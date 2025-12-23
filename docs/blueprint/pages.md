@@ -396,7 +396,7 @@ All routes under `/app` require authentication.
 import { requireAuth } from '$lib/server/auth/guard';
 
 export async function load(event) {
-  const user = requireAuth(event);
+  const { user } = await requireAuth(event);
   return { user };
 }
 ```
@@ -407,8 +407,8 @@ User's authenticated home.
 
 | Tests | Stack |
 |-------|-------|
-| Session | Database sessions |
-| User data | `locals.user` |
+| Session | Better Auth (Postgres) |
+| User data | `auth.api.getSession()` |
 | Protected content | Per-route guards |
 
 ### /app/settings
@@ -439,27 +439,28 @@ GDPR compliance routes.
 
 | Tests | Stack |
 |-------|-------|
-| Credentials | Email + password |
-| Session creation | Database sessions |
+| Credentials | Better Auth `signIn.email()` |
+| OAuth | Better Auth `signIn.social()` |
+| Session creation | Better Auth (Postgres) |
 | Redirect | Return to previous page |
-| Rate limiting | sveltekit-rate-limiter |
+| Rate limiting | Better Auth built-in |
 
 ### /auth/register
 
 | Tests | Stack |
 |-------|-------|
-| User creation | Drizzle insert |
-| Password hashing | Argon2id |
-| Validation | Valibot |
-| Email verification | Optional (Resend) |
+| User creation | Better Auth `signUp.email()` |
+| Password hashing | Better Auth (bcrypt/Argon2) |
+| Validation | Valibot + Better Auth |
+| Email verification | Better Auth plugin |
 
 ### /auth/forgot-password
 
 | Tests | Stack |
 |-------|-------|
-| Reset flow | Token generation |
-| Email sending | Resend |
-| Token validation | Time-limited |
+| Reset flow | Better Auth `forgetPassword()` |
+| Email sending | Better Auth + Resend |
+| Token validation | Better Auth built-in |
 
 ---
 

@@ -1,40 +1,112 @@
 # Authentication
 
-Session-based authentication following Lucia patterns.
+Session-based authentication with two approaches: **Better Auth** (recommended) or **DIY Sessions**.
 
-## Stack
+## Stack Options
+
+| Option | Best For | Trade-off |
+|--------|----------|-----------|
+| **Better Auth** | Production apps, built-in 2FA/passkeys | Library dependency |
+| **DIY Sessions** | Learning, maximum control | More code to maintain |
+
+## Recommended: Better Auth
 
 | Layer | Choice | Why |
 |-------|--------|-----|
-| Auth | **DIY Sessions** | Lucia patterns, no library dependency |
+| Auth | **Better Auth** | TypeScript-first, batteries-included |
+| Adapter | **Drizzle** | Native integration, auto-schema |
+| Sessions | PostgreSQL-backed | Persistent, immediate revocation |
+| OAuth | Built-in | 20+ providers out of the box |
+| 2FA/MFA | Built-in | TOTP, passkeys, WebAuthn |
+| Middleware | SvelteKit handler | Native request interception |
+
+**Why Better Auth:**
+
+| Aspect | Better Auth | DIY | Clerk |
+|--------|-------------|-----|-------|
+| Cost | Free | Free | Free to 10K MAU |
+| Vendor Lock-in | None | None | High |
+| Data Ownership | 100% yours | 100% yours | Third-party |
+| Drizzle | Native adapter | Manual | N/A |
+| 2FA/Passkeys | Built-in | DIY | Built-in |
+| Setup Time | Minutes | Hours | Minutes |
+
+## Alternative: DIY Sessions (Lucia Patterns)
+
+For learning or maximum control.
+
+| Layer | Choice | Why |
+|-------|--------|-----|
 | Sessions | PostgreSQL-backed | Persistent, immediate revocation |
 | Password | **Argon2id** | OWASP recommended, memory-hard |
 | OAuth | **Arctic** | 50+ providers, lightweight |
-| Middleware | SvelteKit hooks | Native request interception |
+| Crypto | **Oslo** | Runtime-agnostic, lightweight |
 
-## Lucia Status
+### Lucia Status
 
 **Lucia v3 was deprecated March 2025.** It's now a learning resource, not a maintained library.
 
-What this means:
 - The `lucia` npm package is maintenance-only
-- Adapters (`@lucia-auth/adapter-drizzle`) are deprecated
 - **Oslo** and **Arctic** libraries continue active development
-- SvelteKit CLI (`npx sv add lucia`) scaffolds the pattern without the library
+- [The Copenhagen Book](https://thecopenhagenbook.com/) provides implementation guidance
 
-**Our approach:** Follow Lucia's session patterns directly with simple code.
+## Better Auth Setup
 
-## Why DIY Sessions (Lucia Patterns)
+### Installation
 
-| Aspect | DIY Sessions | Clerk | Supabase Auth |
-|--------|--------------|-------|---------------|
-| Cost | Free forever | Free to 10K MAU | Tied to Supabase |
-| Vendor Lock-in | None | High | High |
-| Data Ownership | 100% yours | Third-party | Third-party |
-| Drizzle Integration | Native | N/A | N/A |
-| Maintenance | You own it | Managed | Managed |
+```bash
+bun add better-auth
+```
 
-DIY wins: zero cost at scale, full data control, native Drizzle, no vendor lock-in.
+### Configuration
+
+```typescript
+// src/lib/server/auth.ts
+import { betterAuth } from 'better-auth';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { db } from './db';
+
+export const auth = betterAuth({
+  database: drizzleAdapter(db, { provider: 'pg' }),
+  emailAndPassword: { enabled: true },
+  socialProviders: {
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    },
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    },
+  },
+});
+```
+
+### SvelteKit Integration
+
+```typescript
+// src/hooks.server.ts
+import { auth } from '$lib/server/auth';
+import { svelteKitHandler } from 'better-auth/svelte-kit';
+
+export const handle = svelteKitHandler({ auth });
+```
+
+### Client
+
+```typescript
+// src/lib/auth-client.ts
+import { createAuthClient } from 'better-auth/svelte';
+
+export const authClient = createAuthClient();
+```
+
+### Generate Schema
+
+```bash
+bunx @better-auth/cli generate
+bunx drizzle-kit migrate
+```
 
 ## Flow
 
@@ -54,26 +126,6 @@ DIY wins: zero cost at scale, full data control, native Drizzle, no vendor lock-
 - Invalidation on logout
 - Sliding window refresh (30 days default)
 
-## Sessions
-
-| Feature | Implementation |
-|---------|----------------|
-| Storage | PostgreSQL via Drizzle |
-| Cookie | HTTP-only, secure, SameSite=Lax |
-| Expiry | 30 days, refreshed at 15 days |
-| Hashing | SHA-256 (token → session ID) |
-| Invalidation | Logout, password change |
-
-## Middleware
-
-Handle auth in `hooks.server.ts`:
-
-1. Read session cookie
-2. Hash token, lookup in database
-3. Validate expiry, refresh if needed
-4. Attach user to `event.locals`
-5. Protect routes per-route (not layout)
-
 ## Protected Routes
 
 | Strategy | Use Case |
@@ -81,11 +133,22 @@ Handle auth in `hooks.server.ts`:
 | Per-route `load` | **Recommended** - explicit protection |
 | Helper function | `requireAuth(event)` for consistency |
 | Form actions | Before mutations |
-| API routes | Check `locals.user` |
+| API routes | Check session |
 
 **Important:** Don't rely on layout `load` for auth - protect each route individually.
 
 ## Libraries
+
+### Better Auth (Recommended)
+
+| Package | Purpose |
+|---------|---------|
+| `better-auth` | Full auth framework |
+| `better-auth/adapters/drizzle` | Database adapter |
+| `better-auth/svelte-kit` | SvelteKit integration |
+| `@better-auth/cli` | Schema generation |
+
+### DIY Sessions
 
 | Package | Purpose |
 |---------|---------|

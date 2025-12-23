@@ -4,7 +4,7 @@ Implementation designs for Velociraptor.
 
 ## What Is Velociraptor
 
-Velociraptor is a **tech stack** (Bun, SvelteKit, Drizzle, Lucia, etc.).
+Velociraptor is a **tech stack** (Bun, SvelteKit, Drizzle, Better Auth, etc.).
 
 This project serves three purposes:
 
@@ -57,7 +57,7 @@ No separate test suite needed for feature validation. The template tests itself 
 | `/showcase/theme` renders | UnoCSS, CSS vars, localStorage, `$state` |
 | `/showcase/forms` submits | Superforms, Valibot, server actions |
 | `/showcase/data` loads | Drizzle, load functions, SSR |
-| `/app/dashboard` requires login | Lucia, sessions, route guards |
+| `/app/dashboard` requires login | Better Auth, sessions, route guards |
 | `/showcase/files` uploads | R2, Sharp, presigned URLs |
 
 Breaking a stack component breaks its showcase page. The failure is immediate and visible.
@@ -78,7 +78,7 @@ Breaking a stack component breaks its showcase page. The failure is immediate an
 | [pages.md](./pages.md) | Route structure, showcase pages, what each tests |
 | [database.md](./database.md) | PostgreSQL schema, Neo4j model, Drizzle setup |
 | [styling.md](./styling.md) | UnoCSS, fluid typography, container queries |
-| [auth.md](./auth.md) | Session auth, password hashing, OAuth, route guards |
+| [auth.md](./auth.md) | Better Auth, OAuth, 2FA, route guards |
 | [state.md](./state.md) | Svelte 5 runes, shared state, context API |
 | [api.md](./api.md) | REST endpoints, validation, CORS, rate limiting |
 | [i18n.md](./i18n.md) | sveltekit-i18n, locale routing, date/number formatting |

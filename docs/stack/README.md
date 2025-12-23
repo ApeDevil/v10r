@@ -10,7 +10,7 @@ Technology decisions for the Velociraptor template.
 | Framework | SvelteKit |
 | Database | PostgreSQL (Neon) + Neo4j |
 | ORM | Drizzle |
-| Auth | DIY Sessions (Lucia patterns) |
+| Auth | Better Auth (or DIY Sessions) |
 | Styling | UnoCSS + Bits UI |
 | Validation | Valibot + Superforms |
 | Code Quality | Biome |

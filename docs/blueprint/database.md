@@ -6,16 +6,18 @@ PostgreSQL schema for Velociraptor template using Drizzle ORM.
 
 | Table | Purpose | Used By |
 |-------|---------|---------|
-| `users` | User accounts | Auth, all features |
-| `sessions` | Auth sessions | Session management |
-| `oauth_accounts` | OAuth provider links | OAuth login |
+| `user` | User accounts | Better Auth (auto-generated) |
+| `session` | Auth sessions | Better Auth (auto-generated) |
+| `account` | OAuth provider links | Better Auth (auto-generated) |
+| `verification` | Email/password tokens | Better Auth (auto-generated) |
+| `user_profile` | Extended user data | Custom |
 | `user_settings` | Preferences | Theme, i18n |
 | `items` | Generic entities | CRUD showcase |
 | `tags` | Categorization | Data showcase |
 | `item_tags` | Item-tag relations | Data showcase |
 | `files` | Upload references | Files showcase |
-| `password_reset_tokens` | Password recovery | Auth |
-| `email_verification_tokens` | Email verification | Auth |
+
+**Note:** Better Auth auto-generates `user`, `session`, `account`, and `verification` tables via CLI.
 
 ---
 
@@ -23,57 +25,73 @@ PostgreSQL schema for Velociraptor template using Drizzle ORM.
 
 ```
 ┌─────────────────┐       ┌─────────────────┐
-│     users       │       │    sessions     │
+│      user       │       │    session      │  (Better Auth)
 ├─────────────────┤       ├─────────────────┤
-│ id visually: PK │◀──────│ user_id FK      │
+│ id PK           │◀──────│ userId FK       │
 │ email           │       │ id PK           │
-│ password_hash   │       │ expires_at      │
-│ name            │       └─────────────────┘
-│ avatar_url      │
-│ email_verified  │       ┌─────────────────┐
-│ created_at      │◀──────│ user_settings   │
-│ updated_at      │       ├─────────────────┤
-└────────┬────────┘       │ user_id PK/FK   │
+│ emailVerified   │       │ token           │
+│ name            │       │ expiresAt       │
+│ image           │       │ ipAddress       │
+│ createdAt       │       │ userAgent       │
+│ updatedAt       │       └─────────────────┘
+└────────┬────────┘
+         │                ┌─────────────────┐
+         │◀───────────────│    account      │  (Better Auth)
+         │                ├─────────────────┤
+         │                │ id PK           │
+         │                │ userId FK       │
+         │                │ providerId      │
+         │                │ providerUserId  │
+         │                │ accessToken     │
+         │                │ refreshToken    │
+         │                └─────────────────┘
+         │
+         │                ┌─────────────────┐
+         │◀───────────────│  user_profile   │  (Custom)
+         │                ├─────────────────┤
+         │                │ userId PK/FK    │
+         │                │ bio             │
+         │                │ website         │
+         │                │ timezone        │
+         │                └─────────────────┘
+         │
+         │                ┌─────────────────┐
+         │◀───────────────│ user_settings   │  (Custom)
+         │                ├─────────────────┤
+         │                │ userId PK/FK    │
          │                │ theme           │
          │                │ language        │
          │                │ notifications   │
          │                └─────────────────┘
          │
          │  ┌─────────────────┐
-         │  │     items       │
-         │  ├─────────────────┤
-         └─▶│ user_id FK      │
+         └─▶│     items       │
+            ├─────────────────┤
             │ id PK           │◀─┐
-            │ title           │  │
-            │ description     │  │     ┌─────────────────┐
-            │ content         │  │     │   item_tags     │
-            │ status          │  │     ├─────────────────┤
-            │ image_url       │  └─────│ item_id FK      │
-            │ created_at      │        │ tag_id FK       │──┐
-            │ updated_at      │        └─────────────────┘  │
-            └────────┬────────┘                             │
-                     │                 ┌─────────────────┐  │
+            │ userId FK       │  │
+            │ title           │  │     ┌─────────────────┐
+            │ description     │  │     │   item_tags     │
+            │ content         │  │     ├─────────────────┤
+            │ status          │  └─────│ itemId FK       │
+            │ imageUrl        │        │ tagId FK        │──┐
+            │ createdAt       │        └─────────────────┘  │
+            │ updatedAt       │                             │
+            └────────┬────────┘        ┌─────────────────┐  │
                      │                 │      tags       │  │
                      │                 ├─────────────────┤  │
-                     │                 │ id PK           │◀─┘
-                     │                 │ name            │
-                     │                 │ color           │
-                     │                 │ created_at      │
-                     │                 └─────────────────┘
-                     │
-                     ▼
-            ┌─────────────────┐
-            │     files       │
-            ├─────────────────┤
-            │ id PK           │
-            │ user_id FK      │
-            │ item_id FK?     │
+                     ▼                 │ id PK           │◀─┘
+            ┌─────────────────┐        │ name            │
+            │     files       │        │ color           │
+            ├─────────────────┤        │ createdAt       │
+            │ id PK           │        └─────────────────┘
+            │ userId FK       │
+            │ itemId FK?      │
             │ filename        │
-            │ storage_key     │
+            │ storageKey      │
             │ url             │
             │ size            │
-            │ mime_type       │
-            │ created_at      │
+            │ mimeType        │
+            │ createdAt       │
             └─────────────────┘
 ```
 
@@ -81,59 +99,71 @@ PostgreSQL schema for Velociraptor template using Drizzle ORM.
 
 ## Drizzle Schema
 
-### Users & Auth
+### Better Auth Tables (Auto-Generated)
+
+Better Auth generates these tables via CLI. Run:
+
+```bash
+bunx @better-auth/cli generate
+bunx drizzle-kit migrate
+```
+
+```ts
+// Generated by Better Auth CLI - DO NOT EDIT
+// These are reference definitions for type inference
+
+export const user = pgTable('user', {
+  id: text('id').primaryKey(),
+  email: text('email').notNull().unique(),
+  emailVerified: boolean('email_verified').notNull().default(false),
+  name: text('name'),
+  image: text('image'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const session = pgTable('session', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  token: text('token').notNull().unique(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+});
+
+export const account = pgTable('account', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  providerId: text('provider_id').notNull(),
+  providerUserId: text('provider_user_id').notNull(),
+  accessToken: text('access_token'),
+  refreshToken: text('refresh_token'),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+});
+
+export const verification = pgTable('verification', {
+  id: text('id').primaryKey(),
+  identifier: text('identifier').notNull(),
+  value: text('value').notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+});
+```
+
+### Custom User Extensions
 
 ```ts
 // src/lib/server/db/schema/auth.ts
-import { pgTable, text, timestamp, boolean, primaryKey } from 'drizzle-orm/pg-core';
+import { pgTable, text } from 'drizzle-orm/pg-core';
+import { user } from './better-auth'; // Reference generated table
 
-export const users = pgTable('users', {
-  id: text('id').primaryKey(), // 'usr_' + nanoid
-  email: text('email').notNull().unique(),
-  passwordHash: text('password_hash'),
-  name: text('name').notNull(),
-  avatarUrl: text('avatar_url'),
-  emailVerified: boolean('email_verified').notNull().default(false),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
-});
-
-export const sessions = pgTable('sessions', {
-  id: text('id').primaryKey(),
+// Extend user with custom profile fields
+export const userProfile = pgTable('user_profile', {
   userId: text('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull()
-});
-
-export const oauthAccounts = pgTable('oauth_accounts', {
-  providerId: text('provider_id').notNull(), // 'github', 'google'
-  providerUserId: text('provider_user_id').notNull(),
-  userId: text('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-}, (table) => ({
-  pk: primaryKey({ columns: [table.providerId, table.providerUserId] }),
-}));
-
-export const passwordResetTokens = pgTable('password_reset_tokens', {
-  id: text('id').primaryKey(),
-  userId: text('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  tokenHash: text('token_hash').notNull(),
-  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-  usedAt: timestamp('used_at', { withTimezone: true })
-});
-
-export const emailVerificationTokens = pgTable('email_verification_tokens', {
-  id: text('id').primaryKey(),
-  userId: text('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  tokenHash: text('token_hash').notNull(),
-  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-  verifiedAt: timestamp('verified_at', { withTimezone: true })
+    .primaryKey()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  bio: text('bio'),
+  website: text('website'),
+  timezone: text('timezone').default('UTC'),
 });
 ```
 
@@ -142,14 +172,14 @@ export const emailVerificationTokens = pgTable('email_verification_tokens', {
 ```ts
 // src/lib/server/db/schema/settings.ts
 import { pgTable, text, boolean, pgEnum } from 'drizzle-orm/pg-core';
-import { users } from './auth';
+import { user } from './better-auth'; // Reference Better Auth's user table
 
 export const themeEnum = pgEnum('theme', ['light', 'dark', 'system']);
 
 export const userSettings = pgTable('user_settings', {
   userId: text('user_id')
     .primaryKey()
-    .references(() => users.id, { onDelete: 'cascade' }),
+    .references(() => user.id, { onDelete: 'cascade' }),
   theme: themeEnum('theme').notNull().default('system'),
   language: text('language').notNull().default('en'),
   notificationsEnabled: boolean('notifications_enabled').notNull().default(true)
@@ -161,7 +191,7 @@ export const userSettings = pgTable('user_settings', {
 ```ts
 // src/lib/server/db/schema/items.ts
 import { pgTable, text, timestamp, pgEnum, primaryKey } from 'drizzle-orm/pg-core';
-import { users } from './auth';
+import { user } from './better-auth'; // Reference Better Auth's user table
 
 export const itemStatusEnum = pgEnum('item_status', ['draft', 'published', 'archived']);
 
@@ -169,7 +199,7 @@ export const items = pgTable('items', {
   id: text('id').primaryKey(), // 'itm_' + nanoid
   userId: text('user_id')
     .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
+    .references(() => user.id, { onDelete: 'cascade' }),
   title: text('title').notNull(),
   description: text('description'),
   content: text('content'),
@@ -207,14 +237,14 @@ export const itemTags = pgTable(
 ```ts
 // src/lib/server/db/schema/files.ts
 import { pgTable, text, timestamp, integer } from 'drizzle-orm/pg-core';
-import { users } from './auth';
+import { user } from './better-auth'; // Reference Better Auth's user table
 import { items } from './items';
 
 export const files = pgTable('files', {
   id: text('id').primaryKey(), // 'fil_' + nanoid
   userId: text('user_id')
     .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
+    .references(() => user.id, { onDelete: 'cascade' }),
   itemId: text('item_id').references(() => items.id, { onDelete: 'set null' }),
   filename: text('filename').notNull(),
   storageKey: text('storage_key').notNull(), // R2 object key
@@ -229,26 +259,22 @@ export const files = pgTable('files', {
 
 ```ts
 // src/lib/server/db/schema/index.ts
-export * from './auth';
-export * from './settings';
-export * from './items';
-export * from './files';
+export * from './better-auth'; // Auto-generated: user, session, account, verification
+export * from './auth';        // Custom: userProfile
+export * from './settings';    // Custom: userSettings
+export * from './items';       // Custom: items, tags, itemTags
+export * from './files';       // Custom: files
 ```
 
 ---
 
 ## Indexes
 
+Better Auth tables have indexes auto-generated. For custom tables:
+
 ```ts
 // Add to respective schema files
 import { index } from 'drizzle-orm/pg-core';
-
-// users - email lookup
-export const usersEmailIdx = index('users_email_idx').on(users.email);
-
-// sessions - user lookup, expiry cleanup
-export const sessionsUserIdx = index('sessions_user_id_idx').on(sessions.userId);
-export const sessionsExpiresIdx = index('sessions_expires_at_idx').on(sessions.expiresAt);
 
 // items - user's items, status filter, recent first
 export const itemsUserIdx = index('items_user_id_idx').on(items.userId);
@@ -258,12 +284,6 @@ export const itemsCreatedIdx = index('items_created_at_idx').on(items.createdAt)
 // files - user's files, item attachments
 export const filesUserIdx = index('files_user_id_idx').on(files.userId);
 export const filesItemIdx = index('files_item_id_idx').on(files.itemId);
-
-// tokens - cleanup expired
-export const passwordResetExpiresIdx = index('password_reset_expires_idx')
-  .on(passwordResetTokens.expiresAt);
-export const emailVerificationExpiresIdx = index('email_verification_expires_idx')
-  .on(emailVerificationTokens.expiresAt);
 ```
 
 ---
@@ -297,24 +317,47 @@ export const createId = {
 ```ts
 // src/lib/server/db/relations.ts
 import { relations } from 'drizzle-orm';
-import { users, sessions, userSettings } from './schema/auth';
+import { user, session, account } from './schema/better-auth';
+import { userProfile } from './schema/auth';
+import { userSettings } from './schema/settings';
 import { items, tags, itemTags } from './schema/items';
 import { files } from './schema/files';
 
-export const usersRelations = relations(users, ({ one, many }) => ({
+// Better Auth tables relations
+export const userRelations = relations(user, ({ one, many }) => ({
+  profile: one(userProfile, {
+    fields: [user.id],
+    references: [userProfile.userId]
+  }),
   settings: one(userSettings, {
-    fields: [users.id],
+    fields: [user.id],
     references: [userSettings.userId]
   }),
-  sessions: many(sessions),
+  sessions: many(session),
+  accounts: many(account),
   items: many(items),
   files: many(files)
 }));
 
+export const sessionRelations = relations(session, ({ one }) => ({
+  user: one(user, {
+    fields: [session.userId],
+    references: [user.id]
+  })
+}));
+
+export const accountRelations = relations(account, ({ one }) => ({
+  user: one(user, {
+    fields: [account.userId],
+    references: [user.id]
+  })
+}));
+
+// Custom tables relations
 export const itemsRelations = relations(items, ({ one, many }) => ({
-  user: one(users, {
+  user: one(user, {
     fields: [items.userId],
-    references: [users.id]
+    references: [user.id]
   }),
   files: many(files),
   itemTags: many(itemTags)
@@ -336,9 +379,9 @@ export const itemTagsRelations = relations(itemTags, ({ one }) => ({
 }));
 
 export const filesRelations = relations(files, ({ one }) => ({
-  user: one(users, {
+  user: one(user, {
     fields: [files.userId],
-    references: [users.id]
+    references: [user.id]
   }),
   item: one(items, {
     fields: [files.itemId],
@@ -354,19 +397,25 @@ export const filesRelations = relations(files, ({ one }) => ({
 ```ts
 // src/lib/server/db/types.ts
 import type { InferSelectModel, InferInsertModel } from 'drizzle-orm';
-import { users, sessions, oauthAccounts, userSettings, items, tags, files } from './schema';
+import { user, session, account } from './schema/better-auth';
+import { userProfile } from './schema/auth';
+import { userSettings } from './schema/settings';
+import { items, tags, files } from './schema';
 
-// Select types (reading from DB)
-export type User = InferSelectModel<typeof users>;
-export type Session = InferSelectModel<typeof sessions>;
-export type OAuthAccount = InferSelectModel<typeof oauthAccounts>;
+// Better Auth types (auto-generated tables)
+export type User = InferSelectModel<typeof user>;
+export type Session = InferSelectModel<typeof session>;
+export type Account = InferSelectModel<typeof account>;
+
+// Custom types
+export type UserProfile = InferSelectModel<typeof userProfile>;
 export type UserSettings = InferSelectModel<typeof userSettings>;
 export type Item = InferSelectModel<typeof items>;
 export type Tag = InferSelectModel<typeof tags>;
 export type File = InferSelectModel<typeof files>;
 
 // Insert types (writing to DB)
-export type NewUser = InferInsertModel<typeof users>;
+export type NewUserProfile = InferInsertModel<typeof userProfile>;
 export type NewItem = InferInsertModel<typeof items>;
 export type NewTag = InferInsertModel<typeof tags>;
 export type NewFile = InferInsertModel<typeof files>;
@@ -375,6 +424,7 @@ export type NewFile = InferInsertModel<typeof files>;
 export type ItemWithTags = Item & { tags: Tag[] };
 export type ItemWithFiles = Item & { files: File[] };
 export type ItemFull = Item & { tags: Tag[]; files: File[]; user: User };
+export type UserWithProfile = User & { profile: UserProfile | null };
 ```
 
 ---
@@ -609,13 +659,15 @@ src/lib/server/db/
 ├── relations.ts          # Drizzle relations
 └── schema/
     ├── index.ts          # Re-exports
-    ├── auth.ts           # users, sessions, tokens
-    ├── settings.ts       # user_settings
-    ├── items.ts          # items, tags, item_tags
-    └── files.ts          # files
+    ├── better-auth.ts    # Auto-generated: user, session, account, verification
+    ├── auth.ts           # Custom: userProfile
+    ├── settings.ts       # Custom: userSettings
+    ├── items.ts          # Custom: items, tags, itemTags
+    └── files.ts          # Custom: files
 
 drizzle/
-├── 0000_initial.sql      # Generated migration
+├── 0000_better_auth.sql  # Better Auth generated migration
+├── 0001_custom.sql       # Custom tables migration
 └── meta/                 # Migration metadata
 
 scripts/
@@ -628,17 +680,16 @@ scripts/
 
 | Database | Tables | Purpose |
 |----------|--------|---------|
-| **Postgres** | 10 | Users, auth, OAuth, content, files |
+| **Postgres** | 10 | Better Auth (4) + Custom (6) |
 | **Neo4j** | 3 node types | Relationships, navigation, RAG |
 
-| Table | Records Expected |
-|-------|------------------|
-| users | 1-1000 (template scale) |
-| items | 10-10000 |
-| tags | 10-100 |
-| files | 100-10000 |
+| Table | Source | Purpose |
+|-------|--------|---------|
+| user, session, account, verification | Better Auth | Auth system |
+| user_profile, user_settings | Custom | Extended user data |
+| items, tags, item_tags, files | Custom | CRUD showcase |
 
-Schema is intentionally minimal but complete enough to demonstrate all CRUD patterns, relationships, and file handling.
+Schema uses Better Auth's auto-generated tables for auth, extended with custom tables for app-specific features.
 
 ---
 
