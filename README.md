@@ -1,4 +1,5 @@
 # Velociraptor
+Is a full stack with focuse of performance and lightweight with good free tier service options!
 
 A Bun + SvelteKit test project running fully containerized in Podman.
 
