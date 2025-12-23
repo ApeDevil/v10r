@@ -1,0 +1,754 @@
+# API Architecture
+
+REST endpoints with SvelteKit +server.ts files.
+
+---
+
+## Strategy
+
+**File-based API routes** using Web Standards (Request/Response).
+
+| Aspect | Approach |
+|--------|----------|
+| Endpoints | `+server.ts` files |
+| Validation | Valibot schemas |
+| Errors | `error()` helper + status codes |
+| Documentation | OpenAPI (optional) |
+| CORS | hooks.server.ts |
+
+---
+
+## Basic Endpoints
+
+### File Structure
+
+```
+src/routes/
+├── api/
+│   ├── health/
+│   │   └── +server.ts          # GET /api/health
+│   ├── items/
+│   │   ├── +server.ts          # GET, POST /api/items
+│   │   └── [id]/
+│   │       └── +server.ts      # GET, PUT, DELETE /api/items/:id
+│   └── upload/
+│       └── +server.ts          # POST /api/upload
+```
+
+### GET Handler
+
+```typescript
+// src/routes/api/items/+server.ts
+import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
+import { db } from '$lib/server/db';
+import { items } from '$lib/server/db/schema';
+
+export const GET: RequestHandler = async ({ url }) => {
+  const limit = Number(url.searchParams.get('limit')) || 20;
+  const offset = Number(url.searchParams.get('offset')) || 0;
+
+  const results = await db
+    .select()
+    .from(items)
+    .limit(limit)
+    .offset(offset);
+
+  return json({
+    data: results,
+    meta: { limit, offset },
+  });
+};
+```
+
+### POST Handler
+
+```typescript
+// src/routes/api/items/+server.ts
+import { json, error } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
+import { db } from '$lib/server/db';
+import { items } from '$lib/server/db/schema';
+import * as v from 'valibot';
+
+const CreateItemSchema = v.object({
+  name: v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
+  description: v.optional(v.string()),
+  price: v.pipe(v.number(), v.minValue(0)),
+});
+
+export const POST: RequestHandler = async ({ request }) => {
+  const body = await request.json();
+
+  const result = v.safeParse(CreateItemSchema, body);
+  if (!result.success) {
+    error(400, {
+      message: 'Validation failed',
+      errors: result.issues.map(i => ({
+        path: i.path?.map(p => p.key).join('.'),
+        message: i.message,
+      })),
+    });
+  }
+
+  const [item] = await db
+    .insert(items)
+    .values(result.output)
+    .returning();
+
+  return json(item, { status: 201 });
+};
+```
+
+### PUT Handler
+
+```typescript
+// src/routes/api/items/[id]/+server.ts
+import { json, error } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
+import { db } from '$lib/server/db';
+import { items } from '$lib/server/db/schema';
+import { eq } from 'drizzle-orm';
+import * as v from 'valibot';
+
+const UpdateItemSchema = v.object({
+  name: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(100))),
+  description: v.optional(v.string()),
+  price: v.optional(v.pipe(v.number(), v.minValue(0))),
+});
+
+export const PUT: RequestHandler = async ({ params, request }) => {
+  const body = await request.json();
+
+  const result = v.safeParse(UpdateItemSchema, body);
+  if (!result.success) {
+    error(400, { message: 'Validation failed' });
+  }
+
+  const [updated] = await db
+    .update(items)
+    .set({ ...result.output, updatedAt: new Date() })
+    .where(eq(items.id, params.id))
+    .returning();
+
+  if (!updated) {
+    error(404, { message: 'Item not found' });
+  }
+
+  return json(updated);
+};
+```
+
+### DELETE Handler
+
+```typescript
+// src/routes/api/items/[id]/+server.ts
+import { json, error } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
+import { db } from '$lib/server/db';
+import { items } from '$lib/server/db/schema';
+import { eq } from 'drizzle-orm';
+
+export const DELETE: RequestHandler = async ({ params }) => {
+  const [deleted] = await db
+    .delete(items)
+    .where(eq(items.id, params.id))
+    .returning();
+
+  if (!deleted) {
+    error(404, { message: 'Item not found' });
+  }
+
+  return json({ success: true });
+};
+```
+
+---
+
+## Request Handling
+
+### URL Parameters
+
+```typescript
+export const GET: RequestHandler = async ({ params, url }) => {
+  // Route params: /api/items/[id] → params.id
+  const { id } = params;
+
+  // Query params: /api/items?sort=name&order=desc
+  const sort = url.searchParams.get('sort') ?? 'createdAt';
+  const order = url.searchParams.get('order') ?? 'desc';
+
+  // ...
+};
+```
+
+### Request Body
+
+```typescript
+export const POST: RequestHandler = async ({ request }) => {
+  // JSON body
+  const json = await request.json();
+
+  // Form data
+  const formData = await request.formData();
+  const name = formData.get('name');
+  const file = formData.get('file') as File;
+
+  // Raw text
+  const text = await request.text();
+
+  // ...
+};
+```
+
+### Headers and Cookies
+
+```typescript
+export const GET: RequestHandler = async ({ request, cookies }) => {
+  // Request headers
+  const auth = request.headers.get('Authorization');
+  const contentType = request.headers.get('Content-Type');
+
+  // Cookies
+  const session = cookies.get('session');
+
+  // Response with custom headers
+  return new Response(JSON.stringify(data), {
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'max-age=3600',
+      'X-Custom-Header': 'value',
+    },
+  });
+};
+```
+
+---
+
+## Validation
+
+### Valibot Schemas
+
+```typescript
+// src/lib/server/api/schemas.ts
+import * as v from 'valibot';
+
+// Reusable schemas
+export const PaginationSchema = v.object({
+  limit: v.optional(v.pipe(v.number(), v.minValue(1), v.maxValue(100)), 20),
+  offset: v.optional(v.pipe(v.number(), v.minValue(0)), 0),
+});
+
+export const IdParamSchema = v.object({
+  id: v.pipe(v.string(), v.uuid()),
+});
+
+// Entity schemas
+export const CreateItemSchema = v.object({
+  name: v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
+  description: v.optional(v.pipe(v.string(), v.maxLength(1000))),
+  price: v.pipe(v.number(), v.minValue(0)),
+  tags: v.optional(v.array(v.string())),
+});
+
+export const UpdateItemSchema = v.partial(CreateItemSchema);
+```
+
+### Validation Helper
+
+```typescript
+// src/lib/server/api/validate.ts
+import { error } from '@sveltejs/kit';
+import * as v from 'valibot';
+
+export function validate<T extends v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>>(
+  schema: T,
+  data: unknown
+): v.InferOutput<T> {
+  const result = v.safeParse(schema, data);
+
+  if (!result.success) {
+    error(400, {
+      message: 'Validation failed',
+      errors: result.issues.map(issue => ({
+        path: issue.path?.map(p => p.key).join('.') ?? '',
+        message: issue.message,
+      })),
+    });
+  }
+
+  return result.output;
+}
+
+export async function validateBody<T extends v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>>(
+  request: Request,
+  schema: T
+): Promise<v.InferOutput<T>> {
+  try {
+    const body = await request.json();
+    return validate(schema, body);
+  } catch (e) {
+    if (e instanceof SyntaxError) {
+      error(400, { message: 'Invalid JSON' });
+    }
+    throw e;
+  }
+}
+
+export function validateQuery<T extends v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>>(
+  url: URL,
+  schema: T
+): v.InferOutput<T> {
+  const params = Object.fromEntries(url.searchParams);
+  return validate(schema, params);
+}
+```
+
+### Usage
+
+```typescript
+import { validateBody, validateQuery } from '$lib/server/api/validate';
+import { CreateItemSchema, PaginationSchema } from '$lib/server/api/schemas';
+
+export const GET: RequestHandler = async ({ url }) => {
+  const { limit, offset } = validateQuery(url, PaginationSchema);
+  // ...
+};
+
+export const POST: RequestHandler = async ({ request }) => {
+  const data = await validateBody(request, CreateItemSchema);
+  // data is fully typed
+};
+```
+
+---
+
+## Error Handling
+
+### Expected Errors
+
+```typescript
+import { error } from '@sveltejs/kit';
+
+export const GET: RequestHandler = async ({ params }) => {
+  const item = await db.query.items.findFirst({
+    where: eq(items.id, params.id),
+  });
+
+  if (!item) {
+    // 4xx errors - client's fault
+    error(404, { message: 'Item not found' });
+  }
+
+  if (!item.published) {
+    error(403, { message: 'Item not accessible' });
+  }
+
+  return json(item);
+};
+```
+
+### Error Response Format
+
+```typescript
+// Consistent error shape
+interface ApiError {
+  message: string;
+  code?: string;
+  errors?: Array<{
+    path: string;
+    message: string;
+  }>;
+}
+
+// Usage
+error(400, {
+  message: 'Validation failed',
+  code: 'VALIDATION_ERROR',
+  errors: [
+    { path: 'email', message: 'Invalid email format' },
+    { path: 'password', message: 'Must be at least 8 characters' },
+  ],
+});
+```
+
+### Global Error Handler
+
+```typescript
+// src/hooks.server.ts
+import type { HandleServerError } from '@sveltejs/kit';
+
+export const handleError: HandleServerError = async ({ error, event, status, message }) => {
+  // Log unexpected errors (5xx)
+  if (status >= 500) {
+    console.error('Server error:', error);
+    // Send to error tracking service
+    // await sentry.captureException(error);
+  }
+
+  return {
+    message: status >= 500 ? 'Internal server error' : message,
+    code: status >= 500 ? 'INTERNAL_ERROR' : undefined,
+  };
+};
+```
+
+---
+
+## Authentication
+
+### Protected Endpoints
+
+```typescript
+// src/routes/api/items/+server.ts
+import { error } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
+
+export const POST: RequestHandler = async ({ locals, request }) => {
+  // Check auth from hooks.server.ts
+  if (!locals.user) {
+    error(401, { message: 'Unauthorized' });
+  }
+
+  // Check permissions
+  if (!locals.user.canCreateItems) {
+    error(403, { message: 'Forbidden' });
+  }
+
+  // Proceed with authenticated request
+  const data = await validateBody(request, CreateItemSchema);
+  // ...
+};
+```
+
+### API Key Authentication
+
+```typescript
+// src/hooks.server.ts
+import type { Handle } from '@sveltejs/kit';
+import { API_SECRET_KEY } from '$env/static/private';
+
+export const handle: Handle = async ({ event, resolve }) => {
+  // Check for API routes
+  if (event.url.pathname.startsWith('/api')) {
+    const apiKey = event.request.headers.get('X-API-Key');
+
+    if (apiKey === API_SECRET_KEY) {
+      event.locals.apiAuth = true;
+    }
+  }
+
+  return resolve(event);
+};
+```
+
+---
+
+## CORS
+
+### Global CORS in Hooks
+
+```typescript
+// src/hooks.server.ts
+import type { Handle } from '@sveltejs/kit';
+
+const ALLOWED_ORIGINS = [
+  'https://example.com',
+  'https://app.example.com',
+];
+
+export const handle: Handle = async ({ event, resolve }) => {
+  // Handle preflight requests
+  if (event.request.method === 'OPTIONS') {
+    const origin = event.request.headers.get('Origin');
+
+    if (origin && ALLOWED_ORIGINS.includes(origin)) {
+      return new Response(null, {
+        headers: {
+          'Access-Control-Allow-Origin': origin,
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
+          'Access-Control-Max-Age': '86400',
+        },
+      });
+    }
+  }
+
+  const response = await resolve(event);
+
+  // Add CORS headers to API responses
+  if (event.url.pathname.startsWith('/api')) {
+    const origin = event.request.headers.get('Origin');
+
+    if (origin && ALLOWED_ORIGINS.includes(origin)) {
+      response.headers.set('Access-Control-Allow-Origin', origin);
+      response.headers.set('Access-Control-Allow-Credentials', 'true');
+    }
+  }
+
+  return response;
+};
+```
+
+### Per-Route CORS
+
+```typescript
+// src/routes/api/public/+server.ts
+import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
+
+export const GET: RequestHandler = async () => {
+  const data = { /* ... */ };
+
+  return json(data, {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+    },
+  });
+};
+
+// Handle OPTIONS for this specific route
+export const OPTIONS: RequestHandler = async () => {
+  return new Response(null, {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    },
+  });
+};
+```
+
+---
+
+## Response Helpers
+
+### Standard Response Wrapper
+
+```typescript
+// src/lib/server/api/response.ts
+import { json } from '@sveltejs/kit';
+
+interface ApiResponse<T> {
+  data: T;
+  meta?: Record<string, unknown>;
+}
+
+interface PaginatedResponse<T> extends ApiResponse<T[]> {
+  meta: {
+    total: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
+}
+
+export function apiResponse<T>(data: T, meta?: Record<string, unknown>) {
+  return json({ data, meta });
+}
+
+export function paginatedResponse<T>(
+  data: T[],
+  total: number,
+  limit: number,
+  offset: number
+) {
+  return json({
+    data,
+    meta: {
+      total,
+      limit,
+      offset,
+      hasMore: offset + data.length < total,
+    },
+  });
+}
+```
+
+### Usage
+
+```typescript
+import { paginatedResponse } from '$lib/server/api/response';
+
+export const GET: RequestHandler = async ({ url }) => {
+  const limit = Number(url.searchParams.get('limit')) || 20;
+  const offset = Number(url.searchParams.get('offset')) || 0;
+
+  const [results, [{ count }]] = await Promise.all([
+    db.select().from(items).limit(limit).offset(offset),
+    db.select({ count: sql`count(*)` }).from(items),
+  ]);
+
+  return paginatedResponse(results, Number(count), limit, offset);
+};
+```
+
+---
+
+## File Uploads
+
+```typescript
+// src/routes/api/upload/+server.ts
+import { json, error } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
+import { uploadToR2 } from '$lib/server/storage';
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+export const POST: RequestHandler = async ({ request, locals }) => {
+  if (!locals.user) {
+    error(401, { message: 'Unauthorized' });
+  }
+
+  const formData = await request.formData();
+  const file = formData.get('file') as File | null;
+
+  if (!file) {
+    error(400, { message: 'No file provided' });
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+    error(400, { message: 'File too large' });
+  }
+
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    error(400, { message: 'Invalid file type' });
+  }
+
+  const url = await uploadToR2(file, locals.user.id);
+
+  return json({ url }, { status: 201 });
+};
+```
+
+---
+
+## Rate Limiting
+
+```typescript
+// src/lib/server/api/ratelimit.ts
+import { RateLimiter } from 'sveltekit-rate-limiter/server';
+
+export const apiLimiter = new RateLimiter({
+  IP: [100, '15m'],      // 100 requests per 15 minutes per IP
+  IPUA: [200, '15m'],    // 200 per IP + User Agent combo
+});
+
+export const strictLimiter = new RateLimiter({
+  IP: [10, '1m'],        // 10 requests per minute
+});
+```
+
+```typescript
+// src/routes/api/items/+server.ts
+import { error } from '@sveltejs/kit';
+import { apiLimiter } from '$lib/server/api/ratelimit';
+
+export const POST: RequestHandler = async (event) => {
+  if (await apiLimiter.isLimited(event)) {
+    error(429, { message: 'Too many requests' });
+  }
+
+  // ...
+};
+```
+
+---
+
+## OpenAPI Documentation (Optional)
+
+### Using JSDoc Annotations
+
+```typescript
+// src/routes/api/items/+server.ts
+
+/**
+ * @swagger
+ * /api/items:
+ *   get:
+ *     summary: List all items
+ *     parameters:
+ *       - name: limit
+ *         in: query
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - name: offset
+ *         in: query
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *     responses:
+ *       200:
+ *         description: List of items
+ */
+export const GET: RequestHandler = async ({ url }) => {
+  // ...
+};
+```
+
+### Tools
+
+- **sveltekit-openapi-generator** - Generates OpenAPI from JSDoc
+- **swagger-ui-svelte** - Swagger UI component for Svelte
+- **sveltekit-api** - Type-safe endpoints with auto OpenAPI
+
+---
+
+## File Structure
+
+```
+src/
+├── lib/
+│   └── server/
+│       └── api/
+│           ├── schemas.ts      # Valibot schemas
+│           ├── validate.ts     # Validation helpers
+│           ├── response.ts     # Response helpers
+│           └── ratelimit.ts    # Rate limiting
+├── routes/
+│   └── api/
+│       ├── health/
+│       │   └── +server.ts
+│       ├── items/
+│       │   ├── +server.ts      # GET (list), POST (create)
+│       │   └── [id]/
+│       │       └── +server.ts  # GET, PUT, DELETE
+│       └── upload/
+│           └── +server.ts
+└── hooks.server.ts             # CORS, error handling
+```
+
+---
+
+## Summary
+
+| What | How |
+|------|-----|
+| Endpoints | `+server.ts` with HTTP method exports |
+| Validation | Valibot schemas + helper functions |
+| Errors | `error()` with status codes 4xx/5xx |
+| Auth | Check `locals.user` from hooks |
+| CORS | `hooks.server.ts` + OPTIONS handler |
+| Rate limiting | `sveltekit-rate-limiter` |
+| Documentation | JSDoc + OpenAPI generator |
+
+---
+
+## Related
+
+- [auth.md](./auth.md) - Authentication patterns, protected endpoint implementation
+- [database.md](./database.md) - Drizzle schema used in API queries
+- [pages.md](./pages.md) - `/showcase/api` route with interactive API explorer
+
+---
+
+## Sources
+
+- [SvelteKit Routing - API Routes](https://svelte.dev/docs/kit/routing#server)
+- [SvelteKit Web Standards](https://svelte.dev/docs/kit/web-standards)
+- [SvelteKit Errors](https://svelte.dev/docs/kit/errors)
+- [SvelteKit Hooks](https://svelte.dev/docs/kit/hooks)
+- [Valibot Documentation](https://valibot.dev/)
+- [Joy of Code - SvelteKit Endpoints](https://joyofcode.xyz/using-sveltekit-endpoints)
+- [Configure CORS in SvelteKit](https://snippets.khromov.se/configure-cors-in-sveltekit-to-access-your-api-routes-from-a-different-host/)

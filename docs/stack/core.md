@@ -27,7 +27,7 @@ Runtime, framework, database, storage, and deployment.
 | Concern | Service | Why |
 |---------|---------|-----|
 | Relational | **Neon (Postgres)** | Serverless, branching, Drizzle-native |
-| Sessions | **Lucia + Postgres** | Self-hosted, no vendor lock-in |
+| Sessions | **DIY + Postgres** | Lucia patterns, no vendor lock-in |
 | Graph | **Neo4j Aura** | Native graph queries, 200k nodes free |
 | Files | **Cloudflare R2** | Zero egress, 10GB free, S3-compatible |
 

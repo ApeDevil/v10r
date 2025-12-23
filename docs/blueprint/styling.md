@@ -419,6 +419,13 @@ This approach gives smooth scaling, component portability, and minimal CSS.
 
 ---
 
+## Related
+
+- [pages.md](./pages.md) - Routes using these styling patterns, especially `/showcase/theme` and `/showcase/ui`
+- [state.md](./state.md) - Theme state management with `$state` and localStorage
+
+---
+
 ## Sources
 
 - [UnoCSS Theme Config](https://unocss.dev/config/theme)

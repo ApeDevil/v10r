@@ -77,9 +77,14 @@ Breaking a stack component breaks its showcase page. The failure is immediate an
 |------|----------|
 | [pages.md](./pages.md) | Route structure, showcase pages, what each tests |
 | [database.md](./database.md) | PostgreSQL schema, Neo4j model, Drizzle setup |
+| [styling.md](./styling.md) | UnoCSS, fluid typography, container queries |
+| [auth.md](./auth.md) | Session auth, password hashing, OAuth, route guards |
+| [state.md](./state.md) | Svelte 5 runes, shared state, context API |
+| [api.md](./api.md) | REST endpoints, validation, CORS, rate limiting |
+| [i18n.md](./i18n.md) | sveltekit-i18n, locale routing, date/number formatting |
 
 ## Future Additions
 
 - `components.md` - Shared component library design
-- `api.md` - REST endpoint specifications
-- `state.md` - State management patterns
+- `files.md` - File uploads, R2 storage, image processing
+- `forms.md` - Superforms patterns, validation flows

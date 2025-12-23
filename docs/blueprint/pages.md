@@ -292,8 +292,8 @@ Internationalization with lazy-loaded translations.
 |-------|-------|
 | Translation loading | sveltekit-i18n |
 | URL-based locale | `/en/`, `/de/` |
-| Language switching | Redirect + cookie |
-| Lazy loading | Per-language bundles |
+| Language switching | Route-based |
+| Date/Number formatting | Native `Intl` API |
 
 **Routes:**
 ```
@@ -390,13 +390,15 @@ Interactive API documentation.
 
 All routes under `/app` require authentication.
 
-**Protection via layout:**
+**Protection per-route** (not layout - see [auth.md](./auth.md#route-protection)):
 ```ts
-// /app/+layout.server.ts
-export const load = async ({ locals }) => {
-  if (!locals.user) redirect(303, '/auth/login');
-  return { user: locals.user };
-};
+// /app/dashboard/+page.server.ts
+import { requireAuth } from '$lib/server/auth/guard';
+
+export async function load(event) {
+  const user = requireAuth(event);
+  return { user };
+}
 ```
 
 ### /app/dashboard
@@ -405,9 +407,9 @@ User's authenticated home.
 
 | Tests | Stack |
 |-------|-------|
-| Session | Lucia |
+| Session | Database sessions |
 | User data | `locals.user` |
-| Protected content | Layout guards |
+| Protected content | Per-route guards |
 
 ### /app/settings
 
@@ -438,16 +440,16 @@ GDPR compliance routes.
 | Tests | Stack |
 |-------|-------|
 | Credentials | Email + password |
-| Session creation | Lucia |
+| Session creation | Database sessions |
 | Redirect | Return to previous page |
-| Rate limiting | Superforms limiter |
+| Rate limiting | sveltekit-rate-limiter |
 
 ### /auth/register
 
 | Tests | Stack |
 |-------|-------|
 | User creation | Drizzle insert |
-| Password hashing | Lucia |
+| Password hashing | Argon2id |
 | Validation | Valibot |
 | Email verification | Optional (Resend) |
 
@@ -564,8 +566,8 @@ src/routes/
 | Area | Routes | Primary Tests |
 |------|--------|---------------|
 | Showcase | 10+ pages | All stack features |
-| Protected | 4 pages | Auth, GDPR |
-| Auth | 3 pages | Lucia, forms |
+| Protected | 4 pages | Sessions, GDPR |
+| Auth | 3 pages | Sessions, forms |
 | Docs | Dynamic | Prerendering, markdown |
 
 The showcase pages form a comprehensive test suite. If all pages render correctly, the entire stack works.

@@ -7,7 +7,8 @@ PostgreSQL schema for Velociraptor template using Drizzle ORM.
 | Table | Purpose | Used By |
 |-------|---------|---------|
 | `users` | User accounts | Auth, all features |
-| `sessions` | Auth sessions | Lucia |
+| `sessions` | Auth sessions | Session management |
+| `oauth_accounts` | OAuth provider links | OAuth login |
 | `user_settings` | Preferences | Theme, i18n |
 | `items` | Generic entities | CRUD showcase |
 | `tags` | Categorization | Data showcase |
@@ -84,7 +85,7 @@ PostgreSQL schema for Velociraptor template using Drizzle ORM.
 
 ```ts
 // src/lib/server/db/schema/auth.ts
-import { pgTable, text, timestamp, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, primaryKey } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: text('id').primaryKey(), // 'usr_' + nanoid
@@ -102,8 +103,18 @@ export const sessions = pgTable('sessions', {
   userId: text('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull()
+  expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull()
 });
+
+export const oauthAccounts = pgTable('oauth_accounts', {
+  providerId: text('provider_id').notNull(), // 'github', 'google'
+  providerUserId: text('provider_user_id').notNull(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.providerId, table.providerUserId] }),
+}));
 
 export const passwordResetTokens = pgTable('password_reset_tokens', {
   id: text('id').primaryKey(),
@@ -343,11 +354,12 @@ export const filesRelations = relations(files, ({ one }) => ({
 ```ts
 // src/lib/server/db/types.ts
 import type { InferSelectModel, InferInsertModel } from 'drizzle-orm';
-import { users, sessions, userSettings, items, tags, files } from './schema';
+import { users, sessions, oauthAccounts, userSettings, items, tags, files } from './schema';
 
 // Select types (reading from DB)
 export type User = InferSelectModel<typeof users>;
 export type Session = InferSelectModel<typeof sessions>;
+export type OAuthAccount = InferSelectModel<typeof oauthAccounts>;
 export type UserSettings = InferSelectModel<typeof userSettings>;
 export type Item = InferSelectModel<typeof items>;
 export type Tag = InferSelectModel<typeof tags>;
@@ -616,7 +628,7 @@ scripts/
 
 | Database | Tables | Purpose |
 |----------|--------|---------|
-| **Postgres** | 9 | Users, auth, content, files |
+| **Postgres** | 10 | Users, auth, OAuth, content, files |
 | **Neo4j** | 3 node types | Relationships, navigation, RAG |
 
 | Table | Records Expected |
@@ -627,3 +639,11 @@ scripts/
 | files | 100-10000 |
 
 Schema is intentionally minimal but complete enough to demonstrate all CRUD patterns, relationships, and file handling.
+
+---
+
+## Related
+
+- [auth.md](./auth.md) - Session management, OAuth implementation using these tables
+- [api.md](./api.md) - REST endpoints that query this schema
+- [pages.md](./pages.md) - Routes that demonstrate CRUD operations
