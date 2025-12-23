@@ -118,6 +118,19 @@ R2 wins because:
 
 ---
 
+## Image Optimization
+
+| Layer | Choice | Why |
+|-------|--------|-----|
+| Static images | **@sveltejs/enhanced-img** | Official, build-time WebP/AVIF, responsive srcset |
+| User uploads | **Sharp** | Process on upload, store multiple sizes in R2 |
+
+Strategy:
+- **Static**: Optimized at build time (zero runtime cost)
+- **Uploads**: Process once → store thumbnail/medium/full in R2 → serve via Cloudflare CDN
+
+---
+
 ## UI & Styling
 
 | Layer | Choice | Why |
