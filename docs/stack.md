@@ -267,6 +267,30 @@ The best form library for SvelteKit:
 
 ---
 
+## Error Tracking
+
+| Layer | Choice | Why |
+|-------|--------|-----|
+| Error Monitoring | **Sentry** | Official SvelteKit SDK, 5K errors/mo free, source maps |
+
+---
+
+## Email
+
+| Layer | Choice | Why |
+|-------|--------|-----|
+| Transactional | **Resend** | Simple API, 100 emails/day free, great DX |
+
+---
+
+## CI/CD
+
+| Layer | Choice | Why |
+|-------|--------|-----|
+| Platform | **GitLab CI** | Project on GitLab, 400 min/mo free, built-in container registry |
+
+---
+
 ## Development Tools
 
 | Tool | Purpose |
