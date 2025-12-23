@@ -83,12 +83,37 @@ R2 wins: zero egress, S3-compatible, built-in CDN, no credit card required.
 
 Start with Vercel Edge. Add Redis for query caching or real-time features.
 
+## Code Quality
+
+| Layer | Choice | Why |
+|-------|--------|-----|
+| Linting + Formatting | **Biome** | 10-25x faster than ESLint + Prettier, single binary |
+| Alternative | **ESLint + Prettier** | Full Svelte syntax support, mature ecosystem |
+
+**Why Biome over ESLint + Prettier:**
+
+| Aspect | Biome | ESLint + Prettier |
+|--------|-------|-------------------|
+| Speed | ~200ms (10k lines) | 3-5 seconds |
+| Config files | 1 | 3-4 |
+| Dependencies | 1 binary | 127+ packages |
+| Svelte support | Experimental (v2.3+) | Full |
+
+**Biome Svelte Status (v2.3.0, Oct 2025):**
+- Formats/lints JS/TS in `<script>` and CSS in `<style>` tags
+- Requires opt-in: `html.experimentalFullSupportEnabled`
+- Limitation: Svelte control flow (`{#if}`, `{#each}`) not fully parsed
+
+**Recommendation:**
+- New projects: Try Biome with experimental flag
+- Production apps needing full Svelte syntax: ESLint + Prettier
+- Hybrid option: Biome for JS/TS, ESLint for .svelte files
+
 ## Development Tools
 
 | Tool | Purpose |
 |------|---------|
 | **VS Code** | Primary editor |
-| **Biome** | Linting + formatting (faster than ESLint + Prettier) |
 | **Vitest** | Unit testing |
 | **Playwright** | E2E testing |
 | **GitLab CI** | CI/CD (400 min/mo free, built-in container registry) |

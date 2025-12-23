@@ -13,6 +13,7 @@ Technology decisions for the Velociraptor template.
 | Auth | Lucia |
 | Styling | UnoCSS + Bits UI |
 | Validation | Valibot + Superforms |
+| Code Quality | Biome |
 | Hosting | Vercel |
 
 ## Documentation
@@ -21,7 +22,7 @@ Technology decisions for the Velociraptor template.
 
 | Doc | Contents |
 |-----|----------|
-| [Core](./core.md) | Runtime, framework, database, storage, caching, deployment |
+| [Core](./core.md) | Runtime, framework, database, storage, code quality, deployment |
 | [UI](./ui.md) | Styling, components, state, validation, forms |
 | [Auth](./auth.md) | Session-based authentication |
 | [API](./api.md) | API patterns, services, i18n, background jobs |
