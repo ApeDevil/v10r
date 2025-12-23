@@ -1,0 +1,20 @@
+
+
+
+```
+velociraptor/
+├── yyyyyyy/
+│   ├── y1
+│   ├── y2
+│   └── y3
+├── xxxxx/
+│   ├── x1
+│   ├── x2
+│   └── x3
+├── db/
+│   ├── db-type-a
+│   └── db-type-b
+└── zzzzz
+    ├── z1
+    └── z2
+```
