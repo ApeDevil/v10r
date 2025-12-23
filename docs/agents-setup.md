@@ -58,6 +58,10 @@ philosophy:
 
 ---
 
+# Security Agent
+name: secy
+
+---
 # SvelteKit Specialist Agent
 name: svely
 soul: 

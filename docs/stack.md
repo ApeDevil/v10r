@@ -267,6 +267,14 @@ The best form library for SvelteKit:
 
 ---
 
+## Analytics
+
+| Layer | Choice | Why |
+|-------|--------|-----|
+| Web Analytics | **Vercel Analytics** | Free with Vercel, cookieless (no GDPR banner), zero config |
+
+---
+
 ## Error Tracking
 
 | Layer | Choice | Why |
@@ -280,6 +288,29 @@ The best form library for SvelteKit:
 | Layer | Choice | Why |
 |-------|--------|-----|
 | Transactional | **Resend** | Simple API, 100 emails/day free, great DX |
+
+---
+
+## Caching
+
+| Layer | Choice | Why |
+|-------|--------|-----|
+| Default | **Vercel Edge Cache** | Free, built-in, zero config |
+| Dynamic data | **Upstash Redis** | 500K commands/mo free, query caching |
+
+Start with Vercel Edge only. Add Redis when you need database query caching or real-time features.
+
+---
+
+## Background Jobs
+
+| Layer | Choice | Why |
+|-------|--------|-----|
+| Default (90%) | **SvelteKit server actions** | Fast, simple, no extra deps |
+| Simple async | **Upstash QStash** | Fire-and-forget, 500 msg/day free |
+| Complex workflows | **Inngest** | Multi-step, retries, cron, 25K runs/mo free |
+
+Use background jobs only when: task takes 5+ seconds, need cron/scheduling, or need auto-retries.
 
 ---
 
