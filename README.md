@@ -40,16 +40,9 @@ A Bun + SvelteKit test project running fully containerized in Podman.
 
 ## Stack
 
-| Component | Choice |
-|-----------|--------|
-| Runtime | Bun (latest) |
-| Framework | SvelteKit |
-| Adapter | adapter-bun |
-| Base Image | oven/bun:alpine |
-| Container | Podman + compose |
-| Editor | VS Code |
-| DB | TBD (SQLite or Postgres container) |
-| UI | TBD (Tailwind / Skeleton / DaisyUI) |
+**Bun + SvelteKit + Podman** with PostgreSQL, Neo4j, and Cloudflare R2.
+
+See [docs/stack.md](./docs/stack.md) for complete technology decisions.
 
 ## Project Structure
 
@@ -58,6 +51,7 @@ velociraptor/
 ├── src/
 │   ├── routes/          # SvelteKit pages & API routes
 │   └── lib/             # Shared components & utilities
+├── docs/                # Documentation (stack, PRD, etc.)
 ├── static/              # Static assets
 ├── Containerfile        # Container build instructions
 ├── compose.yaml         # Dev environment (podman-compose)
@@ -99,19 +93,11 @@ podman run -p 5173:5173 -v ./src:/app/src velociraptor
 ## Goals
 
 - [x] Plan project structure
+- [x] Define technology stack
 - [ ] Scaffold SvelteKit with Bun
 - [ ] Create Containerfile
 - [ ] Create compose.yaml
 - [ ] Test hot reload in container
-- [ ] Add database (SQLite/Postgres)
-- [ ] Choose UI framework
-- [ ] Deploy to free hosting (Fly.io / Railway / Render)
-
-## Free Hosting Options
-
-| Platform | Notes |
-|----------|-------|
-| Fly.io | Free tier, great for containers |
-| Railway | $5 free credit/month |
-| Render | Free tier for web services |
-| Koyeb | Free tier available |
+- [ ] Implement database connections
+- [ ] Implement authentication
+- [ ] Deploy to Vercel

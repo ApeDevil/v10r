@@ -125,13 +125,19 @@ R2 wins because:
 | CSS Engine | **UnoCSS** | Atomic, on-demand, smaller than Tailwind |
 | Components | **Bits UI** | Headless, accessible, Svelte-native |
 | Icons | **Iconify** | Unified API, tree-shakeable |
-| Animations | **Motion One** | Lightweight, performant |
+| Animations | **Svelte built-in** | Native transitions, springs, tweened (0 KB) |
+| Complex Animations | **Motion One** | Timelines, scroll-triggered, staggering (~3.8 KB) |
 
 ### Styling Philosophy
 - Utility-first with UnoCSS presets
 - Unstyled base components (Bits UI)
 - Custom design tokens for theming
 - No pre-built component library bloat
+
+### Animation Strategy
+- **Primary**: Svelte built-in (`fade`, `fly`, `slide`, `scale`, `spring`, `tweened`)
+- **When needed**: Motion One for timelines, scroll-triggered, gesture-based animations
+- WAAPI-based, hardware accelerated, runs off main thread
 
 ---
 
@@ -166,8 +172,27 @@ Lucia wins for Velociraptor because:
 
 | Layer | Choice | Why |
 |-------|--------|-----|
-| i18n Library | **Paraglide** | Compile-time, type-safe, tiny runtime |
+| i18n Library | **sveltekit-i18n** | Per-language lazy loading, scales to 10+ languages |
 | Strategy | URL-based (`/en/`, `/de/`) | SEO-friendly, cacheable |
+
+### Why sveltekit-i18n over Paraglide?
+
+| Aspect | sveltekit-i18n | Paraglide |
+|--------|----------------|-----------|
+| Language Loading | Per-language lazy | All languages bundled |
+| 10+ Languages | ~1 KB/page | ~12+ KB/page |
+| Type Safety | Partial | Full |
+| Route Lazy Loading | Yes | Yes |
+| Dependencies | None | None |
+| Svelte 5 | Yes | Yes |
+
+sveltekit-i18n wins for Densho/multi-language projects because:
+- **True lazy loading** - only requested language is fetched
+- **Scales infinitely** - 10, 20, 50 languages with same bundle size
+- **Per-route loading** - translations loaded only for visited pages
+- **No external dependencies** - minimal footprint
+
+Note: For projects with 2-5 languages, Paraglide offers better type safety.
 
 ---
 
@@ -231,7 +256,7 @@ Bun → SvelteKit → adapter-bun    →    adapter-vercel → Vercel (Bun)
          │                                   │
          ├── UnoCSS + Bits UI               ├── UnoCSS + Bits UI
          ├── Lucia (auth)                   ├── Lucia (auth)
-         ├── Paraglide (i18n)               ├── Paraglide (i18n)
+         ├── sveltekit-i18n                 ├── sveltekit-i18n
          ├── Drizzle → PostgreSQL ───────── ├── Drizzle → Neon
          ├── Neo4j Driver → Neo4j ───────── ├── Neo4j Driver → Aura
          └── S3 SDK → MinIO ─────────────── └── S3 SDK → Cloudflare R2
