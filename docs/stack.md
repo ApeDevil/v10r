@@ -196,12 +196,73 @@ Note: For projects with 2-5 languages, Paraglide offers better type safety.
 
 ---
 
+## State Management
+
+| Layer | Choice | Why |
+|-------|--------|-----|
+| Local State | **Svelte Runes** | `$state`, `$derived`, `$effect` - built-in, 0 KB |
+| Shared State | **Svelte Stores** | `writable`, `readable`, `derived` - built-in, 0 KB |
+
+### Why No External State Library?
+
+Svelte's reactivity is built into the compiler. Unlike React (needs Redux/Zustand) or Vue (needs Pinia), Svelte handles state natively:
+
+```svelte
+<!-- Svelte 5 Runes - component state -->
+<script>
+  let count = $state(0);
+  let doubled = $derived(count * 2);
+</script>
+
+<!-- Svelte Stores - shared state -->
+<script>
+  import { writable } from 'svelte/store';
+  export const user = writable(null);
+</script>
+```
+
+**No Zustand, no Redux, no Pinia** - Svelte doesn't need them.
+
+---
+
+## Validation & Forms
+
+| Layer | Choice | Why |
+|-------|--------|-----|
+| Schema Validation | **Valibot** | Type-safe, ~1 KB (10x smaller than Zod) |
+| Form Handling | **Superforms** | SvelteKit-native, Valibot integration |
+
+### Why Valibot over Zod?
+
+| Aspect | Valibot | Zod |
+|--------|---------|-----|
+| Bundle Size | **~1 KB** | ~12 KB |
+| TypeScript Inference | ✅ Full | ✅ Full |
+| API Style | Similar to Zod | Industry standard |
+| Tree-shaking | Fully modular | Monolithic |
+| Ecosystem | Growing | Mature |
+
+Valibot wins for Velociraptor because:
+- **10x smaller** - critical for edge/serverless
+- **Same DX** - if you know Zod, you know Valibot
+- **Superforms support** - first-class SvelteKit integration
+- **Modular** - only import what you use
+
+### Why Superforms?
+
+The best form library for SvelteKit:
+- **Server-side validation** with Valibot schemas
+- **Progressive enhancement** - works without JS
+- **Auto error handling** - field-level errors out of the box
+- **Nested data** - complex forms made simple
+
+---
+
 ## API & Data Fetching
 
 | Layer | Choice | Why |
 |-------|--------|-----|
 | API Style | **REST + Server Actions** | Simple, SvelteKit-native |
-| Validation | **Zod** | Runtime validation, TS inference |
 | API Docs | **Scalar** | OpenAPI spec, modern UI |
 
 ---
