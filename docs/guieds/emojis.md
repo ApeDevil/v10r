@@ -23,3 +23,5 @@ Notifications (pajer)
 🛂 Valadation
 🧼 Sanitization
 🎨 Theme
+
+🚦 Middleware
