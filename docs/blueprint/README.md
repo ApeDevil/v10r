@@ -81,6 +81,8 @@ Breaking a stack component breaks its showcase page. The failure is immediate an
 | [db/graph.md](./db/graph.md) | Neo4j connection, Cypher queries, graph model |
 | [tokens.md](./tokens.md) | Design tokens: breakpoints, colors, spacing, z-index |
 | [styling.md](./styling.md) | UnoCSS, fluid typography, container queries |
+| [components.md](./components.md) | Bits UI primitives, CVA variants, composites |
+| [forms.md](./forms.md) | Superforms, Valibot validation, form patterns |
 | [app-shell.md](./app-shell.md) | Sidebar, navigation, responsive layout |
 | [auth.md](./auth.md) | Better Auth, OAuth, 2FA, route guards |
 | [state.md](./state.md) | Svelte 5 runes, shared state, context API |
@@ -91,7 +93,5 @@ Breaking a stack component breaks its showcase page. The failure is immediate an
 
 ## Future Additions
 
-- `components.md` - Shared component library design
 - `files.md` - File uploads, R2 storage, image processing
-- `forms.md` - Superforms patterns, validation flows
 - `testing.md` - Vitest unit tests, Playwright E2E

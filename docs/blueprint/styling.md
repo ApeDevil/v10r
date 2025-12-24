@@ -382,6 +382,30 @@ src/
 
 ---
 
+## Animations
+
+Svelte's built-in transitions handle most animation needs:
+
+```svelte
+<script>
+  import { fly, fade, slide } from 'svelte/transition';
+</script>
+
+<div transition:fly={{ x: 100, duration: 200 }}>
+  Animated content
+</div>
+```
+
+For duration values, use CSS variables defined in [tokens.md](./tokens.md):
+
+```css
+transition: all var(--duration-fast) var(--ease-default);
+```
+
+UnoCSS duration utilities (`duration-fast`, `duration-normal`, `duration-slow`) are available via custom rules in the UnoCSS config.
+
+---
+
 ## Summary
 
 | What | How |
@@ -392,6 +416,7 @@ src/
 | Component layout | Container queries (built into preset-uno) |
 | Colors | CSS variables + theme |
 | Dark mode | `.dark` class on `<html>` |
+| Animations | Svelte transitions + CSS variables |
 
 This approach gives smooth scaling, component portability, and minimal CSS.
 

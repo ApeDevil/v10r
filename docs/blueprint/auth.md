@@ -603,7 +603,8 @@ This approach requires implementing sessions, cookies, and OAuth flows manually.
 
 ## Related
 
-- [database.md](./database.md) - Schema including Better Auth tables
+- [db/README.md](./db/README.md) - Data layer overview
+- [db/postgres.md](./db/postgres.md) - Schema including Better Auth tables
 - [api.md](./api.md) - Protected API endpoints
 - [pages.md](./pages.md) - Auth routes (`/auth/*`) and protected routes (`/app/*`)
 

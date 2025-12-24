@@ -224,6 +224,7 @@ import {
   spacing,
   colors,
   zIndex,
+  duration,
 } from './src/lib/styles/tokens';
 
 export default defineConfig({
@@ -236,7 +237,15 @@ export default defineConfig({
     spacing,
     colors,
     zIndex,
+    // Duration requires custom rule or CSS variables
   },
+
+  // Custom rules for duration utilities
+  rules: [
+    ['duration-fast', { 'transition-duration': 'var(--duration-fast, 150ms)' }],
+    ['duration-normal', { 'transition-duration': 'var(--duration-normal, 250ms)' }],
+    ['duration-slow', { 'transition-duration': 'var(--duration-slow, 400ms)' }],
+  ],
 
   // Safelist commonly used dynamic classes
   safelist: [

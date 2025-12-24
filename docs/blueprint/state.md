@@ -909,10 +909,10 @@ setContext('user', user);
 ```
 src/lib/
 ├── stores/
-│   ├── counter.svelte.ts     # Simple shared state
-│   ├── todos.svelte.ts       # Factory pattern store
-│   ├── theme.svelte.ts       # LocalStorage-synced
-│   └── context.ts            # Context helpers
+│   ├── ui.svelte.ts          # Sidebar, theme, locale state
+│   ├── toast.svelte.ts       # Toast notifications
+│   ├── todos.svelte.ts       # Factory pattern example
+│   └── context.ts            # Type-safe context helpers
 └── components/
     └── ...
 ```

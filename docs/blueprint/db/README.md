@@ -81,9 +81,7 @@ Need to store data?
 
 ## File Storage
 
-File storage (R2) is documented separately in [files.md](../files.md) (future).
-
-For now, see [stack/core.md](../../stack/core.md) for R2 configuration.
+File storage (R2) will be documented in `files.md` (future addition).
 
 ## Local Development
 
