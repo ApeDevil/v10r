@@ -1,7 +1,5 @@
 # Velociraptor
-Is a full stack with focuse of performance and lightweight with good free tier service options!
-
-A Bun + SvelteKit test project running fully containerized in Podman.
+Is a full stack with focus of performance and lightweight with good free tier service options!
 
 > Fast and dangerous (in a good way).
 
@@ -40,7 +38,7 @@ A Bun + SvelteKit test project running fully containerized in Podman.
 
 ## Stack
 
-**Bun + SvelteKit + Podman** with PostgreSQL, Neo4j, and Cloudflare R2.
+**Podman + Bun + SvelteKit** with relational database, graph database, and object storage.
 
 See [docs/stack.md](./docs/stack.md) for complete technology decisions.
 

@@ -76,11 +76,15 @@ Breaking a stack component breaks its showcase page. The failure is immediate an
 | File | Contents |
 |------|----------|
 | [pages.md](./pages.md) | Route structure, showcase pages, what each tests |
-| [database.md](./database.md) | PostgreSQL schema, Neo4j model, Drizzle setup |
+| [db/](./db/README.md) | Data layer overview and decision tree |
+| [db/postgres.md](./db/postgres.md) | Drizzle schema, Better Auth tables, migrations |
+| [db/graph.md](./db/graph.md) | Neo4j connection, Cypher queries, graph model |
 | [styling.md](./styling.md) | UnoCSS, fluid typography, container queries |
 | [auth.md](./auth.md) | Better Auth, OAuth, 2FA, route guards |
 | [state.md](./state.md) | Svelte 5 runes, shared state, context API |
-| [api.md](./api.md) | REST endpoints, validation, CORS, rate limiting |
+| [api.md](./api.md) | REST endpoints, GraphQL (optional), validation, CORS |
+| [middleware.md](./middleware.md) | SvelteKit hooks, request handling, rate limiting |
+| [error-handling.md](./error-handling.md) | Error pages, API errors, form errors |
 | [i18n.md](./i18n.md) | sveltekit-i18n, locale routing, date/number formatting |
 
 ## Future Additions
@@ -88,3 +92,4 @@ Breaking a stack component breaks its showcase page. The failure is immediate an
 - `components.md` - Shared component library design
 - `files.md` - File uploads, R2 storage, image processing
 - `forms.md` - Superforms patterns, validation flows
+- `testing.md` - Vitest unit tests, Playwright E2E

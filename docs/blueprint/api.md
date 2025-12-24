@@ -695,17 +695,208 @@ export const GET: RequestHandler = async ({ url }) => {
 
 ---
 
+## GraphQL (Optional)
+
+GraphQL is **not** the primary API pattern for Velociraptor. REST endpoints with `+server.ts` are simpler and sufficient for most use cases. However, GraphQL is available as a showcase for learning and exploration.
+
+### When to Consider GraphQL
+
+| Use Case | REST | GraphQL |
+|----------|------|---------|
+| Simple CRUD | **Better** | Overkill |
+| Mobile apps (bandwidth) | Good | **Better** |
+| Complex nested queries | Multiple requests | **Single query** |
+| Rapid frontend iteration | Schema changes | **Flexible queries** |
+| Public API | **Simpler** | More powerful |
+
+### Setup with GraphQL Yoga
+
+GraphQL Yoga is lightweight (~15KB) and works well with SvelteKit.
+
+```bash
+bun add graphql graphql-yoga
+```
+
+### Schema Definition
+
+```typescript
+// src/lib/server/graphql/schema.ts
+import { createSchema } from 'graphql-yoga';
+import { db } from '$lib/server/db';
+import { items, tags } from '$lib/server/db/schema';
+import { eq } from 'drizzle-orm';
+
+export const schema = createSchema({
+  typeDefs: `
+    type Item {
+      id: ID!
+      title: String!
+      description: String
+      status: ItemStatus!
+      tags: [Tag!]!
+      createdAt: String!
+    }
+
+    type Tag {
+      id: ID!
+      name: String!
+      color: String!
+    }
+
+    enum ItemStatus {
+      DRAFT
+      PUBLISHED
+      ARCHIVED
+    }
+
+    type Query {
+      items(status: ItemStatus): [Item!]!
+      item(id: ID!): Item
+    }
+
+    type Mutation {
+      createItem(title: String!, description: String): Item!
+      updateItem(id: ID!, title: String, description: String, status: ItemStatus): Item
+      deleteItem(id: ID!): Boolean!
+    }
+  `,
+  resolvers: {
+    Query: {
+      items: async (_, { status }) => {
+        const query = status
+          ? db.query.items.findMany({ where: eq(items.status, status.toLowerCase()) })
+          : db.query.items.findMany();
+        return query;
+      },
+      item: async (_, { id }) => {
+        return db.query.items.findFirst({ where: eq(items.id, id) });
+      },
+    },
+    Mutation: {
+      createItem: async (_, { title, description }, context) => {
+        if (!context.user) throw new Error('Unauthorized');
+        const [item] = await db.insert(items).values({
+          id: createId.item(),
+          userId: context.user.id,
+          title,
+          description,
+        }).returning();
+        return item;
+      },
+      // ... other mutations
+    },
+    Item: {
+      tags: async (parent) => {
+        return db.query.itemTags.findMany({
+          where: eq(itemTags.itemId, parent.id),
+          with: { tag: true },
+        }).then(results => results.map(r => r.tag));
+      },
+    },
+  },
+});
+```
+
+### SvelteKit Integration
+
+```typescript
+// src/routes/api/graphql/+server.ts
+import { createYoga } from 'graphql-yoga';
+import { schema } from '$lib/server/graphql/schema';
+import type { RequestHandler } from './$types';
+
+const yoga = createYoga({
+  schema,
+  graphqlEndpoint: '/api/graphql',
+  fetchAPI: globalThis,
+});
+
+export const GET: RequestHandler = async ({ request, locals }) => {
+  return yoga.handleRequest(request, { user: locals.user });
+};
+
+export const POST: RequestHandler = async ({ request, locals }) => {
+  return yoga.handleRequest(request, { user: locals.user });
+};
+```
+
+### GraphiQL Playground
+
+GraphQL Yoga includes GraphiQL by default. Visit `/api/graphql` in your browser.
+
+To disable in production:
+
+```typescript
+const yoga = createYoga({
+  schema,
+  graphqlEndpoint: '/api/graphql',
+  graphiql: process.env.NODE_ENV !== 'production',
+});
+```
+
+### Client Usage
+
+```typescript
+// src/lib/graphql-client.ts
+export async function graphql<T>(
+  query: string,
+  variables?: Record<string, unknown>
+): Promise<T> {
+  const response = await fetch('/api/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, variables }),
+  });
+
+  const { data, errors } = await response.json();
+  if (errors) throw new Error(errors[0].message);
+  return data;
+}
+```
+
+```svelte
+<script lang="ts">
+  import { graphql } from '$lib/graphql-client';
+
+  const loadItems = async () => {
+    const data = await graphql<{ items: Item[] }>(`
+      query {
+        items(status: PUBLISHED) {
+          id
+          title
+          tags { name color }
+        }
+      }
+    `);
+    return data.items;
+  };
+</script>
+```
+
+### When NOT to Use GraphQL
+
+- Simple CRUD operations → use REST
+- Public APIs → REST is more cacheable
+- Server-to-server communication → REST is simpler
+- You don't have complex nested data → REST is sufficient
+
+**Velociraptor's recommendation:** Start with REST. Add GraphQL only if you have specific needs (mobile optimization, complex nested queries, or a public API for developers).
+
+---
+
 ## File Structure
 
 ```
 src/
 ├── lib/
 │   └── server/
-│       └── api/
-│           ├── schemas.ts      # Valibot schemas
-│           ├── validate.ts     # Validation helpers
-│           ├── response.ts     # Response helpers
-│           └── ratelimit.ts    # Rate limiting
+│       ├── api/
+│       │   ├── schemas.ts      # Valibot schemas
+│       │   ├── validate.ts     # Validation helpers
+│       │   ├── response.ts     # Response helpers
+│       │   └── ratelimit.ts    # Rate limiting
+│       └── graphql/            # Optional GraphQL
+│           └── schema.ts       # GraphQL schema + resolvers
 ├── routes/
 │   └── api/
 │       ├── health/
@@ -714,6 +905,8 @@ src/
 │       │   ├── +server.ts      # GET (list), POST (create)
 │       │   └── [id]/
 │       │       └── +server.ts  # GET, PUT, DELETE
+│       ├── graphql/            # Optional GraphQL endpoint
+│       │   └── +server.ts
 │       └── upload/
 │           └── +server.ts
 └── hooks.server.ts             # CORS, error handling
@@ -738,7 +931,8 @@ src/
 ## Related
 
 - [auth.md](./auth.md) - Authentication patterns, protected endpoint implementation
-- [database.md](./database.md) - Drizzle schema used in API queries
+- [db/postgres.md](./db/postgres.md) - Drizzle schema used in API queries
+- [db/graph.md](./db/graph.md) - Neo4j for relationship queries
 - [pages.md](./pages.md) - `/showcase/api` route with interactive API explorer
 
 ---
