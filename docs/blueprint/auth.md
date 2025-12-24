@@ -203,6 +203,14 @@ export const userProfile = pgTable('user_profile', {
 
 ## Authentication Flows
 
+> **Why not Superforms?** Auth forms use Better Auth's client methods (`signIn.email()`, `signUp.email()`) directly instead of Superforms + Valibot. This is intentional:
+>
+> 1. **Client-side auth flow** — Better Auth handles validation, rate limiting, and error messages internally
+> 2. **No server action needed** — Auth endpoints are managed by `svelteKitHandler`, not form actions
+> 3. **Built-in features** — OAuth redirects, email verification, and 2FA work out of the box
+>
+> For all other forms (profile, settings, CRUD), use Superforms + Valibot as documented in [forms.md](./forms.md).
+
 ### Sign Up
 
 ```svelte

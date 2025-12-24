@@ -24,6 +24,10 @@ Type-safe forms with real-time validation using Superforms and Valibot.
 | Performance | Faster validation | Slower |
 | API | Pipe-based | Chained |
 
+### Exception: Auth Forms
+
+Authentication forms (login, register, password reset) use Better Auth's client methods directly, not Superforms. See [auth.md](./auth.md#authentication-flows) for details.
+
 ---
 
 ## Installation
