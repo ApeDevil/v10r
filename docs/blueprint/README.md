@@ -75,14 +75,14 @@ Breaking a stack component breaks its showcase page. The failure is immediate an
 
 | File | Contents |
 |------|----------|
-| [design.md](./design.md) | Design philosophy, visual identity, theming strategy |
+| [design/](./design/README.md) | Design philosophy, visual identity, theming strategy |
+| [design/tokens.md](./design/tokens.md) | Design tokens: breakpoints, colors, spacing, z-index |
+| [design/styling.md](./design/styling.md) | UnoCSS, fluid typography, container queries |
+| [design/components.md](./design/components.md) | Bits UI primitives, CVA variants, composites |
 | [pages.md](./pages.md) | Route structure, showcase pages, what each tests |
 | [db/](./db/README.md) | Data layer overview and decision tree |
 | [db/postgres.md](./db/postgres.md) | Drizzle schema, Better Auth tables, migrations |
 | [db/graph.md](./db/graph.md) | Neo4j connection, Cypher queries, graph model |
-| [tokens.md](./tokens.md) | Design tokens: breakpoints, colors, spacing, z-index |
-| [styling.md](./styling.md) | UnoCSS, fluid typography, container queries |
-| [components.md](./components.md) | Bits UI primitives, CVA variants, composites |
 | [forms.md](./forms.md) | Superforms, Valibot validation, form patterns |
 | [app-shell.md](./app-shell.md) | Sidebar, navigation, responsive layout |
 | [auth.md](./auth.md) | Better Auth, OAuth, 2FA, route guards |

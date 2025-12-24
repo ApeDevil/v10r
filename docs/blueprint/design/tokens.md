@@ -449,10 +449,10 @@ All color combinations meet WCAG AA (4.5:1 for normal text):
 
 ## Related
 
-- [design.md](./design.md) - Design philosophy and theming strategy
+- [README.md](./README.md) - Design philosophy and theming strategy
 - [styling.md](./styling.md) - How tokens are used in styling patterns
-- [app-shell.md](./app-shell.md) - Sidebar dimensions and z-index usage
-- [state.md](./state.md) - Theme state management
+- [app-shell.md](../app-shell.md) - Sidebar dimensions and z-index usage
+- [state.md](../state.md) - Theme state management
 
 ---
 

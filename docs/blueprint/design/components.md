@@ -947,13 +947,13 @@ UnoCSS utility: `sr-only` hides visually but keeps accessible.
 
 ## Related
 
-- [design.md](./design.md) - Design philosophy and component rules
+- [README.md](./README.md) - Design philosophy and component rules
 - [tokens.md](./tokens.md) - Design tokens (colors, spacing, z-index)
 - [styling.md](./styling.md) - UnoCSS configuration, fluid scales
-- [forms.md](./forms.md) - Form patterns using these components
-- [app-shell.md](./app-shell.md) - Shell components (Sidebar, NavItem, etc.)
-- [error-handling.md](./error-handling.md) - Error display with Toast
-- [pages.md](./pages.md) - `/showcase/ui` component gallery
+- [forms.md](../forms.md) - Form patterns using these components
+- [app-shell.md](../app-shell.md) - Shell components (Sidebar, NavItem, etc.)
+- [error-handling.md](../error-handling.md) - Error display with Toast
+- [pages.md](../pages.md) - `/showcase/ui` component gallery
 
 ---
 

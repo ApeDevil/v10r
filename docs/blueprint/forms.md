@@ -787,8 +787,8 @@ src/
 
 ## Related
 
-- [components.md](./components.md) - Form field components (Input, Select, FormField)
-- [tokens.md](./tokens.md) - Design tokens for form styling
+- [design/components.md](./design/components.md) - Form field components (Input, Select, FormField)
+- [design/tokens.md](./design/tokens.md) - Design tokens for form styling
 - [auth.md](./auth.md) - Login/register form implementations
 - [error-handling.md](./error-handling.md) - Error display patterns
 - [pages.md](./pages.md) - `/showcase/forms` route

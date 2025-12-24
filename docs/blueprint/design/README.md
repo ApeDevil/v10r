@@ -442,7 +442,7 @@ docs/blueprint/
 - [tokens.md](./tokens.md) - Concrete token values and scales
 - [styling.md](./styling.md) - UnoCSS, fluid techniques, container queries
 - [components.md](./components.md) - Component architecture and patterns
-- [app-shell.md](./app-shell.md) - Layout structure and navigation
+- [app-shell.md](../app-shell.md) - Layout structure and navigation
 
 ---
 

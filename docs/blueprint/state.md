@@ -939,9 +939,9 @@ src/lib/
 ## Related
 
 - [pages.md](./pages.md) - `/showcase/state` route demonstrating these patterns
-- [tokens.md](./tokens.md) - Sidebar dimensions, z-index values referenced in UI state
+- [design/tokens.md](./design/tokens.md) - Sidebar dimensions, z-index values referenced in UI state
 - [app-shell.md](./app-shell.md) - Sidebar component consuming sidebar state
-- [styling.md](./styling.md) - Theme CSS variables applied by themeStore
+- [design/styling.md](./design/styling.md) - Theme CSS variables applied by themeStore
 - [i18n.md](./i18n.md) - Locale/language state management (handled by sveltekit-i18n)
 
 ---

@@ -325,7 +325,7 @@ src/lib/components/
 
 ## Z-Index Layers
 
-Z-index values are defined in [tokens.md](./tokens.md#z-index). Key layers for the app shell:
+Z-index values are defined in [design/tokens.md](./design/tokens.md#z-index). Key layers for the app shell:
 
 | Layer | Component |
 |-------|-----------|
@@ -335,12 +335,12 @@ Z-index values are defined in [tokens.md](./tokens.md#z-index). Key layers for t
 | `drawer` | Mobile sidebar drawer |
 | `dropdown` | Nav dropdown menus |
 
-See [tokens.md](./tokens.md) for the complete stacking context with all layer values.
+See [design/tokens.md](./design/tokens.md) for the complete stacking context with all layer values.
 
 ---
 
 ## Related
 
-- [tokens.md](./tokens.md) - Z-index values and sidebar dimensions defined here
+- [design/tokens.md](./design/tokens.md) - Z-index values and sidebar dimensions defined here
 - [state.md](./state.md) - Sidebar state management (open, pinned, toggle)
-- [styling.md](./styling.md) - Responsive breakpoints and fluid spacing
+- [design/styling.md](./design/styling.md) - Responsive breakpoints and fluid spacing
