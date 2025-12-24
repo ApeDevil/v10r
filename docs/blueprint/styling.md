@@ -424,6 +424,7 @@ This approach gives smooth scaling, component portability, and minimal CSS.
 
 ## Related
 
+- [design.md](./design.md) - Design philosophy and visual identity
 - [tokens.md](./tokens.md) - Single source of truth for all design values
 - [pages.md](./pages.md) - Routes using these styling patterns, especially `/showcase/theme` and `/showcase/ui`
 - [state.md](./state.md) - Theme state management with `$state` and localStorage

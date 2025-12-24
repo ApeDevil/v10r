@@ -947,6 +947,7 @@ UnoCSS utility: `sr-only` hides visually but keeps accessible.
 
 ## Related
 
+- [design.md](./design.md) - Design philosophy and component rules
 - [tokens.md](./tokens.md) - Design tokens (colors, spacing, z-index)
 - [styling.md](./styling.md) - UnoCSS configuration, fluid scales
 - [forms.md](./forms.md) - Form patterns using these components

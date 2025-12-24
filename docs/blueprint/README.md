@@ -75,6 +75,7 @@ Breaking a stack component breaks its showcase page. The failure is immediate an
 
 | File | Contents |
 |------|----------|
+| [design.md](./design.md) | Design philosophy, visual identity, theming strategy |
 | [pages.md](./pages.md) | Route structure, showcase pages, what each tests |
 | [db/](./db/README.md) | Data layer overview and decision tree |
 | [db/postgres.md](./db/postgres.md) | Drizzle schema, Better Auth tables, migrations |
