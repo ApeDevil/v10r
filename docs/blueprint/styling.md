@@ -262,39 +262,17 @@ For nested contexts:
 
 ## Color System
 
-CSS custom properties for theming.
+CSS custom properties for theming. All color values are defined in [tokens.md](./tokens.md).
 
 ### Design Tokens
 
-```css
-:root {
-  /* Semantic colors */
-  --color-bg: #ffffff;
-  --color-fg: #111827;
-  --color-muted: #6b7280;
-  --color-border: #e5e7eb;
+See [tokens.md → Color Values](./tokens.md#colors) for the complete color palette with WCAG contrast ratios.
 
-  /* Brand */
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-
-  /* Feedback */
-  --color-success: #16a34a;
-  --color-warning: #f59e0b;
-  --color-error: #dc2626;
-}
-
-/* UnoCSS default dark selector */
-.dark {
-  --color-bg: #111827;
-  --color-fg: #f3f4f6;
-  --color-muted: #9ca3af;
-  --color-border: #374151;
-
-  --color-primary: #60a5fa;
-  --color-primary-hover: #93c5fd;
-}
-```
+The tokens define:
+- **Semantic colors:** `bg`, `fg`, `muted`, `border`
+- **Brand colors:** `primary`, `primary-hover`
+- **Feedback colors:** `success`, `warning`, `error`
+- **Dark mode variants:** Automatic via `.dark` class
 
 ### UnoCSS Integration
 
@@ -421,6 +399,7 @@ This approach gives smooth scaling, component portability, and minimal CSS.
 
 ## Related
 
+- [tokens.md](./tokens.md) - Single source of truth for all design values
 - [pages.md](./pages.md) - Routes using these styling patterns, especially `/showcase/theme` and `/showcase/ui`
 - [state.md](./state.md) - Theme state management with `$state` and localStorage
 

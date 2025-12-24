@@ -79,7 +79,9 @@ Breaking a stack component breaks its showcase page. The failure is immediate an
 | [db/](./db/README.md) | Data layer overview and decision tree |
 | [db/postgres.md](./db/postgres.md) | Drizzle schema, Better Auth tables, migrations |
 | [db/graph.md](./db/graph.md) | Neo4j connection, Cypher queries, graph model |
+| [tokens.md](./tokens.md) | Design tokens: breakpoints, colors, spacing, z-index |
 | [styling.md](./styling.md) | UnoCSS, fluid typography, container queries |
+| [app-shell.md](./app-shell.md) | Sidebar, navigation, responsive layout |
 | [auth.md](./auth.md) | Better Auth, OAuth, 2FA, route guards |
 | [state.md](./state.md) | Svelte 5 runes, shared state, context API |
 | [api.md](./api.md) | REST endpoints, GraphQL (optional), validation, CORS |

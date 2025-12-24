@@ -641,6 +641,204 @@ export async function load() {
 
 ---
 
+## UI State
+
+App-wide UI state for sidebar, theme, and locale. All persisted to localStorage.
+
+### Store File
+
+```typescript
+// src/lib/stores/ui.svelte.ts
+
+import { browser } from '$app/environment';
+
+// ═══════════════════════════════════════════════════════════════
+// SIDEBAR
+// ═══════════════════════════════════════════════════════════════
+
+let sidebarOpen = $state(false);
+let sidebarPinned = $state(browser ? localStorage.getItem('sidebar-pinned') === 'true' : false);
+
+export const sidebar = {
+  get isOpen() { return sidebarOpen },
+  get isPinned() { return sidebarPinned },
+
+  open() { sidebarOpen = true },
+  close() { sidebarOpen = false },
+  toggle() { sidebarOpen = !sidebarOpen },
+
+  pin() {
+    sidebarPinned = true;
+    sidebarOpen = true;
+    if (browser) localStorage.setItem('sidebar-pinned', 'true');
+  },
+  unpin() {
+    sidebarPinned = false;
+    if (browser) localStorage.setItem('sidebar-pinned', 'false');
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// THEME
+// ═══════════════════════════════════════════════════════════════
+
+type Theme = 'light' | 'dark' | 'system';
+
+function getInitialTheme(): Theme {
+  if (!browser) return 'system';
+  return (localStorage.getItem('theme') as Theme) ?? 'system';
+}
+
+function applyTheme(theme: Theme) {
+  if (!browser) return;
+
+  const isDark = theme === 'dark' ||
+    (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+
+  document.documentElement.classList.toggle('dark', isDark);
+}
+
+let theme = $state<Theme>(getInitialTheme());
+
+// Apply on change
+$effect(() => {
+  if (browser) {
+    localStorage.setItem('theme', theme);
+    applyTheme(theme);
+  }
+});
+
+// Listen for system preference changes when in 'system' mode
+if (browser) {
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (theme === 'system') applyTheme('system');
+  });
+}
+
+export const themeStore = {
+  get current() { return theme },
+  set(value: Theme) { theme = value },
+  toggle() { theme = theme === 'dark' ? 'light' : 'dark' },
+  cycle() {
+    const modes: Theme[] = ['light', 'dark', 'system'];
+    const i = modes.indexOf(theme);
+    theme = modes[(i + 1) % modes.length];
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// LOCALE
+// ═══════════════════════════════════════════════════════════════
+// Locale/i18n state is managed by sveltekit-i18n.
+// See i18n.md for locale management, language switching, and translations.
+```
+
+### Usage in Components
+
+```svelte
+<!-- Sidebar.svelte -->
+<script>
+  import { sidebar } from '$lib/stores/ui.svelte';
+</script>
+
+<aside class:open={sidebar.isOpen} class:pinned={sidebar.isPinned}>
+  <!-- ... -->
+</aside>
+```
+
+```svelte
+<!-- ThemeToggle.svelte -->
+<script>
+  import { themeStore } from '$lib/stores/ui.svelte';
+</script>
+
+<button onclick={themeStore.cycle} aria-label="Toggle theme">
+  {#if themeStore.current === 'light'}
+    ☀️
+  {:else if themeStore.current === 'dark'}
+    🌙
+  {:else}
+    💻
+  {/if}
+</button>
+```
+
+```svelte
+<!-- LanguageSwitcher.svelte -->
+<!-- See i18n.md for locale/language switching implementation -->
+```
+
+### User Menu Integration
+
+For logged-in users, theme and language controls appear in the user menu dropdown:
+
+```svelte
+<!-- UserMenu.svelte -->
+<script>
+  import { themeStore } from '$lib/stores/ui.svelte';
+  import { locale, locales } from '$lib/i18n';
+
+  const languages: Record<string, string> = {
+    en: 'English',
+    de: 'Deutsch',
+    fr: 'Français',
+  };
+</script>
+
+<div class="user-menu-dropdown">
+  <a href="/settings/profile">👤 Profile</a>
+
+  <div class="menu-item">
+    🎨 Theme
+    <select bind:value={themeStore.current}>
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
+      <option value="system">System</option>
+    </select>
+  </div>
+
+  <div class="menu-item">
+    🌐 Language
+    <!-- See i18n.md for full language switcher with route handling -->
+    <select onchange={(e) => /* navigate to localized route */}>
+      {#each $locales as lang}
+        <option value={lang} selected={lang === $locale}>
+          {languages[lang]}
+        </option>
+      {/each}
+    </select>
+  </div>
+
+  <hr />
+  <button onclick={logout}>🚪 Sign out</button>
+</div>
+```
+
+> **Note:** Language switching requires route navigation. See [i18n.md](./i18n.md) for the full implementation with `getLocalizedPath()` helper.
+
+### Responsive Sidebar Behavior
+
+The sidebar state changes based on viewport:
+
+```svelte
+<!-- AppShell.svelte -->
+<script>
+  import { sidebar } from '$lib/stores/ui.svelte';
+  import { browser } from '$app/environment';
+
+  // Close sidebar on mobile when route changes
+  import { afterNavigate } from '$app/navigation';
+
+  afterNavigate(() => {
+    if (browser && window.innerWidth < 768) {
+      sidebar.close();
+    }
+  });
+</script>
+```
+
+---
+
 ## Anti-Patterns
 
 ### Don't: Modify State in $derived
@@ -741,7 +939,10 @@ src/lib/
 ## Related
 
 - [pages.md](./pages.md) - `/showcase/state` route demonstrating these patterns
-- [styling.md](./styling.md) - Theme state with localStorage sync
+- [tokens.md](./tokens.md) - Sidebar dimensions, z-index values referenced in UI state
+- [app-shell.md](./app-shell.md) - Sidebar component consuming sidebar state
+- [styling.md](./styling.md) - Theme CSS variables applied by themeStore
+- [i18n.md](./i18n.md) - Locale/language state management (handled by sveltekit-i18n)
 
 ---
 
