@@ -790,7 +790,8 @@ For logged-in users, theme and language controls appear in the user menu dropdow
 
   <div class="menu-item">
     🎨 Theme
-    <select bind:value={themeStore.current}>
+    <!-- Note: bind:value won't work with getters. Use onchange + value instead -->
+    <select value={themeStore.current} onchange={(e) => themeStore.set(e.currentTarget.value)}>
       <option value="light">Light</option>
       <option value="dark">Dark</option>
       <option value="system">System</option>

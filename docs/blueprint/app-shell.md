@@ -47,11 +47,12 @@ Collapsed (Rail):          Expanded (Hover):
 │ 📊 │   Content   │  →    │ 📊 Stats │   Content   │
 │ ⚙️ │             │       │ ⚙️ Settings            │
 └────┴─────────────┘       └──────────┴─────────────┘
-  48px                        240px
+  56px                        240px
 ```
 
-- **Rail width:** 48-64px (icons only)
-- **Expanded width:** 220-260px (icons + labels)
+Dimensions from [design/tokens.md](./design/tokens.md#sidebar):
+- **Rail width:** `--sidebar-rail-width` = 56px (icons only)
+- **Expanded width:** `--sidebar-expanded-width` = 240px (icons + labels)
 - **Trigger:** Hover or click to pin open
 - **Position:** Left side (LTR reading flow)
 
@@ -72,7 +73,7 @@ Closed:                    Open:
 - **Trigger:** Floating Action Button (FAB) in bottom-right corner
 - **Animation:** Slides in from right
 - **Overlay:** Dimmed backdrop, tap to close
-- **Drawer width:** 280-320px or 80vw (whichever is smaller)
+- **Drawer width:** `--sidebar-mobile-width` = min(320px, 85vw) — see [tokens.md](./design/tokens.md#sidebar)
 
 ### FAB Trigger Specification
 

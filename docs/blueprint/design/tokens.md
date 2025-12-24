@@ -176,9 +176,11 @@ export const layout = {
 
 /** Duration values */
 export const duration = {
-  fast: '150ms',
-  normal: '250ms',
-  slow: '400ms',
+  instant: '0ms',      // Immediate, no animation
+  fast: '150ms',       // Micro-interactions, hovers
+  normal: '250ms',     // Standard transitions
+  slow: '400ms',       // Emphasized transitions
+  slower: '600ms',     // Page transitions, modals
 } as const;
 
 /** Easing functions */
@@ -242,9 +244,11 @@ export default defineConfig({
 
   // Custom rules for duration utilities
   rules: [
+    ['duration-instant', { 'transition-duration': 'var(--duration-instant, 0ms)' }],
     ['duration-fast', { 'transition-duration': 'var(--duration-fast, 150ms)' }],
     ['duration-normal', { 'transition-duration': 'var(--duration-normal, 250ms)' }],
     ['duration-slow', { 'transition-duration': 'var(--duration-slow, 400ms)' }],
+    ['duration-slower', { 'transition-duration': 'var(--duration-slower, 600ms)' }],
   ],
 
   // Safelist commonly used dynamic classes
@@ -279,10 +283,14 @@ Global CSS variables defined in `app.css`, using values from tokens:
   /* Layout */
   --sidebar-rail-width: 56px;
   --sidebar-expanded-width: 240px;
+  --sidebar-mobile-width: min(320px, 85vw);
 
   /* Animation */
+  --duration-instant: 0ms;
   --duration-fast: 150ms;
   --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --duration-slower: 600ms;
   --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
 }
 

@@ -78,11 +78,30 @@ export type Auth = typeof auth;
 
 ```typescript
 // src/hooks.server.ts
+import { sequence } from '@sveltejs/kit/hooks';
 import { auth } from '$lib/server/auth';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
+import { building } from '$app/environment';
 
-export const handle = svelteKitHandler({ auth });
+// Better Auth handler
+const authHandle = async ({ event, resolve }) => {
+  return svelteKitHandler({ event, resolve, auth, building });
+};
+
+// Populate event.locals with session (optional but recommended)
+const sessionHandle = async ({ event, resolve }) => {
+  const session = await auth.api.getSession({ headers: event.request.headers });
+  event.locals.user = session?.user ?? null;
+  event.locals.session = session?.session ?? null;
+  return resolve(event);
+};
+
+// Compose handlers with sequence (add more handlers as needed)
+// See api.md for CORS handler example
+export const handle = sequence(authHandle, sessionHandle);
 ```
+
+**Why `sequence`?** SvelteKit only allows one `handle` export. Use `sequence` from `@sveltejs/kit/hooks` to compose multiple handlers (auth, CORS, logging, etc.).
 
 ---
 
@@ -113,13 +132,23 @@ export const {
 // src/lib/stores/session.svelte.ts
 import { useSession } from '$lib/auth-client';
 
-// Reactive session state
-export const session = useSession();
+// Reactive session state (nano-store from Better Auth)
+const session = useSession();
 
-// Derived helpers
-export const isAuthenticated = $derived(!!session.data?.user);
-export const user = $derived(session.data?.user);
+// Derived values (cannot be exported directly in .svelte.ts)
+const _isAuthenticated = $derived(!!session.data?.user);
+const _user = $derived(session.data?.user);
+
+// Export via getters (required pattern for module-level $derived)
+export const auth = {
+  get session() { return session; },
+  get isAuthenticated() { return _isAuthenticated; },
+  get user() { return _user; },
+  get isPending() { return session.isPending; },
+};
 ```
+
+**Why getters?** Svelte 5 does not allow exporting `$derived` values directly from `.svelte.ts` modules. The compiler error is: "Cannot export derived state from a module." Use getters to expose reactive values.
 
 ---
 
@@ -355,20 +384,20 @@ export async function load(event) {
 ```svelte
 <!-- src/routes/app/+layout.svelte -->
 <script lang="ts">
-  import { session } from '$lib/stores/session.svelte';
+  import { auth } from '$lib/stores/session.svelte';
   import { goto } from '$app/navigation';
   import { browser } from '$app/environment';
 
   $effect(() => {
-    if (browser && !session.isPending && !session.data?.user) {
+    if (browser && !auth.isPending && !auth.isAuthenticated) {
       goto('/auth/login');
     }
   });
 </script>
 
-{#if session.isPending}
+{#if auth.isPending}
   <div>Loading...</div>
-{:else if session.data?.user}
+{:else if auth.isAuthenticated}
   <slot />
 {/if}
 ```

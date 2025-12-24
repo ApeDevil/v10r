@@ -30,9 +30,11 @@ Components, styling, state management, and forms.
 | Layer | Choice | Why |
 |-------|--------|-----|
 | Local | **Svelte Runes** | `$state`, `$derived`, `$effect` (0 KB) |
-| Shared | **Svelte Stores** | `writable`, `readable`, `derived` (0 KB) |
+| Shared | **Runes + `.svelte.ts`** | Factory pattern with `$state` in modules (0 KB) |
 
-Svelte's reactivity is built into the compiler. No external state library needed.
+Svelte 5's runes work universally — in components AND in `.svelte.ts` modules. No external state library needed.
+
+**Pattern:** Export getters (not raw `$derived`) from `.svelte.ts` files. See [blueprint/state.md](../blueprint/state.md).
 
 ## Validation & Forms
 

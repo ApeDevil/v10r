@@ -448,8 +448,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 ### Global CORS in Hooks
 
+CORS is implemented as a composable handler using `sequence`. See [auth.md](./auth.md) for the full hooks.server.ts setup.
+
 ```typescript
-// src/hooks.server.ts
+// src/lib/server/hooks/cors.ts
 import type { Handle } from '@sveltejs/kit';
 
 const ALLOWED_ORIGINS = [
@@ -457,7 +459,7 @@ const ALLOWED_ORIGINS = [
   'https://app.example.com',
 ];
 
-export const handle: Handle = async ({ event, resolve }) => {
+export const corsHandle: Handle = async ({ event, resolve }) => {
   // Handle preflight requests
   if (event.request.method === 'OPTIONS') {
     const origin = event.request.headers.get('Origin');
@@ -489,6 +491,20 @@ export const handle: Handle = async ({ event, resolve }) => {
   return response;
 };
 ```
+
+### Composing with Auth
+
+```typescript
+// src/hooks.server.ts
+import { sequence } from '@sveltejs/kit/hooks';
+import { authHandle, sessionHandle } from '$lib/server/hooks/auth';
+import { corsHandle } from '$lib/server/hooks/cors';
+
+// Order matters: CORS first (handles OPTIONS), then auth
+export const handle = sequence(corsHandle, authHandle, sessionHandle);
+```
+
+**Why `sequence`?** SvelteKit only allows one `handle` export. Use `sequence` to compose CORS, auth, logging, and other middleware-like handlers.
 
 ### Per-Route CORS
 
