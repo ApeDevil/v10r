@@ -575,6 +575,258 @@ Usage:
 </Dialog.Root>
 ```
 
+### QuickSearch
+
+Global search and navigation modal. Opens via `⌘K` or sidebar trigger.
+
+```svelte
+<!-- src/lib/components/composites/quick-search/QuickSearch.svelte -->
+<script lang="ts">
+  import { Dialog } from 'bits-ui';
+  import { Input } from '$lib/components/primitives';
+  import Icon from '@iconify/svelte';
+  import { cn } from '$lib/utils/cn';
+  import { goto } from '$app/navigation';
+
+  interface QuickSearchItem {
+    id: string;
+    type: 'page' | 'action' | 'recent';
+    label: string;
+    icon: string;
+    href?: string;
+    action?: () => void;
+  }
+
+  interface Props {
+    open: boolean;
+    items: QuickSearchItem[];
+  }
+
+  let { open = $bindable(false), items }: Props = $props();
+
+  let query = $state('');
+  let selectedIndex = $state(0);
+
+  // Filter items based on query
+  let filtered = $derived(
+    query
+      ? items.filter((item) =>
+          item.label.toLowerCase().includes(query.toLowerCase())
+        )
+      : items
+  );
+
+  // Group by type
+  let grouped = $derived({
+    recent: filtered.filter((i) => i.type === 'recent'),
+    pages: filtered.filter((i) => i.type === 'page'),
+    actions: filtered.filter((i) => i.type === 'action'),
+  });
+
+  function handleSelect(item: QuickSearchItem) {
+    open = false;
+    query = '';
+    if (item.href) {
+      goto(item.href);
+    } else if (item.action) {
+      item.action();
+    }
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    const total = filtered.length;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      selectedIndex = (selectedIndex + 1) % total;
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      selectedIndex = (selectedIndex - 1 + total) % total;
+    } else if (e.key === 'Enter' && filtered[selectedIndex]) {
+      e.preventDefault();
+      handleSelect(filtered[selectedIndex]);
+    }
+  }
+
+  // Reset on open
+  $effect(() => {
+    if (open) {
+      query = '';
+      selectedIndex = 0;
+    }
+  });
+</script>
+
+<!-- Global keyboard shortcut -->
+<svelte:window
+  onkeydown={(e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      open = true;
+    }
+  }}
+/>
+
+<Dialog.Root bind:open>
+  <Dialog.Portal>
+    <Dialog.Overlay class="fixed inset-0 z-overlay bg-black/50" />
+    <Dialog.Content
+      class={cn(
+        'fixed left-1/2 top-1/4 z-modal -translate-x-1/2',
+        'w-full max-w-lg rounded-lg border border-border bg-bg shadow-xl'
+      )}
+      onkeydown={handleKeydown}
+    >
+      <div class="flex items-center gap-3 border-b border-border px-4 py-3">
+        <Icon icon="lucide:search" class="h-5 w-5 text-muted" />
+        <input
+          type="text"
+          placeholder="Search pages, actions..."
+          class="flex-1 bg-transparent text-fg placeholder:text-muted focus:outline-none"
+          bind:value={query}
+        />
+        <kbd class="rounded bg-muted/20 px-2 py-0.5 text-xs text-muted">ESC</kbd>
+      </div>
+
+      <div class="max-h-80 overflow-y-auto p-2">
+        {#if grouped.recent.length > 0}
+          <div class="mb-2">
+            <span class="px-2 text-xs font-medium text-muted">Recent</span>
+            {#each grouped.recent as item, i}
+              <button
+                class={cn(
+                  'flex w-full items-center gap-3 rounded-md px-3 py-2 text-left',
+                  filtered.indexOf(item) === selectedIndex
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-fg hover:bg-muted/10'
+                )}
+                onclick={() => handleSelect(item)}
+              >
+                <Icon icon={item.icon} class="h-4 w-4" />
+                <span>{item.label}</span>
+              </button>
+            {/each}
+          </div>
+        {/if}
+
+        {#if grouped.pages.length > 0}
+          <div class="mb-2">
+            <span class="px-2 text-xs font-medium text-muted">Pages</span>
+            {#each grouped.pages as item}
+              <button
+                class={cn(
+                  'flex w-full items-center gap-3 rounded-md px-3 py-2 text-left',
+                  filtered.indexOf(item) === selectedIndex
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-fg hover:bg-muted/10'
+                )}
+                onclick={() => handleSelect(item)}
+              >
+                <Icon icon={item.icon} class="h-4 w-4" />
+                <span>{item.label}</span>
+              </button>
+            {/each}
+          </div>
+        {/if}
+
+        {#if grouped.actions.length > 0}
+          <div>
+            <span class="px-2 text-xs font-medium text-muted">Actions</span>
+            {#each grouped.actions as item}
+              <button
+                class={cn(
+                  'flex w-full items-center gap-3 rounded-md px-3 py-2 text-left',
+                  filtered.indexOf(item) === selectedIndex
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-fg hover:bg-muted/10'
+                )}
+                onclick={() => handleSelect(item)}
+              >
+                <Icon icon={item.icon} class="h-4 w-4" />
+                <span>{item.label}</span>
+              </button>
+            {/each}
+          </div>
+        {/if}
+
+        {#if filtered.length === 0}
+          <div class="py-8 text-center text-muted">
+            No results for "{query}"
+          </div>
+        {/if}
+      </div>
+    </Dialog.Content>
+  </Dialog.Portal>
+</Dialog.Root>
+```
+
+#### QuickSearchTrigger (Sidebar)
+
+Fake input that opens QuickSearch. Adapts to sidebar collapsed/expanded state.
+
+```svelte
+<!-- src/lib/components/composites/quick-search/QuickSearchTrigger.svelte -->
+<script lang="ts">
+  import Icon from '@iconify/svelte';
+  import { cn } from '$lib/utils/cn';
+
+  interface Props {
+    collapsed?: boolean;
+    onclick: () => void;
+  }
+
+  let { collapsed = false, onclick }: Props = $props();
+</script>
+
+{#if collapsed}
+  <!-- Rail mode: icon only -->
+  <button
+    class="flex h-10 w-10 items-center justify-center rounded-md text-muted hover:bg-muted/10 hover:text-fg"
+    {onclick}
+    aria-label="Open search"
+  >
+    <Icon icon="lucide:search" class="h-5 w-5" />
+  </button>
+{:else}
+  <!-- Expanded mode: fake input -->
+  <button
+    class={cn(
+      'flex h-9 w-full items-center gap-2 rounded-md border border-border bg-bg/50 px-3',
+      'text-muted hover:border-muted hover:text-fg',
+      'transition-colors duration-fast'
+    )}
+    {onclick}
+  >
+    <Icon icon="lucide:search" class="h-4 w-4" />
+    <span class="flex-1 text-left text-sm">Search...</span>
+    <kbd class="rounded bg-muted/20 px-1.5 py-0.5 text-xs">⌘K</kbd>
+  </button>
+{/if}
+```
+
+Usage in sidebar:
+
+```svelte
+<script>
+  import { QuickSearch, QuickSearchTrigger } from '$lib/components/composites';
+
+  let searchOpen = $state(false);
+
+  const searchItems = [
+    { id: '1', type: 'page', label: 'Dashboard', icon: 'lucide:layout-dashboard', href: '/app/dashboard' },
+    { id: '2', type: 'page', label: 'Projects', icon: 'lucide:folder', href: '/app/projects' },
+    { id: '3', type: 'page', label: 'Settings', icon: 'lucide:settings', href: '/app/settings' },
+    { id: '4', type: 'action', label: 'Create project', icon: 'lucide:plus', action: () => { /* open modal */ } },
+    { id: '5', type: 'action', label: 'Toggle theme', icon: 'lucide:moon', action: () => { /* toggle */ } },
+    { id: '6', type: 'action', label: 'Sign out', icon: 'lucide:log-out', action: () => { /* logout */ } },
+  ];
+</script>
+
+<QuickSearchTrigger collapsed={sidebarCollapsed} onclick={() => searchOpen = true} />
+<QuickSearch bind:open={searchOpen} items={searchItems} />
+```
+
+---
+
 ### Toast (using Svelte 5 state)
 
 ```typescript
@@ -710,6 +962,7 @@ Browse icons: [Iconify Icon Sets](https://icon-sets.iconify.design/)
 | DropdownMenu | Primitive | Required |
 | Tabs | Primitive | Required |
 | Toast/Toaster | Composite | Required |
+| QuickSearch | Composite | Required |
 | Alert | Composite | Required |
 | Skeleton | Primitive | Required |
 
@@ -770,6 +1023,10 @@ src/lib/
 │   │   ├── toast/
 │   │   │   ├── Toaster.svelte
 │   │   │   └── index.ts
+│   │   ├── quick-search/
+│   │   │   ├── QuickSearch.svelte
+│   │   │   ├── QuickSearchTrigger.svelte
+│   │   │   └── index.ts
 │   │   ├── alert/
 │   │   ├── pagination/
 │   │   ├── data-table/
@@ -805,6 +1062,8 @@ export { default as Card } from './card/Card.svelte';
 export { default as FormField } from './form-field/FormField.svelte';
 export { default as ConfirmDialog } from './confirm-dialog/ConfirmDialog.svelte';
 export { default as Toaster } from './toast/Toaster.svelte';
+export { default as QuickSearch } from './quick-search/QuickSearch.svelte';
+export { default as QuickSearchTrigger } from './quick-search/QuickSearchTrigger.svelte';
 // ...
 
 // src/lib/components/index.ts

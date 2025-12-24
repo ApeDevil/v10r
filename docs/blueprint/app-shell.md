@@ -95,6 +95,94 @@ Closed:                    Open:
 
 ---
 
+## QuickSearch
+
+Global navigation and search via keyboard shortcut or sidebar trigger.
+
+### Why "QuickSearch"?
+
+"Command palette" comes from code editors where you execute commands ("Format Document"). Our use case is primarily **navigation and search**, so we use the simpler, more descriptive name "QuickSearch".
+
+### Trigger Locations
+
+| Location | Element | Behavior |
+|----------|---------|----------|
+| **Sidebar header** | Search input (visual) | Click opens QuickSearch |
+| **Keyboard** | `⌘K` / `Ctrl+K` | Opens QuickSearch from anywhere |
+| **Mobile FAB** | Optional 🔍 button | Opens QuickSearch |
+
+### Sidebar Search Trigger
+
+The sidebar header contains a search trigger that adapts to sidebar state:
+
+```
+Rail (56px):              Expanded (240px):
+┌────┐                    ┌──────────────────────┐
+│ 🦖 │                    │  🦖 Velociraptor     │
+│ 🔍 │ ← icon only        │  🔍 Search...    ⌘K  │ ← styled as input
+├────┤                    ├──────────────────────┤
+```
+
+- **Rail mode**: Search icon button, click opens QuickSearch
+- **Expanded mode**: Fake input (styled like Input but not editable), shows `⌘K` hint
+- **Both**: Clicking opens the QuickSearch modal
+
+### QuickSearch Modal
+
+```
+┌─────────────────────────────────────────────┐
+│  🔍 [Search pages, actions...]              │  ← Actual input
+├─────────────────────────────────────────────┤
+│  Recent                                     │
+│  ├── 📊 Dashboard                           │
+│  ├── ⚙️ Settings                            │
+│  └── 📁 Project Alpha                       │
+├─────────────────────────────────────────────┤
+│  Pages                                      │
+│  ├── 🏠 Home                                │
+│  ├── 📊 Dashboard                           │
+│  └── 📁 Projects                            │
+├─────────────────────────────────────────────┤
+│  Actions                                    │
+│  ├── ➕ Create new project                  │
+│  ├── 🚪 Sign out                            │
+│  └── 🎨 Toggle theme                        │
+└─────────────────────────────────────────────┘
+```
+
+### Search Categories
+
+| Category | Content | Example |
+|----------|---------|---------|
+| **Recent** | Recently visited pages | Dashboard, Settings |
+| **Pages** | All navigable routes | /projects, /settings |
+| **Actions** | Quick actions | Create project, Sign out, Toggle theme |
+
+### Keyboard Navigation
+
+| Key | Action |
+|-----|--------|
+| `↑` / `↓` | Navigate results |
+| `Enter` | Select highlighted item |
+| `Escape` | Close QuickSearch |
+| `⌘K` / `Ctrl+K` | Open QuickSearch (global) |
+
+### Component Location
+
+QuickSearch is a **composite component** (see [design/components.md](./design/components.md#quicksearch)):
+
+```
+src/lib/components/
+├── composites/
+│   └── quick-search/
+│       ├── QuickSearch.svelte         # Modal + search logic
+│       ├── QuickSearchTrigger.svelte  # Sidebar trigger (fake input)
+│       ├── QuickSearchItem.svelte     # Result item
+│       └── index.ts
+```
+
+---
+
 ## Sidebar Anatomy
 
 The sidebar is divided into three zones:
@@ -102,6 +190,7 @@ The sidebar is divided into three zones:
 ```
 ┌──────────────────────┐
 │  🦖 Logo             │  ← Header: Branding
+│  🔍 Search...    ⌘K  │  ← Search trigger (opens Spotlight)
 ├──────────────────────┤
 │  🏠 Dashboard        │
 │  📁 Projects      ▼  │  ← Body: Navigation

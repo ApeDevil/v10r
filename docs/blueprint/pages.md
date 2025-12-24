@@ -93,6 +93,7 @@ Component gallery with all UI primitives.
 - Tables, lists
 - Navigation (tabs, breadcrumbs)
 - Feedback (alerts, toasts, progress)
+- QuickSearch (`⌘K` global search)
 
 **Structure:**
 ```
@@ -101,6 +102,7 @@ Component gallery with all UI primitives.
 ├── buttons/+page.svelte      # Button variants
 ├── inputs/+page.svelte       # Input types
 ├── feedback/+page.svelte     # Alerts, toasts
+├── quick-search/+page.svelte # QuickSearch demo
 └── ...
 ```
 
@@ -493,6 +495,7 @@ src/routes/
 │   ├── ui/
 │   │   ├── +page.svelte
 │   │   ├── buttons/+page.svelte
+│   │   ├── quick-search/+page.svelte
 │   │   └── ...
 │   ├── forms/+page.svelte
 │   ├── state/+page.svelte
@@ -541,23 +544,25 @@ src/routes/
 ### Showcase Sidebar
 
 ```
-┌──────────────┐
-│ Showcase     │
-├──────────────┤
-│ Theme        │
-│ UI           │
-│   └ Buttons  │
-│   └ Inputs   │
-│   └ ...      │
-│ Forms        │
-│ State        │
-│ Data         │
-│ Files        │
-│ i18n         │
-│ Animations   │
-│ Graph        │
-│ API          │
-└──────────────┘
+┌────────────────┐
+│ Showcase       │
+├────────────────┤
+│ Theme          │
+│ UI             │
+│   └ Buttons    │
+│   └ Inputs     │
+│   └ Feedback   │
+│   └ QuickSearch│
+│   └ ...        │
+│ Forms          │
+│ State          │
+│ Data           │
+│ Files          │
+│ i18n           │
+│ Animations     │
+│ Graph          │
+│ API            │
+└────────────────┘
 ```
 
 ---
