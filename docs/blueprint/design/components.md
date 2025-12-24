@@ -575,6 +575,82 @@ Usage:
 </Dialog.Root>
 ```
 
+### PageHeader
+
+Per-page header for title, breadcrumbs, and actions. **Not a global header** — lives inside the main content area, used per-page as needed. See [app-shell.md](../app-shell.md#pageheader) for full documentation.
+
+```svelte
+<!-- src/lib/components/composites/page-header/PageHeader.svelte -->
+<script lang="ts">
+  import type { Snippet } from 'svelte';
+  import { cn } from '$lib/utils/cn';
+
+  interface Breadcrumb {
+    label: string;
+    href?: string;
+  }
+
+  interface Props {
+    title: string;
+    breadcrumbs?: Breadcrumb[];
+    actions?: Snippet;
+    class?: string;
+  }
+
+  let { title, breadcrumbs, actions, class: className }: Props = $props();
+</script>
+
+<header class={cn('mb-6', className)}>
+  {#if breadcrumbs?.length}
+    <nav class="mb-2 text-sm text-muted" aria-label="Breadcrumb">
+      <ol class="flex items-center gap-1">
+        {#each breadcrumbs as crumb, i}
+          {#if i > 0}
+            <li class="text-muted/50">/</li>
+          {/if}
+          <li>
+            {#if crumb.href}
+              <a href={crumb.href} class="hover:text-fg">{crumb.label}</a>
+            {:else}
+              <span>{crumb.label}</span>
+            {/if}
+          </li>
+        {/each}
+      </ol>
+    </nav>
+  {/if}
+
+  <div class="flex items-center justify-between gap-4">
+    <h1 class="text-2xl font-semibold text-fg">{title}</h1>
+
+    {#if actions}
+      <div class="flex items-center gap-2">
+        {@render actions()}
+      </div>
+    {/if}
+  </div>
+</header>
+```
+
+Usage:
+
+```svelte
+<PageHeader
+  title="Project Alpha"
+  breadcrumbs={[
+    { label: 'Projects', href: '/app/projects' },
+    { label: 'Project Alpha' }
+  ]}
+>
+  {#snippet actions()}
+    <Button intent="secondary">Edit</Button>
+    <DropdownMenu>...</DropdownMenu>
+  {/snippet}
+</PageHeader>
+```
+
+---
+
 ### QuickSearch
 
 Global search and navigation modal. Opens via `⌘K` or sidebar trigger.
@@ -963,6 +1039,7 @@ Browse icons: [Iconify Icon Sets](https://icon-sets.iconify.design/)
 | Tabs | Primitive | Required |
 | Toast/Toaster | Composite | Required |
 | QuickSearch | Composite | Required |
+| PageHeader | Composite | Required |
 | Alert | Composite | Required |
 | Skeleton | Primitive | Required |
 
@@ -1027,6 +1104,9 @@ src/lib/
 │   │   │   ├── QuickSearch.svelte
 │   │   │   ├── QuickSearchTrigger.svelte
 │   │   │   └── index.ts
+│   │   ├── page-header/
+│   │   │   ├── PageHeader.svelte
+│   │   │   └── index.ts
 │   │   ├── alert/
 │   │   ├── pagination/
 │   │   ├── data-table/
@@ -1064,6 +1144,7 @@ export { default as ConfirmDialog } from './confirm-dialog/ConfirmDialog.svelte'
 export { default as Toaster } from './toast/Toaster.svelte';
 export { default as QuickSearch } from './quick-search/QuickSearch.svelte';
 export { default as QuickSearchTrigger } from './quick-search/QuickSearchTrigger.svelte';
+export { default as PageHeader } from './page-header/PageHeader.svelte';
 // ...
 
 // src/lib/components/index.ts

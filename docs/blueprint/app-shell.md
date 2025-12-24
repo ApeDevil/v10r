@@ -17,7 +17,7 @@ The app shell is the persistent UI skeleton that wraps all pages. It loads insta
 └──────────────────────────────────────────────────────────┘
 ```
 
-**No main header.** The sidebar handles all navigation. This maximizes vertical content space.
+**No global header.** The sidebar handles all navigation. This maximizes vertical content space. Individual pages use a `PageHeader` component inside the main content area for page-specific titles and actions (see [PageHeader](#pageheader)).
 
 ### Components
 
@@ -426,6 +426,145 @@ Z-index values are defined in [design/tokens.md](./design/tokens.md#z-index). Ke
 | `dropdown` | Nav dropdown menus |
 
 See [design/tokens.md](./design/tokens.md) for the complete stacking context with all layer values.
+
+---
+
+## PageHeader
+
+Per-page header inside the main content area. **Not a global header** — each page optionally includes this component for its title and actions.
+
+### Why No Global Header?
+
+| Global Header | PageHeader (per-page) |
+|---------------|----------------------|
+| Wastes vertical space | Only where needed |
+| One-size-fits-all | Page-specific actions |
+| Competes with sidebar | Clean separation |
+
+### Structure
+
+```
+┌──────┬─────────────────────────────────────────┐
+│      │  ┌───────────────────────────────────┐  │
+│      │  │ Breadcrumbs (optional)            │  │
+│      │  │ Page Title          [Actions]     │  │ ← PageHeader
+│      │  ├───────────────────────────────────┤  │
+│ Side │  │                                   │  │
+│ bar  │  │  Page content...                  │  │
+│      │  │                                   │  │
+│      │  └───────────────────────────────────┘  │
+│      │  Footer                                 │
+└──────┴─────────────────────────────────────────┘
+```
+
+### PageHeader Anatomy
+
+```
+┌─────────────────────────────────────────────────┐
+│  Projects › Project Alpha                       │  ← Breadcrumbs (optional)
+│  Project Alpha                    [Edit] [⋮]   │  ← Title + Actions
+└─────────────────────────────────────────────────┘
+```
+
+| Element | Description |
+|---------|-------------|
+| **Breadcrumbs** | Optional navigation trail |
+| **Title** | Page or resource name |
+| **Actions** | Primary actions (buttons, dropdown) |
+
+### Component
+
+```svelte
+<!-- src/lib/components/composites/page-header/PageHeader.svelte -->
+<script lang="ts">
+  import type { Snippet } from 'svelte';
+  import { cn } from '$lib/utils/cn';
+
+  interface Breadcrumb {
+    label: string;
+    href?: string;
+  }
+
+  interface Props {
+    title: string;
+    breadcrumbs?: Breadcrumb[];
+    actions?: Snippet;
+    class?: string;
+  }
+
+  let { title, breadcrumbs, actions, class: className }: Props = $props();
+</script>
+
+<header class={cn('mb-6', className)}>
+  {#if breadcrumbs?.length}
+    <nav class="mb-2 text-sm text-muted" aria-label="Breadcrumb">
+      <ol class="flex items-center gap-1">
+        {#each breadcrumbs as crumb, i}
+          {#if i > 0}
+            <li class="text-muted/50">/</li>
+          {/if}
+          <li>
+            {#if crumb.href}
+              <a href={crumb.href} class="hover:text-fg">{crumb.label}</a>
+            {:else}
+              <span>{crumb.label}</span>
+            {/if}
+          </li>
+        {/each}
+      </ol>
+    </nav>
+  {/if}
+
+  <div class="flex items-center justify-between gap-4">
+    <h1 class="text-2xl font-semibold text-fg">{title}</h1>
+
+    {#if actions}
+      <div class="flex items-center gap-2">
+        {@render actions()}
+      </div>
+    {/if}
+  </div>
+</header>
+```
+
+### Usage
+
+```svelte
+<!-- src/routes/app/projects/[id]/+page.svelte -->
+<script>
+  import { PageHeader } from '$lib/components/composites';
+  import { Button, DropdownMenu } from '$lib/components/primitives';
+
+  let { data } = $props();
+</script>
+
+<PageHeader
+  title={data.project.name}
+  breadcrumbs={[
+    { label: 'Projects', href: '/app/projects' },
+    { label: data.project.name }
+  ]}
+>
+  {#snippet actions()}
+    <Button intent="secondary">Edit</Button>
+    <DropdownMenu>
+      <DropdownItem>Duplicate</DropdownItem>
+      <DropdownItem>Archive</DropdownItem>
+      <DropdownItem destructive>Delete</DropdownItem>
+    </DropdownMenu>
+  {/snippet}
+</PageHeader>
+
+<!-- Page content below -->
+```
+
+### Sticky Option
+
+For long pages, PageHeader can stick to top on scroll:
+
+```svelte
+<PageHeader title="Dashboard" class="sticky top-0 bg-bg z-10" />
+```
 
 ---
 
