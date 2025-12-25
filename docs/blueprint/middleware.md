@@ -473,6 +473,7 @@ export {};
 
 ## Related
 
+- [rate-limiting.md](./rate-limiting.md) - Rate limiting patterns (sveltekit-rate-limiter, Upstash)
 - [error-handling.md](./error-handling.md) - Error handling patterns
 - [auth.md](./auth.md) - Authentication implementation
 - [api.md](./api.md) - API route patterns

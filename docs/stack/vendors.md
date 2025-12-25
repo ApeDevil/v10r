@@ -24,7 +24,8 @@ All external services used by Velociraptor. This separates **what technology** w
 | Relational DB | PostgreSQL | **Neon** | Easy |
 | Graph DB | Neo4j | **Neo4j Aura** | Medium |
 | Object Storage | S3 API | **Cloudflare R2** | Easy |
-| App Hosting | Bun + SvelteKit | **Vercel** | Medium |
+| App Hosting | SvelteKit + Node.js | **Vercel** | Medium |
+| App Hosting | SvelteKit + Bun | **Koyeb** | Easy |
 | Email | SMTP/API | **Resend** | Easy |
 | Error Tracking | Sentry SDK | **Sentry** | Easy |
 | Analytics | Web Analytics | **Vercel Analytics** | Easy |
@@ -49,6 +50,7 @@ All external services used by Velociraptor. This separates **what technology** w
 | **Together AI** | 3 months unlimited | ~$0.003/image | FLUX Schnell |
 | **Neon** | 0.5 GB, 100 CU-hours/mo | $19/mo | Sleeps after 5min inactivity |
 | **Vercel** | 100 GB bandwidth/mo | $20/mo | Hobby tier, 1 concurrent build |
+| **Koyeb** | 1 service, 512MB RAM | $5.50/mo | Nano instance, no credit card for free |
 | **Cloudflare R2** | 10 GB, 10M reads, 1M writes | $0.015/GB/mo | Zero egress fees |
 | **Neo4j Aura** | 200K nodes, 400K relationships | $65/mo | Free tier is generous |
 | **Resend** | 100 emails/day (3K/mo) | $20/mo | 50K emails/mo |
@@ -211,23 +213,22 @@ We use a **multi-provider architecture** with Vercel AI SDK, selecting the best 
 ### Vercel
 
 **What:** App hosting and edge network
-**Technology:** Node.js / Bun runtime
+**Technology:** Node.js runtime (SvelteKit)
 
 | Feature | Details |
 |---------|---------|
 | Edge Network | Global CDN, automatic |
-| Bun Runtime | Native support via adapter |
+| Runtime | Node.js 20 (Bun runtime doesn't support SvelteKit) |
 | Preview Deploys | Per-PR deployments |
 | Analytics | Built-in, cookieless |
 
 **Alternatives:**
 | Provider | Trade-off |
 |----------|-----------|
+| Koyeb | Native Bun, container-based |
 | Netlify | Similar, different edge functions |
 | Railway | Container-based, more control |
-| Fly.io | Global containers, more ops |
 | Cloudflare Pages | Cheaper, Workers runtime |
-| Self-hosted | Docker + reverse proxy |
 
 **Vercel-specific features (not portable):**
 - `adapter-vercel` optimizations
@@ -235,6 +236,43 @@ We use a **multi-provider architecture** with Vercel AI SDK, selecting the best 
 - Preview deploy comments
 
 **Migration:** Change adapter, update CI/CD, migrate env vars.
+
+---
+
+### Koyeb
+
+**What:** Container hosting with native Bun support
+**Technology:** Docker containers
+
+| Feature | Details |
+|---------|---------|
+| Bun Runtime | Native, not Node.js compatibility |
+| Free Tier | 1 service, 512MB RAM, 0.1 vCPU |
+| Credit Card | Not required for free tier |
+| Regions | Frankfurt, Washington D.C. (free) |
+
+**Free Tier Limits:**
+| Resource | Limit |
+|----------|-------|
+| Services | 1 web service |
+| RAM | 512 MB |
+| CPU | 0.1 vCPU |
+| Storage | 2 GB SSD |
+| Bandwidth | 100 GB/mo (not currently charged) |
+
+**Alternatives:**
+| Provider | Trade-off |
+|----------|-----------|
+| Vercel | Better DX, no native Bun |
+| Railway | $5/mo minimum, better resources |
+| Render | 750 hours/mo, sleeps after 15min |
+| Fly.io | No free tier anymore |
+
+**Koyeb-specific features (not portable):**
+- Koyeb dashboard and CLI
+- Auto-deploy from Git
+
+**Migration:** Dockerfile is portable. Change registry and deploy target.
 
 ---
 

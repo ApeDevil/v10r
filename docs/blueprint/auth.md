@@ -562,7 +562,7 @@ export const auth = betterAuth({
 });
 ```
 
-**Use external rate limiting instead** - see [security.md](../security.md#rate-limiting) for implementation with Upstash (production) or sveltekit-rate-limiter (development).
+**Use external rate limiting instead** - see [rate-limiting.md](./rate-limiting.md) for implementation with sveltekit-rate-limiter (primary) and Upstash (production scaling).
 
 ### Custom Password Hashing
 

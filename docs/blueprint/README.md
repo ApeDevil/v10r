@@ -88,7 +88,9 @@ Breaking a stack component breaks its showcase page. The failure is immediate an
 | [auth.md](./auth.md) | Better Auth, OAuth, 2FA, route guards |
 | [state.md](./state.md) | Svelte 5 runes, shared state, context API |
 | [api.md](./api.md) | REST endpoints, GraphQL (optional), validation, CORS |
-| [middleware.md](./middleware.md) | SvelteKit hooks, request handling, rate limiting |
+| [middleware.md](./middleware.md) | SvelteKit hooks, request handling, security headers |
+| [rate-limiting.md](./rate-limiting.md) | Request rate limiting, abuse prevention, Upstash |
+| [deployment.md](./deployment.md) | Vercel + Koyeb setup, Dockerfile, CI/CD pipelines |
 | [error-handling.md](./error-handling.md) | Error pages, API errors, form errors |
 | [i18n.md](./i18n.md) | sveltekit-i18n, locale routing, date/number formatting |
 

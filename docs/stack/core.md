@@ -8,8 +8,7 @@ Runtime, framework, database, storage, and deployment.
 |-------|--------|-----|
 | Runtime | **Bun** | Fastest JS runtime, built-in bundler, native TypeScript |
 | Framework | **SvelteKit** | Minimal overhead, reactive, great DX |
-| Adapter (dev) | **adapter-bun** | Native Bun server for local containers |
-| Adapter (prod) | **adapter-vercel** | Optimized for Vercel with Bun runtime |
+| Adapter | **Dynamic** | `adapter-vercel` (serverless) or `svelte-adapter-bun` (container) |
 | Language | **TypeScript** | Type safety, better tooling |
 
 ## Container
@@ -141,19 +140,15 @@ Fallback to ESLint + Prettier if Biome causes issues with complex Svelte templat
 
 ## Deployment
 
-**Strategy:** Containers locally, managed services in production.
+**Strategy:** Dual-target deployment to both serverless and containers.
 
-**Local:**
-- Podman Compose: app (Bun+SvelteKit), postgres, neo4j, minio
-- Volume mounts for live reload
+| Target | Runtime | Platform | Adapter |
+|--------|---------|----------|---------|
+| Serverless | Node.js | Vercel | `adapter-vercel` |
+| Container | Bun | Koyeb | `svelte-adapter-bun` |
 
-**Production:**
+Same codebase, different adapters. Proves portability and gives users flexibility.
 
-| Service | Technology | Provider | Free Tier |
-|---------|------------|----------|-----------|
-| **App** | Bun + SvelteKit | [Vercel](./vendors.md#vercel) | 100GB bandwidth/mo |
-| **Postgres** | PostgreSQL | [Neon](./vendors.md#neon) | 0.5GB, 100 CU-hours/mo |
-| **Graph** | Neo4j | [Neo4j Aura](./vendors.md#neo4j-aura) | 200k nodes |
-| **Files** | S3 API | [Cloudflare R2](./vendors.md#cloudflare-r2) | 10GB, unlimited egress |
+**Local:** Podman Compose (app, postgres, neo4j, minio) with volume mounts for live reload.
 
-See [vendors.md](./vendors.md) for full cost breakdown and alternatives.
+**Full details:** [deployment.md](./deployment.md) (decisions) and [blueprint/deployment.md](../blueprint/deployment.md) (implementation).
