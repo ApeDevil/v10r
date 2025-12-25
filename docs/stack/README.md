@@ -26,6 +26,7 @@ Technology decisions for the Velociraptor template.
 | [UI](./ui.md) | Styling, components, state, validation, forms |
 | [Auth](./auth.md) | Session-based authentication |
 | [API](./api.md) | API patterns, services, i18n, background jobs |
+| [Vendors](./vendors.md) | All external services, costs, compliance, alternatives |
 
 ### Features
 

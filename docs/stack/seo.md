@@ -17,12 +17,14 @@ SvelteKit has SSR by default. Content is indexed reliably.
 
 ### Meta Tags
 
-| Layer | Choice | Why |
-|-------|--------|-----|
-| Library | **svelte-meta-tags** | Open Graph, Twitter Cards, JSON-LD |
-| Alternative | Native `<svelte:head>` | Zero deps, manual control |
+| Layer | Technology | Provider | Why |
+|-------|------------|----------|-----|
+| Library | **Meta tag management** | svelte-meta-tags | Open Graph, Twitter Cards, JSON-LD |
+| Alternative | **Native HTML** | `<svelte:head>` | Zero deps, manual control |
 
 Return SEO data from `load()`, use in layout via `<svelte:head>`.
+
+**Swappability:** Both are library/framework-native. No vendor dependency.
 
 ### Essential Tags
 
@@ -137,12 +139,14 @@ Skip marketing speak. Use concrete data and citations.
 
 ## Stack Integration
 
-| Component | Benefit |
-|-----------|---------|
-| **SvelteKit SSR** | Content indexed reliably |
-| **Svelte** | Fast Core Web Vitals |
-| **svelte-meta-tags** | Easy Open Graph + JSON-LD |
-| **Vercel** | Edge caching, fast TTFB |
-| **URL i18n** | SEO-friendly routes |
+| Component | Technology | Provider | Benefit |
+|-----------|------------|----------|---------|
+| **SSR** | Server rendering | SvelteKit | Content indexed reliably |
+| **Performance** | Compiler | Svelte | Fast Core Web Vitals |
+| **Meta tags** | Tag management | svelte-meta-tags | Easy Open Graph + JSON-LD |
+| **Hosting** | Edge network | [Vercel](./vendors.md#vercel) | Edge caching, fast TTFB |
+| **i18n** | URL-based routing | sveltekit-i18n | SEO-friendly routes |
 
 **Why ready:** SSR default, minimal JS, fast loads, clean URLs, structured data support.
+
+**Swappability:** Only Vercel is a vendor. All others are libraries/framework features.

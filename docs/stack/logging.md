@@ -4,11 +4,13 @@ Structured logging for debugging, monitoring, and observability.
 
 ## Stack
 
-| Layer | Choice | Why |
-|-------|--------|-----|
-| Logger | **Pino** | Fastest Node.js logger, structured JSON, low overhead |
-| Error Tracking | **Sentry** | Already in stack, integrates with Pino |
-| Log Aggregation | **Vercel Logs** | Free with Vercel, zero config |
+| Layer | Technology | Provider | Why |
+|-------|------------|----------|-----|
+| Logger | **Pino** | Library | Fastest Node.js logger, structured JSON, low overhead |
+| Error Tracking | **Sentry SDK** | [Sentry](./vendors.md#sentry) | Already in stack, integrates with Pino |
+| Log Aggregation | **JSON stdout** | [Vercel Logs](./vendors.md#vercel) | Free with Vercel, zero config |
+
+See [vendors.md](./vendors.md) for alternatives and costs.
 
 ## Why Pino
 
@@ -74,14 +76,16 @@ Pino (JSON to stdout) → Vercel Runtime → Vercel Logs (1 hour). Add Axiom or 
 
 ### Aggregation Options
 
-| Service | Free Tier | Retention | Why |
-|---------|-----------|-----------|-----|
-| **Vercel Logs** | Included | 1 hour | Zero config |
-| **Axiom** | 500 GB/mo | 30 days | Generous |
-| **Better Stack** | 1 GB/mo | 3 days | Good UI |
-| **Datadog** | Limited | 15 days | Enterprise |
+| Service | Technology | Free Tier | Retention |
+|---------|------------|-----------|-----------|
+| **Vercel Logs** | JSON ingestion | Included | 1 hour |
+| **Axiom** | JSON ingestion | 500 GB/mo | 30 days |
+| **Better Stack** | JSON ingestion | 1 GB/mo | 3 days |
+| **Datadog** | JSON ingestion | Limited | 15 days |
 
 Start with Vercel Logs. Add Axiom for longer retention.
+
+All options use the same technology (structured JSON to stdout). Swappable by changing log drain destination.
 
 ## What to Log
 

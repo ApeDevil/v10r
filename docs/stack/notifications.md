@@ -4,12 +4,14 @@ Multi-channel notification system: email, push, in-app, chat.
 
 ## Stack
 
-| Layer | Choice | Why |
-|-------|--------|-----|
-| Platform | **Novu** | Open-source, multi-channel, self-hostable |
-| Email Provider | **Resend** | Already in stack, simple API |
-| Push Provider | **FCM** | Free, works on web and mobile |
-| In-App | **Novu Inbox** | Built-in component, real-time |
+| Layer | Technology | Provider | Why |
+|-------|------------|----------|-----|
+| Platform | **Novu** | Novu Cloud / Self-hosted | Open-source, multi-channel, self-hostable |
+| Email | **SMTP/API** | [Resend](./vendors.md#resend) | Already in stack, simple API |
+| Push | **Web Push / FCM** | Google FCM | Free, works on web and mobile |
+| In-App | **WebSocket** | Novu Inbox | Built-in component, real-time |
+
+See [vendors.md](./vendors.md) for alternatives and costs.
 
 ## Why Novu
 
@@ -25,13 +27,15 @@ Novu wins: open-source, self-hostable, unified API, SvelteKit integration.
 
 ## Channels
 
-| Channel | Provider | Use Case |
-|---------|----------|----------|
-| **Email** | Resend, SendGrid, SES | Transactional, marketing |
-| **Push** | FCM, APNS, OneSignal | Mobile/web alerts |
-| **In-App** | Novu Inbox | Notification center |
-| **SMS** | Twilio, Plivo | Critical alerts, 2FA |
-| **Chat** | Slack, Discord | Team notifications |
+| Channel | Technology | Provider Options | Use Case |
+|---------|------------|------------------|----------|
+| **Email** | SMTP/API | Resend, SendGrid, SES | Transactional, marketing |
+| **Push** | Web Push / FCM | FCM, APNS, OneSignal | Mobile/web alerts |
+| **In-App** | WebSocket | Novu Inbox | Notification center |
+| **SMS** | SMS API | Twilio, Plivo | Critical alerts, 2FA |
+| **Chat** | Webhooks | Slack, Discord | Team notifications |
+
+All channels use standard protocols. Providers are swappable within Novu configuration.
 
 ## Setup
 
@@ -106,6 +110,8 @@ User Action (purchase, comment, etc.)
 Docker Compose with MongoDB and Redis. Add novu container to compose.yaml.
 
 **Trade-off:** Adds complexity. Use Novu Cloud for simpler setup.
+
+**Swappability:** Novu is open-source (MIT). Self-host to eliminate vendor dependency entirely.
 
 ## Checklist
 

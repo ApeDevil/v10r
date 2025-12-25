@@ -94,21 +94,24 @@ Separate identity from usage. Users table has PII (email, name). Analytics refer
 
 ## Third-Party Services
 
-All services must be GDPR-compliant with DPAs.
+All services must be GDPR-compliant with DPAs. See [vendors.md](./vendors.md) for the complete vendor registry.
 
-| Service | GDPR | DPA |
-|---------|------|-----|
-| **Vercel** | Yes | Available |
-| **Neon** | Yes | Available |
-| **Cloudflare R2** | Yes | Available |
-| **Resend** | Yes | Available |
-| **Sentry** | Yes | Available |
+| Service | GDPR | DPA | EU Region |
+|---------|------|-----|-----------|
+| **Vercel** | Yes | Available | Edge |
+| **Neon** | Yes | Available | Yes |
+| **Cloudflare R2** | Yes | Available | Yes |
+| **Neo4j Aura** | Yes | Available | Yes |
+| **Resend** | Yes | Available | No |
+| **Sentry** | Yes | Available | Yes |
+| **Inngest** | Yes | Available | Yes |
 
 **New service checklist:**
 - [ ] GDPR compliance page
 - [ ] DPA available
 - [ ] EU data residency (if required)
 - [ ] Listed in privacy policy
+- [ ] Added to [vendors.md](./vendors.md)
 
 ## Privacy Policy
 
@@ -168,3 +171,5 @@ Regulators actively enforce against:
 | **Svelte Stores** | Client consent state |
 
 Self-hosted auth, minimal tracking, full DB control, EU hosting.
+
+See [vendors.md](./vendors.md) for complete compliance matrix and alternatives.

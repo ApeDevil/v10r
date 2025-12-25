@@ -24,17 +24,19 @@ Runtime, framework, database, storage, and deployment.
 
 ## Data Architecture
 
-| Concern | Service | Why |
-|---------|---------|-----|
-| Relational | **Neon (Postgres)** | Serverless, branching, Drizzle-native |
-| Sessions | **Better Auth + Postgres** | Full-featured, Drizzle-native |
-| Graph | **Neo4j Aura** | Native graph queries, 200k nodes free |
-| Files | **Cloudflare R2** | Zero egress, 10GB free, S3-compatible |
+| Concern | Technology | Provider | Why |
+|---------|------------|----------|-----|
+| Relational | **PostgreSQL** | [Neon](./vendors.md#neon) | ACID, JSON support, Drizzle-native |
+| Sessions | **Better Auth** | Self-hosted (Postgres) | Full-featured, no vendor lock-in |
+| Graph | **Neo4j** | [Neo4j Aura](./vendors.md#neo4j-aura) | Native graph queries, Cypher |
+| Files | **S3 API** | [Cloudflare R2](./vendors.md#cloudflare-r2) | Zero egress, S3-compatible |
 
 **Separation:**
 - Postgres: users, sessions, content, settings
 - Neo4j: entities, relations, graph RAG
 - R2: images, files, uploads
+
+**Swappability:** All use standard protocols. See [vendors.md](./vendors.md) for alternatives and migration guides.
 
 ### Polyglot Freshness
 
@@ -51,12 +53,12 @@ Cross-database references must remain valid and current. No foreign keys across 
 
 ## Database
 
-| Layer | Choice | Why |
-|-------|--------|-----|
-| Primary DB | **PostgreSQL** | Production-ready, rich features, JSON support |
-| Graph DB | **Neo4j** | Native graph queries, entity relationships |
-| ORM | **Drizzle** | Type-safe, lightweight, Bun-compatible |
-| Migrations | **Drizzle Kit** | Schema-driven, SQL-first |
+| Layer | Technology | Provider | Why |
+|-------|------------|----------|-----|
+| Primary DB | **PostgreSQL** | [Neon](./vendors.md#neon) | Production-ready, rich features, JSON support |
+| Graph DB | **Neo4j** | [Neo4j Aura](./vendors.md#neo4j-aura) | Native graph queries, entity relationships |
+| ORM | **Drizzle** | Library | Type-safe, lightweight, Bun-compatible |
+| Migrations | **Drizzle Kit** | Library | Schema-driven, SQL-first |
 
 **Why Drizzle over Prisma/Kysely:**
 
@@ -71,10 +73,10 @@ Drizzle wins: lightweight bundle, no codegen, SQL-first, Bun-native.
 
 ## File Storage
 
-| Layer | Choice | Why |
-|-------|--------|-----|
-| Provider | **Cloudflare R2** | Zero egress fees, S3-compatible, global CDN |
-| SDK | **@aws-sdk/client-s3** | Standard S3 API, works with R2 |
+| Layer | Technology | Provider | Why |
+|-------|------------|----------|-----|
+| Protocol | **S3 API** | [Cloudflare R2](./vendors.md#cloudflare-r2) | Zero egress fees, S3-compatible, global CDN |
+| SDK | **@aws-sdk/client-s3** | Library | Standard S3 API, works with any S3-compatible |
 
 **Why R2 over alternatives:**
 
@@ -89,10 +91,10 @@ R2 wins: zero egress, S3-compatible, built-in CDN, no credit card required.
 
 ## Caching
 
-| Layer | Choice | Why |
-|-------|--------|-----|
-| Default | **Vercel Edge Cache** | Free, built-in, zero config |
-| Dynamic | **Upstash Redis** | 500K commands/mo free, query caching |
+| Layer | Technology | Provider | Why |
+|-------|------------|----------|-----|
+| Edge | **HTTP Cache** | [Vercel](./vendors.md#vercel) | Free, built-in, zero config |
+| Dynamic | **Redis** | Upstash | 500K commands/mo free, query caching |
 
 Start with Vercel Edge. Add Redis for query caching or real-time features.
 
@@ -147,9 +149,11 @@ Fallback to ESLint + Prettier if Biome causes issues with complex Svelte templat
 
 **Production:**
 
-| Service | Provider | Free Tier | Why |
-|---------|----------|-----------|-----|
-| **App** | Vercel | 100GB bandwidth/mo | Native Bun, edge network, zero-config |
-| **Postgres** | Neon | 0.5GB, 100 CU-hours/mo | Serverless, branching, sleeps after 5min |
-| **Graph** | Neo4j Aura | 200k nodes | Managed Neo4j |
-| **Files** | Cloudflare R2 | 10GB, 10M reads, 1M writes/mo | Zero egress, S3-compatible |
+| Service | Technology | Provider | Free Tier |
+|---------|------------|----------|-----------|
+| **App** | Bun + SvelteKit | [Vercel](./vendors.md#vercel) | 100GB bandwidth/mo |
+| **Postgres** | PostgreSQL | [Neon](./vendors.md#neon) | 0.5GB, 100 CU-hours/mo |
+| **Graph** | Neo4j | [Neo4j Aura](./vendors.md#neo4j-aura) | 200k nodes |
+| **Files** | S3 API | [Cloudflare R2](./vendors.md#cloudflare-r2) | 10GB, unlimited egress |
+
+See [vendors.md](./vendors.md) for full cost breakdown and alternatives.

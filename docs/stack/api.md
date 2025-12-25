@@ -4,21 +4,23 @@ API patterns, external services, background jobs, and i18n.
 
 ## Services
 
-| Layer | Choice | Why |
-|-------|--------|-----|
-| API Style | **REST + Server Actions** | SvelteKit-native |
-| API Docs | **Scalar** | OpenAPI spec, modern UI |
-| Analytics | **Vercel Analytics** | Cookieless, zero config |
-| Error Tracking | **Sentry** | 5K errors/mo free |
-| Email | **Resend** | 100 emails/day free |
+| Layer | Technology | Provider | Why |
+|-------|------------|----------|-----|
+| API Style | **REST + Server Actions** | SvelteKit | Framework-native |
+| API Docs | **OpenAPI** | Scalar | Modern UI, spec-driven |
+| Analytics | **Web Analytics** | [Vercel](./vendors.md#vercel) | Cookieless, zero config |
+| Error Tracking | **Sentry SDK** | [Sentry](./vendors.md#sentry) | 5K errors/mo free |
+| Email | **SMTP/API** | [Resend](./vendors.md#resend) | 100 emails/day free |
+
+See [vendors.md](./vendors.md) for alternatives and migration guides.
 
 ## Background Jobs
 
-| Layer | Choice | Why |
-|-------|--------|-----|
-| Default | **SvelteKit server actions** | Fast, simple, no deps |
-| Simple async | **Upstash QStash** | Fire-and-forget, 500 msg/day free |
-| Complex | **Inngest** | Multi-step, retries, cron, 25K runs/mo free |
+| Layer | Technology | Provider | Why |
+|-------|------------|----------|-----|
+| Default | **Server Actions** | SvelteKit | Fast, simple, no deps |
+| Simple async | **HTTP Webhooks** | Upstash QStash | Fire-and-forget, 500 msg/day free |
+| Complex | **Step Functions** | [Inngest](./vendors.md#inngest) | Multi-step, retries, cron, 25K runs/mo free |
 
 **Use jobs when:** task takes 5+ seconds, need cron, or need retries.
 
@@ -50,3 +52,5 @@ sveltekit-i18n wins for multi-language: true lazy loading, scales infinitely, no
 | Email | Resend | 100/day |
 | Jobs | QStash | 500 msg/day |
 | Workflows | Inngest | 25K runs/mo |
+
+See [vendors.md](./vendors.md) for complete cost breakdown across all services.

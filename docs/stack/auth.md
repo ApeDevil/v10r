@@ -11,14 +11,16 @@ Session-based authentication with two approaches: **Better Auth** (recommended) 
 
 ## Recommended: Better Auth
 
-| Layer | Choice | Why |
-|-------|--------|-----|
-| Auth | **Better Auth** | TypeScript-first, batteries-included |
-| Adapter | **Drizzle** | Native integration, auto-schema |
-| Sessions | PostgreSQL-backed | Persistent, immediate revocation |
-| OAuth | Built-in | 20+ providers out of the box |
-| 2FA/MFA | Built-in | TOTP, passkeys, WebAuthn |
-| Middleware | SvelteKit handler | Native request interception |
+| Layer | Technology | Provider | Why |
+|-------|------------|----------|-----|
+| Auth | **Session-based auth** | Better Auth | TypeScript-first, batteries-included |
+| Adapter | **ORM integration** | Drizzle | Native integration, auto-schema |
+| Sessions | **Database sessions** | [Neon](./vendors.md#neon) | Persistent, immediate revocation |
+| OAuth | **OAuth 2.0** | Built-in | 20+ providers out of the box |
+| 2FA/MFA | **TOTP/WebAuthn** | Built-in | Passkeys, authenticator apps |
+| Middleware | **Request hooks** | SvelteKit | Native request interception |
+
+**Swappability:** Better Auth is a library, not a service. Sessions stored in your own Postgres. No vendor lock-in.
 
 **Why Better Auth:**
 
@@ -35,14 +37,16 @@ Session-based authentication with two approaches: **Better Auth** (recommended) 
 
 For learning or maximum control. Based on patterns from [The Copenhagen Book](https://thecopenhagenbook.com/).
 
-| Layer | Choice | Why |
-|-------|--------|-----|
-| Sessions | PostgreSQL-backed | Persistent, immediate revocation |
-| Password | **Argon2id** | OWASP recommended, memory-hard |
-| OAuth | **Arctic** | 50+ providers, lightweight |
-| Crypto | **Oslo** | Runtime-agnostic, lightweight |
+| Layer | Technology | Provider | Why |
+|-------|------------|----------|-----|
+| Sessions | **Database sessions** | PostgreSQL | Persistent, immediate revocation |
+| Password | **Argon2id hashing** | @node-rs/argon2 | OWASP recommended, memory-hard |
+| OAuth | **OAuth 2.0** | Arctic | 50+ providers, lightweight |
+| Crypto | **Token generation** | Oslo | Runtime-agnostic, lightweight |
 
 **Oslo** and **Arctic** are actively maintained libraries for building custom auth.
+
+**Swappability:** All libraries, no services. Full control over your auth implementation.
 
 ## Better Auth Setup
 
@@ -122,12 +126,12 @@ bunx drizzle-kit migrate
 
 ## Protected Routes
 
-| Strategy | Use Case |
-|----------|----------|
-| Per-route `load` | **Recommended** - explicit protection |
-| Helper function | `requireAuth(event)` for consistency |
-| Form actions | Before mutations |
-| API routes | Check session |
+| Strategy | Technology | Use Case |
+|----------|------------|----------|
+| Per-route `load` | SvelteKit hooks | **Recommended** - explicit protection |
+| Helper function | Custom middleware | `requireAuth(event)` for consistency |
+| Form actions | SvelteKit actions | Before mutations |
+| API routes | Request validation | Check session |
 
 **Important:** Don't rely on layout `load` for auth - protect each route individually.
 
@@ -135,21 +139,23 @@ bunx drizzle-kit migrate
 
 ### Better Auth (Recommended)
 
-| Package | Purpose |
-|---------|---------|
-| `better-auth` | Full auth framework |
-| `better-auth/adapters/drizzle` | Database adapter |
-| `better-auth/svelte-kit` | SvelteKit integration |
-| `@better-auth/cli` | Schema generation |
+| Package | Technology | Purpose |
+|---------|------------|---------|
+| `better-auth` | Auth framework | Full auth framework |
+| `better-auth/adapters/drizzle` | ORM adapter | Database integration |
+| `better-auth/svelte-kit` | Framework adapter | SvelteKit integration |
+| `@better-auth/cli` | Code generation | Schema generation |
 
 ### DIY Sessions
 
-| Package | Purpose |
-|---------|---------|
-| `@oslojs/crypto` | SHA-256 hashing |
-| `@oslojs/encoding` | Base32/Hex encoding |
-| `@node-rs/argon2` | Password hashing |
-| `arctic` | OAuth providers |
+| Package | Technology | Purpose |
+|---------|------------|---------|
+| `@oslojs/crypto` | Cryptography | SHA-256 hashing |
+| `@oslojs/encoding` | Encoding | Base32/Hex encoding |
+| `@node-rs/argon2` | Password hashing | Argon2id implementation |
+| `arctic` | OAuth | 50+ OAuth providers |
+
+All packages are libraries with no external service dependencies.
 
 ## Related
 
