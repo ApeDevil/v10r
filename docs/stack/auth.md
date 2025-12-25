@@ -77,18 +77,39 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     },
   },
+  // CRITICAL: Cookie caching avoids DB hit on every request
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 5, // 5 minutes
+    },
+  },
 });
 ```
+
+> **Performance**: Without `cookieCache`, every request hits the database to validate the session. Enable it for production.
 
 ### SvelteKit Integration
 
 ```typescript
 // src/hooks.server.ts
+import { sequence } from '@sveltejs/kit/hooks';
 import { auth } from '$lib/server/auth';
-import { svelteKitHandler } from 'better-auth/svelte-kit';
+import type { Handle } from '@sveltejs/kit';
 
-export const handle = svelteKitHandler({ auth });
+// IMPORTANT: svelteKitHandler alone does NOT populate event.locals
+// You must manually populate locals for use in load functions
+const authHandle: Handle = async ({ event, resolve }) => {
+  const session = await auth.api.getSession({ headers: event.request.headers });
+  event.locals.session = session?.session ?? null;
+  event.locals.user = session?.user ?? null;
+  return resolve(event);
+};
+
+export const handle = sequence(authHandle);
 ```
+
+> **Gotcha**: Using `svelteKitHandler({ auth })` alone won't populate `event.locals`. You must call `auth.api.getSession()` and set locals manually.
 
 ### Client
 

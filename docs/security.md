@@ -10,7 +10,8 @@ Security practices for Velociraptor.
 |---------|----------|-------|
 | Authentication | Better Auth | Session-based, Postgres-backed |
 | Input Validation | Valibot + Superforms | Server-side validation |
-| Rate Limiting | Superforms | Built-in IP/cookie limiter |
+| Rate Limiting (Forms) | Superforms | Built-in IP/cookie limiter |
+| Rate Limiting (Global) | Upstash / sveltekit-rate-limiter | See Rate Limiting section |
 | CSRF Protection | SvelteKit | Automatic for form actions |
 | XSS Prevention | Svelte | Auto-escapes by default |
 | SQL Injection | Drizzle ORM | Parameterized queries |
@@ -18,6 +19,37 @@ Security practices for Velociraptor.
 ---
 
 ## Rate Limiting
+
+### Global Rate Limiting (Required)
+
+> **Critical**: Better Auth's built-in rate limiting is **BROKEN** (GitHub Issue #2153). Always implement external rate limiting.
+
+| Environment | Solution | Package |
+|-------------|----------|---------|
+| Production | Upstash Redis | `@upstash/ratelimit` |
+| Development | In-memory | `sveltekit-rate-limiter` |
+
+**Implementation in `hooks.server.ts`:**
+
+```typescript
+import { dev } from '$app/environment';
+
+let rateLimiter: any;
+
+if (dev) {
+  const { RateLimiter } = await import('sveltekit-rate-limiter/server');
+  rateLimiter = new RateLimiter({ IP: [100, '1m'] });
+} else {
+  const { Ratelimit } = await import('@upstash/ratelimit');
+  const { Redis } = await import('@upstash/redis');
+  rateLimiter = new Ratelimit({
+    redis: Redis.fromEnv(),
+    limiter: Ratelimit.slidingWindow(100, '1 m'),
+  });
+}
+```
+
+### Form Rate Limiting (Superforms)
 
 Superforms provides built-in rate limiting for form submissions.
 
@@ -29,13 +61,14 @@ Superforms provides built-in rate limiting for form submissions.
 
 **Recommended limits:**
 
-| Form Type | Limit |
-|-----------|-------|
+| Endpoint Type | Limit |
+|---------------|-------|
 | Login | 5 attempts / 15 min |
 | Registration | 3 attempts / hour |
 | Password Reset | 3 attempts / hour |
 | Contact Form | 5 submissions / hour |
 | API Endpoints | 100 requests / min |
+| AI Chat | 20 requests / min (per user) |
 
 ---
 

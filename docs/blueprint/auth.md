@@ -70,6 +70,11 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 30, // 30 days
     updateAge: 60 * 60 * 24, // Update session every 24 hours
+    // CRITICAL: Enable cookie caching to avoid DB hit on every request
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 5, // 5 minutes - revalidate session from DB every 5 min
+    },
   },
 });
 
@@ -543,20 +548,21 @@ export const actions = {
 | Session fixation | Handled |
 | Secure cookies | Default in production |
 | Password hashing | bcrypt (configurable) |
-| Rate limiting | Configurable |
+| Rate limiting | **BROKEN** - use external (see below) |
+| Session revocation | `revokeOtherSessions: true` |
 
 ### Rate Limiting
 
+> **Critical**: Better Auth's built-in rate limiting is **BROKEN** (GitHub Issue #2153). Do NOT rely on it.
+
 ```typescript
-// src/lib/server/auth.ts
+// BROKEN - DO NOT USE
 export const auth = betterAuth({
-  // ... config
-  rateLimit: {
-    window: 60, // 1 minute
-    max: 10, // 10 requests per window
-  },
+  rateLimit: { window: 60, max: 10 }, // This does NOT work!
 });
 ```
+
+**Use external rate limiting instead** - see [security.md](../security.md#rate-limiting) for implementation with Upstash (production) or sveltekit-rate-limiter (development).
 
 ### Custom Password Hashing
 
@@ -578,6 +584,60 @@ export const auth = betterAuth({
     },
   },
 });
+```
+
+### Session Cleanup (Required)
+
+> **Important**: Better Auth does NOT automatically clean up expired sessions. Without cleanup, your session table will grow indefinitely.
+
+**Create a cleanup job:**
+
+```typescript
+// src/lib/server/jobs/session-cleanup.ts
+import { db } from '$lib/server/db';
+import { session } from '$lib/server/db/schema';
+import { lt } from 'drizzle-orm';
+
+export async function cleanupExpiredSessions() {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 1); // 24h grace period
+
+  const result = await db
+    .delete(session)
+    .where(lt(session.expiresAt, cutoff))
+    .returning({ id: session.id });
+
+  return { deleted: result.length };
+}
+```
+
+**Create a cron endpoint:**
+
+```typescript
+// src/routes/api/cron/session-cleanup/+server.ts
+import { json, error } from '@sveltejs/kit';
+import { cleanupExpiredSessions } from '$lib/server/jobs/session-cleanup';
+
+export async function GET({ request }) {
+  const auth = request.headers.get('authorization');
+  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+    error(401, 'Unauthorized');
+  }
+
+  const result = await cleanupExpiredSessions();
+  return json({ success: true, ...result });
+}
+```
+
+**Schedule in `vercel.json`:**
+
+```json
+{
+  "crons": [{
+    "path": "/api/cron/session-cleanup",
+    "schedule": "0 2 * * *"
+  }]
+}
 ```
 
 ---
