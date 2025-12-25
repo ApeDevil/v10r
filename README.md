@@ -1,7 +1,10 @@
 # Velociraptor
-Is a full stack with focus of performance and lightweight with good free tier service options!
+
+A full-stack template focused on performance, lightweight deployment, and free-tier friendly services.
 
 > Fast and dangerous (in a good way).
+
+**Status:** Pre-scaffold planning phase
 
 ## Why "Velociraptor"?
 
@@ -10,30 +13,32 @@ Is a full stack with focus of performance and lightweight with good free tier se
 - **V** connection → **V**elocity + S**v**elte both share that V sound
 - The actual dinosaur name means **"swift thief"** in Latin (velox = swift, raptor = robber/thief)
 
+## Genesis
 
-## Architecture
+Each layer evolves from and is based on the previous:
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  Host Machine (macOS / Linux / Windows)                     │
-│                                                             │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │ Podman Container: Velociraptor                        │  │
-│  │                                                       │  │
-│  │  ┌─────────────────────────────────────────────────┐  │  │
-│  │  │ Bun + SvelteKit + adapter-bun                   │  │  │
-│  │  │                                                 │  │  │
-│  │  │  DEV:  bun run dev    (hot reload)              │  │  │
-│  │  │  PROD: bun run build && bun run preview         │  │  │
-│  │  └─────────────────────────────────────────────────┘  │  │
-│  │                                                       │  │
-│  │  Volume: ./src → /app/src  (live editing)             │  │
-│  │  Port: 5173 (dev) / 3000 (prod)                       │  │
-│  └───────────────────────────────────────────────────────┘  │
-│                                                             │
-│  Editor: VS Code → edits files on host                      │
-│          Changes sync instantly via volume mount            │
-└─────────────────────────────────────────────────────────────┘
+PRD → Stack → Blueprint
+requirements → tech choices → implementation
+```
+
+1. **[foundation/PRD.md](./docs/foundation/PRD.md)** — Source of truth (goals, requirements)
+2. **[stack/](./docs/stack/)** — Technology decisions based on PRD
+3. **[blueprint/](./docs/blueprint/)** — Implementation specs based on stack
+
+
+## Local Development
+
+```
+┌───────────────────────────────────────────┐
+│  Host Machine                             │
+│  ┌───────────────────────────────────┐    │
+│  │  Podman Container                 │    │
+│  │  ┌───────────────────────────┐    │    │
+│  │  │  Bun + SvelteKit          │    │    │
+│  │  └───────────────────────────┘    │    │
+│  └───────────────────────────────────┘    │
+└───────────────────────────────────────────┘
 ```
 
 ## Stack
@@ -41,4 +46,6 @@ Is a full stack with focus of performance and lightweight with good free tier se
 **Podman + Bun + SvelteKit** with relational database, graph database, and object storage.
 
 See [docs/stack/README.md](./docs/stack/README.md) for complete technology decisions.
+
+
 
