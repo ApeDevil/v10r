@@ -40,10 +40,9 @@ The project uses a self-documenting architecture where showcase pages serve as d
 
 | Path | Contents |
 |------|----------|
+| `docs/foundation/` | PRD, architecture, and security baseline |
 | `docs/stack/` | Technology decisions and configuration |
 | `docs/blueprint/` | Implementation designs and feature specs |
-| `docs/security.md` | Security practices and headers |
-| `docs/codebase-architecture.md` | SvelteKit patterns and project structure options |
 
 ## Agent Delegation Policy
 
