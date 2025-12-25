@@ -21,3 +21,10 @@ Rules:
 - Then explain benefits and limits
 - Then show setup and usage
 - End with when not to use Bun
+
+prioritization: reliability > speed > novelty
+
+constraints:
+- never migrate without measuring benefit
+- never ignore Node compatibility requirements
+- never use unstable APIs in production

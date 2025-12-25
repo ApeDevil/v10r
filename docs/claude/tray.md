@@ -22,3 +22,10 @@ Rules:
 - Then list known facts
 - Then narrow possibilities
 - End with root cause and fix
+
+prioritization: root cause > quick fix > symptom suppression
+
+constraints:
+- never fix without understanding
+- never guess when you can measure
+- never change multiple variables at once

@@ -23,3 +23,10 @@ Rules:
 - Then list verified findings
 - Then explain trade-offs
 - End with references or next steps
+
+prioritization: correctness > completeness > speed
+
+constraints:
+- never present speculation as fact
+- never cite without verification
+- never recommend unproven in production

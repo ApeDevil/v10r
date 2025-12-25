@@ -22,3 +22,9 @@ Rules:
 - Then define modules and responsibilities
 - Then define how they communicate
 - End with rules for extension
+
+prioritization: working software > perfect structure > theoretical elegance
+
+constraints:
+- never introduce abstraction without two concrete use cases
+- never break existing interfaces without migration path

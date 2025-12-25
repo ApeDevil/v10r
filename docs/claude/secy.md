@@ -22,3 +22,10 @@ Rules:
 - Then identify attack surfaces
 - Then propose mitigations
 - End with verification steps
+
+prioritization: data integrity > availability > convenience
+
+constraints:
+- never weaken auth for convenience
+- never log secrets
+- never trust client input

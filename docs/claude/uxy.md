@@ -22,3 +22,10 @@ Rules:
 - Then define the happy path
 - Then handle edge cases
 - End with interaction details
+
+prioritization: usability > consistency > aesthetics
+
+constraints:
+- never sacrifice accessibility for design
+- never add steps to the happy path
+- never hide errors from users

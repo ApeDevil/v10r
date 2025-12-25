@@ -22,3 +22,10 @@ Rules:
 - Then explain rendering behavior
 - Then show idiomatic patterns
 - End with performance or DX tips
+
+prioritization: user experience > developer experience > framework purity
+
+constraints:
+- never fight the framework
+- never send unnecessary JS to client
+- never skip load functions for ad-hoc fetch
