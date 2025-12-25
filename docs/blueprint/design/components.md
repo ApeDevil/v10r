@@ -903,6 +903,147 @@ Usage in sidebar:
 
 ---
 
+### Chatbot
+
+Persistent AI assistant modal. Opens via `⌘J` or sidebar trigger. Unlike QuickSearch (ephemeral), the chatbot maintains conversation history across modal close/reopen.
+
+See [ai/README.md](../ai/README.md) for full implementation details, provider configuration, and persistence strategies.
+
+```svelte
+<!-- src/lib/components/composites/chatbot/Chatbot.svelte -->
+<script lang="ts">
+  import { Dialog } from 'bits-ui';
+  import { Chat } from '@ai-sdk/svelte';
+  import { cn } from '$lib/utils/cn';
+  import { chatStore } from '$lib/stores/chat.svelte';
+  import ChatMessage from './ChatMessage.svelte';
+  import ChatInput from './ChatInput.svelte';
+  import Icon from '@iconify/svelte';
+
+  const chat = new Chat({
+    api: '/api/chat',
+    onFinish: (message) => {
+      chatStore.addMessage('assistant', message.content);
+    },
+  });
+
+  function handleSend(text: string) {
+    chatStore.addMessage('user', text);
+    chat.sendMessage({ text });
+  }
+</script>
+
+<!-- Global keyboard shortcut -->
+<svelte:window
+  onkeydown={(e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'j') {
+      e.preventDefault();
+      chatStore.toggle();
+    }
+  }}
+/>
+
+<Dialog.Root bind:open={chatStore.isOpen}>
+  <Dialog.Portal>
+    <Dialog.Overlay class="fixed inset-0 z-overlay bg-black/50" />
+    <Dialog.Content
+      class={cn(
+        'fixed left-1/2 top-1/2 z-modal -translate-x-1/2 -translate-y-1/2',
+        'flex h-[600px] w-full max-w-2xl flex-col',
+        'rounded-lg border border-border bg-bg shadow-xl'
+      )}
+    >
+      <!-- Header -->
+      <header class="flex items-center justify-between border-b border-border px-4 py-3">
+        <div class="flex items-center gap-2">
+          <Icon icon="lucide:bot" class="h-5 w-5 text-primary" />
+          <Dialog.Title class="font-semibold text-fg">AI Assistant</Dialog.Title>
+        </div>
+        <Dialog.Close class="rounded p-1.5 text-muted hover:bg-muted/10">
+          <Icon icon="lucide:x" class="h-4 w-4" />
+        </Dialog.Close>
+      </header>
+
+      <!-- Messages -->
+      <div class="flex-1 overflow-y-auto p-4">
+        {#each chat.messages as message (message.id)}
+          <ChatMessage role={message.role} parts={message.parts} />
+        {/each}
+      </div>
+
+      <!-- Input -->
+      <ChatInput onsubmit={handleSend} disabled={chat.isLoading} />
+    </Dialog.Content>
+  </Dialog.Portal>
+</Dialog.Root>
+```
+
+#### ChatbotTrigger (Sidebar)
+
+Adapts to sidebar collapsed/expanded state, similar to QuickSearchTrigger.
+
+```svelte
+<!-- src/lib/components/composites/chatbot/ChatbotTrigger.svelte -->
+<script lang="ts">
+  import Icon from '@iconify/svelte';
+  import { cn } from '$lib/utils/cn';
+  import { chatStore } from '$lib/stores/chat.svelte';
+
+  interface Props {
+    collapsed?: boolean;
+  }
+
+  let { collapsed = false }: Props = $props();
+</script>
+
+{#if collapsed}
+  <!-- Rail mode: icon only -->
+  <button
+    class="flex h-10 w-10 items-center justify-center rounded-md text-muted hover:bg-muted/10 hover:text-fg"
+    onclick={() => chatStore.open()}
+    aria-label="Open AI Assistant"
+  >
+    <Icon icon="lucide:bot" class="h-5 w-5" />
+  </button>
+{:else}
+  <!-- Expanded mode: fake input -->
+  <button
+    class={cn(
+      'flex h-9 w-full items-center gap-2 rounded-md border border-border bg-bg/50 px-3',
+      'text-muted hover:border-muted hover:text-fg'
+    )}
+    onclick={() => chatStore.open()}
+  >
+    <Icon icon="lucide:bot" class="h-4 w-4" />
+    <span class="flex-1 text-left text-sm">Ask AI...</span>
+    <kbd class="rounded bg-muted/20 px-1.5 py-0.5 text-xs">⌘J</kbd>
+  </button>
+{/if}
+```
+
+Usage in sidebar (alongside QuickSearch):
+
+```svelte
+<script>
+  import { QuickSearch, QuickSearchTrigger, Chatbot, ChatbotTrigger } from '$lib/components/composites';
+
+  let searchOpen = $state(false);
+</script>
+
+<!-- Sidebar header -->
+<div class="sidebar-header">
+  <SidebarLogo {collapsed} />
+  <QuickSearchTrigger {collapsed} onclick={() => searchOpen = true} />
+  <ChatbotTrigger {collapsed} />
+</div>
+
+<!-- Modals (rendered at root level) -->
+<QuickSearch bind:open={searchOpen} items={searchItems} />
+<Chatbot />
+```
+
+---
+
 ### Toast (using Svelte 5 state)
 
 ```typescript
@@ -1039,6 +1180,7 @@ Browse icons: [Iconify Icon Sets](https://icon-sets.iconify.design/)
 | Tabs | Primitive | Required |
 | Toast/Toaster | Composite | Required |
 | QuickSearch | Composite | Required |
+| Chatbot | Composite | Required |
 | PageHeader | Composite | Required |
 | Alert | Composite | Required |
 | Skeleton | Primitive | Required |
@@ -1104,6 +1246,12 @@ src/lib/
 │   │   │   ├── QuickSearch.svelte
 │   │   │   ├── QuickSearchTrigger.svelte
 │   │   │   └── index.ts
+│   │   ├── chatbot/
+│   │   │   ├── Chatbot.svelte
+│   │   │   ├── ChatbotTrigger.svelte
+│   │   │   ├── ChatMessage.svelte
+│   │   │   ├── ChatInput.svelte
+│   │   │   └── index.ts
 │   │   ├── page-header/
 │   │   │   ├── PageHeader.svelte
 │   │   │   └── index.ts
@@ -1120,7 +1268,13 @@ src/lib/
 │   └── index.ts                   # Root barrel export
 │
 ├── stores/
-│   └── toast.svelte.ts
+│   ├── toast.svelte.ts
+│   └── chat.svelte.ts             # AI chat state
+│
+├── server/
+│   └── ai/
+│       ├── provider.ts            # Provider abstraction
+│       └── config.ts              # Model configuration
 │
 └── utils/
     └── cn.ts                      # clsx wrapper
@@ -1144,6 +1298,8 @@ export { default as ConfirmDialog } from './confirm-dialog/ConfirmDialog.svelte'
 export { default as Toaster } from './toast/Toaster.svelte';
 export { default as QuickSearch } from './quick-search/QuickSearch.svelte';
 export { default as QuickSearchTrigger } from './quick-search/QuickSearchTrigger.svelte';
+export { default as Chatbot } from './chatbot/Chatbot.svelte';
+export { default as ChatbotTrigger } from './chatbot/ChatbotTrigger.svelte';
 export { default as PageHeader } from './page-header/PageHeader.svelte';
 // ...
 
@@ -1292,6 +1448,7 @@ UnoCSS utility: `sr-only` hides visually but keeps accessible.
 - [styling.md](./styling.md) - UnoCSS configuration, fluid scales
 - [forms.md](../forms.md) - Form patterns using these components
 - [app-shell.md](../app-shell.md) - Shell components (Sidebar, NavItem, etc.)
+- [ai/README.md](../ai/README.md) - AI Assistant implementation and provider configuration
 - [error-handling.md](../error-handling.md) - Error display with Toast
 - [pages.md](../pages.md) - `/showcase/ui` component gallery
 

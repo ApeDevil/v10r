@@ -111,15 +111,16 @@ Global navigation and search via keyboard shortcut or sidebar trigger.
 | **Keyboard** | `⌘K` / `Ctrl+K` | Opens QuickSearch from anywhere |
 | **Mobile FAB** | Optional 🔍 button | Opens QuickSearch |
 
-### Sidebar Search Trigger
+### Sidebar Header Triggers
 
-The sidebar header contains a search trigger that adapts to sidebar state:
+The sidebar header contains triggers for both QuickSearch and AI Assistant, adapting to sidebar state:
 
 ```
 Rail (56px):              Expanded (240px):
 ┌────┐                    ┌──────────────────────┐
 │ 🦖 │                    │  🦖 Velociraptor     │
 │ 🔍 │ ← icon only        │  🔍 Search...    ⌘K  │ ← styled as input
+│ 💬 │ ← icon only        │  💬 Ask AI...    ⌘J  │ ← styled as input
 ├────┤                    ├──────────────────────┤
 ```
 
@@ -183,6 +184,78 @@ src/lib/components/
 
 ---
 
+## AI Assistant
+
+Persistent, conversational AI chat accessible via sidebar trigger or keyboard shortcut.
+
+### Trigger Locations
+
+| Location | Element | Behavior |
+|----------|---------|----------|
+| **Sidebar header** | Chat input (visual) | Click opens AI Assistant |
+| **Keyboard** | `⌘J` / `Ctrl+J` | Opens AI Assistant from anywhere |
+
+### Key Differences from QuickSearch
+
+| Aspect | QuickSearch | AI Assistant |
+|--------|-------------|--------------|
+| **Purpose** | Navigation & actions | Conversational help |
+| **Interaction** | One-shot selection | Multi-turn conversation |
+| **State** | Ephemeral (resets on close) | Persistent (survives close) |
+| **Modal size** | `max-w-lg` | `max-w-2xl` |
+| **Backend** | None (client-side) | API endpoint + AI provider |
+
+### AI Assistant Modal
+
+```
+┌─────────────────────────────────────────────────────┐
+│  🤖 AI Assistant                        [🗑] [✕]   │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  ┌─────────────────────────────────────────────┐   │
+│  │ 👤 How do I create a new project?           │   │
+│  └─────────────────────────────────────────────┘   │
+│                                                     │
+│  ┌─────────────────────────────────────────────┐   │
+│  │ 🤖 To create a new project, navigate to...  │   │
+│  └─────────────────────────────────────────────┘   │
+│                                                     │
+│                  (scrollable)                       │
+│                                                     │
+├─────────────────────────────────────────────────────┤
+│  [Message input...                    ] [Send ▶]   │
+│  Press Enter to send, Shift+Enter for new line     │
+└─────────────────────────────────────────────────────┘
+```
+
+### Keyboard Navigation
+
+| Key | Action |
+|-----|--------|
+| `⌘J` / `Ctrl+J` | Open AI Assistant (global) |
+| `Escape` | Close AI Assistant |
+| `Enter` | Send message |
+| `Shift+Enter` | New line in input |
+
+### Component Location
+
+AI Assistant is a **composite component** (see [design/components.md](./design/components.md#chatbot)):
+
+```
+src/lib/components/
+├── composites/
+│   └── chatbot/
+│       ├── Chatbot.svelte             # Modal + chat logic
+│       ├── ChatbotTrigger.svelte      # Sidebar trigger (fake input)
+│       ├── ChatMessage.svelte         # Message bubble
+│       ├── ChatInput.svelte           # Input + send button
+│       └── index.ts
+```
+
+See [ai/README.md](./ai/README.md) for full implementation details, provider configuration, and persistence strategies.
+
+---
+
 ## Sidebar Anatomy
 
 The sidebar is divided into three zones:
@@ -190,7 +263,8 @@ The sidebar is divided into three zones:
 ```
 ┌──────────────────────┐
 │  🦖 Logo             │  ← Header: Branding
-│  🔍 Search...    ⌘K  │  ← Search trigger (opens Spotlight)
+│  🔍 Search...    ⌘K  │  ← Search trigger (opens QuickSearch)
+│  💬 Ask AI...    ⌘J  │  ← AI trigger (opens AI Assistant)
 ├──────────────────────┤
 │  🏠 Dashboard        │
 │  📁 Projects      ▼  │  ← Body: Navigation
@@ -570,6 +644,7 @@ For long pages, PageHeader can stick to top on scroll:
 
 ## Related
 
+- [ai/README.md](./ai/README.md) - AI Assistant implementation and provider configuration
 - [design/tokens.md](./design/tokens.md) - Z-index values and sidebar dimensions defined here
 - [state.md](./state.md) - Sidebar state management (open, pinned, toggle)
 - [design/styling.md](./design/styling.md) - Responsive breakpoints and fluid spacing
