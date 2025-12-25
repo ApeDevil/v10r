@@ -10,12 +10,12 @@ Is a tech stack, main parts: padman, bun, sveltekit
 - speed/perfomance
 - clean designed codebase
 - flexible UI
-- optimized for Desktop & Mobile
+- optimized for Mobile & Desktop
 - fast init of projects via the Velociraptor-Stack-Template
 
 # Requirements:
 - user management
-- versatile DB setup (postgres, graph, files)
+- versatile DB setup (relational, graph, files)
 - built-in API Gateway
 - internationalization/localization: ui & content
 

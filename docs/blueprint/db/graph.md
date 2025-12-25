@@ -1,8 +1,8 @@
-# Neo4j Graph Database
+# Graph Database
 
 Graph data model for relationships, navigation, and future RAG capabilities.
 
-**Provider:** [Neo4j Aura](../../stack/vendors.md#neo4j-aura) (managed) or self-hosted Neo4j Community.
+**Provider:** Neo4j via [Neo4j Aura](../../stack/vendors.md#neo4j-aura) (managed) or self-hosted Neo4j Community.
 
 ## When to Use Neo4j
 
@@ -526,7 +526,7 @@ scripts/
 
 ## Related
 
-- [postgres.md](./postgres.md) - Relational data (users, items)
+- [relational.md](./relational.md) - Relational data (users, items)
 - [README.md](./README.md) - When to use which database
 - [../api.md](../api.md) - API endpoints using graph queries
 - [../ai/graph-rag.md](../ai/graph-rag.md) - Graph RAG with Neo4j + vector embeddings

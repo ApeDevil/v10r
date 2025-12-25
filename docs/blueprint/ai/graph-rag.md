@@ -855,7 +855,7 @@ src/lib/server/
 - [README.md](./README.md) - AI architecture overview
 - [toon.md](./toon.md) - TOON format for token savings
 - [../db/graph.md](../db/graph.md) - Neo4j setup and basic model
-- [../db/postgres.md](../db/postgres.md) - pgvector for embeddings
+- [../db/relational.md](../db/relational.md) - pgvector for embeddings
 - [../../stack/vendors.md](../../stack/vendors.md) - Provider details
 
 ---

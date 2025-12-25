@@ -947,7 +947,7 @@ src/
 ## Related
 
 - [auth.md](./auth.md) - Authentication patterns, protected endpoint implementation
-- [db/postgres.md](./db/postgres.md) - Drizzle schema used in API queries
+- [db/relational.md](./db/relational.md) - Drizzle schema used in API queries
 - [db/graph.md](./db/graph.md) - Neo4j for relationship queries
 - [pages.md](./pages.md) - `/showcase/api` route with interactive API explorer
 

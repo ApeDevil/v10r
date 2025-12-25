@@ -81,7 +81,7 @@ Breaking a stack component breaks its showcase page. The failure is immediate an
 | [design/components.md](./design/components.md) | Bits UI primitives, CVA variants, composites |
 | [pages.md](./pages.md) | Route structure, showcase pages, what each tests |
 | [db/](./db/README.md) | Data layer overview and decision tree |
-| [db/postgres.md](./db/postgres.md) | Drizzle schema, Better Auth tables, migrations |
+| [db/relational.md](./db/relational.md) | Drizzle schema, Better Auth tables, migrations |
 | [db/graph.md](./db/graph.md) | Neo4j connection, Cypher queries, graph model |
 | [forms.md](./forms.md) | Superforms, Valibot validation, form patterns |
 | [app-shell.md](./app-shell.md) | Sidebar, navigation, responsive layout |

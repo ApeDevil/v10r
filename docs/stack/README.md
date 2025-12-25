@@ -41,4 +41,4 @@ Technology decisions for the Velociraptor template.
 
 | Doc | Contents |
 |-----|----------|
-| [Security](../security.md) | Security practices, headers, rate limiting |
+| [Security](../foundation/security.md) | Security practices, headers, rate limiting |

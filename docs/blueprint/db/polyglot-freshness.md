@@ -597,7 +597,7 @@ src/routes/api/cron/
 ## Related
 
 - [README.md](./README.md) - Polyglot persistence overview
-- [postgres.md](./postgres.md) - Drizzle schema
+- [relational.md](./relational.md) - Drizzle schema
 - [graph.md](./graph.md) - Neo4j queries
 - [../api.md](../api.md) - API endpoints
 

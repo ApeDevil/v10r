@@ -1,8 +1,8 @@
-# PostgreSQL Schema
+# Relational Database
 
 Drizzle ORM schema for relational data and Better Auth integration.
 
-**Provider:** [Neon](../../stack/vendors.md#neon) (serverless) or any PostgreSQL 16+ host.
+**Provider:** PostgreSQL via [Neon](../../stack/vendors.md#neon) (serverless) or any PostgreSQL 16+ host.
 
 ## Overview
 

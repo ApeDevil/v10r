@@ -20,7 +20,7 @@ Need to store data?
 │   └── Yes → R2 (files.md)
 │
 ├── Does it need ACID transactions?
-│   └── Yes → PostgreSQL (postgres.md)
+│   └── Yes → PostgreSQL (relational.md)
 │
 ├── Is it primarily about relationships between entities?
 │   └── Yes → Neo4j (graph.md)
@@ -87,7 +87,7 @@ No foreign keys across stores. References between Postgres, Neo4j, and R2 must b
 
 | File | Contents |
 |------|----------|
-| [postgres.md](./postgres.md) | Drizzle schema, Better Auth tables, migrations |
+| [relational.md](./relational.md) | Drizzle schema, Better Auth tables, migrations |
 | [graph.md](./graph.md) | Neo4j connection, Cypher queries, graph model |
 | [polyglot-freshness.md](./polyglot-freshness.md) | Cross-database reference integrity, orphan cleanup |
 
