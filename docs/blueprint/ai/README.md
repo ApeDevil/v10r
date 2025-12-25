@@ -29,116 +29,191 @@ The AI Assistant is a chat interface accessible from the sidebar header. Unlike 
 
 ## Strategy
 
-**Provider-agnostic** architecture using [Vercel AI SDK](https://ai-sdk.dev/).
+**Multi-provider architecture** using [Vercel AI SDK](https://ai-sdk.dev/) — best provider for each capability.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Vercel AI SDK (unified API)                  │
+├────────────────┬────────────────┬────────────────┬─────────────┤
+│     Chat       │   Embeddings   │     Image      │    Audio    │
+│     Groq       │    Mistral     │  Together AI   │ Groq Whisper│
+│  (14K req/day) │ (1B tokens/mo) │  (3mo free)    │ (free tier) │
+└────────────────┴────────────────┴────────────────┴─────────────┘
+```
+
+| Capability | Provider | Free Tier | AI SDK Package |
+|------------|----------|-----------|----------------|
+| **Chat** | Groq | 14,400 req/day | `@ai-sdk/groq` |
+| **Embeddings** | Mistral | 1B tokens/mo | `@ai-sdk/mistral` |
+| **Image Gen** | Together AI | 3 months unlimited | `@ai-sdk/togetherai` |
+| **Audio/STT** | Groq | 7,200 audio-sec/min | `@ai-sdk/groq` |
 
 | Layer | Purpose | Location |
 |-------|---------|----------|
 | **UI Components** | Chat modal, messages, input | `src/lib/components/composites/chatbot/` |
 | **State Management** | Conversation persistence | `src/lib/stores/chat.svelte.ts` |
-| **API Endpoint** | Streaming chat completions | `src/routes/api/chat/+server.ts` |
-| **Provider Abstraction** | Model configuration | `src/lib/server/ai/` |
+| **API Endpoints** | Streaming completions | `src/routes/api/ai/` |
+| **Provider Config** | Multi-provider setup | `src/lib/server/ai/` |
+
+### Why Multi-Provider?
+
+- **Cost:** Generous free tiers across providers ($0/mo for MVP)
+- **Speed:** Groq is 10x faster than competitors (300+ tokens/sec)
+- **Quality:** Best-in-class for each capability
+- **Flexibility:** Easy to swap individual providers
 
 ### Why Vercel AI SDK?
 
-- Framework-agnostic core with first-class SvelteKit support
-- Unified API across providers (Anthropic, OpenAI, Google, etc.)
+- Unified API across all providers
 - Built-in streaming with `toUIMessageStreamResponse()`
 - Type-safe message handling with `UIMessage` type
 - Tool/function calling support
+- First-class SvelteKit support
 
 ---
 
 ## Installation
 
 ```bash
+# Core AI SDK
 bun add ai @ai-sdk/svelte
-bun add @ai-sdk/anthropic  # or @ai-sdk/openai, @ai-sdk/google, etc.
+
+# Providers (install what you need)
+bun add @ai-sdk/groq          # Chat + Audio (Llama, Whisper)
+bun add @ai-sdk/mistral       # Embeddings
+bun add @ai-sdk/togetherai    # Image generation (FLUX)
+
+# Token optimization (optional but recommended)
+bun add @toon-format/toon     # 30-60% token savings for RAG context
 ```
 
 ---
 
 ## Provider Configuration
 
-### Provider Abstraction
+### Multi-Provider Setup
 
 ```typescript
-// src/lib/server/ai/provider.ts
-import { createAnthropic } from '@ai-sdk/anthropic';
-import { createOpenAI } from '@ai-sdk/openai';
-import { AI_PROVIDER, AI_API_KEY } from '$env/static/private';
+// src/lib/server/ai/providers.ts
+import { createGroq } from '@ai-sdk/groq';
+import { createMistral } from '@ai-sdk/mistral';
+import { createTogetherAI } from '@ai-sdk/togetherai';
+import {
+  GROQ_API_KEY,
+  MISTRAL_API_KEY,
+  TOGETHER_API_KEY,
+} from '$env/static/private';
 
-export type AIProvider = 'anthropic' | 'openai' | 'google';
+// ═══════════════════════════════════════════════════════════════
+// PROVIDER INSTANCES
+// ═══════════════════════════════════════════════════════════════
 
-const providers = {
-  anthropic: () => createAnthropic({ apiKey: AI_API_KEY }),
-  openai: () => createOpenAI({ apiKey: AI_API_KEY }),
-  // Add more providers as needed
+export const groq = createGroq({
+  apiKey: GROQ_API_KEY,
+});
+
+export const mistral = createMistral({
+  apiKey: MISTRAL_API_KEY,
+});
+
+export const together = createTogetherAI({
+  apiKey: TOGETHER_API_KEY,
+});
+
+// ═══════════════════════════════════════════════════════════════
+// CAPABILITY-SPECIFIC EXPORTS
+// ═══════════════════════════════════════════════════════════════
+
+export const providers = {
+  chat: groq,
+  embeddings: mistral,
+  image: together,
+  audio: groq,
 };
-
-export function getProvider() {
-  const provider = AI_PROVIDER as AIProvider;
-  const factory = providers[provider];
-
-  if (!factory) {
-    throw new Error(`Unknown AI provider: ${provider}`);
-  }
-
-  return factory();
-}
 ```
 
 ### Model Configuration
 
 ```typescript
 // src/lib/server/ai/config.ts
-import { AI_PROVIDER, AI_MODEL } from '$env/static/private';
 
 export const aiConfig = {
-  provider: AI_PROVIDER,
-  model: AI_MODEL,
+  // Models per capability
+  models: {
+    chat: 'llama-3.3-70b-versatile',      // Groq
+    embeddings: 'mistral-embed',           // Mistral
+    image: 'black-forest-labs/FLUX.1-schnell', // Together AI
+    audio: 'whisper-large-v3',             // Groq
+  },
 
-  // Default model per provider
-  defaultModels: {
-    anthropic: 'claude-sonnet-4-20250514',
-    openai: 'gpt-4o',
-    google: 'gemini-1.5-pro',
-  } as const,
-
-  // System prompt for the assistant
+  // System prompt for chat assistant
   systemPrompt: `You are a helpful assistant for the Velociraptor application.
 Be concise and helpful. Format responses with markdown when appropriate.`,
-};
 
-export function getModel() {
-  return AI_MODEL || aiConfig.defaultModels[AI_PROVIDER as keyof typeof aiConfig.defaultModels];
-}
+  // Rate limits (per user)
+  rateLimits: {
+    chat: { windowMs: 60_000, maxRequests: 20 },
+    image: { windowMs: 60_000, maxRequests: 5 },
+  },
+};
 ```
 
 ### Environment Variables
 
 ```bash
 # .env
-AI_PROVIDER=anthropic
-AI_API_KEY=sk-ant-...
-AI_MODEL=claude-sonnet-4-20250514  # Optional, uses default if not set
+
+# Groq (Chat + Audio)
+GROQ_API_KEY=gsk_...
+
+# Mistral (Embeddings)
+MISTRAL_API_KEY=...
+
+# Together AI (Image Generation)
+TOGETHER_API_KEY=...
+```
+
+### Provider Fallback (Optional)
+
+For high availability, configure fallback providers:
+
+```typescript
+// src/lib/server/ai/providers.ts
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+
+// Fallback if primary provider fails
+export const fallbackProviders = {
+  chat: createGoogleGenerativeAI({ apiKey: GOOGLE_API_KEY }),
+};
+
+export async function withFallback<T>(
+  primary: () => Promise<T>,
+  fallback: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await primary();
+  } catch (error) {
+    console.warn('Primary provider failed, using fallback:', error);
+    return fallback();
+  }
+}
 ```
 
 ---
 
-## API Endpoint
+## API Endpoints
 
-### Streaming Chat Endpoint
+### Chat Endpoint (Groq)
 
 ```typescript
-// src/routes/api/chat/+server.ts
+// src/routes/api/ai/chat/+server.ts
 import { json } from '@sveltejs/kit';
 import { streamText, convertToModelMessages, type UIMessage } from 'ai';
-import { getProvider } from '$lib/server/ai/provider';
-import { getModel, aiConfig } from '$lib/server/ai/config';
+import { providers } from '$lib/server/ai/providers';
+import { aiConfig } from '$lib/server/ai/config';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-  // Optional: require authentication
   if (!locals.user) {
     return json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -146,11 +221,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   try {
     const { messages }: { messages: UIMessage[] } = await request.json();
 
-    const provider = getProvider();
-    const model = getModel();
-
     const result = streamText({
-      model: provider(model),
+      model: providers.chat(aiConfig.models.chat),
       system: aiConfig.systemPrompt,
       messages: await convertToModelMessages(messages),
     });
@@ -159,6 +231,134 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   } catch (error) {
     console.error('Chat API error:', error);
     return json({ error: 'Failed to process chat request' }, { status: 500 });
+  }
+};
+```
+
+### Embeddings Endpoint (Mistral)
+
+```typescript
+// src/routes/api/ai/embed/+server.ts
+import { json } from '@sveltejs/kit';
+import { embed, embedMany } from 'ai';
+import { providers } from '$lib/server/ai/providers';
+import { aiConfig } from '$lib/server/ai/config';
+import type { RequestHandler } from './$types';
+
+export const POST: RequestHandler = async ({ request, locals }) => {
+  if (!locals.user) {
+    return json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const { text, texts } = await request.json();
+
+    // Single embedding
+    if (text) {
+      const { embedding } = await embed({
+        model: providers.embeddings.embedding(aiConfig.models.embeddings),
+        value: text,
+      });
+      return json({ embedding });
+    }
+
+    // Batch embeddings
+    if (texts) {
+      const { embeddings } = await embedMany({
+        model: providers.embeddings.embedding(aiConfig.models.embeddings),
+        values: texts,
+      });
+      return json({ embeddings });
+    }
+
+    return json({ error: 'Provide text or texts' }, { status: 400 });
+  } catch (error) {
+    console.error('Embed API error:', error);
+    return json({ error: 'Failed to generate embeddings' }, { status: 500 });
+  }
+};
+```
+
+### Image Generation Endpoint (Together AI)
+
+```typescript
+// src/routes/api/ai/image/+server.ts
+import { json } from '@sveltejs/kit';
+import { experimental_generateImage as generateImage } from 'ai';
+import { providers } from '$lib/server/ai/providers';
+import { aiConfig } from '$lib/server/ai/config';
+import type { RequestHandler } from './$types';
+
+export const POST: RequestHandler = async ({ request, locals }) => {
+  if (!locals.user) {
+    return json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const { prompt, size = '1024x1024' } = await request.json();
+
+    if (!prompt) {
+      return json({ error: 'Prompt is required' }, { status: 400 });
+    }
+
+    const { image } = await generateImage({
+      model: providers.image.image(aiConfig.models.image),
+      prompt,
+      size,
+    });
+
+    return json({
+      url: image.base64,
+      contentType: 'image/png',
+    });
+  } catch (error) {
+    console.error('Image API error:', error);
+    return json({ error: 'Failed to generate image' }, { status: 500 });
+  }
+};
+```
+
+### Audio Transcription Endpoint (Groq Whisper)
+
+```typescript
+// src/routes/api/ai/transcribe/+server.ts
+import { json } from '@sveltejs/kit';
+import { providers } from '$lib/server/ai/providers';
+import { aiConfig } from '$lib/server/ai/config';
+import type { RequestHandler } from './$types';
+
+export const POST: RequestHandler = async ({ request, locals }) => {
+  if (!locals.user) {
+    return json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const formData = await request.formData();
+    const audio = formData.get('audio') as File;
+
+    if (!audio) {
+      return json({ error: 'Audio file is required' }, { status: 400 });
+    }
+
+    // Use Groq's transcription API
+    const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: (() => {
+        const fd = new FormData();
+        fd.append('file', audio);
+        fd.append('model', aiConfig.models.audio);
+        return fd;
+      })(),
+    });
+
+    const result = await response.json();
+    return json({ text: result.text });
+  } catch (error) {
+    console.error('Transcribe API error:', error);
+    return json({ error: 'Failed to transcribe audio' }, { status: 500 });
   }
 };
 ```
@@ -684,6 +884,7 @@ export async function POST({ request, locals }) {
 | **Input Validation** | Validate message format before sending to provider |
 | **Content Moderation** | Optional: Add content filtering before/after |
 | **Cost Control** | Set max tokens, implement usage tracking |
+| **GDPR Consent** | Require opt-in before first AI use (see [gdpr.md](../../stack/gdpr.md#ai-data-processing)) |
 
 ### Rate Limiting Example
 
@@ -744,16 +945,25 @@ src/
 │   │   └── ui.svelte.ts
 │   └── server/
 │       └── ai/
-│           ├── provider.ts
-│           └── config.ts
+│           ├── providers.ts     # Multi-provider setup (Groq, Mistral, Together)
+│           └── config.ts        # Models and system prompts
 ├── routes/
 │   └── api/
-│       └── chat/
-│           └── +server.ts
+│       └── ai/
+│           ├── chat/
+│           │   └── +server.ts   # Chat endpoint (Groq)
+│           ├── embed/
+│           │   └── +server.ts   # Embeddings endpoint (Mistral)
+│           ├── image/
+│           │   └── +server.ts   # Image generation (Together AI)
+│           └── transcribe/
+│               └── +server.ts   # Audio transcription (Groq Whisper)
 └── ...
 
 docs/blueprint/ai/
 ├── README.md          # This file
+├── toon.md            # TOON format for token optimization
+├── graph-rag.md       # Hybrid retrieval with knowledge graphs
 ├── providers.md       # Provider-specific setup (future)
 └── persistence.md     # Storage strategies (future)
 ```
@@ -762,10 +972,15 @@ docs/blueprint/ai/
 
 ## Related
 
+- [toon.md](./toon.md) - TOON format for token-efficient RAG context
+- [graph-rag.md](./graph-rag.md) - Hybrid retrieval with Neo4j knowledge graphs
 - [app-shell.md](../app-shell.md) - Sidebar integration
 - [design/components.md](../design/components.md) - Component patterns
 - [state.md](../state.md) - State management patterns
-- [api.md](../api.md) - API endpoint patterns
+- [error-handling.md](../error-handling.md) - AI error patterns
+- [../../stack/vendors.md](../../stack/vendors.md#ai-providers-multi-provider-architecture) - AI provider details and alternatives
+- [../../stack/gdpr.md](../../stack/gdpr.md#ai-data-processing) - AI consent and compliance
+- [../../stack/logging.md](../../stack/logging.md#ai-request-logging) - AI request logging patterns
 
 ---
 
@@ -773,5 +988,9 @@ docs/blueprint/ai/
 
 - [Vercel AI SDK - Svelte](https://ai-sdk.dev/docs/getting-started/svelte)
 - [AI SDK Introduction](https://ai-sdk.dev/docs/introduction)
-- [@ai-sdk/svelte Package](https://www.npmjs.com/package/@ai-sdk/svelte)
-- [Vercel AI Chatbot (SvelteKit)](https://github.com/vercel/ai-chatbot-svelte)
+- [AI SDK Providers](https://ai-sdk.dev/providers/ai-sdk-providers)
+- [Groq AI SDK](https://ai-sdk.dev/providers/ai-sdk-providers/groq)
+- [Mistral AI SDK](https://ai-sdk.dev/providers/ai-sdk-providers/mistral)
+- [Together AI SDK](https://ai-sdk.dev/providers/ai-sdk-providers/togetherai)
+- [Groq Rate Limits](https://console.groq.com/docs/rate-limits)
+- [Groq Whisper STT](https://console.groq.com/docs/speech-to-text)

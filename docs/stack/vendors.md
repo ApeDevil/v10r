@@ -17,6 +17,10 @@ All external services used by Velociraptor. This separates **what technology** w
 
 | Capability | Technology | Provider | Swappability |
 |------------|------------|----------|--------------|
+| AI Chat | Vercel AI SDK | **Groq** | Easy |
+| AI Embeddings | Vercel AI SDK | **Mistral** | Easy |
+| AI Image Gen | Vercel AI SDK | **Together AI** | Easy |
+| AI Audio/STT | Vercel AI SDK | **Groq** | Easy |
 | Relational DB | PostgreSQL | **Neon** | Easy |
 | Graph DB | Neo4j | **Neo4j Aura** | Medium |
 | Object Storage | S3 API | **Cloudflare R2** | Easy |
@@ -40,6 +44,9 @@ All external services used by Velociraptor. This separates **what technology** w
 
 | Provider | Free Tier | Paid Starts At | Notes |
 |----------|-----------|----------------|-------|
+| **Groq** | 14,400 req/day | $0.05/1M tokens | Fastest inference, Llama 3.3 70B |
+| **Mistral** | 1B tokens/mo | $0.10/1M tokens | Embeddings included |
+| **Together AI** | 3 months unlimited | ~$0.003/image | FLUX Schnell |
 | **Neon** | 0.5 GB, 100 CU-hours/mo | $19/mo | Sleeps after 5min inactivity |
 | **Vercel** | 100 GB bandwidth/mo | $20/mo | Hobby tier, 1 concurrent build |
 | **Cloudflare R2** | 10 GB, 10M reads, 1M writes | $0.015/GB/mo | Zero egress fees |
@@ -59,6 +66,9 @@ All external services used by Velociraptor. This separates **what technology** w
 
 | Provider | GDPR | DPA Available | EU Region | SOC 2 |
 |----------|------|---------------|-----------|-------|
+| **Groq** | Yes | Yes | No (US) | Yes |
+| **Mistral** | Yes | Yes | Yes (EU-based) | Yes |
+| **Together AI** | Yes | Yes | No (US) | Yes |
 | **Neon** | Yes | Yes | Yes | Yes |
 | **Vercel** | Yes | Yes | Edge (global) | Yes |
 | **Cloudflare** | Yes | Yes | Yes | Yes |
@@ -72,6 +82,102 @@ All providers have Data Processing Agreements (DPAs) available. See [gdpr.md](./
 ---
 
 ## Provider Details
+
+### AI Providers (Multi-Provider Architecture)
+
+We use a **multi-provider architecture** with Vercel AI SDK, selecting the best provider for each AI capability while maximizing free tier usage.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Vercel AI SDK (unified API)              │
+├──────────────┬──────────────┬──────────────┬───────────────┤
+│    Chat      │  Embeddings  │    Image     │    Audio      │
+│    Groq      │   Mistral    │  Together AI │  Groq Whisper │
+└──────────────┴──────────────┴──────────────┴───────────────┘
+```
+
+#### Groq (Chat + Audio)
+
+**What:** Ultra-fast LLM inference and speech-to-text
+**Technology:** Vercel AI SDK (`@ai-sdk/groq`)
+
+| Capability | Model | Free Tier |
+|------------|-------|-----------|
+| Chat | Llama 3.3 70B | 14,400 req/day |
+| Audio/STT | Whisper Large v3 | 7,200 audio-sec/min |
+
+| Feature | Details |
+|---------|---------|
+| Speed | 300+ tokens/sec (10x faster than competitors) |
+| Streaming | Native support via AI SDK |
+| Credit Card | Not required for free tier |
+
+**Alternatives:**
+| Provider | Trade-off |
+|----------|-----------|
+| Cerebras | Similar speed, different models |
+| Google Gemini | Multimodal, but slower |
+| OpenRouter | 30+ free models, lower limits |
+
+#### Mistral (Embeddings)
+
+**What:** Vector embeddings for semantic search and RAG
+**Technology:** Vercel AI SDK (`@ai-sdk/mistral`)
+
+| Capability | Model | Free Tier |
+|------------|-------|-----------|
+| Embeddings | mistral-embed | 1B tokens/mo |
+| Chat (backup) | mistral-small | 1B tokens/mo (shared) |
+
+| Feature | Details |
+|---------|---------|
+| Dimensions | 1024 |
+| EU-based | Yes (GDPR-friendly) |
+| Quality | Competitive with OpenAI |
+
+**Alternatives:**
+| Provider | Trade-off |
+|----------|-----------|
+| Google Gemini | 768 dimensions, included in chat tier |
+| Cohere | 1K req/mo (limited) |
+| Voyage AI | 50M tokens/mo, highest quality |
+| Jina AI | 1M tokens/mo, no AI SDK support |
+
+#### Together AI (Image Generation)
+
+**What:** AI image generation with FLUX models
+**Technology:** Vercel AI SDK (`@ai-sdk/togetherai`)
+
+| Capability | Model | Free Tier |
+|------------|-------|-----------|
+| Image Gen | FLUX.1 Schnell | 3 months unlimited |
+| Image Gen | FLUX.1 Dev | Pay-as-you-go |
+
+| Feature | Details |
+|---------|---------|
+| Speed | ~1-2 sec per image |
+| Quality | State-of-the-art (FLUX) |
+| Resolution | Up to 1024x1024 |
+
+**Alternatives:**
+| Provider | Trade-off |
+|----------|-----------|
+| Replicate | 50 gen/mo free, more models |
+| fal.ai | Fast, has free tier |
+| Stability AI | Free for <$1M revenue orgs |
+
+#### Provider Comparison Summary
+
+| Capability | Provider | Free Tier | Why Chosen |
+|------------|----------|-----------|------------|
+| **Chat** | Groq | 14,400 req/day | Fastest, generous |
+| **Embeddings** | Mistral | 1B tokens/mo | EU-based, massive quota |
+| **Image** | Together AI | 3mo unlimited | Best free offer |
+| **Audio** | Groq | 7,200 sec/min | Already using Groq |
+
+**Migration:** Each provider is independent. Change in `src/lib/server/ai/providers.ts`. See [blueprint/ai/README.md](../blueprint/ai/README.md).
+
+---
 
 ### Neon
 
@@ -283,6 +389,9 @@ See [../blueprint/db/README.md](../blueprint/db/README.md) for container setup.
 
 | Variable | Provider | Purpose |
 |----------|----------|---------|
+| `GROQ_API_KEY` | Groq | Chat + Audio API key |
+| `MISTRAL_API_KEY` | Mistral | Embeddings API key |
+| `TOGETHER_API_KEY` | Together AI | Image generation API key |
 | `DATABASE_URL` | Neon | Postgres connection |
 | `NEO4J_URI` | Neo4j Aura | Graph connection |
 | `NEO4J_USER` | Neo4j Aura | Graph auth |

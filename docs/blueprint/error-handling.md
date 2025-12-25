@@ -530,6 +530,128 @@ Svelte 5 introduces error boundaries with `<svelte:boundary>`:
 
 ---
 
+## AI Error Handling
+
+AI requests have unique failure modes. Handle them gracefully.
+
+### AI Error Types
+
+| Error | Cause | User Message |
+|-------|-------|--------------|
+| `401` | Invalid API key | "AI service unavailable" |
+| `429` | Rate limited | "Too many requests. Try again shortly." |
+| `500` | Provider outage | "AI service temporarily unavailable" |
+| `timeout` | Slow response | "Response taking too long. Try again." |
+| `stream_error` | Connection dropped | "Connection lost. Please retry." |
+
+### AI API Error Handling
+
+```typescript
+// src/routes/api/chat/+server.ts
+import { json } from '@sveltejs/kit';
+import { streamText } from 'ai';
+import { APIError } from '@ai-sdk/provider';
+
+export const POST: RequestHandler = async ({ request, locals }) => {
+  if (!locals.user) {
+    return json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const { messages } = await request.json();
+    const result = streamText({ model, messages, system });
+    return result.toUIMessageStreamResponse();
+  } catch (error) {
+    // Provider-specific errors
+    if (error instanceof APIError) {
+      console.error('AI API error:', {
+        status: error.status,
+        message: error.message,
+        provider: 'groq',  // or 'mistral', 'together'
+      });
+
+      if (error.status === 429) {
+        return json(
+          { error: 'Too many requests. Please try again shortly.' },
+          { status: 429 }
+        );
+      }
+
+      if (error.status === 401 || error.status === 403) {
+        return json(
+          { error: 'AI service configuration error' },
+          { status: 503 }
+        );
+      }
+    }
+
+    // Generic fallback
+    console.error('Chat error:', error);
+    return json(
+      { error: 'Failed to get AI response. Please try again.' },
+      { status: 500 }
+    );
+  }
+};
+```
+
+### Client-Side Streaming Errors
+
+```svelte
+<script lang="ts">
+  import { Chat } from '@ai-sdk/svelte';
+
+  const chat = new Chat({
+    api: '/api/chat',
+    onError: (error) => {
+      // Show user-friendly message
+      if (error.message.includes('429')) {
+        toast.error('Too many requests. Please wait a moment.');
+      } else {
+        toast.error('Failed to get response. Please try again.');
+      }
+    },
+  });
+</script>
+```
+
+### Retry Pattern for AI
+
+```typescript
+// src/lib/utils/ai-retry.ts
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  options = { maxRetries: 3, delayMs: 1000 }
+): Promise<T> {
+  let lastError: Error;
+
+  for (let i = 0; i < options.maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+
+      // Don't retry auth errors
+      if (error instanceof APIError && error.status === 401) {
+        throw error;
+      }
+
+      // Exponential backoff for rate limits
+      if (error instanceof APIError && error.status === 429) {
+        await new Promise(r => setTimeout(r, options.delayMs * Math.pow(2, i)));
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw lastError!;
+}
+```
+
+---
+
 ## Testing Errors
 
 ```typescript
@@ -572,3 +694,4 @@ describe('Item page', () => {
 - [middleware.md](./middleware.md) - `handleError` hook integration
 - [api.md](./api.md) - API validation and error responses
 - [auth.md](./auth.md) - Authentication error handling
+- [ai/README.md](./ai/README.md) - AI assistant implementation

@@ -8,11 +8,14 @@ API patterns, external services, background jobs, and i18n.
 |-------|------------|----------|-----|
 | API Style | **REST + Server Actions** | SvelteKit | Framework-native |
 | API Docs | **OpenAPI** | Scalar | Modern UI, spec-driven |
+| AI / LLM | **Vercel AI SDK** | [Anthropic](./vendors.md#anthropic) | Streaming, provider-agnostic |
 | Analytics | **Web Analytics** | [Vercel](./vendors.md#vercel) | Cookieless, zero config |
 | Error Tracking | **Sentry SDK** | [Sentry](./vendors.md#sentry) | 5K errors/mo free |
 | Email | **SMTP/API** | [Resend](./vendors.md#resend) | 100 emails/day free |
 
 See [vendors.md](./vendors.md) for alternatives and migration guides.
+
+**AI:** Streaming chat via `/api/chat`. Provider-agnostic with AI SDK. See [blueprint/ai/README.md](../blueprint/ai/README.md).
 
 ## Background Jobs
 

@@ -529,3 +529,4 @@ scripts/
 - [postgres.md](./postgres.md) - Relational data (users, items)
 - [README.md](./README.md) - When to use which database
 - [../api.md](../api.md) - API endpoints using graph queries
+- [../ai/graph-rag.md](../ai/graph-rag.md) - Graph RAG with Neo4j + vector embeddings

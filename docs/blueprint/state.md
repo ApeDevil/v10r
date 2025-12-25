@@ -1011,6 +1011,7 @@ setContext('user', user);
 src/lib/
 ├── stores/
 │   ├── ui.svelte.ts          # Sidebar, theme, locale state
+│   ├── chat.svelte.ts        # AI assistant state (see ai/README.md)
 │   ├── toast.svelte.ts       # Toast notifications
 │   ├── todos.svelte.ts       # Factory pattern example
 │   └── context.ts            # Type-safe context helpers
@@ -1044,6 +1045,7 @@ src/lib/
 - [app-shell.md](./app-shell.md) - Sidebar component consuming sidebar state
 - [design/styling.md](./design/styling.md) - Theme CSS variables applied by themeStore
 - [i18n.md](./i18n.md) - Locale/language state management (handled by sveltekit-i18n)
+- [ai/README.md](./ai/README.md) - AI assistant chat state with persistence
 
 ---
 

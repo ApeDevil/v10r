@@ -92,12 +92,87 @@ Deleted users: replace email with `deleted-{userId}@anonymized.local`, displayNa
 
 Separate identity from usage. Users table has PII (email, name). Analytics references user_id without PII.
 
+## AI Data Processing
+
+The AI assistant processes user messages through third-party AI providers. Special considerations apply.
+
+### Data Flow
+
+```
+User Message → Your Server → AI Provider → Response → User
+              (no storage)   (processed)
+```
+
+### AI-Specific Requirements
+
+| Requirement | Implementation |
+|-------------|----------------|
+| **Consent** | Explicit opt-in before first AI use |
+| **Transparency** | Disclose AI provider in privacy policy |
+| **Right to Erasure** | Clear chat history on request |
+| **Data Minimization** | Don't send unnecessary context |
+| **Retention** | sessionStorage by default (ephemeral) |
+
+### AI Consent Pattern
+
+The AI assistant requires consent separate from general app consent:
+
+```typescript
+// src/lib/stores/consent.svelte.ts
+let aiConsent = $state(browser ? localStorage.getItem('ai-consent') === 'true' : false);
+
+export const consent = {
+  get hasAiConsent() { return aiConsent; },
+  grantAiConsent() {
+    aiConsent = true;
+    if (browser) localStorage.setItem('ai-consent', 'true');
+  },
+  revokeAiConsent() {
+    aiConsent = false;
+    if (browser) localStorage.removeItem('ai-consent');
+  },
+};
+```
+
+### AI in Privacy Policy
+
+Add to privacy policy:
+
+- [ ] AI assistant feature description
+- [ ] Provider names (Groq, Mistral, Together AI)
+- [ ] Data sent to each provider (messages, embeddings, images, audio)
+- [ ] Provider's data retention policy
+- [ ] How to opt out of AI features
+- [ ] How to delete AI conversation history
+
+### Provider Data Handling
+
+We use multiple AI providers for different capabilities:
+
+| Provider | Capability | Data Retention | Training | Region | DPA |
+|----------|------------|----------------|----------|--------|-----|
+| **Groq** | Chat, Audio | Not stored | No | US | [Available](https://groq.com/privacy-policy/) |
+| **Mistral** | Embeddings | 30 days | Opt-out | EU (France) | [Available](https://mistral.ai/terms/) |
+| **Together AI** | Images | Not stored | No | US | [Available](https://www.together.ai/privacy) |
+
+**Privacy advantages:**
+- **Groq & Together AI** do not retain or use API data for training
+- **Mistral** is EU-based (GDPR-native), best for strict EU compliance
+- All providers offer enterprise DPAs on request
+
+**Note:** API usage has stricter data handling than consumer apps. Verify current policies for your use case.
+
+---
+
 ## Third-Party Services
 
 All services must be GDPR-compliant with DPAs. See [vendors.md](./vendors.md) for the complete vendor registry.
 
 | Service | GDPR | DPA | EU Region |
 |---------|------|-----|-----------|
+| **Groq** | Yes | Available | No (US) |
+| **Mistral** | Yes | Available | Yes (EU-native) |
+| **Together AI** | Yes | Available | No (US) |
 | **Vercel** | Yes | Available | Edge |
 | **Neon** | Yes | Available | Yes |
 | **Cloudflare R2** | Yes | Available | Yes |

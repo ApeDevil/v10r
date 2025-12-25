@@ -97,6 +97,7 @@ All options use the same technology (structured JSON to stdout). Swappable by ch
 - External API calls (with duration)
 - Database errors
 - Background job start/complete/fail
+- AI requests (userId, model, token counts, duration, cost)
 
 ### Never Log
 
@@ -105,10 +106,52 @@ All options use the same technology (structured JSON to stdout). Swappable by ch
 - Personal health information
 - Session tokens
 - API keys
+- Full AI prompts/responses (PII risk, storage costs)
+- User message content sent to AI
 
 ### Sanitization
 
 Redact sensitive fields (password, token, secret, apiKey, creditCard) before logging.
+
+### AI Request Logging
+
+Log AI requests for cost tracking and debugging, but never log message content:
+
+```typescript
+// src/routes/api/chat/+server.ts
+const startTime = Date.now();
+
+const result = streamText({ model, messages, system });
+
+// Log after completion (via onFinish or after stream)
+log.info({
+  context: 'ai',
+  userId: locals.user?.id,
+  provider: 'groq',  // or 'mistral', 'together'
+  model: 'llama-3.3-70b-versatile',
+  inputTokens: result.usage?.promptTokens,
+  outputTokens: result.usage?.completionTokens,
+  duration: Date.now() - startTime,
+  // Estimated cost (calculate from token counts)
+  costUsd: calculateCost(result.usage),
+});
+```
+
+**What to log:**
+| Field | Purpose |
+|-------|---------|
+| `userId` | Usage tracking per user |
+| `provider` | Which AI provider |
+| `model` | Model version used |
+| `inputTokens` | Request size |
+| `outputTokens` | Response size |
+| `duration` | Latency monitoring |
+| `costUsd` | Cost tracking |
+
+**What NOT to log:**
+- Message content (PII, GDPR)
+- System prompts (may contain secrets)
+- Full request/response payloads
 
 ## Environment Variables
 
