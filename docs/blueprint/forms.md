@@ -797,7 +797,7 @@ src/
 | Timing | Real-time with 300ms debounce |
 | Errors | Inline + form message + toast |
 | Enhancement | `use:enhance` for no-reload |
-| Files | `withFiles()` + Sharp + R2 |
+| Files | `withFiles()` + Sharp + [R2](../stack/vendors.md#cloudflare-r2) |
 
 ---
 

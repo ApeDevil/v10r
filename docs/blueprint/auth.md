@@ -2,19 +2,21 @@
 
 Session-based authentication using Better Auth with Drizzle ORM.
 
+**Technology:** Session-based auth (library, not a service). See [stack/auth.md](../../stack/auth.md) for alternatives.
+
 ---
 
 ## Strategy
 
 **Better Auth** for production-ready features with minimal setup.
 
-| Component | Choice | Why |
-|-----------|--------|-----|
-| Framework | Better Auth | TypeScript-first, batteries-included |
-| Adapter | Drizzle | Native integration, auto-schema |
-| Sessions | Database-stored | Immediate revocation, no JWT complexity |
-| 2FA | Built-in TOTP | No additional libraries |
-| OAuth | Built-in | 20+ providers supported |
+| Component | Technology | Provider | Why |
+|-----------|------------|----------|-----|
+| Framework | Session auth | Better Auth | TypeScript-first, batteries-included |
+| Adapter | ORM integration | Drizzle | Native integration, auto-schema |
+| Sessions | Database sessions | [Neon](../../stack/vendors.md#neon) | Immediate revocation, no JWT complexity |
+| 2FA | TOTP | Built-in | No additional libraries |
+| OAuth | OAuth 2.0 | Built-in | 20+ providers supported |
 
 ### Why Better Auth
 

@@ -253,12 +253,12 @@ CRUD operations with master-detail pattern.
 
 File upload and image processing.
 
-| Tests | Stack |
-|-------|-------|
-| Upload handling | SvelteKit form actions |
-| Storage | Cloudflare R2 |
-| Image processing | Sharp |
-| Presigned URLs | S3 SDK |
+| Tests | Technology | Provider |
+|-------|------------|----------|
+| Upload handling | Form actions | SvelteKit |
+| Storage | S3 API | [Cloudflare R2](../../stack/vendors.md#cloudflare-r2) |
+| Image processing | Sharp | Library |
+| Presigned URLs | S3 SDK | @aws-sdk/client-s3 |
 
 **Page content:**
 - Single file upload
@@ -342,11 +342,11 @@ Motion and transitions.
 
 Neo4j visualization and graph queries.
 
-| Tests | Stack |
-|-------|-------|
-| Graph queries | Neo4j driver |
-| Visualization | D3-force or similar |
-| Relationships | Cypher queries |
+| Tests | Technology | Provider |
+|-------|------------|----------|
+| Graph queries | Cypher | [Neo4j Aura](../../stack/vendors.md#neo4j-aura) |
+| Visualization | D3-force | Library |
+| Relationships | Graph traversal | neo4j-driver |
 
 **Page content:**
 - Interactive graph visualization
@@ -407,21 +407,21 @@ export async function load(event) {
 
 User's authenticated home.
 
-| Tests | Stack |
-|-------|-------|
-| Session | Better Auth (Postgres) |
-| User data | `auth.api.getSession()` |
-| Protected content | Per-route guards |
+| Tests | Technology | Provider |
+|-------|------------|----------|
+| Session | Database sessions | Better Auth + [Neon](../../stack/vendors.md#neon) |
+| User data | `auth.api.getSession()` | Better Auth |
+| Protected content | Per-route guards | SvelteKit |
 
 ### /app/settings
 
 User preferences with form handling.
 
-| Tests | Stack |
-|-------|-------|
-| Form + auth | Combined patterns |
-| User updates | Drizzle mutations |
-| Theme preference | Stored in DB |
+| Tests | Technology | Provider |
+|-------|------------|----------|
+| Form + auth | Combined patterns | Superforms + Better Auth |
+| User updates | ORM mutations | Drizzle |
+| Theme preference | Database storage | [Neon](../../stack/vendors.md#neon) |
 
 ### /app/account
 
@@ -439,30 +439,30 @@ GDPR compliance routes.
 
 ### /auth/login
 
-| Tests | Stack |
-|-------|-------|
-| Credentials | Better Auth `signIn.email()` |
-| OAuth | Better Auth `signIn.social()` |
-| Session creation | Better Auth (Postgres) |
-| Redirect | Return to previous page |
-| Rate limiting | Better Auth built-in |
+| Tests | Technology | Provider |
+|-------|------------|----------|
+| Credentials | Email/password | Better Auth |
+| OAuth | OAuth 2.0 | Better Auth (20+ providers) |
+| Session creation | Database sessions | [Neon](../../stack/vendors.md#neon) |
+| Redirect | URL handling | SvelteKit |
+| Rate limiting | Request limiting | Better Auth built-in |
 
 ### /auth/register
 
-| Tests | Stack |
-|-------|-------|
-| User creation | Better Auth `signUp.email()` |
-| Password hashing | Better Auth (bcrypt/Argon2) |
-| Validation | Valibot + Better Auth |
-| Email verification | Better Auth plugin |
+| Tests | Technology | Provider |
+|-------|------------|----------|
+| User creation | Account creation | Better Auth |
+| Password hashing | Argon2id/bcrypt | Better Auth |
+| Validation | Schema validation | Valibot |
+| Email verification | Token verification | Better Auth plugin |
 
 ### /auth/forgot-password
 
-| Tests | Stack |
-|-------|-------|
-| Reset flow | Better Auth `forgetPassword()` |
-| Email sending | Better Auth + Resend |
-| Token validation | Better Auth built-in |
+| Tests | Technology | Provider |
+|-------|------------|----------|
+| Reset flow | Token flow | Better Auth |
+| Email sending | Transactional email | [Resend](../../stack/vendors.md#resend) |
+| Token validation | Secure tokens | Better Auth built-in |
 
 ---
 

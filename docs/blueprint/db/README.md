@@ -6,9 +6,11 @@ Velociraptor uses a polyglot persistence strategy: the right database for each j
 
 | Database | Provider | Use For |
 |----------|----------|---------|
-| **PostgreSQL** | Neon | Users, sessions, CRUD entities, transactional data |
-| **Neo4j** | Neo4j Aura | Relationships, navigation graphs, future RAG |
-| **R2** | Cloudflare | Binary files, images, uploads |
+| **PostgreSQL** | [Neon](../../stack/vendors.md#neon) | Users, sessions, CRUD entities, transactional data |
+| **Neo4j** | [Neo4j Aura](../../stack/vendors.md#neo4j-aura) | Relationships, navigation graphs, future RAG |
+| **S3 API** | [Cloudflare R2](../../stack/vendors.md#cloudflare-r2) | Binary files, images, uploads |
+
+See [vendors.md](../../stack/vendors.md) for costs, alternatives, and migration guides.
 
 ## Decision Tree
 
@@ -53,7 +55,7 @@ No foreign keys across stores. References between Postgres, Neo4j, and R2 must b
 - Future: RAG for semantic search
 - Knowledge graphs
 
-### Cloudflare R2
+### R2 / S3-Compatible Storage
 
 - User uploads (images, documents)
 - Generated files (exports, reports)

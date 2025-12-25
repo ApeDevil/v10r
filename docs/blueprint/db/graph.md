@@ -2,6 +2,8 @@
 
 Graph data model for relationships, navigation, and future RAG capabilities.
 
+**Provider:** [Neo4j Aura](../../stack/vendors.md#neo4j-aura) (managed) or self-hosted Neo4j Community.
+
 ## When to Use Neo4j
 
 | Use Case | Why Graph |
