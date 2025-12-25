@@ -29,13 +29,6 @@ Velociraptor is a full-stack template/test-sandbox focused on performance and li
 The project uses a self-documenting architecture where showcase pages serve as documentation, tests, and templates simultaneously. If a showcase page works, the feature is proven functional.
 
 
-### Key Patterns
-
-- **Svelte 5 Runes**: Use `$state`, `$derived`, `$effect` for reactivity
-- **Server separation**: All server code in `$lib/server/` (auto-blocked from client)
-- **Mobile-first fluid design**: Typography and spacing use `clamp()`
-- **Container queries**: Components adapt to container, not viewport
-
 ## Documentation
 
 | Path | Contents |

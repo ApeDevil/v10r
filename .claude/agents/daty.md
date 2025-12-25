@@ -2,7 +2,7 @@
 name: daty
 description: Use this agent when you need to design database schemas, data models, or data structures. This includes when starting a new feature that requires persistent storage, when refactoring existing data models, when choosing between different database technologies (relational vs graph vs document), when optimizing query performance through schema changes, when designing migrations, or when establishing relationships between entities.\n\nExamples:\n\n<example>\nContext: User is building a new feature that requires storing data.\nuser: "I need to store user preferences for our content recommendation system."\nassistant: "This requires careful data modeling. Let me use the daty agent to design the appropriate schema."\n</example>\n\n<example>\nContext: User is deciding between database technologies.\nuser: "Should we use a relational DB or add a graph DB for friend connections?"\nassistant: "This is a classic graph vs relational decision. Let me use the daty agent to analyze this properly."\n</example>
 tools: Read, Glob, Grep, Edit, Write, WebFetch, WebSearch
-model: sonnet
+model: opus
 color: green
 ---
 
