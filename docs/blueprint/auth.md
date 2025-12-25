@@ -126,29 +126,35 @@ export const {
 } = authClient;
 ```
 
-### Session Store
+### Session Access Pattern
+
+**Primary pattern:** Access session via `event.locals` (populated in hooks) and page data.
 
 ```typescript
-// src/lib/stores/session.svelte.ts
-import { useSession } from '$lib/auth-client';
-
-// Reactive session state (nano-store from Better Auth)
-const session = useSession();
-
-// Derived values (cannot be exported directly in .svelte.ts)
-const _isAuthenticated = $derived(!!session.data?.user);
-const _user = $derived(session.data?.user);
-
-// Export via getters (required pattern for module-level $derived)
-export const auth = {
-  get session() { return session; },
-  get isAuthenticated() { return _isAuthenticated; },
-  get user() { return _user; },
-  get isPending() { return session.isPending; },
-};
+// src/routes/app/+layout.server.ts
+export async function load({ locals }) {
+  return {
+    user: locals.user,
+    session: locals.session,
+  };
+}
 ```
 
-**Why getters?** Svelte 5 does not allow exporting `$derived` values directly from `.svelte.ts` modules. The compiler error is: "Cannot export derived state from a module." Use getters to expose reactive values.
+```svelte
+<!-- src/routes/app/+layout.svelte -->
+<script>
+  import { page } from '$app/state';
+
+  const user = $derived(page.data.user);
+  const isAuthenticated = $derived(!!page.data.user);
+</script>
+
+{#if isAuthenticated}
+  <p>Welcome, {user.name}!</p>
+{/if}
+```
+
+**Why not module-level `useSession()`?** Module-level state is shared across SSR requests, creating a security risk where User A's session could leak to User B. The `event.locals` pattern is request-scoped and SSR-safe. See [state.md](./state.md#better-auth-session-state) for details.
 
 ---
 
@@ -392,23 +398,27 @@ export async function load(event) {
 ```svelte
 <!-- src/routes/app/+layout.svelte -->
 <script lang="ts">
-  import { auth } from '$lib/stores/session.svelte';
+  import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { browser } from '$app/environment';
 
+  const user = $derived(page.data.user);
+
   $effect(() => {
-    if (browser && !auth.isPending && !auth.isAuthenticated) {
+    if (browser && !user) {
       goto('/auth/login');
     }
   });
 </script>
 
-{#if auth.isPending}
-  <div>Loading...</div>
-{:else if auth.isAuthenticated}
+{#if user}
   <slot />
+{:else}
+  <div>Loading...</div>
 {/if}
 ```
+
+**Note:** Server-side guards (in `+page.server.ts`) are preferred — they prevent the page from rendering at all. Client-side guards are a fallback for SPA navigation.
 
 ---
 
@@ -579,9 +589,7 @@ src/
 │   │   ├── auth.ts           # Better Auth instance
 │   │   └── auth/
 │   │       └── guard.ts      # Route protection helper
-│   ├── auth-client.ts        # Client-side auth
-│   └── stores/
-│       └── session.svelte.ts # Session state
+│   └── auth-client.ts        # Client-side auth (signIn, signUp, signOut)
 ├── routes/
 │   ├── auth/
 │   │   ├── login/+page.svelte
@@ -589,10 +597,11 @@ src/
 │   │   ├── forgot-password/+page.svelte
 │   │   └── reset-password/+page.svelte
 │   └── app/                  # Protected routes
-│       ├── +layout.svelte    # Client guard
+│       ├── +layout.server.ts # Load session from event.locals
+│       ├── +layout.svelte    # Client guard (fallback)
 │       └── dashboard/
 │           └── +page.server.ts
-└── hooks.server.ts           # Better Auth handler
+└── hooks.server.ts           # Better Auth handler + session population
 ```
 
 ---
@@ -619,7 +628,7 @@ VITE_BASE_URL=http://localhost:5173
 | OAuth providers | GitHub, Google (built-in) |
 | 2FA | TOTP plugin |
 | Route protection | Per-route in `+page.server.ts` |
-| Client state | `useSession()` store |
+| Session access | `event.locals` → page data (SSR-safe) |
 
 ---
 

@@ -8,7 +8,7 @@ Security practices for Velociraptor.
 
 | Concern | Solution | Notes |
 |---------|----------|-------|
-| Authentication | Lucia | Session-based, Postgres-backed |
+| Authentication | Better Auth | Session-based, Postgres-backed |
 | Input Validation | Valibot + Superforms | Server-side validation |
 | Rate Limiting | Superforms | Built-in IP/cookie limiter |
 | CSRF Protection | SvelteKit | Automatic for form actions |
@@ -42,14 +42,14 @@ Superforms provides built-in rate limiting for form submissions.
 ## Authentication Flow
 
 ```
-┌──────────┐    ┌──────────┐    ┌──────────┐
-│  Client  │───▶│  Lucia   │───▶│ Postgres │
-└──────────┘    └──────────┘    └──────────┘
-                     │
-              ┌──────┴──────┐
-              │   Session   │
-              │  (cookie)   │
-              └─────────────┘
+┌──────────┐    ┌─────────────┐    ┌──────────┐
+│  Client  │───▶│ Better Auth │───▶│ Postgres │
+└──────────┘    └─────────────┘    └──────────┘
+                      │
+               ┌──────┴──────┐
+               │   Session   │
+               │  (cookie)   │
+               └─────────────┘
 ```
 
 - Sessions stored in Postgres (not JWT)

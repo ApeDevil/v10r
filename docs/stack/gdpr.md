@@ -161,7 +161,7 @@ Regulators actively enforce against:
 
 | Component | Benefit |
 |-----------|---------|
-| **Lucia** | Self-hosted, full control |
+| **Better Auth** | Self-hosted, full control, native Drizzle adapter |
 | **Drizzle** | Easy export/deletion |
 | **Vercel Analytics** | Cookieless default |
 | **Neon** | EU region available |

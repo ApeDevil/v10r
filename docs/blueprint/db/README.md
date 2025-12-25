@@ -26,6 +26,15 @@ Need to store data?
 └── Default → PostgreSQL
 ```
 
+## Cross-Store Freshness
+
+No foreign keys across stores. References between Postgres, Neo4j, and R2 must be validated at the application level. See [polyglot-freshness.md](./polyglot-freshness.md) for:
+
+- Read-time validation patterns
+- Soft delete with cascade propagation
+- Transactional outbox for guaranteed events
+- Periodic reconciliation for orphan cleanup
+
 ## When to Use Each
 
 ### PostgreSQL
@@ -78,6 +87,7 @@ Need to store data?
 |------|----------|
 | [postgres.md](./postgres.md) | Drizzle schema, Better Auth tables, migrations |
 | [graph.md](./graph.md) | Neo4j connection, Cypher queries, graph model |
+| [polyglot-freshness.md](./polyglot-freshness.md) | Cross-database reference integrity, orphan cleanup |
 
 ## File Storage
 

@@ -576,6 +576,106 @@ export async function load() {
 </form>
 ```
 
+### Better Auth Session State
+
+Better Auth uses [nano-stores](https://github.com/nanostores/nanostores) internally for `useSession()`. **Correct usage requires understanding SSR safety.**
+
+#### SSR Safety Warning
+
+Module-level state in SvelteKit is **shared across all SSR requests**. This is a [well-documented security issue](https://github.com/sveltejs/svelte/issues/13594) — the most upvoted issue in SvelteKit.
+
+```typescript
+// ❌ UNSAFE - Module-level singleton shared across SSR requests
+const session = useSession(); // Persists in Node.js process!
+export const auth = { get user() { return session.value?.data?.user; } };
+```
+
+#### Recommended Pattern: Server-First
+
+The safest approach uses `event.locals` (request-scoped) for SSR, with optional client-side reactivity.
+
+**1. Server: Populate `event.locals` in hooks (SSR-safe)**
+
+```typescript
+// src/hooks.server.ts
+import { auth } from '$lib/server/auth';
+import { svelteKitHandler } from 'better-auth/svelte-kit';
+
+export async function handle({ event, resolve }) {
+  const session = await auth.api.getSession({
+    headers: event.request.headers,
+  });
+
+  // Request-scoped — safe for SSR
+  event.locals.user = session?.user ?? null;
+  event.locals.session = session?.session ?? null;
+
+  return svelteKitHandler({ event, resolve, auth });
+}
+```
+
+**2. Load functions: Access `event.locals`**
+
+```typescript
+// src/routes/app/+layout.server.ts
+export async function load({ locals }) {
+  return {
+    user: locals.user,
+    session: locals.session,
+  };
+}
+```
+
+**3. Components: Use page data**
+
+```svelte
+<!-- src/routes/app/+layout.svelte -->
+<script>
+  import { page } from '$app/state';
+
+  // Reactive via page store — SSR-safe
+  const user = $derived(page.data.user);
+</script>
+
+{#if user}
+  <p>Welcome, {user.name}!</p>
+{:else}
+  <a href="/auth/login">Sign in</a>
+{/if}
+```
+
+#### Client-Side Reactivity (Post-Hydration)
+
+For reactive updates after sign-in/sign-out (client-side only), use `useSession()` **within components**, not at module level:
+
+```svelte
+<script>
+  import { useSession } from '$lib/auth-client';
+  import { browser } from '$app/environment';
+
+  // Only runs on client after hydration
+  const session = browser ? useSession() : null;
+</script>
+
+{#if browser && $session?.data}
+  <p>Client-side: {$session.data.user.name}</p>
+{/if}
+```
+
+#### Pattern Comparison
+
+| Pattern | SSR Safe | Use Case |
+|---------|----------|----------|
+| `event.locals` → page data | ✅ Yes | Primary pattern for all auth state |
+| `useSession()` in component | ✅ Yes | Client-side reactivity after auth events |
+| Module-level `useSession()` | ❌ No | Avoid — leaks state between users |
+
+#### Why Not Module-Level Stores?
+
+During SSR, module-level state persists across requests in the Node.js process. User A's session could briefly leak to User B. The `event.locals` pattern ensures request isolation.
+
+See: [SvelteKit State Management](https://svelte.dev/docs/kit/state-management), [Svelte Issue #13594](https://github.com/sveltejs/svelte/issues/13594)
+
 ---
 
 ## Patterns

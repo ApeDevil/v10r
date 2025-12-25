@@ -36,6 +36,19 @@ Runtime, framework, database, storage, and deployment.
 - Neo4j: entities, relations, graph RAG
 - R2: images, files, uploads
 
+### Polyglot Freshness
+
+Cross-database references must remain valid and current. No foreign keys across stores, so freshness is your responsibility.
+
+| Pattern | Complexity | Use Case |
+|---------|------------|----------|
+| Read-time validation | Low | Check refs on read |
+| Soft delete + propagation | Low-Medium | Async cascade cleanup |
+| Transactional outbox | Medium | Guaranteed event delivery |
+| Periodic reconciliation | Low | Batch orphan detection |
+
+**Full implementation details:** [blueprint/db/polyglot-freshness.md](../blueprint/db/polyglot-freshness.md)
+
 ## Database
 
 | Layer | Choice | Why |
@@ -104,10 +117,16 @@ Start with Vercel Edge. Add Redis for query caching or real-time features.
 - Requires opt-in: `html.experimentalFullSupportEnabled`
 - Limitation: Svelte control flow (`{#if}`, `{#each}`) not fully parsed
 
-**Recommendation:**
-- New projects: Try Biome with experimental flag
-- Production apps needing full Svelte syntax: ESLint + Prettier
-- Hybrid option: Biome for JS/TS, ESLint for .svelte files
+**Our Choice: Biome (experimental)**
+
+We use Biome despite its experimental Svelte support. This is a deliberate cutting-edge tradeoff:
+
+- Speed and DX benefits outweigh current limitations
+- Svelte control flow issues are minor in practice
+- Biome's Svelte support is actively improving
+- Aligns with our "fast and modern" stack philosophy
+
+Fallback to ESLint + Prettier if Biome causes issues with complex Svelte templates.
 
 ## Development Tools
 

@@ -31,9 +31,9 @@ Session-based authentication with two approaches: **Better Auth** (recommended) 
 | 2FA/Passkeys | Built-in | DIY | Built-in |
 | Setup Time | Minutes | Hours | Minutes |
 
-## Alternative: DIY Sessions (Lucia Patterns)
+## Alternative: DIY Sessions
 
-For learning or maximum control.
+For learning or maximum control. Based on patterns from [The Copenhagen Book](https://thecopenhagenbook.com/).
 
 | Layer | Choice | Why |
 |-------|--------|-----|
@@ -42,13 +42,7 @@ For learning or maximum control.
 | OAuth | **Arctic** | 50+ providers, lightweight |
 | Crypto | **Oslo** | Runtime-agnostic, lightweight |
 
-### Lucia Status
-
-**Lucia v3 was deprecated March 2025.** It's now a learning resource, not a maintained library.
-
-- The `lucia` npm package is maintenance-only
-- **Oslo** and **Arctic** libraries continue active development
-- [The Copenhagen Book](https://thecopenhagenbook.com/) provides implementation guidance
+**Oslo** and **Arctic** are actively maintained libraries for building custom auth.
 
 ## Better Auth Setup
 

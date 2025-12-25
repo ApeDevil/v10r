@@ -6,7 +6,7 @@ Type-safe forms with real-time validation using Superforms and Valibot.
 
 ## Strategy
 
-**Superforms + Valibot** for the complete form lifecycle.
+**Hybrid Approach:** Superforms + Valibot for most forms, Better Auth client for authentication.
 
 | Component | Choice | Why |
 |-----------|--------|-----|
@@ -14,6 +14,22 @@ Type-safe forms with real-time validation using Superforms and Valibot.
 | Validation | Valibot | Smaller than Zod, tree-shakeable, fast |
 | Enhancement | `use:enhance` | No full-page reloads |
 | Feedback | Inline + Toast | Context-dependent error display |
+
+### Hybrid Approach: When to Use What
+
+| Form Type | Use | Why |
+|-----------|-----|-----|
+| Sign-in / Sign-up | **Better Auth client** | Built-in rate limiting, CSRF, session management |
+| Password reset | **Better Auth client** | Auth-critical flow with token handling |
+| OAuth flows | **Better Auth client** | Redirect handling built-in |
+| Profile updates | **Superforms + Valibot** | Not auth-critical, benefits from real-time validation |
+| Settings / preferences | **Superforms + Valibot** | Standard CRUD, good UX with debounced validation |
+| Contact / feedback forms | **Superforms + Valibot** | Server actions, email integration |
+| CRUD operations | **Superforms + Valibot** | Data mutations with optimistic UI |
+
+**Rationale:** Better Auth's client methods (`signIn.email`, `signUp.email`) handle security concerns that Superforms would need to replicate. Using Superforms for auth would mean re-implementing rate limiting, manual CSRF handling, and potential security gaps.
+
+See [auth.md](./auth.md#authentication-flows) for Better Auth form implementations.
 
 ### Why Valibot over Zod
 
@@ -23,10 +39,6 @@ Type-safe forms with real-time validation using Superforms and Valibot.
 | Tree-shaking | Full | Partial |
 | Performance | Faster validation | Slower |
 | API | Pipe-based | Chained |
-
-### Exception: Auth Forms
-
-Authentication forms (login, register, password reset) use Better Auth's client methods directly, not Superforms. See [auth.md](./auth.md#authentication-flows) for details.
 
 ---
 
