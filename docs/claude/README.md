@@ -15,7 +15,7 @@ When working on specific domains, delegate to specialized agents:
 
 | Agent | Domain | When to Use |
 |-------|--------|-------------|
-| @docs/claude/ary.md | Architecture | System design, module boundaries, refactoring |
+| @docs/claude/archy.md | Architecture | System design, module boundaries, refactoring |
 | @docs/claude/daty.md | Data modeling | Schema design, database choice, migrations |
 | @docs/claude/svey.md | SvelteKit | Routes, load functions, rendering modes |
 | @docs/claude/uxy.md | UI/UX | Component design, user flows, accessibility |
@@ -31,7 +31,7 @@ When working on specific domains, delegate to specialized agents:
 
 | Agent | Soul | Purpose |
 |-------|------|---------|
-| **ary** | order that scales | Codebase architecture and system design |
+| **archy** | order that scales | Codebase architecture and system design |
 | **buny** | speed without ceremony | Bun runtime specialist |
 | **daty** | shape functional systems | Data modeling and schema design |
 | **resy** | curiosity guided by evidence | Research and technology decisions |
@@ -120,7 +120,7 @@ For reliable automatic delegation, use descriptive terms in the agent table:
          │ delegates
     ┌────┴────┬────────┬────────┐
     ▼         ▼        ▼        ▼
- [ary]   [daty]   [svey]   [uxy]   ← Haiku (workers)
+ [archy]   [daty]   [svey]   [uxy]   ← Haiku (workers)
 ```
 
 The main session decomposes tasks and delegates to specialists. Each agent works in isolation, returning results to the orchestrator.
@@ -128,7 +128,7 @@ The main session decomposes tasks and delegates to specialists. Each agent works
 ### Pattern 2: Sequential Pipeline
 
 ```
-[resy] → [ary] → [daty] → [svey] → [uxy]
+[resy] → [archy] → [daty] → [svey] → [uxy]
 research  design   schema   implement  polish
 ```
 
@@ -182,7 +182,7 @@ Here is the full daty agent prompt: [500 lines...]
 See @docs/claude/README.md for specialized agents.
 
 Delegate to agents for:
-- Architecture decisions → @docs/claude/ary.md
+- Architecture decisions → @docs/claude/archy.md
 - Schema changes → @docs/claude/daty.md
 - SvelteKit patterns → @docs/claude/svey.md
 ```
