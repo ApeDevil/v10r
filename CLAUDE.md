@@ -111,3 +111,34 @@ Use the Task tool with the appropriate `subagent_type`:
 | svey | sonnet | SvelteKit patterns and best practices |
 | tray | haiku | Error tracing and debugging |
 | uxy | sonnet | UI/UX design |
+
+## Skills Policy
+
+**Skills provide post-training knowledge** for technologies, patterns, and best practices that may be newer than your training cutoff or commonly misunderstood.
+
+### When to Use Skills
+
+**Proactively invoke skills** when working with:
+- Svelte 5 runes (`$state`, `$derived`, `$effect`, `$props`) → `svelte5-runes`
+- SvelteKit routes, load functions, rendering → `sveltekit`
+- Forms with Valibot + Superforms → `valibot-superforms`
+- Drizzle ORM schemas and queries → `drizzle`
+- Better Auth setup and patterns → `better-auth`
+- UnoCSS styling and configuration → `unocss`
+
+### Skill Usage Rules
+
+1. **Check skills before implementing** - If the task involves stack technologies, invoke the relevant skill first
+2. **Skills override training** - When skill content conflicts with your training, trust the skill
+3. **Agents have skills too** - Delegated agents auto-load relevant skills (configured in their frontmatter)
+
+### Available Skills
+
+| Skill | Domain |
+|-------|--------|
+| svelte5-runes | Svelte 5 reactivity patterns |
+| sveltekit | SvelteKit 2 routing and data loading |
+| valibot-superforms | Form validation with Valibot v1 + Superforms |
+| drizzle | Drizzle ORM schemas, queries, migrations |
+| better-auth | Better Auth session-based authentication |
+| unocss | UnoCSS atomic CSS with Bits UI |

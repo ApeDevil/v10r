@@ -1,4 +1,14 @@
 
+
+let resy make a deep dive into claude code skills! i wanna know what are the best functional practices!
+
+goal: use skills for knowledge gaps of ai - things post-training cutoff or underdocumented info!
+
+examine our currently skills set-up! let resy validate the existing information inside skills!
+
+---
+
+
 knowledge gaps - things post-training cutoff or underdocumented
 
 to clarify: we want to use the skills for thinks which the ai is not trained on: new versions, new teck, new best practices
