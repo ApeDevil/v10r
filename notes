@@ -10,15 +10,10 @@ Please think through the task and orchestrate the following workflow:
 ---
 
 checkout .claude/agents & .claude/skills and contemplate it!
-question: 
 
-what other skills should we add in context of our project to imrove the quality of calude generted code? ultrathink this, what would be the most importaind & functional addition?
+how about to add a new skill 'AI tools' for knowledge gaps of ai - things post-training cutoff or underdocumented info?
 
+let resy look up the most inportained and best modern practices in context of our project!
+then write the skill!
 
-let first archy make an analyzis then after archy is done let resy research the best proctieces for skills integration in ai coding workflow with claude!
-
-to clarify: we want to use the skills for things which the ai is not trained on: new versions, new teck, new best practices
-is that all clear to you?
-
-
-knowledge gaps - things post-training cutoff or underdocumented
+---
