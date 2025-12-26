@@ -62,6 +62,11 @@ export const session = pgTable('session', {
   userAgent: text('user_agent'),
 });
 
+// REQUIRED: Better Auth does NOT auto-generate indexes. Add manually for performance.
+// Without these, session lookups become bottlenecks at scale.
+export const sessionUserIdx = index('session_user_id_idx').on(session.userId);
+export const sessionExpiresIdx = index('session_expires_at_idx').on(session.expiresAt);
+
 export const account = pgTable('account', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
@@ -426,6 +431,59 @@ export type ItemFull = Item & { tags: Tag[]; files: File[]; user: User };
 export type UserWithProfile = User & { profile: UserProfile | null };
 ```
 
+### Type Flow: Database → Load Function → Component
+
+**Limitation:** `InferSelectModel` doesn't include Drizzle relations. You must manually type queries that use `.with()`.
+
+```typescript
+// src/lib/server/db/queries/items.ts
+import { db } from '$lib/server/db';
+import { items, tags, itemTags } from '$lib/server/db/schema';
+import { eq } from 'drizzle-orm';
+
+// Query function with typed return
+export async function getItemsWithTags(userId: string) {
+  return db.query.items.findMany({
+    where: eq(items.userId, userId),
+    with: {
+      itemTags: {
+        with: { tag: true }
+      }
+    }
+  });
+}
+
+// Infer return type from the function
+export type ItemsWithTags = Awaited<ReturnType<typeof getItemsWithTags>>;
+```
+
+```typescript
+// src/routes/showcase/data/+page.server.ts
+import { getItemsWithTags } from '$lib/server/db/queries/items';
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ locals }) => {
+  const items = await getItemsWithTags(locals.user!.id);
+  return { items }; // Fully typed: ItemsWithTags
+};
+```
+
+```svelte
+<!-- src/routes/showcase/data/+page.svelte -->
+<script lang="ts">
+  let { data } = $props();
+  // data.items is fully typed with relations!
+  const items = $derived(data.items);
+</script>
+
+{#each items as item}
+  <p>{item.title}</p>
+  {#each item.itemTags as itemTag}
+    <span>{itemTag.tag.name}</span>
+  {/each}
+{/each}
+```
+
 ---
 
 ## Database Client
@@ -500,6 +558,138 @@ bunx drizzle-kit push
 
 # Open Drizzle Studio
 bunx drizzle-kit studio
+```
+
+---
+
+## Transactions
+
+Use `db.transaction()` for operations that must be atomic.
+
+### Form Action with Transaction
+
+```typescript
+// src/routes/showcase/data/new/+page.server.ts
+import { fail, redirect } from '@sveltejs/kit';
+import { superValidate } from 'sveltekit-superforms';
+import { valibot } from 'sveltekit-superforms/adapters';
+import { db, createId, schema } from '$lib/server/db';
+import { itemSchema } from '$lib/schemas/item';
+
+export const actions = {
+  default: async ({ request, locals }) => {
+    const form = await superValidate(request, valibot(itemSchema));
+    if (!form.valid) return fail(400, { form });
+
+    await db.transaction(async (tx) => {
+      // 1. Create item
+      const [item] = await tx.insert(schema.items).values({
+        id: createId.item(),
+        userId: locals.user!.id,
+        title: form.data.title,
+        description: form.data.description,
+        status: 'draft',
+      }).returning();
+
+      // 2. Create item-tag associations
+      if (form.data.tagIds?.length) {
+        await tx.insert(schema.itemTags).values(
+          form.data.tagIds.map(tagId => ({
+            itemId: item.id,
+            tagId,
+          }))
+        );
+      }
+
+      // 3. Outbox event for graph sync (optional)
+      await tx.insert(schema.outbox).values({
+        id: `obx_${nanoid(12)}`,
+        aggregateType: 'item',
+        aggregateId: item.id,
+        eventType: 'created',
+        payload: { itemId: item.id, userId: locals.user!.id },
+      });
+    });
+
+    redirect(303, '/showcase/data');
+  },
+};
+```
+
+### When to Use Transactions
+
+| Use Case | Transaction Needed? |
+|----------|---------------------|
+| Single insert/update | No |
+| Insert + related records | Yes |
+| Insert + outbox event | Yes |
+| Read-only queries | No |
+| Conditional update (check then write) | Yes |
+
+---
+
+## Error Handling
+
+### Postgres Error Code Mapping
+
+```typescript
+// src/lib/server/db/errors.ts
+import { error } from '@sveltejs/kit';
+
+export const PG_ERROR_CODES = {
+  UNIQUE_VIOLATION: '23505',
+  FOREIGN_KEY_VIOLATION: '23503',
+  NOT_NULL_VIOLATION: '23502',
+  CHECK_VIOLATION: '23514',
+  QUERY_CANCELED: '57014',
+} as const;
+
+export function mapDbError(err: unknown): never {
+  // Check if it's a Postgres error with a code
+  if (err instanceof Error && 'code' in err) {
+    const code = (err as { code: string }).code;
+
+    switch (code) {
+      case PG_ERROR_CODES.UNIQUE_VIOLATION:
+        error(409, 'A record with this value already exists.');
+      case PG_ERROR_CODES.FOREIGN_KEY_VIOLATION:
+        error(400, 'Referenced record does not exist.');
+      case PG_ERROR_CODES.NOT_NULL_VIOLATION:
+        error(400, 'Required field is missing.');
+      case PG_ERROR_CODES.CHECK_VIOLATION:
+        error(400, 'Invalid value provided.');
+      case PG_ERROR_CODES.QUERY_CANCELED:
+        error(408, 'Request timeout.');
+      default:
+        console.error('Database error:', err);
+        error(500, 'Database error occurred.');
+    }
+  }
+
+  console.error('Unexpected error:', err);
+  error(500, 'An unexpected error occurred.');
+}
+```
+
+### Usage in Load Functions
+
+```typescript
+// src/routes/showcase/data/[id]/+page.server.ts
+import { mapDbError } from '$lib/server/db/errors';
+
+export async function load({ params }) {
+  try {
+    const item = await db.query.items.findFirst({
+      where: eq(items.id, params.id),
+      with: { itemTags: { with: { tag: true } } }
+    });
+
+    if (!item) error(404, 'Item not found');
+    return { item };
+  } catch (err) {
+    mapDbError(err);
+  }
+}
 ```
 
 ---

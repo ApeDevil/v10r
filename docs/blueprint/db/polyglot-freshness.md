@@ -477,6 +477,61 @@ For enterprise scale with real-time requirements. Uses Debezium + Kafka.
 
 ---
 
+## Failure Scenarios
+
+Understanding what happens when cross-database operations fail:
+
+### Scenario 1: Postgres Commits, Outbox Processor Fails
+
+| Aspect | Detail |
+|--------|--------|
+| **Result** | User deleted in Postgres, Neo4j nodes remain temporarily |
+| **Detection** | Outbox event stays in `pending` status |
+| **Resolution** | Outbox retry mechanism (up to 3 attempts) |
+| **Fallback** | Periodic reconciliation job detects orphans |
+| **User Impact** | None — stale graph data is filtered at read time |
+
+### Scenario 2: Outbox Processor Succeeds, Neo4j Write Fails
+
+| Aspect | Detail |
+|--------|--------|
+| **Result** | Outbox event marked as `failed` with error message |
+| **Detection** | Monitoring alert on failed events |
+| **Resolution** | Manual review, fix underlying issue, reprocess |
+| **Prevention** | Use MERGE instead of CREATE for idempotent operations |
+| **User Impact** | Stale graph data until resolved |
+
+### Scenario 3: Neo4j Down During Outbox Processing
+
+| Aspect | Detail |
+|--------|--------|
+| **Result** | Event retried, eventually marked `failed` after max retries |
+| **Detection** | `verifyConnection()` health check fails |
+| **Resolution** | Events automatically retry when Neo4j recovers |
+| **Prevention** | Circuit breaker pattern (future enhancement) |
+| **User Impact** | Graph features degraded, core CRUD unaffected |
+
+### Scenario 4: R2 Storage Unavailable
+
+| Aspect | Detail |
+|--------|--------|
+| **Result** | File upload fails, database record not created |
+| **Detection** | S3 client throws error |
+| **Resolution** | User retries upload |
+| **Prevention** | Upload to R2 first, then create DB record |
+| **User Impact** | Upload fails with error message |
+
+### Mitigation Checklist
+
+- [ ] Outbox processor runs on cron (every minute)
+- [ ] Reconciliation runs on cron (hourly or daily)
+- [ ] Monitoring alerts on `failed` outbox events
+- [ ] Use MERGE in Neo4j for idempotent writes
+- [ ] Read-time validation filters stale graph references
+- [ ] Health endpoint checks both Postgres and Neo4j
+
+---
+
 ## Decision Tree
 
 ```

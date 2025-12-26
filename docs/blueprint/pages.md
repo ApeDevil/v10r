@@ -390,6 +390,62 @@ export function createTodoStore() {
 
 CRUD operations with master-detail pattern.
 
+#### Streaming for Large Datasets
+
+For expensive queries, stream data to show initial content immediately:
+
+```typescript
+// +page.server.ts
+export async function load({ locals }) {
+  // Fast query: return immediately
+  const recentItems = await db.query.items.findMany({
+    where: eq(items.userId, locals.user!.id),
+    orderBy: desc(items.createdAt),
+    limit: 10,
+  });
+
+  // Slow query: return promise to stream later
+  const analytics = getAnalytics(locals.user!.id); // Returns Promise
+
+  return {
+    items: recentItems,     // Available immediately
+    analytics,              // Streamed when ready
+  };
+}
+```
+
+```svelte
+<!-- +page.svelte -->
+<script lang="ts">
+  let { data } = $props();
+</script>
+
+<!-- Immediate: Show items right away -->
+{#each data.items as item}
+  <ItemCard {item} />
+{/each}
+
+<!-- Streamed: Show loading state, then content -->
+{#await data.analytics}
+  <div class="skeleton">Loading analytics...</div>
+{:then analytics}
+  <AnalyticsDashboard {analytics} />
+{:catch error}
+  <p>Failed to load analytics</p>
+{/await}
+```
+
+#### Streaming Guidelines
+
+| Scenario | Pattern |
+|----------|---------|
+| Primary content | `await` before return |
+| Secondary/slow data | Return promise, use `{#await}` |
+| Optional analytics | Return promise |
+| Critical data | Always `await` |
+
+**Note:** Streaming requires `edge: true` or Node.js 18+ runtime.
+
 | Tests | Stack |
 |-------|-------|
 | Database queries | Drizzle ORM |

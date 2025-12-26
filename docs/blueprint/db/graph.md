@@ -42,10 +42,33 @@ export function getDriver(): Driver {
       neo4j.auth.basic(
         process.env.NEO4J_USER!,
         process.env.NEO4J_PASSWORD!
-      )
+      ),
+      {
+        // REQUIRED for serverless: Limit pool size for Aura free tier
+        maxConnectionPoolSize: 10,
+        maxConnectionLifetime: 60 * 60 * 1000, // 1 hour
+        connectionAcquisitionTimeout: 60 * 1000, // 1 minute
+      }
     );
   }
   return driver;
+}
+
+// Connection health check - call on startup or when errors occur
+export async function verifyConnection(): Promise<boolean> {
+  try {
+    const d = getDriver();
+    await d.verifyConnectivity();
+    return true;
+  } catch (error) {
+    console.error('Neo4j connection failed:', error);
+    // Reset driver to force reconnection on next request
+    if (driver) {
+      await driver.close();
+      driver = null;
+    }
+    return false;
+  }
 }
 
 export async function getSession(): Promise<Session> {

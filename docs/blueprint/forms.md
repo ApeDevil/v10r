@@ -480,6 +480,104 @@ const { form, errors, enhance, message } = superForm(data.form, {
 
 ---
 
+## Data Invalidation After Form Actions
+
+### Default Behavior
+
+Form actions using `use:enhance` trigger `invalidateAll()` after successful submission, re-running all load functions on the current page.
+
+### When to Use Each Pattern
+
+| Pattern | Use Case | Example |
+|---------|----------|---------|
+| `invalidateAll: true` (default) | User login/logout | Update global user state |
+| `invalidate('/api/items')` | Item CRUD on list page | Refresh items list only |
+| `invalidateAll: false` + local state | Real-time preview | Update component state without refetch |
+| `goto()` + automatic invalidation | Create → Detail page | Navigate + fresh data |
+| Redirect from server | Create → List page | `redirect(303, '/items')` |
+
+### Superforms Invalidation Options
+
+```typescript
+const { form, enhance } = superForm(data.form, {
+  // Default: refresh all data after success
+  invalidateAll: true,
+
+  // Or: specify what to invalidate on success
+  onResult({ result }) {
+    if (result.type === 'success') {
+      invalidate('/api/items'); // Only refresh items
+    }
+  },
+
+  // Or: disable auto-invalidation for optimistic updates
+  invalidateAll: false,
+});
+```
+
+### Optimistic Updates Pattern
+
+Update UI immediately, sync with server in background:
+
+```typescript
+let items = $state(data.items);
+
+const { form, enhance } = superForm(data.form, {
+  invalidateAll: false, // Don't refetch — we'll update locally
+
+  onSubmit() {
+    // Optimistic: add item immediately with temp ID
+    const tempId = `temp_${Date.now()}`;
+    items = [...items, { id: tempId, ...formData }];
+  },
+
+  onResult({ result }) {
+    if (result.type === 'success' && result.data?.item) {
+      // Replace temp with real item from server
+      items = items.map(i =>
+        i.id.startsWith('temp_') ? result.data.item : i
+      );
+    }
+  },
+
+  onError() {
+    // Rollback: remove optimistic item
+    items = items.filter(i => !i.id.startsWith('temp_'));
+    toast.error('Failed to create item');
+  },
+});
+```
+
+### Server-Side Redirect vs Client-Side Invalidation
+
+**Prefer server-side redirect** when navigating after mutation:
+
+```typescript
+// +page.server.ts — Server redirect (recommended)
+export const actions = {
+  create: async ({ request }) => {
+    // ... create item
+    redirect(303, '/showcase/data'); // Automatic invalidation
+  },
+};
+```
+
+**Use client-side invalidation** when staying on page:
+
+```typescript
+// +page.svelte — Stay on page, refresh data
+const { enhance } = superForm(data.form, {
+  onResult({ result }) {
+    if (result.type === 'success') {
+      invalidate('app:items'); // Custom invalidation key
+      toast.success('Item created!');
+    }
+  },
+});
+```
+
+---
+
 ## Form Patterns
 
 ### Settings Form (Multi-Section)
