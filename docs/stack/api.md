@@ -31,20 +31,24 @@ See [vendors.md](./vendors.md) for alternatives and migration guides.
 
 | Layer | Choice | Why |
 |-------|--------|-----|
-| Library | **sveltekit-i18n** | Per-language lazy loading, scales to 10+ languages |
+| Library | **svelte-i18n** | Active maintenance, FormatJS/ICU, lazy loading |
+| Format | **ICU MessageFormat** | Industry standard, CLDR plural rules |
 | Strategy | URL-based (`/en/`, `/de/`) | SEO-friendly, cacheable |
 
-**Why sveltekit-i18n over Paraglide:**
+**Why svelte-i18n over alternatives:**
 
-| Aspect | sveltekit-i18n | Paraglide |
-|--------|----------------|-----------|
-| Loading | Per-language lazy | All bundled |
-| 10+ Languages | ~1 KB/page | ~12+ KB/page |
-| Type Safety | Partial | Full |
+| Aspect | svelte-i18n | sveltekit-i18n | Paraglide |
+|--------|-------------|----------------|-----------|
+| Maintenance | Active (Oct 2024) | **Unmaintained** | Active |
+| Loading | Per-language lazy | Per-language lazy | All bundled |
+| Type Safety | Partial | Partial | Full |
+| Pluralization | ICU (standard) | Custom syntax | ICU |
 
-sveltekit-i18n wins for multi-language: true lazy loading, scales infinitely, no deps.
+sveltekit-i18n is smaller (~4.6 KB vs ~14 KB) but unmaintained since July 2023. Building on abandoned software is technical debt.
 
-**Note:** For 2-5 languages, Paraglide offers better type safety.
+**Note:** For 2-5 languages, Paraglide offers better type safety. For 10+, svelte-i18n's lazy loading is essential.
+
+**Full details:** [core.md](./core.md#internationalization) (decision) and [blueprint/i18n.md](../blueprint/i18n.md) (implementation).
 
 ## Free Tiers
 

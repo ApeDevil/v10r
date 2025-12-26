@@ -129,6 +129,31 @@ We use Biome despite its experimental Svelte support. This is a deliberate cutti
 
 Fallback to ESLint + Prettier if Biome causes issues with complex Svelte templates.
 
+## Internationalization
+
+| Layer | Choice | Why |
+|-------|--------|-----|
+| Library | **svelte-i18n** | Active maintenance, FormatJS/ICU, lazy loading |
+| Format | **ICU MessageFormat** | Industry standard, CLDR plural rules |
+| Routing | **URL prefix** | SEO-friendly (`/de/about`), param matcher |
+
+**Why svelte-i18n over sveltekit-i18n:**
+
+| Aspect | svelte-i18n | sveltekit-i18n |
+|--------|-------------|----------------|
+| Last release | Oct 2024 (v4.0.1) | July 2023 (v2.4.2) |
+| Maintenance | Active | **Seeking maintainers** |
+| Svelte 5 | Confirmed | Unknown |
+| Downloads | ~40k/week | ~12k/week |
+| Bundle | 14 KB gzip | 4.6 KB gzip |
+| Pluralization | ICU (industry standard) | Custom syntax |
+
+sveltekit-i18n is smaller but unmaintained. Building on abandoned software is technical debt from day one. The ~10 KB bundle difference is negligible compared to the maintenance risk.
+
+**Why not Paraglide?** Full type safety but bundles all languages together. For 10+ languages, lazy loading is essential. Once [issue #88](https://github.com/opral/inlang-paraglide-js/issues/88) ships per-locale splitting, reconsider.
+
+**Full implementation:** [blueprint/i18n.md](../blueprint/i18n.md)
+
 ## Development Tools
 
 | Tool | Purpose |

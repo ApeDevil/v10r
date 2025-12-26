@@ -145,7 +145,7 @@ Skip marketing speak. Use concrete data and citations.
 | **Performance** | Compiler | Svelte | Fast Core Web Vitals |
 | **Meta tags** | Tag management | svelte-meta-tags | Easy Open Graph + JSON-LD |
 | **Hosting** | Edge network | [Vercel](./vendors.md#vercel) | Edge caching, fast TTFB |
-| **i18n** | URL-based routing | sveltekit-i18n | SEO-friendly routes |
+| **i18n** | URL-based routing | svelte-i18n | SEO-friendly routes |
 
 **Why ready:** SSR default, minimal JS, fast loads, clean URLs, structured data support.
 

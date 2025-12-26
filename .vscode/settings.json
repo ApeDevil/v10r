@@ -1,0 +1,12 @@
+{
+    "folder-color.pathColors": [
+        {
+            "folderPath": "velociraptor/docs/foundation/",
+            "badge": "🧱"
+        },
+        {
+            "folderPath": "velociraptor/docs/blueprint/",
+            "badge": "🗺️"
+        }
+    ]
+}

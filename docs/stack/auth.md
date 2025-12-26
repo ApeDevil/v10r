@@ -1,183 +1,82 @@
 # Authentication
 
-Session-based authentication with two approaches: **Better Auth** (recommended) or **DIY Sessions**.
+Session-based authentication. Better Auth chosen for production. DIY available for learning.
 
-## Stack Options
+## Decision
 
-| Option | Best For | Trade-off |
-|--------|----------|-----------|
-| **Better Auth** | Production apps, built-in 2FA/passkeys | Library dependency |
-| **DIY Sessions** | Learning, maximum control | More code to maintain |
+| Choice | Rationale |
+|--------|-----------|
+| **Better Auth** | TypeScript-first, Drizzle native integration, batteries-included (2FA/passkeys/OAuth) |
+| Session storage | Database (Postgres) for immediate revocation |
+| No vendor lock-in | Library, not service. Data stays in your database |
 
-## Recommended: Better Auth
-
-| Layer | Technology | Provider | Why |
-|-------|------------|----------|-----|
-| Auth | **Session-based auth** | Better Auth | TypeScript-first, batteries-included |
-| Adapter | **ORM integration** | Drizzle | Native integration, auto-schema |
-| Sessions | **Database sessions** | [Neon](./vendors.md#neon) | Persistent, immediate revocation |
-| OAuth | **OAuth 2.0** | Built-in | 20+ providers out of the box |
-| 2FA/MFA | **TOTP/WebAuthn** | Built-in | Passkeys, authenticator apps |
-| Middleware | **Request hooks** | SvelteKit | Native request interception |
-
-**Swappability:** Better Auth is a library, not a service. Sessions stored in your own Postgres. No vendor lock-in.
-
-**Why Better Auth:**
+## Stack Comparison
 
 | Aspect | Better Auth | DIY | Clerk |
 |--------|-------------|-----|-------|
 | Cost | Free | Free | Free to 10K MAU |
 | Vendor Lock-in | None | None | High |
-| Data Ownership | 100% yours | 100% yours | Third-party |
+| Data Ownership | Yours | Yours | Third-party |
 | Drizzle | Native adapter | Manual | N/A |
-| 2FA/Passkeys | Built-in | DIY | Built-in |
+| 2FA/Passkeys | Built-in | Manual | Built-in |
 | Setup Time | Minutes | Hours | Minutes |
 
-## Alternative: DIY Sessions
+**Why Better Auth wins:** Zero vendor lock-in with production features. Same freedom as DIY, less code.
 
-For learning or maximum control. Based on patterns from [The Copenhagen Book](https://thecopenhagenbook.com/).
+## Better Auth Stack
 
-| Layer | Technology | Provider | Why |
-|-------|------------|----------|-----|
-| Sessions | **Database sessions** | PostgreSQL | Persistent, immediate revocation |
-| Password | **Argon2id hashing** | @node-rs/argon2 | OWASP recommended, memory-hard |
-| OAuth | **OAuth 2.0** | Arctic | 50+ providers, lightweight |
-| Crypto | **Token generation** | Oslo | Runtime-agnostic, lightweight |
+| Layer | Technology | Why |
+|-------|------------|-----|
+| Auth library | Better Auth | TypeScript-first, batteries-included |
+| Adapter | Drizzle | Native integration, auto-schema |
+| Sessions | Database (Postgres) | Persistent, immediate revocation |
+| OAuth | Built-in | 20+ providers out of the box |
+| 2FA/MFA | Built-in | TOTP, WebAuthn, passkeys |
+| Middleware | SvelteKit hooks | Native request interception |
 
-**Oslo** and **Arctic** are actively maintained libraries for building custom auth.
-
-**Swappability:** All libraries, no services. Full control over your auth implementation.
-
-## Better Auth Setup
-
-### Installation
-
-```bash
-bun add better-auth
-```
-
-### Configuration
-
-```typescript
-// src/lib/server/auth.ts
-import { betterAuth } from 'better-auth';
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { db } from './db';
-
-export const auth = betterAuth({
-  database: drizzleAdapter(db, { provider: 'pg' }),
-  emailAndPassword: { enabled: true },
-  socialProviders: {
-    github: {
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-    },
-    google: {
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    },
-  },
-  // CRITICAL: Cookie caching avoids DB hit on every request
-  session: {
-    cookieCache: {
-      enabled: true,
-      maxAge: 60 * 5, // 5 minutes
-    },
-  },
-});
-```
-
-> **Performance**: Without `cookieCache`, every request hits the database to validate the session. Enable it for production.
-
-### SvelteKit Integration
-
-```typescript
-// src/hooks.server.ts
-import { sequence } from '@sveltejs/kit/hooks';
-import { auth } from '$lib/server/auth';
-import type { Handle } from '@sveltejs/kit';
-
-// IMPORTANT: svelteKitHandler alone does NOT populate event.locals
-// You must manually populate locals for use in load functions
-const authHandle: Handle = async ({ event, resolve }) => {
-  const session = await auth.api.getSession({ headers: event.request.headers });
-  event.locals.session = session?.session ?? null;
-  event.locals.user = session?.user ?? null;
-  return resolve(event);
-};
-
-export const handle = sequence(authHandle);
-```
-
-> **Gotcha**: Using `svelteKitHandler({ auth })` alone won't populate `event.locals`. You must call `auth.api.getSession()` and set locals manually.
-
-### Client
-
-```typescript
-// src/lib/auth-client.ts
-import { createAuthClient } from 'better-auth/svelte';
-
-export const authClient = createAuthClient();
-```
-
-### Generate Schema
-
-```bash
-bunx @better-auth/cli generate
-bunx drizzle-kit migrate
-```
-
-## Flow
-
-```
-┌──────────┐    ┌──────────┐    ┌──────────┐
-│  Client  │───▶│  Hooks   │───▶│ Postgres │
-└──────────┘    └──────────┘    └──────────┘
-                     │
-              ┌──────┴──────┐
-              │   Session   │
-              │  (cookie)   │
-              └─────────────┘
-```
-
-- Sessions in Postgres (not JWT)
+**Key features:**
+- Session cookie caching (reduces DB hits)
 - HTTP-only, secure cookies
-- Invalidation on logout
-- Sliding window refresh (30 days default)
+- Sliding window refresh (configurable)
+- No JWT (database sessions only)
 
-## Protected Routes
+## DIY Alternative
 
-| Strategy | Technology | Use Case |
-|----------|------------|----------|
-| Per-route `load` | SvelteKit hooks | **Recommended** - explicit protection |
-| Helper function | Custom middleware | `requireAuth(event)` for consistency |
-| Form actions | SvelteKit actions | Before mutations |
-| API routes | Request validation | Check session |
+For learning or maximum control. Based on [The Copenhagen Book](https://thecopenhagenbook.com/).
 
-**Important:** Don't rely on layout `load` for auth - protect each route individually.
+| Layer | Technology | Why |
+|-------|------------|-----|
+| Sessions | PostgreSQL | Persistent, immediate revocation |
+| Password | @node-rs/argon2 | Argon2id, OWASP recommended |
+| OAuth | Arctic | 50+ providers, lightweight |
+| Crypto | Oslo | Token generation, runtime-agnostic |
+
+**Trade-off:** Full control vs more code to maintain. Oslo and Arctic are actively maintained.
 
 ## Libraries
 
-### Better Auth (Recommended)
+### Better Auth
 
-| Package | Technology | Purpose |
-|---------|------------|---------|
-| `better-auth` | Auth framework | Full auth framework |
-| `better-auth/adapters/drizzle` | ORM adapter | Database integration |
-| `better-auth/svelte-kit` | Framework adapter | SvelteKit integration |
-| `@better-auth/cli` | Code generation | Schema generation |
+| Package | Purpose |
+|---------|---------|
+| `better-auth` | Core auth framework |
+| `better-auth/adapters/drizzle` | Database integration |
+| `better-auth/svelte` | Svelte client |
+| `@better-auth/cli` | Schema generation |
 
-### DIY Sessions
+### DIY
 
-| Package | Technology | Purpose |
-|---------|------------|---------|
-| `@oslojs/crypto` | Cryptography | SHA-256 hashing |
-| `@oslojs/encoding` | Encoding | Base32/Hex encoding |
-| `@node-rs/argon2` | Password hashing | Argon2id implementation |
-| `arctic` | OAuth | 50+ OAuth providers |
+| Package | Purpose |
+|---------|---------|
+| `@oslojs/crypto` | SHA-256 hashing |
+| `@oslojs/encoding` | Base32/Hex encoding |
+| `@node-rs/argon2` | Argon2id password hashing |
+| `arctic` | OAuth providers |
 
 All packages are libraries with no external service dependencies.
 
-## Related
+## Links
 
-See [blueprint/auth.md](../blueprint/auth.md) for full implementation details.
+- [Better Auth docs](https://better-auth.com)
+- [The Copenhagen Book](https://thecopenhagenbook.com)
+- [Implementation guide](../blueprint/auth.md)
