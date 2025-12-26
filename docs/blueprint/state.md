@@ -741,53 +741,124 @@ See: [SvelteKit State Management](https://svelte.dev/docs/kit/state-management),
 
 ---
 
+## Hydration Mismatch Prevention
+
+State that affects SSR rendering **must use cookies**, not localStorage. Otherwise, server renders one thing, client reads localStorage and renders another — causing hydration errors.
+
+### The Problem
+
+```typescript
+// ❌ CAUSES HYDRATION MISMATCH
+let theme = $state(browser ? localStorage.getItem('theme') ?? 'light' : 'light');
+// Server renders 'light', client may read 'dark' from localStorage → mismatch
+```
+
+### The Solution: Cookie-Based SSR Sync
+
+**1. Server reads from cookie in layout load:**
+
+```typescript
+// src/routes/+layout.server.ts
+import type { LayoutServerLoad } from './$types';
+
+export const load: LayoutServerLoad = async ({ cookies }) => {
+  return {
+    // Server and client will agree on initial value
+    theme: (cookies.get('theme') as 'light' | 'dark' | 'system') ?? 'system',
+    sidebarPinned: cookies.get('sidebar-pinned') === 'true',
+  };
+};
+```
+
+**2. Store syncs to cookie on change:**
+
+```typescript
+// src/lib/stores/ui.svelte.ts
+import { browser } from '$app/environment';
+
+export function createThemeStore(initial: Theme) {
+  let theme = $state<Theme>(initial);
+
+  $effect(() => {
+    if (browser) {
+      // Sync to cookie (server can read on next request)
+      document.cookie = `theme=${theme}; path=/; max-age=31536000; SameSite=Lax`;
+      // Apply to DOM
+      document.documentElement.classList.toggle('dark',
+        theme === 'dark' ||
+        (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
+      );
+    }
+  });
+
+  return {
+    get current() { return theme; },
+    set(value: Theme) { theme = value; },
+    toggle() { theme = theme === 'dark' ? 'light' : 'dark'; },
+  };
+}
+```
+
+**3. Initialize from page data in layout:**
+
+```svelte
+<!-- src/routes/+layout.svelte -->
+<script>
+  import { setContext } from 'svelte';
+  import { createThemeStore, createSidebarStore } from '$lib/stores/ui.svelte';
+
+  let { data, children } = $props();
+
+  // Initialize with server-provided values (no mismatch!)
+  const theme = createThemeStore(data.theme);
+  const sidebar = createSidebarStore(data.sidebarPinned);
+
+  setContext('theme', theme);
+  setContext('sidebar', sidebar);
+</script>
+
+{@render children()}
+```
+
+### State Storage Decision Matrix
+
+| State Type | Storage | Why |
+|------------|---------|-----|
+| Theme (affects SSR) | **Cookie** | Server must render correct theme |
+| Sidebar pinned state | **Cookie** | Prevents layout shift |
+| User preferences | **Cookie** | Consistent initial render |
+| Transient UI state | **$state only** | No persistence needed |
+| Large data caches | **localStorage** | Too big for cookies, doesn't affect SSR |
+
+### Module State Boundaries
+
+⚠️ **Critical:** Module-level stores (`.svelte.ts` files with top-level `$state`) must NEVER be imported in server contexts.
+
+```typescript
+// ❌ NEVER do this in +page.server.ts or hooks.server.ts
+import { sidebar } from '$lib/stores/ui.svelte';  // Module state leaks between SSR requests!
+
+// ✅ Always use context or page data for server-compatible state
+```
+
+---
+
 ## UI State
 
-App-wide UI state for sidebar, theme, and locale. All persisted to localStorage.
+App-wide UI state for sidebar, theme, and locale. Uses cookies for SSR-affecting state.
 
-### Store File
+### Store File (Factory Pattern for SSR Safety)
 
 ```typescript
 // src/lib/stores/ui.svelte.ts
 
 import { browser } from '$app/environment';
 
-// ═══════════════════════════════════════════════════════════════
-// SIDEBAR
-// ═══════════════════════════════════════════════════════════════
-
-let sidebarOpen = $state(false);
-let sidebarPinned = $state(browser ? localStorage.getItem('sidebar-pinned') === 'true' : false);
-
-export const sidebar = {
-  get isOpen() { return sidebarOpen },
-  get isPinned() { return sidebarPinned },
-
-  open() { sidebarOpen = true },
-  close() { sidebarOpen = false },
-  toggle() { sidebarOpen = !sidebarOpen },
-
-  pin() {
-    sidebarPinned = true;
-    sidebarOpen = true;
-    if (browser) localStorage.setItem('sidebar-pinned', 'true');
-  },
-  unpin() {
-    sidebarPinned = false;
-    if (browser) localStorage.setItem('sidebar-pinned', 'false');
-  },
-};
-
-// ═══════════════════════════════════════════════════════════════
-// THEME
-// ═══════════════════════════════════════════════════════════════
-
 type Theme = 'light' | 'dark' | 'system';
 
-function getInitialTheme(): Theme {
-  if (!browser) return 'system';
-  return (localStorage.getItem('theme') as Theme) ?? 'system';
-}
+// ═══════════════════════════════════════════════════════════════
+// THEME (Factory — SSR-safe with cookie sync)
+// ═══════════════════════════════════════════════════════════════
 
 function applyTheme(theme: Theme) {
   if (!browser) return;
@@ -798,33 +869,71 @@ function applyTheme(theme: Theme) {
   document.documentElement.classList.toggle('dark', isDark);
 }
 
-let theme = $state<Theme>(getInitialTheme());
+export function createThemeStore(initial: Theme = 'system') {
+  let theme = $state<Theme>(initial);
 
-// Apply on change
-$effect(() => {
-  if (browser) {
-    localStorage.setItem('theme', theme);
-    applyTheme(theme);
-  }
-});
-
-// Listen for system preference changes when in 'system' mode
-if (browser) {
-  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    if (theme === 'system') applyTheme('system');
+  // Sync to cookie and apply to DOM
+  $effect(() => {
+    if (browser) {
+      document.cookie = `theme=${theme}; path=/; max-age=31536000; SameSite=Lax`;
+      applyTheme(theme);
+    }
   });
+
+  // Listen for system preference changes when in 'system' mode
+  $effect(() => {
+    if (!browser || theme !== 'system') return;
+
+    const mq = matchMedia('(prefers-color-scheme: dark)');
+    const handler = () => applyTheme('system');
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  });
+
+  return {
+    get current() { return theme; },
+    set(value: Theme) { theme = value; },
+    toggle() { theme = theme === 'dark' ? 'light' : 'dark'; },
+    cycle() {
+      const modes: Theme[] = ['light', 'dark', 'system'];
+      const i = modes.indexOf(theme);
+      theme = modes[(i + 1) % modes.length];
+    },
+  };
 }
 
-export const themeStore = {
-  get current() { return theme },
-  set(value: Theme) { theme = value },
-  toggle() { theme = theme === 'dark' ? 'light' : 'dark' },
-  cycle() {
-    const modes: Theme[] = ['light', 'dark', 'system'];
-    const i = modes.indexOf(theme);
-    theme = modes[(i + 1) % modes.length];
-  },
-};
+// ═══════════════════════════════════════════════════════════════
+// SIDEBAR (Factory — SSR-safe with cookie sync)
+// ═══════════════════════════════════════════════════════════════
+
+export function createSidebarStore(initialPinned: boolean = false) {
+  let isOpen = $state(false);
+  let isPinned = $state(initialPinned);
+
+  // Sync pinned state to cookie
+  $effect(() => {
+    if (browser) {
+      document.cookie = `sidebar-pinned=${isPinned}; path=/; max-age=31536000; SameSite=Lax`;
+    }
+  });
+
+  return {
+    get isOpen() { return isOpen; },
+    get isPinned() { return isPinned; },
+
+    open() { isOpen = true; },
+    close() { isOpen = false; },
+    toggle() { isOpen = !isOpen; },
+
+    pin() {
+      isPinned = true;
+      isOpen = true;
+    },
+    unpin() {
+      isPinned = false;
+    },
+  };
+}
 
 // ═══════════════════════════════════════════════════════════════
 // LOCALE
@@ -835,10 +944,14 @@ export const themeStore = {
 
 ### Usage in Components
 
+Components access stores via context (set in root layout):
+
 ```svelte
 <!-- Sidebar.svelte -->
 <script>
-  import { sidebar } from '$lib/stores/ui.svelte';
+  import { getContext } from 'svelte';
+
+  const sidebar = getContext('sidebar');
 </script>
 
 <aside class:open={sidebar.isOpen} class:pinned={sidebar.isPinned}>
@@ -849,13 +962,15 @@ export const themeStore = {
 ```svelte
 <!-- ThemeToggle.svelte -->
 <script>
-  import { themeStore } from '$lib/stores/ui.svelte';
+  import { getContext } from 'svelte';
+
+  const theme = getContext('theme');
 </script>
 
-<button onclick={themeStore.cycle} aria-label="Toggle theme">
-  {#if themeStore.current === 'light'}
+<button onclick={theme.cycle} aria-label="Toggle theme">
+  {#if theme.current === 'light'}
     ☀️
-  {:else if themeStore.current === 'dark'}
+  {:else if theme.current === 'dark'}
     🌙
   {:else}
     💻
@@ -875,8 +990,10 @@ For logged-in users, theme and language controls appear in the user menu dropdow
 ```svelte
 <!-- UserMenu.svelte -->
 <script>
-  import { themeStore } from '$lib/stores/ui.svelte';
+  import { getContext } from 'svelte';
   import { locale, locales } from '$lib/i18n';
+
+  const theme = getContext('theme');
 
   const languages: Record<string, string> = {
     en: 'English',
@@ -891,7 +1008,7 @@ For logged-in users, theme and language controls appear in the user menu dropdow
   <div class="menu-item">
     🎨 Theme
     <!-- Note: bind:value won't work with getters. Use onchange + value instead -->
-    <select value={themeStore.current} onchange={(e) => themeStore.set(e.currentTarget.value)}>
+    <select value={theme.current} onchange={(e) => theme.set(e.currentTarget.value)}>
       <option value="light">Light</option>
       <option value="dark">Dark</option>
       <option value="system">System</option>
@@ -924,12 +1041,13 @@ The sidebar state changes based on viewport:
 ```svelte
 <!-- AppShell.svelte -->
 <script>
-  import { sidebar } from '$lib/stores/ui.svelte';
+  import { getContext } from 'svelte';
   import { browser } from '$app/environment';
-
-  // Close sidebar on mobile when route changes
   import { afterNavigate } from '$app/navigation';
 
+  const sidebar = getContext('sidebar');
+
+  // Close sidebar on mobile when route changes
   afterNavigate(() => {
     if (browser && window.innerWidth < 768) {
       sidebar.close();

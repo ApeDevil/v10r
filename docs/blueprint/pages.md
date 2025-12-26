@@ -22,6 +22,7 @@ No documentation drift. No stale examples. The template validates itself.
 /                                    # Landing page
 │
 ├── /showcase                        # Living demos
+│   ├── +page.svelte                 # Landing with recommended path
 │   ├── /theme                       # Theming system
 │   ├── /ui                          # Component gallery
 │   ├── /forms                       # Form patterns
@@ -51,7 +52,204 @@ No documentation drift. No stale examples. The template validates itself.
 
 ---
 
+## Error Boundary Structure
+
+Every route group should have an `+error.svelte` file for graceful error handling.
+
+### Required Error Boundaries
+
+| Location | Purpose | Context |
+|----------|---------|---------|
+| `/+error.svelte` | Root fallback | Generic error, "Go home" link |
+| `/app/+error.svelte` | Authenticated area | Maintains app shell, "Back to dashboard" |
+| `/(auth)/+error.svelte` | Auth flows | Clean layout, "Try again" link |
+| `/showcase/+error.svelte` | Showcase area | Shows error within showcase layout |
+
+### Error Boundary File Structure
+
+```
+src/routes/
+├── +error.svelte              # Root fallback (REQUIRED)
+├── +layout.svelte
+│
+├── (auth)/
+│   ├── +error.svelte          # Auth-specific errors
+│   ├── login/+page.svelte
+│   └── register/+page.svelte
+│
+├── showcase/
+│   ├── +error.svelte          # Showcase-specific errors
+│   ├── +layout.svelte
+│   └── ...
+│
+└── app/
+    ├── +error.svelte          # App-specific (maintains shell)
+    ├── +layout.svelte
+    ├── dashboard/+page.svelte
+    └── settings/
+        ├── +error.svelte      # Optional: settings-specific
+        └── +page.svelte
+```
+
+### Layout Error Gotcha
+
+⚠️ **Important:** Errors in `+layout.server.ts` are caught by `+error.svelte` **above** the layout, not next to it.
+
+```
+routes/app/
+├── +layout.server.ts   ← Error here
+├── +layout.svelte
+└── +error.svelte       ← Won't catch it!
+
+routes/
+└── +error.svelte       ← Catches it here (parent level)
+```
+
+### Error Page Implementation
+
+```svelte
+<!-- src/routes/+error.svelte (Root) -->
+<script>
+  import { page } from '$app/state';
+</script>
+
+<div class="error-page">
+  <h1>{page.status}</h1>
+  <p>{page.error?.message || 'Something went wrong'}</p>
+  <a href="/">Go home</a>
+</div>
+```
+
+```svelte
+<!-- src/routes/app/+error.svelte (App area - keeps shell) -->
+<script>
+  import { page } from '$app/state';
+</script>
+
+<!-- This renders inside AppShell layout -->
+<div class="error-content">
+  <h1>Error {page.status}</h1>
+  <p>{page.error?.message || 'Something went wrong'}</p>
+  <a href="/app/dashboard">Back to dashboard</a>
+</div>
+```
+
+### Component-Level Errors (Svelte 5)
+
+Use `<svelte:boundary>` for component rendering errors:
+
+```svelte
+<svelte:boundary onerror={(error) => logToSentry(error)}>
+  <ComplexChart data={chartData} />
+
+  {#snippet failed(error, reset)}
+    <div class="error-state">
+      <p>Chart failed to load</p>
+      <button onclick={reset}>Retry</button>
+    </div>
+  {/snippet}
+</svelte:boundary>
+```
+
+**Limitations:** Only catches rendering/effect errors, not event handlers or async code.
+
+---
+
 ## Showcase Pages
+
+### /showcase (Landing Page)
+
+The showcase landing page provides first-time visitors with a clear entry point and recommended learning path.
+
+**Purpose:**
+- Prevent decision paralysis (10+ demos can overwhelm)
+- Guide new users through fundamentals first
+- Show progress/completion status
+
+**Page content:**
+- Brief intro to the showcase concept
+- Recommended path with categorization
+- Visual cards for each section
+- Optional: visited/completed indicators
+
+**Recommended Learning Path:**
+
+| Order | Category | Page | Focus |
+|-------|----------|------|-------|
+| 1 | Fundamentals | Theme | Design tokens, dark mode, CSS variables |
+| 2 | Fundamentals | UI | Component library, accessibility |
+| 3 | Fundamentals | Forms | Validation, progressive enhancement |
+| 4 | Core | State | Svelte 5 runes, reactivity |
+| 5 | Core | Data | Load functions, CRUD patterns |
+| 6 | Advanced | Files | Upload, R2 storage |
+| 7 | Advanced | i18n | Translations, locale routing |
+| 8 | Advanced | Animations | Transitions, Motion One |
+| 9 | Specialized | Graph | Neo4j, visualization |
+| 10 | Specialized | API | REST, interactive docs |
+
+**Implementation:**
+
+```svelte
+<!-- src/routes/showcase/+page.svelte -->
+<script>
+  const categories = [
+    {
+      name: 'Fundamentals',
+      description: 'Start here — core patterns you\'ll use everywhere',
+      pages: [
+        { href: '/showcase/theme', title: 'Theme', description: 'Design tokens & dark mode' },
+        { href: '/showcase/ui', title: 'UI', description: 'Component library' },
+        { href: '/showcase/forms', title: 'Forms', description: 'Validation & submission' },
+      ],
+    },
+    {
+      name: 'Core Patterns',
+      description: 'Essential SvelteKit patterns for any app',
+      pages: [
+        { href: '/showcase/state', title: 'State', description: 'Svelte 5 runes' },
+        { href: '/showcase/data', title: 'Data', description: 'CRUD & load functions' },
+      ],
+    },
+    {
+      name: 'Advanced',
+      description: 'Specialized features for production apps',
+      pages: [
+        { href: '/showcase/files', title: 'Files', description: 'Upload & storage' },
+        { href: '/showcase/i18n', title: 'i18n', description: 'Internationalization' },
+        { href: '/showcase/animations', title: 'Animations', description: 'Transitions & motion' },
+      ],
+    },
+    {
+      name: 'Specialized',
+      description: 'Domain-specific integrations',
+      pages: [
+        { href: '/showcase/graph', title: 'Graph', description: 'Neo4j visualization' },
+        { href: '/showcase/api', title: 'API', description: 'REST documentation' },
+      ],
+    },
+  ];
+</script>
+
+<h1>Showcase</h1>
+<p>Self-documenting pages that test the features they document.</p>
+
+{#each categories as category}
+  <section>
+    <h2>{category.name}</h2>
+    <p>{category.description}</p>
+    <div class="card-grid">
+      {#each category.pages as page}
+        <a href={page.href} class="card">
+          <h3>{page.title}</h3>
+          <p>{page.description}</p>
+        </a>
+      {/each}
+    </div>
+  </section>
+{/each}
+```
+
+---
 
 ### /showcase/theme
 

@@ -238,7 +238,7 @@ export const actions = {
 
     // Real-time validation with debounce
     validationMethod: 'oninput',
-    delayMs: 300,
+    delayMs: 150,  // Fast for client-side validation
 
     // Error handling
     onError({ result }) {
@@ -305,9 +305,45 @@ const { form, enhance } = superForm(data.form, {
   // validationMethod: 'onblur', // When field loses focus
   // validationMethod: 'submit-only', // Only on submit
 
-  delayMs: 300, // Debounce delay for 'oninput'
+  delayMs: 150, // Debounce delay for 'oninput' (see guidelines below)
 });
 ```
+
+### Debounce Timing Guidelines
+
+Research shows **100-300ms** feels instant, while **>300ms** feels sluggish. Choose based on validation type:
+
+| Validation Type | Recommended Delay | Rationale |
+|-----------------|-------------------|-----------|
+| Client-side only | **150ms** | Fast feedback, no API cost |
+| Mixed client/server | **300ms** | Balance responsiveness and efficiency |
+| Async server checks | **500ms** | Reduce API calls, wait for typing pause |
+
+**Examples by use case:**
+
+```typescript
+// Fast client-side validation (email format, required fields)
+const { form, enhance } = superForm(data.form, {
+  validators: valibotClient(schema),
+  validationMethod: 'oninput',
+  delayMs: 150,  // Quick feedback
+});
+
+// Async validation (username availability check)
+const { form, enhance } = superForm(data.form, {
+  validators: valibotClient(schema),
+  validationMethod: 'oninput',
+  delayMs: 500,  // Reduce server requests
+});
+
+// Complex forms with expensive validation
+const { form, enhance } = superForm(data.form, {
+  validators: valibotClient(schema),
+  validationMethod: 'onblur',  // Only validate when leaving field
+});
+```
+
+**Key insight:** The 300ms default in many examples is a compromise. Use **150ms** for client-only validation to feel snappy, and **500ms** for server round-trips to avoid hammering the API.
 
 ---
 
@@ -366,6 +402,82 @@ const { enhance } = superForm(data.form, {
 | Success feedback | Toast notification |
 | Multi-step wizard | Summary at step top |
 
+### Error Priority Hierarchy
+
+When multiple error types occur simultaneously, follow this priority to avoid overwhelming users:
+
+| Priority | Error Type | Display Method | Suppress Others? |
+|----------|------------|----------------|------------------|
+| 1 (Highest) | Network failure | Toast (error) | Yes — hide form errors |
+| 2 | Server error (500) | Form-level message | Yes — skip field errors |
+| 3 | Rate limit exceeded | Form-level message | Yes — skip field errors |
+| 4 | Auth failure | Form-level message | No |
+| 5 | Multiple field errors | Inline + focus first | No toast |
+| 6 (Lowest) | Single field error | Inline only | No |
+
+**Implementation:**
+
+```typescript
+const { form, errors, enhance, message } = superForm(data.form, {
+  validators: valibotClient(schema),
+
+  onError({ result }) {
+    // Priority 1: Network/connection errors
+    if (result.error?.message?.includes('fetch')) {
+      toast.error('Connection lost. Please check your network.');
+      return; // Don't show field errors
+    }
+
+    // Priority 2-3: Server errors (handled by message)
+    // Let form-level $message display these
+  },
+
+  onResult({ result }) {
+    if (result.type === 'failure') {
+      // Priority 5: Multiple field errors — focus first invalid field
+      const firstError = document.querySelector('[aria-invalid="true"]');
+      if (firstError instanceof HTMLElement) {
+        firstError.focus();
+      }
+    }
+
+    if (result.type === 'success') {
+      toast.success('Changes saved!');
+    }
+  },
+});
+```
+
+**Form template with hierarchy:**
+
+```svelte
+<form method="POST" use:enhance>
+  <!-- Priority 2-3: Form-level message (server errors, rate limits) -->
+  {#if $message}
+    <div class="form-error" role="alert">{$message}</div>
+  {/if}
+
+  <!-- Priority 5-6: Field-level errors -->
+  <div class="form-field">
+    <label for="email">Email</label>
+    <input
+      id="email"
+      name="email"
+      type="email"
+      bind:value={$form.email}
+      aria-invalid={$errors.email ? 'true' : undefined}
+    />
+    {#if $errors.email}
+      <span class="error">{$errors.email}</span>
+    {/if}
+  </div>
+
+  <!-- ... more fields ... -->
+</form>
+
+<!-- Priority 1: Toast container for network errors (rendered at app root) -->
+```
+
 ---
 
 ## Form Patterns
@@ -384,7 +496,7 @@ const { enhance } = superForm(data.form, {
   const { form, errors, enhance, submitting, tainted } = superForm(data.form, {
     validators: valibotClient(settingsSchema),
     validationMethod: 'oninput',
-    delayMs: 300,
+    delayMs: 150,  // Fast for client-side validation
   });
 </script>
 
@@ -472,7 +584,7 @@ export const wizardSchema = v.object({
   const { form, errors, enhance, validate } = superForm(data.form, {
     validators: valibotClient(schemas[currentStep - 1]),
     validationMethod: 'oninput',
-    delayMs: 300,
+    delayMs: 150,  // Fast for client-side validation
   });
 
   async function nextStep() {
@@ -794,8 +906,8 @@ src/
 |------|-----|
 | Form library | Superforms v2 |
 | Validation | Valibot schemas |
-| Timing | Real-time with 300ms debounce |
-| Errors | Inline + form message + toast |
+| Timing | Real-time with context-aware debounce (150ms client / 500ms async) |
+| Errors | Inline + form message + toast (with priority hierarchy) |
 | Enhancement | `use:enhance` for no-reload |
 | Files | `withFiles()` + Sharp + [R2](../stack/vendors.md#cloudflare-r2) |
 
