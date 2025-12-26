@@ -127,6 +127,7 @@ Use the Task tool with the appropriate `subagent_type`:
 - UnoCSS styling and configuration → `unocss`
 - Biome linting and formatting → `biome`
 - Security patterns, CSRF, injection, headers → `security`
+- AI/LLM integration, streaming, prompts, tool calling → `ai-tools`
 
 ### Skill Usage Rules
 
@@ -146,3 +147,4 @@ Use the Task tool with the appropriate `subagent_type`:
 | unocss | UnoCSS atomic CSS with Bits UI |
 | biome | Biome linter and formatter configuration |
 | security | Security patterns, CSRF, injection, headers, rate limiting |
+| ai-tools | Vendor-agnostic LLM integration, Vercel AI SDK, streaming, caching |
