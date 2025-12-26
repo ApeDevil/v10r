@@ -1,4 +1,11 @@
-I would like to validate/examine our currently planned i18n setup.
+I would like to validate/examine our currently planned auth setup.
 Please think through the task and orchestrate the following workflow:
 1) Let the appropriate agent with according skills review/examine the documentation and analyze the relevant sections in depth.
 2) Only after the respective agents finisched thier analyzis launch resy agent to identify/verify the best possible solution approaches.
+
+---
+
+checkout .claude/agents & .claude/skills and contemplate it!
+how about add a new skills 'security' for knowledge gaps of ai - things post-training cutoff or underdocumented info?
+let resy look up the most inportained best security practices in context of our project!
+then write the skill!

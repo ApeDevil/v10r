@@ -1,4 +1,11 @@
 
+
+✅ Success
+❌ Error
+ℹ️ Info
+⚠️ Warning
+🪲 Debug
+
 🛎️ Sevice
 
 👤 User
@@ -6,7 +13,6 @@ Authentication
 Authorization
 
 👄 i18n
-Notifications (pajer)
 
 💾 Database
 ☎️ API

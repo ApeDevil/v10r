@@ -7,6 +7,10 @@
         {
             "folderPath": "velociraptor/docs/blueprint/",
             "badge": "🗺️"
+        },
+        {
+            "folderPath": "velociraptor/docs/guides/",
+            "badge": "🧙‍♂️"
         }
     ]
 }
