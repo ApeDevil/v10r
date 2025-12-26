@@ -31,11 +31,34 @@ The project uses a self-documenting architecture where showcase pages serve as d
 
 ## Documentation
 
-| Path | Contents |
-|------|----------|
-| `docs/foundation/` | PRD, architecture, and security baseline |
-| `docs/stack/` | Technology decisions and configuration |
-| `docs/blueprint/` | Implementation designs and feature specs |
+See [`docs/README.md`](docs/README.md) for the full documentation index.
+
+### README Structure
+
+Each documentation directory has a README.md that serves as a **navigation hub**:
+
+1. **Brief intro** (2-3 sentences) - directory purpose only
+2. **Topic table** - each file with its main topics as bullet points
+
+Example format:
+```markdown
+| File | Main Topics |
+|------|-------------|
+| auth.md | • Better Auth setup, • OAuth providers, • Session management |
+| rate-limiting.md | • sveltekit-rate-limiter, • Upstash scaling, • Per-route limits |
+```
+
+This ensures findability - scanning a README reveals which file covers any topic.
+
+### Finding Documentation
+
+**MUST DO:** When searching for documentation on any topic:
+
+1. **First** - Read the relevant directory's README.md
+2. **Then** - Use the topic table to identify which file(s) cover your topic
+3. **Finally** - Read the specific file(s)
+
+Never grep blindly through docs. The READMEs are the index.
 
 ## Agent Delegation Policy
 

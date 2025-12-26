@@ -1,8 +1,15 @@
-i would like to make a validation of our current planed backend. ultrathink the task and orchestad this workflow:
- let the according agent look through the documentation and analyze and contemplate the relevant parts!
-then let the resy agernt verify/find the best possible soultion approach!
-
-I would like to validate our currently planned backend.
+I would like to validate our currently planned frontend.
 Please ultrathink through the task and orchestrate the following workflow:
 Let the appropriate agent review the documentation and analyze the relevant sections in depth.
 Then, let the research agent verify and identify the best possible solution approach.
+
+---
+
+I think we need to improve our documentation structure, the findability has to be much better!
+
+i think the rules have to be that in local readme like docs/blueprint/README.md we have only very short introduction to the directory purpuse and a much better table of content:
+so that it is clearly documented which main topics each file contains.
+
+do you anderstand what i mean?
+
+for example | [i18n.md](./i18n.md) | 

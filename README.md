@@ -49,3 +49,13 @@ See [docs/stack/README.md](./docs/stack/README.md) for complete technology decis
 
 
 
+## Core Idea
+
+**The app documents itself by being itself.**
+
+Every showcase page serves three purposes simultaneously:
+
+| Role | What It Does |
+|------|--------------|
+| **Documentation** | Explains how the feature works |
+| **Test** | Proves the feature works |

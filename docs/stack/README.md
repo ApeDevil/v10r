@@ -1,45 +1,28 @@
-# Velociraptor Stack
+# Stack
 
-Technology decisions for the Velociraptor template.
+Technology decisions and vendor choices. Each file documents what we use and why, with swappability analysis and alternatives.
 
-## Quick Reference
+## Core Stack
 
-| Layer | Choice |
-|-------|--------|
-| Runtime | Bun |
-| Framework | SvelteKit |
-| Database | PostgreSQL (Neon) + Neo4j |
-| ORM | Drizzle |
-| Auth | Better Auth (or DIY Sessions) |
-| Styling | UnoCSS + Bits UI |
-| Validation | Valibot + Superforms |
-| Code Quality | Biome |
-| Hosting | Vercel (Node.js) + Koyeb (Bun) |
+| File | Main Topics |
+|------|-------------|
+| **[core.md](./core.md)** | • Runtime & framework: Bun, SvelteKit, TypeScript<br>• Container: Podman, oven/bun:alpine, MinIO for local S3<br>• Data architecture: PostgreSQL (Neon), Neo4j (Aura), R2 for files<br>• Polyglot freshness: cross-database referential integrity patterns<br>• Database: Drizzle ORM vs Prisma/Kysely comparison<br>• File storage: Cloudflare R2 (zero egress) vs alternatives<br>• Caching: Vercel Edge HTTP cache, Redis (Upstash) for dynamic<br>• Code quality: Biome vs ESLint + Prettier (10-25x faster) |
+| **[deployment.md](./deployment.md)** | • Tri-target strategy: Vercel (Node.js), Vercel (Bun experimental), Koyeb (Bun container)<br>• Adapter selection: `adapter-vercel` vs `svelte-adapter-bun`<br>• Platform comparison: cold starts, preview deploys, free tier limits<br>• Vercel Node.js: stable, zero config<br>• Vercel Bun: experimental, 28% faster, SvelteKit not officially supported<br>• Koyeb: native Bun, container experience, sleep on inactivity<br>• Environment parity across targets<br>• Recommendations by use case |
+| **[auth.md](./auth.md)** | • Better Auth (recommended) vs DIY Sessions comparison<br>• Session-based auth with Drizzle adapter<br>• OAuth 2.0: 20+ built-in providers (GitHub, Google)<br>• 2FA/MFA: TOTP, WebAuthn, passkeys<br>• Libraries: `better-auth`, `@better-auth/cli`<br>• DIY alternative: Oslo, Arctic, @node-rs/argon2<br>• Cookie caching for performance (avoids DB hit per request)<br>• No vendor lock-in (self-hosted) |
+| **[ui.md](./ui.md)** | • Styling: UnoCSS (atomic CSS, smaller than Tailwind)<br>• Components: Bits UI (headless, Svelte-native)<br>• Icons: Iconify (unified API, tree-shakeable)<br>• Animations: Svelte transitions (built-in), Motion One for complex<br>• Images: @sveltejs/enhanced-img (build-time), Sharp (upload processing), R2 storage<br>• State: Svelte 5 runes (`$state`, `$derived`, `$effect`)<br>• Validation & forms: Valibot (1 KB vs Zod 12 KB) + Superforms<br>• All libraries, no vendor lock-in |
+| **[api.md](./api.md)** | • API style: REST + Server Actions (SvelteKit-native)<br>• API docs: OpenAPI with Scalar UI<br>• AI/LLM: Vercel AI SDK (streaming, provider-agnostic) + Anthropic<br>• Analytics: Vercel Analytics (cookieless, zero config)<br>• Error tracking: Sentry SDK (5K errors/mo free)<br>• Email: SMTP/API via Resend (100 emails/day free)<br>• Background jobs: Server Actions (default), QStash (async), Inngest (complex workflows)<br>• i18n: sveltekit-i18n (per-language lazy loading) vs Paraglide |
 
-## Documentation
+## Features
 
-### Core
+| File | Main Topics |
+|------|-------------|
+| **[seo.md](./seo.md)** | • Traditional SEO: SSR by default, meta tags via svelte-meta-tags<br>• Essential tags: title, description, canonical, Open Graph<br>• Sitemap: dynamic via `/sitemap.xml` endpoint<br>• Structured data: JSON-LD schemas (Article, Product, FAQ, etc.)<br>• GEO (Generative Engine Optimization): AI search optimization<br>• GEO strategies: statistics (+22%), quotations (+37%), structure<br>• Content structure for LLMs: clear hierarchy, semantic density<br>• Metrics: reference rate, unaided awareness, citation volume |
+| **[logging.md](./logging.md)** | • Logger: Pino (fastest Node.js logger, 5x faster than Winston)<br>• Error tracking: Sentry SDK integration<br>• Log aggregation: JSON stdout → Vercel Logs (1 hour retention)<br>• Log levels: fatal, error, warn, info, debug, trace<br>• Structured logging: queryable objects, not string concatenation<br>• Standard fields: context, userId, requestId, duration, err<br>• SvelteKit integration: request logging in hooks<br>• **AI request logging**: never log message content (PII), only metadata<br>• What to log: auth events, payments, API calls, AI usage (tokens, cost)<br>• What never to log: passwords, secrets, AI prompts/responses, user messages |
+| **[notifications.md](./notifications.md)** | • Platform: Novu (open-source, multi-channel, self-hostable)<br>• Email: SMTP/API via Resend<br>• Push: Web Push / FCM (free)<br>• In-app: WebSocket via Novu Inbox<br>• Setup: `@novu/node`, workflow definitions in code<br>• Triggering: `novu.trigger(workflowName, { to, payload })`<br>• User preferences: store in DB, check before triggering<br>• Digests: batch events with `step.digest()`<br>• Toasts: svelte-french-toast for UI feedback<br>• Self-hosting option: Docker Compose with MongoDB and Redis |
+| **[gdpr.md](./gdpr.md)** | • Requirements: lawful basis, consent, data minimization, security<br>• Consent: cookie banner (block scripts until opt-in), Klaro vs DIY<br>• Cookie categories: necessary, analytics, marketing, functional<br>• User rights: access (`/account/data`), export (JSON), deletion, preferences<br>• Retention: active accounts (until deletion), logs (30 days), analytics (26 months)<br>• Privacy by design: minimization, anonymization, pseudonymization<br>• **AI data processing**: separate consent, transparency about providers<br>• AI consent pattern: localStorage flag, opt-in before first use<br>• Provider data handling: Groq (not stored), Mistral (30 days, EU-based), Together AI (not stored)<br>• Third-party services: all have DPAs, compliance matrix<br>• Privacy policy checklist: data collected, legal basis, retention, rights |
 
-| Doc | Contents |
-|-----|----------|
-| [Core](./core.md) | Runtime, framework, database, storage, code quality |
-| [Deployment](./deployment.md) | Hosting strategy: Vercel (Node.js) + Koyeb (Bun) |
-| [UI](./ui.md) | Styling, components, state, validation, forms |
-| [Auth](./auth.md) | Session-based authentication |
-| [API](./api.md) | API patterns, services, i18n, background jobs |
-| [Vendors](./vendors.md) | All external services, costs, compliance, alternatives |
+## Vendors
 
-### Features
-
-| Doc | Contents |
-|-----|----------|
-| [SEO](./seo.md) | Traditional SEO and GEO for AI search |
-| [Logging](./logging.md) | Structured logging and observability |
-| [Notifications](./notifications.md) | Multi-channel notification system |
-| [GDPR](./gdpr.md) | Privacy compliance and data protection |
-
-### Related
-
-| Doc | Contents |
-|-----|----------|
-| [Security](../foundation/security.md) | Security practices, headers, rate limiting |
+| File | Main Topics |
+|------|-------------|
+| **[vendors.md](./vendors.md)** | • **Multi-provider AI architecture**: Groq (chat + audio), Mistral (embeddings), Together AI (images)<br>• Provider comparison: free tiers, speed, quality, EU compliance<br>• Groq: 14,400 req/day free, 300+ tokens/sec, Llama 3.3 70B<br>• Mistral: 1B tokens/mo free, EU-based (GDPR-native), 1024-dim embeddings<br>• Together AI: 3 months unlimited free, FLUX Schnell image gen<br>• Neon: serverless Postgres, database branching, autoscaling to zero<br>• Vercel: app hosting, edge network, Node.js runtime (Bun experimental)<br>• Koyeb: native Bun containers, 512 MB RAM free, no credit card<br>• Cloudflare R2: 10 GB free, **zero egress fees**, S3-compatible<br>• Neo4j Aura: 200K nodes free, managed graph DB<br>• Resend: 100 emails/day free, React Email integration<br>• Sentry: 5K errors/mo free, performance monitoring<br>• Inngest: 25K runs/mo free, step functions, retries, cron<br>• Cost summary: $0/mo at free tier, $50-150/mo at ~10K MAU<br>• Compliance matrix: GDPR, DPA, EU region, SOC 2<br>• Swappability: Easy (standard protocol), Medium (some code changes), Hard (deep integration)<br>• Local development: Postgres, Neo4j, MinIO containers<br>• Environment variables: all API keys and credentials listed |

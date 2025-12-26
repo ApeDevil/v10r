@@ -1,100 +1,29 @@
 # Blueprint
 
-Implementation designs for Velociraptor.
+Implementation designs and feature specifications. How to build features using the stack, with code examples and patterns.
 
-## What Is Velociraptor
+## Application Structure
 
-Velociraptor is a **tech stack** (Bun, SvelteKit, Drizzle, Better Auth, etc.).
+| File | Main Topics |
+|------|-------------|
+| **[app-shell.md](./app-shell.md)** | • Main layout: root `+layout.svelte`, meta tags, theme class<br>• Authenticated layout: `/app/+layout.svelte` with sidebar<br>• Sidebar: pinnable, persistent state (localStorage), responsive breakpoints<br>• Header: navigation, user menu, theme toggle, quick search (`⌘K`)<br>• User menu: profile, settings, theme select, language switcher, sign out<br>• Footer: social links, copyright, app version<br>• Mobile navigation: hamburger, drawer, swipe gestures<br>• File structure: `$lib/components/layout/` organization<br>• QuickSearch: command palette for global navigation |
+| **[pages.md](./pages.md)** | • **Self-documenting architecture**: each page is documentation + test + template<br>• Route structure: `/` (landing), `/showcase/*` (demos), `/app/*` (protected), `/auth/*`, `/docs/*`<br>• Showcase routes: theme, ui, forms, state, data, files, i18n, animations, graph, api<br>• `/showcase/data`: CRUD with master-detail, cards, table view, pagination<br>• `/showcase/ui`: component gallery (buttons, inputs, modals, QuickSearch, etc.)<br>• `/app/dashboard`: authenticated home with session data<br>• `/app/account`: GDPR compliance (view data, export JSON, delete account)<br>• Protected routes: per-route `requireAuth()` guards (not layout-based)<br>• Static docs: prerendered Markdown pages<br>• Navigation: main nav, showcase sidebar with nested links |
+| **[middleware.md](./middleware.md)** | • Hooks: `handle`, `handleFetch`, `handleError`, `reroute`<br>• `handle` hook: request interception before routes<br>• `sequence()` for composing multiple handlers (order matters)<br>• Execution order: rate limit → i18n → auth → route → response<br>• Better Auth integration: `svelteKitHandler` for `/api/auth/*`<br>• Rate limiting: in hooks, skip static assets (`/_app`)<br>• CORS: origin validation, preflight handling, headers<br>• Security headers: X-Frame-Options, CSP, X-Content-Type-Options<br>• `handleFetch`: intercept server-side fetch, forward cookies, add auth headers<br>• `handleError`: global error handler, logging, safe error messages<br>• `reroute`: URL rewriting before routing (locale stripping, redirects)<br>• Full example with all patterns composed |
 
-This project serves three purposes:
+## Features
 
-1. **Test** the stack - verify all components work together
-2. **Document** the stack - show how to use each feature
-3. **Template** for new projects - copy and build on it
+| File | Main Topics |
+|------|-------------|
+| **[auth.md](./auth.md)** | • Better Auth setup: `$lib/server/auth/index.ts` with Drizzle adapter<br>• Client setup: `$lib/auth-client.ts` for browser use<br>• Authentication flows: credentials (email/password), OAuth (GitHub, Google)<br>• Session management: database-backed, cookie-based, 7-day default<br>• Route protection: per-route guards with `requireAuth()` helper<br>• User registration: `signUp.email()`, password hashing (argon2id)<br>• Password reset: `forgetPassword()`, email tokens, expiration<br>• OAuth: `signIn.social()`, redirect handling, profile mapping<br>• Email verification: `emailVerification` plugin, resend flow<br>• Hooks integration: populate `event.locals.user` and `event.locals.session`<br>• **Rate limiting**: Better Auth's built-in is BROKEN — use sveltekit-rate-limiter<br>• CSRF protection: enabled by default, `csrfProtection` option<br>• Security: password validation, rate limits by endpoint, audit logging |
+| **[forms.md](./forms.md)** | • Hybrid approach: Superforms for most, Better Auth client for auth<br>• Why Valibot over Zod: 1 KB vs 12 KB bundle, tree-shakeable, faster<br>• Schema location: top of `+page.server.ts` (route-specific) or `$lib/schemas/*.ts` (shared)<br>• Server integration: `superValidate()`, `valibot()` adapter, `fail()` for errors<br>• Client integration: `superForm()`, real-time validation, debounce (300ms)<br>• Validation timing: `oninput` (real-time), `onblur` (on blur), `submit-only`<br>• Error display: inline (field-level), form message, toast notifications<br>• Form patterns: settings (multi-section), wizard (multi-step), dependent fields<br>• File uploads: `withFiles()`, Sharp processing, R2 storage, preview<br>• Accessibility: labels, `aria-invalid`, `aria-describedby`, focus first error<br>• Named actions: multiple forms per page<br>• Confirmation modals: `onSubmit` cancel, programmatic `submit()` |
+| **[state.md](./state.md)** | • Svelte 5 runes: `$state`, `$derived`, `$effect`, `$props`, `$bindable`<br>• `$state`: reactive variables, deep proxy for objects/arrays<br>• `$state.raw`: opt out of proxy, only reassignment triggers updates<br>• `$state.snapshot`: plain object copy for API calls, cloning<br>• `$derived`: computed values (memoized, lazy), use 90% of the time<br>• `$derived.by`: multi-statement computations, must be pure<br>• `$effect`: side effects after DOM update, cleanup pattern<br>• `$effect.pre`: before DOM update (scroll position capture)<br>• Module state: `.svelte.ts` files, factory pattern for instances<br>• Context API: SSR-safe shared state, `setContext()` / `getContext()`<br>• **Better Auth session state**: use `event.locals` (SSR-safe), not module-level `useSession()`<br>• Reactive built-ins: `SvelteMap`, `SvelteSet`, `SvelteDate`, `SvelteURL`<br>• UI state: sidebar (open/pinned), theme (light/dark/system), localStorage sync<br>• Anti-patterns: modify state in `$derived`, use `$effect` for computation, forget cleanup |
+| **[i18n.md](./i18n.md)** | • Library: sveltekit-i18n (lazy loading per locale, scales to 10+ languages)<br>• Why not Paraglide: bundles all languages (multiplies by count), no runtime switching<br>• Routing: `[[lang]]` optional parameter (`/`, `/de`, `/de/about`)<br>• Translation files: `src/lib/i18n/{locale}/*.json`, per-route lazy loading<br>• Route-based loading: `routes` array in loaders, only load needed translations<br>• Usage: `$t('key.path', { params })`, pluralization, interpolation<br>• Language switcher: dropdown, preserve current route, localized paths<br>• Date/number formatting: native `Intl` API (locale-aware)<br>• SEO: `lang` attribute, `hreflang` alternate links, translated meta tags<br>• DB content: JSON columns for translations, helper function for fallback<br>• Format helpers: `formatDate()`, `formatCurrency()`, `formatRelative()` |
+| **[api.md](./api.md)** | • Strategy: REST (`+server.ts`) for external, Server Actions for forms<br>• Route structure: `/api/*` for REST endpoints<br>• HTTP methods: `GET`, `POST`, `PUT`, `DELETE`, `PATCH` exports<br>• Request handling: `json()` helper, typed request bodies<br>• Response patterns: `json()` with status, error handling, streaming<br>• Validation: Valibot schemas for API payloads<br>• Authentication: check `event.locals.user`, return 401 if missing<br>• Rate limiting: per-endpoint limiters, stricter for mutations<br>• Error responses: consistent format, status codes, error codes<br>• CORS: headers for cross-origin requests, preflight handling<br>• OpenAPI docs: schema generation, Scalar UI for interactive docs<br>• Pagination: cursor-based for large datasets, limit + offset for simple<br>• Webhooks: signature verification, idempotency, async processing |
+| **[error-handling.md](./error-handling.md)** | • Error types: expected (`error()`), unexpected (`handleError`), form (`fail()`), API (`json()` + status)<br>• Expected errors: use `error(status, { message })` helper in load functions<br>• Status codes: 400 (bad request), 401 (not authenticated), 403 (not authorized), 404 (not found), 422 (validation failed), 429 (rate limited)<br>• Error pages: `+error.svelte` global, layout-specific for `/app/*`<br>• Custom error data: `App.Error` interface in `app.d.ts`<br>• `handleError` hook: catch unexpected errors, log to Sentry, return safe message<br>• Form errors: `fail()` in actions, Superforms integration, display patterns<br>• API errors: `json({ error }, { status })`, consistent format with error codes<br>• Database errors: catch PostgresError, map codes (23505 = unique violation, etc.)<br>• File upload errors: size limits, type validation, 413/415 status codes<br>• Client-side: custom `ApiError` class, `apiFetch()` helper, try/catch in components<br>• AI errors: provider-specific (401/429/500), retry with exponential backoff, user-friendly messages<br>• Testing: expect 404/403 for invalid access |
+| **[rate-limiting.md](./rate-limiting.md)** | • **Critical**: Better Auth's built-in rate limiting is BROKEN (GitHub issues #2153, #2112, #1891)<br>• Primary: sveltekit-rate-limiter (SvelteKit-native, serverless-compatible)<br>• Production: Upstash Redis for distributed limiting across serverless<br>• Strategy: global (hooks), route-specific (endpoints), Superforms integration<br>• Rate limit types: IP (low resistance), IP+UA (medium), Cookie (high), User ID (highest)<br>• Global limits: 100/min per IP, 50/30s per IP+UA, 200/min per cookie<br>• Auth endpoints: 5/min (login), 3/hour (password reset), 3/hour (email verification)<br>• Time units: `s`, `m`, `h`, `d`, `15m`, `2h`, etc.<br>• Hook integration: check in `handle`, skip static assets, return 429 with headers<br>• Headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`, `Retry-After`<br>• Per-user limits: custom rate function with `event.locals.user.id`<br>• Upstash setup: `@upstash/ratelimit`, sliding window algorithm<br>• Hybrid approach: in-memory (dev), Upstash (prod), environment-based switching<br>• Recommended limits by endpoint type (login, API reads/writes, file uploads, contact forms) |
 
-These aren't separate efforts. They happen simultaneously through the same pages.
+## Deployment
 
-## Core Idea
-
-**The app documents itself by being itself.**
-
-Every showcase page serves three purposes simultaneously:
-
-| Role | What It Does |
-|------|--------------|
-| **Documentation** | Explains how the feature works |
-| **Test** | Proves the feature works |
-| **Template** | Copy-paste reference for real projects |
-
-## Self-Documentation
-
-Traditional documentation drifts from reality. Code changes, docs don't. Examples rot.
-
-Velociraptor solves this by making documentation executable:
-
-```
-Traditional:
-  docs say "theme toggle works like X"
-  → code changes
-  → docs become wrong
-  → developers get confused
-
-Velociraptor:
-  /showcase/theme IS the theme toggle
-  → if page works, docs are accurate
-  → if code breaks, page breaks
-  → zero drift possible
-```
-
-The showcase pages ARE the documentation. Reading them shows what's possible. Using them proves it works.
-
-## Self-Testing
-
-No separate test suite needed for feature validation. The template tests itself through usage:
-
-| If This Works | Then This Is Tested |
-|---------------|---------------------|
-| `/showcase/theme` renders | UnoCSS, CSS vars, localStorage, `$state` |
-| `/showcase/forms` submits | Superforms, Valibot, server actions |
-| `/showcase/data` loads | Drizzle, load functions, SSR |
-| `/app/dashboard` requires login | Better Auth, sessions, route guards |
-| `/showcase/files` uploads | R2, Sharp, presigned URLs |
-
-Breaking a stack component breaks its showcase page. The failure is immediate and visible.
-
-## Why This Works
-
-| Problem | Traditional | Velociraptor |
-|---------|-------------|--------------|
-| Stale examples | Common | Impossible |
-| "Works on my machine" | Hidden | Visible in deploy |
-| Feature coverage gaps | Easy to miss | Page exists or doesn't |
-| Onboarding confusion | Read, then try | See working, copy it |
-
-## Documents
-
-| File | Contents |
-|------|----------|
-| [design/](./design/README.md) | Design philosophy, visual identity, theming strategy |
-| [design/tokens.md](./design/tokens.md) | Design tokens: breakpoints, colors, spacing, z-index |
-| [design/styling.md](./design/styling.md) | UnoCSS, fluid typography, container queries |
-| [design/components.md](./design/components.md) | Bits UI primitives, CVA variants, composites |
-| [pages.md](./pages.md) | Route structure, showcase pages, what each tests |
-| [db/](./db/README.md) | Data layer overview and decision tree |
-| [db/relational.md](./db/relational.md) | Drizzle schema, Better Auth tables, migrations |
-| [db/graph.md](./db/graph.md) | Neo4j connection, Cypher queries, graph model |
-| [forms.md](./forms.md) | Superforms, Valibot validation, form patterns |
-| [app-shell.md](./app-shell.md) | Sidebar, navigation, responsive layout |
-| [auth.md](./auth.md) | Better Auth, OAuth, 2FA, route guards |
-| [state.md](./state.md) | Svelte 5 runes, shared state, context API |
-| [api.md](./api.md) | REST endpoints, GraphQL (optional), validation, CORS |
-| [middleware.md](./middleware.md) | SvelteKit hooks, request handling, security headers |
-| [rate-limiting.md](./rate-limiting.md) | Request rate limiting, abuse prevention, Upstash |
-| [deployment.md](./deployment.md) | Vercel + Koyeb setup, Dockerfile, CI/CD pipelines |
-| [error-handling.md](./error-handling.md) | Error pages, API errors, form errors |
-| [i18n.md](./i18n.md) | sveltekit-i18n, locale routing, date/number formatting |
-
-## Future Additions
-
-- `files.md` - File uploads, R2 storage, image processing
-- `testing.md` - Vitest unit tests, Playwright E2E
+| File | Main Topics |
+|------|-------------|
+| **[deployment.md](./deployment.md)** | • Tri-target deployment strategy: Vercel Node.js, Vercel Bun (experimental), Koyeb (Bun native)<br>• Vercel Node.js: stable, zero config, preview deploys, `@sveltejs/adapter-vercel`<br>• Vercel Bun: experimental, 28% faster, SvelteKit not officially supported yet<br>• Koyeb: native Bun runtime, container experience, 512 MB free tier, sleeps on inactivity<br>• Adapter comparison: `adapter-vercel` vs `svelte-adapter-bun` (different configs)<br>• Platform comparison: cold start times, free tier limits, preview deploy support<br>• Environment parity: same `.env` variables across all targets<br>• Database setup: Neon (connection pooling), Neo4j Aura (read replicas)<br>• File storage: Cloudflare R2 (S3-compatible, zero egress)<br>• Deployment workflow: Git push → build → deploy, preview branches<br>• Monitoring: Vercel Analytics, Sentry error tracking, logs (1 hour retention)<br>• Recommendations: Vercel Node.js (production stability), Koyeb (Bun performance), Vercel Bun (testing future) |
