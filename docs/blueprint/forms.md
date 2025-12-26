@@ -147,27 +147,29 @@ export const userWithAddressSchema = v.object({
 
 ```typescript
 // src/routes/auth/login/+page.server.ts
+import type { PageServerLoad, Actions } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
 import { superValidate, message } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import { loginSchema } from '$lib/schemas/auth';
 import { auth } from '$lib/server/auth';
 
-// Schema at top level for caching
-export async function load() {
+export const load: PageServerLoad = async () => {
   const form = await superValidate(valibot(loginSchema));
   return { form };
-}
+};
 
-export const actions = {
-  default: async ({ request, cookies }) => {
+export const actions: Actions = {
+  default: async ({ request }) => {
     const form = await superValidate(request, valibot(loginSchema));
 
     if (!form.valid) {
       return fail(400, { form });
     }
 
-    // Authenticate
+    // Authenticate via Better Auth
+    // Note: For auth-critical forms, consider using Better Auth client directly
+    // See "Hybrid Approach" section above
     const result = await auth.api.signInEmail({
       body: {
         email: form.data.email,
@@ -188,19 +190,20 @@ export const actions = {
 
 ```typescript
 // src/routes/auth/+page.server.ts
+import type { PageServerLoad, Actions } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
-import { superValidate, message } from 'sveltekit-superforms';
+import { superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import { loginSchema, registerSchema } from '$lib/schemas/auth';
 
-export async function load() {
+export const load: PageServerLoad = async () => {
   return {
     loginForm: await superValidate(valibot(loginSchema)),
     registerForm: await superValidate(valibot(registerSchema)),
   };
-}
+};
 
-export const actions = {
+export const actions: Actions = {
   login: async ({ request }) => {
     const form = await superValidate(request, valibot(loginSchema));
     if (!form.valid) return fail(400, { form });
@@ -226,18 +229,21 @@ export const actions = {
 ```svelte
 <!-- src/routes/auth/login/+page.svelte -->
 <script lang="ts">
+  import type { PageProps } from './$types';
   import { superForm } from 'sveltekit-superforms';
   import { valibotClient } from 'sveltekit-superforms/adapters';
   import { loginSchema } from '$lib/schemas/auth';
   import { toast } from '$lib/stores/toast.svelte';
 
-  let { data } = $props();
+  let { data }: PageProps = $props();
 
   const { form, errors, enhance, submitting, message } = superForm(data.form, {
     validators: valibotClient(loginSchema),
 
-    // Real-time validation with debounce
-    validationMethod: 'oninput',
+    // "Reward early, validate late" pattern (recommended default)
+    // Validates on blur for pristine fields, on input after errors appear
+    // validationMethod: 'auto', // This is the default, no need to specify
+
     delayMs: 150,  // Fast for client-side validation
 
     // Error handling
@@ -296,18 +302,34 @@ export const actions = {
 
 ### Validation Timing
 
+**Default: `'auto'` (recommended)** — Implements the research-backed "reward early, validate late" pattern:
+- Validates on **blur** for pristine fields (avoids interrupting typing)
+- Validates on **input** only after errors appear (quick correction feedback)
+
 ```typescript
 const { form, enhance } = superForm(data.form, {
   validators: valibotClient(schema),
 
-  // Options for validation timing:
-  validationMethod: 'oninput',  // Real-time (on every keystroke)
-  // validationMethod: 'onblur', // When field loses focus
-  // validationMethod: 'submit-only', // Only on submit
+  // Default behavior (no need to specify):
+  // validationMethod: 'auto',
 
-  delayMs: 150, // Debounce delay for 'oninput' (see guidelines below)
+  // Override only when needed:
+  // validationMethod: 'oninput',      // Real-time (password strength, char count)
+  // validationMethod: 'onblur',       // Only when leaving field
+  // validationMethod: 'submit-only',  // Only on submit
+
+  delayMs: 150, // Debounce delay (see guidelines below)
 });
 ```
+
+**Decision tree for validation timing:**
+
+| Question | Answer | Use |
+|----------|--------|-----|
+| Need real-time feedback? (password strength, live char count) | Yes | `'oninput'` |
+| Does validation require server call? (username availability) | Yes | `'oninput'` + `delayMs: 500` |
+| Is the form complex with expensive validation? | Yes | `'onblur'` |
+| Standard form fields? | Yes | `'auto'` (default) |
 
 ### Debounce Timing Guidelines
 
@@ -322,18 +344,25 @@ Research shows **100-300ms** feels instant, while **>300ms** feels sluggish. Cho
 **Examples by use case:**
 
 ```typescript
-// Fast client-side validation (email format, required fields)
+// Standard forms (use default 'auto' behavior)
 const { form, enhance } = superForm(data.form, {
   validators: valibotClient(schema),
-  validationMethod: 'oninput',
-  delayMs: 150,  // Quick feedback
+  // validationMethod: 'auto' is the default
+  delayMs: 150,
+});
+
+// Real-time feedback (password strength, character count)
+const { form, enhance } = superForm(data.form, {
+  validators: valibotClient(schema),
+  validationMethod: 'oninput',  // Override default for real-time
+  delayMs: 150,
 });
 
 // Async validation (username availability check)
 const { form, enhance } = superForm(data.form, {
   validators: valibotClient(schema),
   validationMethod: 'oninput',
-  delayMs: 500,  // Reduce server requests
+  delayMs: 500,  // Higher delay to reduce server requests
 });
 
 // Complex forms with expensive validation
@@ -343,7 +372,7 @@ const { form, enhance } = superForm(data.form, {
 });
 ```
 
-**Key insight:** The 300ms default in many examples is a compromise. Use **150ms** for client-only validation to feel snappy, and **500ms** for server round-trips to avoid hammering the API.
+**Key insight:** The default `'auto'` mode is research-backed and works best for most forms. Only override when you have a specific reason (real-time feedback, expensive validation, or server-side checks).
 
 ---
 
@@ -585,16 +614,17 @@ const { enhance } = superForm(data.form, {
 ```svelte
 <!-- src/routes/app/settings/+page.svelte -->
 <script lang="ts">
+  import type { PageProps } from './$types';
   import { superForm } from 'sveltekit-superforms';
   import { valibotClient } from 'sveltekit-superforms/adapters';
   import { settingsSchema } from '$lib/schemas/user';
 
-  let { data } = $props();
+  let { data }: PageProps = $props();
 
   const { form, errors, enhance, submitting, tainted } = superForm(data.form, {
     validators: valibotClient(settingsSchema),
-    validationMethod: 'oninput',
-    delayMs: 150,  // Fast for client-side validation
+    // Using default 'auto' validation (reward early, validate late)
+    delayMs: 150,
   });
 </script>
 
@@ -670,19 +700,20 @@ export const wizardSchema = v.object({
 ```svelte
 <!-- src/routes/onboarding/+page.svelte -->
 <script lang="ts">
+  import type { PageProps } from './$types';
   import { superForm } from 'sveltekit-superforms';
   import { valibotClient } from 'sveltekit-superforms/adapters';
   import { step1Schema, step2Schema, step3Schema } from '$lib/schemas/wizard';
 
-  let { data } = $props();
+  let { data }: PageProps = $props();
   let currentStep = $state(1);
 
   const schemas = [step1Schema, step2Schema, step3Schema];
 
   const { form, errors, enhance, validate } = superForm(data.form, {
     validators: valibotClient(schemas[currentStep - 1]),
-    validationMethod: 'oninput',
-    delayMs: 150,  // Fast for client-side validation
+    // Using default 'auto' validation
+    delayMs: 150,
   });
 
   async function nextStep() {
@@ -745,9 +776,10 @@ export const wizardSchema = v.object({
 ```svelte
 <!-- Country → State → City cascade -->
 <script lang="ts">
+  import type { PageProps } from './$types';
   import { superForm } from 'sveltekit-superforms';
 
-  let { data } = $props();
+  let { data }: PageProps = $props();
 
   const { form, enhance } = superForm(data.form);
 
@@ -803,10 +835,11 @@ export const wizardSchema = v.object({
 
 ```svelte
 <script lang="ts">
+  import type { PageProps } from './$types';
   import { superForm } from 'sveltekit-superforms';
   import { ConfirmDialog } from '$lib/components/composites';
 
-  let { data } = $props();
+  let { data }: PageProps = $props();
   let showConfirm = $state(false);
 
   const { form, enhance, submit } = superForm(data.form, {
@@ -842,6 +875,7 @@ export const wizardSchema = v.object({
 
 ```typescript
 // src/routes/app/settings/avatar/+page.server.ts
+import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { superValidate, withFiles } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
@@ -857,12 +891,12 @@ const avatarSchema = v.object({
   ),
 });
 
-export async function load() {
+export const load: PageServerLoad = async () => {
   const form = await superValidate(valibot(avatarSchema));
   return { form };
-}
+};
 
-export const actions = {
+export const actions: Actions = {
   default: async ({ request, locals }) => {
     const form = await superValidate(request, valibot(avatarSchema));
 
@@ -895,9 +929,10 @@ export const actions = {
 ```svelte
 <!-- src/routes/app/settings/avatar/+page.svelte -->
 <script lang="ts">
+  import type { PageProps } from './$types';
   import { superForm } from 'sveltekit-superforms';
 
-  let { data } = $props();
+  let { data }: PageProps = $props();
   let preview = $state<string | null>(null);
 
   const { form, errors, enhance, submitting } = superForm(data.form);
@@ -938,6 +973,272 @@ export const actions = {
 </form>
 ```
 
+### Edit Form (Loading Existing Data)
+
+```typescript
+// src/routes/app/users/[id]/edit/+page.server.ts
+import type { PageServerLoad, Actions } from './$types';
+import { fail, error } from '@sveltejs/kit';
+import { superValidate } from 'sveltekit-superforms';
+import { valibot } from 'sveltekit-superforms/adapters';
+import { userSchema } from '$lib/schemas/user';
+import { db } from '$lib/server/db';
+import { users } from '$lib/server/db/schema';
+import { eq } from 'drizzle-orm';
+
+export const load: PageServerLoad = async ({ params }) => {
+  const existingUser = await db.query.users.findFirst({
+    where: eq(users.id, params.id)
+  });
+
+  if (!existingUser) {
+    error(404, 'User not found');
+  }
+
+  // Pass existing data as first parameter to populate form
+  const form = await superValidate(existingUser, valibot(userSchema));
+
+  return { form };
+};
+
+export const actions: Actions = {
+  default: async ({ request, params }) => {
+    const form = await superValidate(request, valibot(userSchema));
+
+    if (!form.valid) return fail(400, { form });
+
+    await db.update(users)
+      .set(form.data)
+      .where(eq(users.id, params.id));
+
+    return { form };
+  },
+};
+```
+
+**Key pattern:** Pass existing data as the first parameter to `superValidate()`. The form will be pre-populated with those values.
+
+### Array/Dynamic Fields
+
+For forms with dynamic lists (tags, items, etc.), use `dataType: 'json'`:
+
+```typescript
+// src/lib/schemas/tags.ts
+import * as v from 'valibot';
+
+export const tagsSchema = v.object({
+  tags: v.pipe(
+    v.array(v.object({
+      id: v.optional(v.number()),
+      name: v.pipe(v.string(), v.nonEmpty('Tag name required')),
+    })),
+    v.minLength(1, 'At least one tag required')
+  ),
+});
+```
+
+```svelte
+<!-- src/routes/items/[id]/tags/+page.svelte -->
+<script lang="ts">
+  import type { PageProps } from './$types';
+  import { superForm } from 'sveltekit-superforms';
+  import { valibotClient } from 'sveltekit-superforms/adapters';
+  import { tagsSchema } from '$lib/schemas/tags';
+
+  let { data }: PageProps = $props();
+
+  const { form, errors, enhance } = superForm(data.form, {
+    validators: valibotClient(tagsSchema),
+    dataType: 'json', // Required for nested arrays/objects
+  });
+
+  function addTag() {
+    $form.tags = [...$form.tags, { id: undefined, name: '' }];
+  }
+
+  function removeTag(index: number) {
+    $form.tags = $form.tags.filter((_, i) => i !== index);
+  }
+</script>
+
+<form method="POST" use:enhance>
+  {#each $form.tags as tag, i}
+    <div class="tag-field">
+      <input
+        type="text"
+        bind:value={tag.name}
+        placeholder="Tag name"
+        aria-invalid={$errors.tags?.[i]?.name ? 'true' : undefined}
+      />
+      <button type="button" onclick={() => removeTag(i)}>Remove</button>
+      {#if $errors.tags?.[i]?.name}
+        <span class="error">{$errors.tags[i].name}</span>
+      {/if}
+    </div>
+  {/each}
+
+  <button type="button" onclick={addTag}>Add Tag</button>
+  <button type="submit">Save</button>
+</form>
+```
+
+**Important:** `dataType: 'json'` is required for nested arrays and objects. Arrays of primitives at the top level don't require it.
+
+### Async Validation (Server-Side Checks)
+
+For validations requiring server calls (username availability, email uniqueness):
+
+```typescript
+// src/lib/schemas/register.ts
+import * as v from 'valibot';
+
+// Async check function
+async function isUsernameAvailable(username: string): Promise<boolean> {
+  const response = await fetch(`/api/check-username?u=${username}`);
+  const { available } = await response.json();
+  return available;
+}
+
+// Use objectAsync when ANY field has async validation
+export const registerSchema = v.objectAsync({
+  username: v.pipeAsync(
+    v.string(),
+    v.nonEmpty('Username is required'),
+    v.minLength(3, 'At least 3 characters'),
+    v.checkAsync(isUsernameAvailable, 'Username already taken')
+  ),
+  // Synchronous fields can still use regular pipe
+  email: v.pipe(v.string(), v.email()),
+  password: v.pipe(v.string(), v.minLength(8)),
+});
+```
+
+**Key rules:**
+1. Use `objectAsync` if **any** field has async validation
+2. Use `pipeAsync` + `checkAsync` for async checks
+3. Synchronous fields can still use `pipe` (not `pipeAsync`) within an async schema
+4. Increase `delayMs` to 500ms to reduce server requests
+
+```svelte
+<script lang="ts">
+  const { form, enhance } = superForm(data.form, {
+    validators: valibotClient(registerSchema),
+    validationMethod: 'oninput',  // Override 'auto' for real-time feedback
+    delayMs: 500, // Higher delay for server requests
+  });
+</script>
+```
+
+### Form Reset After Success
+
+For forms that should clear after submission (contact, feedback):
+
+```typescript
+const { form, enhance } = superForm(data.form, {
+  resetForm: true, // Reset to initial values after success
+
+  // Or conditional reset:
+  onResult({ result }) {
+    if (result.type === 'success') {
+      // Custom reset logic
+      $form.email = '';
+      $form.message = '';
+      toast.success('Message sent!');
+    }
+  },
+});
+```
+
+---
+
+## Mobile UX
+
+Mobile form usability requires specific attention to input types, touch targets, and keyboard behavior.
+
+### Input Types and inputmode
+
+Use the right combination of `type`, `inputmode`, and `autocomplete`:
+
+| Field Type | type | inputmode | autocomplete | Result |
+|------------|------|-----------|--------------|--------|
+| Email | `email` | `email` | `email` | Email keyboard |
+| Phone | `tel` | `tel` | `tel` | Phone keypad |
+| Numeric code | `text` | `numeric` | `one-time-code` | Number pad |
+| Decimal price | `text` | `decimal` | — | Numeric with decimal |
+| URL | `url` | `url` | `url` | URL keyboard |
+| Search | `search` | `search` | — | Search keyboard |
+
+```svelte
+<!-- Email field -->
+<input
+  type="email"
+  inputmode="email"
+  autocomplete="email"
+  bind:value={$form.email}
+/>
+
+<!-- Phone number -->
+<input
+  type="tel"
+  inputmode="tel"
+  autocomplete="tel"
+  bind:value={$form.phone}
+/>
+
+<!-- 2FA code -->
+<input
+  type="text"
+  inputmode="numeric"
+  autocomplete="one-time-code"
+  pattern="[0-9]*"
+  maxlength="6"
+  bind:value={$form.code}
+/>
+
+<!-- Price input -->
+<input
+  type="text"
+  inputmode="decimal"
+  bind:value={$form.price}
+/>
+```
+
+### Touch Target Sizes
+
+Minimum touch targets for accessibility:
+
+| Standard | Level | Minimum Size |
+|----------|-------|--------------|
+| WCAG 2.2 | AA (required) | 24×24 CSS px |
+| WCAG 2.1 | AAA (recommended) | 44×44 CSS px |
+
+```css
+/* UnoCSS shortcuts for form controls */
+button, input, select, textarea {
+  min-height: 44px;  /* Touch-friendly */
+  padding: 12px 16px;
+}
+
+/* Checkboxes and radio buttons */
+input[type="checkbox"], input[type="radio"] {
+  width: 24px;
+  height: 24px;
+}
+```
+
+### iOS Safari Zoom Prevention
+
+iOS Safari zooms in on inputs with `font-size < 16px`. Use the accessible solution:
+
+```css
+/* Accessible fix (recommended) */
+input, select, textarea {
+  font-size: max(16px, 1rem);
+}
+```
+
+**Never use** `maximum-scale=1` in the viewport meta tag — it breaks accessibility by preventing all user zooming.
+
 ---
 
 ## Accessibility
@@ -950,6 +1251,74 @@ export const actions = {
 | **Error description** | `aria-describedby` linking to error |
 | **Focus management** | Focus first error on submit failure |
 | **Loading state** | `aria-busy="true"` during submission |
+
+### aria-live for Real-Time Validation
+
+Pre-register live regions in the DOM on page load (empty containers work):
+
+```svelte
+<form method="POST" use:enhance>
+  <!-- Pre-registered error container -->
+  <div aria-live="polite" aria-atomic="true">
+    {#if $errors.email}
+      <span id="email-error">{$errors.email}</span>
+    {/if}
+  </div>
+
+  <input
+    id="email"
+    type="email"
+    bind:value={$form.email}
+    aria-invalid={$errors.email ? 'true' : undefined}
+    aria-describedby={$errors.email ? 'email-error' : undefined}
+  />
+</form>
+```
+
+**When to use each:**
+
+| Attribute | Use Case |
+|-----------|----------|
+| `aria-live="polite"` | Form validation errors (waits for pause) |
+| `aria-live="assertive"` | Critical security alerts (interrupts) |
+| `role="alert"` | Form-level errors (equivalent to assertive + atomic) |
+
+**iOS VoiceOver:** Add `aria-atomic="true"` for repeated announcements.
+
+### Positive Feedback (Success States)
+
+Show success indicators for valid fields to improve UX:
+
+```svelte
+<div class="form-field">
+  <label for="email">Email</label>
+  <div class="input-wrapper">
+    <input
+      id="email"
+      type="email"
+      bind:value={$form.email}
+      aria-invalid={$errors.email ? 'true' : undefined}
+    />
+    {#if $form.email && !$errors.email}
+      <span class="success-icon" aria-label="Valid">✓</span>
+    {/if}
+  </div>
+  {#if $errors.email}
+    <span class="error" role="alert">{$errors.email}</span>
+  {/if}
+</div>
+```
+
+**Benefits:**
+- Provides sense of accomplishment and progress
+- Reassures risk-averse users
+- Reduces need to review completed fields
+
+**Color coding:**
+- ✓ Green: Success/valid
+- ✗ Red: Errors
+- ℹ Blue: Information
+- ⚠ Yellow: Warnings
 
 ### Focus First Error
 
@@ -966,6 +1335,38 @@ const { enhance } = superForm(data.form, {
   },
 });
 ```
+
+---
+
+## Constraints
+
+### Prerendering
+
+**Pages with form actions cannot be prerendered.**
+
+```typescript
+// ❌ This will error at build time
+export const prerender = true;
+
+export const actions: Actions = {
+  default: async () => { /* ... */ }
+};
+```
+
+**Reason:** Form actions require a server to handle POST requests.
+
+**Workaround:** Use `+server.ts` API routes instead:
+
+```typescript
+// +server.ts (can coexist with prerendered page)
+export async function POST({ request }) {
+  const form = await superValidate(request, valibot(schema));
+  // ...
+  return json({ form });
+}
+```
+
+See [SvelteKit Page Options](https://kit.svelte.dev/docs/page-options) for details.
 
 ---
 
@@ -1003,10 +1404,12 @@ src/
 | What | How |
 |------|-----|
 | Form library | Superforms v2 |
-| Validation | Valibot schemas |
-| Timing | Real-time with context-aware debounce (150ms client / 500ms async) |
+| Validation | Valibot schemas (sync + async) |
+| Timing | Default `'auto'` (reward early, validate late) with context-aware debounce |
 | Errors | Inline + form message + toast (with priority hierarchy) |
+| Success states | Positive feedback with checkmarks |
 | Enhancement | `use:enhance` for no-reload |
+| Mobile | Touch targets, inputmode, iOS zoom prevention |
 | Files | `withFiles()` + Sharp + [R2](../stack/vendors.md#cloudflare-r2) |
 
 ---
@@ -1023,7 +1426,24 @@ src/
 
 ## Sources
 
+### Core Libraries
 - [Superforms Documentation](https://superforms.rocks/)
+- [Superforms Client Validation](https://superforms.rocks/concepts/client-validation)
 - [Valibot Documentation](https://valibot.dev/)
+- [Valibot Async Validation](https://valibot.dev/guides/async-validation/)
 - [SvelteKit Form Actions](https://svelte.dev/docs/kit/form-actions)
-- [Superforms GitHub](https://github.com/ciscoheat/sveltekit-superforms)
+- [SvelteKit Page Options](https://kit.svelte.dev/docs/page-options)
+
+### Accessibility
+- [WCAG 2.1 Target Size (AAA)](https://www.w3.org/WAI/WCAG21/Understanding/target-size.html)
+- [WCAG 2.2 Target Size Minimum (AA)](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum)
+- [ARIA Live Regions (MDN)](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Guides/Live_regions)
+- [Accessible Form Validation (Smashing Magazine)](https://www.smashingmagazine.com/2023/02/guide-accessible-form-validation/)
+
+### Mobile UX
+- [Better Form Inputs for Mobile (CSS-Tricks)](https://css-tricks.com/better-form-inputs-for-better-mobile-user-experiences/)
+- [16px Prevents iOS Zoom (CSS-Tricks)](https://css-tricks.com/16px-or-larger-text-prevents-ios-form-zoom/)
+
+### UX Research
+- [Inline Validation UX (Smashing Magazine)](https://www.smashingmagazine.com/2022/09/inline-validation-web-forms-ux/)
+- [Inline Validation Testing (Baymard Institute)](https://baymard.com/blog/inline-form-validation)
