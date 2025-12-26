@@ -96,6 +96,27 @@ Get a plain object from a reactive proxy.
 </script>
 ```
 
+**Performance guidance:**
+
+- Each `$state.snapshot()` creates a deep clone — expensive for large objects
+- Snapshot **lazily** (on submit/save), not reactively
+- For large datasets, consider `$state.raw` instead
+
+```svelte
+<script>
+  let largeState = $state({ users: [], posts: [], comments: [] });
+
+  // ❌ BAD - Snapshots on every change (expensive)
+  let snapshot = $derived($state.snapshot(largeState));
+
+  // ✅ GOOD - Snapshot only when needed
+  function save() {
+    const data = $state.snapshot(largeState.users); // Only what you need
+    fetch('/api/users', { body: JSON.stringify(data) });
+  }
+</script>
+```
+
 ---
 
 ## Derived Values
@@ -207,6 +228,77 @@ Return a function to clean up before re-run or unmount.
   });
 </script>
 ```
+
+**Cleanup Checklist — return a cleanup function when using:**
+
+| Resource | Cleanup Required | Why |
+|----------|------------------|-----|
+| `addEventListener` | ✅ Yes | Memory leak, stale handlers |
+| `setTimeout` | ✅ Yes | Callback may fire after unmount |
+| `setInterval` | ✅ Yes | Interval continues indefinitely |
+| `fetch` | ✅ Yes | Race conditions, stale responses |
+| `WebSocket` | ✅ Yes | Connection stays open |
+| `MutationObserver` | ✅ Yes | Observer continues watching |
+| `requestAnimationFrame` | ✅ Yes | Frame callback may fire after unmount |
+| DOM mutations | ❌ No | Svelte handles this |
+| Logging/analytics | ❌ No | Fire-and-forget |
+
+### Async Effects and Cancellation
+
+**`$effect` cannot be async.** Use these patterns for async operations:
+
+```svelte
+<script>
+  let query = $state('');
+  let results = $state([]);
+
+  // ✅ Pattern 1: AbortController for fetch cancellation
+  $effect(() => {
+    const q = query; // Capture dependency BEFORE async
+    if (!q) return;
+
+    const controller = new AbortController();
+
+    fetch(`/api/search?q=${q}`, { signal: controller.signal })
+      .then(r => r.json())
+      .then(data => { results = data; })
+      .catch(e => {
+        if (e.name !== 'AbortError') throw e;
+      });
+
+    return () => controller.abort();
+  });
+</script>
+```
+
+**Critical: Dependency tracking stops at `await`.**
+
+```svelte
+<script>
+  let id = $state(1);
+  let settings = $state({ theme: 'dark' });
+
+  // ❌ BAD - settings.theme NOT tracked (read after await)
+  $effect(async () => {
+    const data = await fetch(`/api/${id}`);
+    if (settings.theme === 'dark') { /* ... */ } // Won't re-run when theme changes!
+  });
+
+  // ✅ GOOD - capture dependencies before async
+  $effect(() => {
+    const currentId = id;           // Tracked!
+    const currentTheme = settings.theme; // Tracked!
+
+    fetch(`/api/${currentId}`)
+      .then(r => r.json())
+      .then(data => {
+        if (currentTheme === 'dark') { /* ... */ }
+      });
+  });
+</script>
+```
+
+**Rule:** Always read reactive values **synchronously** at the top of `$effect`, before any `await`, `setTimeout`, or `.then()`.
 
 ### $effect.pre
 
@@ -320,6 +412,37 @@ Enable two-way binding for specific props.
 ---
 
 ## Shared State
+
+> ⚠️ **CRITICAL SSR WARNING**
+>
+> Module-level `$state` in `.svelte.ts` files is **shared across ALL SSR requests** in the Node.js process. User A's data can leak to User B.
+>
+> **NEVER** import module-level stores in `+page.server.ts`, `+layout.server.ts`, or `hooks.server.ts`.
+>
+> Use the **Context API + Factory Pattern** for SSR-safe shared state.
+>
+> See: [Svelte Issue #13594](https://github.com/sveltejs/svelte/issues/13594) (most upvoted issue)
+
+### Layout Scope Guidance
+
+Choose the correct layout for each store based on where it's needed:
+
+| Store Type | Scope | Layout | Why |
+|------------|-------|--------|-----|
+| Theme, locale | App-wide | Root `+layout.svelte` | Affects all pages including public |
+| Sidebar, user menu | Authenticated zone | `(app)/+layout.svelte` | Only needed in app shell |
+| Shopping cart | E-commerce section | `(shop)/+layout.svelte` | Scoped to shop routes |
+| Feature flags | Per-feature | Route group layout | Feature isolation |
+| Form drafts | Single page | `+page.svelte` | Page lifecycle only |
+
+```
+src/routes/
+├── +layout.svelte           → Theme, locale (app-wide)
+├── (marketing)/
+│   └── +layout.svelte       → (inherits from root)
+└── (app)/
+    └── +layout.svelte       → Sidebar, user session, toast
+```
 
 ### Module State (No SSR)
 
@@ -506,6 +629,32 @@ Import from `svelte/reactivity` for reactive versions of JS built-ins.
 </script>
 ```
 
+### When to Use SvelteMap vs $state
+
+| Use Case | Choice | Why |
+|----------|--------|-----|
+| Fixed set of keys | `$state({ ... })` | Deep reactivity, simpler syntax |
+| String keys, nested mutations | `$state<Record<string, T>>({})` | Deep reactivity on nested objects |
+| Non-string keys (objects, numbers) | `SvelteMap` | Maps support any key type |
+| Frequent add/delete of keys | `SvelteMap` | More efficient for dynamic keys |
+| Need `.has()`, `.keys()`, `.entries()` | `SvelteMap` | Map-specific methods |
+| Order matters | `SvelteMap` | Maps preserve insertion order |
+| Unique value collection | `SvelteSet` | Automatic deduplication |
+
+```svelte
+<script>
+  // ❌ Don't wrap SvelteMap in $state (redundant)
+  let map = $state(new SvelteMap());
+
+  // ✅ Use SvelteMap directly
+  let map = new SvelteMap();
+
+  // ✅ For nested data with string keys, prefer $state
+  let users = $state<Record<string, User>>({});
+  users['123'].name = 'Bob'; // Triggers update (deep reactive)
+</script>
+```
+
 ---
 
 ## SvelteKit Integration
@@ -646,21 +795,44 @@ export async function load({ locals }) {
 
 #### Client-Side Reactivity (Post-Hydration)
 
-For reactive updates after sign-in/sign-out (client-side only), use `useSession()` **within components**, not at module level:
+For reactive updates after sign-in/sign-out (client-side only), use `useSession()` **within components**, not at module level.
+
+**Hydration-safe pattern:** Use server data for initial render, client session for updates:
 
 ```svelte
 <script>
+  import { page } from '$app/state';
   import { useSession } from '$lib/auth-client';
   import { browser } from '$app/environment';
 
-  // Only runs on client after hydration
-  const session = browser ? useSession() : null;
+  // Server data (from load function) - SSR safe
+  const serverUser = $derived(page.data.user);
+
+  // Client session - only initialize after hydration
+  let clientSession = $state(null);
+
+  $effect(() => {
+    // Deferred to client, won't cause hydration mismatch
+    clientSession = useSession();
+  });
+
+  // Use server data initially, client session for live updates
+  const user = $derived(
+    browser && clientSession?.data?.user
+      ? clientSession.data.user
+      : serverUser
+  );
 </script>
 
-{#if browser && $session?.data}
-  <p>Client-side: {$session.data.user.name}</p>
+<!-- Same content renders on server and client initially -->
+{#if user}
+  <p>Welcome, {user.name}!</p>
+{:else}
+  <a href="/auth/login">Sign in</a>
 {/if}
 ```
+
+> **Why this pattern?** The `{#if browser}` conditional causes hydration mismatch because server renders nothing while client renders content. By using `$effect` to defer client session initialization, both server and client initially render the same content from `page.data.user`.
 
 #### Pattern Comparison
 
@@ -739,6 +911,103 @@ See: [SvelteKit State Management](https://svelte.dev/docs/kit/state-management),
 </script>
 ```
 
+### URL State Synchronization
+
+Sync state to URL query parameters for shareable/bookmarkable state. Use SvelteKit's navigation functions, not `history.pushState` directly.
+
+```svelte
+<script>
+  import { replaceState } from '$app/navigation';
+  import { page } from '$app/state';
+
+  // Initialize from URL
+  let search = $state(page.url.searchParams.get('q') ?? '');
+  let sort = $state(page.url.searchParams.get('sort') ?? 'newest');
+
+  // Sync to URL on change (debounced)
+  $effect(() => {
+    const url = new URL(page.url);
+
+    if (search) {
+      url.searchParams.set('q', search);
+    } else {
+      url.searchParams.delete('q');
+    }
+
+    url.searchParams.set('sort', sort);
+
+    // Use SvelteKit's navigation to avoid conflicts
+    replaceState(url, {});
+  });
+</script>
+
+<input bind:value={search} placeholder="Search..." />
+<select bind:value={sort}>
+  <option value="newest">Newest</option>
+  <option value="oldest">Oldest</option>
+</select>
+```
+
+**Important:** Always use `replaceState`/`pushState` from `$app/navigation`, not `history.pushState` directly. Direct history manipulation conflicts with SvelteKit's router.
+
+### Navigation Lifecycle
+
+SvelteKit provides lifecycle functions for navigation-aware state:
+
+```svelte
+<script>
+  import { beforeNavigate, afterNavigate, onNavigate } from '$app/navigation';
+
+  let isNavigating = $state(false);
+  let previousPath = $state('');
+
+  // Fires BEFORE navigation starts (before data loading)
+  beforeNavigate(({ from, to, cancel }) => {
+    isNavigating = true;
+
+    // Can cancel navigation (e.g., unsaved changes)
+    if (hasUnsavedChanges && !confirm('Discard changes?')) {
+      cancel();
+    }
+  });
+
+  // Fires immediately before new page renders (after data loaded)
+  // Used for view transitions
+  onNavigate((navigation) => {
+    // Start view transition if supported
+    if (document.startViewTransition) {
+      return new Promise((resolve) => {
+        document.startViewTransition(async () => {
+          resolve();
+          await navigation.complete;
+        });
+      });
+    }
+  });
+
+  // Fires AFTER page updated
+  afterNavigate(({ from, to }) => {
+    isNavigating = false;
+    previousPath = from?.url.pathname ?? '';
+
+    // Scroll to top, reset focus, etc.
+  });
+</script>
+
+{#if isNavigating}
+  <div class="loading-bar" />
+{/if}
+```
+
+**State behavior during navigation:**
+
+| State Type | Persists? | Notes |
+|------------|-----------|-------|
+| Context API stores | ✅ Yes | Same layout = same context |
+| Module-level state | ✅ Yes | Never resets (be careful!) |
+| Component `$state` | ❌ No | Resets when component unmounts |
+| `$page.data` | Updates | Automatically from new load function |
+
 ---
 
 ## Hydration Mismatch Prevention
@@ -751,6 +1020,113 @@ State that affects SSR rendering **must use cookies**, not localStorage. Otherwi
 // ❌ CAUSES HYDRATION MISMATCH
 let theme = $state(browser ? localStorage.getItem('theme') ?? 'light' : 'light');
 // Server renders 'light', client may read 'dark' from localStorage → mismatch
+```
+
+### Common Hydration Mismatch Sources
+
+**1. Timestamps and Dates**
+
+```svelte
+<script>
+  import { browser } from '$app/environment';
+
+  // ❌ BAD - Server and client generate different timestamps
+  let timestamp = $state(new Date().toISOString());
+
+  // ❌ BAD - Timezone differences
+  let formatted = $state(new Date().toLocaleTimeString());
+
+  // ✅ GOOD - Pass from server via load function
+  let { data } = $props();
+  let timestamp = data.timestamp; // Generated server-side
+
+  // ✅ GOOD - Defer to client with $effect
+  let clientTime = $state('');
+  $effect(() => {
+    clientTime = new Date().toLocaleTimeString();
+  });
+</script>
+
+<!-- Only show after hydration -->
+{#if clientTime}
+  <span>Local time: {clientTime}</span>
+{/if}
+```
+
+**2. Random IDs and UUIDs**
+
+```svelte
+<script>
+  // ❌ BAD - Server generates one ID, client generates another
+  let id = $state(crypto.randomUUID());
+
+  // ✅ GOOD - Generate server-side, pass as prop
+  let { data } = $props();
+  let id = data.generatedId; // From load function
+
+  // ✅ GOOD - Generate once with stable key
+  import { browser } from '$app/environment';
+  let id = $state('');
+  $effect(() => {
+    if (!id) id = crypto.randomUUID();
+  });
+</script>
+```
+
+**3. Media Queries and Window Size**
+
+```svelte
+<script>
+  import { browser } from '$app/environment';
+
+  // ❌ BAD - Server can't access matchMedia
+  let isMobile = $state(window.matchMedia('(max-width: 768px)').matches);
+
+  // ✅ GOOD - Default to safe value, update on client
+  let isMobile = $state(false); // Server-safe default
+
+  $effect(() => {
+    const mq = matchMedia('(max-width: 768px)');
+    isMobile = mq.matches;
+
+    const handler = (e) => { isMobile = e.matches; };
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  });
+</script>
+
+<!-- Content is the same on server/client initially -->
+<div class={isMobile ? 'mobile-layout' : 'desktop-layout'}>
+  <!-- ... -->
+</div>
+```
+
+**4. Browser-Only APIs**
+
+```svelte
+<script>
+  import { browser } from '$app/environment';
+
+  // ❌ BAD - navigator doesn't exist on server
+  let isOnline = $state(navigator.onLine);
+
+  // ✅ GOOD - Safe default + client update
+  let isOnline = $state(true);
+
+  $effect(() => {
+    isOnline = navigator.onLine;
+    const handleOnline = () => { isOnline = true; };
+    const handleOffline = () => { isOnline = false; };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  });
+</script>
 ```
 
 ### The Solution: Cookie-Based SSR Sync
@@ -847,14 +1223,47 @@ import { sidebar } from '$lib/stores/ui.svelte';  // Module state leaks between 
 
 App-wide UI state for sidebar, theme, and locale. Uses cookies for SSR-affecting state.
 
+### Store Interfaces
+
+Define explicit TypeScript interfaces for type-safe context usage:
+
+```typescript
+// src/lib/stores/types.ts
+
+export type Theme = 'light' | 'dark' | 'system';
+
+export interface ThemeStore {
+  readonly current: Theme;
+  set(value: Theme): void;
+  toggle(): void;
+  cycle(): void;
+}
+
+export interface SidebarStore {
+  readonly isOpen: boolean;
+  readonly isPinned: boolean;
+  open(): void;
+  close(): void;
+  toggle(): void;
+  pin(): void;
+  unpin(): void;
+}
+
+export interface ToastStore {
+  readonly items: readonly Toast[];
+  add(message: string, type?: 'info' | 'success' | 'warning' | 'error'): void;
+  dismiss(id: string): void;
+  clear(): void;
+}
+```
+
 ### Store File (Factory Pattern for SSR Safety)
 
 ```typescript
 // src/lib/stores/ui.svelte.ts
 
 import { browser } from '$app/environment';
-
-type Theme = 'light' | 'dark' | 'system';
+import type { Theme, ThemeStore, SidebarStore } from './types';
 
 // ═══════════════════════════════════════════════════════════════
 // THEME (Factory — SSR-safe with cookie sync)
@@ -869,7 +1278,7 @@ function applyTheme(theme: Theme) {
   document.documentElement.classList.toggle('dark', isDark);
 }
 
-export function createThemeStore(initial: Theme = 'system') {
+export function createThemeStore(initial: Theme = 'system'): ThemeStore {
   let theme = $state<Theme>(initial);
 
   // Sync to cookie and apply to DOM
@@ -906,7 +1315,7 @@ export function createThemeStore(initial: Theme = 'system') {
 // SIDEBAR (Factory — SSR-safe with cookie sync)
 // ═══════════════════════════════════════════════════════════════
 
-export function createSidebarStore(initialPinned: boolean = false) {
+export function createSidebarStore(initialPinned: boolean = false): SidebarStore {
   let isOpen = $state(false);
   let isPinned = $state(initialPinned);
 
@@ -1128,14 +1537,21 @@ setContext('user', user);
 ```
 src/lib/
 ├── stores/
-│   ├── ui.svelte.ts          # Sidebar, theme, locale state
+│   ├── theme.svelte.ts       # Theme state (light/dark/system)
+│   ├── sidebar.svelte.ts     # Sidebar open/pinned state
+│   ├── toast.svelte.ts       # Toast notification queue
 │   ├── chat.svelte.ts        # AI assistant state (see ai/README.md)
-│   ├── toast.svelte.ts       # Toast notifications
-│   ├── todos.svelte.ts       # Factory pattern example
+│   ├── ui.svelte.ts          # Re-exports theme + sidebar (convenience)
 │   └── context.ts            # Type-safe context helpers
 └── components/
     └── ...
 ```
+
+**Why split stores?**
+- Easier to delete unused features (not using sidebar? delete one file)
+- Better tree-shaking potential
+- Clearer ownership (theme has its own file)
+- `ui.svelte.ts` re-exports for convenience: `import { createThemeStore, createSidebarStore } from '$lib/stores/ui.svelte'`
 
 ---
 
@@ -1169,13 +1585,26 @@ src/lib/
 
 ## Sources
 
+### Official Svelte Documentation
 - [Svelte 5 Migration Guide](https://svelte.dev/docs/svelte/v5-migration-guide)
 - [Introducing Runes](https://svelte.dev/blog/runes)
 - [$state Documentation](https://svelte.dev/docs/svelte/$state)
 - [$derived Documentation](https://svelte.dev/docs/svelte/$derived)
 - [$effect Documentation](https://svelte.dev/docs/svelte/$effect)
 - [SvelteKit State Management](https://svelte.dev/docs/kit/state-management)
+- [SvelteKit Navigation API](https://svelte.dev/docs/kit/$app-navigation)
 - [Svelte/Reactivity Module](https://svelte.dev/docs/svelte/svelte-reactivity)
-- [Global State Do's and Don'ts](https://mainmatter.com/blog/2025/03/11/global-state-in-svelte-5/)
+- [View Transitions in SvelteKit](https://svelte.dev/blog/view-transitions)
+
+### GitHub Issues & Discussions
+- [Svelte Issue #13594 - Module state SSR safety](https://github.com/sveltejs/svelte/issues/13594)
+- [SvelteKit Issue #13746 - Reactive URL Search Params](https://github.com/sveltejs/kit/issues/13746)
+- [Svelte Discussion #14376 - Using SvelteMap with runes](https://github.com/sveltejs/svelte/discussions/14376)
+
+### Community Resources
+- [Global State Do's and Don'ts (Mainmatter)](https://mainmatter.com/blog/2025/03/11/global-state-in-svelte-5/)
+- [Avoid Async Effects In Svelte (Joy of Code)](https://joyofcode.xyz/avoid-async-effects-in-svelte)
+- [Avoid Sharing Server And Client State (Joy of Code)](https://joyofcode.xyz/avoid-sharing-server-and-client-state-in-sveltekit)
 - [Joy of Code - Share State in Svelte 5](https://joyofcode.xyz/how-to-share-state-in-svelte-5)
 - [Understanding $derived vs $effect](https://dev.to/mikehtmlallthethings/understanding-svelte-5-runes-derived-vs-effect-1hh)
+- [State in URL: the SvelteKit approach](https://www.okupter.com/blog/state-in-url-the-sveltekit-approach)
