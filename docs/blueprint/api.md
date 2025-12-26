@@ -423,17 +423,45 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 
 ### API Key Authentication
 
+> **Security:** Never use `===` for secret comparison—it's vulnerable to timing attacks. Use `crypto.timingSafeEqual()` instead.
+
+```typescript
+// src/lib/server/auth/api-key.ts
+import { timingSafeEqual } from 'crypto';
+import { API_SECRET_KEY } from '$env/static/private';
+
+/**
+ * Timing-safe API key verification.
+ * Prevents timing attacks by ensuring constant-time comparison.
+ */
+export function verifyApiKey(providedKey: string | null): boolean {
+  if (!providedKey || !API_SECRET_KEY) {
+    return false;
+  }
+
+  // Length check first (not timing-safe, but prevents unnecessary encoding)
+  if (providedKey.length !== API_SECRET_KEY.length) {
+    return false;
+  }
+
+  const providedBuffer = Buffer.from(providedKey);
+  const expectedBuffer = Buffer.from(API_SECRET_KEY);
+
+  return timingSafeEqual(providedBuffer, expectedBuffer);
+}
+```
+
 ```typescript
 // src/hooks.server.ts
 import type { Handle } from '@sveltejs/kit';
-import { API_SECRET_KEY } from '$env/static/private';
+import { verifyApiKey } from '$lib/server/auth/api-key';
 
 export const handle: Handle = async ({ event, resolve }) => {
   // Check for API routes
   if (event.url.pathname.startsWith('/api')) {
     const apiKey = event.request.headers.get('X-API-Key');
 
-    if (apiKey === API_SECRET_KEY) {
+    if (verifyApiKey(apiKey)) {
       event.locals.apiAuth = true;
     }
   }
@@ -602,14 +630,57 @@ export const GET: RequestHandler = async ({ url }) => {
 
 ## File Uploads
 
+> **Security:** Never trust client-provided MIME types (`file.type`). Validate actual file content using magic bytes.
+
+```bash
+bun add file-type
+```
+
+```typescript
+// src/lib/server/upload/validate.ts
+import { fileTypeFromBuffer } from 'file-type';
+
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
+type AllowedMimeType = (typeof ALLOWED_MIME_TYPES)[number];
+
+interface ValidatedFile {
+  buffer: Buffer;
+  mimeType: AllowedMimeType;
+  extension: string;
+}
+
+/**
+ * Validates file content using magic bytes, not client-provided MIME type.
+ * Prevents attackers from uploading malicious files with spoofed extensions.
+ */
+export async function validateFileContent(file: File): Promise<ValidatedFile> {
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const detected = await fileTypeFromBuffer(buffer);
+
+  if (!detected) {
+    throw new Error('Unable to determine file type');
+  }
+
+  if (!ALLOWED_MIME_TYPES.includes(detected.mime as AllowedMimeType)) {
+    throw new Error(`File type ${detected.mime} not allowed`);
+  }
+
+  return {
+    buffer,
+    mimeType: detected.mime as AllowedMimeType,
+    extension: detected.ext,
+  };
+}
+```
+
 ```typescript
 // src/routes/api/upload/+server.ts
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { validateFileContent } from '$lib/server/upload/validate';
 import { uploadToR2 } from '$lib/server/storage';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   if (!locals.user) {
@@ -617,21 +688,31 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   }
 
   const formData = await request.formData();
-  const file = formData.get('file') as File | null;
+  const fileEntry = formData.get('file');
 
-  if (!file) {
+  // Validate file exists and is actually a File (not a string)
+  if (!fileEntry || typeof fileEntry === 'string') {
     error(400, { message: 'No file provided' });
   }
 
+  const file = fileEntry as File;
+
   if (file.size > MAX_FILE_SIZE) {
-    error(400, { message: 'File too large' });
+    error(400, { message: 'File too large (max 10MB)' });
   }
 
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    error(400, { message: 'Invalid file type' });
+  // Validate actual file content using magic bytes
+  let validated;
+  try {
+    validated = await validateFileContent(file);
+  } catch (e) {
+    error(400, { message: e instanceof Error ? e.message : 'Invalid file type' });
   }
 
-  const url = await uploadToR2(file, locals.user.id);
+  // Generate safe filename (never use client-provided name)
+  const safeFilename = `${crypto.randomUUID()}.${validated.extension}`;
+
+  const url = await uploadToR2(validated.buffer, safeFilename, locals.user.id);
 
   return json({ url }, { status: 201 });
 };

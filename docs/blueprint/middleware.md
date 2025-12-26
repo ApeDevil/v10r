@@ -372,35 +372,87 @@ export const reroute: Reroute = ({ url }) => {
 
 Complete `hooks.server.ts` with all patterns:
 
+> **Hook Order:** Rate Limit → CORS → Security Headers → Auth. This order ensures:
+> 1. Abusive requests are blocked before consuming resources
+> 2. CORS preflight (OPTIONS) bypasses rate limiting and returns immediately
+> 3. Security headers are applied to all responses
+> 4. Authentication runs last (most expensive operation)
+
 ```typescript
 // src/hooks.server.ts
 import { sequence } from '@sveltejs/kit/hooks';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { auth } from '$lib/server/auth';
 import { limiter } from '$lib/server/rate-limit';
+import { ALLOWED_ORIGINS } from '$env/static/private';
 import type { Handle, HandleFetch, HandleServerError } from '@sveltejs/kit';
 
-// 1. Rate limiting
+const allowedOrigins = ALLOWED_ORIGINS?.split(',') ?? [];
+
+// 1. Rate limiting (with OPTIONS exemption for CORS preflight)
 const rateLimitHandle: Handle = async ({ event, resolve }) => {
+  // Skip static assets
   if (event.url.pathname.startsWith('/_app')) {
     return resolve(event);
   }
+
+  // Skip rate limiting for CORS preflight requests
+  if (event.request.method === 'OPTIONS') {
+    return resolve(event);
+  }
+
   const status = await limiter.check(event);
   if (status.limited) {
-    return new Response('Too Many Requests', { status: 429 });
+    return new Response('Too Many Requests', {
+      status: 429,
+      headers: { 'Retry-After': String(status.retryAfter) },
+    });
   }
   return resolve(event);
 };
 
-// 2. Security headers
+// 2. CORS handling
+const corsHandle: Handle = async ({ event, resolve }) => {
+  const origin = event.request.headers.get('Origin');
+
+  // Handle preflight requests
+  if (event.request.method === 'OPTIONS') {
+    if (origin && allowedOrigins.includes(origin)) {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': origin,
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
+          'Access-Control-Max-Age': '86400',
+        },
+      });
+    }
+    return new Response(null, { status: 403 });
+  }
+
+  const response = await resolve(event);
+
+  // Add CORS headers to API responses
+  if (event.url.pathname.startsWith('/api') && origin && allowedOrigins.includes(origin)) {
+    response.headers.set('Access-Control-Allow-Origin', origin);
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
+  }
+
+  return response;
+};
+
+// 3. Security headers
 const securityHandle: Handle = async ({ event, resolve }) => {
   const response = await resolve(event);
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   return response;
 };
 
-// 3. Authentication
+// 4. Authentication
 const authHandle: Handle = async ({ event, resolve }) => {
   const authResponse = await svelteKitHandler({ auth, event });
   if (authResponse) return authResponse;
@@ -414,9 +466,10 @@ const authHandle: Handle = async ({ event, resolve }) => {
   return resolve(event);
 };
 
-// Compose in order
+// Compose in order: Rate Limit → CORS → Security → Auth
 export const handle = sequence(
   rateLimitHandle,
+  corsHandle,
   securityHandle,
   authHandle
 );

@@ -613,14 +613,34 @@ export async function cleanupExpiredSessions() {
 
 **Create a cron endpoint:**
 
+> **Security:** Use timing-safe comparison for cron secrets to prevent timing attacks.
+
 ```typescript
 // src/routes/api/cron/session-cleanup/+server.ts
 import { json, error } from '@sveltejs/kit';
+import { timingSafeEqual } from 'crypto';
+import { CRON_SECRET } from '$env/static/private';
 import { cleanupExpiredSessions } from '$lib/server/jobs/session-cleanup';
+
+function verifyCronSecret(authHeader: string | null): boolean {
+  if (!authHeader || !CRON_SECRET) {
+    return false;
+  }
+
+  const expected = `Bearer ${CRON_SECRET}`;
+
+  // Length check first
+  if (authHeader.length !== expected.length) {
+    return false;
+  }
+
+  return timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected));
+}
 
 export async function GET({ request }) {
   const auth = request.headers.get('authorization');
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+
+  if (!verifyCronSecret(auth)) {
     error(401, 'Unauthorized');
   }
 
