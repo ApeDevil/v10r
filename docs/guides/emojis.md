@@ -1,10 +1,9 @@
-
-
 ✅ Success
 ❌ Error
 ℹ️ Info
 ⚠️ Warning
 🪲 Debug
+
 
 🛎️ Sevice
 
@@ -15,6 +14,10 @@ Authorization
 👄 i18n
 
 💾 Database
+🐘 Relational Database (tables)
+✳️ Graph Database (relations)
+🪣 Files Database (objects)
+
 ☎️ API
 📍 Endpoint
 
