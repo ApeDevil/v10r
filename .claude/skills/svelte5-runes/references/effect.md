@@ -2,6 +2,16 @@
 
 Side effects. Runs after render, after DOM updates. Dependencies tracked automatically.
 
+## Contents
+
+- [Basic Usage](#effect) - Effect with cleanup
+- [When Effects Run](#when-effects-run) - Timing and batching
+- [Cleanup](#cleanup) - Return cleanup function
+- [Common Patterns](#common-patterns) - Event listeners, WebSocket, Canvas, LocalStorage, Debounce
+- [$effect.pre()](#effectpre) - Before DOM updates
+- [Dependency Tracking](#dependency-tracking) - Sync only, async pattern
+- [When NOT to Use](#when-not-to-use) - Use $derived instead
+
 ```svelte
 <script lang="ts">
   let count = $state(0);

@@ -2,6 +2,18 @@
 
 Component props with TypeScript. Destructure with defaults.
 
+## Contents
+
+- [Basic Usage](#props) - Interface and destructuring
+- [Defaults and Renaming](#defaults-and-renaming) - class: className, ...rest
+- [Rest Props](#rest-props) - HTMLButtonAttributes pattern
+- [Callbacks](#callbacks) - Event handlers as props
+- [$bindable](#bindable) - Two-way binding for props
+- [Snippets (Children)](#snippets-children) - Render children and slots
+- [Snippets with Parameters](#snippets-with-parameters) - Typed render props
+- [Reactivity](#reactivity) - Read-only props, derive from props
+- [Generics](#generics) - Generic component props
+
 ```svelte
 <script lang="ts">
   interface Props {

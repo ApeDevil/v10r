@@ -2,6 +2,18 @@
 
 App-level functions that intercept requests and responses.
 
+## Contents
+
+- [File Locations](#file-locations) - hooks.server.ts, hooks.client.ts, hooks.ts
+- [Server Hooks](#server-hooks) - handle, handleFetch, handleError
+- [Sequence Multiple Handles](#sequence-multiple-handles) - Compose handlers
+- [Client Hooks](#client-hooks) - handleError for navigation errors
+- [event.locals](#eventlocals) - Pass data between hooks and routes
+- [Protect Routes](#protect-routes) - Auth guard patterns
+- [CSRF Protection](#csrf-protection) - Built-in protection, trusted origins
+- [Content Security Policy](#content-security-policy) - Header-based and config-based
+- [Rate Limiting Hook](#rate-limiting-hook) - sveltekit-rate-limiter
+
 ## File Locations
 
 | File | Runs Where |

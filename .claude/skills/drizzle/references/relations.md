@@ -2,6 +2,19 @@
 
 Drizzle relations for the relational query API.
 
+## Contents
+
+- [Key Concepts](#key-concepts) - Relations ≠ foreign keys, bidirectional
+- [Relation Types](#relation-types) - one, many
+- [One-to-One](#one-to-one) - Owner and inverse sides
+- [One-to-Many](#one-to-many) - User has many items
+- [Many-to-Many](#many-to-many) - Junction tables, querying, flattening results
+- [Self-Referencing Relations](#self-referencing-relations) - Parent/children
+- [Named Relations](#named-relations) - Multiple relations between same tables
+- [Relation File Organization](#relation-file-organization) - Grouping by table
+- [Including Relations in DB Client](#including-relations-in-db-client) - drizzle() config
+- [Querying with Relations](#querying-with-relations) - with: { nested }
+
 ## Key Concepts
 
 1. **Drizzle relations ≠ SQL foreign keys** - Relations are for `db.query` API, foreign keys are for SQL constraints

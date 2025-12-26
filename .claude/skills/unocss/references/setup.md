@@ -2,6 +2,16 @@
 
 Complete installation and configuration for Velociraptor.
 
+## Contents
+
+- [Installation](#installation) - Core, presets, icons, transformers
+- [Standard Setup](#standard-setup) - Config file, Vite config, layout import
+- [Svelte Scoped Setup](#svelte-scoped-setup-large-projects) - Component-scoped styles
+- [Environment-Based Configuration](#environment-based-configuration) - Dev-only utilities
+- [VS Code Integration](#vs-code-integration) - UnoCSS extension
+- [Vercel Deployment](#vercel-deployment) - Build settings
+- [TypeScript Types](#typescript-types) - Custom theme values
+
 ## Installation
 
 ```bash

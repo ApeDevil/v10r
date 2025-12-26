@@ -1,5 +1,17 @@
 # Form Actions
 
+## Contents
+
+- [Basic Actions](#basic-actions) - Default action pattern
+- [Named Actions](#named-actions) - Multiple actions per page
+- [Progressive Enhancement](#progressive-enhancement) - use:enhance, custom enhance
+- [Displaying Errors](#displaying-errors) - Form error handling
+- [With Valibot + Superforms](#with-valibot--superforms) - Type-safe validation
+- [File Uploads](#file-uploads) - Multipart form handling
+- [Cross-Page Actions](#cross-page-actions) - Action on different page
+- [Cookie Path Required (v2)](#cookie-path-required-v2) - Breaking change
+- [Prerendering Constraint](#prerendering-constraint) - No prerender with actions
+
 ## Basic Actions
 
 ```typescript

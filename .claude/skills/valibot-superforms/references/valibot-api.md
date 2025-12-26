@@ -2,6 +2,19 @@
 
 Tree-shakeable schema validation library. ~1kB bundle size.
 
+## Contents
+
+- [Import](#import)
+- [Schemas](#schemas) - Primitives, Literals, Objects, Arrays, Records, Union, Special
+- [The pipe() Function](#the-pipe-function) - Chaining validations and transformations
+- [Validation Actions](#validation-actions) - String, Number, Array, Object, Custom validators
+- [Transformation Actions](#transformation-actions) - Type conversions, String/Value/Array transforms
+- [Optional and Default Values](#optional-and-default-values) - optional, nullable, nullish, exactOptional
+- [Type Inference](#type-inference) - InferOutput, InferInput
+- [Error Messages](#error-messages) - Per-action, schema-level, i18n
+- [Parsing](#parsing) - safeParse, parse, async
+- [Common Patterns](#common-patterns) - Email, Password, URL, Phone, Price fields
+
 ## Import
 
 ```typescript

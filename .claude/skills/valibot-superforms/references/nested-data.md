@@ -2,6 +2,17 @@
 
 Handling complex form structures with Superforms.
 
+## Contents
+
+- [Enable Nested Data](#enable-nested-data) - dataType: 'json'
+- [Nested Objects](#nested-objects) - Deep object schemas and forms
+- [Arrays](#arrays) - Simple arrays without JSON
+- [Arrays of Objects](#arrays-of-objects) - Complex array handling
+- [Programmatic Updates](#programmatic-updates) - Taint options
+- [File Uploads](#file-uploads) - Schema, single, multiple, server-side, preview
+- [Validation Errors Structure](#validation-errors-structure) - Nested error paths
+- [Server-Side Nested Errors](#server-side-nested-errors) - setError with paths
+
 ## Enable Nested Data
 
 ```typescript

@@ -2,6 +2,19 @@
 
 SvelteKit hooks configuration for Better Auth.
 
+## Contents
+
+- [Basic Setup](#basic-setup) - svelteKitHandler + session handler
+- [Why Two Handlers?](#why-two-handlers) - Separation of concerns
+- [Adding More Handlers](#adding-more-handlers) - Logging, CORS, custom
+- [Handler Order](#handler-order) - Correct sequencing
+- [Accessing Session in Handlers](#accessing-session-in-handlers) - After sessionHandle
+- [Conditional Session Loading](#conditional-session-loading) - Skip for static assets
+- [HandleFetch Hook](#handlefetch-hook) - Forward cookies during SSR
+- [Error Handling](#error-handling) - HandleServerError
+- [App.d.ts Types](#appd.ts-types) - TypeScript definitions
+- [Testing Hooks](#testing-hooks) - Mock event.locals
+
 ## Basic Setup
 
 ```typescript

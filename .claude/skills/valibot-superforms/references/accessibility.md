@@ -2,6 +2,19 @@
 
 WCAG 2.1/2.2 compliant form patterns for Superforms.
 
+## Contents
+
+- [Required ARIA Attributes](#required-aria-attributes) - aria-invalid, aria-describedby, aria-live
+- [Error Summary Pattern](#error-summary-pattern) - Screen reader-friendly error lists
+- [Complete Accessible Form](#complete-accessible-form) - Full example with all patterns
+- [Don't Rely on Color Alone](#dont-rely-on-color-alone) - Multiple indicators
+- [Error Message Best Practices](#error-message-best-practices) - WCAG 3.3.3, actionable errors
+- [Autocomplete Attributes](#autocomplete-attributes) - Help users with autofill
+- [Focus Management](#focus-management) - Superforms config, custom logic
+- [Keyboard Navigation](#keyboard-navigation) - Accessible controls
+- [Screen Reader Announcements](#screen-reader-announcements) - Live regions
+- [Testing Accessibility](#testing-accessibility) - Checklist
+
 ## Required ARIA Attributes
 
 ### aria-invalid

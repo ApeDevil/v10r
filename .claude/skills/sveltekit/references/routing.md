@@ -2,6 +2,21 @@
 
 File-based routing in `src/routes/`.
 
+## Contents
+
+- [Basic Routes](#basic-routes) - File structure to URLs
+- [Dynamic Parameters](#dynamic-parameters) - [slug], [...path], [[optional]]
+- [Route Groups](#route-groups) - (marketing), (app) for shared layouts
+- [Layout Hierarchy](#layout-hierarchy) - Nested layouts
+- [Breaking Out of Layouts](#breaking-out-of-layouts) - @reset syntax
+- [Layouts](#layouts) - +layout.svelte, layout data
+- [Error Pages](#error-pages) - +error.svelte inheritance
+- [API Routes](#api-routes) - +server.ts for REST endpoints
+- [Parameter Validation](#parameter-validation) - Custom matchers
+- [Route Priority](#route-priority) - Literal > dynamic > rest
+- [Prerendering Dynamic Routes](#prerendering-dynamic-routes) - entries()
+- [Redirects](#redirects) - Load, hooks, config
+
 ## Basic Routes
 
 ```

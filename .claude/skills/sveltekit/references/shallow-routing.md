@@ -2,6 +2,20 @@
 
 Create history entries without full navigation. Added in SvelteKit 2.12.
 
+## Contents
+
+- [Use Cases](#use-cases) - Modals, galleries, filters
+- [API](#api) - pushState, replaceState
+- [Basic Usage](#basic-usage) - Opening/closing modals
+- [With Preloaded Data](#with-preloaded-data) - Load data without navigation
+- [Type Safety](#type-safety) - App.PageState in app.d.ts
+- [replaceState vs pushState](#replacestate-vs-pushstate) - When to use each
+- [State After Invalidation](#state-after-invalidation) - Known issue and workaround
+- [Progressive Enhancement](#progressive-enhancement) - Fallback links
+- [Modal Pattern](#modal-pattern) - Complete implementation
+- [Tabs/Filters Pattern](#tabsfilters-pattern) - UI state in history
+- [Caveats](#caveats) - Invalidation, SSR, serialization
+
 ## Use Cases
 
 - Modal dialogs dismissible via back button

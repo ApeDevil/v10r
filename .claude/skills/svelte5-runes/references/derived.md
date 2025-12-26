@@ -2,6 +2,15 @@
 
 Computed values from state. Lazy and cached.
 
+## Contents
+
+- [Basic Usage](#derived) - Simple and complex derivations
+- [Dependency Tracking](#dependency-tracking) - Automatic, conditional
+- [Arrays](#arrays) - Filtering, sorting, counting
+- [Classes](#classes) - Derived properties in classes
+- [Performance](#performance) - Lazy evaluation
+- [Pitfalls](#pitfalls) - Don't use $effect, no async, don't mutate
+
 ```svelte
 <script lang="ts">
   let count = $state(0);

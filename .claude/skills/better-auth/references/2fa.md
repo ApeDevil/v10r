@@ -2,6 +2,17 @@
 
 TOTP-based 2FA with Better Auth.
 
+## Contents
+
+- [Enable 2FA Plugin](#enable-2fa-plugin) - Server config
+- [Client Setup](#client-setup) - twoFactorClient
+- [2FA Setup Flow](#2fa-setup-flow) - Generate secret, verify and enable
+- [2FA Login Flow](#2fa-login-flow) - Handle TWO_FACTOR_REQUIRED
+- [Backup Codes](#backup-codes) - Account recovery
+- [Disable 2FA](#disable-2fa) - Remove 2FA from account
+- [Check 2FA Status](#check-2fa-status) - UI for 2FA state
+- [Trusted Devices (Optional)](#trusted-devices-optional) - Remember devices
+
 ## Enable 2FA Plugin
 
 ```typescript

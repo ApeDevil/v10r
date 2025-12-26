@@ -2,6 +2,18 @@
 
 Complete Better Auth configuration for Velociraptor.
 
+## Contents
+
+- [Installation](#installation)
+- [Server Instance](#server-instance) - betterAuth config
+- [Client Instance](#client-instance) - createAuthClient
+- [Environment Variables](#environment-variables)
+- [Schema Generation](#schema-generation) - CLI and migrations
+- [Custom Password Hashing](#custom-password-hashing) - Argon2id
+- [Cookie Configuration](#cookie-configuration) - Prefix, secure
+- [Trusted Origins](#trusted-origins) - Production domains
+- [Type Exports](#type-exports) - User, Session types
+
 ## Installation
 
 ```bash

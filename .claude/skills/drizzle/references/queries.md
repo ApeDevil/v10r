@@ -2,6 +2,18 @@
 
 Query builder vs relational API patterns.
 
+## Contents
+
+- [When to Use Which](#when-to-use-which) - Query builder vs relational API
+- [Operators](#operators) - eq, ne, lt, gt, inArray, like, and, or, sql
+- [Query Builder](#query-builder) - Select, Joins, Aggregations, Subqueries
+- [Relational API](#relational-api) - findMany, findFirst, nested relations
+- [Insert](#insert) - Single, multiple, returning, conflict handling, upsert
+- [Update](#update) - With where, returning, multiple conditions
+- [Delete](#delete) - With where, returning
+- [Raw SQL](#raw-sql) - sql`` template, raw queries
+- [Prepared Statements](#prepared-statements) - Reusable queries
+
 ## When to Use Which
 
 | API | Use When |

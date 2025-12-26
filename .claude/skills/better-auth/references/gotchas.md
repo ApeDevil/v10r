@@ -2,6 +2,18 @@
 
 Critical issues and their solutions.
 
+## Contents
+
+- [Rate Limiting is BROKEN](#rate-limiting-is-broken) - Use external rate limiter
+- [Session Cleanup Required](#session-cleanup-required) - Cron job for expired sessions
+- [Cookie Caching Required](#cookie-caching-required) - Avoid DB hit on every request
+- [svelteKitHandler Doesn't Populate Locals](#sveltekithandler-doesnt-populate-locals) - Manual session loading
+- [useSession() SSR Leak](#usesession-ssr-leak) - Use page data instead
+- [Missing Session Indexes](#missing-session-indexes) - Add performance indexes
+- [Layout-Only Protection](#layout-only-protection) - Protect each route
+- [OAuth Callback URL Mismatch](#oauth-callback-url-mismatch) - Configure trusted origins
+- [Email Verification Tokens Expire](#email-verification-tokens-expire) - Extend expiration
+
 ## Rate Limiting is BROKEN
 
 **Issue:** Better Auth's built-in rate limiting does not work (GitHub Issue #2153).

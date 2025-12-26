@@ -2,6 +2,20 @@
 
 Complete reference for Drizzle PostgreSQL schema patterns.
 
+## Contents
+
+- [Column Types](#column-types) - text, integer, boolean, timestamp, json, uuid, serial
+- [Column Modifiers](#column-modifiers) - notNull, unique, default, references
+- [Enums](#enums) - pgEnum definition and usage
+- [Foreign Keys](#foreign-keys) - onDelete options (cascade, set null, etc.)
+- [Composite Primary Keys](#composite-primary-keys) - Junction tables
+- [Indexes](#indexes) - Single, composite, unique, descending
+- [Check Constraints](#check-constraints) - Custom validation rules
+- [Schema Organization](#schema-organization) - File structure patterns
+- [Timestamp Patterns](#timestamp-patterns) - createdAt, updatedAt, expiresAt
+- [Array Columns](#array-columns) - PostgreSQL arrays
+- [JSONB Patterns](#jsonb-patterns) - Typed JSON columns
+
 ## Column Types
 
 ```typescript

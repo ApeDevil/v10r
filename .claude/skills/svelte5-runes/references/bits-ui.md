@@ -2,6 +2,18 @@
 
 Headless component library. Uses snippets for render delegation. Style with data attributes.
 
+## Contents
+
+- [Dialog](#dialog) - Modal dialogs with Portal
+- [Dropdown Menu](#dropdown-menu) - Trigger, items, separators
+- [Select](#select) - Single select with options
+- [Tabs](#tabs) - Tab navigation
+- [Switch](#switch) - Toggle switches
+- [Checkbox](#checkbox) - Checkbox with custom indicator
+- [Tooltip](#tooltip) - Hover tooltips
+- [Accordion](#accordion) - Collapsible sections
+- [Data Attributes](#data-attributes) - State-based styling
+
 ## Dialog
 
 ```svelte

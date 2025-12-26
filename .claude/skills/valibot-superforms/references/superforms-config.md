@@ -2,6 +2,22 @@
 
 All options for `superForm()`.
 
+## Contents
+
+- [Basic Usage](#basic-usage)
+- [Validation Options](#validation-options) - validators, validationMethod, defaultValidator
+- [Data Type Options](#data-type-options) - dataType, jsonChunkSize, multipleSubmits
+- [Reset Options](#reset-options) - resetForm, clearOnSubmit
+- [Error Handling Options](#error-handling-options) - autoFocusOnError, scrollToError, stickyNavbar
+- [Timing Options](#timing-options) - delayMs, timeoutMs
+- [SvelteKit Integration](#sveltekit-integration) - applyAction, invalidateAll
+- [Tainted Form Options](#tainted-dirty-form-options) - taintedMessage, warnings
+- [Events](#events) - onSubmit, onResult, onUpdate, onError, onChange
+- [Return Values](#return-values) - Stores, Actions, Methods
+- [Programmatic Methods](#programmatic-methods) - submit, reset, validate, form.update
+- [Snapshots](#snapshots) - Preserve form state
+- [Flash Messages](#flash-messages) - sveltekit-flash-message integration
+
 ## Basic Usage
 
 ```typescript

@@ -2,6 +2,19 @@
 
 Detailed preset configuration patterns.
 
+## Contents
+
+- [Available Presets](#available-presets) - Wind3, Wind4, Mini, Uno, Attributify, Icons, Typography, Web Fonts
+- [presetWind3 (Recommended)](#presetwind3-recommended) - Tailwind v3 compatibility, dark mode
+- [presetWind4 (Tailwind v4)](#presetwind4-tailwind-v4) - CSS variables, integrated reset
+- [presetAttributify](#presetattributify) - HTML attribute mode
+- [presetIcons](#preseticons) - Pure CSS icons via Iconify
+- [presetTypography](#presettypography) - Prose styling for content
+- [presetWebFonts](#presetwebfonts) - Font loading from Google, etc.
+- [Preset Ordering](#preset-ordering) - Base preset first
+- [Custom Rules](#custom-rules) - Static and dynamic rules
+- [Custom Variants](#custom-variants) - State modifiers like hocus
+
 ## Available Presets
 
 | Preset | Package | Purpose |

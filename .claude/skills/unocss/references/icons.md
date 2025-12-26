@@ -2,6 +2,19 @@
 
 Pure CSS icon integration via Iconify.
 
+## Contents
+
+- [Installation](#installation) - Preset and icon collections
+- [Configuration](#configuration) - Options: scale, CDN, collections, customizations
+- [Basic Usage](#basic-usage) - Syntax: i-{collection}-{icon-name}
+- [Styling Icons](#styling-icons) - Size, color, transform
+- [Icons in Buttons](#icons-in-buttons) - With text, icon-only
+- [Dynamic Icons](#dynamic-icons) - Static maps, safelist, conditional rendering
+- [Custom Icon Collections](#custom-icon-collections) - Inline SVG, from files
+- [Icon Finder](#icon-finder) - Browse collections at icones.js.org
+- [Anti-Patterns](#anti-patterns) - Dynamic interpolation, massive safelists
+- [Comparison](#comparison-with-other-icon-solutions) - UnoCSS vs Heroicons vs SVG Sprites
+
 ## Installation
 
 ```bash

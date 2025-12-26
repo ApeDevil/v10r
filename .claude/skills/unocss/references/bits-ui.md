@@ -2,6 +2,19 @@
 
 Styling patterns for Bits UI headless components.
 
+## Contents
+
+- [Overview](#overview)
+- [Installation](#installation)
+- [Basic Pattern](#basic-pattern)
+- [Component Examples](#component-examples) - Accordion, Dialog, Select, Tabs, Tooltip
+- [Data Attribute Styling](#data-attribute-styling) - In class strings, style blocks, common attributes
+- [CSS Variables](#css-variables) - Select width, Popover positioning
+- [Animation Patterns](#animation-patterns) - Fade, Scale + Fade
+- [Reusable Shortcuts](#reusable-shortcuts) - Buttons, inputs, cards, dialog, select
+- [Accessibility](#accessibility) - Focus management, keyboard navigation
+- [Dark Mode](#dark-mode) - Consistent dark variants
+
 ## Overview
 
 Bits UI provides **unstyled, accessible** components. Apply UnoCSS classes directly - no style conflicts to fight.

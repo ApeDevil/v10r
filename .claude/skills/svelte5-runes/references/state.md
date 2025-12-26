@@ -2,6 +2,15 @@
 
 Objects and arrays are deeply reactive proxies.
 
+## Contents
+
+- [Basic Usage](#state) - Deep reactivity for objects and arrays
+- [$state.raw()](#stateraw) - Immutable data, reassignment only
+- [$state.snapshot()](#statesnapshot) - Plain copy for JSON/logging
+- [Classes](#classes) - Reactive class properties
+- [Module-Level State](#module-level-state) - Global stores in .svelte.ts
+- [Gotchas](#gotchas) - Destructuring, mutations, proxy identity
+
 ```svelte
 <script lang="ts">
   let user = $state({ name: 'Ada', address: { city: 'London' } });

@@ -2,6 +2,23 @@
 
 Common issues and their solutions.
 
+## Contents
+
+- [Dynamic Classes Don't Work](#dynamic-classes-dont-work) - Static maps, safelist, full class names
+- [JS/TS Files Not Scanned](#jsts-files-not-scanned) - Magic comment, global config
+- [FOUC in Production](#fouc-in-production) - CSS code splitting fix
+- [Tailwind Syntax Differences](#tailwind-syntax-differences) - Grid, bg position, content quotes
+- [Icons Not Showing](#icons-not-showing) - Missing collections, wrong syntax, dynamic names
+- [@apply Not Working](#apply-not-working) - Transformer setup
+- [Variant Groups Not Working](#variant-groups-not-working) - Transformer setup
+- [Dark Mode Not Toggling](#dark-mode-not-toggling) - Class vs media configuration
+- [Safelist Bloating Bundle](#safelist-bloating-bundle) - Minimize safelist
+- [Classes in Third-Party Components](#classes-in-third-party-components) - Safelist or include library
+- [Svelte Scoped Mode Issues](#svelte-scoped-mode-issues) - Limitations and migration
+- [Production vs Development Mismatch](#production-vs-development-mismatch) - Common causes
+- [HMR Not Updating](#hmr-not-updating) - Restart dev server
+- [TypeScript Errors in Config](#typescript-errors-in-config) - Use defineConfig
+
 ## Dynamic Classes Don't Work
 
 **Issue:** Class interpolation produces no CSS.

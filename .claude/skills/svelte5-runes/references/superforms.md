@@ -2,6 +2,16 @@
 
 Form validation with Valibot schemas and Superforms.
 
+## Contents
+
+- [Schema](#schema) - Valibot schema definition
+- [Server](#server) - superValidate, fail, message
+- [Client](#client) - superForm with validators
+- [Valibot Patterns](#valibot-patterns) - Validators, nested, arrays, custom
+- [Superform Options](#superform-options) - validationMethod, delayMs, onUpdated
+- [Multi-Step Forms](#multi-step-forms) - Step validation with validate()
+- [Error Patterns](#error-patterns) - Field errors, form-level errors
+
 ## Schema
 
 ```ts

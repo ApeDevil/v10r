@@ -2,6 +2,19 @@
 
 Atomic database operations with Drizzle.
 
+## Contents
+
+- [Basic Transaction](#basic-transaction) - db.transaction(tx => ...)
+- [When to Use Transactions](#when-to-use-transactions) - Decision table
+- [Form Action with Transaction](#form-action-with-transaction) - Full example
+- [Returning Values from Transactions](#returning-values-from-transactions)
+- [Error Handling in Transactions](#error-handling-in-transactions)
+- [Nested Operations Pattern](#nested-operations-pattern) - Create related records
+- [Outbox Pattern](#outbox-pattern) - Event sourcing, async processing
+- [Read-Modify-Write](#read-modify-write) - Prevent race conditions
+- [Conditional Insert](#conditional-insert) - Check before create
+- [Neon Serverless Considerations](#neon-serverless-considerations) - Keep transactions short
+
 ## Basic Transaction
 
 ```typescript

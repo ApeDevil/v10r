@@ -2,6 +2,20 @@
 
 Reusable patterns for Superforms + Valibot.
 
+## Contents
+
+- [Authentication Forms](#authentication-forms) - Login, Registration schemas
+- [Contact Form](#contact-form) - Name, email, subject, message, category
+- [Profile Settings](#profile-settings) - Display name, bio, website, notifications
+- [Multi-Step Form](#multi-step-form) - Schema partials, step navigation
+- [Search with Filters](#search-with-filters) - Query, filters, URL sync
+- [Toast Notifications](#toast-notifications) - Success/error feedback
+- [Optimistic Updates](#optimistic-updates) - Immediate UI feedback
+- [Debounced Validation](#debounced-validation) - Expensive validations
+- [Conditional Fields](#conditional-fields) - Show/hide based on values
+- [Form Reset Patterns](#form-reset-patterns) - Initial values, new data, keep message
+- [Multiple Forms on Same Page](#multiple-forms-on-same-page) - Form IDs
+
 ## Authentication Forms
 
 ### Login Schema

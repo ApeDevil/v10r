@@ -1,5 +1,14 @@
 # Load Functions
 
+## Contents
+
+- [Universal vs Server](#universal-vs-server) - +page.server.js vs +page.js
+- [Combining Both](#combining-both) - Server runs first
+- [Streaming](#streaming) - Return promises for progressive loading
+- [Dependencies](#dependencies) - depends(), invalidate()
+- [Parent Data](#parent-data) - Access layout data
+- [SvelteKit 2 Changes](#sveltekit-2-changes) - Top-level promises, error/redirect
+
 ## Universal vs Server
 
 ### Server Load (+page.server.js)

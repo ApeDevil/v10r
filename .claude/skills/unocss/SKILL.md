@@ -1,10 +1,11 @@
+---
+name: unocss
+description: UnoCSS atomic CSS patterns for SvelteKit 2 + Svelte 5. Use when styling components, writing utility classes, configuring uno.config.ts, integrating icons with preset-icons, or styling Bits UI components. Includes safelist patterns, dynamic class gotchas, dark mode, and FOUC prevention. Essential for any class attribute work. (project)
+---
+
 # UnoCSS Patterns for Velociraptor
 
 UnoCSS atomic CSS engine patterns for SvelteKit 2 + Svelte 5 projects.
-
-## When to Use This Skill
-
-Use when writing UnoCSS utility classes, configuring uno.config.ts, styling components, integrating icons, or working with Bits UI components. Essential for any styling work in the project.
 
 ## Critical Gotchas
 

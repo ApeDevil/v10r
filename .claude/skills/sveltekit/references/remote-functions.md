@@ -4,6 +4,20 @@ Type-safe RPC-style server calls. Added in SvelteKit 2.27.
 
 **Status:** Experimental - API may change without notice.
 
+## Contents
+
+- [Enable](#enable) - Config flag
+- [Define Remote Functions](#define-remote-functions) - .remote.ts files
+- [Function Types](#function-types) - query, command, form, prerender
+- [Call Remote Functions](#call-remote-functions) - Client-side usage
+- [Batching (query.batch)](#batching-querybatch) - Solve N+1 problem
+- [Form Usage](#form-usage) - action={submitContact}
+- [Event Object](#event-object) - Access locals, cookies, route
+- [When to Use](#when-to-use) - vs +server.js API routes
+- [Type Safety](#type-safety) - Full inference
+- [Recent Updates](#recent-updates) - 2.44.0, 2.46.0, 2.49.0
+- [Caveats](#caveats) - Experimental, no progressive enhancement
+
 ## Enable
 
 ```javascript

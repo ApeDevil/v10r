@@ -2,6 +2,20 @@
 
 Patterns for protecting routes and accessing sessions.
 
+## Contents
+
+- [Protection Strategies](#protection-strategies) - Comparison table
+- [Load Function Guard (Recommended)](#load-function-guard-recommended) - Server-side check
+- [Reusable Guard Helper](#reusable-guard-helper) - requireAuth, requireRole
+- [Form Action Protection](#form-action-protection) - Protected mutations
+- [API Route Protection](#api-route-protection) - +server.ts guards
+- [Layout-Level Protection (Caution)](#layout-level-protection-caution) - Shared protection
+- [Client-Side Guard (Fallback)](#client-side-guard-fallback) - SPA navigation
+- [Session Access in Components](#session-access-in-components) - page.data.user
+- [Redirect After Login](#redirect-after-login) - Return to original URL
+- [Protecting Prerendered Pages](#protecting-prerendered-pages) - Auth-aware static pages
+- [Ownership Checks](#ownership-checks) - Resource access control
+
 ## Protection Strategies
 
 | Strategy | When to Use | Pros | Cons |

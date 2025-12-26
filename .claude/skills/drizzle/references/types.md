@@ -2,6 +2,20 @@
 
 TypeScript patterns for Drizzle with full type safety.
 
+## Contents
+
+- [Basic Type Inference](#basic-type-inference) - InferSelectModel, InferInsertModel
+- [The Relations Problem](#the-relations-problem) - InferSelectModel doesn't include relations
+- [Solutions for Relation Types](#solutions-for-relation-types) - Manual composite, infer from query
+- [Type Flow: DB → Load → Component](#type-flow-db--load--component)
+- [Partial Types](#partial-types) - Pick, Omit, Partial
+- [Enum Types](#enum-types) - Extract enum values as type
+- [Helper Types](#helper-types) - Pagination, form inputs
+- [$types Imports](#types-imports) - SvelteKit generated types
+- [Branded Types (Advanced)](#branded-types-advanced) - Type-safe IDs
+- [Return Type Patterns](#return-type-patterns) - OrFail, nullable, array
+- [Type Guards](#type-guards) - Check loaded relations
+
 ## Basic Type Inference
 
 ```typescript
