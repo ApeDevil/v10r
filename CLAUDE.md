@@ -126,6 +126,7 @@ Use the Task tool with the appropriate `subagent_type`:
 - Better Auth setup and patterns → `better-auth`
 - UnoCSS styling and configuration → `unocss`
 - Biome linting and formatting → `biome`
+- Security patterns, CSRF, injection, headers → `security`
 
 ### Skill Usage Rules
 
@@ -144,3 +145,4 @@ Use the Task tool with the appropriate `subagent_type`:
 | better-auth | Better Auth session-based authentication |
 | unocss | UnoCSS atomic CSS with Bits UI |
 | biome | Biome linter and formatter configuration |
+| security | Security patterns, CSRF, injection, headers, rate limiting |
