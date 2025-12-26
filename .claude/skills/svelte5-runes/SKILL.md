@@ -7,6 +7,23 @@ description: Svelte 5 runes patterns for Velociraptor projects. Use when writing
 
 Compiler directives prefixed with `$`. Built-in keywords. No imports. Compile-time, not runtime.
 
+## Contents
+
+- [$state](#state) - Reactive state, deep reactivity
+- [$derived](#derived) - Computed values
+- [$effect](#effect) - Side effects, cleanup
+- [$props](#props) - Component props with TypeScript
+- [$bindable](#bindable) - Two-way binding
+- [Forms (Valibot + Superforms)](#forms-valibot--superforms) - Form validation
+- [Bits UI](#bits-ui) - Headless components
+- [Data Loading](#data-loading) - Props from load functions
+- [Class State](#class-state) - Runes in classes
+- [Shared State](#shared-state) - .svelte.ts modules
+- [Mobile-First Fluid Design](#mobile-first-fluid-design) - clamp(), containers
+- [Anti-Patterns](#anti-patterns) - Common mistakes
+- [Migration from Svelte 4](#migration-from-svelte-4) - Conversion table
+- [References](#references) - Detailed guides
+
 | Rune | Purpose |
 |------|---------|
 | `$state` | Reactive state |

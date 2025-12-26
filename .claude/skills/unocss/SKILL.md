@@ -7,6 +7,23 @@ description: UnoCSS atomic CSS patterns for SvelteKit 2 + Svelte 5. Use when sty
 
 UnoCSS atomic CSS engine patterns for SvelteKit 2 + Svelte 5 projects.
 
+## Contents
+
+- [Critical Gotchas](#critical-gotchas) - Dynamic classes, file scanning, FOUC
+- [SvelteKit Integration](#sveltekit-integration) - Vite plugin, import, scoped mode
+- [Configuration](#configuration) - Presets, shortcuts, theme, transformers
+- [Dynamic Classes](#dynamic-classes) - Static maps, safelist, conditionals
+- [Icons](#icons) - Installation, usage, dynamic icons
+- [Variant Groups](#variant-groups) - hover:(bg-gray text-white)
+- [Shortcuts](#shortcuts) - Static and dynamic
+- [@apply Directive](#apply-directive) - In style blocks
+- [Dark Mode](#dark-mode) - Class-based toggle
+- [Bits UI Integration](#bits-ui-integration) - Data attributes, CSS variables
+- [File Scanning](#file-scanning) - Enable JS/TS scanning
+- [Tailwind Migration Notes](#tailwind-migration-notes) - Syntax differences
+- [Anti-Patterns](#anti-patterns) - Common mistakes
+- [References](#references) - Detailed guides
+
 ## Critical Gotchas
 
 | Issue | Impact | Solution |

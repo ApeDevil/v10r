@@ -7,6 +7,23 @@ description: SvelteKit 2 patterns for Velociraptor projects. Use when creating r
 
 File-based routing framework for Svelte 5. Server-first, progressive enhancement by default.
 
+## Contents
+
+- [Route Files](#route-files) - +page, +layout, +server, +error
+- [Load Functions](#load-functions) - Server vs Universal, streaming
+- [Form Actions](#form-actions) - POST mutations with enhance
+- [$app/state (Replaces $app/stores)](#appstate-replaces-appstores) - Reactive page data
+- [$app/navigation](#appnavigation) - goto, invalidate, preloadData
+- [Shallow Routing](#shallow-routing) - pushState without navigation
+- [Page Options](#page-options) - prerender, ssr, csr
+- [API Routes (+server.js)](#api-routes-serverjs) - REST endpoints
+- [Hooks](#hooks) - handle, handleFetch
+- [SvelteKit 2 Breaking Changes](#sveltekit-2-breaking-changes) - Migration notes
+- [Routing Patterns](#routing-patterns) - Dynamic, groups, catch-all
+- [Vercel Adapter](#vercel-adapter) - Deployment config
+- [Anti-Patterns](#anti-patterns) - Common mistakes
+- [References](#references) - Detailed guides
+
 | Concept | Purpose |
 |---------|---------|
 | Load functions | Fetch data before rendering |

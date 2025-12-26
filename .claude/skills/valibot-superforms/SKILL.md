@@ -7,6 +7,18 @@ description: Form validation for Velociraptor using Valibot v1 + Superforms. Use
 
 Type-safe form validation with tree-shakeable schemas. Valibot v1 + Superforms v2.
 
+## Contents
+
+- [Quick Start](#quick-start) - Schema, server, client setup
+- [Valibot Schemas](#valibot-schemas) - Types, pipe(), objects, arrays
+- [Superforms Stores](#superforms-stores) - form, errors, submitting, etc.
+- [Error Display](#error-display) - Field errors, summary, server-side
+- [Loading States](#loading-states) - submitting vs delayed
+- [Configuration](#configuration) - Validation, error handling, reset
+- [Events](#events) - onSubmit, onUpdate, onError
+- [Anti-Patterns](#anti-patterns) - Common mistakes
+- [References](#references) - Detailed guides
+
 | Concept | Purpose |
 |---------|---------|
 | Valibot schemas | Define validation rules |

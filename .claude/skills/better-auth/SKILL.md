@@ -7,6 +7,23 @@ description: Better Auth patterns for Velociraptor. Use when implementing authen
 
 Session-based auth library with Drizzle adapter. TypeScript-first, batteries-included.
 
+## Contents
+
+- [Critical Gotchas](#critical-gotchas) - Must-know issues before implementation
+- [Server Configuration](#server-configuration) - betterAuth() setup
+- [SvelteKit Hook Integration](#sveltekit-hook-integration) - Two handlers pattern
+- [App.d.ts Types](#appd.ts-types) - TypeScript definitions
+- [Client Configuration](#client-configuration) - createAuthClient()
+- [Session Access Pattern](#session-access-pattern) - SSR-safe page data
+- [Route Protection](#route-protection) - Load guards, helpers, client-side
+- [Auth Forms](#auth-forms) - Login, signup with Better Auth client
+- [Sign Out](#sign-out)
+- [Session Cleanup (Required)](#session-cleanup-required) - Cron job setup
+- [Database Schema](#database-schema) - Auto-generated tables, indexes
+- [Anti-Patterns](#anti-patterns) - Common mistakes to avoid
+- [File Structure](#file-structure)
+- [References](#references) - Detailed guides
+
 | Concept | Purpose |
 |---------|---------|
 | `betterAuth()` | Server-side auth instance |

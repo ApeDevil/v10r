@@ -7,6 +7,23 @@ description: Drizzle ORM patterns for Velociraptor. Use when writing database sc
 
 Type-safe SQL with Neon PostgreSQL serverless. Schema-first, zero runtime overhead.
 
+## Contents
+
+- [Schema Definition](#schema-definition) - Tables, columns, indexes
+- [Better Auth Tables](#better-auth-tables) - Auto-generated schema
+- [Schema Index](#schema-index) - Re-exports
+- [ID Generation](#id-generation) - Prefixed IDs
+- [Relations](#relations) - Drizzle relations vs foreign keys
+- [Database Client](#database-client) - drizzle() setup
+- [Queries](#queries) - Relational API vs Query Builder
+- [Type Inference](#type-inference) - InferSelectModel, composite types
+- [Transactions](#transactions) - Atomic operations
+- [Error Handling](#error-handling) - PostgreSQL error codes
+- [Migrations](#migrations) - drizzle-kit commands
+- [Anti-Patterns](#anti-patterns) - Common mistakes
+- [File Structure](#file-structure)
+- [References](#references) - Detailed guides
+
 | Concept | Purpose |
 |---------|---------|
 | `pgTable` | Define tables |
