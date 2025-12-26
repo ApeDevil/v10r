@@ -125,6 +125,7 @@ Use the Task tool with the appropriate `subagent_type`:
 - Drizzle ORM schemas and queries → `drizzle`
 - Better Auth setup and patterns → `better-auth`
 - UnoCSS styling and configuration → `unocss`
+- Biome linting and formatting → `biome`
 
 ### Skill Usage Rules
 
@@ -142,3 +143,4 @@ Use the Task tool with the appropriate `subagent_type`:
 | drizzle | Drizzle ORM schemas, queries, migrations |
 | better-auth | Better Auth session-based authentication |
 | unocss | UnoCSS atomic CSS with Bits UI |
+| biome | Biome linter and formatter configuration |
