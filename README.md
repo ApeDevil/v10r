@@ -59,3 +59,16 @@ Every showcase page serves three purposes simultaneously:
 |------|--------------|
 | **Documentation** | Explains how the feature works |
 | **Test** | Proves the feature works |
+| **Template** | Copy-paste starting point |
+
+
+## Documentation Structure
+
+The `docs/` folder uses an AI-optimized navigation structure. Each directory has a README.md that acts as a **navigation hub** with topic tables showing which file covers what.
+
+**Why this structure:**
+- AI agents find the right file faster (README first, then target file)
+- More precise information retrieval (no blind grep through all docs)
+- Reduces token usage (read index → read specific file, not everything)
+
+**Navigation rule:** Always start at [`docs/README.md`](./docs/README.md), drill down through directory READMEs to find the right file.
