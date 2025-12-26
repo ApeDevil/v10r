@@ -21,23 +21,32 @@ Use the `error()` helper for controlled errors:
 // src/routes/items/[id]/+page.server.ts
 import { error } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
+import { and, eq } from 'drizzle-orm';
 
 export async function load({ params, locals }) {
-  const item = await db.query.items.findFirst({
-    where: eq(items.id, params.id)
-  });
-
-  if (!item) {
-    error(404, { message: 'Item not found' });
+  if (!locals.user) {
+    error(401, { message: 'Authentication required' });
   }
 
-  if (item.userId !== locals.user?.id) {
-    error(403, { message: 'Not authorized to view this item' });
+  // Include ownership in query to prevent IDOR enumeration
+  const item = await db.query.items.findFirst({
+    where: and(
+      eq(items.id, params.id),
+      eq(items.userId, locals.user.id)
+    )
+  });
+
+  // Return 404 for both "not found" and "not authorized"
+  // This prevents attackers from enumerating valid item IDs
+  if (!item) {
+    error(404, { message: 'Item not found' });
   }
 
   return { item };
 }
 ```
+
+> **Security Note:** For user-owned resources, always return 404 for both missing and unauthorized access. Returning 403 reveals that the resource exists, enabling ID enumeration attacks (IDOR). See [OWASP IDOR Prevention](https://cheatsheetseries.owasp.org/cheatsheets/Insecure_Direct_Object_Reference_Prevention_Cheat_Sheet.html).
 
 ### Error Responses
 
@@ -45,11 +54,15 @@ export async function load({ params, locals }) {
 |--------|---------|
 | 400 | Bad request, invalid input |
 | 401 | Not authenticated |
-| 403 | Not authorized |
-| 404 | Resource not found |
+| 403 | Not authorized (use for shared resources with explicit permissions) |
+| 404 | Resource not found OR not authorized (for user-owned resources) |
 | 409 | Conflict (duplicate, etc.) |
 | 422 | Validation failed |
 | 429 | Rate limited |
+
+**When to use 403 vs 404:**
+- **User-owned resources** (items, invoices, drafts): Return 404 for both missing and unauthorized
+- **Shared resources** (team docs, org settings): Return 403 when user lacks explicit permission
 
 ---
 
@@ -60,15 +73,15 @@ export async function load({ params, locals }) {
 ```svelte
 <!-- src/routes/+error.svelte -->
 <script lang="ts">
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
 </script>
 
 <div class="error-container">
-  <h1>{$page.status}</h1>
-  <p>{$page.error?.message}</p>
+  <h1>{page.status}</h1>
+  <p>{page.error?.message}</p>
 
-  {#if $page.error?.errorId}
-    <p class="error-id">Error ID: {$page.error.errorId}</p>
+  {#if page.error?.errorId}
+    <p class="error-id">Error ID: {page.error.errorId}</p>
   {/if}
 
   <a href="/">Go home</a>
@@ -80,12 +93,12 @@ export async function load({ params, locals }) {
 ```svelte
 <!-- src/routes/app/+error.svelte -->
 <script lang="ts">
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
 </script>
 
 <div class="app-error">
   <h2>Something went wrong</h2>
-  <p>{$page.error?.message}</p>
+  <p>{page.error?.message}</p>
   <a href="/app/dashboard">Back to dashboard</a>
 </div>
 ```
@@ -664,12 +677,13 @@ describe('Item page', () => {
     expect(response.status).toBe(404);
   });
 
-  it('returns 403 for unauthorized access', async () => {
+  it('returns 404 for unauthorized access (IDOR prevention)', async () => {
     // Create item as user A, try to access as user B
+    // Returns 404 (not 403) to prevent ID enumeration
     const response = await fetch('/items/other-user-item', {
       headers: { cookie: userBCookie }
     });
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(404);
   });
 });
 ```

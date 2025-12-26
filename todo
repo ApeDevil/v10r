@@ -1,4 +1,4 @@
-I would like to validate/examine our currently planned auth setup.
+I would like to validate/examine our currently planned error-handling setup.
 Please think through the task and orchestrate the following workflow:
 1) Let the appropriate agent with according skills review/examine the documentation and analyze the relevant sections in depth.
 2) Only after the respective agents finisched thier analyzis launch resy agent to identify/verify the best possible solution approaches.
@@ -6,6 +6,16 @@ Please think through the task and orchestrate the following workflow:
 ---
 
 checkout .claude/agents & .claude/skills and contemplate it!
-how about add a new skills 'security' for knowledge gaps of ai - things post-training cutoff or underdocumented info?
-let resy look up the most inportained best security practices in context of our project!
+how about to add a new skill 'AI tools' (vendor/provider agnostic) for knowledge gaps of ai - things post-training cutoff or underdocumented info?
+let resy look up the most inportained best modern and most importaind security practices in context of our project!
+then write the skill!
+
+
+
+
+
+
+checkout .claude/agents & .claude/skills and contemplate it!
+how about to add a new skill for 'AI tools' (vendor/provider agnostic) for knowledge gaps of ai - things post-training cutoff or underdocumented info?
+let resy look up the most inportained an best modern AI practices in context of our project!
 then write the skill!
