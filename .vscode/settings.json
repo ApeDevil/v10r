@@ -15,6 +15,10 @@
         {
             "folderPath": "velociraptor/docs/implementation/",
             "badge": "🚀"
+        },
+        {
+            "folderPath": "velociraptor/docs/stack/",
+            "badge": "🥞"
         }
     ]
 }
