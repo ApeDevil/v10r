@@ -1,41 +1,47 @@
+# PRD
 
-# Intro
+## What is Velociraptor
 
-This project is a documentation, test-sandbox, and a template. It documents the complete 'Velociraptor' setup (features & functions), which is simultaneously a template for different projects (skeleton setup).
+Documentation, test-sandbox, and reusable template in one. The project simultaneously:
+- Documents the complete stack (features & patterns)
+- Serves as a test environment to validate decisions
+- Provides a skeleton for new projects
 
-# Velociraptor
+## Goals
 
-A tech stack. Main parts: Podman, Bun, SvelteKit.
+| Goal | Description |
+|------|-------------|
+| Speed | Fast runtime, fast builds, fast user experience |
+| Clean codebase | Maintainable, well-organized, minimal complexity |
+| Flexible UI | Adaptable to different use cases and designs |
+| Cross-platform | Optimized for mobile and desktop |
+| Quick start | Fast project initialization from template |
 
-# Goals
+## Requirements
 
-- Speed/performance
-- clean designed codebase
-- flexible UI
-- optimized for Mobile & Desktop
-- fast init of projects via the Velociraptor-Stack-Template
+| Requirement | Description |
+|-------------|-------------|
+| User management | Authentication, sessions, roles |
+| Versatile data | Relational, graph, and file storage |
+| API layer | Built-in API capabilities |
+| i18n/l10n | UI and content localization |
 
-# Requirements:
-- user management
-- versatile DB setup (relational, graph, files)
-- built-in API Gateway
-- internationalization/localization: ui & content
-
-# Responsive Strategy
+## Responsive Strategy
 
 **Mobile-First Fluid Responsive Design**
 
 | Aspect | Approach |
 |--------|----------|
 | Base | Mobile-first (smallest viewport first) |
-| Typography | Fluid with `clamp()` |
-| Spacing | Fluid with `clamp()` |
+| Typography | Fluid scaling with `clamp()` |
+| Spacing | Fluid scaling with `clamp()` |
 | Page layout | Media query breakpoints |
 | Components | CSS container queries |
 
-Why this approach:
+**Why this approach:**
 - Smooth scaling between breakpoints (no jarring jumps)
 - Less CSS than pure breakpoint-based design
 - Components adapt to their container, not just viewport
 - 91%+ browser support for all techniques
-- Works naturally with UnoCSS arbitrary values
+
+See [stack/](../stack/) for specific technology choices that implement these goals.

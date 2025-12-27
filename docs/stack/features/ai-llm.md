@@ -42,36 +42,13 @@ For most AI features. Handles:
 - Multi-provider abstraction
 - Simple multi-step with `maxSteps`
 
-```typescript
-// Pipeline: Input → LLM → Output
-const { text } = await generateText({
-  model: anthropic('claude-sonnet-4-20250514'),
-  prompt: 'Summarize this document',
-});
-```
-
-```typescript
-// Pipeline with tools: Input → LLM → Tool → LLM → Output
-const { text } = await generateText({
-  model,
-  tools: { search, database },
-  maxSteps: 5,
-  prompt: 'Find and analyze competitor data',
-});
-```
+Pattern: `generateText({ model, prompt })` for simple, `generateText({ model, tools, maxSteps })` for tool-calling pipelines.
 
 ### LangChain (When Needed)
 
-For autonomous agents where the LLM decides the execution path:
+For autonomous agents where the LLM decides the execution path. Pattern: `createReactAgent({ llm, tools })` where the agent dynamically decides: Think → Act → Observe → Think → Act...
 
-```typescript
-// Graph: LLM navigates dynamically
-//   Think → Act → Observe → Think → Act...
-const agent = createReactAgent({ llm, tools });
-const result = await agent.invoke({
-  input: 'Research competitors and decide what to investigate further',
-});
-```
+See [blueprint/ai/](../../blueprint/ai/) for implementation details.
 
 ## Decision Matrix
 
@@ -89,23 +66,11 @@ const result = await agent.invoke({
 
 ## RAG Without LangChain
 
-RAG is a pattern, not a library. AI SDK handles it fine:
-
-```typescript
-// 1. Retrieve (your code)
-const context = await neo4j.run(`
-  MATCH (user)-[:PURCHASED]->(product)
-  RETURN product
-`);
-
-// 2. Augment + Generate (AI SDK)
-const { text } = await generateText({
-  model,
-  prompt: `Based on: ${JSON.stringify(context)}\n\nRecommend products.`,
-});
-```
+RAG is a pattern, not a library. The pattern is: Retrieve (query your database) → Augment (inject context into prompt) → Generate (call LLM). AI SDK handles this natively without LangChain.
 
 LangChain adds value only if you need the LLM to generate queries dynamically.
+
+See [blueprint/ai/graph-rag.md](../../blueprint/ai/graph-rag.md) for implementation details.
 
 ## Stack Integration
 

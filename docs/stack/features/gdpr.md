@@ -115,24 +115,7 @@ User Message → Your Server → AI Provider → Response → User
 
 ### AI Consent Pattern
 
-The AI assistant requires consent separate from general app consent:
-
-```typescript
-// src/lib/stores/consent.svelte.ts
-let aiConsent = $state(browser ? localStorage.getItem('ai-consent') === 'true' : false);
-
-export const consent = {
-  get hasAiConsent() { return aiConsent; },
-  grantAiConsent() {
-    aiConsent = true;
-    if (browser) localStorage.setItem('ai-consent', 'true');
-  },
-  revokeAiConsent() {
-    aiConsent = false;
-    if (browser) localStorage.removeItem('ai-consent');
-  },
-};
-```
+The AI assistant requires consent separate from general app consent. Implement a consent store in `$lib/stores/consent.svelte.ts` using Svelte runes with localStorage persistence. Functions needed: `hasAiConsent`, `grantAiConsent`, `revokeAiConsent`.
 
 ### AI in Privacy Policy
 

@@ -115,27 +115,7 @@ Redact sensitive fields (password, token, secret, apiKey, creditCard) before log
 
 ### AI Request Logging
 
-Log AI requests for cost tracking and debugging, but never log message content:
-
-```typescript
-// src/routes/api/chat/+server.ts
-const startTime = Date.now();
-
-const result = streamText({ model, messages, system });
-
-// Log after completion (via onFinish or after stream)
-log.info({
-  context: 'ai',
-  userId: locals.user?.id,
-  provider: 'groq',  // or 'mistral', 'together'
-  model: 'llama-3.3-70b-versatile',
-  inputTokens: result.usage?.promptTokens,
-  outputTokens: result.usage?.completionTokens,
-  duration: Date.now() - startTime,
-  // Estimated cost (calculate from token counts)
-  costUsd: calculateCost(result.usage),
-});
-```
+Log AI requests for cost tracking and debugging, but never log message content. Log after stream completion with context, userId, provider, model, token counts, duration, and calculated cost.
 
 **What to log:**
 | Field | Purpose |
