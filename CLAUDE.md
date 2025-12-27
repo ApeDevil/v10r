@@ -10,18 +10,21 @@ Velociraptor is a full-stack template/test-sandbox focused on performance and li
 
 ## Stack
 
-| Layer | Technology |
-|-------|------------|
-| Runtime | Bun |
-| Framework | SvelteKit 2 + Svelte 5 |
-| Database | PostgreSQL (Neon) + Neo4j (Aura) |
-| ORM | Drizzle |
-| Auth | Better Auth (session-based) |
-| Styling | UnoCSS + Bits UI |
-| Validation | Valibot + Superforms |
-| Code Quality | Biome |
-| Container | Podman |
-| Hosting | Vercel |
+| Layer | Technology | Docs |
+|-------|------------|------|
+| Runtime | Bun | `docs/stack/core/bun.md` |
+| Framework | SvelteKit 2 + Svelte 5 | `docs/stack/core/sveltekit.md`, `docs/stack/core/svelte.md` |
+| Database | PostgreSQL (Neon) + Neo4j (Aura) | `docs/stack/data/postgres.md`, `docs/stack/data/neo4j.md` |
+| ORM | Drizzle | `docs/stack/data/drizzle.md` |
+| Auth | Better Auth (session-based) | `docs/stack/auth/better-auth.md` |
+| Styling | UnoCSS + Bits UI | `docs/stack/ui/unocss.md`, `docs/stack/ui/bits-ui.md` |
+| Validation | Valibot + Superforms | `docs/stack/forms/valibot.md`, `docs/stack/forms/superforms.md` |
+| Code Quality | Biome | `docs/stack/quality/biome.md` |
+| Container | Podman | `docs/stack/core/podman.md` |
+| Hosting | Vercel | `docs/stack/ops/deployment.md` |
+| Storage | Cloudflare R2 | `docs/stack/data/r2.md` |
+| i18n | svelte-i18n | `docs/stack/i18n/svelte-i18n.md` |
+| AI | Vercel AI SDK | `docs/stack/ai/ai-sdk.md` |
 
 
 ## Architecture

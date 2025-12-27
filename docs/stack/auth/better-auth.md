@@ -1,4 +1,4 @@
-# Authentication
+# Better Auth
 
 Session-based authentication. Better Auth chosen for production. DIY available for learning.
 
@@ -79,4 +79,4 @@ All packages are libraries with no external service dependencies.
 
 - [Better Auth docs](https://better-auth.com)
 - [The Copenhagen Book](https://thecopenhagenbook.com)
-- [Implementation guide](../blueprint/auth.md)
+- [Implementation guide](../../blueprint/auth.md)

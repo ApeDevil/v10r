@@ -1,6 +1,6 @@
-# AI / LLM Integration
+# AI SDK
 
-Mental models and framework choices for AI integration.
+Mental models and framework choices for AI integration. Vercel AI SDK for pipeline flows, LangChain for graph flows.
 
 ## Pipeline Flow vs Graph Flow
 
@@ -94,7 +94,8 @@ See [deployment.md](./deployment.md) for platform details.
 
 ## Related
 
-- [../blueprint/ai/README.md](../blueprint/ai/README.md) - Implementation details
-- [../blueprint/ai/graph-rag.md](../blueprint/ai/graph-rag.md) - Neo4j RAG patterns
-- [vendors.md](./vendors.md) - Provider comparison and free tiers
-- [deployment.md](./deployment.md) - Deployment targets
+- [../../blueprint/ai/README.md](../../blueprint/ai/README.md) - Implementation details
+- [../../blueprint/ai/graph-rag.md](../../blueprint/ai/graph-rag.md) - Neo4j RAG patterns
+- [../vendors.md](../vendors.md) - Provider comparison and free tiers
+- [../ops/deployment.md](../ops/deployment.md) - Deployment targets
+- [../data/neo4j.md](../data/neo4j.md) - Graph database for RAG

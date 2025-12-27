@@ -115,7 +115,7 @@ Application code behaves identically. Only adapter and runtime differ.
 
 ## Implementation
 
-See [blueprint/deployment.md](../blueprint/deployment.md) for:
+See [blueprint/deployment.md](../../blueprint/deployment.md) for:
 - Dockerfile configuration
 - Adapter setup
 - Environment variables
@@ -124,5 +124,6 @@ See [blueprint/deployment.md](../blueprint/deployment.md) for:
 
 ## Related
 
-- [vendors.md](./vendors.md) - Vercel and Koyeb provider details
-- [core.md](./core.md) - Runtime and framework choices
+- [../vendors.md](../vendors.md) - Vercel and Koyeb provider details
+- [../core/bun.md](../core/bun.md) - Runtime choices
+- [../core/sveltekit.md](../core/sveltekit.md) - Framework choices

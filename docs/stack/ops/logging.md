@@ -7,10 +7,10 @@ Structured logging for debugging, monitoring, and observability.
 | Layer | Technology | Provider | Why |
 |-------|------------|----------|-----|
 | Logger | **Pino** | Library | Fastest Node.js logger, structured JSON, low overhead |
-| Error Tracking | **Sentry SDK** | [Sentry](./vendors.md#sentry) | Already in stack, integrates with Pino |
-| Log Aggregation | **JSON stdout** | [Vercel Logs](./vendors.md#vercel) | Free with Vercel, zero config |
+| Error Tracking | **Sentry SDK** | [Sentry](../vendors.md#sentry) | Already in stack, integrates with Pino |
+| Log Aggregation | **JSON stdout** | [Vercel Logs](../vendors.md#vercel) | Free with Vercel, zero config |
 
-See [vendors.md](./vendors.md) for alternatives and costs.
+See [vendors.md](../vendors.md) for alternatives and costs.
 
 ## Why Pino
 
