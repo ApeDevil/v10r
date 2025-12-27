@@ -2,3 +2,40 @@
 Notifications: email, Messaging apps (telegram, discord)
 
 ---
+
+execute the followwing step by step:
+1) get a list of all files in docs/stack/ write it down in root OPTY-PLAN.md (exclude READMEs and docs/stack/vendors.md)
+2) contemplate our goal: refactore each file to a consistant patern [
+    - What it is!
+    - What is it for!
+    - why was it chosen
+    - what are the currently known limetations 
+]
+3) orchistare the following workflow for each file in docs/stack/  {
+- check out a file and understand what it is about
+- let resy look up the nessecery information which are relevant for the stack documentation (no code examples)
+- update the file with our consistant patern and relevat infromation from resys findings (no code examples), don't blode the files
+- mark in OPTY-PLAN.md that the files was optimized
+}
+
+
+
+
+**Execute the following steps step by step:**
+
+1. Get a list of all files in `docs/stack/` and write it down in the root `OPTY-PLAN.md` file
+   *(exclude all README files and `docs/stack/vendors.md`).*
+
+2. Contemplate our goal: refactor each file to follow a consistent pattern:
+
+   * What is it?
+   * What is it for?
+   * Why was it chosen?
+   * What are the currently known limitations?
+
+3. Orchestrate the following workflow for **each** file in `docs/stack/`:
+
+   * Check out the file and understand what it is about
+   * Let **Resy** look up the necessary information relevant for the stack documentation *(no code examples)*
+   * Update the file using the consistent pattern and relevant information from Resy’s findings *(no code examples; do not bloat the files)*
+   * Mark in `OPTY-PLAN.md` that the file was optimized

@@ -1,129 +1,73 @@
 # Deployment
 
-Hosting strategy for Velociraptor: tri-target deployment to test runtime portability.
+## What is it?
 
-## Strategy
+Multi-target deployment strategy proving runtime portability. Same codebase deploys to Vercel (serverless) and container platforms. SvelteKit's adapter system enables platform-agnostic builds.
 
-**Write once, deploy anywhere.** The same codebase deploys to three targets:
+## What is it for?
 
-| Target | Runtime | Platform | Status | Use Case |
-|--------|---------|----------|--------|----------|
-| **Serverless** | Node.js | Vercel | Stable | Zero-config, preview deploys |
-| **Serverless** | Bun | Vercel | Experimental | Bun speed + Vercel DX |
-| **Container** | Bun | Koyeb | Stable | Native Bun, container experience |
+- Zero-config serverless deployment (Vercel)
+- Container-based deployment (Koyeb, Railway)
+- Testing runtime portability across platforms
+- Preview deployments per PR
 
-This proves the stack is portable and gives users deployment flexibility.
+## Why was it chosen?
 
-## Why Three Targets?
+| Target | Runtime | Platform | Use Case |
+|--------|---------|----------|----------|
+| Serverless | Node.js | Vercel | Zero-config, preview deploys |
+| Serverless | Bun | Vercel | Experimental (28% faster) |
+| Container | Bun | Koyeb | Native Bun, no cold starts |
 
-| Concern | Answer |
+**Vercel advantages:**
+- Automatic framework detection
+- Git-based deployment with PR previews
+- Built-in edge caching, image optimization
+- Fluid compute: 99.37% of requests have zero cold starts
+
+**Container advantages:**
+- Persistent runtime (no cold starts)
+- Full Node.js/Bun API access
+- Railway: 3-4x faster than Vercel in benchmarks
+- True free tier (Koyeb: no credit card)
+
+**Adapter selection:**
+| Adapter | Target |
 |---------|--------|
-| Why Vercel + Node.js? | Battle-tested, zero config, best DX |
-| Why Vercel + Bun? | Test experimental Bun runtime (28% faster) |
-| Why Koyeb? | Guaranteed native Bun, container experience |
-| Which is primary? | Your choice—all three are documented |
+| `adapter-vercel` | Vercel (Node.js or Bun) |
+| `svelte-adapter-bun` | Bun containers |
+| `adapter-node` | Node.js containers |
 
-## Platform Comparison
+## Known limitations
 
-| Aspect | Vercel (Node.js) | Vercel (Bun) | Koyeb (Bun) |
-|--------|------------------|--------------|-------------|
-| Runtime | Node.js 20 | Bun (experimental) | Native Bun |
-| Deployment | Git push | Git push | Dockerfile |
-| Cold starts | Fast | Fast | Slower (sleep) |
-| Preview deploys | Automatic | Automatic | Manual |
-| Free tier | 100 GB bandwidth | 100 GB bandwidth | 512 MB RAM |
-| Complexity | Zero config | One config line | Container knowledge |
-| Risk level | None | Medium (undocumented) | Low |
+**Vercel pricing:**
+- Pro: $20/user/month
+- Overages not hard-stopped (except Hobby tier)
+- $0.60 per 1M function invocations over limit
+- Configure spend limits to avoid surprises
 
-## Adapter Selection
+**Vercel cold starts:**
+- 2-3 seconds for heavy setups (GraphQL + Prisma)
+- Each cold start requires new database connections
+- Mitigated by Fluid compute (Pro/Enterprise)
 
-SvelteKit uses adapters to target different platforms:
+**Vercel lock-in:**
+- Proprietary features (image optimization, ISR) create migration friction
+- SvelteKit adapter system provides better portability than Next.js
+- Can swap adapters without changing application code
 
-| Adapter | Target | Package |
-|---------|--------|---------|
-| `adapter-vercel` | Vercel (Node.js or Bun) | `@sveltejs/adapter-vercel` |
-| `svelte-adapter-bun` | Bun container (Koyeb) | `svelte-adapter-bun` |
+**Bun on Vercel:**
+- SvelteKit not officially listed (Next.js, Express, Hono, Nitro only)
+- May break without warning
+- Test thoroughly before production
 
-**Note:** Vercel's Bun runtime uses the same `adapter-vercel`—you just add `"bunVersion": "1.x"` to `vercel.json`.
-
-## Trade-offs
-
-### Vercel (Node.js) — Stable
-
-| Pro | Con |
-|-----|-----|
-| Zero configuration | Not native Bun |
-| Preview deploys per PR | Vendor-specific features |
-| Edge functions | Cold starts on free tier |
-| Built-in analytics | 100 GB bandwidth limit |
-
-### Vercel (Bun) — Experimental
-
-| Pro | Con |
-|-----|-----|
-| Bun runtime (28% faster) | SvelteKit not officially supported |
-| Same Vercel DX | May break without warning |
-| Preview deploys | Undocumented for SvelteKit |
-| One config change | Experimental status |
-
-> **Warning:** Vercel's Bun runtime officially supports Next.js, Express, Hono, and Nitro. SvelteKit is not listed but may work. Test thoroughly before production.
-
-### Koyeb (Bun) — Stable
-
-| Pro | Con |
-|-----|-----|
-| Native Bun runtime | Container sleep (cold starts) |
-| True free tier | 0.1 vCPU is limited |
-| No credit card required | No preview deploys |
-| Container experience | Manual Dockerfile |
-
-## Local Development
-
-Local development uses containers for parity:
-
-| Service | Image | Purpose |
-|---------|-------|---------|
-| App | `oven/bun:alpine` | SvelteKit dev server |
-| PostgreSQL | `postgres:16-alpine` | Relational database |
-| Neo4j | `neo4j:5-community` | Graph database |
-| MinIO | `minio/minio` | S3-compatible storage |
-
-**Container runtime:** Podman (rootless, daemonless, Docker-compatible)
-
-## Environment Parity
-
-| Concern | Local | Vercel (Node) | Vercel (Bun) | Koyeb |
-|---------|-------|---------------|--------------|-------|
-| Runtime | Bun | Node.js | Bun | Bun |
-| Database | Postgres container | Neon | Neon | Neon |
-| Files | MinIO | R2 | R2 | R2 |
-| Env vars | `.env` | Dashboard | Dashboard | Dashboard |
-
-Application code behaves identically. Only adapter and runtime differ.
-
-## Recommendations
-
-| Scenario | Recommendation |
-|----------|----------------|
-| Getting started | Vercel + Node.js (stable, zero config) |
-| Want Bun + best DX | Vercel + Bun (experimental, test first) |
-| Learning containers | Koyeb (Dockerfile experience) |
-| Production app | Vercel + Node.js or Railway ($5/mo) |
-| Bun-native features | Koyeb or self-hosted |
-| Maximum free tier | Koyeb (no credit card) |
-| Testing portability | Deploy to all three! |
-
-## Implementation
-
-See [blueprint/deployment.md](../../blueprint/deployment.md) for:
-- Dockerfile configuration
-- Adapter setup
-- Environment variables
-- CI/CD pipelines
-- Step-by-step deployment guides
+**Container platforms:**
+- Koyeb: Container sleep on free tier (cold starts)
+- Railway: $5/month minimum for always-on
+- Requires Dockerfile knowledge
 
 ## Related
 
-- [../vendors.md](../vendors.md) - Vercel and Koyeb provider details
-- [../core/bun.md](../core/bun.md) - Runtime choices
-- [../core/sveltekit.md](../core/sveltekit.md) - Framework choices
+- [../core/bun.md](../core/bun.md) - Runtime
+- [../core/sveltekit.md](../core/sveltekit.md) - Adapters
+- [hosting.md](./hosting.md) - Domain configuration

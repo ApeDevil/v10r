@@ -1,50 +1,64 @@
 # PostgreSQL
 
-Relational database. Production-ready, rich features, JSON support.
+## What is it?
 
-## Why PostgreSQL
+Open-source object-relational database management system. ACID-compliant with extensibility features. Supports JSON, full-text search, and rich extension ecosystem. Current versions: 14-18 (18 in preview).
+
+**Neon:** Serverless PostgreSQL platform that separates compute and storage. Compute runs on Kubernetes, storage uses custom Pageserver backed by S3. Enables independent scaling and scale-to-zero.
+
+## What is it for?
+
+- Web applications requiring relational data with ACID guarantees
+- Development/staging with database branching (instant schema + data duplication)
+- Serverless applications with variable workloads
+- Applications needing JSONB, full-text search, extensions
+
+## Why was it chosen?
 
 | Aspect | PostgreSQL | MySQL | SQLite |
 |--------|------------|-------|--------|
-| JSON Support | Native JSONB | JSON type | JSON functions |
-| Full-text Search | Built-in | Plugin | Extension |
-| Concurrent Writes | MVCC | Locks | Single-writer |
+| JSON | Native JSONB | JSON type | JSON functions |
+| Full-text search | Built-in | Plugin | Extension |
+| Concurrent writes | MVCC | Locks | Single-writer |
 | Extensions | Rich ecosystem | Limited | Limited |
 
-PostgreSQL wins: JSONB, full-text search, extensions, Drizzle-native.
-
-## Provider: Neon
-
+**Provider comparison:**
 | Aspect | Neon | Supabase | PlanetScale |
 |--------|------|----------|-------------|
-| Free Tier | 0.5 GB, 1 project | 500 MB, 2 projects | 5 GB, 1 DB |
-| Branching | Yes | No | Yes |
-| Serverless | Native | Pooler needed | Native |
-| Cold Start | ~500ms | None | None |
+| Free tier | 10 projects, 0.5 GB each | 500 MB, 2 projects | 5 GB, 1 DB |
+| Branching | Copy-on-write | No | Yes |
+| Serverless | Native scale-to-zero | Pooler needed | Native |
+| Cold start | 500ms-few seconds | None | None |
 
-Neon wins: generous free tier, database branching, serverless-native.
+**Neon advantages:**
+- Scale-to-zero: idle databases cost nothing
+- Instant provisioning (seconds, not minutes)
+- Database branching for testing/staging
+- Pay only for active compute time
+- Free tier: 100 CU-hours/month, no credit card, never expires
 
-See [../vendors.md](../vendors.md#neon) for pricing details.
+## Known limitations
 
-## Data Responsibilities
+**Cold starts:**
+- Activating from idle: 500ms to few seconds
+- PgBouncer pooler mitigates (sub-100ms for subsequent queries)
+- Applications may timeout during reactivation
 
-| Data Type | Store in PostgreSQL |
-|-----------|---------------------|
-| Users | Yes |
-| Sessions | Yes |
-| Content | Yes |
-| Settings | Yes |
-| Relationships | No (use Neo4j) |
-| Files | No (use R2) |
+**Connection limits:**
+- Max connections: 112 (0.25 CU) to 4,000 (9+ CU)
+- Transaction-mode pooling disables: prepared statements (SQL-level), LISTEN/NOTIFY, SET statements, session advisory locks
 
-## Stack Integration
+**Free tier constraints:**
+- Compute suspends when 100 CU-hours/month exhausted
+- 0.5 GB storage per project
+- 6 hours restore history
+- 1 day metrics retention
+- Community support only (no SLA)
 
-| Layer | Technology | Why |
-|-------|------------|-----|
-| Database | **PostgreSQL** | ACID, JSON support, Drizzle-native |
-| Provider | **Neon** | Serverless, branching, generous free tier |
-| ORM | **Drizzle** | Type-safe, lightweight |
-| Sessions | **Better Auth** | Native Drizzle adapter |
+**Enterprise features (Scale plan only):**
+- SOC 2, ISO, HIPAA, GDPR compliance
+- IP Allow and Private Networking
+- Uptime SLA guarantees
 
 ## Related
 

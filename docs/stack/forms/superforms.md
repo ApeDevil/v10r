@@ -1,8 +1,18 @@
 # Superforms
 
-Form handling for SvelteKit. Server validation, progressive enhancement.
+## What is it?
 
-## Why Superforms
+SvelteKit form library providing server and client-side validation with a minimal API. Uses a single method on server and client while offering extensive configuration options.
+
+## What is it for?
+
+- Full-stack form validation (same schema on server and client)
+- Progressive enhancement (works without JavaScript)
+- Nested data structures beyond FormData limitations
+- Type-safe form handling with TypeScript
+- Multiple forms per page
+
+## Why was it chosen?
 
 | Aspect | Superforms | Native SvelteKit |
 |--------|------------|------------------|
@@ -12,49 +22,15 @@ Form handling for SvelteKit. Server validation, progressive enhancement.
 | Nested data | Supported | Complex |
 | Loading states | Built-in | Manual |
 
-Superforms wins: schema validation, automatic error handling, progressive enhancement.
+**Key advantages:**
+- Progressive enhancement by default (forms work without JS)
+- Single source of truth (one schema for server + client)
+- Type safety across PageData, ActionData, form state
+- Minimal API with extensive functionality
+- Validation library agnostic (Valibot, Zod, Yup, etc.)
+- SuperDebug component for development
 
-## Stack Integration
-
-| Layer | Technology | Why |
-|-------|------------|-----|
-| Forms | **Superforms** | SvelteKit-native, Valibot integration |
-| Validation | **Valibot** | Type-safe schemas |
-| Components | **Bits UI** | Accessible form controls |
-
-## Key Features
-
-- **Server-first validation** (secure, works without JS)
-- **Progressive enhancement** (enhances with JS)
-- **Schema integration** (Valibot, Zod)
-- **Nested data** (arrays, objects)
-- **File uploads** (multipart handling)
-- **Flash messages** (cross-request feedback)
-
-## Pattern
-
-```typescript
-// +page.server.ts
-import { superValidate } from 'sveltekit-superforms';
-import { valibot } from 'sveltekit-superforms/adapters';
-
-export const load = async () => {
-  const form = await superValidate(valibot(schema));
-  return { form };
-};
-
-export const actions = {
-  default: async ({ request }) => {
-    const form = await superValidate(request, valibot(schema));
-    if (!form.valid) return fail(400, { form });
-    // Process valid data
-    return { form };
-  }
-};
-```
-
-## Form States
-
+**Form states available:**
 | State | Purpose |
 |-------|---------|
 | `$form` | Current form data |
@@ -64,8 +40,24 @@ export const actions = {
 | `$delayed` | Submission taking long |
 | `$timeout` | Submission timed out |
 
+## Known limitations
+
+**Svelte 5 compatibility:**
+- v2.x works with Svelte 5 but uses Svelte stores (not runes)
+- Must mix store syntax (`$formData`) with runes syntax (`$props()`)
+- Native runes support planned for **v3** (no release date)
+- Multi-form pages require extracting stores separately
+
+**Complexity considerations:**
+- Core API is minimal and straightforward
+- Component-based forms become complex
+- Formsnap wrapper library exists for simplification
+
+**Technical requirements:**
+- Valibot peer dependency: 1.0.0+ required
+- Schema must be defined at module top-level (not inside load functions)
+
 ## Related
 
 - [valibot.md](./valibot.md) - Schema validation
 - [../ui/bits-ui.md](../ui/bits-ui.md) - Form components
-- [../../blueprint/forms/](../../blueprint/forms/) - Implementation details

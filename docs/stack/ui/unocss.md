@@ -1,57 +1,60 @@
 # UnoCSS
 
-Atomic CSS engine. On-demand generation, smaller than Tailwind.
+## What is it?
 
-## Why UnoCSS
+Instant on-demand atomic CSS engine. Unlike traditional CSS frameworks, UnoCSS has no core utilities—all functionality is provided through presets. It generates only the classes actually used in code.
+
+## What is it for?
+
+- Building fully customized design systems without framework constraints
+- Atomic CSS generation on-demand (no unused CSS shipped)
+- Projects requiring maximum extensibility and performance
+- Multi-context deployment: Vite, SvelteKit, Nuxt, Astro, CDN runtime
+
+## Why was it chosen?
 
 | Aspect | UnoCSS | Tailwind CSS |
 |--------|--------|--------------|
-| Generation | On-demand | Full scan |
-| Bundle Size | Only used classes | Purged but larger |
-| Customization | Presets, rules | Config file |
-| Speed | Fastest | Fast |
-| Tailwind Compat | Full (via preset) | N/A |
+| Generation | On-demand | Full scan + purge |
+| Architecture | Isomorphic engine | PostCSS plugin |
+| Bundle size | ~65% of Tailwind | Baseline |
+| Core utilities | None (all via presets) | Monolithic |
+| Speed | Up to 200x faster (benchmarks) | Fast |
 
-UnoCSS wins: on-demand generation, smaller bundles, fully customizable.
+**Key advantages:**
+- No AST parsing, no PostCSS dependency—cheap string concatenation
+- Full Tailwind compatibility via `preset-wind`
+- Unique features: attributify mode, pure CSS icons, variant groups
+- Svelte Scoped mode: inject styles directly into Svelte components
+- ~6kb min+brotli, zero dependencies
 
-## Stack Integration
+**Preset ecosystem:**
+| Preset | Purpose |
+|--------|---------|
+| `preset-wind` | Tailwind-compatible utilities |
+| `preset-icons` | Any Iconify icon as CSS class |
+| `preset-mini` | Minimal essential utilities |
+| `preset-typography` | Prose styling |
 
-| Layer | Technology | Why |
-|-------|------------|-----|
-| CSS Engine | **UnoCSS** | On-demand, smaller than Tailwind |
-| Preset | **preset-wind** | Tailwind-compatible utilities |
-| Icons | **preset-icons** | Iconify integration |
-| Typography | **preset-typography** | Prose styling |
+## Known limitations
 
-## Key Features
+**Ecosystem:**
+- Smaller community than Tailwind (200K+ vs Tailwind's larger base)
+- Cannot use Tailwind CSS plugins—must use UnoCSS presets
+- No pre-built components (unlike Tailwind UI)
+- Creator notes it's "still in early stage"
 
-- **On-demand** (generates only used classes)
-- **Tailwind-compatible** (use familiar classes)
-- **Attributify mode** (cleaner markup)
-- **Icons as classes** (`i-lucide-home`)
-- **Shortcuts** (define reusable class groups)
+**Configuration:**
+- No built-in preflight CSS reset (intentional, must configure manually)
+- More initial setup than Tailwind's "works out of the box" experience
+- Different mental model: preset-based vs monolithic framework
 
-## Philosophy
-
-Utility-first CSS, custom design tokens, no library bloat.
-
-```html
-<!-- Standard utilities -->
-<div class="flex items-center gap-4 p-4">
-
-<!-- Attributify mode -->
-<div flex items-center gap-4 p-4>
-
-<!-- Icons as classes -->
-<span class="i-lucide-settings w-5 h-5" />
-```
-
-## Configuration
-
-`uno.config.ts` at project root. See [../../blueprint/ui/](../../blueprint/ui/) for configuration details.
+**SvelteKit-specific:**
+- Requires Vite plugin setup + SvelteKit hooks
+- Two integration modes to choose from (Scoped vs preprocessor)
+- More configuration required than Tailwind's simpler setup
 
 ## Related
 
 - [bits-ui.md](./bits-ui.md) - Component library
 - [images.md](./images.md) - Image optimization
-- [../../blueprint/ui/](../../blueprint/ui/) - Configuration examples

@@ -1,125 +1,73 @@
 # Notifications
 
-Multi-channel notification system: email, push, in-app, chat.
+## What is it?
 
-## Stack
+Multi-channel notification system supporting email, push, in-app, and chat. Built on open-source platform with unified API and self-hosting option.
 
-| Layer | Technology | Provider | Why |
-|-------|------------|----------|-----|
-| Platform | **Novu** | Novu Cloud / Self-hosted | Open-source, multi-channel, self-hostable |
-| Email | **SMTP/API** | [Resend](./vendors.md#resend) | Already in stack, simple API |
-| Push | **Web Push / FCM** | Google FCM | Free, works on web and mobile |
-| In-App | **WebSocket** | Novu Inbox | Built-in component, real-time |
+## What is it for?
 
-See [vendors.md](./vendors.md) for alternatives and costs.
+- Transactional email (order confirmations, password resets)
+- Push notifications (mobile/web alerts)
+- In-app notification center
+- Team notifications (Slack, Discord)
+- SMS for critical alerts
 
-## Why Novu
+## Why was it chosen?
 
-| Solution | Channels | Self-Host | Cost | Notes |
-|----------|----------|-----------|------|-------|
-| **Novu** | All | Yes (MIT) | Free tier | Best overall |
-| Knock | All | No | Paid | Hosted only |
-| OneSignal | Push only | No | Free tier | Push-focused |
-| Firebase FCM | Push only | No | Free | Google ecosystem |
-| DIY | Custom | Yes | Free | High maintenance |
+| Platform | Channels | Self-Host | Cost |
+|----------|----------|-----------|------|
+| **Novu** | All | Yes (MIT) | Free tier |
+| Knock | All | No | Paid |
+| OneSignal | Push only | No | Free tier |
+| Firebase FCM | Push only | No | Free |
+| DIY | Custom | Yes | High maintenance |
 
-Novu wins: open-source, self-hostable, unified API, SvelteKit integration.
+**Novu advantages:**
+- Open-source (MIT)—self-hostable
+- Unified API for all channels
+- SvelteKit integration
+- Workflow-based orchestration
+- Digest/batching support
 
-## Channels
+**Channel providers:**
+| Channel | Provider | Use Case |
+|---------|----------|----------|
+| Email | Resend | Transactional, marketing |
+| Push | FCM | Mobile/web alerts |
+| In-App | Novu Inbox | Notification center |
+| SMS | Twilio | Critical alerts, 2FA |
+| Chat | Webhooks | Slack, Discord |
 
-| Channel | Technology | Provider Options | Use Case |
-|---------|------------|------------------|----------|
-| **Email** | SMTP/API | Resend, SendGrid, SES | Transactional, marketing |
-| **Push** | Web Push / FCM | FCM, APNS, OneSignal | Mobile/web alerts |
-| **In-App** | WebSocket | Novu Inbox | Notification center |
-| **SMS** | SMS API | Twilio, Plivo | Critical alerts, 2FA |
-| **Chat** | Webhooks | Slack, Discord | Team notifications |
+## Known limitations
 
-All channels use standard protocols. Providers are swappable within Novu configuration.
+**Novu Cloud:**
+- Free tier has limits
+- Adds vendor dependency
+- Latency for real-time
 
-## Setup
+**Self-hosting:**
+- Requires MongoDB + Redis
+- Adds operational complexity
+- Must maintain updates
 
-Install `@novu/node` and `@novu/framework`. Create client in `src/lib/server/novu.ts`.
+**Push notifications:**
+- VAPID keys required
+- Service worker setup
+- User must grant permission
+- iOS Safari limitations
 
-Define workflows in `src/lib/novu/workflows.ts` using `workflow()`. Workflows define steps (email, push, in-app) with templates.
+**Email deliverability:**
+- Sender reputation matters
+- Requires proper DNS (SPF, DKIM, DMARC)
+- Bounce handling needed
 
-Create endpoint at `/api/novu` using `serve()` from `@novu/framework/sveltekit`.
+**User preferences:**
+- Must implement preference storage
+- Check before every send
+- Digest frequency options add complexity
 
-## Triggering
+## Related
 
-Trigger from server actions or API routes: `novu.trigger(workflowName, { to, payload })`. Specify subscriber ID, email, payload data.
-
-## In-App
-
-### Novu Inbox
-
-Pre-built component. Import `@novu/js`, create `Inbox` instance with subscriberId and applicationIdentifier, mount to container.
-
-### Custom
-
-Build with Svelte runes. Store notifications array, unread count (derived), functions for add/mark read. Bell icon with badge and dropdown.
-
-## Push
-
-### Web Push
-
-Service worker, VAPID keys, push subscription. Subscribe via `pushManager.subscribe()`, send to server.
-
-Service worker listens for push events, shows notification (title/body/icon), handles clicks to open URLs.
-
-## Preferences
-
-Store in database: userId, channel booleans (email, push, inApp, marketing), digest frequency (instant, daily, weekly).
-
-Check before triggering. Only send if user opted in.
-
-## Digests
-
-Batch with `step.digest()`. Collect events over time window (24 hours), send single email.
-
-## Toasts
-
-Use `svelte-french-toast`. Add `<Toaster />` to layout, call `toast.success()`, `toast.error()`, `toast()` anywhere.
-
-## Architecture
-
-```
-User Action (purchase, comment, etc.)
-  → SvelteKit Server Action
-    → Novu Trigger (workflow name + payload)
-      → Novu Engine
-        → Check user preferences
-        → Route to channels:
-          ├── Email → Resend
-          ├── Push → FCM → Browser/Mobile
-          ├── In-App → WebSocket → Inbox component
-          └── SMS → Twilio (if critical)
-```
-
-## Environment Variables
-
-| Variable | Purpose |
-|----------|---------|
-| `NOVU_API_KEY` | Novu API authentication |
-| `VITE_NOVU_APP_ID` | Novu application identifier (client) |
-| `VITE_VAPID_PUBLIC_KEY` | Web Push public key |
-| `VAPID_PRIVATE_KEY` | Web Push private key (server) |
-
-## Self-Hosting
-
-Docker Compose with MongoDB and Redis. Add novu container to compose.yaml.
-
-**Trade-off:** Adds complexity. Use Novu Cloud for simpler setup.
-
-**Swappability:** Novu is open-source (MIT). Self-host to eliminate vendor dependency entirely.
-
-## Checklist
-
-- [ ] Novu account or self-hosted instance
-- [ ] Workflows defined for key events
-- [ ] SvelteKit endpoint for Novu bridge
-- [ ] Email provider connected (Resend)
-- [ ] In-app notification component
-- [ ] Push notifications (optional)
-- [ ] User preference management
-- [ ] Toast notifications for UI feedback
+- [api.md](./api.md) - Background jobs
+- [gdpr.md](./gdpr.md) - Consent for marketing
+- [../auth/better-auth.md](../auth/better-auth.md) - User identification

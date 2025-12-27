@@ -1,82 +1,59 @@
 # Better Auth
 
-Session-based authentication. Better Auth chosen for production. DIY available for learning.
+## What is it?
 
-## Decision
+Framework-agnostic authentication and authorization framework for TypeScript. Provides session-based auth with database-backed sessions (or optional stateless cookies). MIT licensed, fully open source—data stays in your database.
 
-| Choice | Rationale |
-|--------|-----------|
-| **Better Auth** | TypeScript-first, Drizzle native integration, batteries-included (2FA/passkeys/OAuth) |
-| Session storage | Database (Postgres) for immediate revocation |
-| No vendor lock-in | Library, not service. Data stays in your database |
+## What is it for?
 
-## Stack Comparison
+- Full-featured authentication (OAuth, email/password, magic links)
+- Session management (database or stateless cookie-based)
+- Two-factor authentication, passkeys, WebAuthn
+- Multi-tenant applications with organizations/teams
+- Enterprise SSO and custom identity providers
 
-| Aspect | Better Auth | DIY | Clerk |
-|--------|-------------|-----|-------|
-| Cost | Free | Free | Free to 10K MAU |
-| Vendor Lock-in | None | None | High |
-| Data Ownership | Yours | Yours | Third-party |
-| Drizzle | Native adapter | Manual | N/A |
-| 2FA/Passkeys | Built-in | Manual | Built-in |
-| Setup Time | Minutes | Hours | Minutes |
+## Why was it chosen?
 
-**Why Better Auth wins:** Zero vendor lock-in with production features. Same freedom as DIY, less code.
+| Aspect | Better Auth | Auth.js | Lucia |
+|--------|-------------|---------|-------|
+| Status | Active development | Maintenance mode | Deprecated |
+| Drizzle | Native adapter | Plugin | Manual |
+| 2FA/Passkeys | Built-in | Manual/plugin | Manual |
+| Setup time | Minutes | Minutes | Hours |
+| TypeScript | Full autocomplete | Manual augmentation | Full |
 
-## Better Auth Stack
+**Key advantages:**
+- Auth.js team joined Better Auth; new projects recommended to use Better Auth
+- Lucia deprecated early 2025 ("not working" per creator)
+- Native Drizzle adapter with auto-schema generation
+- Built-in: 2FA (TOTP), passkeys, email verification, password reset
+- 20+ OAuth providers out of the box
+- Session cookie caching reduces DB hits
+- No vendor lock-in, data ownership
 
-| Layer | Technology | Why |
-|-------|------------|-----|
-| Auth library | Better Auth | TypeScript-first, batteries-included |
-| Adapter | Drizzle | Native integration, auto-schema |
-| Sessions | Database (Postgres) | Persistent, immediate revocation |
-| OAuth | Built-in | 20+ providers out of the box |
-| 2FA/MFA | Built-in | TOTP, WebAuthn, passkeys |
-| Middleware | SvelteKit hooks | Native request interception |
+**Project stats:** 24.5k GitHub stars, 696 contributors, 9.9k dependents
 
-**Key features:**
-- Session cookie caching (reduces DB hits)
-- HTTP-only, secure cookies
-- Sliding window refresh (configurable)
-- No JWT (database sessions only)
+## Known limitations
 
-## DIY Alternative
+**Rate limiting:**
+- Applies globally to all routes (cannot fully exclude specific routes)
+- In-memory storage (default) problematic in serverless/multi-instance
+- Use database adapter for production
 
-For learning or maximum control. Based on [The Copenhagen Book](https://thecopenhagenbook.com/).
+**Session management:**
+- Stateless sessions cannot be easily revoked (requires redeploy)
+- Most plugins require a database
 
-| Layer | Technology | Why |
-|-------|------------|-----|
-| Sessions | PostgreSQL | Persistent, immediate revocation |
-| Password | @node-rs/argon2 | Argon2id, OWASP recommended |
-| OAuth | Arctic | 50+ providers, lightweight |
-| Crypto | Oslo | Token generation, runtime-agnostic |
+**Ecosystem:**
+- Created May 2024 (~8 months old)
+- Smaller provider ecosystem than Auth.js's years of contributions
+- Growing but still early-stage community
 
-**Trade-off:** Full control vs more code to maintain. Oslo and Arctic are actively maintained.
+**SvelteKit-specific:**
+- `svelteKitHandler` doesn't auto-populate `event.locals.user` (manual implementation needed)
+- Cloudflare Workers requires explicit `/api/auth/[...betterauth]` route
 
-## Libraries
+## Related
 
-### Better Auth
-
-| Package | Purpose |
-|---------|---------|
-| `better-auth` | Core auth framework |
-| `better-auth/adapters/drizzle` | Database integration |
-| `better-auth/svelte` | Svelte client |
-| `@better-auth/cli` | Schema generation |
-
-### DIY
-
-| Package | Purpose |
-|---------|---------|
-| `@oslojs/crypto` | SHA-256 hashing |
-| `@oslojs/encoding` | Base32/Hex encoding |
-| `@node-rs/argon2` | Argon2id password hashing |
-| `arctic` | OAuth providers |
-
-All packages are libraries with no external service dependencies.
-
-## Links
-
-- [Better Auth docs](https://better-auth.com)
-- [The Copenhagen Book](https://thecopenhagenbook.com)
-- [Implementation guide](../../blueprint/auth.md)
+- [../data/drizzle.md](../data/drizzle.md) - Database integration
+- [../data/postgres.md](../data/postgres.md) - Session storage

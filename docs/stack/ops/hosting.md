@@ -1,46 +1,49 @@
 # Hosting
 
-Domain strategy and multi-platform deployment configuration.
+## What is it?
 
-## Domain
+Domain and multi-platform hosting configuration. Strategy for running the same application on multiple providers for comparison and redundancy.
 
-**Primary domain:** `v10r.io`
+## What is it for?
 
-The name is a numeronym: **v** + **10** letters (elocirapto) + **r** = velociraptor.
+- Domain management and DNS configuration
+- A/B testing between hosting providers
+- Failover and redundancy options
+- Performance benchmarking across platforms
 
-## Subdomain Strategy
+## Why was it chosen?
 
+**Multi-provider strategy:**
 | Subdomain | Platform | Purpose |
 |-----------|----------|---------|
 | `v10r.io` | Vercel | Primary production |
-| `koyeb.v10r.io` | Koyeb | Secondary/comparison |
+| `koyeb.v10r.io` | Koyeb | Comparison/failover |
 
-This allows A/B testing between hosting providers while maintaining a single brand identity.
+**Domain:** `v10r.io` (numeronym: v + 10 letters + r = velociraptor)
 
-## Platform Configuration
+**Platform configuration:**
+| Platform | Adapter | Features |
+|----------|---------|----------|
+| Vercel | `adapter-vercel` | Edge functions, auto preview |
+| Koyeb | `adapter-node` | Native Bun, container control |
 
-### Vercel
+## Known limitations
 
-Primary host. Optimized for SvelteKit with edge functions and automatic preview deployments.
+**DNS propagation:**
+- Can take up to 48 hours globally
+- Test with multiple DNS resolvers
 
-- Adapter: `@sveltejs/adapter-vercel`
-- Region: TBD
-- Environment variables: Vercel dashboard
+**Multi-provider complexity:**
+- Environment variables must be synced manually
+- Database connections should handle both origins
+- Session cookies need compatible domain settings
 
-### Koyeb
+**Platform differences:**
+- Edge function behavior varies
+- Cold start characteristics differ
+- Logging and monitoring require separate configuration
 
-Secondary host for performance comparison and potential failover.
+## Related
 
-- Adapter: `@sveltejs/adapter-node` (or adapter-bun if supported)
-- Region: TBD
-- Environment variables: Koyeb dashboard
-
-## DNS Configuration
-
-TBD once domain is registered.
-
-## Future Considerations
-
-- Geographic load balancing
-- Failover automation
-- Performance benchmarking between platforms
+- [deployment.md](./deployment.md) - Deployment targets
+- [logging.md](./logging.md) - Platform logging

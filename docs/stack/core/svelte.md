@@ -1,23 +1,35 @@
 # Svelte 5
 
-UI framework. Reactive, compiled, minimal runtime.
+## What is it?
 
-## Why Svelte
+Compiler-based UI framework that transforms declarative components into optimized JavaScript at build time. No virtual DOM—generates lean code that directly manipulates the DOM. Svelte 5 introduces runes, a signal-based reactivity system replacing the older "magical" reactivity.
+
+## What is it for?
+
+- Building user interfaces for web applications
+- Performance-critical applications (mobile, low-bandwidth environments)
+- Projects requiring minimal JavaScript bundle size
+- Fine-grained reactivity without virtual DOM overhead
+
+Production users: The New York Times, Yelp, Square.
+
+## Why was it chosen?
 
 | Aspect | Svelte | React | Vue |
 |--------|--------|-------|-----|
-| Runtime Size | ~2 KB | ~40 KB | ~30 KB |
+| Bundle size | ~2 KB | ~40 KB | ~30 KB |
 | Compilation | Ahead-of-time | JIT | JIT |
-| Reactivity | Native (runes) | Hooks | Refs/Reactive |
-| Learning Curve | Gentle | Moderate | Moderate |
-| Performance | Excellent | Good | Good |
+| Reactivity | Signal-based (runes) | Hooks | Refs/Reactive |
+| DOM | Direct | Virtual DOM | Virtual DOM |
 
-Svelte wins: smallest runtime, compiled reactivity, simple mental model.
+**Key advantages:**
+- Ships 1/10th the JavaScript of React for equivalent apps
+- 40% faster load times than React builds
+- No external state library needed—runes work in components AND modules
+- Scoped CSS by default, built-in transitions and animations
+- Simpler mental model than hooks-based frameworks
 
-## Svelte 5 Runes
-
-Svelte 5 introduces runes for reactivity:
-
+**Runes system:**
 | Rune | Purpose |
 |------|---------|
 | `$state` | Reactive state |
@@ -26,35 +38,24 @@ Svelte 5 introduces runes for reactivity:
 | `$props` | Component props |
 | `$bindable` | Two-way bindable props |
 
-## State Patterns
+## Known limitations
 
-| Location | Pattern | Size |
-|----------|---------|------|
-| Component | `$state` in `<script>` | 0 KB |
-| Shared | `$state` in `.svelte.ts` | 0 KB |
-| Server | `+page.server.ts` load | 0 KB |
+**Ecosystem maturity:**
+- Smallest of the four major frameworks (React, Vue, Angular, Svelte)
+- Fewer third-party libraries than React/Vue
+- Component libraries (Bits UI, Skeleton) less mature than Material UI/Vuetify
 
-No external state library needed. Runes work in components AND modules.
+**Talent availability:**
+- ~900 Svelte job listings vs ~110,000 React (122:1 ratio)
+- Finding experienced Svelte developers is challenging
+- Enterprise clients may hesitate due to smaller talent pool
 
-## Key Concepts
-
-- **Compiled** (no virtual DOM, direct DOM updates)
-- **Reactive** (fine-grained reactivity via runes)
-- **Scoped CSS** (styles scoped to component by default)
-- **Transitions** (built-in animation primitives)
-- **Actions** (reusable element behaviors)
-
-## File Types
-
-| Extension | Purpose |
-|-----------|---------|
-| `.svelte` | Components |
-| `.svelte.ts` | Reactive modules (runes work here) |
-| `.ts` | Non-reactive TypeScript |
+**Migration considerations:**
+- Svelte 4 → 5 runes represent a mental model change
+- Existing components remain compatible, but new patterns required
 
 ## Related
 
 - [sveltekit.md](./sveltekit.md) - Meta-framework
 - [../ui/unocss.md](../ui/unocss.md) - Styling
 - [../ui/bits-ui.md](../ui/bits-ui.md) - Component library
-- [../../blueprint/state.md](../../blueprint/state.md) - State patterns

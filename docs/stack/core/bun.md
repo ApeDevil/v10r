@@ -1,40 +1,54 @@
 # Bun
 
-JavaScript runtime. Fastest available, built-in bundler, native TypeScript.
+## What is it?
 
-## Why Bun
+All-in-one JavaScript/TypeScript runtime written in Zig, powered by JavaScriptCore. Ships as a single executable containing runtime, package manager, bundler, and test runner. Drop-in replacement for Node.js.
 
-| Aspect | Bun | Node.js | Deno |
-|--------|-----|---------|------|
-| Speed | Fastest | Baseline | Fast |
-| TypeScript | Native | Requires transpile | Native |
-| Bundler | Built-in | External (esbuild, etc.) | External |
-| Package Manager | Built-in (fastest) | npm/yarn/pnpm | npm-compatible |
-| Node Compatibility | High | N/A | Partial |
+## What is it for?
 
-Bun wins: fastest runtime, native TS, built-in tooling, Node-compatible.
+- High-performance APIs and HTTP servers
+- Serverless functions requiring fast cold starts
+- TypeScript services with native .ts execution (no transpile step)
+- Development tooling (faster package installation, testing)
 
-## Stack Integration
+## Why was it chosen?
 
-| Layer | Choice | Why |
-|-------|--------|-----|
-| Runtime | **Bun** | Fastest JS runtime, built-in bundler, native TypeScript |
-| Framework | SvelteKit | Bun-compatible via adapters |
-| Adapter | `svelte-adapter-bun` | Native Bun server for containers |
-| Package Manager | `bun install` | Faster than npm/yarn/pnpm |
+| Aspect | Bun | Node.js |
+|--------|-----|---------|
+| HTTP throughput | ~52k req/sec | ~13k req/sec |
+| Package install | 10-30x faster | Baseline |
+| Cold start | 4x faster | Baseline |
+| TypeScript | Native | Requires transpile |
+| Bundler | Built-in | External tool |
 
-## Development
+**Key advantages:**
+- Fastest JavaScript runtime available
+- Native TypeScript without build step
+- Built-in tooling reduces dependency count
+- High Node.js compatibility for easy migration
 
-```bash
-bun install          # Install dependencies
-bun run dev          # Start dev server
-bun run build        # Production build
-bun run preview      # Preview production build
-```
+**Note:** For database-bound workloads, performance difference is negligible (~5%). Runtime choice matters most for compute-heavy or I/O-heavy operations.
 
-## Container Deployment
+## Known limitations
 
-Use `oven/bun:alpine` base image (~50MB). See [ops/deployment.md](../ops/deployment.md).
+**Node.js API gaps:**
+- `node:http2` server not implemented (client only)
+- `node:cluster` limited (workers cannot pass handles)
+- `node:inspector`, `node:repl`, `node:sqlite` missing
+- Partial: `worker_threads`, `vm`, `crypto`, `child_process`
+
+**SvelteKit-specific:**
+- `svelte-adapter-bun` has stalled development
+- Known issues with CORS and form handling (ORIGIN not passed correctly)
+- Vite dev server still runs on Node.js (only production uses Bun)
+- Easy fallback: switch to `adapter-node` with single config change
+
+**Production considerations:**
+- Third-party observability tools have limited support
+- Packages relying on Node internals may fail
+- Enterprise adoption remains cautious vs Node.js maturity
+
+**Mitigation:** Anthropic acquired Bun (December 2024), providing long-term sustainability. Bun remains MIT-licensed and open-source.
 
 ## Related
 

@@ -1,67 +1,60 @@
 # Bits UI
 
-Headless component library. Accessible, Svelte-native, unstyled.
+## What is it?
 
-## Why Bits UI
+Headless component library for Svelte providing unstyled, accessible UI primitives. Built on Melt UI's internal architecture with a component-based API. Inspired by Radix UI (API design) and React Spectrum (date/time, accessibility).
+
+## What is it for?
+
+- Building accessible UI components without imposed styling
+- Creating custom design systems for SvelteKit applications
+- WAI-ARIA compliant primitives with keyboard navigation and focus management
+- Foundation for higher-level libraries (powers shadcn-svelte)
+
+## Why was it chosen?
 
 | Aspect | Bits UI | Melt UI | shadcn-svelte |
 |--------|---------|---------|---------------|
-| Type | Headless | Headless | Styled |
-| Accessibility | Full | Full | Full |
-| Styling | Bring your own | Bring your own | Tailwind |
-| Bundle | Small | Small | Larger |
-| Svelte 5 | Yes | Yes | Yes |
+| API | Component-based | Builder pattern | Component-based |
+| Styling | Unstyled | Unstyled | Tailwind CSS |
+| Ownership | npm dependency | npm dependency | Copy/paste (you own) |
+| Learning curve | Lower | Higher | Lowest |
+| Components | 44 | 37 | Pre-styled Bits UI |
 
-Bits UI wins: accessible primitives, minimal footprint, full styling control.
+**Key advantages:**
+- Melt UI's power with simpler component ergonomics
+- Zero styling opinions (no CSS resets or assumptions)
+- Full creative control via class props and data attributes
+- TypeScript-first with comprehensive type coverage
+- Well-maintained: 2.9k GitHub stars, 12.8k dependents
 
-## Stack Integration
-
-| Layer | Technology | Why |
-|-------|------------|-----|
-| Components | **Bits UI** | Accessible, Svelte-native |
-| Styling | **UnoCSS** | Utility classes |
-| Icons | **Iconify** | Via UnoCSS preset-icons |
-
-## Philosophy
-
-Headless UI provides behavior and accessibility. You provide styling.
-
-- **Unstyled by default** (no CSS conflicts)
-- **ARIA-compliant** (keyboard, screen readers)
-- **Composable** (build complex from simple)
-- **Svelte-native** (not a port)
-
-## Available Components
-
+**Available components:**
 | Category | Components |
 |----------|------------|
-| Overlay | Dialog, Popover, Tooltip, Dropdown |
-| Form | Select, Checkbox, Radio, Switch, Slider |
+| Overlay | Dialog, Popover, Tooltip, Dropdown, Command |
+| Form | Select, Checkbox, Radio, Switch, Slider, PIN Input |
 | Navigation | Tabs, Accordion, Menu |
-| Feedback | Alert, Toast |
-| Layout | Collapsible, Separator |
+| Date/Time | Calendar, Date Picker, Time Field |
+| Feedback | Alert Dialog, Meter, Rating Group |
 
-## Usage Pattern
+## Known limitations
 
-```svelte
-<script>
-  import { Dialog } from 'bits-ui';
-</script>
+**Svelte 5 compatibility:**
+- Svelte 5 support in preview (next.bits-ui.com)
+- Historical hydration mismatch errors in early Svelte 5 previews
+- Migration guide available; requires bits-ui version update
+- No stable release date announced for full Svelte 5 support
 
-<Dialog.Root>
-  <Dialog.Trigger class="btn">Open</Dialog.Trigger>
-  <Dialog.Portal>
-    <Dialog.Overlay class="fixed inset-0 bg-black/50" />
-    <Dialog.Content class="dialog-content">
-      <Dialog.Title>Title</Dialog.Title>
-      <Dialog.Description>Description</Dialog.Description>
-    </Dialog.Content>
-  </Dialog.Portal>
-</Dialog.Root>
-```
+**Component gaps vs Melt UI:**
+- Missing: Table of Contents, Tags Input, Toast
+- Trade-off: slightly larger bundle due to wrapper layer
+
+**Ecosystem:**
+- Less granular control than raw Melt UI builders
+- Requires comfort with headless component patterns
+- Best for teams building consistent design systems
 
 ## Related
 
 - [unocss.md](./unocss.md) - Styling
 - [../forms/superforms.md](../forms/superforms.md) - Form handling
-- [../../blueprint/ui/](../../blueprint/ui/) - Component examples

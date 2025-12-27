@@ -1,242 +1,67 @@
 # SvelteKit
 
-SvelteKit implementation of [architectural patterns](../../foundation/architecture.md).
+## What is it?
 
----
+Meta-framework for Svelte that enables full-stack web application development. Powered by Vite, it provides file-based routing, server-side rendering, and deployment adapters. Similar to Next.js (React) or Nuxt (Vue), but built on Svelte's compiler-first philosophy.
 
-## Why SvelteKit
+## What is it for?
 
-| Principle | How SvelteKit delivers |
-|-----------|------------------------|
-| Lightweight | Minimal runtime, compiles away framework |
-| Speed | Fast builds (Vite), fast runtime |
-| Svelte-native | It *is* Svelte |
-| No code generation | File-based routing, automatic types |
+- Full-stack web applications with server and client logic
+- Server-Side Rendering (SSR) for SEO and initial load performance
+- Static Site Generation (SSG) for documentation, blogs, marketing sites
+- Hybrid applications mixing rendering modes per-route
+- Progressive enhancement with form actions
 
----
+**Rendering modes (configurable per route):**
+| Mode | Use Case |
+|------|----------|
+| SSR (default) | Dynamic content, SEO |
+| SSG | Static pages, blogs |
+| CSR | Admin panels, heavy interactivity |
 
-## Project Structure
+## Why was it chosen?
 
-```
-src/
-├── lib/                        # Reusable code ($lib alias)
-│   ├── components/             # Shared UI components
-│   ├── stores/                 # Svelte stores
-│   ├── utils/                  # Helper functions
-│   └── server/                 # Server-only code ($lib/server)
-│       ├── db/                 # Database client & queries
-│       └── auth/               # Auth logic
-├── params/                     # Parameter matchers
-├── routes/                     # File-based routing
-│   ├── +layout.svelte          # Root layout
-│   ├── +page.svelte            # Home page
-│   ├── api/                    # API endpoints (+server.ts)
-│   └── [slug]/                 # Dynamic routes
-├── app.html                    # HTML template
-├── hooks.server.ts             # Server hooks
-└── hooks.client.ts             # Client hooks
-static/                         # Unprocessed assets (robots.txt, favicon)
-```
+| Aspect | SvelteKit | Next.js | Nuxt |
+|--------|-----------|---------|------|
+| Bundle size | Smallest | Medium | Medium |
+| Boilerplate | Minimal | Medium | Medium |
+| Routing | Simple file-based | Complex (App Router) | File-based |
+| Deployment | Adapters (swap targets easily) | Vercel-optimized | Nitro presets |
 
-See [Project structure - SvelteKit Docs](https://svelte.dev/docs/kit/project-structure).
+**Key advantages:**
+- Less boilerplate than React/Vue equivalents
+- ~1/3 the overhead compared to Nuxt 3 for SSR
+- Single codebase for frontend and backend
+- Built-in progressive form enhancement (works without JS)
+- Adapter system enables platform-agnostic builds (Vercel, Node, Cloudflare, etc.)
 
----
+**Architecture features:**
+- `$lib/server/` directory blocked from client imports at build time
+- Route groups `(name)` for organization without URL impact
+- Hooks for middleware (auth, logging, error handling)
+- Automatic TypeScript types from file-based routing
 
-## Route-Centric Pattern
+## Known limitations
 
-Logic lives in `+page.server.ts` and `+server.ts`. Shared utilities go in `$lib/server/`.
+**Ecosystem size:**
+- Smaller community than React/Vue
+- Fewer third-party libraries and components
+- Finding Svelte developers harder than React/Vue developers
 
-```
-src/routes/
-├── (app)/                      # Route group (authenticated)
-│   ├── dashboard/
-│   │   ├── +page.svelte
-│   │   └── +page.server.ts     # All logic here
-│   └── items/
-│       ├── +page.server.ts     # List + create
-│       └── [id]/
-│           └── +page.server.ts # Read + update + delete
-└── api/
-    └── items/
-        └── +server.ts          # JSON API
-```
+**Large project scaling:**
+- IDE performance degrades on very large projects
+- Build times can reach 10+ minutes in large codebases
+- No esbuild/swc/rspack support (Vite only)
+- Cold dev start: 1-1.5 minutes on large projects
 
-**Why route-centric:** Maximizes SvelteKit's automatic type inference, minimizes boilerplate.
+**Bun compatibility:**
+- `svelte-adapter-bun` development has stalled
+- ORIGIN header issues break form CSRF protection
+- Vite dev server runs on Node.js (not Bun)
+- Easy fallback: switch to `adapter-node` via config
 
----
+## Related
 
-## Server/Client Separation
-
-SvelteKit enforces separation at build time.
-
-| Convention | Purpose |
-|------------|---------|
-| `$lib/server/` | Directory blocked from client imports |
-| `.server.ts` suffix | File blocked from client imports |
-| `+page.server.ts` | Server-only load/actions |
-| `+server.ts` | API endpoints (server-only) |
-
-```typescript
-// src/lib/server/db.ts — automatically blocked from client
-import { drizzle } from 'drizzle-orm/neon-http';
-export const db = drizzle(process.env.DATABASE_URL);
-```
-
-Importing `$lib/server/db` in client code throws a build error.
-
-See [Server-only modules - SvelteKit Docs](https://svelte.dev/docs/kit/server-only-modules).
-
----
-
-## The `$lib` Alias
-
-`src/lib/` is accessible via `$lib` anywhere in the project.
-
-```typescript
-// Instead of: import { Button } from '../../../lib/components/Button.svelte'
-import { Button } from '$lib/components/Button.svelte';
-```
-
-| Path | Access |
-|------|--------|
-| `$lib/components` | Client + Server |
-| `$lib/utils` | Client + Server |
-| `$lib/server` | Server only |
-
----
-
-## Svelte 5 Runes
-
-Explicit reactivity with runes.
-
-| Rune | Purpose |
-|------|---------|
-| `$state` | Reactive state |
-| `$derived` | Computed values |
-| `$effect` | Side effects |
-| `$props` | Component props |
-| `$bindable` | Two-way binding props |
-
-```svelte
-<script lang="ts">
-  let count = $state(0);
-  let doubled = $derived(count * 2);
-
-  $effect(() => {
-    console.log('Count changed:', count);
-  });
-</script>
-```
-
-**Outside components:** Use `.svelte.ts` extension to use runes in plain files.
-
-See [$state](https://svelte.dev/docs/svelte/$state), [$derived](https://svelte.dev/docs/svelte/$derived), [$effect](https://svelte.dev/docs/svelte/$effect).
-
----
-
-## Rendering Modes
-
-Configure per route in `+page.ts` or `+layout.ts`.
-
-| Mode | Config | Use Case |
-|------|--------|----------|
-| SSR | Default | Dynamic content, SEO |
-| SSG | `export const prerender = true` | Static pages, blogs |
-| SPA | `export const ssr = false` | Admin panels |
-| No-JS | `export const csr = false` | Maximum performance |
-
-```typescript
-// src/routes/blog/[slug]/+page.ts
-export const prerender = true;  // SSG for blog posts
-```
-
-See [Page options - SvelteKit Docs](https://svelte.dev/docs/kit/page-options).
-
----
-
-## Hooks
-
-Middleware in SvelteKit.
-
-| Hook | File | Purpose |
-|------|------|---------|
-| `handle` | `hooks.server.ts` | Intercept requests (auth, logging) |
-| `handleFetch` | `hooks.server.ts` | Modify fetch requests |
-| `handleError` | `hooks.server.ts` | Error handling |
-| `init` | `hooks.server.ts` | One-time setup |
-| `reroute` | `hooks.ts` | URL rewriting |
-
-```typescript
-// src/hooks.server.ts
-export const handle: Handle = async ({ event, resolve }) => {
-  const session = await getSession(event.cookies);
-  event.locals.user = session?.user;
-  return resolve(event);
-};
-```
-
-See [Hooks - SvelteKit Docs](https://svelte.dev/docs/kit/hooks).
-
----
-
-## Route Groups
-
-Organize routes without affecting URLs.
-
-```
-routes/
-├── (marketing)/          # No /marketing in URL
-│   ├── +layout.svelte    # Marketing layout
-│   ├── about/
-│   └── pricing/
-├── (app)/                # No /app in URL
-│   ├── +layout.svelte    # App layout (with auth check)
-│   └── dashboard/
-└── +layout.svelte        # Root layout
-```
-
-Parentheses `()` create a group without adding URL segments.
-
----
-
-## Form Actions
-
-Progressive enhancement for forms.
-
-```typescript
-// src/routes/login/+page.server.ts
-export const actions = {
-  default: async ({ request, cookies }) => {
-    const data = await request.formData();
-    const email = data.get('email');
-    // ... validate, authenticate
-    return { success: true };
-  }
-};
-```
-
-```svelte
-<!-- src/routes/login/+page.svelte -->
-<form method="POST">
-  <input name="email" type="email" />
-  <button>Login</button>
-</form>
-```
-
-Works without JavaScript. Enhanced with JS when available.
-
----
-
-## Sources
-
-### Official Documentation
-- [Project structure](https://svelte.dev/docs/kit/project-structure)
-- [Page options](https://svelte.dev/docs/kit/page-options)
-- [Server-only modules](https://svelte.dev/docs/kit/server-only-modules)
-- [Hooks](https://svelte.dev/docs/kit/hooks)
-- [Svelte 5 Runes](https://svelte.dev/docs/svelte/what-are-runes)
-
-### Community Resources
-- [SvelteKit Design Pattern (GitHub)](https://github.com/Kreonovo/SvelteKit-Design-Pattern) - MVC-style pattern
-- [tRPC-SvelteKit](https://icflorescu.github.io/trpc-sveltekit/) - tRPC integration
-- [Structuring larger SvelteKit apps](https://github.com/sveltejs/kit/discussions/7579) - Community discussion
+- [svelte.md](./svelte.md) - UI framework
+- [bun.md](./bun.md) - Runtime
+- [../ops/deployment.md](../ops/deployment.md) - Deployment adapters

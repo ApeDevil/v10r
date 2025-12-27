@@ -1,101 +1,71 @@
 # AI SDK
 
-Mental models and framework choices for AI integration. Vercel AI SDK for pipeline flows, LangChain for graph flows.
+## What is it?
 
-## Pipeline Flow vs Graph Flow
+Open-source TypeScript toolkit for building AI-powered applications. Provides unified API across LLM providers (AI SDK Core) and framework-agnostic UI hooks (AI SDK UI). Apache 2.0 licensed, 20+ million monthly downloads.
 
-The core decision framework for choosing AI tooling:
+## What is it for?
 
-```
-Pipeline Flow                    Graph Flow
-─────────────                    ──────────
-[A] → [B] → [C]                 [A] ⇄ [B]
-                                  ↘   ↙
-Sequential                         [C]
-Deterministic                       ↓
-You define the path             [D] ⇄ [E]
+- Provider-agnostic LLM integration (OpenAI, Anthropic, Google, etc.)
+- Real-time streaming responses
+- Tool/function calling and agents
+- Structured data extraction with Zod schemas
+- Chat UIs across React, Svelte, Vue, Angular
 
-                                Cycles, branches
-                                LLM navigates the graph
-```
+## Why was it chosen?
 
-| Aspect | Pipeline Flow | Graph Flow |
-|--------|---------------|------------|
-| Structure | Linear, sequential | Non-linear, branching |
-| Control | You define the path | LLM discovers the path |
-| Predictability | Deterministic steps | Emergent behavior |
-| Complexity | Simple | Complex |
-| Data analogy | PostgreSQL (tables, rows) | Neo4j (nodes, relationships) |
+| Aspect | AI SDK | Direct Provider SDK |
+|--------|--------|---------------------|
+| Provider switch | One line change | Full rewrite |
+| Streaming | Built-in | Manual handling |
+| Tool calling | Unified API | Provider-specific |
+| Type safety | Full TypeScript | Varies |
+| Framework support | All major | N/A |
 
-## Framework Choice
+**Key advantages:**
+- Switch providers without code changes
+- Handles stream parsing, tool streaming, error recovery
+- Full SvelteKit feature parity (since AI SDK 5)
+- Not tied to Vercel platform (works anywhere)
 
+**Pipeline vs Graph:**
 | Flow Type | Framework | Use Case |
 |-----------|-----------|----------|
-| **Pipeline** | Vercel AI SDK | Chat, streaming, tool calling, RAG |
-| **Graph** | LangChain | Autonomous agents, multi-step reasoning |
+| Pipeline | AI SDK | Chat, streaming, RAG, tool calling |
+| Graph | LangChain | Autonomous agents, multi-step reasoning |
 
-### Vercel AI SDK (Default)
+**RAG without LangChain:** RAG is a pattern (Retrieve → Augment → Generate). AI SDK handles this natively. LangChain only needed if LLM generates queries dynamically.
 
-For most AI features. Handles:
-- Streaming responses
-- Tool/function calling
-- Multi-provider abstraction
-- Simple multi-step with `maxSteps`
-
-Pattern: `generateText({ model, prompt })` for simple, `generateText({ model, tools, maxSteps })` for tool-calling pipelines.
-
-### LangChain (When Needed)
-
-For autonomous agents where the LLM decides the execution path. Pattern: `createReactAgent({ llm, tools })` where the agent dynamically decides: Think → Act → Observe → Think → Act...
-
-See [blueprint/ai/](../../blueprint/ai/) for implementation details.
-
-## Decision Matrix
-
-| Scenario | Flow | Framework |
-|----------|------|-----------|
-| Chat interface | Pipeline | AI SDK |
-| RAG (retrieve + generate) | Pipeline | AI SDK |
-| Background job: summarize data | Pipeline | AI SDK |
-| Tool calling (you define tools) | Pipeline | AI SDK |
-| Multi-step with `maxSteps` | Pipeline | AI SDK |
-| Agent decides what to query | Graph | LangChain |
-| Agent spawns sub-agents | Graph | LangChain |
-| Complex state machines | Graph | LangChain |
-| Custom memory across sessions | Graph | LangChain |
-
-## RAG Without LangChain
-
-RAG is a pattern, not a library. The pattern is: Retrieve (query your database) → Augment (inject context into prompt) → Generate (call LLM). AI SDK handles this natively without LangChain.
-
-LangChain adds value only if you need the LLM to generate queries dynamically.
-
-See [blueprint/ai/graph-rag.md](../../blueprint/ai/graph-rag.md) for implementation details.
-
-## Stack Integration
-
+**Stack integration:**
 | Component | Role |
 |-----------|------|
-| **Vercel AI SDK** | LLM abstraction layer |
-| **Neo4j** | Knowledge graph for Graph RAG |
-| **PostgreSQL** | Structured data, embeddings storage |
-| **Groq** | Fast chat (300+ tokens/sec) |
-| **Mistral** | Embeddings (EU-based) |
-| **Together AI** | Image generation |
+| AI SDK | LLM abstraction |
+| Neo4j | Knowledge graph (Graph RAG) |
+| PostgreSQL | Embeddings storage |
 
-## Deployment Note
+## Known limitations
 
-Vercel AI SDK is **not** tied to Vercel infrastructure. Works with:
-- Vercel (Node.js or Bun)
-- Koyeb (Bun containers)
-- Any Node.js/Bun runtime
+**Bundle size:**
+- AI SDK Core: ~186 KB (vs ~87 KB for standalone OpenAI client)
+- Due to multi-provider support, streaming logic, Zod
+- Use framework-specific packages (`@ai-sdk/svelte`) for smaller bundles
 
-See [deployment.md](./deployment.md) for platform details.
+**AI SDK RSC deprecated:**
+- React Server Components integration paused
+- Issues: stream abort failures, component flickering, quadratic data transfer
+- Use AI SDK UI instead for production
+
+**Rapid development:**
+- Pin to specific versions in production
+- Breaking changes possible between major versions
+
+**Platform independence:**
+- SDK itself is platform-agnostic
+- Vercel AI Gateway (optional) is Vercel-specific
+- Works on Vercel, Koyeb, Railway, any Node.js/Bun runtime
 
 ## Related
 
-- [../../blueprint/ai/README.md](../../blueprint/ai/README.md) - Implementation details
-- [../../blueprint/ai/graph-rag.md](../../blueprint/ai/graph-rag.md) - Neo4j RAG patterns
-- [../vendors.md](../vendors.md) - Provider comparison and free tiers
-- [../ops/deployment.md](../ops/deployment.md) - Deployment targets
 - [../data/neo4j.md](../data/neo4j.md) - Graph database for RAG
+- [../ops/deployment.md](../ops/deployment.md) - Deployment targets
+- [../ops/logging.md](../ops/logging.md) - AI request logging

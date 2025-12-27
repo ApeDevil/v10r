@@ -1,54 +1,68 @@
 # Caching
 
-Edge and dynamic caching strategies.
+## What is it?
 
-## Stack
+Multi-layer caching strategy combining edge caching (HTTP) with optional dynamic caching (Redis). Optimizes response times and reduces database load.
 
-| Layer | Technology | Provider | Why |
-|-------|------------|----------|-----|
-| Edge | **HTTP Cache** | Vercel | Free, built-in, zero config |
-| Dynamic | **Redis** | Upstash | 500K commands/mo free |
+## What is it for?
 
-Start with Vercel Edge. Add Redis for query caching or real-time features.
+- Static asset caching (automatic)
+- API response caching
+- Rate limiting
+- Session storage
+- Query result caching
+- Real-time features (pub/sub)
 
-## Edge Caching (Default)
+## Why was it chosen?
 
-Vercel automatically caches static assets and supports `Cache-Control` headers for dynamic content.
+| Layer | Technology | Provider | Use Case |
+|-------|------------|----------|----------|
+| Edge | HTTP Cache | Vercel | Static + semi-static |
+| Dynamic | Redis | Upstash | Queries, rate limiting |
 
-| Cache Type | Use Case | Configuration |
-|------------|----------|---------------|
-| Static | Built assets | Automatic |
-| ISR | Semi-static pages | `export const prerender = true` |
-| Stale-While-Revalidate | Dynamic with freshness | `Cache-Control` header |
+**Edge caching (default):**
+| Type | Configuration |
+|------|---------------|
+| Static assets | Automatic |
+| ISR | `prerender = true` |
+| Stale-while-revalidate | `Cache-Control` header |
 
-Free with Vercel deployment. No additional setup required.
-
-## Redis (When Needed)
-
-Add Upstash Redis for:
-
+**Redis (when needed):**
 | Use Case | Why Redis |
 |----------|-----------|
-| Query caching | Reduce database load |
+| Query caching | Reduce DB load |
 | Rate limiting | Per-user/IP limits |
-| Session storage | Fast session lookups |
-| Real-time features | Pub/sub, queues |
+| Session storage | Fast lookups |
+| Real-time | Pub/sub, queues |
 
-## Provider: Upstash
-
+**Upstash pricing:**
 | Tier | Commands/mo | Storage | Cost |
 |------|-------------|---------|------|
 | Free | 500K | 256 MB | $0 |
 | Pay-as-you-go | Unlimited | Unlimited | $0.20/100K |
 
-See [../vendors.md](../vendors.md#upstash) for details.
+## Known limitations
 
-## Decision Flow
+**Edge caching:**
+- Best-effort, per-region
+- Not guaranteed to persist across deploys
+- Cannot cache authenticated content without care
 
+**Serverless + Redis:**
+- Connection overhead per cold start
+- Upstash HTTP-based (higher latency than TCP)
+- Connection pooling not available
+
+**Cache invalidation:**
+- Manual invalidation requires strategy
+- ISR revalidation has delay
+- Cross-region consistency not guaranteed
+
+**Decision flow:**
 ```
 Need caching?
 ├── Static assets → Automatic (Vercel)
-├── Page-level → ISR or Cache-Control headers
+├── Page-level → ISR or Cache-Control
 ├── Query results → Redis (Upstash)
 ├── Rate limiting → Redis (Upstash)
 └── Real-time → Redis pub/sub
@@ -57,5 +71,4 @@ Need caching?
 ## Related
 
 - [deployment.md](./deployment.md) - Vercel configuration
-- [../data/postgres.md](../data/postgres.md) - Database queries to cache
-- [../../blueprint/caching/](../../blueprint/caching/) - Implementation details
+- [../data/postgres.md](../data/postgres.md) - Database queries

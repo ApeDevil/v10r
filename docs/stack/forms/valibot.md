@@ -1,62 +1,64 @@
 # Valibot
 
-Schema validation. Type-safe, tiny bundle, edge-friendly.
+## What is it?
 
-## Why Valibot
+TypeScript schema validation library designed for minimal bundle size. Built from many small, independent functions enabling aggressive tree-shaking. Zero dependencies, runs in any JavaScript environment.
+
+## What is it for?
+
+- Schema validation for server-side data (API endpoints, database inputs)
+- Client-side form validation (SvelteKit, React, Vue)
+- Configuration file validation
+- Runtime type guarantees for unknown data structures
+
+## Why was it chosen?
 
 | Aspect | Valibot | Zod |
 |--------|---------|-----|
-| Bundle Size | **~1 KB** | ~12 KB |
-| TypeScript | Full | Full |
+| Bundle size | **~1.4 KB** | ~13.5 KB |
 | Tree-shaking | Modular (only imports) | Monolithic |
-| Edge/Serverless | Perfect | Heavier |
+| Performance | ~2x faster | Baseline |
+| TypeScript | Full inference | Full inference |
 
-Valibot wins: 10x smaller, modular imports, edge-friendly.
+**Bundle impact:** Login form example: Valibot 1.37 KB vs Zod 13.5 KB (90% reduction)
 
-## Stack Integration
+**Key advantages:**
+- Simplest schemas start at <300 bytes
+- Functional composition with pipes (`pipe(string(), email(), minLength(5))`)
+- Modular imports (only bundles used validators)
+- Full TypeScript inference (no codegen)
+- Composable schemas (build complex from simple)
+- Custom error messages (i18n-friendly)
 
-| Layer | Technology | Why |
-|-------|------------|-----|
-| Validation | **Valibot** | Type-safe, ~1 KB |
-| Forms | **Superforms** | Native Valibot integration |
-| Runtime | **Bun** | Fast validation |
+**Superforms integration:**
+- Native Valibot adapter (`sveltekit-superforms/adapters`)
+- Automatic FormData coercion
+- Schema must be defined at module top-level for caching
 
-## Key Features
+## Known limitations
 
-- **Modular imports** (only import what you use)
-- **Full TypeScript inference** (no codegen)
-- **Composable schemas** (build complex from simple)
-- **Custom error messages** (i18n-friendly)
-- **Transforms** (coerce and transform values)
+**Ecosystem maturity:**
+- ~1 year old (newer than Zod/Yup)
+- Smaller community; support primarily via GitHub discussions
+- Growing library support (Superforms, NestJS, Drizzle) but not as comprehensive as Zod
 
-## Schema Pattern
+**Documentation:**
+- Identified as "biggest blocker" for adoption
+- API reference finalized with 600+ pages (recent improvement)
+- Still considered risky for large production projects
 
-```typescript
-import * as v from 'valibot';
+**API differences from Zod:**
+- No method chaining (functional composition instead)
+- `v.parse(schema, data)` instead of `schema.parse(data)`
+- Single string error format vs Zod's differentiated messages
+- No `coerce` object (requires explicit transform)
+- Migration codemod available but in beta
 
-const UserSchema = v.object({
-  email: v.pipe(v.string(), v.email()),
-  name: v.pipe(v.string(), v.minLength(2)),
-  age: v.optional(v.pipe(v.number(), v.minValue(0))),
-});
-
-type User = v.InferOutput<typeof UserSchema>;
-```
-
-## Common Validators
-
-| Validator | Purpose |
-|-----------|---------|
-| `v.string()` | String type |
-| `v.email()` | Email format |
-| `v.minLength(n)` | Minimum length |
-| `v.maxLength(n)` | Maximum length |
-| `v.regex(pattern)` | Pattern match |
-| `v.optional()` | Optional field |
-| `v.nullable()` | Nullable field |
+**JSON Schema:**
+- `@valibot/to-json-schema` available
+- Does not support `transform` actions (limits practical use)
 
 ## Related
 
 - [superforms.md](./superforms.md) - Form handling
 - [../core/sveltekit.md](../core/sveltekit.md) - Server validation
-- [../../blueprint/forms/](../../blueprint/forms/) - Implementation details
