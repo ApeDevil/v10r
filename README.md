@@ -18,8 +18,7 @@ A full-stack template focused on performance, lightweight deployment, and free-t
 Each layer evolves from and is based on the previous:
 
 ```
-PRD → Stack → Blueprint
-requirements → tech choices → implementation
+  Foundation (why/constraints) → Stack (what/choices) → Blueprint (how/implementation)
 ```
 
 1. **[foundation/PRD.md](./docs/foundation/PRD.md)** — Source of truth (goals, requirements)
