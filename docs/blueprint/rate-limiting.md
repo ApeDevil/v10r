@@ -37,9 +37,12 @@ bun add sveltekit-rate-limiter
 
 | Layer | Scope | Purpose |
 |-------|-------|---------|
-| Global (hooks) | All requests | DDoS protection, baseline limits |
-| Route-specific | Sensitive endpoints | Auth, password reset, API mutations |
+| Global (hooks) | All requests | DDoS protection, baseline limits (100/min) |
+| Auth (hooks) | `/api/auth/*` | Brute force protection (5/min) |
+| Route-specific | Sensitive endpoints | Password reset, API mutations |
 | Superforms | Form submissions | Spam prevention |
+
+> **Critical:** Auth endpoints MUST use stricter limits than global. The hook should detect `/api/auth/*` paths and apply `authLimiter` (5/min) instead of `globalLimiter` (100/min). See [middleware.md](./middleware.md) for the full implementation.
 
 ### Rate Limit Types
 
@@ -96,7 +99,7 @@ export const globalLimiter = new RateLimiter({
 ```typescript
 // src/hooks.server.ts
 import { sequence } from '@sveltejs/kit/hooks';
-import { globalLimiter } from '$lib/server/rate-limit';
+import { globalLimiter, authLimiter } from '$lib/server/rate-limit';
 import type { Handle } from '@sveltejs/kit';
 
 const rateLimitHandle: Handle = async ({ event, resolve }) => {
@@ -105,7 +108,18 @@ const rateLimitHandle: Handle = async ({ event, resolve }) => {
     return resolve(event);
   }
 
-  const status = await globalLimiter.check(event);
+  // Let OPTIONS pass through to CORS handler
+  // (Don't return early, or CORS headers won't be added!)
+  if (event.request.method === 'OPTIONS') {
+    return resolve(event);
+  }
+
+  // Use stricter limiter for auth endpoints (brute force protection)
+  const limiter = event.url.pathname.startsWith('/api/auth')
+    ? authLimiter
+    : globalLimiter;
+
+  const status = await limiter.check(event);
 
   if (status.limited) {
     return new Response('Too Many Requests', {
@@ -121,8 +135,12 @@ const rateLimitHandle: Handle = async ({ event, resolve }) => {
 
   // Add rate limit headers to successful responses
   const response = await resolve(event);
-  response.headers.set('X-RateLimit-Limit', String(status.limit));
-  response.headers.set('X-RateLimit-Remaining', String(status.remaining));
+  try {
+    response.headers.set('X-RateLimit-Limit', String(status.limit));
+    response.headers.set('X-RateLimit-Remaining', String(status.remaining));
+  } catch {
+    // Headers immutable (e.g., redirect response)
+  }
 
   return response;
 };
@@ -130,7 +148,7 @@ const rateLimitHandle: Handle = async ({ event, resolve }) => {
 // Order: rate limit FIRST (before expensive auth checks)
 export const handle = sequence(
   rateLimitHandle,
-  // ... other handlers
+  // ... other handlers (CORS, security headers, auth)
 );
 ```
 
@@ -333,6 +351,11 @@ export const upstashLimiter = new Ratelimit({
 import { upstashLimiter } from '$lib/server/rate-limit';
 
 const rateLimitHandle: Handle = async ({ event, resolve }) => {
+  // Let OPTIONS pass through to CORS handler
+  if (event.request.method === 'OPTIONS') {
+    return resolve(event);
+  }
+
   const ip = event.getClientAddress();
   const { success, limit, remaining, reset } = await upstashLimiter.limit(ip);
 
@@ -348,8 +371,12 @@ const rateLimitHandle: Handle = async ({ event, resolve }) => {
   }
 
   const response = await resolve(event);
-  response.headers.set('X-RateLimit-Limit', String(limit));
-  response.headers.set('X-RateLimit-Remaining', String(remaining));
+  try {
+    response.headers.set('X-RateLimit-Limit', String(limit));
+    response.headers.set('X-RateLimit-Remaining', String(remaining));
+  } catch {
+    // Headers immutable (e.g., redirect response)
+  }
 
   return response;
 };
@@ -494,8 +521,10 @@ src/
 
 | What | How |
 |------|-----|
-| Global limits | `sveltekit-rate-limiter` in hooks |
-| Auth endpoints | Strict per-IP limits (5/min) |
+| Global limits | `globalLimiter` in hooks (100/min) |
+| Auth endpoints | `authLimiter` in hooks for `/api/auth/*` (5/min) |
+| CORS preflight | OPTIONS requests bypass rate limiting |
+| Immutable headers | Wrap `response.headers.set()` in try-catch |
 | Forms | Superforms integration |
 | Production | Upstash Redis for distributed limiting |
 | Response | Always include `X-RateLimit-*` headers |

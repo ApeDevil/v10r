@@ -1,3 +1,13 @@
+get an overview of the project! ultrathink it! modualize it as a mental model!
+then orchistare the following workflow:
+1) Let the appropriate agent analyze each module! they should look for inconsistencies & incoherences!
+and if they find anything then report it back to you!
+2) after the agents are done analyze the founded issues and ultrathink if those a real problems, focus on what really matters! then you yourself look for breaking points between the modules!
+3) consult with appropriate agent about the best solutions! alway let resy validate & verify the assumptions!
+4) execute the fixes!
+
+---
+
 First, validate your assumptions with a thorough web search, verify your findings using authoritative information sources and official documentation.
 
 ---
@@ -13,7 +23,30 @@ checkout .claude/agents & .claude/skills and contemplate it!
 
 how about to add a new skill 'AI tools' for knowledge gaps of ai - things post-training cutoff or underdocumented info?
 
-let resy look up the most inportained and best modern practices in context of our project!
+
 then write the skill!
 
 ---
+
+checkout & contemplate .claude/agents & .claude/skills
+
+
+after resy is done analyze the project and ultrathink which other skill would be helpful to us!
+
+
+let's brain storm!
+what about making an database  skill with a structure like this:
+
+then what about making it like this:
+.claude/skills/db-relational/SKILL.md
+.claude/skills/db-graph/SKILL.md
+.claude/skills/db-files/SKILL.md
+
+also i'd like to make the skill itself vender agnostic and then add something like: .claude/skills/db-graph/references/neo4j.md
+
+let resy look up if such sturcture would work and if yes then how to structure it in the most functional way
+---
+
+let resy look up the most inportained and best modern practices in context of our project for 'relational db' & 'neon'
+
+after resy is done ultrathink the findings and wirite the vendor agnstic db-relational skill with a .claude/skills/db-relational/references/neon.md

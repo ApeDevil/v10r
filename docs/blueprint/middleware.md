@@ -133,7 +133,26 @@ Response
 
 ## Better Auth Integration
 
-Better Auth provides a SvelteKit handler:
+Better Auth provides a SvelteKit handler.
+
+> **Critical for Vercel:** Configure `ipAddressHeaders` so Better Auth can identify client IPs behind Vercel's proxy. Without this, rate limiting and IP-based security features are broken.
+
+```typescript
+// src/lib/server/auth.ts
+import { betterAuth } from 'better-auth';
+
+export const auth = betterAuth({
+  // ... other config
+  advanced: {
+    ipAddress: {
+      // Vercel provides validated IP headers
+      ipAddressHeaders: ['x-vercel-forwarded-for', 'x-forwarded-for', 'x-real-ip'],
+    },
+  },
+});
+```
+
+### Hook Integration
 
 ```typescript
 // src/hooks.server.ts
@@ -178,28 +197,41 @@ Using `sveltekit-rate-limiter`:
 ```typescript
 // src/lib/server/rate-limit.ts
 import { RateLimiter } from 'sveltekit-rate-limiter/server';
+import { RATE_LIMIT_SECRET } from '$env/static/private';
 
-export const limiter = new RateLimiter({
-  IP: [100, 'h'],        // 100 requests per hour per IP
+// Global rate limiter (100 requests/minute)
+export const globalLimiter = new RateLimiter({
+  IP: [100, 'm'],        // 100 requests per minute per IP
   IPUA: [50, 'm'],       // 50 requests per minute per IP+UserAgent
   cookie: {
-    name: 'rl',
-    secret: process.env.RATE_LIMIT_SECRET!,
-    rate: [10, 's'],     // 10 requests per second per cookie
-    preflight: true
-  }
+    name: 'rl_id',
+    secret: RATE_LIMIT_SECRET,
+    rate: [200, 'm'],    // 200 requests per minute per cookie
+    preflight: true,
+  },
+});
+
+// Strict limiter for auth endpoints (brute force protection)
+export const authLimiter = new RateLimiter({
+  IP: [5, 'm'],          // 5 attempts per minute per IP
+  IPUA: [3, 'm'],        // 3 attempts per minute per IP+UserAgent
 });
 ```
 
 ```typescript
 // src/hooks.server.ts
-import { limiter } from '$lib/server/rate-limit';
+import { globalLimiter, authLimiter } from '$lib/server/rate-limit';
 
 const rateLimitHandle: Handle = async ({ event, resolve }) => {
   // Skip rate limiting for static assets
   if (event.url.pathname.startsWith('/_app')) {
     return resolve(event);
   }
+
+  // Use stricter limiter for auth endpoints
+  const limiter = event.url.pathname.startsWith('/api/auth')
+    ? authLimiter
+    : globalLimiter;
 
   const status = await limiter.check(event);
   if (status.limited) {
@@ -223,23 +255,24 @@ For API routes that need cross-origin access:
 
 ```typescript
 // src/hooks.server.ts
-const ALLOWED_ORIGINS = [
+const ALLOWED_ORIGINS = new Set([
   'https://example.com',
   'https://app.example.com'
-];
+]);
 
 const corsHandle: Handle = async ({ event, resolve }) => {
-  const origin = event.request.headers.get('origin');
+  const origin = event.request.headers.get('origin'); // lowercase per HTTP spec
 
   // Handle preflight
   if (event.request.method === 'OPTIONS') {
-    if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    if (origin && ALLOWED_ORIGINS.has(origin)) {
       return new Response(null, {
         status: 204,
         headers: {
           'Access-Control-Allow-Origin': origin,
           'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+          'Access-Control-Allow-Credentials': 'true', // Required for credentialed requests
           'Access-Control-Max-Age': '86400'
         }
       });
@@ -250,8 +283,13 @@ const corsHandle: Handle = async ({ event, resolve }) => {
   const response = await resolve(event);
 
   // Add CORS headers to actual response
-  if (origin && ALLOWED_ORIGINS.includes(origin)) {
-    response.headers.set('Access-Control-Allow-Origin', origin);
+  if (origin && ALLOWED_ORIGINS.has(origin)) {
+    try {
+      response.headers.set('Access-Control-Allow-Origin', origin);
+      response.headers.set('Access-Control-Allow-Credentials', 'true');
+    } catch {
+      // Headers immutable (e.g., redirect response)
+    }
   }
 
   return response;
@@ -269,21 +307,25 @@ Add security headers to all responses:
 const securityHandle: Handle = async ({ event, resolve }) => {
   const response = await resolve(event);
 
-  // Security headers
-  response.headers.set('X-Frame-Options', 'DENY');
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  // Some responses (e.g., redirects) have immutable headers
+  try {
+    response.headers.set('X-Frame-Options', 'DENY');
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 
-  // CSP (adjust based on needs)
-  response.headers.set(
-    'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
-  );
+    // CSP - consider using nonce mode in svelte.config.js instead
+    // response.headers.set('Content-Security-Policy', "...");
+  } catch {
+    // Headers immutable, return as-is
+  }
 
   return response;
 };
 ```
+
+> **Note:** For production CSP, configure `csp.mode: 'auto'` in `svelte.config.js` to use nonces for SSR pages and hashes for prerendered content. The `'unsafe-inline'` fallback shown above provides no XSS protection.
 
 ---
 
@@ -297,12 +339,22 @@ import type { HandleFetch } from '@sveltejs/kit';
 
 export const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
   // Forward cookies to same-origin API calls
+  // Create new Request to avoid mutating the original
   if (request.url.startsWith(event.url.origin)) {
-    request.headers.set('cookie', event.request.headers.get('cookie') ?? '');
+    const cookie = event.request.headers.get('cookie');
+    if (cookie) {
+      request = new Request(request, {
+        headers: new Headers(request.headers)
+      });
+      request.headers.set('cookie', cookie);
+    }
   }
 
   // Add auth header for external API
   if (request.url.startsWith('https://api.external.com')) {
+    request = new Request(request, {
+      headers: new Headers(request.headers)
+    });
     request.headers.set('Authorization', `Bearer ${process.env.EXTERNAL_API_KEY}`);
   }
 
@@ -373,35 +425,51 @@ export const reroute: Reroute = ({ url }) => {
 Complete `hooks.server.ts` with all patterns:
 
 > **Hook Order:** Rate Limit → CORS → Security Headers → Auth. This order ensures:
-> 1. Abusive requests are blocked before consuming resources
-> 2. CORS preflight (OPTIONS) bypasses rate limiting and returns immediately
-> 3. Security headers are applied to all responses
+> 1. Abusive requests are blocked before consuming resources (OPTIONS exempt to allow CORS preflight)
+> 2. CORS handler processes all OPTIONS requests and adds required headers
+> 3. Security headers are applied to all responses (with immutable header protection)
 > 4. Authentication runs last (most expensive operation)
+>
+> **Critical:** Auth routes get stricter rate limits (5/min vs 100/min global)
 
 ```typescript
 // src/hooks.server.ts
 import { sequence } from '@sveltejs/kit/hooks';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { auth } from '$lib/server/auth';
-import { limiter } from '$lib/server/rate-limit';
+import { globalLimiter, authLimiter } from '$lib/server/rate-limit';
 import { ALLOWED_ORIGINS } from '$env/static/private';
 import type { Handle, HandleFetch, HandleServerError } from '@sveltejs/kit';
 
-const allowedOrigins = ALLOWED_ORIGINS?.split(',') ?? [];
+const allowedOrigins = new Set(ALLOWED_ORIGINS?.split(',') ?? []);
 
-// 1. Rate limiting (with OPTIONS exemption for CORS preflight)
+// 1. Rate limiting (OPTIONS passes through to CORS handler)
 const rateLimitHandle: Handle = async ({ event, resolve }) => {
   // Skip static assets
   if (event.url.pathname.startsWith('/_app')) {
     return resolve(event);
   }
 
-  // Skip rate limiting for CORS preflight requests
+  // Let OPTIONS pass through - CORS handler will process it
+  // (Don't return early here, or CORS headers won't be added!)
   if (event.request.method === 'OPTIONS') {
     return resolve(event);
   }
 
-  const status = await limiter.check(event);
+  // Stricter limits for auth endpoints (brute force protection)
+  if (event.url.pathname.startsWith('/api/auth')) {
+    const status = await authLimiter.check(event);
+    if (status.limited) {
+      return new Response('Too Many Requests', {
+        status: 429,
+        headers: { 'Retry-After': String(status.retryAfter) },
+      });
+    }
+    return resolve(event);
+  }
+
+  // Global rate limit for all other routes
+  const status = await globalLimiter.check(event);
   if (status.limited) {
     return new Response('Too Many Requests', {
       status: 429,
@@ -413,17 +481,18 @@ const rateLimitHandle: Handle = async ({ event, resolve }) => {
 
 // 2. CORS handling
 const corsHandle: Handle = async ({ event, resolve }) => {
-  const origin = event.request.headers.get('Origin');
+  const origin = event.request.headers.get('origin'); // lowercase per HTTP spec
 
   // Handle preflight requests
   if (event.request.method === 'OPTIONS') {
-    if (origin && allowedOrigins.includes(origin)) {
+    if (origin && allowedOrigins.has(origin)) {
       return new Response(null, {
         status: 204,
         headers: {
           'Access-Control-Allow-Origin': origin,
           'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key, X-Requested-With',
+          'Access-Control-Allow-Credentials': 'true', // Required for credentialed requests
           'Access-Control-Max-Age': '86400',
         },
       });
@@ -434,21 +503,34 @@ const corsHandle: Handle = async ({ event, resolve }) => {
   const response = await resolve(event);
 
   // Add CORS headers to API responses
-  if (event.url.pathname.startsWith('/api') && origin && allowedOrigins.includes(origin)) {
-    response.headers.set('Access-Control-Allow-Origin', origin);
-    response.headers.set('Access-Control-Allow-Credentials', 'true');
+  if (event.url.pathname.startsWith('/api') && origin && allowedOrigins.has(origin)) {
+    try {
+      response.headers.set('Access-Control-Allow-Origin', origin);
+      response.headers.set('Access-Control-Allow-Credentials', 'true');
+    } catch {
+      // Response headers are immutable (e.g., from redirect), skip CORS headers
+    }
   }
 
   return response;
 };
 
-// 3. Security headers
+// 3. Security headers (with immutable header protection)
 const securityHandle: Handle = async ({ event, resolve }) => {
   const response = await resolve(event);
-  response.headers.set('X-Frame-Options', 'DENY');
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+
+  // Some responses (e.g., redirects) have immutable headers
+  // Wrap in try-catch to avoid crashing on Response.redirect()
+  try {
+    response.headers.set('X-Frame-Options', 'DENY');
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  } catch {
+    // Headers are immutable, return response as-is
+  }
+
   return response;
 };
 
@@ -476,8 +558,13 @@ export const handle = sequence(
 
 // Server-side fetch interception
 export const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
+  // Forward cookies to same-origin API calls (create new Request to avoid mutation)
   if (request.url.startsWith(event.url.origin)) {
-    request.headers.set('cookie', event.request.headers.get('cookie') ?? '');
+    const cookie = event.request.headers.get('cookie');
+    if (cookie) {
+      request = new Request(request, { headers: new Headers(request.headers) });
+      request.headers.set('cookie', cookie);
+    }
   }
   return fetch(request);
 };
