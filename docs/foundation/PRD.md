@@ -1,13 +1,15 @@
 
-# Into
-This project is a documentation, test-sandbox and a templale.
-So we want to document the complete 'velociraptor' setup (features & functions), which is simultaniously a tempate for diferent projects (skelleton setup)
+# Intro
+
+This project is a documentation, test-sandbox, and a template. It documents the complete 'Velociraptor' setup (features & functions), which is simultaneously a template for different projects (skeleton setup).
 
 # Velociraptor
-Is a tech stack, main parts: padman, bun, sveltekit
 
-# Gaols:
-- speed/perfomance
+A tech stack. Main parts: Podman, Bun, SvelteKit.
+
+# Goals
+
+- Speed/performance
 - clean designed codebase
 - flexible UI
 - optimized for Mobile & Desktop

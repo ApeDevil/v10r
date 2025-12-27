@@ -144,7 +144,7 @@ Fallback to ESLint + Prettier if Biome causes issues with complex Svelte templat
 | Last release | Oct 2024 (v4.0.1) | July 2023 (v2.4.2) |
 | Maintenance | Active | **Seeking maintainers** |
 | Svelte 5 | Confirmed | Unknown |
-| Downloads | ~40k/week | ~12k/week |
+| Downloads | ~69k/week | ~3k/week |
 | Bundle | 14 KB gzip | 4.6 KB gzip |
 | Pluralization | ICU (industry standard) | Custom syntax |
 
