@@ -6,6 +6,9 @@ Velociraptor is a full-stack template/test-sandbox focused on performance and li
 
 **Status:** Pre-scaffold planning phase. No code has been written yet.
 
+## Local Development
+app container - databases are remote
+
 ## Stack
 
 | Layer | Technology | Docs |

@@ -1,0 +1,13 @@
+# Development container for SvelteKit + Bun
+# Usage: podman compose up
+
+FROM oven/bun:1
+
+WORKDIR /app
+
+# Vite dev server + HMR WebSocket
+EXPOSE 5173 24678
+
+# Install deps and start dev server
+# Dependencies installed at runtime so volume-mounted code works
+CMD ["sh", "-c", "bun install && bun --bun run dev --host 0.0.0.0"]

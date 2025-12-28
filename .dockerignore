@@ -1,0 +1,39 @@
+# Dependencies (rebuilt in container)
+node_modules
+
+# Build outputs
+build
+.svelte-kit
+
+# Environment files (passed via env_file in compose)
+.env
+.env.*
+!.env.example
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Container files (no need to copy into container)
+Containerfile*
+compose.yaml
+.dockerignore
+
+# Documentation (not needed at runtime)
+docs
+*.md
+!README.md

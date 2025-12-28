@@ -1,0 +1,25 @@
+# Development environment for Velociraptor
+# Usage: podman compose up
+
+name: v10r
+
+services:
+  app:
+    image: v10r
+    container_name: v10r
+    build:
+      context: .
+      dockerfile: Containerfile.dev
+    ports:
+      - "5173:5173"   # Vite dev server
+      - "24678:24678" # Vite HMR WebSocket
+    volumes:
+      - .:/app                       # Mount project for hot reload
+      - node_modules:/app/node_modules  # Persist deps in named volume
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+
+volumes:
+  node_modules:  # Named volume keeps deps off your host system
