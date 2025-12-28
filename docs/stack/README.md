@@ -40,6 +40,7 @@ Technology decisions and vendor choices. Each directory contains focused files o
 | Logging | [ops/logging.md](./ops/logging.md) |
 | AI SDK | [ai/ai-sdk.md](./ai/ai-sdk.md) |
 | GDPR | [features/gdpr.md](./features/gdpr.md) |
+| PWA | [features/pwa.md](./features/pwa.md) |
 
 ## Vendors
 

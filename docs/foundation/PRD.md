@@ -25,6 +25,7 @@ Documentation, test-sandbox, and reusable template in one. The project simultane
 | Versatile data | Relational, graph, and file storage |
 | API layer | Built-in API capabilities |
 | i18n/l10n | UI and content localization |
+| PWA | Installable, offline-capable, native-like experience |
 
 ## Responsive Strategy
 

@@ -10,3 +10,4 @@ Cross-cutting application features.
 | **[seo.md](./seo.md)** | • Meta tags, • Sitemap generation, • Structured data, • AI search optimization |
 | **[notifications.md](./notifications.md)** | • Email (Resend), • Push notifications, • In-app messaging, • Toasts |
 | **[gdpr.md](./gdpr.md)** | • Consent management, • User rights, • Data export/deletion, • AI data handling |
+| **[pwa.md](./pwa.md)** | • Installability, • Offline support, • Service workers, • iOS limitations |

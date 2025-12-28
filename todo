@@ -1,25 +1,9 @@
+data saving; schedualed deletion 
 
+---
 Notifications: email, Messaging apps (telegram, discord)
 
 ---
-
-execute the followwing step by step:
-1) get a list of all files in docs/stack/ write it down in root OPTY-PLAN.md (exclude READMEs and docs/stack/vendors.md)
-2) contemplate our goal: refactore each file to a consistant patern [
-    - What it is!
-    - What is it for!
-    - why was it chosen
-    - what are the currently known limetations 
-]
-3) orchistare the following workflow for each file in docs/stack/  {
-- check out a file and understand what it is about
-- let resy look up the nessecery information which are relevant for the stack documentation (no code examples)
-- update the file with our consistant patern and relevat infromation from resys findings (no code examples), don't blode the files
-- mark in OPTY-PLAN.md that the files was optimized
-}
-
-
-
 
 **Execute the following steps step by step:**
 
