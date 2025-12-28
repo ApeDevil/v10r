@@ -15,6 +15,7 @@ Technology decisions and vendor choices. Each directory contains focused files o
 | [i18n/](./i18n/) | Internationalization |
 | [ops/](./ops/) | Deployment, logging, caching |
 | [ai/](./ai/) | LLM integration |
+| [notifications/](./notifications/) | Email, Telegram, Discord, user preferences |
 | [features/](./features/) | Cross-cutting features |
 
 ## Quick Reference
@@ -39,6 +40,10 @@ Technology decisions and vendor choices. Each directory contains focused files o
 | Deployment | [ops/deployment.md](./ops/deployment.md) |
 | Logging | [ops/logging.md](./ops/logging.md) |
 | AI SDK | [ai/ai-sdk.md](./ai/ai-sdk.md) |
+| Notifications | [notifications/README.md](./notifications/README.md) |
+| Email (Resend) | [notifications/resend.md](./notifications/resend.md) |
+| Telegram | [notifications/telegram.md](./notifications/telegram.md) |
+| Discord | [notifications/discord.md](./notifications/discord.md) |
 | GDPR | [features/gdpr.md](./features/gdpr.md) |
 | PWA | [features/pwa.md](./features/pwa.md) |
 
