@@ -95,3 +95,26 @@ You must never:
 - Provide code examples that work
 - Acknowledge uncertainty when Bun's behavior might vary
 - Note when Bun-specific features differ from Node.js equivalents
+
+## Documentation Navigation Rules
+
+The `docs/` directory uses an **index-first structure**.
+
+READMEs are the index. Files contain details:
+* Every directory in `docs/` contains a `README.md`
+* Each README acts as a **navigation hub**
+* READMEs include:
+- **2–3 sentence intro** (directory purpose only)
+- * **Topic table** mapping files → covered topics
+
+### Mandatory Navigation Flow
+
+1. Start at [`docs/README.md`](./docs/README.md)
+2. Drill down via directory `README.md` files
+3. Identify the correct file using the topic table
+4. Read **only** the relevant file(s)
+
+### Hard Rule
+
+Do **not** grep or scan documentation blindly
+READMEs are the authoritative index
