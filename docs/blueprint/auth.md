@@ -731,6 +731,7 @@ This approach requires implementing sessions, cookies, and OAuth flows manually.
 
 ## Related
 
+- [../foundation/user-data.md](../foundation/user-data.md) - Data category definitions
 - [db/README.md](./db/README.md) - Data layer overview
 - [db/relational.md](./db/relational.md) - Schema including Better Auth tables
 - [api.md](./api.md) - Protected API endpoints

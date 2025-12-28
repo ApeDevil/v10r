@@ -1,6 +1,11 @@
-# Settings
+# Settings & Preferences
 
-App-level preferences for appearance, language, privacy, and accessibility. Low-stakes toggles that apply immediately.
+User configuration for appearance, language, privacy, and accessibility. This page covers both:
+
+- **Preferences** — UX customization (theme, language, density) that affects *presentation*
+- **Settings** — Feature toggles (profile visibility, activity sharing) that affect *functionality*
+
+See [../../foundation/user-data.md](../../foundation/user-data.md) for terminology definitions.
 
 ## Route Structure
 
@@ -217,10 +222,10 @@ export const load = async ({ cookies }) => {
 
 ### Locale/Timezone Storage
 
-Locale and timezone are stored in `userProfile` (not `userSettings`) because they affect content display.
+Locale and timezone are **Preferences** (UX customization) per [user-data.md](../../foundation/user-data.md). They're colocated with `userSettings` since they affect content presentation.
 
 ```typescript
-// userProfile table
+// userSettings table (with other preferences)
 locale: text('locale').notNull().default('en'),
 timezone: text('timezone').notNull().default('UTC'),
 ```

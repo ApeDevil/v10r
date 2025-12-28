@@ -10,6 +10,14 @@ Implementation designs and feature specifications. How to build features using t
 | **[pages.md](./pages.md)** | • **Self-documenting architecture**: each page is documentation + test + template<br>• Route structure: `/` (landing), `/showcase/*` (demos), `/app/*` (protected), `/auth/*`, `/docs/*`<br>• Showcase routes: theme, ui, forms, state, data, files, i18n, animations, graph, api<br>• `/showcase/data`: CRUD with master-detail, cards, table view, pagination<br>• `/showcase/ui`: component gallery (buttons, inputs, modals, QuickSearch, etc.)<br>• `/app/dashboard`: authenticated home with session data<br>• `/app/account`: GDPR compliance (view data, export JSON, delete account)<br>• Protected routes: per-route `requireAuth()` guards (not layout-based)<br>• Static docs: prerendered Markdown pages<br>• Navigation: main nav, showcase sidebar with nested links |
 | **[middleware.md](./middleware.md)** | • Hooks: `handle`, `handleFetch`, `handleError`, `reroute`<br>• `handle` hook: request interception before routes<br>• `sequence()` for composing multiple handlers (order matters)<br>• Execution order: rate limit → i18n → auth → route → response<br>• Better Auth integration: `svelteKitHandler` for `/api/auth/*`<br>• Rate limiting: in hooks, skip static assets (`/_app`)<br>• CORS: origin validation, preflight handling, headers<br>• Security headers: X-Frame-Options, CSP, X-Content-Type-Options<br>• `handleFetch`: intercept server-side fetch, forward cookies, add auth headers<br>• `handleError`: global error handler, logging, safe error messages<br>• `reroute`: URL rewriting before routing (locale stripping, redirects)<br>• Full example with all patterns composed |
 
+## Multi-Channel Notifications
+
+| File | Main Topics |
+|------|-------------|
+| **[notifications/](./notifications/)** | • [README.md](./notifications/README.md): Architecture overview, build vs buy decision, Discord DM limitation<br>• [routing.md](./notifications/routing.md): Notification router, provider abstraction, outbox + Inngest, delivery tracking<br>• [channels.md](./notifications/channels.md): Telegram deep link flow, Discord OAuth2, token management, health monitoring<br>• [preferences.md](./notifications/preferences.md): Settings UI, Channel × Type matrix, connection cards, mobile patterns<br>• [schema.md](./notifications/schema.md): user_telegram_accounts, user_discord_accounts, extended preferences, delivery log |
+
+> **Note:** In-app notifications (notification center, SSE) are in [app-shell/notifications.md](./app-shell/notifications.md). This section covers external channel delivery.
+
 ## Features
 
 | File | Main Topics |

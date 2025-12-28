@@ -85,6 +85,7 @@ Data protection compliance framework for EU users. Implements consent management
 
 ## Related
 
+- [../../foundation/user-data.md](../../foundation/user-data.md) - Data category definitions
 - [../auth/better-auth.md](../auth/better-auth.md) - User data ownership
 - [notifications.md](./notifications.md) - Marketing consent
 - [../ai/ai-sdk.md](../ai/ai-sdk.md) - AI data handling

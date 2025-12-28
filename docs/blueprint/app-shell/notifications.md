@@ -8,9 +8,9 @@ In-app notification system with full-page notification center, preference manage
 /app/notifications/
 ├── +page.svelte             # Notification center (inbox)
 ├── +page.server.ts          # Load notifications, mark as read
-└── preferences/
-    ├── +page.svelte         # Email & push preferences
-    └── +page.server.ts      # Save preferences
+└── settings/
+    ├── +page.svelte         # Email & push channel settings
+    └── +page.server.ts      # Save settings
 ```
 
 ---
@@ -47,7 +47,7 @@ Sidebar Header:
 
 ```
 ┌────────────────────────────────────────────────────┐
-│ Notifications                    [⚙️ Preferences]  │
+│ Notifications                      [⚙️ Settings]  │
 ├────────────────────────────────────────────────────┤
 │                                                    │
 │ [All] [Mentions] [System]    Mark all as read     │
@@ -142,7 +142,7 @@ Sidebar Header:
 
 <PageHeader title="Notifications">
   {#snippet actions()}
-    <a href="/app/notifications/preferences" class="btn-icon">
+    <a href="/app/notifications/settings" class="btn-icon">
       <span class="i-lucide-settings" />
     </a>
   {/snippet}
@@ -205,15 +205,15 @@ Sidebar Header:
 
 ---
 
-## Notification Preferences
+## Notification Settings
 
-**Route:** `/app/notifications/preferences`
+**Route:** `/app/notifications/settings`
 
 ### Wireframe
 
 ```
 ┌─────────────────────────────────────────┐
-│ Notification Preferences                │
+│ Notification Settings                   │
 ├─────────────────────────────────────────┤
 │                                         │
 │ Email Notifications                     │
@@ -238,7 +238,7 @@ Sidebar Header:
 │ ☐ Enable quiet hours                    │
 │ From: [22:00] To: [08:00]               │
 │                                         │
-│ [Cancel]  [Save Preferences]            │
+│ [Cancel]  [Save Settings]               │
 └─────────────────────────────────────────┘
 ```
 
@@ -519,14 +519,16 @@ ON notifications (user_id, created_at DESC)
 WHERE is_read = false;
 ```
 
-### Notification Preferences Table
+### Notification Settings Table
+
+Notification channel configuration is a **Setting** (affects functionality) per [../../foundation/user-data.md](../../foundation/user-data.md).
 
 ```typescript
 export const digestFrequencyEnum = pgEnum('digest_frequency', [
   'instant', 'daily', 'weekly', 'never'
 ]);
 
-export const notificationPreferences = pgTable('notification_preferences', {
+export const notificationSettings = pgTable('notification_settings', {
   userId: text('user_id').primaryKey()
     .references(() => user.id, { onDelete: 'cascade' }),
 
@@ -649,3 +651,4 @@ src/lib/components/composites/notifications/
 - [./sidebar.md](./sidebar.md) - Notification trigger in sidebar
 - [../db/relational.md](../db/relational.md) - Full schema
 - [../auth.md](../auth.md) - Session cleanup pattern (apply to notifications)
+- [../notifications/](../notifications/) - **Multi-channel delivery** (Email, Telegram, Discord)

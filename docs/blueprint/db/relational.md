@@ -12,8 +12,8 @@ Drizzle ORM schema for relational data and Better Auth integration.
 | `session` | Auth sessions | Better Auth (auto-generated) |
 | `account` | OAuth provider links | Better Auth (auto-generated) |
 | `verification` | Email/password tokens | Better Auth (auto-generated) |
-| `user_profile` | Extended user data | Custom |
-| `user_settings` | Preferences | Custom |
+| `user_profile` | User Profile Data (public) | Custom |
+| `user_settings` | Preferences & Settings | Custom |
 | `items` | Generic entities | Custom |
 | `tags` | Categorization | Custom |
 | `item_tags` | Item-tag relations | Custom |
@@ -191,7 +191,9 @@ export const userProfile = pgTable('user_profile', {
 });
 ```
 
-### User Settings
+### User Settings (Preferences & Settings)
+
+Contains both **Preferences** (UX customization like theme, language) and **Settings** (feature toggles like notifications). See [../../foundation/user-data.md](../../foundation/user-data.md) for terminology.
 
 ```typescript
 // src/lib/server/db/schema/settings.ts
@@ -204,8 +206,10 @@ export const userSettings = pgTable('user_settings', {
   userId: text('user_id')
     .primaryKey()
     .references(() => user.id, { onDelete: 'cascade' }),
+  // Preferences (UX customization)
   theme: themeEnum('theme').notNull().default('system'),
   language: text('language').notNull().default('en'),
+  // Settings (feature configuration)
   notificationsEnabled: boolean('notifications_enabled').notNull().default(true)
 });
 ```
@@ -788,6 +792,7 @@ scripts/
 
 ## Related
 
+- [../../foundation/user-data.md](../../foundation/user-data.md) - Data category definitions
 - [graph.md](./graph.md) - Neo4j for relationship data
 - [../auth.md](../auth.md) - Better Auth session management
 - [../api.md](../api.md) - REST endpoints querying this schema
