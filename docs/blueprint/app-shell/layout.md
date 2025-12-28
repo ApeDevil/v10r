@@ -87,11 +87,15 @@ src/lib/components/
 
 ## Breakpoints
 
-| Name | Width | Sidebar Behavior |
-|------|-------|------------------|
-| **Mobile** | < 768px | Right drawer + FAB |
-| **Tablet** | 768px - 1024px | Left rail, click to expand |
-| **Desktop** | > 1024px | Left rail, hover to expand |
+Semantic breakpoints map to design token values (see [../design/tokens.md](../design/tokens.md#breakpoints)):
+
+| Semantic | Token Range | Pixel Range | Sidebar Behavior |
+|----------|-------------|-------------|------------------|
+| **Mobile** | `< md` | 0 - 767px | Right drawer + FAB |
+| **Tablet** | `md` to `< lg` | 768px - 1023px | Left rail, click to expand |
+| **Desktop** | `≥ lg` | 1024px+ | Left rail, hover to expand |
+
+> **Mobile-first**: Base styles target mobile. Use `md:` and `lg:` UnoCSS prefixes to progressively enhance.
 
 ---
 

@@ -22,7 +22,6 @@ Multi-channel notification system with user-controlled routing. Users connect th
 | **[resend.md](./resend.md)** | Email provider, templates, deliverability, DNS setup |
 | **[telegram.md](./telegram.md)** | Bot setup, deep linking, user connection flow |
 | **[discord.md](./discord.md)** | Bot setup, OAuth2 flow, DM notifications |
-| **[novu.md](./novu.md)** | Orchestration platform, when to use, self-hosting |
 
 ## User Settings Model
 
@@ -74,16 +73,16 @@ Users control notifications through a **Channel × Type Matrix** (notification c
 
 ## Design Decisions
 
-### Why Custom Routing (Not Novu by Default)?
+### Why Custom Routing?
 
-| Factor | Custom | Novu |
-|--------|--------|------|
-| Database | PostgreSQL only | +MongoDB +Redis |
-| User linking | Build ourselves | Build ourselves |
-| Complexity | Simpler for 3-4 channels | Better for 5+ channels |
-| Digests | Must implement | Built-in |
+| Factor | Rationale |
+|--------|-----------|
+| Database | PostgreSQL only (no MongoDB/Redis) |
+| User linking | Telegram/Discord linking is DIY regardless |
+| Complexity | Simpler for 3-4 channels |
+| Stack alignment | Matches our serverless-first approach |
 
-**Decision**: Start with custom routing. Migrate to Novu if we need digest/batching or complex workflows. See [novu.md](./novu.md).
+**Decision**: Custom routing with Inngest for async delivery. See [../../blueprint/notifications/](../../blueprint/notifications/) for implementation.
 
 ### Why Email is Primary?
 

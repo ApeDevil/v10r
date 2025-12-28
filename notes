@@ -1,6 +1,7 @@
-get an overview of the project! ultrathink it! modualize it as a mental model!
+get an overview of the project! ultrathink it! modualize it as a mental model! with back in mind: Foundation (why/constraints) → Stack (what/choices) → Blueprint (how/implementation)
+
 then orchistare the following workflow:
-1) Let the appropriate agent analyze each module! they should look for inconsistencies & incoherences!
+1) Let the appropriate agent analyze each module (documentation part/sections)! they should look for inconsistencies & incoherences!
 and if they find anything then report it back to you!
 2) after the agents are done analyze the founded issues and ultrathink if those a real problems, focus on what really matters! then you yourself look for breaking points between the modules!
 3) consult with appropriate agent about the best solutions! alway let resy validate & verify the assumptions!

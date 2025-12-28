@@ -544,25 +544,60 @@ export const actions = {
 
 | Feature | Status |
 |---------|--------|
-| CSRF protection | Automatic |
+| CSRF protection | Forms only (see warning below) |
 | Session fixation | Handled |
 | Secure cookies | Default in production |
 | Password hashing | bcrypt (configurable) |
-| Rate limiting | **BROKEN** - use external (see below) |
+| Rate limiting | Requires config (see below) |
 | Session revocation | `revokeOtherSessions: true` |
+
+> **CSRF Warning**: SvelteKit's built-in CSRF protection only covers form submissions (`application/x-www-form-urlencoded`, `multipart/form-data`, `text/plain`). **JSON API endpoints are NOT protected.** For any `+server.ts` endpoints that accept `application/json` and mutate data, you must implement one of:
+>
+> 1. **Custom header check** (simplest):
+>    ```typescript
+>    // In +server.ts
+>    if (!request.headers.get('x-requested-with')) {
+>      return json({ error: 'Missing CSRF header' }, { status: 403 });
+>    }
+>    ```
+>    Client must send: `fetch(url, { headers: { 'x-requested-with': 'fetch' } })`
+>
+> 2. **Double Submit Cookie** - generate token in hook, validate in endpoint
+> 3. **Use form actions instead** - covered by SvelteKit's automatic protection
 
 ### Rate Limiting
 
-> **Critical**: Better Auth's built-in rate limiting is **BROKEN** (GitHub Issue #2153). Do NOT rely on it.
+> **Important**: Better Auth's rate limiting requires specific configuration to work in SvelteKit. Issues #2153, #2112, #1891 documented problems that are now resolved with proper setup.
+
+**Requirements for Better Auth rate limiting:**
+1. Explicitly set `enabled: true`
+2. Forward client IP in hooks (SvelteKit doesn't expose it automatically)
+3. Use database/Redis storage in production (in-memory fails in serverless)
+4. Only applies to client-initiated requests (not server-side calls)
 
 ```typescript
-// BROKEN - DO NOT USE
+// src/hooks.server.ts - Forward client IP
+const authHandle = async ({ event, resolve }) => {
+  // Required: Better Auth needs client IP for rate limiting
+  event.request.headers.set('x-client-ip', event.getClientAddress());
+
+  const authResponse = await svelteKitHandler({ auth, event });
+  if (authResponse) return authResponse;
+  // ...
+};
+
+// src/lib/server/auth.ts
 export const auth = betterAuth({
-  rateLimit: { window: 60, max: 10 }, // This does NOT work!
+  rateLimit: {
+    enabled: true, // Required: must be explicit
+    window: 60,
+    max: 10,
+    storage: 'database', // For production: use 'database' or Redis
+  },
 });
 ```
 
-**Use external rate limiting instead** - see [rate-limiting.md](./rate-limiting.md) for implementation with sveltekit-rate-limiter (primary) and Upstash (production scaling).
+**For additional protection** - see [rate-limiting.md](./rate-limiting.md) for sveltekit-rate-limiter (defense in depth) and Upstash (distributed limiting).
 
 ### Custom Password Hashing
 

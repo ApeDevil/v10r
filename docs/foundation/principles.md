@@ -73,6 +73,8 @@ Runtime-only tooling. Avoid build-step dependencies.
 - Simpler CI/CD pipelines
 - Easier to understand what code does
 
+> **Note on Better Auth:** Better Auth offers both CLI schema generation (`bunx @better-auth/cli generate`) and manual schema definition. This project uses **manual schemas** to maintain this principle. See [stack/data/drizzle.md](../stack/data/drizzle.md) for the hand-written schema approach.
+
 ---
 
 ### 7. Speed is a feature

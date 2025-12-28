@@ -55,7 +55,7 @@ Meta-framework for Svelte that enables full-stack web application development. P
 - Cold dev start: 1-1.5 minutes on large projects
 
 **Bun compatibility:**
-- `svelte-adapter-bun` development has stalled
+- `svelte-adapter-bun` is community-maintained with known issues
 - ORIGIN header issues break form CSRF protection
 - Vite dev server runs on Node.js (not Bun)
 - Easy fallback: switch to `adapter-node` via config

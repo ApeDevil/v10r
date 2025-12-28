@@ -38,8 +38,8 @@ All-in-one JavaScript/TypeScript runtime written in Zig, powered by JavaScriptCo
 - Partial: `worker_threads`, `vm`, `crypto`, `child_process`
 
 **SvelteKit-specific:**
-- `svelte-adapter-bun` has stalled development
-- Known issues with CORS and form handling (ORIGIN not passed correctly)
+- `svelte-adapter-bun` is community-maintained (not official SvelteKit adapter)
+- Known issues with CORS and form handling (ORIGIN header not passed correctly)
 - Vite dev server still runs on Node.js (only production uses Bun)
 - Easy fallback: switch to `adapter-node` with single config change
 

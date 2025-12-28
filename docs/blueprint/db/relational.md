@@ -53,6 +53,8 @@ export const user = pgTable('user', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+// CRITICAL: Indexes MUST be defined inside the pgTable callback (3rd parameter).
+// Standalone index() statements outside pgTable DO NOT work - drizzle-kit ignores them.
 export const session = pgTable('session', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
@@ -60,12 +62,12 @@ export const session = pgTable('session', {
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   ipAddress: text('ip_address'),
   userAgent: text('user_agent'),
-});
-
-// REQUIRED: Better Auth does NOT auto-generate indexes. Add manually for performance.
-// Without these, session lookups become bottlenecks at scale.
-export const sessionUserIdx = index('session_user_id_idx').on(session.userId);
-export const sessionExpiresIdx = index('session_expires_at_idx').on(session.expiresAt);
+}, (table) => [
+  // REQUIRED: Better Auth does NOT auto-generate indexes. Add manually for performance.
+  // Without these, session lookups become bottlenecks at scale.
+  index('session_user_id_idx').on(table.userId),
+  index('session_expires_at_idx').on(table.expiresAt),
+]);
 
 export const account = pgTable('account', {
   id: text('id').primaryKey(),

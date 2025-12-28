@@ -36,9 +36,10 @@ Framework-agnostic authentication and authorization framework for TypeScript. Pr
 ## Known limitations
 
 **Rate limiting:**
-- Applies globally to all routes (cannot fully exclude specific routes)
+- Requires `enabled: true` and IP forwarding in SvelteKit hooks (see blueprint/auth.md)
 - In-memory storage (default) problematic in serverless/multi-instance
-- Use database adapter for production
+- Use database/Redis adapter for production
+- Only applies to client-initiated requests (not server-side calls)
 
 **Session management:**
 - Stateless sessions cannot be easily revoked (requires redeploy)

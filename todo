@@ -1,9 +1,6 @@
 data saving; schedualed deletion 
 
 ---
-Notifications: email, Messaging apps (telegram, discord)
-
----
 
 **Execute the following steps step by step:**
 
@@ -23,3 +20,13 @@ Notifications: email, Messaging apps (telegram, discord)
    * Let **Resy** look up the necessary information relevant for the stack documentation *(no code examples)*
    * Update the file using the consistent pattern and relevant information from Resy’s findings *(no code examples; do not bloat the files)*
    * Mark in `OPTY-PLAN.md` that the file was optimized
+
+
+
+orchestare brainstorming workflow for 'multy chanel notification' {
+   - launche appropriate agents to think through the backend, frontend, Database
+   - after the agests are done let resy validate/varify their assumptions
+}
+ultrathink the agents outputs!
+
+task: create docs/blueprint/notifications/ (implementation strategy) and update the involved files in docs/blueprint/
