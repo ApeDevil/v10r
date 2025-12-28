@@ -92,26 +92,6 @@ DELEGATE when the task involves:
 - **resy**: "research", "evaluate", "compare", "best practice", "is X good for"
 - **docy**: "document", "README", "explain", "write docs"
 
-### How to Delegate
-
-Use the Task tool with the appropriate `subagent_type`:
-- `subagent_type: "daty"` for data modeling
-- `subagent_type: "svey"` for SvelteKit work
-- etc.
-
-### Available Agents
-
-| Agent | Model | Domain |
-|-------|-------|--------|
-| archy | sonnet | Codebase architecture and system design |
-| buny | sonnet | Bun runtime optimization |
-| daty | sonnet | Data modeling and schema design |
-| docy | haiku | Documentation writing |
-| resy | sonnet | Research and technology decisions |
-| secy | sonnet | Security and threat modeling |
-| svey | sonnet | SvelteKit patterns and best practices |
-| tray | haiku | Error tracing and debugging |
-| uxy | sonnet | UI/UX design |
 
 ## Skills Policy
 
