@@ -1,3 +1,6 @@
+knowledge gaps of ai - things post-training cutoff or underdocumented info
+---
+
 get an overview of the project! ultrathink it! modualize it as a mental model! with back in mind: Foundation (why/constraints) → Stack (what/choices) → Blueprint (how/implementation)
 
 then orchistare the following workflow:
@@ -22,7 +25,7 @@ Please think through the task and orchestrate the following workflow:
 
 checkout .claude/agents & .claude/skills and contemplate it!
 
-how about to add a new skill 'AI tools' for knowledge gaps of ai - things post-training cutoff or underdocumented info?
+how about to add a new skill 'AI tools' for ?
 
 
 then write the skill!
