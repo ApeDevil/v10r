@@ -40,12 +40,6 @@ Multi-target deployment strategy proving runtime portability. Same codebase depl
 
 ## Known limitations
 
-**Vercel pricing:**
-- Pro: $20/user/month
-- Overages not hard-stopped (except Hobby tier)
-- $0.60 per 1M function invocations over limit
-- Configure spend limits to avoid surprises
-
 **Vercel cold starts:**
 - 2-3 seconds for heavy setups (GraphQL + Prisma)
 - Each cold start requires new database connections
@@ -62,9 +56,10 @@ Multi-target deployment strategy proving runtime portability. Same codebase depl
 - Test thoroughly before production
 
 **Container platforms:**
-- Koyeb: Container sleep on free tier (cold starts)
-- Railway: $5/month minimum for always-on
+- Container sleep on free tiers causes cold starts
 - Requires Dockerfile knowledge
+
+See [vendors.md](../vendors.md#vercel) for pricing, free tier limits, and platform alternatives.
 
 ## Related
 

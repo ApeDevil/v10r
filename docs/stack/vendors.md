@@ -2,6 +2,8 @@
 
 All external services used by Velociraptor. This separates **what technology** we use from **who provides** it.
 
+> **How to use this file:** Technology files (e.g., `data/postgres.md`) cover *how to use* each technology. This file covers *provider details*: pricing, free tiers, compliance, and alternatives. Technology files link here for provider info.
+
 ## Why This Matters
 
 | Concern | Answer |

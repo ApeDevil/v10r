@@ -22,20 +22,13 @@ Open-source object-relational database management system. ACID-compliant with ex
 | Concurrent writes | MVCC | Locks | Single-writer |
 | Extensions | Rich ecosystem | Limited | Limited |
 
-**Provider comparison:**
-| Aspect | Neon | Supabase | PlanetScale |
-|--------|------|----------|-------------|
-| Free tier | 10 projects, 0.5 GB each | 500 MB, 2 projects | 5 GB, 1 DB |
-| Branching | Copy-on-write | No | Yes |
-| Serverless | Native scale-to-zero | Pooler needed | Native |
-| Cold start | 500ms-few seconds | None | None |
-
 **Neon advantages:**
 - Scale-to-zero: idle databases cost nothing
 - Instant provisioning (seconds, not minutes)
 - Database branching for testing/staging
 - Pay only for active compute time
-- Free tier: 100 CU-hours/month, no credit card, never expires
+
+See [vendors.md](../vendors.md#neon) for pricing, free tier limits, and provider alternatives.
 
 ## Known limitations
 
@@ -49,16 +42,12 @@ Open-source object-relational database management system. ACID-compliant with ex
 - Transaction-mode pooling disables: prepared statements (SQL-level), LISTEN/NOTIFY, SET statements, session advisory locks
 
 **Free tier constraints:**
-- Compute suspends when 100 CU-hours/month exhausted
-- 0.5 GB storage per project
-- 6 hours restore history
-- 1 day metrics retention
+- Compute suspends when monthly CU-hours exhausted
+- Limited storage per project
+- Short restore history and metrics retention
 - Community support only (no SLA)
 
-**Enterprise features (Scale plan only):**
-- SOC 2, ISO, HIPAA, GDPR compliance
-- IP Allow and Private Networking
-- Uptime SLA guarantees
+See [vendors.md](../vendors.md#neon) for exact limits and paid tier features.
 
 ## Related
 

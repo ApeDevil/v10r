@@ -43,14 +43,7 @@ Structured logging strategy for debugging, monitoring, and observability. JSON-f
 **Vercel Logs:**
 - 1 hour retention only
 - No search or filtering on free tier
-- Add Axiom (30 days) or Better Stack (3 days) for retention
-
-**Aggregation costs:**
-| Service | Free Tier | Retention |
-|---------|-----------|-----------|
-| Vercel Logs | Included | 1 hour |
-| Axiom | 500 GB/mo | 30 days |
-| Better Stack | 1 GB/mo | 3 days |
+- Consider external aggregators (Axiom, Better Stack) for longer retention
 
 **Security requirements:**
 - Never log: passwords, API keys, session tokens, credit cards

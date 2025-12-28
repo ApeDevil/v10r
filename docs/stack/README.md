@@ -45,4 +45,6 @@ Technology decisions and vendor choices. Each directory contains focused files o
 
 | File | Description |
 |------|-------------|
-| **[vendors.md](./vendors.md)** | Provider comparison, free tiers, compliance matrix |
+| **[vendors.md](./vendors.md)** | Provider pricing, free tiers, compliance matrix, alternatives |
+
+> Technology files cover *how to use*. vendors.md covers *provider details*. Technology files link to vendors.md for pricing and alternatives.

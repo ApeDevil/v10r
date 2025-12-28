@@ -30,12 +30,7 @@ Native graph database that stores data as nodes, relationships, and properties (
 - Readable Cypher syntax vs complex recursive SQL
 - 15+ years maturity, excellent tooling
 
-**Provider comparison:**
-| Aspect | Neo4j Aura | Amazon Neptune | Dgraph |
-|--------|------------|----------------|--------|
-| Query language | Cypher | Gremlin/SPARQL | GraphQL+- |
-| Free tier | Yes (limited) | None | Cloud only |
-| Maturity | 15+ years | Newer | Newer |
+See [vendors.md](../vendors.md#neo4j-aura) for pricing, free tier limits, and provider alternatives.
 
 **Important caveat:** Performance advantage "noticed only for large datasets and joins involving more than 5 tables." Not significant enough to replace relational databases for general use.
 
@@ -50,13 +45,6 @@ Native graph database that stores data as nodes, relationships, and properties (
 - Query performance degrades for deeply buried nodes
 - Security rules cause overhead (count operations lose fast lookups)
 - Relationship type limit: 65K maximum
-
-**Cost:**
-| Tier | Cost |
-|------|------|
-| Free | Limited nodes/relationships |
-| Professional | $65+/month |
-| Business Critical | $146+/month |
 
 **When NOT to use:**
 - Binary/BLOB storage
