@@ -544,6 +544,6 @@ src/lib/stores/
 ## Related
 
 - [./sidebar.md](./sidebar.md) - Sidebar component behavior
-- [./settings.md](./settings.md) - User preferences
+- [./settings.md](./settings.md) - Settings & Preferences
 - [./session-lifecycle.md](./session-lifecycle.md) - Session state
 - [../state.md](../state.md) - Svelte 5 state patterns

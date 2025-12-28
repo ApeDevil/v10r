@@ -16,7 +16,7 @@ Database tables for multi-channel notification system.
      ▼           ▼                ▼                  ▼
 ┌──────────┐ ┌───────────────┐ ┌────────────────┐ ┌────────────────┐
 │user_     │ │user_          │ │notification_   │ │telegram_       │
-│telegram_ │ │discord_       │ │preferences     │ │verification_   │
+│telegram_ │ │discord_       │ │settings        │ │verification_   │
 │accounts  │ │accounts       │ │(extended)      │ │tokens          │
 └──────────┘ └───────────────┘ └────────────────┘ └────────────────┘
                                        │
@@ -136,7 +136,7 @@ CREATE TYPE delivery_status AS ENUM (
   'processing',  -- Currently sending
   'sent',        -- Provider accepted
   'failed',      -- Provider rejected (after retries)
-  'skipped'      -- Channel inactive, user preference off
+  'skipped'      -- Channel inactive, user setting off
 );
 
 CREATE TYPE notification_channel AS ENUM (
@@ -160,9 +160,9 @@ CREATE TYPE notification_channel AS ENUM (
 
 ## Extended Table
 
-### notification_preferences (add columns)
+### notification_settings (add columns)
 
-Extend existing table with per-channel toggles.
+Extend existing table with per-channel toggles. Notification channel configuration is a **Setting** (affects functionality) per [../../foundation/user-data.md](../../foundation/user-data.md).
 
 | New Column | Type | Default | Purpose |
 |------------|------|---------|---------|
@@ -178,14 +178,14 @@ Extend existing table with per-channel toggles.
 **Why columns, not junction table?**
 - Fixed set of channels (3) and types (4) = 12 columns
 - Single row per user, no joins needed
-- Simpler queries: `SELECT telegram_mention FROM notification_preferences WHERE user_id = ?`
+- Simpler queries: `SELECT telegram_mention FROM notification_settings WHERE user_id = ?`
 - Adding a new type = add columns (migration)
 - Adding a new channel = add columns (migration, but rare)
 
 **Junction table alternative considered:**
 ```sql
 -- Rejected: more complex queries, no clear benefit for small matrix
-CREATE TABLE notification_channel_preferences (
+CREATE TABLE notification_channel_settings (
   user_id TEXT,
   notification_type notification_type_enum,
   channel notification_channel,
@@ -204,7 +204,7 @@ CREATE TABLE notification_channel_preferences (
 |-------|-----------|-------|
 | Get Telegram chat_id for user | Every send | `user_telegram_accounts.user_id` (unique) |
 | Get Discord credentials for user | Every send | `user_discord_accounts.user_id` (unique) |
-| Get preferences for user | Every send | `notification_preferences.user_id` (PK) |
+| Get settings for user | Every send | `notification_settings.user_id` (PK) |
 | Validate verification token | On deep link | `telegram_verification_tokens.token` (unique) |
 
 ### Cold Path Queries
@@ -298,10 +298,10 @@ ON telegram_verification_tokens (expires_at)
 WHERE used_at IS NULL;
 ```
 
-### Migration 3: Extended Preferences
+### Migration 3: Extended Settings
 
 ```sql
-ALTER TABLE notification_preferences
+ALTER TABLE notification_settings
 ADD COLUMN telegram_mention BOOLEAN NOT NULL DEFAULT true,
 ADD COLUMN telegram_comment BOOLEAN NOT NULL DEFAULT false,
 ADD COLUMN telegram_security BOOLEAN NOT NULL DEFAULT true,

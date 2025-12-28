@@ -537,7 +537,7 @@ For new users, show a brief overlay highlighting key shortcuts:
 ### Disable Shortcuts Setting
 
 ```typescript
-// Check user preference before executing
+// Check user setting before executing
 function handleKeydown(event: KeyboardEvent) {
   if (!userSettings.enableKeyboardShortcuts) return;
   // ... rest of handler

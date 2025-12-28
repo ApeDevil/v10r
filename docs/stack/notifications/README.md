@@ -7,7 +7,7 @@ Multi-channel notification system with user-controlled routing. Users connect th
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Notification Router                          │
-│         (checks user preferences, routes to channels)           │
+│          (checks user settings, routes to channels)             │
 ├──────────────┬──────────────┬──────────────┬───────────────────┤
 │    Email     │   Telegram   │   Discord    │    In-App         │
 │   (Resend)   │    (Bot)     │  (Bot+OAuth) │   (Database)      │
@@ -24,9 +24,9 @@ Multi-channel notification system with user-controlled routing. Users connect th
 | **[discord.md](./discord.md)** | Bot setup, OAuth2 flow, DM notifications |
 | **[novu.md](./novu.md)** | Orchestration platform, when to use, self-hosting |
 
-## User Preference Model
+## User Settings Model
 
-Users control notifications through a **Channel × Type Matrix**:
+Users control notifications through a **Channel × Type Matrix** (notification channels are **Settings** per [../../foundation/user-data.md](../../foundation/user-data.md)):
 
 |                | Email | Telegram | Discord |
 |----------------|:-----:|:--------:|:-------:|
@@ -70,7 +70,7 @@ Users control notifications through a **Channel × Type Matrix**:
 |-------|---------|
 | `user_telegram_accounts` | Telegram chat_id per user |
 | `user_discord_accounts` | Discord user_id + OAuth tokens |
-| `notification_preferences` | Per-type channel toggles |
+| `notification_settings` | Per-type channel toggles |
 
 ## Design Decisions
 

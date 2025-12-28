@@ -118,13 +118,13 @@ For Velociraptor, we start with custom routing because:
 3. Push existing channel credentials
 4. Create workflow matching your notification types
 5. Replace direct sends with Novu triggers
-6. Migrate preferences or use Novu's built-in
+6. Migrate settings or use Novu's built-in
 
 ### From Novu to Custom
 
 1. Export subscriber data
 2. Implement direct channel sending
-3. Migrate preference data to your tables
+3. Migrate settings data to your tables
 4. Replace Novu triggers with direct sends
 5. Remove Novu dependencies
 

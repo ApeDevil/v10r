@@ -282,7 +282,7 @@ Background job removes records where `is_active = false` and `unlinked_at < NOW(
 
 ## Related
 
-- [./preferences.md](./preferences.md) - UI for connection management
+- [./settings.md](./settings.md) - UI for connection management
 - [./schema.md](./schema.md) - Database tables for credentials
 - [./routing.md](./routing.md) - How providers use credentials
 - [../auth.md](../auth.md) - OAuth2 patterns

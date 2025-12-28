@@ -669,7 +669,7 @@ User's authenticated home.
 
 ### /app/settings
 
-User preferences with form handling.
+User configuration (preferences & settings) with form handling.
 
 | Tests | Technology | Provider |
 |-------|------------|----------|

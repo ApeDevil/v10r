@@ -24,10 +24,14 @@ Authorization
 👑 Admin
 🔭 Monitoring
 
-💬 Message
-📧 Email
+
 📻 Broadcast Notification  
 📟 Direct/personal Notification 
+💬 Message
+📧 Email
+✈️ Telegram
+👾 Discord
+
 
 🛂 Valadation
 🧼 Sanitization

@@ -14,10 +14,10 @@ Backend architecture for multi-channel notification delivery.
 │  Input: { userId, type, title, body, entityRef?, actionUrl? }               │
 │                                                                              │
 │  1. Create in-app notification record (always)                              │
-│  2. Load user preferences + connected channels                               │
+│  2. Load user settings + connected channels                                  │
 │  3. Apply routing rules:                                                     │
 │     - Security type → force email (cannot disable)                          │
-│     - Check preference matrix for each channel                              │
+│     - Check settings matrix for each channel                                │
 │     - Skip disconnected/inactive channels                                   │
 │  4. Create delivery records in outbox                                       │
 │  5. Trigger Inngest event: "notification/queued"                            │
@@ -178,7 +178,7 @@ When a channel fails permanently:
 1. Set `is_active = false` in channel table
 2. Store error message in `last_error` column
 3. Send notification via other channels: "Your {channel} is disconnected"
-4. Surface in preferences UI with "Reconnect" button
+4. Surface in settings UI with "Reconnect" button
 
 ---
 

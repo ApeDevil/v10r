@@ -16,7 +16,7 @@ Users connect their preferred channels and control which notification types go w
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Notification Router                           │
 │   1. Create in-app notification (always)                        │
-│   2. Load user preferences + connected channels                 │
+│   2. Load user settings + connected channels                    │
 │   3. Queue external deliveries via outbox                       │
 └──────────────────────────────┬──────────────────────────────────┘
                                │
@@ -35,8 +35,8 @@ Users connect their preferred channels and control which notification types go w
 |------|--------|
 | **[routing.md](./routing.md)** | • Notification router architecture<br>• Provider abstraction and rate limiting<br>• Outbox pattern with Inngest<br>• Delivery tracking and retry logic |
 | **[channels.md](./channels.md)** | • Telegram deep link connection flow<br>• Discord OAuth2 flow and DM limitations<br>• Credential storage and token refresh<br>• Channel health monitoring |
-| **[preferences.md](./preferences.md)** | • Route structure (`/app/settings/notifications`)<br>• Channel × Type matrix UI<br>• Connection management UX<br>• Mobile considerations |
-| **[schema.md](./schema.md)** | • `user_telegram_accounts` table<br>• `user_discord_accounts` table<br>• Extended preferences columns<br>• Delivery tracking tables |
+| **[settings.md](./settings.md)** | • Route structure (`/app/settings/notifications`)<br>• Channel × Type settings matrix UI<br>• Connection management UX<br>• Mobile considerations |
+| **[schema.md](./schema.md)** | • `user_telegram_accounts` table<br>• `user_discord_accounts` table<br>• Extended settings columns<br>• Delivery tracking tables |
 
 ## Critical Decision: Discord DM Limitation
 

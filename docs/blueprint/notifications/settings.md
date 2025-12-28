@@ -1,6 +1,8 @@
-# Notification Preferences UI
+# Notification Settings UI
 
-Frontend architecture for channel connections and preference management.
+Frontend architecture for channel connections and notification settings management.
+
+> **Terminology:** Notification channel configuration is a **Setting** (affects functionality) per [../../foundation/user-data.md](../../foundation/user-data.md).
 
 ---
 
@@ -60,7 +62,7 @@ Frontend architecture for channel connections and preference management.
 │ └─────────────────────────────────────────────────────────────┘ │
 │                                                                  │
 │ ┌─────────────────────────────────────────────────────────────┐ │
-│ │ Notification Preferences                                    │ │
+│ │ Notification Settings                                       │ │
 │ │                                                             │ │
 │ │                     Email   Telegram   Discord              │ │
 │ │                                                             │ │
@@ -72,7 +74,7 @@ Frontend architecture for channel connections and preference management.
 │ │ * Required - cannot be disabled                            │ │
 │ │ ○ Connect channel to enable                                │ │
 │ │                                                             │ │
-│ │ [Save Preferences]                                          │ │
+│ │ [Save Settings]                                             │ │
 │ └─────────────────────────────────────────────────────────────┘ │
 │                                                                  │
 │ ┌─────────────────────────────────────────────────────────────┐ │
@@ -127,7 +129,7 @@ Frontend architecture for channel connections and preference management.
 
 ---
 
-## Preference Matrix
+## Settings Matrix
 
 ### Data Structure
 
@@ -165,7 +167,7 @@ Frontend architecture for channel connections and preference management.
 ### Form Schema
 
 ```
-notification_preferences:
+notification_settings:
   mention:
     email: boolean
     telegram: boolean
@@ -228,7 +230,7 @@ Poll `/api/notifications/telegram/status` every 3 seconds until connected or can
 | `connectTelegram` | Generate token, return deep link |
 | `disconnectTelegram` | Set `is_active = false` |
 | `disconnectDiscord` | Revoke token, set `is_active = false` |
-| `updatePreferences` | Save preference matrix |
+| `updateSettings` | Save settings matrix |
 
 ---
 
@@ -294,7 +296,7 @@ Use `window.location.href` instead of `window.open()` for Discord OAuth:
 ### Screen Reader Announcements
 
 - After successful connection: "Telegram connected successfully"
-- After preference save: "Notification preferences saved"
+- After settings save: "Notification settings saved"
 - After disconnect: "Telegram disconnected"
 
 ---
@@ -306,7 +308,7 @@ Use `window.location.href` instead of `window.open()` for Discord OAuth:
 | Data | Source |
 |------|--------|
 | `channels` | Query all channel tables for user |
-| `preferences` | Query `notification_preferences` row |
+| `settings` | Query `notification_settings` row |
 | `notificationTypes` | Static config (could be cached) |
 | `discordClientId` | Environment variable |
 | `discordRedirectUri` | Environment variable |
@@ -326,7 +328,7 @@ Use `window.location.href` instead of `window.open()` for Discord OAuth:
 | Token generation failed | Toast: "Failed to generate connection link" |
 | OAuth cancelled | URL param → Toast: "Discord connection cancelled" |
 | OAuth error | URL param → Toast: "Discord connection failed" |
-| Preference save failed | Toast: "Failed to save preferences" + revert |
+| Settings save failed | Toast: "Failed to save settings" + revert |
 | Channel already linked | Toast: "This Telegram account is already linked" |
 
 ---

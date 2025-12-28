@@ -15,7 +15,7 @@ Technology decisions and vendor choices. Each directory contains focused files o
 | [i18n/](./i18n/) | Internationalization |
 | [ops/](./ops/) | Deployment, logging, caching |
 | [ai/](./ai/) | LLM integration |
-| [notifications/](./notifications/) | Email, Telegram, Discord, user preferences |
+| [notifications/](./notifications/) | Email, Telegram, Discord, user settings |
 | [features/](./features/) | Cross-cutting features |
 
 ## Quick Reference

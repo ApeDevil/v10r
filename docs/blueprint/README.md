@@ -14,7 +14,7 @@ Implementation designs and feature specifications. How to build features using t
 
 | File | Main Topics |
 |------|-------------|
-| **[notifications/](./notifications/)** | • [README.md](./notifications/README.md): Architecture overview, build vs buy decision, Discord DM limitation<br>• [routing.md](./notifications/routing.md): Notification router, provider abstraction, outbox + Inngest, delivery tracking<br>• [channels.md](./notifications/channels.md): Telegram deep link flow, Discord OAuth2, token management, health monitoring<br>• [preferences.md](./notifications/preferences.md): Settings UI, Channel × Type matrix, connection cards, mobile patterns<br>• [schema.md](./notifications/schema.md): user_telegram_accounts, user_discord_accounts, extended preferences, delivery log |
+| **[notifications/](./notifications/)** | • [README.md](./notifications/README.md): Architecture overview, build vs buy decision, Discord DM limitation<br>• [routing.md](./notifications/routing.md): Notification router, provider abstraction, outbox + Inngest, delivery tracking<br>• [channels.md](./notifications/channels.md): Telegram deep link flow, Discord OAuth2, token management, health monitoring<br>• [settings.md](./notifications/settings.md): Settings UI, Channel × Type matrix, connection cards, mobile patterns<br>• [schema.md](./notifications/schema.md): user_telegram_accounts, user_discord_accounts, extended settings, delivery log |
 
 > **Note:** In-app notifications (notification center, SSE) are in [app-shell/notifications.md](./app-shell/notifications.md). This section covers external channel delivery.
 
