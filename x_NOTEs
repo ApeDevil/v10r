@@ -51,3 +51,37 @@ let resy look up if such sturcture would work and if yes then how to structure i
 let resy look up the most inportained and best modern practices in context of our project for 'relational db' & 'neon'
 
 after resy is done ultrathink the findings and wirite the vendor agnstic db-relational skill with a .claude/skills/db-relational/references/neon.md
+
+
+
+
+
+
+
+
+Here’s a **concise, compact, and unambiguous** version, optimized as clear instructions:
+
+---
+
+## Documentation Navigation Rules
+
+The `docs/` directory uses an **index-first structure**.
+
+READMEs are the index. Files contain details:
+* Every directory in `docs/` contains a `README.md`
+* Each README acts as a **navigation hub**
+* READMEs include:
+- **2–3 sentence intro** (directory purpose only)
+- * **Topic table** mapping files → covered topics
+
+### Mandatory Navigation Flow
+
+1. Start at [`docs/README.md`](./docs/README.md)
+2. Drill down via directory `README.md` files
+3. Identify the correct file using the topic table
+4. Read **only** the relevant file(s)
+
+### Hard Rule
+
+❌ Do **not** grep or scan documentation blindly
+✅ READMEs are the authoritative index
