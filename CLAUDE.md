@@ -41,14 +41,6 @@ Each documentation directory has a README.md that serves as a **navigation hub**
 1. **Brief intro** (2-3 sentences) - directory purpose only
 2. **Topic table** - each file with its main topics as bullet points
 
-Example format:
-```markdown
-| File | Main Topics |
-|------|-------------|
-| auth.md | • Better Auth setup, • OAuth providers, • Session management |
-| rate-limiting.md | • sveltekit-rate-limiter, • Upstash scaling, • Per-route limits |
-```
-
 This ensures findability - scanning a README reveals which file covers any topic.
 
 ### Finding Documentation
@@ -60,6 +52,7 @@ This ensures findability - scanning a README reveals which file covers any topic
 3. **Finally** - Read the specific file(s)
 
 Never grep blindly through docs. The READMEs are the index.
+
 
 ## Agent Delegation Policy
 
