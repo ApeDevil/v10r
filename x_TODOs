@@ -1,4 +1,29 @@
+
+`docs/blueprint/pages.md` & `docs/blueprint/forms.md`
+│   └── /forgot-password in / | Password reset | **Better Auth client** | Auth-critical flow with token handling |
+
+we will not use paswords! only OTP or magic links (both similtaniusly in one email, user can choose the log-in type)
+
+also we will not use 'Main Nav'! check out app-shell (only a page header if needed)
+
+purge the idea of using pasword from /blueprint/
+
+----
+
+check out the blueprints documents! there are many instractions to install stuff but we are using only a container so there should be a note of adding the tech to packege (there will be no manual intalations). do you get what i mean?
+
+---
+
 data saving; schedualed deletion 
+
+---
+
+session display: all general stuff that usual/standart to track; transperency
+create a docs/foundation/transperancy.md
+
+---
+
+we implemt the most eneouing & useless (strict) regulations so the burocrats can go fuck themselves
 
 ---
 
@@ -21,12 +46,3 @@ data saving; schedualed deletion
    * Update the file using the consistent pattern and relevant information from Resy’s findings *(no code examples; do not bloat the files)*
    * Mark in `OPTY-PLAN.md` that the file was optimized
 
-
-
-orchestare brainstorming workflow for 'multy chanel notification' {
-   - launche appropriate agents to think through the backend, frontend, Database
-   - after the agests are done let resy validate/varify their assumptions
-}
-ultrathink the agents outputs!
-
-task: create docs/blueprint/notifications/ (implementation strategy) and update the involved files in docs/blueprint/
