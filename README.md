@@ -4,13 +4,12 @@ A full-stack template focused on performance, lightweight deployment, and free-t
 
 > Fast and dangerous (in a good way).
 
-**Status:** Pre-scaffold planning phase
-
 ## Why "Velociraptor"?
+
+The requermnets of the stack are performance and lightweight and the 'Velociraptor' repesents those perfectly!
 
 - **Veloci-** → "Velocity" → Speed (Bun is fast, Svelte is fast, containers are lightweight)
 - **-raptor** → The dinosaur → Cool factor + a bit dangerous/experimental (it's a test project)
-- **V** connection → **V**elocity + S**v**elte both share that V sound
 - The actual dinosaur name means **"swift thief"** in Latin (velox = swift, raptor = robber/thief)
 
 ## Genesis
@@ -21,15 +20,14 @@ Each layer evolves from and is based on the previous:
   Foundation (why/constraints) → Stack (what/choices) → Blueprint (how/implementation)
 ```
 
-1. **[foundation/PRD.md](./docs/foundation/PRD.md)** — Source of truth (goals, requirements)
+1. **[foundation/](./docs/foundation/)** — Source of truth (goals, requirements)
 2. **[stack/](./docs/stack/)** — Technology decisions based on PRD
-3. **[blueprint/](./docs/blueprint/)** — Implementation specs based on stack
+3. **[blueprint/](./docs/blueprint/)** — Implementation specs & strategy based on stack
 
 
 ## Local Development
 
-Clean system + portable setup
-app container - databases are remote
+Clean host system + portable setup
 
 ```
 ┌───────────────────────────────────────────┐
@@ -43,8 +41,6 @@ app container - databases are remote
 └───────────────────────────────────────────┘
 ```
 
-
-
 ## Core Stack
 
 **Podman + Bun + SvelteKit** with relational database, graph database, and object storage.
@@ -57,8 +53,7 @@ Podman                  Container (runs everything)
 See [docs/stack/README.md](./docs/stack/README.md) for complete technology decisions.
 
 
-
-## Core Idea
+## Core Idea of the App
 
 **The app documents itself by being itself.**
 
