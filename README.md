@@ -1,4 +1,4 @@
-# Velociraptor
+# Velociraptor (v10r)
 
 A full-stack template focused on performance, lightweight deployment, and free-tier friendly services.
 
@@ -45,7 +45,7 @@ app container - databases are remote
 
 
 
-## Stack
+## Core Stack
 
 **Podman + Bun + SvelteKit** with relational database, graph database, and object storage.
 
@@ -83,7 +83,7 @@ The `docs/` folder uses an AI-optimized navigation structure. Each directory has
 **Navigation rule:** Always start at [`docs/README.md`](./docs/README.md), drill down through directory READMEs to find the right file.
 
 
-## Project Structure
+## Project Root Structure
 
 | Path | Purpose |
 |------|---------|

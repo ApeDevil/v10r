@@ -1,6 +1,52 @@
 
-progresev discovory of contend:
-- dispaly content granularly
-- svave the progress; let the user resume where they left off
-- use visual indicators to show progress/history
+# prompt
+
+1) check out & contemplate the blueprint app-shell
+
+2) let's brainstorm blueprint 'Progresive Content Discovery' (blueprint/pcd/README.md, blueprint/pcd/concept.md )
+also that elements like sidebar are only displayd when user arrived at a stage where the elements are usefule, not before
+
+3) consult with agents about this
+
+---
+
+# Progresive Content Discovery (PCD)
+
+## Core Idea
+- dispaly content granularly; no cognetive overload 
+- guide the user through the structure
+- save the progress; let the user resume where they left off (even without an account)
+- use visual indicators to show progress/history (muted display of FTUX & onboarding)
 - allow for bookmarking or favoriting specific sections
+- Main Stages: FTUX > Sign-Up > Onboarding
+
+## FTUX (First-Time User Experience) with action-oriented funnel
+Phase 1) first the user lands on the landing-page; in the background is a guest account created to save PCD stages
+- clear & emotional landing-page with some simple choices (action buttons)
+- secondary choises: Theme & Language
+- scroling down the landing-page is also counting as valid action to trigger next phases
+Phase 2) Content Acordion is displayed after the user click on one of the actions buttons
+
+Phase 3) Sign-Up
+- after the use has viewed all infos on the landing page, there should be a messge "you are reday for the next steps: sign up and dive in"
+- after email confermation user gets first achivment:  PIONIER
+
+
+Phase 4) Onboarding after the email is confirmed
+
+## Sign-Up
+- friction should be as little as possible
+- it should feel very save: sign-up via email & OTP
+- promiss of no botherring after sign-up; olny user aproved notifications will be sent (accordion in the sign-up form: our phylosophy); phylosophy note is added to the sign-up email "Adjust your notifications settings" with a link to notifications settings page
+- UI: form title = forground 'log in' with muted 'or Create Account'; one email field & button 'get access'
+
+## Onboarding
+- optional onbaording; user can choose to discover the app on himself or walk the onboarding jorney
+- onboarding should be an exiting expirience like a game, not somethin forsed
+- onboarding progress is tide to achivments
+
+---
+
+# Questions:
+- how & where do we save the 'content discovery progess': local in browser or in DB as gusest
+

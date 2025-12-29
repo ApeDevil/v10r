@@ -2,17 +2,14 @@
 
 ## Project Overview
 
-Velociraptor is a full-stack template/test-sandbox focused on performance and lightweight deployment. The project simultaneously serves as documentation, a test environment, and a reusable template for new projects.
+Velociraptor (v10r) is a full-stack template/test-sandbox focused on performance and lightweight deployment. The project simultaneously serves as documentation, a test environment, and a reusable template for new projects.
 
-**Status:** Pre-scaffold planning phase. No code has been written yet.
-
-## Local Development
-app container - databases are remote
 
 ## Stack
 
 | Layer | Technology | Docs |
 |-------|------------|------|
+| Container | Podman | `ddocs/stack/core/podman.md` |
 | Runtime | Bun | `docs/stack/core/bun.md` |
 | Framework | SvelteKit 2 + Svelte 5 | `docs/stack/core/sveltekit.md`, `docs/stack/core/svelte.md` |
 | Database | PostgreSQL (Neon) + Neo4j (Aura) | `docs/stack/data/postgres.md`, `docs/stack/data/neo4j.md` |
@@ -31,6 +28,10 @@ app container - databases are remote
 ## Architecture
 
 The project uses a self-documenting architecture where showcase pages serve as documentation, tests, and templates simultaneously. If a showcase page works, the feature is proven functional.
+
+## Local Development
+- on host machine is only podman isntalled, everthing else runs in our v10r podman container
+- we use only an app container, the databases are remote
 
 
 ## Documentation
