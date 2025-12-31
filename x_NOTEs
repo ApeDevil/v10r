@@ -5,14 +5,15 @@
 knowledge gaps of ai - things post-training cutoff or underdocumented info
 ---
 
-get an overview of the project! ultrathink it! modualize it as a mental model! with back in mind: Foundation (why/constraints) → Stack (what/choices) → Blueprint (how/implementation)
+check out the project and ultrathink it trough! modualize it as a mental model as a list of modules and the contection between them [with back in mind: Foundation (why/constraints) → Stack (what/choices) → Blueprint (how/implementation)]
 
-then orchistare the following workflow:
-1) Let the appropriate agent analyze each module (documentation part/sections)! they should look for inconsistencies & incoherences!
+then orchistare the following workflow for each module, go through your list one by one:{
+1) Let the appropriate agents analyze the current module form the your list! they should look for inconsistencies & incoherences!
 and if they find anything then report it back to you!
-2) after the agents are done analyze the founded issues and ultrathink if those a real problems, focus on what really matters! then you yourself look for breaking points between the modules!
-3) consult with appropriate agent about the best solutions! alway let resy validate & verify the assumptions!
+2) after the agents are done analyze the founded issues and ultrathink those, fix importaind breakingpoints and ignore minor issues!
+3) consult with appropriate agent about the best solutions! alway let resy and scout validate/verify the assumptions!
 4) execute the fixes!
+}
 
 ---
 

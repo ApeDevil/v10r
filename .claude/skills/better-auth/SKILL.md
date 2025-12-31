@@ -374,11 +374,17 @@ export async function cleanupExpiredSessions() {
 ```typescript
 // src/routes/api/cron/session-cleanup/+server.ts
 import { json, error } from '@sveltejs/kit';
+import { timingSafeEqual } from 'crypto';
 import { cleanupExpiredSessions } from '$lib/server/jobs/session-cleanup';
 
 export async function GET({ request }) {
   const auth = request.headers.get('authorization');
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  const expected = `Bearer ${process.env.CRON_SECRET}`;
+
+  // Use timing-safe comparison to prevent timing attacks
+  if (!auth ||
+      auth.length !== expected.length ||
+      !timingSafeEqual(Buffer.from(auth), Buffer.from(expected))) {
     error(401, 'Unauthorized');
   }
 

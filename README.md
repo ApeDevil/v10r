@@ -33,7 +33,7 @@ Clean host system + portable setup
 ┌───────────────────────────────────────────┐
 │  Host Machine                             │
 │  ┌───────────────────────────────────┐    │
-│  │  Podman Container                 │    │
+│  │  Podman Container (v10r)          │    │
 │  │  ┌───────────────────────────┐    │    │
 │  │  │  Bun + SvelteKit          │    │    │
 │  │  └───────────────────────────┘    │    │

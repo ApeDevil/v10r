@@ -9,7 +9,7 @@ Velociraptor (v10r) is a full-stack template/test-sandbox focused on performance
 
 | Layer | Technology | Docs |
 |-------|------------|------|
-| Container | Podman | `ddocs/stack/core/podman.md` |
+| Container | Podman | `docs/stack/core/podman.md` |
 | Runtime | Bun | `docs/stack/core/bun.md` |
 | Framework | SvelteKit 2 + Svelte 5 | `docs/stack/core/sveltekit.md`, `docs/stack/core/svelte.md` |
 | Database | PostgreSQL (Neon) + Neo4j (Aura) | `docs/stack/data/postgres.md`, `docs/stack/data/neo4j.md` |
@@ -30,8 +30,35 @@ Velociraptor (v10r) is a full-stack template/test-sandbox focused on performance
 The project uses a self-documenting architecture where showcase pages serve as documentation, tests, and templates simultaneously. If a showcase page works, the feature is proven functional.
 
 ## Local Development
-- on host machine is only podman isntalled, everthing else runs in our v10r podman container
-- we use only an app container, the databases are remote
+
+**Container-first architecture** - the host machine stays clean.
+
+| Host Machine | v10r Container |
+|--------------|----------------|
+| Only Podman installed | Bun, SvelteKit, all dependencies |
+| No node_modules | node_modules lives here |
+| No runtime installed | Runtime executes here |
+| Source code (mounted) | Source code (via volume) |
+
+### Key Principles
+
+1. **Never install on host** - No `bun install`, `npm install`, or any package manager commands on the host machine
+2. **Container has everything** - All tools, dependencies, and runtime are inside the v10r container
+3. **Databases are remote** - PostgreSQL (Neon) and Neo4j (Aura) are cloud-hosted, not containerized locally
+4. **Dependencies via package.json** - Add dependencies to `package.json`, then rebuild/restart container
+
+### Workflow
+
+```bash
+# Start development (from host)
+podman-compose up -d
+
+# Container runs: bun install && bun run dev
+# Access app at http://localhost:5173
+
+# Add a new dependency (edit package.json, then restart)
+podman-compose restart app
+```
 
 
 ## Documentation
@@ -75,6 +102,7 @@ Never grep blindly through docs. The READMEs are the index.
 | Errors, failures, debugging, test failures | **tray** |
 | Technical research, technology evaluation, verification | **resy** |
 | Documentation writing, README, guides | **docy** |
+| Real-world technology research, community practices | **scout** |
 
 ### Delegation Triggers
 
@@ -88,6 +116,7 @@ DELEGATE when the task involves:
 - **tray**: "error", "failure", "exception", "debug", "trace", "not working", "failing"
 - **resy**: "research", "evaluate", "compare", "best practice", "is X good for"
 - **docy**: "document", "README", "explain", "write docs"
+- **scout**: "how do people actually use", "what problems do teams hit", "is this production-ready", "find implementations"
 
 
 ## Skills Policy
@@ -101,6 +130,9 @@ DELEGATE when the task involves:
 - SvelteKit routes, load functions, rendering → `sveltekit`
 - Forms with Valibot + Superforms → `valibot-superforms`
 - Drizzle ORM schemas and queries → `drizzle`
+- Neon PostgreSQL serverless patterns → `db-relational`
+- Neo4j graph database patterns → `db-graph`
+- Cloudflare R2 file storage → `db-files`
 - Better Auth setup and patterns → `better-auth`
 - UnoCSS styling and configuration → `unocss`
 - Biome linting and formatting → `biome`
@@ -121,6 +153,9 @@ DELEGATE when the task involves:
 | sveltekit | SvelteKit 2 routing and data loading |
 | valibot-superforms | Form validation with Valibot v1 + Superforms |
 | drizzle | Drizzle ORM schemas, queries, migrations |
+| db-relational | Neon PostgreSQL serverless patterns |
+| db-graph | Neo4j Aura graph database patterns |
+| db-files | Cloudflare R2 file storage patterns |
 | better-auth | Better Auth session-based authentication |
 | unocss | UnoCSS atomic CSS with Bits UI |
 | biome | Biome linter and formatter configuration |

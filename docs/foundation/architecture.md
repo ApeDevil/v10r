@@ -138,4 +138,4 @@ Intercept requests/responses for cross-cutting concerns.
 
 ## Implementation
 
-See [stack/primary/sveltekit.md](../stack/primary/sveltekit.md) for how these patterns are implemented in SvelteKit.
+See [stack/core/sveltekit.md](../stack/core/sveltekit.md) for how these patterns are implemented in SvelteKit.
