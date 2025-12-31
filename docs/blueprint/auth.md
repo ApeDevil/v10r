@@ -1,29 +1,43 @@
 # Authentication Architecture
 
-Session-based authentication using Better Auth with Drizzle ORM.
+**Passwordless** session-based authentication using Better Auth with Drizzle ORM.
 
 **Technology:** Session-based auth (library, not a service). See [stack/auth.md](../../stack/auth.md) for alternatives.
+
+> **No passwords.** Users authenticate via magic link or OTP code (both sent in one email). This eliminates password-related security risks and simplifies the auth flow.
 
 ---
 
 ## Strategy
 
-**Better Auth** for production-ready features with minimal setup.
+**Better Auth** for production-ready passwordless authentication.
 
 | Component | Technology | Provider | Why |
 |-----------|------------|----------|-----|
 | Framework | Session auth | Better Auth | TypeScript-first, batteries-included |
+| Primary auth | Magic link + OTP | Built-in plugins | No passwords to breach |
 | Adapter | ORM integration | Drizzle | Native integration, auto-schema |
 | Sessions | Database sessions | [Neon](../../stack/vendors.md#neon) | Immediate revocation, no JWT complexity |
-| 2FA | TOTP | Built-in | No additional libraries |
+| 2FA | TOTP | Built-in | Layer on top of passwordless |
 | OAuth | OAuth 2.0 | Built-in | 20+ providers supported |
+
+### Why Passwordless
+
+| Concern | Password-based | Passwordless |
+|---------|----------------|--------------|
+| Credential stuffing | Vulnerable | Immune |
+| Weak passwords | Common problem | Non-issue |
+| Password reuse | Major risk | Non-issue |
+| Database breach impact | High (hashes leaked) | Low (no secrets) |
+| User friction | Forgot password flow | Just request new link |
+| Support burden | Password resets | Minimal |
 
 ### Why Better Auth
 
 | Feature | Better Auth | DIY | Clerk |
 |---------|-------------|-----|-------|
 | Setup time | Minutes | Hours | Minutes |
-| 2FA/Passkeys | Built-in | Manual | Built-in |
+| Magic link + OTP | Built-in plugins | Manual | Built-in |
 | Drizzle adapter | Native | Manual | N/A |
 | Cost | Free | Free | $25/mo after 10K |
 | Vendor lock-in | None | None | High |
@@ -42,19 +56,77 @@ bun add better-auth
 
 ### Auth Instance
 
+> **Important:** Better Auth has TWO separate plugins for passwordless auth:
+> - `magicLink` — generates a clickable URL with 32-char token
+> - `emailOTP` — generates an independent 6-digit code
+>
+> We use BOTH plugins together and send both in the same email.
+
 ```typescript
 // src/lib/server/auth.ts
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { magicLink } from 'better-auth/plugins/magic-link';
+import { emailOTP } from 'better-auth/plugins/email-otp';
 import { db } from './db';
+import { sendAuthEmail } from './email';
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: 'pg' }),
 
+  // NO emailAndPassword - we use magic link + OTP only
   emailAndPassword: {
-    enabled: true,
-    minPasswordLength: 8,
+    enabled: false,
   },
+
+  // Rate limiting (emailOTP plugin doesn't accept rateLimit directly)
+  // See: https://github.com/better-auth/better-auth/issues/3848
+  rateLimit: {
+    enabled: true,
+    window: 60,
+    max: 10,
+    customRules: {
+      '/sign-in/magic-link': { window: 300, max: 5 },  // 5 per 5 min
+      '/sign-in/email-otp': { window: 300, max: 5 },   // 5 per 5 min
+      '/email-otp/verify-email': { window: 60, max: 5 }, // 5 per min (verification)
+    },
+  },
+
+  plugins: [
+    // Magic Link plugin - for clickable email links
+    magicLink({
+      sendMagicLink: async ({ email, url }) => {
+        // Generate OTP via the emailOTP plugin
+        // The OTP is stored separately with its own expiration
+        const otpResult = await auth.api.sendVerificationOtp({
+          body: { email, type: 'sign-in' },
+        });
+
+        // Send email with BOTH magic link AND OTP code
+        await sendAuthEmail({
+          to: email,
+          subject: 'Sign in to Velociraptor',
+          magicLinkUrl: url,
+          otpCode: otpResult.otp!, // Only available if sendVerificationOTP returns it
+        });
+      },
+      storeToken: 'hashed', // CRITICAL: Hash tokens before storage
+      expiresIn: 600, // 10 minutes
+    }),
+
+    // Email OTP plugin - for 6-digit codes
+    emailOTP({
+      otpLength: 6,
+      expiresIn: 600, // 10 minutes (same as magic link)
+      allowedAttempts: 3, // Lock out after 3 failed attempts per code
+      sendVerificationOTP: async ({ email, otp, type }) => {
+        // Email is sent from magicLink.sendMagicLink above
+        // This callback is for standalone OTP (we don't use it directly)
+        // Return the OTP so sendMagicLink can include it
+        return { otp };
+      },
+    }),
+  ],
 
   socialProviders: {
     github: {
@@ -70,7 +142,6 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 30, // 30 days
     updateAge: 60 * 60 * 24, // Update session every 24 hours
-    // CRITICAL: Enable cookie caching to avoid DB hit on every request
     cookieCache: {
       enabled: true,
       maxAge: 60 * 5, // 5 minutes - revalidate session from DB every 5 min
@@ -80,6 +151,63 @@ export const auth = betterAuth({
 
 export type Auth = typeof auth;
 ```
+
+> **Security notes:**
+> - `storeToken: 'hashed'` — Magic link tokens are hashed before storage (database breach doesn't expose active links)
+> - `allowedAttempts: 3` — OTP codes are invalidated after 3 failed attempts (per-code lockout)
+> - `customRules` — Rate limiting per endpoint prevents brute force
+> - Magic link and OTP are **cryptographically independent** — compromising one doesn't reveal the other
+
+### Auth Email Template
+
+```typescript
+// src/lib/server/email.ts
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+interface AuthEmailParams {
+  to: string;
+  subject: string;
+  magicLinkUrl: string;
+  otpCode: string;
+}
+
+export async function sendAuthEmail({ to, subject, magicLinkUrl, otpCode }: AuthEmailParams) {
+  await resend.emails.send({
+    from: 'Velociraptor <auth@yourdomain.com>',
+    to,
+    subject,
+    html: `
+      <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto;">
+        <h2>Sign in to Velociraptor</h2>
+
+        <p>Click the button to sign in instantly:</p>
+        <a href="${magicLinkUrl}"
+           style="display: inline-block; background: #000; color: #fff;
+                  padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+          Sign In
+        </a>
+
+        <p style="margin-top: 24px; color: #666;">
+          Or enter this code:
+        </p>
+        <div style="font-size: 32px; font-family: monospace; letter-spacing: 4px;
+                    background: #f5f5f5; padding: 16px; text-align: center;">
+          ${otpCode}
+        </div>
+
+        <p style="margin-top: 24px; font-size: 14px; color: #999;">
+          This link and code expire in 10 minutes.
+          If you didn't request this, you can safely ignore this email.
+        </p>
+      </div>
+    `,
+  });
+}
+```
+
+> **Email scanner note:** Some enterprise email systems (Microsoft Defender, etc.) prefetch URLs which can "consume" magic links before users click them. The OTP code provides a reliable fallback. See [GitHub #5550](https://github.com/better-auth/better-auth/issues/5550).
 
 ### SvelteKit Hook
 
@@ -119,17 +247,23 @@ export const handle = sequence(authHandle, sessionHandle);
 ```typescript
 // src/lib/auth-client.ts
 import { createAuthClient } from 'better-auth/svelte';
+import { magicLinkClient } from 'better-auth/client/plugins';
+import { emailOTPClient } from 'better-auth/client/plugins';
 
 export const authClient = createAuthClient({
   baseURL: import.meta.env.VITE_BASE_URL,
+  plugins: [
+    magicLinkClient(),  // For magic link sign-in
+    emailOTPClient(),   // For OTP verification
+  ],
 });
 
 // Export typed helpers
 export const {
   signIn,
-  signUp,
   signOut,
   useSession,
+  emailOtp,  // For OTP verification: emailOtp.verifyOtp()
 } = authClient;
 ```
 
@@ -216,73 +350,22 @@ export const userProfile = pgTable('user_profile', {
 
 ## Authentication Flows
 
-> **Why not Superforms?** Auth forms use Better Auth's client methods (`signIn.email()`, `signUp.email()`) directly instead of Superforms + Valibot. This is intentional:
+> **Passwordless only.** No passwords in the system. Users authenticate via:
+> 1. **Magic link** — Click link in email, instant sign in
+> 2. **OTP code** — Enter 6-digit code from email
+> 3. **OAuth** — GitHub, Google, etc.
 >
-> 1. **Client-side auth flow** — Better Auth handles validation, rate limiting, and error messages internally
-> 2. **No server action needed** — Auth endpoints are managed by `svelteKitHandler`, not form actions
-> 3. **Built-in features** — OAuth redirects, email verification, and 2FA work out of the box
->
-> For all other forms (profile, settings, CRUD), use Superforms + Valibot as documented in [forms.md](./forms.md).
+> Both magic link and OTP are sent in the same email. User chooses their preferred method.
 
-### Sign Up
-
-```svelte
-<!-- src/routes/auth/register/+page.svelte -->
-<script lang="ts">
-  import { signUp } from '$lib/auth-client';
-  import { goto } from '$app/navigation';
-
-  let email = $state('');
-  let password = $state('');
-  let name = $state('');
-  let loading = $state(false);
-  let error = $state('');
-
-  async function handleSubmit() {
-    loading = true;
-    error = '';
-
-    const result = await signUp.email({
-      email,
-      password,
-      name,
-    });
-
-    if (result.error) {
-      error = result.error.message;
-      loading = false;
-      return;
-    }
-
-    goto('/app/dashboard');
-  }
-</script>
-
-<form onsubmit={handleSubmit}>
-  <input type="text" bind:value={name} placeholder="Name" required />
-  <input type="email" bind:value={email} placeholder="Email" required />
-  <input type="password" bind:value={password} placeholder="Password" required />
-
-  {#if error}
-    <p class="error">{error}</p>
-  {/if}
-
-  <button type="submit" disabled={loading}>
-    {loading ? 'Creating account...' : 'Sign Up'}
-  </button>
-</form>
-```
-
-### Sign In
+### Email Entry (Step 1)
 
 ```svelte
 <!-- src/routes/auth/login/+page.svelte -->
 <script lang="ts">
-  import { signIn } from '$lib/auth-client';
+  import { authClient, signIn } from '$lib/auth-client';
   import { goto } from '$app/navigation';
 
   let email = $state('');
-  let password = $state('');
   let loading = $state(false);
   let error = $state('');
 
@@ -290,9 +373,9 @@ export const userProfile = pgTable('user_profile', {
     loading = true;
     error = '';
 
-    const result = await signIn.email({
+    const result = await authClient.signIn.magicLink({
       email,
-      password,
+      callbackURL: '/app/dashboard',
     });
 
     if (result.error) {
@@ -301,7 +384,8 @@ export const userProfile = pgTable('user_profile', {
       return;
     }
 
-    goto('/app/dashboard');
+    // Redirect to verification page
+    goto(`/auth/verify?email=${encodeURIComponent(email)}`);
   }
 
   async function handleOAuth(provider: 'github' | 'google') {
@@ -310,23 +394,150 @@ export const userProfile = pgTable('user_profile', {
 </script>
 
 <form onsubmit={handleSubmit}>
-  <input type="email" bind:value={email} placeholder="Email" required />
-  <input type="password" bind:value={password} placeholder="Password" required />
+  <h1>Sign in</h1>
+
+  <div class="form-field">
+    <label for="email">Email</label>
+    <input
+      id="email"
+      type="email"
+      bind:value={email}
+      placeholder="you@example.com"
+      required
+    />
+  </div>
 
   {#if error}
-    <p class="error">{error}</p>
+    <p class="error" role="alert">{error}</p>
   {/if}
 
   <button type="submit" disabled={loading}>
-    {loading ? 'Signing in...' : 'Sign In'}
+    {loading ? 'Sending...' : 'Continue with Email'}
   </button>
 </form>
 
+<div class="divider">or</div>
+
 <div class="oauth-buttons">
-  <button onclick={() => handleOAuth('github')}>Continue with GitHub</button>
-  <button onclick={() => handleOAuth('google')}>Continue with Google</button>
+  <button type="button" onclick={() => handleOAuth('github')}>
+    Continue with GitHub
+  </button>
+  <button type="button" onclick={() => handleOAuth('google')}>
+    Continue with Google
+  </button>
 </div>
 ```
+
+### OTP Verification (Step 2)
+
+> **Important:** OTP verification uses `emailOtp.verifyOtp()`, NOT `signIn.magicLink()`.
+> Magic links and OTPs are **cryptographically independent** — different tokens, different verification methods.
+
+```svelte
+<!-- src/routes/auth/verify/+page.svelte -->
+<script lang="ts">
+  import { authClient } from '$lib/auth-client';
+  import { goto } from '$app/navigation';
+  import { page } from '$app/state';
+
+  const email = $derived(page.url.searchParams.get('email') ?? '');
+
+  let code = $state('');
+  let loading = $state(false);
+  let error = $state('');
+  let attemptsRemaining = $state(3);
+  let resendCooldown = $state(0);
+
+  async function handleVerify() {
+    loading = true;
+    error = '';
+
+    // Use emailOtp.verifyOtp() - NOT signIn.magicLink()
+    const result = await authClient.emailOtp.verifyOtp({
+      email,
+      otp: code,
+    });
+
+    if (result.error) {
+      attemptsRemaining--;
+      if (attemptsRemaining <= 0) {
+        error = 'Too many failed attempts. Please request a new code.';
+      } else {
+        error = `Invalid code. ${attemptsRemaining} attempts remaining.`;
+      }
+      loading = false;
+      return;
+    }
+
+    goto('/app/dashboard');
+  }
+
+  async function handleResend() {
+    resendCooldown = 60;
+    attemptsRemaining = 3; // Reset attempts on new code
+    const interval = setInterval(() => {
+      resendCooldown--;
+      if (resendCooldown <= 0) clearInterval(interval);
+    }, 1000);
+
+    // Request new magic link (which also triggers new OTP)
+    await authClient.signIn.magicLink({
+      email,
+      callbackURL: '/app/dashboard',
+    });
+  }
+
+  // Auto-submit when 6 digits entered
+  $effect(() => {
+    if (code.length === 6 && !loading) {
+      handleVerify();
+    }
+  });
+</script>
+
+<div class="verify-page">
+  <h1>Check your email</h1>
+  <p>We sent a sign-in link to <strong>{email}</strong></p>
+
+  <p class="hint">Click the link in your email, or enter the 6-digit code below:</p>
+
+  <form onsubmit={handleVerify}>
+    <div class="otp-input">
+      <input
+        type="text"
+        inputmode="numeric"
+        pattern="[0-9]*"
+        maxlength="6"
+        bind:value={code}
+        placeholder="000000"
+        autocomplete="one-time-code"
+      />
+    </div>
+
+    {#if error}
+      <p class="error" role="alert">{error}</p>
+    {/if}
+
+    <button type="submit" disabled={loading || code.length !== 6 || attemptsRemaining <= 0}>
+      {loading ? 'Verifying...' : 'Verify'}
+    </button>
+  </form>
+
+  <p class="resend">
+    Didn't receive it?
+    {#if resendCooldown > 0}
+      <span>Resend in {resendCooldown}s</span>
+    {:else}
+      <button type="button" onclick={handleResend}>Resend email</button>
+    {/if}
+  </p>
+</div>
+```
+
+> **Security notes:**
+> - `attemptsRemaining` tracks client-side attempts (UX feedback only)
+> - Server-side `allowedAttempts: 3` in emailOTP config enforces the real limit
+> - After 3 failed attempts, the OTP is invalidated — user must request a new code
 
 ### Sign Out
 
@@ -492,52 +703,6 @@ export const auth = betterAuth({
 
 ---
 
-## Password Reset
-
-```typescript
-// src/routes/auth/forgot-password/+page.server.ts
-import { auth } from '$lib/server/auth';
-
-export const actions = {
-  default: async ({ request }) => {
-    const data = await request.formData();
-    const email = data.get('email') as string;
-
-    await auth.api.forgetPassword({
-      body: { email, redirectTo: '/auth/reset-password' },
-    });
-
-    return { success: true };
-  },
-};
-```
-
-```typescript
-// src/routes/auth/reset-password/+page.server.ts
-import { auth } from '$lib/server/auth';
-import { redirect } from '@sveltejs/kit';
-
-export const actions = {
-  default: async ({ request, url }) => {
-    const data = await request.formData();
-    const password = data.get('password') as string;
-    const token = url.searchParams.get('token');
-
-    if (!token) {
-      return { error: 'Invalid reset link' };
-    }
-
-    await auth.api.resetPassword({
-      body: { newPassword: password, token },
-    });
-
-    redirect(303, '/auth/login?reset=success');
-  },
-};
-```
-
----
-
 ## Security
 
 ### Built-in Protections
@@ -547,7 +712,7 @@ export const actions = {
 | CSRF protection | Forms only (see warning below) |
 | Session fixation | Handled |
 | Secure cookies | Default in production |
-| Password hashing | bcrypt (configurable) |
+| Magic link expiry | 10 minutes (configurable) |
 | Rate limiting | Requires config (see below) |
 | Session revocation | `revokeOtherSessions: true` |
 
@@ -599,27 +764,6 @@ export const auth = betterAuth({
 
 **For additional protection** - see [rate-limiting.md](./rate-limiting.md) for sveltekit-rate-limiter (defense in depth) and Upstash (distributed limiting).
 
-### Custom Password Hashing
-
-```typescript
-// src/lib/server/auth.ts
-import { hash, verify } from '@node-rs/argon2';
-
-export const auth = betterAuth({
-  // ... config
-  advanced: {
-    customPassword: {
-      hash: (password) => hash(password, {
-        memoryCost: 19456,
-        timeCost: 2,
-        outputLen: 32,
-        parallelism: 1,
-      }),
-      verify: (hash, password) => verify(hash, password),
-    },
-  },
-});
-```
 
 ### Session Cleanup (Required)
 
@@ -703,16 +847,15 @@ export async function GET({ request }) {
 src/
 ├── lib/
 │   ├── server/
-│   │   ├── auth.ts           # Better Auth instance
+│   │   ├── auth.ts           # Better Auth instance (magic link + OTP)
+│   │   ├── email.ts          # Auth email sender
 │   │   └── auth/
 │   │       └── guard.ts      # Route protection helper
-│   └── auth-client.ts        # Client-side auth (signIn, signUp, signOut)
+│   └── auth-client.ts        # Client-side auth (signIn, signOut)
 ├── routes/
 │   ├── auth/
-│   │   ├── login/+page.svelte
-│   │   ├── register/+page.svelte
-│   │   ├── forgot-password/+page.svelte
-│   │   └── reset-password/+page.svelte
+│   │   ├── login/+page.svelte    # Email entry
+│   │   └── verify/+page.svelte   # OTP verification
 │   └── app/                  # Protected routes
 │       ├── +layout.server.ts # Load session from event.locals
 │       ├── +layout.svelte    # Client guard (fallback)
@@ -741,9 +884,10 @@ VITE_BASE_URL=http://localhost:5173
 | What | How |
 |------|-----|
 | Auth framework | Better Auth |
+| Primary auth | Magic link + OTP (passwordless) |
 | Session storage | PostgreSQL via Drizzle |
 | OAuth providers | GitHub, Google (built-in) |
-| 2FA | TOTP plugin |
+| 2FA | TOTP plugin (optional layer) |
 | Route protection | Per-route in `+page.server.ts` |
 | Session access | `event.locals` → page data (SSR-safe) |
 
@@ -755,12 +899,11 @@ For learning or maximum control, see [The Copenhagen Book](https://thecopenhagen
 
 | Package | Purpose |
 |---------|---------|
-| `@oslojs/crypto` | SHA-256 hashing |
+| `@oslojs/crypto` | SHA-256 hashing (for tokens) |
 | `@oslojs/encoding` | Base32/Hex encoding |
-| `@node-rs/argon2` | Password hashing |
 | `arctic` | OAuth providers |
 
-This approach requires implementing sessions, cookies, and OAuth flows manually.
+This approach requires implementing sessions, cookies, magic link flows, and OAuth manually.
 
 ---
 

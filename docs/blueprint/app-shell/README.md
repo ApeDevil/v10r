@@ -12,7 +12,7 @@ The app shell is the persistent UI skeleton that wraps all pages. It loads insta
 | **[quick-search.md](./quick-search.md)** | • QuickSearch modal (command palette)<br>• Action safety (confirmation for destructive)<br>• Search categories (recent, pages, actions)<br>• Keyboard navigation |
 | **[ai-assistant.md](./ai-assistant.md)** | • AI chat modal<br>• Rate limiting (per-user limits)<br>• Input/output sanitization (XSS, prompt injection)<br>• Streaming and error states |
 | **[page-header.md](./page-header.md)** | • Per-page header (not global)<br>• Breadcrumbs and title<br>• XSS prevention for dynamic content<br>• Sticky option |
-| **[user-account.md](./user-account.md)** | • Profile editing (auto-save + Save button)<br>• Security (password, OAuth, sessions)<br>• GDPR data export (rate limited)<br>• Multi-step deletion with grace period |
+| **[user-account.md](./user-account.md)** | • Profile editing (auto-save + Save button)<br>• Security (2FA, OAuth, sessions)<br>• GDPR data export (rate limited)<br>• Multi-step deletion with grace period |
 | **[notifications.md](./notifications.md)** | • Notification center (full page)<br>• SSE security (auth, heartbeat, IDOR)<br>• Per-type preferences<br>• Real-time strategy (polling → SSE) |
 | **[settings.md](./settings.md)** | • Theme (immediate apply)<br>• Language & timezone<br>• Privacy settings<br>• Accessibility options |
 | **[toast.md](./toast.md)** | • Ephemeral feedback messages<br>• Toast types (success, error, warning, info)<br>• Stacking behavior<br>• Undo/retry patterns |

@@ -41,9 +41,8 @@ No documentation drift. No stale examples. The template validates itself.
 │   └── /account                     # GDPR (export, delete)
 │
 ├── /auth                            # Authentication
-│   ├── /login
-│   ├── /register
-│   └── /forgot-password
+│   ├── /login                       # Email entry + OAuth
+│   └── /verify                      # OTP code entry
 │
 └── /docs                            # Static documentation
     ├── /stack                       # Technology decisions
@@ -75,7 +74,7 @@ src/routes/
 ├── (auth)/
 │   ├── +error.svelte          # Auth-specific errors
 │   ├── login/+page.svelte
-│   └── register/+page.svelte
+│   └── verify/+page.svelte
 │
 ├── showcase/
 │   ├── +error.svelte          # Showcase-specific errors
@@ -695,28 +694,23 @@ GDPR compliance routes.
 
 | Tests | Technology | Provider |
 |-------|------------|----------|
-| Credentials | Email/password | Better Auth |
+| Magic link | Email link auth | Better Auth |
+| OTP | 6-digit code | Better Auth |
 | OAuth | OAuth 2.0 | Better Auth (20+ providers) |
 | Session creation | Database sessions | [Neon](../../stack/vendors.md#neon) |
 | Redirect | URL handling | SvelteKit |
 | Rate limiting | Request limiting | Better Auth built-in |
 
-### /auth/register
+**Flow:** User enters email → receives email with both magic link AND OTP code → chooses how to authenticate.
+
+### /auth/verify
 
 | Tests | Technology | Provider |
 |-------|------------|----------|
-| User creation | Account creation | Better Auth |
-| Password hashing | Argon2id/bcrypt | Better Auth |
-| Validation | Schema validation | Valibot |
+| OTP entry | 6-digit code validation | Better Auth |
+| Code expiry | 10-minute TTL | Better Auth |
+| Resend throttling | Rate limiting | Better Auth built-in |
 | Email verification | Token verification | Better Auth plugin |
-
-### /auth/forgot-password
-
-| Tests | Technology | Provider |
-|-------|------------|----------|
-| Reset flow | Token flow | Better Auth |
-| Email sending | Transactional email | [Resend](../../stack/vendors.md#resend) |
-| Token validation | Secure tokens | Better Auth built-in |
 
 ---
 
@@ -775,8 +769,7 @@ src/routes/
 │
 ├── auth/
 │   ├── login/+page.svelte
-│   ├── register/+page.svelte
-│   └── forgot-password/+page.svelte
+│   └── verify/+page.svelte
 │
 └── docs/
     ├── +layout.ts                    # prerender = true
@@ -787,13 +780,7 @@ src/routes/
 
 ## Navigation
 
-### Main Nav
-
-```
-┌─────────────────────────────────────────────────────┐
-│  🦖 Velociraptor    Showcase  Docs  [Theme] [Auth]  │
-└─────────────────────────────────────────────────────┘
-```
+> **No global header.** Navigation lives in the sidebar. See [app-shell/](./app-shell/) for details.
 
 ### Showcase Sidebar
 

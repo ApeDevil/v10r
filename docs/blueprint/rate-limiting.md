@@ -6,22 +6,47 @@ Request rate limiting to prevent abuse, brute force attacks, and resource exhaus
 
 ---
 
-## Why External Rate Limiting
+## Rate Limiting Strategy
 
-> **Critical:** Better Auth's built-in rate limiting is **BROKEN** ([GitHub Issue #2153](https://github.com/better-auth/better-auth/issues/2153), [#2112](https://github.com/better-auth/better-auth/issues/2112), [#1891](https://github.com/better-auth/better-auth/issues/1891)).
+### Better Auth Built-in Rate Limiting
+
+Better Auth has built-in rate limiting that works with proper configuration. Earlier issues ([#2153](https://github.com/better-auth/better-auth/issues/2153), [#2112](https://github.com/better-auth/better-auth/issues/2112)) were due to missing configuration.
+
+**Required configuration for Better Auth rate limiting:**
 
 ```typescript
-// BROKEN - DO NOT USE
+// src/lib/server/auth.ts
 export const auth = betterAuth({
-  rateLimit: { window: 60, max: 10 }, // This does NOT work!
+  rateLimit: {
+    enabled: true, // Required: must be explicit
+    window: 60,    // 60 seconds
+    max: 10,       // 10 requests per window
+    storage: 'memory', // Use 'database' for production
+    customRules: {
+      // Stricter limits for auth endpoints
+      '/sign-in/magic-link': { window: 300, max: 5 },  // 5 per 5 min
+      '/sign-in/email-otp': { window: 300, max: 5 },   // 5 per 5 min
+      '/email-otp/verify-email': { window: 60, max: 5 }, // 5 per min
+    },
+  },
 });
 ```
 
-Use `sveltekit-rate-limiter` instead. It's:
-- Built specifically for SvelteKit
-- Actively maintained
+> **Important:** The `emailOTP` plugin does NOT accept rate limiting directly — use `customRules` at the global `rateLimit` config level.
+
+**Requirements for Better Auth rate limiting:**
+1. `enabled: true` — must be explicit
+2. Forward client IP in hooks (SvelteKit doesn't expose it automatically)
+3. Use `storage: 'database'` or Redis in production (memory fails in serverless)
+4. Only applies to client-initiated requests (not server-side calls)
+
+### Why Also Use External Rate Limiting
+
+`sveltekit-rate-limiter` provides **defense in depth**:
+- Limits ALL requests (not just Better Auth endpoints)
 - Integrates with Superforms
-- Works in serverless environments
+- Works in serverless without database calls
+- Cookie-based tracking for authenticated users
 
 ---
 
@@ -39,7 +64,7 @@ bun add sveltekit-rate-limiter
 |-------|-------|---------|
 | Global (hooks) | All requests | DDoS protection, baseline limits (100/min) |
 | Auth (hooks) | `/api/auth/*` | Brute force protection (5/min) |
-| Route-specific | Sensitive endpoints | Password reset, API mutations |
+| Route-specific | Sensitive endpoints | Magic link requests, API mutations |
 | Superforms | Form submissions | Spam prevention |
 
 > **Critical:** Auth endpoints MUST use stricter limits than global. The hook should detect `/api/auth/*` paths and apply `authLimiter` (5/min) instead of `globalLimiter` (100/min). See [middleware.md](./middleware.md) for the full implementation.
@@ -170,8 +195,8 @@ export const authLimiter = new RateLimiter({
   IPUA: [3, 'm'],    // 3 attempts per minute per IP+UA
 });
 
-// Password reset: very strict
-export const passwordResetLimiter = new RateLimiter({
+// Magic link / OTP requests: very strict
+export const magicLinkLimiter = new RateLimiter({
   IP: [3, 'h'],      // 3 requests per hour per IP
 });
 
@@ -205,20 +230,20 @@ export async function POST(event) {
 ### Using in +page.server.ts
 
 ```typescript
-// src/routes/auth/forgot-password/+page.server.ts
+// src/routes/auth/login/+page.server.ts
 import { fail } from '@sveltejs/kit';
-import { passwordResetLimiter } from '$lib/server/rate-limit';
+import { magicLinkLimiter } from '$lib/server/rate-limit';
 
 export const actions = {
   default: async (event) => {
-    const status = await passwordResetLimiter.check(event);
+    const status = await magicLinkLimiter.check(event);
     if (status.limited) {
       return fail(429, {
         message: `Too many requests. Try again in ${status.retryAfter} seconds.`,
       });
     }
 
-    // Proceed with password reset...
+    // Proceed with sending magic link/OTP...
   },
 };
 ```
@@ -453,9 +478,9 @@ Always include rate limit headers in responses:
 
 | Endpoint Type | Limit | Rationale |
 |--------------|-------|-----------|
-| Login/Register | 5/min per IP | Brute force protection |
-| Password reset | 3/hour per IP | Prevent enumeration |
-| Email verification | 3/hour per user | Prevent spam |
+| Magic link / OTP | 5/min per IP | Brute force protection |
+| Send verification code | 3/hour per IP | Prevent enumeration |
+| OTP verification | 5/min per IP | Brute force protection |
 | API reads | 100/min per user | Normal usage |
 | API writes | 30/min per user | Prevent spam |
 | File uploads | 10/hour per user | Storage protection |

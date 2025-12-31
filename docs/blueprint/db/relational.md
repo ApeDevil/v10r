@@ -11,7 +11,7 @@ Drizzle ORM schema for relational data and Better Auth integration.
 | `user` | User accounts | Better Auth (auto-generated) |
 | `session` | Auth sessions | Better Auth (auto-generated) |
 | `account` | OAuth provider links | Better Auth (auto-generated) |
-| `verification` | Email/password tokens | Better Auth (auto-generated) |
+| `verification` | Magic link/OTP tokens | Better Auth (auto-generated) |
 | `user_profile` | User Profile Data (public) | Custom |
 | `user_settings` | Preferences & Settings | Custom |
 | `items` | Generic entities | Custom |

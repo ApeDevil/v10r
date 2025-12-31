@@ -19,15 +19,15 @@ Type-safe forms with real-time validation using Superforms and Valibot.
 
 | Form Type | Use | Why |
 |-----------|-----|-----|
-| Sign-in / Sign-up | **Better Auth client** | Built-in rate limiting, CSRF, session management |
-| Password reset | **Better Auth client** | Auth-critical flow with token handling |
+| Email entry (login) | **Better Auth client** | Built-in rate limiting, magic link + OTP |
+| OTP verification | **Better Auth client** | Token validation, expiry handling |
 | OAuth flows | **Better Auth client** | Redirect handling built-in |
 | Profile updates | **Superforms + Valibot** | Not auth-critical, benefits from real-time validation |
 | Settings / preferences | **Superforms + Valibot** | Standard CRUD, good UX with debounced validation |
 | Contact / feedback forms | **Superforms + Valibot** | Server actions, email integration |
 | CRUD operations | **Superforms + Valibot** | Data mutations with optimistic UI |
 
-**Rationale:** Better Auth's client methods (`signIn.email`, `signUp.email`) handle security concerns that Superforms would need to replicate. Using Superforms for auth would mean re-implementing rate limiting, manual CSRF handling, and potential security gaps.
+**Rationale:** Better Auth's client methods (`signIn.magicLink`, `signIn.otp`) handle security concerns that Superforms would need to replicate. Using Superforms for auth would mean re-implementing rate limiting, manual CSRF handling, and potential security gaps.
 
 See [auth.md](./auth.md#authentication-flows) for Better Auth form implementations.
 
@@ -66,52 +66,27 @@ bun add sveltekit-superforms valibot
 // src/lib/schemas/auth.ts
 import * as v from 'valibot';
 
-export const loginSchema = v.object({
+// Email entry for magic link / OTP
+export const emailSchema = v.object({
   email: v.pipe(
     v.string(),
     v.nonEmpty('Email is required'),
     v.email('Invalid email address')
-  ),
-  password: v.pipe(
-    v.string(),
-    v.nonEmpty('Password is required'),
-    v.minLength(8, 'Password must be at least 8 characters')
   ),
 });
 
-export const registerSchema = v.object({
-  name: v.pipe(
+// OTP verification
+export const otpSchema = v.object({
+  code: v.pipe(
     v.string(),
-    v.nonEmpty('Name is required'),
-    v.minLength(2, 'Name must be at least 2 characters')
+    v.nonEmpty('Code is required'),
+    v.length(6, 'Code must be 6 digits'),
+    v.regex(/^\d+$/, 'Code must contain only numbers')
   ),
-  email: v.pipe(
-    v.string(),
-    v.nonEmpty('Email is required'),
-    v.email('Invalid email address')
-  ),
-  password: v.pipe(
-    v.string(),
-    v.nonEmpty('Password is required'),
-    v.minLength(8, 'Password must be at least 8 characters'),
-    v.regex(/[A-Z]/, 'Password must contain an uppercase letter'),
-    v.regex(/[0-9]/, 'Password must contain a number')
-  ),
-  confirmPassword: v.string(),
-}, [
-  // Cross-field validation
-  v.forward(
-    v.partialCheck(
-      [['password'], ['confirmPassword']],
-      (input) => input.password === input.confirmPassword,
-      'Passwords do not match'
-    ),
-    ['confirmPassword']
-  ),
-]);
+});
 
-export type LoginSchema = v.InferInput<typeof loginSchema>;
-export type RegisterSchema = v.InferInput<typeof registerSchema>;
+export type EmailSchema = v.InferInput<typeof emailSchema>;
+export type OtpSchema = v.InferInput<typeof otpSchema>;
 ```
 
 ### Nested Objects
@@ -146,42 +121,33 @@ export const userWithAddressSchema = v.object({
 ### Basic Form Action
 
 ```typescript
-// src/routes/auth/login/+page.server.ts
+// src/routes/app/profile/+page.server.ts
 import type { PageServerLoad, Actions } from './$types';
-import { fail, redirect } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import { superValidate, message } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
-import { loginSchema } from '$lib/schemas/auth';
-import { auth } from '$lib/server/auth';
+import { profileSchema } from '$lib/schemas/user';
+import { db } from '$lib/server/db';
 
-export const load: PageServerLoad = async () => {
-  const form = await superValidate(valibot(loginSchema));
+export const load: PageServerLoad = async ({ locals }) => {
+  const form = await superValidate(locals.user, valibot(profileSchema));
   return { form };
 };
 
 export const actions: Actions = {
-  default: async ({ request }) => {
-    const form = await superValidate(request, valibot(loginSchema));
+  default: async ({ request, locals }) => {
+    const form = await superValidate(request, valibot(profileSchema));
 
     if (!form.valid) {
       return fail(400, { form });
     }
 
-    // Authenticate via Better Auth
-    // Note: For auth-critical forms, consider using Better Auth client directly
-    // See "Hybrid Approach" section above
-    const result = await auth.api.signInEmail({
-      body: {
-        email: form.data.email,
-        password: form.data.password,
-      },
-    });
+    // Update profile
+    await db.update(userProfile)
+      .set({ name: form.data.name, bio: form.data.bio })
+      .where(eq(userProfile.userId, locals.user.id));
 
-    if (result.error) {
-      return message(form, 'Invalid email or password', { status: 401 });
-    }
-
-    redirect(303, '/app/dashboard');
+    return message(form, 'Profile updated!');
   },
 };
 ```
@@ -189,33 +155,33 @@ export const actions: Actions = {
 ### Named Actions
 
 ```typescript
-// src/routes/auth/+page.server.ts
+// src/routes/showcase/data/+page.server.ts
 import type { PageServerLoad, Actions } from './$types';
-import { fail, redirect } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
-import { loginSchema, registerSchema } from '$lib/schemas/auth';
+import { createItemSchema, filterSchema } from '$lib/schemas/items';
 
 export const load: PageServerLoad = async () => {
   return {
-    loginForm: await superValidate(valibot(loginSchema)),
-    registerForm: await superValidate(valibot(registerSchema)),
+    createForm: await superValidate(valibot(createItemSchema)),
+    filterForm: await superValidate(valibot(filterSchema)),
   };
 };
 
 export const actions: Actions = {
-  login: async ({ request }) => {
-    const form = await superValidate(request, valibot(loginSchema));
+  create: async ({ request }) => {
+    const form = await superValidate(request, valibot(createItemSchema));
     if (!form.valid) return fail(400, { form });
-    // ... authenticate
-    redirect(303, '/app/dashboard');
+    // ... create item
+    return { form };
   },
 
-  register: async ({ request }) => {
-    const form = await superValidate(request, valibot(registerSchema));
+  filter: async ({ request }) => {
+    const form = await superValidate(request, valibot(filterSchema));
     if (!form.valid) return fail(400, { form });
-    // ... create account
-    redirect(303, '/app/dashboard');
+    // ... apply filters
+    return { form };
   },
 };
 ```
@@ -227,18 +193,18 @@ export const actions: Actions = {
 ### Basic Form
 
 ```svelte
-<!-- src/routes/auth/login/+page.svelte -->
+<!-- src/routes/app/profile/+page.svelte -->
 <script lang="ts">
   import type { PageProps } from './$types';
   import { superForm } from 'sveltekit-superforms';
   import { valibotClient } from 'sveltekit-superforms/adapters';
-  import { loginSchema } from '$lib/schemas/auth';
+  import { profileSchema } from '$lib/schemas/user';
   import { toast } from '$lib/stores/toast.svelte';
 
   let { data }: PageProps = $props();
 
   const { form, errors, enhance, submitting, message } = superForm(data.form, {
-    validators: valibotClient(loginSchema),
+    validators: valibotClient(profileSchema),
 
     // "Reward early, validate late" pattern (recommended default)
     // Validates on blur for pristine fields, on input after errors appear
@@ -253,8 +219,8 @@ export const actions: Actions = {
 
     // Success handling
     onResult({ result }) {
-      if (result.type === 'redirect') {
-        toast.success('Welcome back!');
+      if (result.type === 'success') {
+        toast.success('Profile updated!');
       }
     },
   });
@@ -262,40 +228,39 @@ export const actions: Actions = {
 
 <form method="POST" use:enhance>
   <div class="form-field">
-    <label for="email">Email</label>
+    <label for="name">Display Name</label>
     <input
-      id="email"
-      name="email"
-      type="email"
-      bind:value={$form.email}
-      aria-invalid={$errors.email ? 'true' : undefined}
-      aria-describedby={$errors.email ? 'email-error' : undefined}
+      id="name"
+      name="name"
+      type="text"
+      bind:value={$form.name}
+      aria-invalid={$errors.name ? 'true' : undefined}
+      aria-describedby={$errors.name ? 'name-error' : undefined}
     />
-    {#if $errors.email}
-      <span id="email-error" class="error">{$errors.email}</span>
+    {#if $errors.name}
+      <span id="name-error" class="error">{$errors.name}</span>
     {/if}
   </div>
 
   <div class="form-field">
-    <label for="password">Password</label>
-    <input
-      id="password"
-      name="password"
-      type="password"
-      bind:value={$form.password}
-      aria-invalid={$errors.password ? 'true' : undefined}
+    <label for="bio">Bio</label>
+    <textarea
+      id="bio"
+      name="bio"
+      bind:value={$form.bio}
+      aria-invalid={$errors.bio ? 'true' : undefined}
     />
-    {#if $errors.password}
-      <span class="error">{$errors.password}</span>
+    {#if $errors.bio}
+      <span class="error">{$errors.bio}</span>
     {/if}
   </div>
 
   {#if $message}
-    <div class="form-error" role="alert">{$message}</div>
+    <div class="form-message" role="status">{$message}</div>
   {/if}
 
   <button type="submit" disabled={$submitting}>
-    {$submitting ? 'Signing in...' : 'Sign In'}
+    {$submitting ? 'Saving...' : 'Save Profile'}
   </button>
 </form>
 ```
@@ -426,7 +391,7 @@ const { enhance } = superForm(data.form, {
 | Context | Error Display |
 |---------|---------------|
 | Field validation | Inline under field |
-| Auth errors (wrong password) | Form-level message |
+| Auth errors (invalid code, expired link) | Form-level message |
 | Server errors (500) | Toast notification |
 | Success feedback | Toast notification |
 | Multi-step wizard | Summary at step top |
@@ -1376,7 +1341,7 @@ See [SvelteKit Page Options](https://kit.svelte.dev/docs/page-options) for detai
 src/
 ├── lib/
 │   └── schemas/
-│       ├── auth.ts           # Login, register, reset-password
+│       ├── auth.ts           # Email, OTP verification
 │       ├── user.ts           # Profile, settings
 │       ├── address.ts        # Nested address object
 │       ├── wizard.ts         # Multi-step form schemas
@@ -1384,10 +1349,9 @@ src/
 └── routes/
     ├── auth/
     │   ├── login/
-    │   │   ├── +page.svelte
-    │   │   └── +page.server.ts
-    │   ├── register/
-    │   └── forgot-password/
+    │   │   └── +page.svelte  # Email entry (Better Auth client)
+    │   └── verify/
+    │       └── +page.svelte  # OTP entry (Better Auth client)
     └── app/
         └── settings/
             ├── +page.svelte

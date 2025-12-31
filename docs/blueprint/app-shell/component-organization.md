@@ -110,7 +110,7 @@ src/lib/components/composites/
 ├── account/
 │   ├── ProfileForm.svelte
 │   ├── AvatarUpload.svelte
-│   ├── PasswordChangeForm.svelte
+│   ├── TwoFactorSetup.svelte
 │   ├── OAuthConnections.svelte
 │   ├── ActiveSessions.svelte
 │   ├── DataExportCard.svelte

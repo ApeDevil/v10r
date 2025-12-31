@@ -43,14 +43,14 @@ Managing authentication state within the app shell: session expiry, re-authentic
 │   ░   ┌────────────────────────────────────────────┐   ░ │
 │   ░   │ 🔒 Session Expired                         │   ░ │
 │   ░   │                                            │   ░ │
-│   ░   │ Your session has expired. Sign in again    │   ░ │
-│   ░   │ to continue where you left off.            │   ░ │
+│   ░   │ Your session has expired.                  │   ░ │
+│   ░   │ We've sent a code to john@example.com      │   ░ │
 │   ░   │                                            │   ░ │
-│   ░   │ Password: [••••••••••••]                   │   ░ │
+│   ░   │ Enter code: [______]                       │   ░ │
 │   ░   │                                            │   ░ │
-│   ░   │           [Sign In]                        │   ░ │
+│   ░   │           [Verify]                         │   ░ │
 │   ░   │                                            │   ░ │
-│   ░   │ Not you? [Sign in as different user]       │   ░ │
+│   ░   │ [Resend code]  [Sign in as different user] │   ░ │
 │   ░   └────────────────────────────────────────────┘   ░ │
 │   ░                                                    ░ │
 │   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │
@@ -61,7 +61,8 @@ Managing authentication state within the app shell: session expiry, re-authentic
 
 **Key UX decisions:**
 - Modal overlay, not redirect (preserves context)
-- Only ask for password (email pre-filled from last session)
+- Auto-send verification code when modal opens
+- OTP entry (6 digits) for quick re-authentication
 - Form data in background is preserved
 - Option to sign in as different user
 
@@ -122,11 +123,22 @@ Managing authentication state within the app shell: session expiry, re-authentic
     }
   }
 
-  async function handleReauthenticate(password: string) {
+  async function sendReauthCode() {
+    try {
+      await fetch('/api/auth/send-reauth-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      console.error('Failed to send code:', error);
+    }
+  }
+
+  async function handleReauthenticate(code: string) {
     try {
       const res = await fetch('/api/auth/reauthenticate', {
         method: 'POST',
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ code }),
         headers: { 'Content-Type': 'application/json' },
       });
 
@@ -134,7 +146,7 @@ Managing authentication state within the app shell: session expiry, re-authentic
         showExpiredModal = false;
         await invalidateAll();
       } else {
-        throw new Error('Invalid password');
+        throw new Error('Invalid or expired code');
       }
     } catch (error) {
       throw error; // Let modal handle error display
@@ -154,7 +166,8 @@ Managing authentication state within the app shell: session expiry, re-authentic
   <SessionExpiryModal
     email={session?.user?.email}
     onreauthenticate={handleReauthenticate}
-    onswitchuser={() => goto('/auth/signin')}
+    onsendcode={sendReauthCode}
+    onswitchuser={() => goto('/auth/login')}
   />
 {/if}
 ```
@@ -197,11 +210,32 @@ Managing authentication state within the app shell: session expiry, re-authentic
 <script lang="ts">
   import { Dialog } from 'bits-ui';
 
-  let { email, onreauthenticate, onswitchuser } = $props();
+  let { email, onreauthenticate, onsendcode, onswitchuser } = $props();
 
-  let password = $state('');
+  let code = $state('');
   let error = $state('');
   let loading = $state(false);
+  let codeSent = $state(false);
+  let resendCooldown = $state(0);
+
+  // Auto-send code when modal opens
+  $effect(() => {
+    if (!codeSent) {
+      sendCode();
+    }
+  });
+
+  async function sendCode() {
+    codeSent = true;
+    resendCooldown = 60;
+
+    const interval = setInterval(() => {
+      resendCooldown--;
+      if (resendCooldown <= 0) clearInterval(interval);
+    }, 1000);
+
+    await onsendcode();
+  }
 
   async function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
@@ -209,13 +243,20 @@ Managing authentication state within the app shell: session expiry, re-authentic
     loading = true;
 
     try {
-      await onreauthenticate(password);
+      await onreauthenticate(code);
     } catch (err) {
-      error = err instanceof Error ? err.message : 'Authentication failed';
+      error = err instanceof Error ? err.message : 'Verification failed';
     } finally {
       loading = false;
     }
   }
+
+  // Auto-submit when 6 digits entered
+  $effect(() => {
+    if (code.length === 6 && !loading) {
+      handleSubmit(new Event('submit') as SubmitEvent);
+    }
+  });
 </script>
 
 <Dialog.Root open={true} closeOnOutsideClick={false} closeOnEscape={false}>
@@ -231,23 +272,22 @@ Managing authentication state within the app shell: session expiry, re-authentic
         </div>
 
         <Dialog.Description class="text-muted mb-6">
-          Your session has expired. Sign in again to continue where you left off.
+          We've sent a verification code to <strong>{email}</strong>
         </Dialog.Description>
 
         <form onsubmit={handleSubmit}>
           <div class="mb-4">
-            <label class="text-sm text-muted">Email</label>
-            <p class="font-medium">{email}</p>
-          </div>
-
-          <div class="mb-4">
-            <label for="password" class="block text-sm mb-1">Password</label>
+            <label for="code" class="block text-sm mb-1">Enter 6-digit code</label>
             <input
-              id="password"
-              type="password"
-              bind:value={password}
-              class="input w-full"
-              required
+              id="code"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              maxlength="6"
+              bind:value={code}
+              class="input w-full text-center text-2xl tracking-widest"
+              placeholder="000000"
+              autocomplete="one-time-code"
               autofocus
             />
           </div>
@@ -256,16 +296,24 @@ Managing authentication state within the app shell: session expiry, re-authentic
             <p class="text-error text-sm mb-4" role="alert">{error}</p>
           {/if}
 
-          <button type="submit" class="btn btn-primary w-full" disabled={loading}>
+          <button type="submit" class="btn btn-primary w-full" disabled={loading || code.length !== 6}>
             {#if loading}
               <span class="i-lucide-loader-2 animate-spin" />
             {/if}
-            Sign In
+            Verify
           </button>
         </form>
 
-        <div class="mt-4 text-center">
-          <button class="text-sm text-muted hover:text-foreground" onclick={onswitchuser}>
+        <div class="mt-4 flex justify-between text-sm">
+          {#if resendCooldown > 0}
+            <span class="text-muted">Resend in {resendCooldown}s</span>
+          {:else}
+            <button class="text-primary hover:underline" onclick={sendCode}>
+              Resend code
+            </button>
+          {/if}
+
+          <button class="text-muted hover:text-foreground" onclick={onswitchuser}>
             Sign in as different user
           </button>
         </div>
@@ -319,24 +367,25 @@ export const POST: RequestHandler = async ({ locals, cookies }) => {
 
 ---
 
-## Re-authentication Endpoint
+## Re-authentication Endpoints
+
+> **Use Better Auth's emailOTP plugin** for re-authentication. Don't manually generate/verify codes.
+
+### Send Re-auth Code
 
 ```typescript
-// src/routes/api/auth/reauthenticate/+server.ts
+// src/routes/api/auth/send-reauth-code/+server.ts
 import { json, error } from '@sveltejs/kit';
 import { auth } from '$lib/server/auth';
 import type { RequestHandler } from './$types';
 
-export const POST: RequestHandler = async ({ request, cookies }) => {
-  const { password } = await request.json();
-
-  // Get user from expired session cookie (if exists)
+export const POST: RequestHandler = async ({ cookies }) => {
+  // Get user email from expired session cookie
   const sessionToken = cookies.get('session_token');
   if (!sessionToken) {
     throw error(401, 'No session to restore');
   }
 
-  // Find the expired session to get user ID
   const expiredSession = await db.query.session.findFirst({
     where: eq(session.token, sessionToken),
     with: { user: true },
@@ -346,29 +395,71 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     throw error(401, 'Session not found');
   }
 
-  // Verify password
-  const isValid = await verifyPassword(password, expiredSession.user.hashedPassword);
-  if (!isValid) {
-    throw error(401, 'Invalid password');
+  // Use Better Auth's emailOTP plugin to send verification code
+  // The plugin handles storage, expiration, and rate limiting
+  await auth.api.sendVerificationOtp({
+    body: {
+      email: expiredSession.user.email,
+      type: 'sign-in',
+    },
+  });
+
+  return json({ success: true, email: expiredSession.user.email });
+};
+```
+
+### Verify Re-auth Code
+
+```typescript
+// src/routes/api/auth/reauthenticate/+server.ts
+import { json, error } from '@sveltejs/kit';
+import { auth } from '$lib/server/auth';
+import type { RequestHandler } from './$types';
+
+export const POST: RequestHandler = async ({ request, cookies }) => {
+  const { code } = await request.json();
+
+  // Get user email from expired session cookie
+  const sessionToken = cookies.get('session_token');
+  if (!sessionToken) {
+    throw error(401, 'No session to restore');
   }
 
-  // Create new session
-  const newSession = await auth.api.createSession({
-    userId: expiredSession.user.id,
+  const expiredSession = await db.query.session.findFirst({
+    where: eq(session.token, sessionToken),
+    with: { user: true },
   });
 
-  // Set new session cookie
-  cookies.set('session_token', newSession.token, {
-    expires: new Date(newSession.expiresAt),
-    path: '/',
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
+  if (!expiredSession?.user) {
+    throw error(401, 'Session not found');
+  }
+
+  // Use Better Auth's emailOTP plugin to verify
+  // This handles attempt tracking, expiration, and creates a new session on success
+  const result = await auth.api.verifyEmailOtp({
+    body: {
+      email: expiredSession.user.email,
+      otp: code,
+    },
   });
+
+  if (!result?.session) {
+    throw error(401, 'Invalid or expired code');
+  }
+
+  // Better Auth sets the session cookie automatically
+  // Clean up the old expired session
+  await db.delete(session).where(eq(session.token, sessionToken));
 
   return json({ success: true });
 };
 ```
+
+> **Security notes:**
+> - Better Auth's emailOTP plugin enforces `allowedAttempts: 3` per code
+> - Failed attempts are tracked server-side (not bypassable)
+> - After 3 failures, user must request a new code
+> - Rate limiting is configured via `customRules` in auth config
 
 ---
 
@@ -419,7 +510,7 @@ The key advantage of the modal approach: unsaved form data is preserved.
 
 ## Session Revocation
 
-When session is explicitly revoked (password change, admin action):
+When session is explicitly revoked (security event, admin action):
 
 ```typescript
 // On 401 with specific revocation code
@@ -462,7 +553,7 @@ export async function requireRecentAuth(session: Session, maxAge = 15 * 60 * 100
   if (sessionAge > maxAge) {
     throw error(403, {
       code: 'REAUTH_REQUIRED',
-      message: 'Please re-enter your password to continue',
+      message: 'Please verify your identity to continue',
     });
   }
 }
@@ -519,7 +610,7 @@ Add SessionMonitor to root app layout:
 | Requirement | Implementation |
 |-------------|----------------|
 | Focus trap | Modal traps focus when open |
-| Auto-focus | Password input focused on open |
+| Auto-focus | Code input focused on open |
 | Screen reader | `role="dialog"`, `aria-labelledby` |
 | No escape | Cannot dismiss without action (security) |
 | Live region | Warning banner uses `role="alert"` |

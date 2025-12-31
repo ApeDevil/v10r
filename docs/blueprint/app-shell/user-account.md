@@ -11,7 +11,7 @@ User account management for identity, security, and GDPR compliance. High-stakes
 ├── +page.svelte             # Profile editing (default tab)
 ├── +page.server.ts          # Profile form actions
 ├── security/
-│   ├── +page.svelte         # Password, OAuth, sessions
+│   ├── +page.svelte         # OAuth connections, sessions, 2FA
 │   └── +page.server.ts      # Security form actions
 ├── data/
 │   ├── +page.svelte         # GDPR data hub
@@ -160,9 +160,9 @@ The account section uses a tabbed layout with sub-routes. Each tab has distinct 
 ├────────────────────────────────────────────────────┤
 │                                                    │
 │ ┌──────────────────────────────────────────────┐  │
-│ │ Password                                     │  │
-│ │ Last changed: 3 months ago                   │  │
-│ │ [Change Password]                            │  │
+│ │ Two-Factor Authentication                    │  │
+│ │ Add an extra layer of security               │  │
+│ │ Status: Not enabled       [Enable 2FA]       │  │
 │ └──────────────────────────────────────────────┘  │
 │                                                    │
 │ ┌──────────────────────────────────────────────┐  │
@@ -188,55 +188,27 @@ The account section uses a tabbed layout with sub-routes. Each tab has distinct 
 └────────────────────────────────────────────────────┘
 ```
 
-### Password Change (Inline Expansion)
-
-```
-┌──────────────────────────────────────────────┐
-│ Password                                     │
-│                                              │
-│ Current Password                             │
-│ [••••••••••••••••]                          │
-│                                              │
-│ New Password                                 │
-│ [••••••••••••••••]                          │
-│ ✓ At least 8 characters                     │
-│ ✓ Contains uppercase                        │
-│ ✓ Contains number                           │
-│                                              │
-│ Confirm New Password                         │
-│ [••••••••••••••••]                          │
-│                                              │
-│ [Cancel]  [Change Password]                  │
-└──────────────────────────────────────────────┘
-```
-
 ### OAuth Disconnect Safety Check
 
 **Critical:** Prevent user lockout if OAuth is their only login method.
 
 ```typescript
 // Before allowing OAuth disconnect
-const hasPassword = user.emailVerified && user.hashedPassword;
 const oauthAccounts = user.accounts.filter(a => a.provider !== 'credential');
 
-if (oauthAccounts.length === 1 && !hasPassword) {
+// Passwordless: user can always sign in via magic link/OTP to verified email
+// Only block if disconnecting would leave no verified email
+if (oauthAccounts.length === 1 && !user.emailVerified) {
   return fail(400, {
-    error: 'Cannot disconnect your only login method. Set a password first.'
+    error: 'Verify your email before disconnecting your only OAuth provider.'
   });
 }
 ```
 
-### Session Revocation After Password Change
+### Session Revocation
 
 ```typescript
-// Use Better Auth's revokeOtherSessions option
-await auth.api.changePassword({
-  body: { currentPassword, newPassword },
-  asResponse: true,
-  headers: event.request.headers,
-});
-
-// Revoke all other sessions
+// Revoke all other sessions (e.g., after security concern)
 await auth.api.revokeOtherSessions({
   headers: event.request.headers,
 });
@@ -423,10 +395,7 @@ export const POST: RequestHandler = async ({ locals }) => {
 │    [_________________________________]            │
 │    ⚠️ Email doesn't match (if wrong)              │
 │                                                    │
-│ 2. Enter your password                            │
-│    [_________________________________]            │
-│                                                    │
-│ 3. Tell us why you're leaving (optional)          │
+│ 2. Tell us why you're leaving (optional)          │
 │    [_________________________________]            │
 │                                                    │
 │ □ I understand this action cannot be undone       │
@@ -435,6 +404,8 @@ export const POST: RequestHandler = async ({ locals }) => {
 │           (disabled until all conditions met)     │
 └────────────────────────────────────────────────────┘
 ```
+
+> **No password step.** With passwordless auth, email confirmation is sufficient identity verification. The user must type their email address to confirm intent.
 
 ### Grace Period Implementation
 
@@ -472,7 +443,7 @@ await db.delete(user)
 src/lib/components/composites/account/
 ├── ProfileForm.svelte           # Profile editing with auto-save
 ├── AvatarUpload.svelte          # Avatar with preview + crop
-├── PasswordChangeForm.svelte    # Inline password change
+├── TwoFactorSetup.svelte        # 2FA setup with QR code
 ├── OAuthConnections.svelte      # Connected accounts list
 ├── ActiveSessions.svelte        # Session list with revoke
 ├── DataExportCard.svelte        # Export request UI

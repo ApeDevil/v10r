@@ -147,7 +147,7 @@ Frontend architecture for channel connections and notification settings manageme
 {
   id: 'security',
   name: 'Security alerts',
-  description: 'Password changes, new logins',
+  description: 'New device logins, security events',
   supportedChannels: ['email', 'telegram', 'discord'],
   required: true,  // Cannot disable email
   requiredChannels: ['email']
