@@ -46,11 +46,15 @@ export default {
 };
 ```
 
-### Install Adapters
+### Adapter Dependencies
 
-```bash
-bun add -D @sveltejs/adapter-vercel svelte-adapter-bun
+Dev dependencies:
+```json
+"@sveltejs/adapter-vercel": "^5.x",
+"svelte-adapter-bun": "^0.5.x"
 ```
+
+> See [development-environment.md](./development-environment.md) for installation workflow.
 
 ### Package.json Scripts
 
@@ -606,15 +610,14 @@ export async function GET() {
 ### Vercel Logs
 
 ```bash
-# Install Vercel CLI
-bun add -g vercel
-
-# View logs
+# View logs (requires Vercel CLI on host machine)
 vercel logs <deployment-url>
 
 # Stream logs
 vercel logs <deployment-url> --follow
 ```
+
+> **Note:** Vercel CLI is installed globally on your host machine, not in the container.
 
 ### Koyeb Logs
 

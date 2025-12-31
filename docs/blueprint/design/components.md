@@ -32,12 +32,20 @@ Pages
 
 ---
 
-## Installation
+## Dependencies
 
-```bash
-bun add bits-ui class-variance-authority clsx
-bun add -D @iconify/svelte
+```json
+"bits-ui": "^1.x",
+"class-variance-authority": "^0.7.x",
+"clsx": "^2.x"
 ```
+
+Dev dependencies:
+```json
+"@iconify/svelte": "^4.x"
+```
+
+> See [development-environment.md](../development-environment.md) for installation workflow.
 
 ---
 

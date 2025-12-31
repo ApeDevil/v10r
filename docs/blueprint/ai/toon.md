@@ -41,11 +41,13 @@ users[2]{id,name,role}:
 
 ---
 
-## Installation
+## Dependencies
 
-```bash
-bun add @toon-format/toon
+```json
+"@toon-format/toon": "^0.x"
 ```
+
+> See [development-environment.md](../development-environment.md) for installation workflow.
 
 ---
 

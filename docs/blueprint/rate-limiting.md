@@ -50,11 +50,13 @@ export const auth = betterAuth({
 
 ---
 
-## Installation
+## Dependencies
 
-```bash
-bun add sveltekit-rate-limiter
+```json
+"sveltekit-rate-limiter": "^0.5.x"
 ```
+
+> See [development-environment.md](./development-environment.md) for installation workflow.
 
 ---
 
@@ -341,11 +343,14 @@ For distributed rate limiting across serverless functions, use Upstash:
 | Free tier | N/A | 10K requests/day |
 | Latency | ~0ms | ~1-2ms |
 
-### Installation
+### Dependencies
 
-```bash
-bun add @upstash/ratelimit @upstash/redis
+```json
+"@upstash/ratelimit": "^2.x",
+"@upstash/redis": "^1.x"
 ```
+
+> See [development-environment.md](./development-environment.md) for installation workflow.
 
 ### Configuration
 

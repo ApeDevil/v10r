@@ -2,6 +2,12 @@
 
 Implementation designs and feature specifications. How to build features using the stack, with code examples and patterns.
 
+## Development
+
+| File | Main Topics |
+|------|-------------|
+| **[development-environment.md](./development-environment.md)** | • Container-first workflow: Podman + Bun, no host installations<br>• Adding dependencies: edit `package.json` → restart container<br>• Container commands: start, stop, restart, shell access<br>• Volume mounts: project files + isolated node_modules<br>• Troubleshooting: fresh start, logs, rebuilding |
+
 ## Application Structure
 
 | File | Main Topics |

@@ -42,11 +42,14 @@ See [auth.md](./auth.md#authentication-flows) for Better Auth form implementatio
 
 ---
 
-## Installation
+## Dependencies
 
-```bash
-bun add sveltekit-superforms valibot
+```json
+"sveltekit-superforms": "^2.x",
+"valibot": "^1.x"
 ```
+
+> See [development-environment.md](./development-environment.md) for installation workflow.
 
 ---
 

@@ -72,20 +72,23 @@ The AI Assistant is a chat interface accessible from the sidebar header. Unlike 
 
 ---
 
-## Installation
+## Dependencies
 
-```bash
-# Core AI SDK
-bun add ai @ai-sdk/svelte
+```json
+// Core
+"ai": "^4.x",
+"@ai-sdk/svelte": "^1.x",
 
-# Providers (install what you need)
-bun add @ai-sdk/groq          # Chat + Audio (Llama, Whisper)
-bun add @ai-sdk/mistral       # Embeddings
-bun add @ai-sdk/togetherai    # Image generation (FLUX)
+// Providers (add what you need)
+"@ai-sdk/groq": "^1.x",         // Chat + Audio (Llama, Whisper)
+"@ai-sdk/mistral": "^1.x",      // Embeddings
+"@ai-sdk/togetherai": "^1.x",   // Image generation (FLUX)
 
-# Token optimization (optional but recommended)
-bun add @toon-format/toon     # 30-60% token savings for RAG context
+// Optional
+"@toon-format/toon": "^0.x"     // 30-60% token savings for RAG
 ```
+
+> See [development-environment.md](../development-environment.md) for installation workflow.
 
 ---
 

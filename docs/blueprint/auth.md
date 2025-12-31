@@ -44,11 +44,13 @@
 
 ---
 
-## Installation
+## Dependencies
 
-```bash
-bun add better-auth
+```json
+"better-auth": "^1.x"
 ```
+
+> See [development-environment.md](./development-environment.md) for installation workflow.
 
 ---
 

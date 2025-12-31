@@ -21,11 +21,13 @@ Graph data model for relationships, navigation, and future RAG capabilities.
 
 ## Connection Setup
 
-### Driver Installation
+### Dependencies
 
-```bash
-bun add neo4j-driver
+```json
+"neo4j-driver": "^5.x"
 ```
+
+> See [development-environment.md](../development-environment.md) for installation workflow.
 
 ### Client Configuration
 
