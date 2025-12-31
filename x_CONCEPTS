@@ -1,14 +1,10 @@
 
 # prompt
 
-1) check out & contemplate the blueprint app-shell
+1) let's brainstorm 'Progresive Content Discovery' as a foundational concept (docs/foundation/PCD.md)
+so that elements/content like sidebar are only displayd when user arrived at a stage where the elements are usefule, not before
 
-2) let's brainstorm blueprint 'Progresive Content Discovery' (blueprint/pcd/README.md, blueprint/pcd/concept.md )
-also that elements like sidebar are only displayd when user arrived at a stage where the elements are usefule, not before
-
-3) consult with agents about this
-
----
+2) consult with agents about this:
 
 # Progresive Content Discovery (PCD)
 
