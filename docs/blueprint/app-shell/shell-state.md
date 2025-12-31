@@ -50,9 +50,12 @@ Orchestration of state across app shell components: sidebar, modals, theme, noti
 
 ### State Definition
 
+> **SSR Safety:** Never export state at module level. Module-level state is shared across all SSR requests in Node.js. Always use factory functions + context.
+
 ```typescript
 // src/lib/stores/sidebar.svelte.ts
 import { browser } from '$app/environment';
+import { getContext, setContext } from 'svelte';
 
 interface SidebarState {
   expanded: boolean;     // Rail vs full sidebar (desktop)
@@ -61,8 +64,9 @@ interface SidebarState {
 }
 
 const STORAGE_KEY = 'sidebar-state';
+const SIDEBAR_CTX = Symbol('sidebar');
 
-function createSidebarState() {
+export function createSidebarState() {
   // Load from localStorage
   const stored = browser ? localStorage.getItem(STORAGE_KEY) : null;
   const initial: SidebarState = stored
@@ -97,16 +101,26 @@ function createSidebarState() {
   };
 }
 
-export const sidebar = createSidebarState();
+// Context helpers for SSR-safe access
+export function setSidebarContext() {
+  const sidebar = createSidebarState();
+  setContext(SIDEBAR_CTX, sidebar);
+  return sidebar;
+}
+
+export function getSidebar() {
+  return getContext<ReturnType<typeof createSidebarState>>(SIDEBAR_CTX);
+}
 ```
 
 ### Integration with Breakpoints
 
 ```svelte
 <script lang="ts">
-  import { sidebar } from '$lib/stores/sidebar.svelte';
+  import { getSidebar } from '$lib/stores/sidebar.svelte';
   import { MediaQuery } from 'svelte/reactivity';
 
+  const sidebar = getSidebar(); // Get from context (SSR-safe)
   const isDesktop = new MediaQuery('(min-width: 1024px)');
 
   // Auto-close mobile drawer on resize to desktop
@@ -124,9 +138,12 @@ export const sidebar = createSidebarState();
 
 ### State Definition
 
+> **SSR Safety:** Theme uses context pattern to avoid module-level state sharing across requests.
+
 ```typescript
 // src/lib/stores/theme.svelte.ts
 import { browser } from '$app/environment';
+import { getContext, setContext } from 'svelte';
 
 type ThemeMode = 'light' | 'dark' | 'system';
 type AccentColor = 'blue' | 'purple' | 'green' | 'orange';
@@ -137,7 +154,9 @@ interface ThemeState {
   resolvedMode: 'light' | 'dark'; // Computed from mode + system preference
 }
 
-function createThemeState(initial: { mode: ThemeMode; accent: AccentColor }) {
+const THEME_CTX = Symbol('theme');
+
+export function createThemeState(initial: { mode: ThemeMode; accent: AccentColor }) {
   let state = $state<ThemeState>({
     mode: initial.mode,
     accent: initial.accent,
@@ -196,12 +215,15 @@ function createThemeState(initial: { mode: ThemeMode; accent: AccentColor }) {
   };
 }
 
-// Initialized from server data in +layout.svelte
-export let theme: ReturnType<typeof createThemeState>;
-
-export function initTheme(initial: { mode: ThemeMode; accent: AccentColor }) {
-  theme = createThemeState(initial);
+// Context helpers for SSR-safe access
+export function setThemeContext(initial: { mode: ThemeMode; accent: AccentColor }) {
+  const theme = createThemeState(initial);
+  setContext(THEME_CTX, theme);
   return theme;
+}
+
+export function getTheme() {
+  return getContext<ReturnType<typeof createThemeState>>(THEME_CTX);
 }
 ```
 
@@ -227,11 +249,17 @@ export function initTheme(initial: { mode: ThemeMode; accent: AccentColor }) {
 
 Only one modal can be open at a time. Opening one closes others.
 
+> **SSR Safety:** Modals are client-only state but still use context pattern for consistency and testability.
+
 ```typescript
 // src/lib/stores/modals.svelte.ts
+import { getContext, setContext } from 'svelte';
+
 type ModalId = 'quickSearch' | 'aiAssistant' | 'shortcuts' | 'sessionExpiry' | null;
 
-function createModalState() {
+const MODALS_CTX = Symbol('modals');
+
+export function createModalState() {
   let activeModal = $state<ModalId>(null);
   let modalData = $state<Record<string, unknown>>({});
 
@@ -258,14 +286,25 @@ function createModalState() {
   };
 }
 
-export const modals = createModalState();
+// Context helpers for SSR-safe access
+export function setModalsContext() {
+  const modals = createModalState();
+  setContext(MODALS_CTX, modals);
+  return modals;
+}
+
+export function getModals() {
+  return getContext<ReturnType<typeof createModalState>>(MODALS_CTX);
+}
 ```
 
 ### Focus Restoration
 
 ```svelte
 <script lang="ts">
-  import { modals } from '$lib/stores/modals.svelte';
+  import { getModals } from '$lib/stores/modals.svelte';
+
+  const modals = getModals(); // Get from context (SSR-safe)
 
   let triggerRef: HTMLButtonElement;
   let previousFocus: HTMLElement | null = null;
@@ -295,11 +334,16 @@ export const modals = createModalState();
 
 ### Polling Pattern
 
+> **SSR Safety:** Notifications use context pattern to avoid module-level state sharing.
+
 ```typescript
 // src/lib/stores/notifications.svelte.ts
 import { browser } from '$app/environment';
+import { getContext, setContext } from 'svelte';
 
-function createNotificationState(initialCount: number) {
+const NOTIFICATIONS_CTX = Symbol('notifications');
+
+export function createNotificationState(initialCount: number) {
   let unreadCount = $state(initialCount);
   let lastFetched = $state(Date.now());
 
@@ -340,11 +384,15 @@ function createNotificationState(initialCount: number) {
   };
 }
 
-export let notifications: ReturnType<typeof createNotificationState>;
-
-export function initNotifications(count: number) {
-  notifications = createNotificationState(count);
+// Context helpers for SSR-safe access
+export function setNotificationsContext(initialCount: number) {
+  const notifications = createNotificationState(initialCount);
+  setContext(NOTIFICATIONS_CTX, notifications);
   return notifications;
+}
+
+export function getNotifications() {
+  return getContext<ReturnType<typeof createNotificationState>>(NOTIFICATIONS_CTX);
 }
 ```
 
@@ -385,32 +433,41 @@ export const load = async ({ locals }) => {
 
 Shell initialization happens in a specific order to prevent flashes and ensure dependencies:
 
-```typescript
-// src/routes/(app)/+layout.svelte
+```svelte
+<!-- src/routes/(app)/+layout.svelte -->
 <script lang="ts">
-  import { initTheme } from '$lib/stores/theme.svelte';
-  import { initNotifications } from '$lib/stores/notifications.svelte';
+  import { onMount } from 'svelte';
+  import { setSidebarContext } from '$lib/stores/sidebar.svelte';
+  import { setThemeContext } from '$lib/stores/theme.svelte';
+  import { setModalsContext } from '$lib/stores/modals.svelte';
+  import { setNotificationsContext } from '$lib/stores/notifications.svelte';
   import { initKeyboardHandler } from '$lib/shortcuts';
 
   let { data, children } = $props();
 
+  // Initialize all contexts (SSR-safe, request-scoped)
   // 1. Theme (already applied in app.html, just sync state)
-  const theme = initTheme({
+  const theme = setThemeContext({
     mode: data.settings?.theme ?? 'system',
     accent: data.settings?.accentColor ?? 'blue',
   });
 
-  // 2. Notifications (start polling)
-  const notifications = initNotifications(data.unreadCount ?? 0);
+  // 2. Sidebar (loads from localStorage on client)
+  const sidebar = setSidebarContext();
 
-  // 3. Keyboard shortcuts (register handlers)
+  // 3. Modals (ephemeral client state)
+  const modals = setModalsContext();
+
+  // 4. Notifications (start polling)
+  const notifications = setNotificationsContext(data.unreadCount ?? 0);
+
+  // 5. Keyboard shortcuts (register handlers)
   onMount(() => {
     return initKeyboardHandler();
   });
-
-  // 4. Sidebar state (loads from localStorage automatically)
-  // Already initialized at module level
 </script>
+
+{@render children()}
 ```
 
 ---
@@ -438,6 +495,7 @@ function markAsRead() {
 }
 
 // In sidebar
+const notifications = getNotifications(); // Get from context
 $effect(() => {
   if (!browser) return;
 
@@ -487,10 +545,16 @@ Add a debug panel in development:
 <!-- src/lib/components/dev/StateDebugger.svelte -->
 <script lang="ts">
   import { dev } from '$app/environment';
-  import { sidebar } from '$lib/stores/sidebar.svelte';
-  import { theme } from '$lib/stores/theme.svelte';
-  import { modals } from '$lib/stores/modals.svelte';
-  import { notifications } from '$lib/stores/notifications.svelte';
+  import { getSidebar } from '$lib/stores/sidebar.svelte';
+  import { getTheme } from '$lib/stores/theme.svelte';
+  import { getModals } from '$lib/stores/modals.svelte';
+  import { getNotifications } from '$lib/stores/notifications.svelte';
+
+  // Get all state from context (SSR-safe)
+  const sidebar = getSidebar();
+  const theme = getTheme();
+  const modals = getModals();
+  const notifications = getNotifications();
 
   let expanded = $state(false);
 </script>
@@ -498,7 +562,7 @@ Add a debug panel in development:
 {#if dev}
   <div class="fixed bottom-4 right-4 z-debug">
     <button onclick={() => expanded = !expanded} class="btn btn-sm">
-      🔧 State
+      State
     </button>
 
     {#if expanded}

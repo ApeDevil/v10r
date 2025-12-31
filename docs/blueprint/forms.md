@@ -851,10 +851,11 @@ import * as v from 'valibot';
 import { uploadToR2 } from '$lib/server/storage';
 import sharp from 'sharp';
 
+// Valibot v1 file validation
 const avatarSchema = v.object({
   avatar: v.pipe(
-    v.file(),
-    v.mimeType(['image/jpeg', 'image/png', 'image/webp'], 'Must be an image'),
+    v.file('Please select a file'),
+    v.mimeType(['image/jpeg', 'image/png', 'image/webp'], 'Must be an image (JPEG, PNG, or WebP)'),
     v.maxSize(5 * 1024 * 1024, 'Max 5MB')
   ),
 });
@@ -989,6 +990,13 @@ export const actions: Actions = {
 ### Array/Dynamic Fields
 
 For forms with dynamic lists (tags, items, etc.), use `dataType: 'json'`:
+
+> **Progressive Enhancement Warning:** `dataType: 'json'` **breaks progressive enhancement**. The form will NOT work without JavaScript. Only use this for complex data structures (nested objects, arrays) where no-JS fallback is not required.
+>
+> **Requirements when using `dataType: 'json'`:**
+> - JavaScript must be enabled
+> - `use:enhance` is mandatory
+> - `disabled` attribute is ignored (all `$form` data posts regardless)
 
 ```typescript
 // src/lib/schemas/tags.ts

@@ -213,12 +213,26 @@ export async function sendAuthEmail({ to, subject, magicLinkUrl, otpCode }: Auth
 
 ### SvelteKit Hook
 
+> **Important:** Always add rate limiting BEFORE auth handlers. Auth operations are expensive (database lookups). See [middleware.md](./middleware.md#full-example) for the complete hook sequence with rate limiting, CORS, CSRF, and security headers.
+
 ```typescript
 // src/hooks.server.ts
 import { sequence } from '@sveltejs/kit/hooks';
 import { auth } from '$lib/server/auth';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { building } from '$app/environment';
+import { authLimiter } from '$lib/server/rate-limit';
+
+// Rate limiting (BEFORE auth - block brute force early)
+const rateLimitHandle = async ({ event, resolve }) => {
+  if (event.url.pathname.startsWith('/api/auth')) {
+    const status = await authLimiter.check(event);
+    if (status.limited) {
+      return new Response('Too Many Requests', { status: 429 });
+    }
+  }
+  return resolve(event);
+};
 
 // Better Auth handler
 const authHandle = async ({ event, resolve }) => {
@@ -233,9 +247,8 @@ const sessionHandle = async ({ event, resolve }) => {
   return resolve(event);
 };
 
-// Compose handlers with sequence (add more handlers as needed)
-// See api.md for CORS handler example
-export const handle = sequence(authHandle, sessionHandle);
+// Order: Rate limit FIRST, then auth
+export const handle = sequence(rateLimitHandle, authHandle, sessionHandle);
 ```
 
 **Why `sequence`?** SvelteKit only allows one `handle` export. Use `sequence` from `@sveltejs/kit/hooks` to compose multiple handlers (auth, CORS, logging, etc.).

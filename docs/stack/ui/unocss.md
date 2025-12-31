@@ -36,6 +36,88 @@ Instant on-demand atomic CSS engine. Unlike traditional CSS frameworks, UnoCSS h
 | `preset-mini` | Minimal essential utilities |
 | `preset-typography` | Prose styling |
 
+## Accessibility Requirements
+
+UnoCSS should be configured to meet WCAG 2.1 AA baseline (with AAA targets for touch):
+
+| Requirement | Implementation | WCAG Level |
+|-------------|----------------|------------|
+| **Focus visible** | `focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2` | AA (1.4.11) |
+| **Reduced motion** | `motion-safe:transition motion-reduce:transition-none` | AAA (2.3.3) |
+| **Touch targets** | 24×24px minimum (AA), 44×44px recommended (AAA) | AA/AAA |
+| **Color contrast** | Use semantic tokens with 4.5:1 minimum ratio | AA (1.4.3) |
+| **Screen reader** | `sr-only` utility for visually hidden text | A (1.3.1) |
+
+**Focus states (required on all interactive elements):**
+```html
+<button class="focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
+               dark:focus-visible:ring-offset-gray-900">
+  Click me
+</button>
+```
+
+**Reduced motion support:**
+```html
+<div class="motion-safe:transition-all motion-reduce:transition-none">
+  Animated content
+</div>
+```
+
+**Screen reader only text:**
+```html
+<span class="sr-only">Required field</span>
+```
+
+See [design/tokens.md](../../blueprint/design/tokens.md) for WCAG-compliant color tokens.
+
+## Dark Mode
+
+UnoCSS supports class-based dark mode via `preset-wind`:
+
+```typescript
+// uno.config.ts
+import { defineConfig, presetWind } from 'unocss';
+
+export default defineConfig({
+  presets: [presetWind()],
+  // Class-based dark mode (default)
+  // Toggle .dark on <html> to switch themes
+});
+```
+
+**Usage:**
+```html
+<div class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  Theme-aware content
+</div>
+```
+
+**Toggle implementation:** See [shell-state.md](../../blueprint/app-shell/shell-state.md#theme-state) for SSR-safe theme state management with cookie persistence.
+
+## Container Queries
+
+Use container queries for component-scoped responsive design (instead of viewport-based breakpoints):
+
+```html
+<!-- Define container -->
+<div class="@container">
+  <!-- Respond to container width, not viewport -->
+  <div class="@md:flex @lg:grid @lg:grid-cols-2">
+    Content adapts to container size
+  </div>
+</div>
+```
+
+**When to use:**
+| Pattern | Use Case |
+|---------|----------|
+| `md:` (media query) | Page-level layout changes |
+| `@md:` (container query) | Component-level responsiveness |
+
+**Container query breakpoints (custom):** `@xs` (320px), `@sm` (384px), `@md` (448px), `@lg` (512px), `@xl` (576px)
+
+See [styling.md](../../blueprint/design/styling.md#container-queries) for detailed patterns.
+
 ## Known limitations
 
 **Ecosystem:**

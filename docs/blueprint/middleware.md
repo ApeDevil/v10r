@@ -424,11 +424,12 @@ export const reroute: Reroute = ({ url }) => {
 
 Complete `hooks.server.ts` with all patterns:
 
-> **Hook Order:** Rate Limit → CORS → Security Headers → Auth. This order ensures:
+> **Hook Order:** Rate Limit → CORS → CSRF → Security Headers → Auth. This order ensures:
 > 1. Abusive requests are blocked before consuming resources (OPTIONS exempt to allow CORS preflight)
 > 2. CORS handler processes all OPTIONS requests and adds required headers
-> 3. Security headers are applied to all responses (with immutable header protection)
-> 4. Authentication runs last (most expensive operation)
+> 3. CSRF protection blocks cross-origin JSON API attacks (SvelteKit only protects forms)
+> 4. Security headers are applied to all responses (with immutable header protection)
+> 5. Authentication runs last (most expensive operation)
 >
 > **Critical:** Auth routes get stricter rate limits (5/min vs 100/min global)
 
@@ -515,7 +516,24 @@ const corsHandle: Handle = async ({ event, resolve }) => {
   return response;
 };
 
-// 3. Security headers (with immutable header protection)
+// 3. CSRF protection for JSON APIs (SvelteKit only protects form submissions)
+const csrfHandle: Handle = async ({ event, resolve }) => {
+  // Only check state-changing requests with JSON content type
+  if (
+    event.request.method !== 'GET' &&
+    event.request.method !== 'HEAD' &&
+    event.request.method !== 'OPTIONS' &&
+    event.request.headers.get('content-type')?.includes('application/json')
+  ) {
+    // Require custom header - browsers won't add this cross-origin
+    if (!event.request.headers.get('x-requested-with')) {
+      return new Response('CSRF token required', { status: 403 });
+    }
+  }
+  return resolve(event);
+};
+
+// 4. Security headers (with immutable header protection)
 const securityHandle: Handle = async ({ event, resolve }) => {
   const response = await resolve(event);
 
@@ -534,7 +552,7 @@ const securityHandle: Handle = async ({ event, resolve }) => {
   return response;
 };
 
-// 4. Authentication
+// 5. Authentication
 const authHandle: Handle = async ({ event, resolve }) => {
   const authResponse = await svelteKitHandler({ auth, event });
   if (authResponse) return authResponse;
@@ -548,10 +566,11 @@ const authHandle: Handle = async ({ event, resolve }) => {
   return resolve(event);
 };
 
-// Compose in order: Rate Limit → CORS → Security → Auth
+// Compose in order: Rate Limit → CORS → CSRF → Security → Auth
 export const handle = sequence(
   rateLimitHandle,
   corsHandle,
+  csrfHandle,
   securityHandle,
   authHandle
 );

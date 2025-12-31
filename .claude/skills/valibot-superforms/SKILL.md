@@ -208,7 +208,7 @@ const AgeSchema = v.pipe(
   v.check((age) => age >= 18, 'Must be 18+')
 );
 
-// Async validation
+// Async validation (single field)
 const UniqueEmailSchema = v.pipeAsync(
   v.string(),
   v.email(),
@@ -218,6 +218,42 @@ const UniqueEmailSchema = v.pipeAsync(
   )
 );
 ```
+
+### Async Schemas (objectAsync)
+
+When ANY field requires async validation, use `objectAsync`:
+
+```typescript
+import * as v from 'valibot';
+
+// Async check function
+async function isUsernameAvailable(username: string): Promise<boolean> {
+  const response = await fetch(`/api/check-username?u=${username}`);
+  const { available } = await response.json();
+  return available;
+}
+
+// Use objectAsync when ANY field has async validation
+export const registerSchema = v.objectAsync({
+  // Async field uses pipeAsync + checkAsync
+  username: v.pipeAsync(
+    v.string(),
+    v.minLength(3, 'At least 3 characters'),
+    v.checkAsync(isUsernameAvailable, 'Username already taken')
+  ),
+  // Sync fields can still use regular pipe() inside objectAsync
+  email: v.pipe(v.string(), v.email()),
+  password: v.pipe(v.string(), v.minLength(8)),
+});
+
+export type RegisterInput = v.InferInput<typeof registerSchema>;
+```
+
+**Key rules:**
+- Use `objectAsync` if ANY field requires async validation
+- Use `pipeAsync` + `checkAsync` for the async field
+- Sync fields can use regular `pipe()` inside `objectAsync`
+- Increase `delayMs: 500` to reduce server requests
 
 ## Superforms Stores
 
