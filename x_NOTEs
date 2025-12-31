@@ -1,3 +1,7 @@
+
+
+---
+
 knowledge gaps of ai - things post-training cutoff or underdocumented info
 ---
 
@@ -21,9 +25,4 @@ Please think through the task and orchestrate the following workflow:
 1) Let the appropriate agent with according skills review/examine the documentation and analyze the relevant sections in depth.
 2) Only after the respective agents finisched thier analyzis launch resy agent to identify/verify the best possible solution approaches.
 
----
 
-
-analyze & contemplate the project!
-task: set up the podman container for our project
-first let resy look up the best practices (note: we use podman desctop & podman desctop compse) 
