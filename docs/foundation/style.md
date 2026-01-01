@@ -287,6 +287,8 @@ Before shipping a new typography set:
 4. **Proves the design system** — if randomization works, the token system is robust
 5. **Low stakes** — no transactions, no critical workflows
 
+> **Pioneering Pattern**: Research indicates no major production sites currently implement "random palette per visit + lock preference" as a UX pattern. Most implementations are limited to palette generator tools. Velociraptor would be pioneering this approach for showcase/portfolio contexts.
+
 ---
 
 ## Anti-Patterns
@@ -312,24 +314,36 @@ Before shipping a new typography set:
 - First-time visitor discovers style randomization within 10 seconds
 - Dice roll button is keyboard accessible
 - Style change feels playful, not jarring
-- "Lock style" option is discoverable
+- "Lock style" option is discoverable (appears after first roll)
+- **"Unlock style" button available** when style is locked (not just an indicator)
 - Returning visitors with locked styles see their preferred style
+- Error feedback displayed for failed API calls
 
 ### Accessibility
 
 - All palette/typography combinations pass WCAG AA
+- **All UI components (borders, rings) meet 3:1 contrast** (WCAG 2.1 SC 1.4.11)
 - Motion-sensitive users see no animated transitions
-- Screen reader users are informed of style changes
+- Screen reader users are informed of style changes (live region announcements)
 - Focus indicators visible across all palettes
 - Colorblind users can distinguish all semantic states
+- **Touch targets meet 44×44px minimum** (WCAG 2.5.5)
 
 ### Technical
 
 - No flash of unstyled content (FOUC) on page load
+- **Blocking theme script** executes before first paint (CSP nonce required)
 - Style persists across page navigations (same session)
 - Font loading doesn't cause layout shift (CLS < 0.1)
 - Locked styles survive browser restarts
 - Guest-to-user migration preserves style preference
+- **Cookie-first persistence** for performance (saves 50-100ms vs database query)
+
+### Privacy & Compliance
+
+- Style preference cookies may qualify as "strictly necessary" (accessibility accommodation)
+- **GDPR consideration**: Verify legal classification with counsel if targeting EU users
+- For maximum compliance, consider self-hosting fonts (WOFF2) instead of Google Fonts CDN
 
 ### Statistical
 

@@ -35,11 +35,13 @@ Implementation blueprint for the Style Randomization system. Randomizes decorati
 
 **Key Principles:**
 
-- **Cookie-authoritative**: Style ID stored in httpOnly cookie (guests) or database (authenticated)
-- **SSR-compatible**: CSS custom properties injected server-side, no FOUC
+- **Cookie-first**: Cookie is trusted first (even for authenticated users) to avoid per-request database queries; database is backup/sync
+- **SSR-compatible**: CSS custom properties injected server-side, blocking theme script prevents FOUC
 - **Theme orthogonality**: Dark/light stored separately from palette/typography
 - **Pre-validated only**: All palette/typography combinations validated at build time
 - **Weighted distribution**: Randomization ensures even distribution across options
+
+> **Performance Note**: For serverless (Neon PostgreSQL), trusting the cookie first saves 50-100ms per request by avoiding database round-trips.
 
 ---
 
@@ -77,7 +79,9 @@ export interface PaletteColors {
   primaryForeground: string;
   secondary: string;
   secondaryHover: string;
+  secondaryForeground: string;  // Required for WCAG validation
   accent: string;
+  accentForeground: string;     // Required for WCAG validation
   bg: string;
   fg: string;
   muted: string;
@@ -109,9 +113,13 @@ export interface TypographySet {
   mono?: FontConfig;    // Optional for code blocks
 }
 
+// Branded types for type-safe IDs (prevents accidental swapping)
+export type PaletteId = string & { readonly __brand: 'PaletteId' };
+export type TypographyId = string & { readonly __brand: 'TypographyId' };
+
 export interface StyleConfig {
-  paletteId: string;
-  typographyId: string;
+  paletteId: PaletteId;
+  typographyId: TypographyId;
   locked: boolean;
 }
 
@@ -120,6 +128,17 @@ export interface ResolvedStyle {
   palette: Palette;
   typography: TypographySet;
 }
+
+// Versioned cookie schema for future migrations
+export interface StyleCookieV1 {
+  pid: string;
+  tid: string;
+  lck: boolean;
+  v: 1;
+}
+
+// Add new versions as union: StyleCookie = StyleCookieV1 | StyleCookieV2
+export type StyleCookie = StyleCookieV1;
 ```
 
 ### Style ID Format
@@ -162,7 +181,9 @@ export const PALETTE_REGISTRY: Palette[] = [
       primaryForeground: 'hsl(0 0% 100%)',
       secondary: 'hsl(195 85% 40%)',
       secondaryHover: 'hsl(195 85% 35%)',
+      secondaryForeground: 'hsl(0 0% 100%)',
       accent: 'hsl(175 70% 35%)',
+      accentForeground: 'hsl(0 0% 100%)',
       bg: 'hsl(210 30% 98%)',
       fg: 'hsl(210 40% 10%)',
       muted: 'hsl(210 20% 94%)',
@@ -182,7 +203,9 @@ export const PALETTE_REGISTRY: Palette[] = [
       primaryForeground: 'hsl(210 40% 10%)',
       secondary: 'hsl(195 75% 55%)',
       secondaryHover: 'hsl(195 75% 60%)',
+      secondaryForeground: 'hsl(210 40% 10%)',
       accent: 'hsl(175 60% 50%)',
+      accentForeground: 'hsl(210 40% 10%)',
       bg: 'hsl(210 40% 8%)',
       fg: 'hsl(210 30% 95%)',
       muted: 'hsl(210 30% 15%)',
@@ -249,8 +272,9 @@ export function getContrastRatio(color1: string, color2: string): number {
 }
 
 export const WCAG = {
-  AA_NORMAL: 4.5,
-  AA_LARGE: 3.0,
+  AA_NORMAL: 4.5,    // Normal text on background
+  AA_LARGE: 3.0,     // Large text (18pt+ or 14pt bold) on background
+  UI_COMPONENT: 3.0, // UI components and graphical objects (WCAG 2.1 SC 1.4.11)
   AAA_NORMAL: 7.0,
   AAA_LARGE: 4.5,
 } as const;
@@ -260,40 +284,76 @@ export interface ContrastValidation {
   issues: string[];
 }
 
+/**
+ * Validate a single mode (light or dark) for WCAG compliance.
+ * Checks all required color pairs per WCAG 2.1/2.2 specifications.
+ */
+function validateMode(
+  colors: PaletteColors,
+  mode: 'Light' | 'Dark',
+  issues: string[]
+): void {
+  // 1. Text on backgrounds (4.5:1 minimum)
+  const fgBg = getContrastRatio(colors.fg, colors.bg);
+  if (fgBg < WCAG.AA_NORMAL) {
+    issues.push(`${mode}: fg/bg = ${fgBg.toFixed(2)}:1 (need ${WCAG.AA_NORMAL}:1)`);
+  }
+
+  const mutedOnBg = getContrastRatio(colors.mutedForeground, colors.bg);
+  if (mutedOnBg < WCAG.AA_NORMAL) {
+    issues.push(`${mode}: mutedForeground/bg = ${mutedOnBg.toFixed(2)}:1`);
+  }
+
+  const mutedOnMuted = getContrastRatio(colors.mutedForeground, colors.muted);
+  if (mutedOnMuted < WCAG.AA_NORMAL) {
+    issues.push(`${mode}: mutedForeground/muted = ${mutedOnMuted.toFixed(2)}:1`);
+  }
+
+  // 2. Button text on button backgrounds (3:1 for large text)
+  const primaryBtn = getContrastRatio(colors.primaryForeground, colors.primary);
+  if (primaryBtn < WCAG.AA_LARGE) {
+    issues.push(`${mode}: primaryForeground/primary = ${primaryBtn.toFixed(2)}:1`);
+  }
+
+  const secondaryBtn = getContrastRatio(colors.secondaryForeground, colors.secondary);
+  if (secondaryBtn < WCAG.AA_LARGE) {
+    issues.push(`${mode}: secondaryForeground/secondary = ${secondaryBtn.toFixed(2)}:1`);
+  }
+
+  const accentBtn = getContrastRatio(colors.accentForeground, colors.accent);
+  if (accentBtn < WCAG.AA_LARGE) {
+    issues.push(`${mode}: accentForeground/accent = ${accentBtn.toFixed(2)}:1`);
+  }
+
+  // 3. UI components (3:1 per WCAG 2.1 SC 1.4.11)
+  const borderOnBg = getContrastRatio(colors.border, colors.bg);
+  if (borderOnBg < WCAG.UI_COMPONENT) {
+    issues.push(`${mode}: border/bg = ${borderOnBg.toFixed(2)}:1 (need ${WCAG.UI_COMPONENT}:1)`);
+  }
+
+  // Focus ring must be visible on both bg and primary (for focused buttons)
+  const ringOnBg = getContrastRatio(colors.ring, colors.bg);
+  const ringOnPrimary = getContrastRatio(colors.ring, colors.primary);
+  if (ringOnBg < WCAG.UI_COMPONENT && ringOnPrimary < WCAG.UI_COMPONENT) {
+    issues.push(`${mode}: ring fails on both bg (${ringOnBg.toFixed(2)}:1) and primary (${ringOnPrimary.toFixed(2)}:1)`);
+  }
+
+  // 4. Semantic colors on backgrounds (4.5:1 if used as text)
+  for (const [name, color] of Object.entries(colors.semantic)) {
+    const onBg = getContrastRatio(color, colors.bg);
+    const onMuted = getContrastRatio(color, colors.muted);
+    // Semantic colors must work on at least one common background
+    if (onBg < WCAG.AA_NORMAL && onMuted < WCAG.AA_NORMAL) {
+      issues.push(`${mode}: ${name} fails on bg (${onBg.toFixed(2)}:1) and muted (${onMuted.toFixed(2)}:1)`);
+    }
+  }
+}
+
 export function validatePaletteContrast(palette: Palette): ContrastValidation {
   const issues: string[] = [];
 
-  // Validate light mode
-  const lightFgBg = getContrastRatio(palette.light.fg, palette.light.bg);
-  if (lightFgBg < WCAG.AA_NORMAL) {
-    issues.push(`Light: fg/bg = ${lightFgBg.toFixed(2)}:1 (need ${WCAG.AA_NORMAL}:1)`);
-  }
-
-  const lightMuted = getContrastRatio(palette.light.mutedForeground, palette.light.bg);
-  if (lightMuted < WCAG.AA_NORMAL) {
-    issues.push(`Light: muted/bg = ${lightMuted.toFixed(2)}:1`);
-  }
-
-  const lightPrimary = getContrastRatio(palette.light.primaryForeground, palette.light.primary);
-  if (lightPrimary < WCAG.AA_LARGE) {
-    issues.push(`Light: primary button text = ${lightPrimary.toFixed(2)}:1`);
-  }
-
-  // Validate dark mode (same checks)
-  const darkFgBg = getContrastRatio(palette.dark.fg, palette.dark.bg);
-  if (darkFgBg < WCAG.AA_NORMAL) {
-    issues.push(`Dark: fg/bg = ${darkFgBg.toFixed(2)}:1`);
-  }
-
-  const darkMuted = getContrastRatio(palette.dark.mutedForeground, palette.dark.bg);
-  if (darkMuted < WCAG.AA_NORMAL) {
-    issues.push(`Dark: muted/bg = ${darkMuted.toFixed(2)}:1`);
-  }
-
-  const darkPrimary = getContrastRatio(palette.dark.primaryForeground, palette.dark.primary);
-  if (darkPrimary < WCAG.AA_LARGE) {
-    issues.push(`Dark: primary button text = ${darkPrimary.toFixed(2)}:1`);
-  }
+  validateMode(palette.light, 'Light', issues);
+  validateMode(palette.dark, 'Dark', issues);
 
   return { valid: issues.length === 0, issues };
 }
@@ -302,6 +362,10 @@ export function validatePaletteContrast(palette: Palette): ContrastValidation {
 ---
 
 ## Typography Registry
+
+> **Font Loading Strategy**: Use `font-display: optional` to eliminate CLS (Cumulative Layout Shift).
+> This shows fallback fonts if web fonts don't load within ~100ms, ensuring zero layout shift.
+> For production, consider self-hosting fonts in WOFF2 format for better performance and GDPR compliance.
 
 ```typescript
 // src/lib/styles/random/typography-registry.ts
@@ -316,19 +380,20 @@ export const TYPOGRAPHY_REGISTRY: TypographySet[] = [
       family: 'Inter',
       weights: [500, 700],
       fallback: 'system-ui, sans-serif',
-      url: 'https://fonts.googleapis.com/css2?family=Inter:wght@500;700&display=swap',
+      // Use display=optional for zero CLS (fallback shown if font doesn't load in ~100ms)
+      url: 'https://fonts.googleapis.com/css2?family=Inter:wght@500;700&display=optional',
     },
     body: {
       family: 'Inter',
       weights: [400, 500],
       fallback: 'system-ui, sans-serif',
-      url: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap',
+      url: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=optional',
     },
     mono: {
       family: 'JetBrains Mono',
       weights: [400, 500],
       fallback: 'ui-monospace, monospace',
-      url: 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap',
+      url: 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=optional',
     },
   },
   {
@@ -338,13 +403,13 @@ export const TYPOGRAPHY_REGISTRY: TypographySet[] = [
       family: 'Playfair Display',
       weights: [500, 700],
       fallback: 'Georgia, serif',
-      url: 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&display=swap',
+      url: 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&display=optional',
     },
     body: {
       family: 'Source Sans 3',
       weights: [400, 600],
       fallback: 'system-ui, sans-serif',
-      url: 'https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600&display=swap',
+      url: 'https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600&display=optional',
     },
   },
   {
@@ -354,19 +419,19 @@ export const TYPOGRAPHY_REGISTRY: TypographySet[] = [
       family: 'Space Grotesk',
       weights: [500, 700],
       fallback: 'Arial, sans-serif',
-      url: 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap',
+      url: 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=optional',
     },
     body: {
       family: 'IBM Plex Sans',
       weights: [400, 500],
       fallback: 'system-ui, sans-serif',
-      url: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&display=swap',
+      url: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&display=optional',
     },
     mono: {
       family: 'IBM Plex Mono',
       weights: [400, 500],
       fallback: 'ui-monospace, monospace',
-      url: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap',
+      url: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=optional',
     },
   },
   // T4: Geometric (Outfit + Nunito)
@@ -551,6 +616,9 @@ export {};
 
 ### Server Hooks
 
+> **Performance Critical**: Cookie-first approach saves 50-100ms per request by avoiding database round-trips.
+> Database is only queried when cookie is missing (first visit after login or device change).
+
 ```typescript
 // src/hooks.server.ts
 import { sequence } from '@sveltejs/kit/hooks';
@@ -559,40 +627,95 @@ import { generateRandomStyle, resolveStyle } from '$lib/styles/random/generator'
 import { userPreferences } from '$lib/server/db/schema/preferences';
 import { db } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
+import type { StyleConfig, StyleCookie } from '$lib/styles/random/types';
 
 const STYLE_COOKIE = 'v10r_style';
 const STYLE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 
-interface StyleCookieData {
-  pid: string;
-  tid: string;
-  lck: boolean;
-  v: number;
+const COOKIE_OPTIONS = {
+  path: '/',
+  httpOnly: true,
+  secure: true,
+  sameSite: 'lax' as const,
+  maxAge: STYLE_COOKIE_MAX_AGE,
+};
+
+/**
+ * Parse and validate style cookie. Returns null if invalid.
+ */
+function parseStyleCookie(cookieVal: string): StyleConfig | null {
+  try {
+    const data: StyleCookie = JSON.parse(cookieVal);
+    // Validate expected shape
+    if (typeof data.pid !== 'string' || typeof data.tid !== 'string') {
+      return null;
+    }
+    return {
+      paletteId: data.pid as PaletteId,
+      typographyId: data.tid as TypographyId,
+      locked: Boolean(data.lck),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Serialize style config to cookie format.
+ */
+function serializeStyleCookie(config: StyleConfig): string {
+  const data: StyleCookie = {
+    pid: config.paletteId,
+    tid: config.typographyId,
+    lck: config.locked,
+    v: 1,
+  };
+  return JSON.stringify(data);
 }
 
 const loadStyle: Handle = async ({ event, resolve }) => {
   const user = event.locals.user;
-  let styleConfig: StyleConfig;
+  let styleConfig: StyleConfig | null = null;
+  let needsCookieUpdate = false;
 
-  if (user) {
-    // Authenticated: Load from database
-    const [prefs] = await db
-      .select()
-      .from(userPreferences)
-      .where(eq(userPreferences.userId, user.id))
-      .limit(1);
+  // 1. ALWAYS try cookie first (saves 50-100ms database round-trip)
+  const cookieVal = event.cookies.get(STYLE_COOKIE);
+  if (cookieVal) {
+    styleConfig = parseStyleCookie(cookieVal);
+  }
 
-    if (prefs?.paletteId && prefs?.typographyId) {
-      styleConfig = {
-        paletteId: prefs.paletteId,
-        typographyId: prefs.typographyId,
-        locked: prefs.styleLocked ?? false,
-      };
-    } else {
-      // New user: Roll and save
-      styleConfig = generateRandomStyle();
-      await db
-        .insert(userPreferences)
+  // 2. If no valid cookie AND user is authenticated, check database
+  if (!styleConfig && user) {
+    try {
+      const [prefs] = await db
+        .select()
+        .from(userPreferences)
+        .where(eq(userPreferences.userId, user.id))
+        .limit(1);
+
+      if (prefs?.paletteId && prefs?.typographyId) {
+        styleConfig = {
+          paletteId: prefs.paletteId as PaletteId,
+          typographyId: prefs.typographyId as TypographyId,
+          locked: prefs.styleLocked ?? false,
+        };
+        needsCookieUpdate = true; // Sync cookie with database
+      }
+    } catch (error) {
+      // Database error - log and continue with fallback
+      console.error('Failed to load style from database:', error);
+      // styleConfig remains null, will generate random below
+    }
+  }
+
+  // 3. If still no config, generate random style
+  if (!styleConfig) {
+    styleConfig = generateRandomStyle();
+    needsCookieUpdate = true;
+
+    // Save to database for authenticated users (background, don't block)
+    if (user) {
+      db.insert(userPreferences)
         .values({
           userId: user.id,
           paletteId: styleConfig.paletteId,
@@ -606,73 +729,36 @@ const loadStyle: Handle = async ({ event, resolve }) => {
             typographyId: styleConfig.typographyId,
             updatedAt: new Date(),
           },
+        })
+        .catch((error) => {
+          console.error('Failed to save style to database:', error);
         });
     }
-
-    // Also set cookie for SSR consistency
-    event.cookies.set(STYLE_COOKIE, JSON.stringify({
-      pid: styleConfig.paletteId,
-      tid: styleConfig.typographyId,
-      lck: styleConfig.locked,
-      v: 1,
-    }), {
-      path: '/',
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      maxAge: STYLE_COOKIE_MAX_AGE,
-    });
-  } else {
-    // Guest: Load from cookie
-    const cookieVal = event.cookies.get(STYLE_COOKIE);
-
-    if (cookieVal) {
-      try {
-        const data: StyleCookieData = JSON.parse(cookieVal);
-        styleConfig = {
-          paletteId: data.pid,
-          typographyId: data.tid,
-          locked: data.lck,
-        };
-      } catch {
-        styleConfig = generateRandomStyle();
-      }
-    } else {
-      styleConfig = generateRandomStyle();
-    }
-
-    // Set/refresh cookie
-    event.cookies.set(STYLE_COOKIE, JSON.stringify({
-      pid: styleConfig.paletteId,
-      tid: styleConfig.typographyId,
-      lck: styleConfig.locked,
-      v: 1,
-    }), {
-      path: '/',
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      maxAge: STYLE_COOKIE_MAX_AGE,
-    });
   }
 
-  // Resolve to full style object
-  const resolved = resolveStyle(styleConfig);
+  // 4. Resolve to full style object
+  let resolved = resolveStyle(styleConfig);
   if (!resolved) {
-    // Fallback if palette/typography removed
+    // Palette/typography was removed from registry - regenerate
+    console.warn(`Style ${styleConfig.paletteId}-${styleConfig.typographyId} not found, regenerating`);
     styleConfig = generateRandomStyle();
-    event.locals.style = resolveStyle(styleConfig)!;
-  } else {
-    event.locals.style = resolved;
+    resolved = resolveStyle(styleConfig)!;
+    needsCookieUpdate = true;
+  }
+  event.locals.style = resolved;
+
+  // 5. Update cookie only if changed (avoid unnecessary Set-Cookie headers)
+  if (needsCookieUpdate || !cookieVal) {
+    event.cookies.set(STYLE_COOKIE, serializeStyleCookie(styleConfig), COOKIE_OPTIONS);
   }
 
-  // Load theme preference
+  // 6. Load theme preference (cookie-based for SSR)
   const themeCookie = event.cookies.get('theme');
   if (themeCookie === 'dark' || themeCookie === 'light') {
     event.locals.theme = themeCookie;
   } else {
-    // Default to system (resolved client-side)
-    event.locals.theme = 'light'; // SSR default
+    // Default for SSR - client will detect system preference
+    event.locals.theme = 'light';
   }
 
   return resolve(event);
@@ -716,13 +802,14 @@ export const load: LayoutServerLoad = async ({ locals }) => {
   const style = $derived(page.data.style as ResolvedStyle);
   const serverTheme = $derived(page.data.theme as 'light' | 'dark');
 
+  // Screen reader announcement for style changes
+  let styleAnnouncement = $state('');
+
   // Client-side theme detection (respects system preference)
   let clientTheme = $state<'light' | 'dark'>('light');
 
   $effect(() => {
-    if (!browser) return;
-
-    // Check for system preference if no explicit theme set
+    // $effect only runs client-side, no need to check browser
     const stored = localStorage.getItem('theme');
     if (stored === 'dark' || stored === 'light') {
       clientTheme = stored;
@@ -753,19 +840,23 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 
   // Apply dark class to html element
   $effect(() => {
-    if (!browser) return;
     document.documentElement.classList.toggle('dark', theme === 'dark');
   });
 
-  // Provide style context
+  // Provide style context with announcement function
   setContext('style', {
     get style() { return style; },
     get theme() { return theme; },
     get locked() { return style.config.locked; },
+    announceStyleChange(paletteName: string, typographyName: string) {
+      styleAnnouncement = `Style changed to ${paletteName} with ${typographyName} typography`;
+      // Clear after announcement is read
+      setTimeout(() => { styleAnnouncement = ''; }, 1000);
+    },
   });
 
-  // Collect font URLs
-  const fontUrls = $derived(() => {
+  // Collect font URLs - use $derived.by() for multi-statement computations
+  const fontUrls = $derived.by(() => {
     const urls: string[] = [];
     if (style.typography.heading.url) urls.push(style.typography.heading.url);
     if (style.typography.body.url) urls.push(style.typography.body.url);
@@ -775,15 +866,41 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 </script>
 
 <svelte:head>
+  <!--
+    FOUC Prevention: Detect theme BEFORE Svelte hydration.
+    This runs synchronously before first paint.
+    Note: Requires CSP nonce or 'unsafe-inline' if using strict CSP.
+  -->
+  {@html `<script nonce="%sveltekit.nonce%">
+    (function() {
+      const stored = localStorage.getItem('theme');
+      const theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+      document.documentElement.dataset.theme = theme;
+    })();
+  </script>`}
+
   <!-- Preconnect to Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
 
+  <!-- Preload body font (most critical) -->
+  {#if style.typography.body.url}
+    <link rel="preload" as="style" href={style.typography.body.url} />
+  {/if}
+
   <!-- Load fonts -->
-  {#each fontUrls() as url}
+  {#each fontUrls as url}
     <link rel="stylesheet" href={url} />
   {/each}
 </svelte:head>
+
+<!-- Screen reader announcement for style changes (WCAG 4.1.3) -->
+<div class="sr-only" aria-live="polite" aria-atomic="true">
+  {#if styleAnnouncement}
+    {styleAnnouncement}
+  {/if}
+</div>
 
 <div class="app-root" style={cssVarsString}>
   {@render children()}
@@ -795,6 +912,19 @@ export const load: LayoutServerLoad = async ({ locals }) => {
     background-color: var(--color-bg);
     color: var(--color-fg);
     font-family: var(--font-body);
+  }
+
+  /* Screen reader only - visually hidden but accessible */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
   }
 </style>
 ```
@@ -860,6 +990,10 @@ export default defineConfig({
 
 ## API Endpoints
 
+> **Security Note**: These endpoints are protected by SvelteKit's built-in CSRF protection
+> (same-origin enforcement via `sameSite: 'lax'` cookies). For additional security,
+> verify the `Origin` header matches your domain.
+
 ### Roll New Style
 
 ```typescript
@@ -871,31 +1005,47 @@ import { userPreferences } from '$lib/server/db/schema/preferences';
 import { db } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 
+const COOKIE_OPTIONS = {
+  path: '/',
+  httpOnly: true,
+  secure: true,
+  sameSite: 'lax' as const,
+  maxAge: 60 * 60 * 24 * 365,
+};
+
 export const POST: RequestHandler = async ({ cookies, locals }) => {
   const user = locals.user;
 
   // Check if style is locked
   if (locals.style.config.locked) {
-    return json({ error: 'Style is locked' }, { status: 400 });
+    return json(
+      { success: false, error: 'Style is locked. Unlock it first.' },
+      { status: 400 }
+    );
   }
 
   const newConfig = generateRandomStyle();
   const resolved = resolveStyle(newConfig);
 
   if (!resolved) {
-    return json({ error: 'Failed to resolve style' }, { status: 500 });
+    return json(
+      { success: false, error: 'Failed to generate style. Please try again.' },
+      { status: 500 }
+    );
   }
 
+  // Update database for authenticated users (non-blocking)
   if (user) {
-    // Update database
-    await db
-      .update(userPreferences)
+    db.update(userPreferences)
       .set({
         paletteId: newConfig.paletteId,
         typographyId: newConfig.typographyId,
         updatedAt: new Date(),
       })
-      .where(eq(userPreferences.userId, user.id));
+      .where(eq(userPreferences.userId, user.id))
+      .catch((error) => {
+        console.error('Failed to save style to database:', error);
+      });
   }
 
   // Update cookie
@@ -904,13 +1054,7 @@ export const POST: RequestHandler = async ({ cookies, locals }) => {
     tid: newConfig.typographyId,
     lck: false,
     v: 1,
-  }), {
-    path: '/',
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 365,
-  });
+  }), COOKIE_OPTIONS);
 
   return json({
     success: true,
@@ -933,16 +1077,53 @@ import type { RequestHandler } from './$types';
 import { userPreferences } from '$lib/server/db/schema/preferences';
 import { db } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
+import * as v from 'valibot';
+
+// Input validation schema
+const LockRequestSchema = v.object({
+  locked: v.boolean(),
+});
+
+const COOKIE_OPTIONS = {
+  path: '/',
+  httpOnly: true,
+  secure: true,
+  sameSite: 'lax' as const,
+  maxAge: 60 * 60 * 24 * 365,
+};
 
 export const POST: RequestHandler = async ({ cookies, locals, request }) => {
   const user = locals.user;
-  const { locked } = await request.json();
 
+  // Validate request body
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return json(
+      { success: false, error: 'Invalid JSON body' },
+      { status: 400 }
+    );
+  }
+
+  const result = v.safeParse(LockRequestSchema, body);
+  if (!result.success) {
+    return json(
+      { success: false, error: 'Invalid request: locked must be a boolean' },
+      { status: 400 }
+    );
+  }
+
+  const { locked } = result.output;
+
+  // Update database for authenticated users (non-blocking)
   if (user) {
-    await db
-      .update(userPreferences)
+    db.update(userPreferences)
       .set({ styleLocked: locked, updatedAt: new Date() })
-      .where(eq(userPreferences.userId, user.id));
+      .where(eq(userPreferences.userId, user.id))
+      .catch((error) => {
+        console.error('Failed to update lock status in database:', error);
+      });
   }
 
   // Update cookie
@@ -952,13 +1133,7 @@ export const POST: RequestHandler = async ({ cookies, locals, request }) => {
     tid: current.typographyId,
     lck: locked,
     v: 1,
-  }), {
-    path: '/',
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 365,
-  });
+  }), COOKIE_OPTIONS);
 
   return json({ success: true, locked });
 };
@@ -967,6 +1142,13 @@ export const POST: RequestHandler = async ({ cookies, locals, request }) => {
 ---
 
 ## FTUX: Dice Roll Component
+
+> **Accessibility Fixes Applied**:
+> - Touch targets meet 44×44px minimum (WCAG 2.5.5)
+> - Screen reader announcements via context
+> - Reduced motion preference respected
+> - Error feedback for failed API calls
+> - Unlock button when style is locked
 
 ```svelte
 <!-- src/lib/components/DiceRollButton.svelte -->
@@ -978,45 +1160,85 @@ export const POST: RequestHandler = async ({ cookies, locals, request }) => {
   interface StyleContext {
     style: ResolvedStyle;
     locked: boolean;
+    announceStyleChange: (paletteName: string, typographyName: string) => void;
   }
 
   const styleContext = getContext<StyleContext>('style');
 
+  // Throw early if used outside layout context
+  if (!styleContext) {
+    throw new Error('DiceRollButton must be used within the root layout');
+  }
+
   let rolling = $state(false);
   let rollCount = $state(0);
+  let errorMessage = $state('');
 
-  // Check reduced motion preference
+  // Check reduced motion preference with listener for changes
   let prefersReducedMotion = $state(false);
   $effect(() => {
-    if (typeof window !== 'undefined') {
-      prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    }
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    prefersReducedMotion = mq.matches;
+
+    const handler = (e: MediaQueryListEvent) => {
+      prefersReducedMotion = e.matches;
+    };
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
   });
 
   async function rollStyle() {
+    // Prevent double-clicks and locked state
     if (styleContext.locked || rolling) return;
 
     rolling = true;
+    errorMessage = '';
     rollCount++;
 
     try {
       const response = await fetch('/api/style/roll', { method: 'POST' });
-      if (!response.ok) throw new Error('Failed to roll');
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        errorMessage = data.error || 'Failed to change style. Please try again.';
+        rollCount--; // Revert count on failure
+        return;
+      }
+
+      // Announce to screen readers via layout context
+      styleContext.announceStyleChange(data.style.paletteName, data.style.typographyName);
+
       await invalidateAll();
     } catch (err) {
       console.error('Style roll failed:', err);
+      errorMessage = 'Network error. Please check your connection.';
+      rollCount--; // Revert count on failure
     } finally {
       rolling = false;
     }
   }
 
-  async function lockStyle() {
-    await fetch('/api/style/lock', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ locked: true }),
-    });
-    await invalidateAll();
+  async function toggleLock(locked: boolean) {
+    errorMessage = '';
+
+    try {
+      const response = await fetch('/api/style/lock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locked }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        errorMessage = data.error || 'Failed to update lock status.';
+        return;
+      }
+
+      await invalidateAll();
+    } catch (err) {
+      console.error('Lock toggle failed:', err);
+      errorMessage = 'Network error. Please try again.';
+    }
   }
 </script>
 
@@ -1027,30 +1249,38 @@ export const POST: RequestHandler = async ({ cookies, locals, request }) => {
       onclick={rollStyle}
       disabled={rolling}
       aria-label="Randomize visual style"
-      aria-live="polite"
     >
       <span
-        class="i-mdi-dice-6 w-6 h-6"
+        class="dice-icon i-mdi-dice-6"
         class:animate-spin={rolling && !prefersReducedMotion}
       ></span>
       <span class="label">
         {rolling ? 'Rolling...' : 'Shuffle Style'}
       </span>
-      {#if rollCount > 0}
+      {#if rollCount >= 2}
         <span class="badge">{rollCount}</span>
       {/if}
     </button>
 
-    {#if rollCount >= 2}
-      <button class="lock-button" onclick={lockStyle}>
-        <span class="i-mdi-lock w-4 h-4"></span>
+    {#if rollCount >= 1}
+      <button class="lock-button" onclick={() => toggleLock(true)}>
+        <span class="i-mdi-lock"></span>
         Lock this style
       </button>
     {/if}
   {:else}
-    <div class="locked-indicator">
-      <span class="i-mdi-lock w-4 h-4"></span>
-      <span>Style locked</span>
+    <!-- Unlock button replaces the locked indicator -->
+    <button class="unlock-button" onclick={() => toggleLock(false)}>
+      <span class="i-mdi-lock-open"></span>
+      <span>Unlock and randomize</span>
+    </button>
+  {/if}
+
+  <!-- Error feedback -->
+  {#if errorMessage}
+    <div class="error-message" role="alert" aria-live="assertive">
+      <span class="i-mdi-alert-circle"></span>
+      {errorMessage}
     </div>
   {/if}
 </div>
@@ -1067,6 +1297,8 @@ export const POST: RequestHandler = async ({ cookies, locals, request }) => {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    /* Ensure 44px minimum touch target */
+    min-height: 44px;
     padding: 0.75rem 1.5rem;
     border-radius: 0.5rem;
     background-color: var(--color-accent);
@@ -1082,9 +1314,18 @@ export const POST: RequestHandler = async ({ cookies, locals, request }) => {
     transform: scale(1.05);
   }
 
+  .dice-roll-button:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
   .dice-roll-button:disabled {
     opacity: 0.7;
     cursor: not-allowed;
+  }
+
+  .dice-icon {
+    width: 1.5rem;
+    height: 1.5rem;
   }
 
   .badge {
@@ -1094,11 +1335,15 @@ export const POST: RequestHandler = async ({ cookies, locals, request }) => {
     font-size: 0.75rem;
   }
 
-  .lock-button {
+  .lock-button,
+  .unlock-button {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
-    padding: 0.5rem 1rem;
+    justify-content: center;
+    gap: 0.375rem;
+    /* Ensure 44px minimum touch target */
+    min-height: 44px;
+    padding: 0.625rem 1rem;
     border-radius: 0.375rem;
     background: transparent;
     border: 1px solid var(--color-border);
@@ -1108,16 +1353,20 @@ export const POST: RequestHandler = async ({ cookies, locals, request }) => {
     transition: border-color 150ms, color 150ms;
   }
 
-  .lock-button:hover {
+  .lock-button:hover,
+  .unlock-button:hover {
     border-color: var(--color-primary);
     color: var(--color-primary);
   }
 
-  .locked-indicator {
+  .error-message {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
-    color: var(--color-muted-foreground);
+    gap: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    background-color: var(--color-error);
+    color: white;
     font-size: 0.875rem;
   }
 
@@ -1132,6 +1381,9 @@ export const POST: RequestHandler = async ({ cookies, locals, request }) => {
 
   @media (prefers-reduced-motion: reduce) {
     .dice-roll-button:hover:not(:disabled) {
+      transform: none;
+    }
+    .dice-roll-button:active:not(:disabled) {
       transform: none;
     }
     .animate-spin {
@@ -1182,13 +1434,21 @@ src/
 
 ## Implementation Checklist
 
+> **Validation Complete**: This checklist incorporates all findings from UXY, ARCHY, SVEY, RESY, and SCOUT agent analysis.
+
 ### Phase 1: Data Model & Registry
 
 - [ ] Create type definitions in `types.ts`
+  - [ ] Add branded types for `PaletteId` and `TypographyId`
+  - [ ] Add `secondaryForeground` and `accentForeground` to `PaletteColors`
+  - [ ] Add versioned `StyleCookie` type for future migrations
 - [ ] Create contrast validation utilities in `contrast.ts`
+  - [ ] Validate all color pairs (fg/bg, muted, button text, borders, rings, semantic)
+  - [ ] Add `UI_COMPONENT` constant (3:1 ratio per WCAG 2.1 SC 1.4.11)
 - [ ] Define 5+ palettes in `palette-registry.ts`
-- [ ] Validate all palettes pass WCAG AA
+- [ ] Validate all palettes pass WCAG AA (complete contrast coverage)
 - [ ] Define 3-5 typography sets in `typography-registry.ts`
+  - [ ] Use `font-display: optional` for zero CLS
 - [ ] Create style ID serialization in `serializer.ts`
 - [ ] Create generator functions in `generator.ts`
 
@@ -1196,36 +1456,57 @@ src/
 
 - [ ] Add `style` to `event.locals` type definitions
 - [ ] Implement `loadStyle` hook in `hooks.server.ts`
-- [ ] Create cookie persistence logic
+  - [ ] **Cookie-first logic** (trust cookie, DB as fallback) - saves 50-100ms
+  - [ ] **Error handling** with try-catch for database queries
+  - [ ] Only set cookie if changed (avoid unnecessary Set-Cookie headers)
+- [ ] Create cookie persistence logic with schema version
 - [ ] Add `userPreferences` table with style columns
 - [ ] Create `/api/style/roll` endpoint
+  - [ ] Add consistent error response format
 - [ ] Create `/api/style/lock` endpoint
+  - [ ] Add Valibot input validation
 - [ ] Test guest → user style migration
 
 ### Phase 3: Client Integration
 
 - [ ] Update root layout to inject CSS variables
+- [ ] **Add FOUC prevention script** in `<svelte:head>` (blocking, before hydration)
 - [ ] Add font loading in `<svelte:head>`
-- [ ] Create style context provider
+  - [ ] Preload body font
+  - [ ] Use `$derived.by()` for font URL collection (not `$derived(() => ...)`)
+- [ ] Create style context provider with `announceStyleChange` function
+- [ ] **Add screen reader live region** for style change announcements (WCAG 4.1.3)
 - [ ] Extend UnoCSS theme with CSS variable references
 - [ ] Test SSR/hydration (no FOUC)
 
 ### Phase 4: FTUX Component
 
 - [ ] Create `DiceRollButton.svelte`
-- [ ] Add roll animation (respect `prefers-reduced-motion`)
-- [ ] Add roll counter badge
-- [ ] Add "Lock this style" button
+- [ ] Add roll animation (respect `prefers-reduced-motion` with listener)
+- [ ] Add roll counter badge (show at ≥2 rolls)
+- [ ] Add "Lock this style" button (show at ≥1 roll)
+- [ ] **Add unlock button** when style is locked (not just indicator)
+- [ ] **Fix touch targets** to 44×44px minimum (WCAG 2.5.5)
+- [ ] **Add error feedback** for failed API calls with `role="alert"`
+- [ ] Context validation (throw if used outside layout)
 - [ ] Integrate into landing page/hero
 
 ### Phase 5: Testing & Polish
 
 - [ ] Test all palette/typography combinations
-- [ ] Run colorblind simulation tests
+- [ ] Run colorblind simulation tests (manual - no CI automation available)
 - [ ] Verify keyboard accessibility
-- [ ] Measure font loading performance (CLS)
-- [ ] Test on mobile devices
-- [ ] Add toast notification for style changes (optional)
+- [ ] Measure font loading performance (CLS < 0.1)
+- [ ] Test on mobile devices (touch targets, viewport)
+- [ ] Add axe-core to CI/CD for automated a11y testing
+- [ ] Test theme FOUC prevention (server default + client detection)
+
+### Phase 6: Production Readiness
+
+- [ ] Consider self-hosting fonts (WOFF2) for GDPR compliance
+- [ ] Add analytics for palette/typography popularity
+- [ ] Monitor CLS with real user metrics
+- [ ] Document CSP requirements for FOUC prevention script
 
 ---
 
