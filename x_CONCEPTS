@@ -1,0 +1,30 @@
+
+1) analyze & contemplate the project!
+
+2) after you get a generl overview of the project, dive deeper into styling & theming!
+
+
+
+what do you think of this concept:{
+
+velociraptor is has no defined color or fonts (themeless/stylelees)?
+on each user visit the typography and theme will be randomized! but the user will have the possibility to determine it in prefernces (randomization = off).
+
+we have talked before about having in the FTUX a theme switch (dark/light) & language; we keep it and add an aditional button to trigger style randomization, to increase the gamification factor of the UX.
+
+terminology:
+theme = dark/light
+typography = fonts and othr text related stuff
+Palette = Harmonious color sets
+
+}
+
+consulte with appropriate agents about this!
+
+
+
+ultrathink the creation of docs/foundation/style.md (technology agnostic, no code) & docs/blueprint/style-randomizer.md (implementation)
+
+consulte with appropriate agents about this!
+
+then create the files
