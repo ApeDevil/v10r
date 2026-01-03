@@ -1,24 +1,28 @@
 {
     "folder-color.pathColors": [
         {
-            "folderPath": "velociraptor/docs/foundation/",
+            "folderPath": "velociraptor🦖/docs/foundation/",
             "badge": "🧱"
         },
         {
-            "folderPath": "velociraptor/docs/blueprint/",
+            "folderPath": "velociraptor🦖/docs/blueprint/",
             "badge": "🗺️"
         },
         {
-            "folderPath": "velociraptor/docs/guides/",
+            "folderPath": "velociraptor🦖/docs/guides/",
             "badge": "🧙‍♂️"
         },
         {
-            "folderPath": "velociraptor/docs/implementation/",
+            "folderPath": "velociraptor🦖/docs/implementation/",
             "badge": "🚀"
         },
         {
-            "folderPath": "velociraptor/docs/stack/",
+            "folderPath": "velociraptor🦖/docs/stack/",
             "badge": "🥞"
+        },
+        {
+            "folderPath": "velociraptor🦖/assets/",
+            "badge": "🎒"
         }
     ]
 }
