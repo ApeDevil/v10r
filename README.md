@@ -1,6 +1,6 @@
 # Velociraptor (v10r)
 
-A containerized full-stack focused on performance, lightweight deployment, and free-tier friendly services.
+A containerized full-stack for web dev focused on performance, lightweight deployment, and free-tier friendly services.
 
 > Fast and dangerous (in a good way).
 
