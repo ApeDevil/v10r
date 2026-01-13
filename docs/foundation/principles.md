@@ -8,14 +8,23 @@ Decision-making constraints that drive stack choices. Every technology decision 
 
 ### 1. Libraries over services
 
-Own your auth, data, and logic. Prefer self-hosted libraries over managed services.
+Own your auth, data, and logic. Prefer libraries over managed services where practical.
 
 - No per-user or per-request pricing surprises
 - Full control over data and behavior
-- No vendor lock-in
+- Minimize vendor lock-in
 - Can run locally without external dependencies
 
-**Exception:** Accept services when self-hosting is impractical (error tracking, graph DB hosting).
+**Exceptions:** Accept managed services when they meet these criteria:
+
+| Criterion | Requirement |
+|-----------|-------------|
+| **Affordable** | Generous free tier, predictable scaling costs |
+| **Practical** | Self-hosting is complex or impractical |
+| **Swappable** | Uses standard protocols (S3, PostgreSQL, SMTP) OR has clear migration path |
+| **Essential** | Provides capability hard to replicate (serverless DB, edge hosting, graph DB) |
+
+Services meeting 3+ criteria are acceptable. Document the trade-off in stack docs.
 
 ---
 
