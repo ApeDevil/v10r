@@ -166,8 +166,7 @@ jobs:
 ### Husky Setup (Recommended)
 
 ```bash
-# Install
-bun add -D husky
+# Initialize husky
 bunx husky init
 ```
 
@@ -179,8 +178,10 @@ bunx biome check --staged --write .
 
 ### With lint-staged
 
+Use `husky` and `lint-staged` packages:
+
 ```bash
-bun add -D husky lint-staged
+# Initialize husky
 bunx husky init
 ```
 

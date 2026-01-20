@@ -4,7 +4,6 @@ Complete Better Auth configuration for Velociraptor.
 
 ## Contents
 
-- [Installation](#installation)
 - [Server Instance](#server-instance) - betterAuth config
 - [Client Instance](#client-instance) - createAuthClient
 - [Environment Variables](#environment-variables)
@@ -13,12 +12,6 @@ Complete Better Auth configuration for Velociraptor.
 - [Cookie Configuration](#cookie-configuration) - Prefix, secure
 - [Trusted Origins](#trusted-origins) - Production domains
 - [Type Exports](#type-exports) - User, Session types
-
-## Installation
-
-```bash
-bun add better-auth
-```
 
 ## Server Instance
 

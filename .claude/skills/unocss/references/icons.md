@@ -4,7 +4,7 @@ Pure CSS icon integration via Iconify.
 
 ## Contents
 
-- [Installation](#installation) - Preset and icon collections
+- [Icon Collections](#icon-collections) - Available collections
 - [Configuration](#configuration) - Options: scale, CDN, collections, customizations
 - [Basic Usage](#basic-usage) - Syntax: i-{collection}-{icon-name}
 - [Styling Icons](#styling-icons) - Size, color, transform
@@ -15,20 +15,15 @@ Pure CSS icon integration via Iconify.
 - [Anti-Patterns](#anti-patterns) - Dynamic interpolation, massive safelists
 - [Comparison](#comparison-with-other-icon-solutions) - UnoCSS vs Heroicons vs SVG Sprites
 
-## Installation
+## Icon Collections
 
-```bash
-# Preset
-bun add -D @unocss/preset-icons
-
-# Icon collections (pick what you need)
-bun add -D @iconify-json/mdi        # Material Design Icons (7000+)
-bun add -D @iconify-json/tabler     # Tabler Icons (4000+)
-bun add -D @iconify-json/lucide     # Lucide Icons (1000+)
-bun add -D @iconify-json/heroicons  # Heroicons (300+)
-bun add -D @iconify-json/carbon     # Carbon Icons (2000+)
-bun add -D @iconify-json/ph         # Phosphor Icons (6000+)
-```
+Available collections:
+- `@iconify-json/mdi` - Material Design Icons (7000+)
+- `@iconify-json/tabler` - Tabler Icons (4000+)
+- `@iconify-json/lucide` - Lucide Icons (1000+)
+- `@iconify-json/heroicons` - Heroicons (300+)
+- `@iconify-json/carbon` - Carbon Icons (2000+)
+- `@iconify-json/ph` - Phosphor Icons (6000+)
 
 ## Configuration
 

@@ -98,10 +98,6 @@ Distributed tracing for AI workflows.
 
 ### Setup
 
-```bash
-bun add @opentelemetry/api @opentelemetry/sdk-node @opentelemetry/auto-instrumentations-node
-```
-
 ```typescript
 // src/lib/server/telemetry.ts
 import { NodeSDK } from '@opentelemetry/sdk-node';

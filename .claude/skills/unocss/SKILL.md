@@ -222,11 +222,7 @@ export default defineConfig({
 
 ## Icons
 
-### Installation
-
-```bash
-bun add -D @unocss/preset-icons @iconify-json/mdi @iconify-json/tabler
-```
+Requires `@unocss/preset-icons` and icon collections like `@iconify-json/mdi`, `@iconify-json/tabler`.
 
 ### Usage
 

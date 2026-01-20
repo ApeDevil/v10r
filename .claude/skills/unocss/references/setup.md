@@ -4,32 +4,12 @@ Complete installation and configuration for Velociraptor.
 
 ## Contents
 
-- [Installation](#installation) - Core, presets, icons, transformers
 - [Standard Setup](#standard-setup) - Config file, Vite config, layout import
 - [Svelte Scoped Setup](#svelte-scoped-setup-large-projects) - Component-scoped styles
 - [Environment-Based Configuration](#environment-based-configuration) - Dev-only utilities
 - [VS Code Integration](#vs-code-integration) - UnoCSS extension
 - [Vercel Deployment](#vercel-deployment) - Build settings
 - [TypeScript Types](#typescript-types) - Custom theme values
-
-## Installation
-
-```bash
-# Core
-bun add -D unocss
-
-# Presets
-bun add -D @unocss/preset-wind3 @unocss/preset-attributify @unocss/preset-icons @unocss/preset-typography
-
-# Icon collections (pick what you need)
-bun add -D @iconify-json/mdi @iconify-json/tabler @iconify-json/lucide
-
-# Transformers
-bun add -D @unocss/transformer-directives @unocss/transformer-variant-group
-
-# Reset (optional)
-bun add -D @unocss/reset
-```
 
 ## Standard Setup
 
@@ -142,13 +122,7 @@ export default defineConfig({
 
 ## Svelte Scoped Setup (Large Projects)
 
-Component-scoped styles instead of global stylesheet.
-
-### Installation
-
-```bash
-bun add -D unocss @unocss/svelte-scoped
-```
+Component-scoped styles instead of global stylesheet. Uses `@unocss/svelte-scoped`.
 
 ### Vite Configuration
 

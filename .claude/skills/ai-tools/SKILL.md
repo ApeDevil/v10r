@@ -96,10 +96,6 @@ export async function POST({ request }) {
 
 ### Provider Setup
 
-```bash
-bun add ai @ai-sdk/anthropic @ai-sdk/openai @ai-sdk/svelte
-```
-
 ```typescript
 // Anthropic
 import { createAnthropic } from '@ai-sdk/anthropic';
@@ -600,10 +596,6 @@ describe('System Prompt', () => {
 ```
 
 ### Evaluation with DeepEval
-
-```bash
-bun add deepeval
-```
 
 ```typescript
 import { assert_test } from 'deepeval';

@@ -320,10 +320,6 @@ export default {
 
 Better Auth rate limiting is unreliable. Use `sveltekit-rate-limiter`:
 
-```bash
-bun add sveltekit-rate-limiter
-```
-
 ```typescript
 // src/routes/api/login/+server.ts
 import { RateLimiter } from 'sveltekit-rate-limiter/server';

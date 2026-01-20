@@ -54,12 +54,6 @@ await db.transaction(async (tx) => {
 
 ## Serverless Driver
 
-### Installation
-
-```bash
-bun add @neondatabase/serverless
-```
-
 ### When to Use Which Driver
 
 | Environment | Driver | Why |

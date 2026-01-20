@@ -35,9 +35,6 @@ All-in-one Rust-based linter, formatter, and import organizer. 10-25x faster tha
 ## Quick Start
 
 ```bash
-# Install with exact version pinning
-bun add -D -E @biomejs/biome
-
 # Initialize configuration
 bunx biome init
 
@@ -272,8 +269,7 @@ Automatically sorts imports:
 **Biome v1.7.0+ has built-in `--staged` flag:**
 
 ```bash
-# Install
-bun add -D @biomejs/biome husky
+# Initialize husky
 bunx husky init
 ```
 

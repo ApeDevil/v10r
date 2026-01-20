@@ -153,16 +153,6 @@ export default defineConfig({
 });
 ```
 
-### Installation
-
-```bash
-# Install icon collections you need
-bun add -D @iconify-json/mdi        # Material Design Icons
-bun add -D @iconify-json/tabler     # Tabler Icons
-bun add -D @iconify-json/lucide     # Lucide Icons
-bun add -D @iconify-json/heroicons  # Heroicons
-```
-
 ### Usage
 
 ```svelte

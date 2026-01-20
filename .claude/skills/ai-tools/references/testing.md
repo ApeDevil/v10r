@@ -167,10 +167,6 @@ Use an LLM to evaluate another LLM's output.
 
 ### DeepEval Framework
 
-```bash
-bun add deepeval
-```
-
 ```typescript
 import { assert_test } from 'deepeval';
 import { AnswerRelevancyMetric, HallucinationMetric } from 'deepeval/metrics';
