@@ -304,33 +304,7 @@ Auth forms use Better Auth client directly, NOT Superforms:
 
 ## Sign Up
 
-```svelte
-<script lang="ts">
-  import { signUp } from '$lib/auth-client';
-  import { goto } from '$app/navigation';
-
-  let email = $state('');
-  let password = $state('');
-  let name = $state('');
-  let loading = $state(false);
-  let error = $state('');
-
-  async function handleSubmit() {
-    loading = true;
-    error = '';
-
-    const result = await signUp.email({ email, password, name });
-
-    if (result.error) {
-      error = result.error.message;
-      loading = false;
-      return;
-    }
-
-    goto('/app/dashboard');
-  }
-</script>
-```
+Same pattern as login: `signUp.email({ email, password, name })`.
 
 ## Sign Out
 

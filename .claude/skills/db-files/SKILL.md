@@ -14,8 +14,8 @@ Vendor-agnostic object storage patterns. Currently implemented with Cloudflare R
 - [Key Naming](#key-naming) - Conventions and patterns
 - [Presigned URLs](#presigned-urls) - Secure temporary access
 - [Direct Upload](#direct-upload) - Browser to storage
-- [Multipart Uploads](#multipart-uploads) - Large files
-- [Security](#security) - Validation, path traversal, CORS
+- [Multipart Uploads](#multipart-uploads) - Large files (see references/multipart.md)
+- [Security](#security) - Quick rules (see references/security.md)
 - [SvelteKit Integration](#sveltekit-integration) - Form actions, streaming
 - [Anti-Patterns](#anti-patterns) - Common mistakes
 - [References](#references) - Vendor-specific details
@@ -327,167 +327,21 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 ## Multipart Uploads
 
-For files > 100 MB, use multipart uploads.
+For files > 100 MB. See **references/multipart.md** for full implementation.
 
-### Key Specs
+**Key specs:** Min part 5 MB, recommended 64 MB, max 10,000 parts (5 TB total).
 
-| Parameter | Value |
-|-----------|-------|
-| Part size (min) | 5 MB |
-| Part size (max) | 5 GB |
-| Part size (recommended) | 64 MB |
-| Max parts | 10,000 |
-| Max file size | 5 TB |
-
-### Basic Pattern
-
-```typescript
-import {
-  CreateMultipartUploadCommand,
-  UploadPartCommand,
-  CompleteMultipartUploadCommand,
-  AbortMultipartUploadCommand,
-} from '@aws-sdk/client-s3';
-
-async function multipartUpload(file: File, key: string) {
-  const PART_SIZE = 64 * 1024 * 1024; // 64 MB
-  const parts: { ETag: string; PartNumber: number }[] = [];
-
-  // 1. Initiate
-  const { UploadId } = await s3.send(new CreateMultipartUploadCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-  }));
-
-  try {
-    // 2. Upload parts
-    const numParts = Math.ceil(file.size / PART_SIZE);
-
-    for (let i = 0; i < numParts; i++) {
-      const start = i * PART_SIZE;
-      const end = Math.min(start + PART_SIZE, file.size);
-      const chunk = file.slice(start, end);
-
-      const { ETag } = await s3.send(new UploadPartCommand({
-        Bucket: BUCKET_NAME,
-        Key: key,
-        UploadId,
-        PartNumber: i + 1,
-        Body: chunk,
-      }));
-
-      parts.push({ ETag: ETag!, PartNumber: i + 1 });
-    }
-
-    // 3. Complete
-    await s3.send(new CompleteMultipartUploadCommand({
-      Bucket: BUCKET_NAME,
-      Key: key,
-      UploadId,
-      MultipartUpload: { Parts: parts },
-    }));
-
-  } catch (error) {
-    // Abort on failure (cleanup incomplete parts)
-    await s3.send(new AbortMultipartUploadCommand({
-      Bucket: BUCKET_NAME,
-      Key: key,
-      UploadId,
-    }));
-    throw error;
-  }
-}
-```
-
-### Resumable Uploads
-
-Store progress in localStorage for resume capability:
-
-```typescript
-interface UploadProgress {
-  uploadId: string;
-  parts: { partNumber: number; etag: string }[];
-  completedParts: number;
-}
-
-function saveProgress(fileId: string, progress: UploadProgress) {
-  localStorage.setItem(`upload_${fileId}`, JSON.stringify(progress));
-}
-
-function loadProgress(fileId: string): UploadProgress | null {
-  const stored = localStorage.getItem(`upload_${fileId}`);
-  return stored ? JSON.parse(stored) : null;
-}
-```
+**Pattern:** CreateMultipartUploadCommand → UploadPartCommand (loop) → CompleteMultipartUploadCommand. Always AbortMultipartUploadCommand on failure.
 
 ## Security
 
-### Path Traversal Prevention
+See **references/security.md** for full patterns.
 
-Never use raw user input in keys:
-
-```typescript
-// WRONG - path traversal vulnerability
-const key = `uploads/${userInput}`; // ../../../etc/passwd
-
-// RIGHT - use generated ID, store original name in DB
-const fileId = crypto.randomUUID();
-const key = `uploads/${userId}/${fileId}`;
-await db.insert(files).values({
-  id: fileId,
-  storageKey: key,
-  fileName: userInput, // Original name stored safely
-});
-```
-
-### Content-Type Validation
-
-Client-side Content-Type is untrusted. Validate with magic bytes:
-
-```typescript
-import { fileTypeFromBuffer } from 'file-type';
-
-const ALLOWED_TYPES = new Set(['image/png', 'image/jpeg', 'application/pdf']);
-
-async function validateFile(buffer: ArrayBuffer): Promise<string> {
-  const type = await fileTypeFromBuffer(new Uint8Array(buffer));
-
-  if (!type || !ALLOWED_TYPES.has(type.mime)) {
-    throw new Error(`Invalid file type: ${type?.mime ?? 'unknown'}`);
-  }
-
-  return type.mime;
-}
-```
-
-### Image Re-encoding
-
-Strip malicious payloads from images:
-
-```typescript
-import sharp from 'sharp';
-
-async function sanitizeImage(buffer: Buffer): Promise<Buffer> {
-  // Re-encode strips metadata, embedded scripts, polyglot payloads
-  return sharp(buffer)
-    .png({ quality: 90 })
-    .toBuffer();
-}
-```
-
-### CORS Configuration
-
-For browser direct uploads:
-
-```typescript
-const corsRules = [{
-  AllowedOrigins: ['https://yourapp.com'], // NEVER use '*' in production
-  AllowedMethods: ['PUT', 'GET'],
-  AllowedHeaders: ['Content-Type', 'Content-MD5'],
-  ExposeHeaders: ['ETag'],
-  MaxAgeSeconds: 3600,
-}];
-```
+**Critical rules:**
+- Never use raw user input in keys (path traversal)
+- Validate Content-Type with magic bytes (`file-type` package)
+- Re-encode images with `sharp` to strip payloads
+- CORS: Never use `*` in production
 
 ## SvelteKit Integration
 
@@ -608,68 +462,18 @@ export const GET: RequestHandler = async ({ request, params }) => {
 
 ## Anti-Patterns
 
-### Using User Input in Keys
+| Anti-Pattern | Problem | Solution |
+|--------------|---------|----------|
+| User input in keys | Path traversal | Use generated UUIDs |
+| Trust client Content-Type | XSS via HTML upload | Validate with magic bytes |
+| Long-lived presigned URLs | Security exposure | 5 min for upload, 1 hr for download |
+| Serverless /tmp storage | Ephemeral, 10 MB limit | Stream to object storage |
+| No multipart cleanup | Incomplete parts accumulate | Always AbortMultipartUploadCommand on error |
 
-```typescript
-// WRONG - path traversal, naming collisions
-const key = `uploads/${fileName}`;
-
-// RIGHT - use generated ID
-const key = `uploads/${userId}/${crypto.randomUUID()}`;
-```
-
-### Trusting Client Content-Type
-
-```typescript
-// WRONG - client can lie
-await s3.send(new PutObjectCommand({
-  ContentType: file.type, // Could be 'text/html' for XSS
-}));
-
-// RIGHT - validate server-side
-const validatedType = await validateFileType(buffer);
-await s3.send(new PutObjectCommand({
-  ContentType: validatedType,
-}));
-```
-
-### Long-Lived Presigned URLs
-
-```typescript
-// WRONG - URL valid for a week
-const url = await getSignedUrl(client, command, { expiresIn: 604800 });
-
-// RIGHT - short-lived for security
-const url = await getSignedUrl(client, command, { expiresIn: 300 });
-```
-
-### Storing Files in Serverless /tmp
-
-```typescript
-// WRONG - ephemeral filesystem, 10 MB limit
-import { writeFileSync } from 'fs';
-writeFileSync('/tmp/file.pdf', buffer);
-
-// RIGHT - stream directly to object storage
-await s3.send(new PutObjectCommand({ Body: buffer }));
-```
-
-### No Cleanup for Failed Multipart
-
-```typescript
-// WRONG - incomplete parts accumulate
-await s3.send(new UploadPartCommand(/* ... */));
-// Error occurs, no cleanup
-
-// RIGHT - always abort on failure
-try {
-  // upload parts
-} catch (error) {
-  await s3.send(new AbortMultipartUploadCommand({ Bucket, Key, UploadId }));
-  throw error;
-}
-```
+See **references/security.md** for code examples.
 
 ## References
 
 - **references/r2.md** - Cloudflare R2 configuration, free tier, public buckets
+- **references/multipart.md** - Full multipart upload implementation
+- **references/security.md** - Path traversal, Content-Type validation, CORS

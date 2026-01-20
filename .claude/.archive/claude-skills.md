@@ -1,6 +1,8 @@
 
-no installation info
-
+Don't Include:
+- Installation commands
+- Basic concept explanations
+- 
 
 
 let resy & scout make a deep dive into claude code skills! i wanna know what are the best functional practices!
@@ -11,6 +13,13 @@ after ther research is done
 
 
 examine our currently skills set-up! let resy validate the existing information inside skills!
+
+
+
+now let resy & scout validate/verify that the made (skills contents) changes/optimizations are correct!
+  
+
+
 
 ---
 

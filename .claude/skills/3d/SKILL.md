@@ -230,42 +230,20 @@ export default {
 
 ## Physics
 
+See **references/physics.md** for Rapier integration. Pattern: `<World>` → `<RigidBody type="fixed|dynamic">` → `<AutoColliders shape="cuboid|ball">`.
+
 ```svelte
-<script lang="ts">
-  import { T } from '@threlte/core';
-  import { World, RigidBody, AutoColliders, Debug } from '@threlte/rapier';
-</script>
-
 <World>
-  <!-- Visual debugging (remove in production) -->
-  <Debug />
-
-  <!-- Static ground -->
   <RigidBody type="fixed">
     <AutoColliders shape="cuboid">
-      <T.Mesh rotation.x={-Math.PI / 2}>
-        <T.PlaneGeometry args={[20, 20]} />
-        <T.MeshStandardMaterial color="#444" />
-      </T.Mesh>
+      <T.Mesh><!-- ground --></T.Mesh>
     </AutoColliders>
   </RigidBody>
-
-  <!-- Dynamic ball -->
   <RigidBody type="dynamic">
     <AutoColliders shape="ball">
-      <T.Mesh position.y={5}>
-        <T.SphereGeometry args={[0.5]} />
-        <T.MeshStandardMaterial color="red" />
-      </T.Mesh>
+      <T.Mesh position.y={5}><!-- falling ball --></T.Mesh>
     </AutoColliders>
   </RigidBody>
-</World>
-```
-
-**Deterministic physics:**
-```svelte
-<World framerate={50}>
-  <!-- Fixed timestep = 0.02s -->
 </World>
 ```
 
@@ -435,26 +413,9 @@ console.log(renderer.info.memory);
 
 ## WebGPU
 
-**Status (Jan 2026):** Production-ready in Three.js r171+, but Threlte has known issues with HMR and auto-resize. **Use WebGL for now.**
+See **references/webgpu.md** for details.
 
-**When WebGPU is stable:**
-```typescript
-// Explicit WebGPU imports
-import { WebGPURenderer } from 'three/webgpu';
-
-const renderer = new WebGPURenderer();
-await renderer.init(); // Async initialization required
-```
-
-**WebGPU advantages:**
-- 2-10x performance for draw-call-heavy scenes
-- Compute shaders for GPU particles
-- Automatic WebGL 2 fallback
-
-**Threlte WebGPU issues:**
-- Issue #1667: HMR causes crashes
-- Issue #1667: Auto-resize creates flickering and max texture errors
-- Recommendation: Stick with WebGL until resolved
+**Status (Jan 2026):** Production-ready in Three.js r171+, but **Threlte has known issues** (HMR crashes, auto-resize flickering). **Use WebGL for now.**
 
 ## Gotchas
 
