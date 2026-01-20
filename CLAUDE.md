@@ -23,6 +23,7 @@ Velociraptor (v10r) is a full-stack template/test-sandbox focused on performance
 | Storage | Cloudflare R2 | `docs/stack/data/r2.md` |
 | i18n | svelte-i18n | `docs/stack/i18n/svelte-i18n.md` |
 | AI | Vercel AI SDK | `docs/stack/ai/ai-sdk.md` |
+| 3D | Three.js + Threlte | `docs/stack/features/3d-web.md` |
 
 
 ## Architecture
@@ -138,6 +139,7 @@ DELEGATE when the task involves:
 - Biome linting and formatting → `biome`
 - Security patterns, CSRF, injection, headers → `security`
 - AI/LLM integration, streaming, prompts, tool calling → `ai-tools`
+- Three.js, Threlte, 3D scenes, GLTF, physics → `3d`
 
 ### Skill Usage Rules
 
@@ -161,3 +163,4 @@ DELEGATE when the task involves:
 | biome | Biome linter and formatter configuration |
 | security | Security patterns, CSRF, injection, headers, rate limiting |
 | ai-tools | Vendor-agnostic LLM integration, Vercel AI SDK, streaming, caching |
+| 3d | Three.js + Threlte patterns, physics, WebGL/WebGPU |
