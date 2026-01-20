@@ -32,8 +32,19 @@ No documentation drift. No stale examples. The template validates itself.
 │   ├── /files                       # File uploads
 │   ├── /i18n                        # Internationalization
 │   ├── /animations                  # Motion & transitions
+│   ├── /3d                          # 3D experiences (Threlte + Three.js)
+│   │   ├── +layout.svelte           # Dark theme, fullscreen toggle
+│   │   ├── +page.svelte             # 3D showcase landing
+│   │   ├── /basic-scene             # Spinning cube (vanilla Three.js)
+│   │   ├── /gltf-viewer             # Model viewer with controls
+│   │   ├── /interactive             # Click/hover interactions
+│   │   └── /physics                 # Rapier physics demo
 │   ├── /graph                       # Neo4j visualization
 │   └── /api                         # API explorer
+│
+├── /experience                      # Immersive 3D experiences
+│   ├── +layout.svelte               # Minimal shell, no sidebar
+│   └── /product                     # 3D product configurator
 │
 ├── /app                             # Protected area
 │   ├── /dashboard                   # User home
