@@ -2,11 +2,20 @@
 
 podman-compose up -d
 podman logs -f v10r
+
+podman-compose down && podman-compose up -d
+
+podman restart v10r
+
+# stop
 podman-compose down
 
 
-podman ps | shows only running containers                                                                                                                                                      
-podman ps -a | shows all containers (running + stopped) 
+# shows only running containers
+podman ps
+# shows all containers (running + stopped)
+podman ps -a 
+
 
 
 
