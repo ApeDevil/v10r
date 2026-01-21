@@ -1,4 +1,15 @@
 
+
+podman-compose up -d
+podman logs -f v10r
+podman-compose down
+
+
+podman ps | shows only running containers                                                                                                                                                      
+podman ps -a | shows all containers (running + stopped) 
+
+
+
 podman machine info
 podman version
 podman ps
