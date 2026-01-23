@@ -5,10 +5,173 @@ Integration guide for using Blender-exported 3D assets in the Velociraptor Svelt
 ## Quick Start
 
 ### Prerequisites
-- Blender 4.2 LTS (recommended)
 - Existing Threlte setup (see `/docs/blueprint/3d/3d-integration.md`)
+- Blender 4.2 LTS (for Phase 3)
 
-### Minimal Test (10 minutes)
+### Phased Validation
+
+Test the pipeline incrementally using official models before introducing Blender variables.
+
+| Phase | Model | Tests | Pass Criteria |
+|-------|-------|-------|---------------|
+| **1** | DamagedHelmet.glb | Basic loading, PBR materials | Model visible with correct materials |
+| **2** | Fox.glb | Animation playback, clip switching | All 3 animations play correctly |
+| **3** | Your own .blend | Full Blender → web pipeline | Custom asset works like Phase 1/2 |
+
+---
+
+### Phase 1: Static Model Test
+
+Uses [Khronos glTF Sample Assets](https://github.com/KhronosGroup/glTF-Sample-Assets) - the official test models.
+
+**1. Download test model:**
+```bash
+# From project root (inside container)
+mkdir -p static/models
+curl -o static/models/DamagedHelmet.glb \
+  https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DamagedHelmet/glTF-Binary/DamagedHelmet.glb
+```
+
+**2. Create test route:**
+
+```typescript
+// src/routes/showcase/3d/phase1-static/+page.ts
+export const ssr = false;
+export const prerender = false;
+```
+
+```svelte
+<!-- src/routes/showcase/3d/phase1-static/+page.svelte -->
+<script lang="ts">
+  import { Canvas, T } from '@threlte/core';
+  import { OrbitControls, GLTF } from '@threlte/extras';
+</script>
+
+<div class="container">
+  <Canvas>
+    <T.PerspectiveCamera makeDefault position={[3, 3, 3]} />
+    <T.DirectionalLight position={[10, 10, 10]} intensity={1} />
+    <T.AmbientLight intensity={0.5} />
+
+    <GLTF url="/models/DamagedHelmet.glb" />
+
+    <OrbitControls />
+  </Canvas>
+</div>
+
+<style>
+  .container { width: 100%; height: 100vh; }
+</style>
+```
+
+**3. Validate:**
+- Navigate to `/showcase/3d/phase1-static`
+- Model should display with metallic/rough PBR materials
+- OrbitControls should allow rotation
+
+**Pass criteria:** Helmet renders with correct materials → Threlte setup works.
+
+---
+
+### Phase 2: Animation Test
+
+Uses the [Fox model](https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/Fox) - industry standard for animation pipeline testing.
+
+**1. Download animated model:**
+```bash
+curl -o static/models/Fox.glb \
+  https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/Fox/glTF-Binary/Fox.glb
+```
+
+**2. Create test route:**
+
+```typescript
+// src/routes/showcase/3d/phase2-animated/+page.ts
+export const ssr = false;
+export const prerender = false;
+```
+
+```svelte
+<!-- src/routes/showcase/3d/phase2-animated/+page.svelte -->
+<script lang="ts">
+  import { Canvas, T } from '@threlte/core';
+  import { OrbitControls, useGltf, AnimatedModel } from '@threlte/extras';
+
+  const gltf = useGltf('/models/Fox.glb');
+
+  let currentAnimation = $state('Survey');
+  const animations = ['Survey', 'Walk', 'Run'];
+</script>
+
+<div class="controls">
+  {#each animations as anim}
+    <button
+      class:active={currentAnimation === anim}
+      onclick={() => currentAnimation = anim}
+    >
+      {anim}
+    </button>
+  {/each}
+</div>
+
+<div class="container">
+  <Canvas>
+    <T.PerspectiveCamera makeDefault position={[100, 100, 100]} />
+    <T.DirectionalLight position={[100, 100, 100]} intensity={1} />
+    <T.AmbientLight intensity={0.5} />
+
+    {#await gltf then { scene, animations }}
+      <T.Primitive object={scene} scale={1}>
+        {#if animations.length > 0}
+          <AnimatedModel
+            {animations}
+            currentAnimation={currentAnimation}
+          />
+        {/if}
+      </T.Primitive>
+    {/await}
+
+    <OrbitControls />
+    <T.GridHelper args={[200, 20]} />
+  </Canvas>
+</div>
+
+<style>
+  .container { width: 100%; height: 100vh; }
+  .controls {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    z-index: 10;
+    display: flex;
+    gap: 0.5rem;
+  }
+  button {
+    padding: 0.5rem 1rem;
+    background: #333;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  button.active {
+    background: hotpink;
+  }
+</style>
+```
+
+**3. Validate:**
+- Navigate to `/showcase/3d/phase2-animated`
+- Fox should display and animate
+- Click buttons to switch between Survey, Walk, Run animations
+
+**Pass criteria:** All 3 animations play correctly → Animation pipeline works.
+
+---
+
+### Phase 3: Custom Blender Export
+
+Now test your own Blender → web pipeline.
 
 **1. Create test asset in Blender:**
 ```
@@ -21,33 +184,33 @@ Integration guide for using Blender-exported 3D assets in the Velociraptor Svelt
    - Format: glTF Binary (.glb)
 ```
 
-**2. Validate export:**
+**2. Validate export externally:**
 - Drag GLB to [threejs.org/editor](https://threejs.org/editor)
 - If it renders → export is valid
 - If not → fix in Blender before touching code
 
-**3. Transform for Threlte:**
+**3. Transform for Threlte (optional optimization):**
 ```bash
 # From container
-npx @threlte/gltf@latest test-cube.glb --transform
+npx @threlte/gltf@latest your-model.glb --transform
 ```
 Generates:
-- `TestCube.svelte` - Reusable component
-- `test-cube-transformed.glb` - Optimized (Draco + texture compression)
+- `YourModel.svelte` - Reusable component
+- `your-model-transformed.glb` - Optimized (Draco + texture compression)
 
 **4. Use in SvelteKit:**
 ```bash
 # Move files
-mv test-cube-transformed.glb static/models/
-mv TestCube.svelte src/lib/components/3d/
+mv your-model-transformed.glb static/models/
+mv YourModel.svelte src/lib/components/3d/
 ```
 
 ```svelte
-<!-- src/routes/showcase/3d/blender-test/+page.svelte -->
+<!-- src/routes/showcase/3d/phase3-custom/+page.svelte -->
 <script lang="ts">
   import { Canvas, T } from '@threlte/core';
   import { OrbitControls } from '@threlte/extras';
-  import TestCube from '$lib/components/3d/TestCube.svelte';
+  import YourModel from '$lib/components/3d/YourModel.svelte';
 </script>
 
 <div class="container">
@@ -56,7 +219,7 @@ mv TestCube.svelte src/lib/components/3d/
     <T.DirectionalLight position={[10, 10, 10]} intensity={1} />
     <T.AmbientLight intensity={0.5} />
 
-    <TestCube />
+    <YourModel />
 
     <OrbitControls />
   </Canvas>
@@ -68,10 +231,30 @@ mv TestCube.svelte src/lib/components/3d/
 ```
 
 ```typescript
-// src/routes/showcase/3d/blender-test/+page.ts
+// src/routes/showcase/3d/phase3-custom/+page.ts
 export const ssr = false;
 export const prerender = false;
 ```
+
+**Pass criteria:** Your custom model renders like the official models → Full pipeline validated.
+
+---
+
+## Official Test Models
+
+| Model | Source | Size | Best For |
+|-------|--------|------|----------|
+| [Box.glb](https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/Box) | Khronos | ~1KB | Simplest possible test |
+| [DamagedHelmet.glb](https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/DamagedHelmet) | Khronos | ~3MB | PBR material validation |
+| [Fox.glb](https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/Fox) | Khronos | ~177KB | Animation testing (3 clips) |
+
+### With Blender Source Files
+
+| Source | What's Included |
+|--------|-----------------|
+| [arturitu/threejs-animation-workflow](https://github.com/arturitu/threejs-animation-workflow) | Full .blend files for each workflow stage |
+| [Poly Pizza](https://poly.pizza/) | CC0 game assets with .blend files |
+| [Unboring.net workflow](https://unboring.net/workflows/animation) | Downloadable .blend for texturing, rigging, animation |
 
 ## What Works
 
@@ -260,6 +443,18 @@ Or with loading state:
 
 ## Testing Checklist
 
+### Phase 1: Static Model
+- [ ] DamagedHelmet.glb downloaded to `static/models/`
+- [ ] Test route created with `ssr = false`
+- [ ] Model visible with correct PBR materials
+- [ ] OrbitControls working
+
+### Phase 2: Animation
+- [ ] Fox.glb downloaded to `static/models/`
+- [ ] All 3 animations play (Survey, Walk, Run)
+- [ ] Animation switching works
+
+### Phase 3: Custom Blender Export
 - [ ] Blender scene uses only Principled BSDF materials
 - [ ] Textures are PNG or JPEG (embedded, not external)
 - [ ] Export validates in threejs.org/editor
@@ -271,8 +466,21 @@ Or with loading state:
 
 ## References
 
+### Official Sources
+- [Khronos glTF-Sample-Assets](https://github.com/KhronosGroup/glTF-Sample-Assets) - Official test models
 - [Blender glTF 2.0 Manual](https://docs.blender.org/manual/en/latest/addons/import_export/scene_gltf2.html)
 - [@threlte/gltf Documentation](https://threlte.xyz/docs/reference/gltf/getting-started)
 - [Three.js Loading 3D Models](https://threejs.org/manual/en/loading-3d-models.html)
-- [glTF Viewer (Validation Tool)](https://gltf-viewer.donmccurdy.com/)
-- [Velociraptor 3D Integration Guide](/docs/blueprint/3d/3d-integration.md)
+
+### Validation Tools
+- [threejs.org/editor](https://threejs.org/editor) - Quick drag-and-drop validation
+- [glTF Viewer (Don McCurdy)](https://gltf-viewer.donmccurdy.com/) - Detailed model inspection
+- [Khronos glTF Sample Viewer](https://github.khronos.org/glTF-Sample-Viewer-Release/) - Official reference renderer
+
+### Blender Source Files
+- [arturitu/threejs-animation-workflow](https://github.com/arturitu/threejs-animation-workflow) - .blend files for each stage
+- [Poly Pizza](https://poly.pizza/) - CC0 models with Blender sources
+- [Unboring.net workflows](https://unboring.net/workflows/animation) - Downloadable .blend files
+
+### Velociraptor
+- [3D Integration Guide](/docs/blueprint/3d/3d-integration.md)
