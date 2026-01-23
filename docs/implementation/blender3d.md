@@ -49,13 +49,13 @@ export const prerender = false;
 
 <div class="container">
   <Canvas>
-    <T.PerspectiveCamera makeDefault position={[3, 3, 3]} />
+    <T.PerspectiveCamera makeDefault position={[3, 3, 3]}>
+      <OrbitControls />
+    </T.PerspectiveCamera>
     <T.DirectionalLight position={[10, 10, 10]} intensity={1} />
     <T.AmbientLight intensity={0.5} />
 
     <GLTF url="/models/DamagedHelmet.glb" />
-
-    <OrbitControls />
   </Canvas>
 </div>
 
@@ -116,7 +116,9 @@ export const prerender = false;
 
 <div class="container">
   <Canvas>
-    <T.PerspectiveCamera makeDefault position={[100, 100, 100]} />
+    <T.PerspectiveCamera makeDefault position={[100, 100, 100]}>
+      <OrbitControls />
+    </T.PerspectiveCamera>
     <T.DirectionalLight position={[100, 100, 100]} intensity={1} />
     <T.AmbientLight intensity={0.5} />
 
@@ -131,7 +133,6 @@ export const prerender = false;
       </T.Primitive>
     {/await}
 
-    <OrbitControls />
     <T.GridHelper args={[200, 20]} />
   </Canvas>
 </div>
@@ -215,13 +216,13 @@ mv YourModel.svelte src/lib/components/3d/
 
 <div class="container">
   <Canvas>
-    <T.PerspectiveCamera makeDefault position={[5, 5, 5]} />
+    <T.PerspectiveCamera makeDefault position={[5, 5, 5]}>
+      <OrbitControls />
+    </T.PerspectiveCamera>
     <T.DirectionalLight position={[10, 10, 10]} intensity={1} />
     <T.AmbientLight intensity={0.5} />
 
     <YourModel />
-
-    <OrbitControls />
   </Canvas>
 </div>
 
@@ -372,6 +373,15 @@ Single command beats multi-tool pipeline.
 - **Y/Z axis swapped** - Uncheck "+Y up" in Blender export
 - Models rotated 90° is classic symptom
 
+### OrbitControls Error
+- **"Parent missing: OrbitControls need to be a child of a Camera"**
+- OrbitControls must be nested inside the camera component:
+```svelte
+<T.PerspectiveCamera makeDefault position={[5, 5, 5]}>
+  <OrbitControls />
+</T.PerspectiveCamera>
+```
+
 ## File Organization
 
 ```
@@ -444,10 +454,10 @@ Or with loading state:
 ## Testing Checklist
 
 ### Phase 1: Static Model
-- [ ] DamagedHelmet.glb downloaded to `static/models/`
-- [ ] Test route created with `ssr = false`
-- [ ] Model visible with correct PBR materials
-- [ ] OrbitControls working
+- [x] DamagedHelmet.glb downloaded to `static/models/`
+- [x] Test route created with `ssr = false`
+- [x] Model visible with correct PBR materials
+- [x] OrbitControls working
 
 ### Phase 2: Animation
 - [ ] Fox.glb downloaded to `static/models/`

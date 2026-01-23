@@ -13,6 +13,7 @@
 	},
 	"dependencies": {
 		"@threlte/core": "^8.3.1",
+		"@threlte/extras": "^9.0.0",
 		"three": "^0.170.0"
 	},
 	"devDependencies": {

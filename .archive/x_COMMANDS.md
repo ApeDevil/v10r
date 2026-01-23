@@ -1,5 +1,7 @@
 
+cd dev/velociraptor🦖/
 
+podman-compose up
 podman-compose up -d
 podman logs -f v10r
 
