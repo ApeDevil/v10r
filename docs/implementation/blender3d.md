@@ -85,6 +85,8 @@ curl -o static/models/Fox.glb \
 
 **2. Create test route:**
 
+> **Important:** `useGltf` must be called inside a child of `<Canvas>`. Split into Scene component.
+
 ```typescript
 // src/routes/showcase/3d/phase2-animated/+page.ts
 export const ssr = false;
@@ -94,17 +96,15 @@ export const prerender = false;
 ```svelte
 <!-- src/routes/showcase/3d/phase2-animated/+page.svelte -->
 <script lang="ts">
-  import { Canvas, T } from '@threlte/core';
-  import { OrbitControls, useGltf, AnimatedModel } from '@threlte/extras';
-
-  const gltf = useGltf('/models/Fox.glb');
+  import { Canvas } from '@threlte/core';
+  import Scene from './Scene.svelte';
 
   let currentAnimation = $state('Survey');
-  const animations = ['Survey', 'Walk', 'Run'];
+  const animationNames = ['Survey', 'Walk', 'Run'];
 </script>
 
 <div class="controls">
-  {#each animations as anim}
+  {#each animationNames as anim}
     <button
       class:active={currentAnimation === anim}
       onclick={() => currentAnimation = anim}
@@ -116,24 +116,7 @@ export const prerender = false;
 
 <div class="container">
   <Canvas>
-    <T.PerspectiveCamera makeDefault position={[100, 100, 100]}>
-      <OrbitControls />
-    </T.PerspectiveCamera>
-    <T.DirectionalLight position={[100, 100, 100]} intensity={1} />
-    <T.AmbientLight intensity={0.5} />
-
-    {#await gltf then { scene, animations }}
-      <T.Primitive object={scene} scale={1}>
-        {#if animations.length > 0}
-          <AnimatedModel
-            {animations}
-            currentAnimation={currentAnimation}
-          />
-        {/if}
-      </T.Primitive>
-    {/await}
-
-    <T.GridHelper args={[200, 20]} />
+    <Scene {currentAnimation} />
   </Canvas>
 </div>
 
@@ -159,6 +142,59 @@ export const prerender = false;
     background: hotpink;
   }
 </style>
+```
+
+```svelte
+<!-- src/routes/showcase/3d/phase2-animated/Scene.svelte -->
+<script lang="ts">
+  import { T, useTask } from '@threlte/core';
+  import { OrbitControls, useGltf } from '@threlte/extras';
+  import { AnimationMixer, type AnimationClip, type Group } from 'three';
+
+  let { currentAnimation }: { currentAnimation: string } = $props();
+
+  const gltf = useGltf('/models/Fox.glb');
+
+  let mixer: AnimationMixer | null = null;
+  let clips: AnimationClip[] = [];
+
+  // Load model and create mixer once
+  gltf.then((data) => {
+    clips = data.animations;
+    mixer = new AnimationMixer(data.scene);
+    playAnimation(currentAnimation);
+  });
+
+  function playAnimation(name: string) {
+    if (!mixer || clips.length === 0) return;
+    mixer.stopAllAction();
+    const clip = clips.find((c) => c.name === name);
+    if (clip) {
+      mixer.clipAction(clip).play();
+    }
+  }
+
+  // React to animation changes
+  $effect(() => {
+    playAnimation(currentAnimation);
+  });
+
+  useTask((delta) => {
+    mixer?.update(delta);
+  });
+</script>
+
+<T.PerspectiveCamera makeDefault position={[100, 50, 100]}>
+  <OrbitControls target={[0, 30, 0]} />
+</T.PerspectiveCamera>
+<T.DirectionalLight position={[100, 100, 100]} intensity={1} />
+<T.AmbientLight intensity={0.5} />
+
+{#await gltf then data}
+  <T is={data.scene} />
+{/await}
+
+<T.GridHelper args={[200, 20]} />
 ```
 
 **3. Validate:**
@@ -382,6 +418,15 @@ Single command beats multi-tool pipeline.
 </T.PerspectiveCamera>
 ```
 
+### useGltf Cache Error
+- **"No cache found. The cache can only be used in a child component to Canvas"**
+- `useGltf` must be called inside a component that is a child of `<Canvas>`
+- Solution: Move loading logic to a separate Scene.svelte component
+
+### T.Primitive Not Found
+- **"No Three.js module found for Primitive"**
+- Use `<T is={object} />` pattern instead of `<T.Primitive object={...} />`
+
 ## File Organization
 
 ```
@@ -460,9 +505,9 @@ Or with loading state:
 - [x] OrbitControls working
 
 ### Phase 2: Animation
-- [ ] Fox.glb downloaded to `static/models/`
-- [ ] All 3 animations play (Survey, Walk, Run)
-- [ ] Animation switching works
+- [x] Fox.glb downloaded to `static/models/`
+- [x] All 3 animations play (Survey, Walk, Run)
+- [x] Animation switching works
 
 ### Phase 3: Custom Blender Export
 - [ ] Blender scene uses only Principled BSDF materials
