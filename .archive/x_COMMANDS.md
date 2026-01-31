@@ -1,16 +1,16 @@
 
-cd dev/velociraptor🦖/
-
+cd dev/velociraptor/
+# 
 podman-compose up
 podman-compose up -d
 podman logs -f v10r
 
-podman-compose down && podman-compose up -d
 
 podman restart v10r
 
 # stop
 podman-compose down
+podman-compose down && podman-compose up -d
 
 
 # shows only running containers

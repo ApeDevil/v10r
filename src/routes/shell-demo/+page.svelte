@@ -1,0 +1,375 @@
+<script lang="ts">
+	import { getSidebar } from '$lib/stores/sidebar.svelte';
+	import { getTheme } from '$lib/stores/theme.svelte';
+	import { getToast } from '$lib/stores/toast.svelte';
+	import { getModals } from '$lib/stores/modals.svelte';
+
+	const sidebar = getSidebar();
+	const theme = getTheme();
+	const toast = getToast();
+	const modals = getModals();
+</script>
+
+<svelte:head>
+	<title>Shell Demo - Velociraptor</title>
+</svelte:head>
+
+<div class="demo-page">
+	<h1>App Shell Demo</h1>
+
+	<section class="demo-section">
+		<h2>Sidebar State</h2>
+		<dl class="state-list">
+			<dt>Expanded:</dt>
+			<dd>{sidebar.expanded ? 'Yes' : 'No'}</dd>
+
+			<dt>Pinned:</dt>
+			<dd>{sidebar.pinned ? 'Yes' : 'No'}</dd>
+
+			<dt>Mobile Open:</dt>
+			<dd>{sidebar.mobileOpen ? 'Yes' : 'No'}</dd>
+		</dl>
+
+		<div class="button-group">
+			<button onclick={() => sidebar.expand()}>Expand</button>
+			<button onclick={() => sidebar.collapse()}>Collapse</button>
+			<button onclick={() => sidebar.togglePin()}>Toggle Pin</button>
+		</div>
+	</section>
+
+	<section class="demo-section">
+		<h2>Theme State</h2>
+		<dl class="state-list">
+			<dt>Mode:</dt>
+			<dd>{theme.mode}</dd>
+
+			<dt>Resolved:</dt>
+			<dd>{theme.resolvedMode}</dd>
+
+			<dt>Is Dark:</dt>
+			<dd>{theme.isDark ? 'Yes' : 'No'}</dd>
+		</dl>
+
+		<div class="button-group">
+			<button onclick={() => theme.setMode('light')}>Light</button>
+			<button onclick={() => theme.setMode('dark')}>Dark</button>
+			<button onclick={() => theme.setMode('system')}>System</button>
+		</div>
+	</section>
+
+	<section class="demo-section">
+		<h2>Toast Notifications</h2>
+		<div class="button-group">
+			<button onclick={() => toast.success('Success!')}>Success</button>
+			<button onclick={() => toast.error('Error!')}>Error</button>
+			<button onclick={() => toast.warning('Warning!')}>Warning</button>
+			<button onclick={() => toast.info('Info!')}>Info</button>
+		</div>
+
+		{#if toast.toasts.length > 0}
+			<div class="toast-preview">
+				<h3>Active Toasts:</h3>
+				<ul>
+					{#each toast.toasts as t}
+						<li class="toast-item toast-{t.type}">
+							{t.message}
+							<button onclick={() => toast.remove(t.id)}>×</button>
+						</li>
+					{/each}
+				</ul>
+			</div>
+		{/if}
+	</section>
+
+	<section class="demo-section">
+		<h2>Responsive Breakpoints</h2>
+		<p>Resize the browser window to see the sidebar behavior change:</p>
+		<ul>
+			<li><strong>Mobile (&lt;768px):</strong> Drawer + FAB (bottom-right)</li>
+			<li><strong>Tablet (768-1023px):</strong> Rail with click-to-expand</li>
+			<li><strong>Desktop (1024px+):</strong> Rail with hover-to-expand</li>
+		</ul>
+	</section>
+
+	<section class="demo-section">
+		<h2>Modal Triggers</h2>
+		<p>
+			Try the keyboard shortcuts or click the triggers in the sidebar:
+		</p>
+		<ul>
+			<li><kbd>⌘K</kbd> or <kbd>Ctrl+K</kbd> - Quick Search</li>
+			<li><kbd>⌘J</kbd> or <kbd>Ctrl+J</kbd> - AI Assistant</li>
+		</ul>
+
+		<div class="button-group">
+			<button onclick={() => modals.open('quickSearch')}>Open Quick Search</button>
+			<button onclick={() => modals.open('aiAssistant')}>Open AI Assistant</button>
+		</div>
+
+		<dl class="state-list">
+			<dt>Active Modal:</dt>
+			<dd>{modals.active || 'None'}</dd>
+		</dl>
+	</section>
+
+	<section class="demo-section">
+		<h2>Navigation Components</h2>
+		<p>
+			The sidebar now includes enhanced navigation with dropdowns and user menu:
+		</p>
+		<ul>
+			<li><strong>NavItem</strong> - Compound button with main navigation + optional dropdown</li>
+			<li><strong>NavDropdown</strong> - Keyboard-navigable submenu for child pages</li>
+			<li><strong>UserMenu</strong> - Avatar dropdown with profile, settings, theme, and sign out</li>
+		</ul>
+
+		<h3>Navigation Structure</h3>
+		<ul>
+			<li><strong>Home</strong> - No children</li>
+			<li><strong>Shell Demo</strong> - No children</li>
+			<li>
+				<strong>Showcases</strong> - Dropdown with:
+				<ul>
+					<li>Forms (placeholder)</li>
+					<li>3D (placeholder)</li>
+					<li>Auth (placeholder)</li>
+				</ul>
+			</li>
+			<li>
+				<strong>Docs</strong> - Dropdown with:
+				<ul>
+					<li>Stack (placeholder)</li>
+					<li>Blueprint (placeholder)</li>
+				</ul>
+			</li>
+		</ul>
+
+		<h3>Features</h3>
+		<ul>
+			<li><strong>Active state detection:</strong> Highlights current page and parent nav items</li>
+			<li>
+				<strong>Compound button:</strong> Main area navigates, chevron toggles dropdown (expanded
+				mode only)
+			</li>
+			<li>
+				<strong>Keyboard navigation:</strong> Arrow keys, Enter to select, Escape to close
+			</li>
+			<li><strong>Click outside to close:</strong> Dropdown auto-closes</li>
+			<li><strong>Smooth animations:</strong> Respects prefers-reduced-motion</li>
+		</ul>
+
+		<h3>User Menu Features</h3>
+		<ul>
+			<li><strong>Profile & Settings:</strong> Quick access links</li>
+			<li><strong>Theme submenu:</strong> Light, Dark, System modes</li>
+			<li><strong>Sign out:</strong> Action button (red on hover)</li>
+			<li><strong>Responsive:</strong> Shows avatar only in rail mode, full info when expanded</li>
+		</ul>
+
+		<p class="note">
+			Try expanding the sidebar (hover on desktop, click on tablet) to see the navigation dropdowns
+			and user menu. The chevron rotates 90° when open. Navigate to different pages to see the
+			active state tracking.
+		</p>
+	</section>
+
+	<section class="demo-section">
+		<h2>Toast Variants</h2>
+		<p>
+			Toast notifications appear in the top-right (desktop) or top-center (mobile). They auto-dismiss
+			after a duration based on type:
+		</p>
+		<ul>
+			<li><strong>Success:</strong> 5 seconds</li>
+			<li><strong>Error:</strong> 8 seconds</li>
+			<li><strong>Warning:</strong> 6 seconds</li>
+			<li><strong>Info:</strong> 5 seconds</li>
+		</ul>
+
+		<div class="button-group">
+			<button onclick={() => toast.success('Operation completed successfully!')}>
+				Show Success
+			</button>
+			<button onclick={() => toast.error('Something went wrong. Please try again.')}>
+				Show Error
+			</button>
+			<button onclick={() => toast.warning('This action cannot be undone.')}>
+				Show Warning
+			</button>
+			<button onclick={() => toast.info('New updates are available.')}>Show Info</button>
+		</div>
+
+		<div class="button-group">
+			<button
+				onclick={() => {
+					toast.success('First toast');
+					setTimeout(() => toast.info('Second toast'), 300);
+					setTimeout(() => toast.warning('Third toast'), 600);
+					setTimeout(() => toast.error('Fourth toast'), 900);
+					setTimeout(() => toast.success('Fifth toast'), 1200);
+					setTimeout(() => toast.info('Sixth toast (hidden - max 5)'), 1500);
+				}}
+			>
+				Show Multiple Toasts (max 5 visible)
+			</button>
+		</div>
+	</section>
+</div>
+
+<style>
+	.demo-page {
+		max-width: 800px;
+		margin: 0 auto;
+		padding: 2rem 1rem;
+	}
+
+	h1 {
+		font-size: 2.5rem;
+		margin-bottom: 2rem;
+		color: var(--color-fg);
+	}
+
+	h2 {
+		font-size: 1.5rem;
+		margin-bottom: 1rem;
+		color: var(--color-fg);
+	}
+
+	h3 {
+		font-size: 1.125rem;
+		margin-top: 1rem;
+		color: var(--color-fg);
+	}
+
+	.demo-section {
+		margin-bottom: 3rem;
+		padding: 1.5rem;
+		border: 1px solid var(--color-border);
+		border-radius: 0.5rem;
+		background: var(--color-bg);
+	}
+
+	.state-list {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		gap: 0.5rem 1rem;
+		margin-bottom: 1rem;
+	}
+
+	.state-list dt {
+		font-weight: 600;
+		color: var(--color-fg);
+	}
+
+	.state-list dd {
+		color: var(--color-muted);
+		margin: 0;
+	}
+
+	.button-group {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+
+	button {
+		padding: 0.5rem 1rem;
+		border: 1px solid var(--color-border);
+		background: var(--color-bg);
+		color: var(--color-fg);
+		border-radius: 0.375rem;
+		cursor: pointer;
+		transition: all 150ms;
+	}
+
+	button:hover {
+		background: var(--color-primary);
+		color: white;
+		border-color: var(--color-primary);
+	}
+
+	button:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+	}
+
+	.toast-preview {
+		margin-top: 1rem;
+		padding: 1rem;
+		background: var(--color-border);
+		border-radius: 0.375rem;
+	}
+
+	.toast-preview ul {
+		list-style: none;
+		margin-top: 0.5rem;
+	}
+
+	.toast-item {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0.75rem;
+		margin-bottom: 0.5rem;
+		border-radius: 0.375rem;
+		color: white;
+	}
+
+	.toast-success {
+		background: var(--color-success);
+	}
+	.toast-error {
+		background: var(--color-error);
+	}
+	.toast-warning {
+		background: var(--color-warning);
+	}
+	.toast-info {
+		background: var(--color-primary);
+	}
+
+	.toast-item button {
+		background: transparent;
+		border: none;
+		color: white;
+		font-size: 1.5rem;
+		padding: 0;
+		width: 1.5rem;
+		height: 1.5rem;
+		line-height: 1;
+	}
+
+	ul {
+		margin-left: 1.5rem;
+		color: var(--color-muted);
+	}
+
+	li {
+		margin-bottom: 0.5rem;
+	}
+
+	p {
+		color: var(--color-muted);
+		margin-bottom: 1rem;
+	}
+
+	.note {
+		font-style: italic;
+		font-size: 0.875rem;
+		padding: 0.75rem;
+		background: var(--color-border);
+		border-radius: 0.375rem;
+		margin-top: 1rem;
+	}
+
+	kbd {
+		display: inline-block;
+		padding: 0.25rem 0.5rem;
+		font-size: 0.75rem;
+		font-family: ui-monospace, monospace;
+		background: var(--color-border);
+		border: 1px solid var(--color-muted);
+		border-radius: 0.25rem;
+		font-weight: 600;
+	}
+</style>
