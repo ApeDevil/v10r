@@ -1,8 +1,9 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
+import UnoCSS from 'unocss/vite';
 
 export default defineConfig({
-	plugins: [sveltekit()],
+	plugins: [UnoCSS(), sveltekit()],
 	ssr: {
 		noExternal: ['three'] // Required for Three.js/Threlte SSR compatibility
 	},

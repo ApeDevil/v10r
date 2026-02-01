@@ -12,6 +12,11 @@ podman restart v10r
 podman-compose down
 podman-compose down && podman-compose up -d
 
+# Kill
+lsof -i :5173
+kill XXXXX (rootlessp XXXXX)
+
+
 
 # shows only running containers
 podman ps

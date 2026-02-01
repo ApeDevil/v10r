@@ -1,10 +1,17 @@
 <script lang="ts">
+	import { cn } from '$lib/utils/cn';
 	import { trapFocus } from '$lib/utils/focus-trap';
 	import { getSidebar } from '$lib/stores/sidebar.svelte';
 	import SidebarLogo from './SidebarLogo.svelte';
 	import SidebarNav from './SidebarNav.svelte';
 	import SidebarTriggers from './SidebarTriggers.svelte';
 	import UserMenu from './UserMenu.svelte';
+
+	interface Props {
+		class?: string;
+	}
+
+	let { class: className }: Props = $props();
 
 	const sidebar = getSidebar();
 
@@ -38,7 +45,7 @@
 	<!-- Overlay -->
 	<div
 		bind:this={overlayRef}
-		class="drawer-overlay"
+		class="drawer-overlay fixed inset-0 bg-black/50 z-overlay motion-reduce:animate-none"
 		onclick={handleOverlayClick}
 		role="presentation"
 	></div>
@@ -46,14 +53,15 @@
 	<!-- Drawer -->
 	<aside
 		bind:this={drawerRef}
-		class="sidebar-drawer"
+		class={cn('sidebar-drawer fixed top-0 right-0 bottom-0 bg-bg border-l border-border z-drawer flex flex-col motion-reduce:animate-none', className)}
+		style:width="var(--sidebar-mobile-width)"
 		role="navigation"
 		aria-label="Main navigation"
 		aria-modal="true"
 	>
-		<div class="sidebar-header">
+		<div class="flex items-center justify-between gap-3 p-4 border-b border-border">
 			<SidebarLogo forceExpanded />
-			<button class="close-button" onclick={() => sidebar.closeMobile()} aria-label="Close menu">
+			<button class="flex items-center justify-center w-[44px] h-[44px] border-none bg-transparent text-fg cursor-pointer rounded-md transition-colors duration-fast hover:bg-border focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none" onclick={() => sidebar.closeMobile()} aria-label="Close menu">
 				<svg
 					width="24"
 					height="24"
@@ -74,24 +82,14 @@
 
 		<SidebarNav forceExpanded />
 
-		<div class="sidebar-footer">
+		<div class="p-2 border-t border-border">
 			<UserMenu user={{ name: 'Demo User', email: 'demo@velociraptor.dev' }} forceExpanded />
 		</div>
 	</aside>
 {/if}
 
 <style>
-	.drawer-overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: rgb(0 0 0 / 0.5);
-		z-index: var(--z-overlay, 30);
-		animation: fadeIn var(--duration-fast, 150ms);
-	}
-
+	/* Custom animations */
 	@keyframes fadeIn {
 		from {
 			opacity: 0;
@@ -99,20 +97,6 @@
 		to {
 			opacity: 1;
 		}
-	}
-
-	.sidebar-drawer {
-		position: fixed;
-		top: 0;
-		right: 0;
-		bottom: 0;
-		width: var(--sidebar-mobile-width);
-		background: var(--color-bg);
-		border-left: 1px solid var(--color-border);
-		z-index: var(--z-drawer, 40);
-		display: flex;
-		flex-direction: column;
-		animation: slideIn var(--duration-normal, 250ms) var(--ease-default, ease);
 	}
 
 	@keyframes slideIn {
@@ -124,44 +108,14 @@
 		}
 	}
 
-	.sidebar-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 0.75rem;
-		padding: 1rem;
-		border-bottom: 1px solid var(--color-border);
+	.drawer-overlay {
+		animation: fadeIn var(--duration-fast);
 	}
 
-	.close-button {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 40px;
-		height: 40px;
-		border: none;
-		background: transparent;
-		color: var(--color-fg);
-		cursor: pointer;
-		border-radius: 0.375rem;
-		transition: background var(--duration-fast, 150ms);
+	.sidebar-drawer {
+		animation: slideIn var(--duration-normal) var(--ease-default);
 	}
 
-	.close-button:hover {
-		background: var(--color-border);
-	}
-
-	.close-button:focus-visible {
-		outline: 2px solid var(--color-primary);
-		outline-offset: 2px;
-	}
-
-	.sidebar-footer {
-		padding: 0.5rem;
-		border-top: 1px solid var(--color-border);
-	}
-
-	/* Respect reduced motion */
 	@media (prefers-reduced-motion: reduce) {
 		.drawer-overlay,
 		.sidebar-drawer {

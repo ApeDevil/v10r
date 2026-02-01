@@ -5,6 +5,7 @@
 	 */
 
 	import { page } from '$app/state';
+	import { cn } from '$lib/utils/cn';
 
 	interface NavDropdownItem {
 		href: string;
@@ -15,9 +16,10 @@
 		items: NavDropdownItem[];
 		open: boolean;
 		onClose: () => void;
+		class?: string;
 	}
 
-	let { items, open, onClose }: Props = $props();
+	let { items, open, onClose, class: className }: Props = $props();
 
 	let dropdownRef: HTMLElement;
 	let focusedIndex = $state(-1);
@@ -73,13 +75,15 @@
 <svelte:window onkeydown={handleKeydown} />
 
 {#if open}
-	<nav bind:this={dropdownRef} class="nav-dropdown" role="menu" aria-label="Submenu">
+	<nav bind:this={dropdownRef} class={cn('nav-dropdown flex flex-col gap-[0.125rem] py-1 pl-[2.5rem] overflow-hidden origin-top motion-reduce:animate-none', className)} role="menu" aria-label="Submenu">
 		{#each items as item, index}
 			<a
 				href={item.href}
 				data-index={index}
-				class="dropdown-item"
-				class:active={isActive(item.href)}
+				class={cn(
+					'block p-2 px-3 text-sm text-muted no-underline rounded-sm transition-all duration-fast whitespace-nowrap hover:bg-border hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none',
+					isActive(item.href) && 'bg-primary text-white font-semibold'
+				)}
 				role="menuitem"
 				aria-current={isActive(item.href) ? 'page' : undefined}
 			>
@@ -90,16 +94,7 @@
 {/if}
 
 <style>
-	.nav-dropdown {
-		display: flex;
-		flex-direction: column;
-		gap: 0.125rem;
-		padding: 0.25rem 0 0.25rem 2.5rem;
-		overflow: hidden;
-		animation: slideDown var(--duration-fast, 150ms) ease-out;
-		transform-origin: top;
-	}
-
+	/* Custom slideDown animation */
 	@keyframes slideDown {
 		from {
 			opacity: 0;
@@ -111,43 +106,13 @@
 		}
 	}
 
-	.dropdown-item {
-		display: block;
-		padding: 0.5rem 0.75rem;
-		font-size: 0.875rem;
-		color: var(--color-muted);
-		text-decoration: none;
-		border-radius: 0.25rem;
-		transition:
-			background var(--duration-fast, 150ms),
-			color var(--duration-fast, 150ms);
-		white-space: nowrap;
+	.nav-dropdown {
+		animation: slideDown var(--duration-fast) ease-out;
 	}
 
-	.dropdown-item:hover {
-		background: var(--color-border);
-		color: var(--color-fg);
-	}
-
-	.dropdown-item:focus-visible {
-		outline: 2px solid var(--color-primary);
-		outline-offset: 2px;
-	}
-
-	.dropdown-item.active {
-		background: var(--color-primary);
-		color: white;
-		font-weight: 600;
-	}
-
-	/* Respect reduced motion */
 	@media (prefers-reduced-motion: reduce) {
 		.nav-dropdown {
 			animation: none;
-		}
-
-		.dropdown-item {
-			transition: none;
 		}
 	}
 </style>

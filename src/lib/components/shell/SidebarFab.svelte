@@ -1,5 +1,12 @@
 <script lang="ts">
+	import { cn } from '$lib/utils/cn';
 	import { getSidebar } from '$lib/stores/sidebar.svelte';
+
+	interface Props {
+		class?: string;
+	}
+
+	let { class: className }: Props = $props();
 
 	const sidebar = getSidebar();
 
@@ -9,7 +16,7 @@
 </script>
 
 <button
-	class="sidebar-fab"
+	class={cn('fixed bottom-4 right-4 w-[56px] h-[56px] rounded-full border-none bg-primary text-white flex items-center justify-center cursor-pointer shadow-lg z-fab transition-all duration-fast hover:scale-105 hover:shadow-xl active:scale-95 focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:hover:scale-100 motion-reduce:active:scale-100', className)}
 	onclick={handleClick}
 	aria-label={sidebar.mobileOpen ? 'Close menu' : 'Open menu'}
 	aria-expanded={sidebar.mobileOpen}
@@ -47,51 +54,3 @@
 		</svg>
 	{/if}
 </button>
-
-<style>
-	.sidebar-fab {
-		position: fixed;
-		bottom: 1rem;
-		right: 1rem;
-		width: 56px;
-		height: 56px;
-		border-radius: 50%;
-		border: none;
-		background: var(--color-primary);
-		color: white;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		cursor: pointer;
-		box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.06);
-		z-index: var(--z-fab, 20);
-		transition:
-			transform var(--duration-fast, 150ms),
-			box-shadow var(--duration-fast, 150ms);
-	}
-
-	.sidebar-fab:hover {
-		transform: scale(1.05);
-		box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
-	}
-
-	.sidebar-fab:active {
-		transform: scale(0.95);
-	}
-
-	.sidebar-fab:focus-visible {
-		outline: 2px solid white;
-		outline-offset: 2px;
-	}
-
-	/* Respect reduced motion */
-	@media (prefers-reduced-motion: reduce) {
-		.sidebar-fab {
-			transition: none;
-		}
-
-		.sidebar-fab:hover {
-			transform: none;
-		}
-	}
-</style>

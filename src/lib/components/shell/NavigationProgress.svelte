@@ -48,44 +48,14 @@
 
 {#if visible}
 	<div
-		class="navigation-progress"
-		style="width: {progress}%"
+		class="fixed top-0 left-0 h-[3px] bg-primary z-progress transition-width duration-200 ease motion-reduce:transition-none"
+		style="width: {progress}%; box-shadow: 0 0 8px var(--color-primary)"
 		role="progressbar"
 		aria-valuemin="0"
 		aria-valuemax="100"
 		aria-valuenow={Math.round(progress)}
 		aria-label="Page loading progress"
-	></div>
+	>
+		<div class="absolute top-0 right-0 w-[100px] h-full opacity-50" style="background: linear-gradient(to right, transparent, var(--color-primary))"></div>
+	</div>
 {/if}
-
-<style>
-	.navigation-progress {
-		position: fixed;
-		top: 0;
-		left: 0;
-		height: 3px;
-		background: var(--color-primary);
-		z-index: var(--z-progress, 100);
-		transition: width 200ms ease;
-		box-shadow: 0 0 8px var(--color-primary);
-	}
-
-	/* Glow effect */
-	.navigation-progress::after {
-		content: '';
-		position: absolute;
-		top: 0;
-		right: 0;
-		width: 100px;
-		height: 100%;
-		background: linear-gradient(to right, transparent, var(--color-primary));
-		opacity: 0.5;
-	}
-
-	/* Respect reduced motion */
-	@media (prefers-reduced-motion: reduce) {
-		.navigation-progress {
-			transition: none;
-		}
-	}
-</style>

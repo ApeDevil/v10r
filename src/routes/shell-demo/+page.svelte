@@ -66,11 +66,11 @@
 			<button onclick={() => toast.info('Info!')}>Info</button>
 		</div>
 
-		{#if toast.toasts.length > 0}
+		{#if toast.items.length > 0}
 			<div class="toast-preview">
 				<h3>Active Toasts:</h3>
 				<ul>
-					{#each toast.toasts as t}
+					{#each toast.items as t}
 						<li class="toast-item toast-{t.type}">
 							{t.message}
 							<button onclick={() => toast.remove(t.id)}>×</button>

@@ -5,7 +5,9 @@
 	 * - Chevron area: Opens dropdown for subpages (if has children)
 	 */
 
+	import Icon from '@iconify/svelte';
 	import { page } from '$app/state';
+	import { cn } from '$lib/utils/cn';
 	import NavDropdown from './NavDropdown.svelte';
 
 	interface NavChild {
@@ -19,6 +21,7 @@
 		label: string;
 		children?: NavChild[];
 		forceExpanded?: boolean;
+		class?: string;
 	}
 
 	let {
@@ -26,7 +29,8 @@
 		icon,
 		label,
 		children = [],
-		forceExpanded = false
+		forceExpanded = false,
+		class: className
 	}: Props = $props();
 
 	let isDropdownOpen = $state(false);
@@ -57,24 +61,34 @@
 	});
 </script>
 
-<div class="nav-item-container">
-	<a
-		{href}
-		class="nav-item"
-		class:active={isActive()}
-		class:has-children={children.length > 0}
-		aria-current={isActive() ? 'page' : undefined}
-	>
-		<span class="nav-icon" aria-hidden="true">{icon}</span>
-		{#if forceExpanded}
-			<span class="nav-label">{label}</span>
-		{/if}
+<div class={cn('relative', className)}>
+	<div class="flex items-center gap-0 relative">
+		<a
+			{href}
+			class={cn(
+				'flex items-center gap-3 p-3 no-underline text-muted rounded-md transition-all duration-fast whitespace-nowrap relative flex-1 hover:bg-border hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none',
+				isActive() && 'bg-primary text-white font-semibold'
+			)}
+			aria-current={isActive() ? 'page' : undefined}
+			aria-label={forceExpanded ? undefined : label}
+		>
+			<span class="text-[1.5rem] shrink-0 leading-none" aria-hidden="true">
+				<Icon {icon} />
+			</span>
+			{#if forceExpanded}
+				<span class="nav-label text-sm font-medium flex-1 opacity-0 motion-reduce:opacity-100">{label}</span>
+			{/if}
+		</a>
 
 		{#if children.length > 0 && forceExpanded}
 			<button
 				type="button"
-				class="chevron-button"
-				class:expanded={isDropdownOpen}
+				class={cn(
+					'flex items-center justify-center w-[24px] h-[24px] p-0 absolute bg-transparent border-none text-muted cursor-pointer rounded-sm transition-all duration-fast motion-reduce:transition-none motion-reduce:rotate-0',
+					isDropdownOpen && 'rotate-90 motion-reduce:rotate-0',
+					'hover:bg-border'
+				)}
+				style:right="var(--spacing-3)"
 				onclick={toggleDropdown}
 				aria-label={isDropdownOpen ? 'Close submenu' : 'Open submenu'}
 				aria-expanded={isDropdownOpen}
@@ -94,7 +108,7 @@
 				</svg>
 			</button>
 		{/if}
-	</a>
+	</div>
 
 	{#if children.length > 0 && forceExpanded}
 		<NavDropdown items={children} open={isDropdownOpen} onClose={closeDropdown} />
@@ -102,106 +116,30 @@
 </div>
 
 <style>
-	.nav-item-container {
-		position: relative;
-	}
-
-	.nav-item {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 0.75rem;
-		text-decoration: none;
-		color: var(--color-muted);
-		border-radius: 0.375rem;
-		transition:
-			background var(--duration-fast, 150ms),
-			color var(--duration-fast, 150ms);
-		white-space: nowrap;
-		position: relative;
-		width: 100%;
-	}
-
-	.nav-item:hover {
-		background: var(--color-border);
-		color: var(--color-fg);
-	}
-
-	.nav-item:focus-visible {
-		outline: 2px solid var(--color-primary);
-		outline-offset: 2px;
-	}
-
-	.nav-item.active {
-		background: var(--color-primary);
-		color: white;
-		font-weight: 600;
-	}
-
-	.nav-icon {
-		font-size: 1.5rem;
-		flex-shrink: 0;
-		line-height: 1;
-	}
-
-	.nav-label {
-		font-size: 0.875rem;
-		font-weight: 500;
-		flex: 1;
-		opacity: 0;
-		animation: fadeIn var(--duration-fast, 150ms) forwards;
-	}
-
-	.chevron-button {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 24px;
-		height: 24px;
-		padding: 0;
-		margin-left: auto;
-		background: transparent;
-		border: none;
-		color: inherit;
-		cursor: pointer;
-		border-radius: 0.25rem;
-		transition:
-			transform var(--duration-fast, 150ms),
-			background var(--duration-fast, 150ms);
-	}
-
-	.chevron-button:hover {
-		background: rgba(0, 0, 0, 0.1);
-	}
-
-	.nav-item.active .chevron-button:hover {
-		background: rgba(255, 255, 255, 0.2);
-	}
-
-	.chevron-button.expanded {
-		transform: rotate(90deg);
-	}
-
+	/* Custom fadeIn animation */
 	@keyframes fadeIn {
 		to {
 			opacity: 1;
 		}
 	}
 
-	/* Respect reduced motion */
-	@media (prefers-reduced-motion: reduce) {
-		.nav-item,
-		.chevron-button {
-			transition: none;
-		}
+	.nav-label {
+		animation: fadeIn var(--duration-fast) forwards;
+	}
 
+	@media (prefers-reduced-motion: reduce) {
 		.nav-label {
 			animation: none;
 			opacity: 1;
 		}
+	}
 
-		.chevron-button.expanded {
-			transform: none;
-		}
+	/* Active state color override for chevron button - CSS variable approach for specificity */
+	button:has(~ a[aria-current="page"]) {
+		color: white;
+	}
+
+	button:hover:has(~ a[aria-current="page"]) {
+		background: rgba(255, 255, 255, 0.2);
 	}
 </style>

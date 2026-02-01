@@ -21,12 +21,12 @@
 <NavigationProgress />
 
 <!-- Skip link for accessibility -->
-<a href="#main-content" class="skip-link">Skip to main content</a>
+<a href="#main-content" class="absolute -top-full left-0 py-2 px-4 bg-primary text-white z-modal no-underline focus:top-0">Skip to main content</a>
 
-<div class="app-shell">
+<div class="flex min-h-screen">
 	<Sidebar />
 
-	<main id="main-content" tabindex="-1" class="main-content">
+	<main id="main-content" tabindex="-1" class="flex-1 flex flex-col">
 		{@render children?.()}
 
 		<Footer />
@@ -43,31 +43,3 @@
 {#if session}
 	<SessionMonitor {session} />
 {/if}
-
-<style>
-	.skip-link {
-		position: absolute;
-		top: -100%;
-		left: 0;
-		padding: 0.5rem 1rem;
-		background: var(--color-primary);
-		color: white;
-		z-index: 9999;
-		text-decoration: none;
-	}
-
-	.skip-link:focus {
-		top: 0;
-	}
-
-	.app-shell {
-		display: flex;
-		min-height: 100dvh;
-	}
-
-	.main-content {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-	}
-</style>

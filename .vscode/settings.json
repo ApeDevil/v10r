@@ -23,6 +23,22 @@
         {
             "folderPath": "velociraptor🦖/assets/",
             "badge": "🎒"
+        },
+        {
+            "folderPath": "velociraptor/src/lib/components/",
+            "badge": "🧩"
+        },
+        {
+            "folderPath": "velociraptor/src/lib/",
+            "badge": "🏛️"
+        },
+        {
+            "folderPath": "velociraptor/src/routes/api/session/",
+            "badge": "☎️"
+        },
+        {
+            "folderPath": "velociraptor/src/routes/",
+            "badge": "🔱"
         }
     ]
 }

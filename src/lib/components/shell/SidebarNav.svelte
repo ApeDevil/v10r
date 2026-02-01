@@ -5,14 +5,16 @@
 	 * Expanded mode: Icons + labels
 	 */
 
+	import { cn } from '$lib/utils/cn';
 	import { getSidebar } from '$lib/stores/sidebar.svelte';
 	import NavItem from './NavItem.svelte';
 
 	interface Props {
 		forceExpanded?: boolean; // Force expanded mode (for drawer)
+		class?: string;
 	}
 
-	let { forceExpanded = false }: Props = $props();
+	let { forceExpanded = false, class: className }: Props = $props();
 
 	const sidebar = getSidebar();
 
@@ -20,12 +22,12 @@
 
 	// Navigation structure with dropdowns
 	const navItems = [
-		{ href: '/', label: 'Home', icon: '🏠' },
-		{ href: '/shell-demo', label: 'Shell Demo', icon: '🎨' },
+		{ href: '/', label: 'Home', icon: 'lucide:home' },
+		{ href: '/shell-demo', label: 'Shell Demo', icon: 'lucide:palette' },
 		{
 			href: '/showcases',
 			label: 'Showcases',
-			icon: '✨',
+			icon: 'lucide:sparkles',
 			children: [
 				{ href: '/showcases/forms', label: 'Forms' },
 				{ href: '/showcases/3d', label: '3D' },
@@ -35,7 +37,7 @@
 		{
 			href: '/docs',
 			label: 'Docs',
-			icon: '📚',
+			icon: 'lucide:book-open',
 			children: [
 				{ href: '/docs/stack', label: 'Stack' },
 				{ href: '/docs/blueprint', label: 'Blueprint' }
@@ -44,8 +46,8 @@
 	];
 </script>
 
-<nav class="sidebar-nav" role="navigation" aria-label="Main navigation">
-	<ul class="nav-list">
+<nav class={cn('flex-1 overflow-y-auto p-2 scrollbar-nav', className)} role="navigation" aria-label="Main navigation">
+	<ul class="list-none m-0 p-0 flex flex-col gap-1">
 		{#each navItems as item}
 			<li>
 				<NavItem
@@ -61,36 +63,21 @@
 </nav>
 
 <style>
-	.sidebar-nav {
-		flex: 1;
-		overflow-y: auto;
-		padding: 0.5rem;
-	}
-
-	.nav-list {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-	}
-
-	/* Scrollbar styling */
-	.sidebar-nav::-webkit-scrollbar {
+	/* Custom scrollbar styling - UnoCSS doesn't provide these pseudo-elements */
+	.scrollbar-nav::-webkit-scrollbar {
 		width: 6px;
 	}
 
-	.sidebar-nav::-webkit-scrollbar-track {
+	.scrollbar-nav::-webkit-scrollbar-track {
 		background: transparent;
 	}
 
-	.sidebar-nav::-webkit-scrollbar-thumb {
+	.scrollbar-nav::-webkit-scrollbar-thumb {
 		background: var(--color-border);
 		border-radius: 3px;
 	}
 
-	.sidebar-nav::-webkit-scrollbar-thumb:hover {
+	.scrollbar-nav::-webkit-scrollbar-thumb:hover {
 		background: var(--color-muted);
 	}
 </style>

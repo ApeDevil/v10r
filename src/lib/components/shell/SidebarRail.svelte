@@ -1,10 +1,17 @@
 <script lang="ts">
 	import { MediaQuery } from 'svelte/reactivity';
+	import { cn } from '$lib/utils/cn';
 	import { getSidebar } from '$lib/stores/sidebar.svelte';
 	import SidebarLogo from './SidebarLogo.svelte';
 	import SidebarNav from './SidebarNav.svelte';
 	import SidebarTriggers from './SidebarTriggers.svelte';
 	import UserMenu from './UserMenu.svelte';
+
+	interface Props {
+		class?: string;
+	}
+
+	let { class: className }: Props = $props();
 
 	const sidebar = getSidebar();
 
@@ -47,15 +54,15 @@
 </script>
 
 <aside
-	class="sidebar-rail"
-	class:expanded={sidebar.expanded}
+	class={cn('fixed top-0 left-0 h-screen bg-bg border-r border-border z-sidebar flex flex-col overflow-hidden transition-all duration-normal motion-reduce:transition-none', sidebar.expanded && 'shadow-lg', className)}
+	style:width={sidebar.expanded ? 'var(--sidebar-expanded-width)' : 'var(--sidebar-rail-width)'}
 	onmouseenter={handleMouseEnter}
 	onmouseleave={handleMouseLeave}
 	onclick={handleClick}
 	role="navigation"
 	aria-label="Main navigation"
 >
-	<div class="sidebar-header">
+	<div class="p-4 border-b border-border">
 		<SidebarLogo />
 	</div>
 
@@ -63,51 +70,10 @@
 
 	<SidebarNav />
 
-	<div class="sidebar-footer">
+	<div class="p-2 border-t border-border">
 		<UserMenu
 			user={{ name: 'Demo User', email: 'demo@velociraptor.dev' }}
 			forceExpanded={sidebar.expanded}
 		/>
 	</div>
 </aside>
-
-<style>
-	.sidebar-rail {
-		position: fixed;
-		top: 0;
-		left: 0;
-		height: 100dvh;
-		width: var(--sidebar-rail-width);
-		background: var(--color-bg);
-		border-right: 1px solid var(--color-border);
-		z-index: var(--z-sidebar, 10);
-		display: flex;
-		flex-direction: column;
-		transition:
-			width var(--duration-normal, 250ms) var(--ease-default, ease),
-			box-shadow var(--duration-normal, 250ms);
-		overflow: hidden;
-	}
-
-	.sidebar-rail.expanded {
-		width: var(--sidebar-expanded-width);
-		box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-	}
-
-	.sidebar-header {
-		padding: 1rem;
-		border-bottom: 1px solid var(--color-border);
-	}
-
-	.sidebar-footer {
-		padding: 0.5rem;
-		border-top: 1px solid var(--color-border);
-	}
-
-	/* Respect reduced motion */
-	@media (prefers-reduced-motion: reduce) {
-		.sidebar-rail {
-			transition: none;
-		}
-	}
-</style>

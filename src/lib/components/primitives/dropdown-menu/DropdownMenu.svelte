@@ -1,0 +1,67 @@
+<script lang="ts">
+	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
+	import Icon from '@iconify/svelte';
+	import { cn } from '$lib/utils/cn';
+	import type { Snippet } from 'svelte';
+
+	interface DropdownItem {
+		label: string;
+		icon?: string;
+		href?: string;
+		onclick?: () => void;
+		separator?: boolean;
+		disabled?: boolean;
+	}
+
+	interface Props {
+		items: DropdownItem[];
+		trigger: Snippet;
+		align?: 'start' | 'center' | 'end';
+	}
+
+	let { items, trigger, align = 'end' }: Props = $props();
+</script>
+
+<DropdownMenuPrimitive.Root>
+	<DropdownMenuPrimitive.Trigger class="focus-visible:outline-none">
+		{#snippet child({ props })}
+			{@render trigger()}
+		{/snippet}
+	</DropdownMenuPrimitive.Trigger>
+
+	<DropdownMenuPrimitive.Portal>
+		<DropdownMenuPrimitive.Content
+			class="z-dropdown min-w-[12rem] overflow-hidden rounded-md border border-border bg-bg shadow-lg"
+			sideOffset={4}
+			{align}
+		>
+			{#each items as item}
+				{#if item.separator}
+					<DropdownMenuPrimitive.Separator class="my-1 h-px bg-border" />
+				{:else}
+					<DropdownMenuPrimitive.Item
+						disabled={item.disabled}
+						class={cn(
+							'relative flex cursor-pointer select-none items-center gap-3 px-3 py-2',
+							'text-fluid-sm text-fg outline-none',
+							'data-[highlighted]:bg-muted/10',
+							'data-[disabled]:pointer-events-none data-[disabled]:opacity-50'
+						)}
+						onclick={() => {
+							if (item.href) {
+								window.location.href = item.href;
+							} else if (item.onclick) {
+								item.onclick();
+							}
+						}}
+					>
+						{#if item.icon}
+							<Icon icon={item.icon} class="h-4 w-4" />
+						{/if}
+						<span>{item.label}</span>
+					</DropdownMenuPrimitive.Item>
+				{/if}
+			{/each}
+		</DropdownMenuPrimitive.Content>
+	</DropdownMenuPrimitive.Portal>
+</DropdownMenuPrimitive.Root>

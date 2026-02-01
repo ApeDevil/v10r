@@ -5,6 +5,8 @@
 	 * Dropdown includes profile, settings, theme toggle, and sign out.
 	 */
 
+	import Icon from '@iconify/svelte';
+	import { cn } from '$lib/utils/cn';
 	import { getTheme } from '$lib/stores/theme.svelte';
 
 	interface User {
@@ -16,15 +18,18 @@
 	interface Props {
 		user: User | null;
 		forceExpanded?: boolean;
+		class?: string;
 	}
 
-	let { user, forceExpanded = false }: Props = $props();
+	let { user, forceExpanded = false, class: className }: Props = $props();
 
 	const theme = getTheme();
 
 	let isDropdownOpen = $state(false);
 	let themeSubmenuOpen = $state(false);
 	let menuRef: HTMLElement;
+	let focusedIndex = $state(-1);
+	let menuItems: HTMLElement[] = [];
 
 	function toggleDropdown() {
 		isDropdownOpen = !isDropdownOpen;
@@ -62,11 +67,65 @@
 		}
 	}
 
-	// Close on Escape
+	// Close on Escape and handle arrow key navigation
 	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape' && isDropdownOpen) {
-			closeDropdown();
+		if (!isDropdownOpen) return;
+
+		switch (e.key) {
+			case 'Escape':
+				closeDropdown();
+				break;
+			case 'ArrowDown':
+				e.preventDefault();
+				focusNextItem();
+				break;
+			case 'ArrowUp':
+				e.preventDefault();
+				focusPreviousItem();
+				break;
+			case 'Home':
+				e.preventDefault();
+				focusFirstItem();
+				break;
+			case 'End':
+				e.preventDefault();
+				focusLastItem();
+				break;
 		}
+	}
+
+	function focusNextItem() {
+		updateMenuItems();
+		if (menuItems.length === 0) return;
+		focusedIndex = (focusedIndex + 1) % menuItems.length;
+		menuItems[focusedIndex]?.focus();
+	}
+
+	function focusPreviousItem() {
+		updateMenuItems();
+		if (menuItems.length === 0) return;
+		focusedIndex = focusedIndex <= 0 ? menuItems.length - 1 : focusedIndex - 1;
+		menuItems[focusedIndex]?.focus();
+	}
+
+	function focusFirstItem() {
+		updateMenuItems();
+		if (menuItems.length === 0) return;
+		focusedIndex = 0;
+		menuItems[0]?.focus();
+	}
+
+	function focusLastItem() {
+		updateMenuItems();
+		if (menuItems.length === 0) return;
+		focusedIndex = menuItems.length - 1;
+		menuItems[focusedIndex]?.focus();
+	}
+
+	function updateMenuItems() {
+		menuItems = Array.from(
+			menuRef?.querySelectorAll<HTMLElement>('.dropdown-item:not([disabled])') || []
+		);
 	}
 
 	// Set up click outside listener
@@ -82,34 +141,42 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div bind:this={menuRef} class="user-menu" class:expanded={forceExpanded}>
+<div bind:this={menuRef} class={cn('relative', className)}>
 	{#if user}
 		<button
 			type="button"
-			class="user-trigger"
-			class:dropdown-open={isDropdownOpen}
+			class={cn(
+				'flex items-center gap-3 p-3 w-full bg-transparent border border-border rounded-md text-fg cursor-pointer',
+				'transition-all duration-fast hover:bg-border focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2',
+				'motion-reduce:transition-none',
+				isDropdownOpen && 'bg-border'
+			)}
 			onclick={toggleDropdown}
 			aria-label={forceExpanded ? 'User menu' : `User menu for ${user.name}`}
 			aria-expanded={isDropdownOpen}
 			aria-haspopup="true"
 		>
-			<div class="user-avatar">
+			<div class="w-8 h-8 rounded-full overflow-hidden bg-primary flex items-center justify-center flex-shrink-0">
 				{#if user.avatarUrl}
-					<img src={user.avatarUrl} alt={user.name} />
+					<img src={user.avatarUrl} alt={user.name} class="w-full h-full object-cover" />
 				{:else}
-					<span class="avatar-icon">👤</span>
+					<span class="text-xl leading-none" aria-label="User avatar">
+						<Icon icon="lucide:user" />
+					</span>
 				{/if}
 			</div>
 
 			{#if forceExpanded}
 				<div class="user-info">
-					<span class="user-name">{user.name}</span>
-					<span class="user-email">{user.email}</span>
+					<span class="text-sm font-semibold text-fg whitespace-nowrap overflow-hidden text-ellipsis">{user.name}</span>
+					<span class="text-xs text-muted whitespace-nowrap overflow-hidden text-ellipsis">{user.email}</span>
 				</div>
 
 				<svg
-					class="chevron"
-					class:rotated={isDropdownOpen}
+					class={cn(
+						'flex-shrink-0 transition-transform duration-fast motion-reduce:transition-none',
+						isDropdownOpen && 'rotate-180 motion-reduce:rotate-0'
+					)}
 					width="16"
 					height="16"
 					viewBox="0 0 24 24"
@@ -127,92 +194,103 @@
 
 		{#if isDropdownOpen}
 			<div class="user-dropdown" role="menu">
-				<a href="/profile" class="dropdown-item" role="menuitem">
-					<span class="item-icon">👤</span>
-					<span class="item-label">Profile</span>
+				<a
+					href="/profile"
+					class="flex items-center gap-3 p-2 px-3 w-full bg-transparent border-none rounded-sm text-fg text-sm no-underline cursor-pointer transition-all duration-fast hover:bg-border focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 text-left motion-reduce:transition-none"
+					role="menuitem"
+				>
+					<span class="text-lg leading-none flex-shrink-0" aria-hidden="true"><Icon icon="lucide:user" /></span>
+					<span class="flex-1">Profile</span>
 				</a>
 
-				<a href="/settings" class="dropdown-item" role="menuitem">
-					<span class="item-icon">⚙️</span>
-					<span class="item-label">Settings</span>
+				<a
+					href="/settings"
+					class="flex items-center gap-3 p-2 px-3 w-full bg-transparent border-none rounded-sm text-fg text-sm no-underline cursor-pointer transition-all duration-fast hover:bg-border focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 text-left motion-reduce:transition-none"
+					role="menuitem"
+				>
+					<span class="text-lg leading-none flex-shrink-0" aria-hidden="true"><Icon icon="lucide:settings" /></span>
+					<span class="flex-1">Settings</span>
 				</a>
 
-				<div class="dropdown-divider"></div>
+				<div class="h-px bg-border my-2"></div>
 
 				<button
 					type="button"
-					class="dropdown-item theme-toggle"
+					class="flex items-center gap-3 p-2 px-3 w-full bg-transparent border-none rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast hover:bg-border focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 text-left motion-reduce:transition-none"
 					onclick={toggleThemeSubmenu}
 					aria-expanded={themeSubmenuOpen}
 					role="menuitem"
 				>
-					<span class="item-icon">🎨</span>
-					<span class="item-label">Theme</span>
-					<svg
-						class="submenu-chevron"
-						class:rotated={themeSubmenuOpen}
-						width="16"
-						height="16"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						aria-hidden="true"
-					>
-						<polyline points="9 18 15 12 9 6"></polyline>
-					</svg>
+					<span class="text-lg leading-none flex-shrink-0" aria-hidden="true"><Icon icon="lucide:palette" /></span>
+					<span class="flex-1">Theme</span>
+					<span class={cn('flex items-center flex-shrink-0 transition-transform duration-fast motion-reduce:transition-none', themeSubmenuOpen && 'rotate-90 motion-reduce:rotate-0')}>
+						<Icon icon="lucide:chevron-right" />
+					</span>
 				</button>
 
 				{#if themeSubmenuOpen}
-					<div class="theme-submenu">
+					<div class="pl-2 mt-1">
 						<button
 							type="button"
-							class="dropdown-item submenu-item"
-							class:active={theme.mode === 'light'}
+							class={cn(
+								'flex items-center gap-3 py-1.5 px-3 w-full bg-transparent border-none rounded-sm text-fg text-[0.8125rem] cursor-pointer transition-all duration-fast hover:bg-border focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 text-left motion-reduce:transition-none',
+								theme.mode === 'light' && 'bg-primary text-white'
+							)}
 							onclick={() => setTheme('light')}
 							role="menuitem"
 						>
-							<span class="item-icon">☀️</span>
-							<span class="item-label">Light</span>
+							<span class="text-lg leading-none flex-shrink-0" aria-hidden="true"><Icon icon="lucide:sun" /></span>
+							<span class="flex-1">Light</span>
 						</button>
 
 						<button
 							type="button"
-							class="dropdown-item submenu-item"
-							class:active={theme.mode === 'dark'}
+							class={cn(
+								'flex items-center gap-3 py-1.5 px-3 w-full bg-transparent border-none rounded-sm text-fg text-[0.8125rem] cursor-pointer transition-all duration-fast hover:bg-border focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 text-left motion-reduce:transition-none',
+								theme.mode === 'dark' && 'bg-primary text-white'
+							)}
 							onclick={() => setTheme('dark')}
 							role="menuitem"
 						>
-							<span class="item-icon">🌙</span>
-							<span class="item-label">Dark</span>
+							<span class="text-lg leading-none flex-shrink-0" aria-hidden="true"><Icon icon="lucide:moon" /></span>
+							<span class="flex-1">Dark</span>
 						</button>
 
 						<button
 							type="button"
-							class="dropdown-item submenu-item"
-							class:active={theme.mode === 'system'}
+							class={cn(
+								'flex items-center gap-3 py-1.5 px-3 w-full bg-transparent border-none rounded-sm text-fg text-[0.8125rem] cursor-pointer transition-all duration-fast hover:bg-border focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 text-left motion-reduce:transition-none',
+								theme.mode === 'system' && 'bg-primary text-white'
+							)}
 							onclick={() => setTheme('system')}
 							role="menuitem"
 						>
-							<span class="item-icon">💻</span>
-							<span class="item-label">System</span>
+							<span class="text-lg leading-none flex-shrink-0" aria-hidden="true"><Icon icon="lucide:monitor" /></span>
+							<span class="flex-1">System</span>
 						</button>
 					</div>
 				{/if}
 
-				<div class="dropdown-divider"></div>
+				<div class="h-px bg-border my-2"></div>
 
-				<button type="button" class="dropdown-item sign-out" onclick={handleSignOut} role="menuitem">
-					<span class="item-icon">🚪</span>
-					<span class="item-label">Sign out</span>
+				<button
+					type="button"
+					class="flex items-center gap-3 p-2 px-3 w-full bg-transparent border-none rounded-sm text-error text-sm cursor-pointer transition-all duration-fast hover:bg-error hover:text-white focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 text-left motion-reduce:transition-none"
+					onclick={handleSignOut}
+					role="menuitem"
+				>
+					<span class="text-lg leading-none flex-shrink-0" aria-hidden="true"><Icon icon="lucide:log-out" /></span>
+					<span class="flex-1">Sign out</span>
 				</button>
 			</div>
 		{/if}
 	{:else}
-		<a href="/auth/signin" class="sign-in-button">
-			<span class="sign-in-icon">🔑</span>
+		<a
+			href="/auth/signin"
+			class="flex items-center gap-3 p-3 w-full bg-primary border-none rounded-md text-white text-sm font-semibold no-underline cursor-pointer transition-bg duration-fast hover:bg-[hsl(from_var(--color-primary)_h_s_calc(l-10))] focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none"
+			aria-label="Sign in"
+		>
+			<span class="text-xl leading-none" aria-hidden="true"><Icon icon="lucide:key" /></span>
 			{#if forceExpanded}
 				<span class="sign-in-label">Sign in</span>
 			{/if}
@@ -221,62 +299,7 @@
 </div>
 
 <style>
-	.user-menu {
-		position: relative;
-	}
-
-	.user-trigger {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 0.75rem;
-		width: 100%;
-		background: transparent;
-		border: 1px solid var(--color-border);
-		border-radius: 0.375rem;
-		color: var(--color-fg);
-		cursor: pointer;
-		transition:
-			background var(--duration-fast, 150ms),
-			border-color var(--duration-fast, 150ms);
-	}
-
-	.user-trigger:hover {
-		background: var(--color-border);
-	}
-
-	.user-trigger:focus-visible {
-		outline: 2px solid var(--color-primary);
-		outline-offset: 2px;
-	}
-
-	.user-trigger.dropdown-open {
-		background: var(--color-border);
-	}
-
-	.user-avatar {
-		width: 32px;
-		height: 32px;
-		border-radius: 50%;
-		overflow: hidden;
-		background: var(--color-primary);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex-shrink: 0;
-	}
-
-	.user-avatar img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-	}
-
-	.avatar-icon {
-		font-size: 1.25rem;
-		line-height: 1;
-	}
-
+	/* User info fade-in animation */
 	.user-info {
 		display: flex;
 		flex-direction: column;
@@ -285,47 +308,28 @@
 		text-align: left;
 		min-width: 0;
 		opacity: 0;
-		animation: fadeIn var(--duration-fast, 150ms) forwards;
+		animation: fadeIn var(--duration-fast) forwards;
 	}
 
-	.user-name {
-		font-size: 0.875rem;
-		font-weight: 600;
-		color: var(--color-fg);
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
+	/* Sign-in label fade-in animation */
+	.sign-in-label {
+		opacity: 0;
+		animation: fadeIn var(--duration-fast) forwards;
 	}
 
-	.user-email {
-		font-size: 0.75rem;
-		color: var(--color-muted);
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	.chevron {
-		flex-shrink: 0;
-		transition: transform var(--duration-fast, 150ms);
-	}
-
-	.chevron.rotated {
-		transform: rotate(180deg);
-	}
-
+	/* Dropdown slide-up animation */
 	.user-dropdown {
 		position: absolute;
-		bottom: calc(100% + 0.5rem);
+		bottom: calc(100% + var(--spacing-2));
 		left: 0;
 		right: 0;
 		background: var(--color-bg);
 		border: 1px solid var(--color-border);
-		border-radius: 0.375rem;
+		border-radius: var(--radius-md);
 		box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-		padding: 0.5rem;
-		z-index: 100;
-		animation: slideUp var(--duration-fast, 150ms) ease-out;
+		padding: var(--spacing-2);
+		z-index: var(--z-dropdown);
+		animation: slideUp var(--duration-fast) ease-out;
 	}
 
 	@keyframes slideUp {
@@ -345,128 +349,8 @@
 		}
 	}
 
-	.dropdown-item {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 0.5rem 0.75rem;
-		width: 100%;
-		background: transparent;
-		border: none;
-		border-radius: 0.25rem;
-		color: var(--color-fg);
-		font-size: 0.875rem;
-		text-decoration: none;
-		cursor: pointer;
-		transition:
-			background var(--duration-fast, 150ms),
-			color var(--duration-fast, 150ms);
-		text-align: left;
-	}
-
-	.dropdown-item:hover {
-		background: var(--color-border);
-	}
-
-	.dropdown-item:focus-visible {
-		outline: 2px solid var(--color-primary);
-		outline-offset: -2px;
-	}
-
-	.dropdown-item.active {
-		background: var(--color-primary);
-		color: white;
-	}
-
-	.item-icon {
-		font-size: 1.125rem;
-		line-height: 1;
-		flex-shrink: 0;
-	}
-
-	.item-label {
-		flex: 1;
-	}
-
-	.submenu-chevron {
-		flex-shrink: 0;
-		transition: transform var(--duration-fast, 150ms);
-	}
-
-	.submenu-chevron.rotated {
-		transform: rotate(90deg);
-	}
-
-	.theme-submenu {
-		padding-left: 0.5rem;
-		margin-top: 0.25rem;
-	}
-
-	.submenu-item {
-		font-size: 0.8125rem;
-		padding: 0.375rem 0.75rem;
-	}
-
-	.dropdown-divider {
-		height: 1px;
-		background: var(--color-border);
-		margin: 0.5rem 0;
-	}
-
-	.sign-out {
-		color: var(--color-error);
-	}
-
-	.sign-out:hover {
-		background: var(--color-error);
-		color: white;
-	}
-
-	.sign-in-button {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 0.75rem;
-		width: 100%;
-		background: var(--color-primary);
-		border: none;
-		border-radius: 0.375rem;
-		color: white;
-		font-size: 0.875rem;
-		font-weight: 600;
-		text-decoration: none;
-		cursor: pointer;
-		transition: background var(--duration-fast, 150ms);
-	}
-
-	.sign-in-button:hover {
-		background: var(--color-primary-dark, hsl(from var(--color-primary) h s calc(l - 10)));
-	}
-
-	.sign-in-button:focus-visible {
-		outline: 2px solid var(--color-primary);
-		outline-offset: 2px;
-	}
-
-	.sign-in-icon {
-		font-size: 1.25rem;
-		line-height: 1;
-	}
-
-	.sign-in-label {
-		opacity: 0;
-		animation: fadeIn var(--duration-fast, 150ms) forwards;
-	}
-
 	/* Respect reduced motion */
 	@media (prefers-reduced-motion: reduce) {
-		.user-trigger,
-		.dropdown-item,
-		.chevron,
-		.submenu-chevron {
-			transition: none;
-		}
-
 		.user-dropdown {
 			animation: none;
 		}
@@ -475,11 +359,6 @@
 		.sign-in-label {
 			animation: none;
 			opacity: 1;
-		}
-
-		.chevron.rotated,
-		.submenu-chevron.rotated {
-			transform: none;
 		}
 	}
 </style>

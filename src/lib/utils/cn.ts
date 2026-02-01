@@ -1,32 +1,14 @@
 /**
- * Class name utility for merging Tailwind/UnoCSS classes.
- * Combines clsx-like class name merging without external dependencies.
+ * Class name utility for merging UnoCSS classes.
+ * Uses clsx for combining class names with conditionals.
  */
 
-type ClassValue = string | number | boolean | undefined | null | ClassValue[] | Record<string, boolean>;
+import { clsx, type ClassValue } from 'clsx';
 
 /**
- * Merge class names, handling conditionals and deduplication.
- * Since we don't have tailwind-merge for proper Tailwind class deduplication,
- * this provides basic class merging functionality.
+ * Merge class names with clsx.
+ * Use for combining CVA variants with additional classes.
  */
-export function cn(...inputs: ClassValue[]): string {
-	const classes: string[] = [];
-
-	for (const input of inputs) {
-		if (!input) continue;
-
-		if (typeof input === 'string' || typeof input === 'number') {
-			classes.push(String(input));
-		} else if (Array.isArray(input)) {
-			const nested = cn(...input);
-			if (nested) classes.push(nested);
-		} else if (typeof input === 'object') {
-			for (const [key, value] of Object.entries(input)) {
-				if (value) classes.push(key);
-			}
-		}
-	}
-
-	return classes.join(' ');
+export function cn(...inputs: ClassValue[]) {
+	return clsx(inputs);
 }

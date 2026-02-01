@@ -10,74 +10,39 @@ interface Toast {
 	id: string;
 	type: ToastType;
 	message: string;
-	duration?: number; // Auto-dismiss after N ms (default: 5000)
+	duration: number;
 }
 
 const TOAST_CTX = Symbol('toast');
-
-let toastIdCounter = 0;
 
 /**
  * Create toast state instance.
  */
 export function createToastState() {
-	// Use SvelteMap for reactive collection
-	let toasts = $state<Map<string, Toast>>(new Map());
+	let toasts = $state<Toast[]>([]);
+
+	function add(type: ToastType, message: string, duration = 5000) {
+		const id = crypto.randomUUID();
+		toasts.push({ id, type, message, duration });
+
+		if (duration > 0) {
+			setTimeout(() => remove(id), duration);
+		}
+	}
+
+	function remove(id: string) {
+		toasts = toasts.filter((t) => t.id !== id);
+	}
 
 	return {
-		get toasts() {
-			return Array.from(toasts.values());
+		get items() {
+			return toasts;
 		},
-
-		/**
-		 * Add a new toast notification.
-		 */
-		add(type: ToastType, message: string, duration = 5000) {
-			const id = `toast-${++toastIdCounter}`;
-			const toast: Toast = { id, type, message, duration };
-
-			toasts.set(id, toast);
-
-			// Auto-dismiss after duration
-			if (duration > 0) {
-				setTimeout(() => {
-					this.remove(id);
-				}, duration);
-			}
-
-			return id;
-		},
-
-		/**
-		 * Remove a toast by ID.
-		 */
-		remove(id: string) {
-			toasts.delete(id);
-		},
-
-		/**
-		 * Clear all toasts.
-		 */
-		clear() {
-			toasts.clear();
-		},
-
-		// Convenience methods
-		success(message: string, duration?: number) {
-			return this.add('success', message, duration);
-		},
-
-		error(message: string, duration?: number) {
-			return this.add('error', message, duration);
-		},
-
-		warning(message: string, duration?: number) {
-			return this.add('warning', message, duration);
-		},
-
-		info(message: string, duration?: number) {
-			return this.add('info', message, duration);
-		},
+		success: (msg: string, duration?: number) => add('success', msg, duration),
+		error: (msg: string, duration?: number) => add('error', msg, duration),
+		warning: (msg: string, duration?: number) => add('warning', msg, duration),
+		info: (msg: string, duration?: number) => add('info', msg, duration),
+		remove
 	};
 }
 

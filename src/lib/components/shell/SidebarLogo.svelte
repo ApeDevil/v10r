@@ -5,73 +5,44 @@
 	 * Expanded mode: Icon + text
 	 */
 
+	import Icon from '@iconify/svelte';
+	import { cn } from '$lib/utils/cn';
 	import { getSidebar } from '$lib/stores/sidebar.svelte';
 
 	interface Props {
 		forceExpanded?: boolean; // Force expanded mode (for drawer)
+		class?: string;
 	}
 
-	let { forceExpanded = false }: Props = $props();
+	let { forceExpanded = false, class: className }: Props = $props();
 
 	const sidebar = getSidebar();
 
 	const showText = $derived(forceExpanded || sidebar.expanded);
 </script>
 
-<a href="/" class="sidebar-logo" aria-label="Home">
-	<div class="logo-icon">🦖</div>
+<a href="/" class={cn('flex items-center gap-3 p-3 no-underline rounded-md transition-colors duration-fast hover:bg-border focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none', className)} aria-label="Home">
+	<div class="text-[2rem] shrink-0 leading-none">
+		<Icon icon="lucide:zap" />
+	</div>
 	{#if showText}
-		<span class="logo-text">Velociraptor</span>
+		<span class="logo-text font-semibold text-lg text-fg whitespace-nowrap opacity-0 animate-fade-in motion-reduce:animate-none motion-reduce:opacity-100">Velociraptor</span>
 	{/if}
 </a>
 
 <style>
-	.sidebar-logo {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 0.75rem;
-		text-decoration: none;
-		border-radius: 0.375rem;
-		transition: background var(--duration-fast, 150ms);
-	}
-
-	.sidebar-logo:hover {
-		background: var(--color-border);
-	}
-
-	.sidebar-logo:focus-visible {
-		outline: 2px solid var(--color-primary);
-		outline-offset: 2px;
-	}
-
-	.logo-icon {
-		font-size: 2rem;
-		flex-shrink: 0;
-		line-height: 1;
-	}
-
-	.logo-text {
-		font-weight: 600;
-		font-size: 1.125rem;
-		color: var(--color-fg);
-		white-space: nowrap;
-		opacity: 0;
-		animation: fadeIn var(--duration-fast, 150ms) forwards;
-	}
-
+	/* Custom fadeIn animation that UnoCSS doesn't provide by default */
 	@keyframes fadeIn {
 		to {
 			opacity: 1;
 		}
 	}
 
-	/* Respect reduced motion */
-	@media (prefers-reduced-motion: reduce) {
-		.sidebar-logo {
-			transition: none;
-		}
+	.logo-text {
+		animation: fadeIn var(--duration-fast) forwards;
+	}
 
+	@media (prefers-reduced-motion: reduce) {
 		.logo-text {
 			animation: none;
 			opacity: 1;

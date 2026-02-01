@@ -127,35 +127,35 @@
 {#if modals.isOpen('sessionExpiry')}
 	<div class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="session-modal-title">
 		<div class="modal-content">
-			<div class="modal-header">
-				<div class="modal-icon" aria-hidden="true">🔒</div>
-				<h2 id="session-modal-title">Session Expired</h2>
+			<div class="flex flex-col items-center gap-3 px-8 pt-8 pb-4 border-b border-[#e5e7eb]">
+				<div class="text-5xl leading-none" aria-hidden="true">🔒</div>
+				<h2 id="session-modal-title" class="m-0 text-2xl font-semibold text-[#111827]">Session Expired</h2>
 			</div>
 
 			{#if step === 'expired'}
-				<div class="modal-body">
-					<p class="modal-description">
+				<div class="p-8">
+					<p class="m-0 mb-6 text-[#6b7280] leading-relaxed">
 						Your session has expired for security reasons. Please verify your identity to
 						continue, or sign in as a different user.
 					</p>
 
-					<div class="user-info">
-						<div class="user-avatar" aria-hidden="true">
+					<div class="flex items-center gap-4 p-4 bg-[#f9fafb] rounded-lg mb-6">
+						<div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#6366f1] to-[#8b5cf6] text-white flex items-center justify-center text-xl font-semibold" aria-hidden="true">
 							{email.charAt(0).toUpperCase()}
 						</div>
 						<div class="user-details">
-							<div class="user-email">{email}</div>
+							<div class="font-medium text-[#111827]">{email}</div>
 						</div>
 					</div>
 
 					{#if error}
-						<div class="error-message" role="alert">
+						<div class="px-4 py-3 bg-[#fef2f2] border border-[#fecaca] rounded-md text-[#dc2626] text-sm text-center" role="alert">
 							{error}
 						</div>
 					{/if}
 				</div>
 
-				<div class="modal-actions">
+				<div class="flex flex-col gap-3 px-8 pb-8">
 					<button
 						type="button"
 						class="btn-primary"
@@ -168,7 +168,7 @@
 
 					<button
 						type="button"
-						class="btn-secondary"
+						class="px-6 py-3 border-none rounded-lg text-[0.9375rem] font-medium cursor-pointer transition-all duration-fast bg-[#f3f4f6] text-[#374151] hover:bg-[#e5e7eb] disabled:opacity-50 disabled:cursor-not-allowed motion-reduce:transition-none"
 						onclick={onSwitchUser}
 						disabled={sending}
 						aria-label="Sign in as different user"
@@ -177,14 +177,14 @@
 					</button>
 				</div>
 			{:else if step === 'verify'}
-				<div class="modal-body">
-					<p class="modal-description">
+				<div class="p-8">
+					<p class="m-0 mb-6 text-[#6b7280] leading-relaxed">
 						We've sent a 6-digit verification code to <strong>{email}</strong>. Enter it below to
 						restore your session.
 					</p>
 
-					<form class="verify-form" onsubmit={(e) => (e.preventDefault(), verify())}>
-						<div class="digit-inputs" onpaste={handlePaste}>
+					<form class="flex flex-col gap-6" onsubmit={(e) => (e.preventDefault(), verify())}>
+						<div class="flex gap-2 justify-center" onpaste={handlePaste}>
 							{#each digits as digit, i}
 								<div class="digit-input">
 									<input
@@ -197,20 +197,21 @@
 										disabled={verifying}
 										aria-label="Digit {i + 1}"
 										autocomplete="off"
+										class="w-full h-16 text-center text-2xl font-semibold border-2 border-[#d1d5db] rounded-lg transition-all duration-fast focus:outline-none focus:border-[#6366f1] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.1)] disabled:opacity-50 disabled:cursor-not-allowed motion-reduce:transition-none"
 									/>
 								</div>
 							{/each}
 						</div>
 
 						{#if error}
-							<div class="error-message" role="alert">
+							<div class="px-4 py-3 bg-[#fef2f2] border border-[#fecaca] rounded-md text-[#dc2626] text-sm text-center" role="alert">
 								{error}
 							</div>
 						{/if}
 
 						<button
 							type="submit"
-							class="btn-verify"
+							class="btn-primary mt-2"
 							disabled={verifying || digits.some((d) => !d)}
 							aria-label="Verify code"
 						>
@@ -220,7 +221,7 @@
 
 					<button
 						type="button"
-						class="btn-back"
+						class="bg-transparent text-[#6b7280] px-2 py-2 border-none rounded-lg text-[0.9375rem] font-medium cursor-pointer transition-all duration-fast hover:text-[#111827] disabled:opacity-50 disabled:cursor-not-allowed motion-reduce:transition-none mt-2 w-full"
 						onclick={() => (step = 'expired')}
 						disabled={verifying}
 					>
@@ -255,122 +256,12 @@
 		animation: slideUp 0.3s ease-out;
 	}
 
-	.modal-header {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 2rem 2rem 1rem;
-		border-bottom: 1px solid #e5e7eb;
-	}
-
-	.modal-icon {
-		font-size: 3rem;
-		line-height: 1;
-	}
-
-	.modal-header h2 {
-		margin: 0;
-		font-size: 1.5rem;
-		font-weight: 600;
-		color: #111827;
-	}
-
-	.modal-body {
-		padding: 2rem;
-	}
-
-	.modal-description {
-		margin: 0 0 1.5rem;
-		color: #6b7280;
-		line-height: 1.6;
-	}
-
-	.user-info {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		padding: 1rem;
-		background: #f9fafb;
-		border-radius: 0.5rem;
-		margin-bottom: 1.5rem;
-	}
-
-	.user-avatar {
-		width: 48px;
-		height: 48px;
-		border-radius: 50%;
-		background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-		color: white;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 1.25rem;
-		font-weight: 600;
-	}
-
-	.user-email {
-		font-weight: 500;
-		color: #111827;
-	}
-
-	.verify-form {
-		display: flex;
-		flex-direction: column;
-		gap: 1.5rem;
-	}
-
-	.digit-inputs {
-		display: flex;
-		gap: 0.5rem;
-		justify-content: center;
-	}
-
 	.digit-input {
 		flex: 1;
 		max-width: 56px;
 	}
 
-	.digit-input input {
-		width: 100%;
-		height: 64px;
-		text-align: center;
-		font-size: 1.5rem;
-		font-weight: 600;
-		border: 2px solid #d1d5db;
-		border-radius: 0.5rem;
-		transition: all 0.2s;
-	}
-
-	.digit-input input:focus {
-		outline: none;
-		border-color: #6366f1;
-		box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-	}
-
-	.digit-input input:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	.error-message {
-		padding: 0.75rem 1rem;
-		background: #fef2f2;
-		border: 1px solid #fecaca;
-		border-radius: 0.375rem;
-		color: #dc2626;
-		font-size: 0.875rem;
-		text-align: center;
-	}
-
-	.modal-actions {
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-		padding: 0 2rem 2rem;
-	}
-
-	button {
+	.btn-primary {
 		padding: 0.75rem 1.5rem;
 		border: none;
 		border-radius: 0.5rem;
@@ -378,14 +269,6 @@
 		font-weight: 500;
 		cursor: pointer;
 		transition: all 0.2s;
-	}
-
-	button:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	.btn-primary {
 		background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
 		color: white;
 	}
@@ -395,35 +278,9 @@
 		box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 	}
 
-	.btn-secondary {
-		background: #f3f4f6;
-		color: #374151;
-	}
-
-	.btn-secondary:hover:not(:disabled) {
-		background: #e5e7eb;
-	}
-
-	.btn-verify {
-		background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-		color: white;
-		margin-top: 0.5rem;
-	}
-
-	.btn-verify:hover:not(:disabled) {
-		transform: translateY(-2px);
-		box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-	}
-
-	.btn-back {
-		background: transparent;
-		color: #6b7280;
-		padding: 0.5rem;
-		margin-top: 0.5rem;
-	}
-
-	.btn-back:hover:not(:disabled) {
-		color: #111827;
+	.btn-primary:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
 	}
 
 	@keyframes fadeIn {
@@ -454,6 +311,12 @@
 		.digit-input input {
 			height: 56px;
 			font-size: 1.25rem;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.btn-primary:hover:not(:disabled) {
+			transform: none;
 		}
 	}
 </style>

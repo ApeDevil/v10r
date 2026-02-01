@@ -4,13 +4,21 @@
 	 * Position: Fixed top-right (desktop), top-center full-width (mobile)
 	 */
 
+	import Icon from '@iconify/svelte';
 	import { fly } from 'svelte/transition';
+	import { cn } from '$lib/utils/cn';
 	import { getToast } from '$lib/stores/toast.svelte';
+
+	interface Props {
+		class?: string;
+	}
+
+	let { class: className }: Props = $props();
 
 	const toast = getToast();
 
 	// Limit visible toasts to 5
-	const visibleToasts = $derived(toast.toasts.slice(0, 5));
+	const visibleToasts = $derived(toast.items.slice(0, 5));
 
 	// Auto-dismiss durations by type (ms)
 	const durations = {
@@ -22,41 +30,44 @@
 
 	// Toast icons
 	const icons = {
-		success: '✓',
-		error: '✕',
-		warning: '⚠',
-		info: 'ℹ',
+		success: 'lucide:check',
+		error: 'lucide:x',
+		warning: 'lucide:alert-triangle',
+		info: 'lucide:info',
 	};
 </script>
 
 {#if visibleToasts.length > 0}
-	<div class="toast-container" role="region" aria-live="polite" aria-label="Notifications">
+	<div class={cn('fixed z-toast flex flex-col gap-2 pointer-events-none top-4 left-4 right-4 md:top-4 md:right-4 md:left-auto md:max-w-[420px]', className)} role="region" aria-live="polite" aria-label="Notifications">
 		{#each visibleToasts as t (t.id)}
 			<div
-				class="toast toast-{t.type}"
+				class={cn(
+					'toast flex items-center gap-3 p-4 bg-white border border-border rounded-lg shadow-md pointer-events-auto min-h-[3.5rem]',
+					t.type === 'success' && 'border-l-4 border-l-success',
+					t.type === 'error' && 'border-l-4 border-l-error',
+					t.type === 'warning' && 'border-l-4 border-l-warning',
+					t.type === 'info' && 'border-l-4 border-l-primary'
+				)}
 				transition:fly={{ x: 300, duration: 250 }}
 				role="status"
 				aria-atomic="true"
 			>
-				<div class="toast-icon">{icons[t.type]}</div>
-				<div class="toast-message">{t.message}</div>
+				<div class={cn(
+					'flex items-center justify-center w-6 h-6 shrink-0 text-base font-bold rounded-full text-white',
+					t.type === 'success' && 'bg-success',
+					t.type === 'error' && 'bg-error',
+					t.type === 'warning' && 'bg-warning',
+					t.type === 'info' && 'bg-primary'
+				)}>
+					<Icon icon={icons[t.type]} />
+				</div>
+				<div class="flex-1 text-sm leading-[1.4] text-fg">{t.message}</div>
 				<button
-					class="toast-close"
+					class="flex items-center justify-center w-[2.75rem] h-[2.75rem] shrink-0 p-[0.625rem] border-none bg-transparent text-muted cursor-pointer rounded-sm transition-all duration-fast hover:bg-border hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none"
 					onclick={() => toast.remove(t.id)}
 					aria-label="Dismiss notification"
 				>
-					<svg
-						width="16"
-						height="16"
-						viewBox="0 0 16 16"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-					>
-						<line x1="12" y1="4" x2="4" y2="12"></line>
-						<line x1="4" y1="4" x2="12" y2="12"></line>
-					</svg>
+					<Icon icon="lucide:x" />
 				</button>
 			</div>
 		{/each}
@@ -64,137 +75,9 @@
 {/if}
 
 <style>
-	.toast-container {
-		position: fixed;
-		z-index: var(--z-toast, 50);
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-		pointer-events: none;
-
-		/* Mobile: top-center, full-width with padding */
-		top: 1rem;
-		left: 1rem;
-		right: 1rem;
-	}
-
-	/* Desktop: top-right, max-width */
-	@media (min-width: 768px) {
-		.toast-container {
-			top: 1rem;
-			right: 1rem;
-			left: auto;
-			max-width: 420px;
-		}
-	}
-
-	.toast {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 1rem;
-		background: white;
-		border: 1px solid var(--color-border);
-		border-radius: 0.5rem;
-		box-shadow:
-			0 4px 6px -1px rgb(0 0 0 / 0.1),
-			0 2px 4px -2px rgb(0 0 0 / 0.1);
-		pointer-events: auto;
-		min-height: 3.5rem;
-	}
-
-	/* Dark mode */
+	/* Dark mode override - CSS variable approach makes this simpler than utility classes */
 	:global([data-theme='dark']) .toast {
 		background: var(--color-bg);
 		border-color: var(--color-border);
-	}
-
-	/* Type-specific colors */
-	.toast-success {
-		border-left: 4px solid var(--color-success);
-	}
-
-	.toast-error {
-		border-left: 4px solid var(--color-error);
-	}
-
-	.toast-warning {
-		border-left: 4px solid var(--color-warning);
-	}
-
-	.toast-info {
-		border-left: 4px solid var(--color-primary);
-	}
-
-	.toast-icon {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 1.5rem;
-		height: 1.5rem;
-		flex-shrink: 0;
-		font-size: 1rem;
-		font-weight: 700;
-		border-radius: 50%;
-	}
-
-	.toast-success .toast-icon {
-		background: var(--color-success);
-		color: white;
-	}
-
-	.toast-error .toast-icon {
-		background: var(--color-error);
-		color: white;
-	}
-
-	.toast-warning .toast-icon {
-		background: var(--color-warning);
-		color: white;
-	}
-
-	.toast-info .toast-icon {
-		background: var(--color-primary);
-		color: white;
-	}
-
-	.toast-message {
-		flex: 1;
-		font-size: 0.875rem;
-		line-height: 1.4;
-		color: var(--color-fg);
-	}
-
-	.toast-close {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 1.5rem;
-		height: 1.5rem;
-		flex-shrink: 0;
-		padding: 0;
-		border: none;
-		background: transparent;
-		color: var(--color-muted);
-		cursor: pointer;
-		border-radius: 0.25rem;
-		transition: all var(--duration-fast, 150ms);
-	}
-
-	.toast-close:hover {
-		background: var(--color-border);
-		color: var(--color-fg);
-	}
-
-	.toast-close:focus-visible {
-		outline: 2px solid var(--color-primary);
-		outline-offset: 2px;
-	}
-
-	/* Respect reduced motion */
-	@media (prefers-reduced-motion: reduce) {
-		.toast {
-			transition: none;
-		}
 	}
 </style>
