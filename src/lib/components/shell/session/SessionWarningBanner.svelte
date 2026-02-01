@@ -37,7 +37,7 @@
 
 <div class="session-banner" role="alert" aria-live="polite">
 	<div class="flex items-center gap-4 px-4 py-3 max-w-[1400px] mx-auto sm:flex-col sm:items-start sm:gap-3">
-		<div class="text-2xl leading-none" aria-hidden="true">⏱️</div>
+		<span class="i-lucide-timer text-2xl leading-none" aria-hidden="true"></span>
 
 		<div class="flex-1 flex flex-col gap-1 text-sm">
 			<strong class="font-semibold text-[0.9375rem]">Session expiring soon</strong>
@@ -72,7 +72,7 @@
 				disabled={extending}
 				aria-label="Dismiss warning"
 			>
-				✕
+				<span class="i-lucide-x"></span>
 			</button>
 		</div>
 	</div>

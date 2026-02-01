@@ -20,14 +20,14 @@
 	<nav class="docs-nav">
 		<LinkCard
 			href="/docs/stack"
-			icon="⚙️"
+			icon="i-lucide-settings"
 			title="Stack"
 			description="Technology stack documentation"
 		/>
 
 		<LinkCard
 			href="/docs/blueprint"
-			icon="📐"
+			icon="i-lucide-ruler"
 			title="Blueprint"
 			description="Application blueprint and architecture"
 		/>

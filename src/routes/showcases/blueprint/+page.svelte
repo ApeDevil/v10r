@@ -73,7 +73,7 @@
 		<h2>Implementation Status</h2>
 		<div class="phase-list">
 			<div class="phase-item completed">
-				<span class="phase-icon">✓</span>
+				<span class="phase-icon i-lucide-check"></span>
 				<div>
 					<h3>Phase 0: Foundation</h3>
 					<p>Theme system, CSS variables, layout structure</p>
@@ -81,7 +81,7 @@
 			</div>
 
 			<div class="phase-item completed">
-				<span class="phase-icon">✓</span>
+				<span class="phase-icon i-lucide-check"></span>
 				<div>
 					<h3>Phase 1: Sidebar Scaffold</h3>
 					<p>Responsive sidebar with rail, drawer, and FAB modes</p>
@@ -89,7 +89,7 @@
 			</div>
 
 			<div class="phase-item completed">
-				<span class="phase-icon">✓</span>
+				<span class="phase-icon i-lucide-check"></span>
 				<div>
 					<h3>Phase 2: Modal System</h3>
 					<p>Context-based modals with SSR safety</p>
@@ -97,7 +97,7 @@
 			</div>
 
 			<div class="phase-item completed">
-				<span class="phase-icon">✓</span>
+				<span class="phase-icon i-lucide-check"></span>
 				<div>
 					<h3>Phase 3: Toast System</h3>
 					<p>Toast notifications with auto-dismiss and accessibility</p>
@@ -105,7 +105,7 @@
 			</div>
 
 			<div class="phase-item completed">
-				<span class="phase-icon">✓</span>
+				<span class="phase-icon i-lucide-check"></span>
 				<div>
 					<h3>Phase 4: Navigation</h3>
 					<p>Progress bar, navigation items, dropdowns, user menu</p>
@@ -113,7 +113,7 @@
 			</div>
 
 			<div class="phase-item completed">
-				<span class="phase-icon">✓</span>
+				<span class="phase-icon i-lucide-check"></span>
 				<div>
 					<h3>Phase 5: Keyboard & Accessibility</h3>
 					<p>Keyboard shortcuts, platform detection, help modal</p>
@@ -121,7 +121,7 @@
 			</div>
 
 			<div class="phase-item completed">
-				<span class="phase-icon">✓</span>
+				<span class="phase-icon i-lucide-check"></span>
 				<div>
 					<h3>Phase 6: Session Lifecycle</h3>
 					<p>Session monitoring, expiry warnings, re-authentication modal</p>
@@ -129,7 +129,7 @@
 			</div>
 
 			<div class="phase-item completed">
-				<span class="phase-icon">✓</span>
+				<span class="phase-icon i-lucide-check"></span>
 				<div>
 					<h3>Phase 7: Composites & UI Primitives</h3>
 					<p>PageHeader, Skeleton loaders, EmptyState components</p>
@@ -347,7 +347,7 @@
 			<div class="demo-section">
 				<h3>Empty States</h3>
 				<EmptyState
-					icon="📭"
+					icon="i-lucide-inbox"
 					title="No items found"
 					description="Get started by creating your first item. It only takes a few seconds."
 				>
@@ -603,11 +603,14 @@
 	}
 
 	.features-list li::before {
-		content: '✓';
+		content: '';
 		position: absolute;
 		left: 0;
-		color: var(--color-success, #10b981);
-		font-weight: bold;
+		width: 1em;
+		height: 1em;
+		background-color: var(--color-success, #10b981);
+		-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+		mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
 	}
 
 	.tech-details {

@@ -7,7 +7,7 @@
 	<p>Placeholder for form validation demonstrations with Valibot + Superforms.</p>
 
 	<div class="placeholder">
-		<span class="placeholder-icon">📝</span>
+		<span class="placeholder-icon i-lucide-file-edit"></span>
 		<p>Coming soon: Interactive form examples with validation, error handling, and progressive enhancement.</p>
 	</div>
 

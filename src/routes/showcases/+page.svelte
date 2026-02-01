@@ -20,35 +20,35 @@
 	<nav class="showcase-nav">
 		<LinkCard
 			href="/showcases/ui"
-			icon="🎨"
+			icon="i-lucide-palette"
 			title="UI Components"
 			description="Complete UI component library and design tokens"
 		/>
 
 		<LinkCard
 			href="/showcases/blueprint"
-			icon="🏗️"
+			icon="i-lucide-layout"
 			title="App Shell Blueprint"
 			description="Keyboard shortcuts, modals, toasts, navigation"
 		/>
 
 		<LinkCard
 			href="/showcases/forms"
-			icon="📝"
+			icon="i-lucide-file-edit"
 			title="Forms"
 			description="Form validation with Valibot + Superforms"
 		/>
 
 		<LinkCard
 			href="/showcases/3d"
-			icon="🎮"
+			icon="i-lucide-box"
 			title="3D"
 			description="Three.js + Threlte 3D scenes"
 		/>
 
 		<LinkCard
 			href="/showcases/auth"
-			icon="🔐"
+			icon="i-lucide-lock"
 			title="Auth"
 			description="Better Auth authentication flows"
 		/>

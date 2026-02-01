@@ -128,7 +128,7 @@
 	<div class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="session-modal-title">
 		<div class="modal-content">
 			<div class="flex flex-col items-center gap-3 px-8 pt-8 pb-4 border-b border-[#e5e7eb]">
-				<div class="text-5xl leading-none" aria-hidden="true">🔒</div>
+				<span class="i-lucide-lock text-5xl leading-none" aria-hidden="true"></span>
 				<h2 id="session-modal-title" class="m-0 text-2xl font-semibold text-[#111827]">Session Expired</h2>
 			</div>
 

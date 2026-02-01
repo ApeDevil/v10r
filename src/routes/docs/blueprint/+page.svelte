@@ -7,7 +7,7 @@
 	<p>Placeholder for application blueprint and architecture documentation.</p>
 
 	<div class="placeholder">
-		<span class="placeholder-icon">📐</span>
+		<span class="placeholder-icon i-lucide-ruler"></span>
 		<p>Coming soon: Application shell blueprint, component architecture, and design patterns.</p>
 	</div>
 

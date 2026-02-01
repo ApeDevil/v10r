@@ -30,7 +30,7 @@
 	{...rest}
 >
 	{#if icon}
-		<span class="text-5xl" aria-hidden="true">{icon}</span>
+		<span class="{icon} text-5xl" aria-hidden="true"></span>
 	{/if}
 
 	{#if children}

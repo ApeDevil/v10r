@@ -7,7 +7,7 @@
 	<p>Placeholder for Three.js + Threlte 3D demonstrations.</p>
 
 	<div class="placeholder">
-		<span class="placeholder-icon">🎮</span>
+		<span class="placeholder-icon i-lucide-box"></span>
 		<p>Coming soon: Interactive 3D scenes with physics, animations, and WebGPU rendering.</p>
 	</div>
 

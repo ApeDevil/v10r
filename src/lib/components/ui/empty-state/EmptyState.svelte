@@ -13,7 +13,7 @@
 <div class="empty-state {className || ''}" role="status">
 	{#if icon}
 		<div class="empty-icon" aria-hidden="true">
-			{icon}
+			<span class="{icon}"></span>
 		</div>
 	{/if}
 

@@ -7,7 +7,7 @@
 	<p>Placeholder for Better Auth authentication demonstrations.</p>
 
 	<div class="placeholder">
-		<span class="placeholder-icon">🔐</span>
+		<span class="placeholder-icon i-lucide-lock"></span>
 		<p>Coming soon: Authentication flows, session management, and OAuth integration examples.</p>
 	</div>
 

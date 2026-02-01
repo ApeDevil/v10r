@@ -7,7 +7,7 @@
 	<p>Placeholder for technology stack documentation.</p>
 
 	<div class="placeholder">
-		<span class="placeholder-icon">⚙️</span>
+		<span class="placeholder-icon i-lucide-settings"></span>
 		<p>Coming soon: Detailed documentation on SvelteKit, Drizzle, Better Auth, and the full stack.</p>
 	</div>
 
