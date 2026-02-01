@@ -1,20 +1,37 @@
 <script lang="ts">
-	import { MediaQuery } from 'svelte/reactivity';
+	import { browser } from '$app/environment';
 	import { getSidebar } from '$lib/stores/sidebar.svelte';
 	import { SidebarRail, SidebarDrawer, SidebarFab } from '$lib/components/shell';
 
 	const sidebar = getSidebar();
-	const isMobile = new MediaQuery('(max-width: 767px)');
+
+	// SSR-safe media query state
+	let isMobile = $state(false);
+
+	// Set up media query listener on client
+	$effect(() => {
+		if (!browser) return;
+
+		const mq = window.matchMedia('(max-width: 767px)');
+		isMobile = mq.matches;
+
+		function handleChange(e: MediaQueryListEvent) {
+			isMobile = e.matches;
+		}
+
+		mq.addEventListener('change', handleChange);
+		return () => mq.removeEventListener('change', handleChange);
+	});
 
 	// Auto-close mobile drawer on resize to tablet/desktop
 	$effect(() => {
-		if (!isMobile.matches && sidebar.mobileOpen) {
+		if (!isMobile && sidebar.mobileOpen) {
 			sidebar.closeMobile();
 		}
 	});
 </script>
 
-{#if isMobile.matches}
+{#if isMobile}
 	<!-- Mobile: Drawer + FAB -->
 	<SidebarDrawer />
 	<SidebarFab />
