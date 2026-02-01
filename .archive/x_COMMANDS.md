@@ -1,3 +1,6 @@
+# claude
+claude --chrome
+
 
 cd dev/velociraptor/
 # 
