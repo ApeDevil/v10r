@@ -1,3 +1,7 @@
+<script lang="ts">
+	import { LinkCard } from '$lib/components/ui';
+</script>
+
 <svelte:head>
 	<title>Velociraptor - v10r</title>
 </svelte:head>
@@ -19,11 +23,11 @@
 
 	<nav class="nav">
 		<h2>Showcases</h2>
-		<ul>
-			<li><a href="/shell-demo">App Shell Demo (New!)</a></li>
-			<li><a href="/showcase/3d/phase1-static">3D Phase 1: Static Scene</a></li>
-			<li><a href="/showcase/3d/phase2-animated">3D Phase 2: Animated Scene</a></li>
-		</ul>
+		<div class="link-grid">
+			<LinkCard href="/shell-demo" title="App Shell Demo (New!)" />
+			<LinkCard href="/showcase/3d/phase1-static" title="3D Phase 1: Static Scene" />
+			<LinkCard href="/showcase/3d/phase2-animated" title="3D Phase 2: Animated Scene" />
+		</div>
 	</nav>
 </div>
 
@@ -61,7 +65,7 @@
 	.nav {
 		text-align: left;
 		margin: 2rem auto;
-		max-width: 500px;
+		max-width: 600px;
 	}
 
 	.nav h2 {
@@ -70,30 +74,9 @@
 		color: var(--color-fg);
 	}
 
-	.nav ul {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-	}
-
-	.nav li {
-		margin-bottom: 0.75rem;
-	}
-
-	.nav a {
-		display: block;
-		padding: 0.75rem 1rem;
-		background: var(--color-bg);
-		border: 1px solid var(--color-border);
-		border-radius: 0.375rem;
-		color: var(--color-fg);
-		text-decoration: none;
-		transition: all 150ms;
-	}
-
-	.nav a:hover {
-		background: var(--color-primary);
-		color: white;
-		border-color: var(--color-primary);
+	.link-grid {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
 	}
 </style>

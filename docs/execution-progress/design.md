@@ -70,11 +70,11 @@ Changes:
 
 ## Phase 3-6: Component Library
 
-### File Structure
+### File Structure (Atomic Design)
 
 ```
 src/lib/components/
-├── primitives/
+├── primitives/          # Atoms - Basic building blocks
 │   ├── alert/
 │   ├── avatar/
 │   ├── badge/
@@ -84,6 +84,7 @@ src/lib/components/
 │   ├── dialog/
 │   ├── drawer/
 │   ├── dropdown-menu/
+│   ├── icon/
 │   ├── input/
 │   ├── popover/
 │   ├── select/
@@ -92,44 +93,54 @@ src/lib/components/
 │   ├── tabs/
 │   ├── tooltip/
 │   └── index.ts
-├── composites/
+├── ui/                  # Molecules - Simple combinations
+│   ├── link-card/       # Navigation card
 │   ├── alert/
 │   ├── card/
 │   ├── confirm-dialog/
 │   ├── form-field/
 │   ├── pagination/
-│   ├── quick-search/
 │   ├── toast/
 │   └── index.ts
+├── composites/          # Organisms - Complex features
+│   ├── page-header/
+│   ├── quick-search/
+│   └── index.ts
+├── shell/               # Templates - Page layouts
+│   └── (18 shell components)
 └── index.ts
 ```
 
 ### Components Implemented
 
-| Component | Type | Features |
-|-----------|------|----------|
-| **Input** | Primitive | Bindable value, error state, aria-invalid |
-| **Badge** | Primitive | CVA variants (default/secondary/success/warning/error/outline) |
-| **Avatar** | Primitive | Image with fallback initials, sizes (sm/md/lg) |
-| **Select** | Primitive | Native styled select, bindable, options array |
-| **Checkbox** | Primitive | Custom styled, bindable checked, label support |
-| **Dialog** | Primitive | Bits UI, backdrop blur, ESC close, focus trap |
-| **Drawer** | Primitive | Side param (left/right/bottom), slide animations |
-| **DropdownMenu** | Primitive | Items with icons, separators, keyboard nav |
-| **Tabs** | Primitive | Bits UI, snippet content, active styling |
-| **Skeleton** | Primitive | 3 variants (text/circular/rectangular), pulse animation |
-| **Table** | Primitive | Responsive wrapper, sub-components (Header/Body/Row/HeaderCell/Cell) |
-| **Tooltip** | Primitive | Bits UI, 4 positions, configurable delay |
-| **Popover** | Primitive | Bits UI, click-outside-to-close |
-| **Combobox** | Primitive | Searchable select, keyboard nav, clear button |
-| **Card** | Composite | Header/children/footer snippets |
-| **FormField** | Composite | Label, error, description, required indicator, accessible IDs |
-| **Toast** | Composite | Fixed bottom-right, fly transition, 4 types |
-| **QuickSearch** | Composite | ⌘K shortcut, filtering, keyboard nav, grouped items |
-| **QuickSearchTrigger** | Composite | Sidebar trigger, collapsed/expanded modes |
-| **Alert** | Composite | 4 variants, icon per type, optional close button |
-| **Pagination** | Composite | Prev/Next, First/Last, smart ellipsis, ARIA labels |
-| **ConfirmDialog** | Composite | Confirmation modal with destructive variant |
+| Component | Atomic Layer | Features |
+|-----------|--------------|----------|
+| **Button** | Primitive (Atom) | CVA variants, sizes, disabled state, icon support |
+| **Input** | Primitive (Atom) | Bindable value, error state, aria-invalid |
+| **Badge** | Primitive (Atom) | CVA variants (default/secondary/success/warning/error/outline) |
+| **Avatar** | Primitive (Atom) | Image with fallback initials, sizes (sm/md/lg) |
+| **Icon** | Primitive (Atom) | Iconify integration, size prop |
+| **Select** | Primitive (Atom) | Native styled select, bindable, options array |
+| **Checkbox** | Primitive (Atom) | Custom styled, bindable checked, label support |
+| **Dialog** | Primitive (Atom) | Bits UI, backdrop blur, ESC close, focus trap |
+| **Drawer** | Primitive (Atom) | Side param (left/right/bottom), slide animations |
+| **DropdownMenu** | Primitive (Atom) | Items with icons, separators, keyboard nav |
+| **Tabs** | Primitive (Atom) | Bits UI, snippet content, active styling |
+| **Skeleton** | Primitive (Atom) | 3 variants (text/circular/rectangular), pulse animation |
+| **Table** | Primitive (Atom) | Responsive wrapper, sub-components (Header/Body/Row/HeaderCell/Cell) |
+| **Tooltip** | Primitive (Atom) | Bits UI, 4 positions, configurable delay |
+| **Popover** | Primitive (Atom) | Bits UI, click-outside-to-close |
+| **Combobox** | Primitive (Atom) | Searchable select, keyboard nav, clear button |
+| **LinkCard** | Molecule (UI) | Navigation card with icon, title, description |
+| **Card** | Molecule (UI) | Header/children/footer snippets |
+| **FormField** | Molecule (UI) | Label, error, description, required indicator, accessible IDs |
+| **Toast** | Molecule (UI) | Fixed bottom-right, fly transition, 4 types |
+| **Alert** | Molecule (UI) | 4 variants, icon per type, optional close button |
+| **Pagination** | Molecule (UI) | Prev/Next, First/Last, smart ellipsis, ARIA labels |
+| **ConfirmDialog** | Molecule (UI) | Confirmation modal with destructive variant |
+| **PageHeader** | Organism (Composite) | Breadcrumbs, title, actions slot |
+| **QuickSearch** | Organism (Composite) | ⌘K shortcut, filtering, keyboard nav, grouped items |
+| **QuickSearchTrigger** | Organism (Composite) | Sidebar trigger, collapsed/expanded modes |
 
 ### Toast Store
 **File**: `/home/ad/dev/velociraptor/src/lib/stores/toast.svelte.ts`
@@ -210,12 +221,59 @@ Issues discovered and resolved during implementation:
 </Dialog>
 ```
 
+## Route Adoption
+
+Component library now used across routes. Inline styles eliminated.
+
+### Pages Migrated
+
+| Route | Components Used | Lines Removed |
+|-------|----------------|---------------|
+| `/` | LinkCard | ~80 |
+| `/showcases` | LinkCard, PageHeader | ~120 |
+| `/docs` | LinkCard, PageHeader | ~120 |
+| `/shell-demo` | Button | ~30 |
+| `/showcases/blueprint` | Button | ~30 |
+
+**Total reduction:** ~380 lines of inline CSS removed.
+
+### Shell Components Migrated
+
+**UserMenu.svelte:**
+- Now uses Bits UI `DropdownMenu` primitive
+- Uses `Avatar` primitive
+- Uses `Icon` component
+- Removed ~140 lines of custom code
+
+**NavItem.svelte:**
+- Chevron uses `Icon` component
+- Removed inline SVG
+
+**SidebarFab.svelte:**
+- Uses `Button` primitive
+- Icons use `Icon` component
+
+**SidebarTriggers.svelte:**
+- Rail mode buttons use `Button` primitive
+
+## Atomic Design Pattern
+
+Formalized component organization:
+
+- **Primitives** (Atoms) - Basic elements: Button, Input, Icon, Avatar, Dialog
+- **UI** (Molecules) - Simple combos: LinkCard, Card, FormField, Alert, Pagination
+- **Composites** (Organisms) - Complex features: PageHeader, QuickSearch
+- **Shell** (Templates) - Layout components: AppShell, Sidebar, Footer
+
+**Documentation:** `/home/ad/dev/velociraptor/docs/blueprint/app-shell/component-organization.md`
+
 ## Next Steps
 
-The design system is production-ready. All components are:
+The design system is production-ready and actively used. All components are:
 - Accessible (ARIA, keyboard nav, focus management)
 - Typed (TypeScript interfaces)
 - Styled (UnoCSS utilities + design tokens)
 - Tested (showcase pages demonstrate functionality)
+- Organized by Atomic Design principles
 
-For new components, follow the established patterns in `/home/ad/dev/velociraptor/src/lib/components/`.
+For new components, follow the Atomic Design pattern in `/home/ad/dev/velociraptor/src/lib/components/`.

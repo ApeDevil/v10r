@@ -8,6 +8,7 @@
 	import Icon from '@iconify/svelte';
 	import { page } from '$app/state';
 	import { cn } from '$lib/utils/cn';
+	import { Button } from '$lib/components/primitives/button';
 	import NavDropdown from './NavDropdown.svelte';
 
 	interface NavChild {
@@ -72,9 +73,7 @@
 			aria-current={isActive() ? 'page' : undefined}
 			aria-label={forceExpanded ? undefined : label}
 		>
-			<span class="text-[1.5rem] shrink-0 leading-none" aria-hidden="true">
-				<Icon {icon} />
-			</span>
+			<Icon {icon} class="text-[1.5rem] shrink-0 leading-none" />
 			{#if forceExpanded}
 				<span class="nav-label text-sm font-medium flex-1 opacity-0 motion-reduce:opacity-100">{label}</span>
 			{/if}
@@ -84,28 +83,15 @@
 			<button
 				type="button"
 				class={cn(
-					'flex items-center justify-center w-[24px] h-[24px] p-0 absolute bg-transparent border-none text-muted cursor-pointer rounded-sm transition-all duration-fast motion-reduce:transition-none motion-reduce:rotate-0',
-					isDropdownOpen && 'rotate-90 motion-reduce:rotate-0',
-					'hover:bg-border'
+					'absolute right-[var(--spacing-3)] flex items-center justify-center w-[24px] h-[24px] p-0 bg-transparent border-none text-muted rounded-sm cursor-pointer',
+					'transition-all duration-fast hover:bg-border motion-reduce:transition-none',
+					isDropdownOpen && 'rotate-90 motion-reduce:rotate-0'
 				)}
-				style:right="var(--spacing-3)"
 				onclick={toggleDropdown}
 				aria-label={isDropdownOpen ? 'Close submenu' : 'Open submenu'}
 				aria-expanded={isDropdownOpen}
 			>
-				<svg
-					width="16"
-					height="16"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					aria-hidden="true"
-				>
-					<polyline points="9 18 15 12 9 6"></polyline>
-				</svg>
+				<Icon icon="lucide:chevron-right" width={16} height={16} />
 			</button>
 		{/if}
 	</div>

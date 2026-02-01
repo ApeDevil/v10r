@@ -11,6 +11,7 @@
 		SkeletonAvatar,
 		EmptyState
 	} from '$lib/components/ui';
+	import { Button } from '$lib/components/primitives';
 
 	const modals = getModals();
 	const toast = getToast();
@@ -62,12 +63,9 @@
 			{ label: 'Blueprint' }
 		]}
 	>
-		<button
-			class="demo-button"
-			onclick={() => toast.show('info', 'Header action button clicked!')}
-		>
+		<Button onclick={() => toast.show('info', 'Header action button clicked!')}>
 			Header Action
-		</button>
+		</Button>
 	</PageHeader>
 
 	<!-- Phase Summary -->
@@ -188,33 +186,19 @@
 		<p class="card-subtitle">Test the app shell features:</p>
 
 		<div class="demo-grid">
-			<button
-				class="demo-button"
-				onclick={() => modals.open('shortcuts')}
-			>
-				Show Shortcuts Help
-			</button>
+			<Button onclick={() => modals.open('shortcuts')}>Show Shortcuts Help</Button>
 
-			<button
-				class="demo-button"
-				onclick={() => toast.show('success', 'Success! This is a toast notification.')}
-			>
+			<Button onclick={() => toast.show('success', 'Success! This is a toast notification.')}>
 				Show Success Toast
-			</button>
+			</Button>
 
-			<button
-				class="demo-button"
-				onclick={() => toast.show('error', 'Error! Something went wrong.')}
-			>
+			<Button onclick={() => toast.show('error', 'Error! Something went wrong.')}>
 				Show Error Toast
-			</button>
+			</Button>
 
-			<button
-				class="demo-button"
-				onclick={() => toast.show('info', 'Info: This is informational.', 10000)}
-			>
+			<Button onclick={() => toast.show('info', 'Info: This is informational.', 10000)}>
 				Show Long Toast (10s)
-			</button>
+			</Button>
 		</div>
 	</section>
 
@@ -235,26 +219,25 @@
 		</div>
 
 		<div class="demo-grid">
-			<button
-				class="demo-button secondary"
-				onclick={simulateWarning}
-			>
+			<Button variant="secondary" onclick={simulateWarning}>
 				Simulate Warning (4 min)
-			</button>
+			</Button>
 
-			<button
-				class="demo-button warning"
+			<Button
+				variant="default"
+				class="bg-warning text-white hover:bg-warning/90"
 				onclick={simulateExpiry}
 			>
 				Simulate Expiry
-			</button>
+			</Button>
 
-			<button
-				class="demo-button success"
+			<Button
+				variant="default"
+				class="bg-success text-white hover:bg-success/90"
 				onclick={resetSession}
 			>
 				Reset to Valid
-			</button>
+			</Button>
 		</div>
 
 		<div class="session-notes">
@@ -322,12 +305,9 @@
 		<div class="primitives-demo">
 			<div class="demo-section">
 				<h3>Skeleton Loaders</h3>
-				<button
-					class="demo-button secondary"
-					onclick={() => showSkeletons = !showSkeletons}
-				>
+				<Button variant="secondary" onclick={() => showSkeletons = !showSkeletons}>
 					{showSkeletons ? 'Hide' : 'Show'} Skeletons
-				</button>
+				</Button>
 
 				{#if showSkeletons}
 					<div class="skeleton-examples">
@@ -371,8 +351,8 @@
 					title="No items found"
 					description="Get started by creating your first item. It only takes a few seconds."
 				>
-					<button class="demo-button">Create Item</button>
-					<button class="demo-button secondary">Learn More</button>
+					<Button>Create Item</Button>
+					<Button variant="secondary">Learn More</Button>
 				</EmptyState>
 			</div>
 
@@ -533,52 +513,6 @@
 		gap: 1rem;
 	}
 
-	.demo-button {
-		padding: 0.75rem 1.5rem;
-		background: var(--color-primary);
-		color: white;
-		border: none;
-		border-radius: 0.375rem;
-		font-size: 0.875rem;
-		font-weight: 500;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.demo-button:hover {
-		background: var(--color-primary-hover, #2563eb);
-		transform: translateY(-1px);
-		box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-	}
-
-	.demo-button:active {
-		transform: translateY(0);
-	}
-
-	.demo-button.secondary {
-		background: var(--color-bg-secondary, #f3f4f6);
-		color: var(--color-fg);
-	}
-
-	.demo-button.secondary:hover {
-		background: #e5e7eb;
-	}
-
-	.demo-button.warning {
-		background: #f59e0b;
-	}
-
-	.demo-button.warning:hover {
-		background: #d97706;
-	}
-
-	.demo-button.success {
-		background: #10b981;
-	}
-
-	.demo-button.success:hover {
-		background: #059669;
-	}
 
 	.session-info {
 		background: var(--color-bg-secondary, #f9fafb);

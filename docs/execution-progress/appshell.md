@@ -16,35 +16,42 @@ The blueprint app shell provides a reference implementation of:
 ```
 src/lib/
 ├── components/
-│   ├── shell/              # Phase 2-4: Core shell components
+│   ├── shell/              # Phase 2-4: Core shell components (Templates)
 │   │   ├── AppShell.svelte
 │   │   ├── Sidebar.svelte
 │   │   ├── SidebarRail.svelte
 │   │   ├── SidebarDrawer.svelte
-│   │   ├── SidebarFab.svelte
+│   │   ├── SidebarFab.svelte       # Uses Button primitive
 │   │   ├── SidebarLogo.svelte
 │   │   ├── SidebarNav.svelte
-│   │   ├── SidebarTriggers.svelte
+│   │   ├── SidebarTriggers.svelte  # Uses Button primitive
 │   │   ├── Footer.svelte
 │   │   ├── ToastContainer.svelte
 │   │   ├── NavigationProgress.svelte
-│   │   ├── NavItem.svelte
+│   │   ├── NavItem.svelte          # Uses Icon component
 │   │   ├── NavDropdown.svelte
-│   │   ├── UserMenu.svelte
+│   │   ├── UserMenu.svelte         # Uses DropdownMenu, Avatar, Icon
 │   │   ├── ShortcutsModal.svelte
 │   │   ├── SessionMonitor.svelte
 │   │   ├── SessionWarningBanner.svelte
 │   │   ├── SessionExpiryModal.svelte
 │   │   └── index.ts
-│   ├── composites/         # Phase 7: Composite components
+│   ├── composites/         # Phase 7: Organisms
 │   │   ├── PageHeader.svelte
 │   │   └── index.ts
-│   └── ui/                 # Phase 7: UI primitives
-│       ├── Skeleton.svelte
-│       ├── SkeletonText.svelte
-│       ├── SkeletonCard.svelte
-│       ├── SkeletonAvatar.svelte
-│       ├── EmptyState.svelte
+│   ├── ui/                 # Phase 7: Molecules
+│   │   ├── LinkCard.svelte
+│   │   ├── Skeleton.svelte
+│   │   ├── SkeletonText.svelte
+│   │   ├── SkeletonCard.svelte
+│   │   ├── SkeletonAvatar.svelte
+│   │   ├── EmptyState.svelte
+│   │   └── index.ts
+│   └── primitives/         # Atoms (used by shell)
+│       ├── button/
+│       ├── icon/
+│       ├── avatar/
+│       ├── dropdown-menu/
 │       └── index.ts
 ├── stores/                 # Phase 1: State management
 │   ├── sidebar.svelte.ts
@@ -202,12 +209,13 @@ src/routes/
 - OTP re-auth modal to refresh without losing form state
 - State preservation during re-auth
 
-### Phase 7: Composites & UI Primitives
+### Phase 7: Composites & UI Components
 
-**Composites (`src/lib/components/composites/`):**
+**Organisms (`src/lib/components/composites/`):**
 - `PageHeader.svelte` - Per-page header with breadcrumbs, title, actions slot
 
-**UI Primitives (`src/lib/components/ui/`):**
+**Molecules (`src/lib/components/ui/`):**
+- `LinkCard.svelte` - Navigation card (icon, title, description)
 - `Skeleton.svelte` - Base skeleton with CSS shimmer animation
 - `SkeletonText.svelte` - Multi-line text placeholder
 - `SkeletonCard.svelte` - Card-shaped placeholder
@@ -216,8 +224,49 @@ src/routes/
 
 **Usage:**
 - PageHeader provides consistent page structure
+- LinkCard for navigation pages (/, /showcases, /docs)
 - Skeletons for loading states
 - EmptyState for zero-data scenarios
+
+### Phase 8: Shell Primitives Migration
+
+**Components migrated to use primitives:**
+
+**UserMenu.svelte:**
+- Replaced custom dropdown with Bits UI `DropdownMenu` primitive
+- Uses `Avatar` primitive for user avatar
+- Uses `Icon` component for icons
+- Removed ~140 lines of custom implementation
+- Theme submenu uses `DropdownMenu.Sub`
+
+**NavItem.svelte:**
+- Chevron icon uses `Icon` component
+- Removed inline SVG
+
+**SidebarFab.svelte:**
+- Uses `Button` primitive
+- Icons use `Icon` component
+
+**SidebarTriggers.svelte:**
+- Rail mode buttons use `Button` primitive
+- Consistent with design system
+
+## Atomic Design Adoption
+
+Shell components now follow Atomic Design pattern:
+
+- **Atoms (Primitives):** Button, Icon, Avatar, DropdownMenu
+- **Molecules (UI):** LinkCard, Skeleton variants, EmptyState
+- **Organisms (Composites):** PageHeader, QuickSearch
+- **Templates (Shell):** AppShell, Sidebar, Footer, all shell components
+
+**Benefits:**
+- Reduced duplication (~520 lines removed across routes and shell)
+- Consistent styling via primitives
+- Easier maintenance (change primitive, all usages update)
+- Clear component hierarchy
+
+**Documentation:** `/home/ad/dev/velociraptor/docs/blueprint/app-shell/component-organization.md`
 
 ## Key Patterns
 

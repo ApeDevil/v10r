@@ -3,6 +3,7 @@
 	import { getTheme } from '$lib/stores/theme.svelte';
 	import { getToast } from '$lib/stores/toast.svelte';
 	import { getModals } from '$lib/stores/modals.svelte';
+	import { Button } from '$lib/components/primitives';
 
 	const sidebar = getSidebar();
 	const theme = getTheme();
@@ -31,9 +32,9 @@
 		</dl>
 
 		<div class="button-group">
-			<button onclick={() => sidebar.expand()}>Expand</button>
-			<button onclick={() => sidebar.collapse()}>Collapse</button>
-			<button onclick={() => sidebar.togglePin()}>Toggle Pin</button>
+			<Button variant="secondary" onclick={() => sidebar.expand()}>Expand</Button>
+			<Button variant="secondary" onclick={() => sidebar.collapse()}>Collapse</Button>
+			<Button variant="secondary" onclick={() => sidebar.togglePin()}>Toggle Pin</Button>
 		</div>
 	</section>
 
@@ -51,19 +52,19 @@
 		</dl>
 
 		<div class="button-group">
-			<button onclick={() => theme.setMode('light')}>Light</button>
-			<button onclick={() => theme.setMode('dark')}>Dark</button>
-			<button onclick={() => theme.setMode('system')}>System</button>
+			<Button variant="secondary" onclick={() => theme.setMode('light')}>Light</Button>
+			<Button variant="secondary" onclick={() => theme.setMode('dark')}>Dark</Button>
+			<Button variant="secondary" onclick={() => theme.setMode('system')}>System</Button>
 		</div>
 	</section>
 
 	<section class="demo-section">
 		<h2>Toast Notifications</h2>
 		<div class="button-group">
-			<button onclick={() => toast.success('Success!')}>Success</button>
-			<button onclick={() => toast.error('Error!')}>Error</button>
-			<button onclick={() => toast.warning('Warning!')}>Warning</button>
-			<button onclick={() => toast.info('Info!')}>Info</button>
+			<Button variant="secondary" onclick={() => toast.success('Success!')}>Success</Button>
+			<Button variant="secondary" onclick={() => toast.error('Error!')}>Error</Button>
+			<Button variant="secondary" onclick={() => toast.warning('Warning!')}>Warning</Button>
+			<Button variant="secondary" onclick={() => toast.info('Info!')}>Info</Button>
 		</div>
 
 		{#if toast.items.length > 0}
@@ -73,7 +74,14 @@
 					{#each toast.items as t}
 						<li class="toast-item toast-{t.type}">
 							{t.message}
-							<button onclick={() => toast.remove(t.id)}>×</button>
+							<Button
+								variant="ghost"
+								size="icon"
+								class="bg-transparent border-none text-white text-xl p-0 w-6 h-6 hover:bg-white/20"
+								onclick={() => toast.remove(t.id)}
+							>
+								×
+							</Button>
 						</li>
 					{/each}
 				</ul>
@@ -102,8 +110,12 @@
 		</ul>
 
 		<div class="button-group">
-			<button onclick={() => modals.open('quickSearch')}>Open Quick Search</button>
-			<button onclick={() => modals.open('aiAssistant')}>Open AI Assistant</button>
+			<Button variant="secondary" onclick={() => modals.open('quickSearch')}>
+				Open Quick Search
+			</Button>
+			<Button variant="secondary" onclick={() => modals.open('aiAssistant')}>
+				Open AI Assistant
+			</Button>
 		</div>
 
 		<dl class="state-list">
@@ -187,20 +199,23 @@
 		</ul>
 
 		<div class="button-group">
-			<button onclick={() => toast.success('Operation completed successfully!')}>
+			<Button variant="secondary" onclick={() => toast.success('Operation completed successfully!')}>
 				Show Success
-			</button>
-			<button onclick={() => toast.error('Something went wrong. Please try again.')}>
+			</Button>
+			<Button variant="secondary" onclick={() => toast.error('Something went wrong. Please try again.')}>
 				Show Error
-			</button>
-			<button onclick={() => toast.warning('This action cannot be undone.')}>
+			</Button>
+			<Button variant="secondary" onclick={() => toast.warning('This action cannot be undone.')}>
 				Show Warning
-			</button>
-			<button onclick={() => toast.info('New updates are available.')}>Show Info</button>
+			</Button>
+			<Button variant="secondary" onclick={() => toast.info('New updates are available.')}>
+				Show Info
+			</Button>
 		</div>
 
 		<div class="button-group">
-			<button
+			<Button
+				variant="secondary"
 				onclick={() => {
 					toast.success('First toast');
 					setTimeout(() => toast.info('Second toast'), 300);
@@ -211,7 +226,7 @@
 				}}
 			>
 				Show Multiple Toasts (max 5 visible)
-			</button>
+			</Button>
 		</div>
 	</section>
 </div>
@@ -272,27 +287,6 @@
 		flex-wrap: wrap;
 	}
 
-	button {
-		padding: 0.5rem 1rem;
-		border: 1px solid var(--color-border);
-		background: var(--color-bg);
-		color: var(--color-fg);
-		border-radius: 0.375rem;
-		cursor: pointer;
-		transition: all 150ms;
-	}
-
-	button:hover {
-		background: var(--color-primary);
-		color: white;
-		border-color: var(--color-primary);
-	}
-
-	button:focus-visible {
-		outline: 2px solid var(--color-primary);
-		outline-offset: 2px;
-	}
-
 	.toast-preview {
 		margin-top: 1rem;
 		padding: 1rem;
@@ -328,16 +322,6 @@
 		background: var(--color-primary);
 	}
 
-	.toast-item button {
-		background: transparent;
-		border: none;
-		color: white;
-		font-size: 1.5rem;
-		padding: 0;
-		width: 1.5rem;
-		height: 1.5rem;
-		line-height: 1;
-	}
 
 	ul {
 		margin-left: 1.5rem;
