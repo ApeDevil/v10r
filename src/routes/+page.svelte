@@ -17,6 +17,8 @@
          ╔═══════════╗
          ║   v10r    ║
          ╚═══════════╝
+
+Velociraptor is the Stack & v10r is the container		 
 </pre>
 
 	<p class="tagline">Performance through understanding</p>
