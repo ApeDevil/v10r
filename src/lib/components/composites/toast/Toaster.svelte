@@ -1,16 +1,15 @@
 <script lang="ts">
 	import { getToast } from '$lib/stores/toast.svelte';
-	import Icon from '@iconify/svelte';
 	import { cn } from '$lib/utils/cn';
 	import { fly } from 'svelte/transition';
 
 	const toast = getToast();
 
-	const icons = {
-		success: 'lucide:check-circle',
-		error: 'lucide:x-circle',
-		warning: 'lucide:alert-triangle',
-		info: 'lucide:info'
+	const iconClasses = {
+		success: 'i-lucide-check-circle',
+		error: 'i-lucide-x-circle',
+		warning: 'i-lucide-alert-triangle',
+		info: 'i-lucide-info'
 	};
 
 	const styles = {
@@ -32,14 +31,14 @@
 			role="alert"
 			aria-live="polite"
 		>
-			<Icon icon={icons[item.type]} class="h-5 w-5 shrink-0" />
+			<span class={cn(iconClasses[item.type], 'h-5 w-5 shrink-0')} />
 			<span class="flex-1 text-fluid-sm">{item.message}</span>
 			<button
 				onclick={() => toast.remove(item.id)}
 				class="shrink-0 opacity-70 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm"
 				aria-label="Close notification"
 			>
-				<Icon icon="lucide:x" class="h-4 w-4" />
+				<span class="i-lucide-x h-4 w-4" />
 			</button>
 		</div>
 	{/each}

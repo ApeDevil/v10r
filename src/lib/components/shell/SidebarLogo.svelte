@@ -5,7 +5,6 @@
 	 * Expanded mode: Icon + text
 	 */
 
-	import Icon from '@iconify/svelte';
 	import { cn } from '$lib/utils/cn';
 	import { getSidebar } from '$lib/stores/sidebar.svelte';
 
@@ -22,9 +21,7 @@
 </script>
 
 <a href="/" class={cn('flex items-center gap-3 p-3 no-underline rounded-md transition-colors duration-fast hover:bg-border focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none', className)} aria-label="Home">
-	<div class="text-[2rem] shrink-0 leading-none">
-		<Icon icon="lucide:zap" />
-	</div>
+	<img src="/logo.png" alt="" class="h-8 w-8 shrink-0 object-contain" />
 	{#if showText}
 		<span class="logo-text font-semibold text-lg text-fg whitespace-nowrap opacity-0 animate-fade-in motion-reduce:animate-none motion-reduce:opacity-100">Velociraptor</span>
 	{/if}

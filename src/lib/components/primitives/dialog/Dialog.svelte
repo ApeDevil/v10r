@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { Dialog as DialogPrimitive } from 'bits-ui';
-	import Icon from '@iconify/svelte';
 	import { cn } from '$lib/utils/cn';
 	import type { Snippet } from 'svelte';
 
@@ -49,7 +48,7 @@
 			<DialogPrimitive.Close
 				class="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
 			>
-				<Icon icon="lucide:x" class="h-4 w-4" />
+				<span class="i-lucide-x h-4 w-4" />
 				<span class="sr-only">Close</span>
 			</DialogPrimitive.Close>
 		</DialogPrimitive.Content>

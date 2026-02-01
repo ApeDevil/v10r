@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { cn } from '$lib/utils/cn';
-	import Icon from '@iconify/svelte';
 	import { Button } from '$lib/components/primitives';
 
 	interface Props {
@@ -86,7 +85,7 @@
 			disabled={currentPage === 1}
 			aria-label="First page"
 		>
-			<Icon icon="lucide:chevrons-left" class="h-4 w-4" />
+			<span class="i-lucide-chevrons-left h-4 w-4" />
 		</Button>
 	{/if}
 
@@ -97,7 +96,7 @@
 		disabled={currentPage === 1}
 		aria-label="Previous page"
 	>
-		<Icon icon="lucide:chevron-left" class="h-4 w-4" />
+		<span class="i-lucide-chevron-left h-4 w-4" />
 	</Button>
 
 	{#each pages() as page}
@@ -125,7 +124,7 @@
 		disabled={currentPage === totalPages}
 		aria-label="Next page"
 	>
-		<Icon icon="lucide:chevron-right" class="h-4 w-4" />
+		<span class="i-lucide-chevron-right h-4 w-4" />
 	</Button>
 
 	{#if showFirstLast}
@@ -136,7 +135,7 @@
 			disabled={currentPage === totalPages}
 			aria-label="Last page"
 		>
-			<Icon icon="lucide:chevrons-right" class="h-4 w-4" />
+			<span class="i-lucide-chevrons-right h-4 w-4" />
 		</Button>
 	{/if}
 </nav>

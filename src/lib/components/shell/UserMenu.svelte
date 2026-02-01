@@ -6,7 +6,6 @@
 	 */
 
 	import { DropdownMenu } from 'bits-ui';
-	import Icon from '@iconify/svelte';
 	import { cn } from '$lib/utils/cn';
 	import { getTheme } from '$lib/stores/theme.svelte';
 	import { Avatar } from '$lib/components/primitives/avatar';
@@ -59,10 +58,9 @@
 						<span class="text-xs text-muted whitespace-nowrap overflow-hidden text-ellipsis">{user.email}</span>
 					</div>
 
-					<Icon
-						icon="lucide:chevron-up"
+					<span
 						class={cn(
-							'flex-shrink-0 transition-transform duration-fast motion-reduce:transition-none [.data-\\[state\\=open\\]_&]:rotate-180'
+							'i-lucide-chevron-up flex-shrink-0 transition-transform duration-fast motion-reduce:transition-none [.data-\\[state\\=open\\]_&]:rotate-180'
 						)}
 					/>
 				{/if}
@@ -83,7 +81,7 @@
 					>
 						{#snippet child({ props })}
 							<a {...props} href="/profile" class="flex items-center gap-3 no-underline text-fg">
-								<Icon icon="lucide:user" class="text-lg" />
+								<span class="i-lucide-user text-lg" />
 								<span>Profile</span>
 							</a>
 						{/snippet}
@@ -94,7 +92,7 @@
 					>
 						{#snippet child({ props })}
 							<a {...props} href="/settings" class="flex items-center gap-3 no-underline text-fg">
-								<Icon icon="lucide:settings" class="text-lg" />
+								<span class="i-lucide-settings text-lg" />
 								<span>Settings</span>
 							</a>
 						{/snippet}
@@ -106,12 +104,11 @@
 						<DropdownMenu.SubTrigger
 							class="flex items-center gap-3 p-2 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-border motion-reduce:transition-none"
 						>
-							<Icon icon="lucide:palette" class="text-lg" />
+							<span class="i-lucide-palette text-lg" />
 							<span class="flex-1">Theme</span>
-							<Icon
-								icon="lucide:chevron-right"
+							<span
 								class={cn(
-									'transition-transform duration-fast motion-reduce:transition-none',
+									'i-lucide-chevron-right transition-transform duration-fast motion-reduce:transition-none',
 									themeSubmenuOpen && 'rotate-90'
 								)}
 							/>
@@ -131,7 +128,7 @@
 								)}
 								onclick={() => setTheme('light')}
 							>
-								<Icon icon="lucide:sun" class="text-lg" />
+								<span class="i-lucide-sun text-lg" />
 								<span>Light</span>
 							</DropdownMenu.Item>
 
@@ -142,7 +139,7 @@
 								)}
 								onclick={() => setTheme('dark')}
 							>
-								<Icon icon="lucide:moon" class="text-lg" />
+								<span class="i-lucide-moon text-lg" />
 								<span>Dark</span>
 							</DropdownMenu.Item>
 
@@ -153,7 +150,7 @@
 								)}
 								onclick={() => setTheme('system')}
 							>
-								<Icon icon="lucide:monitor" class="text-lg" />
+								<span class="i-lucide-monitor text-lg" />
 								<span>System</span>
 							</DropdownMenu.Item>
 						</DropdownMenu.SubContent>
@@ -165,7 +162,7 @@
 						class="flex items-center gap-3 p-2 px-3 rounded-sm text-error text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-error data-[highlighted]:text-white motion-reduce:transition-none"
 						onclick={handleSignOut}
 					>
-						<Icon icon="lucide:log-out" class="text-lg" />
+						<span class="i-lucide-log-out text-lg" />
 						<span>Sign out</span>
 					</DropdownMenu.Item>
 				</DropdownMenu.Content>
@@ -182,7 +179,7 @@
 			)}
 			aria-label="Sign in"
 		>
-			<Icon icon="lucide:key" class="text-xl" />
+			<span class="i-lucide-key text-xl" />
 			{#if forceExpanded}
 				<span class="sign-in-label">Sign in</span>
 			{/if}

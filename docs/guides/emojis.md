@@ -4,6 +4,8 @@
 ⚠️ Warning
 🪲 Debug
 
+
+📚 docs
 🔱 routes
 ☎️ API
 📍 Endpoint

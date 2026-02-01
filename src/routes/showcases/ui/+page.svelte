@@ -3,7 +3,6 @@
 	import { sections } from './_sections';
 	import { getTheme } from '$lib/stores/theme.svelte';
 	import { PageHeader } from '$lib/components/composites';
-	import Icon from '@iconify/svelte';
 
 	const theme = getTheme();
 
@@ -101,9 +100,9 @@
 		title="Toggle theme"
 	>
 		{#if theme.isDark}
-			<Icon icon="lucide:sun" width="24" height="24" />
+			<span class="i-lucide-sun text-[24px]" />
 		{:else}
-			<Icon icon="lucide:moon" width="24" height="24" />
+			<span class="i-lucide-moon text-[24px]" />
 		{/if}
 	</button>
 </div>

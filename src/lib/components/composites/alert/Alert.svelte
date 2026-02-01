@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
 	import { cn } from '$lib/utils/cn';
 	import type { Snippet } from 'svelte';
 
@@ -25,11 +24,11 @@
 
 	let visible = $state(true);
 
-	const icons = {
-		info: 'lucide:info',
-		success: 'lucide:check-circle',
-		warning: 'lucide:alert-triangle',
-		error: 'lucide:x-circle'
+	const iconClasses = {
+		info: 'i-lucide-info',
+		success: 'i-lucide-check-circle',
+		warning: 'i-lucide-alert-triangle',
+		error: 'i-lucide-x-circle'
 	};
 
 	const styles = {
@@ -54,7 +53,7 @@
 		)}
 		role="alert"
 	>
-		<Icon icon={icons[variant]} class="h-5 w-5 shrink-0" />
+		<span class={cn(iconClasses[variant], 'h-5 w-5 shrink-0')} />
 
 		<div class="flex-1">
 			{#if title}
@@ -78,7 +77,7 @@
 				class="shrink-0 opacity-70 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm"
 				aria-label="Close alert"
 			>
-				<Icon icon="lucide:x" class="h-4 w-4" />
+				<span class="i-lucide-x h-4 w-4" />
 			</button>
 		{/if}
 	</div>

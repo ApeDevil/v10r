@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
-	import Icon from '@iconify/svelte';
 	import { cn } from '$lib/utils/cn';
 	import type { Snippet } from 'svelte';
 
 	interface DropdownItem {
 		label: string;
+		/** CSS icon class (e.g., 'i-lucide-home') */
 		icon?: string;
 		href?: string;
 		onclick?: () => void;
@@ -56,7 +56,7 @@
 						}}
 					>
 						{#if item.icon}
-							<Icon icon={item.icon} class="h-4 w-4" />
+							<span class={cn(item.icon, 'h-4 w-4')} />
 						{/if}
 						<span>{item.label}</span>
 					</DropdownMenuPrimitive.Item>

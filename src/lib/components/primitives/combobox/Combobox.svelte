@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
 	import { cn } from '$lib/utils/cn';
 
 	interface Option {
@@ -113,11 +112,11 @@
 					onclick={handleClear}
 					tabindex="-1"
 				>
-					<Icon icon="lucide:x" class="h-4 w-4" />
+					<span class="i-lucide-x h-4 w-4" />
 					<span class="sr-only">Clear selection</span>
 				</button>
 			{/if}
-			<Icon icon="lucide:chevrons-up-down" class="h-4 w-4 opacity-50 pointer-events-none" />
+			<span class="i-lucide-chevrons-up-down h-4 w-4 opacity-50 pointer-events-none" />
 		</div>
 	</div>
 
@@ -140,7 +139,7 @@
 					>
 						{option.label}
 						{#if selected === option.value}
-							<Icon icon="lucide:check" class="ml-auto h-4 w-4" />
+							<span class="i-lucide-check ml-auto h-4 w-4" />
 						{/if}
 					</button>
 				{:else}

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { HTMLInputAttributes } from 'svelte/elements';
-	import Icon from '@iconify/svelte';
 	import { cn } from '$lib/utils/cn';
 
 	interface Props extends Omit<HTMLInputAttributes, 'type' | 'checked'> {
@@ -35,7 +34,7 @@
 			)}
 		>
 			{#if checked}
-				<Icon icon="lucide:check" class="h-4 w-4" />
+				<span class="i-lucide-check h-4 w-4" />
 			{/if}
 		</label>
 	</div>

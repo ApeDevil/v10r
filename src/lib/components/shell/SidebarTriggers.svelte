@@ -5,7 +5,6 @@
 	 * Expanded mode: Fake inputs with keyboard hints
 	 */
 
-	import Icon from '@iconify/svelte';
 	import { cn } from '$lib/utils/cn';
 	import { Button } from '$lib/components/primitives/button';
 	import { getSidebar } from '$lib/stores/sidebar.svelte';
@@ -54,7 +53,7 @@
 			onclick={() => modals.open('quickSearch')}
 			aria-label="Search"
 		>
-			<Icon icon="lucide:search" class="text-[1.25rem]" />
+			<span class="i-lucide-search text-[1.25rem]" />
 			<span class="trigger-placeholder flex-1 opacity-0 motion-reduce:opacity-100">Search...</span>
 			<kbd
 				class="trigger-kbd inline-flex items-center justify-center min-w-[1.5rem] h-[1.25rem] px-1 bg-border border border-muted rounded-sm text-xs font-semibold text-fg font-mono opacity-0 motion-reduce:opacity-100"
@@ -67,7 +66,7 @@
 			onclick={() => modals.open('aiAssistant')}
 			aria-label="AI Assistant"
 		>
-			<Icon icon="lucide:sparkles" class="text-[1.25rem]" />
+			<span class="i-lucide-sparkles text-[1.25rem]" />
 			<span class="trigger-placeholder flex-1 opacity-0 motion-reduce:opacity-100">Ask AI...</span>
 			<kbd
 				class="trigger-kbd inline-flex items-center justify-center min-w-[1.5rem] h-[1.25rem] px-1 bg-border border border-muted rounded-sm text-xs font-semibold text-fg font-mono opacity-0 motion-reduce:opacity-100"
@@ -84,7 +83,7 @@
 			title="Search (⌘K)"
 		>
 			{#snippet children()}
-				<Icon icon="lucide:search" class="text-[1.25rem]" />
+				<span class="i-lucide-search text-[1.25rem]" />
 			{/snippet}
 		</Button>
 
@@ -96,7 +95,7 @@
 			title="AI Assistant (⌘J)"
 		>
 			{#snippet children()}
-				<Icon icon="lucide:sparkles" class="text-[1.25rem]" />
+				<span class="i-lucide-sparkles text-[1.25rem]" />
 			{/snippet}
 		</Button>
 	{/if}

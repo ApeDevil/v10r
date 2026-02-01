@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
 	import { cn } from '$lib/utils/cn';
 	import { Button } from '$lib/components/primitives/button';
 	import { getSidebar } from '$lib/stores/sidebar.svelte';
@@ -29,9 +28,9 @@
 >
 	{#snippet children()}
 		{#if sidebar.mobileOpen}
-			<Icon icon="lucide:x" width={24} height={24} />
+			<span class="i-lucide-x text-[24px]" />
 		{:else}
-			<Icon icon="lucide:menu" width={24} height={24} />
+			<span class="i-lucide-menu text-[24px]" />
 		{/if}
 	{/snippet}
 </Button>

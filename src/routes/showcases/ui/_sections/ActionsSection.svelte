@@ -42,10 +42,10 @@
 		<DemoCard title="Dropdown Menu" description="Menu with actions">
 			<DropdownMenu
 				items={[
-					{ label: 'Profile', icon: 'lucide:user' },
-					{ label: 'Settings', icon: 'lucide:settings' },
+					{ label: 'Profile', icon: 'i-lucide-user' },
+					{ label: 'Settings', icon: 'i-lucide-settings' },
 					{ separator: true },
-					{ label: 'Logout', icon: 'lucide:log-out' }
+					{ label: 'Logout', icon: 'i-lucide-log-out' }
 				]}
 			>
 				{#snippet trigger()}

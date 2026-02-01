@@ -5,7 +5,6 @@
 	 * - Chevron area: Opens dropdown for subpages (if has children)
 	 */
 
-	import Icon from '@iconify/svelte';
 	import { page } from '$app/state';
 	import { cn } from '$lib/utils/cn';
 	import { Button } from '$lib/components/primitives/button';
@@ -18,6 +17,7 @@
 
 	interface Props {
 		href: string;
+		/** CSS icon class (e.g., 'i-lucide-home') */
 		icon: string;
 		label: string;
 		children?: NavChild[];
@@ -73,7 +73,7 @@
 			aria-current={isActive() ? 'page' : undefined}
 			aria-label={forceExpanded ? undefined : label}
 		>
-			<Icon {icon} class="text-[1.5rem] shrink-0 leading-none" />
+			<span class={cn(icon, 'text-[1.5rem] shrink-0 leading-none')} />
 			{#if forceExpanded}
 				<span class="nav-label text-sm font-medium flex-1 opacity-0 motion-reduce:opacity-100">{label}</span>
 			{/if}
@@ -91,7 +91,7 @@
 				aria-label={isDropdownOpen ? 'Close submenu' : 'Open submenu'}
 				aria-expanded={isDropdownOpen}
 			>
-				<Icon icon="lucide:chevron-right" width={16} height={16} />
+				<span class="i-lucide-chevron-right text-[16px]" />
 			</button>
 		{/if}
 	</div>

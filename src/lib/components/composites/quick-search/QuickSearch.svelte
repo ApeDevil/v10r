@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { Dialog } from 'bits-ui';
-	import Icon from '@iconify/svelte';
 	import { cn } from '$lib/utils/cn';
 	import { goto } from '$app/navigation';
 
@@ -8,6 +7,7 @@
 		id: string;
 		type: 'page' | 'action' | 'recent';
 		label: string;
+		/** CSS icon class (e.g., 'i-lucide-home') */
 		icon: string;
 		href?: string;
 		action?: () => void;
@@ -91,7 +91,7 @@
 			onkeydown={handleKeydown}
 		>
 			<div class="flex items-center gap-3 border-b border-border px-4 py-3">
-				<Icon icon="lucide:search" class="h-5 w-5 text-muted" />
+				<span class="i-lucide-search h-5 w-5 text-muted" />
 				<input
 					type="text"
 					placeholder="Search pages, actions..."
@@ -116,7 +116,7 @@
 								)}
 								onclick={() => handleSelect(item)}
 							>
-								<Icon icon={item.icon} class="h-4 w-4" />
+								<span class={cn(item.icon, 'h-4 w-4')} />
 								<span>{item.label}</span>
 							</button>
 						{/each}
@@ -136,7 +136,7 @@
 								)}
 								onclick={() => handleSelect(item)}
 							>
-								<Icon icon={item.icon} class="h-4 w-4" />
+								<span class={cn(item.icon, 'h-4 w-4')} />
 								<span>{item.label}</span>
 							</button>
 						{/each}
@@ -156,7 +156,7 @@
 								)}
 								onclick={() => handleSelect(item)}
 							>
-								<Icon icon={item.icon} class="h-4 w-4" />
+								<span class={cn(item.icon, 'h-4 w-4')} />
 								<span>{item.label}</span>
 							</button>
 						{/each}

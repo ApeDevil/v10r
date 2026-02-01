@@ -22,12 +22,12 @@
 
 	// Navigation structure with dropdowns
 	const navItems = [
-		{ href: '/', label: 'Home', icon: 'lucide:home' },
-		{ href: '/shell-demo', label: 'Shell Demo', icon: 'lucide:palette' },
+		{ href: '/', label: 'Home', icon: 'i-lucide-home' },
+		{ href: '/shell-demo', label: 'Shell Demo', icon: 'i-lucide-palette' },
 		{
 			href: '/showcases',
 			label: 'Showcases',
-			icon: 'lucide:sparkles',
+			icon: 'i-lucide-sparkles',
 			children: [
 				{ href: '/showcases/forms', label: 'Forms' },
 				{ href: '/showcases/3d', label: '3D' },
@@ -37,7 +37,7 @@
 		{
 			href: '/docs',
 			label: 'Docs',
-			icon: 'lucide:book-open',
+			icon: 'i-lucide-book-open',
 			children: [
 				{ href: '/docs/stack', label: 'Stack' },
 				{ href: '/docs/blueprint', label: 'Blueprint' }

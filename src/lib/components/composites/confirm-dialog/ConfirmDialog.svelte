@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { Dialog } from 'bits-ui';
 	import { Button } from '$lib/components/primitives';
-	import Icon from '@iconify/svelte';
 	import { cn } from '$lib/utils/cn';
 
 	interface Props {
@@ -61,7 +60,7 @@
 			<Dialog.Close
 				class="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100"
 			>
-				<Icon icon="lucide:x" class="h-4 w-4" />
+				<span class="i-lucide-x h-4 w-4" />
 				<span class="sr-only">Close</span>
 			</Dialog.Close>
 		</Dialog.Content>

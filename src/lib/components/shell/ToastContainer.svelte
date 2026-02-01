@@ -4,7 +4,6 @@
 	 * Position: Fixed top-right (desktop), top-center full-width (mobile)
 	 */
 
-	import Icon from '@iconify/svelte';
 	import { fly } from 'svelte/transition';
 	import { cn } from '$lib/utils/cn';
 	import { getToast } from '$lib/stores/toast.svelte';
@@ -28,12 +27,12 @@
 		info: 5000,
 	};
 
-	// Toast icons
-	const icons = {
-		success: 'lucide:check',
-		error: 'lucide:x',
-		warning: 'lucide:alert-triangle',
-		info: 'lucide:info',
+	// Toast icon classes
+	const iconClasses = {
+		success: 'i-lucide-check',
+		error: 'i-lucide-x',
+		warning: 'i-lucide-alert-triangle',
+		info: 'i-lucide-info',
 	};
 </script>
 
@@ -59,7 +58,7 @@
 					t.type === 'warning' && 'bg-warning',
 					t.type === 'info' && 'bg-primary'
 				)}>
-					<Icon icon={icons[t.type]} />
+					<span class={iconClasses[t.type]} />
 				</div>
 				<div class="flex-1 text-sm leading-[1.4] text-fg">{t.message}</div>
 				<button
@@ -67,7 +66,7 @@
 					onclick={() => toast.remove(t.id)}
 					aria-label="Dismiss notification"
 				>
-					<Icon icon="lucide:x" />
+					<span class="i-lucide-x" />
 				</button>
 			</div>
 		{/each}

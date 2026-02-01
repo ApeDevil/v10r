@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
 	import { cn } from '$lib/utils/cn';
 
 	interface Props {
@@ -17,7 +16,7 @@
 		{onclick}
 		aria-label="Open search"
 	>
-		<Icon icon="lucide:search" class="h-5 w-5" />
+		<span class="i-lucide-search h-5 w-5" />
 	</button>
 {:else}
 	<!-- Expanded mode: fake input -->
@@ -30,7 +29,7 @@
 		)}
 		{onclick}
 	>
-		<Icon icon="lucide:search" class="h-4 w-4" />
+		<span class="i-lucide-search h-4 w-4" />
 		<span class="flex-1 text-left text-sm">Search...</span>
 		<kbd class="rounded bg-muted/20 px-1.5 py-0.5 text-xs">⌘K</kbd>
 	</button>

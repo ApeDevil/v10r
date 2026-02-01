@@ -62,7 +62,7 @@
 	role="navigation"
 	aria-label="Main navigation"
 >
-	<div class="p-4 border-b border-border">
+	<div class="py-2 border-b border-border">
 		<SidebarLogo />
 	</div>
 
@@ -70,7 +70,7 @@
 
 	<SidebarNav />
 
-	<div class="p-2 border-t border-border">
+	<div class="py-2 border-t border-border">
 		<UserMenu
 			user={{ name: 'Demo User', email: 'demo@velociraptor.dev' }}
 			forceExpanded={sidebar.expanded}
