@@ -3,21 +3,23 @@ claude --chrome
 
 
 cd dev/velociraptor/
-# 
+
+#
+prv(podman run v10r)
 podman-compose up
 podman-compose up -d
 podman logs -f v10r
-
-
 podman restart v10r
 
 # stop
+psv(podman stop v10r)
 podman-compose down
 podman-compose down && podman-compose up -d
 
 # Kill
 lsof -i :5173
 kill XXXXX (rootlessp XXXXX)
+podman rm -f v10r
 
 
 
