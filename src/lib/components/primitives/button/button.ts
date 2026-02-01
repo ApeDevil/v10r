@@ -12,7 +12,7 @@ export const buttonVariants = cva(
 		variants: {
 			variant: {
 				default: 'bg-primary text-white hover:bg-primary-hover',
-				secondary: 'bg-muted text-fg hover:bg-border',
+				secondary: 'bg-border text-fg hover:opacity-80',
 				outline: 'border border-border bg-transparent hover:bg-muted',
 				ghost: 'hover:bg-muted',
 				destructive: 'bg-error text-white hover:bg-error/90'

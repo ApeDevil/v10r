@@ -69,6 +69,7 @@ export const colors = {
   fg: 'var(--color-fg)',
   muted: 'var(--color-muted)',
   border: 'var(--color-border)',
+  subtle: 'var(--color-subtle)',
   primary: {
     DEFAULT: 'var(--color-primary)',
     hover: 'var(--color-primary-hover)',
@@ -91,6 +92,7 @@ export const colorValues = {
     fg: '#111827',
     muted: '#6b7280',
     border: '#e5e7eb',
+    subtle: '#f3f4f6',
     primary: '#2563eb',
     primaryHover: '#1d4ed8',
     success: '#16a34a',
@@ -102,6 +104,7 @@ export const colorValues = {
     fg: '#f3f4f6',
     muted: '#9ca3af',
     border: '#374151',
+    subtle: '#1f2937',
     primary: '#60a5fa',
     primaryHover: '#93c5fd',
     success: '#22c55e',
