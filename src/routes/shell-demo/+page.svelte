@@ -4,6 +4,7 @@
 	import { getToast } from '$lib/stores/toast.svelte';
 	import { getModals } from '$lib/stores/modals.svelte';
 	import { Button } from '$lib/components/primitives';
+	import { PageHeader } from '$lib/components/composites';
 
 	const sidebar = getSidebar();
 	const theme = getTheme();
@@ -16,7 +17,14 @@
 </svelte:head>
 
 <div class="demo-page">
-	<h1>App Shell Demo</h1>
+	<PageHeader
+		title="App Shell Demo"
+		description="Interactive demonstration of the app shell components and state management."
+		breadcrumbs={[
+			{ label: 'Home', href: '/' },
+			{ label: 'Shell Demo' }
+		]}
+	/>
 
 	<section class="demo-section">
 		<h2>Sidebar State</h2>
@@ -236,12 +244,6 @@
 		max-width: 800px;
 		margin: 0 auto;
 		padding: 2rem 1rem;
-	}
-
-	h1 {
-		font-size: 2.5rem;
-		margin-bottom: 2rem;
-		color: var(--color-fg);
 	}
 
 	h2 {

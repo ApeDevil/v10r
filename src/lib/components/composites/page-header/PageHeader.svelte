@@ -69,6 +69,8 @@
 		border-bottom: 1px solid var(--color-border);
 		padding: 1.5rem 2rem;
 		margin: -2rem -2rem 2rem -2rem;
+		width: calc(100% + 4rem);
+		box-sizing: border-box;
 	}
 
 	.page-header.sticky {
@@ -164,6 +166,7 @@
 		.page-header {
 			padding: 1rem 1rem;
 			margin: -1rem -1rem 1rem -1rem;
+			width: calc(100% + 2rem);
 		}
 
 		.header-content {

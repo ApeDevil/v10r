@@ -7,7 +7,7 @@
 		ShortcutsModal,
 		SessionMonitor,
 	} from '$lib/components/shell';
-	import type { Session } from '$lib/stores/session.svelte';
+	import { setSessionContext, type Session } from '$lib/stores/session.svelte';
 
 	type Props = {
 		children?: import('svelte').Snippet;
@@ -15,6 +15,9 @@
 	};
 
 	let { children, session = null }: Props = $props();
+
+	// Initialize session context so child components can use getSession()
+	setSessionContext(session);
 </script>
 
 <!-- Navigation progress bar -->
@@ -26,7 +29,7 @@
 <div class="flex min-h-screen">
 	<Sidebar />
 
-	<main id="main-content" tabindex="-1" class="flex-1 flex flex-col">
+	<main id="main-content" tabindex="-1" class="flex-1 flex flex-col overflow-x-hidden">
 		{@render children?.()}
 
 		<Footer />

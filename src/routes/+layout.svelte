@@ -9,6 +9,7 @@
 	import { setToastContext } from '$lib/stores/toast.svelte';
 	import { initKeyboardHandler, registerShortcut } from '$lib/shortcuts';
 	import { goto } from '$app/navigation';
+	import { Tooltip as TooltipPrimitive } from 'bits-ui';
 
 	let { children, data } = $props();
 
@@ -111,6 +112,8 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-<AppShell session={data.session}>
-	{@render children()}
-</AppShell>
+<TooltipPrimitive.Provider>
+	<AppShell session={data.session}>
+		{@render children()}
+	</AppShell>
+</TooltipPrimitive.Provider>

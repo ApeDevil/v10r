@@ -19,6 +19,13 @@
 
 	<nav class="showcase-nav">
 		<LinkCard
+			href="/showcases/ui"
+			icon="🎨"
+			title="UI Components"
+			description="Complete UI component library and design tokens"
+		/>
+
+		<LinkCard
 			href="/showcases/blueprint"
 			icon="🏗️"
 			title="App Shell Blueprint"
