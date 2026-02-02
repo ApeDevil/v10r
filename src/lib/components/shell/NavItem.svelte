@@ -67,14 +67,13 @@
 		<a
 			{href}
 			class={cn(
-				'flex items-center gap-3 no-underline text-muted rounded-md transition-all duration-fast whitespace-nowrap relative flex-1 hover:bg-border hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none',
-				forceExpanded ? 'p-3' : 'p-2',
+				'flex items-center gap-3 p-2 no-underline text-muted rounded-md transition-all duration-fast whitespace-nowrap relative flex-1 hover:bg-border hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none',
 				isActive() && 'bg-primary text-white font-semibold'
 			)}
 			aria-current={isActive() ? 'page' : undefined}
 			aria-label={forceExpanded ? undefined : label}
 		>
-			<span class={cn(icon, 'shrink-0 leading-none', forceExpanded ? 'text-[1.5rem]' : 'text-[1.25rem]')} />
+			<span class={cn(icon, 'text-[1.5rem] shrink-0 leading-none')} />
 			{#if forceExpanded}
 				<span class="nav-label text-sm font-medium flex-1 opacity-0 motion-reduce:opacity-100">{label}</span>
 			{/if}
