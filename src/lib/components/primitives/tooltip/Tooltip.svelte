@@ -24,7 +24,7 @@
 </script>
 
 <TooltipPrimitive.Root {delayDuration}>
-	<TooltipPrimitive.Trigger>
+	<TooltipPrimitive.Trigger class="bg-transparent border-none p-0 m-0 cursor-pointer">
 		{@render children()}
 	</TooltipPrimitive.Trigger>
 

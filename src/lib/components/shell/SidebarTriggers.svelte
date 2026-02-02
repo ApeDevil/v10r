@@ -76,7 +76,7 @@
 		<!-- Rail mode: Icon buttons only -->
 		<button
 			type="button"
-			class="flex items-center justify-center p-2 text-muted rounded-md border border-border bg-transparent cursor-pointer transition-all duration-fast hover:bg-border hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none"
+			class="flex items-center justify-center p-2 text-muted rounded-md border-none bg-transparent cursor-pointer transition-all duration-fast hover:bg-border hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none"
 			onclick={() => modals.open('quickSearch')}
 			aria-label="Search (⌘K)"
 			title="Search (⌘K)"
@@ -86,7 +86,7 @@
 
 		<button
 			type="button"
-			class="flex items-center justify-center p-2 text-muted rounded-md border border-border bg-transparent cursor-pointer transition-all duration-fast hover:bg-border hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none"
+			class="flex items-center justify-center p-2 text-muted rounded-md border-none bg-transparent cursor-pointer transition-all duration-fast hover:bg-border hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none"
 			onclick={() => modals.open('aiAssistant')}
 			aria-label="AI Assistant (⌘J)"
 			title="AI Assistant (⌘J)"
