@@ -73,7 +73,7 @@
 		aria-current={isActive() ? 'page' : undefined}
 		aria-label={forceExpanded ? undefined : label}
 	>
-		<span class={cn(icon, 'text-icon-lg shrink-0 leading-none')} />
+		<span class={cn(icon, 'text-icon-md shrink-0 leading-none')} />
 		{#if forceExpanded}
 			<span class="nav-label text-sm font-medium flex-1 opacity-0 motion-reduce:opacity-100">{label}</span>
 		{/if}
