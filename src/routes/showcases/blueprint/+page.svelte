@@ -10,7 +10,7 @@
 		SkeletonCard,
 		SkeletonAvatar,
 		EmptyState
-	} from '$lib/components/ui';
+	} from '$lib/components';
 	import { Button } from '$lib/components/primitives';
 
 	const modals = getModals();

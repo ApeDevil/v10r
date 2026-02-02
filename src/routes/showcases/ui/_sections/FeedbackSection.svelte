@@ -1,8 +1,7 @@
 <script lang="ts">
 	import DemoCard from './shared/DemoCard.svelte';
 	import VariantGrid from './shared/VariantGrid.svelte';
-	import { Alert, Badge, Skeleton } from '$lib/components';
-	import { SkeletonText, SkeletonCard, SkeletonAvatar, EmptyState } from '$lib/components/ui';
+	import { Alert, Badge, Skeleton, SkeletonText, SkeletonCard, SkeletonAvatar, EmptyState } from '$lib/components';
 	import { getToast } from '$lib/stores/toast.svelte';
 
 	const toast = getToast();

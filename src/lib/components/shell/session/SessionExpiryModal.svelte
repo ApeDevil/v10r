@@ -127,29 +127,29 @@
 {#if modals.isOpen('sessionExpiry')}
 	<div class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="session-modal-title">
 		<div class="modal-content">
-			<div class="flex flex-col items-center gap-3 px-8 pt-8 pb-4 border-b border-[#e5e7eb]">
+			<div class="flex flex-col items-center gap-3 px-8 pt-8 pb-4 border-b border-border">
 				<span class="i-lucide-lock text-5xl leading-none" aria-hidden="true"></span>
-				<h2 id="session-modal-title" class="m-0 text-2xl font-semibold text-[#111827]">Session Expired</h2>
+				<h2 id="session-modal-title" class="m-0 text-2xl font-semibold text-fg">Session Expired</h2>
 			</div>
 
 			{#if step === 'expired'}
 				<div class="p-8">
-					<p class="m-0 mb-6 text-[#6b7280] leading-relaxed">
+					<p class="m-0 mb-6 text-muted leading-relaxed">
 						Your session has expired for security reasons. Please verify your identity to
 						continue, or sign in as a different user.
 					</p>
 
-					<div class="flex items-center gap-4 p-4 bg-[#f9fafb] rounded-lg mb-6">
-						<div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#6366f1] to-[#8b5cf6] text-white flex items-center justify-center text-xl font-semibold" aria-hidden="true">
+					<div class="flex items-center gap-4 p-4 bg-subtle rounded-lg mb-6">
+						<div class="avatar-circle" aria-hidden="true">
 							{email.charAt(0).toUpperCase()}
 						</div>
 						<div class="user-details">
-							<div class="font-medium text-[#111827]">{email}</div>
+							<div class="font-medium text-fg">{email}</div>
 						</div>
 					</div>
 
 					{#if error}
-						<div class="px-4 py-3 bg-[#fef2f2] border border-[#fecaca] rounded-md text-[#dc2626] text-sm text-center" role="alert">
+						<div class="error-alert" role="alert">
 							{error}
 						</div>
 					{/if}
@@ -168,7 +168,7 @@
 
 					<button
 						type="button"
-						class="px-6 py-3 border-none rounded-lg text-[0.9375rem] font-medium cursor-pointer transition-all duration-fast bg-[#f3f4f6] text-[#374151] hover:bg-[#e5e7eb] disabled:opacity-50 disabled:cursor-not-allowed motion-reduce:transition-none"
+						class="btn-secondary"
 						onclick={onSwitchUser}
 						disabled={sending}
 						aria-label="Sign in as different user"
@@ -178,7 +178,7 @@
 				</div>
 			{:else if step === 'verify'}
 				<div class="p-8">
-					<p class="m-0 mb-6 text-[#6b7280] leading-relaxed">
+					<p class="m-0 mb-6 text-muted leading-relaxed">
 						We've sent a 6-digit verification code to <strong>{email}</strong>. Enter it below to
 						restore your session.
 					</p>
@@ -197,14 +197,14 @@
 										disabled={verifying}
 										aria-label="Digit {i + 1}"
 										autocomplete="off"
-										class="w-full h-16 text-center text-2xl font-semibold border-2 border-[#d1d5db] rounded-lg transition-all duration-fast focus:outline-none focus:border-[#6366f1] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.1)] disabled:opacity-50 disabled:cursor-not-allowed motion-reduce:transition-none"
+										class="digit-input-field"
 									/>
 								</div>
 							{/each}
 						</div>
 
 						{#if error}
-							<div class="px-4 py-3 bg-[#fef2f2] border border-[#fecaca] rounded-md text-[#dc2626] text-sm text-center" role="alert">
+							<div class="error-alert" role="alert">
 								{error}
 							</div>
 						{/if}
@@ -221,7 +221,7 @@
 
 					<button
 						type="button"
-						class="bg-transparent text-[#6b7280] px-2 py-2 border-none rounded-lg text-[0.9375rem] font-medium cursor-pointer transition-all duration-fast hover:text-[#111827] disabled:opacity-50 disabled:cursor-not-allowed motion-reduce:transition-none mt-2 w-full"
+						class="btn-ghost"
 						onclick={() => (step = 'expired')}
 						disabled={verifying}
 					>
@@ -237,23 +237,46 @@
 	.modal-overlay {
 		position: fixed;
 		inset: 0;
-		z-index: 1000;
-		background: rgba(0, 0, 0, 0.5);
+		z-index: var(--z-modal);
+		background: var(--backdrop);
 		backdrop-filter: blur(4px);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: 1rem;
-		animation: fadeIn 0.2s ease-out;
+		padding: var(--spacing-4);
+		animation: fadeIn var(--duration-fast) var(--ease-out);
 	}
 
 	.modal-content {
-		background: white;
-		border-radius: 0.75rem;
+		background: var(--color-bg);
+		border-radius: var(--radius-xl);
 		max-width: 480px;
 		width: 100%;
-		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-		animation: slideUp 0.3s ease-out;
+		box-shadow: var(--shadow-modal);
+		animation: slideUp var(--duration-normal) var(--ease-out);
+	}
+
+	.avatar-circle {
+		width: 3rem;
+		height: 3rem;
+		border-radius: var(--radius-full);
+		background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+		color: white;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 1.25rem;
+		font-weight: 600;
+	}
+
+	.error-alert {
+		padding: var(--spacing-3) var(--spacing-4);
+		background: var(--color-error-light);
+		border: 1px solid var(--color-error-border);
+		border-radius: var(--radius-md);
+		color: var(--color-error);
+		font-size: 0.875rem;
+		text-align: center;
 	}
 
 	.digit-input {
@@ -261,21 +284,46 @@
 		max-width: 56px;
 	}
 
+	.digit-input-field {
+		width: 100%;
+		height: 4rem;
+		text-align: center;
+		font-size: 1.5rem;
+		font-weight: 600;
+		border: 2px solid var(--color-input-border);
+		border-radius: var(--radius-lg);
+		background: var(--color-bg);
+		color: var(--color-fg);
+		transition: all var(--duration-fast);
+	}
+
+	.digit-input-field:focus {
+		outline: none;
+		border-color: var(--color-primary);
+		box-shadow: 0 0 0 3px rgb(from var(--color-primary) r g b / 0.1);
+	}
+
+	.digit-input-field:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
 	.btn-primary {
-		padding: 0.75rem 1.5rem;
+		padding: var(--spacing-3) var(--spacing-6);
 		border: none;
-		border-radius: 0.5rem;
+		border-radius: var(--radius-lg);
 		font-size: 0.9375rem;
 		font-weight: 500;
 		cursor: pointer;
-		transition: all 0.2s;
-		background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+		transition: all var(--duration-fast);
+		background: var(--color-primary);
 		color: white;
 	}
 
 	.btn-primary:hover:not(:disabled) {
+		background: var(--color-primary-hover);
 		transform: translateY(-2px);
-		box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+		box-shadow: var(--shadow-glow-primary);
 	}
 
 	.btn-primary:disabled {
@@ -283,13 +331,53 @@
 		cursor: not-allowed;
 	}
 
+	.btn-secondary {
+		padding: var(--spacing-3) var(--spacing-6);
+		border: none;
+		border-radius: var(--radius-lg);
+		font-size: 0.9375rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all var(--duration-fast);
+		background: var(--color-subtle);
+		color: var(--color-fg);
+	}
+
+	.btn-secondary:hover:not(:disabled) {
+		background: var(--color-border);
+	}
+
+	.btn-secondary:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.btn-ghost {
+		width: 100%;
+		margin-top: var(--spacing-2);
+		padding: var(--spacing-2);
+		border: none;
+		border-radius: var(--radius-lg);
+		font-size: 0.9375rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all var(--duration-fast);
+		background: transparent;
+		color: var(--color-muted);
+	}
+
+	.btn-ghost:hover:not(:disabled) {
+		color: var(--color-fg);
+	}
+
+	.btn-ghost:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
 	@keyframes fadeIn {
-		from {
-			opacity: 0;
-		}
-		to {
-			opacity: 1;
-		}
+		from { opacity: 0; }
+		to { opacity: 1; }
 	}
 
 	@keyframes slideUp {
@@ -308,7 +396,7 @@
 			max-width: 48px;
 		}
 
-		.digit-input input {
+		.digit-input-field {
 			height: 56px;
 			font-size: 1.25rem;
 		}

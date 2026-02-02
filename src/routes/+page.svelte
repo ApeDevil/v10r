@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { LinkCard } from '$lib/components/ui';
+	import { LinkCard } from '$lib/components';
 </script>
 
 <svelte:head>

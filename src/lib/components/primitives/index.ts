@@ -19,7 +19,7 @@ export { default as DropdownMenu } from './dropdown-menu/DropdownMenu.svelte';
 
 export { default as Tabs } from './tabs/Tabs.svelte';
 
-export { default as Skeleton } from './skeleton/Skeleton.svelte';
+export * from './skeleton';
 
 export { Table, Header, Body, Row, HeaderCell, Cell } from './table';
 

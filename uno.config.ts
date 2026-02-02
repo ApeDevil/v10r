@@ -4,6 +4,7 @@ import {
 	breakpoints,
 	containers,
 	fontSize,
+	iconSize,
 	spacing,
 	colors,
 	zIndex,
@@ -27,7 +28,10 @@ export default defineConfig({
 	theme: {
 		breakpoints,
 		containers,
-		fontSize,
+		fontSize: {
+			...fontSize,
+			...iconSize,
+		},
 		spacing,
 		colors,
 		zIndex,
@@ -45,6 +49,7 @@ export default defineConfig({
 	// Safelist commonly used dynamic classes
 	safelist: [
 		...Object.keys(fontSize).map((k) => `text-${k}`),
+		...Object.keys(iconSize).map((k) => `text-${k}`),
 		...Object.keys(spacing).flatMap((k) => [`p-${k}`, `m-${k}`, `gap-${k}`]),
 	],
 });

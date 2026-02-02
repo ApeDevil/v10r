@@ -6,17 +6,22 @@ Single source of truth for all design values. Defined once, referenced everywher
 
 ## Strategy
 
-**Centralized tokens** in TypeScript, consumed by UnoCSS and components.
+**Two-file architecture** with clear responsibilities:
 
 ```
-src/lib/styles/tokens.ts    ← SINGLE SOURCE OF TRUTH
+src/app.css                 ← SINGLE SOURCE OF TRUTH for colors (CSS variables)
+        ↓
+src/lib/styles/tokens.ts    ← References CSS vars + defines non-color tokens
         ↓
     uno.config.ts           ← UnoCSS theme
         ↓
-    Utility classes         ← text-fluid-lg, p-fluid-4, etc.
+    Utility classes         ← text-fluid-lg, p-fluid-4, bg-primary, etc.
 ```
 
-All magic numbers live in `tokens.ts`. No hardcoded values in components.
+- **Colors**: Raw values in `app.css`, references in `tokens.ts`
+- **Everything else**: Values in `tokens.ts` (breakpoints, spacing, typography, etc.)
+
+No hardcoded values in components. Change a token once, updates everywhere.
 
 ---
 
@@ -88,50 +93,44 @@ export const spacing = {
 // COLORS
 // ═══════════════════════════════════════════════════════════════
 
-/** Semantic color tokens (CSS variable references) */
+/**
+ * Semantic color tokens (CSS variable references).
+ *
+ * Single source of truth: src/app.css
+ * This file only references CSS variables - actual values live in app.css.
+ *
+ * WCAG AA contrast ratios (verified in app.css):
+ * - fg on bg: 15.3:1 (light), 13.5:1 (dark) ✓
+ * - muted on bg: 4.6:1 (light), 4.5:1 (dark) ✓
+ * - primary on white: 4.5:1 ✓
+ */
 export const colors = {
   bg: 'var(--color-bg)',
   fg: 'var(--color-fg)',
   muted: 'var(--color-muted)',
   border: 'var(--color-border)',
+  subtle: 'var(--color-subtle)',
   primary: {
     DEFAULT: 'var(--color-primary)',
     hover: 'var(--color-primary-hover)',
+    light: 'var(--color-primary-light)',
   },
-  success: 'var(--color-success)',
-  warning: 'var(--color-warning)',
-  error: 'var(--color-error)',
-} as const;
-
-/**
- * Raw color values for CSS custom properties.
- * Contrast ratios (WCAG AA):
- * - fg on bg: 15.3:1 (light), 13.5:1 (dark) ✓
- * - muted on bg: 4.6:1 (light), 4.5:1 (dark) ✓
- * - primary on white: 4.5:1 ✓
- */
-export const colorValues = {
-  light: {
-    bg: '#ffffff',
-    fg: '#111827',
-    muted: '#6b7280',
-    border: '#e5e7eb',
-    primary: '#2563eb',
-    primaryHover: '#1d4ed8',
-    success: '#16a34a',
-    warning: '#f59e0b',
-    error: '#dc2626',
+  success: {
+    DEFAULT: 'var(--color-success)',
+    light: 'var(--color-success-light)',
   },
-  dark: {
-    bg: '#111827',
-    fg: '#f3f4f6',
-    muted: '#9ca3af',
-    border: '#374151',
-    primary: '#60a5fa',
-    primaryHover: '#93c5fd',
-    success: '#22c55e',
-    warning: '#fbbf24',
-    error: '#f87171',
+  warning: {
+    DEFAULT: 'var(--color-warning)',
+    hover: 'var(--color-warning-hover)',
+    light: 'var(--color-warning-light)',
+  },
+  error: {
+    DEFAULT: 'var(--color-error)',
+    light: 'var(--color-error-light)',
+    border: 'var(--color-error-border)',
+  },
+  input: {
+    border: 'var(--color-input-border)',
   },
 } as const;
 
@@ -403,15 +402,17 @@ function getColumns() {
 
 ## Token Categories
 
-| Category | File Location | Consumed By |
-|----------|---------------|-------------|
+| Category | Source of Truth | Consumed By |
+|----------|-----------------|-------------|
+| Colors | `app.css` (raw values) | CSS variables, UnoCSS via `tokens.ts` refs |
 | Breakpoints | `tokens.ts` | UnoCSS, JS media queries |
 | Typography | `tokens.ts` | UnoCSS `text-*` classes |
 | Spacing | `tokens.ts` | UnoCSS `p-*`, `m-*`, `gap-*` |
-| Colors | `tokens.ts` + `app.css` | CSS variables, UnoCSS |
-| Z-Index | `tokens.ts` | Components, CSS |
-| Layout | `tokens.ts` | Components, CSS variables |
-| Animation | `tokens.ts` + `app.css` | CSS variables |
+| Z-Index | `app.css` + `tokens.ts` | CSS variables, Components |
+| Layout | `app.css` + `tokens.ts` | CSS variables, Components |
+| Animation | `app.css` | CSS variables |
+| Radii | `tokens.ts` + `app.css` | UnoCSS, CSS variables |
+| Shadows | `tokens.ts` + `app.css` | UnoCSS, CSS variables |
 
 ---
 
@@ -419,12 +420,16 @@ function getColumns() {
 
 ```
 src/
-├── app.css                      # CSS custom properties
+├── app.css                      # ← COLORS: Single source of truth (CSS variables)
 ├── lib/
 │   └── styles/
-│       └── tokens.ts            # ← SINGLE SOURCE OF TRUTH
-└── uno.config.ts                # Imports from tokens.ts
+│       └── tokens.ts            # ← NON-COLORS: Source of truth + color refs
+└── uno.config.ts                # Imports from tokens.ts → generates utilities
 ```
+
+**Why two files?**
+- `app.css`: Colors need CSS variables for dark mode toggle (runtime)
+- `tokens.ts`: Everything else can be static (build time via UnoCSS)
 
 ---
 

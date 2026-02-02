@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { PageHeader } from '$lib/components/composites';
-	import { LinkCard } from '$lib/components/ui';
+	import { LinkCard } from '$lib/components';
 </script>
 
 <svelte:head>

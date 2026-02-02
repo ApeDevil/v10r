@@ -1,10 +1,31 @@
 <script lang="ts">
 	import DemoCard from './shared/DemoCard.svelte';
 	import TokenSwatch from './shared/TokenSwatch.svelte';
-	import { fontSize, spacing, colorValues, zIndex, borderRadius, boxShadow } from '$lib/styles/tokens';
-	import { getTheme } from '$lib/stores/theme.svelte';
+	import { fontSize, spacing, zIndex, borderRadius, boxShadow } from '$lib/styles/tokens';
 
-	const theme = getTheme();
+	/**
+	 * Color token names - actual values live in app.css (single source of truth).
+	 * We display these with their CSS variable references.
+	 */
+	const colorTokens = [
+		{ name: 'bg', var: '--color-bg' },
+		{ name: 'fg', var: '--color-fg' },
+		{ name: 'muted', var: '--color-muted' },
+		{ name: 'border', var: '--color-border' },
+		{ name: 'subtle', var: '--color-subtle' },
+		{ name: 'primary', var: '--color-primary' },
+		{ name: 'primary-hover', var: '--color-primary-hover' },
+		{ name: 'primary-light', var: '--color-primary-light' },
+		{ name: 'success', var: '--color-success' },
+		{ name: 'success-light', var: '--color-success-light' },
+		{ name: 'warning', var: '--color-warning' },
+		{ name: 'warning-hover', var: '--color-warning-hover' },
+		{ name: 'warning-light', var: '--color-warning-light' },
+		{ name: 'error', var: '--color-error' },
+		{ name: 'error-light', var: '--color-error-light' },
+		{ name: 'error-border', var: '--color-error-border' },
+		{ name: 'input-border', var: '--color-input-border' },
+	];
 </script>
 
 <section id="tokens" class="section">
@@ -40,19 +61,18 @@
 		</DemoCard>
 
 		<!-- Colors -->
-		<DemoCard title="Colors" description="Light and dark theme color palettes">
+		<DemoCard title="Colors" description="Semantic color tokens (toggle theme to see dark mode)">
 			<div class="color-section">
-				<h4 class="color-mode-title">Light Mode</h4>
+				<p class="color-note">Single source of truth: <code>src/app.css</code></p>
 				<div class="token-grid">
-					{#each Object.entries(colorValues.light) as [key, value]}
-						<TokenSwatch label={key} {value} preview="color" />
-					{/each}
-				</div>
-
-				<h4 class="color-mode-title">Dark Mode</h4>
-				<div class="token-grid">
-					{#each Object.entries(colorValues.dark) as [key, value]}
-						<TokenSwatch label={key} {value} preview="color" />
+					{#each colorTokens as token}
+						<div class="color-swatch">
+							<div class="color-preview" style="background: var({token.var});"></div>
+							<div class="color-info">
+								<div class="color-name">{token.name}</div>
+								<div class="color-var">{token.var}</div>
+							</div>
+						</div>
 					{/each}
 				</div>
 			</div>
@@ -182,15 +202,52 @@
 		width: 100%;
 	}
 
-	.color-mode-title {
-		font-size: 1rem;
-		font-weight: 600;
-		margin: 1.5rem 0 1rem 0;
+	.color-note {
+		font-size: 0.875rem;
+		color: var(--color-muted);
+		margin: 0 0 1rem 0;
+	}
+
+	.color-note code {
+		background: var(--color-subtle);
+		padding: 0.125rem 0.375rem;
+		border-radius: 0.25rem;
+		font-family: 'Fira Code', monospace;
+		font-size: 0.8125rem;
+	}
+
+	.color-swatch {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 0.75rem;
+		border: 1px solid var(--color-border);
+		border-radius: 0.375rem;
+	}
+
+	.color-preview {
+		width: 2.5rem;
+		height: 2.5rem;
+		border-radius: 0.375rem;
+		border: 1px solid var(--color-border);
+		flex-shrink: 0;
+	}
+
+	.color-info {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.color-name {
+		font-size: 0.875rem;
+		font-weight: 500;
 		color: var(--color-fg);
 	}
 
-	.color-mode-title:first-child {
-		margin-top: 0;
+	.color-var {
+		font-size: 0.75rem;
+		color: var(--color-muted);
+		font-family: 'Fira Code', monospace;
 	}
 
 	.z-index-sample {

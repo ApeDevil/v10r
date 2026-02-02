@@ -36,18 +36,18 @@
 </script>
 
 <div class="session-banner" role="alert" aria-live="polite">
-	<div class="flex items-center gap-4 px-4 py-3 max-w-[1400px] mx-auto sm:flex-col sm:items-start sm:gap-3">
+	<div class="banner-content">
 		<span class="i-lucide-timer text-2xl leading-none" aria-hidden="true"></span>
 
-		<div class="flex-1 flex flex-col gap-1 text-sm">
-			<strong class="font-semibold text-[0.9375rem]">Session expiring soon</strong>
-			<span class="opacity-95 font-mono font-medium">Your session will expire in {formattedTime()}</span>
+		<div class="banner-text">
+			<strong class="banner-title">Session expiring soon</strong>
+			<span class="banner-time">Your session will expire in {formattedTime()}</span>
 		</div>
 
-		<div class="flex items-center gap-2 sm:w-full sm:justify-between">
+		<div class="banner-actions">
 			<button
 				type="button"
-				class="px-4 py-2 border-none rounded-md text-sm font-medium cursor-pointer transition-all duration-fast whitespace-nowrap bg-white text-[#d97706] hover:bg-[#fef3c7] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:flex-1 sm:px-2.5"
+				class="btn-extend"
 				onclick={handleExtend}
 				disabled={extending}
 				aria-label="Extend session"
@@ -57,7 +57,7 @@
 
 			<button
 				type="button"
-				class="px-4 py-2 border-none rounded-md text-sm font-medium cursor-pointer transition-all duration-fast whitespace-nowrap bg-white/20 text-white backdrop-blur-sm hover:bg-white/30 disabled:opacity-60 disabled:cursor-not-allowed motion-reduce:transition-none sm:flex-1 sm:px-2.5"
+				class="btn-signout"
 				onclick={onSignOut}
 				disabled={extending}
 				aria-label="Sign out"
@@ -67,7 +67,7 @@
 
 			<button
 				type="button"
-				class="bg-transparent text-white px-2 py-2 border-none text-xl opacity-80 cursor-pointer transition-all duration-fast hover:opacity-100 hover:bg-white/15 rounded-md disabled:opacity-60 disabled:cursor-not-allowed motion-reduce:transition-none sm:flex-0"
+				class="btn-dismiss"
 				onclick={onDismiss}
 				disabled={extending}
 				aria-label="Dismiss warning"
@@ -81,14 +81,116 @@
 <style>
 	.session-banner {
 		position: fixed;
-		top: 3px; /* Below navigation progress bar (3px height) */
+		top: 3px; /* Below navigation progress bar */
 		left: 0;
 		right: 0;
-		z-index: 999; /* Below modals (1000), above content */
-		background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+		z-index: calc(var(--z-modal) - 1);
+		background: linear-gradient(135deg, var(--color-warning) 0%, var(--color-warning-hover) 100%);
 		color: white;
-		box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-		animation: slideDown 0.3s ease-out;
+		box-shadow: var(--shadow-glow-warning);
+		animation: slideDown var(--duration-normal) var(--ease-out);
+	}
+
+	.banner-content {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-4);
+		padding: var(--spacing-3) var(--spacing-4);
+		max-width: var(--layout-max-width);
+		margin: 0 auto;
+	}
+
+	.banner-text {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-1);
+		font-size: 0.875rem;
+	}
+
+	.banner-title {
+		font-weight: 600;
+		font-size: 0.9375rem;
+	}
+
+	.banner-time {
+		opacity: 0.95;
+		font-family: ui-monospace, monospace;
+		font-weight: 500;
+	}
+
+	.banner-actions {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-2);
+	}
+
+	.btn-extend {
+		padding: var(--spacing-2) var(--spacing-4);
+		border: none;
+		border-radius: var(--radius-md);
+		font-size: 0.875rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all var(--duration-fast);
+		white-space: nowrap;
+		background: white;
+		color: var(--color-warning-hover);
+	}
+
+	.btn-extend:hover:not(:disabled) {
+		background: var(--color-warning-light);
+		transform: translateY(-1px);
+	}
+
+	.btn-extend:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.btn-signout {
+		padding: var(--spacing-2) var(--spacing-4);
+		border: none;
+		border-radius: var(--radius-md);
+		font-size: 0.875rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all var(--duration-fast);
+		white-space: nowrap;
+		background: rgb(255 255 255 / 0.2);
+		color: white;
+		backdrop-filter: blur(4px);
+	}
+
+	.btn-signout:hover:not(:disabled) {
+		background: rgb(255 255 255 / 0.3);
+	}
+
+	.btn-signout:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.btn-dismiss {
+		padding: var(--spacing-2);
+		border: none;
+		border-radius: var(--radius-md);
+		font-size: 1.25rem;
+		cursor: pointer;
+		transition: all var(--duration-fast);
+		background: transparent;
+		color: white;
+		opacity: 0.8;
+	}
+
+	.btn-dismiss:hover:not(:disabled) {
+		opacity: 1;
+		background: rgb(255 255 255 / 0.15);
+	}
+
+	.btn-dismiss:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
 	}
 
 	@keyframes slideDown {
@@ -99,6 +201,36 @@
 		to {
 			transform: translateY(0);
 			opacity: 1;
+		}
+	}
+
+	/* Mobile responsive */
+	@media (max-width: 640px) {
+		.banner-content {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: var(--spacing-3);
+		}
+
+		.banner-actions {
+			width: 100%;
+			justify-content: space-between;
+		}
+
+		.btn-extend,
+		.btn-signout {
+			flex: 1;
+			padding: var(--spacing-2) var(--spacing-3);
+		}
+
+		.btn-dismiss {
+			flex: 0;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.btn-extend:hover:not(:disabled) {
+			transform: none;
 		}
 	}
 </style>

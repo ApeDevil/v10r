@@ -44,11 +44,44 @@ export const fontSize = {
 } as const;
 
 // ═══════════════════════════════════════════════════════════════
-// FLUID SPACING
+// ICON SIZES
 // ═══════════════════════════════════════════════════════════════
 
-/** Fluid spacing for margins, padding, gaps */
-export const spacing = {
+/**
+ * Standard icon sizes.
+ * Use text-icon-* classes for consistent sizing.
+ * Never use arbitrary sizes like text-[1.75rem].
+ */
+export const iconSize = {
+  'icon-sm': '1rem',      // 16px - Inline text, small buttons, dense UI
+  'icon-md': '1.25rem',   // 20px - Form inputs, triggers, medium buttons
+  'icon-lg': '1.5rem',    // 24px - Navigation, standard buttons (most common)
+  'icon-xl': '2rem',      // 32px - Section headers, decorative
+} as const;
+
+// ═══════════════════════════════════════════════════════════════
+// FIXED & FLUID SPACING
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Fixed spacing scale (8px base).
+ * Use for component padding, gaps, margins.
+ * Industry standard: Carbon, Material, Atlassian.
+ */
+export const fixedSpacing = {
+  '0': '0',
+  '1': '0.125rem',   // 2px  - Hairline
+  '2': '0.25rem',    // 4px  - Tight
+  '3': '0.5rem',     // 8px  - Input padding, dense lists
+  '4': '0.75rem',    // 12px - Button horizontal padding
+  '5': '1rem',       // 16px - Default padding, form gaps
+  '6': '1.5rem',     // 24px - Comfortable card padding
+  '7': '2rem',       // 32px - Section spacing
+  '8': '3rem',       // 48px - Large sections
+} as const;
+
+/** Fluid spacing for page-level layout (scales with viewport) */
+export const fluidSpacing = {
   'fluid-1': 'clamp(0.25rem, 0.2rem + 0.25vw, 0.5rem)',   // Tight
   'fluid-2': 'clamp(0.5rem, 0.4rem + 0.5vw, 1rem)',       // Small
   'fluid-3': 'clamp(0.75rem, 0.5rem + 1vw, 1.5rem)',      // Medium
@@ -59,11 +92,27 @@ export const spacing = {
   'fluid-8': 'clamp(4rem, 3rem + 5vw, 8rem)',             // Hero
 } as const;
 
+/** Combined spacing (fixed + fluid) for UnoCSS theme */
+export const spacing = {
+  ...fixedSpacing,
+  ...fluidSpacing,
+} as const;
+
 // ═══════════════════════════════════════════════════════════════
 // COLORS
 // ═══════════════════════════════════════════════════════════════
 
-/** Semantic color tokens (CSS variable references) */
+/**
+ * Semantic color tokens (CSS variable references).
+ *
+ * Single source of truth: src/app.css
+ * This file only references CSS variables - actual values live in app.css.
+ *
+ * WCAG AA contrast ratios (verified in app.css):
+ * - fg on bg: 15.3:1 (light), 13.5:1 (dark) ✓
+ * - muted on bg: 4.6:1 (light), 4.5:1 (dark) ✓
+ * - primary on white: 4.5:1 ✓
+ */
 export const colors = {
   bg: 'var(--color-bg)',
   fg: 'var(--color-fg)',
@@ -73,43 +122,24 @@ export const colors = {
   primary: {
     DEFAULT: 'var(--color-primary)',
     hover: 'var(--color-primary-hover)',
+    light: 'var(--color-primary-light)',
   },
-  success: 'var(--color-success)',
-  warning: 'var(--color-warning)',
-  error: 'var(--color-error)',
-} as const;
-
-/**
- * Raw color values for CSS custom properties.
- * Contrast ratios (WCAG AA):
- * - fg on bg: 15.3:1 (light), 13.5:1 (dark) ✓
- * - muted on bg: 4.6:1 (light), 4.5:1 (dark) ✓
- * - primary on white: 4.5:1 ✓
- */
-export const colorValues = {
-  light: {
-    bg: '#ffffff',
-    fg: '#111827',
-    muted: '#6b7280',
-    border: '#e5e7eb',
-    subtle: '#f3f4f6',
-    primary: '#2563eb',
-    primaryHover: '#1d4ed8',
-    success: '#16a34a',
-    warning: '#f59e0b',
-    error: '#dc2626',
+  success: {
+    DEFAULT: 'var(--color-success)',
+    light: 'var(--color-success-light)',
   },
-  dark: {
-    bg: '#111827',
-    fg: '#f3f4f6',
-    muted: '#9ca3af',
-    border: '#374151',
-    subtle: '#1f2937',
-    primary: '#60a5fa',
-    primaryHover: '#93c5fd',
-    success: '#22c55e',
-    warning: '#fbbf24',
-    error: '#f87171',
+  warning: {
+    DEFAULT: 'var(--color-warning)',
+    hover: 'var(--color-warning-hover)',
+    light: 'var(--color-warning-light)',
+  },
+  error: {
+    DEFAULT: 'var(--color-error)',
+    light: 'var(--color-error-light)',
+    border: 'var(--color-error-border)',
+  },
+  input: {
+    border: 'var(--color-input-border)',
   },
 } as const;
 
@@ -187,4 +217,10 @@ export const boxShadow = {
   md: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
   lg: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
   xl: '0 20px 25px -5px rgb(0 0 0 / 0.1)',
+  modal: 'var(--shadow-modal)',
+  'glow-primary': 'var(--shadow-glow-primary)',
+  'glow-warning': 'var(--shadow-glow-warning)',
 } as const;
+
+/** Backdrop overlay */
+export const backdrop = 'var(--backdrop)' as const;
