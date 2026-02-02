@@ -29,7 +29,7 @@
 <div class="flex min-h-screen">
 	<Sidebar />
 
-	<main id="main-content" tabindex="-1" class="flex-1 flex flex-col overflow-x-hidden">
+	<main id="main-content" tabindex="-1" class="flex-1 flex flex-col overflow-x-hidden pt-8 md:pl-[var(--sidebar-rail-width)]">
 		{@render children?.()}
 
 		<Footer />
