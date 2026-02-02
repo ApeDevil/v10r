@@ -53,8 +53,9 @@
 	<!-- Drawer -->
 	<aside
 		bind:this={drawerRef}
-		class={cn('sidebar-drawer fixed top-0 right-0 bottom-0 bg-bg border-l border-border z-drawer flex flex-col motion-reduce:animate-none', className)}
+		class={cn('sidebar-drawer fixed top-0 right-0 bg-bg border-l border-border z-drawer flex flex-col motion-reduce:animate-none', className)}
 		style:width="var(--sidebar-mobile-width)"
+		style:height="100dvh"
 		role="navigation"
 		aria-label="Main navigation"
 		aria-modal="true"

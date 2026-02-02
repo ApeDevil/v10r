@@ -100,9 +100,9 @@
 		title="Toggle theme"
 	>
 		{#if theme.isDark}
-			<span class="i-lucide-sun text-[24px]" />
+			<span class="i-lucide-sun text-icon-lg" />
 		{:else}
-			<span class="i-lucide-moon text-[24px]" />
+			<span class="i-lucide-moon text-icon-lg" />
 		{/if}
 	</button>
 </div>
@@ -189,11 +189,11 @@
 	/* Fixed theme toggle FAB */
 	.theme-toggle {
 		position: fixed;
-		top: 1.5rem;
-		right: 1.5rem;
-		z-index: 20;
-		width: 56px;
-		height: 56px;
+		bottom: 5rem;
+		left: 1rem;
+		z-index: var(--z-fab);
+		width: 48px;
+		height: 48px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -234,6 +234,10 @@
 		.theme-toggle {
 			top: 2rem;
 			right: 2rem;
+			bottom: auto;
+			left: auto;
+			width: 56px;
+			height: 56px;
 		}
 
 		.nav-scroll {

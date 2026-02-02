@@ -8,6 +8,7 @@
 	import { page } from '$app/state';
 	import { cn } from '$lib/utils/cn';
 	import { Button } from '$lib/components/primitives/button';
+	import { Tooltip } from '$lib/components/primitives/tooltip';
 	import NavDropdown from './NavDropdown.svelte';
 
 	interface NavChild {
@@ -62,30 +63,41 @@
 	});
 </script>
 
+{#snippet navLink()}
+	<a
+		{href}
+		class={cn(
+			'flex items-center gap-3 p-2 no-underline text-muted rounded-md transition-all duration-fast whitespace-nowrap relative flex-1 hover:bg-border hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none',
+			isActive() && 'bg-primary text-white font-semibold'
+		)}
+		aria-current={isActive() ? 'page' : undefined}
+		aria-label={forceExpanded ? undefined : label}
+	>
+		<span class={cn(icon, 'text-icon-lg shrink-0 leading-none')} />
+		{#if forceExpanded}
+			<span class="nav-label text-sm font-medium flex-1 opacity-0 motion-reduce:opacity-100">{label}</span>
+		{/if}
+	</a>
+{/snippet}
+
 <div class={cn('relative', className)}>
 	<div class="flex items-center gap-0 relative">
-		<a
-			{href}
-			class={cn(
-				'flex items-center gap-3 p-2 no-underline text-muted rounded-md transition-all duration-fast whitespace-nowrap relative flex-1 hover:bg-border hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none',
-				isActive() && 'bg-primary text-white font-semibold'
-			)}
-			aria-current={isActive() ? 'page' : undefined}
-			aria-label={forceExpanded ? undefined : label}
-		>
-			<span class={cn(icon, 'text-icon-lg shrink-0 leading-none')} />
-			{#if forceExpanded}
-				<span class="nav-label text-sm font-medium flex-1 opacity-0 motion-reduce:opacity-100">{label}</span>
-			{/if}
-		</a>
+		{#if forceExpanded}
+			{@render navLink()}
+		{:else}
+			<Tooltip content={label} side="right" delayDuration={300}>
+				{@render navLink()}
+			</Tooltip>
+		{/if}
 
 		{#if children.length > 0 && forceExpanded}
 			<button
 				type="button"
 				class={cn(
-					'absolute right-[var(--spacing-3)] flex items-center justify-center w-[24px] h-[24px] p-0 bg-transparent border-none text-muted rounded-sm cursor-pointer',
-					'transition-all duration-fast hover:bg-border motion-reduce:transition-none',
-					isDropdownOpen && 'rotate-90 motion-reduce:rotate-0'
+					'absolute right-0 flex items-center justify-center min-w-[44px] min-h-[44px] p-0 bg-transparent border-none rounded-sm cursor-pointer',
+					'transition-all duration-fast motion-reduce:transition-none',
+					isDropdownOpen && 'rotate-90 motion-reduce:rotate-0',
+					isActive() ? 'text-white hover:bg-white/20' : 'text-muted hover:bg-border'
 				)}
 				onclick={toggleDropdown}
 				aria-label={isDropdownOpen ? 'Close submenu' : 'Open submenu'}
@@ -118,14 +130,5 @@
 			animation: none;
 			opacity: 1;
 		}
-	}
-
-	/* Active state color override for chevron button - CSS variable approach for specificity */
-	button:has(~ a[aria-current="page"]) {
-		color: white;
-	}
-
-	button:hover:has(~ a[aria-current="page"]) {
-		background: rgba(255, 255, 255, 0.2);
 	}
 </style>

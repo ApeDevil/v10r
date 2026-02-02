@@ -8,28 +8,35 @@ const FOCUSABLE_SELECTOR =
 
 /**
  * Trap focus within a container element.
+ * Stores the previously focused element and restores focus on cleanup.
  * @param container - Element to trap focus within
- * @returns Cleanup function to remove the trap
+ * @returns Cleanup function to remove the trap and restore focus
  */
 export function trapFocus(container: HTMLElement): () => void {
+	// Store the element that had focus before the trap
+	const previouslyFocused = document.activeElement as HTMLElement | null;
+
 	const focusableElements = container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
-	const firstFocusable = focusableElements[0];
-	const lastFocusable = focusableElements[focusableElements.length - 1];
 
 	// Focus first element on mount
-	firstFocusable?.focus();
+	focusableElements[0]?.focus();
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key !== 'Tab') return;
 
-		if (e.shiftKey && document.activeElement === firstFocusable) {
+		// Re-query focusable elements in case DOM changed
+		const currentFocusable = container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+		const first = currentFocusable[0];
+		const last = currentFocusable[currentFocusable.length - 1];
+
+		if (e.shiftKey && document.activeElement === first) {
 			// Shift+Tab on first element -> focus last
 			e.preventDefault();
-			lastFocusable?.focus();
-		} else if (!e.shiftKey && document.activeElement === lastFocusable) {
+			last?.focus();
+		} else if (!e.shiftKey && document.activeElement === last) {
 			// Tab on last element -> focus first
 			e.preventDefault();
-			firstFocusable?.focus();
+			first?.focus();
 		}
 	}
 
@@ -37,5 +44,7 @@ export function trapFocus(container: HTMLElement): () => void {
 
 	return () => {
 		container.removeEventListener('keydown', handleKeydown);
+		// Restore focus to the element that had focus before the trap
+		previouslyFocused?.focus();
 	};
 }
