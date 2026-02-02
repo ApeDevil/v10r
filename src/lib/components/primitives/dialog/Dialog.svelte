@@ -27,23 +27,23 @@
 				className
 			)}
 		>
-			{#if title}
-				<DialogPrimitive.Title class="text-fluid-lg font-semibold text-fg">
-					{title}
-				</DialogPrimitive.Title>
-			{/if}
+			<div class="flex flex-col gap-4">
+				{#if title}
+					<DialogPrimitive.Title class="text-fluid-lg font-semibold text-fg">
+						{title}
+					</DialogPrimitive.Title>
+				{/if}
 
-			{#if description}
-				<DialogPrimitive.Description class="mt-2 text-fluid-sm text-muted">
-					{description}
-				</DialogPrimitive.Description>
-			{/if}
+				{#if description}
+					<DialogPrimitive.Description class="text-fluid-sm text-muted">
+						{description}
+					</DialogPrimitive.Description>
+				{/if}
 
-			{#if children}
-				<div class="mt-4">
+				{#if children}
 					{@render children()}
-				</div>
-			{/if}
+				{/if}
+			</div>
 
 			<DialogPrimitive.Close
 				class="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"

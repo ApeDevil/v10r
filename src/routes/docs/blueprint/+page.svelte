@@ -1,3 +1,7 @@
+<script lang="ts">
+	import { EmptyState } from '$lib/components/composites/empty-state';
+</script>
+
 <svelte:head>
 	<title>Blueprint - Docs - Velociraptor</title>
 </svelte:head>
@@ -6,10 +10,11 @@
 	<h1>Blueprint Documentation</h1>
 	<p>Placeholder for application blueprint and architecture documentation.</p>
 
-	<div class="placeholder">
-		<span class="placeholder-icon i-lucide-ruler"></span>
-		<p>Coming soon: Application shell blueprint, component architecture, and design patterns.</p>
-	</div>
+	<EmptyState
+		icon="i-lucide-ruler"
+		title="Coming Soon"
+		description="Application shell blueprint, component architecture, and design patterns."
+	/>
 
 	<a href="/docs" class="back-link">← Back to Docs</a>
 </div>
@@ -30,21 +35,6 @@
 	p {
 		color: var(--color-muted);
 		margin-bottom: 2rem;
-	}
-
-	.placeholder {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 1rem;
-		padding: 4rem 2rem;
-		background: var(--color-border);
-		border-radius: 0.5rem;
-		text-align: center;
-	}
-
-	.placeholder-icon {
-		font-size: 4rem;
 	}
 
 	.back-link {

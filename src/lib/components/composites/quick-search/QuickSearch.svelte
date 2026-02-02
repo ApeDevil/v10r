@@ -102,9 +102,9 @@
 				<kbd class="rounded bg-muted/20 px-2 py-0.5 text-xs text-muted">ESC</kbd>
 			</div>
 
-			<div class="max-h-80 overflow-y-auto p-2">
+			<div class="max-h-80 overflow-y-auto p-2 flex flex-col gap-2">
 				{#if grouped.recent.length > 0}
-					<div class="mb-2">
+					<div>
 						<span class="px-2 text-xs font-medium text-muted">Recent</span>
 						{#each grouped.recent as item, i}
 							<button
@@ -124,7 +124,7 @@
 				{/if}
 
 				{#if grouped.pages.length > 0}
-					<div class="mb-2">
+					<div>
 						<span class="px-2 text-xs font-medium text-muted">Pages</span>
 						{#each grouped.pages as item}
 							<button

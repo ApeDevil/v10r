@@ -35,6 +35,7 @@
 			class={cn(
 				'fixed left-1/2 top-1/2 z-modal -translate-x-1/2 -translate-y-1/2',
 				'w-full max-w-md rounded-lg border border-border bg-bg p-6 shadow-xl',
+				'flex flex-col gap-2',
 				'data-[state=open]:animate-in data-[state=closed]:animate-out'
 			)}
 		>
@@ -43,12 +44,12 @@
 			</Dialog.Title>
 
 			{#if description}
-				<Dialog.Description class="mt-2 text-fluid-sm text-muted">
+				<Dialog.Description class="text-fluid-sm text-muted">
 					{description}
 				</Dialog.Description>
 			{/if}
 
-			<div class="mt-6 flex justify-end gap-3">
+			<div class="pt-4 flex justify-end gap-3">
 				<Button variant="secondary" onclick={oncancel}>
 					{cancelLabel}
 				</Button>

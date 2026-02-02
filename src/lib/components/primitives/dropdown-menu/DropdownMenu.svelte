@@ -37,7 +37,7 @@
 		>
 			{#each items as item}
 				{#if item.separator}
-					<DropdownMenuPrimitive.Separator class="my-1 h-px bg-border" />
+					<DropdownMenuPrimitive.Separator class="h-px bg-border" />
 				{:else}
 					<DropdownMenuPrimitive.Item
 						disabled={item.disabled}

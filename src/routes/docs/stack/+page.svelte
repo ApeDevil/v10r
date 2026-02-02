@@ -1,3 +1,7 @@
+<script lang="ts">
+	import { EmptyState } from '$lib/components/composites/empty-state';
+</script>
+
 <svelte:head>
 	<title>Stack - Docs - Velociraptor</title>
 </svelte:head>
@@ -6,10 +10,11 @@
 	<h1>Stack Documentation</h1>
 	<p>Placeholder for technology stack documentation.</p>
 
-	<div class="placeholder">
-		<span class="placeholder-icon i-lucide-settings"></span>
-		<p>Coming soon: Detailed documentation on SvelteKit, Drizzle, Better Auth, and the full stack.</p>
-	</div>
+	<EmptyState
+		icon="i-lucide-settings"
+		title="Coming Soon"
+		description="Detailed documentation on SvelteKit, Drizzle, Better Auth, and the full stack."
+	/>
 
 	<a href="/docs" class="back-link">← Back to Docs</a>
 </div>
@@ -30,21 +35,6 @@
 	p {
 		color: var(--color-muted);
 		margin-bottom: 2rem;
-	}
-
-	.placeholder {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 1rem;
-		padding: 4rem 2rem;
-		background: var(--color-border);
-		border-radius: 0.5rem;
-		text-align: center;
-	}
-
-	.placeholder-icon {
-		font-size: 4rem;
 	}
 
 	.back-link {

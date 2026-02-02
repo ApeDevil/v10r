@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { PageContainer } from '$lib/components/layout';
 	import { PageHeader } from '$lib/components/composites';
 	import { LinkCard } from '$lib/components';
 </script>
@@ -7,7 +8,7 @@
 	<title>Docs - Velociraptor</title>
 </svelte:head>
 
-<div class="page">
+<PageContainer width="wide">
 	<PageHeader
 		title="Documentation"
 		description="Technical documentation and guides for the Velociraptor template."
@@ -32,14 +33,9 @@
 			description="Application blueprint and architecture"
 		/>
 	</nav>
-</div>
+</PageContainer>
 
 <style>
-	.page {
-		max-width: 1200px;
-		margin: 0 auto;
-		padding: 2rem 1rem;
-	}
 
 	.docs-nav {
 		display: grid;

@@ -122,7 +122,8 @@
 
 	{#if open && !disabled}
 		<div
-			class="absolute z-dropdown mt-1 max-h-80 w-full overflow-hidden rounded-md border border-border bg-bg shadow-lg"
+			class="absolute z-dropdown top-full max-h-80 w-full overflow-hidden rounded-md border border-border bg-bg shadow-lg"
+			style="margin-top: 0.25rem;"
 		>
 			<div class="max-h-80 overflow-y-auto p-1">
 				{#each filteredOptions as option, index (option.value)}

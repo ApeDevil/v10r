@@ -1,3 +1,7 @@
+<script lang="ts">
+	import { EmptyState } from '$lib/components/composites/empty-state';
+</script>
+
 <svelte:head>
 	<title>Forms - Showcases - Velociraptor</title>
 </svelte:head>
@@ -6,10 +10,11 @@
 	<h1>Forms Showcase</h1>
 	<p>Placeholder for form validation demonstrations with Valibot + Superforms.</p>
 
-	<div class="placeholder">
-		<span class="placeholder-icon i-lucide-file-edit"></span>
-		<p>Coming soon: Interactive form examples with validation, error handling, and progressive enhancement.</p>
-	</div>
+	<EmptyState
+		icon="i-lucide-file-edit"
+		title="Coming Soon"
+		description="Interactive form examples with validation, error handling, and progressive enhancement."
+	/>
 
 	<a href="/showcases" class="back-link">← Back to Showcases</a>
 </div>
@@ -30,21 +35,6 @@
 	p {
 		color: var(--color-muted);
 		margin-bottom: 2rem;
-	}
-
-	.placeholder {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 1rem;
-		padding: 4rem 2rem;
-		background: var(--color-border);
-		border-radius: 0.5rem;
-		text-align: center;
-	}
-
-	.placeholder-icon {
-		font-size: 4rem;
 	}
 
 	.back-link {

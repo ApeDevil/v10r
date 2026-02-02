@@ -55,9 +55,9 @@
 	>
 		<span class={cn(iconClasses[variant], 'h-5 w-5 shrink-0')} />
 
-		<div class="flex-1">
+		<div class="flex flex-col gap-1 flex-1">
 			{#if title}
-				<h5 class="mb-1 font-semibold">{title}</h5>
+				<h5 class="font-semibold">{title}</h5>
 			{/if}
 
 			{#if description}
@@ -65,7 +65,7 @@
 			{/if}
 
 			{#if children}
-				<div class="mt-2">
+				<div class="pt-1">
 					{@render children()}
 				</div>
 			{/if}

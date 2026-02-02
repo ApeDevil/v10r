@@ -1,3 +1,7 @@
+<script lang="ts">
+	import { EmptyState } from '$lib/components/composites/empty-state';
+</script>
+
 <svelte:head>
 	<title>3D - Showcases - Velociraptor</title>
 </svelte:head>
@@ -6,10 +10,11 @@
 	<h1>3D Showcase</h1>
 	<p>Placeholder for Three.js + Threlte 3D demonstrations.</p>
 
-	<div class="placeholder">
-		<span class="placeholder-icon i-lucide-box"></span>
-		<p>Coming soon: Interactive 3D scenes with physics, animations, and WebGPU rendering.</p>
-	</div>
+	<EmptyState
+		icon="i-lucide-box"
+		title="Coming Soon"
+		description="Interactive 3D scenes with physics, animations, and WebGPU rendering."
+	/>
 
 	<a href="/showcases" class="back-link">← Back to Showcases</a>
 </div>
@@ -30,21 +35,6 @@
 	p {
 		color: var(--color-muted);
 		margin-bottom: 2rem;
-	}
-
-	.placeholder {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 1rem;
-		padding: 4rem 2rem;
-		background: var(--color-border);
-		border-radius: 0.5rem;
-		text-align: center;
-	}
-
-	.placeholder-icon {
-		font-size: 4rem;
 	}
 
 	.back-link {

@@ -28,9 +28,9 @@
 >
 	{#snippet children()}
 		{#if sidebar.mobileOpen}
-			<span class="i-lucide-x text-[24px]" />
+			<span class="i-lucide-x text-icon-lg" />
 		{:else}
-			<span class="i-lucide-menu text-[24px]" />
+			<span class="i-lucide-menu text-icon-lg" />
 		{/if}
 	{/snippet}
 </Button>

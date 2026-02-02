@@ -98,7 +98,7 @@
 						{/snippet}
 					</DropdownMenu.Item>
 
-					<DropdownMenu.Separator class="h-px bg-border my-2" />
+					<DropdownMenu.Separator class="h-px bg-border" />
 
 					<DropdownMenu.Sub bind:open={themeSubmenuOpen}>
 						<DropdownMenu.SubTrigger
@@ -123,7 +123,7 @@
 						>
 							<DropdownMenu.Item
 								class={cn(
-									'flex items-center gap-3 py-1.5 px-3 rounded-sm text-fg text-[0.8125rem] cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-border motion-reduce:transition-none',
+									'flex items-center gap-3 py-1.5 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-border motion-reduce:transition-none',
 									theme.mode === 'light' && 'bg-primary text-white'
 								)}
 								onclick={() => setTheme('light')}
@@ -134,7 +134,7 @@
 
 							<DropdownMenu.Item
 								class={cn(
-									'flex items-center gap-3 py-1.5 px-3 rounded-sm text-fg text-[0.8125rem] cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-border motion-reduce:transition-none',
+									'flex items-center gap-3 py-1.5 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-border motion-reduce:transition-none',
 									theme.mode === 'dark' && 'bg-primary text-white'
 								)}
 								onclick={() => setTheme('dark')}
@@ -145,7 +145,7 @@
 
 							<DropdownMenu.Item
 								class={cn(
-									'flex items-center gap-3 py-1.5 px-3 rounded-sm text-fg text-[0.8125rem] cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-border motion-reduce:transition-none',
+									'flex items-center gap-3 py-1.5 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-border motion-reduce:transition-none',
 									theme.mode === 'system' && 'bg-primary text-white'
 								)}
 								onclick={() => setTheme('system')}
@@ -156,7 +156,7 @@
 						</DropdownMenu.SubContent>
 					</DropdownMenu.Sub>
 
-					<DropdownMenu.Separator class="h-px bg-border my-2" />
+					<DropdownMenu.Separator class="h-px bg-border" />
 
 					<DropdownMenu.Item
 						class="flex items-center gap-3 p-2 px-3 rounded-sm text-error text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-error data-[highlighted]:text-white motion-reduce:transition-none"

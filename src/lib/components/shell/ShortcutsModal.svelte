@@ -64,10 +64,10 @@
 				</button>
 			</div>
 
-			<div class="p-6 overflow-y-auto">
+			<div class="p-6 overflow-y-auto flex flex-col gap-4">
 				{#if shortcutsByCategory.global.length > 0}
-					<section class="mb-4 last:mb-0">
-						<h3 class="text-sm font-semibold uppercase tracking-wider text-muted m-0 mb-3">Global</h3>
+					<section class="flex flex-col gap-3">
+						<h3 class="text-sm font-semibold uppercase tracking-wider text-muted m-0">Global</h3>
 						<dl class="grid gap-2 m-0">
 							{#each shortcutsByCategory.global as shortcut}
 								<div class="flex items-center justify-between gap-4 p-2 rounded-sm transition-bg duration-normal hover:bg-border motion-reduce:transition-none">
@@ -82,8 +82,8 @@
 				{/if}
 
 				{#if shortcutsByCategory.navigation.length > 0}
-					<section class="mb-4 last:mb-0">
-						<h3 class="text-sm font-semibold uppercase tracking-wider text-muted m-0 mb-3">Navigation</h3>
+					<section class="flex flex-col gap-3">
+						<h3 class="text-sm font-semibold uppercase tracking-wider text-muted m-0">Navigation</h3>
 						<dl class="grid gap-2 m-0">
 							{#each shortcutsByCategory.navigation as shortcut}
 								<div class="flex items-center justify-between gap-4 p-2 rounded-sm transition-bg duration-normal hover:bg-border motion-reduce:transition-none">
@@ -98,8 +98,8 @@
 				{/if}
 
 				{#if shortcutsByCategory.actions.length > 0}
-					<section class="mb-4 last:mb-0">
-						<h3 class="text-sm font-semibold uppercase tracking-wider text-muted m-0 mb-3">Actions</h3>
+					<section class="flex flex-col gap-3">
+						<h3 class="text-sm font-semibold uppercase tracking-wider text-muted m-0">Actions</h3>
 						<dl class="grid gap-2 m-0">
 							{#each shortcutsByCategory.actions as shortcut}
 								<div class="flex items-center justify-between gap-4 p-2 rounded-sm transition-bg duration-normal hover:bg-border motion-reduce:transition-none">

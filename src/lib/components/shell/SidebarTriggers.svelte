@@ -52,7 +52,7 @@
 			onclick={() => modals.open('quickSearch')}
 			aria-label="Search"
 		>
-			<span class="i-lucide-search text-[1.75rem]" />
+			<span class="i-lucide-search text-icon-xl" />
 			<span class="trigger-placeholder flex-1 opacity-0 motion-reduce:opacity-100">Search...</span>
 			<kbd
 				class="trigger-kbd inline-flex items-center justify-center min-w-[1.5rem] h-[1.25rem] px-1 bg-border border border-muted rounded-sm text-xs font-semibold text-fg font-mono opacity-0 motion-reduce:opacity-100"
@@ -65,7 +65,7 @@
 			onclick={() => modals.open('aiAssistant')}
 			aria-label="AI Assistant"
 		>
-			<span class="i-lucide-sparkles text-[1.75rem]" />
+			<span class="i-lucide-sparkles text-icon-xl" />
 			<span class="trigger-placeholder flex-1 opacity-0 motion-reduce:opacity-100">Ask AI...</span>
 			<kbd
 				class="trigger-kbd inline-flex items-center justify-center min-w-[1.5rem] h-[1.25rem] px-1 bg-border border border-muted rounded-sm text-xs font-semibold text-fg font-mono opacity-0 motion-reduce:opacity-100"
@@ -81,7 +81,7 @@
 			aria-label="Search (⌘K)"
 			title="Search (⌘K)"
 		>
-			<span class="i-lucide-search text-[1.5rem]" />
+			<span class="i-lucide-search text-icon-lg" />
 		</button>
 
 		<button
@@ -91,7 +91,7 @@
 			aria-label="AI Assistant (⌘J)"
 			title="AI Assistant (⌘J)"
 		>
-			<span class="i-lucide-sparkles text-[1.5rem]" />
+			<span class="i-lucide-sparkles text-icon-lg" />
 		</button>
 	{/if}
 </div>

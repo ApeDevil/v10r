@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { PageContainer } from '$lib/components/layout';
 	import { LinkCard } from '$lib/components';
 </script>
 
@@ -6,6 +7,7 @@
 	<title>Velociraptor - v10r</title>
 </svelte:head>
 
+<PageContainer width="default">
 <div class="home">
 	<h1>Velociraptor</h1>
 
@@ -32,12 +34,10 @@ Velociraptor is the Stack & v10r is the container
 		</div>
 	</nav>
 </div>
+</PageContainer>
 
 <style>
 	.home {
-		max-width: 800px;
-		margin: 0 auto;
-		padding: 2rem 1rem;
 		text-align: center;
 	}
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { PageContainer } from '$lib/components/layout';
 	import { PageHeader } from '$lib/components/composites';
 	import { LinkCard } from '$lib/components';
 </script>
@@ -7,7 +8,7 @@
 	<title>Showcases - Velociraptor</title>
 </svelte:head>
 
-<div class="page">
+<PageContainer width="wide">
 	<PageHeader
 		title="Showcases"
 		description="Feature demonstrations and examples showing the capabilities of the Velociraptor stack."
@@ -53,14 +54,9 @@
 			description="Better Auth authentication flows"
 		/>
 	</nav>
-</div>
+</PageContainer>
 
 <style>
-	.page {
-		max-width: 1200px;
-		margin: 0 auto;
-		padding: 2rem 1rem;
-	}
 
 	.showcase-nav {
 		display: grid;

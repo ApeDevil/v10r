@@ -19,7 +19,7 @@
 	let { tabs, value = $bindable(tabs[0]?.value ?? ''), class: className }: Props = $props();
 </script>
 
-<TabsPrimitive.Root bind:value class={cn('w-full', className)}>
+<TabsPrimitive.Root bind:value class={cn('w-full flex flex-col gap-4', className)}>
 	<TabsPrimitive.List
 		class="inline-flex h-10 items-center justify-center rounded-md bg-muted/20 p-1"
 	>
@@ -44,7 +44,7 @@
 	{#each tabs as tab}
 		<TabsPrimitive.Content
 			value={tab.value}
-			class="mt-4 ring-offset-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+			class="ring-offset-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
 		>
 			{@render tab.content()}
 		</TabsPrimitive.Content>
