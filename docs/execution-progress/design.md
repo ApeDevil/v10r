@@ -261,8 +261,8 @@ Component library now used across routes. Inline styles eliminated.
 | `/` | LinkCard | ~80 |
 | `/showcases` | LinkCard, PageHeader | ~120 |
 | `/docs` | LinkCard, PageHeader | ~120 |
-| `/shell-demo` | Button | ~30 |
-| `/showcases/blueprint` | Button | ~30 |
+| `/showcases/shell` | Button | ~30 |
+| `/showcases/shell` | Button, Skeleton, EmptyState | ~30 |
 
 **Total reduction:** ~380 lines of inline CSS removed.
 

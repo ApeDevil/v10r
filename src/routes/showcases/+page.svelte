@@ -27,10 +27,10 @@
 		/>
 
 		<LinkCard
-			href="/showcases/blueprint"
+			href="/showcases/shell"
 			icon="i-lucide-layout"
-			title="App Shell Blueprint"
-			description="Keyboard shortcuts, modals, toasts, navigation"
+			title="App Shell"
+			description="Keyboard shortcuts, modals, toasts, session lifecycle, navigation"
 		/>
 
 		<LinkCard

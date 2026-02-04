@@ -390,7 +390,7 @@ $effect(() => {
 
 ## Demo Page
 
-**Location:** `/showcases/blueprint`
+**Location:** `/showcases/shell`
 
 **Features:**
 - Interactive demo of all shell components
@@ -461,5 +461,4 @@ All implementation files:
 - `/home/ad/dev/velociraptor/src/lib/components/composites/PageHeader.svelte`
 - `/home/ad/dev/velociraptor/src/lib/components/ui/Skeleton*.svelte` (4 variants)
 - `/home/ad/dev/velociraptor/src/lib/components/ui/EmptyState.svelte`
-- `/home/ad/dev/velociraptor/src/routes/showcases/blueprint/+page.svelte`
-- `/home/ad/dev/velociraptor/src/routes/showcases/blueprint/+page.server.ts`
+- `/home/ad/dev/velociraptor/src/routes/showcases/shell/+page.svelte`

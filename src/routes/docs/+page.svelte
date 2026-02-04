@@ -25,13 +25,6 @@
 			title="Stack"
 			description="Technology stack documentation"
 		/>
-
-		<LinkCard
-			href="/docs/blueprint"
-			icon="i-lucide-ruler"
-			title="Blueprint"
-			description="Application blueprint and architecture"
-		/>
 	</nav>
 </PageContainer>
 
