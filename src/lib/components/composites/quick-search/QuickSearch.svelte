@@ -86,7 +86,7 @@
 		<Dialog.Content
 			class={cn(
 				'fixed left-1/2 top-1/4 z-modal -translate-x-1/2',
-				'w-full max-w-lg rounded-lg border border-border bg-bg shadow-xl'
+				'w-full max-w-lg rounded-lg border border-border bg-surface-3 shadow-xl'
 			)}
 			onkeydown={handleKeydown}
 		>

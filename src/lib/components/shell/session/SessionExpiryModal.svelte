@@ -248,7 +248,7 @@
 	}
 
 	.modal-content {
-		background: var(--color-bg);
+		background: var(--surface-3);
 		border-radius: var(--radius-xl);
 		max-width: 480px;
 		width: 100%;

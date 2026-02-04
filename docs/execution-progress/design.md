@@ -53,6 +53,35 @@ Added UnoCSS plugin to build pipeline.
 
 Updated to use `clsx` for className merging.
 
+### Elevation System
+**File**: `/home/ad/dev/velociraptor/src/app.css`
+**UnoCSS Classes**: `bg-surface-0`, `bg-surface-1`, `bg-surface-2`, `bg-surface-3`
+**Showcase**: `/home/ad/dev/velociraptor/src/routes/showcase/elevation`
+
+4-level numeric surface system for visual hierarchy:
+
+| Level | Usage | Components |
+|-------|-------|------------|
+| `surface-0` | Base level, page background | PageHeader, Footer |
+| `surface-1` | Raised elements | Card, SidebarRail, LinkCard, ToastContainer, DemoCard |
+| `surface-2` | Overlay elements | Drawer, Popover, DropdownMenu, Combobox dropdown, UserMenu dropdown, SidebarDrawer |
+| `surface-3` | Modal elements (highest) | Dialog, ConfirmDialog, Tooltip, ShortcutsModal, SessionExpiryModal, QuickSearch |
+
+**Design Choice (Inverse Material Design):**
+- **Light mode**: Higher elevation → lighter (toward #ffffff white)
+- **Dark mode**: Higher elevation → darker (toward #000000 black)
+
+Conventional Material Design elevates with shadow/brightness. This system uses contrast direction for depth perception.
+
+**CSS Variables:**
+```css
+/* Light mode */
+--color-surface-3: #ffffff;  /* Pure white at highest elevation */
+
+/* Dark mode */
+--color-surface-3: #000000;  /* Complete black at highest elevation */
+```
+
 ## Phase 2: Shell Migration
 
 **Components Migrated**: 18 shell components

@@ -69,7 +69,7 @@
 			<DropdownMenu.Portal>
 				<DropdownMenu.Content
 					class={cn(
-						'z-dropdown min-w-[12rem] bg-bg border border-border rounded-md shadow-lg p-2',
+						'z-dropdown min-w-[12rem] bg-surface-2 border border-border rounded-md shadow-lg p-2',
 						'animate-in slide-in-from-bottom-2 motion-reduce:animate-none'
 					)}
 					side="top"
@@ -116,7 +116,7 @@
 
 						<DropdownMenu.SubContent
 							class={cn(
-								'min-w-[10rem] bg-bg border border-border rounded-md shadow-lg p-2 ml-2',
+								'min-w-[10rem] bg-surface-2 border border-border rounded-md shadow-lg p-2 ml-2',
 								'animate-in slide-in-from-left-2 motion-reduce:animate-none'
 							)}
 							sideOffset={4}

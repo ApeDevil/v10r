@@ -35,7 +35,7 @@
 
 	<DropdownMenuPrimitive.Portal>
 		<DropdownMenuPrimitive.Content
-			class="z-dropdown min-w-[12rem] overflow-hidden rounded-md border border-border bg-bg shadow-lg"
+			class="z-dropdown min-w-[12rem] overflow-hidden rounded-md border border-border bg-surface-2 shadow-lg"
 			sideOffset={4}
 			{align}
 		>

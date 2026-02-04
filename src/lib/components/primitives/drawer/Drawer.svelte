@@ -28,7 +28,7 @@
 		/>
 		<DialogPrimitive.Content
 			class={cn(
-				'fixed z-modal border border-border bg-bg shadow-xl',
+				'fixed z-modal border border-border bg-surface-2 shadow-xl',
 				'data-[state=open]:animate-in data-[state=closed]:animate-out',
 				sideClasses[side],
 				className

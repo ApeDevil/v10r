@@ -2,7 +2,7 @@
 	const currentYear = new Date().getFullYear();
 </script>
 
-<footer class="mt-auto py-8 px-4 border-t border-border bg-bg">
+<footer class="mt-auto py-8 px-4 border-t border-border bg-surface-0">
 	<div class="max-w-[80rem] mx-auto flex flex-col gap-4 items-center text-center md:flex-row md:justify-between md:text-left">
 		<p class="text-muted text-sm m-0">
 			© {currentYear} Velociraptor. Built with SvelteKit.

@@ -59,6 +59,12 @@
 	--z-tooltip: 80;
 	--z-progress: 100;
 
+	/* Elevation surfaces (Light mode: higher = lighter → white) */
+	--surface-0: var(--color-bg);    /* Base - same as page background */
+	--surface-1: #dce2e9;            /* Raised - cards, panels */
+	--surface-2: #eaeff4;            /* Overlay - dropdowns, popovers */
+	--surface-3: #ffffff;            /* Modal - highest, pure white */
+
 	/* Animation */
 	--duration-instant: 0ms;
 	--duration-fast: 150ms;
@@ -141,6 +147,12 @@
 	--shadow-modal: 0 20px 60px rgb(0 0 0 / 0.5);
 	--shadow-glow-primary: 0 4px 12px rgb(96 165 250 / 0.3);
 	--shadow-glow-warning: 0 4px 12px rgb(251 191 36 / 0.3);
+
+	/* Elevation surfaces (Dark mode: higher = darker → black) */
+	--surface-0: var(--color-bg);    /* Base - same as page background */
+	--surface-1: #121416;            /* Raised - cards, panels */
+	--surface-2: #0c0e10;            /* Overlay - dropdowns, popovers */
+	--surface-3: #000000;            /* Modal - highest, complete dark */
 }
 
 /* Base reset */

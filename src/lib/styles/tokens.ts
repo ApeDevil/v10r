@@ -148,6 +148,15 @@ export const colors = {
   // Semi-transparent variants
   bgAlpha: 'var(--color-bg-alpha)',
   fgAlpha: 'var(--color-fg-alpha)',
+  // Elevation surfaces (higher number = higher elevation)
+  // Light mode: 0 → 3 goes lighter (toward white)
+  // Dark mode: 0 → 3 goes darker (toward black)
+  surface: {
+    0: 'var(--surface-0)',  // Base - page background
+    1: 'var(--surface-1)',  // Raised - cards, panels
+    2: 'var(--surface-2)',  // Overlay - dropdowns, popovers
+    3: 'var(--surface-3)',  // Modal - highest elevation
+  },
 } as const;
 
 // ═══════════════════════════════════════════════════════════════

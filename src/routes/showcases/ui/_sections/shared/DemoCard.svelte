@@ -41,7 +41,7 @@
 	.demo-card {
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
-		background: var(--color-bg);
+		background: var(--surface-1);
 		overflow: hidden;
 	}
 

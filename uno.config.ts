@@ -51,5 +51,10 @@ export default defineConfig({
 		...Object.keys(fontSize).map((k) => `text-${k}`),
 		...Object.keys(iconSize).map((k) => `text-${k}`),
 		...Object.keys(spacing).flatMap((k) => [`p-${k}`, `m-${k}`, `gap-${k}`]),
+		// Elevation surfaces
+		'bg-surface-0',
+		'bg-surface-1',
+		'bg-surface-2',
+		'bg-surface-3',
 	],
 });

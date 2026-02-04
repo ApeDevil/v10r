@@ -20,7 +20,7 @@
 	class={cn(
 		'flex flex-col gap-3',
 		'px-fluid-4 py-fluid-5',
-		'bg-bg border border-border rounded-lg',
+		'bg-surface-1 border border-border rounded-lg',
 		'no-underline',
 		'transition-all duration-fast',
 		'hover:border-primary hover:shadow-md hover:-translate-y-0.5',

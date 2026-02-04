@@ -54,7 +54,7 @@
 </script>
 
 <aside
-	class={cn('fixed top-0 left-0 bg-bg border-r border-border z-sidebar flex flex-col overflow-hidden transition-all duration-normal motion-reduce:transition-none group', sidebar.expanded && 'shadow-lg', className)}
+	class={cn('fixed top-0 left-0 bg-surface-1 border-r border-border z-sidebar flex flex-col overflow-hidden transition-all duration-normal motion-reduce:transition-none group', sidebar.expanded && 'shadow-lg', className)}
 	style:width={sidebar.expanded ? 'var(--sidebar-expanded-width)' : 'var(--sidebar-rail-width)'}
 	style:height="100dvh"
 	onmouseenter={handleMouseEnter}

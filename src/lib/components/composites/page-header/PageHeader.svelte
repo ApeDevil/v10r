@@ -65,7 +65,7 @@
 
 <style>
 	.page-header {
-		background: var(--color-bg);
+		background: var(--surface-0);
 		border-bottom: 1px solid var(--color-border);
 		padding: var(--spacing-6) var(--spacing-7);
 		margin: calc(-1 * var(--spacing-7)) calc(-1 * var(--spacing-7)) var(--spacing-7) calc(-1 * var(--spacing-7));
@@ -78,7 +78,7 @@
 		top: 0;
 		z-index: var(--z-sidebar);
 		backdrop-filter: blur(8px);
-		background: var(--color-bg-alpha);
+		background: color-mix(in srgb, var(--surface-0) 80%, transparent);
 	}
 
 	.breadcrumbs {

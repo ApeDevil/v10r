@@ -41,7 +41,7 @@
 		{#each visibleToasts as t (t.id)}
 			<div
 				class={cn(
-					'toast flex items-center gap-3 p-4 bg-white border border-border rounded-lg shadow-md pointer-events-auto min-h-[3.5rem]',
+					'toast flex items-center gap-3 p-4 bg-surface-1 border border-border rounded-lg shadow-md pointer-events-auto min-h-[3.5rem]',
 					t.type === 'success' && 'border-l-4 border-l-success',
 					t.type === 'error' && 'border-l-4 border-l-error',
 					t.type === 'warning' && 'border-l-4 border-l-warning',
@@ -73,10 +73,3 @@
 	</div>
 {/if}
 
-<style>
-	/* Dark mode override - CSS variable approach makes this simpler than utility classes */
-	:global([data-theme='dark']) .toast {
-		background: var(--color-bg);
-		border-color: var(--color-border);
-	}
-</style>

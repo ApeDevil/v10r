@@ -34,7 +34,7 @@
 		<Dialog.Content
 			class={cn(
 				'fixed left-1/2 top-1/2 z-modal -translate-x-1/2 -translate-y-1/2',
-				'w-full max-w-md rounded-lg border border-border bg-bg p-6 shadow-xl',
+				'w-full max-w-md rounded-lg border border-border bg-surface-3 p-6 shadow-xl',
 				'flex flex-col gap-2',
 				'data-[state=open]:animate-in data-[state=closed]:animate-out'
 			)}
