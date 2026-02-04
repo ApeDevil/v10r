@@ -100,20 +100,20 @@
 
 <style>
 	.section {
-		scroll-margin-top: 80px;
-		margin-bottom: 3rem;
+		scroll-margin-top: 5rem;
+		margin-bottom: var(--spacing-8);
 	}
 
 	.section-title {
-		font-size: clamp(1.5rem, 3vw, 2rem);
+		font-size: var(--text-fluid-2xl);
 		font-weight: 700;
-		margin: 0 0 0.5rem 0;
+		margin: 0 0 var(--spacing-2) 0;
 		color: var(--color-fg);
 	}
 
 	.section-description {
-		margin: 0 0 2rem 0;
-		font-size: 1rem;
+		margin: 0 0 var(--spacing-7) 0;
+		font-size: var(--text-fluid-base);
 		color: var(--color-muted);
 		line-height: 1.6;
 	}
@@ -121,50 +121,50 @@
 	.demos {
 		display: flex;
 		flex-direction: column;
-		gap: 1.5rem;
+		gap: var(--spacing-6);
 	}
 
 	.dialog-content,
 	.drawer-content {
-		margin: 1rem 0;
+		margin: var(--spacing-4) 0;
 		line-height: 1.6;
 		color: var(--color-fg);
 	}
 
 	.drawer-title {
-		font-size: 1.25rem;
+		font-size: var(--text-fluid-lg);
 		font-weight: 600;
-		margin: 0 0 1rem 0;
+		margin: 0 0 var(--spacing-4) 0;
 		color: var(--color-fg);
 	}
 
 	.dialog-actions {
 		display: flex;
 		justify-content: flex-end;
-		gap: 0.75rem;
-		margin-top: 1.5rem;
+		gap: var(--spacing-3);
+		margin-top: var(--spacing-6);
 	}
 
 	.confirm-result {
-		margin-top: 0.5rem;
-		font-size: 0.875rem;
+		margin-top: var(--spacing-2);
+		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);
 	}
 
 	.popover-content {
-		padding: 0.5rem;
+		padding: var(--spacing-2);
 	}
 
 	.popover-title {
-		font-size: 0.875rem;
+		font-size: var(--text-fluid-sm);
 		font-weight: 600;
-		margin: 0 0 0.25rem 0;
+		margin: 0 0 var(--spacing-1) 0;
 		color: var(--color-fg);
 	}
 
 	.popover-text {
 		margin: 0;
-		font-size: 0.875rem;
+		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);
 		line-height: 1.5;
 	}

@@ -21,25 +21,25 @@
 
 <style>
 	.page {
-		max-width: 800px;
+		max-width: var(--layout-narrow-width);
 		margin: 0 auto;
-		padding: 2rem 1rem;
+		padding: var(--spacing-7) var(--spacing-4);
 	}
 
 	h1 {
-		font-size: 2.5rem;
-		margin-bottom: 1rem;
+		font-size: var(--text-fluid-3xl);
+		margin-bottom: var(--spacing-4);
 		color: var(--color-fg);
 	}
 
 	p {
 		color: var(--color-muted);
-		margin-bottom: 2rem;
+		margin-bottom: var(--spacing-7);
 	}
 
 	.back-link {
 		display: inline-block;
-		margin-top: 2rem;
+		margin-top: var(--spacing-7);
 		color: var(--color-primary);
 		text-decoration: none;
 		font-weight: 600;

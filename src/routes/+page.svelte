@@ -42,43 +42,43 @@ Velociraptor is the Stack & v10r is the container
 	}
 
 	h1 {
-		font-size: 2.5rem;
-		margin-bottom: 1rem;
+		font-size: var(--text-fluid-3xl);
+		margin-bottom: var(--spacing-4);
 		color: var(--color-fg);
 	}
 
 	.logo {
 		font-family: 'Courier New', monospace;
-		font-size: 0.9rem;
+		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);
 		background: var(--color-border);
-		padding: 1.5rem;
-		border-radius: 0.5rem;
-		margin: 2rem auto;
+		padding: var(--spacing-6);
+		border-radius: var(--radius-lg);
+		margin: var(--spacing-7) auto;
 		display: inline-block;
 	}
 
 	.tagline {
-		font-size: 1.25rem;
+		font-size: var(--text-fluid-lg);
 		color: var(--color-muted);
-		margin-bottom: 2rem;
+		margin-bottom: var(--spacing-7);
 	}
 
 	.nav {
 		text-align: left;
-		margin: 2rem auto;
-		max-width: 600px;
+		margin: var(--spacing-7) auto;
+		max-width: 37.5rem;
 	}
 
 	.nav h2 {
-		font-size: 1.5rem;
-		margin-bottom: 1rem;
+		font-size: var(--text-fluid-xl);
+		margin-bottom: var(--spacing-4);
 		color: var(--color-fg);
 	}
 
 	.link-grid {
 		display: flex;
 		flex-direction: column;
-		gap: 0.75rem;
+		gap: var(--spacing-3);
 	}
 </style>

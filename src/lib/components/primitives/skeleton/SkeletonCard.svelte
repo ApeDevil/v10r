@@ -37,22 +37,22 @@
 	.skeleton-card {
 		background: var(--color-bg);
 		border: 1px solid var(--color-border);
-		border-radius: 0.5rem;
-		padding: 1rem;
+		border-radius: var(--radius-lg);
+		padding: var(--spacing-4);
 		display: flex;
 		flex-direction: column;
-		gap: 1rem;
+		gap: var(--spacing-4);
 	}
 
 	.card-content {
 		display: flex;
 		flex-direction: column;
-		gap: 0.75rem;
+		gap: var(--spacing-3);
 	}
 
 	:global(.skeleton-card .card-image) {
-		margin: -1rem -1rem 0 -1rem;
-		width: calc(100% + 2rem);
-		border-radius: 0.5rem 0.5rem 0 0;
+		margin: calc(-1 * var(--spacing-4)) calc(-1 * var(--spacing-4)) 0 calc(-1 * var(--spacing-4));
+		width: calc(100% + var(--spacing-4) * 2);
+		border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 	}
 </style>

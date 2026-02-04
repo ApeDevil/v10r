@@ -27,21 +27,22 @@
 	}
 	.controls {
 		position: absolute;
-		top: 1rem;
-		left: 1rem;
-		z-index: 10;
+		top: var(--spacing-4);
+		left: var(--spacing-4);
+		z-index: var(--z-sidebar);
 		display: flex;
-		gap: 0.5rem;
+		gap: var(--spacing-2);
 	}
 	button {
-		padding: 0.5rem 1rem;
-		background: #333;
-		color: white;
+		padding: var(--spacing-2) var(--spacing-4);
+		background: var(--color-subtle);
+		color: var(--color-fg);
 		border: none;
-		border-radius: 4px;
+		border-radius: var(--radius-sm);
 		cursor: pointer;
 	}
 	button.active {
-		background: hotpink;
+		background: var(--color-primary);
+		color: var(--color-bg);
 	}
 </style>

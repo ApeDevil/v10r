@@ -40,38 +40,38 @@
 <style>
 	.demo-card {
 		border: 1px solid var(--color-border);
-		border-radius: 0.5rem;
+		border-radius: var(--radius-lg);
 		background: var(--color-bg);
 		overflow: hidden;
 	}
 
 	.demo-header {
-		padding: 1rem 1.5rem;
+		padding: var(--spacing-4) var(--spacing-6);
 		border-bottom: 1px solid var(--color-border);
 		background: var(--color-subtle);
 	}
 
 	.demo-title {
-		font-size: 1rem;
+		font-size: var(--text-fluid-base);
 		font-weight: 600;
 		margin: 0;
 		color: var(--color-fg);
 	}
 
 	.demo-description {
-		margin: 0.25rem 0 0 0;
-		font-size: 0.875rem;
+		margin: var(--spacing-1) 0 0 0;
+		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);
 		line-height: 1.5;
 	}
 
 	.demo-content {
-		padding: 2rem 1.5rem;
+		padding: var(--spacing-7) var(--spacing-6);
 		display: flex;
 		flex-wrap: wrap;
-		gap: 1rem;
+		gap: var(--spacing-4);
 		align-items: center;
-		min-height: 80px;
+		min-height: 5rem;
 	}
 
 	.demo-code {
@@ -79,13 +79,13 @@
 	}
 
 	.demo-code summary {
-		padding: 0.75rem 1.5rem;
+		padding: var(--spacing-3) var(--spacing-6);
 		cursor: pointer;
 		user-select: none;
-		font-size: 0.875rem;
+		font-size: var(--text-fluid-sm);
 		font-weight: 500;
 		color: var(--color-muted);
-		transition: color 0.15s;
+		transition: color var(--duration-fast);
 		background: var(--color-subtle);
 	}
 
@@ -95,7 +95,7 @@
 
 	.demo-code pre {
 		margin: 0;
-		padding: 1rem 1.5rem;
+		padding: var(--spacing-4) var(--spacing-6);
 		overflow-x: auto;
 		background: var(--color-subtle);
 		border-top: 1px solid var(--color-border);
@@ -103,7 +103,7 @@
 
 	.demo-code code {
 		font-family: 'Fira Code', 'Courier New', monospace;
-		font-size: 0.875rem;
+		font-size: var(--text-fluid-sm);
 		line-height: 1.6;
 		color: var(--color-fg);
 	}

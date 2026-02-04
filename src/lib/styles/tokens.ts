@@ -138,9 +138,16 @@ export const colors = {
     light: 'var(--color-error-light)',
     border: 'var(--color-error-border)',
   },
+  info: {
+    DEFAULT: 'var(--color-info)',
+    light: 'var(--color-info-light)',
+  },
   input: {
     border: 'var(--color-input-border)',
   },
+  // Semi-transparent variants
+  bgAlpha: 'var(--color-bg-alpha)',
+  fgAlpha: 'var(--color-fg-alpha)',
 } as const;
 
 // ═══════════════════════════════════════════════════════════════
@@ -176,6 +183,7 @@ export const layout = {
   maxWidth: '80rem',        // 1280px - main content max
   contentWidth: '65ch',     // Optimal reading width
   wideWidth: '90rem',       // 1440px - wide layouts
+  narrowWidth: '50rem',     // 800px - docs/showcase pages
 } as const;
 
 // ═══════════════════════════════════════════════════════════════
@@ -213,10 +221,10 @@ export const borderRadius = {
 } as const;
 
 export const boxShadow = {
-  sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
-  md: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-  lg: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-  xl: '0 20px 25px -5px rgb(0 0 0 / 0.1)',
+  sm: 'var(--shadow-sm)',
+  md: 'var(--shadow-md)',
+  lg: 'var(--shadow-lg)',
+  xl: 'var(--shadow-xl)',
   modal: 'var(--shadow-modal)',
   'glow-primary': 'var(--shadow-glow-primary)',
   'glow-warning': 'var(--shadow-glow-warning)',

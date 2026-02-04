@@ -13,10 +13,10 @@
 	};
 
 	const styles = {
-		success: 'border-success/50 bg-success/10 text-success',
-		error: 'border-error/50 bg-error/10 text-error',
-		warning: 'border-warning/50 bg-warning/10 text-warning',
-		info: 'border-primary/50 bg-primary/10 text-primary'
+		success: 'border-success/50 bg-success-light text-success',
+		error: 'border-error/50 bg-error-light text-error',
+		warning: 'border-warning/50 bg-warning-light text-warning',
+		info: 'border-primary/50 bg-primary-light text-primary'
 	};
 </script>
 

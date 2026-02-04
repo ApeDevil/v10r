@@ -81,6 +81,7 @@
 		<Button
 			variant="ghost"
 			size="icon"
+			class="focus-visible:ring-1"
 			onclick={() => handlePageChange(1)}
 			disabled={currentPage === 1}
 			aria-label="First page"
@@ -92,6 +93,7 @@
 	<Button
 		variant="ghost"
 		size="icon"
+		class="focus-visible:ring-1"
 		onclick={() => handlePageChange(currentPage - 1)}
 		disabled={currentPage === 1}
 		aria-label="Previous page"
@@ -108,6 +110,7 @@
 			<Button
 				variant={currentPage === page ? 'default' : 'ghost'}
 				size="icon"
+				class="focus-visible:ring-1"
 				onclick={() => handlePageChange(page)}
 				aria-label={`Page ${page}`}
 				aria-current={currentPage === page ? 'page' : undefined}
@@ -120,6 +123,7 @@
 	<Button
 		variant="ghost"
 		size="icon"
+		class="focus-visible:ring-1"
 		onclick={() => handlePageChange(currentPage + 1)}
 		disabled={currentPage === totalPages}
 		aria-label="Next page"
@@ -131,6 +135,7 @@
 		<Button
 			variant="ghost"
 			size="icon"
+			class="focus-visible:ring-1"
 			onclick={() => handlePageChange(totalPages)}
 			disabled={currentPage === totalPages}
 			aria-label="Last page"

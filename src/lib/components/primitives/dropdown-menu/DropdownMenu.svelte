@@ -13,9 +13,13 @@
 		disabled?: boolean;
 	}
 
+	interface TriggerProps {
+		props: Record<string, unknown>;
+	}
+
 	interface Props {
 		items: DropdownItem[];
-		trigger: Snippet;
+		trigger: Snippet<[TriggerProps]>;
 		align?: 'start' | 'center' | 'end';
 	}
 
@@ -25,7 +29,7 @@
 <DropdownMenuPrimitive.Root>
 	<DropdownMenuPrimitive.Trigger class="focus-visible:outline-none">
 		{#snippet child({ props })}
-			{@render trigger()}
+			{@render trigger({ props })}
 		{/snippet}
 	</DropdownMenuPrimitive.Trigger>
 

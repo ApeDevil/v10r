@@ -34,12 +34,17 @@
 
 	<div class="demos">
 		<!-- Typography -->
-		<DemoCard title="Typography Scale" description="Fluid font sizes using clamp()">
-			<div class="token-grid">
+		<DemoCard title="Typography Scale" description="Fluid font sizes using clamp() — resize your window to see text scale">
+			<div class="type-scale">
 				{#each Object.entries(fontSize) as [key, value]}
-					<div class="type-sample" style="font-size: {value};">
-						<span class="type-key">{key}</span>
-						<span class="type-value">{value}</span>
+					<div class="type-sample">
+						<div class="type-meta">
+							<span class="type-key">{key}</span>
+							<span class="type-value">{value}</span>
+						</div>
+						<div class="type-preview" style="font-size: {value};">
+							The quick brown fox jumps over the lazy dog
+						</div>
 					</div>
 				{/each}
 			</div>
@@ -112,20 +117,20 @@
 
 <style>
 	.section {
-		scroll-margin-top: 80px;
-		margin-bottom: 3rem;
+		scroll-margin-top: 5rem;
+		margin-bottom: var(--spacing-8);
 	}
 
 	.section-title {
-		font-size: clamp(1.5rem, 3vw, 2rem);
+		font-size: var(--text-fluid-2xl);
 		font-weight: 700;
-		margin: 0 0 0.5rem 0;
+		margin: 0 0 var(--spacing-2) 0;
 		color: var(--color-fg);
 	}
 
 	.section-description {
-		margin: 0 0 2rem 0;
-		font-size: 1rem;
+		margin: 0 0 var(--spacing-7) 0;
+		font-size: var(--text-fluid-base);
 		color: var(--color-muted);
 		line-height: 1.6;
 	}
@@ -133,50 +138,69 @@
 	.demos {
 		display: flex;
 		flex-direction: column;
-		gap: 1.5rem;
+		gap: var(--spacing-6);
 	}
 
 	.token-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-		gap: 1rem;
+		gap: var(--spacing-4);
+		width: 100%;
+	}
+
+	.type-scale {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-6);
 		width: 100%;
 	}
 
 	.type-sample {
-		padding: 0.75rem;
-		border: 1px solid var(--color-border);
-		border-radius: 0.375rem;
 		display: flex;
 		flex-direction: column;
-		gap: 0.25rem;
+		gap: var(--spacing-3);
+		padding: var(--spacing-4);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+	}
+
+	.type-meta {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: var(--spacing-4);
 	}
 
 	.type-key {
-		font-size: 0.75rem;
-		font-weight: 500;
-		color: var(--color-muted);
+		font-size: var(--text-fluid-xs);
+		font-weight: 600;
+		color: var(--color-fg);
 		font-family: 'Fira Code', monospace;
 	}
 
 	.type-value {
-		font-size: 0.75rem;
+		font-size: var(--text-fluid-xs);
 		color: var(--color-muted);
 		font-family: 'Fira Code', monospace;
+	}
+
+	.type-preview {
+		color: var(--color-fg);
+		line-height: 1.4;
 	}
 
 	.spacing-sample {
 		display: flex;
 		align-items: center;
-		gap: 0.75rem;
-		padding: 0.75rem;
+		gap: var(--spacing-3);
+		padding: var(--spacing-3);
 		border: 1px solid var(--color-border);
-		border-radius: 0.375rem;
+		border-radius: var(--radius-md);
 	}
 
 	.spacing-visual {
 		background: var(--color-primary);
-		border-radius: 0.25rem;
+		border-radius: var(--radius-sm);
 		flex-shrink: 0;
 	}
 
@@ -186,14 +210,14 @@
 	}
 
 	.spacing-key {
-		font-size: 0.875rem;
+		font-size: var(--text-fluid-sm);
 		font-weight: 500;
 		color: var(--color-fg);
 		font-family: 'Fira Code', monospace;
 	}
 
 	.spacing-value {
-		font-size: 0.75rem;
+		font-size: var(--text-fluid-xs);
 		color: var(--color-muted);
 		font-family: 'Fira Code', monospace;
 	}
@@ -203,32 +227,32 @@
 	}
 
 	.color-note {
-		font-size: 0.875rem;
+		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);
-		margin: 0 0 1rem 0;
+		margin: 0 0 var(--spacing-4) 0;
 	}
 
 	.color-note code {
 		background: var(--color-subtle);
-		padding: 0.125rem 0.375rem;
-		border-radius: 0.25rem;
+		padding: var(--spacing-1) var(--spacing-2);
+		border-radius: var(--radius-sm);
 		font-family: 'Fira Code', monospace;
-		font-size: 0.8125rem;
+		font-size: var(--text-fluid-xs);
 	}
 
 	.color-swatch {
 		display: flex;
 		align-items: center;
-		gap: 0.75rem;
-		padding: 0.75rem;
+		gap: var(--spacing-3);
+		padding: var(--spacing-3);
 		border: 1px solid var(--color-border);
-		border-radius: 0.375rem;
+		border-radius: var(--radius-md);
 	}
 
 	.color-preview {
 		width: 2.5rem;
 		height: 2.5rem;
-		border-radius: 0.375rem;
+		border-radius: var(--radius-md);
 		border: 1px solid var(--color-border);
 		flex-shrink: 0;
 	}
@@ -239,35 +263,35 @@
 	}
 
 	.color-name {
-		font-size: 0.875rem;
+		font-size: var(--text-fluid-sm);
 		font-weight: 500;
 		color: var(--color-fg);
 	}
 
 	.color-var {
-		font-size: 0.75rem;
+		font-size: var(--text-fluid-xs);
 		color: var(--color-muted);
 		font-family: 'Fira Code', monospace;
 	}
 
 	.z-index-sample {
-		padding: 0.75rem;
+		padding: var(--spacing-3);
 		border: 1px solid var(--color-border);
-		border-radius: 0.375rem;
+		border-radius: var(--radius-md);
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
 	}
 
 	.z-key {
-		font-size: 0.875rem;
+		font-size: var(--text-fluid-sm);
 		font-weight: 500;
 		color: var(--color-fg);
 		font-family: 'Fira Code', monospace;
 	}
 
 	.z-value {
-		font-size: 0.875rem;
+		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);
 		font-family: 'Fira Code', monospace;
 	}

@@ -26,11 +26,13 @@
 		<label
 			for={id}
 			class={cn(
-				'flex h-5 w-5 shrink-0 items-center justify-center rounded border border-border cursor-pointer',
+				'flex h-5 w-5 shrink-0 items-center justify-center rounded cursor-pointer',
+				'bg-subtle border-2 border-input-border',
 				'transition-colors duration-fast',
-				'peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-primary',
-				'peer-disabled:cursor-not-allowed peer-disabled:opacity-50',
-				'peer-checked:bg-primary peer-checked:border-primary peer-checked:text-white'
+				'hover:border-fg/50 hover:bg-fg/5',
+				'peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-1',
+				'peer-disabled:cursor-not-allowed peer-disabled:opacity-50 peer-disabled:hover:border-input-border peer-disabled:hover:bg-subtle',
+				'peer-checked:bg-primary peer-checked:border-primary peer-checked:text-white peer-checked:hover:border-primary peer-checked:hover:bg-primary'
 			)}
 		>
 			{#if checked}

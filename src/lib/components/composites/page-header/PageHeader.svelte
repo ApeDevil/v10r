@@ -67,22 +67,22 @@
 	.page-header {
 		background: var(--color-bg);
 		border-bottom: 1px solid var(--color-border);
-		padding: 1.5rem 2rem;
-		margin: -2rem -2rem 2rem -2rem;
-		width: calc(100% + 4rem);
+		padding: var(--spacing-6) var(--spacing-7);
+		margin: calc(-1 * var(--spacing-7)) calc(-1 * var(--spacing-7)) var(--spacing-7) calc(-1 * var(--spacing-7));
+		width: calc(100% + var(--spacing-7) * 2);
 		box-sizing: border-box;
 	}
 
 	.page-header.sticky {
 		position: sticky;
 		top: 0;
-		z-index: 10;
+		z-index: var(--z-sidebar);
 		backdrop-filter: blur(8px);
-		background: var(--color-bg-alpha, rgba(255, 255, 255, 0.95));
+		background: var(--color-bg-alpha);
 	}
 
 	.breadcrumbs {
-		margin-bottom: 1rem;
+		margin-bottom: var(--spacing-4);
 	}
 
 	.breadcrumbs ol {
@@ -91,20 +91,20 @@
 		list-style: none;
 		margin: 0;
 		padding: 0;
-		gap: 0.5rem;
+		gap: var(--spacing-2);
 	}
 
 	.breadcrumbs li {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
-		font-size: 0.875rem;
+		gap: var(--spacing-2);
+		font-size: var(--text-fluid-sm);
 	}
 
 	.breadcrumbs a {
 		color: var(--color-primary);
 		text-decoration: none;
-		transition: color 0.2s;
+		transition: color var(--duration-fast);
 	}
 
 	.breadcrumbs a:hover {
@@ -115,7 +115,7 @@
 	.breadcrumbs a:focus-visible {
 		outline: 2px solid var(--color-primary);
 		outline-offset: 2px;
-		border-radius: 2px;
+		border-radius: var(--radius-sm);
 	}
 
 	.breadcrumbs span[aria-current] {
@@ -132,7 +132,7 @@
 		display: flex;
 		align-items: flex-start;
 		justify-content: space-between;
-		gap: 2rem;
+		gap: var(--spacing-7);
 	}
 
 	.header-text {
@@ -141,7 +141,7 @@
 	}
 
 	h1 {
-		font-size: clamp(1.75rem, 4vw, 2.25rem);
+		font-size: var(--text-fluid-3xl);
 		font-weight: 700;
 		margin: 0;
 		color: var(--color-fg);
@@ -149,8 +149,8 @@
 	}
 
 	.description {
-		margin: 0.5rem 0 0 0;
-		font-size: 1rem;
+		margin: var(--spacing-2) 0 0 0;
+		font-size: var(--text-fluid-base);
 		color: var(--color-muted);
 		line-height: 1.6;
 	}
@@ -158,21 +158,21 @@
 	.header-actions {
 		display: flex;
 		align-items: center;
-		gap: 0.75rem;
+		gap: var(--spacing-3);
 		flex-shrink: 0;
 	}
 
 	@media (max-width: 640px) {
 		.page-header {
-			padding: 1rem 1rem;
-			margin: -1rem -1rem 1rem -1rem;
-			width: calc(100% + 2rem);
+			padding: var(--spacing-4) var(--spacing-4);
+			margin: calc(-1 * var(--spacing-4)) calc(-1 * var(--spacing-4)) var(--spacing-4) calc(-1 * var(--spacing-4));
+			width: calc(100% + var(--spacing-4) * 2);
 		}
 
 		.header-content {
 			flex-direction: column;
 			align-items: flex-start;
-			gap: 1rem;
+			gap: var(--spacing-4);
 		}
 
 		.header-actions {

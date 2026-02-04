@@ -21,14 +21,14 @@
 
 <TabsPrimitive.Root bind:value class={cn('w-full flex flex-col gap-4', className)}>
 	<TabsPrimitive.List
-		class="inline-flex h-10 items-center justify-center rounded-md bg-muted/20 p-1"
+		class="inline-flex h-10 items-center justify-center rounded-lg bg-muted/20 p-1"
 	>
 		{#each tabs as tab}
 			<TabsPrimitive.Trigger
 				value={tab.value}
 				disabled={tab.disabled}
 				class={cn(
-					'inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5',
+					'inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5',
 					'text-fluid-sm font-medium ring-offset-bg transition-all',
 					'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
 					'disabled:pointer-events-none disabled:opacity-50',

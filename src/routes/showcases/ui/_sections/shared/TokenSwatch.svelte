@@ -30,10 +30,10 @@
 	.token-swatch {
 		display: flex;
 		align-items: center;
-		gap: 0.75rem;
-		padding: 0.75rem;
+		gap: var(--spacing-3);
+		padding: var(--spacing-3);
 		border: 1px solid var(--color-border);
-		border-radius: 0.375rem;
+		border-radius: var(--radius-md);
 		background: var(--color-bg);
 	}
 
@@ -44,10 +44,10 @@
 	.color-preview,
 	.shadow-preview,
 	.radius-preview {
-		width: 40px;
-		height: 40px;
+		width: 2.5rem;
+		height: 2.5rem;
 		border: 1px solid var(--color-border);
-		border-radius: 0.25rem;
+		border-radius: var(--radius-sm);
 	}
 
 	.shadow-preview {
@@ -64,14 +64,14 @@
 	}
 
 	.token-label {
-		font-size: 0.875rem;
+		font-size: var(--text-fluid-sm);
 		font-weight: 500;
 		color: var(--color-fg);
-		margin-bottom: 0.125rem;
+		margin-bottom: var(--spacing-1);
 	}
 
 	.token-value {
-		font-size: 0.75rem;
+		font-size: var(--text-fluid-xs);
 		font-family: 'Fira Code', monospace;
 		color: var(--color-muted);
 		word-break: break-all;

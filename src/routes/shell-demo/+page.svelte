@@ -241,36 +241,36 @@
 
 <style>
 	.demo-page {
-		max-width: 800px;
+		max-width: var(--layout-narrow-width);
 		margin: 0 auto;
-		padding: 2rem 1rem;
+		padding: var(--spacing-7) var(--spacing-4);
 	}
 
 	h2 {
-		font-size: 1.5rem;
-		margin-bottom: 1rem;
+		font-size: var(--text-fluid-xl);
+		margin-bottom: var(--spacing-4);
 		color: var(--color-fg);
 	}
 
 	h3 {
-		font-size: 1.125rem;
-		margin-top: 1rem;
+		font-size: var(--text-fluid-lg);
+		margin-top: var(--spacing-4);
 		color: var(--color-fg);
 	}
 
 	.demo-section {
-		margin-bottom: 3rem;
-		padding: 1.5rem;
+		margin-bottom: var(--spacing-8);
+		padding: var(--spacing-6);
 		border: 1px solid var(--color-border);
-		border-radius: 0.5rem;
+		border-radius: var(--radius-lg);
 		background: var(--color-bg);
 	}
 
 	.state-list {
 		display: grid;
 		grid-template-columns: auto 1fr;
-		gap: 0.5rem 1rem;
-		margin-bottom: 1rem;
+		gap: var(--spacing-2) var(--spacing-4);
+		margin-bottom: var(--spacing-4);
 	}
 
 	.state-list dt {
@@ -285,30 +285,30 @@
 
 	.button-group {
 		display: flex;
-		gap: 0.5rem;
+		gap: var(--spacing-2);
 		flex-wrap: wrap;
 	}
 
 	.toast-preview {
-		margin-top: 1rem;
-		padding: 1rem;
+		margin-top: var(--spacing-4);
+		padding: var(--spacing-4);
 		background: var(--color-border);
-		border-radius: 0.375rem;
+		border-radius: var(--radius-md);
 	}
 
 	.toast-preview ul {
 		list-style: none;
-		margin-top: 0.5rem;
+		margin-top: var(--spacing-2);
 	}
 
 	.toast-item {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding: 0.75rem;
-		margin-bottom: 0.5rem;
-		border-radius: 0.375rem;
-		color: white;
+		padding: var(--spacing-3);
+		margin-bottom: var(--spacing-2);
+		border-radius: var(--radius-md);
+		color: var(--color-bg);
 	}
 
 	.toast-success {
@@ -326,36 +326,36 @@
 
 
 	ul {
-		margin-left: 1.5rem;
+		margin-left: var(--spacing-6);
 		color: var(--color-muted);
 	}
 
 	li {
-		margin-bottom: 0.5rem;
+		margin-bottom: var(--spacing-2);
 	}
 
 	p {
 		color: var(--color-muted);
-		margin-bottom: 1rem;
+		margin-bottom: var(--spacing-4);
 	}
 
 	.note {
 		font-style: italic;
-		font-size: 0.875rem;
-		padding: 0.75rem;
+		font-size: var(--text-fluid-sm);
+		padding: var(--spacing-3);
 		background: var(--color-border);
-		border-radius: 0.375rem;
-		margin-top: 1rem;
+		border-radius: var(--radius-md);
+		margin-top: var(--spacing-4);
 	}
 
 	kbd {
 		display: inline-block;
-		padding: 0.25rem 0.5rem;
-		font-size: 0.75rem;
+		padding: var(--spacing-1) var(--spacing-2);
+		font-size: var(--text-fluid-xs);
 		font-family: ui-monospace, monospace;
 		background: var(--color-border);
 		border: 1px solid var(--color-muted);
-		border-radius: 0.25rem;
+		border-radius: var(--radius-sm);
 		font-weight: 600;
 	}
 </style>

@@ -27,6 +27,6 @@
 	.skeleton-text {
 		display: flex;
 		flex-direction: column;
-		gap: 0.5rem;
+		gap: var(--spacing-2);
 	}
 </style>

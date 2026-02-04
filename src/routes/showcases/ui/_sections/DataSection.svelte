@@ -65,20 +65,20 @@
 
 <style>
 	.section {
-		scroll-margin-top: 80px;
-		margin-bottom: 3rem;
+		scroll-margin-top: 5rem;
+		margin-bottom: var(--spacing-8);
 	}
 
 	.section-title {
-		font-size: clamp(1.5rem, 3vw, 2rem);
+		font-size: var(--text-fluid-2xl);
 		font-weight: 700;
-		margin: 0 0 0.5rem 0;
+		margin: 0 0 var(--spacing-2) 0;
 		color: var(--color-fg);
 	}
 
 	.section-description {
-		margin: 0 0 2rem 0;
-		font-size: 1rem;
+		margin: 0 0 var(--spacing-7) 0;
+		font-size: var(--text-fluid-base);
 		color: var(--color-muted);
 		line-height: 1.6;
 	}
@@ -86,7 +86,7 @@
 	.demos {
 		display: flex;
 		flex-direction: column;
-		gap: 1.5rem;
+		gap: var(--spacing-6);
 	}
 
 	.table-container {
@@ -98,13 +98,13 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 1rem;
+		gap: var(--spacing-4);
 		width: 100%;
 	}
 
 	.page-info {
 		margin: 0;
-		font-size: 0.875rem;
+		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);
 	}
 </style>

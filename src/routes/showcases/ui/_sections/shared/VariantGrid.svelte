@@ -19,7 +19,7 @@
 	.variant-container {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 1rem;
+		gap: var(--spacing-4);
 		width: 100%;
 	}
 
