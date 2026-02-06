@@ -54,7 +54,7 @@
 </script>
 
 <aside
-	class={cn('fixed top-0 left-0 bg-surface-1 border-r border-border z-sidebar flex flex-col overflow-hidden transition-all duration-normal motion-reduce:transition-none group', sidebar.expanded && 'shadow-lg', className)}
+	class={cn('fixed top-0 left-0 bg-surface-1 border-r border-border z-sidebar flex flex-col overflow-hidden transition-all duration-normal motion-reduce:transition-none', sidebar.expanded && 'shadow-lg', className)}
 	style:width={sidebar.expanded ? 'var(--sidebar-expanded-width)' : 'var(--sidebar-rail-width)'}
 	style:height="100dvh"
 	onmouseenter={handleMouseEnter}
@@ -77,12 +77,4 @@
 			forceExpanded={sidebar.expanded}
 		/>
 	</div>
-
-	<!-- Expand affordance indicator (only visible when collapsed) -->
-	{#if !sidebar.expanded}
-		<div
-			class="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-16 bg-primary/0 group-hover:bg-primary/30 rounded-l-full transition-all duration-normal motion-reduce:transition-none"
-			aria-hidden="true"
-		/>
-	{/if}
 </aside>
