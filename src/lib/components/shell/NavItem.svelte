@@ -69,7 +69,7 @@
 		class={cn(
 			'flex items-center no-underline text-muted rounded-md transition-all duration-fast whitespace-nowrap relative hover:bg-border hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none',
 			forceExpanded
-				? 'gap-3 p-2 flex-1'
+				? 'h-10 gap-3 px-2 flex-1'
 				: 'h-10 w-10 justify-center',
 			isActive() && 'bg-primary text-white font-semibold'
 		)}

@@ -48,11 +48,11 @@
 	<button
 		type="button"
 		class={cn(
-			'flex items-center rounded-md text-muted cursor-pointer transition-all duration-fast motion-reduce:transition-none',
+			'flex items-center text-muted cursor-pointer transition-all duration-fast motion-reduce:transition-none',
 			'focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2',
 			isExpanded
-				? 'trigger-input h-10 gap-2 px-2 bg-bg border border-border text-sm text-left w-full hover:border-primary hover:bg-border'
-				: 'h-10 w-10 justify-center border-none bg-transparent hover:bg-border hover:text-fg'
+				? 'trigger-input h-10 gap-2 px-2 bg-bg border border-border rounded-md text-sm text-left w-full hover:border-primary hover:bg-border'
+				: 'h-10 w-10 justify-center border-none bg-transparent rounded-full opacity-60 hover:opacity-100 hover:bg-border hover:text-fg'
 		)}
 		onclick={() => modals.open('quickSearch')}
 		aria-label={isExpanded ? 'Search' : 'Search (⌘K)'}
@@ -71,11 +71,11 @@
 	<button
 		type="button"
 		class={cn(
-			'flex items-center rounded-md text-muted cursor-pointer transition-all duration-fast motion-reduce:transition-none',
+			'flex items-center text-muted cursor-pointer transition-all duration-fast motion-reduce:transition-none',
 			'focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2',
 			isExpanded
-				? 'trigger-input h-10 gap-2 px-2 bg-bg border border-border text-sm text-left w-full hover:border-primary hover:bg-border'
-				: 'h-10 w-10 justify-center border-none bg-transparent hover:bg-border hover:text-fg'
+				? 'trigger-input h-10 gap-2 px-2 bg-bg border border-border rounded-md text-sm text-left w-full hover:border-primary hover:bg-border'
+				: 'h-10 w-10 justify-center border-none bg-transparent rounded-full opacity-60 hover:opacity-100 hover:bg-border hover:text-fg'
 		)}
 		onclick={() => modals.open('aiAssistant')}
 		aria-label={isExpanded ? 'AI Assistant' : 'AI Assistant (⌘J)'}
