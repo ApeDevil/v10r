@@ -8,8 +8,6 @@
 	import { DropdownMenu } from 'bits-ui';
 	import { cn } from '$lib/utils/cn';
 	import { getTheme } from '$lib/stores/theme.svelte';
-	import { Avatar } from '$lib/components/primitives/avatar';
-	import { Button } from '$lib/components/primitives/button';
 
 	interface User {
 		name: string;
@@ -44,13 +42,16 @@
 		<DropdownMenu.Root>
 			<DropdownMenu.Trigger
 				class={cn(
-					'flex items-center gap-3 p-3 w-full bg-transparent border border-border rounded-md text-fg cursor-pointer',
+					'flex items-center bg-transparent rounded-md text-fg cursor-pointer',
 					'transition-all duration-fast hover:bg-border focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2',
-					'motion-reduce:transition-none data-[state=open]:bg-border'
+					'motion-reduce:transition-none data-[state=open]:bg-border',
+					forceExpanded
+						? 'gap-3 p-3 w-full border border-border'
+						: 'h-10 w-10 justify-center border-none'
 				)}
 				aria-label={forceExpanded ? 'User menu' : `User menu for ${user.name}`}
 			>
-				<Avatar src={user.avatarUrl} alt={user.name} fallback={user.name} size="sm" />
+				<span class="i-lucide-user text-icon-md shrink-0" />
 
 				{#if forceExpanded}
 					<div class="user-info">

@@ -71,7 +71,7 @@
 
 	<SidebarNav />
 
-	<div class="py-2 border-t border-border">
+	<div class="p-2 border-t border-border">
 		<UserMenu
 			user={{ name: 'Demo User', email: 'demo@velociraptor.dev' }}
 			forceExpanded={sidebar.expanded}
