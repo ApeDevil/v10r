@@ -97,7 +97,7 @@
 			<button
 				type="button"
 				class={cn(
-					'absolute right-0 flex items-center justify-center min-w-[44px] min-h-[44px] p-0 bg-transparent border-none rounded-sm cursor-pointer',
+					'absolute right-0 flex items-center justify-center w-10 h-10 p-0 bg-transparent border-none rounded-md cursor-pointer',
 					'transition-all duration-fast motion-reduce:transition-none',
 					isDropdownOpen && 'rotate-90 motion-reduce:rotate-0',
 					isActive() ? 'text-white hover:bg-white/20' : 'text-muted hover:bg-border'
