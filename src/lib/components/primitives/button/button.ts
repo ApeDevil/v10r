@@ -13,8 +13,8 @@ export const buttonVariants = cva(
 				default: 'bg-fg text-bg hover:bg-primary hover:text-white',
 				primary: 'bg-primary text-white',
 				secondary: 'bg-border text-fg hover:bg-border/80',
-				outline: 'border border-border bg-transparent text-fg hover:bg-fg/10',
-				ghost: 'text-fg hover:bg-fg/10',
+				outline: 'border border-border bg-transparent text-fg',
+				ghost: 'text-fg',
 				destructive: 'bg-error text-white hover:bg-error/90'
 			},
 			size: {

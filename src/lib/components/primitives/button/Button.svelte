@@ -67,17 +67,26 @@
 
 	/* Outline: fg-colored border */
 	button:global(.border-border) {
+		border-width: 1px;
+		border-style: solid;
 		border-color: var(--color-fg);
 	}
 
+	/* Outline hover: shadow in light, glow in dark */
 	button:global(.border-border):hover:not(:disabled) {
-		box-shadow:
-			0 0 14px 2px color-mix(in srgb, var(--color-fg) 20%, transparent),
-			inset 0 0 0 1px var(--color-fg);
+		box-shadow: 0 2px 8px 0 color-mix(in srgb, var(--color-fg) 20%, transparent);
 	}
 
-	/* Ghost: soft foreground-tinted glow */
+	:global(.dark) button:global(.border-border):hover:not(:disabled) {
+		box-shadow: 0 0 14px 2px color-mix(in srgb, var(--color-fg) 20%, transparent);
+	}
+
+	/* Ghost hover: shadow in light, glow in dark */
 	button:global(.text-fg):not(:global(.bg-fg)):not(:global(.bg-primary)):not(:global(.bg-border)):not(:global(.bg-error)):hover:not(:disabled) {
+		box-shadow: 0 2px 8px 0 color-mix(in srgb, var(--color-fg) 15%, transparent);
+	}
+
+	:global(.dark) button:global(.text-fg):not(:global(.bg-fg)):not(:global(.bg-primary)):not(:global(.bg-border)):not(:global(.bg-error)):hover:not(:disabled) {
 		box-shadow: 0 0 10px 2px color-mix(in srgb, var(--color-fg) 15%, transparent);
 	}
 
