@@ -1,5 +1,6 @@
 <script lang="ts">
 	import DemoCard from './shared/DemoCard.svelte';
+	import VariantGrid from './shared/VariantGrid.svelte';
 	import {
 		Table,
 		Header as TableHeader,
@@ -7,11 +8,13 @@
 		Row as TableRow,
 		HeaderCell as TableHeaderCell,
 		Cell as TableCell,
-		Pagination
+		Badge,
+		Avatar,
+		Skeleton,
+		SkeletonText,
+		SkeletonCard,
+		SkeletonAvatar
 	} from '$lib/components';
-
-	let currentPage = $state(1);
-	const totalPages = 10;
 
 	const sampleData = [
 		{ id: '1', name: 'Alice Johnson', email: 'alice@example.com', role: 'Admin' },
@@ -20,9 +23,9 @@
 	];
 </script>
 
-<section id="data" class="section">
-	<h2 class="section-title">Data</h2>
-	<p class="section-description">Components for displaying tabular data.</p>
+<section id="prim-data-display" class="section">
+	<h2 class="section-title">Data Display</h2>
+	<p class="section-description">Components for presenting data and status information.</p>
 
 	<div class="demos">
 		<!-- Table -->
@@ -49,15 +52,38 @@
 			</div>
 		</DemoCard>
 
-		<!-- Pagination -->
-		<DemoCard title="Pagination" description="Page navigation">
-			<div class="pagination-demo">
-				<Pagination
-					{currentPage}
-					{totalPages}
-					onPageChange={(page) => (currentPage = page)}
-				/>
-				<p class="page-info">Current page: {currentPage} of {totalPages}</p>
+		<!-- Badge Variants -->
+		<DemoCard title="Badge Variants" description="Status indicators">
+			<VariantGrid layout="row">
+				<Badge variant="default">Default</Badge>
+				<Badge variant="secondary">Secondary</Badge>
+				<Badge variant="success">Success</Badge>
+				<Badge variant="warning">Warning</Badge>
+				<Badge variant="error">Error</Badge>
+				<Badge variant="outline">Outline</Badge>
+			</VariantGrid>
+		</DemoCard>
+
+		<!-- Avatar -->
+		<DemoCard title="Avatar" description="User profile images with fallback">
+			<VariantGrid layout="row">
+				<Avatar size="sm" fallback="AB" />
+				<Avatar size="md" fallback="CD" />
+				<Avatar size="lg" fallback="EF" />
+			</VariantGrid>
+		</DemoCard>
+
+		<!-- Skeleton -->
+		<DemoCard title="Skeleton" description="Loading placeholders">
+			<div class="skeleton-demo">
+				<SkeletonCard />
+				<div class="skeleton-text-demo">
+					<SkeletonAvatar />
+					<div class="skeleton-text-group">
+						<SkeletonText width="60%" />
+						<SkeletonText width="40%" />
+					</div>
+				</div>
 			</div>
 		</DemoCard>
 	</div>
@@ -94,17 +120,24 @@
 		overflow-x: auto;
 	}
 
-	.pagination-demo {
+	.skeleton-demo {
 		display: flex;
 		flex-direction: column;
-		align-items: center;
-		gap: var(--spacing-4);
+		gap: var(--spacing-6);
 		width: 100%;
+		max-width: 25rem;
 	}
 
-	.page-info {
-		margin: 0;
-		font-size: var(--text-fluid-sm);
-		color: var(--color-muted);
+	.skeleton-text-demo {
+		display: flex;
+		gap: var(--spacing-4);
+		align-items: center;
+	}
+
+	.skeleton-text-group {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-2);
 	}
 </style>

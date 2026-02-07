@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { sections } from './_sections';
+	import { showcase, getAllSections, isSectionGroup } from './_sections';
 	import { getTheme } from '$lib/stores/theme.svelte';
 	import { PageHeader } from '$lib/components/composites';
 
 	const theme = getTheme();
+	const allSections = getAllSections(showcase);
 
-	let activeSection = $state(sections[0].id);
+	let activeSection = $state(allSections[0].id);
 	let navContainer: HTMLElement;
 	let sectionRefs: Map<string, HTMLElement> = new Map();
 
@@ -29,7 +30,7 @@
 		);
 
 		// Observe all sections
-		sections.forEach((section) => {
+		allSections.forEach((section) => {
 			const element = document.getElementById(section.id);
 			if (element) {
 				sectionRefs.set(section.id, element);
@@ -71,22 +72,40 @@
 	<!-- Section nav (sticky within content area) -->
 	<nav bind:this={navContainer} class="section-nav" aria-label="Section navigation">
 		<div class="nav-scroll">
-			{#each sections as section}
-				<button
-					class="nav-item"
-					class:active={activeSection === section.id}
-					onclick={() => scrollToSection(section.id)}
-					aria-current={activeSection === section.id ? 'true' : undefined}
-				>
-					{section.label}
-				</button>
+			{#each showcase as entry}
+				{#if isSectionGroup(entry)}
+					<div class="nav-group">
+						<span class="nav-group-label">{entry.label}</span>
+						{#each entry.sections as section}
+							<button
+								class="nav-item"
+								class:active={activeSection === section.id}
+								onclick={() => scrollToSection(section.id)}
+								aria-current={activeSection === section.id ? 'true' : undefined}
+							>
+								{section.label}
+							</button>
+						{/each}
+					</div>
+				{:else}
+					<div class="nav-group">
+						<button
+							class="nav-item"
+							class:active={activeSection === entry.id}
+							onclick={() => scrollToSection(entry.id)}
+							aria-current={activeSection === entry.id ? 'true' : undefined}
+						>
+							{entry.label}
+						</button>
+					</div>
+				{/if}
 			{/each}
 		</div>
 	</nav>
 
 	<!-- Main content -->
 	<main id="main-content" class="content">
-		{#each sections as section}
+		{#each allSections as section}
 			{@const SectionComponent = section.component}
 			<SectionComponent />
 		{/each}
@@ -137,6 +156,7 @@
 		scrollbar-width: thin;
 		scrollbar-color: var(--color-border) transparent;
 		padding: var(--spacing-3) 0;
+		align-items: center;
 	}
 
 	.nav-scroll::-webkit-scrollbar {
@@ -150,6 +170,28 @@
 	.nav-scroll::-webkit-scrollbar-thumb {
 		background: var(--color-border);
 		border-radius: var(--radius-sm);
+	}
+
+	.nav-group {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-1);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-lg);
+		padding: var(--spacing-1);
+		flex-shrink: 0;
+	}
+
+	.nav-group-label {
+		flex-shrink: 0;
+		padding: var(--spacing-1) var(--spacing-2);
+		font-size: var(--text-fluid-xs);
+		font-weight: 600;
+		color: var(--color-fg);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		white-space: nowrap;
+		user-select: none;
 	}
 
 	.nav-item {

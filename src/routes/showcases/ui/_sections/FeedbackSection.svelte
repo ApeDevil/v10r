@@ -1,7 +1,7 @@
 <script lang="ts">
 	import DemoCard from './shared/DemoCard.svelte';
 	import VariantGrid from './shared/VariantGrid.svelte';
-	import { Alert, Badge, Skeleton, SkeletonText, SkeletonCard, SkeletonAvatar, EmptyState } from '$lib/components';
+	import { Alert, EmptyState } from '$lib/components';
 	import { getToast } from '$lib/stores/toast.svelte';
 
 	const toast = getToast();
@@ -11,7 +11,7 @@
 	}
 </script>
 
-<section id="feedback" class="section">
+<section id="comp-feedback" class="section">
 	<h2 class="section-title">Feedback</h2>
 	<p class="section-description">Components that communicate status and information.</p>
 
@@ -36,18 +36,6 @@
 			/>
 		</DemoCard>
 
-		<!-- Badge Variants -->
-		<DemoCard title="Badge Variants" description="Status indicators">
-			<VariantGrid layout="row">
-				<Badge variant="default">Default</Badge>
-				<Badge variant="secondary">Secondary</Badge>
-				<Badge variant="success">Success</Badge>
-				<Badge variant="warning">Warning</Badge>
-				<Badge variant="error">Error</Badge>
-				<Badge variant="outline">Outline</Badge>
-			</VariantGrid>
-		</DemoCard>
-
 		<!-- Toast -->
 		<DemoCard title="Toast" description="Temporary notifications">
 			<VariantGrid layout="row">
@@ -56,20 +44,6 @@
 				<button class="toast-btn" onclick={() => showToast('warning')}>Warning Toast</button>
 				<button class="toast-btn" onclick={() => showToast('info')}>Info Toast</button>
 			</VariantGrid>
-		</DemoCard>
-
-		<!-- Skeleton -->
-		<DemoCard title="Skeleton" description="Loading placeholders">
-			<div class="skeleton-demo">
-				<SkeletonCard />
-				<div class="skeleton-text-demo">
-					<SkeletonAvatar />
-					<div class="skeleton-text-group">
-						<SkeletonText width="60%" />
-						<SkeletonText width="40%" />
-					</div>
-				</div>
-			</div>
 		</DemoCard>
 
 		<!-- Empty State -->
@@ -133,26 +107,5 @@
 
 	.toast-btn:active {
 		transform: scale(0.98);
-	}
-
-	.skeleton-demo {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-6);
-		width: 100%;
-		max-width: 25rem;
-	}
-
-	.skeleton-text-demo {
-		display: flex;
-		gap: var(--spacing-4);
-		align-items: center;
-	}
-
-	.skeleton-text-group {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-2);
 	}
 </style>

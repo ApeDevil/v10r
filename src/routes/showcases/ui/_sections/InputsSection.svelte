@@ -1,7 +1,7 @@
 <script lang="ts">
 	import DemoCard from './shared/DemoCard.svelte';
 	import VariantGrid from './shared/VariantGrid.svelte';
-	import { Input, Select, Checkbox } from '$lib/components';
+	import { Input, Select, Checkbox, Combobox } from '$lib/components';
 
 	let textValue = $state('');
 	let emailValue = $state('');
@@ -10,9 +10,10 @@
 	let checkbox1 = $state(false);
 	let checkbox2 = $state(true);
 	let checkbox3 = $state(false);
+	let comboboxValue = $state<string | undefined>(undefined);
 </script>
 
-<section id="inputs" class="section">
+<section id="prim-inputs" class="section">
 	<h2 class="section-title">Inputs</h2>
 	<p class="section-description">Form input elements for user data entry.</p>
 
@@ -55,6 +56,23 @@
 				<Checkbox bind:checked={checkbox1} label="Unchecked" />
 				<Checkbox bind:checked={checkbox2} label="Checked" />
 				<Checkbox bind:checked={checkbox3} label="Disabled" disabled />
+			</VariantGrid>
+		</DemoCard>
+
+		<!-- Combobox -->
+		<DemoCard title="Combobox" description="Searchable dropdown selection">
+			<VariantGrid layout="grid">
+				<Combobox
+					bind:selected={comboboxValue}
+					placeholder="Search a framework..."
+					options={[
+						{ value: 'svelte', label: 'Svelte' },
+						{ value: 'react', label: 'React' },
+						{ value: 'vue', label: 'Vue' },
+						{ value: 'angular', label: 'Angular' },
+						{ value: 'solid', label: 'SolidJS' }
+					]}
+				/>
 			</VariantGrid>
 		</DemoCard>
 	</div>

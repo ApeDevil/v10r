@@ -4,7 +4,7 @@
 	import { Button, DropdownMenu } from '$lib/components';
 </script>
 
-<section id="actions" class="section">
+<section id="prim-actions" class="section">
 	<h2 class="section-title">Actions</h2>
 	<p class="section-description">Interactive elements that trigger actions.</p>
 

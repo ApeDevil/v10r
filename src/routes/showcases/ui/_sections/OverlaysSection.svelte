@@ -1,20 +1,14 @@
 <script lang="ts">
 	import DemoCard from './shared/DemoCard.svelte';
-	import VariantGrid from './shared/VariantGrid.svelte';
-	import { Dialog, Drawer, Button, ConfirmDialog } from '$lib/components';
+	import { Dialog, Drawer, Button, Tabs } from '$lib/components';
 	import { Tooltip, Popover } from '$lib/components';
 
 	let dialogOpen = $state(false);
 	let drawerOpen = $state(false);
-	let confirmOpen = $state(false);
-	let confirmResult = $state<boolean | null>(null);
-
-	async function handleConfirm() {
-		confirmOpen = true;
-	}
+	let tabValue = $state('tab1');
 </script>
 
-<section id="overlays" class="section">
+<section id="prim-overlays" class="section">
 	<h2 class="section-title">Overlays</h2>
 	<p class="section-description">Components that appear above other content.</p>
 
@@ -46,33 +40,6 @@
 			</Drawer>
 		</DemoCard>
 
-		<!-- Confirm Dialog -->
-		<DemoCard title="Confirm Dialog" description="Confirmation prompt">
-			<Button onclick={handleConfirm} variant="destructive">Delete Item</Button>
-			{#if confirmResult !== null}
-				<p class="confirm-result">
-					Result: {confirmResult ? 'Confirmed' : 'Cancelled'}
-				</p>
-			{/if}
-
-			<ConfirmDialog
-				bind:open={confirmOpen}
-				title="Confirm Delete"
-				description="Are you sure you want to delete this item? This action cannot be undone."
-				confirmLabel="Delete"
-				cancelLabel="Cancel"
-				destructive
-				onconfirm={() => {
-					confirmResult = true;
-					confirmOpen = false;
-				}}
-				oncancel={() => {
-					confirmResult = false;
-					confirmOpen = false;
-				}}
-			/>
-		</DemoCard>
-
 		<!-- Tooltip -->
 		<DemoCard title="Tooltip" description="Hover hint">
 			<Tooltip content="This is a tooltip">
@@ -94,6 +61,32 @@
 					</div>
 				{/snippet}
 			</Popover>
+		</DemoCard>
+
+		<!-- Tabs -->
+		<DemoCard title="Tabs" description="Tabbed interface">
+			<div class="tabs-demo">
+				<Tabs
+					bind:value={tabValue}
+					tabs={[
+						{
+							value: 'tab1',
+							label: 'Tab 1',
+							content: () => 'Content for Tab 1'
+						},
+						{
+							value: 'tab2',
+							label: 'Tab 2',
+							content: () => 'Content for Tab 2'
+						},
+						{
+							value: 'tab3',
+							label: 'Tab 3',
+							content: () => 'Content for Tab 3'
+						}
+					]}
+				/>
+			</div>
 		</DemoCard>
 	</div>
 </section>
@@ -145,12 +138,6 @@
 		margin-top: var(--spacing-6);
 	}
 
-	.confirm-result {
-		margin-top: var(--spacing-2);
-		font-size: var(--text-fluid-sm);
-		color: var(--color-muted);
-	}
-
 	.popover-content {
 		padding: var(--spacing-2);
 	}
@@ -167,5 +154,9 @@
 		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);
 		line-height: 1.5;
+	}
+
+	.tabs-demo {
+		width: 100%;
 	}
 </style>

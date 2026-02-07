@@ -1,99 +1,137 @@
 <script lang="ts">
 	import DemoCard from './shared/DemoCard.svelte';
-	import { Card, Tabs, PageHeader, FormField } from '$lib/components';
-	import { Input } from '$lib/components';
-
-	let tabValue = $state('tab1');
-	let inputValue = $state('');
+	import { Stack, Cluster, Grid, Center } from '$lib/components';
 </script>
 
 <section id="layout" class="section">
 	<h2 class="section-title">Layout</h2>
-	<p class="section-description">Components for structuring content.</p>
+	<p class="section-description">Primitives for composing page structure and spatial relationships.</p>
 
 	<div class="demos">
-		<!-- Card -->
-		<DemoCard title="Card" description="Container with header and footer">
-			<div class="card-demo">
-				<Card>
-					{#snippet header()}
-						<h3 class="card-header-title">Card Header</h3>
-					{/snippet}
-
-					{#snippet children()}
-						<p>This is the card content area. It can contain any content.</p>
-					{/snippet}
-
-					{#snippet footer()}
-						<span class="card-footer-text">Card Footer</span>
-					{/snippet}
-				</Card>
+		<!-- Stack -->
+		<DemoCard title="Stack" description="Vertical layout with consistent gaps">
+			<div class="layout-demo">
+				<div class="demo-group">
+					<span class="demo-label">gap="2"</span>
+					<Stack gap="2">
+						<div class="box">1</div>
+						<div class="box">2</div>
+						<div class="box">3</div>
+					</Stack>
+				</div>
+				<div class="demo-group">
+					<span class="demo-label">gap="4"</span>
+					<Stack gap="4">
+						<div class="box">1</div>
+						<div class="box">2</div>
+						<div class="box">3</div>
+					</Stack>
+				</div>
+				<div class="demo-group">
+					<span class="demo-label">gap="6"</span>
+					<Stack gap="6">
+						<div class="box">1</div>
+						<div class="box">2</div>
+						<div class="box">3</div>
+					</Stack>
+				</div>
 			</div>
 		</DemoCard>
 
-		<!-- Tabs -->
-		<DemoCard title="Tabs" description="Tabbed interface">
-			<div class="tabs-demo">
-				<Tabs
-					bind:value={tabValue}
-					tabs={[
-						{
-							value: 'tab1',
-							label: 'Tab 1',
-							content: () => 'Content for Tab 1'
-						},
-						{
-							value: 'tab2',
-							label: 'Tab 2',
-							content: () => 'Content for Tab 2'
-						},
-						{
-							value: 'tab3',
-							label: 'Tab 3',
-							content: () => 'Content for Tab 3'
-						}
-					]}
-				/>
+		<!-- Cluster -->
+		<DemoCard title="Cluster" description="Horizontal layout with wrapping and alignment">
+			<div class="layout-demo-vertical">
+				<div class="demo-group">
+					<span class="demo-label">justify="start"</span>
+					<Cluster justify="start" gap="3">
+						<div class="box">A</div>
+						<div class="box">B</div>
+						<div class="box">C</div>
+						<div class="box">D</div>
+						<div class="box">E</div>
+					</Cluster>
+				</div>
+				<div class="demo-group">
+					<span class="demo-label">justify="center"</span>
+					<Cluster justify="center" gap="3">
+						<div class="box">A</div>
+						<div class="box">B</div>
+						<div class="box">C</div>
+					</Cluster>
+				</div>
+				<div class="demo-group">
+					<span class="demo-label">justify="between"</span>
+					<Cluster justify="between" gap="3">
+						<div class="box">A</div>
+						<div class="box">B</div>
+						<div class="box">C</div>
+					</Cluster>
+				</div>
 			</div>
 		</DemoCard>
 
-		<!-- PageHeader -->
-		<DemoCard title="Page Header" description="Page title and breadcrumbs">
-			<div class="page-header-demo">
-				<PageHeader
-					title="Page Title"
-					description="This is a page description that explains what this page is about."
-					breadcrumbs={[
-						{ label: 'Home', href: '/' },
-						{ label: 'Showcases', href: '/showcases' },
-						{ label: 'UI' }
-					]}
-				/>
+		<!-- Grid -->
+		<DemoCard title="Grid" description="CSS grid with consistent gaps">
+			<div class="layout-demo-vertical">
+				<div class="demo-group">
+					<span class="demo-label">cols={2}</span>
+					<Grid cols={2} gap="3">
+						<div class="box">1</div>
+						<div class="box">2</div>
+						<div class="box">3</div>
+						<div class="box">4</div>
+					</Grid>
+				</div>
+				<div class="demo-group">
+					<span class="demo-label">cols={3}</span>
+					<Grid cols={3} gap="3">
+						<div class="box">1</div>
+						<div class="box">2</div>
+						<div class="box">3</div>
+						<div class="box">4</div>
+						<div class="box">5</div>
+						<div class="box">6</div>
+					</Grid>
+				</div>
+				<div class="demo-group">
+					<span class="demo-label">cols={4}</span>
+					<Grid cols={4} gap="3">
+						<div class="box">1</div>
+						<div class="box">2</div>
+						<div class="box">3</div>
+						<div class="box">4</div>
+					</Grid>
+				</div>
 			</div>
 		</DemoCard>
 
-		<!-- FormField -->
-		<DemoCard title="Form Field" description="Input with label and error">
-			<div class="form-field-demo">
-				<FormField
-					label="Username"
-					description="Enter your username"
-					required
-				>
-					{#snippet children()}
-						<Input bind:value={inputValue} placeholder="Enter username" />
-					{/snippet}
-				</FormField>
-
-				<FormField
-					label="Email"
-					error="Invalid email address"
-					required
-				>
-					{#snippet children()}
-						<Input placeholder="Enter email" error />
-					{/snippet}
-				</FormField>
+		<!-- Center -->
+		<DemoCard title="Center" description="Horizontally centered content with max-width">
+			<div class="layout-demo-vertical">
+				<div class="demo-group">
+					<span class="demo-label">max="sm"</span>
+					<div class="center-wrapper">
+						<Center max="sm">
+							<div class="box-wide">Centered (sm)</div>
+						</Center>
+					</div>
+				</div>
+				<div class="demo-group">
+					<span class="demo-label">max="md"</span>
+					<div class="center-wrapper">
+						<Center max="md">
+							<div class="box-wide">Centered (md)</div>
+						</Center>
+					</div>
+				</div>
+				<div class="demo-group">
+					<span class="demo-label">max="lg"</span>
+					<div class="center-wrapper">
+						<Center max="lg">
+							<div class="box-wide">Centered (lg)</div>
+						</Center>
+					</div>
+				</div>
 			</div>
 		</DemoCard>
 	</div>
@@ -125,35 +163,63 @@
 		gap: var(--spacing-6);
 	}
 
-	.card-demo,
-	.tabs-demo,
-	.page-header-demo,
-	.form-field-demo {
+	.layout-demo {
+		display: flex;
+		gap: var(--spacing-7);
+		flex-wrap: wrap;
 		width: 100%;
 	}
 
-	.card-header-title {
-		font-size: var(--text-fluid-base);
-		font-weight: 600;
-		margin: 0;
-		color: var(--color-fg);
-	}
-
-	.card-footer-text {
-		font-size: var(--text-fluid-sm);
-		color: var(--color-muted);
-	}
-
-	.page-header-demo {
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		overflow: hidden;
-	}
-
-	.form-field-demo {
+	.layout-demo-vertical {
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-6);
-		max-width: 25rem;
+		width: 100%;
+	}
+
+	.demo-group {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-2);
+	}
+
+	.demo-label {
+		font-size: var(--text-fluid-xs);
+		font-family: 'Fira Code', monospace;
+		color: var(--color-muted);
+	}
+
+	.box {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 3rem;
+		height: 3rem;
+		border-radius: var(--radius-md);
+		background: var(--color-primary-light);
+		color: var(--color-primary);
+		font-weight: 600;
+		font-size: var(--text-fluid-sm);
+		flex-shrink: 0;
+	}
+
+	.box-wide {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+		height: 3rem;
+		border-radius: var(--radius-md);
+		background: var(--color-primary-light);
+		color: var(--color-primary);
+		font-weight: 600;
+		font-size: var(--text-fluid-sm);
+	}
+
+	.center-wrapper {
+		width: 100%;
+		border: 1px dashed var(--color-border);
+		border-radius: var(--radius-md);
+		padding: var(--spacing-3);
 	}
 </style>
