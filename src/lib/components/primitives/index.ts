@@ -71,15 +71,6 @@ export {
 } from './progress';
 
 export { Slider } from './slider';
-export {
-	sliderRootVariants,
-	sliderTrackVariants,
-	sliderRangeVariants,
-	sliderThumbVariants,
-	type SliderRootVariants,
-	type SliderTrackVariants,
-	type SliderThumbVariants
-} from './slider';
 
 export { ResizablePaneGroup, ResizablePane, ResizableHandle } from './resizable';
 export {

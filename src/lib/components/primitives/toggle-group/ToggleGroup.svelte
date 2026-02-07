@@ -61,49 +61,90 @@
 </script>
 
 {#if type === 'single'}
-	<ToggleGroupPrimitive.Root
-		bind:value
-		{disabled}
-		type="single"
-		class={cn(toggleGroupVariants({ orientation }), className)}
-	>
-		{#each items as item, index}
-			<ToggleGroupPrimitive.Item
-				value={item.value}
-				disabled={item.disabled || disabled}
-				class={cn(
-					toggleGroupItemVariants({ variant, size }),
-					getItemClasses(index, isHorizontal)
-				)}
+	<ToggleGroupPrimitive.Root bind:value {disabled} type="single">
+		{#snippet child({ props })}
+			<div
+				{...props}
+				class={cn('toggle-group', toggleGroupVariants({ orientation }), className)}
 			>
-				{#if item.icon}
-					<span class="mr-2">{item.icon}</span>
-				{/if}
-				{item.label || item.value}
-			</ToggleGroupPrimitive.Item>
-		{/each}
+				{#each items as item, index}
+					<ToggleGroupPrimitive.Item value={item.value} disabled={item.disabled || disabled}>
+						{#snippet child({ props: itemProps })}
+							<button
+								{...itemProps}
+								class={cn(
+									'toggle-group-item',
+									toggleGroupItemVariants({ variant, size }),
+									getItemClasses(index, isHorizontal)
+								)}
+							>
+								{#if item.icon}
+									<span class="mr-2">{item.icon}</span>
+								{/if}
+								{item.label || item.value}
+							</button>
+						{/snippet}
+					</ToggleGroupPrimitive.Item>
+				{/each}
+			</div>
+		{/snippet}
 	</ToggleGroupPrimitive.Root>
 {:else}
-	<ToggleGroupPrimitive.Root
-		bind:value
-		{disabled}
-		type="multiple"
-		class={cn(toggleGroupVariants({ orientation }), className)}
-	>
-		{#each items as item, index}
-			<ToggleGroupPrimitive.Item
-				value={item.value}
-				disabled={item.disabled || disabled}
-				class={cn(
-					toggleGroupItemVariants({ variant, size }),
-					getItemClasses(index, isHorizontal)
-				)}
+	<ToggleGroupPrimitive.Root bind:value {disabled} type="multiple">
+		{#snippet child({ props })}
+			<div
+				{...props}
+				class={cn('toggle-group', toggleGroupVariants({ orientation }), className)}
 			>
-				{#if item.icon}
-					<span class="mr-2">{item.icon}</span>
-				{/if}
-				{item.label || item.value}
-			</ToggleGroupPrimitive.Item>
-		{/each}
+				{#each items as item, index}
+					<ToggleGroupPrimitive.Item value={item.value} disabled={item.disabled || disabled}>
+						{#snippet child({ props: itemProps })}
+							<button
+								{...itemProps}
+								class={cn(
+									'toggle-group-item',
+									toggleGroupItemVariants({ variant, size }),
+									getItemClasses(index, isHorizontal)
+								)}
+							>
+								{#if item.icon}
+									<span class="mr-2">{item.icon}</span>
+								{/if}
+								{item.label || item.value}
+							</button>
+						{/snippet}
+					</ToggleGroupPrimitive.Item>
+				{/each}
+			</div>
+		{/snippet}
 	</ToggleGroupPrimitive.Root>
 {/if}
+
+<style>
+	/* State-based styling — UnoCSS can't extract data-[state=*] from .ts files */
+	.toggle-group-item {
+		background: transparent;
+		color: var(--color-fg);
+		border: 1px solid var(--color-border);
+	}
+
+	.toggle-group-item:hover {
+		background: var(--color-subtle);
+	}
+
+	.toggle-group-item:global([data-state='on']) {
+		background: var(--color-primary);
+		color: var(--color-primary-fg);
+	}
+
+	.toggle-group-item:global([disabled]) {
+		pointer-events: none;
+		opacity: 0.5;
+	}
+
+	/* Focus ring */
+	.toggle-group-item:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-primary);
+	}
+</style>
