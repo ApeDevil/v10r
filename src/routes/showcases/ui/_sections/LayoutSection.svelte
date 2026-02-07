@@ -1,5 +1,5 @@
 <script lang="ts">
-	import DemoCard from './shared/DemoCard.svelte';
+	import { DemoCard } from '../_components';
 	import { Stack, Cluster, Grid, Center, ResizablePaneGroup, ResizablePane, ResizableHandle } from '$lib/components';
 </script>
 

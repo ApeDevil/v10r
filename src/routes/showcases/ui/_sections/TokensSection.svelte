@@ -1,6 +1,5 @@
 <script lang="ts">
-	import DemoCard from './shared/DemoCard.svelte';
-	import TokenSwatch from './shared/TokenSwatch.svelte';
+	import { DemoCard, TokenSwatch } from '../_components';
 	import { fontSize, spacing, zIndex, borderRadius, boxShadow } from '$lib/styles/tokens';
 
 	/**

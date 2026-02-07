@@ -1,5 +1,5 @@
 <script lang="ts">
-	import DemoCard from './shared/DemoCard.svelte';
+	import { DemoCard } from '../_components';
 	import { PageHeader, MenuBar, QuickSearch, Button } from '$lib/components';
 
 	let searchOpen = $state(false);

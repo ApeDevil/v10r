@@ -1,5 +1,5 @@
 <script lang="ts">
-	import DemoCard from './shared/DemoCard.svelte';
+	import { DemoCard } from '../_components';
 	import { Card, LinkCard, Pagination, ConfirmDialog, Button, Carousel, CarouselItem, Chart } from '$lib/components';
 
 	let currentPage = $state(1);

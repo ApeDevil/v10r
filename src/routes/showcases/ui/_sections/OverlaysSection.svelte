@@ -1,5 +1,5 @@
 <script lang="ts">
-	import DemoCard from './shared/DemoCard.svelte';
+	import { DemoCard } from '../_components';
 	import { Dialog, Drawer, Button, Tabs, Accordion, ScrollArea } from '$lib/components';
 	import { Tooltip, Popover } from '$lib/components';
 

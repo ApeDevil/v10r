@@ -1,6 +1,5 @@
 <script lang="ts">
-	import DemoCard from './shared/DemoCard.svelte';
-	import VariantGrid from './shared/VariantGrid.svelte';
+	import { DemoCard, VariantGrid } from '../_components';
 	import {
 		Table,
 		Header as TableHeader,
@@ -16,8 +15,7 @@
 		SkeletonAvatar,
 		Kbd,
 		Progress,
-		Spinner,
-		Typography
+		Spinner
 	} from '$lib/components';
 
 	const sampleData = [
@@ -122,19 +120,6 @@
 			</VariantGrid>
 		</DemoCard>
 
-		<!-- Typography -->
-		<DemoCard title="Typography" description="Text styles and semantic elements">
-			<div class="typography-demos">
-				<Typography variant="h1">Heading 1</Typography>
-				<Typography variant="h2">Heading 2</Typography>
-				<Typography variant="h3">Heading 3</Typography>
-				<Typography variant="body">Body text paragraph with normal styling.</Typography>
-				<Typography variant="lead">Lead text for introductions.</Typography>
-				<Typography variant="muted">Muted secondary text.</Typography>
-				<Typography variant="code">const x = 42;</Typography>
-			</div>
-		</DemoCard>
-
 		<!-- Skeleton -->
 		<DemoCard title="Skeleton" description="Loading placeholders">
 			<div class="skeleton-demo">
@@ -199,13 +184,6 @@
 		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);
 		font-weight: 500;
-	}
-
-	.typography-demos {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-3);
-		width: 100%;
 	}
 
 	.skeleton-demo {

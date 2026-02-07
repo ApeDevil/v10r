@@ -1,6 +1,5 @@
 <script lang="ts">
-	import DemoCard from './shared/DemoCard.svelte';
-	import VariantGrid from './shared/VariantGrid.svelte';
+	import { DemoCard, VariantGrid } from '../_components';
 	import { Alert, EmptyState } from '$lib/components';
 	import { getToast } from '$lib/stores/toast.svelte';
 

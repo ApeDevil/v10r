@@ -1,5 +1,5 @@
 <script lang="ts">
-	import DemoCard from './shared/DemoCard.svelte';
+	import { DemoCard } from '../_components';
 	import { FormField, Input, DatePicker } from '$lib/components';
 
 	let inputValue = $state('');
