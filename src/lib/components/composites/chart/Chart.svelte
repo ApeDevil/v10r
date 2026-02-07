@@ -62,12 +62,12 @@
 
 	// Default colors from CSS custom properties
 	const defaultColors = [
-		'hsl(var(--color-primary))',
-		'hsl(var(--color-secondary))',
-		'hsl(var(--color-accent))',
-		'hsl(var(--color-success))',
-		'hsl(var(--color-warning))',
-		'hsl(var(--color-error))'
+		'var(--color-primary)',
+		'var(--color-info)',
+		'var(--color-warning)',
+		'var(--color-success)',
+		'var(--color-error)',
+		'var(--color-primary-hover)'
 	];
 
 	// Chart dimensions with padding

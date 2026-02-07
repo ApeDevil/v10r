@@ -90,15 +90,15 @@
 
 <style>
 	:global([data-selected] [data-bits-day]) {
-		background: hsl(var(--color-primary));
+		background: var(--color-primary);
 		color: white;
 	}
 	:global([data-selected] [data-bits-day]:hover) {
-		background: hsl(var(--color-primary-hover));
+		background: var(--color-primary-hover);
 		color: white;
 	}
 	:global([data-today] [data-bits-day]) {
-		background: hsl(var(--color-subtle));
+		background: var(--color-subtle);
 		font-weight: 600;
 	}
 	:global([data-disabled] [data-bits-day]) {
@@ -110,7 +110,7 @@
 		opacity: 0.5;
 	}
 	:global([data-outside-month] [data-bits-day]) {
-		color: hsl(var(--color-muted));
+		color: var(--color-muted);
 		opacity: 0.5;
 	}
 </style>

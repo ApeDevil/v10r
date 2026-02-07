@@ -197,10 +197,10 @@
 		color: white;
 	}
 
-	.slide-1 { background: hsl(var(--color-primary)); }
-	.slide-2 { background: hsl(var(--color-secondary)); }
-	.slide-3 { background: hsl(var(--color-accent)); }
-	.slide-4 { background: hsl(var(--color-success)); }
+	.slide-1 { background: var(--color-primary); }
+	.slide-2 { background: var(--color-info); }
+	.slide-3 { background: var(--color-warning); }
+	.slide-4 { background: var(--color-success); }
 
 	.chart-demo {
 		width: 100%;
