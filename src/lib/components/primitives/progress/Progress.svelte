@@ -1,16 +1,12 @@
 <script lang="ts">
 	import { Progress as ProgressPrimitive } from 'bits-ui';
 	import { cn } from '$lib/utils/cn';
-	import {
-		progressTrackVariants,
-		progressIndicatorVariants,
-		type ProgressTrackVariants,
-		type ProgressIndicatorVariants
-	} from './progress';
 
-	interface Props extends ProgressTrackVariants, ProgressIndicatorVariants {
+	interface Props {
 		value?: number;
 		max?: number;
+		variant?: 'default' | 'success' | 'warning' | 'error';
+		size?: 'sm' | 'md' | 'lg';
 		showLabel?: boolean;
 		class?: string;
 	}
@@ -40,46 +36,100 @@
 
 <div
 	class={cn(
-		'flex items-center gap-3',
-		size === 'lg' && showLabel ? 'flex-col items-start' : 'flex-row',
+		'progress-wrapper',
+		size === 'lg' && showLabel && 'progress-wrapper--col',
 		className
 	)}
 >
 	<ProgressPrimitive.Root
-		{value}
+		value={isIndeterminate ? null : value}
 		{max}
-		class={cn(progressTrackVariants({ size }), 'flex-1')}
+		class={`progress-${size}`}
 	>
-		{#if isIndeterminate}
-			<div
-				class={cn(
-					progressIndicatorVariants({ variant }),
-					'w-1/3 animate-indeterminate'
-				)}
-			/>
-		{:else}
-			<div
-				class={progressIndicatorVariants({ variant })}
-				style="width: {percentage}%"
-			/>
-		{/if}
+		<div
+			class={cn(
+				'progress-indicator',
+				`progress-${variant}`,
+				isIndeterminate && 'progress-indeterminate'
+			)}
+			style={!isIndeterminate ? `width: ${percentage}%` : undefined}
+		/>
 	</ProgressPrimitive.Root>
 
 	{#if showLabel && !isIndeterminate}
-		<span
-			class={cn(
-				'text-muted tabular-nums',
-				size === 'sm' && 'text-fluid-xs',
-				size === 'md' && 'text-fluid-sm',
-				size === 'lg' && 'text-fluid-base'
-			)}
-		>
+		<span class={`progress-label progress-label--${size}`}>
 			{percentage}%
 		</span>
 	{/if}
 </div>
 
 <style>
+	/* Wrapper */
+	.progress-wrapper {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-3);
+		flex-direction: row;
+	}
+
+	.progress-wrapper--col {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	/* Root / Track */
+	:global([data-progress-root]) {
+		position: relative;
+		width: 100%;
+		overflow: hidden;
+		border-radius: var(--radius-full);
+		background: color-mix(in srgb, var(--color-muted) 20%, transparent);
+		flex: 1;
+	}
+
+	/* Size variants */
+	:global(.progress-sm[data-progress-root]) {
+		height: 0.375rem;
+	}
+
+	:global(.progress-md[data-progress-root]) {
+		height: 0.625rem;
+	}
+
+	:global(.progress-lg[data-progress-root]) {
+		height: 1rem;
+	}
+
+	/* Indicator */
+	.progress-indicator {
+		height: 100%;
+		border-radius: var(--radius-full);
+		transition: width var(--duration-normal) ease;
+	}
+
+	/* Variant colors */
+	.progress-default {
+		background: var(--color-primary);
+	}
+
+	.progress-success {
+		background: var(--color-success);
+	}
+
+	.progress-warning {
+		background: var(--color-warning);
+	}
+
+	.progress-error {
+		background: var(--color-error);
+	}
+
+	/* Indeterminate animation */
+	.progress-indeterminate {
+		width: 33.333% !important;
+		animation: indeterminate 1.5s ease-in-out infinite;
+	}
+
 	@keyframes indeterminate {
 		0% {
 			transform: translateX(-100%);
@@ -89,13 +139,27 @@
 		}
 	}
 
-	.animate-indeterminate {
-		animation: indeterminate 1.5s ease-in-out infinite;
-	}
-
 	@media (prefers-reduced-motion: reduce) {
-		.animate-indeterminate {
+		.progress-indeterminate {
 			animation-duration: 3s;
 		}
+	}
+
+	/* Label */
+	.progress-label {
+		color: var(--color-muted);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.progress-label--sm {
+		font-size: var(--text-fluid-xs);
+	}
+
+	.progress-label--md {
+		font-size: var(--text-fluid-sm);
+	}
+
+	.progress-label--lg {
+		font-size: var(--text-fluid-base);
 	}
 </style>

@@ -63,12 +63,6 @@ export {
 export { Switch, switchRootVariants, switchThumbVariants, type SwitchVariants } from './switch';
 
 export { Progress } from './progress';
-export {
-	progressTrackVariants,
-	progressIndicatorVariants,
-	type ProgressTrackVariants,
-	type ProgressIndicatorVariants
-} from './progress';
 
 export { Slider } from './slider';
 
