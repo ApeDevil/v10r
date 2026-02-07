@@ -11,9 +11,9 @@ export const switchRootVariants = cva(
 	{
 		variants: {
 			size: {
-				sm: 'h-5 w-9',
-				md: 'h-6 w-11',
-				lg: 'h-7 w-[3.25rem]'
+				sm: 'h-[1.25rem] w-[2.25rem]',   // 20px × 36px
+				md: 'h-6 w-[2.75rem]',             // 24px × 44px
+				lg: 'h-[1.75rem] w-[3.25rem]'      // 28px × 52px
 			}
 		},
 		defaultVariants: {
@@ -24,15 +24,15 @@ export const switchRootVariants = cva(
 
 export const switchThumbVariants = cva(
 	[
-		'pointer-events-none block rounded-full bg-white shadow-sm ring-0',
+		'pointer-events-none block rounded-full bg-white dark:bg-black shadow-sm ring-0',
 		'transition-transform duration-fast'
 	],
 	{
 		variants: {
 			size: {
-				sm: 'h-4 w-4 data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0.5',
-				md: 'h-5 w-5 data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0.5',
-				lg: 'h-6 w-6 data-[state=checked]:translate-x-6 data-[state=unchecked]:translate-x-0.5'
+				sm: 'h-[1rem] w-[1rem] data-[state=checked]:translate-x-[18px] data-[state=unchecked]:translate-x-[2px]',
+				md: 'h-[1.25rem] w-[1.25rem] data-[state=checked]:translate-x-[22px] data-[state=unchecked]:translate-x-[2px]',
+				lg: 'h-6 w-6 data-[state=checked]:translate-x-[26px] data-[state=unchecked]:translate-x-[2px]'
 			}
 		},
 		defaultVariants: {
