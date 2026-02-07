@@ -67,15 +67,15 @@
 			<span class="i-lucide-calendar h-4 w-4 text-muted" aria-hidden="true" />
 		</DatePickerPrimitive.Trigger>
 
+		<DatePickerPrimitive.Portal>
 		<DatePickerPrimitive.Content
 			sideOffset={4}
 			class={datePickerContentVariants()}
 		>
 			<DatePickerPrimitive.Calendar
 				class={datePickerCalendarVariants()}
-				let:months
-				let:weekdays
 			>
+				{#snippet children({ months, weekdays })}
 				{#each months as month}
 					<div class="space-y-4">
 						<DatePickerPrimitive.Header class="flex items-center justify-between">
@@ -117,11 +117,10 @@
 										{#each weekDates as date}
 											<DatePickerPrimitive.Cell
 												{date}
+												month={month.value}
 												class="relative h-9 w-9 p-0 text-center text-fluid-sm focus-within:relative focus-within:z-20"
 											>
 												<DatePickerPrimitive.Day
-													{date}
-													month={month.value}
 													class="inline-flex h-9 w-9 items-center justify-center rounded-md font-normal transition-colors duration-fast hover:bg-fg-alpha hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50 data-[selected]:bg-primary data-[selected]:text-white data-[selected]:hover:bg-primary-hover data-[selected]:hover:text-white data-[today]:bg-subtle data-[today]:font-semibold data-[outside-month]:text-muted data-[outside-month]:opacity-50 data-[disabled]:text-muted data-[disabled]:opacity-50 data-[disabled]:cursor-not-allowed data-[unavailable]:text-muted data-[unavailable]:line-through data-[unavailable]:opacity-50"
 												>
 													{date.day}
@@ -134,7 +133,9 @@
 						</DatePickerPrimitive.Grid>
 					</div>
 				{/each}
+				{/snippet}
 			</DatePickerPrimitive.Calendar>
 		</DatePickerPrimitive.Content>
+		</DatePickerPrimitive.Portal>
 	</DatePickerPrimitive.Root>
 </div>
