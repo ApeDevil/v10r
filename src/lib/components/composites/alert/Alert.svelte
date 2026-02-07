@@ -31,13 +31,6 @@
 		error: 'i-lucide-x-circle'
 	};
 
-	const styles = {
-		info: 'border-primary/50 bg-primary/10 text-primary',
-		success: 'border-success/50 bg-success/10 text-success',
-		warning: 'border-warning/50 bg-warning/10 text-warning',
-		error: 'border-error/50 bg-error/10 text-error'
-	};
-
 	function handleClose() {
 		visible = false;
 		onclose?.();
@@ -46,26 +39,22 @@
 
 {#if visible}
 	<div
-		class={cn(
-			'relative flex gap-3 rounded-lg border p-4',
-			styles[variant],
-			className
-		)}
+		class={cn('alert', `alert-${variant}`, className)}
 		role="alert"
 	>
-		<span class={cn(iconClasses[variant], 'h-5 w-5 shrink-0')} />
+		<span class={cn(iconClasses[variant], 'alert-icon')} />
 
-		<div class="flex flex-col gap-1 flex-1">
+		<div class="alert-content">
 			{#if title}
-				<h5 class="font-semibold">{title}</h5>
+				<h5 class="alert-title">{title}</h5>
 			{/if}
 
 			{#if description}
-				<p class="text-fluid-sm opacity-90">{description}</p>
+				<p class="alert-description">{description}</p>
 			{/if}
 
 			{#if children}
-				<div class="pt-1">
+				<div class="alert-body">
 					{@render children()}
 				</div>
 			{/if}
@@ -74,11 +63,104 @@
 		{#if closable}
 			<button
 				onclick={handleClose}
-				class="shrink-0 opacity-70 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm"
+				class="alert-close"
 				aria-label="Close alert"
 			>
-				<span class="i-lucide-x h-4 w-4" />
+				<span class="i-lucide-x alert-close-icon" />
 			</button>
 		{/if}
 	</div>
 {/if}
+
+<style>
+	.alert {
+		position: relative;
+		display: flex;
+		gap: var(--spacing-3);
+		border-radius: var(--radius-lg);
+		border: 1px solid;
+		padding: var(--spacing-4);
+	}
+
+	.alert-icon {
+		width: 1.25rem;
+		height: 1.25rem;
+		flex-shrink: 0;
+	}
+
+	.alert-content {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-1);
+		flex: 1;
+	}
+
+	.alert-title {
+		font-weight: 600;
+		margin: 0;
+	}
+
+	.alert-description {
+		font-size: var(--text-fluid-sm);
+		opacity: 0.9;
+		margin: 0;
+	}
+
+	.alert-body {
+		padding-top: var(--spacing-1);
+	}
+
+	.alert-close {
+		flex-shrink: 0;
+		opacity: 0.7;
+		cursor: pointer;
+		border: none;
+		background: none;
+		color: inherit;
+		padding: 0;
+		border-radius: var(--radius-sm);
+	}
+
+	.alert-close:hover {
+		opacity: 1;
+	}
+
+	.alert-close:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 2px var(--color-primary);
+	}
+
+	.alert-close-icon {
+		width: 1rem;
+		height: 1rem;
+		display: block;
+	}
+
+	/* Variant: info */
+	.alert-info {
+		border-color: var(--color-info);
+		background: var(--color-info-bg);
+		color: var(--color-info-fg);
+	}
+
+	/* Variant: success */
+	.alert-success {
+		border-color: var(--color-success);
+		background: var(--color-success-bg);
+		color: var(--color-success-fg);
+	}
+
+	/* Variant: warning */
+	.alert-warning {
+		border-color: var(--color-warning);
+		background: var(--color-warning-bg);
+		color: var(--color-warning-fg);
+	}
+
+	/* Variant: error */
+	.alert-error {
+		border-color: var(--color-error);
+		background: var(--color-error-bg);
+		color: var(--color-error-fg);
+	}
+</style>
