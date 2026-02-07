@@ -170,6 +170,7 @@ export const zIndex = {
   fab: 20,
   overlay: 30,
   drawer: 40,
+  popover: 50,
   dropdown: 50,
   modal: 60,
   toast: 70,

@@ -59,6 +59,7 @@
 	--z-fab: 20;
 	--z-overlay: 30;
 	--z-drawer: 40;
+	--z-popover: 50;
 	--z-dropdown: 50;
 	--z-modal: 60;
 	--z-toast: 70;
@@ -227,6 +228,11 @@ body {
 	clip: rect(0, 0, 0, 0);
 	white-space: nowrap;
 	border-width: 0;
+}
+
+/* Bits UI floating content (popovers, dropdowns, tooltips, etc.) must sit above the sidebar */
+[data-bits-floating-content-wrapper] {
+	z-index: var(--z-popover) !important;
 }
 
 /* Native select option styling (browser support varies) */
