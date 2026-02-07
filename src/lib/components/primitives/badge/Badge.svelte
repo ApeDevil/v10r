@@ -14,3 +14,31 @@
 <span class={cn(badgeVariants({ variant }), className)}>
 	{@render children()}
 </span>
+
+<style>
+	span:global(.bg-primary) {
+		background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+	}
+
+	span:global(.bg-muted) {
+		background-color: color-mix(in srgb, var(--color-muted) 20%, transparent);
+	}
+
+	span:global(.bg-success) {
+		background-color: color-mix(in srgb, var(--color-success) 10%, transparent);
+	}
+
+	span:global(.bg-warning) {
+		background-color: color-mix(in srgb, var(--color-warning) 10%, transparent);
+	}
+
+	span:global(.bg-error) {
+		background-color: color-mix(in srgb, var(--color-error) 10%, transparent);
+		color: var(--color-error);
+	}
+
+	:global(.dark) span:global(.bg-error) {
+		background-color: var(--color-error-light);
+		color: var(--color-error-fg);
+	}
+</style>

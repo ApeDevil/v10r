@@ -5,12 +5,12 @@ export const badgeVariants = cva(
 	{
 		variants: {
 			variant: {
-				default: 'bg-primary/10 text-primary',
-				secondary: 'bg-muted/20 text-muted',
-				success: 'bg-success/10 text-success',
-				warning: 'bg-warning/10 text-warning',
-				error: 'bg-error/10 text-error',
-				outline: 'border border-border text-fg'
+				default: 'bg-primary text-primary',
+				secondary: 'bg-muted text-muted',
+				success: 'bg-success text-success',
+				warning: 'bg-warning text-warning',
+				error: 'bg-error text-error',
+				outline: 'border border-solid border-fg text-fg'
 			}
 		},
 		defaultVariants: {
