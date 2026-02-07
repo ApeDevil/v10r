@@ -2,6 +2,20 @@
 	import { DemoCard, TokenSwatch } from '../_components';
 	import { fontSize, spacing, zIndex, borderRadius, boxShadow } from '$lib/styles/tokens';
 
+	/** Maps z-index layers to their surface level based on actual component usage */
+	const zSurface: Record<string, number> = {
+		base: 0,
+		sidebar: 1,
+		fab: 1,
+		overlay: 2,
+		drawer: 2,
+		popover: 2,
+		dropdown: 2,
+		modal: 3,
+		toast: 1,
+		tooltip: 3,
+	};
+
 	/**
 	 * Color token names - actual values live in app.css (single source of truth).
 	 * We display these with their CSS variable references.
@@ -83,11 +97,18 @@
 		</DemoCard>
 
 		<!-- Z-Index -->
-		<DemoCard title="Z-Index Layers" description="Stacking context hierarchy">
-			<div class="token-grid">
+		<DemoCard title="Z-Index Layers" description="Stacking context hierarchy — colored by surface elevation">
+			<div class="z-index-stack">
 				{#each Object.entries(zIndex) as [key, value]}
-					<div class="z-index-sample">
-						<div class="z-key">{key}</div>
+					{@const level = zSurface[key] ?? 0}
+					<div
+						class="z-index-sample"
+						style="background: var(--surface-{level});"
+					>
+						<div class="z-info">
+							<span class="z-key">{key}</span>
+							<span class="z-surface">surface-{level}</span>
+						</div>
 						<div class="z-value">{value}</div>
 					</div>
 				{/each}
@@ -273,25 +294,45 @@
 		font-family: 'Fira Code', monospace;
 	}
 
+	.z-index-stack {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-2);
+		width: 100%;
+	}
+
 	.z-index-sample {
-		padding: var(--spacing-3);
-		border: 1px solid var(--color-border);
+		padding: var(--spacing-3) var(--spacing-4);
 		border-radius: var(--radius-md);
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
+		border: 1px solid var(--color-border);
+	}
+
+	.z-info {
+		display: flex;
+		align-items: baseline;
+		gap: var(--spacing-3);
 	}
 
 	.z-key {
 		font-size: var(--text-fluid-sm);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--color-fg);
+		font-family: 'Fira Code', monospace;
+	}
+
+	.z-surface {
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
 		font-family: 'Fira Code', monospace;
 	}
 
 	.z-value {
 		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);
+		font-weight: 600;
 		font-family: 'Fira Code', monospace;
 	}
 
