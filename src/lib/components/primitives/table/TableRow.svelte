@@ -15,10 +15,16 @@
 <tr
 	class={cn(
 		'border-b border-border transition-colors duration-fast',
-		hoverable && 'hover:bg-muted/5',
+		hoverable && 'hoverable',
 		className
 	)}
 	{...rest}
 >
 	{@render children()}
 </tr>
+
+<style>
+	tr.hoverable:hover {
+		background-color: color-mix(in srgb, var(--color-muted) 10%, transparent);
+	}
+</style>
