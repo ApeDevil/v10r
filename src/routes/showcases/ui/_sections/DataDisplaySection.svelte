@@ -118,7 +118,7 @@
 				<Spinner size="sm" />
 				<Spinner size="md" />
 				<Spinner size="lg" />
-				<Spinner variant="secondary" />
+				<Spinner variant="muted" />
 			</VariantGrid>
 		</DemoCard>
 
