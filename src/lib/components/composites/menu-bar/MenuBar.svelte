@@ -80,3 +80,16 @@
 		</Menubar.Menu>
 	{/each}
 </Menubar.Root>
+
+<style>
+	/* UnoCSS can't extract bg-muted/10 variants from .ts files (opacity modifier too complex) */
+	:global([data-menubar-content] [role='menuitem'][data-highlighted]),
+	:global([data-menubar-content] [role='menuitemcheckbox'][data-highlighted]) {
+		background-color: color-mix(in srgb, var(--color-muted) 10%, transparent);
+	}
+
+	:global([data-menubar-trigger][data-state='open']),
+	:global([data-menubar-trigger]:hover) {
+		background-color: color-mix(in srgb, var(--color-muted) 10%, transparent);
+	}
+</style>

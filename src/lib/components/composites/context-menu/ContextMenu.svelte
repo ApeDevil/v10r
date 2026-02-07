@@ -62,3 +62,10 @@
 		</ContextMenuPrimitive.Content>
 	</ContextMenuPrimitive.Portal>
 </ContextMenuPrimitive.Root>
+
+<style>
+	/* UnoCSS can't extract data-[highlighted]:bg-muted/10 from .ts files (opacity modifier too complex) */
+	:global([data-context-menu-content] [role='menuitem'][data-highlighted]) {
+		background-color: color-mix(in srgb, var(--color-muted) 10%, transparent);
+	}
+</style>

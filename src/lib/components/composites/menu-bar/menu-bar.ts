@@ -22,7 +22,6 @@ export const menuBarItemVariants = cva([
 	'relative flex cursor-pointer select-none items-center gap-3',
 	'px-3 py-2',
 	'text-fluid-sm text-fg outline-none',
-	'transition-colors duration-fast',
 	'data-[highlighted]:bg-muted/10',
 	'data-[disabled]:pointer-events-none data-[disabled]:opacity-50'
 ]);
@@ -35,7 +34,6 @@ export const menuBarCheckboxItemVariants = cva([
 	'relative flex cursor-pointer select-none items-center gap-3',
 	'px-3 py-2 pl-8',
 	'text-fluid-sm text-fg outline-none',
-	'transition-colors duration-fast',
 	'data-[highlighted]:bg-muted/10',
 	'data-[disabled]:pointer-events-none data-[disabled]:opacity-50'
 ]);

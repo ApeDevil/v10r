@@ -10,7 +10,6 @@ export const dropdownMenuItemVariants = cva([
 	'relative flex cursor-pointer select-none items-center gap-3',
 	'px-3 py-2',
 	'text-fluid-sm text-fg outline-none',
-	'transition-colors duration-fast',
 	'data-[highlighted]:bg-muted/10',
 	'data-[disabled]:pointer-events-none data-[disabled]:opacity-50'
 ]);

@@ -69,3 +69,10 @@
 		</DropdownMenuPrimitive.Content>
 	</DropdownMenuPrimitive.Portal>
 </DropdownMenuPrimitive.Root>
+
+<style>
+	/* UnoCSS can't extract data-[highlighted]:bg-muted/10 from .ts files (opacity modifier too complex) */
+	:global([data-dropdown-menu-content] [role='menuitem'][data-highlighted]) {
+		background-color: color-mix(in srgb, var(--color-muted) 10%, transparent);
+	}
+</style>
