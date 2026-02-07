@@ -1,12 +1,21 @@
 <script lang="ts">
 	import DemoCard from './shared/DemoCard.svelte';
-	import { Card, LinkCard, Pagination, ConfirmDialog, Button } from '$lib/components';
+	import { Card, LinkCard, Pagination, ConfirmDialog, Button, Carousel, CarouselItem, Chart } from '$lib/components';
 
 	let currentPage = $state(1);
 	const totalPages = 10;
 
 	let confirmOpen = $state(false);
 	let confirmResult = $state<boolean | null>(null);
+
+	const chartData = [
+		{ label: 'Jan', value: 40 },
+		{ label: 'Feb', value: 65 },
+		{ label: 'Mar', value: 45 },
+		{ label: 'Apr', value: 80 },
+		{ label: 'May', value: 55 },
+		{ label: 'Jun', value: 70 }
+	];
 </script>
 
 <section id="comp-content" class="section">
@@ -46,6 +55,38 @@
 					href="/showcases"
 					title="Plain Card"
 					description="A simple link card without an icon."
+				/>
+			</div>
+		</DemoCard>
+
+		<!-- Carousel -->
+		<DemoCard title="Carousel" description="Scrollable slide container">
+			<div class="carousel-demo">
+				<Carousel showDots showArrows>
+					<CarouselItem>
+						<div class="carousel-slide slide-1">Slide 1</div>
+					</CarouselItem>
+					<CarouselItem>
+						<div class="carousel-slide slide-2">Slide 2</div>
+					</CarouselItem>
+					<CarouselItem>
+						<div class="carousel-slide slide-3">Slide 3</div>
+					</CarouselItem>
+					<CarouselItem>
+						<div class="carousel-slide slide-4">Slide 4</div>
+					</CarouselItem>
+				</Carousel>
+			</div>
+		</DemoCard>
+
+		<!-- Chart -->
+		<DemoCard title="Chart" description="Data visualization (bar, line, area)">
+			<div class="chart-demo">
+				<Chart
+					type="bar"
+					data={chartData}
+					width={500}
+					height={250}
 				/>
 			</div>
 		</DemoCard>
@@ -138,6 +179,32 @@
 		grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
 		gap: var(--spacing-4);
 		width: 100%;
+	}
+
+	.carousel-demo {
+		width: 100%;
+		max-width: 32rem;
+	}
+
+	.carousel-slide {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		height: 12rem;
+		border-radius: var(--radius-md);
+		font-size: var(--text-fluid-lg);
+		font-weight: 600;
+		color: white;
+	}
+
+	.slide-1 { background: hsl(var(--color-primary)); }
+	.slide-2 { background: hsl(var(--color-secondary)); }
+	.slide-3 { background: hsl(var(--color-accent)); }
+	.slide-4 { background: hsl(var(--color-success)); }
+
+	.chart-demo {
+		width: 100%;
+		overflow-x: auto;
 	}
 
 	.pagination-demo {

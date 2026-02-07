@@ -7,12 +7,20 @@
 		Select,
 		Checkbox,
 		Card,
-		FormField
+		FormField,
+		Toggle,
+		ToggleGroup
 	} from '$lib/components';
 
 	let inputValue = $state('');
 	let selectValue = $state('');
 	let checkboxValue = $state(false);
+	let togglePressed = $state(false);
+	let boldPressed = $state(false);
+	let italicPressed = $state(false);
+	let underlinePressed = $state(false);
+	let alignValue = $state('left');
+	let selectedFormats = $state<string[]>([]);
 
 	const selectOptions = [
 		{ value: 'option1', label: 'Option 1' },
@@ -119,5 +127,117 @@
 		<FormField label="Password" error="Password must be at least 8 characters" required>
 			<Input type="password" placeholder="Enter password" error={true} />
 		</FormField>
+	</section>
+
+	<section class="space-y-4">
+		<h2 class="text-fluid-2xl font-semibold">Toggle</h2>
+		<div class="space-y-3">
+			<div class="flex items-center gap-3">
+				<Toggle bind:pressed={togglePressed}>
+					Default
+				</Toggle>
+				<p class="text-sm text-muted">Pressed: {togglePressed}</p>
+			</div>
+
+			<div class="flex items-center gap-3">
+				<Toggle bind:pressed={boldPressed} variant="outline">
+					<strong>B</strong>
+				</Toggle>
+				<Toggle bind:pressed={italicPressed} variant="outline">
+					<em>I</em>
+				</Toggle>
+				<Toggle bind:pressed={underlinePressed} variant="outline">
+					<u>U</u>
+				</Toggle>
+			</div>
+
+			<div class="flex items-center gap-3">
+				<Toggle size="sm" variant="outline">Small</Toggle>
+				<Toggle size="md" variant="outline">Medium</Toggle>
+				<Toggle size="lg" variant="outline">Large</Toggle>
+			</div>
+		</div>
+	</section>
+
+	<section class="space-y-4">
+		<h2 class="text-fluid-2xl font-semibold">Toggle Group</h2>
+		<div class="space-y-3">
+			<div>
+				<p class="text-sm text-muted mb-2">Text alignment (single):</p>
+				<ToggleGroup
+					type="single"
+					bind:value={alignValue}
+					items={[
+						{ value: 'left', label: 'Left' },
+						{ value: 'center', label: 'Center' },
+						{ value: 'right', label: 'Right' },
+						{ value: 'justify', label: 'Justify' }
+					]}
+				/>
+				<p class="text-sm text-muted mt-2">Selected: {alignValue || 'none'}</p>
+			</div>
+
+			<div>
+				<p class="text-sm text-muted mb-2">Text formatting (multiple):</p>
+				<ToggleGroup
+					type="multiple"
+					bind:value={selectedFormats}
+					items={[
+						{ value: 'bold', label: 'B' },
+						{ value: 'italic', label: 'I' },
+						{ value: 'underline', label: 'U' },
+						{ value: 'strikethrough', label: 'S' }
+					]}
+					variant="outline"
+				/>
+				<p class="text-sm text-muted mt-2">Selected: {selectedFormats.join(', ') || 'none'}</p>
+			</div>
+
+			<div>
+				<p class="text-sm text-muted mb-2">Vertical orientation:</p>
+				<ToggleGroup
+					type="single"
+					orientation="vertical"
+					items={[
+						{ value: 'top', label: 'Top' },
+						{ value: 'middle', label: 'Middle' },
+						{ value: 'bottom', label: 'Bottom' }
+					]}
+				/>
+			</div>
+
+			<div>
+				<p class="text-sm text-muted mb-2">Sizes:</p>
+				<div class="flex flex-wrap gap-4">
+					<ToggleGroup
+						type="single"
+						size="sm"
+						items={[
+							{ value: 'a', label: 'A' },
+							{ value: 'b', label: 'B' },
+							{ value: 'c', label: 'C' }
+						]}
+					/>
+					<ToggleGroup
+						type="single"
+						size="md"
+						items={[
+							{ value: 'a', label: 'A' },
+							{ value: 'b', label: 'B' },
+							{ value: 'c', label: 'C' }
+						]}
+					/>
+					<ToggleGroup
+						type="single"
+						size="lg"
+						items={[
+							{ value: 'a', label: 'A' },
+							{ value: 'b', label: 'B' },
+							{ value: 'c', label: 'C' }
+						]}
+					/>
+				</div>
+			</div>
+		</div>
 	</section>
 </div>

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import DemoCard from './shared/DemoCard.svelte';
-	import { FormField, Input } from '$lib/components';
+	import { FormField, Input, DatePicker } from '$lib/components';
 
 	let inputValue = $state('');
 </script>
@@ -32,6 +32,14 @@
 						<Input placeholder="Enter email" error />
 					{/snippet}
 				</FormField>
+			</div>
+		</DemoCard>
+
+		<!-- DatePicker -->
+		<DemoCard title="Date Picker" description="Calendar-based date selection">
+			<div class="form-field-demo">
+				<DatePicker label="Birthdate" />
+				<DatePicker label="Disabled" disabled />
 			</div>
 		</DemoCard>
 	</div>

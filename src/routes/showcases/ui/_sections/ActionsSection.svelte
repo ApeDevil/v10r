@@ -1,7 +1,7 @@
 <script lang="ts">
 	import DemoCard from './shared/DemoCard.svelte';
 	import VariantGrid from './shared/VariantGrid.svelte';
-	import { Button, DropdownMenu } from '$lib/components';
+	import { Button, DropdownMenu, ContextMenu } from '$lib/components';
 </script>
 
 <section id="prim-actions" class="section">
@@ -56,6 +56,24 @@
 				{/snippet}
 			</DropdownMenu>
 		</DemoCard>
+
+		<!-- Context Menu -->
+		<DemoCard title="Context Menu" description="Right-click triggered menu">
+			<ContextMenu
+				items={[
+					{ label: 'Copy', icon: 'i-lucide-copy', shortcut: '⌘C' },
+					{ label: 'Paste', icon: 'i-lucide-clipboard', shortcut: '⌘V' },
+					{ separator: true },
+					{ label: 'Delete', icon: 'i-lucide-trash-2' }
+				]}
+			>
+				{#snippet trigger({ props })}
+					<div {...props} class="context-trigger">
+						Right-click here
+					</div>
+				{/snippet}
+			</ContextMenu>
+		</DemoCard>
 	</div>
 </section>
 
@@ -83,5 +101,24 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-6);
+	}
+
+	.context-trigger {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+		height: 8rem;
+		border: 2px dashed var(--color-border);
+		border-radius: var(--radius-md);
+		color: var(--color-muted);
+		font-size: var(--text-fluid-sm);
+		cursor: context-menu;
+		transition: border-color var(--duration-fast);
+	}
+
+	.context-trigger:hover {
+		border-color: var(--color-primary);
+		color: var(--color-fg);
 	}
 </style>

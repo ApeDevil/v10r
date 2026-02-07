@@ -1,6 +1,8 @@
 <script lang="ts">
 	import DemoCard from './shared/DemoCard.svelte';
-	import { PageHeader } from '$lib/components';
+	import { PageHeader, MenuBar, QuickSearch, Button } from '$lib/components';
+
+	let searchOpen = $state(false);
 </script>
 
 <section id="comp-navigation" class="section">
@@ -21,6 +23,62 @@
 					]}
 				/>
 			</div>
+		</DemoCard>
+
+		<!-- MenuBar -->
+		<DemoCard title="Menu Bar" description="Application menu bar with keyboard shortcuts">
+			<MenuBar
+				menus={[
+					{
+						label: 'File',
+						items: [
+							{ label: 'New', shortcut: '⌘N', icon: 'i-lucide-file-plus' },
+							{ label: 'Open', shortcut: '⌘O', icon: 'i-lucide-folder-open' },
+							{ type: 'separator' },
+							{ label: 'Save', shortcut: '⌘S', icon: 'i-lucide-save' },
+							{ label: 'Save As...', shortcut: '⌘⇧S' }
+						]
+					},
+					{
+						label: 'Edit',
+						items: [
+							{ label: 'Undo', shortcut: '⌘Z', icon: 'i-lucide-undo' },
+							{ label: 'Redo', shortcut: '⌘⇧Z', icon: 'i-lucide-redo' },
+							{ type: 'separator' },
+							{ label: 'Cut', shortcut: '⌘X' },
+							{ label: 'Copy', shortcut: '⌘C' },
+							{ label: 'Paste', shortcut: '⌘V' }
+						]
+					},
+					{
+						label: 'View',
+						items: [
+							{ label: 'Zoom In', shortcut: '⌘+' },
+							{ label: 'Zoom Out', shortcut: '⌘-' },
+							{ type: 'separator' },
+							{ label: 'Full Screen', shortcut: 'F11' }
+						]
+					}
+				]}
+			/>
+		</DemoCard>
+
+		<!-- Quick Search -->
+		<DemoCard title="Quick Search" description="Command palette with Ctrl+K shortcut">
+			<Button variant="outline" onclick={() => (searchOpen = true)}>
+				<span class="i-lucide-search h-4 w-4 mr-2" aria-hidden="true" />
+				Open Quick Search
+			</Button>
+
+			<QuickSearch
+				bind:open={searchOpen}
+				items={[
+					{ id: '1', type: 'recent', label: 'UI Showcase', icon: 'i-lucide-palette', href: '/showcases/ui' },
+					{ id: '2', type: 'page', label: 'Home', icon: 'i-lucide-home', href: '/' },
+					{ id: '3', type: 'page', label: 'Showcases', icon: 'i-lucide-layout', href: '/showcases' },
+					{ id: '4', type: 'action', label: 'Toggle Theme', icon: 'i-lucide-sun' }
+				]}
+			/>
 		</DemoCard>
 	</div>
 </section>

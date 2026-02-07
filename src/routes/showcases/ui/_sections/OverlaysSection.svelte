@@ -1,6 +1,6 @@
 <script lang="ts">
 	import DemoCard from './shared/DemoCard.svelte';
-	import { Dialog, Drawer, Button, Tabs } from '$lib/components';
+	import { Dialog, Drawer, Button, Tabs, Accordion, ScrollArea } from '$lib/components';
 	import { Tooltip, Popover } from '$lib/components';
 
 	let dialogOpen = $state(false);
@@ -13,6 +13,19 @@
 	<p class="section-description">Components that appear above other content.</p>
 
 	<div class="demos">
+		<!-- Accordion -->
+		<DemoCard title="Accordion" description="Collapsible content sections">
+			<div class="accordion-demo">
+				<Accordion
+					items={[
+						{ value: 'item-1', title: 'What is Velociraptor?', content: 'A full-stack template focused on performance and lightweight deployment.' },
+						{ value: 'item-2', title: 'What tech stack does it use?', content: 'SvelteKit 2, Bun, PostgreSQL (Neon), Neo4j, and more.' },
+						{ value: 'item-3', title: 'How do I get started?', content: 'Clone the repo and run podman-compose up to start developing.' }
+					]}
+				/>
+			</div>
+		</DemoCard>
+
 		<!-- Dialog -->
 		<DemoCard title="Dialog" description="Modal dialog">
 			<Button onclick={() => (dialogOpen = true)}>Open Dialog</Button>
@@ -88,6 +101,19 @@
 				/>
 			</div>
 		</DemoCard>
+
+		<!-- Scroll Area -->
+		<DemoCard title="Scroll Area" description="Custom scrollbar container">
+			<div class="scroll-area-demo">
+				<ScrollArea class="h-48 w-full rounded-md border border-border">
+					<div class="scroll-area-content">
+						{#each Array(20) as _, i}
+							<div class="scroll-item">Scrollable item {i + 1}</div>
+						{/each}
+					</div>
+				</ScrollArea>
+			</div>
+		</DemoCard>
 	</div>
 </section>
 
@@ -115,6 +141,10 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-6);
+	}
+
+	.accordion-demo {
+		width: 100%;
 	}
 
 	.dialog-content,
@@ -158,5 +188,25 @@
 
 	.tabs-demo {
 		width: 100%;
+	}
+
+	.scroll-area-demo {
+		width: 100%;
+		max-width: 25rem;
+	}
+
+	.scroll-area-content {
+		padding: var(--spacing-4);
+	}
+
+	.scroll-item {
+		padding: var(--spacing-2) 0;
+		border-bottom: 1px solid var(--color-border);
+		font-size: var(--text-fluid-sm);
+		color: var(--color-fg);
+	}
+
+	.scroll-item:last-child {
+		border-bottom: none;
 	}
 </style>
