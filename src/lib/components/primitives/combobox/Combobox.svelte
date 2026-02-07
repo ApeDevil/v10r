@@ -130,9 +130,9 @@
 					<button
 						type="button"
 						class={cn(
-							'relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-left',
-							'text-fluid-sm text-fg outline-none transition-colors',
-							index === highlightedIndex && 'bg-muted/10',
+							'combobox-item relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-left',
+							'text-fluid-sm text-fg outline-none',
+							index === highlightedIndex && 'combobox-item-highlighted',
 							option.disabled && 'pointer-events-none opacity-50'
 						)}
 						onclick={() => handleSelect(option)}
@@ -150,3 +150,10 @@
 		</div>
 	{/if}
 </div>
+
+<style>
+	/* UnoCSS can't apply opacity modifiers with CSS variable colors — use color-mix() */
+	:global(.combobox-item-highlighted) {
+		background-color: color-mix(in srgb, var(--color-muted) 10%, transparent);
+	}
+</style>
