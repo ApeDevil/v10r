@@ -44,6 +44,10 @@
 </a>
 
 <style>
+	:global(.dark) a:hover {
+		box-shadow: 0 0 20px rgb(152 101 248 / 0.3), 0 0 8px rgb(152 101 248 / 0.2);
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		a {
 			transition: none;
