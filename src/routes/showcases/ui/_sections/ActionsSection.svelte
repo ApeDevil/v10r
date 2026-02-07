@@ -13,6 +13,7 @@
 		<DemoCard title="Button Variants" description="Different visual styles">
 			<VariantGrid layout="row">
 				<Button variant="default">Default</Button>
+				<Button variant="primary">Primary</Button>
 				<Button variant="secondary">Secondary</Button>
 				<Button variant="outline">Outline</Button>
 				<Button variant="ghost">Ghost</Button>
