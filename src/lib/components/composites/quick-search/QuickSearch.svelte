@@ -99,7 +99,7 @@
 					bind:value={query}
 					autofocus
 				/>
-				<kbd class="rounded bg-muted/20 px-2 py-0.5 text-xs text-muted">ESC</kbd>
+				<kbd class="qs-kbd rounded px-2 py-0.5 text-xs text-muted">ESC</kbd>
 			</div>
 
 			<div class="max-h-80 overflow-y-auto p-2 flex flex-col gap-2">
@@ -109,10 +109,10 @@
 						{#each grouped.recent as item, i}
 							<button
 								class={cn(
-									'flex w-full items-center gap-3 rounded-md px-3 py-2 text-left',
+									'qs-item flex w-full items-center gap-3 rounded-md px-3 py-2 text-left',
 									filtered.indexOf(item) === selectedIndex
-										? 'bg-primary/10 text-primary'
-										: 'text-fg hover:bg-muted/10'
+										? 'selected text-primary'
+										: 'text-fg'
 								)}
 								onclick={() => handleSelect(item)}
 							>
@@ -129,10 +129,10 @@
 						{#each grouped.pages as item}
 							<button
 								class={cn(
-									'flex w-full items-center gap-3 rounded-md px-3 py-2 text-left',
+									'qs-item flex w-full items-center gap-3 rounded-md px-3 py-2 text-left',
 									filtered.indexOf(item) === selectedIndex
-										? 'bg-primary/10 text-primary'
-										: 'text-fg hover:bg-muted/10'
+										? 'selected text-primary'
+										: 'text-fg'
 								)}
 								onclick={() => handleSelect(item)}
 							>
@@ -149,10 +149,10 @@
 						{#each grouped.actions as item}
 							<button
 								class={cn(
-									'flex w-full items-center gap-3 rounded-md px-3 py-2 text-left',
+									'qs-item flex w-full items-center gap-3 rounded-md px-3 py-2 text-left',
 									filtered.indexOf(item) === selectedIndex
-										? 'bg-primary/10 text-primary'
-										: 'text-fg hover:bg-muted/10'
+										? 'selected text-primary'
+										: 'text-fg'
 								)}
 								onclick={() => handleSelect(item)}
 							>
@@ -170,3 +170,17 @@
 		</Dialog.Content>
 	</Dialog.Portal>
 </Dialog.Root>
+
+<style>
+	.qs-kbd {
+		background-color: color-mix(in srgb, var(--color-muted) 20%, transparent);
+	}
+
+	.qs-item:not(.selected):hover {
+		background-color: color-mix(in srgb, var(--color-muted) 10%, transparent);
+	}
+
+	.qs-item.selected {
+		background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+	}
+</style>
