@@ -21,7 +21,7 @@
 
 <TabsPrimitive.Root bind:value class={cn('w-full flex flex-col gap-4', className)}>
 	<TabsPrimitive.List
-		class="inline-flex h-10 items-center justify-center rounded-lg bg-muted/20 p-1"
+		class="tabs-list inline-flex h-10 items-center justify-center rounded-lg p-1"
 	>
 		{#each tabs as tab}
 			<TabsPrimitive.Trigger
@@ -50,3 +50,9 @@
 		</TabsPrimitive.Content>
 	{/each}
 </TabsPrimitive.Root>
+
+<style>
+	.tabs-list {
+		background-color: color-mix(in srgb, var(--color-muted) 20%, transparent);
+	}
+</style>

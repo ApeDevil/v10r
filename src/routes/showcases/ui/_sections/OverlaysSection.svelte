@@ -5,8 +5,29 @@
 
 	let dialogOpen = $state(false);
 	let drawerOpen = $state(false);
-	let tabValue = $state('tab1');
+	let tabValue = $state('account');
 </script>
+
+{#snippet accountTab()}
+	<div class="tab-content">
+		<h4 class="tab-heading">Account Settings</h4>
+		<p class="tab-text">Manage your account details, profile information, and preferences.</p>
+	</div>
+{/snippet}
+
+{#snippet passwordTab()}
+	<div class="tab-content">
+		<h4 class="tab-heading">Change Password</h4>
+		<p class="tab-text">Update your password regularly to keep your account secure.</p>
+	</div>
+{/snippet}
+
+{#snippet notificationsTab()}
+	<div class="tab-content">
+		<h4 class="tab-heading">Notification Preferences</h4>
+		<p class="tab-text">Choose which notifications you want to receive via email or push.</p>
+	</div>
+{/snippet}
 
 <section id="prim-overlays" class="section">
 	<h2 class="section-title">Overlays</h2>
@@ -83,19 +104,19 @@
 					bind:value={tabValue}
 					tabs={[
 						{
-							value: 'tab1',
-							label: 'Tab 1',
-							content: () => 'Content for Tab 1'
+							value: 'account',
+							label: 'Account',
+							content: accountTab
 						},
 						{
-							value: 'tab2',
-							label: 'Tab 2',
-							content: () => 'Content for Tab 2'
+							value: 'password',
+							label: 'Password',
+							content: passwordTab
 						},
 						{
-							value: 'tab3',
-							label: 'Tab 3',
-							content: () => 'Content for Tab 3'
+							value: 'notifications',
+							label: 'Notifications',
+							content: notificationsTab
 						}
 					]}
 				/>
@@ -188,6 +209,24 @@
 
 	.tabs-demo {
 		width: 100%;
+	}
+
+	.tab-content {
+		padding: var(--spacing-4);
+	}
+
+	.tab-heading {
+		font-size: var(--text-fluid-base);
+		font-weight: 600;
+		margin: 0 0 var(--spacing-2) 0;
+		color: var(--color-fg);
+	}
+
+	.tab-text {
+		margin: 0;
+		font-size: var(--text-fluid-sm);
+		color: var(--color-muted);
+		line-height: 1.6;
 	}
 
 	.scroll-area-demo {
