@@ -19,34 +19,31 @@ export const kbdVariants = cva(
 export type KbdVariants = VariantProps<typeof kbdVariants>;
 
 /**
- * Map common key names to their visual symbols
+ * Map common key names to their display labels (Linux/Windows style)
  */
 export const keySymbols: Record<string, string> = {
-	// Command/Meta
-	cmd: '⌘',
-	meta: '⌘',
-	command: '⌘',
-	// Control
-	ctrl: '⌃',
-	control: '⌃',
-	// Alt/Option
-	alt: '⌥',
-	option: '⌥',
-	// Shift
+	// Modifiers
+	cmd: 'Ctrl',
+	meta: 'Ctrl',
+	command: 'Ctrl',
+	ctrl: 'Ctrl',
+	control: 'Ctrl',
+	alt: 'Alt',
+	option: 'Alt',
 	shift: '⇧',
 	// Enter
-	enter: '↵',
-	return: '↵',
+	enter: '⏎',
+	return: '⏎',
 	// Backspace/Delete
 	backspace: '⌫',
-	delete: '⌫',
+	delete: 'Del',
 	// Escape
 	escape: 'Esc',
 	esc: 'Esc',
 	// Tab
 	tab: '⇥',
 	// Space
-	space: '␣',
+	space: 'Space',
 	// Arrows
 	up: '↑',
 	down: '↓',

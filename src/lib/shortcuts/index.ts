@@ -3,7 +3,7 @@
  * Exports all shortcuts functionality.
  */
 
-export { isMac, getModifierKey, formatShortcut } from './platform';
+export { getModifierKey, formatShortcut } from './platform';
 export {
 	registerShortcut,
 	getShortcuts,

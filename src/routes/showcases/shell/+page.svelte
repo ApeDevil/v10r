@@ -174,8 +174,8 @@
 			Try the keyboard shortcuts or click the triggers in the sidebar:
 		</p>
 		<ul>
-			<li><kbd>⌘K</kbd> or <kbd>Ctrl+K</kbd> - Quick Search</li>
-			<li><kbd>⌘J</kbd> or <kbd>Ctrl+J</kbd> - AI Assistant</li>
+			<li><kbd>Ctrl+K</kbd> - Quick Search</li>
+			<li><kbd>Ctrl+J</kbd> - AI Assistant</li>
 		</ul>
 
 		<div class="button-group">
@@ -200,7 +200,7 @@
 	<section class="demo-section">
 		<h2>Keyboard Shortcuts</h2>
 		<p>
-			Press <kbd>?</kbd> to view all keyboard shortcuts. Platform-aware shortcuts adapt to macOS (⌘) vs other platforms (Ctrl).
+			Press <kbd>?</kbd> to view all keyboard shortcuts.
 		</p>
 
 		<div class="shortcuts-demo">

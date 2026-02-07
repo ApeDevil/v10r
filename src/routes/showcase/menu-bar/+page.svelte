@@ -12,14 +12,14 @@
 					type: 'item',
 					label: 'New File',
 					icon: 'i-lucide-file-plus',
-					shortcut: '⌘N',
+					shortcut: 'Ctrl+N',
 					onSelect: () => console.log('New File')
 				},
 				{
 					type: 'item',
 					label: 'Open',
 					icon: 'i-lucide-folder-open',
-					shortcut: '⌘O',
+					shortcut: 'Ctrl+O',
 					onSelect: () => console.log('Open')
 				},
 				{ type: 'separator' },
@@ -27,21 +27,21 @@
 					type: 'item',
 					label: 'Save',
 					icon: 'i-lucide-save',
-					shortcut: '⌘S',
+					shortcut: 'Ctrl+S',
 					onSelect: () => console.log('Save')
 				},
 				{
 					type: 'item',
 					label: 'Save As...',
 					icon: 'i-lucide-save',
-					shortcut: '⌘⇧S',
+					shortcut: 'Ctrl+⇧+S',
 					onSelect: () => console.log('Save As')
 				},
 				{ type: 'separator' },
 				{
 					type: 'item',
 					label: 'Close',
-					shortcut: '⌘W',
+					shortcut: 'Ctrl+W',
 					onSelect: () => console.log('Close')
 				}
 			]
@@ -53,14 +53,14 @@
 					type: 'item',
 					label: 'Undo',
 					icon: 'i-lucide-undo',
-					shortcut: '⌘Z',
+					shortcut: 'Ctrl+Z',
 					onSelect: () => console.log('Undo')
 				},
 				{
 					type: 'item',
 					label: 'Redo',
 					icon: 'i-lucide-redo',
-					shortcut: '⌘⇧Z',
+					shortcut: 'Ctrl+⇧+Z',
 					onSelect: () => console.log('Redo')
 				},
 				{ type: 'separator' },
@@ -68,21 +68,21 @@
 					type: 'item',
 					label: 'Cut',
 					icon: 'i-lucide-scissors',
-					shortcut: '⌘X',
+					shortcut: 'Ctrl+X',
 					onSelect: () => console.log('Cut')
 				},
 				{
 					type: 'item',
 					label: 'Copy',
 					icon: 'i-lucide-copy',
-					shortcut: '⌘C',
+					shortcut: 'Ctrl+C',
 					onSelect: () => console.log('Copy')
 				},
 				{
 					type: 'item',
 					label: 'Paste',
 					icon: 'i-lucide-clipboard',
-					shortcut: '⌘V',
+					shortcut: 'Ctrl+V',
 					onSelect: () => console.log('Paste')
 				}
 			]
@@ -113,20 +113,20 @@
 					type: 'item',
 					label: 'Zoom In',
 					icon: 'i-lucide-zoom-in',
-					shortcut: '⌘+',
+					shortcut: 'Ctrl++',
 					onSelect: () => console.log('Zoom In')
 				},
 				{
 					type: 'item',
 					label: 'Zoom Out',
 					icon: 'i-lucide-zoom-out',
-					shortcut: '⌘-',
+					shortcut: 'Ctrl+-',
 					onSelect: () => console.log('Zoom Out')
 				},
 				{
 					type: 'item',
 					label: 'Reset Zoom',
-					shortcut: '⌘0',
+					shortcut: 'Ctrl+0',
 					onSelect: () => console.log('Reset Zoom')
 				}
 			]
@@ -144,7 +144,7 @@
 					type: 'item',
 					label: 'Keyboard Shortcuts',
 					icon: 'i-lucide-keyboard',
-					shortcut: '⌘/',
+					shortcut: 'Ctrl+/',
 					onSelect: () => console.log('Shortcuts')
 				},
 				{ type: 'separator' },
@@ -223,7 +223,7 @@
           type: 'item',
           label: 'New File',
           icon: 'i-lucide-file-plus',
-          shortcut: '⌘N',
+          shortcut: 'Ctrl+N',
           onSelect: () => console.log('New File')
         },
         { type: 'separator' },
@@ -231,7 +231,7 @@
           type: 'item',
           label: 'Save',
           icon: 'i-lucide-save',
-          shortcut: '⌘S',
+          shortcut: 'Ctrl+S',
           onSelect: () => console.log('Save')
         }
       ]

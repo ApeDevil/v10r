@@ -5,30 +5,30 @@
 	// Simple items example
 	const simpleItems = [
 		{ label: 'View Details', icon: 'i-lucide-eye', onclick: () => alert('View clicked') },
-		{ label: 'Edit', icon: 'i-lucide-pencil', shortcut: '⌘E', onclick: () => alert('Edit clicked') },
+		{ label: 'Edit', icon: 'i-lucide-pencil', shortcut: 'Ctrl+E', onclick: () => alert('Edit clicked') },
 		{ separator: true },
-		{ label: 'Delete', icon: 'i-lucide-trash-2', shortcut: '⌘⌫', onclick: () => alert('Delete clicked') }
+		{ label: 'Delete', icon: 'i-lucide-trash-2', shortcut: 'Ctrl+Del', onclick: () => alert('Delete clicked') }
 	];
 
 	// Document actions
 	const documentItems = [
-		{ label: 'New Document', icon: 'i-lucide-file-plus', shortcut: '⌘N', onclick: () => alert('New document') },
-		{ label: 'Open...', icon: 'i-lucide-folder-open', shortcut: '⌘O', onclick: () => alert('Open') },
+		{ label: 'New Document', icon: 'i-lucide-file-plus', shortcut: 'Ctrl+N', onclick: () => alert('New document') },
+		{ label: 'Open...', icon: 'i-lucide-folder-open', shortcut: 'Ctrl+O', onclick: () => alert('Open') },
 		{ separator: true },
-		{ label: 'Save', icon: 'i-lucide-save', shortcut: '⌘S', onclick: () => alert('Saved') },
-		{ label: 'Save As...', icon: 'i-lucide-save-all', shortcut: '⇧⌘S', onclick: () => alert('Save as') },
+		{ label: 'Save', icon: 'i-lucide-save', shortcut: 'Ctrl+S', onclick: () => alert('Saved') },
+		{ label: 'Save As...', icon: 'i-lucide-save-all', shortcut: 'Ctrl+⇧+S', onclick: () => alert('Save as') },
 		{ separator: true },
 		{ label: 'Export PDF', icon: 'i-lucide-file-down', onclick: () => alert('Exporting PDF') },
-		{ label: 'Print', icon: 'i-lucide-printer', shortcut: '⌘P', onclick: () => alert('Printing') }
+		{ label: 'Print', icon: 'i-lucide-printer', shortcut: 'Ctrl+P', onclick: () => alert('Printing') }
 	];
 
 	// Disabled items example
 	const itemsWithDisabled = [
-		{ label: 'Cut', icon: 'i-lucide-scissors', shortcut: '⌘X', disabled: true, onclick: () => {} },
-		{ label: 'Copy', icon: 'i-lucide-copy', shortcut: '⌘C', onclick: () => alert('Copied') },
-		{ label: 'Paste', icon: 'i-lucide-clipboard', shortcut: '⌘V', onclick: () => alert('Pasted') },
+		{ label: 'Cut', icon: 'i-lucide-scissors', shortcut: 'Ctrl+X', disabled: true, onclick: () => {} },
+		{ label: 'Copy', icon: 'i-lucide-copy', shortcut: 'Ctrl+C', onclick: () => alert('Copied') },
+		{ label: 'Paste', icon: 'i-lucide-clipboard', shortcut: 'Ctrl+V', onclick: () => alert('Pasted') },
 		{ separator: true },
-		{ label: 'Select All', icon: 'i-lucide-select-all', shortcut: '⌘A', onclick: () => alert('Selected all') }
+		{ label: 'Select All', icon: 'i-lucide-select-all', shortcut: 'Ctrl+A', onclick: () => alert('Selected all') }
 	];
 
 	// Image actions
@@ -255,7 +255,7 @@
 				<div>
 					<h4 class="text-fluid-base font-semibold mb-2">Define Items</h4>
 					<pre class="bg-muted/5 p-3 rounded text-fluid-sm overflow-x-auto"><code>const items = [
-  {'{'} label: 'Edit', icon: 'i-lucide-pencil', shortcut: '⌘E', onclick: () => {'{'} /* action */ {'}'} {'}'},
+  {'{'} label: 'Edit', icon: 'i-lucide-pencil', shortcut: 'Ctrl+E', onclick: () => {'{'} /* action */ {'}'} {'}'},
   {'{'} separator: true {'}'},
   {'{'} label: 'Delete', icon: 'i-lucide-trash-2', onclick: () => {'{'} /* action */ {'}'} {'}'}
 ];</code></pre>

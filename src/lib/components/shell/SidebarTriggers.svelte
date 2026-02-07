@@ -21,10 +21,7 @@
 
 	const isExpanded = $derived(forceExpanded || sidebar.expanded);
 
-	// Detect OS for keyboard hint
-	const isMac =
-		typeof navigator !== 'undefined' ? /Mac|iPhone|iPad|iPod/.test(navigator.platform) : false;
-	const cmdKey = isMac ? '⌘' : 'Ctrl';
+	const cmdKey = 'Ctrl+';
 
 	// Keyboard shortcuts
 	function handleKeydown(e: KeyboardEvent) {
@@ -55,8 +52,8 @@
 				: 'h-10 w-10 justify-center border-none bg-transparent rounded-full opacity-60 hover:opacity-100 hover:bg-border hover:text-fg'
 		)}
 		onclick={() => modals.open('quickSearch')}
-		aria-label={isExpanded ? 'Search' : 'Search (⌘K)'}
-		title={isExpanded ? undefined : 'Search (⌘K)'}
+		aria-label={isExpanded ? 'Search' : 'Search (Ctrl+K)'}
+		title={isExpanded ? undefined : 'Search (Ctrl+K)'}
 	>
 		<span class="i-lucide-search text-icon-md shrink-0" />
 		{#if isExpanded}
@@ -78,8 +75,8 @@
 				: 'h-10 w-10 justify-center border-none bg-transparent rounded-full opacity-60 hover:opacity-100 hover:bg-border hover:text-fg'
 		)}
 		onclick={() => modals.open('aiAssistant')}
-		aria-label={isExpanded ? 'AI Assistant' : 'AI Assistant (⌘J)'}
-		title={isExpanded ? undefined : 'AI Assistant (⌘J)'}
+		aria-label={isExpanded ? 'AI Assistant' : 'AI Assistant (Ctrl+J)'}
+		title={isExpanded ? undefined : 'AI Assistant (Ctrl+J)'}
 	>
 		<span class="i-lucide-sparkles text-icon-md shrink-0" />
 		{#if isExpanded}

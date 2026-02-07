@@ -62,8 +62,8 @@
 		<DemoCard title="Context Menu" description="Right-click triggered menu">
 			<ContextMenu
 				items={[
-					{ label: 'Copy', icon: 'i-lucide-copy', shortcut: '⌘C' },
-					{ label: 'Paste', icon: 'i-lucide-clipboard', shortcut: '⌘V' },
+					{ label: 'Copy', icon: 'i-lucide-copy', shortcut: 'Ctrl+C' },
+					{ label: 'Paste', icon: 'i-lucide-clipboard', shortcut: 'Ctrl+V' },
 					{ separator: true },
 					{ label: 'Delete', icon: 'i-lucide-trash-2' }
 				]}

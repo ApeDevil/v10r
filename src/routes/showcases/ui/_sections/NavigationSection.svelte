@@ -32,29 +32,29 @@
 					{
 						label: 'File',
 						items: [
-							{ label: 'New', shortcut: '⌘N', icon: 'i-lucide-file-plus' },
-							{ label: 'Open', shortcut: '⌘O', icon: 'i-lucide-folder-open' },
+							{ label: 'New', shortcut: 'Ctrl+N', icon: 'i-lucide-file-plus' },
+							{ label: 'Open', shortcut: 'Ctrl+O', icon: 'i-lucide-folder-open' },
 							{ type: 'separator' },
-							{ label: 'Save', shortcut: '⌘S', icon: 'i-lucide-save' },
-							{ label: 'Save As...', shortcut: '⌘⇧S' }
+							{ label: 'Save', shortcut: 'Ctrl+S', icon: 'i-lucide-save' },
+							{ label: 'Save As...', shortcut: 'Ctrl+⇧+S' }
 						]
 					},
 					{
 						label: 'Edit',
 						items: [
-							{ label: 'Undo', shortcut: '⌘Z', icon: 'i-lucide-undo' },
-							{ label: 'Redo', shortcut: '⌘⇧Z', icon: 'i-lucide-redo' },
+							{ label: 'Undo', shortcut: 'Ctrl+Z', icon: 'i-lucide-undo' },
+							{ label: 'Redo', shortcut: 'Ctrl+⇧+Z', icon: 'i-lucide-redo' },
 							{ type: 'separator' },
-							{ label: 'Cut', shortcut: '⌘X' },
-							{ label: 'Copy', shortcut: '⌘C' },
-							{ label: 'Paste', shortcut: '⌘V' }
+							{ label: 'Cut', shortcut: 'Ctrl+X' },
+							{ label: 'Copy', shortcut: 'Ctrl+C' },
+							{ label: 'Paste', shortcut: 'Ctrl+V' }
 						]
 					},
 					{
 						label: 'View',
 						items: [
-							{ label: 'Zoom In', shortcut: '⌘+' },
-							{ label: 'Zoom Out', shortcut: '⌘-' },
+							{ label: 'Zoom In', shortcut: 'Ctrl++' },
+							{ label: 'Zoom Out', shortcut: 'Ctrl+-' },
 							{ type: 'separator' },
 							{ label: 'Full Screen', shortcut: 'F11' }
 						]

@@ -5,7 +5,6 @@
 
 import { browser } from '$app/environment';
 import { findShortcutByKeys } from './registry';
-import { isMac } from './platform';
 
 // Sequence state
 let sequenceKeys: string[] = [];
@@ -74,11 +73,9 @@ function shouldIgnoreEvent(event: KeyboardEvent): boolean {
  */
 function buildKeyString(event: KeyboardEvent): string | null {
 	const parts: string[] = [];
-	const mac = isMac();
 
-	// Modifiers (normalize Cmd/Ctrl to 'mod')
-	if (event.metaKey && mac) parts.push('mod');
-	if (event.ctrlKey && !mac) parts.push('mod');
+	// Modifiers (normalize Ctrl to 'mod')
+	if (event.ctrlKey) parts.push('mod');
 	if (event.altKey) parts.push('alt');
 	if (event.shiftKey && !isSingleShiftKey(event)) parts.push('shift');
 

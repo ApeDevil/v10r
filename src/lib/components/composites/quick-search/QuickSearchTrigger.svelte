@@ -31,6 +31,6 @@
 	>
 		<span class="i-lucide-search h-4 w-4" />
 		<span class="flex-1 text-left text-sm">Search...</span>
-		<kbd class="rounded bg-muted/20 px-1.5 py-0.5 text-xs">⌘K</kbd>
+		<kbd class="rounded bg-muted/20 px-1.5 py-0.5 text-xs">Ctrl+K</kbd>
 	</button>
 {/if}

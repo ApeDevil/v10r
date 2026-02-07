@@ -1,35 +1,22 @@
 /**
- * Platform detection for keyboard shortcuts.
- * Handles Cmd/Ctrl differences between macOS and other platforms.
+ * Keyboard shortcut formatting (Linux/Windows).
  */
-
-import { browser } from '$app/environment';
 
 /**
- * Detect if running on macOS.
+ * Get the modifier key label.
  */
-export function isMac(): boolean {
-	if (!browser) return false;
-	return /Mac|iPhone|iPod|iPad/i.test(navigator.platform || navigator.userAgent);
-}
-
-/**
- * Get the platform-appropriate modifier key.
- */
-export function getModifierKey(): 'Cmd' | 'Ctrl' {
-	return isMac() ? 'Cmd' : 'Ctrl';
+export function getModifierKey(): 'Ctrl' {
+	return 'Ctrl';
 }
 
 /**
  * Format shortcut string for display.
- * Converts 'mod+k' → '⌘K' on Mac or 'Ctrl+K' on other platforms.
- * Converts 'g h' → 'g then h' for sequences.
+ * Converts 'mod+k' → 'Ctrl+K'.
+ * Converts 'g h' → 'G then H' for sequences.
  *
  * @param shortcut - Raw shortcut string (e.g., 'mod+k', 'shift+/', 'g h')
  */
 export function formatShortcut(shortcut: string): string {
-	const mac = isMac();
-
 	// Handle key sequences (contains space)
 	if (shortcut.includes(' ')) {
 		return shortcut
@@ -38,8 +25,8 @@ export function formatShortcut(shortcut: string): string {
 			.join(' then ');
 	}
 
-	// Replace 'mod' with platform-appropriate modifier
-	const normalized = shortcut.replace(/mod/i, mac ? 'cmd' : 'ctrl');
+	// Replace 'mod' with Ctrl
+	const normalized = shortcut.replace(/mod/i, 'ctrl');
 
 	// Split into parts
 	const parts = normalized.split('+');
@@ -48,25 +35,21 @@ export function formatShortcut(shortcut: string): string {
 	const formatted = parts.map((part) => {
 		const lower = part.toLowerCase();
 
-		// Map to symbols (Mac) or capitalized text (other platforms)
 		switch (lower) {
 			case 'cmd':
-				return mac ? '⌘' : 'Cmd';
 			case 'ctrl':
-				return mac ? '⌃' : 'Ctrl';
+				return 'Ctrl';
 			case 'alt':
-				return mac ? '⌥' : 'Alt';
+				return 'Alt';
 			case 'shift':
-				return mac ? '⇧' : 'Shift';
+				return '⇧';
 			case 'escape':
 			case 'esc':
-				return mac ? 'Esc' : 'Escape';
+				return 'Esc';
 			default:
-				// Convert single characters to uppercase
 				return part.length === 1 ? part.toUpperCase() : part;
 		}
 	});
 
-	// Join with no space on Mac, space on other platforms
-	return mac ? formatted.join('') : formatted.join('+');
+	return formatted.join('+');
 }
