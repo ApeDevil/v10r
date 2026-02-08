@@ -4,6 +4,7 @@
 	/* Colors - Light mode */
 	--color-bg: #d2d9e2;
 	--color-fg: #09516d;
+	--color-body: #073c52;
 	--color-muted: #4b5563;
 	--color-border: #ffffff;
 	--color-subtle: #f3f4f6;
@@ -129,6 +130,7 @@
 .dark {
 	--color-bg: #16181b;
 	--color-fg: #53ccc2;
+	--color-body: #98cfcb;
 	--color-muted: #b4bcc7;
 	--color-border: #374151;
 	--color-subtle: #1f2937;

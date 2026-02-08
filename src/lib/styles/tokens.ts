@@ -116,6 +116,7 @@ export const spacing = {
 export const colors = {
   bg: 'var(--color-bg)',
   fg: 'var(--color-fg)',
+  body: 'var(--color-body)',
   muted: 'var(--color-muted)',
   border: 'var(--color-border)',
   subtle: 'var(--color-subtle)',

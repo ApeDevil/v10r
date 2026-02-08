@@ -60,6 +60,8 @@ export default defineConfig({
 		...Object.keys(fontSize).map((k) => `text-${k}`),
 		...Object.keys(iconSize).map((k) => `text-${k}`),
 		...Object.keys(spacing).flatMap((k) => [`p-${k}`, `m-${k}`, `gap-${k}`]),
+		// Typography colors
+		'color-body',
 		// Elevation surfaces
 		'bg-surface-0',
 		'bg-surface-1',
