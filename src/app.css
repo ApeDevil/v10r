@@ -97,6 +97,10 @@
 	--radius-xl: 0.75rem;
 	--radius-full: 9999px;
 
+	/* Scrollbar */
+	scrollbar-width: thin;
+	scrollbar-color: var(--color-border) transparent;
+
 	/* Spacing tokens */
 	--spacing-1: 0.25rem;
 	--spacing-2: 0.5rem;
