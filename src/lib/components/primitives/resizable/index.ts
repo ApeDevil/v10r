@@ -1,11 +1,4 @@
-export { default as ResizablePaneGroup } from './ResizablePaneGroup.svelte';
-export { default as ResizablePane } from './ResizablePane.svelte';
-export { default as ResizableHandle } from './ResizableHandle.svelte';
-export {
-	resizablePaneGroupVariants,
-	resizablePaneVariants,
-	resizableHandleVariants,
-	type ResizablePaneGroupVariants,
-	type ResizablePaneVariants,
-	type ResizableHandleVariants
-} from './resizable';
+export { default as PaneGroup } from './PaneGroup.svelte';
+export { default as Pane } from './Pane.svelte';
+export { default as PaneResizer } from './PaneResizer.svelte';
+export { resizableHandleVariants, type ResizableHandleVariants } from './resizable';

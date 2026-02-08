@@ -44,6 +44,12 @@
 			description="Stack, cluster, grid, center, and resizable pane primitives"
 		/>
 		<LinkCard
+			href="/showcases/ui/panes"
+			icon="i-lucide-panel-left"
+			title="Resizable Panes"
+			description="Draggable split layouts with persistence, collapsible panes, and keyboard support"
+		/>
+		<LinkCard
 			href="/showcases/ui/tokens"
 			icon="i-lucide-palette"
 			title="Theme Tokens"
