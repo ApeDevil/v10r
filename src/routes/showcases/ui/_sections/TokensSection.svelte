@@ -115,6 +115,27 @@
 			</div>
 		</DemoCard>
 
+		<!-- Surface Elevation -->
+		<DemoCard title="Surface Elevation" description="4 elevation levels — higher = whiter in light, darker in dark">
+			<div class="surface-grid">
+				{#each [
+					{ level: 0, label: 'Surface 0', usage: 'Page background' },
+					{ level: 1, label: 'Surface 1', usage: 'Cards, sidebar' },
+					{ level: 2, label: 'Surface 2', usage: 'Dropdowns, popovers' },
+					{ level: 3, label: 'Surface 3', usage: 'Modals, tooltips' }
+				] as surface}
+					<div
+						class="surface-swatch"
+						style="background: var(--surface-{surface.level});"
+					>
+						<div class="surface-label">{surface.label}</div>
+						<div class="surface-usage">{surface.usage}</div>
+						<code class="surface-class">bg-surface-{surface.level}</code>
+					</div>
+				{/each}
+			</div>
+		</DemoCard>
+
 		<!-- Border Radius -->
 		<DemoCard title="Border Radius" description="Corner rounding values">
 			<div class="token-grid">
@@ -336,8 +357,43 @@
 		font-family: 'Fira Code', monospace;
 	}
 
+	.surface-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+		gap: var(--spacing-4);
+		width: 100%;
+	}
+
+	.surface-swatch {
+		padding: var(--spacing-4);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-1);
+	}
+
+	.surface-label {
+		font-size: var(--text-fluid-sm);
+		font-weight: 600;
+		color: var(--color-fg);
+	}
+
+	.surface-usage {
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
+	}
+
+	.surface-class {
+		margin-top: var(--spacing-2);
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
+		font-family: 'Fira Code', monospace;
+	}
+
 	@media (max-width: 640px) {
-		.token-grid {
+		.token-grid,
+		.surface-grid {
 			grid-template-columns: 1fr;
 		}
 	}

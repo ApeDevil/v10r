@@ -1,7 +1,23 @@
 <script lang="ts">
+	import { PageHeader } from '$lib/components';
 	import { Canvas, T } from '@threlte/core';
 	import { OrbitControls, GLTF } from '@threlte/extras';
 </script>
+
+<svelte:head>
+	<title>Static Scene - 3D - Velociraptor</title>
+</svelte:head>
+
+<PageHeader
+	title="Static Scene"
+	description="GLTF model with orbit controls and directional lighting."
+	breadcrumbs={[
+		{ label: 'Home', href: '/' },
+		{ label: 'Showcases', href: '/showcases' },
+		{ label: '3D', href: '/showcases/3d' },
+		{ label: 'Static Scene' }
+	]}
+/>
 
 <div class="container">
 	<Canvas>

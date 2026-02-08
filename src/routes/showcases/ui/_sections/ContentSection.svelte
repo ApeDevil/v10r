@@ -60,22 +60,55 @@
 		</DemoCard>
 
 		<!-- Carousel -->
-		<DemoCard title="Carousel" description="Scrollable slide container">
-			<div class="carousel-demo">
-				<Carousel showDots showArrows>
-					<CarouselItem>
-						<div class="carousel-slide slide-1">Slide 1</div>
-					</CarouselItem>
-					<CarouselItem>
-						<div class="carousel-slide slide-2">Slide 2</div>
-					</CarouselItem>
-					<CarouselItem>
-						<div class="carousel-slide slide-3">Slide 3</div>
-					</CarouselItem>
-					<CarouselItem>
-						<div class="carousel-slide slide-4">Slide 4</div>
-					</CarouselItem>
-				</Carousel>
+		<DemoCard title="Carousel" description="Scrollable slide container with arrows, dots, autoplay">
+			<div class="carousel-variants">
+				<div class="carousel-demo">
+					<p class="carousel-label">With controls</p>
+					<Carousel showDots showArrows>
+						<CarouselItem>
+							<div class="carousel-slide slide-1">Slide 1</div>
+						</CarouselItem>
+						<CarouselItem>
+							<div class="carousel-slide slide-2">Slide 2</div>
+						</CarouselItem>
+						<CarouselItem>
+							<div class="carousel-slide slide-3">Slide 3</div>
+						</CarouselItem>
+						<CarouselItem>
+							<div class="carousel-slide slide-4">Slide 4</div>
+						</CarouselItem>
+					</Carousel>
+				</div>
+
+				<div class="carousel-demo">
+					<p class="carousel-label">Autoplay (3s, pauses on hover)</p>
+					<Carousel showDots showArrows autoplay autoplayInterval={3000}>
+						<CarouselItem>
+							<div class="carousel-slide slide-3">Auto 1</div>
+						</CarouselItem>
+						<CarouselItem>
+							<div class="carousel-slide slide-1">Auto 2</div>
+						</CarouselItem>
+						<CarouselItem>
+							<div class="carousel-slide slide-4">Auto 3</div>
+						</CarouselItem>
+					</Carousel>
+				</div>
+
+				<div class="carousel-demo">
+					<p class="carousel-label">Minimal (swipe / keyboard only)</p>
+					<Carousel showArrows={false} showDots={false}>
+						<CarouselItem>
+							<div class="carousel-slide slide-2">Swipe 1</div>
+						</CarouselItem>
+						<CarouselItem>
+							<div class="carousel-slide slide-4">Swipe 2</div>
+						</CarouselItem>
+						<CarouselItem>
+							<div class="carousel-slide slide-1">Swipe 3</div>
+						</CarouselItem>
+					</Carousel>
+				</div>
 			</div>
 		</DemoCard>
 
@@ -181,9 +214,23 @@
 		width: 100%;
 	}
 
+	.carousel-variants {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-6);
+		width: 100%;
+	}
+
 	.carousel-demo {
 		width: 100%;
 		max-width: 32rem;
+	}
+
+	.carousel-label {
+		margin: 0 0 var(--spacing-2) 0;
+		font-size: var(--text-fluid-sm);
+		color: var(--color-muted);
+		font-weight: 500;
 	}
 
 	.carousel-slide {

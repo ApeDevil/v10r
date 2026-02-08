@@ -1,8 +1,20 @@
 <script lang="ts">
 	import { DemoCard } from '../_components';
 	import { PageHeader, MenuBar, QuickSearch, Button } from '$lib/components';
+	import { ContextMenu } from '$lib/components/composites/context-menu';
 
 	let searchOpen = $state(false);
+	let showLineNumbers = $state(false);
+	let wordWrap = $state(true);
+
+	const contextMenuItems = [
+		{ label: 'View Details', icon: 'i-lucide-eye', onclick: () => {} },
+		{ label: 'Edit', icon: 'i-lucide-pencil', shortcut: 'Ctrl+E', onclick: () => {} },
+		{ label: 'Copy', icon: 'i-lucide-copy', shortcut: 'Ctrl+C', onclick: () => {} },
+		{ separator: true },
+		{ label: 'Archive', icon: 'i-lucide-archive', disabled: true, onclick: () => {} },
+		{ label: 'Delete', icon: 'i-lucide-trash-2', shortcut: 'Ctrl+Del', onclick: () => {} }
+	];
 </script>
 
 <section id="comp-navigation" class="section">
@@ -26,7 +38,7 @@
 		</DemoCard>
 
 		<!-- MenuBar -->
-		<DemoCard title="Menu Bar" description="Application menu bar with keyboard shortcuts">
+		<DemoCard title="Menu Bar" description="Application menu bar with checkboxes, icons, shortcuts">
 			<MenuBar
 				menus={[
 					{
@@ -53,10 +65,22 @@
 					{
 						label: 'View',
 						items: [
-							{ label: 'Zoom In', shortcut: 'Ctrl++' },
-							{ label: 'Zoom Out', shortcut: 'Ctrl+-' },
+							{ type: 'checkbox', label: 'Line Numbers', checked: showLineNumbers, onSelect: () => { showLineNumbers = !showLineNumbers; } },
+							{ type: 'checkbox', label: 'Word Wrap', checked: wordWrap, onSelect: () => { wordWrap = !wordWrap; } },
+							{ type: 'separator' },
+							{ label: 'Zoom In', shortcut: 'Ctrl++', icon: 'i-lucide-zoom-in' },
+							{ label: 'Zoom Out', shortcut: 'Ctrl+-', icon: 'i-lucide-zoom-out' },
 							{ type: 'separator' },
 							{ label: 'Full Screen', shortcut: 'F11' }
+						]
+					},
+					{
+						label: 'Help',
+						items: [
+							{ label: 'Documentation', icon: 'i-lucide-book-open' },
+							{ label: 'Keyboard Shortcuts', icon: 'i-lucide-keyboard', shortcut: 'Ctrl+/' },
+							{ type: 'separator' },
+							{ label: 'About', icon: 'i-lucide-info' }
 						]
 					}
 				]}
@@ -79,6 +103,18 @@
 					{ id: '4', type: 'action', label: 'Toggle Theme', icon: 'i-lucide-sun' }
 				]}
 			/>
+		</DemoCard>
+
+		<!-- Context Menu -->
+		<DemoCard title="Context Menu" description="Right-click menu with icons, shortcuts, disabled items">
+			<ContextMenu items={contextMenuItems}>
+				{#snippet trigger({ props })}
+					<div class="context-trigger" {...props}>
+						<p class="context-text">Right-click this area</p>
+						<p class="context-hint">Opens a context menu with actions</p>
+					</div>
+				{/snippet}
+			</ContextMenu>
 		</DemoCard>
 	</div>
 </section>
@@ -114,5 +150,30 @@
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);
 		overflow: hidden;
+	}
+
+	.context-trigger {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		height: 10rem;
+		width: 100%;
+		border: 1px dashed var(--color-border);
+		border-radius: var(--radius-md);
+		cursor: context-menu;
+	}
+
+	.context-text {
+		margin: 0;
+		font-size: var(--text-fluid-base);
+		font-weight: 600;
+		color: var(--color-fg);
+	}
+
+	.context-hint {
+		margin: var(--spacing-1) 0 0 0;
+		font-size: var(--text-fluid-sm);
+		color: var(--color-muted);
 	}
 </style>

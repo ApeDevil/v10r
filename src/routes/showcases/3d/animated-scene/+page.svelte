@@ -1,10 +1,26 @@
 <script lang="ts">
+	import { PageHeader } from '$lib/components';
 	import { Canvas } from '@threlte/core';
 	import Scene from './Scene.svelte';
 
 	let currentAnimation = $state('Survey');
 	const animationNames = ['Survey', 'Walk', 'Run'];
 </script>
+
+<svelte:head>
+	<title>Animated Scene - 3D - Velociraptor</title>
+</svelte:head>
+
+<PageHeader
+	title="Animated Scene"
+	description="Fox model with switchable animations and orbit controls."
+	breadcrumbs={[
+		{ label: 'Home', href: '/' },
+		{ label: 'Showcases', href: '/showcases' },
+		{ label: '3D', href: '/showcases/3d' },
+		{ label: 'Animated Scene' }
+	]}
+/>
 
 <div class="controls">
 	{#each animationNames as anim}

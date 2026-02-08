@@ -1,51 +1,43 @@
 <script lang="ts">
-	import { EmptyState } from '$lib/components/composites/empty-state';
+	import { PageContainer } from '$lib/components/layout';
+	import { PageHeader, LinkCard } from '$lib/components';
 </script>
 
 <svelte:head>
-	<title>3D - Showcases - Velociraptor</title>
+	<title>3D Showcase - Velociraptor</title>
 </svelte:head>
 
-<div class="page">
-	<h1>3D Showcase</h1>
-	<p>Placeholder for Three.js + Threlte 3D demonstrations.</p>
-
-	<EmptyState
-		icon="i-lucide-box"
-		title="Coming Soon"
-		description="Interactive 3D scenes with physics, animations, and WebGPU rendering."
+<PageContainer width="default">
+	<PageHeader
+		title="3D Showcase"
+		description="Three.js + Threlte 3D demonstrations with GLTF models, animations, and interactive controls."
+		breadcrumbs={[
+			{ label: 'Home', href: '/' },
+			{ label: 'Showcases', href: '/showcases' },
+			{ label: '3D' }
+		]}
 	/>
 
-	<a href="/showcases" class="back-link">← Back to Showcases</a>
-</div>
+	<nav class="scene-nav">
+		<LinkCard
+			href="/showcases/3d/static-scene"
+			icon="i-lucide-box"
+			title="Static Scene"
+			description="GLTF model (DamagedHelmet) with orbit controls and lighting"
+		/>
+		<LinkCard
+			href="/showcases/3d/animated-scene"
+			icon="i-lucide-play"
+			title="Animated Scene"
+			description="Fox model with animation controls (Survey, Walk, Run)"
+		/>
+	</nav>
+</PageContainer>
 
 <style>
-	.page {
-		max-width: var(--layout-narrow-width);
-		margin: 0 auto;
-		padding: var(--spacing-7) var(--spacing-4);
-	}
-
-	h1 {
-		font-size: var(--text-fluid-3xl);
-		margin-bottom: var(--spacing-4);
-		color: var(--color-fg);
-	}
-
-	p {
-		color: var(--color-muted);
-		margin-bottom: var(--spacing-7);
-	}
-
-	.back-link {
-		display: inline-block;
-		margin-top: var(--spacing-7);
-		color: var(--color-primary);
-		text-decoration: none;
-		font-weight: 600;
-	}
-
-	.back-link:hover {
-		text-decoration: underline;
+	.scene-nav {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+		gap: var(--spacing-6);
 	}
 </style>
