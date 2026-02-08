@@ -43,6 +43,10 @@
         {
             "folderPath": "velociraptor/docs/",
             "badge": "📚"
+        },
+        {
+            "folderPath": "velociraptor/src/lib/services/",
+            "badge": "🛎️"
         }
     ]
 }
