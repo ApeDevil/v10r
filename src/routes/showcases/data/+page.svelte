@@ -12,7 +12,7 @@
 		Button,
 		Badge
 	} from '$lib/components/primitives';
-	import { Pagination, Card, PageHeader } from '$lib/components/composites';
+	import { Pagination, Card, PageHeader, BackLink } from '$lib/components/composites';
 
 	// Sample data for table
 	interface User {
@@ -71,6 +71,7 @@
 	}
 </script>
 
+<div class="page">
 <PageHeader
 	title="Data Components"
 	breadcrumbs={[{ label: 'Showcases', href: '/showcases' }, { label: 'Data' }]}
@@ -300,3 +301,28 @@ let selected = $state<string>();
 		</div>
 	</Card>
 </div>
+
+<BackLink href="/showcases" label="Showcases" />
+</div>
+
+<style>
+	.page {
+		width: 100%;
+		max-width: var(--layout-max-width);
+		margin: 0 auto;
+		padding: var(--spacing-7) var(--spacing-4);
+		box-sizing: border-box;
+	}
+
+	@media (min-width: 768px) {
+		.page {
+			padding: var(--spacing-7);
+		}
+	}
+
+	@media (max-width: 640px) {
+		.page {
+			padding: var(--spacing-4);
+		}
+	}
+</style>

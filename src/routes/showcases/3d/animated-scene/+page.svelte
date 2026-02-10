@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { PageHeader } from '$lib/components';
+	import { PageHeader, BackLink } from '$lib/components';
 	import { Canvas } from '@threlte/core';
 	import Scene from './Scene.svelte';
 
@@ -11,16 +11,18 @@
 	<title>Animated Scene - 3D - Velociraptor</title>
 </svelte:head>
 
-<PageHeader
-	title="Animated Scene"
-	description="Fox model with switchable animations and orbit controls."
-	breadcrumbs={[
-		{ label: 'Home', href: '/' },
-		{ label: 'Showcases', href: '/showcases' },
-		{ label: '3D', href: '/showcases/3d' },
-		{ label: 'Animated Scene' }
-	]}
-/>
+<div class="page">
+	<PageHeader
+		title="Animated Scene"
+		description="Fox model with switchable animations and orbit controls."
+		breadcrumbs={[
+			{ label: 'Home', href: '/' },
+			{ label: 'Showcases', href: '/showcases' },
+			{ label: '3D', href: '/showcases/3d' },
+			{ label: 'Animated Scene' }
+		]}
+	/>
+</div>
 
 <div class="controls">
 	{#each animationNames as anim}
@@ -36,7 +38,16 @@
 	</Canvas>
 </div>
 
+<div class="page">
+	<BackLink href="/showcases/3d" label="3D" />
+</div>
+
 <style>
+	.page {
+		max-width: var(--layout-narrow-width);
+		margin: 0 auto;
+		padding: var(--spacing-7) var(--spacing-4);
+	}
 	.container {
 		width: 100%;
 		height: 100vh;

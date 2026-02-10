@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { PageHeader, Card } from '$lib/components';
+	import { PageHeader, Card, BackLink } from '$lib/components';
 	import { PaneGroup, Pane, PaneResizer } from '$lib/components/primitives';
 </script>
 
@@ -347,6 +347,8 @@
 			</Card>
 		</section>
 	</main>
+
+	<BackLink href="/showcases/ui" label="UI" />
 </div>
 
 <style>

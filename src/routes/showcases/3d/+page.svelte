@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { PageContainer } from '$lib/components/layout';
-	import { PageHeader, LinkCard } from '$lib/components';
+	import { PageHeader, LinkCard, BackLink } from '$lib/components';
 </script>
 
 <svelte:head>
 	<title>3D Showcase - Velociraptor</title>
 </svelte:head>
 
-<PageContainer width="default">
+<PageContainer width="default" class="pt-7">
 	<PageHeader
 		title="3D Showcase"
 		description="Three.js + Threlte 3D demonstrations with GLTF models, animations, and interactive controls."
@@ -32,6 +32,8 @@
 			description="Fox model with animation controls (Survey, Walk, Run)"
 		/>
 	</nav>
+
+	<BackLink href="/showcases" label="Showcases" />
 </PageContainer>
 
 <style>

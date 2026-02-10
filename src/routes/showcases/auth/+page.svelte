@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { EmptyState } from '$lib/components/composites/empty-state';
+	import { PageHeader, BackLink } from '$lib/components/composites';
 </script>
 
 <svelte:head>
@@ -7,8 +8,15 @@
 </svelte:head>
 
 <div class="page">
-	<h1>Auth Showcase</h1>
-	<p>Placeholder for Better Auth authentication demonstrations.</p>
+	<PageHeader
+		title="Auth Showcase"
+		description="Placeholder for Better Auth authentication demonstrations."
+		breadcrumbs={[
+			{ label: 'Home', href: '/' },
+			{ label: 'Showcases', href: '/showcases' },
+			{ label: 'Auth' }
+		]}
+	/>
 
 	<EmptyState
 		icon="i-lucide-lock"
@@ -16,7 +24,7 @@
 		description="Authentication flows, session management, and OAuth integration examples."
 	/>
 
-	<a href="/showcases" class="back-link">← Back to Showcases</a>
+	<BackLink href="/showcases" label="Showcases" />
 </div>
 
 <style>
@@ -24,28 +32,5 @@
 		max-width: var(--layout-narrow-width);
 		margin: 0 auto;
 		padding: var(--spacing-7) var(--spacing-4);
-	}
-
-	h1 {
-		font-size: var(--text-fluid-3xl);
-		margin-bottom: var(--spacing-4);
-		color: var(--color-fg);
-	}
-
-	p {
-		color: var(--color-muted);
-		margin-bottom: var(--spacing-7);
-	}
-
-	.back-link {
-		display: inline-block;
-		margin-top: var(--spacing-7);
-		color: var(--color-primary);
-		text-decoration: none;
-		font-weight: 600;
-	}
-
-	.back-link:hover {
-		text-decoration: underline;
 	}
 </style>

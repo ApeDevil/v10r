@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { PageHeader } from '$lib/components/composites';
+	import { PageHeader, BackLink } from '$lib/components/composites';
 	import ActionsSection from '../_sections/ActionsSection.svelte';
 	import InputsSection from '../_sections/InputsSection.svelte';
 	import DataDisplaySection from '../_sections/DataDisplaySection.svelte';
@@ -79,6 +79,8 @@
 		<DataDisplaySection />
 		<OverlaysSection />
 	</main>
+
+	<BackLink href="/showcases/ui" label="UI" />
 </div>
 
 <style>

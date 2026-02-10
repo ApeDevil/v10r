@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { PageHeader } from '$lib/components/composites';
+	import { PageHeader, BackLink } from '$lib/components/composites';
 	import LayoutSection from '../_sections/LayoutSection.svelte';
 </script>
 
@@ -22,6 +22,8 @@
 	<main class="content">
 		<LayoutSection />
 	</main>
+
+	<BackLink href="/showcases/ui" label="UI" />
 </div>
 
 <style>

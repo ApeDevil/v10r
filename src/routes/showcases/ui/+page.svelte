@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { PageHeader } from '$lib/components/composites';
+	import { PageHeader, BackLink } from '$lib/components/composites';
 	import { LinkCard } from '$lib/components';
 </script>
 
@@ -56,6 +56,8 @@
 			description="Colors, spacing, typography scale, shadows, and radii"
 		/>
 	</nav>
+
+	<BackLink href="/showcases" label="Showcases" />
 </div>
 
 <style>

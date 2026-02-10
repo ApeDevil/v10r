@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { PageHeader } from '$lib/components';
+	import { PageHeader, BackLink } from '$lib/components';
 	import { Canvas, T } from '@threlte/core';
 	import { OrbitControls, GLTF } from '@threlte/extras';
 </script>
@@ -8,16 +8,18 @@
 	<title>Static Scene - 3D - Velociraptor</title>
 </svelte:head>
 
-<PageHeader
-	title="Static Scene"
-	description="GLTF model with orbit controls and directional lighting."
-	breadcrumbs={[
-		{ label: 'Home', href: '/' },
-		{ label: 'Showcases', href: '/showcases' },
-		{ label: '3D', href: '/showcases/3d' },
-		{ label: 'Static Scene' }
-	]}
-/>
+<div class="page">
+	<PageHeader
+		title="Static Scene"
+		description="GLTF model with orbit controls and directional lighting."
+		breadcrumbs={[
+			{ label: 'Home', href: '/' },
+			{ label: 'Showcases', href: '/showcases' },
+			{ label: '3D', href: '/showcases/3d' },
+			{ label: 'Static Scene' }
+		]}
+	/>
+</div>
 
 <div class="container">
 	<Canvas>
@@ -31,7 +33,17 @@
 	</Canvas>
 </div>
 
+<div class="page">
+	<BackLink href="/showcases/3d" label="3D" />
+</div>
+
 <style>
+	.page {
+		max-width: var(--layout-narrow-width);
+		margin: 0 auto;
+		padding: var(--spacing-7) var(--spacing-4);
+	}
+
 	.container {
 		width: 100%;
 		height: 100vh;

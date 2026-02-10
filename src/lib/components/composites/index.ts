@@ -1,5 +1,6 @@
 // Composite component exports
 export * from './page-header';
+export * from './back-link';
 
 export { default as Card } from './card/Card.svelte';
 

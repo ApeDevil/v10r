@@ -9,7 +9,9 @@
 		Card,
 		FormField,
 		Toggle,
-		ToggleGroup
+		ToggleGroup,
+		PageHeader,
+		BackLink
 	} from '$lib/components';
 
 	let inputValue = $state('');
@@ -29,8 +31,16 @@
 	];
 </script>
 
-<div class="container mx-auto p-8 space-y-8">
-	<h1 class="text-fluid-4xl font-bold">Component Test</h1>
+<div class="page">
+	<PageHeader
+		title="Component Test"
+		breadcrumbs={[
+			{ label: 'Home', href: '/' },
+			{ label: 'Test Components' }
+		]}
+	/>
+
+	<div class="space-y-8">
 
 	<section class="space-y-4">
 		<h2 class="text-fluid-2xl font-semibold">Buttons</h2>
@@ -240,4 +250,29 @@
 			</div>
 		</div>
 	</section>
+	</div>
+
+	<BackLink href="/" label="Home" />
 </div>
+
+<style>
+	.page {
+		width: 100%;
+		max-width: var(--layout-max-width);
+		margin: 0 auto;
+		padding: var(--spacing-7) var(--spacing-4);
+		box-sizing: border-box;
+	}
+
+	@media (min-width: 768px) {
+		.page {
+			padding: var(--spacing-7);
+		}
+	}
+
+	@media (max-width: 640px) {
+		.page {
+			padding: var(--spacing-4);
+		}
+	}
+</style>

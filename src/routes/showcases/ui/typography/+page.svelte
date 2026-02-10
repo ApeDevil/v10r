@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
-	import { PageHeader } from '$lib/components/composites';
+	import { PageHeader, BackLink } from '$lib/components/composites';
 	import { loadFont, isFontLoaded, findFont, type FontLoadState } from '$lib/services/fonts';
 	import FontPicker from './_components/FontPicker.svelte';
 	import FontPreview from './_components/FontPreview.svelte';
@@ -232,6 +232,8 @@
 			</section>
 		</div>
 	</main>
+
+	<BackLink href="/showcases/ui" label="UI" />
 </div>
 
 <style>

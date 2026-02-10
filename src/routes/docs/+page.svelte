@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { PageContainer } from '$lib/components/layout';
-	import { PageHeader } from '$lib/components/composites';
+	import { PageHeader, BackLink } from '$lib/components/composites';
 	import { LinkCard } from '$lib/components';
 </script>
 
@@ -8,7 +8,7 @@
 	<title>Docs - Velociraptor</title>
 </svelte:head>
 
-<PageContainer width="wide">
+<PageContainer width="wide" class="pt-7">
 	<PageHeader
 		title="Documentation"
 		description="Technical documentation and guides for the Velociraptor template."
@@ -26,6 +26,8 @@
 			description="Technology stack documentation"
 		/>
 	</nav>
+
+	<BackLink href="/" label="Home" />
 </PageContainer>
 
 <style>

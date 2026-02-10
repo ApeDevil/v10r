@@ -6,7 +6,7 @@
 	import { getSession } from '$lib/stores/session.svelte';
 	import { getShortcutsByCategory, formatShortcut } from '$lib/shortcuts';
 	import { Button } from '$lib/components/primitives';
-	import { PageHeader } from '$lib/components/composites';
+	import { PageHeader, BackLink } from '$lib/components/composites';
 	import {
 		Skeleton,
 		SkeletonText,
@@ -378,6 +378,8 @@
 			and user menu. The chevron rotates 90° when open.
 		</p>
 	</section>
+
+	<BackLink href="/showcases" label="Showcases" />
 </div>
 
 <style>
