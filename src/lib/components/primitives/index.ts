@@ -5,6 +5,9 @@ export { default as Input } from './input/Input.svelte';
 export { default as Badge } from './badge/Badge.svelte';
 export { badgeVariants, type BadgeVariants } from './badge/badge';
 
+export { Chip, FilterChip } from './chip';
+export { chipVariants, chipCloseVariants, filterChipVariants, type ChipVariants, type FilterChipVariants } from './chip';
+
 export { default as Avatar } from './avatar/Avatar.svelte';
 
 export { default as Select } from './select/Select.svelte';

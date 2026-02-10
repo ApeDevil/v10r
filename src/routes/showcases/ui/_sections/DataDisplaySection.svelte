@@ -8,6 +8,8 @@
 		HeaderCell as TableHeaderCell,
 		Cell as TableCell,
 		Badge,
+		Chip,
+		FilterChip,
 		Avatar,
 		Skeleton,
 		SkeletonText,
@@ -25,6 +27,11 @@
 	];
 
 	let progressValue = $state(65);
+
+	let chips = $state(['Svelte', 'TypeScript', 'UnoCSS', 'Bits UI']);
+	let filterActive = $state(false);
+	let filterPending = $state(true);
+	let filterCompleted = $state(false);
 </script>
 
 <section id="prim-data-display" class="section">
@@ -65,6 +72,63 @@
 				<Badge variant="warning">Warning</Badge>
 				<Badge variant="error">Error</Badge>
 				<Badge variant="outline">Outline</Badge>
+			</VariantGrid>
+		</DemoCard>
+
+		<!-- Chip (Dismissible) -->
+		<DemoCard title="Chip (Dismissible)" description="Removable tags for inputs and selections">
+			<VariantGrid layout="row">
+				<Chip label="Default" variant="default" ondismiss={() => {}} />
+				<Chip label="Secondary" variant="secondary" ondismiss={() => {}} />
+				<Chip label="Success" variant="success" ondismiss={() => {}} />
+				<Chip label="Warning" variant="warning" ondismiss={() => {}} />
+				<Chip label="Error" variant="error" ondismiss={() => {}} />
+				<Chip label="Outline" variant="outline" ondismiss={() => {}} />
+			</VariantGrid>
+		</DemoCard>
+
+		<!-- Chip Sizes -->
+		<DemoCard title="Chip Sizes" description="Small and medium chip sizes">
+			<VariantGrid layout="row">
+				<Chip label="Small" size="sm" ondismiss={() => {}} />
+				<Chip label="Medium" size="md" ondismiss={() => {}} />
+				<Chip label="With Icon" size="md" icon="i-lucide-tag" ondismiss={() => {}} />
+				<Chip label="No dismiss" variant="secondary" />
+			</VariantGrid>
+		</DemoCard>
+
+		<!-- Chip Interactive Demo -->
+		<DemoCard title="Chip (Interactive)" description="Click x to remove tags">
+			<VariantGrid layout="row">
+				{#each chips as chip (chip)}
+					<Chip
+						label={chip}
+						variant="secondary"
+						ondismiss={() => { chips = chips.filter(c => c !== chip); }}
+					/>
+				{/each}
+				{#if chips.length === 0}
+					<span class="chips-empty">All chips removed</span>
+				{/if}
+			</VariantGrid>
+		</DemoCard>
+
+		<!-- Filter Chips -->
+		<DemoCard title="Filter Chip (Toggle)" description="Toggle-based filter chips">
+			<VariantGrid layout="row">
+				<FilterChip label="Active" bind:pressed={filterActive} />
+				<FilterChip label="Pending" bind:pressed={filterPending} />
+				<FilterChip label="Completed" bind:pressed={filterCompleted} />
+			</VariantGrid>
+		</DemoCard>
+
+		<!-- Filter Chip Variants -->
+		<DemoCard title="Filter Chip Variants" description="Default and outline styles">
+			<VariantGrid layout="row">
+				<FilterChip label="Default" variant="default" bind:pressed={filterActive} />
+				<FilterChip label="Outline" variant="outline" bind:pressed={filterPending} />
+				<FilterChip label="With Icon" variant="default" icon="i-lucide-star" bind:pressed={filterCompleted} />
+				<FilterChip label="Disabled" variant="default" disabled />
 			</VariantGrid>
 		</DemoCard>
 
@@ -205,5 +269,11 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-2);
+	}
+
+	.chips-empty {
+		font-size: var(--text-fluid-sm);
+		color: var(--color-muted);
+		font-style: italic;
 	}
 </style>
