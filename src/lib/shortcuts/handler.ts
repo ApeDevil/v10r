@@ -52,17 +52,20 @@ export function initKeyboardHandler(): () => void {
 
 /**
  * Check if event target is an input element.
+ * Always allows modifier combos (Ctrl+K, Ctrl+J) and Escape through,
+ * even when focused on inputs — only plain keys are ignored.
  */
 function shouldIgnoreEvent(event: KeyboardEvent): boolean {
+	// Always allow Escape and modifier combos (Ctrl+K, Ctrl+J, etc.)
+	if (event.key === 'Escape') return false;
+	if (event.ctrlKey || event.metaKey || event.altKey) return false;
+
 	const target = event.target as HTMLElement;
 	const tagName = target.tagName.toLowerCase();
 
-	// Ignore inputs, textareas, and contenteditable
+	// Ignore plain keys in inputs, textareas, and contenteditable
 	if (tagName === 'input' || tagName === 'textarea') return true;
 	if (target.isContentEditable) return true;
-
-	// Allow Escape key even in inputs (to close modals)
-	if (event.key === 'Escape') return false;
 
 	return false;
 }

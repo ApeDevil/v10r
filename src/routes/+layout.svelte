@@ -42,7 +42,7 @@
 			keys: 'mod+k',
 			description: 'Search anything',
 			category: 'global',
-			action: () => modals.open('quickSearch'),
+			action: () => modals.toggle('quickSearch'),
 		});
 
 		const unregisterAI = registerShortcut({
@@ -50,7 +50,7 @@
 			keys: 'mod+j',
 			description: 'AI help',
 			category: 'global',
-			action: () => modals.open('aiAssistant'),
+			action: () => modals.toggle('aiAssistant'),
 		});
 
 		const unregisterHelp = registerShortcut({

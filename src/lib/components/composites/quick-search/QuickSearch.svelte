@@ -70,16 +70,6 @@
 	});
 </script>
 
-<!-- Global keyboard shortcut -->
-<svelte:window
-	onkeydown={(e) => {
-		if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-			e.preventDefault();
-			open = true;
-		}
-	}}
-/>
-
 <Dialog.Root bind:open>
 	<Dialog.Portal>
 		<Dialog.Overlay class="fixed inset-0 z-overlay bg-black/50" />

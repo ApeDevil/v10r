@@ -22,24 +22,7 @@
 	const isExpanded = $derived(forceExpanded || sidebar.expanded);
 
 	const cmdKey = 'Ctrl+';
-
-	// Keyboard shortcuts
-	function handleKeydown(e: KeyboardEvent) {
-		// QuickSearch: Cmd/Ctrl + K
-		if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-			e.preventDefault();
-			modals.open('quickSearch');
-		}
-
-		// AI Assistant: Cmd/Ctrl + J
-		if ((e.metaKey || e.ctrlKey) && e.key === 'j') {
-			e.preventDefault();
-			modals.open('aiAssistant');
-		}
-	}
 </script>
-
-<svelte:window onkeydown={handleKeydown} />
 
 <div class={cn('flex flex-col gap-2 p-2', className)}>
 	<button

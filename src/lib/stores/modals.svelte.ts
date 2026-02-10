@@ -33,6 +33,10 @@ export function createModalState() {
 			}
 		},
 
+		toggle(id: ModalId) {
+			activeModal = activeModal === id ? null : id;
+		},
+
 		close() {
 			activeModal = null;
 			modalData = {};
@@ -40,6 +44,24 @@ export function createModalState() {
 
 		getData<T>(key: string): T | undefined {
 			return modalData[key] as T;
+		},
+
+		/** Bindable getter/setter for QuickSearch dialog */
+		get quickSearchOpen() {
+			return activeModal === 'quickSearch';
+		},
+		set quickSearchOpen(value: boolean) {
+			activeModal = value ? 'quickSearch' : null;
+			if (!value) modalData = {};
+		},
+
+		/** Bindable getter/setter for AI Assistant dialog */
+		get aiAssistantOpen() {
+			return activeModal === 'aiAssistant';
+		},
+		set aiAssistantOpen(value: boolean) {
+			activeModal = value ? 'aiAssistant' : null;
+			if (!value) modalData = {};
 		},
 	};
 }
