@@ -76,7 +76,7 @@
 	.page-header.sticky {
 		position: sticky;
 		top: 0;
-		z-index: var(--z-sidebar);
+		z-index: 5;
 		backdrop-filter: blur(8px);
 		background: color-mix(in srgb, var(--surface-0) 80%, transparent);
 	}

@@ -95,7 +95,7 @@
 	.section-nav {
 		position: sticky;
 		top: 0;
-		z-index: var(--z-sidebar);
+		z-index: 5;
 		background: var(--color-bg);
 		border-bottom: 1px solid var(--color-border);
 		margin: 0 calc(-1 * var(--spacing-4));

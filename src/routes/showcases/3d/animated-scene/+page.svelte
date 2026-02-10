@@ -56,7 +56,7 @@
 		position: absolute;
 		top: var(--spacing-4);
 		left: var(--spacing-4);
-		z-index: var(--z-sidebar);
+		z-index: 5;
 		display: flex;
 		gap: var(--spacing-2);
 	}
