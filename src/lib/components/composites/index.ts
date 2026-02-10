@@ -22,6 +22,7 @@ export * from './link-card';
 export * from './menu-bar';
 export * from './context-menu';
 export * from './dropdown-menu';
+export * from './section-nav';
 
 export { Chart } from './chart';
 export {

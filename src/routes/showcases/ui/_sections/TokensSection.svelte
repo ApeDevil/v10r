@@ -41,12 +41,10 @@
 	];
 </script>
 
-<section id="tokens" class="section">
-	<h2 class="section-title">Theme Tokens</h2>
-	<p class="section-description">Design tokens for consistent styling across the application.</p>
-
+<section class="section">
 	<div class="demos">
 		<!-- Typography -->
+		<div id="tok-typography" class="scroll-target">
 		<DemoCard title="Typography Scale" description="Fluid font sizes using clamp() — resize your window to see text scale">
 			<div class="type-scale">
 				{#each Object.entries(fontSize) as [key, value]}
@@ -62,8 +60,10 @@
 				{/each}
 			</div>
 		</DemoCard>
+		</div>
 
 		<!-- Spacing -->
+		<div id="tok-spacing" class="scroll-target">
 		<DemoCard title="Spacing Scale" description="Fluid spacing for margins, padding, gaps">
 			<div class="token-grid">
 				{#each Object.entries(spacing) as [key, value]}
@@ -77,8 +77,10 @@
 				{/each}
 			</div>
 		</DemoCard>
+		</div>
 
 		<!-- Colors -->
+		<div id="tok-colors" class="scroll-target">
 		<DemoCard title="Colors" description="Semantic color tokens (toggle theme to see dark mode)">
 			<div class="color-section">
 				<p class="color-note">Single source of truth: <code>src/app.css</code></p>
@@ -95,8 +97,10 @@
 				</div>
 			</div>
 		</DemoCard>
+		</div>
 
 		<!-- Z-Index -->
+		<div id="tok-z-index" class="scroll-target">
 		<DemoCard title="Z-Index Layers" description="Stacking context hierarchy — colored by surface elevation">
 			<div class="z-index-stack">
 				{#each Object.entries(zIndex) as [key, value]}
@@ -114,8 +118,10 @@
 				{/each}
 			</div>
 		</DemoCard>
+		</div>
 
-		<!-- Surface Elevation -->
+		<!-- Surfaces -->
+		<div id="tok-surfaces" class="scroll-target">
 		<DemoCard title="Surface Elevation" description="4 elevation levels — higher = whiter in light, darker in dark">
 			<div class="surface-grid">
 				{#each [
@@ -135,8 +141,10 @@
 				{/each}
 			</div>
 		</DemoCard>
+		</div>
 
 		<!-- Border Radius -->
+		<div id="tok-radius" class="scroll-target">
 		<DemoCard title="Border Radius" description="Corner rounding values">
 			<div class="token-grid">
 				{#each Object.entries(borderRadius) as [key, value]}
@@ -144,8 +152,10 @@
 				{/each}
 			</div>
 		</DemoCard>
+		</div>
 
-		<!-- Box Shadow -->
+		<!-- Shadows -->
+		<div id="tok-shadows" class="scroll-target">
 		<DemoCard title="Box Shadows" description="Elevation and depth">
 			<div class="token-grid">
 				{#each Object.entries(boxShadow) as [key, value]}
@@ -153,27 +163,17 @@
 				{/each}
 			</div>
 		</DemoCard>
+		</div>
 	</div>
 </section>
 
 <style>
 	.section {
-		scroll-margin-top: 5rem;
 		margin-bottom: var(--spacing-8);
 	}
 
-	.section-title {
-		font-size: var(--text-fluid-2xl);
-		font-weight: 700;
-		margin: 0 0 var(--spacing-2) 0;
-		color: var(--color-fg);
-	}
-
-	.section-description {
-		margin: 0 0 var(--spacing-7) 0;
-		font-size: var(--text-fluid-base);
-		color: var(--color-muted);
-		line-height: 1.6;
+	.scroll-target {
+		scroll-margin-top: 3rem;
 	}
 
 	.demos {

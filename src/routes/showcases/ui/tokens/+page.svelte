@@ -1,6 +1,16 @@
 <script lang="ts">
-	import { PageHeader, BackLink } from '$lib/components/composites';
+	import { PageHeader, BackLink, SectionNav } from '$lib/components/composites';
 	import TokensSection from '../_sections/TokensSection.svelte';
+
+	const sections = [
+		{ id: 'tok-typography', label: 'Typography' },
+		{ id: 'tok-spacing', label: 'Spacing' },
+		{ id: 'tok-colors', label: 'Colors' },
+		{ id: 'tok-z-index', label: 'Z-Index' },
+		{ id: 'tok-surfaces', label: 'Surfaces' },
+		{ id: 'tok-radius', label: 'Radius' },
+		{ id: 'tok-shadows', label: 'Shadows' }
+	];
 </script>
 
 <svelte:head>
@@ -18,6 +28,8 @@
 			{ label: 'Tokens' }
 		]}
 	/>
+
+	<SectionNav {sections} />
 
 	<main class="content">
 		<TokensSection />
