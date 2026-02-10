@@ -14,7 +14,7 @@
 	const id = crypto.randomUUID();
 </script>
 
-<div class={cn('flex items-center gap-2', className)}>
+<div class={cn('checkbox-container flex items-center gap-2', className)}>
 	<div class="relative">
 		<input
 			{id}
@@ -26,13 +26,12 @@
 		<label
 			for={id}
 			class={cn(
-				'flex h-5 w-5 shrink-0 items-center justify-center rounded cursor-pointer',
+				'checkbox-box flex h-5 w-5 shrink-0 items-center justify-center rounded cursor-pointer',
 				'bg-subtle border-2 border-input-border',
 				'transition-colors duration-fast',
-				'hover:border-fg/50 hover:bg-fg/5',
 				'peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-1',
-				'peer-disabled:cursor-not-allowed peer-disabled:opacity-50 peer-disabled:hover:border-input-border peer-disabled:hover:bg-subtle',
-				'peer-checked:bg-primary peer-checked:border-primary peer-checked:text-white peer-checked:hover:border-primary peer-checked:hover:bg-primary'
+				'peer-disabled:cursor-not-allowed peer-disabled:opacity-50',
+				'peer-checked:bg-primary peer-checked:border-primary peer-checked:text-white'
 			)}
 		>
 			{#if checked}
@@ -43,7 +42,7 @@
 	{#if label}
 		<label
 			for={id}
-			class={cn('text-fluid-sm text-fg cursor-pointer select-none', {
+			class={cn('checkbox-label text-fluid-sm text-fg cursor-pointer select-none', {
 				'opacity-50 cursor-not-allowed': restProps.disabled
 			})}
 		>
@@ -51,3 +50,32 @@
 		</label>
 	{/if}
 </div>
+
+<style>
+	/* Hover on container (box or label) → highlight checkbox box */
+	.checkbox-container:hover :global(.checkbox-box) {
+		border-color: color-mix(in srgb, var(--color-fg) 70%, transparent);
+		background: color-mix(in srgb, var(--color-fg) 8%, transparent);
+	}
+
+	/* Hover: underline label */
+	.checkbox-container:hover :global(.checkbox-label) {
+		text-decoration: underline;
+	}
+
+	/* Disabled: suppress hover */
+	.checkbox-container:has(input:disabled):hover :global(.checkbox-box) {
+		border-color: var(--color-input-border);
+		background: var(--color-subtle);
+	}
+
+	.checkbox-container:has(input:disabled):hover :global(.checkbox-label) {
+		text-decoration: none;
+	}
+
+	/* Checked: keep primary colors on hover */
+	.checkbox-container:has(input:checked):hover :global(.checkbox-box) {
+		border-color: var(--color-primary);
+		background: var(--color-primary);
+	}
+</style>
