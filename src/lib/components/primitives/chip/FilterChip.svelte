@@ -91,5 +91,7 @@
 
 	.chip-icon {
 		flex-shrink: 0;
+		width: 1em;
+		height: 1em;
 	}
 </style>

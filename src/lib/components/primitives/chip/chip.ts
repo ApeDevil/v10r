@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 
 export const chipVariants = cva(
-	'inline-flex items-center rounded-full font-medium border-0 cursor-default',
+	'inline-flex items-center rounded-full font-medium cursor-default',
 	{
 		variants: {
 			variant: {
@@ -25,23 +25,12 @@ export const chipVariants = cva(
 );
 
 export const chipCloseVariants = cva(
-	'inline-flex items-center justify-center rounded-full border-0 cursor-pointer p-0',
-	{
-		variants: {
-			size: {
-				sm: 'h-3.5 w-3.5',
-				md: 'h-4 w-4'
-			}
-		},
-		defaultVariants: {
-			size: 'md'
-		}
-	}
+	'inline-flex items-center justify-center rounded-full cursor-pointer p-0'
 );
 
 export const filterChipVariants = cva(
 	[
-		'inline-flex items-center rounded-full font-medium border-0',
+		'inline-flex items-center rounded-full font-medium',
 		'cursor-pointer select-none'
 	],
 	{

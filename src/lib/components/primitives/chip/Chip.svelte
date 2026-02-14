@@ -45,7 +45,7 @@
 	{#if ondismiss}
 		<button
 			type="button"
-			class={cn('chip-close', chipCloseVariants({ size }))}
+			class={cn('chip-close', chipCloseVariants())}
 			aria-label={label ? `Remove ${label}` : 'Remove'}
 			{disabled}
 			onclick={ondismiss}
@@ -74,10 +74,14 @@
 
 	.chip-icon {
 		flex-shrink: 0;
+		width: 1em;
+		height: 1em;
 	}
 
 	.chip-close {
 		flex-shrink: 0;
+		width: 1em;
+		height: 1em;
 		background: none;
 		color: inherit;
 		opacity: 0.6;
