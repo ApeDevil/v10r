@@ -32,9 +32,9 @@
 <SelectPrimitive.Root type="single" bind:value {disabled}>
 	<SelectPrimitive.Trigger
 		class={cn(
-			'select-trigger flex h-11 w-full items-center justify-between rounded-md border border-input-border px-4 py-2',
+			'select-trigger flex h-11 w-full items-center justify-between rounded-t-md px-4 py-2',
 			'text-fluid-base text-fg',
-			'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+			'focus-visible:outline-none',
 			'disabled:cursor-not-allowed disabled:opacity-50',
 			className
 		)}
@@ -77,7 +77,13 @@
 <style>
 	:global(.select-trigger) {
 		background-color: var(--color-input-bg);
-		--un-ring-offset-color: transparent;
+		border: none;
+		border-bottom: 1px solid var(--color-input-border);
+		transition: border-bottom-color 150ms ease, border-bottom-width 150ms ease;
+	}
+
+	:global(.select-trigger:focus-visible) {
+		border-bottom: 2px solid var(--color-primary);
 	}
 
 	/* UnoCSS can't apply opacity modifiers with CSS variable colors — use color-mix() */

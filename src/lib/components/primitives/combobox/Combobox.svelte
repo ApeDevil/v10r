@@ -51,9 +51,9 @@
 	<div class="relative w-full">
 		<ComboboxPrimitive.Input
 			class={cn(
-				'combobox-input flex h-11 w-full items-center justify-between rounded-md border border-input-border px-4 py-2 pr-10',
+				'combobox-input flex h-11 w-full items-center justify-between rounded-t-md px-4 py-2 pr-10',
 				'text-fluid-sm text-fg placeholder:text-muted',
-				'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+				'focus-visible:outline-none',
 				'disabled:cursor-not-allowed disabled:opacity-50',
 				className
 			)}
@@ -111,7 +111,13 @@
 <style>
 	:global(.combobox-input) {
 		background-color: var(--color-input-bg);
-		--un-ring-offset-color: transparent;
+		border: none;
+		border-bottom: 1px solid var(--color-input-border);
+		transition: border-bottom-color 150ms ease, border-bottom-width 150ms ease;
+	}
+
+	:global(.combobox-input:focus-visible) {
+		border-bottom: 2px solid var(--color-primary);
 	}
 
 	/* UnoCSS can't apply opacity modifiers with CSS variable colors — use color-mix() */
