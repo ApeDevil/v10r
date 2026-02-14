@@ -73,8 +73,8 @@
 							'[&[data-state=open]>span]:rotate-180'
 						)}
 					>
-						{item.title}
 						<span class={cn(accordionChevronVariants({ size }))} />
+						{item.title}
 					</AccordionPrimitive.Trigger>
 				</AccordionPrimitive.Header>
 				<AccordionPrimitive.Content
@@ -116,8 +116,8 @@
 							'[&[data-state=open]>span]:rotate-180'
 						)}
 					>
-						{item.title}
 						<span class={cn(accordionChevronVariants({ size }))} />
+						{item.title}
 					</AccordionPrimitive.Trigger>
 				</AccordionPrimitive.Header>
 				<AccordionPrimitive.Content
@@ -140,9 +140,23 @@
 {/if}
 
 <style>
-	/* Accordion animation styles */
+	/* Content differentiation: muted text + primary border accent when open */
 	:global([data-accordion-content]) {
 		overflow: hidden;
+		color: var(--color-muted);
+	}
+
+	:global([data-accordion-content][data-state='open']) {
+		border-left: 2px solid var(--color-primary);
+		margin-left: 6px;
+	}
+
+	:global([data-accordion-trigger][data-state='open']) {
+		color: var(--color-primary);
+	}
+
+	:global([data-accordion-trigger][data-state='open'] span) {
+		color: var(--color-primary);
 	}
 
 	@keyframes accordion-down {

@@ -17,13 +17,13 @@ export const accordionItemVariants = cva(
 );
 
 export const accordionTriggerVariants = cva(
-	'flex w-full items-center justify-between gap-2 py-4 font-medium transition-all',
+	'flex w-full items-center justify-start gap-2 py-4 font-medium transition-all',
 	{
 		variants: {
 			size: {
-				sm: 'text-fluid-sm px-2',
-				md: 'text-fluid-base px-3',
-				lg: 'text-fluid-lg px-4'
+				sm: 'text-fluid-sm pr-2',
+				md: 'text-fluid-base pr-3',
+				lg: 'text-fluid-lg pr-4'
 			}
 		},
 		defaultVariants: {
@@ -33,13 +33,13 @@ export const accordionTriggerVariants = cva(
 );
 
 export const accordionContentVariants = cva(
-	'overflow-hidden text-fg/90 transition-all duration-normal',
+	'overflow-hidden transition-all duration-normal leading-relaxed',
 	{
 		variants: {
 			size: {
-				sm: 'text-fluid-sm px-2 pb-3',
-				md: 'text-fluid-base px-3 pb-4',
-				lg: 'text-fluid-lg px-4 pb-5'
+				sm: 'text-fluid-xs pl-4 pr-2 pb-3',
+				md: 'text-fluid-sm pl-5 pr-3 pb-4',
+				lg: 'text-fluid-base pl-6 pr-4 pb-5'
 			}
 		},
 		defaultVariants: {
@@ -49,7 +49,7 @@ export const accordionContentVariants = cva(
 );
 
 export const accordionChevronVariants = cva(
-	'i-lucide-chevron-down shrink-0 text-muted transition-transform duration-normal',
+	'i-lucide-chevron-down shrink-0 text-muted transition-transform transition-colors duration-normal',
 	{
 		variants: {
 			size: {
