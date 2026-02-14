@@ -34,7 +34,7 @@
 		class={cn(
 			'select-trigger flex h-11 w-full items-center justify-between rounded-md border border-input-border px-4 py-2',
 			'text-fluid-base text-fg',
-			'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary',
+			'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
 			'disabled:cursor-not-allowed disabled:opacity-50',
 			className
 		)}
@@ -77,6 +77,7 @@
 <style>
 	:global(.select-trigger) {
 		background-color: var(--color-input-bg);
+		--un-ring-offset-color: transparent;
 	}
 
 	/* UnoCSS can't apply opacity modifiers with CSS variable colors — use color-mix() */
