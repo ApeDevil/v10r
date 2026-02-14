@@ -39,7 +39,7 @@
 
 	button:global(.bg-fg):hover:not(:disabled) {
 		background-color: var(--color-primary);
-		color: white;
+		color: var(--color-bg);
 		box-shadow: 0 0 16px 4px color-mix(in srgb, var(--color-primary) 45%, transparent);
 	}
 
@@ -50,8 +50,10 @@
 	}
 
 	button:global(.bg-primary):hover:not(:disabled) {
-		filter: brightness(1.2);
-		box-shadow: 0 0 16px 4px color-mix(in srgb, var(--color-primary-bg) 45%, transparent);
+		background-color: var(--color-primary-hover);
+		color: var(--color-bg);
+		filter: none;
+		box-shadow: 0 0 16px 4px color-mix(in srgb, var(--color-primary-hover) 45%, transparent);
 	}
 
 	/* Secondary: uses secondary-bg/fg tokens */
@@ -61,8 +63,9 @@
 	}
 
 	button:global(.bg-border):hover:not(:disabled) {
-		filter: brightness(1.15);
-		box-shadow: 0 0 12px 2px color-mix(in srgb, var(--color-secondary-bg) 40%, transparent);
+		background-color: var(--color-primary-light);
+		filter: none;
+		box-shadow: 0 0 12px 2px color-mix(in srgb, var(--color-primary-light) 40%, transparent);
 	}
 
 	/* Outline: fg-colored border */
@@ -72,17 +75,20 @@
 		border-color: var(--color-fg);
 	}
 
-	/* Outline hover: shadow in light, glow in dark */
+	/* Outline hover: primary text & border */
 	button:global(.border-border):hover:not(:disabled) {
-		box-shadow: 0 2px 8px 0 color-mix(in srgb, var(--color-fg) 20%, transparent);
+		color: var(--color-primary);
+		border-color: var(--color-primary);
+		box-shadow: 0 2px 8px 0 color-mix(in srgb, var(--color-primary) 20%, transparent);
 	}
 
 	:global(.dark) button:global(.border-border):hover:not(:disabled) {
-		box-shadow: 0 0 14px 2px color-mix(in srgb, var(--color-fg) 20%, transparent);
+		box-shadow: 0 0 14px 2px color-mix(in srgb, var(--color-primary) 20%, transparent);
 	}
 
 	/* Ghost hover: shadow in light, glow in dark */
 	button:global(.text-fg):not(:global(.bg-fg)):not(:global(.bg-primary)):not(:global(.bg-border)):not(:global(.bg-error)):hover:not(:disabled) {
+		color: var(--color-primary);
 		box-shadow: 0 2px 8px 0 color-mix(in srgb, var(--color-fg) 15%, transparent);
 	}
 
