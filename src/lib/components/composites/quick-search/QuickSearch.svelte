@@ -85,7 +85,7 @@
 				<input
 					type="text"
 					placeholder="Search pages, actions..."
-					class="flex-1 bg-transparent text-fg placeholder:text-muted focus:outline-none"
+					class="qs-search-input flex-1 text-fluid-base text-fg placeholder:text-muted focus:outline-none"
 					bind:value={query}
 					autofocus
 				/>
@@ -162,6 +162,11 @@
 </Dialog.Root>
 
 <style>
+	.qs-search-input {
+		background: transparent;
+		border: none;
+	}
+
 	.qs-kbd {
 		background-color: color-mix(in srgb, var(--color-muted) 20%, transparent);
 	}
