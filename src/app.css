@@ -226,9 +226,8 @@ body {
 	}
 }
 
-/* Focus visible for keyboard navigation */
-.focus-ring:focus-visible,
-:focus-visible {
+/* Focus visible for keyboard navigation — opt-in only */
+.focus-ring:focus-visible {
 	outline: 2px solid var(--color-primary);
 	outline-offset: 2px;
 }
