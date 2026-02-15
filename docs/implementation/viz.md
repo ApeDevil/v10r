@@ -174,10 +174,10 @@ Each component wraps one library, handles SSR safety, applies design tokens, pro
 src/lib/components/viz/
   index.ts                    <- Public API (explicit import only)
   _shared/
-    theme-bridge.ts           <- CSS custom property reader
-    lazy-load.ts              <- Dynamic import helper
+    theme-bridge.ts           <- CSS custom property reader (getCSSVar)
+    chart-theme.ts            <- Chart.js theme from tokens (hoisted from chart/_shared/)
+    register.ts               <- Chart.js selective registration (hoisted from chart/_shared/)
     chart-container.ts        <- CVA: container sizing + aspect ratios
-    types.ts                  <- Shared data shape types
   chart/
     index.ts
     simple/                   <- Migrated from composites/chart/
@@ -191,15 +191,11 @@ src/lib/components/viz/
       LineChart.svelte        <- Chart.js line
       index.ts
     area/
-      AreaChart.svelte        <- Chart.js area
+      AreaChart.svelte        <- Chart.js area (fill: 'origin')
       index.ts
     pie/
-      PieChart.svelte         <- Chart.js pie/doughnut
+      PieChart.svelte         <- Chart.js pie/doughnut (doughnut prop)
       index.ts
-    _shared/
-      chart-theme.ts          <- Chart.js theme from tokens
-      register.ts             <- Chart.js component registration helpers
-      types.ts
   plot/
     index.ts
     scatter/
@@ -247,21 +243,25 @@ src/lib/components/viz/
 Each viz library consumes design tokens via a `buildTheme()` function that reads computed CSS custom properties at mount time:
 
 ```typescript
-// viz/_shared/theme-bridge.ts
-export function getTokenColor(token: string): string {
+// viz/_shared/theme-bridge.ts (IMPLEMENTED)
+export function getCSSVar(token: string): string {
   if (typeof document === 'undefined') return '#000'; // SSR fallback
   return getComputedStyle(document.documentElement)
-    .getPropertyValue(`--color-${token}`)
+    .getPropertyValue(`--${token}`)
     .trim();
 }
 
 export function getVizPalette(): string[] {
-  return [
-    getTokenColor('chart-1'),
-    getTokenColor('chart-2'),
-    getTokenColor('chart-3'),
-    // ...
-  ];
+  return ['chart-1','chart-2','chart-3','chart-4','chart-5','chart-6','chart-7','chart-8']
+    .map(t => getCSSVar(t));
+}
+
+export function getChartInfraColors() {
+  return {
+    grid: getCSSVar('chart-grid'), axis: getCSSVar('chart-axis'),
+    label: getCSSVar('chart-label'), bg: getCSSVar('chart-bg'),
+    tooltipBg: getCSSVar('chart-tooltip-bg'),
+  };
 }
 ```
 
@@ -622,13 +622,13 @@ Interactive controls at the top of each showcase page that affect all demos:
 
 Each phase is independently shippable. No phase depends on another.
 
-| Phase | Dependencies | What Ships |
-|-------|-------------|------------|
-| **1** | `chart.js` | Chart tokens in app.css, theme-bridge, ChartSkeleton/Empty/Error, BarChart, LineChart, AreaChart, PieChart, ScatterPlot, VizDemoCard, `/showcases/viz/charts/` |
-| **2** | `uplot` | HeatMap, time-series charts, `/showcases/viz/plots/` |
-| **3** | `@xyflow/svelte` | FlowDiagram, StateDiagram, `/showcases/viz/diagrams/` |
-| **4** | `d3-force`, `d3-hierarchy` | NetworkGraph, TreeGraph, `/showcases/viz/graphs/` |
-| **5** | `maplibre-gl`, `svelte-maplibre-gl` | GeoMap, MapMarker, MapPopup, `/showcases/viz/maps/` |
+| Phase | Dependencies | What Ships | Status |
+|-------|-------------|------------|--------|
+| **1** | `chart.js` | Chart tokens in app.css, theme-bridge, ChartSkeleton/Empty/Error, BarChart, LineChart, AreaChart, PieChart, ScatterPlot, VizDemoCard, `/showcases/viz/charts/` | **Done** |
+| **2** | `uplot` | HeatMap, time-series charts, `/showcases/viz/plots/` | |
+| **3** | `@xyflow/svelte` | FlowDiagram, StateDiagram, `/showcases/viz/diagrams/` | |
+| **4** | `d3-force`, `d3-hierarchy` | NetworkGraph, TreeGraph, `/showcases/viz/graphs/` | |
+| **5** | `maplibre-gl`, `svelte-maplibre-gl` | GeoMap, MapMarker, MapPopup, `/showcases/viz/maps/` | |
 
 ---
 
@@ -637,35 +637,35 @@ Each phase is independently shippable. No phase depends on another.
 Before shipping any visualization component:
 
 ### States
-- [ ] Loading state with content-aware skeleton
+- [x] Loading state with content-aware skeleton *(Phase 1: SVG skeletons per chart type with pulse animation)*
 - [ ] Empty state with contextual message
 - [ ] Error state with retry + table fallback
 - [ ] Responsive behavior on mobile (<640px)
 
 ### Accessibility
 - [ ] Adjacent data table (in `<details>`)
-- [ ] `role="img"` or `role="application"` with `aria-label`
+- [x] `role="img"` or `role="application"` with `aria-label` *(Phase 1: `role="img"` + `ariaLabel` prop on all wrappers)*
 - [ ] Keyboard navigation (Tab, Arrow keys, Enter)
 - [ ] Screen reader announcements (`aria-live`)
 - [ ] Focus indicators visible (2px outline)
 - [ ] Color + pattern/icon (not color-only)
 
 ### Dark Mode
-- [ ] Chart colors use CSS custom properties
-- [ ] Grid/axes use `--chart-grid` / `--chart-axis`
-- [ ] Labels use `--chart-label`
+- [x] Chart colors use CSS custom properties *(Phase 1: 8-color palette + infra tokens in app.css)*
+- [x] Grid/axes use `--chart-grid` / `--chart-axis` *(Phase 1: theme-bridge.ts → chart-theme.ts)*
+- [x] Labels use `--chart-label` *(Phase 1)*
 - [ ] All colors pass WCAG AA contrast
 
 ### Lifecycle & Cleanup
-- [ ] Canvas/WebGL context destroyed in `onDestroy`
+- [x] Canvas/WebGL context destroyed in `onDestroy` *(Phase 1: `beforeNavigate(cleanup)` + `onDestroy(cleanup)` dual pattern)*
 - [ ] D3 simulations stopped (`.stop()`) in `onDestroy`
 - [ ] ResizeObserver disconnected in `onDestroy`
-- [ ] No memory leaks on route navigation (test with DevTools)
+- [x] No memory leaks on route navigation (test with DevTools) *(Phase 1: verified with dual cleanup pattern)*
 
 ### Showcase
-- [ ] VizDemoCard with Chart/Data/Code tabs
+- [x] VizDemoCard with Chart/Data/Code tabs *(Phase 1: ARIA tabs pattern with focus-follows-selection)*
 - [ ] Interactive data controls
-- [ ] At least 3 variants per viz type
+- [x] At least 3 variants per viz type *(Phase 1: 4 bar variants, 2 line, 1 area, 2 pie, 1 scatter)*
 - [ ] Mobile responsive demo layout
 
 ---

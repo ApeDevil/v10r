@@ -1,0 +1,140 @@
+<script lang="ts">
+	import { onDestroy, onMount, untrack } from 'svelte';
+	import { beforeNavigate } from '$app/navigation';
+	import { cn } from '$lib/utils/cn';
+	import { chartContainerVariants, type ChartContainerVariants } from '../../_shared/chart-container';
+	import { buildChartTheme } from '../../_shared/chart-theme';
+	import type { Chart as ChartJS, ChartData, ChartOptions } from 'chart.js';
+
+	interface Props {
+		data: ChartData<'line'>;
+		options?: ChartOptions<'line'>;
+		aspect?: ChartContainerVariants['aspect'];
+		ariaLabel?: string;
+		class?: string;
+	}
+
+	let {
+		data,
+		options = {},
+		aspect = 'chart',
+		ariaLabel = 'Line chart',
+		class: className,
+	}: Props = $props();
+
+	let canvasEl: HTMLCanvasElement | undefined = $state();
+	let chart: ChartJS<'line'> | undefined = $state();
+	let ready = $state(false);
+
+	function cleanup() {
+		chart?.destroy();
+		chart = undefined;
+	}
+
+	beforeNavigate(cleanup);
+	onDestroy(cleanup);
+
+	onMount(async () => {
+		const { registerLineChart } = await import('../../_shared/register');
+		const Chart = await registerLineChart();
+		const theme = buildChartTheme();
+
+		if (!canvasEl) return;
+
+		chart = new Chart(canvasEl, {
+			type: 'line',
+			data,
+			options: {
+				responsive: true,
+				maintainAspectRatio: true,
+				...theme.defaults,
+				...options,
+			},
+		});
+
+		requestAnimationFrame(() => chart?.resize());
+		ready = true;
+	});
+
+	$effect(() => {
+		const _data = data;
+		const _options = options;
+
+		untrack(() => {
+			if (!chart) return;
+			chart.data = _data;
+			const theme = buildChartTheme();
+			Object.assign(chart.options, theme.defaults, _options);
+			chart.update();
+		});
+	});
+</script>
+
+<figure class={cn(chartContainerVariants({ aspect }), className)}>
+	<figcaption class="sr-only">{ariaLabel}</figcaption>
+
+	{#if !ready}
+		<div class="skeleton" role="status">
+			<svg viewBox="0 0 400 300" class="skeleton-svg" aria-hidden="true">
+				<line x1="40" y1="20" x2="40" y2="280" class="skeleton-axis" />
+				<line x1="40" y1="280" x2="380" y2="280" class="skeleton-axis" />
+				<path
+					d="M 60,200 Q 120,100 180,180 T 300,120 T 360,160"
+					class="skeleton-line"
+				/>
+			</svg>
+			<span class="sr-only">Loading line chart</span>
+		</div>
+	{/if}
+
+	<canvas
+		bind:this={canvasEl}
+		role="img"
+		aria-label={ariaLabel}
+		class="chart-canvas"
+		class:visible={ready}
+	></canvas>
+</figure>
+
+<style>
+	.skeleton {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.skeleton-svg {
+		width: 100%;
+		height: 100%;
+		max-height: 300px;
+	}
+
+	.skeleton-axis {
+		stroke: var(--chart-grid);
+		stroke-width: 2;
+	}
+
+	.skeleton-line {
+		fill: none;
+		stroke: var(--chart-grid);
+		stroke-width: 3;
+		stroke-linecap: round;
+		animation: pulse 1.5s ease-in-out infinite;
+	}
+
+	@keyframes pulse {
+		0%, 100% { opacity: 0.3; }
+		50% { opacity: 0.6; }
+	}
+
+	.chart-canvas {
+		opacity: 0;
+		transition: opacity 0.15s ease-in;
+	}
+
+	.chart-canvas.visible {
+		opacity: 1;
+	}
+</style>

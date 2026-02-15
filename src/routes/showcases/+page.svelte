@@ -41,6 +41,13 @@
 		/>
 
 		<LinkCard
+			href="/showcases/viz"
+			icon="i-lucide-bar-chart-3"
+			title="Data Viz"
+			description="Charts, plots, diagrams, and data visualization"
+		/>
+
+		<LinkCard
 			href="/showcases/3d"
 			icon="i-lucide-box"
 			title="3D"
