@@ -9,7 +9,12 @@
 		{ id: 'tok-z-index', label: 'Z-Index' },
 		{ id: 'tok-surfaces', label: 'Surfaces' },
 		{ id: 'tok-radius', label: 'Radius' },
-		{ id: 'tok-shadows', label: 'Shadows' }
+		{ id: 'tok-shadows', label: 'Shadows' },
+		{ id: 'tok-icons', label: 'Icons' },
+		{ id: 'tok-breakpoints', label: 'Breakpoints' },
+		{ id: 'tok-containers', label: 'Containers' },
+		{ id: 'tok-duration', label: 'Duration' },
+		{ id: 'tok-layout', label: 'Layout' }
 	];
 </script>
 
@@ -20,7 +25,7 @@
 <div class="page">
 	<PageHeader
 		title="Theme Tokens"
-		description="Colors, spacing, typography scale, shadows, and border radii."
+		description="Colors, spacing, typography, icons, breakpoints, shadows, layout, and animation tokens."
 		breadcrumbs={[
 			{ label: 'Home', href: '/' },
 			{ label: 'Showcases', href: '/showcases' },

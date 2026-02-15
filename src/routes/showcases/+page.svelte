@@ -41,6 +41,13 @@
 		/>
 
 		<LinkCard
+			href="/showcases/data"
+			icon="i-lucide-database"
+			title="Data"
+			description="Tables, pagination, filtering, and data display"
+		/>
+
+		<LinkCard
 			href="/showcases/viz"
 			icon="i-lucide-bar-chart-3"
 			title="Data Viz"

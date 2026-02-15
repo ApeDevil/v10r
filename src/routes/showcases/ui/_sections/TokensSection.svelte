@@ -1,6 +1,36 @@
 <script lang="ts">
 	import { DemoCard, TokenSwatch } from '../_components';
-	import { fontSize, spacing, zIndex, borderRadius, boxShadow } from '$lib/styles/tokens';
+	import {
+		fontSize,
+		iconSize,
+		spacing,
+		breakpoints,
+		containers,
+		zIndex,
+		duration,
+		sidebar,
+		layout
+	} from '$lib/styles/tokens';
+
+	/** Border radius tokens (display-only, reference CSS variables from app.css) */
+	const borderRadius = {
+		sm: '0.25rem',
+		md: '0.375rem',
+		lg: '0.5rem',
+		xl: '0.75rem',
+		full: '9999px',
+	};
+
+	/** Box shadow tokens (display-only, reference CSS variables from app.css) */
+	const boxShadow = {
+		sm: 'var(--shadow-sm)',
+		md: 'var(--shadow-md)',
+		lg: 'var(--shadow-lg)',
+		xl: 'var(--shadow-xl)',
+		modal: 'var(--shadow-modal)',
+		'glow-primary': 'var(--shadow-glow-primary)',
+		'glow-warning': 'var(--shadow-glow-warning)',
+	};
 
 	/** Maps z-index layers to their surface level based on actual component usage */
 	const zSurface: Record<string, number> = {
@@ -17,27 +47,90 @@
 	};
 
 	/**
-	 * Color token names - actual values live in app.css (single source of truth).
-	 * We display these with their CSS variable references.
+	 * Color token groups — actual values live in app.css (single source of truth).
+	 * We display these with their CSS variable references, grouped by semantic role.
 	 */
-	const colorTokens = [
-		{ name: 'bg', var: '--color-bg' },
-		{ name: 'fg', var: '--color-fg' },
-		{ name: 'muted', var: '--color-muted' },
-		{ name: 'border', var: '--color-border' },
-		{ name: 'subtle', var: '--color-subtle' },
-		{ name: 'primary', var: '--color-primary' },
-		{ name: 'primary-hover', var: '--color-primary-hover' },
-		{ name: 'primary-light', var: '--color-primary-light' },
-		{ name: 'success', var: '--color-success' },
-		{ name: 'success-light', var: '--color-success-light' },
-		{ name: 'warning', var: '--color-warning' },
-		{ name: 'warning-hover', var: '--color-warning-hover' },
-		{ name: 'warning-light', var: '--color-warning-light' },
-		{ name: 'error', var: '--color-error' },
-		{ name: 'error-light', var: '--color-error-light' },
-		{ name: 'error-border', var: '--color-error-border' },
-		{ name: 'input-border', var: '--color-input-border' },
+	const colorGroups = [
+		{
+			label: 'Base',
+			tokens: [
+				{ name: 'bg', var: '--color-bg' },
+				{ name: 'fg', var: '--color-fg' },
+				{ name: 'body', var: '--color-body' },
+				{ name: 'muted', var: '--color-muted' },
+				{ name: 'border', var: '--color-border' },
+				{ name: 'subtle', var: '--color-subtle' },
+			],
+		},
+		{
+			label: 'Semi-transparent',
+			tokens: [
+				{ name: 'bg-alpha', var: '--color-bg-alpha' },
+				{ name: 'fg-alpha', var: '--color-fg-alpha' },
+			],
+		},
+		{
+			label: 'Primary',
+			tokens: [
+				{ name: 'primary', var: '--color-primary' },
+				{ name: 'primary-hover', var: '--color-primary-hover' },
+				{ name: 'primary-bg', var: '--color-primary-bg' },
+				{ name: 'primary-fg', var: '--color-primary-fg' },
+				{ name: 'primary-light', var: '--color-primary-light' },
+			],
+		},
+		{
+			label: 'Success',
+			tokens: [
+				{ name: 'success', var: '--color-success' },
+				{ name: 'success-bg', var: '--color-success-bg' },
+				{ name: 'success-fg', var: '--color-success-fg' },
+				{ name: 'success-light', var: '--color-success-light' },
+			],
+		},
+		{
+			label: 'Warning',
+			tokens: [
+				{ name: 'warning', var: '--color-warning' },
+				{ name: 'warning-hover', var: '--color-warning-hover' },
+				{ name: 'warning-bg', var: '--color-warning-bg' },
+				{ name: 'warning-fg', var: '--color-warning-fg' },
+				{ name: 'warning-light', var: '--color-warning-light' },
+			],
+		},
+		{
+			label: 'Error',
+			tokens: [
+				{ name: 'error', var: '--color-error' },
+				{ name: 'error-bg', var: '--color-error-bg' },
+				{ name: 'error-fg', var: '--color-error-fg' },
+				{ name: 'error-light', var: '--color-error-light' },
+				{ name: 'error-border', var: '--color-error-border' },
+			],
+		},
+		{
+			label: 'Info',
+			tokens: [
+				{ name: 'info', var: '--color-info' },
+				{ name: 'info-bg', var: '--color-info-bg' },
+				{ name: 'info-fg', var: '--color-info-fg' },
+				{ name: 'info-light', var: '--color-info-light' },
+			],
+		},
+		{
+			label: 'Secondary',
+			tokens: [
+				{ name: 'secondary-bg', var: '--color-secondary-bg' },
+				{ name: 'secondary-fg', var: '--color-secondary-fg' },
+			],
+		},
+		{
+			label: 'Input',
+			tokens: [
+				{ name: 'input-border', var: '--color-input-border' },
+				{ name: 'input-bg', var: '--color-input-bg' },
+			],
+		},
 	];
 </script>
 
@@ -84,17 +177,20 @@
 		<DemoCard title="Colors" description="Semantic color tokens (toggle theme to see dark mode)">
 			<div class="color-section">
 				<p class="color-note">Single source of truth: <code>src/app.css</code></p>
-				<div class="token-grid">
-					{#each colorTokens as token}
-						<div class="color-swatch">
-							<div class="color-preview" style="background: var({token.var});"></div>
-							<div class="color-info">
-								<div class="color-name">{token.name}</div>
-								<div class="color-var">{token.var}</div>
+				{#each colorGroups as group}
+					<h4 class="color-group-label">{group.label}</h4>
+					<div class="token-grid">
+						{#each group.tokens as token}
+							<div class="color-swatch">
+								<div class="color-preview" style="background: var({token.var});"></div>
+								<div class="color-info">
+									<div class="color-name">{token.name}</div>
+									<div class="color-var">{token.var}</div>
+								</div>
 							</div>
-						</div>
-					{/each}
-				</div>
+						{/each}
+					</div>
+				{/each}
 			</div>
 		</DemoCard>
 		</div>
@@ -160,6 +256,103 @@
 			<div class="token-grid">
 				{#each Object.entries(boxShadow) as [key, value]}
 					<TokenSwatch label={key} {value} preview="shadow" />
+				{/each}
+			</div>
+		</DemoCard>
+		</div>
+
+		<!-- Icon Sizes -->
+		<div id="tok-icons" class="scroll-target">
+		<DemoCard title="Icon Sizes" description="Standard sizes for UnoCSS preset-icons (text-icon-*)">
+			<div class="token-grid">
+				{#each Object.entries(iconSize) as [key, value]}
+					<div class="icon-sample">
+						<div class="icon-preview" style="width: {value}; height: {value};"></div>
+						<div class="spacing-info">
+							<div class="spacing-key">{key}</div>
+							<div class="spacing-value">{value}</div>
+						</div>
+					</div>
+				{/each}
+			</div>
+		</DemoCard>
+		</div>
+
+		<!-- Breakpoints -->
+		<div id="tok-breakpoints" class="scroll-target">
+		<DemoCard title="Breakpoints" description="Media query breakpoints (min-width)">
+			<div class="breakpoint-list">
+				{#each Object.entries(breakpoints) as [key, value]}
+					<div class="breakpoint-sample">
+						<div class="breakpoint-bar" style="width: calc({value} / 15.36);"></div>
+						<div class="breakpoint-info">
+							<span class="spacing-key">{key}</span>
+							<span class="spacing-value">{value}</span>
+						</div>
+					</div>
+				{/each}
+			</div>
+		</DemoCard>
+		</div>
+
+		<!-- Container Queries -->
+		<div id="tok-containers" class="scroll-target">
+		<DemoCard title="Container Queries" description="Container query breakpoints">
+			<div class="breakpoint-list">
+				{#each Object.entries(containers) as [key, value]}
+					<div class="breakpoint-sample">
+						<div class="breakpoint-bar" style="width: calc({value} / 5.76);"></div>
+						<div class="breakpoint-info">
+							<span class="spacing-key">{key}</span>
+							<span class="spacing-value">{value}</span>
+						</div>
+					</div>
+				{/each}
+			</div>
+		</DemoCard>
+		</div>
+
+		<!-- Duration -->
+		<div id="tok-duration" class="scroll-target">
+		<DemoCard title="Animation Duration" description="Transition and animation timing">
+			<div class="duration-list">
+				{#each Object.entries(duration) as [key, value]}
+					<div class="duration-sample">
+						<div class="duration-bar-track">
+							<div
+								class="duration-bar-fill"
+								style="animation-duration: {value};"
+							></div>
+						</div>
+						<div class="breakpoint-info">
+							<span class="spacing-key">{key}</span>
+							<span class="spacing-value">{value}</span>
+						</div>
+					</div>
+				{/each}
+			</div>
+		</DemoCard>
+		</div>
+
+		<!-- Layout -->
+		<div id="tok-layout" class="scroll-target">
+		<DemoCard title="Layout" description="Content width constraints and sidebar dimensions">
+			<h4 class="color-group-label">Content widths</h4>
+			<div class="layout-list">
+				{#each Object.entries(layout) as [key, value]}
+					<div class="layout-sample">
+						<span class="spacing-key">{key}</span>
+						<span class="spacing-value">{value}</span>
+					</div>
+				{/each}
+			</div>
+			<h4 class="color-group-label">Sidebar</h4>
+			<div class="layout-list">
+				{#each Object.entries(sidebar) as [key, value]}
+					<div class="layout-sample">
+						<span class="spacing-key">{key}</span>
+						<span class="spacing-value">{value}</span>
+					</div>
 				{/each}
 			</div>
 		</DemoCard>
@@ -389,6 +582,107 @@
 		font-size: var(--text-fluid-xs);
 		color: var(--color-muted);
 		font-family: 'Fira Code', monospace;
+	}
+
+	.color-group-label {
+		font-size: var(--text-fluid-sm);
+		font-weight: 600;
+		color: var(--color-fg);
+		margin: var(--spacing-4) 0 var(--spacing-2) 0;
+	}
+
+	.color-group-label:first-child {
+		margin-top: 0;
+	}
+
+	.icon-sample {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-3);
+		padding: var(--spacing-3);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+	}
+
+	.icon-preview {
+		background: var(--color-primary);
+		border-radius: var(--radius-sm);
+		flex-shrink: 0;
+	}
+
+	.breakpoint-list,
+	.duration-list,
+	.layout-list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-2);
+		width: 100%;
+	}
+
+	.breakpoint-sample {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-4);
+		padding: var(--spacing-3) var(--spacing-4);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+	}
+
+	.breakpoint-bar {
+		height: 0.5rem;
+		background: var(--color-primary);
+		border-radius: var(--radius-full);
+		flex-shrink: 0;
+		min-width: 1rem;
+	}
+
+	.breakpoint-info {
+		display: flex;
+		align-items: baseline;
+		gap: var(--spacing-3);
+	}
+
+	.duration-sample {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-4);
+		padding: var(--spacing-3) var(--spacing-4);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+	}
+
+	.duration-bar-track {
+		width: 6rem;
+		height: 0.5rem;
+		background: var(--color-subtle);
+		border-radius: var(--radius-full);
+		overflow: hidden;
+		flex-shrink: 0;
+	}
+
+	.duration-bar-fill {
+		height: 100%;
+		width: 100%;
+		background: var(--color-primary);
+		border-radius: var(--radius-full);
+		animation-name: duration-sweep;
+		animation-iteration-count: infinite;
+		animation-timing-function: ease-in-out;
+	}
+
+	@keyframes duration-sweep {
+		0% { transform: translateX(-100%); }
+		50% { transform: translateX(0); }
+		100% { transform: translateX(-100%); }
+	}
+
+	.layout-sample {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: var(--spacing-3) var(--spacing-4);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
 	}
 
 	@media (max-width: 640px) {

@@ -33,7 +33,6 @@
 
 	function handleSignOut() {
 		// TODO: Implement sign out logic
-		console.log('Sign out');
 	}
 </script>
 

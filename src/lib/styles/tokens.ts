@@ -210,36 +210,3 @@ export const duration = {
   slower: '600ms',     // Page transitions, modals
 } as const;
 
-/** Easing functions */
-export const easing = {
-  default: 'cubic-bezier(0.4, 0, 0.2, 1)',      // ease-out
-  in: 'cubic-bezier(0.4, 0, 1, 1)',
-  out: 'cubic-bezier(0, 0, 0.2, 1)',
-  inOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
-  bounce: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-} as const;
-
-// ═══════════════════════════════════════════════════════════════
-// RADII & SHADOWS
-// ═══════════════════════════════════════════════════════════════
-
-export const borderRadius = {
-  sm: '0.25rem',
-  md: '0.375rem',
-  lg: '0.5rem',
-  xl: '0.75rem',
-  full: '9999px',
-} as const;
-
-export const boxShadow = {
-  sm: 'var(--shadow-sm)',
-  md: 'var(--shadow-md)',
-  lg: 'var(--shadow-lg)',
-  xl: 'var(--shadow-xl)',
-  modal: 'var(--shadow-modal)',
-  'glow-primary': 'var(--shadow-glow-primary)',
-  'glow-warning': 'var(--shadow-glow-warning)',
-} as const;
-
-/** Backdrop overlay */
-export const backdrop = 'var(--backdrop)' as const;

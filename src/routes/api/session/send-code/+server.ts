@@ -11,9 +11,6 @@ export const POST: RequestHandler = async ({ request }) => {
 	// Simulate email sending delay
 	await new Promise((resolve) => setTimeout(resolve, 1000));
 
-	// Mock: always succeeds, logs code to console
-	console.log(`[MOCK] Verification code for ${email}: 123456`);
-
 	return json({
 		success: true,
 		message: 'Verification code sent',

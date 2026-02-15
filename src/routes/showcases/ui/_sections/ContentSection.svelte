@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { DemoCard } from '../_components';
-	import { Card, LinkCard, Pagination, ConfirmDialog, Button, Carousel, CarouselItem, Chart } from '$lib/components';
+	import { Card, LinkCard, Pagination, ConfirmDialog, Button, Carousel, CarouselItem } from '$lib/components';
+	import { SimpleChart } from '$lib/components/viz/chart/simple';
 
 	let currentPage = $state(1);
 	const totalPages = 10;
@@ -115,7 +116,7 @@
 		<!-- Chart -->
 		<DemoCard title="Chart" description="Data visualization (bar, line, area)">
 			<div class="chart-demo">
-				<Chart
+				<SimpleChart
 					type="bar"
 					data={chartData}
 					width={500}

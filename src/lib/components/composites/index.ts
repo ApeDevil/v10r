@@ -24,17 +24,6 @@ export * from './context-menu';
 export * from './dropdown-menu';
 export * from './section-nav';
 
-export { Chart } from './chart';
-export {
-	chartRootVariants,
-	chartGridVariants,
-	chartAxisVariants,
-	chartTooltipVariants,
-	type ChartRootVariants,
-	type ChartGridVariants,
-	type ChartAxisVariants
-} from './chart';
-
 export { DatePicker } from './date-picker';
 export {
 	datePickerRootVariants,
