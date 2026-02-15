@@ -2,14 +2,49 @@
 	import { PageHeader, BackLink, SectionNav } from '$lib/components/composites';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives/table';
 	import VizDemoCard from '../_components/VizDemoCard.svelte';
-	import { HeatMap } from '$lib/components/viz';
+	import { ScatterPlot, HeatMap } from '$lib/components/viz';
 	import type { HeatMapData } from '$lib/components/viz/plot';
+	import { getVizPalette } from '$lib/components/viz/_shared/theme-bridge';
+	import { browser } from '$app/environment';
 
 	const sections = [
+		{ id: 'scatter-plot', label: 'Scatter' },
 		{ id: 'activity-heatmap', label: 'Activity' },
 		{ id: 'correlation-matrix', label: 'Correlation' },
 		{ id: 'server-load', label: 'Server Load' },
 	];
+
+	// SSR-safe: resolve palette only in browser
+	let palette: string[] = $state(browser ? getVizPalette() : []);
+
+	// --- Scatter Plot data ---
+
+	const scatterData = {
+		datasets: [
+			{
+				label: 'Dataset A',
+				data: [
+					{ x: 10, y: 20 }, { x: 25, y: 45 }, { x: 35, y: 30 },
+					{ x: 45, y: 60 }, { x: 55, y: 40 }, { x: 65, y: 75 },
+					{ x: 80, y: 55 }, { x: 90, y: 85 },
+				],
+				backgroundColor: palette[0] || '#3b82f6',
+				pointRadius: 5,
+				pointHoverRadius: 7,
+			},
+			{
+				label: 'Dataset B',
+				data: [
+					{ x: 15, y: 50 }, { x: 30, y: 25 }, { x: 40, y: 70 },
+					{ x: 50, y: 35 }, { x: 60, y: 55 }, { x: 75, y: 45 },
+					{ x: 85, y: 65 },
+				],
+				backgroundColor: palette[3] || '#8b5cf6',
+				pointRadius: 5,
+				pointHoverRadius: 7,
+			},
+		],
+	};
 
 	// --- Activity Heatmap (GitHub-style contribution graph) ---
 
@@ -72,7 +107,7 @@
 <div class="page">
 	<PageHeader
 		title="Plots"
-		description="Canvas-based heatmaps for dense data visualization. Zero external dependencies — pure Canvas rendering with ResizeObserver, DPI scaling, and design token theming."
+		description="Scatter plots and heatmaps for dense data visualization. ScatterPlot uses Chart.js; HeatMap is zero-dependency pure Canvas with ResizeObserver, DPI scaling, and design token theming."
 		breadcrumbs={[
 			{ label: 'Home', href: '/' },
 			{ label: 'Showcases', href: '/showcases' },
@@ -84,6 +119,60 @@
 	<SectionNav {sections} />
 
 	<main class="content">
+		<!-- Scatter Plot -->
+		<section id="scatter-plot" class="section">
+			<h2 class="section-title">Scatter Plot</h2>
+			<p class="section-description">Chart.js scatter plots for correlation analysis. Each dataset renders as a distinct point cloud.</p>
+
+			<div class="demos">
+				<VizDemoCard
+					title="Two Datasets"
+					description="Comparing distributions across two groups."
+				>
+					{#snippet visualization()}
+						<ScatterPlot data={scatterData} ariaLabel="Two-dataset scatter plot" />
+					{/snippet}
+					{#snippet dataTable()}
+						<Table>
+							<Header>
+								<Row hoverable={false}>
+									<HeaderCell>Dataset</HeaderCell>
+									<HeaderCell>X</HeaderCell>
+									<HeaderCell>Y</HeaderCell>
+								</Row>
+							</Header>
+							<Body>
+								{#each scatterData.datasets[0].data as point}
+									<Row>
+										<Cell>A</Cell>
+										<Cell>{point.x}</Cell>
+										<Cell>{point.y}</Cell>
+									</Row>
+								{/each}
+								{#each scatterData.datasets[1].data as point}
+									<Row>
+										<Cell>B</Cell>
+										<Cell>{point.x}</Cell>
+										<Cell>{point.y}</Cell>
+									</Row>
+								{/each}
+							</Body>
+						</Table>
+					{/snippet}
+					{#snippet code()}
+						<pre><code>{`<ScatterPlot
+  data={{
+    datasets: [
+      { label: 'A', data: [{ x: 10, y: 20 }, ...], backgroundColor: palette[0] },
+      { label: 'B', data: [{ x: 15, y: 50 }, ...], backgroundColor: palette[3] },
+    ],
+  }}
+/>`}</code></pre>
+					{/snippet}
+				</VizDemoCard>
+			</div>
+		</section>
+
 		<!-- Activity Heatmap -->
 		<section id="activity-heatmap" class="section">
 			<h2 class="section-title">Activity Heatmap</h2>

@@ -23,13 +23,13 @@
 			href="/showcases/viz/charts"
 			icon="i-lucide-bar-chart-3"
 			title="Charts"
-			description="Bar, line, area, pie, and scatter charts powered by Chart.js"
+			description="Bar, line, area, pie, radar, bubble, sparkline, gauge, and treemap charts"
 		/>
 		<LinkCard
 			href="/showcases/viz/plots"
 			icon="i-lucide-grid-3x3"
 			title="Plots"
-			description="Canvas-based heatmaps for dense data visualization"
+			description="Scatter plots and heatmaps for dense data visualization"
 		/>
 		<LinkCard
 			href="/showcases/viz/diagrams"

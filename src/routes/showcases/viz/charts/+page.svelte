@@ -4,7 +4,7 @@
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives/table';
 	import VizDemoCard from '../_components/VizDemoCard.svelte';
 	import DataControls from '../_components/DataControls.svelte';
-	import { BarChart, LineChart, AreaChart, PieChart, ScatterPlot, SimpleChart, RadarChart, BubbleChart, Sparkline, Gauge, Treemap } from '$lib/components/viz';
+	import { BarChart, LineChart, AreaChart, PieChart, SimpleChart, RadarChart, BubbleChart, Sparkline, Gauge, Treemap } from '$lib/components/viz';
 	import type { TreemapNode } from '$lib/components/viz/chart/treemap/types';
 	import { getVizPalette } from '$lib/components/viz/_shared/theme-bridge';
 
@@ -14,7 +14,6 @@
 		{ id: 'line-chart', label: 'Line' },
 		{ id: 'area-chart', label: 'Area' },
 		{ id: 'pie-chart', label: 'Pie' },
-		{ id: 'scatter-plot', label: 'Scatter' },
 		{ id: 'radar-chart', label: 'Radar' },
 		{ id: 'bubble-chart', label: 'Bubble' },
 		{ id: 'sparkline', label: 'Sparkline' },
@@ -40,8 +39,6 @@
 		values3?: number[];
 		pieLabels: string[];
 		pieValues: number[];
-		scatterA: { x: number; y: number }[];
-		scatterB: { x: number; y: number }[];
 		radarLabels: string[];
 		radarValues: number[];
 		radarValues2?: number[];
@@ -58,16 +55,6 @@
 			values3: [20, 35, 25, 40, 30, 45],
 			pieLabels: ['Desktop', 'Mobile', 'Tablet', 'Other'],
 			pieValues: [45, 35, 15, 5],
-			scatterA: [
-				{ x: 10, y: 20 }, { x: 25, y: 45 }, { x: 35, y: 30 },
-				{ x: 45, y: 60 }, { x: 55, y: 40 }, { x: 65, y: 75 },
-				{ x: 80, y: 55 }, { x: 90, y: 85 },
-			],
-			scatterB: [
-				{ x: 15, y: 50 }, { x: 30, y: 25 }, { x: 40, y: 70 },
-				{ x: 50, y: 35 }, { x: 60, y: 55 }, { x: 75, y: 45 },
-				{ x: 85, y: 65 },
-			],
 			radarLabels: ['Design', 'Dev', 'Marketing', 'Sales', 'Support'],
 			radarValues: [85, 70, 60, 90, 75],
 			radarValues2: [65, 90, 80, 55, 70],
@@ -86,16 +73,6 @@
 			values3: [30, 40, 35, 50, 45, 60],
 			pieLabels: ['Organic', 'Direct', 'Social', 'Referral'],
 			pieValues: [38, 28, 22, 12],
-			scatterA: [
-				{ x: 5, y: 30 }, { x: 20, y: 55 }, { x: 30, y: 40 },
-				{ x: 50, y: 70 }, { x: 60, y: 50 }, { x: 70, y: 80 },
-				{ x: 85, y: 60 }, { x: 95, y: 90 },
-			],
-			scatterB: [
-				{ x: 10, y: 45 }, { x: 25, y: 30 }, { x: 45, y: 65 },
-				{ x: 55, y: 40 }, { x: 65, y: 50 }, { x: 80, y: 70 },
-				{ x: 90, y: 55 },
-			],
 			radarLabels: ['SEO', 'SEM', 'Social', 'Email', 'Content'],
 			radarValues: [70, 85, 60, 45, 80],
 			radarValues2: [55, 70, 90, 65, 50],
@@ -114,16 +91,6 @@
 			values3: [55, 60, 70, 65, 75, 80],
 			pieLabels: ['Complete', 'In Progress', 'Pending', 'Failed'],
 			pieValues: [62, 18, 12, 8],
-			scatterA: [
-				{ x: 12, y: 35 }, { x: 28, y: 50 }, { x: 38, y: 42 },
-				{ x: 48, y: 68 }, { x: 58, y: 55 }, { x: 72, y: 78 },
-				{ x: 82, y: 62 }, { x: 92, y: 88 },
-			],
-			scatterB: [
-				{ x: 18, y: 48 }, { x: 32, y: 38 }, { x: 42, y: 72 },
-				{ x: 52, y: 45 }, { x: 62, y: 60 }, { x: 78, y: 52 },
-				{ x: 88, y: 70 },
-			],
 			radarLabels: ['Speed', 'Reliability', 'Scalability', 'Security', 'UX'],
 			radarValues: [88, 75, 82, 90, 65],
 			radarValues2: [72, 88, 68, 80, 85],
@@ -285,25 +252,6 @@
 		],
 	});
 
-	const scatterData = $derived({
-		datasets: [
-			{
-				label: 'Dataset A',
-				data: d.scatterA,
-				backgroundColor: palette[0] || '#3b82f6',
-				pointRadius: 5,
-				pointHoverRadius: 7,
-			},
-			{
-				label: 'Dataset B',
-				data: d.scatterB,
-				backgroundColor: palette[3] || '#8b5cf6',
-				pointRadius: 5,
-				pointHoverRadius: 7,
-			},
-		],
-	});
-
 	// --- Radar chart data ---
 
 	const radarData = $derived({
@@ -417,7 +365,7 @@
 <div class="page">
 	<PageHeader
 		title="Charts"
-		description="Bar, line, area, pie, scatter, radar, bubble, sparkline, gauge, and treemap charts. SimpleChart and Sparkline/Gauge are zero-dependency SVG. The rest use Chart.js or d3-hierarchy."
+		description="Bar, line, area, pie, radar, bubble, sparkline, gauge, and treemap charts. SimpleChart and Sparkline/Gauge are zero-dependency SVG. The rest use Chart.js or d3-hierarchy."
 		breadcrumbs={[
 			{ label: 'Home', href: '/' },
 			{ label: 'Showcases', href: '/showcases' },
@@ -664,50 +612,6 @@
 				>
 					{#snippet visualization()}
 						<PieChart data={doughnutData} doughnut options={{ animation: animationOption }} ariaLabel="Task status doughnut chart" class="max-w-sm" />
-					{/snippet}
-				</VizDemoCard>
-			</div>
-		</section>
-
-		<!-- Scatter Plot (Chart.js) -->
-		<section id="scatter-plot" class="section">
-			<h2 class="section-title">Scatter Plot</h2>
-			<p class="section-description">Chart.js scatter plots for correlation analysis.</p>
-
-			<div class="demos">
-				<VizDemoCard
-					title="Two Datasets"
-					description="Comparing distributions across two groups."
-				>
-					{#snippet visualization()}
-						<ScatterPlot data={scatterData} options={{ animation: animationOption }} ariaLabel="Two-dataset scatter plot" />
-					{/snippet}
-					{#snippet dataTable()}
-						<Table>
-							<Header>
-								<Row hoverable={false}>
-									<HeaderCell>Dataset</HeaderCell>
-									<HeaderCell>X</HeaderCell>
-									<HeaderCell>Y</HeaderCell>
-								</Row>
-							</Header>
-							<Body>
-								{#each d.scatterA as point}
-									<Row>
-										<Cell>A</Cell>
-										<Cell>{point.x}</Cell>
-										<Cell>{point.y}</Cell>
-									</Row>
-								{/each}
-								{#each d.scatterB as point}
-									<Row>
-										<Cell>B</Cell>
-										<Cell>{point.x}</Cell>
-										<Cell>{point.y}</Cell>
-									</Row>
-								{/each}
-							</Body>
-						</Table>
 					{/snippet}
 				</VizDemoCard>
 			</div>
