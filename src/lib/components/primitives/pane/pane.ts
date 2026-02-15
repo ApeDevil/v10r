@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 
-export const resizableHandleVariants = cva(
+export const paneResizerVariants = cva(
 	[
 		'relative shrink-0 select-none bg-border',
 		'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary'
@@ -18,4 +18,4 @@ export const resizableHandleVariants = cva(
 	}
 );
 
-export type ResizableHandleVariants = VariantProps<typeof resizableHandleVariants>;
+export type PaneResizerVariants = VariantProps<typeof paneResizerVariants>;

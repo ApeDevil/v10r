@@ -48,3 +48,40 @@ export {
 	type DatePickerCalendarVariants,
 	type DatePickerLabelVariants
 } from './date-picker';
+
+export { ReorderablePaneLayout, PaneTabBar } from './reorderable-panes';
+export {
+	tabBarVariants,
+	tabVariants,
+	gripVariants,
+	type PaneDefinition,
+	type TabBarVariants,
+	type TabVariants,
+	type GripVariants
+} from './reorderable-panes';
+
+export {
+	DockLayout,
+	DockNode,
+	DockLeaf,
+	DockTabBar,
+	DockDropOverlay,
+	DockActivityBar
+} from './dock';
+export {
+	createDockState,
+	setDockContext,
+	getDockContext,
+	type DockState
+} from './dock';
+export type {
+	PanelDefinition as DockPanelDefinition,
+	SplitNode,
+	LeafNode,
+	LayoutNode,
+	DropZone,
+	DropTarget,
+	DragState,
+	ActivityBarItem,
+	DockLayoutState
+} from './dock';

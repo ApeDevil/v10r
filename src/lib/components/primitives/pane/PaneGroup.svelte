@@ -3,6 +3,12 @@
 	import { PaneGroup } from 'paneforge';
 	import type { Snippet } from 'svelte';
 
+	export interface PaneGroupHandle {
+		getLayout: () => number[];
+		setLayout: (layout: number[]) => void;
+		getId: () => string;
+	}
+
 	interface Props {
 		direction?: 'horizontal' | 'vertical';
 		autoSaveId?: string;
@@ -18,9 +24,24 @@
 		children,
 		class: className
 	}: Props = $props();
+
+	let paneGroupRef = $state<PaneGroupHandle | undefined>();
+
+	export function getLayout(): number[] {
+		return paneGroupRef?.getLayout() ?? [];
+	}
+
+	export function setLayout(layout: number[]): void {
+		paneGroupRef?.setLayout(layout);
+	}
+
+	export function getId(): string {
+		return paneGroupRef?.getId() ?? '';
+	}
 </script>
 
 <PaneGroup
+	bind:this={paneGroupRef}
 	{direction}
 	{autoSaveId}
 	{onLayoutChange}

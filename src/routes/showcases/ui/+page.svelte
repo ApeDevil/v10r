@@ -44,10 +44,10 @@
 			description="Stack, cluster, grid, center, and resizable pane primitives"
 		/>
 		<LinkCard
-			href="/showcases/ui/panes"
+			href="/showcases/ui/panes-and-panels"
 			icon="i-lucide-panel-left"
-			title="Resizable Panes"
-			description="Draggable split layouts with persistence, collapsible panes, and keyboard support"
+			title="Panes & Panels"
+			description="Resizable panes divide space, dock panels organize content with tabs, drag-to-split, and activity bar"
 		/>
 		<LinkCard
 			href="/showcases/ui/tokens"

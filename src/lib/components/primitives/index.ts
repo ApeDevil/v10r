@@ -69,8 +69,8 @@ export { Progress } from './progress';
 
 export { Slider } from './slider';
 
-export { PaneGroup, Pane, PaneResizer } from './resizable';
-export { resizableHandleVariants, type ResizableHandleVariants } from './resizable';
+export { PaneGroup, Pane, PaneResizer } from './pane';
+export { paneResizerVariants, type PaneResizerVariants } from './pane';
 
 export { Carousel, CarouselItem } from './carousel';
 export {

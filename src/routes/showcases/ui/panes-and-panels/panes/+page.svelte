@@ -10,12 +10,13 @@
 <div class="page">
 	<PageHeader
 		title="Resizable Panes"
-		description="Resizable panel layouts powered by PaneForge. Supports drag, keyboard, touch, localStorage persistence, and collapsible panes."
+		description="Resizable spatial containers powered by PaneForge. Panes divide space — they have no content identity, just geometry."
 		breadcrumbs={[
 			{ label: 'Home', href: '/' },
 			{ label: 'Showcases', href: '/showcases' },
 			{ label: 'UI', href: '/showcases/ui' },
-			{ label: 'Resizable Panes' }
+			{ label: 'Panes & Panels', href: '/showcases/ui/panes-and-panels' },
+			{ label: 'Panes' }
 		]}
 	/>
 
@@ -24,7 +25,7 @@
 		<section>
 			<h2 class="text-fluid-2xl font-bold mb-fluid-3">Horizontal Layout</h2>
 			<p class="text-fluid-base text-muted mb-fluid-4">
-				Two panels side-by-side with a draggable divider. Includes visual grip indicator.
+				Two panes side-by-side with a draggable divider. Includes visual grip indicator.
 			</p>
 
 			<Card>
@@ -49,7 +50,7 @@
 							<div class="h-full bg-surface-1 p-fluid-4 rounded-r-lg">
 								<h3 class="text-fluid-lg font-semibold mb-2">Right Pane</h3>
 								<p class="text-fluid-sm text-muted">
-									This pane fills the remaining space. Resize constraints ensure neither panel
+									This pane fills the remaining space. Resize constraints ensure neither pane
 									becomes too small or too large.
 								</p>
 							</div>
@@ -63,7 +64,7 @@
 		<section>
 			<h2 class="text-fluid-2xl font-bold mb-fluid-3">Vertical Layout</h2>
 			<p class="text-fluid-base text-muted mb-fluid-4">
-				Stacked panels with a horizontal divider. Cursor changes to row-resize for vertical splits.
+				Stacked panes with a horizontal divider. Cursor changes to row-resize for vertical splits.
 			</p>
 
 			<Card>
@@ -97,9 +98,9 @@
 
 		<!-- Three Panel Example -->
 		<section>
-			<h2 class="text-fluid-2xl font-bold mb-fluid-3">Three-Panel Layout</h2>
+			<h2 class="text-fluid-2xl font-bold mb-fluid-3">Three-Pane Layout</h2>
 			<p class="text-fluid-base text-muted mb-fluid-4">
-				Multiple panels with independent resize handles. Common pattern for navigation, content, and
+				Multiple panes with independent resize handles. Common pattern for navigation, content, and
 				sidebar.
 			</p>
 
@@ -124,7 +125,7 @@
 									Primary content area. Takes the majority of the space by default.
 								</p>
 								<p class="text-fluid-sm text-muted mt-2">
-									Uses surface-0 to distinguish from the side panels.
+									Uses surface-0 to distinguish from the side panes.
 								</p>
 							</div>
 						</Pane>
@@ -348,7 +349,7 @@
 		</section>
 	</main>
 
-	<BackLink href="/showcases/ui" label="UI" />
+	<BackLink href="/showcases/ui/panes-and-panels" label="Panes & Panels" />
 </div>
 
 <style>
