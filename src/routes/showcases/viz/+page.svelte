@@ -26,6 +26,12 @@
 			description="Bar, line, area, pie, and scatter charts powered by Chart.js"
 		/>
 		<LinkCard
+			href="/showcases/viz/plots"
+			icon="i-lucide-grid-3x3"
+			title="Plots"
+			description="Canvas-based heatmaps for dense data visualization"
+		/>
+		<LinkCard
 			href="/showcases/viz/graphs"
 			icon="i-lucide-share-2"
 			title="Graphs"

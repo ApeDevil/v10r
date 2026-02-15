@@ -7,6 +7,7 @@ export { default as LineChart } from './chart/line/LineChart.svelte';
 export { default as AreaChart } from './chart/area/AreaChart.svelte';
 export { default as PieChart } from './chart/pie/PieChart.svelte';
 export { default as ScatterPlot } from './plot/scatter/ScatterPlot.svelte';
+export { default as HeatMap } from './plot/heatmap/HeatMap.svelte';
 export { default as NetworkGraph } from './graph/network/NetworkGraph.svelte';
 export { default as TreeGraph } from './graph/tree/TreeGraph.svelte';
 export { default as DagGraph } from './graph/dag/DagGraph.svelte';

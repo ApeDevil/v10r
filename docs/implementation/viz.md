@@ -29,7 +29,7 @@
 |----------|------|-----|--------|
 | **Charts** (bar, line, area, pie) | **Chart.js** | Most battle-tested, tree-shakable, framework-agnostic (no runes issues) | ~150-200KB total (tree-shaking yields ~25% reduction, shared base classes limit per-type savings) |
 | **Scatter plots** | Chart.js | Already loaded, built-in scatter type | 0KB marginal |
-| **Heatmap / time-series** | **uPlot** | 47.9KB total, fastest Canvas renderer for dense data (166k points in 25ms cold start) | ~48KB |
+| **Heatmap** | **Pure Canvas** | uPlot has no built-in heatmap — its demos are custom Canvas code. Pure Canvas = 0KB vs 48KB dead weight | 0KB |
 | **Interactive diagrams** | **Svelte Flow** | 1.0 stable (May 14, 2025), Svelte 5 runes-native, used at Stripe/Typeform | ~150KB |
 | **Static diagrams** | **Mermaid** | Text-to-diagram, AI-friendly, @friendofsvelte/mermaid SSR | lazy only |
 | **Network graphs** | **D3-force + Svelte** | Community consensus -- D3 for math, Svelte renders SVG | ~30KB |
@@ -38,7 +38,7 @@
 
 ### Tier Summary (by bundle impact)
 
-- **Tier 1** (under 50KB): uPlot, existing SVGChart
+- **Tier 1** (under 50KB): Pure Canvas HeatMap (0KB), existing SVGChart
 - **Tier 2** (50-300KB): Chart.js, Svelte Flow, D3 modules
 - **Tier 3** (300KB+): MapLibre (~400KB), Mermaid -- lazy load only
 
@@ -1040,7 +1040,7 @@ Each phase is independently shippable. Phase 4b depends on 4a (KnowledgeGraph wr
 | Phase | Dependencies | What Ships | Bundle | Status |
 |-------|-------------|------------|--------|--------|
 | **1** | `chart.js` | Chart tokens, theme-bridge, ChartSkeleton/Empty/Error, BarChart, LineChart, AreaChart, PieChart, ScatterPlot, VizDemoCard, `/showcases/viz/charts/` | ~150-200KB | **Done** |
-| **2** | `uplot` | HeatMap, time-series charts, `/showcases/viz/plots/` | ~48KB | |
+| **2** | Pure Canvas (0KB) | HeatMap, `/showcases/viz/plots/` | 0KB | **Done** |
 | **3** | `@xyflow/svelte` | FlowDiagram, StateDiagram, `/showcases/viz/diagrams/` | ~150KB | |
 | **4a** | `d3-force`, `d3-hierarchy`, `d3-zoom`, `d3-selection` | SvgGraphContainer, graph types/markers, NetworkGraph (directed prop), TreeGraph, `/showcases/viz/graphs/` | ~48KB | **Done** |
 | **4b** | `d3-dag`, `d3-sankey` | DagGraph, SankeyDiagram, KnowledgeGraph + KnowledgeFilters, expanded `/showcases/viz/graphs/` | ~55-85KB | **Done** |
@@ -1053,8 +1053,8 @@ Each phase is independently shippable. Phase 4b depends on 4a (KnowledgeGraph wr
 Before shipping any visualization component:
 
 ### States
-- [x] Loading state with content-aware skeleton *(Phase 1: SVG skeletons per chart type with pulse animation)*
-- [x] Empty state with contextual message *(Phase 1: ChartEmpty wraps EmptyState with chart defaults)*
+- [x] Loading state with content-aware skeleton *(Phase 1: SVG skeletons per chart type with pulse animation; Phase 2: HeatMap SVG skeleton with 4x6 grid)*
+- [x] Empty state with contextual message *(Phase 1: ChartEmpty wraps EmptyState with chart defaults; Phase 2: HeatMap inline empty state)*
 - [x] Error state with retry + table fallback *(Phase 1: ChartError with retry button + `<details>` data table)*
 - [ ] Responsive behavior on mobile (<640px)
 
@@ -1181,6 +1181,56 @@ Before shipping any visualization component:
 - Degree slider for KnowledgeFilters deferred (no current use case for degree filtering)
 - Breadcrumb drill-down deferred (no hierarchical knowledge graph use case yet)
 - `any` types for d3-dag/d3-sankey module references (complex generics add no runtime value)
+
+---
+
+## Phase 2 Implementation Notes
+
+> Completed Feb 2026. HeatMap component + plots showcase page. Reviewed by archy, uxy, svey agents — fixes applied.
+
+### Architecture Decision: Pure Canvas Instead of uPlot
+
+The plan specified uPlot (~48KB) for heatmaps, but investigation revealed uPlot has **no built-in heatmap mode** — its heatmap demos are custom Canvas code layered on top. Since we'd be writing the Canvas rendering ourselves anyway, using uPlot would add 48KB of dead weight. Decision: pure Canvas (0KB additional bundle).
+
+### What Shipped
+
+| Component | File | Key Features |
+|-----------|------|-------------|
+| **HeatMap** | `plot/heatmap/HeatMap.svelte` | Pure Canvas rendering, ResizeObserver, DPI scaling, color interpolation (hex→RGB→lerp), hover highlight with tooltip, `showValues` for in-cell text, `formatValue` prop, `colorRange` prop, empty state, content-aware SVG skeleton |
+| **Types** | `plot/heatmap/types.ts` | `HeatMapData` interface (`xLabels`, `yLabels`, `values[][]`) |
+| **Showcase page** | `routes/showcases/viz/plots/+page.svelte` | 3 demos: Activity Heatmap (green, GitHub-style), Correlation Matrix (default colors, showValues, square aspect, formatValue), Server Load (red, formatValue with ms suffix). Data tables for all 3 |
+
+### Key Patterns Established
+
+1. **Cached Canvas context**: `ctx` stored as `$state` variable, initialized on first `draw()` call, nullified in `cleanup()` — avoids repeated `getContext('2d')` calls
+2. **Explicit dependency tracking in `$effect`**: All reactive dependencies (`data`, `cw`, `ch`, `colorRange`, `showValues`, `hoverRow`, `hoverCol`) assigned to local `const` before the `if` guard to ensure Svelte tracks them
+3. **`$derived.by` for tooltip text**: Tooltip content computed in `$derived.by()` that accesses `data.values` inside the block — ensures reactivity when data changes
+4. **Hover bounds reset**: Separate `$effect` resets `hoverRow`/`hoverCol` to -1 when data dimensions shrink (prevents stale hover indices)
+5. **`formatValue` prop**: Customizable value formatter used in both tooltip text and in-cell display — defaults to rounding to 2 decimal places
+
+### Review Fixes Applied
+
+| Issue | Source | Fix |
+|-------|--------|-----|
+| Import from leaf module instead of barrel | archy | Changed showcase import to `$lib/components/viz/plot` |
+| Tooltip text missing `data.values` dependency | svey | Rewrote as `$derived.by()` accessing data inside block |
+| Canvas context not cached | svey | `ctx` as `$state`, initialized once, cleaned up in `cleanup()` |
+| Hover state not reset on data change | svey | Added bounds-check `$effect` |
+| No `formatValue` prop | archy | Added optional prop with default formatter |
+| No empty state | uxy | Added `isEmpty` derived + empty state div |
+| Missing `role="tooltip"` | uxy | Added to tooltip div |
+| Missing `aria-busy` | uxy | Added `aria-busy={!ready}` to figure |
+| z-index magic number | uxy | Changed from `10` to `var(--z-tooltip)` |
+| Missing server load data table | uxy | Added data table snippet to showcase |
+
+### Known Limitations (Acceptable for Phase 2)
+
+- No keyboard navigation for individual cells (consistent with ScatterPlot — cross-cutting enhancement)
+- No touch support (consistent with all Canvas-based components)
+- No dark mode reactivity (Canvas must be redrawn manually — consistent with Chart.js components)
+- Binary text contrast threshold (`t > 0.55` → white/black) — adequate but not WCAG-validated per cell
+- Hardcoded left padding (65px) for y-axis labels — sufficient for short labels, may clip long ones
+- Color-only encoding — mitigated by `showValues` prop for in-cell text and tooltip on hover
 
 ---
 
