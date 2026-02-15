@@ -28,7 +28,6 @@
 			class={cn(
 				'checkbox-box flex h-5 w-5 shrink-0 items-center justify-center rounded cursor-pointer',
 				'bg-subtle border-2 border-input-border',
-				'transition-colors duration-fast',
 				'peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-1',
 				'peer-disabled:cursor-not-allowed peer-disabled:opacity-50',
 				'peer-checked:bg-primary peer-checked:border-primary peer-checked:text-white'
@@ -56,6 +55,8 @@
 	.checkbox-container:hover :global(.checkbox-box) {
 		border-color: color-mix(in srgb, var(--color-fg) 70%, transparent);
 		background: color-mix(in srgb, var(--color-fg) 8%, transparent);
+		outline: 1px solid color-mix(in srgb, var(--color-fg) 25%, transparent);
+		outline-offset: 1px;
 	}
 
 	/* Hover: underline label */
@@ -67,6 +68,7 @@
 	.checkbox-container:has(input:disabled):hover :global(.checkbox-box) {
 		border-color: var(--color-input-border);
 		background: var(--color-subtle);
+		outline: none;
 	}
 
 	.checkbox-container:has(input:disabled):hover :global(.checkbox-label) {
@@ -77,5 +79,6 @@
 	.checkbox-container:has(input:checked):hover :global(.checkbox-box) {
 		border-color: var(--color-primary);
 		background: var(--color-primary);
+		outline-color: color-mix(in srgb, var(--color-primary) 40%, transparent);
 	}
 </style>
