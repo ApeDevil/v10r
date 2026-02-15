@@ -32,6 +32,12 @@
 			description="Canvas-based heatmaps for dense data visualization"
 		/>
 		<LinkCard
+			href="/showcases/viz/diagrams"
+			icon="i-lucide-workflow"
+			title="Diagrams"
+			description="Interactive flow diagrams and state machines powered by Svelte Flow"
+		/>
+		<LinkCard
 			href="/showcases/viz/graphs"
 			icon="i-lucide-share-2"
 			title="Graphs"

@@ -13,6 +13,8 @@ export { default as TreeGraph } from './graph/tree/TreeGraph.svelte';
 export { default as DagGraph } from './graph/dag/DagGraph.svelte';
 export { default as SankeyDiagram } from './graph/sankey/SankeyDiagram.svelte';
 export { default as KnowledgeGraph } from './graph/knowledge/KnowledgeGraph.svelte';
+export { default as FlowDiagram } from './diagram/flow/FlowDiagram.svelte';
+export { default as StateDiagram } from './diagram/state/StateDiagram.svelte';
 
 // Shared state components
 export { default as ChartEmpty } from './_shared/ChartEmpty.svelte';

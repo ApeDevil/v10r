@@ -1041,7 +1041,7 @@ Each phase is independently shippable. Phase 4b depends on 4a (KnowledgeGraph wr
 |-------|-------------|------------|--------|--------|
 | **1** | `chart.js` | Chart tokens, theme-bridge, ChartSkeleton/Empty/Error, BarChart, LineChart, AreaChart, PieChart, ScatterPlot, VizDemoCard, `/showcases/viz/charts/` | ~150-200KB | **Done** |
 | **2** | Pure Canvas (0KB) | HeatMap, `/showcases/viz/plots/` | 0KB | **Done** |
-| **3** | `@xyflow/svelte` | FlowDiagram, StateDiagram, `/showcases/viz/diagrams/` | ~150KB | |
+| **3** | `@xyflow/svelte` | FlowDiagram, StateDiagram, `/showcases/viz/diagrams/` | ~150KB | **Done** |
 | **4a** | `d3-force`, `d3-hierarchy`, `d3-zoom`, `d3-selection` | SvgGraphContainer, graph types/markers, NetworkGraph (directed prop), TreeGraph, `/showcases/viz/graphs/` | ~48KB | **Done** |
 | **4b** | `d3-dag`, `d3-sankey` | DagGraph, SankeyDiagram, KnowledgeGraph + KnowledgeFilters, expanded `/showcases/viz/graphs/` | ~55-85KB | **Done** |
 | **5** | `maplibre-gl`, `svelte-maplibre-gl` | GeoMap, MapMarker, MapPopup, `/showcases/viz/maps/` | ~400KB | |
@@ -1181,6 +1181,38 @@ Before shipping any visualization component:
 - Degree slider for KnowledgeFilters deferred (no current use case for degree filtering)
 - Breadcrumb drill-down deferred (no hierarchical knowledge graph use case yet)
 - `any` types for d3-dag/d3-sankey module references (complex generics add no runtime value)
+
+---
+
+## Phase 3 Implementation Notes
+
+> Completed Feb 2026. FlowDiagram + StateDiagram + showcase page. Browser-tested in light and dark modes.
+
+### What Shipped
+
+| Component | File | Key Features |
+|-----------|------|-------------|
+| **FlowNode** | `diagram/flow/FlowNode.svelte` | Custom themed node with 3 variants: default (rounded rect), decision (diamond via CSS rotate), terminal (pill). Handle connections top/bottom. Design token colors, selected state highlight |
+| **FlowDiagram** | `diagram/flow/FlowDiagram.svelte` | SvelteFlow wrapper with dynamic import (SSR-safe), `$state.raw()` nodes/edges, content-aware SVG skeleton, `<figure>`/`<figcaption>` a11y, Background + Controls, scoped CSS theming with design tokens |
+| **StateNode** | `diagram/state/StateNode.svelte` | Custom node with 3 visual variants: state (pill shape), start (filled circle), end (double circle outline). Handle connections left/right |
+| **StateDiagram** | `diagram/state/StateDiagram.svelte` | Read-only SvelteFlow wrapper (`nodesDraggable={false}`, `nodesConnectable={false}`), animated edges for transitions, hidden handles, same SSR/skeleton/a11y pattern as FlowDiagram |
+| **Showcase page** | `routes/showcases/viz/diagrams/+page.svelte` | 3 demos: Auth Flow (branching with decision nodes), Order State Machine (lifecycle with retry), CI/CD Pipeline (parallel fan-out/fan-in). VizDemoCard with data tables and code snippets |
+
+### Key Patterns Established
+
+1. **Dynamic imports for SSR safety**: `@xyflow/svelte` accesses DOM APIs at import time — static imports cause SSR 500 errors. All runtime imports (`SvelteFlow`, `Background`, `Controls`, custom nodes) loaded inside `onMount()`. Only `import type` at module level (erased at compile time)
+2. **`$state.raw()` with `$effect` sync**: Initialize with empty array `$state.raw<Node[]>([])`, sync from props via `$effect(() => { internalNodes = nodesProp; })`. Direct initialization from props causes Svelte warnings about capturing initial value
+3. **`height` not `min-height` for Svelte Flow containers**: Svelte Flow uses `height: 100%` internally, which doesn't resolve against `min-height`. Fixed height (`400px`) on `.diagram-container` is required
+4. **Scoped CSS theming via `:global()`**: Override Svelte Flow's CSS custom properties (`--xy-background-color`, `--xy-node-color`, etc.) with design tokens inside `.flow-wrapper :global(.svelte-flow)` — works in both light and dark modes
+5. **`Component<any>` for dynamic components**: Dynamically imported Svelte components stored as `$state()` variables typed `Component<any> | undefined`, rendered after `ready` flag
+
+### Known Limitations (Acceptable for Phase 3)
+
+- `proOptions: { hideAttribution: true }` used to hide Svelte Flow attribution (acceptable for internal showcase)
+- Svelte Flow adds its own `light` class regardless of page theme — theming works via CSS variable overrides, not class-based
+- `NodeTypes` typed with `as NodeTypes` cast — Svelte Flow's generic type is complex and doesn't infer cleanly from dynamic imports
+- No empty/error state components (showcase always has data, consistent with graph components)
+- Fixed container height (400px) — not responsive to container size
 
 ---
 
