@@ -15,6 +15,7 @@
 - [Accessibility](#accessibility)
 - [Dark Mode & Chart Color Palette](#dark-mode--chart-color-palette)
 - [Showcase Design](#showcase-design)
+- [Graph Visualizations](#graph-visualizations)
 - [Implementation Phases](#implementation-phases)
 - [Implementation Checklist](#implementation-checklist)
 - [Known Gotchas](#known-gotchas)
@@ -142,7 +143,7 @@ export { SimpleChart } from './chart/simple';
 export { BarChart, LineChart, AreaChart, PieChart } from './chart';
 export { ScatterPlot, HeatMap } from './plot';
 export { FlowDiagram } from './diagram';
-export { NetworkGraph } from './graph';
+export { NetworkGraph, TreeGraph, DagGraph, SankeyDiagram, KnowledgeGraph } from './graph';
 export { GeoMap } from './map';
 ```
 
@@ -217,15 +218,31 @@ src/lib/components/viz/
       index.ts
   graph/
     index.ts
+    _shared/
+      types.ts                   <- GraphNode, GraphEdge, GraphData<N,E>
+      SvgGraphContainer.svelte   <- Zoom/pan/resize viewport (d3-zoom)
+      svg-markers.ts             <- Arrow <marker> definitions
     network/
-      NetworkGraph.svelte      <- D3-force + Svelte SVG
+      NetworkGraph.svelte        <- D3-force + Svelte SVG (directed={true} for arrows)
+      types.ts                   <- NetworkNode, NetworkEdge, NetworkData
       index.ts
     tree/
-      TreeGraph.svelte         <- D3-hierarchy + Svelte SVG
+      TreeGraph.svelte           <- D3-hierarchy + Svelte SVG
+      types.ts                   <- TreeNode, TreeData (recursive, not GraphData)
       index.ts
-    _shared/
-      force-simulation.ts
-      types.ts
+    dag/
+      DagGraph.svelte            <- d3-dag Sugiyama layout
+      types.ts                   <- DagNode, DagData
+      index.ts
+    sankey/
+      SankeyDiagram.svelte       <- d3-sankey flow visualization
+      types.ts                   <- SankeyNode, SankeyLink, SankeyData
+      index.ts
+    knowledge/
+      KnowledgeGraph.svelte      <- Composition wrapper over NetworkGraph
+      KnowledgeFilters.svelte    <- Entity/relationship type toggles
+      knowledge-types.ts         <- KnowledgeNode, KnowledgeEdge, KnowledgeData
+      index.ts
   map/
     index.ts
     geo/
@@ -614,21 +631,420 @@ Interactive controls at the top of each showcase page that affect all demos:
 
 **Maps**: Choropleth (sales by region), point map (store locations), heat map (activity density)
 
-**Graphs**: Network graph (social connections), tree graph (file hierarchy), force-directed (cluster detection)
+**Graphs**: Network graph (social connections), directed graph (control flow), tree graph (org chart, file hierarchy), DAG (package dependencies, task pipeline), Sankey (energy flow, user funnel, budget allocation), knowledge graph (movie database, academic publications)
+
+---
+
+## Graph Visualizations
+
+> Phase 4a/4b deep-dive. Compiled from resy (authoritative research), scout (real-world ground truth), archy (architecture), uxy (UX design). Feb 2026.
+
+### Library Picks
+
+| Viz Type | Library | Bundle | Why |
+|----------|---------|--------|-----|
+| **Network Graph** | d3-force + Svelte SVG | ~20KB | Community consensus: D3 for physics, Svelte renders SVG |
+| **Directed Graph** | Same (SVG `<marker>` arrows) | +0KB | Not a separate library — `directed={true}` prop |
+| **Tree Diagram** | d3-hierarchy + Svelte SVG | ~10KB | 3.7M weekly downloads, 7 layout algorithms built-in |
+| **DAG** | d3-dag (Sugiyama layout) | ~40-60KB | Purpose-built for DAG layouts, outputs coordinates |
+| **Sankey** | d3-sankey + Svelte SVG | ~15-25KB | Uncontested standard (333k weekly downloads, Mike Bostock) |
+| **Knowledge Graph** | D3-force (reuses NetworkGraph) | +0KB | Styled network graph + filtering UI |
+
+**Shared dependencies** (Phase 4a): `d3-zoom` (~8KB), `d3-selection` (~10KB) — needed by SvgGraphContainer.
+
+**Total Phase 4**: ~103-133KB lazy-loaded (each module loads independently via dynamic import).
+
+#### What Was Evaluated and Rejected
+
+| Library | Why Rejected |
+|---------|-------------|
+| **Svelte Flow for DAGs** | 150KB to disable most features (`nodesDraggable={false}`, `nodesConnectable={false}`). Pays full interactive-editor bundle for read-only viz |
+| **dagre** | Codebase from 2015, no active development. Still 1M+ downloads but bugs won't get fixed. ELK.js better for complex cases |
+| **Cytoscape.js** | ~150-200KB. Only justified at 2k+ nodes where SVG performance degrades. Overkill for showcase |
+| **Sigma.js** | WebGL renderer for 10k+ nodes. Documentation gaps. Only needed for production analytics dashboards |
+| **vis-network** | "Order of magnitude slower than competitors." Original library deprecated |
+| **neovis.js** | 700 nodes = 3GB RAM. 15,500 nodes = 45min load. Not production-ready |
+| **Plotly.js Sankey** | Better defaults than raw d3-sankey, but 3-10MB bundle. Non-starter |
+
+#### Performance Tipping Points
+
+| Scale | Renderer | Library |
+|-------|----------|---------|
+| <1,000 nodes | SVG (Svelte renders) | D3 modules — all Phase 4 components |
+| 1k-10k nodes | Canvas | Cytoscape.js or PIXI.js |
+| 10k+ nodes | WebGL | Sigma.js + Graphology |
+
+For showcase/template, SVG handles everything. Canvas/WebGL only needed for production analytics.
+
+### Architecture Decisions
+
+#### Why 5 Modules, Not 6
+
+Directed graph is NOT a separate module. D3-force doesn't distinguish directed/undirected — the physics are identical. The only rendering difference is one SVG `<defs>` block with arrow markers. `NetworkGraph` with `directed={true}` avoids duplicating 90% of the component.
+
+#### Sankey Belongs Under `graph/`, Not `diagram/` or `chart/`
+
+- `diagram/` = Svelte Flow (Phase 3) — interactive, user-editable (flowcharts, state machines)
+- `chart/` = Chart.js — Canvas-rendered, `{ labels, datasets }` data shape
+- Sankey consumes `{ nodes, links }` (graph topology), is SVG-rendered, uses D3 layout. It's a graph.
+
+#### KnowledgeGraph is Composition, Not a Mode
+
+**Pattern**: `KnowledgeGraph.svelte` wraps `NetworkGraph.svelte` + adds `KnowledgeFilters.svelte`
+
+- KnowledgeGraph owns the domain concern (entity types, relationship types, filtering)
+- NetworkGraph owns the visualization concern (force layout, SVG rendering, zoom/pan)
+- NetworkGraph exposes a `nodeRenderer` snippet so KnowledgeGraph can customize node shapes/colors by entity type
+
+Why not `mode="knowledge"` on NetworkGraph: A `mode` prop means "this component has multiple identities" — violates one-responsibility-per-module.
+
+Why not standalone: Duplicates force simulation, SVG rendering, zoom/pan, dark mode theming, and cleanup logic.
+
+#### DAG Uses d3-dag, Not Svelte Flow
+
+d3-dag provides Sugiyama layout (gold standard for DAG rendering) at ~40-60KB. Using Svelte Flow would import 150KB of interactive diagram infrastructure to disable most of it. For a template project, demonstrating d3-dag teaches developers about layout algorithms. Demonstrating "Svelte Flow with everything disabled" teaches nothing useful.
+
+**Exception**: If the DAG use case requires interactivity (drag nodes, expand clusters), Phase 3's Svelte Flow + dagre layout is the right tool. That's a diagram, not a visualization.
+
+#### Shared `SvgGraphContainer` (Justified)
+
+All 5 graph types need identical zoom/pan/resize behavior. Without sharing: 5 copies of d3-zoom initialization, 5 copies of ResizeObserver setup/teardown, 5 copies of reset-to-fit calculation.
+
+**What it owns**: SVG element sizing (ResizeObserver), zoom/pan behavior (d3-zoom), `<figure>` + `<figcaption>` accessibility wrapper, aspect ratio via `chartContainerVariants`.
+
+**What it does NOT own**: Layout algorithm, node/edge rendering, skeleton shapes, data types.
+
+```svelte
+<!-- Usage pattern -->
+<SvgGraphContainer {aspect} {ariaLabel}>
+  {#snippet children({ width, height })}
+    {#each edges as edge}
+      <line ... />
+    {/each}
+    {#each nodes as node}
+      <circle ... />
+    {/each}
+  {/snippet}
+</SvgGraphContainer>
+```
+
+#### No Layout Engine Abstraction
+
+Force, hierarchy, Sugiyama, and sankey are fundamentally different algorithms with different inputs, outputs, and configuration surfaces. A unified `LayoutEngine` interface would be speculative with zero benefit. Each component calls its D3 module directly.
+
+### Data Types
+
+Per-component types extending shared base. No unified `GraphData` that adapts (adapters would have zero callers). No fully independent types (lose compile-time safety).
+
+```typescript
+// viz/graph/_shared/types.ts — Base types (shared by network, DAG, sankey, knowledge)
+export interface GraphNode {
+  id: string;
+  label?: string;
+  x?: number;
+  y?: number;
+}
+
+export interface GraphEdge {
+  source: string;
+  target: string;
+}
+
+export interface GraphData<
+  N extends GraphNode = GraphNode,
+  E extends GraphEdge = GraphEdge
+> {
+  nodes: N[];
+  edges: E[];
+}
+```
+
+```typescript
+// Per-component extensions
+interface NetworkNode extends GraphNode { group?: string; size?: number; }
+interface NetworkEdge extends GraphEdge { weight?: number; }
+type NetworkData = GraphData<NetworkNode, NetworkEdge>;
+
+interface SankeyLink extends GraphEdge { value: number; } // value REQUIRED
+type SankeyData = GraphData<SankeyNode, SankeyLink>;
+
+interface KnowledgeNode extends GraphNode { entityType: string; properties?: Record<string, unknown>; }
+interface KnowledgeEdge extends GraphEdge { relationshipType: string; label?: string; }
+interface KnowledgeData extends GraphData<KnowledgeNode, KnowledgeEdge> {
+  entityTypes: string[];
+  relationshipTypes: string[];
+}
+```
+
+**Tree is the exception** — d3-hierarchy expects recursive `{ children: [] }`, not flat nodes/edges:
+
+```typescript
+// viz/graph/tree/types.ts
+interface TreeNode {
+  id: string;
+  label?: string;
+  children?: TreeNode[];
+}
+type TreeData = TreeNode;
+```
+
+### Svelte 5 + D3 Integration Pattern
+
+**Community consensus**: D3 for math, Svelte for rendering. Never let D3 do `.append()` / `.attr()` DOM manipulation — it conflicts with Svelte's reactivity.
+
+```svelte
+<script lang="ts">
+  import { onMount, onDestroy } from 'svelte';
+  import { beforeNavigate } from '$app/navigation';
+
+  let nodes = $state([...]);
+  let simulation: d3.Simulation | undefined;
+
+  onMount(async () => {
+    const d3 = await import('d3-force');
+
+    simulation = d3.forceSimulation(nodes)
+      .force('charge', d3.forceManyBody())
+      .force('center', d3.forceCenter(width / 2, height / 2))
+      .on('tick', () => { nodes = [...nodes]; }); // Trigger Svelte reactivity
+  });
+
+  function cleanup() {
+    simulation?.stop(); // CRITICAL: D3 runs internal timer
+    simulation = undefined;
+  }
+
+  beforeNavigate(cleanup);
+  onDestroy(cleanup);
+</script>
+
+<!-- Svelte handles all DOM rendering -->
+<svg>
+  {#each edges as edge}
+    <line x1={edge.source.x} y1={edge.source.y} x2={edge.target.x} y2={edge.target.y} />
+  {/each}
+  {#each nodes as node}
+    <circle cx={node.x} cy={node.y} r={5} />
+  {/each}
+</svg>
+```
+
+### Directed Edge Rendering
+
+SVG `<marker>` definitions in `<defs>`, applied via `marker-end` on edge paths:
+
+```svelte
+<svg>
+  <defs>
+    <marker id="arrow" viewBox="0 -5 10 10" refX="20" refY="0"
+            markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,-5L10,0L0,5" fill="var(--chart-axis)" />
+    </marker>
+  </defs>
+
+  {#each edges as edge}
+    <line ... marker-end={directed ? 'url(#arrow)' : undefined} />
+  {/each}
+</svg>
+```
+
+**Gotcha**: Arrow heads hide inside large nodes. Use `refX` offset to position arrows at node edge, not center.
+
+### Graph UX Patterns
+
+#### Interaction Model Per Type
+
+| Type | Primary Interaction | Tooltip Content | Selection | Drill-Down |
+|------|-------------------|-----------------|-----------|------------|
+| **Network** | Drag nodes + pan viewport | Node label, group, connection count | Single-select, Ctrl+Click multi | Click → 1-hop neighborhood |
+| **Directed** | Hover for path highlighting | Node label, in/out-degree | Click → highlight ancestry path | Click → expand collapsed subgraph |
+| **Tree** | Expand/collapse branches | Node label, depth, child count | Click → select entire subtree | Click branch → toggle expand/collapse |
+| **DAG** | Trace paths, hover for deps | Node label, upstream/downstream count | Click → highlight upstream (blue) + downstream (green) | Click → show critical path |
+| **Sankey** | Hover flows for values | Node: "Source: 1,234 (45%)". Flow: "A → B: 567 (20%)" | Click node → highlight all connected flows | Click → filter to flows touching that node |
+| **Knowledge** | Search + filter, then explore | Entity name, type (icon), property count | Click → relationship panel (sidebar) | Click → load 1-hop neighborhood |
+
+#### Mobile Behavior
+
+| Type | Mobile Strategy |
+|------|----------------|
+| **Network** | Node dragging disabled (ambiguous with pan). Tap to select + tooltip. Two-finger pan/zoom. Floating "Reset view" button |
+| **Directed** | Tap node for sticky tooltip. Edge labels only show at zoom >150% |
+| **Tree** | Tap to expand/collapse. Fit-to-width on load. Vertical layout (top-to-bottom) |
+| **DAG** | Top-to-bottom layout (rotated from desktop's left-to-right). Vertical scroll. Edge labels hidden (show in tooltip) |
+| **Sankey** | No persistent labels — tap for tooltip. Flows <5% hidden in "Other" aggregate. Vertical scroll |
+| **Knowledge** | Search-first pattern: fullscreen search overlay → tap result → fullscreen graph. Bottom sheet for entity details |
+
+#### Zoom & Pan Controls
+
+Floating bottom-right, all graph types. Semi-transparent backdrop, always visible:
+
+- **Zoom in/out** buttons (+/-)
+- **Fit-to-screen** reset button
+- **Minimap toggle** (only for >200 nodes)
+- **Zoom level indicator** (shown when not 100%, fades after 2s idle)
+
+**Mouse wheel zoom requires Ctrl/Cmd** (Google Maps/Figma pattern — prevents page scroll hijack):
+
+```typescript
+canvas.addEventListener('wheel', (e) => {
+  if (e.ctrlKey || e.metaKey) {
+    e.preventDefault();
+    handleZoom(e.deltaY);
+  }
+  // Otherwise: normal page scroll
+}, { passive: false });
+```
+
+**Keyboard** (when graph container focused): `+`/`-` zoom, `0` reset, `F` fit-to-view, arrow keys pan.
+
+**Minimap thresholds**: Network >200 nodes, Trees depth >5, DAGs >100 nodes, Knowledge always. Sankey never.
+
+#### Content-Aware Skeletons
+
+| Type | Skeleton Shape |
+|------|---------------|
+| **Network** | 8-12 circles in loose cluster + 10-15 connecting lines, staggered pulse |
+| **Tree** | 1 root rect → 3 child rects in second row → 6-8 leaf rects, connecting lines |
+| **DAG** | 2 rects top → 3 rects middle → 2 rects bottom, diagonal lines |
+| **Sankey** | Left-aligned rects (sources), curved flowing bands, right-aligned rects (targets) |
+| **Knowledge** | 3-4 clusters of 3-5 circles each, sparse inter-cluster lines |
+
+All use `fill: var(--color-muted)` at 30% opacity with staggered pulse animation (same CSS as chart skeletons).
+
+#### Empty States
+
+| State | When | Message | Icon | Action |
+|-------|------|---------|------|--------|
+| No data | Zero nodes | "No graph data available" | `i-mdi-graph-outline` | "Import data" button |
+| No connections | Nodes exist, zero edges | "No relationships found" | `i-mdi-link-variant-off` | "Define connections" button |
+| Filtered out | Filters exclude all nodes | "No results match your filters" | `i-mdi-filter-remove-outline` | "Clear filters" button |
+| Search miss | Query returns empty | "No entities found for '{query}'" | `i-mdi-magnify` | "Clear search" link |
+| Isolated node | Drill-down yields no connections | "No connections from this node" | `i-mdi-sitemap` | "Return to full graph" button |
+
+#### Error States
+
+| Error | Message | Recovery |
+|-------|---------|----------|
+| Simulation failure | "Graph layout failed to compute" | Retry + fallback to static circular layout |
+| Malformed data | "Invalid graph data format" | Validation errors in `<details>`, schema link |
+| Library load failure | "Graph library failed to load" | Retry + data table fallback |
+| Too many nodes | "Graph too large to render" | "Reduce filters" + "Export data" buttons |
+| Cycle in DAG | "Invalid DAG: circular dependency detected" | Highlight offending cycle in red |
+
+### Sankey-Specific UX
+
+#### Flow Aggregation (>20 links)
+
+Flows below 3% of total aggregated into "Other" (muted color + dashed pattern). Clicking "Other" expands to show breakdown table.
+
+#### Label Positioning
+
+| Context | Strategy |
+|---------|----------|
+| Desktop, <10 nodes | Labels inside nodes (centered) |
+| Desktop, 10-20 nodes | Inside if node height >30px, otherwise outside-right |
+| Tablet | Inside only, hide if height <25px, show on hover |
+| Mobile | No persistent labels. Tap → tooltip |
+
+#### Flow Highlighting
+
+Hover node → highlight all connected flows + connected nodes. Dim unrelated flows to 20% opacity.
+
+#### Color Strategy
+
+**Recommended**: Gradient from source node color to target node color along each flow (SVG `<linearGradient>`). Alternative (simpler): all flows same color, opacity varies by magnitude.
+
+#### Orientation
+
+Desktop: left-to-right. Mobile (<640px): top-to-bottom (easier to scroll, labels fit better).
+
+### Knowledge Graph Filtering
+
+#### Filter Panel Layout
+
+- **Desktop**: Left sidebar (280px fixed), collapsible
+- **Tablet**: Floating panel, toggleable
+- **Mobile**: Bottom sheet, search-first (filters appear after search results)
+
+#### Filter Types
+
+| Filter | UI | Behavior |
+|--------|-----|---------|
+| Search | Text input with autocomplete | Instant filter, shows matches + 1-hop neighborhood |
+| Node type | Checkbox group with icons | Multi-select, OR logic |
+| Edge type | Checkbox group | Multi-select, filters visible relationships |
+| Degree | Dual range slider | Min/max connection count |
+
+Active filters shown as dismissible chips above graph. "Clear all" button when any filter active.
+
+#### Filter Animation
+
+Animated removal (300ms fade + scale-down) for <100 nodes. Instant for larger graphs.
+
+#### Filter State Persistence
+
+Save to URL search params (`?q=alice&types=person,org`) for shareability.
+
+### Graph Accessibility
+
+Interactive graphs use `role="application"` (not `role="img"`) with keyboard instructions.
+
+#### Keyboard Navigation
+
+1. Tab into graph container (focus indicator on container border)
+2. Arrow keys navigate between nodes
+3. Enter to select (triggers drill-down or detail panel)
+4. Escape to deselect / return to parent view
+5. Tab out to next focusable element
+
+#### Screen Reader Announcements
+
+`aria-live="polite"` region announces:
+- On navigation: "Alice Johnson, Person, 12 connections"
+- On selection: "Selected Alice Johnson. Showing 12 connected nodes."
+- On load: "Graph loaded. 15 nodes, 22 connections. Node types: Person, Organization. Use arrow keys to navigate."
+
+#### Alternative Data Representations
+
+- **Adjacency list table** in `<details>` for all graph types (columns: Node, Type, Connected to, Count)
+- **Adjacency matrix** for small graphs (<20 nodes) — additional `<details>` block
+
+#### Focus Management for Drill-Down
+
+Breadcrumb navigation: `Full graph / Alice / Bob`. When drilling down: announce new state, reset focused node to 0, return focus to container. ESC or breadcrumb click navigates up.
+
+### Graph Showcase Demos
+
+Route: `/showcases/viz/graphs/+page.svelte`
+
+Section-based layout (2-col grid desktop, 1-col mobile), grouped by type:
+
+| Section | Demos |
+|---------|-------|
+| **Network Graphs** | Force-directed (social network), clustered (communities), weighted edges |
+| **Directed Graphs** | Control flow (execution paths), citation network |
+| **Tree Diagrams** | Org chart (horizontal, collapsible), file system (vertical) |
+| **DAG Visualizations** | Package dependencies (layered), task pipeline (critical path) |
+| **Sankey Diagrams** | Energy flow (multi-stage), user funnel (conversion) |
+| **Knowledge Graphs** | Full-width: movie database with filters + search |
+| **Layout Comparison** | Same data rendered as force, tree, and DAG side-by-side |
+
+DataControls at page level: dataset selector (Social / Organization / Dependencies), animation toggle. Per-demo controls where relevant (node sizing, edge opacity, orientation).
 
 ---
 
 ## Implementation Phases
 
-Each phase is independently shippable. No phase depends on another.
+Each phase is independently shippable. Phase 4b depends on 4a (KnowledgeGraph wraps NetworkGraph).
 
-| Phase | Dependencies | What Ships | Status |
-|-------|-------------|------------|--------|
-| **1** | `chart.js` | Chart tokens in app.css, theme-bridge, ChartSkeleton/Empty/Error, BarChart, LineChart, AreaChart, PieChart, ScatterPlot, VizDemoCard, `/showcases/viz/charts/` | **Done** |
-| **2** | `uplot` | HeatMap, time-series charts, `/showcases/viz/plots/` | |
-| **3** | `@xyflow/svelte` | FlowDiagram, StateDiagram, `/showcases/viz/diagrams/` | |
-| **4** | `d3-force`, `d3-hierarchy` | NetworkGraph, TreeGraph, `/showcases/viz/graphs/` | |
-| **5** | `maplibre-gl`, `svelte-maplibre-gl` | GeoMap, MapMarker, MapPopup, `/showcases/viz/maps/` | |
+| Phase | Dependencies | What Ships | Bundle | Status |
+|-------|-------------|------------|--------|--------|
+| **1** | `chart.js` | Chart tokens, theme-bridge, ChartSkeleton/Empty/Error, BarChart, LineChart, AreaChart, PieChart, ScatterPlot, VizDemoCard, `/showcases/viz/charts/` | ~150-200KB | **Done** |
+| **2** | `uplot` | HeatMap, time-series charts, `/showcases/viz/plots/` | ~48KB | |
+| **3** | `@xyflow/svelte` | FlowDiagram, StateDiagram, `/showcases/viz/diagrams/` | ~150KB | |
+| **4a** | `d3-force`, `d3-hierarchy`, `d3-zoom`, `d3-selection` | SvgGraphContainer, graph types/markers, NetworkGraph (directed prop), TreeGraph, `/showcases/viz/graphs/` | ~48KB | |
+| **4b** | `d3-dag`, `d3-sankey` | DagGraph, SankeyDiagram, KnowledgeGraph + KnowledgeFilters, expanded `/showcases/viz/graphs/` | ~55-85KB | |
+| **5** | `maplibre-gl`, `svelte-maplibre-gl` | GeoMap, MapMarker, MapPopup, `/showcases/viz/maps/` | ~400KB | |
 
 ---
 
@@ -658,8 +1074,8 @@ Before shipping any visualization component:
 
 ### Lifecycle & Cleanup
 - [x] Canvas/WebGL context destroyed in `onDestroy` *(Phase 1: `beforeNavigate(cleanup)` + `onDestroy(cleanup)` dual pattern)*
-- [ ] D3 simulations stopped (`.stop()`) in `onDestroy`
-- [ ] ResizeObserver disconnected in `onDestroy`
+- [ ] D3 simulations stopped (`.stop()`) in `onDestroy` *(Phase 4a)*
+- [ ] ResizeObserver disconnected in `onDestroy` *(Phase 4a: via SvgGraphContainer)*
 - [x] No memory leaks on route navigation (test with DevTools) *(Phase 1: verified with dual cleanup pattern)*
 
 ### Showcase
@@ -667,6 +1083,21 @@ Before shipping any visualization component:
 - [x] Interactive data controls *(Phase 1: DataControls with dataset picker + animation toggle)*
 - [x] At least 3 variants per viz type *(Phase 1: 4 bar variants, 2 line, 1 area, 2 pie, 1 scatter)*
 - [ ] Mobile responsive demo layout
+
+### Graph-Specific (Phase 4a/4b)
+- [ ] SvgGraphContainer with d3-zoom (zoom/pan/resize shared by all graph types)
+- [ ] SVG arrow markers for directed edges (`svg-markers.ts`)
+- [ ] Base type system (`GraphNode`, `GraphEdge`, `GraphData<N,E>`)
+- [ ] Modifier-key zoom (Ctrl/Cmd+scroll, prevents page scroll hijack)
+- [ ] Zoom controls UI (floating bottom-right: +, -, fit-to-screen)
+- [ ] Content-aware skeletons per graph type (network, tree, DAG, sankey, knowledge)
+- [ ] Adjacency list table in `<details>` for all graph types
+- [ ] Keyboard navigation (arrow keys between nodes, Enter to select, Escape to deselect)
+- [ ] `aria-live` announcements (node name, type, connections on navigate/select)
+- [ ] Breadcrumb navigation for drill-down with focus management
+- [ ] KnowledgeFilters (search, node type checkboxes, edge type checkboxes, degree slider)
+- [ ] Sankey label overlap handling (hide for small nodes, show on hover)
+- [ ] Layout comparison demo (same data as force, tree, DAG)
 
 ---
 
@@ -734,16 +1165,48 @@ Svelte Flow 1.0 requires `$state.raw` (not `$state`) for nodes/edges arrays -- d
 
 Track known incompatible libraries at [sveltejs/svelte#10359](https://github.com/sveltejs/svelte/issues/10359). Check before adding any new viz dependency.
 
+### Dagre Is Unmaintained
+
+Dagre codebase is from 2015, no active development. Still has 1M+ weekly downloads. Svelte Flow uses it for DAG layout examples, but bugs won't get fixed. For complex DAGs, consider ELK.js (more powerful, steeper learning curve) or d3-dag (Sugiyama algorithm, D3 ecosystem).
+
+### Svelte Flow Dagre Layout Bugs
+
+- Can't layout sub-flows if nodes connect outside the sub-flow ([xyflow#4627](https://github.com/xyflow/xyflow/issues/4627))
+- Edges overlap nodes when node height increases ([xyflow#4800](https://github.com/xyflow/xyflow/issues/4800))
+- Neither dagre nor ELK.js handles sub-flows well ([xyflow#3495](https://github.com/xyflow/xyflow/discussions/3495))
+
+### D3 Timer & Event Handler Memory Leaks
+
+D3 transitions, timers, and event handlers leak if not cleaned up. Stop all timers/simulations in `onDestroy` + `beforeNavigate`. Remove event listeners explicitly. Use Chrome DevTools Memory Profiler to detect detached nodes.
+
+- [D3 timer leak](https://github.com/d3/d3-timer/issues/24)
+- [D3 event handler leak](https://github.com/d3/d3-selection/issues/186)
+
+### Sankey Label Overlap
+
+Small nodes get squeezed, labels overlap. Solutions: auto-hide labels for nodes below height threshold, use `dataLabels.padding: 0` for less overlap sensitivity, selective label positioning (left nodes → right labels, right nodes → left labels).
+
+### Force Graph Mouse Tracking Performance
+
+Enabling hover/click events in force-graph libraries activates internal tracking that hurts performance. Only enable for specific interactions, not globally.
+
+### d3-dag Is Light Maintenance
+
+d3-dag is stable but in "light maintenance mode" — the author accepts fixes but doesn't expand to new use cases. Acceptable for a showcase dependency since the Sugiyama algorithm is well-established and unlikely to need changes.
+
 ---
 
 ## Known Tradeoffs
 
-1. **Multiple libraries = more to maintain** -- Chart.js, uPlot, Svelte Flow, D3, MapLibre. Five upgrade paths. LayerChart 2.0 could potentially replace Chart.js + reduce this to four.
+1. **Multiple libraries = more to maintain** -- Chart.js, uPlot, Svelte Flow, D3 modules, MapLibre. Six upgrade paths (D3 modules share versioning). LayerChart 2.0 could potentially replace Chart.js + reduce this.
 2. **Dynamic import adds load latency** -- First render shows skeleton for 100-500ms. Preloading on route hover (SvelteKit `data-sveltekit-preload-data`) can help.
 3. **Theme sync is eventual** -- Brief moment where chart shows old theme on dark mode toggle. Store subscription fires quickly but not instantaneously.
-4. **No unified data format** -- Chart.js expects `{ labels, datasets }`, D3 expects arrays, Svelte Flow expects `{ nodes, edges }`. Translation layers per library would add complexity without value.
+4. **No unified data format** -- Chart.js expects `{ labels, datasets }`, D3-force expects `{ nodes, links }`, d3-hierarchy expects `{ children: [] }`, d3-sankey expects `{ nodes, links: [{value}] }`. Per-component types with shared base is the right tradeoff — adapters would have zero callers.
 5. **Chart.js tree-shaking overpromises** -- Shared base classes (core controller, scales) mean each chart type doesn't add just ~50KB. Realistic: ~150-200KB total for 4 chart types. Still much better than `chart.js/auto` (~200-250KB all-in).
 6. **svelte-maplibre-gl is pioneer territory** -- Redesigned for Svelte 5 but has 0 production users (vs svelte-maplibre with 8). Tradeoff: Svelte 5 native DX vs battle-tested reliability.
+7. **d3-dag is a single-user dependency** -- Only DagGraph uses it. If the DAG showcase is cut, the dependency is dead weight. Mitigation: lazy-loaded, non-visiting users pay zero cost.
+8. **SvgGraphContainer couples all graph types to d3-zoom** -- If a future graph type needs Canvas rendering, it can't use the shared container. Mitigation: Canvas graphs belong in `plot/` (like HeatMap with uPlot), not `graph/`. All graph types are SVG.
+9. **KnowledgeGraph depends on NetworkGraph's interface stability** -- Must ship NetworkGraph first (4a), stabilize its API, then compose KnowledgeGraph on top (4b). The 4a/4b split ensures this.
 
 ---
 
@@ -812,3 +1275,61 @@ Track known incompatible libraries at [sveltejs/svelte#10359](https://github.com
 - [Skeleton vs Spinner UX battle](https://medium.com/productboard-engineering/%EF%B8%8F-spinners-versus-skeletons-in-the-battle-of-hasting-b51b9c6574ef)
 - [Lazy Loading in Svelte 5](https://www.richardfu.net/efficient-lazy-loading-in-svelte-a-practical-guide-for-svelte-4-and-svelte-5-runes/)
 - [Responsive charts with bind:clientWidth](https://www.newline.co/courses/better-data-visualizations-with-svelte/using-sveltes-dimension-bindings-for-responsive-scatterplots)
+
+### D3 Graph Modules
+- [d3-force npm](https://www.npmjs.com/package/d3-force) (1.9M weekly downloads)
+- [d3-hierarchy npm](https://www.npmjs.com/package/d3-hierarchy) (3.7M weekly downloads)
+- [d3-sankey GitHub](https://github.com/d3/d3-sankey) (333k weekly downloads)
+- [d3-dag GitHub](https://github.com/erikbrinkman/d3-dag) (6.5k weekly downloads, light maintenance)
+- [d3-dag Sugiyama Observable](https://observablehq.com/@erikbrinkman/d3-dag-sugiyama)
+- [D3 force-directed graph with arrows](https://observablehq.com/@brunolaranjeira/d3-v6-force-directed-graph-with-directional-straight-arrow)
+- [Collapsible tree (D3 Observable)](https://observablehq.com/@d3/collapsible-tree)
+
+### Svelte + D3 Integration
+- [Data Visualization with Svelte: Force Simulations](https://datavisualizationwithsvelte.com/basics/force-simulations)
+- [Svelte 5 + D3 example](https://datavisualizationwithsvelte.com/basics/svelte-5-d3-example)
+- [Vis & Society 2026: Intro to Svelte + D3](https://vis-society.github.io/lectures/intro-svelte-d3.html)
+- [d3-fdg-svelte (force-directed Svelte example)](https://github.com/happybeing/d3-fdg-svelte)
+- [Rich Harris svelte-d3-arc-demo](https://github.com/Rich-Harris/svelte-d3-arc-demo)
+
+### Graph Visualization Libraries (Evaluated)
+- [Cytoscape.js](https://github.com/cytoscape/cytoscape.js) (10.7k stars, 1.4M weekly downloads)
+- [Sigma.js v3](https://www.sigmajs.org/) (11.3k stars, WebGL renderer)
+- [Graphology](https://graphology.github.io/) (graph data structure for Sigma.js)
+- [vis-network](https://github.com/visjs/vis-network) (deprecated original, community fork)
+- [Comparison: fast vs easy vs popular graph viz](https://memgraph.com/blog/you-want-a-fast-easy-to-use-and-popular-graph-visualization-tool)
+- [JS graph library comparison (Cylynx)](https://www.cylynx.io/blog/a-comparison-of-javascript-graph-network-visualisation-libraries/)
+
+### DAG Layout Libraries
+- [Svelte Flow layouting docs](https://svelteflow.dev/learn/layouting/layouting-libraries)
+- [Svelte Flow dagre example](https://svelteflow.dev/examples/layout/dagre)
+- [Svelte Flow ELK.js example](https://svelteflow.dev/examples/layout/elkjs)
+- [dagre GitHub](https://github.com/dagrejs/dagre) (1M weekly downloads, 2015 codebase)
+- [ELK.js GitHub](https://github.com/kieler/elkjs) (1M weekly downloads)
+- [Svelte Flow dagre subflow bug](https://github.com/xyflow/xyflow/issues/4627)
+- [Svelte Flow edge overlap bug](https://github.com/xyflow/xyflow/issues/4800)
+
+### Knowledge Graph Visualization
+- [Knowledge graph visualization guide (Datavid)](https://datavid.com/blog/knowledge-graph-visualization)
+- [Neo4j graph visualization tools](https://neo4j.com/blog/graph-visualization/neo4j-graph-visualization-tools/)
+- [neovis.js](https://github.com/neo4j-contrib/neovis.js) (700 nodes = 3GB RAM)
+- [neovis.js 15k nodes performance](https://github.com/neo4j-contrib/neovis.js/issues/92)
+- [Production knowledge graphs 2025](https://medium.com/@claudiubranzan/from-llms-to-knowledge-graphs-building-production-ready-graph-systems-in-2025-2b4aff1ec99a)
+
+### Graph Rendering Performance
+- [SVG vs Canvas vs WebGL benchmarks (SVG Genie)](https://www.svggenie.com/blog/svg-vs-canvas-vs-webgl-performance-2025)
+- [Rendering large network graphs on the web](https://weber-stephen.medium.com/the-best-libraries-and-methods-to-render-large-network-graphs-on-the-web-d122ece2f4dc)
+- [Scale up D3 with PIXI.js (GraphAware)](https://graphaware.com/blog/scale-up-your-d3-graph-visualisation-webgl-canvas-with-pixi-js/)
+- [SVG vs Canvas vs WebGL (yWorks)](https://www.yworks.com/blog/svg-canvas-webgl)
+- [Graph viz efficiency benchmarks (PMC)](https://pmc.ncbi.nlm.nih.gov/articles/PMC12061801/)
+
+### SVG Accessibility
+- [SVG accessibility patterns comparison (Smashing)](https://www.smashingmagazine.com/2021/05/accessible-svg-patterns-comparison/)
+- [ARIA roles for SVG charts (W3C)](https://www.w3.org/wiki/SVG_Accessibility/ARIA_roles_for_charts)
+- [Accessible SVGs (Deque)](https://www.deque.com/blog/creating-accessible-svgs/)
+- [Using ARIA to enhance SVG (TPGi)](https://www.tpgi.com/using-aria-enhance-svg-accessibility/)
+
+### D3 Memory & Cleanup
+- [D3 timer memory leak](https://github.com/d3/d3-timer/issues/24)
+- [D3 event handler leak](https://github.com/d3/d3-selection/issues/186)
+- [D3 charts memory leak discussion](https://groups.google.com/g/d3-js/c/sCmDXqXW-LY)
