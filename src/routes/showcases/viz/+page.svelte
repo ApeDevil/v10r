@@ -43,6 +43,12 @@
 			title="Graphs"
 			description="Network, directed, and tree graphs powered by D3-force and D3-hierarchy"
 		/>
+		<LinkCard
+			href="/showcases/viz/maps"
+			icon="i-lucide-map-pin"
+			title="Maps"
+			description="Interactive maps with markers, popups, and data layers powered by MapLibre GL"
+		/>
 	</nav>
 
 	<BackLink href="/showcases" label="Showcases" />

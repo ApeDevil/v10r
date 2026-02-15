@@ -1044,7 +1044,7 @@ Each phase is independently shippable. Phase 4b depends on 4a (KnowledgeGraph wr
 | **3** | `@xyflow/svelte` | FlowDiagram, StateDiagram, `/showcases/viz/diagrams/` | ~150KB | **Done** |
 | **4a** | `d3-force`, `d3-hierarchy`, `d3-zoom`, `d3-selection` | SvgGraphContainer, graph types/markers, NetworkGraph (directed prop), TreeGraph, `/showcases/viz/graphs/` | ~48KB | **Done** |
 | **4b** | `d3-dag`, `d3-sankey` | DagGraph, SankeyDiagram, KnowledgeGraph + KnowledgeFilters, expanded `/showcases/viz/graphs/` | ~55-85KB | **Done** |
-| **5** | `maplibre-gl`, `svelte-maplibre-gl` | GeoMap, MapMarker, MapPopup, `/showcases/viz/maps/` | ~400KB | |
+| **5** | `maplibre-gl`, `svelte-maplibre-gl` | GeoMap, MapMarker, MapPopup, `/showcases/viz/maps/` | ~400KB | **Done** |
 
 ---
 
@@ -1263,6 +1263,50 @@ The plan specified uPlot (~48KB) for heatmaps, but investigation revealed uPlot 
 - Binary text contrast threshold (`t > 0.55` → white/black) — adequate but not WCAG-validated per cell
 - Hardcoded left padding (65px) for y-axis labels — sufficient for short labels, may clip long ones
 - Color-only encoding — mitigated by `showValues` prop for in-cell text and tooltip on hover
+
+---
+
+## Phase 5 Implementation Notes
+
+> Completed Feb 2026. GeoMap + MapMarker + MapPopup + maps showcase page. Browser-tested in dark mode.
+
+### What Shipped
+
+| Component | File | Key Features |
+|-----------|------|-------------|
+| **GeoMap** | `map/geo/GeoMap.svelte` | MapLibre GL wrapper with dynamic import (SSR-safe), CartoDB Voyager (light) / Dark Matter (dark) tile auto-switching via `getTheme().isDark`, `<figure>`/`<figcaption>` a11y, NavigationControl + ScaleControl, content-aware SVG skeleton (abstract continent shapes), scoped CSS theming for MapLibre GL controls/popups/dark mode icon inversion |
+| **MapMarker** | `map/geo/MapMarker.svelte` | Thin wrapper around svelte-maplibre-gl `Marker` with independent dynamic import, `lnglat` prop (`{ lng, lat }` format), `draggable` prop, children snippet for popup nesting |
+| **MapPopup** | `map/geo/MapPopup.svelte` | Thin wrapper around svelte-maplibre-gl `Popup` with independent dynamic import, `offset`/`closeButton`/`class` props, children snippet |
+| **map-theme.ts** | `map/geo/map-theme.ts` | CartoDB tile URL constants (`CARTO_VOYAGER`, `CARTO_DARK_MATTER`), `getMapThemeColors()` using `getCSSVar()` |
+| **Showcase page** | `routes/showcases/viz/maps/+page.svelte` | 3 demos: Basic Map (Europe view), Markers & Popups (6 tech hub markers with popups), GeoJSON Choropleth (US states with hover interaction). Page-level dynamic imports for GeoJSONSource, FillLayer, LineLayer, FeatureState, Popup |
+
+### Key Patterns Established
+
+1. **Per-component dynamic imports**: Each wrapper (GeoMap, MapMarker, MapPopup) handles its own `onMount` + dynamic import independently. Child `onMount` fires after parent MapLibre context is established, so Marker/Popup components resolve within the map's context
+2. **Reactive tile switching**: `$derived(styleProp ?? (theme.isDark ? darkStyle : lightStyle))` drives automatic tile style changes when dark mode toggles — MapLibre GL handles the style transition internally
+3. **MapLibre GL height requirement**: `.maplibregl-map` needs explicit `width: 100%; height: 100%` via scoped CSS — without this, the container renders at 0 height despite parent having fixed height
+4. **Scoped CSS for vendor controls**: MapLibre GL injects its own DOM for controls, popups, and attribution. Override via `.map-wrapper :global(.maplibregl-*)` selectors with design tokens. Dark mode icon inversion via CSS `filter: invert(1)`
+5. **`beforeNavigate` cleanup**: Sets `ready = false` to unmount the MapLibre component before navigation, preventing WebGL context leaks (same pattern as Chart.js and D3 components)
+6. **CartoDB vector tile styles**: Use style.json URLs (not raster tile templates) for vector tiles with labels, zoom-dependent detail, and better dark mode support
+
+### svelte-maplibre-gl API Notes
+
+- Component name is `MapLibre` (not `Map`)
+- `center` uses `{ lng, lat }` object format (not `[lng, lat]` array)
+- `Marker` uses `lnglat` prop with `{ lng, lat }` object format
+- `Popup` nests inside `Marker` (not sibling)
+- `GeoJSONSource` wraps `FillLayer`/`LineLayer` (parent-child nesting)
+- `FeatureState` component manages hover state on GeoJSON features
+- CSS import path: `maplibre-gl/dist/maplibre-gl.css`
+
+### Known Limitations (Acceptable for Phase 5)
+
+- Fixed container height (400px) — not responsive to content
+- GeoJSON choropleth fetches external data from maplibre.org docs (no local fallback)
+- Choropleth color palette computed at mount time — does not react to dark mode toggle (would need palette recalculation + GeoJSON source update)
+- `any` types for dynamically imported svelte-maplibre-gl components (complex generics add no runtime value)
+- No empty/error state components (showcase always has data, consistent with other phases)
+- MapPopup `class` prop not tested with complex class combinations
 
 ---
 

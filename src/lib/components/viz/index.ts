@@ -15,6 +15,9 @@ export { default as SankeyDiagram } from './graph/sankey/SankeyDiagram.svelte';
 export { default as KnowledgeGraph } from './graph/knowledge/KnowledgeGraph.svelte';
 export { default as FlowDiagram } from './diagram/flow/FlowDiagram.svelte';
 export { default as StateDiagram } from './diagram/state/StateDiagram.svelte';
+export { default as GeoMap } from './map/geo/GeoMap.svelte';
+export { default as MapMarker } from './map/geo/MapMarker.svelte';
+export { default as MapPopup } from './map/geo/MapPopup.svelte';
 
 // Shared state components
 export { default as ChartEmpty } from './_shared/ChartEmpty.svelte';
