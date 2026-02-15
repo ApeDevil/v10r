@@ -25,6 +25,15 @@ No documentation drift. No stale examples. The template validates itself.
 │   ├── +page.svelte                 # Landing with recommended path
 │   ├── /theme                       # Theming system
 │   ├── /ui                          # Component gallery
+│   │   ├── /primitives              # Buttons, inputs, badges
+│   │   ├── /composites              # Alerts, toasts, menus
+│   │   ├── /typography              # Headings, body, lead
+│   │   ├── /layouts                 # Stack, cluster, grid
+│   │   ├── /tokens                  # Colors, spacing, shadows
+│   │   └── /panes-and-panels        # Resize + dock systems
+│   │       ├── /panes               # PaneForge resize primitives
+│   │       │   └── /reorderable     # Drag-to-reorder panes
+│   │       └── /panels              # Dock (tabs, splits, activity bar)
 │   ├── /forms                       # Form patterns
 │   ├── /state                       # Reactivity playground
 │   ├── /data                        # CRUD & data display
@@ -306,11 +315,17 @@ Component gallery with all UI primitives.
 **Structure:**
 ```
 /showcase/ui
-├── +page.svelte              # Overview with links
-├── buttons/+page.svelte      # Button variants
-├── inputs/+page.svelte       # Input types
-├── feedback/+page.svelte     # Alerts, toasts
-├── quick-search/+page.svelte # QuickSearch demo
+├── +page.svelte                          # Overview with links
+├── primitives/+page.svelte               # Buttons, inputs, badges, etc.
+├── composites/+page.svelte               # Alerts, toasts, cards, menus
+├── typography/+page.svelte               # Headings, body, lead text
+├── layouts/+page.svelte                  # Stack, cluster, grid, center
+├── tokens/+page.svelte                   # Colors, spacing, shadows
+├── panes-and-panels/
+│   ├── +page.svelte                      # Landing with links
+│   ├── panes/+page.svelte               # PaneForge resize primitives
+│   ├── panes/reorderable/+page.svelte   # Drag-to-reorder panes
+│   └── panels/+page.svelte              # Dock system (tabs, splits, drag-to-split)
 └── ...
 ```
 
@@ -801,11 +816,12 @@ src/routes/
 ├────────────────┤
 │ Theme          │
 │ UI             │
-│   └ Buttons    │
-│   └ Inputs     │
-│   └ Feedback   │
-│   └ QuickSearch│
-│   └ ...        │
+│   └ Primitives │
+│   └ Composites │
+│   └ Typography │
+│   └ Layouts    │
+│   └ Panes & Panels │
+│   └ Tokens     │
 │ Forms          │
 │ State          │
 │ Data           │

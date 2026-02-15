@@ -1203,6 +1203,14 @@ Browse icons: [Iconify Icon Sets](https://icon-sets.iconify.design/)
 | Tooltip | Primitive | Optional |
 | Popover | Primitive | Optional |
 
+### Priority 4 (Layout)
+
+| Component | Type | Status |
+|-----------|------|--------|
+| PaneGroup / Pane / PaneResizer | Primitive | Done |
+| ReorderablePaneLayout | Composite | Done |
+| DockLayout | Composite | Done |
+
 ### Shell Components
 
 Navigation components for the app shell are documented separately in [app-shell.md](./app-shell.md):
@@ -1239,6 +1247,12 @@ src/lib/
 │   │   ├── tabs/
 │   │   ├── skeleton/
 │   │   ├── table/
+│   │   ├── pane/
+│   │   │   ├── PaneGroup.svelte      # PaneForge wrapper
+│   │   │   ├── Pane.svelte
+│   │   │   ├── PaneResizer.svelte
+│   │   │   ├── pane.ts               # CVA variants
+│   │   │   └── index.ts
 │   │   └── index.ts               # Barrel export
 │   │
 │   ├── composites/
@@ -1266,6 +1280,24 @@ src/lib/
 │   │   ├── alert/
 │   │   ├── pagination/
 │   │   ├── data-table/
+│   │   ├── reorderable-panes/
+│   │   │   ├── ReorderablePaneLayout.svelte
+│   │   │   ├── PaneTabBar.svelte
+│   │   │   ├── reorderable-panes.ts  # CVA + types
+│   │   │   └── index.ts
+│   │   ├── dock/
+│   │   │   ├── DockLayout.svelte     # Root: context + persistence
+│   │   │   ├── DockNode.svelte       # Recursive split/leaf renderer
+│   │   │   ├── DockLeaf.svelte       # Tab bar + content area
+│   │   │   ├── DockTabBar.svelte     # Tabs with drag source
+│   │   │   ├── DockResizeHandle.svelte # Custom pointer + keyboard resize
+│   │   │   ├── DockDropOverlay.svelte # Drop zone indicators
+│   │   │   ├── DockActivityBar.svelte # Sidebar panel toggles
+│   │   │   ├── dock.types.ts         # LayoutNode, PanelDefinition, etc.
+│   │   │   ├── dock.state.svelte.ts  # Reactive state + context
+│   │   │   ├── dock.operations.ts    # Tree operations (find, split, replace)
+│   │   │   ├── dock.persistence.ts   # localStorage save/load
+│   │   │   └── index.ts
 │   │   └── index.ts               # Barrel export
 │   │
 │   ├── shell/                     # App shell (see app-shell.md)
