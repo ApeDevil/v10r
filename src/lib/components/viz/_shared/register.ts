@@ -66,3 +66,35 @@ export async function registerScatterChart() {
 	Chart.register(ScatterController, LinearScale, PointElement, Tooltip, Legend);
 	return Chart;
 }
+
+/** Register radar chart components */
+export async function registerRadarChart() {
+	const {
+		Chart,
+		RadarController,
+		RadialLinearScale,
+		PointElement,
+		LineElement,
+		Filler,
+		Tooltip,
+		Legend,
+	} = await import('chart.js');
+
+	Chart.register(RadarController, RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
+	return Chart;
+}
+
+/** Register bubble chart components */
+export async function registerBubbleChart() {
+	const {
+		Chart,
+		BubbleController,
+		LinearScale,
+		PointElement,
+		Tooltip,
+		Legend,
+	} = await import('chart.js');
+
+	Chart.register(BubbleController, LinearScale, PointElement, Tooltip, Legend);
+	return Chart;
+}

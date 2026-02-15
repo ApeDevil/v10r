@@ -4,7 +4,8 @@
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives/table';
 	import VizDemoCard from '../_components/VizDemoCard.svelte';
 	import DataControls from '../_components/DataControls.svelte';
-	import { BarChart, LineChart, AreaChart, PieChart, ScatterPlot, SimpleChart } from '$lib/components/viz';
+	import { BarChart, LineChart, AreaChart, PieChart, ScatterPlot, SimpleChart, RadarChart, BubbleChart, Sparkline, Gauge, Treemap } from '$lib/components/viz';
+	import type { TreemapNode } from '$lib/components/viz/chart/treemap/types';
 	import { getVizPalette } from '$lib/components/viz/_shared/theme-bridge';
 
 	const sections = [
@@ -14,6 +15,11 @@
 		{ id: 'area-chart', label: 'Area' },
 		{ id: 'pie-chart', label: 'Pie' },
 		{ id: 'scatter-plot', label: 'Scatter' },
+		{ id: 'radar-chart', label: 'Radar' },
+		{ id: 'bubble-chart', label: 'Bubble' },
+		{ id: 'sparkline', label: 'Sparkline' },
+		{ id: 'gauge', label: 'Gauge' },
+		{ id: 'treemap', label: 'Treemap' },
 	];
 
 	// SSR-safe: resolve palette only in browser
@@ -36,6 +42,12 @@
 		pieValues: number[];
 		scatterA: { x: number; y: number }[];
 		scatterB: { x: number; y: number }[];
+		radarLabels: string[];
+		radarValues: number[];
+		radarValues2?: number[];
+		bubbleData: { x: number; y: number; r: number }[];
+		sparklineValues: number[];
+		gaugeValue: number;
 	};
 
 	const datasets: Record<string, DatasetMap> = {
@@ -56,6 +68,16 @@
 				{ x: 50, y: 35 }, { x: 60, y: 55 }, { x: 75, y: 45 },
 				{ x: 85, y: 65 },
 			],
+			radarLabels: ['Design', 'Dev', 'Marketing', 'Sales', 'Support'],
+			radarValues: [85, 70, 60, 90, 75],
+			radarValues2: [65, 90, 80, 55, 70],
+			bubbleData: [
+				{ x: 20, y: 30, r: 10 }, { x: 40, y: 60, r: 18 },
+				{ x: 60, y: 40, r: 8 }, { x: 80, y: 70, r: 14 },
+				{ x: 30, y: 80, r: 12 }, { x: 70, y: 20, r: 16 },
+			],
+			sparklineValues: [40, 65, 45, 80, 55, 70, 60, 85],
+			gaugeValue: 73,
 		},
 		traffic: {
 			labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
@@ -74,6 +96,16 @@
 				{ x: 55, y: 40 }, { x: 65, y: 50 }, { x: 80, y: 70 },
 				{ x: 90, y: 55 },
 			],
+			radarLabels: ['SEO', 'SEM', 'Social', 'Email', 'Content'],
+			radarValues: [70, 85, 60, 45, 80],
+			radarValues2: [55, 70, 90, 65, 50],
+			bubbleData: [
+				{ x: 15, y: 45, r: 14 }, { x: 35, y: 70, r: 10 },
+				{ x: 55, y: 25, r: 20 }, { x: 75, y: 55, r: 8 },
+				{ x: 45, y: 85, r: 16 }, { x: 85, y: 35, r: 12 },
+			],
+			sparklineValues: [120, 190, 150, 210, 180, 90, 160, 200],
+			gaugeValue: 58,
 		},
 		performance: {
 			labels: ['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6'],
@@ -92,6 +124,16 @@
 				{ x: 52, y: 45 }, { x: 62, y: 60 }, { x: 78, y: 52 },
 				{ x: 88, y: 70 },
 			],
+			radarLabels: ['Speed', 'Reliability', 'Scalability', 'Security', 'UX'],
+			radarValues: [88, 75, 82, 90, 65],
+			radarValues2: [72, 88, 68, 80, 85],
+			bubbleData: [
+				{ x: 25, y: 50, r: 16 }, { x: 50, y: 30, r: 12 },
+				{ x: 70, y: 65, r: 10 }, { x: 35, y: 75, r: 18 },
+				{ x: 85, y: 45, r: 14 }, { x: 55, y: 90, r: 8 },
+			],
+			sparklineValues: [72, 85, 68, 91, 79, 88, 82, 95],
+			gaugeValue: 88,
 		},
 	};
 
@@ -261,6 +303,111 @@
 			},
 		],
 	});
+
+	// --- Radar chart data ---
+
+	const radarData = $derived({
+		labels: d.radarLabels,
+		datasets: [
+			{
+				label: 'Team A',
+				data: d.radarValues,
+				borderColor: palette[0] || '#3b82f6',
+				backgroundColor: (palette[0] || '#3b82f6') + '33',
+				pointBackgroundColor: palette[0] || '#3b82f6',
+			},
+		],
+	});
+
+	const radarCompareData = $derived({
+		labels: d.radarLabels,
+		datasets: [
+			{
+				label: 'Team A',
+				data: d.radarValues,
+				borderColor: palette[0] || '#3b82f6',
+				backgroundColor: (palette[0] || '#3b82f6') + '33',
+				pointBackgroundColor: palette[0] || '#3b82f6',
+			},
+			{
+				label: 'Team B',
+				data: d.radarValues2 || d.radarValues,
+				borderColor: palette[3] || '#8b5cf6',
+				backgroundColor: (palette[3] || '#8b5cf6') + '33',
+				pointBackgroundColor: palette[3] || '#8b5cf6',
+			},
+		],
+	});
+
+	// --- Bubble chart data ---
+
+	const bubbleData = $derived({
+		datasets: [
+			{
+				label: 'Metrics',
+				data: d.bubbleData,
+				backgroundColor: (palette[0] || '#3b82f6') + '99',
+				borderColor: palette[0] || '#3b82f6',
+				borderWidth: 1,
+			},
+		],
+	});
+
+	// --- Sparkline table data ---
+
+	const sparklineTable = $derived([
+		{ label: 'Revenue', values: d.sparklineValues, type: 'line' as const },
+		{ label: 'Orders', values: d.sparklineValues.map((v) => v * 0.8 + 10).map(Math.round), type: 'bar' as const },
+		{ label: 'Visitors', values: d.sparklineValues.map((v) => v * 1.2 - 5).map(Math.round), type: 'area' as const },
+	]);
+
+	// --- Treemap data (static, not dataset-dependent) ---
+
+	const treemapFlat: TreemapNode = {
+		id: 'root',
+		label: 'Budget',
+		children: [
+			{ id: 'eng', label: 'Engineering', value: 450 },
+			{ id: 'mkt', label: 'Marketing', value: 280 },
+			{ id: 'ops', label: 'Operations', value: 180 },
+			{ id: 'design', label: 'Design', value: 150 },
+			{ id: 'hr', label: 'HR', value: 90 },
+			{ id: 'legal', label: 'Legal', value: 60 },
+		],
+	};
+
+	const treemapNested: TreemapNode = {
+		id: 'root',
+		label: 'Company',
+		children: [
+			{
+				id: 'eng',
+				label: 'Engineering',
+				children: [
+					{ id: 'frontend', label: 'Frontend', value: 180 },
+					{ id: 'backend', label: 'Backend', value: 200 },
+					{ id: 'infra', label: 'Infra', value: 70 },
+				],
+			},
+			{
+				id: 'product',
+				label: 'Product',
+				children: [
+					{ id: 'design', label: 'Design', value: 120 },
+					{ id: 'research', label: 'Research', value: 80 },
+				],
+			},
+			{
+				id: 'gtm',
+				label: 'Go-to-Market',
+				children: [
+					{ id: 'sales', label: 'Sales', value: 160 },
+					{ id: 'marketing', label: 'Marketing', value: 140 },
+					{ id: 'support', label: 'Support', value: 60 },
+				],
+			},
+		],
+	};
 </script>
 
 <svelte:head>
@@ -270,7 +417,7 @@
 <div class="page">
 	<PageHeader
 		title="Charts"
-		description="Bar, line, area, pie, and scatter charts. SimpleChart is zero-dependency SVG. The rest use Chart.js with tree-shaken imports."
+		description="Bar, line, area, pie, scatter, radar, bubble, sparkline, gauge, and treemap charts. SimpleChart and Sparkline/Gauge are zero-dependency SVG. The rest use Chart.js or d3-hierarchy."
 		breadcrumbs={[
 			{ label: 'Home', href: '/' },
 			{ label: 'Showcases', href: '/showcases' },
@@ -565,6 +712,278 @@
 				</VizDemoCard>
 			</div>
 		</section>
+
+		<!-- Radar Chart (Chart.js) -->
+		<section id="radar-chart" class="section">
+			<h2 class="section-title">Radar Chart</h2>
+			<p class="section-description">Chart.js radar charts for multi-dimensional comparisons. Uses radial scales instead of Cartesian axes.</p>
+
+			<div class="demos">
+				<VizDemoCard
+					title="Skill Profile"
+					description="Single-series radar showing team strengths."
+				>
+					{#snippet visualization()}
+						<RadarChart data={radarData} options={{ animation: animationOption }} ariaLabel="Team skill profile radar chart" class="max-w-md" />
+					{/snippet}
+					{#snippet dataTable()}
+						<Table>
+							<Header>
+								<Row hoverable={false}>
+									<HeaderCell>Dimension</HeaderCell>
+									<HeaderCell>Value</HeaderCell>
+								</Row>
+							</Header>
+							<Body>
+								{#each d.radarLabels as label, i}
+									<Row>
+										<Cell>{label}</Cell>
+										<Cell>{d.radarValues[i]}</Cell>
+									</Row>
+								{/each}
+							</Body>
+						</Table>
+					{/snippet}
+					{#snippet code()}
+						<pre><code>{`<RadarChart
+  data={{
+    labels: ['Design', 'Dev', ...],
+    datasets: [{
+      label: 'Team A',
+      data: [85, 70, 60, 90, 75],
+      borderColor: palette[0],
+      backgroundColor: palette[0] + '33',
+    }],
+  }}
+/>`}</code></pre>
+					{/snippet}
+				</VizDemoCard>
+
+				<VizDemoCard
+					title="Comparison"
+					description="Two-series radar for head-to-head comparison."
+				>
+					{#snippet visualization()}
+						<RadarChart data={radarCompareData} options={{ animation: animationOption }} ariaLabel="Team comparison radar chart" class="max-w-md" />
+					{/snippet}
+				</VizDemoCard>
+			</div>
+		</section>
+
+		<!-- Bubble Chart (Chart.js) -->
+		<section id="bubble-chart" class="section">
+			<h2 class="section-title">Bubble Chart</h2>
+			<p class="section-description">Chart.js bubble charts for multi-variable analysis. Each point encodes x, y position and radius as a third variable.</p>
+
+			<div class="demos">
+				<VizDemoCard
+					title="Multi-Variable"
+					description="Three dimensions encoded as position and size."
+				>
+					{#snippet visualization()}
+						<BubbleChart data={bubbleData} options={{ animation: animationOption }} ariaLabel="Multi-variable bubble chart" />
+					{/snippet}
+					{#snippet dataTable()}
+						<Table>
+							<Header>
+								<Row hoverable={false}>
+									<HeaderCell>X</HeaderCell>
+									<HeaderCell>Y</HeaderCell>
+									<HeaderCell>Size</HeaderCell>
+								</Row>
+							</Header>
+							<Body>
+								{#each d.bubbleData as point}
+									<Row>
+										<Cell>{point.x}</Cell>
+										<Cell>{point.y}</Cell>
+										<Cell>{point.r}</Cell>
+									</Row>
+								{/each}
+							</Body>
+						</Table>
+					{/snippet}
+					{#snippet code()}
+						<pre><code>{`<BubbleChart
+  data={{
+    datasets: [{
+      label: 'Metrics',
+      data: [
+        { x: 20, y: 30, r: 10 },
+        { x: 40, y: 60, r: 18 },
+      ],
+      backgroundColor: palette[0] + '99',
+    }],
+  }}
+/>`}</code></pre>
+					{/snippet}
+				</VizDemoCard>
+			</div>
+		</section>
+
+		<!-- Sparkline (Pure SVG) -->
+		<section id="sparkline" class="section">
+			<h2 class="section-title">Sparkline</h2>
+			<p class="section-description">Lightweight inline micro-charts. Pure SVG, zero dependencies. Ideal for embedding in tables and dashboards.</p>
+
+			<div class="demos">
+				<VizDemoCard
+					title="Inline Sparklines"
+					description="Line, bar, and area sparklines embedded in a table."
+				>
+					{#snippet visualization()}
+						<Table>
+							<Header>
+								<Row hoverable={false}>
+									<HeaderCell>Metric</HeaderCell>
+									<HeaderCell>Current</HeaderCell>
+									<HeaderCell>Trend</HeaderCell>
+								</Row>
+							</Header>
+							<Body>
+								{#each sparklineTable as row}
+									<Row>
+										<Cell>{row.label}</Cell>
+										<Cell>{row.values[row.values.length - 1]}</Cell>
+										<Cell>
+											<Sparkline
+												data={row.values}
+												type={row.type}
+												width={100}
+												height={28}
+												ariaLabel="{row.label} trend"
+											/>
+										</Cell>
+									</Row>
+								{/each}
+							</Body>
+						</Table>
+					{/snippet}
+					{#snippet code()}
+						<pre><code>{`<Sparkline
+  data={[40, 65, 45, 80, 55, 70]}
+  type="line"
+  width={100}
+  height={28}
+/>`}</code></pre>
+					{/snippet}
+				</VizDemoCard>
+			</div>
+		</section>
+
+		<!-- Gauge (Pure SVG) -->
+		<section id="gauge" class="section">
+			<h2 class="section-title">Gauge</h2>
+			<p class="section-description">Single-value radial meters. Pure SVG, zero dependencies. 270-degree arc sweep with optional color segments.</p>
+
+			<div class="demos">
+				<VizDemoCard
+					title="Simple Gauge"
+					description="Basic gauge with value and label."
+				>
+					{#snippet visualization()}
+						<div class="gauge-row">
+							<Gauge value={d.gaugeValue} label="Score" />
+						</div>
+					{/snippet}
+					{#snippet code()}
+						<pre><code>{`<Gauge
+  value={73}
+  label="Score"
+/>`}</code></pre>
+					{/snippet}
+				</VizDemoCard>
+
+				<VizDemoCard
+					title="Segmented Gauge"
+					description="Color zones indicate performance ranges."
+				>
+					{#snippet visualization()}
+						<div class="gauge-row">
+							<Gauge
+								value={d.gaugeValue}
+								label="Health"
+								segments={[
+									{ from: 0, to: 40, color: '#ef4444' },
+									{ from: 40, to: 70, color: '#f59e0b' },
+									{ from: 70, to: 100, color: '#10b981' },
+								]}
+							/>
+						</div>
+					{/snippet}
+				</VizDemoCard>
+
+				<VizDemoCard
+					title="Mini Gauges"
+					description="Compact gauges for dashboard rows."
+				>
+					{#snippet visualization()}
+						<div class="gauge-row">
+							<Gauge value={92} label="CPU" size={100} strokeWidth={8} />
+							<Gauge value={67} label="Memory" size={100} strokeWidth={8} />
+							<Gauge value={34} label="Disk" size={100} strokeWidth={8} />
+						</div>
+					{/snippet}
+				</VizDemoCard>
+			</div>
+		</section>
+
+		<!-- Treemap (d3-hierarchy) -->
+		<section id="treemap" class="section">
+			<h2 class="section-title">Treemap</h2>
+			<p class="section-description">Nested rectangles showing hierarchical data proportions. Uses d3-hierarchy for layout. Click to zoom into nested categories.</p>
+
+			<div class="demos">
+				<VizDemoCard
+					title="Flat Treemap"
+					description="Department budget allocation."
+				>
+					{#snippet visualization()}
+						<Treemap data={treemapFlat} ariaLabel="Department budget treemap" />
+					{/snippet}
+					{#snippet dataTable()}
+						<Table>
+							<Header>
+								<Row hoverable={false}>
+									<HeaderCell>Department</HeaderCell>
+									<HeaderCell>Budget (k)</HeaderCell>
+								</Row>
+							</Header>
+							<Body>
+								{#each treemapFlat.children ?? [] as dept}
+									<Row>
+										<Cell>{dept.label}</Cell>
+										<Cell>{dept.value}</Cell>
+									</Row>
+								{/each}
+							</Body>
+						</Table>
+					{/snippet}
+					{#snippet code()}
+						<pre><code>{`<Treemap
+  data={{
+    id: 'root',
+    label: 'Budget',
+    children: [
+      { id: 'eng', label: 'Engineering', value: 450 },
+      { id: 'mkt', label: 'Marketing', value: 280 },
+      ...
+    ],
+  }}
+/>`}</code></pre>
+					{/snippet}
+				</VizDemoCard>
+
+				<VizDemoCard
+					title="Nested with Zoom"
+					description="Click a category to drill down. Use breadcrumbs to navigate back."
+				>
+					{#snippet visualization()}
+						<Treemap data={treemapNested} ariaLabel="Company org treemap with zoom" />
+					{/snippet}
+				</VizDemoCard>
+			</div>
+		</section>
 	</main>
 
 	<BackLink href="/showcases/viz" label="Viz" />
@@ -606,6 +1025,14 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-6);
+	}
+
+	.gauge-row {
+		display: flex;
+		gap: var(--spacing-6);
+		justify-content: center;
+		align-items: center;
+		flex-wrap: wrap;
 	}
 
 	@media (min-width: 768px) {

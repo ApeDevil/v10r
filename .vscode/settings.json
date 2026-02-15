@@ -47,6 +47,18 @@
         {
             "folderPath": "velociraptor/src/lib/services/",
             "badge": "🛎️"
+        },
+        {
+            "folderPath": "velociraptor/docs/guides/",
+            "badge": "🧙‍♂️"
+        },
+        {
+            "folderPath": "velociraptor/static/",
+            "badge": "🖼️"
+        },
+        {
+            "folderPath": "velociraptor/src/",
+            "badge": "⚜️"
         }
     ]
 }
