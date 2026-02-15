@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { PageHeader, BackLink, SectionNav } from '$lib/components/composites';
+	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives/table';
 	import VizDemoCard from '../_components/VizDemoCard.svelte';
+	import DataControls from '../_components/DataControls.svelte';
 	import { BarChart, LineChart, AreaChart, PieChart, ScatterPlot, SimpleChart } from '$lib/components/viz';
 	import { getVizPalette } from '$lib/components/viz/_shared/theme-bridge';
 
@@ -17,23 +19,98 @@
 	// SSR-safe: resolve palette only in browser
 	let palette: string[] = $state(browser ? getVizPalette() : []);
 
-	// --- Sample data ---
+	// --- DataControls state ---
+	let dataset: string = $state('sales');
+	let animated: boolean = $state(true);
 
-	const simpleData = [
-		{ label: 'Jan', value: 40 },
-		{ label: 'Feb', value: 65 },
-		{ label: 'Mar', value: 45 },
-		{ label: 'Apr', value: 80 },
-		{ label: 'May', value: 55 },
-		{ label: 'Jun', value: 70 },
-	];
+	const animationOption = $derived(animated ? {} : false);
+
+	// --- Sample datasets ---
+
+	type DatasetMap = {
+		labels: string[];
+		values: number[];
+		values2?: number[];
+		values3?: number[];
+		pieLabels: string[];
+		pieValues: number[];
+		scatterA: { x: number; y: number }[];
+		scatterB: { x: number; y: number }[];
+	};
+
+	const datasets: Record<string, DatasetMap> = {
+		sales: {
+			labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+			values: [40, 65, 45, 80, 55, 70],
+			values2: [30, 50, 60, 45, 70, 55],
+			values3: [20, 35, 25, 40, 30, 45],
+			pieLabels: ['Desktop', 'Mobile', 'Tablet', 'Other'],
+			pieValues: [45, 35, 15, 5],
+			scatterA: [
+				{ x: 10, y: 20 }, { x: 25, y: 45 }, { x: 35, y: 30 },
+				{ x: 45, y: 60 }, { x: 55, y: 40 }, { x: 65, y: 75 },
+				{ x: 80, y: 55 }, { x: 90, y: 85 },
+			],
+			scatterB: [
+				{ x: 15, y: 50 }, { x: 30, y: 25 }, { x: 40, y: 70 },
+				{ x: 50, y: 35 }, { x: 60, y: 55 }, { x: 75, y: 45 },
+				{ x: 85, y: 65 },
+			],
+		},
+		traffic: {
+			labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+			values: [120, 190, 150, 210, 180, 90],
+			values2: [80, 110, 130, 160, 200, 220],
+			values3: [30, 40, 35, 50, 45, 60],
+			pieLabels: ['Organic', 'Direct', 'Social', 'Referral'],
+			pieValues: [38, 28, 22, 12],
+			scatterA: [
+				{ x: 5, y: 30 }, { x: 20, y: 55 }, { x: 30, y: 40 },
+				{ x: 50, y: 70 }, { x: 60, y: 50 }, { x: 70, y: 80 },
+				{ x: 85, y: 60 }, { x: 95, y: 90 },
+			],
+			scatterB: [
+				{ x: 10, y: 45 }, { x: 25, y: 30 }, { x: 45, y: 65 },
+				{ x: 55, y: 40 }, { x: 65, y: 50 }, { x: 80, y: 70 },
+				{ x: 90, y: 55 },
+			],
+		},
+		performance: {
+			labels: ['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6'],
+			values: [72, 85, 68, 91, 79, 88],
+			values2: [65, 78, 82, 74, 90, 86],
+			values3: [55, 60, 70, 65, 75, 80],
+			pieLabels: ['Complete', 'In Progress', 'Pending', 'Failed'],
+			pieValues: [62, 18, 12, 8],
+			scatterA: [
+				{ x: 12, y: 35 }, { x: 28, y: 50 }, { x: 38, y: 42 },
+				{ x: 48, y: 68 }, { x: 58, y: 55 }, { x: 72, y: 78 },
+				{ x: 82, y: 62 }, { x: 92, y: 88 },
+			],
+			scatterB: [
+				{ x: 18, y: 48 }, { x: 32, y: 38 }, { x: 42, y: 72 },
+				{ x: 52, y: 45 }, { x: 62, y: 60 }, { x: 78, y: 52 },
+				{ x: 88, y: 70 },
+			],
+		},
+	};
+
+	const d = $derived(datasets[dataset]);
+
+	// --- SimpleChart data (static, not affected by dataset picker) ---
+
+	const simpleData = $derived(
+		d.labels.map((label, i) => ({ label, value: d.values[i] }))
+	);
+
+	// --- Chart.js data shapes ---
 
 	const barData = $derived({
-		labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+		labels: d.labels,
 		datasets: [
 			{
-				label: 'Sales',
-				data: [40, 65, 45, 80, 55, 70],
+				label: 'Series A',
+				data: d.values,
 				backgroundColor: palette[0] || '#3b82f6',
 				borderRadius: 4,
 			},
@@ -41,17 +118,17 @@
 	});
 
 	const groupedBarData = $derived({
-		labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+		labels: d.labels.slice(0, 4),
 		datasets: [
 			{
-				label: '2024',
-				data: [120, 190, 150, 210],
+				label: 'Series A',
+				data: d.values.slice(0, 4),
 				backgroundColor: palette[0] || '#3b82f6',
 				borderRadius: 4,
 			},
 			{
-				label: '2025',
-				data: [140, 170, 180, 240],
+				label: 'Series B',
+				data: (d.values2 || d.values).slice(0, 4),
 				backgroundColor: palette[3] || '#8b5cf6',
 				borderRadius: 4,
 			},
@@ -59,17 +136,17 @@
 	});
 
 	const stackedBarData = $derived({
-		labels: ['Product A', 'Product B', 'Product C', 'Product D'],
+		labels: d.labels.slice(0, 4),
 		datasets: [
 			{
-				label: 'Online',
-				data: [65, 45, 80, 55],
+				label: 'Channel A',
+				data: d.values.slice(0, 4),
 				backgroundColor: palette[0] || '#3b82f6',
 				borderRadius: 4,
 			},
 			{
-				label: 'Retail',
-				data: [35, 55, 20, 45],
+				label: 'Channel B',
+				data: (d.values2 || d.values).slice(0, 4),
 				backgroundColor: palette[1] || '#10b981',
 				borderRadius: 4,
 			},
@@ -77,11 +154,11 @@
 	});
 
 	const lineData = $derived({
-		labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+		labels: d.labels,
 		datasets: [
 			{
-				label: 'Revenue',
-				data: [30, 45, 38, 65, 55, 72, 68, 80],
+				label: 'Primary',
+				data: d.values,
 				borderColor: palette[0] || '#3b82f6',
 				backgroundColor: 'transparent',
 				tension: 0.3,
@@ -92,25 +169,25 @@
 	});
 
 	const multiLineData = $derived({
-		labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+		labels: d.labels,
 		datasets: [
 			{
-				label: 'Desktop',
-				data: [120, 190, 150, 210, 180, 90, 60],
+				label: 'Series A',
+				data: d.values,
 				borderColor: palette[0] || '#3b82f6',
 				backgroundColor: 'transparent',
 				tension: 0.3,
 			},
 			{
-				label: 'Mobile',
-				data: [80, 110, 130, 160, 200, 220, 180],
+				label: 'Series B',
+				data: d.values2 || d.values,
 				borderColor: palette[1] || '#10b981',
 				backgroundColor: 'transparent',
 				tension: 0.3,
 			},
 			{
-				label: 'Tablet',
-				data: [30, 40, 35, 50, 45, 60, 55],
+				label: 'Series C',
+				data: d.values3 || d.values,
 				borderColor: palette[2] || '#f59e0b',
 				backgroundColor: 'transparent',
 				tension: 0.3,
@@ -119,11 +196,11 @@
 	});
 
 	const areaData = $derived({
-		labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+		labels: d.labels,
 		datasets: [
 			{
-				label: 'Users',
-				data: [200, 350, 280, 450, 520, 610],
+				label: 'Area',
+				data: d.values,
 				borderColor: palette[0] || '#3b82f6',
 				backgroundColor: (palette[0] || '#3b82f6') + '33',
 				tension: 0.4,
@@ -133,10 +210,10 @@
 	});
 
 	const pieData = $derived({
-		labels: ['Desktop', 'Mobile', 'Tablet', 'Other'],
+		labels: d.pieLabels,
 		datasets: [
 			{
-				data: [45, 35, 15, 5],
+				data: d.pieValues,
 				backgroundColor: [
 					palette[0] || '#3b82f6',
 					palette[1] || '#10b981',
@@ -150,10 +227,10 @@
 	});
 
 	const doughnutData = $derived({
-		labels: ['Complete', 'In Progress', 'Pending', 'Failed'],
+		labels: d.pieLabels,
 		datasets: [
 			{
-				data: [62, 18, 12, 8],
+				data: d.pieValues,
 				backgroundColor: [
 					palette[1] || '#10b981',
 					palette[2] || '#f59e0b',
@@ -170,22 +247,14 @@
 		datasets: [
 			{
 				label: 'Dataset A',
-				data: [
-					{ x: 10, y: 20 }, { x: 25, y: 45 }, { x: 35, y: 30 },
-					{ x: 45, y: 60 }, { x: 55, y: 40 }, { x: 65, y: 75 },
-					{ x: 80, y: 55 }, { x: 90, y: 85 },
-				],
+				data: d.scatterA,
 				backgroundColor: palette[0] || '#3b82f6',
 				pointRadius: 5,
 				pointHoverRadius: 7,
 			},
 			{
 				label: 'Dataset B',
-				data: [
-					{ x: 15, y: 50 }, { x: 30, y: 25 }, { x: 40, y: 70 },
-					{ x: 50, y: 35 }, { x: 60, y: 55 }, { x: 75, y: 45 },
-					{ x: 85, y: 65 },
-				],
+				data: d.scatterB,
 				backgroundColor: palette[3] || '#8b5cf6',
 				pointRadius: 5,
 				pointHoverRadius: 7,
@@ -211,6 +280,8 @@
 	/>
 
 	<SectionNav {sections} />
+
+	<DataControls bind:dataset bind:animated />
 
 	<main class="content">
 		<!-- Simple Chart (zero-dep SVG) -->
@@ -259,14 +330,32 @@
 					description="Standard column chart for comparing categories."
 				>
 					{#snippet visualization()}
-						<BarChart data={barData} ariaLabel="Monthly sales bar chart" />
+						<BarChart data={barData} options={{ animation: animationOption }} ariaLabel="Monthly sales bar chart" />
+					{/snippet}
+					{#snippet dataTable()}
+						<Table>
+							<Header>
+								<Row hoverable={false}>
+									<HeaderCell>Label</HeaderCell>
+									<HeaderCell>Value</HeaderCell>
+								</Row>
+							</Header>
+							<Body>
+								{#each d.labels as label, i}
+									<Row>
+										<Cell>{label}</Cell>
+										<Cell>{d.values[i]}</Cell>
+									</Row>
+								{/each}
+							</Body>
+						</Table>
 					{/snippet}
 					{#snippet code()}
 						<pre><code>{`<BarChart
   data={{
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    labels: ['Jan', 'Feb', ...],
     datasets: [{
-      label: 'Sales',
+      label: 'Series A',
       data: [40, 65, 45, 80, 55, 70],
       backgroundColor: palette[0],
       borderRadius: 4,
@@ -282,7 +371,7 @@
 					description="Multi-series comparison across categories."
 				>
 					{#snippet visualization()}
-						<BarChart data={groupedBarData} ariaLabel="Quarterly comparison bar chart" />
+						<BarChart data={groupedBarData} options={{ animation: animationOption }} ariaLabel="Quarterly comparison bar chart" />
 					{/snippet}
 				</VizDemoCard>
 
@@ -293,7 +382,7 @@
 					{#snippet visualization()}
 						<BarChart
 							data={stackedBarData}
-							options={{ scales: { x: { stacked: true }, y: { stacked: true } } }}
+							options={{ scales: { x: { stacked: true }, y: { stacked: true } }, animation: animationOption }}
 							ariaLabel="Stacked product sales chart"
 						/>
 					{/snippet}
@@ -304,7 +393,7 @@
 					description="Horizontal bar chart for ranking data."
 				>
 					{#snippet visualization()}
-						<BarChart data={barData} horizontal ariaLabel="Horizontal sales chart" />
+						<BarChart data={barData} horizontal options={{ animation: animationOption }} ariaLabel="Horizontal sales chart" />
 					{/snippet}
 				</VizDemoCard>
 			</div>
@@ -321,7 +410,25 @@
 					description="Revenue trend over time."
 				>
 					{#snippet visualization()}
-						<LineChart data={lineData} ariaLabel="Revenue trend line chart" />
+						<LineChart data={lineData} options={{ animation: animationOption }} ariaLabel="Revenue trend line chart" />
+					{/snippet}
+					{#snippet dataTable()}
+						<Table>
+							<Header>
+								<Row hoverable={false}>
+									<HeaderCell>Label</HeaderCell>
+									<HeaderCell>Value</HeaderCell>
+								</Row>
+							</Header>
+							<Body>
+								{#each d.labels as label, i}
+									<Row>
+										<Cell>{label}</Cell>
+										<Cell>{d.values[i]}</Cell>
+									</Row>
+								{/each}
+							</Body>
+						</Table>
 					{/snippet}
 				</VizDemoCard>
 
@@ -330,7 +437,7 @@
 					description="Compare multiple series across the same timeline."
 				>
 					{#snippet visualization()}
-						<LineChart data={multiLineData} ariaLabel="Device traffic comparison" />
+						<LineChart data={multiLineData} options={{ animation: animationOption }} ariaLabel="Device traffic comparison" />
 					{/snippet}
 				</VizDemoCard>
 			</div>
@@ -347,7 +454,25 @@
 					description="User growth shown as filled area."
 				>
 					{#snippet visualization()}
-						<AreaChart data={areaData} ariaLabel="User growth area chart" />
+						<AreaChart data={areaData} options={{ animation: animationOption }} ariaLabel="User growth area chart" />
+					{/snippet}
+					{#snippet dataTable()}
+						<Table>
+							<Header>
+								<Row hoverable={false}>
+									<HeaderCell>Label</HeaderCell>
+									<HeaderCell>Value</HeaderCell>
+								</Row>
+							</Header>
+							<Body>
+								{#each d.labels as label, i}
+									<Row>
+										<Cell>{label}</Cell>
+										<Cell>{d.values[i]}</Cell>
+									</Row>
+								{/each}
+							</Body>
+						</Table>
 					{/snippet}
 				</VizDemoCard>
 			</div>
@@ -364,7 +489,25 @@
 					description="Device type market share."
 				>
 					{#snippet visualization()}
-						<PieChart data={pieData} ariaLabel="Device market share pie chart" class="max-w-sm" />
+						<PieChart data={pieData} options={{ animation: animationOption }} ariaLabel="Device market share pie chart" class="max-w-sm" />
+					{/snippet}
+					{#snippet dataTable()}
+						<Table>
+							<Header>
+								<Row hoverable={false}>
+									<HeaderCell>Category</HeaderCell>
+									<HeaderCell>Value</HeaderCell>
+								</Row>
+							</Header>
+							<Body>
+								{#each d.pieLabels as label, i}
+									<Row>
+										<Cell>{label}</Cell>
+										<Cell>{d.pieValues[i]}</Cell>
+									</Row>
+								{/each}
+							</Body>
+						</Table>
 					{/snippet}
 				</VizDemoCard>
 
@@ -373,7 +516,7 @@
 					description="Task status distribution."
 				>
 					{#snippet visualization()}
-						<PieChart data={doughnutData} doughnut ariaLabel="Task status doughnut chart" class="max-w-sm" />
+						<PieChart data={doughnutData} doughnut options={{ animation: animationOption }} ariaLabel="Task status doughnut chart" class="max-w-sm" />
 					{/snippet}
 				</VizDemoCard>
 			</div>
@@ -390,7 +533,34 @@
 					description="Comparing distributions across two groups."
 				>
 					{#snippet visualization()}
-						<ScatterPlot data={scatterData} ariaLabel="Two-dataset scatter plot" />
+						<ScatterPlot data={scatterData} options={{ animation: animationOption }} ariaLabel="Two-dataset scatter plot" />
+					{/snippet}
+					{#snippet dataTable()}
+						<Table>
+							<Header>
+								<Row hoverable={false}>
+									<HeaderCell>Dataset</HeaderCell>
+									<HeaderCell>X</HeaderCell>
+									<HeaderCell>Y</HeaderCell>
+								</Row>
+							</Header>
+							<Body>
+								{#each d.scatterA as point}
+									<Row>
+										<Cell>A</Cell>
+										<Cell>{point.x}</Cell>
+										<Cell>{point.y}</Cell>
+									</Row>
+								{/each}
+								{#each d.scatterB as point}
+									<Row>
+										<Cell>B</Cell>
+										<Cell>{point.x}</Cell>
+										<Cell>{point.y}</Cell>
+									</Row>
+								{/each}
+							</Body>
+						</Table>
 					{/snippet}
 				</VizDemoCard>
 			</div>

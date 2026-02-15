@@ -638,12 +638,12 @@ Before shipping any visualization component:
 
 ### States
 - [x] Loading state with content-aware skeleton *(Phase 1: SVG skeletons per chart type with pulse animation)*
-- [ ] Empty state with contextual message
-- [ ] Error state with retry + table fallback
+- [x] Empty state with contextual message *(Phase 1: ChartEmpty wraps EmptyState with chart defaults)*
+- [x] Error state with retry + table fallback *(Phase 1: ChartError with retry button + `<details>` data table)*
 - [ ] Responsive behavior on mobile (<640px)
 
 ### Accessibility
-- [ ] Adjacent data table (in `<details>`)
+- [x] Adjacent data table (in `<details>`) *(Phase 1: dataTable snippet in VizDemoCard Data tab for first demo of each chart type)*
 - [x] `role="img"` or `role="application"` with `aria-label` *(Phase 1: `role="img"` + `ariaLabel` prop on all wrappers)*
 - [ ] Keyboard navigation (Tab, Arrow keys, Enter)
 - [ ] Screen reader announcements (`aria-live`)
@@ -664,7 +664,7 @@ Before shipping any visualization component:
 
 ### Showcase
 - [x] VizDemoCard with Chart/Data/Code tabs *(Phase 1: ARIA tabs pattern with focus-follows-selection)*
-- [ ] Interactive data controls
+- [x] Interactive data controls *(Phase 1: DataControls with dataset picker + animation toggle)*
 - [x] At least 3 variants per viz type *(Phase 1: 4 bar variants, 2 line, 1 area, 2 pie, 1 scatter)*
 - [ ] Mobile responsive demo layout
 

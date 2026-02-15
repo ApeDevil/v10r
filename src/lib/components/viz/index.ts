@@ -7,3 +7,7 @@ export { default as LineChart } from './chart/line/LineChart.svelte';
 export { default as AreaChart } from './chart/area/AreaChart.svelte';
 export { default as PieChart } from './chart/pie/PieChart.svelte';
 export { default as ScatterPlot } from './plot/scatter/ScatterPlot.svelte';
+
+// Shared state components
+export { default as ChartEmpty } from './_shared/ChartEmpty.svelte';
+export { default as ChartError } from './_shared/ChartError.svelte';
