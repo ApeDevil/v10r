@@ -88,28 +88,41 @@
 			layout(dag);
 
 			const nodes: LayoutNode[] = [];
-			let layerCounter = 0;
+			// Collect raw positions first to derive actual layers
+			const rawNodes: Array<{ id: string; nodeData: DagNodeType | undefined; x: number; y: number; layerCoord: number }> = [];
 			for (const node of dag.nodes()) {
 				const id = node.data as string;
 				const nodeData = nodeMap.get(id);
 				const isHorizontal = orientation === 'horizontal';
-				nodes.push({
+				rawNodes.push({
 					id,
-					label: nodeData?.label ?? id,
-					group: nodeData?.group,
-					// Swap axes for horizontal layout
+					nodeData,
 					x: isHorizontal ? node.y : node.x,
 					y: isHorizontal ? node.x : node.y,
-					layer: layerCounter++,
+					// Sugiyama Y is always the layer/depth axis
+					layerCoord: node.y,
+				});
+			}
+			// Map unique layer coordinates to layer indices
+			const uniqueLayers = [...new Set(rawNodes.map((n) => n.layerCoord))].sort((a, b) => a - b);
+			const layerMap = new Map(uniqueLayers.map((coord, idx) => [coord, idx]));
+			for (const raw of rawNodes) {
+				nodes.push({
+					id: raw.id,
+					label: raw.nodeData?.label ?? raw.id,
+					group: raw.nodeData?.group,
+					x: raw.x,
+					y: raw.y,
+					layer: layerMap.get(raw.layerCoord) ?? 0,
 				});
 			}
 
 			const links: LayoutLink[] = [];
 			for (const link of dag.links()) {
 				const isHorizontal = orientation === 'horizontal';
-				const points = link.points.map((p: { x: number; y: number }) => ({
-					x: isHorizontal ? p.y : p.x,
-					y: isHorizontal ? p.x : p.y,
+				const points = link.points.map((p: [number, number]) => ({
+					x: isHorizontal ? p[1] : p[0],
+					y: isHorizontal ? p[0] : p[1],
 				}));
 				links.push({
 					sourceId: link.source.data as string,
@@ -261,10 +274,11 @@
 
 	{#snippet children({ width: w, height: h })}
 		<defs>
+			<!-- DAG-specific arrow: refX accounts for 80×28 rectangular nodes -->
 			<marker
-				id={arrowMarker.id}
+				id="dag-arrow"
 				viewBox={arrowMarker.viewBox}
-				refX={arrowMarker.refX}
+				refX="55"
 				refY={arrowMarker.refY}
 				markerWidth={arrowMarker.markerWidth}
 				markerHeight={arrowMarker.markerHeight}
@@ -281,7 +295,7 @@
 					d={linkPath(link)}
 					class="dag-link"
 					style:opacity={getEdgeOpacity(link)}
-					marker-end="url(#{arrowMarker.id})"
+					marker-end="url(#dag-arrow)"
 				/>
 			{/each}
 
