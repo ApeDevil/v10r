@@ -3,10 +3,9 @@ import { cva, type VariantProps } from 'class-variance-authority';
 export const switchRootVariants = cva(
 	[
 		'inline-flex shrink-0 cursor-pointer items-center rounded-full border-0',
-		'transition-colors duration-fast',
 		'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
 		'disabled:cursor-not-allowed disabled:opacity-50',
-		'data-[state=unchecked]:bg-muted/20 data-[state=checked]:bg-primary'
+		'data-[state=checked]:bg-primary'
 	],
 	{
 		variants: {
@@ -30,9 +29,9 @@ export const switchThumbVariants = cva(
 	{
 		variants: {
 			size: {
-				sm: 'h-[1rem] w-[1rem] data-[state=checked]:translate-x-[18px] data-[state=unchecked]:translate-x-[2px]',
-				md: 'h-[1.25rem] w-[1.25rem] data-[state=checked]:translate-x-[22px] data-[state=unchecked]:translate-x-[2px]',
-				lg: 'h-6 w-6 data-[state=checked]:translate-x-[26px] data-[state=unchecked]:translate-x-[2px]'
+				sm: 'h-[0.875rem] w-[0.875rem] data-[state=checked]:translate-x-[19px] data-[state=unchecked]:translate-x-[3px]',
+				md: 'h-[1.125rem] w-[1.125rem] data-[state=checked]:translate-x-[23px] data-[state=unchecked]:translate-x-[3px]',
+				lg: 'h-[1.375rem] w-[1.375rem] data-[state=checked]:translate-x-[27px] data-[state=unchecked]:translate-x-[3px]'
 			}
 		},
 		defaultVariants: {

@@ -24,7 +24,7 @@
 </script>
 
 {#if label}
-	<div class={cn('flex items-center gap-2', className)}>
+	<div class={cn('switch-wrap flex items-center gap-2', className)}>
 		<SwitchPrimitive.Root
 			bind:checked
 			{disabled}
@@ -43,11 +43,27 @@
 		</label>
 	</div>
 {:else}
-	<SwitchPrimitive.Root
-		bind:checked
-		{disabled}
-		class={cn(switchRootVariants({ size }), className)}
-	>
-		<SwitchPrimitive.Thumb class={cn(switchThumbVariants({ size }))} />
-	</SwitchPrimitive.Root>
+	<span class="switch-wrap">
+		<SwitchPrimitive.Root
+			bind:checked
+			{disabled}
+			class={cn(switchRootVariants({ size }), className)}
+		>
+			<SwitchPrimitive.Thumb class={cn(switchThumbVariants({ size }))} />
+		</SwitchPrimitive.Root>
+	</span>
 {/if}
+
+<style>
+	/* Off state: transparent pill with fg inset ring */
+	.switch-wrap :global([data-state="unchecked"]) {
+		background: transparent;
+		box-shadow: inset 0 0 0 1px var(--color-fg);
+	}
+
+	/* Off state thumb: transparent with fg inset ring, no outer shadow */
+	.switch-wrap :global([data-state="unchecked"] [data-state="unchecked"]) {
+		background: transparent;
+		box-shadow: inset 0 0 0 1px var(--color-fg);
+	}
+</style>
