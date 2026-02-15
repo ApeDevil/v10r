@@ -61,7 +61,7 @@
 		aria-label={isExpanded ? 'AI Assistant' : 'AI Assistant (Ctrl+J)'}
 		title={isExpanded ? undefined : 'AI Assistant (Ctrl+J)'}
 	>
-		<span class="i-lucide-sparkles text-icon-md shrink-0" />
+		<span class="i-lucide-bot text-icon-md shrink-0" />
 		{#if isExpanded}
 			<span class="trigger-placeholder flex-1 opacity-0 motion-reduce:opacity-100">Ask AI...</span>
 			<kbd

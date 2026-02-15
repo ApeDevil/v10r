@@ -27,7 +27,7 @@
 
 	const searchItems = [
 		{ id: 'home', type: 'page' as const, label: 'Home', icon: 'i-lucide-home', href: '/' },
-		{ id: 'showcases', type: 'page' as const, label: 'Showcases', icon: 'i-lucide-sparkles', href: '/showcases' },
+		{ id: 'showcases', type: 'page' as const, label: 'Showcases', icon: 'i-lucide-eye', href: '/showcases' },
 		{ id: 'showcases-shell', type: 'page' as const, label: 'Shell', icon: 'i-lucide-layout', href: '/showcases/shell' },
 		{ id: 'showcases-forms', type: 'page' as const, label: 'Forms', icon: 'i-lucide-file-text', href: '/showcases/forms' },
 		{ id: 'showcases-3d', type: 'page' as const, label: '3D', icon: 'i-lucide-box', href: '/showcases/3d' },

@@ -21,7 +21,7 @@
 	<nav class="hub-nav">
 		<LinkCard
 			href="/showcases/ui/primitives"
-			icon="i-lucide-blocks"
+			icon="i-lucide-puzzle"
 			title="Primitives"
 			description="Buttons, inputs, badges, avatars, dialogs, and other foundational elements"
 		/>

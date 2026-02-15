@@ -26,7 +26,7 @@
 		{
 			href: '/showcases',
 			label: 'Showcases',
-			icon: 'i-lucide-sparkles',
+			icon: 'i-lucide-view',
 			children: [
 				{ href: '/showcases/shell', label: 'Shell' },
 				{ href: '/showcases/forms', label: 'Forms' },
