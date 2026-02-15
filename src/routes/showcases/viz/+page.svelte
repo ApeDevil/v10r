@@ -25,6 +25,12 @@
 			title="Charts"
 			description="Bar, line, area, pie, and scatter charts powered by Chart.js"
 		/>
+		<LinkCard
+			href="/showcases/viz/graphs"
+			icon="i-lucide-share-2"
+			title="Graphs"
+			description="Network, directed, and tree graphs powered by D3-force and D3-hierarchy"
+		/>
 	</nav>
 
 	<BackLink href="/showcases" label="Showcases" />

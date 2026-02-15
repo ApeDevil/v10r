@@ -1042,8 +1042,8 @@ Each phase is independently shippable. Phase 4b depends on 4a (KnowledgeGraph wr
 | **1** | `chart.js` | Chart tokens, theme-bridge, ChartSkeleton/Empty/Error, BarChart, LineChart, AreaChart, PieChart, ScatterPlot, VizDemoCard, `/showcases/viz/charts/` | ~150-200KB | **Done** |
 | **2** | `uplot` | HeatMap, time-series charts, `/showcases/viz/plots/` | ~48KB | |
 | **3** | `@xyflow/svelte` | FlowDiagram, StateDiagram, `/showcases/viz/diagrams/` | ~150KB | |
-| **4a** | `d3-force`, `d3-hierarchy`, `d3-zoom`, `d3-selection` | SvgGraphContainer, graph types/markers, NetworkGraph (directed prop), TreeGraph, `/showcases/viz/graphs/` | ~48KB | |
-| **4b** | `d3-dag`, `d3-sankey` | DagGraph, SankeyDiagram, KnowledgeGraph + KnowledgeFilters, expanded `/showcases/viz/graphs/` | ~55-85KB | |
+| **4a** | `d3-force`, `d3-hierarchy`, `d3-zoom`, `d3-selection` | SvgGraphContainer, graph types/markers, NetworkGraph (directed prop), TreeGraph, `/showcases/viz/graphs/` | ~48KB | **Done** |
+| **4b** | `d3-dag`, `d3-sankey` | DagGraph, SankeyDiagram, KnowledgeGraph + KnowledgeFilters, expanded `/showcases/viz/graphs/` | ~55-85KB | **Done** |
 | **5** | `maplibre-gl`, `svelte-maplibre-gl` | GeoMap, MapMarker, MapPopup, `/showcases/viz/maps/` | ~400KB | |
 
 ---
@@ -1061,9 +1061,9 @@ Before shipping any visualization component:
 ### Accessibility
 - [x] Adjacent data table (in `<details>`) *(Phase 1: dataTable snippet in VizDemoCard Data tab for first demo of each chart type)*
 - [x] `role="img"` or `role="application"` with `aria-label` *(Phase 1: `role="img"` + `ariaLabel` prop on all wrappers)*
-- [ ] Keyboard navigation (Tab, Arrow keys, Enter)
-- [ ] Screen reader announcements (`aria-live`)
-- [ ] Focus indicators visible (2px outline)
+- [x] Keyboard navigation (Tab, Arrow keys, Enter) *(Phase 4a: tabindex="0", role="button", arrow key traversal, Enter/Space select, Escape deselect)*
+- [x] Screen reader announcements (`aria-live`) *(Phase 4a: aria-live="polite" region announces node name, group, connections on select; collapse state in TreeGraph)*
+- [x] Focus indicators visible (2px outline) *(Phase 4a: :focus-visible with dashed primary stroke on graph nodes)*
 - [ ] Color + pattern/icon (not color-only)
 
 ### Dark Mode
@@ -1074,8 +1074,8 @@ Before shipping any visualization component:
 
 ### Lifecycle & Cleanup
 - [x] Canvas/WebGL context destroyed in `onDestroy` *(Phase 1: `beforeNavigate(cleanup)` + `onDestroy(cleanup)` dual pattern)*
-- [ ] D3 simulations stopped (`.stop()`) in `onDestroy` *(Phase 4a)*
-- [ ] ResizeObserver disconnected in `onDestroy` *(Phase 4a: via SvgGraphContainer)*
+- [x] D3 simulations stopped (`.stop()`) in `onDestroy` *(Phase 4a: `beforeNavigate(cleanup)` + `onDestroy(cleanup)` stops force simulation, cleans drag listeners)*
+- [x] ResizeObserver disconnected in `onDestroy` *(Phase 4a: SvgGraphContainer cleanup disconnects observer, removes d3-zoom listeners, clears timeouts)*
 - [x] No memory leaks on route navigation (test with DevTools) *(Phase 1: verified with dual cleanup pattern)*
 
 ### Showcase
@@ -1085,19 +1085,102 @@ Before shipping any visualization component:
 - [ ] Mobile responsive demo layout
 
 ### Graph-Specific (Phase 4a/4b)
-- [ ] SvgGraphContainer with d3-zoom (zoom/pan/resize shared by all graph types)
-- [ ] SVG arrow markers for directed edges (`svg-markers.ts`)
-- [ ] Base type system (`GraphNode`, `GraphEdge`, `GraphData<N,E>`)
-- [ ] Modifier-key zoom (Ctrl/Cmd+scroll, prevents page scroll hijack)
-- [ ] Zoom controls UI (floating bottom-right: +, -, fit-to-screen)
-- [ ] Content-aware skeletons per graph type (network, tree, DAG, sankey, knowledge)
-- [ ] Adjacency list table in `<details>` for all graph types
-- [ ] Keyboard navigation (arrow keys between nodes, Enter to select, Escape to deselect)
-- [ ] `aria-live` announcements (node name, type, connections on navigate/select)
-- [ ] Breadcrumb navigation for drill-down with focus management
-- [ ] KnowledgeFilters (search, node type checkboxes, edge type checkboxes, degree slider)
-- [ ] Sankey label overlap handling (hide for small nodes, show on hover)
-- [ ] Layout comparison demo (same data as force, tree, DAG)
+- [x] SvgGraphContainer with d3-zoom (zoom/pan/resize shared by all graph types) *(Phase 4a: d3-zoom with modifier-key filter, ResizeObserver, skeleton→ready transition, keyboard shortcuts)*
+- [x] SVG arrow markers for directed edges (`svg-markers.ts`) *(Phase 4a: MarkerConfig type, arrowMarker with refX offset for node radius)*
+- [x] Base type system (`GraphNode`, `GraphEdge`, `GraphData<N,E>`) *(Phase 4a: shared types + per-component extensions via barrel exports)*
+- [x] Modifier-key zoom (Ctrl/Cmd+scroll, prevents page scroll hijack) *(Phase 4a: d3-zoom filter, dblclick reset)*
+- [x] Zoom controls UI (floating bottom-right: +, -, fit-to-screen) *(Phase 4a: 44px touch targets, cached zoomIdentity for fit-to-view, zoom level indicator)*
+- [x] Content-aware skeletons per graph type (network, tree) *(Phase 4a: network=circles+lines cluster, tree=rects+lines hierarchy. DAG/sankey/knowledge deferred to 4b)*
+- [x] Adjacency list table in `<details>` for all graph types *(Phase 4a: VizDemoCard Data tab with data tables for showcase demos)*
+- [x] Keyboard navigation (arrow keys between nodes, Enter to select, Escape to deselect) *(Phase 4a: tabindex="0", role="button", aria-label, arrow key traversal, focus management via $effect)*
+- [x] `aria-live` announcements (node name, type, connections on navigate/select) *(Phase 4a: announcement $derived with node info, collapse state in TreeGraph)*
+- [ ] Breadcrumb navigation for drill-down with focus management *(deferred — no drill-down use case yet)*
+- [x] KnowledgeFilters (search, node type checkboxes, edge type checkboxes) *(Phase 4b: fieldset/legend for a11y, local state synced with parent, clear button)*
+- [x] Sankey label handling (labels shown for nodes > 20px height, value formatting with K/M suffixes) *(Phase 4b)*
+- [x] Layout comparison demo (same 6-node data as force, tree, DAG side-by-side) *(Phase 4b)*
+
+---
+
+## Phase 4a Implementation Notes
+
+> Completed Feb 2026. NetworkGraph + TreeGraph + shared infra. Reviewed by archy, uxy, svey agents — all pass.
+
+### What Shipped
+
+| Component | File | Key Features |
+|-----------|------|-------------|
+| **SvgGraphContainer** | `graph/_shared/SvgGraphContainer.svelte` | d3-zoom (modifier-key), ResizeObserver, 44px zoom controls, keyboard shortcuts (+/-/0/f), skeleton→ready transition, `role="application"` |
+| **NetworkGraph** | `graph/network/NetworkGraph.svelte` | D3-force simulation, `directed` prop for arrows, node dragging (zoom-aware via zoom group CTM), hover/selection highlighting, group-based coloring, arrow key traversal |
+| **TreeGraph** | `graph/tree/TreeGraph.svelte` | D3-hierarchy tree layout, expand/collapse branches, horizontal/vertical orientation, cubic bezier links, depth-based coloring, auto-centering |
+| **Shared types** | `graph/_shared/types.ts` | `GraphNode`, `GraphEdge`, `GraphData<N,E>` base types |
+| **SVG markers** | `graph/_shared/svg-markers.ts` | `MarkerConfig` type, `arrowMarker` with `refX: 20` for node radius offset |
+| **Showcase page** | `routes/showcases/viz/graphs/+page.svelte` | 5 demo datasets (social network, citation, infrastructure, org chart, file system), VizDemoCard with data tables |
+
+### Key Patterns Established
+
+1. **D3 module caching**: Dynamic import in `onMount`, module ref stored in variable, reused in `$effect` (no re-imports)
+2. **Dual cleanup**: `beforeNavigate(cleanup)` + `onDestroy(cleanup)` — stops simulations, disconnects observers, removes event listeners, clears timeouts
+3. **Drag listener tracking**: `dragCleanup` function tracked and called in cleanup to prevent window listener leaks on navigation
+4. **Zoom-aware drag**: Uses zoom group's `getScreenCTM()` (not SVG root) so dragging works at any zoom level
+5. **Keyboard a11y**: `tabindex="0"`, `role="button"`, `aria-label`, arrow key traversal with `$effect`-driven focus management, Escape to deselect
+6. **Focus indicators**: `:focus-visible` with dashed primary stroke (distinct from selected state's solid stroke)
+7. **Screen reader announcements**: `aria-live="polite"` region with `$derived` announcement (node name, group, connections, collapse state)
+
+### Review Outcomes
+
+| Agent | Result | Notes |
+|-------|--------|-------|
+| **archy** | Production-ready | Clean module boundaries, no circular deps, proper type segregation |
+| **svey** | All clean | No memory leaks, no stale closures, correct reactive dependencies |
+| **uxy** | WCAG AA compliant | Passes 2.1.1 (Keyboard) and 2.4.7 (Focus Visible) |
+
+### Known Limitations (Acceptable for Phase 4a)
+
+- `arrowMarker.refX: 20` hardcodes node radius — arrows may overlap large nodes or gap small ones
+- `any` types for d3-zoom/d3-selection internals (complex generics, typed alternatives add no runtime value)
+- Skeleton shapes are fixed (not data-aware) — adequate for loading indication
+- TreeNode doesn't extend GraphNode (intentional — recursive `children[]` vs flat `nodes/edges`)
+- No empty/error state components yet (showcase always has data)
+
+---
+
+## Phase 4b Implementation Notes
+
+> Completed Feb 2026. DagGraph + SankeyDiagram + KnowledgeGraph/KnowledgeFilters. Reviewed by archy, uxy, svey agents — fixes applied.
+
+### What Shipped
+
+| Component | File | Key Features |
+|-----------|------|-------------|
+| **DagGraph** | `graph/dag/DagGraph.svelte` | d3-dag Sugiyama layout, horizontal orientation (swapped x/y), cubic bezier links, always-directed arrows, selection highlighting with opacity, keyboard arrow-key traversal, screen reader upstream/downstream counts, fallback layout on error |
+| **SankeyDiagram** | `graph/sankey/SankeyDiagram.svelte` | d3-sankey flow layout, gradient link fills (source→target color), dual state (selected + hovered), labels for nodes > 20px, value formatting (K/M suffixes), data cloned before d3-sankey (mutates input) |
+| **KnowledgeGraph** | `graph/knowledge/KnowledgeGraph.svelte` | Composition wrapper: KnowledgeFilters + NetworkGraph, `$derived.by()` filtered data, entityType→group coloring, responsive grid (sidebar on desktop, stacked on mobile), empty state with filter-aware messaging |
+| **KnowledgeFilters** | `graph/knowledge/KnowledgeFilters.svelte` | Search input, entity/relationship type checkboxes in `<fieldset>`/`<legend>` (WCAG 1.3.1), local state synced with parent via `$effect`, clear button with `focus-visible` |
+| **Showcase page** | `routes/showcases/viz/graphs/+page.svelte` | 7 sections total (Network, Directed, Tree, DAG, Sankey, Knowledge, Layout Comparison), data tables for all new demo types |
+
+### Key Patterns Established
+
+1. **Data cloning for mutating libraries**: d3-sankey mutates input data — deep clone via `JSON.parse(JSON.stringify())` before passing to generator
+2. **Composition over inheritance**: KnowledgeGraph wraps NetworkGraph rather than extending it — domain logic (filtering) stays in knowledge module, rendering delegates to network
+3. **Parent↔child state sync**: KnowledgeFilters maintains local state for responsiveness, synced with parent via `$effect` watchers on props for external resets (empty-state clear button)
+4. **Fallback layouts**: DagGraph catches d3-dag layout failures and falls back to horizontal line positioning
+5. **Sugiyama horizontal orientation**: Swap x/y from d3-dag's default top-to-bottom to get left-to-right layout
+
+### Review Fixes Applied
+
+| Issue | Severity | Fix |
+|-------|----------|-----|
+| Checkbox groups lack `<fieldset>`/`<legend>` | Critical (WCAG 1.3.1) | Replaced `<div>`/`<span>` with `<fieldset>`/`<legend>`, added border/padding/margin reset |
+| Clear button missing `type="button"` | Moderate | Added `type="button"` to both KnowledgeFilters and KnowledgeGraph clear buttons |
+| Clear button missing `:focus-visible` | Moderate | Added `outline: 2px solid var(--color-primary)` with `outline-offset: 2px` |
+| Empty-state clear bypasses filter state | Moderate | Changed to call `handleFilterChange()` instead of direct state mutation; added `$effect` sync in KnowledgeFilters |
+
+### Known Limitations (Acceptable for Phase 4b)
+
+- Sankey layout dimensions hardcoded to 600x400 — does not read actual container size
+- Degree slider for KnowledgeFilters deferred (no current use case for degree filtering)
+- Breadcrumb drill-down deferred (no hierarchical knowledge graph use case yet)
+- `any` types for d3-dag/d3-sankey module references (complex generics add no runtime value)
 
 ---
 

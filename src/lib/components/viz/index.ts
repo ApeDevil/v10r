@@ -7,6 +7,11 @@ export { default as LineChart } from './chart/line/LineChart.svelte';
 export { default as AreaChart } from './chart/area/AreaChart.svelte';
 export { default as PieChart } from './chart/pie/PieChart.svelte';
 export { default as ScatterPlot } from './plot/scatter/ScatterPlot.svelte';
+export { default as NetworkGraph } from './graph/network/NetworkGraph.svelte';
+export { default as TreeGraph } from './graph/tree/TreeGraph.svelte';
+export { default as DagGraph } from './graph/dag/DagGraph.svelte';
+export { default as SankeyDiagram } from './graph/sankey/SankeyDiagram.svelte';
+export { default as KnowledgeGraph } from './graph/knowledge/KnowledgeGraph.svelte';
 
 // Shared state components
 export { default as ChartEmpty } from './_shared/ChartEmpty.svelte';
