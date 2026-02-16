@@ -20,7 +20,7 @@
          ║   v10r    ║
          ╚═══════════╝
 
-Velociraptor is the Stack & v10r is the container		 
+Velociraptor is the Stack & v10r is the container
 </pre>
 
 	<p class="tagline">Performance through understanding</p>
@@ -49,13 +49,15 @@ Velociraptor is the Stack & v10r is the container
 
 	.logo {
 		font-family: 'Courier New', monospace;
-		font-size: var(--text-fluid-sm);
+		font-size: clamp(0.5rem, 2.5vw, 1rem);
 		color: var(--color-muted);
 		background: var(--color-border);
-		padding: var(--spacing-6);
+		padding: clamp(0.75rem, 3vw, 1.5rem);
 		border-radius: var(--radius-lg);
 		margin: var(--spacing-7) auto;
 		display: inline-block;
+		max-width: 100%;
+		overflow-x: auto;
 	}
 
 	.tagline {
