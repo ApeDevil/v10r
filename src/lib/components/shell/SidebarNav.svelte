@@ -12,10 +12,11 @@
 
 	interface Props {
 		forceExpanded?: boolean; // Force expanded mode (for drawer)
+		useFlyout?: boolean;
 		class?: string;
 	}
 
-	let { forceExpanded = false, class: className }: Props = $props();
+	let { forceExpanded = false, useFlyout = true, class: className }: Props = $props();
 
 	const sidebar = getSidebar();
 
@@ -32,6 +33,7 @@
 					label={item.label}
 					children={item.children}
 					forceExpanded={isExpanded}
+					{useFlyout}
 				/>
 			</li>
 		{/each}

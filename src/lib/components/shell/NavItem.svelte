@@ -1,15 +1,15 @@
 <script lang="ts">
 	/**
-	 * Compound navigation button with two click zones:
-	 * - Main area: Navigates to page
-	 * - Chevron area: Opens dropdown for subpages (if has children)
+	 * Navigation item with two modes:
+	 * - Flyout (default): Hover opens a portal flyout for children
+	 * - Dropdown (mobile): Click chevron opens inline dropdown
 	 */
 
 	import { page } from '$app/state';
 	import { cn } from '$lib/utils/cn';
-	import { Button } from '$lib/components/primitives/button';
 	import { Tooltip } from '$lib/components/primitives/tooltip';
 	import NavDropdown from './NavDropdown.svelte';
+	import NavFlyout from './NavFlyout.svelte';
 	import type { NavChild } from '$lib/nav';
 
 	interface Props {
@@ -19,6 +19,7 @@
 		label: string;
 		children?: NavChild[];
 		forceExpanded?: boolean;
+		useFlyout?: boolean;
 		class?: string;
 	}
 
@@ -28,6 +29,7 @@
 		label,
 		children = [],
 		forceExpanded = false,
+		useFlyout = true,
 		class: className
 	}: Props = $props();
 
@@ -60,6 +62,9 @@
 		page.url.pathname;
 		isDropdownOpen = false;
 	});
+
+	const hasFlyoutChildren = $derived(children.length > 0 && useFlyout);
+	const hasDropdownChildren = $derived(children.length > 0 && !useFlyout);
 </script>
 
 {#snippet navLink()}
@@ -83,35 +88,45 @@
 {/snippet}
 
 <div class={cn('relative', className)}>
-	<div class="flex items-center gap-0 relative">
-		{#if forceExpanded}
-			{@render navLink()}
-		{:else}
-			<Tooltip content={label} side="right" delayDuration={300}>
+	{#if hasFlyoutChildren}
+		<!-- Flyout mode: hover opens portal flyout -->
+		<NavFlyout items={children} {label} {forceExpanded}>
+			<div class="flex items-center gap-0 relative">
 				{@render navLink()}
-			</Tooltip>
-		{/if}
+			</div>
+		</NavFlyout>
+	{:else}
+		<!-- No flyout: tooltip for rail, plain link for expanded -->
+		<div class="flex items-center gap-0 relative">
+			{#if forceExpanded}
+				{@render navLink()}
+			{:else}
+				<Tooltip content={label} side="right" delayDuration={300}>
+					{@render navLink()}
+				</Tooltip>
+			{/if}
 
-		{#if children.length > 0 && forceExpanded}
-			<button
-				type="button"
-				class={cn(
-					'absolute right-0 flex items-center justify-center w-10 h-10 p-0 bg-transparent border-none rounded-md cursor-pointer',
-					'transition-all duration-fast motion-reduce:transition-none',
-					isDropdownOpen && 'rotate-90 motion-reduce:rotate-0',
-					isActive() ? 'text-white hover:bg-white/20' : 'text-muted hover:bg-border'
-				)}
-				onclick={toggleDropdown}
-				aria-label={isDropdownOpen ? 'Close submenu' : 'Open submenu'}
-				aria-expanded={isDropdownOpen}
-			>
-				<span class="i-lucide-chevron-right text-icon-sm" />
-			</button>
-		{/if}
-	</div>
+			{#if hasDropdownChildren && forceExpanded}
+				<button
+					type="button"
+					class={cn(
+						'absolute right-0 flex items-center justify-center w-10 h-10 p-0 bg-transparent border-none rounded-md cursor-pointer',
+						'transition-all duration-fast motion-reduce:transition-none',
+						isDropdownOpen && 'rotate-90 motion-reduce:rotate-0',
+						isActive() ? 'text-white hover:bg-white/20' : 'text-muted hover:bg-border'
+					)}
+					onclick={toggleDropdown}
+					aria-label={isDropdownOpen ? 'Close submenu' : 'Open submenu'}
+					aria-expanded={isDropdownOpen}
+				>
+					<span class="i-lucide-chevron-right text-icon-sm" />
+				</button>
+			{/if}
+		</div>
 
-	{#if children.length > 0 && forceExpanded}
-		<NavDropdown items={children} open={isDropdownOpen} onClose={closeDropdown} />
+		{#if hasDropdownChildren && forceExpanded}
+			<NavDropdown items={children} open={isDropdownOpen} onClose={closeDropdown} />
+		{/if}
 	{/if}
 </div>
 

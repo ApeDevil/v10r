@@ -81,7 +81,7 @@
 
 		<SidebarTriggers forceExpanded />
 
-		<SidebarNav forceExpanded />
+		<SidebarNav forceExpanded useFlyout={false} />
 
 		<div class="p-2 border-t border-border">
 			<UserMenu user={{ name: 'Demo User', email: 'demo@velociraptor.dev' }} forceExpanded />
