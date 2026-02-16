@@ -59,6 +59,10 @@
         {
             "folderPath": "velociraptor/src/",
             "badge": "⚜️"
+        },
+        {
+            "folderPath": "velociraptor/src/lib/nav/",
+            "badge": "🧭"
         }
     ]
 }

@@ -10,11 +10,7 @@
 	import { Button } from '$lib/components/primitives/button';
 	import { Tooltip } from '$lib/components/primitives/tooltip';
 	import NavDropdown from './NavDropdown.svelte';
-
-	interface NavChild {
-		href: string;
-		label: string;
-	}
+	import type { NavChild } from '$lib/nav';
 
 	interface Props {
 		href: string;
@@ -37,11 +33,14 @@
 
 	let isDropdownOpen = $state(false);
 
-	// Check if current page matches this nav item or any of its children
+	// Check if current page matches this nav item or any of its children (including nested routes)
 	const isActive = $derived(() => {
-		if (page.url.pathname === href) return true;
+		const path = page.url.pathname;
+		if (path === href) return true;
 		if (children.length > 0) {
-			return children.some((child) => page.url.pathname === child.href);
+			return children.some(
+				(child) => path === child.href || path.startsWith(child.href + '/'),
+			);
 		}
 		return false;
 	});

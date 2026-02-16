@@ -6,14 +6,10 @@
 
 	import { page } from '$app/state';
 	import { cn } from '$lib/utils/cn';
-
-	interface NavDropdownItem {
-		href: string;
-		label: string;
-	}
+	import type { NavChild } from '$lib/nav';
 
 	interface Props {
-		items: NavDropdownItem[];
+		items: NavChild[];
 		open: boolean;
 		onClose: () => void;
 		class?: string;
@@ -66,9 +62,9 @@
 		}
 	});
 
-	// Check if item is active
+	// Check if item is active (exact match or nested route)
 	function isActive(href: string): boolean {
-		return page.url.pathname === href;
+		return page.url.pathname === href || page.url.pathname.startsWith(href + '/');
 	}
 </script>
 

@@ -7,6 +7,7 @@
 
 	import { cn } from '$lib/utils/cn';
 	import { getSidebar } from '$lib/stores/sidebar.svelte';
+	import { navItems } from '$lib/nav';
 	import NavItem from './NavItem.svelte';
 
 	interface Props {
@@ -19,30 +20,6 @@
 	const sidebar = getSidebar();
 
 	const isExpanded = $derived(forceExpanded || sidebar.expanded);
-
-	// Navigation structure with dropdowns
-	const navItems = [
-		{ href: '/', label: 'Home', icon: 'i-lucide-home' },
-		{
-			href: '/showcases',
-			label: 'Showcases',
-			icon: 'i-lucide-view',
-			children: [
-				{ href: '/showcases/shell', label: 'Shell' },
-				{ href: '/showcases/forms', label: 'Forms' },
-				{ href: '/showcases/3d', label: '3D' },
-				{ href: '/showcases/auth', label: 'Auth' }
-			]
-		},
-		{
-			href: '/docs',
-			label: 'Docs',
-			icon: 'i-lucide-book-open',
-			children: [
-				{ href: '/docs/stack', label: 'Stack' }
-			]
-		}
-	];
 </script>
 
 <nav class={cn('flex-1 overflow-y-auto p-2 scrollbar-nav', className)} role="navigation" aria-label="Main navigation">
