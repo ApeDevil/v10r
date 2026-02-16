@@ -21,7 +21,7 @@ Velociraptor (v10r) is a full-stack template/test-sandbox focused on performance
 | Container | Podman | `docs/stack/core/podman.md` |
 | Hosting | Vercel | `docs/stack/ops/deployment.md` |
 | Storage | Cloudflare R2 | `docs/stack/data/r2.md` |
-| i18n | svelte-i18n | `docs/stack/i18n/svelte-i18n.md` |
+| i18n | Paraglide JS | `docs/stack/i18n/paraglide.md` |
 | AI | Vercel AI SDK | `docs/stack/ai/ai-sdk.md` |
 | 3D | Three.js + Threlte | `docs/stack/features/3d-web.md` |
 

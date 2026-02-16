@@ -67,5 +67,5 @@ Gartner predicts 50% drop in traditional traffic by 2028. Optimize for both.
 ## Related
 
 - [../core/sveltekit.md](../core/sveltekit.md) - SSR capabilities
-- [../i18n/svelte-i18n.md](../i18n/svelte-i18n.md) - URL-based i18n
+- [../i18n/paraglide.md](../i18n/paraglide.md) - URL-based i18n
 - [../ops/deployment.md](../ops/deployment.md) - Edge hosting

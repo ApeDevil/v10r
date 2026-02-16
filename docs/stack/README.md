@@ -36,7 +36,7 @@ Technology decisions and vendor choices. Each directory contains focused files o
 | Valibot | [forms/valibot.md](./forms/valibot.md) |
 | Superforms | [forms/superforms.md](./forms/superforms.md) |
 | Biome | [quality/biome.md](./quality/biome.md) |
-| svelte-i18n | [i18n/svelte-i18n.md](./i18n/svelte-i18n.md) |
+| Paraglide JS | [i18n/paraglide.md](./i18n/paraglide.md) |
 | Deployment | [ops/deployment.md](./ops/deployment.md) |
 | Logging | [ops/logging.md](./ops/logging.md) |
 | AI SDK | [ai/ai-sdk.md](./ai/ai-sdk.md) |

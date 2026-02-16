@@ -58,5 +58,5 @@ API patterns and external service integrations for the application. Combines Sve
 ## Related
 
 - [../ai/ai-sdk.md](../ai/ai-sdk.md) - AI integration
-- [../i18n/svelte-i18n.md](../i18n/svelte-i18n.md) - Internationalization
+- [../i18n/paraglide.md](../i18n/paraglide.md) - Internationalization
 - [../ops/logging.md](../ops/logging.md) - Error tracking
