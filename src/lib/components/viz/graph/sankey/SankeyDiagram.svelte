@@ -53,8 +53,8 @@
 	let d3SankeyModule: any;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let linkPathGenerator: any;
-	let layoutWidth = 600;
-	let layoutHeight = 400;
+	let containerWidth = $state(600);
+	let containerHeight = $state(400);
 
 	function cleanup() {
 		d3SankeyModule = undefined;
@@ -64,18 +64,23 @@
 	beforeNavigate(cleanup);
 	onDestroy(cleanup);
 
+	function handleResize(w: number, h: number) {
+		containerWidth = w;
+		containerHeight = h;
+		if (d3SankeyModule) {
+			computeLayout(w, h);
+		}
+	}
+
 	onMount(async () => {
 		palette = getVizPalette();
 		d3SankeyModule = await import('d3-sankey');
 		linkPathGenerator = d3SankeyModule.sankeyLinkHorizontal();
-		computeLayout();
+		computeLayout(containerWidth, containerHeight);
 	});
 
-	function computeLayout(w = 600, h = 400) {
+	function computeLayout(w = containerWidth, h = containerHeight) {
 		if (!d3SankeyModule) return;
-
-		layoutWidth = w;
-		layoutHeight = h;
 
 		try {
 			// Clone data — d3-sankey mutates input
@@ -110,7 +115,7 @@
 	$effect(() => {
 		const _data = data;
 		if (d3SankeyModule) {
-			computeLayout(layoutWidth, layoutHeight);
+			computeLayout(containerWidth, containerHeight);
 		}
 	});
 
@@ -201,7 +206,7 @@
 	});
 </script>
 
-<SvgGraphContainer {aspect} {ariaLabel} class={cn('sankey-diagram', className)}>
+<SvgGraphContainer {aspect} {ariaLabel} onResize={handleResize} class={cn('sankey-diagram', className)}>
 	{#snippet skeleton()}
 		<svg viewBox="0 0 400 300" class="skeleton-svg" aria-hidden="true">
 			<!-- Source rects -->

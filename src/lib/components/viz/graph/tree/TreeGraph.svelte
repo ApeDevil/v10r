@@ -132,17 +132,6 @@
 		return `M${sx},${sy}C${sx},${my} ${tx},${my} ${tx},${ty}`;
 	}
 
-	// Center offset so the tree isn't clipped
-	let treeTranslate = $derived.by(() => {
-		if (layoutNodes.length === 0) return 'translate(0,0)';
-		const xs = layoutNodes.map(nodeX);
-		const ys = layoutNodes.map(nodeY);
-		const minX = Math.min(...xs);
-		const minY = Math.min(...ys);
-		// Pad 60px from edges
-		return `translate(${-minX + 60},${-minY + 60})`;
-	});
-
 	function handleNodeKeydown(event: KeyboardEvent, node: PointNode, idx: number) {
 		if (event.key === 'Enter' || event.key === ' ') {
 			event.preventDefault();
@@ -211,7 +200,11 @@
 	{/snippet}
 
 	{#snippet children({ width: w, height: h })}
-		<g transform={treeTranslate}>
+		{@const xs = layoutNodes.map(nodeX)}
+		{@const ys = layoutNodes.map(nodeY)}
+		{@const cx = xs.length > 0 ? (Math.min(...xs) + Math.max(...xs)) / 2 : 0}
+		{@const cy = ys.length > 0 ? (Math.min(...ys) + Math.max(...ys)) / 2 : 0}
+		<g transform="translate({w / 2 - cx},{h / 2 - cy})">
 			<!-- Links -->
 			{#each layoutLinks as link}
 				<path

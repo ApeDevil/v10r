@@ -261,6 +261,7 @@
 	{/snippet}
 
 	{#snippet children({ width: w, height: h })}
+		<g transform="translate({w / 2},{h / 2})">
 		{#if directed}
 			<defs>
 				<marker
@@ -326,6 +327,7 @@
 				{/if}
 			</g>
 		{/each}
+		</g>
 	{/snippet}
 </SvgGraphContainer>
 

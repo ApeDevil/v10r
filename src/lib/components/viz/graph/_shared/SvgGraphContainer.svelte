@@ -9,6 +9,7 @@
 		ariaLabel?: string;
 		children: Snippet<[{ width: number; height: number; transform: string }]>;
 		skeleton?: Snippet;
+		onResize?: (width: number, height: number) => void;
 		class?: string;
 	}
 
@@ -17,6 +18,7 @@
 		ariaLabel = 'Graph visualization',
 		children,
 		skeleton,
+		onResize,
 		class: className,
 	}: Props = $props();
 
@@ -68,6 +70,7 @@
 		const rect = containerEl.getBoundingClientRect();
 		width = rect.width;
 		height = rect.height;
+		onResize?.(width, height);
 
 		// ResizeObserver for responsive sizing
 		resizeObserver = new ResizeObserver((entries) => {
@@ -75,6 +78,7 @@
 				const cr = entry.contentRect;
 				width = cr.width;
 				height = cr.height;
+				onResize?.(cr.width, cr.height);
 			}
 		});
 		resizeObserver.observe(containerEl);

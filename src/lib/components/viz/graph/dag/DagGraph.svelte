@@ -184,16 +184,6 @@
 		return d;
 	}
 
-	// Center the graph in the viewport
-	let dagTranslate = $derived.by(() => {
-		if (layoutNodes.length === 0) return 'translate(0,0)';
-		const xs = layoutNodes.map((n) => n.x);
-		const ys = layoutNodes.map((n) => n.y);
-		const minX = Math.min(...xs);
-		const minY = Math.min(...ys);
-		return `translate(${-minX + 60},${-minY + 60})`;
-	});
-
 	function getEdgeOpacity(link: LayoutLink): number {
 		if (!selectedNodeId) return 0.5;
 		if (link.sourceId === selectedNodeId || link.targetId === selectedNodeId) return 0.8;
@@ -288,7 +278,11 @@
 			</marker>
 		</defs>
 
-		<g transform={dagTranslate}>
+		{@const xs = layoutNodes.map((n) => n.x)}
+		{@const ys = layoutNodes.map((n) => n.y)}
+		{@const cx = xs.length > 0 ? (Math.min(...xs) + Math.max(...xs)) / 2 : 0}
+		{@const cy = ys.length > 0 ? (Math.min(...ys) + Math.max(...ys)) / 2 : 0}
+		<g transform="translate({w / 2 - cx},{h / 2 - cy})">
 			<!-- Links -->
 			{#each layoutLinks as link}
 				<path
