@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { cn } from '$lib/utils/cn';
+	import { localizeHref } from '$lib/i18n';
 	import type { HTMLAnchorAttributes } from 'svelte/elements';
 	import type { Snippet } from 'svelte';
 
@@ -16,7 +17,7 @@
 </script>
 
 <a
-	{href}
+	href={localizeHref(href)}
 	class={cn(
 		'flex flex-col gap-3',
 		'px-fluid-4 py-fluid-5',

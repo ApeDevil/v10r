@@ -31,6 +31,7 @@ Velociraptor is the Stack & v10r is the container
 			<LinkCard href="/showcases/shell" title="App Shell Demo" />
 			<LinkCard href="/showcases/3d/static-scene" title="3D: Static Scene" />
 			<LinkCard href="/showcases/3d/animated-scene" title="3D: Animated Scene" />
+			<LinkCard href="/showcases/i18n" title="i18n" />
 		</div>
 	</nav>
 </div>

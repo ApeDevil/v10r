@@ -6,6 +6,7 @@
 
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { localizeHref } from '$lib/i18n';
 	import type { Session } from '$lib/stores/session.svelte';
 	import { setSessionContext } from '$lib/stores/session.svelte';
 	import { getModals } from '$lib/stores';
@@ -52,7 +53,7 @@
 	// Redirect on revoked session
 	$effect(() => {
 		if (sessionState.status === 'revoked') {
-			goto('/login?reason=revoked');
+			goto(localizeHref('/login') + '?reason=revoked');
 		}
 	});
 
@@ -85,7 +86,7 @@
 	}
 
 	function signOut() {
-		goto('/logout');
+		goto(localizeHref('/logout'));
 	}
 
 	function dismissWarning() {
@@ -120,7 +121,7 @@
 	}
 
 	function switchUser() {
-		goto('/login');
+		goto(localizeHref('/login'));
 	}
 
 	onMount(() => {

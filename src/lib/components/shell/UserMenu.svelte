@@ -7,6 +7,7 @@
 
 	import { DropdownMenu } from 'bits-ui';
 	import { cn } from '$lib/utils/cn';
+	import { localizeHref } from '$lib/i18n';
 	import { getTheme } from '$lib/stores/theme.svelte';
 
 	interface User {
@@ -80,7 +81,7 @@
 						class="flex items-center gap-3 p-2 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-border motion-reduce:transition-none"
 					>
 						{#snippet child({ props })}
-							<a {...props} href="/profile" class="flex items-center gap-3 no-underline text-fg">
+							<a {...props} href={localizeHref('/profile')} class="flex items-center gap-3 no-underline text-fg">
 								<span class="i-lucide-user text-lg" />
 								<span>Profile</span>
 							</a>
@@ -91,7 +92,7 @@
 						class="flex items-center gap-3 p-2 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-border motion-reduce:transition-none"
 					>
 						{#snippet child({ props })}
-							<a {...props} href="/settings" class="flex items-center gap-3 no-underline text-fg">
+							<a {...props} href={localizeHref('/settings')} class="flex items-center gap-3 no-underline text-fg">
 								<span class="i-lucide-settings text-lg" />
 								<span>Settings</span>
 							</a>
@@ -170,7 +171,7 @@
 		</DropdownMenu.Root>
 	{:else}
 		<a
-			href="/auth/signin"
+			href={localizeHref('/auth/signin')}
 			class={cn(
 				'flex items-center gap-3 p-3 w-full bg-primary rounded-md text-white font-semibold no-underline',
 				'transition-colors duration-fast hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2',

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { localizeHref } from '$lib/i18n';
+
 	interface Breadcrumb {
 		label: string;
 		href?: string;
@@ -34,7 +36,7 @@
 				{#each processedBreadcrumbs as breadcrumb, i}
 					<li>
 						{#if breadcrumb.href}
-							<a href={breadcrumb.href}>{breadcrumb.label}</a>
+							<a href={localizeHref(breadcrumb.href)}>{breadcrumb.label}</a>
 						{:else}
 							<span aria-current="page">{breadcrumb.label}</span>
 						{/if}

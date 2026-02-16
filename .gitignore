@@ -8,6 +8,7 @@ node_modules
 .wrangler
 /.svelte-kit
 /build
+/src/lib/paraglide
 
 # OS
 .DS_Store

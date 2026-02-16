@@ -1,7 +1,7 @@
 import type { LayoutServerLoad } from './$types';
 import type { Session } from '$lib/stores/session.svelte';
 
-export const load: LayoutServerLoad = async () => {
+export const load: LayoutServerLoad = async ({ cookies }) => {
 	// Mock session data for demo
 	// In production, this would come from cookies/auth middleware
 	const session: Session = {
@@ -13,7 +13,13 @@ export const load: LayoutServerLoad = async () => {
 		},
 	};
 
+	// Read theme preference from cookie to prevent flash on full-page reload
+	const raw = cookies.get('theme');
+	const themeMode: 'light' | 'dark' | 'system' =
+		raw === 'light' || raw === 'dark' || raw === 'system' ? raw : 'system';
+
 	return {
 		session,
+		themeMode,
 	};
 };

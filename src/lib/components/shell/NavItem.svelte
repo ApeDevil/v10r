@@ -7,6 +7,7 @@
 
 	import { page } from '$app/state';
 	import { cn } from '$lib/utils/cn';
+	import { localizeHref, deLocalizeHref } from '$lib/i18n';
 	import { Tooltip } from '$lib/components/primitives/tooltip';
 	import NavAccordion from './NavAccordion.svelte';
 	import NavFlyout from './NavFlyout.svelte';
@@ -37,7 +38,7 @@
 
 	// Check if current page matches this nav item or any of its children (including nested routes)
 	const isActive = $derived(() => {
-		const path = page.url.pathname;
+		const path = deLocalizeHref(page.url.pathname);
 		if (path === href) return true;
 		if (children.length > 0) {
 			return children.some(
@@ -69,7 +70,7 @@
 
 {#snippet navLink()}
 	<a
-		{href}
+		href={localizeHref(href)}
 		class={cn(
 			'flex items-center no-underline text-muted rounded-md transition-all duration-fast whitespace-nowrap relative hover:bg-border hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none',
 			forceExpanded

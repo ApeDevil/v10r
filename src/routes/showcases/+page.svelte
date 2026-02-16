@@ -67,6 +67,13 @@
 			title="Auth"
 			description="Better Auth authentication flows"
 		/>
+
+		<LinkCard
+			href="/showcases/i18n"
+			icon="i-lucide-languages"
+			title="i18n"
+			description="Translations, pluralization, formatting, and language switching"
+		/>
 	</nav>
 
 	<BackLink href="/" label="Home" />

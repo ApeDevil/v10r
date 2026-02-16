@@ -6,6 +6,7 @@
 
 	import { page } from '$app/state';
 	import { cn } from '$lib/utils/cn';
+	import { localizeHref, deLocalizeHref } from '$lib/i18n';
 	import type { NavChild } from '$lib/nav';
 
 	interface Props {
@@ -64,7 +65,8 @@
 
 	// Check if item is active (exact match or nested route)
 	function isActive(href: string): boolean {
-		return page.url.pathname === href || page.url.pathname.startsWith(href + '/');
+		const path = deLocalizeHref(page.url.pathname);
+		return path === href || path.startsWith(href + '/');
 	}
 </script>
 
@@ -74,7 +76,7 @@
 	<nav bind:this={accordionRef} class={cn('nav-accordion flex flex-col gap-[0.125rem] py-1 pl-[2.5rem] overflow-hidden origin-top motion-reduce:animate-none', className)} role="menu" aria-label="Submenu">
 		{#each items as item, index}
 			<a
-				href={item.href}
+				href={localizeHref(item.href)}
 				data-index={index}
 				class={cn(
 					'block p-2 px-3 text-sm text-muted no-underline rounded-sm transition-all duration-fast whitespace-nowrap hover:bg-border hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none',

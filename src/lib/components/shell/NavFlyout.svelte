@@ -7,6 +7,7 @@
 
 	import { page } from '$app/state';
 	import { cn } from '$lib/utils/cn';
+	import { localizeHref, deLocalizeHref } from '$lib/i18n';
 	import type { NavChild } from '$lib/nav';
 	import type { Snippet } from 'svelte';
 
@@ -164,7 +165,8 @@
 	}
 
 	function isActive(href: string): boolean {
-		return page.url.pathname === href || page.url.pathname.startsWith(href + '/');
+		const path = deLocalizeHref(page.url.pathname);
+		return path === href || path.startsWith(href + '/');
 	}
 
 	// Close on click outside
@@ -220,7 +222,7 @@
 
 		{#each items as item, index}
 			<a
-				href={item.href}
+				href={localizeHref(item.href)}
 				data-index={index}
 				class={cn(
 					'flyout-item block mx-1 px-3 py-2 text-sm text-muted no-underline rounded-sm whitespace-nowrap',

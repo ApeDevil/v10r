@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { localizeHref } from '$lib/i18n';
+
 	const currentYear = new Date().getFullYear();
 </script>
 
@@ -8,9 +10,9 @@
 			© {currentYear} Velociraptor. Built with SvelteKit.
 		</p>
 		<nav class="flex gap-6 flex-wrap">
-			<a href="/about" class="text-muted text-sm no-underline transition-colors duration-fast hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">About</a>
-			<a href="/privacy" class="text-muted text-sm no-underline transition-colors duration-fast hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">Privacy</a>
-			<a href="/terms" class="text-muted text-sm no-underline transition-colors duration-fast hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">Terms</a>
+			<a href={localizeHref('/about')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">About</a>
+			<a href={localizeHref('/privacy')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">Privacy</a>
+			<a href={localizeHref('/terms')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">Terms</a>
 		</nav>
 	</div>
 </footer>

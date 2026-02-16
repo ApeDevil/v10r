@@ -9,6 +9,7 @@
 	import { setToastContext } from '$lib/stores/toast.svelte';
 	import { initKeyboardHandler, registerShortcut } from '$lib/shortcuts';
 	import { goto } from '$app/navigation';
+	import { localizeHref } from '$lib/i18n';
 	import { Tooltip as TooltipPrimitive } from 'bits-ui';
 
 	let { children, data } = $props();
@@ -16,7 +17,7 @@
 	// Initialize all shell contexts (SSR-safe, request-scoped)
 	// 1. Theme (sync with cookie/system preference)
 	const theme = setThemeContext({
-		mode: 'system', // TODO: Load from user preferences
+		mode: data.themeMode,
 		accent: 'blue',
 	});
 
@@ -75,7 +76,7 @@
 			keys: 'g h',
 			description: 'Navigate home',
 			category: 'navigation',
-			action: () => goto('/'),
+			action: () => goto(localizeHref('/')),
 		});
 
 		const unregisterSettings = registerShortcut({
@@ -83,7 +84,7 @@
 			keys: 'g s',
 			description: 'Navigate settings',
 			category: 'navigation',
-			action: () => goto('/settings'),
+			action: () => goto(localizeHref('/settings')),
 		});
 
 		const unregisterDocs = registerShortcut({
@@ -91,7 +92,7 @@
 			keys: 'g d',
 			description: 'Navigate docs',
 			category: 'navigation',
-			action: () => goto('/docs'),
+			action: () => goto(localizeHref('/docs')),
 		});
 
 		// Cleanup on unmount

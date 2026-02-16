@@ -1,0 +1,22 @@
+{
+	"greeting": "Hallo, {name}!",
+	"items_count": "{count, plural, one {# Element} other {# Elemente}}",
+	"welcome_message": "Willkommen bei der Internationalisierungs-Demo",
+	"showcase_title": "Internationalisierung",
+	"showcase_description": "Typsichere Übersetzungen, Pluralisierung, Datums-/Zahlenformatierung und Sprachwechsel mit Paraglide JS.",
+	"current_language": "Aktuelle Sprache",
+	"switch_language": "Sprache wechseln",
+	"section_messages": "Übersetzte Nachrichten",
+	"section_pluralization": "Pluralisierung",
+	"section_formatting": "Datums- & Zahlenformatierung",
+	"section_switcher": "Sprachwahl",
+	"section_type_safety": "Typsicherheit",
+	"type_safety_desc": "Alle Nachrichtenschlüssel werden zur Kompilierzeit geprüft mit vollständiger IntelliSense-Unterstützung. Fehlende Schlüssel oder falsche Parameter verursachen Build-Fehler, keine Laufzeitfehler.",
+	"formatted_date": "Formatiertes Datum",
+	"formatted_number": "Formatierte Zahl",
+	"formatted_currency": "Formatierte Währung",
+	"formatted_percent": "Formatierter Prozentsatz",
+	"formatted_relative": "Relative Zeit",
+	"sample_text": "Dieser Text wird basierend auf der aktuellen Sprache übersetzt.",
+	"locale_strategy": "Erkennungsreihenfolge: URL-Präfix → Cookie → Basissprache (Englisch)"
+}

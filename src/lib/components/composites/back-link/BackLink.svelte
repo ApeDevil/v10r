@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { localizeHref } from '$lib/i18n';
+
 	interface Props {
 		href: string;
 		label: string;
@@ -7,7 +9,7 @@
 	let { href, label }: Props = $props();
 </script>
 
-<a {href} class="back-link">← Back to {label}</a>
+<a href={localizeHref(href)} class="back-link">← Back to {label}</a>
 
 <style>
 	.back-link {

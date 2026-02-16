@@ -6,6 +6,7 @@
 	 */
 
 	import { cn } from '$lib/utils/cn';
+	import { localizeHref } from '$lib/i18n';
 	import { getSidebar } from '$lib/stores/sidebar.svelte';
 
 	interface Props {
@@ -20,7 +21,7 @@
 	const showText = $derived(forceExpanded || sidebar.expanded);
 </script>
 
-<a href="/" class={cn('flex items-center p-3 no-underline rounded-md transition-colors duration-fast hover:bg-border focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none', className)} aria-label="Home">
+<a href={localizeHref('/')} class={cn('flex items-center p-3 no-underline rounded-md transition-colors duration-fast hover:bg-border focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none', className)} aria-label="Home">
 	{#if showText}
 		<span class="logo-text font-bold text-lg text-fg whitespace-nowrap opacity-0">Velociraptor</span>
 	{:else}
