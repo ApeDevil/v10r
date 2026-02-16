@@ -4,6 +4,11 @@
 ⚠️ Warning
 🪲 Debug
 
+🏛️ Library (lib)
+🧩 Components
+🧭 Navigation
+👄 i18n
+🛎️ Sevice
 
 📚 docs
 🧙‍♂️ guide
@@ -13,18 +18,13 @@
 📍 Endpoint
 🧙‍♂️ 
 
-🏛️ Library (lib)
-🧩 Components
-🧭 Navigation
 
-
-🛎️ Sevice
 
 👤 User
 Authentication
 Authorization
 
-👄 i18n
+
 
 💾 Database
 🐘 Relational Database (tables)

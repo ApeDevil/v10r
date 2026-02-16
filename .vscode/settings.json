@@ -63,6 +63,14 @@
         {
             "folderPath": "velociraptor/src/lib/nav/",
             "badge": "🧭"
+        },
+        {
+            "folderPath": "velociraptor/src/lib/i18n/",
+            "badge": "👄"
+        },
+        {
+            "folderPath": "velociraptor/messages/",
+            "badge": "👄"
         }
     ]
 }
