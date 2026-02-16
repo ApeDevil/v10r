@@ -1,6 +1,6 @@
 <script lang="ts">
 	/**
-	 * Dropdown submenu for navigation items.
+	 * Inline accordion submenu for navigation items (mobile drawer).
 	 * Supports keyboard navigation and click-outside-to-close.
 	 */
 
@@ -17,7 +17,7 @@
 
 	let { items, open, onClose, class: className }: Props = $props();
 
-	let dropdownRef: HTMLElement;
+	let accordionRef: HTMLElement;
 	let focusedIndex = $state(-1);
 
 	// Handle keyboard navigation
@@ -37,7 +37,7 @@
 				break;
 			case 'Enter':
 				if (focusedIndex >= 0 && focusedIndex < items.length) {
-					const link = dropdownRef?.querySelector<HTMLAnchorElement>(
+					const link = accordionRef?.querySelector<HTMLAnchorElement>(
 						`a[data-index="${focusedIndex}"]`
 					);
 					link?.click();
@@ -51,11 +51,11 @@
 	}
 
 	function focusLink(index: number) {
-		const link = dropdownRef?.querySelector<HTMLAnchorElement>(`a[data-index="${index}"]`);
+		const link = accordionRef?.querySelector<HTMLAnchorElement>(`a[data-index="${index}"]`);
 		link?.focus();
 	}
 
-	// Reset focused index when dropdown opens
+	// Reset focused index when accordion opens
 	$effect(() => {
 		if (open) {
 			focusedIndex = -1;
@@ -71,7 +71,7 @@
 <svelte:window onkeydown={handleKeydown} />
 
 {#if open}
-	<nav bind:this={dropdownRef} class={cn('nav-dropdown flex flex-col gap-[0.125rem] py-1 pl-[2.5rem] overflow-hidden origin-top motion-reduce:animate-none', className)} role="menu" aria-label="Submenu">
+	<nav bind:this={accordionRef} class={cn('nav-accordion flex flex-col gap-[0.125rem] py-1 pl-[2.5rem] overflow-hidden origin-top motion-reduce:animate-none', className)} role="menu" aria-label="Submenu">
 		{#each items as item, index}
 			<a
 				href={item.href}
@@ -102,12 +102,12 @@
 		}
 	}
 
-	.nav-dropdown {
+	.nav-accordion {
 		animation: slideDown var(--duration-fast) ease-out;
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.nav-dropdown {
+		.nav-accordion {
 			animation: none;
 		}
 	}

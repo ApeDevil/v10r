@@ -13,7 +13,7 @@ export { default as SidebarTriggers } from './SidebarTriggers.svelte';
 
 // Navigation components (Phase 4)
 export { default as NavItem } from './NavItem.svelte';
-export { default as NavDropdown } from './NavDropdown.svelte';
+export { default as NavAccordion } from './NavAccordion.svelte';
 export { default as UserMenu } from './UserMenu.svelte';
 
 // Toast system (Phase 3B)

@@ -360,7 +360,7 @@
 		</p>
 		<ul>
 			<li><strong>NavItem</strong> - Compound button with main navigation + optional dropdown</li>
-			<li><strong>NavDropdown</strong> - Keyboard-navigable submenu for child pages</li>
+			<li><strong>NavAccordion</strong> - Keyboard-navigable inline accordion submenu for child pages (mobile)</li>
 			<li><strong>UserMenu</strong> - Avatar dropdown with profile, settings, theme, and sign out</li>
 		</ul>
 

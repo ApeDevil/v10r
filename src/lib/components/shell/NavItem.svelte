@@ -8,7 +8,7 @@
 	import { page } from '$app/state';
 	import { cn } from '$lib/utils/cn';
 	import { Tooltip } from '$lib/components/primitives/tooltip';
-	import NavDropdown from './NavDropdown.svelte';
+	import NavAccordion from './NavAccordion.svelte';
 	import NavFlyout from './NavFlyout.svelte';
 	import type { NavChild } from '$lib/nav';
 
@@ -125,7 +125,7 @@
 		</div>
 
 		{#if hasDropdownChildren && forceExpanded}
-			<NavDropdown items={children} open={isDropdownOpen} onClose={closeDropdown} />
+			<NavAccordion items={children} open={isDropdownOpen} onClose={closeDropdown} />
 		{/if}
 	{/if}
 </div>
