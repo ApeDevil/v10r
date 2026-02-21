@@ -132,6 +132,184 @@
 			],
 		},
 	];
+
+	/**
+	 * Color combinations — how tokens are actually paired in components.
+	 * Each combo shows bg + fg + optional border/accent, with where it's used.
+	 */
+	const colorCombos = [
+		{
+			label: 'Solid fills',
+			combos: [
+				{
+					name: 'Default',
+					bg: 'var(--color-fg)',
+					fg: 'var(--color-bg)',
+					usage: 'Button default',
+				},
+				{
+					name: 'Primary',
+					bg: 'var(--color-primary-bg)',
+					fg: 'var(--color-primary-fg)',
+					border: 'var(--color-primary)',
+					usage: 'Button, Alert, Badge',
+				},
+				{
+					name: 'Secondary',
+					bg: 'var(--color-secondary-bg)',
+					fg: 'var(--color-secondary-fg)',
+					usage: 'Button secondary',
+				},
+				{
+					name: 'Destructive',
+					bg: 'var(--color-error-bg)',
+					fg: 'var(--color-error-fg)',
+					border: 'var(--color-error)',
+					usage: 'Button destructive, Alert',
+				},
+				{
+					name: 'Ghost',
+					bg: 'transparent',
+					fg: 'var(--color-primary)',
+					border: 'var(--color-border)',
+					usage: 'Button ghost, outline',
+				},
+			],
+		},
+		{
+			label: 'Status',
+			combos: [
+				{
+					name: 'Success',
+					bg: 'var(--color-success-bg)',
+					fg: 'var(--color-success-fg)',
+					border: 'var(--color-success)',
+					usage: 'Alert, Badge',
+				},
+				{
+					name: 'Warning',
+					bg: 'var(--color-warning-bg)',
+					fg: 'var(--color-warning-fg)',
+					border: 'var(--color-warning)',
+					usage: 'Alert, Badge',
+				},
+				{
+					name: 'Error',
+					bg: 'var(--color-error-bg)',
+					fg: 'var(--color-error-fg)',
+					border: 'var(--color-error)',
+					usage: 'Alert, Badge',
+				},
+				{
+					name: 'Info',
+					bg: 'var(--color-info-bg)',
+					fg: 'var(--color-info-fg)',
+					border: 'var(--color-info)',
+					usage: 'Alert, Badge',
+				},
+			],
+		},
+		{
+			label: 'Tinted (color-mix)',
+			combos: [
+				{
+					name: 'Primary tint',
+					bg: 'color-mix(in srgb, var(--color-primary) 10%, transparent)',
+					fg: 'var(--color-primary)',
+					usage: 'Badge, Chip',
+				},
+				{
+					name: 'Success tint',
+					bg: 'color-mix(in srgb, var(--color-success) 10%, transparent)',
+					fg: 'var(--color-success)',
+					usage: 'Badge',
+				},
+				{
+					name: 'Warning tint',
+					bg: 'color-mix(in srgb, var(--color-warning) 10%, transparent)',
+					fg: 'var(--color-warning)',
+					usage: 'Badge',
+				},
+				{
+					name: 'Error tint',
+					bg: 'color-mix(in srgb, var(--color-error) 10%, transparent)',
+					fg: 'var(--color-error)',
+					usage: 'Badge',
+				},
+				{
+					name: 'Muted tint',
+					bg: 'color-mix(in srgb, var(--color-muted) 20%, transparent)',
+					fg: 'var(--color-muted)',
+					usage: 'Badge secondary',
+				},
+			],
+		},
+		{
+			label: 'Surfaces',
+			combos: [
+				{
+					name: 'Page',
+					bg: 'var(--color-bg)',
+					fg: 'var(--color-body)',
+					usage: 'Page body',
+				},
+				{
+					name: 'Card',
+					bg: 'var(--surface-1)',
+					fg: 'var(--color-fg)',
+					border: 'var(--color-border)',
+					usage: 'Cards, sidebar',
+				},
+				{
+					name: 'Overlay',
+					bg: 'var(--surface-2)',
+					fg: 'var(--color-fg)',
+					border: 'var(--color-border)',
+					usage: 'Dropdown, popover',
+				},
+				{
+					name: 'Modal',
+					bg: 'var(--surface-3)',
+					fg: 'var(--color-fg)',
+					border: 'var(--color-border)',
+					usage: 'Modal, tooltip',
+				},
+			],
+		},
+		{
+			label: 'Input',
+			combos: [
+				{
+					name: 'Input default',
+					bg: 'var(--color-input-bg)',
+					fg: 'var(--color-body)',
+					border: 'var(--color-input-border)',
+					usage: 'Input, Select, Combobox',
+				},
+				{
+					name: 'Input focus',
+					bg: 'var(--color-input-bg)',
+					fg: 'var(--color-body)',
+					border: 'var(--color-primary)',
+					usage: 'Input :focus',
+				},
+				{
+					name: 'Input error',
+					bg: 'var(--color-input-bg)',
+					fg: 'var(--color-body)',
+					border: 'var(--color-error)',
+					usage: 'Input :invalid',
+				},
+				{
+					name: 'Input disabled',
+					bg: 'var(--color-subtle)',
+					fg: 'var(--color-muted)',
+					border: 'var(--color-border)',
+					usage: 'Input :disabled',
+				},
+			],
+		},
+	];
 </script>
 
 <section class="section">
@@ -186,6 +364,35 @@
 								<div class="color-info">
 									<div class="color-name">{token.name}</div>
 									<div class="color-var">{token.var}</div>
+								</div>
+							</div>
+						{/each}
+					</div>
+				{/each}
+			</div>
+		</DemoCard>
+		</div>
+
+		<!-- Color Combos -->
+		<div id="tok-color-combos" class="scroll-target">
+		<DemoCard title="Color Combos" description="How color tokens pair in real components — bg + fg + border">
+			<div class="combos-section">
+				{#each colorCombos as group}
+					<h4 class="color-group-label">{group.label}</h4>
+					<div class="combos-grid">
+						{#each group.combos as combo}
+							<div
+								class="combo-card"
+								style="background: {combo.bg}; border-left-color: {combo.border ?? 'var(--color-border)'};"
+							>
+								<div class="combo-sample" style="color: {combo.fg};">
+									{combo.name}
+								</div>
+								<div class="combo-meta" style="color: color-mix(in srgb, {combo.fg} 70%, transparent);">
+									{combo.usage}
+								</div>
+								<div class="combo-vars" style="color: color-mix(in srgb, {combo.fg} 55%, transparent);">
+									{combo.bg} + {combo.fg}
 								</div>
 							</div>
 						{/each}
@@ -595,6 +802,47 @@
 		margin-top: 0;
 	}
 
+	.combos-section {
+		width: 100%;
+	}
+
+	.combos-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+		gap: var(--spacing-4);
+		width: 100%;
+	}
+
+	.combo-card {
+		padding: var(--spacing-4);
+		border-radius: var(--radius-md);
+		border: 1px solid var(--color-border);
+		border-left: 3px solid var(--color-border);
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-2);
+		min-height: 5rem;
+	}
+
+	.combo-sample {
+		font-size: var(--text-fluid-sm);
+		font-weight: 600;
+		line-height: 1.3;
+	}
+
+	.combo-meta {
+		font-size: var(--text-fluid-xs);
+		font-family: 'Fira Code', monospace;
+		line-height: 1.3;
+	}
+
+	.combo-vars {
+		font-size: 0.65rem;
+		font-family: 'Fira Code', monospace;
+		line-height: 1.2;
+		word-break: break-all;
+	}
+
 	.icon-sample {
 		display: flex;
 		align-items: center;
@@ -687,7 +935,8 @@
 
 	@media (max-width: 640px) {
 		.token-grid,
-		.surface-grid {
+		.surface-grid,
+		.combos-grid {
 			grid-template-columns: 1fr;
 		}
 	}

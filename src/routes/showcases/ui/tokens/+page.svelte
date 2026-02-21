@@ -6,6 +6,7 @@
 		{ id: 'tok-typography', label: 'Typography' },
 		{ id: 'tok-spacing', label: 'Spacing' },
 		{ id: 'tok-colors', label: 'Colors' },
+		{ id: 'tok-color-combos', label: 'Combos' },
 		{ id: 'tok-z-index', label: 'Z-Index' },
 		{ id: 'tok-surfaces', label: 'Surfaces' },
 		{ id: 'tok-radius', label: 'Radius' },
