@@ -43,23 +43,11 @@ The project uses a self-documenting architecture where showcase pages serve as d
 
 ### Key Principles
 
-1. **Never install on host** - No `bun install`, `npm install`, or any package manager commands on the host machine
+1. **Never install on host** - No `bun install` or any package manager commands on the host machine
 2. **Container has everything** - All tools, dependencies, and runtime are inside the v10r container
 3. **Databases are remote** - PostgreSQL (Neon) and Neo4j (Aura) are cloud-hosted, not containerized locally
 4. **Dependencies via package.json** - Add dependencies to `package.json`, then rebuild/restart container
 
-### Workflow
-
-```bash
-# Start development (from host)
-podman-compose up -d
-
-# Container runs: bun install && bun run dev
-# Access app at http://localhost:5173
-
-# Add a new dependency (edit package.json, then restart)
-podman-compose restart app
-```
 
 
 ## Documentation
