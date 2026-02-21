@@ -17,8 +17,8 @@
 	--color-success-bg: #86efac;
 	--color-success-fg: #052e16;
 	--color-success-light: #f0fdf4;
-	--color-warning: #f59e0b;
-	--color-warning-hover: #d97706;
+	--color-warning: #d97706;
+	--color-warning-hover: #b45309;
 	--color-warning-bg: #fde68a;
 	--color-warning-fg: #451a03;
 	--color-warning-light: #fef3c7;
@@ -172,7 +172,7 @@
 	--color-warning-light: #451a03;
 	--color-secondary-bg: #252a35;
 	--color-secondary-fg: #b0c4ce;
-	--color-error: #680b0b;
+	--color-error: #ef4444;
 	--color-error-bg: #531919;
 	--color-error-fg: #ffd9d9;
 	--color-error-light: #450a0a;

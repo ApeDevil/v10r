@@ -121,9 +121,4 @@
 		background-color: color-mix(in srgb, var(--color-error) 12%, transparent);
 		color: var(--color-error);
 	}
-
-	:global(.dark) .chip:global(.bg-error) {
-		background-color: var(--color-error-light);
-		color: var(--color-error-fg);
-	}
 </style>

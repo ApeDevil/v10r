@@ -36,9 +36,4 @@
 		background-color: color-mix(in srgb, var(--color-error) 10%, transparent);
 		color: var(--color-error);
 	}
-
-	:global(.dark) span:global(.bg-error) {
-		background-color: var(--color-error-light);
-		color: var(--color-error-fg);
-	}
 </style>
