@@ -434,12 +434,12 @@ See [../blueprint/db/README.md](../blueprint/db/README.md) for container setup.
 | `TOGETHER_API_KEY` | Together AI | Image generation API key |
 | `DATABASE_URL` | Neon | Postgres connection |
 | `NEO4J_URI` | Neo4j Aura | Graph connection |
-| `NEO4J_USER` | Neo4j Aura | Graph auth |
+| `NEO4J_USERNAME` | Neo4j Aura | Graph auth |
 | `NEO4J_PASSWORD` | Neo4j Aura | Graph auth |
-| `R2_ENDPOINT` | Cloudflare | S3 endpoint |
+| `R2_ACCOUNT_ID` | Cloudflare | Account ID (endpoint derived: `https://{id}.r2.cloudflarestorage.com`) |
 | `R2_ACCESS_KEY_ID` | Cloudflare | S3 auth |
 | `R2_SECRET_ACCESS_KEY` | Cloudflare | S3 auth |
-| `R2_BUCKET` | Cloudflare | Bucket name |
+| `R2_BUCKET_NAME` | Cloudflare | Bucket name |
 | `RESEND_API_KEY` | Resend | Email auth |
 | `SENTRY_DSN` | Sentry | Error tracking |
 | `INNGEST_SIGNING_KEY` | Inngest | Webhook auth |

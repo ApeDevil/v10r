@@ -5,5 +5,6 @@ Records of what was actually built. Each file covers one feature or system — w
 | File | Topics |
 |------|--------|
 | [database-showcase.md](./database-showcase.md) | PostgreSQL type showcase, Drizzle schema, Neon HTTP driver, route structure, seed script, drizzle-kit gotchas |
+| [storage-showcase.md](./storage-showcase.md) | R2 object storage showcase, S3 client setup, presigned URLs, byte-range requests, upload flow, seed data |
 | [phase1-database.md](./phase1-database.md) | Database foundation plan — auth tables, Drizzle setup, ID generation, error handling (pre-implementation) |
 | [blender3d.md](./blender3d.md) | Blender → glTF → Threlte pipeline, phased validation, export settings, troubleshooting |

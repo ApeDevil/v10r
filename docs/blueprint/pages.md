@@ -21,9 +21,8 @@ No documentation drift. No stale examples. The template validates itself.
 ```
 /                                    # Landing page
 │
-├── /showcase                        # Living demos
+├── /showcases                       # Living demos
 │   ├── +page.svelte                 # Landing with recommended path
-│   ├── /theme                       # Theming system
 │   ├── /ui                          # Component gallery
 │   │   ├── /primitives              # Buttons, inputs, badges
 │   │   ├── /composites              # Alerts, toasts, menus
@@ -35,21 +34,34 @@ No documentation drift. No stale examples. The template validates itself.
 │   │       │   └── /reorderable     # Drag-to-reorder panes
 │   │       └── /panels              # Dock (tabs, splits, activity bar)
 │   ├── /forms                       # Form patterns
-│   ├── /state                       # Reactivity playground
 │   ├── /data                        # CRUD & data display
-│   │   └── /data/[id]               # Detail view
-│   ├── /files                       # File uploads
+│   ├── /db                          # Database showcases
+│   │   ├── +page.svelte             # Hub (Relational, Graph, Storage cards)
+│   │   ├── /postgres                # PostgreSQL showcase
+│   │   │   ├── /connection          # Neon health check + latency
+│   │   │   ├── /types               # Full type system demo
+│   │   │   └── /mutability          # CRUD, versioning, soft delete, temporal, audit
+│   │   ├── /neo4j                   # Graph database showcase
+│   │   │   ├── /connection          # Aura health check + stats
+│   │   │   ├── /model               # Labels, relationships, full graph viz
+│   │   │   └── /traversal           # Path finding, recommendations
+│   │   └── /storage                 # Object storage showcase (R2)
+│   │       ├── /connection          # R2 health check + bucket stats
+│   │       ├── /objects             # List, inspect, presigned download URLs
+│   │       └── /transfer            # Presigned upload, byte-range requests
 │   ├── /i18n                        # Internationalization
-│   ├── /animations                  # Motion & transitions
+│   ├── /viz                         # Data visualization
+│   │   ├── /charts                  # Chart types
+│   │   ├── /plots                   # Plot types
+│   │   ├── /graphs                  # Graph/network viz
+│   │   ├── /diagrams                # Diagram types
+│   │   └── /maps                    # Map visualizations
 │   ├── /3d                          # 3D experiences (Threlte + Three.js)
-│   │   ├── +layout.svelte           # Dark theme, fullscreen toggle
-│   │   ├── +page.svelte             # 3D showcase landing
-│   │   ├── /basic-scene             # Spinning cube (vanilla Three.js)
-│   │   ├── /gltf-viewer             # Model viewer with controls
-│   │   ├── /interactive             # Click/hover interactions
-│   │   └── /physics                 # Rapier physics demo
-│   ├── /graph                       # Graph database visualization
-│   └── /api                         # API explorer
+│   │   ├── /static-scene            # Static 3D scene
+│   │   └── /animated-scene          # Animated 3D scene
+│   ├── /auth                        # Authentication demo
+│   ├── /shell                       # App shell demo
+│   └── /i18n                        # Internationalization
 │
 ├── /experience                      # Immersive 3D experiences
 │   ├── +layout.svelte               # Minimal shell, no sidebar
@@ -195,16 +207,16 @@ The showcase landing page provides first-time visitors with a clear entry point 
 
 | Order | Category | Page | Focus |
 |-------|----------|------|-------|
-| 1 | Fundamentals | Theme | Design tokens, dark mode, CSS variables |
-| 2 | Fundamentals | UI | Component library, accessibility |
-| 3 | Fundamentals | Forms | Validation, progressive enhancement |
-| 4 | Core | State | Svelte 5 runes, reactivity |
-| 5 | Core | Data | Load functions, CRUD patterns |
-| 6 | Advanced | Files | Upload, R2 storage |
+| 1 | Fundamentals | UI | Component library, accessibility |
+| 2 | Fundamentals | Forms | Validation, progressive enhancement |
+| 3 | Core | Data | Load functions, CRUD patterns |
+| 4 | Core | DB: PostgreSQL | Types, mutability patterns, Neon connection |
+| 5 | Core | DB: Neo4j | Graph modeling, traversal, recommendations |
+| 6 | Core | DB: Storage | R2 objects, presigned URLs, byte-range requests |
 | 7 | Advanced | i18n | Translations, locale routing |
-| 8 | Advanced | Animations | Transitions, Motion One |
-| 9 | Specialized | Graph | Graph database visualization |
-| 10 | Specialized | API | REST, interactive docs |
+| 8 | Advanced | Viz | Charts, plots, graphs, diagrams, maps |
+| 9 | Specialized | 3D | Threlte scenes, Three.js |
+| 10 | Specialized | Auth | Authentication flows |
 
 **Implementation:**
 
@@ -216,34 +228,32 @@ The showcase landing page provides first-time visitors with a clear entry point 
       name: 'Fundamentals',
       description: 'Start here — core patterns you\'ll use everywhere',
       pages: [
-        { href: '/showcase/theme', title: 'Theme', description: 'Design tokens & dark mode' },
-        { href: '/showcase/ui', title: 'UI', description: 'Component library' },
-        { href: '/showcase/forms', title: 'Forms', description: 'Validation & submission' },
+        { href: '/showcases/ui', title: 'UI', description: 'Component library' },
+        { href: '/showcases/forms', title: 'Forms', description: 'Validation & submission' },
       ],
     },
     {
       name: 'Core Patterns',
       description: 'Essential SvelteKit patterns for any app',
       pages: [
-        { href: '/showcase/state', title: 'State', description: 'Svelte 5 runes' },
-        { href: '/showcase/data', title: 'Data', description: 'CRUD & load functions' },
+        { href: '/showcases/data', title: 'Data', description: 'CRUD & load functions' },
+        { href: '/showcases/db', title: 'DB', description: 'PostgreSQL, Neo4j, R2 storage' },
       ],
     },
     {
       name: 'Advanced',
       description: 'Specialized features for production apps',
       pages: [
-        { href: '/showcase/files', title: 'Files', description: 'Upload & storage' },
-        { href: '/showcase/i18n', title: 'i18n', description: 'Internationalization' },
-        { href: '/showcase/animations', title: 'Animations', description: 'Transitions & motion' },
+        { href: '/showcases/i18n', title: 'i18n', description: 'Internationalization' },
+        { href: '/showcases/viz', title: 'Viz', description: 'Charts, graphs, diagrams' },
       ],
     },
     {
       name: 'Specialized',
       description: 'Domain-specific integrations',
       pages: [
-        { href: '/showcase/graph', title: 'Graph', description: 'Graph database visualization' },
-        { href: '/showcase/api', title: 'API', description: 'REST documentation' },
+        { href: '/showcases/3d', title: '3D', description: 'Threlte + Three.js scenes' },
+        { href: '/showcases/auth', title: 'Auth', description: 'Authentication flows' },
       ],
     },
   ];
@@ -528,39 +538,38 @@ export async function load({ locals }) {
 
 ---
 
-### /showcase/files
+### /showcases/db/storage
 
-File upload and image processing.
+Object storage showcase (Cloudflare R2). Three sub-pages under the DB hub.
 
 | Tests | Technology | Provider |
 |-------|------------|----------|
-| Upload handling | Form actions | SvelteKit |
-| Storage | S3 API | [Cloudflare R2](../../stack/vendors.md#cloudflare-r2) |
-| Image processing | Sharp | Library |
-| Presigned URLs | S3 SDK | @aws-sdk/client-s3 |
+| S3 client setup | @aws-sdk/client-s3 | Cloudflare R2 |
+| Presigned URLs | @aws-sdk/s3-request-presigner | Cloudflare R2 |
+| Byte-range reads | GetObject with Range header | Cloudflare R2 |
+| Upload flow | Presigned PUT + confirm | SvelteKit form actions |
 
-**Page content:**
-- Single file upload
-- Multi-file upload
-- Drag and drop zone
-- Image preview
-- Progress indicator
-- File type validation
-- Size limits
-- Image gallery (from R2)
+**Sub-pages:**
 
-**Flow:**
+| Route | Purpose |
+|-------|---------|
+| `/connection` | R2 health check, bucket stats, object count, reseed action |
+| `/objects` | List objects, inspect metadata, generate presigned download URLs |
+| `/transfer` | Presigned upload flow, byte-range requests with hex dump |
+
+**Upload flow:**
 ```
 Client                    Server                    R2
   │                         │                        │
-  ├── Upload file ─────────▶│                        │
-  │                         ├── Process (Sharp) ────▶│
-  │                         │◀── Store URL ──────────┤
-  │◀── Return URL ──────────┤                        │
+  ├── Request upload URL ──▶│                        │
+  │                         ├── Validate + presign ─▶│
+  │◀── Presigned PUT URL ───┤                        │
   │                         │                        │
-  ├── Request image ───────▶│                        │
-  │                         ├── Presigned URL ──────▶│
-  │◀── Redirect to CDN ─────┤                        │
+  ├── PUT file directly ────┼───────────────────────▶│
+  │                         │                        │
+  ├── Confirm upload ──────▶│                        │
+  │                         ├── HeadObject verify ──▶│
+  │◀── Upload result ───────┤                        │
 ```
 
 ---
@@ -763,26 +772,37 @@ src/routes/
 ├── +layout.server.ts                 # Auth check, theme
 ├── +page.svelte                      # Landing
 │
-├── showcase/
-│   ├── +layout.svelte                # Showcase layout (sidebar nav)
-│   ├── theme/+page.svelte
-│   ├── ui/
+├── showcases/
+│   ├── +page.svelte                  # Showcase landing
+│   ├── ui/                           # Component gallery
 │   │   ├── +page.svelte
-│   │   ├── buttons/+page.svelte
-│   │   ├── quick-search/+page.svelte
-│   │   └── ...
+│   │   ├── primitives/+page.svelte
+│   │   ├── composites/+page.svelte
+│   │   ├── typography/+page.svelte
+│   │   ├── layouts/+page.svelte
+│   │   ├── tokens/+page.svelte
+│   │   └── panes-and-panels/
 │   ├── forms/+page.svelte
-│   ├── state/+page.svelte
-│   ├── data/
-│   │   ├── +page.svelte
-│   │   ├── +page.server.ts
-│   │   ├── [id]/+page.svelte
-│   │   └── new/+page.svelte
-│   ├── files/+page.svelte
+│   ├── data/+page.svelte
+│   ├── db/                           # Database showcases
+│   │   ├── +page.svelte              # Hub page
+│   │   ├── postgres/
+│   │   │   ├── connection/+page.server.ts
+│   │   │   ├── types/+page.server.ts
+│   │   │   └── mutability/+page.server.ts
+│   │   ├── neo4j/
+│   │   │   ├── connection/+page.server.ts
+│   │   │   ├── model/+page.server.ts
+│   │   │   └── traversal/+page.server.ts
+│   │   └── storage/
+│   │       ├── connection/+page.server.ts
+│   │       ├── objects/+page.server.ts
+│   │       └── transfer/+page.server.ts
 │   ├── i18n/+page.svelte
-│   ├── animations/+page.svelte
-│   ├── graph/+page.svelte
-│   └── api/+page.svelte
+│   ├── viz/                          # Data visualization
+│   ├── 3d/                           # Threlte + Three.js
+│   ├── auth/+page.svelte
+│   └── shell/+page.svelte
 │
 ├── app/
 │   ├── +layout.server.ts             # Auth guard
