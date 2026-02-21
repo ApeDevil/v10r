@@ -27,6 +27,9 @@
 
 	const searchItems = [
 		{ id: 'home', type: 'page' as const, label: 'Home', icon: 'i-lucide-home', href: '/' },
+		{ id: 'dashboard', type: 'page' as const, label: 'Dashboard', icon: 'i-lucide-layout-dashboard', href: '/app/dashboard' },
+		{ id: 'account', type: 'page' as const, label: 'Account', icon: 'i-lucide-user', href: '/app/account' },
+		{ id: 'sign-in', type: 'page' as const, label: 'Sign in', icon: 'i-lucide-key', href: '/auth/login' },
 		{ id: 'showcases', type: 'page' as const, label: 'Showcases', icon: 'i-lucide-eye', href: '/showcases' },
 		{ id: 'showcases-shell', type: 'page' as const, label: 'Shell', icon: 'i-lucide-layout', href: '/showcases/shell' },
 		{ id: 'showcases-forms', type: 'page' as const, label: 'Forms', icon: 'i-lucide-file-text', href: '/showcases/forms' },

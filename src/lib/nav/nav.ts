@@ -16,6 +16,15 @@ export const navItems: NavItem[] = [
 		icon: 'i-lucide-home',
 	},
 	{
+		href: '/app',
+		label: 'App',
+		icon: 'i-lucide-layout-dashboard',
+		children: [
+			{ href: '/app/dashboard', label: 'Dashboard' },
+			{ href: '/app/account', label: 'Account' },
+		],
+	},
+	{
 		href: '/showcases',
 		label: 'Showcases',
 		icon: 'i-lucide-view',

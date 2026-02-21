@@ -83,6 +83,14 @@
         {
             "folderPath": "velociraptor/src/lib/server/store/",
             "badge": "🪣"
+        },
+        {
+            "folderPath": "velociraptor/src/lib/server/auth/",
+            "badge": "🛂"
+        },
+        {
+            "folderPath": "velociraptor/src/lib/components/shell/",
+            "badge": "🐚"
         }
     ]
 }

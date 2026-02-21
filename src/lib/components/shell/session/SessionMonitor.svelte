@@ -1,7 +1,8 @@
 <script lang="ts">
 	/**
 	 * Session lifecycle monitor
-	 * Orchestrates session expiry warnings and re-authentication flow
+	 * Orchestrates session expiry warnings and re-authentication flow.
+	 * Sessions auto-renew via Better Auth's updateAge — no manual extend needed.
 	 */
 
 	import { onMount } from 'svelte';
@@ -10,6 +11,7 @@
 	import type { Session } from '$lib/stores/session.svelte';
 	import { setSessionContext } from '$lib/stores/session.svelte';
 	import { getModals } from '$lib/stores';
+	import { authClient } from '$lib/auth-client';
 	import SessionWarningBanner from './SessionWarningBanner.svelte';
 	import SessionExpiryModal from './SessionExpiryModal.svelte';
 
@@ -53,7 +55,7 @@
 	// Redirect on revoked session
 	$effect(() => {
 		if (sessionState.status === 'revoked') {
-			goto(localizeHref('/login') + '?reason=revoked');
+			goto(localizeHref('/auth/login') + '?reason=revoked');
 		}
 	});
 
@@ -61,67 +63,32 @@
 		extending = true;
 
 		try {
-			const response = await fetch('/api/session/extend', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-			});
+			// Trigger session refresh via Better Auth client
+			const result = await authClient.getSession();
 
-			if (!response.ok) {
-				throw new Error('Failed to extend session');
+			if (result.data?.session) {
+				sessionState.updateSession({
+					expiresAt: result.data.session.expiresAt,
+					user: session?.user || { id: '', email: '' },
+				});
 			}
-
-			const data = await response.json();
-
-			// Update session with new expiry time
-			sessionState.updateSession({
-				expiresAt: data.expiresAt,
-				user: session?.user || { id: '', email: '' },
-			});
 		} catch (error) {
-			console.error('Session extension failed:', error);
-			// Don't throw - let session expire naturally
+			console.error('Session refresh failed:', error);
 		} finally {
 			extending = false;
 		}
 	}
 
 	function signOut() {
-		goto(localizeHref('/logout'));
+		goto(localizeHref('/auth/login'));
 	}
 
 	function dismissWarning() {
 		sessionState.dismissWarning();
 	}
 
-	async function reauthenticate(code: string): Promise<boolean> {
-		try {
-			const response = await fetch('/api/session/verify', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ code }),
-			});
-
-			if (!response.ok) {
-				return false;
-			}
-
-			const data = await response.json();
-
-			// Restore session with new expiry
-			sessionState.updateSession({
-				expiresAt: data.expiresAt,
-				user: session?.user || { id: '', email: '' },
-			});
-
-			return true;
-		} catch (error) {
-			console.error('Reauthentication failed:', error);
-			return false;
-		}
-	}
-
 	function switchUser() {
-		goto(localizeHref('/login'));
+		goto(localizeHref('/auth/login'));
 	}
 
 	onMount(() => {
@@ -146,7 +113,7 @@
 {#if session?.user}
 	<SessionExpiryModal
 		email={session.user.email}
-		onReauthenticate={reauthenticate}
+		onSignIn={() => goto(localizeHref('/auth/login'))}
 		onSwitchUser={switchUser}
 	/>
 {/if}

@@ -9,6 +9,8 @@
 	import { cn } from '$lib/utils/cn';
 	import { localizeHref } from '$lib/i18n';
 	import { getTheme } from '$lib/stores/theme.svelte';
+	import { goto } from '$app/navigation';
+	import { authClient } from '$lib/auth-client';
 
 	interface User {
 		name: string;
@@ -32,8 +34,9 @@
 		theme.setMode(mode);
 	}
 
-	function handleSignOut() {
-		// TODO: Implement sign out logic
+	async function handleSignOut() {
+		await authClient.signOut();
+		goto('/');
 	}
 </script>
 
@@ -81,9 +84,9 @@
 						class="flex items-center gap-3 p-2 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-border motion-reduce:transition-none"
 					>
 						{#snippet child({ props })}
-							<a {...props} href={localizeHref('/profile')} class="flex items-center gap-3 no-underline text-fg">
+							<a {...props} href={localizeHref('/app/account')} class="flex items-center gap-3 no-underline text-fg">
 								<span class="i-lucide-user text-lg" />
-								<span>Profile</span>
+								<span>Account</span>
 							</a>
 						{/snippet}
 					</DropdownMenu.Item>
@@ -92,7 +95,7 @@
 						class="flex items-center gap-3 p-2 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-border motion-reduce:transition-none"
 					>
 						{#snippet child({ props })}
-							<a {...props} href={localizeHref('/settings')} class="flex items-center gap-3 no-underline text-fg">
+							<a {...props} href={localizeHref('/app/settings')} class="flex items-center gap-3 no-underline text-fg">
 								<span class="i-lucide-settings text-lg" />
 								<span>Settings</span>
 							</a>
@@ -171,7 +174,7 @@
 		</DropdownMenu.Root>
 	{:else}
 		<a
-			href={localizeHref('/auth/signin')}
+			href={localizeHref('/auth/login')}
 			class={cn(
 				'flex items-center gap-3 p-3 w-full bg-primary rounded-md text-white font-semibold no-underline',
 				'transition-colors duration-fast hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2',

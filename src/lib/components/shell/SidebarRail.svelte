@@ -2,6 +2,7 @@
 	import { MediaQuery } from 'svelte/reactivity';
 	import { cn } from '$lib/utils/cn';
 	import { getSidebar } from '$lib/stores/sidebar.svelte';
+	import { getSession } from '$lib/stores/session.svelte';
 	import SidebarLogo from './SidebarLogo.svelte';
 	import SidebarNav from './SidebarNav.svelte';
 	import SidebarTriggers from './SidebarTriggers.svelte';
@@ -14,6 +15,7 @@
 	let { class: className }: Props = $props();
 
 	const sidebar = getSidebar();
+	const session = getSession();
 
 	// Detect if device supports hover
 	const hasHover = new MediaQuery('(hover: hover)');
@@ -73,7 +75,7 @@
 
 	<div class="p-2 border-t border-border">
 		<UserMenu
-			user={{ name: 'Demo User', email: 'demo@velociraptor.dev' }}
+			user={session.user ? { name: session.user.name ?? '', email: session.user.email } : null}
 			forceExpanded={sidebar.expanded}
 		/>
 	</div>

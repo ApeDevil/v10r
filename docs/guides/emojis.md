@@ -9,6 +9,7 @@
 🧭 Navigation
 👄 i18n
 🛎️ Sevice
+🛂 Auth
 
 📚 docs
 🧙‍♂️ guide
@@ -16,7 +17,7 @@
 🔱 routes
 ☎️ API
 📍 Endpoint
-🧙‍♂️ 
+🧙‍♂️ Guide 
 
 
 

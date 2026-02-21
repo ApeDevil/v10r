@@ -11,7 +11,7 @@ type SessionStatus = 'valid' | 'warning' | 'expired' | 'revoked';
 
 export type Session = {
 	expiresAt: Date | string;
-	user: { id: string; email: string; name?: string };
+	user: { id: string; email: string; name?: string | null; image?: string | null };
 } | null;
 
 type SessionState = {
@@ -28,6 +28,8 @@ export function createSessionState(initialSession: Session | null) {
 	const expiresAt = initialSession?.expiresAt
 		? new Date(initialSession.expiresAt)
 		: null;
+
+	const user = initialSession?.user ?? null;
 
 	let state = $state<SessionState>({
 		status: 'valid',
@@ -93,6 +95,10 @@ export function createSessionState(initialSession: Session | null) {
 
 		get warningDismissed() {
 			return state.warningDismissed;
+		},
+
+		get user() {
+			return user;
 		},
 
 		dismissWarning() {

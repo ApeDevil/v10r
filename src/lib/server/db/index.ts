@@ -1,8 +1,12 @@
-import { neon } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-http';
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-serverless';
 import { DATABASE_URL } from '$env/static/private';
+import ws from 'ws';
 import * as schema from './schema';
 
-const sql = neon(DATABASE_URL);
+// Node/Bun need a WebSocket polyfill for Neon's serverless driver
+neonConfig.webSocketConstructor = ws;
 
-export const db = drizzle(sql, { schema });
+const pool = new Pool({ connectionString: DATABASE_URL });
+
+export const db = drizzle(pool, { schema });

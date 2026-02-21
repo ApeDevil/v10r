@@ -2,6 +2,7 @@
 	import { cn } from '$lib/utils/cn';
 	import { trapFocus } from '$lib/utils/focus-trap';
 	import { getSidebar } from '$lib/stores/sidebar.svelte';
+	import { getSession } from '$lib/stores/session.svelte';
 	import SidebarLogo from './SidebarLogo.svelte';
 	import SidebarNav from './SidebarNav.svelte';
 	import SidebarTriggers from './SidebarTriggers.svelte';
@@ -14,6 +15,7 @@
 	let { class: className }: Props = $props();
 
 	const sidebar = getSidebar();
+	const session = getSession();
 
 	let drawerRef: HTMLElement;
 	let overlayRef: HTMLElement;
@@ -84,7 +86,7 @@
 		<SidebarNav forceExpanded useFlyout={false} />
 
 		<div class="p-2 border-t border-border">
-			<UserMenu user={{ name: 'Demo User', email: 'demo@velociraptor.dev' }} forceExpanded />
+			<UserMenu user={session.user ? { name: session.user.name ?? '', email: session.user.email } : null} forceExpanded />
 		</div>
 	</aside>
 {/if}
