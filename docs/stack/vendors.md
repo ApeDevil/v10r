@@ -26,6 +26,7 @@ All external services used by Velociraptor. This separates **what technology** w
 | Relational DB | PostgreSQL | **Neon** | Easy |
 | Graph DB | Neo4j | **Neo4j Aura** | Medium |
 | Object Storage | S3 API | **Cloudflare R2** | Easy |
+| Cache | Redis | **Upstash** | Easy |
 | App Hosting | SvelteKit + Node.js | **Vercel** | Medium |
 | App Hosting | SvelteKit + Bun | **Koyeb** | Easy |
 | Email | SMTP/API | **Resend** | Easy |
@@ -54,6 +55,7 @@ All external services used by Velociraptor. This separates **what technology** w
 | **Vercel** | 100 GB bandwidth/mo | $20/mo | Hobby tier, 1 concurrent build |
 | **Koyeb** | 1 service, 512MB RAM | $5.50/mo | Nano instance, no credit card for free |
 | **Cloudflare R2** | 10 GB, 10M reads, 1M writes | $0.015/GB/mo | Zero egress fees |
+| **Upstash** | 500K cmd/mo, 256MB | $0.20/100K cmd | Archived after 14d inactivity |
 | **Neo4j Aura** | 200K nodes, 400K relationships | $65/mo | Free tier is generous |
 | **Resend** | 100 emails/day (3K/mo) | $20/mo | 50K emails/mo |
 | **Sentry** | 5K errors/mo | $26/mo | 50K errors/mo |
@@ -76,6 +78,7 @@ All external services used by Velociraptor. This separates **what technology** w
 | **Neon** | Yes | Yes | Yes | Yes |
 | **Vercel** | Yes | Yes | Edge (global) | Yes |
 | **Cloudflare** | Yes | Yes | Yes | Yes |
+| **Upstash** | Yes | Yes | Yes (EU) | Yes |
 | **Neo4j Aura** | Yes | Yes | Yes | Yes |
 | **Resend** | Yes | Yes | No | In progress |
 | **Sentry** | Yes | Yes | Yes | Yes |
@@ -306,6 +309,35 @@ We use a **multi-provider architecture** with Vercel AI SDK, selecting the best 
 
 ---
 
+### Upstash
+
+**What:** Serverless Redis over HTTP REST
+**Technology:** Redis (`@upstash/redis`, `@upstash/ratelimit`)
+
+| Feature | Details |
+|---------|---------|
+| Transport | HTTP/REST — works in all serverless and edge runtimes |
+| Auto-pipelining | Batches concurrent commands into one HTTP request |
+| Rate limiting | `@upstash/ratelimit` built-in (sliding window, fixed window) |
+| Free tier | 500K commands/month, 256MB storage, 10K req/sec |
+
+**Alternatives:**
+| Provider | Trade-off |
+|----------|-----------|
+| Vercel KV | Upstash under the hood, vendor-locked API, deprecated for new projects (2024) |
+| Redis Cloud | TCP only — not serverless-compatible |
+| Self-hosted Redis | No persistent state in serverless |
+| Dragonfly | Redis-compatible, self-hosted only |
+
+**Upstash-specific features (not portable):**
+- HTTP REST transport
+- Built-in rate limiting SDK
+- Database archiving after 14d inactivity (free tier)
+
+**Migration:** Standard Redis commands. Change client to `ioredis` or `redis` if moving to TCP.
+
+---
+
 ### Neo4j Aura
 
 **What:** Managed Neo4j graph database
@@ -417,6 +449,7 @@ All production services have local equivalents:
 | Neon | PostgreSQL (Docker) | `postgres:16-alpine` |
 | Neo4j Aura | Neo4j (Docker) | `neo4j:5-community` |
 | Cloudflare R2 | MinIO | S3-compatible |
+| Upstash Redis | Dev database | Use Upstash dev instance directly — no local container needed |
 | Vercel | `vite dev` | SvelteKit dev server |
 | Resend | Mailpit | Local SMTP capture |
 | Sentry | Console logging | Or self-hosted Sentry |
@@ -440,6 +473,8 @@ See [../blueprint/db/README.md](../blueprint/db/README.md) for container setup.
 | `R2_ACCESS_KEY_ID` | Cloudflare | S3 auth |
 | `R2_SECRET_ACCESS_KEY` | Cloudflare | S3 auth |
 | `R2_BUCKET_NAME` | Cloudflare | Bucket name |
+| `UPSTASH_REDIS_REST_URL` | Upstash | Redis REST endpoint |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash | Redis REST auth token |
 | `RESEND_API_KEY` | Resend | Email auth |
 | `SENTRY_DSN` | Sentry | Error tracking |
 | `INNGEST_SIGNING_KEY` | Inngest | Webhook auth |

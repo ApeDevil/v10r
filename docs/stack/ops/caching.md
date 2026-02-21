@@ -48,10 +48,10 @@ Multi-layer caching strategy combining edge caching (HTTP) with optional dynamic
 - Not guaranteed to persist across deploys
 - Cannot cache authenticated content without care
 
-**Serverless + Redis:**
-- Connection overhead per cold start
-- Upstash HTTP-based (higher latency than TCP)
-- Connection pooling not available
+**Serverless + Redis (Upstash HTTP):**
+- Higher per-request latency than TCP Redis (~4-5ms vs ~0.5ms), but no connection overhead
+- No connection pooling needed (stateless HTTP)
+- Free tier databases archived after 14 days of inactivity
 
 **Cache invalidation:**
 - Manual invalidation requires strategy
@@ -72,3 +72,5 @@ Need caching?
 
 - [deployment.md](./deployment.md) - Vercel configuration
 - [../data/postgres.md](../data/postgres.md) - Database queries
+- [../data/redis.md](../data/redis.md) - Redis technology details, SDK reference, known limitations
+- [../../implementation/cache.md](../../implementation/cache.md) - Cache showcase implementation record

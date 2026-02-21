@@ -38,6 +38,12 @@
 			title="Storage"
 			description="Object storage — presigned URLs, file uploads, and bucket management"
 		/>
+		<LinkCard
+			href="/showcases/db/cache"
+			icon="i-lucide-zap"
+			title="Cache"
+			description="Redis key-value store — TTL, counters, sorted sets, rate limiting, and ephemeral data"
+		/>
 	</nav>
 
 	<BackLink href="/showcases" label="Showcases" />

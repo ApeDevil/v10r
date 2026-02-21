@@ -32,6 +32,7 @@ Technology decisions and vendor choices. Each directory contains focused files o
 | Neo4j | [data/neo4j.md](./data/neo4j.md) |
 | Drizzle | [data/drizzle.md](./data/drizzle.md) |
 | Cloudflare R2 | [data/r2.md](./data/r2.md) |
+| Redis (Upstash) | [data/redis.md](./data/redis.md) |
 | Better Auth | [auth/better-auth.md](./auth/better-auth.md) |
 | Valibot | [forms/valibot.md](./forms/valibot.md) |
 | Superforms | [forms/superforms.md](./forms/superforms.md) |
