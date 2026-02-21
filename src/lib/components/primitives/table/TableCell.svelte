@@ -4,7 +4,7 @@
 	import type { HTMLAttributes } from 'svelte/elements';
 
 	interface Props extends HTMLAttributes<HTMLTableCellElement> {
-		children: Snippet;
+		children?: Snippet;
 		class?: string;
 	}
 
@@ -15,5 +15,5 @@
 	class={cn('p-4 align-middle [&:has([role=checkbox])]:pr-0', className)}
 	{...rest}
 >
-	{@render children()}
+	{#if children}{@render children()}{/if}
 </td>

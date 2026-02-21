@@ -4,7 +4,7 @@
 	import type { HTMLAttributes } from 'svelte/elements';
 
 	interface Props extends HTMLAttributes<HTMLTableCellElement> {
-		children: Snippet;
+		children?: Snippet;
 		class?: string;
 	}
 
@@ -19,5 +19,5 @@
 	)}
 	{...rest}
 >
-	{@render children()}
+	{#if children}{@render children()}{/if}
 </th>
