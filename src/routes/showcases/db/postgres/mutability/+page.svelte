@@ -107,7 +107,7 @@
 				<h2 class="text-fluid-lg font-semibold">Database Error</h2>
 			{/snippet}
 			<code class="error-msg">{data.error}</code>
-			<p class="error-hint">Run <code>db:push</code> and <code>db:seed</code> to initialize the showcase schema.</p>
+			<p class="error-hint">Run <code>db:push</code> to initialize the showcase schema, then use the Reseed button.</p>
 		</Card>
 	{:else}
 		<SectionNav {sections} ariaLabel="Mutability patterns" />

@@ -159,7 +159,7 @@ DATABASE_URL_DIRECT="postgresql://user:password@ep-xxx.region.aws.neon.tech/dbna
 Exports: db client, schema, types from ./types, IDs from ./id
 ```
 
-`errors.ts` is imported directly (`import { mapDbError } from '$lib/server/db/errors'`), NOT re-exported from index. It's a consumer-side utility, not a producer-side API.
+Error handling is done inline in load functions and form actions — no shared error utility module.
 
 ### 4. Schema Organization
 
@@ -172,20 +172,9 @@ Exports: db client, schema, types from ./types, IDs from ./id
 
 ```
 Layer 1: DB module         — does NOT catch errors (pure data access)
-Layer 2: Load functions    — catch and call mapDbError() (knows HTTP context)
+Layer 2: Load functions    — catch and map PG error codes inline (knows HTTP context)
 Layer 3: handleError hook  — catches unexpected escapes (safety net)
 ```
-
-PG error code mapping:
-
-| PG Code | HTTP Status | User Message |
-|---------|-------------|--------------|
-| 23505 (UNIQUE_VIOLATION) | 409 | "A record with this value already exists." |
-| 23503 (FOREIGN_KEY_VIOLATION) | 400 | "Referenced record does not exist." |
-| 23502 (NOT_NULL_VIOLATION) | 400 | "Required field is missing." |
-| 23514 (CHECK_VIOLATION) | 400 | "Invalid value provided." |
-| 57014 (QUERY_CANCELED) | 408 | "Request timeout." |
-| Other | 500 | "Database error occurred." |
 
 ### 6. Type Flow
 
@@ -223,11 +212,10 @@ Use `db.select()` for simple queries (less overhead). Reserve `db.query` (relati
 | 10 | Create `src/lib/server/db/id.ts` | ID generation works |
 | 11 | Create `src/lib/server/db/relations.ts` | Relations reference valid tables |
 | 12 | Create `src/lib/server/db/types.ts` | Type inference works |
-| 13 | Create `src/lib/server/db/errors.ts` | Error mapping compiles |
-| 14 | Create `src/lib/server/db/index.ts` | DB client connects to Neon |
-| 15 | Run `bunx drizzle-kit push` (inside container) | Tables created on Neon |
-| 16 | Verify with `bunx drizzle-kit studio` | Visual confirmation |
-| 17 | Add convenience scripts to `package.json` | `db:generate`, `db:migrate`, `db:push`, `db:studio` |
+| 13 | Create `src/lib/server/db/index.ts` | DB client connects to Neon |
+| 14 | Run `bunx drizzle-kit push` (inside container) | Tables created on Neon |
+| 15 | Verify with `bunx drizzle-kit studio` | Visual confirmation |
+| 16 | Add convenience scripts to `package.json` | `db:generate`, `db:migrate`, `db:push`, `db:studio` |
 
 ### Convenience Scripts
 

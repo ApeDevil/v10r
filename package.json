@@ -13,7 +13,6 @@
 		"db:push": "bunx drizzle-kit push",
 		"db:generate": "bunx drizzle-kit generate",
 		"db:migrate": "bunx drizzle-kit migrate",
-		"db:seed": "bun run scripts/seed-showcase.ts",
 		"db:studio": "bunx drizzle-kit studio"
 	},
 	"dependencies": {
@@ -36,7 +35,6 @@
 		"class-variance-authority": "^0.7.0",
 		"drizzle-orm": "^0.45.0",
 		"paneforge": "^1.0.2",
-		"postgres-range": "^1.1.0",
 		"clsx": "^2.1.0",
 		"three": "^0.170.0"
 	},

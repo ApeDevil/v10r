@@ -1,5 +1,5 @@
 /**
- * Showcase seed data — shared by scripts/seed-showcase.ts and reseed actions.
+ * Showcase seed data — used by the in-app reseed form action.
  * Single source of truth for all showcase seed data.
  */
 import { sql } from 'drizzle-orm';

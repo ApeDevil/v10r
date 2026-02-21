@@ -32,7 +32,6 @@ Nav entry: `{ href: '/showcases/db', label: 'DB' }` — deep routes via hub card
 |---------|---------|-------|
 | `@neondatabase/serverless` | `^1.0.0` | GA since March 2025 — breaking change from 0.x |
 | `drizzle-orm` | `^0.45.0` | Must be >=0.40.1 for Neon 1.0 compat |
-| `postgres-range` | `^1.1.0` | Range type parsing |
 | `drizzle-kit` | `^0.31.0` (dev) | CLI for push/generate/migrate/studio |
 
 ---
@@ -70,7 +69,6 @@ Seven tables in the `showcase` PostgreSQL schema. Each table is designed to demo
 ```
 src/lib/server/db/
 ├── index.ts                           # Drizzle + Neon HTTP client (uses $env/static/private)
-├── errors.ts                          # PG error code mapping
 └── schema/
     ├── index.ts                       # Barrel export
     └── showcase/
@@ -84,8 +82,6 @@ src/lib/server/db/
         ├── audit-log.ts
         └── index.ts                   # Showcase barrel
 ```
-
-**Error codes mapped in `errors.ts`:** `UNIQUE_VIOLATION` (23505), `FK_VIOLATION` (23503), `NOT_NULL` (23502), `UNDEFINED_TABLE` (42P01).
 
 ---
 
@@ -136,17 +132,13 @@ Each section shows live data alongside the schema pattern. Soft delete splits ac
 **Scripts added to `package.json`:**
 
 ```json
-"db:push":     "npx drizzle-kit push",
-"db:generate": "npx drizzle-kit generate",
-"db:migrate":  "npx drizzle-kit migrate",
-"db:studio":   "npx drizzle-kit studio",
-"db:seed":     "bun run scripts/seed-showcase.ts"
+"db:push":     "bunx drizzle-kit push",
+"db:generate": "bunx drizzle-kit generate",
+"db:migrate":  "bunx drizzle-kit migrate",
+"db:studio":   "bunx drizzle-kit studio"
 ```
 
-**Seed script** (`scripts/seed-showcase.ts`):
-- Uses `process.env.DATABASE_URL` (not `$env` — runs outside SvelteKit)
-- Creates the `showcase` schema, seeds all 7 tables, 51 total rows
-- Idempotent via `ON CONFLICT DO NOTHING`
+**Seeding** is handled in-app via the Reseed button on the types and mutability pages (`src/lib/server/db/showcase/seed.ts`).
 
 ---
 
@@ -159,12 +151,9 @@ Each section shows live data alongside the schema pattern. Soft delete splits ac
 podman-compose restart app
 
 # 3. Push schema (inside container)
-npx drizzle-kit push
+bunx drizzle-kit push
 
-# 4. Seed
-bun run scripts/seed-showcase.ts
-
-# 5. Navigate to /showcases/db
+# 4. Navigate to /showcases/db and use the Reseed button
 ```
 
 ---
@@ -180,17 +169,11 @@ Key differences:
 | `nanoid`-based prefixed IDs | Not needed for showcase tables |
 | Better Auth tables | Not part of this showcase |
 | `$env/dynamic/private` for DB client | Used `$env/static/private` (showcase-only, no branching needed) |
-| `bunx drizzle-kit` | `npx drizzle-kit` — see gotchas |
+| `bunx drizzle-kit` | `bunx drizzle-kit` (same) |
 
 ---
 
 ## ⚠️ Gotchas
-
-### drizzle-kit must run via `npx`, not `bunx`
-
-Multiple confirmed Bun + drizzle-kit issues: WebSocket 101 errors, empty migrations, segfaults. drizzle-kit runs Node.js internally even under bunx.
-
-**Use `npx drizzle-kit` always. Never `bunx drizzle-kit`.**
 
 ### `schemaFilter` is required for `pgSchema`
 
@@ -224,11 +207,10 @@ Older versions break with `@neondatabase/serverless` 1.0. Pin appropriately.
 
 ---
 
-## Files Created (22 total)
+## Files Created (21 total)
 
-**Database layer (12):**
+**Database layer (11):**
 - `src/lib/server/db/index.ts`
-- `src/lib/server/db/errors.ts`
 - `src/lib/server/db/schema/index.ts`
 - `src/lib/server/db/schema/showcase/index.ts`
 - `src/lib/server/db/schema/showcase/_custom-types.ts`
@@ -250,12 +232,11 @@ Older versions break with `@neondatabase/serverless` 1.0. Pin appropriately.
 - `src/routes/showcases/db/postgres/mutability/+page.server.ts`
 - `src/routes/showcases/db/postgres/mutability/+page.svelte`
 
-**Config and scripts (2):**
+**Config (1):**
 - `drizzle.config.ts`
-- `scripts/seed-showcase.ts`
 
 **Modified:**
-- `package.json` — added 4 deps + 5 scripts
+- `package.json` — added 3 deps + 4 scripts
 - `src/routes/showcases/+page.svelte` — added DB LinkCard
 
 ---

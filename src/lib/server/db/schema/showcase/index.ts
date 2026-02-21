@@ -1,5 +1,3 @@
-export { showcaseSchema } from './type-specimen';
-export * from './_custom-types';
 export * from './type-specimen';
 export * from './temporal-record';
 export * from './document-vault';
