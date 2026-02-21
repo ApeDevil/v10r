@@ -14,7 +14,7 @@
 
 <article class={cn('rounded-lg border border-border bg-surface-1 shadow-sm', className)}>
 	{#if header}
-		<header class="border-b border-border px-fluid-4 py-fluid-3">
+		<header class="flex flex-col gap-4 border-b border-border px-fluid-4 py-fluid-3">
 			{@render header()}
 		</header>
 	{/if}
