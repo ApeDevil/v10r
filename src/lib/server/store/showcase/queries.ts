@@ -1,0 +1,142 @@
+import {
+	HeadBucketCommand,
+	ListObjectsV2Command,
+	HeadObjectCommand,
+	GetObjectCommand,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { s3, BUCKET } from '../index';
+import { classifyS3Error } from '../errors';
+import type { ObjectInfo, ObjectDetail, BucketStats, PresignedUrlResult, RangeResult } from '../types';
+
+const SHOWCASE_PREFIX = 'showcase/';
+
+// ─── Connection page ────────────────────────────────────
+
+export interface ConnectionResult {
+	reachable: boolean;
+	bucketName: string;
+	region: string;
+	stats: BucketStats;
+}
+
+export async function verifyConnection(): Promise<ConnectionResult> {
+	await s3.send(new HeadBucketCommand({ Bucket: BUCKET }));
+
+	const stats = await getBucketStats();
+
+	return {
+		reachable: true,
+		bucketName: BUCKET,
+		region: 'auto',
+		stats,
+	};
+}
+
+async function getBucketStats(): Promise<BucketStats> {
+	let objectCount = 0;
+	let totalSize = 0;
+	let continuationToken: string | undefined;
+
+	do {
+		const res = await s3.send(
+			new ListObjectsV2Command({
+				Bucket: BUCKET,
+				Prefix: SHOWCASE_PREFIX,
+				ContinuationToken: continuationToken,
+			}),
+		);
+
+		for (const obj of res.Contents ?? []) {
+			objectCount++;
+			totalSize += obj.Size ?? 0;
+		}
+
+		continuationToken = res.IsTruncated ? res.NextContinuationToken : undefined;
+	} while (continuationToken);
+
+	return { objectCount, totalSize };
+}
+
+// ─── Objects page ───────────────────────────────────────
+
+export async function listShowcaseObjects(): Promise<ObjectInfo[]> {
+	const objects: ObjectInfo[] = [];
+	let continuationToken: string | undefined;
+
+	do {
+		const res = await s3.send(
+			new ListObjectsV2Command({
+				Bucket: BUCKET,
+				Prefix: SHOWCASE_PREFIX,
+				ContinuationToken: continuationToken,
+			}),
+		);
+
+		for (const obj of res.Contents ?? []) {
+			objects.push({
+				key: obj.Key!,
+				size: obj.Size ?? 0,
+				lastModified: obj.LastModified ?? new Date(),
+				etag: obj.ETag ?? '',
+			});
+		}
+
+		continuationToken = res.IsTruncated ? res.NextContinuationToken : undefined;
+	} while (continuationToken);
+
+	return objects.sort((a, b) => a.key.localeCompare(b.key));
+}
+
+export async function getObjectDetail(key: string): Promise<ObjectDetail> {
+	const res = await s3.send(new HeadObjectCommand({ Bucket: BUCKET, Key: key }));
+
+	return {
+		key,
+		size: res.ContentLength ?? 0,
+		lastModified: res.LastModified ?? new Date(),
+		etag: res.ETag ?? '',
+		contentType: res.ContentType,
+		metadata: res.Metadata ?? {},
+		cacheControl: res.CacheControl,
+		contentEncoding: res.ContentEncoding,
+	};
+}
+
+export async function generateDownloadUrl(
+	key: string,
+	expiresIn: number,
+): Promise<PresignedUrlResult> {
+	const command = new GetObjectCommand({ Bucket: BUCKET, Key: key });
+	const url = await getSignedUrl(s3, command, { expiresIn });
+
+	return {
+		url,
+		expiresIn,
+		expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString(),
+	};
+}
+
+// ─── Transfer page ──────────────────────────────────────
+
+export async function getObjectRange(
+	key: string,
+	start: number,
+	end: number,
+): Promise<RangeResult> {
+	const res = await s3.send(
+		new GetObjectCommand({
+			Bucket: BUCKET,
+			Key: key,
+			Range: `bytes=${start}-${end}`,
+		}),
+	);
+
+	const body = await res.Body!.transformToByteArray();
+
+	return {
+		data: body,
+		contentRange: res.ContentRange ?? `bytes ${start}-${end}/*`,
+		contentLength: res.ContentLength ?? body.length,
+	};
+}

@@ -79,6 +79,10 @@
         {
             "folderPath": "velociraptor/src/lib/server/graph/",
             "badge": "✳️"
+        },
+        {
+            "folderPath": "velociraptor/src/lib/server/store/",
+            "badge": "🪣"
         }
     ]
 }

@@ -32,7 +32,7 @@
 			description="Aura graph database — nodes, relationships, Cypher queries, and traversals"
 		/>
 		<LinkCard
-			href="/showcases/db/r2"
+			href="/showcases/db/storage"
 			icon="i-lucide-hard-drive"
 			title="Storage"
 			description="Object storage — presigned URLs, file uploads, and bucket management"
