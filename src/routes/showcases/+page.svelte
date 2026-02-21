@@ -48,6 +48,13 @@
 		/>
 
 		<LinkCard
+			href="/showcases/db"
+			icon="i-lucide-server"
+			title="Database"
+			description="PostgreSQL, Neo4j, R2 — connections, types, queries, and storage"
+		/>
+
+		<LinkCard
 			href="/showcases/viz"
 			icon="i-lucide-bar-chart-3"
 			title="Data Viz"

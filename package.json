@@ -9,7 +9,12 @@
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"db:push": "bunx drizzle-kit push",
+		"db:generate": "bunx drizzle-kit generate",
+		"db:migrate": "bunx drizzle-kit migrate",
+		"db:seed": "bun run scripts/seed-showcase.ts",
+		"db:studio": "bunx drizzle-kit studio"
 	},
 	"dependencies": {
 		"@iconify/svelte": "^4.0.0",
@@ -27,8 +32,11 @@
 		"d3-zoom": "^3.0.0",
 		"maplibre-gl": "^5.0.0",
 		"svelte-maplibre-gl": "^1.0.3",
+		"@neondatabase/serverless": "^1.0.0",
 		"class-variance-authority": "^0.7.0",
+		"drizzle-orm": "^0.45.0",
 		"paneforge": "^1.0.2",
+		"postgres-range": "^1.1.0",
 		"clsx": "^2.1.0",
 		"three": "^0.170.0"
 	},
@@ -47,6 +55,7 @@
 		"@unocss/preset-icons": "^0.58.0",
 		"@unocss/preset-uno": "^0.58.0",
 		"@unocss/transformer-directives": "^0.58.0",
+		"drizzle-kit": "^0.31.0",
 		"svelte": "^5.45.6",
 		"svelte-check": "^4.3.4",
 		"typescript": "^5.9.3",

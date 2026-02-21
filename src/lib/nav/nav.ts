@@ -26,6 +26,7 @@ export const navItems: NavItem[] = [
 			{ href: '/showcases/3d', label: '3D' },
 			{ href: '/showcases/auth', label: 'Auth' },
 			{ href: '/showcases/data', label: 'Data' },
+			{ href: '/showcases/db', label: 'DB' },
 			{ href: '/showcases/viz', label: 'Viz' },
 		],
 	},

@@ -30,6 +30,34 @@ Open-source object-relational database management system. ACID-compliant with ex
 
 See [vendors.md](../vendors.md#neon) for pricing, free tier limits, and provider alternatives.
 
+## Connection
+
+Neon connections have two independent axes: **endpoint type** and **protocol**.
+
+**Endpoint type:**
+
+| Endpoint | Hostname | Notes |
+|----------|----------|-------|
+| Direct | `ep-xxx.region.aws.neon.tech` | Raw Postgres, required for migrations |
+| Pooled | `ep-xxx-pooler.region.aws.neon.tech` | PgBouncer in transaction mode |
+
+Pooled (PgBouncer) disables: `SET`, `PREPARE`, `LISTEN`/`NOTIFY`, session advisory locks. Use direct for all schema operations.
+
+**Protocol:**
+
+| Protocol | API | Use case |
+|----------|-----|----------|
+| HTTP fetch | `neon()` from `@neondatabase/serverless` | Serverless — stateless, no persistent connection |
+| WebSocket | `Pool`/`Client` from `@neondatabase/serverless` | Session persistence, interactive transactions |
+| TCP | `pg`, `postgres.js` | Traditional long-lived servers |
+
+**What this project uses:**
+
+- **App runtime:** `neon()` HTTP driver + `drizzle-orm/neon-http` — one fetch per query, no connection pool needed, ideal for Vercel serverless
+- **drizzle-kit CLI:** reads `DATABASE_URL`, requires a direct (non-pooled) endpoint for migrations
+
+A single direct `DATABASE_URL` covers both. The HTTP driver is already stateless — pooling adds nothing. drizzle-kit requires direct to run schema operations.
+
 ## Known limitations
 
 **Cold starts:**

@@ -71,6 +71,10 @@
         {
             "folderPath": "velociraptor/messages/",
             "badge": "👄"
+        },
+        {
+            "folderPath": "velociraptor/src/lib/server/db/",
+            "badge": "💾"
         }
     ]
 }

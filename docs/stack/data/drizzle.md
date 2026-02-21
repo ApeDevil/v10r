@@ -32,6 +32,47 @@ Headless TypeScript ORM—a library and collection of complementary opt-in tools
 - Relational queries with `with` clause
 - Migrations via Drizzle Kit
 
+## Connection
+
+**drizzle.config.ts:**
+
+```ts
+import { defineConfig } from 'drizzle-kit';
+import { neonConfig } from '@neondatabase/serverless';
+
+neonConfig.poolQueryViaFetch = true;
+
+export default defineConfig({
+  schema: './src/lib/server/db/schema',
+  out: './drizzle',
+  dialect: 'postgresql',
+  schemaFilter: ['showcase'],
+  dbCredentials: {
+    url: process.env.DATABASE_URL!,
+  },
+});
+```
+
+**The Bun + drizzle-kit WebSocket gotcha:**
+
+drizzle-kit auto-detects `@neondatabase/serverless` and internally switches to WebSocket mode. Bun's `ws` implementation mishandles the WebSocket upgrade (HTTP 101), producing:
+
+```
+Unexpected server response: 101
+```
+
+Fix: `neonConfig.poolQueryViaFetch = true` in `drizzle.config.ts` forces HTTP fetch instead. Set it before `defineConfig`. See [drizzle-orm#4957](https://github.com/drizzle-team/drizzle-orm/issues/4957).
+
+**Running migrations inside the container:**
+
+```bash
+podman exec -it v10r bun run drizzle-kit push      # dev: direct sync (no migration files)
+podman exec -it v10r bun run drizzle-kit generate  # prod: create migration files
+podman exec -it v10r bun run drizzle-kit migrate   # prod: apply migration files
+```
+
+Use `push` during active development. Switch to `generate` + `migrate` before going to production.
+
 ## Known limitations
 
 **Maturity:**

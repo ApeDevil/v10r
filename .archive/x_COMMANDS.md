@@ -1,7 +1,6 @@
 # claude
 claude --chrome
 
-
 cd dev/velociraptor/
 
 #
@@ -16,11 +15,14 @@ psv(podman stop v10r)
 podman-compose down
 podman-compose down && podman-compose up -d
 
+# build
+podman compose build
+podman compose down && podman compose build && podman compose up -d
+
 # Kill
 lsof -i :5173
 kill XXXXX (rootlessp XXXXX)
 podman rm -f v10r
-
 
 
 # shows only running containers
@@ -29,7 +31,15 @@ podman ps
 podman ps -a 
 
 
+# DB neon
+## migrations (schema push)
+podman exec -it v10r bun run drizzle-kit push
 
+podman exec -it v10r npx drizzle-kit push
+podman exec -it v10r bun run drizzle-kit push
+
+
+de
 
 podman machine info
 podman version
