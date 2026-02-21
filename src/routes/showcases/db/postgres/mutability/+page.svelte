@@ -85,7 +85,7 @@
 </script>
 
 <svelte:head>
-	<title>Mutability - PostgreSQL - Showcases - Velociraptor</title>
+	<title>Mutability - Relational - Showcases - Velociraptor</title>
 </svelte:head>
 
 <div class="page">
@@ -96,7 +96,7 @@
 			{ label: 'Home', href: '/' },
 			{ label: 'Showcases', href: '/showcases' },
 			{ label: 'DB', href: '/showcases/db' },
-			{ label: 'PostgreSQL', href: '/showcases/db/postgres' },
+			{ label: 'Relational', href: '/showcases/db/postgres' },
 			{ label: 'Mutability' }
 		]}
 	/>
@@ -611,7 +611,7 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 		</div>
 	{/if}
 
-	<BackLink href="/showcases/db/postgres" label="PostgreSQL" />
+	<BackLink href="/showcases/db/postgres" label="Relational" />
 </div>
 
 <!-- ═══ DIALOGS ═══ -->

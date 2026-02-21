@@ -31,7 +31,7 @@
 </script>
 
 <svelte:head>
-	<title>Type System - PostgreSQL - Showcases - Velociraptor</title>
+	<title>Type System - Relational - Showcases - Velociraptor</title>
 </svelte:head>
 
 <div class="page">
@@ -42,7 +42,7 @@
 			{ label: 'Home', href: '/' },
 			{ label: 'Showcases', href: '/showcases' },
 			{ label: 'DB', href: '/showcases/db' },
-			{ label: 'PostgreSQL', href: '/showcases/db/postgres' },
+			{ label: 'Relational', href: '/showcases/db/postgres' },
 			{ label: 'Types' }
 		]}
 	/>
@@ -433,7 +433,7 @@
 		<span class="reset-hint">Types are read-only. See <a href="/showcases/db/postgres/mutability">Mutability</a> for live write operations.</span>
 	</div>
 
-	<BackLink href="/showcases/db/postgres" label="PostgreSQL" />
+	<BackLink href="/showcases/db/postgres" label="Relational" />
 </div>
 
 <ConfirmDialog

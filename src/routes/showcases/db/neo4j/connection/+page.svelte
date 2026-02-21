@@ -8,8 +8,8 @@
 	let testing = $state(false);
 
 	const latencyTier = $derived(
-		data.latencyMs < 100 ? 'warm' :
-		data.latencyMs < 1000 ? 'waking' : 'cold'
+		data.latencyMs < 200 ? 'warm' :
+		data.latencyMs < 2000 ? 'waking' : 'cold'
 	);
 
 	const tierVariant = $derived(
@@ -19,32 +19,31 @@
 
 	const tierLabel = $derived(
 		latencyTier === 'warm' ? 'Warm' :
-		latencyTier === 'waking' ? 'Pool Wake' : 'Cold Start'
+		latencyTier === 'waking' ? 'Waking' : 'Cold Start'
 	);
 
-	// Client-side latency history (last 5 results)
 	let history = $state<{ ms: number; tier: string; variant: 'success' | 'warning' | 'error' }[]>([]);
 
 	function recordHistory(ms: number) {
-		const tier = ms < 100 ? 'Warm' : ms < 1000 ? 'Wake' : 'Cold';
-		const variant = ms < 100 ? 'success' as const : ms < 1000 ? 'warning' as const : 'error' as const;
+		const tier = ms < 200 ? 'Warm' : ms < 2000 ? 'Wake' : 'Cold';
+		const variant = ms < 200 ? 'success' as const : ms < 2000 ? 'warning' as const : 'error' as const;
 		history = [...history.slice(-4), { ms, tier, variant }];
 	}
 </script>
 
 <svelte:head>
-	<title>Connection - Relational - Showcases - Velociraptor</title>
+	<title>Connection - Graph - Showcases - Velociraptor</title>
 </svelte:head>
 
 <div class="page">
 	<PageHeader
 		title="Connection"
-		description="Live Neon PostgreSQL health check. The latency below was measured during your page load."
+		description="Live Neo4j Aura health check via HTTP Query API. The latency below was measured during your page load."
 		breadcrumbs={[
 			{ label: 'Home', href: '/' },
 			{ label: 'Showcases', href: '/showcases' },
 			{ label: 'DB', href: '/showcases/db' },
-			{ label: 'Relational', href: '/showcases/db/postgres' },
+			{ label: 'Graph', href: '/showcases/db/neo4j' },
 			{ label: 'Connection' }
 		]}
 	/>
@@ -115,36 +114,41 @@
 		</Card>
 
 		{#if data.connected}
-			<!-- Database Info -->
+			<!-- Instance Info -->
 			<Card>
 				{#snippet header()}
-					<h2 class="text-fluid-lg font-semibold">Database Info</h2>
+					<h2 class="text-fluid-lg font-semibold">Instance Info</h2>
 				{/snippet}
 
 				<div class="diag-grid">
 					<div class="diag-row">
-						<span class="diag-label">PostgreSQL Version</span>
-						<code class="diag-mono">{data.pgVersion}</code>
+						<span class="diag-label">Neo4j Version</span>
+						<code class="diag-mono">{data.neo4jVersion}</code>
 					</div>
 
 					<div class="diag-row">
-						<span class="diag-label">Database Name</span>
-						<code class="diag-mono">{data.dbName}</code>
+						<span class="diag-label">Edition</span>
+						<code class="diag-mono">{data.edition}</code>
 					</div>
 
 					<div class="diag-row">
-						<span class="diag-label">Current Schema</span>
-						<code class="diag-mono">{data.currentSchema}</code>
+						<span class="diag-label">Node Count</span>
+						<code class="diag-mono">{data.nodeCount}</code>
 					</div>
 
 					<div class="diag-row">
-						<span class="diag-label">Database Size</span>
-						<code class="diag-mono">{data.dbSize}</code>
+						<span class="diag-label">Relationship Count</span>
+						<code class="diag-mono">{data.relCount}</code>
 					</div>
 
 					<div class="diag-row">
-						<span class="diag-label">Active Connections</span>
-						<code class="diag-mono">{data.activeConnections}</code>
+						<span class="diag-label">Labels</span>
+						<code class="diag-mono">{data.labelCount}</code>
+					</div>
+
+					<div class="diag-row">
+						<span class="diag-label">Relationship Types</span>
+						<code class="diag-mono">{data.relTypeCount}</code>
 					</div>
 				</div>
 			</Card>
@@ -152,24 +156,24 @@
 			<!-- Latency Explanation -->
 			<Card>
 				{#snippet header()}
-					<h2 class="text-fluid-lg font-semibold">About Neon Latency</h2>
+					<h2 class="text-fluid-lg font-semibold">About Aura Latency</h2>
 				{/snippet}
 
 				<div class="explanation">
-					<p>Neon PostgreSQL scales to zero after 5 minutes of inactivity. The first query after idle includes compute wake-up time.</p>
+					<p>Neo4j Aura free instances auto-pause after inactivity. The first query after pause includes instance resume time (10-30 seconds).</p>
 
 					<div class="tier-legend">
 						<div class="tier-item">
 							<Badge variant="success">Warm</Badge>
-							<span>&lt; 100ms — Compute was already running</span>
+							<span>&lt; 200ms — Instance was already running</span>
 						</div>
 						<div class="tier-item">
-							<Badge variant="warning">Pool Wake</Badge>
-							<span>100–999ms — Connection pool was warming up</span>
+							<Badge variant="warning">Waking</Badge>
+							<span>200–2000ms — Instance was resuming from pause</span>
 						</div>
 						<div class="tier-item">
 							<Badge variant="error">Cold Start</Badge>
-							<span>&gt; 1s — Compute was suspended, full wake-up required</span>
+							<span>&gt; 2s — Instance was fully paused, long resume required</span>
 						</div>
 					</div>
 
@@ -185,13 +189,13 @@
 
 				<div class="error-info">
 					<code class="error-msg">{data.error}</code>
-					<p>Check that <code>DATABASE_URL</code> is set in <code>.env</code> and points to a valid Neon database with <code>?sslmode=require</code>.</p>
+					<p>Check that <code>NEO4J_URI</code>, <code>NEO4J_USERNAME</code>, and <code>NEO4J_PASSWORD</code> are set in <code>.env</code> and point to a valid Neo4j Aura instance.</p>
 				</div>
 			</Card>
 		{/if}
 	</div>
 
-	<BackLink href="/showcases/db/postgres" label="Relational" />
+	<BackLink href="/showcases/db/neo4j" label="Graph" />
 </div>
 
 <style>

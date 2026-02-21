@@ -22,20 +22,20 @@
 		<LinkCard
 			href="/showcases/db/postgres"
 			icon="i-lucide-database"
-			title="PostgreSQL"
+			title="Relational"
 			description="Neon serverless — type system, JSONB, arrays, ranges, and mutability patterns via Drizzle ORM"
 		/>
 		<LinkCard
 			href="/showcases/db/neo4j"
 			icon="i-lucide-share-2"
-			title="Neo4j"
+			title="Graph"
 			description="Aura graph database — nodes, relationships, Cypher queries, and traversals"
 		/>
 		<LinkCard
 			href="/showcases/db/r2"
 			icon="i-lucide-hard-drive"
-			title="R2"
-			description="Cloudflare R2 — object storage, presigned URLs, and file uploads"
+			title="Storage"
+			description="Object storage — presigned URLs, file uploads, and bucket management"
 		/>
 	</nav>
 

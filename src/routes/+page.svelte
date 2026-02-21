@@ -12,15 +12,14 @@
 	<h1>Velociraptor</h1>
 
 	<pre class="logo">
-  v  e l o c i r a p t o   r
-  │ └──── 10 letters ────┘ │
-  v          10            r
+v  e l o c i r a p t o   r
+│ └──── 10 letters ────┘ │
+v          10            r
 
-         ╔═══════════╗
-         ║   v10r    ║
-         ╚═══════════╝
-
-Velociraptor is the Stack & v10r is the container
+╔═══════════╗
+║   v10r    ║
+╚═══════════╝
+container 
 </pre>
 
 	<p class="tagline">Performance through understanding</p>
