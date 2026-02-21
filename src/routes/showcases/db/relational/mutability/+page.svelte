@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
-	import { PageHeader, BackLink, Card, SectionNav, ConfirmDialog } from '$lib/components/composites';
-	import { Badge, Button, Input, Select, Spinner } from '$lib/components/primitives';
+	import { PageHeader, BackLink, Card, SectionNav, ConfirmDialog, Alert, FormField } from '$lib/components/composites';
+	import { Badge, Button, Input, Select, Switch, Typography } from '$lib/components/primitives';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
 	import { Dialog } from '$lib/components/primitives';
+	import { PageContainer, Stack, Cluster } from '$lib/components/layout';
 	import { getToast } from '$lib/stores/toast.svelte';
 
 	let { data } = $props();
@@ -88,7 +89,7 @@
 	<title>Mutability - Relational - Showcases - Velociraptor</title>
 </svelte:head>
 
-<div class="page">
+<PageContainer class="py-7">
 	<PageHeader
 		title="Mutability Patterns"
 		description="Five data mutability strategies — now interactive. Loaded in {data.queryMs}ms."
@@ -96,45 +97,45 @@
 			{ label: 'Home', href: '/' },
 			{ label: 'Showcases', href: '/showcases' },
 			{ label: 'DB', href: '/showcases/db' },
-			{ label: 'Relational', href: '/showcases/db/postgres' },
+			{ label: 'Relational', href: '/showcases/db/relational' },
 			{ label: 'Mutability' }
 		]}
 	/>
 
 	{#if data.error}
-		<Card>
-			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Database Error</h2>
+		<Alert variant="error" title="Database Error">
+			{#snippet children()}
+				<code class="font-mono text-fluid-sm break-all">{data.error}</code>
+				<p class="text-fluid-sm mt-2">Run <code>db:push</code> to initialize the showcase schema, then use the Reseed button.</p>
 			{/snippet}
-			<code class="error-msg">{data.error}</code>
-			<p class="error-hint">Run <code>db:push</code> to initialize the showcase schema, then use the Reseed button.</p>
-		</Card>
+		</Alert>
 	{:else}
 		<SectionNav {sections} ariaLabel="Mutability patterns" />
 
 		<!-- Action result alert -->
 		{#if actionResult?.message && !actionResult?.success}
-			<div class="error-alert" role="alert" aria-live="assertive">
-				<span class="i-lucide-alert-circle h-4 w-4" />
-				<code>{actionResult.message}</code>
-			</div>
+			<Alert variant="error" class="mb-4">
+				{#snippet children()}
+					<code>{actionResult.message}</code>
+				{/snippet}
+			</Alert>
 		{/if}
 
-		<div class="sections">
+		<Stack gap="7">
 			<!-- ═══ MUTABLE CRUD ═══ -->
 			<section id="mutable">
 				<Card>
 					{#snippet header()}
-						<div class="section-header">
+						<Cluster justify="between" align="start" gap="4">
 							<div>
-								<h2 class="text-fluid-lg font-semibold">Mutable CRUD</h2>
+								<Typography variant="h5" as="h2">Mutable CRUD</Typography>
 								<p class="section-desc">Rows are created, read, updated, and deleted. <code>updated_at</code> tracks last modification. Try creating, editing, and deleting rows below.</p>
 							</div>
 							<Button variant="primary" size="sm" onclick={() => showCreateForm = !showCreateForm}>
 								<span class="i-lucide-plus h-4 w-4 mr-1" />
 								Add Row
 							</Button>
-						</div>
+						</Cluster>
 					{/snippet}
 
 					<!-- Create form -->
@@ -219,7 +220,7 @@
 							</Table>
 						</div>
 					{:else}
-						<p class="empty">No specimens. Create one above.</p>
+						<Typography variant="muted" as="p">No specimens. Create one above.</Typography>
 					{/if}
 				</Card>
 			</section>
@@ -228,7 +229,7 @@
 			<section id="versioned">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Versioned Records</h2>
+						<Typography variant="h5" as="h2">Versioned Records</Typography>
 						<p class="section-desc">Every update inserts a snapshot into the history table. Edit a specimen below and watch the history grow.</p>
 					{/snippet}
 
@@ -309,7 +310,7 @@
 							</Table>
 						</div>
 					{:else}
-						<p class="empty">No version history yet. Edit a specimen to create history entries.</p>
+						<Typography variant="muted" as="p">No version history yet. Edit a specimen to create history entries.</Typography>
 					{/if}
 				</Card>
 			</section>
@@ -318,7 +319,7 @@
 			<section id="soft-delete">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Soft Delete</h2>
+						<Typography variant="h5" as="h2">Soft Delete</Typography>
 						<p class="section-desc"><code>deleted_at IS NULL</code> = active. Non-NULL = soft-deleted (recoverable). Click delete to move a document right. Click restore to move it back.</p>
 					{/snippet}
 
@@ -344,7 +345,7 @@
 								</div>
 							{/each}
 							{#if data.activeDocuments.length === 0}
-								<p class="empty">No active documents.</p>
+								<Typography variant="muted" as="p">No active documents.</Typography>
 							{/if}
 						</div>
 
@@ -369,7 +370,7 @@
 								</div>
 							{/each}
 							{#if data.deletedDocuments.length === 0}
-								<p class="empty">No deleted documents.</p>
+								<Typography variant="muted" as="p">No deleted documents.</Typography>
 							{/if}
 						</div>
 					</div>
@@ -392,7 +393,7 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 			<section id="append-only">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Append-Only / Immutable</h2>
+						<Typography variant="h5" as="h2">Append-Only / Immutable</Typography>
 						<p class="section-desc">Records are inserted and never modified. There is no Edit button. There is no Delete button. This is intentional.</p>
 					{/snippet}
 
@@ -439,20 +440,23 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 							use:enhance={() => handleActionResult({ successMsg: 'Audit entry appended.' })}
 						>
 							<div class="append-form-fields">
-								<div class="append-field">
-									<label for="append-description" class="field-label">Description</label>
-									<Input id="append-description" name="description" placeholder="What happened?" required />
-								</div>
-								<div class="append-field">
-									<label for="append-action" class="field-label">Action</label>
-									<input type="hidden" name="action" value={appendAction} />
-									<Select options={actionOptions} bind:value={appendAction} />
-								</div>
-								<div class="append-field">
-									<label for="append-severity" class="field-label">Severity</label>
-									<input type="hidden" name="severity" value={appendSeverity} />
-									<Select options={severityOptions} bind:value={appendSeverity} />
-								</div>
+								<FormField label="Description" id="append-description">
+									{#snippet children()}
+										<Input id="append-description" name="description" placeholder="What happened?" required />
+									{/snippet}
+								</FormField>
+								<FormField label="Action" id="append-action">
+									{#snippet children()}
+										<input type="hidden" name="action" value={appendAction} />
+										<Select options={actionOptions} bind:value={appendAction} />
+									{/snippet}
+								</FormField>
+								<FormField label="Severity" id="append-severity">
+									{#snippet children()}
+										<input type="hidden" name="severity" value={appendSeverity} />
+										<Select options={severityOptions} bind:value={appendSeverity} />
+									{/snippet}
+								</FormField>
 							</div>
 							<Button type="submit" variant="primary" size="sm">
 								<span class="i-lucide-plus h-4 w-4 mr-1" />
@@ -468,7 +472,7 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 			<section id="temporal">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Temporal / Bi-temporal</h2>
+						<Typography variant="h5" as="h2">Temporal / Bi-temporal</Typography>
 						<p class="section-desc"><code>valid_from</code> / <code>valid_to</code> track when a fact is true in the real world. Use the date picker to query "what was valid on date X?"</p>
 					{/snippet}
 
@@ -503,7 +507,7 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 							</Table>
 						</div>
 					{:else}
-						<p class="empty">No temporal records. Add one below.</p>
+						<Typography variant="muted" as="p">No temporal records. Add one below.</Typography>
 					{/if}
 
 					<!-- Temporal query -->
@@ -565,7 +569,7 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 								</div>
 							</div>
 						{:else if temporalQueryDate && temporalResults.length === 0}
-							<p class="empty">No records valid on {temporalQueryDate}.</p>
+							<Typography variant="muted" as="p">No records valid on {temporalQueryDate}.</Typography>
 						{/if}
 					</div>
 
@@ -579,18 +583,21 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 							use:enhance={() => handleActionResult({ successMsg: 'Temporal record added.' })}
 						>
 							<div class="temporal-add-fields">
-								<div class="append-field">
-									<label for="temp-desc" class="field-label">Description</label>
-									<Input id="temp-desc" name="description" placeholder="What fact is this?" required />
-								</div>
-								<div class="append-field">
-									<label for="temp-from" class="field-label">Valid From</label>
-									<Input id="temp-from" name="validFrom" type="datetime-local" required />
-								</div>
-								<div class="append-field">
-									<label for="temp-to" class="field-label">Valid To (optional)</label>
-									<Input id="temp-to" name="validTo" type="datetime-local" />
-								</div>
+								<FormField label="Description" id="temp-desc">
+									{#snippet children()}
+										<Input id="temp-desc" name="description" placeholder="What fact is this?" required />
+									{/snippet}
+								</FormField>
+								<FormField label="Valid From" id="temp-from">
+									{#snippet children()}
+										<Input id="temp-from" name="validFrom" type="datetime-local" required />
+									{/snippet}
+								</FormField>
+								<FormField label="Valid To (optional)" id="temp-to">
+									{#snippet children()}
+										<Input id="temp-to" name="validTo" type="datetime-local" />
+									{/snippet}
+								</FormField>
 							</div>
 							<Button type="submit" variant="primary" size="sm">
 								<span class="i-lucide-plus h-4 w-4 mr-1" />
@@ -600,19 +607,19 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 					</div>
 				</Card>
 			</section>
-		</div>
+		</Stack>
 
 		<!-- Reset button -->
-		<div class="reset-section">
+		<Cluster justify="center" class="mt-6 mb-4">
 			<Button variant="outline" size="sm" onclick={() => resetDialogOpen = true}>
 				<span class="i-lucide-rotate-ccw h-4 w-4 mr-1" />
 				Reset All Showcase Data
 			</Button>
-		</div>
+		</Cluster>
 	{/if}
 
-	<BackLink href="/showcases/db/postgres" label="Relational" />
-</div>
+	<BackLink href="/showcases/db/relational" label="Relational" />
+</PageContainer>
 
 <!-- ═══ DIALOGS ═══ -->
 
@@ -638,34 +645,30 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 		>
 			<input type="hidden" name="id" value={editingSpecimen.id} />
 			<div class="dialog-fields">
-				<div class="append-field">
-					<label for="edit-label" class="field-label">Label</label>
-					<Input id="edit-label" name="label" value={editingSpecimen.label} />
-				</div>
-				<div class="append-field">
-					<label for="edit-rating" class="field-label">Rating (1-5)</label>
-					<Input id="edit-rating" name="rating" type="number" min={1} max={5} value={String(editingSpecimen.rating ?? '')} />
-				</div>
-				<div class="append-field">
-					<label for="edit-quantity" class="field-label">Quantity</label>
-					<Input id="edit-quantity" name="quantity" type="number" min={0} value={String(editingSpecimen.quantity)} />
-				</div>
-				<div class="append-field">
-					<label for="edit-active" class="field-label">Active</label>
-					<input type="hidden" name="isActive" value={editingSpecimen.isActive ? 'true' : 'false'} />
-					<label class="toggle-label">
-						<input
-							type="checkbox"
-							checked={editingSpecimen.isActive}
-							onchange={(e) => {
-								if (editingSpecimen) {
-									editingSpecimen = { ...editingSpecimen, isActive: e.currentTarget.checked };
-								}
-							}}
+				<FormField label="Label" id="edit-label">
+					{#snippet children()}
+						<Input id="edit-label" name="label" value={editingSpecimen.label} />
+					{/snippet}
+				</FormField>
+				<FormField label="Rating (1-5)" id="edit-rating">
+					{#snippet children()}
+						<Input id="edit-rating" name="rating" type="number" min={1} max={5} value={String(editingSpecimen.rating ?? '')} />
+					{/snippet}
+				</FormField>
+				<FormField label="Quantity" id="edit-quantity">
+					{#snippet children()}
+						<Input id="edit-quantity" name="quantity" type="number" min={0} value={String(editingSpecimen.quantity)} />
+					{/snippet}
+				</FormField>
+				<FormField label="Active" id="edit-active">
+					{#snippet children()}
+						<input type="hidden" name="isActive" value={editingSpecimen.isActive ? 'true' : 'false'} />
+						<Switch
+							bind:checked={editingSpecimen.isActive}
+							label={editingSpecimen.isActive ? 'Active' : 'Inactive'}
 						/>
-						{editingSpecimen.isActive ? 'Active' : 'Inactive'}
-					</label>
-				</div>
+					{/snippet}
+				</FormField>
 			</div>
 			<div class="dialog-actions">
 				<Button type="button" variant="ghost" size="sm" onclick={() => { editDialogOpen = false; editingSpecimen = null; }}>Cancel</Button>
@@ -697,34 +700,30 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 		>
 			<input type="hidden" name="id" value={editingVersioned.id} />
 			<div class="dialog-fields">
-				<div class="append-field">
-					<label for="ver-label" class="field-label">Label</label>
-					<Input id="ver-label" name="label" value={editingVersioned.label} />
-				</div>
-				<div class="append-field">
-					<label for="ver-rating" class="field-label">Rating (1-5)</label>
-					<Input id="ver-rating" name="rating" type="number" min={1} max={5} value={String(editingVersioned.rating ?? '')} />
-				</div>
-				<div class="append-field">
-					<label for="ver-quantity" class="field-label">Quantity</label>
-					<Input id="ver-quantity" name="quantity" type="number" min={0} value={String(editingVersioned.quantity)} />
-				</div>
-				<div class="append-field">
-					<label for="ver-active" class="field-label">Active</label>
-					<input type="hidden" name="isActive" value={editingVersioned.isActive ? 'true' : 'false'} />
-					<label class="toggle-label">
-						<input
-							type="checkbox"
-							checked={editingVersioned.isActive}
-							onchange={(e) => {
-								if (editingVersioned) {
-									editingVersioned = { ...editingVersioned, isActive: e.currentTarget.checked };
-								}
-							}}
+				<FormField label="Label" id="ver-label">
+					{#snippet children()}
+						<Input id="ver-label" name="label" value={editingVersioned.label} />
+					{/snippet}
+				</FormField>
+				<FormField label="Rating (1-5)" id="ver-rating">
+					{#snippet children()}
+						<Input id="ver-rating" name="rating" type="number" min={1} max={5} value={String(editingVersioned.rating ?? '')} />
+					{/snippet}
+				</FormField>
+				<FormField label="Quantity" id="ver-quantity">
+					{#snippet children()}
+						<Input id="ver-quantity" name="quantity" type="number" min={0} value={String(editingVersioned.quantity)} />
+					{/snippet}
+				</FormField>
+				<FormField label="Active" id="ver-active">
+					{#snippet children()}
+						<input type="hidden" name="isActive" value={editingVersioned.isActive ? 'true' : 'false'} />
+						<Switch
+							bind:checked={editingVersioned.isActive}
+							label={editingVersioned.isActive ? 'Active' : 'Inactive'}
 						/>
-						{editingVersioned.isActive ? 'Active' : 'Inactive'}
-					</label>
-				</div>
+					{/snippet}
+				</FormField>
 			</div>
 			<div class="dialog-actions">
 				<Button type="button" variant="ghost" size="sm" onclick={() => { versionedDialogOpen = false; editingVersioned = null; }}>Cancel</Button>
@@ -763,27 +762,6 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 </form>
 
 <style>
-	.page {
-		width: 100%;
-		max-width: var(--layout-max-width);
-		margin: 0 auto;
-		padding: var(--spacing-7) var(--spacing-4);
-		box-sizing: border-box;
-	}
-
-	.sections {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-7);
-	}
-
-	.section-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-start;
-		gap: var(--spacing-4);
-	}
-
 	.section-desc {
 		margin: var(--spacing-1) 0 0;
 		color: var(--color-muted);
@@ -795,35 +773,7 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 		overflow-x: auto;
 	}
 
-	.empty {
-		color: var(--color-muted);
-		font-style: italic;
-	}
-
-	.error-msg {
-		font-family: ui-monospace, monospace;
-		color: var(--color-error);
-		word-break: break-all;
-	}
-
-	.error-hint {
-		color: var(--color-muted);
-		font-size: var(--text-fluid-sm);
-		margin-top: var(--spacing-2);
-	}
-
-	.error-alert {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-2);
-		padding: var(--spacing-3) var(--spacing-4);
-		background: color-mix(in srgb, var(--color-error) 10%, transparent);
-		border: 1px solid var(--color-error);
-		border-radius: var(--radius-md);
-		margin-bottom: var(--spacing-4);
-		color: var(--color-error);
-		font-size: var(--text-fluid-sm);
-	}
+	/* Alert inherits error color; code and hint use utility classes */
 
 	code {
 		font-family: ui-monospace, monospace;
@@ -957,18 +907,6 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 		gap: var(--spacing-3);
 	}
 
-	.append-field {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-1);
-	}
-
-	.field-label {
-		font-size: var(--text-fluid-xs);
-		font-weight: 500;
-		color: var(--color-muted);
-	}
-
 	.append-note {
 		margin-top: var(--spacing-2);
 		font-size: var(--text-fluid-xs);
@@ -1032,31 +970,12 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 		border-top: 1px solid var(--color-border);
 	}
 
-	.toggle-label {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-2);
-		font-size: var(--text-fluid-sm);
-		cursor: pointer;
-	}
-
 	/* ─── Reset ─── */
-	.reset-section {
-		display: flex;
-		justify-content: center;
-		margin-top: var(--spacing-6);
-		margin-bottom: var(--spacing-4);
-	}
-
 	.hidden {
 		display: none;
 	}
 
 	@media (max-width: 640px) {
-		.page {
-			padding: var(--spacing-4);
-		}
-
 		.soft-delete-groups {
 			grid-template-columns: 1fr;
 		}
@@ -1064,16 +983,6 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 		.append-form-fields,
 		.temporal-add-fields {
 			grid-template-columns: 1fr;
-		}
-
-		.section-header {
-			flex-direction: column;
-		}
-	}
-
-	@media (min-width: 768px) {
-		.page {
-			padding: var(--spacing-7);
 		}
 	}
 </style>

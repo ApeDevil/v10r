@@ -16,10 +16,10 @@ A PostgreSQL showcase covering the full breadth of Postgres type system and muta
 
 ```
 /showcases/db/                         → Hub (Relational, Graph, Storage link cards)
-  /showcases/db/postgres/              → PostgreSQL hub (Connection, Types, Mutability)
-    /showcases/db/postgres/connection/ → Neon health check + latency tiers
-    /showcases/db/postgres/types/      → 10-section type showcase with SectionNav
-    /showcases/db/postgres/mutability/ → 5 mutability pattern showcase
+  /showcases/db/relational/              → PostgreSQL hub (Connection, Types, Mutability)
+    /showcases/db/relational/connection/ → Neon health check + latency tiers
+    /showcases/db/relational/types/      → 10-section type showcase with SectionNav
+    /showcases/db/relational/mutability/ → 5 mutability pattern showcase
 ```
 
 Nav entry: `{ href: '/showcases/db', label: 'DB' }` — deep routes via hub cards, not top nav.
@@ -224,13 +224,13 @@ Older versions break with `@neondatabase/serverless` 1.0. Pin appropriately.
 
 **Routes (8):**
 - `src/routes/showcases/db/+page.svelte`
-- `src/routes/showcases/db/postgres/+page.svelte`
-- `src/routes/showcases/db/postgres/connection/+page.server.ts`
-- `src/routes/showcases/db/postgres/connection/+page.svelte`
-- `src/routes/showcases/db/postgres/types/+page.server.ts`
-- `src/routes/showcases/db/postgres/types/+page.svelte`
-- `src/routes/showcases/db/postgres/mutability/+page.server.ts`
-- `src/routes/showcases/db/postgres/mutability/+page.svelte`
+- `src/routes/showcases/db/relational/+page.svelte`
+- `src/routes/showcases/db/relational/connection/+page.server.ts`
+- `src/routes/showcases/db/relational/connection/+page.svelte`
+- `src/routes/showcases/db/relational/types/+page.server.ts`
+- `src/routes/showcases/db/relational/types/+page.svelte`
+- `src/routes/showcases/db/relational/mutability/+page.server.ts`
+- `src/routes/showcases/db/relational/mutability/+page.svelte`
 
 **Config (1):**
 - `drizzle.config.ts`

@@ -37,11 +37,11 @@ No documentation drift. No stale examples. The template validates itself.
 │   ├── /data                        # CRUD & data display
 │   ├── /db                          # Database showcases
 │   │   ├── +page.svelte             # Hub (Relational, Graph, Storage cards)
-│   │   ├── /postgres                # PostgreSQL showcase
+│   │   ├── /relational              # PostgreSQL showcase
 │   │   │   ├── /connection          # Neon health check + latency
 │   │   │   ├── /types               # Full type system demo
 │   │   │   └── /mutability          # CRUD, versioning, soft delete, temporal, audit
-│   │   ├── /neo4j                   # Graph database showcase
+│   │   ├── /graph                   # Graph database showcase
 │   │   │   ├── /connection          # Aura health check + stats
 │   │   │   ├── /model               # Labels, relationships, full graph viz
 │   │   │   └── /traversal           # Path finding, recommendations
@@ -786,11 +786,11 @@ src/routes/
 │   ├── data/+page.svelte
 │   ├── db/                           # Database showcases
 │   │   ├── +page.svelte              # Hub page
-│   │   ├── postgres/
+│   │   ├── relational/
 │   │   │   ├── connection/+page.server.ts
 │   │   │   ├── types/+page.server.ts
 │   │   │   └── mutability/+page.server.ts
-│   │   ├── neo4j/
+│   │   ├── graph/
 │   │   │   ├── connection/+page.server.ts
 │   │   │   ├── model/+page.server.ts
 │   │   │   └── traversal/+page.server.ts

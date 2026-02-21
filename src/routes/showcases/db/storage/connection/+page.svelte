@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { PageHeader, BackLink, Card, ConfirmDialog } from '$lib/components/composites';
-	import { Badge, Button, Spinner } from '$lib/components/primitives';
+	import { PageHeader, BackLink, Card, ConfirmDialog, Alert } from '$lib/components/composites';
+	import { Badge, Button, Spinner, Typography } from '$lib/components/primitives';
+	import { PageContainer, Stack, Cluster } from '$lib/components/layout';
 	import { getToast } from '$lib/stores/toast.svelte';
 
 	let { data } = $props();
@@ -39,7 +40,7 @@
 	<title>Connection - Storage - Showcases - Velociraptor</title>
 </svelte:head>
 
-<div class="page">
+<PageContainer class="py-7">
 	<PageHeader
 		title="Connection"
 		description="Live R2 bucket health check via S3-compatible API. The latency below was measured during your page load."
@@ -52,12 +53,12 @@
 		]}
 	/>
 
-	<div class="cards">
+	<Stack gap="6">
 		<!-- Status -->
 		<Card>
 			{#snippet header()}
-				<div class="card-header-row">
-					<h2 class="text-fluid-lg font-semibold">Status</h2>
+				<Cluster justify="between">
+					<Typography variant="h5" as="h2">Status</Typography>
 					<form
 						method="POST"
 						action="?/retest"
@@ -78,7 +79,7 @@
 							Re-test
 						</Button>
 					</form>
-				</div>
+				</Cluster>
 			{/snippet}
 
 			<div class="diag-grid">
@@ -121,7 +122,7 @@
 			<!-- Bucket Info -->
 			<Card>
 				{#snippet header()}
-					<h2 class="text-fluid-lg font-semibold">Bucket Info</h2>
+					<Typography variant="h5" as="h2">Bucket Info</Typography>
 				{/snippet}
 
 				<div class="diag-grid">
@@ -155,25 +156,25 @@
 			<!-- About R2 Latency -->
 			<Card>
 				{#snippet header()}
-					<h2 class="text-fluid-lg font-semibold">About R2 Latency</h2>
+					<Typography variant="h5" as="h2">About R2 Latency</Typography>
 				{/snippet}
 
 				<div class="explanation">
 					<p>R2 is always-on — there are no cold starts like Neon (PostgreSQL) or Aura (Neo4j). Buckets are instantly available 24/7.</p>
 
 					<div class="tier-legend">
-						<div class="tier-item">
+						<Cluster gap="3">
 							<Badge variant="success">Fast</Badge>
 							<span>&lt; 150ms — Low network distance to R2 edge</span>
-						</div>
-						<div class="tier-item">
+						</Cluster>
+						<Cluster gap="3">
 							<Badge variant="warning">Slow</Badge>
 							<span>150–500ms — Higher network distance or listing many objects</span>
-						</div>
-						<div class="tier-item">
+						</Cluster>
+						<Cluster gap="3">
 							<Badge variant="error">Degraded</Badge>
 							<span>&gt; 500ms — Network issues or R2 service degradation</span>
-						</div>
+						</Cluster>
 					</div>
 
 					<p class="hint">Latency tiers reflect network distance, not wake-up time. Click Re-test to measure again.</p>
@@ -181,27 +182,23 @@
 			</Card>
 		{:else}
 			<!-- Error State -->
-			<Card>
-				{#snippet header()}
-					<h2 class="text-fluid-lg font-semibold">Connection Error</h2>
-				{/snippet}
-
-				<div class="error-info">
-					<code class="error-msg">{data.error}</code>
-					<p>Check that the following environment variables are set in <code>.env</code>:</p>
+			<Alert variant="error" title="Connection Error">
+				{#snippet children()}
+					<code class="alert-code">{data.error}</code>
+					<p class="alert-text">Check that the following environment variables are set in <code>.env</code>:</p>
 					<ul class="env-checklist">
 						<li><code>R2_ACCOUNT_ID</code></li>
 						<li><code>R2_ACCESS_KEY_ID</code></li>
 						<li><code>R2_SECRET_ACCESS_KEY</code></li>
 						<li><code>R2_BUCKET_NAME</code></li>
 					</ul>
-				</div>
-			</Card>
+				{/snippet}
+			</Alert>
 		{/if}
-	</div>
+	</Stack>
 
 	{#if data.connected}
-		<div class="reseed-section">
+		<Cluster justify="center" class="mt-6 mb-4">
 			<Button variant="outline" size="sm" onclick={() => reseedDialogOpen = true} disabled={reseeding}>
 				{#if reseeding}
 					<Spinner size="xs" class="mr-2" />
@@ -209,11 +206,11 @@
 				<span class="i-lucide-rotate-ccw h-4 w-4 mr-1" />
 				Reseed Showcase Data
 			</Button>
-		</div>
+		</Cluster>
 	{/if}
 
 	<BackLink href="/showcases/db/storage" label="Storage" />
-</div>
+</PageContainer>
 
 <ConfirmDialog
 	bind:open={reseedDialogOpen}
@@ -250,26 +247,6 @@
 </form>
 
 <style>
-	.page {
-		width: 100%;
-		max-width: var(--layout-max-width);
-		margin: 0 auto;
-		padding: var(--spacing-7) var(--spacing-4);
-		box-sizing: border-box;
-	}
-
-	.cards {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-6);
-	}
-
-	.card-header-row {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-	}
-
 	.diag-grid {
 		display: flex;
 		flex-direction: column;
@@ -338,12 +315,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-2);
-	}
-
-	.tier-item {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-3);
 		font-size: var(--text-fluid-sm);
 	}
 
@@ -351,22 +322,14 @@
 		font-style: italic;
 	}
 
-	.error-info {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-3);
-	}
-
-	.error-msg {
+	.alert-code {
 		font-family: ui-monospace, monospace;
 		font-size: var(--text-fluid-sm);
-		color: var(--color-error);
 		word-break: break-all;
 	}
 
-	.error-info p {
+	.alert-text {
 		margin: 0;
-		color: var(--color-muted);
 		font-size: var(--text-fluid-sm);
 	}
 
@@ -396,26 +359,7 @@
 		font-size: var(--text-fluid-xs);
 	}
 
-	.reseed-section {
-		display: flex;
-		justify-content: center;
-		margin-top: var(--spacing-6);
-		margin-bottom: var(--spacing-4);
-	}
-
 	.hidden {
 		display: none;
-	}
-
-	@media (min-width: 768px) {
-		.page {
-			padding: var(--spacing-7);
-		}
-	}
-
-	@media (max-width: 640px) {
-		.page {
-			padding: var(--spacing-4);
-		}
 	}
 </style>

@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
-	import { PageHeader, BackLink, Card, SectionNav } from '$lib/components/composites';
-	import { Badge, Button, Spinner } from '$lib/components/primitives';
+	import { PageHeader, BackLink, Card, SectionNav, Alert } from '$lib/components/composites';
+	import { Badge, Button, Spinner, Typography } from '$lib/components/primitives';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
 	import { ToggleGroup } from '$lib/components/primitives';
+	import { PageContainer, Stack } from '$lib/components/layout';
 	import { getToast } from '$lib/stores/toast.svelte';
 
 	let { data } = $props();
@@ -86,7 +87,7 @@
 	<title>Objects - Storage - Showcases - Velociraptor</title>
 </svelte:head>
 
-<div class="page">
+<PageContainer class="py-7">
 	<PageHeader
 		title="Objects"
 		description="Browse showcase objects, inspect metadata, and generate presigned download URLs. Loaded in {data.queryMs}ms."
@@ -100,21 +101,16 @@
 	/>
 
 	{#if data.error}
-		<Card>
-			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Error</h2>
-			{/snippet}
-			<code class="error-msg">{data.error}</code>
-		</Card>
+		<Alert variant="error" title="Error" description={data.error} />
 	{:else}
 		<SectionNav {sections} ariaLabel="Object operations" />
 
-		<div class="sections">
+		<Stack gap="7">
 			<!-- ═══ BROWSER ═══ -->
 			<section id="browser">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Browser</h2>
+						<Typography variant="h5" as="h2">Browser</Typography>
 						<p class="section-desc">{data.objects.length} objects in the showcase namespace.</p>
 					{/snippet}
 
@@ -174,7 +170,7 @@
 							</Table>
 						</div>
 					{:else}
-						<p class="empty">No objects. Go to the <a href="/showcases/db/storage/connection">Connection</a> page and click Reseed.</p>
+						<Typography variant="muted" as="p" class="italic">No objects. Go to the <a href="/showcases/db/storage/connection" class="text-primary">Connection</a> page and click Reseed.</Typography>
 					{/if}
 				</Card>
 			</section>
@@ -183,7 +179,7 @@
 			<section id="metadata">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Metadata</h2>
+						<Typography variant="h5" as="h2">Metadata</Typography>
 						<p class="section-desc">
 							{#if inspectedDetail}
 								Inspecting <code>{inspectedDetail.key}</code>
@@ -236,7 +232,7 @@
 
 						{#if Object.keys(inspectedDetail.metadata).length > 0}
 							<div class="custom-metadata">
-								<h3 class="sub-heading">Custom Metadata</h3>
+								<Typography variant="h6" as="h3" class="mb-3">Custom Metadata</Typography>
 								<div class="diag-grid">
 									{#each Object.entries(inspectedDetail.metadata) as [k, v]}
 										<div class="diag-row">
@@ -248,7 +244,7 @@
 							</div>
 						{/if}
 					{:else}
-						<p class="empty">No object selected. Click Inspect in the Browser section above.</p>
+						<Typography variant="muted" as="p" class="italic">No object selected. Click Inspect in the Browser section above.</Typography>
 					{/if}
 				</Card>
 			</section>
@@ -257,7 +253,7 @@
 			<section id="presigned">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Presigned URLs</h2>
+						<Typography variant="h5" as="h2">Presigned URLs</Typography>
 						<p class="section-desc">Generate a temporary, signed URL for direct download. The URL expires after the selected duration.</p>
 					{/snippet}
 
@@ -317,7 +313,7 @@
 					</form>
 
 					{#if presignedResult}
-						<div class="presign-result">
+						<Stack gap="3" class="pt-4 border-t border-border">
 							<div class="presign-url-row">
 								<code class="presign-url">{presignedResult.url}</code>
 								<Button variant="ghost" size="sm" onclick={() => copyToClipboard(presignedResult!.url)}>
@@ -336,31 +332,17 @@
 									<Badge variant="error">Expired</Badge>
 								{/if}
 							</div>
-						</div>
+						</Stack>
 					{/if}
 				</Card>
 			</section>
-		</div>
+		</Stack>
 	{/if}
 
 	<BackLink href="/showcases/db/storage" label="Storage" />
-</div>
+</PageContainer>
 
 <style>
-	.page {
-		width: 100%;
-		max-width: var(--layout-max-width);
-		margin: 0 auto;
-		padding: var(--spacing-7) var(--spacing-4);
-		box-sizing: border-box;
-	}
-
-	.sections {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-7);
-	}
-
 	.section-desc {
 		margin: var(--spacing-1) 0 0;
 		color: var(--color-muted);
@@ -382,21 +364,6 @@
 		font-family: ui-monospace, monospace;
 		font-size: var(--text-fluid-xs);
 		color: var(--color-muted);
-	}
-
-	.empty {
-		color: var(--color-muted);
-		font-style: italic;
-	}
-
-	.empty a {
-		color: var(--color-primary);
-	}
-
-	.error-msg {
-		font-family: ui-monospace, monospace;
-		color: var(--color-error);
-		word-break: break-all;
 	}
 
 	/* ─── Metadata ─── */
@@ -446,12 +413,6 @@
 		border-top: 1px solid var(--color-border);
 	}
 
-	.sub-heading {
-		font-size: var(--text-fluid-base);
-		font-weight: 600;
-		margin: 0 0 var(--spacing-3);
-	}
-
 	/* ─── Presigned URLs ─── */
 	.presign-form {
 		display: flex;
@@ -489,15 +450,6 @@
 		font-family: ui-monospace, monospace;
 	}
 
-	.presign-result {
-		margin-top: var(--spacing-4);
-		padding-top: var(--spacing-4);
-		border-top: 1px solid var(--color-border);
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-3);
-	}
-
 	.presign-url-row {
 		display: flex;
 		align-items: flex-start;
@@ -521,17 +473,7 @@
 		gap: var(--spacing-2);
 	}
 
-	@media (min-width: 768px) {
-		.page {
-			padding: var(--spacing-7);
-		}
-	}
-
 	@media (max-width: 640px) {
-		.page {
-			padding: var(--spacing-4);
-		}
-
 		.presign-controls {
 			flex-direction: column;
 		}

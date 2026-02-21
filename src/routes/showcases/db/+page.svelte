@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { PageHeader, BackLink } from '$lib/components/composites';
 	import { LinkCard } from '$lib/components';
+	import { PageContainer } from '$lib/components/layout';
 </script>
 
 <svelte:head>
 	<title>Database - Showcases - Velociraptor</title>
 </svelte:head>
 
-<div class="page">
+<PageContainer class="py-7">
 	<PageHeader
 		title="Database"
 		description="Database engines, connection patterns, type systems, and data strategies."
@@ -18,15 +19,15 @@
 		]}
 	/>
 
-	<nav class="db-nav">
+	<nav class="nav-grid">
 		<LinkCard
-			href="/showcases/db/postgres"
+			href="/showcases/db/relational"
 			icon="i-lucide-database"
 			title="Relational"
 			description="Neon serverless — type system, JSONB, arrays, ranges, and mutability patterns via Drizzle ORM"
 		/>
 		<LinkCard
-			href="/showcases/db/neo4j"
+			href="/showcases/db/graph"
 			icon="i-lucide-share-2"
 			title="Graph"
 			description="Aura graph database — nodes, relationships, Cypher queries, and traversals"
@@ -40,32 +41,12 @@
 	</nav>
 
 	<BackLink href="/showcases" label="Showcases" />
-</div>
+</PageContainer>
 
 <style>
-	.page {
-		width: 100%;
-		max-width: var(--layout-max-width);
-		margin: 0 auto;
-		padding: var(--spacing-7) var(--spacing-4);
-		box-sizing: border-box;
-	}
-
-	.db-nav {
+	.nav-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 		gap: var(--spacing-6);
-	}
-
-	@media (min-width: 768px) {
-		.page {
-			padding: var(--spacing-7);
-		}
-	}
-
-	@media (max-width: 640px) {
-		.page {
-			padding: var(--spacing-4);
-		}
 	}
 </style>

@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
-	import { PageHeader, BackLink, Card, SectionNav } from '$lib/components/composites';
-	import { Badge, Button, Spinner, Progress } from '$lib/components/primitives';
+	import { PageHeader, BackLink, Card, SectionNav, Alert } from '$lib/components/composites';
+	import { Badge, Button, Spinner, Progress, Typography } from '$lib/components/primitives';
+	import { PageContainer, Stack, Cluster } from '$lib/components/layout';
 	import { getToast } from '$lib/stores/toast.svelte';
 
 	let { data } = $props();
@@ -154,7 +155,7 @@
 	<title>Transfer - Storage - Showcases - Velociraptor</title>
 </svelte:head>
 
-<div class="page">
+<PageContainer class="py-7">
 	<PageHeader
 		title="Transfer"
 		description="Upload files via presigned URLs, fetch byte ranges, and understand MIME type enforcement."
@@ -169,12 +170,12 @@
 
 	<SectionNav {sections} ariaLabel="Transfer operations" />
 
-	<div class="sections">
+	<Stack gap="7">
 		<!-- ═══ UPLOAD ═══ -->
 		<section id="upload">
 			<Card>
 				{#snippet header()}
-					<h2 class="text-fluid-lg font-semibold">Upload</h2>
+					<Typography variant="h5" as="h2">Upload</Typography>
 					<p class="section-desc">Upload a file directly to R2 via a presigned URL. The server generates the URL, then the browser uploads directly to R2 — the file never passes through the server.</p>
 				{/snippet}
 
@@ -199,10 +200,7 @@
 					</label>
 
 					{#if uploadError}
-						<div class="upload-error" role="alert">
-							<span class="i-lucide-alert-circle h-4 w-4" />
-							<span>{uploadError}</span>
-						</div>
+						<Alert variant="error" description={uploadError} class="mt-4" />
 					{/if}
 
 					{#if selectedFile}
@@ -280,15 +278,15 @@
 								<code class="diag-mono">{uploadResult.etag}</code>
 							</div>
 						</div>
-						<div class="upload-done-actions">
+						<Cluster gap="4" align="center">
 							<Button variant="outline" size="sm" onclick={resetUpload}>
 								<span class="i-lucide-upload h-4 w-4 mr-1" />
 								Upload Another
 							</Button>
-							<a href="/showcases/db/storage/objects" class="objects-link">
+							<a href="/showcases/db/storage/objects" class="text-fluid-sm text-primary">
 								View on Objects page
 							</a>
-						</div>
+						</Cluster>
 					</div>
 				{/if}
 			</Card>
@@ -317,7 +315,7 @@
 		<section id="range">
 			<Card>
 				{#snippet header()}
-					<h2 class="text-fluid-lg font-semibold">Range Requests</h2>
+					<Typography variant="h5" as="h2">Range Requests</Typography>
 					<p class="section-desc">Fetch a byte range from <code>showcase/large/padded.bin</code> (1 MB repeating pattern). R2 supports the <code>Range</code> HTTP header for partial reads.</p>
 				{/snippet}
 
@@ -378,7 +376,7 @@
 					</Button>
 
 					{#if rangeEnd - rangeStart > 1024}
-						<p class="range-warn">Max 1024 bytes per request.</p>
+						<Alert variant="warning" description="Max 1024 bytes per request." />
 					{/if}
 				</form>
 
@@ -398,7 +396,7 @@
 		<section id="mime">
 			<Card>
 				{#snippet header()}
-					<h2 class="text-fluid-lg font-semibold">MIME Enforcement</h2>
+					<Typography variant="h5" as="h2">MIME Enforcement</Typography>
 					<p class="section-desc">How presigned URLs lock Content-Type into the signature, preventing type-mismatch attacks.</p>
 				{/snippet}
 
@@ -428,7 +426,7 @@
 					</div>
 
 					<div class="mime-code">
-						<h3 class="sub-heading">How It Works</h3>
+						<Typography variant="h6" as="h3" class="mb-3">How It Works</Typography>
 						<pre><code>// Server: Content-Type is baked into the signature
 const command = new PutObjectCommand(&#123;
   Bucket: BUCKET,
@@ -453,26 +451,12 @@ fetch(url, &#123;
 				</div>
 			</Card>
 		</section>
-	</div>
+	</Stack>
 
 	<BackLink href="/showcases/db/storage" label="Storage" />
-</div>
+</PageContainer>
 
 <style>
-	.page {
-		width: 100%;
-		max-width: var(--layout-max-width);
-		margin: 0 auto;
-		padding: var(--spacing-7) var(--spacing-4);
-		box-sizing: border-box;
-	}
-
-	.sections {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-7);
-	}
-
 	.section-desc {
 		margin: var(--spacing-1) 0 0;
 		color: var(--color-muted);
@@ -554,19 +538,6 @@ fetch(url, &#123;
 		color: var(--color-muted);
 	}
 
-	.upload-error {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-2);
-		padding: var(--spacing-3) var(--spacing-4);
-		background: color-mix(in srgb, var(--color-error) 10%, transparent);
-		border: 1px solid var(--color-error);
-		border-radius: var(--radius-md);
-		margin-top: var(--spacing-4);
-		color: var(--color-error);
-		font-size: var(--text-fluid-sm);
-	}
-
 	.upload-status {
 		display: flex;
 		align-items: center;
@@ -587,17 +558,6 @@ fetch(url, &#123;
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-4);
-	}
-
-	.upload-done-actions {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-4);
-	}
-
-	.objects-link {
-		font-size: var(--text-fluid-sm);
-		color: var(--color-primary);
 	}
 
 	/* ─── Diag grid (shared) ─── */
@@ -677,12 +637,6 @@ fetch(url, &#123;
 	.range-size code {
 		font-family: ui-monospace, monospace;
 		font-size: var(--text-fluid-sm);
-	}
-
-	.range-warn {
-		color: var(--color-error);
-		font-size: var(--text-fluid-xs);
-		margin: 0;
 	}
 
 	.range-result {
@@ -778,12 +732,6 @@ fetch(url, &#123;
 		white-space: pre;
 	}
 
-	.sub-heading {
-		font-size: var(--text-fluid-base);
-		font-weight: 600;
-		margin: 0 0 var(--spacing-3);
-	}
-
 	.mime-note p {
 		margin: 0;
 		color: var(--color-muted);
@@ -792,17 +740,7 @@ fetch(url, &#123;
 		font-style: italic;
 	}
 
-	@media (min-width: 768px) {
-		.page {
-			padding: var(--spacing-7);
-		}
-	}
-
 	@media (max-width: 640px) {
-		.page {
-			padding: var(--spacing-4);
-		}
-
 		.mime-comparison {
 			grid-template-columns: 1fr;
 		}

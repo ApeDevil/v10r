@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { PageHeader, BackLink, Card, SectionNav, ConfirmDialog } from '$lib/components/composites';
-	import { Badge, Button, Tooltip } from '$lib/components/primitives';
+	import { PageHeader, BackLink, Card, SectionNav, ConfirmDialog, Alert } from '$lib/components/composites';
+	import { Badge, Button, Tooltip, Typography } from '$lib/components/primitives';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
+	import { PageContainer, Stack } from '$lib/components/layout';
 	import { getToast } from '$lib/stores/toast.svelte';
 
 	let { data } = $props();
@@ -34,7 +35,7 @@
 	<title>Type System - Relational - Showcases - Velociraptor</title>
 </svelte:head>
 
-<div class="page">
+<PageContainer class="py-7">
 	<PageHeader
 		title="Type System"
 		description="Every PostgreSQL type demonstrated with live data from Neon. Loaded in {data.queryMs}ms ({data.specimens.length + data.temporals.length + data.documents.length + data.collections.length + data.networks.length + data.bookings.length + data.audits.length} total rows, 7 parallel queries)."
@@ -42,28 +43,27 @@
 			{ label: 'Home', href: '/' },
 			{ label: 'Showcases', href: '/showcases' },
 			{ label: 'DB', href: '/showcases/db' },
-			{ label: 'Relational', href: '/showcases/db/postgres' },
+			{ label: 'Relational', href: '/showcases/db/relational' },
 			{ label: 'Types' }
 		]}
 	/>
 
 	{#if data.error}
-		<Card>
-			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Database Error</h2>
+		<Alert variant="error" title="Database Error">
+			{#snippet children()}
+				<code class="font-mono text-fluid-sm break-all">{data.error}</code>
+				<p class="text-fluid-sm mt-2">Run <code>db:push</code> to initialize the showcase schema, then use the Reseed button.</p>
 			{/snippet}
-			<code class="error-msg">{data.error}</code>
-			<p class="error-hint">Run <code>db:push</code> to initialize the showcase schema, then use the Reseed button.</p>
-		</Card>
+		</Alert>
 	{:else}
 		<SectionNav {sections} ariaLabel="Type categories" />
 
-		<div class="sections">
+		<Stack gap="7">
 			<!-- NUMERIC TYPES -->
 			<section id="numeric">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Numeric Types</h2>
+						<Typography variant="h5" as="h2">Numeric Types</Typography>
 						<p class="section-desc">PostgreSQL stores exact and approximate numbers. Choose based on precision — <code>numeric</code> is exact, <code>real</code>/<code>double</code> are not.</p>
 					{/snippet}
 
@@ -97,7 +97,7 @@
 							</Table>
 						</div>
 					{:else}
-						<p class="empty">No data. Run the seed script.</p>
+						<Typography variant="muted" as="p">No data. Run the seed script.</Typography>
 					{/if}
 				</Card>
 			</section>
@@ -106,7 +106,7 @@
 			<section id="text">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Text / String Types</h2>
+						<Typography variant="h5" as="h2">Text / String Types</Typography>
 						<p class="section-desc"><code>text</code> is the workhorse — no performance penalty vs <code>varchar</code>. Use <code>varchar(n)</code> only when you need a constraint. <code>char(n)</code> is space-padded and rarely useful.</p>
 					{/snippet}
 
@@ -139,7 +139,7 @@
 			<section id="temporal">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Date & Time Types</h2>
+						<Typography variant="h5" as="h2">Date & Time Types</Typography>
 						<p class="section-desc">Always use <code>timestamptz</code> for wall-clock times. <code>timestamp</code> without timezone is rarely correct. <code>interval</code> stores durations PostgreSQL can do arithmetic with.</p>
 					{/snippet}
 
@@ -169,7 +169,7 @@
 							</Table>
 						</div>
 					{:else}
-						<p class="empty">No data. Run the seed script.</p>
+						<Typography variant="muted" as="p">No data. Run the seed script.</Typography>
 					{/if}
 				</Card>
 			</section>
@@ -178,7 +178,7 @@
 			<section id="boolean">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Boolean</h2>
+						<Typography variant="h5" as="h2">Boolean</Typography>
 						<p class="section-desc">PostgreSQL accepts many literals: <code>true</code>, <code>'yes'</code>, <code>'on'</code>, <code>'1'</code>. Always store as <code>boolean</code>, never as integer or string.</p>
 					{/snippet}
 
@@ -201,7 +201,7 @@
 			<section id="uuid">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">UUID</h2>
+						<Typography variant="h5" as="h2">UUID</Typography>
 						<p class="section-desc">128-bit universally unique identifiers. <code>gen_random_uuid()</code> generates v4 UUIDs natively (PG 13+, no extension needed). Use for external-facing IDs — keep <code>serial</code> for internal references.</p>
 					{/snippet}
 
@@ -222,7 +222,7 @@
 			<section id="json">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">JSON Types</h2>
+						<Typography variant="h5" as="h2">JSON Types</Typography>
 						<p class="section-desc">Always use <code>jsonb</code>. It's parsed binary — indexable with GIN, queryable with <code>@&gt;</code> containment and <code>-&gt;&gt;</code> path extraction. <code>json</code> stores verbatim text (preserving whitespace and duplicate keys).</p>
 					{/snippet}
 
@@ -250,7 +250,7 @@
 							{/each}
 						</div>
 					{:else}
-						<p class="empty">No data. Run the seed script.</p>
+						<Typography variant="muted" as="p">No data. Run the seed script.</Typography>
 					{/if}
 				</Card>
 			</section>
@@ -259,7 +259,7 @@
 			<section id="arrays">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Arrays</h2>
+						<Typography variant="h5" as="h2">Arrays</Typography>
 						<p class="section-desc">PostgreSQL arrays are powerful for tags, labels, and ordered lists. GIN indexes enable fast <code>@&gt;</code> containment queries. Use junction tables instead when elements need foreign keys.</p>
 					{/snippet}
 
@@ -295,7 +295,7 @@
 							</Table>
 						</div>
 					{:else}
-						<p class="empty">No data. Run the seed script.</p>
+						<Typography variant="muted" as="p">No data. Run the seed script.</Typography>
 					{/if}
 				</Card>
 			</section>
@@ -304,7 +304,7 @@
 			<section id="ranges">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Range Types</h2>
+						<Typography variant="h5" as="h2">Range Types</Typography>
 						<p class="section-desc">One of PostgreSQL's most underappreciated features. A single <code>tstzrange</code> replaces separate start/end columns, with native overlap (<code>&amp;&amp;</code>), containment (<code>@&gt;</code>), and adjacency (<code>-|-</code>) operators. GiST indexes make them fast.</p>
 					{/snippet}
 
@@ -334,7 +334,7 @@
 							</Table>
 						</div>
 					{:else}
-						<p class="empty">No data. Run the seed script.</p>
+						<Typography variant="muted" as="p">No data. Run the seed script.</Typography>
 					{/if}
 				</Card>
 			</section>
@@ -343,7 +343,7 @@
 			<section id="network">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Network & Geometry Types</h2>
+						<Typography variant="h5" as="h2">Network & Geometry Types</Typography>
 						<p class="section-desc"><code>inet</code> for host addresses, <code>cidr</code> for networks, <code>macaddr</code> for hardware. All support containment operators (<code>&lt;&lt;</code>, <code>&gt;&gt;</code>). <code>point</code> for simple 2D coordinates — use PostGIS for serious GIS work.</p>
 					{/snippet}
 
@@ -373,7 +373,7 @@
 							</Table>
 						</div>
 					{:else}
-						<p class="empty">No data. Run the seed script.</p>
+						<Typography variant="muted" as="p">No data. Run the seed script.</Typography>
 					{/if}
 				</Card>
 			</section>
@@ -382,7 +382,7 @@
 			<section id="enums">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Enums & Audit Log</h2>
+						<Typography variant="h5" as="h2">Enums & Audit Log</Typography>
 						<p class="section-desc"><code>pgEnum</code> creates real PostgreSQL ENUM types — 4-byte storage, type-safe at DB level. Caveat: adding values requires <code>ALTER TYPE</code>, can't remove without recreation. Use for stable sets only.</p>
 					{/snippet}
 
@@ -417,24 +417,24 @@
 							</Table>
 						</div>
 					{:else}
-						<p class="empty">No data. Run the seed script.</p>
+						<Typography variant="muted" as="p">No data. Run the seed script.</Typography>
 					{/if}
 				</Card>
 			</section>
-		</div>
+		</Stack>
 	{/if}
 
 	<!-- Reset button -->
-	<div class="reset-section">
+	<Stack gap="2" class="items-center mt-6 mb-4">
 		<Button variant="outline" size="sm" onclick={() => resetDialogOpen = true}>
 			<span class="i-lucide-rotate-ccw h-4 w-4 mr-1" />
 			Reset to Seed Data
 		</Button>
-		<span class="reset-hint">Types are read-only. See <a href="/showcases/db/postgres/mutability">Mutability</a> for live write operations.</span>
-	</div>
+		<span class="reset-hint">Types are read-only. See <a href="/showcases/db/relational/mutability">Mutability</a> for live write operations.</span>
+	</Stack>
 
-	<BackLink href="/showcases/db/postgres" label="Relational" />
-</div>
+	<BackLink href="/showcases/db/relational" label="Relational" />
+</PageContainer>
 
 <ConfirmDialog
 	bind:open={resetDialogOpen}
@@ -454,7 +454,7 @@
 	id="reseed-form"
 	method="POST"
 	action="?/reseed"
-	style="display:none"
+	class="hidden"
 	use:enhance={() => {
 		return async ({ result, update }) => {
 			if (result.type === 'success') {
@@ -469,20 +469,6 @@
 </form>
 
 <style>
-	.page {
-		width: 100%;
-		max-width: var(--layout-max-width);
-		margin: 0 auto;
-		padding: var(--spacing-7) var(--spacing-4);
-		box-sizing: border-box;
-	}
-
-	.sections {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-7);
-	}
-
 	.section-desc {
 		margin: var(--spacing-1) 0 0;
 		color: var(--color-muted);
@@ -492,23 +478,6 @@
 
 	.table-wrap {
 		overflow-x: auto;
-	}
-
-	.empty {
-		color: var(--color-muted);
-		font-style: italic;
-	}
-
-	.error-msg {
-		font-family: ui-monospace, monospace;
-		color: var(--color-error);
-		word-break: break-all;
-	}
-
-	.error-hint {
-		color: var(--color-muted);
-		font-size: var(--text-fluid-sm);
-		margin-top: var(--spacing-2);
 	}
 
 	/* Boolean grid */
@@ -632,15 +601,6 @@
 		cursor: help;
 	}
 
-	.reset-section {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: var(--spacing-2);
-		margin-top: var(--spacing-6);
-		margin-bottom: var(--spacing-4);
-	}
-
 	.reset-hint {
 		font-size: var(--text-fluid-xs);
 		color: var(--color-muted);
@@ -651,15 +611,7 @@
 		text-decoration: underline;
 	}
 
-	@media (min-width: 768px) {
-		.page {
-			padding: var(--spacing-7);
-		}
-	}
-
-	@media (max-width: 640px) {
-		.page {
-			padding: var(--spacing-4);
-		}
+	.hidden {
+		display: none;
 	}
 </style>

@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { page } from '$app/state';
-	import { PageHeader, BackLink, Card, SectionNav } from '$lib/components/composites';
-	import { Badge, Button, Select, Spinner } from '$lib/components/primitives';
+	import { PageHeader, BackLink, Card, SectionNav, Alert } from '$lib/components/composites';
+	import { Badge, Button, Select, Spinner, Typography } from '$lib/components/primitives';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
 	import { getToast } from '$lib/stores/toast.svelte';
+	import { PageContainer, Stack } from '$lib/components/layout';
 
 	let { data } = $props();
 	const toast = getToast();
@@ -72,7 +72,7 @@
 	<title>Traversal - Graph - Showcases - Velociraptor</title>
 </svelte:head>
 
-<div class="page">
+<PageContainer class="py-7">
 	<PageHeader
 		title="Traversal"
 		description="Interactive graph traversal patterns — browse connected nodes, find shortest paths, get recommendations, and run Cypher queries."
@@ -80,31 +80,26 @@
 			{ label: 'Home', href: '/' },
 			{ label: 'Showcases', href: '/showcases' },
 			{ label: 'DB', href: '/showcases/db' },
-			{ label: 'Graph', href: '/showcases/db/neo4j' },
+			{ label: 'Graph', href: '/showcases/db/graph' },
 			{ label: 'Traversal' }
 		]}
 	/>
 
 	{#if data.error}
-		<Card>
-			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Database Error</h2>
-			{/snippet}
-			<div class="error-info">
-				<code class="error-msg">{data.error}</code>
-				<p>Seed the graph from the <a href="/showcases/db/neo4j/model">Model</a> page first.</p>
-			</div>
-		</Card>
+		<Alert variant="error" title="Database Error">
+			<code>{data.error}</code>
+			<p>Seed the graph from the <a href="/showcases/db/graph/model">Model</a> page first.</p>
+		</Alert>
 	{:else}
 		<SectionNav {sections} ariaLabel="Traversal sections" />
 
-		<div class="sections">
+		<Stack gap="6">
 			<!-- BROWSE -->
 			<section id="browse">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Browse</h2>
-						<p class="section-desc">Select a node to see its properties and all connected neighbors.</p>
+						<Typography variant="h5" as="h2">Browse</Typography>
+						<Typography variant="muted" as="p">Select a node to see its properties and all connected neighbors.</Typography>
 					{/snippet}
 
 					<form
@@ -184,8 +179,8 @@
 			<section id="shortest-path">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Shortest Path</h2>
-						<p class="section-desc">Find the shortest connection between any two nodes using <code>shortestPath()</code>.</p>
+						<Typography variant="h5" as="h2">Shortest Path</Typography>
+						<Typography variant="muted" as="p">Find the shortest connection between any two nodes using <code>shortestPath()</code>.</Typography>
 					{/snippet}
 
 					<form
@@ -213,7 +208,7 @@
 					</form>
 
 					{#if pathMessage}
-						<p class="empty">{pathMessage}</p>
+						<Typography variant="muted" as="p">{pathMessage}</Typography>
 					{/if}
 
 					{#if pathResult && pathResult.length > 0}
@@ -240,8 +235,8 @@
 			<section id="recommendations">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Recommendations</h2>
-						<p class="section-desc">Find related items by traversing 2 hops through the graph. Items with more connecting paths score higher.</p>
+						<Typography variant="h5" as="h2">Recommendations</Typography>
+						<Typography variant="muted" as="p">Find related items by traversing 2 hops through the graph. Items with more connecting paths score higher.</Typography>
 					{/snippet}
 
 					<form
@@ -288,8 +283,8 @@
 			<section id="repl">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Cypher REPL</h2>
-						<p class="section-desc">Run read-only Cypher queries against the graph. Write operations (CREATE, DELETE, etc.) are blocked.</p>
+						<Typography variant="h5" as="h2">Cypher REPL</Typography>
+						<Typography variant="muted" as="p">Run read-only Cypher queries against the graph. Write operations (CREATE, DELETE, etc.) are blocked.</Typography>
 					{/snippet}
 
 					<form
@@ -344,7 +339,7 @@
 							</div>
 							<p class="result-count">{replResult.rows.length} row{replResult.rows.length !== 1 ? 's' : ''} returned</p>
 						{:else}
-							<p class="empty">Query returned no results.</p>
+							<Typography variant="muted" as="p">Query returned no results.</Typography>
 						{/if}
 					{/if}
 				</Card>
@@ -354,8 +349,8 @@
 			<section id="vs-sql">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Graph vs SQL</h2>
-						<p class="section-desc">Side-by-side comparison of common queries in Cypher and SQL.</p>
+						<Typography variant="h5" as="h2">Graph vs SQL</Typography>
+						<Typography variant="muted" as="p">Side-by-side comparison of common queries in Cypher and SQL.</Typography>
 					{/snippet}
 
 					<div class="comparison-list">
@@ -428,34 +423,13 @@ WHERE a.id &lt;&gt; b.id;</code></pre>
 					</div>
 				</Card>
 			</section>
-		</div>
+		</Stack>
 	{/if}
 
-	<BackLink href="/showcases/db/neo4j" label="Graph" />
-</div>
+	<BackLink href="/showcases/db/graph" label="Graph" />
+</PageContainer>
 
 <style>
-	.page {
-		width: 100%;
-		max-width: var(--layout-max-width);
-		margin: 0 auto;
-		padding: var(--spacing-7) var(--spacing-4);
-		box-sizing: border-box;
-	}
-
-	.sections {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-6);
-	}
-
-	.section-desc {
-		margin: 0;
-		margin-top: var(--spacing-1);
-		color: var(--color-muted);
-		font-size: var(--text-fluid-sm);
-	}
-
 	.action-row {
 		display: flex;
 		align-items: center;
@@ -684,45 +658,7 @@ WHERE a.id &lt;&gt; b.id;</code></pre>
 		line-height: 1.6;
 	}
 
-	/* ─── Shared ─────────────────────────────────────────── */
-
-	.empty {
-		color: var(--color-muted);
-		font-size: var(--text-fluid-sm);
-		text-align: center;
-		padding: var(--spacing-4) 0;
-	}
-
-	.error-info {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-3);
-	}
-
-	.error-msg {
-		font-family: ui-monospace, monospace;
-		font-size: var(--text-fluid-sm);
-		color: var(--color-error);
-		word-break: break-all;
-	}
-
-	.error-info p {
-		margin: 0;
-		color: var(--color-muted);
-		font-size: var(--text-fluid-sm);
-	}
-
-	@media (min-width: 768px) {
-		.page {
-			padding: var(--spacing-7);
-		}
-	}
-
 	@media (max-width: 640px) {
-		.page {
-			padding: var(--spacing-4);
-		}
-
 		.comparison-cols {
 			grid-template-columns: 1fr;
 		}

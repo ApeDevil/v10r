@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { PageHeader, BackLink, Card, SectionNav, ConfirmDialog } from '$lib/components/composites';
-	import { Badge, Button } from '$lib/components/primitives';
+	import { PageHeader, BackLink, Card, SectionNav, ConfirmDialog, Alert } from '$lib/components/composites';
+	import { Badge, Button, Typography } from '$lib/components/primitives';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
 	import { getToast } from '$lib/stores/toast.svelte';
+	import { PageContainer, Stack, Cluster } from '$lib/components/layout';
 	import KnowledgeGraph from '$lib/components/viz/graph/knowledge/KnowledgeGraph.svelte';
 
 	let { data } = $props();
@@ -56,7 +57,7 @@
 	<title>Model - Graph - Showcases - Velociraptor</title>
 </svelte:head>
 
-<div class="page">
+<PageContainer class="py-7">
 	<PageHeader
 		title="Model"
 		description="Graph schema introspection — {totalNodes} nodes, {totalRels} relationships across {data.labels.length} labels. Loaded in {data.queryMs}ms."
@@ -64,31 +65,26 @@
 			{ label: 'Home', href: '/' },
 			{ label: 'Showcases', href: '/showcases' },
 			{ label: 'DB', href: '/showcases/db' },
-			{ label: 'Graph', href: '/showcases/db/neo4j' },
+			{ label: 'Graph', href: '/showcases/db/graph' },
 			{ label: 'Model' }
 		]}
 	/>
 
 	{#if data.error}
-		<Card>
-			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Database Error</h2>
-			{/snippet}
-			<div class="error-info">
-				<code class="error-msg">{data.error}</code>
-				<p>Use the Reset Data button to seed the graph, or check your Neo4j connection.</p>
-			</div>
-		</Card>
+		<Alert variant="error" title="Database Error">
+			<code>{data.error}</code>
+			<p>Use the Reset Data button to seed the graph, or check your Neo4j connection.</p>
+		</Alert>
 	{:else}
 		<SectionNav {sections} ariaLabel="Model sections" />
 
-		<div class="sections">
+		<Stack gap="6">
 			<!-- NODE LABELS -->
 			<section id="labels">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Node Labels</h2>
-						<p class="section-desc">Each label represents a category of nodes in the graph. Like tables in a relational database, but schema-flexible.</p>
+						<Typography variant="h5" as="h2">Node Labels</Typography>
+						<Typography variant="muted" as="p">Each label represents a category of nodes in the graph. Like tables in a relational database, but schema-flexible.</Typography>
 					{/snippet}
 
 					{#if data.labels.length > 0}
@@ -119,7 +115,7 @@
 							</Table>
 						</div>
 					{:else}
-						<p class="empty">No labels found. Use Reset Data to seed the graph.</p>
+						<Typography variant="muted" as="p">No labels found. Use Reset Data to seed the graph.</Typography>
 					{/if}
 				</Card>
 			</section>
@@ -128,8 +124,8 @@
 			<section id="relationships">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Relationship Types</h2>
-						<p class="section-desc">Relationships connect nodes with typed, directed edges. Each type represents a distinct semantic connection.</p>
+						<Typography variant="h5" as="h2">Relationship Types</Typography>
+						<Typography variant="muted" as="p">Relationships connect nodes with typed, directed edges. Each type represents a distinct semantic connection.</Typography>
 					{/snippet}
 
 					{#if data.relTypes.length > 0}
@@ -160,7 +156,7 @@
 							</Table>
 						</div>
 					{:else}
-						<p class="empty">No relationship types found. Use Reset Data to seed the graph.</p>
+						<Typography variant="muted" as="p">No relationship types found. Use Reset Data to seed the graph.</Typography>
 					{/if}
 				</Card>
 			</section>
@@ -169,10 +165,10 @@
 			<section id="graph">
 				<Card>
 					{#snippet header()}
-						<div class="card-header-row">
+						<Cluster justify="between" align="start">
 							<div>
-								<h2 class="text-fluid-lg font-semibold">Graph Schema</h2>
-								<p class="section-desc">Interactive visualization of all nodes and relationships. Filter by entity type or search by name.</p>
+								<Typography variant="h5" as="h2">Graph Schema</Typography>
+								<Typography variant="muted" as="p">Interactive visualization of all nodes and relationships. Filter by entity type or search by name.</Typography>
 							</div>
 							<Button
 								variant="outline"
@@ -182,7 +178,7 @@
 								<span class="i-lucide-refresh-cw h-4 w-4 mr-1" />
 								Reset Data
 							</Button>
-						</div>
+						</Cluster>
 					{/snippet}
 
 					{#if data.graphData.nodes.length > 0}
@@ -191,7 +187,7 @@
 							ariaLabel="Tech stack knowledge graph"
 						/>
 					{:else}
-						<p class="empty">No graph data. Click Reset Data to seed the knowledge graph.</p>
+						<Typography variant="muted" as="p">No graph data. Click Reset Data to seed the knowledge graph.</Typography>
 					{/if}
 				</Card>
 			</section>
@@ -200,8 +196,8 @@
 			<section id="properties">
 				<Card>
 					{#snippet header()}
-						<h2 class="text-fluid-lg font-semibold">Properties</h2>
-						<p class="section-desc">Property keys collected from each entity type. Unlike relational columns, graph properties are schema-flexible per node.</p>
+						<Typography variant="h5" as="h2">Properties</Typography>
+						<Typography variant="muted" as="p">Property keys collected from each entity type. Unlike relational columns, graph properties are schema-flexible per node.</Typography>
 					{/snippet}
 
 					{#if propertyGroups.length > 0}
@@ -220,11 +216,11 @@
 							{/each}
 						</div>
 					{:else}
-						<p class="empty">No properties found.</p>
+						<Typography variant="muted" as="p">No properties found.</Typography>
 					{/if}
 				</Card>
 			</section>
-		</div>
+		</Stack>
 	{/if}
 
 	<ConfirmDialog
@@ -250,38 +246,10 @@
 	>
 	</form>
 
-	<BackLink href="/showcases/db/neo4j" label="Graph" />
-</div>
+	<BackLink href="/showcases/db/graph" label="Graph" />
+</PageContainer>
 
 <style>
-	.page {
-		width: 100%;
-		max-width: var(--layout-max-width);
-		margin: 0 auto;
-		padding: var(--spacing-7) var(--spacing-4);
-		box-sizing: border-box;
-	}
-
-	.sections {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-6);
-	}
-
-	.card-header-row {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-start;
-		gap: var(--spacing-4);
-	}
-
-	.section-desc {
-		margin: 0;
-		margin-top: var(--spacing-1);
-		color: var(--color-muted);
-		font-size: var(--text-fluid-sm);
-	}
-
 	.table-wrap {
 		overflow-x: auto;
 	}
@@ -327,47 +295,5 @@
 	.property-group-title {
 		margin: 0;
 		font-size: var(--text-fluid-base);
-	}
-
-	.empty {
-		color: var(--color-muted);
-		font-size: var(--text-fluid-sm);
-		text-align: center;
-		padding: var(--spacing-6) 0;
-	}
-
-	.hidden {
-		display: none;
-	}
-
-	.error-info {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-3);
-	}
-
-	.error-msg {
-		font-family: ui-monospace, monospace;
-		font-size: var(--text-fluid-sm);
-		color: var(--color-error);
-		word-break: break-all;
-	}
-
-	.error-info p {
-		margin: 0;
-		color: var(--color-muted);
-		font-size: var(--text-fluid-sm);
-	}
-
-	@media (min-width: 768px) {
-		.page {
-			padding: var(--spacing-7);
-		}
-	}
-
-	@media (max-width: 640px) {
-		.page {
-			padding: var(--spacing-4);
-		}
 	}
 </style>

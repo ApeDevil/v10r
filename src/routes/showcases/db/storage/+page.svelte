@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { PageHeader, BackLink } from '$lib/components/composites';
 	import { LinkCard } from '$lib/components';
+	import { PageContainer } from '$lib/components/layout';
 </script>
 
 <svelte:head>
 	<title>Storage - Database - Showcases - Velociraptor</title>
 </svelte:head>
 
-<div class="page">
+<PageContainer class="py-7">
 	<PageHeader
 		title="Storage"
 		description="Cloudflare R2 object storage — presigned URLs, file uploads, byte-range requests, and bucket management."
@@ -19,7 +20,7 @@
 		]}
 	/>
 
-	<nav class="r2-nav">
+	<nav class="nav-grid">
 		<LinkCard
 			href="/showcases/db/storage/connection"
 			icon="i-lucide-activity"
@@ -41,32 +42,12 @@
 	</nav>
 
 	<BackLink href="/showcases/db" label="Database" />
-</div>
+</PageContainer>
 
 <style>
-	.page {
-		width: 100%;
-		max-width: var(--layout-max-width);
-		margin: 0 auto;
-		padding: var(--spacing-7) var(--spacing-4);
-		box-sizing: border-box;
-	}
-
-	.r2-nav {
+	.nav-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 		gap: var(--spacing-6);
-	}
-
-	@media (min-width: 768px) {
-		.page {
-			padding: var(--spacing-7);
-		}
-	}
-
-	@media (max-width: 640px) {
-		.page {
-			padding: var(--spacing-4);
-		}
 	}
 </style>
