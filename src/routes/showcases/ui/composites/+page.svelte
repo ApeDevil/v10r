@@ -51,7 +51,6 @@
 	}
 
 	.content {
-		padding-top: var(--spacing-7);
 	}
 
 	@media (min-width: 768px) {

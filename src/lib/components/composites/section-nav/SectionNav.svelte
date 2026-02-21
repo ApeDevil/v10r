@@ -163,7 +163,8 @@
 		overflow: hidden;
 		background: var(--color-bg);
 		border-bottom: 1px solid transparent;
-		margin: 0 calc(-1 * var(--spacing-4));
+		margin-inline: calc(-1 * var(--spacing-4));
+		margin-bottom: var(--spacing-8);
 		padding: 0 var(--spacing-4);
 		transition:
 			border-color var(--duration-fast),
@@ -285,7 +286,7 @@
 
 	@media (min-width: 768px) {
 		.section-nav {
-			margin: 0 calc(-1 * var(--spacing-7));
+			margin-inline: calc(-1 * var(--spacing-7));
 			padding: 0 var(--spacing-7);
 		}
 
@@ -308,7 +309,7 @@
 
 	@media (max-width: 640px) {
 		.section-nav {
-			margin: 0 calc(-1 * var(--spacing-4));
+			margin-inline: calc(-1 * var(--spacing-4));
 			padding: 0 var(--spacing-4);
 		}
 

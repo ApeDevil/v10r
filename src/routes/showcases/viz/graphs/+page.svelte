@@ -918,7 +918,6 @@
 	}
 
 	.content {
-		padding-top: var(--spacing-7);
 	}
 
 	.section {

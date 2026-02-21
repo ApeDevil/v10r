@@ -69,7 +69,7 @@
 	.page-header {
 		background: var(--surface-0);
 		border-bottom: 1px solid var(--color-border);
-		padding: var(--spacing-6) var(--spacing-7);
+		padding: var(--spacing-4) var(--spacing-7) var(--spacing-6);
 		margin: calc(-1 * var(--spacing-7)) calc(-1 * var(--spacing-7)) var(--spacing-7) calc(-1 * var(--spacing-7));
 		width: calc(100% + var(--spacing-7) * 2);
 		box-sizing: border-box;
@@ -166,7 +166,7 @@
 
 	@media (max-width: 640px) {
 		.page-header {
-			padding: var(--spacing-4) var(--spacing-4);
+			padding: var(--spacing-2) var(--spacing-4) var(--spacing-4);
 			margin: calc(-1 * var(--spacing-4)) calc(-1 * var(--spacing-4)) var(--spacing-4) calc(-1 * var(--spacing-4));
 			width: calc(100% + var(--spacing-4) * 2);
 		}

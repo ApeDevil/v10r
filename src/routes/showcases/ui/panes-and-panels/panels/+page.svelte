@@ -229,7 +229,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-fluid-6);
-		padding-top: var(--spacing-7);
 	}
 
 	.dock-container {

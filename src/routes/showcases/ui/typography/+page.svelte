@@ -246,7 +246,6 @@
 	}
 
 	.content {
-		padding-top: var(--spacing-7);
 	}
 
 	.layout {
