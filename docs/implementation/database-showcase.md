@@ -15,7 +15,7 @@ A PostgreSQL showcase covering the full breadth of Postgres type system and muta
 ### Route Structure
 
 ```
-/showcases/db/                         → Hub (PostgreSQL, Neo4j, R2 link cards)
+/showcases/db/                         → Hub (Relational, Graph, Storage link cards)
   /showcases/db/postgres/              → PostgreSQL hub (Connection, Types, Mutability)
     /showcases/db/postgres/connection/ → Neon health check + latency tiers
     /showcases/db/postgres/types/      → 10-section type showcase with SectionNav
@@ -89,7 +89,7 @@ src/lib/server/db/
 
 ```
 src/routes/showcases/db/
-├── +page.svelte                       # DB hub (LinkCards to postgres, neo4j, r2)
+├── +page.svelte                       # DB hub (LinkCards: Relational, Graph, Storage)
 └── postgres/
     ├── +page.svelte                   # PostgreSQL hub
     ├── connection/

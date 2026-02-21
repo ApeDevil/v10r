@@ -48,7 +48,7 @@ No documentation drift. No stale examples. The template validates itself.
 │   │   ├── /gltf-viewer             # Model viewer with controls
 │   │   ├── /interactive             # Click/hover interactions
 │   │   └── /physics                 # Rapier physics demo
-│   ├── /graph                       # Neo4j visualization
+│   ├── /graph                       # Graph database visualization
 │   └── /api                         # API explorer
 │
 ├── /experience                      # Immersive 3D experiences
@@ -203,7 +203,7 @@ The showcase landing page provides first-time visitors with a clear entry point 
 | 6 | Advanced | Files | Upload, R2 storage |
 | 7 | Advanced | i18n | Translations, locale routing |
 | 8 | Advanced | Animations | Transitions, Motion One |
-| 9 | Specialized | Graph | Neo4j, visualization |
+| 9 | Specialized | Graph | Graph database visualization |
 | 10 | Specialized | API | REST, interactive docs |
 
 **Implementation:**
@@ -242,7 +242,7 @@ The showcase landing page provides first-time visitors with a clear entry point 
       name: 'Specialized',
       description: 'Domain-specific integrations',
       pages: [
-        { href: '/showcase/graph', title: 'Graph', description: 'Neo4j visualization' },
+        { href: '/showcase/graph', title: 'Graph', description: 'Graph database visualization' },
         { href: '/showcase/api', title: 'API', description: 'REST documentation' },
       ],
     },
@@ -619,7 +619,7 @@ Motion and transitions.
 
 ### /showcase/graph
 
-Neo4j visualization and graph queries.
+Graph database visualization and queries.
 
 | Tests | Technology | Provider |
 |-------|------------|----------|
