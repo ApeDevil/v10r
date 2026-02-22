@@ -9,6 +9,7 @@ import { ChatRequestSchema } from '$lib/server/ai/validation';
 import { classifyAIError, aiErrorToStatus } from '$lib/server/ai/errors';
 import { createConversation, saveMessages, updateConversationTitle } from '$lib/server/db/ai/mutations';
 import { checkConversationLimit } from '$lib/server/db/ai/guards';
+import { retrieve, formatContextForPrompt } from '$lib/server/retrieval';
 import type { RequestHandler } from './$types';
 
 const ratelimit = new Ratelimit({
@@ -51,7 +52,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return json({ error: 'Invalid request.' }, { status: 400 });
 	}
 
-	const { messages, conversationId: existingConvId } = parsed.output;
+	const { messages, conversationId: existingConvId, useRetrieval, retrievalTiers } = parsed.output;
 
 	try {
 		// Auto-create conversation if none provided
@@ -90,11 +91,37 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			]);
 		}
 
+		// Retrieve context if enabled
+		let systemPrompt = SYSTEM_PROMPT;
+		let retrievalMeta: Record<string, unknown> | null = null;
+
+		if (useRetrieval && userMsg?.role === 'user') {
+			try {
+				const retrievalResult = await retrieve(userMsg.content, {
+					maxChunks: 3,
+					tiers: retrievalTiers ?? [1],
+				});
+
+				const contextBlock = formatContextForPrompt(retrievalResult);
+				if (contextBlock) {
+					systemPrompt = `${SYSTEM_PROMPT}\n\n<context>\n${contextBlock}\n</context>\n\nUse the above context to inform your response. Cite sources when relevant.`;
+				}
+
+				retrievalMeta = {
+					tierUsed: retrievalResult.tierUsed,
+					chunkCount: retrievalResult.chunks.length,
+					durationMs: retrievalResult.durationMs,
+				};
+			} catch (err) {
+				console.error('[ai:chat] Retrieval failed, proceeding without context:', err);
+			}
+		}
+
 		const userId = locals.user.id;
 
 		const result = streamText({
 			model: chatModel,
-			system: SYSTEM_PROMPT,
+			system: systemPrompt,
 			messages,
 			maxTokens: MAX_TOKENS,
 			onFinish: async ({ text }) => {
@@ -119,6 +146,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		const headers: Record<string, string> = {};
 		if (conversationId) {
 			headers['X-Conversation-Id'] = conversationId;
+		}
+		if (retrievalMeta) {
+			headers['X-Retrieval-Meta'] = JSON.stringify(retrievalMeta);
 		}
 
 		return result.toDataStreamResponse({ headers });

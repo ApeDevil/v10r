@@ -11,6 +11,7 @@
 🛎️ Sevice
 🛂 Auth
 🤖 AI
+♻️ Retrieval
 
 📚 docs
 🧙‍♂️ guide

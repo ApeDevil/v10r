@@ -16,6 +16,8 @@ export const ChatRequestSchema = v.object({
 	conversationId: v.optional(
 		v.pipe(v.string(), v.uuid()),
 	),
+	useRetrieval: v.optional(v.boolean()),
+	retrievalTiers: v.optional(v.array(v.picklist([1, 2, 3]))),
 });
 
 export const StreamingRequestSchema = v.object({

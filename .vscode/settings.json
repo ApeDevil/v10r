@@ -95,6 +95,10 @@
         {
             "folderPath": "velociraptor/src/lib/server/ai/",
             "badge": "🤖"
+        },
+        {
+            "folderPath": "velociraptor/src/lib/server/retrieval/",
+            "badge": "♻️"
         }
     ]
 }

@@ -40,6 +40,13 @@
 			title="Streaming"
 			description="Token-level streaming visualization with TTFT and throughput metrics"
 		/>
+
+		<LinkCard
+			href="/showcases/ai/retrieval"
+			icon="i-lucide-brain-circuit"
+			title="Retrieval (RAG)"
+			description="Three-tier recursive retrieval: contextual hybrid, parent-child, and graph traversal"
+		/>
 	</nav>
 
 	<BackLink href="/showcases" label="Showcases" />

@@ -1,0 +1,127 @@
+/**
+ * Entity extraction: extract named entities and relationships from text.
+ * Uses the active LLM provider for structured extraction.
+ */
+import { generateText } from 'ai';
+import { chatModel, aiConfigured } from '$lib/server/ai';
+
+export interface ExtractedEntity {
+	name: string;
+	type: string;
+	description: string;
+}
+
+export interface ExtractedRelationship {
+	source: string;
+	target: string;
+	type: string;
+	weight: number;
+}
+
+export interface ExtractionResult {
+	entities: ExtractedEntity[];
+	relationships: ExtractedRelationship[];
+}
+
+const EXTRACTION_PROMPT = `Extract named entities and their relationships from this text.
+
+Return a JSON object with:
+- "entities": array of {name, type, description} where type is one of: concept, technology, feature, component, person, organization
+- "relationships": array of {source, target, type, weight} where source/target are entity names, type describes the relationship (e.g. "uses", "part_of", "depends_on", "related_to"), weight is 0.0-1.0 confidence
+
+Rules:
+- Extract only significant, named entities (not generic words)
+- Canonicalize names (e.g. "SvelteKit" not "svelte kit" or "Svelte Kit")
+- Keep descriptions under 20 words
+- Maximum 15 entities and 20 relationships per chunk
+
+Text:
+{text}
+
+JSON:`;
+
+/** Extract entities and relationships from a text chunk. */
+export async function extractEntities(
+	text: string,
+): Promise<ExtractionResult> {
+	if (!aiConfigured || !chatModel) {
+		return { entities: [], relationships: [] };
+	}
+
+	try {
+		const result = await generateText({
+			model: chatModel,
+			prompt: EXTRACTION_PROMPT.replace('{text}', text.slice(0, 3000)),
+			maxTokens: 1024,
+		});
+
+		// Parse JSON from response (handle markdown code blocks)
+		let jsonStr = result.text.trim();
+		const codeBlockMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+		if (codeBlockMatch) {
+			jsonStr = codeBlockMatch[1].trim();
+		}
+
+		const parsed = JSON.parse(jsonStr);
+
+		const entities: ExtractedEntity[] = (parsed.entities ?? [])
+			.filter((e: Record<string, unknown>) => e.name && e.type)
+			.map((e: Record<string, unknown>) => ({
+				name: String(e.name).trim(),
+				type: String(e.type).toLowerCase().trim(),
+				description: String(e.description ?? '').trim(),
+			}));
+
+		const relationships: ExtractedRelationship[] = (parsed.relationships ?? [])
+			.filter((r: Record<string, unknown>) => r.source && r.target)
+			.map((r: Record<string, unknown>) => ({
+				source: String(r.source).trim(),
+				target: String(r.target).trim(),
+				type: String(r.type ?? 'related_to').trim(),
+				weight: Math.max(0, Math.min(1, Number(r.weight ?? 0.5))),
+			}));
+
+		return { entities, relationships };
+	} catch {
+		return { entities: [], relationships: [] };
+	}
+}
+
+/**
+ * Extract entities from multiple text sections and merge results.
+ * Deduplicates entities by name (keeps first description).
+ */
+export async function extractEntitiesFromSections(
+	sections: string[],
+): Promise<ExtractionResult> {
+	const allEntities = new Map<string, ExtractedEntity>();
+	const allRelationships: ExtractedRelationship[] = [];
+
+	for (const section of sections) {
+		const result = await extractEntities(section);
+
+		for (const entity of result.entities) {
+			if (!allEntities.has(entity.name)) {
+				allEntities.set(entity.name, entity);
+			}
+		}
+
+		allRelationships.push(...result.relationships);
+	}
+
+	// Deduplicate relationships
+	const relKey = (r: ExtractedRelationship) => `${r.source}→${r.target}→${r.type}`;
+	const uniqueRels = new Map<string, ExtractedRelationship>();
+	for (const rel of allRelationships) {
+		const key = relKey(rel);
+		const existing = uniqueRels.get(key);
+		if (!existing || rel.weight > existing.weight) {
+			uniqueRels.set(key, rel);
+		}
+	}
+
+	return {
+		entities: Array.from(allEntities.values()),
+		relationships: Array.from(uniqueRels.values()),
+	};
+}

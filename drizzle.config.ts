@@ -10,7 +10,7 @@ export default defineConfig({
 	schema: './src/lib/server/db/schema',
 	out: './drizzle',
 	dialect: 'postgresql',
-	schemaFilter: ['showcase', 'auth', 'ai'],
+	schemaFilter: ['showcase', 'auth', 'ai', 'rag'],
 	dbCredentials: {
 		url: process.env.DATABASE_URL!,
 	},
