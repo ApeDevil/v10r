@@ -50,6 +50,27 @@ export interface PipelineStepEvent {
 	detail?: StepDetail;
 }
 
+/** Summary of a single retrieved chunk, sent to the client */
+export interface ChunkSummary {
+	chunkId: string;
+	documentId: string;
+	documentTitle: string;
+	contentPreview: string;
+	contentLength: number;
+	score: number;
+	source: 'vector' | 'bm25' | 'graph';
+	tier: 1 | 2 | 3;
+	survived: boolean;
+}
+
+/** Chunk data event emitted after context assembly */
+export interface PipelineChunksEvent {
+	type: 'pipeline:chunks';
+	tierChunks: Record<string, ChunkSummary[]>;
+	rankedChunks: ChunkSummary[];
+	contextChunks: ChunkSummary[];
+}
+
 /** Per-step UI state */
 export interface PipelineStepState {
 	id: PipelineStepId;

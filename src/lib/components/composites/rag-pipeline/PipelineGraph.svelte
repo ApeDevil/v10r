@@ -5,10 +5,11 @@
 
 	interface Props {
 		steps: PipelineStepState[];
+		chunkCounts?: Record<string, number>;
 		onselect: (id: PipelineStepId) => void;
 	}
 
-	let { steps, onselect }: Props = $props();
+	let { steps, chunkCounts = {}, onselect }: Props = $props();
 
 	/** Fixed positions for each step in the DAG */
 	const positions: Record<PipelineStepId, { x: number; y: number }> = {
@@ -50,13 +51,21 @@
 <svg viewBox="0 0 240 290" class="pipeline-graph" aria-label="RAG pipeline visualization">
 	<!-- Edges (rendered behind nodes) -->
 	{#each edges as [from, to]}
-		<PipelineEdge
-			x1={positions[from].x}
-			y1={positions[from].y + 14}
-			x2={positions[to].x}
-			y2={positions[to].y - 14}
-			status={edgeStatus(from, to)}
-		/>
+		{@const x1 = positions[from].x}
+		{@const y1 = positions[from].y + 14}
+		{@const x2 = positions[to].x}
+		{@const y2 = positions[to].y - 14}
+		<PipelineEdge {x1} {y1} {x2} {y2} status={edgeStatus(from, to)} />
+
+		{#if chunkCounts[from] !== undefined && edgeStatus(from, to) === 'done'}
+			<text
+				x={(x1 + x2) / 2 + (x1 === x2 ? 8 : 0)}
+				y={(y1 + y2) / 2}
+				class="edge-count"
+				dominant-baseline="middle"
+				text-anchor={x1 === x2 ? 'start' : 'middle'}
+			>{chunkCounts[from]}</text>
+		{/if}
 	{/each}
 
 	<!-- Nodes -->
@@ -75,5 +84,12 @@
 		width: 100%;
 		max-width: 240px;
 		height: auto;
+	}
+
+	.edge-count {
+		font-size: 9px;
+		fill: var(--color-muted);
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
 	}
 </style>

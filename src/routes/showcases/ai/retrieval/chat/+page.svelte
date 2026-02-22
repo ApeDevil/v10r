@@ -184,7 +184,7 @@
 							<Typography variant="h6" as="h3">Pipeline</Typography>
 						{/snippet}
 
-						<RagPipeline state={pipeline} />
+						<RagPipeline {pipeline} />
 					</Card>
 
 					<Card>
@@ -212,7 +212,7 @@
 
 			<!-- Mobile drawer -->
 			<Drawer bind:open={drawerOpen} side="bottom">
-				<RagPipeline state={pipeline} />
+				<RagPipeline {pipeline} />
 			</Drawer>
 		{/if}
 	</Stack>

@@ -3,6 +3,8 @@ import {
 	type PipelineStepId,
 	type PipelineStepState,
 	type PipelineStepEvent,
+	type PipelineChunksEvent,
+	type ChunkSummary,
 } from '$lib/types/pipeline';
 
 function createInitialSteps(): PipelineStepState[] {
@@ -19,6 +21,7 @@ export function createPipelineState() {
 	let steps = $state<PipelineStepState[]>(createInitialSteps());
 	let selectedStepId = $state<PipelineStepId | null>(null);
 	let annotationCursor = $state(0);
+	let chunkData = $state<PipelineChunksEvent | null>(null);
 
 	function handleEvent(event: PipelineStepEvent) {
 		steps = steps.map((s) => {
@@ -40,6 +43,8 @@ export function createPipelineState() {
 			const ann = annotations[i] as Record<string, unknown>;
 			if (ann && ann.type === 'pipeline:step') {
 				handleEvent(ann as unknown as PipelineStepEvent);
+			} else if (ann && ann.type === 'pipeline:chunks') {
+				chunkData = ann as unknown as PipelineChunksEvent;
 			}
 		}
 		annotationCursor = annotations.length;
@@ -48,6 +53,7 @@ export function createPipelineState() {
 	function reset() {
 		steps = createInitialSteps();
 		selectedStepId = null;
+		chunkData = null;
 	}
 
 	function resetCursor() {
@@ -56,6 +62,14 @@ export function createPipelineState() {
 
 	function selectStep(id: PipelineStepId | null) {
 		selectedStepId = selectedStepId === id ? null : id;
+	}
+
+	function chunksForStep(stepId: PipelineStepId): ChunkSummary[] {
+		if (!chunkData) return [];
+		if (stepId.startsWith('tier-')) return chunkData.tierChunks[stepId] ?? [];
+		if (stepId === 'rank') return chunkData.rankedChunks;
+		if (stepId === 'context') return chunkData.contextChunks;
+		return [];
 	}
 
 	return {
@@ -73,10 +87,22 @@ export function createPipelineState() {
 			if (doneSteps.length === 0) return 0;
 			return doneSteps.reduce((sum, s) => sum + (s.durationMs ?? 0), 0);
 		},
+		get chunkData() { return chunkData; },
+		get chunkCounts(): Record<string, number> {
+			if (!chunkData) return {};
+			const counts: Record<string, number> = {};
+			for (const [key, chunks] of Object.entries(chunkData.tierChunks)) {
+				counts[key] = chunks.length;
+			}
+			counts['rank'] = chunkData.rankedChunks.length;
+			counts['context'] = chunkData.contextChunks.length;
+			return counts;
+		},
 		handleEvent,
 		processAnnotations,
 		reset,
 		resetCursor,
 		selectStep,
+		chunksForStep,
 	};
 }

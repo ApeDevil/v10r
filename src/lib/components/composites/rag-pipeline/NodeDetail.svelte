@@ -1,20 +1,32 @@
 <script lang="ts">
-	import type { PipelineStepState, TierDetail, RankDetail, ContextDetail, EmbedDetail } from '$lib/types/pipeline';
+	import type { PipelineStepState, TierDetail, RankDetail, ContextDetail, EmbedDetail, ChunkSummary } from '$lib/types/pipeline';
+	import ChunkList from './ChunkList.svelte';
 
 	interface Props {
 		step: PipelineStepState;
+		chunks?: ChunkSummary[];
 		onclose: () => void;
+		onexpand?: () => void;
 	}
 
-	let { step, onclose }: Props = $props();
+	let { step, chunks = [], onclose, onexpand }: Props = $props();
+
+	const hasChunks = $derived(chunks.length > 0);
 </script>
 
 <div class="node-detail" role="region" aria-label="Step details for {step.label}">
 	<div class="detail-header">
 		<span class="detail-title">{step.label}</span>
-		<button class="detail-close" onclick={onclose} aria-label="Close detail panel">
-			<span class="i-lucide-x h-3 w-3"></span>
-		</button>
+		<div class="detail-actions">
+			{#if hasChunks && onexpand}
+				<button class="detail-expand" onclick={onexpand} aria-label="Expand chunk details">
+					<span class="i-lucide-maximize-2 h-3 w-3"></span>
+				</button>
+			{/if}
+			<button class="detail-close" onclick={onclose} aria-label="Close detail panel">
+				<span class="i-lucide-x h-3 w-3"></span>
+			</button>
+		</div>
 	</div>
 
 	{#if step.error}
@@ -67,6 +79,12 @@
 			{step.durationMs}ms
 		</div>
 	{/if}
+
+	{#if hasChunks}
+		<div class="detail-chunks">
+			<ChunkList {chunks} />
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -100,6 +118,30 @@
 		align-items: center;
 		justify-content: space-between;
 		margin-bottom: var(--spacing-2);
+	}
+
+	.detail-actions {
+		display: flex;
+		align-items: center;
+		gap: 2px;
+	}
+
+	.detail-expand {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 20px;
+		height: 20px;
+		border: none;
+		border-radius: var(--radius-sm);
+		background: none;
+		color: var(--color-muted);
+		cursor: pointer;
+	}
+
+	.detail-expand:hover {
+		color: var(--color-primary);
+		background: color-mix(in srgb, var(--color-primary) 10%, transparent);
 	}
 
 	.detail-title {
@@ -179,5 +221,11 @@
 		color: var(--color-muted);
 		text-align: right;
 		margin-top: var(--spacing-2);
+	}
+
+	.detail-chunks {
+		margin-top: var(--spacing-2);
+		padding-top: var(--spacing-2);
+		border-top: 1px solid var(--color-border);
 	}
 </style>

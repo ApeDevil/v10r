@@ -2,18 +2,25 @@
 	import type { PipelineState } from './pipeline-state.svelte';
 	import PipelineGraph from './PipelineGraph.svelte';
 	import NodeDetail from './NodeDetail.svelte';
+	import ChunkDetailPanel from './ChunkDetailPanel.svelte';
 
 	interface Props {
-		state: PipelineState;
+		pipeline: PipelineState;
 	}
 
-	let { state }: Props = $props();
+	let { pipeline }: Props = $props();
+
+	let expanded = $state(false);
 
 	const statusLabel = $derived.by(() => {
-		if (state.isActive) return 'Running';
-		if (state.totalDurationMs > 0) return `${state.totalDurationMs}ms`;
+		if (pipeline.isActive) return 'Running';
+		if (pipeline.totalDurationMs > 0) return `${pipeline.totalDurationMs}ms`;
 		return 'Idle';
 	});
+
+	const selectedChunks = $derived(
+		pipeline.selectedStepId ? pipeline.chunksForStep(pipeline.selectedStepId) : [],
+	);
 </script>
 
 <div class="rag-pipeline">
@@ -21,20 +28,36 @@
 		<span class="pipeline-title">Pipeline</span>
 		<span
 			class="pipeline-status"
-			class:status-active={state.isActive}
-			class:status-done={!state.isActive && state.totalDurationMs > 0}
+			class:status-active={pipeline.isActive}
+			class:status-done={!pipeline.isActive && pipeline.totalDurationMs > 0}
 		>
-			{#if state.isActive}
+			{#if pipeline.isActive}
 				<span class="status-dot"></span>
 			{/if}
 			{statusLabel}
 		</span>
 	</div>
 
-	<PipelineGraph steps={state.steps} onselect={(id) => state.selectStep(id)} />
+	{#if expanded && pipeline.chunkData}
+		<ChunkDetailPanel
+			chunkData={pipeline.chunkData}
+			onclose={() => { expanded = false; }}
+		/>
+	{:else}
+		<PipelineGraph
+			steps={pipeline.steps}
+			chunkCounts={pipeline.chunkCounts}
+			onselect={(id) => pipeline.selectStep(id)}
+		/>
 
-	{#if state.selectedStep && (state.selectedStep.status === 'done' || state.selectedStep.status === 'error')}
-		<NodeDetail step={state.selectedStep} onclose={() => state.selectStep(null)} />
+		{#if pipeline.selectedStep && (pipeline.selectedStep.status === 'done' || pipeline.selectedStep.status === 'error')}
+			<NodeDetail
+				step={pipeline.selectedStep}
+				chunks={selectedChunks}
+				onclose={() => pipeline.selectStep(null)}
+				onexpand={pipeline.chunkData ? () => { expanded = true; } : undefined}
+			/>
+		{/if}
 	{/if}
 </div>
 

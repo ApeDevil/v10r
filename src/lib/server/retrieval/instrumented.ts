@@ -1,5 +1,5 @@
 import type { RetrievalResult, RetrievalOptions, RankedChunk } from './types';
-import type { PipelineStepEvent, StepDetail } from '$lib/types/pipeline';
+import type { PipelineStepEvent, PipelineChunksEvent, ChunkSummary, StepDetail } from '$lib/types/pipeline';
 import { generateEmbedding } from './embed';
 import { searchContextual } from './tiers/contextual';
 import { searchParentChild } from './tiers/parent-child';
@@ -13,7 +13,21 @@ const DEFAULT_OPTIONS: Required<Omit<RetrievalOptions, 'collectionId' | 'userId'
 	graphDepth: MAX_GRAPH_HOPS,
 };
 
-type EmitFn = (event: PipelineStepEvent) => void;
+type EmitFn = (event: PipelineStepEvent | PipelineChunksEvent) => void;
+
+function toSummary(chunk: RankedChunk, survived: boolean): ChunkSummary {
+	return {
+		chunkId: chunk.chunkId,
+		documentId: chunk.documentId,
+		documentTitle: chunk.documentTitle,
+		contentPreview: chunk.content.slice(0, 200),
+		contentLength: chunk.content.length,
+		score: Math.round(chunk.score * 1000) / 1000,
+		source: chunk.source,
+		tier: chunk.tier,
+		survived,
+	};
+}
 
 function emit(fn: EmitFn, step: PipelineStepEvent['step'], status: PipelineStepEvent['status'], extra?: { durationMs?: number; error?: string; detail?: StepDetail }) {
 	fn({ type: 'pipeline:step', step, status, ...extra });
@@ -126,6 +140,24 @@ export async function retrieveWithEvents(
 			tokenEstimate,
 			chunkCount: chunks.length,
 		},
+	});
+
+	// --- Emit chunk details ---
+	const survivedIds = new Set(chunks.map((c) => c.chunkId));
+	const tierChunks: Record<string, ChunkSummary[]> = {};
+	for (let i = 0; i < opts.tiers.length; i++) {
+		const tier = opts.tiers[i];
+		const tierResult = tierResults[i];
+		tierChunks[`tier-${tier}`] = tierResult.map((c) => toSummary(c, survivedIds.has(c.chunkId)));
+	}
+	onEvent({
+		type: 'pipeline:chunks',
+		tierChunks,
+		rankedChunks: allChunks
+			.filter((c) => survivedIds.has(c.chunkId))
+			.sort((a, b) => b.score - a.score)
+			.map((c) => toSummary(c, true)),
+		contextChunks: chunks.map((c) => toSummary(c, true)),
 	});
 
 	return {

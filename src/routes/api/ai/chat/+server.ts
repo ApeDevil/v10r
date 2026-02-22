@@ -11,7 +11,7 @@ import { createConversation, saveMessages, updateConversationTitle } from '$lib/
 import { checkConversationLimit } from '$lib/server/db/ai/guards';
 import { formatContextForPrompt } from '$lib/server/retrieval';
 import { retrieveWithEvents } from '$lib/server/retrieval/instrumented';
-import type { PipelineStepEvent } from '$lib/types/pipeline';
+import type { PipelineStepEvent, PipelineChunksEvent } from '$lib/types/pipeline';
 import type { RequestHandler } from './$types';
 
 const ratelimit = new Ratelimit({
@@ -106,8 +106,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				execute: async (dataStream) => {
 					let systemPrompt = SYSTEM_PROMPT;
 
-					const emitEvent = (event: PipelineStepEvent) => {
-						dataStream.writeMessageAnnotation(event);
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					const emitEvent = (event: PipelineStepEvent | PipelineChunksEvent) => {
+						dataStream.writeMessageAnnotation(event as any);
 					};
 
 					try {
