@@ -98,6 +98,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		if (useRetrieval && userMsg?.role === 'user') {
 			try {
 				const retrievalResult = await retrieve(userMsg.content, {
+					userId: locals.user.id,
 					maxChunks: 3,
 					tiers: retrievalTiers ?? [1],
 				});
@@ -164,7 +165,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 					const result = streamText({
 						model: fallbackModel,
-						system: SYSTEM_PROMPT,
+						system: systemPrompt,
 						messages,
 						maxTokens: MAX_TOKENS,
 						onFinish: async ({ text }) => {

@@ -1,6 +1,6 @@
 import { eq, and, desc, isNull, count } from 'drizzle-orm';
 import { db } from '../index';
-import { document, collection, collectionDocument } from '../schema/rag';
+import { document, chunk, collection, collectionDocument } from '../schema/rag';
 
 /** List documents for a user (active only, newest first). */
 export async function listDocuments(userId: string) {
@@ -30,13 +30,18 @@ export async function getDocument(id: string, userId: string) {
 	return doc ?? null;
 }
 
-/** Soft-delete a document. */
+/** Soft-delete a document and hard-delete its chunks (removes from HNSW index). */
 export async function deleteDocument(id: string, userId: string): Promise<boolean> {
 	const [updated] = await db
 		.update(document)
 		.set({ deletedAt: new Date(), updatedAt: new Date() })
 		.where(and(eq(document.id, id), eq(document.userId, userId), isNull(document.deletedAt)))
 		.returning({ id: document.id });
+
+	if (updated) {
+		await db.delete(chunk).where(eq(chunk.documentId, id));
+	}
+
 	return !!updated;
 }
 

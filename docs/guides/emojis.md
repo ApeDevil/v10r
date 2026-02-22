@@ -14,7 +14,7 @@
 ♻️ Retrieval
 
 📚 docs
-🧙‍♂️ guide
+📜 Script
 
 🔱 routes
 ☎️ API

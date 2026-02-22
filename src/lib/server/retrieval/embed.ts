@@ -1,15 +1,17 @@
 import { embed, embedMany } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { env } from '$env/dynamic/private';
-import { EMBEDDING_MODEL } from './config';
+import { EMBEDDING_MODEL, EMBEDDING_DIMENSIONS } from './config';
 import { RetrievalError } from './errors';
 
 function getEmbeddingModel() {
-	const apiKey = env.OPENAI_API_KEY;
+	const apiKey = env.GOOGLE_GENERATIVE_AI_API_KEY;
 	if (!apiKey) {
-		throw new RetrievalError('embedding', 'OPENAI_API_KEY is not set for embeddings');
+		throw new RetrievalError('embedding', 'GOOGLE_GENERATIVE_AI_API_KEY is not set for embeddings');
 	}
-	return createOpenAI({ apiKey }).embedding(EMBEDDING_MODEL);
+	return createGoogleGenerativeAI({ apiKey }).embedding(EMBEDDING_MODEL, {
+		outputDimensionality: EMBEDDING_DIMENSIONS,
+	});
 }
 
 /** Generate a single embedding for a query string. */

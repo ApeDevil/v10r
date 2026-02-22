@@ -29,10 +29,11 @@ interface ParentRow {
 async function searchChildren(
 	queryEmbedding: number[],
 	limit: number,
+	userId: string,
 ): Promise<ChildHit[]> {
 	const embeddingStr = `[${queryEmbedding.join(',')}]`;
 
-	return db.execute<ChildHit>(sql`
+	const result = await db.execute<ChildHit>(sql`
 		SELECT
 			c.id AS "chunkId",
 			c.parent_id AS "parentId",
@@ -47,9 +48,11 @@ async function searchChildren(
 		  AND c.parent_id IS NOT NULL
 		  AND d.status = 'ready'
 		  AND d.deleted_at IS NULL
+		  AND d.user_id = ${userId}
 		ORDER BY c.embedding <=> ${embeddingStr}::vector
 		LIMIT ${limit}
 	`);
+	return result.rows;
 }
 
 /** Resolve child matches to their parent chunks. */
@@ -58,7 +61,7 @@ async function resolveParents(
 ): Promise<Map<string, { content: string; documentId: string; documentTitle: string }>> {
 	if (parentIds.length === 0) return new Map();
 
-	const rows = await db.execute<{
+	const result = await db.execute<{
 		chunkId: string;
 		documentId: string;
 		documentTitle: string;
@@ -71,11 +74,11 @@ async function resolveParents(
 			COALESCE(c.context_prefix || E'\n' || c.content, c.content) AS content
 		FROM rag.chunk c
 		JOIN rag.document d ON d.id = c.document_id
-		WHERE c.id = ANY(${parentIds})
+		WHERE c.id IN (${sql.join(parentIds.map(id => sql`${id}`), sql`, `)})
 	`);
 
 	const map = new Map<string, { content: string; documentId: string; documentTitle: string }>();
-	for (const row of rows) {
+	for (const row of result.rows) {
 		map.set(row.chunkId, {
 			content: row.content,
 			documentId: row.documentId,
@@ -89,9 +92,10 @@ async function resolveParents(
 export async function searchParentChild(
 	queryEmbedding: number[],
 	limit: number,
+	userId: string,
 ): Promise<RankedChunk[]> {
 	const overfetch = limit * OVERFETCH_MULTIPLIER;
-	const childHits = await searchChildren(queryEmbedding, overfetch);
+	const childHits = await searchChildren(queryEmbedding, overfetch, userId);
 
 	if (childHits.length === 0) return [];
 

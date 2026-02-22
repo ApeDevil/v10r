@@ -6,7 +6,7 @@ import { searchGraph } from './tiers/graph';
 import { fuseAndRank } from './rank';
 import { MAX_CONTEXT_CHUNKS, MAX_GRAPH_HOPS } from './config';
 
-const DEFAULT_OPTIONS: Required<Omit<RetrievalOptions, 'collectionId'>> = {
+const DEFAULT_OPTIONS: Required<Omit<RetrievalOptions, 'collectionId' | 'userId'>> = {
 	maxChunks: MAX_CONTEXT_CHUNKS,
 	tiers: [1],
 	graphDepth: MAX_GRAPH_HOPS,
@@ -18,7 +18,7 @@ const DEFAULT_OPTIONS: Required<Omit<RetrievalOptions, 'collectionId'>> = {
  */
 export async function retrieve(
 	query: string,
-	options?: RetrievalOptions,
+	options: RetrievalOptions,
 ): Promise<RetrievalResult> {
 	const opts = { ...DEFAULT_OPTIONS, ...options };
 	const start = performance.now();
@@ -31,11 +31,11 @@ export async function retrieve(
 		opts.tiers.map((tier) => {
 			switch (tier) {
 				case 1:
-					return searchContextual(query, queryEmbedding, opts.maxChunks);
+					return searchContextual(query, queryEmbedding, opts.maxChunks, opts.userId);
 				case 2:
-					return searchParentChild(queryEmbedding, opts.maxChunks);
+					return searchParentChild(queryEmbedding, opts.maxChunks, opts.userId);
 				case 3:
-					return searchGraph(queryEmbedding, opts.maxChunks, opts.graphDepth);
+					return searchGraph(queryEmbedding, opts.maxChunks, opts.graphDepth, opts.userId);
 			}
 		}),
 	);

@@ -9,7 +9,7 @@ import { generateEmbeddings } from '../embed';
 import { addContextPrefixes } from './contextual-prep';
 import { extractEntitiesFromSections } from './entity-extract';
 import { storeChunkStructure, storeEntitiesAndRelationships } from './graph-store';
-import { EMBEDDING_MODEL_ID } from '../config';
+import { EMBEDDING_MODEL_ID, MAX_CHUNKS_PER_DOCUMENT } from '../config';
 import type { IngestableDocument, IngestResult, RawChunk } from '../types';
 import { RetrievalError } from '../errors';
 
@@ -50,7 +50,10 @@ export async function ingest(doc: IngestableDocument): Promise<IngestResult> {
 
 	try {
 		// 2. Chunk the document
-		const { parents, children } = await chunkDocument(doc.content);
+		const { parents, children: allChildren } = await chunkDocument(doc.content);
+
+		// Cap child chunks to limit LLM calls during ingestion
+		const children = allChildren.slice(0, MAX_CHUNKS_PER_DOCUMENT);
 
 		// 3. Add context prefixes to child chunks
 		const contextualizedChildren = await addContextPrefixes(doc.title, children);

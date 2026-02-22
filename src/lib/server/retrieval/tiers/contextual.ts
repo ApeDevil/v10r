@@ -28,10 +28,11 @@ interface BM25Row {
 async function vectorSearch(
 	queryEmbedding: number[],
 	limit: number,
+	userId: string,
 ): Promise<RankedChunk[]> {
 	const embeddingStr = `[${queryEmbedding.join(',')}]`;
 
-	const rows = await db.execute<VectorRow>(sql`
+	const result = await db.execute<VectorRow>(sql`
 		SELECT
 			c.id AS "chunkId",
 			c.document_id AS "documentId",
@@ -43,11 +44,12 @@ async function vectorSearch(
 		WHERE c.embedding IS NOT NULL
 		  AND d.status = 'ready'
 		  AND d.deleted_at IS NULL
+		  AND d.user_id = ${userId}
 		ORDER BY c.embedding <=> ${embeddingStr}::vector
 		LIMIT ${limit}
 	`);
 
-	return rows.map((row) => ({
+	return result.rows.map((row) => ({
 		chunkId: row.chunkId,
 		documentId: row.documentId,
 		documentTitle: row.documentTitle,
@@ -62,8 +64,9 @@ async function vectorSearch(
 async function fullTextSearch(
 	query: string,
 	limit: number,
+	userId: string,
 ): Promise<RankedChunk[]> {
-	const rows = await db.execute<BM25Row>(sql`
+	const result = await db.execute<BM25Row>(sql`
 		SELECT
 			c.id AS "chunkId",
 			c.document_id AS "documentId",
@@ -75,11 +78,12 @@ async function fullTextSearch(
 		WHERE c.search_vector @@ plainto_tsquery('english', ${query})
 		  AND d.status = 'ready'
 		  AND d.deleted_at IS NULL
+		  AND d.user_id = ${userId}
 		ORDER BY rank DESC
 		LIMIT ${limit}
 	`);
 
-	return rows.map((row) => ({
+	return result.rows.map((row) => ({
 		chunkId: row.chunkId,
 		documentId: row.documentId,
 		documentTitle: row.documentTitle,
@@ -95,12 +99,13 @@ export async function searchContextual(
 	query: string,
 	queryEmbedding: number[],
 	limit: number,
+	userId: string,
 ): Promise<RankedChunk[]> {
 	const overfetch = limit * OVERFETCH_MULTIPLIER;
 
 	const [vectorHits, bm25Hits] = await Promise.all([
-		vectorSearch(queryEmbedding, overfetch),
-		fullTextSearch(query, overfetch),
+		vectorSearch(queryEmbedding, overfetch, userId),
+		fullTextSearch(query, overfetch, userId),
 	]);
 
 	// Fuse via reciprocal rank fusion

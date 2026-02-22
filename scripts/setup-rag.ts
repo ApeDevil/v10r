@@ -1,9 +1,13 @@
 /**
- * Runner script for RAG schema setup.
- * Usage: bun run db:setup-rag
+ * RAG schema setup — two phases.
  *
- * Must run AFTER `drizzle-kit push` creates the base rag schema tables.
- * Adds pgvector extension, tsvector column, HNSW + GIN indexes, and seeds data.
+ * Phase 1 (pre-push):  pgvector extension + rag schema — must run BEFORE drizzle-kit push
+ * Phase 2 (post-push): tsvector column, HNSW + GIN indexes, seed data — must run AFTER push
+ *
+ * Usage:
+ *   bun run db:rag-pre    # phase 1
+ *   bun run db:push       # drizzle-kit push
+ *   bun run db:rag-post   # phase 2
  */
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
@@ -21,11 +25,22 @@ if (!DATABASE_URL) {
 const pool = new Pool({ connectionString: DATABASE_URL });
 const db = drizzle(pool);
 
-async function main() {
-	console.log('[rag:setup] Enabling pgvector extension...');
+const phase = process.argv[2];
+
+/** Phase 1: prerequisites for drizzle-kit push. */
+async function prePush() {
+	console.log('[rag:pre] Enabling pgvector extension...');
 	await db.execute(sql`CREATE EXTENSION IF NOT EXISTS vector`);
 
-	console.log('[rag:setup] Adding search_vector column...');
+	console.log('[rag:pre] Creating rag schema...');
+	await db.execute(sql`CREATE SCHEMA IF NOT EXISTS rag`);
+
+	console.log('[rag:pre] Done. Now run: bun run db:push');
+}
+
+/** Phase 2: features drizzle-kit can't express. */
+async function postPush() {
+	console.log('[rag:post] Adding search_vector column...');
 	await db.execute(sql`
 		DO $$
 		BEGIN
@@ -41,27 +56,38 @@ async function main() {
 		END $$
 	`);
 
-	console.log('[rag:setup] Creating GIN index on search_vector...');
+	console.log('[rag:post] Creating GIN index on search_vector...');
 	await db.execute(sql`
 		CREATE INDEX IF NOT EXISTS chunk_search_vector_idx
 			ON rag.chunk USING gin(search_vector)
 	`);
 
-	console.log('[rag:setup] Creating HNSW index on embedding...');
+	console.log('[rag:post] Creating HNSW index on embedding...');
 	await db.execute(sql`
 		CREATE INDEX IF NOT EXISTS chunk_embedding_hnsw_idx
 			ON rag.chunk USING hnsw(embedding vector_cosine_ops)
 			WITH (m = 16, ef_construction = 64)
 	`);
 
-	console.log('[rag:setup] Seeding default embedding model...');
+	console.log('[rag:post] Seeding default embedding model...');
 	await db.execute(sql`
 		INSERT INTO rag.embedding_model (id, provider, model_name, dimensions, max_tokens, is_default)
-		VALUES ('openai-text-embedding-3-small', 'openai', 'text-embedding-3-small', 1536, 8191, true)
+		VALUES ('google-gemini-embedding-001', 'google', 'gemini-embedding-001', 1536, 2048, true)
 		ON CONFLICT (id) DO NOTHING
 	`);
 
-	console.log('[rag:setup] Done.');
+	console.log('[rag:post] Done.');
+}
+
+async function main() {
+	if (phase === 'pre') {
+		await prePush();
+	} else if (phase === 'post') {
+		await postPush();
+	} else {
+		console.error('Usage: bun run scripts/setup-rag.ts <pre|post>');
+		process.exit(1);
+	}
 	await pool.end();
 }
 

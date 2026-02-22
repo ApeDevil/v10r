@@ -12,10 +12,11 @@ import type { RankedChunk, RetrievedEntity } from '../types';
 async function getSeeds(
 	queryEmbedding: number[],
 	seedCount: number = 3,
+	userId: string,
 ): Promise<Array<{ chunkId: string; score: number }>> {
 	const embeddingStr = `[${queryEmbedding.join(',')}]`;
 
-	const rows = await db.execute<{ chunkId: string; distance: number }>(sql`
+	const result = await db.execute<{ chunkId: string; distance: number }>(sql`
 		SELECT
 			c.id AS "chunkId",
 			c.embedding <=> ${embeddingStr}::vector AS distance
@@ -24,23 +25,25 @@ async function getSeeds(
 		WHERE c.embedding IS NOT NULL
 		  AND d.status = 'ready'
 		  AND d.deleted_at IS NULL
+		  AND d.user_id = ${userId}
 		ORDER BY c.embedding <=> ${embeddingStr}::vector
 		LIMIT ${seedCount}
 	`);
 
-	return rows.map((r) => ({
+	return result.rows.map((r) => ({
 		chunkId: r.chunkId,
 		score: 1 - Number(r.distance),
 	}));
 }
 
-/** Fetch chunk content from Postgres by IDs. */
+/** Fetch chunk content from Postgres by IDs (user-scoped). */
 async function fetchChunksByIds(
 	chunkIds: string[],
+	userId: string,
 ): Promise<Map<string, { documentId: string; documentTitle: string; content: string }>> {
 	if (chunkIds.length === 0) return new Map();
 
-	const rows = await db.execute<{
+	const result = await db.execute<{
 		chunkId: string;
 		documentId: string;
 		documentTitle: string;
@@ -53,11 +56,12 @@ async function fetchChunksByIds(
 			COALESCE(c.context_prefix || E'\n' || c.content, c.content) AS content
 		FROM rag.chunk c
 		JOIN rag.document d ON d.id = c.document_id
-		WHERE c.id = ANY(${chunkIds})
+		WHERE c.id IN (${sql.join(chunkIds.map(id => sql`${id}`), sql`, `)})
+		  AND d.user_id = ${userId}
 	`);
 
 	const map = new Map<string, { documentId: string; documentTitle: string; content: string }>();
-	for (const row of rows) {
+	for (const row of result.rows) {
 		map.set(row.chunkId, {
 			documentId: row.documentId,
 			documentTitle: row.documentTitle,
@@ -72,26 +76,26 @@ export async function searchGraph(
 	queryEmbedding: number[],
 	limit: number,
 	maxHops: number = 2,
+	userId: string,
 ): Promise<RankedChunk[]> {
 	// Step 1: Get seed chunks via vector search
-	const seeds = await getSeeds(queryEmbedding, 3);
+	const seeds = await getSeeds(queryEmbedding, 3, userId);
 	if (seeds.length === 0) return [];
 
 	const seedIds = seeds.map((s) => s.chunkId);
 
 	// Step 2: Expand via graph traversal
-	let graphResults;
+	let graphResults: Array<{ pgId: string; entityName: string; entityType: string; relType: string }> = [];
 	try {
 		graphResults = await expandViaGraph(seedIds, Math.min(maxHops, 2));
 	} catch {
 		// Graph unavailable — graceful degradation to seeds only
-		graphResults = [];
 	}
 
 	// Step 3: Fetch content for graph-discovered chunks
 	const graphChunkIds = graphResults.map((r) => r.pgId);
 	const allChunkIds = [...new Set([...seedIds, ...graphChunkIds])];
-	const chunkContent = await fetchChunksByIds(allChunkIds);
+	const chunkContent = await fetchChunksByIds(allChunkIds, userId);
 
 	// Step 4: Build ranked results
 	const results: RankedChunk[] = [];

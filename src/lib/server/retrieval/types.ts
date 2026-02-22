@@ -26,6 +26,7 @@ export interface RetrievedEntity {
 
 /** Options for retrieve() */
 export interface RetrievalOptions {
+	userId: string;
 	maxChunks?: number;
 	tiers?: (1 | 2 | 3)[];
 	graphDepth?: number;

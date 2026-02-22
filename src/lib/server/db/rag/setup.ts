@@ -1,6 +1,6 @@
 /**
  * RAG schema setup — idempotent SQL for features Drizzle can't express natively.
- * Run via `bun run db:setup-rag` after `drizzle-kit push`.
+ * Run via `bun run db:rag-post` after `drizzle-kit push`.
  *
  * Creates: pgvector extension, generated tsvector column, HNSW + GIN indexes,
  * and seeds the default embedding model.
@@ -58,7 +58,7 @@ async function createEmbeddingIndex() {
 async function seedEmbeddingModel() {
 	await db.execute(sql`
 		INSERT INTO rag.embedding_model (id, provider, model_name, dimensions, max_tokens, is_default)
-		VALUES ('openai-text-embedding-3-small', 'openai', 'text-embedding-3-small', 1536, 8191, true)
+		VALUES ('google-gemini-embedding-001', 'google', 'gemini-embedding-001', 1536, 2048, true)
 		ON CONFLICT (id) DO NOTHING
 	`);
 }

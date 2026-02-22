@@ -99,6 +99,10 @@
         {
             "folderPath": "velociraptor/src/lib/server/retrieval/",
             "badge": "♻️"
+        },
+        {
+            "folderPath": "velociraptor/scripts/",
+            "badge": "📜"
         }
     ]
 }
