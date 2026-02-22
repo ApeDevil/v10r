@@ -1,5 +1,5 @@
 import { marked } from 'marked';
-import DOMPurify from 'dompurify';
+import DOMPurify from 'isomorphic-dompurify';
 
 marked.setOptions({
 	gfm: true,
@@ -16,7 +16,7 @@ const ALLOWED_TAGS = [
 
 const ALLOWED_ATTR = ['href', 'target', 'rel', 'class'];
 
-/** Parse markdown to sanitized HTML. Sync, safe for chat rendering. */
+/** Parse markdown to sanitized HTML. Sync, safe for chat rendering. SSR-compatible. */
 export function renderMarkdown(source: string): string {
 	const html = marked.parse(source, { async: false }) as string;
 	return DOMPurify.sanitize(html, {

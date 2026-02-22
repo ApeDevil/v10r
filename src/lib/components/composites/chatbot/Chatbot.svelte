@@ -19,11 +19,17 @@
 
 	let conversationId: string | undefined = $state();
 	let conversations: Conversation[] = $state([]);
+	let conversationsError = $state(false);
 	let showSidebar = $state(false);
+	let pendingDeleteId: string | null = $state(null);
 
 	const chat = new Chat({
 		api: '/api/ai/chat',
 		body: () => (conversationId ? { conversationId } : {}),
+		onResponse: (response: Response) => {
+			const id = response.headers.get('X-Conversation-Id');
+			if (id) conversationId = id;
+		},
 	});
 
 	const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
@@ -47,14 +53,24 @@
 		}
 	});
 
+	// Refresh conversation list when streaming finishes (replaces setTimeout)
+	$effect(() => {
+		if (chat.status === 'ready' && !conversationId && chat.messages.length > 0) {
+			loadConversations();
+		}
+	});
+
 	async function loadConversations() {
+		conversationsError = false;
 		try {
 			const res = await fetch('/api/ai/conversations');
 			if (res.ok) {
 				conversations = await res.json();
+			} else {
+				conversationsError = true;
 			}
 		} catch {
-			// silently fail
+			conversationsError = true;
 		}
 	}
 
@@ -86,6 +102,8 @@
 			}
 		} catch {
 			// silently fail
+		} finally {
+			pendingDeleteId = null;
 		}
 	}
 
@@ -98,10 +116,6 @@
 	function submitMessage() {
 		if (!chat.input.trim() || isLoading) return;
 		chat.handleSubmit();
-		// Capture conversation ID from response header after first message
-		if (!conversationId) {
-			setTimeout(() => loadConversations(), 2000);
-		}
 	}
 
 	function formatRelativeTime(dateStr: string): string {
@@ -137,7 +151,7 @@
 					>
 						<span class="i-lucide-history h-4 w-4"></span>
 					</button>
-					<span class="text-fluid-base font-semibold text-fg">AI Assistant</span>
+					<Dialog.Title class="text-fluid-base font-semibold text-fg">AI Assistant</Dialog.Title>
 				</div>
 				<div class="flex items-center gap-1">
 					<button
@@ -156,13 +170,18 @@
 					</Dialog.Close>
 				</div>
 			</div>
+			<Dialog.Description class="sr-only">
+				Chat with the AI assistant. Your conversation history is saved automatically.
+			</Dialog.Description>
 
 			<div class="flex flex-1 overflow-hidden">
 				<!-- Sidebar -->
 				{#if showSidebar}
 					<div class="chatbot-sidebar flex w-48 shrink-0 flex-col border-r border-border">
 						<div class="flex-1 overflow-y-auto">
-							{#if conversations.length === 0}
+							{#if conversationsError}
+								<p class="p-3 text-center text-fluid-xs text-muted">Could not load history.</p>
+							{:else if conversations.length === 0}
 								<p class="p-3 text-center text-fluid-xs text-muted">No conversations yet</p>
 							{:else}
 								{#each conversations as conv (conv.id)}
@@ -177,14 +196,29 @@
 										>
 											{conv.title}
 										</button>
-										<button
-											type="button"
-											class="chatbot-delete-btn shrink-0 text-muted opacity-0 hover:text-error-fg"
-											aria-label="Delete conversation"
-											onclick={() => deleteConversation(conv.id)}
-										>
-											<span class="i-lucide-trash-2 h-3 w-3"></span>
-										</button>
+										{#if pendingDeleteId === conv.id}
+											<button
+												type="button"
+												class="shrink-0 text-fluid-xs font-medium text-error-fg"
+												onclick={() => deleteConversation(conv.id)}
+												aria-label="Confirm delete conversation"
+											>Yes</button>
+											<button
+												type="button"
+												class="shrink-0 text-fluid-xs text-muted"
+												onclick={() => (pendingDeleteId = null)}
+												aria-label="Cancel delete"
+											>No</button>
+										{:else}
+											<button
+												type="button"
+												class="chatbot-delete-btn shrink-0 text-muted hover:text-error-fg"
+												aria-label="Delete conversation"
+												onclick={() => (pendingDeleteId = conv.id)}
+											>
+												<span class="i-lucide-trash-2 h-3 w-3"></span>
+											</button>
+										{/if}
 									</div>
 								{/each}
 							{/if}
@@ -225,8 +259,17 @@
 
 					<!-- Error display -->
 					{#if chat.error}
-						<div class="chatbot-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm">
-							{chat.error.message}
+						<div class="chatbot-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm" role="alert" aria-live="polite">
+							<span class="font-medium">Could not get a response.</span>
+							{#if chat.error.message?.includes('429')}
+								You've reached the rate limit. Please wait a moment.
+							{:else if chat.error.message?.includes('401') || chat.error.message?.includes('Sign in')}
+								Sign in to use the AI assistant.
+							{:else if chat.error.message?.includes('503')}
+								The AI service is temporarily unavailable.
+							{:else}
+								Something went wrong. Try again.
+							{/if}
 						</div>
 					{/if}
 
@@ -259,6 +302,14 @@
 	}
 
 	.chatbot-conv-item:hover .chatbot-delete-btn {
+		opacity: 1;
+	}
+
+	.chatbot-delete-btn {
+		opacity: 0.3;
+	}
+
+	.chatbot-delete-btn:focus-visible {
 		opacity: 1;
 	}
 

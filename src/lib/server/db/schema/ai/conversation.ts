@@ -7,6 +7,8 @@ import { user } from '../auth/_better-auth';
 
 export const aiSchema = pgSchema('ai');
 
+export const messageRoleEnum = aiSchema.enum('message_role', ['user', 'assistant', 'system']);
+
 export const conversation = aiSchema.table(
 	'conversation',
 	{
@@ -19,8 +21,7 @@ export const conversation = aiSchema.table(
 		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 	},
 	(table) => [
-		index('conversation_user_id_idx').on(table.userId),
-		index('conversation_updated_at_idx').on(table.updatedAt),
+		index('conversation_user_updated_idx').on(table.userId, table.updatedAt),
 	],
 );
 
@@ -31,12 +32,11 @@ export const message = aiSchema.table(
 		conversationId: text('conversation_id')
 			.notNull()
 			.references(() => conversation.id, { onDelete: 'cascade' }),
-		role: text('role').notNull(),
+		role: messageRoleEnum('role').notNull(),
 		content: text('content').notNull(),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	},
 	(table) => [
-		index('message_conversation_id_idx').on(table.conversationId),
-		index('message_created_at_idx').on(table.createdAt),
+		index('message_conv_created_idx').on(table.conversationId, table.createdAt),
 	],
 );

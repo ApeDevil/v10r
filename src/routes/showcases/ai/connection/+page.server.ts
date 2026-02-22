@@ -1,11 +1,14 @@
+import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { verifyAIConnection, getProviderStatuses } from '$lib/server/ai/showcase/queries';
 
-export const load: PageServerLoad = async () => {
-	const [connection, providers] = await Promise.all([
-		verifyAIConnection(),
-		Promise.resolve(getProviderStatuses()),
-	]);
+export const load: PageServerLoad = async ({ locals }) => {
+	if (!locals.user) {
+		redirect(303, '/auth/login');
+	}
+
+	const connection = await verifyAIConnection();
+	const providers = getProviderStatuses();
 
 	return {
 		connection,
@@ -15,13 +18,12 @@ export const load: PageServerLoad = async () => {
 };
 
 export const actions: Actions = {
-	retest: async () => {
-		const connection = await verifyAIConnection();
+	retest: async ({ locals }) => {
+		if (!locals.user) {
+			redirect(303, '/auth/login');
+		}
 
-		return {
-			connection,
-			providers: getProviderStatuses(),
-			measuredAt: new Date().toISOString(),
-		};
+		await verifyAIConnection();
+		// Load re-runs via update() in the enhance callback — no return needed
 	},
 };

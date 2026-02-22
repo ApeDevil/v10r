@@ -86,8 +86,17 @@
 					</div>
 
 					{#if chat.error}
-						<div class="chat-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm">
-							{chat.error.message}
+						<div class="chat-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm" role="alert" aria-live="polite">
+							<span class="font-medium">Could not get a response.</span>
+							{#if chat.error.message?.includes('429')}
+								You've reached the rate limit. Please wait a moment.
+							{:else if chat.error.message?.includes('401') || chat.error.message?.includes('Sign in')}
+								Sign in to use the AI assistant.
+							{:else if chat.error.message?.includes('503')}
+								The AI service is temporarily unavailable.
+							{:else}
+								Something went wrong. Try again.
+							{/if}
 						</div>
 					{/if}
 
@@ -108,7 +117,7 @@
 	.chat-container {
 		display: flex;
 		flex-direction: column;
-		height: 500px;
+		height: min(500px, 60vh);
 	}
 
 	.chat-messages {

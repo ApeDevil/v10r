@@ -1,9 +1,11 @@
 import { json } from '@sveltejs/kit';
 import { streamText } from 'ai';
+import { safeParse } from 'valibot';
 import { Ratelimit } from '@upstash/ratelimit';
 import { redis } from '$lib/server/cache';
-import { aiConfigured, chatModel, activeProviderInfo } from '$lib/server/ai';
+import { aiConfigured, chatModel } from '$lib/server/ai';
 import { SYSTEM_PROMPT, MAX_TOKENS, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW, RATE_LIMIT_PREFIX } from '$lib/server/ai/config';
+import { StreamingRequestSchema } from '$lib/server/ai/validation';
 import { classifyAIError, aiErrorToStatus } from '$lib/server/ai/errors';
 import type { RequestHandler } from './$types';
 
@@ -18,7 +20,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return json({ error: 'Sign in to use the AI assistant.' }, { status: 401 });
 	}
 
-	if (!aiConfigured || !chatModel || !activeProviderInfo) {
+	if (!aiConfigured || !chatModel) {
 		return json(
 			{ error: 'No AI provider configured.' },
 			{ status: 503 },
@@ -36,8 +38,19 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		);
 	}
 
+	// Parse and validate request body
+	const body = await request.json().catch(() => null);
+	if (!body) {
+		return json({ error: 'Invalid request body.' }, { status: 400 });
+	}
+
+	const parsed = safeParse(StreamingRequestSchema, body);
+	if (!parsed.success) {
+		return json({ error: 'Invalid request.' }, { status: 400 });
+	}
+
 	try {
-		const { prompt } = await request.json();
+		const { prompt } = parsed.output;
 
 		const result = streamText({
 			model: chatModel,
@@ -46,12 +59,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			maxTokens: MAX_TOKENS,
 		});
 
-		return result.toDataStreamResponse({
-			headers: {
-				'X-Provider': activeProviderInfo.id,
-				'X-Model': activeProviderInfo.model,
-			},
-		});
+		result.consumeStream();
+
+		return result.toDataStreamResponse();
 	} catch (err) {
 		const aiErr = classifyAIError(err);
 		return json(

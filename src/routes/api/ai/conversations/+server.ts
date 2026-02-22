@@ -1,6 +1,8 @@
 import { json } from '@sveltejs/kit';
+import { safeParse } from 'valibot';
 import { listConversations, createConversation } from '$lib/server/db/ai/mutations';
 import { checkConversationLimit } from '$lib/server/db/ai/guards';
+import { CreateConversationSchema } from '$lib/server/ai/validation';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ locals }) => {
@@ -23,7 +25,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	const body = await request.json().catch(() => ({}));
-	const title = typeof body.title === 'string' ? body.title : undefined;
+	const parsed = safeParse(CreateConversationSchema, body);
+	const title = parsed.success ? parsed.output.title : undefined;
 
 	const conv = await createConversation(locals.user.id, title);
 	return json(conv, { status: 201 });

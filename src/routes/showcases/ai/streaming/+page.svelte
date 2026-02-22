@@ -43,8 +43,14 @@
 			});
 
 			if (!res.ok) {
-				const data = await res.json();
-				error = data.error || `Error ${res.status}`;
+				let errorDetail: string;
+				try {
+					const data = await res.json();
+					errorDetail = data.error || `Error ${res.status}`;
+				} catch {
+					errorDetail = `Error ${res.status}`;
+				}
+				error = errorDetail;
 				streaming = false;
 				return;
 			}
@@ -140,7 +146,7 @@
 					<Typography variant="h5" as="h2">Prompt</Typography>
 				{/snippet}
 
-				<div class="stream-prompts">
+				<div class="stream-prompts" role="group" aria-label="Preset prompts">
 					{#each PRESETS as preset}
 						<Button
 							variant="outline"
@@ -161,7 +167,7 @@
 				{/snippet}
 
 				{#if error}
-					<div class="stream-error rounded-md px-3 py-2 text-fluid-sm">
+					<div class="stream-error rounded-md px-3 py-2 text-fluid-sm" role="alert">
 						{error}
 					</div>
 				{:else if output || streaming}

@@ -40,13 +40,14 @@ export async function getConversation(id: string, userId: string) {
 
 	if (!conv) return null;
 
-	const messages = await db
+	const msgs = await db
 		.select()
 		.from(message)
 		.where(eq(message.conversationId, id))
-		.orderBy(message.createdAt);
+		.orderBy(message.createdAt)
+		.limit(500);
 
-	return { ...conv, messages };
+	return { ...conv, messages: msgs };
 }
 
 /** Delete a conversation (cascades to messages) */
@@ -58,12 +59,22 @@ export async function deleteConversation(id: string, userId: string) {
 	return !!deleted;
 }
 
-/** Save messages in bulk (idempotent via onConflictDoNothing) */
+/** Save messages in bulk (idempotent via onConflictDoNothing). Auth-scoped. */
 export async function saveMessages(
 	conversationId: string,
+	userId: string,
 	messages: { id: string; role: string; content: string }[],
 ) {
 	if (messages.length === 0) return;
+
+	// Verify conversation ownership before inserting
+	const [conv] = await db
+		.select({ id: conversation.id })
+		.from(conversation)
+		.where(and(eq(conversation.id, conversationId), eq(conversation.userId, userId)))
+		.limit(1);
+
+	if (!conv) return;
 
 	await db
 		.insert(message)
@@ -71,17 +82,23 @@ export async function saveMessages(
 			messages.map((m) => ({
 				id: m.id,
 				conversationId,
-				role: m.role,
+				role: m.role as 'user' | 'assistant' | 'system',
 				content: m.content,
 			})),
 		)
 		.onConflictDoNothing();
+
+	// Touch updatedAt so listing reflects recent activity
+	await db
+		.update(conversation)
+		.set({ updatedAt: new Date() })
+		.where(eq(conversation.id, conversationId));
 }
 
-/** Update conversation title and touch updatedAt */
-export async function updateConversationTitle(id: string, title: string) {
+/** Update conversation title and touch updatedAt. Auth-scoped. */
+export async function updateConversationTitle(id: string, userId: string, title: string) {
 	await db
 		.update(conversation)
 		.set({ title, updatedAt: new Date() })
-		.where(eq(conversation.id, id));
+		.where(and(eq(conversation.id, id), eq(conversation.userId, userId)));
 }
