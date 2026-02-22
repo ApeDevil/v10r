@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { Chat } from '@ai-sdk/svelte';
 	import { PageHeader, BackLink, Card, Alert, EmptyState } from '$lib/components/composites';
-	import { Typography } from '$lib/components/primitives';
+	import { RagPipeline, createPipelineState } from '$lib/components/composites/rag-pipeline';
+	import { Typography, Drawer } from '$lib/components/primitives';
 	import { PageContainer, Stack } from '$lib/components/layout';
 	import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
 	import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
@@ -9,7 +10,9 @@
 	let { data } = $props();
 
 	let selectedTiers: (1 | 2 | 3)[] = $state([1]);
-	let retrievalMeta: { tierUsed: number[]; chunkCount: number; durationMs: number } | null = $state(null);
+	let drawerOpen = $state(false);
+
+	const pipeline = createPipelineState();
 
 	const chat = new Chat({
 		api: '/api/ai/chat',
@@ -17,20 +20,13 @@
 			get useRetrieval() { return true; },
 			get retrievalTiers() { return selectedTiers; },
 		},
-		onResponse: (response) => {
-			const meta = response.headers.get('X-Retrieval-Meta');
-			if (meta) {
-				try {
-					retrievalMeta = JSON.parse(meta);
-				} catch { /* ignore */ }
-			}
-		},
 	});
 
 	const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
 
 	let scrollContainer: HTMLDivElement | undefined = $state();
 
+	// Auto-scroll on new messages
 	$effect(() => {
 		if (chat.messages.length && scrollContainer) {
 			requestAnimationFrame(() => {
@@ -41,9 +37,20 @@
 		}
 	});
 
+	// Process pipeline annotations from the last assistant message
+	$effect(() => {
+		const msgs = chat.messages;
+		if (msgs.length === 0) return;
+		const lastMsg = msgs[msgs.length - 1];
+		if (lastMsg?.role === 'assistant' && lastMsg.annotations) {
+			pipeline.processAnnotations(lastMsg.annotations as unknown[]);
+		}
+	});
+
 	function submitMessage() {
 		if (!chat.input.trim() || isLoading) return;
-		retrievalMeta = null;
+		pipeline.reset();
+		pipeline.resetCursor();
 		chat.handleSubmit();
 	}
 
@@ -151,29 +158,33 @@
 								</div>
 							{/if}
 
-							<ChatInput bind:value={chat.input} loading={isLoading} onsubmit={submitMessage} />
+							<div class="chat-input-row">
+								<ChatInput bind:value={chat.input} loading={isLoading} onsubmit={submitMessage} />
+
+								<!-- Mobile pipeline status chip -->
+								{#if pipeline.isActive || pipeline.totalDurationMs > 0}
+									<button class="pipeline-chip" onclick={() => { drawerOpen = true; }}>
+										{#if pipeline.isActive}
+											<span class="chip-dot"></span>
+											Pipeline running
+										{:else}
+											Pipeline {pipeline.totalDurationMs}ms
+										{/if}
+									</button>
+								{/if}
+							</div>
 						</div>
 					</Card>
 				</div>
 
+				<!-- Desktop sidebar -->
 				<div class="rag-sidebar">
 					<Card>
 						{#snippet header()}
-							<Typography variant="h6" as="h3">Retrieval Info</Typography>
+							<Typography variant="h6" as="h3">Pipeline</Typography>
 						{/snippet}
 
-						{#if retrievalMeta}
-							<div class="meta-grid">
-								<span class="text-muted text-fluid-xs">Tiers used</span>
-								<span class="text-fluid-sm">{retrievalMeta.tierUsed.map(t => `T${t}`).join(', ')}</span>
-								<span class="text-muted text-fluid-xs">Chunks injected</span>
-								<span class="text-fluid-sm">{retrievalMeta.chunkCount}</span>
-								<span class="text-muted text-fluid-xs">Retrieval time</span>
-								<span class="text-fluid-sm">{retrievalMeta.durationMs}ms</span>
-							</div>
-						{:else}
-							<p class="text-fluid-xs text-muted">Send a message to see retrieval metadata.</p>
-						{/if}
+						<RagPipeline state={pipeline} />
 					</Card>
 
 					<Card>
@@ -198,6 +209,11 @@
 					</Card>
 				</div>
 			</div>
+
+			<!-- Mobile drawer -->
+			<Drawer bind:open={drawerOpen} side="bottom">
+				<RagPipeline state={pipeline} />
+			</Drawer>
 		{/if}
 	</Stack>
 
@@ -222,9 +238,15 @@
 	}
 
 	.rag-sidebar {
-		display: flex;
+		display: none;
 		flex-direction: column;
 		gap: var(--spacing-4);
+	}
+
+	@media (min-width: 768px) {
+		.rag-sidebar {
+			display: flex;
+		}
 	}
 
 	.chat-header {
@@ -282,6 +304,11 @@
 		color: var(--color-error-fg);
 	}
 
+	.chat-input-row {
+		display: flex;
+		flex-direction: column;
+	}
+
 	.chat-typing-avatar {
 		background-color: color-mix(in srgb, var(--color-muted) 20%, transparent);
 		color: var(--color-fg);
@@ -310,12 +337,6 @@
 		40% { transform: scale(1); opacity: 1; }
 	}
 
-	.meta-grid {
-		display: grid;
-		grid-template-columns: auto 1fr;
-		gap: var(--spacing-2) var(--spacing-4);
-	}
-
 	.tier-info {
 		display: flex;
 		flex-direction: column;
@@ -341,5 +362,47 @@
 		font-size: 11px;
 		color: var(--color-primary);
 		min-width: 24px;
+	}
+
+	/* Mobile pipeline chip */
+	.pipeline-chip {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: var(--spacing-1);
+		padding: var(--spacing-1) var(--spacing-3);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-sm);
+		background: color-mix(in srgb, var(--color-surface-2) 80%, transparent);
+		color: var(--color-muted);
+		font-size: 11px;
+		cursor: pointer;
+		margin: var(--spacing-2) var(--spacing-3);
+	}
+
+	@media (min-width: 768px) {
+		.pipeline-chip {
+			display: none;
+		}
+	}
+
+	.chip-dot {
+		display: inline-block;
+		width: 5px;
+		height: 5px;
+		border-radius: 50%;
+		background-color: var(--color-primary);
+		animation: pulse-chip 1s ease-in-out infinite;
+	}
+
+	@keyframes pulse-chip {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0.4; }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.chip-dot {
+			animation: none;
+		}
 	}
 </style>

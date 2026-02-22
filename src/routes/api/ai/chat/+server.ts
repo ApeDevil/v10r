@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { streamText } from 'ai';
+import { streamText, createDataStreamResponse } from 'ai';
 import { safeParse } from 'valibot';
 import { Ratelimit } from '@upstash/ratelimit';
 import { redis } from '$lib/server/cache';
@@ -9,7 +9,9 @@ import { ChatRequestSchema } from '$lib/server/ai/validation';
 import { classifyAIError, aiErrorToStatus } from '$lib/server/ai/errors';
 import { createConversation, saveMessages, updateConversationTitle } from '$lib/server/db/ai/mutations';
 import { checkConversationLimit } from '$lib/server/db/ai/guards';
-import { retrieve, formatContextForPrompt } from '$lib/server/retrieval';
+import { formatContextForPrompt } from '$lib/server/retrieval';
+import { retrieveWithEvents } from '$lib/server/retrieval/instrumented';
+import type { PipelineStepEvent } from '$lib/types/pipeline';
 import type { RequestHandler } from './$types';
 
 const ratelimit = new Ratelimit({
@@ -91,38 +93,81 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			]);
 		}
 
-		// Retrieve context if enabled
-		let systemPrompt = SYSTEM_PROMPT;
-		let retrievalMeta: Record<string, unknown> | null = null;
-
-		if (useRetrieval && userMsg?.role === 'user') {
-			try {
-				const retrievalResult = await retrieve(userMsg.content, {
-					userId: locals.user.id,
-					maxChunks: 3,
-					tiers: retrievalTiers ?? [1],
-				});
-
-				const contextBlock = formatContextForPrompt(retrievalResult);
-				if (contextBlock) {
-					systemPrompt = `${SYSTEM_PROMPT}\n\n<context>\n${contextBlock}\n</context>\n\nUse the above context to inform your response. Cite sources when relevant.`;
-				}
-
-				retrievalMeta = {
-					tierUsed: retrievalResult.tierUsed,
-					chunkCount: retrievalResult.chunks.length,
-					durationMs: retrievalResult.durationMs,
-				};
-			} catch (err) {
-				console.error('[ai:chat] Retrieval failed, proceeding without context:', err);
-			}
+		const userId = locals.user.id;
+		const responseHeaders: Record<string, string> = {};
+		if (conversationId) {
+			responseHeaders['X-Conversation-Id'] = conversationId;
 		}
 
-		const userId = locals.user.id;
+		// --- Retrieval path: use createDataStreamResponse for pipeline events ---
+		if (useRetrieval && userMsg?.role === 'user') {
+			return createDataStreamResponse({
+				headers: responseHeaders,
+				execute: async (dataStream) => {
+					let systemPrompt = SYSTEM_PROMPT;
 
+					const emitEvent = (event: PipelineStepEvent) => {
+						dataStream.writeMessageAnnotation(event);
+					};
+
+					try {
+						const retrievalResult = await retrieveWithEvents(
+							userMsg.content,
+							{ userId, maxChunks: 3, tiers: retrievalTiers ?? [1] },
+							emitEvent,
+						);
+
+						const contextBlock = formatContextForPrompt(retrievalResult);
+						if (contextBlock) {
+							systemPrompt = `${SYSTEM_PROMPT}\n\n<context>\n${contextBlock}\n</context>\n\nUse the above context to inform your response. Cite sources when relevant.`;
+						}
+
+						// Keep X-Retrieval-Meta as fallback for basic chat page
+						responseHeaders['X-Retrieval-Meta'] = JSON.stringify({
+							tierUsed: retrievalResult.tierUsed,
+							chunkCount: retrievalResult.chunks.length,
+							durationMs: retrievalResult.durationMs,
+						});
+					} catch (err) {
+						console.error('[ai:chat] Retrieval failed, proceeding without context:', err);
+					}
+
+					emitEvent({ type: 'pipeline:step', step: 'generate', status: 'active' });
+
+					const textResult = streamText({
+						model: chatModel,
+						system: systemPrompt,
+						messages,
+						maxTokens: MAX_TOKENS,
+						onFinish: async ({ text }) => {
+							emitEvent({ type: 'pipeline:step', step: 'generate', status: 'done' });
+							try {
+								if (conversationId && text) {
+									await saveMessages(conversationId, userId, [
+										{ id: crypto.randomUUID(), role: 'assistant', content: text },
+									]);
+								}
+							} catch (err) {
+								console.error('[ai:chat] Failed to persist assistant message:', {
+									conversationId,
+									error: err instanceof Error ? err.message : err,
+								});
+							}
+						},
+					});
+
+					textResult.mergeIntoDataStream(dataStream);
+				},
+				onError: (error) => {
+					return error instanceof Error ? error.message : 'An error occurred.';
+				},
+			});
+		}
+
+		// --- Non-retrieval path: unchanged ---
 		const result = streamText({
 			model: chatModel,
-			system: systemPrompt,
+			system: SYSTEM_PROMPT,
 			messages,
 			maxTokens: MAX_TOKENS,
 			onFinish: async ({ text }) => {
@@ -141,18 +186,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			},
 		});
 
-		// Ensure onFinish runs even if client disconnects
 		result.consumeStream();
 
-		const headers: Record<string, string> = {};
-		if (conversationId) {
-			headers['X-Conversation-Id'] = conversationId;
-		}
-		if (retrievalMeta) {
-			headers['X-Retrieval-Meta'] = JSON.stringify(retrievalMeta);
-		}
-
-		return result.toDataStreamResponse({ headers });
+		return result.toDataStreamResponse({ headers: responseHeaders });
 	} catch (err) {
 		const aiErr = classifyAIError(err);
 
@@ -165,7 +201,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 					const result = streamText({
 						model: fallbackModel,
-						system: systemPrompt,
+						system: SYSTEM_PROMPT,
 						messages,
 						maxTokens: MAX_TOKENS,
 						onFinish: async ({ text }) => {
