@@ -81,6 +81,13 @@
 			title="i18n"
 			description="Translations, pluralization, formatting, and language switching"
 		/>
+
+		<LinkCard
+			href="/showcases/ai"
+			icon="i-lucide-bot"
+			title="AI"
+			description="AI assistant with Vercel AI SDK and Groq"
+		/>
 	</nav>
 
 	<BackLink href="/" label="Home" />

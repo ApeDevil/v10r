@@ -8,6 +8,7 @@
 		SessionMonitor,
 	} from '$lib/components/shell';
 	import { QuickSearch } from '$lib/components/composites/quick-search';
+	import { Chatbot } from '$lib/components/composites/chatbot';
 	import { setSessionContext, type Session } from '$lib/stores/session.svelte';
 	import { getModals } from '$lib/stores/modals.svelte';
 	import { getTheme } from '$lib/stores/theme.svelte';
@@ -38,7 +39,9 @@
 		{ id: 'docs', type: 'page' as const, label: 'Docs', icon: 'i-lucide-book-open', href: '/docs' },
 		{ id: 'docs-stack', type: 'page' as const, label: 'Stack', icon: 'i-lucide-layers', href: '/docs/stack' },
 		{ id: 'toggle-theme', type: 'action' as const, label: 'Toggle Theme', icon: 'i-lucide-sun-moon', action: () => theme.setMode(theme.isDark ? 'light' : 'dark') },
+		{ id: 'showcases-ai', type: 'page' as const, label: 'AI', icon: 'i-lucide-bot', href: '/showcases/ai' },
 		{ id: 'shortcuts', type: 'action' as const, label: 'Keyboard Shortcuts', icon: 'i-lucide-keyboard', action: () => modals.open('shortcuts') },
+		{ id: 'ai-assistant', type: 'action' as const, label: 'AI Assistant', icon: 'i-lucide-bot', action: () => modals.open('aiAssistant') },
 	];
 </script>
 
@@ -63,6 +66,9 @@
 
 <!-- Quick search (command palette) -->
 <QuickSearch bind:open={modals.quickSearchOpen} items={searchItems} />
+
+<!-- AI assistant chatbot -->
+<Chatbot bind:open={modals.aiAssistantOpen} />
 
 <!-- Shortcuts modal -->
 <ShortcutsModal />

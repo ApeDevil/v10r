@@ -91,6 +91,10 @@
         {
             "folderPath": "velociraptor/src/lib/components/shell/",
             "badge": "🐚"
+        },
+        {
+            "folderPath": "velociraptor/src/lib/server/ai/",
+            "badge": "🤖"
         }
     ]
 }

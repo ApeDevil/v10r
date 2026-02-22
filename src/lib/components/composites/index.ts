@@ -13,6 +13,8 @@ export { default as Toaster } from './toast/Toaster.svelte';
 export { default as QuickSearch } from './quick-search/QuickSearch.svelte';
 export { default as QuickSearchTrigger } from './quick-search/QuickSearchTrigger.svelte';
 
+export { Chatbot } from './chatbot';
+
 export { default as Alert } from './alert/Alert.svelte';
 
 export { Pagination } from './pagination';
