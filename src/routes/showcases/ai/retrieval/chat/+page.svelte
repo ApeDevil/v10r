@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Chat } from '@ai-sdk/svelte';
-	import { PageHeader, BackLink, Card, Alert } from '$lib/components/composites';
+	import { PageHeader, BackLink, Card, Alert, EmptyState } from '$lib/components/composites';
 	import { Typography } from '$lib/components/primitives';
 	import { PageContainer, Stack } from '$lib/components/layout';
 	import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
@@ -92,16 +92,22 @@
 										class="tier-btn"
 										class:active={selectedTiers.includes(1)}
 										onclick={() => toggleTier(1)}
+										aria-pressed={selectedTiers.includes(1)}
+										aria-label="Tier 1: Contextual retrieval"
 									>T1</button>
 									<button
 										class="tier-btn"
 										class:active={selectedTiers.includes(2)}
 										onclick={() => toggleTier(2)}
+										aria-pressed={selectedTiers.includes(2)}
+										aria-label="Tier 2: Parent-child retrieval"
 									>T2</button>
 									<button
 										class="tier-btn"
 										class:active={selectedTiers.includes(3)}
 										onclick={() => toggleTier(3)}
+										aria-pressed={selectedTiers.includes(3)}
+										aria-label="Tier 3: Graph traversal"
 									>T3</button>
 								</div>
 							</div>
@@ -110,11 +116,14 @@
 						<div class="chat-container">
 							<div bind:this={scrollContainer} class="chat-messages">
 								{#if chat.messages.length === 0}
-									<div class="chat-empty">
-										<span class="i-lucide-brain-circuit h-10 w-10 text-muted"></span>
-										<p class="text-fluid-sm text-muted">Ask a question about your ingested documents.</p>
+									<EmptyState
+										icon="i-lucide-brain-circuit h-10 w-10"
+										title="Ask a question"
+										description="Ask a question about your ingested documents."
+										class="chat-empty"
+									>
 										<p class="text-fluid-xs text-muted">Tiers: {selectedTiers.map(t => `T${t}`).join(' + ')}</p>
-									</div>
+									</EmptyState>
 								{:else}
 									{#each chat.messages as message (message.id)}
 										<ChatMessage role={message.role as 'user' | 'assistant'} content={message.content} />
@@ -122,7 +131,7 @@
 
 									{#if isLoading && chat.messages[chat.messages.length - 1]?.role === 'user'}
 										<div class="chat-typing flex items-center gap-3 px-4 py-3">
-											<div class="chat-typing-avatar flex h-8 w-8 shrink-0 items-center justify-content-center rounded-full">
+											<div class="chat-typing-avatar flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
 												<span class="i-lucide-bot h-4 w-4"></span>
 											</div>
 											<div class="chat-typing-dots flex gap-1">
@@ -233,7 +242,7 @@
 	.tier-btn {
 		padding: 4px 10px;
 		border: 1px solid var(--color-border);
-		border-radius: 4px;
+		border-radius: var(--radius-sm);
 		background: none;
 		color: var(--color-muted);
 		font-size: 11px;
@@ -261,15 +270,10 @@
 		flex-direction: column;
 	}
 
-	.chat-empty {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: var(--spacing-3);
+	:global(.chat-empty) {
 		height: 100%;
+		min-height: 0;
 		padding: var(--spacing-6);
-		text-align: center;
 	}
 
 	.chat-error {
@@ -285,7 +289,7 @@
 
 	.chat-typing-dots {
 		padding: 8px 12px;
-		border-radius: 8px;
+		border-radius: var(--radius-lg);
 		background-color: color-mix(in srgb, var(--color-muted) 12%, transparent);
 	}
 
@@ -323,7 +327,7 @@
 		align-items: center;
 		gap: var(--spacing-3);
 		padding: var(--spacing-2) var(--spacing-3);
-		border-radius: 6px;
+		border-radius: var(--radius-md);
 		opacity: 0.4;
 	}
 

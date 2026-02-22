@@ -42,7 +42,7 @@
 		placeholder="Type a message..."
 		disabled={loading}
 		rows={1}
-		class="chat-textarea flex-1 resize-none rounded-md border border-border px-3 py-2 text-fluid-base text-fg placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+		class="chat-textarea flex-1 resize-none rounded-md border border-border px-3 py-2 text-fluid-base text-fg placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary"
 	></textarea>
 	<button
 		type="button"
@@ -68,7 +68,19 @@
 		background-color: transparent;
 	}
 
+	.chat-send-btn {
+		transition:
+			translate var(--duration-fast) var(--ease-out),
+			box-shadow var(--duration-fast) var(--ease-default);
+	}
+
 	.chat-send-btn:not(:disabled):hover {
-		filter: brightness(1.1);
+		translate: 0 -2px;
+		box-shadow: 0 0 16px 4px color-mix(in srgb, var(--color-primary) 45%, transparent);
+	}
+
+	.chat-send-btn:not(:disabled):active {
+		translate: 0 0;
+		box-shadow: none;
 	}
 </style>

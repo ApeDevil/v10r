@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { PageHeader, BackLink, Card, Alert } from '$lib/components/composites';
-	import { Typography } from '$lib/components/primitives';
+	import { PageHeader, BackLink, Card, Alert, FormField } from '$lib/components/composites';
+	import { Typography, Button } from '$lib/components/primitives';
 	import { PageContainer, Stack } from '$lib/components/layout';
 
 	let { data } = $props();
@@ -10,6 +10,7 @@
 	let loading = $state(false);
 	let result: { documentId: string; chunkCount: number; entityCount: number; durationMs: number } | null = $state(null);
 	let error: string | null = $state(null);
+	let deleteError: string | null = $state(null);
 
 	let documents: Array<{
 		id: string;
@@ -61,10 +62,16 @@
 	}
 
 	async function deleteDocument(id: string) {
+		deleteError = null;
 		try {
-			await fetch(`/api/retrieval/documents/${id}`, { method: 'DELETE' });
+			const res = await fetch(`/api/retrieval/documents/${id}`, { method: 'DELETE' });
+			if (!res.ok) {
+				throw new Error(`Failed to delete document (HTTP ${res.status})`);
+			}
 			await loadDocuments();
-		} catch { /* ignore */ }
+		} catch (err) {
+			deleteError = err instanceof Error ? err.message : 'Delete failed';
+		}
 	}
 
 	$effect(() => {
@@ -125,8 +132,7 @@ A +page.server.ts file can also export actions for progressive form handling. Ac
 				{/snippet}
 
 				<Stack gap="4">
-					<div class="form-field">
-						<label for="doc-title" class="text-fluid-sm font-medium text-fg">Title</label>
+					<FormField label="Title" id="doc-title">
 						<input
 							id="doc-title"
 							type="text"
@@ -135,10 +141,9 @@ A +page.server.ts file can also export actions for progressive form handling. Ac
 							class="ingest-input"
 							disabled={loading}
 						/>
-					</div>
+					</FormField>
 
-					<div class="form-field">
-						<label for="doc-content" class="text-fluid-sm font-medium text-fg">Content</label>
+					<FormField label="Content" id="doc-content">
 						<textarea
 							id="doc-content"
 							bind:value={content}
@@ -147,14 +152,10 @@ A +page.server.ts file can also export actions for progressive form handling. Ac
 							rows="12"
 							disabled={loading}
 						></textarea>
-					</div>
+					</FormField>
 
-					<div class="flex gap-3">
-						<button
-							class="ingest-btn"
-							onclick={ingestDocument}
-							disabled={loading || !title.trim() || !content.trim()}
-						>
+					<div class="flex flex-wrap gap-3">
+						<Button variant="primary" onclick={ingestDocument} disabled={loading || !title.trim() || !content.trim()}>
 							{#if loading}
 								<span class="i-lucide-loader-2 h-4 w-4 animate-spin"></span>
 								Processing...
@@ -162,16 +163,16 @@ A +page.server.ts file can also export actions for progressive form handling. Ac
 								<span class="i-lucide-upload h-4 w-4"></span>
 								Ingest Document
 							{/if}
-						</button>
+						</Button>
 
-						<button
-							class="sample-btn"
+						<Button
+							variant="secondary"
 							onclick={() => { title = 'SvelteKit Routing'; content = SAMPLE_DOC; }}
 							disabled={loading}
 						>
 							<span class="i-lucide-file-text h-4 w-4"></span>
 							Load Sample
-						</button>
+						</Button>
 					</div>
 				</Stack>
 			</Card>
@@ -194,6 +195,12 @@ A +page.server.ts file can also export actions for progressive form handling. Ac
 			{#if error}
 				<Alert variant="error" title="Ingestion Failed">
 					<p>{error}</p>
+				</Alert>
+			{/if}
+
+			{#if deleteError}
+				<Alert variant="error" title="Delete Failed">
+					<p>{deleteError}</p>
 				</Alert>
 			{/if}
 
@@ -232,17 +239,12 @@ A +page.server.ts file can also export actions for progressive form handling. Ac
 </PageContainer>
 
 <style>
-	.form-field {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-2);
-	}
-
 	.ingest-input,
 	.ingest-textarea {
+		width: 100%;
 		padding: var(--spacing-3) var(--spacing-4);
 		border: 1px solid var(--color-border);
-		border-radius: 8px;
+		border-radius: var(--radius-lg);
 		background-color: var(--color-surface-1);
 		color: var(--color-fg);
 		font-size: var(--text-fluid-sm);
@@ -259,37 +261,6 @@ A +page.server.ts file can also export actions for progressive form handling. Ac
 	.ingest-textarea {
 		resize: vertical;
 		min-height: 120px;
-	}
-
-	.ingest-btn,
-	.sample-btn {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--spacing-2);
-		padding: var(--spacing-3) var(--spacing-5);
-		border-radius: 8px;
-		font-size: var(--text-fluid-sm);
-		font-weight: 500;
-		cursor: pointer;
-		border: none;
-		transition: opacity 150ms;
-	}
-
-	.ingest-btn {
-		background-color: var(--color-primary);
-		color: var(--color-primary-fg);
-	}
-
-	.sample-btn {
-		background-color: var(--color-surface-2);
-		color: var(--color-fg);
-		border: 1px solid var(--color-border);
-	}
-
-	.ingest-btn:disabled,
-	.sample-btn:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
 	}
 
 	.result-grid {
@@ -328,7 +299,7 @@ A +page.server.ts file can also export actions for progressive form handling. Ac
 		background: none;
 		color: var(--color-muted);
 		cursor: pointer;
-		border-radius: 4px;
+		border-radius: var(--radius-sm);
 		transition: color 150ms;
 	}
 

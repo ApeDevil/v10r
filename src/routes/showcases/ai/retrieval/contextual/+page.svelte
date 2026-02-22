@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { PageHeader, BackLink, Card, Alert } from '$lib/components/composites';
-	import { Typography } from '$lib/components/primitives';
+	import { Typography, Button } from '$lib/components/primitives';
 	import { PageContainer, Stack } from '$lib/components/layout';
 
 	let { data } = $props();
@@ -16,6 +16,7 @@
 	}> = $state([]);
 	let meta: { durationMs: number; tierUsed: number[] } | null = $state(null);
 	let error: string | null = $state(null);
+	let searched = $state(false);
 
 	async function search() {
 		if (!query.trim() || loading) return;
@@ -38,6 +39,7 @@
 			const data = await res.json();
 			results = data.chunks ?? [];
 			meta = { durationMs: data.durationMs, tierUsed: data.tierUsed };
+			searched = true;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Search failed';
 			results = [];
@@ -91,15 +93,16 @@
 						placeholder="Enter a search query..."
 						class="search-input"
 						disabled={loading}
+						aria-label="Search query"
 					/>
-					<button class="search-btn" onclick={search} disabled={loading || !query.trim()}>
+					<Button variant="primary" onclick={search} disabled={loading || !query.trim()}>
 						{#if loading}
 							<span class="i-lucide-loader-2 h-4 w-4 animate-spin"></span>
 						{:else}
 							<span class="i-lucide-search h-4 w-4"></span>
 						{/if}
 						Search
-					</button>
+					</Button>
 				</div>
 			</Card>
 
@@ -117,6 +120,10 @@
 				<Alert variant="error" title="Search Failed">
 					<p>{error}</p>
 				</Alert>
+			{/if}
+
+			{#if searched && results.length === 0 && !error}
+				<p class="text-fluid-sm text-muted text-center py-6">No results found for this query.</p>
 			{/if}
 
 			{#if results.length > 0}
@@ -152,7 +159,7 @@
 		flex: 1;
 		padding: var(--spacing-3) var(--spacing-4);
 		border: 1px solid var(--color-border);
-		border-radius: 8px;
+		border-radius: var(--radius-lg);
 		background-color: var(--color-surface-1);
 		color: var(--color-fg);
 		font-size: var(--text-fluid-sm);
@@ -161,26 +168,6 @@
 
 	.search-input:focus {
 		border-color: var(--color-primary);
-	}
-
-	.search-btn {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--spacing-2);
-		padding: var(--spacing-3) var(--spacing-5);
-		background-color: var(--color-primary);
-		color: var(--color-primary-fg);
-		border: none;
-		border-radius: 8px;
-		font-size: var(--text-fluid-sm);
-		font-weight: 500;
-		cursor: pointer;
-		white-space: nowrap;
-	}
-
-	.search-btn:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
 	}
 
 	.meta-bar {
@@ -224,7 +211,7 @@
 		color: var(--color-fg);
 		background-color: var(--color-surface-2);
 		padding: var(--spacing-4);
-		border-radius: 6px;
+		border-radius: var(--radius-md);
 		margin: 0;
 		max-height: 200px;
 		overflow-y: auto;

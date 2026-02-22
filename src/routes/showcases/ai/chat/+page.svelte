@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Chat } from '@ai-sdk/svelte';
-	import { PageHeader, BackLink, Card, Alert } from '$lib/components/composites';
+	import { PageHeader, BackLink, Card, Alert, EmptyState } from '$lib/components/composites';
 	import { Typography } from '$lib/components/primitives';
 	import { PageContainer, Stack } from '$lib/components/layout';
 	import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
@@ -61,10 +61,12 @@
 				<div class="chat-container">
 					<div bind:this={scrollContainer} class="chat-messages">
 						{#if chat.messages.length === 0}
-							<div class="chat-empty">
-								<span class="i-lucide-message-circle h-10 w-10 text-muted"></span>
-								<p class="text-fluid-sm text-muted">Send a message to start chatting.</p>
-							</div>
+							<EmptyState
+								icon="i-lucide-message-circle h-10 w-10"
+								title="Start chatting"
+								description="Send a message to start chatting."
+								class="chat-empty"
+							/>
 						{:else}
 							{#each chat.messages as message (message.id)}
 								<ChatMessage role={message.role as 'user' | 'assistant'} content={message.content} />
@@ -127,15 +129,10 @@
 		flex-direction: column;
 	}
 
-	.chat-empty {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: var(--spacing-3);
+	:global(.chat-empty) {
 		height: 100%;
+		min-height: 0;
 		padding: var(--spacing-6);
-		text-align: center;
 	}
 
 	.chat-error {
@@ -151,7 +148,7 @@
 
 	.chat-typing-dots {
 		padding: 8px 12px;
-		border-radius: 8px;
+		border-radius: var(--radius-lg);
 		background-color: color-mix(in srgb, var(--color-muted) 12%, transparent);
 	}
 
