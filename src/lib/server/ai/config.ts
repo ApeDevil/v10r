@@ -1,6 +1,3 @@
-/** Default model for chat completions */
-export const CHAT_MODEL = 'llama-3.3-70b-versatile';
-
 /** System prompt for the AI assistant */
 export const SYSTEM_PROMPT = `You are the Velociraptor AI assistant — a helpful, concise coding assistant embedded in a full-stack SvelteKit application.
 

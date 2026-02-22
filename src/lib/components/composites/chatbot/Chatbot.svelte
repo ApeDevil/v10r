@@ -5,19 +5,31 @@
 	import ChatMessage from './ChatMessage.svelte';
 	import ChatInput from './ChatInput.svelte';
 
+	interface Conversation {
+		id: string;
+		title: string;
+		updatedAt: string;
+	}
+
 	interface Props {
 		open: boolean;
 	}
 
 	let { open = $bindable(false) }: Props = $props();
 
-	const chat = new Chat({ api: '/api/ai/chat' });
+	let conversationId: string | undefined = $state();
+	let conversations: Conversation[] = $state([]);
+	let showSidebar = $state(false);
+
+	const chat = new Chat({
+		api: '/api/ai/chat',
+		body: () => (conversationId ? { conversationId } : {}),
+	});
 
 	const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
 
 	let scrollContainer: HTMLDivElement | undefined = $state();
 
-	// Auto-scroll to bottom when messages change
 	$effect(() => {
 		if (chat.messages.length && scrollContainer) {
 			requestAnimationFrame(() => {
@@ -28,9 +40,79 @@
 		}
 	});
 
+	// Load conversations when dialog opens
+	$effect(() => {
+		if (open) {
+			loadConversations();
+		}
+	});
+
+	async function loadConversations() {
+		try {
+			const res = await fetch('/api/ai/conversations');
+			if (res.ok) {
+				conversations = await res.json();
+			}
+		} catch {
+			// silently fail
+		}
+	}
+
+	async function loadConversation(conv: Conversation) {
+		try {
+			const res = await fetch(`/api/ai/conversations/${conv.id}`);
+			if (!res.ok) return;
+			const data = await res.json();
+			conversationId = conv.id;
+			chat.messages = data.messages.map((m: { id: string; role: string; content: string }) => ({
+				id: m.id,
+				role: m.role,
+				content: m.content,
+			}));
+			showSidebar = false;
+		} catch {
+			// silently fail
+		}
+	}
+
+	async function deleteConversation(id: string) {
+		try {
+			const res = await fetch(`/api/ai/conversations/${id}`, { method: 'DELETE' });
+			if (res.ok) {
+				conversations = conversations.filter((c) => c.id !== id);
+				if (conversationId === id) {
+					startNewChat();
+				}
+			}
+		} catch {
+			// silently fail
+		}
+	}
+
+	function startNewChat() {
+		conversationId = undefined;
+		chat.messages = [];
+		chat.input = '';
+	}
+
 	function submitMessage() {
 		if (!chat.input.trim() || isLoading) return;
 		chat.handleSubmit();
+		// Capture conversation ID from response header after first message
+		if (!conversationId) {
+			setTimeout(() => loadConversations(), 2000);
+		}
+	}
+
+	function formatRelativeTime(dateStr: string): string {
+		const diff = Date.now() - new Date(dateStr).getTime();
+		const mins = Math.floor(diff / 60000);
+		if (mins < 1) return 'just now';
+		if (mins < 60) return `${mins}m ago`;
+		const hours = Math.floor(mins / 60);
+		if (hours < 24) return `${hours}h ago`;
+		const days = Math.floor(hours / 24);
+		return `${days}d ago`;
 	}
 </script>
 
@@ -47,61 +129,117 @@
 			<!-- Header -->
 			<div class="flex items-center justify-between border-b border-border px-4 py-3">
 				<div class="flex items-center gap-2">
-					<span class="i-lucide-bot h-5 w-5 text-primary"></span>
+					<button
+						type="button"
+						class="chatbot-icon-btn flex h-8 w-8 items-center justify-center rounded-md text-muted hover:text-fg"
+						aria-label="Toggle history"
+						onclick={() => (showSidebar = !showSidebar)}
+					>
+						<span class="i-lucide-history h-4 w-4"></span>
+					</button>
 					<span class="text-fluid-base font-semibold text-fg">AI Assistant</span>
 				</div>
-				<Dialog.Close
-					class="chatbot-close flex h-8 w-8 items-center justify-center rounded-md text-muted hover:text-fg"
-					aria-label="Close"
-				>
-					<span class="i-lucide-x h-4 w-4"></span>
-				</Dialog.Close>
+				<div class="flex items-center gap-1">
+					<button
+						type="button"
+						class="chatbot-icon-btn flex h-8 w-8 items-center justify-center rounded-md text-muted hover:text-fg"
+						aria-label="New chat"
+						onclick={startNewChat}
+					>
+						<span class="i-lucide-plus h-4 w-4"></span>
+					</button>
+					<Dialog.Close
+						class="chatbot-icon-btn flex h-8 w-8 items-center justify-center rounded-md text-muted hover:text-fg"
+						aria-label="Close"
+					>
+						<span class="i-lucide-x h-4 w-4"></span>
+					</Dialog.Close>
+				</div>
 			</div>
 
-			<!-- Messages -->
-			<div bind:this={scrollContainer} class="flex-1 overflow-y-auto">
-				{#if chat.messages.length === 0}
-					<div class="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
-						<span class="i-lucide-message-circle h-10 w-10 text-muted"></span>
-						<p class="text-fluid-sm text-muted">Ask me anything about web development.</p>
+			<div class="flex flex-1 overflow-hidden">
+				<!-- Sidebar -->
+				{#if showSidebar}
+					<div class="chatbot-sidebar flex w-48 shrink-0 flex-col border-r border-border">
+						<div class="flex-1 overflow-y-auto">
+							{#if conversations.length === 0}
+								<p class="p-3 text-center text-fluid-xs text-muted">No conversations yet</p>
+							{:else}
+								{#each conversations as conv (conv.id)}
+									<div class="chatbot-conv-item flex items-center gap-1 px-2 py-2">
+										<button
+											type="button"
+											class={cn(
+												'flex-1 truncate text-left text-fluid-xs',
+												conv.id === conversationId ? 'font-semibold text-fg' : 'text-muted hover:text-fg'
+											)}
+											onclick={() => loadConversation(conv)}
+										>
+											{conv.title}
+										</button>
+										<button
+											type="button"
+											class="chatbot-delete-btn shrink-0 text-muted opacity-0 hover:text-error-fg"
+											aria-label="Delete conversation"
+											onclick={() => deleteConversation(conv.id)}
+										>
+											<span class="i-lucide-trash-2 h-3 w-3"></span>
+										</button>
+									</div>
+								{/each}
+							{/if}
+						</div>
 					</div>
-				{:else}
-					<div class="flex flex-col gap-1 py-2">
-						{#each chat.messages as message (message.id)}
-							<ChatMessage role={message.role as 'user' | 'assistant'} content={message.content} />
-						{/each}
+				{/if}
 
-						{#if isLoading && chat.messages[chat.messages.length - 1]?.role === 'user'}
-							<div class="flex items-center gap-3 px-4 py-3">
-								<div class="chatbot-avatar flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
-									<span class="i-lucide-bot h-4 w-4"></span>
-								</div>
-								<div class="chatbot-typing flex gap-1">
-									<span class="chatbot-dot"></span>
-									<span class="chatbot-dot"></span>
-									<span class="chatbot-dot"></span>
-								</div>
+				<!-- Chat area -->
+				<div class="flex flex-1 flex-col overflow-hidden">
+					<!-- Messages -->
+					<div bind:this={scrollContainer} class="flex-1 overflow-y-auto">
+						{#if chat.messages.length === 0}
+							<div class="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+								<span class="i-lucide-message-circle h-10 w-10 text-muted"></span>
+								<p class="text-fluid-sm text-muted">Ask me anything about web development.</p>
+							</div>
+						{:else}
+							<div class="flex flex-col gap-1 py-2">
+								{#each chat.messages as message (message.id)}
+									<ChatMessage role={message.role as 'user' | 'assistant'} content={message.content} />
+								{/each}
+
+								{#if isLoading && chat.messages[chat.messages.length - 1]?.role === 'user'}
+									<div class="flex items-center gap-3 px-4 py-3">
+										<div class="chatbot-avatar flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+											<span class="i-lucide-bot h-4 w-4"></span>
+										</div>
+										<div class="chatbot-typing flex gap-1">
+											<span class="chatbot-dot"></span>
+											<span class="chatbot-dot"></span>
+											<span class="chatbot-dot"></span>
+										</div>
+									</div>
+								{/if}
 							</div>
 						{/if}
 					</div>
-				{/if}
-			</div>
 
-			<!-- Error display -->
-			{#if chat.error}
-				<div class="chatbot-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm">
-					{chat.error.message}
+					<!-- Error display -->
+					{#if chat.error}
+						<div class="chatbot-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm">
+							{chat.error.message}
+						</div>
+					{/if}
+
+					<!-- Input -->
+					<ChatInput bind:value={chat.input} loading={isLoading} onsubmit={submitMessage} />
 				</div>
-			{/if}
-
-			<!-- Input -->
-			<ChatInput bind:value={chat.input} loading={isLoading} onsubmit={submitMessage} />
+			</div>
 		</Dialog.Content>
 	</Dialog.Portal>
 </Dialog.Root>
 
 <style>
-	:global(.chatbot-close):hover {
+	.chatbot-icon-btn:hover {
 		background-color: color-mix(in srgb, var(--color-muted) 15%, transparent);
 	}
 
@@ -114,6 +252,14 @@
 		background-color: color-mix(in srgb, var(--color-error-fg) 10%, transparent);
 		border: 1px solid color-mix(in srgb, var(--color-error-fg) 20%, transparent);
 		color: var(--color-error-fg);
+	}
+
+	.chatbot-sidebar {
+		background-color: color-mix(in srgb, var(--color-muted) 5%, transparent);
+	}
+
+	.chatbot-conv-item:hover .chatbot-delete-btn {
+		opacity: 1;
 	}
 
 	/* Typing indicator dots */

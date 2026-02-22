@@ -34,7 +34,7 @@
 <PageContainer class="py-7">
 	<PageHeader
 		title="Connection"
-		description="AI provider health check. Verifies the Groq API key is valid and measures response latency."
+		description="AI provider health check. Verifies the active provider's API key and measures response latency."
 		breadcrumbs={[
 			{ label: 'Home', href: '/' },
 			{ label: 'Showcases', href: '/showcases' },
@@ -124,6 +124,7 @@
 						<span class="diag-label">{provider.name}</span>
 						<span class="diag-value">
 							<code class="diag-mono">{provider.model}</code>
+							<code class="diag-env">{provider.envVar}</code>
 							{#if provider.configured}
 								<Badge variant="success">Configured</Badge>
 							{:else}
@@ -138,18 +139,18 @@
 		{#if !data.connection.connected}
 			{#if data.connection.error?.includes('not configured')}
 				<Alert variant="info" title="Setup Required">
-					<p>Add <code>GROQ_API_KEY</code> to your <code>.env</code> file to enable AI features.</p>
+					<p>Add an API key for at least one AI provider to your <code>.env</code> file.</p>
 					<ol class="setup-steps">
-						<li>Go to <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a></li>
-						<li>Create a new API key</li>
-						<li>Add <code>GROQ_API_KEY="gsk_..."</code> to your <code>.env</code> file</li>
-						<li>Restart the dev server</li>
+						<li><strong>Groq</strong>: <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> — <code>GROQ_API_KEY</code></li>
+						<li><strong>OpenAI</strong>: <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a> — <code>OPENAI_API_KEY</code></li>
+						<li><strong>Google</strong>: <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> — <code>GOOGLE_GENERATIVE_AI_API_KEY</code></li>
+						<li>Restart the dev server after adding the key</li>
 					</ol>
 				</Alert>
 			{:else}
 				<Alert variant="error" title="Connection Error">
 					<code>{data.connection.error}</code>
-					<p>Check that <code>GROQ_API_KEY</code> is set correctly in <code>.env</code>.</p>
+					<p>Check that your provider API key is set correctly in <code>.env</code>.</p>
 				</Alert>
 			{/if}
 		{/if}
@@ -193,6 +194,12 @@
 		font-family: ui-monospace, monospace;
 		font-size: var(--text-fluid-xs);
 		word-break: break-all;
+	}
+
+	.diag-env {
+		font-family: ui-monospace, monospace;
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
 	}
 
 	.setup-steps {

@@ -11,4 +11,5 @@ export interface AIProviderStatus {
 	name: string;
 	configured: boolean;
 	model: string;
+	envVar: string;
 }

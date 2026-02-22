@@ -1,18 +1,17 @@
 import { generateText } from 'ai';
-import { aiConfigured, chatModel } from '../index';
-import { CHAT_MODEL } from '../config';
+import { aiConfigured, chatModel, activeProviderInfo, providerRegistry } from '../index';
 import { classifyAIError } from '../errors';
 import type { AIConnectionInfo, AIProviderStatus } from '../types';
 
 /** Verify AI provider connection with a lightweight test call */
 export async function verifyAIConnection(): Promise<AIConnectionInfo> {
-	if (!aiConfigured || !chatModel) {
+	if (!aiConfigured || !chatModel || !activeProviderInfo) {
 		return {
 			connected: false,
-			provider: 'groq',
-			model: CHAT_MODEL,
+			provider: 'none',
+			model: 'none',
 			latencyMs: null,
-			error: 'GROQ_API_KEY is not configured',
+			error: 'No AI provider is configured',
 		};
 	}
 
@@ -27,8 +26,8 @@ export async function verifyAIConnection(): Promise<AIConnectionInfo> {
 
 		return {
 			connected: true,
-			provider: 'groq',
-			model: CHAT_MODEL,
+			provider: activeProviderInfo.id,
+			model: activeProviderInfo.model,
 			latencyMs: Math.round(performance.now() - start),
 			error: null,
 		};
@@ -36,8 +35,8 @@ export async function verifyAIConnection(): Promise<AIConnectionInfo> {
 		const aiErr = classifyAIError(err);
 		return {
 			connected: false,
-			provider: 'groq',
-			model: CHAT_MODEL,
+			provider: activeProviderInfo.id,
+			model: activeProviderInfo.model,
 			latencyMs: Math.round(performance.now() - start),
 			error: aiErr.message,
 		};
@@ -46,12 +45,11 @@ export async function verifyAIConnection(): Promise<AIConnectionInfo> {
 
 /** Get status of all configured AI providers */
 export function getProviderStatuses(): AIProviderStatus[] {
-	return [
-		{
-			id: 'groq',
-			name: 'Groq',
-			configured: aiConfigured,
-			model: CHAT_MODEL,
-		},
-	];
+	return providerRegistry.map((p) => ({
+		id: p.id,
+		name: p.name,
+		configured: p.configured,
+		model: p.model,
+		envVar: p.envVar,
+	}));
 }

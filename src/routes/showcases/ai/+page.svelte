@@ -11,7 +11,7 @@
 <PageContainer width="wide" class="pt-7">
 	<PageHeader
 		title="AI"
-		description="AI integration with Vercel AI SDK and Groq."
+		description="AI integration with Vercel AI SDK. Supports Groq, OpenAI, and Google Gemini."
 		breadcrumbs={[
 			{ label: 'Home', href: '/' },
 			{ label: 'Showcases', href: '/showcases' },
@@ -31,7 +31,14 @@
 			href="/showcases/ai/chat"
 			icon="i-lucide-message-circle"
 			title="Chat"
-			description="Streaming chat demo with Groq Llama 3.3 70B"
+			description="Streaming chat with markdown rendering and conversation history"
+		/>
+
+		<LinkCard
+			href="/showcases/ai/streaming"
+			icon="i-lucide-gauge"
+			title="Streaming"
+			description="Token-level streaming visualization with TTFT and throughput metrics"
 		/>
 	</nav>
 

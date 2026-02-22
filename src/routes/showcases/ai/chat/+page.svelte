@@ -37,7 +37,7 @@
 <PageContainer class="py-7">
 	<PageHeader
 		title="Chat"
-		description="Streaming chat demo with Groq Llama 3.3 70B. Requires authentication and a configured GROQ_API_KEY."
+		description="Streaming chat demo with markdown rendering. Requires authentication and a configured AI provider."
 		breadcrumbs={[
 			{ label: 'Home', href: '/' },
 			{ label: 'Showcases', href: '/showcases' },
@@ -49,7 +49,7 @@
 	<Stack gap="6">
 		{#if !data.configured}
 			<Alert variant="info" title="AI Not Configured">
-				<p>Set <code>GROQ_API_KEY</code> in your <code>.env</code> file to enable the chat demo.</p>
+				<p>Configure an AI provider in your <code>.env</code> file to enable the chat demo.</p>
 				<p>See <a href="/showcases/ai/connection">Connection</a> for setup instructions.</p>
 			</Alert>
 		{:else}
