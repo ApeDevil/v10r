@@ -29,7 +29,7 @@
 			</p>
 
 			<Card>
-				<div class="h-80">
+				<div class="h-[20rem]">
 					<PaneGroup direction="horizontal">
 						<Pane defaultSize={50} minSize={20} maxSize={80}>
 							<div class="h-full bg-surface-1 p-fluid-4 rounded-l-lg border-r border-border">
@@ -68,7 +68,7 @@
 			</p>
 
 			<Card>
-				<div class="h-96">
+				<div class="h-[24rem]">
 					<PaneGroup direction="vertical">
 						<Pane defaultSize={60} minSize={30}>
 							<div class="h-full bg-surface-1 p-fluid-4 rounded-t-lg border-b border-border">
@@ -105,7 +105,7 @@
 			</p>
 
 			<Card>
-				<div class="h-96">
+				<div class="h-[24rem]">
 					<PaneGroup direction="horizontal">
 						<Pane defaultSize={20} minSize={15} maxSize={30}>
 							<div class="h-full bg-surface-1 p-fluid-4 border-r border-border">
@@ -153,7 +153,7 @@
 			</p>
 
 			<Card>
-				<div class="h-64">
+				<div class="h-[16rem]">
 					<PaneGroup direction="horizontal" autoSaveId="showcase-persistent">
 						<Pane defaultSize={30} minSize={20}>
 							<div class="h-full bg-surface-1 p-fluid-4 border-r border-border">
@@ -183,7 +183,7 @@
 			</p>
 
 			<Card>
-				<div class="h-64">
+				<div class="h-[16rem]">
 					<PaneGroup direction="horizontal">
 						<Pane defaultSize={25} minSize={15} collapsible collapsedSize={0}>
 							<div class="h-full bg-surface-1 p-fluid-4 border-r border-border">
@@ -215,7 +215,7 @@
 			</p>
 
 			<Card>
-				<div class="h-64">
+				<div class="h-[16rem]">
 					<PaneGroup direction="horizontal">
 						<Pane defaultSize={50}>
 							<div class="h-full bg-surface-1 p-fluid-4 rounded-l-lg border-r border-border">
