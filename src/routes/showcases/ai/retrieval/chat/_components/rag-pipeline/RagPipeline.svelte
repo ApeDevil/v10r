@@ -25,7 +25,7 @@
 
 <div class="rag-pipeline">
 	<div class="pipeline-header">
-		<span class="pipeline-title">Pipeline</span>
+		<span class="pipeline-title">Retrieval Trace</span>
 		<span
 			class="pipeline-status"
 			class:status-active={pipeline.isActive}

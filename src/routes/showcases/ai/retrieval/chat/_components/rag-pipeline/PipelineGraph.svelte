@@ -28,6 +28,25 @@
 	const VIEWBOX_W = 240;
 	const VIEWBOX_H = 290;
 
+	/** Zoom/pan state */
+	let zoom = $state(1);
+	let panX = $state(0);
+	let panY = $state(0);
+	let svgEl: SVGSVGElement | undefined = $state();
+	let isPanning = $state(false);
+	let panStartX = 0;
+	let panStartY = 0;
+	let panStartPanX = 0;
+	let panStartPanY = 0;
+	let didPan = false;
+
+	const MIN_ZOOM = 0.5;
+	const MAX_ZOOM = 4;
+	const PAN_THRESHOLD = 3;
+
+	const viewBox = $derived(`${panX} ${panY} ${VIEWBOX_W / zoom} ${VIEWBOX_H / zoom}`);
+	const isZoomed = $derived(Math.abs(zoom - 1) > 0.01 || Math.abs(panX) > 0.5 || Math.abs(panY) > 0.5);
+
 	/** Fixed positions for each step in the DAG */
 	const positions: Record<PipelineStepId, { x: number; y: number }> = {
 		'embed':   { x: 50, y: 30 },
@@ -79,21 +98,21 @@
 		PIPELINE_STEPS.map((s) => [s.id, s.label])
 	) as Record<PipelineStepId, string>;
 
-	/** Tooltip position as percentage of container */
+	/** Tooltip position as percentage of container, accounting for zoom/pan */
 	const tooltipPos = $derived.by(() => {
 		if (hoveredStepId) {
 			const pos = positions[hoveredStepId];
 			return {
-				left: (pos.x / VIEWBOX_W) * 100,
-				top: (pos.y / VIEWBOX_H) * 100,
+				left: ((pos.x - panX) * zoom / VIEWBOX_W) * 100,
+				top: ((pos.y - panY) * zoom / VIEWBOX_H) * 100,
 			};
 		}
 		if (hoveredEdge) {
 			const p1 = positions[hoveredEdge.from];
 			const p2 = positions[hoveredEdge.to];
 			return {
-				left: ((p1.x + p2.x) / 2 / VIEWBOX_W) * 100,
-				top: ((p1.y + p2.y) / 2 / VIEWBOX_H) * 100,
+				left: (((p1.x + p2.x) / 2 - panX) * zoom / VIEWBOX_W) * 100,
+				top: (((p1.y + p2.y) / 2 - panY) * zoom / VIEWBOX_H) * 100,
 			};
 		}
 		return null;
@@ -146,10 +165,99 @@
 	});
 
 	const showTooltip = $derived(tooltipPos !== null && tooltipContent !== null);
+
+	/** Zoom toward cursor on Ctrl/Cmd + scroll (also handles trackpad pinch) */
+	function handleWheel(e: WheelEvent) {
+		if (!e.ctrlKey && !e.metaKey) return;
+		e.preventDefault();
+		if (!svgEl) return;
+
+		const factor = e.deltaY > 0 ? 0.9 : 1.1;
+		const newZoom = Math.min(Math.max(zoom * factor, MIN_ZOOM), MAX_ZOOM);
+
+		const rect = svgEl.getBoundingClientRect();
+		const cursorX = (e.clientX - rect.left) / rect.width;
+		const cursorY = (e.clientY - rect.top) / rect.height;
+
+		const oldW = VIEWBOX_W / zoom;
+		const newW = VIEWBOX_W / newZoom;
+		const oldH = VIEWBOX_H / zoom;
+		const newH = VIEWBOX_H / newZoom;
+
+		panX += (oldW - newW) * cursorX;
+		panY += (oldH - newH) * cursorY;
+		zoom = newZoom;
+	}
+
+	function handlePointerDown(e: PointerEvent) {
+		if (e.button !== 0) return;
+		isPanning = true;
+		didPan = false;
+		panStartX = e.clientX;
+		panStartY = e.clientY;
+		panStartPanX = panX;
+		panStartPanY = panY;
+	}
+
+	function handlePointerMove(e: PointerEvent) {
+		if (!isPanning || !svgEl) return;
+		const dx = e.clientX - panStartX;
+		const dy = e.clientY - panStartY;
+		if (!didPan && Math.abs(dx) < PAN_THRESHOLD && Math.abs(dy) < PAN_THRESHOLD) return;
+		didPan = true;
+		const rect = svgEl.getBoundingClientRect();
+		panX = panStartPanX - (dx / rect.width) * (VIEWBOX_W / zoom);
+		panY = panStartPanY - (dy / rect.height) * (VIEWBOX_H / zoom);
+	}
+
+	function handlePointerUp() {
+		isPanning = false;
+	}
+
+	function resetZoom() {
+		zoom = 1;
+		panX = 0;
+		panY = 0;
+	}
+
+	function zoomIn() {
+		const newZoom = Math.min(zoom * 1.3, MAX_ZOOM);
+		const oldW = VIEWBOX_W / zoom;
+		const newW = VIEWBOX_W / newZoom;
+		const oldH = VIEWBOX_H / zoom;
+		const newH = VIEWBOX_H / newZoom;
+		panX += (oldW - newW) / 2;
+		panY += (oldH - newH) / 2;
+		zoom = newZoom;
+	}
+
+	function zoomOut() {
+		const newZoom = Math.max(zoom * 0.7, MIN_ZOOM);
+		const oldW = VIEWBOX_W / zoom;
+		const newW = VIEWBOX_W / newZoom;
+		const oldH = VIEWBOX_H / zoom;
+		const newH = VIEWBOX_H / newZoom;
+		panX += (oldW - newW) / 2;
+		panY += (oldH - newH) / 2;
+		zoom = newZoom;
+	}
 </script>
 
 <div class="graph-container">
-	<svg viewBox="0 0 {VIEWBOX_W} {VIEWBOX_H}" class="pipeline-graph" aria-label="RAG pipeline visualization">
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<svg
+		bind:this={svgEl}
+		viewBox={viewBox}
+		class="pipeline-graph"
+		class:graph-panning={isPanning && didPan}
+		aria-label="RAG pipeline visualization"
+		onwheel={handleWheel}
+		onpointerdown={handlePointerDown}
+		onpointermove={handlePointerMove}
+		onpointerup={handlePointerUp}
+		onpointercancel={handlePointerUp}
+		ondblclick={resetZoom}
+	>
 		<!-- Edges (rendered behind nodes) -->
 		{#each edges as [from, to]}
 			{@const x1 = positions[from].x}
@@ -194,19 +302,46 @@
 			<span class="tooltip-text">{tooltipContent.text}</span>
 		{/if}
 	</SvgTooltip>
+
+	<!-- Zoom controls -->
+	<div class="zoom-controls">
+		<button class="zoom-btn" onclick={zoomIn} aria-label="Zoom in" title="Zoom in">
+			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+			</svg>
+		</button>
+		<button class="zoom-btn" onclick={zoomOut} aria-label="Zoom out" title="Zoom out">
+			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<line x1="5" y1="12" x2="19" y2="12" />
+			</svg>
+		</button>
+		{#if isZoomed}
+			<button class="zoom-btn" onclick={resetZoom} aria-label="Reset zoom" title="Reset zoom (double-click)">
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+				</svg>
+			</button>
+		{/if}
+	</div>
 </div>
 
 <style>
 	.graph-container {
 		position: relative;
 		width: 100%;
-		max-width: 240px;
+		height: 400px;
 	}
 
 	.pipeline-graph {
 		width: 100%;
-		height: auto;
+		height: 100%;
 		display: block;
+		cursor: grab;
+		touch-action: none;
+	}
+
+	.pipeline-graph.graph-panning {
+		cursor: grabbing;
 	}
 
 	.edge-count {
@@ -225,5 +360,35 @@
 	.tooltip-text {
 		font-size: 10px;
 		color: var(--color-muted);
+	}
+
+	.zoom-controls {
+		position: absolute;
+		bottom: var(--spacing-2);
+		right: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		background: color-mix(in srgb, var(--color-surface-2) 85%, transparent);
+		backdrop-filter: blur(8px);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		padding: 2px;
+	}
+
+	.zoom-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 28px;
+		height: 28px;
+		border-radius: var(--radius-sm);
+		color: var(--color-muted);
+		transition: color 120ms, background 120ms;
+	}
+
+	.zoom-btn:hover {
+		color: var(--color-fg);
+		background: color-mix(in srgb, var(--color-muted) 12%, transparent);
 	}
 </style>

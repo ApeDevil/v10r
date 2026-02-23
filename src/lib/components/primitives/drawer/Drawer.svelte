@@ -6,11 +6,12 @@
 	interface Props {
 		open: boolean;
 		side?: 'left' | 'right' | 'bottom';
+		title?: string;
 		children?: Snippet;
 		class?: string;
 	}
 
-	let { open = $bindable(false), side = 'right', children, class: className }: Props = $props();
+	let { open = $bindable(false), side = 'right', title = 'Menu', children, class: className }: Props = $props();
 
 	const sideClasses = {
 		left: 'inset-y-0 left-0 h-full w-3/4 max-w-sm data-[state=open]:slide-in-from-left data-[state=closed]:slide-out-to-left',
@@ -37,7 +38,7 @@
 			<div class="flex h-full flex-col">
 				<div class="flex items-center justify-between border-b border-border px-4 py-3">
 					<DialogPrimitive.Title class="text-fluid-lg font-semibold text-fg">
-						Menu
+						{title}
 					</DialogPrimitive.Title>
 					<DialogPrimitive.Close
 						class="rounded-sm opacity-70 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"

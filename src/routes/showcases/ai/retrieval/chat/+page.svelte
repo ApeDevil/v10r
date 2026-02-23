@@ -2,14 +2,21 @@
 	import { Chat } from '@ai-sdk/svelte';
 	import { PageHeader, BackLink, Card, Alert, EmptyState } from '$lib/components/composites';
 	import { RagPipeline, createPipelineState } from './_components/rag-pipeline';
-	import { Typography, Drawer } from '$lib/components/primitives';
+	import { Typography, Drawer, ToggleGroup } from '$lib/components/primitives';
 	import { PageContainer, Stack } from '$lib/components/layout';
 	import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
 	import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
 
 	let { data } = $props();
 
-	let selectedTiers: (1 | 2 | 3)[] = $state([1]);
+	let selectedTierValues: string[] = $state(['1']);
+	const selectedTiers = $derived(selectedTierValues.map(v => Number(v) as 1 | 2 | 3));
+	const tierItems = [
+		{ value: '1', label: 'T1' },
+		{ value: '2', label: 'T2' },
+		{ value: '3', label: 'T3' },
+	];
+
 	let drawerOpen = $state(false);
 
 	const pipeline = createPipelineState();
@@ -25,6 +32,11 @@
 	const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
 
 	let scrollContainer: HTMLDivElement | undefined = $state();
+
+	// Guard: prevent empty tier selection
+	$effect(() => {
+		if (selectedTierValues.length === 0) selectedTierValues = ['1'];
+	});
 
 	// Auto-scroll on new messages
 	$effect(() => {
@@ -53,16 +65,6 @@
 		pipeline.resetCursor();
 		chat.handleSubmit();
 	}
-
-	function toggleTier(tier: 1 | 2 | 3) {
-		if (selectedTiers.includes(tier)) {
-			if (selectedTiers.length > 1) {
-				selectedTiers = selectedTiers.filter(t => t !== tier);
-			}
-		} else {
-			selectedTiers = [...selectedTiers, tier].sort();
-		}
-	}
 </script>
 
 <svelte:head>
@@ -88,130 +90,69 @@
 				<p>Configure an AI provider and ingest documents to use RAG chat.</p>
 			</Alert>
 		{:else}
-			<div class="rag-layout">
-				<div class="rag-main">
-					<Card class="chat-card">
-						{#snippet header()}
-							<div class="chat-header">
-								<Typography variant="h5" as="h2">RAG Chat</Typography>
-								<div class="tier-selector">
-									<button
-										class="tier-btn"
-										class:active={selectedTiers.includes(1)}
-										onclick={() => toggleTier(1)}
-										aria-pressed={selectedTiers.includes(1)}
-										aria-label="Tier 1: Contextual retrieval"
-									>T1</button>
-									<button
-										class="tier-btn"
-										class:active={selectedTiers.includes(2)}
-										onclick={() => toggleTier(2)}
-										aria-pressed={selectedTiers.includes(2)}
-										aria-label="Tier 2: Parent-child retrieval"
-									>T2</button>
-									<button
-										class="tier-btn"
-										class:active={selectedTiers.includes(3)}
-										onclick={() => toggleTier(3)}
-										aria-pressed={selectedTiers.includes(3)}
-										aria-label="Tier 3: Graph traversal"
-									>T3</button>
-								</div>
-							</div>
-						{/snippet}
+			<Card class="chat-card">
+				{#snippet header()}
+					<div class="chat-header">
+						<Typography variant="h5" as="h2">RAG Chat</Typography>
+						<ToggleGroup type="multiple" bind:value={selectedTierValues} items={tierItems} size="sm" />
+					</div>
+				{/snippet}
 
-						<div class="chat-container">
-							<div bind:this={scrollContainer} class="chat-messages">
-								{#if chat.messages.length === 0}
-									<EmptyState
-										icon="i-lucide-brain-circuit h-10 w-10"
-										title="Ask a question"
-										description="Ask a question about your ingested documents."
-										class="chat-empty"
-									>
-										<p class="text-fluid-xs text-muted">Tiers: {selectedTiers.map(t => `T${t}`).join(' + ')}</p>
-									</EmptyState>
-								{:else}
-									{#each chat.messages as message (message.id)}
-										<ChatMessage role={message.role as 'user' | 'assistant'} content={message.content} />
-									{/each}
+				<div class="chat-container">
+					<div bind:this={scrollContainer} class="chat-messages">
+						{#if chat.messages.length === 0}
+							<EmptyState
+								icon="i-lucide-brain-circuit h-10 w-10"
+								title="Ask a question"
+								description="Ask a question about your ingested documents."
+								class="chat-empty"
+							>
+								<p class="text-fluid-xs text-muted">Tiers: {selectedTiers.map(t => `T${t}`).join(' + ')}</p>
+							</EmptyState>
+						{:else}
+							{#each chat.messages as message (message.id)}
+								<ChatMessage role={message.role as 'user' | 'assistant'} content={message.content} />
+							{/each}
 
-									{#if isLoading && chat.messages[chat.messages.length - 1]?.role === 'user'}
-										<div class="chat-typing flex items-center gap-3 px-4 py-3">
-											<div class="chat-typing-avatar flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
-												<span class="i-lucide-bot h-4 w-4"></span>
-											</div>
-											<div class="chat-typing-dots flex gap-1">
-												<span class="chat-dot"></span>
-												<span class="chat-dot"></span>
-												<span class="chat-dot"></span>
-											</div>
-										</div>
-									{/if}
-								{/if}
-							</div>
-
-							{#if chat.error}
-								<div class="chat-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm" role="alert">
-									<span class="font-medium">Error:</span>
-									{chat.error.message ?? 'Something went wrong.'}
+							{#if isLoading && chat.messages[chat.messages.length - 1]?.role === 'user'}
+								<div class="chat-typing flex items-center gap-3 px-4 py-3">
+									<div class="chat-typing-avatar flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+										<span class="i-lucide-bot h-4 w-4"></span>
+									</div>
+									<div class="chat-typing-dots flex gap-1">
+										<span class="chat-dot"></span>
+										<span class="chat-dot"></span>
+										<span class="chat-dot"></span>
+									</div>
 								</div>
 							{/if}
+						{/if}
+					</div>
 
-							<div class="chat-input-row">
-								<ChatInput bind:value={chat.input} loading={isLoading} onsubmit={submitMessage} />
+					{#if chat.error}
+						<div class="chat-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm" role="alert">
+							<span class="font-medium">Error:</span>
+							{chat.error.message ?? 'Something went wrong.'}
+						</div>
+					{/if}
 
-								<!-- Mobile pipeline status chip -->
-								{#if pipeline.isActive || pipeline.totalDurationMs > 0}
-									<button class="pipeline-chip" onclick={() => { drawerOpen = true; }}>
-										{#if pipeline.isActive}
-											<span class="chip-dot"></span>
-											Pipeline running
-										{:else}
-											Pipeline {pipeline.totalDurationMs}ms
-										{/if}
-									</button>
+					<div class="chat-input-row">
+						<ChatInput bind:value={chat.input} loading={isLoading} onsubmit={submitMessage} />
+
+						{#if pipeline.isActive || pipeline.totalDurationMs > 0}
+							<button class="pipeline-chip" onclick={() => { drawerOpen = true; }}>
+								{#if pipeline.isActive}
+									<span class="chip-dot"></span> Trace running
+								{:else}
+									Trace {pipeline.totalDurationMs}ms
 								{/if}
-							</div>
-						</div>
-					</Card>
+							</button>
+						{/if}
+					</div>
 				</div>
+			</Card>
 
-				<!-- Desktop sidebar -->
-				<div class="rag-sidebar">
-					<Card>
-						{#snippet header()}
-							<Typography variant="h6" as="h3">Pipeline</Typography>
-						{/snippet}
-
-						<RagPipeline {pipeline} />
-					</Card>
-
-					<Card>
-						{#snippet header()}
-							<Typography variant="h6" as="h3">Active Tiers</Typography>
-						{/snippet}
-
-						<div class="tier-info">
-							<div class="tier-item" class:active={selectedTiers.includes(1)}>
-								<span class="tier-label">T1</span>
-								<span class="text-fluid-xs">Contextual (vector + BM25)</span>
-							</div>
-							<div class="tier-item" class:active={selectedTiers.includes(2)}>
-								<span class="tier-label">T2</span>
-								<span class="text-fluid-xs">Parent-Child (small-to-big)</span>
-							</div>
-							<div class="tier-item" class:active={selectedTiers.includes(3)}>
-								<span class="tier-label">T3</span>
-								<span class="text-fluid-xs">Graph (Neo4j traversal)</span>
-							</div>
-						</div>
-					</Card>
-				</div>
-			</div>
-
-			<!-- Mobile drawer -->
-			<Drawer bind:open={drawerOpen} side="bottom">
+			<Drawer bind:open={drawerOpen} side="bottom" title="Retrieval Trace">
 				<RagPipeline {pipeline} />
 			</Drawer>
 		{/if}
@@ -225,30 +166,7 @@
 		padding: 0 !important;
 	}
 
-	.rag-layout {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: var(--spacing-6);
-	}
-
-	@media (min-width: 768px) {
-		.rag-layout {
-			grid-template-columns: 1fr 260px;
-		}
-	}
-
-	.rag-sidebar {
-		display: none;
-		flex-direction: column;
-		gap: var(--spacing-4);
-	}
-
-	@media (min-width: 768px) {
-		.rag-sidebar {
-			display: flex;
-		}
-	}
-
+	/* Chat header */
 	.chat-header {
 		display: flex;
 		align-items: center;
@@ -256,29 +174,7 @@
 		padding: var(--spacing-4) var(--spacing-5);
 	}
 
-	.tier-selector {
-		display: flex;
-		gap: var(--spacing-1);
-	}
-
-	.tier-btn {
-		padding: 4px 10px;
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-sm);
-		background: none;
-		color: var(--color-muted);
-		font-size: 11px;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 150ms;
-	}
-
-	.tier-btn.active {
-		background-color: var(--color-primary);
-		color: var(--color-primary-fg);
-		border-color: var(--color-primary);
-	}
-
+	/* Chat container */
 	.chat-container {
 		display: flex;
 		flex-direction: column;
@@ -337,34 +233,7 @@
 		40% { transform: scale(1); opacity: 1; }
 	}
 
-	.tier-info {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-2);
-	}
-
-	.tier-item {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-3);
-		padding: var(--spacing-2) var(--spacing-3);
-		border-radius: var(--radius-md);
-		opacity: 0.4;
-	}
-
-	.tier-item.active {
-		opacity: 1;
-		background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
-	}
-
-	.tier-label {
-		font-weight: 700;
-		font-size: 11px;
-		color: var(--color-primary);
-		min-width: 24px;
-	}
-
-	/* Mobile pipeline chip */
+	/* Pipeline chip */
 	.pipeline-chip {
 		display: flex;
 		align-items: center;
@@ -378,12 +247,6 @@
 		font-size: 11px;
 		cursor: pointer;
 		margin: var(--spacing-2) var(--spacing-3);
-	}
-
-	@media (min-width: 768px) {
-		.pipeline-chip {
-			display: none;
-		}
 	}
 
 	.chip-dot {
