@@ -27,3 +27,4 @@ export { default as MapPopup } from './map/geo/MapPopup.svelte';
 // Shared state components
 export { default as ChartEmpty } from './_shared/ChartEmpty.svelte';
 export { default as ChartError } from './_shared/ChartError.svelte';
+export { default as SvgTooltip } from './_shared/SvgTooltip.svelte';

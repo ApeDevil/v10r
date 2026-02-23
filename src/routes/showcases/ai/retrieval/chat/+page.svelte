@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Chat } from '@ai-sdk/svelte';
 	import { PageHeader, BackLink, Card, Alert, EmptyState } from '$lib/components/composites';
-	import { RagPipeline, createPipelineState } from '$lib/components/composites/rag-pipeline';
+	import { RagPipeline, createPipelineState } from './_components/rag-pipeline';
 	import { Typography, Drawer } from '$lib/components/primitives';
 	import { PageContainer, Stack } from '$lib/components/layout';
 	import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';

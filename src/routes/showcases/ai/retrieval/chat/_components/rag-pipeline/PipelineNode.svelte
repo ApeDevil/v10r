@@ -5,10 +5,12 @@
 		step: PipelineStepState;
 		x: number;
 		y: number;
+		hovered?: boolean;
 		onselect: (id: PipelineStepId) => void;
+		onhover?: (id: PipelineStepId | null) => void;
 	}
 
-	let { step, x, y, onselect }: Props = $props();
+	let { step, x, y, hovered = false, onselect, onhover }: Props = $props();
 
 	const r = 14;
 
@@ -32,10 +34,15 @@
 <g
 	class="node"
 	class:node-clickable={clickable}
+	class:node-hovered={hovered}
 	class:node-error-shake={step.status === 'error'}
 	transform="translate({x}, {y})"
 	onclick={() => clickable && onselect(step.id)}
 	onkeydown={(e) => e.key === 'Enter' && clickable && onselect(step.id)}
+	onmouseenter={() => onhover?.(step.id)}
+	onmouseleave={() => onhover?.(null)}
+	onfocus={() => onhover?.(step.id)}
+	onblur={() => onhover?.(null)}
 	tabindex={clickable ? 0 : undefined}
 	role={clickable ? 'button' : undefined}
 	aria-label="{step.label}: {step.status}{step.durationMs ? ` (${step.durationMs}ms)` : ''}"
@@ -102,6 +109,11 @@
 
 	.node-clickable {
 		cursor: pointer;
+	}
+
+	.node-hovered .node-circle {
+		stroke-width: 2.5;
+		filter: brightness(1.2);
 	}
 
 	.node-circle {
