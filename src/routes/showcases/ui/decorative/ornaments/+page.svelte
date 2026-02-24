@@ -7,7 +7,11 @@
 		Asterism,
 		Kamon,
 		Flourish,
-		WaveDivider
+		WaveDivider,
+		CornerFrame,
+		ConcentricRings,
+		TickMarks,
+		Marquee
 	} from '$lib/components';
 
 	const sections = [
@@ -17,6 +21,10 @@
 		{ id: 'dec-kamon', label: 'Kamon' },
 		{ id: 'dec-flourish', label: 'Flourish' },
 		{ id: 'dec-wave-divider', label: 'WaveDivider' },
+		{ id: 'dec-corner-frame', label: 'CornerFrame' },
+		{ id: 'dec-concentric-rings', label: 'ConcentricRings' },
+		{ id: 'dec-tick-marks', label: 'TickMarks' },
+		{ id: 'dec-marquee', label: 'Marquee' },
 	];
 
 	const waveShapes = ['wave', 'curve', 'zigzag', 'slant'] as const;
@@ -26,6 +34,9 @@
 	const patterns = ['three-dots', 'fleuron', 'dinkus', 'star'] as const;
 	const foldCounts = [3, 4, 5, 6, 7, 8] as const;
 	const positions = ['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const;
+	const frameVariants = ['bracket', 'double', 'inset', 'cross'] as const;
+	const ringShapes = ['circle', 'square', 'hexagon'] as const;
+	const ringCounts = [2, 3, 4, 5, 6, 7, 8] as const;
 </script>
 
 <svelte:head>
@@ -303,6 +314,257 @@
 			</DemoCard>
 		</div>
 	</section>
+
+	<!-- CornerFrame -->
+	<section id="dec-corner-frame" class="section">
+		<h2 class="section-title">CornerFrame</h2>
+		<p class="section-description">Decorative corner brackets. Absolutely positioned within a relative parent. Certificates, pull quotes, menus.</p>
+
+		<div class="demos">
+			<DemoCard title="All Variants" description="bracket, double, inset, cross">
+				<VariantGrid layout="row">
+					{#each frameVariants as variant}
+						<div class="frame-demo-item">
+							<div class="frame-container">
+								<CornerFrame {variant} />
+								<span class="flourish-label">{variant}</span>
+							</div>
+						</div>
+					{/each}
+				</VariantGrid>
+			</DemoCard>
+
+			<DemoCard title="Selective Corners" description="Only top corners or diagonal pair">
+				<VariantGrid layout="row">
+					<div class="frame-container">
+						<CornerFrame corners={['top-left', 'top-right']} />
+						<span class="flourish-label">top pair</span>
+					</div>
+					<div class="frame-container">
+						<CornerFrame corners={['top-left', 'bottom-right']} />
+						<span class="flourish-label">diagonal</span>
+					</div>
+					<div class="frame-container">
+						<CornerFrame corners={['bottom-left']} />
+						<span class="flourish-label">single</span>
+					</div>
+				</VariantGrid>
+			</DemoCard>
+
+			<DemoCard title="Sizes" description="16px, 24px, 32px, 48px corner marks">
+				<VariantGrid layout="row">
+					<div class="frame-container frame-sm">
+						<CornerFrame size={16} />
+					</div>
+					<div class="frame-container">
+						<CornerFrame size={24} />
+					</div>
+					<div class="frame-container frame-md">
+						<CornerFrame size={32} />
+					</div>
+					<div class="frame-container frame-lg">
+						<CornerFrame size={48} />
+					</div>
+				</VariantGrid>
+			</DemoCard>
+
+			<DemoCard title="Theme Colors" description="Colored corner frames">
+				<VariantGrid layout="row">
+					<div class="frame-container">
+						<CornerFrame color="var(--color-primary)" />
+						<span class="flourish-label">primary</span>
+					</div>
+					<div class="frame-container">
+						<CornerFrame variant="double" color="var(--color-success)" />
+						<span class="flourish-label">success</span>
+					</div>
+					<div class="frame-container">
+						<CornerFrame variant="cross" color="var(--color-warning)" />
+						<span class="flourish-label">warning</span>
+					</div>
+				</VariantGrid>
+			</DemoCard>
+		</div>
+	</section>
+
+	<!-- ConcentricRings -->
+	<section id="dec-concentric-rings" class="section">
+		<h2 class="section-title">ConcentricRings</h2>
+		<p class="section-description">Expanding concentric shapes from center. Ripple, radar, and crystalline patterns for section headers and accents.</p>
+
+		<div class="demos">
+			<DemoCard title="Ring Counts" description="2 to 8 concentric circles">
+				<VariantGrid layout="row">
+					{#each ringCounts as rings}
+						<div class="shape-item">
+							<ConcentricRings {rings} size={80} />
+							<span class="shape-label">{rings} rings</span>
+						</div>
+					{/each}
+				</VariantGrid>
+			</DemoCard>
+
+			<DemoCard title="Shapes" description="circle, square, hexagon">
+				<VariantGrid layout="row">
+					{#each ringShapes as shape}
+						<div class="shape-item">
+							<ConcentricRings {shape} rings={5} size={120} />
+							<span class="shape-label">{shape}</span>
+						</div>
+					{/each}
+				</VariantGrid>
+			</DemoCard>
+
+			<DemoCard title="Sizes" description="60px, 120px, 200px">
+				<VariantGrid layout="row">
+					<ConcentricRings size={60} rings={3} spacing={8} />
+					<ConcentricRings size={120} rings={5} />
+					<ConcentricRings size={200} rings={6} spacing={16} />
+				</VariantGrid>
+			</DemoCard>
+
+			<DemoCard title="Spacing" description="Tight (8px) vs wide (20px)">
+				<VariantGrid layout="row">
+					<div class="shape-item">
+						<ConcentricRings spacing={8} rings={5} size={100} />
+						<span class="shape-label">8px</span>
+					</div>
+					<div class="shape-item">
+						<ConcentricRings spacing={14} rings={5} size={160} />
+						<span class="shape-label">14px</span>
+					</div>
+					<div class="shape-item">
+						<ConcentricRings spacing={20} rings={5} size={220} />
+						<span class="shape-label">20px</span>
+					</div>
+				</VariantGrid>
+			</DemoCard>
+
+			<DemoCard title="Theme Colors" description="Using CSS variable colors">
+				<VariantGrid layout="row">
+					<ConcentricRings color="var(--color-primary)" rings={4} size={100} opacity={0.3} />
+					<ConcentricRings color="var(--color-success)" shape="hexagon" rings={5} size={100} opacity={0.3} />
+					<ConcentricRings color="var(--color-warning)" shape="square" rings={3} size={100} opacity={0.3} />
+					<ConcentricRings color="var(--color-error)" rings={6} size={100} opacity={0.3} />
+				</VariantGrid>
+			</DemoCard>
+		</div>
+	</section>
+
+	<!-- TickMarks -->
+	<section id="dec-tick-marks" class="section">
+		<h2 class="section-title">TickMarks</h2>
+		<p class="section-description">Ruled-edge measuring tape aesthetic. Decorative ticks for timelines, footers, and technical UI.</p>
+
+		<div class="demos">
+			<DemoCard title="Default (Horizontal)" description="21 ticks, major every 5, 10px gap">
+				<TickMarks />
+			</DemoCard>
+
+			<DemoCard title="Vertical" description="Vertical orientation for sidebars">
+				<VariantGrid layout="row">
+					<TickMarks orientation="vertical" count={11} />
+					<TickMarks orientation="vertical" count={21} majorEvery={10} majorHeight={16} />
+				</VariantGrid>
+			</DemoCard>
+
+			<DemoCard title="Density" description="Sparse (gap=20) vs dense (gap=6)">
+				<div class="tick-stack">
+					<div class="tick-row">
+						<span class="motif-label">sparse</span>
+						<TickMarks gap={20} count={11} />
+					</div>
+					<div class="tick-row">
+						<span class="motif-label">dense</span>
+						<TickMarks gap={6} count={31} majorEvery={10} />
+					</div>
+				</div>
+			</DemoCard>
+
+			<DemoCard title="Custom Heights" description="Short (4/8px) vs tall (8/20px) ticks">
+				<div class="tick-stack">
+					<div class="tick-row">
+						<span class="motif-label">short</span>
+						<TickMarks minorHeight={4} majorHeight={8} />
+					</div>
+					<div class="tick-row">
+						<span class="motif-label">tall</span>
+						<TickMarks minorHeight={8} majorHeight={20} />
+					</div>
+				</div>
+			</DemoCard>
+
+			<DemoCard title="Theme Colors" description="Using CSS variable colors">
+				<div class="tick-stack">
+					<TickMarks color="var(--color-primary)" opacity={0.6} />
+					<TickMarks color="var(--color-success)" opacity={0.6} />
+					<TickMarks color="var(--color-warning)" opacity={0.6} />
+				</div>
+			</DemoCard>
+		</div>
+	</section>
+
+	<!-- Marquee -->
+	<section id="dec-marquee" class="section">
+		<h2 class="section-title">Marquee</h2>
+		<p class="section-description">Continuously scrolling text strip. CSS-only animation. Hover to pause. Hero textures, skill banners, ticker tapes.</p>
+
+		<div class="demos">
+			<DemoCard title="Default" description="Single word repeated at 6% opacity">
+				<Marquee items={['VELOCIRAPTOR']} />
+			</DemoCard>
+
+			<DemoCard title="Multiple Items" description="Several items with separator">
+				<Marquee
+					items={['Design', 'Build', 'Ship', 'Iterate', 'Scale']}
+					opacity={0.08}
+					fontSize="2rem"
+					fontWeight={700}
+				/>
+			</DemoCard>
+
+			<DemoCard title="Directions" description="Left vs right scrolling">
+				<div class="marquee-stack">
+					<div class="marquee-row">
+						<span class="motif-label">left</span>
+						<Marquee items={['LEFT', 'SCROLL']} direction="left" opacity={0.08} />
+					</div>
+					<div class="marquee-row">
+						<span class="motif-label">right</span>
+						<Marquee items={['RIGHT', 'SCROLL']} direction="right" opacity={0.08} />
+					</div>
+				</div>
+			</DemoCard>
+
+			<DemoCard title="Speed" description="Fast (10s) vs slow (60s)">
+				<div class="marquee-stack">
+					<div class="marquee-row">
+						<span class="motif-label">fast</span>
+						<Marquee items={['FAST', 'MOTION']} speed={10} opacity={0.08} />
+					</div>
+					<div class="marquee-row">
+						<span class="motif-label">slow</span>
+						<Marquee items={['SLOW', 'DRIFT']} speed={60} opacity={0.08} />
+					</div>
+				</div>
+			</DemoCard>
+
+			<DemoCard title="Custom Separators" description="Different visual separators">
+				<div class="marquee-stack">
+					<Marquee items={['React', 'Svelte', 'Vue', 'Angular']} separator="/" opacity={0.08} fontSize="1.5rem" />
+					<Marquee items={['React', 'Svelte', 'Vue', 'Angular']} separator="—" opacity={0.08} fontSize="1.5rem" />
+					<Marquee items={['React', 'Svelte', 'Vue', 'Angular']} separator="*" opacity={0.08} fontSize="1.5rem" />
+				</div>
+			</DemoCard>
+
+			<DemoCard title="Theme Colors" description="Colored text strips">
+				<div class="marquee-stack">
+					<Marquee items={['DESIGN', 'SYSTEM']} color="var(--color-primary)" opacity={0.12} fontSize="2rem" fontWeight={800} />
+					<Marquee items={['SHIP', 'IT']} color="var(--color-success)" opacity={0.12} fontSize="2rem" fontWeight={800} direction="right" />
+				</div>
+			</DemoCard>
+		</div>
+	</section>
 </main>
 
 <style>
@@ -436,5 +698,69 @@
 
 	.wave-section-bottom .wave-section-text {
 		color: white;
+	}
+
+	/* CornerFrame */
+	.frame-demo-item {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--spacing-2);
+	}
+
+	.frame-container {
+		position: relative;
+		width: 160px;
+		height: 120px;
+		border: 1px dashed var(--color-border);
+		border-radius: var(--radius-lg);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.frame-sm {
+		width: 120px;
+		height: 90px;
+	}
+
+	.frame-md {
+		width: 200px;
+		height: 150px;
+	}
+
+	.frame-lg {
+		width: 260px;
+		height: 200px;
+	}
+
+	/* TickMarks */
+	.tick-stack {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-6);
+		width: 100%;
+	}
+
+	.tick-row {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-2);
+		width: 100%;
+	}
+
+	/* Marquee */
+	.marquee-stack {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-4);
+		width: 100%;
+	}
+
+	.marquee-row {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-2);
+		width: 100%;
 	}
 </style>

@@ -121,11 +121,16 @@ export {
 	Kamon,
 	Flourish,
 	WaveDivider,
+	CornerFrame,
+	ConcentricRings,
+	TickMarks,
+	Marquee,
 	DotPattern,
 	GridPattern,
 	RetroGrid,
 	GradientBlob,
 	NoiseTexture,
 	RadialGlow,
-	FadeMask
+	FadeMask,
+	LineFill
 } from './decorative';

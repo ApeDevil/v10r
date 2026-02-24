@@ -5,3 +5,4 @@ export { default as GradientBlob } from './GradientBlob.svelte';
 export { default as NoiseTexture } from './NoiseTexture.svelte';
 export { default as RadialGlow } from './RadialGlow.svelte';
 export { default as FadeMask } from './FadeMask.svelte';
+export { default as LineFill } from './LineFill.svelte';

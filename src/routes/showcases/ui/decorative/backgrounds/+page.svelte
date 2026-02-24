@@ -8,7 +8,8 @@
 		GradientBlob,
 		NoiseTexture,
 		RadialGlow,
-		FadeMask
+		FadeMask,
+		LineFill
 	} from '$lib/components';
 
 	const sections = [
@@ -19,6 +20,7 @@
 		{ id: 'bg-noise-texture', label: 'NoiseTexture' },
 		{ id: 'bg-radial-glow', label: 'RadialGlow' },
 		{ id: 'bg-fade-mask', label: 'FadeMask' },
+		{ id: 'bg-line-fill', label: 'LineFill' },
 		{ id: 'bg-utilities', label: 'Utilities' },
 		{ id: 'bg-composition', label: 'Composition' },
 	];
@@ -26,6 +28,7 @@
 	const blendModes = ['overlay', 'soft-light', 'multiply', 'screen'] as const;
 	const glowPositions = ['center', 'top', 'bottom', 'top-left', 'top-right', 'bottom-left', 'bottom-right'] as const;
 	const glowSizes = ['sm', 'md', 'lg', 'full'] as const;
+	const lineVariants = ['scanline', 'hatch', 'crosshatch'] as const;
 </script>
 
 <svelte:head>
@@ -319,6 +322,85 @@
 						</div>
 					</FadeMask>
 				</div>
+			</DemoCard>
+		</div>
+	</section>
+
+	<!-- LineFill -->
+	<section id="bg-line-fill" class="section">
+		<h2 class="section-title">LineFill</h2>
+		<p class="section-description">Repeating line patterns via SVG. Scanlines, hatching, and crosshatching for editorial and technical textures.</p>
+
+		<div class="demos">
+			<DemoCard title="All Variants" description="scanline, hatch, crosshatch">
+				<div class="bg-row bg-row-wrap">
+					{#each lineVariants as variant}
+						<div class="blend-item flex-1">
+							<LineFill {variant} class="rounded-lg min-h-[160px] w-full" />
+							<span class="blend-label">{variant}</span>
+						</div>
+					{/each}
+				</div>
+			</DemoCard>
+
+			<DemoCard title="Spacing" description="Tight (12px) vs wide (24px) scanlines">
+				<div class="bg-row">
+					<div class="blend-item flex-1">
+						<LineFill spacing={12} class="rounded-lg min-h-[160px] w-full" />
+						<span class="blend-label">12px</span>
+					</div>
+					<div class="blend-item flex-1">
+						<LineFill spacing={24} class="rounded-lg min-h-[160px] w-full" />
+						<span class="blend-label">24px</span>
+					</div>
+				</div>
+			</DemoCard>
+
+			<DemoCard title="Stroke Width" description="Hairline (0.5px) vs thick (2px)">
+				<div class="bg-row">
+					<div class="blend-item flex-1">
+						<LineFill strokeWidth={0.5} spacing={16} class="rounded-lg min-h-[160px] w-full" />
+						<span class="blend-label">0.5px</span>
+					</div>
+					<div class="blend-item flex-1">
+						<LineFill strokeWidth={2} spacing={16} class="rounded-lg min-h-[160px] w-full" />
+						<span class="blend-label">2px</span>
+					</div>
+				</div>
+			</DemoCard>
+
+			<DemoCard title="Custom Angles" description="Diagonal hatching at different angles">
+				<div class="bg-row bg-row-wrap">
+					<div class="blend-item flex-1">
+						<LineFill variant="hatch" angle={30} class="rounded-lg min-h-[140px] w-full" />
+						<span class="blend-label">30deg</span>
+					</div>
+					<div class="blend-item flex-1">
+						<LineFill variant="hatch" angle={45} class="rounded-lg min-h-[140px] w-full" />
+						<span class="blend-label">45deg</span>
+					</div>
+					<div class="blend-item flex-1">
+						<LineFill variant="hatch" angle={60} class="rounded-lg min-h-[140px] w-full" />
+						<span class="blend-label">60deg</span>
+					</div>
+				</div>
+			</DemoCard>
+
+			<DemoCard title="Theme Colors" description="Colored line fills">
+				<div class="bg-row">
+					<LineFill variant="hatch" color="var(--color-primary)" class="rounded-lg min-h-[140px] flex-1" />
+					<LineFill variant="crosshatch" color="var(--color-success)" class="rounded-lg min-h-[140px] flex-1" />
+					<LineFill color="var(--color-warning)" class="rounded-lg min-h-[140px] flex-1" />
+				</div>
+			</DemoCard>
+
+			<DemoCard title="With Content" description="Content overlaid on hatch pattern">
+				<LineFill variant="hatch" opacity={0.06} class="rounded-lg min-h-[200px] w-full">
+					<div class="overlay-content overlay-centered">
+						<h3 class="overlay-hero">HATCHED</h3>
+						<p class="overlay-text">Line fills add draftsmanship texture behind content.</p>
+					</div>
+				</LineFill>
 			</DemoCard>
 		</div>
 	</section>
