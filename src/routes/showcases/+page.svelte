@@ -34,6 +34,13 @@
 		/>
 
 		<LinkCard
+			href="/showcases/forms"
+			icon="i-lucide-text-cursor-input"
+			title="Forms"
+			description="Superforms + Valibot validation, patterns, and advanced techniques"
+		/>
+
+		<LinkCard
 			href="/showcases/viz"
 			icon="i-lucide-bar-chart-3"
 			title="Data Viz"
