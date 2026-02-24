@@ -84,16 +84,31 @@
 
 <style>
 	.tab-nav {
+		position: relative;
 		overflow: hidden;
 	}
 
+	/* Full-width baseline — sits behind the scroll container */
+	.tab-nav::after {
+		content: '';
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		height: 1px;
+		background: var(--color-input-border);
+		pointer-events: none;
+		z-index: 0;
+	}
+
 	.tab-list {
-		display: inline-flex;
+		display: flex;
 		align-items: center;
+		position: relative;
+		z-index: 1;
 		overflow-x: auto;
 		scrollbar-width: none;
 		-ms-overflow-style: none;
-		border-bottom: 1px solid var(--color-input-border);
 		/* Fade masks for overflow indicators */
 		mask-image: linear-gradient(to right, transparent 0%, black 0%, black 100%, transparent 100%);
 		-webkit-mask-image: linear-gradient(
@@ -168,7 +183,6 @@
 		white-space: nowrap;
 		cursor: pointer;
 		border-bottom: 2px solid transparent;
-		margin-bottom: -1px;
 		transition: border-bottom-color 150ms ease, color 150ms ease;
 	}
 
