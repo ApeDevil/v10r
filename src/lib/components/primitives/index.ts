@@ -120,8 +120,12 @@ export {
 	Asterism,
 	Kamon,
 	Flourish,
+	WaveDivider,
 	DotPattern,
 	GridPattern,
 	RetroGrid,
-	GradientBlob
+	GradientBlob,
+	NoiseTexture,
+	RadialGlow,
+	FadeMask
 } from './decorative';

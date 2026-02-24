@@ -6,7 +6,8 @@
 		Divider,
 		Asterism,
 		Kamon,
-		Flourish
+		Flourish,
+		WaveDivider
 	} from '$lib/components';
 
 	const sections = [
@@ -15,7 +16,10 @@
 		{ id: 'dec-asterism', label: 'Asterism' },
 		{ id: 'dec-kamon', label: 'Kamon' },
 		{ id: 'dec-flourish', label: 'Flourish' },
+		{ id: 'dec-wave-divider', label: 'WaveDivider' },
 	];
+
+	const waveShapes = ['wave', 'curve', 'zigzag', 'slant'] as const;
 
 	const shapes = ['circle', 'hexagon', 'triangle', 'square', 'cross', 'diamond'] as const;
 	const motifs = ['none', 'dot', 'diamond', 'crosshair', 'flourish'] as const;
@@ -229,6 +233,76 @@
 			</DemoCard>
 		</div>
 	</section>
+
+	<!-- WaveDivider -->
+	<section id="dec-wave-divider" class="section">
+		<h2 class="section-title">WaveDivider</h2>
+		<p class="section-description">Full-width SVG section separator. Stretches to fill container width with preserveAspectRatio="none".</p>
+
+		<div class="demos">
+			<DemoCard title="All Shapes" description="wave, curve, zigzag, slant">
+				<div class="wave-stack">
+					{#each waveShapes as shape}
+						<div class="wave-item">
+							<span class="motif-label">{shape}</span>
+							<WaveDivider {shape} />
+						</div>
+					{/each}
+				</div>
+			</DemoCard>
+
+			<DemoCard title="Flipped" description="Vertical mirror for top-of-section placement">
+				<div class="wave-stack">
+					<div class="wave-item">
+						<span class="motif-label">normal</span>
+						<WaveDivider shape="wave" />
+					</div>
+					<div class="wave-item">
+						<span class="motif-label">flipped</span>
+						<WaveDivider shape="wave" flip />
+					</div>
+				</div>
+			</DemoCard>
+
+			<DemoCard title="Heights" description="24px, 48px, 96px">
+				<div class="wave-stack">
+					<div class="wave-item">
+						<span class="motif-label">24px</span>
+						<WaveDivider shape="curve" height={24} />
+					</div>
+					<div class="wave-item">
+						<span class="motif-label">48px</span>
+						<WaveDivider shape="curve" height={48} />
+					</div>
+					<div class="wave-item">
+						<span class="motif-label">96px</span>
+						<WaveDivider shape="curve" height={96} />
+					</div>
+				</div>
+			</DemoCard>
+
+			<DemoCard title="Theme Colors" description="Using CSS variable colors">
+				<div class="wave-stack">
+					<WaveDivider shape="wave" color="var(--color-primary)" />
+					<WaveDivider shape="curve" color="var(--color-success)" />
+					<WaveDivider shape="zigzag" color="var(--color-warning)" />
+					<WaveDivider shape="slant" color="var(--color-error)" />
+				</div>
+			</DemoCard>
+
+			<DemoCard title="Section Transition" description="Sandwiched between colored sections">
+				<div class="wave-transition">
+					<div class="wave-section-top">
+						<p class="wave-section-text">Section above</p>
+					</div>
+					<WaveDivider shape="wave" color="var(--color-primary)" />
+					<div class="wave-section-bottom">
+						<p class="wave-section-text">Section below</p>
+					</div>
+				</div>
+			</DemoCard>
+		</div>
+	</section>
 </main>
 
 <style>
@@ -315,5 +389,52 @@
 	.flourish-label {
 		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);
+	}
+
+	.wave-stack {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-6);
+		width: 100%;
+	}
+
+	.wave-item {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-2);
+		width: 100%;
+	}
+
+	.wave-transition {
+		width: 100%;
+		border-radius: var(--radius-lg);
+		overflow: hidden;
+	}
+
+	.wave-section-top {
+		background: var(--color-surface-1);
+		padding: var(--spacing-6);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.wave-section-bottom {
+		background: var(--color-primary);
+		padding: var(--spacing-6);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.wave-section-text {
+		margin: 0;
+		font-size: var(--text-fluid-sm);
+		color: var(--color-muted);
+		font-style: italic;
+	}
+
+	.wave-section-bottom .wave-section-text {
+		color: white;
 	}
 </style>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { cn } from '$lib/utils/cn';
+	import { createDecorativeId } from '../utils';
 
 	interface Props {
 		folds?: 3 | 4 | 5 | 6 | 7 | 8;
@@ -32,7 +33,7 @@
 		})
 	);
 
-	const clipId = `kamon-${Math.random().toString(36).slice(2, 9)}`;
+	const clipId = createDecorativeId('kamon');
 </script>
 
 <svg

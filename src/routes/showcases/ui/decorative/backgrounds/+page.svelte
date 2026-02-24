@@ -5,7 +5,10 @@
 		DotPattern,
 		GridPattern,
 		RetroGrid,
-		GradientBlob
+		GradientBlob,
+		NoiseTexture,
+		RadialGlow,
+		FadeMask
 	} from '$lib/components';
 
 	const sections = [
@@ -13,9 +16,16 @@
 		{ id: 'bg-grid-pattern', label: 'GridPattern' },
 		{ id: 'bg-retro-grid', label: 'RetroGrid' },
 		{ id: 'bg-gradient-blob', label: 'GradientBlob' },
+		{ id: 'bg-noise-texture', label: 'NoiseTexture' },
+		{ id: 'bg-radial-glow', label: 'RadialGlow' },
+		{ id: 'bg-fade-mask', label: 'FadeMask' },
 		{ id: 'bg-utilities', label: 'Utilities' },
 		{ id: 'bg-composition', label: 'Composition' },
 	];
+
+	const blendModes = ['overlay', 'soft-light', 'multiply', 'screen'] as const;
+	const glowPositions = ['center', 'top', 'bottom', 'top-left', 'top-right', 'bottom-left', 'bottom-right'] as const;
+	const glowSizes = ['sm', 'md', 'lg', 'full'] as const;
 </script>
 
 <svelte:head>
@@ -164,6 +174,155 @@
 		</div>
 	</section>
 
+	<!-- NoiseTexture -->
+	<section id="bg-noise-texture" class="section">
+		<h2 class="section-title">NoiseTexture</h2>
+		<p class="section-description">SVG feTurbulence film grain. Desaturated noise blended over content for tactile, analog texture.</p>
+
+		<div class="demos">
+			<DemoCard title="Default" description="0.65 frequency, 4 octaves, overlay blend at 5%">
+				<NoiseTexture class="rounded-lg min-h-[200px] w-full bg-surface-1" />
+			</DemoCard>
+
+			<DemoCard title="Blend Modes" description="overlay, soft-light, multiply, screen">
+				<div class="bg-row bg-row-wrap">
+					{#each blendModes as mode}
+						<div class="blend-item">
+							<NoiseTexture blend={mode} opacity={0.08} class="rounded-lg min-h-[120px] w-full bg-surface-1" />
+							<span class="blend-label">{mode}</span>
+						</div>
+					{/each}
+				</div>
+			</DemoCard>
+
+			<DemoCard title="Grain Density" description="Low (0.3) vs high (1.2) frequency">
+				<div class="bg-row">
+					<div class="blend-item flex-1">
+						<NoiseTexture frequency={0.3} opacity={0.08} class="rounded-lg min-h-[160px] w-full bg-surface-1" />
+						<span class="blend-label">coarse (0.3)</span>
+					</div>
+					<div class="blend-item flex-1">
+						<NoiseTexture frequency={1.2} opacity={0.08} class="rounded-lg min-h-[160px] w-full bg-surface-1" />
+						<span class="blend-label">fine (1.2)</span>
+					</div>
+				</div>
+			</DemoCard>
+
+			<DemoCard title="Composited with GradientBlob" description="Noise texture over animated blobs">
+				<GradientBlob animated opacity={0.12} class="rounded-lg min-h-[250px] w-full">
+					<NoiseTexture opacity={0.06} class="noise-overlay">
+						<div class="overlay-content overlay-centered">
+							<h3 class="overlay-hero">GRAIN + BLOBS</h3>
+							<p class="overlay-text">Film grain adds tactile quality over smooth gradients.</p>
+						</div>
+					</NoiseTexture>
+				</GradientBlob>
+			</DemoCard>
+		</div>
+	</section>
+
+	<!-- RadialGlow -->
+	<section id="bg-radial-glow" class="section">
+		<h2 class="section-title">RadialGlow</h2>
+		<p class="section-description">Pure CSS radial-gradient spotlight. Focal-point backgrounds for hero sections and cards.</p>
+
+		<div class="demos">
+			<DemoCard title="Default" description="Primary color, center position, medium size at 15%">
+				<RadialGlow class="rounded-lg min-h-[200px] w-full" />
+			</DemoCard>
+
+			<DemoCard title="Positions" description="Seven anchor points for the gradient">
+				<div class="bg-row bg-row-wrap">
+					{#each glowPositions as pos}
+						<div class="glow-item">
+							<RadialGlow position={pos} opacity={0.2} class="rounded-lg min-h-[100px] w-full" />
+							<span class="blend-label">{pos}</span>
+						</div>
+					{/each}
+				</div>
+			</DemoCard>
+
+			<DemoCard title="Sizes" description="sm (closest-side), md (farthest-corner), lg (farthest-side), full">
+				<div class="bg-row bg-row-wrap">
+					{#each glowSizes as s}
+						<div class="glow-item">
+							<RadialGlow size={s} opacity={0.2} class="rounded-lg min-h-[100px] w-full" />
+							<span class="blend-label">{s}</span>
+						</div>
+					{/each}
+				</div>
+			</DemoCard>
+
+			<DemoCard title="Theme Colors" description="Primary, success, warning glows">
+				<div class="bg-row">
+					<RadialGlow color="var(--color-primary)" opacity={0.2} class="rounded-lg min-h-[160px] flex-1" />
+					<RadialGlow color="var(--color-success)" opacity={0.2} class="rounded-lg min-h-[160px] flex-1" />
+					<RadialGlow color="var(--color-warning)" opacity={0.2} class="rounded-lg min-h-[160px] flex-1" />
+				</div>
+			</DemoCard>
+
+			<DemoCard title="With Content" description="Hero section with radial glow spotlight">
+				<RadialGlow color="var(--color-primary)" position="top" size="lg" opacity={0.2} class="rounded-lg min-h-[250px] w-full">
+					<div class="overlay-content overlay-centered">
+						<h3 class="overlay-hero">SPOTLIGHT</h3>
+						<p class="overlay-text">Radial glow creates a focal point that draws the eye.</p>
+					</div>
+				</RadialGlow>
+			</DemoCard>
+		</div>
+	</section>
+
+	<!-- FadeMask -->
+	<section id="bg-fade-mask" class="section">
+		<h2 class="section-title">FadeMask</h2>
+		<p class="section-description">CSS mask-image gradients that fade content edges. Pure CSS, no JS animation.</p>
+
+		<div class="demos">
+			<DemoCard title="Single Edge (bottom)" description="Default: bottom edge fades to transparent">
+				<FadeMask class="rounded-lg w-full">
+					<div class="fade-demo-content">
+						<p class="fade-text">This content fades at the bottom edge. Useful for long lists, scrollable areas, or decorative cutoffs that suggest more content below.</p>
+						<p class="fade-text">Second paragraph provides enough height to see the fade effect clearly.</p>
+						<p class="fade-text">Third paragraph is almost invisible, masked by the gradient.</p>
+					</div>
+				</FadeMask>
+			</DemoCard>
+
+			<DemoCard title="Multiple Edges (top + bottom)" description="Vertical fade on both ends">
+				<FadeMask edges={['top', 'bottom']} class="rounded-lg w-full">
+					<div class="fade-demo-content">
+						<p class="fade-text">Top edge fades in.</p>
+						<p class="fade-text">Middle content remains fully visible.</p>
+						<p class="fade-text">Bottom edge fades out.</p>
+					</div>
+				</FadeMask>
+			</DemoCard>
+
+			<DemoCard title="Vignette (all edges)" description="All four edges fade over a GridPattern">
+				<FadeMask edges={['top', 'bottom', 'left', 'right']} size={64} class="rounded-lg w-full">
+					<GridPattern cellSize={24} opacity={0.15} class="rounded-lg min-h-[200px] w-full" />
+				</FadeMask>
+			</DemoCard>
+
+			<DemoCard title="Custom Sizes" description="16px tight vs 96px wide fade">
+				<div class="bg-row">
+					<FadeMask edges={['bottom']} size={16} class="rounded-lg flex-1">
+						<div class="fade-demo-content fade-demo-sm">
+							<p class="fade-text">16px fade — tight cutoff.</p>
+							<p class="fade-text">Content disappears quickly.</p>
+						</div>
+					</FadeMask>
+					<FadeMask edges={['bottom']} size={96} class="rounded-lg flex-1">
+						<div class="fade-demo-content fade-demo-sm">
+							<p class="fade-text">96px fade — gradual falloff.</p>
+							<p class="fade-text">Content disappears slowly.</p>
+						</div>
+					</FadeMask>
+				</div>
+			</DemoCard>
+		</div>
+	</section>
+
 	<!-- CSS Utilities -->
 	<section id="bg-utilities" class="section">
 		<h2 class="section-title">CSS Utilities</h2>
@@ -283,6 +442,56 @@
 		color: var(--color-muted);
 		margin: 0;
 		max-width: 36ch;
+	}
+
+	.bg-row-wrap {
+		flex-wrap: wrap;
+	}
+
+	.blend-item {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--spacing-2);
+		min-width: 140px;
+	}
+
+	.blend-label {
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
+		font-family: monospace;
+	}
+
+	.glow-item {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--spacing-2);
+		min-width: 120px;
+		flex: 1;
+	}
+
+	:global(.noise-overlay) {
+		min-height: 250px;
+		width: 100%;
+	}
+
+	.fade-demo-content {
+		padding: var(--spacing-6);
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-4);
+	}
+
+	.fade-demo-sm {
+		min-height: 120px;
+	}
+
+	.fade-text {
+		margin: 0;
+		font-size: var(--text-fluid-sm);
+		color: var(--color-fg);
+		line-height: 1.6;
 	}
 
 	.utility-demo {

@@ -1,2 +1,3 @@
-export { GeometricMark, Divider, Asterism, Kamon, Flourish } from './ornament';
-export { DotPattern, GridPattern, RetroGrid, GradientBlob } from './background';
+export { GeometricMark, Divider, Asterism, Kamon, Flourish, WaveDivider } from './ornament';
+export { DotPattern, GridPattern, RetroGrid, GradientBlob, NoiseTexture, RadialGlow, FadeMask } from './background';
+export { createDecorativeId } from './utils';

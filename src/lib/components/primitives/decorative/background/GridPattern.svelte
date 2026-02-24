@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { cn } from '$lib/utils/cn';
+	import { createDecorativeId } from '../utils';
 
 	interface Props {
 		cellSize?: number;
@@ -24,7 +25,7 @@
 		children
 	}: Props = $props();
 
-	const patternId = `grid-${Math.random().toString(36).slice(2, 9)}`;
+	const patternId = createDecorativeId('grid');
 </script>
 
 <div class={cn('relative overflow-hidden', className)}>

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { cn } from '$lib/utils/cn';
+	import { createDecorativeId } from '../utils';
 
 	interface Props {
 		spacing?: number;
@@ -20,7 +21,7 @@
 		children
 	}: Props = $props();
 
-	const patternId = `dot-${Math.random().toString(36).slice(2, 9)}`;
+	const patternId = createDecorativeId('dot');
 </script>
 
 <div class={cn('relative overflow-hidden', className)}>

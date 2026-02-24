@@ -3,3 +3,4 @@ export { default as Divider } from './Divider.svelte';
 export { default as Asterism } from './Asterism.svelte';
 export { default as Kamon } from './Kamon.svelte';
 export { default as Flourish } from './Flourish.svelte';
+export { default as WaveDivider } from './WaveDivider.svelte';
