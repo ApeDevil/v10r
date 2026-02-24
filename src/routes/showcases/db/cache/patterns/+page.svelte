@@ -196,13 +196,19 @@
 					>
 						<div class="form-grid">
 							<FormField label="Key" id="str-key">
-								<Input id="str-key" name="key" type="text" bind:value={newStringKey} placeholder="showcase:my-key" />
+								{#snippet children(_)}
+									<Input id="str-key" name="key" type="text" bind:value={newStringKey} placeholder="showcase:my-key" />
+								{/snippet}
 							</FormField>
 							<FormField label="Value" id="str-value">
-								<Input id="str-value" name="value" type="text" bind:value={newStringValue} placeholder="Hello, Redis!" />
+								{#snippet children(_)}
+									<Input id="str-value" name="value" type="text" bind:value={newStringValue} placeholder="Hello, Redis!" />
+								{/snippet}
 							</FormField>
 							<FormField label="TTL (seconds)" id="str-ttl">
-								<Input id="str-ttl" name="ttl" type="number" bind:value={newStringTtl} placeholder="Optional" />
+								{#snippet children(_)}
+									<Input id="str-ttl" name="ttl" type="number" bind:value={newStringTtl} placeholder="Optional" />
+								{/snippet}
 							</FormField>
 							<div class="form-action">
 								<Button type="submit" variant="outline" size="sm" disabled={actionLoading === 'setString'}>

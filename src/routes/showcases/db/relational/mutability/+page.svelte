@@ -91,7 +91,7 @@
 
 {#if data.error}
 		<Alert variant="error" title="Database Error">
-			{#snippet children()}
+			{#snippet children(_)}
 				<code class="font-mono text-fluid-sm break-all">{data.error}</code>
 				<p class="text-fluid-sm mt-2">Run <code>db:push</code> to initialize the showcase schema, then use the Reseed button.</p>
 			{/snippet}
@@ -102,7 +102,7 @@
 		<!-- Action result alert -->
 		{#if actionResult?.message && !actionResult?.success}
 			<Alert variant="error" class="mb-4">
-				{#snippet children()}
+				{#snippet children(_)}
 					<code>{actionResult.message}</code>
 				{/snippet}
 			</Alert>
@@ -428,18 +428,18 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 						>
 							<div class="append-form-fields">
 								<FormField label="Description" id="append-description">
-									{#snippet children()}
+									{#snippet children(_)}
 										<Input id="append-description" name="description" placeholder="What happened?" required />
 									{/snippet}
 								</FormField>
 								<FormField label="Action" id="append-action">
-									{#snippet children()}
+									{#snippet children(_)}
 										<input type="hidden" name="action" value={appendAction} />
 										<Select options={actionOptions} bind:value={appendAction} />
 									{/snippet}
 								</FormField>
 								<FormField label="Severity" id="append-severity">
-									{#snippet children()}
+									{#snippet children(_)}
 										<input type="hidden" name="severity" value={appendSeverity} />
 										<Select options={severityOptions} bind:value={appendSeverity} />
 									{/snippet}
@@ -571,17 +571,17 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 						>
 							<div class="temporal-add-fields">
 								<FormField label="Description" id="temp-desc">
-									{#snippet children()}
+									{#snippet children(_)}
 										<Input id="temp-desc" name="description" placeholder="What fact is this?" required />
 									{/snippet}
 								</FormField>
 								<FormField label="Valid From" id="temp-from">
-									{#snippet children()}
+									{#snippet children(_)}
 										<Input id="temp-from" name="validFrom" type="datetime-local" required />
 									{/snippet}
 								</FormField>
 								<FormField label="Valid To (optional)" id="temp-to">
-									{#snippet children()}
+									{#snippet children(_)}
 										<Input id="temp-to" name="validTo" type="datetime-local" />
 									{/snippet}
 								</FormField>
@@ -630,22 +630,22 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 			<input type="hidden" name="id" value={editingSpecimen.id} />
 			<div class="dialog-fields">
 				<FormField label="Label" id="edit-label">
-					{#snippet children()}
+					{#snippet children(_)}
 						<Input id="edit-label" name="label" value={editingSpecimen.label} />
 					{/snippet}
 				</FormField>
 				<FormField label="Rating (1-5)" id="edit-rating">
-					{#snippet children()}
+					{#snippet children(_)}
 						<Input id="edit-rating" name="rating" type="number" min={1} max={5} value={String(editingSpecimen.rating ?? '')} />
 					{/snippet}
 				</FormField>
 				<FormField label="Quantity" id="edit-quantity">
-					{#snippet children()}
+					{#snippet children(_)}
 						<Input id="edit-quantity" name="quantity" type="number" min={0} value={String(editingSpecimen.quantity)} />
 					{/snippet}
 				</FormField>
 				<FormField label="Active" id="edit-active">
-					{#snippet children()}
+					{#snippet children(_)}
 						<input type="hidden" name="isActive" value={editingSpecimen.isActive ? 'true' : 'false'} />
 						<Switch
 							bind:checked={editingSpecimen.isActive}
@@ -685,22 +685,22 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 			<input type="hidden" name="id" value={editingVersioned.id} />
 			<div class="dialog-fields">
 				<FormField label="Label" id="ver-label">
-					{#snippet children()}
+					{#snippet children(_)}
 						<Input id="ver-label" name="label" value={editingVersioned.label} />
 					{/snippet}
 				</FormField>
 				<FormField label="Rating (1-5)" id="ver-rating">
-					{#snippet children()}
+					{#snippet children(_)}
 						<Input id="ver-rating" name="rating" type="number" min={1} max={5} value={String(editingVersioned.rating ?? '')} />
 					{/snippet}
 				</FormField>
 				<FormField label="Quantity" id="ver-quantity">
-					{#snippet children()}
+					{#snippet children(_)}
 						<Input id="ver-quantity" name="quantity" type="number" min={0} value={String(editingVersioned.quantity)} />
 					{/snippet}
 				</FormField>
 				<FormField label="Active" id="ver-active">
-					{#snippet children()}
+					{#snippet children(_)}
 						<input type="hidden" name="isActive" value={editingVersioned.isActive ? 'true' : 'false'} />
 						<Switch
 							bind:checked={editingVersioned.isActive}

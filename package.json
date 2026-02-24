@@ -52,6 +52,7 @@
 		"paneforge": "^1.0.2",
 		"svelte-maplibre-gl": "^1.0.3",
 		"three": "^0.170.0",
+		"sveltekit-superforms": "^2.22.1",
 		"valibot": "^1.2.0",
 		"ws": "^8.18.0"
 	},

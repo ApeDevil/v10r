@@ -31,6 +31,7 @@ export const navItems: NavItem[] = [
 		children: [
 			{ href: '/showcases/shell', label: 'Shell' },
 			{ href: '/showcases/ui', label: 'UI' },
+			{ href: '/showcases/forms', label: 'Forms' },
 			{ href: '/showcases/viz', label: 'Viz' },
 			{ href: '/showcases/3d', label: '3D' },
 			{ href: '/showcases/db', label: 'DB' },

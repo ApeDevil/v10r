@@ -2,13 +2,19 @@
 	import type { Snippet } from 'svelte';
 	import { cn } from '$lib/utils/cn';
 
+	interface FieldContext {
+		fieldId: string;
+		errorId: string;
+		descId: string;
+	}
+
 	interface Props {
 		label: string;
 		id?: string;
 		error?: string;
 		description?: string;
 		required?: boolean;
-		children: Snippet;
+		children: Snippet<[FieldContext]>;
 		class?: string;
 	}
 
@@ -41,7 +47,7 @@
 	{/if}
 
 	<div>
-		{@render children()}
+		{@render children({ fieldId, errorId, descId })}
 	</div>
 
 	{#if error}

@@ -18,7 +18,7 @@
 					description="Enter your username"
 					required
 				>
-					{#snippet children()}
+					{#snippet children(_)}
 						<Input bind:value={inputValue} placeholder="Enter username" />
 					{/snippet}
 				</FormField>
@@ -28,7 +28,7 @@
 					error="Invalid email address"
 					required
 				>
-					{#snippet children()}
+					{#snippet children(_)}
 						<Input placeholder="Enter email" error />
 					{/snippet}
 				</FormField>

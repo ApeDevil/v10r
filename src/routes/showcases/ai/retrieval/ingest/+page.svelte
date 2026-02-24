@@ -120,25 +120,29 @@ A +page.server.ts file can also export actions for progressive form handling. Ac
 
 				<Stack gap="4">
 					<FormField label="Title" id="doc-title">
-						<input
-							id="doc-title"
-							type="text"
-							bind:value={title}
-							placeholder="Document title..."
-							class="ingest-input"
-							disabled={loading}
-						/>
+						{#snippet children(_)}
+							<input
+								id="doc-title"
+								type="text"
+								bind:value={title}
+								placeholder="Document title..."
+								class="ingest-input"
+								disabled={loading}
+							/>
+						{/snippet}
 					</FormField>
 
 					<FormField label="Content" id="doc-content">
-						<textarea
-							id="doc-content"
-							bind:value={content}
-							placeholder="Paste document content (markdown supported)..."
-							class="ingest-textarea"
-							rows="12"
-							disabled={loading}
-						></textarea>
+						{#snippet children(_)}
+							<textarea
+								id="doc-content"
+								bind:value={content}
+								placeholder="Paste document content (markdown supported)..."
+								class="ingest-textarea"
+								rows="12"
+								disabled={loading}
+							></textarea>
+						{/snippet}
 					</FormField>
 
 					<div class="flex flex-wrap gap-3">
