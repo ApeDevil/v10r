@@ -6,6 +6,7 @@
 		fieldId: string;
 		errorId: string;
 		descId: string;
+		describedBy: string | undefined;
 	}
 
 	interface Props {
@@ -32,6 +33,7 @@
 	const fieldId = id ?? crypto.randomUUID();
 	const errorId = `${fieldId}-error`;
 	const descId = `${fieldId}-description`;
+	const describedBy = $derived(error ? errorId : description ? descId : undefined);
 </script>
 
 <div class={cn('space-y-2', className)}>
@@ -47,7 +49,7 @@
 	{/if}
 
 	<div>
-		{@render children({ fieldId, errorId, descId })}
+		{@render children({ fieldId, errorId, descId, describedBy })}
 	</div>
 
 	{#if error}

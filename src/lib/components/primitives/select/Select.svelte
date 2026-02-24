@@ -13,6 +13,8 @@
 		value?: string;
 		placeholder?: string;
 		disabled?: boolean;
+		error?: boolean;
+		onchange?: (value: string) => void;
 		class?: string;
 	}
 
@@ -21,6 +23,8 @@
 		value = $bindable(''),
 		placeholder = 'Select...',
 		disabled = false,
+		error = false,
+		onchange,
 		class: className
 	}: Props = $props();
 
@@ -29,15 +33,17 @@
 	);
 </script>
 
-<SelectPrimitive.Root type="single" bind:value {disabled}>
+<SelectPrimitive.Root type="single" bind:value {disabled} onValueChange={(v) => onchange?.(v)}>
 	<SelectPrimitive.Trigger
 		class={cn(
 			'select-trigger flex h-11 w-full items-center justify-between rounded-t-md px-4 py-2',
 			'text-fluid-base text-fg',
 			'focus-visible:outline-none',
 			'disabled:cursor-not-allowed disabled:opacity-50',
+			error && 'select-error',
 			className
 		)}
+		aria-invalid={error ? 'true' : undefined}
 	>
 		<span class={cn(!value && 'text-muted')}>
 			{selectedLabel || placeholder}
@@ -84,6 +90,10 @@
 
 	:global(.select-trigger:focus-visible) {
 		border-bottom: 2px solid var(--color-primary);
+	}
+
+	:global(.select-trigger.select-error) {
+		border-bottom-color: var(--color-error);
 	}
 
 	/* UnoCSS can't apply opacity modifiers with CSS variable colors — use color-mix() */

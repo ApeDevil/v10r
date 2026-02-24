@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
 
 export const load = () => {
-	redirect(307, '/showcases/forms/advanced/confirm');
+	redirect(303, '/showcases/forms/advanced/confirm');
 };

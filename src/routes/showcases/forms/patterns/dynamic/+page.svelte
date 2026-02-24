@@ -12,7 +12,6 @@
 	const { form, errors, enhance, submitting, delayed, message: formMessage } = superForm(data.form, {
 		validators: valibotClient(dynamicSchema),
 		dataType: 'json',
-		delayMs: 150,
 	});
 
 	function addTag() {
@@ -25,7 +24,7 @@
 </script>
 
 <svelte:head>
-	<title>Dynamic - Forms - Showcases - Velociraptor</title>
+	<title>Dynamic - Patterns - Showcases - Velociraptor</title>
 </svelte:head>
 
 <Stack gap="6">
@@ -50,13 +49,14 @@
 
 		<form method="POST" use:enhance class="form-grid">
 			<FormField label="Title" error={$errors.title?.[0]} required>
-				{#snippet children({ fieldId, errorId, descId })}
+				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
+						name="title"
 						bind:value={$form.title}
 						placeholder="Article title"
 						error={!!$errors.title}
-						aria-describedby={$errors.title ? errorId : descId}
+						aria-describedby={describedBy}
 					/>
 				{/snippet}
 			</FormField>
@@ -89,6 +89,7 @@
 								onclick={() => removeTag(i)}
 								disabled={$form.tags.length <= 1}
 								class="remove-btn"
+								aria-label="Remove tag {i + 1}"
 							>
 								<span class="i-lucide-x h-4 w-4"></span>
 							</Button>
@@ -119,18 +120,6 @@
 </Stack>
 
 <style>
-	.form-grid {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-5);
-	}
-
-	.form-actions {
-		display: flex;
-		justify-content: flex-end;
-		padding-top: var(--spacing-2);
-	}
-
 	.tags-section {
 		display: flex;
 		flex-direction: column;

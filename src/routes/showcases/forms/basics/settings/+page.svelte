@@ -11,7 +11,6 @@
 
 	const { form, errors, enhance, submitting, delayed, tainted, message: formMessage } = superForm(data.form, {
 		validators: valibotClient(settingsSchema),
-		delayMs: 150,
 	});
 
 	const timezoneOptions = [
@@ -32,7 +31,7 @@
 </script>
 
 <svelte:head>
-	<title>Settings - Forms - Showcases - Velociraptor</title>
+	<title>Settings - Basics - Showcases - Velociraptor</title>
 </svelte:head>
 
 <Stack gap="6">
@@ -53,39 +52,39 @@
 
 				<div class="form-grid">
 					<FormField label="Display Name" error={$errors.displayName?.[0]} required>
-						{#snippet children({ fieldId, errorId, descId })}
+						{#snippet children({ fieldId, describedBy })}
 							<Input
 								id={fieldId}
 								name="displayName"
 								bind:value={$form.displayName}
 								error={!!$errors.displayName}
-								aria-describedby={$errors.displayName ? errorId : descId}
+								aria-describedby={describedBy}
 							/>
 						{/snippet}
 					</FormField>
 
 					<FormField label="Email" error={$errors.email?.[0]} required>
-						{#snippet children({ fieldId, errorId, descId })}
+						{#snippet children({ fieldId, describedBy })}
 							<Input
 								id={fieldId}
 								name="email"
 								type="email"
 								bind:value={$form.email}
 								error={!!$errors.email}
-								aria-describedby={$errors.email ? errorId : descId}
+								aria-describedby={describedBy}
 							/>
 						{/snippet}
 					</FormField>
 
 					<FormField label="Website" error={$errors.website?.[0]} description="Optional. Must start with http:// or https://">
-						{#snippet children({ fieldId, errorId, descId })}
+						{#snippet children({ fieldId, describedBy })}
 							<Input
 								id={fieldId}
 								name="website"
 								bind:value={$form.website}
 								placeholder="https://yoursite.com"
 								error={!!$errors.website}
-								aria-describedby={$errors.website ? errorId : descId}
+								aria-describedby={describedBy}
 							/>
 						{/snippet}
 					</FormField>
@@ -101,14 +100,14 @@
 					<FormField label="Timezone" error={$errors.timezone?.[0]} required>
 						{#snippet children(_)}
 							<input type="hidden" name="timezone" value={$form.timezone} />
-							<Select options={timezoneOptions} bind:value={$form.timezone} />
+							<Select options={timezoneOptions} bind:value={$form.timezone} error={!!$errors.timezone} />
 						{/snippet}
 					</FormField>
 
 					<FormField label="Language" error={$errors.language?.[0]} required>
 						{#snippet children(_)}
 							<input type="hidden" name="language" value={$form.language} />
-							<Select options={languageOptions} bind:value={$form.language} />
+							<Select options={languageOptions} bind:value={$form.language} error={!!$errors.language} />
 						{/snippet}
 					</FormField>
 
@@ -158,16 +157,3 @@
 		</Stack>
 	</form>
 </Stack>
-
-<style>
-	.form-grid {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-5);
-	}
-
-	.form-actions {
-		display: flex;
-		justify-content: flex-end;
-	}
-</style>

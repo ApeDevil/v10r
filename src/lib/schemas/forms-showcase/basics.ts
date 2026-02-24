@@ -1,21 +1,23 @@
 import * as v from 'valibot';
 
 export const contactSchema = v.object({
-	name: v.pipe(v.string(), v.nonEmpty('Name is required'), v.maxLength(100, 'Max 100 characters')),
+	name: v.pipe(v.string(), v.trim(), v.nonEmpty('Name is required'), v.maxLength(100, 'Max 100 characters')),
 	email: v.pipe(
 		v.string(),
-		v.nonEmpty('Email is required'),
 		v.trim(),
+		v.nonEmpty('Email is required'),
 		v.toLowerCase(),
 		v.email('Invalid email address')
 	),
 	subject: v.pipe(
 		v.string(),
+		v.trim(),
 		v.nonEmpty('Subject is required'),
 		v.maxLength(200, 'Max 200 characters')
 	),
 	message: v.pipe(
 		v.string(),
+		v.trim(),
 		v.nonEmpty('Message is required'),
 		v.minLength(10, 'At least 10 characters'),
 		v.maxLength(2000, 'Max 2000 characters')
@@ -28,13 +30,14 @@ export type ContactOutput = v.InferOutput<typeof contactSchema>;
 export const settingsSchema = v.object({
 	displayName: v.pipe(
 		v.string(),
+		v.trim(),
 		v.nonEmpty('Display name is required'),
 		v.maxLength(50, 'Max 50 characters')
 	),
 	email: v.pipe(
 		v.string(),
-		v.nonEmpty('Email is required'),
 		v.trim(),
+		v.nonEmpty('Email is required'),
 		v.toLowerCase(),
 		v.email('Invalid email address')
 	),
@@ -49,8 +52,8 @@ export const settingsSchema = v.object({
 		),
 		''
 	),
-	timezone: v.pipe(v.string(), v.nonEmpty('Select a timezone')),
-	language: v.pipe(v.string(), v.nonEmpty('Select a language')),
+	timezone: v.picklist(['utc', 'est', 'cst', 'pst', 'cet'], 'Select a timezone'),
+	language: v.picklist(['en', 'es', 'fr', 'de', 'ja'], 'Select a language'),
 	emailNotifications: v.optional(v.boolean(), false),
 	marketingEmails: v.optional(v.boolean(), false),
 	publicProfile: v.optional(v.boolean(), true),

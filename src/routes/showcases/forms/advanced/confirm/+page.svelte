@@ -11,7 +11,6 @@
 
 	const { form, errors, enhance, submitting, delayed, message: formMessage } = superForm(data.form, {
 		validators: valibotClient(confirmSchema),
-		delayMs: 150,
 	});
 
 	let showConfirm = $state(false);
@@ -31,7 +30,7 @@
 </script>
 
 <svelte:head>
-	<title>Confirm - Forms - Showcases - Velociraptor</title>
+	<title>Confirm - Advanced - Showcases - Velociraptor</title>
 </svelte:head>
 
 <Stack gap="6">
@@ -63,20 +62,20 @@
 
 		<form method="POST" action="?/delete" use:enhance bind:this={formRef} class="form-grid">
 			<FormField label="Type DELETE to confirm" error={$errors.confirmation?.[0]} required>
-				{#snippet children({ fieldId, errorId, descId })}
+				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
 						name="confirmation"
 						bind:value={$form.confirmation}
 						placeholder="DELETE"
 						error={!!$errors.confirmation}
-						aria-describedby={$errors.confirmation ? errorId : descId}
+						aria-describedby={describedBy}
 					/>
 				{/snippet}
 			</FormField>
 
 			<div class="form-actions">
-				<Button type="button" variant="destructive" onclick={handleDeleteClick} disabled={$submitting}>
+				<Button type="button" variant="destructive" onclick={handleDeleteClick} disabled={$submitting || $form.confirmation !== 'DELETE'}>
 					{#if $delayed}<Spinner size="sm" class="mr-2" />{/if}
 					Delete All Items
 				</Button>
@@ -105,18 +104,6 @@
 </Stack>
 
 <style>
-	.form-grid {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-5);
-	}
-
-	.form-actions {
-		display: flex;
-		justify-content: flex-end;
-		padding-top: var(--spacing-2);
-	}
-
 	.items-list {
 		padding: var(--spacing-4);
 		border: 1px solid var(--color-border);

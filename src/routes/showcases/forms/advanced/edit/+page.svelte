@@ -11,7 +11,6 @@
 
 	const { form, errors, enhance, submitting, delayed, tainted, message: formMessage } = superForm(data.form, {
 		validators: valibotClient(profileEditSchema),
-		delayMs: 150,
 	});
 
 	const roleOptions = [
@@ -23,7 +22,7 @@
 </script>
 
 <svelte:head>
-	<title>Edit - Forms - Showcases - Velociraptor</title>
+	<title>Edit - Advanced - Showcases - Velociraptor</title>
 </svelte:head>
 
 <Stack gap="6">
@@ -50,26 +49,26 @@
 
 		<form method="POST" use:enhance class="form-grid">
 			<FormField label="Name" error={$errors.name?.[0]} required>
-				{#snippet children({ fieldId, errorId, descId })}
+				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
 						name="name"
 						bind:value={$form.name}
 						error={!!$errors.name}
-						aria-describedby={$errors.name ? errorId : descId}
+						aria-describedby={describedBy}
 					/>
 				{/snippet}
 			</FormField>
 
 			<FormField label="Email" error={$errors.email?.[0]} required>
-				{#snippet children({ fieldId, errorId, descId })}
+				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
 						name="email"
 						type="email"
 						bind:value={$form.email}
 						error={!!$errors.email}
-						aria-describedby={$errors.email ? errorId : descId}
+						aria-describedby={describedBy}
 					/>
 				{/snippet}
 			</FormField>
@@ -77,12 +76,12 @@
 			<FormField label="Role" error={$errors.role?.[0]} required>
 				{#snippet children(_)}
 					<input type="hidden" name="role" value={$form.role} />
-					<Select options={roleOptions} bind:value={$form.role} />
+					<Select options={roleOptions} bind:value={$form.role} error={!!$errors.role} />
 				{/snippet}
 			</FormField>
 
 			<FormField label="Bio" error={$errors.bio?.[0]} description="Max 300 characters">
-				{#snippet children({ fieldId, errorId, descId })}
+				{#snippet children({ fieldId, describedBy })}
 					<textarea
 						id={fieldId}
 						name="bio"
@@ -91,7 +90,7 @@
 						rows="3"
 						class="form-textarea"
 						aria-invalid={$errors.bio ? 'true' : undefined}
-						aria-describedby={$errors.bio ? errorId : descId}
+						aria-describedby={describedBy}
 					></textarea>
 				{/snippet}
 			</FormField>
@@ -118,36 +117,3 @@
 		{/snippet}
 	</Alert>
 </Stack>
-
-<style>
-	.form-grid {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-5);
-	}
-
-	.form-actions {
-		display: flex;
-		justify-content: flex-end;
-		padding-top: var(--spacing-2);
-	}
-
-	.form-textarea {
-		width: 100%;
-		min-height: 5rem;
-		padding: var(--spacing-3);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		background: var(--color-input-bg);
-		color: var(--color-fg);
-		font-size: var(--text-fluid-sm);
-		font-family: inherit;
-		resize: vertical;
-	}
-
-	.form-textarea:focus {
-		outline: none;
-		border-color: var(--color-primary);
-		box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 25%, transparent);
-	}
-</style>

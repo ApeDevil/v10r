@@ -42,8 +42,8 @@ export const asyncSchema = v.object({
 	),
 	email: v.pipe(
 		v.string(),
-		v.nonEmpty('Required'),
 		v.trim(),
+		v.nonEmpty('Required'),
 		v.toLowerCase(),
 		v.email('Invalid email address')
 	),
@@ -55,13 +55,14 @@ export type AsyncOutput = v.InferOutput<typeof asyncSchema>;
 export const serverSchema = v.object({
 	email: v.pipe(
 		v.string(),
-		v.nonEmpty('Email is required'),
 		v.trim(),
+		v.nonEmpty('Email is required'),
 		v.toLowerCase(),
 		v.email('Invalid email address')
 	),
 	inviteCode: v.pipe(
 		v.string(),
+		v.trim(),
 		v.nonEmpty('Invite code is required'),
 		v.minLength(4, 'At least 4 characters')
 	),

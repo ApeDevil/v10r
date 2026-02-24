@@ -12,7 +12,6 @@
 	const { form, errors, enhance, submitting, delayed, message: formMessage } = superForm(data.form, {
 		validators: valibotClient(realtimeSchema),
 		validationMethod: 'oninput',
-		delayMs: 150,
 	});
 
 	const usernameLength = $derived($form.username.length);
@@ -39,7 +38,7 @@
 </script>
 
 <svelte:head>
-	<title>Realtime - Forms - Showcases - Velociraptor</title>
+	<title>Realtime - Validation - Showcases - Velociraptor</title>
 </svelte:head>
 
 <Stack gap="6">
@@ -59,7 +58,7 @@
 
 		<form method="POST" use:enhance class="form-grid">
 			<FormField label="Username" error={$errors.username?.[0]} required>
-				{#snippet children({ fieldId, errorId, descId })}
+				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
 						name="username"
@@ -67,7 +66,7 @@
 						placeholder="lowercase_username"
 						maxlength={usernameMaxLength}
 						error={!!$errors.username}
-						aria-describedby={$errors.username ? errorId : descId}
+						aria-describedby={describedBy}
 					/>
 					<Cluster justify="end" gap="2">
 						<span class="char-count">{usernameLength}/{usernameMaxLength}</span>
@@ -76,7 +75,7 @@
 			</FormField>
 
 			<FormField label="Password" error={$errors.password?.[0]} required>
-				{#snippet children({ fieldId, errorId, descId })}
+				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
 						name="password"
@@ -84,7 +83,7 @@
 						bind:value={$form.password}
 						placeholder="Min 8 chars, uppercase, number, special"
 						error={!!$errors.password}
-						aria-describedby={$errors.password ? errorId : descId}
+						aria-describedby={describedBy}
 					/>
 					{#if $form.password}
 						<div class="strength-bar">
@@ -100,7 +99,7 @@
 			</FormField>
 
 			<FormField label="Confirm Password" error={$errors.confirmPassword?.[0]} required>
-				{#snippet children({ fieldId, errorId, descId })}
+				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
 						name="confirmPassword"
@@ -108,7 +107,7 @@
 						bind:value={$form.confirmPassword}
 						placeholder="Re-enter your password"
 						error={!!$errors.confirmPassword}
-						aria-describedby={$errors.confirmPassword ? errorId : descId}
+						aria-describedby={describedBy}
 					/>
 				{/snippet}
 			</FormField>
@@ -130,18 +129,6 @@
 </Stack>
 
 <style>
-	.form-grid {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-5);
-	}
-
-	.form-actions {
-		display: flex;
-		justify-content: flex-end;
-		padding-top: var(--spacing-2);
-	}
-
 	.char-count {
 		font-size: var(--text-fluid-xs);
 		color: var(--color-muted);

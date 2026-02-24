@@ -11,7 +11,6 @@
 
 	const { form, errors, enhance, submitting, delayed, message: formMessage } = superForm(data.form, {
 		validators: valibotClient(dependentSchema),
-		delayMs: 150,
 	});
 
 	const locationData = data.locationData;
@@ -41,21 +40,18 @@
 		return state.cities.map((city: string) => ({ value: city, label: city }));
 	});
 
-	// Reset child fields when parent changes
-	$effect(() => {
-		$form.country;
+	function onCountryChange() {
 		$form.state = '';
 		$form.city = '';
-	});
+	}
 
-	$effect(() => {
-		$form.state;
+	function onStateChange() {
 		$form.city = '';
-	});
+	}
 </script>
 
 <svelte:head>
-	<title>Dependent - Forms - Showcases - Velociraptor</title>
+	<title>Dependent - Patterns - Showcases - Velociraptor</title>
 </svelte:head>
 
 <Stack gap="6">
@@ -77,7 +73,7 @@
 			<FormField label="Country" error={$errors.country?.[0]} required>
 				{#snippet children(_)}
 					<input type="hidden" name="country" value={$form.country} />
-					<Select options={countryOptions} bind:value={$form.country} placeholder="Select country..." />
+					<Select options={countryOptions} bind:value={$form.country} placeholder="Select country..." onchange={onCountryChange} error={!!$errors.country} />
 				{/snippet}
 			</FormField>
 
@@ -89,6 +85,8 @@
 						bind:value={$form.state}
 						placeholder="Select state..."
 						disabled={!$form.country}
+						onchange={onStateChange}
+						error={!!$errors.state}
 					/>
 				{/snippet}
 			</FormField>
@@ -101,6 +99,7 @@
 						bind:value={$form.city}
 						placeholder="Select city..."
 						disabled={!$form.state}
+						error={!!$errors.city}
 					/>
 				{/snippet}
 			</FormField>
@@ -116,21 +115,7 @@
 
 	<Alert variant="info" title="Cascading Pattern">
 		{#snippet children()}
-			<p>Options for State and City are filtered using <code>$derived</code>. When a parent changes, <code>$effect</code> resets child values to empty string. The cascade stops naturally because resetting to the same value (<code>''</code>) doesn't re-trigger.</p>
+			<p>Options for State and City are filtered using <code>$derived</code>. When a parent changes, the <code>onchange</code> callback resets child values to empty string. This avoids <code>$effect</code> anti-patterns and works safely with pre-populated forms.</p>
 		{/snippet}
 	</Alert>
 </Stack>
-
-<style>
-	.form-grid {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-5);
-	}
-
-	.form-actions {
-		display: flex;
-		justify-content: flex-end;
-		padding-top: var(--spacing-2);
-	}
-</style>

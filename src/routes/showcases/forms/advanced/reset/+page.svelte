@@ -12,14 +12,13 @@
 	const { form, errors, enhance, submitting, delayed, message: formMessage } = superForm(data.form, {
 		validators: valibotClient(feedbackSchema),
 		resetForm: true,
-		delayMs: 150,
 	});
 
 	const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
 </script>
 
 <svelte:head>
-	<title>Reset - Forms - Showcases - Velociraptor</title>
+	<title>Reset - Advanced - Showcases - Velociraptor</title>
 </svelte:head>
 
 <Stack gap="6">
@@ -39,7 +38,7 @@
 
 		<form method="POST" use:enhance class="form-grid">
 			<FormField label="Rating" error={$errors.rating?.[0]} required>
-				{#snippet children({ fieldId })}
+				{#snippet children({ fieldId, describedBy })}
 					<div class="rating-group">
 						<input
 							id={fieldId}
@@ -48,6 +47,8 @@
 							min="1"
 							max="5"
 							bind:value={$form.rating}
+							aria-valuetext="{$form.rating}/5 — {ratingLabels[$form.rating] ?? 'Slide to rate'}"
+							aria-describedby={describedBy}
 							class="rating-input"
 						/>
 						<span class="rating-label">
@@ -62,7 +63,7 @@
 			</FormField>
 
 			<FormField label="Comment" error={$errors.comment?.[0]} required>
-				{#snippet children({ fieldId, errorId, descId })}
+				{#snippet children({ fieldId, describedBy })}
 					<textarea
 						id={fieldId}
 						name="comment"
@@ -71,7 +72,7 @@
 						rows="4"
 						class="form-textarea"
 						aria-invalid={$errors.comment ? 'true' : undefined}
-						aria-describedby={$errors.comment ? errorId : descId}
+						aria-describedby={describedBy}
 					></textarea>
 				{/snippet}
 			</FormField>
@@ -103,37 +104,6 @@
 </Stack>
 
 <style>
-	.form-grid {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-5);
-	}
-
-	.form-actions {
-		display: flex;
-		justify-content: flex-end;
-		padding-top: var(--spacing-2);
-	}
-
-	.form-textarea {
-		width: 100%;
-		min-height: 6rem;
-		padding: var(--spacing-3);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		background: var(--color-input-bg);
-		color: var(--color-fg);
-		font-size: var(--text-fluid-sm);
-		font-family: inherit;
-		resize: vertical;
-	}
-
-	.form-textarea:focus {
-		outline: none;
-		border-color: var(--color-primary);
-		box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 25%, transparent);
-	}
-
 	.rating-group {
 		display: flex;
 		flex-direction: column;

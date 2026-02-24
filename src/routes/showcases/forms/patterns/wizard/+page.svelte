@@ -12,7 +12,6 @@
 
 	const { form, errors, enhance, submitting, delayed, validateForm, message: formMessage } = superForm(data.form, {
 		validators: valibotClient(wizardSchema),
-		delayMs: 150,
 	});
 
 	let step = $state(1);
@@ -61,7 +60,7 @@
 </script>
 
 <svelte:head>
-	<title>Wizard - Forms - Showcases - Velociraptor</title>
+	<title>Wizard - Patterns - Showcases - Velociraptor</title>
 </svelte:head>
 
 <Stack gap="6">
@@ -92,33 +91,33 @@
 					<h3 class="step-title">Personal Info</h3>
 					<div class="step-fields">
 						<FormField label="First Name" error={$errors.firstName?.[0]} required>
-							{#snippet children({ fieldId, errorId, descId })}
+							{#snippet children({ fieldId, describedBy })}
 								<Input
 									id={fieldId}
 									name="firstName"
 									bind:value={$form.firstName}
 									placeholder="Jane"
 									error={!!$errors.firstName}
-									aria-describedby={$errors.firstName ? errorId : descId}
+									aria-describedby={describedBy}
 								/>
 							{/snippet}
 						</FormField>
 
 						<FormField label="Last Name" error={$errors.lastName?.[0]} required>
-							{#snippet children({ fieldId, errorId, descId })}
+							{#snippet children({ fieldId, describedBy })}
 								<Input
 									id={fieldId}
 									name="lastName"
 									bind:value={$form.lastName}
 									placeholder="Doe"
 									error={!!$errors.lastName}
-									aria-describedby={$errors.lastName ? errorId : descId}
+									aria-describedby={describedBy}
 								/>
 							{/snippet}
 						</FormField>
 
 						<FormField label="Email" error={$errors.email?.[0]} required>
-							{#snippet children({ fieldId, errorId, descId })}
+							{#snippet children({ fieldId, describedBy })}
 								<Input
 									id={fieldId}
 									name="email"
@@ -126,7 +125,7 @@
 									bind:value={$form.email}
 									placeholder="jane@example.com"
 									error={!!$errors.email}
-									aria-describedby={$errors.email ? errorId : descId}
+									aria-describedby={describedBy}
 								/>
 							{/snippet}
 						</FormField>
@@ -137,27 +136,27 @@
 					<h3 class="step-title">Address</h3>
 					<div class="step-fields">
 						<FormField label="Street" error={$errors.street?.[0]} required>
-							{#snippet children({ fieldId, errorId, descId })}
+							{#snippet children({ fieldId, describedBy })}
 								<Input
 									id={fieldId}
 									name="street"
 									bind:value={$form.street}
 									placeholder="123 Main St"
 									error={!!$errors.street}
-									aria-describedby={$errors.street ? errorId : descId}
+									aria-describedby={describedBy}
 								/>
 							{/snippet}
 						</FormField>
 
 						<FormField label="City" error={$errors.city?.[0]} required>
-							{#snippet children({ fieldId, errorId, descId })}
+							{#snippet children({ fieldId, describedBy })}
 								<Input
 									id={fieldId}
 									name="city"
 									bind:value={$form.city}
 									placeholder="San Francisco"
 									error={!!$errors.city}
-									aria-describedby={$errors.city ? errorId : descId}
+									aria-describedby={describedBy}
 								/>
 							{/snippet}
 						</FormField>
@@ -165,12 +164,12 @@
 						<FormField label="State" error={$errors.state?.[0]} required>
 							{#snippet children(_)}
 								<input type="hidden" name="state" value={$form.state} />
-								<Select options={stateOptions} bind:value={$form.state} />
+								<Select options={stateOptions} bind:value={$form.state} error={!!$errors.state} />
 							{/snippet}
 						</FormField>
 
 						<FormField label="ZIP Code" error={$errors.zip?.[0]} required>
-							{#snippet children({ fieldId, errorId, descId })}
+							{#snippet children({ fieldId, describedBy })}
 								<Input
 									id={fieldId}
 									name="zip"
@@ -178,7 +177,7 @@
 									bind:value={$form.zip}
 									placeholder="94102"
 									error={!!$errors.zip}
-									aria-describedby={$errors.zip ? errorId : descId}
+									aria-describedby={describedBy}
 								/>
 							{/snippet}
 						</FormField>
@@ -191,7 +190,7 @@
 						<FormField label="Plan" error={$errors.plan?.[0]} required>
 							{#snippet children(_)}
 								<input type="hidden" name="plan" value={$form.plan} />
-								<Select options={planOptions} bind:value={$form.plan} />
+								<Select options={planOptions} bind:value={$form.plan} error={!!$errors.plan} />
 							{/snippet}
 						</FormField>
 
@@ -252,12 +251,6 @@
 </Stack>
 
 <style>
-	.form-grid {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-5);
-	}
-
 	.step-title {
 		font-size: var(--text-fluid-base);
 		font-weight: 600;

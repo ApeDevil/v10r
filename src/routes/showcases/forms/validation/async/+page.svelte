@@ -11,7 +11,6 @@
 
 	const { form, errors, enhance, submitting, delayed, message: formMessage } = superForm(data.form, {
 		validators: valibotClient(asyncSchema),
-		delayMs: 150,
 	});
 
 	let usernameAvailable = $state<boolean | null>(null);
@@ -46,7 +45,7 @@
 </script>
 
 <svelte:head>
-	<title>Async - Forms - Showcases - Velociraptor</title>
+	<title>Async - Validation - Showcases - Velociraptor</title>
 </svelte:head>
 
 <Stack gap="6">
@@ -66,14 +65,14 @@
 
 		<form method="POST" use:enhance class="form-grid">
 			<FormField label="Username" error={$errors.username?.[0]} required>
-				{#snippet children({ fieldId, errorId, descId })}
+				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
 						name="username"
 						bind:value={$form.username}
 						placeholder="Check: admin, test, user, root"
 						error={!!$errors.username}
-						aria-describedby={$errors.username ? errorId : descId}
+						aria-describedby={describedBy}
 						oninput={checkUsername}
 					/>
 					<div class="availability">
@@ -90,7 +89,7 @@
 			</FormField>
 
 			<FormField label="Email" error={$errors.email?.[0]} required>
-				{#snippet children({ fieldId, errorId, descId })}
+				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
 						name="email"
@@ -98,7 +97,7 @@
 						bind:value={$form.email}
 						placeholder="you@example.com"
 						error={!!$errors.email}
-						aria-describedby={$errors.email ? errorId : descId}
+						aria-describedby={describedBy}
 					/>
 				{/snippet}
 			</FormField>
@@ -120,18 +119,6 @@
 </Stack>
 
 <style>
-	.form-grid {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-5);
-	}
-
-	.form-actions {
-		display: flex;
-		justify-content: flex-end;
-		padding-top: var(--spacing-2);
-	}
-
 	.availability {
 		display: flex;
 		align-items: center;

@@ -12,14 +12,13 @@
 
 	const { form, errors, enhance, submitting, delayed, message: formMessage } = superForm(data.form, {
 		validators: valibotClient(serverSchema),
-		delayMs: 150,
 	});
 
 	const isError = $derived(page.status >= 400);
 </script>
 
 <svelte:head>
-	<title>Server - Forms - Showcases - Velociraptor</title>
+	<title>Server - Validation - Showcases - Velociraptor</title>
 </svelte:head>
 
 <Stack gap="6">
@@ -39,7 +38,7 @@
 
 		<form method="POST" use:enhance class="form-grid">
 			<FormField label="Email" error={$errors.email?.[0]} required description="Try an email containing 'taken' to trigger server error">
-				{#snippet children({ fieldId, errorId, descId })}
+				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
 						name="email"
@@ -47,20 +46,20 @@
 						bind:value={$form.email}
 						placeholder="you@example.com (or taken@test.com)"
 						error={!!$errors.email}
-						aria-describedby={$errors.email ? errorId : descId}
+						aria-describedby={describedBy}
 					/>
 				{/snippet}
 			</FormField>
 
 			<FormField label="Invite Code" error={$errors.inviteCode?.[0]} required description="Try EXPIRED1 or INVALID1 to trigger server errors">
-				{#snippet children({ fieldId, errorId, descId })}
+				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
 						name="inviteCode"
 						bind:value={$form.inviteCode}
 						placeholder="Enter invite code"
 						error={!!$errors.inviteCode}
-						aria-describedby={$errors.inviteCode ? errorId : descId}
+						aria-describedby={describedBy}
 					/>
 				{/snippet}
 			</FormField>
@@ -80,17 +79,3 @@
 		{/snippet}
 	</Alert>
 </Stack>
-
-<style>
-	.form-grid {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-5);
-	}
-
-	.form-actions {
-		display: flex;
-		justify-content: flex-end;
-		padding-top: var(--spacing-2);
-	}
-</style>

@@ -21,8 +21,8 @@
 		error && 'input-error',
 		className
 	)}
-	aria-invalid={error ? 'true' : undefined}
 	{...restProps}
+	aria-invalid={error ? 'true' : undefined}
 />
 
 <style>
