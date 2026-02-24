@@ -113,3 +113,15 @@ export {
 	type CalendarCellVariants,
 	type CalendarDayVariants
 } from './calendar';
+
+export {
+	GeometricMark,
+	Divider,
+	Asterism,
+	Kamon,
+	Flourish,
+	DotPattern,
+	GridPattern,
+	RetroGrid,
+	GradientBlob
+} from './decorative';

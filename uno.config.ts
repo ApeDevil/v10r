@@ -55,6 +55,12 @@ export default defineConfig({
 		['duration-slower', { 'transition-duration': 'var(--duration-slower, 600ms)' }],
 	],
 
+	// Decorative background utilities
+	shortcuts: {
+		'bg-dots': 'bg-[radial-gradient(circle,currentColor_1px,transparent_1px)] bg-[length:20px_20px]',
+		'bg-grid': 'bg-[linear-gradient(currentColor_1px,transparent_1px),linear-gradient(to_right,currentColor_1px,transparent_1px)] bg-[length:30px_30px]',
+	},
+
 	// Safelist commonly used dynamic classes
 	safelist: [
 		...Object.keys(fontSize).map((k) => `text-${k}`),

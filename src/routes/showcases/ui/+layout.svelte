@@ -15,6 +15,7 @@
 		{ label: 'Components', href: '/showcases/ui/components' },
 		{ label: 'Layouts', href: '/showcases/ui/layouts' },
 		{ label: 'Panes', href: '/showcases/ui/panes' },
+		{ label: 'Decorative', href: '/showcases/ui/decorative' },
 		{ label: 'Typography', href: '/showcases/ui/typography' },
 		{ label: 'Tokens', href: '/showcases/ui/tokens' },
 	];
