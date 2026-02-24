@@ -25,6 +25,8 @@ export * from './menu-bar';
 export * from './context-menu';
 export * from './dropdown-menu';
 export * from './section-nav';
+export * from './tab-nav';
+export * from './nav-grid';
 
 export { DatePicker } from './date-picker';
 export {

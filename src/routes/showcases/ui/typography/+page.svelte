@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
-	import { PageHeader, BackLink } from '$lib/components/composites';
 	import { loadFont, isFontLoaded, findFont, type FontLoadState } from '$lib/services/fonts';
 	import FontPicker from './_components/FontPicker.svelte';
 	import FontPreview from './_components/FontPreview.svelte';
@@ -156,95 +155,72 @@
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
 </svelte:head>
 
-<div class="page">
-	<PageHeader
-		title="Typography"
-		description="Explore typographic styles with dynamic font selection. Pick a font family and see how it renders across the full type scale."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'UI', href: '/showcases/ui' },
-			{ label: 'Typography' }
-		]}
-	/>
+<main class="content">
+	<div class="layout">
+		<aside class="sidebar">
+			<FontPicker
+				{mode}
+				selected={selectedFamily}
+				headingFont={headingFamily}
+				bodyFont={bodyFamily}
+				{loadState}
+				{headingLoadState}
+				{bodyLoadState}
+				onselect={selectFont}
+				onselectHeading={selectHeadingFont}
+				onselectBody={selectBodyFont}
+				onmodechange={handleModeChange}
+			/>
+		</aside>
 
-	<main class="content">
-		<div class="layout">
-			<aside class="sidebar">
-				<FontPicker
+		<section class="preview-area">
+			<div class="view-toggle" role="tablist">
+				<button
+					role="tab"
+					aria-selected={viewMode === 'scale'}
+					class="view-tab"
+					class:active={viewMode === 'scale'}
+					onclick={() => handleViewChange('scale')}
+				>
+					Type Scale
+				</button>
+				<button
+					role="tab"
+					aria-selected={viewMode === 'prose'}
+					class="view-tab"
+					class:active={viewMode === 'prose'}
+					onclick={() => handleViewChange('prose')}
+				>
+					Prose
+				</button>
+			</div>
+
+			{#if viewMode === 'scale'}
+				<FontPreview
 					{mode}
-					selected={selectedFamily}
-					headingFont={headingFamily}
-					bodyFont={bodyFamily}
+					{fontStack}
+					{headingFontStack}
+					{bodyFontStack}
 					{loadState}
 					{headingLoadState}
 					{bodyLoadState}
-					onselect={selectFont}
-					onselectHeading={selectHeadingFont}
-					onselectBody={selectBodyFont}
-					onmodechange={handleModeChange}
 				/>
-			</aside>
-
-			<section class="preview-area">
-				<div class="view-toggle" role="tablist">
-					<button
-						role="tab"
-						aria-selected={viewMode === 'scale'}
-						class="view-tab"
-						class:active={viewMode === 'scale'}
-						onclick={() => handleViewChange('scale')}
-					>
-						Type Scale
-					</button>
-					<button
-						role="tab"
-						aria-selected={viewMode === 'prose'}
-						class="view-tab"
-						class:active={viewMode === 'prose'}
-						onclick={() => handleViewChange('prose')}
-					>
-						Prose
-					</button>
-				</div>
-
-				{#if viewMode === 'scale'}
-					<FontPreview
-						{mode}
-						{fontStack}
-						{headingFontStack}
-						{bodyFontStack}
-						{loadState}
-						{headingLoadState}
-						{bodyLoadState}
-					/>
-				{:else}
-					<ProsePreview
-						{mode}
-						{fontStack}
-						{headingFontStack}
-						{bodyFontStack}
-						{loadState}
-						{headingLoadState}
-						{bodyLoadState}
-					/>
-				{/if}
-			</section>
-		</div>
-	</main>
-
-	<BackLink href="/showcases/ui" label="UI" />
-</div>
+			{:else}
+				<ProsePreview
+					{mode}
+					{fontStack}
+					{headingFontStack}
+					{bodyFontStack}
+					{loadState}
+					{headingLoadState}
+					{bodyLoadState}
+				/>
+			{/if}
+		</section>
+	</div>
+</main>
 
 <style>
-	.page {
-		width: 100%;
-		max-width: var(--layout-max-width);
-		margin: 0 auto;
-		padding: var(--spacing-7) var(--spacing-4);
-		box-sizing: border-box;
-	}
-
 	.content {
 	}
 
@@ -305,18 +281,6 @@
 			position: sticky;
 			top: var(--spacing-7);
 			align-self: flex-start;
-		}
-	}
-
-	@media (min-width: 768px) {
-		.page {
-			padding: var(--spacing-7);
-		}
-	}
-
-	@media (max-width: 640px) {
-		.page {
-			padding: var(--spacing-4);
 		}
 	}
 </style>

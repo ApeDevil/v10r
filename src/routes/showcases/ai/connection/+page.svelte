@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { PageHeader, BackLink, Card, Alert } from '$lib/components/composites';
+	import { Card, Alert } from '$lib/components/composites';
 	import { Badge, Button, Spinner, Typography } from '$lib/components/primitives';
-	import { PageContainer, Stack, Cluster } from '$lib/components/layout';
+	import { Stack, Cluster } from '$lib/components/layout';
 
 	let { data } = $props();
 
@@ -30,18 +30,6 @@
 <svelte:head>
 	<title>Connection - AI - Showcases - Velociraptor</title>
 </svelte:head>
-
-<PageContainer class="py-7">
-	<PageHeader
-		title="Connection"
-		description="AI provider health check. Verifies the active provider's API key and measures response latency."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'AI', href: '/showcases/ai' },
-			{ label: 'Connection' }
-		]}
-	/>
 
 	<Stack gap="6">
 		<!-- Status -->
@@ -155,9 +143,6 @@
 			{/if}
 		{/if}
 	</Stack>
-
-	<BackLink href="/showcases/ai" label="AI" />
-</PageContainer>
 
 <style>
 	.diag-grid {

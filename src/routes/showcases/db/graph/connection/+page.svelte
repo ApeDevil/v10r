@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { PageHeader, BackLink, Card, Alert } from '$lib/components/composites';
+	import { Card, Alert } from '$lib/components/composites';
 	import { Badge, Button, Spinner, Typography } from '$lib/components/primitives';
-	import { PageContainer, Stack, Cluster } from '$lib/components/layout';
+	import { Stack, Cluster } from '$lib/components/layout';
 
 	let { data } = $props();
 
@@ -36,20 +36,7 @@
 	<title>Connection - Graph - Showcases - Velociraptor</title>
 </svelte:head>
 
-<PageContainer class="py-7">
-	<PageHeader
-		title="Connection"
-		description="Live Neo4j Aura health check via HTTP Query API. The latency below was measured during your page load."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'DB', href: '/showcases/db' },
-			{ label: 'Graph', href: '/showcases/db/graph' },
-			{ label: 'Connection' }
-		]}
-	/>
-
-	<Stack gap="6">
+<Stack gap="6">
 		<!-- Status -->
 		<Card>
 			{#snippet header()}
@@ -190,8 +177,6 @@
 		{/if}
 	</Stack>
 
-	<BackLink href="/showcases/db/graph" label="Graph" />
-</PageContainer>
 
 <style>
 	.diag-grid {

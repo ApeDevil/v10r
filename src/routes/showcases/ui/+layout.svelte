@@ -1,6 +1,8 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { getTheme } from '$lib/stores/theme.svelte';
+	import { PageContainer } from '$lib/components/layout';
+	import { PageHeader, TabNav } from '$lib/components/composites';
 
 	let { children }: { children: Snippet } = $props();
 	const theme = getTheme();
@@ -8,9 +10,33 @@
 	function toggleTheme() {
 		theme.setMode(theme.isDark ? 'light' : 'dark');
 	}
+
+	const tabs = [
+		{ label: 'Components', href: '/showcases/ui/components' },
+		{ label: 'Layouts', href: '/showcases/ui/layouts' },
+		{ label: 'Panes', href: '/showcases/ui/panes' },
+		{ label: 'Typography', href: '/showcases/ui/typography' },
+		{ label: 'Tokens', href: '/showcases/ui/tokens' },
+	];
 </script>
 
-{@render children()}
+<PageContainer class="py-7">
+	<PageHeader
+		title="UI Showcase"
+		description="Explore all UI components, design tokens, and patterns used in Velociraptor."
+		breadcrumbs={[
+			{ label: 'Home', href: '/' },
+			{ label: 'Showcases', href: '/showcases' },
+			{ label: 'UI' }
+		]}
+	/>
+
+	<TabNav {tabs} ariaLabel="UI sections" />
+
+	<div class="pt-6">
+		{@render children()}
+	</div>
+</PageContainer>
 
 <!-- Fixed theme toggle FAB -->
 <button

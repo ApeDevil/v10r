@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { PageContainer } from '$lib/components/layout';
-	import { PageHeader, LinkCard, BackLink } from '$lib/components';
+	import { PageHeader, BackLink, NavGrid } from '$lib/components/composites';
+	import { LinkCard } from '$lib/components';
 </script>
 
 <svelte:head>
@@ -18,7 +19,7 @@
 		]}
 	/>
 
-	<nav class="scene-nav">
+	<NavGrid>
 		<LinkCard
 			href="/showcases/3d/static-scene"
 			icon="i-lucide-box"
@@ -31,15 +32,7 @@
 			title="Animated Scene"
 			description="Fox model with animation controls (Survey, Walk, Run)"
 		/>
-	</nav>
+	</NavGrid>
 
 	<BackLink href="/showcases" label="Showcases" />
 </PageContainer>
-
-<style>
-	.scene-nav {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-		gap: var(--spacing-6);
-	}
-</style>

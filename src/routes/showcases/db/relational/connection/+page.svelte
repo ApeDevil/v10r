@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { PageHeader, BackLink, Card, Alert } from '$lib/components/composites';
+	import { Card, Alert } from '$lib/components/composites';
 	import { Badge, Button, Spinner } from '$lib/components/primitives';
-	import { PageContainer, Stack, Cluster } from '$lib/components/layout';
+	import { Stack, Cluster } from '$lib/components/layout';
 
 	let { data } = $props();
 
@@ -37,20 +37,7 @@
 	<title>Connection - Relational - Showcases - Velociraptor</title>
 </svelte:head>
 
-<PageContainer class="py-7">
-	<PageHeader
-		title="Connection"
-		description="Live Neon PostgreSQL health check. The latency below was measured during your page load."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'DB', href: '/showcases/db' },
-			{ label: 'Relational', href: '/showcases/db/relational' },
-			{ label: 'Connection' }
-		]}
-	/>
-
-	<Stack gap="6">
+<Stack gap="6">
 		<!-- Status -->
 		<Card>
 			{#snippet header()}
@@ -188,8 +175,6 @@
 		{/if}
 	</Stack>
 
-	<BackLink href="/showcases/db/relational" label="Relational" />
-</PageContainer>
 
 <style>
 	.diag-grid {

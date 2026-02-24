@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
-	import { PageHeader, BackLink, Card, SectionNav, Alert } from '$lib/components/composites';
+	import { Card, SectionNav, Alert } from '$lib/components/composites';
 	import { Badge, Button, Spinner, Typography } from '$lib/components/primitives';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
 	import { ToggleGroup } from '$lib/components/primitives';
-	import { PageContainer, Stack } from '$lib/components/layout';
+	import { Stack } from '$lib/components/layout';
 	import { getToast } from '$lib/stores/toast.svelte';
 
 	let { data } = $props();
@@ -87,20 +87,7 @@
 	<title>Objects - Storage - Showcases - Velociraptor</title>
 </svelte:head>
 
-<PageContainer class="py-7">
-	<PageHeader
-		title="Objects"
-		description="Browse showcase objects, inspect metadata, and generate presigned download URLs. Loaded in {data.queryMs}ms."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'DB', href: '/showcases/db' },
-			{ label: 'Storage', href: '/showcases/db/storage' },
-			{ label: 'Objects' }
-		]}
-	/>
-
-	{#if data.error}
+{#if data.error}
 		<Alert variant="error" title="Error" description={data.error} />
 	{:else}
 		<SectionNav {sections} ariaLabel="Object operations" />
@@ -339,8 +326,6 @@
 		</Stack>
 	{/if}
 
-	<BackLink href="/showcases/db/storage" label="Storage" />
-</PageContainer>
 
 <style>
 	.section-desc {

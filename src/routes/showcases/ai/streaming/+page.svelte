@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { PageHeader, BackLink, Card, Alert } from '$lib/components/composites';
+	import { Card, Alert } from '$lib/components/composites';
 	import { Button, Typography } from '$lib/components/primitives';
-	import { PageContainer, Stack } from '$lib/components/layout';
+	import { Stack } from '$lib/components/layout';
 
 	let { data } = $props();
 
@@ -113,18 +113,6 @@
 	<title>Streaming - AI - Showcases - Velociraptor</title>
 </svelte:head>
 
-<PageContainer class="py-7">
-	<PageHeader
-		title="Streaming"
-		description="Token-level streaming visualization with real-time performance metrics."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'AI', href: '/showcases/ai' },
-			{ label: 'Streaming' }
-		]}
-	/>
-
 	<Stack gap="6">
 		{#if !data.configured}
 			<Alert variant="info" title="AI Not Configured">
@@ -209,9 +197,6 @@
 			</Card>
 		{/if}
 	</Stack>
-
-	<BackLink href="/showcases/ai" label="AI" />
-</PageContainer>
 
 <style>
 	.stream-prompts {

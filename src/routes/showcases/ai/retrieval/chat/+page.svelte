@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { Chat } from '@ai-sdk/svelte';
-	import { PageHeader, BackLink, Card, Alert, EmptyState } from '$lib/components/composites';
+	import { Card, Alert, EmptyState } from '$lib/components/composites';
 	import { RagPipeline, createPipelineState } from './_components/rag-pipeline';
 	import { Typography, Drawer, ToggleGroup } from '$lib/components/primitives';
-	import { PageContainer, Stack } from '$lib/components/layout';
+	import { Stack } from '$lib/components/layout';
 	import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
 	import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
 
@@ -70,19 +70,6 @@
 <svelte:head>
 	<title>RAG Chat - Retrieval - AI - Showcases - Velociraptor</title>
 </svelte:head>
-
-<PageContainer class="py-7">
-	<PageHeader
-		title="RAG Chat"
-		description="Chat with retrieval-augmented generation. Context from your ingested documents is automatically injected into the conversation."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'AI', href: '/showcases/ai' },
-			{ label: 'Retrieval', href: '/showcases/ai/retrieval' },
-			{ label: 'RAG Chat' }
-		]}
-	/>
 
 	<Stack gap="6">
 		{#if !data.configured}
@@ -157,9 +144,6 @@
 			</Drawer>
 		{/if}
 	</Stack>
-
-	<BackLink href="/showcases/ai/retrieval" label="Retrieval" />
-</PageContainer>
 
 <style>
 	:global(.chat-card) {

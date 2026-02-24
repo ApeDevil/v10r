@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
-	import { PageHeader, BackLink, Card, SectionNav, ConfirmDialog, Alert, FormField } from '$lib/components/composites';
+	import { Card, SectionNav, ConfirmDialog, Alert, FormField } from '$lib/components/composites';
 	import { Badge, Button, Input, Select, Switch, Typography } from '$lib/components/primitives';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
 	import { Dialog } from '$lib/components/primitives';
-	import { PageContainer, Stack, Cluster } from '$lib/components/layout';
+	import { Stack, Cluster } from '$lib/components/layout';
 	import { getToast } from '$lib/stores/toast.svelte';
 
 	let { data } = $props();
@@ -89,20 +89,7 @@
 	<title>Mutability - Relational - Showcases - Velociraptor</title>
 </svelte:head>
 
-<PageContainer class="py-7">
-	<PageHeader
-		title="Mutability Patterns"
-		description="Five data mutability strategies — now interactive. Loaded in {data.queryMs}ms."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'DB', href: '/showcases/db' },
-			{ label: 'Relational', href: '/showcases/db/relational' },
-			{ label: 'Mutability' }
-		]}
-	/>
-
-	{#if data.error}
+{#if data.error}
 		<Alert variant="error" title="Database Error">
 			{#snippet children()}
 				<code class="font-mono text-fluid-sm break-all">{data.error}</code>
@@ -617,9 +604,6 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 			</Button>
 		</Cluster>
 	{/if}
-
-	<BackLink href="/showcases/db/relational" label="Relational" />
-</PageContainer>
 
 <!-- ═══ DIALOGS ═══ -->
 

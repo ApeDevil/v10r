@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { PageHeader, BackLink, SectionNav } from '$lib/components/composites';
-	import TokensSection from '../_sections/TokensSection.svelte';
+	import { SectionNav } from '$lib/components/composites';
+	import TokensSection from '../components/_sections/TokensSection.svelte';
 
 	const sections = [
 		{ id: 'tok-typography', label: 'Typography' },
@@ -23,48 +23,8 @@
 	<title>Theme Tokens - UI Showcase - Velociraptor</title>
 </svelte:head>
 
-<div class="page">
-	<PageHeader
-		title="Theme Tokens"
-		description="Colors, spacing, typography, icons, breakpoints, shadows, layout, and animation tokens."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'UI', href: '/showcases/ui' },
-			{ label: 'Tokens' }
-		]}
-	/>
+<SectionNav {sections} />
 
-	<SectionNav {sections} />
-
-	<main class="content">
-		<TokensSection />
-	</main>
-
-	<BackLink href="/showcases/ui" label="UI" />
-</div>
-
-<style>
-	.page {
-		width: 100%;
-		max-width: var(--layout-max-width);
-		margin: 0 auto;
-		padding: var(--spacing-7) var(--spacing-4);
-		box-sizing: border-box;
-	}
-
-	.content {
-	}
-
-	@media (min-width: 768px) {
-		.page {
-			padding: var(--spacing-7);
-		}
-	}
-
-	@media (max-width: 640px) {
-		.page {
-			padding: var(--spacing-4);
-		}
-	}
-</style>
+<main class="content">
+	<TokensSection />
+</main>

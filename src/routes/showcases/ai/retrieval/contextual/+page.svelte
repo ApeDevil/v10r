@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { PageHeader, BackLink, Card, Alert } from '$lib/components/composites';
+	import { Card, Alert } from '$lib/components/composites';
 	import { Typography, Button } from '$lib/components/primitives';
-	import { PageContainer, Stack } from '$lib/components/layout';
+	import { Stack } from '$lib/components/layout';
 
 	let { data } = $props();
 
@@ -60,19 +60,6 @@
 <svelte:head>
 	<title>Contextual Search - Retrieval - AI - Showcases - Velociraptor</title>
 </svelte:head>
-
-<PageContainer class="py-7">
-	<PageHeader
-		title="Tier 1: Contextual Search"
-		description="Hybrid retrieval combining pgvector cosine similarity with Postgres BM25 full-text search, fused via reciprocal rank fusion."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'AI', href: '/showcases/ai' },
-			{ label: 'Retrieval', href: '/showcases/ai/retrieval' },
-			{ label: 'Contextual' }
-		]}
-	/>
 
 	<Stack gap="6">
 		{#if !data.configured}
@@ -145,9 +132,6 @@
 			{/if}
 		{/if}
 	</Stack>
-
-	<BackLink href="/showcases/ai/retrieval" label="Retrieval" />
-</PageContainer>
 
 <style>
 	.search-form {

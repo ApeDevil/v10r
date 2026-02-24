@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { PageHeader, BackLink, Card, ConfirmDialog, Alert } from '$lib/components/composites';
+	import { Card, ConfirmDialog, Alert } from '$lib/components/composites';
 	import { Badge, Button, Spinner, Typography } from '$lib/components/primitives';
-	import { PageContainer, Stack, Cluster } from '$lib/components/layout';
+	import { Stack, Cluster } from '$lib/components/layout';
 	import { getToast } from '$lib/stores/toast.svelte';
 
 	let { data } = $props();
@@ -40,20 +40,7 @@
 	<title>Connection - Storage - Showcases - Velociraptor</title>
 </svelte:head>
 
-<PageContainer class="py-7">
-	<PageHeader
-		title="Connection"
-		description="Live R2 bucket health check via S3-compatible API. The latency below was measured during your page load."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'DB', href: '/showcases/db' },
-			{ label: 'Storage', href: '/showcases/db/storage' },
-			{ label: 'Connection' }
-		]}
-	/>
-
-	<Stack gap="6">
+<Stack gap="6">
 		<!-- Status -->
 		<Card>
 			{#snippet header()}
@@ -208,9 +195,6 @@
 			</Button>
 		</Cluster>
 	{/if}
-
-	<BackLink href="/showcases/db/storage" label="Storage" />
-</PageContainer>
 
 <ConfirmDialog
 	bind:open={reseedDialogOpen}

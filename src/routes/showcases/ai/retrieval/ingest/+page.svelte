@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { PageHeader, BackLink, Card, Alert, FormField } from '$lib/components/composites';
+	import { Card, Alert, FormField } from '$lib/components/composites';
 	import { Typography, Button } from '$lib/components/primitives';
-	import { PageContainer, Stack } from '$lib/components/layout';
+	import { Stack } from '$lib/components/layout';
 
 	let { data } = $props();
 
@@ -106,19 +106,6 @@ A +page.server.ts file can also export actions for progressive form handling. Ac
 <svelte:head>
 	<title>Ingest - Retrieval - AI - Showcases - Velociraptor</title>
 </svelte:head>
-
-<PageContainer class="py-7">
-	<PageHeader
-		title="Document Ingestion"
-		description="Upload documents to the RAG pipeline. Documents are chunked, contextualized, embedded, and indexed for retrieval."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'AI', href: '/showcases/ai' },
-			{ label: 'Retrieval', href: '/showcases/ai/retrieval' },
-			{ label: 'Ingest' }
-		]}
-	/>
 
 	<Stack gap="6">
 		{#if !data.configured}
@@ -234,9 +221,6 @@ A +page.server.ts file can also export actions for progressive form handling. Ac
 			{/if}
 		{/if}
 	</Stack>
-
-	<BackLink href="/showcases/ai/retrieval" label="Retrieval" />
-</PageContainer>
 
 <style>
 	.ingest-input,

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { PageHeader, BackLink, Card } from '$lib/components/composites';
+	import { Card } from '$lib/components/composites';
 	import { Badge } from '$lib/components/primitives';
-	import { PageContainer, Stack } from '$lib/components/layout';
+	import { Stack } from '$lib/components/layout';
 
 	let { data } = $props();
 </script>
@@ -10,19 +10,7 @@
 	<title>Security - Auth - Showcases - Velociraptor</title>
 </svelte:head>
 
-<PageContainer class="py-7">
-	<PageHeader
-		title="Security"
-		description="Security headers, rate limiting, trusted origins, and CSRF protection status."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'Auth', href: '/showcases/auth' },
-			{ label: 'Security' }
-		]}
-	/>
-
-	<Stack gap="6">
+<Stack gap="6">
 		<!-- Security Headers -->
 		<Card>
 			{#snippet header()}
@@ -115,9 +103,6 @@
 			</div>
 		</Card>
 	</Stack>
-
-	<BackLink href="/showcases/auth" label="Auth" />
-</PageContainer>
 
 <style>
 	.diag-grid {

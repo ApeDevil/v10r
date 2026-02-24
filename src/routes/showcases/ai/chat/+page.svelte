@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { Chat } from '@ai-sdk/svelte';
-	import { PageHeader, BackLink, Card, Alert, EmptyState } from '$lib/components/composites';
+	import { Card, Alert, EmptyState } from '$lib/components/composites';
 	import { Typography } from '$lib/components/primitives';
-	import { PageContainer, Stack } from '$lib/components/layout';
+	import { Stack } from '$lib/components/layout';
 	import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
 	import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
 
@@ -33,18 +33,6 @@
 <svelte:head>
 	<title>Chat - AI - Showcases - Velociraptor</title>
 </svelte:head>
-
-<PageContainer class="py-7">
-	<PageHeader
-		title="Chat"
-		description="Streaming chat demo with markdown rendering. Requires authentication and a configured AI provider."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'AI', href: '/showcases/ai' },
-			{ label: 'Chat' }
-		]}
-	/>
 
 	<Stack gap="6">
 		{#if !data.configured}
@@ -107,9 +95,6 @@
 			</Card>
 		{/if}
 	</Stack>
-
-	<BackLink href="/showcases/ai" label="AI" />
-</PageContainer>
 
 <style>
 	:global(.chat-card) {

@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { PageHeader, BackLink, Card, SectionNav, Alert } from '$lib/components/composites';
+	import { Card, SectionNav, Alert } from '$lib/components/composites';
 	import { Badge, Button, Input, Progress, Spinner, Typography } from '$lib/components/primitives';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
 	import { getToast } from '$lib/stores/toast.svelte';
-	import { PageContainer, Stack, Cluster } from '$lib/components/layout';
+	import { Stack, Cluster } from '$lib/components/layout';
 
 	let { data } = $props();
 
@@ -63,20 +63,7 @@
 	<title>Ephemeral - Cache - Showcases - Velociraptor</title>
 </svelte:head>
 
-<PageContainer class="py-7">
-	<PageHeader
-		title="Ephemeral"
-		description="The cache paradigm where disappearance is a feature — TTL countdown, sliding expiry, and rate limiting."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'DB', href: '/showcases/db' },
-			{ label: 'Cache', href: '/showcases/db/cache' },
-			{ label: 'Ephemeral' }
-		]}
-	/>
-
-	{#if data.error}
+{#if data.error}
 		<Alert variant="error" title="Cache Error">
 			<code>{data.error}</code>
 			<p>Seed the cache from the <a href="/showcases/db/cache/connection">Connection</a> page first.</p>
@@ -314,8 +301,6 @@
 		</Stack>
 	{/if}
 
-	<BackLink href="/showcases/db/cache" label="Cache" />
-</PageContainer>
 
 <style>
 	/* ─── TTL Countdown ──────────────────────────────────── */

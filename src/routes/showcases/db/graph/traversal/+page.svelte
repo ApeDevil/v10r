@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { PageHeader, BackLink, Card, SectionNav, Alert } from '$lib/components/composites';
+	import { Card, SectionNav, Alert } from '$lib/components/composites';
 	import { Badge, Button, Select, Spinner, Typography } from '$lib/components/primitives';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
 	import { getToast } from '$lib/stores/toast.svelte';
-	import { PageContainer, Stack } from '$lib/components/layout';
+	import { Stack } from '$lib/components/layout';
 
 	let { data } = $props();
 	const toast = getToast();
@@ -72,20 +72,7 @@
 	<title>Traversal - Graph - Showcases - Velociraptor</title>
 </svelte:head>
 
-<PageContainer class="py-7">
-	<PageHeader
-		title="Traversal"
-		description="Interactive graph traversal patterns — browse connected nodes, find shortest paths, get recommendations, and run Cypher queries."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'DB', href: '/showcases/db' },
-			{ label: 'Graph', href: '/showcases/db/graph' },
-			{ label: 'Traversal' }
-		]}
-	/>
-
-	{#if data.error}
+{#if data.error}
 		<Alert variant="error" title="Database Error">
 			<code>{data.error}</code>
 			<p>Seed the graph from the <a href="/showcases/db/graph/model">Model</a> page first.</p>
@@ -426,8 +413,6 @@ WHERE a.id &lt;&gt; b.id;</code></pre>
 		</Stack>
 	{/if}
 
-	<BackLink href="/showcases/db/graph" label="Graph" />
-</PageContainer>
 
 <style>
 	.action-row {

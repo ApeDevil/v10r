@@ -13,6 +13,7 @@
 		tc
 	} from '$lib/i18n';
 	import { PageHeader, BackLink } from '$lib/components/composites';
+	import { PageContainer } from '$lib/components/layout';
 
 	const LOCALE_NAMES: Record<string, string> = {
 		en: 'English',
@@ -63,7 +64,7 @@
 </svelte:head>
 
 {#key currentLocale}
-<div class="demo-page">
+<PageContainer class="py-7">
 	<PageHeader
 		title={m.showcase_title()}
 		description={m.showcase_description()}
@@ -223,16 +224,10 @@ m.unknownKey();</code></pre>
 	</section>
 
 	<BackLink href="/showcases" label="Showcases" />
-</div>
+</PageContainer>
 {/key}
 
 <style>
-	.demo-page {
-		max-width: var(--layout-narrow-width);
-		margin: 0 auto;
-		padding: var(--spacing-7) var(--spacing-4);
-	}
-
 	h2 {
 		font-size: var(--text-fluid-xl);
 		margin-bottom: var(--spacing-4);

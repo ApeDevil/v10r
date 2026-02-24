@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { PageHeader, BackLink, Card, SectionNav, ConfirmDialog, Alert } from '$lib/components/composites';
+	import { Card, SectionNav, ConfirmDialog, Alert } from '$lib/components/composites';
 	import { Badge, Button, Typography } from '$lib/components/primitives';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
 	import { getToast } from '$lib/stores/toast.svelte';
-	import { PageContainer, Stack, Cluster } from '$lib/components/layout';
+	import { Stack, Cluster } from '$lib/components/layout';
 	import KnowledgeGraph from '$lib/components/viz/graph/knowledge/KnowledgeGraph.svelte';
 
 	let { data } = $props();
@@ -57,20 +57,7 @@
 	<title>Model - Graph - Showcases - Velociraptor</title>
 </svelte:head>
 
-<PageContainer class="py-7">
-	<PageHeader
-		title="Model"
-		description="Graph schema introspection — {totalNodes} nodes, {totalRels} relationships across {data.labels.length} labels. Loaded in {data.queryMs}ms."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'DB', href: '/showcases/db' },
-			{ label: 'Graph', href: '/showcases/db/graph' },
-			{ label: 'Model' }
-		]}
-	/>
-
-	{#if data.error}
+{#if data.error}
 		<Alert variant="error" title="Database Error">
 			<code>{data.error}</code>
 			<p>Use the Reset Data button to seed the graph, or check your Neo4j connection.</p>
@@ -246,8 +233,6 @@
 	>
 	</form>
 
-	<BackLink href="/showcases/db/graph" label="Graph" />
-</PageContainer>
 
 <style>
 	.table-wrap {

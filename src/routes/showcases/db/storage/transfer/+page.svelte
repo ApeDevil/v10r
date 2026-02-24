@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
-	import { PageHeader, BackLink, Card, SectionNav, Alert } from '$lib/components/composites';
+	import { Card, SectionNav, Alert } from '$lib/components/composites';
 	import { Badge, Button, Spinner, Progress, Typography } from '$lib/components/primitives';
-	import { PageContainer, Stack, Cluster } from '$lib/components/layout';
+	import { Stack, Cluster } from '$lib/components/layout';
 	import { getToast } from '$lib/stores/toast.svelte';
 
 	let { data } = $props();
@@ -155,20 +155,7 @@
 	<title>Transfer - Storage - Showcases - Velociraptor</title>
 </svelte:head>
 
-<PageContainer class="py-7">
-	<PageHeader
-		title="Transfer"
-		description="Upload files via presigned URLs, fetch byte ranges, and understand MIME type enforcement."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'DB', href: '/showcases/db' },
-			{ label: 'Storage', href: '/showcases/db/storage' },
-			{ label: 'Transfer' }
-		]}
-	/>
-
-	<SectionNav {sections} ariaLabel="Transfer operations" />
+<SectionNav {sections} ariaLabel="Transfer operations" />
 
 	<Stack gap="7">
 		<!-- ═══ UPLOAD ═══ -->
@@ -453,8 +440,6 @@ fetch(url, &#123;
 		</section>
 	</Stack>
 
-	<BackLink href="/showcases/db/storage" label="Storage" />
-</PageContainer>
 
 <style>
 	.section-desc {

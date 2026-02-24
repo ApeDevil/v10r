@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { PageHeader, BackLink, Card, Alert } from '$lib/components/composites';
+	import { Card, Alert } from '$lib/components/composites';
 	import { Badge, Button, Spinner } from '$lib/components/primitives';
-	import { PageContainer, Stack, Cluster } from '$lib/components/layout';
+	import { Stack, Cluster } from '$lib/components/layout';
 
 	let { data } = $props();
 
@@ -13,19 +13,7 @@
 	<title>Connection - Auth - Showcases - Velociraptor</title>
 </svelte:head>
 
-<PageContainer class="py-7">
-	<PageHeader
-		title="Connection"
-		description="Live Better Auth health check. Tests auth system reachability, session status, and provider configuration."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'Auth', href: '/showcases/auth' },
-			{ label: 'Connection' }
-		]}
-	/>
-
-	<Stack gap="6">
+<Stack gap="6">
 		<!-- Status -->
 		<Card>
 			{#snippet header()}
@@ -132,9 +120,6 @@
 			</Alert>
 		{/if}
 	</Stack>
-
-	<BackLink href="/showcases/auth" label="Auth" />
-</PageContainer>
 
 <style>
 	.diag-grid {

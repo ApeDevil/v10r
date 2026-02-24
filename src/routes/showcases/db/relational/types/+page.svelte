@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { PageHeader, BackLink, Card, SectionNav, ConfirmDialog, Alert } from '$lib/components/composites';
+	import { Card, SectionNav, ConfirmDialog, Alert } from '$lib/components/composites';
 	import { Badge, Button, Tooltip, Typography } from '$lib/components/primitives';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
-	import { PageContainer, Stack } from '$lib/components/layout';
+	import { Stack } from '$lib/components/layout';
 	import { getToast } from '$lib/stores/toast.svelte';
 
 	let { data } = $props();
@@ -35,20 +35,7 @@
 	<title>Type System - Relational - Showcases - Velociraptor</title>
 </svelte:head>
 
-<PageContainer class="py-7">
-	<PageHeader
-		title="Type System"
-		description="Every PostgreSQL type demonstrated with live data from Neon. Loaded in {data.queryMs}ms ({data.specimens.length + data.temporals.length + data.documents.length + data.collections.length + data.networks.length + data.bookings.length + data.audits.length} total rows, 7 parallel queries)."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'DB', href: '/showcases/db' },
-			{ label: 'Relational', href: '/showcases/db/relational' },
-			{ label: 'Types' }
-		]}
-	/>
-
-	{#if data.error}
+{#if data.error}
 		<Alert variant="error" title="Database Error">
 			{#snippet children()}
 				<code class="font-mono text-fluid-sm break-all">{data.error}</code>
@@ -432,9 +419,6 @@
 		</Button>
 		<span class="reset-hint">Types are read-only. See <a href="/showcases/db/relational/mutability">Mutability</a> for live write operations.</span>
 	</Stack>
-
-	<BackLink href="/showcases/db/relational" label="Relational" />
-</PageContainer>
 
 <ConfirmDialog
 	bind:open={resetDialogOpen}
