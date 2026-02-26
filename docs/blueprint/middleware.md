@@ -420,6 +420,21 @@ export const reroute: Reroute = ({ url }) => {
 
 ---
 
+## Scheduler Bootstrap
+
+The in-process job scheduler starts via a bare import at the top of `hooks.server.ts`:
+
+```typescript
+// src/hooks.server.ts
+import '$lib/server/jobs/scheduler';
+```
+
+The import runs the scheduler module once at startup. The module itself guards against duplicate intervals (HMR) and skips execution during Vite builds. On Vercel (serverless), it detects `platform.persistent = false` and does nothing.
+
+See [deployment.md](./deployment.md#scheduled-jobs) for the full jobs system.
+
+---
+
 ## Full Example
 
 Complete `hooks.server.ts` with all patterns:
@@ -441,6 +456,7 @@ import { auth } from '$lib/server/auth';
 import { globalLimiter, authLimiter } from '$lib/server/rate-limit';
 import { ALLOWED_ORIGINS } from '$env/static/private';
 import type { Handle, HandleFetch, HandleServerError } from '@sveltejs/kit';
+import '$lib/server/jobs/scheduler'; // starts in-process scheduler (container only, no-op on Vercel)
 
 const allowedOrigins = new Set(ALLOWED_ORIGINS?.split(',') ?? []);
 

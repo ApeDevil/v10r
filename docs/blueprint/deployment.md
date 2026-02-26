@@ -90,11 +90,13 @@ Dev dependencies:
   "crons": [
     {
       "path": "/api/cron/session-cleanup",
-      "schedule": "0 2 * * *"
+      "schedule": "0 3 * * *"
     }
   ]
 }
 ```
+
+Vercel cron calls are authenticated with `CRON_SECRET`. See [Scheduled Jobs](#scheduled-jobs) below.
 
 ### Environment Variables
 
@@ -104,7 +106,7 @@ Set in Vercel dashboard → Settings → Environment Variables:
 |----------|----------|-------|
 | `DATABASE_URL` | Yes | Neon connection string |
 | `RATE_LIMIT_SECRET` | Yes | 32+ char secret |
-| `CRON_SECRET` | Yes | Cron endpoint auth |
+| `CRON_SECRET` | Yes | Bearer token for cron endpoints |
 | `R2_ENDPOINT` | If using R2 | Cloudflare R2 endpoint |
 | `R2_ACCESS_KEY_ID` | If using R2 | R2 credentials |
 | `R2_SECRET_ACCESS_KEY` | If using R2 | R2 credentials |
@@ -172,7 +174,7 @@ Same as Node.js deployment, plus one addition to `vercel.json`:
   "crons": [
     {
       "path": "/api/cron/session-cleanup",
-      "schedule": "0 2 * * *"
+      "schedule": "0 3 * * *"
     }
   ]
 }
@@ -390,6 +392,101 @@ podman run -p 3000:3000 \
 
 # Open http://localhost:3000
 ```
+
+---
+
+## Scheduled Jobs
+
+Recurring background work runs differently per platform. The same job registry serves both.
+
+### How it works
+
+| Platform | Trigger | Entry point |
+|----------|---------|-------------|
+| Vercel | HTTP cron via `vercel.json` | `GET /api/cron/[job]` |
+| Container | `setInterval` in `hooks.server.ts` | Direct function call |
+
+**Platform detection** — `src/lib/server/platform/index.ts` reads `$env/dynamic/private`. If `VERCEL` is set, `platform.persistent = false` and the scheduler is a no-op. If `CONTAINER=1`, `platform.persistent = true` and the scheduler starts.
+
+**Job registry** — `src/lib/server/jobs/index.ts` maps slugs to `execute()` functions. Both trigger paths call the same registry.
+
+```typescript
+// src/lib/server/jobs/index.ts
+export const jobs: Record<string, Job> = {
+  'session-cleanup': { execute: sessionCleanup },
+};
+```
+
+### Adding a job
+
+1. Write a pure function in `src/lib/server/jobs/`:
+
+```typescript
+// src/lib/server/jobs/my-job.ts
+export async function myJob(): Promise<number> {
+  // do work, return count of affected rows
+  return affectedCount;
+}
+```
+
+2. Register it:
+
+```typescript
+// src/lib/server/jobs/index.ts
+import { myJob } from './my-job';
+
+export const jobs: Record<string, Job> = {
+  'session-cleanup': { execute: sessionCleanup },
+  'my-job': { execute: myJob },           // add this line
+};
+```
+
+3. Add a Vercel cron entry (Vercel only):
+
+```json
+{
+  "crons": [
+    { "path": "/api/cron/session-cleanup", "schedule": "0 3 * * *" },
+    { "path": "/api/cron/my-job", "schedule": "0 4 * * *" }
+  ]
+}
+```
+
+Container mode runs all registered jobs on the same interval (`JOB_INTERVAL_MS`, default 3 hours). Vercel crons can have independent schedules.
+
+### HTTP endpoint
+
+`GET /api/cron/[job]` requires a bearer token:
+
+```
+Authorization: Bearer <CRON_SECRET>
+```
+
+Vercel sends this automatically when `CRON_SECRET` is set in the dashboard. The `CRON_SECRET` value must match across `vercel.json` config and the dashboard environment variable.
+
+Returns:
+```json
+{ "success": true, "deleted": 42 }
+```
+
+Returns `401` if the token is missing or wrong. Returns `404` if the job slug is not in the registry.
+
+### Scheduler behaviour (container)
+
+- Runs 5 seconds after startup (catches expired sessions immediately)
+- Repeats every `JOB_INTERVAL_MS` milliseconds (default: `10800000` = 3 hours)
+- `globalThis.__v10r_scheduler` prevents duplicate intervals on HMR restarts
+- `timer.unref()` lets the process exit cleanly without a pending interval
+- Clears on `SIGTERM` for graceful shutdown
+
+### Environment variables
+
+| Variable | Platform | Notes |
+|----------|----------|-------|
+| `CRON_SECRET` | Both | Bearer token for HTTP cron endpoint. Generate with `openssl rand -base64 32` |
+| `CONTAINER` | Container | Set to `1` in `compose.yaml`. Tells platform detector this is a persistent process |
+| `JOB_INTERVAL_MS` | Container | Interval in ms. Omit to use the 3-hour default |
+| `VERCEL` | Vercel | Set automatically by Vercel. Disables in-process scheduler |
 
 ---
 
@@ -642,6 +739,8 @@ koyeb service logs <service-name> --follow
 | `ORIGIN` | Auto | Manual | Yes (Koyeb) |
 | `RATE_LIMIT_SECRET` | Dashboard | Dashboard | Yes |
 | `CRON_SECRET` | Dashboard | Dashboard | If using crons |
+| `CONTAINER` | Not used | `compose.yaml` | Container only |
+| `JOB_INTERVAL_MS` | Not used | Dashboard | Container only, optional |
 | `R2_ENDPOINT` | Dashboard | Dashboard | If using R2 |
 | `R2_ACCESS_KEY_ID` | Dashboard | Dashboard | If using R2 |
 | `R2_SECRET_ACCESS_KEY` | Dashboard | Dashboard | If using R2 |
@@ -656,12 +755,26 @@ koyeb service logs <service-name> --follow
 /
 ├── Dockerfile              # Koyeb container build
 ├── .dockerignore           # Docker build exclusions
-├── vercel.json             # Vercel configuration
+├── vercel.json             # Vercel configuration (crons, regions)
+├── compose.yaml            # Local dev (sets CONTAINER=1)
 ├── svelte.config.js        # Adapter selection
 ├── .gitlab-ci.yml          # GitLab CI/CD
-└── .github/
-    └── workflows/
-        └── deploy.yml      # GitHub Actions
+├── .github/
+│   └── workflows/
+│       └── deploy.yml      # GitHub Actions
+└── src/
+    ├── hooks.server.ts     # Imports scheduler (bare import activates it)
+    ├── lib/server/
+    │   ├── platform/
+    │   │   ├── types.ts    # PlatformId, PlatformInfo
+    │   │   └── index.ts    # Platform detection (VERCEL vs CONTAINER)
+    │   └── jobs/
+    │       ├── index.ts    # Job registry (slug → execute fn)
+    │       ├── scheduler.ts# In-process scheduler (containers only)
+    │       └── session-cleanup.ts  # Deletes expired sessions
+    └── routes/api/cron/
+        └── [job]/
+            └── +server.ts  # HTTP trigger (Vercel crons)
 ```
 
 ---
@@ -676,6 +789,7 @@ koyeb service logs <service-name> --follow
 | Deploy | Git push | Git push | Dockerfile → dashboard |
 | Status | Stable | Experimental | Stable |
 | Logs | `vercel logs` | `vercel logs` | `koyeb service logs` |
+| Scheduled jobs | HTTP cron via `vercel.json` | HTTP cron via `vercel.json` | `setInterval` in process |
 
 ---
 

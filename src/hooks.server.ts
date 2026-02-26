@@ -5,10 +5,11 @@ import { auth } from '$lib/server/auth';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { Ratelimit } from '@upstash/ratelimit';
 import { redis } from '$lib/server/cache';
+import '$lib/server/jobs/scheduler';
 
 const ALLOWED_LOCALES = new Set(['en', 'de', 'fr']);
 
-/** Upstash rate limiter for auth sign-in endpoints: 5 requests per 60s per IP */
+/** Upstash rate limiter for auth endpoints: 5 requests per 60s per IP */
 const authRatelimit = new Ratelimit({
 	redis,
 	limiter: Ratelimit.slidingWindow(5, '60 s'),
@@ -28,6 +29,10 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
 		'Permissions-Policy',
 		'camera=(), microphone=(), geolocation=()',
 	);
+	response.headers.set(
+		'Strict-Transport-Security',
+		'max-age=63072000; includeSubDomains; preload',
+	);
 
 	return response;
 };
@@ -46,13 +51,13 @@ const i18n: Handle = ({ event, resolve }) =>
 
 /**
  * 3. Auth API handler — intercepts /api/auth/* routes
- *    Includes Upstash rate limiting on sign-in endpoints
+ *    Includes Upstash rate limiting on all auth endpoints
  */
 const authHandler: Handle = async ({ event, resolve }) => {
 	const path = event.url.pathname;
 
-	// Rate limit auth sign-in endpoints
-	if (path.startsWith('/api/auth/sign-in')) {
+	// Rate limit all auth endpoints (sign-in, sign-out, callback, get-session)
+	if (path.startsWith('/api/auth/')) {
 		const ip = event.getClientAddress();
 		const { success, reset } = await authRatelimit.limit(ip);
 
