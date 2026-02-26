@@ -1,8 +1,8 @@
 import { redis } from '../index';
 import { CacheError } from '../errors';
+import { MAX_SHOWCASE_KEYS } from '$lib/server/config';
 
 export const SHOWCASE_PREFIX = 'showcase:';
-const MAX_SHOWCASE_KEYS = 50;
 
 /** Ensure a key is within the showcase namespace. */
 export function assertShowcaseKey(key: string): void {

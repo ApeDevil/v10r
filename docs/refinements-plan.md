@@ -8,7 +8,7 @@ The codebase is structurally sound. The server module pattern, component hierarc
 
 ## Tier 1: Critical / High Impact
 
-### 1.1 Centralize Configuration
+### 1.1 Centralize Configuration ✅
 
 **Problem:** 30+ magic numbers scattered across 15+ files. When someone forks this template, they must hunt through the entire codebase to customize operational limits.
 
@@ -80,9 +80,11 @@ export const config = {
 
 **Why this matters for a template:** A single file becomes the customization dashboard when forking. The `retrieval/config.ts` is already partially doing this for its own domain — extend the pattern project-wide.
 
+> **Implementation notes:** Created `src/lib/server/config.ts` with flat named exports (not a nested object) grouped by section comments. No `$env/dynamic/private` import at top level — env overrides stay at usage sites (e.g. `JOB_INTERVAL_MS` in scheduler.ts) to avoid build-time evaluation issues. `retrieval/config.ts` became a pure re-export shim; `ai/config.ts` re-exports with aliased names and keeps `SYSTEM_PROMPT` locally. All 15 consumer files wired up.
+
 ---
 
-### 1.2 Unified Error System
+### 1.2 Unified Error System ✅
 
 **Problem:** 6 independent error classes with identical constructors, copy-pasted across modules. No shared base means no unified error handling middleware.
 
@@ -136,6 +138,8 @@ export abstract class ServiceError extends Error {
 Each module still defines its own error kinds (domain-specific), but the class structure, classification, and HTTP mapping are shared. Route handlers get a single `catch (err) { if (err instanceof ServiceError) ... }` path.
 
 **Also add:** `src/lib/server/db/errors.ts` — the missing PostgreSQL error classification with PG error codes.
+
+> **Implementation notes:** Created `src/lib/server/errors/index.ts` with `ServerError` (concrete, not abstract) extending `Error` with `kind: string`, optional `code: string`, `toStatus(): number` (default 500), and `toJSON()`. Used flat single-file approach instead of proposed `base.ts`/`http-mapping.ts` split — simpler for 35 lines of code. All 6 error classes migrated to extend `ServerError` with `toStatus()` overrides. `RetrievalError` kept without `code` parameter (no breaking change). Added `classifyNeo4jError(err: unknown)` wrapper to graph errors. PostgreSQL `DbError` deferred to later phase.
 
 ---
 

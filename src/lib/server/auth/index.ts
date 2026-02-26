@@ -8,6 +8,7 @@ import {
 	GOOGLE_CLIENT_ID,
 	GOOGLE_CLIENT_SECRET,
 } from '$env/static/private';
+import { SESSION_EXPIRES_IN, SESSION_UPDATE_AGE, SESSION_COOKIE_MAX_AGE } from '$lib/server/config';
 // Use relative import — Better Auth CLI breaks on $lib aliases (Issue #2252)
 import { db } from '../db';
 
@@ -37,12 +38,12 @@ export const auth = betterAuth({
 	},
 
 	session: {
-		expiresIn: 60 * 60 * 24 * 7, // 7 days
-		updateAge: 60 * 60 * 24, // Refresh every 24h on activity
+		expiresIn: SESSION_EXPIRES_IN,
+		updateAge: SESSION_UPDATE_AGE,
 
 		cookieCache: {
 			enabled: true,
-			maxAge: 60 * 5, // Revalidate every 5 min
+			maxAge: SESSION_COOKIE_MAX_AGE,
 		},
 	},
 });

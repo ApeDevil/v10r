@@ -7,10 +7,10 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { s3, BUCKET } from '../index';
 import { assertShowcaseKey, checkObjectLimit } from './guards';
 import { StoreError } from '../errors';
+import { MAX_UPLOAD_SIZE, PRESIGNED_URL_EXPIRY } from '$lib/server/config';
 import type { PresignedUrlResult, UploadResult } from '../types';
 
 const UPLOAD_PREFIX = 'showcase/uploads/';
-const MAX_UPLOAD_SIZE = 2 * 1024 * 1024; // 2 MB
 
 const ALLOWED_MIME_TYPES = [
 	'image/png',
@@ -62,13 +62,13 @@ export async function generateUploadUrl(
 		ContentType: mimeType,
 	});
 
-	const url = await getSignedUrl(s3, command, { expiresIn: 300 });
+	const url = await getSignedUrl(s3, command, { expiresIn: PRESIGNED_URL_EXPIRY });
 
 	return {
 		url,
 		key,
-		expiresIn: 300,
-		expiresAt: new Date(Date.now() + 300_000).toISOString(),
+		expiresIn: PRESIGNED_URL_EXPIRY,
+		expiresAt: new Date(Date.now() + PRESIGNED_URL_EXPIRY * 1000).toISOString(),
 	};
 }
 

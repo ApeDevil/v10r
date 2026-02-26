@@ -1,3 +1,5 @@
+import { ServerError } from '$lib/server/errors';
+
 export type CacheErrorKind =
 	| 'credentials'
 	| 'command'
@@ -6,14 +8,31 @@ export type CacheErrorKind =
 	| 'unavailable'
 	| 'unknown';
 
-export class CacheError extends Error {
+export class CacheError extends ServerError {
 	constructor(
 		public readonly kind: CacheErrorKind,
 		message: string,
 		public readonly code?: string,
 	) {
-		super(message);
+		super(kind, message, code);
 		this.name = 'CacheError';
+	}
+
+	override toStatus(): number {
+		switch (this.kind) {
+			case 'credentials':
+				return 502;
+			case 'command':
+				return 400;
+			case 'timeout':
+				return 504;
+			case 'limit':
+				return 429;
+			case 'unavailable':
+				return 503;
+			default:
+				return 500;
+		}
 	}
 }
 

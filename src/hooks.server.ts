@@ -5,14 +5,15 @@ import { auth } from '$lib/server/auth';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { Ratelimit } from '@upstash/ratelimit';
 import { redis } from '$lib/server/cache';
+import { AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW, HSTS_MAX_AGE } from '$lib/server/config';
 import '$lib/server/jobs/scheduler';
 
 const ALLOWED_LOCALES = new Set(['en', 'de', 'fr']);
 
-/** Upstash rate limiter for auth endpoints: 5 requests per 60s per IP */
+/** Upstash rate limiter for auth endpoints */
 const authRatelimit = new Ratelimit({
 	redis,
-	limiter: Ratelimit.slidingWindow(5, '60 s'),
+	limiter: Ratelimit.slidingWindow(AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW),
 	prefix: 'ratelimit:auth',
 });
 
@@ -31,7 +32,7 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
 	);
 	response.headers.set(
 		'Strict-Transport-Security',
-		'max-age=63072000; includeSubDomains; preload',
+		`max-age=${HSTS_MAX_AGE}; includeSubDomains; preload`,
 	);
 
 	return response;

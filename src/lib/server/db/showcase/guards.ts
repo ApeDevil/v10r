@@ -5,8 +5,7 @@
 import { db } from '$lib/server/db';
 import { sql } from 'drizzle-orm';
 import type { PgTableWithColumns } from 'drizzle-orm/pg-core';
-
-const MAX_SHOWCASE_ROWS = 50;
+import { MAX_SHOWCASE_ROWS } from '$lib/server/config';
 
 /**
  * Check if a table has reached the row limit.

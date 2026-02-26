@@ -1,9 +1,9 @@
 import { ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { s3, BUCKET } from '../index';
 import { StoreError } from '../errors';
+import { MAX_SHOWCASE_OBJECTS } from '$lib/server/config';
 
 const SHOWCASE_PREFIX = 'showcase/';
-const MAX_SHOWCASE_OBJECTS = 20;
 
 /** Ensure a key is within the showcase namespace. */
 export function assertShowcaseKey(key: string): void {

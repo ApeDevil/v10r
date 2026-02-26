@@ -1,8 +1,7 @@
 import { eq, count } from 'drizzle-orm';
 import { db } from '../index';
 import { conversation } from '../schema/ai/conversation';
-
-const MAX_CONVERSATIONS_PER_USER = 50;
+import { MAX_CONVERSATIONS_PER_USER } from '$lib/server/config';
 
 /** Check if user has hit conversation limit. Returns true if under limit. */
 export async function checkConversationLimit(userId: string): Promise<boolean> {

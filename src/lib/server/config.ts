@@ -1,0 +1,145 @@
+// ── Auth ───────────────────────────────────────────────────────────────────────
+
+/** Session lifetime in seconds (7 days) */
+export const SESSION_EXPIRES_IN = 60 * 60 * 24 * 7;
+
+/** Refresh session if older than this (24 hours, seconds) */
+export const SESSION_UPDATE_AGE = 60 * 60 * 24;
+
+/** Cookie cache revalidation interval (5 minutes, seconds) */
+export const SESSION_COOKIE_MAX_AGE = 60 * 5;
+
+/** Auth endpoint rate limit: requests per window */
+export const AUTH_RATE_LIMIT_MAX = 5;
+
+/** Auth endpoint rate limit: window duration */
+export const AUTH_RATE_LIMIT_WINDOW = '60 s';
+
+// ── AI ─────────────────────────────────────────────────────────────────────────
+
+/** Chat endpoint rate limit: requests per window */
+export const AI_RATE_LIMIT_MAX = 20;
+
+/** Chat endpoint rate limit: window duration */
+export const AI_RATE_LIMIT_WINDOW = '60 s';
+
+/** Chat endpoint rate limit: Redis key prefix */
+export const AI_RATE_LIMIT_PREFIX = 'ratelimit:ai:chat';
+
+/** Max tokens for chat responses */
+export const AI_MAX_TOKENS = 2048;
+
+// ── Retrieval ──────────────────────────────────────────────────────────────────
+
+/** Embedding model identifier */
+export const EMBEDDING_MODEL = 'gemini-embedding-001';
+
+/** Embedding vector dimensions */
+export const EMBEDDING_DIMENSIONS = 1536;
+
+/** Embedding model row ID */
+export const EMBEDDING_MODEL_ID = 'google-gemini-embedding-001';
+
+/** Section-level chunk target (approximate tokens) */
+export const SECTION_CHUNK_TARGET = 1000;
+
+/** Paragraph-level chunk target (approximate tokens) */
+export const PARAGRAPH_CHUNK_TARGET = 300;
+
+/** Token overlap between chunks */
+export const CHUNK_OVERLAP = 50;
+
+/** Maximum chunks injected into prompt context */
+export const MAX_CONTEXT_CHUNKS = 5;
+
+/** Graph traversal hard limit (hops) */
+export const MAX_GRAPH_HOPS = 2;
+
+/** Reciprocal rank fusion constant */
+export const RRF_K = 60;
+
+/** Over-fetch multiplier for pre-fusion retrieval */
+export const OVERFETCH_MULTIPLIER = 3;
+
+/** Maximum documents per user */
+export const MAX_DOCUMENTS_PER_USER = 100;
+
+/** Maximum total chunks across all documents */
+export const MAX_TOTAL_CHUNKS = 10_000;
+
+/** Maximum child chunks per document (limits LLM calls during ingestion) */
+export const MAX_CHUNKS_PER_DOCUMENT = 50;
+
+/** Ingest endpoint rate limit: requests per window */
+export const INGEST_RATE_LIMIT_MAX = 5;
+
+/** Ingest endpoint rate limit: window duration */
+export const INGEST_RATE_LIMIT_WINDOW = '1h';
+
+/** Search endpoint rate limit: requests per window */
+export const SEARCH_RATE_LIMIT_MAX = 30;
+
+/** Search endpoint rate limit: window duration */
+export const SEARCH_RATE_LIMIT_WINDOW = '1m';
+
+// ── Showcase ───────────────────────────────────────────────────────────────────
+
+/** Max rows per showcase table */
+export const MAX_SHOWCASE_ROWS = 50;
+
+/** Max Redis keys in showcase namespace */
+export const MAX_SHOWCASE_KEYS = 50;
+
+/** Max S3 objects in showcase namespace */
+export const MAX_SHOWCASE_OBJECTS = 20;
+
+/** Max conversations per user */
+export const MAX_CONVERSATIONS_PER_USER = 50;
+
+/** Username check endpoint rate limit: requests per window */
+export const USERNAME_CHECK_RATE_LIMIT_MAX = 20;
+
+/** Username check endpoint rate limit: window (ms) */
+export const USERNAME_CHECK_RATE_LIMIT_WINDOW_MS = 60_000;
+
+// ── Jobs ───────────────────────────────────────────────────────────────────────
+
+/** Default scheduler interval (3 hours, ms). Override with JOB_INTERVAL_MS env var. */
+export const DEFAULT_JOB_INTERVAL_MS = 3 * 60 * 60 * 1000;
+
+/** Delay before first scheduler run (ms) */
+export const JOB_STARTUP_DELAY_MS = 5_000;
+
+/** Log retention period (days) */
+export const LOG_RETENTION_DAYS = 90;
+
+// ── Storage ────────────────────────────────────────────────────────────────────
+
+/** Max file upload size (bytes, 2 MB) */
+export const MAX_UPLOAD_SIZE = 2 * 1024 * 1024;
+
+/** Presigned URL expiry (seconds) */
+export const PRESIGNED_URL_EXPIRY = 300;
+
+// ── Database ───────────────────────────────────────────────────────────────────
+
+/** HNSW index: max connections per node */
+export const HNSW_M = 16;
+
+/** HNSW index: construction beam width */
+export const HNSW_EF_CONSTRUCTION = 64;
+
+// ── Graph ──────────────────────────────────────────────────────────────────────
+
+/** Default Neo4j query timeout (ms) */
+export const GRAPH_TIMEOUT_MS = 30_000;
+
+// ── Security ───────────────────────────────────────────────────────────────────
+
+/** HSTS max-age (seconds, 2 years) */
+export const HSTS_MAX_AGE = 63_072_000;
+
+// ── Admin ──────────────────────────────────────────────────────────────────────
+
+// ADMIN_EMAIL is read from $env/dynamic/private at usage sites to avoid
+// top-level env access during build. See src/lib/server/auth/guards.ts.

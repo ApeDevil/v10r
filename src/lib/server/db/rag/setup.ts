@@ -7,6 +7,7 @@
  */
 import { sql } from 'drizzle-orm';
 import { db } from '../index';
+import { HNSW_M, HNSW_EF_CONSTRUCTION, EMBEDDING_DIMENSIONS, AI_MAX_TOKENS, EMBEDDING_MODEL_ID, EMBEDDING_MODEL } from '$lib/server/config';
 
 /** Enable the pgvector extension (Neon supports this on all plans). */
 async function enablePgvector() {
@@ -44,13 +45,13 @@ async function createSearchVectorIndex() {
 
 /**
  * HNSW index on embedding for vector similarity search (cosine distance).
- * m=16, ef_construction=64 suitable for up to ~1M vectors.
+ * Suitable for up to ~1M vectors.
  */
 async function createEmbeddingIndex() {
 	await db.execute(sql`
 		CREATE INDEX IF NOT EXISTS chunk_embedding_hnsw_idx
 			ON rag.chunk USING hnsw(embedding vector_cosine_ops)
-			WITH (m = 16, ef_construction = 64)
+			WITH (m = ${sql.raw(String(HNSW_M))}, ef_construction = ${sql.raw(String(HNSW_EF_CONSTRUCTION))})
 	`);
 }
 
@@ -58,7 +59,7 @@ async function createEmbeddingIndex() {
 async function seedEmbeddingModel() {
 	await db.execute(sql`
 		INSERT INTO rag.embedding_model (id, provider, model_name, dimensions, max_tokens, is_default)
-		VALUES ('google-gemini-embedding-001', 'google', 'gemini-embedding-001', 1536, 2048, true)
+		VALUES (${EMBEDDING_MODEL_ID}, 'google', ${EMBEDDING_MODEL}, ${EMBEDDING_DIMENSIONS}, ${AI_MAX_TOKENS}, true)
 		ON CONFLICT (id) DO NOTHING
 	`);
 }

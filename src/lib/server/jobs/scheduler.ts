@@ -1,11 +1,9 @@
 import { building } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import { platform } from '$lib/server/platform';
+import { DEFAULT_JOB_INTERVAL_MS, JOB_STARTUP_DELAY_MS } from '$lib/server/config';
 import { jobs } from './index';
 import { runJob } from './runner';
-
-const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
-const STARTUP_DELAY_MS = 5_000;
 
 declare global {
 	var __v10r_scheduler: ReturnType<typeof setInterval> | undefined;
@@ -20,11 +18,11 @@ function runAll() {
 }
 
 if (!building && platform.persistent && !globalThis.__v10r_scheduler) {
-	const interval = Number(env.JOB_INTERVAL_MS) || THREE_HOURS_MS;
+	const interval = Number(env.JOB_INTERVAL_MS) || DEFAULT_JOB_INTERVAL_MS;
 
 	console.log(`[scheduler] Starting on ${platform.id} platform, interval: ${interval / 1000}s`);
 
-	setTimeout(runAll, STARTUP_DELAY_MS);
+	setTimeout(runAll, JOB_STARTUP_DELAY_MS);
 
 	const timer = setInterval(runAll, interval);
 	timer.unref();

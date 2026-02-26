@@ -1,5 +1,6 @@
 import { NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD } from '$env/static/private';
 import { Neo4jError, classifyError } from './errors';
+import { GRAPH_TIMEOUT_MS } from '$lib/server/config';
 
 /** Derive HTTPS host from NEO4J_URI (neo4j+s://xxx → https://xxx) */
 function getHttpHost(): string {
@@ -28,8 +29,6 @@ interface Neo4jHttpResponse {
 	counters?: Record<string, number>;
 }
 
-const DEFAULT_TIMEOUT_MS = 30_000;
-
 /**
  * Execute a Cypher statement via the Neo4j HTTP Query API.
  *
@@ -43,7 +42,7 @@ export async function cypher<T = Record<string, unknown>>(
 ): Promise<T[]> {
 	const host = getHttpHost();
 	const url = `${host}/db/neo4j/query/v2`;
-	const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+	const timeoutMs = options?.timeoutMs ?? GRAPH_TIMEOUT_MS;
 
 	const body: Record<string, unknown> = { statement };
 	if (parameters && Object.keys(parameters).length > 0) {

@@ -1,3 +1,5 @@
+import { ServerError } from '$lib/server/errors';
+
 export type AIErrorKind =
 	| 'authentication'
 	| 'rate_limit'
@@ -7,14 +9,18 @@ export type AIErrorKind =
 	| 'unavailable'
 	| 'unknown';
 
-export class AIError extends Error {
+export class AIError extends ServerError {
 	constructor(
 		public readonly kind: AIErrorKind,
 		message: string,
 		public readonly code?: string,
 	) {
-		super(message);
+		super(kind, message, code);
 		this.name = 'AIError';
+	}
+
+	override toStatus(): number {
+		return aiErrorToStatus(this.kind);
 	}
 }
 

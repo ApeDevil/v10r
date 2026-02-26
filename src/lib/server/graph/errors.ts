@@ -1,3 +1,5 @@
+import { ServerError } from '$lib/server/errors';
+
 export type Neo4jErrorKind =
 	| 'authentication'
 	| 'http'
@@ -7,14 +9,33 @@ export type Neo4jErrorKind =
 	| 'timeout'
 	| 'unknown';
 
-export class Neo4jError extends Error {
+export class Neo4jError extends ServerError {
 	constructor(
 		public readonly kind: Neo4jErrorKind,
 		message: string,
 		public readonly code?: string,
 	) {
-		super(message);
+		super(kind, message, code);
 		this.name = 'Neo4jError';
+	}
+
+	override toStatus(): number {
+		switch (this.kind) {
+			case 'authentication':
+				return 502;
+			case 'http':
+				return 502;
+			case 'syntax':
+				return 400;
+			case 'constraint':
+				return 409;
+			case 'unavailable':
+				return 503;
+			case 'timeout':
+				return 504;
+			default:
+				return 500;
+		}
 	}
 }
 
@@ -25,4 +46,25 @@ export function classifyError(code: string): Neo4jErrorKind {
 	if (code.startsWith('Neo.ClientError.Schema.ConstraintValidationFailed')) return 'constraint';
 	if (code.startsWith('Neo.TransientError')) return 'unavailable';
 	return 'unknown';
+}
+
+/** Classify an unknown error into a Neo4jError. */
+export function classifyNeo4jError(err: unknown): Neo4jError {
+	if (err instanceof Neo4jError) return err;
+
+	const message = err instanceof Error ? err.message : 'Unknown Neo4j error';
+	const code = (err as { code?: string })?.code;
+
+	if (code) {
+		return new Neo4jError(classifyError(code), message, code);
+	}
+
+	if (message.includes('timeout') || message.includes('ETIMEDOUT')) {
+		return new Neo4jError('timeout', message, 'TIMEOUT');
+	}
+	if (message.includes('fetch failed') || message.includes('ECONNREFUSED')) {
+		return new Neo4jError('unavailable', message, 'NETWORK');
+	}
+
+	return new Neo4jError('unknown', message);
 }

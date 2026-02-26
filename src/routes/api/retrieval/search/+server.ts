@@ -5,11 +5,12 @@ import { Ratelimit } from '@upstash/ratelimit';
 import { redis } from '$lib/server/cache';
 import { retrieve } from '$lib/server/retrieval';
 import { RetrievalError, retrievalErrorToStatus } from '$lib/server/retrieval/errors';
+import { SEARCH_RATE_LIMIT_MAX, SEARCH_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import type { RequestHandler } from './$types';
 
 const ratelimit = new Ratelimit({
 	redis,
-	limiter: Ratelimit.slidingWindow(30, '1m'),
+	limiter: Ratelimit.slidingWindow(SEARCH_RATE_LIMIT_MAX, SEARCH_RATE_LIMIT_WINDOW),
 	prefix: 'rl:retrieval:search',
 });
 

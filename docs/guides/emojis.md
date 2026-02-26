@@ -12,6 +12,7 @@
 🛂 Auth
 🤖 AI
 ♻️ Retrieval
+🎛️ config
 
 📚 docs
 📜 Script

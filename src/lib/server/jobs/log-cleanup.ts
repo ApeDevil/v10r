@@ -1,12 +1,11 @@
 import { db } from '$lib/server/db';
 import { jobExecution } from '$lib/server/db/schema/jobs';
 import { lt } from 'drizzle-orm';
-
-const RETENTION_DAYS = 90;
+import { LOG_RETENTION_DAYS } from '$lib/server/config';
 
 export async function logCleanup(): Promise<number> {
 	const cutoff = new Date();
-	cutoff.setDate(cutoff.getDate() - RETENTION_DAYS);
+	cutoff.setDate(cutoff.getDate() - LOG_RETENTION_DAYS);
 
 	const deleted = await db
 		.delete(jobExecution)

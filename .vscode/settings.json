@@ -107,6 +107,10 @@
         {
             "folderPath": "velociraptor/src/lib/components/primitives/decorative/",
             "badge": "🎀"
+        },
+        {
+            "folderPath": "velociraptor/src/lib/server/config.ts/",
+            "badge": "🎛️"
         }
     ]
 }

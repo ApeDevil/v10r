@@ -1,3 +1,5 @@
+import { ServerError } from '$lib/server/errors';
+
 export type RetrievalErrorKind =
 	| 'embedding'
 	| 'storage'
@@ -8,13 +10,17 @@ export type RetrievalErrorKind =
 	| 'timeout'
 	| 'unknown';
 
-export class RetrievalError extends Error {
+export class RetrievalError extends ServerError {
 	constructor(
 		public readonly kind: RetrievalErrorKind,
 		message: string,
 	) {
-		super(message);
+		super(kind, message);
 		this.name = 'RetrievalError';
+	}
+
+	override toStatus(): number {
+		return retrievalErrorToStatus(this.kind);
 	}
 }
 

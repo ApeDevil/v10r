@@ -6,11 +6,12 @@ import { redis } from '$lib/server/cache';
 import { ingest } from '$lib/server/retrieval/ingest';
 import { checkDocumentLimit } from '$lib/server/db/rag/guards';
 import { RetrievalError, retrievalErrorToStatus } from '$lib/server/retrieval/errors';
+import { INGEST_RATE_LIMIT_MAX, INGEST_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import type { RequestHandler } from './$types';
 
 const ratelimit = new Ratelimit({
 	redis,
-	limiter: Ratelimit.slidingWindow(5, '1h'),
+	limiter: Ratelimit.slidingWindow(INGEST_RATE_LIMIT_MAX, INGEST_RATE_LIMIT_WINDOW),
 	prefix: 'rl:retrieval:ingest',
 });
 

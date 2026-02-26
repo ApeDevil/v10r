@@ -1,3 +1,5 @@
+import { ServerError } from '$lib/server/errors';
+
 export type StoreErrorKind =
 	| 'credentials'
 	| 'not_found'
@@ -7,14 +9,33 @@ export type StoreErrorKind =
 	| 'unavailable'
 	| 'unknown';
 
-export class StoreError extends Error {
+export class StoreError extends ServerError {
 	constructor(
 		public readonly kind: StoreErrorKind,
 		message: string,
 		public readonly code?: string,
 	) {
-		super(message);
+		super(kind, message, code);
 		this.name = 'StoreError';
+	}
+
+	override toStatus(): number {
+		switch (this.kind) {
+			case 'credentials':
+				return 502;
+			case 'not_found':
+				return 404;
+			case 'forbidden':
+				return 403;
+			case 'timeout':
+				return 504;
+			case 'limit':
+				return 429;
+			case 'unavailable':
+				return 503;
+			default:
+				return 500;
+		}
 	}
 }
 
