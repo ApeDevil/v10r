@@ -160,7 +160,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 					textResult.mergeIntoDataStream(dataStream);
 				},
 				onError: (error) => {
-					return error instanceof Error ? error.message : 'An error occurred.';
+					console.error('[ai:chat:stream] Stream error:', error);
+					return 'An error occurred while processing your request.';
 				},
 			});
 		}
