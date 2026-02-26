@@ -11,6 +11,7 @@
 		{ label: 'Toasts', href: '/showcases/shell/toasts' },
 		{ label: 'Modals', href: '/showcases/shell/modals' },
 		{ label: 'Shortcuts', href: '/showcases/shell/shortcuts' },
+		{ label: 'Errors', href: '/showcases/shell/errors' },
 		{ label: 'Session', href: '/showcases/shell/session' },
 	];
 </script>
