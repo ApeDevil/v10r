@@ -7,11 +7,12 @@
 		status: number;
 		message?: string;
 		errorId?: string;
-		context?: 'default' | 'showcase';
+		context?: 'default' | 'showcase' | 'app' | 'auth';
+		actions?: Snippet;
 		children?: Snippet;
 	}
 
-	let { status, message, errorId, context = 'default', children }: Props = $props();
+	let { status, message, errorId, context = 'default', actions, children }: Props = $props();
 
 	const icon = $derived.by(() => {
 		if (status === 404) return 'i-lucide-compass';
@@ -66,7 +67,9 @@
 	{/if}
 
 	<div class="error-actions">
-		{#if status >= 500}
+		{#if actions}
+			{@render actions()}
+		{:else if status >= 500}
 			<Button onclick={() => location.reload()}>Try again</Button>
 			<Button variant="ghost" onclick={() => goto('/')}>Go home</Button>
 		{:else}

@@ -106,12 +106,48 @@
 			</div>
 		</div>
 
+		<h3>Error Boundaries</h3>
+		<p>
+			Four <code>+error.svelte</code> files provide contextual recovery actions for each area:
+		</p>
+
+		<div class="boundary-map">
+			<div class="boundary-entry">
+				<code class="boundary-path">routes/+error.svelte</code>
+				<span class="boundary-purpose">Root fallback &mdash; "Go home" action</span>
+			</div>
+			<div class="boundary-entry">
+				<code class="boundary-path">routes/app/+error.svelte</code>
+				<span class="boundary-purpose">Authenticated area &mdash; "Back to dashboard" with sidebar visible</span>
+			</div>
+			<div class="boundary-entry">
+				<code class="boundary-path">routes/auth/+error.svelte</code>
+				<span class="boundary-purpose">Auth flow &mdash; "Back to sign in" action</span>
+			</div>
+			<div class="boundary-entry">
+				<code class="boundary-path">routes/showcases/+error.svelte</code>
+				<span class="boundary-purpose">Showcases &mdash; contextual hints per showcase category</span>
+			</div>
+		</div>
+
 		<div class="route-links">
 			<p class="route-links-label">Trigger a real error page:</p>
 			<div class="button-group">
 				<Button variant="secondary" size="sm" onclick={() => goto('/this-does-not-exist')}>
 					<span class="i-lucide-compass mr-2 h-3.5 w-3.5" aria-hidden="true"></span>
-					404 &mdash; Not Found
+					Root 404
+				</Button>
+				<Button variant="secondary" size="sm" onclick={() => goto('/app/nonexistent')}>
+					<span class="i-lucide-layout-dashboard mr-2 h-3.5 w-3.5" aria-hidden="true"></span>
+					App 404
+				</Button>
+				<Button variant="secondary" size="sm" onclick={() => goto('/auth/nonexistent')}>
+					<span class="i-lucide-log-in mr-2 h-3.5 w-3.5" aria-hidden="true"></span>
+					Auth 404
+				</Button>
+				<Button variant="secondary" size="sm" onclick={() => goto('/showcases/nonexistent')}>
+					<span class="i-lucide-lightbulb mr-2 h-3.5 w-3.5" aria-hidden="true"></span>
+					Showcase 404
 				</Button>
 			</div>
 		</div>
@@ -212,6 +248,41 @@
 		color: var(--color-muted);
 	}
 
+	h3 {
+		font-size: var(--text-fluid-lg);
+		margin-bottom: var(--spacing-3);
+		color: var(--color-fg);
+	}
+
+	.boundary-map {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-2);
+		margin-bottom: var(--spacing-5);
+	}
+
+	.boundary-entry {
+		display: flex;
+		align-items: baseline;
+		gap: var(--spacing-3);
+		padding: var(--spacing-2) var(--spacing-3);
+		border-radius: var(--radius-md);
+		background: var(--color-subtle);
+	}
+
+	.boundary-path {
+		flex-shrink: 0;
+		font-weight: 600;
+		font-size: var(--text-fluid-xs);
+		background: none;
+		padding: 0;
+	}
+
+	.boundary-purpose {
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
+	}
+
 	.route-links {
 		padding: var(--spacing-4);
 		border-radius: var(--radius-md);
@@ -232,7 +303,8 @@
 	}
 
 	@media (max-width: 640px) {
-		.layer {
+		.layer,
+		.boundary-entry {
 			flex-direction: column;
 			gap: var(--spacing-1);
 		}
