@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { listDocuments } from '$lib/server/db/rag/mutations';
+import { listDocuments } from '$lib/server/db/rag/queries';
 import { requireApiUser } from '$lib/server/auth/guards';
 import type { RequestHandler } from './$types';
 

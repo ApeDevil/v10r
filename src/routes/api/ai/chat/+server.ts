@@ -7,8 +7,7 @@ import { ChatRequestSchema } from '$lib/server/ai/validation';
 import { classifyAIError, aiErrorToStatus } from '$lib/server/ai/errors';
 import { createConversation, saveMessages, updateConversationTitle } from '$lib/server/db/ai/mutations';
 import { checkConversationLimit } from '$lib/server/db/ai/guards';
-import { formatContextForPrompt } from '$lib/server/retrieval';
-import { retrieveWithEvents } from '$lib/server/retrieval/instrumented';
+import { retrieve, formatContextForPrompt } from '$lib/server/retrieval';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import type { PipelineStepEvent, PipelineChunksEvent } from '$lib/types/pipeline';
@@ -46,12 +45,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		// Auto-create conversation if none provided
 		let conversationId = existingConvId;
 		if (!conversationId) {
-			const allowed = await checkConversationLimit(user.id);
-			if (!allowed) {
-				return json(
-					{ error: 'Conversation limit reached. Delete old conversations to continue.' },
-					{ status: 403 },
-				);
+			const limitError = await checkConversationLimit(user.id);
+			if (limitError) {
+				return json({ error: limitError }, { status: 403 });
 			}
 
 			const firstUserMsg = messages.find((m: { role: string }) => m.role === 'user');
@@ -64,7 +60,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 		// Verify conversation ownership if existing
 		if (existingConvId) {
-			const { getConversation } = await import('$lib/server/db/ai/mutations');
+			const { getConversation } = await import('$lib/server/db/ai/queries');
 			const conv = await getConversation(existingConvId, user.id);
 			if (!conv) {
 				return json({ error: 'Conversation not found.' }, { status: 404 });
@@ -98,7 +94,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 					};
 
 					try {
-						const retrievalResult = await retrieveWithEvents(
+						const retrievalResult = await retrieve(
 							userMsg.content,
 							{ userId, maxChunks: 3, tiers: retrievalTiers ?? [1] },
 							emitEvent,

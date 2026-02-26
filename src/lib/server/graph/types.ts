@@ -1,4 +1,4 @@
-import type { KnowledgeData, KnowledgeNode, KnowledgeEdge } from '$lib/components/viz/graph/knowledge/knowledge-types';
+import type { KnowledgeData, KnowledgeNode, KnowledgeEdge } from '$lib/types/knowledge';
 
 // ─── Node interfaces ────────────────────────────────────
 

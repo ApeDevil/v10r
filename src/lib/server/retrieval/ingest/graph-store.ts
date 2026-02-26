@@ -2,9 +2,9 @@
  * Graph store: persist entities and relationships to Neo4j.
  */
 import {
-	createChunkNode,
-	createHasChild,
-	createNextChunk,
+	batchCreateChunks,
+	batchCreateHasChild,
+	batchCreateNextChunk,
 	storeDocumentGraph,
 } from '$lib/server/graph/rag/mutations';
 import type { RawChunk } from '../types';
@@ -18,34 +18,40 @@ export async function storeChunkStructure(
 	parents: RawChunk[],
 	children: RawChunk[],
 ): Promise<void> {
-	// Create parent chunk nodes
-	for (const parent of parents) {
-		await createChunkNode(parent.id, documentId, parent.level);
-	}
+	// Batch all chunk nodes in one call
+	const allChunks = [...parents, ...children].map((c) => ({
+		pgId: c.id,
+		documentId,
+		level: c.level,
+	}));
+	await batchCreateChunks(allChunks);
 
-	// Create child chunk nodes + HAS_CHILD edges
-	for (const child of children) {
-		await createChunkNode(child.id, documentId, child.level);
-		if (child.parentId) {
-			await createHasChild(child.parentId, child.id, child.position);
-		}
-	}
+	// Batch HAS_CHILD edges
+	const hasChildEdges = children
+		.filter((c) => c.parentId)
+		.map((c) => ({
+			parentPgId: c.parentId!,
+			childPgId: c.id,
+			position: c.position,
+		}));
+	await batchCreateHasChild(hasChildEdges);
 
-	// Create NEXT_CHUNK edges for sequential ordering (within same level)
+	// Batch NEXT_CHUNK edges (within same level)
 	const byLevel = new Map<string, RawChunk[]>();
 	for (const chunk of [...parents, ...children]) {
-		const key = `${chunk.level}`;
-		const group = byLevel.get(key) ?? [];
+		const group = byLevel.get(chunk.level) ?? [];
 		group.push(chunk);
-		byLevel.set(key, group);
+		byLevel.set(chunk.level, group);
 	}
 
+	const nextEdges: Array<{ fromPgId: string; toPgId: string }> = [];
 	for (const group of byLevel.values()) {
 		const sorted = group.sort((a, b) => a.position - b.position);
 		for (let i = 0; i < sorted.length - 1; i++) {
-			await createNextChunk(sorted[i].id, sorted[i + 1].id);
+			nextEdges.push({ fromPgId: sorted[i].id, toPgId: sorted[i + 1].id });
 		}
 	}
+	await batchCreateNextChunk(nextEdges);
 }
 
 /**

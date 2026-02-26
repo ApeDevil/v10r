@@ -1,8 +1,10 @@
-import { countDocuments } from './mutations';
+import { countDocuments } from './queries';
 import { MAX_DOCUMENTS_PER_USER } from '$lib/server/retrieval/config';
 
-/** Check if user has hit document limit. Returns true if under limit. */
-export async function checkDocumentLimit(userId: string): Promise<boolean> {
+/** Check if user has hit document limit. Returns null if under limit, error message if at/over. */
+export async function checkDocumentLimit(userId: string): Promise<string | null> {
 	const total = await countDocuments(userId);
-	return total < MAX_DOCUMENTS_PER_USER;
+	return total < MAX_DOCUMENTS_PER_USER
+		? null
+		: `Document limit reached (${MAX_DOCUMENTS_PER_USER}). Delete old documents to continue.`;
 }

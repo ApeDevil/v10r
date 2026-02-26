@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
-import { getDocument, deleteDocument } from '$lib/server/db/rag/mutations';
+import { getDocument } from '$lib/server/db/rag/queries';
+import { deleteDocument } from '$lib/server/db/rag/mutations';
 import { deleteDocumentGraph } from '$lib/server/graph/rag/mutations';
 import { requireApiUser } from '$lib/server/auth/guards';
 import type { RequestHandler } from './$types';

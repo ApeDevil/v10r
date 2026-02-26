@@ -288,7 +288,7 @@ DETACH DELETE n
 
 ## Tier 2: Consistency / DRY
 
-### 2.1 Server Module Pattern Alignment
+### 2.1 Server Module Pattern Alignment ✅
 
 The four data stores and feature modules follow inconsistent conventions:
 
@@ -304,9 +304,11 @@ The four data stores and feature modules follow inconsistent conventions:
 
 Also: `graph/types.ts` imports `KnowledgeData` from `$lib/components/viz/graph/knowledge/knowledge-types` — a server module importing a client component type. Move shared types to `$lib/types/`.
 
+> **Implementation notes:** Addressed the high-value items from this list. (1) Created `src/lib/server/db/errors.ts` with `DbError` extending `ServerError` — PG error code classification (23xxx→constraint, 08xxx→connection, 40001/40P01→serialization, 57014→timeout, 42501/28xxx→permission) plus heuristic fallbacks for timeout/connection strings. (2) Split `db/ai/mutations.ts` — moved `listConversations` and `getConversation` to new `db/ai/queries.ts`; updated 3 consumer routes. (3) Split `db/rag/mutations.ts` — moved `listDocuments`, `getDocument`, `countDocuments`, `listCollections` to new `db/rag/queries.ts`; updated 3 consumer files. (4) Moved `KnowledgeNode`, `KnowledgeEdge`, `KnowledgeData` to `$lib/types/knowledge.ts`; `knowledge-types.ts` became a re-export shim; server imports updated to `$lib/types/knowledge`. Deferred items: `db/types.ts` (low value — Drizzle infers), `showcase/guards.ts` for graph (new functionality), DB credential validation (better as 4.7 startup validation), `db/showcase/queries.ts` (showcase queries are inline in page.server.ts loads).
+
 ---
 
-### 2.2 Guard Pattern Standardization
+### 2.2 Guard Pattern Standardization ✅
 
 Two distinct concerns mixed under "guards":
 
@@ -335,7 +337,7 @@ interface LimitCheck {
 
 3. Each showcase module should define its prefix in one place. The store module already does this correctly; the cache module does not.
 
-> **2.2a** (return type standardization) deferred to Pass 4 alongside 2.1 module alignment.
+> **2.2a** ✅ Guard return type standardized to `string | null` (null = allowed, string = error message). Updated `db/ai/guards.ts` and `db/rag/guards.ts` from `Promise<boolean>` to `Promise<string | null>` — guards now return descriptive error messages including the limit value. Updated 3 consumer routes (`api/ai/chat`, `api/ai/conversations`, `api/retrieval/ingest`) from `const allowed = …; if (!allowed)` + hardcoded message to `const limitError = …; if (limitError)` + `{ error: limitError }`. Chose `string | null` over the proposed `LimitCheck` interface — simpler, matches the 3 existing showcase/cache/store guards, and the `current`/`max` fields are not consumed by any caller.
 >
 > **2.2b** ✅ `SHOWCASE_PREFIX` dedup: Cache module — `queries.ts` and `seed.ts` now import from `guards.ts` (which already exported it). Store module — `guards.ts` changed `const` → `export const`; `queries.ts` and `seed.ts` now import from `guards.ts`. Total declarations reduced from 6 to 2 (one per module).
 
@@ -380,13 +382,15 @@ export function rateLimitResponse(reset: number): Response { ... }
 
 ---
 
-### 2.4 Retrieval Duplication
+### 2.4 Retrieval Duplication ✅
 
 **Files:** `src/lib/server/retrieval/index.ts` and `src/lib/server/retrieval/instrumented.ts`
 
 `instrumented.ts` reimplements the entire retrieval flow (160+ lines) with event emission interleaved. The two implementations can drift silently.
 
 **Fix:** Refactor `retrieve()` to accept an optional event callback, or make the instrumented version the canonical implementation with a no-op emitter as default.
+
+> **Implementation notes:** Merged `instrumented.ts` into `index.ts` — `retrieve()` now takes an optional third parameter `onEvent?: EmitFn`. All `emit()` calls are guarded with `onEvent &&`, so the non-instrumented path has zero overhead. Helpers `toSummary()` and `emit()` moved as module-private functions. Deleted `instrumented.ts`. Updated `api/ai/chat/+server.ts` to import `retrieve` from `'$lib/server/retrieval'` instead of `retrieveWithEvents` from the deleted module.
 
 ---
 
@@ -412,7 +416,7 @@ Forks import `schema/core` to skip showcase tables cleanly.
 
 ---
 
-### 2.6 Neo4j Ingestion Performance
+### 2.6 Neo4j Ingestion Performance ✅
 
 **File:** `src/lib/server/retrieval/ingest/graph-store.ts`
 
@@ -425,6 +429,8 @@ UNWIND $chunks AS c
 MERGE (chunk:Chunk {id: c.id})
 SET chunk.text = c.text, chunk.order = c.order
 ```
+
+> **Implementation notes:** Replaced 6 individual mutation functions (`upsertEntity`, `createChunkNode`, `createMentions`, `createRelatedTo`, `createHasChild`, `createNextChunk`) with 3 batch functions (`batchCreateChunks`, `batchCreateHasChild`, `batchCreateNextChunk`) using UNWIND. `storeDocumentGraph` rewritten to batch entities, relationships, and mentions in 3 calls max (vs N+M+K sequential). `storeChunkStructure` in `graph-store.ts` collects all data first, then makes 3 batch calls. `deleteDocumentGraph` unchanged.
 
 ---
 

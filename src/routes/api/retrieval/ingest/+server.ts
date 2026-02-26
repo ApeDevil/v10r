@@ -34,12 +34,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return json({ error: 'Invalid request.' }, { status: 400 });
 	}
 
-	const allowed = await checkDocumentLimit(user.id);
-	if (!allowed) {
-		return json(
-			{ error: 'Document limit reached. Delete old documents to continue.' },
-			{ status: 403 },
-		);
+	const limitError = await checkDocumentLimit(user.id);
+	if (limitError) {
+		return json({ error: limitError }, { status: 403 });
 	}
 
 	try {

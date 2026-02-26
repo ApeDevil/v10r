@@ -1,7 +1,7 @@
 import { cypher } from '../index';
 import type { Neo4jNodeRecord, Neo4jRelRecord } from '../types';
 import { toKnowledgeData } from '../types';
-import type { KnowledgeData } from '$lib/components/viz/graph/knowledge/knowledge-types';
+import type { KnowledgeData } from '$lib/types/knowledge';
 
 // ─── Connection page ────────────────────────────────────
 

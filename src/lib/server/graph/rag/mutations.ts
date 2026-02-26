@@ -13,100 +13,85 @@ interface RelationshipInput {
 	weight: number;
 }
 
-/** Create or update an Entity node. */
-export async function upsertEntity(entity: EntityInput): Promise<void> {
-	await cypher(
-		`MERGE (e:Entity {name: $name})
-		 ON CREATE SET e.type = $type, e.description = $description
-		 ON MATCH SET e.type = $type, e.description = $description`,
-		entity,
-	);
-}
-
-/** Create a Chunk reference node linked to Postgres. */
-export async function createChunkNode(
-	pgId: string,
-	documentId: string,
-	level: string,
+/** Batch-create Chunk nodes. */
+export async function batchCreateChunks(
+	chunks: Array<{ pgId: string; documentId: string; level: string }>,
 ): Promise<void> {
+	if (chunks.length === 0) return;
 	await cypher(
-		`MERGE (c:Chunk {pgId: $pgId})
-		 ON CREATE SET c.documentId = $documentId, c.level = $level`,
-		{ pgId, documentId, level },
+		`UNWIND $chunks AS c
+		 MERGE (ch:Chunk {pgId: c.pgId})
+		 ON CREATE SET ch.documentId = c.documentId, ch.level = c.level`,
+		{ chunks },
 	);
 }
 
-/** Create a MENTIONS relationship between a Chunk and an Entity. */
-export async function createMentions(
-	chunkPgId: string,
-	entityName: string,
-	confidence: number,
+/** Batch-create HAS_CHILD edges between parent and child chunks. */
+export async function batchCreateHasChild(
+	edges: Array<{ parentPgId: string; childPgId: string; position: number }>,
 ): Promise<void> {
+	if (edges.length === 0) return;
 	await cypher(
-		`MATCH (c:Chunk {pgId: $chunkPgId})
-		 MATCH (e:Entity {name: $entityName})
-		 MERGE (c)-[r:MENTIONS]->(e)
-		 ON CREATE SET r.confidence = $confidence`,
-		{ chunkPgId, entityName, confidence },
-	);
-}
-
-/** Create a RELATED_TO relationship between two entities. */
-export async function createRelatedTo(rel: RelationshipInput): Promise<void> {
-	await cypher(
-		`MATCH (a:Entity {name: $sourceName})
-		 MATCH (b:Entity {name: $targetName})
-		 MERGE (a)-[r:RELATED_TO]->(b)
-		 ON CREATE SET r.type = $type, r.weight = $weight
-		 ON MATCH SET r.weight = CASE WHEN r.weight < $weight THEN $weight ELSE r.weight END`,
-		rel,
-	);
-}
-
-/** Create HAS_CHILD relationship between parent and child chunks. */
-export async function createHasChild(
-	parentPgId: string,
-	childPgId: string,
-	position: number,
-): Promise<void> {
-	await cypher(
-		`MATCH (p:Chunk {pgId: $parentPgId})
-		 MATCH (c:Chunk {pgId: $childPgId})
+		`UNWIND $edges AS e
+		 MATCH (p:Chunk {pgId: e.parentPgId})
+		 MATCH (c:Chunk {pgId: e.childPgId})
 		 MERGE (p)-[r:HAS_CHILD]->(c)
-		 ON CREATE SET r.position = $position`,
-		{ parentPgId, childPgId, position },
+		 ON CREATE SET r.position = e.position`,
+		{ edges },
 	);
 }
 
-/** Create NEXT_CHUNK relationship for sequential ordering. */
-export async function createNextChunk(
-	fromPgId: string,
-	toPgId: string,
+/** Batch-create NEXT_CHUNK edges for sequential ordering. */
+export async function batchCreateNextChunk(
+	edges: Array<{ fromPgId: string; toPgId: string }>,
 ): Promise<void> {
+	if (edges.length === 0) return;
 	await cypher(
-		`MATCH (a:Chunk {pgId: $fromPgId})
-		 MATCH (b:Chunk {pgId: $toPgId})
+		`UNWIND $edges AS e
+		 MATCH (a:Chunk {pgId: e.fromPgId})
+		 MATCH (b:Chunk {pgId: e.toPgId})
 		 MERGE (a)-[:NEXT_CHUNK]->(b)`,
-		{ fromPgId, toPgId },
+		{ edges },
 	);
 }
 
-/** Bulk create entities and relationships for a document. */
+/** Batch-create entities, relationships, and mentions for a document. */
 export async function storeDocumentGraph(
 	entities: EntityInput[],
 	relationships: RelationshipInput[],
 	chunkEntityMap: Array<{ chunkPgId: string; entityName: string; confidence: number }>,
 ): Promise<{ entityCount: number; relationshipCount: number }> {
-	for (const entity of entities) {
-		await upsertEntity(entity);
+	if (entities.length > 0) {
+		await cypher(
+			`UNWIND $entities AS e
+			 MERGE (n:Entity {name: e.name})
+			 ON CREATE SET n.type = e.type, n.description = e.description
+			 ON MATCH SET n.type = e.type, n.description = e.description`,
+			{ entities },
+		);
 	}
 
-	for (const rel of relationships) {
-		await createRelatedTo(rel);
+	if (relationships.length > 0) {
+		await cypher(
+			`UNWIND $rels AS r
+			 MATCH (a:Entity {name: r.sourceName})
+			 MATCH (b:Entity {name: r.targetName})
+			 MERGE (a)-[rel:RELATED_TO]->(b)
+			 ON CREATE SET rel.type = r.type, rel.weight = r.weight
+			 ON MATCH SET rel.weight = CASE WHEN rel.weight < r.weight THEN r.weight ELSE rel.weight END`,
+			{ rels: relationships },
+		);
 	}
 
-	for (const mention of chunkEntityMap) {
-		await createMentions(mention.chunkPgId, mention.entityName, mention.confidence);
+	if (chunkEntityMap.length > 0) {
+		await cypher(
+			`UNWIND $mentions AS m
+			 MATCH (c:Chunk {pgId: m.chunkPgId})
+			 MATCH (e:Entity {name: m.entityName})
+			 MERGE (c)-[r:MENTIONS]->(e)
+			 ON CREATE SET r.confidence = m.confidence`,
+			{ mentions: chunkEntityMap },
+		);
 	}
 
 	return {

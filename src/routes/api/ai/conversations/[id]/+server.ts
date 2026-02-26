@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
-import { getConversation, deleteConversation } from '$lib/server/db/ai/mutations';
+import { getConversation } from '$lib/server/db/ai/queries';
+import { deleteConversation } from '$lib/server/db/ai/mutations';
 import { requireApiUser } from '$lib/server/auth/guards';
 import type { RequestHandler } from './$types';
 
