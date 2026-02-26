@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { PageContainer } from '$lib/components/layout';
-	import { PageHeader, TabNav } from '$lib/components/composites';
+	import { ShowcaseLayout } from '$lib/components/composites';
 
 	let { children }: { children: Snippet } = $props();
 
@@ -13,20 +12,16 @@
 	];
 </script>
 
-<PageContainer class="py-7">
-	<PageHeader
-		title="Database"
-		description="Database engines, connection patterns, type systems, and data strategies."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'DB' }
-		]}
-	/>
-
-	<TabNav {tabs} ariaLabel="Database engines" />
-
-	<div class="pt-6">
-		{@render children()}
-	</div>
-</PageContainer>
+<ShowcaseLayout
+	title="Database"
+	description="Database engines, connection patterns, type systems, and data strategies."
+	breadcrumbs={[
+		{ label: 'Home', href: '/' },
+		{ label: 'Showcases', href: '/showcases' },
+		{ label: 'DB' }
+	]}
+	{tabs}
+	ariaLabel="Database engines"
+>
+	{@render children()}
+</ShowcaseLayout>

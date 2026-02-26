@@ -2,21 +2,20 @@
 	import { page } from '$app/state';
 	import { ErrorDisplay } from '$lib/components/composites';
 
-	const path = $derived(page.url.pathname);
+	const HINT_MAP: [string, string][] = [
+		['/showcases/db/relational', 'Check your Neon DATABASE_URL in .env — is the connection string valid?'],
+		['/showcases/db/graph', 'Check NEO4J_URI, NEO4J_USERNAME, and NEO4J_PASSWORD in .env.'],
+		['/showcases/db/storage', 'Check R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, and R2_SECRET_ACCESS_KEY in .env.'],
+		['/showcases/3d', 'WebGL is required. Check that your browser supports it and graphics drivers are up to date.'],
+		['/showcases/ai', 'Check your AI provider API key in .env. See /showcases/ai/connection for setup.'],
+	];
 
-	const hint = $derived.by(() => {
-		if (path.startsWith('/showcases/db/relational'))
-			return 'Check your Neon DATABASE_URL in .env — is the connection string valid?';
-		if (path.startsWith('/showcases/db/graph'))
-			return 'Check NEO4J_URI, NEO4J_USERNAME, and NEO4J_PASSWORD in .env.';
-		if (path.startsWith('/showcases/db/storage'))
-			return 'Check R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, and R2_SECRET_ACCESS_KEY in .env.';
-		if (path.startsWith('/showcases/3d'))
-			return 'WebGL is required. Check that your browser supports it and graphics drivers are up to date.';
-		if (path.startsWith('/showcases/ai'))
-			return 'Check your AI provider API key in .env. See /showcases/ai/connection for setup.';
-		return 'This showcase may require environment variables. Check .env and the relevant docs.';
-	});
+	const DEFAULT_HINT = 'This showcase may require environment variables. Check .env and the relevant docs.';
+
+	const path = $derived(page.url.pathname);
+	const hint = $derived(
+		HINT_MAP.find(([prefix]) => path.startsWith(prefix))?.[1] ?? DEFAULT_HINT
+	);
 </script>
 
 <svelte:head>

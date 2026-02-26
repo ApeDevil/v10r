@@ -7,7 +7,7 @@
 
 	import { cn } from '$lib/utils/cn';
 	import { localizeHref } from '$lib/i18n';
-	import { getSidebar } from '$lib/stores/sidebar.svelte';
+	import { getSidebar } from '$lib/state/sidebar.svelte';
 
 	interface Props {
 		forceExpanded?: boolean; // Force expanded mode (for drawer)

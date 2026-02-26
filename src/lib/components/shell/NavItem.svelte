@@ -37,7 +37,7 @@
 	let isDropdownOpen = $state(false);
 
 	// Check if current page matches this nav item or any of its children (including nested routes)
-	const isActive = $derived(() => {
+	const isActive = $derived.by(() => {
 		const path = deLocalizeHref(page.url.pathname);
 		if (path === href) return true;
 		if (children.length > 0) {
@@ -76,9 +76,9 @@
 			forceExpanded
 				? 'h-10 gap-3 px-2 flex-1'
 				: 'h-10 w-10 justify-center',
-			isActive() && 'bg-primary text-white font-semibold'
+			isActive && 'bg-primary text-white font-semibold'
 		)}
-		aria-current={isActive() ? 'page' : undefined}
+		aria-current={isActive ? 'page' : undefined}
 		aria-label={forceExpanded ? undefined : label}
 	>
 		<span class={cn(icon, 'text-icon-md shrink-0 leading-none')} />
@@ -114,7 +114,7 @@
 						'absolute right-0 flex items-center justify-center w-10 h-10 p-0 bg-transparent border-none rounded-md cursor-pointer',
 						'transition-all duration-fast motion-reduce:transition-none',
 						isDropdownOpen && 'rotate-90 motion-reduce:rotate-0',
-						isActive() ? 'text-white hover:bg-white/20' : 'text-muted hover:bg-border'
+						isActive ? 'text-white hover:bg-white/20' : 'text-muted hover:bg-border'
 					)}
 					onclick={toggleDropdown}
 					aria-label={isDropdownOpen ? 'Close submenu' : 'Open submenu'}

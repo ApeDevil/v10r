@@ -1,9 +1,7 @@
 export { default as ScrollArea } from './ScrollArea.svelte';
 export {
-	scrollAreaVariants,
+	SCROLL_AREA_CLASS,
 	scrollbarVariants,
-	scrollThumbVariants,
-	type ScrollAreaVariants,
-	type ScrollbarVariants,
-	type ScrollThumbVariants
+	SCROLL_THUMB_CLASS,
+	type ScrollbarVariants
 } from './scroll-area';

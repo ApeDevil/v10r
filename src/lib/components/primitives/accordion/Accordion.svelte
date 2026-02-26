@@ -51,48 +51,52 @@
 	}
 </script>
 
+{#snippet accordionItems()}
+	{#each items as item (item.value)}
+		<AccordionPrimitive.Item
+			value={item.value}
+			disabled={item.disabled}
+			class={cn(accordionItemVariants({ variant }))}
+		>
+			<AccordionPrimitive.Header>
+				<AccordionPrimitive.Trigger
+					class={cn(
+						accordionTriggerVariants({ size }),
+						'text-fg hover:text-primary',
+						'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+						'disabled:cursor-not-allowed disabled:opacity-50',
+						'[&[data-state=open]>span]:rotate-180'
+					)}
+				>
+					<span class={cn(accordionChevronVariants({ size }))} />
+					{item.title}
+				</AccordionPrimitive.Trigger>
+			</AccordionPrimitive.Header>
+			<AccordionPrimitive.Content
+				class={cn(
+					accordionContentVariants({ size }),
+					'data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down'
+				)}
+			>
+				<div class="pt-1">
+					{#if isSnippet(item.content)}
+						{@render item.content()}
+					{:else}
+						{item.content}
+					{/if}
+				</div>
+			</AccordionPrimitive.Content>
+		</AccordionPrimitive.Item>
+	{/each}
+{/snippet}
+
 {#if type === 'single'}
 	<AccordionPrimitive.Root
 		bind:value
 		{collapsible}
 		class={cn('w-full', className)}
 	>
-		{#each items as item (item.value)}
-			<AccordionPrimitive.Item
-				value={item.value}
-				disabled={item.disabled}
-				class={cn(accordionItemVariants({ variant }))}
-			>
-				<AccordionPrimitive.Header>
-					<AccordionPrimitive.Trigger
-						class={cn(
-							accordionTriggerVariants({ size }),
-							'text-fg hover:text-primary',
-							'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
-							'disabled:cursor-not-allowed disabled:opacity-50',
-							'[&[data-state=open]>span]:rotate-180'
-						)}
-					>
-						<span class={cn(accordionChevronVariants({ size }))} />
-						{item.title}
-					</AccordionPrimitive.Trigger>
-				</AccordionPrimitive.Header>
-				<AccordionPrimitive.Content
-					class={cn(
-						accordionContentVariants({ size }),
-						'data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down'
-					)}
-				>
-					<div class="pt-1">
-						{#if isSnippet(item.content)}
-							{@render item.content()}
-						{:else}
-							{item.content}
-						{/if}
-					</div>
-				</AccordionPrimitive.Content>
-			</AccordionPrimitive.Item>
-		{/each}
+		{@render accordionItems()}
 	</AccordionPrimitive.Root>
 {:else}
 	<AccordionPrimitive.Root
@@ -100,42 +104,7 @@
 		multiple
 		class={cn('w-full', className)}
 	>
-		{#each items as item (item.value)}
-			<AccordionPrimitive.Item
-				value={item.value}
-				disabled={item.disabled}
-				class={cn(accordionItemVariants({ variant }))}
-			>
-				<AccordionPrimitive.Header>
-					<AccordionPrimitive.Trigger
-						class={cn(
-							accordionTriggerVariants({ size }),
-							'text-fg hover:text-primary',
-							'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
-							'disabled:cursor-not-allowed disabled:opacity-50',
-							'[&[data-state=open]>span]:rotate-180'
-						)}
-					>
-						<span class={cn(accordionChevronVariants({ size }))} />
-						{item.title}
-					</AccordionPrimitive.Trigger>
-				</AccordionPrimitive.Header>
-				<AccordionPrimitive.Content
-					class={cn(
-						accordionContentVariants({ size }),
-						'data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down'
-					)}
-				>
-					<div class="pt-1">
-						{#if isSnippet(item.content)}
-							{@render item.content()}
-						{:else}
-							{item.content}
-						{/if}
-					</div>
-				</AccordionPrimitive.Content>
-			</AccordionPrimitive.Item>
-		{/each}
+		{@render accordionItems()}
 	</AccordionPrimitive.Root>
 {/if}
 

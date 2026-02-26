@@ -1,1 +1,1 @@
-export { default as SectionNav } from './SectionNav.svelte';
+export { default as NavSection } from './NavSection.svelte';

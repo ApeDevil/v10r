@@ -83,6 +83,13 @@ const authHandler: Handle = async ({ event, resolve }) => {
  *    CRITICAL: svelteKitHandler does NOT populate event.locals (Issue #2188)
  */
 const sessionPopulate: Handle = async ({ event, resolve }) => {
+	const cookies = event.request.headers.get('cookie');
+	if (!cookies?.includes('better-auth.session_token')) {
+		event.locals.user = null;
+		event.locals.session = null;
+		return resolve(event);
+	}
+
 	const sessionData = await auth.api.getSession({
 		headers: event.request.headers,
 	});

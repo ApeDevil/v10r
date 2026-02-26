@@ -6,7 +6,7 @@
 
 	import { fly } from 'svelte/transition';
 	import { cn } from '$lib/utils/cn';
-	import { getToast } from '$lib/stores/toast.svelte';
+	import { getToast } from '$lib/state/toast.svelte';
 
 	interface Props {
 		class?: string;

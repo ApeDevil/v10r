@@ -4,7 +4,7 @@
 	import { Card, EmptyState } from '$lib/components/composites';
 	import { Badge, Button, Spinner } from '$lib/components/primitives';
 	import { Stack, Cluster } from '$lib/components/layout';
-	import { getToast } from '$lib/stores/toast.svelte';
+	import { getToast } from '$lib/state/toast.svelte';
 
 	let { data } = $props();
 	const toast = getToast();

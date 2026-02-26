@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
 
 export const load = () => {
-	redirect(307, '/showcases/db/relational');
+	redirect(303, '/showcases/db/relational');
 };

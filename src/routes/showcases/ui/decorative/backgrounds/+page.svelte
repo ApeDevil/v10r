@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SectionNav } from '$lib/components/composites';
+	import { NavSection } from '$lib/components/composites';
 	import { DemoCard } from '../../components/_components';
 	import {
 		DotPattern,
@@ -35,7 +35,7 @@
 	<title>Backgrounds - Decorative - UI Showcase - Velociraptor</title>
 </svelte:head>
 
-<SectionNav {sections} />
+<NavSection {sections} />
 
 <main class="content">
 	<!-- DotPattern -->

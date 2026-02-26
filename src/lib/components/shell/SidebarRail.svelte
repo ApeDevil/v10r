@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { MediaQuery } from 'svelte/reactivity';
 	import { cn } from '$lib/utils/cn';
-	import { getSidebar } from '$lib/stores/sidebar.svelte';
-	import { getSession } from '$lib/stores/session.svelte';
+	import { getSidebar } from '$lib/state/sidebar.svelte';
+	import { getSession } from '$lib/state/session.svelte';
 	import SidebarLogo from './SidebarLogo.svelte';
 	import SidebarNav from './SidebarNav.svelte';
 	import SidebarTriggers from './SidebarTriggers.svelte';

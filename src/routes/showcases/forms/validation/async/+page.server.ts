@@ -1,7 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { superValidate, fail, message } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
-import { asyncSchema } from '$lib/schemas/forms-showcase/validation';
+import { asyncSchema } from '$lib/schemas/showcase/validation';
 
 export const load: PageServerLoad = async () => {
 	const form = await superValidate(valibot(asyncSchema));

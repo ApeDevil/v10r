@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { PageHeader, BackLink, SectionNav, BoundaryFallback } from '$lib/components/composites';
+	import { PageHeader, BackLink, NavSection, BoundaryFallback } from '$lib/components/composites';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives/table';
 	import VizDemoCard from '../_components/VizDemoCard.svelte';
 	import DataControls from '../_components/DataControls.svelte';
@@ -374,7 +374,7 @@
 		]}
 	/>
 
-	<SectionNav {sections} />
+	<NavSection {sections} />
 
 	<DataControls bind:dataset bind:animated />
 

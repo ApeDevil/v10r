@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { PageHeader, BackLink, SectionNav } from '$lib/components/composites';
+	import { PageHeader, BackLink, NavSection } from '$lib/components/composites';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives/table';
 	import VizDemoCard from '../_components/VizDemoCard.svelte';
 	import { ScatterPlot, HeatMap } from '$lib/components/viz';
@@ -116,7 +116,7 @@
 		]}
 	/>
 
-	<SectionNav {sections} />
+	<NavSection {sections} />
 
 	<main class="content">
 		<!-- Scatter Plot -->

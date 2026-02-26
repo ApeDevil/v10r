@@ -8,9 +8,9 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { localizeHref } from '$lib/i18n';
-	import type { Session } from '$lib/stores/session.svelte';
-	import { setSessionContext } from '$lib/stores/session.svelte';
-	import { getModals } from '$lib/stores';
+	import type { Session } from '$lib/state/session.svelte';
+	import { setSessionContext } from '$lib/state/session.svelte';
+	import { getModals } from '$lib/state';
 	import { authClient } from '$lib/auth-client';
 	import SessionWarningBanner from './SessionWarningBanner.svelte';
 	import SessionExpiryModal from './SessionExpiryModal.svelte';

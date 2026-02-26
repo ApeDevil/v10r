@@ -1,7 +1,9 @@
 <script lang="ts">
 	/**
-	 * PageContainer - Wrapper for page content with consistent max-width, centering, and padding.
-	 * Use for wrapping entire page content to constrain width and provide responsive padding.
+	 * PageContainer — Full-page wrapper with responsive `padding-inline` and `max-width`
+	 * from design tokens. Used for top-level page shells.
+	 *
+	 * For centering content sections within a page, use `Center` instead.
 	 */
 
 	import type { Snippet } from 'svelte';

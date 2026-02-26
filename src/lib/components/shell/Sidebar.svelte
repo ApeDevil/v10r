@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { getSidebar } from '$lib/stores/sidebar.svelte';
+	import { getSidebar } from '$lib/state/sidebar.svelte';
 	import { SidebarRail, SidebarDrawer, SidebarFab } from '$lib/components/shell';
 
 	const sidebar = getSidebar();

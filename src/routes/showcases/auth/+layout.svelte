@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { PageContainer } from '$lib/components/layout';
-	import { PageHeader, TabNav } from '$lib/components/composites';
+	import { ShowcaseLayout } from '$lib/components/composites';
 
 	let { children }: { children: Snippet } = $props();
 
@@ -12,20 +11,16 @@
 	];
 </script>
 
-<PageContainer class="py-7">
-	<PageHeader
-		title="Auth"
-		description="Better Auth session-based authentication — connection health, session lifecycle, and security diagnostics."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'Auth' }
-		]}
-	/>
-
-	<TabNav {tabs} ariaLabel="Auth sections" />
-
-	<div class="pt-6">
-		{@render children()}
-	</div>
-</PageContainer>
+<ShowcaseLayout
+	title="Auth"
+	description="Better Auth session-based authentication — connection health, session lifecycle, and security diagnostics."
+	breadcrumbs={[
+		{ label: 'Home', href: '/' },
+		{ label: 'Showcases', href: '/showcases' },
+		{ label: 'Auth' }
+	]}
+	{tabs}
+	ariaLabel="Auth sections"
+>
+	{@render children()}
+</ShowcaseLayout>

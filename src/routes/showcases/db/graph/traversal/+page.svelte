@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Card, SectionNav, Alert } from '$lib/components/composites';
+	import { Card, NavSection, Alert } from '$lib/components/composites';
 	import { Badge, Button, Select, Spinner, Typography } from '$lib/components/primitives';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
-	import { getToast } from '$lib/stores/toast.svelte';
+	import { getToast } from '$lib/state/toast.svelte';
 	import { Stack } from '$lib/components/layout';
 
 	let { data } = $props();
@@ -78,7 +78,7 @@
 			<p>Seed the graph from the <a href="/showcases/db/graph/model">Model</a> page first.</p>
 		</Alert>
 	{:else}
-		<SectionNav {sections} ariaLabel="Traversal sections" />
+		<NavSection {sections} ariaLabel="Traversal sections" />
 
 		<Stack gap="6">
 			<!-- BROWSE -->

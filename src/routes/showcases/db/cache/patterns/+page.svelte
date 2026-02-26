@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Card, SectionNav, Alert, FormField } from '$lib/components/composites';
+	import { Card, NavSection, Alert, FormField } from '$lib/components/composites';
 	import { Badge, Button, Input, Spinner, Typography } from '$lib/components/primitives';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
-	import { getToast } from '$lib/stores/toast.svelte';
+	import { getToast } from '$lib/state/toast.svelte';
 	import { Stack, Cluster } from '$lib/components/layout';
 
 	let { data } = $props();
@@ -92,7 +92,7 @@
 			<p>Seed the cache from the <a href="/showcases/db/cache/connection">Connection</a> page first.</p>
 		</Alert>
 	{:else}
-		<SectionNav {sections} ariaLabel="Pattern sections" />
+		<NavSection {sections} ariaLabel="Pattern sections" />
 
 		<Stack gap="6">
 			<!-- OVERVIEW -->

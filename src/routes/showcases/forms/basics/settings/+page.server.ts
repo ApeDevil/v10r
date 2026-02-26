@@ -1,7 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { superValidate, fail, message } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
-import { settingsSchema } from '$lib/schemas/forms-showcase/basics';
+import { settingsSchema } from '$lib/schemas/showcase/basics';
 
 const mockSettings = {
 	displayName: 'Jane Doe',

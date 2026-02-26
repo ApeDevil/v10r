@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Card, SectionNav, ConfirmDialog, Alert } from '$lib/components/composites';
+	import { Card, NavSection, ConfirmDialog, Alert } from '$lib/components/composites';
 	import { Badge, Button, Tooltip, Typography } from '$lib/components/primitives';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
 	import { Stack } from '$lib/components/layout';
-	import { getToast } from '$lib/stores/toast.svelte';
+	import { getToast } from '$lib/state/toast.svelte';
 
 	let { data } = $props();
 	const toast = getToast();
@@ -43,7 +43,7 @@
 			{/snippet}
 		</Alert>
 	{:else}
-		<SectionNav {sections} ariaLabel="Type categories" />
+		<NavSection {sections} ariaLabel="Type categories" />
 
 		<Stack gap="7">
 			<!-- NUMERIC TYPES -->

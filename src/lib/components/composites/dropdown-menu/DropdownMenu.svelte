@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
+	import { goto } from '$app/navigation';
 	import { cn } from '$lib/utils/cn';
 	import type { Snippet } from 'svelte';
 	import {
@@ -53,7 +54,7 @@
 						class={dropdownMenuItemVariants()}
 						onclick={() => {
 							if (item.href) {
-								window.location.href = item.href;
+								goto(item.href);
 							} else if (item.onclick) {
 								item.onclick();
 							}

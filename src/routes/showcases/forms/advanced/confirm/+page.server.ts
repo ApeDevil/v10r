@@ -1,7 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { superValidate, fail, message } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
-import { confirmSchema } from '$lib/schemas/forms-showcase/advanced';
+import { confirmSchema } from '$lib/schemas/showcase/advanced';
 
 const mockItems = [
 	{ id: 1, name: 'Project Alpha', type: 'Repository' },

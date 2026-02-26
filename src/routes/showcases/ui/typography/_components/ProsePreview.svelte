@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Typography } from '$lib/components';
-	import type { FontLoadState } from '$lib/services/fonts';
+	import type { FontLoadState } from '$lib/utils/fonts';
 
 	interface Props {
 		mode: 'single' | 'pairing';

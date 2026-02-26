@@ -8,7 +8,7 @@
 	import { DropdownMenu } from 'bits-ui';
 	import { cn } from '$lib/utils/cn';
 	import { localizeHref } from '$lib/i18n';
-	import { getTheme } from '$lib/stores/theme.svelte';
+	import { getTheme } from '$lib/state/theme.svelte';
 	import { goto } from '$app/navigation';
 	import { authClient } from '$lib/auth-client';
 

@@ -6,7 +6,7 @@
 		fontPairings,
 		type FontCategory,
 		type FontLoadState,
-	} from '$lib/services/fonts';
+	} from '$lib/utils/fonts';
 
 	interface Props {
 		mode: 'single' | 'pairing';

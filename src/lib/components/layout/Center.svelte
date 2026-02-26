@@ -1,7 +1,9 @@
 <script lang="ts">
 	/**
-	 * Center - Horizontally center content with max-width.
-	 * Use for page content, articles, forms.
+	 * Center — Simple centering with Tailwind `max-w-*` classes.
+	 * Used for content sections within a page.
+	 *
+	 * For full-page wrappers with design-token widths and responsive padding, use `PageContainer`.
 	 */
 
 	import type { Snippet } from 'svelte';

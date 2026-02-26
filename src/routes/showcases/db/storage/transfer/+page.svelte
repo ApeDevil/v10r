@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
-	import { Card, SectionNav, Alert } from '$lib/components/composites';
+	import { Card, NavSection, Alert } from '$lib/components/composites';
 	import { Badge, Button, Spinner, Progress, Typography } from '$lib/components/primitives';
 	import { Stack, Cluster } from '$lib/components/layout';
-	import { getToast } from '$lib/stores/toast.svelte';
+	import { getToast } from '$lib/state/toast.svelte';
 
 	let { data } = $props();
 	const toast = getToast();
@@ -155,7 +155,7 @@
 	<title>Transfer - Storage - Showcases - Velociraptor</title>
 </svelte:head>
 
-<SectionNav {sections} ariaLabel="Transfer operations" />
+<NavSection {sections} ariaLabel="Transfer operations" />
 
 	<Stack gap="7">
 		<!-- ═══ UPLOAD ═══ -->

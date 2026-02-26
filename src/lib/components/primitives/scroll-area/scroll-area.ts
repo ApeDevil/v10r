@@ -1,12 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 
-/**
- * Root container variants for scroll area
- */
-export const scrollAreaVariants = cva('relative overflow-hidden', {
-	variants: {},
-	defaultVariants: {}
-});
+/** Root container class for scroll area */
+export const SCROLL_AREA_CLASS = 'relative overflow-hidden';
 
 /**
  * Scrollbar track variants
@@ -45,17 +40,7 @@ export const scrollbarVariants = cva(
 	}
 );
 
-/**
- * Scrollbar thumb variants
- */
-export const scrollThumbVariants = cva(
-	'relative flex-1 rounded-full bg-border transition-colors duration-[var(--duration-fast)] hover:bg-muted',
-	{
-		variants: {},
-		defaultVariants: {}
-	}
-);
+/** Scrollbar thumb class */
+export const SCROLL_THUMB_CLASS = 'relative flex-1 rounded-full bg-border transition-colors duration-[var(--duration-fast)] hover:bg-muted';
 
-export type ScrollAreaVariants = VariantProps<typeof scrollAreaVariants>;
 export type ScrollbarVariants = VariantProps<typeof scrollbarVariants>;
-export type ScrollThumbVariants = VariantProps<typeof scrollThumbVariants>;

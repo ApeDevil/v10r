@@ -6,7 +6,7 @@
 	 */
 
 	import { cn } from '$lib/utils/cn';
-	import { getSidebar } from '$lib/stores/sidebar.svelte';
+	import { getSidebar } from '$lib/state/sidebar.svelte';
 	import { navItems } from '$lib/nav';
 	import NavItem from './NavItem.svelte';
 

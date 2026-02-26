@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Card, SectionNav, ConfirmDialog, Alert } from '$lib/components/composites';
+	import { Card, NavSection, ConfirmDialog, Alert } from '$lib/components/composites';
 	import { Badge, Button, Typography } from '$lib/components/primitives';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
-	import { getToast } from '$lib/stores/toast.svelte';
+	import { getToast } from '$lib/state/toast.svelte';
 	import { Stack, Cluster } from '$lib/components/layout';
 	import KnowledgeGraph from '$lib/components/viz/graph/knowledge/KnowledgeGraph.svelte';
 
@@ -63,7 +63,7 @@
 			<p>Use the Reset Data button to seed the graph, or check your Neo4j connection.</p>
 		</Alert>
 	{:else}
-		<SectionNav {sections} ariaLabel="Model sections" />
+		<NavSection {sections} ariaLabel="Model sections" />
 
 		<Stack gap="6">
 			<!-- NODE LABELS -->

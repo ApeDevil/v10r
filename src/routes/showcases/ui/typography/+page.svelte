@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
-	import { loadFont, isFontLoaded, findFont, type FontLoadState } from '$lib/services/fonts';
+	import { loadFont, isFontLoaded, findFont, type FontLoadState } from '$lib/utils/fonts';
 	import FontPicker from './_components/FontPicker.svelte';
 	import FontPreview from './_components/FontPreview.svelte';
 	import ProsePreview from './_components/ProsePreview.svelte';

@@ -9,9 +9,9 @@
 	} from '$lib/components/shell';
 	import { QuickSearch } from '$lib/components/composites/quick-search';
 	import { Chatbot } from '$lib/components/composites/chatbot';
-	import { setSessionContext, type Session } from '$lib/stores/session.svelte';
-	import { getModals } from '$lib/stores/modals.svelte';
-	import { getTheme } from '$lib/stores/theme.svelte';
+	import { setSessionContext, type Session } from '$lib/state/session.svelte';
+	import { getModals } from '$lib/state/modals.svelte';
+	import { getTheme } from '$lib/state/theme.svelte';
 
 	type Props = {
 		children?: import('svelte').Snippet;

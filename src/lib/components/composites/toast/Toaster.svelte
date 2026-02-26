@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getToast } from '$lib/stores/toast.svelte';
+	import { getToast } from '$lib/state/toast.svelte';
 	import { cn } from '$lib/utils/cn';
 	import { fly } from 'svelte/transition';
 

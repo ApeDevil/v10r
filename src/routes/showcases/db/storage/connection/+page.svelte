@@ -3,7 +3,7 @@
 	import { Card, ConfirmDialog, Alert } from '$lib/components/composites';
 	import { Badge, Button, Spinner, Typography } from '$lib/components/primitives';
 	import { Stack, Cluster } from '$lib/components/layout';
-	import { getToast } from '$lib/stores/toast.svelte';
+	import { getToast } from '$lib/state/toast.svelte';
 
 	let { data } = $props();
 	const toast = getToast();

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { PageHeader, BackLink, SectionNav, BoundaryFallback } from '$lib/components/composites';
+	import { PageHeader, BackLink, NavSection, BoundaryFallback } from '$lib/components/composites';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives/table';
 	import VizDemoCard from '../_components/VizDemoCard.svelte';
 	import { NetworkGraph, TreeGraph, DagGraph, SankeyDiagram, KnowledgeGraph } from '$lib/components/viz';
@@ -437,7 +437,7 @@
 		]}
 	/>
 
-	<SectionNav {sections} />
+	<NavSection {sections} />
 
 	<svelte:boundary>
 	<main class="content">

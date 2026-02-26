@@ -2,9 +2,9 @@
 	import { ScrollArea as ScrollAreaPrimitive } from 'bits-ui';
 	import { cn } from '$lib/utils/cn';
 	import {
-		scrollAreaVariants,
+		SCROLL_AREA_CLASS,
 		scrollbarVariants,
-		scrollThumbVariants,
+		SCROLL_THUMB_CLASS,
 		type ScrollbarVariants
 	} from './scroll-area';
 	import type { Snippet } from 'svelte';
@@ -53,7 +53,7 @@
 	const showHorizontal = $derived(orientation === 'horizontal' || orientation === 'both');
 </script>
 
-<ScrollAreaPrimitive.Root {type} {scrollHideDelay} class={cn(scrollAreaVariants(), className)}>
+<ScrollAreaPrimitive.Root {type} {scrollHideDelay} class={cn(SCROLL_AREA_CLASS, className)}>
 	<ScrollAreaPrimitive.Viewport class="h-full w-full rounded-[inherit]">
 		{#if children}
 			{@render children()}
@@ -65,7 +65,7 @@
 			orientation="vertical"
 			class={cn(scrollbarVariants({ orientation: 'vertical', size }))}
 		>
-			<ScrollAreaPrimitive.Thumb class={cn(scrollThumbVariants())} />
+			<ScrollAreaPrimitive.Thumb class={SCROLL_THUMB_CLASS} />
 		</ScrollAreaPrimitive.Scrollbar>
 	{/if}
 
@@ -74,7 +74,7 @@
 			orientation="horizontal"
 			class={cn(scrollbarVariants({ orientation: 'horizontal', size }))}
 		>
-			<ScrollAreaPrimitive.Thumb class={cn(scrollThumbVariants())} />
+			<ScrollAreaPrimitive.Thumb class={SCROLL_THUMB_CLASS} />
 		</ScrollAreaPrimitive.Scrollbar>
 	{/if}
 

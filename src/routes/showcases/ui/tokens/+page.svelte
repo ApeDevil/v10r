@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SectionNav } from '$lib/components/composites';
+	import { NavSection } from '$lib/components/composites';
 	import TokensSection from '../components/_sections/TokensSection.svelte';
 
 	const sections = [
@@ -23,7 +23,7 @@
 	<title>Theme Tokens - UI Showcase - Velociraptor</title>
 </svelte:head>
 
-<SectionNav {sections} />
+<NavSection {sections} />
 
 <main class="content">
 	<TokensSection />

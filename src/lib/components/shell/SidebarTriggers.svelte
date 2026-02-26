@@ -6,8 +6,8 @@
 	 */
 
 	import { cn } from '$lib/utils/cn';
-	import { getSidebar } from '$lib/stores/sidebar.svelte';
-	import { getModals } from '$lib/stores/modals.svelte';
+	import { getSidebar } from '$lib/state/sidebar.svelte';
+	import { getModals } from '$lib/state/modals.svelte';
 
 	interface Props {
 		forceExpanded?: boolean; // Force expanded mode (for drawer)

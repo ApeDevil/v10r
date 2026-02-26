@@ -2,7 +2,7 @@
 	import type { PageProps } from './$types';
 	import { superForm } from 'sveltekit-superforms';
 	import { valibotClient } from 'sveltekit-superforms/adapters';
-	import { realtimeSchema } from '$lib/schemas/forms-showcase/validation';
+	import { realtimeSchema } from '$lib/schemas/showcase/validation';
 	import { Card, Alert, FormField } from '$lib/components/composites';
 	import { Button, Input, Badge, Progress, Spinner } from '$lib/components/primitives';
 	import { Stack, Cluster } from '$lib/components/layout';

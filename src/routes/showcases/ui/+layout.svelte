@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { getTheme } from '$lib/stores/theme.svelte';
+	import { getTheme } from '$lib/state/theme.svelte';
 	import { PageContainer } from '$lib/components/layout';
 	import { PageHeader, TabNav } from '$lib/components/composites';
 

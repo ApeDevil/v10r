@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { PageContainer } from '$lib/components/layout';
-	import { PageHeader, TabNav } from '$lib/components/composites';
+	import { ShowcaseLayout } from '$lib/components/composites';
 
 	let { children }: { children: Snippet } = $props();
 
@@ -13,39 +12,36 @@
 	];
 </script>
 
-<PageContainer class="py-7">
-	<PageHeader
-		title="Forms"
-		description="Form validation patterns with Superforms v2 + Valibot v1."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'Forms' }
-		]}
-	/>
-
-	<TabNav {tabs} ariaLabel="Form sections" />
-
-	<div class="pt-6 forms-showcase">
-		{@render children()}
-	</div>
-</PageContainer>
+<ShowcaseLayout
+	title="Forms"
+	description="Form validation patterns with Superforms v2 + Valibot v1."
+	breadcrumbs={[
+		{ label: 'Home', href: '/' },
+		{ label: 'Showcases', href: '/showcases' },
+		{ label: 'Forms' }
+	]}
+	{tabs}
+	ariaLabel="Form sections"
+	wrapperClass="forms-showcase"
+>
+	{@render children()}
+</ShowcaseLayout>
 
 <style>
 	/* Shared form styles for all leaf pages */
-	.forms-showcase :global(.form-grid) {
+	:global(.forms-showcase .form-grid) {
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-5);
 	}
 
-	.forms-showcase :global(.form-actions) {
+	:global(.forms-showcase .form-actions) {
 		display: flex;
 		justify-content: flex-end;
 		padding-top: var(--spacing-2);
 	}
 
-	.forms-showcase :global(.form-textarea) {
+	:global(.forms-showcase .form-textarea) {
 		width: 100%;
 		min-height: 6rem;
 		padding: var(--spacing-3);
@@ -58,7 +54,7 @@
 		resize: vertical;
 	}
 
-	.forms-showcase :global(.form-textarea:focus) {
+	:global(.forms-showcase .form-textarea:focus) {
 		outline: none;
 		border-color: var(--color-primary);
 		box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 25%, transparent);

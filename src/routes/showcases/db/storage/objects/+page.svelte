@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
-	import { Card, SectionNav, Alert } from '$lib/components/composites';
+	import { Card, NavSection, Alert } from '$lib/components/composites';
 	import { Badge, Button, Spinner, Typography } from '$lib/components/primitives';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
 	import { ToggleGroup } from '$lib/components/primitives';
 	import { Stack } from '$lib/components/layout';
-	import { getToast } from '$lib/stores/toast.svelte';
+	import { getToast } from '$lib/state/toast.svelte';
 
 	let { data } = $props();
 	const toast = getToast();
@@ -90,7 +90,7 @@
 {#if data.error}
 		<Alert variant="error" title="Error" description={data.error} />
 	{:else}
-		<SectionNav {sections} ariaLabel="Object operations" />
+		<NavSection {sections} ariaLabel="Object operations" />
 
 		<Stack gap="7">
 			<!-- ═══ BROWSER ═══ -->

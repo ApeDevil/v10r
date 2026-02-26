@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SectionNav } from '$lib/components/composites';
+	import { NavSection } from '$lib/components/composites';
 	import FeedbackSection from '../_sections/FeedbackSection.svelte';
 	import ContentSection from '../_sections/ContentSection.svelte';
 	import NavigationSection from '../_sections/NavigationSection.svelte';
@@ -17,7 +17,7 @@
 	<title>Composites - UI Showcase - Velociraptor</title>
 </svelte:head>
 
-<SectionNav {sections} />
+<NavSection {sections} />
 
 <main class="content">
 	<FeedbackSection />

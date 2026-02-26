@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getTheme } from '$lib/stores/theme.svelte';
+	import { getTheme } from '$lib/state/theme.svelte';
 	import { Button } from '$lib/components/primitives';
 
 	const theme = getTheme();

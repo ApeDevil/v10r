@@ -3,10 +3,10 @@
 	import '../app.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import { AppShell } from '$lib/components/shell';
-	import { setSidebarContext } from '$lib/stores/sidebar.svelte';
-	import { setThemeContext } from '$lib/stores/theme.svelte';
-	import { setModalsContext } from '$lib/stores/modals.svelte';
-	import { setToastContext } from '$lib/stores/toast.svelte';
+	import { setSidebarContext } from '$lib/state/sidebar.svelte';
+	import { setThemeContext } from '$lib/state/theme.svelte';
+	import { setModalsContext } from '$lib/state/modals.svelte';
+	import { setToastContext } from '$lib/state/toast.svelte';
 	import { initKeyboardHandler, registerShortcut } from '$lib/shortcuts';
 	import { goto } from '$app/navigation';
 	import { localizeHref } from '$lib/i18n';

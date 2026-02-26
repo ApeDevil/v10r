@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SectionNav } from '$lib/components/composites';
+	import { NavSection } from '$lib/components/composites';
 	import { DemoCard, VariantGrid } from '../../components/_components';
 	import {
 		GeometricMark,
@@ -43,7 +43,7 @@
 	<title>Ornaments - Decorative - UI Showcase - Velociraptor</title>
 </svelte:head>
 
-<SectionNav {sections} />
+<NavSection {sections} />
 
 <main class="content">
 	<!-- GeometricMark -->

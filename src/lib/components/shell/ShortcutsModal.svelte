@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { cn } from '$lib/utils/cn';
 	import { trapFocus } from '$lib/utils/focus-trap';
-	import { getModals } from '$lib/stores/modals.svelte';
+	import { getModals } from '$lib/state/modals.svelte';
 	import { getShortcutsByCategory, formatShortcut } from '$lib/shortcuts';
 
 	interface Props {

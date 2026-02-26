@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { cn } from '$lib/utils/cn';
 	import { Button } from '$lib/components/primitives/button';
-	import { getSidebar } from '$lib/stores/sidebar.svelte';
+	import { getSidebar } from '$lib/state/sidebar.svelte';
 
 	interface Props {
 		class?: string;

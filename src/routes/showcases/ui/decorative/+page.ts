@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
 
 export const load = () => {
-	redirect(307, '/showcases/ui/decorative/ornaments');
+	redirect(303, '/showcases/ui/decorative/ornaments');
 };

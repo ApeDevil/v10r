@@ -5,7 +5,7 @@
 	 * Sessions auto-renew, so this only appears after 7 days of inactivity.
 	 */
 
-	import { getModals } from '$lib/stores';
+	import { getModals } from '$lib/state';
 
 	type Props = {
 		email: string;

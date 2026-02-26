@@ -448,7 +448,7 @@ Credentials are re-encoded to base64 on every `cypher()` call.
 
 ## Tier 3: Structural Refinements
 
-### 3.1 Route & Layout Cleanup
+### 3.1 Route & Layout Cleanup ✅
 
 | Issue | Location | Action |
 |-------|----------|--------|
@@ -459,9 +459,11 @@ Credentials are re-encoded to base64 on every `cypher()` call.
 | Showcase error hints use `if/else if` chain | `showcases/+error.svelte` | Convert to declarative config map `[prefix, hint][]` |
 | Conversation API routes have no try/catch | `api/ai/conversations/+server.ts`, `api/ai/conversations/[id]/+server.ts` | Add error handling — currently throws propagate as HTML, not JSON |
 
+> **Implementation notes:** (1) Deleted pass-through `showcases/+layout.svelte`. (2) Created `ShowcaseLayout` component at `composites/showcase-layout/` with props for `title`, `description`, `breadcrumbs`, `tabs`, `ariaLabel`, `width`, `containerClass`, `wrapperClass`; updated 5 layouts (auth, db, shell, ai, forms) — UI layout kept custom (floating theme toggle FAB). AI uses `width="wide" containerClass="pt-7"`, forms uses `wrapperClass="forms-showcase"` with scoped CSS preserved. (3) Changed `redirect(307)` → `redirect(303)` in 13 showcase `+page.ts` files. (4) Added cookie check guard to `sessionPopulate` in `hooks.server.ts` — skips `auth.api.getSession()` when no `better-auth.session_token` cookie is present. (5) Replaced 6-branch if/else chain with `HINT_MAP: [string, string][]` + `.find()` in `showcases/+error.svelte`. (6) Added try/catch with `classifyDbError` to GET/POST in `api/ai/conversations/+server.ts` and GET/DELETE in `api/ai/conversations/[id]/+server.ts`.
+
 ---
 
-### 3.2 Naming & Organization
+### 3.2 Naming & Organization ✅
 
 | Current | Problem | Proposed |
 |---------|---------|----------|
@@ -474,9 +476,11 @@ Credentials are re-encoded to base64 on every `cypher()` call.
 | Shell index `// Phase 3A` comments | Build-phase artifacts | Replace with functional groupings or remove |
 | `db/ai/guards.ts` / `db/rag/guards.ts` | Domain guards named like showcase guards | Rename to `limits.ts` to distinguish from showcase safety guards |
 
+> **Implementation notes:** (1) Renamed `stores/` → `state/`; updated 34 consumer files. (2) Moved `services/fonts/` → `utils/fonts/`; deleted empty `services/` directory; updated 4 consumer files. (3) Renamed `schemas/forms-showcase/` → `schemas/showcase/`. (4) Renamed `SectionNav.svelte` → `NavSection.svelte`; updated barrel export and 18 consumer files. (5) Deleted empty `primitives/separator/` directory. (6) Replaced phase comments (`Phase 3A`, `Phase 4`, etc.) in `shell/index.ts` with functional groupings (Core shell, Sidebar, Navigation, Toasts, Utilities, Session lifecycle). (7) Renamed `db/ai/guards.ts` → `limits.ts` and `db/rag/guards.ts` → `limits.ts`; updated 3 consumer routes. Deferred: `pipeline.ts` relocation (imported by both server and client code, current `$lib/types/` location is correct).
+
 ---
 
-### 3.3 Component Barrel Cleanup
+### 3.3 Component Barrel Cleanup ✅
 
 **Problem:** `composites/index.ts` uses three distinct export styles:
 
@@ -504,9 +508,11 @@ export { DatePicker } from './date-picker';
 // Note: shell/ is NOT exported here — app-specific, import from '$lib/components/shell'.
 ```
 
+> **Implementation notes:** (1) Standardized `composites/index.ts` to all `export * from './...'` style (sub-barrels already existed for card, form-field, confirm-dialog, quick-search, alert). (2) Trimmed primitives barrel — removed internal-only CVA variant exports: all accordion (4 variants + 5 types), scroll-area (3 variants + 3 types), carousel (6 variants + 6 types), calendar (8 variants + 8 types), toggle-group (2 variants + 2 types), switch, pane resizer, chip close/filter variants, kbd, spinner, typography. Kept externally-used: `buttonVariants`, `ButtonVariants`, `badgeVariants`, `BadgeVariants`, `chipVariants`, `ChipVariants`, `toggleVariants`, `ToggleVariants`. Verified zero external consumers of removed exports via grep. (3) Added exclusion comments to `components/index.ts` for viz/ and shell/.
+
 ---
 
-### 3.4 Toast System Co-location
+### 3.4 Toast System Co-location ✅
 
 The toast system is split:
 
@@ -517,9 +523,11 @@ A developer looking for the toast system finds half in each place.
 
 **Fix:** Move `ToastContainer` into `composites/toast/` alongside `Toaster`. Re-export from `shell/index.ts` for the AppShell to consume. The toast system becomes a coherent directory.
 
+> **Implementation notes:** Moved `shell/ToastContainer.svelte` → `composites/toast/ToastContainer.svelte`. Updated `composites/toast/index.ts` to export both `Toaster` and `ToastContainer`. `shell/index.ts` re-exports `ToastContainer` from `'$lib/components/composites/toast'` — preserving all existing import paths.
+
 ---
 
-### 3.5 Component-Level Fixes
+### 3.5 Component-Level Fixes ✅
 
 | Component | Issue | Fix |
 |-----------|-------|-----|
@@ -530,6 +538,8 @@ A developer looking for the toast system finds half in each place.
 | `Toaster` | Duplicates variant styles from `Alert` | Compose from Alert |
 | `ScrollArea` | No-variant CVA (only one variant: default) | Replace with string constants |
 | `PageContainer` vs `Center` | Purpose overlap not documented | Add JSDoc distinguishing their intent |
+
+> **Implementation notes:** (a) `EmptyState`: replaced `class="empty-state {className || ''}"` with `class={cn('empty-state', className)}` + `cn` import. (b) `NavItem`: changed `$derived(() => { ... })` to `$derived.by(() => { ... })`; updated 3 usages from `isActive()` to `isActive` (now a boolean, not a function). (c) `DropdownMenu`: replaced `window.location.href = item.href` with `goto(item.href)` from `$app/navigation` for SPA-correct navigation. (d) `Accordion`: extracted `{#snippet accordionItems()}` containing the shared `{#each}` block; single and multiple branches now render only the Root wrapper + `{@render accordionItems()}`. (e) Toaster composition deferred — legacy component may still be used in showcase demos. (f) `ScrollArea`: replaced empty-variant `scrollAreaVariants` CVA with `SCROLL_AREA_CLASS` string constant; replaced empty-variant `scrollThumbVariants` CVA with `SCROLL_THUMB_CLASS` string constant; updated `ScrollArea.svelte` and sub-barrel exports. (g) Added JSDoc to `PageContainer` ("Full-page wrapper with design-token widths, use for top-level page shells") and `Center` ("Simple centering with Tailwind max-w-* classes, use for content sections within a page"), with cross-references.
 
 ---
 

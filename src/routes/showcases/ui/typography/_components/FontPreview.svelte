@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Typography } from '$lib/components';
 	import type { TypographyVariants } from '$lib/components/primitives/typography/typography';
-	import type { FontLoadState } from '$lib/services/fonts';
+	import type { FontLoadState } from '$lib/utils/fonts';
 
 	type Variant = NonNullable<TypographyVariants['variant']>;
 

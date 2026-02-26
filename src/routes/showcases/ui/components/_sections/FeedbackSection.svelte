@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { DemoCard, VariantGrid } from '../_components';
 	import { Alert, EmptyState } from '$lib/components';
-	import { getToast } from '$lib/stores/toast.svelte';
+	import { getToast } from '$lib/state/toast.svelte';
 
 	const toast = getToast();
 

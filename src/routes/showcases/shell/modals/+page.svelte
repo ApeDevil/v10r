@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getModals } from '$lib/stores/modals.svelte';
+	import { getModals } from '$lib/state/modals.svelte';
 	import { Button } from '$lib/components/primitives';
 
 	const modals = getModals();

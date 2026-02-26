@@ -3,7 +3,7 @@
 	import { beforeNavigate } from '$app/navigation';
 	import { cn } from '$lib/utils/cn';
 	import { chartContainerVariants, type ChartContainerVariants } from '../../_shared/chart-container';
-	import { getTheme } from '$lib/stores/theme.svelte';
+	import { getTheme } from '$lib/state/theme.svelte';
 	import { CARTO_VOYAGER, CARTO_DARK_MATTER } from './map-theme';
 	import type { Snippet, Component } from 'svelte';
 

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { getSession } from '$lib/stores/session.svelte';
-	import { getModals } from '$lib/stores/modals.svelte';
+	import { getSession } from '$lib/state/session.svelte';
+	import { getModals } from '$lib/state/modals.svelte';
 	import { Button } from '$lib/components/primitives';
 
 	const session = getSession();

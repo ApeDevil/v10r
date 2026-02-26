@@ -6,7 +6,7 @@ import { SYSTEM_PROMPT, MAX_TOKENS, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW, RATE_LIMI
 import { ChatRequestSchema } from '$lib/server/ai/validation';
 import { classifyAIError, aiErrorToStatus } from '$lib/server/ai/errors';
 import { createConversation, saveMessages, updateConversationTitle } from '$lib/server/db/ai/mutations';
-import { checkConversationLimit } from '$lib/server/db/ai/guards';
+import { checkConversationLimit } from '$lib/server/db/ai/limits';
 import { retrieve, formatContextForPrompt } from '$lib/server/retrieval';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';

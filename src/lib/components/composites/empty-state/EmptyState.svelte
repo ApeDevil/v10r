@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { cn } from '$lib/utils/cn';
+
 	interface Props {
 		icon?: string;
 		title: string;
@@ -10,7 +12,7 @@
 	let { icon, title, description, class: className, children }: Props = $props();
 </script>
 
-<div class="empty-state {className || ''}" role="status">
+<div class={cn('empty-state', className)} role="status">
 	{#if icon}
 		<div class="empty-icon" aria-hidden="true">
 			<span class="{icon}"></span>

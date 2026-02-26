@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SectionNav } from '$lib/components/composites';
+	import { NavSection } from '$lib/components/composites';
 	import ActionsSection from '../_sections/ActionsSection.svelte';
 	import InputsSection from '../_sections/InputsSection.svelte';
 	import DataDisplaySection from '../_sections/DataDisplaySection.svelte';
@@ -17,7 +17,7 @@
 	<title>Primitives - UI Showcase - Velociraptor</title>
 </svelte:head>
 
-<SectionNav {sections} />
+<NavSection {sections} />
 
 <main class="content">
 	<ActionsSection />

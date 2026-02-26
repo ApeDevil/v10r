@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import { safeParse } from 'valibot';
 import * as v from 'valibot';
 import { ingest } from '$lib/server/retrieval/ingest';
-import { checkDocumentLimit } from '$lib/server/db/rag/guards';
+import { checkDocumentLimit } from '$lib/server/db/rag/limits';
 import { RetrievalError, retrievalErrorToStatus } from '$lib/server/retrieval/errors';
 import { INGEST_RATE_LIMIT_MAX, INGEST_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import { requireApiUser } from '$lib/server/auth/guards';

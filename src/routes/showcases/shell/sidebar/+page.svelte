@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getSidebar } from '$lib/stores/sidebar.svelte';
+	import { getSidebar } from '$lib/state/sidebar.svelte';
 	import { Button } from '$lib/components/primitives';
 
 	const sidebar = getSidebar();

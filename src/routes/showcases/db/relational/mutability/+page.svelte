@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
-	import { Card, SectionNav, ConfirmDialog, Alert, FormField } from '$lib/components/composites';
+	import { Card, NavSection, ConfirmDialog, Alert, FormField } from '$lib/components/composites';
 	import { Badge, Button, Input, Select, Switch, Typography } from '$lib/components/primitives';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
 	import { Dialog } from '$lib/components/primitives';
 	import { Stack, Cluster } from '$lib/components/layout';
-	import { getToast } from '$lib/stores/toast.svelte';
+	import { getToast } from '$lib/state/toast.svelte';
 
 	let { data } = $props();
 	const toast = getToast();
@@ -97,7 +97,7 @@
 			{/snippet}
 		</Alert>
 	{:else}
-		<SectionNav {sections} ariaLabel="Mutability patterns" />
+		<NavSection {sections} ariaLabel="Mutability patterns" />
 
 		<!-- Action result alert -->
 		{#if actionResult?.message && !actionResult?.success}

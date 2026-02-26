@@ -1,7 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { superValidate, fail, message } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
-import { dependentSchema } from '$lib/schemas/forms-showcase/patterns';
+import { dependentSchema } from '$lib/schemas/showcase/patterns';
 
 const locationData = {
 	US: {
