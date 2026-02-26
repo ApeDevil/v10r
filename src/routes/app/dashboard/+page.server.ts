@@ -1,13 +1,10 @@
-import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { account } from '$lib/server/db/schema/auth/_better-auth';
 import { eq } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (!locals.user) {
-		redirect(303, '/auth/login');
-	}
+	// Auth guard handled by /app layout
 
 	// Fetch linked accounts for display
 	const accounts = await db

@@ -81,6 +81,13 @@
 			title="i18n"
 			description="Translations, pluralization, formatting, and language switching"
 		/>
+
+		<LinkCard
+			href="/showcases/jobs"
+			icon="i-lucide-clock"
+			title="Jobs"
+			description="Scheduled background jobs with execution logging and monitoring"
+		/>
 	</NavGrid>
 
 	<BackLink href="/" label="Home" />

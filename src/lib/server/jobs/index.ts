@@ -1,3 +1,4 @@
+import { logCleanup } from './log-cleanup';
 import { sessionCleanup } from './session-cleanup';
 
 export interface Job {
@@ -6,4 +7,5 @@ export interface Job {
 
 export const jobs: Record<string, Job> = {
 	'session-cleanup': { execute: sessionCleanup },
+	'log-cleanup': { execute: logCleanup },
 };

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { PageHeader, Card } from '$lib/components/composites';
+	import { Card } from '$lib/components/composites';
 	import { Badge } from '$lib/components/primitives';
-	import { PageContainer, Stack } from '$lib/components/layout';
+	import { Stack } from '$lib/components/layout';
 
 	let { data } = $props();
 </script>
@@ -10,64 +10,53 @@
 	<title>Dashboard - Velociraptor</title>
 </svelte:head>
 
-<PageContainer class="py-7">
-	<PageHeader
-		title="Dashboard"
-		description="Welcome back, {data.user.name}."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Dashboard' }
-		]}
-	/>
+<Stack gap="6">
+	<Card>
+		{#snippet header()}
+			<h2 class="text-fluid-lg font-semibold">Profile</h2>
+		{/snippet}
 
-	<Stack gap="6">
-		<Card>
-			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Profile</h2>
-			{/snippet}
-
-			<div class="diag-grid">
-				<div class="diag-row">
-					<span class="diag-label">Name</span>
-					<span class="diag-value">{data.user.name}</span>
-				</div>
-				<div class="diag-row">
-					<span class="diag-label">Email</span>
-					<code class="diag-mono">{data.user.email}</code>
-				</div>
-				<div class="diag-row">
-					<span class="diag-label">User ID</span>
-					<code class="diag-mono">{data.user.id}</code>
-				</div>
-				{#if data.user.image}
-					<div class="diag-row">
-						<span class="diag-label">Avatar</span>
-						<img src={data.user.image} alt="User avatar" class="avatar-img" />
-					</div>
-				{/if}
+		<div class="diag-grid">
+			<div class="diag-row">
+				<span class="diag-label">Name</span>
+				<span class="diag-value">{data.user.name}</span>
 			</div>
-		</Card>
-
-		<Card>
-			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Linked Accounts</h2>
-			{/snippet}
-
-			{#if data.accounts.length > 0}
-				<div class="diag-grid">
-					{#each data.accounts as acc}
-						<div class="diag-row">
-							<span class="diag-label capitalize">{acc.provider}</span>
-							<Badge variant="success">Connected</Badge>
-						</div>
-					{/each}
+			<div class="diag-row">
+				<span class="diag-label">Email</span>
+				<code class="diag-mono">{data.user.email}</code>
+			</div>
+			<div class="diag-row">
+				<span class="diag-label">User ID</span>
+				<code class="diag-mono">{data.user.id}</code>
+			</div>
+			{#if data.user.image}
+				<div class="diag-row">
+					<span class="diag-label">Avatar</span>
+					<img src={data.user.image} alt="User avatar" class="avatar-img" />
 				</div>
-			{:else}
-				<p class="text-muted text-sm">No linked accounts.</p>
 			{/if}
-		</Card>
-	</Stack>
-</PageContainer>
+		</div>
+	</Card>
+
+	<Card>
+		{#snippet header()}
+			<h2 class="text-fluid-lg font-semibold">Linked Accounts</h2>
+		{/snippet}
+
+		{#if data.accounts.length > 0}
+			<div class="diag-grid">
+				{#each data.accounts as acc}
+					<div class="diag-row">
+						<span class="diag-label capitalize">{acc.provider}</span>
+						<Badge variant="success">Connected</Badge>
+					</div>
+				{/each}
+			</div>
+		{:else}
+			<p class="text-muted text-sm">No linked accounts.</p>
+		{/if}
+	</Card>
+</Stack>
 
 <style>
 	.diag-grid {

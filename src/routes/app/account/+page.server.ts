@@ -6,9 +6,7 @@ import { eq, and, ne } from 'drizzle-orm';
 import { auth } from '$lib/server/auth';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (!locals.user) {
-		redirect(303, '/auth/login');
-	}
+	// Auth guard handled by /app layout
 
 	// Fetch all active sessions for this user
 	const sessions = await db

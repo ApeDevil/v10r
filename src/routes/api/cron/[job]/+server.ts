@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { jobs } from '$lib/server/jobs';
+import { runJob } from '$lib/server/jobs/runner';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ request, params }) => {
@@ -10,11 +11,10 @@ export const GET: RequestHandler = async ({ request, params }) => {
 		error(401, 'Unauthorized');
 	}
 
-	const job = jobs[params.job];
-	if (!job) {
+	if (!jobs[params.job]) {
 		error(404, `Unknown job: ${params.job}`);
 	}
 
-	const result = await job.execute();
-	return json({ success: true, deleted: result });
+	const result = await runJob(params.job, 'cron');
+	return json(result);
 };

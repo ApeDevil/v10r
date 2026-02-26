@@ -2,6 +2,7 @@ import { building } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import { platform } from '$lib/server/platform';
 import { jobs } from './index';
+import { runJob } from './runner';
 
 const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
 const STARTUP_DELAY_MS = 5_000;
@@ -11,10 +12,10 @@ declare global {
 }
 
 function runAll() {
-	for (const [slug, job] of Object.entries(jobs)) {
-		job.execute()
-			.then((n) => console.log(`[scheduler] ${slug}: deleted ${n}`))
-			.catch((err) => console.error(`[scheduler] ${slug} failed:`, err));
+	for (const slug of Object.keys(jobs)) {
+		runJob(slug, 'scheduler')
+			.then((r) => console.log(`[scheduler] ${slug}: ${r.status} (${r.durationMs}ms)`))
+			.catch((err) => console.error(`[scheduler] ${slug} unexpected:`, err));
 	}
 }
 
