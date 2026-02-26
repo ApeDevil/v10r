@@ -10,6 +10,7 @@
 	let exporting = $state(false);
 	let deleting = $state(false);
 	let confirmDelete = $state(false);
+	let deleteConfirmText = $state('');
 
 	// If export action returned data, trigger download
 	$effect(() => {
@@ -41,7 +42,7 @@
 				<div class="session-row">
 					<div class="session-info">
 						<div class="flex items-center gap-2">
-							<code class="diag-mono">{sess.id.slice(0, 8)}...</code>
+							<code class="diag-mono">{sess.displayId}</code>
 							{#if sess.isCurrent}
 								<Badge variant="success">Current</Badge>
 							{/if}
@@ -145,6 +146,14 @@
 			<Alert variant="error" title="Are you sure?">
 				{#snippet children()}
 					<p>This will permanently delete your account, all sessions, and linked providers.</p>
+					<p class="text-sm mt-2">Type <strong>DELETE</strong> to confirm:</p>
+					<input
+						type="text"
+						bind:value={deleteConfirmText}
+						placeholder="DELETE"
+						class="delete-confirm-input"
+						autocomplete="off"
+					/>
 					<div class="flex gap-3 mt-4">
 						<form
 							method="POST"
@@ -157,14 +166,15 @@
 								};
 							}}
 						>
-							<Button type="submit" variant="destructive" disabled={deleting}>
+							<input type="hidden" name="confirmation" value={deleteConfirmText} />
+							<Button type="submit" variant="destructive" disabled={deleting || deleteConfirmText !== 'DELETE'}>
 								{#if deleting}
 									<Spinner size="xs" class="mr-2" />
 								{/if}
 								Yes, Delete My Account
 							</Button>
 						</form>
-						<Button variant="outline" onclick={() => (confirmDelete = false)}>
+						<Button variant="outline" onclick={() => { confirmDelete = false; deleteConfirmText = ''; }}>
 							Cancel
 						</Button>
 					</div>
@@ -220,5 +230,18 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-1);
+	}
+
+	.delete-confirm-input {
+		margin-top: var(--spacing-2);
+		padding: var(--spacing-2) var(--spacing-3);
+		border: 1px solid var(--color-error-fg);
+		border-radius: var(--radius-sm);
+		background-color: var(--color-surface-1);
+		color: var(--color-fg);
+		font-size: var(--text-fluid-sm);
+		width: 100%;
+		max-width: 200px;
+		outline: none;
 	}
 </style>

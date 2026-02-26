@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { apiFetch } from '$lib/api';
 	import { Card, Alert } from '$lib/components/composites';
 	import { Typography, Button } from '$lib/components/primitives';
 	import { Stack } from '$lib/components/layout';
@@ -25,7 +26,7 @@
 		error = null;
 
 		try {
-			const res = await fetch('/api/retrieval/search', {
+			const res = await apiFetch('/api/retrieval/search', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ query: query.trim(), tiers: [1], maxChunks: 10 }),

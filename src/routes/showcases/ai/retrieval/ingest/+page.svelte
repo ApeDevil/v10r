@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { apiFetch } from '$lib/api';
 	import { Card, Alert, FormField } from '$lib/components/composites';
 	import { Typography, Button } from '$lib/components/primitives';
 	import { Stack } from '$lib/components/layout';
@@ -39,7 +40,7 @@
 		result = null;
 
 		try {
-			const res = await fetch('/api/retrieval/ingest', {
+			const res = await apiFetch('/api/retrieval/ingest', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ title: title.trim(), content: content.trim() }),
@@ -64,7 +65,7 @@
 	async function deleteDocument(id: string) {
 		deleteError = null;
 		try {
-			const res = await fetch(`/api/retrieval/documents/${id}`, { method: 'DELETE' });
+			const res = await apiFetch(`/api/retrieval/documents/${id}`, { method: 'DELETE' });
 			if (!res.ok) {
 				throw new Error(`Failed to delete document (HTTP ${res.status})`);
 			}

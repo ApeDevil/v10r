@@ -1,9 +1,14 @@
+import { createHash } from 'node:crypto';
 import { redirect, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { db } from '$lib/server/db';
 import { session as sessionTable, account, user } from '$lib/server/db/schema/auth/_better-auth';
 import { eq, and, ne } from 'drizzle-orm';
 import { auth } from '$lib/server/auth';
+
+function hashForDisplay(id: string): string {
+	return createHash('sha256').update(id).digest('hex').slice(0, 12);
+}
 
 export const load: PageServerLoad = async ({ locals }) => {
 	// Auth guard handled by /app layout
@@ -33,6 +38,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		user: locals.user,
 		sessions: sessions.map((s) => ({
 			id: s.id,
+			displayId: hashForDisplay(s.id),
 			createdAt: s.createdAt.toISOString(),
 			expiresAt: s.expiresAt.toISOString(),
 			ipAddress: s.ipAddress,
@@ -73,12 +79,22 @@ export const actions: Actions = {
 		if (!locals.user) redirect(303, '/auth/login');
 
 		const userData = await db
-			.select()
+			.select({
+				id: user.id,
+				name: user.name,
+				email: user.email,
+				emailVerified: user.emailVerified,
+				image: user.image,
+				createdAt: user.createdAt,
+			})
 			.from(user)
 			.where(eq(user.id, locals.user.id));
 
 		const accountData = await db
-			.select()
+			.select({
+				providerId: account.providerId,
+				createdAt: account.createdAt,
+			})
 			.from(account)
 			.where(eq(account.userId, locals.user.id));
 
@@ -110,8 +126,15 @@ export const actions: Actions = {
 		};
 	},
 
-	deleteAccount: async ({ locals }) => {
+	deleteAccount: async ({ request, locals }) => {
 		if (!locals.user) redirect(303, '/auth/login');
+
+		const formData = await request.formData();
+		const confirmation = formData.get('confirmation');
+
+		if (confirmation !== 'DELETE') {
+			return fail(400, { error: 'Type DELETE to confirm account deletion' });
+		}
 
 		// Delete user — cascades to sessions and accounts via FK
 		await db.delete(user).where(eq(user.id, locals.user.id));

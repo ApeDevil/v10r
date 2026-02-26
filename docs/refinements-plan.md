@@ -143,9 +143,9 @@ Each module still defines its own error kinds (domain-specific), but the class s
 
 ---
 
-### 1.3 Security Fixes
+### 1.3 Security Fixes ✅
 
-#### 1.3a Cron Secret Timing Attack (High)
+#### 1.3a Cron Secret Timing Attack (High) ✅
 
 **File:** `src/routes/api/cron/[job]/+server.ts`
 
@@ -164,7 +164,7 @@ function safeCompare(a: string, b: string): boolean {
 }
 ```
 
-#### 1.3b JSON CSRF Protection Missing (High)
+#### 1.3b JSON CSRF Protection Missing (High) ✅
 
 **Files:** All `/api/*` endpoints accepting POST/DELETE
 
@@ -191,7 +191,7 @@ const csrfProtection: Handle = async ({ event, resolve }) => {
 
 Create a shared `apiFetch()` utility that includes the header automatically.
 
-#### 1.3c Job Trigger Has No Authorization (High)
+#### 1.3c Job Trigger Has No Authorization (High) ✅
 
 **File:** `src/routes/app/jobs/+page.server.ts`
 
@@ -220,7 +220,7 @@ export function requireAdmin(event: RequestEvent) {
 }
 ```
 
-#### 1.3d Session IDs Exposed to Client (Medium)
+#### 1.3d Session IDs Exposed to Client (Medium) ✅
 
 **File:** `src/routes/app/account/+page.server.ts`
 
@@ -236,7 +236,7 @@ function sessionDisplayId(id: string): string {
 
 Use the display ID in the UI and for revocation (look up by user ownership + hash comparison).
 
-#### 1.3e Account Deletion Has No Confirmation (Medium)
+#### 1.3e Account Deletion Has No Confirmation (Medium) ✅
 
 **File:** `src/routes/app/account/+page.server.ts`
 
@@ -244,7 +244,7 @@ A single POST request irreversibly deletes the user and all cascaded data. No re
 
 **Fix:** Require typing `"delete my account"` to confirm, or add re-authentication.
 
-#### 1.3f Data Export Leaks Full User Record (Medium)
+#### 1.3f Data Export Leaks Full User Record (Medium) ✅
 
 **File:** `src/routes/app/account/+page.server.ts`
 
@@ -259,15 +259,17 @@ const userData = await db
     .where(eq(user.id, locals.user.id));
 ```
 
-#### 1.3g CSP Missing Critical Directives (Medium)
+#### 1.3g CSP Missing Critical Directives (Medium) ✅
 
 **File:** `svelte.config.js`
 
 Missing: `frame-ancestors: 'none'`, `base-uri: 'self'`, `form-action: 'self'`, `object-src: 'none'`. Also add `mode: 'auto'` for nonce-based script loading.
 
+> **Implementation notes:** All 7 security fixes applied in a single pass. (a) `timingSafeEqual` via `safeEqual()` helper in cron endpoint. (b) `csrfProtection` handle added to `hooks.server.ts` between `sessionPopulate` and `routeGuard`; created `src/lib/api.ts` with `apiFetch()` wrapper and `CSRF_HEADER` export; updated 10 client call sites (3 `Chat` constructors via `headers: CSRF_HEADER`, 7 `fetch` calls via `apiFetch`). (c) Created `src/lib/server/auth/guards.ts` with `requireAuth` and `requireAdmin` (uses `ADMIN_EMAIL` env var); added `requireAdmin(locals)` to jobs trigger action. (d) Added `hashForDisplay()` using SHA-256 truncated to 12 hex chars; session map includes `displayId` alongside `id` (id still needed for revocation form). (e) Server requires `confirmation === 'DELETE'` in formData; UI adds text input + hidden field, submit disabled until match. (f) User export whitelisted to `id, name, email, emailVerified, image, createdAt`; account export whitelisted to `providerId, createdAt`. (g) Added `object-src: none`, `base-uri: self`, `form-action: self`, `frame-ancestors: none` to CSP directives; deferred `mode: 'auto'` (nonce support) to avoid breaking inline styles.
+
 ---
 
-### 1.4 Graph Showcase Seed is Destructive
+### 1.4 Graph Showcase Seed is Destructive ✅
 
 **File:** `src/lib/server/graph/showcase/seed.ts`
 
@@ -279,6 +281,8 @@ Missing: `frame-ancestors: 'none'`, `base-uri: 'self'`, `form-action: 'self'`, `
 MATCH (n) WHERE n:Technology OR n:Concept OR n:Layer OR n:Showcase
 DETACH DELETE n
 ```
+
+> **Implementation notes:** Replaced `MATCH (n) DETACH DELETE n` with label-scoped `MATCH (n) WHERE n:Layer OR n:Technology OR n:Concept OR n:Showcase DETACH DELETE n` in `seed.ts`. RAG nodes (`Entity`, `Chunk`, `Document`) are now preserved when reseeding showcase data.
 
 ---
 

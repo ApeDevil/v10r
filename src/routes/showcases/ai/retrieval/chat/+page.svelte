@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Chat } from '@ai-sdk/svelte';
+	import { CSRF_HEADER } from '$lib/api';
 	import { Card, Alert, EmptyState } from '$lib/components/composites';
 	import { RagPipeline, createPipelineState } from './_components/rag-pipeline';
 	import { Typography, Drawer, ToggleGroup } from '$lib/components/primitives';
@@ -23,6 +24,7 @@
 
 	const chat = new Chat({
 		api: '/api/ai/chat',
+		headers: CSRF_HEADER,
 		body: {
 			get useRetrieval() { return true; },
 			get retrievalTiers() { return selectedTiers; },

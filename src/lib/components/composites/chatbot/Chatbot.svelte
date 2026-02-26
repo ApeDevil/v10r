@@ -2,6 +2,7 @@
 	import { Dialog } from 'bits-ui';
 	import { Chat } from '@ai-sdk/svelte';
 	import { cn } from '$lib/utils/cn';
+	import { apiFetch, CSRF_HEADER } from '$lib/api';
 	import ChatMessage from './ChatMessage.svelte';
 	import ChatInput from './ChatInput.svelte';
 
@@ -25,6 +26,7 @@
 
 	const chat = new Chat({
 		api: '/api/ai/chat',
+		headers: CSRF_HEADER,
 		body: () => (conversationId ? { conversationId } : {}),
 		onResponse: (response: Response) => {
 			const id = response.headers.get('X-Conversation-Id');
@@ -93,7 +95,7 @@
 
 	async function deleteConversation(id: string) {
 		try {
-			const res = await fetch(`/api/ai/conversations/${id}`, { method: 'DELETE' });
+			const res = await apiFetch(`/api/ai/conversations/${id}`, { method: 'DELETE' });
 			if (res.ok) {
 				conversations = conversations.filter((c) => c.id !== id);
 				if (conversationId === id) {

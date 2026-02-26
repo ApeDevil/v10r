@@ -8,7 +8,7 @@ import { ensureConstraints } from './constraints';
  */
 export async function reseedGraph(): Promise<void> {
 	// 1. Clear all existing data
-	await cypher('MATCH (n) DETACH DELETE n');
+	await cypher('MATCH (n) WHERE n:Layer OR n:Technology OR n:Concept OR n:Showcase DETACH DELETE n');
 
 	// 2. Ensure constraints + indexes exist
 	await ensureConstraints();

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { apiFetch } from '$lib/api';
 	import { Card, Alert, BoundaryFallback } from '$lib/components/composites';
 	import { Button, Typography } from '$lib/components/primitives';
 	import { Stack } from '$lib/components/layout';
@@ -36,7 +37,7 @@
 		let firstTokenReceived = false;
 
 		try {
-			const res = await fetch('/api/ai/streaming', {
+			const res = await apiFetch('/api/ai/streaming', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ prompt }),

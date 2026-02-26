@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Chat } from '@ai-sdk/svelte';
+	import { CSRF_HEADER } from '$lib/api';
 	import { Card, Alert, EmptyState, BoundaryFallback } from '$lib/components/composites';
 	import { Typography } from '$lib/components/primitives';
 	import { Stack } from '$lib/components/layout';
@@ -8,7 +9,7 @@
 
 	let { data } = $props();
 
-	const chat = new Chat({ api: '/api/ai/chat' });
+	const chat = new Chat({ api: '/api/ai/chat', headers: CSRF_HEADER });
 
 	const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
 

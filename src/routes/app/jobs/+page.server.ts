@@ -3,6 +3,7 @@ import { db } from '$lib/server/db';
 import { jobExecution } from '$lib/server/db/schema/jobs';
 import { jobs } from '$lib/server/jobs';
 import { runJob } from '$lib/server/jobs/runner';
+import { requireAdmin } from '$lib/server/auth/guards';
 import { desc, eq, count, max, sql } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 
@@ -73,7 +74,8 @@ export const load: PageServerLoad = async ({ url }) => {
 };
 
 export const actions: Actions = {
-	trigger: async ({ request }) => {
+	trigger: async ({ request, locals }) => {
+		requireAdmin(locals);
 		const formData = await request.formData();
 		const slug = formData.get('slug');
 

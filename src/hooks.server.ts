@@ -94,7 +94,29 @@ const sessionPopulate: Handle = async ({ event, resolve }) => {
 };
 
 /**
- * 5. Route guard — protect /app/* routes
+ * 5. CSRF protection — require X-Requested-With on mutating API calls
+ *    Excludes /api/auth/* (Better Auth handles its own CSRF) and /api/cron/* (Bearer token)
+ */
+const csrfProtection: Handle = async ({ event, resolve }) => {
+	const method = event.request.method;
+	const path = event.url.pathname;
+
+	if (
+		(method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE') &&
+		path.startsWith('/api/') &&
+		!path.startsWith('/api/auth/') &&
+		!path.startsWith('/api/cron/')
+	) {
+		if (!event.request.headers.get('x-requested-with')) {
+			return json({ error: 'Forbidden' }, { status: 403 });
+		}
+	}
+
+	return resolve(event);
+};
+
+/**
+ * 6. Route guard — protect /app/* routes
  */
 const routeGuard: Handle = async ({ event, resolve }) => {
 	if (event.url.pathname.startsWith('/app')) {
@@ -112,6 +134,7 @@ export const handle = sequence(
 	i18n,
 	authHandler,
 	sessionPopulate,
+	csrfProtection,
 	routeGuard,
 );
 
