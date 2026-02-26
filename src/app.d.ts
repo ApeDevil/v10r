@@ -5,6 +5,7 @@ declare global {
 		interface Error {
 			message: string;
 			code?: string;
+			errorId?: string;
 		}
 		interface Locals {
 			user: import('better-auth').User | null;

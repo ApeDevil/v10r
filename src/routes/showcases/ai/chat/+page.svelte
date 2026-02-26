@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Chat } from '@ai-sdk/svelte';
-	import { Card, Alert, EmptyState } from '$lib/components/composites';
+	import { Card, Alert, EmptyState, BoundaryFallback } from '$lib/components/composites';
 	import { Typography } from '$lib/components/primitives';
 	import { Stack } from '$lib/components/layout';
 	import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
@@ -41,58 +41,68 @@
 				<p>See <a href="/showcases/ai/connection">Connection</a> for setup instructions.</p>
 			</Alert>
 		{:else}
-			<Card class="chat-card">
-				{#snippet header()}
-					<Typography variant="h5" as="h2">AI Chat</Typography>
-				{/snippet}
+			<svelte:boundary>
+				<Card class="chat-card">
+					{#snippet header()}
+						<Typography variant="h5" as="h2">AI Chat</Typography>
+					{/snippet}
 
-				<div class="chat-container">
-					<div bind:this={scrollContainer} class="chat-messages">
-						{#if chat.messages.length === 0}
-							<EmptyState
-								icon="i-lucide-message-circle h-10 w-10"
-								title="Start chatting"
-								description="Send a message to start chatting."
-								class="chat-empty"
-							/>
-						{:else}
-							{#each chat.messages as message (message.id)}
-								<ChatMessage role={message.role as 'user' | 'assistant'} content={message.content} />
-							{/each}
-
-							{#if isLoading && chat.messages[chat.messages.length - 1]?.role === 'user'}
-								<div class="chat-typing flex items-center gap-3 px-4 py-3">
-									<div class="chat-typing-avatar flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
-										<span class="i-lucide-bot h-4 w-4"></span>
-									</div>
-									<div class="chat-typing-dots flex gap-1">
-										<span class="chat-dot"></span>
-										<span class="chat-dot"></span>
-										<span class="chat-dot"></span>
-									</div>
-								</div>
-							{/if}
-						{/if}
-					</div>
-
-					{#if chat.error}
-						<div class="chat-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm" role="alert" aria-live="polite">
-							<span class="font-medium">Could not get a response.</span>
-							{#if chat.error.message?.includes('429')}
-								You've reached the rate limit. Please wait a moment.
-							{:else if chat.error.message?.includes('401') || chat.error.message?.includes('Sign in')}
-								Sign in to use the AI assistant.
-							{:else if chat.error.message?.includes('503')}
-								The AI service is temporarily unavailable.
+					<div class="chat-container">
+						<div bind:this={scrollContainer} class="chat-messages">
+							{#if chat.messages.length === 0}
+								<EmptyState
+									icon="i-lucide-message-circle h-10 w-10"
+									title="Start chatting"
+									description="Send a message to start chatting."
+									class="chat-empty"
+								/>
 							{:else}
-								Something went wrong. Try again.
+								{#each chat.messages as message (message.id)}
+									<ChatMessage role={message.role as 'user' | 'assistant'} content={message.content} />
+								{/each}
+
+								{#if isLoading && chat.messages[chat.messages.length - 1]?.role === 'user'}
+									<div class="chat-typing flex items-center gap-3 px-4 py-3">
+										<div class="chat-typing-avatar flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+											<span class="i-lucide-bot h-4 w-4"></span>
+										</div>
+										<div class="chat-typing-dots flex gap-1">
+											<span class="chat-dot"></span>
+											<span class="chat-dot"></span>
+											<span class="chat-dot"></span>
+										</div>
+									</div>
+								{/if}
 							{/if}
 						</div>
-					{/if}
 
-					<ChatInput bind:value={chat.input} loading={isLoading} onsubmit={submitMessage} />
-				</div>
-			</Card>
+						{#if chat.error}
+							<div class="chat-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm" role="alert" aria-live="polite">
+								<span class="font-medium">Could not get a response.</span>
+								{#if chat.error.message?.includes('429')}
+									You've reached the rate limit. Please wait a moment.
+								{:else if chat.error.message?.includes('401') || chat.error.message?.includes('Sign in')}
+									Sign in to use the AI assistant.
+								{:else if chat.error.message?.includes('503')}
+									The AI service is temporarily unavailable.
+								{:else}
+									Something went wrong. Try again.
+								{/if}
+							</div>
+						{/if}
+
+						<ChatInput bind:value={chat.input} loading={isLoading} onsubmit={submitMessage} />
+					</div>
+				</Card>
+
+				{#snippet failed(error, reset)}
+					<BoundaryFallback
+						title="AI chat unavailable"
+						description="The AI response stream was interrupted. Check your API key configuration."
+						{reset}
+					/>
+				{/snippet}
+			</svelte:boundary>
 		{/if}
 	</Stack>
 

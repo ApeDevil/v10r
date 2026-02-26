@@ -20,6 +20,8 @@ export { default as Alert } from './alert/Alert.svelte';
 export { Pagination } from './pagination';
 
 export * from './empty-state';
+export * from './error-display';
+export * from './boundary-fallback';
 export * from './link-card';
 export * from './menu-bar';
 export * from './context-menu';

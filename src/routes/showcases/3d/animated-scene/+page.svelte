@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { PageHeader, BackLink } from '$lib/components';
+	import { BoundaryFallback } from '$lib/components/composites';
 	import { Canvas } from '@threlte/core';
 	import Scene from './Scene.svelte';
 
@@ -32,11 +33,22 @@
 	{/each}
 </div>
 
-<div class="container">
-	<Canvas>
-		<Scene {currentAnimation} />
-	</Canvas>
-</div>
+<svelte:boundary>
+	<div class="container">
+		<Canvas>
+			<Scene {currentAnimation} />
+		</Canvas>
+	</div>
+
+	{#snippet failed(error, reset)}
+		<BoundaryFallback
+			title="3D scene unavailable"
+			description="WebGL is required. Check browser support or graphics drivers."
+			minHeight="100vh"
+			{reset}
+		/>
+	{/snippet}
+</svelte:boundary>
 
 <div class="page">
 	<BackLink href="/showcases/3d" label="3D" />

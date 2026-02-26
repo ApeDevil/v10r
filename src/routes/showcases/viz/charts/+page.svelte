@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { PageHeader, BackLink, SectionNav } from '$lib/components/composites';
+	import { PageHeader, BackLink, SectionNav, BoundaryFallback } from '$lib/components/composites';
 	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives/table';
 	import VizDemoCard from '../_components/VizDemoCard.svelte';
 	import DataControls from '../_components/DataControls.svelte';
@@ -378,6 +378,7 @@
 
 	<DataControls bind:dataset bind:animated />
 
+	<svelte:boundary>
 	<main class="content">
 		<!-- Simple Chart (zero-dep SVG) -->
 		<section id="simple-chart" class="section">
@@ -889,6 +890,15 @@
 			</div>
 		</section>
 	</main>
+
+	{#snippet failed(error, reset)}
+		<BoundaryFallback
+			title="Visualization failed to render"
+			description="The data may be in an unexpected format."
+			{reset}
+		/>
+	{/snippet}
+	</svelte:boundary>
 
 	<BackLink href="/showcases/viz" label="Viz" />
 </div>

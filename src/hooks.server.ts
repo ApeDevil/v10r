@@ -1,5 +1,5 @@
 import { sequence } from '@sveltejs/kit/hooks';
-import { json, redirect, type Handle } from '@sveltejs/kit';
+import { json, redirect, type Handle, type HandleServerError } from '@sveltejs/kit';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import { auth } from '$lib/server/auth';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
@@ -108,3 +108,25 @@ export const handle = sequence(
 	sessionPopulate,
 	routeGuard,
 );
+
+export const handleError: HandleServerError = ({ error, event, status, message }) => {
+	// 404s from unknown routes — no errorId needed
+	if (status === 404 && event.route.id === null) {
+		return { message: 'Page not found' };
+	}
+
+	const errorId = crypto.randomUUID();
+
+	console.error(
+		JSON.stringify({
+			errorId,
+			status,
+			path: event.url.pathname,
+			route: event.route.id,
+			message: error instanceof Error ? error.message : String(error),
+			stack: error instanceof Error ? error.stack : undefined,
+		}),
+	);
+
+	return { message, errorId };
+};

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Card, Alert } from '$lib/components/composites';
+	import { Card, Alert, BoundaryFallback } from '$lib/components/composites';
 	import { Button, Typography } from '$lib/components/primitives';
 	import { Stack } from '$lib/components/layout';
 
@@ -120,81 +120,91 @@
 				<p>See <a href="/showcases/ai/connection">Connection</a> for setup instructions.</p>
 			</Alert>
 		{:else}
-			{#if data.provider}
-				<div class="stream-provider flex items-center gap-2 text-fluid-sm text-muted">
-					<span class="i-lucide-cpu h-4 w-4"></span>
-					<span>{data.provider.name}</span>
-					<code class="stream-model">{data.provider.model}</code>
-				</div>
-			{/if}
-
-			<!-- Prompt -->
-			<Card>
-				{#snippet header()}
-					<Typography variant="h5" as="h2">Prompt</Typography>
-				{/snippet}
-
-				<div class="stream-prompts" role="group" aria-label="Preset prompts">
-					{#each PRESETS as preset}
-						<Button
-							variant="outline"
-							size="sm"
-							disabled={streaming}
-							onclick={() => runPrompt(preset)}
-						>
-							{preset}
-						</Button>
-					{/each}
-				</div>
-			</Card>
-
-			<!-- Output -->
-			<Card>
-				{#snippet header()}
-					<Typography variant="h5" as="h2">Output</Typography>
-				{/snippet}
-
-				{#if error}
-					<div class="stream-error rounded-md px-3 py-2 text-fluid-sm" role="alert">
-						{error}
+			<svelte:boundary>
+				{#if data.provider}
+					<div class="stream-provider flex items-center gap-2 text-fluid-sm text-muted">
+						<span class="i-lucide-cpu h-4 w-4"></span>
+						<span>{data.provider.name}</span>
+						<code class="stream-model">{data.provider.model}</code>
 					</div>
-				{:else if output || streaming}
-					<div class="stream-output">
-						<span class="whitespace-pre-wrap">{output}</span>
-						{#if streaming}
-							<span class="stream-cursor"></span>
-						{/if}
-					</div>
-				{:else}
-					<p class="text-fluid-sm text-muted">Select a prompt to begin streaming.</p>
 				{/if}
-			</Card>
 
-			<!-- Metrics -->
-			<Card>
-				{#snippet header()}
-					<Typography variant="h5" as="h2">Metrics</Typography>
+				<!-- Prompt -->
+				<Card>
+					{#snippet header()}
+						<Typography variant="h5" as="h2">Prompt</Typography>
+					{/snippet}
+
+					<div class="stream-prompts" role="group" aria-label="Preset prompts">
+						{#each PRESETS as preset}
+							<Button
+								variant="outline"
+								size="sm"
+								disabled={streaming}
+								onclick={() => runPrompt(preset)}
+							>
+								{preset}
+							</Button>
+						{/each}
+					</div>
+				</Card>
+
+				<!-- Output -->
+				<Card>
+					{#snippet header()}
+						<Typography variant="h5" as="h2">Output</Typography>
+					{/snippet}
+
+					{#if error}
+						<div class="stream-error rounded-md px-3 py-2 text-fluid-sm" role="alert">
+							{error}
+						</div>
+					{:else if output || streaming}
+						<div class="stream-output">
+							<span class="whitespace-pre-wrap">{output}</span>
+							{#if streaming}
+								<span class="stream-cursor"></span>
+							{/if}
+						</div>
+					{:else}
+						<p class="text-fluid-sm text-muted">Select a prompt to begin streaming.</p>
+					{/if}
+				</Card>
+
+				<!-- Metrics -->
+				<Card>
+					{#snippet header()}
+						<Typography variant="h5" as="h2">Metrics</Typography>
+					{/snippet}
+
+					<div class="stream-metrics">
+						<div class="stream-stat">
+							<span class="stream-stat-label">TTFT</span>
+							<span class="stream-stat-value">{ttft !== null ? `${ttft}ms` : '—'}</span>
+						</div>
+						<div class="stream-stat">
+							<span class="stream-stat-label">Tokens/s</span>
+							<span class="stream-stat-value">{tokensPerSec || '—'}</span>
+						</div>
+						<div class="stream-stat">
+							<span class="stream-stat-label">Chunks</span>
+							<span class="stream-stat-value">{totalChunks || '—'}</span>
+						</div>
+						<div class="stream-stat">
+							<span class="stream-stat-label">Elapsed</span>
+							<span class="stream-stat-value">{elapsed ? `${elapsed}ms` : '—'}</span>
+						</div>
+					</div>
+				</Card>
+
+				{#snippet failed(error, reset)}
+					<BoundaryFallback
+						title="AI streaming unavailable"
+						description="The AI response stream was interrupted. Check your API key configuration."
+						{reset}
+					/>
 				{/snippet}
-
-				<div class="stream-metrics">
-					<div class="stream-stat">
-						<span class="stream-stat-label">TTFT</span>
-						<span class="stream-stat-value">{ttft !== null ? `${ttft}ms` : '—'}</span>
-					</div>
-					<div class="stream-stat">
-						<span class="stream-stat-label">Tokens/s</span>
-						<span class="stream-stat-value">{tokensPerSec || '—'}</span>
-					</div>
-					<div class="stream-stat">
-						<span class="stream-stat-label">Chunks</span>
-						<span class="stream-stat-value">{totalChunks || '—'}</span>
-					</div>
-					<div class="stream-stat">
-						<span class="stream-stat-label">Elapsed</span>
-						<span class="stream-stat-value">{elapsed ? `${elapsed}ms` : '—'}</span>
-					</div>
-				</div>
-			</Card>
+			</svelte:boundary>
 		{/if}
 	</Stack>
 
