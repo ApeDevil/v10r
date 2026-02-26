@@ -8,8 +8,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { s3, BUCKET } from '../index';
 import { classifyS3Error } from '../errors';
 import type { ObjectInfo, ObjectDetail, BucketStats, PresignedUrlResult, RangeResult } from '../types';
-
-const SHOWCASE_PREFIX = 'showcase/';
+import { SHOWCASE_PREFIX } from './guards';
 
 // ─── Connection page ────────────────────────────────────
 

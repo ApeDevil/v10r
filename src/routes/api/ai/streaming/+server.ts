@@ -1,24 +1,18 @@
 import { json } from '@sveltejs/kit';
 import { streamText } from 'ai';
 import { safeParse } from 'valibot';
-import { Ratelimit } from '@upstash/ratelimit';
-import { redis } from '$lib/server/cache';
 import { aiConfigured, chatModel } from '$lib/server/ai';
 import { SYSTEM_PROMPT, MAX_TOKENS, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW, RATE_LIMIT_PREFIX } from '$lib/server/ai/config';
 import { StreamingRequestSchema } from '$lib/server/ai/validation';
 import { classifyAIError, aiErrorToStatus } from '$lib/server/ai/errors';
+import { requireApiUser } from '$lib/server/auth/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import type { RequestHandler } from './$types';
 
-const ratelimit = new Ratelimit({
-	redis,
-	limiter: Ratelimit.slidingWindow(RATE_LIMIT_MAX, RATE_LIMIT_WINDOW),
-	prefix: RATE_LIMIT_PREFIX,
-});
+const ratelimit = createLimiter(RATE_LIMIT_PREFIX, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-	if (!locals.user) {
-		return json({ error: 'Sign in to use the AI assistant.' }, { status: 401 });
-	}
+	const { user } = requireApiUser(locals);
 
 	if (!aiConfigured || !chatModel) {
 		return json(
@@ -27,16 +21,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		);
 	}
 
-	const { success, reset } = await ratelimit.limit(locals.user.id);
-	if (!success) {
-		return json(
-			{ error: 'Too many requests. Please wait a moment.' },
-			{
-				status: 429,
-				headers: { 'Retry-After': String(Math.ceil((reset - Date.now()) / 1000)) },
-			},
-		);
-	}
+	const { success, reset } = await ratelimit.limit(user.id);
+	if (!success) return rateLimitResponse(reset);
 
 	// Parse and validate request body
 	const body = await request.json().catch(() => null);

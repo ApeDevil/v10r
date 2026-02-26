@@ -1,6 +1,5 @@
 import { redis } from '../index';
-
-const SHOWCASE_PREFIX = 'showcase:';
+import { SHOWCASE_PREFIX } from './guards';
 
 /** Delete all showcase keys and re-populate with seed data. */
 export async function reseedCache(): Promise<{ keyCount: number }> {

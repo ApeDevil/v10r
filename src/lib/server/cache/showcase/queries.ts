@@ -9,8 +9,7 @@ import type {
 	RateLimitResult,
 	RedisType,
 } from '../types';
-
-const SHOWCASE_PREFIX = 'showcase:';
+import { SHOWCASE_PREFIX } from './guards';
 
 // Module-level ephemeral cache for rate limiter (persists across warm invocations)
 const ephemeralCache = new Map();

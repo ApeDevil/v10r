@@ -4,8 +4,7 @@ import {
 	PutObjectCommand,
 } from '@aws-sdk/client-s3';
 import { s3, BUCKET } from '../index';
-
-const SHOWCASE_PREFIX = 'showcase/';
+import { SHOWCASE_PREFIX } from './guards';
 
 // Minimal 1x1 red PNG (67 bytes)
 const PIXEL_PNG = new Uint8Array([

@@ -1,13 +1,12 @@
 import { json } from '@sveltejs/kit';
 import { getConversation, deleteConversation } from '$lib/server/db/ai/mutations';
+import { requireApiUser } from '$lib/server/auth/guards';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
-	if (!locals.user) {
-		return json({ error: 'Authentication required.' }, { status: 401 });
-	}
+	const { user } = requireApiUser(locals);
 
-	const conv = await getConversation(params.id, locals.user.id);
+	const conv = await getConversation(params.id, user.id);
 	if (!conv) {
 		return json({ error: 'Conversation not found.' }, { status: 404 });
 	}
@@ -16,11 +15,9 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 };
 
 export const DELETE: RequestHandler = async ({ params, locals }) => {
-	if (!locals.user) {
-		return json({ error: 'Authentication required.' }, { status: 401 });
-	}
+	const { user } = requireApiUser(locals);
 
-	const deleted = await deleteConversation(params.id, locals.user.id);
+	const deleted = await deleteConversation(params.id, user.id);
 	if (!deleted) {
 		return json({ error: 'Conversation not found.' }, { status: 404 });
 	}

@@ -1,8 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { streamText, createDataStreamResponse } from 'ai';
 import { safeParse } from 'valibot';
-import { Ratelimit } from '@upstash/ratelimit';
-import { redis } from '$lib/server/cache';
 import { aiConfigured, chatModel, fallbackProviders } from '$lib/server/ai';
 import { SYSTEM_PROMPT, MAX_TOKENS, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW, RATE_LIMIT_PREFIX } from '$lib/server/ai/config';
 import { ChatRequestSchema } from '$lib/server/ai/validation';
@@ -11,19 +9,15 @@ import { createConversation, saveMessages, updateConversationTitle } from '$lib/
 import { checkConversationLimit } from '$lib/server/db/ai/guards';
 import { formatContextForPrompt } from '$lib/server/retrieval';
 import { retrieveWithEvents } from '$lib/server/retrieval/instrumented';
+import { requireApiUser } from '$lib/server/auth/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import type { PipelineStepEvent, PipelineChunksEvent } from '$lib/types/pipeline';
 import type { RequestHandler } from './$types';
 
-const ratelimit = new Ratelimit({
-	redis,
-	limiter: Ratelimit.slidingWindow(RATE_LIMIT_MAX, RATE_LIMIT_WINDOW),
-	prefix: RATE_LIMIT_PREFIX,
-});
+const ratelimit = createLimiter(RATE_LIMIT_PREFIX, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-	if (!locals.user) {
-		return json({ error: 'Sign in to use the AI assistant.' }, { status: 401 });
-	}
+	const { user } = requireApiUser(locals);
 
 	if (!aiConfigured || !chatModel) {
 		return json(
@@ -32,16 +26,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		);
 	}
 
-	const { success, reset } = await ratelimit.limit(locals.user.id);
-	if (!success) {
-		return json(
-			{ error: 'Too many requests. Please wait a moment.' },
-			{
-				status: 429,
-				headers: { 'Retry-After': String(Math.ceil((reset - Date.now()) / 1000)) },
-			},
-		);
-	}
+	const { success, reset } = await ratelimit.limit(user.id);
+	if (!success) return rateLimitResponse(reset);
 
 	// Parse and validate request body
 	const body = await request.json().catch(() => null);
@@ -60,7 +46,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		// Auto-create conversation if none provided
 		let conversationId = existingConvId;
 		if (!conversationId) {
-			const allowed = await checkConversationLimit(locals.user.id);
+			const allowed = await checkConversationLimit(user.id);
 			if (!allowed) {
 				return json(
 					{ error: 'Conversation limit reached. Delete old conversations to continue.' },
@@ -72,14 +58,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			const title = firstUserMsg
 				? firstUserMsg.content.slice(0, 80)
 				: 'New conversation';
-			const conv = await createConversation(locals.user.id, title);
+			const conv = await createConversation(user.id, title);
 			conversationId = conv.id;
 		}
 
 		// Verify conversation ownership if existing
 		if (existingConvId) {
 			const { getConversation } = await import('$lib/server/db/ai/mutations');
-			const conv = await getConversation(existingConvId, locals.user.id);
+			const conv = await getConversation(existingConvId, user.id);
 			if (!conv) {
 				return json({ error: 'Conversation not found.' }, { status: 404 });
 			}
@@ -88,12 +74,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		// Save user message before streaming
 		const userMsg = messages[messages.length - 1];
 		if (conversationId && userMsg?.role === 'user') {
-			await saveMessages(conversationId, locals.user.id, [
+			await saveMessages(conversationId, user.id, [
 				{ id: crypto.randomUUID(), role: userMsg.role, content: userMsg.content },
 			]);
 		}
 
-		const userId = locals.user.id;
+		const userId = user.id;
 		const responseHeaders: Record<string, string> = {};
 		if (conversationId) {
 			responseHeaders['X-Conversation-Id'] = conversationId;
@@ -209,8 +195,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 						onFinish: async ({ text }) => {
 							try {
 								const convId = existingConvId ?? undefined;
-								if (convId && text && locals.user) {
-									await saveMessages(convId, locals.user.id, [
+								if (convId && text) {
+									await saveMessages(convId, user.id, [
 										{ id: crypto.randomUUID(), role: 'assistant', content: text },
 									]);
 								}

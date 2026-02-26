@@ -1,19 +1,15 @@
 import { json } from '@sveltejs/kit';
 import { safeParse } from 'valibot';
 import * as v from 'valibot';
-import { Ratelimit } from '@upstash/ratelimit';
-import { redis } from '$lib/server/cache';
 import { ingest } from '$lib/server/retrieval/ingest';
 import { checkDocumentLimit } from '$lib/server/db/rag/guards';
 import { RetrievalError, retrievalErrorToStatus } from '$lib/server/retrieval/errors';
 import { INGEST_RATE_LIMIT_MAX, INGEST_RATE_LIMIT_WINDOW } from '$lib/server/config';
+import { requireApiUser } from '$lib/server/auth/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import type { RequestHandler } from './$types';
 
-const ratelimit = new Ratelimit({
-	redis,
-	limiter: Ratelimit.slidingWindow(INGEST_RATE_LIMIT_MAX, INGEST_RATE_LIMIT_WINDOW),
-	prefix: 'rl:retrieval:ingest',
-});
+const ratelimit = createLimiter('rl:retrieval:ingest', INGEST_RATE_LIMIT_MAX, INGEST_RATE_LIMIT_WINDOW);
 
 const IngestSchema = v.object({
 	title: v.pipe(v.string(), v.minLength(1), v.maxLength(200)),
@@ -23,20 +19,10 @@ const IngestSchema = v.object({
 });
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-	if (!locals.user) {
-		return json({ error: 'Sign in to use document ingestion.' }, { status: 401 });
-	}
+	const { user } = requireApiUser(locals);
 
-	const { success, reset } = await ratelimit.limit(locals.user.id);
-	if (!success) {
-		return json(
-			{ error: 'Too many ingestion requests. Please wait before trying again.' },
-			{
-				status: 429,
-				headers: { 'Retry-After': String(Math.ceil((reset - Date.now()) / 1000)) },
-			},
-		);
-	}
+	const { success, reset } = await ratelimit.limit(user.id);
+	if (!success) return rateLimitResponse(reset);
 
 	const body = await request.json().catch(() => null);
 	if (!body) {
@@ -48,7 +34,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return json({ error: 'Invalid request.' }, { status: 400 });
 	}
 
-	const allowed = await checkDocumentLimit(locals.user.id);
+	const allowed = await checkDocumentLimit(user.id);
 	if (!allowed) {
 		return json(
 			{ error: 'Document limit reached. Delete old documents to continue.' },
@@ -62,7 +48,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			content: parsed.output.content,
 			sourceType: parsed.output.sourceType ?? 'text',
 			sourcePath: parsed.output.sourcePath,
-			userId: locals.user.id,
+			userId: user.id,
 		});
 
 		return json(result, { status: 201 });

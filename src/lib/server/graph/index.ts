@@ -8,13 +8,16 @@ function getHttpHost(): string {
 	return NEO4J_URI.replace(/^neo4j(\+s)?:\/\//, 'https://');
 }
 
-/** Base64-encode Basic auth header */
+/** Base64-encode Basic auth header (memoized — credentials don't change at runtime) */
+let cachedAuthHeader: string | undefined;
+
 function getAuthHeader(): string {
+	if (cachedAuthHeader) return cachedAuthHeader;
 	if (!NEO4J_USERNAME || !NEO4J_PASSWORD) {
 		throw new Neo4jError('authentication', 'NEO4J_USERNAME or NEO4J_PASSWORD is not set');
 	}
-	const encoded = btoa(`${NEO4J_USERNAME}:${NEO4J_PASSWORD}`);
-	return `Basic ${encoded}`;
+	cachedAuthHeader = `Basic ${btoa(`${NEO4J_USERNAME}:${NEO4J_PASSWORD}`)}`;
+	return cachedAuthHeader;
 }
 
 interface Neo4jHttpResponse {

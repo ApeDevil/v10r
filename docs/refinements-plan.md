@@ -335,9 +335,13 @@ interface LimitCheck {
 
 3. Each showcase module should define its prefix in one place. The store module already does this correctly; the cache module does not.
 
+> **2.2a** (return type standardization) deferred to Pass 4 alongside 2.1 module alignment.
+>
+> **2.2b** ✅ `SHOWCASE_PREFIX` dedup: Cache module — `queries.ts` and `seed.ts` now import from `guards.ts` (which already exported it). Store module — `guards.ts` changed `const` → `export const`; `queries.ts` and `seed.ts` now import from `guards.ts`. Total declarations reduced from 6 to 2 (one per module).
+
 ---
 
-### 2.3 API Route Boilerplate Extraction
+### 2.3 API Route Boilerplate Extraction ✅
 
 Every API route duplicates three patterns:
 
@@ -372,6 +376,8 @@ export function createLimiter(config: RateLimitConfig): Ratelimit { ... }
 export function rateLimitResponse(reset: number): Response { ... }
 ```
 
+> **Implementation notes:** (a) Added `requireApiUser(locals)` to `src/lib/server/auth/guards.ts` — throws `error(401)` instead of redirecting (API-appropriate). Replaced 11 inline auth checks across 8 route files (`api/ai/conversations`, `api/ai/conversations/[id]`, `api/ai/streaming`, `api/ai/chat`, `api/retrieval/documents`, `api/retrieval/documents/[id]`, `api/retrieval/ingest`, `api/retrieval/search`). Routes now destructure `const { user } = requireApiUser(locals)` and use `user.id` directly. (b+c) Created `src/lib/server/api/rate-limit.ts` with `createLimiter(prefix, max, window)` and `rateLimitResponse(reset, message?)`. Updated 4 rate-limited routes (`ai/streaming`, `ai/chat`, `retrieval/ingest`, `retrieval/search`) — removed direct `@upstash/ratelimit` and `$lib/server/cache` imports from route files. Not touched: `api/cron/[job]` (Bearer token auth), `api/showcases/check-username` (public GET with in-memory Map).
+
 ---
 
 ### 2.4 Retrieval Duplication
@@ -384,7 +390,7 @@ export function rateLimitResponse(reset: number): Response { ... }
 
 ---
 
-### 2.5 Schema Barrel for Showcase Stripping
+### 2.5 Schema Barrel for Showcase Stripping ✅
 
 **File:** `src/lib/server/db/schema/index.ts`
 
@@ -401,6 +407,8 @@ export * from './jobs';
 ```
 
 Forks import `schema/core` to skip showcase tables cleanly.
+
+> **Implementation notes:** Created `src/lib/server/db/schema/core.ts` re-exporting `auth`, `ai`, `rag`, `jobs`. Existing `index.ts` unchanged (still exports everything including showcase).
 
 ---
 
@@ -420,13 +428,15 @@ SET chunk.text = c.text, chunk.order = c.order
 
 ---
 
-### 2.7 Neo4j Auth Header Memoization
+### 2.7 Neo4j Auth Header Memoization ✅
 
 **File:** `src/lib/server/graph/index.ts`
 
 Credentials are re-encoded to base64 on every `cypher()` call.
 
 **Fix:** Memoize the `Authorization` header at module level.
+
+> **Implementation notes:** Added `let cachedAuthHeader: string | undefined` at module scope. `getAuthHeader()` now returns the cached value on subsequent calls, computing and caching the base64 encoding only once.
 
 ---
 

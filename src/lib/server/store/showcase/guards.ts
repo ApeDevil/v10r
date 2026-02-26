@@ -3,7 +3,7 @@ import { s3, BUCKET } from '../index';
 import { StoreError } from '../errors';
 import { MAX_SHOWCASE_OBJECTS } from '$lib/server/config';
 
-const SHOWCASE_PREFIX = 'showcase/';
+export const SHOWCASE_PREFIX = 'showcase/';
 
 /** Ensure a key is within the showcase namespace. */
 export function assertShowcaseKey(key: string): void {

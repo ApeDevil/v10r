@@ -8,6 +8,14 @@ export function requireAuth(locals: App.Locals) {
 	return { user: locals.user, session: locals.session };
 }
 
+/** For API routes — throws 401 instead of redirecting. */
+export function requireApiUser(locals: App.Locals) {
+	if (!locals.user || !locals.session) {
+		error(401, 'Authentication required');
+	}
+	return { user: locals.user, session: locals.session };
+}
+
 export function requireAdmin(locals: App.Locals) {
 	const { user, session } = requireAuth(locals);
 	const adminEmail = env.ADMIN_EMAIL;

@@ -3,23 +3,20 @@ import { safeParse } from 'valibot';
 import { listConversations, createConversation } from '$lib/server/db/ai/mutations';
 import { checkConversationLimit } from '$lib/server/db/ai/guards';
 import { CreateConversationSchema } from '$lib/server/ai/validation';
+import { requireApiUser } from '$lib/server/auth/guards';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ locals }) => {
-	if (!locals.user) {
-		return json({ error: 'Authentication required.' }, { status: 401 });
-	}
+	const { user } = requireApiUser(locals);
 
-	const conversations = await listConversations(locals.user.id);
+	const conversations = await listConversations(user.id);
 	return json(conversations);
 };
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-	if (!locals.user) {
-		return json({ error: 'Authentication required.' }, { status: 401 });
-	}
+	const { user } = requireApiUser(locals);
 
-	const allowed = await checkConversationLimit(locals.user.id);
+	const allowed = await checkConversationLimit(user.id);
 	if (!allowed) {
 		return json({ error: 'Conversation limit reached. Delete old conversations to continue.' }, { status: 403 });
 	}
@@ -28,6 +25,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const parsed = safeParse(CreateConversationSchema, body);
 	const title = parsed.success ? parsed.output.title : undefined;
 
-	const conv = await createConversation(locals.user.id, title);
+	const conv = await createConversation(user.id, title);
 	return json(conv, { status: 201 });
 };

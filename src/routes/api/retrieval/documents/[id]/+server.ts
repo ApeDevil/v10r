@@ -1,15 +1,14 @@
 import { json } from '@sveltejs/kit';
 import { getDocument, deleteDocument } from '$lib/server/db/rag/mutations';
 import { deleteDocumentGraph } from '$lib/server/graph/rag/mutations';
+import { requireApiUser } from '$lib/server/auth/guards';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
-	if (!locals.user) {
-		return json({ error: 'Sign in to view documents.' }, { status: 401 });
-	}
+	const { user } = requireApiUser(locals);
 
 	try {
-		const doc = await getDocument(params.id, locals.user.id);
+		const doc = await getDocument(params.id, user.id);
 		if (!doc) {
 			return json({ error: 'Document not found.' }, { status: 404 });
 		}
@@ -21,12 +20,10 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 };
 
 export const DELETE: RequestHandler = async ({ params, locals }) => {
-	if (!locals.user) {
-		return json({ error: 'Sign in to delete documents.' }, { status: 401 });
-	}
+	const { user } = requireApiUser(locals);
 
 	try {
-		const deleted = await deleteDocument(params.id, locals.user.id);
+		const deleted = await deleteDocument(params.id, user.id);
 		if (!deleted) {
 			return json({ error: 'Document not found.' }, { status: 404 });
 		}
