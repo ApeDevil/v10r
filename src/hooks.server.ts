@@ -8,6 +8,7 @@ import { redis } from '$lib/server/cache';
 import { AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW, HSTS_MAX_AGE } from '$lib/server/config';
 import { logFeatureStatus } from '$lib/server/features';
 import '$lib/server/jobs/scheduler';
+import '$lib/server/jobs/delivery-scheduler';
 
 logFeatureStatus();
 
@@ -117,7 +118,8 @@ const csrfProtection: Handle = async ({ event, resolve }) => {
 		(method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE') &&
 		path.startsWith('/api/') &&
 		!path.startsWith('/api/auth/') &&
-		!path.startsWith('/api/cron/')
+		!path.startsWith('/api/cron/') &&
+		!path.startsWith('/api/telegram/')
 	) {
 		if (!event.request.headers.get('x-requested-with')) {
 			return json({ error: 'Forbidden' }, { status: 403 });

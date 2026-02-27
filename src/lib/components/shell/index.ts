@@ -23,6 +23,9 @@ export { ToastContainer } from '$lib/components/composites/toast';
 export { default as NavigationProgress } from './NavigationProgress.svelte';
 export { default as ShortcutsModal } from './ShortcutsModal.svelte';
 
+// Notifications
+export { default as SidebarNotifications } from './SidebarNotifications.svelte';
+
 // Session lifecycle
 export { default as SessionMonitor } from './session/SessionMonitor.svelte';
 export { default as SessionWarningBanner } from './session/SessionWarningBanner.svelte';

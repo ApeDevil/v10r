@@ -111,6 +111,22 @@
         {
             "folderPath": "velociraptor/src/lib/server/config.ts/",
             "badge": "🎛️"
+        },
+        {
+            "folderPath": "velociraptor/src/routes/api/",
+            "badge": "☎️"
+        },
+        {
+            "folderPath": "velociraptor/src/lib/server/notifications/",
+            "badge": "📟"
+        },
+        {
+            "folderPath": "velociraptor/src/lib/server/jobs/",
+            "badge": "🐝"
+        },
+        {
+            "folderPath": "velociraptor/src/lib/server/cache/",
+            "badge": "🐿️"
         }
     ]
 }

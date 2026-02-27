@@ -22,6 +22,7 @@ export const navItems: NavItem[] = [
 		children: [
 			{ href: '/app/dashboard', label: 'Dashboard' },
 			{ href: '/app/account', label: 'Account' },
+			{ href: '/app/notifications', label: 'Notifications' },
 		],
 	},
 	{

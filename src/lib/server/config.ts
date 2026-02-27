@@ -139,6 +139,29 @@ export const GRAPH_TIMEOUT_MS = 30_000;
 /** HSTS max-age (seconds, 2 years) */
 export const HSTS_MAX_AGE = 63_072_000;
 
+// ── Notifications ─────────────────────────────────────────────────────────
+
+/** Notifications per page */
+export const NOTIFICATIONS_PAGE_SIZE = 20;
+
+/** Archive read notifications after N days */
+export const NOTIFICATION_ARCHIVE_DAYS = 30;
+
+/** Hard-delete archived notifications after N days */
+export const NOTIFICATION_DELETE_DAYS = 90;
+
+/** SSE heartbeat interval (ms) */
+export const SSE_HEARTBEAT_MS = 25_000;
+
+/** Max SSE connections per user */
+export const SSE_MAX_PER_USER = 3;
+
+/** Delivery worker interval (ms) */
+export const DEFAULT_DELIVERY_INTERVAL_MS = 15_000;
+
+/** Max delivery attempts before giving up */
+export const DELIVERY_MAX_ATTEMPTS = 3;
+
 // ── Admin ──────────────────────────────────────────────────────────────────────
 
 // ADMIN_EMAIL is read from $env/dynamic/private at usage sites to avoid

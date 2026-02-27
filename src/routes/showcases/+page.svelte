@@ -88,6 +88,13 @@
 			title="Jobs"
 			description="Scheduled background jobs with execution logging and monitoring"
 		/>
+
+		<LinkCard
+			href="/showcases/notifications"
+			icon="i-lucide-bell"
+			title="Notifications"
+			description="Multi-channel notifications — in-app SSE, email, Telegram, and Discord"
+		/>
 	</NavGrid>
 
 	<BackLink href="/" label="Home" />

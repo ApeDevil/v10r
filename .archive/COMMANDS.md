@@ -57,3 +57,11 @@ podman compose up -d
 
 # After editing Containerfile.dev or compose.yaml
 podman compose up --build -d
+
+
+# Telegram
+./scripts/tunnel-dev.sh 
+cd ~/dev/velociraptor && ./scripts/tunnel-dev.sh 
+curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
+-H "Content-Type: application/json" \
+-d '{"url": "https://abc123.ngrok-free.app/api/telegram/webhook"}'

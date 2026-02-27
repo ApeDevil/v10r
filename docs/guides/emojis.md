@@ -5,6 +5,7 @@
 🪲 Debug
 
 🏛️ Library (lib)
+📟 Notifications
 🧩 Components
 🧭 Navigation
 👄 i18n
@@ -13,6 +14,9 @@
 🤖 AI
 ♻️ Retrieval
 🎛️ config
+
+🐝 Jobs
+🪞 State
 
 📚 docs
 📜 Script
@@ -34,6 +38,8 @@ Authorization
 🐘 Relational Database (tables)
 ✳️ Graph Database (relations)
 🪣 Files Database (objects)
+🐿️ Caching
+
 
 
 
