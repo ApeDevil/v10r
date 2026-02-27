@@ -1,19 +1,27 @@
 import { redis } from '../index';
+import { CacheError } from '../errors';
 import { SHOWCASE_PREFIX } from './guards';
+
+function requireRedis() {
+	if (!redis) throw new CacheError('credentials', 'Redis is not configured');
+	return redis;
+}
 
 /** Delete all showcase keys and re-populate with seed data. */
 export async function reseedCache(): Promise<{ keyCount: number }> {
+	const r = requireRedis();
+
 	// 1. Clear all existing showcase keys
-	const existing = await redis.keys(`${SHOWCASE_PREFIX}*`);
+	const existing = await r.keys(`${SHOWCASE_PREFIX}*`);
 	if (existing.length > 0) {
-		await redis.del(...existing);
+		await r.del(...existing);
 	}
 
 	// 2. Seed strings
 	await Promise.all([
-		redis.set('showcase:config:site-name', 'Velociraptor'),
-		redis.set('showcase:config:version', '0.0.1'),
-		redis.set(
+		r.set('showcase:config:site-name', 'Velociraptor'),
+		r.set('showcase:config:version', '0.0.1'),
+		r.set(
 			'showcase:json:stack-summary',
 			JSON.stringify({
 				runtime: 'Bun',
@@ -28,27 +36,27 @@ export async function reseedCache(): Promise<{ keyCount: number }> {
 
 	// 3. Seed TTL entries
 	await Promise.all([
-		redis.set('showcase:ttl:verification-code', 'V10R-8X2K', { ex: 300 }),
-		redis.set('showcase:ttl:flash-message', 'Database reseeded successfully.', { ex: 30 }),
-		redis.set('showcase:ttl:session-token', 'ses_demo_abc123def456', { ex: 3600 }),
+		r.set('showcase:ttl:verification-code', 'V10R-8X2K', { ex: 300 }),
+		r.set('showcase:ttl:flash-message', 'Database reseeded successfully.', { ex: 30 }),
+		r.set('showcase:ttl:session-token', 'ses_demo_abc123def456', { ex: 3600 }),
 	]);
 
 	// 4. Seed counters
 	await Promise.all([
-		redis.set('showcase:counter:page-views', 1500000),
-		redis.set('showcase:counter:api-calls-today', 4200),
+		r.set('showcase:counter:page-views', 1500000),
+		r.set('showcase:counter:api-calls-today', 4200),
 	]);
 
 	// 5. Seed hashes
 	await Promise.all([
-		redis.hset('showcase:hash:feature-flags', {
+		r.hset('showcase:hash:feature-flags', {
 			dark_mode: '1',
 			beta_ui: '0',
 			cache_showcase: '1',
 			graph_viz: '1',
 			ai_chat: '0',
 		}),
-		redis.hset('showcase:hash:user-prefs', {
+		r.hset('showcase:hash:user-prefs', {
 			theme: 'system',
 			language: 'en',
 			page_size: '25',
@@ -57,7 +65,7 @@ export async function reseedCache(): Promise<{ keyCount: number }> {
 	]);
 
 	// 6. Seed sorted set (leaderboard)
-	await redis.zadd('showcase:leaderboard:tech-popularity', ...[
+	await r.zadd('showcase:leaderboard:tech-popularity', ...[
 		{ score: 95, member: 'Svelte' },
 		{ score: 92, member: 'PostgreSQL' },
 		{ score: 88, member: 'Bun' },
@@ -69,7 +77,7 @@ export async function reseedCache(): Promise<{ keyCount: number }> {
 	]);
 
 	// 7. Seed list (queue)
-	await redis.rpush(
+	await r.rpush(
 		'showcase:queue:recent-events',
 		'user:login {"user":"alice","ts":"2025-01-15T10:30:00Z"}',
 		'page:view {"path":"/showcases/db","ts":"2025-01-15T10:31:00Z"}',
@@ -79,6 +87,6 @@ export async function reseedCache(): Promise<{ keyCount: number }> {
 	);
 
 	// 8. Count final keys
-	const keys = await redis.keys(`${SHOWCASE_PREFIX}*`);
+	const keys = await r.keys(`${SHOWCASE_PREFIX}*`);
 	return { keyCount: keys.length };
 }

@@ -6,9 +6,14 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { s3, BUCKET } from '../index';
-import { classifyS3Error } from '../errors';
+import { StoreError } from '../errors';
 import type { ObjectInfo, ObjectDetail, BucketStats, PresignedUrlResult, RangeResult } from '../types';
 import { SHOWCASE_PREFIX } from './guards';
+
+function requireS3() {
+	if (!s3) throw new StoreError('credentials', 'R2 storage is not configured');
+	return s3;
+}
 
 // ─── Connection page ────────────────────────────────────
 
@@ -20,7 +25,8 @@ export interface ConnectionResult {
 }
 
 export async function verifyConnection(): Promise<ConnectionResult> {
-	await s3.send(new HeadBucketCommand({ Bucket: BUCKET }));
+	const client = requireS3();
+	await client.send(new HeadBucketCommand({ Bucket: BUCKET }));
 
 	const stats = await getBucketStats();
 
@@ -33,12 +39,13 @@ export async function verifyConnection(): Promise<ConnectionResult> {
 }
 
 async function getBucketStats(): Promise<BucketStats> {
+	const client = requireS3();
 	let objectCount = 0;
 	let totalSize = 0;
 	let continuationToken: string | undefined;
 
 	do {
-		const res = await s3.send(
+		const res = await client.send(
 			new ListObjectsV2Command({
 				Bucket: BUCKET,
 				Prefix: SHOWCASE_PREFIX,
@@ -60,11 +67,12 @@ async function getBucketStats(): Promise<BucketStats> {
 // ─── Objects page ───────────────────────────────────────
 
 export async function listShowcaseObjects(): Promise<ObjectInfo[]> {
+	const client = requireS3();
 	const objects: ObjectInfo[] = [];
 	let continuationToken: string | undefined;
 
 	do {
-		const res = await s3.send(
+		const res = await client.send(
 			new ListObjectsV2Command({
 				Bucket: BUCKET,
 				Prefix: SHOWCASE_PREFIX,
@@ -88,7 +96,8 @@ export async function listShowcaseObjects(): Promise<ObjectInfo[]> {
 }
 
 export async function getObjectDetail(key: string): Promise<ObjectDetail> {
-	const res = await s3.send(new HeadObjectCommand({ Bucket: BUCKET, Key: key }));
+	const client = requireS3();
+	const res = await client.send(new HeadObjectCommand({ Bucket: BUCKET, Key: key }));
 
 	return {
 		key,
@@ -106,8 +115,9 @@ export async function generateDownloadUrl(
 	key: string,
 	expiresIn: number,
 ): Promise<PresignedUrlResult> {
+	const client = requireS3();
 	const command = new GetObjectCommand({ Bucket: BUCKET, Key: key });
-	const url = await getSignedUrl(s3, command, { expiresIn });
+	const url = await getSignedUrl(client, command, { expiresIn });
 
 	return {
 		url,
@@ -123,7 +133,8 @@ export async function getObjectRange(
 	start: number,
 	end: number,
 ): Promise<RangeResult> {
-	const res = await s3.send(
+	const client = requireS3();
+	const res = await client.send(
 		new GetObjectCommand({
 			Bucket: BUCKET,
 			Key: key,

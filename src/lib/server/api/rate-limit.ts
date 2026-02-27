@@ -2,7 +2,18 @@ import { json } from '@sveltejs/kit';
 import { Ratelimit } from '@upstash/ratelimit';
 import { redis } from '$lib/server/cache';
 
-export function createLimiter(prefix: string, max: number, window: string) {
+interface Limiter {
+	limit(id: string): Promise<{ success: boolean; reset: number }>;
+}
+
+const passthrough: Limiter = {
+	async limit() {
+		return { success: true, reset: 0 };
+	},
+};
+
+export function createLimiter(prefix: string, max: number, window: string): Limiter {
+	if (!redis) return passthrough;
 	return new Ratelimit({
 		redis,
 		limiter: Ratelimit.slidingWindow(max, window),

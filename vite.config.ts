@@ -24,6 +24,13 @@ export default defineConfig({
 		},
 		hmr: {
 			port: 24678
-		}
+		},
+		warmup: {
+			clientFiles: [
+				'./src/routes/+layout.svelte',
+				'./src/lib/components/index.ts',
+				'./src/lib/styles/tokens.ts',
+			],
+		},
 	}
 });

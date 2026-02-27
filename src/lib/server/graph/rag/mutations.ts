@@ -100,11 +100,16 @@ export async function storeDocumentGraph(
 	};
 }
 
-/** Delete all graph data for a document. */
+/** Delete all graph data for a document and clean up orphaned entities. */
 export async function deleteDocumentGraph(documentId: string): Promise<void> {
 	await cypher(
 		`MATCH (c:Chunk {documentId: $documentId})
 		 DETACH DELETE c`,
 		{ documentId },
+	);
+
+	// Remove entities no longer mentioned by any chunk
+	await cypher(
+		`MATCH (e:Entity) WHERE NOT (e)<-[:MENTIONS]-() DETACH DELETE e`,
 	);
 }

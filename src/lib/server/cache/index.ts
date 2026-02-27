@@ -1,18 +1,11 @@
+import { env } from '$env/dynamic/private';
 import { Redis } from '@upstash/redis';
-import {
-	UPSTASH_REDIS_REST_URL,
-	UPSTASH_REDIS_REST_TOKEN,
-} from '$env/static/private';
-import { CacheError } from './errors';
 
-if (!UPSTASH_REDIS_REST_URL || !UPSTASH_REDIS_REST_TOKEN) {
-	throw new CacheError(
-		'credentials',
-		'Missing Redis env vars: UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN',
-	);
+function createRedis(): Redis | null {
+	const url = env.UPSTASH_REDIS_REST_URL;
+	const token = env.UPSTASH_REDIS_REST_TOKEN;
+	if (!url || !token) return null;
+	return new Redis({ url, token });
 }
 
-export const redis = new Redis({
-	url: UPSTASH_REDIS_REST_URL,
-	token: UPSTASH_REDIS_REST_TOKEN,
-});
+export const redis: Redis | null = createRedis();

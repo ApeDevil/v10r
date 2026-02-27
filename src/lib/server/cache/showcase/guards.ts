@@ -15,6 +15,7 @@ export function assertShowcaseKey(key: string): void {
 export async function checkKeyLimit(
 	limit = MAX_SHOWCASE_KEYS,
 ): Promise<string | null> {
+	if (!redis) throw new CacheError('credentials', 'Redis is not configured');
 	const keys = await redis.keys(`${SHOWCASE_PREFIX}*`);
 	if (keys.length >= limit) {
 		return `Showcase limit reached (${limit} keys). Use reseed to clear.`;

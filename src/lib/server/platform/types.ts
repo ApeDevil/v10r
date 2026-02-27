@@ -1,4 +1,4 @@
-export type PlatformId = 'vercel' | 'container';
+export type PlatformId = 'vercel' | 'fly' | 'railway' | 'container';
 
 export interface PlatformInfo {
 	id: PlatformId;

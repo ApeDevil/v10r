@@ -12,9 +12,10 @@
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { sql } from 'drizzle-orm';
-import ws from 'ws';
 
-neonConfig.webSocketConstructor = ws;
+// Route queries over HTTP fetch instead of WebSocket.
+// Bun's ws implementation mishandles WebSocket upgrade (HTTP 101).
+neonConfig.poolQueryViaFetch = true;
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {

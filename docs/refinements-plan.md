@@ -545,7 +545,7 @@ A developer looking for the toast system finds half in each place.
 
 ## Tier 4: Strategic Improvements
 
-### 4.1 Replace Custom AI Provider Registry
+### 4.1 Replace Custom AI Provider Registry — SKIPPED
 
 **File:** `src/lib/server/ai/providers.ts`
 
@@ -558,9 +558,11 @@ The current `buildProviderRegistry()` / `resolveActiveProvider()` / `getFallback
 
 **Fix:** Replace with `createProviderRegistry`. Less code, covers all model types, free middleware hooks.
 
+> **Skipped:** Custom impl provides per-provider `configured` boolean, fallback ordering, and UI metadata that the SDK registry lacks.
+
 ---
 
-### 4.2 Code-Based Feature Flags
+### 4.2 Code-Based Feature Flags ✅
 
 No feature flag system exists. Optional services either work or crash.
 
@@ -579,9 +581,11 @@ export const features = {
 
 Graceful degradation: if a service's env vars aren't set, the feature turns off. In hooks or load functions: `if (!features.neo4j) return { graph: null }`. This is how real SaaS templates handle optional services.
 
+> **Implementation notes:** Created `src/lib/server/features.ts` with flags for `redis`, `r2`, `neo4j`, `ai` using `$env/dynamic/private`. Added `logFeatureStatus()` for startup logging — called from `hooks.server.ts` at module scope. Combined with 4.7 (startup validation) into a single pass: cache/store switched from `$env/static/private` to `$env/dynamic/private` with nullable exports (`Redis | null`, `S3Client | null`). Rate limiting degrades gracefully via `Limiter` interface + passthrough no-op in `api/rate-limit.ts`. Auth rate limiter in `hooks.server.ts` conditionally created (null when no Redis). All 6 showcase files (cache + store: queries, seed, mutations) plus 2 guard files updated with `requireRedis()`/`requireS3()` guards that throw domain errors (`CacheError('credentials')`, `StoreError('credentials')`) instead of crashing — showcase pages' existing try/catch displays "not configured".
+
 ---
 
-### 4.3 Drop `ws` Dependency
+### 4.3 Drop `ws` Dependency ✅
 
 **File:** `src/lib/server/db/index.ts`
 
@@ -598,9 +602,11 @@ neonConfig.webSocketConstructor = WebSocket;
 
 Drops `ws` and `@types/ws` — two fewer dependencies. Verify `WebSocket` is globally available in the container's Bun version first.
 
+> **Implementation notes:** Used `neonConfig.poolQueryViaFetch = true` instead of Bun's native WebSocket — same pattern already proven in `drizzle.config.ts` (which had the same comment about Bun's ws issues). Applied to both `db/index.ts` and `scripts/setup-rag.ts`. Removed `ws` from dependencies and `@types/ws` from devDependencies. Trade-off: HTTP per query instead of persistent WebSocket — slightly higher latency but simpler and works identically on serverless (Vercel) and container.
+
 ---
 
-### 4.4 Add Biome to devDependencies
+### 4.4 Add Biome to devDependencies ✅
 
 Biome is listed in the stack docs and CLAUDE.md but is **not in `package.json`**. Either it is installed globally in the container (fragile) or has been dropped.
 
@@ -620,9 +626,11 @@ Add scripts:
 "test": "bun test"
 ```
 
+> **Implementation notes:** Added `@biomejs/biome: ^2.0.0` to devDependencies. Created `biome.json` with: tabs, 120 line width, single quotes, trailing commas, LF line endings, recommended rules, `noUnusedImports: error`, `noUnusedVariables: warn`, `noNonNullAssertion: warn`, import organization enabled. Svelte overrides disable `useConst` (Svelte `$state()` requires `let`) and `noUnusedVariables` (template usage not detected). Excludes `.svelte-kit/`, `node_modules/`, `src/lib/paraglide/` (auto-generated). VCS integration enabled with git ignore file. Added 4 scripts: `lint` (check), `lint:fix` (check --write), `format` (format --write), `check:biome` (ci mode).
+
 ---
 
-### 4.5 Vite Dev Warmup
+### 4.5 Vite Dev Warmup ✅
 
 **File:** `vite.config.ts`
 
@@ -640,9 +648,11 @@ server: {
 }
 ```
 
+> **Implementation notes:** Added `server.warmup.clientFiles` to `vite.config.ts` with the three files listed above.
+
 ---
 
-### 4.6 CSP Audit for Client-Side Fetches
+### 4.6 CSP Audit for Client-Side Fetches ✅
 
 **File:** `svelte.config.js`
 
@@ -654,17 +664,21 @@ server: {
 'connect-src': ['self', 'https://*.maptiler.com', 'https://*.openstreetmap.org'],
 ```
 
+> **Implementation notes:** Added `'https://basemaps.cartocdn.com'` to `connect-src` (MapLibre loads tiles/styles/glyphs from this CDN, found in `map-theme.ts`). Added `'worker-src': ['self', 'blob:']` for MapLibre web workers. AI API calls are server-side — no additional CSP changes needed.
+
 ---
 
-### 4.7 Startup Configuration Validation
+### 4.7 Startup Configuration Validation ✅
 
 No centralized startup check validates required env vars. Each module either throws on first import (cache, store), checks lazily per-request (graph), or fails at query time with an opaque SDK error (db).
 
 **Fix:** Validate a config schema at app initialization using Valibot (already in the stack). Provide a structured error message listing all missing required configuration at once, rather than one-at-a-time scattered throws.
 
+> **Implementation notes:** Merged with 4.2 (feature flags). Instead of a Valibot schema that would error on missing optional vars, the approach is: `features.ts` detects which services are configured, `logFeatureStatus()` prints enabled/disabled at startup, and optional modules (`cache/index.ts`, `store/index.ts`) return `null` instead of throwing. This provides the same visibility without blocking app startup when optional services are unconfigured.
+
 ---
 
-### 4.8 Platform Detection Extension
+### 4.8 Platform Detection Extension ✅
 
 **File:** `src/lib/server/platform/index.ts`
 
@@ -681,9 +695,11 @@ function detect(): PlatformInfo {
 }
 ```
 
+> **Implementation notes:** Extended `PlatformId` type with `'fly' | 'railway'`. Added `FLY_APP_NAME` and `RAILWAY_ENVIRONMENT` env var detection to `detect()` function.
+
 ---
 
-### 4.9 Primitive Token Layer for Theming
+### 4.9 Primitive Token Layer for Theming — SKIPPED
 
 **File:** `src/app.css`
 
@@ -709,9 +725,11 @@ Current tokens map semantic names directly to hex values. No primitive palette l
 
 Rebranding becomes changing primitive values only.
 
+> **Skipped:** ~80 color values to restructure across `:root` and `.dark`; high effort, low ROI for a template.
+
 ---
 
-### 4.10 Orphaned Entity Cleanup in RAG
+### 4.10 Orphaned Entity Cleanup in RAG ✅
 
 **File:** `src/lib/server/graph/rag/mutations.ts`
 
@@ -724,6 +742,8 @@ MATCH (e:Entity)
 WHERE NOT (e)<-[:MENTIONS]-()
 DETACH DELETE e
 ```
+
+> **Implementation notes:** Added the orphan cleanup query as a second `cypher()` call after chunk deletion in `deleteDocumentGraph()`.
 
 ---
 
@@ -809,8 +829,8 @@ Server module alignment, guard standardization, API boilerplate extraction, retr
 **Phase 3 — Structure (Tier 3)**
 Route/layout cleanup, naming normalization, barrel cleanup, component fixes. Renames, deletes, and small refactors.
 
-**Phase 4 — Strategy (Tier 4)**
-AI provider registry swap, feature flags, dependency cleanup, Vite warmup, platform detection, token layering, RAG cleanup. Cherry-pick based on priority.
+**Phase 4 — Strategy (Tier 4)** ✅
+Feature flags + optional services, `ws` removal, Biome setup, Vite warmup, CSP audit, platform detection, RAG cleanup. Skipped: AI provider registry swap (custom impl has needed features), primitive token layer (high effort, low ROI).
 
 **Phase 5 — Docs (Tier 5)**
 Route docs update, CLAUDE.md fixes, surface hidden docs, directory cleanup, fill gaps. Can be done in parallel with any phase.

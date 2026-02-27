@@ -6,16 +6,21 @@ import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { Ratelimit } from '@upstash/ratelimit';
 import { redis } from '$lib/server/cache';
 import { AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW, HSTS_MAX_AGE } from '$lib/server/config';
+import { logFeatureStatus } from '$lib/server/features';
 import '$lib/server/jobs/scheduler';
+
+logFeatureStatus();
 
 const ALLOWED_LOCALES = new Set(['en', 'de', 'fr']);
 
-/** Upstash rate limiter for auth endpoints */
-const authRatelimit = new Ratelimit({
-	redis,
-	limiter: Ratelimit.slidingWindow(AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW),
-	prefix: 'ratelimit:auth',
-});
+/** Upstash rate limiter for auth endpoints (null when Redis is not configured) */
+const authRatelimit = redis
+	? new Ratelimit({
+			redis,
+			limiter: Ratelimit.slidingWindow(AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW),
+			prefix: 'ratelimit:auth',
+		})
+	: null;
 
 /**
  * 1. Security headers — applied to every response
@@ -58,7 +63,7 @@ const authHandler: Handle = async ({ event, resolve }) => {
 	const path = event.url.pathname;
 
 	// Rate limit all auth endpoints (sign-in, sign-out, callback, get-session)
-	if (path.startsWith('/api/auth/')) {
+	if (path.startsWith('/api/auth/') && authRatelimit) {
 		const ip = event.getClientAddress();
 		const { success, reset } = await authRatelimit.limit(ip);
 

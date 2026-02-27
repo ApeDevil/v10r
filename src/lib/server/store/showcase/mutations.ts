@@ -5,10 +5,15 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { s3, BUCKET } from '../index';
-import { assertShowcaseKey, checkObjectLimit } from './guards';
 import { StoreError } from '../errors';
+import { assertShowcaseKey, checkObjectLimit } from './guards';
 import { MAX_UPLOAD_SIZE, PRESIGNED_URL_EXPIRY } from '$lib/server/config';
 import type { PresignedUrlResult, UploadResult } from '../types';
+
+function requireS3() {
+	if (!s3) throw new StoreError('credentials', 'R2 storage is not configured');
+	return s3;
+}
 
 const UPLOAD_PREFIX = 'showcase/uploads/';
 
@@ -30,6 +35,8 @@ export async function generateUploadUrl(
 	mimeType: string,
 	fileSize: number,
 ): Promise<PresignedUrlResult & { key: string }> {
+	const client = requireS3();
+
 	// Validate MIME type
 	if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
 		throw new StoreError(
@@ -62,7 +69,7 @@ export async function generateUploadUrl(
 		ContentType: mimeType,
 	});
 
-	const url = await getSignedUrl(s3, command, { expiresIn: PRESIGNED_URL_EXPIRY });
+	const url = await getSignedUrl(client, command, { expiresIn: PRESIGNED_URL_EXPIRY });
 
 	return {
 		url,
@@ -77,9 +84,10 @@ export async function generateUploadUrl(
  * Returns metadata about the uploaded object.
  */
 export async function confirmUpload(key: string): Promise<UploadResult> {
+	const client = requireS3();
 	assertShowcaseKey(key);
 
-	const res = await s3.send(new HeadObjectCommand({ Bucket: BUCKET, Key: key }));
+	const res = await client.send(new HeadObjectCommand({ Bucket: BUCKET, Key: key }));
 
 	return {
 		key,
@@ -91,6 +99,7 @@ export async function confirmUpload(key: string): Promise<UploadResult> {
 
 /** Delete a single showcase object. */
 export async function deleteShowcaseObject(key: string): Promise<void> {
+	const client = requireS3();
 	assertShowcaseKey(key);
-	await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+	await client.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
 }

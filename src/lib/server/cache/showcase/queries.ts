@@ -1,4 +1,5 @@
 import { redis } from '../index';
+import { CacheError } from '../errors';
 import { Ratelimit } from '@upstash/ratelimit';
 import type {
 	CacheEntry,
@@ -14,14 +15,20 @@ import { SHOWCASE_PREFIX } from './guards';
 // Module-level ephemeral cache for rate limiter (persists across warm invocations)
 const ephemeralCache = new Map();
 
+function requireRedis() {
+	if (!redis) throw new CacheError('credentials', 'Redis is not configured');
+	return redis;
+}
+
 // ─── Connection page ────────────────────────────────────
 
 export async function verifyConnection(): Promise<CacheConnectionInfo> {
+	const r = requireRedis();
 	const start = performance.now();
-	await redis.ping();
+	await r.ping();
 	const latencyMs = Math.round((performance.now() - start) * 100) / 100;
 
-	const keys = await redis.keys(`${SHOWCASE_PREFIX}*`);
+	const keys = await r.keys(`${SHOWCASE_PREFIX}*`);
 
 	return {
 		connected: true,
@@ -34,15 +41,16 @@ export async function verifyConnection(): Promise<CacheConnectionInfo> {
 // ─── Patterns page ──────────────────────────────────────
 
 export async function listShowcaseEntries(): Promise<CacheEntry[]> {
-	const keys = await redis.keys(`${SHOWCASE_PREFIX}*`);
+	const r = requireRedis();
+	const keys = await r.keys(`${SHOWCASE_PREFIX}*`);
 	if (keys.length === 0) return [];
 
 	// Parallel TYPE + TTL for each key (auto-pipelined by @upstash/redis)
 	const entries = await Promise.all(
 		keys.map(async (key) => {
 			const [type, ttl] = await Promise.all([
-				redis.type(key) as Promise<RedisType>,
-				redis.ttl(key),
+				r.type(key) as Promise<RedisType>,
+				r.ttl(key),
 			]);
 			return { key, type, ttl };
 		}),
@@ -52,28 +60,29 @@ export async function listShowcaseEntries(): Promise<CacheEntry[]> {
 }
 
 export async function getEntryDetail(key: string): Promise<CacheEntryDetail | null> {
-	const type = await redis.type(key) as RedisType;
+	const r = requireRedis();
+	const type = await r.type(key) as RedisType;
 	if (type === 'none') return null;
 
-	const ttl = await redis.ttl(key);
+	const ttl = await r.ttl(key);
 	let value: unknown;
 
 	switch (type) {
 		case 'string':
-			value = await redis.get(key);
+			value = await r.get(key);
 			break;
 		case 'hash':
-			value = await redis.hgetall(key);
+			value = await r.hgetall(key);
 			break;
 		case 'list':
-			value = await redis.lrange(key, 0, -1);
+			value = await r.lrange(key, 0, -1);
 			break;
 		case 'set':
-			value = await redis.smembers(key);
+			value = await r.smembers(key);
 			break;
 		case 'zset': {
 			// Return members with scores
-			const members = await redis.zrange(key, 0, -1, { withScores: true });
+			const members = await r.zrange(key, 0, -1, { withScores: true });
 			// zrange with withScores returns [member, score, member, score, ...]
 			const pairs: Array<{ member: string; score: number }> = [];
 			for (let i = 0; i < members.length; i += 2) {
@@ -103,7 +112,8 @@ export async function getShowcaseStats(): Promise<CacheShowcaseStats> {
 // ─── Ephemeral page ─────────────────────────────────────
 
 export async function getTtlSnapshot(key: string): Promise<TtlSnapshot> {
-	const ttl = await redis.ttl(key);
+	const r = requireRedis();
+	const ttl = await r.ttl(key);
 
 	return {
 		key,
@@ -118,8 +128,9 @@ export async function checkRateLimit(
 	limit = 10,
 	windowSeconds = 10,
 ): Promise<RateLimitResult> {
+	const r = requireRedis();
 	const ratelimit = new Ratelimit({
-		redis,
+		redis: r,
 		limiter: Ratelimit.slidingWindow(limit, `${windowSeconds} s`),
 		ephemeralCache,
 	});

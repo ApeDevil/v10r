@@ -4,7 +4,13 @@ import {
 	PutObjectCommand,
 } from '@aws-sdk/client-s3';
 import { s3, BUCKET } from '../index';
+import { StoreError } from '../errors';
 import { SHOWCASE_PREFIX } from './guards';
+
+function requireS3() {
+	if (!s3) throw new StoreError('credentials', 'R2 storage is not configured');
+	return s3;
+}
 
 // Minimal 1x1 red PNG (67 bytes)
 const PIXEL_PNG = new Uint8Array([
@@ -128,10 +134,12 @@ const SEED_OBJECTS: SeedObject[] = [
 
 /** Delete all objects under showcase/ and re-upload the seed set. */
 export async function reseedBucket(): Promise<{ objectCount: number }> {
+	const client = requireS3();
+
 	// 1. Delete all existing showcase objects
 	let continuationToken: string | undefined;
 	do {
-		const list = await s3.send(
+		const list = await client.send(
 			new ListObjectsV2Command({
 				Bucket: BUCKET,
 				Prefix: SHOWCASE_PREFIX,
@@ -144,7 +152,7 @@ export async function reseedBucket(): Promise<{ objectCount: number }> {
 			.filter(Boolean);
 
 		if (keys.length > 0) {
-			await s3.send(
+			await client.send(
 				new DeleteObjectsCommand({
 					Bucket: BUCKET,
 					Delete: { Objects: keys.map((Key) => ({ Key })) },
@@ -159,7 +167,7 @@ export async function reseedBucket(): Promise<{ objectCount: number }> {
 	for (const obj of SEED_OBJECTS) {
 		const body = typeof obj.body === 'string' ? new TextEncoder().encode(obj.body) : obj.body;
 
-		await s3.send(
+		await client.send(
 			new PutObjectCommand({
 				Bucket: BUCKET,
 				Key: obj.key,

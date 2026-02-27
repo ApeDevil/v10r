@@ -16,6 +16,7 @@ export function assertShowcaseKey(key: string): void {
 export async function checkObjectLimit(
 	limit = MAX_SHOWCASE_OBJECTS,
 ): Promise<string | null> {
+	if (!s3) throw new StoreError('credentials', 'R2 storage is not configured');
 	const res = await s3.send(
 		new ListObjectsV2Command({
 			Bucket: BUCKET,
