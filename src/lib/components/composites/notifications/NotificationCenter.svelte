@@ -37,7 +37,7 @@
 		{#if empty}
 			{@render empty()}
 		{:else}
-			<p class="empty-message">No notifications</p>
+			<p class="empty-message">No notifications match this filter</p>
 		{/if}
 	{:else}
 		<div class="notification-list" role="feed" aria-label="Notifications">

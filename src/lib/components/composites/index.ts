@@ -24,3 +24,4 @@ export * from './date-picker';
 export * from './reorderable-panes';
 export * from './dock';
 export * from './notifications';
+export * from './diag-grid';

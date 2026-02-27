@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Card, Alert } from '$lib/components/composites';
+	import { Card, Alert, DiagGrid, DiagRow } from '$lib/components/composites';
 	import { Badge, Button, Spinner } from '$lib/components/primitives';
 	import { Stack } from '$lib/components/layout';
 
@@ -37,12 +37,12 @@
 			<h2 class="text-fluid-lg font-semibold">Active Sessions</h2>
 		{/snippet}
 
-		<div class="diag-grid">
+		<DiagGrid>
 			{#each data.sessions as sess}
 				<div class="session-row">
 					<div class="session-info">
 						<div class="flex items-center gap-2">
-							<code class="diag-mono">{sess.displayId}</code>
+							<code class="font-mono text-fluid-xs">{sess.displayId}</code>
 							{#if sess.isCurrent}
 								<Badge variant="success">Current</Badge>
 							{/if}
@@ -77,7 +77,7 @@
 					{/if}
 				</div>
 			{/each}
-		</div>
+		</DiagGrid>
 	</Card>
 
 	<!-- Linked Accounts -->
@@ -86,14 +86,13 @@
 			<h2 class="text-fluid-lg font-semibold">Linked Accounts</h2>
 		{/snippet}
 
-		<div class="diag-grid">
+		<DiagGrid>
 			{#each data.accounts as acc}
-				<div class="diag-row">
-					<span class="diag-label capitalize">{acc.provider}</span>
+				<DiagRow label={acc.provider} class="capitalize">
 					<Badge variant="success">Connected</Badge>
-				</div>
+				</DiagRow>
 			{/each}
-		</div>
+		</DiagGrid>
 	</Card>
 
 	<!-- Data Export -->
@@ -185,35 +184,6 @@
 </Stack>
 
 <style>
-	.diag-grid {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-1);
-	}
-
-	.diag-row {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: var(--spacing-2) var(--spacing-3);
-		border-radius: var(--radius-sm);
-	}
-
-	.diag-row:nth-child(odd) {
-		background: var(--color-subtle);
-	}
-
-	.diag-label {
-		font-weight: 500;
-		color: var(--color-muted);
-		font-size: var(--text-fluid-sm);
-	}
-
-	.diag-mono {
-		font-family: ui-monospace, monospace;
-		font-size: var(--text-fluid-xs);
-	}
-
 	.session-row {
 		display: flex;
 		justify-content: space-between;

@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Card } from '$lib/components/composites';
-	import { Button } from '$lib/components/primitives/button';
-	import { Badge } from '$lib/components/primitives/badge';
-	import { BackLink } from '$lib/components/composites';
+	import { Card, BackLink } from '$lib/components/composites';
+	import { Button, Badge, Switch, Input } from '$lib/components/primitives';
+	import { buttonVariants } from '$lib/components/primitives/button';
+	import { Stack, Cluster } from '$lib/components/layout';
 	import { getToast } from '$lib/state';
 
 	let { data, form } = $props();
@@ -13,7 +13,24 @@
 	let connectingTelegram = $state(false);
 	let telegramDeepLink = $state<string | null>(null);
 
-	const s = data.settings;
+	// Local mutable state for Switch components (initialized from server data)
+	let emailMention = $state(data.settings.emailMention);
+	let emailComment = $state(data.settings.emailComment);
+	let emailSystem = $state(data.settings.emailSystem);
+	let emailSuccess = $state(data.settings.emailSuccess);
+	let emailSecurity = $state(data.settings.emailSecurity);
+	let emailFollow = $state(data.settings.emailFollow);
+	let telegramMention = $state(data.settings.telegramMention);
+	let telegramComment = $state(data.settings.telegramComment);
+	let telegramSystem = $state(data.settings.telegramSystem);
+	let telegramSecurity = $state(data.settings.telegramSecurity);
+	let discordMention = $state(data.settings.discordMention);
+	let discordComment = $state(data.settings.discordComment);
+	let discordSystem = $state(data.settings.discordSystem);
+	let discordSecurity = $state(data.settings.discordSecurity);
+	let digestFrequency = $state(data.settings.digestFrequency);
+	let quietStart = $state(data.settings.quietStart ?? '');
+	let quietEnd = $state(data.settings.quietEnd ?? '');
 
 	$effect(() => {
 		if (form?.success) {
@@ -50,10 +67,8 @@
 	}
 </script>
 
-<div class="settings-page">
-	<BackLink href="/app/notifications" label="Back to notifications" />
-
-	<h2 class="page-title">Notification Settings</h2>
+<Stack gap="5">
+	<h2 class="text-fluid-lg font-semibold">Notification Settings</h2>
 
 	<form
 		method="POST"
@@ -65,220 +80,167 @@
 			};
 		}}
 	>
-		<!-- Email -->
-		<Card class="settings-card">
-			{#snippet header()}
-				<h3 class="section-title">Email Notifications</h3>
-				<p class="section-desc">Choose which notifications you receive by email.</p>
-			{/snippet}
+		<!-- Hidden inputs for Switch values (form submission) -->
+		<input type="hidden" name="emailMention" value={emailMention ? 'on' : ''} />
+		<input type="hidden" name="emailComment" value={emailComment ? 'on' : ''} />
+		<input type="hidden" name="emailSystem" value={emailSystem ? 'on' : ''} />
+		<input type="hidden" name="emailSuccess" value={emailSuccess ? 'on' : ''} />
+		<input type="hidden" name="emailSecurity" value={emailSecurity ? 'on' : ''} />
+		<input type="hidden" name="emailFollow" value={emailFollow ? 'on' : ''} />
+		<input type="hidden" name="telegramMention" value={telegramMention ? 'on' : ''} />
+		<input type="hidden" name="telegramComment" value={telegramComment ? 'on' : ''} />
+		<input type="hidden" name="telegramSystem" value={telegramSystem ? 'on' : ''} />
+		<input type="hidden" name="telegramSecurity" value={telegramSecurity ? 'on' : ''} />
+		<input type="hidden" name="discordMention" value={discordMention ? 'on' : ''} />
+		<input type="hidden" name="discordComment" value={discordComment ? 'on' : ''} />
+		<input type="hidden" name="discordSystem" value={discordSystem ? 'on' : ''} />
+		<input type="hidden" name="discordSecurity" value={discordSecurity ? 'on' : ''} />
+		<input type="hidden" name="digestFrequency" value={digestFrequency} />
 
-			<div class="toggle-list">
-				<label class="toggle-row">
-					<input type="checkbox" name="emailMention" checked={s.emailMention} />
-					<span>Mentions</span>
-				</label>
-				<label class="toggle-row">
-					<input type="checkbox" name="emailComment" checked={s.emailComment} />
-					<span>Comments</span>
-				</label>
-				<label class="toggle-row">
-					<input type="checkbox" name="emailSystem" checked={s.emailSystem} />
-					<span>System</span>
-				</label>
-				<label class="toggle-row">
-					<input type="checkbox" name="emailSuccess" checked={s.emailSuccess} />
-					<span>Success</span>
-				</label>
-				<label class="toggle-row">
-					<input type="checkbox" name="emailSecurity" checked={s.emailSecurity} />
-					<span>Security</span>
-				</label>
-				<label class="toggle-row">
-					<input type="checkbox" name="emailFollow" checked={s.emailFollow} />
-					<span>Follows</span>
-				</label>
-			</div>
-		</Card>
+		<Stack gap="5">
+			<!-- Email -->
+			<Card>
+				{#snippet header()}
+					<h3 class="text-fluid-base font-semibold">Email Notifications</h3>
+					<p class="text-fluid-sm text-muted mt-1">Choose which notifications you receive by email.</p>
+				{/snippet}
 
-		<!-- Telegram -->
-		<Card class="settings-card">
-			{#snippet header()}
-				<div class="channel-header">
-					<h3 class="section-title">Telegram</h3>
-					{#if data.telegram}
-						<Badge variant={data.telegram.isActive ? 'success' : 'warning'}>
-							{data.telegram.isActive ? 'Connected' : 'Inactive'}
-						</Badge>
+				<Stack gap="3">
+					<Switch bind:checked={emailMention} label="Mentions" size="sm" />
+					<Switch bind:checked={emailComment} label="Comments" size="sm" />
+					<Switch bind:checked={emailSystem} label="System" size="sm" />
+					<Switch bind:checked={emailSuccess} label="Success" size="sm" />
+					<Switch bind:checked={emailSecurity} label="Security" size="sm" />
+					<Switch bind:checked={emailFollow} label="Follows" size="sm" />
+				</Stack>
+			</Card>
+
+			<!-- Telegram -->
+			<Card>
+				{#snippet header()}
+					<Cluster gap="3">
+						<h3 class="text-fluid-base font-semibold">Telegram</h3>
+						{#if data.telegram}
+							<Badge variant={data.telegram.isActive ? 'success' : 'warning'}>
+								{data.telegram.isActive ? 'Connected' : 'Inactive'}
+							</Badge>
+						{/if}
+					</Cluster>
+					{#if data.telegram?.telegramUsername}
+						<p class="text-fluid-sm text-muted mt-1">Connected as @{data.telegram.telegramUsername}</p>
 					{/if}
-				</div>
-				{#if data.telegram?.telegramUsername}
-					<p class="section-desc">Connected as @{data.telegram.telegramUsername}</p>
+				{/snippet}
+
+				{#if data.telegram?.isActive}
+					<Stack gap="3">
+						<Switch bind:checked={telegramMention} label="Mentions" size="sm" />
+						<Switch bind:checked={telegramComment} label="Comments" size="sm" />
+						<Switch bind:checked={telegramSystem} label="System" size="sm" />
+						<Switch bind:checked={telegramSecurity} label="Security" size="sm" />
+					</Stack>
+				{:else}
+					<Stack gap="3">
+						<p class="text-fluid-sm text-muted">Connect your Telegram account to receive notifications via DM.</p>
+						<div>
+							<Button type="button" variant="secondary" onclick={connectTelegram} disabled={connectingTelegram}>
+								{connectingTelegram ? 'Generating link...' : 'Connect Telegram'}
+							</Button>
+						</div>
+						{#if telegramDeepLink}
+							<p class="text-fluid-xs text-muted">A link has been opened. Send /start in Telegram to complete the connection.</p>
+						{/if}
+					</Stack>
 				{/if}
-			{/snippet}
+			</Card>
 
-			{#if data.telegram?.isActive}
-				<div class="toggle-list">
-					<label class="toggle-row">
-						<input type="checkbox" name="telegramMention" checked={s.telegramMention} />
-						<span>Mentions</span>
-					</label>
-					<label class="toggle-row">
-						<input type="checkbox" name="telegramComment" checked={s.telegramComment} />
-						<span>Comments</span>
-					</label>
-					<label class="toggle-row">
-						<input type="checkbox" name="telegramSystem" checked={s.telegramSystem} />
-						<span>System</span>
-					</label>
-					<label class="toggle-row">
-						<input type="checkbox" name="telegramSecurity" checked={s.telegramSecurity} />
-						<span>Security</span>
-					</label>
-				</div>
-			{:else}
-				<div class="connect-section">
-					<p class="connect-desc">Connect your Telegram account to receive notifications via DM.</p>
-					<Button type="button" variant="secondary" onclick={connectTelegram} disabled={connectingTelegram}>
-						{connectingTelegram ? 'Generating link...' : 'Connect Telegram'}
-					</Button>
-					{#if telegramDeepLink}
-						<p class="connect-hint">A link has been opened. Send /start in Telegram to complete the connection.</p>
+			<!-- Discord -->
+			<Card>
+				{#snippet header()}
+					<Cluster gap="3">
+						<h3 class="text-fluid-base font-semibold">Discord</h3>
+						{#if data.discord}
+							<Badge variant={data.discord.isActive ? 'success' : 'warning'}>
+								{data.discord.isActive ? 'Connected' : 'Inactive'}
+							</Badge>
+						{/if}
+					</Cluster>
+					{#if data.discord?.discordUsername}
+						<p class="text-fluid-sm text-muted mt-1">Connected as {data.discord.discordUsername}</p>
 					{/if}
-				</div>
-			{/if}
-		</Card>
+				{/snippet}
 
-		<!-- Discord -->
-		<Card class="settings-card">
-			{#snippet header()}
-				<div class="channel-header">
-					<h3 class="section-title">Discord</h3>
-					{#if data.discord}
-						<Badge variant={data.discord.isActive ? 'success' : 'warning'}>
-							{data.discord.isActive ? 'Connected' : 'Inactive'}
-						</Badge>
-					{/if}
-				</div>
-				{#if data.discord?.discordUsername}
-					<p class="section-desc">Connected as {data.discord.discordUsername}</p>
+				{#if data.discord?.isActive}
+					<Stack gap="3">
+						<Switch bind:checked={discordMention} label="Mentions" size="sm" />
+						<Switch bind:checked={discordComment} label="Comments" size="sm" />
+						<Switch bind:checked={discordSystem} label="System" size="sm" />
+						<Switch bind:checked={discordSecurity} label="Security" size="sm" />
+					</Stack>
+				{:else}
+					<Stack gap="3">
+						<p class="text-fluid-sm text-muted">Connect your Discord account to receive notifications via DM.</p>
+						<div>
+							<a href="/api/notifications/discord/authorize" class={buttonVariants({ variant: 'secondary' })}>
+								Connect Discord
+							</a>
+						</div>
+					</Stack>
 				{/if}
-			{/snippet}
+			</Card>
 
-			{#if data.discord?.isActive}
-				<div class="toggle-list">
-					<label class="toggle-row">
-						<input type="checkbox" name="discordMention" checked={s.discordMention} />
-						<span>Mentions</span>
+			<!-- Digest Frequency -->
+			<Card>
+				{#snippet header()}
+					<h3 class="text-fluid-base font-semibold">Digest Frequency</h3>
+				{/snippet}
+
+				<Stack gap="3">
+					{#each ['instant', 'daily', 'weekly', 'never'] as freq}
+						<label class="radio-row">
+							<input
+								type="radio"
+								value={freq}
+								checked={digestFrequency === freq}
+								onchange={() => digestFrequency = freq}
+							/>
+							<span class="capitalize">{freq}</span>
+						</label>
+					{/each}
+				</Stack>
+			</Card>
+
+			<!-- Quiet Hours -->
+			<Card>
+				{#snippet header()}
+					<h3 class="text-fluid-base font-semibold">Quiet Hours</h3>
+					<p class="text-fluid-sm text-muted mt-1">Pause notifications during certain hours.</p>
+				{/snippet}
+
+				<Cluster gap="5">
+					<label class="time-field">
+						<span class="text-fluid-sm">Start</span>
+						<Input type="time" name="quietStart" bind:value={quietStart} />
 					</label>
-					<label class="toggle-row">
-						<input type="checkbox" name="discordComment" checked={s.discordComment} />
-						<span>Comments</span>
+					<label class="time-field">
+						<span class="text-fluid-sm">End</span>
+						<Input type="time" name="quietEnd" bind:value={quietEnd} />
 					</label>
-					<label class="toggle-row">
-						<input type="checkbox" name="discordSystem" checked={s.discordSystem} />
-						<span>System</span>
-					</label>
-					<label class="toggle-row">
-						<input type="checkbox" name="discordSecurity" checked={s.discordSecurity} />
-						<span>Security</span>
-					</label>
-				</div>
-			{:else}
-				<div class="connect-section">
-					<p class="connect-desc">Connect your Discord account to receive notifications via DM.</p>
-					<a href="/api/notifications/discord/authorize" class="connect-btn">
-						<Button type="button" variant="secondary">Connect Discord</Button>
-					</a>
-				</div>
-			{/if}
-		</Card>
+				</Cluster>
+			</Card>
 
-		<!-- Digest Frequency -->
-		<Card class="settings-card">
-			{#snippet header()}
-				<h3 class="section-title">Digest Frequency</h3>
-			{/snippet}
-
-			<div class="radio-list">
-				{#each ['instant', 'daily', 'weekly', 'never'] as freq}
-					<label class="toggle-row">
-						<input type="radio" name="digestFrequency" value={freq} checked={s.digestFrequency === freq} />
-						<span class="capitalize">{freq}</span>
-					</label>
-				{/each}
-			</div>
-		</Card>
-
-		<!-- Quiet Hours -->
-		<Card class="settings-card">
-			{#snippet header()}
-				<h3 class="section-title">Quiet Hours</h3>
-				<p class="section-desc">Pause notifications during certain hours.</p>
-			{/snippet}
-
-			<div class="time-inputs">
-				<label class="time-label">
-					<span>Start</span>
-					<input type="time" name="quietStart" value={s.quietStart ?? ''} />
-				</label>
-				<label class="time-label">
-					<span>End</span>
-					<input type="time" name="quietEnd" value={s.quietEnd ?? ''} />
-				</label>
-			</div>
-		</Card>
-
-		<div class="form-actions">
-			<Button type="submit" disabled={saving}>
-				{saving ? 'Saving...' : 'Save settings'}
-			</Button>
-		</div>
+			<Cluster justify="end">
+				<Button type="submit" disabled={saving}>
+					{saving ? 'Saving...' : 'Save settings'}
+				</Button>
+			</Cluster>
+		</Stack>
 	</form>
-</div>
+
+	<BackLink href="/app/notifications" label="notifications" />
+</Stack>
 
 <style>
-	.settings-page {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-5);
-	}
-
-	.page-title {
-		font-size: var(--text-fluid-lg);
-		font-weight: 600;
-		margin: 0;
-	}
-
-	.settings-page :global(.settings-card) {
-		margin-bottom: var(--spacing-5);
-	}
-
-	.section-title {
-		font-size: var(--text-fluid-base);
-		font-weight: 600;
-		margin: 0;
-	}
-
-	.section-desc {
-		font-size: var(--text-fluid-sm);
-		color: var(--color-muted);
-		margin: var(--spacing-1) 0 0;
-	}
-
-	.channel-header {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-3);
-	}
-
-	.toggle-list,
-	.radio-list {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-3);
-	}
-
-	.toggle-row {
+	.radio-row {
 		display: flex;
 		align-items: center;
 		gap: var(--spacing-3);
@@ -286,55 +248,13 @@
 		cursor: pointer;
 	}
 
-	.connect-section {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-3);
+	.capitalize {
+		text-transform: capitalize;
 	}
 
-	.connect-desc {
-		font-size: var(--text-fluid-sm);
-		color: var(--color-muted);
-		margin: 0;
-	}
-
-	.connect-hint {
-		font-size: var(--text-fluid-xs);
-		color: var(--color-primary);
-		margin: 0;
-	}
-
-	.connect-btn {
-		text-decoration: none;
-		align-self: flex-start;
-	}
-
-	.time-inputs {
-		display: flex;
-		gap: var(--spacing-5);
-	}
-
-	.time-label {
+	.time-field {
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-1);
-		font-size: var(--text-fluid-sm);
-	}
-
-	.time-label input {
-		padding: var(--spacing-2) var(--spacing-3);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		background-color: var(--color-surface-1);
-		color: var(--color-fg);
-	}
-
-	.form-actions {
-		display: flex;
-		justify-content: flex-end;
-	}
-
-	.capitalize {
-		text-transform: capitalize;
 	}
 </style>

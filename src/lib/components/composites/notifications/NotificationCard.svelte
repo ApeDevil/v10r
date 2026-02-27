@@ -81,8 +81,9 @@
 
 	.notification-icon {
 		flex-shrink: 0;
-		font-size: 1.125rem;
+		font-size: var(--text-fluid-base);
 		color: var(--color-muted);
+		/* Optical alignment with text baseline */
 		padding-top: 2px;
 	}
 

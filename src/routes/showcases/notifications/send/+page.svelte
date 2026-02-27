@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Card } from '$lib/components/composites';
+	import { Card, FormField } from '$lib/components/composites';
 	import { NotificationCard } from '$lib/components/composites/notifications';
-	import { Badge, Button, Spinner } from '$lib/components/primitives';
+	import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
 	import { Stack } from '$lib/components/layout';
 
 	let { data, form } = $props();
@@ -76,7 +76,7 @@
 								<span class={qt.icon}></span>
 							{/if}
 						</span>
-						<span class="quick-label">{qt.label}</span>
+						<span class="text-fluid-sm font-medium">{qt.label}</span>
 					</button>
 				</form>
 			{/each}
@@ -96,7 +96,6 @@
 			<form
 				method="POST"
 				action="?/customSend"
-				class="custom-form"
 				use:enhance={() => {
 					sendingCustom = true;
 					return async ({ update }) => {
@@ -108,59 +107,75 @@
 					};
 				}}
 			>
-				<div class="form-field">
-					<label for="custom-type">Type</label>
-					<select id="custom-type" name="type" bind:value={customType}>
-						{#each data.notificationTypes as t}
-							<option value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
-						{/each}
-					</select>
-				</div>
+				<Stack gap="4">
+					<FormField label="Type" id="custom-type">
+						{#snippet children({ fieldId, describedBy })}
+							<select
+								id={fieldId}
+								name="type"
+								bind:value={customType}
+								aria-describedby={describedBy}
+								class="form-select"
+							>
+								{#each data.notificationTypes as t}
+									<option value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+								{/each}
+							</select>
+						{/snippet}
+					</FormField>
 
-				<div class="form-field">
-					<label for="custom-title">Title</label>
-					<input
-						id="custom-title"
-						name="title"
-						type="text"
-						required
-						placeholder="Notification title..."
-						bind:value={customTitle}
-					/>
-				</div>
+					<FormField label="Title" id="custom-title" required>
+						{#snippet children({ fieldId, describedBy })}
+							<Input
+								id={fieldId}
+								name="title"
+								type="text"
+								required
+								placeholder="Notification title..."
+								bind:value={customTitle}
+								aria-describedby={describedBy}
+							/>
+						{/snippet}
+					</FormField>
 
-				<div class="form-field">
-					<label for="custom-body">Body <span class="text-muted">(optional)</span></label>
-					<textarea
-						id="custom-body"
-						name="body"
-						rows="3"
-						placeholder="Optional description..."
-						bind:value={customBody}
-					></textarea>
-				</div>
+					<FormField label="Body" id="custom-body" description="Optional">
+						{#snippet children({ fieldId, describedBy })}
+							<textarea
+								id={fieldId}
+								name="body"
+								rows="3"
+								placeholder="Optional description..."
+								bind:value={customBody}
+								aria-describedby={describedBy}
+								class="form-textarea"
+							></textarea>
+						{/snippet}
+					</FormField>
 
-				{#if form?.error}
-					<p class="form-error">{form.error}</p>
-				{/if}
-
-				<Button type="submit" disabled={sendingCustom || !customTitle.trim()}>
-					{#if sendingCustom}
-						<Spinner size="xs" class="mr-2" />
-						Sending...
-					{:else if sentCustom}
-						<span class="i-lucide-check h-4 w-4 mr-1"></span>
-						Sent
-					{:else}
-						<span class="i-lucide-send h-4 w-4 mr-1"></span>
-						Send
+					{#if form?.error}
+						<p class="text-fluid-sm text-error">{form.error}</p>
 					{/if}
-				</Button>
+
+					<div>
+						<Button type="submit" disabled={sendingCustom || !customTitle.trim()}>
+							{#if sendingCustom}
+								<Spinner size="xs" class="mr-2" />
+								Sending...
+							{:else if sentCustom}
+								<span class="i-lucide-check h-4 w-4 mr-1"></span>
+								Sent
+							{:else}
+								<span class="i-lucide-send h-4 w-4 mr-1"></span>
+								Send
+							{/if}
+						</Button>
+					</div>
+				</Stack>
 			</form>
 
 			<!-- Live Preview -->
 			<div class="preview-section">
-				<p class="preview-label">Preview</p>
+				<p class="text-fluid-sm font-medium text-muted">Preview</p>
 				<div class="preview-card">
 					<NotificationCard
 						id="preview"
@@ -202,22 +217,22 @@
 		background: color-mix(in srgb, var(--color-primary) 5%, transparent);
 	}
 
+	.quick-card:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+	}
+
 	.quick-card:disabled {
 		opacity: 0.7;
 		cursor: wait;
 	}
 
 	.quick-icon {
-		font-size: 1.25rem;
+		font-size: var(--text-fluid-lg);
 		color: var(--color-muted);
 	}
 
-	.quick-label {
-		font-size: var(--text-fluid-sm);
-		font-weight: 500;
-	}
-
-	/* Custom Form */
+	/* Custom Form Layout */
 	.custom-layout {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
@@ -230,51 +245,28 @@
 		}
 	}
 
-	.custom-form {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-4);
-	}
-
-	.form-field {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-1);
-	}
-
-	.form-field label {
-		font-size: var(--text-fluid-sm);
-		font-weight: 500;
-		color: var(--color-muted);
-	}
-
-	.form-field input,
-	.form-field select,
-	.form-field textarea {
+	/* Native select/textarea styled to match Input component */
+	.form-select,
+	.form-textarea {
+		width: 100%;
 		padding: var(--spacing-2) var(--spacing-3);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-sm);
-		background: var(--color-bg);
-		font-size: var(--text-fluid-sm);
+		font-size: var(--text-fluid-base);
 		color: var(--color-fg);
+		background-color: var(--color-input-bg);
+		border: none;
+		border-bottom: 1px solid var(--color-input-border);
+		border-radius: var(--radius-md) var(--radius-md) 0 0;
+		transition: border-bottom-color 150ms ease, border-bottom-width 150ms ease;
 	}
 
-	.form-field input:focus,
-	.form-field select:focus,
-	.form-field textarea:focus {
+	.form-select:focus,
+	.form-textarea:focus {
 		outline: none;
-		border-color: var(--color-primary);
-		box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 20%, transparent);
+		border-bottom: 2px solid var(--color-primary);
 	}
 
-	.form-field textarea {
+	.form-textarea {
 		resize: vertical;
-	}
-
-	.form-error {
-		color: var(--color-error);
-		font-size: var(--text-fluid-sm);
-		margin: 0;
 	}
 
 	/* Preview */
@@ -282,13 +274,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-2);
-	}
-
-	.preview-label {
-		font-size: var(--text-fluid-sm);
-		font-weight: 500;
-		color: var(--color-muted);
-		margin: 0;
 	}
 
 	.preview-card {

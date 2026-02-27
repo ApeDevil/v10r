@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Card } from '$lib/components/composites';
+	import { Card, DiagGrid, DiagRow } from '$lib/components/composites';
 	import { Badge } from '$lib/components/primitives';
 	import { Stack } from '$lib/components/layout';
 
@@ -17,34 +17,31 @@
 			<h2 class="text-fluid-lg font-semibold">Provider Configuration</h2>
 		{/snippet}
 
-		<div class="diag-grid">
-			<div class="diag-row">
-				<span class="diag-label">Email ({data.providers.email.name})</span>
+		<DiagGrid>
+			<DiagRow label="Email ({data.providers.email.name})">
 				{#if data.providers.email.configured}
 					<Badge variant="success">Configured</Badge>
 				{:else}
 					<Badge variant="warning">Missing</Badge>
 				{/if}
-			</div>
+			</DiagRow>
 
-			<div class="diag-row">
-				<span class="diag-label">Telegram ({data.providers.telegram.name})</span>
+			<DiagRow label="Telegram ({data.providers.telegram.name})">
 				{#if data.providers.telegram.configured}
 					<Badge variant="success">Configured</Badge>
 				{:else}
 					<Badge variant="warning">Missing</Badge>
 				{/if}
-			</div>
+			</DiagRow>
 
-			<div class="diag-row">
-				<span class="diag-label">Discord ({data.providers.discord.name})</span>
+			<DiagRow label="Discord ({data.providers.discord.name})">
 				{#if data.providers.discord.configured}
 					<Badge variant="success">Configured</Badge>
 				{:else}
 					<Badge variant="warning">Missing</Badge>
 				{/if}
-			</div>
-		</div>
+			</DiagRow>
+		</DiagGrid>
 	</Card>
 
 	<!-- User Channels -->
@@ -54,47 +51,35 @@
 				<h2 class="text-fluid-lg font-semibold">Your Channels</h2>
 			{/snippet}
 
-			<div class="diag-grid">
-				<div class="diag-row">
-					<span class="diag-label">In-App (SSE)</span>
+			<DiagGrid>
+				<DiagRow label="In-App (SSE)">
 					<Badge variant="success">Active</Badge>
-				</div>
+				</DiagRow>
 
-				<div class="diag-row">
-					<span class="diag-label">Email</span>
-					<code class="diag-mono">{data.userChannels.email}</code>
-				</div>
+				<DiagRow label="Email">
+					<code>{data.userChannels.email}</code>
+				</DiagRow>
 
-				<div class="diag-row">
-					<span class="diag-label">Telegram</span>
+				<DiagRow label="Telegram">
 					{#if data.userChannels.telegram?.active}
-						<span class="diag-value">
-							<Badge variant="success">Connected</Badge>
-							<code class="diag-mono">@{data.userChannels.telegram.username}</code>
-						</span>
+						<Badge variant="success">Connected</Badge>
+						<code>@{data.userChannels.telegram.username}</code>
 					{:else}
-						<span class="diag-value">
-							<Badge variant="secondary">Not connected</Badge>
-							<a href="/app/notifications/settings" class="diag-link">Settings</a>
-						</span>
+						<Badge variant="secondary">Not connected</Badge>
+						<a href="/app/notifications/settings">Settings</a>
 					{/if}
-				</div>
+				</DiagRow>
 
-				<div class="diag-row">
-					<span class="diag-label">Discord</span>
+				<DiagRow label="Discord">
 					{#if data.userChannels.discord?.active}
-						<span class="diag-value">
-							<Badge variant="success">Connected</Badge>
-							<code class="diag-mono">{data.userChannels.discord.username}</code>
-						</span>
+						<Badge variant="success">Connected</Badge>
+						<code>{data.userChannels.discord.username}</code>
 					{:else}
-						<span class="diag-value">
-							<Badge variant="secondary">Not connected</Badge>
-							<a href="/app/notifications/settings" class="diag-link">Settings</a>
-						</span>
+						<Badge variant="secondary">Not connected</Badge>
+						<a href="/app/notifications/settings">Settings</a>
 					{/if}
-				</div>
-			</div>
+				</DiagRow>
+			</DiagGrid>
 		</Card>
 	{/if}
 
@@ -104,27 +89,12 @@
 			<h2 class="text-fluid-lg font-semibold">System Configuration</h2>
 		{/snippet}
 
-		<div class="diag-grid">
-			<div class="diag-row">
-				<span class="diag-label">Delivery Interval</span>
-				<code class="diag-mono">{data.config.deliveryIntervalMs}ms</code>
-			</div>
-
-			<div class="diag-row">
-				<span class="diag-label">Max Delivery Attempts</span>
-				<code class="diag-mono">{data.config.deliveryMaxAttempts}</code>
-			</div>
-
-			<div class="diag-row">
-				<span class="diag-label">SSE Heartbeat</span>
-				<code class="diag-mono">{data.config.sseHeartbeatMs}ms</code>
-			</div>
-
-			<div class="diag-row">
-				<span class="diag-label">Max SSE per User</span>
-				<code class="diag-mono">{data.config.sseMaxPerUser}</code>
-			</div>
-		</div>
+		<DiagGrid>
+			<DiagRow label="Delivery Interval"><code>{data.config.deliveryIntervalMs}ms</code></DiagRow>
+			<DiagRow label="Max Delivery Attempts"><code>{data.config.deliveryMaxAttempts}</code></DiagRow>
+			<DiagRow label="SSE Heartbeat"><code>{data.config.sseHeartbeatMs}ms</code></DiagRow>
+			<DiagRow label="Max SSE per User"><code>{data.config.sseMaxPerUser}</code></DiagRow>
+		</DiagGrid>
 	</Card>
 
 	<!-- Key Files -->
@@ -133,84 +103,14 @@
 			<h2 class="text-fluid-lg font-semibold">Key Files</h2>
 		{/snippet}
 
-		<div class="diag-grid">
-			<div class="diag-row">
-				<span class="diag-label">Service</span>
-				<code class="diag-mono">src/lib/server/notifications/service.ts</code>
-			</div>
-			<div class="diag-row">
-				<span class="diag-label">Router</span>
-				<code class="diag-mono">src/lib/server/notifications/router.ts</code>
-			</div>
-			<div class="diag-row">
-				<span class="diag-label">Outbox</span>
-				<code class="diag-mono">src/lib/server/notifications/outbox.ts</code>
-			</div>
-			<div class="diag-row">
-				<span class="diag-label">SSE Stream</span>
-				<code class="diag-mono">src/lib/server/notifications/stream.ts</code>
-			</div>
-			<div class="diag-row">
-				<span class="diag-label">Providers</span>
-				<code class="diag-mono">src/lib/server/notifications/providers/</code>
-			</div>
-			<div class="diag-row">
-				<span class="diag-label">Schema</span>
-				<code class="diag-mono">src/lib/server/db/schema/notifications/</code>
-			</div>
-			<div class="diag-row">
-				<span class="diag-label">Settings UI</span>
-				<code class="diag-mono">src/routes/app/notifications/settings/</code>
-			</div>
-		</div>
+		<DiagGrid>
+			<DiagRow label="Service"><code>src/lib/server/notifications/service.ts</code></DiagRow>
+			<DiagRow label="Router"><code>src/lib/server/notifications/router.ts</code></DiagRow>
+			<DiagRow label="Outbox"><code>src/lib/server/notifications/outbox.ts</code></DiagRow>
+			<DiagRow label="SSE Stream"><code>src/lib/server/notifications/stream.ts</code></DiagRow>
+			<DiagRow label="Providers"><code>src/lib/server/notifications/providers/</code></DiagRow>
+			<DiagRow label="Schema"><code>src/lib/server/db/schema/notifications/</code></DiagRow>
+			<DiagRow label="Settings UI"><code>src/routes/app/notifications/settings/</code></DiagRow>
+		</DiagGrid>
 	</Card>
 </Stack>
-
-<style>
-	.diag-grid {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-1);
-	}
-
-	.diag-row {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: var(--spacing-2) var(--spacing-3);
-		border-radius: var(--radius-sm);
-	}
-
-	.diag-row:nth-child(odd) {
-		background: var(--color-subtle);
-	}
-
-	.diag-label {
-		font-weight: 500;
-		color: var(--color-muted);
-		font-size: var(--text-fluid-sm);
-	}
-
-	.diag-value {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-2);
-		font-size: var(--text-fluid-sm);
-	}
-
-	.diag-mono {
-		font-family: ui-monospace, monospace;
-		font-size: var(--text-fluid-xs);
-		word-break: break-all;
-	}
-
-	.diag-link {
-		font-size: var(--text-fluid-xs);
-		color: var(--color-primary);
-		text-decoration: none;
-	}
-
-	.diag-link:hover {
-		text-decoration: underline;
-	}
-</style>

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Card, EmptyState } from '$lib/components/composites';
+	import { Card, EmptyState, DiagGrid, DiagRow } from '$lib/components/composites';
 	import { Badge, Button, Spinner } from '$lib/components/primitives';
 	import { Stack, Cluster } from '$lib/components/layout';
 
@@ -93,9 +93,8 @@
 			<h2 class="text-fluid-lg font-semibold">SSE Stream</h2>
 		{/snippet}
 
-		<div class="diag-grid">
-			<div class="diag-row">
-				<span class="diag-label">Connection</span>
+		<DiagGrid>
+			<DiagRow label="Connection">
 				{#if sseStatus === 'connected'}
 					<Badge variant="success">Connected</Badge>
 				{:else if sseStatus === 'connecting'}
@@ -103,25 +102,21 @@
 				{:else}
 					<Badge variant="error">Disconnected</Badge>
 				{/if}
-			</div>
+			</DiagRow>
 
-			<div class="diag-row">
-				<span class="diag-label">Unread Count</span>
+			<DiagRow label="Unread Count">
 				<Badge variant={unreadCount > 0 ? 'warning' : 'secondary'}>{unreadCount}</Badge>
-			</div>
+			</DiagRow>
 
-			<div class="diag-row">
-				<span class="diag-label">Last Event</span>
+			<DiagRow label="Last Event">
 				{#if lastEvent}
-					<span class="diag-value">
-						<Badge variant="secondary">{lastEvent.type}</Badge>
-						<code class="diag-mono">{lastEvent.time}</code>
-					</span>
+					<Badge variant="secondary">{lastEvent.type}</Badge>
+					<code>{lastEvent.time}</code>
 				{:else}
-					<span class="diag-value">&mdash;</span>
+					&mdash;
 				{/if}
-			</div>
-		</div>
+			</DiagRow>
+		</DiagGrid>
 	</Card>
 
 	<!-- Recent Deliveries -->
@@ -212,44 +207,6 @@
 </Stack>
 
 <style>
-	.diag-grid {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-1);
-	}
-
-	.diag-row {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: var(--spacing-2) var(--spacing-3);
-		border-radius: var(--radius-sm);
-	}
-
-	.diag-row:nth-child(odd) {
-		background: var(--color-subtle);
-	}
-
-	.diag-label {
-		font-weight: 500;
-		color: var(--color-muted);
-		font-size: var(--text-fluid-sm);
-	}
-
-	.diag-value {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-2);
-		font-size: var(--text-fluid-sm);
-	}
-
-	.diag-mono {
-		font-family: ui-monospace, monospace;
-		font-size: var(--text-fluid-xs);
-		word-break: break-all;
-	}
-
-	/* History Table */
 	.history-table-wrap {
 		overflow-x: auto;
 	}

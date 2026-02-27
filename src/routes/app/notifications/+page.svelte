@@ -2,6 +2,8 @@
 	import { invalidate } from '$app/navigation';
 	import { NotificationCenter, EmptyState } from '$lib/components/composites';
 	import { Button } from '$lib/components/primitives/button';
+	import { buttonVariants } from '$lib/components/primitives/button';
+	import { Stack, Cluster } from '$lib/components/layout';
 	import { getNotifications } from '$lib/state';
 	import { getToast } from '$lib/state';
 
@@ -36,19 +38,21 @@
 	}
 </script>
 
-<div class="notification-page">
-	<div class="page-actions">
-		<h2 class="page-title">Notifications</h2>
-		{#if data.unreadCount > 0}
-			<Button variant="ghost" size="sm" onclick={handleMarkAllRead}>
-				Mark all as read
-			</Button>
-		{/if}
-		<a href="/app/notifications/settings" class="settings-link">
-			<span class="i-lucide-settings" aria-hidden="true"></span>
-			Settings
-		</a>
-	</div>
+<Stack gap="5">
+	<Cluster justify="between">
+		<h2 class="text-fluid-lg font-semibold">Notifications</h2>
+		<Cluster gap="3">
+			{#if data.unreadCount > 0}
+				<Button variant="ghost" size="sm" onclick={handleMarkAllRead}>
+					Mark all as read
+				</Button>
+			{/if}
+			<a href="/app/notifications/settings" class={buttonVariants({ variant: 'ghost', size: 'sm' })}>
+				<span class="i-lucide-settings" aria-hidden="true"></span>
+				Settings
+			</a>
+		</Cluster>
+	</Cluster>
 
 	{#if data.notifications.length === 0 && filter === 'all'}
 		<EmptyState
@@ -64,38 +68,4 @@
 			onMarkRead={handleMarkRead}
 		/>
 	{/if}
-</div>
-
-<style>
-	.notification-page {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-5);
-	}
-
-	.page-actions {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-3);
-	}
-
-	.page-title {
-		font-size: var(--text-fluid-lg);
-		font-weight: 600;
-		margin: 0;
-		flex: 1;
-	}
-
-	.settings-link {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--spacing-2);
-		font-size: var(--text-fluid-sm);
-		color: var(--color-muted);
-		text-decoration: none;
-	}
-
-	.settings-link:hover {
-		color: var(--color-fg);
-	}
-</style>
+</Stack>
