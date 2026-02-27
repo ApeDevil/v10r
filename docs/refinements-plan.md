@@ -749,7 +749,7 @@ DETACH DELETE e
 
 ## Tier 5: Documentation Fixes
 
-### 5.1 Stale Route Documentation
+### 5.1 Stale Route Documentation ✅
 
 **File:** `docs/blueprint/pages.md`
 
@@ -757,17 +757,21 @@ Significantly stale. Documents routes that don't exist (`/showcase/state`, `/sho
 
 **Fix:** Update to match `src/routes/showcases/` or mark as aspirational with a clear note about drift.
 
+> **Implementation notes:** Complete rewrite of route tree, showcase sections, file structure, navigation sidebar, and summary table. Removed 5 non-existent routes (state, data, animations, graph, api). Added 7 missing route groups (ai, shell, cache, viz, jobs, decorative, expanded auth/forms). Updated all 50+ routes to match actual filesystem.
+
 ---
 
-### 5.2 CLAUDE.md Bugs
+### 5.2 CLAUDE.md Bugs ✅
 
 1. **Duplicate row:** Lines 12 and 21 both say `| Container | Podman | docs/stack/core/podman.md |`. Remove one.
 2. **Duplicate delegation section:** "Mandatory Delegation Rules" table and "Delegation Triggers" keyword list say the same thing twice. Keep the keyword triggers (more scannable), remove the table.
 3. **Missing AI subsystem:** The RAG/retrieval system (`docs/blueprint/ai/graph-rag.md`) is not referenced anywhere in CLAUDE.md.
 
+> **Implementation notes:** All three bugs fixed. Duplicate Podman row removed, delegation table removed (keyword triggers kept), RAG/retrieval reference added to Architecture section.
+
 ---
 
-### 5.3 Unsurfaced Documentation
+### 5.3 Unsurfaced Documentation ✅
 
 **`docs/blueprint/ai/`** exists with `graph-rag.md` and `toon.md` but is NOT referenced in:
 - `docs/README.md`
@@ -776,9 +780,11 @@ Significantly stale. Documents routes that don't exist (`/showcase/state`, `/sho
 
 Anyone looking for AI/RAG documentation will miss it entirely.
 
+> **Implementation notes:** Added AI section to `docs/blueprint/README.md` with graph-rag.md and toon.md entries. Added `ai/` to `docs/README.md` blueprint line. Added RAG reference to CLAUDE.md Architecture section.
+
 ---
 
-### 5.4 Directory Identity Issues
+### 5.4 Directory Identity Issues ✅
 
 | Problem | Fix |
 |---------|-----|
@@ -788,15 +794,19 @@ Anyone looking for AI/RAG documentation will miss it entirely.
 | `docs/blueprint/development-environment.md` is a setup principle, not a feature design | Move to `docs/foundation/` |
 | `docs/blueprint/progressive-revelation.md` and `style-randomizer.md` are product concepts | Move to `docs/foundation/` |
 
+> **Implementation notes:** (1) Moved `keyboard-shortcuts.md` to `docs/implementation/`, deleted `docs/features/`. (2) Renamed `docs/stack/features/` → `docs/stack/capabilities/`, updated all references in CLAUDE.md, docs/README.md, docs/stack/README.md. (3) Deployment docs kept in both locations — they serve different purposes (stack/ops = decision rationale, blueprint = implementation guide); cross-reference added. (4) Moved `development-environment.md` to `docs/foundation/`, fixed 12 cross-references across blueprint docs. (5) progressive-revelation and style-randomizer left in blueprint — foundation already has concept-level versions (`progressive-revelation.md`, `style.md`); blueprint versions are implementation specs, not duplicates.
+
 ---
 
-### 5.5 Missing Documentation
+### 5.5 Missing Documentation ✅
 
 | Feature | Routes exist | Docs exist | Action |
 |---------|:---:|:---:|--------|
 | AI / RAG / retrieval | 8+ routes | `stack/ai/ai-sdk.md` only | Write `implementation/ai-showcase.md` |
 | Visualization | 5 showcase pages | none | Write `stack/capabilities/viz.md` |
 | Decorative UI | 2 showcase pages | none | Low priority — self-documenting via showcases |
+
+> **Implementation notes:** Wrote `docs/implementation/ai-showcase.md` covering the AI showcase routes, Vercel AI SDK multi-provider setup, and RAG retrieval pipeline. Wrote `docs/stack/capabilities/viz.md` covering Chart.js, D3 family, XY Flow, and MapLibre GL. Decorative UI skipped as planned (low priority, self-documenting).
 
 ---
 
@@ -832,5 +842,5 @@ Route/layout cleanup, naming normalization, barrel cleanup, component fixes. Ren
 **Phase 4 — Strategy (Tier 4)** ✅
 Feature flags + optional services, `ws` removal, Biome setup, Vite warmup, CSP audit, platform detection, RAG cleanup. Skipped: AI provider registry swap (custom impl has needed features), primitive token layer (high effort, low ROI).
 
-**Phase 5 — Docs (Tier 5)**
-Route docs update, CLAUDE.md fixes, surface hidden docs, directory cleanup, fill gaps. Can be done in parallel with any phase.
+**Phase 5 — Docs (Tier 5)** ✅
+Route docs update, CLAUDE.md fixes, surface hidden docs, directory cleanup, fill gaps. Rewrote pages.md, fixed CLAUDE.md bugs, surfaced AI docs in READMEs, restructured directories (features→implementation, stack/features→stack/capabilities, development-environment→foundation), wrote ai-showcase.md and viz.md.

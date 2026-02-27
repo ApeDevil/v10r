@@ -15,37 +15,10 @@ Host Machine          Container (v10r)
 
 ## Adding Dependencies
 
-When documentation shows:
+Never run `bun add` on the host. The workflow is:
 
-```bash
-bun add package-name
-```
-
-The actual workflow is:
-
-1. **Edit `package.json`** - add the package to `dependencies` or `devDependencies`
-2. **Restart the container** - `podman-compose restart app`
-
-The container runs `bun install` automatically on startup, picking up any new packages.
-
-### Example
-
-To add `better-auth`:
-
-```json
-// package.json
-{
-  "dependencies": {
-    "better-auth": "^1.2.0"
-  }
-}
-```
-
-Then restart:
-
-```bash
-podman-compose restart app
-```
+1. **Edit `package.json`** — add the package to `dependencies` or `devDependencies`
+2. **Restart the container** — the container runs `bun install` automatically on startup
 
 ### Why No Manual Installation?
 
@@ -76,52 +49,19 @@ podman-compose restart app
 
 ## Volume Mounts
 
-```yaml
-volumes:
-  - .:/app                        # Project files (hot reload)
-  - node_modules:/app/node_modules  # Named volume (isolated)
-```
-
-The named volume for `node_modules` means:
+Project files are bind-mounted at `/app` for hot reload. `node_modules` uses a named volume, which means:
 - Dependencies don't sync back to host
 - Faster I/O (no filesystem translation)
 - No conflicts with host's Node version
 
 ## Running Commands Inside Container
 
-If you need to run a one-off command:
-
-```bash
-podman exec -it v10r bun run check
-podman exec -it v10r bun run build
-```
-
-Or open a shell:
-
-```bash
-podman exec -it v10r sh
-```
+Use `podman exec -it v10r <command>` for one-off commands (e.g., `bun run check`, `bun run build`), or open a shell with `podman exec -it v10r sh`.
 
 ## Troubleshooting
 
-### Dependencies not updating?
-
-```bash
-podman-compose down
-podman-compose up -d
-```
-
-### Need a fresh start?
-
-```bash
-podman-compose down -v  # removes volumes too
-podman-compose up -d
-```
-
-### Container won't start?
-
-Check logs:
-
-```bash
-podman-compose logs app
-```
+| Problem | Fix |
+|---------|-----|
+| Dependencies not updating | `podman-compose down` then `podman-compose up -d` |
+| Need a fresh start | `podman-compose down -v` (removes volumes) then `podman-compose up -d` |
+| Container won't start | Check logs with `podman-compose logs app` |

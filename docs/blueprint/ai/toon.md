@@ -47,7 +47,7 @@ users[2]{id,name,role}:
 "@toon-format/toon": "^0.x"
 ```
 
-> See [development-environment.md](../development-environment.md) for installation workflow.
+> See [development-environment.md](../../foundation/development-environment.md) for installation workflow.
 
 ---
 

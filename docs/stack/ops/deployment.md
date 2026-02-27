@@ -63,6 +63,7 @@ See [vendors.md](../vendors.md#vercel) for pricing, free tier limits, and platfo
 
 ## Related
 
+- [../../blueprint/deployment.md](../../blueprint/deployment.md) - Detailed deployment guide (adapters, env parity, scheduled jobs, monitoring)
 - [../core/bun.md](../core/bun.md) - Runtime
 - [../core/sveltekit.md](../core/sveltekit.md) - Adapters
 - [hosting.md](./hosting.md) - Domain configuration

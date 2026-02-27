@@ -88,7 +88,7 @@ The AI Assistant is a chat interface accessible from the sidebar header. Unlike 
 "@toon-format/toon": "^0.x"     // 30-60% token savings for RAG
 ```
 
-> See [development-environment.md](../development-environment.md) for installation workflow.
+> See [development-environment.md](../../foundation/development-environment.md) for installation workflow.
 
 ---
 

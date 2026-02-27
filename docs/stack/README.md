@@ -16,7 +16,7 @@ Technology decisions and vendor choices. Each directory contains focused files o
 | [ops/](./ops/) | Deployment, logging, caching |
 | [ai/](./ai/) | LLM integration |
 | [notifications/](./notifications/) | Email, Telegram, Discord, user settings |
-| [features/](./features/) | Cross-cutting features |
+| [capabilities/](./capabilities/) | Cross-cutting features |
 
 ## Quick Reference
 
@@ -45,8 +45,8 @@ Technology decisions and vendor choices. Each directory contains focused files o
 | Email (Resend) | [notifications/resend.md](./notifications/resend.md) |
 | Telegram | [notifications/telegram.md](./notifications/telegram.md) |
 | Discord | [notifications/discord.md](./notifications/discord.md) |
-| GDPR | [features/gdpr.md](./features/gdpr.md) |
-| PWA | [features/pwa.md](./features/pwa.md) |
+| GDPR | [capabilities/gdpr.md](./capabilities/gdpr.md) |
+| PWA | [capabilities/pwa.md](./capabilities/pwa.md) |
 
 ## Vendors
 

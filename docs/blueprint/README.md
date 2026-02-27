@@ -2,12 +2,6 @@
 
 Implementation designs and feature specifications. How to build features using the stack, with code examples and patterns.
 
-## Development
-
-| File | Main Topics |
-|------|-------------|
-| **[development-environment.md](./development-environment.md)** | • Container-first workflow: Podman + Bun, no host installations<br>• Adding dependencies: edit `package.json` → restart container<br>• Container commands: start, stop, restart, shell access<br>• Volume mounts: project files + isolated node_modules<br>• Troubleshooting: fresh start, logs, rebuilding |
-
 ## Application Structure
 
 | File | Main Topics |
@@ -23,6 +17,12 @@ Implementation designs and feature specifications. How to build features using t
 | **[notifications/](./notifications/)** | • [README.md](./notifications/README.md): Architecture overview, build vs buy decision, Discord DM limitation<br>• [routing.md](./notifications/routing.md): Notification router, provider abstraction, outbox + Inngest, delivery tracking<br>• [channels.md](./notifications/channels.md): Telegram deep link flow, Discord OAuth2, token management, health monitoring<br>• [settings.md](./notifications/settings.md): Settings UI, Channel × Type matrix, connection cards, mobile patterns<br>• [schema.md](./notifications/schema.md): user_telegram_accounts, user_discord_accounts, extended settings, delivery log |
 
 > **Note:** In-app notifications (notification center, SSE) are in [app-shell/notifications.md](./app-shell/notifications.md). This section covers external channel delivery.
+
+## AI
+
+| File | Main Topics |
+|------|-------------|
+| **[ai/](./ai/)** | • [README.md](./ai/README.md): AI Assistant architecture, multi-provider setup, Vercel AI SDK, chat/embed/image/audio endpoints, sidebar integration<br>• [graph-rag.md](./ai/graph-rag.md): Hybrid retrieval pipeline, Neo4j knowledge graphs, recursive chunking, entity extraction, three-tier search<br>• [toon.md](./ai/toon.md): TOON format for token-efficient RAG context |
 
 ## Features
 

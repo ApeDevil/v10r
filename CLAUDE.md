@@ -18,17 +18,18 @@ Velociraptor (v10r) is a full-stack template/test-sandbox focused on performance
 | Styling | UnoCSS + Bits UI | `docs/stack/ui/unocss.md`, `docs/stack/ui/bits-ui.md` |
 | Validation | Valibot + Superforms | `docs/stack/forms/valibot.md`, `docs/stack/forms/superforms.md` |
 | Code Quality | Biome | `docs/stack/quality/biome.md` |
-| Container | Podman | `docs/stack/core/podman.md` |
 | Hosting | Vercel | `docs/stack/ops/deployment.md` |
 | Storage | Cloudflare R2 | `docs/stack/data/r2.md` |
 | i18n | Paraglide JS | `docs/stack/i18n/paraglide.md` |
 | AI | Vercel AI SDK | `docs/stack/ai/ai-sdk.md` |
-| 3D | Three.js + Threlte | `docs/stack/features/3d-web.md` |
+| 3D | Three.js + Threlte | `docs/stack/capabilities/3d-web.md` |
 
 
 ## Architecture
 
 The project uses a self-documenting architecture where showcase pages serve as documentation, tests, and templates simultaneously. If a showcase page works, the feature is proven functional.
+
+The AI subsystem includes a Graph RAG retrieval pipeline. See `docs/blueprint/ai/` for architecture details.
 
 ## Local Development
 
@@ -77,21 +78,6 @@ Never grep blindly through docs. The READMEs are the index.
 ## Agent Delegation Policy
 
 **IMPORTANT:** This project uses specialized agents for domain-specific work. You MUST delegate tasks to the appropriate agent rather than handling them directly. Agents provide deeper expertise and keep the main context clean.
-
-### Mandatory Delegation Rules
-
-| When you encounter... | ALWAYS delegate to |
-|----------------------|-------------------|
-| Database schemas, data models, entity relationships | **daty** |
-| SvelteKit routes, load functions, rendering modes | **svey** |
-| Security review, auth flows, vulnerability assessment | **secy** |
-| System architecture, module boundaries, refactoring | **archy** |
-| UI/UX review, forms, error states, accessibility | **uxy** |
-| Runtime optimization, package management, Bun config | **buny** |
-| Errors, failures, debugging, test failures | **tray** |
-| Technical research, technology evaluation, verification | **resy** |
-| Documentation writing, README, guides | **docy** |
-| Real-world technology research, community practices | **scout** |
 
 ### Delegation Triggers
 

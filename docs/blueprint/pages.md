@@ -23,49 +23,86 @@ No documentation drift. No stale examples. The template validates itself.
 │
 ├── /showcases                       # Living demos
 │   ├── +page.svelte                 # Landing with recommended path
+│   ├── /shell                       # App shell features
+│   │   ├── /theme                   # Design tokens, dark/light mode
+│   │   ├── /sidebar                 # Sidebar navigation
+│   │   ├── /modals                  # Modal dialogs
+│   │   ├── /toasts                  # Toast notifications
+│   │   ├── /shortcuts               # Keyboard shortcuts
+│   │   ├── /errors                  # Error boundaries
+│   │   └── /session                 # Session state
 │   ├── /ui                          # Component gallery
-│   │   ├── /primitives              # Buttons, inputs, badges
-│   │   ├── /composites              # Alerts, toasts, menus
+│   │   ├── /components
+│   │   │   ├── /primitives          # Buttons, inputs, badges
+│   │   │   └── /composites          # Alerts, cards, menus
+│   │   ├── /decorative
+│   │   │   ├── /backgrounds         # Background patterns
+│   │   │   └── /ornaments           # Decorative elements
 │   │   ├── /typography              # Headings, body, lead
 │   │   ├── /layouts                 # Stack, cluster, grid
 │   │   ├── /tokens                  # Colors, spacing, shadows
-│   │   └── /panes-and-panels        # Resize + dock systems
-│   │       ├── /panes               # PaneForge resize primitives
-│   │       │   └── /reorderable     # Drag-to-reorder panes
-│   │       └── /panels              # Dock (tabs, splits, activity bar)
+│   │   └── /panes
+│   │       ├── /panels              # Dock system (tabs, splits, activity bar)
+│   │       ├── /resizable           # PaneForge resize primitives
+│   │       └── /reorderable         # Drag-to-reorder panes
 │   ├── /forms                       # Form patterns
-│   ├── /data                        # CRUD & data display
+│   │   ├── /basics
+│   │   │   ├── /contact             # Simple contact form
+│   │   │   └── /settings            # Settings form
+│   │   ├── /validation
+│   │   │   ├── /realtime            # Client-side live validation
+│   │   │   ├── /async               # Async field validation
+│   │   │   └── /server              # Server-side validation errors
+│   │   ├── /advanced
+│   │   │   ├── /confirm             # Confirmation dialogs
+│   │   │   ├── /edit                # Edit-in-place
+│   │   │   └── /reset               # Form reset patterns
+│   │   └── /patterns
+│   │       ├── /dependent           # Dependent field logic
+│   │       ├── /dynamic             # Dynamic field lists
+│   │       └── /wizard              # Multi-step wizard
 │   ├── /db                          # Database showcases
-│   │   ├── +page.svelte             # Hub (Relational, Graph, Storage cards)
-│   │   ├── /relational              # PostgreSQL showcase
-│   │   │   ├── /connection          # Neon health check + latency
+│   │   ├── /relational              # PostgreSQL (Neon)
+│   │   │   ├── /connection          # Health check + latency
 │   │   │   ├── /types               # Full type system demo
-│   │   │   └── /mutability          # CRUD, versioning, soft delete, temporal, audit
-│   │   ├── /graph                   # Graph database showcase
-│   │   │   ├── /connection          # Aura health check + stats
-│   │   │   ├── /model               # Labels, relationships, full graph viz
+│   │   │   └── /mutability          # CRUD, versioning, soft delete
+│   │   ├── /graph                   # Graph database (Neo4j Aura)
+│   │   │   ├── /connection          # Health check + stats
+│   │   │   ├── /model               # Labels, relationships, graph viz
 │   │   │   └── /traversal           # Path finding, recommendations
-│   │   └── /storage                 # Object storage showcase (R2)
-│   │       ├── /connection          # R2 health check + bucket stats
-│   │       ├── /objects             # List, inspect, presigned download URLs
-│   │       └── /transfer            # Presigned upload, byte-range requests
+│   │   ├── /storage                 # Object storage (Cloudflare R2)
+│   │   │   ├── /connection          # Bucket health + stats
+│   │   │   ├── /objects             # List, inspect, presigned downloads
+│   │   │   └── /transfer            # Presigned upload, byte-range reads
+│   │   └── /cache                   # Cache layer (Redis/Upstash)
+│   │       ├── /connection          # Cache health check
+│   │       ├── /ephemeral           # Short-lived keys, TTL
+│   │       └── /patterns            # Caching strategies
+│   ├── /ai                          # AI integration
+│   │   ├── /connection              # Provider health + config
+│   │   ├── /chat                    # Basic chat interface
+│   │   ├── /streaming               # Streaming text responses
+│   │   └── /retrieval               # RAG pipeline
+│   │       ├── /ingest              # Document ingestion
+│   │       ├── /chat                # RAG-augmented chat
+│   │       ├── /contextual          # Contextual retrieval
+│   │       ├── /parent-child        # Parent-child chunking
+│   │       └── /graph               # Graph-based retrieval
+│   ├── /auth                        # Authentication showcase
+│   │   ├── /connection              # Provider health check
+│   │   ├── /security                # Security features demo
+│   │   └── /session                 # Session inspection
 │   ├── /i18n                        # Internationalization
+│   ├── /jobs                        # Background jobs
 │   ├── /viz                         # Data visualization
 │   │   ├── /charts                  # Chart types
 │   │   ├── /plots                   # Plot types
 │   │   ├── /graphs                  # Graph/network viz
 │   │   ├── /diagrams                # Diagram types
 │   │   └── /maps                    # Map visualizations
-│   ├── /3d                          # 3D experiences (Threlte + Three.js)
-│   │   ├── /static-scene            # Static 3D scene
-│   │   └── /animated-scene          # Animated 3D scene
-│   ├── /auth                        # Authentication demo
-│   ├── /shell                       # App shell demo
-│   └── /i18n                        # Internationalization
-│
-├── /experience                      # Immersive 3D experiences
-│   ├── +layout.svelte               # Minimal shell, no sidebar
-│   └── /product                     # 3D product configurator
+│   └── /3d                          # 3D experiences (Threlte + Three.js)
+│       ├── /static-scene            # Static 3D scene
+│       └── /animated-scene          # Animated 3D scene
 │
 ├── /app                             # Protected area
 │   ├── /dashboard                   # User home
@@ -188,7 +225,7 @@ Use `<svelte:boundary>` for component rendering errors:
 
 ## Showcase Pages
 
-### /showcase (Landing Page)
+### /showcases (Landing Page)
 
 The showcase landing page provides first-time visitors with a clear entry point and recommended learning path.
 
@@ -207,141 +244,80 @@ The showcase landing page provides first-time visitors with a clear entry point 
 
 | Order | Category | Page | Focus |
 |-------|----------|------|-------|
-| 1 | Fundamentals | UI | Component library, accessibility |
-| 2 | Fundamentals | Forms | Validation, progressive enhancement |
-| 3 | Core | Data | Load functions, CRUD patterns |
+| 1 | Fundamentals | Shell | Theme, sidebar, modals, toasts |
+| 2 | Fundamentals | UI | Component library, accessibility |
+| 3 | Fundamentals | Forms | Validation, progressive enhancement |
 | 4 | Core | DB: PostgreSQL | Types, mutability patterns, Neon connection |
 | 5 | Core | DB: Neo4j | Graph modeling, traversal, recommendations |
 | 6 | Core | DB: Storage | R2 objects, presigned URLs, byte-range requests |
-| 7 | Advanced | i18n | Translations, locale routing |
-| 8 | Advanced | Viz | Charts, plots, graphs, diagrams, maps |
-| 9 | Specialized | 3D | Threlte scenes, Three.js |
-| 10 | Specialized | Auth | Authentication flows |
-
-**Implementation:**
-
-```svelte
-<!-- src/routes/showcase/+page.svelte -->
-<script>
-  const categories = [
-    {
-      name: 'Fundamentals',
-      description: 'Start here — core patterns you\'ll use everywhere',
-      pages: [
-        { href: '/showcases/ui', title: 'UI', description: 'Component library' },
-        { href: '/showcases/forms', title: 'Forms', description: 'Validation & submission' },
-      ],
-    },
-    {
-      name: 'Core Patterns',
-      description: 'Essential SvelteKit patterns for any app',
-      pages: [
-        { href: '/showcases/data', title: 'Data', description: 'CRUD & load functions' },
-        { href: '/showcases/db', title: 'DB', description: 'PostgreSQL, Neo4j, R2 storage' },
-      ],
-    },
-    {
-      name: 'Advanced',
-      description: 'Specialized features for production apps',
-      pages: [
-        { href: '/showcases/i18n', title: 'i18n', description: 'Internationalization' },
-        { href: '/showcases/viz', title: 'Viz', description: 'Charts, graphs, diagrams' },
-      ],
-    },
-    {
-      name: 'Specialized',
-      description: 'Domain-specific integrations',
-      pages: [
-        { href: '/showcases/3d', title: '3D', description: 'Threlte + Three.js scenes' },
-        { href: '/showcases/auth', title: 'Auth', description: 'Authentication flows' },
-      ],
-    },
-  ];
-</script>
-
-<h1>Showcase</h1>
-<p>Self-documenting pages that test the features they document.</p>
-
-{#each categories as category}
-  <section>
-    <h2>{category.name}</h2>
-    <p>{category.description}</p>
-    <div class="card-grid">
-      {#each category.pages as page}
-        <a href={page.href} class="card">
-          <h3>{page.title}</h3>
-          <p>{page.description}</p>
-        </a>
-      {/each}
-    </div>
-  </section>
-{/each}
-```
+| 7 | Core | DB: Cache | Redis patterns, TTL, cache strategies |
+| 8 | Core | Auth | Authentication flows, session inspection |
+| 9 | Advanced | AI | Chat, streaming, RAG pipeline |
+| 10 | Advanced | i18n | Translations, locale routing |
+| 11 | Advanced | Viz | Charts, plots, graphs, diagrams, maps |
+| 12 | Specialized | 3D | Threlte scenes, Three.js |
+| 13 | Specialized | Jobs | Background job patterns |
 
 ---
 
-### /showcase/theme
+### /showcases/shell
 
-Theming system with dark/light mode and design tokens.
+App shell features: theming, navigation, overlays, and session.
 
 | Tests | Stack |
 |-------|-------|
-| Theme toggle | `$state`, localStorage |
-| CSS variables | UnoCSS theme config |
-| Design tokens | Color, spacing, typography scales |
-| System preference | `prefers-color-scheme` |
-| Persistence | Cookie or localStorage |
+| Theme toggle | `$state`, localStorage, `prefers-color-scheme` |
+| Sidebar navigation | SvelteKit routing, Svelte 5 state |
+| Modal system | Bits UI dialog primitives |
+| Toast system | Notification stack, auto-dismiss |
+| Keyboard shortcuts | `$effect`, `keydown` listeners |
+| Error boundaries | `<svelte:boundary>`, `+error.svelte` |
+| Session display | Better Auth session data |
 
-**Page content:**
-- Theme toggle button
-- Color palette display
-- Typography scale
-- Spacing scale
-- Component variants in both themes
+**Sub-pages:**
+
+| Route | Purpose |
+|-------|---------|
+| `/theme` | Color palette, design tokens, dark/light toggle, CSS variables |
+| `/sidebar` | Sidebar navigation patterns, collapsible groups, active states |
+| `/modals` | Dialog, drawer, popover, alert dialog |
+| `/toasts` | Success, error, info toasts with queue management |
+| `/shortcuts` | Global keyboard shortcut registration and display |
+| `/errors` | Error boundary patterns, fallback UI, recovery flows |
+| `/session` | Session inspection, user data display, sign-out |
 
 ---
 
-### /showcase/ui
+### /showcases/ui
 
-Component gallery with all UI primitives.
+Component gallery covering every UI primitive and composite.
 
 | Tests | Stack |
 |-------|-------|
 | Headless components | Bits UI |
 | Atomic CSS | UnoCSS utilities |
-| Icons | Iconify |
 | Accessibility | ARIA, keyboard navigation |
+| Decorative | Background patterns, ornaments |
+| Layout primitives | Stack, cluster, grid, center |
 
-**Page content:**
-- Buttons (variants, sizes, states)
-- Inputs (text, select, checkbox, radio)
-- Cards, badges, avatars
-- Modals, drawers, popovers
-- Tables, lists
-- Navigation (tabs, breadcrumbs)
-- Feedback (alerts, toasts, progress)
-- QuickSearch (`⌘K` global search)
+**Sub-pages:**
 
-**Structure:**
-```
-/showcase/ui
-├── +page.svelte                          # Overview with links
-├── primitives/+page.svelte               # Buttons, inputs, badges, etc.
-├── composites/+page.svelte               # Alerts, toasts, cards, menus
-├── typography/+page.svelte               # Headings, body, lead text
-├── layouts/+page.svelte                  # Stack, cluster, grid, center
-├── tokens/+page.svelte                   # Colors, spacing, shadows
-├── panes-and-panels/
-│   ├── +page.svelte                      # Landing with links
-│   ├── panes/+page.svelte               # PaneForge resize primitives
-│   ├── panes/reorderable/+page.svelte   # Drag-to-reorder panes
-│   └── panels/+page.svelte              # Dock system (tabs, splits, drag-to-split)
-└── ...
-```
+| Route | Purpose |
+|-------|---------|
+| `/components/primitives` | Buttons, inputs, badges, avatars, checkboxes, radios |
+| `/components/composites` | Alerts, cards, menus, tables, navigation |
+| `/decorative/backgrounds` | Background pattern components |
+| `/decorative/ornaments` | Decorative shape and divider elements |
+| `/typography` | Headings, body copy, lead text, prose |
+| `/layouts` | Stack, cluster, grid, sidebar, center layouts |
+| `/tokens` | Color swatches, spacing scale, shadow scale |
+| `/panes/panels` | Dock system with tabs, splits, activity bar |
+| `/panes/resizable` | PaneForge resize primitives |
+| `/panes/reorderable` | Drag-to-reorder panes |
 
 ---
 
-### /showcase/forms
+### /showcases/forms
 
 Form handling with validation and progressive enhancement.
 
@@ -353,13 +329,21 @@ Form handling with validation and progressive enhancement.
 | Error handling | Field errors, form errors |
 | Loading states | Submission pending |
 
-**Page content:**
-- Simple form (text inputs)
-- Complex form (nested data, arrays)
-- Multi-step form (wizard)
-- File upload form
-- Real-time validation
-- Server-side validation errors
+**Sub-pages:**
+
+| Route | Purpose |
+|-------|---------|
+| `/basics/contact` | Simple contact form, text inputs, submit |
+| `/basics/settings` | Settings form with toggles and selects |
+| `/validation/realtime` | Live client-side validation as user types |
+| `/validation/async` | Async field validation (e.g. username availability) |
+| `/validation/server` | Server-side validation errors returned to client |
+| `/advanced/confirm` | Confirmation dialog before destructive submit |
+| `/advanced/edit` | Edit-in-place with inline form |
+| `/advanced/reset` | Form reset and dirty-state detection |
+| `/patterns/dependent` | Fields that depend on other field values |
+| `/patterns/dynamic` | Dynamic field arrays (add/remove rows) |
+| `/patterns/wizard` | Multi-step form with progress and back navigation |
 
 **Demonstrates:**
 ```svelte
@@ -385,156 +369,45 @@ export const actions = {
 
 ---
 
-### /showcase/state
+### /showcases/db/relational
 
-Svelte 5 reactivity playground.
+PostgreSQL showcase using Neon serverless. Three sub-pages under the DB hub.
 
-| Tests | Stack |
-|-------|-------|
-| Reactive state | `$state` |
-| Derived values | `$derived`, `$derived.by` |
-| Side effects | `$effect` |
-| Shared state | `.svelte.ts` modules |
+| Tests | Technology | Provider |
+|-------|------------|----------|
+| Serverless connection | `@neondatabase/serverless` | Neon |
+| Schema + queries | Drizzle ORM | Neon |
+| Type system | Full Postgres type coverage | Drizzle |
+| CRUD | Insert, select, update, delete | Drizzle |
+| Versioning | Temporal tables, audit log | Drizzle |
 
-**Page content:**
-- Counter (basic `$state`)
-- Computed values (`$derived`)
-- Complex derivations (`$derived.by`)
-- Effect demos (logging, localStorage sync)
-- Shared store pattern
-- Deep reactivity (arrays, objects)
+**Sub-pages:**
 
-**Demonstrates:**
-```ts
-// stores.svelte.ts
-export function createTodoStore() {
-  let todos = $state<Todo[]>([]);
-  let completed = $derived(todos.filter(t => t.done));
-
-  return {
-    get todos() { return todos; },
-    get completed() { return completed; },
-    add(text: string) { todos.push({ text, done: false }); }
-  };
-}
-```
+| Route | Purpose |
+|-------|---------|
+| `/connection` | Neon health check, connection latency, pool stats |
+| `/types` | Full Postgres type system: JSON, arrays, enums, UUID, timestamps |
+| `/mutability` | CRUD operations, soft delete, versioning, audit trail |
 
 ---
 
-### /showcase/data
+### /showcases/db/graph
 
-CRUD operations with master-detail pattern.
+Graph database showcase using Neo4j Aura.
 
-#### Streaming for Large Datasets
+| Tests | Technology | Provider |
+|-------|------------|----------|
+| Graph queries | Cypher | Neo4j Aura |
+| Visualization | Graph rendering | neo4j-driver |
+| Relationships | Graph traversal | neo4j-driver |
 
-For expensive queries, stream data to show initial content immediately:
+**Sub-pages:**
 
-```typescript
-// +page.server.ts
-export async function load({ locals }) {
-  // Fast query: return immediately
-  const recentItems = await db.query.items.findMany({
-    where: eq(items.userId, locals.user!.id),
-    orderBy: desc(items.createdAt),
-    limit: 10,
-  });
-
-  // Slow query: return promise to stream later
-  const analytics = getAnalytics(locals.user!.id); // Returns Promise
-
-  return {
-    items: recentItems,     // Available immediately
-    analytics,              // Streamed when ready
-  };
-}
-```
-
-```svelte
-<!-- +page.svelte -->
-<script lang="ts">
-  let { data } = $props();
-</script>
-
-<!-- Immediate: Show items right away -->
-{#each data.items as item}
-  <ItemCard {item} />
-{/each}
-
-<!-- Streamed: Show loading state, then content -->
-{#await data.analytics}
-  <div class="skeleton">Loading analytics...</div>
-{:then analytics}
-  <AnalyticsDashboard {analytics} />
-{:catch error}
-  <p>Failed to load analytics</p>
-{/await}
-```
-
-#### Streaming Guidelines
-
-| Scenario | Pattern |
-|----------|---------|
-| Primary content | `await` before return |
-| Secondary/slow data | Return promise, use `{#await}` |
-| Optional analytics | Return promise |
-| Critical data | Always `await` |
-
-**Note:** Streaming requires `edge: true` or Node.js 18+ runtime.
-
-| Tests | Stack |
-|-------|-------|
-| Database queries | Drizzle ORM |
-| Server load | `+page.server.ts` load functions |
-| Dynamic routes | `[id]` params |
-| Mutations | Form actions |
-| Optimistic UI | Instant feedback |
-
-**Routes:**
-```
-/showcase/data
-├── +page.svelte              # List view (cards/table)
-├── +page.server.ts           # Load items, handle create
-├── [id]/
-│   ├── +page.svelte          # Detail view
-│   ├── +page.server.ts       # Load item, handle update/delete
-│   └── edit/
-│       ├── +page.svelte      # Edit form
-│       └── +page.server.ts   # Handle update
-└── new/
-    ├── +page.svelte          # Create form
-    └── +page.server.ts       # Handle create
-```
-
-**Page content:**
-- Item grid with cards
-- Table view toggle
-- Search and filters
-- Pagination
-- Sort controls
-- Create/Edit/Delete flows
-- Empty states
-- Loading skeletons
-
-**Object Card Pattern:**
-```svelte
-<Card>
-  <CardHeader>
-    <Avatar src={item.image} />
-    <CardTitle>{item.title}</CardTitle>
-  </CardHeader>
-  <CardContent>
-    <p>{item.description}</p>
-    <TagList tags={item.tags} />
-  </CardContent>
-  <CardFooter>
-    <Button href="/showcase/data/{item.id}">View</Button>
-    <DropdownMenu>
-      <DropdownItem on:click={edit}>Edit</DropdownItem>
-      <DropdownItem on:click={delete}>Delete</DropdownItem>
-    </DropdownMenu>
-  </CardFooter>
-</Card>
-```
+| Route | Purpose |
+|-------|---------|
+| `/connection` | Aura health check, driver stats |
+| `/model` | Labels, relationship types, full graph visualization |
+| `/traversal` | Path finding, shortest path, recommendations |
 
 ---
 
@@ -574,103 +447,145 @@ Client                    Server                    R2
 
 ---
 
-### /showcase/i18n
+### /showcases/db/cache
 
-Internationalization with lazy-loaded translations.
+Cache layer showcase. Three sub-pages covering connection, ephemeral keys, and caching strategies.
 
 | Tests | Stack |
 |-------|-------|
-| Translation loading | sveltekit-i18n |
-| URL-based locale | `/en/`, `/de/` |
-| Language switching | Route-based |
-| Date/Number formatting | Native `Intl` API |
+| Cache connection | Redis/Upstash client |
+| Key-value operations | GET, SET, DEL |
+| TTL management | Expiring keys |
+| Caching patterns | Cache-aside, write-through, invalidation |
 
-**Routes:**
-```
-/showcase/i18n
-├── +layout.ts                # Init i18n
-├── +page.svelte              # Language demo
-└── [[lang]]/                 # Optional locale prefix
-    └── ...
-```
+**Sub-pages:**
+
+| Route | Purpose |
+|-------|---------|
+| `/connection` | Cache provider health check, latency, key count |
+| `/ephemeral` | Short-lived keys, TTL demonstration, expiry inspection |
+| `/patterns` | Cache-aside, write-through, invalidation strategies |
+
+---
+
+### /showcases/ai
+
+AI integration showcase using the Vercel AI SDK. Covers basic chat through full RAG pipelines.
+
+| Tests | Stack |
+|-------|-------|
+| Provider connection | Vercel AI SDK |
+| Chat interface | Streaming text, message history |
+| Streaming | Server-sent events, partial rendering |
+| RAG pipeline | Embeddings, vector search, retrieval |
+
+**Sub-pages:**
+
+| Route | Purpose |
+|-------|---------|
+| `/connection` | AI provider health check, model list, token counts |
+| `/chat` | Basic chat interface with message history |
+| `/streaming` | Streaming text responses, token-by-token rendering |
+| `/retrieval/ingest` | Document ingestion: chunking, embedding, indexing |
+| `/retrieval/chat` | RAG-augmented chat with source attribution and pipeline visualization |
+| `/retrieval/contextual` | Contextual retrieval: context-enriched chunk embedding |
+| `/retrieval/parent-child` | Parent-child chunking: small retrieval, large context |
+| `/retrieval/graph` | Graph-based retrieval: entity extraction, relationship traversal |
+
+---
+
+### /showcases/auth
+
+Authentication showcase using Better Auth. Demonstrates connection health, security features, and session state.
+
+| Tests | Stack |
+|-------|-------|
+| Provider health | Better Auth |
+| Security features | Rate limiting, CSRF, session rotation |
+| Session inspection | Better Auth session API |
+
+**Sub-pages:**
+
+| Route | Purpose |
+|-------|---------|
+| `/connection` | Auth provider health check, adapter status |
+| `/security` | Rate limiting, CSRF protection, brute-force defense |
+| `/session` | Live session data, token inspection, sign-out |
+
+---
+
+### /showcases/i18n
+
+Internationalization with Paraglide JS. Single page covering the full i18n feature set.
+
+| Tests | Stack |
+|-------|-------|
+| Translation loading | Paraglide JS |
+| Language switching | Route-based locale |
+| Date/number formatting | Native `Intl` API |
+| Pluralization | Paraglide message variants |
 
 **Page content:**
 - Language switcher
 - Translated strings
-- Pluralization
+- Pluralization examples
 - Date/number formatting
 - RTL support demo
-- Translation key inspector (dev mode)
 
 ---
 
-### /showcase/animations
+### /showcases/jobs
 
-Motion and transitions.
+Background job patterns. Single page demonstrating job scheduling and status tracking.
 
 | Tests | Stack |
 |-------|-------|
-| Enter/exit | Svelte `transition:` |
-| Tweening | Svelte `tweened`, `spring` |
-| Keyframes | Motion One |
-| Scroll-triggered | Motion One |
-
-**Page content:**
-- Fade, slide, scale transitions
-- List animations (flip)
-- Spring physics
-- Stagger animations
-- Scroll-triggered reveals
-- Page transitions
-- Gesture animations
+| Job enqueueing | SvelteKit server actions |
+| Status polling | Periodic fetch |
+| Job results | Async resolution display |
 
 ---
 
-### /showcase/graph
+### /showcases/viz
 
-Graph database visualization and queries.
-
-| Tests | Technology | Provider |
-|-------|------------|----------|
-| Graph queries | Cypher | [Neo4j Aura](../../stack/vendors.md#neo4j-aura) |
-| Visualization | D3-force | Library |
-| Relationships | Graph traversal | neo4j-driver |
-
-**Page content:**
-- Interactive graph visualization
-- Node search
-- Relationship explorer
-- Path finding
-- Graph of this template's own structure
-
-**Meta visualization:**
-```
-(Theme)──[:USES]──▶(UnoCSS)
-   │                  │
-   └──[:RELATES_TO]───┘
-          │
-          ▼
-      (UI Components)
-```
-
----
-
-### /showcase/api
-
-Interactive API documentation.
+Data visualization hub. Five sub-pages covering the full range of chart and diagram types.
 
 | Tests | Stack |
 |-------|-------|
-| REST endpoints | SvelteKit `+server.ts` |
-| Documentation | OpenAPI/Scalar |
-| Testing | Interactive requests |
+| Charts | Chart library integration |
+| Plots | Statistical plots |
+| Network graphs | Force-directed layouts |
+| Diagrams | Flow and sequence diagrams |
+| Maps | Geographic data rendering |
 
-**Page content:**
-- Endpoint list
-- Request builder
-- Response viewer
-- Authentication helper
-- Code snippets (curl, fetch, etc.)
+**Sub-pages:**
+
+| Route | Purpose |
+|-------|---------|
+| `/charts` | Bar, line, area, pie, donut charts |
+| `/plots` | Scatter, bubble, histogram, box plots |
+| `/graphs` | Force-directed graph, node-link diagrams |
+| `/diagrams` | Flowcharts, sequence diagrams, tree diagrams |
+| `/maps` | Geographic maps, choropleth, point data |
+
+---
+
+### /showcases/3d
+
+3D experiences with Threlte and Three.js.
+
+| Tests | Stack |
+|-------|-------|
+| 3D scene setup | Threlte (Svelte + Three.js) |
+| Static geometry | Three.js meshes, materials, lighting |
+| Animations | Three.js animation loop, Threlte `useFrame` |
+
+**Sub-pages:**
+
+| Route | Purpose |
+|-------|---------|
+| `/static-scene` | Static geometry, lighting, camera controls |
+| `/animated-scene` | Animated objects, physics, interaction |
 
 ---
 
@@ -774,35 +689,89 @@ src/routes/
 │
 ├── showcases/
 │   ├── +page.svelte                  # Showcase landing
+│   ├── +error.svelte                 # Showcase error boundary
+│   ├── shell/                        # App shell features
+│   │   ├── theme/+page.svelte
+│   │   ├── sidebar/+page.svelte
+│   │   ├── modals/+page.svelte
+│   │   ├── toasts/+page.svelte
+│   │   ├── shortcuts/+page.svelte
+│   │   ├── errors/+page.svelte
+│   │   └── session/+page.svelte
 │   ├── ui/                           # Component gallery
-│   │   ├── +page.svelte
-│   │   ├── primitives/+page.svelte
-│   │   ├── composites/+page.svelte
+│   │   ├── components/
+│   │   │   ├── primitives/+page.svelte
+│   │   │   └── composites/+page.svelte
+│   │   ├── decorative/
+│   │   │   ├── backgrounds/+page.svelte
+│   │   │   └── ornaments/+page.svelte
 │   │   ├── typography/+page.svelte
 │   │   ├── layouts/+page.svelte
 │   │   ├── tokens/+page.svelte
-│   │   └── panes-and-panels/
-│   ├── forms/+page.svelte
-│   ├── data/+page.svelte
+│   │   └── panes/
+│   │       ├── panels/+page.svelte
+│   │       ├── resizable/+page.svelte
+│   │       └── reorderable/+page.svelte
+│   ├── forms/
+│   │   ├── basics/
+│   │   │   ├── contact/+page.svelte
+│   │   │   └── settings/+page.svelte
+│   │   ├── validation/
+│   │   │   ├── realtime/+page.svelte
+│   │   │   ├── async/+page.svelte
+│   │   │   └── server/+page.svelte
+│   │   ├── advanced/
+│   │   │   ├── confirm/+page.svelte
+│   │   │   ├── edit/+page.svelte
+│   │   │   └── reset/+page.svelte
+│   │   └── patterns/
+│   │       ├── dependent/+page.svelte
+│   │       ├── dynamic/+page.svelte
+│   │       └── wizard/+page.svelte
 │   ├── db/                           # Database showcases
-│   │   ├── +page.svelte              # Hub page
 │   │   ├── relational/
-│   │   │   ├── connection/+page.server.ts
-│   │   │   ├── types/+page.server.ts
-│   │   │   └── mutability/+page.server.ts
+│   │   │   ├── connection/+page.svelte
+│   │   │   ├── types/+page.svelte
+│   │   │   └── mutability/+page.svelte
 │   │   ├── graph/
-│   │   │   ├── connection/+page.server.ts
-│   │   │   ├── model/+page.server.ts
-│   │   │   └── traversal/+page.server.ts
-│   │   └── storage/
-│   │       ├── connection/+page.server.ts
-│   │       ├── objects/+page.server.ts
-│   │       └── transfer/+page.server.ts
+│   │   │   ├── connection/+page.svelte
+│   │   │   ├── model/+page.svelte
+│   │   │   └── traversal/+page.svelte
+│   │   ├── storage/
+│   │   │   ├── connection/+page.svelte
+│   │   │   ├── objects/+page.svelte
+│   │   │   └── transfer/+page.svelte
+│   │   └── cache/
+│   │       ├── connection/+page.svelte
+│   │       ├── ephemeral/+page.svelte
+│   │       └── patterns/+page.svelte
+│   ├── ai/
+│   │   ├── connection/+page.svelte
+│   │   ├── chat/+page.svelte
+│   │   ├── streaming/+page.svelte
+│   │   └── retrieval/
+│   │       ├── ingest/+page.svelte
+│   │       ├── chat/+page.svelte
+│   │       ├── contextual/+page.svelte
+│   │       ├── parent-child/+page.svelte
+│   │       └── graph/+page.svelte
+│   ├── auth/
+│   │   ├── connection/+page.svelte
+│   │   ├── security/+page.svelte
+│   │   └── session/+page.svelte
 │   ├── i18n/+page.svelte
-│   ├── viz/                          # Data visualization
-│   ├── 3d/                           # Threlte + Three.js
-│   ├── auth/+page.svelte
-│   └── shell/+page.svelte
+│   ├── jobs/+page.svelte
+│   ├── viz/
+│   │   ├── +page.svelte
+│   │   ├── charts/+page.svelte
+│   │   ├── plots/+page.svelte
+│   │   ├── graphs/+page.svelte
+│   │   ├── diagrams/+page.svelte
+│   │   └── maps/+page.svelte
+│   └── 3d/
+│       ├── +page.svelte
+│       ├── static-scene/+page.svelte
+│       └── animated-scene/+page.svelte
 │
 ├── app/
 │   ├── +layout.server.ts             # Auth guard
@@ -831,26 +800,44 @@ src/routes/
 ### Showcase Sidebar
 
 ```
-┌────────────────┐
-│ Showcase       │
-├────────────────┤
-│ Theme          │
-│ UI             │
-│   └ Primitives │
-│   └ Composites │
-│   └ Typography │
-│   └ Layouts    │
-│   └ Panes & Panels │
-│   └ Tokens     │
-│ Forms          │
-│ State          │
-│ Data           │
-│ Files          │
-│ i18n           │
-│ Animations     │
-│ Graph          │
-│ API            │
-└────────────────┘
+┌────────────────────┐
+│ Showcase           │
+├────────────────────┤
+│ Shell              │
+│   └ Theme          │
+│   └ Sidebar        │
+│   └ Modals         │
+│   └ Toasts         │
+│   └ Shortcuts      │
+│   └ Errors         │
+│   └ Session        │
+│ UI                 │
+│   └ Components     │
+│   └ Decorative     │
+│   └ Typography     │
+│   └ Layouts        │
+│   └ Tokens         │
+│   └ Panes          │
+│ Forms              │
+│   └ Basics         │
+│   └ Validation     │
+│   └ Advanced       │
+│   └ Patterns       │
+│ DB                 │
+│   └ Relational     │
+│   └ Graph          │
+│   └ Storage        │
+│   └ Cache          │
+│ AI                 │
+│   └ Chat           │
+│   └ Streaming      │
+│   └ Retrieval      │
+│ Auth               │
+│ i18n               │
+│ Jobs               │
+│ Viz                │
+│ 3D                 │
+└────────────────────┘
 ```
 
 ---
@@ -859,9 +846,9 @@ src/routes/
 
 | Area | Routes | Primary Tests |
 |------|--------|---------------|
-| Showcase | 10+ pages | All stack features |
+| Showcase | 50+ pages | All stack features |
 | Protected | 4 pages | Sessions, GDPR |
-| Auth | 3 pages | Sessions, forms |
+| Auth | 2 pages | Sessions, forms |
 | Docs | Dynamic | Prerendering, markdown |
 
 The showcase pages form a comprehensive test suite. If all pages render correctly, the entire stack works.

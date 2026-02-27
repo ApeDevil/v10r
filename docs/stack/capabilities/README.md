@@ -1,4 +1,4 @@
-# Features
+# Capabilities
 
 Cross-cutting application features.
 
@@ -11,5 +11,6 @@ Cross-cutting application features.
 | **[seo.md](./seo.md)** | • Meta tags, • Sitemap generation, • Structured data, • AI search optimization |
 | **[gdpr.md](./gdpr.md)** | • Consent management, • User rights, • Data export/deletion, • AI data handling |
 | **[pwa.md](./pwa.md)** | • Installability, • Offline support, • Service workers, • iOS limitations |
+| **[viz.md](./viz.md)** | • Chart.js, • D3 (force, hierarchy, sankey), • XY Flow, • MapLibre GL, • Visualization patterns |
 
 > **Notifications** moved to dedicated directory: [../notifications/](../notifications/)
