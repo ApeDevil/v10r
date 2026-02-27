@@ -2,6 +2,8 @@
 
 Database tables for multi-channel notification system.
 
+> **Note:** The `notifications` and `notification_settings` base tables are defined in [../app-shell/notifications.md](../app-shell/notifications.md). This file covers multi-channel extensions.
+
 ---
 
 ## Schema Overview
