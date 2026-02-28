@@ -9,6 +9,7 @@
 		{ label: 'Validation', href: '/showcases/forms/validation' },
 		{ label: 'Patterns', href: '/showcases/forms/patterns' },
 		{ label: 'Advanced', href: '/showcases/forms/advanced' },
+		{ label: 'Auth', href: '/showcases/forms/auth' },
 	];
 </script>
 
