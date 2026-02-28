@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { markAsRead } from '$lib/server/db/notifications/mutations';
-import { classifyDbError } from '$lib/server/db/errors';
+import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ params, locals }) => {
@@ -15,6 +15,6 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 		return json({ success: true });
 	} catch (err) {
 		const dbErr = classifyDbError(err);
-		return json({ error: dbErr.message }, { status: dbErr.toStatus() });
+		return json({ error: safeDbMessage(dbErr.kind) }, { status: dbErr.toStatus() });
 	}
 };

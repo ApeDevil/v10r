@@ -2,11 +2,18 @@ import { json } from '@sveltejs/kit';
 import { getConversation } from '$lib/server/db/ai/queries';
 import { deleteConversation } from '$lib/server/db/ai/mutations';
 import { requireApiUser } from '$lib/server/auth/guards';
-import { classifyDbError } from '$lib/server/db/errors';
+import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { CONV_RATE_LIMIT_PREFIX, CONV_RATE_LIMIT_MAX, CONV_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import type { RequestHandler } from './$types';
+
+const ratelimit = createLimiter(CONV_RATE_LIMIT_PREFIX, CONV_RATE_LIMIT_MAX, CONV_RATE_LIMIT_WINDOW);
 
 export const GET: RequestHandler = async ({ params, locals }) => {
 	const { user } = requireApiUser(locals);
+
+	const { success, reset } = await ratelimit.limit(user.id);
+	if (!success) return rateLimitResponse(reset);
 
 	try {
 		const conv = await getConversation(params.id, user.id);
@@ -17,12 +24,15 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		return json(conv);
 	} catch (err) {
 		const dbErr = classifyDbError(err);
-		return json({ error: dbErr.message }, { status: dbErr.toStatus() });
+		return json({ error: safeDbMessage(dbErr.kind) }, { status: dbErr.toStatus() });
 	}
 };
 
 export const DELETE: RequestHandler = async ({ params, locals }) => {
 	const { user } = requireApiUser(locals);
+
+	const { success, reset } = await ratelimit.limit(user.id);
+	if (!success) return rateLimitResponse(reset);
 
 	try {
 		const deleted = await deleteConversation(params.id, user.id);
@@ -33,6 +43,6 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 		return json({ ok: true });
 	} catch (err) {
 		const dbErr = classifyDbError(err);
-		return json({ error: dbErr.message }, { status: dbErr.toStatus() });
+		return json({ error: safeDbMessage(dbErr.kind) }, { status: dbErr.toStatus() });
 	}
 };

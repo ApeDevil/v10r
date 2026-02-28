@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { Ratelimit } from '@upstash/ratelimit';
+import { Ratelimit, type Duration } from '@upstash/ratelimit';
 import { redis } from '$lib/server/cache';
 
 interface Limiter {
@@ -12,8 +12,11 @@ const passthrough: Limiter = {
 	},
 };
 
-export function createLimiter(prefix: string, max: number, window: string): Limiter {
-	if (!redis) return passthrough;
+export function createLimiter(prefix: string, max: number, window: Duration): Limiter {
+	if (!redis) {
+		console.warn(`[rate-limit] Redis unavailable — rate limiting DISABLED for ${prefix}`);
+		return passthrough;
+	}
 	return new Ratelimit({
 		redis,
 		limiter: Ratelimit.slidingWindow(max, window),

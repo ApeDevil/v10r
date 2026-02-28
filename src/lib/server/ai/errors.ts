@@ -54,6 +54,22 @@ export function classifyAIError(err: unknown): AIError {
 	return new AIError('unknown', message, code ?? undefined);
 }
 
+/** User-safe message per kind — never exposes provider internals. */
+const SAFE_AI_MESSAGES: Record<AIErrorKind, string> = {
+	authentication: 'AI service authentication failed. Please try again later.',
+	rate_limit: 'Too many AI requests. Please wait a moment.',
+	model: 'AI model unavailable. Please try again later.',
+	context_length: 'Message too long for the AI to process. Try a shorter message.',
+	timeout: 'AI service timed out. Please try again.',
+	unavailable: 'AI service is temporarily unavailable.',
+	unknown: 'An unexpected AI error occurred.',
+};
+
+/** Get a user-safe error message that won't leak provider details. */
+export function safeAIMessage(kind: AIErrorKind): string {
+	return SAFE_AI_MESSAGES[kind];
+}
+
 /** Map AIErrorKind to HTTP status code */
 export function aiErrorToStatus(kind: AIErrorKind): number {
 	switch (kind) {

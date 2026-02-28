@@ -4,7 +4,7 @@ import { safeParse } from 'valibot';
 import { aiConfigured, chatModel, fallbackProviders } from '$lib/server/ai';
 import { SYSTEM_PROMPT, MAX_TOKENS, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW, RATE_LIMIT_PREFIX } from '$lib/server/ai/config';
 import { ChatRequestSchema } from '$lib/server/ai/validation';
-import { classifyAIError, aiErrorToStatus } from '$lib/server/ai/errors';
+import { classifyAIError, aiErrorToStatus, safeAIMessage } from '$lib/server/ai/errors';
 import { createConversation, saveMessages, updateConversationTitle } from '$lib/server/db/ai/mutations';
 import { checkConversationLimit } from '$lib/server/db/ai/limits';
 import { retrieve, formatContextForPrompt } from '$lib/server/retrieval';
@@ -219,7 +219,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		}
 
 		return json(
-			{ error: aiErr.message },
+			{ error: safeAIMessage(aiErr.kind) },
 			{ status: aiErrorToStatus(aiErr.kind) },
 		);
 	}

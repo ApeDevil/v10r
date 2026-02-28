@@ -96,6 +96,15 @@ export const MAX_SHOWCASE_OBJECTS = 20;
 /** Max conversations per user */
 export const MAX_CONVERSATIONS_PER_USER = 50;
 
+/** Conversation CRUD rate limit: requests per window */
+export const CONV_RATE_LIMIT_MAX = 30;
+
+/** Conversation CRUD rate limit: window duration */
+export const CONV_RATE_LIMIT_WINDOW = '60 s';
+
+/** Conversation CRUD rate limit: Redis key prefix */
+export const CONV_RATE_LIMIT_PREFIX = 'ratelimit:ai:conversations';
+
 /** Username check endpoint rate limit: requests per window */
 export const USERNAME_CHECK_RATE_LIMIT_MAX = 20;
 

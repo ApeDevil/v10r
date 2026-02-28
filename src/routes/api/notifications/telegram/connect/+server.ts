@@ -3,7 +3,7 @@ import { env } from '$env/dynamic/private';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { db } from '$lib/server/db';
 import { telegramVerificationTokens } from '$lib/server/db/schema/notifications/telegram';
-import { eq, gt, count } from 'drizzle-orm';
+import { and, eq, gt, count } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ locals }) => {
@@ -20,7 +20,10 @@ export const POST: RequestHandler = async ({ locals }) => {
 		.select({ count: count() })
 		.from(telegramVerificationTokens)
 		.where(
-			gt(telegramVerificationTokens.createdAt, oneHourAgo),
+			and(
+				eq(telegramVerificationTokens.userId, user.id),
+				gt(telegramVerificationTokens.createdAt, oneHourAgo),
+			),
 		);
 
 	if (recentCount >= 3) {

@@ -39,6 +39,22 @@ export class DbError extends ServerError {
 	}
 }
 
+/** User-safe message per kind — never exposes schema or constraint details. */
+const SAFE_DB_MESSAGES: Record<DbErrorKind, string> = {
+	connection: 'Database connection failed. Please try again later.',
+	constraint: 'This operation conflicts with existing data.',
+	not_found: 'The requested resource was not found.',
+	timeout: 'Database request timed out. Please try again.',
+	serialization: 'A concurrent update occurred. Please retry.',
+	permission: 'Database access denied.',
+	unknown: 'An unexpected database error occurred.',
+};
+
+/** Get a user-safe error message that won't leak schema details. */
+export function safeDbMessage(kind: DbErrorKind): string {
+	return SAFE_DB_MESSAGES[kind];
+}
+
 /** Classify a PG error code into a kind. */
 function classifyCode(code: string): DbErrorKind {
 	if (code.startsWith('23')) return 'constraint';

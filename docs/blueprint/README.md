@@ -2,6 +2,12 @@
 
 Implementation designs and feature specifications. How to build features using the stack, with code examples and patterns.
 
+## Cross-Cutting Architecture
+
+| File | Main Topics |
+|------|-------------|
+| **[architecture/](./architecture/)** | • [multi-client-core.md](./architecture/multi-client-core.md): How human UI, AI agents, REST API, and background jobs share domain logic without duplication — the four invariants, AI tool pattern, auth per client, error contracts, extraction rules |
+
 ## Application Structure
 
 | File | Main Topics |

@@ -11,6 +11,16 @@ export const POST: RequestHandler = async ({ request }) => {
 		return json({ ok: false }, { status: 503 });
 	}
 
+	// Verify request originates from Telegram via secret token
+	// Set via: POST https://api.telegram.org/bot{token}/setWebhook with secret_token param
+	const webhookSecret = env.TELEGRAM_WEBHOOK_SECRET;
+	if (webhookSecret) {
+		const secretHeader = request.headers.get('x-telegram-bot-api-secret-token');
+		if (secretHeader !== webhookSecret) {
+			return json({ ok: false }, { status: 403 });
+		}
+	}
+
 	const body = await request.json().catch(() => null);
 	if (!body?.message?.text) {
 		return json({ ok: true });

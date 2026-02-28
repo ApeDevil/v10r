@@ -9,9 +9,11 @@ export const GET: RequestHandler = async ({ locals }) => {
 
 	const encoder = new TextEncoder();
 	let heartbeatTimer: ReturnType<typeof setInterval> | undefined;
+	let streamController: ReadableStreamDefaultController<Uint8Array> | undefined;
 
 	const stream = new ReadableStream<Uint8Array>({
 		async start(controller) {
+			streamController = controller;
 			const registered = registerStream(user.id, controller);
 			if (!registered) {
 				controller.enqueue(encoder.encode('data: {"error":"too_many_connections"}\n\n'));
@@ -35,7 +37,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 		},
 		cancel() {
 			if (heartbeatTimer) clearInterval(heartbeatTimer);
-			// Controller reference isn't accessible here — cleanup via abort signal
+			if (streamController) unregisterStream(user.id, streamController);
 		},
 	});
 
