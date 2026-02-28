@@ -45,6 +45,12 @@ Implementation designs and feature specifications. How to build features using t
 | **[style-randomizer.md](./style-randomizer.md)** | • **Style Randomization**: visual variation per visit (typography + palette)<br>• Three-Axis Model: Theme × Typography × Palette (orthogonal)<br>• Palette registry: Pre-validated color sets with WCAG AA contrast<br>• Typography registry: Curated font pairings with fallbacks<br>• Persistence: Cookie (guests) + database (authenticated users)<br>• SvelteKit hooks: Load style config → CSS custom properties → UnoCSS<br>• FTUX component: DiceRollButton with roll animation and lock option<br>• API endpoints: `/api/style/roll`, `/api/style/lock`<br>• Contrast validation: Luminance calculation, WCAG thresholds<br>• File structure and implementation checklist |
 | **[3d/](./3d/)** | • [3d-integration.md](./3d/3d-integration.md): Technology options (Threlte vs vanilla Three.js), route structure, SSR/CSR strategy, Svelte 5 + WebGL patterns, load functions, GLTF loading, performance optimization, progressive enhancement, anti-patterns<br>• [3d-quick-reference.md](./3d/3d-quick-reference.md): Copy-paste templates, basic scenes, reactive controls, model loading, WebGL detection, common mistakes |
 
+## Testing
+
+| File | Main Topics |
+|------|-------------|
+| **[testing/](./testing/)** | • [ai-testing-infrastructure.md](./testing/ai-testing-infrastructure.md): Two-tool strategy (Vitest + Claude Chrome extension), SvelteKit virtual module resolution, PGlite database isolation, Neo4j mocking, test data factories, Claude Code PostToolUse and Stop hooks, machine-readable output, implementation phases, AGENTS.md template |
+
 ## Deployment
 
 | File | Main Topics |
