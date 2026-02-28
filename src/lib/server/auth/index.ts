@@ -1,5 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { magicLink } from 'better-auth/plugins';
+import { emailOTP } from 'better-auth/plugins';
 import {
 	BETTER_AUTH_SECRET,
 	BETTER_AUTH_URL,
@@ -7,8 +9,18 @@ import {
 	GITHUB_CLIENT_SECRET,
 	GOOGLE_CLIENT_ID,
 	GOOGLE_CLIENT_SECRET,
+	MICROSOFT_CLIENT_ID,
+	MICROSOFT_CLIENT_SECRET,
 } from '$env/static/private';
-import { SESSION_EXPIRES_IN, SESSION_UPDATE_AGE, SESSION_COOKIE_MAX_AGE } from '$lib/server/config';
+import {
+	SESSION_EXPIRES_IN,
+	SESSION_UPDATE_AGE,
+	SESSION_COOKIE_MAX_AGE,
+	MAGIC_LINK_EXPIRES_IN,
+	EMAIL_OTP_EXPIRES_IN,
+	EMAIL_OTP_MAX_ATTEMPTS,
+} from '$lib/server/config';
+import { sendAuthEmail, magicLinkTemplate, otpTemplate } from './send-auth-email';
 // Use relative import — Better Auth CLI breaks on $lib aliases (Issue #2252)
 import { db } from '../db';
 
@@ -35,6 +47,11 @@ export const auth = betterAuth({
 			clientId: GOOGLE_CLIENT_ID,
 			clientSecret: GOOGLE_CLIENT_SECRET,
 		},
+		microsoft: {
+			clientId: MICROSOFT_CLIENT_ID,
+			clientSecret: MICROSOFT_CLIENT_SECRET,
+			tenantId: 'common',
+		},
 	},
 
 	session: {
@@ -46,6 +63,32 @@ export const auth = betterAuth({
 			maxAge: SESSION_COOKIE_MAX_AGE,
 		},
 	},
+
+	plugins: [
+		magicLink({
+			sendMagicLink: async ({ email, url }: { email: string; url: string }) => {
+				await sendAuthEmail({
+					to: email,
+					subject: 'Sign in to Velociraptor',
+					html: magicLinkTemplate(url),
+				});
+			},
+			expiresIn: MAGIC_LINK_EXPIRES_IN,
+		}),
+		emailOTP({
+			sendVerificationOTP: async ({ email, otp, type }: { email: string; otp: string; type: string }) => {
+				await sendAuthEmail({
+					to: email,
+					subject: type === 'sign-in' ? 'Your sign-in code' : 'Your verification code',
+					html: otpTemplate(otp),
+				});
+			},
+			otpLength: 6,
+			expiresIn: EMAIL_OTP_EXPIRES_IN,
+			allowedAttempts: EMAIL_OTP_MAX_ATTEMPTS,
+			sendVerificationOnSignUp: true,
+		}),
+	],
 });
 
 export type Auth = typeof auth;

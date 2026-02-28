@@ -9,6 +9,15 @@ export const SESSION_UPDATE_AGE = 60 * 60 * 24;
 /** Cookie cache revalidation interval (5 minutes, seconds) */
 export const SESSION_COOKIE_MAX_AGE = 60 * 5;
 
+/** Magic link token expiry (seconds) */
+export const MAGIC_LINK_EXPIRES_IN = 300;
+
+/** Email OTP expiry (seconds) */
+export const EMAIL_OTP_EXPIRES_IN = 300;
+
+/** Email OTP max attempts before invalidation */
+export const EMAIL_OTP_MAX_ATTEMPTS = 3;
+
 /** Auth endpoint rate limit: requests per window */
 export const AUTH_RATE_LIMIT_MAX = 5;
 
