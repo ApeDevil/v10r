@@ -1,9 +1,13 @@
 import type { InferInsertModel } from 'drizzle-orm';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
 import { notifications } from '$lib/server/db/schema/notifications/notifications';
+import { conversation } from '$lib/server/db/schema/ai/conversation';
+import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
 
 type UserInsert = InferInsertModel<typeof user>;
 type NotificationInsert = InferInsertModel<typeof notifications>;
+type ConversationInsert = InferInsertModel<typeof conversation>;
+type DeliveryInsert = InferInsertModel<typeof notificationDeliveries>;
 
 export function makeUser(overrides?: Partial<UserInsert>): UserInsert {
 	const id = overrides?.id ?? crypto.randomUUID();
@@ -25,6 +29,29 @@ export function makeNotification(overrides?: Partial<NotificationInsert>): Notif
 		type: 'system',
 		title: 'Test notification',
 		isRead: false,
+		createdAt: new Date(),
+		...overrides,
+	};
+}
+
+export function makeConversation(overrides?: Partial<ConversationInsert>): ConversationInsert {
+	return {
+		id: crypto.randomUUID(),
+		userId: 'must-be-set',
+		title: 'Test conversation',
+		createdAt: new Date(),
+		updatedAt: new Date(),
+		...overrides,
+	};
+}
+
+export function makeDelivery(overrides?: Partial<DeliveryInsert>): DeliveryInsert {
+	return {
+		id: crypto.randomUUID(),
+		notificationId: 'must-be-set',
+		channel: 'email',
+		status: 'pending',
+		attempts: 0,
 		createdAt: new Date(),
 		...overrides,
 	};
