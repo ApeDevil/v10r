@@ -29,6 +29,8 @@ Velociraptor (v10r) is a full-stack template/test-sandbox focused on performance
 
 The project uses a self-documenting architecture where showcase pages serve as documentation, tests, and templates simultaneously. If a showcase page works, the feature is proven functional.
 
+The backend follows a multi-client core pattern: domain modules in `$lib/server/[domain]/` contain pure business logic with no framework imports, so the same functions serve UI form actions, AI SDK tool calls, REST API, and background jobs. Route handlers are thin adapters. See `docs/blueprint/architecture/multi-client-core.md` for the full blueprint.
+
 The AI subsystem includes a Graph RAG retrieval pipeline. See `docs/blueprint/ai/` for architecture details.
 
 ## Local Development
