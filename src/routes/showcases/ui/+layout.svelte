@@ -3,6 +3,7 @@
 	import { getTheme } from '$lib/state/theme.svelte';
 	import { PageContainer } from '$lib/components/layout';
 	import { PageHeader, TabNav } from '$lib/components/composites';
+	import { getShowcaseTabs } from '../showcases';
 
 	let { children }: { children: Snippet } = $props();
 	const theme = getTheme();
@@ -11,15 +12,7 @@
 		theme.setMode(theme.isDark ? 'light' : 'dark');
 	}
 
-	const tabs = [
-		{ label: 'Components', href: '/showcases/ui/components' },
-		{ label: 'Layouts', href: '/showcases/ui/layouts' },
-		{ label: 'Tables', href: '/showcases/ui/tables' },
-		{ label: 'Panes', href: '/showcases/ui/panes' },
-		{ label: 'Decorative', href: '/showcases/ui/decorative' },
-		{ label: 'Typography', href: '/showcases/ui/typography' },
-		{ label: 'Tokens', href: '/showcases/ui/tokens' },
-	];
+	const tabs = getShowcaseTabs('/showcases/ui');
 </script>
 
 <PageContainer class="py-7">

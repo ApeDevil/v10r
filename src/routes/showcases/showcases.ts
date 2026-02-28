@@ -6,6 +6,10 @@ interface ShowcaseCard {
 	sublinks?: { label: string; href: string }[];
 }
 
+export function getShowcaseTabs(basePath: string) {
+	return showcases.find((s) => s.href === basePath)?.sublinks ?? [];
+}
+
 export const showcases: ShowcaseCard[] = [
 	{
 		href: '/showcases/shell',

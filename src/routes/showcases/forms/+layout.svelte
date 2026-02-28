@@ -1,16 +1,11 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { ShowcaseLayout } from '$lib/components/composites';
+	import { getShowcaseTabs } from '../showcases';
 
 	let { children }: { children: Snippet } = $props();
 
-	const tabs = [
-		{ label: 'Basics', href: '/showcases/forms/basics' },
-		{ label: 'Validation', href: '/showcases/forms/validation' },
-		{ label: 'Patterns', href: '/showcases/forms/patterns' },
-		{ label: 'Advanced', href: '/showcases/forms/advanced' },
-		{ label: 'Auth', href: '/showcases/forms/auth' },
-	];
+	const tabs = getShowcaseTabs('/showcases/forms');
 </script>
 
 <ShowcaseLayout
