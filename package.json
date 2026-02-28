@@ -20,7 +20,10 @@
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
 		"format": "biome format --write .",
-		"check:biome": "biome ci ."
+		"check:biome": "biome ci .",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"validate": "bun run check && bun biome check . && bun run test"
 	},
 	"dependencies": {
 		"@ai-sdk/google": "^1.0.0",
@@ -80,6 +83,8 @@
 		"svelte-check": "^4.3.4",
 		"typescript": "^5.9.3",
 		"unocss": "^0.58.0",
-		"vite": "^7.2.6"
+		"@electric-sql/pglite": "^0.3.14",
+		"vite": "^7.2.6",
+		"vitest": "^4.0.0"
 	}
 }

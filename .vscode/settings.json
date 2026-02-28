@@ -127,6 +127,14 @@
         {
             "folderPath": "velociraptor/src/lib/server/cache/",
             "badge": "🐿️"
+        },
+        {
+            "folderPath": "velociraptor/src/lib/server/test/",
+            "badge": "🧪"
+        },
+        {
+            "folderPath": "velociraptor/src/lib/server/errors/",
+            "badge": "❗"
         }
     ]
 }
