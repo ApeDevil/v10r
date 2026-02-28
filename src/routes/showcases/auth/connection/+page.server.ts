@@ -1,6 +1,11 @@
 import type { PageServerLoad, Actions } from './$types';
 import { auth } from '$lib/server/auth';
-import { BETTER_AUTH_URL, GITHUB_CLIENT_ID, GOOGLE_CLIENT_ID } from '$env/static/private';
+import {
+	BETTER_AUTH_URL,
+	GITHUB_CLIENT_ID,
+	GOOGLE_CLIENT_ID,
+	MICROSOFT_CLIENT_ID,
+} from '$env/static/private';
 
 async function measureAuth(headers: Headers) {
 	const start = performance.now();
@@ -19,6 +24,7 @@ async function measureAuth(headers: Headers) {
 			providers: {
 				github: !!GITHUB_CLIENT_ID,
 				google: !!GOOGLE_CLIENT_ID,
+				microsoft: !!MICROSOFT_CLIENT_ID,
 			},
 			baseURL: BETTER_AUTH_URL,
 			measuredAt: new Date().toISOString(),
@@ -36,6 +42,7 @@ async function measureAuth(headers: Headers) {
 			providers: {
 				github: !!GITHUB_CLIENT_ID,
 				google: !!GOOGLE_CLIENT_ID,
+				microsoft: !!MICROSOFT_CLIENT_ID,
 			},
 			baseURL: BETTER_AUTH_URL,
 			error: err instanceof Error ? err.message : 'Unknown error',

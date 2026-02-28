@@ -14,6 +14,7 @@
 	const tabs = [
 		{ label: 'Components', href: '/showcases/ui/components' },
 		{ label: 'Layouts', href: '/showcases/ui/layouts' },
+		{ label: 'Tables', href: '/showcases/ui/tables' },
 		{ label: 'Panes', href: '/showcases/ui/panes' },
 		{ label: 'Decorative', href: '/showcases/ui/decorative' },
 		{ label: 'Typography', href: '/showcases/ui/typography' },
