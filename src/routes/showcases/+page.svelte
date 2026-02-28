@@ -2,6 +2,7 @@
 	import { PageContainer } from '$lib/components/layout';
 	import { PageHeader, BackLink, NavGrid } from '$lib/components/composites';
 	import { LinkCard } from '$lib/components';
+	import { showcases } from './showcases';
 </script>
 
 <svelte:head>
@@ -19,82 +20,15 @@
 	/>
 
 	<NavGrid>
-		<LinkCard
-			href="/showcases/shell"
-			icon="i-lucide-layout"
-			title="App Shell"
-			description="Keyboard shortcuts, modals, toasts, session lifecycle, navigation"
-		/>
-
-		<LinkCard
-			href="/showcases/ui"
-			icon="i-lucide-palette"
-			title="UI Components"
-			description="Complete UI component library and design tokens"
-		/>
-
-		<LinkCard
-			href="/showcases/forms"
-			icon="i-lucide-text-cursor-input"
-			title="Forms"
-			description="Superforms + Valibot validation, patterns, and advanced techniques"
-		/>
-
-		<LinkCard
-			href="/showcases/viz"
-			icon="i-lucide-bar-chart-3"
-			title="Data Viz"
-			description="Charts, plots, diagrams, and data visualization"
-		/>
-
-		<LinkCard
-			href="/showcases/3d"
-			icon="i-lucide-box"
-			title="3D"
-			description="Three.js + Threlte 3D scenes"
-		/>
-
-		<LinkCard
-			href="/showcases/db"
-			icon="i-lucide-server"
-			title="Database"
-			description="PostgreSQL, Neo4j, R2, Redis — connections, types, queries, and storage"
-		/>
-
-		<LinkCard
-			href="/showcases/auth"
-			icon="i-lucide-lock"
-			title="Auth"
-			description="Better Auth authentication flows"
-		/>
-
-		<LinkCard
-			href="/showcases/ai"
-			icon="i-lucide-bot"
-			title="AI"
-			description="AI assistant with Vercel AI SDK and Groq"
-		/>
-
-		<LinkCard
-			href="/showcases/i18n"
-			icon="i-lucide-languages"
-			title="i18n"
-			description="Translations, pluralization, formatting, and language switching"
-		/>
-
-		<LinkCard
-			href="/showcases/jobs"
-			icon="i-lucide-clock"
-			title="Jobs"
-			description="Scheduled background jobs with execution logging and monitoring"
-		/>
-
-		<LinkCard
-			href="/showcases/notifications"
-			icon="i-lucide-bell"
-			title="Notifications"
-			description="Multi-channel notifications — in-app SSE, email, Telegram, and Discord"
-		/>
+		{#each showcases as card}
+			<LinkCard
+				href={card.href}
+				icon={card.icon}
+				title={card.title}
+				description={card.description}
+				sublinks={card.sublinks}
+			/>
+		{/each}
 	</NavGrid>
 
 	<BackLink href="/" label="Home" />

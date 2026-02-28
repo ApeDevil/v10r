@@ -1,61 +1,145 @@
 <script lang="ts">
 	import { cn } from '$lib/utils/cn';
 	import { localizeHref } from '$lib/i18n';
-	import type { HTMLAnchorAttributes } from 'svelte/elements';
+	import type { HTMLAttributes } from 'svelte/elements';
 	import type { Snippet } from 'svelte';
 
-	interface Props extends HTMLAnchorAttributes {
+	interface Sublink {
+		label: string;
+		href: string;
+	}
+
+	interface Props extends HTMLAttributes<HTMLDivElement> {
 		href: string;
 		title: string;
 		description?: string;
 		icon?: string;
+		sublinks?: Sublink[];
 		children?: Snippet;
 		class?: string;
 	}
 
-	let { href, title, description, icon, children, class: className, ...rest }: Props = $props();
+	let { href, title, description, icon, sublinks, children, class: className, ...rest }: Props =
+		$props();
 </script>
 
-<a
-	href={localizeHref(href)}
+<div
 	class={cn(
+		'card-wrapper',
+		'relative',
 		'flex flex-col gap-3',
 		'px-fluid-4 py-fluid-5',
 		'bg-surface-1 border border-border rounded-lg',
-		'no-underline',
 		'transition-all duration-fast',
-		'hover:border-primary hover:shadow-md hover:-translate-y-0.5',
-		'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary',
 		className
 	)}
 	{...rest}
 >
-	{#if icon}
-		<span class="{icon} text-3xl text-fg" aria-hidden="true"></span>
+	{#if icon || sublinks?.length}
+		<div class="flex items-start justify-between gap-3">
+			{#if icon}
+				<span class="{icon} text-3xl text-fg shrink-0" aria-hidden="true"></span>
+			{/if}
+			{#if sublinks?.length}
+				<div class="flex flex-wrap justify-end gap-x-2 gap-y-1 text-xs text-muted ml-auto">
+					{#each sublinks as sublink}
+						<a href={localizeHref(sublink.href)} class="sublink">
+							{sublink.label}
+						</a>
+					{/each}
+				</div>
+			{/if}
+		</div>
 	{/if}
 
 	{#if children}
 		{@render children()}
 	{:else}
-		<h2 class="text-2xl font-medium text-fg m-0">{title}</h2>
-		{#if description}
-			<p class="text-sm text-muted m-0">{description}</p>
-		{/if}
+		<a href={localizeHref(href)} class="card-link no-underline">
+			<h2 class="text-2xl font-medium text-fg m-0">{title}</h2>
+			{#if description}
+				<p class="text-sm text-muted m-0 mt-3">{description}</p>
+			{/if}
+		</a>
 	{/if}
-</a>
+</div>
 
 <style>
-	:global(.dark) a:hover {
+	/* Stretched link: title anchor covers the entire card */
+	.card-link::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: 0.5rem;
+	}
+
+	.card-link:focus-visible {
+		outline: none;
+	}
+
+	.card-link:focus-visible::after {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+	}
+
+	/* Card hover effect */
+	.card-wrapper:hover {
+		border-color: var(--color-primary);
+		box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+		transform: translateY(-2px);
+	}
+
+	/* Suppress card hover when sublink is hovered */
+	.card-wrapper:has(.sublink:hover) {
+		border-color: var(--color-border);
+		box-shadow: none;
+		transform: none;
+	}
+
+	:global(.dark) .card-wrapper:hover {
 		box-shadow: 0 0 20px rgb(152 101 248 / 0.3), 0 0 8px rgb(152 101 248 / 0.2);
 	}
 
+	:global(.dark) .card-wrapper:has(.sublink:hover) {
+		box-shadow: none;
+	}
+
+	/* Sublinks sit above the stretched link */
+	.sublink {
+		position: relative;
+		z-index: 1;
+		border-radius: 0.25rem;
+		padding: 0.25rem 0.5rem;
+		text-decoration: none;
+		color: inherit;
+		transition: color 150ms, background-color 150ms;
+	}
+
+	.sublink:hover {
+		color: var(--color-fg);
+		background-color: color-mix(in srgb, var(--color-muted) 15%, transparent);
+	}
+
+	.sublink:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+	}
+
+	.sublink:active {
+		background-color: color-mix(in srgb, var(--color-muted) 25%, transparent);
+	}
+
 	@media (prefers-reduced-motion: reduce) {
-		a {
+		.card-wrapper {
 			transition: none;
 		}
 
-		a:hover {
+		.card-wrapper:hover {
 			transform: none;
+		}
+
+		.sublink {
+			transition: none;
 		}
 	}
 </style>
