@@ -3,10 +3,18 @@ import { getDocument } from '$lib/server/db/rag/queries';
 import { deleteDocument } from '$lib/server/db/rag/mutations';
 import { deleteDocumentGraph } from '$lib/server/graph/rag/mutations';
 import { requireApiUser } from '$lib/server/auth/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW, API_WRITE_RATE_LIMIT_MAX, API_WRITE_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import type { RequestHandler } from './$types';
+
+const readLimiter = createLimiter('rl:retrieval:documents:read', API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW);
+const deleteLimiter = createLimiter('rl:retrieval:documents:delete', API_WRITE_RATE_LIMIT_MAX, API_WRITE_RATE_LIMIT_WINDOW);
 
 export const GET: RequestHandler = async ({ params, locals }) => {
 	const { user } = requireApiUser(locals);
+
+	const { success, reset } = await readLimiter.limit(user.id);
+	if (!success) return rateLimitResponse(reset);
 
 	try {
 		const doc = await getDocument(params.id, user.id);
@@ -22,6 +30,9 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 export const DELETE: RequestHandler = async ({ params, locals }) => {
 	const { user } = requireApiUser(locals);
+
+	const { success, reset } = await deleteLimiter.limit(user.id);
+	if (!success) return rateLimitResponse(reset);
 
 	try {
 		const deleted = await deleteDocument(params.id, user.id);

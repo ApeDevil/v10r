@@ -1,11 +1,17 @@
 import { requireApiUser } from '$lib/server/auth/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { SSE_HEARTBEAT_MS, SSE_RATE_LIMIT_MAX, SSE_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import { getUnreadCount } from '$lib/server/db/notifications/queries';
 import { registerStream, unregisterStream } from '$lib/server/notifications';
-import { SSE_HEARTBEAT_MS } from '$lib/server/config';
 import type { RequestHandler } from './$types';
+
+const limiter = createLimiter('rl:notifications:stream', SSE_RATE_LIMIT_MAX, SSE_RATE_LIMIT_WINDOW);
 
 export const GET: RequestHandler = async ({ locals }) => {
 	const { user } = requireApiUser(locals);
+
+	const { success, reset } = await limiter.limit(user.id);
+	if (!success) return rateLimitResponse(reset);
 
 	const encoder = new TextEncoder();
 	let heartbeatTimer: ReturnType<typeof setInterval> | undefined;

@@ -171,6 +171,32 @@ export const DEFAULT_DELIVERY_INTERVAL_MS = 15_000;
 /** Max delivery attempts before giving up */
 export const DELIVERY_MAX_ATTEMPTS = 3;
 
+// ── API Rate Limits ─────────────────────────────────────────────────────────
+
+/** Notification mark-as-read rate limit: requests per window */
+export const NOTIFICATION_RATE_LIMIT_MAX = 60;
+
+/** Notification mark-as-read rate limit: window duration */
+export const NOTIFICATION_RATE_LIMIT_WINDOW = '60 s';
+
+/** API write operations rate limit: requests per window */
+export const API_WRITE_RATE_LIMIT_MAX = 10;
+
+/** API write operations rate limit: window duration */
+export const API_WRITE_RATE_LIMIT_WINDOW = '60 s';
+
+/** API read operations rate limit: requests per window */
+export const API_READ_RATE_LIMIT_MAX = 30;
+
+/** API read operations rate limit: window duration */
+export const API_READ_RATE_LIMIT_WINDOW = '60 s';
+
+/** SSE connection attempt rate limit: requests per window */
+export const SSE_RATE_LIMIT_MAX = 10;
+
+/** SSE connection attempt rate limit: window duration */
+export const SSE_RATE_LIMIT_WINDOW = '60 s';
+
 // ── Admin ──────────────────────────────────────────────────────────────────────
 
 // ADMIN_EMAIL is read from $env/dynamic/private at usage sites to avoid

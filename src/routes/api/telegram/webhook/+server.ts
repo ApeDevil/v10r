@@ -1,9 +1,17 @@
+import { timingSafeEqual } from 'node:crypto';
 import { json } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { db } from '$lib/server/db';
 import { eq, and, gt, sql } from 'drizzle-orm';
 import { telegramVerificationTokens, userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
 import type { RequestHandler } from './$types';
+
+function safeEqual(a: string, b: string): boolean {
+	const bufA = Buffer.from(a);
+	const bufB = Buffer.from(b);
+	if (bufA.length !== bufB.length) return false;
+	return timingSafeEqual(bufA, bufB);
+}
 
 export const POST: RequestHandler = async ({ request }) => {
 	const botToken = env.TELEGRAM_BOT_TOKEN;
@@ -14,11 +22,12 @@ export const POST: RequestHandler = async ({ request }) => {
 	// Verify request originates from Telegram via secret token
 	// Set via: POST https://api.telegram.org/bot{token}/setWebhook with secret_token param
 	const webhookSecret = env.TELEGRAM_WEBHOOK_SECRET;
-	if (webhookSecret) {
-		const secretHeader = request.headers.get('x-telegram-bot-api-secret-token');
-		if (secretHeader !== webhookSecret) {
-			return json({ ok: false }, { status: 403 });
-		}
+	if (!webhookSecret) {
+		return json({ ok: false }, { status: 503 });
+	}
+	const secretHeader = request.headers.get('x-telegram-bot-api-secret-token');
+	if (!secretHeader || !safeEqual(secretHeader, webhookSecret)) {
+		return json({ ok: false }, { status: 403 });
 	}
 
 	const body = await request.json().catch(() => null);

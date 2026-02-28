@@ -3,8 +3,7 @@ import { json, redirect, type Handle, type HandleServerError } from '@sveltejs/k
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import { auth } from '$lib/server/auth';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
-import { Ratelimit } from '@upstash/ratelimit';
-import { redis } from '$lib/server/cache';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW, HSTS_MAX_AGE } from '$lib/server/config';
 import { logFeatureStatus } from '$lib/server/features';
 import '$lib/server/jobs/scheduler';
@@ -14,14 +13,8 @@ logFeatureStatus();
 
 const ALLOWED_LOCALES = new Set(['en', 'de', 'fr']);
 
-/** Upstash rate limiter for auth endpoints (null when Redis is not configured) */
-const authRatelimit = redis
-	? new Ratelimit({
-			redis,
-			limiter: Ratelimit.slidingWindow(AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW),
-			prefix: 'ratelimit:auth',
-		})
-	: null;
+/** Upstash rate limiter for auth endpoints */
+const authRatelimit = createLimiter('ratelimit:auth', AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW);
 
 /**
  * 1. Security headers — applied to every response
@@ -64,20 +57,12 @@ const authHandler: Handle = async ({ event, resolve }) => {
 	const path = event.url.pathname;
 
 	// Rate limit all auth endpoints (sign-in, sign-out, callback, get-session)
-	if (path.startsWith('/api/auth/') && authRatelimit) {
+	if (path.startsWith('/api/auth/')) {
 		const ip = event.getClientAddress();
 		const { success, reset } = await authRatelimit.limit(ip);
 
 		if (!success) {
-			return json(
-				{ error: 'Too many requests. Please try again later.' },
-				{
-					status: 429,
-					headers: {
-						'Retry-After': String(Math.ceil((reset - Date.now()) / 1000)),
-					},
-				},
-			);
+			return rateLimitResponse(reset, 'Too many requests. Please try again later.');
 		}
 	}
 

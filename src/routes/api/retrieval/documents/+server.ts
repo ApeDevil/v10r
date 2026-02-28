@@ -1,10 +1,17 @@
 import { json } from '@sveltejs/kit';
 import { listDocuments } from '$lib/server/db/rag/queries';
 import { requireApiUser } from '$lib/server/auth/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import type { RequestHandler } from './$types';
+
+const limiter = createLimiter('rl:retrieval:documents', API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW);
 
 export const GET: RequestHandler = async ({ locals }) => {
 	const { user } = requireApiUser(locals);
+
+	const { success, reset } = await limiter.limit(user.id);
+	if (!success) return rateLimitResponse(reset);
 
 	try {
 		const documents = await listDocuments(user.id);

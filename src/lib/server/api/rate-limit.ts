@@ -1,8 +1,9 @@
 import { json } from '@sveltejs/kit';
 import { Ratelimit, type Duration } from '@upstash/ratelimit';
 import { redis } from '$lib/server/cache';
+import { dev } from '$app/environment';
 
-interface Limiter {
+export interface Limiter {
 	limit(id: string): Promise<{ success: boolean; reset: number }>;
 }
 
@@ -12,10 +13,20 @@ const passthrough: Limiter = {
 	},
 };
 
+const failClosed: Limiter = {
+	async limit() {
+		return { success: false, reset: Date.now() + 60_000 };
+	},
+};
+
 export function createLimiter(prefix: string, max: number, window: Duration): Limiter {
 	if (!redis) {
-		console.warn(`[rate-limit] Redis unavailable — rate limiting DISABLED for ${prefix}`);
-		return passthrough;
+		if (dev) {
+			console.warn(`[rate-limit] Redis unavailable — rate limiting DISABLED for ${prefix}`);
+			return passthrough;
+		}
+		console.error(`[rate-limit] Redis unavailable — BLOCKING all requests for ${prefix}`);
+		return failClosed;
 	}
 	return new Ratelimit({
 		redis,
