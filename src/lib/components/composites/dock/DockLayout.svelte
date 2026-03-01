@@ -4,6 +4,7 @@
 	import { loadDockState, saveDockState } from './dock.persistence';
 	import DockNode from './DockNode.svelte';
 	import DockActivityBar from './DockActivityBar.svelte';
+	import { hasPanelType } from './dock.operations';
 	import type { LayoutNode, PanelDefinition, ActivityBarItem } from './dock.types';
 	import type { Snippet } from 'svelte';
 
@@ -12,6 +13,7 @@
 		initialPanels: Record<string, PanelDefinition>;
 		activityBarItems?: ActivityBarItem[];
 		persist?: boolean | string;
+		openPanel?: string | null;
 		panelContent: Snippet<[string]>;
 		class?: string;
 	}
@@ -21,6 +23,7 @@
 		initialPanels,
 		activityBarItems,
 		persist = false,
+		openPanel,
 		panelContent,
 		class: className
 	}: Props = $props();
@@ -46,6 +49,21 @@
 			timer = setTimeout(() => saveDockState(root, panels, persistKey), 300);
 		});
 	}
+
+	// Open a panel type via prop (e.g. from URL search param)
+	$effect(() => {
+		if (!openPanel) return;
+		if (hasPanelType(dock.root, openPanel, dock.panels)) return;
+		const def = Object.values(initialPanels).find((p) => p.type === openPanel);
+		if (!def) return;
+		dock.addPanel({
+			id: `${openPanel}-${Date.now()}`,
+			type: def.type,
+			label: def.label,
+			icon: def.icon,
+			closable: true
+		});
+	});
 </script>
 
 <div class="dock-layout {className ?? ''}">
