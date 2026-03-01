@@ -36,11 +36,11 @@
 			: Math.max(spacingProp, 12)
 	);
 
-	// Enforce opacity cap: 0.12 for scanline/hatch, 0.08 for crosshatch
+	// Enforce opacity cap: 0.5 for scanline/hatch, 0.35 for crosshatch
 	let opacity = $derived(
 		variant === 'crosshatch'
-			? Math.min(opacityProp, 0.08)
-			: Math.min(opacityProp, 0.12)
+			? Math.min(opacityProp, 0.35)
+			: Math.min(opacityProp, 0.5)
 	);
 
 	// Default angle: 0 for scanline, 45 for hatch/crosshatch

@@ -44,19 +44,19 @@
 		<p class="section-description">Repeating dots via SVG pattern. Subtle texture for hero sections, cards, and empty states.</p>
 
 		<div class="demos">
-			<DemoCard title="Default" description="20px spacing, 1px radius, 15% opacity">
-				<DotPattern class="rounded-lg min-h-[200px] w-full" />
+			<DemoCard title="Default" description="20px spacing, 1.5px radius, 40% opacity">
+				<DotPattern radius={1.5} opacity={0.4} class="rounded-lg min-h-[200px] w-full" />
 			</DemoCard>
 
 			<DemoCard title="Custom Spacing" description="Tighter (12px) and wider (32px) dot grids">
 				<div class="bg-row">
-					<DotPattern spacing={12} class="rounded-lg min-h-[200px] flex-1" />
-					<DotPattern spacing={32} radius={1.5} class="rounded-lg min-h-[200px] flex-1" />
+					<DotPattern spacing={12} radius={1.5} opacity={0.35} class="rounded-lg min-h-[200px] flex-1" />
+					<DotPattern spacing={32} radius={2} opacity={0.35} class="rounded-lg min-h-[200px] flex-1" />
 				</div>
 			</DemoCard>
 
 			<DemoCard title="With Content" description="Content overlaid on dot pattern">
-				<DotPattern spacing={16} opacity={0.2} class="rounded-lg min-h-[200px] w-full">
+				<DotPattern spacing={16} radius={1.5} opacity={0.3} class="rounded-lg min-h-[200px] w-full">
 					<div class="overlay-content">
 						<h3 class="overlay-title">Dot Pattern Background</h3>
 						<p class="overlay-text">Content renders above the pattern layer.</p>
@@ -66,8 +66,8 @@
 
 			<DemoCard title="Colored Dots" description="Using theme colors">
 				<div class="bg-row">
-					<DotPattern color="var(--color-primary)" opacity={0.25} class="rounded-lg min-h-[160px] flex-1" />
-					<DotPattern color="var(--color-success)" opacity={0.25} class="rounded-lg min-h-[160px] flex-1" />
+					<DotPattern color="var(--color-primary)" radius={1.5} opacity={0.5} class="rounded-lg min-h-[160px] flex-1" />
+					<DotPattern color="var(--color-success)" radius={1.5} opacity={0.5} class="rounded-lg min-h-[160px] flex-1" />
 				</div>
 			</DemoCard>
 		</div>
@@ -79,23 +79,24 @@
 		<p class="section-description">Grid lines via SVG pattern with optional highlighted cells. Technical and engineering aesthetics.</p>
 
 		<div class="demos">
-			<DemoCard title="Default" description="30px cells, 1px stroke, 10% opacity">
-				<GridPattern class="rounded-lg min-h-[200px] w-full" />
+			<DemoCard title="Default" description="30px cells, 1px stroke, 30% opacity">
+				<GridPattern opacity={0.3} class="rounded-lg min-h-[200px] w-full" />
 			</DemoCard>
 
 			<DemoCard title="With Highlights" description="Selected cells get a subtle fill">
 				<GridPattern
+					opacity={0.25}
 					highlights={[[1, 1], [2, 2], [3, 1], [4, 3], [5, 2]]}
 					class="rounded-lg min-h-[200px] w-full"
 				/>
 			</DemoCard>
 
 			<DemoCard title="Fine Grid" description="Smaller cells for dense patterns">
-				<GridPattern cellSize={16} strokeWidth={0.5} opacity={0.15} class="rounded-lg min-h-[200px] w-full" />
+				<GridPattern cellSize={16} strokeWidth={0.5} opacity={0.25} class="rounded-lg min-h-[200px] w-full" />
 			</DemoCard>
 
 			<DemoCard title="With Content" description="Content overlaid on grid">
-				<GridPattern cellSize={24} opacity={0.12} class="rounded-lg min-h-[200px] w-full">
+				<GridPattern cellSize={24} opacity={0.2} class="rounded-lg min-h-[200px] w-full">
 					<div class="overlay-content">
 						<h3 class="overlay-title">Grid Pattern Background</h3>
 						<p class="overlay-text">Grid creates a technical, engineering feel.</p>
@@ -143,31 +144,31 @@
 		<p class="section-description">Radial gradient blobs with blur and optional animation. Organic, ambient atmosphere.</p>
 
 		<div class="demos">
-			<DemoCard title="Default" description="Primary, success, warning blobs at 15% opacity">
-				<GradientBlob class="rounded-lg min-h-[250px] w-full" />
+			<DemoCard title="Default" description="Primary, success, warning blobs at 25% opacity">
+				<GradientBlob opacity={0.25} class="rounded-lg min-h-[250px] w-full" />
 			</DemoCard>
 
 			<DemoCard title="Animated" description="Floating blob animation">
-				<GradientBlob animated class="rounded-lg min-h-[250px] w-full" />
+				<GradientBlob animated opacity={0.25} class="rounded-lg min-h-[250px] w-full" />
 			</DemoCard>
 
 			<DemoCard title="Custom Colors" description="Single-tone and dual-tone">
 				<div class="bg-row">
 					<GradientBlob
 						colors={['var(--color-primary)', 'var(--color-info)']}
-						opacity={0.2}
+						opacity={0.3}
 						class="rounded-lg min-h-[200px] flex-1"
 					/>
 					<GradientBlob
 						colors={['var(--color-error)', 'var(--color-warning)', 'var(--color-primary)']}
-						opacity={0.2}
+						opacity={0.3}
 						class="rounded-lg min-h-[200px] flex-1"
 					/>
 				</div>
 			</DemoCard>
 
 			<DemoCard title="With Content" description="Content over animated blobs">
-				<GradientBlob animated opacity={0.12} class="rounded-lg min-h-[250px] w-full">
+				<GradientBlob animated opacity={0.15} class="rounded-lg min-h-[250px] w-full">
 					<div class="overlay-content overlay-centered">
 						<h3 class="overlay-hero">GRADIENT BLOBS</h3>
 						<p class="overlay-text">Organic, ambient atmosphere for hero sections and landing pages.</p>
@@ -183,15 +184,15 @@
 		<p class="section-description">SVG feTurbulence film grain. Desaturated noise blended over content for tactile, analog texture.</p>
 
 		<div class="demos">
-			<DemoCard title="Default" description="0.65 frequency, 4 octaves, overlay blend at 5%">
-				<NoiseTexture class="rounded-lg min-h-[200px] w-full bg-surface-1" />
+			<DemoCard title="Default" description="0.65 frequency, 4 octaves, overlay blend at 15%">
+				<NoiseTexture opacity={0.15} class="rounded-lg min-h-[200px] w-full bg-surface-1" />
 			</DemoCard>
 
 			<DemoCard title="Blend Modes" description="overlay, soft-light, multiply, screen">
 				<div class="bg-row bg-row-wrap">
 					{#each blendModes as mode}
 						<div class="blend-item">
-							<NoiseTexture blend={mode} opacity={0.08} class="rounded-lg min-h-[120px] w-full bg-surface-1" />
+							<NoiseTexture blend={mode} opacity={0.2} class="rounded-lg min-h-[120px] w-full bg-surface-1" />
 							<span class="blend-label">{mode}</span>
 						</div>
 					{/each}
@@ -201,19 +202,19 @@
 			<DemoCard title="Grain Density" description="Low (0.3) vs high (1.2) frequency">
 				<div class="bg-row">
 					<div class="blend-item flex-1">
-						<NoiseTexture frequency={0.3} opacity={0.08} class="rounded-lg min-h-[160px] w-full bg-surface-1" />
+						<NoiseTexture frequency={0.3} opacity={0.2} class="rounded-lg min-h-[160px] w-full bg-surface-1" />
 						<span class="blend-label">coarse (0.3)</span>
 					</div>
 					<div class="blend-item flex-1">
-						<NoiseTexture frequency={1.2} opacity={0.08} class="rounded-lg min-h-[160px] w-full bg-surface-1" />
+						<NoiseTexture frequency={1.2} opacity={0.2} class="rounded-lg min-h-[160px] w-full bg-surface-1" />
 						<span class="blend-label">fine (1.2)</span>
 					</div>
 				</div>
 			</DemoCard>
 
 			<DemoCard title="Composited with GradientBlob" description="Noise texture over animated blobs">
-				<GradientBlob animated opacity={0.12} class="rounded-lg min-h-[250px] w-full">
-					<NoiseTexture opacity={0.06} class="noise-overlay">
+				<GradientBlob animated opacity={0.15} class="rounded-lg min-h-[250px] w-full">
+					<NoiseTexture opacity={0.12} class="noise-overlay">
 						<div class="overlay-content overlay-centered">
 							<h3 class="overlay-hero">GRAIN + BLOBS</h3>
 							<p class="overlay-text">Film grain adds tactile quality over smooth gradients.</p>
@@ -230,15 +231,15 @@
 		<p class="section-description">Pure CSS radial-gradient spotlight. Focal-point backgrounds for hero sections and cards.</p>
 
 		<div class="demos">
-			<DemoCard title="Default" description="Primary color, center position, medium size at 15%">
-				<RadialGlow class="rounded-lg min-h-[200px] w-full" />
+			<DemoCard title="Default" description="Primary color, center position, medium size at 25%">
+				<RadialGlow opacity={0.25} class="rounded-lg min-h-[200px] w-full" />
 			</DemoCard>
 
 			<DemoCard title="Positions" description="Seven anchor points for the gradient">
 				<div class="bg-row bg-row-wrap">
 					{#each glowPositions as pos}
 						<div class="glow-item">
-							<RadialGlow position={pos} opacity={0.2} class="rounded-lg min-h-[100px] w-full" />
+							<RadialGlow position={pos} opacity={0.3} class="rounded-lg min-h-[100px] w-full" />
 							<span class="blend-label">{pos}</span>
 						</div>
 					{/each}
@@ -249,7 +250,7 @@
 				<div class="bg-row bg-row-wrap">
 					{#each glowSizes as s}
 						<div class="glow-item">
-							<RadialGlow size={s} opacity={0.2} class="rounded-lg min-h-[100px] w-full" />
+							<RadialGlow size={s} opacity={0.3} class="rounded-lg min-h-[100px] w-full" />
 							<span class="blend-label">{s}</span>
 						</div>
 					{/each}
@@ -258,14 +259,14 @@
 
 			<DemoCard title="Theme Colors" description="Primary, success, warning glows">
 				<div class="bg-row">
-					<RadialGlow color="var(--color-primary)" opacity={0.2} class="rounded-lg min-h-[160px] flex-1" />
-					<RadialGlow color="var(--color-success)" opacity={0.2} class="rounded-lg min-h-[160px] flex-1" />
-					<RadialGlow color="var(--color-warning)" opacity={0.2} class="rounded-lg min-h-[160px] flex-1" />
+					<RadialGlow color="var(--color-primary)" opacity={0.3} class="rounded-lg min-h-[160px] flex-1" />
+					<RadialGlow color="var(--color-success)" opacity={0.3} class="rounded-lg min-h-[160px] flex-1" />
+					<RadialGlow color="var(--color-warning)" opacity={0.3} class="rounded-lg min-h-[160px] flex-1" />
 				</div>
 			</DemoCard>
 
 			<DemoCard title="With Content" description="Hero section with radial glow spotlight">
-				<RadialGlow color="var(--color-primary)" position="top" size="lg" opacity={0.2} class="rounded-lg min-h-[250px] w-full">
+				<RadialGlow color="var(--color-primary)" position="top" size="lg" opacity={0.25} class="rounded-lg min-h-[250px] w-full">
 					<div class="overlay-content overlay-centered">
 						<h3 class="overlay-hero">SPOTLIGHT</h3>
 						<p class="overlay-text">Radial glow creates a focal point that draws the eye.</p>
@@ -303,7 +304,7 @@
 
 			<DemoCard title="Vignette (all edges)" description="All four edges fade over a GridPattern">
 				<FadeMask edges={['top', 'bottom', 'left', 'right']} size={64} class="rounded-lg w-full">
-					<GridPattern cellSize={24} opacity={0.15} class="rounded-lg min-h-[200px] w-full" />
+					<GridPattern cellSize={24} opacity={0.3} class="rounded-lg min-h-[200px] w-full" />
 				</FadeMask>
 			</DemoCard>
 
@@ -336,7 +337,7 @@
 				<div class="bg-row bg-row-wrap">
 					{#each lineVariants as variant}
 						<div class="blend-item flex-1">
-							<LineFill {variant} class="rounded-lg min-h-[160px] w-full" />
+							<LineFill {variant} opacity={0.3} strokeWidth={1.5} class="rounded-lg min-h-[160px] w-full" />
 							<span class="blend-label">{variant}</span>
 						</div>
 					{/each}
@@ -346,11 +347,11 @@
 			<DemoCard title="Spacing" description="Tight (12px) vs wide (24px) scanlines">
 				<div class="bg-row">
 					<div class="blend-item flex-1">
-						<LineFill spacing={12} class="rounded-lg min-h-[160px] w-full" />
+						<LineFill spacing={12} opacity={0.3} strokeWidth={1.5} class="rounded-lg min-h-[160px] w-full" />
 						<span class="blend-label">12px</span>
 					</div>
 					<div class="blend-item flex-1">
-						<LineFill spacing={24} class="rounded-lg min-h-[160px] w-full" />
+						<LineFill spacing={24} opacity={0.3} strokeWidth={1.5} class="rounded-lg min-h-[160px] w-full" />
 						<span class="blend-label">24px</span>
 					</div>
 				</div>
@@ -359,11 +360,11 @@
 			<DemoCard title="Stroke Width" description="Hairline (0.5px) vs thick (2px)">
 				<div class="bg-row">
 					<div class="blend-item flex-1">
-						<LineFill strokeWidth={0.5} spacing={16} class="rounded-lg min-h-[160px] w-full" />
+						<LineFill strokeWidth={0.5} spacing={16} opacity={0.35} class="rounded-lg min-h-[160px] w-full" />
 						<span class="blend-label">0.5px</span>
 					</div>
 					<div class="blend-item flex-1">
-						<LineFill strokeWidth={2} spacing={16} class="rounded-lg min-h-[160px] w-full" />
+						<LineFill strokeWidth={2} spacing={16} opacity={0.35} class="rounded-lg min-h-[160px] w-full" />
 						<span class="blend-label">2px</span>
 					</div>
 				</div>
@@ -372,15 +373,15 @@
 			<DemoCard title="Custom Angles" description="Diagonal hatching at different angles">
 				<div class="bg-row bg-row-wrap">
 					<div class="blend-item flex-1">
-						<LineFill variant="hatch" angle={30} class="rounded-lg min-h-[140px] w-full" />
+						<LineFill variant="hatch" angle={30} opacity={0.3} strokeWidth={1.5} class="rounded-lg min-h-[140px] w-full" />
 						<span class="blend-label">30deg</span>
 					</div>
 					<div class="blend-item flex-1">
-						<LineFill variant="hatch" angle={45} class="rounded-lg min-h-[140px] w-full" />
+						<LineFill variant="hatch" angle={45} opacity={0.3} strokeWidth={1.5} class="rounded-lg min-h-[140px] w-full" />
 						<span class="blend-label">45deg</span>
 					</div>
 					<div class="blend-item flex-1">
-						<LineFill variant="hatch" angle={60} class="rounded-lg min-h-[140px] w-full" />
+						<LineFill variant="hatch" angle={60} opacity={0.3} strokeWidth={1.5} class="rounded-lg min-h-[140px] w-full" />
 						<span class="blend-label">60deg</span>
 					</div>
 				</div>
@@ -388,14 +389,14 @@
 
 			<DemoCard title="Theme Colors" description="Colored line fills">
 				<div class="bg-row">
-					<LineFill variant="hatch" color="var(--color-primary)" class="rounded-lg min-h-[140px] flex-1" />
-					<LineFill variant="crosshatch" color="var(--color-success)" class="rounded-lg min-h-[140px] flex-1" />
-					<LineFill color="var(--color-warning)" class="rounded-lg min-h-[140px] flex-1" />
+					<LineFill variant="hatch" color="var(--color-primary)" opacity={0.5} strokeWidth={1.5} class="rounded-lg min-h-[140px] flex-1" />
+					<LineFill variant="crosshatch" color="var(--color-success)" opacity={0.5} strokeWidth={1.5} class="rounded-lg min-h-[140px] flex-1" />
+					<LineFill color="var(--color-warning)" opacity={0.5} strokeWidth={1.5} class="rounded-lg min-h-[140px] flex-1" />
 				</div>
 			</DemoCard>
 
 			<DemoCard title="With Content" description="Content overlaid on hatch pattern">
-				<LineFill variant="hatch" opacity={0.06} class="rounded-lg min-h-[200px] w-full">
+				<LineFill variant="hatch" opacity={0.15} strokeWidth={1.5} class="rounded-lg min-h-[200px] w-full">
 					<div class="overlay-content overlay-centered">
 						<h3 class="overlay-hero">HATCHED</h3>
 						<p class="overlay-text">Line fills add draftsmanship texture behind content.</p>
@@ -428,7 +429,7 @@
 
 		<div class="demos">
 			<DemoCard title="Card with Dot Pattern" description="A card component using DotPattern as background">
-				<DotPattern spacing={16} opacity={0.12} class="composition-card">
+				<DotPattern spacing={16} radius={1.5} opacity={0.25} class="composition-card">
 					<div class="card-content">
 						<span class="card-badge">New</span>
 						<h3 class="card-title">Feature Card</h3>
@@ -439,8 +440,8 @@
 
 			<DemoCard title="Hero with Blobs + Grid" description="Layered backgrounds for rich atmosphere">
 				<div class="hero-composition">
-					<GradientBlob animated opacity={0.1} class="hero-layer">
-						<GridPattern cellSize={40} opacity={0.06} class="hero-layer">
+					<GradientBlob animated opacity={0.15} class="hero-layer">
+						<GridPattern cellSize={40} opacity={0.15} class="hero-layer">
 							<div class="overlay-content overlay-centered">
 								<h3 class="overlay-hero">LAYERED BACKGROUNDS</h3>
 								<p class="overlay-text">Combine multiple background components for rich, layered atmospheric effects.</p>
@@ -577,7 +578,7 @@
 	}
 
 	.utility-demo {
-		opacity: 0.15;
+		opacity: 0.35;
 	}
 
 	:global(.composition-card) {
