@@ -10,7 +10,7 @@ input="$(cat)"
 
 # Prevent infinite loops — if this hook already triggered, skip
 if echo "$input" | grep -q '"stop_hook_active"'; then
-  echo '{"decision": "allow"}'
+  echo '{"decision": "approve"}'
   exit 0
 fi
 
@@ -21,4 +21,4 @@ output=$(podman exec v10r bash -c 'set -o pipefail; bun vitest run 2>&1 | tail -
   exit 0
 }
 
-echo '{"decision": "allow"}'
+echo '{"decision": "approve"}'
