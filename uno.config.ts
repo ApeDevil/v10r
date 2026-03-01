@@ -83,5 +83,6 @@ export default defineConfig({
 		'i-lucide-panel-top',
 		'i-lucide-message-circle',
 		'i-lucide-send',
+		'i-lucide-sheet',
 	],
 });
