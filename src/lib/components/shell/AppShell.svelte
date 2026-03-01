@@ -13,6 +13,7 @@
 	import { getModals } from '$lib/state/modals.svelte';
 	import { getTheme } from '$lib/state/theme.svelte';
 	import { DESK_PANELS } from '$lib/config/desk-panels';
+	import { searchPages } from '$lib/nav';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 
@@ -29,20 +30,19 @@
 	const modals = getModals();
 	const theme = getTheme();
 
-	function pageItem(id: string, label: string, icon: string, href: string) {
-		return {
-			id,
-			type: 'page' as const,
-			label,
-			icon,
-			href,
-			secondary: {
-				icon: 'i-lucide-external-link',
-				label: 'Open in new tab',
-				action: () => window.open(href, '_blank'),
-			},
-		};
-	}
+	const pageSearchItems = searchPages.map((p) => ({
+		id: p.id,
+		type: 'page' as const,
+		label: p.label,
+		icon: p.icon,
+		href: p.href,
+		hint: p.hint,
+		secondary: {
+			icon: 'i-lucide-external-link',
+			label: 'Open in new tab',
+			action: () => window.open(p.href, '_blank'),
+		},
+	}));
 
 	const panelSearchItems = $derived(
 		Object.values(DESK_PANELS).map((p) => ({
@@ -61,18 +61,7 @@
 	);
 
 	const searchItems = $derived([
-		pageItem('home', 'Home', 'i-lucide-home', '/'),
-		pageItem('dashboard', 'Dashboard', 'i-lucide-layout-dashboard', '/app/dashboard'),
-		pageItem('account', 'Account', 'i-lucide-user', '/app/account'),
-		pageItem('sign-in', 'Sign in', 'i-lucide-key', '/auth/login'),
-		pageItem('showcases', 'Showcases', 'i-lucide-eye', '/showcases'),
-		pageItem('showcases-shell', 'Shell', 'i-lucide-layout', '/showcases/shell'),
-		pageItem('showcases-forms', 'Forms', 'i-lucide-file-text', '/showcases/forms'),
-		pageItem('showcases-3d', '3D', 'i-lucide-box', '/showcases/3d'),
-		pageItem('showcases-auth', 'Auth', 'i-lucide-lock', '/showcases/auth'),
-		pageItem('docs', 'Docs', 'i-lucide-book-open', '/docs'),
-		pageItem('docs-stack', 'Stack', 'i-lucide-layers', '/docs/stack'),
-		pageItem('showcases-ai', 'AI', 'i-lucide-bot', '/showcases/ai'),
+		...pageSearchItems,
 		...panelSearchItems,
 		{ id: 'toggle-theme', type: 'action' as const, label: 'Toggle Theme', icon: 'i-lucide-sun-moon', action: () => theme.setMode(theme.isDark ? 'light' : 'dark') },
 		{ id: 'shortcuts', type: 'action' as const, label: 'Keyboard Shortcuts', icon: 'i-lucide-keyboard', action: () => modals.open('shortcuts') },

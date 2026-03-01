@@ -1,13 +1,31 @@
+export interface ShowcaseSublink {
+	label: string;
+	href: string;
+	children?: ShowcaseSublink[];
+}
+
 interface ShowcaseCard {
 	href: string;
 	icon: string;
 	title: string;
 	description: string;
-	sublinks?: { label: string; href: string }[];
+	sublinks?: ShowcaseSublink[];
 }
 
 export function getShowcaseTabs(basePath: string) {
 	return showcases.find((s) => s.href === basePath)?.sublinks ?? [];
+}
+
+export function getShowcaseSubTabs(parentPath: string): { label: string; href: string }[] {
+	for (const card of showcases) {
+		if (!card.sublinks) continue;
+		for (const sub of card.sublinks) {
+			if (sub.href === parentPath && sub.children) {
+				return sub.children.map((c) => ({ label: c.label, href: c.href }));
+			}
+		}
+	}
+	return [];
 }
 
 export const showcases: ShowcaseCard[] = [
@@ -32,11 +50,33 @@ export const showcases: ShowcaseCard[] = [
 		title: 'UI Components',
 		description: 'Complete UI component library and design tokens',
 		sublinks: [
-			{ label: 'Components', href: '/showcases/ui/components' },
+			{
+				label: 'Components',
+				href: '/showcases/ui/components',
+				children: [
+					{ label: 'Primitives', href: '/showcases/ui/components/primitives' },
+					{ label: 'Composites', href: '/showcases/ui/components/composites' },
+				],
+			},
 			{ label: 'Layouts', href: '/showcases/ui/layouts' },
 			{ label: 'Tables', href: '/showcases/ui/tables' },
-			{ label: 'Panes', href: '/showcases/ui/panes' },
-			{ label: 'Decorative', href: '/showcases/ui/decorative' },
+			{
+				label: 'Panes',
+				href: '/showcases/ui/panes',
+				children: [
+					{ label: 'Resizable', href: '/showcases/ui/panes/resizable' },
+					{ label: 'Reorderable', href: '/showcases/ui/panes/reorderable' },
+					{ label: 'Panels', href: '/showcases/ui/panes/panels' },
+				],
+			},
+			{
+				label: 'Decorative',
+				href: '/showcases/ui/decorative',
+				children: [
+					{ label: 'Ornaments', href: '/showcases/ui/decorative/ornaments' },
+					{ label: 'Backgrounds', href: '/showcases/ui/decorative/backgrounds' },
+				],
+			},
 			{ label: 'Typography', href: '/showcases/ui/typography' },
 			{ label: 'Tokens', href: '/showcases/ui/tokens' },
 		],
@@ -47,10 +87,41 @@ export const showcases: ShowcaseCard[] = [
 		title: 'Forms',
 		description: 'Superforms + Valibot validation, patterns, and advanced techniques',
 		sublinks: [
-			{ label: 'Basics', href: '/showcases/forms/basics' },
-			{ label: 'Validation', href: '/showcases/forms/validation' },
-			{ label: 'Patterns', href: '/showcases/forms/patterns' },
-			{ label: 'Advanced', href: '/showcases/forms/advanced' },
+			{
+				label: 'Basics',
+				href: '/showcases/forms/basics',
+				children: [
+					{ label: 'Contact', href: '/showcases/forms/basics/contact' },
+					{ label: 'Settings', href: '/showcases/forms/basics/settings' },
+				],
+			},
+			{
+				label: 'Validation',
+				href: '/showcases/forms/validation',
+				children: [
+					{ label: 'Realtime', href: '/showcases/forms/validation/realtime' },
+					{ label: 'Async', href: '/showcases/forms/validation/async' },
+					{ label: 'Server', href: '/showcases/forms/validation/server' },
+				],
+			},
+			{
+				label: 'Patterns',
+				href: '/showcases/forms/patterns',
+				children: [
+					{ label: 'Wizard', href: '/showcases/forms/patterns/wizard' },
+					{ label: 'Dynamic', href: '/showcases/forms/patterns/dynamic' },
+					{ label: 'Dependent', href: '/showcases/forms/patterns/dependent' },
+				],
+			},
+			{
+				label: 'Advanced',
+				href: '/showcases/forms/advanced',
+				children: [
+					{ label: 'Confirm', href: '/showcases/forms/advanced/confirm' },
+					{ label: 'Reset', href: '/showcases/forms/advanced/reset' },
+					{ label: 'Edit', href: '/showcases/forms/advanced/edit' },
+				],
+			},
 			{ label: 'Auth', href: '/showcases/forms/auth' },
 		],
 	},
@@ -83,10 +154,42 @@ export const showcases: ShowcaseCard[] = [
 		title: 'Database',
 		description: 'PostgreSQL, Neo4j, R2, Redis — connections, types, queries, and storage',
 		sublinks: [
-			{ label: 'Relational', href: '/showcases/db/relational' },
-			{ label: 'Graph', href: '/showcases/db/graph' },
-			{ label: 'Storage', href: '/showcases/db/storage' },
-			{ label: 'Cache', href: '/showcases/db/cache' },
+			{
+				label: 'Relational',
+				href: '/showcases/db/relational',
+				children: [
+					{ label: 'Connection', href: '/showcases/db/relational/connection' },
+					{ label: 'Types', href: '/showcases/db/relational/types' },
+					{ label: 'Mutability', href: '/showcases/db/relational/mutability' },
+				],
+			},
+			{
+				label: 'Graph',
+				href: '/showcases/db/graph',
+				children: [
+					{ label: 'Connection', href: '/showcases/db/graph/connection' },
+					{ label: 'Model', href: '/showcases/db/graph/model' },
+					{ label: 'Traversal', href: '/showcases/db/graph/traversal' },
+				],
+			},
+			{
+				label: 'Storage',
+				href: '/showcases/db/storage',
+				children: [
+					{ label: 'Connection', href: '/showcases/db/storage/connection' },
+					{ label: 'Objects', href: '/showcases/db/storage/objects' },
+					{ label: 'Transfer', href: '/showcases/db/storage/transfer' },
+				],
+			},
+			{
+				label: 'Cache',
+				href: '/showcases/db/cache',
+				children: [
+					{ label: 'Connection', href: '/showcases/db/cache/connection' },
+					{ label: 'Patterns', href: '/showcases/db/cache/patterns' },
+					{ label: 'Ephemeral', href: '/showcases/db/cache/ephemeral' },
+				],
+			},
 		],
 	},
 	{
@@ -109,7 +212,17 @@ export const showcases: ShowcaseCard[] = [
 			{ label: 'Connection', href: '/showcases/ai/connection' },
 			{ label: 'Chat', href: '/showcases/ai/chat' },
 			{ label: 'Streaming', href: '/showcases/ai/streaming' },
-			{ label: 'Retrieval', href: '/showcases/ai/retrieval' },
+			{
+				label: 'Retrieval',
+				href: '/showcases/ai/retrieval',
+				children: [
+					{ label: 'Ingest', href: '/showcases/ai/retrieval/ingest' },
+					{ label: 'Contextual', href: '/showcases/ai/retrieval/contextual' },
+					{ label: 'Parent-Child', href: '/showcases/ai/retrieval/parent-child' },
+					{ label: 'Graph', href: '/showcases/ai/retrieval/graph' },
+					{ label: 'Chat', href: '/showcases/ai/retrieval/chat' },
+				],
+			},
 		],
 	},
 	{

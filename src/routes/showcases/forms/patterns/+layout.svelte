@@ -1,14 +1,11 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { TabNav } from '$lib/components/composites';
+	import { getShowcaseSubTabs } from '../../showcases';
 
 	let { children }: { children: Snippet } = $props();
 
-	const tabs = [
-		{ label: 'Wizard', href: '/showcases/forms/patterns/wizard' },
-		{ label: 'Dynamic', href: '/showcases/forms/patterns/dynamic' },
-		{ label: 'Dependent', href: '/showcases/forms/patterns/dependent' },
-	];
+	const tabs = getShowcaseSubTabs('/showcases/forms/patterns');
 </script>
 
 <TabNav {tabs} ariaLabel="Patterns sections" />
