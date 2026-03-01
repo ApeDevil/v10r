@@ -57,6 +57,17 @@
 					title="Plain Card"
 					description="A simple link card without an icon."
 				/>
+				<LinkCard
+					href="/showcases/ui"
+					title="With Sublinks"
+					description="Card with independently clickable sublinks."
+					icon="i-lucide-layout-grid"
+					sublinks={[
+						{ label: 'Components', href: '/showcases/ui/components' },
+						{ label: 'Layouts', href: '/showcases/ui/layouts' },
+						{ label: 'Typography', href: '/showcases/ui/typography' }
+					]}
+				/>
 			</div>
 		</DemoCard>
 
