@@ -41,7 +41,7 @@
 				<span class="{icon} text-3xl text-fg shrink-0" aria-hidden="true"></span>
 			{/if}
 			{#if sublinks?.length}
-				<div class="flex flex-wrap justify-end gap-x-2 gap-y-1 text-xs text-muted ml-auto">
+				<div class="flex flex-wrap justify-end gap-x-2 gap-y-1 text-xs ml-auto">
 					{#each sublinks as sublink}
 						<a href={localizeHref(sublink.href)} class="sublink">
 							{sublink.label}
@@ -111,22 +111,22 @@
 		border-radius: 0.25rem;
 		padding: 0.25rem 0.5rem;
 		text-decoration: none;
-		color: inherit;
+		color: var(--color-secondary-fg);
 		transition: color 150ms, background-color 150ms;
 	}
 
 	.sublink:hover {
-		color: var(--color-fg);
-		background-color: color-mix(in srgb, var(--color-muted) 15%, transparent);
+		text-decoration: underline;
+		background-color: color-mix(in srgb, var(--color-secondary-bg) 40%, transparent);
 	}
 
 	.sublink:focus-visible {
-		outline: 2px solid var(--color-primary);
+		outline: 2px solid var(--color-secondary-fg);
 		outline-offset: 2px;
 	}
 
 	.sublink:active {
-		background-color: color-mix(in srgb, var(--color-muted) 25%, transparent);
+		background-color: color-mix(in srgb, var(--color-secondary-bg) 60%, transparent);
 	}
 
 	@media (prefers-reduced-motion: reduce) {
