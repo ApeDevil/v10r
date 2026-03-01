@@ -87,22 +87,27 @@
 	}
 
 	/* Ghost hover: shadow in light, glow in dark */
-	button:global(.text-fg):not(:global(.bg-fg)):not(:global(.bg-primary)):not(:global(.bg-border)):not(:global(.bg-error)):hover:not(:disabled) {
+	button:global(.text-fg):not(:global(.bg-fg)):not(:global(.bg-primary)):not(:global(.bg-border)):not(:global(.border-error)):hover:not(:disabled) {
 		color: var(--color-primary);
 		box-shadow: 0 2px 8px 0 color-mix(in srgb, var(--color-fg) 15%, transparent);
 	}
 
-	:global(.dark) button:global(.text-fg):not(:global(.bg-fg)):not(:global(.bg-primary)):not(:global(.bg-border)):not(:global(.bg-error)):hover:not(:disabled) {
+	:global(.dark) button:global(.text-fg):not(:global(.bg-fg)):not(:global(.bg-primary)):not(:global(.bg-border)):not(:global(.border-error)):hover:not(:disabled) {
 		box-shadow: 0 0 10px 2px color-mix(in srgb, var(--color-fg) 15%, transparent);
 	}
 
-	/* Destructive: uses error-bg/fg tokens */
-	button:global(.bg-error) {
-		background-color: var(--color-error-bg);
-		color: var(--color-error-fg);
+	/* Destructive: outline → filled on hover */
+	button:global(.border-error) {
+		border-width: 1px;
+		border-style: solid;
+		border-color: var(--color-error);
+		color: var(--color-error);
 	}
 
-	button:global(.bg-error):hover:not(:disabled) {
+	button:global(.border-error):hover:not(:disabled) {
+		background-color: var(--color-error-bg);
+		color: var(--color-error-fg);
+		border-color: var(--color-error-bg);
 		box-shadow: 0 0 16px 4px color-mix(in srgb, var(--color-error-bg) 45%, transparent);
 	}
 
