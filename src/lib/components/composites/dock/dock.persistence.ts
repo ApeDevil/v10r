@@ -6,25 +6,25 @@
 import { browser } from '$app/environment';
 import type { LayoutNode, PanelDefinition, DockLayoutState, LeafNode } from './dock.types';
 
-const STORAGE_KEY = 'dock-layout';
+const DEFAULT_KEY = 'dock-layout';
 const CURRENT_VERSION = 1;
 
 /** Save dock state to localStorage */
-export function saveDockState(root: LayoutNode, panels: Record<string, PanelDefinition>): void {
+export function saveDockState(root: LayoutNode, panels: Record<string, PanelDefinition>, storageKey = DEFAULT_KEY): void {
 	if (!browser) return;
 	try {
 		const state: DockLayoutState = { version: CURRENT_VERSION, root, panels };
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+		localStorage.setItem(storageKey, JSON.stringify(state));
 	} catch {
 		// Silently fail (e.g., storage full)
 	}
 }
 
 /** Load dock state from localStorage, returns null if invalid */
-export function loadDockState(): DockLayoutState | null {
+export function loadDockState(storageKey = DEFAULT_KEY): DockLayoutState | null {
 	if (!browser) return null;
 	try {
-		const raw = localStorage.getItem(STORAGE_KEY);
+		const raw = localStorage.getItem(storageKey);
 		if (!raw) return null;
 
 		const state = JSON.parse(raw) as DockLayoutState;
@@ -41,9 +41,9 @@ export function loadDockState(): DockLayoutState | null {
 }
 
 /** Clear persisted state */
-export function clearDockState(): void {
+export function clearDockState(storageKey = DEFAULT_KEY): void {
 	if (!browser) return;
-	localStorage.removeItem(STORAGE_KEY);
+	localStorage.removeItem(storageKey);
 }
 
 /** Validate layout node structure */

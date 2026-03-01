@@ -11,7 +11,7 @@
 		initialRoot: LayoutNode;
 		initialPanels: Record<string, PanelDefinition>;
 		activityBarItems?: ActivityBarItem[];
-		persist?: boolean;
+		persist?: boolean | string;
 		panelContent: Snippet<[string]>;
 		class?: string;
 	}
@@ -25,8 +25,10 @@
 		class: className
 	}: Props = $props();
 
+	const persistKey = typeof persist === 'string' ? persist : undefined;
+
 	// Try to restore persisted state, fall back to initial
-	const saved = persist ? loadDockState() : null;
+	const saved = persist ? loadDockState(persistKey) : null;
 	const dock = setDockContext(
 		saved?.root ?? initialRoot,
 		saved?.panels ?? initialPanels
@@ -41,7 +43,7 @@
 			const root = $state.snapshot(dock.root) as LayoutNode;
 			const panels = $state.snapshot(dock.panels) as Record<string, PanelDefinition>;
 			clearTimeout(timer);
-			timer = setTimeout(() => saveDockState(root, panels), 300);
+			timer = setTimeout(() => saveDockState(root, panels, persistKey), 300);
 		});
 	}
 </script>
