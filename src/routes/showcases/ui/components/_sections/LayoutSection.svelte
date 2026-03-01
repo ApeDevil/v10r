@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { DemoCard } from '../_components';
-	import { Stack, Cluster, Grid, Center, PaneGroup, Pane, PaneResizer } from '$lib/components';
+	import { Stack, Cluster, Grid, Center } from '$lib/components';
 </script>
 
 <section id="layout" class="section">
@@ -135,20 +135,6 @@
 			</div>
 		</DemoCard>
 
-		<!-- Resizable -->
-		<DemoCard title="Resizable Panes" description="Draggable resizable pane layout">
-			<div class="resizable-demo">
-				<PaneGroup direction="horizontal">
-					<Pane defaultSize={50}>
-						<div class="pane-content">Left Pane</div>
-					</Pane>
-					<PaneResizer withHandle />
-					<Pane defaultSize={50}>
-						<div class="pane-content">Right Pane</div>
-					</Pane>
-				</PaneGroup>
-			</div>
-		</DemoCard>
 	</div>
 </section>
 
@@ -238,22 +224,4 @@
 		padding: var(--spacing-3);
 	}
 
-	.resizable-demo {
-		width: 100%;
-		height: 12rem;
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		overflow: hidden;
-	}
-
-	.pane-content {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		height: 100%;
-		background: var(--color-subtle);
-		color: var(--color-muted);
-		font-size: var(--text-fluid-sm);
-		font-weight: 500;
-	}
 </style>

@@ -22,7 +22,7 @@
 	{onDraggingChange}
 	class={cn(
 		'resizable-handle',
-		'relative shrink-0 select-none bg-border',
+		'relative shrink-0 select-none',
 		'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
 		withHandle && 'with-grip',
 		className
@@ -89,6 +89,7 @@
 
 	/* Hover/active states using color-mix (opacity modifiers broken with CSS vars) */
 	:global(.resizable-handle) {
+		background: color-mix(in srgb, var(--color-fg) 20%, transparent);
 		transition: background-color 150ms;
 	}
 

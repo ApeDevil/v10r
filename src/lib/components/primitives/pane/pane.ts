@@ -2,7 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 
 export const paneResizerVariants = cva(
 	[
-		'relative shrink-0 select-none bg-border',
+		'relative shrink-0 select-none',
 		'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary'
 	],
 	{
