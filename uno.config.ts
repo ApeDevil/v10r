@@ -73,5 +73,13 @@ export default defineConfig({
 		'bg-surface-1',
 		'bg-surface-2',
 		'bg-surface-3',
+		// Desk panel icons (used programmatically via activity bar data)
+		'i-lucide-notebook-pen',
+		'i-lucide-pen-tool',
+		'i-lucide-terminal',
+		'i-lucide-image',
+		'i-lucide-inbox',
+		'i-lucide-bar-chart-3',
+		'i-lucide-panel-top',
 	],
 });
