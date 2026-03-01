@@ -81,5 +81,7 @@ export default defineConfig({
 		'i-lucide-inbox',
 		'i-lucide-bar-chart-3',
 		'i-lucide-panel-top',
+		'i-lucide-message-circle',
+		'i-lucide-send',
 	],
 });
