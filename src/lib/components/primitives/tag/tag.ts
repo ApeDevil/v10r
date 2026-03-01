@@ -1,21 +1,12 @@
 import { cva, type VariantProps } from 'class-variance-authority';
+import { pillColorVariants, pillSizeVariants } from '../pill-variants';
 
-export const chipVariants = cva(
+export const tagVariants = cva(
 	'inline-flex items-center rounded-full font-medium cursor-default',
 	{
 		variants: {
-			variant: {
-				default: 'bg-primary text-primary',
-				secondary: 'bg-muted text-muted',
-				success: 'bg-success text-success',
-				warning: 'bg-warning text-warning',
-				error: 'bg-error text-error',
-				outline: 'border border-solid border-border text-fg'
-			},
-			size: {
-				sm: 'gap-1 px-2 py-0.5 text-fluid-xs',
-				md: 'gap-1.5 px-2.5 py-1 text-fluid-sm'
-			}
+			variant: pillColorVariants,
+			size: pillSizeVariants
 		},
 		defaultVariants: {
 			variant: 'default',
@@ -24,11 +15,11 @@ export const chipVariants = cva(
 	}
 );
 
-export const chipCloseVariants = cva(
+export const tagCloseVariants = cva(
 	'inline-flex items-center justify-center rounded-full cursor-pointer p-0'
 );
 
-export const filterChipVariants = cva(
+export const tagSelectableVariants = cva(
 	[
 		'inline-flex items-center rounded-full font-medium',
 		'cursor-pointer select-none'
@@ -51,5 +42,5 @@ export const filterChipVariants = cva(
 	}
 );
 
-export type ChipVariants = VariantProps<typeof chipVariants>;
-export type FilterChipVariants = VariantProps<typeof filterChipVariants>;
+export type TagVariants = VariantProps<typeof tagVariants>;
+export type TagSelectableVariants = VariantProps<typeof tagSelectableVariants>;

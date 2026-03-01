@@ -5,6 +5,11 @@ export { default as Input } from './input/Input.svelte';
 export { default as Badge } from './badge/Badge.svelte';
 export { badgeVariants, type BadgeVariants } from './badge/badge';
 
+export { Tag, TagSelectable } from './tag';
+export { tagVariants, type TagVariants, type TagSelectableVariants } from './tag';
+
+export { TagGroup } from './tag-group';
+
 export { Chip, FilterChip } from './chip';
 export { chipVariants, type ChipVariants } from './chip';
 

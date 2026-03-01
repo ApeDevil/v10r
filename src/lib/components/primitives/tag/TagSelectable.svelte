@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { Toggle as TogglePrimitive } from 'bits-ui';
 	import { cn } from '$lib/utils/cn';
-	import { filterChipVariants, type FilterChipVariants } from './chip';
+	import { tagSelectableVariants, type TagSelectableVariants } from './tag';
 
-	interface Props extends FilterChipVariants {
+	interface Props extends TagSelectableVariants {
 		label: string;
 		pressed?: boolean;
 		icon?: string;
@@ -26,12 +26,12 @@
 	{#snippet child({ props })}
 		<button
 			{...props}
-			class={cn('filter-chip', filterChipVariants({ variant, size }), className)}
+			class={cn('tag-selectable', tagSelectableVariants({ variant, size }), className)}
 		>
 			{#if pressed}
 				<span class="i-lucide-check check-icon" aria-hidden="true"></span>
 			{:else if icon}
-				<span class={cn('chip-icon', icon)} aria-hidden="true"></span>
+				<span class={cn('tag-icon', icon)} aria-hidden="true"></span>
 			{/if}
 
 			{label}
@@ -40,45 +40,45 @@
 </TogglePrimitive.Root>
 
 <style>
-	.filter-chip {
+	.tag-selectable {
 		line-height: 1;
 		transition: background-color 150ms, color 150ms;
 	}
 
 	/* Default variant states */
-	.filter-chip:global(.bg-muted) {
+	.tag-selectable:global(.bg-muted) {
 		background-color: color-mix(in srgb, var(--color-muted) 15%, transparent);
 		color: var(--color-fg);
 	}
 
-	.filter-chip:global(.bg-muted):hover {
+	.tag-selectable:global(.bg-muted):hover {
 		background-color: color-mix(in srgb, var(--color-muted) 25%, transparent);
 	}
 
-	.filter-chip:global(.bg-muted):global([data-state='on']) {
+	.tag-selectable:global(.bg-muted):global([data-state='on']) {
 		background-color: var(--color-primary);
 		color: var(--color-primary-fg);
 	}
 
 	/* Outline variant states */
-	.filter-chip:global(.border):global([data-state='on']) {
+	.tag-selectable:global(.border):global([data-state='on']) {
 		background-color: var(--color-primary);
 		color: var(--color-primary-fg);
 		border-color: var(--color-primary);
 	}
 
-	.filter-chip:global(.border):hover {
+	.tag-selectable:global(.border):hover {
 		background-color: color-mix(in srgb, var(--color-muted) 10%, transparent);
 	}
 
 	/* Disabled state */
-	.filter-chip:global([disabled]) {
+	.tag-selectable:global([disabled]) {
 		pointer-events: none;
 		opacity: 0.5;
 	}
 
 	/* Focus ring */
-	.filter-chip:focus-visible {
+	.tag-selectable:focus-visible {
 		outline: none;
 		box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-primary);
 	}
@@ -89,7 +89,7 @@
 		flex-shrink: 0;
 	}
 
-	.chip-icon {
+	.tag-icon {
 		flex-shrink: 0;
 		width: 1em;
 		height: 1em;

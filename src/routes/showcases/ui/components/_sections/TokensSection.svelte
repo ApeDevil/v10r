@@ -216,7 +216,7 @@
 					name: 'Primary tint',
 					bg: 'color-mix(in srgb, var(--color-primary) 10%, transparent)',
 					fg: 'var(--color-primary)',
-					usage: 'Badge, Chip',
+					usage: 'Badge, Tag',
 				},
 				{
 					name: 'Success tint',

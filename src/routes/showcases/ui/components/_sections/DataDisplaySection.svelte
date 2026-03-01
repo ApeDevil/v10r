@@ -8,8 +8,9 @@
 		HeaderCell as TableHeaderCell,
 		Cell as TableCell,
 		Badge,
-		Chip,
-		FilterChip,
+		Tag,
+		TagSelectable,
+		TagGroup,
 		Avatar,
 		Skeleton,
 		SkeletonText,
@@ -28,10 +29,18 @@
 
 	let progressValue = $state(65);
 
-	let chips = $state(['Svelte', 'TypeScript', 'UnoCSS', 'Bits UI']);
+	let tags = $state(['Svelte', 'TypeScript', 'UnoCSS', 'Bits UI']);
 	let filterActive = $state(false);
 	let filterPending = $state(true);
 	let filterCompleted = $state(false);
+
+	let groupItems = $state([
+		{ value: 'svelte', label: 'Svelte', icon: 'i-lucide-component' },
+		{ value: 'typescript', label: 'TypeScript', icon: 'i-lucide-file-code' },
+		{ value: 'unocss', label: 'UnoCSS' },
+		{ value: 'bitsui', label: 'Bits UI' },
+		{ value: 'valibot', label: 'Valibot' }
+	]);
 </script>
 
 <section id="prim-data-display" class="section">
@@ -75,71 +84,87 @@
 			</VariantGrid>
 		</DemoCard>
 
-		<!-- Chips -->
-		<DemoCard title="Chip" description="Dismissible tags and toggle-based filters">
-			<div class="chip-demos">
-				<div class="chip-group">
-					<span class="chip-group-label">Variants</span>
+		<!-- Tag -->
+		<DemoCard title="Tag" description="Dismissible tags and toggle-based filters">
+			<div class="tag-demos">
+				<div class="tag-group">
+					<span class="tag-group-label">Variants</span>
 					<VariantGrid layout="row">
-						<Chip label="Default" variant="default" ondismiss={() => {}} />
-						<Chip label="Secondary" variant="secondary" ondismiss={() => {}} />
-						<Chip label="Success" variant="success" ondismiss={() => {}} />
-						<Chip label="Warning" variant="warning" ondismiss={() => {}} />
-						<Chip label="Error" variant="error" ondismiss={() => {}} />
-						<Chip label="Outline" variant="outline" ondismiss={() => {}} />
+						<Tag label="Default" variant="default" ondismiss={() => {}} />
+						<Tag label="Secondary" variant="secondary" ondismiss={() => {}} />
+						<Tag label="Success" variant="success" ondismiss={() => {}} />
+						<Tag label="Warning" variant="warning" ondismiss={() => {}} />
+						<Tag label="Error" variant="error" ondismiss={() => {}} />
+						<Tag label="Outline" variant="outline" ondismiss={() => {}} />
 					</VariantGrid>
 				</div>
 
-				<hr class="chip-divider" />
+				<hr class="tag-divider" />
 
-				<div class="chip-group">
-					<span class="chip-group-label">Sizes & options</span>
+				<div class="tag-group">
+					<span class="tag-group-label">Sizes & options</span>
 					<VariantGrid layout="row">
-						<Chip label="Small" size="sm" ondismiss={() => {}} />
-						<Chip label="Medium" size="md" ondismiss={() => {}} />
-						<Chip label="With Icon" size="md" icon="i-lucide-tag" ondismiss={() => {}} />
-						<Chip label="No dismiss" variant="secondary" />
+						<Tag label="Small" size="sm" ondismiss={() => {}} />
+						<Tag label="Medium" size="md" ondismiss={() => {}} />
+						<Tag label="With Icon" size="md" icon="i-lucide-tag" ondismiss={() => {}} />
+						<Tag label="No dismiss" variant="secondary" />
 					</VariantGrid>
 				</div>
 
-				<hr class="chip-divider" />
+				<hr class="tag-divider" />
 
-				<div class="chip-group">
-					<span class="chip-group-label">Interactive — click x to remove</span>
+				<div class="tag-group">
+					<span class="tag-group-label">Interactive — click x to remove</span>
 					<VariantGrid layout="row">
-						{#each chips as chip (chip)}
-							<Chip
-								label={chip}
+						{#each tags as tag (tag)}
+							<Tag
+								label={tag}
 								variant="secondary"
-								ondismiss={() => { chips = chips.filter(c => c !== chip); }}
+								ondismiss={() => { tags = tags.filter(t => t !== tag); }}
 							/>
 						{/each}
-						{#if chips.length === 0}
-							<span class="chips-empty">All chips removed</span>
+						{#if tags.length === 0}
+							<span class="tags-empty">All tags removed</span>
 						{/if}
 					</VariantGrid>
 				</div>
 
-				<hr class="chip-divider" />
+				<hr class="tag-divider" />
 
-				<div class="chip-group">
-					<span class="chip-group-label">Filter (toggle)</span>
+				<div class="tag-group">
+					<span class="tag-group-label">TagGroup — keyboard-navigable dismiss</span>
+					<TagGroup
+						items={groupItems}
+						variant="secondary"
+						dismissible
+						ondismiss={(value) => { groupItems = groupItems.filter(i => i.value !== value); }}
+						label="Technology tags"
+					/>
+					{#if groupItems.length === 0}
+						<span class="tags-empty">All tags removed</span>
+					{/if}
+				</div>
+
+				<hr class="tag-divider" />
+
+				<div class="tag-group">
+					<span class="tag-group-label">Selectable (toggle)</span>
 					<VariantGrid layout="row">
-						<FilterChip label="Active" bind:pressed={filterActive} />
-						<FilterChip label="Pending" bind:pressed={filterPending} />
-						<FilterChip label="Completed" bind:pressed={filterCompleted} />
+						<TagSelectable label="Active" bind:pressed={filterActive} />
+						<TagSelectable label="Pending" bind:pressed={filterPending} />
+						<TagSelectable label="Completed" bind:pressed={filterCompleted} />
 					</VariantGrid>
 				</div>
 
-				<hr class="chip-divider" />
+				<hr class="tag-divider" />
 
-				<div class="chip-group">
-					<span class="chip-group-label">Filter variants</span>
+				<div class="tag-group">
+					<span class="tag-group-label">Selectable variants</span>
 					<VariantGrid layout="row">
-						<FilterChip label="Default" variant="default" bind:pressed={filterActive} />
-						<FilterChip label="Outline" variant="outline" bind:pressed={filterPending} />
-						<FilterChip label="With Icon" variant="default" icon="i-lucide-star" bind:pressed={filterCompleted} />
-						<FilterChip label="Disabled" variant="default" disabled />
+						<TagSelectable label="Default" variant="default" bind:pressed={filterActive} />
+						<TagSelectable label="Outline" variant="outline" bind:pressed={filterPending} />
+						<TagSelectable label="With Icon" variant="default" icon="i-lucide-star" bind:pressed={filterCompleted} />
+						<TagSelectable label="Disabled" variant="default" disabled />
 					</VariantGrid>
 				</div>
 			</div>
@@ -284,32 +309,32 @@
 		gap: var(--spacing-2);
 	}
 
-	.chip-demos {
+	.tag-demos {
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-4);
 		width: 100%;
 	}
 
-	.chip-group {
+	.tag-group {
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-3);
 	}
 
-	.chip-group-label {
+	.tag-group-label {
 		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);
 		font-weight: 500;
 	}
 
-	.chip-divider {
+	.tag-divider {
 		border: none;
 		border-top: 1px solid var(--color-border);
 		margin: 0;
 	}
 
-	.chips-empty {
+	.tags-empty {
 		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);
 		font-style: italic;
