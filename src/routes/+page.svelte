@@ -118,13 +118,7 @@
 <section class="hero">
 	<div class="hero-grid">
 		<div class="hero-content">
-			<p class="classification">
-				<span>CLASS: full-stack template</span>
-				<span class="classification-sep">·</span>
-				<span>GENUS: velociraptor</span>
-				<span class="classification-sep">·</span>
-				<span>VERSION: 10r</span>
-			</p>
+			<p class="classification">born to be fast & light</p>
 
 			<h1 class="specimen-name" class:revealed>
 				{#each specimenName as char, i}
@@ -132,7 +126,7 @@
 				{/each}
 			</h1>
 
-			<p class="tagline">Performance through understanding</p>
+			<p class="tagline">Full-Stack Containerized Template</p>
 
 			<div class="etymology-card">
 				<CornerFrame variant="bracket" size={20} strokeWidth={1} />
