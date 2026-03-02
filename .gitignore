@@ -20,6 +20,9 @@ Thumbs.db
 !.env.example
 !.env.test
 
+# Drizzle — push-only workflow, generated transiently for test harness
+/drizzle
+
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*

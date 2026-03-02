@@ -97,5 +97,6 @@ The `docs/` folder uses an AI-optimized navigation structure. Each directory has
 | `vite.config.ts` | Vite config (HMR for containers) |
 | `svelte.config.js` | SvelteKit config |
 | `tsconfig.json` | TypeScript config |
+| `drizzle.config.ts` | Drizzle ORM config (push-only workflow — `drizzle/` is gitignored, generated transiently for tests) |
 | `CLAUDE.md` | AI agent instructions |
 | `.claude/` | Claude Code agents and skills |

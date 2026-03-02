@@ -106,13 +106,13 @@ src/
 
 PGlite runs WASM Postgres in-process inside the `v10r` container. No external DB, no network, no shared state. Each test file gets its own database instance — parallel-safe by default. PGlite installs as an npm devDependency into the named `node_modules` volume — no host installation needed. Target version: **0.3.14+** (PostgreSQL 17.4 based).
 
-**Schema sync via `migrate`:** Use the documented `migrate` function from `drizzle-orm/pglite/migrator` with generated SQL migration files. This is the stable, officially supported path. Migration files live in `drizzle/` and are generated from the TypeScript schema definitions via `drizzle-kit generate`.
+**Schema sync via `migrate`:** Use the documented `migrate` function from `drizzle-orm/pglite/migrator` with generated SQL migration files. This is the stable, officially supported path. Migration files are generated transiently by `bun run db:test-schema` (which runs `drizzle-kit generate`) into `drizzle/`. The `drizzle/` folder is gitignored — the project uses a push-only workflow for the live Neon database (`drizzle-kit push`), so migration files exist only as a test artifact.
 
 **Why not `pushSchema`:** The `pushSchema` function from `drizzle-kit/api` is undocumented and has two confirmed bugs that affect this project directly:
 - **Interactive prompt bug** ([drizzle-orm#4531](https://github.com/drizzle-team/drizzle-orm/issues/4531)) — hangs waiting for user input when adding unique constraints or renaming columns. Manifests as a silent test timeout, not a clear error.
 - **`pgSchema` handling** ([drizzle-orm#1181](https://github.com/drizzle-team/drizzle-orm/issues/1181), [drizzle-orm#4796](https://github.com/drizzle-team/drizzle-orm/issues/4796)) — zero confirmed examples working with non-`public` schemas. This project uses 6 custom schemas with 12 schema-scoped enums and 9 cross-schema foreign keys — the maximum risk surface.
 
-**Dev workflow stays unchanged:** The project continues using `drizzle-kit push` for development. Migration files are generated separately for the test harness via `drizzle-kit generate`. The `drizzle/` folder becomes a testing artifact checked into the repo. Add a `db:generate` script to regenerate when schema changes.
+**Dev workflow stays unchanged:** The project uses `drizzle-kit push` exclusively for the live Neon database. Migration files are generated separately for the test harness via `bun run db:test-schema`. The `drizzle/` folder is gitignored — it exists transiently for test runs only. After schema changes, regenerate with `db:test-schema` before running tests.
 
 **Driver difference:** Production uses `drizzle-orm/neon-serverless`. Tests use `drizzle-orm/pglite`. Same query API, different connection. Swap via `vi.mock`.
 
@@ -435,7 +435,7 @@ NEO4J_PASSWORD=test
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:generate": "bunx drizzle-kit generate",
+    "db:test-schema": "bunx drizzle-kit generate",
     "validate": "bun run check && bun biome check . && bun run test"
   }
 }
@@ -443,7 +443,7 @@ NEO4J_PASSWORD=test
 
 `validate` is the quality gate command. From the host: `podman exec v10r bun run validate`.
 
-`db:generate` produces migration SQL files in `drizzle/` from the TypeScript schema. Run it after schema changes to keep test migrations in sync. This is separate from the existing `db:push` used for development.
+`db:test-schema` generates migration SQL files in `drizzle/` from the TypeScript schema definitions. The `drizzle/` folder is gitignored — these files exist only as a test artifact for PGlite's `migrate` function. Run after schema changes to keep test migrations in sync. The live Neon database is managed exclusively via `drizzle-kit push`.
 
 ---
 
@@ -455,7 +455,7 @@ NEO4J_PASSWORD=test
 2. Create `vitest.config.ts` with `sveltekit()` plugin, `testTimeout`, and `setupFiles`
 3. Create `src/lib/server/test/vitest.setup.ts` — global mocks and scheduler sentinels
 4. Create `.env.test` with fake values for `$env/static/private` modules
-5. Add test scripts to `package.json` (`test`, `test:watch`, `db:generate`)
+5. Add test scripts to `package.json` (`test`, `test:watch`, `db:test-schema`)
 6. Restart container so deps install: `podman compose down && podman compose up -d`
 7. Ensure `.svelte-kit/` types exist — the `sveltekit()` plugin needs them. The dev server creates them automatically on startup (`svelte-kit sync`). If running tests before the dev server has started, run `podman exec v10r bun run check` first (which triggers `svelte-kit sync`).
 
@@ -513,7 +513,7 @@ Goal: verify the full pipeline works end-to-end. Claude Code (host) runs `podman
 
 1. Add `@electric-sql/pglite` to `devDependencies` in `package.json` (`drizzle-orm` and `drizzle-kit` are already dependencies)
 2. Restart container: `podman compose down && podman compose up -d`
-3. Generate migration files: `podman exec v10r bun run db:generate`
+3. Generate migration files: `podman exec v10r bun run db:test-schema`
 4. Verify migration files exist in `drizzle/` and contain `CREATE SCHEMA IF NOT EXISTS` for all 6 schemas
 5. Create `src/lib/server/test/db.ts` — PGlite setup with `migrate`
 6. Create `src/lib/server/test/fixtures.ts` — data factories
@@ -655,7 +655,7 @@ Only use Test Aura if the test cannot be written any other way.
 Override only what the test cares about.
 
 **Schema changes:** After modifying schema files in `src/lib/server/db/schema/`,
-regenerate test migrations: `podman exec v10r bun run db:generate`.
+regenerate test migrations: `podman exec v10r bun run db:test-schema`.
 
 ## Boundaries
 

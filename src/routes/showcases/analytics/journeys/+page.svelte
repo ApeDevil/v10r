@@ -35,6 +35,13 @@
 </script>
 
 <div class="journeys-layout">
+	{#if data.error}
+		<Alert variant="error" title="Database Error">
+			<p>{data.error}</p>
+			<p class="mt-2 text-sm text-muted">Try reseeding the analytics data to create the required tables and data.</p>
+		</Alert>
+	{/if}
+
 	<!-- Sankey diagram (streamed from Neo4j) -->
 	<ChartSection
 		title="User Flows"

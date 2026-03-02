@@ -21,7 +21,7 @@ podman compose down && podman compose build && podman compose up -d
 
 # Kill
 lsof -i :5173
-kill XXXXX (rootlessp XXXXX)
+kill 
 podman rm -f v10r
 
 
