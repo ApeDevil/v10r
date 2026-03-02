@@ -1,0 +1,29 @@
+import type { PageServerLoad } from './$types';
+import { getConsentSplit, getDataAgeStats } from '$lib/server/db/analytics/aggregations';
+import { ANALYTICS_RETENTION_DAYS, ANALYTICS_AGGREGATE_RETENTION_DAYS } from '$lib/server/config';
+
+export const load: PageServerLoad = async () => {
+	const start = performance.now();
+
+	try {
+		const [consent, dataAge] = await Promise.all([getConsentSplit(90), getDataAgeStats()]);
+
+		const queryMs = Math.round((performance.now() - start) * 100) / 100;
+
+		return {
+			consent,
+			dataAge,
+			retentionDays: ANALYTICS_RETENTION_DAYS,
+			aggregateRetentionDays: ANALYTICS_AGGREGATE_RETENTION_DAYS,
+			queryMs,
+		};
+	} catch (err) {
+		return {
+			consent: [],
+			dataAge: { totalEvents: 0, oldestEvent: null, newestEvent: null, totalSessions: 0 },
+			retentionDays: ANALYTICS_RETENTION_DAYS,
+			aggregateRetentionDays: ANALYTICS_AGGREGATE_RETENTION_DAYS,
+			error: err instanceof Error ? err.message : 'Unknown database error',
+		};
+	}
+};

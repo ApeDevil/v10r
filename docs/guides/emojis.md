@@ -18,6 +18,7 @@
 🐝 Jobs
 🪞 State
 🧪 Test
+📊 Analytics
 
 
 

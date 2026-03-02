@@ -1,42 +1,44 @@
 # Multi-Client Core Architecture
 
-The same backend logic must serve four client types: human UI (SvelteKit form actions and load functions), AI agents (Vercel AI SDK tool calls), external API (REST endpoints), and background jobs. The naive path is duplication — a form action, an API endpoint, and a tool each re-implementing the same operation. This document formalizes the pattern already in the codebase to prevent that.
+The same backend logic must serve five client types: human UI (SvelteKit form actions and load functions), AI agents (Vercel AI SDK tool calls), external API (REST endpoints), background jobs, and reactive workflows (Inngest). The naive path is duplication — a form action, an API endpoint, and a tool each re-implementing the same operation. This document formalizes the pattern already in the codebase to prevent that.
 
 The answer is not a new architecture layer. Domain modules in `$lib/server/[domain]/` already are the operations layer. The job is to name that clearly, add AI tool definitions as thin wrappers, and enforce four invariants everywhere.
+
+> For the full background jobs architecture (scheduled, reactive, manual), see [jobs.md](./jobs.md).
 
 ---
 
 ## Architecture Diagram
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                     ADAPTERS                        │
-│                                                     │
-│  +page.server.ts   +server.ts   AI tools   jobs/   │
-│  (form actions,    (REST API,   (tool       (cron,  │
-│   load fns)         SSE)        wrappers)   sched.) │
-└──────────┬───────────┬───────────┬──────────┬───────┘
-           │           │           │          │
-           ▼           ▼           ▼          ▼
-┌─────────────────────────────────────────────────────┐
-│                 DOMAIN MODULES                      │
-│            $lib/server/[domain]/                    │
-│                                                     │
-│  notifications/    auth/         retrieval/         │
-│  ├── index.ts      ├── index.ts  ├── index.ts       │
-│  ├── service.ts    └── guards.ts └── ...            │
-│  └── ...                                            │
-│                                                     │
-│  db/[domain]/                                       │
-│  ├── queries.ts   (reads — no side effects)         │
-│  └── mutations.ts (writes — explicit intent)        │
-└──────────┬──────────────────┬────────────────────── ┘
-           │                  │
-           ▼                  ▼
-┌────────────────┐  ┌─────────────────────────────────┐
-│  PostgreSQL     │  │  Neo4j  │  Redis  │  R2         │
-│  (Drizzle ORM) │  │  (graph)│ (cache) │  (storage)  │
-└────────────────┘  └─────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                          ADAPTERS                            │
+│                                                              │
+│  +page.server.ts   +server.ts   AI tools   jobs/  inngest/  │
+│  (form actions,    (REST API,   (tool       (cron, (reactive │
+│   load fns)         SSE)        wrappers)   sched.) events)  │
+└──────┬───────────────┬───────────┬──────────┬────────┬───────┘
+       │               │           │          │        │
+       ▼               ▼           ▼          ▼        ▼
+┌──────────────────────────────────────────────────────────────┐
+│                      DOMAIN MODULES                          │
+│                 $lib/server/[domain]/                         │
+│                                                              │
+│  notifications/    auth/         retrieval/                   │
+│  ├── index.ts      ├── index.ts  ├── index.ts                │
+│  ├── service.ts    └── guards.ts └── ...                     │
+│  └── ...                                                     │
+│                                                              │
+│  db/[domain]/                                                │
+│  ├── queries.ts   (reads — no side effects)                  │
+│  └── mutations.ts (writes — explicit intent)                 │
+└──────────────────────────┬───────────────┬───────────────────┘
+                           │               │
+                           ▼               ▼
+┌──────────────────────┐  ┌────────────────────────────────────┐
+│  PostgreSQL           │  │  Neo4j  │  Redis  │  R2            │
+│  (Drizzle ORM)       │  │  (graph)│ (cache) │  (storage)     │
+└──────────────────────┘  └────────────────────────────────────┘
 ```
 
 **How each client flows through:**
@@ -47,6 +49,7 @@ The answer is not a new architecture layer. Domain modules in `$lib/server/[doma
 | REST API | `+server.ts` GET/POST | `markAsRead()` | PostgreSQL |
 | AI tool | `createNotificationTools()` execute | `getNotifications()` | PostgreSQL |
 | Background job | `notificationCleanup()` | direct DB call | PostgreSQL |
+| Reactive workflow | Inngest `step.run()` | `NotificationService.send()` | PostgreSQL |
 
 ---
 
@@ -79,8 +82,12 @@ src/lib/server/
     rate-limit.ts              ← createLimiter(), rateLimitResponse()
   jobs/
     runner.ts                  ← runJob() — execute + log
-    scheduler.ts               ← setInterval-based job runner
-    index.ts                   ← job registry
+    scheduler.ts               ← cron-aware job scheduler
+    index.ts                   ← job registry (schedules + metadata)
+  inngest/
+    client.ts                  ← Inngest client instance
+    functions/                 ← reactive job definitions
+    index.ts                   ← barrel export
   errors/
     index.ts                   ← ServerError base class
 ```
@@ -347,6 +354,7 @@ Jobs register in `src/lib/server/jobs/index.ts`. They're triggered two ways: `sc
 | AI tool | Inherited from chat endpoint | closure capture of `userId` | N/A — tool never sees unauthenticated call |
 | External API (future) | API key header | `requireApiKey(request)` | `error(401)` |
 | Background job | None — trusted context | none | N/A |
+| Reactive workflow | Inngest signing key | Verified by `serve()` SDK | N/A — Inngest handles auth |
 
 The AI tool pattern is important: authentication happens once, at the `POST /api/ai/chat` endpoint. `requireApiUser` runs there. The tool factory receives the verified `user.id` as a closure argument. No tool ever calls `requireApiUser` itself.
 

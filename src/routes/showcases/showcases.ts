@@ -226,6 +226,19 @@ export const showcases: ShowcaseCard[] = [
 		],
 	},
 	{
+		href: '/showcases/analytics',
+		icon: 'i-lucide-activity',
+		title: 'Analytics',
+		description: 'Privacy-first analytics — page views, user journeys, funnels, and real-time events',
+		sublinks: [
+			{ label: 'Overview', href: '/showcases/analytics/overview' },
+			{ label: 'Journeys', href: '/showcases/analytics/journeys' },
+			{ label: 'Funnels', href: '/showcases/analytics/funnels' },
+			{ label: 'Live', href: '/showcases/analytics/live' },
+			{ label: 'Privacy', href: '/showcases/analytics/privacy' },
+		],
+	},
+	{
 		href: '/showcases/i18n',
 		icon: 'i-lucide-languages',
 		title: 'i18n',

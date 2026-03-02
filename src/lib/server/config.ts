@@ -206,6 +206,17 @@ export const SSE_RATE_LIMIT_MAX = 10;
 /** SSE connection attempt rate limit: window duration */
 export const SSE_RATE_LIMIT_WINDOW = '60 s';
 
+// ── Analytics ─────────────────────────────────────────────────────────────────
+
+/** Raw event retention period (days) */
+export const ANALYTICS_RETENTION_DAYS = 90;
+
+/** Aggregate rollup retention period (days) */
+export const ANALYTICS_AGGREGATE_RETENTION_DAYS = 365;
+
+/** Session inactivity timeout (ms, 30 min) */
+export const ANALYTICS_SESSION_TIMEOUT_MS = 30 * 60 * 1000;
+
 // ── Admin ──────────────────────────────────────────────────────────────────────
 
 // ADMIN_EMAIL is read from $env/dynamic/private at usage sites to avoid

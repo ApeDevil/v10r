@@ -135,6 +135,10 @@
         {
             "folderPath": "velociraptor/src/lib/server/errors/",
             "badge": "❗"
+        },
+        {
+            "folderPath": "velociraptor/src/lib/server/analytics/",
+            "badge": "📊"
         }
     ]
 }

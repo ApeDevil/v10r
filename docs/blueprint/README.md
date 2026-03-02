@@ -6,7 +6,7 @@ Implementation designs and feature specifications. How to build features using t
 
 | File | Main Topics |
 |------|-------------|
-| **[architecture/](./architecture/)** | • [multi-client-core.md](./architecture/multi-client-core.md): How human UI, AI agents, REST API, and background jobs share domain logic without duplication — the four invariants, AI tool pattern, auth per client, error contracts, extraction rules |
+| **[architecture/](./architecture/)** | • [multi-client-core.md](./architecture/multi-client-core.md): How human UI, AI agents, REST API, and background jobs share domain logic without duplication — the four invariants, AI tool pattern, auth per client, error contracts, extraction rules<br>• [jobs.md](./architecture/jobs.md): Backend jobs — three categories (scheduled/reactive/manual), vendor-agnostic scheduling, Inngest for reactive, unified observability, platform constraints, security |
 
 ## Application Structure
 
