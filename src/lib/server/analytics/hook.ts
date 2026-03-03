@@ -6,9 +6,9 @@
  *   sequence(sessionPopulate, analyticsCollector, csrfProtection, ...)
  */
 import type { Handle } from '@sveltejs/kit';
-import { hashVisitorId } from './consent';
+import { hashVisitorId, hasConsent, parseConsentTier } from './consent';
 import { recordEvent, upsertSession } from '$lib/server/db/analytics/mutations';
-import { ANALYTICS_SESSION_TIMEOUT_MS } from '$lib/server/config';
+import { ANALYTICS_SESSION_TIMEOUT_MS, ANALYTICS_CONSENT_COOKIE } from '$lib/server/config';
 
 export const analyticsCollector: Handle = async ({ event, resolve }) => {
 	const response = await resolve(event);
@@ -35,9 +35,16 @@ async function trackPageview(event: Parameters<Handle>[0]['event']) {
 	const ip = event.getClientAddress();
 	const ua = event.request.headers.get('user-agent') ?? '';
 	const visitorId = await hashVisitorId(`${ip}:${ua}`);
-	const referrer = event.request.headers.get('referer') ?? undefined;
 
-	// Session ID from cookie or generate new
+	// Read consent tier from cookie
+	const consentTier = parseConsentTier(event.cookies.get(ANALYTICS_CONSENT_COOKIE));
+
+	// Gate fields on consent level
+	const referrer = hasConsent(consentTier, 'analytics')
+		? (event.request.headers.get('referer') ?? undefined)
+		: undefined;
+
+	// Session ID from cookie or generate new (session cookie is strictly necessary)
 	const sessionCookie = event.cookies.get('_v10r_sid');
 	const sessionId = sessionCookie ?? `s_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
 
@@ -58,13 +65,14 @@ async function trackPageview(event: Parameters<Handle>[0]['event']) {
 			eventType: 'pageview',
 			path: event.url.pathname,
 			referrer,
-			consentTier: 'necessary',
+			consentTier,
 		}),
 		upsertSession({
 			id: sessionId,
 			visitorId,
 			entryPath: event.url.pathname,
 			exitPath: event.url.pathname,
+			consentTier,
 		}),
 	]);
 }

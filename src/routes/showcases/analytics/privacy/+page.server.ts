@@ -18,12 +18,13 @@ export const load: PageServerLoad = async () => {
 			queryMs,
 		};
 	} catch (err) {
+		console.error('[analytics:privacy] Failed to load data:', err);
 		return {
 			consent: [],
 			dataAge: { totalEvents: 0, oldestEvent: null, newestEvent: null, totalSessions: 0 },
 			retentionDays: ANALYTICS_RETENTION_DAYS,
 			aggregateRetentionDays: ANALYTICS_AGGREGATE_RETENTION_DAYS,
-			error: err instanceof Error ? err.message : 'Unknown database error',
+			error: 'Unable to load analytics data',
 		};
 	}
 };

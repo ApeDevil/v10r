@@ -217,6 +217,12 @@ export const ANALYTICS_AGGREGATE_RETENTION_DAYS = 365;
 /** Session inactivity timeout (ms, 30 min) */
 export const ANALYTICS_SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 
+/** Consent cookie name */
+export const ANALYTICS_CONSENT_COOKIE = 'v10r_consent';
+
+/** Consent cookie max-age (seconds, 6 months) */
+export const ANALYTICS_CONSENT_MAX_AGE = 15_552_000;
+
 // ── Admin ──────────────────────────────────────────────────────────────────────
 
 // ADMIN_EMAIL is read from $env/dynamic/private at usage sites to avoid

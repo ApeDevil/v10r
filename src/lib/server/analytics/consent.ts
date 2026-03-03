@@ -4,7 +4,13 @@
  */
 
 const CONSENT_LEVELS = { necessary: 0, analytics: 1, full: 2 } as const;
-type ConsentTier = keyof typeof CONSENT_LEVELS;
+export type ConsentTier = keyof typeof CONSENT_LEVELS;
+
+/** Parse a raw cookie value into a valid ConsentTier (defaults to 'necessary') */
+export function parseConsentTier(raw: string | undefined): ConsentTier {
+	if (raw === 'necessary' || raw === 'analytics' || raw === 'full') return raw;
+	return 'necessary';
+}
 
 /** Check if a consent tier meets the required minimum */
 export function hasConsent(actual: ConsentTier, required: ConsentTier): boolean {

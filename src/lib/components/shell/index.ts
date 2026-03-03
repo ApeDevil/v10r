@@ -1,6 +1,7 @@
 // Core shell
 export { default as AppShell } from './AppShell.svelte';
 export { default as Footer } from './Footer.svelte';
+export { default as ConsentBanner } from './ConsentBanner.svelte';
 
 // Sidebar
 export { default as Sidebar } from './Sidebar.svelte';

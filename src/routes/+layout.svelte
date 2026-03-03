@@ -7,6 +7,7 @@
 	import { setThemeContext } from '$lib/state/theme.svelte';
 	import { setModalsContext } from '$lib/state/modals.svelte';
 	import { setToastContext } from '$lib/state/toast.svelte';
+	import { setConsentContext } from '$lib/state/consent.svelte';
 	import { initKeyboardHandler, registerShortcut } from '$lib/shortcuts';
 	import { goto } from '$app/navigation';
 	import { localizeHref } from '$lib/i18n';
@@ -30,7 +31,10 @@
 	// 4. Toast (ephemeral client state)
 	const toast = setToastContext();
 
-	// 5. Keyboard shortcuts (Phase 5)
+	// 5. Consent (cookie-backed, controls banner visibility)
+	const consent = setConsentContext();
+
+	// 6. Keyboard shortcuts
 	$effect(() => {
 		// Initialize keyboard handler
 		const cleanup = initKeyboardHandler();

@@ -2,6 +2,7 @@
 	import {
 		Sidebar,
 		Footer,
+		ConsentBanner,
 		ToastContainer,
 		NavigationProgress,
 		ShortcutsModal,
@@ -84,6 +85,9 @@
 		<Footer />
 	</main>
 </div>
+
+<!-- Consent banner -->
+<ConsentBanner />
 
 <!-- Toast notifications -->
 <ToastContainer />
