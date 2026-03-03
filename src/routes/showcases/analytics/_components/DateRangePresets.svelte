@@ -4,10 +4,11 @@
 	import { cn } from '$lib/utils/cn';
 
 	interface Props {
+		defaultRange?: '7' | '30' | '90';
 		class?: string;
 	}
 
-	let { class: className }: Props = $props();
+	let { defaultRange = '30', class: className }: Props = $props();
 
 	const presets = [
 		{ label: '7d', value: '7' },
@@ -15,7 +16,7 @@
 		{ label: '90d', value: '90' },
 	] as const;
 
-	const activeRange = $derived(page.url.searchParams.get('range') ?? '30');
+	const activeRange = $derived(page.url.searchParams.get('range') ?? defaultRange);
 
 	function selectRange(value: string) {
 		const url = new URL(page.url);

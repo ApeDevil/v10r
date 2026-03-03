@@ -3,6 +3,7 @@
 	import FunnelChart from '../_components/FunnelChart.svelte';
 	import DateRangePresets from '../_components/DateRangePresets.svelte';
 	import ChartSection from '../_components/ChartSection.svelte';
+	import QueryTime from '../_components/QueryTime.svelte';
 
 	let { data } = $props();
 
@@ -21,13 +22,10 @@
 
 <div class="funnels-layout">
 	<div class="funnels-controls">
-		<DateRangePresets />
+		<DateRangePresets defaultRange="90" />
 		<div class="funnels-meta">
 			{#if data.queryMs}
-				<span class="query-time">
-					<span class="i-lucide-clock text-icon-xs" aria-hidden="true"></span>
-					{data.queryMs}ms
-				</span>
+				<QueryTime ms={data.queryMs} />
 			{/if}
 		</div>
 	</div>
@@ -56,14 +54,14 @@
 		<!-- Step details table -->
 		<ChartSection title="Step Breakdown" description="Detailed metrics for each funnel step">
 			{#snippet chart()}
-				<table class="funnel-table">
+				<table class="funnel-table" aria-label="Funnel step breakdown">
 					<thead>
 						<tr>
-							<th>Step</th>
-							<th>Path</th>
-							<th class="numeric">Sessions</th>
-							<th class="numeric">Rate</th>
-							<th class="numeric">Drop-off</th>
+							<th scope="col">Step</th>
+							<th scope="col">Path</th>
+							<th scope="col" class="numeric">Sessions</th>
+							<th scope="col" class="numeric">Rate</th>
+							<th scope="col" class="numeric">Drop-off</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -113,15 +111,6 @@
 		display: flex;
 		align-items: center;
 		gap: var(--spacing-4);
-	}
-
-	.query-time {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--spacing-1);
-		font-size: var(--text-fluid-xs);
-		color: var(--color-muted);
-		font-variant-numeric: tabular-nums;
 	}
 
 	.conversion-banner {

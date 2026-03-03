@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
 	import { Alert } from '$lib/components/composites';
 	import { Sparkline } from '$lib/components/viz/chart/sparkline';
 	import MetricCard from '../_components/MetricCard.svelte';
@@ -15,27 +14,28 @@
 
 	let events = $state<LiveEvent[]>([]);
 	let activeSessions = $state(0);
-	let eventsPerMinute = $state<number[]>([]);
 	let connectionStatus = $state<'connecting' | 'connected' | 'disconnected'>('connecting');
-	let eventSource: EventSource | undefined;
 
 	// Rolling count of events per minute (last 10 minutes)
 	let minuteBuckets = $state<number[]>(new Array(10).fill(0));
+	const eventsPerMinute = $derived([...minuteBuckets]);
 
 	function addEvent(event: LiveEvent) {
 		events = [event, ...events].slice(0, 50);
 		minuteBuckets[minuteBuckets.length - 1]++;
-		eventsPerMinute = [...minuteBuckets];
 	}
 
-	onMount(() => {
-		eventSource = new EventSource('/api/analytics/stream');
+	$effect(() => {
+		const source = new EventSource('/api/analytics/stream');
+		const bucketTimer = setInterval(() => {
+			minuteBuckets = [...minuteBuckets.slice(1), 0];
+		}, 60000);
 
-		eventSource.onopen = () => {
+		source.onopen = () => {
 			connectionStatus = 'connected';
 		};
 
-		eventSource.onmessage = (e) => {
+		source.onmessage = (e) => {
 			try {
 				const data = JSON.parse(e.data);
 				if (data.type === 'init') {
@@ -50,22 +50,14 @@
 			}
 		};
 
-		eventSource.onerror = () => {
+		source.onerror = () => {
 			connectionStatus = 'disconnected';
 		};
 
-		// Rotate minute buckets every 60s
-		const bucketTimer = setInterval(() => {
-			minuteBuckets = [...minuteBuckets.slice(1), 0];
-		}, 60000);
-
 		return () => {
+			source.close();
 			clearInterval(bucketTimer);
 		};
-	});
-
-	onDestroy(() => {
-		eventSource?.close();
 	});
 
 	function formatTime(ts: string): string {
@@ -86,7 +78,7 @@
 
 <div class="live-layout">
 	<!-- Connection status -->
-	<div class="connection-status" class:connected={connectionStatus === 'connected'} class:disconnected={connectionStatus === 'disconnected'}>
+	<div class="connection-status" class:connecting={connectionStatus === 'connecting'} class:connected={connectionStatus === 'connected'} class:disconnected={connectionStatus === 'disconnected'} aria-live="polite" role="status">
 		<span class="status-dot"></span>
 		{#if connectionStatus === 'connecting'}
 			Connecting to event stream...
@@ -173,6 +165,11 @@
 		border-color: var(--color-error);
 	}
 
+	.connection-status.connecting {
+		color: var(--color-warning);
+		border-color: var(--color-warning);
+	}
+
 	.status-dot {
 		width: 8px;
 		height: 8px;
@@ -182,6 +179,11 @@
 
 	.connection-status.connected .status-dot {
 		animation: pulse-dot 2s ease-in-out infinite;
+	}
+
+	.connection-status.connecting .status-dot {
+		background: var(--color-warning);
+		animation: pulse-dot 1.5s ease-in-out infinite;
 	}
 
 	@keyframes pulse-dot {

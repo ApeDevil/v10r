@@ -10,9 +10,13 @@
 	let { steps, class: className }: Props = $props();
 
 	const maxCount = $derived(steps[0]?.count ?? 1);
+
+	const funnelAriaLabel = $derived(
+		`Conversion funnel: ${steps.map((s) => `${s.label} ${s.count.toLocaleString()} (${s.rate}%)`).join(', ')}`,
+	);
 </script>
 
-<div class={cn('funnel', className)} role="img" aria-label="Conversion funnel">
+<div class={cn('funnel', className)} role="img" aria-label={funnelAriaLabel}>
 	{#each steps as step, i}
 		{@const width = maxCount > 0 ? (step.count / maxCount) * 100 : 0}
 		{@const dropoff = i > 0 ? steps[i - 1].count - step.count : 0}
@@ -76,11 +80,12 @@
 	.funnel-step-path {
 		font-size: var(--text-fluid-xs);
 		color: var(--color-muted);
-		font-family: 'Fira Code', monospace;
+		font-family: ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
 	}
 
 	.funnel-bar-container {
 		width: 100%;
+		min-width: 0;
 		height: 32px;
 		border-radius: var(--radius-md);
 		background: var(--color-subtle);

@@ -14,22 +14,20 @@ export const load: PageServerLoad = async () => {
 			getTopPaths(20),
 			getEntryPages(10),
 			getExitPages(10),
-		]).catch((err) => {
-			console.error('[analytics/journeys] Neo4j query failed:', err);
-			return null;
-		});
+		]);
 
-		const queryMs = Math.round((performance.now() - start) * 100) / 100;
+		const pgQueryMs = Math.round((performance.now() - start) * 100) / 100;
 
 		return {
 			sessions,
 			graph: graphPromise,
-			queryMs,
+			pgQueryMs,
 		};
 	} catch (err) {
 		return {
 			sessions: [],
 			graph: Promise.resolve(null),
+			pgQueryMs: Math.round((performance.now() - start) * 100) / 100,
 			error: err instanceof Error ? err.message : 'Unknown database error',
 		};
 	}

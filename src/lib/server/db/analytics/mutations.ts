@@ -3,7 +3,7 @@
  */
 import { db } from '$lib/server/db';
 import { events, sessions } from '$lib/server/db/schema/analytics';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 /** Record a single analytics event */
 export async function recordEvent(event: {
@@ -55,7 +55,7 @@ export async function upsertSession(session: {
 			target: sessions.id,
 			set: {
 				exitPath: session.exitPath ?? session.entryPath,
-				pageCount: session.pageCount ?? 1,
+				pageCount: sql<number>`${sessions.pageCount} + 1`,
 				endedAt: new Date(),
 			},
 		});

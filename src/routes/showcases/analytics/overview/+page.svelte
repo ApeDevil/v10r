@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Alert, Card, ConfirmDialog } from '$lib/components/composites';
+	import { Alert, ConfirmDialog } from '$lib/components/composites';
 	import { getToast } from '$lib/state/toast.svelte';
 	import { Button } from '$lib/components/primitives';
 	import { AreaChart } from '$lib/components/viz/chart/area';
@@ -9,11 +9,13 @@
 	import MetricCard from '../_components/MetricCard.svelte';
 	import DateRangePresets from '../_components/DateRangePresets.svelte';
 	import ChartSection from '../_components/ChartSection.svelte';
+	import QueryTime from '../_components/QueryTime.svelte';
 	import type { ChartData } from 'chart.js';
 
 	let { data } = $props();
 	const toast = getToast();
 	let resetDialogOpen = $state(false);
+	let reseedForm = $state<HTMLFormElement | null>(null);
 
 	// Format duration from ms to human readable
 	function formatDuration(ms: number): string {
@@ -28,6 +30,20 @@
 	// Sparkline data from trend
 	const pageviewSparkline = $derived(data.trend.map((t) => Number(t.pageviews)));
 	const visitorSparkline = $derived(data.trend.map((t) => Number(t.uniqueVisitors)));
+
+	// Period-over-period deltas: compare first half vs second half of trend array.
+	// Only pageviews and uniqueVisitors are available per-day in the trend data.
+	function computeDelta(values: number[]): number | undefined {
+		if (values.length < 2) return undefined;
+		const mid = Math.floor(values.length / 2);
+		const prev = values.slice(0, mid).reduce((a, b) => a + b, 0);
+		const curr = values.slice(mid).reduce((a, b) => a + b, 0);
+		if (prev === 0) return undefined;
+		return Math.round(((curr - prev) / prev) * 100);
+	}
+
+	const pageviewDelta = $derived(computeDelta(pageviewSparkline));
+	const visitorDelta = $derived(computeDelta(visitorSparkline));
 
 	// Area chart data for traffic trend
 	const trendChartData: ChartData<'line'> = $derived({
@@ -95,12 +111,13 @@
 	});
 
 	// Country bar chart
+	const topCountries = $derived(data.countries.slice(0, 10));
 	const countryData: ChartData<'bar'> = $derived({
-		labels: data.countries.slice(0, 10).map((c) => c.country),
+		labels: topCountries.map((c) => c.country),
 		datasets: [
 			{
 				label: 'Sessions',
-				data: data.countries.slice(0, 10).map((c) => Number(c.count)),
+				data: topCountries.map((c) => Number(c.count)),
 				backgroundColor: 'var(--chart-3)',
 			},
 		],
@@ -117,10 +134,7 @@
 <div class="overview-controls">
 	<DateRangePresets />
 	{#if data.queryMs}
-		<span class="query-time">
-			<span class="i-lucide-clock text-icon-xs" aria-hidden="true"></span>
-			{data.queryMs}ms
-		</span>
+		<QueryTime ms={data.queryMs} />
 	{/if}
 </div>
 
@@ -129,11 +143,13 @@
 	<MetricCard
 		title="Total Pageviews"
 		value={data.metrics.totalPageviews.toLocaleString()}
+		delta={pageviewDelta}
 		sparklineData={pageviewSparkline}
 	/>
 	<MetricCard
 		title="Unique Visitors"
 		value={data.metrics.uniqueVisitors.toLocaleString()}
+		delta={visitorDelta}
 		sparklineData={visitorSparkline}
 	/>
 	<MetricCard
@@ -157,6 +173,10 @@
 			<AreaChart data={trendChartData} ariaLabel="Traffic trend over {data.days} days" />
 		{/snippet}
 	</ChartSection>
+{:else}
+	<ChartSection title="Traffic Trend" description="Pageviews and unique visitors over time">
+		{#snippet chart()}<p class="empty-chart">No data in this range.</p>{/snippet}
+	</ChartSection>
 {/if}
 
 <!-- Top pages + breakdowns -->
@@ -167,6 +187,10 @@
 				<BarChart data={topPagesData} horizontal ariaLabel="Top pages by pageviews" />
 			{/snippet}
 		</ChartSection>
+	{:else}
+		<ChartSection title="Top Pages" description="Most visited pages by pageview count">
+			{#snippet chart()}<p class="empty-chart">No data in this range.</p>{/snippet}
+		</ChartSection>
 	{/if}
 
 	{#if data.devices.length > 0}
@@ -174,6 +198,10 @@
 			{#snippet chart()}
 				<PieChart data={deviceData} doughnut ariaLabel="Device distribution" aspect="square" />
 			{/snippet}
+		</ChartSection>
+	{:else}
+		<ChartSection title="Devices" description="Session distribution by device type">
+			{#snippet chart()}<p class="empty-chart">No data in this range.</p>{/snippet}
 		</ChartSection>
 	{/if}
 
@@ -183,6 +211,10 @@
 				<PieChart data={browserData} doughnut ariaLabel="Browser distribution" aspect="square" />
 			{/snippet}
 		</ChartSection>
+	{:else}
+		<ChartSection title="Browsers" description="Session distribution by browser">
+			{#snippet chart()}<p class="empty-chart">No data in this range.</p>{/snippet}
+		</ChartSection>
 	{/if}
 
 	{#if data.countries.length > 0}
@@ -190,6 +222,10 @@
 			{#snippet chart()}
 				<BarChart data={countryData} horizontal ariaLabel="Country distribution" />
 			{/snippet}
+		</ChartSection>
+	{:else}
+		<ChartSection title="Countries" description="Top 10 countries by session count">
+			{#snippet chart()}<p class="empty-chart">No data in this range.</p>{/snippet}
 		</ChartSection>
 	{/if}
 </div>
@@ -206,15 +242,12 @@
 	bind:open={resetDialogOpen}
 	title="Reset Analytics Data"
 	description="This will truncate all analytics tables and re-insert synthetic seed data. This action cannot be undone."
-	onconfirm={() => {
-		const form = document.getElementById('reseed-form') as HTMLFormElement;
-		form?.requestSubmit();
-	}}
+	onconfirm={() => reseedForm?.requestSubmit()}
 	oncancel={() => (resetDialogOpen = false)}
 />
 
 <form
-	id="reseed-form"
+	bind:this={reseedForm}
 	method="POST"
 	action="?/reseed"
 	class="hidden"
@@ -237,15 +270,6 @@
 		align-items: center;
 		justify-content: space-between;
 		margin-bottom: var(--spacing-6);
-	}
-
-	.query-time {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--spacing-1);
-		font-size: var(--text-fluid-xs);
-		color: var(--color-muted);
-		font-variant-numeric: tabular-nums;
 	}
 
 	.metrics-grid {
@@ -278,6 +302,13 @@
 		.charts-grid {
 			grid-template-columns: 1fr;
 		}
+	}
+
+	.empty-chart {
+		padding: var(--spacing-6);
+		text-align: center;
+		color: var(--color-muted);
+		font-size: var(--text-fluid-sm);
 	}
 
 	.reseed-section {

@@ -4,7 +4,7 @@
  */
 import { db } from '$lib/server/db';
 import { dailyPageStats, events, sessions } from '$lib/server/db/schema/analytics';
-import { sql, and, gte, lte, eq, desc } from 'drizzle-orm';
+import { sql, and, gte, lte, eq, desc, inArray } from 'drizzle-orm';
 import type {
 	TrafficTrendPoint,
 	TopPage,
@@ -157,29 +157,32 @@ export async function getFunnelSteps(
 ): Promise<FunnelStep[]> {
 	const cutoff = new Date(Date.now() - days * 86400000);
 
-	// For each step, count distinct sessions that visited that path
-	const results: FunnelStep[] = [];
+	const paths = steps.map((s) => s.path);
 
-	for (const step of steps) {
-		const result = await db
-			.select({ count: sql<number>`count(distinct ${events.sessionId})` })
-			.from(events)
-			.where(
-				and(
-					eq(events.path, step.path),
-					eq(events.eventType, 'pageview'),
-					gte(events.timestamp, cutoff),
-				),
-			);
+	// Single query: count distinct sessions per path
+	const rows = await db
+		.select({
+			path: events.path,
+			count: sql<number>`count(distinct ${events.sessionId})`,
+		})
+		.from(events)
+		.where(
+			and(
+				inArray(events.path, paths),
+				eq(events.eventType, 'pageview'),
+				gte(events.timestamp, cutoff),
+			),
+		)
+		.groupBy(events.path);
 
-		const count = Number(result[0]?.count ?? 0);
-		results.push({
-			label: step.label,
-			path: step.path,
-			count,
-			rate: 0,
-		});
-	}
+	// Map results back to ordered steps
+	const countByPath = new Map(rows.map((r) => [r.path, Number(r.count)]));
+	const results: FunnelStep[] = steps.map((step) => ({
+		label: step.label,
+		path: step.path,
+		count: countByPath.get(step.path) ?? 0,
+		rate: 0,
+	}));
 
 	// Calculate conversion rates relative to first step
 	const topOfFunnel = results[0]?.count ?? 1;

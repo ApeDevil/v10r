@@ -8,7 +8,7 @@
 	let { data } = $props();
 
 	const consentChartData: ChartData<'pie'> = $derived({
-		labels: data.consent.map((c) => c.tier),
+		labels: data.consent.map((c) => c.tier.charAt(0).toUpperCase() + c.tier.slice(1)),
 		datasets: [
 			{
 				data: data.consent.map((c) => Number(c.count)),
@@ -306,7 +306,7 @@
 	.retention-detail {
 		display: flex;
 		flex-direction: column;
-		gap: 2px;
+		gap: var(--spacing-1);
 	}
 
 	.retention-note {
@@ -336,7 +336,7 @@
 	.verification-item div {
 		display: flex;
 		flex-direction: column;
-		gap: 2px;
+		gap: var(--spacing-1);
 	}
 
 	.verification-item strong {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { cn } from '$lib/utils/cn';
+	import { Card } from '$lib/components/composites';
 
 	interface Props {
 		title: string;
@@ -13,39 +14,29 @@
 	let { title, description, details, chart, class: className }: Props = $props();
 </script>
 
-<section class={cn('chart-section', className)}>
-	<div class="chart-header">
+<Card class={cn('chart-section', className)}>
+	{#snippet header()}
 		<h3 class="chart-title">{title}</h3>
 		{#if description}
 			<p class="chart-description">{description}</p>
 		{/if}
-	</div>
+	{/snippet}
 
-	<div class="chart-body">
+	{#snippet children()}
 		{@render chart()}
-	</div>
+	{/snippet}
 
-	{#if details}
-		<details class="chart-details">
-			<summary>How this works</summary>
-			<p>{details}</p>
-		</details>
-	{/if}
-</section>
+	{#snippet footer()}
+		{#if details}
+			<details class="chart-details">
+				<summary>How this works</summary>
+				<p>{details}</p>
+			</details>
+		{/if}
+	{/snippet}
+</Card>
 
 <style>
-	.chart-section {
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-lg);
-		background: var(--surface-1);
-		overflow: hidden;
-	}
-
-	.chart-header {
-		padding: var(--spacing-5) var(--spacing-6);
-		border-bottom: 1px solid var(--color-border);
-	}
-
 	.chart-title {
 		font-size: var(--text-fluid-base);
 		font-weight: 600;
@@ -60,13 +51,7 @@
 		line-height: 1.5;
 	}
 
-	.chart-body {
-		padding: var(--spacing-6);
-	}
-
 	.chart-details {
-		border-top: 1px solid var(--color-border);
-		padding: var(--spacing-4) var(--spacing-6);
 		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);
 	}

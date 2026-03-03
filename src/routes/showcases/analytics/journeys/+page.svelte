@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Alert, Card } from '$lib/components/composites';
+	import { Alert } from '$lib/components/composites';
 	import { SankeyDiagram } from '$lib/components/viz/graph/sankey';
 	import ChartSection from '../_components/ChartSection.svelte';
 	import type { SankeyData } from '$lib/components/viz/graph/sankey/types';
@@ -38,7 +38,7 @@
 	{#if data.error}
 		<Alert variant="error" title="Database Error">
 			<p>{data.error}</p>
-			<p class="mt-2 text-sm text-muted">Try reseeding the analytics data to create the required tables and data.</p>
+			<p class="mt-2 text-fluid-sm text-muted">Try reseeding the analytics data to create the required tables and data.</p>
 		</Alert>
 	{/if}
 
@@ -75,7 +75,22 @@
 	</ChartSection>
 
 	<!-- Entry/Exit pages (streamed) -->
-	{#await data.graph then graphData}
+	{#await data.graph}
+		<div class="entry-exit-grid">
+			<div class="skeleton-section" aria-label="Loading entry pages">
+				<div class="skeleton-bar" style="width: 40%"></div>
+				<div class="skeleton-bar" style="width: 70%"></div>
+				<div class="skeleton-bar" style="width: 55%"></div>
+				<div class="skeleton-bar" style="width: 45%"></div>
+			</div>
+			<div class="skeleton-section" aria-label="Loading exit pages">
+				<div class="skeleton-bar" style="width: 60%"></div>
+				<div class="skeleton-bar" style="width: 50%"></div>
+				<div class="skeleton-bar" style="width: 75%"></div>
+				<div class="skeleton-bar" style="width: 40%"></div>
+			</div>
+		</div>
+	{:then graphData}
 		{#if graphData}
 			<div class="entry-exit-grid">
 				{#if graphData[1].length > 0}
@@ -118,16 +133,16 @@
 	>
 		{#snippet chart()}
 			<div class="sessions-table-wrapper">
-				<table class="sessions-table">
+				<table class="sessions-table" aria-label="Recent sessions">
 					<thead>
 						<tr>
-							<th>Session</th>
-							<th>Pages</th>
-							<th>Entry</th>
-							<th>Exit</th>
-							<th>Device</th>
-							<th>Country</th>
-							<th>Started</th>
+							<th scope="col">Session</th>
+							<th scope="col">Pages</th>
+							<th scope="col">Entry</th>
+							<th scope="col">Exit</th>
+							<th scope="col">Device</th>
+							<th scope="col">Country</th>
+							<th scope="col">Started</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -169,6 +184,15 @@
 		border-radius: var(--radius-md);
 		background: var(--color-subtle);
 		animation: pulse 1.5s ease-in-out infinite;
+	}
+
+	.skeleton-section {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-3);
+		padding: var(--spacing-5) var(--spacing-6);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-lg);
 	}
 
 	@keyframes pulse {

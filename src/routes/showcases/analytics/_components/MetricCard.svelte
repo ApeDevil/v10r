@@ -26,7 +26,7 @@
 <div
 	class={cn('metric-card', className)}
 	role="group"
-	aria-label="{title}: {value}{deltaLabel ? `, ${deltaLabel}` : ''}"
+	aria-label="{title}: {value}{deltaLabel ? `, ${deltaLabel}, vs previous period` : ''}"
 >
 	<span class="metric-label">{title}</span>
 	<span class="metric-value">{value}</span>
@@ -42,6 +42,7 @@
 					<span class="i-lucide-minus text-icon-sm" aria-hidden="true"></span>
 				{/if}
 				{Math.abs(delta)}%
+				<span class="delta-context">vs prev.</span>
 			</span>
 		{/if}
 
@@ -101,5 +102,11 @@
 
 	.metric-delta.negative {
 		color: var(--color-error);
+	}
+
+	.delta-context {
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
+		font-weight: 400;
 	}
 </style>
