@@ -1,111 +1,94 @@
 <script lang="ts">
 	import { Accordion } from '$lib/components';
+	import { localizeHref } from '$lib/i18n';
 	import { fadeIn } from './fadeIn';
+	import { sections, type StructureItem } from './structure-map';
+
+	const [intelligence, structural] = sections;
+
+	function group(sectionIdx: number, groupValue: string) {
+		return sections[sectionIdx].groups.find((g) => g.value === groupValue)!;
+	}
+
+	function getItemHref(item: StructureItem): string | null {
+		for (const seg of item.segments) {
+			if (seg.href) return seg.href;
+		}
+		return null;
+	}
 </script>
 
-<!-- Inner snippets: Intelligence Layer detail -->
-{#snippet agentsSnippet()}
+{#snippet renderItems(items: StructureItem[])}
+	<ul>
+		{#each items as item}
+			{@const href = getItemHref(item)}
+			<li>
+				{#if href}
+					<a class="item-link" href={localizeHref(href)}>
+						<span class="item-codes">
+							{#each item.segments as seg, i}
+								{#if i > 0}{' '}{/if}<code>{seg.label}</code>
+							{/each}
+						</span>
+						<span class="item-desc">{item.description}</span>
+					</a>
+				{:else}
+					<span class="item-plain">
+						<span class="item-codes">
+							{#each item.segments as seg, i}
+								{#if i > 0}{' '}{/if}<code>{seg.label}</code>
+							{/each}
+						</span>
+						<span class="item-desc">{item.description}</span>
+					</span>
+				{/if}
+			</li>
+		{/each}
+	</ul>
+{/snippet}
+
+{#snippet renderGroup(sectionIdx: number, groupValue: string)}
+	{@const g = group(sectionIdx, groupValue)}
 	<div class="structure-content">
-		<ul>
-			<li><code>archy</code> architecture & system design</li>
-			<li><code>arty</code> aesthetic refinement & visual polish</li>
-			<li><code>buny</code> Bun runtime & tooling</li>
-			<li><code>daty</code> database schemas & data modeling</li>
-			<li><code>docy</code> documentation & technical writing</li>
-			<li><code>resy</code> technology research & evaluation</li>
-			<li><code>scout</code> real-world usage research</li>
-			<li><code>secy</code> security review & threat modeling</li>
-			<li><code>svey</code> SvelteKit application patterns</li>
-			<li><code>tray</code> debugging & error tracing</li>
-			<li><code>uxy</code> UI/UX design & accessibility</li>
-		</ul>
+		{#if g.intro}
+			<p>{g.intro}</p>
+		{/if}
+		{@render renderItems(g.items)}
 	</div>
+{/snippet}
+
+<!-- Intelligence Layer groups -->
+{#snippet agentsSnippet()}
+	{@render renderGroup(0, 'agents')}
 {/snippet}
 
 {#snippet skillsSnippet()}
-	<div class="structure-content">
-		<ul>
-			<li><code>svelte5-runes</code> <code>sveltekit</code> <code>unocss</code> <code>biome</code> — core framework</li>
-			<li><code>drizzle</code> <code>db-relational</code> <code>db-graph</code> <code>db-files</code> — data layer</li>
-			<li><code>better-auth</code> <code>security</code> — auth & security</li>
-			<li><code>valibot-superforms</code> <code>design-system</code> — forms & design</li>
-			<li><code>ai-tools</code> <code>3d</code> — AI & visualization</li>
-		</ul>
-	</div>
+	{@render renderGroup(0, 'skills')}
 {/snippet}
 
 {#snippet docsHubsSnippet()}
-	<div class="structure-content">
-		<p>Each directory has a README.md navigation hub — brief intro, then a topic table linking to specific files.</p>
-		<ul>
-			<li><code>docs/foundation/</code> core concepts & conventions</li>
-			<li><code>docs/stack/</code> technology documentation per layer</li>
-			<li><code>docs/blueprint/</code> architecture decisions</li>
-			<li><code>docs/implementation/</code> build details</li>
-			<li><code>docs/patterns/</code> reusable patterns</li>
-			<li><code>docs/guides/</code> how-to guides</li>
-		</ul>
-	</div>
+	{@render renderGroup(0, 'docs-hubs')}
 {/snippet}
 
-<!-- Inner snippets: Structural Map detail -->
+<!-- Structural Map groups -->
 {#snippet routesSnippet()}
-	<div class="structure-content">
-		<ul>
-			<li><code>/app</code> main application</li>
-			<li><code>/auth</code> authentication flows</li>
-			<li><code>/showcases</code> feature demonstrations</li>
-			<li><code>/docs</code> documentation viewer</li>
-			<li><code>/desk</code> workspace</li>
-			<li><code>/api</code> REST endpoints</li>
-		</ul>
-	</div>
+	{@render renderGroup(1, 'routes')}
 {/snippet}
 
 {#snippet serverSnippet()}
-	<div class="structure-content">
-		<ul>
-			<li><code>ai</code> <code>graph</code> <code>retrieval</code> — intelligence</li>
-			<li><code>db</code> <code>cache</code> <code>store</code> — persistence</li>
-			<li><code>auth</code> <code>notifications</code> — identity & messaging</li>
-			<li><code>api</code> <code>platform</code> — external interfaces</li>
-			<li><code>jobs</code> <code>analytics</code> — background & telemetry</li>
-		</ul>
-	</div>
+	{@render renderGroup(1, 'server')}
 {/snippet}
 
 {#snippet componentsSnippet()}
-	<div class="structure-content">
-		<ul>
-			<li><code>primitives/</code> atomic UI elements (accordion, button, input...)</li>
-			<li><code>composites/</code> assembled patterns (data-table, sidebar...)</li>
-			<li><code>layout/</code> page structure (stack, grid, divider...)</li>
-			<li><code>shell/</code> app chrome (nav, footer, theme)</li>
-			<li><code>viz/</code> charts & 3D (lazy-loaded, excluded from barrel)</li>
-		</ul>
-	</div>
+	{@render renderGroup(1, 'components')}
 {/snippet}
 
 {#snippet claudeSnippet()}
-	<div class="structure-content">
-		<ul>
-			<li><code>agents/</code> 11 specialized Claude Code agents</li>
-			<li><code>skills/</code> 14 post-training knowledge modules</li>
-			<li><code>memory/</code> persistent agent memory across sessions</li>
-		</ul>
-	</div>
+	{@render renderGroup(1, 'claude')}
 {/snippet}
 
 {#snippet documentationSnippet()}
-	<div class="structure-content">
-		<ul>
-			<li><code>foundation/</code> core concepts & conventions</li>
-			<li><code>stack/</code> per-technology documentation</li>
-			<li><code>blueprint/</code> architecture decisions</li>
-			<li><code>implementation/</code> build details</li>
-			<li><code>patterns/</code> reusable patterns</li>
-		</ul>
-	</div>
+	{@render renderGroup(1, 'documentation')}
 {/snippet}
 
 <!-- Outer snippets -->
@@ -116,7 +99,7 @@
 			items={[
 				{ value: 'agents', title: 'Agents', content: agentsSnippet },
 				{ value: 'skills', title: 'Skills', content: skillsSnippet },
-				{ value: 'docs', title: 'Documentation Hubs', content: docsHubsSnippet },
+				{ value: 'docs-hubs', title: 'Documentation Hubs', content: docsHubsSnippet },
 			]}
 			type="multiple"
 			size="sm"
@@ -257,5 +240,65 @@
 		border-top: 1px solid var(--color-border);
 		color: var(--color-muted);
 		font-size: var(--text-fluid-xs);
+	}
+
+	/* Linked items — whole row is click target */
+	.item-link {
+		display: inline-flex;
+		align-items: baseline;
+		gap: var(--spacing-2);
+		text-decoration: none;
+		color: inherit;
+		padding: var(--spacing-1) var(--spacing-2);
+		margin-inline: calc(-1 * var(--spacing-2));
+		border-radius: 2px;
+		transition: background-color 120ms ease;
+	}
+
+	.item-link:hover {
+		background: color-mix(in srgb, var(--color-primary) 6%, transparent);
+	}
+
+	.item-link:active {
+		opacity: 0.7;
+	}
+
+	.item-link:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+	}
+
+	/* Code inside links — hover border-bottom */
+	.item-link code {
+		border-bottom: 1px solid transparent;
+		transition: border-color 120ms ease;
+	}
+
+	.item-link:hover code {
+		border-bottom-color: color-mix(in srgb, var(--color-primary) 50%, transparent);
+	}
+
+	/* Plain (unlinked) items keep existing style */
+	.item-plain {
+		display: inline-flex;
+		align-items: baseline;
+		gap: var(--spacing-2);
+		padding: var(--spacing-1) 0;
+	}
+
+	/* Description text — always passive */
+	.item-desc {
+		color: var(--color-muted);
+		cursor: default;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.item-link {
+			transition: none;
+		}
+
+		.item-link code {
+			transition: none;
+		}
 	}
 </style>
