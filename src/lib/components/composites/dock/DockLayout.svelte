@@ -34,7 +34,8 @@
 	const saved = persist ? loadDockState(persistKey) : null;
 	const dock = setDockContext(
 		saved?.root ?? initialRoot,
-		saved?.panels ?? initialPanels
+		saved?.panels ?? initialPanels,
+		saved?.activityBarPosition ?? 'left'
 	);
 
 	// Debounced persistence — $state.snapshot() creates deep tracking
@@ -45,8 +46,9 @@
 			// snapshot() deeply reads all properties, establishing fine-grained tracking
 			const root = $state.snapshot(dock.root) as LayoutNode;
 			const panels = $state.snapshot(dock.panels) as Record<string, PanelDefinition>;
+			const barPos = dock.activityBarPosition;
 			clearTimeout(timer);
-			timer = setTimeout(() => saveDockState(root, panels, persistKey), 300);
+			timer = setTimeout(() => saveDockState(root, panels, persistKey, barPos), 300);
 		});
 	}
 
@@ -64,11 +66,18 @@
 			closable: true
 		});
 	});
+
 </script>
 
-<div class="dock-layout {className ?? ''}">
+<div
+	class="dock-layout {className ?? ''}"
+	data-bar-position={dock.activityBarPosition}
+>
 	{#if activityBarItems && activityBarItems.length > 0}
-		<DockActivityBar items={activityBarItems} />
+		<DockActivityBar
+			items={activityBarItems}
+			position={dock.activityBarPosition}
+		/>
 	{/if}
 
 	<div class="dock-content">
@@ -78,15 +87,40 @@
 
 <style>
 	.dock-layout {
-		display: flex;
+		display: grid;
 		height: 100%;
 		width: 100%;
 		overflow: hidden;
 		background: var(--surface-0);
 	}
 
+	/* Grid layouts for each bar position */
+	.dock-layout[data-bar-position='left'] {
+		grid-template-areas: 'bar content';
+		grid-template-columns: auto 1fr;
+		grid-template-rows: 1fr;
+	}
+
+	.dock-layout[data-bar-position='right'] {
+		grid-template-areas: 'content bar';
+		grid-template-columns: 1fr auto;
+		grid-template-rows: 1fr;
+	}
+
+	.dock-layout[data-bar-position='top'] {
+		grid-template-areas: 'bar' 'content';
+		grid-template-columns: 1fr;
+		grid-template-rows: auto 1fr;
+	}
+
+	.dock-layout[data-bar-position='bottom'] {
+		grid-template-areas: 'content' 'bar';
+		grid-template-columns: 1fr;
+		grid-template-rows: 1fr auto;
+	}
+
 	.dock-content {
-		flex: 1;
+		grid-area: content;
 		min-width: 0;
 		min-height: 0;
 		overflow: hidden;

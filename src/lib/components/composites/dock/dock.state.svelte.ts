@@ -9,7 +9,8 @@ import type {
 	LeafNode,
 	PanelDefinition,
 	DragState,
-	DropTarget
+	DropTarget,
+	ActivityBarPosition
 } from './dock.types';
 import {
 	findNode,
@@ -28,11 +29,13 @@ const MAX_DEPTH = 4;
 
 export function createDockState(
 	initialRoot: LayoutNode,
-	initialPanels: Record<string, PanelDefinition>
+	initialPanels: Record<string, PanelDefinition>,
+	initialBarPosition: ActivityBarPosition = 'left'
 ) {
 	let root = $state<LayoutNode>(initialRoot);
 	let panels = $state<Record<string, PanelDefinition>>({ ...initialPanels });
 	let dragState = $state<DragState | null>(null);
+	let activityBarPosition = $state<ActivityBarPosition>(initialBarPosition);
 
 	// --- Tab operations ---
 
@@ -198,6 +201,7 @@ export function createDockState(
 		get root() { return root; },
 		get panels() { return panels; },
 		get dragState() { return dragState; },
+		get activityBarPosition() { return activityBarPosition; },
 
 		activateTab,
 		closePanel,
@@ -212,6 +216,8 @@ export function createDockState(
 		endDrag,
 		cancelDrag,
 
+		setActivityBarPosition(pos: ActivityBarPosition) { activityBarPosition = pos; },
+
 		// For persistence
 		setRoot(newRoot: LayoutNode) { root = newRoot; },
 		setPanels(newPanels: Record<string, PanelDefinition>) { panels = { ...newPanels }; }
@@ -222,9 +228,10 @@ export type DockState = ReturnType<typeof createDockState>;
 
 export function setDockContext(
 	initialRoot: LayoutNode,
-	initialPanels: Record<string, PanelDefinition>
+	initialPanels: Record<string, PanelDefinition>,
+	initialBarPosition?: ActivityBarPosition
 ): DockState {
-	const state = createDockState(initialRoot, initialPanels);
+	const state = createDockState(initialRoot, initialPanels, initialBarPosition);
 	setContext(DOCK_CTX, state);
 	return state;
 }

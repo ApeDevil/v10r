@@ -21,9 +21,11 @@
 	type Props = {
 		children?: import('svelte').Snippet;
 		session?: Session;
+		/** Immersive mode: hides the footer for full-viewport layouts like the desk. */
+		immersive?: boolean;
 	};
 
-	let { children, session = null }: Props = $props();
+	let { children, session = null, immersive = false }: Props = $props();
 
 	// Initialize session context so child components can use getSession()
 	setSessionContext(session);
@@ -82,7 +84,9 @@
 	<main id="main-content" tabindex="-1" class="flex-1 min-w-0 flex flex-col overflow-x-clip md:pl-[var(--sidebar-rail-width)]">
 		{@render children?.()}
 
-		<Footer />
+		{#if !immersive}
+			<Footer />
+		{/if}
 	</main>
 </div>
 

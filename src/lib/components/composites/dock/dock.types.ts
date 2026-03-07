@@ -47,6 +47,9 @@ export interface DragState {
 	target: DropTarget | null;
 }
 
+/** Activity bar position within the dock layout */
+export type ActivityBarPosition = 'left' | 'right' | 'top' | 'bottom';
+
 /** Activity bar entry */
 export interface ActivityBarItem {
 	panelType: string;
@@ -59,4 +62,5 @@ export interface DockLayoutState {
 	version: number;
 	root: LayoutNode;
 	panels: Record<string, PanelDefinition>;
+	activityBarPosition?: ActivityBarPosition;
 }

@@ -2,7 +2,6 @@
 	import 'uno.css';
 	import '../app.css';
 	import favicon from '$lib/assets/favicon.svg';
-	import { AppShell } from '$lib/components/shell';
 	import { setSidebarContext } from '$lib/state/sidebar.svelte';
 	import { setThemeContext } from '$lib/state/theme.svelte';
 	import { setModalsContext } from '$lib/state/modals.svelte';
@@ -16,32 +15,19 @@
 	let { children, data } = $props();
 
 	// Initialize all shell contexts (SSR-safe, request-scoped)
-	// 1. Theme (sync with cookie/system preference)
 	const theme = setThemeContext({
 		mode: data.themeMode,
 		accent: 'blue',
 	});
-
-	// 2. Sidebar (loads from localStorage on client)
 	const sidebar = setSidebarContext();
-
-	// 3. Modals (ephemeral client state)
 	const modals = setModalsContext();
-
-	// 4. Toast (ephemeral client state)
 	const toast = setToastContext();
-
-	// 5. Consent (cookie-backed, controls banner visibility)
 	const consent = setConsentContext();
 
-	// 6. Keyboard shortcuts
+	// Keyboard shortcuts
 	$effect(() => {
-		// Initialize keyboard handler
 		const cleanup = initKeyboardHandler();
 
-		// Register default shortcuts
-
-		// Global shortcuts
 		const unregisterSearch = registerShortcut({
 			id: 'quicksearch',
 			keys: 'mod+k',
@@ -74,7 +60,6 @@
 			action: () => modals.close(),
 		});
 
-		// Navigation shortcuts
 		const unregisterHome = registerShortcut({
 			id: 'nav-home',
 			keys: 'g h',
@@ -99,7 +84,6 @@
 			action: () => goto(localizeHref('/docs')),
 		});
 
-		// Cleanup on unmount
 		return () => {
 			cleanup();
 			unregisterSearch();
@@ -118,7 +102,5 @@
 </svelte:head>
 
 <TooltipPrimitive.Provider>
-	<AppShell session={data.session}>
-		{@render children()}
-	</AppShell>
+	{@render children()}
 </TooltipPrimitive.Provider>

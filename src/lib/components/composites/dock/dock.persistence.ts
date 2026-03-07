@@ -4,16 +4,21 @@
  */
 
 import { browser } from '$app/environment';
-import type { LayoutNode, PanelDefinition, DockLayoutState, LeafNode } from './dock.types';
+import type { LayoutNode, PanelDefinition, DockLayoutState, LeafNode, ActivityBarPosition } from './dock.types';
 
 const DEFAULT_KEY = 'dock-layout';
 const CURRENT_VERSION = 1;
 
 /** Save dock state to localStorage */
-export function saveDockState(root: LayoutNode, panels: Record<string, PanelDefinition>, storageKey = DEFAULT_KEY): void {
+export function saveDockState(
+	root: LayoutNode,
+	panels: Record<string, PanelDefinition>,
+	storageKey = DEFAULT_KEY,
+	activityBarPosition?: ActivityBarPosition
+): void {
 	if (!browser) return;
 	try {
-		const state: DockLayoutState = { version: CURRENT_VERSION, root, panels };
+		const state: DockLayoutState = { version: CURRENT_VERSION, root, panels, activityBarPosition };
 		localStorage.setItem(storageKey, JSON.stringify(state));
 	} catch {
 		// Silently fail (e.g., storage full)

@@ -2,6 +2,8 @@
 	import { CornerFrame, Divider, Asterism } from '$lib/components';
 	import { localizeHref } from '$lib/i18n';
 	import AsciiRaptor from './_components/AsciiRaptor.svelte';
+	import StructureSection from './_components/StructureSection.svelte';
+	import { fadeIn } from './_components/fadeIn';
 
 	let revealed = $state(false);
 
@@ -80,34 +82,7 @@
 		'i-lucide-sparkles',
 	];
 
-	function fadeIn(node: HTMLElement) {
-		const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		if (prefersReduced) {
-			node.style.opacity = '1';
-			return;
-		}
 
-		node.style.opacity = '0';
-		node.style.transition = `opacity var(--duration-slow) ease-out`;
-
-		const observer = new IntersectionObserver(
-			([entry]) => {
-				if (entry.isIntersecting) {
-					node.style.opacity = '1';
-					observer.disconnect();
-				}
-			},
-			{ threshold: 0.1 }
-		);
-
-		observer.observe(node);
-
-		return {
-			destroy() {
-				observer.disconnect();
-			},
-		};
-	}
 </script>
 
 <svelte:head>
@@ -185,7 +160,14 @@ v          10            r</pre>
 	</div>
 </section>
 
-<!-- ACT III: Showcase Entry -->
+<!-- ACT III: Internal Structure -->
+<div class="divider-wrap">
+	<Divider motif="crosshair" width="content" />
+</div>
+
+<StructureSection />
+
+<!-- ACT IV: Showcase Entry -->
 <div class="asterism-wrap">
 	<Asterism pattern="three-dots" />
 </div>
@@ -508,7 +490,7 @@ v          10            r</pre>
 		margin-left: var(--spacing-2);
 	}
 
-	/* ─── ACT III: SHOWCASE ENTRY ─── */
+	/* ─── ACT IV: SHOWCASE ENTRY ─── */
 	.showcase-entry {
 		padding: var(--spacing-7) var(--spacing-fluid-3) var(--spacing-8);
 		display: flex;

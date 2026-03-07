@@ -17,6 +17,7 @@ export type {
 	DropTarget,
 	DragState,
 	ActivityBarItem,
+	ActivityBarPosition,
 	DockLayoutState
 } from './dock.types';
 
