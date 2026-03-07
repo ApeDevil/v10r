@@ -50,7 +50,7 @@
 			{/if}
 
 			<div class="pt-4 flex justify-end gap-3">
-				<Button variant="secondary" onclick={oncancel}>
+				<Button variant="outline" onclick={oncancel}>
 					{cancelLabel}
 				</Button>
 				<Button variant={destructive ? 'destructive' : 'default'} onclick={onconfirm}>

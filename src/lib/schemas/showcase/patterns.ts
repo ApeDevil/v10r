@@ -45,9 +45,7 @@ export const dynamicSchema = v.object({
 	title: v.pipe(v.string(), v.trim(), v.nonEmpty('Title is required'), v.maxLength(100)),
 	tags: v.pipe(
 		v.array(
-			v.object({
-				name: v.pipe(v.string(), v.trim(), v.nonEmpty('Tag name is required'), v.maxLength(30)),
-			})
+			v.pipe(v.string(), v.trim(), v.nonEmpty('Tag cannot be empty'), v.maxLength(30))
 		),
 		v.minLength(1, 'At least one tag is required'),
 		v.maxLength(10, 'Max 10 tags')

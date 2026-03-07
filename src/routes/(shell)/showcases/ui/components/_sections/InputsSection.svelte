@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { DemoCard, VariantGrid } from '../_components';
 	import { Input, Select, Checkbox, Combobox, Slider, Switch, Toggle, ToggleGroup, Calendar } from '$lib/components';
+	import { TagInput } from '$lib/components/composites';
 
 	let textValue = $state('');
 	let emailValue = $state('');
@@ -18,6 +19,10 @@
 	let toggleBold = $state(false);
 	let toggleItalic = $state(false);
 	let toggleGroupValue = $state('center');
+	let tags = $state<string[]>(['svelte', 'typescript']);
+	let tagsEmpty = $state<string[]>([]);
+	let tagsDisabled = $state<string[]>(['locked', 'readonly']);
+	let tagsError = $state<string[]>(['invalid']);
 </script>
 
 <section id="prim-inputs" class="section">
@@ -39,6 +44,23 @@
 			<VariantGrid layout="grid">
 				<Input placeholder="Normal state" />
 				<Input placeholder="Error state" error />
+			</VariantGrid>
+		</DemoCard>
+
+		<!-- Tag Input -->
+		<DemoCard title="Tag Input" description="Multi-value text input with tag chips">
+			<VariantGrid layout="grid">
+				<TagInput bind:value={tags} placeholder="Add a tag..." max={8} />
+				<TagInput bind:value={tagsEmpty} placeholder="Type and press Enter..." />
+			</VariantGrid>
+		</DemoCard>
+
+		<!-- Tag Input States -->
+		<DemoCard title="Tag Input States" description="Error, disabled, and size variants">
+			<VariantGrid layout="grid">
+				<TagInput bind:value={tagsError} error placeholder="Error state" />
+				<TagInput bind:value={tagsDisabled} disabled />
+				<TagInput bind:value={tags} size="sm" placeholder="Small size" max={8} />
 			</VariantGrid>
 		</DemoCard>
 

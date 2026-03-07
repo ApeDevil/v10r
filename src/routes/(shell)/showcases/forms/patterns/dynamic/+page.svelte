@@ -3,7 +3,7 @@
 	import { superForm } from 'sveltekit-superforms';
 	import { valibotClient } from 'sveltekit-superforms/adapters';
 	import { dynamicSchema } from '$lib/schemas/showcase/patterns';
-	import { Card, Alert, FormField } from '$lib/components/composites';
+	import { Card, Alert, FormField, TagInput } from '$lib/components/composites';
 	import { Button, Input, Badge, Spinner } from '$lib/components/primitives';
 	import { Stack, Cluster } from '$lib/components/layout';
 
@@ -13,14 +13,6 @@
 		validators: valibotClient(dynamicSchema),
 		dataType: 'json',
 	});
-
-	function addTag() {
-		$form.tags = [...$form.tags, { name: '' }];
-	}
-
-	function removeTag(index: number) {
-		$form.tags = $form.tags.filter((_, i) => i !== index);
-	}
 </script>
 
 <svelte:head>
@@ -61,47 +53,19 @@
 				{/snippet}
 			</FormField>
 
-			<div class="tags-section">
-				<Cluster justify="between">
-					<span class="text-fluid-sm font-medium text-fg">Tags *</span>
-					{#if $errors.tags?._errors}
-						<span class="text-fluid-xs text-error">{$errors.tags._errors[0]}</span>
-					{/if}
-				</Cluster>
-
-				<Stack gap="3">
-					{#each $form.tags as tag, i (i)}
-						<Cluster gap="3">
-							<div class="tag-input-wrap">
-								<Input
-									bind:value={$form.tags[i].name}
-									placeholder="Tag name"
-									error={!!$errors.tags?.[i]?.name}
-								/>
-								{#if $errors.tags?.[i]?.name}
-									<span class="text-fluid-xs text-error">{$errors.tags[i].name[0]}</span>
-								{/if}
-							</div>
-							<Button
-								type="button"
-								variant="ghost"
-								size="sm"
-								onclick={() => removeTag(i)}
-								disabled={$form.tags.length <= 1}
-								class="remove-btn"
-								aria-label="Remove tag {i + 1}"
-							>
-								<span class="i-lucide-x h-4 w-4"></span>
-							</Button>
-						</Cluster>
-					{/each}
-				</Stack>
-
-				<Button type="button" variant="outline" size="sm" onclick={addTag} disabled={$form.tags.length >= 10}>
-					<span class="i-lucide-plus h-4 w-4 mr-1"></span>
-					Add Tag
-				</Button>
-			</div>
+			<FormField label="Tags" error={$errors.tags?._errors?.[0]} required>
+				{#snippet children({ fieldId, describedBy })}
+					<TagInput
+						id={fieldId}
+						bind:value={$form.tags}
+						placeholder="Type a tag and press Enter..."
+						max={10}
+						maxLength={30}
+						error={!!$errors.tags?._errors}
+						aria-describedby={describedBy}
+					/>
+				{/snippet}
+			</FormField>
 
 			<div class="form-actions">
 				<Button type="submit" disabled={$submitting}>
@@ -118,23 +82,3 @@
 		{/snippet}
 	</Alert>
 </Stack>
-
-<style>
-	.tags-section {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-3);
-	}
-
-	.tag-input-wrap {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-1);
-	}
-
-	:global(.remove-btn) {
-		min-height: 2.75rem;
-		min-width: 2.75rem;
-	}
-</style>

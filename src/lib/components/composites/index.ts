@@ -28,3 +28,4 @@ export * from './diag-grid';
 export * from './command';
 export * from './command-palette';
 export * from './selection-bar';
+export * from './tag-input';

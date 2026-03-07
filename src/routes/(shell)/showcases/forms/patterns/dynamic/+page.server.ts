@@ -5,7 +5,7 @@ import { dynamicSchema } from '$lib/schemas/showcase/patterns';
 
 export const load: PageServerLoad = async () => {
 	const form = await superValidate(
-		{ title: '', tags: [{ name: '' }] },
+		{ title: '', tags: [] as string[] },
 		valibot(dynamicSchema)
 	);
 	return { form };
@@ -19,7 +19,7 @@ export const actions: Actions = {
 			return fail(400, { form });
 		}
 
-		const tagCount = form.data.tags.length;
-		return message(form, `Saved "${form.data.title}" with ${tagCount} tag${tagCount !== 1 ? 's' : ''}.`);
+		const tags = form.data.tags;
+		return message(form, `Saved "${form.data.title}" with ${tags.length} tag${tags.length !== 1 ? 's' : ''}: ${tags.join(', ')}.`);
 	},
 };
