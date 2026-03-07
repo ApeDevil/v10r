@@ -6,9 +6,6 @@
 		Row as TableRow,
 		HeaderCell as TableHeaderCell,
 		Cell as TableCell,
-		ConcentricRings,
-		TickMarks,
-		GeometricMark,
 		Pagination
 	} from '$lib/components';
 	import { EMPLOYEES, formatSalary, type SortKey, type SortDirection, type Status } from '../_data/mock-data';
@@ -71,10 +68,6 @@
 
 	<div class="demos">
 		<div class="observatory-wrapper">
-			<div class="rings-accent">
-				<ConcentricRings rings={5} shape="circle" size={160} opacity={0.08} />
-			</div>
-
 			<div class="table-container">
 				<Table>
 					<TableHeader>
@@ -112,7 +105,7 @@
 								<TableCell class="text-right tabular-nums">{emp.projects}</TableCell>
 								<TableCell>
 									<span class="status-dot">
-										<GeometricMark shape="circle" size={8} filled color={statusColor(emp.status)} />
+										<span class="status-indicator" style="background:{statusColor(emp.status)}"></span>
 										<span class="status-label">{emp.status}</span>
 									</span>
 								</TableCell>
@@ -121,8 +114,6 @@
 					</TableBody>
 				</Table>
 			</div>
-
-			<TickMarks orientation="horizontal" count={21} majorEvery={5} />
 
 			<div class="observatory-footer">
 				<span class="showing-text">
@@ -178,7 +169,6 @@
 	}
 
 	.observatory-wrapper {
-		position: relative;
 		overflow: hidden;
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
@@ -194,13 +184,6 @@
 		--surface-1: #14161f;
 		background: var(--color-bg);
 		color: var(--color-fg);
-	}
-
-	.rings-accent {
-		position: absolute;
-		top: -40px;
-		right: -40px;
-		pointer-events: none;
 	}
 
 	.table-container {
@@ -250,6 +233,13 @@
 		display: inline-flex;
 		align-items: center;
 		gap: var(--spacing-2);
+	}
+
+	.status-indicator {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		flex-shrink: 0;
 	}
 
 	.status-label {

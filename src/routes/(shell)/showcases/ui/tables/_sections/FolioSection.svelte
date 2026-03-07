@@ -5,10 +5,7 @@
 		Body as TableBody,
 		Row as TableRow,
 		HeaderCell as TableHeaderCell,
-		Cell as TableCell,
-		Flourish,
-		Kamon,
-		Divider
+		Cell as TableCell
 	} from '$lib/components';
 	import { EMPLOYEES, DEPARTMENTS, formatSalary, formatDate, type Department } from '../_data/mock-data';
 
@@ -50,17 +47,11 @@
 </script>
 
 <section id="tbl-folio" class="section">
-	<h2 class="section-title">
-		<Kamon folds={6} size={32} class="inline-block mr-2 align-middle" />
-		Folio
-	</h2>
+	<h2 class="section-title">Folio</h2>
 	<p class="section-description">Annual report with rows grouped by department. Groups are collapsible with expand/collapse-all controls.</p>
 
 	<div class="demos">
 		<div class="folio-frame">
-			<Flourish position="top-left" size={48} />
-			<Flourish position="bottom-right" size={48} />
-
 			<div class="folio-controls">
 				<button class="folio-btn" onclick={expandAll}>Expand all</button>
 				<button class="folio-btn" onclick={collapseAll}>Collapse all</button>
@@ -78,16 +69,8 @@
 						</TableRow>
 					</TableHeader>
 					<TableBody>
-						{#each [...grouped] as [dept, members], groupIdx (dept)}
-							{#if groupIdx > 0}
+						{#each [...grouped] as [dept, members] (dept)}
 								<TableRow hoverable={false}>
-									<TableCell colspan={5}>
-										<Divider motif="flourish" width="content" />
-									</TableCell>
-								</TableRow>
-							{/if}
-
-							<TableRow hoverable={false}>
 								<TableCell colspan={5}>
 									<button
 										class="group-header"
@@ -151,7 +134,6 @@
 	}
 
 	.folio-frame {
-		position: relative;
 		padding: var(--spacing-7);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);

@@ -6,9 +6,7 @@
 		Row as TableRow,
 		HeaderCell as TableHeaderCell,
 		Cell as TableCell,
-		Badge,
-		CornerFrame,
-		Asterism
+		Badge
 	} from '$lib/components';
 	import { EMPLOYEES, type Status } from '../_data/mock-data';
 
@@ -59,8 +57,6 @@
 
 	<div class="demos">
 		<div class="specimen-frame">
-			<CornerFrame variant="cross" corners={['top-left', 'top-right']} />
-
 			{#if selected.size > 0}
 				<div class="selection-toolbar">
 					<span class="selection-count">{selected.size} selected</span>
@@ -119,9 +115,8 @@
 						{/each}
 						{#if EMPLOYEES.length === 0}
 							<TableRow hoverable={false}>
-								<TableCell colspan={6}>
-									<Asterism pattern="three-dots" />
-									<p class="empty-text">No specimens catalogued.</p>
+								<TableCell class="empty-text" colspan={6}>
+									No specimens catalogued.
 								</TableCell>
 							</TableRow>
 						{/if}
@@ -159,7 +154,6 @@
 	}
 
 	.specimen-frame {
-		position: relative;
 		padding: var(--spacing-6);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
@@ -234,10 +228,9 @@
 		color: var(--color-warning);
 	}
 
-	.empty-text {
+	:global(.empty-text) {
 		text-align: center;
 		color: var(--color-muted);
 		font-style: italic;
-		margin: var(--spacing-2) 0 0 0;
 	}
 </style>

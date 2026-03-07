@@ -5,9 +5,7 @@
 		Body as TableBody,
 		Row as TableRow,
 		HeaderCell as TableHeaderCell,
-		Cell as TableCell,
-		CornerFrame,
-		Divider
+		Cell as TableCell
 	} from '$lib/components';
 	import { EMPLOYEES, formatSalary, formatDate, type SortKey, type SortDirection } from '../_data/mock-data';
 
@@ -60,11 +58,6 @@
 
 	<div class="demos">
 		<div class="ledger-frame">
-			<CornerFrame variant="bracket" />
-
-			<div class="ledger-inner">
-				<Divider motif="diamond" />
-
 				<div class="table-container">
 					<Table>
 						<TableHeader>
@@ -105,7 +98,6 @@
 						</TableBody>
 					</Table>
 				</div>
-			</div>
 		</div>
 	</div>
 </section>
@@ -137,16 +129,9 @@
 	}
 
 	.ledger-frame {
-		position: relative;
 		padding: var(--spacing-6);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
-	}
-
-	.ledger-inner {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-4);
 	}
 
 	.table-container {

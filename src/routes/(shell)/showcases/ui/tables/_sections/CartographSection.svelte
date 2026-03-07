@@ -7,8 +7,6 @@
 		HeaderCell as TableHeaderCell,
 		Cell as TableCell,
 		Badge,
-		TickMarks,
-		GeometricMark,
 		Pagination
 	} from '$lib/components';
 	import {
@@ -122,17 +120,7 @@
 	<p class="section-description">Surveyor's grid combining sorting, filtering, pagination, and row selection. The full interactive data table experience.</p>
 
 	<div class="demos">
-		<div class="cartograph-layout">
-			<div class="ruler-corner">
-				<GeometricMark shape="cross" size={16} />
-			</div>
-			<div class="ruler-top">
-				<TickMarks orientation="horizontal" count={21} majorEvery={5} />
-			</div>
-			<div class="ruler-left">
-				<TickMarks orientation="vertical" count={15} majorEvery={5} />
-			</div>
-
+		<div class="cartograph-frame">
 			<div class="cartograph-main">
 				<div class="cartograph-controls">
 					<input
@@ -254,7 +242,6 @@
 						<option value={12}>12 / page</option>
 					</select>
 				</div>
-			</div>
 		</div>
 	</div>
 </section>
@@ -285,69 +272,16 @@
 		gap: var(--spacing-6);
 	}
 
-	.cartograph-layout {
-		display: grid;
-		grid-template-columns: auto 1fr;
-		grid-template-rows: auto 1fr;
+	.cartograph-frame {
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
-		overflow: hidden;
 	}
 
-	.ruler-corner {
-		display: none;
-		place-items: center;
-		padding: var(--spacing-2);
-		background: var(--color-subtle);
-		border-bottom: 1px solid var(--color-border);
-		border-right: 1px solid var(--color-border);
-	}
-
-	.ruler-top {
-		display: none;
-		padding: var(--spacing-2) var(--spacing-4);
-		background: var(--color-subtle);
-		border-bottom: 1px solid var(--color-border);
-		overflow: hidden;
-	}
-
-	.ruler-left {
-		display: none;
-		padding: var(--spacing-4) var(--spacing-2);
-		background: var(--color-subtle);
-		border-right: 1px solid var(--color-border);
-		overflow: hidden;
-	}
-
-	@media (min-width: 768px) {
-		.ruler-corner {
-			display: grid;
-		}
-
-		.ruler-top {
-			display: flex;
-			align-items: center;
-		}
-
-		.ruler-left {
-			display: flex;
-			align-items: flex-start;
-		}
-	}
-
-	/* On mobile, make the main area span both columns */
 	.cartograph-main {
-		grid-column: 1 / -1;
 		padding: var(--spacing-6);
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-4);
-	}
-
-	@media (min-width: 768px) {
-		.cartograph-main {
-			grid-column: 2;
-		}
 	}
 
 	.cartograph-controls {

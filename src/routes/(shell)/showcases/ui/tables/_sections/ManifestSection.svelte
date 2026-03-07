@@ -6,10 +6,7 @@
 		Row as TableRow,
 		HeaderCell as TableHeaderCell,
 		Cell as TableCell,
-		Badge,
-		TickMarks,
-		GeometricMark,
-		Divider
+		Badge
 	} from '$lib/components';
 	import { EMPLOYEES, DEPARTMENTS, type Department, type Status } from '../_data/mock-data';
 
@@ -41,18 +38,11 @@
 </script>
 
 <section id="tbl-manifest" class="section">
-	<h2 class="section-title">
-		<GeometricMark shape="diamond" size={12} class="inline-block mr-2 align-middle" />
-		Manifest
-	</h2>
+	<h2 class="section-title">Manifest</h2>
 	<p class="section-description">Expedition log with text search and department filtering. Results update live as you type.</p>
 
 	<div class="demos">
 		<div class="manifest-layout">
-			<div class="manifest-ticks">
-				<TickMarks orientation="vertical" count={15} majorEvery={5} />
-			</div>
-
 			<div class="manifest-main">
 				<div class="manifest-controls">
 					<input
@@ -73,8 +63,6 @@
 						{/each}
 					</select>
 				</div>
-
-				<Divider motif="crosshair" />
 
 				<p class="result-count" aria-live="polite">
 					{filtered.length} {filtered.length === 1 ? 'record' : 'records'} found
@@ -147,23 +135,9 @@
 	}
 
 	.manifest-layout {
-		display: flex;
-		gap: var(--spacing-4);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
 		padding: var(--spacing-6);
-	}
-
-	.manifest-ticks {
-		display: none;
-		flex-shrink: 0;
-		padding-top: var(--spacing-4);
-	}
-
-	@media (min-width: 768px) {
-		.manifest-ticks {
-			display: block;
-		}
 	}
 
 	.manifest-main {
