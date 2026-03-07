@@ -54,7 +54,7 @@
 			<Button variant="outline" onclick={() => (paletteOpen = true)}>
 				<span class="i-lucide-search h-4 w-4" />
 				Open Command Palette
-				<kbd class="ml-2 rounded bg-muted/20 px-1.5 py-0.5 text-xs text-muted">Ctrl+K</kbd>
+				<kbd class="shortcut-hint">Ctrl+K</kbd>
 			</Button>
 		</DemoCard>
 
@@ -100,6 +100,15 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-6);
+	}
+
+	.shortcut-hint {
+		margin-left: var(--spacing-2);
+		padding: 0.125rem 0.375rem;
+		border-radius: var(--radius-sm);
+		font-size: var(--text-fluid-xs);
+		background: color-mix(in srgb, var(--color-muted) 20%, transparent);
+		color: var(--color-muted);
 	}
 
 	.inline-command-wrapper {

@@ -79,7 +79,7 @@
 				class="flex flex-col"
 				bind:inputValue
 			>
-				<div class="flex items-center gap-3 border-b border-border px-4 py-3">
+				<div class="cp-input-row flex items-center gap-3 px-4 py-3">
 					<span class="i-lucide-search h-5 w-5 text-muted shrink-0" />
 					<CommandPrimitive.Input
 						{placeholder}
@@ -190,8 +190,15 @@
 {/snippet}
 
 <style>
+	.cp-input-row {
+		background-color: var(--color-input-bg);
+		border-radius: var(--radius-md) var(--radius-md) 0 0;
+		border: 1px solid var(--color-input-border);
+	}
+
 	.cp-kbd {
 		background-color: color-mix(in srgb, var(--color-muted) 20%, transparent);
+		border: 1px solid color-mix(in srgb, var(--color-muted) 30%, transparent);
 	}
 
 	.cp-hint {

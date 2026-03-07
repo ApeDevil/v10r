@@ -5,7 +5,7 @@ export const commandRootVariants = cva([
 ]);
 
 export const commandInputVariants = cva([
-	'flex w-full bg-transparent',
+	'flex w-full bg-transparent border-none',
 	'text-fluid-base text-fg placeholder:text-muted',
 	'outline-none disabled:opacity-50',
 ]);

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { DemoCard } from '../_components';
-	import { Dialog, Drawer, Button, Tabs, Accordion, ScrollArea } from '$lib/components';
+	import { Dialog, Drawer, Button, Tabs, Accordion } from '$lib/components';
 	import { Tooltip, Popover } from '$lib/components';
 
 	let dialogOpen = $state(false);
@@ -122,19 +122,6 @@
 				/>
 			</div>
 		</DemoCard>
-
-		<!-- Scroll Area -->
-		<DemoCard title="Scroll Area" description="Custom scrollbar container">
-			<div class="scroll-area-demo">
-				<ScrollArea class="h-48 w-full rounded-md border border-border">
-					<div class="scroll-area-content">
-						{#each Array(20) as _, i}
-							<div class="scroll-item">Scrollable item {i + 1}</div>
-						{/each}
-					</div>
-				</ScrollArea>
-			</div>
-		</DemoCard>
 	</div>
 </section>
 
@@ -229,23 +216,4 @@
 		line-height: 1.6;
 	}
 
-	.scroll-area-demo {
-		width: 100%;
-		max-width: 25rem;
-	}
-
-	.scroll-area-content {
-		padding: var(--spacing-4);
-	}
-
-	.scroll-item {
-		padding: var(--spacing-2) 0;
-		border-bottom: 1px solid var(--color-border);
-		font-size: var(--text-fluid-sm);
-		color: var(--color-fg);
-	}
-
-	.scroll-item:last-child {
-		border-bottom: none;
-	}
 </style>

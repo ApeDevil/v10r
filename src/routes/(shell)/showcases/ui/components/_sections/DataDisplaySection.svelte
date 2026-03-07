@@ -1,12 +1,6 @@
 <script lang="ts">
 	import { DemoCard, VariantGrid } from '../_components';
 	import {
-		Table,
-		Header as TableHeader,
-		Body as TableBody,
-		Row as TableRow,
-		HeaderCell as TableHeaderCell,
-		Cell as TableCell,
 		Badge,
 		Tag,
 		TagSelectable,
@@ -18,14 +12,9 @@
 		SkeletonAvatar,
 		Kbd,
 		Progress,
-		Spinner
+		Spinner,
+		ScrollArea
 	} from '$lib/components';
-
-	const sampleData = [
-		{ id: '1', name: 'Alice Johnson', email: 'alice@example.com', role: 'Admin' },
-		{ id: '2', name: 'Bob Smith', email: 'bob@example.com', role: 'User' },
-		{ id: '3', name: 'Carol Williams', email: 'carol@example.com', role: 'Editor' }
-	];
 
 	let progressValue = $state(65);
 
@@ -48,30 +37,6 @@
 	<p class="section-description">Components for presenting data and status information.</p>
 
 	<div class="demos">
-		<!-- Table -->
-		<DemoCard title="Table" description="Data table with headers">
-			<div class="table-container">
-				<Table>
-					<TableHeader>
-						<TableRow>
-							<TableHeaderCell>Name</TableHeaderCell>
-							<TableHeaderCell>Email</TableHeaderCell>
-							<TableHeaderCell>Role</TableHeaderCell>
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{#each sampleData as user}
-							<TableRow>
-								<TableCell>{user.name}</TableCell>
-								<TableCell>{user.email}</TableCell>
-								<TableCell>{user.role}</TableCell>
-							</TableRow>
-						{/each}
-					</TableBody>
-				</Table>
-			</div>
-		</DemoCard>
-
 		<!-- Badge Variants -->
 		<DemoCard title="Badge Variants" description="Status indicators">
 			<VariantGrid layout="row">
@@ -235,6 +200,32 @@
 				</div>
 			</div>
 		</DemoCard>
+
+		<!-- Scroll Area -->
+		<DemoCard title="Scroll Area" description="Custom scrollbar overlay for scrollable content">
+			<VariantGrid>
+				<div class="scroll-area-demo">
+					<span class="scroll-area-label">Vertical</span>
+					<ScrollArea class="h-48 w-full rounded-md border border-border">
+						<div class="scroll-area-content">
+							{#each Array.from({ length: 30 }, (_, i) => i + 1) as item}
+								<div class="scroll-area-item">Item {item}</div>
+							{/each}
+						</div>
+					</ScrollArea>
+				</div>
+				<div class="scroll-area-demo">
+					<span class="scroll-area-label">Horizontal</span>
+					<ScrollArea orientation="horizontal" class="w-full rounded-md border border-border">
+						<div class="scroll-area-content-h">
+							{#each Array.from({ length: 20 }, (_, i) => i + 1) as item}
+								<div class="scroll-area-chip">Tag {item}</div>
+							{/each}
+						</div>
+					</ScrollArea>
+				</div>
+			</VariantGrid>
+		</DemoCard>
 	</div>
 </section>
 
@@ -262,11 +253,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-6);
-	}
-
-	.table-container {
-		width: 100%;
-		overflow-x: auto;
 	}
 
 	.progress-demos {
@@ -338,5 +324,49 @@
 		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);
 		font-style: italic;
+	}
+
+	.scroll-area-demo {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-2);
+		width: 100%;
+	}
+
+	.scroll-area-label {
+		font-size: var(--text-fluid-sm);
+		color: var(--color-muted);
+		font-weight: 500;
+	}
+
+	.scroll-area-content {
+		padding: var(--spacing-3);
+	}
+
+	.scroll-area-item {
+		padding: var(--spacing-2) var(--spacing-3);
+		border-bottom: 1px solid var(--color-border);
+		font-size: var(--text-fluid-sm);
+	}
+
+	.scroll-area-item:last-child {
+		border-bottom: none;
+	}
+
+	.scroll-area-content-h {
+		display: flex;
+		gap: var(--spacing-2);
+		padding: var(--spacing-3);
+		width: max-content;
+	}
+
+	.scroll-area-chip {
+		flex-shrink: 0;
+		padding: var(--spacing-1) var(--spacing-3);
+		border-radius: 9999px;
+		background: var(--color-muted);
+		color: var(--color-bg);
+		font-size: var(--text-fluid-sm);
+		white-space: nowrap;
 	}
 </style>

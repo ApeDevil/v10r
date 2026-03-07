@@ -3,13 +3,11 @@
 	import FeedbackSection from '../_sections/FeedbackSection.svelte';
 	import ContentSection from '../_sections/ContentSection.svelte';
 	import NavigationSection from '../_sections/NavigationSection.svelte';
-	import FormsSection from '../_sections/FormsSection.svelte';
 
 	const sections = [
 		{ id: 'comp-feedback', label: 'Feedback' },
 		{ id: 'comp-content', label: 'Content' },
-		{ id: 'comp-navigation', label: 'Navigation' },
-		{ id: 'comp-forms', label: 'Forms' }
+		{ id: 'comp-navigation', label: 'Navigation' }
 	];
 </script>
 
@@ -23,5 +21,4 @@
 	<FeedbackSection />
 	<ContentSection />
 	<NavigationSection />
-	<FormsSection />
 </main>

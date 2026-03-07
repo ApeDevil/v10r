@@ -46,7 +46,7 @@
 
 <CommandPrimitive.Root class={cn(commandRootVariants(), className)}>
 	{#if !hideInput}
-		<div class="flex items-center gap-3 border-b border-border px-3 py-2">
+		<div class="cmd-input-row flex items-center gap-3 px-4 py-2">
 			<span class="i-lucide-search h-4 w-4 text-muted shrink-0" />
 			<CommandPrimitive.Input
 				{placeholder}
@@ -124,6 +124,12 @@
 </CommandPrimitive.Root>
 
 <style>
+	.cmd-input-row {
+		background-color: var(--color-input-bg);
+		border-radius: var(--radius-md) var(--radius-md) 0 0;
+		border: 1px solid var(--color-input-border);
+	}
+
 	/* UnoCSS can't extract opacity modifiers with CSS variables */
 	:global([data-command-item][data-highlighted]) {
 		background-color: color-mix(in srgb, var(--color-muted) 10%, transparent);

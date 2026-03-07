@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { DemoCard, VariantGrid } from '../_components';
-	import { Button, DropdownMenu, ContextMenu } from '$lib/components';
+	import { Button } from '$lib/components';
 </script>
 
 <section id="prim-actions" class="section">
@@ -38,42 +38,6 @@
 			</VariantGrid>
 		</DemoCard>
 
-		<!-- Dropdown Menu -->
-		<DemoCard title="Dropdown Menu" description="Menu with actions">
-			<DropdownMenu
-				items={[
-					{ label: 'Profile', icon: 'i-lucide-user' },
-					{ label: 'Settings', icon: 'i-lucide-settings' },
-					{ separator: true },
-					{ label: 'Logout', icon: 'i-lucide-log-out' }
-				]}
-			>
-				{#snippet trigger({ props })}
-					<Button variant="outline" {...props}>
-						Open Menu
-						<span class="i-lucide-chevron-down h-4 w-4 ml-1" />
-					</Button>
-				{/snippet}
-			</DropdownMenu>
-		</DemoCard>
-
-		<!-- Context Menu -->
-		<DemoCard title="Context Menu" description="Right-click triggered menu">
-			<ContextMenu
-				items={[
-					{ label: 'Copy', icon: 'i-lucide-copy', shortcut: 'Ctrl+C' },
-					{ label: 'Paste', icon: 'i-lucide-clipboard', shortcut: 'Ctrl+V' },
-					{ separator: true },
-					{ label: 'Delete', icon: 'i-lucide-trash-2' }
-				]}
-			>
-				{#snippet trigger({ props })}
-					<div {...props} class="context-trigger">
-						Right-click here
-					</div>
-				{/snippet}
-			</ContextMenu>
-		</DemoCard>
 	</div>
 </section>
 
@@ -103,22 +67,4 @@
 		gap: var(--spacing-6);
 	}
 
-	.context-trigger {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 100%;
-		height: 8rem;
-		border: 2px dashed var(--color-border);
-		border-radius: var(--radius-md);
-		color: var(--color-muted);
-		font-size: var(--text-fluid-sm);
-		cursor: context-menu;
-		transition: border-color var(--duration-fast);
-	}
-
-	.context-trigger:hover {
-		border-color: var(--color-primary);
-		color: var(--color-fg);
-	}
 </style>

@@ -1,22 +1,12 @@
 <script lang="ts">
 	import { DemoCard } from '../_components';
 	import { Card, LinkCard, Pagination, ConfirmDialog, Button, Carousel, CarouselItem } from '$lib/components';
-	import { SimpleChart } from '$lib/components/viz/chart/simple';
 
 	let currentPage = $state(1);
 	const totalPages = 10;
 
 	let confirmOpen = $state(false);
 	let confirmResult = $state<boolean | null>(null);
-
-	const chartData = [
-		{ label: 'Jan', value: 40 },
-		{ label: 'Feb', value: 65 },
-		{ label: 'Mar', value: 45 },
-		{ label: 'Apr', value: 80 },
-		{ label: 'May', value: 55 },
-		{ label: 'Jun', value: 70 }
-	];
 </script>
 
 <section id="comp-content" class="section">
@@ -121,18 +111,6 @@
 						</CarouselItem>
 					</Carousel>
 				</div>
-			</div>
-		</DemoCard>
-
-		<!-- Chart -->
-		<DemoCard title="Chart" description="Data visualization (bar, line, area)">
-			<div class="chart-demo">
-				<SimpleChart
-					type="bar"
-					data={chartData}
-					width={500}
-					height={250}
-				/>
 			</div>
 		</DemoCard>
 
@@ -260,11 +238,6 @@
 	.slide-2 { background: var(--color-info); }
 	.slide-3 { background: var(--color-warning); }
 	.slide-4 { background: var(--color-success); }
-
-	.chart-demo {
-		width: 100%;
-		overflow-x: auto;
-	}
 
 	.pagination-demo {
 		display: flex;
