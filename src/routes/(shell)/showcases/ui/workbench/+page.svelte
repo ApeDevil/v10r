@@ -97,7 +97,7 @@
 </script>
 
 <svelte:head>
-	<title>Dock Panels - UI Showcase - Velociraptor</title>
+	<title>Workbench - UI Showcase - Velociraptor</title>
 </svelte:head>
 
 <main class="content">

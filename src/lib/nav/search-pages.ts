@@ -30,7 +30,7 @@ const REDIRECT_HREFS = new Set([
 	'/showcases/db/cache',
 	'/showcases/ai/retrieval',
 	'/showcases/ui/components',
-	'/showcases/ui/panes',
+	'/showcases/ui/splits',
 	'/showcases/ui/decorative',
 ]);
 

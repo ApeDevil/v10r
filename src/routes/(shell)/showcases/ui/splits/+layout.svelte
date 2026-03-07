@@ -5,10 +5,10 @@
 
 	let { children }: { children: Snippet } = $props();
 
-	const tabs = getShowcaseSubTabs('/showcases/ui/panes');
+	const tabs = getShowcaseSubTabs('/showcases/ui/splits');
 </script>
 
-<TabNav {tabs} ariaLabel="Pane types" />
+<TabNav {tabs} ariaLabel="Split types" />
 
 <div class="pt-6">
 	{@render children()}

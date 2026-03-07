@@ -4,7 +4,7 @@
 </script>
 
 <svelte:head>
-	<title>Resizable Panes - UI Showcase - Velociraptor</title>
+	<title>Resizable Splits - UI Showcase - Velociraptor</title>
 </svelte:head>
 
 <main class="content">

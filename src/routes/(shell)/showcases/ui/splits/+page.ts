@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
 
 export const load = () => {
-	redirect(303, '/showcases/ui/panes/resizable');
+	redirect(303, '/showcases/ui/splits/resizable');
 };

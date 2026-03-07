@@ -62,14 +62,14 @@ export const showcases: ShowcaseCard[] = [
 			{ label: 'Tables', href: '/showcases/ui/tables' },
 			{ label: 'Menus', href: '/showcases/ui/menus' },
 			{
-				label: 'Panes',
-				href: '/showcases/ui/panes',
+				label: 'Splits',
+				href: '/showcases/ui/splits',
 				children: [
-					{ label: 'Resizable', href: '/showcases/ui/panes/resizable' },
-					{ label: 'Reorderable', href: '/showcases/ui/panes/reorderable' },
-					{ label: 'Panels', href: '/showcases/ui/panes/panels' },
+					{ label: 'Resizable', href: '/showcases/ui/splits/resizable' },
+					{ label: 'Reorderable', href: '/showcases/ui/splits/reorderable' },
 				],
 			},
+			{ label: 'Workbench', href: '/showcases/ui/workbench' },
 			{
 				label: 'Decorative',
 				href: '/showcases/ui/decorative',

@@ -35,7 +35,7 @@
 </script>
 
 <svelte:head>
-	<title>Reorderable Panes - UI Showcase - Velociraptor</title>
+	<title>Reorderable Splits - UI Showcase - Velociraptor</title>
 </svelte:head>
 
 <main class="content">
