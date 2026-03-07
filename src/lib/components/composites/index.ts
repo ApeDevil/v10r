@@ -25,3 +25,6 @@ export * from './reorderable-panes';
 export * from './dock';
 export * from './notifications';
 export * from './diag-grid';
+export * from './command';
+export * from './command-palette';
+export * from './selection-bar';

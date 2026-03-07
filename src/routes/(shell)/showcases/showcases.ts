@@ -60,6 +60,7 @@ export const showcases: ShowcaseCard[] = [
 			},
 			{ label: 'Layouts', href: '/showcases/ui/layouts' },
 			{ label: 'Tables', href: '/showcases/ui/tables' },
+			{ label: 'Menus', href: '/showcases/ui/menus' },
 			{
 				label: 'Panes',
 				href: '/showcases/ui/panes',
