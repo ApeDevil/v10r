@@ -30,6 +30,8 @@ import {
 	typeSpecimen,
 	typeSpecimenHistory,
 	auditLog,
+	// app
+	userPreferences,
 } from './index';
 
 // ── Auth ─────────────────────────────────────────────────────────────
@@ -164,6 +166,12 @@ export const auditLogRelations = relations(auditLog, ({ one }) => ({
 	}),
 }));
 
+// ── App ─────────────────────────────────────────────────────────────
+
+export const userPreferencesRelations = relations(userPreferences, ({ one }) => ({
+	user: one(user, { fields: [userPreferences.userId], references: [user.id] }),
+}));
+
 // ── User hub (the big one) ──────────────────────────────────────────
 
 export const userRelations = relations(user, ({ one, many }) => ({
@@ -182,4 +190,6 @@ export const userRelations = relations(user, ({ one, many }) => ({
 	telegramAccount: one(userTelegramAccounts),
 	discordAccount: one(userDiscordAccounts),
 	telegramVerificationTokens: many(telegramVerificationTokens),
+	// app
+	preferences: one(userPreferences),
 }));

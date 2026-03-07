@@ -68,16 +68,19 @@ export function createThemeState(initial: { mode: ThemeMode; accent: AccentColor
 
 		setMode(mode: ThemeMode) {
 			state.mode = mode;
-			// Persist to cookie (for SSR)
 			if (browser) {
 				document.cookie = `theme=${mode};path=/;max-age=31536000;SameSite=Lax`;
+				// Fire-and-forget DB persistence for authenticated users
+				fetch('/api/preferences', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ theme: mode }),
+				}).catch(() => {});
 			}
-			// TODO: Persist to DB via API when user management is implemented
 		},
 
 		setAccent(accent: AccentColor) {
 			state.accent = accent;
-			// TODO: Persist to DB via API when user management is implemented
 		},
 	};
 }

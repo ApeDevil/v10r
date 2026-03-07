@@ -5,3 +5,4 @@ export * from './rag';
 export * from './jobs';
 export * from './notifications';
 export * from './analytics';
+export * from './app';
