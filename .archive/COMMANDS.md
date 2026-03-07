@@ -32,7 +32,7 @@ podman ps
 podman ps -a 
 
 
-# DB neon
+# --------------------------------------------- DB neon
 ## migrations (schema push)
 podman exec -it v10r bun run drizzle-kit push
 ### neon rag
