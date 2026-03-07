@@ -548,8 +548,11 @@
 			<div class="layout-list">
 				{#each Object.entries(layout) as [key, value]}
 					<div class="layout-sample">
-						<span class="spacing-key">{key}</span>
-						<span class="spacing-value">{value}</span>
+						<div class="layout-bar" style="max-width: {value};"></div>
+						<div class="breakpoint-info">
+							<span class="spacing-key">{key}</span>
+							<span class="spacing-value">{value}</span>
+						</div>
 					</div>
 				{/each}
 			</div>
@@ -557,8 +560,11 @@
 			<div class="layout-list">
 				{#each Object.entries(sidebar) as [key, value]}
 					<div class="layout-sample">
-						<span class="spacing-key">{key}</span>
-						<span class="spacing-value">{value}</span>
+						<div class="layout-bar" style="max-width: {value};"></div>
+						<div class="breakpoint-info">
+							<span class="spacing-key">{key}</span>
+							<span class="spacing-value">{value}</span>
+						</div>
 					</div>
 				{/each}
 			</div>
@@ -926,11 +932,19 @@
 
 	.layout-sample {
 		display: flex;
-		justify-content: space-between;
 		align-items: center;
+		gap: var(--spacing-4);
 		padding: var(--spacing-3) var(--spacing-4);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);
+	}
+
+	.layout-bar {
+		height: 0.5rem;
+		width: 100%;
+		background: var(--color-primary);
+		border-radius: var(--radius-full);
+		flex-shrink: 1;
 	}
 
 	@media (max-width: 640px) {
