@@ -4,6 +4,7 @@
 	import { cn } from '$lib/utils/cn';
 	import { chartContainerVariants, type ChartContainerVariants } from '../../_shared/chart-container';
 	import { buildChartTheme } from '../../_shared/chart-theme';
+	import { onThemeChange, resolveDatasetColors } from '../../_shared/theme-bridge';
 	import type { Chart as ChartJS, ChartData, ChartOptions } from 'chart.js';
 
 	interface Props {
@@ -25,8 +26,19 @@
 	let canvasEl: HTMLCanvasElement | undefined = $state();
 	let chart: ChartJS<'bubble'> | undefined = $state();
 	let ready = $state(false);
+	let unsub: (() => void) | undefined;
+
+	function updateChart(d: ChartData<'bubble'>, opts: ChartOptions<'bubble'>, animate = true) {
+		if (!chart) return;
+		chart.data = resolveDatasetColors(d);
+		const t = buildChartTheme();
+		Object.assign(chart.options, t.defaults, opts);
+		chart.update(animate ? undefined : 'none');
+	}
 
 	function cleanup() {
+		unsub?.();
+		unsub = undefined;
 		chart?.destroy();
 		chart = undefined;
 	}
@@ -43,7 +55,7 @@
 
 		chart = new Chart(canvasEl, {
 			type: 'bubble',
-			data,
+			data: resolveDatasetColors(data),
 			options: {
 				responsive: true,
 				maintainAspectRatio: true,
@@ -51,6 +63,8 @@
 				...options,
 			},
 		});
+
+		unsub = onThemeChange(() => updateChart(data, options, false));
 
 		requestAnimationFrame(() => chart?.resize());
 		ready = true;
@@ -60,13 +74,7 @@
 		const _data = data;
 		const _options = options;
 
-		untrack(() => {
-			if (!chart) return;
-			chart.data = _data;
-			const theme = buildChartTheme();
-			Object.assign(chart.options, theme.defaults, _options);
-			chart.update();
-		});
+		untrack(() => updateChart(_data, _options));
 	});
 </script>
 

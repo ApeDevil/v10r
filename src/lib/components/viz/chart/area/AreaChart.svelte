@@ -4,6 +4,7 @@
 	import { cn } from '$lib/utils/cn';
 	import { chartContainerVariants, type ChartContainerVariants } from '../../_shared/chart-container';
 	import { buildChartTheme } from '../../_shared/chart-theme';
+	import { onThemeChange, resolveDatasetColors } from '../../_shared/theme-bridge';
 	import type { Chart as ChartJS, ChartData, ChartOptions } from 'chart.js';
 
 	interface Props {
@@ -25,14 +26,7 @@
 	let canvasEl: HTMLCanvasElement | undefined = $state();
 	let chart: ChartJS<'line'> | undefined = $state();
 	let ready = $state(false);
-
-	function cleanup() {
-		chart?.destroy();
-		chart = undefined;
-	}
-
-	beforeNavigate(cleanup);
-	onDestroy(cleanup);
+	let unsub: (() => void) | undefined;
 
 	/** Ensure each dataset has fill enabled */
 	function applyFill(chartData: ChartData<'line'>): ChartData<'line'> {
@@ -45,6 +39,24 @@
 		};
 	}
 
+	function updateChart(d: ChartData<'line'>, opts: ChartOptions<'line'>, animate = true) {
+		if (!chart) return;
+		chart.data = resolveDatasetColors(applyFill(d));
+		const t = buildChartTheme();
+		Object.assign(chart.options, t.defaults, opts);
+		chart.update(animate ? undefined : 'none');
+	}
+
+	function cleanup() {
+		unsub?.();
+		unsub = undefined;
+		chart?.destroy();
+		chart = undefined;
+	}
+
+	beforeNavigate(cleanup);
+	onDestroy(cleanup);
+
 	onMount(async () => {
 		const { registerLineChart } = await import('../../_shared/register');
 		const Chart = await registerLineChart();
@@ -54,7 +66,7 @@
 
 		chart = new Chart(canvasEl, {
 			type: 'line',
-			data: applyFill(data),
+			data: resolveDatasetColors(applyFill(data)),
 			options: {
 				responsive: true,
 				maintainAspectRatio: true,
@@ -62,6 +74,8 @@
 				...options,
 			},
 		});
+
+		unsub = onThemeChange(() => updateChart(data, options, false));
 
 		requestAnimationFrame(() => chart?.resize());
 		ready = true;
@@ -71,13 +85,7 @@
 		const _data = data;
 		const _options = options;
 
-		untrack(() => {
-			if (!chart) return;
-			chart.data = applyFill(_data);
-			const theme = buildChartTheme();
-			Object.assign(chart.options, theme.defaults, _options);
-			chart.update();
-		});
+		untrack(() => updateChart(_data, _options));
 	});
 </script>
 

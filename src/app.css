@@ -99,17 +99,17 @@
 	--radius-full: 9999px;
 
 	/* Chart series colors (light mode) */
-	--chart-1: #3b82f6;
-	--chart-2: #10b981;
-	--chart-3: #f59e0b;
-	--chart-4: #8b5cf6;
-	--chart-5: #ef4444;
-	--chart-6: #06b6d4;
-	--chart-7: #ec4899;
-	--chart-8: #84cc16;
+	--chart-1: #2563eb;
+	--chart-2: #059669;
+	--chart-3: #d97706;
+	--chart-4: #7c3aed;
+	--chart-5: #ea580c;
+	--chart-6: #0891b2;
+	--chart-7: #db2777;
+	--chart-8: #65a30d;
 
 	/* Chart infrastructure */
-	--chart-grid: #e5e7eb;
+	--chart-grid: #c8cdd6;
 	--chart-axis: #6b7280;
 	--chart-label: var(--color-muted);
 	--chart-bg: var(--surface-1);
@@ -201,9 +201,9 @@
 	/* Chart series colors (dark mode -- lighter tints) */
 	--chart-1: #60a5fa;
 	--chart-2: #34d399;
-	--chart-3: #fbbf24;
+	--chart-3: #dba32a;
 	--chart-4: #a78bfa;
-	--chart-5: #f87171;
+	--chart-5: #f97316;
 	--chart-6: #22d3ee;
 	--chart-7: #f472b6;
 	--chart-8: #a3e635;

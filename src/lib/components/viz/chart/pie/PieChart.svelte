@@ -4,6 +4,7 @@
 	import { cn } from '$lib/utils/cn';
 	import { chartContainerVariants, type ChartContainerVariants } from '../../_shared/chart-container';
 	import { buildChartTheme } from '../../_shared/chart-theme';
+	import { getChartInfraColors, onThemeChange, resolveDatasetColors } from '../../_shared/theme-bridge';
 	import type { Chart as ChartJS, ChartData, ChartOptions } from 'chart.js';
 
 	interface Props {
@@ -27,8 +28,31 @@
 	let canvasEl: HTMLCanvasElement | undefined = $state();
 	let chart: ChartJS<'pie' | 'doughnut'> | undefined = $state();
 	let ready = $state(false);
+	let unsub: (() => void) | undefined;
+
+	/** Set slice borderColor to chart bg so gaps blend with the surface */
+	function applySliceBorders<T extends { datasets: Record<string, unknown>[] }>(chartData: T): T {
+		const bg = getChartInfraColors().bg;
+		return {
+			...chartData,
+			datasets: chartData.datasets.map((ds) => ({ ...ds, borderColor: bg })),
+		};
+	}
+
+	function updateChart(d: ChartData<'pie'>, opts: ChartOptions<'pie'>, animate = true) {
+		if (!chart) return;
+		chart.data = applySliceBorders(resolveDatasetColors(d));
+		const t = buildChartTheme();
+		Object.assign(chart.options, {
+			plugins: { ...t.defaults.plugins, ...opts.plugins },
+			...opts,
+		});
+		chart.update(animate ? undefined : 'none');
+	}
 
 	function cleanup() {
+		unsub?.();
+		unsub = undefined;
 		chart?.destroy();
 		chart = undefined;
 	}
@@ -45,7 +69,7 @@
 
 		chart = new Chart(canvasEl, {
 			type: doughnut ? 'doughnut' : 'pie',
-			data,
+			data: applySliceBorders(resolveDatasetColors(data)),
 			options: {
 				responsive: true,
 				maintainAspectRatio: true,
@@ -57,6 +81,8 @@
 			},
 		}) as ChartJS<'pie' | 'doughnut'>;
 
+		unsub = onThemeChange(() => updateChart(data, options, false));
+
 		requestAnimationFrame(() => chart?.resize());
 		ready = true;
 	});
@@ -66,16 +92,7 @@
 		const _data = data;
 		const _options = options;
 
-		untrack(() => {
-			if (!chart) return;
-			chart.data = _data;
-			const theme = buildChartTheme();
-			Object.assign(chart.options, {
-				plugins: { ...theme.defaults.plugins, ..._options.plugins },
-				..._options,
-			});
-			chart.update();
-		});
+		untrack(() => updateChart(_data, _options));
 	});
 </script>
 

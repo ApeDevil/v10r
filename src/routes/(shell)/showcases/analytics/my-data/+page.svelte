@@ -177,6 +177,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-6);
+		min-width: 0;
 	}
 
 	.reveal-section {
@@ -215,6 +216,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-4);
+		min-width: 0;
 	}
 
 	.tier-card.active {
@@ -313,6 +315,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-4);
+		min-width: 0;
 	}
 
 	.hash-demo h3 {
@@ -337,7 +340,7 @@
 	.hash-input,
 	.hash-output {
 		flex: 1;
-		min-width: 200px;
+		min-width: 0;
 		padding: var(--spacing-3) var(--spacing-4);
 		border-radius: var(--radius-md);
 		background: var(--color-subtle);
@@ -358,6 +361,7 @@
 	.hash-output code {
 		font-size: var(--text-fluid-sm);
 		word-break: break-all;
+		overflow-wrap: anywhere;
 	}
 
 	.hash-result {
