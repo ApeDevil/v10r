@@ -17,6 +17,7 @@
 		"db:rag-pre": "bun run scripts/setup-rag.ts pre",
 		"db:rag-post": "bun run scripts/setup-rag.ts post",
 		"db:neo4j-setup": "bun run scripts/setup-neo4j.ts",
+		"db:setup": "bun run db:rag-pre && bun run db:migrate && bun run db:rag-post && bun run db:neo4j-setup",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
 		"format": "biome format --write .",

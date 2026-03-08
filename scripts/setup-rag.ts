@@ -1,13 +1,16 @@
 /**
  * RAG schema setup — two phases.
  *
- * Phase 1 (pre-push):  pgvector extension + rag schema — must run BEFORE drizzle-kit push
- * Phase 2 (post-push): tsvector column, HNSW + GIN indexes, seed data — must run AFTER push
+ * Phase 1 (pre-migrate):  pgvector extension — must run BEFORE db:migrate
+ * Phase 2 (post-migrate): tsvector column, HNSW + GIN indexes, seed data — must run AFTER migrate
  *
- * Usage:
+ * Usage (standalone):
  *   bun run db:rag-pre    # phase 1
- *   bun run db:push       # drizzle-kit push
+ *   bun run db:migrate    # apply migrations
  *   bun run db:rag-post   # phase 2
+ *
+ * Or use the composite command:
+ *   bun run db:setup      # runs all phases in order
  */
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
@@ -28,15 +31,12 @@ const db = drizzle(pool);
 
 const phase = process.argv[2];
 
-/** Phase 1: prerequisites for drizzle-kit push. */
+/** Phase 1: extensions required before migration. */
 async function prePush() {
 	console.log('[rag:pre] Enabling pgvector extension...');
 	await db.execute(sql`CREATE EXTENSION IF NOT EXISTS vector`);
 
-	console.log('[rag:pre] Creating rag schema...');
-	await db.execute(sql`CREATE SCHEMA IF NOT EXISTS rag`);
-
-	console.log('[rag:pre] Done. Now run: bun run db:push');
+	console.log('[rag:pre] Done. Now run: bun run db:migrate');
 }
 
 /** Phase 2: features drizzle-kit can't express. */

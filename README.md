@@ -25,6 +25,15 @@ Each layer evolves from and is based on the previous:
 3. **[blueprint/](./docs/blueprint/)** — Implementation specs & strategy based on stack
 
 
+## Getting Started
+
+```bash
+cp .env.example .env          # fill in DATABASE_URL
+podman compose up -d           # start container
+podman exec v10r bun run db:setup   # bootstrap DB (extensions → migrate → RAG → Neo4j)
+podman exec v10r bun run dev --host 0.0.0.0
+```
+
 ## Local Development
 
 Clean host system + portable setup
@@ -97,6 +106,7 @@ The `docs/` folder uses an AI-optimized navigation structure. Each directory has
 | `vite.config.ts` | Vite config (HMR for containers) |
 | `svelte.config.js` | SvelteKit config |
 | `tsconfig.json` | TypeScript config |
-| `drizzle.config.ts` | Drizzle ORM config (push-only workflow — `drizzle/` is gitignored, generated transiently for tests) |
+| `drizzle/` | Migration SQL files (committed, applied via `db:migrate`) |
+| `drizzle.config.ts` | Drizzle ORM config |
 | `CLAUDE.md` | AI agent instructions |
 | `.claude/` | Claude Code agents and skills |

@@ -13,7 +13,7 @@ podman restart v10r
 psv(podman stop v10r)
 podman-compose down
 
-# build
+# --------------------------build
 podman compose build
 
 # Kill
@@ -32,7 +32,10 @@ podman ps
 podman ps -a 
 
 
-# --------------------------------------------- DB neon
+# --------------------------------------------- DB
+podman exec v10r bun run db:generate
+podman exec v10r bun run db:migrate
+podman exec v10r bun run db:push
 ## migrations (schema push)
 podman exec -it v10r bun run drizzle-kit push
 ### neon rag
