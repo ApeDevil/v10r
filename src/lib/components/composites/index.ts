@@ -6,7 +6,6 @@ export * from './card';
 export * from './form-field';
 export * from './confirm-dialog';
 export * from './toast';
-export * from './quick-search';
 export * from './chatbot';
 export * from './alert';
 export * from './pagination';

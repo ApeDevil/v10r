@@ -8,7 +8,6 @@ import {
 	spacing,
 	colors,
 	zIndex,
-	duration,
 } from './src/lib/styles/tokens';
 
 export default defineConfig({

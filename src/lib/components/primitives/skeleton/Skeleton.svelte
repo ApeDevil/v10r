@@ -5,10 +5,11 @@
 		variant?: 'text' | 'circular' | 'rectangular';
 		width?: string;
 		height?: string;
+		rounded?: string;
 		class?: string;
 	}
 
-	let { variant = 'rectangular', width, height, class: className }: Props = $props();
+	let { variant = 'rectangular', width, height, rounded, class: className }: Props = $props();
 
 	const variantClasses = {
 		text: 'h-4 w-full rounded',
@@ -21,6 +22,7 @@
 	class={cn(
 		'animate-pulse bg-muted/30',
 		variantClasses[variant],
+		rounded && `rounded-${rounded}`,
 		className
 	)}
 	style:width

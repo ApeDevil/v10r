@@ -1,32 +1,5 @@
 import type { KnowledgeData, KnowledgeNode, KnowledgeEdge } from '$lib/types/knowledge';
 
-// ─── Node interfaces ────────────────────────────────────
-
-export interface TechnologyNode {
-	name: string;
-	version?: string;
-	description: string;
-	url?: string;
-	category: string;
-}
-
-export interface ConceptNode {
-	name: string;
-	description: string;
-}
-
-export interface LayerNode {
-	name: string;
-	description: string;
-	order: number;
-}
-
-export interface ShowcaseNode {
-	name: string;
-	path: string;
-	description: string;
-}
-
 // ─── Relationship types ─────────────────────────────────
 
 export const RELATIONSHIP_TYPES = [

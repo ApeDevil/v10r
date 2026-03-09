@@ -1,6 +1,6 @@
 <script lang="ts">
 	/**
-	 * Quick access triggers for QuickSearch + AI Assistant.
+	 * Quick access triggers for command palette + AI Assistant.
 	 * Persistent buttons that transition between rail (icon-only) and expanded (fake input) modes.
 	 * Icons stay mounted across expand/collapse to prevent DOM swap jank.
 	 */

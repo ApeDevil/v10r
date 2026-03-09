@@ -5,7 +5,7 @@
  * TRUNCATE + INSERT pattern, callable from form action.
  */
 import { sql } from 'drizzle-orm';
-import type { NeonHttpDatabase } from 'drizzle-orm/neon-http';
+import type { Database } from '$lib/server/db';
 
 // ── Seeded PRNG ──────────────────────────────────────────────────────────────
 
@@ -159,7 +159,7 @@ function formatTimestamp(d: Date): string {
 
 // ── Seed Function ────────────────────────────────────────────────────────────
 
-export async function reseedAnalytics(database: NeonHttpDatabase<any>) {
+export async function reseedAnalytics(database: Database) {
 	// Reset PRNG for deterministic output
 	rng = mulberry32(42);
 

@@ -12,3 +12,5 @@ neonConfig.poolQueryViaFetch = true;
 const pool = new Pool({ connectionString: DATABASE_URL });
 
 export const db = drizzle(pool, { schema: { ...schema, ...relations } });
+
+export type Database = typeof db;

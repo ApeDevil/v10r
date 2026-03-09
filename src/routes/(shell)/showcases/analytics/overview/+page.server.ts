@@ -55,7 +55,7 @@ export const load: PageServerLoad = async ({ url }) => {
 export const actions: Actions = {
 	reseed: async () => {
 		try {
-			await reseedAnalytics(db as any);
+			await reseedAnalytics(db);
 			return { success: true, message: 'Analytics data reset to seed values.' };
 		} catch (err) {
 			return fail(500, {

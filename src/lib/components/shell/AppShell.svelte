@@ -8,7 +8,8 @@
 		ShortcutsModal,
 		SessionMonitor,
 	} from '$lib/components/shell';
-	import { QuickSearch } from '$lib/components/composites/quick-search';
+	import { CommandPalette } from '$lib/components/composites/command-palette';
+import type { CommandPaletteItem } from '$lib/components/composites/command-palette';
 	import { Chatbot } from '$lib/components/composites/chatbot';
 	import { setSessionContext, type Session } from '$lib/state/session.svelte';
 	import { getModals } from '$lib/state/modals.svelte';
@@ -63,7 +64,7 @@
 		}))
 	);
 
-	const searchItems = $derived([
+	const searchItems = $derived<CommandPaletteItem[]>([
 		...pageSearchItems,
 		...panelSearchItems,
 		{ id: 'toggle-theme', type: 'action' as const, label: 'Toggle Theme', icon: 'i-lucide-sun-moon', action: () => theme.setMode(theme.isDark ? 'light' : 'dark') },
@@ -96,8 +97,8 @@
 <!-- Toast notifications -->
 <ToastContainer />
 
-<!-- Quick search (command palette) -->
-<QuickSearch bind:open={modals.quickSearchOpen} items={searchItems} />
+<!-- Command palette -->
+<CommandPalette bind:open={modals.quickSearchOpen} items={searchItems} />
 
 <!-- AI assistant chatbot -->
 <Chatbot bind:open={modals.aiAssistantOpen} />

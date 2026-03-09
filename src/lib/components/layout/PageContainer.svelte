@@ -3,7 +3,6 @@
 	 * PageContainer — Full-page wrapper with responsive `padding-inline` and `max-width`
 	 * from design tokens. Used for top-level page shells.
 	 *
-	 * For centering content sections within a page, use `Center` instead.
 	 */
 
 	import type { Snippet } from 'svelte';

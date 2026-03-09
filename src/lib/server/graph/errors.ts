@@ -47,24 +47,3 @@ export function classifyError(code: string): Neo4jErrorKind {
 	if (code.startsWith('Neo.TransientError')) return 'unavailable';
 	return 'unknown';
 }
-
-/** Classify an unknown error into a Neo4jError. */
-export function classifyNeo4jError(err: unknown): Neo4jError {
-	if (err instanceof Neo4jError) return err;
-
-	const message = err instanceof Error ? err.message : 'Unknown Neo4j error';
-	const code = (err as { code?: string })?.code;
-
-	if (code) {
-		return new Neo4jError(classifyError(code), message, code);
-	}
-
-	if (message.includes('timeout') || message.includes('ETIMEDOUT')) {
-		return new Neo4jError('timeout', message, 'TIMEOUT');
-	}
-	if (message.includes('fetch failed') || message.includes('ECONNREFUSED')) {
-		return new Neo4jError('unavailable', message, 'NETWORK');
-	}
-
-	return new Neo4jError('unknown', message);
-}

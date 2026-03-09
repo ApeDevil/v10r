@@ -46,7 +46,7 @@ export function createModalState() {
 			return modalData[key] as T;
 		},
 
-		/** Bindable getter/setter for QuickSearch dialog */
+		/** Bindable getter/setter for command palette dialog */
 		get quickSearchOpen() {
 			return activeModal === 'quickSearch';
 		},

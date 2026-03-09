@@ -3,15 +3,11 @@ export { Button, buttonVariants, type ButtonVariants } from './button';
 export { default as Input } from './input/Input.svelte';
 
 export { default as Badge } from './badge/Badge.svelte';
-export { badgeVariants, type BadgeVariants } from './badge/badge';
 
 export { Tag, TagSelectable } from './tag';
 export { tagVariants, type TagVariants, type TagSelectableVariants } from './tag';
 
 export { TagGroup } from './tag-group';
-
-export { Chip, FilterChip } from './chip';
-export { chipVariants, type ChipVariants } from './chip';
 
 export { default as Avatar } from './avatar/Avatar.svelte';
 
@@ -39,7 +35,7 @@ export { Accordion } from './accordion';
 
 export { ScrollArea } from './scroll-area';
 
-export { Toggle, toggleVariants, type ToggleVariants } from './toggle';
+export { Toggle } from './toggle';
 
 export { ToggleGroup } from './toggle-group';
 
@@ -53,7 +49,7 @@ export { PaneGroup, Pane, PaneResizer } from './pane';
 
 export { Carousel, CarouselItem } from './carousel';
 
-export { Kbd, getKeySymbol, keySymbols } from './kbd';
+export { Kbd } from './kbd';
 
 export { Spinner } from './spinner';
 

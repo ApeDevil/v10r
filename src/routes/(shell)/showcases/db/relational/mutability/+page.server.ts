@@ -281,7 +281,7 @@ export const actions: Actions = {
 
 	reseed: async () => {
 		try {
-			await reseedShowcase(db as any);
+			await reseedShowcase(db);
 			return { success: true, message: 'Showcase data reset to seed values.' };
 		} catch (err) {
 			return fail(500, {

@@ -3,13 +3,13 @@
  * Single source of truth for all showcase seed data.
  */
 import { sql } from 'drizzle-orm';
-import type { NeonHttpDatabase } from 'drizzle-orm/neon-http';
+import type { Database } from '$lib/server/db';
 
 /**
  * Truncate all showcase tables and re-insert seed data.
  * Uses raw SQL for TRUNCATE CASCADE to handle foreign keys.
  */
-export async function reseedShowcase(database: NeonHttpDatabase<any>) {
+export async function reseedShowcase(database: Database) {
 	// Truncate all showcase tables and reset serial sequences so IDs start at 1 again
 	await database.execute(sql`
 		TRUNCATE
