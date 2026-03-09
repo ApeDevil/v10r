@@ -21,9 +21,14 @@ lsof -i :5173
 kill 
 podman rm -f v10r
 
-# test
+# -------------------------------------- Test
 podman exec -it v10r bun run check
+podman exec -it v10r bun run lint
+podman exec -it v10r bun run test
 
+1. bun run check — TypeScript compilation
+2. bun run lint — Biome linting
+3. bun run test — Full test suite
 
 
 # shows only running containers
