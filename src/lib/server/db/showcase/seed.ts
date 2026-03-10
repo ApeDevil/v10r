@@ -33,7 +33,7 @@ export async function reseedShowcase(database: Database) {
 			('Svelte Framework',     'SVLT-001', 'US', 5, 42,    1500000, '0.00',       22.5,   37.7749,  -122.4194, true),
 			('PostgreSQL Database',   'PGSQ-002', 'CA', 5, 100,   9200000, '9999.99',   -40.0,  45.4215,  -75.6972,  true),
 			('Drizzle ORM',          'DRZL-003', 'DE', 4, 0,     350000,  '150.50',     98.6,   52.5200,  13.4050,   true),
-			('Neon Serverless',      'NEON-004', 'JP', 4, 7,     420000,  NULL,         NULL,   35.6762,  139.6503,  true),
+			('Bun Runtime',          'BUNR-004', 'JP', 4, 7,     420000,  NULL,         NULL,   35.6762,  139.6503,  true),
 			('Inactive Feature',     'INAC-005', NULL, 1, 0,     12,      '0.01',       0.0,    0.0,      0.0,       false),
 			('Edge Case: Max Int',   'MAXI-006', 'GB', 5, 2147483647, 0, '99999999.99', -273.15, 90.0,   180.0,     true),
 			('Edge Case: Min Values','MINV-007', 'AU', 1, 0,     0,       '0.00',       -273.15, -90.0,  -180.0,    true)
