@@ -164,8 +164,8 @@ let appendSeverity = $state('info');
 							<Input name="rating" type="number" placeholder="Rating (1-5)" min={1} max={5} />
 							<Input name="quantity" type="number" placeholder="Quantity" min={0} />
 							<div class="form-actions">
-								<Button type="submit" variant="primary" size="sm">Insert</Button>
-								<Button type="button" variant="ghost" size="sm" onclick={() => showCreateForm = false}>Cancel</Button>
+								<Button type="submit" variant="default" size="sm">Insert</Button>
+								<Button type="button" variant="outline" size="sm" onclick={() => showCreateForm = false}>Cancel</Button>
 							</div>
 						</form>
 					{/if}
@@ -671,8 +671,8 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 				</FormField>
 			</div>
 			<div class="dialog-actions">
-				<Button type="button" variant="ghost" size="sm" onclick={() => { editDialogOpen = false; editingSpecimen = null; }}>Cancel</Button>
-				<Button type="submit" variant="primary" size="sm">Save</Button>
+				<Button type="button" variant="outline" size="sm" onclick={() => { editDialogOpen = false; editingSpecimen = null; }}>Cancel</Button>
+				<Button type="submit" variant="default" size="sm">Save</Button>
 			</div>
 		</form>
 	</Dialog>
@@ -726,8 +726,8 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 				</FormField>
 			</div>
 			<div class="dialog-actions">
-				<Button type="button" variant="ghost" size="sm" onclick={() => { versionedDialogOpen = false; editingVersioned = null; }}>Cancel</Button>
-				<Button type="submit" variant="primary" size="sm">
+				<Button type="button" variant="outline" size="sm" onclick={() => { versionedDialogOpen = false; editingVersioned = null; }}>Cancel</Button>
+				<Button type="submit" variant="default" size="sm">
 					<span class="i-lucide-history h-3.5 w-3.5 mr-1" ></span>
 					Save + Version
 				</Button>

@@ -113,12 +113,9 @@ async function handleOAuth(provider: 'github' | 'google' | 'microsoft') {
 				</div>
 			</div>
 
-			<button
-				class="text-sm text-muted underline mt-4 text-center w-full"
-				onclick={() => { flowState = 'idle'; error = null; }}
-			>
+			<Button variant="ghost" class="mt-4 w-full justify-center" onclick={() => { flowState = 'idle'; error = null; }}>
 				Use a different email
-			</button>
+			</Button>
 		{:else}
 			<div class="email-section">
 				<Input

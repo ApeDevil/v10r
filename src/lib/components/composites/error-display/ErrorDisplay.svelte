@@ -58,9 +58,9 @@ function copyErrorId() {
 		<div class="error-id">
 			<span class="error-id-label">Error ID:</span>
 			<code class="error-id-value">{errorId}</code>
-			<button class="error-id-copy" onclick={copyErrorId} aria-label="Copy error ID">
+			<Button variant="ghost" size="icon" class="error-id-copy" onclick={copyErrorId} aria-label="Copy error ID">
 				<span class={copied ? 'i-lucide-check' : 'i-lucide-copy'}></span>
-			</button>
+			</Button>
 		</div>
 	{/if}
 
@@ -68,11 +68,11 @@ function copyErrorId() {
 		{#if actions}
 			{@render actions()}
 		{:else if status >= 500}
-			<Button onclick={() => location.reload()}>Try again</Button>
-			<Button variant="ghost" onclick={() => goto('/')}>Go home</Button>
+			<Button variant="default" onclick={() => location.reload()}>Try again</Button>
+			<Button variant="outline" onclick={() => goto('/')}>Go home</Button>
 		{:else}
-			<Button onclick={() => goto('/')}>Go home</Button>
-			<Button variant="ghost" onclick={() => history.back()}>Go back</Button>
+			<Button variant="default" onclick={() => goto('/')}>Go home</Button>
+			<Button variant="outline" onclick={() => history.back()}>Go back</Button>
 		{/if}
 	</div>
 

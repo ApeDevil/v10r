@@ -127,8 +127,10 @@ function reset() {
 									bind:value={password}
 									disabled={registering}
 								/>
-								<button
+								<Button
 									type="button"
+									variant="ghost"
+									size="icon"
 									class="toggle-vis"
 									onclick={() => showPassword = !showPassword}
 									aria-label={showPassword ? 'Hide password' : 'Show password'}
@@ -137,7 +139,7 @@ function reset() {
 										class={showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'}
 										aria-hidden="true"
 									></span>
-								</button>
+								</Button>
 							</div>
 
 							{#if password}

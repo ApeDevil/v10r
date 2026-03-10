@@ -167,17 +167,13 @@ function reset() {
 						</form>
 
 						<div class="cipher-footer">
-							<button
-								class="resend-link"
-								disabled={resendCooldown > 0}
-								onclick={handleResend}
-							>
+							<Button variant="ghost" disabled={resendCooldown > 0} onclick={handleResend}>
 								{#if resendCooldown > 0}
 									Resend code ({resendCooldown}s)
 								{:else}
 									Resend code
 								{/if}
-							</button>
+							</Button>
 						</div>
 					{/if}
 
@@ -327,19 +323,6 @@ function reset() {
 		justify-content: center;
 	}
 
-	.resend-link {
-		background: none;
-		border: none;
-		color: var(--color-primary);
-		font-size: 0.875rem;
-		cursor: pointer;
-		padding: 0;
-	}
-
-	.resend-link:disabled {
-		color: var(--color-muted);
-		cursor: default;
-	}
 
 	.reset-bar {
 		display: flex;

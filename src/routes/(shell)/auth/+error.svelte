@@ -17,11 +17,11 @@ import { Button } from '$lib/components/primitives';
 >
 	{#snippet actions()}
 		{#if page.status >= 500}
-			<Button onclick={() => location.reload()}>Try again</Button>
-			<Button variant="ghost" onclick={() => goto('/auth/login')}>Back to sign in</Button>
+			<Button variant="default" onclick={() => location.reload()}>Try again</Button>
+			<Button variant="outline" onclick={() => goto('/auth/login')}>Back to sign in</Button>
 		{:else}
-			<Button onclick={() => goto('/auth/login')}>Back to sign in</Button>
-			<Button variant="ghost" onclick={() => goto('/')}>Go home</Button>
+			<Button variant="default" onclick={() => goto('/auth/login')}>Back to sign in</Button>
+			<Button variant="outline" onclick={() => goto('/')}>Go home</Button>
 		{/if}
 	{/snippet}
 </ErrorDisplay>

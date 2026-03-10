@@ -56,7 +56,7 @@ let tabValue = $state('account');
 				</div>
 				<div class="dialog-actions">
 					<Button variant="outline" onclick={() => (dialogOpen = false)}>Cancel</Button>
-					<Button onclick={() => (dialogOpen = false)}>Confirm</Button>
+					<Button variant="default" onclick={() => (dialogOpen = false)}>Confirm</Button>
 				</div>
 			</Dialog>
 		</DemoCard>

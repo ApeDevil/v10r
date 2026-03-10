@@ -54,15 +54,12 @@ const visible = $derived(browser && (consent.needsBanner || consent.bannerOpen))
 					<Button variant="outline" size="md" onclick={() => accept('analytics')}>
 						Analytics Only
 					</Button>
-					<Button variant="outline" size="md" onclick={() => accept('full')}>
+					<Button variant="primary" size="md" onclick={() => accept('full')}>
 						Accept All
 					</Button>
-					<button
-						class="customize-toggle"
-						onclick={() => (showCustomize = !showCustomize)}
-					>
+					<Button variant="ghost" size="md" onclick={() => (showCustomize = !showCustomize)}>
 						{showCustomize ? 'Hide options' : 'Customize'}
-					</button>
+					</Button>
 				</div>
 			</div>
 
@@ -140,19 +137,6 @@ const visible = $derived(browser && (consent.needsBanner || consent.bannerOpen))
 		align-items: center;
 		gap: var(--spacing-3);
 		flex-wrap: wrap;
-	}
-
-	.customize-toggle {
-		background: none;
-		border: none;
-		color: var(--color-muted);
-		font-size: var(--text-fluid-sm);
-		cursor: pointer;
-		padding: var(--spacing-2) var(--spacing-3);
-	}
-
-	.customize-toggle:hover {
-		color: var(--color-fg);
 	}
 
 	.customize-panel {

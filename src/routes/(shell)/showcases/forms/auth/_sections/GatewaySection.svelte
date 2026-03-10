@@ -72,9 +72,9 @@ function reset() {
 							</div>
 						</div>
 
-						<button class="reset-link" onclick={reset}>
+						<Button variant="ghost" onclick={reset}>
 							Use a different email
-						</button>
+						</Button>
 					{:else if flowState === 'otp-sent'}
 						<div class="success-alert" role="status">
 							<span class="i-lucide-hash text-lg" aria-hidden="true"></span>
@@ -84,9 +84,9 @@ function reset() {
 							</div>
 						</div>
 
-						<button class="reset-link" onclick={reset}>
+						<Button variant="ghost" onclick={reset}>
 							Use a different email
-						</button>
+						</Button>
 					{:else}
 						<div class="email-section">
 							<Input
@@ -290,17 +290,6 @@ function reset() {
 
 	.success-alert p {
 		margin: 0;
-	}
-
-	.reset-link {
-		background: none;
-		border: none;
-		color: var(--color-muted);
-		font-size: 0.875rem;
-		text-decoration: underline;
-		cursor: pointer;
-		padding: 0;
-		text-align: center;
 	}
 
 	.reset-bar {
