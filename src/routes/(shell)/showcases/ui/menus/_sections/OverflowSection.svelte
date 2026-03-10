@@ -196,7 +196,7 @@ function noop() {}
 		cursor: pointer;
 		font-weight: 500;
 		font-size: var(--text-fluid-sm);
-		color: var(--color-primary-fg);
+		color: var(--color-on-primary);
 		background: var(--color-primary);
 	}
 

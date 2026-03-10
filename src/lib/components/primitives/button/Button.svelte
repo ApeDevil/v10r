@@ -43,15 +43,15 @@ let { variant, size, class: className, children, ...rest }: Props = $props();
 		box-shadow: 0 0 16px 4px color-mix(in srgb, var(--color-primary) 45%, transparent);
 	}
 
-	/* Primary: uses primary-bg/fg tokens */
+	/* Primary: saturated primary surface with on-primary text */
 	button:global(.bg-primary) {
-		background-color: var(--color-primary-bg);
-		color: var(--color-primary-fg);
+		background-color: var(--color-primary);
+		color: var(--color-on-primary);
 	}
 
 	button:global(.bg-primary):hover:not(:disabled) {
 		background-color: var(--color-primary-hover);
-		color: var(--color-bg);
+		color: var(--color-on-primary);
 		filter: none;
 		box-shadow: 0 0 16px 4px color-mix(in srgb, var(--color-primary-hover) 45%, transparent);
 	}

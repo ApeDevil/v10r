@@ -13,6 +13,7 @@
 	--color-primary-bg: #dac8ee;
 	--color-primary-fg: #300c85;
 	--color-primary-light: #b591f7;
+	--color-on-primary: #c9c2dd;
 	--color-secondary-bg: #b6c2d4;
 	--color-secondary-fg: rgb(0, 33, 143);
 	--color-success: #16a34a;
@@ -161,6 +162,7 @@
 	--color-primary-bg: #8d54d8;
 	--color-primary-fg: #1d043a;
 	--color-primary-light: #3a1e5f;
+	--color-on-primary: #250747;
 	--color-secondary-bg: #191c22;
 	--color-secondary-fg: #7b93ff;
 	--color-success: #22c55e;
