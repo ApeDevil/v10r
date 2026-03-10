@@ -1,5 +1,5 @@
 import { env } from '$env/dynamic/private';
-import type { NotificationProvider, DeliveryPayload, DeliveryResult } from './types';
+import type { DeliveryPayload, DeliveryResult, NotificationProvider } from './types';
 
 export class TelegramProvider implements NotificationProvider {
 	getProviderName() {
@@ -13,7 +13,12 @@ export class TelegramProvider implements NotificationProvider {
 	async send(payload: DeliveryPayload): Promise<DeliveryResult> {
 		const botToken = env.TELEGRAM_BOT_TOKEN;
 		if (!botToken) {
-			return { success: false, errorCode: 'NO_BOT_TOKEN', errorMessage: 'TELEGRAM_BOT_TOKEN not configured', retryable: false };
+			return {
+				success: false,
+				errorCode: 'NO_BOT_TOKEN',
+				errorMessage: 'TELEGRAM_BOT_TOKEN not configured',
+				retryable: false,
+			};
 		}
 
 		// payload.to is the Telegram chat ID
@@ -65,8 +70,5 @@ export class TelegramProvider implements NotificationProvider {
 }
 
 function escapeHtml(text: string): string {
-	return text
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;');
+	return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }

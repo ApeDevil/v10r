@@ -1,8 +1,9 @@
 /**
  * TELEGRAM ACCOUNTS — Links v10r users to Telegram chat IDs for DM notifications.
  */
-import { text, boolean, timestamp, index } from 'drizzle-orm/pg-core';
+
 import { sql } from 'drizzle-orm';
+import { boolean, index, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
 import { notificationsSchema } from './notifications';
 
@@ -20,9 +21,7 @@ export const userTelegramAccounts = notificationsSchema.table(
 		linkedAt: timestamp('linked_at', { withTimezone: true }).notNull().defaultNow(),
 		unlinkedAt: timestamp('unlinked_at', { withTimezone: true }),
 	},
-	(table) => [
-		index('telegram_user_idx').on(table.userId),
-	],
+	(table) => [index('telegram_user_idx').on(table.userId)],
 );
 
 export const telegramVerificationTokens = notificationsSchema.table(
@@ -37,9 +36,5 @@ export const telegramVerificationTokens = notificationsSchema.table(
 		usedAt: timestamp('used_at', { withTimezone: true }),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	},
-	(table) => [
-		index('telegram_token_cleanup_idx')
-			.on(table.expiresAt)
-			.where(sql`used_at IS NULL`),
-	],
+	(table) => [index('telegram_token_cleanup_idx').on(table.expiresAt).where(sql`used_at IS NULL`)],
 );

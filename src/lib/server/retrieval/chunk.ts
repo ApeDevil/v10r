@@ -1,5 +1,5 @@
+import { CHUNK_OVERLAP, PARAGRAPH_CHUNK_TARGET, SECTION_CHUNK_TARGET } from './config';
 import type { RawChunk } from './types';
-import { SECTION_CHUNK_TARGET, PARAGRAPH_CHUNK_TARGET, CHUNK_OVERLAP } from './config';
 
 /** Rough token count estimate: ~4 chars per token for English text */
 function estimateTokens(text: string): number {

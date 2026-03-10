@@ -1,5 +1,5 @@
-import { redis } from '../index';
 import { CacheError } from '../errors';
+import { redis } from '../index';
 import { assertShowcaseKey } from './guards';
 
 function requireRedis() {
@@ -69,11 +69,7 @@ export async function removeFromSortedSet(key: string, member: string): Promise<
 
 // ─── Lists ──────────────────────────────────────────────
 
-export async function pushToList(
-	key: string,
-	value: string,
-	side: 'left' | 'right' = 'right',
-): Promise<void> {
+export async function pushToList(key: string, value: string, side: 'left' | 'right' = 'right'): Promise<void> {
 	const r = requireRedis();
 	assertShowcaseKey(key);
 	if (side === 'left') {
@@ -83,10 +79,7 @@ export async function pushToList(
 	}
 }
 
-export async function popFromList(
-	key: string,
-	side: 'left' | 'right' = 'left',
-): Promise<string | null> {
+export async function popFromList(key: string, side: 'left' | 'right' = 'left'): Promise<string | null> {
 	const r = requireRedis();
 	assertShowcaseKey(key);
 	if (side === 'left') {

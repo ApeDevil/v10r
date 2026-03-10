@@ -1,60 +1,60 @@
 <script lang="ts">
-	import { page } from '$app/state';
-	import { browser } from '$app/environment';
-	import { localizeHref, deLocalizeHref } from '$lib/i18n';
+import { browser } from '$app/environment';
+import { page } from '$app/state';
+import { deLocalizeHref, localizeHref } from '$lib/i18n';
 
-	interface Tab {
-		label: string;
-		href: string;
-		icon?: string;
+interface Tab {
+	label: string;
+	href: string;
+	icon?: string;
+}
+
+interface Props {
+	tabs: Tab[];
+	ariaLabel?: string;
+}
+
+let { tabs, ariaLabel = 'Section navigation' }: Props = $props();
+
+let chipsEl: HTMLElement | undefined = $state();
+let canScrollRight = $state(false);
+let canScrollLeft = $state(false);
+
+function isActive(href: string): boolean {
+	return page.url.pathname.startsWith(deLocalizeHref(href));
+}
+
+// Track horizontal scroll overflow for fade indicators
+$effect(() => {
+	if (!browser || !chipsEl) return;
+
+	function updateOverflow() {
+		if (!chipsEl) return;
+		const { scrollLeft, scrollWidth, clientWidth } = chipsEl;
+		canScrollLeft = scrollLeft > 1;
+		canScrollRight = scrollLeft + clientWidth < scrollWidth - 1;
 	}
 
-	interface Props {
-		tabs: Tab[];
-		ariaLabel?: string;
-	}
-
-	let { tabs, ariaLabel = 'Section navigation' }: Props = $props();
-
-	let chipsEl: HTMLElement | undefined = $state();
-	let canScrollRight = $state(false);
-	let canScrollLeft = $state(false);
-
-	function isActive(href: string): boolean {
-		return page.url.pathname.startsWith(deLocalizeHref(href));
-	}
-
-	// Track horizontal scroll overflow for fade indicators
-	$effect(() => {
-		if (!browser || !chipsEl) return;
-
-		function updateOverflow() {
-			if (!chipsEl) return;
-			const { scrollLeft, scrollWidth, clientWidth } = chipsEl;
-			canScrollLeft = scrollLeft > 1;
-			canScrollRight = scrollLeft + clientWidth < scrollWidth - 1;
+	function handleWheel(e: WheelEvent) {
+		if (!chipsEl || chipsEl.scrollWidth <= chipsEl.clientWidth) return;
+		if (e.deltaY !== 0) {
+			e.preventDefault();
+			chipsEl.scrollLeft += e.deltaY;
 		}
+	}
 
-		function handleWheel(e: WheelEvent) {
-			if (!chipsEl || chipsEl.scrollWidth <= chipsEl.clientWidth) return;
-			if (e.deltaY !== 0) {
-				e.preventDefault();
-				chipsEl.scrollLeft += e.deltaY;
-			}
-		}
+	chipsEl.addEventListener('scroll', updateOverflow, { passive: true });
+	chipsEl.addEventListener('wheel', handleWheel, { passive: false });
+	const ro = new ResizeObserver(updateOverflow);
+	ro.observe(chipsEl);
+	updateOverflow();
 
-		chipsEl.addEventListener('scroll', updateOverflow, { passive: true });
-		chipsEl.addEventListener('wheel', handleWheel, { passive: false });
-		const ro = new ResizeObserver(updateOverflow);
-		ro.observe(chipsEl);
-		updateOverflow();
-
-		return () => {
-			chipsEl?.removeEventListener('scroll', updateOverflow);
-			chipsEl?.removeEventListener('wheel', handleWheel);
-			ro.disconnect();
-		};
-	});
+	return () => {
+		chipsEl?.removeEventListener('scroll', updateOverflow);
+		chipsEl?.removeEventListener('wheel', handleWheel);
+		ro.disconnect();
+	};
+});
 </script>
 
 <nav class="tab-nav" aria-label={ariaLabel}>

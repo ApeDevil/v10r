@@ -1,9 +1,10 @@
 /**
  * Proactive Discord token refresh — refreshes tokens expiring within 24 hours.
  */
+
+import { and, eq, lt, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
-import { and, eq, lt, sql } from 'drizzle-orm';
 import { refreshDiscordTokens } from '$lib/server/notifications/providers/discord';
 
 export async function discordTokenRefresh(): Promise<number> {

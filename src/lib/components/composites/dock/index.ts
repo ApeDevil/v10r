@@ -1,39 +1,35 @@
-export { default as DockLayout } from './DockLayout.svelte';
-export { default as DockNode } from './DockNode.svelte';
-export { default as DockLeaf } from './DockLeaf.svelte';
-export { default as DockTabBar } from './DockTabBar.svelte';
-export { default as DockResizeHandle } from './DockResizeHandle.svelte';
-export { default as DockDropOverlay } from './DockDropOverlay.svelte';
 export { default as DockActivityBar } from './DockActivityBar.svelte';
-
-export { createDockState, setDockContext, getDockContext, type DockState } from './dock.state.svelte';
-
-export type {
-	PanelDefinition,
-	SplitNode,
-	LeafNode,
-	LayoutNode,
-	DropZone,
-	DropTarget,
-	DragState,
-	ActivityBarItem,
-	ActivityBarPosition,
-	DockLayoutState
-} from './dock.types';
-
+export { default as DockDropOverlay } from './DockDropOverlay.svelte';
+export { default as DockLayout } from './DockLayout.svelte';
+export { default as DockLeaf } from './DockLeaf.svelte';
+export { default as DockNode } from './DockNode.svelte';
+export { default as DockResizeHandle } from './DockResizeHandle.svelte';
+export { default as DockTabBar } from './DockTabBar.svelte';
 export {
-	generateId,
+	addPanelToLeaf,
+	collectLeaves,
+	findLeafWithPanel,
 	findNode,
 	findParent,
-	findLeafWithPanel,
-	replaceNode,
-	removePanelFromLeaf,
-	addPanelToLeaf,
-	splitLeaf,
+	generateId,
 	getDepth,
+	hasPanelType,
+	removePanelFromLeaf,
+	replaceNode,
 	resolveDropZone,
-	collectLeaves,
-	hasPanelType
+	splitLeaf,
 } from './dock.operations';
-
-export { saveDockState, loadDockState, clearDockState } from './dock.persistence';
+export { clearDockState, loadDockState, saveDockState } from './dock.persistence';
+export { createDockState, type DockState, getDockContext, setDockContext } from './dock.state.svelte';
+export type {
+	ActivityBarItem,
+	ActivityBarPosition,
+	DockLayoutState,
+	DragState,
+	DropTarget,
+	DropZone,
+	LayoutNode,
+	LeafNode,
+	PanelDefinition,
+	SplitNode,
+} from './dock.types';

@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { Card, DiagGrid, DiagRow } from '$lib/components/composites';
-	import { Badge } from '$lib/components/primitives';
-	import { Stack } from '$lib/components/layout';
+import { Card, DiagGrid, DiagRow } from '$lib/components/composites';
+import { Stack } from '$lib/components/layout';
+import { Badge } from '$lib/components/primitives';
 
-	let { data } = $props();
+let { data } = $props();
 </script>
 
 <svelte:head>
@@ -17,13 +17,15 @@
 		{/snippet}
 
 		<DiagGrid>
-			<DiagRow label="Name">{data.user.name}</DiagRow>
-			<DiagRow label="Email"><code>{data.user.email}</code></DiagRow>
-			<DiagRow label="User ID"><code>{data.user.id}</code></DiagRow>
-			{#if data.user.image}
-				<DiagRow label="Avatar">
-					<img src={data.user.image} alt="User avatar" class="avatar-img" />
-				</DiagRow>
+			{#if data.user}
+				<DiagRow label="Name">{data.user.name}</DiagRow>
+				<DiagRow label="Email"><code>{data.user.email}</code></DiagRow>
+				<DiagRow label="User ID"><code>{data.user.id}</code></DiagRow>
+				{#if data.user.image}
+					<DiagRow label="Avatar">
+						<img src={data.user.image} alt="User avatar" class="avatar-img" />
+					</DiagRow>
+				{/if}
 			{/if}
 		</DiagGrid>
 	</Card>

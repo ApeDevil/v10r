@@ -1,53 +1,53 @@
 <script lang="ts">
-	import { Command as CommandPrimitive } from 'bits-ui';
-	import { goto } from '$app/navigation';
-	import { cn } from '$lib/utils/cn';
-	import type { CommandItem, CommandGroup } from './types';
-	import {
-		commandRootVariants,
-		commandInputVariants,
-		commandListVariants,
-		commandEmptyVariants,
-		commandGroupHeadingVariants,
-		commandItemVariants,
-		commandShortcutVariants,
-		commandSeparatorVariants,
-	} from './command';
+import { Command as CommandPrimitive } from 'bits-ui';
+import { goto } from '$app/navigation';
+import { cn } from '$lib/utils/cn';
+import {
+	commandEmptyVariants,
+	commandGroupHeadingVariants,
+	commandInputVariants,
+	commandItemVariants,
+	commandListVariants,
+	commandRootVariants,
+	commandSeparatorVariants,
+	commandShortcutVariants,
+} from './command';
+import type { CommandGroup, CommandItem } from './types';
 
-	interface Props {
-		/** Flat item list (rendered ungrouped) */
-		items?: CommandItem[];
-		/** Grouped items with headings */
-		groups?: CommandGroup[];
-		placeholder?: string;
-		emptyMessage?: string;
-		class?: string;
-		/** Hide the search input (for static lists) */
-		hideInput?: boolean;
+interface Props {
+	/** Flat item list (rendered ungrouped) */
+	items?: CommandItem[];
+	/** Grouped items with headings */
+	groups?: CommandGroup[];
+	placeholder?: string;
+	emptyMessage?: string;
+	class?: string;
+	/** Hide the search input (for static lists) */
+	hideInput?: boolean;
+}
+
+let {
+	items = [],
+	groups = [],
+	placeholder = 'Search...',
+	emptyMessage = 'No results found.',
+	class: className,
+	hideInput = false,
+}: Props = $props();
+
+function handleSelect(item: CommandItem) {
+	if (item.onSelect) {
+		item.onSelect();
+	} else if (item.href) {
+		goto(item.href);
 	}
-
-	let {
-		items = [],
-		groups = [],
-		placeholder = 'Search...',
-		emptyMessage = 'No results found.',
-		class: className,
-		hideInput = false,
-	}: Props = $props();
-
-	function handleSelect(item: CommandItem) {
-		if (item.onSelect) {
-			item.onSelect();
-		} else if (item.href) {
-			goto(item.href);
-		}
-	}
+}
 </script>
 
 <CommandPrimitive.Root class={cn(commandRootVariants(), className)}>
 	{#if !hideInput}
 		<div class="cmd-input-row flex items-center gap-3 px-4 py-2">
-			<span class="i-lucide-search h-4 w-4 text-muted shrink-0" />
+			<span class="i-lucide-search h-4 w-4 text-muted shrink-0" ></span>
 			<CommandPrimitive.Input
 				{placeholder}
 				class={commandInputVariants()}
@@ -70,7 +70,7 @@
 						onSelect={() => handleSelect(item)}
 					>
 						{#if item.icon}
-							<span class={cn(item.icon, 'h-4 w-4 shrink-0')} />
+							<span class={cn(item.icon, 'h-4 w-4 shrink-0')} ></span>
 						{/if}
 						<span class="flex flex-col min-w-0">
 							<span>{item.label}</span>
@@ -100,7 +100,7 @@
 							onSelect={() => handleSelect(item)}
 						>
 							{#if item.icon}
-								<span class={cn(item.icon, 'h-4 w-4 shrink-0')} />
+								<span class={cn(item.icon, 'h-4 w-4 shrink-0')} ></span>
 							{/if}
 							<span class="flex flex-col min-w-0">
 								<span>{item.label}</span>

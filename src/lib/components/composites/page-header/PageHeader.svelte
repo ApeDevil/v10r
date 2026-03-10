@@ -1,29 +1,29 @@
 <script lang="ts">
-	import { localizeHref } from '$lib/i18n';
+import { localizeHref } from '$lib/i18n';
 
-	interface Breadcrumb {
-		label: string;
-		href?: string;
-	}
+interface Breadcrumb {
+	label: string;
+	href?: string;
+}
 
-	interface Props {
-		title: string;
-		description?: string;
-		breadcrumbs?: Breadcrumb[];
-		sticky?: boolean;
-		class?: string;
-		children?: import('svelte').Snippet;
-	}
+interface Props {
+	title: string;
+	description?: string;
+	breadcrumbs?: Breadcrumb[];
+	sticky?: boolean;
+	class?: string;
+	children?: import('svelte').Snippet;
+}
 
-	let { title, description, breadcrumbs = [], sticky = false, class: className, children }: Props = $props();
+let { title, description, breadcrumbs = [], sticky = false, class: className, children }: Props = $props();
 
-	// Ensure last breadcrumb is current (no link)
-	const processedBreadcrumbs = $derived(
-		breadcrumbs.map((b, i) => ({
-			...b,
-			href: i === breadcrumbs.length - 1 ? undefined : b.href
-		}))
-	);
+// Ensure last breadcrumb is current (no link)
+const processedBreadcrumbs = $derived(
+	breadcrumbs.map((b, i) => ({
+		...b,
+		href: i === breadcrumbs.length - 1 ? undefined : b.href,
+	})),
+);
 </script>
 
 <header

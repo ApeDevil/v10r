@@ -2,7 +2,7 @@
  * NOTIFICATION SETTINGS — Per-user notification preferences.
  * Controls which notification types are delivered via which channels.
  */
-import { pgSchema, text, boolean, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
 import { notificationsSchema } from './notifications';
 

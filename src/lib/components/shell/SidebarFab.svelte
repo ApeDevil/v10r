@@ -1,19 +1,19 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
-	import { Button } from '$lib/components/primitives/button';
-	import { getSidebar } from '$lib/state/sidebar.svelte';
+import { Button } from '$lib/components/primitives/button';
+import { getSidebar } from '$lib/state/sidebar.svelte';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		class?: string;
-	}
+interface Props {
+	class?: string;
+}
 
-	let { class: className }: Props = $props();
+let { class: className }: Props = $props();
 
-	const sidebar = getSidebar();
+const sidebar = getSidebar();
 
-	function handleClick() {
-		sidebar.toggleMobile();
-	}
+function handleClick() {
+	sidebar.toggleMobile();
+}
 </script>
 
 <Button
@@ -28,9 +28,9 @@
 >
 	{#snippet children()}
 		{#if sidebar.mobileOpen}
-			<span class="i-lucide-x text-icon-lg" />
+			<span class="i-lucide-x text-icon-lg" ></span>
 		{:else}
-			<span class="i-lucide-menu text-icon-lg" />
+			<span class="i-lucide-menu text-icon-lg" ></span>
 		{/if}
 	{/snippet}
 </Button>

@@ -1,73 +1,67 @@
 <script lang="ts">
-	import { onDestroy, onMount, untrack } from 'svelte';
-	import { beforeNavigate } from '$app/navigation';
-	import { cn } from '$lib/utils/cn';
-	import { chartContainerVariants, type ChartContainerVariants } from '../../_shared/chart-container';
-	import { buildChartTheme } from '../../_shared/chart-theme';
-	import type { Chart as ChartJS, ChartData, ChartOptions } from 'chart.js';
+import type { ChartData, Chart as ChartJS, ChartOptions } from 'chart.js';
+import { onDestroy, onMount, untrack } from 'svelte';
+import { beforeNavigate } from '$app/navigation';
+import { cn } from '$lib/utils/cn';
+import { type ChartContainerVariants, chartContainerVariants } from '../../_shared/chart-container';
+import { buildChartTheme } from '../../_shared/chart-theme';
 
-	interface Props {
-		data: ChartData<'scatter'>;
-		options?: ChartOptions<'scatter'>;
-		aspect?: ChartContainerVariants['aspect'];
-		ariaLabel?: string;
-		class?: string;
-	}
+interface Props {
+	data: ChartData<'scatter'>;
+	options?: ChartOptions<'scatter'>;
+	aspect?: ChartContainerVariants['aspect'];
+	ariaLabel?: string;
+	class?: string;
+}
 
-	let {
+let { data, options = {}, aspect = 'chart', ariaLabel = 'Scatter plot', class: className }: Props = $props();
+
+let canvasEl: HTMLCanvasElement | undefined = $state();
+let chart: ChartJS<'scatter'> | undefined = $state();
+let ready = $state(false);
+
+function cleanup() {
+	chart?.destroy();
+	chart = undefined;
+}
+
+beforeNavigate(cleanup);
+onDestroy(cleanup);
+
+onMount(async () => {
+	const { registerScatterChart } = await import('../../_shared/register');
+	const Chart = await registerScatterChart();
+	const theme = buildChartTheme();
+
+	if (!canvasEl) return;
+
+	chart = new Chart(canvasEl, {
+		type: 'scatter',
 		data,
-		options = {},
-		aspect = 'chart',
-		ariaLabel = 'Scatter plot',
-		class: className,
-	}: Props = $props();
+		options: {
+			responsive: true,
+			maintainAspectRatio: true,
+			...theme.defaults,
+			...options,
+		},
+	});
 
-	let canvasEl: HTMLCanvasElement | undefined = $state();
-	let chart: ChartJS<'scatter'> | undefined = $state();
-	let ready = $state(false);
+	requestAnimationFrame(() => chart?.resize());
+	ready = true;
+});
 
-	function cleanup() {
-		chart?.destroy();
-		chart = undefined;
-	}
+$effect(() => {
+	const _data = data;
+	const _options = options;
 
-	beforeNavigate(cleanup);
-	onDestroy(cleanup);
-
-	onMount(async () => {
-		const { registerScatterChart } = await import('../../_shared/register');
-		const Chart = await registerScatterChart();
+	untrack(() => {
+		if (!chart) return;
+		chart.data = _data;
 		const theme = buildChartTheme();
-
-		if (!canvasEl) return;
-
-		chart = new Chart(canvasEl, {
-			type: 'scatter',
-			data,
-			options: {
-				responsive: true,
-				maintainAspectRatio: true,
-				...theme.defaults,
-				...options,
-			},
-		});
-
-		requestAnimationFrame(() => chart?.resize());
-		ready = true;
+		Object.assign(chart.options, theme.defaults, _options);
+		chart.update();
 	});
-
-	$effect(() => {
-		const _data = data;
-		const _options = options;
-
-		untrack(() => {
-			if (!chart) return;
-			chart.data = _data;
-			const theme = buildChartTheme();
-			Object.assign(chart.options, theme.defaults, _options);
-			chart.update();
-		});
-	});
+});
 </script>
 
 <figure class={cn(chartContainerVariants({ aspect }), className)}>

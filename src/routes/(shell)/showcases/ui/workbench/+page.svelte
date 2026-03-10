@@ -1,99 +1,99 @@
 <script lang="ts">
-	import { Card } from '$lib/components';
-	import { DockLayout } from '$lib/components/composites/dock';
-	import type { LayoutNode, PanelDefinition, ActivityBarItem } from '$lib/components/composites/dock';
+import { Card } from '$lib/components';
+import type { ActivityBarItem, LayoutNode, PanelDefinition } from '$lib/components/composites/dock';
+import { DockLayout } from '$lib/components/composites/dock';
 
-	// --- Panel definitions ---
-	const panels: Record<string, PanelDefinition> = {
-		explorer: {
-			id: 'explorer',
-			type: 'explorer',
-			label: 'Explorer',
-			icon: 'i-lucide-folder-tree',
-			closable: true
-		},
-		editor: {
-			id: 'editor',
-			type: 'editor',
-			label: 'Editor',
-			icon: 'i-lucide-file-code',
-			closable: true
-		},
-		terminal: {
-			id: 'terminal',
-			type: 'terminal',
-			label: 'Terminal',
-			icon: 'i-lucide-terminal',
-			closable: true
-		},
-		output: {
-			id: 'output',
-			type: 'output',
-			label: 'Output',
-			icon: 'i-lucide-scroll-text',
-			closable: true
-		},
-		search: {
-			id: 'search',
-			type: 'search',
-			label: 'Search',
-			icon: 'i-lucide-search',
-			closable: true
-		},
-		preview: {
-			id: 'preview',
-			type: 'preview',
-			label: 'Preview',
-			icon: 'i-lucide-eye',
-			closable: true
-		}
-	};
+// --- Panel definitions ---
+const panels: Record<string, PanelDefinition> = {
+	explorer: {
+		id: 'explorer',
+		type: 'explorer',
+		label: 'Explorer',
+		icon: 'i-lucide-folder-tree',
+		closable: true,
+	},
+	editor: {
+		id: 'editor',
+		type: 'editor',
+		label: 'Editor',
+		icon: 'i-lucide-file-code',
+		closable: true,
+	},
+	terminal: {
+		id: 'terminal',
+		type: 'terminal',
+		label: 'Terminal',
+		icon: 'i-lucide-terminal',
+		closable: true,
+	},
+	output: {
+		id: 'output',
+		type: 'output',
+		label: 'Output',
+		icon: 'i-lucide-scroll-text',
+		closable: true,
+	},
+	search: {
+		id: 'search',
+		type: 'search',
+		label: 'Search',
+		icon: 'i-lucide-search',
+		closable: true,
+	},
+	preview: {
+		id: 'preview',
+		type: 'preview',
+		label: 'Preview',
+		icon: 'i-lucide-eye',
+		closable: true,
+	},
+};
 
-	// --- Layout tree ---
-	// Explorer (left) | Editor + Preview (right-top) | Terminal + Output (right-bottom)
-	const initialRoot: LayoutNode = {
-		type: 'split',
-		id: 'root-split',
-		direction: 'horizontal',
-		sizes: [25, 75],
-		children: [
-			{
-				type: 'leaf',
-				id: 'leaf-sidebar',
-				tabs: ['explorer', 'search'],
-				activeTab: 'explorer'
-			},
-			{
-				type: 'split',
-				id: 'split-main',
-				direction: 'vertical',
-				sizes: [65, 35],
-				children: [
-					{
-						type: 'leaf',
-						id: 'leaf-editor',
-						tabs: ['editor', 'preview'],
-						activeTab: 'editor'
-					},
-					{
-						type: 'leaf',
-						id: 'leaf-bottom',
-						tabs: ['terminal', 'output'],
-						activeTab: 'terminal'
-					}
-				]
-			}
-		]
-	};
+// --- Layout tree ---
+// Explorer (left) | Editor + Preview (right-top) | Terminal + Output (right-bottom)
+const initialRoot: LayoutNode = {
+	type: 'split',
+	id: 'root-split',
+	direction: 'horizontal',
+	sizes: [25, 75],
+	children: [
+		{
+			type: 'leaf',
+			id: 'leaf-sidebar',
+			tabs: ['explorer', 'search'],
+			activeTab: 'explorer',
+		},
+		{
+			type: 'split',
+			id: 'split-main',
+			direction: 'vertical',
+			sizes: [65, 35],
+			children: [
+				{
+					type: 'leaf',
+					id: 'leaf-editor',
+					tabs: ['editor', 'preview'],
+					activeTab: 'editor',
+				},
+				{
+					type: 'leaf',
+					id: 'leaf-bottom',
+					tabs: ['terminal', 'output'],
+					activeTab: 'terminal',
+				},
+			],
+		},
+	],
+};
 
-	// --- Activity bar items ---
-	const activityBarItems: ActivityBarItem[] = [
-		{ panelType: 'explorer', icon: 'i-lucide-folder-tree', label: 'Explorer' },
-		{ panelType: 'search', icon: 'i-lucide-search', label: 'Search' },
-		{ panelType: 'terminal', icon: 'i-lucide-terminal', label: 'Terminal' },
-		{ panelType: 'output', icon: 'i-lucide-scroll-text', label: 'Output' },
-		{ panelType: 'preview', icon: 'i-lucide-eye', label: 'Preview' }
-	];
+// --- Activity bar items ---
+const activityBarItems: ActivityBarItem[] = [
+	{ panelType: 'explorer', icon: 'i-lucide-folder-tree', label: 'Explorer' },
+	{ panelType: 'search', icon: 'i-lucide-search', label: 'Search' },
+	{ panelType: 'terminal', icon: 'i-lucide-terminal', label: 'Terminal' },
+	{ panelType: 'output', icon: 'i-lucide-scroll-text', label: 'Output' },
+	{ panelType: 'preview', icon: 'i-lucide-eye', label: 'Preview' },
+];
 </script>
 
 <svelte:head>

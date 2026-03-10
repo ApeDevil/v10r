@@ -1,18 +1,18 @@
 <script lang="ts">
-	import { NavSection } from '$lib/components/composites';
-	import CommandPaletteSection from './_sections/CommandPaletteSection.svelte';
-	import OverflowSection from './_sections/OverflowSection.svelte';
-	import SelectionBarSection from './_sections/SelectionBarSection.svelte';
-	import ContextMenuSection from './_sections/ContextMenuSection.svelte';
-	import MenuBarSection from './_sections/MenuBarSection.svelte';
+import { NavSection } from '$lib/components/composites';
+import CommandPaletteSection from './_sections/CommandPaletteSection.svelte';
+import ContextMenuSection from './_sections/ContextMenuSection.svelte';
+import MenuBarSection from './_sections/MenuBarSection.svelte';
+import OverflowSection from './_sections/OverflowSection.svelte';
+import SelectionBarSection from './_sections/SelectionBarSection.svelte';
 
-	const sections = [
-		{ id: 'menu-command-palette', label: 'Command Palette' },
-		{ id: 'menu-overflow', label: 'Overflow' },
-		{ id: 'menu-selection-bar', label: 'Selection Bar' },
-		{ id: 'menu-context', label: 'Context Menu' },
-		{ id: 'menu-menubar', label: 'Menu Bar' },
-	];
+const sections = [
+	{ id: 'menu-command-palette', label: 'Command Palette' },
+	{ id: 'menu-overflow', label: 'Overflow' },
+	{ id: 'menu-selection-bar', label: 'Selection Bar' },
+	{ id: 'menu-context', label: 'Context Menu' },
+	{ id: 'menu-menubar', label: 'Menu Bar' },
+];
 </script>
 
 <svelte:head>

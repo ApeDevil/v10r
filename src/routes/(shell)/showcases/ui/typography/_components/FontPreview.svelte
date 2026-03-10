@@ -1,53 +1,57 @@
 <script lang="ts">
-	import { Typography } from '$lib/components';
-	import type { TypographyVariants } from '$lib/components/primitives/typography/typography';
-	import type { FontLoadState } from '$lib/utils/fonts';
+import { Typography } from '$lib/components';
+import type { TypographyVariants } from '$lib/components/primitives/typography/typography';
+import type { FontLoadState } from '$lib/utils/fonts';
 
-	type Variant = NonNullable<TypographyVariants['variant']>;
+type Variant = NonNullable<TypographyVariants['variant']>;
 
-	interface Props {
-		mode: 'single' | 'pairing';
-		fontStack: string;
-		headingFontStack: string;
-		bodyFontStack: string;
-		loadState: FontLoadState;
-		headingLoadState: FontLoadState;
-		bodyLoadState: FontLoadState;
-	}
+interface Props {
+	mode: 'single' | 'pairing';
+	fontStack: string;
+	headingFontStack: string;
+	bodyFontStack: string;
+	loadState: FontLoadState;
+	headingLoadState: FontLoadState;
+	bodyLoadState: FontLoadState;
+}
 
-	let { mode, fontStack, headingFontStack, bodyFontStack, loadState, headingLoadState, bodyLoadState }: Props = $props();
+let { mode, fontStack, headingFontStack, bodyFontStack, loadState, headingLoadState, bodyLoadState }: Props = $props();
 
-	let customText = $state('');
+let customText = $state('');
 
-	const defaultSamples: { variant: Variant; text: string; role: 'heading' | 'body' | 'code' }[] = [
-		{ variant: 'h1', text: 'Heading 1', role: 'heading' },
-		{ variant: 'h2', text: 'Heading 2', role: 'heading' },
-		{ variant: 'h3', text: 'Heading 3', role: 'heading' },
-		{ variant: 'h4', text: 'Heading 4', role: 'heading' },
-		{ variant: 'body', text: 'Body text — The quick brown fox jumps over the lazy dog. Typography is the art and technique of arranging type to make written language legible, readable, and appealing.', role: 'body' },
-		{ variant: 'lead', text: 'Lead text for introductions and summaries.', role: 'body' },
-		{ variant: 'muted', text: 'Muted secondary text for captions and metadata.', role: 'body' },
-		{ variant: 'code', text: 'const font = await loadFont("Inter");', role: 'code' },
-	];
+const defaultSamples: { variant: Variant; text: string; role: 'heading' | 'body' | 'code' }[] = [
+	{ variant: 'h1', text: 'Heading 1', role: 'heading' },
+	{ variant: 'h2', text: 'Heading 2', role: 'heading' },
+	{ variant: 'h3', text: 'Heading 3', role: 'heading' },
+	{ variant: 'h4', text: 'Heading 4', role: 'heading' },
+	{
+		variant: 'body',
+		text: 'Body text — The quick brown fox jumps over the lazy dog. Typography is the art and technique of arranging type to make written language legible, readable, and appealing.',
+		role: 'body',
+	},
+	{ variant: 'lead', text: 'Lead text for introductions and summaries.', role: 'body' },
+	{ variant: 'muted', text: 'Muted secondary text for captions and metadata.', role: 'body' },
+	{ variant: 'code', text: 'const font = await loadFont("Inter");', role: 'code' },
+];
 
-	function getFontFamily(role: 'heading' | 'body' | 'code'): string | undefined {
-		if (mode === 'single') return undefined; // handled by parent container
-		if (role === 'code') return undefined; // stays monospace
-		return role === 'heading' ? headingFontStack : bodyFontStack;
-	}
+function getFontFamily(role: 'heading' | 'body' | 'code'): string | undefined {
+	if (mode === 'single') return undefined; // handled by parent container
+	if (role === 'code') return undefined; // stays monospace
+	return role === 'heading' ? headingFontStack : bodyFontStack;
+}
 
-	function getLabel(variant: string, role: 'heading' | 'body' | 'code'): string {
-		if (mode === 'single') return variant;
-		if (role === 'code') return variant;
-		return `${variant} (${role})`;
-	}
+function getLabel(variant: string, role: 'heading' | 'body' | 'code'): string {
+	if (mode === 'single') return variant;
+	if (role === 'code') return variant;
+	return `${variant} (${role})`;
+}
 
-	function isRoleLoading(role: 'heading' | 'body' | 'code'): boolean {
-		if (mode === 'single') return loadState === 'loading';
-		if (role === 'heading') return headingLoadState === 'loading';
-		if (role === 'body') return bodyLoadState === 'loading';
-		return false;
-	}
+function isRoleLoading(role: 'heading' | 'body' | 'code'): boolean {
+	if (mode === 'single') return loadState === 'loading';
+	if (role === 'heading') return headingLoadState === 'loading';
+	if (role === 'body') return bodyLoadState === 'loading';
+	return false;
+}
 </script>
 
 <div class="preview" style:font-family={mode === 'single' ? fontStack : undefined}>

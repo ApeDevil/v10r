@@ -1,85 +1,96 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { Card, NavSection, Alert, FormField } from '$lib/components/composites';
-	import { Badge, Button, Input, Spinner, Typography } from '$lib/components/primitives';
-	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
-	import { getToast } from '$lib/state/toast.svelte';
-	import { Stack, Cluster } from '$lib/components/layout';
+import { enhance } from '$app/forms';
+import { Alert, Card, FormField, NavSection } from '$lib/components/composites';
+import { Cluster, Stack } from '$lib/components/layout';
+import {
+	Badge,
+	Body,
+	Button,
+	Cell,
+	Header,
+	HeaderCell,
+	Input,
+	Row,
+	Spinner,
+	Table,
+	Typography,
+} from '$lib/components/primitives';
+import { getToast } from '$lib/state/toast.svelte';
 
-	let { data } = $props();
+let { data } = $props();
 
-	function formatTtl(seconds: number): string {
-		if (seconds === -2) return 'expired';
-		if (seconds === -1) return 'no expiry';
-		if (seconds < 60) return `${seconds}s`;
-		if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
-		const h = Math.floor(seconds / 3600);
-		const m = Math.floor((seconds % 3600) / 60);
-		return m > 0 ? `${h}h ${m}m` : `${h}h`;
-	}
-	const toast = getToast();
+function formatTtl(seconds: number): string {
+	if (seconds === -2) return 'expired';
+	if (seconds === -1) return 'no expiry';
+	if (seconds < 60) return `${seconds}s`;
+	if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+	const h = Math.floor(seconds / 3600);
+	const m = Math.floor((seconds % 3600) / 60);
+	return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
+const toast = getToast();
 
-	const sections = [
-		{ id: 'overview', label: 'Overview' },
-		{ id: 'strings', label: 'Strings' },
-		{ id: 'hashes', label: 'Hashes' },
-		{ id: 'counters', label: 'Counters' },
-		{ id: 'sorted-sets', label: 'Sorted Sets' },
-		{ id: 'lists', label: 'Lists' },
-	];
+const sections = [
+	{ id: 'overview', label: 'Overview' },
+	{ id: 'strings', label: 'Strings' },
+	{ id: 'hashes', label: 'Hashes' },
+	{ id: 'counters', label: 'Counters' },
+	{ id: 'sorted-sets', label: 'Sorted Sets' },
+	{ id: 'lists', label: 'Lists' },
+];
 
-	// ─── Inspect state ──────────────────────────────────
-	let inspectLoading = $state(false);
-	let inspectResult = $state<any>(null);
+// ─── Inspect state ──────────────────────────────────
+let inspectLoading = $state(false);
+let inspectResult = $state<any>(null);
 
-	// ─── String state ───────────────────────────────────
-	let newStringKey = $state('showcase:');
-	let newStringValue = $state('');
-	let newStringTtl = $state('');
+// ─── String state ───────────────────────────────────
+let newStringKey = $state('showcase:');
+let newStringValue = $state('');
+let newStringTtl = $state('');
 
-	// ─── Hash state ─────────────────────────────────────
-	let hashField = $state('');
-	let hashValue = $state('');
+// ─── Hash state ─────────────────────────────────────
+let hashField = $state('');
+let hashValue = $state('');
 
-	// ─── Sorted set state ───────────────────────────────
-	let newMember = $state('');
-	let newScore = $state('');
+// ─── Sorted set state ───────────────────────────────
+let newMember = $state('');
+let newScore = $state('');
 
-	// ─── List state ─────────────────────────────────────
-	let listValue = $state('');
+// ─── List state ─────────────────────────────────────
+let listValue = $state('');
 
-	// ─── Loading states ─────────────────────────────────
-	let actionLoading = $state('');
+// ─── Loading states ─────────────────────────────────
+let actionLoading = $state('');
 
-	function handleResult(successMsg?: string) {
-		return ({ result, update }: { result: any; update: (opts?: any) => Promise<void> }) => {
-			actionLoading = '';
-			if (result.type === 'success' && result.data) {
-				if (result.data.detail) inspectResult = result.data.detail;
-				toast.success(result.data.message || successMsg || 'Done.');
-			} else if (result.type === 'failure') {
-				toast.error(result.data?.message || 'Operation failed.');
-			}
-			return update();
-		};
-	}
-
-	function formatValue(val: unknown): string {
-		if (val === null || val === undefined) return 'null';
-		if (typeof val === 'object') return JSON.stringify(val, null, 2);
-		return String(val);
-	}
-
-	const typeBadgeVariant = (type: string) => {
-		const map: Record<string, 'success' | 'warning' | 'error' | 'secondary'> = {
-			string: 'success',
-			hash: 'warning',
-			list: 'secondary',
-			zset: 'error',
-			set: 'secondary',
-		};
-		return map[type] ?? 'secondary';
+function handleResult(successMsg?: string) {
+	return ({ result, update }: { result: any; update: (opts?: any) => Promise<void> }) => {
+		actionLoading = '';
+		if (result.type === 'success' && result.data) {
+			if (result.data.detail) inspectResult = result.data.detail;
+			toast.success((result.data.message as string) || successMsg || 'Done.');
+		} else if (result.type === 'failure') {
+			toast.error((result.data?.message as string) || 'Operation failed.');
+		}
+		return update();
 	};
+}
+
+function formatValue(val: unknown): string {
+	if (val === null || val === undefined) return 'null';
+	if (typeof val === 'object') return JSON.stringify(val, null, 2);
+	return String(val);
+}
+
+const typeBadgeVariant = (type: string) => {
+	const map: Record<string, 'success' | 'warning' | 'error' | 'secondary'> = {
+		string: 'success',
+		hash: 'warning',
+		list: 'secondary',
+		zset: 'error',
+		set: 'secondary',
+	};
+	return map[type] ?? 'secondary';
+};
 </script>
 
 <svelte:head>
@@ -144,7 +155,7 @@
 															if (event.result.type === 'success' && event.result.data?.detail) {
 																inspectResult = event.result.data.detail;
 															} else if (event.result.type === 'failure') {
-																toast.error(event.result.data?.message || 'Inspect failed.');
+																toast.error((event.result.data?.message as string) || 'Inspect failed.');
 															}
 															return event.update();
 														};

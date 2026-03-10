@@ -5,18 +5,17 @@ export const load: LayoutServerLoad = async ({ cookies, locals }) => {
 		? {
 				expiresAt: locals.session.expiresAt,
 				user: {
-					id: locals.user!.id,
-					email: locals.user!.email,
-					name: locals.user!.name,
-					image: locals.user!.image ?? null,
+					id: locals.user?.id,
+					email: locals.user?.email,
+					name: locals.user?.name,
+					image: locals.user?.image ?? null,
 				},
 			}
 		: null;
 
 	// Read theme preference from cookie to prevent flash on full-page reload
 	const raw = cookies.get('theme');
-	const themeMode: 'light' | 'dark' | 'system' =
-		raw === 'light' || raw === 'dark' || raw === 'system' ? raw : 'system';
+	const themeMode: 'light' | 'dark' | 'system' = raw === 'light' || raw === 'dark' || raw === 'system' ? raw : 'system';
 
 	return {
 		session,

@@ -3,7 +3,7 @@ import { getLocale } from '$lib/paraglide/runtime';
 const LOCALE_DEFAULTS: Record<string, string> = {
 	en: 'en-US',
 	de: 'de-DE',
-	fr: 'fr-FR'
+	fr: 'fr-FR',
 };
 
 /**
@@ -21,10 +21,7 @@ export function getFormattingLocale(): string {
 	return LOCALE_DEFAULTS[lang] ?? lang;
 }
 
-export function formatDate(
-	date: Date,
-	options: Intl.DateTimeFormatOptions = { dateStyle: 'medium' }
-): string {
+export function formatDate(date: Date, options: Intl.DateTimeFormatOptions = { dateStyle: 'medium' }): string {
 	return new Intl.DateTimeFormat(getFormattingLocale(), options).format(date);
 }
 
@@ -35,7 +32,7 @@ export function formatNumber(value: number, options: Intl.NumberFormatOptions = 
 export function formatCurrency(value: number, currency = 'USD'): string {
 	return new Intl.NumberFormat(getFormattingLocale(), {
 		style: 'currency',
-		currency
+		currency,
 	}).format(value);
 }
 
@@ -43,7 +40,7 @@ export function formatPercent(value: number): string {
 	return new Intl.NumberFormat(getFormattingLocale(), {
 		style: 'percent',
 		minimumFractionDigits: 0,
-		maximumFractionDigits: 1
+		maximumFractionDigits: 1,
 	}).format(value);
 }
 

@@ -1,48 +1,46 @@
-import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
+import { desc, isNotNull, isNull } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import {
-	typeSpecimen,
-	typeSpecimenHistory,
+	auditLog,
 	documentVault,
 	networkRegistry,
-	auditLog,
 	temporalRecord,
+	typeSpecimen,
+	typeSpecimenHistory,
 } from '$lib/server/db/schema';
-import { sql, desc, isNull, isNotNull } from 'drizzle-orm';
 import { checkRowLimit } from '$lib/server/db/showcase/guards';
 import {
-	createSpecimen,
-	updateSpecimen,
-	deleteSpecimen,
-	updateWithHistory,
-	softDeleteDocument,
-	restoreDocument,
-	appendAuditEntry,
 	addTemporalRecord,
+	appendAuditEntry,
+	createSpecimen,
+	deleteSpecimen,
 	queryTemporalAt,
+	restoreDocument,
+	softDeleteDocument,
+	updateSpecimen,
+	updateWithHistory,
 } from '$lib/server/db/showcase/mutations';
 import { reseedShowcase } from '$lib/server/db/showcase/seed';
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
 	const start = performance.now();
 
 	try {
-		const [mutableRows, versionHistory, activeDocuments, deletedDocuments, appendLog, temporalRows] =
-			await Promise.all([
+		const [mutableRows, versionHistory, activeDocuments, deletedDocuments, appendLog, temporalRows] = await Promise.all(
+			[
 				db.select().from(typeSpecimen).orderBy(desc(typeSpecimen.updatedAt)),
 				db.select().from(typeSpecimenHistory).orderBy(desc(typeSpecimenHistory.changedAt)),
 				db.select().from(documentVault).where(isNull(documentVault.deletedAt)),
 				db.select().from(documentVault).where(isNotNull(documentVault.deletedAt)),
 				db.select().from(auditLog).orderBy(desc(auditLog.occurredAt)).limit(15),
 				db.select().from(temporalRecord).orderBy(desc(temporalRecord.validFrom)),
-			]);
+			],
+		);
 
 		// Also load append-only network registry
-		const appendOnlyRecords = await db
-			.select()
-			.from(networkRegistry)
-			.orderBy(desc(networkRegistry.registeredAt));
+		const appendOnlyRecords = await db.select().from(networkRegistry).orderBy(desc(networkRegistry.registeredAt));
 
 		const queryMs = Math.round((performance.now() - start) * 100) / 100;
 

@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { PageHeader, BackLink } from '$lib/components';
-	import { BoundaryFallback } from '$lib/components/composites';
-	import { Canvas } from '@threlte/core';
-	import Scene from './Scene.svelte';
+import { Canvas } from '@threlte/core';
+import { BackLink, PageHeader } from '$lib/components';
+import { BoundaryFallback } from '$lib/components/composites';
+import Scene from './Scene.svelte';
 
-	let currentAnimation = $state('Survey');
-	const animationNames = ['Survey', 'Walk', 'Run'];
+let currentAnimation = $state('Survey');
+const animationNames = ['Survey', 'Walk', 'Run'];
 </script>
 
 <svelte:head>

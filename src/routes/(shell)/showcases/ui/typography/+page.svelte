@@ -1,152 +1,152 @@
 <script lang="ts">
-	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
-	import { loadFont, isFontLoaded, findFont, type FontLoadState } from '$lib/utils/fonts';
-	import FontPicker from './_components/FontPicker.svelte';
-	import FontPreview from './_components/FontPreview.svelte';
-	import ProsePreview from './_components/ProsePreview.svelte';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import { type FontLoadState, findFont, isFontLoaded, loadFont } from '$lib/utils/fonts';
+import FontPicker from './_components/FontPicker.svelte';
+import FontPreview from './_components/FontPreview.svelte';
+import ProsePreview from './_components/ProsePreview.svelte';
 
-	// --- Mode state ---
-	const urlHeading = page.url.searchParams.get('heading');
-	const urlBody = page.url.searchParams.get('body');
-	const urlView = page.url.searchParams.get('view');
+// --- Mode state ---
+const urlHeading = page.url.searchParams.get('heading');
+const urlBody = page.url.searchParams.get('body');
+const urlView = page.url.searchParams.get('view');
 
-	let mode = $state<'single' | 'pairing'>(urlHeading && urlBody ? 'pairing' : 'single');
-	let viewMode = $state<'scale' | 'prose'>(urlView === 'prose' ? 'prose' : 'scale');
+let mode = $state<'single' | 'pairing'>(urlHeading && urlBody ? 'pairing' : 'single');
+let viewMode = $state<'scale' | 'prose'>(urlView === 'prose' ? 'prose' : 'scale');
 
-	// --- Single mode ---
-	let selectedFamily = $state(page.url.searchParams.get('font') ?? 'System');
-	let loadState = $state<FontLoadState>('idle');
+// --- Single mode ---
+let selectedFamily = $state(page.url.searchParams.get('font') ?? 'System');
+let loadState = $state<FontLoadState>('idle');
 
-	// --- Pairing mode ---
-	let headingFamily = $state(urlHeading ?? 'Playfair Display');
-	let bodyFamily = $state(urlBody ?? 'Inter');
-	let headingLoadState = $state<FontLoadState>('idle');
-	let bodyLoadState = $state<FontLoadState>('idle');
+// --- Pairing mode ---
+let headingFamily = $state(urlHeading ?? 'Playfair Display');
+let bodyFamily = $state(urlBody ?? 'Inter');
+let headingLoadState = $state<FontLoadState>('idle');
+let bodyLoadState = $state<FontLoadState>('idle');
 
-	// --- Derived font stacks ---
-	function buildFontStack(family: string): string {
-		const meta = findFont(family);
-		if (!meta || meta.family === 'System') {
-			return "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+// --- Derived font stacks ---
+function buildFontStack(family: string): string {
+	const meta = findFont(family);
+	if (!meta || meta.family === 'System') {
+		return "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+	}
+	return `'${meta.family}', ${meta.fallback}`;
+}
+
+let fontStack = $derived(buildFontStack(selectedFamily));
+let headingFontStack = $derived(buildFontStack(headingFamily));
+let bodyFontStack = $derived(buildFontStack(bodyFamily));
+
+// --- URL sync ---
+function syncUrl() {
+	const url = new URL(page.url);
+
+	// Clear all font params first
+	url.searchParams.delete('font');
+	url.searchParams.delete('heading');
+	url.searchParams.delete('body');
+	url.searchParams.delete('view');
+
+	if (mode === 'single') {
+		if (selectedFamily !== 'System') {
+			url.searchParams.set('font', selectedFamily);
 		}
-		return `'${meta.family}', ${meta.fallback}`;
+	} else {
+		url.searchParams.set('heading', headingFamily);
+		url.searchParams.set('body', bodyFamily);
 	}
 
-	let fontStack = $derived(buildFontStack(selectedFamily));
-	let headingFontStack = $derived(buildFontStack(headingFamily));
-	let bodyFontStack = $derived(buildFontStack(bodyFamily));
+	if (viewMode === 'prose') {
+		url.searchParams.set('view', 'prose');
+	}
 
-	// --- URL sync ---
-	function syncUrl() {
-		const url = new URL(page.url);
+	goto(url.toString(), { replaceState: true, noScroll: true, keepFocus: true });
+}
 
-		// Clear all font params first
-		url.searchParams.delete('font');
-		url.searchParams.delete('heading');
-		url.searchParams.delete('body');
-		url.searchParams.delete('view');
+// --- Font loading helpers ---
+async function doLoadFont(family: string): Promise<void> {
+	if (family === 'System' || isFontLoaded(family)) return;
+	const meta = findFont(family);
+	if (!meta) return;
+	await loadFont(meta.family, meta.weights);
+}
 
-		if (mode === 'single') {
-			if (selectedFamily !== 'System') {
-				url.searchParams.set('font', selectedFamily);
-			}
-		} else {
-			url.searchParams.set('heading', headingFamily);
-			url.searchParams.set('body', bodyFamily);
+// --- Single mode selection ---
+async function selectFont(family: string) {
+	selectedFamily = family;
+	syncUrl();
+
+	if (family !== 'System' && !isFontLoaded(family)) {
+		loadState = 'loading';
+		try {
+			await doLoadFont(family);
+			loadState = 'loaded';
+		} catch {
+			loadState = 'error';
 		}
+	} else {
+		loadState = family === 'System' ? 'idle' : 'loaded';
+	}
+}
 
-		if (viewMode === 'prose') {
-			url.searchParams.set('view', 'prose');
+// --- Pairing mode selection ---
+async function selectHeadingFont(family: string) {
+	headingFamily = family;
+	syncUrl();
+
+	if (family !== 'System' && !isFontLoaded(family)) {
+		headingLoadState = 'loading';
+		try {
+			await doLoadFont(family);
+			headingLoadState = 'loaded';
+		} catch {
+			headingLoadState = 'error';
 		}
-
-		goto(url.toString(), { replaceState: true, noScroll: true, keepFocus: true });
+	} else {
+		headingLoadState = family === 'System' ? 'idle' : 'loaded';
 	}
+}
 
-	// --- Font loading helpers ---
-	async function doLoadFont(family: string): Promise<void> {
-		if (family === 'System' || isFontLoaded(family)) return;
-		const meta = findFont(family);
-		if (!meta) return;
-		await loadFont(meta.family, meta.weights);
-	}
+async function selectBodyFont(family: string) {
+	bodyFamily = family;
+	syncUrl();
 
-	// --- Single mode selection ---
-	async function selectFont(family: string) {
-		selectedFamily = family;
-		syncUrl();
-
-		if (family !== 'System' && !isFontLoaded(family)) {
-			loadState = 'loading';
-			try {
-				await doLoadFont(family);
-				loadState = 'loaded';
-			} catch {
-				loadState = 'error';
-			}
-		} else {
-			loadState = family === 'System' ? 'idle' : 'loaded';
+	if (family !== 'System' && !isFontLoaded(family)) {
+		bodyLoadState = 'loading';
+		try {
+			await doLoadFont(family);
+			bodyLoadState = 'loaded';
+		} catch {
+			bodyLoadState = 'error';
 		}
+	} else {
+		bodyLoadState = family === 'System' ? 'idle' : 'loaded';
 	}
+}
 
-	// --- Pairing mode selection ---
-	async function selectHeadingFont(family: string) {
-		headingFamily = family;
-		syncUrl();
-
-		if (family !== 'System' && !isFontLoaded(family)) {
-			headingLoadState = 'loading';
-			try {
-				await doLoadFont(family);
-				headingLoadState = 'loaded';
-			} catch {
-				headingLoadState = 'error';
-			}
-		} else {
-			headingLoadState = family === 'System' ? 'idle' : 'loaded';
-		}
-	}
-
-	async function selectBodyFont(family: string) {
-		bodyFamily = family;
-		syncUrl();
-
-		if (family !== 'System' && !isFontLoaded(family)) {
-			bodyLoadState = 'loading';
-			try {
-				await doLoadFont(family);
-				bodyLoadState = 'loaded';
-			} catch {
-				bodyLoadState = 'error';
-			}
-		} else {
-			bodyLoadState = family === 'System' ? 'idle' : 'loaded';
-		}
-	}
-
-	// --- Mode switch ---
-	function handleModeChange(newMode: 'single' | 'pairing') {
-		mode = newMode;
-		if (newMode === 'pairing') {
-			// Trigger loading both fonts
-			selectHeadingFont(headingFamily);
-			selectBodyFont(bodyFamily);
-		}
-		syncUrl();
-	}
-
-	function handleViewChange(newView: 'scale' | 'prose') {
-		viewMode = newView;
-		syncUrl();
-	}
-
-	// --- Load initial fonts if arriving via URL params ---
-	if (mode === 'pairing') {
+// --- Mode switch ---
+function handleModeChange(newMode: 'single' | 'pairing') {
+	mode = newMode;
+	if (newMode === 'pairing') {
+		// Trigger loading both fonts
 		selectHeadingFont(headingFamily);
 		selectBodyFont(bodyFamily);
-	} else if (selectedFamily !== 'System') {
-		selectFont(selectedFamily);
 	}
+	syncUrl();
+}
+
+function handleViewChange(newView: 'scale' | 'prose') {
+	viewMode = newView;
+	syncUrl();
+}
+
+// --- Load initial fonts if arriving via URL params ---
+if (mode === 'pairing') {
+	selectHeadingFont(headingFamily);
+	selectBodyFont(bodyFamily);
+} else if (selectedFamily !== 'System') {
+	selectFont(selectedFamily);
+}
 </script>
 
 <svelte:head>

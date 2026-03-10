@@ -1,5 +1,5 @@
-import type { PageServerLoad } from './$types';
 import { getFunnelSteps } from '$lib/server/db/analytics/aggregations';
+import type { PageServerLoad } from './$types';
 
 const FUNNEL_STEPS = [
 	{ label: 'Landing', path: '/' },

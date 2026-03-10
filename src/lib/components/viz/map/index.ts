@@ -1,1 +1,1 @@
-export { GeoMap, MapMarker, MapPopup, CARTO_VOYAGER, CARTO_DARK_MATTER, getMapThemeColors } from './geo';
+export { CARTO_DARK_MATTER, CARTO_VOYAGER, GeoMap, getMapThemeColors, MapMarker, MapPopup } from './geo';

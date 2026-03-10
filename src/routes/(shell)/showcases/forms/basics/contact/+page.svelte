@@ -1,17 +1,24 @@
 <script lang="ts">
-	import type { PageProps } from './$types';
-	import { superForm } from 'sveltekit-superforms';
-	import { valibotClient } from 'sveltekit-superforms/adapters';
-	import { contactSchema } from '$lib/schemas/showcase/basics';
-	import { Card, Alert, FormField } from '$lib/components/composites';
-	import { Button, Input, Spinner } from '$lib/components/primitives';
-	import { Stack } from '$lib/components/layout';
+import { superForm } from 'sveltekit-superforms';
+import { valibotClient } from 'sveltekit-superforms/adapters';
+import { Alert, Card, FormField } from '$lib/components/composites';
+import { Stack } from '$lib/components/layout';
+import { Button, Input, Spinner } from '$lib/components/primitives';
+import { contactSchema } from '$lib/schemas/showcase/basics';
+import type { PageProps } from './$types';
 
-	let { data }: PageProps = $props();
+let { data }: PageProps = $props();
 
-	const { form, errors, enhance, submitting, delayed, message: formMessage } = superForm(data.form, {
-		validators: valibotClient(contactSchema),
-	});
+const {
+	form,
+	errors,
+	enhance,
+	submitting,
+	delayed,
+	message: formMessage,
+} = superForm(data.form, {
+	validators: valibotClient(contactSchema),
+});
 </script>
 
 <svelte:head>

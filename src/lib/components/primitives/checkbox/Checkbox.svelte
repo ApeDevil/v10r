@@ -1,17 +1,17 @@
 <script lang="ts">
-	import type { HTMLInputAttributes } from 'svelte/elements';
-	import { cn } from '$lib/utils/cn';
+import type { HTMLInputAttributes } from 'svelte/elements';
+import { cn } from '$lib/utils/cn';
 
-	interface Props extends Omit<HTMLInputAttributes, 'type' | 'checked'> {
-		checked?: boolean;
-		label?: string;
-		class?: string;
-	}
+interface Props extends Omit<HTMLInputAttributes, 'type' | 'checked'> {
+	checked?: boolean;
+	label?: string;
+	class?: string;
+}
 
-	let { checked = $bindable(false), label, class: className, ...restProps }: Props = $props();
+let { checked = $bindable(false), label, class: className, ...restProps }: Props = $props();
 
-	// Generate unique ID for label association
-	const id = crypto.randomUUID();
+// Generate unique ID for label association
+const id = crypto.randomUUID();
 </script>
 
 <div class={cn('checkbox-container flex items-center gap-2', className)}>
@@ -34,7 +34,7 @@
 			)}
 		>
 			{#if checked}
-				<span class="i-lucide-check h-4 w-4" />
+				<span class="i-lucide-check h-4 w-4" ></span>
 			{/if}
 		</label>
 	</div>

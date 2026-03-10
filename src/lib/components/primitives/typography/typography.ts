@@ -15,12 +15,12 @@ export const typographyVariants = cva('', {
 			small: 'text-fluid-sm color-fg',
 			muted: 'text-fluid-sm color-muted',
 			code: 'font-mono text-fluid-sm bg-subtle px-1.5 py-0.5 rounded color-fg',
-			blockquote: 'text-fluid-base italic border-l-4 border-primary pl-4 color-fg'
-		}
+			blockquote: 'text-fluid-base italic border-l-4 border-primary pl-4 color-fg',
+		},
 	},
 	defaultVariants: {
-		variant: 'body'
-	}
+		variant: 'body',
+	},
 });
 
 export type TypographyVariants = VariantProps<typeof typographyVariants>;

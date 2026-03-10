@@ -1,28 +1,28 @@
 <script lang="ts">
-	import { DemoCard, VariantGrid } from '../_components';
-	import { Input, Select, Checkbox, Combobox, Slider, Switch, Toggle, ToggleGroup, Calendar } from '$lib/components';
-	import { TagInput } from '$lib/components/composites';
+import { Calendar, Checkbox, Combobox, Input, Select, Slider, Switch, Toggle, ToggleGroup } from '$lib/components';
+import { TagInput } from '$lib/components/composites';
+import { DemoCard, VariantGrid } from '../_components';
 
-	let textValue = $state('');
-	let emailValue = $state('');
-	let disabledValue = $state('Disabled');
-	let selectValue = $state('');
-	let checkbox1 = $state(false);
-	let checkbox2 = $state(true);
-	let checkbox3 = $state(false);
-	let comboboxValue = $state<string | undefined>(undefined);
-	let sliderValue = $state([50]);
-	let sliderSmValue = $state([25]);
-	let sliderLgValue = $state([75]);
-	let rangeValue = $state([20, 80]);
-	let switchChecked = $state(false);
-	let toggleBold = $state(false);
-	let toggleItalic = $state(false);
-	let toggleGroupValue = $state('center');
-	let tags = $state<string[]>(['svelte', 'typescript']);
-	let tagsEmpty = $state<string[]>([]);
-	let tagsDisabled = $state<string[]>(['locked', 'readonly']);
-	let tagsError = $state<string[]>(['invalid']);
+let textValue = $state('');
+let emailValue = $state('');
+let disabledValue = $state('Disabled');
+let selectValue = $state('');
+let checkbox1 = $state(false);
+let checkbox2 = $state(true);
+let checkbox3 = $state(false);
+let comboboxValue = $state<string | undefined>(undefined);
+let sliderValue = $state([50]);
+let sliderSmValue = $state([25]);
+let sliderLgValue = $state([75]);
+let rangeValue = $state([20, 80]);
+let switchChecked = $state(false);
+let toggleBold = $state(false);
+let toggleItalic = $state(false);
+let toggleGroupValue = $state('center');
+let tags = $state<string[]>(['svelte', 'typescript']);
+let tagsEmpty = $state<string[]>([]);
+let tagsDisabled = $state<string[]>(['locked', 'readonly']);
+let tagsError = $state<string[]>(['invalid']);
 </script>
 
 <section id="prim-inputs" class="section">
@@ -101,13 +101,13 @@
 		<DemoCard title="Toggle" description="Pressable toggle button">
 			<VariantGrid layout="row">
 				<Toggle bind:pressed={toggleBold}>
-					<span class="i-lucide-bold h-4 w-4" aria-hidden="true" />
+					<span class="i-lucide-bold h-4 w-4" aria-hidden="true" ></span>
 				</Toggle>
 				<Toggle bind:pressed={toggleItalic} variant="outline">
-					<span class="i-lucide-italic h-4 w-4" aria-hidden="true" />
+					<span class="i-lucide-italic h-4 w-4" aria-hidden="true" ></span>
 				</Toggle>
 				<Toggle disabled>
-					<span class="i-lucide-underline h-4 w-4" aria-hidden="true" />
+					<span class="i-lucide-underline h-4 w-4" aria-hidden="true" ></span>
 				</Toggle>
 			</VariantGrid>
 		</DemoCard>

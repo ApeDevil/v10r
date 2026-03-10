@@ -7,13 +7,13 @@ export const kbdVariants = cva(
 			size: {
 				sm: 'text-fluid-xs px-1 py-0.5',
 				md: 'text-fluid-sm px-1.5 py-0.5',
-				lg: 'text-fluid-base px-2 py-1'
-			}
+				lg: 'text-fluid-base px-2 py-1',
+			},
 		},
 		defaultVariants: {
-			size: 'md'
-		}
-	}
+			size: 'md',
+		},
+	},
 );
 
 export type KbdVariants = VariantProps<typeof kbdVariants>;
@@ -48,7 +48,7 @@ export const keySymbols: Record<string, string> = {
 	up: '↑',
 	down: '↓',
 	left: '←',
-	right: '→'
+	right: '→',
 };
 
 /**

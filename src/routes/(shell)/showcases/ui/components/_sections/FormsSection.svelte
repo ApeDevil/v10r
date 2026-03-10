@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { DemoCard } from '../_components';
-	import { FormField, Input, DatePicker } from '$lib/components';
+import { DatePicker, FormField, Input } from '$lib/components';
+import { DemoCard } from '../_components';
 
-	let inputValue = $state('');
+let inputValue = $state('');
 </script>
 
 <section id="comp-forms" class="section">

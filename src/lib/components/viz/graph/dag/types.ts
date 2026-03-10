@@ -1,4 +1,4 @@
-import type { GraphNode, GraphEdge, GraphData } from '../_shared/types';
+import type { GraphData, GraphEdge, GraphNode } from '../_shared/types';
 
 export interface DagNode extends GraphNode {
 	group?: string;

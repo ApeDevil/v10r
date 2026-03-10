@@ -1,13 +1,13 @@
-export { NetworkGraph } from './network';
-export { TreeGraph } from './tree';
+export type { GraphData, GraphEdge, GraphNode } from './_shared/types';
+export type { DagData, DagEdge, DagNode } from './dag';
 export { DagGraph } from './dag';
-export { SankeyDiagram } from './sankey';
-export { KnowledgeGraph, KnowledgeFilters } from './knowledge';
+export type { KnowledgeData, KnowledgeEdge, KnowledgeNode } from './knowledge';
+export { KnowledgeFilters, KnowledgeGraph } from './knowledge';
 
 // Re-export types
-export type { NetworkNode, NetworkEdge, NetworkData } from './network';
-export type { TreeNode, TreeData } from './tree';
-export type { DagNode, DagEdge, DagData } from './dag';
-export type { SankeyNodeData, SankeyLinkData, SankeyData } from './sankey';
-export type { KnowledgeNode, KnowledgeEdge, KnowledgeData } from './knowledge';
-export type { GraphNode, GraphEdge, GraphData } from './_shared/types';
+export type { NetworkData, NetworkEdge, NetworkNode } from './network';
+export { NetworkGraph } from './network';
+export type { SankeyData, SankeyLinkData, SankeyNodeData } from './sankey';
+export { SankeyDiagram } from './sankey';
+export type { TreeData, TreeNode } from './tree';
+export { TreeGraph } from './tree';

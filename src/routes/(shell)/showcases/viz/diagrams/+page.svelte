@@ -1,72 +1,77 @@
 <script lang="ts">
-	import { PageHeader, BackLink, NavSection } from '$lib/components/composites';
-	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives/table';
-	import VizDemoCard from '../_components/VizDemoCard.svelte';
-	import { FlowDiagram, StateDiagram } from '$lib/components/viz';
-	import type { Node, Edge } from '@xyflow/svelte';
+import type { Edge, Node } from '@xyflow/svelte';
+import { BackLink, NavSection, PageHeader } from '$lib/components/composites';
+import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
+import { FlowDiagram, StateDiagram } from '$lib/components/viz';
+import VizDemoCard from '../_components/VizDemoCard.svelte';
 
-	const sections = [
-		{ id: 'auth-flow', label: 'Auth Flow' },
-		{ id: 'order-state', label: 'Order State' },
-		{ id: 'cicd-pipeline', label: 'CI/CD' },
-	];
+const sections = [
+	{ id: 'auth-flow', label: 'Auth Flow' },
+	{ id: 'order-state', label: 'Order State' },
+	{ id: 'cicd-pipeline', label: 'CI/CD' },
+];
 
-	// --- Section 1: Authentication Flow (FlowDiagram) ---
-	const authNodes: Node[] = [
-		{ id: 'start', type: 'flow', position: { x: 250, y: 0 }, data: { label: 'Start', variant: 'terminal' } },
-		{ id: 'login', type: 'flow', position: { x: 250, y: 100 }, data: { label: 'Login Page' } },
-		{ id: 'validate', type: 'flow', position: { x: 250, y: 200 }, data: { label: 'Valid?', variant: 'decision' } },
-		{ id: 'dashboard', type: 'flow', position: { x: 100, y: 340 }, data: { label: 'Dashboard' } },
-		{ id: 'error', type: 'flow', position: { x: 400, y: 340 }, data: { label: 'Error' } },
-		{ id: 'retry', type: 'flow', position: { x: 400, y: 440 }, data: { label: 'Retry', variant: 'terminal' } },
-	];
+// --- Section 1: Authentication Flow (FlowDiagram) ---
+const authNodes: Node[] = [
+	{ id: 'start', type: 'flow', position: { x: 250, y: 0 }, data: { label: 'Start', variant: 'terminal' } },
+	{ id: 'login', type: 'flow', position: { x: 250, y: 100 }, data: { label: 'Login Page' } },
+	{ id: 'validate', type: 'flow', position: { x: 250, y: 200 }, data: { label: 'Valid?', variant: 'decision' } },
+	{ id: 'dashboard', type: 'flow', position: { x: 100, y: 340 }, data: { label: 'Dashboard' } },
+	{ id: 'error', type: 'flow', position: { x: 400, y: 340 }, data: { label: 'Error' } },
+	{ id: 'retry', type: 'flow', position: { x: 400, y: 440 }, data: { label: 'Retry', variant: 'terminal' } },
+];
 
-	const authEdges: Edge[] = [
-		{ id: 'e-start-login', source: 'start', target: 'login', type: 'smoothstep' },
-		{ id: 'e-login-validate', source: 'login', target: 'validate', type: 'smoothstep' },
-		{ id: 'e-validate-dashboard', source: 'validate', target: 'dashboard', type: 'smoothstep', label: 'Yes' },
-		{ id: 'e-validate-error', source: 'validate', target: 'error', type: 'smoothstep', label: 'No' },
-		{ id: 'e-error-retry', source: 'error', target: 'retry', type: 'smoothstep' },
-		{ id: 'e-retry-login', source: 'retry', target: 'login', type: 'smoothstep', animated: true },
-	];
+const authEdges: Edge[] = [
+	{ id: 'e-start-login', source: 'start', target: 'login', type: 'smoothstep' },
+	{ id: 'e-login-validate', source: 'login', target: 'validate', type: 'smoothstep' },
+	{ id: 'e-validate-dashboard', source: 'validate', target: 'dashboard', type: 'smoothstep', label: 'Yes' },
+	{ id: 'e-validate-error', source: 'validate', target: 'error', type: 'smoothstep', label: 'No' },
+	{ id: 'e-error-retry', source: 'error', target: 'retry', type: 'smoothstep' },
+	{ id: 'e-retry-login', source: 'retry', target: 'login', type: 'smoothstep', animated: true },
+];
 
-	// --- Section 2: Order State Machine (StateDiagram) ---
-	const orderNodes: Node[] = [
-		{ id: 'start', type: 'start', position: { x: 0, y: 150 }, data: { variant: 'start' } },
-		{ id: 'pending', type: 'state', position: { x: 100, y: 140 }, data: { label: 'Pending', variant: 'state' } },
-		{ id: 'processing', type: 'state', position: { x: 280, y: 140 }, data: { label: 'Processing', variant: 'state' } },
-		{ id: 'shipped', type: 'state', position: { x: 460, y: 140 }, data: { label: 'Shipped', variant: 'state' } },
-		{ id: 'delivered', type: 'state', position: { x: 640, y: 140 }, data: { label: 'Delivered', variant: 'state' } },
-		{ id: 'end', type: 'end', position: { x: 800, y: 150 }, data: { variant: 'end' } },
-		{ id: 'failed', type: 'state', position: { x: 280, y: 280 }, data: { label: 'Failed', variant: 'state' } },
-	];
+// --- Section 2: Order State Machine (StateDiagram) ---
+const orderNodes: Node[] = [
+	{ id: 'start', type: 'start', position: { x: 0, y: 150 }, data: { variant: 'start' } },
+	{ id: 'pending', type: 'state', position: { x: 100, y: 140 }, data: { label: 'Pending', variant: 'state' } },
+	{ id: 'processing', type: 'state', position: { x: 280, y: 140 }, data: { label: 'Processing', variant: 'state' } },
+	{ id: 'shipped', type: 'state', position: { x: 460, y: 140 }, data: { label: 'Shipped', variant: 'state' } },
+	{ id: 'delivered', type: 'state', position: { x: 640, y: 140 }, data: { label: 'Delivered', variant: 'state' } },
+	{ id: 'end', type: 'end', position: { x: 800, y: 150 }, data: { variant: 'end' } },
+	{ id: 'failed', type: 'state', position: { x: 280, y: 280 }, data: { label: 'Failed', variant: 'state' } },
+];
 
-	const orderEdges: Edge[] = [
-		{ id: 'e-start-pending', source: 'start', target: 'pending', type: 'smoothstep', label: 'place' },
-		{ id: 'e-pending-processing', source: 'pending', target: 'processing', type: 'smoothstep', label: 'confirm' },
-		{ id: 'e-processing-shipped', source: 'processing', target: 'shipped', type: 'smoothstep', label: 'ship' },
-		{ id: 'e-shipped-delivered', source: 'shipped', target: 'delivered', type: 'smoothstep', label: 'deliver' },
-		{ id: 'e-delivered-end', source: 'delivered', target: 'end', type: 'smoothstep' },
-		{ id: 'e-processing-failed', source: 'processing', target: 'failed', type: 'smoothstep', label: 'error' },
-		{ id: 'e-failed-pending', source: 'failed', target: 'pending', type: 'smoothstep', label: 'retry', animated: true },
-	];
+const orderEdges: Edge[] = [
+	{ id: 'e-start-pending', source: 'start', target: 'pending', type: 'smoothstep', label: 'place' },
+	{ id: 'e-pending-processing', source: 'pending', target: 'processing', type: 'smoothstep', label: 'confirm' },
+	{ id: 'e-processing-shipped', source: 'processing', target: 'shipped', type: 'smoothstep', label: 'ship' },
+	{ id: 'e-shipped-delivered', source: 'shipped', target: 'delivered', type: 'smoothstep', label: 'deliver' },
+	{ id: 'e-delivered-end', source: 'delivered', target: 'end', type: 'smoothstep' },
+	{ id: 'e-processing-failed', source: 'processing', target: 'failed', type: 'smoothstep', label: 'error' },
+	{ id: 'e-failed-pending', source: 'failed', target: 'pending', type: 'smoothstep', label: 'retry', animated: true },
+];
 
-	// --- Section 3: CI/CD Pipeline (FlowDiagram) ---
-	const cicdNodes: Node[] = [
-		{ id: 'build', type: 'flow', position: { x: 0, y: 150 }, data: { label: 'Build' } },
-		{ id: 'test-unit', type: 'flow', position: { x: 200, y: 80 }, data: { label: 'Unit Tests' } },
-		{ id: 'test-e2e', type: 'flow', position: { x: 200, y: 220 }, data: { label: 'E2E Tests' } },
-		{ id: 'deploy-staging', type: 'flow', position: { x: 420, y: 150 }, data: { label: 'Deploy Staging' } },
-		{ id: 'deploy-prod', type: 'flow', position: { x: 620, y: 150 }, data: { label: 'Deploy Prod', variant: 'terminal' } },
-	];
+// --- Section 3: CI/CD Pipeline (FlowDiagram) ---
+const cicdNodes: Node[] = [
+	{ id: 'build', type: 'flow', position: { x: 0, y: 150 }, data: { label: 'Build' } },
+	{ id: 'test-unit', type: 'flow', position: { x: 200, y: 80 }, data: { label: 'Unit Tests' } },
+	{ id: 'test-e2e', type: 'flow', position: { x: 200, y: 220 }, data: { label: 'E2E Tests' } },
+	{ id: 'deploy-staging', type: 'flow', position: { x: 420, y: 150 }, data: { label: 'Deploy Staging' } },
+	{
+		id: 'deploy-prod',
+		type: 'flow',
+		position: { x: 620, y: 150 },
+		data: { label: 'Deploy Prod', variant: 'terminal' },
+	},
+];
 
-	const cicdEdges: Edge[] = [
-		{ id: 'e-build-unit', source: 'build', target: 'test-unit', type: 'smoothstep' },
-		{ id: 'e-build-e2e', source: 'build', target: 'test-e2e', type: 'smoothstep' },
-		{ id: 'e-unit-staging', source: 'test-unit', target: 'deploy-staging', type: 'smoothstep' },
-		{ id: 'e-e2e-staging', source: 'test-e2e', target: 'deploy-staging', type: 'smoothstep' },
-		{ id: 'e-staging-prod', source: 'deploy-staging', target: 'deploy-prod', type: 'smoothstep' },
-	];
+const cicdEdges: Edge[] = [
+	{ id: 'e-build-unit', source: 'build', target: 'test-unit', type: 'smoothstep' },
+	{ id: 'e-build-e2e', source: 'build', target: 'test-e2e', type: 'smoothstep' },
+	{ id: 'e-unit-staging', source: 'test-unit', target: 'deploy-staging', type: 'smoothstep' },
+	{ id: 'e-e2e-staging', source: 'test-e2e', target: 'deploy-staging', type: 'smoothstep' },
+	{ id: 'e-staging-prod', source: 'deploy-staging', target: 'deploy-prod', type: 'smoothstep' },
+];
 </script>
 
 <svelte:head>

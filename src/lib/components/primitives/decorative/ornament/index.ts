@@ -1,10 +1,10 @@
-export { default as GeometricMark } from './GeometricMark.svelte';
-export { default as Divider } from './Divider.svelte';
 export { default as Asterism } from './Asterism.svelte';
-export { default as Kamon } from './Kamon.svelte';
-export { default as Flourish } from './Flourish.svelte';
-export { default as WaveDivider } from './WaveDivider.svelte';
-export { default as CornerFrame } from './CornerFrame.svelte';
 export { default as ConcentricRings } from './ConcentricRings.svelte';
-export { default as TickMarks } from './TickMarks.svelte';
+export { default as CornerFrame } from './CornerFrame.svelte';
+export { default as Divider } from './Divider.svelte';
+export { default as Flourish } from './Flourish.svelte';
+export { default as GeometricMark } from './GeometricMark.svelte';
+export { default as Kamon } from './Kamon.svelte';
 export { default as Marquee } from './Marquee.svelte';
+export { default as TickMarks } from './TickMarks.svelte';
+export { default as WaveDivider } from './WaveDivider.svelte';

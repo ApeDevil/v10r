@@ -1,31 +1,31 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import { cn } from '$lib/utils/cn';
-	import { createDecorativeId } from '../utils';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils/cn';
+import { createDecorativeId } from '../utils';
 
-	interface Props {
-		cellSize?: number;
-		strokeWidth?: number;
-		color?: string;
-		opacity?: number;
-		highlights?: [number, number][];
-		highlightColor?: string;
-		class?: string;
-		children?: Snippet;
-	}
+interface Props {
+	cellSize?: number;
+	strokeWidth?: number;
+	color?: string;
+	opacity?: number;
+	highlights?: [number, number][];
+	highlightColor?: string;
+	class?: string;
+	children?: Snippet;
+}
 
-	let {
-		cellSize = 30,
-		strokeWidth = 1,
-		color = 'currentColor',
-		opacity = 0.1,
-		highlights = [],
-		highlightColor = 'currentColor',
-		class: className,
-		children
-	}: Props = $props();
+let {
+	cellSize = 30,
+	strokeWidth = 1,
+	color = 'currentColor',
+	opacity = 0.1,
+	highlights = [],
+	highlightColor = 'currentColor',
+	class: className,
+	children,
+}: Props = $props();
 
-	const patternId = createDecorativeId('grid');
+const patternId = createDecorativeId('grid');
 </script>
 
 <div class={cn('relative overflow-hidden', className)}>

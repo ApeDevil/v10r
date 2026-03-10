@@ -1,49 +1,49 @@
 <script lang="ts">
-	import {
-		Table,
-		Header as TableHeader,
-		Body as TableBody,
-		Row as TableRow,
-		HeaderCell as TableHeaderCell,
-		Cell as TableCell
-	} from '$lib/components';
-	import { EMPLOYEES, DEPARTMENTS, formatSalary, formatDate, type Department } from '../_data/mock-data';
+import {
+	Table,
+	Body as TableBody,
+	Cell as TableCell,
+	Header as TableHeader,
+	HeaderCell as TableHeaderCell,
+	Row as TableRow,
+} from '$lib/components';
+import { DEPARTMENTS, type Department, EMPLOYEES, formatDate, formatSalary } from '../_data/mock-data';
 
-	let expandedGroups = $state<Set<Department>>(new Set(DEPARTMENTS));
+let expandedGroups = $state<Set<Department>>(new Set(DEPARTMENTS));
 
-	let grouped = $derived.by(() => {
-		const map = new Map<Department, typeof EMPLOYEES>();
-		for (const dept of DEPARTMENTS) {
-			const members = EMPLOYEES.filter(e => e.department === dept);
-			if (members.length > 0) {
-				map.set(dept, members);
-			}
+let grouped = $derived.by(() => {
+	const map = new Map<Department, typeof EMPLOYEES>();
+	for (const dept of DEPARTMENTS) {
+		const members = EMPLOYEES.filter((e) => e.department === dept);
+		if (members.length > 0) {
+			map.set(dept, members);
 		}
-		return map;
-	});
-
-	function toggleGroup(dept: Department) {
-		const next = new Set(expandedGroups);
-		if (next.has(dept)) {
-			next.delete(dept);
-		} else {
-			next.add(dept);
-		}
-		expandedGroups = next;
 	}
+	return map;
+});
 
-	function expandAll() {
-		expandedGroups = new Set(DEPARTMENTS);
+function toggleGroup(dept: Department) {
+	const next = new Set(expandedGroups);
+	if (next.has(dept)) {
+		next.delete(dept);
+	} else {
+		next.add(dept);
 	}
+	expandedGroups = next;
+}
 
-	function collapseAll() {
-		expandedGroups = new Set();
-	}
+function expandAll() {
+	expandedGroups = new Set(DEPARTMENTS);
+}
 
-	function avgSalary(employees: typeof EMPLOYEES): string {
-		const avg = employees.reduce((sum, e) => sum + e.salary, 0) / employees.length;
-		return formatSalary(Math.round(avg));
-	}
+function collapseAll() {
+	expandedGroups = new Set();
+}
+
+function avgSalary(employees: typeof EMPLOYEES): string {
+	const avg = employees.reduce((sum, e) => sum + e.salary, 0) / employees.length;
+	return formatSalary(Math.round(avg));
+}
 </script>
 
 <section id="tbl-folio" class="section">
@@ -78,7 +78,7 @@
 										aria-expanded={expandedGroups.has(dept)}
 									>
 										<span class="chevron" class:expanded={expandedGroups.has(dept)}>
-											<span class="i-lucide-chevron-right" />
+											<span class="i-lucide-chevron-right" ></span>
 										</span>
 										<span class="group-name">{dept}</span>
 										<span class="group-meta">

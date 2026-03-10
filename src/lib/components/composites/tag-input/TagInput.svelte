@@ -1,148 +1,155 @@
 <script lang="ts">
-	import { tick } from 'svelte';
-	import { cn } from '$lib/utils/cn';
-	import { Tag } from '$lib/components/primitives';
-	import type { TagVariants } from '$lib/components/primitives/tag/tag';
+import { tick } from 'svelte';
+import { Tag } from '$lib/components/primitives';
+import type { TagVariants } from '$lib/components/primitives/tag/tag';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		value?: string[];
-		placeholder?: string;
-		delimiters?: string[];
-		max?: number;
-		maxLength?: number;
-		allowDuplicates?: boolean;
-		validate?: (tag: string) => string | undefined;
-		size?: 'sm' | 'md';
-		tagVariant?: TagVariants['variant'];
-		disabled?: boolean;
-		error?: boolean;
-		id?: string;
-		'aria-describedby'?: string;
-		class?: string;
+interface Props {
+	value?: string[];
+	placeholder?: string;
+	delimiters?: string[];
+	max?: number;
+	maxLength?: number;
+	allowDuplicates?: boolean;
+	validate?: (tag: string) => string | undefined;
+	size?: 'sm' | 'md';
+	tagVariant?: TagVariants['variant'];
+	disabled?: boolean;
+	error?: boolean;
+	id?: string;
+	'aria-describedby'?: string;
+	class?: string;
+}
+
+let {
+	value = $bindable<string[]>([]),
+	placeholder = 'Add tags...',
+	delimiters = ['Enter'],
+	max,
+	maxLength,
+	allowDuplicates = false,
+	validate,
+	size = 'md',
+	tagVariant = 'default',
+	disabled = false,
+	error = false,
+	id,
+	'aria-describedby': ariaDescribedBy,
+	class: className,
+}: Props = $props();
+
+let inputValue = $state('');
+let pendingDeleteIndex = $state<number | null>(null);
+let inputEl: HTMLInputElement | undefined = $state();
+let announcement = $state('');
+let shakeIndex = $state<number | null>(null);
+
+const tagSize: TagVariants['size'] = 'sm';
+let atMax = $derived(max != null && value.length >= max);
+let countText = $derived(max != null ? `${value.length}/${max}` : '');
+
+function trimAndValidate(raw: string): string | undefined {
+	let tag = raw.trim();
+	if (!tag) return undefined;
+	if (maxLength) tag = tag.slice(0, maxLength);
+	if (!allowDuplicates && value.includes(tag)) {
+		const dupeIdx = value.indexOf(tag);
+		triggerShake(dupeIdx);
+		announce(`${tag} already added.`);
+		return undefined;
 	}
-
-	let {
-		value = $bindable<string[]>([]),
-		placeholder = 'Add tags...',
-		delimiters = ['Enter'],
-		max,
-		maxLength,
-		allowDuplicates = false,
-		validate,
-		size = 'md',
-		tagVariant = 'default',
-		disabled = false,
-		error = false,
-		id,
-		'aria-describedby': ariaDescribedBy,
-		class: className
-	}: Props = $props();
-
-	let inputValue = $state('');
-	let pendingDeleteIndex = $state<number | null>(null);
-	let inputEl: HTMLInputElement | undefined = $state();
-	let announcement = $state('');
-	let shakeIndex = $state<number | null>(null);
-
-	const tagSize: TagVariants['size'] = 'sm';
-	let atMax = $derived(max != null && value.length >= max);
-	let countText = $derived(max != null ? `${value.length}/${max}` : '');
-
-	function trimAndValidate(raw: string): string | undefined {
-		let tag = raw.trim();
-		if (!tag) return undefined;
-		if (maxLength) tag = tag.slice(0, maxLength);
-		if (!allowDuplicates && value.includes(tag)) {
-			const dupeIdx = value.indexOf(tag);
-			triggerShake(dupeIdx);
-			announce(`${tag} already added.`);
+	if (validate) {
+		const err = validate(tag);
+		if (err) {
+			announce(err);
 			return undefined;
 		}
-		if (validate) {
-			const err = validate(tag);
-			if (err) {
-				announce(err);
-				return undefined;
-			}
-		}
-		if (atMax) {
-			announce(`Maximum ${max} tags reached.`);
-			return undefined;
-		}
-		return tag;
 	}
-
-	function addTag(raw: string) {
-		const tag = trimAndValidate(raw);
-		if (!tag) return false;
-		value = [...value, tag];
-		announce(`${tag} added. ${value.length} tag${value.length !== 1 ? 's' : ''} total.`);
-		return true;
+	if (atMax) {
+		announce(`Maximum ${max} tags reached.`);
+		return undefined;
 	}
+	return tag;
+}
 
-	function removeTag(index: number) {
-		const removed = value[index];
-		value = value.filter((_, i) => i !== index);
-		pendingDeleteIndex = null;
-		announce(`${removed} removed. ${value.length} tag${value.length !== 1 ? 's' : ''} total.`);
-	}
+function addTag(raw: string) {
+	const tag = trimAndValidate(raw);
+	if (!tag) return false;
+	value = [...value, tag];
+	announce(`${tag} added. ${value.length} tag${value.length !== 1 ? 's' : ''} total.`);
+	return true;
+}
 
-	function triggerShake(index: number) {
-		shakeIndex = index;
-		setTimeout(() => { shakeIndex = null; }, 300);
-	}
+function removeTag(index: number) {
+	const removed = value[index];
+	value = value.filter((_, i) => i !== index);
+	pendingDeleteIndex = null;
+	announce(`${removed} removed. ${value.length} tag${value.length !== 1 ? 's' : ''} total.`);
+}
 
-	function announce(msg: string) {
-		announcement = '';
-		tick().then(() => { announcement = msg; });
-	}
+function triggerShake(index: number) {
+	shakeIndex = index;
+	setTimeout(() => {
+		shakeIndex = null;
+	}, 300);
+}
 
-	function handleKeydown(e: KeyboardEvent) {
-		if (disabled) return;
+function announce(msg: string) {
+	announcement = '';
+	tick().then(() => {
+		announcement = msg;
+	});
+}
 
-		if (delimiters.includes(e.key) && inputValue.trim()) {
-			e.preventDefault();
-			if (addTag(inputValue)) {
-				inputValue = '';
-			}
-			return;
-		}
+function handleKeydown(e: KeyboardEvent) {
+	if (disabled) return;
 
-		if (e.key === 'Backspace' && !inputValue && value.length > 0) {
-			e.preventDefault();
-			if (pendingDeleteIndex != null) {
-				removeTag(pendingDeleteIndex);
-			} else {
-				pendingDeleteIndex = value.length - 1;
-			}
-			return;
-		}
-
-		// Any other key resets pending delete
-		if (pendingDeleteIndex != null && e.key !== 'Backspace') {
-			pendingDeleteIndex = null;
-		}
-	}
-
-	function handlePaste(e: ClipboardEvent) {
-		if (disabled) return;
-		const text = e.clipboardData?.getData('text');
-		if (!text) return;
-
-		const parts = text.split(/[,\n]+/).map(s => s.trim()).filter(Boolean);
-		if (parts.length <= 1) return; // let single values go through normal input
-
+	if (delimiters.includes(e.key) && inputValue.trim()) {
 		e.preventDefault();
-		let added = 0;
-		for (const part of parts) {
-			if (addTag(part)) added++;
+		if (addTag(inputValue)) {
+			inputValue = '';
 		}
-		inputValue = '';
+		return;
 	}
 
-	function handleContainerClick() {
-		if (!disabled) inputEl?.focus();
+	if (e.key === 'Backspace' && !inputValue && value.length > 0) {
+		e.preventDefault();
+		if (pendingDeleteIndex != null) {
+			removeTag(pendingDeleteIndex);
+		} else {
+			pendingDeleteIndex = value.length - 1;
+		}
+		return;
 	}
+
+	// Any other key resets pending delete
+	if (pendingDeleteIndex != null && e.key !== 'Backspace') {
+		pendingDeleteIndex = null;
+	}
+}
+
+function handlePaste(e: ClipboardEvent) {
+	if (disabled) return;
+	const text = e.clipboardData?.getData('text');
+	if (!text) return;
+
+	const parts = text
+		.split(/[,\n]+/)
+		.map((s) => s.trim())
+		.filter(Boolean);
+	if (parts.length <= 1) return; // let single values go through normal input
+
+	e.preventDefault();
+	let added = 0;
+	for (const part of parts) {
+		if (addTag(part)) added++;
+	}
+	inputValue = '';
+}
+
+function handleContainerClick() {
+	if (!disabled) inputEl?.focus();
+}
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->

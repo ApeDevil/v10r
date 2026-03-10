@@ -1,33 +1,33 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import NotificationCard from './NotificationCard.svelte';
-	import NotificationFilters from './NotificationFilters.svelte';
+import type { Snippet } from 'svelte';
+import NotificationCard from './NotificationCard.svelte';
+import NotificationFilters from './NotificationFilters.svelte';
 
-	interface Notification {
-		id: string;
-		type: string;
-		title: string;
-		body?: string | null;
-		actionUrl?: string | null;
-		isRead: boolean;
-		createdAt: string;
-	}
+interface Notification {
+	id: string;
+	type: string;
+	title: string;
+	body?: string | null;
+	actionUrl?: string | null;
+	isRead: boolean;
+	createdAt: string;
+}
 
-	interface Props {
-		notifications: Notification[];
-		filter: string;
-		onFilterChange: (filter: string) => void;
-		onMarkRead: (id: string) => void;
-		empty?: Snippet;
-	}
+interface Props {
+	notifications: Notification[];
+	filter: string;
+	onFilterChange: (filter: string) => void;
+	onMarkRead: (id: string) => void;
+	empty?: Snippet;
+}
 
-	let { notifications, filter, onFilterChange, onMarkRead, empty }: Props = $props();
+let { notifications, filter, onFilterChange, onMarkRead, empty }: Props = $props();
 
-	const filtered = $derived(() => {
-		if (filter === 'mentions') return notifications.filter((n) => n.type === 'mention');
-		if (filter === 'system') return notifications.filter((n) => n.type === 'system' || n.type === 'security');
-		return notifications;
-	});
+const filtered = $derived(() => {
+	if (filter === 'mentions') return notifications.filter((n) => n.type === 'mention');
+	if (filter === 'system') return notifications.filter((n) => n.type === 'system' || n.type === 'security');
+	return notifications;
+});
 </script>
 
 <div class="notification-center">

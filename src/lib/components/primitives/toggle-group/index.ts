@@ -1,7 +1,7 @@
 export { default as ToggleGroup } from './ToggleGroup.svelte';
 export {
-	toggleGroupVariants,
-	toggleGroupItemVariants,
+	type ToggleGroupItemVariants,
 	type ToggleGroupVariants,
-	type ToggleGroupItemVariants
+	toggleGroupItemVariants,
+	toggleGroupVariants,
 } from './toggle-group';

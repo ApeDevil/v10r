@@ -1,37 +1,39 @@
 <script lang="ts">
-	import { Calendar as CalendarPrimitive } from 'bits-ui';
-	import { cn } from '$lib/utils/cn';
-	import {
-		calendarRootVariants,
-		calendarHeaderVariants,
-		calendarHeadingVariants,
-		calendarNavButtonVariants,
-		calendarGridVariants,
-		calendarHeadCellVariants,
-		calendarCellVariants,
-		calendarDayVariants
-	} from './calendar';
-	import type { DateValue } from '@internationalized/date';
+import type { DateValue } from '@internationalized/date';
+import { Calendar as CalendarPrimitive } from 'bits-ui';
+import { cn } from '$lib/utils/cn';
+import {
+	calendarCellVariants,
+	calendarDayVariants,
+	calendarGridVariants,
+	calendarHeadCellVariants,
+	calendarHeaderVariants,
+	calendarHeadingVariants,
+	calendarNavButtonVariants,
+	calendarRootVariants,
+} from './calendar';
 
-	interface Props {
-		value?: DateValue;
-		placeholder?: DateValue;
-		weekdayFormat?: 'narrow' | 'short' | 'long';
-		fixedWeeks?: boolean;
-		class?: string;
-	}
+interface Props {
+	value?: DateValue;
+	placeholder?: DateValue;
+	weekdayFormat?: 'narrow' | 'short' | 'long';
+	fixedWeeks?: boolean;
+	class?: string;
+}
 
-	let {
-		value = $bindable(),
-		placeholder,
-		weekdayFormat = 'short',
-		fixedWeeks = false,
-		class: className
-	}: Props = $props();
+let {
+	value = $bindable(),
+	placeholder,
+	weekdayFormat = 'short',
+	fixedWeeks = false,
+	class: className,
+}: Props = $props();
 </script>
 
 <CalendarPrimitive.Root
-	bind:value
+	value={value}
+	onValueChange={(v) => value = v}
+	type="single"
 	{placeholder}
 	{weekdayFormat}
 	{fixedWeeks}
@@ -41,14 +43,14 @@
 		{#each months as month}
 			<CalendarPrimitive.Header class={calendarHeaderVariants()}>
 				<CalendarPrimitive.PrevButton class={calendarNavButtonVariants()}>
-					<span class="i-lucide-chevron-left h-4 w-4" aria-hidden="true" />
+					<span class="i-lucide-chevron-left h-4 w-4" aria-hidden="true" ></span>
 					<span class="sr-only">Previous month</span>
 				</CalendarPrimitive.PrevButton>
 
 				<CalendarPrimitive.Heading class={calendarHeadingVariants()} />
 
 				<CalendarPrimitive.NextButton class={calendarNavButtonVariants()}>
-					<span class="i-lucide-chevron-right h-4 w-4" aria-hidden="true" />
+					<span class="i-lucide-chevron-right h-4 w-4" aria-hidden="true" ></span>
 					<span class="sr-only">Next month</span>
 				</CalendarPrimitive.NextButton>
 			</CalendarPrimitive.Header>

@@ -1,13 +1,11 @@
-import type { RankedChunk, RetrievedEntity } from './types';
 import { RRF_K } from './config';
+import type { RankedChunk, RetrievedEntity } from './types';
 
 /**
  * Reciprocal Rank Fusion: combine results from multiple ranked lists.
  * Score = sum(1 / (k + rank)) across all lists containing the chunk.
  */
-export function reciprocalRankFusion(
-	...lists: RankedChunk[][]
-): RankedChunk[] {
+export function reciprocalRankFusion(...lists: RankedChunk[][]): RankedChunk[] {
 	const scores = new Map<string, { chunk: RankedChunk; score: number }>();
 
 	for (const list of lists) {
@@ -38,10 +36,7 @@ export function reciprocalRankFusion(
 /**
  * Deduplicate chunks by ID and cap at maxChunks.
  */
-export function deduplicateAndCap(
-	chunks: RankedChunk[],
-	maxChunks: number,
-): RankedChunk[] {
+export function deduplicateAndCap(chunks: RankedChunk[], maxChunks: number): RankedChunk[] {
 	const seen = new Set<string>();
 	const result: RankedChunk[] = [];
 
@@ -77,9 +72,7 @@ export function fuseAndRank(
 
 	// Fuse all tier groups
 	const lists = Array.from(tierGroups.values());
-	const fused = lists.length > 1
-		? reciprocalRankFusion(...lists)
-		: (lists[0] ?? []).sort((a, b) => b.score - a.score);
+	const fused = lists.length > 1 ? reciprocalRankFusion(...lists) : (lists[0] ?? []).sort((a, b) => b.score - a.score);
 
 	const chunks = deduplicateAndCap(fused, maxChunks);
 

@@ -1,178 +1,174 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
-	import { beforeNavigate } from '$app/navigation';
-	import { cn } from '$lib/utils/cn';
-	import SvgGraphContainer from '../_shared/SvgGraphContainer.svelte';
-	import { getVizPalette } from '../../_shared/theme-bridge';
-	import type { ChartContainerVariants } from '../../_shared/chart-container';
-	import type { TreeData } from './types';
-	import type { HierarchyPointNode, HierarchyPointLink } from 'd3-hierarchy';
+import type { HierarchyPointLink, HierarchyPointNode } from 'd3-hierarchy';
+import { onDestroy, onMount } from 'svelte';
+import { beforeNavigate } from '$app/navigation';
+import { cn } from '$lib/utils/cn';
+import type { ChartContainerVariants } from '../../_shared/chart-container';
+import { getVizPalette } from '../../_shared/theme-bridge';
+import SvgGraphContainer from '../_shared/SvgGraphContainer.svelte';
+import type { TreeData } from './types';
 
-	interface Props {
-		data: TreeData;
-		orientation?: 'horizontal' | 'vertical';
-		aspect?: ChartContainerVariants['aspect'];
-		ariaLabel?: string;
-		class?: string;
+interface Props {
+	data: TreeData;
+	orientation?: 'horizontal' | 'vertical';
+	aspect?: ChartContainerVariants['aspect'];
+	ariaLabel?: string;
+	class?: string;
+}
+
+let {
+	data,
+	orientation = 'horizontal',
+	aspect = 'chart',
+	ariaLabel = 'Tree diagram',
+	class: className,
+}: Props = $props();
+
+type PointNode = HierarchyPointNode<TreeData> & { _collapsed?: boolean };
+
+let layoutNodes = $state<PointNode[]>([]);
+let layoutLinks = $state<HierarchyPointLink<TreeData>[]>([]);
+let collapsedIds = $state<Set<string>>(new Set());
+let selectedNodeId = $state<string | null>(null);
+let focusedNodeIdx = $state(-1);
+let palette: string[] = [];
+let d3HierarchyModule: typeof import('d3-hierarchy') | undefined;
+
+function cleanup() {
+	// No simulation to stop, but reset state for clean teardown
+	d3HierarchyModule = undefined;
+}
+
+beforeNavigate(cleanup);
+onDestroy(cleanup);
+
+onMount(async () => {
+	palette = getVizPalette();
+	d3HierarchyModule = await import('d3-hierarchy');
+	computeLayout(d3HierarchyModule);
+});
+
+function computeLayout(d3Hierarchy: typeof import('d3-hierarchy')) {
+	// Filter out collapsed children
+	function filterCollapsed(node: TreeData): TreeData {
+		if (collapsedIds.has(node.id) || !node.children) {
+			return { id: node.id, label: node.label };
+		}
+		return {
+			...node,
+			children: node.children.map(filterCollapsed),
+		};
 	}
 
-	let {
-		data,
-		orientation = 'horizontal',
-		aspect = 'chart',
-		ariaLabel = 'Tree diagram',
-		class: className,
-	}: Props = $props();
+	const filteredData = filterCollapsed(data);
+	const root = d3Hierarchy.hierarchy(filteredData);
+	const treeLayout = d3Hierarchy.tree<TreeData>().nodeSize([40, 160]);
+	treeLayout(root);
 
-	type PointNode = HierarchyPointNode<TreeData> & { _collapsed?: boolean };
+	layoutNodes = root.descendants() as PointNode[];
+	// After tree() layout, nodes have x/y so links are effectively HierarchyPointLink
+	layoutLinks = root.links() as unknown as HierarchyPointLink<TreeData>[];
+}
 
-	let layoutNodes = $state<PointNode[]>([]);
-	let layoutLinks = $state<HierarchyPointLink<TreeData>[]>([]);
-	let collapsedIds = $state<Set<string>>(new Set());
-	let selectedNodeId = $state<string | null>(null);
-	let focusedNodeIdx = $state(-1);
-	let palette: string[] = [];
-	let d3HierarchyModule: typeof import('d3-hierarchy') | undefined;
-
-	function cleanup() {
-		// No simulation to stop, but reset state for clean teardown
-		d3HierarchyModule = undefined;
-	}
-
-	beforeNavigate(cleanup);
-	onDestroy(cleanup);
-
-	onMount(async () => {
-		palette = getVizPalette();
-		d3HierarchyModule = await import('d3-hierarchy');
+// Recompute when data or collapsed state changes (cached module ref)
+$effect(() => {
+	const _data = data;
+	const _collapsed = collapsedIds;
+	if (d3HierarchyModule) {
 		computeLayout(d3HierarchyModule);
-	});
+	}
+});
 
-	function computeLayout(d3Hierarchy: typeof import('d3-hierarchy')) {
-		// Filter out collapsed children
-		function filterCollapsed(node: TreeData): TreeData {
-			if (collapsedIds.has(node.id) || !node.children) {
-				return { id: node.id, label: node.label };
-			}
-			return {
-				...node,
-				children: node.children.map(filterCollapsed),
-			};
+function toggleCollapse(nodeId: string) {
+	const next = new Set(collapsedIds);
+	if (next.has(nodeId)) {
+		next.delete(nodeId);
+	} else {
+		next.add(nodeId);
+	}
+	collapsedIds = next;
+}
+
+function hasChildren(nodeId: string): boolean {
+	// Check original data, not filtered
+	function find(node: TreeData): TreeData | undefined {
+		if (node.id === nodeId) return node;
+		return node.children?.map(find).find(Boolean);
+	}
+	const found = find(data);
+	return (found?.children?.length ?? 0) > 0;
+}
+
+function isCollapsed(nodeId: string): boolean {
+	return collapsedIds.has(nodeId);
+}
+
+function getNodeColor(depth: number): string {
+	return palette[depth % palette.length] || '#3b82f6';
+}
+
+/** Get node x/y accounting for orientation swap */
+function nodeX(node: PointNode): number {
+	return orientation === 'horizontal' ? node.y : node.x;
+}
+
+function nodeY(node: PointNode): number {
+	return orientation === 'horizontal' ? node.x : node.y;
+}
+
+/** SVG path for link between parent and child */
+function linkPath(link: HierarchyPointLink<TreeData>): string {
+	const sx = orientation === 'horizontal' ? link.source.y : link.source.x;
+	const sy = orientation === 'horizontal' ? link.source.x : link.source.y;
+	const tx = orientation === 'horizontal' ? link.target.y : link.target.x;
+	const ty = orientation === 'horizontal' ? link.target.x : link.target.y;
+
+	// Cubic bezier with control points for smooth curves
+	const mx = (sx + tx) / 2;
+	if (orientation === 'horizontal') {
+		return `M${sx},${sy}C${mx},${sy} ${mx},${ty} ${tx},${ty}`;
+	}
+	const my = (sy + ty) / 2;
+	return `M${sx},${sy}C${sx},${my} ${tx},${my} ${tx},${ty}`;
+}
+
+function handleNodeKeydown(event: KeyboardEvent, node: PointNode, idx: number) {
+	if (event.key === 'Enter' || event.key === ' ') {
+		event.preventDefault();
+		if (hasChildren(node.data.id)) {
+			toggleCollapse(node.data.id);
 		}
-
-		const filteredData = filterCollapsed(data);
-		const root = d3Hierarchy.hierarchy(filteredData);
-		const treeLayout = d3Hierarchy.tree<TreeData>().nodeSize([40, 160]);
-		treeLayout(root);
-
-		layoutNodes = root.descendants() as PointNode[];
-		// After tree() layout, nodes have x/y so links are effectively HierarchyPointLink
-		layoutLinks = root.links() as unknown as HierarchyPointLink<TreeData>[];
+		selectedNodeId = selectedNodeId === node.data.id ? null : node.data.id;
+	} else if (event.key === 'Escape') {
+		event.preventDefault();
+		selectedNodeId = null;
+	} else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+		event.preventDefault();
+		focusedNodeIdx = (idx + 1) % layoutNodes.length;
+	} else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+		event.preventDefault();
+		focusedNodeIdx = (idx - 1 + layoutNodes.length) % layoutNodes.length;
 	}
+}
 
-	// Recompute when data or collapsed state changes (cached module ref)
-	$effect(() => {
-		const _data = data;
-		const _collapsed = collapsedIds;
-		if (d3HierarchyModule) {
-			computeLayout(d3HierarchyModule);
-		}
-	});
-
-	function toggleCollapse(nodeId: string) {
-		const next = new Set(collapsedIds);
-		if (next.has(nodeId)) {
-			next.delete(nodeId);
-		} else {
-			next.add(nodeId);
-		}
-		collapsedIds = next;
+// Focus management: when focusedNodeIdx changes, focus the corresponding element
+$effect(() => {
+	if (focusedNodeIdx >= 0 && focusedNodeIdx < layoutNodes.length) {
+		const el = document.querySelector(`.tree-graph .tree-node[data-idx="${focusedNodeIdx}"]`) as HTMLElement | null;
+		el?.focus();
 	}
+});
 
-	function hasChildren(nodeId: string): boolean {
-		// Check original data, not filtered
-		function find(node: TreeData): TreeData | undefined {
-			if (node.id === nodeId) return node;
-			return node.children?.map(find).find(Boolean);
-		}
-		const found = find(data);
-		return (found?.children?.length ?? 0) > 0;
+let announcement = $derived.by(() => {
+	if (selectedNodeId) {
+		const node = layoutNodes.find((n) => n.data.id === selectedNodeId);
+		if (!node) return '';
+		const childCount = node.children?.length ?? 0;
+		const collapsedState = hasChildren(node.data.id) ? (isCollapsed(node.data.id) ? ', collapsed' : ', expanded') : '';
+		return `Selected ${node.data.label || node.data.id}, depth ${node.depth}, ${childCount} children${collapsedState}`;
 	}
-
-	function isCollapsed(nodeId: string): boolean {
-		return collapsedIds.has(nodeId);
-	}
-
-	function getNodeColor(depth: number): string {
-		return palette[depth % palette.length] || '#3b82f6';
-	}
-
-	/** Get node x/y accounting for orientation swap */
-	function nodeX(node: PointNode): number {
-		return orientation === 'horizontal' ? node.y : node.x;
-	}
-
-	function nodeY(node: PointNode): number {
-		return orientation === 'horizontal' ? node.x : node.y;
-	}
-
-	/** SVG path for link between parent and child */
-	function linkPath(link: HierarchyPointLink<TreeData>): string {
-		const sx = orientation === 'horizontal' ? link.source.y : link.source.x;
-		const sy = orientation === 'horizontal' ? link.source.x : link.source.y;
-		const tx = orientation === 'horizontal' ? link.target.y : link.target.x;
-		const ty = orientation === 'horizontal' ? link.target.x : link.target.y;
-
-		// Cubic bezier with control points for smooth curves
-		const mx = (sx + tx) / 2;
-		if (orientation === 'horizontal') {
-			return `M${sx},${sy}C${mx},${sy} ${mx},${ty} ${tx},${ty}`;
-		}
-		const my = (sy + ty) / 2;
-		return `M${sx},${sy}C${sx},${my} ${tx},${my} ${tx},${ty}`;
-	}
-
-	function handleNodeKeydown(event: KeyboardEvent, node: PointNode, idx: number) {
-		if (event.key === 'Enter' || event.key === ' ') {
-			event.preventDefault();
-			if (hasChildren(node.data.id)) {
-				toggleCollapse(node.data.id);
-			}
-			selectedNodeId = selectedNodeId === node.data.id ? null : node.data.id;
-		} else if (event.key === 'Escape') {
-			event.preventDefault();
-			selectedNodeId = null;
-		} else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
-			event.preventDefault();
-			focusedNodeIdx = (idx + 1) % layoutNodes.length;
-		} else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
-			event.preventDefault();
-			focusedNodeIdx = (idx - 1 + layoutNodes.length) % layoutNodes.length;
-		}
-	}
-
-	// Focus management: when focusedNodeIdx changes, focus the corresponding element
-	$effect(() => {
-		if (focusedNodeIdx >= 0 && focusedNodeIdx < layoutNodes.length) {
-			const el = document.querySelector(
-				`.tree-graph .tree-node[data-idx="${focusedNodeIdx}"]`,
-			) as HTMLElement | null;
-			el?.focus();
-		}
-	});
-
-	let announcement = $derived.by(() => {
-		if (selectedNodeId) {
-			const node = layoutNodes.find((n) => n.data.id === selectedNodeId);
-			if (!node) return '';
-			const childCount = node.children?.length ?? 0;
-			const collapsedState = hasChildren(node.data.id)
-				? (isCollapsed(node.data.id) ? ', collapsed' : ', expanded')
-				: '';
-			return `Selected ${node.data.label || node.data.id}, depth ${node.depth}, ${childCount} children${collapsedState}`;
-		}
-		return '';
-	});
+	return '';
+});
 </script>
 
 <SvgGraphContainer {aspect} {ariaLabel} class={cn('tree-graph', className)}>

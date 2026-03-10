@@ -1,2 +1,2 @@
 export { default as NetworkGraph } from './NetworkGraph.svelte';
-export type { NetworkNode, NetworkEdge, NetworkData } from './types';
+export type { NetworkData, NetworkEdge, NetworkNode } from './types';

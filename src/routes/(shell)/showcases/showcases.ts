@@ -237,7 +237,7 @@ export const showcases: ShowcaseCard[] = [
 			{ label: 'Funnels', href: '/showcases/analytics/funnels' },
 			{ label: 'Live', href: '/showcases/analytics/live' },
 			{ label: 'Privacy', href: '/showcases/analytics/privacy' },
-		{ label: 'My Data', href: '/showcases/analytics/my-data' },
+			{ label: 'My Data', href: '/showcases/analytics/my-data' },
 		],
 	},
 	{

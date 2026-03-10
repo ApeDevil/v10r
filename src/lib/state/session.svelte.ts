@@ -25,13 +25,11 @@ type SessionState = {
  * Create session state instance
  */
 export function createSessionState(initialSession: Session | null) {
-	const expiresAt = initialSession?.expiresAt
-		? new Date(initialSession.expiresAt)
-		: null;
+	const expiresAt = initialSession?.expiresAt ? new Date(initialSession.expiresAt) : null;
 
 	const user = initialSession?.user ?? null;
 
-	let state = $state<SessionState>({
+	const state = $state<SessionState>({
 		status: 'valid',
 		expiresAt,
 		timeRemaining: expiresAt ? Math.floor((expiresAt.getTime() - Date.now()) / 1000) : 0,

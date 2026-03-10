@@ -1,36 +1,22 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 
 export const calendarRootVariants = cva(
-	[
-		'inline-block rounded-md border border-border bg-surface-1 p-4',
-		'shadow-sm'
-	],
+	['inline-block rounded-md border border-border bg-surface-1 p-4', 'shadow-sm'],
 	{
 		variants: {},
-		defaultVariants: {}
-	}
+		defaultVariants: {},
+	},
 );
 
-export const calendarHeaderVariants = cva(
-	[
-		'flex items-center justify-between',
-		'mb-4'
-	],
-	{
-		variants: {},
-		defaultVariants: {}
-	}
-);
+export const calendarHeaderVariants = cva(['flex items-center justify-between', 'mb-4'], {
+	variants: {},
+	defaultVariants: {},
+});
 
-export const calendarHeadingVariants = cva(
-	[
-		'text-fluid-base font-semibold text-fg'
-	],
-	{
-		variants: {},
-		defaultVariants: {}
-	}
-);
+export const calendarHeadingVariants = cva(['text-fluid-base font-semibold text-fg'], {
+	variants: {},
+	defaultVariants: {},
+});
 
 export const calendarNavButtonVariants = cva(
 	[
@@ -39,43 +25,26 @@ export const calendarNavButtonVariants = cva(
 		'text-muted hover:bg-fg-alpha hover:text-fg',
 		'transition-colors duration-fast',
 		'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-		'disabled:pointer-events-none disabled:opacity-50'
+		'disabled:pointer-events-none disabled:opacity-50',
 	],
 	{
 		variants: {},
-		defaultVariants: {}
-	}
+		defaultVariants: {},
+	},
 );
 
-export const calendarGridVariants = cva(
-	[
-		'w-full border-collapse',
-		'text-fluid-sm'
-	],
-	{
-		variants: {},
-		defaultVariants: {}
-	}
-);
+export const calendarGridVariants = cva(['w-full border-collapse', 'text-fluid-sm'], {
+	variants: {},
+	defaultVariants: {},
+});
 
-export const calendarHeadCellVariants = cva(
-	[
-		'w-9 h-9',
-		'text-muted font-medium text-center',
-		'pb-2'
-	],
-	{
-		variants: {},
-		defaultVariants: {}
-	}
-);
+export const calendarHeadCellVariants = cva(['w-9 h-9', 'text-muted font-medium text-center', 'pb-2'], {
+	variants: {},
+	defaultVariants: {},
+});
 
 export const calendarCellVariants = cva(
-	[
-		'relative h-9 w-9 p-0',
-		'text-center text-fluid-sm',
-		'focus-within:relative focus-within:z-20'
-	],
+	['relative h-9 w-9 p-0', 'text-center text-fluid-sm', 'focus-within:relative focus-within:z-20'],
 	{
 		variants: {
 			state: {
@@ -84,13 +53,13 @@ export const calendarCellVariants = cva(
 				today: '',
 				outside: 'text-muted opacity-50',
 				disabled: 'text-muted opacity-50 cursor-not-allowed',
-				unavailable: 'text-muted line-through opacity-50'
-			}
+				unavailable: 'text-muted line-through opacity-50',
+			},
 		},
 		defaultVariants: {
-			state: 'default'
-		}
-	}
+			state: 'default',
+		},
+	},
 );
 
 export const calendarDayVariants = cva(
@@ -101,7 +70,7 @@ export const calendarDayVariants = cva(
 		'transition-colors duration-fast',
 		'hover:bg-fg-alpha hover:text-fg',
 		'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary',
-		'disabled:pointer-events-none disabled:opacity-50'
+		'disabled:pointer-events-none disabled:opacity-50',
 	],
 	{
 		variants: {
@@ -111,19 +80,19 @@ export const calendarDayVariants = cva(
 				today: 'bg-subtle font-semibold',
 				outside: '',
 				disabled: '',
-				unavailable: ''
-			}
+				unavailable: '',
+			},
 		},
 		compoundVariants: [
 			{
 				state: ['selected', 'today'],
-				class: 'bg-primary text-white hover:bg-primary-hover'
-			}
+				class: 'bg-primary text-white hover:bg-primary-hover',
+			},
 		],
 		defaultVariants: {
-			state: 'default'
-		}
-	}
+			state: 'default',
+		},
+	},
 );
 
 export type CalendarRootVariants = VariantProps<typeof calendarRootVariants>;

@@ -1,39 +1,39 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		id: string;
-		type: string;
-		title: string;
-		body?: string | null;
-		actionUrl?: string | null;
-		isRead: boolean;
-		createdAt: string;
-		onMarkRead?: (id: string) => void;
-		class?: string;
-	}
+interface Props {
+	id: string;
+	type: string;
+	title: string;
+	body?: string | null;
+	actionUrl?: string | null;
+	isRead: boolean;
+	createdAt: string;
+	onMarkRead?: (id: string) => void;
+	class?: string;
+}
 
-	let { id, type, title, body, actionUrl, isRead, createdAt, onMarkRead, class: className }: Props = $props();
+let { id, type, title, body, actionUrl, isRead, createdAt, onMarkRead, class: className }: Props = $props();
 
-	const iconMap: Record<string, string> = {
-		mention: 'i-lucide-at-sign',
-		comment: 'i-lucide-message-square',
-		system: 'i-lucide-info',
-		success: 'i-lucide-check-circle',
-		security: 'i-lucide-shield-alert',
-		follow: 'i-lucide-user-plus',
-	};
+const iconMap: Record<string, string> = {
+	mention: 'i-lucide-at-sign',
+	comment: 'i-lucide-message-square',
+	system: 'i-lucide-info',
+	success: 'i-lucide-check-circle',
+	security: 'i-lucide-shield-alert',
+	follow: 'i-lucide-user-plus',
+};
 
-	function timeAgo(dateStr: string): string {
-		const diff = Date.now() - new Date(dateStr).getTime();
-		const minutes = Math.floor(diff / 60_000);
-		if (minutes < 1) return 'just now';
-		if (minutes < 60) return `${minutes}m ago`;
-		const hours = Math.floor(minutes / 60);
-		if (hours < 24) return `${hours}h ago`;
-		const days = Math.floor(hours / 24);
-		return `${days}d ago`;
-	}
+function timeAgo(dateStr: string): string {
+	const diff = Date.now() - new Date(dateStr).getTime();
+	const minutes = Math.floor(diff / 60_000);
+	if (minutes < 1) return 'just now';
+	if (minutes < 60) return `${minutes}m ago`;
+	const hours = Math.floor(minutes / 60);
+	if (hours < 24) return `${hours}h ago`;
+	const days = Math.floor(hours / 24);
+	return `${days}d ago`;
+}
 </script>
 
 <article class={cn('notification-card', !isRead && 'unread', className)}>

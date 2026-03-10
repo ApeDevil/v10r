@@ -2,19 +2,20 @@
  * Analytics aggregation queries — reads from rollup tables + computed aggregates.
  * These power the dashboard overview and breakdown views.
  */
-import { db } from '$lib/server/db';
-import { dailyPageStats, events, sessions } from '$lib/server/db/schema/analytics';
-import { sql, and, gte, lte, eq, desc, inArray } from 'drizzle-orm';
+
+import { and, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 import type {
-	TrafficTrendPoint,
-	TopPage,
-	DeviceSplit,
 	BrowserSplit,
-	CountrySplit,
 	ConsentSplit,
+	CountrySplit,
+	DeviceSplit,
 	FunnelStep,
 	OverviewMetrics,
+	TopPage,
+	TrafficTrendPoint,
 } from '$lib/server/analytics/types';
+import { db } from '$lib/server/db';
+import { dailyPageStats, events, sessions } from '$lib/server/db/schema/analytics';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 
@@ -151,10 +152,7 @@ export async function getConsentSplit(days: number): Promise<ConsentSplit[]> {
 
 // ── Funnel analysis ──────────────────────────────────────────────────────────
 
-export async function getFunnelSteps(
-	days: number,
-	steps: { label: string; path: string }[],
-): Promise<FunnelStep[]> {
+export async function getFunnelSteps(days: number, steps: { label: string; path: string }[]): Promise<FunnelStep[]> {
 	const cutoff = new Date(Date.now() - days * 86400000);
 
 	const paths = steps.map((s) => s.path);
@@ -166,13 +164,7 @@ export async function getFunnelSteps(
 			count: sql<number>`count(distinct ${events.sessionId})`,
 		})
 		.from(events)
-		.where(
-			and(
-				inArray(events.path, paths),
-				eq(events.eventType, 'pageview'),
-				gte(events.timestamp, cutoff),
-			),
-		)
+		.where(and(inArray(events.path, paths), eq(events.eventType, 'pageview'), gte(events.timestamp, cutoff)))
 		.groupBy(events.path);
 
 	// Map results back to ordered steps

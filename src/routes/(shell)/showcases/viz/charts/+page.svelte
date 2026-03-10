@@ -1,361 +1,379 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import { PageHeader, BackLink, NavSection, BoundaryFallback } from '$lib/components/composites';
-	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives/table';
-	import VizDemoCard from '../_components/VizDemoCard.svelte';
-	import DataControls from '../_components/DataControls.svelte';
-	import { BarChart, LineChart, AreaChart, PieChart, SimpleChart, RadarChart, BubbleChart, Sparkline, Gauge, Treemap } from '$lib/components/viz';
-	import type { TreemapNode } from '$lib/components/viz/chart/treemap/types';
-	import { getVizPalette } from '$lib/components/viz/_shared/theme-bridge';
+import { browser } from '$app/environment';
+import { BackLink, BoundaryFallback, NavSection, PageHeader } from '$lib/components/composites';
+import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
+import {
+	AreaChart,
+	BarChart,
+	BubbleChart,
+	Gauge,
+	LineChart,
+	PieChart,
+	RadarChart,
+	SimpleChart,
+	Sparkline,
+	Treemap,
+} from '$lib/components/viz';
+import { getVizPalette } from '$lib/components/viz/_shared/theme-bridge';
+import type { TreemapNode } from '$lib/components/viz/chart/treemap/types';
+import DataControls from '../_components/DataControls.svelte';
+import VizDemoCard from '../_components/VizDemoCard.svelte';
 
-	const sections = [
-		{ id: 'simple-chart', label: 'Simple (SVG)' },
-		{ id: 'bar-chart', label: 'Bar' },
-		{ id: 'line-chart', label: 'Line' },
-		{ id: 'area-chart', label: 'Area' },
-		{ id: 'pie-chart', label: 'Pie' },
-		{ id: 'radar-chart', label: 'Radar' },
-		{ id: 'bubble-chart', label: 'Bubble' },
-		{ id: 'sparkline', label: 'Sparkline' },
-		{ id: 'gauge', label: 'Gauge' },
-		{ id: 'treemap', label: 'Treemap' },
-	];
+const sections = [
+	{ id: 'simple-chart', label: 'Simple (SVG)' },
+	{ id: 'bar-chart', label: 'Bar' },
+	{ id: 'line-chart', label: 'Line' },
+	{ id: 'area-chart', label: 'Area' },
+	{ id: 'pie-chart', label: 'Pie' },
+	{ id: 'radar-chart', label: 'Radar' },
+	{ id: 'bubble-chart', label: 'Bubble' },
+	{ id: 'sparkline', label: 'Sparkline' },
+	{ id: 'gauge', label: 'Gauge' },
+	{ id: 'treemap', label: 'Treemap' },
+];
 
-	// SSR-safe: resolve palette only in browser
-	let palette: string[] = $state(browser ? getVizPalette() : []);
+// SSR-safe: resolve palette only in browser
+let palette: string[] = $state(browser ? getVizPalette() : []);
 
-	// --- DataControls state ---
-	let dataset: string = $state('sales');
-	let animated: boolean = $state(true);
+// --- DataControls state ---
+let dataset: string = $state('sales');
+let animated: boolean = $state(true);
 
-	const animationOption = $derived(animated ? {} : false);
+const animationOption = $derived(animated ? {} : false);
 
-	// --- Sample datasets ---
+// --- Sample datasets ---
 
-	type DatasetMap = {
-		labels: string[];
-		values: number[];
-		values2?: number[];
-		values3?: number[];
-		pieLabels: string[];
-		pieValues: number[];
-		radarLabels: string[];
-		radarValues: number[];
-		radarValues2?: number[];
-		bubbleData: { x: number; y: number; r: number }[];
-		sparklineValues: number[];
-		gaugeValue: number;
-	};
+type DatasetMap = {
+	labels: string[];
+	values: number[];
+	values2?: number[];
+	values3?: number[];
+	pieLabels: string[];
+	pieValues: number[];
+	radarLabels: string[];
+	radarValues: number[];
+	radarValues2?: number[];
+	bubbleData: { x: number; y: number; r: number }[];
+	sparklineValues: number[];
+	gaugeValue: number;
+};
 
-	const datasets: Record<string, DatasetMap> = {
-		sales: {
-			labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-			values: [40, 65, 45, 80, 55, 70],
-			values2: [30, 50, 60, 45, 70, 55],
-			values3: [20, 35, 25, 40, 30, 45],
-			pieLabels: ['Desktop', 'Mobile', 'Tablet', 'Other'],
-			pieValues: [45, 35, 15, 5],
-			radarLabels: ['Design', 'Dev', 'Marketing', 'Sales', 'Support'],
-			radarValues: [85, 70, 60, 90, 75],
-			radarValues2: [65, 90, 80, 55, 70],
-			bubbleData: [
-				{ x: 20, y: 30, r: 10 }, { x: 40, y: 60, r: 18 },
-				{ x: 60, y: 40, r: 8 }, { x: 80, y: 70, r: 14 },
-				{ x: 30, y: 80, r: 12 }, { x: 70, y: 20, r: 16 },
-			],
-			sparklineValues: [40, 65, 45, 80, 55, 70, 60, 85],
-			gaugeValue: 73,
+const datasets: Record<string, DatasetMap> = {
+	sales: {
+		labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+		values: [40, 65, 45, 80, 55, 70],
+		values2: [30, 50, 60, 45, 70, 55],
+		values3: [20, 35, 25, 40, 30, 45],
+		pieLabels: ['Desktop', 'Mobile', 'Tablet', 'Other'],
+		pieValues: [45, 35, 15, 5],
+		radarLabels: ['Design', 'Dev', 'Marketing', 'Sales', 'Support'],
+		radarValues: [85, 70, 60, 90, 75],
+		radarValues2: [65, 90, 80, 55, 70],
+		bubbleData: [
+			{ x: 20, y: 30, r: 10 },
+			{ x: 40, y: 60, r: 18 },
+			{ x: 60, y: 40, r: 8 },
+			{ x: 80, y: 70, r: 14 },
+			{ x: 30, y: 80, r: 12 },
+			{ x: 70, y: 20, r: 16 },
+		],
+		sparklineValues: [40, 65, 45, 80, 55, 70, 60, 85],
+		gaugeValue: 73,
+	},
+	traffic: {
+		labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+		values: [120, 190, 150, 210, 180, 90],
+		values2: [80, 110, 130, 160, 200, 220],
+		values3: [30, 40, 35, 50, 45, 60],
+		pieLabels: ['Organic', 'Direct', 'Social', 'Referral'],
+		pieValues: [38, 28, 22, 12],
+		radarLabels: ['SEO', 'SEM', 'Social', 'Email', 'Content'],
+		radarValues: [70, 85, 60, 45, 80],
+		radarValues2: [55, 70, 90, 65, 50],
+		bubbleData: [
+			{ x: 15, y: 45, r: 14 },
+			{ x: 35, y: 70, r: 10 },
+			{ x: 55, y: 25, r: 20 },
+			{ x: 75, y: 55, r: 8 },
+			{ x: 45, y: 85, r: 16 },
+			{ x: 85, y: 35, r: 12 },
+		],
+		sparklineValues: [120, 190, 150, 210, 180, 90, 160, 200],
+		gaugeValue: 58,
+	},
+	performance: {
+		labels: ['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6'],
+		values: [72, 85, 68, 91, 79, 88],
+		values2: [65, 78, 82, 74, 90, 86],
+		values3: [55, 60, 70, 65, 75, 80],
+		pieLabels: ['Complete', 'In Progress', 'Pending', 'Failed'],
+		pieValues: [62, 18, 12, 8],
+		radarLabels: ['Speed', 'Reliability', 'Scalability', 'Security', 'UX'],
+		radarValues: [88, 75, 82, 90, 65],
+		radarValues2: [72, 88, 68, 80, 85],
+		bubbleData: [
+			{ x: 25, y: 50, r: 16 },
+			{ x: 50, y: 30, r: 12 },
+			{ x: 70, y: 65, r: 10 },
+			{ x: 35, y: 75, r: 18 },
+			{ x: 85, y: 45, r: 14 },
+			{ x: 55, y: 90, r: 8 },
+		],
+		sparklineValues: [72, 85, 68, 91, 79, 88, 82, 95],
+		gaugeValue: 88,
+	},
+};
+
+const d = $derived(datasets[dataset]);
+
+// --- SimpleChart data (static, not affected by dataset picker) ---
+
+const simpleData = $derived(d.labels.map((label, i) => ({ label, value: d.values[i] })));
+
+// --- Chart.js data shapes ---
+
+const barData = $derived({
+	labels: d.labels,
+	datasets: [
+		{
+			label: 'Series A',
+			data: d.values,
+			backgroundColor: palette[0] || '#3b82f6',
+			borderRadius: 4,
 		},
-		traffic: {
-			labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-			values: [120, 190, 150, 210, 180, 90],
-			values2: [80, 110, 130, 160, 200, 220],
-			values3: [30, 40, 35, 50, 45, 60],
-			pieLabels: ['Organic', 'Direct', 'Social', 'Referral'],
-			pieValues: [38, 28, 22, 12],
-			radarLabels: ['SEO', 'SEM', 'Social', 'Email', 'Content'],
-			radarValues: [70, 85, 60, 45, 80],
-			radarValues2: [55, 70, 90, 65, 50],
-			bubbleData: [
-				{ x: 15, y: 45, r: 14 }, { x: 35, y: 70, r: 10 },
-				{ x: 55, y: 25, r: 20 }, { x: 75, y: 55, r: 8 },
-				{ x: 45, y: 85, r: 16 }, { x: 85, y: 35, r: 12 },
-			],
-			sparklineValues: [120, 190, 150, 210, 180, 90, 160, 200],
-			gaugeValue: 58,
+	],
+});
+
+const groupedBarData = $derived({
+	labels: d.labels.slice(0, 4),
+	datasets: [
+		{
+			label: 'Series A',
+			data: d.values.slice(0, 4),
+			backgroundColor: palette[0] || '#3b82f6',
+			borderRadius: 4,
 		},
-		performance: {
-			labels: ['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6'],
-			values: [72, 85, 68, 91, 79, 88],
-			values2: [65, 78, 82, 74, 90, 86],
-			values3: [55, 60, 70, 65, 75, 80],
-			pieLabels: ['Complete', 'In Progress', 'Pending', 'Failed'],
-			pieValues: [62, 18, 12, 8],
-			radarLabels: ['Speed', 'Reliability', 'Scalability', 'Security', 'UX'],
-			radarValues: [88, 75, 82, 90, 65],
-			radarValues2: [72, 88, 68, 80, 85],
-			bubbleData: [
-				{ x: 25, y: 50, r: 16 }, { x: 50, y: 30, r: 12 },
-				{ x: 70, y: 65, r: 10 }, { x: 35, y: 75, r: 18 },
-				{ x: 85, y: 45, r: 14 }, { x: 55, y: 90, r: 8 },
-			],
-			sparklineValues: [72, 85, 68, 91, 79, 88, 82, 95],
-			gaugeValue: 88,
+		{
+			label: 'Series B',
+			data: (d.values2 || d.values).slice(0, 4),
+			backgroundColor: palette[3] || '#8b5cf6',
+			borderRadius: 4,
 		},
-	};
+	],
+});
 
-	const d = $derived(datasets[dataset]);
+const stackedBarData = $derived({
+	labels: d.labels.slice(0, 4),
+	datasets: [
+		{
+			label: 'Channel A',
+			data: d.values.slice(0, 4),
+			backgroundColor: palette[0] || '#3b82f6',
+			borderRadius: 4,
+		},
+		{
+			label: 'Channel B',
+			data: (d.values2 || d.values).slice(0, 4),
+			backgroundColor: palette[1] || '#10b981',
+			borderRadius: 4,
+		},
+	],
+});
 
-	// --- SimpleChart data (static, not affected by dataset picker) ---
+const lineData = $derived({
+	labels: d.labels,
+	datasets: [
+		{
+			label: 'Primary',
+			data: d.values,
+			borderColor: palette[0] || '#3b82f6',
+			backgroundColor: 'transparent',
+			tension: 0.3,
+			pointRadius: 4,
+			pointHoverRadius: 6,
+		},
+	],
+});
 
-	const simpleData = $derived(
-		d.labels.map((label, i) => ({ label, value: d.values[i] }))
-	);
+const multiLineData = $derived({
+	labels: d.labels,
+	datasets: [
+		{
+			label: 'Series A',
+			data: d.values,
+			borderColor: palette[0] || '#3b82f6',
+			backgroundColor: 'transparent',
+			tension: 0.3,
+		},
+		{
+			label: 'Series B',
+			data: d.values2 || d.values,
+			borderColor: palette[1] || '#10b981',
+			backgroundColor: 'transparent',
+			tension: 0.3,
+		},
+		{
+			label: 'Series C',
+			data: d.values3 || d.values,
+			borderColor: palette[2] || '#f59e0b',
+			backgroundColor: 'transparent',
+			tension: 0.3,
+		},
+	],
+});
 
-	// --- Chart.js data shapes ---
+const areaData = $derived({
+	labels: d.labels,
+	datasets: [
+		{
+			label: 'Area',
+			data: d.values,
+			borderColor: palette[0] || '#3b82f6',
+			backgroundColor: `${palette[0] || '#3b82f6'}33`,
+			tension: 0.4,
+			pointRadius: 3,
+		},
+	],
+});
 
-	const barData = $derived({
-		labels: d.labels,
-		datasets: [
-			{
-				label: 'Series A',
-				data: d.values,
-				backgroundColor: palette[0] || '#3b82f6',
-				borderRadius: 4,
-			},
-		],
-	});
+const pieData = $derived({
+	labels: d.pieLabels,
+	datasets: [
+		{
+			data: d.pieValues,
+			backgroundColor: [
+				palette[0] || '#3b82f6',
+				palette[1] || '#10b981',
+				palette[2] || '#f59e0b',
+				palette[3] || '#8b5cf6',
+			],
+			borderWidth: 2,
+			borderColor: 'var(--surface-1)',
+		},
+	],
+});
 
-	const groupedBarData = $derived({
-		labels: d.labels.slice(0, 4),
-		datasets: [
-			{
-				label: 'Series A',
-				data: d.values.slice(0, 4),
-				backgroundColor: palette[0] || '#3b82f6',
-				borderRadius: 4,
-			},
-			{
-				label: 'Series B',
-				data: (d.values2 || d.values).slice(0, 4),
-				backgroundColor: palette[3] || '#8b5cf6',
-				borderRadius: 4,
-			},
-		],
-	});
+const doughnutData = $derived({
+	labels: d.pieLabels,
+	datasets: [
+		{
+			data: d.pieValues,
+			backgroundColor: [
+				palette[1] || '#10b981',
+				palette[2] || '#f59e0b',
+				palette[5] || '#06b6d4',
+				palette[4] || '#ef4444',
+			],
+			borderWidth: 2,
+			borderColor: 'var(--surface-1)',
+		},
+	],
+});
 
-	const stackedBarData = $derived({
-		labels: d.labels.slice(0, 4),
-		datasets: [
-			{
-				label: 'Channel A',
-				data: d.values.slice(0, 4),
-				backgroundColor: palette[0] || '#3b82f6',
-				borderRadius: 4,
-			},
-			{
-				label: 'Channel B',
-				data: (d.values2 || d.values).slice(0, 4),
-				backgroundColor: palette[1] || '#10b981',
-				borderRadius: 4,
-			},
-		],
-	});
+// --- Radar chart data ---
 
-	const lineData = $derived({
-		labels: d.labels,
-		datasets: [
-			{
-				label: 'Primary',
-				data: d.values,
-				borderColor: palette[0] || '#3b82f6',
-				backgroundColor: 'transparent',
-				tension: 0.3,
-				pointRadius: 4,
-				pointHoverRadius: 6,
-			},
-		],
-	});
+const radarData = $derived({
+	labels: d.radarLabels,
+	datasets: [
+		{
+			label: 'Team A',
+			data: d.radarValues,
+			borderColor: palette[0] || '#3b82f6',
+			backgroundColor: `${palette[0] || '#3b82f6'}33`,
+			pointBackgroundColor: palette[0] || '#3b82f6',
+		},
+	],
+});
 
-	const multiLineData = $derived({
-		labels: d.labels,
-		datasets: [
-			{
-				label: 'Series A',
-				data: d.values,
-				borderColor: palette[0] || '#3b82f6',
-				backgroundColor: 'transparent',
-				tension: 0.3,
-			},
-			{
-				label: 'Series B',
-				data: d.values2 || d.values,
-				borderColor: palette[1] || '#10b981',
-				backgroundColor: 'transparent',
-				tension: 0.3,
-			},
-			{
-				label: 'Series C',
-				data: d.values3 || d.values,
-				borderColor: palette[2] || '#f59e0b',
-				backgroundColor: 'transparent',
-				tension: 0.3,
-			},
-		],
-	});
+const radarCompareData = $derived({
+	labels: d.radarLabels,
+	datasets: [
+		{
+			label: 'Team A',
+			data: d.radarValues,
+			borderColor: palette[0] || '#3b82f6',
+			backgroundColor: `${palette[0] || '#3b82f6'}33`,
+			pointBackgroundColor: palette[0] || '#3b82f6',
+		},
+		{
+			label: 'Team B',
+			data: d.radarValues2 || d.radarValues,
+			borderColor: palette[3] || '#8b5cf6',
+			backgroundColor: `${palette[3] || '#8b5cf6'}33`,
+			pointBackgroundColor: palette[3] || '#8b5cf6',
+		},
+	],
+});
 
-	const areaData = $derived({
-		labels: d.labels,
-		datasets: [
-			{
-				label: 'Area',
-				data: d.values,
-				borderColor: palette[0] || '#3b82f6',
-				backgroundColor: (palette[0] || '#3b82f6') + '33',
-				tension: 0.4,
-				pointRadius: 3,
-			},
-		],
-	});
+// --- Bubble chart data ---
 
-	const pieData = $derived({
-		labels: d.pieLabels,
-		datasets: [
-			{
-				data: d.pieValues,
-				backgroundColor: [
-					palette[0] || '#3b82f6',
-					palette[1] || '#10b981',
-					palette[2] || '#f59e0b',
-					palette[3] || '#8b5cf6',
-				],
-				borderWidth: 2,
-				borderColor: 'var(--surface-1)',
-			},
-		],
-	});
+const bubbleData = $derived({
+	datasets: [
+		{
+			label: 'Metrics',
+			data: d.bubbleData,
+			backgroundColor: `${palette[0] || '#3b82f6'}99`,
+			borderColor: palette[0] || '#3b82f6',
+			borderWidth: 1,
+		},
+	],
+});
 
-	const doughnutData = $derived({
-		labels: d.pieLabels,
-		datasets: [
-			{
-				data: d.pieValues,
-				backgroundColor: [
-					palette[1] || '#10b981',
-					palette[2] || '#f59e0b',
-					palette[5] || '#06b6d4',
-					palette[4] || '#ef4444',
-				],
-				borderWidth: 2,
-				borderColor: 'var(--surface-1)',
-			},
-		],
-	});
+// --- Sparkline table data ---
 
-	// --- Radar chart data ---
+const sparklineTable = $derived([
+	{ label: 'Revenue', values: d.sparklineValues, type: 'line' as const },
+	{ label: 'Orders', values: d.sparklineValues.map((v) => v * 0.8 + 10).map(Math.round), type: 'bar' as const },
+	{ label: 'Visitors', values: d.sparklineValues.map((v) => v * 1.2 - 5).map(Math.round), type: 'area' as const },
+]);
 
-	const radarData = $derived({
-		labels: d.radarLabels,
-		datasets: [
-			{
-				label: 'Team A',
-				data: d.radarValues,
-				borderColor: palette[0] || '#3b82f6',
-				backgroundColor: (palette[0] || '#3b82f6') + '33',
-				pointBackgroundColor: palette[0] || '#3b82f6',
-			},
-		],
-	});
+// --- Treemap data (static, not dataset-dependent) ---
 
-	const radarCompareData = $derived({
-		labels: d.radarLabels,
-		datasets: [
-			{
-				label: 'Team A',
-				data: d.radarValues,
-				borderColor: palette[0] || '#3b82f6',
-				backgroundColor: (palette[0] || '#3b82f6') + '33',
-				pointBackgroundColor: palette[0] || '#3b82f6',
-			},
-			{
-				label: 'Team B',
-				data: d.radarValues2 || d.radarValues,
-				borderColor: palette[3] || '#8b5cf6',
-				backgroundColor: (palette[3] || '#8b5cf6') + '33',
-				pointBackgroundColor: palette[3] || '#8b5cf6',
-			},
-		],
-	});
+const treemapFlat: TreemapNode = {
+	id: 'root',
+	label: 'Budget',
+	children: [
+		{ id: 'eng', label: 'Engineering', value: 450 },
+		{ id: 'mkt', label: 'Marketing', value: 280 },
+		{ id: 'ops', label: 'Operations', value: 180 },
+		{ id: 'design', label: 'Design', value: 150 },
+		{ id: 'hr', label: 'HR', value: 90 },
+		{ id: 'legal', label: 'Legal', value: 60 },
+	],
+};
 
-	// --- Bubble chart data ---
-
-	const bubbleData = $derived({
-		datasets: [
-			{
-				label: 'Metrics',
-				data: d.bubbleData,
-				backgroundColor: (palette[0] || '#3b82f6') + '99',
-				borderColor: palette[0] || '#3b82f6',
-				borderWidth: 1,
-			},
-		],
-	});
-
-	// --- Sparkline table data ---
-
-	const sparklineTable = $derived([
-		{ label: 'Revenue', values: d.sparklineValues, type: 'line' as const },
-		{ label: 'Orders', values: d.sparklineValues.map((v) => v * 0.8 + 10).map(Math.round), type: 'bar' as const },
-		{ label: 'Visitors', values: d.sparklineValues.map((v) => v * 1.2 - 5).map(Math.round), type: 'area' as const },
-	]);
-
-	// --- Treemap data (static, not dataset-dependent) ---
-
-	const treemapFlat: TreemapNode = {
-		id: 'root',
-		label: 'Budget',
-		children: [
-			{ id: 'eng', label: 'Engineering', value: 450 },
-			{ id: 'mkt', label: 'Marketing', value: 280 },
-			{ id: 'ops', label: 'Operations', value: 180 },
-			{ id: 'design', label: 'Design', value: 150 },
-			{ id: 'hr', label: 'HR', value: 90 },
-			{ id: 'legal', label: 'Legal', value: 60 },
-		],
-	};
-
-	const treemapNested: TreemapNode = {
-		id: 'root',
-		label: 'Company',
-		children: [
-			{
-				id: 'eng',
-				label: 'Engineering',
-				children: [
-					{ id: 'frontend', label: 'Frontend', value: 180 },
-					{ id: 'backend', label: 'Backend', value: 200 },
-					{ id: 'infra', label: 'Infra', value: 70 },
-				],
-			},
-			{
-				id: 'product',
-				label: 'Product',
-				children: [
-					{ id: 'design', label: 'Design', value: 120 },
-					{ id: 'research', label: 'Research', value: 80 },
-				],
-			},
-			{
-				id: 'gtm',
-				label: 'Go-to-Market',
-				children: [
-					{ id: 'sales', label: 'Sales', value: 160 },
-					{ id: 'marketing', label: 'Marketing', value: 140 },
-					{ id: 'support', label: 'Support', value: 60 },
-				],
-			},
-		],
-	};
+const treemapNested: TreemapNode = {
+	id: 'root',
+	label: 'Company',
+	children: [
+		{
+			id: 'eng',
+			label: 'Engineering',
+			children: [
+				{ id: 'frontend', label: 'Frontend', value: 180 },
+				{ id: 'backend', label: 'Backend', value: 200 },
+				{ id: 'infra', label: 'Infra', value: 70 },
+			],
+		},
+		{
+			id: 'product',
+			label: 'Product',
+			children: [
+				{ id: 'design', label: 'Design', value: 120 },
+				{ id: 'research', label: 'Research', value: 80 },
+			],
+		},
+		{
+			id: 'gtm',
+			label: 'Go-to-Market',
+			children: [
+				{ id: 'sales', label: 'Sales', value: 160 },
+				{ id: 'marketing', label: 'Marketing', value: 140 },
+				{ id: 'support', label: 'Support', value: 60 },
+			],
+		},
+	],
+};
 </script>
 
 <svelte:head>

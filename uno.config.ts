@@ -1,14 +1,6 @@
-import { defineConfig, presetUno, presetIcons } from 'unocss';
 import transformerDirectives from '@unocss/transformer-directives';
-import {
-	breakpoints,
-	containers,
-	fontSize,
-	iconSize,
-	spacing,
-	colors,
-	zIndex,
-} from './src/lib/styles/tokens';
+import { defineConfig, presetIcons, presetUno } from 'unocss';
+import { breakpoints, colors, containers, fontSize, iconSize, spacing, zIndex } from './src/lib/styles/tokens';
 
 export default defineConfig({
 	presets: [
@@ -26,10 +18,7 @@ export default defineConfig({
 
 	content: {
 		pipeline: {
-			include: [
-				/\.(vue|svelte|[jt]sx|mdx?|astro|elm|php|phtml|html)($|\?)/,
-				'src/**/*.ts',
-			],
+			include: [/\.(vue|svelte|[jt]sx|mdx?|astro|elm|php|phtml|html)($|\?)/, 'src/**/*.ts'],
 		},
 	},
 
@@ -57,7 +46,8 @@ export default defineConfig({
 	// Decorative background utilities
 	shortcuts: {
 		'bg-dots': 'bg-[radial-gradient(circle,currentColor_1px,transparent_1px)] bg-[length:20px_20px]',
-		'bg-grid': 'bg-[linear-gradient(currentColor_1px,transparent_1px),linear-gradient(to_right,currentColor_1px,transparent_1px)] bg-[length:30px_30px]',
+		'bg-grid':
+			'bg-[linear-gradient(currentColor_1px,transparent_1px),linear-gradient(to_right,currentColor_1px,transparent_1px)] bg-[length:30px_30px]',
 	},
 
 	// Safelist commonly used dynamic classes

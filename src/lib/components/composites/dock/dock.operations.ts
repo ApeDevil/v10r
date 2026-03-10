@@ -3,7 +3,7 @@
  * All mutations produce new trees (immutable replacement).
  */
 
-import type { LayoutNode, SplitNode, LeafNode, DropZone, PanelDefinition } from './dock.types';
+import type { DropZone, LayoutNode, LeafNode, PanelDefinition, SplitNode } from './dock.types';
 
 let counter = 0;
 
@@ -22,10 +22,7 @@ export function findNode(root: LayoutNode, id: string): LayoutNode | null {
 }
 
 /** Find the parent split of a node by ID */
-export function findParent(
-	root: LayoutNode,
-	targetId: string
-): { parent: SplitNode; index: 0 | 1 } | null {
+export function findParent(root: LayoutNode, targetId: string): { parent: SplitNode; index: 0 | 1 } | null {
 	if (root.type === 'leaf') return null;
 	for (const i of [0, 1] as const) {
 		if (root.children[i].id === targetId) {
@@ -49,20 +46,12 @@ export function findLeafWithPanel(root: LayoutNode, panelId: string): LeafNode |
  * Replace a node in the tree by ID.
  * Returns null if the replacement is null and the target is root (empty tree).
  */
-export function replaceNode(
-	root: LayoutNode,
-	targetId: string,
-	replacement: LayoutNode | null
-): LayoutNode | null {
+export function replaceNode(root: LayoutNode, targetId: string, replacement: LayoutNode | null): LayoutNode | null {
 	if (root.id === targetId) return replacement;
 	if (root.type === 'leaf') return root;
 
-	const left = root.children[0].id === targetId
-		? replacement
-		: replaceNode(root.children[0], targetId, replacement);
-	const right = root.children[1].id === targetId
-		? replacement
-		: replaceNode(root.children[1], targetId, replacement);
+	const left = root.children[0].id === targetId ? replacement : replaceNode(root.children[0], targetId, replacement);
+	const right = root.children[1].id === targetId ? replacement : replaceNode(root.children[1], targetId, replacement);
 
 	// If one child was removed, promote the other
 	if (left === null) return right;
@@ -70,7 +59,7 @@ export function replaceNode(
 
 	return {
 		...root,
-		children: [left, right]
+		children: [left, right],
 	};
 }
 
@@ -90,25 +79,20 @@ export function addPanelToLeaf(leaf: LeafNode, panelId: string): LeafNode {
 	return {
 		...leaf,
 		tabs: [...leaf.tabs, panelId],
-		activeTab: panelId
+		activeTab: panelId,
 	};
 }
 
 /** Create a new split by wrapping an existing leaf with a new leaf */
-export function splitLeaf(
-	existingLeaf: LeafNode,
-	newPanelId: string,
-	zone: Exclude<DropZone, 'center'>
-): SplitNode {
+export function splitLeaf(existingLeaf: LeafNode, newPanelId: string, zone: Exclude<DropZone, 'center'>): SplitNode {
 	const newLeaf: LeafNode = {
 		type: 'leaf',
 		id: generateId('leaf'),
 		tabs: [newPanelId],
-		activeTab: newPanelId
+		activeTab: newPanelId,
 	};
 
-	const direction: 'horizontal' | 'vertical' =
-		zone === 'left' || zone === 'right' ? 'horizontal' : 'vertical';
+	const direction: 'horizontal' | 'vertical' = zone === 'left' || zone === 'right' ? 'horizontal' : 'vertical';
 
 	const first = zone === 'left' || zone === 'top' ? newLeaf : existingLeaf;
 	const second = zone === 'left' || zone === 'top' ? existingLeaf : newLeaf;
@@ -118,7 +102,7 @@ export function splitLeaf(
 		id: generateId('split'),
 		direction,
 		children: [first, second],
-		sizes: [50, 50]
+		sizes: [50, 50],
 	};
 }
 
@@ -132,7 +116,7 @@ export function getDepth(node: LayoutNode): number {
 export function resolveDropZone(
 	rect: { left: number; top: number; width: number; height: number },
 	clientX: number,
-	clientY: number
+	clientY: number,
 ): DropZone {
 	const relX = (clientX - rect.left) / rect.width;
 	const relY = (clientY - rect.top) / rect.height;
@@ -153,13 +137,7 @@ export function collectLeaves(node: LayoutNode): LeafNode[] {
 }
 
 /** Check if a panel type exists anywhere in the tree */
-export function hasPanelType(
-	root: LayoutNode,
-	panelType: string,
-	panels: Record<string, PanelDefinition>
-): boolean {
+export function hasPanelType(root: LayoutNode, panelType: string, panels: Record<string, PanelDefinition>): boolean {
 	const leaves = collectLeaves(root);
-	return leaves.some((leaf) =>
-		leaf.tabs.some((tabId) => panels[tabId]?.type === panelType)
-	);
+	return leaves.some((leaf) => leaf.tabs.some((tabId) => panels[tabId]?.type === panelType));
 }

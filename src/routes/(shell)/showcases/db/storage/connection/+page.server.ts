@@ -1,9 +1,9 @@
-import type { PageServerLoad, Actions } from './$types';
 import { R2_ACCOUNT_ID } from '$env/static/private';
+import { classifyS3Error } from '$lib/server/store/errors';
 import { verifyConnection } from '$lib/server/store/showcase/queries';
 import { reseedBucket } from '$lib/server/store/showcase/seed';
-import { classifyS3Error } from '$lib/server/store/errors';
 import { formatBytes } from '$lib/server/store/types';
+import type { Actions, PageServerLoad } from './$types';
 
 async function measureConnection() {
 	const start = performance.now();

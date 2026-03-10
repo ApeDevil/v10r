@@ -1,31 +1,31 @@
 <script lang="ts">
-	import { getSession } from '$lib/state/session.svelte';
-	import { getModals } from '$lib/state/modals.svelte';
-	import { Button } from '$lib/components/primitives';
+import { Button } from '$lib/components/primitives';
+import { getModals } from '$lib/state/modals.svelte';
+import { getSession } from '$lib/state/session.svelte';
 
-	const session = getSession();
-	const modals = getModals();
+const session = getSession();
+const modals = getModals();
 
-	function simulateWarning() {
-		const expiresAt = new Date(Date.now() + 4 * 60 * 1000);
-		session.updateSession({
-			expiresAt,
-			user: { id: 'demo', email: 'demo@example.com', name: 'Demo User' }
-		});
-	}
+function simulateWarning() {
+	const expiresAt = new Date(Date.now() + 4 * 60 * 1000);
+	session.updateSession({
+		expiresAt,
+		user: { id: 'demo', email: 'demo@example.com', name: 'Demo User' },
+	});
+}
 
-	function simulateExpiry() {
-		session.markExpired();
-		modals.open('sessionExpiry');
-	}
+function simulateExpiry() {
+	session.markExpired();
+	modals.open('sessionExpiry');
+}
 
-	function resetSession() {
-		const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
-		session.updateSession({
-			expiresAt,
-			user: { id: 'demo', email: 'demo@example.com', name: 'Demo User' }
-		});
-	}
+function resetSession() {
+	const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+	session.updateSession({
+		expiresAt,
+		user: { id: 'demo', email: 'demo@example.com', name: 'Demo User' },
+	});
+}
 </script>
 
 <svelte:head>

@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { spinnerVariants, type SpinnerVariants } from './spinner';
-	import { cn } from '$lib/utils/cn';
+import { cn } from '$lib/utils/cn';
+import { type SpinnerVariants, spinnerVariants } from './spinner';
 
-	interface Props extends SpinnerVariants {
-		label?: string;
-		class?: string;
-	}
+interface Props extends SpinnerVariants {
+	label?: string;
+	class?: string;
+}
 
-	let { size = 'md', variant = 'primary', label = 'Loading', class: className }: Props = $props();
+let { size = 'md', variant = 'primary', label = 'Loading', class: className }: Props = $props();
 </script>
 
 <div

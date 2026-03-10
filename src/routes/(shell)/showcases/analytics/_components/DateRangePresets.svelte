@@ -1,28 +1,28 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { page } from '$app/state';
-	import { cn } from '$lib/utils/cn';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		defaultRange?: '7' | '30' | '90';
-		class?: string;
-	}
+interface Props {
+	defaultRange?: '7' | '30' | '90';
+	class?: string;
+}
 
-	let { defaultRange = '30', class: className }: Props = $props();
+let { defaultRange = '30', class: className }: Props = $props();
 
-	const presets = [
-		{ label: '7d', value: '7' },
-		{ label: '30d', value: '30' },
-		{ label: '90d', value: '90' },
-	] as const;
+const presets = [
+	{ label: '7d', value: '7' },
+	{ label: '30d', value: '30' },
+	{ label: '90d', value: '90' },
+] as const;
 
-	const activeRange = $derived(page.url.searchParams.get('range') ?? defaultRange);
+const activeRange = $derived(page.url.searchParams.get('range') ?? defaultRange);
 
-	function selectRange(value: string) {
-		const url = new URL(page.url);
-		url.searchParams.set('range', value);
-		goto(url.toString(), { replaceState: true, noScroll: true });
-	}
+function selectRange(value: string) {
+	const url = new URL(page.url);
+	url.searchParams.set('range', value);
+	goto(url.toString(), { replaceState: true, noScroll: true });
+}
 </script>
 
 <div class={cn('range-presets', className)} role="radiogroup" aria-label="Date range">

@@ -2,7 +2,7 @@
  * EMBEDDING MODEL — Registry of embedding models used to generate vectors.
  * Tracks which model produced each embedding for future migration support.
  */
-import { pgSchema, text, integer, boolean, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, integer, pgSchema, text, timestamp } from 'drizzle-orm/pg-core';
 
 export const ragSchema = pgSchema('rag');
 

@@ -6,8 +6,15 @@
  * and seeds the default embedding model.
  */
 import { sql } from 'drizzle-orm';
+import {
+	AI_MAX_TOKENS,
+	EMBEDDING_DIMENSIONS,
+	EMBEDDING_MODEL,
+	EMBEDDING_MODEL_ID,
+	HNSW_EF_CONSTRUCTION,
+	HNSW_M,
+} from '$lib/server/config';
 import { db } from '../index';
-import { HNSW_M, HNSW_EF_CONSTRUCTION, EMBEDDING_DIMENSIONS, AI_MAX_TOKENS, EMBEDDING_MODEL_ID, EMBEDDING_MODEL } from '$lib/server/config';
 
 /** Enable the pgvector extension (Neon supports this on all plans). */
 async function enablePgvector() {

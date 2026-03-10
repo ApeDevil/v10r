@@ -1,25 +1,25 @@
 <script lang="ts">
-	import { Toggle as TogglePrimitive } from 'bits-ui';
-	import { cn } from '$lib/utils/cn';
-	import { tagSelectableVariants, type TagSelectableVariants } from './tag';
+import { Toggle as TogglePrimitive } from 'bits-ui';
+import { cn } from '$lib/utils/cn';
+import { type TagSelectableVariants, tagSelectableVariants } from './tag';
 
-	interface Props extends TagSelectableVariants {
-		label: string;
-		pressed?: boolean;
-		icon?: string;
-		disabled?: boolean;
-		class?: string;
-	}
+interface Props extends TagSelectableVariants {
+	label: string;
+	pressed?: boolean;
+	icon?: string;
+	disabled?: boolean;
+	class?: string;
+}
 
-	let {
-		label,
-		pressed = $bindable(false),
-		icon,
-		variant = 'default',
-		size = 'md',
-		disabled = false,
-		class: className
-	}: Props = $props();
+let {
+	label,
+	pressed = $bindable(false),
+	icon,
+	variant = 'default',
+	size = 'md',
+	disabled = false,
+	class: className,
+}: Props = $props();
 </script>
 
 <TogglePrimitive.Root bind:pressed {disabled}>

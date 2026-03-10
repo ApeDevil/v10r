@@ -1,27 +1,21 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		motif?: 'none' | 'dot' | 'diamond' | 'crosshair' | 'flourish';
-		width?: 'full' | 'content' | 'narrow';
-		color?: string;
-		opacity?: number;
-		class?: string;
-	}
+interface Props {
+	motif?: 'none' | 'dot' | 'diamond' | 'crosshair' | 'flourish';
+	width?: 'full' | 'content' | 'narrow';
+	color?: string;
+	opacity?: number;
+	class?: string;
+}
 
-	let {
-		motif = 'none',
-		width = 'full',
-		color = 'currentColor',
-		opacity = 0.2,
-		class: className
-	}: Props = $props();
+let { motif = 'none', width = 'full', color = 'currentColor', opacity = 0.2, class: className }: Props = $props();
 
-	const widths: Record<string, string> = {
-		full: 'w-full',
-		content: 'w-3/4',
-		narrow: 'w-1/2'
-	};
+const widths: Record<string, string> = {
+	full: 'w-full',
+	content: 'w-3/4',
+	narrow: 'w-1/2',
+};
 </script>
 
 <div

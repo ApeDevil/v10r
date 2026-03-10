@@ -1,15 +1,15 @@
 import { fail } from '@sveltejs/kit';
-import type { PageServerLoad, Actions } from './$types';
+import { db } from '$lib/server/db';
 import {
-	getOverviewMetrics,
-	getTrafficTrend,
-	getTopPages,
-	getDeviceSplit,
 	getBrowserSplit,
 	getCountrySplit,
+	getDeviceSplit,
+	getOverviewMetrics,
+	getTopPages,
+	getTrafficTrend,
 } from '$lib/server/db/analytics/aggregations';
 import { reseedAnalytics } from '$lib/server/db/analytics/seed';
-import { db } from '$lib/server/db';
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const range = Number(url.searchParams.get('range') ?? '30');

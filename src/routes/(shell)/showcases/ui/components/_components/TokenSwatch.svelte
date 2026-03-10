@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		label: string;
-		value: string;
-		preview?: 'color' | 'size' | 'shadow' | 'radius';
-		class?: string;
-	}
+interface Props {
+	label: string;
+	value: string;
+	preview?: 'color' | 'size' | 'shadow' | 'radius';
+	class?: string;
+}
 
-	let { label, value, preview, class: className }: Props = $props();
+let { label, value, preview, class: className }: Props = $props();
 </script>
 
 <div class={cn('token-swatch', className)}>

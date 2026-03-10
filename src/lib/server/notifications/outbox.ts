@@ -1,10 +1,10 @@
 /**
  * Notification outbox — manages delivery records in the outbox table.
  */
-import { eq, and, lt, sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
+import { DELIVERY_MAX_ATTEMPTS } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
-import { DELIVERY_MAX_ATTEMPTS } from '$lib/server/config';
 
 type Channel = 'email' | 'telegram' | 'discord';
 

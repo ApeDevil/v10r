@@ -42,7 +42,7 @@ export function createToastState() {
 		error: (msg: string, duration?: number) => add('error', msg, duration),
 		warning: (msg: string, duration?: number) => add('warning', msg, duration),
 		info: (msg: string, duration?: number) => add('info', msg, duration),
-		remove
+		remove,
 	};
 }
 

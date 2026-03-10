@@ -1,12 +1,6 @@
 import { ServerError } from '$lib/server/errors';
 
-export type CacheErrorKind =
-	| 'credentials'
-	| 'command'
-	| 'timeout'
-	| 'limit'
-	| 'unavailable'
-	| 'unknown';
+export type CacheErrorKind = 'credentials' | 'command' | 'timeout' | 'limit' | 'unavailable' | 'unknown';
 
 export class CacheError extends ServerError {
 	constructor(

@@ -1,30 +1,36 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { Card, Alert } from '$lib/components/composites';
-	import { Badge, Button, Spinner, Typography } from '$lib/components/primitives';
-	import { Stack, Cluster } from '$lib/components/layout';
+import { enhance } from '$app/forms';
+import { Alert, Card } from '$lib/components/composites';
+import { Cluster, Stack } from '$lib/components/layout';
+import { Badge, Button, Spinner, Typography } from '$lib/components/primitives';
 
-	let { data } = $props();
+let { data } = $props();
 
-	let testing = $state(false);
+let testing = $state(false);
 
-	const latencyTier = $derived(
-		!data.connection.latencyMs ? 'unknown' :
-		data.connection.latencyMs < 500 ? 'fast' :
-		data.connection.latencyMs < 2000 ? 'normal' : 'slow'
-	);
+const latencyTier = $derived(
+	!data.connection.latencyMs
+		? 'unknown'
+		: data.connection.latencyMs < 500
+			? 'fast'
+			: data.connection.latencyMs < 2000
+				? 'normal'
+				: 'slow',
+);
 
-	const tierVariant = $derived(
-		latencyTier === 'fast' ? 'success' as const :
-		latencyTier === 'normal' ? 'warning' as const :
-		latencyTier === 'unknown' ? 'secondary' as const : 'error' as const
-	);
+const tierVariant = $derived(
+	latencyTier === 'fast'
+		? ('success' as const)
+		: latencyTier === 'normal'
+			? ('warning' as const)
+			: latencyTier === 'unknown'
+				? ('secondary' as const)
+				: ('error' as const),
+);
 
-	const tierLabel = $derived(
-		latencyTier === 'fast' ? 'Fast' :
-		latencyTier === 'normal' ? 'Normal' :
-		latencyTier === 'unknown' ? '—' : 'Slow'
-	);
+const tierLabel = $derived(
+	latencyTier === 'fast' ? 'Fast' : latencyTier === 'normal' ? 'Normal' : latencyTier === 'unknown' ? '—' : 'Slow',
+);
 </script>
 
 <svelte:head>

@@ -1,246 +1,253 @@
 <script lang="ts">
-	import type {
-		PipelineStepState,
-		PipelineStepId,
-		StepDetail,
-		EmbedDetail,
-		TierDetail,
-		RankDetail,
-		ContextDetail,
-	} from '$lib/types/pipeline';
-	import { PIPELINE_STEPS } from '$lib/types/pipeline';
-	import PipelineNode from './PipelineNode.svelte';
-	import PipelineEdge from './PipelineEdge.svelte';
-	import { SvgTooltip } from '$lib/components/viz';
+import { SvgTooltip } from '$lib/components/viz';
+import type {
+	ContextDetail,
+	EmbedDetail,
+	PipelineStepId,
+	PipelineStepState,
+	RankDetail,
+	StepDetail,
+	TierDetail,
+} from '$lib/types/pipeline';
+import { PIPELINE_STEPS } from '$lib/types/pipeline';
+import PipelineEdge from './PipelineEdge.svelte';
+import PipelineNode from './PipelineNode.svelte';
 
-	interface Props {
-		steps: PipelineStepState[];
-		chunkCounts?: Record<string, number>;
-		onselect: (id: PipelineStepId) => void;
+interface Props {
+	steps: PipelineStepState[];
+	chunkCounts?: Record<string, number>;
+	onselect: (id: PipelineStepId) => void;
+}
+
+let { steps, chunkCounts = {}, onselect }: Props = $props();
+
+/** Hover state */
+let hoveredStepId = $state<PipelineStepId | null>(null);
+let hoveredEdge = $state<{ from: PipelineStepId; to: PipelineStepId } | null>(null);
+
+const VIEWBOX_W = 240;
+const VIEWBOX_H = 290;
+
+/** Zoom/pan state */
+let zoom = $state(1);
+let panX = $state(0);
+let panY = $state(0);
+let svgEl: SVGSVGElement | undefined = $state();
+let isPanning = $state(false);
+let panStartX = 0;
+let panStartY = 0;
+let panStartPanX = 0;
+let panStartPanY = 0;
+let didPan = false;
+
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 4;
+const PAN_THRESHOLD = 3;
+
+const viewBox = $derived(`${panX} ${panY} ${VIEWBOX_W / zoom} ${VIEWBOX_H / zoom}`);
+const isZoomed = $derived(Math.abs(zoom - 1) > 0.01 || Math.abs(panX) > 0.5 || Math.abs(panY) > 0.5);
+
+/** Fixed positions for each step in the DAG */
+const positions: Record<PipelineStepId, { x: number; y: number }> = {
+	embed: { x: 50, y: 30 },
+	'tier-1': { x: 30, y: 100 },
+	'tier-2': { x: 100, y: 100 },
+	'tier-3': { x: 170, y: 100 },
+	rank: { x: 100, y: 170 },
+	context: { x: 100, y: 220 },
+	generate: { x: 100, y: 270 },
+};
+
+/** Edge connections: from → to */
+const edges: [PipelineStepId, PipelineStepId][] = [
+	['embed', 'tier-1'],
+	['embed', 'tier-2'],
+	['embed', 'tier-3'],
+	['tier-1', 'rank'],
+	['tier-2', 'rank'],
+	['tier-3', 'rank'],
+	['rank', 'context'],
+	['context', 'generate'],
+];
+
+function getStep(id: PipelineStepId): PipelineStepState {
+	return steps.find((s) => s.id === id)!;
+}
+
+function edgeStatus(fromId: PipelineStepId, toId: PipelineStepId) {
+	const from = getStep(fromId);
+	const to = getStep(toId);
+	if (from.status === 'skipped' || to.status === 'skipped') return 'skipped';
+	if (to.status === 'active') return 'active';
+	if (to.status === 'done' || to.status === 'error') return from.status;
+	return 'pending';
+}
+
+function handleNodeHover(id: PipelineStepId | null) {
+	hoveredStepId = id;
+	if (id) hoveredEdge = null;
+}
+
+function handleEdgeHover(edge: { from: PipelineStepId; to: PipelineStepId } | null) {
+	hoveredEdge = edge;
+	if (edge) hoveredStepId = null;
+}
+
+/** Label lookup for edge tooltip */
+const stepLabels: Record<PipelineStepId, string> = Object.fromEntries(
+	PIPELINE_STEPS.map((s) => [s.id, s.label]),
+) as Record<PipelineStepId, string>;
+
+/** Tooltip position as percentage of container, accounting for zoom/pan */
+const tooltipPos = $derived.by(() => {
+	if (hoveredStepId) {
+		const pos = positions[hoveredStepId];
+		return {
+			left: (((pos.x - panX) * zoom) / VIEWBOX_W) * 100,
+			top: (((pos.y - panY) * zoom) / VIEWBOX_H) * 100,
+		};
 	}
-
-	let { steps, chunkCounts = {}, onselect }: Props = $props();
-
-	/** Hover state */
-	let hoveredStepId = $state<PipelineStepId | null>(null);
-	let hoveredEdge = $state<{ from: PipelineStepId; to: PipelineStepId } | null>(null);
-
-	const VIEWBOX_W = 240;
-	const VIEWBOX_H = 290;
-
-	/** Zoom/pan state */
-	let zoom = $state(1);
-	let panX = $state(0);
-	let panY = $state(0);
-	let svgEl: SVGSVGElement | undefined = $state();
-	let isPanning = $state(false);
-	let panStartX = 0;
-	let panStartY = 0;
-	let panStartPanX = 0;
-	let panStartPanY = 0;
-	let didPan = false;
-
-	const MIN_ZOOM = 0.5;
-	const MAX_ZOOM = 4;
-	const PAN_THRESHOLD = 3;
-
-	const viewBox = $derived(`${panX} ${panY} ${VIEWBOX_W / zoom} ${VIEWBOX_H / zoom}`);
-	const isZoomed = $derived(Math.abs(zoom - 1) > 0.01 || Math.abs(panX) > 0.5 || Math.abs(panY) > 0.5);
-
-	/** Fixed positions for each step in the DAG */
-	const positions: Record<PipelineStepId, { x: number; y: number }> = {
-		'embed':   { x: 50, y: 30 },
-		'tier-1':  { x: 30, y: 100 },
-		'tier-2':  { x: 100, y: 100 },
-		'tier-3':  { x: 170, y: 100 },
-		'rank':    { x: 100, y: 170 },
-		'context': { x: 100, y: 220 },
-		'generate':{ x: 100, y: 270 },
-	};
-
-	/** Edge connections: from → to */
-	const edges: [PipelineStepId, PipelineStepId][] = [
-		['embed', 'tier-1'],
-		['embed', 'tier-2'],
-		['embed', 'tier-3'],
-		['tier-1', 'rank'],
-		['tier-2', 'rank'],
-		['tier-3', 'rank'],
-		['rank', 'context'],
-		['context', 'generate'],
-	];
-
-	function getStep(id: PipelineStepId): PipelineStepState {
-		return steps.find((s) => s.id === id)!;
+	if (hoveredEdge) {
+		const p1 = positions[hoveredEdge.from];
+		const p2 = positions[hoveredEdge.to];
+		return {
+			left: ((((p1.x + p2.x) / 2 - panX) * zoom) / VIEWBOX_W) * 100,
+			top: ((((p1.y + p2.y) / 2 - panY) * zoom) / VIEWBOX_H) * 100,
+		};
 	}
+	return null;
+});
 
-	function edgeStatus(fromId: PipelineStepId, toId: PipelineStepId) {
-		const from = getStep(fromId);
-		const to = getStep(toId);
-		if (from.status === 'skipped' || to.status === 'skipped') return 'skipped';
-		if (to.status === 'active') return 'active';
-		if (to.status === 'done' || to.status === 'error') return from.status;
-		return 'pending';
+/** Derive tooltip text from step status + detail */
+function tooltipText(step: PipelineStepState): string {
+	switch (step.status) {
+		case 'pending':
+			return 'Waiting\u2026';
+		case 'active':
+			return 'Processing\u2026';
+		case 'skipped':
+			return 'Skipped';
+		case 'error':
+			return step.error ?? 'Error';
+		case 'done':
+			return doneText(step.detail, step.durationMs);
 	}
+}
 
-	function handleNodeHover(id: PipelineStepId | null) {
-		hoveredStepId = id;
-		if (id) hoveredEdge = null;
-	}
-
-	function handleEdgeHover(edge: { from: PipelineStepId; to: PipelineStepId } | null) {
-		hoveredEdge = edge;
-		if (edge) hoveredStepId = null;
-	}
-
-	/** Label lookup for edge tooltip */
-	const stepLabels: Record<PipelineStepId, string> = Object.fromEntries(
-		PIPELINE_STEPS.map((s) => [s.id, s.label])
-	) as Record<PipelineStepId, string>;
-
-	/** Tooltip position as percentage of container, accounting for zoom/pan */
-	const tooltipPos = $derived.by(() => {
-		if (hoveredStepId) {
-			const pos = positions[hoveredStepId];
-			return {
-				left: ((pos.x - panX) * zoom / VIEWBOX_W) * 100,
-				top: ((pos.y - panY) * zoom / VIEWBOX_H) * 100,
-			};
+function doneText(detail: StepDetail | undefined, ms: number | undefined): string {
+	const timing = ms !== undefined ? ` \u00b7 ${ms}ms` : '';
+	if (!detail) return `Done${timing}`;
+	switch (detail.kind) {
+		case 'embed':
+			return `${(detail as EmbedDetail).dimensions} dimensions${timing}`;
+		case 'tier': {
+			const d = detail as TierDetail;
+			return `${d.chunksFound} chunks found${timing}`;
 		}
-		if (hoveredEdge) {
-			const p1 = positions[hoveredEdge.from];
-			const p2 = positions[hoveredEdge.to];
-			return {
-				left: (((p1.x + p2.x) / 2 - panX) * zoom / VIEWBOX_W) * 100,
-				top: (((p1.y + p2.y) / 2 - panY) * zoom / VIEWBOX_H) * 100,
-			};
+		case 'rank': {
+			const d = detail as RankDetail;
+			return `${d.inputChunks} \u2192 ${d.outputChunks} chunks (${d.method.toUpperCase()})${timing}`;
 		}
-		return null;
-	});
-
-	/** Derive tooltip text from step status + detail */
-	function tooltipText(step: PipelineStepState): string {
-		switch (step.status) {
-			case 'pending': return 'Waiting\u2026';
-			case 'active': return 'Processing\u2026';
-			case 'skipped': return 'Skipped';
-			case 'error': return step.error ?? 'Error';
-			case 'done': return doneText(step.detail, step.durationMs);
+		case 'context': {
+			const d = detail as ContextDetail;
+			return `${d.chunkCount} chunks, ~${d.tokenEstimate} tokens${timing}`;
 		}
+		case 'generate':
+			return `Generating response${timing}`;
 	}
+}
 
-	function doneText(detail: StepDetail | undefined, ms: number | undefined): string {
-		const timing = ms !== undefined ? ` \u00b7 ${ms}ms` : '';
-		if (!detail) return `Done${timing}`;
-		switch (detail.kind) {
-			case 'embed': return `${(detail as EmbedDetail).dimensions} dimensions${timing}`;
-			case 'tier': {
-				const d = detail as TierDetail;
-				return `${d.chunksFound} chunks found${timing}`;
-			}
-			case 'rank': {
-				const d = detail as RankDetail;
-				return `${d.inputChunks} \u2192 ${d.outputChunks} chunks (${d.method.toUpperCase()})${timing}`;
-			}
-			case 'context': {
-				const d = detail as ContextDetail;
-				return `${d.chunkCount} chunks, ~${d.tokenEstimate} tokens${timing}`;
-			}
-			case 'generate': return `Generating response${timing}`;
-		}
+const tooltipContent = $derived.by(() => {
+	if (hoveredStepId) {
+		const step = getStep(hoveredStepId);
+		return { label: step.label, text: tooltipText(step) };
 	}
-
-	const tooltipContent = $derived.by(() => {
-		if (hoveredStepId) {
-			const step = getStep(hoveredStepId);
-			return { label: step.label, text: tooltipText(step) };
-		}
-		if (hoveredEdge) {
-			return {
-				label: `${stepLabels[hoveredEdge.from]} \u2192 ${stepLabels[hoveredEdge.to]}`,
-				text: null,
-			};
-		}
-		return null;
-	});
-
-	const showTooltip = $derived(tooltipPos !== null && tooltipContent !== null);
-
-	/** Zoom toward cursor on Ctrl/Cmd + scroll (also handles trackpad pinch) */
-	function handleWheel(e: WheelEvent) {
-		if (!e.ctrlKey && !e.metaKey) return;
-		e.preventDefault();
-		if (!svgEl) return;
-
-		const factor = e.deltaY > 0 ? 0.9 : 1.1;
-		const newZoom = Math.min(Math.max(zoom * factor, MIN_ZOOM), MAX_ZOOM);
-
-		const rect = svgEl.getBoundingClientRect();
-		const cursorX = (e.clientX - rect.left) / rect.width;
-		const cursorY = (e.clientY - rect.top) / rect.height;
-
-		const oldW = VIEWBOX_W / zoom;
-		const newW = VIEWBOX_W / newZoom;
-		const oldH = VIEWBOX_H / zoom;
-		const newH = VIEWBOX_H / newZoom;
-
-		panX += (oldW - newW) * cursorX;
-		panY += (oldH - newH) * cursorY;
-		zoom = newZoom;
+	if (hoveredEdge) {
+		return {
+			label: `${stepLabels[hoveredEdge.from]} \u2192 ${stepLabels[hoveredEdge.to]}`,
+			text: null,
+		};
 	}
+	return null;
+});
 
-	function handlePointerDown(e: PointerEvent) {
-		if (e.button !== 0) return;
-		isPanning = true;
-		didPan = false;
-		panStartX = e.clientX;
-		panStartY = e.clientY;
-		panStartPanX = panX;
-		panStartPanY = panY;
-	}
+const showTooltip = $derived(tooltipPos !== null && tooltipContent !== null);
 
-	function handlePointerMove(e: PointerEvent) {
-		if (!isPanning || !svgEl) return;
-		const dx = e.clientX - panStartX;
-		const dy = e.clientY - panStartY;
-		if (!didPan && Math.abs(dx) < PAN_THRESHOLD && Math.abs(dy) < PAN_THRESHOLD) return;
-		didPan = true;
-		const rect = svgEl.getBoundingClientRect();
-		panX = panStartPanX - (dx / rect.width) * (VIEWBOX_W / zoom);
-		panY = panStartPanY - (dy / rect.height) * (VIEWBOX_H / zoom);
-	}
+/** Zoom toward cursor on Ctrl/Cmd + scroll (also handles trackpad pinch) */
+function handleWheel(e: WheelEvent) {
+	if (!e.ctrlKey && !e.metaKey) return;
+	e.preventDefault();
+	if (!svgEl) return;
 
-	function handlePointerUp() {
-		isPanning = false;
-	}
+	const factor = e.deltaY > 0 ? 0.9 : 1.1;
+	const newZoom = Math.min(Math.max(zoom * factor, MIN_ZOOM), MAX_ZOOM);
 
-	function resetZoom() {
-		zoom = 1;
-		panX = 0;
-		panY = 0;
-	}
+	const rect = svgEl.getBoundingClientRect();
+	const cursorX = (e.clientX - rect.left) / rect.width;
+	const cursorY = (e.clientY - rect.top) / rect.height;
 
-	function zoomIn() {
-		const newZoom = Math.min(zoom * 1.3, MAX_ZOOM);
-		const oldW = VIEWBOX_W / zoom;
-		const newW = VIEWBOX_W / newZoom;
-		const oldH = VIEWBOX_H / zoom;
-		const newH = VIEWBOX_H / newZoom;
-		panX += (oldW - newW) / 2;
-		panY += (oldH - newH) / 2;
-		zoom = newZoom;
-	}
+	const oldW = VIEWBOX_W / zoom;
+	const newW = VIEWBOX_W / newZoom;
+	const oldH = VIEWBOX_H / zoom;
+	const newH = VIEWBOX_H / newZoom;
 
-	function zoomOut() {
-		const newZoom = Math.max(zoom * 0.7, MIN_ZOOM);
-		const oldW = VIEWBOX_W / zoom;
-		const newW = VIEWBOX_W / newZoom;
-		const oldH = VIEWBOX_H / zoom;
-		const newH = VIEWBOX_H / newZoom;
-		panX += (oldW - newW) / 2;
-		panY += (oldH - newH) / 2;
-		zoom = newZoom;
-	}
+	panX += (oldW - newW) * cursorX;
+	panY += (oldH - newH) * cursorY;
+	zoom = newZoom;
+}
+
+function handlePointerDown(e: PointerEvent) {
+	if (e.button !== 0) return;
+	isPanning = true;
+	didPan = false;
+	panStartX = e.clientX;
+	panStartY = e.clientY;
+	panStartPanX = panX;
+	panStartPanY = panY;
+}
+
+function handlePointerMove(e: PointerEvent) {
+	if (!isPanning || !svgEl) return;
+	const dx = e.clientX - panStartX;
+	const dy = e.clientY - panStartY;
+	if (!didPan && Math.abs(dx) < PAN_THRESHOLD && Math.abs(dy) < PAN_THRESHOLD) return;
+	didPan = true;
+	const rect = svgEl.getBoundingClientRect();
+	panX = panStartPanX - (dx / rect.width) * (VIEWBOX_W / zoom);
+	panY = panStartPanY - (dy / rect.height) * (VIEWBOX_H / zoom);
+}
+
+function handlePointerUp() {
+	isPanning = false;
+}
+
+function resetZoom() {
+	zoom = 1;
+	panX = 0;
+	panY = 0;
+}
+
+function zoomIn() {
+	const newZoom = Math.min(zoom * 1.3, MAX_ZOOM);
+	const oldW = VIEWBOX_W / zoom;
+	const newW = VIEWBOX_W / newZoom;
+	const oldH = VIEWBOX_H / zoom;
+	const newH = VIEWBOX_H / newZoom;
+	panX += (oldW - newW) / 2;
+	panY += (oldH - newH) / 2;
+	zoom = newZoom;
+}
+
+function zoomOut() {
+	const newZoom = Math.max(zoom * 0.7, MIN_ZOOM);
+	const oldW = VIEWBOX_W / zoom;
+	const newW = VIEWBOX_W / newZoom;
+	const oldH = VIEWBOX_H / zoom;
+	const newH = VIEWBOX_H / newZoom;
+	panX += (oldW - newW) / 2;
+	panY += (oldH - newH) / 2;
+	zoom = newZoom;
+}
 </script>
 
 <div class="graph-container">

@@ -1,45 +1,45 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
-	import { trapFocus } from '$lib/utils/focus-trap';
-	import { getModals } from '$lib/state/modals.svelte';
-	import { getShortcutsByCategory, formatShortcut } from '$lib/shortcuts';
+import { formatShortcut, getShortcutsByCategory } from '$lib/shortcuts';
+import { getModals } from '$lib/state/modals.svelte';
+import { cn } from '$lib/utils/cn';
+import { trapFocus } from '$lib/utils/focus-trap';
 
-	interface Props {
-		class?: string;
+interface Props {
+	class?: string;
+}
+
+let { class: className }: Props = $props();
+
+const modals = getModals();
+
+// Get shortcuts grouped by category
+const shortcutsByCategory = $derived(getShortcutsByCategory());
+
+let modalRef: HTMLElement;
+
+// Set up focus trap when modal opens
+$effect(() => {
+	if (modals.isOpen('shortcuts') && modalRef) {
+		const cleanup = trapFocus(modalRef);
+		return cleanup;
 	}
+});
 
-	let { class: className }: Props = $props();
+function handleClose() {
+	modals.close();
+}
 
-	const modals = getModals();
-
-	// Get shortcuts grouped by category
-	const shortcutsByCategory = $derived(getShortcutsByCategory());
-
-	let modalRef: HTMLElement;
-
-	// Set up focus trap when modal opens
-	$effect(() => {
-		if (modals.isOpen('shortcuts') && modalRef) {
-			const cleanup = trapFocus(modalRef);
-			return cleanup;
-		}
-	});
-
-	function handleClose() {
-		modals.close();
+function handleBackdropClick(event: MouseEvent) {
+	if (event.target === event.currentTarget) {
+		handleClose();
 	}
+}
 
-	function handleBackdropClick(event: MouseEvent) {
-		if (event.target === event.currentTarget) {
-			handleClose();
-		}
+function handleKeydown(e: KeyboardEvent) {
+	if (e.key === 'Escape' && modals.isOpen('shortcuts')) {
+		handleClose();
 	}
-
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape' && modals.isOpen('shortcuts')) {
-			handleClose();
-		}
-	}
+}
 </script>
 
 <svelte:window onkeydown={handleKeydown} />

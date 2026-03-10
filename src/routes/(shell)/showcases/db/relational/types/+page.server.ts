@@ -1,32 +1,31 @@
-import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
+import { sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import {
-	typeSpecimen,
-	temporalRecord,
-	documentVault,
+	auditLog,
 	collectionShelf,
+	documentVault,
 	networkRegistry,
 	rangeBooking,
-	auditLog,
+	temporalRecord,
+	typeSpecimen,
 } from '$lib/server/db/schema';
-import { sql } from 'drizzle-orm';
 import { reseedShowcase } from '$lib/server/db/showcase/seed';
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
 	const start = performance.now();
 
 	try {
-		const [specimens, temporals, documents, collections, networks, bookings, audits] =
-			await Promise.all([
-				db.select().from(typeSpecimen),
-				db.select().from(temporalRecord),
-				db.select().from(documentVault).where(sql`deleted_at IS NULL`),
-				db.select().from(collectionShelf),
-				db.select().from(networkRegistry),
-				db.select().from(rangeBooking),
-				db.select().from(auditLog).orderBy(sql`occurred_at DESC`),
-			]);
+		const [specimens, temporals, documents, collections, networks, bookings, audits] = await Promise.all([
+			db.select().from(typeSpecimen),
+			db.select().from(temporalRecord),
+			db.select().from(documentVault).where(sql`deleted_at IS NULL`),
+			db.select().from(collectionShelf),
+			db.select().from(networkRegistry),
+			db.select().from(rangeBooking),
+			db.select().from(auditLog).orderBy(sql`occurred_at DESC`),
+		]);
 
 		const queryMs = Math.round((performance.now() - start) * 100) / 100;
 

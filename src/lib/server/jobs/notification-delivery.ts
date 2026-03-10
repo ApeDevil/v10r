@@ -3,28 +3,20 @@
  * Fetches batches of pending deliveries, sends through providers, updates status.
  * Resolves the correct recipient address per channel (email, telegram chat ID, discord user ID).
  */
+
+import { and, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import { notifications } from '$lib/server/db/schema/notifications/notifications';
-import { eq, and } from 'drizzle-orm';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
+import { notifications } from '$lib/server/db/schema/notifications/notifications';
 import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
-import {
-	getPendingDeliveries,
-	markProcessing,
-	markSent,
-	markFailed,
-} from '$lib/server/notifications/outbox';
+import { getPendingDeliveries, markFailed, markProcessing, markSent } from '$lib/server/notifications/outbox';
 import { getProvider } from '$lib/server/notifications/providers';
 import type { DeliveryPayload } from '$lib/server/notifications/providers/types';
 
 /** Resolve the recipient address for a given channel + user */
 async function resolveRecipient(userId: string, channel: string): Promise<string | null> {
 	if (channel === 'email') {
-		const [u] = await db
-			.select({ email: user.email })
-			.from(user)
-			.where(eq(user.id, userId))
-			.limit(1);
+		const [u] = await db.select({ email: user.email }).from(user).where(eq(user.id, userId)).limit(1);
 		return u?.email ?? null;
 	}
 
@@ -73,11 +65,7 @@ export async function notificationDelivery(): Promise<number> {
 		await markProcessing(delivery.id);
 
 		// Fetch the notification
-		const [notif] = await db
-			.select()
-			.from(notifications)
-			.where(eq(notifications.id, delivery.notificationId))
-			.limit(1);
+		const [notif] = await db.select().from(notifications).where(eq(notifications.id, delivery.notificationId)).limit(1);
 
 		if (!notif) {
 			await markFailed(delivery.id, 'NO_NOTIFICATION', 'Notification not found', false);

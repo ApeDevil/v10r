@@ -1,6 +1,6 @@
+import { Neo4jError } from '../errors';
 import { cypher } from '../index';
 import { RELATIONSHIP_TYPES, type RelationshipType } from '../types';
-import { Neo4jError } from '../errors';
 
 // ─── Relationship type allowlist ────────────────────────
 // Cypher can't parameterize relationship types, so we validate against an allowlist.
@@ -48,11 +48,7 @@ export async function deleteTechnology(elementId: string): Promise<void> {
 
 // ─── Relationship mutations ─────────────────────────────
 
-export async function createRelationship(
-	fromId: string,
-	toId: string,
-	type: string,
-): Promise<void> {
+export async function createRelationship(fromId: string, toId: string, type: string): Promise<void> {
 	assertAllowedRelType(type);
 
 	// Safe: type has been validated against the allowlist
@@ -64,11 +60,7 @@ export async function createRelationship(
 	);
 }
 
-export async function deleteRelationship(
-	fromId: string,
-	toId: string,
-	type: string,
-): Promise<void> {
+export async function deleteRelationship(fromId: string, toId: string, type: string): Promise<void> {
 	assertAllowedRelType(type);
 
 	await cypher(

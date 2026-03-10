@@ -1,19 +1,19 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { BoundaryFallback } from '$lib/components/composites';
-	import { Button } from '$lib/components/primitives';
+import { goto } from '$app/navigation';
+import { BoundaryFallback } from '$lib/components/composites';
+import { Button } from '$lib/components/primitives';
 
-	let crashKey = $state(0);
-	let crashed = $state(false);
+let crashKey = $state(0);
+let crashed = $state(false);
 
-	function triggerCrash() {
-		crashed = true;
-	}
+function triggerCrash() {
+	crashed = true;
+}
 
-	function handleReset() {
-		crashed = false;
-		crashKey++;
-	}
+function handleReset() {
+	crashed = false;
+	crashKey++;
+}
 </script>
 
 <svelte:head>

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { AppShell } from '$lib/components/shell';
+import { AppShell } from '$lib/components/shell';
 
-	let { children, data } = $props();
+let { children, data } = $props();
 </script>
 
 <AppShell session={data.session}>

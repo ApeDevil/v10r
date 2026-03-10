@@ -1,11 +1,7 @@
-import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
-import {
-	getLabelsWithCounts,
-	getRelTypesWithCounts,
-	getFullGraph,
-} from '$lib/server/graph/showcase/queries';
+import { getFullGraph, getLabelsWithCounts, getRelTypesWithCounts } from '$lib/server/graph/showcase/queries';
 import { reseedGraph } from '$lib/server/graph/showcase/seed';
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
 	const start = performance.now();

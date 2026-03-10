@@ -12,10 +12,7 @@ export interface GraphEdge {
 	target: string;
 }
 
-export interface GraphData<
-	N extends GraphNode = GraphNode,
-	E extends GraphEdge = GraphEdge,
-> {
+export interface GraphData<N extends GraphNode = GraphNode, E extends GraphEdge = GraphEdge> {
 	nodes: N[];
 	edges: E[];
 }

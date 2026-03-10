@@ -1,21 +1,21 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import EmptyState from '$lib/components/composites/empty-state/EmptyState.svelte';
-	import Button from '$lib/components/primitives/button/Button.svelte';
+import type { Snippet } from 'svelte';
+import EmptyState from '$lib/components/composites/empty-state/EmptyState.svelte';
+import Button from '$lib/components/primitives/button/Button.svelte';
 
-	interface Props {
-		error?: string;
-		description?: string;
-		onRetry?: () => void;
-		dataTable?: Snippet;
-	}
+interface Props {
+	error?: string;
+	description?: string;
+	onRetry?: () => void;
+	dataTable?: Snippet;
+}
 
-	let {
-		error = 'Failed to load chart',
-		description = 'Something went wrong rendering this chart',
-		onRetry,
-		dataTable,
-	}: Props = $props();
+let {
+	error = 'Failed to load chart',
+	description = 'Something went wrong rendering this chart',
+	onRetry,
+	dataTable,
+}: Props = $props();
 </script>
 
 <EmptyState icon="i-lucide-triangle-alert" title={error} {description}>

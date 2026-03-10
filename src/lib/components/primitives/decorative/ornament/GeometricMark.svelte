@@ -1,23 +1,23 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		shape?: 'circle' | 'hexagon' | 'triangle' | 'square' | 'cross' | 'diamond';
-		size?: number;
-		color?: string;
-		filled?: boolean;
-		strokeWidth?: number;
-		class?: string;
-	}
+interface Props {
+	shape?: 'circle' | 'hexagon' | 'triangle' | 'square' | 'cross' | 'diamond';
+	size?: number;
+	color?: string;
+	filled?: boolean;
+	strokeWidth?: number;
+	class?: string;
+}
 
-	let {
-		shape = 'circle',
-		size = 24,
-		color = 'currentColor',
-		filled = false,
-		strokeWidth = 1.5,
-		class: className
-	}: Props = $props();
+let {
+	shape = 'circle',
+	size = 24,
+	color = 'currentColor',
+	filled = false,
+	strokeWidth = 1.5,
+	class: className,
+}: Props = $props();
 </script>
 
 <svg

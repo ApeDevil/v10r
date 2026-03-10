@@ -1,86 +1,86 @@
 <script lang="ts">
-	import { onDestroy, onMount, untrack } from 'svelte';
-	import { beforeNavigate } from '$app/navigation';
-	import { cn } from '$lib/utils/cn';
-	import { chartContainerVariants, type ChartContainerVariants } from '../../_shared/chart-container';
-	import { buildChartTheme } from '../../_shared/chart-theme';
-	import { onThemeChange, resolveDatasetColors } from '../../_shared/theme-bridge';
-	import type { Chart as ChartJS, ChartData, ChartOptions } from 'chart.js';
+import type { ChartData, Chart as ChartJS, ChartOptions } from 'chart.js';
+import { onDestroy, onMount, untrack } from 'svelte';
+import { beforeNavigate } from '$app/navigation';
+import { cn } from '$lib/utils/cn';
+import { type ChartContainerVariants, chartContainerVariants } from '../../_shared/chart-container';
+import { buildChartTheme } from '../../_shared/chart-theme';
+import { onThemeChange, resolveDatasetColors } from '../../_shared/theme-bridge';
 
-	interface Props {
-		data: ChartData<'bar'>;
-		options?: ChartOptions<'bar'>;
-		aspect?: ChartContainerVariants['aspect'];
-		ariaLabel?: string;
-		horizontal?: boolean;
-		class?: string;
-	}
+interface Props {
+	data: ChartData<'bar'>;
+	options?: ChartOptions<'bar'>;
+	aspect?: ChartContainerVariants['aspect'];
+	ariaLabel?: string;
+	horizontal?: boolean;
+	class?: string;
+}
 
-	let {
-		data,
-		options = {},
-		aspect = 'chart',
-		ariaLabel = 'Bar chart',
-		horizontal = false,
-		class: className,
-	}: Props = $props();
+let {
+	data,
+	options = {},
+	aspect = 'chart',
+	ariaLabel = 'Bar chart',
+	horizontal = false,
+	class: className,
+}: Props = $props();
 
-	let canvasEl: HTMLCanvasElement | undefined = $state();
-	let chart: ChartJS<'bar'> | undefined = $state();
-	let ready = $state(false);
-	let unsub: (() => void) | undefined;
+let canvasEl: HTMLCanvasElement | undefined = $state();
+let chart: ChartJS<'bar'> | undefined = $state();
+let ready = $state(false);
+let unsub: (() => void) | undefined;
 
-	function updateChart(d: ChartData<'bar'>, opts: ChartOptions<'bar'>, h: boolean, animate = true) {
-		if (!chart) return;
-		chart.data = resolveDatasetColors(d);
-		const t = buildChartTheme();
-		Object.assign(chart.options, t.defaults, opts, { indexAxis: h ? 'y' : 'x' });
-		chart.update(animate ? undefined : 'none');
-	}
+function updateChart(d: ChartData<'bar'>, opts: ChartOptions<'bar'>, h: boolean, animate = true) {
+	if (!chart) return;
+	chart.data = resolveDatasetColors(d);
+	const t = buildChartTheme();
+	Object.assign(chart.options, t.defaults, opts, { indexAxis: h ? 'y' : 'x' });
+	chart.update(animate ? undefined : 'none');
+}
 
-	function cleanup() {
-		unsub?.();
-		unsub = undefined;
-		chart?.destroy();
-		chart = undefined;
-	}
+function cleanup() {
+	unsub?.();
+	unsub = undefined;
+	chart?.destroy();
+	chart = undefined;
+}
 
-	beforeNavigate(cleanup);
-	onDestroy(cleanup);
+beforeNavigate(cleanup);
+onDestroy(cleanup);
 
-	onMount(async () => {
-		const { registerBarChart } = await import('../../_shared/register');
-		const Chart = await registerBarChart();
-		const theme = buildChartTheme();
+onMount(async () => {
+	const { registerBarChart } = await import('../../_shared/register');
+	const Chart = await registerBarChart();
+	const theme = buildChartTheme();
 
-		if (!canvasEl) return;
+	if (!canvasEl) return;
 
-		chart = new Chart(canvasEl, {
-			type: 'bar',
-			data: resolveDatasetColors(data),
-			options: {
-				responsive: true,
-				maintainAspectRatio: true,
-				indexAxis: horizontal ? 'y' : 'x',
-				...theme.defaults,
-				...options,
-			},
-		});
-
-		unsub = onThemeChange(() => updateChart(data, options, horizontal, false));
-
-		requestAnimationFrame(() => chart?.resize());
-		ready = true;
+	chart = new Chart(canvasEl, {
+		type: 'bar',
+		data: resolveDatasetColors(data),
+		options: {
+			responsive: true,
+			maintainAspectRatio: true,
+			indexAxis: horizontal ? 'y' : 'x',
+			...theme.defaults,
+			...options,
+		},
 	});
 
-	// Update chart when data or options change
-	$effect(() => {
-		const _data = data;
-		const _options = options;
-		const _horizontal = horizontal;
+	unsub = onThemeChange(() => updateChart(data, options, horizontal, false));
 
-		untrack(() => updateChart(_data, _options, _horizontal));
-	});
+	requestAnimationFrame(() => chart?.resize());
+	ready = true;
+});
+
+// Update chart when data or options change
+$effect(() => {
+	const _data = data;
+	const _options = options;
+	const _horizontal = horizontal;
+
+	untrack(() => updateChart(_data, _options, _horizontal));
+});
 </script>
 
 <figure class={cn(chartContainerVariants({ aspect }), className)}>

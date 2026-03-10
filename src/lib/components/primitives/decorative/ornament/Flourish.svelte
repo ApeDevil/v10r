@@ -1,35 +1,29 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-		size?: number;
-		color?: string;
-		strokeWidth?: number;
-		class?: string;
-	}
+interface Props {
+	position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+	size?: number;
+	color?: string;
+	strokeWidth?: number;
+	class?: string;
+}
 
-	let {
-		position = 'top-left',
-		size = 48,
-		color = 'currentColor',
-		strokeWidth = 1.5,
-		class: className
-	}: Props = $props();
+let { position = 'top-left', size = 48, color = 'currentColor', strokeWidth = 1.5, class: className }: Props = $props();
 
-	const positionClasses: Record<string, string> = {
-		'top-left': 'top-0 left-0',
-		'top-right': 'top-0 right-0',
-		'bottom-left': 'bottom-0 left-0',
-		'bottom-right': 'bottom-0 right-0'
-	};
+const positionClasses: Record<string, string> = {
+	'top-left': 'top-0 left-0',
+	'top-right': 'top-0 right-0',
+	'bottom-left': 'bottom-0 left-0',
+	'bottom-right': 'bottom-0 right-0',
+};
 
-	const transforms: Record<string, string> = {
-		'top-left': '',
-		'top-right': 'scaleX(-1)',
-		'bottom-left': 'scaleY(-1)',
-		'bottom-right': 'scale(-1)'
-	};
+const transforms: Record<string, string> = {
+	'top-left': '',
+	'top-right': 'scaleX(-1)',
+	'bottom-left': 'scaleY(-1)',
+	'bottom-right': 'scale(-1)',
+};
 </script>
 
 <svg

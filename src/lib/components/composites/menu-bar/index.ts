@@ -1,20 +1,20 @@
 export { default as MenuBar } from './MenuBar.svelte';
-export type { MenuBarMenu, MenuBarItem } from './types';
 export {
-	menuBarRootVariants,
-	menuBarTriggerVariants,
-	menuBarContentVariants,
-	menuBarItemVariants,
-	menuBarSeparatorVariants,
-	menuBarShortcutVariants,
-	menuBarCheckboxItemVariants,
-	menuBarItemIndicatorVariants,
-	type MenuBarRootVariants,
-	type MenuBarTriggerVariants,
+	type MenuBarCheckboxItemVariants,
 	type MenuBarContentVariants,
+	type MenuBarItemIndicatorVariants,
 	type MenuBarItemVariants,
+	type MenuBarRootVariants,
 	type MenuBarSeparatorVariants,
 	type MenuBarShortcutVariants,
-	type MenuBarCheckboxItemVariants,
-	type MenuBarItemIndicatorVariants
+	type MenuBarTriggerVariants,
+	menuBarCheckboxItemVariants,
+	menuBarContentVariants,
+	menuBarItemIndicatorVariants,
+	menuBarItemVariants,
+	menuBarRootVariants,
+	menuBarSeparatorVariants,
+	menuBarShortcutVariants,
+	menuBarTriggerVariants,
 } from './menu-bar';
+export type { MenuBarItem, MenuBarMenu } from './types';

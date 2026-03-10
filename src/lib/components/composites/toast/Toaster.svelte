@@ -1,23 +1,23 @@
 <script lang="ts">
-	import { getToast } from '$lib/state/toast.svelte';
-	import { cn } from '$lib/utils/cn';
-	import { fly } from 'svelte/transition';
+import { fly } from 'svelte/transition';
+import { getToast } from '$lib/state/toast.svelte';
+import { cn } from '$lib/utils/cn';
 
-	const toast = getToast();
+const toast = getToast();
 
-	const iconClasses = {
-		success: 'i-lucide-check-circle',
-		error: 'i-lucide-x-circle',
-		warning: 'i-lucide-alert-triangle',
-		info: 'i-lucide-info'
-	};
+const iconClasses = {
+	success: 'i-lucide-check-circle',
+	error: 'i-lucide-x-circle',
+	warning: 'i-lucide-alert-triangle',
+	info: 'i-lucide-info',
+};
 
-	const styles = {
-		success: 'border-success/50 bg-success-light text-success',
-		error: 'border-error/50 bg-error-light text-error',
-		warning: 'border-warning/50 bg-warning-light text-warning',
-		info: 'border-primary/50 bg-primary-light text-primary'
-	};
+const styles = {
+	success: 'border-success/50 bg-success-light text-success',
+	error: 'border-error/50 bg-error-light text-error',
+	warning: 'border-warning/50 bg-warning-light text-warning',
+	info: 'border-primary/50 bg-primary-light text-primary',
+};
 </script>
 
 <div class="fixed bottom-4 right-4 z-toast flex flex-col gap-2">
@@ -31,14 +31,14 @@
 			role="alert"
 			aria-live="polite"
 		>
-			<span class={cn(iconClasses[item.type], 'h-5 w-5 shrink-0')} />
+			<span class={cn(iconClasses[item.type], 'h-5 w-5 shrink-0')} ></span>
 			<span class="flex-1 text-fluid-sm">{item.message}</span>
 			<button
 				onclick={() => toast.remove(item.id)}
 				class="shrink-0 opacity-70 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm"
 				aria-label="Close notification"
 			>
-				<span class="i-lucide-x h-4 w-4" />
+				<span class="i-lucide-x h-4 w-4" ></span>
 			</button>
 		</div>
 	{/each}

@@ -1,103 +1,112 @@
 <script lang="ts">
-	import { PageHeader, BackLink, NavSection } from '$lib/components/composites';
-	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives/table';
-	import VizDemoCard from '../_components/VizDemoCard.svelte';
-	import { ScatterPlot, HeatMap } from '$lib/components/viz';
-	import type { HeatMapData } from '$lib/components/viz/plot';
-	import { getVizPalette } from '$lib/components/viz/_shared/theme-bridge';
-	import { browser } from '$app/environment';
+import { browser } from '$app/environment';
+import { BackLink, NavSection, PageHeader } from '$lib/components/composites';
+import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
+import { HeatMap, ScatterPlot } from '$lib/components/viz';
+import { getVizPalette } from '$lib/components/viz/_shared/theme-bridge';
+import type { HeatMapData } from '$lib/components/viz/plot';
+import VizDemoCard from '../_components/VizDemoCard.svelte';
 
-	const sections = [
-		{ id: 'scatter-plot', label: 'Scatter' },
-		{ id: 'activity-heatmap', label: 'Activity' },
-		{ id: 'correlation-matrix', label: 'Correlation' },
-		{ id: 'server-load', label: 'Server Load' },
-	];
+const sections = [
+	{ id: 'scatter-plot', label: 'Scatter' },
+	{ id: 'activity-heatmap', label: 'Activity' },
+	{ id: 'correlation-matrix', label: 'Correlation' },
+	{ id: 'server-load', label: 'Server Load' },
+];
 
-	// SSR-safe: resolve palette only in browser
-	let palette: string[] = $state(browser ? getVizPalette() : []);
+// SSR-safe: resolve palette only in browser
+let palette: string[] = $state(browser ? getVizPalette() : []);
 
-	// --- Scatter Plot data ---
+// --- Scatter Plot data ---
 
-	const scatterData = {
-		datasets: [
-			{
-				label: 'Dataset A',
-				data: [
-					{ x: 10, y: 20 }, { x: 25, y: 45 }, { x: 35, y: 30 },
-					{ x: 45, y: 60 }, { x: 55, y: 40 }, { x: 65, y: 75 },
-					{ x: 80, y: 55 }, { x: 90, y: 85 },
-				],
-				backgroundColor: palette[0] || '#3b82f6',
-				pointRadius: 5,
-				pointHoverRadius: 7,
-			},
-			{
-				label: 'Dataset B',
-				data: [
-					{ x: 15, y: 50 }, { x: 30, y: 25 }, { x: 40, y: 70 },
-					{ x: 50, y: 35 }, { x: 60, y: 55 }, { x: 75, y: 45 },
-					{ x: 85, y: 65 },
-				],
-				backgroundColor: palette[3] || '#8b5cf6',
-				pointRadius: 5,
-				pointHoverRadius: 7,
-			},
-		],
-	};
+const scatterData = {
+	datasets: [
+		{
+			label: 'Dataset A',
+			data: [
+				{ x: 10, y: 20 },
+				{ x: 25, y: 45 },
+				{ x: 35, y: 30 },
+				{ x: 45, y: 60 },
+				{ x: 55, y: 40 },
+				{ x: 65, y: 75 },
+				{ x: 80, y: 55 },
+				{ x: 90, y: 85 },
+			],
+			backgroundColor: palette[0] || '#3b82f6',
+			pointRadius: 5,
+			pointHoverRadius: 7,
+		},
+		{
+			label: 'Dataset B',
+			data: [
+				{ x: 15, y: 50 },
+				{ x: 30, y: 25 },
+				{ x: 40, y: 70 },
+				{ x: 50, y: 35 },
+				{ x: 60, y: 55 },
+				{ x: 75, y: 45 },
+				{ x: 85, y: 65 },
+			],
+			backgroundColor: palette[3] || '#8b5cf6',
+			pointRadius: 5,
+			pointHoverRadius: 7,
+		},
+	],
+};
 
-	// --- Activity Heatmap (GitHub-style contribution graph) ---
+// --- Activity Heatmap (GitHub-style contribution graph) ---
 
-	const activityData: HeatMapData = {
-		xLabels: ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12'],
-		yLabels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-		values: [
-			[3, 5, 1, 8, 2, 6, 4, 7, 3, 9, 5, 2],
-			[6, 2, 7, 4, 9, 1, 5, 3, 8, 2, 7, 4],
-			[1, 8, 3, 6, 4, 7, 2, 9, 1, 5, 3, 8],
-			[4, 3, 9, 2, 7, 5, 8, 1, 6, 4, 9, 3],
-			[7, 6, 2, 5, 1, 8, 3, 4, 7, 6, 2, 5],
-			[2, 1, 4, 3, 6, 2, 1, 5, 2, 3, 1, 6],
-			[1, 0, 2, 1, 3, 1, 0, 2, 1, 1, 0, 3],
-		],
-	};
+const activityData: HeatMapData = {
+	xLabels: ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12'],
+	yLabels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+	values: [
+		[3, 5, 1, 8, 2, 6, 4, 7, 3, 9, 5, 2],
+		[6, 2, 7, 4, 9, 1, 5, 3, 8, 2, 7, 4],
+		[1, 8, 3, 6, 4, 7, 2, 9, 1, 5, 3, 8],
+		[4, 3, 9, 2, 7, 5, 8, 1, 6, 4, 9, 3],
+		[7, 6, 2, 5, 1, 8, 3, 4, 7, 6, 2, 5],
+		[2, 1, 4, 3, 6, 2, 1, 5, 2, 3, 1, 6],
+		[1, 0, 2, 1, 3, 1, 0, 2, 1, 1, 0, 3],
+	],
+};
 
-	// --- Correlation Matrix ---
+// --- Correlation Matrix ---
 
-	const corrLabels = ['Sales', 'Traffic', 'Ads', 'Social', 'Email', 'SEO'];
-	const corrData: HeatMapData = {
-		xLabels: corrLabels,
-		yLabels: corrLabels,
-		values: [
-			[1.00, 0.85, 0.72, 0.45, 0.63, 0.78],
-			[0.85, 1.00, 0.65, 0.58, 0.51, 0.82],
-			[0.72, 0.65, 1.00, 0.38, 0.71, 0.55],
-			[0.45, 0.58, 0.38, 1.00, 0.42, 0.35],
-			[0.63, 0.51, 0.71, 0.42, 1.00, 0.60],
-			[0.78, 0.82, 0.55, 0.35, 0.60, 1.00],
-		],
-	};
+const corrLabels = ['Sales', 'Traffic', 'Ads', 'Social', 'Email', 'SEO'];
+const corrData: HeatMapData = {
+	xLabels: corrLabels,
+	yLabels: corrLabels,
+	values: [
+		[1.0, 0.85, 0.72, 0.45, 0.63, 0.78],
+		[0.85, 1.0, 0.65, 0.58, 0.51, 0.82],
+		[0.72, 0.65, 1.0, 0.38, 0.71, 0.55],
+		[0.45, 0.58, 0.38, 1.0, 0.42, 0.35],
+		[0.63, 0.51, 0.71, 0.42, 1.0, 0.6],
+		[0.78, 0.82, 0.55, 0.35, 0.6, 1.0],
+	],
+};
 
-	// --- Server Load (2-hour blocks × days) ---
+// --- Server Load (2-hour blocks × days) ---
 
-	const serverData: HeatMapData = {
-		xLabels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-		yLabels: ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'],
-		values: [
-			[12, 15, 10, 14, 11, 8, 6],
-			[8, 10, 7, 9, 8, 5, 4],
-			[5, 6, 4, 5, 4, 3, 3],
-			[15, 18, 14, 17, 16, 7, 5],
-			[45, 52, 48, 50, 47, 12, 10],
-			[78, 85, 80, 82, 75, 25, 18],
-			[92, 95, 88, 90, 85, 35, 22],
-			[88, 90, 85, 87, 82, 30, 20],
-			[95, 98, 92, 96, 90, 28, 18],
-			[72, 78, 70, 75, 68, 20, 15],
-			[42, 48, 40, 45, 38, 18, 12],
-			[20, 25, 18, 22, 17, 10, 8],
-		],
-	};
+const serverData: HeatMapData = {
+	xLabels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+	yLabels: ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'],
+	values: [
+		[12, 15, 10, 14, 11, 8, 6],
+		[8, 10, 7, 9, 8, 5, 4],
+		[5, 6, 4, 5, 4, 3, 3],
+		[15, 18, 14, 17, 16, 7, 5],
+		[45, 52, 48, 50, 47, 12, 10],
+		[78, 85, 80, 82, 75, 25, 18],
+		[92, 95, 88, 90, 85, 35, 22],
+		[88, 90, 85, 87, 82, 30, 20],
+		[95, 98, 92, 96, 90, 28, 18],
+		[72, 78, 70, 75, 68, 20, 15],
+		[42, 48, 40, 45, 38, 18, 12],
+		[20, 25, 18, 22, 17, 10, 8],
+	],
+};
 </script>
 
 <svelte:head>

@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { Handle, Position, type NodeProps, type Node } from '@xyflow/svelte';
+import { Handle, type Node, type NodeProps, Position } from '@xyflow/svelte';
 
-	interface FlowNodeData extends Record<string, unknown> {
-		label: string;
-		variant?: 'default' | 'decision' | 'terminal';
-	}
+interface FlowNodeData extends Record<string, unknown> {
+	label: string;
+	variant?: 'default' | 'decision' | 'terminal';
+}
 
-	type FlowNode = Node<FlowNodeData>;
+type FlowNode = Node<FlowNodeData>;
 
-	let { data, isConnectable }: NodeProps<FlowNode> = $props();
+let { data, isConnectable }: NodeProps<FlowNode> = $props();
 </script>
 
 <Handle type="target" position={Position.Top} {isConnectable} />

@@ -1,5 +1,5 @@
 import { env } from '$env/dynamic/private';
-import type { NotificationProvider, DeliveryPayload, DeliveryResult } from './types';
+import type { DeliveryPayload, DeliveryResult, NotificationProvider } from './types';
 
 function buildHtml(subject: string, body: string): string {
 	return `<!DOCTYPE html>
@@ -28,7 +28,12 @@ export class EmailProvider implements NotificationProvider {
 		const fromEmail = env.RESEND_FROM_EMAIL ?? 'notifications@example.com';
 
 		if (!apiKey) {
-			return { success: false, errorCode: 'NO_API_KEY', errorMessage: 'RESEND_API_KEY not configured', retryable: false };
+			return {
+				success: false,
+				errorCode: 'NO_API_KEY',
+				errorMessage: 'RESEND_API_KEY not configured',
+				retryable: false,
+			};
 		}
 
 		try {

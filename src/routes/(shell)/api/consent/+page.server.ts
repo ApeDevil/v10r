@@ -3,11 +3,12 @@
  * The banner sets cookies client-side for instant reactivity,
  * then calls these actions via fetch for server-side audit recording.
  */
-import type { Actions } from './$types';
+
 import { fail } from '@sveltejs/kit';
-import { parseConsentTier, hashVisitorId } from '$lib/server/analytics/consent';
-import { recordConsentEvent } from '$lib/server/db/analytics/consent-mutations';
+import { hashVisitorId, parseConsentTier } from '$lib/server/analytics/consent';
 import { ANALYTICS_CONSENT_COOKIE, ANALYTICS_CONSENT_MAX_AGE } from '$lib/server/config';
+import { recordConsentEvent } from '$lib/server/db/analytics/consent-mutations';
+import type { Actions } from './$types';
 
 export const actions: Actions = {
 	set: async ({ request, cookies, getClientAddress }) => {

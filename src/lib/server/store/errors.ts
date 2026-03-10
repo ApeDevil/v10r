@@ -44,7 +44,10 @@ export function classifyS3Error(err: unknown): StoreError {
 	if (err instanceof StoreError) return err;
 
 	const name = (err as { name?: string })?.name ?? '';
-	const code = (err as { Code?: string })?.Code ?? (err as { $metadata?: { httpStatusCode?: number } })?.$metadata?.httpStatusCode?.toString() ?? '';
+	const code =
+		(err as { Code?: string })?.Code ??
+		(err as { $metadata?: { httpStatusCode?: number } })?.$metadata?.httpStatusCode?.toString() ??
+		'';
 	const message = err instanceof Error ? err.message : 'Unknown storage error';
 
 	if (name === 'NoSuchKey' || name === 'NotFound' || code === '404') {

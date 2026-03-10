@@ -1,40 +1,32 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
-	import type { Snippet } from 'svelte';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		variant?: 'info' | 'success' | 'warning' | 'error';
-		title?: string;
-		description?: string;
-		children?: Snippet;
-		closable?: boolean;
-		onclose?: () => void;
-		class?: string;
-	}
+interface Props {
+	variant?: 'info' | 'success' | 'warning' | 'error';
+	title?: string;
+	description?: string;
+	children?: Snippet;
+	closable?: boolean;
+	onclose?: () => void;
+	class?: string;
+}
 
-	let {
-		variant = 'info',
-		title,
-		description,
-		children,
-		closable = false,
-		onclose,
-		class: className
-	}: Props = $props();
+let { variant = 'info', title, description, children, closable = false, onclose, class: className }: Props = $props();
 
-	let visible = $state(true);
+let visible = $state(true);
 
-	const iconClasses = {
-		info: 'i-lucide-info',
-		success: 'i-lucide-check-circle',
-		warning: 'i-lucide-alert-triangle',
-		error: 'i-lucide-x-circle'
-	};
+const iconClasses = {
+	info: 'i-lucide-info',
+	success: 'i-lucide-check-circle',
+	warning: 'i-lucide-alert-triangle',
+	error: 'i-lucide-x-circle',
+};
 
-	function handleClose() {
-		visible = false;
-		onclose?.();
-	}
+function handleClose() {
+	visible = false;
+	onclose?.();
+}
 </script>
 
 {#if visible}
@@ -42,7 +34,7 @@
 		class={cn('alert', `alert-${variant}`, className)}
 		role="alert"
 	>
-		<span class={cn(iconClasses[variant], 'alert-icon')} />
+		<span class={cn(iconClasses[variant], 'alert-icon')} ></span>
 
 		<div class="alert-content">
 			{#if title}
@@ -66,7 +58,7 @@
 				class="alert-close"
 				aria-label="Close alert"
 			>
-				<span class="i-lucide-x alert-close-icon" />
+				<span class="i-lucide-x alert-close-icon" ></span>
 			</button>
 		{/if}
 	</div>

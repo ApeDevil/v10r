@@ -1,26 +1,26 @@
 <script lang="ts">
-	import { Switch as SwitchPrimitive } from 'bits-ui';
-	import { cn } from '$lib/utils/cn';
-	import { switchRootVariants, switchThumbVariants, type SwitchVariants } from './switch';
+import { Switch as SwitchPrimitive } from 'bits-ui';
+import { cn } from '$lib/utils/cn';
+import { type SwitchVariants, switchRootVariants, switchThumbVariants } from './switch';
 
-	interface Props extends SwitchVariants {
-		id?: string;
-		checked?: boolean;
-		disabled?: boolean;
-		label?: string;
-		class?: string;
-	}
+interface Props extends SwitchVariants {
+	id?: string;
+	checked?: boolean;
+	disabled?: boolean;
+	label?: string;
+	class?: string;
+}
 
-	let {
-		id: propId,
-		checked = $bindable(false),
-		disabled = false,
-		size = 'md',
-		label,
-		class: className
-	}: Props = $props();
+let {
+	id: propId,
+	checked = $bindable(false),
+	disabled = false,
+	size = 'md',
+	label,
+	class: className,
+}: Props = $props();
 
-	const id = propId ?? `switch-${Math.random().toString(36).slice(2, 9)}`;
+const id = propId ?? `switch-${Math.random().toString(36).slice(2, 9)}`;
 </script>
 
 {#if label}

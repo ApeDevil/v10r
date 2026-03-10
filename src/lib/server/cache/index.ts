@@ -1,5 +1,5 @@
-import { env } from '$env/dynamic/private';
 import { Redis } from '@upstash/redis';
+import { env } from '$env/dynamic/private';
 
 function createRedis(): Redis | null {
 	const url = env.UPSTASH_REDIS_REST_URL;

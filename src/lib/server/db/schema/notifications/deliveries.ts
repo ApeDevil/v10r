@@ -2,9 +2,10 @@
  * NOTIFICATION DELIVERIES — Outbox for external delivery channels.
  * Tracks delivery status for email, telegram, discord.
  */
-import { text, integer, timestamp, index } from 'drizzle-orm/pg-core';
+
 import { sql } from 'drizzle-orm';
-import { notificationsSchema, notifications } from './notifications';
+import { index, integer, text, timestamp } from 'drizzle-orm/pg-core';
+import { notifications, notificationsSchema } from './notifications';
 
 export const deliveryStatusEnum = notificationsSchema.enum('delivery_status', [
 	'pending',
@@ -38,12 +39,8 @@ export const notificationDeliveries = notificationsSchema.table(
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	},
 	(table) => [
-		index('delivery_pending_idx')
-			.on(table.createdAt)
-			.where(sql`status = 'pending'`),
-		index('delivery_failed_idx')
-			.on(table.createdAt)
-			.where(sql`status = 'failed'`),
+		index('delivery_pending_idx').on(table.createdAt).where(sql`status = 'pending'`),
+		index('delivery_failed_idx').on(table.createdAt).where(sql`status = 'failed'`),
 		index('delivery_notification_idx').on(table.notificationId),
 	],
 );

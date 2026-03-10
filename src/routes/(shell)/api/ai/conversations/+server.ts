@@ -1,13 +1,13 @@
 import { json } from '@sveltejs/kit';
 import { safeParse } from 'valibot';
-import { listConversations } from '$lib/server/db/ai/queries';
-import { createConversation } from '$lib/server/db/ai/mutations';
-import { checkConversationLimit } from '$lib/server/db/ai/limits';
 import { CreateConversationSchema } from '$lib/server/ai/validation';
-import { requireApiUser } from '$lib/server/auth/guards';
-import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { CONV_RATE_LIMIT_PREFIX, CONV_RATE_LIMIT_MAX, CONV_RATE_LIMIT_WINDOW } from '$lib/server/config';
+import { requireApiUser } from '$lib/server/auth/guards';
+import { CONV_RATE_LIMIT_MAX, CONV_RATE_LIMIT_PREFIX, CONV_RATE_LIMIT_WINDOW } from '$lib/server/config';
+import { checkConversationLimit } from '$lib/server/db/ai/limits';
+import { createConversation } from '$lib/server/db/ai/mutations';
+import { listConversations } from '$lib/server/db/ai/queries';
+import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
 import type { RequestHandler } from './$types';
 
 const ratelimit = createLimiter(CONV_RATE_LIMIT_PREFIX, CONV_RATE_LIMIT_MAX, CONV_RATE_LIMIT_WINDOW);

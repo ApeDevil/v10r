@@ -1,3 +1,23 @@
-export { GeometricMark, Divider, Asterism, Kamon, Flourish, WaveDivider, CornerFrame, ConcentricRings, TickMarks, Marquee } from './ornament';
-export { DotPattern, GridPattern, RetroGrid, GradientBlob, NoiseTexture, RadialGlow, FadeMask, LineFill } from './background';
+export {
+	DotPattern,
+	FadeMask,
+	GradientBlob,
+	GridPattern,
+	LineFill,
+	NoiseTexture,
+	RadialGlow,
+	RetroGrid,
+} from './background';
+export {
+	Asterism,
+	ConcentricRings,
+	CornerFrame,
+	Divider,
+	Flourish,
+	GeometricMark,
+	Kamon,
+	Marquee,
+	TickMarks,
+	WaveDivider,
+} from './ornament';
 export { createDecorativeId } from './utils';

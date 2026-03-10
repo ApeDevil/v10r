@@ -1,6 +1,6 @@
-import { redis } from '../index';
-import { CacheError } from '../errors';
 import { MAX_SHOWCASE_KEYS } from '$lib/server/config';
+import { CacheError } from '../errors';
+import { redis } from '../index';
 
 export const SHOWCASE_PREFIX = 'showcase:';
 
@@ -12,9 +12,7 @@ export function assertShowcaseKey(key: string): void {
 }
 
 /** Check if the showcase namespace has room for more keys. */
-export async function checkKeyLimit(
-	limit = MAX_SHOWCASE_KEYS,
-): Promise<string | null> {
+export async function checkKeyLimit(limit = MAX_SHOWCASE_KEYS): Promise<string | null> {
 	if (!redis) throw new CacheError('credentials', 'Redis is not configured');
 	const keys = await redis.keys(`${SHOWCASE_PREFIX}*`);
 	if (keys.length >= limit) {

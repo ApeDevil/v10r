@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
 import * as v from 'valibot';
-import { realtimeSchema, asyncSchema, serverSchema } from './validation';
+import { describe, expect, it } from 'vitest';
+import { asyncSchema, realtimeSchema, serverSchema } from './validation';
 
 describe('realtimeSchema', () => {
 	const valid = {

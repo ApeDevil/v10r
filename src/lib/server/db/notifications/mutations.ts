@@ -1,7 +1,7 @@
-import { eq, and } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../index';
-import { notifications } from '../schema/notifications/notifications';
 import { notificationSettings } from '../schema/notifications/notification-settings';
+import { notifications } from '../schema/notifications/notifications';
 
 interface CreateNotificationInput {
 	userId: string;
@@ -56,19 +56,11 @@ export async function getOrCreateSettings(userId: string) {
 
 	if (existing) return existing;
 
-	const [created] = await db
-		.insert(notificationSettings)
-		.values({ userId })
-		.onConflictDoNothing()
-		.returning();
+	const [created] = await db.insert(notificationSettings).values({ userId }).onConflictDoNothing().returning();
 
 	// Race condition: another request may have inserted between select and insert
 	if (!created) {
-		const [row] = await db
-			.select()
-			.from(notificationSettings)
-			.where(eq(notificationSettings.userId, userId))
-			.limit(1);
+		const [row] = await db.select().from(notificationSettings).where(eq(notificationSettings.userId, userId)).limit(1);
 		return row;
 	}
 

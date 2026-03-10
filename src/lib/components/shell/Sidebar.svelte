@@ -1,34 +1,34 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import { getSidebar } from '$lib/state/sidebar.svelte';
-	import { SidebarRail, SidebarDrawer, SidebarFab } from '$lib/components/shell';
+import { browser } from '$app/environment';
+import { SidebarDrawer, SidebarFab, SidebarRail } from '$lib/components/shell';
+import { getSidebar } from '$lib/state/sidebar.svelte';
 
-	const sidebar = getSidebar();
+const sidebar = getSidebar();
 
-	// SSR-safe media query state
-	let isMobile = $state(false);
+// SSR-safe media query state
+let isMobile = $state(false);
 
-	// Set up media query listener on client
-	$effect(() => {
-		if (!browser) return;
+// Set up media query listener on client
+$effect(() => {
+	if (!browser) return;
 
-		const mq = window.matchMedia('(max-width: 767px)');
-		isMobile = mq.matches;
+	const mq = window.matchMedia('(max-width: 767px)');
+	isMobile = mq.matches;
 
-		function handleChange(e: MediaQueryListEvent) {
-			isMobile = e.matches;
-		}
+	function handleChange(e: MediaQueryListEvent) {
+		isMobile = e.matches;
+	}
 
-		mq.addEventListener('change', handleChange);
-		return () => mq.removeEventListener('change', handleChange);
-	});
+	mq.addEventListener('change', handleChange);
+	return () => mq.removeEventListener('change', handleChange);
+});
 
-	// Auto-close mobile drawer on resize to tablet/desktop
-	$effect(() => {
-		if (!isMobile && sidebar.mobileOpen) {
-			sidebar.closeMobile();
-		}
-	});
+// Auto-close mobile drawer on resize to tablet/desktop
+$effect(() => {
+	if (!isMobile && sidebar.mobileOpen) {
+		sidebar.closeMobile();
+	}
+});
 </script>
 
 {#if isMobile}

@@ -1,424 +1,425 @@
 <script lang="ts">
-	import { PageHeader, BackLink, NavSection, BoundaryFallback } from '$lib/components/composites';
-	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives/table';
-	import VizDemoCard from '../_components/VizDemoCard.svelte';
-	import { NetworkGraph, TreeGraph, DagGraph, SankeyDiagram, KnowledgeGraph } from '$lib/components/viz';
-	import type { NetworkData, TreeData, DagData, SankeyData, KnowledgeData } from '$lib/components/viz/graph';
+import { BackLink, BoundaryFallback, NavSection, PageHeader } from '$lib/components/composites';
+import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
+import { DagGraph, KnowledgeGraph, NetworkGraph, SankeyDiagram, TreeGraph } from '$lib/components/viz';
+import type { DagData, KnowledgeData, NetworkData, SankeyData, TreeData } from '$lib/components/viz/graph';
+import VizDemoCard from '../_components/VizDemoCard.svelte';
 
-	const sections = [
-		{ id: 'network-graph', label: 'Network' },
-		{ id: 'directed-graph', label: 'Directed' },
-		{ id: 'tree-graph', label: 'Tree' },
-		{ id: 'dag-graph', label: 'DAG' },
-		{ id: 'sankey-diagram', label: 'Sankey' },
-		{ id: 'knowledge-graph', label: 'Knowledge' },
-		{ id: 'layout-comparison', label: 'Comparison' },
-	];
+const sections = [
+	{ id: 'network-graph', label: 'Network' },
+	{ id: 'directed-graph', label: 'Directed' },
+	{ id: 'tree-graph', label: 'Tree' },
+	{ id: 'dag-graph', label: 'DAG' },
+	{ id: 'sankey-diagram', label: 'Sankey' },
+	{ id: 'knowledge-graph', label: 'Knowledge' },
+	{ id: 'layout-comparison', label: 'Comparison' },
+];
 
-	// --- Sample Data: Social Network (undirected) ---
-	const socialNetwork: NetworkData = {
-		nodes: [
-			{ id: 'alice', label: 'Alice', group: 'engineering', size: 8 },
-			{ id: 'bob', label: 'Bob', group: 'engineering', size: 7 },
-			{ id: 'carol', label: 'Carol', group: 'design', size: 7 },
-			{ id: 'dave', label: 'Dave', group: 'design', size: 6 },
-			{ id: 'eve', label: 'Eve', group: 'product', size: 8 },
-			{ id: 'frank', label: 'Frank', group: 'product', size: 6 },
-			{ id: 'grace', label: 'Grace', group: 'engineering', size: 7 },
-			{ id: 'hank', label: 'Hank', group: 'data', size: 6 },
-			{ id: 'iris', label: 'Iris', group: 'data', size: 5 },
-			{ id: 'jack', label: 'Jack', group: 'engineering', size: 6 },
-		],
-		edges: [
-			{ source: 'alice', target: 'bob' },
-			{ source: 'alice', target: 'carol' },
-			{ source: 'alice', target: 'eve' },
-			{ source: 'bob', target: 'grace' },
-			{ source: 'bob', target: 'jack' },
-			{ source: 'carol', target: 'dave' },
-			{ source: 'carol', target: 'eve' },
-			{ source: 'dave', target: 'frank' },
-			{ source: 'eve', target: 'frank' },
-			{ source: 'eve', target: 'hank' },
-			{ source: 'grace', target: 'jack' },
-			{ source: 'hank', target: 'iris' },
-			{ source: 'alice', target: 'hank' },
-		],
-	};
+// --- Sample Data: Social Network (undirected) ---
+const socialNetwork: NetworkData = {
+	nodes: [
+		{ id: 'alice', label: 'Alice', group: 'engineering', size: 8 },
+		{ id: 'bob', label: 'Bob', group: 'engineering', size: 7 },
+		{ id: 'carol', label: 'Carol', group: 'design', size: 7 },
+		{ id: 'dave', label: 'Dave', group: 'design', size: 6 },
+		{ id: 'eve', label: 'Eve', group: 'product', size: 8 },
+		{ id: 'frank', label: 'Frank', group: 'product', size: 6 },
+		{ id: 'grace', label: 'Grace', group: 'engineering', size: 7 },
+		{ id: 'hank', label: 'Hank', group: 'data', size: 6 },
+		{ id: 'iris', label: 'Iris', group: 'data', size: 5 },
+		{ id: 'jack', label: 'Jack', group: 'engineering', size: 6 },
+	],
+	edges: [
+		{ source: 'alice', target: 'bob' },
+		{ source: 'alice', target: 'carol' },
+		{ source: 'alice', target: 'eve' },
+		{ source: 'bob', target: 'grace' },
+		{ source: 'bob', target: 'jack' },
+		{ source: 'carol', target: 'dave' },
+		{ source: 'carol', target: 'eve' },
+		{ source: 'dave', target: 'frank' },
+		{ source: 'eve', target: 'frank' },
+		{ source: 'eve', target: 'hank' },
+		{ source: 'grace', target: 'jack' },
+		{ source: 'hank', target: 'iris' },
+		{ source: 'alice', target: 'hank' },
+	],
+};
 
-	// --- Sample Data: Citation Network (directed) ---
-	const citationNetwork: NetworkData = {
-		nodes: [
-			{ id: 'paper-a', label: 'Paper A', group: 'ml', size: 9 },
-			{ id: 'paper-b', label: 'Paper B', group: 'ml', size: 7 },
-			{ id: 'paper-c', label: 'Paper C', group: 'nlp', size: 8 },
-			{ id: 'paper-d', label: 'Paper D', group: 'nlp', size: 6 },
-			{ id: 'paper-e', label: 'Paper E', group: 'cv', size: 7 },
-			{ id: 'paper-f', label: 'Paper F', group: 'cv', size: 6 },
-			{ id: 'paper-g', label: 'Paper G', group: 'ml', size: 5 },
-			{ id: 'paper-h', label: 'Paper H', group: 'systems', size: 6 },
-		],
-		edges: [
-			{ source: 'paper-b', target: 'paper-a' },
-			{ source: 'paper-c', target: 'paper-a' },
-			{ source: 'paper-c', target: 'paper-b' },
-			{ source: 'paper-d', target: 'paper-c' },
-			{ source: 'paper-e', target: 'paper-a' },
-			{ source: 'paper-e', target: 'paper-b' },
-			{ source: 'paper-f', target: 'paper-e' },
-			{ source: 'paper-g', target: 'paper-a' },
-			{ source: 'paper-g', target: 'paper-b' },
-			{ source: 'paper-h', target: 'paper-a' },
-			{ source: 'paper-d', target: 'paper-h' },
-		],
-	};
+// --- Sample Data: Citation Network (directed) ---
+const citationNetwork: NetworkData = {
+	nodes: [
+		{ id: 'paper-a', label: 'Paper A', group: 'ml', size: 9 },
+		{ id: 'paper-b', label: 'Paper B', group: 'ml', size: 7 },
+		{ id: 'paper-c', label: 'Paper C', group: 'nlp', size: 8 },
+		{ id: 'paper-d', label: 'Paper D', group: 'nlp', size: 6 },
+		{ id: 'paper-e', label: 'Paper E', group: 'cv', size: 7 },
+		{ id: 'paper-f', label: 'Paper F', group: 'cv', size: 6 },
+		{ id: 'paper-g', label: 'Paper G', group: 'ml', size: 5 },
+		{ id: 'paper-h', label: 'Paper H', group: 'systems', size: 6 },
+	],
+	edges: [
+		{ source: 'paper-b', target: 'paper-a' },
+		{ source: 'paper-c', target: 'paper-a' },
+		{ source: 'paper-c', target: 'paper-b' },
+		{ source: 'paper-d', target: 'paper-c' },
+		{ source: 'paper-e', target: 'paper-a' },
+		{ source: 'paper-e', target: 'paper-b' },
+		{ source: 'paper-f', target: 'paper-e' },
+		{ source: 'paper-g', target: 'paper-a' },
+		{ source: 'paper-g', target: 'paper-b' },
+		{ source: 'paper-h', target: 'paper-a' },
+		{ source: 'paper-d', target: 'paper-h' },
+	],
+};
 
-	// --- Sample Data: Weighted Network ---
-	const weightedNetwork: NetworkData = {
-		nodes: [
-			{ id: 'server-1', label: 'Server 1', group: 'frontend', size: 8 },
-			{ id: 'server-2', label: 'Server 2', group: 'frontend', size: 7 },
-			{ id: 'api-1', label: 'API 1', group: 'backend', size: 9 },
-			{ id: 'api-2', label: 'API 2', group: 'backend', size: 7 },
-			{ id: 'db-1', label: 'DB Primary', group: 'database', size: 10 },
-			{ id: 'db-2', label: 'DB Replica', group: 'database', size: 8 },
-			{ id: 'cache', label: 'Cache', group: 'infra', size: 7 },
-			{ id: 'queue', label: 'Queue', group: 'infra', size: 6 },
-		],
-		edges: [
-			{ source: 'server-1', target: 'api-1', weight: 5 },
-			{ source: 'server-1', target: 'api-2', weight: 3 },
-			{ source: 'server-2', target: 'api-1', weight: 4 },
-			{ source: 'server-2', target: 'api-2', weight: 2 },
-			{ source: 'api-1', target: 'db-1', weight: 8 },
-			{ source: 'api-1', target: 'cache', weight: 6 },
-			{ source: 'api-2', target: 'db-1', weight: 4 },
-			{ source: 'api-2', target: 'queue', weight: 3 },
-			{ source: 'db-1', target: 'db-2', weight: 7 },
-			{ source: 'cache', target: 'db-1', weight: 2 },
-		],
-	};
+// --- Sample Data: Weighted Network ---
+const weightedNetwork: NetworkData = {
+	nodes: [
+		{ id: 'server-1', label: 'Server 1', group: 'frontend', size: 8 },
+		{ id: 'server-2', label: 'Server 2', group: 'frontend', size: 7 },
+		{ id: 'api-1', label: 'API 1', group: 'backend', size: 9 },
+		{ id: 'api-2', label: 'API 2', group: 'backend', size: 7 },
+		{ id: 'db-1', label: 'DB Primary', group: 'database', size: 10 },
+		{ id: 'db-2', label: 'DB Replica', group: 'database', size: 8 },
+		{ id: 'cache', label: 'Cache', group: 'infra', size: 7 },
+		{ id: 'queue', label: 'Queue', group: 'infra', size: 6 },
+	],
+	edges: [
+		{ source: 'server-1', target: 'api-1', weight: 5 },
+		{ source: 'server-1', target: 'api-2', weight: 3 },
+		{ source: 'server-2', target: 'api-1', weight: 4 },
+		{ source: 'server-2', target: 'api-2', weight: 2 },
+		{ source: 'api-1', target: 'db-1', weight: 8 },
+		{ source: 'api-1', target: 'cache', weight: 6 },
+		{ source: 'api-2', target: 'db-1', weight: 4 },
+		{ source: 'api-2', target: 'queue', weight: 3 },
+		{ source: 'db-1', target: 'db-2', weight: 7 },
+		{ source: 'cache', target: 'db-1', weight: 2 },
+	],
+};
 
-	// --- Sample Data: Org Chart Tree ---
-	const orgChart: TreeData = {
-		id: 'ceo',
-		label: 'CEO',
-		children: [
-			{
-				id: 'cto',
-				label: 'CTO',
-				children: [
-					{
-						id: 'eng-lead',
-						label: 'Eng Lead',
-						children: [
-							{ id: 'dev-1', label: 'Dev 1' },
-							{ id: 'dev-2', label: 'Dev 2' },
-							{ id: 'dev-3', label: 'Dev 3' },
-						],
-					},
-					{
-						id: 'data-lead',
-						label: 'Data Lead',
-						children: [
-							{ id: 'analyst-1', label: 'Analyst 1' },
-							{ id: 'analyst-2', label: 'Analyst 2' },
-						],
-					},
-				],
-			},
-			{
-				id: 'cpo',
-				label: 'CPO',
-				children: [
-					{
-						id: 'pm-lead',
-						label: 'PM Lead',
-						children: [
-							{ id: 'pm-1', label: 'PM 1' },
-							{ id: 'pm-2', label: 'PM 2' },
-						],
-					},
-					{
-						id: 'design-lead',
-						label: 'Design Lead',
-						children: [
-							{ id: 'designer-1', label: 'Designer 1' },
-							{ id: 'designer-2', label: 'Designer 2' },
-						],
-					},
-				],
-			},
-			{
-				id: 'cfo',
-				label: 'CFO',
-				children: [
-					{ id: 'finance-1', label: 'Finance 1' },
-					{ id: 'finance-2', label: 'Finance 2' },
-				],
-			},
-		],
-	};
+// --- Sample Data: Org Chart Tree ---
+const orgChart: TreeData = {
+	id: 'ceo',
+	label: 'CEO',
+	children: [
+		{
+			id: 'cto',
+			label: 'CTO',
+			children: [
+				{
+					id: 'eng-lead',
+					label: 'Eng Lead',
+					children: [
+						{ id: 'dev-1', label: 'Dev 1' },
+						{ id: 'dev-2', label: 'Dev 2' },
+						{ id: 'dev-3', label: 'Dev 3' },
+					],
+				},
+				{
+					id: 'data-lead',
+					label: 'Data Lead',
+					children: [
+						{ id: 'analyst-1', label: 'Analyst 1' },
+						{ id: 'analyst-2', label: 'Analyst 2' },
+					],
+				},
+			],
+		},
+		{
+			id: 'cpo',
+			label: 'CPO',
+			children: [
+				{
+					id: 'pm-lead',
+					label: 'PM Lead',
+					children: [
+						{ id: 'pm-1', label: 'PM 1' },
+						{ id: 'pm-2', label: 'PM 2' },
+					],
+				},
+				{
+					id: 'design-lead',
+					label: 'Design Lead',
+					children: [
+						{ id: 'designer-1', label: 'Designer 1' },
+						{ id: 'designer-2', label: 'Designer 2' },
+					],
+				},
+			],
+		},
+		{
+			id: 'cfo',
+			label: 'CFO',
+			children: [
+				{ id: 'finance-1', label: 'Finance 1' },
+				{ id: 'finance-2', label: 'Finance 2' },
+			],
+		},
+	],
+};
 
-	// --- Sample Data: File System Tree ---
-	const fileSystem: TreeData = {
-		id: 'src',
-		label: 'src/',
-		children: [
-			{
-				id: 'lib',
-				label: 'lib/',
-				children: [
-					{
-						id: 'components',
-						label: 'components/',
-						children: [
-							{ id: 'primitives', label: 'primitives/' },
-							{ id: 'composites', label: 'composites/' },
-							{
-								id: 'viz',
-								label: 'viz/',
-								children: [
-									{ id: 'chart', label: 'chart/' },
-									{ id: 'graph', label: 'graph/' },
-								],
-							},
-						],
-					},
-					{
-						id: 'utils',
-						label: 'utils/',
-						children: [
-							{ id: 'cn', label: 'cn.ts' },
-							{ id: 'format', label: 'format.ts' },
-						],
-					},
-				],
-			},
-			{
-				id: 'routes',
-				label: 'routes/',
-				children: [
-					{ id: 'page', label: '+page.svelte' },
-					{
-						id: 'showcases',
-						label: 'showcases/',
-						children: [
-							{ id: 'viz-route', label: 'viz/' },
-						],
-					},
-				],
-			},
-		],
-	};
+// --- Sample Data: File System Tree ---
+const fileSystem: TreeData = {
+	id: 'src',
+	label: 'src/',
+	children: [
+		{
+			id: 'lib',
+			label: 'lib/',
+			children: [
+				{
+					id: 'components',
+					label: 'components/',
+					children: [
+						{ id: 'primitives', label: 'primitives/' },
+						{ id: 'composites', label: 'composites/' },
+						{
+							id: 'viz',
+							label: 'viz/',
+							children: [
+								{ id: 'chart', label: 'chart/' },
+								{ id: 'graph', label: 'graph/' },
+							],
+						},
+					],
+				},
+				{
+					id: 'utils',
+					label: 'utils/',
+					children: [
+						{ id: 'cn', label: 'cn.ts' },
+						{ id: 'format', label: 'format.ts' },
+					],
+				},
+			],
+		},
+		{
+			id: 'routes',
+			label: 'routes/',
+			children: [
+				{ id: 'page', label: '+page.svelte' },
+				{
+					id: 'showcases',
+					label: 'showcases/',
+					children: [{ id: 'viz-route', label: 'viz/' }],
+				},
+			],
+		},
+	],
+};
 
-	// --- Sample Data: Package Dependencies DAG ---
-	const packageDeps: DagData = {
-		nodes: [
-			{ id: 'app', label: 'App' },
-			{ id: 'sveltekit', label: 'SvelteKit' },
-			{ id: 'svelte', label: 'Svelte' },
-			{ id: 'vite', label: 'Vite' },
-			{ id: 'esbuild', label: 'esbuild' },
-			{ id: 'rollup', label: 'Rollup' },
-			{ id: 'unocss', label: 'UnoCSS' },
-			{ id: 'drizzle', label: 'Drizzle' },
-			{ id: 'pg', label: 'pg' },
-		],
-		edges: [
-			{ source: 'app', target: 'sveltekit' },
-			{ source: 'app', target: 'unocss' },
-			{ source: 'app', target: 'drizzle' },
-			{ source: 'sveltekit', target: 'svelte' },
-			{ source: 'sveltekit', target: 'vite' },
-			{ source: 'vite', target: 'esbuild' },
-			{ source: 'vite', target: 'rollup' },
-			{ source: 'unocss', target: 'vite' },
-			{ source: 'drizzle', target: 'pg' },
-		],
-	};
+// --- Sample Data: Package Dependencies DAG ---
+const packageDeps: DagData = {
+	nodes: [
+		{ id: 'app', label: 'App' },
+		{ id: 'sveltekit', label: 'SvelteKit' },
+		{ id: 'svelte', label: 'Svelte' },
+		{ id: 'vite', label: 'Vite' },
+		{ id: 'esbuild', label: 'esbuild' },
+		{ id: 'rollup', label: 'Rollup' },
+		{ id: 'unocss', label: 'UnoCSS' },
+		{ id: 'drizzle', label: 'Drizzle' },
+		{ id: 'pg', label: 'pg' },
+	],
+	edges: [
+		{ source: 'app', target: 'sveltekit' },
+		{ source: 'app', target: 'unocss' },
+		{ source: 'app', target: 'drizzle' },
+		{ source: 'sveltekit', target: 'svelte' },
+		{ source: 'sveltekit', target: 'vite' },
+		{ source: 'vite', target: 'esbuild' },
+		{ source: 'vite', target: 'rollup' },
+		{ source: 'unocss', target: 'vite' },
+		{ source: 'drizzle', target: 'pg' },
+	],
+};
 
-	// --- Sample Data: Task Pipeline DAG ---
-	const taskPipeline: DagData = {
-		nodes: [
-			{ id: 'fetch', label: 'Fetch', group: 'input' },
-			{ id: 'validate', label: 'Validate', group: 'input' },
-			{ id: 'transform', label: 'Transform', group: 'process' },
-			{ id: 'enrich', label: 'Enrich', group: 'process' },
-			{ id: 'dedupe', label: 'Dedupe', group: 'process' },
-			{ id: 'index', label: 'Index', group: 'output' },
-			{ id: 'notify', label: 'Notify', group: 'output' },
-		],
-		edges: [
-			{ source: 'fetch', target: 'validate' },
-			{ source: 'validate', target: 'transform' },
-			{ source: 'validate', target: 'enrich' },
-			{ source: 'transform', target: 'dedupe' },
-			{ source: 'enrich', target: 'dedupe' },
-			{ source: 'dedupe', target: 'index' },
-			{ source: 'dedupe', target: 'notify' },
-		],
-	};
+// --- Sample Data: Task Pipeline DAG ---
+const taskPipeline: DagData = {
+	nodes: [
+		{ id: 'fetch', label: 'Fetch', group: 'input' },
+		{ id: 'validate', label: 'Validate', group: 'input' },
+		{ id: 'transform', label: 'Transform', group: 'process' },
+		{ id: 'enrich', label: 'Enrich', group: 'process' },
+		{ id: 'dedupe', label: 'Dedupe', group: 'process' },
+		{ id: 'index', label: 'Index', group: 'output' },
+		{ id: 'notify', label: 'Notify', group: 'output' },
+	],
+	edges: [
+		{ source: 'fetch', target: 'validate' },
+		{ source: 'validate', target: 'transform' },
+		{ source: 'validate', target: 'enrich' },
+		{ source: 'transform', target: 'dedupe' },
+		{ source: 'enrich', target: 'dedupe' },
+		{ source: 'dedupe', target: 'index' },
+		{ source: 'dedupe', target: 'notify' },
+	],
+};
 
-	// --- Sample Data: Energy Flow Sankey ---
-	const energyFlow: SankeyData = {
-		nodes: [
-			{ id: 'solar', label: 'Solar', category: 'source' },
-			{ id: 'wind', label: 'Wind', category: 'source' },
-			{ id: 'gas', label: 'Gas', category: 'source' },
-			{ id: 'grid', label: 'Grid', category: 'distribution' },
-			{ id: 'storage', label: 'Storage', category: 'distribution' },
-			{ id: 'residential', label: 'Residential', category: 'consumption' },
-			{ id: 'commercial', label: 'Commercial', category: 'consumption' },
-			{ id: 'industrial', label: 'Industrial', category: 'consumption' },
-			{ id: 'losses', label: 'Losses', category: 'waste' },
-		],
-		edges: [
-			{ source: 'solar', target: 'grid', value: 120 },
-			{ source: 'solar', target: 'storage', value: 30 },
-			{ source: 'wind', target: 'grid', value: 80 },
-			{ source: 'wind', target: 'storage', value: 20 },
-			{ source: 'gas', target: 'grid', value: 200 },
-			{ source: 'storage', target: 'grid', value: 40 },
-			{ source: 'grid', target: 'residential', value: 180 },
-			{ source: 'grid', target: 'commercial', value: 150 },
-			{ source: 'grid', target: 'industrial', value: 80 },
-			{ source: 'grid', target: 'losses', value: 30 },
-		],
-	};
+// --- Sample Data: Energy Flow Sankey ---
+const energyFlow: SankeyData = {
+	nodes: [
+		{ id: 'solar', label: 'Solar', category: 'source' },
+		{ id: 'wind', label: 'Wind', category: 'source' },
+		{ id: 'gas', label: 'Gas', category: 'source' },
+		{ id: 'grid', label: 'Grid', category: 'distribution' },
+		{ id: 'storage', label: 'Storage', category: 'distribution' },
+		{ id: 'residential', label: 'Residential', category: 'consumption' },
+		{ id: 'commercial', label: 'Commercial', category: 'consumption' },
+		{ id: 'industrial', label: 'Industrial', category: 'consumption' },
+		{ id: 'losses', label: 'Losses', category: 'waste' },
+	],
+	edges: [
+		{ source: 'solar', target: 'grid', value: 120 },
+		{ source: 'solar', target: 'storage', value: 30 },
+		{ source: 'wind', target: 'grid', value: 80 },
+		{ source: 'wind', target: 'storage', value: 20 },
+		{ source: 'gas', target: 'grid', value: 200 },
+		{ source: 'storage', target: 'grid', value: 40 },
+		{ source: 'grid', target: 'residential', value: 180 },
+		{ source: 'grid', target: 'commercial', value: 150 },
+		{ source: 'grid', target: 'industrial', value: 80 },
+		{ source: 'grid', target: 'losses', value: 30 },
+	],
+};
 
-	// --- Sample Data: User Funnel Sankey ---
-	const userFunnel: SankeyData = {
-		nodes: [
-			{ id: 'visit', label: 'Visit', category: 'top' },
-			{ id: 'signup', label: 'Sign Up', category: 'middle' },
-			{ id: 'activate', label: 'Activate', category: 'middle' },
-			{ id: 'subscribe', label: 'Subscribe', category: 'bottom' },
-			{ id: 'churn', label: 'Churn', category: 'exit' },
-			{ id: 'bounce', label: 'Bounce', category: 'exit' },
-		],
-		edges: [
-			{ source: 'visit', target: 'signup', value: 400 },
-			{ source: 'visit', target: 'bounce', value: 600 },
-			{ source: 'signup', target: 'activate', value: 300 },
-			{ source: 'signup', target: 'churn', value: 100 },
-			{ source: 'activate', target: 'subscribe', value: 200 },
-			{ source: 'activate', target: 'churn', value: 100 },
-		],
-	};
+// --- Sample Data: User Funnel Sankey ---
+const userFunnel: SankeyData = {
+	nodes: [
+		{ id: 'visit', label: 'Visit', category: 'top' },
+		{ id: 'signup', label: 'Sign Up', category: 'middle' },
+		{ id: 'activate', label: 'Activate', category: 'middle' },
+		{ id: 'subscribe', label: 'Subscribe', category: 'bottom' },
+		{ id: 'churn', label: 'Churn', category: 'exit' },
+		{ id: 'bounce', label: 'Bounce', category: 'exit' },
+	],
+	edges: [
+		{ source: 'visit', target: 'signup', value: 400 },
+		{ source: 'visit', target: 'bounce', value: 600 },
+		{ source: 'signup', target: 'activate', value: 300 },
+		{ source: 'signup', target: 'churn', value: 100 },
+		{ source: 'activate', target: 'subscribe', value: 200 },
+		{ source: 'activate', target: 'churn', value: 100 },
+	],
+};
 
-	// --- Sample Data: Movie Knowledge Graph ---
-	const movieKG: KnowledgeData = {
-		entityTypes: ['Person', 'Movie', 'Genre'],
-		relationshipTypes: ['ACTED_IN', 'DIRECTED', 'HAS_GENRE'],
-		nodes: [
-			{ id: 'nolan', label: 'C. Nolan', entityType: 'Person' },
-			{ id: 'dicaprio', label: 'DiCaprio', entityType: 'Person' },
-			{ id: 'hardy', label: 'T. Hardy', entityType: 'Person' },
-			{ id: 'caine', label: 'M. Caine', entityType: 'Person' },
-			{ id: 'hathaway', label: 'Hathaway', entityType: 'Person' },
-			{ id: 'inception', label: 'Inception', entityType: 'Movie' },
-			{ id: 'interstellar', label: 'Interstellar', entityType: 'Movie' },
-			{ id: 'dark-knight', label: 'Dark Knight', entityType: 'Movie' },
-			{ id: 'tenet', label: 'Tenet', entityType: 'Movie' },
-			{ id: 'scifi', label: 'Sci-Fi', entityType: 'Genre' },
-			{ id: 'action', label: 'Action', entityType: 'Genre' },
-			{ id: 'thriller', label: 'Thriller', entityType: 'Genre' },
-		],
-		edges: [
-			{ source: 'nolan', target: 'inception', relationshipType: 'DIRECTED' },
-			{ source: 'nolan', target: 'interstellar', relationshipType: 'DIRECTED' },
-			{ source: 'nolan', target: 'dark-knight', relationshipType: 'DIRECTED' },
-			{ source: 'nolan', target: 'tenet', relationshipType: 'DIRECTED' },
-			{ source: 'dicaprio', target: 'inception', relationshipType: 'ACTED_IN' },
-			{ source: 'hardy', target: 'inception', relationshipType: 'ACTED_IN' },
-			{ source: 'hardy', target: 'dark-knight', relationshipType: 'ACTED_IN' },
-			{ source: 'caine', target: 'inception', relationshipType: 'ACTED_IN' },
-			{ source: 'caine', target: 'interstellar', relationshipType: 'ACTED_IN' },
-			{ source: 'caine', target: 'dark-knight', relationshipType: 'ACTED_IN' },
-			{ source: 'hathaway', target: 'interstellar', relationshipType: 'ACTED_IN' },
-			{ source: 'hathaway', target: 'dark-knight', relationshipType: 'ACTED_IN' },
-			{ source: 'inception', target: 'scifi', relationshipType: 'HAS_GENRE' },
-			{ source: 'inception', target: 'action', relationshipType: 'HAS_GENRE' },
-			{ source: 'interstellar', target: 'scifi', relationshipType: 'HAS_GENRE' },
-			{ source: 'dark-knight', target: 'action', relationshipType: 'HAS_GENRE' },
-			{ source: 'dark-knight', target: 'thriller', relationshipType: 'HAS_GENRE' },
-			{ source: 'tenet', target: 'scifi', relationshipType: 'HAS_GENRE' },
-			{ source: 'tenet', target: 'action', relationshipType: 'HAS_GENRE' },
-		],
-	};
+// --- Sample Data: Movie Knowledge Graph ---
+const movieKG: KnowledgeData = {
+	entityTypes: ['Person', 'Movie', 'Genre'],
+	relationshipTypes: ['ACTED_IN', 'DIRECTED', 'HAS_GENRE'],
+	nodes: [
+		{ id: 'nolan', label: 'C. Nolan', entityType: 'Person' },
+		{ id: 'dicaprio', label: 'DiCaprio', entityType: 'Person' },
+		{ id: 'hardy', label: 'T. Hardy', entityType: 'Person' },
+		{ id: 'caine', label: 'M. Caine', entityType: 'Person' },
+		{ id: 'hathaway', label: 'Hathaway', entityType: 'Person' },
+		{ id: 'inception', label: 'Inception', entityType: 'Movie' },
+		{ id: 'interstellar', label: 'Interstellar', entityType: 'Movie' },
+		{ id: 'dark-knight', label: 'Dark Knight', entityType: 'Movie' },
+		{ id: 'tenet', label: 'Tenet', entityType: 'Movie' },
+		{ id: 'scifi', label: 'Sci-Fi', entityType: 'Genre' },
+		{ id: 'action', label: 'Action', entityType: 'Genre' },
+		{ id: 'thriller', label: 'Thriller', entityType: 'Genre' },
+	],
+	edges: [
+		{ source: 'nolan', target: 'inception', relationshipType: 'DIRECTED' },
+		{ source: 'nolan', target: 'interstellar', relationshipType: 'DIRECTED' },
+		{ source: 'nolan', target: 'dark-knight', relationshipType: 'DIRECTED' },
+		{ source: 'nolan', target: 'tenet', relationshipType: 'DIRECTED' },
+		{ source: 'dicaprio', target: 'inception', relationshipType: 'ACTED_IN' },
+		{ source: 'hardy', target: 'inception', relationshipType: 'ACTED_IN' },
+		{ source: 'hardy', target: 'dark-knight', relationshipType: 'ACTED_IN' },
+		{ source: 'caine', target: 'inception', relationshipType: 'ACTED_IN' },
+		{ source: 'caine', target: 'interstellar', relationshipType: 'ACTED_IN' },
+		{ source: 'caine', target: 'dark-knight', relationshipType: 'ACTED_IN' },
+		{ source: 'hathaway', target: 'interstellar', relationshipType: 'ACTED_IN' },
+		{ source: 'hathaway', target: 'dark-knight', relationshipType: 'ACTED_IN' },
+		{ source: 'inception', target: 'scifi', relationshipType: 'HAS_GENRE' },
+		{ source: 'inception', target: 'action', relationshipType: 'HAS_GENRE' },
+		{ source: 'interstellar', target: 'scifi', relationshipType: 'HAS_GENRE' },
+		{ source: 'dark-knight', target: 'action', relationshipType: 'HAS_GENRE' },
+		{ source: 'dark-knight', target: 'thriller', relationshipType: 'HAS_GENRE' },
+		{ source: 'tenet', target: 'scifi', relationshipType: 'HAS_GENRE' },
+		{ source: 'tenet', target: 'action', relationshipType: 'HAS_GENRE' },
+	],
+};
 
-	// --- Layout Comparison: same data for network, tree, DAG ---
-	const comparisonNetwork: NetworkData = {
-		nodes: [
-			{ id: 'a', label: 'A', group: 'root' },
-			{ id: 'b', label: 'B', group: 'mid' },
-			{ id: 'c', label: 'C', group: 'mid' },
-			{ id: 'd', label: 'D', group: 'leaf' },
-			{ id: 'e', label: 'E', group: 'leaf' },
-			{ id: 'f', label: 'F', group: 'leaf' },
-		],
-		edges: [
-			{ source: 'a', target: 'b' },
-			{ source: 'a', target: 'c' },
-			{ source: 'b', target: 'd' },
-			{ source: 'b', target: 'e' },
-			{ source: 'c', target: 'f' },
-		],
-	};
+// --- Layout Comparison: same data for network, tree, DAG ---
+const comparisonNetwork: NetworkData = {
+	nodes: [
+		{ id: 'a', label: 'A', group: 'root' },
+		{ id: 'b', label: 'B', group: 'mid' },
+		{ id: 'c', label: 'C', group: 'mid' },
+		{ id: 'd', label: 'D', group: 'leaf' },
+		{ id: 'e', label: 'E', group: 'leaf' },
+		{ id: 'f', label: 'F', group: 'leaf' },
+	],
+	edges: [
+		{ source: 'a', target: 'b' },
+		{ source: 'a', target: 'c' },
+		{ source: 'b', target: 'd' },
+		{ source: 'b', target: 'e' },
+		{ source: 'c', target: 'f' },
+	],
+};
 
-	const comparisonTree: TreeData = {
-		id: 'a',
-		label: 'A',
-		children: [
-			{
-				id: 'b',
-				label: 'B',
-				children: [
-					{ id: 'd', label: 'D' },
-					{ id: 'e', label: 'E' },
-				],
-			},
-			{
-				id: 'c',
-				label: 'C',
-				children: [{ id: 'f', label: 'F' }],
-			},
-		],
-	};
+const comparisonTree: TreeData = {
+	id: 'a',
+	label: 'A',
+	children: [
+		{
+			id: 'b',
+			label: 'B',
+			children: [
+				{ id: 'd', label: 'D' },
+				{ id: 'e', label: 'E' },
+			],
+		},
+		{
+			id: 'c',
+			label: 'C',
+			children: [{ id: 'f', label: 'F' }],
+		},
+	],
+};
 
-	const comparisonDag: DagData = {
-		nodes: [
-			{ id: 'a', label: 'A' },
-			{ id: 'b', label: 'B' },
-			{ id: 'c', label: 'C' },
-			{ id: 'd', label: 'D' },
-			{ id: 'e', label: 'E' },
-			{ id: 'f', label: 'F' },
-		],
-		edges: [
-			{ source: 'a', target: 'b' },
-			{ source: 'a', target: 'c' },
-			{ source: 'b', target: 'd' },
-			{ source: 'b', target: 'e' },
-			{ source: 'c', target: 'f' },
-		],
-	};
+const comparisonDag: DagData = {
+	nodes: [
+		{ id: 'a', label: 'A' },
+		{ id: 'b', label: 'B' },
+		{ id: 'c', label: 'C' },
+		{ id: 'd', label: 'D' },
+		{ id: 'e', label: 'E' },
+		{ id: 'f', label: 'F' },
+	],
+	edges: [
+		{ source: 'a', target: 'b' },
+		{ source: 'a', target: 'c' },
+		{ source: 'b', target: 'd' },
+		{ source: 'b', target: 'e' },
+		{ source: 'c', target: 'f' },
+	],
+};
 
-	// --- Helpers ---
-	function flattenTree(node: TreeData, depth = 0): Array<{ id: string; label: string; depth: number; childCount: number }> {
-		const result: Array<{ id: string; label: string; depth: number; childCount: number }> = [];
-		result.push({
-			id: node.id,
-			label: node.label || node.id,
-			depth,
-			childCount: node.children?.length ?? 0,
-		});
-		for (const child of node.children ?? []) {
-			result.push(...flattenTree(child, depth + 1));
-		}
-		return result;
+// --- Helpers ---
+function flattenTree(
+	node: TreeData,
+	depth = 0,
+): Array<{ id: string; label: string; depth: number; childCount: number }> {
+	const result: Array<{ id: string; label: string; depth: number; childCount: number }> = [];
+	result.push({
+		id: node.id,
+		label: node.label || node.id,
+		depth,
+		childCount: node.children?.length ?? 0,
+	});
+	for (const child of node.children ?? []) {
+		result.push(...flattenTree(child, depth + 1));
 	}
+	return result;
+}
 </script>
 
 <svelte:head>

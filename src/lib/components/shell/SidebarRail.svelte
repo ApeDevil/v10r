@@ -1,58 +1,58 @@
 <script lang="ts">
-	import { MediaQuery } from 'svelte/reactivity';
-	import { cn } from '$lib/utils/cn';
-	import { getSidebar } from '$lib/state/sidebar.svelte';
-	import { getSession } from '$lib/state/session.svelte';
-	import SidebarLogo from './SidebarLogo.svelte';
-	import SidebarNav from './SidebarNav.svelte';
-	import SidebarTriggers from './SidebarTriggers.svelte';
-	import UserMenu from './UserMenu.svelte';
+import { MediaQuery } from 'svelte/reactivity';
+import { getSession } from '$lib/state/session.svelte';
+import { getSidebar } from '$lib/state/sidebar.svelte';
+import { cn } from '$lib/utils/cn';
+import SidebarLogo from './SidebarLogo.svelte';
+import SidebarNav from './SidebarNav.svelte';
+import SidebarTriggers from './SidebarTriggers.svelte';
+import UserMenu from './UserMenu.svelte';
 
-	interface Props {
-		class?: string;
+interface Props {
+	class?: string;
+}
+
+let { class: className }: Props = $props();
+
+const sidebar = getSidebar();
+const session = getSession();
+
+// Detect if device supports hover
+const hasHover = new MediaQuery('(hover: hover)');
+const isDesktop = new MediaQuery('(min-width: 1024px)');
+
+function handleMouseEnter() {
+	// Only hover-expand on desktop devices with hover capability
+	if (hasHover.current && isDesktop.current && !sidebar.pinned) {
+		sidebar.expand();
 	}
+}
 
-	let { class: className }: Props = $props();
+function handleMouseLeave() {
+	// Only auto-collapse if not pinned
+	if (!sidebar.pinned) {
+		sidebar.collapse();
+	}
+}
 
-	const sidebar = getSidebar();
-	const session = getSession();
-
-	// Detect if device supports hover
-	const hasHover = new MediaQuery('(hover: hover)');
-	const isDesktop = new MediaQuery('(min-width: 1024px)');
-
-	function handleMouseEnter() {
-		// Only hover-expand on desktop devices with hover capability
-		if (hasHover.matches && isDesktop.matches && !sidebar.pinned) {
+function handleClick() {
+	// Click-to-toggle on tablet or touch devices
+	if (!hasHover.current || !isDesktop.current) {
+		if (sidebar.expanded) {
+			sidebar.collapse();
+		} else {
 			sidebar.expand();
 		}
 	}
+}
 
-	function handleMouseLeave() {
-		// Only auto-collapse if not pinned
-		if (!sidebar.pinned) {
-			sidebar.collapse();
-		}
+// Unpin and collapse when leaving desktop
+$effect(() => {
+	if (!isDesktop.current && sidebar.pinned) {
+		sidebar.togglePin(); // Unpin
+		sidebar.collapse();
 	}
-
-	function handleClick() {
-		// Click-to-toggle on tablet or touch devices
-		if (!hasHover.matches || !isDesktop.matches) {
-			if (sidebar.expanded) {
-				sidebar.collapse();
-			} else {
-				sidebar.expand();
-			}
-		}
-	}
-
-	// Unpin and collapse when leaving desktop
-	$effect(() => {
-		if (!isDesktop.matches && sidebar.pinned) {
-			sidebar.togglePin(); // Unpin
-			sidebar.collapse();
-		}
-	});
+});
 </script>
 
 <aside

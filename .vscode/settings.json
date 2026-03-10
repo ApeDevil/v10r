@@ -1,144 +1,144 @@
 {
-    "folder-color.pathColors": [
-        {
-            "folderPath": "velociraptor🦖/docs/foundation/",
-            "badge": "🧱"
-        },
-        {
-            "folderPath": "velociraptor🦖/docs/blueprint/",
-            "badge": "🗺️"
-        },
-        {
-            "folderPath": "velociraptor🦖/docs/guides/",
-            "badge": "🧙‍♂️"
-        },
-        {
-            "folderPath": "velociraptor🦖/docs/implementation/",
-            "badge": "🚀"
-        },
-        {
-            "folderPath": "velociraptor🦖/docs/stack/",
-            "badge": "🥞"
-        },
-        {
-            "folderPath": "velociraptor🦖/assets/",
-            "badge": "🎒"
-        },
-        {
-            "folderPath": "velociraptor/src/lib/components/",
-            "badge": "🧩"
-        },
-        {
-            "folderPath": "velociraptor/src/lib/",
-            "badge": "🏛️"
-        },
-        {
-            "folderPath": "velociraptor/src/routes/api/session/",
-            "badge": "☎️"
-        },
-        {
-            "folderPath": "velociraptor/src/routes/",
-            "badge": "🔱"
-        },
-        {
-            "folderPath": "velociraptor/docs/",
-            "badge": "📚"
-        },
-        {
-            "folderPath": "velociraptor/src/lib/services/",
-            "badge": "🛎️"
-        },
-        {
-            "folderPath": "velociraptor/docs/guides/",
-            "badge": "🧙‍♂️"
-        },
-        {
-            "folderPath": "velociraptor/static/",
-            "badge": "🖼️"
-        },
-        {
-            "folderPath": "velociraptor/src/",
-            "badge": "🔆"
-        },
-        {
-            "folderPath": "velociraptor/src/lib/nav/",
-            "badge": "🧭"
-        },
-        {
-            "folderPath": "velociraptor/src/lib/i18n/",
-            "badge": "👄"
-        },
-        {
-            "folderPath": "velociraptor/messages/",
-            "badge": "👄"
-        },
-        {
-            "folderPath": "velociraptor/src/lib/server/db/",
-            "badge": "🐘"
-        },
-        {
-            "folderPath": "velociraptor/src/lib/server/graph/",
-            "badge": "✳️"
-        },
-        {
-            "folderPath": "velociraptor/src/lib/server/store/",
-            "badge": "🪣"
-        },
-        {
-            "folderPath": "velociraptor/src/lib/server/auth/",
-            "badge": "🛂"
-        },
-        {
-            "folderPath": "velociraptor/src/lib/components/shell/",
-            "badge": "🐚"
-        },
-        {
-            "folderPath": "velociraptor/src/lib/server/ai/",
-            "badge": "🤖"
-        },
-        {
-            "folderPath": "velociraptor/src/lib/server/retrieval/",
-            "badge": "♻️"
-        },
-        {
-            "folderPath": "velociraptor/scripts/",
-            "badge": "📜"
-        },
-        {
-            "folderPath": "velociraptor/src/lib/components/primitives/decorative/",
-            "badge": "🎀"
-        },
-        {
-            "folderPath": "velociraptor/src/lib/server/config.ts/",
-            "badge": "🎛️"
-        },
-        {
-            "folderPath": "velociraptor/src/routes/api/",
-            "badge": "☎️"
-        },
-        {
-            "folderPath": "velociraptor/src/lib/server/notifications/",
-            "badge": "📟"
-        },
-        {
-            "folderPath": "velociraptor/src/lib/server/jobs/",
-            "badge": "🐝"
-        },
-        {
-            "folderPath": "velociraptor/src/lib/server/cache/",
-            "badge": "🐿️"
-        },
-        {
-            "folderPath": "velociraptor/src/lib/server/test/",
-            "badge": "🧪"
-        },
-        {
-            "folderPath": "velociraptor/src/lib/server/errors/",
-            "badge": "❗"
-        },
-        {
-            "folderPath": "velociraptor/src/lib/server/analytics/",
-            "badge": "📊"
-        }
-    ]
+	"folder-color.pathColors": [
+		{
+			"folderPath": "velociraptor🦖/docs/foundation/",
+			"badge": "🧱"
+		},
+		{
+			"folderPath": "velociraptor🦖/docs/blueprint/",
+			"badge": "🗺️"
+		},
+		{
+			"folderPath": "velociraptor🦖/docs/guides/",
+			"badge": "🧙‍♂️"
+		},
+		{
+			"folderPath": "velociraptor🦖/docs/implementation/",
+			"badge": "🚀"
+		},
+		{
+			"folderPath": "velociraptor🦖/docs/stack/",
+			"badge": "🥞"
+		},
+		{
+			"folderPath": "velociraptor🦖/assets/",
+			"badge": "🎒"
+		},
+		{
+			"folderPath": "velociraptor/src/lib/components/",
+			"badge": "🧩"
+		},
+		{
+			"folderPath": "velociraptor/src/lib/",
+			"badge": "🏛️"
+		},
+		{
+			"folderPath": "velociraptor/src/routes/api/session/",
+			"badge": "☎️"
+		},
+		{
+			"folderPath": "velociraptor/src/routes/",
+			"badge": "🔱"
+		},
+		{
+			"folderPath": "velociraptor/docs/",
+			"badge": "📚"
+		},
+		{
+			"folderPath": "velociraptor/src/lib/services/",
+			"badge": "🛎️"
+		},
+		{
+			"folderPath": "velociraptor/docs/guides/",
+			"badge": "🧙‍♂️"
+		},
+		{
+			"folderPath": "velociraptor/static/",
+			"badge": "🖼️"
+		},
+		{
+			"folderPath": "velociraptor/src/",
+			"badge": "🔆"
+		},
+		{
+			"folderPath": "velociraptor/src/lib/nav/",
+			"badge": "🧭"
+		},
+		{
+			"folderPath": "velociraptor/src/lib/i18n/",
+			"badge": "👄"
+		},
+		{
+			"folderPath": "velociraptor/messages/",
+			"badge": "👄"
+		},
+		{
+			"folderPath": "velociraptor/src/lib/server/db/",
+			"badge": "🐘"
+		},
+		{
+			"folderPath": "velociraptor/src/lib/server/graph/",
+			"badge": "✳️"
+		},
+		{
+			"folderPath": "velociraptor/src/lib/server/store/",
+			"badge": "🪣"
+		},
+		{
+			"folderPath": "velociraptor/src/lib/server/auth/",
+			"badge": "🛂"
+		},
+		{
+			"folderPath": "velociraptor/src/lib/components/shell/",
+			"badge": "🐚"
+		},
+		{
+			"folderPath": "velociraptor/src/lib/server/ai/",
+			"badge": "🤖"
+		},
+		{
+			"folderPath": "velociraptor/src/lib/server/retrieval/",
+			"badge": "♻️"
+		},
+		{
+			"folderPath": "velociraptor/scripts/",
+			"badge": "📜"
+		},
+		{
+			"folderPath": "velociraptor/src/lib/components/primitives/decorative/",
+			"badge": "🎀"
+		},
+		{
+			"folderPath": "velociraptor/src/lib/server/config.ts/",
+			"badge": "🎛️"
+		},
+		{
+			"folderPath": "velociraptor/src/routes/api/",
+			"badge": "☎️"
+		},
+		{
+			"folderPath": "velociraptor/src/lib/server/notifications/",
+			"badge": "📟"
+		},
+		{
+			"folderPath": "velociraptor/src/lib/server/jobs/",
+			"badge": "🐝"
+		},
+		{
+			"folderPath": "velociraptor/src/lib/server/cache/",
+			"badge": "🐿️"
+		},
+		{
+			"folderPath": "velociraptor/src/lib/server/test/",
+			"badge": "🧪"
+		},
+		{
+			"folderPath": "velociraptor/src/lib/server/errors/",
+			"badge": "❗"
+		},
+		{
+			"folderPath": "velociraptor/src/lib/server/analytics/",
+			"badge": "📊"
+		}
+	]
 }

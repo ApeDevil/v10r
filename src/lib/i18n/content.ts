@@ -10,7 +10,5 @@ export function tc(translations: TranslatedField, fallback = 'en'): string {
 	if (!translations) return '';
 
 	const currentLocale = getLocale();
-	return (
-		translations[currentLocale] ?? translations[fallback] ?? Object.values(translations)[0] ?? ''
-	);
+	return translations[currentLocale] ?? translations[fallback] ?? Object.values(translations)[0] ?? '';
 }

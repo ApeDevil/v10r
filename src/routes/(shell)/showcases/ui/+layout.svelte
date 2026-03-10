@@ -1,18 +1,18 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import { getTheme } from '$lib/state/theme.svelte';
-	import { PageContainer } from '$lib/components/layout';
-	import { PageHeader, TabNav } from '$lib/components/composites';
-	import { getShowcaseTabs } from '../showcases';
+import type { Snippet } from 'svelte';
+import { PageHeader, TabNav } from '$lib/components/composites';
+import { PageContainer } from '$lib/components/layout';
+import { getTheme } from '$lib/state/theme.svelte';
+import { getShowcaseTabs } from '../showcases';
 
-	let { children }: { children: Snippet } = $props();
-	const theme = getTheme();
+let { children }: { children: Snippet } = $props();
+const theme = getTheme();
 
-	function toggleTheme() {
-		theme.setMode(theme.isDark ? 'light' : 'dark');
-	}
+function toggleTheme() {
+	theme.setMode(theme.isDark ? 'light' : 'dark');
+}
 
-	const tabs = getShowcaseTabs('/showcases/ui');
+const tabs = getShowcaseTabs('/showcases/ui');
 </script>
 
 <PageContainer class="py-7">
@@ -41,9 +41,9 @@
 	title="Toggle theme"
 >
 	{#if theme.isDark}
-		<span class="i-lucide-sun text-icon-lg" />
+		<span class="i-lucide-sun text-icon-lg" ></span>
 	{:else}
-		<span class="i-lucide-moon text-icon-lg" />
+		<span class="i-lucide-moon text-icon-lg" ></span>
 	{/if}
 </button>
 

@@ -1,88 +1,88 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { authClient } from '$lib/auth-client';
-	import { Button, Input, Spinner } from '$lib/components/primitives';
+import { goto } from '$app/navigation';
+import { authClient } from '$lib/auth-client';
+import { Button, Input, Spinner } from '$lib/components/primitives';
 
-	let { data } = $props();
+let { data } = $props();
 
-	type FlowState = 'idle' | 'sending' | 'magic-link-sent' | 'error';
+type FlowState = 'idle' | 'sending' | 'magic-link-sent' | 'error';
 
-	let email = $state('');
-	let flowState = $state<FlowState>('idle');
-	let sendingMethod = $state<'magic-link' | 'otp' | null>(null);
-	let loadingProvider = $state<string | null>(null);
-	let error = $state<string | null>(null);
+let email = $state('');
+let flowState = $state<FlowState>('idle');
+let sendingMethod = $state<'magic-link' | 'otp' | null>(null);
+let loadingProvider = $state<string | null>(null);
+let error = $state<string | null>(null);
 
-	let isBusy = $derived(flowState === 'sending' || !!loadingProvider);
+let isBusy = $derived(flowState === 'sending' || !!loadingProvider);
 
-	async function handleMagicLink() {
-		if (!email.trim()) return;
-		flowState = 'sending';
-		sendingMethod = 'magic-link';
-		error = null;
+async function handleMagicLink() {
+	if (!email.trim()) return;
+	flowState = 'sending';
+	sendingMethod = 'magic-link';
+	error = null;
 
-		try {
-			const result = await authClient.signIn.magicLink({
-				email: email.trim(),
-				callbackURL: data.returnTo,
-			});
-			if (result.error) {
-				error = result.error.message ?? 'Failed to send magic link.';
-				flowState = 'error';
-			} else {
-				flowState = 'magic-link-sent';
-			}
-		} catch {
-			error = 'Failed to send magic link. Please try again.';
+	try {
+		const result = await authClient.signIn.magicLink({
+			email: email.trim(),
+			callbackURL: data.returnTo,
+		});
+		if (result.error) {
+			error = result.error.message ?? 'Failed to send magic link.';
 			flowState = 'error';
-		} finally {
-			sendingMethod = null;
+		} else {
+			flowState = 'magic-link-sent';
 		}
+	} catch {
+		error = 'Failed to send magic link. Please try again.';
+		flowState = 'error';
+	} finally {
+		sendingMethod = null;
 	}
+}
 
-	async function handleOtp() {
-		if (!email.trim()) return;
-		flowState = 'sending';
-		sendingMethod = 'otp';
-		error = null;
+async function handleOtp() {
+	if (!email.trim()) return;
+	flowState = 'sending';
+	sendingMethod = 'otp';
+	error = null;
 
-		try {
-			const result = await authClient.emailOtp.sendVerificationOtp({
-				email: email.trim(),
-				type: 'sign-in',
-			});
-			if (result.error) {
-				error = result.error.message ?? 'Failed to send code.';
-				flowState = 'error';
-				sendingMethod = null;
-			} else {
-				const params = new URLSearchParams({
-					email: email.trim(),
-					returnTo: data.returnTo,
-				});
-				goto(`/auth/verify?${params.toString()}`);
-			}
-		} catch {
-			error = 'Failed to send code. Please try again.';
+	try {
+		const result = await authClient.emailOtp.sendVerificationOtp({
+			email: email.trim(),
+			type: 'sign-in',
+		});
+		if (result.error) {
+			error = result.error.message ?? 'Failed to send code.';
 			flowState = 'error';
 			sendingMethod = null;
-		}
-	}
-
-	async function handleOAuth(provider: 'github' | 'google' | 'microsoft') {
-		loadingProvider = provider;
-		error = null;
-
-		try {
-			await authClient.signIn.social({
-				provider,
-				callbackURL: data.returnTo,
+		} else {
+			const params = new URLSearchParams({
+				email: email.trim(),
+				returnTo: data.returnTo,
 			});
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Sign in failed. Please try again.';
-			loadingProvider = null;
+			goto(`/auth/verify?${params.toString()}`);
 		}
+	} catch {
+		error = 'Failed to send code. Please try again.';
+		flowState = 'error';
+		sendingMethod = null;
 	}
+}
+
+async function handleOAuth(provider: 'github' | 'google' | 'microsoft') {
+	loadingProvider = provider;
+	error = null;
+
+	try {
+		await authClient.signIn.social({
+			provider,
+			callbackURL: data.returnTo,
+		});
+	} catch (err) {
+		error = err instanceof Error ? err.message : 'Sign in failed. Please try again.';
+		loadingProvider = null;
+	}
+}
 </script>
 
 <svelte:head>

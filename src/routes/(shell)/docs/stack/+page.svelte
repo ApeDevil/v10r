@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { PageHeader, BackLink } from '$lib/components/composites';
+import { BackLink, PageHeader } from '$lib/components/composites';
 </script>
 
 <svelte:head>

@@ -6,16 +6,9 @@
  * jsonb = parsed binary, deduplicates keys, supports GIN indexes
  * Rule: Always use JSONB unless you need to preserve exact JSON text.
  */
-import {
-	text,
-	json,
-	jsonb,
-	uuid,
-	timestamp,
-	serial,
-	index,
-} from 'drizzle-orm/pg-core';
+
 import { sql } from 'drizzle-orm';
+import { index, json, jsonb, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { showcaseSchema } from './type-specimen';
 
 export const documentVault = showcaseSchema.table(
@@ -45,8 +38,6 @@ export const documentVault = showcaseSchema.table(
 	},
 	(table) => ({
 		metadataGinIdx: index('vault_metadata_gin_idx').using('gin', table.metadata),
-		activeTitleIdx: index('vault_active_title_idx')
-			.on(table.title)
-			.where(sql`deleted_at IS NULL`),
+		activeTitleIdx: index('vault_active_title_idx').on(table.title).where(sql`deleted_at IS NULL`),
 	}),
 );

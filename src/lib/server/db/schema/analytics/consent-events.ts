@@ -2,14 +2,10 @@
  * CONSENT EVENTS — Append-only audit log for consent changes (GDPR Art 7(1)).
  * Records every grant, change, and withdrawal of consent.
  */
-import { text, integer, timestamp, index } from 'drizzle-orm/pg-core';
+import { index, integer, text, timestamp } from 'drizzle-orm/pg-core';
 import { analyticsSchema, consentTierEnum } from './events';
 
-export const consentActionEnum = analyticsSchema.enum('consent_action', [
-	'grant',
-	'change',
-	'withdraw',
-]);
+export const consentActionEnum = analyticsSchema.enum('consent_action', ['grant', 'change', 'withdraw']);
 
 export const consentEvents = analyticsSchema.table(
 	'consent_events',

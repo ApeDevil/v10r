@@ -1,32 +1,39 @@
 <script lang="ts">
-	import type { PageProps } from './$types';
-	import { superForm } from 'sveltekit-superforms';
-	import { valibotClient } from 'sveltekit-superforms/adapters';
-	import { confirmSchema } from '$lib/schemas/showcase/advanced';
-	import { Card, Alert, FormField, ConfirmDialog } from '$lib/components/composites';
-	import { Button, Input, Badge, Spinner } from '$lib/components/primitives';
-	import { Stack, Cluster } from '$lib/components/layout';
+import { superForm } from 'sveltekit-superforms';
+import { valibotClient } from 'sveltekit-superforms/adapters';
+import { Alert, Card, ConfirmDialog, FormField } from '$lib/components/composites';
+import { Cluster, Stack } from '$lib/components/layout';
+import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
+import { confirmSchema } from '$lib/schemas/showcase/advanced';
+import type { PageProps } from './$types';
 
-	let { data }: PageProps = $props();
+let { data }: PageProps = $props();
 
-	const { form, errors, enhance, submitting, delayed, message: formMessage } = superForm(data.form, {
-		validators: valibotClient(confirmSchema),
-	});
+const {
+	form,
+	errors,
+	enhance,
+	submitting,
+	delayed,
+	message: formMessage,
+} = superForm(data.form, {
+	validators: valibotClient(confirmSchema),
+});
 
-	let showConfirm = $state(false);
-	let formRef = $state<HTMLFormElement | null>(null);
+let showConfirm = $state(false);
+let formRef = $state<HTMLFormElement | null>(null);
 
-	function handleDeleteClick() {
-		showConfirm = true;
-	}
+function handleDeleteClick() {
+	showConfirm = true;
+}
 
-	function handleConfirm() {
-		showConfirm = false;
-	}
+function handleConfirm() {
+	showConfirm = false;
+}
 
-	function handleCancel() {
-		showConfirm = false;
-	}
+function handleCancel() {
+	showConfirm = false;
+}
 </script>
 
 <svelte:head>

@@ -3,12 +3,12 @@
  * Exports all shortcuts functionality.
  */
 
-export { getModifierKey, formatShortcut } from './platform';
+export { initKeyboardHandler } from './handler';
+export { formatShortcut, getModifierKey } from './platform';
+export type { Shortcut, ShortcutCategory } from './registry';
 export {
-	registerShortcut,
+	findShortcutByKeys,
 	getShortcuts,
 	getShortcutsByCategory,
-	findShortcutByKeys,
+	registerShortcut,
 } from './registry';
-export { initKeyboardHandler } from './handler';
-export type { Shortcut, ShortcutCategory } from './registry';

@@ -3,15 +3,7 @@
  * Mutability pattern: Immutable event log.
  * Records are inserted and NEVER modified.
  */
-import {
-	text,
-	serial,
-	bigserial,
-	integer,
-	timestamp,
-	uuid,
-	index,
-} from 'drizzle-orm/pg-core';
+import { bigserial, index, integer, serial, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { showcaseSchema, typeSpecimen } from './type-specimen';
 
 /**

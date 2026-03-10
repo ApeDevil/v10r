@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, afterAll, beforeAll, beforeEach } from 'vitest';
 import type { PGlite } from '@electric-sql/pglite';
-import { user } from '../schema/auth/_better-auth';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { makeUser } from '$lib/server/test/fixtures';
 import { conversation, message } from '../schema/ai/conversation';
-import { makeUser, makeConversation } from '$lib/server/test/fixtures';
+import { user } from '../schema/auth/_better-auth';
 
 let testClient: PGlite;
 
@@ -13,8 +13,7 @@ vi.mock('$lib/server/db', async () => {
 	return { db };
 });
 
-const { createConversation, deleteConversation, saveMessages, updateConversationTitle } =
-	await import('./mutations');
+const { createConversation, deleteConversation, saveMessages, updateConversationTitle } = await import('./mutations');
 const { db } = await import('$lib/server/db');
 
 const USER_A = makeUser({ id: 'user-a' });
@@ -94,9 +93,7 @@ describe('AI mutations', () => {
 
 		it('is a no-op for wrong userId (ownership check)', async () => {
 			const conv = await createConversation(USER_A.id);
-			await saveMessages(conv.id, USER_B.id, [
-				{ id: 'msg-1', role: 'user', content: 'Hello' },
-			]);
+			await saveMessages(conv.id, USER_B.id, [{ id: 'msg-1', role: 'user', content: 'Hello' }]);
 
 			const rows = await db.select().from(message);
 			expect(rows).toHaveLength(0);

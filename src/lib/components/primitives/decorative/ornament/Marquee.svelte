@@ -1,39 +1,35 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		items: string[];
-		direction?: 'left' | 'right';
-		speed?: number;
-		gap?: number;
-		fontSize?: string;
-		fontWeight?: number | string;
-		opacity?: number;
-		color?: string;
-		separator?: string;
-		pauseOnHover?: boolean;
-		class?: string;
-	}
+interface Props {
+	items: string[];
+	direction?: 'left' | 'right';
+	speed?: number;
+	gap?: number;
+	fontSize?: string;
+	fontWeight?: number | string;
+	opacity?: number;
+	color?: string;
+	separator?: string;
+	pauseOnHover?: boolean;
+	class?: string;
+}
 
-	let {
-		items,
-		direction = 'left',
-		speed = 30,
-		gap = 32,
-		fontSize = '1rem',
-		fontWeight = 400,
-		opacity = 0.06,
-		color = 'currentColor',
-		separator = '\u00B7',
-		pauseOnHover = true,
-		class: className
-	}: Props = $props();
+let {
+	items,
+	direction = 'left',
+	speed = 30,
+	gap = 32,
+	fontSize = '1rem',
+	fontWeight = 400,
+	opacity = 0.06,
+	color = 'currentColor',
+	separator = '\u00B7',
+	pauseOnHover = true,
+	class: className,
+}: Props = $props();
 
-	let displayItems = $derived(
-		items.flatMap((item, i) =>
-			i < items.length - 1 ? [item, separator] : [item]
-		)
-	);
+let displayItems = $derived(items.flatMap((item, i) => (i < items.length - 1 ? [item, separator] : [item])));
 </script>
 
 <div

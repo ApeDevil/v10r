@@ -1,24 +1,24 @@
 <script lang="ts">
-	/**
-	 * Logo/branding for sidebar.
-	 * Rail mode: "v10r" (collapsed)
-	 * Expanded mode: "velociraptor"
-	 */
+/**
+ * Logo/branding for sidebar.
+ * Rail mode: "v10r" (collapsed)
+ * Expanded mode: "velociraptor"
+ */
 
-	import { cn } from '$lib/utils/cn';
-	import { localizeHref } from '$lib/i18n';
-	import { getSidebar } from '$lib/state/sidebar.svelte';
+import { localizeHref } from '$lib/i18n';
+import { getSidebar } from '$lib/state/sidebar.svelte';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		forceExpanded?: boolean; // Force expanded mode (for drawer)
-		class?: string;
-	}
+interface Props {
+	forceExpanded?: boolean; // Force expanded mode (for drawer)
+	class?: string;
+}
 
-	let { forceExpanded = false, class: className }: Props = $props();
+let { forceExpanded = false, class: className }: Props = $props();
 
-	const sidebar = getSidebar();
+const sidebar = getSidebar();
 
-	const showText = $derived(forceExpanded || sidebar.expanded);
+const showText = $derived(forceExpanded || sidebar.expanded);
 </script>
 
 <a href={localizeHref('/')} class={cn('flex items-center p-3 no-underline rounded-md transition-colors duration-fast hover:bg-border focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none', className)} aria-label="Home">

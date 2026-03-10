@@ -1,5 +1,5 @@
-import { db } from '$lib/server/db';
 import { sql } from 'drizzle-orm';
+import { db } from '$lib/server/db';
 
 /**
  * Compute daily page stats from raw events for yesterday.

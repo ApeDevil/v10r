@@ -1,241 +1,240 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
-	import { beforeNavigate } from '$app/navigation';
-	import { cn } from '$lib/utils/cn';
-	import SvgGraphContainer from '../_shared/SvgGraphContainer.svelte';
-	import { arrowMarker } from '../_shared/svg-markers';
-	import { getVizPalette } from '../../_shared/theme-bridge';
-	import type { ChartContainerVariants } from '../../_shared/chart-container';
-	import type { DagData, DagNode as DagNodeType } from './types';
+import { onDestroy, onMount } from 'svelte';
+import { beforeNavigate } from '$app/navigation';
+import { cn } from '$lib/utils/cn';
+import type { ChartContainerVariants } from '../../_shared/chart-container';
+import { getVizPalette } from '../../_shared/theme-bridge';
+import SvgGraphContainer from '../_shared/SvgGraphContainer.svelte';
+import { arrowMarker } from '../_shared/svg-markers';
+import type { DagData, DagNode as DagNodeType } from './types';
 
-	interface Props {
-		data: DagData;
-		orientation?: 'horizontal' | 'vertical';
-		aspect?: ChartContainerVariants['aspect'];
-		ariaLabel?: string;
-		class?: string;
+interface Props {
+	data: DagData;
+	orientation?: 'horizontal' | 'vertical';
+	aspect?: ChartContainerVariants['aspect'];
+	ariaLabel?: string;
+	class?: string;
+}
+
+let {
+	data,
+	orientation = 'horizontal',
+	aspect = 'chart',
+	ariaLabel = 'DAG diagram',
+	class: className,
+}: Props = $props();
+
+interface LayoutNode {
+	id: string;
+	label?: string;
+	group?: string;
+	x: number;
+	y: number;
+	layer: number;
+}
+
+interface LayoutLink {
+	sourceId: string;
+	targetId: string;
+	points: Array<{ x: number; y: number }>;
+}
+
+let layoutNodes = $state<LayoutNode[]>([]);
+let layoutLinks = $state<LayoutLink[]>([]);
+let selectedNodeId = $state<string | null>(null);
+let focusedNodeIdx = $state(-1);
+let palette: string[] = [];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let d3DagModule: any;
+
+function cleanup() {
+	d3DagModule = undefined;
+}
+
+beforeNavigate(cleanup);
+onDestroy(cleanup);
+
+onMount(async () => {
+	palette = getVizPalette();
+	d3DagModule = await import('d3-dag');
+	computeLayout();
+});
+
+function computeLayout() {
+	if (!d3DagModule) return;
+
+	if (data.edges.length === 0) {
+		layoutNodes = data.nodes.map((n, i) => ({
+			id: n.id,
+			label: n.label,
+			group: n.group,
+			x: i * 160,
+			y: 0,
+			layer: 0,
+		}));
+		layoutLinks = [];
+		return;
 	}
 
-	let {
-		data,
-		orientation = 'horizontal',
-		aspect = 'chart',
-		ariaLabel = 'DAG diagram',
-		class: className,
-	}: Props = $props();
+	try {
+		const nodeMap = new Map(data.nodes.map((n) => [n.id, n]));
 
-	interface LayoutNode {
-		id: string;
-		label?: string;
-		group?: string;
-		x: number;
-		y: number;
-		layer: number;
+		// graphConnect creates DAG from edge pairs
+		const edgePairs: [string, string][] = data.edges.map((e) => [e.source, e.target]);
+		const dag = d3DagModule.graphConnect()(edgePairs);
+
+		// Sugiyama layout — produces top-to-bottom coordinates
+		const layout = d3DagModule.sugiyama().nodeSize([80, 40]).gap([40, 80]);
+		layout(dag);
+
+		const nodes: LayoutNode[] = [];
+		// Collect raw positions first to derive actual layers
+		const rawNodes: Array<{ id: string; nodeData: DagNodeType | undefined; x: number; y: number; layerCoord: number }> =
+			[];
+		for (const node of dag.nodes()) {
+			const id = node.data as string;
+			const nodeData = nodeMap.get(id);
+			const isHorizontal = orientation === 'horizontal';
+			rawNodes.push({
+				id,
+				nodeData,
+				x: isHorizontal ? node.y : node.x,
+				y: isHorizontal ? node.x : node.y,
+				// Sugiyama Y is always the layer/depth axis
+				layerCoord: node.y,
+			});
+		}
+		// Map unique layer coordinates to layer indices
+		const uniqueLayers = [...new Set(rawNodes.map((n) => n.layerCoord))].sort((a, b) => a - b);
+		const layerMap = new Map(uniqueLayers.map((coord, idx) => [coord, idx]));
+		for (const raw of rawNodes) {
+			nodes.push({
+				id: raw.id,
+				label: raw.nodeData?.label ?? raw.id,
+				group: raw.nodeData?.group,
+				x: raw.x,
+				y: raw.y,
+				layer: layerMap.get(raw.layerCoord) ?? 0,
+			});
+		}
+
+		const links: LayoutLink[] = [];
+		for (const link of dag.links()) {
+			const isHorizontal = orientation === 'horizontal';
+			const points = link.points.map((p: [number, number]) => ({
+				x: isHorizontal ? p[1] : p[0],
+				y: isHorizontal ? p[0] : p[1],
+			}));
+			links.push({
+				sourceId: link.source.data as string,
+				targetId: link.target.data as string,
+				points,
+			});
+		}
+
+		layoutNodes = nodes;
+		layoutLinks = links;
+	} catch {
+		// Fallback: arrange nodes in a line
+		layoutNodes = data.nodes.map((n, i) => ({
+			id: n.id,
+			label: n.label,
+			group: n.group,
+			x: i * 160,
+			y: 0,
+			layer: 0,
+		}));
+		layoutLinks = [];
 	}
+}
 
-	interface LayoutLink {
-		sourceId: string;
-		targetId: string;
-		points: Array<{ x: number; y: number }>;
-	}
-
-	let layoutNodes = $state<LayoutNode[]>([]);
-	let layoutLinks = $state<LayoutLink[]>([]);
-	let selectedNodeId = $state<string | null>(null);
-	let focusedNodeIdx = $state(-1);
-	let palette: string[] = [];
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let d3DagModule: any;
-
-	function cleanup() {
-		d3DagModule = undefined;
-	}
-
-	beforeNavigate(cleanup);
-	onDestroy(cleanup);
-
-	onMount(async () => {
-		palette = getVizPalette();
-		d3DagModule = await import('d3-dag');
+// Recompute when data or orientation changes
+$effect(() => {
+	const _data = data;
+	const _orientation = orientation;
+	if (d3DagModule) {
 		computeLayout();
-	});
+	}
+});
 
-	function computeLayout() {
-		if (!d3DagModule) return;
+function getNodeColor(node: LayoutNode): string {
+	return palette[node.layer % palette.length] || '#3b82f6';
+}
 
-		if (data.edges.length === 0) {
-			layoutNodes = data.nodes.map((n, i) => ({
-				id: n.id,
-				label: n.label,
-				group: n.group,
-				x: i * 160,
-				y: 0,
-				layer: 0,
-			}));
-			layoutLinks = [];
-			return;
+function linkPath(link: LayoutLink): string {
+	const pts = link.points;
+	if (pts.length < 2) return '';
+
+	const [first, ...rest] = pts;
+	if (rest.length === 1) {
+		// Direct: cubic bezier
+		const last = rest[0];
+		if (orientation === 'horizontal') {
+			const mx = (first.x + last.x) / 2;
+			return `M${first.x},${first.y}C${mx},${first.y} ${mx},${last.y} ${last.x},${last.y}`;
 		}
-
-		try {
-			const nodeMap = new Map(data.nodes.map((n) => [n.id, n]));
-
-			// graphConnect creates DAG from edge pairs
-			const edgePairs: [string, string][] = data.edges.map((e) => [e.source, e.target]);
-			const dag = d3DagModule.graphConnect()(edgePairs);
-
-			// Sugiyama layout — produces top-to-bottom coordinates
-			const layout = d3DagModule.sugiyama().nodeSize([80, 40]).gap([40, 80]);
-			layout(dag);
-
-			const nodes: LayoutNode[] = [];
-			// Collect raw positions first to derive actual layers
-			const rawNodes: Array<{ id: string; nodeData: DagNodeType | undefined; x: number; y: number; layerCoord: number }> = [];
-			for (const node of dag.nodes()) {
-				const id = node.data as string;
-				const nodeData = nodeMap.get(id);
-				const isHorizontal = orientation === 'horizontal';
-				rawNodes.push({
-					id,
-					nodeData,
-					x: isHorizontal ? node.y : node.x,
-					y: isHorizontal ? node.x : node.y,
-					// Sugiyama Y is always the layer/depth axis
-					layerCoord: node.y,
-				});
-			}
-			// Map unique layer coordinates to layer indices
-			const uniqueLayers = [...new Set(rawNodes.map((n) => n.layerCoord))].sort((a, b) => a - b);
-			const layerMap = new Map(uniqueLayers.map((coord, idx) => [coord, idx]));
-			for (const raw of rawNodes) {
-				nodes.push({
-					id: raw.id,
-					label: raw.nodeData?.label ?? raw.id,
-					group: raw.nodeData?.group,
-					x: raw.x,
-					y: raw.y,
-					layer: layerMap.get(raw.layerCoord) ?? 0,
-				});
-			}
-
-			const links: LayoutLink[] = [];
-			for (const link of dag.links()) {
-				const isHorizontal = orientation === 'horizontal';
-				const points = link.points.map((p: [number, number]) => ({
-					x: isHorizontal ? p[1] : p[0],
-					y: isHorizontal ? p[0] : p[1],
-				}));
-				links.push({
-					sourceId: link.source.data as string,
-					targetId: link.target.data as string,
-					points,
-				});
-			}
-
-			layoutNodes = nodes;
-			layoutLinks = links;
-		} catch {
-			// Fallback: arrange nodes in a line
-			layoutNodes = data.nodes.map((n, i) => ({
-				id: n.id,
-				label: n.label,
-				group: n.group,
-				x: i * 160,
-				y: 0,
-				layer: 0,
-			}));
-			layoutLinks = [];
-		}
+		const my = (first.y + last.y) / 2;
+		return `M${first.x},${first.y}C${first.x},${my} ${last.x},${my} ${last.x},${last.y}`;
 	}
 
-	// Recompute when data or orientation changes
-	$effect(() => {
-		const _data = data;
-		const _orientation = orientation;
-		if (d3DagModule) {
-			computeLayout();
-		}
-	});
-
-	function getNodeColor(node: LayoutNode): string {
-		return palette[node.layer % palette.length] || '#3b82f6';
+	// Multi-point: polyline
+	let d = `M${first.x},${first.y}`;
+	for (const p of rest) {
+		d += ` L${p.x},${p.y}`;
 	}
+	return d;
+}
 
-	function linkPath(link: LayoutLink): string {
-		const pts = link.points;
-		if (pts.length < 2) return '';
+function getEdgeOpacity(link: LayoutLink): number {
+	if (!selectedNodeId) return 0.5;
+	if (link.sourceId === selectedNodeId || link.targetId === selectedNodeId) return 0.8;
+	return 0.1;
+}
 
-		const [first, ...rest] = pts;
-		if (rest.length === 1) {
-			// Direct: cubic bezier
-			const last = rest[0];
-			if (orientation === 'horizontal') {
-				const mx = (first.x + last.x) / 2;
-				return `M${first.x},${first.y}C${mx},${first.y} ${mx},${last.y} ${last.x},${last.y}`;
-			}
-			const my = (first.y + last.y) / 2;
-			return `M${first.x},${first.y}C${first.x},${my} ${last.x},${my} ${last.x},${last.y}`;
-		}
+function getNodeOpacity(node: LayoutNode): number {
+	if (!selectedNodeId) return 0.9;
+	if (selectedNodeId === node.id) return 1;
+	const connected = layoutLinks.some(
+		(l) =>
+			(l.sourceId === selectedNodeId && l.targetId === node.id) ||
+			(l.targetId === selectedNodeId && l.sourceId === node.id),
+	);
+	return connected ? 0.8 : 0.2;
+}
 
-		// Multi-point: polyline
-		let d = `M${first.x},${first.y}`;
-		for (const p of rest) {
-			d += ` L${p.x},${p.y}`;
-		}
-		return d;
+function handleNodeKeydown(event: KeyboardEvent, node: LayoutNode, idx: number) {
+	if (event.key === 'Enter' || event.key === ' ') {
+		event.preventDefault();
+		selectedNodeId = selectedNodeId === node.id ? null : node.id;
+	} else if (event.key === 'Escape') {
+		event.preventDefault();
+		selectedNodeId = null;
+	} else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+		event.preventDefault();
+		focusedNodeIdx = (idx + 1) % layoutNodes.length;
+	} else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+		event.preventDefault();
+		focusedNodeIdx = (idx - 1 + layoutNodes.length) % layoutNodes.length;
 	}
+}
 
-	function getEdgeOpacity(link: LayoutLink): number {
-		if (!selectedNodeId) return 0.5;
-		if (link.sourceId === selectedNodeId || link.targetId === selectedNodeId) return 0.8;
-		return 0.1;
+$effect(() => {
+	if (focusedNodeIdx >= 0 && focusedNodeIdx < layoutNodes.length) {
+		const el = document.querySelector(`.dag-graph .dag-node[data-idx="${focusedNodeIdx}"]`) as HTMLElement | null;
+		el?.focus();
 	}
+});
 
-	function getNodeOpacity(node: LayoutNode): number {
-		if (!selectedNodeId) return 0.9;
-		if (selectedNodeId === node.id) return 1;
-		const connected = layoutLinks.some(
-			(l) =>
-				(l.sourceId === selectedNodeId && l.targetId === node.id) ||
-				(l.targetId === selectedNodeId && l.sourceId === node.id),
-		);
-		return connected ? 0.8 : 0.2;
+let announcement = $derived.by(() => {
+	if (selectedNodeId) {
+		const node = layoutNodes.find((n) => n.id === selectedNodeId);
+		if (!node) return '';
+		const upstream = layoutLinks.filter((l) => l.targetId === node.id).length;
+		const downstream = layoutLinks.filter((l) => l.sourceId === node.id).length;
+		return `Selected ${node.label || node.id}${node.group ? `, ${node.group}` : ''}, ${upstream} upstream, ${downstream} downstream`;
 	}
-
-	function handleNodeKeydown(event: KeyboardEvent, node: LayoutNode, idx: number) {
-		if (event.key === 'Enter' || event.key === ' ') {
-			event.preventDefault();
-			selectedNodeId = selectedNodeId === node.id ? null : node.id;
-		} else if (event.key === 'Escape') {
-			event.preventDefault();
-			selectedNodeId = null;
-		} else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
-			event.preventDefault();
-			focusedNodeIdx = (idx + 1) % layoutNodes.length;
-		} else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
-			event.preventDefault();
-			focusedNodeIdx = (idx - 1 + layoutNodes.length) % layoutNodes.length;
-		}
-	}
-
-	$effect(() => {
-		if (focusedNodeIdx >= 0 && focusedNodeIdx < layoutNodes.length) {
-			const el = document.querySelector(
-				`.dag-graph .dag-node[data-idx="${focusedNodeIdx}"]`,
-			) as HTMLElement | null;
-			el?.focus();
-		}
-	});
-
-	let announcement = $derived.by(() => {
-		if (selectedNodeId) {
-			const node = layoutNodes.find((n) => n.id === selectedNodeId);
-			if (!node) return '';
-			const upstream = layoutLinks.filter((l) => l.targetId === node.id).length;
-			const downstream = layoutLinks.filter((l) => l.sourceId === node.id).length;
-			return `Selected ${node.label || node.id}${node.group ? `, ${node.group}` : ''}, ${upstream} upstream, ${downstream} downstream`;
-		}
-		return '';
-	});
+	return '';
+});
 </script>
 
 <SvgGraphContainer {aspect} {ariaLabel} class={cn('dag-graph', className)}>

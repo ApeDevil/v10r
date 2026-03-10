@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import type { PGlite } from '@electric-sql/pglite';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import { jobExecution } from '../schema/jobs/job-execution';
 
 let testClient: PGlite;

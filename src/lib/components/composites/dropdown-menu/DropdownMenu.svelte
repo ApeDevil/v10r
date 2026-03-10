@@ -1,35 +1,40 @@
 <script lang="ts">
-	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
-	import { goto } from '$app/navigation';
-	import { cn } from '$lib/utils/cn';
-	import type { Snippet } from 'svelte';
-	import {
-		dropdownMenuContentVariants,
-		dropdownMenuItemVariants,
-		dropdownMenuSeparatorVariants
-	} from './dropdown-menu';
+import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
+import type { Snippet } from 'svelte';
+import { goto } from '$app/navigation';
+import { cn } from '$lib/utils/cn';
+import { dropdownMenuContentVariants, dropdownMenuItemVariants, dropdownMenuSeparatorVariants } from './dropdown-menu';
 
-	interface DropdownItem {
-		label: string;
-		/** CSS icon class (e.g., 'i-lucide-home') */
-		icon?: string;
-		href?: string;
-		onclick?: () => void;
-		separator?: boolean;
-		disabled?: boolean;
-	}
+type DropdownItem =
+	| {
+			label: string;
+			/** CSS icon class (e.g., 'i-lucide-home') */
+			icon?: string;
+			href?: string;
+			onclick?: () => void;
+			separator?: false;
+			disabled?: boolean;
+	  }
+	| {
+			separator: true;
+			label?: never;
+			icon?: never;
+			href?: never;
+			onclick?: never;
+			disabled?: never;
+	  };
 
-	interface TriggerProps {
-		props: Record<string, unknown>;
-	}
+interface TriggerProps {
+	props: Record<string, unknown>;
+}
 
-	interface Props {
-		items: DropdownItem[];
-		trigger: Snippet<[TriggerProps]>;
-		align?: 'start' | 'center' | 'end';
-	}
+interface Props {
+	items: DropdownItem[];
+	trigger: Snippet<[TriggerProps]>;
+	align?: 'start' | 'center' | 'end';
+}
 
-	let { items, trigger, align = 'end' }: Props = $props();
+let { items, trigger, align = 'end' }: Props = $props();
 </script>
 
 <DropdownMenuPrimitive.Root>
@@ -61,7 +66,7 @@
 						}}
 					>
 						{#if item.icon}
-							<span class={cn(item.icon, 'h-4 w-4')} />
+							<span class={cn(item.icon, 'h-4 w-4')} ></span>
 						{/if}
 						<span>{item.label}</span>
 					</DropdownMenuPrimitive.Item>

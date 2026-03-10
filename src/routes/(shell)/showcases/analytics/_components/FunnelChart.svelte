@@ -1,19 +1,19 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
-	import type { FunnelStep } from '$lib/server/analytics/types';
+import type { FunnelStep } from '$lib/server/analytics/types';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		steps: FunnelStep[];
-		class?: string;
-	}
+interface Props {
+	steps: FunnelStep[];
+	class?: string;
+}
 
-	let { steps, class: className }: Props = $props();
+let { steps, class: className }: Props = $props();
 
-	const maxCount = $derived(steps[0]?.count ?? 1);
+const maxCount = $derived(steps[0]?.count ?? 1);
 
-	const funnelAriaLabel = $derived(
-		`Conversion funnel: ${steps.map((s) => `${s.label} ${s.count.toLocaleString()} (${s.rate}%)`).join(', ')}`,
-	);
+const funnelAriaLabel = $derived(
+	`Conversion funnel: ${steps.map((s) => `${s.label} ${s.count.toLocaleString()} (${s.rate}%)`).join(', ')}`,
+);
 </script>
 
 <div class={cn('funnel', className)} role="img" aria-label={funnelAriaLabel}>

@@ -1,36 +1,34 @@
 <script lang="ts">
-	import { Select as SelectPrimitive } from 'bits-ui';
-	import { cn } from '$lib/utils/cn';
+import { Select as SelectPrimitive } from 'bits-ui';
+import { cn } from '$lib/utils/cn';
 
-	interface Option {
-		value: string;
-		label: string;
-		disabled?: boolean;
-	}
+interface Option {
+	value: string;
+	label: string;
+	disabled?: boolean;
+}
 
-	interface Props {
-		options: Option[];
-		value?: string;
-		placeholder?: string;
-		disabled?: boolean;
-		error?: boolean;
-		onchange?: (value: string) => void;
-		class?: string;
-	}
+interface Props {
+	options: Option[];
+	value?: string;
+	placeholder?: string;
+	disabled?: boolean;
+	error?: boolean;
+	onchange?: (value: string) => void;
+	class?: string;
+}
 
-	let {
-		options,
-		value = $bindable(''),
-		placeholder = 'Select...',
-		disabled = false,
-		error = false,
-		onchange,
-		class: className
-	}: Props = $props();
+let {
+	options,
+	value = $bindable(''),
+	placeholder = 'Select...',
+	disabled = false,
+	error = false,
+	onchange,
+	class: className,
+}: Props = $props();
 
-	let selectedLabel = $derived(
-		options.find((opt) => opt.value === value)?.label ?? ''
-	);
+let selectedLabel = $derived(options.find((opt) => opt.value === value)?.label ?? '');
 </script>
 
 <SelectPrimitive.Root type="single" bind:value {disabled} onValueChange={(v) => onchange?.(v)}>
@@ -48,7 +46,7 @@
 		<span class={cn(!value && 'text-muted')}>
 			{selectedLabel || placeholder}
 		</span>
-		<span class="i-lucide-chevrons-up-down h-4 w-4 opacity-50" />
+		<span class="i-lucide-chevrons-up-down h-4 w-4 opacity-50" ></span>
 	</SelectPrimitive.Trigger>
 
 	<SelectPrimitive.Portal>
@@ -71,7 +69,7 @@
 					>
 						<span>{option.label}</span>
 						{#if value === option.value}
-							<span class="i-lucide-check ml-auto h-4 w-4" />
+							<span class="i-lucide-check ml-auto h-4 w-4" ></span>
 						{/if}
 					</SelectPrimitive.Item>
 				{/each}

@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import type { LeafNode, LayoutNode, PanelDefinition } from './dock.types';
-import { createDockState } from './dock.state.svelte';
+import { describe, expect, it } from 'vitest';
 import { collectLeaves, getDepth } from './dock.operations';
+import { createDockState } from './dock.state.svelte';
+import type { LayoutNode, LeafNode, PanelDefinition } from './dock.types';
 
 function leaf(id: string, tabs: string[], activeTab?: string): LeafNode {
 	return { type: 'leaf', id, tabs, activeTab: activeTab ?? tabs[0] };
@@ -12,10 +12,7 @@ function panel(id: string): PanelDefinition {
 }
 
 function makeState(root?: LayoutNode, panels?: Record<string, PanelDefinition>) {
-	return createDockState(
-		root ?? leaf('leaf-1', ['p1', 'p2'], 'p1'),
-		panels ?? { p1: panel('p1'), p2: panel('p2') },
-	);
+	return createDockState(root ?? leaf('leaf-1', ['p1', 'p2'], 'p1'), panels ?? { p1: panel('p1'), p2: panel('p2') });
 }
 
 describe('createDockState', () => {
@@ -177,10 +174,10 @@ describe('createDockState', () => {
 
 			state.startDrag('p1', 'leaf-1');
 			expect(state.dragState).toBeTruthy();
-			expect(state.dragState!.panelId).toBe('p1');
+			expect(state.dragState?.panelId).toBe('p1');
 
 			state.updateDragTarget({ leafId: 'leaf-2', zone: 'center' });
-			expect(state.dragState!.target).toEqual({ leafId: 'leaf-2', zone: 'center' });
+			expect(state.dragState?.target).toEqual({ leafId: 'leaf-2', zone: 'center' });
 
 			state.endDrag();
 			expect(state.dragState).toBeNull();

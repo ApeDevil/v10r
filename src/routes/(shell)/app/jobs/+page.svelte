@@ -1,45 +1,45 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
-	import { Card, EmptyState } from '$lib/components/composites';
-	import { Badge, Button, Spinner } from '$lib/components/primitives';
-	import { Stack, Cluster } from '$lib/components/layout';
-	import { getToast } from '$lib/state/toast.svelte';
+import { enhance } from '$app/forms';
+import { invalidateAll } from '$app/navigation';
+import { Card, EmptyState } from '$lib/components/composites';
+import { Cluster, Stack } from '$lib/components/layout';
+import { Badge, Button, Spinner } from '$lib/components/primitives';
+import { getToast } from '$lib/state/toast.svelte';
 
-	let { data } = $props();
-	const toast = getToast();
+let { data } = $props();
+const toast = getToast();
 
-	let triggeringSlug = $state('');
-	let expandedError = $state<number | null>(null);
+let triggeringSlug = $state('');
+let expandedError = $state<number | null>(null);
 
-	function relativeTime(iso: string): string {
-		const diff = Date.now() - new Date(iso).getTime();
-		const mins = Math.floor(diff / 60000);
-		if (mins < 1) return 'just now';
-		if (mins < 60) return `${mins}m ago`;
-		const hours = Math.floor(mins / 60);
-		if (hours < 24) return `${hours}h ago`;
-		const days = Math.floor(hours / 24);
-		return `${days}d ago`;
-	}
+function relativeTime(iso: string): string {
+	const diff = Date.now() - new Date(iso).getTime();
+	const mins = Math.floor(diff / 60000);
+	if (mins < 1) return 'just now';
+	if (mins < 60) return `${mins}m ago`;
+	const hours = Math.floor(mins / 60);
+	if (hours < 24) return `${hours}h ago`;
+	const days = Math.floor(hours / 24);
+	return `${days}d ago`;
+}
 
-	function healthVariant(slug: string): 'success' | 'error' | 'secondary' {
-		const stat = data.stats.find((s) => s.jobSlug === slug);
-		if (!stat) return 'secondary';
-		return stat.lastStatus === 'success' ? 'success' : 'error';
-	}
+function healthVariant(slug: string): 'success' | 'error' | 'secondary' {
+	const stat = data.stats.find((s) => s.jobSlug === slug);
+	if (!stat) return 'secondary';
+	return stat.lastStatus === 'success' ? 'success' : 'error';
+}
 
-	function healthLabel(slug: string): string {
-		const stat = data.stats.find((s) => s.jobSlug === slug);
-		if (!stat) return 'Never ran';
-		return stat.lastStatus === 'success' ? 'Healthy' : 'Failed';
-	}
+function healthLabel(slug: string): string {
+	const stat = data.stats.find((s) => s.jobSlug === slug);
+	if (!stat) return 'Never ran';
+	return stat.lastStatus === 'success' ? 'Healthy' : 'Failed';
+}
 
-	function triggerVariant(trigger: string): 'default' | 'secondary' | 'warning' {
-		if (trigger === 'cron') return 'default';
-		if (trigger === 'manual') return 'warning';
-		return 'secondary';
-	}
+function triggerVariant(trigger: string): 'default' | 'secondary' | 'warning' {
+	if (trigger === 'cron') return 'default';
+	if (trigger === 'manual') return 'warning';
+	return 'secondary';
+}
 </script>
 
 <svelte:head>
@@ -82,7 +82,7 @@
 							{#if stat}
 								<div class="job-stat">
 									<span class="job-stat-label">Last run</span>
-									<span class="job-stat-value">{relativeTime(stat.lastRun!)}</span>
+									<span class="job-stat-value">{relativeTime(stat.lastRun!.toISOString())}</span>
 								</div>
 								<div class="job-stat">
 									<span class="job-stat-label">Duration</span>
@@ -108,9 +108,9 @@
 								triggeringSlug = slug;
 								return async ({ result, update }) => {
 									if (result.type === 'success' && result.data) {
-										toast.success(result.data.message);
+										toast.success(result.data.message as string);
 									} else if (result.type === 'failure') {
-										toast.error(result.data?.message || 'Job failed.');
+										toast.error((result.data?.message as string) || 'Job failed.');
 									}
 									triggeringSlug = '';
 									return update();
@@ -175,9 +175,9 @@
 							triggeringSlug = data.registeredJobs[0];
 							return async ({ result, update }) => {
 								if (result.type === 'success' && result.data) {
-									toast.success(result.data.message);
+									toast.success(result.data.message as string);
 								} else if (result.type === 'failure') {
-									toast.error(result.data?.message || 'Job failed.');
+									toast.error((result.data?.message as string) || 'Job failed.');
 								}
 								triggeringSlug = '';
 								return update();

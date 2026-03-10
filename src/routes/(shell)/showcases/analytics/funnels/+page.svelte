@@ -1,17 +1,15 @@
 <script lang="ts">
-	import { Alert } from '$lib/components/composites';
-	import FunnelChart from '../_components/FunnelChart.svelte';
-	import DateRangePresets from '../_components/DateRangePresets.svelte';
-	import ChartSection from '../_components/ChartSection.svelte';
-	import QueryTime from '../_components/QueryTime.svelte';
+import { Alert } from '$lib/components/composites';
+import ChartSection from '../_components/ChartSection.svelte';
+import DateRangePresets from '../_components/DateRangePresets.svelte';
+import FunnelChart from '../_components/FunnelChart.svelte';
+import QueryTime from '../_components/QueryTime.svelte';
 
-	let { data } = $props();
+let { data } = $props();
 
-	const overallConversion = $derived(
-		data.funnel.length >= 2
-			? Math.round((data.funnel[data.funnel.length - 1].count / data.funnel[0].count) * 100)
-			: 0,
-	);
+const overallConversion = $derived(
+	data.funnel.length >= 2 ? Math.round((data.funnel[data.funnel.length - 1].count / data.funnel[0].count) * 100) : 0,
+);
 </script>
 
 {#if data.error}

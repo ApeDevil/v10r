@@ -1,43 +1,43 @@
 <script lang="ts">
-	/**
-	 * User avatar + dropdown menu.
-	 * Shows avatar icon in rail mode, full info when expanded.
-	 * Dropdown includes profile, settings, theme toggle, and sign out.
-	 */
+/**
+ * User avatar + dropdown menu.
+ * Shows avatar icon in rail mode, full info when expanded.
+ * Dropdown includes profile, settings, theme toggle, and sign out.
+ */
 
-	import { DropdownMenu } from 'bits-ui';
-	import { cn } from '$lib/utils/cn';
-	import { localizeHref } from '$lib/i18n';
-	import { getTheme } from '$lib/state/theme.svelte';
-	import { goto } from '$app/navigation';
-	import { authClient } from '$lib/auth-client';
+import { DropdownMenu } from 'bits-ui';
+import { goto } from '$app/navigation';
+import { authClient } from '$lib/auth-client';
+import { localizeHref } from '$lib/i18n';
+import { getTheme } from '$lib/state/theme.svelte';
+import { cn } from '$lib/utils/cn';
 
-	interface User {
-		name: string;
-		email: string;
-		avatarUrl?: string;
-	}
+interface User {
+	name: string;
+	email: string;
+	avatarUrl?: string;
+}
 
-	interface Props {
-		user: User | null;
-		forceExpanded?: boolean;
-		class?: string;
-	}
+interface Props {
+	user: User | null;
+	forceExpanded?: boolean;
+	class?: string;
+}
 
-	let { user, forceExpanded = false, class: className }: Props = $props();
+let { user, forceExpanded = false, class: className }: Props = $props();
 
-	const theme = getTheme();
+const theme = getTheme();
 
-	let themeSubmenuOpen = $state(false);
+let themeSubmenuOpen = $state(false);
 
-	function setTheme(mode: 'light' | 'dark' | 'system') {
-		theme.setMode(mode);
-	}
+function setTheme(mode: 'light' | 'dark' | 'system') {
+	theme.setMode(mode);
+}
 
-	async function handleSignOut() {
-		await authClient.signOut();
-		goto('/');
-	}
+async function handleSignOut() {
+	await authClient.signOut();
+	goto('/');
+}
 </script>
 
 <div class={cn('relative', className)}>
@@ -54,7 +54,7 @@
 				)}
 				aria-label={forceExpanded ? 'User menu' : `User menu for ${user.name}`}
 			>
-				<span class="i-lucide-user text-icon-md shrink-0" />
+				<span class="i-lucide-user text-icon-md shrink-0" ></span>
 
 				{#if forceExpanded}
 					<div class="user-info">
@@ -85,7 +85,7 @@
 					>
 						{#snippet child({ props })}
 							<a {...props} href={localizeHref('/app/account')} class="flex items-center gap-3 no-underline text-fg">
-								<span class="i-lucide-user text-lg" />
+								<span class="i-lucide-user text-lg" ></span>
 								<span>Account</span>
 							</a>
 						{/snippet}
@@ -96,7 +96,7 @@
 					>
 						{#snippet child({ props })}
 							<a {...props} href={localizeHref('/app/settings')} class="flex items-center gap-3 no-underline text-fg">
-								<span class="i-lucide-settings text-lg" />
+								<span class="i-lucide-settings text-lg" ></span>
 								<span>Settings</span>
 							</a>
 						{/snippet}
@@ -108,7 +108,7 @@
 						<DropdownMenu.SubTrigger
 							class="flex items-center gap-3 p-2 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-border motion-reduce:transition-none"
 						>
-							<span class="i-lucide-palette text-lg" />
+							<span class="i-lucide-palette text-lg" ></span>
 							<span class="flex-1">Theme</span>
 							<span
 								class={cn(
@@ -132,7 +132,7 @@
 								)}
 								onclick={() => setTheme('light')}
 							>
-								<span class="i-lucide-sun text-lg" />
+								<span class="i-lucide-sun text-lg" ></span>
 								<span>Light</span>
 							</DropdownMenu.Item>
 
@@ -143,7 +143,7 @@
 								)}
 								onclick={() => setTheme('dark')}
 							>
-								<span class="i-lucide-moon text-lg" />
+								<span class="i-lucide-moon text-lg" ></span>
 								<span>Dark</span>
 							</DropdownMenu.Item>
 
@@ -154,7 +154,7 @@
 								)}
 								onclick={() => setTheme('system')}
 							>
-								<span class="i-lucide-monitor text-lg" />
+								<span class="i-lucide-monitor text-lg" ></span>
 								<span>System</span>
 							</DropdownMenu.Item>
 						</DropdownMenu.SubContent>
@@ -166,7 +166,7 @@
 						class="flex items-center gap-3 p-2 px-3 rounded-sm text-error text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-error data-[highlighted]:text-white motion-reduce:transition-none"
 						onclick={handleSignOut}
 					>
-						<span class="i-lucide-log-out text-lg" />
+						<span class="i-lucide-log-out text-lg" ></span>
 						<span>Sign out</span>
 					</DropdownMenu.Item>
 				</DropdownMenu.Content>
@@ -183,7 +183,7 @@
 			)}
 			aria-label="Sign in"
 		>
-			<span class="i-lucide-key text-xl" />
+			<span class="i-lucide-key text-xl" ></span>
 			{#if forceExpanded}
 				<span class="sign-in-label">Sign in</span>
 			{/if}

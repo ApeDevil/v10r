@@ -12,9 +12,9 @@
  * Or use the composite command:
  *   bun run db:setup      # runs all phases in order
  */
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
+import { neonConfig, Pool } from '@neondatabase/serverless';
 import { sql } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/neon-serverless';
 
 // Route queries over HTTP fetch instead of WebSocket.
 // Bun's ws implementation mishandles WebSocket upgrade (HTTP 101).

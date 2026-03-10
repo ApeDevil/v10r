@@ -4,25 +4,18 @@
  */
 
 import { getContext, setContext } from 'svelte';
-import type {
-	LayoutNode,
-	LeafNode,
-	PanelDefinition,
-	DragState,
-	DropTarget,
-	ActivityBarPosition
-} from './dock.types';
 import {
-	findNode,
-	findLeafWithPanel,
-	replaceNode,
-	removePanelFromLeaf,
 	addPanelToLeaf,
-	splitLeaf,
-	getDepth,
+	collectLeaves,
+	findLeafWithPanel,
+	findNode,
 	generateId,
-	collectLeaves
+	getDepth,
+	removePanelFromLeaf,
+	replaceNode,
+	splitLeaf,
 } from './dock.operations';
+import type { ActivityBarPosition, DragState, DropTarget, LayoutNode, LeafNode, PanelDefinition } from './dock.types';
 
 const DOCK_CTX = Symbol('dock');
 const MAX_DEPTH = 4;
@@ -30,7 +23,7 @@ const MAX_DEPTH = 4;
 export function createDockState(
 	initialRoot: LayoutNode,
 	initialPanels: Record<string, PanelDefinition>,
-	initialBarPosition: ActivityBarPosition = 'left'
+	initialBarPosition: ActivityBarPosition = 'left',
 ) {
 	let root = $state<LayoutNode>(initialRoot);
 	let panels = $state<Record<string, PanelDefinition>>({ ...initialPanels });
@@ -75,14 +68,14 @@ export function createDockState(
 
 		// Step 1: Remove from source
 		const updatedSource = removePanelFromLeaf(sourceLeaf, panelId);
-		let newRoot = replaceNode(root, sourceLeaf.id, updatedSource);
+		const newRoot = replaceNode(root, sourceLeaf.id, updatedSource);
 		if (!newRoot) {
 			// Tree became empty — create fresh leaf
 			root = {
 				type: 'leaf',
 				id: generateId('leaf'),
 				tabs: [panelId],
-				activeTab: panelId
+				activeTab: panelId,
 			};
 			return;
 		}
@@ -198,10 +191,18 @@ export function createDockState(
 	}
 
 	return {
-		get root() { return root; },
-		get panels() { return panels; },
-		get dragState() { return dragState; },
-		get activityBarPosition() { return activityBarPosition; },
+		get root() {
+			return root;
+		},
+		get panels() {
+			return panels;
+		},
+		get dragState() {
+			return dragState;
+		},
+		get activityBarPosition() {
+			return activityBarPosition;
+		},
 
 		activateTab,
 		closePanel,
@@ -216,11 +217,17 @@ export function createDockState(
 		endDrag,
 		cancelDrag,
 
-		setActivityBarPosition(pos: ActivityBarPosition) { activityBarPosition = pos; },
+		setActivityBarPosition(pos: ActivityBarPosition) {
+			activityBarPosition = pos;
+		},
 
 		// For persistence
-		setRoot(newRoot: LayoutNode) { root = newRoot; },
-		setPanels(newPanels: Record<string, PanelDefinition>) { panels = { ...newPanels }; }
+		setRoot(newRoot: LayoutNode) {
+			root = newRoot;
+		},
+		setPanels(newPanels: Record<string, PanelDefinition>) {
+			panels = { ...newPanels };
+		},
 	};
 }
 
@@ -229,7 +236,7 @@ export type DockState = ReturnType<typeof createDockState>;
 export function setDockContext(
 	initialRoot: LayoutNode,
 	initialPanels: Record<string, PanelDefinition>,
-	initialBarPosition?: ActivityBarPosition
+	initialBarPosition?: ActivityBarPosition,
 ): DockState {
 	const state = createDockState(initialRoot, initialPanels, initialBarPosition);
 	setContext(DOCK_CTX, state);

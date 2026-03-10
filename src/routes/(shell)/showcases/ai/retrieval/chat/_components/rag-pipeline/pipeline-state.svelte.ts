@@ -1,10 +1,10 @@
 import {
+	type ChunkSummary,
 	PIPELINE_STEPS,
+	type PipelineChunksEvent,
+	type PipelineStepEvent,
 	type PipelineStepId,
 	type PipelineStepState,
-	type PipelineStepEvent,
-	type PipelineChunksEvent,
-	type ChunkSummary,
 } from '$lib/types/pipeline';
 
 function createInitialSteps(): PipelineStepState[] {
@@ -73,8 +73,12 @@ export function createPipelineState() {
 	}
 
 	return {
-		get steps() { return steps; },
-		get selectedStepId() { return selectedStepId; },
+		get steps() {
+			return steps;
+		},
+		get selectedStepId() {
+			return selectedStepId;
+		},
 		get selectedStep() {
 			if (!selectedStepId) return null;
 			return steps.find((s) => s.id === selectedStepId) ?? null;
@@ -87,15 +91,17 @@ export function createPipelineState() {
 			if (doneSteps.length === 0) return 0;
 			return doneSteps.reduce((sum, s) => sum + (s.durationMs ?? 0), 0);
 		},
-		get chunkData() { return chunkData; },
+		get chunkData() {
+			return chunkData;
+		},
 		get chunkCounts(): Record<string, number> {
 			if (!chunkData) return {};
 			const counts: Record<string, number> = {};
 			for (const [key, chunks] of Object.entries(chunkData.tierChunks)) {
 				counts[key] = chunks.length;
 			}
-			counts['rank'] = chunkData.rankedChunks.length;
-			counts['context'] = chunkData.contextChunks.length;
+			counts.rank = chunkData.rankedChunks.length;
+			counts.context = chunkData.contextChunks.length;
 			return counts;
 		},
 		handleEvent,

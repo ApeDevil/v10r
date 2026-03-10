@@ -1,11 +1,11 @@
 import { json } from '@sveltejs/kit';
-import { safeParse } from 'valibot';
 import * as v from 'valibot';
+import { safeParse } from 'valibot';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { requireApiUser } from '$lib/server/auth/guards';
+import { SEARCH_RATE_LIMIT_MAX, SEARCH_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import { retrieve } from '$lib/server/retrieval';
 import { RetrievalError, retrievalErrorToStatus } from '$lib/server/retrieval/errors';
-import { SEARCH_RATE_LIMIT_MAX, SEARCH_RATE_LIMIT_WINDOW } from '$lib/server/config';
-import { requireApiUser } from '$lib/server/auth/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import type { RequestHandler } from './$types';
 
 const ratelimit = createLimiter('rl:retrieval:search', SEARCH_RATE_LIMIT_MAX, SEARCH_RATE_LIMIT_WINDOW);
@@ -45,10 +45,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	} catch (err) {
 		console.error('[api:retrieval:search] Error:', err instanceof Error ? err.message : err);
 		if (err instanceof RetrievalError) {
-			return json(
-				{ error: err.message },
-				{ status: retrievalErrorToStatus(err.kind) },
-			);
+			return json({ error: err.message }, { status: retrievalErrorToStatus(err.kind) });
 		}
 		return json({ error: 'Search failed' }, { status: 500 });
 	}

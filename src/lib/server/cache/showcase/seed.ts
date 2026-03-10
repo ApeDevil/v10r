@@ -1,5 +1,5 @@
-import { redis } from '../index';
 import { CacheError } from '../errors';
+import { redis } from '../index';
 import { SHOWCASE_PREFIX } from './guards';
 
 function requireRedis() {
@@ -42,10 +42,7 @@ export async function reseedCache(): Promise<{ keyCount: number }> {
 	]);
 
 	// 4. Seed counters
-	await Promise.all([
-		r.set('showcase:counter:page-views', 1500000),
-		r.set('showcase:counter:api-calls-today', 4200),
-	]);
+	await Promise.all([r.set('showcase:counter:page-views', 1500000), r.set('showcase:counter:api-calls-today', 4200)]);
 
 	// 5. Seed hashes
 	await Promise.all([
@@ -65,16 +62,19 @@ export async function reseedCache(): Promise<{ keyCount: number }> {
 	]);
 
 	// 6. Seed sorted set (leaderboard)
-	await r.zadd('showcase:leaderboard:tech-popularity', ...[
-		{ score: 95, member: 'Svelte' },
-		{ score: 92, member: 'PostgreSQL' },
-		{ score: 88, member: 'Bun' },
-		{ score: 85, member: 'UnoCSS' },
-		{ score: 82, member: 'Drizzle' },
-		{ score: 78, member: 'Neo4j' },
-		{ score: 75, member: 'Valibot' },
-		{ score: 70, member: 'Threlte' },
-	]);
+	await r.zadd(
+		'showcase:leaderboard:tech-popularity',
+		...[
+			{ score: 95, member: 'Svelte' },
+			{ score: 92, member: 'PostgreSQL' },
+			{ score: 88, member: 'Bun' },
+			{ score: 85, member: 'UnoCSS' },
+			{ score: 82, member: 'Drizzle' },
+			{ score: 78, member: 'Neo4j' },
+			{ score: 75, member: 'Valibot' },
+			{ score: 70, member: 'Threlte' },
+		],
+	);
 
 	// 7. Seed list (queue)
 	await r.rpush(

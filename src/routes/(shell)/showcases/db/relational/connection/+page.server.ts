@@ -1,6 +1,6 @@
-import type { PageServerLoad, Actions } from './$types';
-import { db } from '$lib/server/db';
 import { sql } from 'drizzle-orm';
+import { db } from '$lib/server/db';
+import type { Actions, PageServerLoad } from './$types';
 
 async function measureConnection() {
 	const start = performance.now();

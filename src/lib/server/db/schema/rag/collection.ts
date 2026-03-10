@@ -2,11 +2,12 @@
  * COLLECTION — Groups of documents for scoped retrieval.
  * Documents can belong to multiple collections (N:M via junction table).
  */
-import { text, timestamp, index, primaryKey } from 'drizzle-orm/pg-core';
+
 import { sql } from 'drizzle-orm';
-import { ragSchema } from './embedding-model';
+import { index, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
 import { document } from './document';
+import { ragSchema } from './embedding-model';
 
 export const collection = ragSchema.table(
 	'collection',
@@ -23,9 +24,7 @@ export const collection = ragSchema.table(
 	},
 	(table) => [
 		index('collection_user_idx').on(table.userId),
-		index('collection_active_idx')
-			.on(table.userId, table.name)
-			.where(sql`deleted_at IS NULL`),
+		index('collection_active_idx').on(table.userId, table.name).where(sql`deleted_at IS NULL`),
 	],
 );
 

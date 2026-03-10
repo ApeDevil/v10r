@@ -1,11 +1,11 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import { TabNav } from '$lib/components/composites';
-	import { getShowcaseSubTabs } from '../../showcases';
+import type { Snippet } from 'svelte';
+import { TabNav } from '$lib/components/composites';
+import { getShowcaseSubTabs } from '../../showcases';
 
-	let { children }: { children: Snippet } = $props();
+let { children }: { children: Snippet } = $props();
 
-	const tabs = getShowcaseSubTabs('/showcases/db/graph');
+const tabs = getShowcaseSubTabs('/showcases/db/graph');
 </script>
 
 <TabNav {tabs} ariaLabel="Graph sections" />

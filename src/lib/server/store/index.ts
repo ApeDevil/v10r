@@ -1,5 +1,5 @@
-import { env } from '$env/dynamic/private';
 import { S3Client } from '@aws-sdk/client-s3';
+import { env } from '$env/dynamic/private';
 
 function createS3(): S3Client | null {
 	const accountId = env.R2_ACCOUNT_ID;

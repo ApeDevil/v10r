@@ -1,164 +1,162 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import { cn } from '$lib/utils/cn';
-	import { tick, onMount } from 'svelte';
-	import type { PaneDefinition } from './reorderable-panes';
-	import { tabBarVariants, tabVariants, gripVariants } from './reorderable-panes';
+import { onMount, tick } from 'svelte';
+import { browser } from '$app/environment';
+import { cn } from '$lib/utils/cn';
+import type { PaneDefinition } from './reorderable-panes';
+import { gripVariants, tabBarVariants, tabVariants } from './reorderable-panes';
 
-	interface Props {
-		panes: PaneDefinition[];
-		order: string[];
-		direction?: 'horizontal' | 'vertical';
-		onReorder: (newOrder: string[]) => void;
-		class?: string;
+interface Props {
+	panes: PaneDefinition[];
+	order: string[];
+	direction?: 'horizontal' | 'vertical';
+	onReorder: (newOrder: string[]) => void;
+	class?: string;
+}
+
+let { panes, order, direction = 'horizontal', onReorder, class: className }: Props = $props();
+
+let paneMap = $derived(Object.fromEntries(panes.map((p) => [p.id, p])) as Record<string, PaneDefinition>);
+
+// Drag state
+let dragId = $state<string | null>(null);
+let ghostEl = $state<HTMLElement | null>(null);
+let dropIndex = $state<number | null>(null);
+let barEl = $state<HTMLElement | null>(null);
+let mounted = $state(false);
+
+// Announcement for screen readers
+let announcement = $state('');
+
+onMount(() => {
+	mounted = true;
+});
+
+function getTabElements(): HTMLElement[] {
+	if (!barEl) return [];
+	return Array.from(barEl.querySelectorAll('[data-tab-id]'));
+}
+
+function getDropIndex(clientPos: number): number {
+	const tabs = getTabElements();
+	const isHorizontal = direction === 'horizontal';
+
+	for (let i = 0; i < tabs.length; i++) {
+		const rect = tabs[i].getBoundingClientRect();
+		const mid = isHorizontal ? rect.left + rect.width / 2 : rect.top + rect.height / 2;
+		if (clientPos < mid) return i;
 	}
+	return tabs.length;
+}
 
-	let { panes, order, direction = 'horizontal', onReorder, class: className }: Props = $props();
+function createGhost(sourceEl: HTMLElement, x: number, y: number) {
+	const rect = sourceEl.getBoundingClientRect();
+	const ghost = sourceEl.cloneNode(true) as HTMLElement;
+	ghost.style.position = 'fixed';
+	ghost.style.width = `${rect.width}px`;
+	ghost.style.height = `${rect.height}px`;
+	ghost.style.left = `${x - rect.width / 2}px`;
+	ghost.style.top = `${y - rect.height / 2}px`;
+	ghost.style.pointerEvents = 'none';
+	ghost.style.zIndex = '9999';
+	ghost.style.opacity = '0.8';
+	ghost.style.transition = 'none';
+	ghost.removeAttribute('data-tab-id');
+	ghost.classList.add('tab-ghost');
+	document.body.appendChild(ghost);
+	return ghost;
+}
 
-	let paneMap = $derived(
-		Object.fromEntries(panes.map((p) => [p.id, p])) as Record<string, PaneDefinition>
-	);
+function handlePointerDown(e: PointerEvent, id: string) {
+	if (!mounted || !browser) return;
+	e.preventDefault();
 
-	// Drag state
-	let dragId = $state<string | null>(null);
-	let ghostEl = $state<HTMLElement | null>(null);
-	let dropIndex = $state<number | null>(null);
-	let barEl = $state<HTMLElement | null>(null);
-	let mounted = $state(false);
+	const grip = e.currentTarget as HTMLElement;
+	const tab = grip.closest('[data-tab-id]') as HTMLElement;
+	if (!tab) return;
 
-	// Announcement for screen readers
-	let announcement = $state('');
+	grip.setPointerCapture(e.pointerId);
+	dragId = id;
 
-	onMount(() => {
-		mounted = true;
+	const clientPos = direction === 'horizontal' ? e.clientX : e.clientY;
+	dropIndex = getDropIndex(clientPos);
+	ghostEl = createGhost(tab, e.clientX, e.clientY);
+}
+
+function handlePointerMove(e: PointerEvent) {
+	if (!dragId || !ghostEl) return;
+
+	requestAnimationFrame(() => {
+		if (!ghostEl) return;
+		const rect = ghostEl.getBoundingClientRect();
+		ghostEl.style.left = `${e.clientX - rect.width / 2}px`;
+		ghostEl.style.top = `${e.clientY - rect.height / 2}px`;
 	});
 
-	function getTabElements(): HTMLElement[] {
-		if (!barEl) return [];
-		return Array.from(barEl.querySelectorAll('[data-tab-id]'));
-	}
+	const clientPos = direction === 'horizontal' ? e.clientX : e.clientY;
+	dropIndex = getDropIndex(clientPos);
+}
 
-	function getDropIndex(clientPos: number): number {
-		const tabs = getTabElements();
-		const isHorizontal = direction === 'horizontal';
+function handlePointerUp(_e: PointerEvent) {
+	if (!dragId) return;
 
-		for (let i = 0; i < tabs.length; i++) {
-			const rect = tabs[i].getBoundingClientRect();
-			const mid = isHorizontal ? rect.left + rect.width / 2 : rect.top + rect.height / 2;
-			if (clientPos < mid) return i;
-		}
-		return tabs.length;
-	}
-
-	function createGhost(sourceEl: HTMLElement, x: number, y: number) {
-		const rect = sourceEl.getBoundingClientRect();
-		const ghost = sourceEl.cloneNode(true) as HTMLElement;
-		ghost.style.position = 'fixed';
-		ghost.style.width = `${rect.width}px`;
-		ghost.style.height = `${rect.height}px`;
-		ghost.style.left = `${x - rect.width / 2}px`;
-		ghost.style.top = `${y - rect.height / 2}px`;
-		ghost.style.pointerEvents = 'none';
-		ghost.style.zIndex = '9999';
-		ghost.style.opacity = '0.8';
-		ghost.style.transition = 'none';
-		ghost.removeAttribute('data-tab-id');
-		ghost.classList.add('tab-ghost');
-		document.body.appendChild(ghost);
-		return ghost;
-	}
-
-	function handlePointerDown(e: PointerEvent, id: string) {
-		if (!mounted || !browser) return;
-		e.preventDefault();
-
-		const grip = e.currentTarget as HTMLElement;
-		const tab = grip.closest('[data-tab-id]') as HTMLElement;
-		if (!tab) return;
-
-		grip.setPointerCapture(e.pointerId);
-		dragId = id;
-
-		const clientPos = direction === 'horizontal' ? e.clientX : e.clientY;
-		dropIndex = getDropIndex(clientPos);
-		ghostEl = createGhost(tab, e.clientX, e.clientY);
-	}
-
-	function handlePointerMove(e: PointerEvent) {
-		if (!dragId || !ghostEl) return;
-
-		requestAnimationFrame(() => {
-			if (!ghostEl) return;
-			const rect = ghostEl.getBoundingClientRect();
-			ghostEl.style.left = `${e.clientX - rect.width / 2}px`;
-			ghostEl.style.top = `${e.clientY - rect.height / 2}px`;
-		});
-
-		const clientPos = direction === 'horizontal' ? e.clientX : e.clientY;
-		dropIndex = getDropIndex(clientPos);
-	}
-
-	function handlePointerUp(e: PointerEvent) {
-		if (!dragId) return;
-
-		const currentIndex = order.indexOf(dragId);
-		if (dropIndex !== null && dropIndex !== currentIndex && dropIndex !== currentIndex + 1) {
-			const newOrder = order.filter((id) => id !== dragId);
-			const insertAt = dropIndex > currentIndex ? dropIndex - 1 : dropIndex;
-			newOrder.splice(insertAt, 0, dragId);
-			const label = paneMap[dragId]?.label ?? dragId;
-			announcement = `${label} moved to position ${insertAt + 1} of ${newOrder.length}`;
-			onReorder(newOrder);
-		}
-
-		cleanupDrag();
-	}
-
-	function handlePointerCancel() {
-		cleanupDrag();
-	}
-
-	function cleanupDrag() {
-		if (ghostEl) {
-			ghostEl.remove();
-			ghostEl = null;
-		}
-		dragId = null;
-		dropIndex = null;
-	}
-
-	function handleKeyDown(e: KeyboardEvent, id: string) {
-		const isHorizontal = direction === 'horizontal';
-		const prevKey = isHorizontal ? 'ArrowLeft' : 'ArrowUp';
-		const nextKey = isHorizontal ? 'ArrowRight' : 'ArrowDown';
-
-		if (e.key !== prevKey && e.key !== nextKey) return;
-		e.preventDefault();
-
-		const currentIndex = order.indexOf(id);
-		let newIndex: number;
-
-		if (e.key === prevKey) {
-			newIndex = Math.max(0, currentIndex - 1);
-		} else {
-			newIndex = Math.min(order.length - 1, currentIndex + 1);
-		}
-
-		if (newIndex === currentIndex) return;
-
-		const newOrder = [...order];
-		newOrder.splice(currentIndex, 1);
-		newOrder.splice(newIndex, 0, id);
-
-		const label = paneMap[id]?.label ?? id;
-		announcement = `${label} moved to position ${newIndex + 1} of ${newOrder.length}`;
+	const currentIndex = order.indexOf(dragId);
+	if (dropIndex !== null && dropIndex !== currentIndex && dropIndex !== currentIndex + 1) {
+		const newOrder = order.filter((id) => id !== dragId);
+		const insertAt = dropIndex > currentIndex ? dropIndex - 1 : dropIndex;
+		newOrder.splice(insertAt, 0, dragId);
+		const label = paneMap[dragId]?.label ?? dragId;
+		announcement = `${label} moved to position ${insertAt + 1} of ${newOrder.length}`;
 		onReorder(newOrder);
-
-		tick().then(() => {
-			const tab = barEl?.querySelector(`[data-tab-id="${id}"] .grip-handle`) as HTMLElement;
-			tab?.focus();
-		});
 	}
+
+	cleanupDrag();
+}
+
+function handlePointerCancel() {
+	cleanupDrag();
+}
+
+function cleanupDrag() {
+	if (ghostEl) {
+		ghostEl.remove();
+		ghostEl = null;
+	}
+	dragId = null;
+	dropIndex = null;
+}
+
+function handleKeyDown(e: KeyboardEvent, id: string) {
+	const isHorizontal = direction === 'horizontal';
+	const prevKey = isHorizontal ? 'ArrowLeft' : 'ArrowUp';
+	const nextKey = isHorizontal ? 'ArrowRight' : 'ArrowDown';
+
+	if (e.key !== prevKey && e.key !== nextKey) return;
+	e.preventDefault();
+
+	const currentIndex = order.indexOf(id);
+	let newIndex: number;
+
+	if (e.key === prevKey) {
+		newIndex = Math.max(0, currentIndex - 1);
+	} else {
+		newIndex = Math.min(order.length - 1, currentIndex + 1);
+	}
+
+	if (newIndex === currentIndex) return;
+
+	const newOrder = [...order];
+	newOrder.splice(currentIndex, 1);
+	newOrder.splice(newIndex, 0, id);
+
+	const label = paneMap[id]?.label ?? id;
+	announcement = `${label} moved to position ${newIndex + 1} of ${newOrder.length}`;
+	onReorder(newOrder);
+
+	tick().then(() => {
+		const tab = barEl?.querySelector(`[data-tab-id="${id}"] .grip-handle`) as HTMLElement;
+		tab?.focus();
+	});
+}
 </script>
 
 {#if order.length > 1}

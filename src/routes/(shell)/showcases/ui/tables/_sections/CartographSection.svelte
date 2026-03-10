@@ -1,118 +1,127 @@
 <script lang="ts">
-	import {
-		Table,
-		Header as TableHeader,
-		Body as TableBody,
-		Row as TableRow,
-		HeaderCell as TableHeaderCell,
-		Cell as TableCell,
-		Badge,
-		Pagination
-	} from '$lib/components';
-	import {
-		EMPLOYEES, DEPARTMENTS, formatSalary, formatDate,
-		type Department, type SortKey, type SortDirection, type Status
-	} from '../_data/mock-data';
+import {
+	Badge,
+	Pagination,
+	Table,
+	Body as TableBody,
+	Cell as TableCell,
+	Header as TableHeader,
+	HeaderCell as TableHeaderCell,
+	Row as TableRow,
+} from '$lib/components';
+import {
+	DEPARTMENTS,
+	type Department,
+	EMPLOYEES,
+	formatDate,
+	formatSalary,
+	type SortDirection,
+	type SortKey,
+	type Status,
+} from '../_data/mock-data';
 
-	let search = $state('');
-	let departmentFilter = $state<Department | ''>('');
-	let sortKey = $state<SortKey>('name');
-	let sortDir = $state<SortDirection>('asc');
-	let currentPage = $state(1);
-	let pageSize = $state(6);
-	let selected = $state<Set<string>>(new Set());
-	let headerCheckbox = $state<HTMLInputElement | null>(null);
+let search = $state('');
+let departmentFilter = $state<Department | ''>('');
+let sortKey = $state<SortKey>('name');
+let sortDir = $state<SortDirection>('asc');
+let currentPage = $state(1);
+let pageSize = $state(6);
+let selected = $state<Set<string>>(new Set());
+let headerCheckbox = $state<HTMLInputElement | null>(null);
 
-	// Filter → Sort → Paginate pipeline
-	let filtered = $derived.by(() => {
-		let result = EMPLOYEES;
-		if (departmentFilter) {
-			result = result.filter(e => e.department === departmentFilter);
-		}
-		if (search) {
-			const q = search.toLowerCase();
-			result = result.filter(e =>
-				e.name.toLowerCase().includes(q) ||
-				e.email.toLowerCase().includes(q) ||
-				e.department.toLowerCase().includes(q)
-			);
-		}
-		return result;
-	});
-
-	let sorted = $derived.by(() => {
-		const key = sortKey;
-		const dir = sortDir === 'asc' ? 1 : -1;
-		return [...filtered].sort((a, b) => {
-			const av = a[key];
-			const bv = b[key];
-			if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
-			return String(av).localeCompare(String(bv)) * dir;
-		});
-	});
-
-	let totalPages = $derived(Math.max(1, Math.ceil(sorted.length / pageSize)));
-	let paginated = $derived(sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize));
-	let rangeStart = $derived(sorted.length === 0 ? 0 : (currentPage - 1) * pageSize + 1);
-	let rangeEnd = $derived(Math.min(currentPage * pageSize, sorted.length));
-
-	// Reset page on filter/sort/pageSize change
-	$effect(() => {
-		search; departmentFilter; sortKey; sortDir; pageSize;
-		currentPage = 1;
-	});
-
-	// Selection scoped to current page
-	let pageIds = $derived(new Set(paginated.map(e => e.id)));
-	let allPageSelected = $derived(paginated.length > 0 && paginated.every(e => selected.has(e.id)));
-	let somePageSelected = $derived(paginated.some(e => selected.has(e.id)) && !allPageSelected);
-
-	$effect(() => {
-		if (headerCheckbox) {
-			headerCheckbox.indeterminate = somePageSelected;
-		}
-	});
-
-	function toggleAll() {
-		const next = new Set(selected);
-		if (allPageSelected || somePageSelected) {
-			for (const id of pageIds) next.delete(id);
-		} else {
-			for (const id of pageIds) next.add(id);
-		}
-		selected = next;
+// Filter → Sort → Paginate pipeline
+let filtered = $derived.by(() => {
+	let result = EMPLOYEES;
+	if (departmentFilter) {
+		result = result.filter((e) => e.department === departmentFilter);
 	}
-
-	function toggleRow(id: string) {
-		const next = new Set(selected);
-		if (next.has(id)) next.delete(id);
-		else next.add(id);
-		selected = next;
+	if (search) {
+		const q = search.toLowerCase();
+		result = result.filter(
+			(e) =>
+				e.name.toLowerCase().includes(q) || e.email.toLowerCase().includes(q) || e.department.toLowerCase().includes(q),
+		);
 	}
+	return result;
+});
 
-	function toggleSort(key: SortKey) {
-		if (sortKey === key) {
-			sortDir = sortDir === 'asc' ? 'desc' : 'asc';
-		} else {
-			sortKey = key;
-			sortDir = 'asc';
-		}
+let sorted = $derived.by(() => {
+	const key = sortKey;
+	const dir = sortDir === 'asc' ? 1 : -1;
+	return [...filtered].sort((a, b) => {
+		const av = a[key];
+		const bv = b[key];
+		if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
+		return String(av).localeCompare(String(bv)) * dir;
+	});
+});
+
+let totalPages = $derived(Math.max(1, Math.ceil(sorted.length / pageSize)));
+let paginated = $derived(sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize));
+let rangeStart = $derived(sorted.length === 0 ? 0 : (currentPage - 1) * pageSize + 1);
+let rangeEnd = $derived(Math.min(currentPage * pageSize, sorted.length));
+
+// Reset page on filter/sort/pageSize change
+$effect(() => {
+	search;
+	departmentFilter;
+	sortKey;
+	sortDir;
+	pageSize;
+	currentPage = 1;
+});
+
+// Selection scoped to current page
+let pageIds = $derived(new Set(paginated.map((e) => e.id)));
+let allPageSelected = $derived(paginated.length > 0 && paginated.every((e) => selected.has(e.id)));
+let somePageSelected = $derived(paginated.some((e) => selected.has(e.id)) && !allPageSelected);
+
+$effect(() => {
+	if (headerCheckbox) {
+		headerCheckbox.indeterminate = somePageSelected;
 	}
+});
 
-	function statusVariant(status: Status) {
-		if (status === 'active') return 'success' as const;
-		if (status === 'on-leave') return 'warning' as const;
-		return 'error' as const;
+function toggleAll() {
+	const next = new Set(selected);
+	if (allPageSelected || somePageSelected) {
+		for (const id of pageIds) next.delete(id);
+	} else {
+		for (const id of pageIds) next.add(id);
 	}
+	selected = next;
+}
 
-	const columns: { key: SortKey; label: string; align?: 'right' }[] = [
-		{ key: 'name', label: 'Name' },
-		{ key: 'email', label: 'Email' },
-		{ key: 'department', label: 'Department' },
-		{ key: 'salary', label: 'Salary', align: 'right' },
-		{ key: 'status', label: 'Status' },
-		{ key: 'startDate', label: 'Start Date' }
-	];
+function toggleRow(id: string) {
+	const next = new Set(selected);
+	if (next.has(id)) next.delete(id);
+	else next.add(id);
+	selected = next;
+}
+
+function toggleSort(key: SortKey) {
+	if (sortKey === key) {
+		sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+	} else {
+		sortKey = key;
+		sortDir = 'asc';
+	}
+}
+
+function statusVariant(status: Status) {
+	if (status === 'active') return 'success' as const;
+	if (status === 'on-leave') return 'warning' as const;
+	return 'error' as const;
+}
+
+const columns: { key: SortKey; label: string; align?: 'right' }[] = [
+	{ key: 'name', label: 'Name' },
+	{ key: 'email', label: 'Email' },
+	{ key: 'department', label: 'Department' },
+	{ key: 'salary', label: 'Salary', align: 'right' },
+	{ key: 'status', label: 'Status' },
+	{ key: 'startDate', label: 'Start Date' },
+];
 </script>
 
 <section id="tbl-cartograph" class="section">
@@ -170,12 +179,12 @@
 											{col.label}
 											{#if sortKey === col.key}
 												{#if sortDir === 'asc'}
-													<span class="i-lucide-chevron-up sort-icon" />
+													<span class="i-lucide-chevron-up sort-icon" ></span>
 												{:else}
-													<span class="i-lucide-chevron-down sort-icon" />
+													<span class="i-lucide-chevron-down sort-icon" ></span>
 												{/if}
 											{:else}
-												<span class="i-lucide-chevrons-up-down sort-icon idle" />
+												<span class="i-lucide-chevrons-up-down sort-icon idle" ></span>
 											{/if}
 										</button>
 									</TableHeaderCell>

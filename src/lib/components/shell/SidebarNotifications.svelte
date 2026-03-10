@@ -1,47 +1,47 @@
 <script lang="ts">
-	import { getNotifications } from '$lib/state';
-	import { NotificationBadge } from '$lib/components/composites/notifications';
+import { NotificationBadge } from '$lib/components/composites/notifications';
+import { getNotifications } from '$lib/state';
 
-	const notifs = getNotifications();
+const notifs = getNotifications();
 
-	let eventSource: EventSource | null = $state(null);
-	let retryDelay = $state(1000);
+let eventSource: EventSource | null = $state(null);
+let retryDelay = $state(1000);
 
-	function connect() {
-		if (typeof window === 'undefined') return;
+function connect() {
+	if (typeof window === 'undefined') return;
 
-		const es = new EventSource('/api/notifications/stream');
-		eventSource = es;
+	const es = new EventSource('/api/notifications/stream');
+	eventSource = es;
 
-		es.onmessage = (event) => {
-			try {
-				const data = JSON.parse(event.data);
-				if (data.type === 'init') {
-					notifs.setCount(data.unreadCount);
-				} else if (data.type === 'new') {
-					notifs.increment();
-				}
-				retryDelay = 1000;
-			} catch {
-				// Ignore malformed events
+	es.onmessage = (event) => {
+		try {
+			const data = JSON.parse(event.data);
+			if (data.type === 'init') {
+				notifs.setCount(data.unreadCount);
+			} else if (data.type === 'new') {
+				notifs.increment();
 			}
-		};
+			retryDelay = 1000;
+		} catch {
+			// Ignore malformed events
+		}
+	};
 
-		es.onerror = () => {
-			es.close();
-			eventSource = null;
-			// Exponential backoff: 1s, 2s, 4s, 8s, ..., max 30s
-			setTimeout(connect, retryDelay);
-			retryDelay = Math.min(retryDelay * 2, 30_000);
-		};
-	}
+	es.onerror = () => {
+		es.close();
+		eventSource = null;
+		// Exponential backoff: 1s, 2s, 4s, 8s, ..., max 30s
+		setTimeout(connect, retryDelay);
+		retryDelay = Math.min(retryDelay * 2, 30_000);
+	};
+}
 
-	$effect(() => {
-		connect();
-		return () => {
-			eventSource?.close();
-		};
-	});
+$effect(() => {
+	connect();
+	return () => {
+		eventSource?.close();
+	};
+});
 </script>
 
 <a href="/app/notifications" class="notification-trigger" aria-label="Notifications">

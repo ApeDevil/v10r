@@ -82,9 +82,7 @@ function normalizeKeys(keys: string): string {
 
 	// Split, lowercase, and sort (modifiers first, then key)
 	const parts = keys.toLowerCase().split('+');
-	const modifiers = parts.filter((p) =>
-		['mod', 'ctrl', 'cmd', 'alt', 'shift'].includes(p),
-	);
+	const modifiers = parts.filter((p) => ['mod', 'ctrl', 'cmd', 'alt', 'shift'].includes(p));
 	const key = parts.find((p) => !modifiers.includes(p));
 
 	return [...modifiers.sort(), key].filter(Boolean).join('+');

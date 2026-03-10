@@ -24,11 +24,7 @@ export async function encrypt(plaintext: string): Promise<string> {
 	const nonce = crypto.getRandomValues(new Uint8Array(12));
 	const encoded = new TextEncoder().encode(plaintext);
 
-	const ciphertext = await crypto.subtle.encrypt(
-		{ name: 'AES-GCM', iv: nonce },
-		key,
-		encoded,
-	);
+	const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce }, key, encoded);
 
 	const nonceB64 = btoa(String.fromCharCode(...nonce));
 	const ctB64 = btoa(String.fromCharCode(...new Uint8Array(ciphertext)));
@@ -48,11 +44,7 @@ export async function decrypt(stored: string): Promise<string> {
 	const nonce = Uint8Array.from(atob(nonceB64), (c) => c.charCodeAt(0));
 	const ciphertext = Uint8Array.from(atob(ctB64), (c) => c.charCodeAt(0));
 
-	const plaintext = await crypto.subtle.decrypt(
-		{ name: 'AES-GCM', iv: nonce },
-		key,
-		ciphertext,
-	);
+	const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: nonce }, key, ciphertext);
 
 	return new TextDecoder().decode(plaintext);
 }

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { RankedChunk } from './types';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PipelineStepEvent } from '$lib/types/pipeline';
+import type { RankedChunk } from './types';
 
 const mockGenerateEmbedding = vi.fn();
 const mockSearchContextual = vi.fn();

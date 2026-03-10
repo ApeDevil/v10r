@@ -1,16 +1,16 @@
 import { json } from '@sveltejs/kit';
-import { streamText, createDataStreamResponse } from 'ai';
+import { createDataStreamResponse, streamText } from 'ai';
 import { safeParse } from 'valibot';
 import { aiConfigured, chatModel, fallbackProviders } from '$lib/server/ai';
-import { SYSTEM_PROMPT, MAX_TOKENS, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW, RATE_LIMIT_PREFIX } from '$lib/server/ai/config';
+import { MAX_TOKENS, RATE_LIMIT_MAX, RATE_LIMIT_PREFIX, RATE_LIMIT_WINDOW, SYSTEM_PROMPT } from '$lib/server/ai/config';
+import { aiErrorToStatus, classifyAIError, safeAIMessage } from '$lib/server/ai/errors';
 import { ChatRequestSchema } from '$lib/server/ai/validation';
-import { classifyAIError, aiErrorToStatus, safeAIMessage } from '$lib/server/ai/errors';
-import { createConversation, saveMessages, updateConversationTitle } from '$lib/server/db/ai/mutations';
-import { checkConversationLimit } from '$lib/server/db/ai/limits';
-import { retrieve, formatContextForPrompt } from '$lib/server/retrieval';
-import { requireApiUser } from '$lib/server/auth/guards';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import type { PipelineStepEvent, PipelineChunksEvent } from '$lib/types/pipeline';
+import { requireApiUser } from '$lib/server/auth/guards';
+import { checkConversationLimit } from '$lib/server/db/ai/limits';
+import { createConversation, saveMessages } from '$lib/server/db/ai/mutations';
+import { formatContextForPrompt, retrieve } from '$lib/server/retrieval';
+import type { PipelineChunksEvent, PipelineStepEvent } from '$lib/types/pipeline';
 import type { RequestHandler } from './$types';
 
 const ratelimit = createLimiter(RATE_LIMIT_PREFIX, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
@@ -19,11 +19,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const { user } = requireApiUser(locals);
 
 	if (!aiConfigured || !chatModel) {
-		return json(
-			{ error: 'No AI provider configured. Add an API key to your environment.' },
-			{ status: 503 },
-		);
+		return json({ error: 'No AI provider configured. Add an API key to your environment.' }, { status: 503 });
 	}
+	const model = chatModel;
 
 	const { success, reset } = await ratelimit.limit(user.id);
 	if (!success) return rateLimitResponse(reset);
@@ -51,9 +49,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			}
 
 			const firstUserMsg = messages.find((m: { role: string }) => m.role === 'user');
-			const title = firstUserMsg
-				? firstUserMsg.content.slice(0, 80)
-				: 'New conversation';
+			const title = firstUserMsg ? firstUserMsg.content.slice(0, 80) : 'New conversation';
 			const conv = await createConversation(user.id, title);
 			conversationId = conv.id;
 		}
@@ -118,7 +114,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 					emitEvent({ type: 'pipeline:step', step: 'generate', status: 'active' });
 
 					const textResult = streamText({
-						model: chatModel,
+						model,
 						system: systemPrompt,
 						messages,
 						maxTokens: MAX_TOKENS,
@@ -150,16 +146,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 		// --- Non-retrieval path: unchanged ---
 		const result = streamText({
-			model: chatModel,
+			model,
 			system: SYSTEM_PROMPT,
 			messages,
 			maxTokens: MAX_TOKENS,
 			onFinish: async ({ text }) => {
 				try {
 					if (conversationId && text) {
-						await saveMessages(conversationId, userId, [
-							{ id: crypto.randomUUID(), role: 'assistant', content: text },
-						]);
+						await saveMessages(conversationId, userId, [{ id: crypto.randomUUID(), role: 'assistant', content: text }]);
 					}
 				} catch (err) {
 					console.error('[ai:chat] Failed to persist assistant message:', {
@@ -192,9 +186,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 							try {
 								const convId = existingConvId ?? undefined;
 								if (convId && text) {
-									await saveMessages(convId, user.id, [
-										{ id: crypto.randomUUID(), role: 'assistant', content: text },
-									]);
+									await saveMessages(convId, user.id, [{ id: crypto.randomUUID(), role: 'assistant', content: text }]);
 								}
 							} catch (err) {
 								console.error('[ai:chat:fallback] Failed to persist assistant message:', {
@@ -212,15 +204,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 					}
 
 					return result.toDataStreamResponse({ headers });
-				} catch {
-					continue;
-				}
+				} catch {}
 			}
 		}
 
-		return json(
-			{ error: safeAIMessage(aiErr.kind) },
-			{ status: aiErrorToStatus(aiErr.kind) },
-		);
+		return json({ error: safeAIMessage(aiErr.kind) }, { status: aiErrorToStatus(aiErr.kind) });
 	}
 };

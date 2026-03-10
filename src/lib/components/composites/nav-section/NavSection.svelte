@@ -1,123 +1,125 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
+import { browser } from '$app/environment';
 
-	interface Section {
-		id: string;
-		label: string;
-	}
+interface Section {
+	id: string;
+	label: string;
+}
 
-	interface Props {
-		sections: Section[];
-		ariaLabel?: string;
-	}
+interface Props {
+	sections: Section[];
+	ariaLabel?: string;
+}
 
-	let { sections, ariaLabel = 'Section navigation' }: Props = $props();
+let { sections, ariaLabel = 'Section navigation' }: Props = $props();
 
-	let sentinelEl: HTMLElement | undefined = $state();
-	let chipsEl: HTMLElement | undefined = $state();
-	let isStuck = $state(false);
-	let activeSection = $state(sections[0]?.id ?? '');
-	let canScrollRight = $state(false);
-	let canScrollLeft = $state(false);
-	let isUserClick = false;
+let sentinelEl: HTMLElement | undefined = $state();
+let chipsEl: HTMLElement | undefined = $state();
+let isStuck = $state(false);
+let activeSection = $state(sections[0]?.id ?? '');
+let canScrollRight = $state(false);
+let canScrollLeft = $state(false);
+let isUserClick = false;
 
-	// Sentinel observer: detect when nav has scrolled to its sticky position
-	$effect(() => {
-		if (!browser || !sentinelEl) return;
+// Sentinel observer: detect when nav has scrolled to its sticky position
+$effect(() => {
+	if (!browser || !sentinelEl) return;
 
-		const observer = new IntersectionObserver(
-			([entry]) => {
-				isStuck = !entry.isIntersecting;
-			},
-			{ threshold: 0 }
-		);
+	const observer = new IntersectionObserver(
+		([entry]) => {
+			isStuck = !entry.isIntersecting;
+		},
+		{ threshold: 0 },
+	);
 
-		observer.observe(sentinelEl);
-		return () => observer.disconnect();
-	});
+	observer.observe(sentinelEl);
+	return () => observer.disconnect();
+});
 
-	// Section observer: track which section is currently visible
-	$effect(() => {
-		if (!browser) return;
+// Section observer: track which section is currently visible
+$effect(() => {
+	if (!browser) return;
 
-		const observer = new IntersectionObserver(
-			(entries) => {
-				for (const entry of entries) {
-					if (entry.isIntersecting) {
-						activeSection = entry.target.id;
-					}
+	const observer = new IntersectionObserver(
+		(entries) => {
+			for (const entry of entries) {
+				if (entry.isIntersecting) {
+					activeSection = entry.target.id;
 				}
-			},
-			{ rootMargin: '-100px 0px -66% 0px', threshold: 0 }
-		);
-
-		for (const section of sections) {
-			const el = document.getElementById(section.id);
-			if (el) observer.observe(el);
-		}
-
-		return () => observer.disconnect();
-	});
-
-	// Auto-scroll active chip into view (only on page scroll, not user click)
-	$effect(() => {
-		if (!browser || !chipsEl) return;
-		// Track activeSection reactively
-		const id = activeSection;
-		if (isUserClick) return;
-
-		const chip = chipsEl.querySelector(`[data-section="${id}"]`) as HTMLElement | null;
-		chip?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-	});
-
-	// Track horizontal scroll overflow for fade indicators
-	$effect(() => {
-		if (!browser || !chipsEl) return;
-
-		function updateOverflow() {
-			if (!chipsEl) return;
-			const { scrollLeft, scrollWidth, clientWidth } = chipsEl;
-			canScrollLeft = scrollLeft > 1;
-			canScrollRight = scrollLeft + clientWidth < scrollWidth - 1;
-		}
-
-		// Desktop: convert vertical wheel to horizontal scroll (must be non-passive to preventDefault)
-		function handleWheel(e: WheelEvent) {
-			if (!chipsEl || chipsEl.scrollWidth <= chipsEl.clientWidth) return;
-			if (e.deltaY !== 0) {
-				e.preventDefault();
-				chipsEl.scrollLeft += e.deltaY;
 			}
-		}
+		},
+		{ rootMargin: '-100px 0px -66% 0px', threshold: 0 },
+	);
 
-		chipsEl.addEventListener('scroll', updateOverflow, { passive: true });
-		chipsEl.addEventListener('wheel', handleWheel, { passive: false });
-		// Also check on resize
-		const ro = new ResizeObserver(updateOverflow);
-		ro.observe(chipsEl);
-		updateOverflow();
-
-		return () => {
-			chipsEl?.removeEventListener('scroll', updateOverflow);
-			chipsEl?.removeEventListener('wheel', handleWheel);
-			ro.disconnect();
-		};
-	});
-
-	// Screen reader scroll position announcement
-	let scrollState = $derived.by(() => {
-		if (!canScrollLeft && !canScrollRight) return '';
-		if (!canScrollLeft) return 'Viewing first sections, scroll right for more';
-		if (!canScrollRight) return 'Viewing last sections';
-		return 'More sections available in both directions';
-	});
-
-	function scrollToSection(id: string) {
-		isUserClick = true;
-		document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-		// Reset after scroll settles
-		setTimeout(() => { isUserClick = false; }, 1000);
+	for (const section of sections) {
+		const el = document.getElementById(section.id);
+		if (el) observer.observe(el);
 	}
+
+	return () => observer.disconnect();
+});
+
+// Auto-scroll active chip into view (only on page scroll, not user click)
+$effect(() => {
+	if (!browser || !chipsEl) return;
+	// Track activeSection reactively
+	const id = activeSection;
+	if (isUserClick) return;
+
+	const chip = chipsEl.querySelector(`[data-section="${id}"]`) as HTMLElement | null;
+	chip?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+});
+
+// Track horizontal scroll overflow for fade indicators
+$effect(() => {
+	if (!browser || !chipsEl) return;
+
+	function updateOverflow() {
+		if (!chipsEl) return;
+		const { scrollLeft, scrollWidth, clientWidth } = chipsEl;
+		canScrollLeft = scrollLeft > 1;
+		canScrollRight = scrollLeft + clientWidth < scrollWidth - 1;
+	}
+
+	// Desktop: convert vertical wheel to horizontal scroll (must be non-passive to preventDefault)
+	function handleWheel(e: WheelEvent) {
+		if (!chipsEl || chipsEl.scrollWidth <= chipsEl.clientWidth) return;
+		if (e.deltaY !== 0) {
+			e.preventDefault();
+			chipsEl.scrollLeft += e.deltaY;
+		}
+	}
+
+	chipsEl.addEventListener('scroll', updateOverflow, { passive: true });
+	chipsEl.addEventListener('wheel', handleWheel, { passive: false });
+	// Also check on resize
+	const ro = new ResizeObserver(updateOverflow);
+	ro.observe(chipsEl);
+	updateOverflow();
+
+	return () => {
+		chipsEl?.removeEventListener('scroll', updateOverflow);
+		chipsEl?.removeEventListener('wheel', handleWheel);
+		ro.disconnect();
+	};
+});
+
+// Screen reader scroll position announcement
+let scrollState = $derived.by(() => {
+	if (!canScrollLeft && !canScrollRight) return '';
+	if (!canScrollLeft) return 'Viewing first sections, scroll right for more';
+	if (!canScrollRight) return 'Viewing last sections';
+	return 'More sections available in both directions';
+});
+
+function scrollToSection(id: string) {
+	isUserClick = true;
+	document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+	// Reset after scroll settles
+	setTimeout(() => {
+		isUserClick = false;
+	}, 1000);
+}
 </script>
 
 <!-- Sentinel: zero-height marker at natural flow position -->

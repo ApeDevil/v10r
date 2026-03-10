@@ -1,24 +1,32 @@
 <script lang="ts">
-	import type { PageProps } from './$types';
-	import { superForm } from 'sveltekit-superforms';
-	import { valibotClient } from 'sveltekit-superforms/adapters';
-	import { profileEditSchema } from '$lib/schemas/showcase/advanced';
-	import { Card, Alert, FormField } from '$lib/components/composites';
-	import { Button, Input, Select, Switch, Badge, Spinner } from '$lib/components/primitives';
-	import { Stack, Cluster } from '$lib/components/layout';
+import { superForm } from 'sveltekit-superforms';
+import { valibotClient } from 'sveltekit-superforms/adapters';
+import { Alert, Card, FormField } from '$lib/components/composites';
+import { Cluster, Stack } from '$lib/components/layout';
+import { Badge, Button, Input, Select, Spinner, Switch } from '$lib/components/primitives';
+import { profileEditSchema } from '$lib/schemas/showcase/advanced';
+import type { PageProps } from './$types';
 
-	let { data }: PageProps = $props();
+let { data }: PageProps = $props();
 
-	const { form, errors, enhance, submitting, delayed, tainted, message: formMessage } = superForm(data.form, {
-		validators: valibotClient(profileEditSchema),
-	});
+const {
+	form,
+	errors,
+	enhance,
+	submitting,
+	delayed,
+	tainted,
+	message: formMessage,
+} = superForm(data.form, {
+	validators: valibotClient(profileEditSchema),
+});
 
-	const roleOptions = [
-		{ value: 'viewer', label: 'Viewer' },
-		{ value: 'editor', label: 'Editor' },
-		{ value: 'admin', label: 'Admin' },
-		{ value: 'owner', label: 'Owner' },
-	];
+const roleOptions = [
+	{ value: 'viewer', label: 'Viewer' },
+	{ value: 'editor', label: 'Editor' },
+	{ value: 'admin', label: 'Admin' },
+	{ value: 'owner', label: 'Owner' },
+];
 </script>
 
 <svelte:head>

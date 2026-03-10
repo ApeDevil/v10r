@@ -1,53 +1,58 @@
 <script lang="ts">
-	import type { PageProps } from './$types';
-	import { superForm } from 'sveltekit-superforms';
-	import { valibotClient } from 'sveltekit-superforms/adapters';
-	import { dependentSchema } from '$lib/schemas/showcase/patterns';
-	import { Card, Alert, FormField } from '$lib/components/composites';
-	import { Button, Select, Spinner } from '$lib/components/primitives';
-	import { Stack } from '$lib/components/layout';
+import { superForm } from 'sveltekit-superforms';
+import { valibotClient } from 'sveltekit-superforms/adapters';
+import { Alert, Card, FormField } from '$lib/components/composites';
+import { Stack } from '$lib/components/layout';
+import { Button, Select, Spinner } from '$lib/components/primitives';
+import { dependentSchema } from '$lib/schemas/showcase/patterns';
+import type { PageProps } from './$types';
 
-	let { data }: PageProps = $props();
+let { data }: PageProps = $props();
 
-	const { form, errors, enhance, submitting, delayed, message: formMessage } = superForm(data.form, {
-		validators: valibotClient(dependentSchema),
-	});
+const {
+	form,
+	errors,
+	enhance,
+	submitting,
+	delayed,
+	message: formMessage,
+} = superForm(data.form, {
+	validators: valibotClient(dependentSchema),
+});
 
-	const locationData = data.locationData;
+const locationData = data.locationData;
 
-	type Country = (typeof locationData)[keyof typeof locationData];
-	type States = Country['states'];
+type Country = (typeof locationData)[keyof typeof locationData];
+type States = Country['states'];
 
-	const countryOptions = $derived(
-		Object.entries(locationData).map(([value, c]) => ({ value, label: c.label }))
-	);
+const countryOptions = $derived(Object.entries(locationData).map(([value, c]) => ({ value, label: c.label })));
 
-	const stateOptions = $derived.by(() => {
-		const key = $form.country as keyof typeof locationData;
-		if (!key || !locationData[key]) return [];
-		const states = locationData[key].states as States;
-		return Object.entries(states).map(([value, s]) => ({ value, label: (s as { label: string }).label }));
-	});
+const stateOptions = $derived.by(() => {
+	const key = $form.country as keyof typeof locationData;
+	if (!key || !locationData[key]) return [];
+	const states = locationData[key].states as States;
+	return Object.entries(states).map(([value, s]) => ({ value, label: (s as { label: string }).label }));
+});
 
-	const cityOptions = $derived.by(() => {
-		const countryKey = $form.country as keyof typeof locationData;
-		if (!countryKey || !$form.state) return [];
-		const country = locationData[countryKey];
-		if (!country) return [];
-		const states = country.states as Record<string, { label: string; cities: string[] }>;
-		const state = states[$form.state];
-		if (!state) return [];
-		return state.cities.map((city: string) => ({ value: city, label: city }));
-	});
+const cityOptions = $derived.by(() => {
+	const countryKey = $form.country as keyof typeof locationData;
+	if (!countryKey || !$form.state) return [];
+	const country = locationData[countryKey];
+	if (!country) return [];
+	const states = country.states as Record<string, { label: string; cities: string[] }>;
+	const state = states[$form.state];
+	if (!state) return [];
+	return state.cities.map((city: string) => ({ value: city, label: city }));
+});
 
-	function onCountryChange() {
-		$form.state = '';
-		$form.city = '';
-	}
+function onCountryChange() {
+	$form.state = '';
+	$form.city = '';
+}
 
-	function onStateChange() {
-		$form.city = '';
-	}
+function onStateChange() {
+	$form.city = '';
+}
 </script>
 
 <svelte:head>

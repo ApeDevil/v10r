@@ -1,14 +1,14 @@
-import { redis } from '../index';
-import { CacheError } from '../errors';
 import { Ratelimit } from '@upstash/ratelimit';
+import { CacheError } from '../errors';
+import { redis } from '../index';
 import type {
+	CacheConnectionInfo,
 	CacheEntry,
 	CacheEntryDetail,
-	CacheConnectionInfo,
 	CacheShowcaseStats,
-	TtlSnapshot,
 	RateLimitResult,
 	RedisType,
+	TtlSnapshot,
 } from '../types';
 import { SHOWCASE_PREFIX } from './guards';
 
@@ -48,10 +48,7 @@ export async function listShowcaseEntries(): Promise<CacheEntry[]> {
 	// Parallel TYPE + TTL for each key (auto-pipelined by @upstash/redis)
 	const entries = await Promise.all(
 		keys.map(async (key) => {
-			const [type, ttl] = await Promise.all([
-				r.type(key) as Promise<RedisType>,
-				r.ttl(key),
-			]);
+			const [type, ttl] = await Promise.all([r.type(key) as Promise<RedisType>, r.ttl(key)]);
 			return { key, type, ttl };
 		}),
 	);
@@ -61,7 +58,7 @@ export async function listShowcaseEntries(): Promise<CacheEntry[]> {
 
 export async function getEntryDetail(key: string): Promise<CacheEntryDetail | null> {
 	const r = requireRedis();
-	const type = await r.type(key) as RedisType;
+	const type = (await r.type(key)) as RedisType;
 	if (type === 'none') return null;
 
 	const ttl = await r.ttl(key);
@@ -123,11 +120,7 @@ export async function getTtlSnapshot(key: string): Promise<TtlSnapshot> {
 	};
 }
 
-export async function checkRateLimit(
-	identifier: string,
-	limit = 10,
-	windowSeconds = 10,
-): Promise<RateLimitResult> {
+export async function checkRateLimit(identifier: string, limit = 10, windowSeconds = 10): Promise<RateLimitResult> {
 	const r = requireRedis();
 	const ratelimit = new Ratelimit({
 		redis: r,

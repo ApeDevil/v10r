@@ -6,9 +6,9 @@
  *   sequence(sessionPopulate, analyticsCollector, csrfProtection, ...)
  */
 import type { Handle } from '@sveltejs/kit';
-import { hashVisitorId, hasConsent, parseConsentTier } from './consent';
+import { ANALYTICS_CONSENT_COOKIE, ANALYTICS_SESSION_TIMEOUT_MS } from '$lib/server/config';
 import { recordEvent, upsertSession } from '$lib/server/db/analytics/mutations';
-import { ANALYTICS_SESSION_TIMEOUT_MS, ANALYTICS_CONSENT_COOKIE } from '$lib/server/config';
+import { hasConsent, hashVisitorId, parseConsentTier } from './consent';
 
 export const analyticsCollector: Handle = async ({ event, resolve }) => {
 	const response = await resolve(event);

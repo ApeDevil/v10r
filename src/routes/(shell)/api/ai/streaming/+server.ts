@@ -2,11 +2,11 @@ import { json } from '@sveltejs/kit';
 import { streamText } from 'ai';
 import { safeParse } from 'valibot';
 import { aiConfigured, chatModel } from '$lib/server/ai';
-import { SYSTEM_PROMPT, MAX_TOKENS, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW, RATE_LIMIT_PREFIX } from '$lib/server/ai/config';
+import { MAX_TOKENS, RATE_LIMIT_MAX, RATE_LIMIT_PREFIX, RATE_LIMIT_WINDOW, SYSTEM_PROMPT } from '$lib/server/ai/config';
+import { aiErrorToStatus, classifyAIError, safeAIMessage } from '$lib/server/ai/errors';
 import { StreamingRequestSchema } from '$lib/server/ai/validation';
-import { classifyAIError, aiErrorToStatus, safeAIMessage } from '$lib/server/ai/errors';
-import { requireApiUser } from '$lib/server/auth/guards';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { requireApiUser } from '$lib/server/auth/guards';
 import type { RequestHandler } from './$types';
 
 const ratelimit = createLimiter(RATE_LIMIT_PREFIX, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
@@ -15,10 +15,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const { user } = requireApiUser(locals);
 
 	if (!aiConfigured || !chatModel) {
-		return json(
-			{ error: 'No AI provider configured.' },
-			{ status: 503 },
-		);
+		return json({ error: 'No AI provider configured.' }, { status: 503 });
 	}
 
 	const { success, reset } = await ratelimit.limit(user.id);
@@ -50,9 +47,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return result.toDataStreamResponse();
 	} catch (err) {
 		const aiErr = classifyAIError(err);
-		return json(
-			{ error: safeAIMessage(aiErr.kind) },
-			{ status: aiErrorToStatus(aiErr.kind) },
-		);
+		return json({ error: safeAIMessage(aiErr.kind) }, { status: aiErrorToStatus(aiErr.kind) });
 	}
 };

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { DemoCard } from '../../components/_components';
-	import { ContextMenu } from '$lib/components/composites';
+import { ContextMenu } from '$lib/components/composites';
+import { DemoCard } from '../../components/_components';
 </script>
 
 <section id="menu-context" class="section">
@@ -28,7 +28,7 @@
 			>
 				{#snippet trigger({ props })}
 					<div {...props} class="context-zone">
-						<span class="i-lucide-mouse-pointer-click h-6 w-6 text-muted" />
+						<span class="i-lucide-mouse-pointer-click h-6 w-6 text-muted" ></span>
 						<span>Right-click anywhere in this area</span>
 					</div>
 				{/snippet}
@@ -53,7 +53,7 @@
 				>
 					{#snippet trigger({ props })}
 						<div {...props} class="context-card">
-							<span class="i-lucide-file-text h-5 w-5 text-primary" />
+							<span class="i-lucide-file-text h-5 w-5 text-primary" ></span>
 							<span class="context-card-title">Document</span>
 							<span class="context-card-meta">Editable</span>
 						</div>
@@ -72,7 +72,7 @@
 				>
 					{#snippet trigger({ props })}
 						<div {...props} class="context-card">
-							<span class="i-lucide-image h-5 w-5 text-primary" />
+							<span class="i-lucide-image h-5 w-5 text-primary" ></span>
 							<span class="context-card-title">Image</span>
 							<span class="context-card-meta">Read-only</span>
 						</div>
@@ -90,7 +90,7 @@
 				>
 					{#snippet trigger({ props })}
 						<div {...props} class="context-card">
-							<span class="i-lucide-file-code h-5 w-5 text-primary" />
+							<span class="i-lucide-file-code h-5 w-5 text-primary" ></span>
 							<span class="context-card-title">Source Code</span>
 							<span class="context-card-meta">Developer</span>
 						</div>

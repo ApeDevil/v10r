@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { Handle, Position, type NodeProps, type Node } from '@xyflow/svelte';
+import { Handle, type Node, type NodeProps, Position } from '@xyflow/svelte';
 
-	interface StateNodeData extends Record<string, unknown> {
-		label?: string;
-		variant: 'state' | 'start' | 'end';
-	}
+interface StateNodeData extends Record<string, unknown> {
+	label?: string;
+	variant: 'state' | 'start' | 'end';
+}
 
-	type StateNodeType = Node<StateNodeData>;
+type StateNodeType = Node<StateNodeData>;
 
-	let { data, isConnectable }: NodeProps<StateNodeType> = $props();
+let { data, isConnectable }: NodeProps<StateNodeType> = $props();
 </script>
 
 {#if data.variant === 'start'}

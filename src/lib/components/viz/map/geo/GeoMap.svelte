@@ -1,63 +1,62 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { beforeNavigate } from '$app/navigation';
-	import { cn } from '$lib/utils/cn';
-	import { chartContainerVariants, type ChartContainerVariants } from '../../_shared/chart-container';
-	import { getTheme } from '$lib/state/theme.svelte';
-	import { CARTO_VOYAGER, CARTO_DARK_MATTER } from './map-theme';
-	import type { Snippet, Component } from 'svelte';
+import type { Component, Snippet } from 'svelte';
+import { onMount } from 'svelte';
+import { beforeNavigate } from '$app/navigation';
+import { getTheme } from '$lib/state/theme.svelte';
+import { cn } from '$lib/utils/cn';
+import { type ChartContainerVariants, chartContainerVariants } from '../../_shared/chart-container';
+import { CARTO_DARK_MATTER, CARTO_VOYAGER } from './map-theme';
 
-	interface Props {
-		center?: { lng: number; lat: number };
-		zoom?: number;
-		style?: string;
-		lightStyle?: string;
-		darkStyle?: string;
-		aspect?: ChartContainerVariants['aspect'];
-		ariaLabel?: string;
-		maxBounds?: [[number, number], [number, number]];
-		minZoom?: number;
-		maxZoom?: number;
-		class?: string;
-		children?: Snippet;
-	}
+interface Props {
+	center?: { lng: number; lat: number };
+	zoom?: number;
+	style?: string;
+	lightStyle?: string;
+	darkStyle?: string;
+	aspect?: ChartContainerVariants['aspect'];
+	ariaLabel?: string;
+	maxBounds?: [[number, number], [number, number]];
+	minZoom?: number;
+	maxZoom?: number;
+	class?: string;
+	children?: Snippet;
+}
 
-	let {
-		center = { lng: 0, lat: 20 },
-		zoom = 2,
-		style: styleProp,
-		lightStyle = CARTO_VOYAGER,
-		darkStyle = CARTO_DARK_MATTER,
-		aspect = 'auto',
-		ariaLabel = 'Interactive map',
-		maxBounds,
-		minZoom,
-		maxZoom,
-		class: className,
-		children,
-	}: Props = $props();
+let {
+	center = { lng: 0, lat: 20 },
+	zoom = 2,
+	style: styleProp,
+	lightStyle = CARTO_VOYAGER,
+	darkStyle = CARTO_DARK_MATTER,
+	aspect = 'auto',
+	ariaLabel = 'Interactive map',
+	maxBounds,
+	minZoom,
+	maxZoom,
+	class: className,
+	children,
+}: Props = $props();
 
-	let ready = $state(false);
-	let MapLibreComp: Component<any> | undefined = $state();
-	let NavigationControl: Component<any> | undefined = $state();
-	let ScaleControl: Component<any> | undefined = $state();
+let ready = $state(false);
+let MapLibreComp: Component<any> | undefined = $state();
+let NavigationControl: Component<any> | undefined = $state();
+let ScaleControl: Component<any> | undefined = $state();
 
-	const theme = getTheme();
-	const currentStyle = $derived(styleProp ?? (theme.isDark ? darkStyle : lightStyle));
+const theme = getTheme();
+const currentStyle = $derived(styleProp ?? (theme.isDark ? darkStyle : lightStyle));
 
-	beforeNavigate(() => { ready = false; });
+beforeNavigate(() => {
+	ready = false;
+});
 
-	onMount(async () => {
-		const [sml] = await Promise.all([
-			import('svelte-maplibre-gl'),
-			import('maplibre-gl/dist/maplibre-gl.css'),
-		]);
+onMount(async () => {
+	const [sml] = await Promise.all([import('svelte-maplibre-gl'), import('maplibre-gl/dist/maplibre-gl.css')]);
 
-		MapLibreComp = sml.MapLibre;
-		NavigationControl = sml.NavigationControl;
-		ScaleControl = sml.ScaleControl;
-		ready = true;
-	});
+	MapLibreComp = sml.MapLibre;
+	NavigationControl = sml.NavigationControl;
+	ScaleControl = sml.ScaleControl;
+	ready = true;
+});
 </script>
 
 <figure class={cn(chartContainerVariants({ aspect }), 'map-container', className)}>

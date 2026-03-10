@@ -1,29 +1,29 @@
 <script lang="ts">
-	import type { ChunkSummary } from '$lib/types/pipeline';
-	import ChunkCard from './ChunkCard.svelte';
+import type { ChunkSummary } from '$lib/types/pipeline';
+import ChunkCard from './ChunkCard.svelte';
 
-	interface FunnelStats {
-		found: number;
-		kept: number;
-		context: number;
-	}
+interface FunnelStats {
+	found: number;
+	kept: number;
+	context: number;
+}
 
-	interface Props {
-		chunks: ChunkSummary[];
-		funnelStats?: FunnelStats;
-		maxHeight?: string;
-	}
+interface Props {
+	chunks: ChunkSummary[];
+	funnelStats?: FunnelStats;
+	maxHeight?: string;
+}
 
-	let { chunks, funnelStats, maxHeight = '200px' }: Props = $props();
+let { chunks, funnelStats, maxHeight = '200px' }: Props = $props();
 
-	const sorted = $derived(
-		[...chunks].sort((a, b) => {
-			if (a.survived !== b.survived) return a.survived ? -1 : 1;
-			return b.score - a.score;
-		}),
-	);
+const sorted = $derived(
+	[...chunks].sort((a, b) => {
+		if (a.survived !== b.survived) return a.survived ? -1 : 1;
+		return b.score - a.score;
+	}),
+);
 
-	const funnelTotal = $derived(funnelStats ? Math.max(funnelStats.found, 1) : 0);
+const funnelTotal = $derived(funnelStats ? Math.max(funnelStats.found, 1) : 0);
 </script>
 
 {#if funnelStats}

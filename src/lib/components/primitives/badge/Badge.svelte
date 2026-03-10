@@ -1,14 +1,14 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import { badgeVariants, type BadgeVariants } from './badge';
-	import { cn } from '$lib/utils/cn';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils/cn';
+import { type BadgeVariants, badgeVariants } from './badge';
 
-	interface Props extends BadgeVariants {
-		children: Snippet;
-		class?: string;
-	}
+interface Props extends BadgeVariants {
+	children: Snippet;
+	class?: string;
+}
 
-	let { children, variant = 'default', class: className }: Props = $props();
+let { children, variant = 'default', class: className }: Props = $props();
 </script>
 
 <span class={cn(badgeVariants({ variant }), className)}>

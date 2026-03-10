@@ -1,11 +1,7 @@
-import type { PageServerLoad, Actions } from './$types';
+import { env } from '$env/dynamic/private';
+import { BETTER_AUTH_URL, GITHUB_CLIENT_ID, MICROSOFT_CLIENT_ID } from '$env/static/private';
 import { auth } from '$lib/server/auth';
-import {
-	BETTER_AUTH_URL,
-	GITHUB_CLIENT_ID,
-	GOOGLE_CLIENT_ID,
-	MICROSOFT_CLIENT_ID,
-} from '$env/static/private';
+import type { Actions, PageServerLoad } from './$types';
 
 async function measureAuth(headers: Headers) {
 	const start = performance.now();
@@ -23,7 +19,7 @@ async function measureAuth(headers: Headers) {
 			userEmail: session?.user?.email ?? null,
 			providers: {
 				github: !!GITHUB_CLIENT_ID,
-				google: !!GOOGLE_CLIENT_ID,
+				google: !!env.GOOGLE_CLIENT_ID,
 				microsoft: !!MICROSOFT_CLIENT_ID,
 			},
 			baseURL: BETTER_AUTH_URL,
@@ -41,7 +37,7 @@ async function measureAuth(headers: Headers) {
 			userEmail: null,
 			providers: {
 				github: !!GITHUB_CLIENT_ID,
-				google: !!GOOGLE_CLIENT_ID,
+				google: !!env.GOOGLE_CLIENT_ID,
 				microsoft: !!MICROSOFT_CLIENT_ID,
 			},
 			baseURL: BETTER_AUTH_URL,

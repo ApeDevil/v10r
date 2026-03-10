@@ -1,65 +1,65 @@
 <script lang="ts">
-	import {
-		Table,
-		Header as TableHeader,
-		Body as TableBody,
-		Row as TableRow,
-		HeaderCell as TableHeaderCell,
-		Cell as TableCell,
-		Pagination
-	} from '$lib/components';
-	import { EMPLOYEES, formatSalary, type SortKey, type SortDirection, type Status } from '../_data/mock-data';
+import {
+	Pagination,
+	Table,
+	Body as TableBody,
+	Cell as TableCell,
+	Header as TableHeader,
+	HeaderCell as TableHeaderCell,
+	Row as TableRow,
+} from '$lib/components';
+import { EMPLOYEES, formatSalary, type SortDirection, type SortKey, type Status } from '../_data/mock-data';
 
-	let currentPage = $state(1);
-	let pageSize = $state(6);
-	let sortKey = $state<SortKey>('name');
-	let sortDir = $state<SortDirection>('asc');
+let currentPage = $state(1);
+let pageSize = $state(6);
+let sortKey = $state<SortKey>('name');
+let sortDir = $state<SortDirection>('asc');
 
-	let sorted = $derived.by(() => {
-		const key = sortKey;
-		const dir = sortDir === 'asc' ? 1 : -1;
-		return [...EMPLOYEES].sort((a, b) => {
-			const av = a[key];
-			const bv = b[key];
-			if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
-			return String(av).localeCompare(String(bv)) * dir;
-		});
+let sorted = $derived.by(() => {
+	const key = sortKey;
+	const dir = sortDir === 'asc' ? 1 : -1;
+	return [...EMPLOYEES].sort((a, b) => {
+		const av = a[key];
+		const bv = b[key];
+		if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
+		return String(av).localeCompare(String(bv)) * dir;
 	});
+});
 
-	let totalPages = $derived(Math.ceil(sorted.length / pageSize));
-	let paginated = $derived(sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize));
-	let rangeStart = $derived((currentPage - 1) * pageSize + 1);
-	let rangeEnd = $derived(Math.min(currentPage * pageSize, sorted.length));
+let totalPages = $derived(Math.ceil(sorted.length / pageSize));
+let paginated = $derived(sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize));
+let rangeStart = $derived((currentPage - 1) * pageSize + 1);
+let rangeEnd = $derived(Math.min(currentPage * pageSize, sorted.length));
 
-	$effect(() => {
-		pageSize; // track
-		currentPage = 1;
-	});
+$effect(() => {
+	pageSize; // track
+	currentPage = 1;
+});
 
-	function toggleSort(key: SortKey) {
-		if (sortKey === key) {
-			sortDir = sortDir === 'asc' ? 'desc' : 'asc';
-		} else {
-			sortKey = key;
-			sortDir = 'asc';
-		}
+function toggleSort(key: SortKey) {
+	if (sortKey === key) {
+		sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+	} else {
+		sortKey = key;
+		sortDir = 'asc';
 	}
+}
 
-	function statusColor(status: Status): string {
-		if (status === 'active') return 'var(--color-success)';
-		if (status === 'on-leave') return 'var(--color-warning)';
-		return 'var(--color-error)';
-	}
+function statusColor(status: Status): string {
+	if (status === 'active') return 'var(--color-success)';
+	if (status === 'on-leave') return 'var(--color-warning)';
+	return 'var(--color-error)';
+}
 
-	const columns: { key: SortKey; label: string; align?: 'right'; mono?: boolean }[] = [
-		{ key: 'name', label: 'Name' },
-		{ key: 'role', label: 'Role' },
-		{ key: 'department', label: 'Department' },
-		{ key: 'salary', label: 'Salary', align: 'right', mono: true },
-		{ key: 'rating', label: 'Rating', align: 'right' },
-		{ key: 'projects', label: 'Projects', align: 'right' },
-		{ key: 'status', label: 'Status' }
-	];
+const columns: { key: SortKey; label: string; align?: 'right'; mono?: boolean }[] = [
+	{ key: 'name', label: 'Name' },
+	{ key: 'role', label: 'Role' },
+	{ key: 'department', label: 'Department' },
+	{ key: 'salary', label: 'Salary', align: 'right', mono: true },
+	{ key: 'rating', label: 'Rating', align: 'right' },
+	{ key: 'projects', label: 'Projects', align: 'right' },
+	{ key: 'status', label: 'Status' },
+];
 </script>
 
 <section id="tbl-observatory" class="section">
@@ -82,12 +82,12 @@
 										{col.label}
 										{#if sortKey === col.key}
 											{#if sortDir === 'asc'}
-												<span class="i-lucide-chevron-up sort-icon" />
+												<span class="i-lucide-chevron-up sort-icon" ></span>
 											{:else}
-												<span class="i-lucide-chevron-down sort-icon" />
+												<span class="i-lucide-chevron-down sort-icon" ></span>
 											{/if}
 										{:else}
-											<span class="i-lucide-chevrons-up-down sort-icon idle" />
+											<span class="i-lucide-chevrons-up-down sort-icon idle" ></span>
 										{/if}
 									</button>
 								</TableHeaderCell>

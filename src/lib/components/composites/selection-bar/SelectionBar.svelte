@@ -1,21 +1,21 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
-	import type { SelectionBarAction } from './types';
-	import {
-		selectionBarVariants,
-		selectionBarCountVariants,
-		selectionBarActionVariants,
-		selectionBarDismissVariants,
-	} from './selection-bar';
+import { cn } from '$lib/utils/cn';
+import {
+	selectionBarActionVariants,
+	selectionBarCountVariants,
+	selectionBarDismissVariants,
+	selectionBarVariants,
+} from './selection-bar';
+import type { SelectionBarAction } from './types';
 
-	interface Props {
-		count: number;
-		actions: SelectionBarAction[];
-		onClear: () => void;
-		class?: string;
-	}
+interface Props {
+	count: number;
+	actions: SelectionBarAction[];
+	onClear: () => void;
+	class?: string;
+}
 
-	let { count, actions, onClear, class: className }: Props = $props();
+let { count, actions, onClear, class: className }: Props = $props();
 </script>
 
 {#if count > 0}
@@ -38,7 +38,7 @@
 				title={action.label}
 			>
 				{#if action.icon}
-					<span class={cn(action.icon, 'h-4 w-4')} />
+					<span class={cn(action.icon, 'h-4 w-4')} ></span>
 				{/if}
 				<span class="hidden sm:inline">{action.label}</span>
 			</button>
@@ -52,7 +52,7 @@
 			title="Clear selection"
 			aria-label="Clear selection"
 		>
-			<span class="i-lucide-x h-4 w-4" />
+			<span class="i-lucide-x h-4 w-4" ></span>
 		</button>
 	</div>
 {/if}

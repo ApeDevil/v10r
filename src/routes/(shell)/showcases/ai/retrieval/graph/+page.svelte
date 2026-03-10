@@ -1,72 +1,72 @@
 <script lang="ts">
-	import { apiFetch } from '$lib/api';
-	import { Card, Alert } from '$lib/components/composites';
-	import { Typography, Button } from '$lib/components/primitives';
-	import { Stack } from '$lib/components/layout';
+import { apiFetch } from '$lib/api';
+import { Alert, Card } from '$lib/components/composites';
+import { Stack } from '$lib/components/layout';
+import { Button, Typography } from '$lib/components/primitives';
 
-	let { data } = $props();
+let { data } = $props();
 
-	let query = $state('');
-	let loading = $state(false);
-	let results: Array<{
-		chunkId: string;
-		documentTitle: string;
-		content: string;
-		score: number;
-		source: string;
-		tier: number;
-	}> = $state([]);
-	let entities: Array<{
-		name: string;
-		type: string;
-		related: string[];
-	}> = $state([]);
-	let meta: { durationMs: number; tierUsed: number[] } | null = $state(null);
-	let error: string | null = $state(null);
-	let searched = $state(false);
+let query = $state('');
+let loading = $state(false);
+let results: Array<{
+	chunkId: string;
+	documentTitle: string;
+	content: string;
+	score: number;
+	source: string;
+	tier: number;
+}> = $state([]);
+let entities: Array<{
+	name: string;
+	type: string;
+	related: string[];
+}> = $state([]);
+let meta: { durationMs: number; tierUsed: number[] } | null = $state(null);
+let error: string | null = $state(null);
+let searched = $state(false);
 
-	async function search() {
-		if (!query.trim() || loading) return;
+async function search() {
+	if (!query.trim() || loading) return;
 
-		loading = true;
-		error = null;
+	loading = true;
+	error = null;
 
-		try {
-			const res = await apiFetch('/api/retrieval/search', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ query: query.trim(), tiers: [3], maxChunks: 8, graphDepth: 2 }),
-			});
+	try {
+		const res = await apiFetch('/api/retrieval/search', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ query: query.trim(), tiers: [3], maxChunks: 8, graphDepth: 2 }),
+		});
 
-			if (!res.ok) {
-				const data = await res.json().catch(() => ({}));
-				throw new Error(data.error ?? `HTTP ${res.status}`);
-			}
-
-			const data = await res.json();
-			results = data.chunks ?? [];
-			entities = data.entities ?? [];
-			meta = { durationMs: data.durationMs, tierUsed: data.tierUsed };
-			searched = true;
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Search failed';
-			results = [];
-			entities = [];
-			meta = null;
-		} finally {
-			loading = false;
+		if (!res.ok) {
+			const data = await res.json().catch(() => ({}));
+			throw new Error(data.error ?? `HTTP ${res.status}`);
 		}
-	}
 
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Enter' && !e.shiftKey) {
-			e.preventDefault();
-			search();
-		}
+		const data = await res.json();
+		results = data.chunks ?? [];
+		entities = data.entities ?? [];
+		meta = { durationMs: data.durationMs, tierUsed: data.tierUsed };
+		searched = true;
+	} catch (err) {
+		error = err instanceof Error ? err.message : 'Search failed';
+		results = [];
+		entities = [];
+		meta = null;
+	} finally {
+		loading = false;
 	}
+}
 
-	const seedChunks = $derived(results.filter(r => r.source === 'vector'));
-	const graphChunks = $derived(results.filter(r => r.source === 'graph'));
+function handleKeydown(e: KeyboardEvent) {
+	if (e.key === 'Enter' && !e.shiftKey) {
+		e.preventDefault();
+		search();
+	}
+}
+
+const seedChunks = $derived(results.filter((r) => r.source === 'vector'));
+const graphChunks = $derived(results.filter((r) => r.source === 'graph'));
 </script>
 
 <svelte:head>

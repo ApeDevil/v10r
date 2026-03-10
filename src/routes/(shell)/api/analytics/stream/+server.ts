@@ -2,8 +2,9 @@
  * Analytics SSE stream — simulates real-time analytics events for the demo.
  * No auth required (showcase-only, synthetic data).
  */
-import type { RequestHandler } from './$types';
+
 import { SSE_HEARTBEAT_MS } from '$lib/server/config';
+import type { RequestHandler } from './$types';
 
 const PAGE_PATHS = [
 	'/',
@@ -40,11 +41,7 @@ export const GET: RequestHandler = async () => {
 		start(controller) {
 			// Send init with simulated active sessions
 			const activeSessions = Math.floor(Math.random() * 15) + 5;
-			controller.enqueue(
-				encoder.encode(
-					`data: ${JSON.stringify({ type: 'init', activeSessions })}\n\n`,
-				),
-			);
+			controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'init', activeSessions })}\n\n`));
 
 			// Emit simulated events at random intervals (1-5 seconds)
 			function scheduleNext() {
@@ -53,20 +50,12 @@ export const GET: RequestHandler = async () => {
 					try {
 						eventId++;
 						const event = randomEvent(eventId);
-						controller.enqueue(
-							encoder.encode(
-								`data: ${JSON.stringify({ type: 'event', event })}\n\n`,
-							),
-						);
+						controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'event', event })}\n\n`));
 
 						// Occasionally update active sessions count
 						if (eventId % 5 === 0) {
 							const count = Math.floor(Math.random() * 15) + 5;
-							controller.enqueue(
-								encoder.encode(
-									`data: ${JSON.stringify({ type: 'sessions', count })}\n\n`,
-								),
-							);
+							controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'sessions', count })}\n\n`));
 						}
 
 						scheduleNext();

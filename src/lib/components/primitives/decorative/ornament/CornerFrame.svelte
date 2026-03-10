@@ -1,44 +1,44 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
+import { cn } from '$lib/utils/cn';
 
-	type Corner = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-	type FrameVariant = 'bracket' | 'double' | 'inset' | 'cross';
+type Corner = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+type FrameVariant = 'bracket' | 'double' | 'inset' | 'cross';
 
-	interface Props {
-		variant?: FrameVariant;
-		size?: number;
-		strokeWidth?: number;
-		corners?: Corner[];
-		offset?: number;
-		color?: string;
-		opacity?: number;
-		class?: string;
-	}
+interface Props {
+	variant?: FrameVariant;
+	size?: number;
+	strokeWidth?: number;
+	corners?: Corner[];
+	offset?: number;
+	color?: string;
+	opacity?: number;
+	class?: string;
+}
 
-	let {
-		variant = 'bracket',
-		size = 24,
-		strokeWidth = 1.5,
-		corners = ['top-left', 'top-right', 'bottom-left', 'bottom-right'] as Corner[],
-		offset = 0,
-		color = 'currentColor',
-		opacity = 0.6,
-		class: className
-	}: Props = $props();
+let {
+	variant = 'bracket',
+	size = 24,
+	strokeWidth = 1.5,
+	corners = ['top-left', 'top-right', 'bottom-left', 'bottom-right'] as Corner[],
+	offset = 0,
+	color = 'currentColor',
+	opacity = 0.6,
+	class: className,
+}: Props = $props();
 
-	const positionClasses: Record<Corner, string> = {
-		'top-left': 'top-0 left-0',
-		'top-right': 'top-0 right-0',
-		'bottom-left': 'bottom-0 left-0',
-		'bottom-right': 'bottom-0 right-0'
-	};
+const positionClasses: Record<Corner, string> = {
+	'top-left': 'top-0 left-0',
+	'top-right': 'top-0 right-0',
+	'bottom-left': 'bottom-0 left-0',
+	'bottom-right': 'bottom-0 right-0',
+};
 
-	const transforms: Record<Corner, string> = {
-		'top-left': '',
-		'top-right': 'scaleX(-1)',
-		'bottom-left': 'scaleY(-1)',
-		'bottom-right': 'scale(-1)'
-	};
+const transforms: Record<Corner, string> = {
+	'top-left': '',
+	'top-right': 'scaleX(-1)',
+	'bottom-left': 'scaleY(-1)',
+	'bottom-right': 'scale(-1)',
+};
 </script>
 
 {#each corners as corner}

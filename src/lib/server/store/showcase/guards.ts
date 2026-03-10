@@ -1,7 +1,7 @@
 import { ListObjectsV2Command } from '@aws-sdk/client-s3';
-import { s3, BUCKET } from '../index';
-import { StoreError } from '../errors';
 import { MAX_SHOWCASE_OBJECTS } from '$lib/server/config';
+import { StoreError } from '../errors';
+import { BUCKET, s3 } from '../index';
 
 export const SHOWCASE_PREFIX = 'showcase/';
 
@@ -13,9 +13,7 @@ export function assertShowcaseKey(key: string): void {
 }
 
 /** Check if the showcase namespace has room for more objects. */
-export async function checkObjectLimit(
-	limit = MAX_SHOWCASE_OBJECTS,
-): Promise<string | null> {
+export async function checkObjectLimit(limit = MAX_SHOWCASE_OBJECTS): Promise<string | null> {
 	if (!s3) throw new StoreError('credentials', 'R2 storage is not configured');
 	const res = await s3.send(
 		new ListObjectsV2Command({

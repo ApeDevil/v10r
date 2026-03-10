@@ -1,5 +1,5 @@
-import { marked } from 'marked';
 import DOMPurify from 'isomorphic-dompurify';
+import { marked } from 'marked';
 
 marked.setOptions({
 	gfm: true,
@@ -7,11 +7,33 @@ marked.setOptions({
 });
 
 const ALLOWED_TAGS = [
-	'p', 'br', 'strong', 'em', 'del', 'code', 'pre',
-	'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-	'ul', 'ol', 'li', 'blockquote',
-	'a', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
-	'hr', 'span', 'div',
+	'p',
+	'br',
+	'strong',
+	'em',
+	'del',
+	'code',
+	'pre',
+	'h1',
+	'h2',
+	'h3',
+	'h4',
+	'h5',
+	'h6',
+	'ul',
+	'ol',
+	'li',
+	'blockquote',
+	'a',
+	'table',
+	'thead',
+	'tbody',
+	'tr',
+	'th',
+	'td',
+	'hr',
+	'span',
+	'div',
 ];
 
 const ALLOWED_ATTR = ['href', 'target', 'rel', 'class'];

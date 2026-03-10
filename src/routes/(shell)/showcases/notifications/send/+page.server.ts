@@ -1,6 +1,6 @@
-import { redirect, fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { NotificationService } from '$lib/server/notifications/service';
-import type { PageServerLoad, Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 
 const PRESETS: Record<string, { title: string; body: string }> = {
 	mention: { title: 'You were mentioned in a discussion', body: 'Someone tagged you in a comment thread.' },

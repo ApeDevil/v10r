@@ -1,47 +1,54 @@
 <script lang="ts">
-	import type { PageProps } from './$types';
-	import { superForm } from 'sveltekit-superforms';
-	import { valibotClient } from 'sveltekit-superforms/adapters';
-	import { asyncSchema } from '$lib/schemas/showcase/validation';
-	import { Card, Alert, FormField } from '$lib/components/composites';
-	import { Button, Input, Badge, Spinner } from '$lib/components/primitives';
-	import { Stack } from '$lib/components/layout';
+import { superForm } from 'sveltekit-superforms';
+import { valibotClient } from 'sveltekit-superforms/adapters';
+import { Alert, Card, FormField } from '$lib/components/composites';
+import { Stack } from '$lib/components/layout';
+import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
+import { asyncSchema } from '$lib/schemas/showcase/validation';
+import type { PageProps } from './$types';
 
-	let { data }: PageProps = $props();
+let { data }: PageProps = $props();
 
-	const { form, errors, enhance, submitting, delayed, message: formMessage } = superForm(data.form, {
-		validators: valibotClient(asyncSchema),
-	});
+const {
+	form,
+	errors,
+	enhance,
+	submitting,
+	delayed,
+	message: formMessage,
+} = superForm(data.form, {
+	validators: valibotClient(asyncSchema),
+});
 
-	let usernameAvailable = $state<boolean | null>(null);
-	let checkingUsername = $state(false);
-	let debounceTimer = $state<ReturnType<typeof setTimeout> | null>(null);
+let usernameAvailable = $state<boolean | null>(null);
+let checkingUsername = $state(false);
+let debounceTimer = $state<ReturnType<typeof setTimeout> | null>(null);
 
-	function checkUsername() {
-		const username = $form.username;
+function checkUsername() {
+	const username = $form.username;
 
-		if (debounceTimer) clearTimeout(debounceTimer);
-		usernameAvailable = null;
+	if (debounceTimer) clearTimeout(debounceTimer);
+	usernameAvailable = null;
 
-		if (username.length < 3 || !/^[a-z0-9_-]+$/.test(username)) {
-			checkingUsername = false;
-			return;
-		}
-
-		checkingUsername = true;
-		debounceTimer = setTimeout(async () => {
-			try {
-				const res = await fetch(`/api/showcases/check-username?u=${encodeURIComponent(username)}`);
-				const { available } = await res.json();
-				// Only update if the username hasn't changed while we were checking
-				if ($form.username === username) {
-					usernameAvailable = available;
-				}
-			} finally {
-				checkingUsername = false;
-			}
-		}, 400);
+	if (username.length < 3 || !/^[a-z0-9_-]+$/.test(username)) {
+		checkingUsername = false;
+		return;
 	}
+
+	checkingUsername = true;
+	debounceTimer = setTimeout(async () => {
+		try {
+			const res = await fetch(`/api/showcases/check-username?u=${encodeURIComponent(username)}`);
+			const { available } = await res.json();
+			// Only update if the username hasn't changed while we were checking
+			if ($form.username === username) {
+				usernameAvailable = available;
+			}
+		} finally {
+			checkingUsername = false;
+		}
+	}, 400);
+}
 </script>
 
 <svelte:head>

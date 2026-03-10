@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { DbError, classifyDbError, safeDbMessage } from './errors';
+import { describe, expect, it } from 'vitest';
 import { ServerError } from '$lib/server/errors';
+import { classifyDbError, DbError, safeDbMessage } from './errors';
 
 describe('DbError', () => {
 	it('extends ServerError', () => {

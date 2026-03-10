@@ -1,11 +1,11 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import { ShowcaseLayout } from '$lib/components/composites';
-	import { getShowcaseTabs } from '../showcases';
+import type { Snippet } from 'svelte';
+import { ShowcaseLayout } from '$lib/components/composites';
+import { getShowcaseTabs } from '../showcases';
 
-	let { children }: { children: Snippet } = $props();
+let { children }: { children: Snippet } = $props();
 
-	const tabs = getShowcaseTabs('/showcases/shell');
+const tabs = getShowcaseTabs('/showcases/shell');
 </script>
 
 <ShowcaseLayout

@@ -1,19 +1,19 @@
 <script lang="ts">
-	import type { ChunkSummary } from '$lib/types/pipeline';
+import type { ChunkSummary } from '$lib/types/pipeline';
 
-	interface Props {
-		chunk: ChunkSummary;
-	}
+interface Props {
+	chunk: ChunkSummary;
+}
 
-	let { chunk }: Props = $props();
+let { chunk }: Props = $props();
 
-	let expanded = $state(false);
+let expanded = $state(false);
 
-	const sourceColors: Record<ChunkSummary['source'], string> = {
-		vector: 'badge-vector',
-		bm25: 'badge-bm25',
-		graph: 'badge-graph',
-	};
+const sourceColors: Record<ChunkSummary['source'], string> = {
+	vector: 'badge-vector',
+	bm25: 'badge-bm25',
+	graph: 'badge-graph',
+};
 </script>
 
 <button

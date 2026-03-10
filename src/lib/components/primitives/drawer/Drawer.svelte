@@ -1,25 +1,25 @@
 <script lang="ts">
-	import { Dialog as DialogPrimitive } from 'bits-ui';
-	import { cn } from '$lib/utils/cn';
-	import type { Snippet } from 'svelte';
+import { Dialog as DialogPrimitive } from 'bits-ui';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		open: boolean;
-		side?: 'left' | 'right' | 'bottom';
-		title?: string;
-		children?: Snippet;
-		class?: string;
-	}
+interface Props {
+	open: boolean;
+	side?: 'left' | 'right' | 'bottom';
+	title?: string;
+	children?: Snippet;
+	class?: string;
+}
 
-	let { open = $bindable(false), side = 'right', title = 'Menu', children, class: className }: Props = $props();
+let { open = $bindable(false), side = 'right', title = 'Menu', children, class: className }: Props = $props();
 
-	const sideClasses = {
-		left: 'inset-y-0 left-0 h-full w-3/4 max-w-sm data-[state=open]:slide-in-from-left data-[state=closed]:slide-out-to-left',
-		right:
-			'inset-y-0 right-0 h-full w-3/4 max-w-sm data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right',
-		bottom:
-			'inset-x-0 bottom-0 h-auto max-h-[80vh] data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom'
-	};
+const sideClasses = {
+	left: 'inset-y-0 left-0 h-full w-3/4 max-w-sm data-[state=open]:slide-in-from-left data-[state=closed]:slide-out-to-left',
+	right:
+		'inset-y-0 right-0 h-full w-3/4 max-w-sm data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right',
+	bottom:
+		'inset-x-0 bottom-0 h-auto max-h-[80vh] data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom',
+};
 </script>
 
 <DialogPrimitive.Root bind:open>
@@ -43,7 +43,7 @@
 					<DialogPrimitive.Close
 						class="rounded-sm opacity-70 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
 					>
-						<span class="i-lucide-x h-4 w-4" />
+						<span class="i-lucide-x h-4 w-4" ></span>
 						<span class="sr-only">Close</span>
 					</DialogPrimitive.Close>
 				</div>

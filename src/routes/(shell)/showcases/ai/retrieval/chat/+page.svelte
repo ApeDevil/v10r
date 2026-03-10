@@ -1,72 +1,76 @@
 <script lang="ts">
-	import { Chat } from '@ai-sdk/svelte';
-	import { CSRF_HEADER } from '$lib/api';
-	import { Card, Alert, EmptyState } from '$lib/components/composites';
-	import { RagPipeline, createPipelineState } from './_components/rag-pipeline';
-	import { Typography, Drawer, ToggleGroup } from '$lib/components/primitives';
-	import { Stack } from '$lib/components/layout';
-	import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
-	import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
+import { Chat } from '@ai-sdk/svelte';
+import { CSRF_HEADER } from '$lib/api';
+import { Alert, Card, EmptyState } from '$lib/components/composites';
+import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
+import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
+import { Stack } from '$lib/components/layout';
+import { Drawer, ToggleGroup, Typography } from '$lib/components/primitives';
+import { createPipelineState, RagPipeline } from './_components/rag-pipeline';
 
-	let { data } = $props();
+let { data } = $props();
 
-	let selectedTierValues: string[] = $state(['1']);
-	const selectedTiers = $derived(selectedTierValues.map(v => Number(v) as 1 | 2 | 3));
-	const tierItems = [
-		{ value: '1', label: 'T1' },
-		{ value: '2', label: 'T2' },
-		{ value: '3', label: 'T3' },
-	];
+let selectedTierValues: string[] = $state(['1']);
+const selectedTiers = $derived(selectedTierValues.map((v) => Number(v) as 1 | 2 | 3));
+const tierItems = [
+	{ value: '1', label: 'T1' },
+	{ value: '2', label: 'T2' },
+	{ value: '3', label: 'T3' },
+];
 
-	let drawerOpen = $state(false);
+let drawerOpen = $state(false);
 
-	const pipeline = createPipelineState();
+const pipeline = createPipelineState();
 
-	const chat = new Chat({
-		api: '/api/ai/chat',
-		headers: CSRF_HEADER,
-		body: {
-			get useRetrieval() { return true; },
-			get retrievalTiers() { return selectedTiers; },
+const chat = new Chat({
+	api: '/api/ai/chat',
+	headers: CSRF_HEADER,
+	body: {
+		get useRetrieval() {
+			return true;
 		},
-	});
+		get retrievalTiers() {
+			return selectedTiers;
+		},
+	},
+});
 
-	const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
+const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
 
-	let scrollContainer: HTMLDivElement | undefined = $state();
+let scrollContainer: HTMLDivElement | undefined = $state();
 
-	// Guard: prevent empty tier selection
-	$effect(() => {
-		if (selectedTierValues.length === 0) selectedTierValues = ['1'];
-	});
+// Guard: prevent empty tier selection
+$effect(() => {
+	if (selectedTierValues.length === 0) selectedTierValues = ['1'];
+});
 
-	// Auto-scroll on new messages
-	$effect(() => {
-		if (chat.messages.length && scrollContainer) {
-			requestAnimationFrame(() => {
-				if (scrollContainer) {
-					scrollContainer.scrollTop = scrollContainer.scrollHeight;
-				}
-			});
-		}
-	});
-
-	// Process pipeline annotations from the last assistant message
-	$effect(() => {
-		const msgs = chat.messages;
-		if (msgs.length === 0) return;
-		const lastMsg = msgs[msgs.length - 1];
-		if (lastMsg?.role === 'assistant' && lastMsg.annotations) {
-			pipeline.processAnnotations(lastMsg.annotations as unknown[]);
-		}
-	});
-
-	function submitMessage() {
-		if (!chat.input.trim() || isLoading) return;
-		pipeline.reset();
-		pipeline.resetCursor();
-		chat.handleSubmit();
+// Auto-scroll on new messages
+$effect(() => {
+	if (chat.messages.length && scrollContainer) {
+		requestAnimationFrame(() => {
+			if (scrollContainer) {
+				scrollContainer.scrollTop = scrollContainer.scrollHeight;
+			}
+		});
 	}
+});
+
+// Process pipeline annotations from the last assistant message
+$effect(() => {
+	const msgs = chat.messages;
+	if (msgs.length === 0) return;
+	const lastMsg = msgs[msgs.length - 1];
+	if (lastMsg?.role === 'assistant' && lastMsg.annotations) {
+		pipeline.processAnnotations(lastMsg.annotations as unknown[]);
+	}
+});
+
+function submitMessage() {
+	if (!chat.input.trim() || isLoading) return;
+	pipeline.reset();
+	pipeline.resetCursor();
+	chat.handleSubmit();
+}
 </script>
 
 <svelte:head>

@@ -1,19 +1,14 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		pattern?: 'three-dots' | 'fleuron' | 'dinkus' | 'star';
-		size?: number;
-		color?: string;
-		class?: string;
-	}
+interface Props {
+	pattern?: 'three-dots' | 'fleuron' | 'dinkus' | 'star';
+	size?: number;
+	color?: string;
+	class?: string;
+}
 
-	let {
-		pattern = 'three-dots',
-		size = 16,
-		color = 'currentColor',
-		class: className
-	}: Props = $props();
+let { pattern = 'three-dots', size = 16, color = 'currentColor', class: className }: Props = $props();
 </script>
 
 <div

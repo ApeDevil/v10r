@@ -56,7 +56,10 @@ async function fetchChunksByIds(
 			COALESCE(c.context_prefix || E'\n' || c.content, c.content) AS content
 		FROM rag.chunk c
 		JOIN rag.document d ON d.id = c.document_id
-		WHERE c.id IN (${sql.join(chunkIds.map(id => sql`${id}`), sql`, `)})
+		WHERE c.id IN (${sql.join(
+			chunkIds.map((id) => sql`${id}`),
+			sql`, `,
+		)})
 		  AND d.user_id = ${userId}
 	`);
 
@@ -134,15 +137,11 @@ export async function searchGraph(
 		});
 	}
 
-	return results
-		.sort((a, b) => b.score - a.score)
-		.slice(0, limit);
+	return results.sort((a, b) => b.score - a.score).slice(0, limit);
 }
 
 /** Get entity context for visualization. */
-export async function getGraphEntities(
-	chunkIds: string[],
-): Promise<RetrievedEntity[]> {
+export async function getGraphEntities(chunkIds: string[]): Promise<RetrievedEntity[]> {
 	try {
 		const entities = await getEntitiesForChunks(chunkIds);
 		return entities.map((e) => ({

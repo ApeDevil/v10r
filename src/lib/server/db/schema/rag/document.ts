@@ -2,24 +2,15 @@
  * DOCUMENT — Source documents ingested into the RAG pipeline.
  * Soft-deletable. A document is the ingestion unit that gets chunked.
  */
-import { text, integer, timestamp, index } from 'drizzle-orm/pg-core';
+
 import { sql } from 'drizzle-orm';
-import { ragSchema } from './embedding-model';
+import { index, integer, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
+import { ragSchema } from './embedding-model';
 
-export const documentSourceEnum = ragSchema.enum('document_source', [
-	'upload',
-	'web',
-	'text',
-	'api',
-]);
+export const documentSourceEnum = ragSchema.enum('document_source', ['upload', 'web', 'text', 'api']);
 
-export const documentStatusEnum = ragSchema.enum('document_status', [
-	'pending',
-	'processing',
-	'ready',
-	'error',
-]);
+export const documentStatusEnum = ragSchema.enum('document_status', ['pending', 'processing', 'ready', 'error']);
 
 export const document = ragSchema.table(
 	'document',
@@ -43,8 +34,6 @@ export const document = ragSchema.table(
 		index('document_user_idx').on(table.userId),
 		index('document_status_idx').on(table.status),
 		index('document_content_hash_idx').on(table.contentHash),
-		index('document_active_idx')
-			.on(table.createdAt)
-			.where(sql`deleted_at IS NULL`),
+		index('document_active_idx').on(table.createdAt).where(sql`deleted_at IS NULL`),
 	],
 );

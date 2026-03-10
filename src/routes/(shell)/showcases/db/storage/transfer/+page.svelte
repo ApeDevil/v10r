@@ -1,154 +1,154 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { page } from '$app/state';
-	import { Card, NavSection, Alert } from '$lib/components/composites';
-	import { Badge, Button, Spinner, Progress, Typography } from '$lib/components/primitives';
-	import { Stack, Cluster } from '$lib/components/layout';
-	import { getToast } from '$lib/state/toast.svelte';
+import { enhance } from '$app/forms';
+import { page } from '$app/state';
+import { Alert, Card, NavSection } from '$lib/components/composites';
+import { Cluster, Stack } from '$lib/components/layout';
+import { Badge, Button, Progress, Spinner, Typography } from '$lib/components/primitives';
+import { getToast } from '$lib/state/toast.svelte';
 
-	let { data } = $props();
-	const toast = getToast();
+let { data } = $props();
+const toast = getToast();
 
-	const sections = [
-		{ id: 'upload', label: 'Upload' },
-		{ id: 'range', label: 'Range Requests' },
-		{ id: 'mime', label: 'MIME Enforcement' },
-	];
+const sections = [
+	{ id: 'upload', label: 'Upload' },
+	{ id: 'range', label: 'Range Requests' },
+	{ id: 'mime', label: 'MIME Enforcement' },
+];
 
-	// ─── Upload state machine ───────────────────────────
-	type UploadState = 'idle' | 'requesting' | 'uploading' | 'confirming' | 'done' | 'error';
+// ─── Upload state machine ───────────────────────────
+type UploadState = 'idle' | 'requesting' | 'uploading' | 'confirming' | 'done' | 'error';
 
-	let uploadState = $state<UploadState>('idle');
-	let selectedFile = $state<File | null>(null);
-	let uploadProgress = $state(0);
-	let uploadError = $state('');
-	let uploadResult = $state<{
-		key: string;
-		etag: string;
-		size: number;
-		sizeFormatted: string;
-		contentType: string;
-	} | null>(null);
-	let dragOver = $state(false);
+let uploadState = $state<UploadState>('idle');
+let selectedFile = $state<File | null>(null);
+let uploadProgress = $state(0);
+let uploadError = $state('');
+let uploadResult = $state<{
+	key: string;
+	etag: string;
+	size: number;
+	sizeFormatted: string;
+	contentType: string;
+} | null>(null);
+let dragOver = $state(false);
 
-	// Hold presigned URL info during upload flow
-	let pendingUploadUrl = '';
-	let pendingUploadKey = '';
+// Hold presigned URL info during upload flow
+let pendingUploadUrl = '';
+let pendingUploadKey = '';
 
-	function handleFileSelect(e: Event) {
-		const input = e.target as HTMLInputElement;
-		if (input.files?.length) {
-			selectedFile = input.files[0];
-			uploadError = '';
-		}
-	}
-
-	function handleDrop(e: DragEvent) {
-		e.preventDefault();
-		dragOver = false;
-		const file = e.dataTransfer?.files?.[0];
-		if (file) {
-			selectedFile = file;
-			uploadError = '';
-		}
-	}
-
-	function handleDragOver(e: DragEvent) {
-		e.preventDefault();
-		dragOver = true;
-	}
-
-	function handleDragLeave() {
-		dragOver = false;
-	}
-
-	function resetUpload() {
-		uploadState = 'idle';
-		selectedFile = null;
-		uploadProgress = 0;
+function handleFileSelect(e: Event) {
+	const input = e.target as HTMLInputElement;
+	if (input.files?.length) {
+		selectedFile = input.files[0];
 		uploadError = '';
-		uploadResult = null;
-		pendingUploadUrl = '';
-		pendingUploadKey = '';
 	}
+}
 
-	// Step 2: Upload file directly to R2 via XHR (for progress tracking)
-	function uploadToR2(url: string, file: File): Promise<void> {
-		return new Promise((resolve, reject) => {
-			const xhr = new XMLHttpRequest();
-			xhr.open('PUT', url);
-			xhr.setRequestHeader('Content-Type', file.type);
-
-			xhr.upload.onprogress = (e) => {
-				if (e.lengthComputable) {
-					uploadProgress = Math.round((e.loaded / e.total) * 100);
-				}
-			};
-
-			xhr.onload = () => {
-				if (xhr.status >= 200 && xhr.status < 300) {
-					resolve();
-				} else {
-					reject(new Error(`Upload failed: HTTP ${xhr.status}`));
-				}
-			};
-
-			xhr.onerror = () => reject(new Error('Upload failed: network error'));
-			xhr.send(file);
-		});
+function handleDrop(e: DragEvent) {
+	e.preventDefault();
+	dragOver = false;
+	const file = e.dataTransfer?.files?.[0];
+	if (file) {
+		selectedFile = file;
+		uploadError = '';
 	}
+}
 
-	// Handle the form action result for requestUploadUrl
-	const actionResult = $derived(page.form);
+function handleDragOver(e: DragEvent) {
+	e.preventDefault();
+	dragOver = true;
+}
 
-	$effect(() => {
-		if (actionResult?.uploadUrl && uploadState === 'requesting') {
-			pendingUploadUrl = actionResult.uploadUrl.url;
-			pendingUploadKey = actionResult.uploadUrl.key;
-			startDirectUpload();
-		}
-		if (actionResult?.confirmed && uploadState === 'confirming') {
-			uploadResult = actionResult.confirmed;
-			uploadState = 'done';
-		}
+function handleDragLeave() {
+	dragOver = false;
+}
+
+function resetUpload() {
+	uploadState = 'idle';
+	selectedFile = null;
+	uploadProgress = 0;
+	uploadError = '';
+	uploadResult = null;
+	pendingUploadUrl = '';
+	pendingUploadKey = '';
+}
+
+// Step 2: Upload file directly to R2 via XHR (for progress tracking)
+function uploadToR2(url: string, file: File): Promise<void> {
+	return new Promise((resolve, reject) => {
+		const xhr = new XMLHttpRequest();
+		xhr.open('PUT', url);
+		xhr.setRequestHeader('Content-Type', file.type);
+
+		xhr.upload.onprogress = (e) => {
+			if (e.lengthComputable) {
+				uploadProgress = Math.round((e.loaded / e.total) * 100);
+			}
+		};
+
+		xhr.onload = () => {
+			if (xhr.status >= 200 && xhr.status < 300) {
+				resolve();
+			} else {
+				reject(new Error(`Upload failed: HTTP ${xhr.status}`));
+			}
+		};
+
+		xhr.onerror = () => reject(new Error('Upload failed: network error'));
+		xhr.send(file);
 	});
+}
 
-	async function startDirectUpload() {
-		if (!selectedFile || !pendingUploadUrl) return;
+// Handle the form action result for requestUploadUrl
+const actionResult = $derived(page.form);
 
-		uploadState = 'uploading';
-		uploadProgress = 0;
-
-		try {
-			await uploadToR2(pendingUploadUrl, selectedFile);
-
-			// Step 3: Confirm upload via form action
-			uploadState = 'confirming';
-			const confirmForm = document.getElementById('confirm-form') as HTMLFormElement;
-			const keyInput = confirmForm?.querySelector('input[name="key"]') as HTMLInputElement;
-			if (keyInput) keyInput.value = pendingUploadKey;
-			confirmForm?.requestSubmit();
-		} catch (err) {
-			uploadError = err instanceof Error ? err.message : 'Upload failed';
-			uploadState = 'error';
-		}
+$effect(() => {
+	if (actionResult?.uploadUrl && uploadState === 'requesting') {
+		pendingUploadUrl = actionResult.uploadUrl.url;
+		pendingUploadKey = actionResult.uploadUrl.key;
+		startDirectUpload();
 	}
+	if (actionResult?.confirmed && uploadState === 'confirming') {
+		uploadResult = actionResult.confirmed;
+		uploadState = 'done';
+	}
+});
 
-	// ─── Range request state ────────────────────────────
-	let rangeStart = $state(0);
-	let rangeEnd = $state(63);
-	let fetchingRange = $state(false);
-	let rangeResult = $state<{
-		contentRange: string;
-		contentLength: number;
-		hexDump: string;
-	} | null>(null);
+async function startDirectUpload() {
+	if (!selectedFile || !pendingUploadUrl) return;
 
-	$effect(() => {
-		if (actionResult?.range) {
-			rangeResult = actionResult.range;
-		}
-	});
+	uploadState = 'uploading';
+	uploadProgress = 0;
+
+	try {
+		await uploadToR2(pendingUploadUrl, selectedFile);
+
+		// Step 3: Confirm upload via form action
+		uploadState = 'confirming';
+		const confirmForm = document.getElementById('confirm-form') as HTMLFormElement;
+		const keyInput = confirmForm?.querySelector('input[name="key"]') as HTMLInputElement;
+		if (keyInput) keyInput.value = pendingUploadKey;
+		confirmForm?.requestSubmit();
+	} catch (err) {
+		uploadError = err instanceof Error ? err.message : 'Upload failed';
+		uploadState = 'error';
+	}
+}
+
+// ─── Range request state ────────────────────────────
+let rangeStart = $state(0);
+let rangeEnd = $state(63);
+let fetchingRange = $state(false);
+let rangeResult = $state<{
+	contentRange: string;
+	contentLength: number;
+	hexDump: string;
+} | null>(null);
+
+$effect(() => {
+	if (actionResult?.range) {
+		rangeResult = actionResult.range;
+	}
+});
 </script>
 
 <svelte:head>
@@ -181,7 +181,7 @@
 							accept="image/*,application/pdf"
 							onchange={handleFileSelect}
 						/>
-						<span class="i-lucide-upload-cloud drop-icon" />
+						<span class="i-lucide-upload-cloud drop-icon" ></span>
 						<span class="drop-text">Drop a file here or click to browse</span>
 						<span class="drop-hint">Images and PDF only, max 2 MB</span>
 					</label>
@@ -193,7 +193,7 @@
 					{#if selectedFile}
 						<div class="file-preview">
 							<div class="file-info">
-								<span class="i-lucide-file h-5 w-5" />
+								<span class="i-lucide-file h-5 w-5" ></span>
 								<div>
 									<span class="file-name">{selectedFile.name}</span>
 									<span class="file-meta">{selectedFile.type} — {(selectedFile.size / 1024).toFixed(1)} KB</span>
@@ -206,7 +206,7 @@
 									uploadState = 'requesting';
 									return async ({ result, update }) => {
 										if (result.type === 'failure') {
-											uploadError = result.data?.message || 'Failed to get upload URL';
+											uploadError = (result.data?.message as string) || 'Failed to get upload URL';
 											uploadState = 'error';
 										}
 										await update({ reset: false });
@@ -217,7 +217,7 @@
 								<input type="hidden" name="mimeType" value={selectedFile.type} />
 								<input type="hidden" name="fileSize" value={selectedFile.size} />
 								<Button type="submit" variant="primary" size="sm">
-									<span class="i-lucide-upload h-4 w-4 mr-1" />
+									<span class="i-lucide-upload h-4 w-4 mr-1" ></span>
 									Upload
 								</Button>
 							</form>
@@ -267,7 +267,7 @@
 						</div>
 						<Cluster gap="4" align="center">
 							<Button variant="outline" size="sm" onclick={resetUpload}>
-								<span class="i-lucide-upload h-4 w-4 mr-1" />
+								<span class="i-lucide-upload h-4 w-4 mr-1" ></span>
 								Upload Another
 							</Button>
 							<a href="/showcases/db/storage/objects" class="text-fluid-sm text-primary">
@@ -288,7 +288,7 @@
 			use:enhance={() => {
 				return async ({ result, update }) => {
 					if (result.type === 'failure') {
-						uploadError = result.data?.message || 'Confirmation failed';
+						uploadError = (result.data?.message as string) || 'Confirmation failed';
 						uploadState = 'error';
 					}
 					await update({ reset: false });
@@ -315,7 +315,7 @@
 						return async ({ result, update }) => {
 							fetchingRange = false;
 							if (result.type === 'failure') {
-								toast.error(result.data?.message || 'Range request failed');
+								toast.error((result.data?.message as string) || 'Range request failed');
 							}
 							await update({ reset: false });
 						};
@@ -358,7 +358,7 @@
 						{#if fetchingRange}
 							<Spinner size="xs" class="mr-2" />
 						{/if}
-						<span class="i-lucide-download h-4 w-4 mr-1" />
+						<span class="i-lucide-download h-4 w-4 mr-1" ></span>
 						Fetch Range
 					</Button>
 

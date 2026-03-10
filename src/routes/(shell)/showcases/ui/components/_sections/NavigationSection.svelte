@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { DemoCard } from '../_components';
-	import { PageHeader } from '$lib/components';
+import { PageHeader } from '$lib/components';
+import { DemoCard } from '../_components';
 </script>
 
 <section id="comp-navigation" class="section">

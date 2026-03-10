@@ -1,14 +1,10 @@
-import {
-	PutObjectCommand,
-	HeadObjectCommand,
-	DeleteObjectCommand,
-} from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, HeadObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { s3, BUCKET } from '../index';
-import { StoreError } from '../errors';
-import { assertShowcaseKey, checkObjectLimit } from './guards';
 import { MAX_UPLOAD_SIZE, PRESIGNED_URL_EXPIRY } from '$lib/server/config';
+import { StoreError } from '../errors';
+import { BUCKET, s3 } from '../index';
 import type { PresignedUrlResult, UploadResult } from '../types';
+import { assertShowcaseKey, checkObjectLimit } from './guards';
 
 function requireS3() {
 	if (!s3) throw new StoreError('credentials', 'R2 storage is not configured');
@@ -17,14 +13,7 @@ function requireS3() {
 
 const UPLOAD_PREFIX = 'showcase/uploads/';
 
-const ALLOWED_MIME_TYPES = [
-	'image/png',
-	'image/jpeg',
-	'image/gif',
-	'image/webp',
-	'image/svg+xml',
-	'application/pdf',
-];
+const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml', 'application/pdf'];
 
 /**
  * Generate a presigned PUT URL for direct browser upload.
@@ -47,10 +36,7 @@ export async function generateUploadUrl(
 
 	// Validate size
 	if (fileSize > MAX_UPLOAD_SIZE) {
-		throw new StoreError(
-			'limit',
-			`File size ${(fileSize / 1024 / 1024).toFixed(1)} MB exceeds the 2 MB limit`,
-		);
+		throw new StoreError('limit', `File size ${(fileSize / 1024 / 1024).toFixed(1)} MB exceeds the 2 MB limit`);
 	}
 
 	// Check showcase object limit
@@ -60,7 +46,7 @@ export async function generateUploadUrl(
 	}
 
 	// Generate key with UUID
-	const ext = fileName.includes('.') ? fileName.split('.').pop()!.toLowerCase() : 'bin';
+	const ext = fileName.includes('.') ? fileName.split('.').pop()?.toLowerCase() : 'bin';
 	const key = `${UPLOAD_PREFIX}${crypto.randomUUID()}.${ext}`;
 
 	const command = new PutObjectCommand({

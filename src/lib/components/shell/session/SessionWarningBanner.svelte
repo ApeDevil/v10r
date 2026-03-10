@@ -1,38 +1,38 @@
 <script lang="ts">
-	/**
-	 * Session expiry warning banner
-	 * Shows when <5 minutes remain, allows extension or sign out
-	 */
+/**
+ * Session expiry warning banner
+ * Shows when <5 minutes remain, allows extension or sign out
+ */
 
-	type Props = {
-		timeRemaining: number; // seconds
-		onExtend: () => Promise<void>;
-		onSignOut: () => void;
-		onDismiss: () => void;
-	};
+type Props = {
+	timeRemaining: number; // seconds
+	onExtend: () => Promise<void>;
+	onSignOut: () => void;
+	onDismiss: () => void;
+};
 
-	let { timeRemaining, onExtend, onSignOut, onDismiss }: Props = $props();
+let { timeRemaining, onExtend, onSignOut, onDismiss }: Props = $props();
 
-	let extending = $state(false);
+let extending = $state(false);
 
-	// Format time as MM:SS
-	const formattedTime = $derived(() => {
-		const minutes = Math.floor(timeRemaining / 60);
-		const seconds = timeRemaining % 60;
-		return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-	});
+// Format time as MM:SS
+const formattedTime = $derived(() => {
+	const minutes = Math.floor(timeRemaining / 60);
+	const seconds = timeRemaining % 60;
+	return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+});
 
-	async function handleExtend() {
-		extending = true;
-		try {
-			await onExtend();
-			onDismiss(); // Close banner after successful extension
-		} catch (error) {
-			console.error('Failed to extend session:', error);
-		} finally {
-			extending = false;
-		}
+async function handleExtend() {
+	extending = true;
+	try {
+		await onExtend();
+		onDismiss(); // Close banner after successful extension
+	} catch (error) {
+		console.error('Failed to extend session:', error);
+	} finally {
+		extending = false;
 	}
+}
 </script>
 
 <div class="session-banner" role="alert" aria-live="polite">

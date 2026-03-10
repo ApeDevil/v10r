@@ -1,15 +1,15 @@
 <script lang="ts">
-	import DockLeaf from './DockLeaf.svelte';
-	import DockResizeHandle from './DockResizeHandle.svelte';
-	import type { LayoutNode } from './dock.types';
-	import type { Snippet } from 'svelte';
+import type { Snippet } from 'svelte';
+import DockLeaf from './DockLeaf.svelte';
+import DockResizeHandle from './DockResizeHandle.svelte';
+import type { LayoutNode } from './dock.types';
 
-	interface Props {
-		node: LayoutNode;
-		panelContent: Snippet<[string]>;
-	}
+interface Props {
+	node: LayoutNode;
+	panelContent: Snippet<[string]>;
+}
 
-	let { node, panelContent }: Props = $props();
+let { node, panelContent }: Props = $props();
 </script>
 
 {#if node.type === 'leaf'}

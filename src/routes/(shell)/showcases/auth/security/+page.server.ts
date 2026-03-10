@@ -1,5 +1,5 @@
-import type { PageServerLoad } from './$types';
 import { BETTER_AUTH_URL } from '$env/static/private';
+import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
 	return {

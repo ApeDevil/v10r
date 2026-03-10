@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import type { RankedChunk } from './types';
-import { reciprocalRankFusion, deduplicateAndCap, fuseAndRank } from './rank';
+import { describe, expect, it } from 'vitest';
 import { RRF_K } from './config';
+import { deduplicateAndCap, fuseAndRank, reciprocalRankFusion } from './rank';
+import type { RankedChunk } from './types';
 
 function makeChunk(id: string, score: number, tier: 1 | 2 | 3 = 1): RankedChunk {
 	return {
@@ -74,12 +74,7 @@ describe('deduplicateAndCap', () => {
 
 describe('fuseAndRank', () => {
 	it('groups by tier for RRF then deduplicates', () => {
-		const chunks = [
-			makeChunk('a', 0.9, 1),
-			makeChunk('b', 0.8, 1),
-			makeChunk('a', 0.7, 2),
-			makeChunk('c', 0.6, 2),
-		];
+		const chunks = [makeChunk('a', 0.9, 1), makeChunk('b', 0.8, 1), makeChunk('a', 0.7, 2), makeChunk('c', 0.6, 2)];
 		const { chunks: result } = fuseAndRank(chunks, 10);
 
 		// 'a' appears in both tiers, should rank highest

@@ -5,20 +5,21 @@ export const spinnerVariants = cva(
 	{
 		variants: {
 			size: {
+				xs: 'w-3 h-3',
 				sm: 'w-4 h-4',
 				md: 'w-6 h-6',
-				lg: 'w-8 h-8'
+				lg: 'w-8 h-8',
 			},
 			variant: {
 				primary: 'border-primary',
-				muted: 'border-muted'
-			}
+				muted: 'border-muted',
+			},
 		},
 		defaultVariants: {
 			size: 'md',
-			variant: 'primary'
-		}
-	}
+			variant: 'primary',
+		},
+	},
 );
 
 export type SpinnerVariants = VariantProps<typeof spinnerVariants>;

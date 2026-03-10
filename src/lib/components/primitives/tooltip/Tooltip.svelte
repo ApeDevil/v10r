@@ -1,26 +1,20 @@
 <script lang="ts">
-	import { Tooltip as TooltipPrimitive } from 'bits-ui';
-	import { cn } from '$lib/utils/cn';
-	import type { Snippet } from 'svelte';
+import { Tooltip as TooltipPrimitive } from 'bits-ui';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		children: Snippet;
-		content: string | Snippet;
-		side?: 'top' | 'right' | 'bottom' | 'left';
-		delayDuration?: number;
-		class?: string;
-	}
+interface Props {
+	children: Snippet;
+	content: string | Snippet;
+	side?: 'top' | 'right' | 'bottom' | 'left';
+	delayDuration?: number;
+	class?: string;
+}
 
-	let {
-		children,
-		content,
-		side = 'top',
-		delayDuration = 200,
-		class: className
-	}: Props = $props();
+let { children, content, side = 'top', delayDuration = 200, class: className }: Props = $props();
 
-	// Type guard to check if content is a string
-	const isString = (val: string | Snippet): val is string => typeof val === 'string';
+// Type guard to check if content is a string
+const isString = (val: string | Snippet): val is string => typeof val === 'string';
 </script>
 
 <TooltipPrimitive.Root {delayDuration}>

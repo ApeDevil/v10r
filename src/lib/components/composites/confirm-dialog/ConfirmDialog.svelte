@@ -1,29 +1,29 @@
 <script lang="ts">
-	import { Dialog } from 'bits-ui';
-	import { Button } from '$lib/components/primitives';
-	import { cn } from '$lib/utils/cn';
+import { Dialog } from 'bits-ui';
+import { Button } from '$lib/components/primitives';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		open: boolean;
-		title: string;
-		description?: string;
-		confirmLabel?: string;
-		cancelLabel?: string;
-		destructive?: boolean;
-		onconfirm: () => void;
-		oncancel: () => void;
-	}
+interface Props {
+	open: boolean;
+	title: string;
+	description?: string;
+	confirmLabel?: string;
+	cancelLabel?: string;
+	destructive?: boolean;
+	onconfirm: () => void;
+	oncancel: () => void;
+}
 
-	let {
-		open = $bindable(),
-		title,
-		description,
-		confirmLabel = 'Confirm',
-		cancelLabel = 'Cancel',
-		destructive = false,
-		onconfirm,
-		oncancel
-	}: Props = $props();
+let {
+	open = $bindable(),
+	title,
+	description,
+	confirmLabel = 'Confirm',
+	cancelLabel = 'Cancel',
+	destructive = false,
+	onconfirm,
+	oncancel,
+}: Props = $props();
 </script>
 
 <Dialog.Root bind:open>
@@ -61,7 +61,7 @@
 			<Dialog.Close
 				class="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100"
 			>
-				<span class="i-lucide-x h-4 w-4" />
+				<span class="i-lucide-x h-4 w-4" ></span>
 				<span class="sr-only">Close</span>
 			</Dialog.Close>
 		</Dialog.Content>

@@ -1,26 +1,26 @@
 <script lang="ts">
-	import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
-	import { cn } from '$lib/utils/cn';
-	import type { Snippet } from 'svelte';
-	import type { ContextMenuItem } from './types';
-	import {
-		contextMenuContentVariants,
-		contextMenuItemVariants,
-		contextMenuSeparatorVariants,
-		contextMenuShortcutVariants
-	} from './context-menu';
+import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils/cn';
+import {
+	contextMenuContentVariants,
+	contextMenuItemVariants,
+	contextMenuSeparatorVariants,
+	contextMenuShortcutVariants,
+} from './context-menu';
+import type { ContextMenuItem } from './types';
 
-	interface TriggerProps {
-		props: Record<string, unknown>;
-	}
+interface TriggerProps {
+	props: Record<string, unknown>;
+}
 
-	interface Props {
-		items: ContextMenuItem[];
-		trigger: Snippet<[TriggerProps]>;
-		align?: 'start' | 'center' | 'end';
-	}
+interface Props {
+	items: ContextMenuItem[];
+	trigger: Snippet<[TriggerProps]>;
+	align?: 'start' | 'center' | 'end';
+}
 
-	let { items, trigger, align = 'start' }: Props = $props();
+let { items, trigger, align = 'start' }: Props = $props();
 </script>
 
 <ContextMenuPrimitive.Root>
@@ -33,8 +33,6 @@
 	<ContextMenuPrimitive.Portal>
 		<ContextMenuPrimitive.Content
 			class={contextMenuContentVariants()}
-			sideOffset={4}
-			{align}
 		>
 			{#each items as item}
 				{#if item.separator}
@@ -50,7 +48,7 @@
 						}}
 					>
 						{#if item.icon}
-							<span class={cn(item.icon, 'h-4 w-4')} />
+							<span class={cn(item.icon, 'h-4 w-4')} ></span>
 						{/if}
 						<span class="flex-1">{item.label}</span>
 						{#if item.shortcut}

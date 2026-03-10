@@ -1,40 +1,47 @@
 <script lang="ts">
-	import type { PageProps } from './$types';
-	import { superForm } from 'sveltekit-superforms';
-	import { valibotClient } from 'sveltekit-superforms/adapters';
-	import { realtimeSchema } from '$lib/schemas/showcase/validation';
-	import { Card, Alert, FormField } from '$lib/components/composites';
-	import { Button, Input, Badge, Progress, Spinner } from '$lib/components/primitives';
-	import { Stack, Cluster } from '$lib/components/layout';
+import { superForm } from 'sveltekit-superforms';
+import { valibotClient } from 'sveltekit-superforms/adapters';
+import { Alert, Card, FormField } from '$lib/components/composites';
+import { Cluster, Stack } from '$lib/components/layout';
+import { Badge, Button, Input, Progress, Spinner } from '$lib/components/primitives';
+import { realtimeSchema } from '$lib/schemas/showcase/validation';
+import type { PageProps } from './$types';
 
-	let { data }: PageProps = $props();
+let { data }: PageProps = $props();
 
-	const { form, errors, enhance, submitting, delayed, message: formMessage } = superForm(data.form, {
-		validators: valibotClient(realtimeSchema),
-		validationMethod: 'oninput',
-	});
+const {
+	form,
+	errors,
+	enhance,
+	submitting,
+	delayed,
+	message: formMessage,
+} = superForm(data.form, {
+	validators: valibotClient(realtimeSchema),
+	validationMethod: 'oninput',
+});
 
-	const usernameLength = $derived($form.username.length);
-	const usernameMaxLength = 20;
+const usernameLength = $derived($form.username.length);
+const usernameMaxLength = 20;
 
-	// Password strength
-	const passwordStrength = $derived.by(() => {
-		const pw = $form.password;
-		if (!pw) return { score: 0, label: '', variant: 'default' as const };
-		let score = 0;
-		if (pw.length >= 8) score++;
-		if (/[A-Z]/.test(pw)) score++;
-		if (/[0-9]/.test(pw)) score++;
-		if (/[^A-Za-z0-9]/.test(pw)) score++;
-		const levels = [
-			{ score: 0, label: '', variant: 'default' as const },
-			{ score: 1, label: 'Weak', variant: 'error' as const },
-			{ score: 2, label: 'Fair', variant: 'warning' as const },
-			{ score: 3, label: 'Good', variant: 'success' as const },
-			{ score: 4, label: 'Strong', variant: 'success' as const },
-		];
-		return levels[score];
-	});
+// Password strength
+const passwordStrength = $derived.by(() => {
+	const pw = $form.password;
+	if (!pw) return { score: 0, label: '', variant: 'default' as const };
+	let score = 0;
+	if (pw.length >= 8) score++;
+	if (/[A-Z]/.test(pw)) score++;
+	if (/[0-9]/.test(pw)) score++;
+	if (/[^A-Za-z0-9]/.test(pw)) score++;
+	const levels = [
+		{ score: 0, label: '', variant: 'default' as const },
+		{ score: 1, label: 'Weak', variant: 'error' as const },
+		{ score: 2, label: 'Fair', variant: 'warning' as const },
+		{ score: 3, label: 'Good', variant: 'success' as const },
+		{ score: 4, label: 'Strong', variant: 'success' as const },
+	];
+	return levels[score];
+});
 </script>
 
 <svelte:head>

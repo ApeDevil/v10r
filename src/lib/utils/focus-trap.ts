@@ -3,8 +3,7 @@
  * Traps keyboard focus within a container element.
  */
 
-const FOCUSABLE_SELECTOR =
-	'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 /**
  * Trap focus within a container element.

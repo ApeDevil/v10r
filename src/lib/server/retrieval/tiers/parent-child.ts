@@ -5,8 +5,8 @@
  */
 import { sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import type { RankedChunk } from '../types';
 import { OVERFETCH_MULTIPLIER } from '../config';
+import type { RankedChunk } from '../types';
 
 interface ChildHit {
 	chunkId: string;
@@ -15,6 +15,7 @@ interface ChildHit {
 	documentTitle: string;
 	content: string;
 	distance: number;
+	[key: string]: unknown;
 }
 
 interface ParentRow {
@@ -26,11 +27,7 @@ interface ParentRow {
 }
 
 /** Search child chunks by vector similarity. */
-async function searchChildren(
-	queryEmbedding: number[],
-	limit: number,
-	userId: string,
-): Promise<ChildHit[]> {
+async function searchChildren(queryEmbedding: number[], limit: number, userId: string): Promise<ChildHit[]> {
 	const embeddingStr = `[${queryEmbedding.join(',')}]`;
 
 	const result = await db.execute<ChildHit>(sql`
@@ -74,7 +71,10 @@ async function resolveParents(
 			COALESCE(c.context_prefix || E'\n' || c.content, c.content) AS content
 		FROM rag.chunk c
 		JOIN rag.document d ON d.id = c.document_id
-		WHERE c.id IN (${sql.join(parentIds.map(id => sql`${id}`), sql`, `)})
+		WHERE c.id IN (${sql.join(
+			parentIds.map((id) => sql`${id}`),
+			sql`, `,
+		)})
 	`);
 
 	const map = new Map<string, { content: string; documentId: string; documentTitle: string }>();
@@ -135,7 +135,5 @@ export async function searchParentChild(
 		});
 	}
 
-	return results
-		.sort((a, b) => b.score - a.score)
-		.slice(0, limit);
+	return results.sort((a, b) => b.score - a.score).slice(0, limit);
 }

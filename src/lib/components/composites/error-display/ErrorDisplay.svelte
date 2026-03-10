@@ -1,46 +1,44 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import { goto } from '$app/navigation';
-	import { Button } from '$lib/components/primitives';
+import type { Snippet } from 'svelte';
+import { goto } from '$app/navigation';
+import { Button } from '$lib/components/primitives';
 
-	interface Props {
-		status: number;
-		message?: string;
-		errorId?: string;
-		context?: 'default' | 'showcase' | 'app' | 'auth';
-		actions?: Snippet;
-		children?: Snippet;
+interface Props {
+	status: number;
+	message?: string;
+	errorId?: string;
+	context?: 'default' | 'showcase' | 'app' | 'auth';
+	actions?: Snippet;
+	children?: Snippet;
+}
+
+let { status, message, errorId, context = 'default', actions, children }: Props = $props();
+
+const icon = $derived.by(() => {
+	if (status === 404) return 'i-lucide-compass';
+	if (status === 403) return 'i-lucide-shield-off';
+	if (status >= 500) return 'i-lucide-server-crash';
+	return 'i-lucide-triangle-alert';
+});
+
+const heading = $derived.by(() => {
+	if (status === 404) return "This page doesn't exist";
+	if (status === 403) return "You don't have access";
+	if (status >= 500) return 'Something went wrong';
+	return 'An error occurred';
+});
+
+const showMessage = $derived(message && !message.includes('\n') && message.length < 200);
+
+let copied = $state(false);
+
+function copyErrorId() {
+	if (errorId) {
+		navigator.clipboard.writeText(errorId);
+		copied = true;
+		setTimeout(() => (copied = false), 2000);
 	}
-
-	let { status, message, errorId, context = 'default', actions, children }: Props = $props();
-
-	const icon = $derived.by(() => {
-		if (status === 404) return 'i-lucide-compass';
-		if (status === 403) return 'i-lucide-shield-off';
-		if (status >= 500) return 'i-lucide-server-crash';
-		return 'i-lucide-triangle-alert';
-	});
-
-	const heading = $derived.by(() => {
-		if (status === 404) return "This page doesn't exist";
-		if (status === 403) return "You don't have access";
-		if (status >= 500) return 'Something went wrong';
-		return 'An error occurred';
-	});
-
-	const showMessage = $derived(
-		message && !message.includes('\n') && message.length < 200
-	);
-
-	let copied = $state(false);
-
-	function copyErrorId() {
-		if (errorId) {
-			navigator.clipboard.writeText(errorId);
-			copied = true;
-			setTimeout(() => (copied = false), 2000);
-		}
-	}
+}
 </script>
 
 <div class="error-display" role="alert">

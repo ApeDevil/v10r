@@ -1,88 +1,104 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { page } from '$app/state';
-	import { Card, NavSection, ConfirmDialog, Alert, FormField } from '$lib/components/composites';
-	import { Badge, Button, Input, Select, Switch, Typography } from '$lib/components/primitives';
-	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
-	import { Dialog } from '$lib/components/primitives';
-	import { Stack, Cluster } from '$lib/components/layout';
-	import { getToast } from '$lib/state/toast.svelte';
+import { enhance } from '$app/forms';
+import { page } from '$app/state';
+import { Alert, Card, ConfirmDialog, FormField, NavSection } from '$lib/components/composites';
+import { Cluster, Stack } from '$lib/components/layout';
+import {
+	Badge,
+	Body,
+	Button,
+	Cell,
+	Dialog,
+	Header,
+	HeaderCell,
+	Input,
+	Row,
+	Select,
+	Switch,
+	Table,
+	Typography,
+} from '$lib/components/primitives';
+import { getToast } from '$lib/state/toast.svelte';
 
-	let { data } = $props();
-	const toast = getToast();
+let { data } = $props();
+const toast = getToast();
 
-	const sections = [
-		{ id: 'mutable', label: 'Mutable CRUD' },
-		{ id: 'versioned', label: 'Versioned' },
-		{ id: 'soft-delete', label: 'Soft Delete' },
-		{ id: 'append-only', label: 'Append-Only' },
-		{ id: 'temporal', label: 'Temporal' },
-	];
+const sections = [
+	{ id: 'mutable', label: 'Mutable CRUD' },
+	{ id: 'versioned', label: 'Versioned' },
+	{ id: 'soft-delete', label: 'Soft Delete' },
+	{ id: 'append-only', label: 'Append-Only' },
+	{ id: 'temporal', label: 'Temporal' },
+];
 
-	// ─── CRUD state ──────────────────────────────────────────
-	let showCreateForm = $state(false);
-	let editingSpecimen = $state<typeof data.mutableRows[0] | null>(null);
-	let editDialogOpen = $state(false);
+// ─── CRUD state ──────────────────────────────────────────
+let showCreateForm = $state(false);
+let editingSpecimen = $state<(typeof data.mutableRows)[0] | null>(null);
+let editDialogOpen = $state(false);
 
-	// ─── Versioned state ─────────────────────────────────────
-	let editingVersioned = $state<typeof data.mutableRows[0] | null>(null);
-	let versionedDialogOpen = $state(false);
+// ─── Versioned state ─────────────────────────────────────
+let editingVersioned = $state<(typeof data.mutableRows)[0] | null>(null);
+let versionedDialogOpen = $state(false);
 
-	// ─── Reset state ─────────────────────────────────────────
-	let resetDialogOpen = $state(false);
+// ─── Reset state ─────────────────────────────────────────
+let resetDialogOpen = $state(false);
 
-	// ─── Temporal query state ────────────────────────────────
-	let temporalQueryDate = $state('');
-	let temporalResults = $state<typeof data.temporalRows>([]);
-	let temporalQueryActive = $state(false);
+// ─── Temporal query state ────────────────────────────────
+let temporalQueryDate = $state('');
+let temporalResults = $state<typeof data.temporalRows>([]);
+let temporalQueryActive = $state(false);
 
-	// ─── Action result handling ──────────────────────────────
-	const actionResult = $derived(page.form);
+// ─── Action result handling ──────────────────────────────
+const actionResult = $derived(page.form);
 
-	// ─── Shared ──────────────────────────────────────────────
-	function formatTs(val: unknown): string {
-		if (!val) return '—';
-		const d = new Date(String(val));
-		return d.toLocaleString('en-US', {
-			month: 'short', day: 'numeric', year: 'numeric',
-			hour: '2-digit', minute: '2-digit', second: '2-digit',
-		});
-	}
+// ─── Shared ──────────────────────────────────────────────
+function formatTs(val: unknown): string {
+	if (!val) return '—';
+	const d = new Date(String(val));
+	return d.toLocaleString('en-US', {
+		month: 'short',
+		day: 'numeric',
+		year: 'numeric',
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit',
+	});
+}
 
-	function handleActionResult(opts: { successMsg?: string } = {}) {
-		return ({ result, update }: { result: any; update: (opts?: any) => Promise<void> }) => {
-			if (result.type === 'success') {
-				const msg = result.data?.message || opts.successMsg || 'Done.';
-				toast.success(msg);
-			} else if (result.type === 'failure') {
-				toast.error(result.data?.message || 'Operation failed.');
-			}
-			return update();
-		};
-	}
+function handleActionResult(opts: { successMsg?: string } = {}) {
+	return ({ result, update }: { result: any; update: (opts?: any) => Promise<void> }) => {
+		if (result.type === 'success') {
+			const msg = (result.data?.message as string) || opts.successMsg || 'Done.';
+			toast.success(msg);
+		} else if (result.type === 'failure') {
+			toast.error((result.data?.message as string) || 'Operation failed.');
+		}
+		return update();
+	};
+}
 
-	const actionOptions = [
-		{ value: 'create', label: 'create' },
-		{ value: 'update', label: 'update' },
-		{ value: 'delete', label: 'delete' },
-		{ value: 'restore', label: 'restore' },
-		{ value: 'export', label: 'export' },
-		{ value: 'import', label: 'import' },
-		{ value: 'login', label: 'login' },
-		{ value: 'logout', label: 'logout' },
-	];
+const actionOptions = [
+	{ value: 'create', label: 'create' },
+	{ value: 'update', label: 'update' },
+	{ value: 'delete', label: 'delete' },
+	{ value: 'restore', label: 'restore' },
+	{ value: 'export', label: 'export' },
+	{ value: 'import', label: 'import' },
+	{ value: 'login', label: 'login' },
+	{ value: 'logout', label: 'logout' },
+];
 
-	const severityOptions = [
-		{ value: 'debug', label: 'debug' },
-		{ value: 'info', label: 'info' },
-		{ value: 'warning', label: 'warning' },
-		{ value: 'error', label: 'error' },
-		{ value: 'critical', label: 'critical' },
-	];
+const severityOptions = [
+	{ value: 'debug', label: 'debug' },
+	{ value: 'info', label: 'info' },
+	{ value: 'warning', label: 'warning' },
+	{ value: 'error', label: 'error' },
+	{ value: 'critical', label: 'critical' },
+];
 
-	// Append-only form state
-	let appendAction = $state('create');
-	let appendSeverity = $state('info');
+// Append-only form state
+let appendAction = $state('create');
+let appendSeverity = $state('info');
 </script>
 
 <svelte:head>
@@ -91,7 +107,7 @@
 
 {#if data.error}
 		<Alert variant="error" title="Database Error">
-			{#snippet children(_)}
+			{#snippet children()}
 				<code class="font-mono text-fluid-sm break-all">{data.error}</code>
 				<p class="text-fluid-sm mt-2">Run <code>db:push</code> to initialize the showcase schema, then use the Reseed button.</p>
 			{/snippet}
@@ -102,7 +118,7 @@
 		<!-- Action result alert -->
 		{#if actionResult?.message && !actionResult?.success}
 			<Alert variant="error" class="mb-4">
-				{#snippet children(_)}
+				{#snippet children()}
 					<code>{actionResult.message}</code>
 				{/snippet}
 			</Alert>
@@ -119,7 +135,7 @@
 								<p class="section-desc">Rows are created, read, updated, and deleted. <code>updated_at</code> tracks last modification. Try creating, editing, and deleting rows below.</p>
 							</div>
 							<Button variant="primary" size="sm" onclick={() => showCreateForm = !showCreateForm}>
-								<span class="i-lucide-plus h-4 w-4 mr-1" />
+								<span class="i-lucide-plus h-4 w-4 mr-1" ></span>
 								Add Row
 							</Button>
 						</Cluster>
@@ -137,7 +153,7 @@
 										showCreateForm = false;
 										toast.success('Specimen created.');
 									} else if (result.type === 'failure') {
-										toast.error(result.data?.message || 'Failed to create.');
+										toast.error((result.data?.message as string) || 'Failed to create.');
 									}
 									return update();
 								};
@@ -187,7 +203,7 @@
 														onclick={() => { editingSpecimen = r; editDialogOpen = true; }}
 														aria-label="Edit {r.label}"
 													>
-														<span class="i-lucide-pencil h-3.5 w-3.5" />
+														<span class="i-lucide-pencil h-3.5 w-3.5" ></span>
 													</Button>
 													<form
 														method="POST"
@@ -196,7 +212,7 @@
 													>
 														<input type="hidden" name="id" value={r.id} />
 														<Button type="submit" variant="ghost" size="sm" aria-label="Delete {r.label}">
-															<span class="i-lucide-trash-2 h-3.5 w-3.5 text-error" />
+															<span class="i-lucide-trash-2 h-3.5 w-3.5 text-error" ></span>
 														</Button>
 													</form>
 												</div>
@@ -250,7 +266,7 @@
 													size="sm"
 													onclick={() => { editingVersioned = r; versionedDialogOpen = true; }}
 												>
-													<span class="i-lucide-history h-3.5 w-3.5 mr-1" />
+													<span class="i-lucide-history h-3.5 w-3.5 mr-1" ></span>
 													Edit + Version
 												</Button>
 											</Cell>
@@ -326,7 +342,7 @@
 									>
 										<input type="hidden" name="id" value={doc.id} />
 										<Button type="submit" variant="ghost" size="sm" aria-label="Soft-delete {doc.title}">
-											<span class="i-lucide-trash-2 h-3.5 w-3.5 text-error" />
+											<span class="i-lucide-trash-2 h-3.5 w-3.5 text-error" ></span>
 										</Button>
 									</form>
 								</div>
@@ -351,7 +367,7 @@
 									>
 										<input type="hidden" name="id" value={doc.id} />
 										<Button type="submit" variant="ghost" size="sm" aria-label="Restore {doc.title}">
-											<span class="i-lucide-undo-2 h-3.5 w-3.5 text-success" />
+											<span class="i-lucide-undo-2 h-3.5 w-3.5 text-success" ></span>
 										</Button>
 									</form>
 								</div>
@@ -446,7 +462,7 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 								</FormField>
 							</div>
 							<Button type="submit" variant="primary" size="sm">
-								<span class="i-lucide-plus h-4 w-4 mr-1" />
+								<span class="i-lucide-plus h-4 w-4 mr-1" ></span>
 								Append
 							</Button>
 						</form>
@@ -508,10 +524,10 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 								temporalQueryActive = true;
 								return async ({ result, update }) => {
 									if (result.type === 'success' && result.data?.temporalResults) {
-										temporalResults = result.data.temporalResults;
-										temporalQueryDate = result.data.queryDate;
+										temporalResults = result.data.temporalResults as typeof data.temporalRows;
+										temporalQueryDate = result.data.queryDate as string;
 									} else if (result.type === 'failure') {
-										toast.error(result.data?.message || 'Query failed.');
+										toast.error((result.data?.message as string) || 'Query failed.');
 									}
 									temporalQueryActive = false;
 									// Don't call update() — we don't want to invalidate, we keep the query results in local state
@@ -520,7 +536,7 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 						>
 							<Input name="date" type="date" required />
 							<Button type="submit" variant="outline" size="sm" disabled={temporalQueryActive}>
-								<span class="i-lucide-search h-4 w-4 mr-1" />
+								<span class="i-lucide-search h-4 w-4 mr-1" ></span>
 								Query
 							</Button>
 						</form>
@@ -587,7 +603,7 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 								</FormField>
 							</div>
 							<Button type="submit" variant="primary" size="sm">
-								<span class="i-lucide-plus h-4 w-4 mr-1" />
+								<span class="i-lucide-plus h-4 w-4 mr-1" ></span>
 								Add Record
 							</Button>
 						</form>
@@ -599,7 +615,7 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 		<!-- Reset button -->
 		<Cluster justify="center" class="mt-6 mb-4">
 			<Button variant="outline" size="sm" onclick={() => resetDialogOpen = true}>
-				<span class="i-lucide-rotate-ccw h-4 w-4 mr-1" />
+				<span class="i-lucide-rotate-ccw h-4 w-4 mr-1" ></span>
 				Reset All Showcase Data
 			</Button>
 		</Cluster>
@@ -621,35 +637,35 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 						editingSpecimen = null;
 						toast.success('Specimen updated.');
 					} else if (result.type === 'failure') {
-						toast.error(result.data?.message || 'Failed to update.');
+						toast.error((result.data?.message as string) || 'Failed to update.');
 					}
 					return update();
 				};
 			}}
 		>
-			<input type="hidden" name="id" value={editingSpecimen.id} />
+			<input type="hidden" name="id" value={editingSpecimen!.id} />
 			<div class="dialog-fields">
 				<FormField label="Label" id="edit-label">
 					{#snippet children(_)}
-						<Input id="edit-label" name="label" value={editingSpecimen.label} />
+						<Input id="edit-label" name="label" value={editingSpecimen!.label} />
 					{/snippet}
 				</FormField>
 				<FormField label="Rating (1-5)" id="edit-rating">
 					{#snippet children(_)}
-						<Input id="edit-rating" name="rating" type="number" min={1} max={5} value={String(editingSpecimen.rating ?? '')} />
+						<Input id="edit-rating" name="rating" type="number" min={1} max={5} value={String(editingSpecimen!.rating ?? '')} />
 					{/snippet}
 				</FormField>
 				<FormField label="Quantity" id="edit-quantity">
 					{#snippet children(_)}
-						<Input id="edit-quantity" name="quantity" type="number" min={0} value={String(editingSpecimen.quantity)} />
+						<Input id="edit-quantity" name="quantity" type="number" min={0} value={String(editingSpecimen!.quantity)} />
 					{/snippet}
 				</FormField>
 				<FormField label="Active" id="edit-active">
 					{#snippet children(_)}
-						<input type="hidden" name="isActive" value={editingSpecimen.isActive ? 'true' : 'false'} />
+						<input type="hidden" name="isActive" value={editingSpecimen!.isActive ? 'true' : 'false'} />
 						<Switch
-							bind:checked={editingSpecimen.isActive}
-							label={editingSpecimen.isActive ? 'Active' : 'Inactive'}
+							bind:checked={editingSpecimen!.isActive}
+							label={editingSpecimen!.isActive ? 'Active' : 'Inactive'}
 						/>
 					{/snippet}
 				</FormField>
@@ -674,37 +690,37 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 					if (result.type === 'success') {
 						versionedDialogOpen = false;
 						editingVersioned = null;
-						toast.success(result.data?.message || 'Version created.');
+						toast.success((result.data?.message as string) || 'Version created.');
 					} else if (result.type === 'failure') {
-						toast.error(result.data?.message || 'Failed to update.');
+						toast.error((result.data?.message as string) || 'Failed to update.');
 					}
 					return update();
 				};
 			}}
 		>
-			<input type="hidden" name="id" value={editingVersioned.id} />
+			<input type="hidden" name="id" value={editingVersioned!.id} />
 			<div class="dialog-fields">
 				<FormField label="Label" id="ver-label">
 					{#snippet children(_)}
-						<Input id="ver-label" name="label" value={editingVersioned.label} />
+						<Input id="ver-label" name="label" value={editingVersioned!.label} />
 					{/snippet}
 				</FormField>
 				<FormField label="Rating (1-5)" id="ver-rating">
 					{#snippet children(_)}
-						<Input id="ver-rating" name="rating" type="number" min={1} max={5} value={String(editingVersioned.rating ?? '')} />
+						<Input id="ver-rating" name="rating" type="number" min={1} max={5} value={String(editingVersioned!.rating ?? '')} />
 					{/snippet}
 				</FormField>
 				<FormField label="Quantity" id="ver-quantity">
 					{#snippet children(_)}
-						<Input id="ver-quantity" name="quantity" type="number" min={0} value={String(editingVersioned.quantity)} />
+						<Input id="ver-quantity" name="quantity" type="number" min={0} value={String(editingVersioned!.quantity)} />
 					{/snippet}
 				</FormField>
 				<FormField label="Active" id="ver-active">
 					{#snippet children(_)}
-						<input type="hidden" name="isActive" value={editingVersioned.isActive ? 'true' : 'false'} />
+						<input type="hidden" name="isActive" value={editingVersioned!.isActive ? 'true' : 'false'} />
 						<Switch
-							bind:checked={editingVersioned.isActive}
-							label={editingVersioned.isActive ? 'Active' : 'Inactive'}
+							bind:checked={editingVersioned!.isActive}
+							label={editingVersioned!.isActive ? 'Active' : 'Inactive'}
 						/>
 					{/snippet}
 				</FormField>
@@ -712,7 +728,7 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 			<div class="dialog-actions">
 				<Button type="button" variant="ghost" size="sm" onclick={() => { versionedDialogOpen = false; editingVersioned = null; }}>Cancel</Button>
 				<Button type="submit" variant="primary" size="sm">
-					<span class="i-lucide-history h-3.5 w-3.5 mr-1" />
+					<span class="i-lucide-history h-3.5 w-3.5 mr-1" ></span>
 					Save + Version
 				</Button>
 			</div>

@@ -1,6 +1,6 @@
-import { eq, and, desc, isNull, count } from 'drizzle-orm';
+import { and, count, desc, eq, isNull } from 'drizzle-orm';
 import { db } from '../index';
-import { document, collection } from '../schema/rag';
+import { collection, document } from '../schema/rag';
 
 /** List documents for a user (active only, newest first). */
 export async function listDocuments(userId: string) {

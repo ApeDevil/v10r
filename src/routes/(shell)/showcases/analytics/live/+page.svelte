@@ -1,79 +1,79 @@
 <script lang="ts">
-	import { Alert } from '$lib/components/composites';
-	import { Sparkline } from '$lib/components/viz/chart/sparkline';
-	import MetricCard from '../_components/MetricCard.svelte';
-	import ChartSection from '../_components/ChartSection.svelte';
+import { Alert } from '$lib/components/composites';
+import { Sparkline } from '$lib/components/viz/chart/sparkline';
+import ChartSection from '../_components/ChartSection.svelte';
+import MetricCard from '../_components/MetricCard.svelte';
 
-	interface LiveEvent {
-		id: number;
-		type: string;
-		path: string;
-		timestamp: string;
-		sessionId?: string;
-	}
+interface LiveEvent {
+	id: number;
+	type: string;
+	path: string;
+	timestamp: string;
+	sessionId?: string;
+}
 
-	let events = $state<LiveEvent[]>([]);
-	let activeSessions = $state(0);
-	let connectionStatus = $state<'connecting' | 'connected' | 'disconnected'>('connecting');
+let events = $state<LiveEvent[]>([]);
+let activeSessions = $state(0);
+let connectionStatus = $state<'connecting' | 'connected' | 'disconnected'>('connecting');
 
-	// Rolling count of events per minute (last 10 minutes)
-	let minuteBuckets = $state<number[]>(new Array(10).fill(0));
-	const eventsPerMinute = $derived([...minuteBuckets]);
+// Rolling count of events per minute (last 10 minutes)
+let minuteBuckets = $state<number[]>(new Array(10).fill(0));
+const eventsPerMinute = $derived([...minuteBuckets]);
 
-	function addEvent(event: LiveEvent) {
-		events = [event, ...events].slice(0, 50);
-		minuteBuckets[minuteBuckets.length - 1]++;
-	}
+function addEvent(event: LiveEvent) {
+	events = [event, ...events].slice(0, 50);
+	minuteBuckets[minuteBuckets.length - 1]++;
+}
 
-	$effect(() => {
-		const source = new EventSource('/api/analytics/stream');
-		const bucketTimer = setInterval(() => {
-			minuteBuckets = [...minuteBuckets.slice(1), 0];
-		}, 60000);
+$effect(() => {
+	const source = new EventSource('/api/analytics/stream');
+	const bucketTimer = setInterval(() => {
+		minuteBuckets = [...minuteBuckets.slice(1), 0];
+	}, 60000);
 
-		source.onopen = () => {
-			connectionStatus = 'connected';
-		};
-
-		source.onmessage = (e) => {
-			try {
-				const data = JSON.parse(e.data);
-				if (data.type === 'init') {
-					activeSessions = data.activeSessions ?? 0;
-				} else if (data.type === 'event') {
-					addEvent(data.event);
-				} else if (data.type === 'sessions') {
-					activeSessions = data.count;
-				}
-			} catch {
-				// Ignore parse errors (heartbeats, etc.)
-			}
-		};
-
-		source.onerror = () => {
-			connectionStatus = 'disconnected';
-		};
-
-		return () => {
-			source.close();
-			clearInterval(bucketTimer);
-		};
-	});
-
-	function formatTime(ts: string): string {
-		return new Date(ts).toLocaleTimeString('en-US', {
-			hour: '2-digit',
-			minute: '2-digit',
-			second: '2-digit',
-		});
-	}
-
-	const eventTypeIcon: Record<string, string> = {
-		pageview: 'i-lucide-eye',
-		action: 'i-lucide-mouse-pointer-click',
-		error: 'i-lucide-alert-triangle',
-		timing: 'i-lucide-timer',
+	source.onopen = () => {
+		connectionStatus = 'connected';
 	};
+
+	source.onmessage = (e) => {
+		try {
+			const data = JSON.parse(e.data);
+			if (data.type === 'init') {
+				activeSessions = data.activeSessions ?? 0;
+			} else if (data.type === 'event') {
+				addEvent(data.event);
+			} else if (data.type === 'sessions') {
+				activeSessions = data.count;
+			}
+		} catch {
+			// Ignore parse errors (heartbeats, etc.)
+		}
+	};
+
+	source.onerror = () => {
+		connectionStatus = 'disconnected';
+	};
+
+	return () => {
+		source.close();
+		clearInterval(bucketTimer);
+	};
+});
+
+function formatTime(ts: string): string {
+	return new Date(ts).toLocaleTimeString('en-US', {
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit',
+	});
+}
+
+const eventTypeIcon: Record<string, string> = {
+	pageview: 'i-lucide-eye',
+	action: 'i-lucide-mouse-pointer-click',
+	error: 'i-lucide-alert-triangle',
+	timing: 'i-lucide-timer',
+};
 </script>
 
 <div class="live-layout">

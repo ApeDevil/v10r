@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { DemoCard } from '../_components';
-	import { Dialog, Drawer, Button, Tabs, Accordion } from '$lib/components';
-	import { Tooltip, Popover } from '$lib/components';
+import { Accordion, Button, Dialog, Drawer, Popover, Tabs, Tooltip } from '$lib/components';
+import { DemoCard } from '../_components';
 
-	let dialogOpen = $state(false);
-	let drawerOpen = $state(false);
-	let tabValue = $state('account');
+let dialogOpen = $state(false);
+let drawerOpen = $state(false);
+let tabValue = $state('account');
 </script>
 
 {#snippet accountTab()}

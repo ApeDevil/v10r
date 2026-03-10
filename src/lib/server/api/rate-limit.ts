@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
-import { Ratelimit, type Duration } from '@upstash/ratelimit';
-import { redis } from '$lib/server/cache';
+import { type Duration, Ratelimit } from '@upstash/ratelimit';
 import { dev } from '$app/environment';
+import { redis } from '$lib/server/cache';
 
 export interface Limiter {
 	limit(id: string): Promise<{ success: boolean; reset: number }>;

@@ -1,12 +1,12 @@
 export { default as SelectionBar } from './SelectionBar.svelte';
-export type { SelectionBarAction } from './types';
 export {
-	selectionBarVariants,
-	selectionBarCountVariants,
-	selectionBarActionVariants,
-	selectionBarDismissVariants,
-	type SelectionBarVariants,
-	type SelectionBarCountVariants,
 	type SelectionBarActionVariants,
+	type SelectionBarCountVariants,
 	type SelectionBarDismissVariants,
+	type SelectionBarVariants,
+	selectionBarActionVariants,
+	selectionBarCountVariants,
+	selectionBarDismissVariants,
+	selectionBarVariants,
 } from './selection-bar';
+export type { SelectionBarAction } from './types';

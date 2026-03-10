@@ -1,29 +1,29 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import type { HTMLAttributes } from 'svelte/elements';
-	import { cn } from '$lib/utils/cn';
-	import { tagVariants, tagCloseVariants, type TagVariants } from './tag';
+import type { Snippet } from 'svelte';
+import type { HTMLAttributes } from 'svelte/elements';
+import { cn } from '$lib/utils/cn';
+import { type TagVariants, tagCloseVariants, tagVariants } from './tag';
 
-	interface Props extends TagVariants, HTMLAttributes<HTMLSpanElement> {
-		label?: string;
-		icon?: string;
-		disabled?: boolean;
-		ondismiss?: () => void;
-		class?: string;
-		children?: Snippet;
-	}
+interface Props extends TagVariants, HTMLAttributes<HTMLSpanElement> {
+	label?: string;
+	icon?: string;
+	disabled?: boolean;
+	ondismiss?: () => void;
+	class?: string;
+	children?: Snippet;
+}
 
-	let {
-		label,
-		icon,
-		variant = 'default',
-		size = 'md',
-		disabled = false,
-		ondismiss,
-		class: className,
-		children,
-		...rest
-	}: Props = $props();
+let {
+	label,
+	icon,
+	variant = 'default',
+	size = 'md',
+	disabled = false,
+	ondismiss,
+	class: className,
+	children,
+	...rest
+}: Props = $props();
 </script>
 
 <span

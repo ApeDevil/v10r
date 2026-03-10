@@ -1,54 +1,47 @@
 <script lang="ts">
-	import {
-		Button,
-		Input,
-		Spinner,
-		CornerFrame,
-		Divider,
-		RadialGlow
-	} from '$lib/components';
+import { Button, CornerFrame, Divider, Input, RadialGlow, Spinner } from '$lib/components';
 
-	type FlowState = 'idle' | 'sending' | 'magic-link-sent' | 'otp-sent';
+type FlowState = 'idle' | 'sending' | 'magic-link-sent' | 'otp-sent';
 
-	const simulate = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const simulate = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-	let email = $state('');
-	let flowState = $state<FlowState>('idle');
-	let sendingMethod = $state<'magic-link' | 'otp' | null>(null);
-	let loadingProvider = $state<string | null>(null);
+let email = $state('');
+let flowState = $state<FlowState>('idle');
+let sendingMethod = $state<'magic-link' | 'otp' | null>(null);
+let loadingProvider = $state<string | null>(null);
 
-	let isBusy = $derived(flowState === 'sending' || !!loadingProvider);
+let isBusy = $derived(flowState === 'sending' || !!loadingProvider);
 
-	async function handleMagicLink() {
-		if (!email.trim()) return;
-		flowState = 'sending';
-		sendingMethod = 'magic-link';
-		await simulate(1500);
-		flowState = 'magic-link-sent';
-		sendingMethod = null;
-	}
+async function handleMagicLink() {
+	if (!email.trim()) return;
+	flowState = 'sending';
+	sendingMethod = 'magic-link';
+	await simulate(1500);
+	flowState = 'magic-link-sent';
+	sendingMethod = null;
+}
 
-	async function handleOtp() {
-		if (!email.trim()) return;
-		flowState = 'sending';
-		sendingMethod = 'otp';
-		await simulate(1500);
-		flowState = 'otp-sent';
-		sendingMethod = null;
-	}
+async function handleOtp() {
+	if (!email.trim()) return;
+	flowState = 'sending';
+	sendingMethod = 'otp';
+	await simulate(1500);
+	flowState = 'otp-sent';
+	sendingMethod = null;
+}
 
-	async function handleOAuth(provider: string) {
-		loadingProvider = provider;
-		await simulate(1500);
-		loadingProvider = null;
-	}
+async function handleOAuth(provider: string) {
+	loadingProvider = provider;
+	await simulate(1500);
+	loadingProvider = null;
+}
 
-	function reset() {
-		email = '';
-		flowState = 'idle';
-		sendingMethod = null;
-		loadingProvider = null;
-	}
+function reset() {
+	email = '';
+	flowState = 'idle';
+	sendingMethod = null;
+	loadingProvider = null;
+}
 </script>
 
 <section id="auth-gateway" class="section">

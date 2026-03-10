@@ -1,17 +1,17 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import { cn } from '$lib/utils/cn';
-	import { Card } from '$lib/components/composites';
+import type { Snippet } from 'svelte';
+import { Card } from '$lib/components/composites';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		title: string;
-		description?: string;
-		details?: string;
-		chart: Snippet;
-		class?: string;
-	}
+interface Props {
+	title: string;
+	description?: string;
+	details?: string;
+	chart: Snippet;
+	class?: string;
+}
 
-	let { title, description, details, chart, class: className }: Props = $props();
+let { title, description, details, chart, class: className }: Props = $props();
 </script>
 
 <Card class={cn('chart-section', className)}>

@@ -1,20 +1,15 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
-	import { PaneResizer } from 'paneforge';
+import { PaneResizer } from 'paneforge';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		withHandle?: boolean;
-		disabled?: boolean;
-		onDraggingChange?: (isDragging: boolean) => void;
-		class?: string;
-	}
+interface Props {
+	withHandle?: boolean;
+	disabled?: boolean;
+	onDraggingChange?: (isDragging: boolean) => void;
+	class?: string;
+}
 
-	let {
-		withHandle = false,
-		disabled,
-		onDraggingChange,
-		class: className
-	}: Props = $props();
+let { withHandle = false, disabled, onDraggingChange, class: className }: Props = $props();
 </script>
 
 <PaneResizer

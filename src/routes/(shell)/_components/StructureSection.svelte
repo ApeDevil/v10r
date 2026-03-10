@@ -1,21 +1,21 @@
 <script lang="ts">
-	import { Accordion } from '$lib/components';
-	import { localizeHref } from '$lib/i18n';
-	import { fadeIn } from './fadeIn';
-	import { sections, type StructureItem } from './structure-map';
+import { Accordion } from '$lib/components';
+import { localizeHref } from '$lib/i18n';
+import { fadeIn } from './fadeIn';
+import { type StructureItem, sections } from './structure-map';
 
-	const [intelligence, structural] = sections;
+const [intelligence, structural] = sections;
 
-	function group(sectionIdx: number, groupValue: string) {
-		return sections[sectionIdx].groups.find((g) => g.value === groupValue)!;
+function group(sectionIdx: number, groupValue: string) {
+	return sections[sectionIdx].groups.find((g) => g.value === groupValue)!;
+}
+
+function getItemHref(item: StructureItem): string | null {
+	for (const seg of item.segments) {
+		if (seg.href) return seg.href;
 	}
-
-	function getItemHref(item: StructureItem): string | null {
-		for (const seg of item.segments) {
-			if (seg.href) return seg.href;
-		}
-		return null;
-	}
+	return null;
+}
 </script>
 
 {#snippet renderItems(items: StructureItem[])}

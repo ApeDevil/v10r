@@ -3,21 +3,15 @@
  * Records are inserted on completion and NEVER modified.
  * Supports both Vercel cron (HTTP) and container scheduler (setInterval) triggers.
  */
-import { pgSchema, text, timestamp, integer, index, check } from 'drizzle-orm/pg-core';
+
 import { sql } from 'drizzle-orm';
+import { check, index, integer, pgSchema, text, timestamp } from 'drizzle-orm/pg-core';
 
 export const jobsSchema = pgSchema('jobs');
 
-export const jobExecutionStatusEnum = jobsSchema.enum('job_execution_status', [
-	'success',
-	'failure',
-]);
+export const jobExecutionStatusEnum = jobsSchema.enum('job_execution_status', ['success', 'failure']);
 
-export const jobTriggerEnum = jobsSchema.enum('job_trigger', [
-	'cron',
-	'scheduler',
-	'manual',
-]);
+export const jobTriggerEnum = jobsSchema.enum('job_trigger', ['cron', 'scheduler', 'manual']);
 
 export const jobExecution = jobsSchema.table(
 	'job_execution',

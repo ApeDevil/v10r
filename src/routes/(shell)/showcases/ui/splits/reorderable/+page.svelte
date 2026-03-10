@@ -1,37 +1,37 @@
 <script lang="ts">
-	import { Card, ReorderablePaneLayout } from '$lib/components';
-	import type { PaneDefinition } from '$lib/components/composites/reorderable-panes';
+import { Card, ReorderablePaneLayout } from '$lib/components';
+import type { PaneDefinition } from '$lib/components/composites/reorderable-panes';
 
-	const basicPanes: PaneDefinition[] = [
-		{ id: 'nav', label: 'Navigation', defaultSize: 20, minSize: 15, maxSize: 30 },
-		{ id: 'content', label: 'Content', defaultSize: 60, minSize: 30 },
-		{ id: 'inspector', label: 'Inspector', defaultSize: 20, minSize: 15, maxSize: 30 }
-	];
+const basicPanes: PaneDefinition[] = [
+	{ id: 'nav', label: 'Navigation', defaultSize: 20, minSize: 15, maxSize: 30 },
+	{ id: 'content', label: 'Content', defaultSize: 60, minSize: 30 },
+	{ id: 'inspector', label: 'Inspector', defaultSize: 20, minSize: 15, maxSize: 30 },
+];
 
-	const collapsiblePanes: PaneDefinition[] = [
-		{
-			id: 'sidebar',
-			label: 'Sidebar',
-			defaultSize: 25,
-			minSize: 15,
-			collapsible: true,
-			collapsedSize: 0
-		},
-		{ id: 'main', label: 'Main', defaultSize: 50, minSize: 30 },
-		{
-			id: 'details',
-			label: 'Details',
-			defaultSize: 25,
-			minSize: 15,
-			collapsible: true,
-			collapsedSize: 0
-		}
-	];
+const collapsiblePanes: PaneDefinition[] = [
+	{
+		id: 'sidebar',
+		label: 'Sidebar',
+		defaultSize: 25,
+		minSize: 15,
+		collapsible: true,
+		collapsedSize: 0,
+	},
+	{ id: 'main', label: 'Main', defaultSize: 50, minSize: 30 },
+	{
+		id: 'details',
+		label: 'Details',
+		defaultSize: 25,
+		minSize: 15,
+		collapsible: true,
+		collapsedSize: 0,
+	},
+];
 
-	const verticalPanes: PaneDefinition[] = [
-		{ id: 'editor', label: 'Editor', defaultSize: 60, minSize: 30 },
-		{ id: 'terminal', label: 'Terminal', defaultSize: 40, minSize: 20 }
-	];
+const verticalPanes: PaneDefinition[] = [
+	{ id: 'editor', label: 'Editor', defaultSize: 60, minSize: 30 },
+	{ id: 'terminal', label: 'Terminal', defaultSize: 40, minSize: 20 },
+];
 </script>
 
 <svelte:head>

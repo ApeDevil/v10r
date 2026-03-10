@@ -1,16 +1,16 @@
-import { describe, it, expect } from 'vitest';
-import type { LeafNode, SplitNode, LayoutNode } from './dock.types';
+import { describe, expect, it } from 'vitest';
 import {
-	findNode,
-	findLeafWithPanel,
-	replaceNode,
-	removePanelFromLeaf,
 	addPanelToLeaf,
-	splitLeaf,
-	getDepth,
 	collectLeaves,
+	findLeafWithPanel,
+	findNode,
+	getDepth,
+	removePanelFromLeaf,
+	replaceNode,
 	resolveDropZone,
+	splitLeaf,
 } from './dock.operations';
+import type { LayoutNode, LeafNode, SplitNode } from './dock.types';
 
 // --- Helpers ---
 
@@ -18,11 +18,7 @@ function leaf(id: string, tabs: string[], activeTab?: string): LeafNode {
 	return { type: 'leaf', id, tabs, activeTab: activeTab ?? tabs[0] };
 }
 
-function split(
-	id: string,
-	direction: 'horizontal' | 'vertical',
-	children: [LayoutNode, LayoutNode],
-): SplitNode {
+function split(id: string, direction: 'horizontal' | 'vertical', children: [LayoutNode, LayoutNode]): SplitNode {
 	return { type: 'split', id, direction, children, sizes: [50, 50] };
 }
 

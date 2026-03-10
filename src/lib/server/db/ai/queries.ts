@@ -1,4 +1,4 @@
-import { eq, and, desc } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { db } from '../index';
 import { conversation, message } from '../schema/ai/conversation';
 

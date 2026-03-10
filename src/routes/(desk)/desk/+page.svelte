@@ -1,80 +1,80 @@
 <script lang="ts">
-	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
-	import { DockLayout } from '$lib/components/composites/dock';
-	import type { LayoutNode } from '$lib/components/composites/dock';
-	import { DESK_PANELS, DESK_PANEL_TYPES, DESK_ACTIVITY_BAR_ITEMS } from '$lib/config/desk-panels';
-	import {
-		DotPattern,
-		GridPattern,
-		RetroGrid,
-		GradientBlob,
-		NoiseTexture,
-		RadialGlow
-	} from '$lib/components/primitives/decorative/background';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import type { LayoutNode } from '$lib/components/composites/dock';
+import { DockLayout } from '$lib/components/composites/dock';
+import {
+	DotPattern,
+	GradientBlob,
+	GridPattern,
+	NoiseTexture,
+	RadialGlow,
+	RetroGrid,
+} from '$lib/components/primitives/decorative/background';
+import { DESK_ACTIVITY_BAR_ITEMS, DESK_PANEL_TYPES, DESK_PANELS } from '$lib/config/desk-panels';
 
-	let openPanel = $derived(page.url.searchParams.get('open'));
+let openPanel = $derived(page.url.searchParams.get('open'));
 
-	// Clean URL param after it's consumed
-	$effect(() => {
-		if (openPanel && page.url.searchParams.has('open')) {
-			goto(page.url.pathname, { replaceState: true });
-		}
-	});
-
-	const initialRoot: LayoutNode = {
-		type: 'split',
-		id: 'desk-root',
-		direction: 'horizontal',
-		sizes: [30, 70],
-		children: [
-			{
-				type: 'split',
-				id: 'desk-left',
-				direction: 'vertical',
-				sizes: [55, 45],
-				children: [
-					{
-						type: 'leaf',
-						id: 'desk-left-top',
-						tabs: ['notes', 'inbox'],
-						activeTab: 'notes'
-					},
-					{
-						type: 'leaf',
-						id: 'desk-left-bottom',
-						tabs: ['chat'],
-						activeTab: 'chat'
-					}
-				]
-			},
-			{
-				type: 'split',
-				id: 'desk-right',
-				direction: 'vertical',
-				sizes: [60, 40],
-				children: [
-					{
-						type: 'leaf',
-						id: 'desk-right-top',
-						tabs: ['canvas', 'dashboard', 'spreadsheet'],
-						activeTab: 'canvas'
-					},
-					{
-						type: 'leaf',
-						id: 'desk-right-bottom',
-						tabs: ['terminal', 'gallery', 'files'],
-						activeTab: 'terminal'
-					}
-				]
-			}
-		]
-	};
-
-	/** Resolve panel type — handles dynamic IDs from activity bar (e.g. "notes-1709312345") */
-	function getPanelType(panelId: string): string | undefined {
-		return DESK_PANEL_TYPES.find(t => panelId === t || panelId.startsWith(`${t}-`));
+// Clean URL param after it's consumed
+$effect(() => {
+	if (openPanel && page.url.searchParams.has('open')) {
+		goto(page.url.pathname, { replaceState: true });
 	}
+});
+
+const initialRoot: LayoutNode = {
+	type: 'split',
+	id: 'desk-root',
+	direction: 'horizontal',
+	sizes: [30, 70],
+	children: [
+		{
+			type: 'split',
+			id: 'desk-left',
+			direction: 'vertical',
+			sizes: [55, 45],
+			children: [
+				{
+					type: 'leaf',
+					id: 'desk-left-top',
+					tabs: ['notes', 'inbox'],
+					activeTab: 'notes',
+				},
+				{
+					type: 'leaf',
+					id: 'desk-left-bottom',
+					tabs: ['chat'],
+					activeTab: 'chat',
+				},
+			],
+		},
+		{
+			type: 'split',
+			id: 'desk-right',
+			direction: 'vertical',
+			sizes: [60, 40],
+			children: [
+				{
+					type: 'leaf',
+					id: 'desk-right-top',
+					tabs: ['canvas', 'dashboard', 'spreadsheet'],
+					activeTab: 'canvas',
+				},
+				{
+					type: 'leaf',
+					id: 'desk-right-bottom',
+					tabs: ['terminal', 'gallery', 'files'],
+					activeTab: 'terminal',
+				},
+			],
+		},
+	],
+};
+
+/** Resolve panel type — handles dynamic IDs from activity bar (e.g. "notes-1709312345") */
+function getPanelType(panelId: string): string | undefined {
+	return DESK_PANEL_TYPES.find((t) => panelId === t || panelId.startsWith(`${t}-`));
+}
 </script>
 
 <svelte:head>

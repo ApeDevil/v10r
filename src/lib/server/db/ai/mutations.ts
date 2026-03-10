@@ -1,4 +1,4 @@
-import { eq, and } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../index';
 import { conversation, message } from '../schema/ai/conversation';
 
@@ -54,10 +54,7 @@ export async function saveMessages(
 		.onConflictDoNothing();
 
 	// Touch updatedAt so listing reflects recent activity
-	await db
-		.update(conversation)
-		.set({ updatedAt: new Date() })
-		.where(eq(conversation.id, conversationId));
+	await db.update(conversation).set({ updatedAt: new Date() }).where(eq(conversation.id, conversationId));
 }
 
 /** Update conversation title and touch updatedAt. Auth-scoped. */

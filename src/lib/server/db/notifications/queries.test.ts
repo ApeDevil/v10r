@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest';
 import type { PGlite } from '@electric-sql/pglite';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { makeNotification, makeUser } from '$lib/server/test/fixtures';
 import { user } from '../schema/auth/_better-auth';
 import { notifications } from '../schema/notifications/notifications';
-import { makeUser, makeNotification } from '$lib/server/test/fixtures';
 
 let testClient: PGlite;
 
@@ -53,10 +53,12 @@ describe('notification queries', () => {
 		});
 
 		it('excludes other users notifications', async () => {
-			await db.insert(notifications).values([
-				makeNotification({ userId: USER_A.id, title: 'A' }),
-				makeNotification({ userId: USER_B.id, title: 'B' }),
-			]);
+			await db
+				.insert(notifications)
+				.values([
+					makeNotification({ userId: USER_A.id, title: 'A' }),
+					makeNotification({ userId: USER_B.id, title: 'B' }),
+				]);
 
 			const result = await getNotifications(USER_A.id, 10, 0);
 			expect(result).toHaveLength(1);
@@ -99,12 +101,14 @@ describe('notification queries', () => {
 
 	describe('getUnreadCount', () => {
 		it('counts only unread, non-archived notifications', async () => {
-			await db.insert(notifications).values([
-				makeNotification({ userId: USER_A.id, isRead: false }),
-				makeNotification({ userId: USER_A.id, isRead: false }),
-				makeNotification({ userId: USER_A.id, isRead: true }),
-				makeNotification({ userId: USER_A.id, isRead: false, archivedAt: new Date() }),
-			]);
+			await db
+				.insert(notifications)
+				.values([
+					makeNotification({ userId: USER_A.id, isRead: false }),
+					makeNotification({ userId: USER_A.id, isRead: false }),
+					makeNotification({ userId: USER_A.id, isRead: true }),
+					makeNotification({ userId: USER_A.id, isRead: false, archivedAt: new Date() }),
+				]);
 
 			const count = await getUnreadCount(USER_A.id);
 			expect(count).toBe(2);
@@ -123,7 +127,7 @@ describe('notification queries', () => {
 
 			const result = await getNotificationById(n.id, USER_A.id);
 			expect(result).not.toBeNull();
-			expect(result!.title).toBe('Mine');
+			expect(result?.title).toBe('Mine');
 		});
 
 		it('returns null for wrong user (IDOR protection)', async () => {

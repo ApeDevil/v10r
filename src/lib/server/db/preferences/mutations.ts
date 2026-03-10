@@ -4,27 +4,15 @@ import { userPreferences } from '../schema/app/user-preferences';
 
 /** Get or create user preferences (triple-read pattern for race safety) */
 export async function getOrCreatePreferences(userId: string) {
-	const [existing] = await db
-		.select()
-		.from(userPreferences)
-		.where(eq(userPreferences.userId, userId))
-		.limit(1);
+	const [existing] = await db.select().from(userPreferences).where(eq(userPreferences.userId, userId)).limit(1);
 
 	if (existing) return existing;
 
-	const [created] = await db
-		.insert(userPreferences)
-		.values({ userId })
-		.onConflictDoNothing()
-		.returning();
+	const [created] = await db.insert(userPreferences).values({ userId }).onConflictDoNothing().returning();
 
 	// Race condition: another request may have inserted between select and insert
 	if (!created) {
-		const [row] = await db
-			.select()
-			.from(userPreferences)
-			.where(eq(userPreferences.userId, userId))
-			.limit(1);
+		const [row] = await db.select().from(userPreferences).where(eq(userPreferences.userId, userId)).limit(1);
 		return row;
 	}
 

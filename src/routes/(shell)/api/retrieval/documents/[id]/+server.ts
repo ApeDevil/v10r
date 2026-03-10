@@ -1,14 +1,23 @@
 import { json } from '@sveltejs/kit';
-import { getDocument } from '$lib/server/db/rag/queries';
-import { deleteDocument } from '$lib/server/db/rag/mutations';
-import { deleteDocumentGraph } from '$lib/server/graph/rag/mutations';
-import { requireApiUser } from '$lib/server/auth/guards';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW, API_WRITE_RATE_LIMIT_MAX, API_WRITE_RATE_LIMIT_WINDOW } from '$lib/server/config';
+import { requireApiUser } from '$lib/server/auth/guards';
+import {
+	API_READ_RATE_LIMIT_MAX,
+	API_READ_RATE_LIMIT_WINDOW,
+	API_WRITE_RATE_LIMIT_MAX,
+	API_WRITE_RATE_LIMIT_WINDOW,
+} from '$lib/server/config';
+import { deleteDocument } from '$lib/server/db/rag/mutations';
+import { getDocument } from '$lib/server/db/rag/queries';
+import { deleteDocumentGraph } from '$lib/server/graph/rag/mutations';
 import type { RequestHandler } from './$types';
 
 const readLimiter = createLimiter('rl:retrieval:documents:read', API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW);
-const deleteLimiter = createLimiter('rl:retrieval:documents:delete', API_WRITE_RATE_LIMIT_MAX, API_WRITE_RATE_LIMIT_WINDOW);
+const deleteLimiter = createLimiter(
+	'rl:retrieval:documents:delete',
+	API_WRITE_RATE_LIMIT_MAX,
+	API_WRITE_RATE_LIMIT_WINDOW,
+);
 
 export const GET: RequestHandler = async ({ params, locals }) => {
 	const { user } = requireApiUser(locals);
@@ -44,7 +53,10 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 		try {
 			await deleteDocumentGraph(params.id);
 		} catch (graphErr) {
-			console.error('[api:retrieval:documents] Graph cleanup failed:', graphErr instanceof Error ? graphErr.message : graphErr);
+			console.error(
+				'[api:retrieval:documents] Graph cleanup failed:',
+				graphErr instanceof Error ? graphErr.message : graphErr,
+			);
 		}
 
 		return json({ deleted: true });

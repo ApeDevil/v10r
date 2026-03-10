@@ -1,85 +1,87 @@
 <script lang="ts">
-	import { apiFetch } from '$lib/api';
-	import { Card, Alert, FormField } from '$lib/components/composites';
-	import { Typography, Button } from '$lib/components/primitives';
-	import { Stack } from '$lib/components/layout';
+import { apiFetch } from '$lib/api';
+import { Alert, Card, FormField } from '$lib/components/composites';
+import { Stack } from '$lib/components/layout';
+import { Button, Typography } from '$lib/components/primitives';
 
-	let { data } = $props();
+let { data } = $props();
 
-	let title = $state('');
-	let content = $state('');
-	let loading = $state(false);
-	let result: { documentId: string; chunkCount: number; entityCount: number; durationMs: number } | null = $state(null);
-	let error: string | null = $state(null);
-	let deleteError: string | null = $state(null);
+let title = $state('');
+let content = $state('');
+let loading = $state(false);
+let result: { documentId: string; chunkCount: number; entityCount: number; durationMs: number } | null = $state(null);
+let error: string | null = $state(null);
+let deleteError: string | null = $state(null);
 
-	let documents: Array<{
-		id: string;
-		title: string;
-		status: string;
-		totalChunks: number;
-		totalTokens: number;
-		createdAt: string;
-	}> = $state([]);
+let documents: Array<{
+	id: string;
+	title: string;
+	status: string;
+	totalChunks: number;
+	totalTokens: number;
+	createdAt: string;
+}> = $state([]);
 
-	async function loadDocuments() {
-		try {
-			const res = await fetch('/api/retrieval/documents');
-			if (res.ok) {
-				const data = await res.json();
-				documents = data.documents ?? [];
-			}
-		} catch { /* ignore */ }
-	}
-
-	async function ingestDocument() {
-		if (!title.trim() || !content.trim() || loading) return;
-
-		loading = true;
-		error = null;
-		result = null;
-
-		try {
-			const res = await apiFetch('/api/retrieval/ingest', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ title: title.trim(), content: content.trim() }),
-			});
-
-			if (!res.ok) {
-				const data = await res.json().catch(() => ({}));
-				throw new Error(data.error ?? `HTTP ${res.status}`);
-			}
-
-			result = await res.json();
-			title = '';
-			content = '';
-			await loadDocuments();
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Ingestion failed';
-		} finally {
-			loading = false;
+async function loadDocuments() {
+	try {
+		const res = await fetch('/api/retrieval/documents');
+		if (res.ok) {
+			const data = await res.json();
+			documents = data.documents ?? [];
 		}
+	} catch {
+		/* ignore */
 	}
+}
 
-	async function deleteDocument(id: string) {
-		deleteError = null;
-		try {
-			const res = await apiFetch(`/api/retrieval/documents/${id}`, { method: 'DELETE' });
-			if (!res.ok) {
-				throw new Error(`Failed to delete document (HTTP ${res.status})`);
-			}
-			await loadDocuments();
-		} catch (err) {
-			deleteError = err instanceof Error ? err.message : 'Delete failed';
+async function ingestDocument() {
+	if (!title.trim() || !content.trim() || loading) return;
+
+	loading = true;
+	error = null;
+	result = null;
+
+	try {
+		const res = await apiFetch('/api/retrieval/ingest', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ title: title.trim(), content: content.trim() }),
+		});
+
+		if (!res.ok) {
+			const data = await res.json().catch(() => ({}));
+			throw new Error(data.error ?? `HTTP ${res.status}`);
 		}
+
+		result = await res.json();
+		title = '';
+		content = '';
+		await loadDocuments();
+	} catch (err) {
+		error = err instanceof Error ? err.message : 'Ingestion failed';
+	} finally {
+		loading = false;
 	}
+}
 
-	$effect(() => {
-		loadDocuments();
-	});
+async function deleteDocument(id: string) {
+	deleteError = null;
+	try {
+		const res = await apiFetch(`/api/retrieval/documents/${id}`, { method: 'DELETE' });
+		if (!res.ok) {
+			throw new Error(`Failed to delete document (HTTP ${res.status})`);
+		}
+		await loadDocuments();
+	} catch (err) {
+		deleteError = err instanceof Error ? err.message : 'Delete failed';
+	}
+}
 
-	const SAMPLE_DOC = `# SvelteKit Routing
+$effect(() => {
+	loadDocuments();
+});
+
+const SAMPLE_DOC = `# SvelteKit Routing
 
 SvelteKit uses filesystem-based routing. Routes are defined by the directory structure under src/routes.
 

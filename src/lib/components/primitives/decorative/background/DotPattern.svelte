@@ -1,27 +1,20 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import { cn } from '$lib/utils/cn';
-	import { createDecorativeId } from '../utils';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils/cn';
+import { createDecorativeId } from '../utils';
 
-	interface Props {
-		spacing?: number;
-		radius?: number;
-		color?: string;
-		opacity?: number;
-		class?: string;
-		children?: Snippet;
-	}
+interface Props {
+	spacing?: number;
+	radius?: number;
+	color?: string;
+	opacity?: number;
+	class?: string;
+	children?: Snippet;
+}
 
-	let {
-		spacing = 20,
-		radius = 1,
-		color = 'currentColor',
-		opacity = 0.15,
-		class: className,
-		children
-	}: Props = $props();
+let { spacing = 20, radius = 1, color = 'currentColor', opacity = 0.15, class: className, children }: Props = $props();
 
-	const patternId = createDecorativeId('dot');
+const patternId = createDecorativeId('dot');
 </script>
 
 <div class={cn('relative overflow-hidden', className)}>

@@ -1,13 +1,13 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import { cn } from '$lib/utils/cn';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		children: Snippet;
-		class?: string;
-	}
+interface Props {
+	children: Snippet;
+	class?: string;
+}
 
-	let { children, class: className }: Props = $props();
+let { children, class: className }: Props = $props();
 </script>
 
 <div class={cn('diag-grid', className)}>

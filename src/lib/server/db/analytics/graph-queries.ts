@@ -2,8 +2,9 @@
  * Analytics graph queries — Neo4j journey and path analysis.
  * Returns user flow data for Sankey diagrams and path analysis.
  */
-import { cypher } from '$lib/server/graph';
+
 import type { JourneyPath } from '$lib/server/analytics/types';
+import { cypher } from '$lib/server/graph';
 
 /** Get top page-to-page transitions for Sankey diagram */
 export async function getTopPaths(limit = 20): Promise<JourneyPath[]> {

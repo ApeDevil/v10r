@@ -3,15 +3,10 @@
  * All database writes for the interactive showcase pages live here.
  * Action handlers in +page.server.ts are thin — they parse FormData and call these.
  */
+
+import { and, desc, eq, gt, isNull, lte, max, or } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import {
-	typeSpecimen,
-	typeSpecimenHistory,
-	documentVault,
-	auditLog,
-	temporalRecord,
-} from '$lib/server/db/schema';
-import { eq, sql, and, lte, or, isNull, gt, desc, max } from 'drizzle-orm';
+import { auditLog, documentVault, temporalRecord, typeSpecimen, typeSpecimenHistory } from '$lib/server/db/schema';
 
 // ─── Mutable CRUD ──────────────────────────────────────────────
 
@@ -69,10 +64,7 @@ export async function updateSpecimen(
 
 export async function deleteSpecimen(id: number) {
 	// History cascade handles cleanup
-	const [row] = await db
-		.delete(typeSpecimen)
-		.where(eq(typeSpecimen.id, id))
-		.returning();
+	const [row] = await db.delete(typeSpecimen).where(eq(typeSpecimen.id, id)).returning();
 	return row;
 }
 
@@ -169,21 +161,14 @@ export async function queryTemporalAt(date: string) {
 		.where(
 			and(
 				lte(temporalRecord.validFrom, new Date(date)),
-				or(
-					isNull(temporalRecord.validTo),
-					gt(temporalRecord.validTo, new Date(date)),
-				),
+				or(isNull(temporalRecord.validTo), gt(temporalRecord.validTo, new Date(date))),
 			),
 		)
 		.orderBy(desc(temporalRecord.validFrom));
 	return rows;
 }
 
-export async function addTemporalRecord(data: {
-	description: string;
-	validFrom: string;
-	validTo?: string;
-}) {
+export async function addTemporalRecord(data: { description: string; validFrom: string; validTo?: string }) {
 	const [row] = await db
 		.insert(temporalRecord)
 		.values({

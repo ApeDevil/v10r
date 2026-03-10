@@ -15,10 +15,7 @@ const emailSettingsMap: Record<NotificationType, string> = {
 	follow: 'emailFollow',
 };
 
-export async function routeToChannels(
-	userId: string,
-	type: NotificationType,
-): Promise<string[]> {
+export async function routeToChannels(userId: string, type: NotificationType): Promise<string[]> {
 	const settings = await getOrCreateSettings(userId);
 	if (!settings) return [];
 

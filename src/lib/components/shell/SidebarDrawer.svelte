@@ -1,44 +1,44 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
-	import { trapFocus } from '$lib/utils/focus-trap';
-	import { getSidebar } from '$lib/state/sidebar.svelte';
-	import { getSession } from '$lib/state/session.svelte';
-	import SidebarLogo from './SidebarLogo.svelte';
-	import SidebarNav from './SidebarNav.svelte';
-	import SidebarTriggers from './SidebarTriggers.svelte';
-	import UserMenu from './UserMenu.svelte';
+import { getSession } from '$lib/state/session.svelte';
+import { getSidebar } from '$lib/state/sidebar.svelte';
+import { cn } from '$lib/utils/cn';
+import { trapFocus } from '$lib/utils/focus-trap';
+import SidebarLogo from './SidebarLogo.svelte';
+import SidebarNav from './SidebarNav.svelte';
+import SidebarTriggers from './SidebarTriggers.svelte';
+import UserMenu from './UserMenu.svelte';
 
-	interface Props {
-		class?: string;
+interface Props {
+	class?: string;
+}
+
+let { class: className }: Props = $props();
+
+const sidebar = getSidebar();
+const session = getSession();
+
+let drawerRef: HTMLElement;
+let overlayRef: HTMLElement;
+
+// Set up focus trap when drawer opens
+$effect(() => {
+	if (sidebar.mobileOpen && drawerRef) {
+		const cleanup = trapFocus(drawerRef);
+		return cleanup;
 	}
+});
 
-	let { class: className }: Props = $props();
-
-	const sidebar = getSidebar();
-	const session = getSession();
-
-	let drawerRef: HTMLElement;
-	let overlayRef: HTMLElement;
-
-	// Set up focus trap when drawer opens
-	$effect(() => {
-		if (sidebar.mobileOpen && drawerRef) {
-			const cleanup = trapFocus(drawerRef);
-			return cleanup;
-		}
-	});
-
-	// Close on Escape key
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape' && sidebar.mobileOpen) {
-			sidebar.closeMobile();
-		}
-	}
-
-	// Close on overlay click
-	function handleOverlayClick() {
+// Close on Escape key
+function handleKeydown(e: KeyboardEvent) {
+	if (e.key === 'Escape' && sidebar.mobileOpen) {
 		sidebar.closeMobile();
 	}
+}
+
+// Close on overlay click
+function handleOverlayClick() {
+	sidebar.closeMobile();
+}
 </script>
 
 <svelte:window onkeydown={handleKeydown} />

@@ -1,14 +1,14 @@
-import { db } from '$lib/server/db';
-import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
-import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
 import { eq } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
 import {
-	SSE_HEARTBEAT_MS,
-	SSE_MAX_PER_USER,
 	DEFAULT_DELIVERY_INTERVAL_MS,
 	DELIVERY_MAX_ATTEMPTS,
+	SSE_HEARTBEAT_MS,
+	SSE_MAX_PER_USER,
 } from '$lib/server/config';
+import { db } from '$lib/server/db';
+import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
+import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {

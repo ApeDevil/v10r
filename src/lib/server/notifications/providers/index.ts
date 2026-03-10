@@ -1,9 +1,9 @@
-import type { NotificationProvider } from './types';
+import { DiscordProvider } from './discord';
 import { EmailProvider } from './email';
 import { TelegramProvider } from './telegram';
-import { DiscordProvider } from './discord';
+import type { NotificationProvider } from './types';
 
-export type { NotificationProvider, DeliveryPayload, DeliveryResult } from './types';
+export type { DeliveryPayload, DeliveryResult, NotificationProvider } from './types';
 
 const providers = new Map<string, NotificationProvider>([
 	['email', new EmailProvider()],

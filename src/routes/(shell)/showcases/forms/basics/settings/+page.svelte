@@ -1,33 +1,41 @@
 <script lang="ts">
-	import type { PageProps } from './$types';
-	import { superForm } from 'sveltekit-superforms';
-	import { valibotClient } from 'sveltekit-superforms/adapters';
-	import { settingsSchema } from '$lib/schemas/showcase/basics';
-	import { Card, Alert, FormField } from '$lib/components/composites';
-	import { Button, Input, Select, Switch, Checkbox, Spinner } from '$lib/components/primitives';
-	import { Stack } from '$lib/components/layout';
+import { superForm } from 'sveltekit-superforms';
+import { valibotClient } from 'sveltekit-superforms/adapters';
+import { Alert, Card, FormField } from '$lib/components/composites';
+import { Stack } from '$lib/components/layout';
+import { Button, Checkbox, Input, Select, Spinner, Switch } from '$lib/components/primitives';
+import { settingsSchema } from '$lib/schemas/showcase/basics';
+import type { PageProps } from './$types';
 
-	let { data }: PageProps = $props();
+let { data }: PageProps = $props();
 
-	const { form, errors, enhance, submitting, delayed, tainted, message: formMessage } = superForm(data.form, {
-		validators: valibotClient(settingsSchema),
-	});
+const {
+	form,
+	errors,
+	enhance,
+	submitting,
+	delayed,
+	tainted,
+	message: formMessage,
+} = superForm(data.form, {
+	validators: valibotClient(settingsSchema),
+});
 
-	const timezoneOptions = [
-		{ value: 'utc', label: 'UTC' },
-		{ value: 'est', label: 'Eastern (EST)' },
-		{ value: 'cst', label: 'Central (CST)' },
-		{ value: 'pst', label: 'Pacific (PST)' },
-		{ value: 'cet', label: 'Central European (CET)' },
-	];
+const timezoneOptions = [
+	{ value: 'utc', label: 'UTC' },
+	{ value: 'est', label: 'Eastern (EST)' },
+	{ value: 'cst', label: 'Central (CST)' },
+	{ value: 'pst', label: 'Pacific (PST)' },
+	{ value: 'cet', label: 'Central European (CET)' },
+];
 
-	const languageOptions = [
-		{ value: 'en', label: 'English' },
-		{ value: 'es', label: 'Spanish' },
-		{ value: 'fr', label: 'French' },
-		{ value: 'de', label: 'German' },
-		{ value: 'ja', label: 'Japanese' },
-	];
+const languageOptions = [
+	{ value: 'en', label: 'English' },
+	{ value: 'es', label: 'Spanish' },
+	{ value: 'fr', label: 'French' },
+	{ value: 'de', label: 'German' },
+	{ value: 'ja', label: 'Japanese' },
+];
 </script>
 
 <svelte:head>

@@ -1,70 +1,70 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { Card, BackLink } from '$lib/components/composites';
-	import { Button, Badge, Switch, Input } from '$lib/components/primitives';
-	import { buttonVariants } from '$lib/components/primitives/button';
-	import { Stack, Cluster } from '$lib/components/layout';
-	import { getToast } from '$lib/state';
+import { enhance } from '$app/forms';
+import { BackLink, Card } from '$lib/components/composites';
+import { Cluster, Stack } from '$lib/components/layout';
+import { Badge, Button, Input, Switch } from '$lib/components/primitives';
+import { buttonVariants } from '$lib/components/primitives/button';
+import { getToast } from '$lib/state';
 
-	let { data, form } = $props();
+let { data, form } = $props();
 
-	const toast = getToast();
-	let saving = $state(false);
-	let connectingTelegram = $state(false);
-	let telegramDeepLink = $state<string | null>(null);
+const toast = getToast();
+let saving = $state(false);
+let connectingTelegram = $state(false);
+let telegramDeepLink = $state<string | null>(null);
 
-	// Local mutable state for Switch components (initialized from server data)
-	let emailMention = $state(data.settings.emailMention);
-	let emailComment = $state(data.settings.emailComment);
-	let emailSystem = $state(data.settings.emailSystem);
-	let emailSuccess = $state(data.settings.emailSuccess);
-	let emailSecurity = $state(data.settings.emailSecurity);
-	let emailFollow = $state(data.settings.emailFollow);
-	let telegramMention = $state(data.settings.telegramMention);
-	let telegramComment = $state(data.settings.telegramComment);
-	let telegramSystem = $state(data.settings.telegramSystem);
-	let telegramSecurity = $state(data.settings.telegramSecurity);
-	let discordMention = $state(data.settings.discordMention);
-	let discordComment = $state(data.settings.discordComment);
-	let discordSystem = $state(data.settings.discordSystem);
-	let discordSecurity = $state(data.settings.discordSecurity);
-	let digestFrequency = $state(data.settings.digestFrequency);
-	let quietStart = $state(data.settings.quietStart ?? '');
-	let quietEnd = $state(data.settings.quietEnd ?? '');
+// Local mutable state for Switch components (initialized from server data)
+let emailMention = $state(data.settings.emailMention);
+let emailComment = $state(data.settings.emailComment);
+let emailSystem = $state(data.settings.emailSystem);
+let emailSuccess = $state(data.settings.emailSuccess);
+let emailSecurity = $state(data.settings.emailSecurity);
+let emailFollow = $state(data.settings.emailFollow);
+let telegramMention = $state(data.settings.telegramMention);
+let telegramComment = $state(data.settings.telegramComment);
+let telegramSystem = $state(data.settings.telegramSystem);
+let telegramSecurity = $state(data.settings.telegramSecurity);
+let discordMention = $state(data.settings.discordMention);
+let discordComment = $state(data.settings.discordComment);
+let discordSystem = $state(data.settings.discordSystem);
+let discordSecurity = $state(data.settings.discordSecurity);
+let digestFrequency = $state(data.settings.digestFrequency);
+let quietStart = $state(data.settings.quietStart ?? '');
+let quietEnd = $state(data.settings.quietEnd ?? '');
 
-	$effect(() => {
-		if (form?.success) {
-			toast.success('Notification settings saved');
-		}
-		if (data.successMessage === 'discord_connected') {
-			toast.success('Discord connected successfully');
-		}
-		if (data.errorMessage === 'discord_denied') {
-			toast.error('Discord connection was denied');
-		}
-	});
-
-	async function connectTelegram() {
-		connectingTelegram = true;
-		try {
-			const res = await fetch('/api/notifications/telegram/connect', {
-				method: 'POST',
-				headers: { 'X-Requested-With': 'fetch' },
-			});
-			if (res.ok) {
-				const { deepLink } = await res.json();
-				telegramDeepLink = deepLink;
-				window.open(deepLink, '_blank');
-			} else {
-				const { error } = await res.json();
-				toast.error(error ?? 'Failed to generate Telegram link');
-			}
-		} catch {
-			toast.error('Failed to connect Telegram');
-		} finally {
-			connectingTelegram = false;
-		}
+$effect(() => {
+	if (form?.success) {
+		toast.success('Notification settings saved');
 	}
+	if (data.successMessage === 'discord_connected') {
+		toast.success('Discord connected successfully');
+	}
+	if (data.errorMessage === 'discord_denied') {
+		toast.error('Discord connection was denied');
+	}
+});
+
+async function connectTelegram() {
+	connectingTelegram = true;
+	try {
+		const res = await fetch('/api/notifications/telegram/connect', {
+			method: 'POST',
+			headers: { 'X-Requested-With': 'fetch' },
+		});
+		if (res.ok) {
+			const { deepLink } = await res.json();
+			telegramDeepLink = deepLink;
+			window.open(deepLink, '_blank');
+		} else {
+			const { error } = await res.json();
+			toast.error(error ?? 'Failed to generate Telegram link');
+		}
+	} catch {
+		toast.error('Failed to connect Telegram');
+	} finally {
+		connectingTelegram = false;
+	}
+}
 </script>
 
 <Stack gap="5">
@@ -201,7 +201,7 @@
 								type="radio"
 								value={freq}
 								checked={digestFrequency === freq}
-								onchange={() => digestFrequency = freq}
+								onchange={() => digestFrequency = freq as typeof digestFrequency}
 							/>
 							<span class="capitalize">{freq}</span>
 						</label>

@@ -1,85 +1,85 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { Card, EmptyState, DiagGrid, DiagRow } from '$lib/components/composites';
-	import { Badge, Button, Spinner } from '$lib/components/primitives';
-	import { Stack, Cluster } from '$lib/components/layout';
+import { enhance } from '$app/forms';
+import { Card, DiagGrid, DiagRow, EmptyState } from '$lib/components/composites';
+import { Cluster, Stack } from '$lib/components/layout';
+import { Badge, Button, Spinner } from '$lib/components/primitives';
 
-	let { data } = $props();
+let { data } = $props();
 
-	let refreshing = $state(false);
+let refreshing = $state(false);
 
-	// SSE connection state
-	let sseStatus = $state<'connecting' | 'connected' | 'disconnected'>('disconnected');
-	let unreadCount = $state(0);
-	let lastEvent = $state<{ type: string; time: string } | null>(null);
+// SSE connection state
+let sseStatus = $state<'connecting' | 'connected' | 'disconnected'>('disconnected');
+let unreadCount = $state(0);
+let lastEvent = $state<{ type: string; time: string } | null>(null);
 
-	$effect(() => {
-		const es = new EventSource('/api/notifications/stream');
+$effect(() => {
+	const es = new EventSource('/api/notifications/stream');
 
-		es.onopen = () => {
-			sseStatus = 'connected';
-		};
+	es.onopen = () => {
+		sseStatus = 'connected';
+	};
 
-		es.addEventListener('init', (e) => {
-			try {
-				const payload = JSON.parse(e.data);
-				unreadCount = payload.unreadCount ?? 0;
-			} catch {}
-		});
-
-		es.addEventListener('new', (e) => {
-			unreadCount++;
-			lastEvent = { type: 'new', time: new Date().toLocaleTimeString() };
-		});
-
-		es.addEventListener('read', () => {
-			if (unreadCount > 0) unreadCount--;
-			lastEvent = { type: 'read', time: new Date().toLocaleTimeString() };
-		});
-
-		es.addEventListener('read-all', () => {
-			unreadCount = 0;
-			lastEvent = { type: 'read-all', time: new Date().toLocaleTimeString() };
-		});
-
-		es.onerror = () => {
-			sseStatus = 'disconnected';
-		};
-
-		return () => {
-			es.close();
-			sseStatus = 'disconnected';
-		};
+	es.addEventListener('init', (e) => {
+		try {
+			const payload = JSON.parse(e.data);
+			unreadCount = payload.unreadCount ?? 0;
+		} catch {}
 	});
 
-	function relativeTime(iso: string): string {
-		const diff = Date.now() - new Date(iso).getTime();
-		const mins = Math.floor(diff / 60000);
-		if (mins < 1) return 'just now';
-		if (mins < 60) return `${mins}m ago`;
-		const hours = Math.floor(mins / 60);
-		if (hours < 24) return `${hours}h ago`;
-		const days = Math.floor(hours / 24);
-		return `${days}d ago`;
-	}
+	es.addEventListener('new', (_e) => {
+		unreadCount++;
+		lastEvent = { type: 'new', time: new Date().toLocaleTimeString() };
+	});
 
-	type BadgeVariant = 'success' | 'secondary' | 'warning' | 'error';
+	es.addEventListener('read', () => {
+		if (unreadCount > 0) unreadCount--;
+		lastEvent = { type: 'read', time: new Date().toLocaleTimeString() };
+	});
 
-	function statusVariant(status: string): BadgeVariant {
-		const map: Record<string, BadgeVariant> = {
-			pending: 'secondary',
-			processing: 'warning',
-			sent: 'success',
-			failed: 'error',
-			skipped: 'secondary',
-		};
-		return map[status] ?? 'secondary';
-	}
+	es.addEventListener('read-all', () => {
+		unreadCount = 0;
+		lastEvent = { type: 'read-all', time: new Date().toLocaleTimeString() };
+	});
 
-	function channelStatus(deliveries: { channel: string; status: string }[], channel: string): string | null {
-		const d = deliveries.find((d) => d.channel === channel);
-		return d?.status ?? null;
-	}
+	es.onerror = () => {
+		sseStatus = 'disconnected';
+	};
+
+	return () => {
+		es.close();
+		sseStatus = 'disconnected';
+	};
+});
+
+function relativeTime(iso: string): string {
+	const diff = Date.now() - new Date(iso).getTime();
+	const mins = Math.floor(diff / 60000);
+	if (mins < 1) return 'just now';
+	if (mins < 60) return `${mins}m ago`;
+	const hours = Math.floor(mins / 60);
+	if (hours < 24) return `${hours}h ago`;
+	const days = Math.floor(hours / 24);
+	return `${days}d ago`;
+}
+
+type BadgeVariant = 'success' | 'secondary' | 'warning' | 'error';
+
+function statusVariant(status: string): BadgeVariant {
+	const map: Record<string, BadgeVariant> = {
+		pending: 'secondary',
+		processing: 'warning',
+		sent: 'success',
+		failed: 'error',
+		skipped: 'secondary',
+	};
+	return map[status] ?? 'secondary';
+}
+
+function channelStatus(deliveries: { channel: string; status: string }[], channel: string): string | null {
+	const d = deliveries.find((d) => d.channel === channel);
+	return d?.status ?? null;
+}
 </script>
 
 <svelte:head>

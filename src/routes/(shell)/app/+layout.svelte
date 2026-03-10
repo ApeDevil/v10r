@@ -1,19 +1,19 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import { PageContainer } from '$lib/components/layout';
-	import { PageHeader, TabNav } from '$lib/components/composites';
-	import { setNotificationContext } from '$lib/state';
+import type { Snippet } from 'svelte';
+import { PageHeader, TabNav } from '$lib/components/composites';
+import { PageContainer } from '$lib/components/layout';
+import { setNotificationContext } from '$lib/state';
 
-	let { data, children }: { data: any; children: Snippet } = $props();
+let { data, children }: { data: any; children: Snippet } = $props();
 
-	setNotificationContext(data.unreadCount);
+setNotificationContext(data.unreadCount);
 
-	const tabs = [
-		{ label: 'Dashboard', href: '/app/dashboard', icon: 'i-lucide-layout-dashboard' },
-		{ label: 'Account', href: '/app/account', icon: 'i-lucide-user' },
-		{ label: 'Notifications', href: '/app/notifications', icon: 'i-lucide-bell' },
-		{ label: 'Jobs', href: '/app/jobs', icon: 'i-lucide-clock' },
-	];
+const tabs = [
+	{ label: 'Dashboard', href: '/app/dashboard', icon: 'i-lucide-layout-dashboard' },
+	{ label: 'Account', href: '/app/account', icon: 'i-lucide-user' },
+	{ label: 'Notifications', href: '/app/notifications', icon: 'i-lucide-bell' },
+	{ label: 'Jobs', href: '/app/jobs', icon: 'i-lucide-clock' },
+];
 </script>
 
 <PageContainer class="py-7">

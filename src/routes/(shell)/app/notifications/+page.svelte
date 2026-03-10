@@ -1,41 +1,39 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
-	import { NotificationCenter, EmptyState } from '$lib/components/composites';
-	import { Button } from '$lib/components/primitives/button';
-	import { buttonVariants } from '$lib/components/primitives/button';
-	import { Stack, Cluster } from '$lib/components/layout';
-	import { getNotifications } from '$lib/state';
-	import { getToast } from '$lib/state';
+import { invalidate } from '$app/navigation';
+import { EmptyState, NotificationCenter } from '$lib/components/composites';
+import { Cluster, Stack } from '$lib/components/layout';
+import { Button, buttonVariants } from '$lib/components/primitives/button';
+import { getNotifications, getToast } from '$lib/state';
 
-	let { data } = $props();
+let { data } = $props();
 
-	const notifs = getNotifications();
-	const toast = getToast();
-	let filter = $state('all');
+const notifs = getNotifications();
+const toast = getToast();
+let filter = $state('all');
 
-	async function handleMarkRead(id: string) {
-		const res = await fetch(`/api/notifications/${id}/read`, {
-			method: 'POST',
-			headers: { 'X-Requested-With': 'fetch' },
-		});
-		if (res.ok) {
-			notifs.decrementBy(1);
-			await invalidate('app:notifications');
-		}
+async function handleMarkRead(id: string) {
+	const res = await fetch(`/api/notifications/${id}/read`, {
+		method: 'POST',
+		headers: { 'X-Requested-With': 'fetch' },
+	});
+	if (res.ok) {
+		notifs.decrementBy(1);
+		await invalidate('app:notifications');
 	}
+}
 
-	async function handleMarkAllRead() {
-		const res = await fetch('/api/notifications/read-all', {
-			method: 'POST',
-			headers: { 'X-Requested-With': 'fetch' },
-		});
-		if (res.ok) {
-			const { count } = await res.json();
-			notifs.decrementBy(count);
-			toast.success(`Marked ${count} notifications as read`);
-			await invalidate('app:notifications');
-		}
+async function handleMarkAllRead() {
+	const res = await fetch('/api/notifications/read-all', {
+		method: 'POST',
+		headers: { 'X-Requested-With': 'fetch' },
+	});
+	if (res.ok) {
+		const { count } = await res.json();
+		notifs.decrementBy(count);
+		toast.success(`Marked ${count} notifications as read`);
+		await invalidate('app:notifications');
 	}
+}
 </script>
 
 <Stack gap="5">

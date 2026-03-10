@@ -5,39 +5,39 @@ export const switchRootVariants = cva(
 		'inline-flex shrink-0 cursor-pointer items-center rounded-full border-0',
 		'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
 		'disabled:cursor-not-allowed disabled:opacity-50',
-		'data-[state=checked]:bg-primary'
+		'data-[state=checked]:bg-primary',
 	],
 	{
 		variants: {
 			size: {
-				sm: 'h-[1.25rem] w-[2.25rem]',   // 20px × 36px
-				md: 'h-6 w-[2.75rem]',             // 24px × 44px
-				lg: 'h-[1.75rem] w-[3.25rem]'      // 28px × 52px
-			}
+				sm: 'h-[1.25rem] w-[2.25rem]', // 20px × 36px
+				md: 'h-6 w-[2.75rem]', // 24px × 44px
+				lg: 'h-[1.75rem] w-[3.25rem]', // 28px × 52px
+			},
 		},
 		defaultVariants: {
-			size: 'md'
-		}
-	}
+			size: 'md',
+		},
+	},
 );
 
 export const switchThumbVariants = cva(
 	[
 		'pointer-events-none block rounded-full bg-white dark:bg-black shadow-sm ring-0',
-		'transition-transform duration-fast'
+		'transition-transform duration-fast',
 	],
 	{
 		variants: {
 			size: {
 				sm: 'h-[0.875rem] w-[0.875rem] data-[state=checked]:translate-x-[19px] data-[state=unchecked]:translate-x-[3px]',
 				md: 'h-[1.125rem] w-[1.125rem] data-[state=checked]:translate-x-[23px] data-[state=unchecked]:translate-x-[3px]',
-				lg: 'h-[1.375rem] w-[1.375rem] data-[state=checked]:translate-x-[27px] data-[state=unchecked]:translate-x-[3px]'
-			}
+				lg: 'h-[1.375rem] w-[1.375rem] data-[state=checked]:translate-x-[27px] data-[state=unchecked]:translate-x-[3px]',
+			},
 		},
 		defaultVariants: {
-			size: 'md'
-		}
-	}
+			size: 'md',
+		},
+	},
 );
 
 export type SwitchVariants = VariantProps<typeof switchRootVariants>;

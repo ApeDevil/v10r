@@ -1,55 +1,55 @@
 <script lang="ts">
-	import {
-		Table,
-		Header as TableHeader,
-		Body as TableBody,
-		Row as TableRow,
-		HeaderCell as TableHeaderCell,
-		Cell as TableCell
-	} from '$lib/components';
-	import { EMPLOYEES, formatSalary, formatDate, type SortKey, type SortDirection } from '../_data/mock-data';
+import {
+	Table,
+	Body as TableBody,
+	Cell as TableCell,
+	Header as TableHeader,
+	HeaderCell as TableHeaderCell,
+	Row as TableRow,
+} from '$lib/components';
+import { EMPLOYEES, formatDate, formatSalary, type SortDirection, type SortKey } from '../_data/mock-data';
 
-	let sortKey = $state<SortKey | null>(null);
-	let sortDir = $state<SortDirection>('asc');
+let sortKey = $state<SortKey | null>(null);
+let sortDir = $state<SortDirection>('asc');
 
-	const columns: { key: SortKey; label: string; align?: 'right' }[] = [
-		{ key: 'name', label: 'Name' },
-		{ key: 'department', label: 'Department' },
-		{ key: 'role', label: 'Role' },
-		{ key: 'salary', label: 'Salary', align: 'right' },
-		{ key: 'startDate', label: 'Start Date' }
-	];
+const columns: { key: SortKey; label: string; align?: 'right' }[] = [
+	{ key: 'name', label: 'Name' },
+	{ key: 'department', label: 'Department' },
+	{ key: 'role', label: 'Role' },
+	{ key: 'salary', label: 'Salary', align: 'right' },
+	{ key: 'startDate', label: 'Start Date' },
+];
 
-	function toggleSort(key: SortKey) {
-		if (sortKey === key) {
-			if (sortDir === 'asc') {
-				sortDir = 'desc';
-			} else {
-				sortKey = null;
-				sortDir = 'asc';
-			}
+function toggleSort(key: SortKey) {
+	if (sortKey === key) {
+		if (sortDir === 'asc') {
+			sortDir = 'desc';
 		} else {
-			sortKey = key;
+			sortKey = null;
 			sortDir = 'asc';
 		}
+	} else {
+		sortKey = key;
+		sortDir = 'asc';
 	}
+}
 
-	function ariaSortValue(key: SortKey): 'ascending' | 'descending' | 'none' {
-		if (sortKey !== key) return 'none';
-		return sortDir === 'asc' ? 'ascending' : 'descending';
-	}
+function ariaSortValue(key: SortKey): 'ascending' | 'descending' | 'none' {
+	if (sortKey !== key) return 'none';
+	return sortDir === 'asc' ? 'ascending' : 'descending';
+}
 
-	let sorted = $derived.by(() => {
-		if (!sortKey) return EMPLOYEES;
-		const key = sortKey;
-		const dir = sortDir === 'asc' ? 1 : -1;
-		return [...EMPLOYEES].sort((a, b) => {
-			const av = a[key];
-			const bv = b[key];
-			if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
-			return String(av).localeCompare(String(bv)) * dir;
-		});
+let sorted = $derived.by(() => {
+	if (!sortKey) return EMPLOYEES;
+	const key = sortKey;
+	const dir = sortDir === 'asc' ? 1 : -1;
+	return [...EMPLOYEES].sort((a, b) => {
+		const av = a[key];
+		const bv = b[key];
+		if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
+		return String(av).localeCompare(String(bv)) * dir;
 	});
+});
 </script>
 
 <section id="tbl-ledger" class="section">
@@ -73,12 +73,12 @@
 											{col.label}
 											{#if sortKey === col.key}
 												{#if sortDir === 'asc'}
-													<span class="i-lucide-chevron-up sort-icon" />
+													<span class="i-lucide-chevron-up sort-icon" ></span>
 												{:else}
-													<span class="i-lucide-chevron-down sort-icon" />
+													<span class="i-lucide-chevron-down sort-icon" ></span>
 												{/if}
 											{:else}
-												<span class="i-lucide-chevrons-up-down sort-icon idle" />
+												<span class="i-lucide-chevrons-up-down sort-icon idle" ></span>
 											{/if}
 										</button>
 									</TableHeaderCell>

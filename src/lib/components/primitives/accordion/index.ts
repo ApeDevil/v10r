@@ -1,12 +1,12 @@
 export { default as Accordion } from './Accordion.svelte';
 export {
-	accordionItemVariants,
-	accordionTriggerVariants,
-	accordionContentVariants,
-	accordionChevronVariants,
+	type AccordionChevronVariants,
+	type AccordionContentVariants,
 	type AccordionItemVariants,
 	type AccordionTriggerVariants,
-	type AccordionContentVariants,
-	type AccordionChevronVariants,
-	type AccordionVariants
+	type AccordionVariants,
+	accordionChevronVariants,
+	accordionContentVariants,
+	accordionItemVariants,
+	accordionTriggerVariants,
 } from './accordion';

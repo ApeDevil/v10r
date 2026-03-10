@@ -1,9 +1,9 @@
 import { redirect } from '@sveltejs/kit';
+import { desc, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import { notifications } from '$lib/server/db/schema/notifications/notifications';
 import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
-import { eq, desc } from 'drizzle-orm';
-import type { PageServerLoad, Actions } from './$types';
+import { notifications } from '$lib/server/db/schema/notifications/notifications';
+import type { Actions, PageServerLoad } from './$types';
 
 interface DeliveryInfo {
 	channel: string;
@@ -54,7 +54,7 @@ async function loadRecentNotifications(userId: string): Promise<GroupedNotificat
 		}
 
 		if (row.deliveryChannel) {
-			map.get(row.id)!.deliveries.push({
+			map.get(row.id)?.deliveries.push({
 				channel: row.deliveryChannel,
 				status: row.deliveryStatus ?? 'pending',
 				errorCode: row.errorCode,

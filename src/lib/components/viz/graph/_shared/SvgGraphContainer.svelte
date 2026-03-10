@@ -1,151 +1,149 @@
 <script lang="ts">
-	import { onDestroy, onMount, type Snippet } from 'svelte';
-	import { beforeNavigate } from '$app/navigation';
-	import { cn } from '$lib/utils/cn';
-	import { chartContainerVariants, type ChartContainerVariants } from '../../_shared/chart-container';
+import { onDestroy, onMount, type Snippet } from 'svelte';
+import { beforeNavigate } from '$app/navigation';
+import { cn } from '$lib/utils/cn';
+import { type ChartContainerVariants, chartContainerVariants } from '../../_shared/chart-container';
 
-	interface Props {
-		aspect?: ChartContainerVariants['aspect'];
-		ariaLabel?: string;
-		children: Snippet<[{ width: number; height: number; transform: string }]>;
-		skeleton?: Snippet;
-		onResize?: (width: number, height: number) => void;
-		class?: string;
+interface Props {
+	aspect?: ChartContainerVariants['aspect'];
+	ariaLabel?: string;
+	children: Snippet<[{ width: number; height: number; transform: string }]>;
+	skeleton?: Snippet;
+	onResize?: (width: number, height: number) => void;
+	class?: string;
+}
+
+let {
+	aspect = 'chart',
+	ariaLabel = 'Graph visualization',
+	children,
+	skeleton,
+	onResize,
+	class: className,
+}: Props = $props();
+
+let containerEl: HTMLDivElement | undefined = $state();
+let svgEl: SVGSVGElement | undefined = $state();
+let width = $state(600);
+let height = $state(400);
+let ready = $state(false);
+let transform = $state('translate(0,0) scale(1)');
+let zoomLevel = $state(1);
+let showZoomIndicator = $state(false);
+let zoomIndicatorTimeout: ReturnType<typeof setTimeout> | undefined;
+
+let resizeObserver: ResizeObserver | undefined;
+// D3 zoom/selection types are complex generics — use any for internal state
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let zoomBehavior: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let d3Sel: any;
+// Cached from onMount to avoid re-importing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let zoomIdentity: any;
+
+function cleanup() {
+	resizeObserver?.disconnect();
+	resizeObserver = undefined;
+	clearTimeout(zoomIndicatorTimeout);
+	zoomIndicatorTimeout = undefined;
+	// Remove d3-zoom listeners
+	if (d3Sel) {
+		d3Sel.on('.zoom', null);
 	}
+	d3Sel = undefined;
+	zoomBehavior = undefined;
+}
 
-	let {
-		aspect = 'chart',
-		ariaLabel = 'Graph visualization',
-		children,
-		skeleton,
-		onResize,
-		class: className,
-	}: Props = $props();
+beforeNavigate(cleanup);
+onDestroy(cleanup);
 
-	let containerEl: HTMLDivElement | undefined = $state();
-	let svgEl: SVGSVGElement | undefined = $state();
-	let width = $state(600);
-	let height = $state(400);
-	let ready = $state(false);
-	let transform = $state('translate(0,0) scale(1)');
-	let zoomLevel = $state(1);
-	let showZoomIndicator = $state(false);
-	let zoomIndicatorTimeout: ReturnType<typeof setTimeout> | undefined;
+onMount(async () => {
+	const [d3Zoom, d3Selection_] = await Promise.all([import('d3-zoom'), import('d3-selection')]);
 
-	let resizeObserver: ResizeObserver | undefined;
-	// D3 zoom/selection types are complex generics — use any for internal state
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let zoomBehavior: any;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let d3Sel: any;
-	// Cached from onMount to avoid re-importing
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let zoomIdentity: any;
+	if (!svgEl || !containerEl) return;
 
-	function cleanup() {
-		resizeObserver?.disconnect();
-		resizeObserver = undefined;
-		clearTimeout(zoomIndicatorTimeout);
-		zoomIndicatorTimeout = undefined;
-		// Remove d3-zoom listeners
-		if (d3Sel) {
-			d3Sel.on('.zoom', null);
+	// Initial sizing
+	const rect = containerEl.getBoundingClientRect();
+	width = rect.width;
+	height = rect.height;
+	onResize?.(width, height);
+
+	// ResizeObserver for responsive sizing
+	resizeObserver = new ResizeObserver((entries) => {
+		for (const entry of entries) {
+			const cr = entry.contentRect;
+			width = cr.width;
+			height = cr.height;
+			onResize?.(cr.width, cr.height);
 		}
-		d3Sel = undefined;
-		zoomBehavior = undefined;
-	}
-
-	beforeNavigate(cleanup);
-	onDestroy(cleanup);
-
-	onMount(async () => {
-		const [d3Zoom, d3Selection_] = await Promise.all([
-			import('d3-zoom'),
-			import('d3-selection'),
-		]);
-
-		if (!svgEl || !containerEl) return;
-
-		// Initial sizing
-		const rect = containerEl.getBoundingClientRect();
-		width = rect.width;
-		height = rect.height;
-		onResize?.(width, height);
-
-		// ResizeObserver for responsive sizing
-		resizeObserver = new ResizeObserver((entries) => {
-			for (const entry of entries) {
-				const cr = entry.contentRect;
-				width = cr.width;
-				height = cr.height;
-				onResize?.(cr.width, cr.height);
-			}
-		});
-		resizeObserver.observe(containerEl);
-
-		// d3-zoom: Ctrl/Cmd+scroll for zoom, drag for pan
-		zoomBehavior = d3Zoom.zoom<SVGSVGElement, unknown>()
-			.scaleExtent([0.1, 8])
-			.filter((event: Event) => {
-				// Allow drag (mousedown) for panning
-				if (event.type === 'mousedown' || event.type === 'touchstart') return true;
-				// For wheel events, require Ctrl/Cmd modifier (prevents page scroll hijack)
-				if (event.type === 'wheel') {
-					return (event as WheelEvent).ctrlKey || (event as WheelEvent).metaKey;
-				}
-				// Allow dblclick for zoom reset
-				if (event.type === 'dblclick') return true;
-				return false;
-			})
-			.on('zoom', (event) => {
-				const t = event.transform;
-				transform = `translate(${t.x},${t.y}) scale(${t.k})`;
-				zoomLevel = t.k;
-
-				// Show zoom indicator briefly
-				showZoomIndicator = true;
-				clearTimeout(zoomIndicatorTimeout);
-				zoomIndicatorTimeout = setTimeout(() => {
-					showZoomIndicator = false;
-				}, 2000);
-			});
-
-		d3Sel = d3Selection_.select(svgEl);
-		d3Sel.call(zoomBehavior);
-
-		zoomIdentity = d3Zoom.zoomIdentity;
-		ready = true;
 	});
+	resizeObserver.observe(containerEl);
 
-	function handleZoomIn() {
-		if (!zoomBehavior || !d3Sel) return;
-		zoomBehavior.scaleBy(d3Sel, 1.3);
-	}
+	// d3-zoom: Ctrl/Cmd+scroll for zoom, drag for pan
+	zoomBehavior = d3Zoom
+		.zoom<SVGSVGElement, unknown>()
+		.scaleExtent([0.1, 8])
+		.filter((event: Event) => {
+			// Allow drag (mousedown) for panning
+			if (event.type === 'mousedown' || event.type === 'touchstart') return true;
+			// For wheel events, require Ctrl/Cmd modifier (prevents page scroll hijack)
+			if (event.type === 'wheel') {
+				return (event as WheelEvent).ctrlKey || (event as WheelEvent).metaKey;
+			}
+			// Allow dblclick for zoom reset
+			if (event.type === 'dblclick') return true;
+			return false;
+		})
+		.on('zoom', (event) => {
+			const t = event.transform;
+			transform = `translate(${t.x},${t.y}) scale(${t.k})`;
+			zoomLevel = t.k;
 
-	function handleZoomOut() {
-		if (!zoomBehavior || !d3Sel) return;
-		zoomBehavior.scaleBy(d3Sel, 0.7);
-	}
+			// Show zoom indicator briefly
+			showZoomIndicator = true;
+			clearTimeout(zoomIndicatorTimeout);
+			zoomIndicatorTimeout = setTimeout(() => {
+				showZoomIndicator = false;
+			}, 2000);
+		});
 
-	function handleFitToView() {
-		if (!zoomBehavior || !d3Sel || !zoomIdentity) return;
-		zoomBehavior.transform(d3Sel, zoomIdentity);
-	}
+	d3Sel = d3Selection_.select(svgEl);
+	d3Sel.call(zoomBehavior);
 
-	function handleKeydown(event: KeyboardEvent) {
-		if (event.key === '+' || event.key === '=') {
-			event.preventDefault();
-			handleZoomIn();
-		} else if (event.key === '-') {
-			event.preventDefault();
-			handleZoomOut();
-		} else if (event.key === '0' || event.key === 'f') {
-			event.preventDefault();
-			handleFitToView();
-		} else if (event.key === 'Escape') {
-			// Bubble escape to child components for deselection
-		}
+	zoomIdentity = d3Zoom.zoomIdentity;
+	ready = true;
+});
+
+function handleZoomIn() {
+	if (!zoomBehavior || !d3Sel) return;
+	zoomBehavior.scaleBy(d3Sel, 1.3);
+}
+
+function handleZoomOut() {
+	if (!zoomBehavior || !d3Sel) return;
+	zoomBehavior.scaleBy(d3Sel, 0.7);
+}
+
+function handleFitToView() {
+	if (!zoomBehavior || !d3Sel || !zoomIdentity) return;
+	zoomBehavior.transform(d3Sel, zoomIdentity);
+}
+
+function handleKeydown(event: KeyboardEvent) {
+	if (event.key === '+' || event.key === '=') {
+		event.preventDefault();
+		handleZoomIn();
+	} else if (event.key === '-') {
+		event.preventDefault();
+		handleZoomOut();
+	} else if (event.key === '0' || event.key === 'f') {
+		event.preventDefault();
+		handleFitToView();
+	} else if (event.key === 'Escape') {
+		// Bubble escape to child components for deselection
 	}
+}
 </script>
 
 <figure class={cn(chartContainerVariants({ aspect }), 'graph-container', className)}>

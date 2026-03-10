@@ -1,22 +1,22 @@
 <script lang="ts">
-	import type { PipelineStepId, PipelineStepStatus } from '$lib/types/pipeline';
+import type { PipelineStepId, PipelineStepStatus } from '$lib/types/pipeline';
 
-	interface Props {
-		x1: number;
-		y1: number;
-		x2: number;
-		y2: number;
-		from: PipelineStepId;
-		to: PipelineStepId;
-		status: PipelineStepStatus;
-		hovered?: boolean;
-		onhover?: (edge: { from: PipelineStepId; to: PipelineStepId } | null) => void;
-	}
+interface Props {
+	x1: number;
+	y1: number;
+	x2: number;
+	y2: number;
+	from: PipelineStepId;
+	to: PipelineStepId;
+	status: PipelineStepStatus;
+	hovered?: boolean;
+	onhover?: (edge: { from: PipelineStepId; to: PipelineStepId } | null) => void;
+}
 
-	let { x1, y1, x2, y2, from, to, status, hovered = false, onhover }: Props = $props();
+let { x1, y1, x2, y2, from, to, status, hovered = false, onhover }: Props = $props();
 
-	const midY = $derived((y1 + y2) / 2);
-	const path = $derived(`M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`);
+const midY = $derived((y1 + y2) / 2);
+const path = $derived(`M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`);
 </script>
 
 <path

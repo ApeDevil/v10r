@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { Card, DiagGrid, DiagRow } from '$lib/components/composites';
-	import { Badge } from '$lib/components/primitives';
-	import { Stack } from '$lib/components/layout';
+import { Card, DiagGrid, DiagRow } from '$lib/components/composites';
+import { Stack } from '$lib/components/layout';
+import { Badge } from '$lib/components/primitives';
 
-	let { data } = $props();
+let { data } = $props();
 </script>
 
 <svelte:head>

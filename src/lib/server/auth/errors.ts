@@ -1,12 +1,6 @@
 import { ServerError } from '$lib/server/errors';
 
-export type AuthErrorKind =
-	| 'unauthenticated'
-	| 'forbidden'
-	| 'expired'
-	| 'rate_limited'
-	| 'provider'
-	| 'unknown';
+export type AuthErrorKind = 'unauthenticated' | 'forbidden' | 'expired' | 'rate_limited' | 'provider' | 'unknown';
 
 export class AuthError extends ServerError {
 	constructor(

@@ -1,53 +1,51 @@
 <script lang="ts">
-	import {
-		categories,
-		getFontsByCategory,
-		findFont,
-		fontPairings,
-		type FontCategory,
-		type FontLoadState,
-	} from '$lib/utils/fonts';
+import {
+	categories,
+	type FontCategory,
+	type FontLoadState,
+	findFont,
+	fontPairings,
+	getFontsByCategory,
+} from '$lib/utils/fonts';
 
-	interface Props {
-		mode: 'single' | 'pairing';
-		selected: string;
-		headingFont: string;
-		bodyFont: string;
-		loadState: FontLoadState;
-		headingLoadState: FontLoadState;
-		bodyLoadState: FontLoadState;
-		onselect: (family: string) => void;
-		onselectHeading: (family: string) => void;
-		onselectBody: (family: string) => void;
-		onmodechange: (mode: 'single' | 'pairing') => void;
-	}
+interface Props {
+	mode: 'single' | 'pairing';
+	selected: string;
+	headingFont: string;
+	bodyFont: string;
+	loadState: FontLoadState;
+	headingLoadState: FontLoadState;
+	bodyLoadState: FontLoadState;
+	onselect: (family: string) => void;
+	onselectHeading: (family: string) => void;
+	onselectBody: (family: string) => void;
+	onmodechange: (mode: 'single' | 'pairing') => void;
+}
 
-	let {
-		mode,
-		selected,
-		headingFont,
-		bodyFont,
-		loadState,
-		headingLoadState,
-		bodyLoadState,
-		onselect,
-		onselectHeading,
-		onselectBody,
-		onmodechange,
-	}: Props = $props();
+let {
+	mode,
+	selected,
+	headingFont,
+	bodyFont,
+	loadState,
+	headingLoadState,
+	bodyLoadState,
+	onselect,
+	onselectHeading,
+	onselectBody,
+	onmodechange,
+}: Props = $props();
 
-	let activeCategory = $state<FontCategory>('sans-serif');
+let activeCategory = $state<FontCategory>('sans-serif');
 
-	let fontsInCategory = $derived(getFontsByCategory(activeCategory));
-	let selectedMeta = $derived(
-		mode === 'single' ? findFont(selected) : null
-	);
+let fontsInCategory = $derived(getFontsByCategory(activeCategory));
+let selectedMeta = $derived(mode === 'single' ? findFont(selected) : null);
 
-	function swapFonts() {
-		const prev = headingFont;
-		onselectHeading(bodyFont);
-		onselectBody(prev);
-	}
+function swapFonts() {
+	const prev = headingFont;
+	onselectHeading(bodyFont);
+	onselectBody(prev);
+}
 </script>
 
 <div class="font-picker">

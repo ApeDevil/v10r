@@ -4,8 +4,8 @@
  */
 import { building } from '$app/environment';
 import { env } from '$env/dynamic/private';
-import { platform } from '$lib/server/platform';
 import { DEFAULT_DELIVERY_INTERVAL_MS } from '$lib/server/config';
+import { platform } from '$lib/server/platform';
 import { notificationDelivery } from './notification-delivery';
 
 declare global {

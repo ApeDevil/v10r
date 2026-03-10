@@ -1,11 +1,11 @@
-export { default as ReorderablePaneLayout } from './ReorderablePaneLayout.svelte';
 export { default as PaneTabBar } from './PaneTabBar.svelte';
+export { default as ReorderablePaneLayout } from './ReorderablePaneLayout.svelte';
 export {
-	tabBarVariants,
-	tabVariants,
+	type GripVariants,
 	gripVariants,
 	type PaneDefinition,
 	type TabBarVariants,
 	type TabVariants,
-	type GripVariants
+	tabBarVariants,
+	tabVariants,
 } from './reorderable-panes';

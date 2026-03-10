@@ -1,60 +1,60 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { PageHeader, BackLink, NavSection, BoundaryFallback } from '$lib/components/composites';
-	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives/table';
-	import VizDemoCard from '../_components/VizDemoCard.svelte';
-	import { GeoMap, MapMarker, MapPopup } from '$lib/components/viz';
-	import { getVizPalette } from '$lib/components/viz/_shared/theme-bridge';
-	import type { Component } from 'svelte';
+import type { Component } from 'svelte';
+import { onMount } from 'svelte';
+import { BackLink, BoundaryFallback, NavSection, PageHeader } from '$lib/components/composites';
+import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
+import { GeoMap, MapMarker, MapPopup } from '$lib/components/viz';
+import { getVizPalette } from '$lib/components/viz/_shared/theme-bridge';
+import VizDemoCard from '../_components/VizDemoCard.svelte';
 
-	const sections = [
-		{ id: 'basic-map', label: 'Basic Map' },
-		{ id: 'markers-popups', label: 'Markers' },
-		{ id: 'choropleth', label: 'Choropleth' },
-	];
+const sections = [
+	{ id: 'basic-map', label: 'Basic Map' },
+	{ id: 'markers-popups', label: 'Markers' },
+	{ id: 'choropleth', label: 'Choropleth' },
+];
 
-	// --- Section 2: Markers data ---
-	const markers = [
-		{ city: 'San Francisco', lnglat: { lng: -122.42, lat: 37.78 }, description: 'Silicon Valley hub' },
-		{ city: 'London', lnglat: { lng: -0.12, lat: 51.51 }, description: 'European fintech center' },
-		{ city: 'Tokyo', lnglat: { lng: 139.69, lat: 35.69 }, description: 'Electronics and robotics' },
-		{ city: 'Bangalore', lnglat: { lng: 77.59, lat: 12.97 }, description: 'India\'s tech capital' },
-		{ city: 'Berlin', lnglat: { lng: 13.40, lat: 52.52 }, description: 'European startup scene' },
-		{ city: 'Singapore', lnglat: { lng: 103.85, lat: 1.29 }, description: 'Asia-Pacific gateway' },
-	];
+// --- Section 2: Markers data ---
+const markers = [
+	{ city: 'San Francisco', lnglat: { lng: -122.42, lat: 37.78 }, description: 'Silicon Valley hub' },
+	{ city: 'London', lnglat: { lng: -0.12, lat: 51.51 }, description: 'European fintech center' },
+	{ city: 'Tokyo', lnglat: { lng: 139.69, lat: 35.69 }, description: 'Electronics and robotics' },
+	{ city: 'Bangalore', lnglat: { lng: 77.59, lat: 12.97 }, description: "India's tech capital" },
+	{ city: 'Berlin', lnglat: { lng: 13.4, lat: 52.52 }, description: 'European startup scene' },
+	{ city: 'Singapore', lnglat: { lng: 103.85, lat: 1.29 }, description: 'Asia-Pacific gateway' },
+];
 
-	// --- Section 3: Choropleth (dynamic imports) ---
-	const STATES_GEOJSON = 'https://maplibre.org/maplibre-gl-js/docs/assets/us_states.geojson';
+// --- Section 3: Choropleth (dynamic imports) ---
+const STATES_GEOJSON = 'https://maplibre.org/maplibre-gl-js/docs/assets/us_states.geojson';
 
-	let GeoJSONSource: Component<any> | undefined = $state();
-	let FillLayer: Component<any> | undefined = $state();
-	let LineLayer: Component<any> | undefined = $state();
-	let FeatureStateComp: Component<any> | undefined = $state();
-	let PopupComp: Component<any> | undefined = $state();
-	let choroplethReady = $state(false);
-	let palette = $state<string[]>([]);
+let GeoJSONSource: Component<any> | undefined = $state();
+let FillLayer: Component<any> | undefined = $state();
+let LineLayer: Component<any> | undefined = $state();
+let FeatureStateComp: Component<any> | undefined = $state();
+let PopupComp: Component<any> | undefined = $state();
+let choroplethReady = $state(false);
+let palette = $state<string[]>([]);
 
-	let hoveredFeature: any = $state(undefined);
-	let hoverLngLat: { lng: number; lat: number } | undefined = $state(undefined);
+let hoveredFeature: any = $state(undefined);
+let hoverLngLat: { lng: number; lat: number } | undefined = $state(undefined);
 
-	onMount(async () => {
-		const sml = await import('svelte-maplibre-gl');
-		GeoJSONSource = sml.GeoJSONSource;
-		FillLayer = sml.FillLayer;
-		LineLayer = sml.LineLayer;
-		FeatureStateComp = sml.FeatureState;
-		PopupComp = sml.Popup;
-		palette = getVizPalette();
-		choroplethReady = true;
-	});
+onMount(async () => {
+	const sml = await import('svelte-maplibre-gl');
+	GeoJSONSource = sml.GeoJSONSource;
+	FillLayer = sml.FillLayer;
+	LineLayer = sml.LineLayer;
+	FeatureStateComp = sml.FeatureState;
+	PopupComp = sml.Popup;
+	palette = getVizPalette();
+	choroplethReady = true;
+});
 
-	const choroplethRegions = [
-		{ region: 'Northeast', states: 'CT, MA, ME, NH, NJ, NY, PA, RI, VT' },
-		{ region: 'Southeast', states: 'AL, FL, GA, KY, MD, NC, SC, TN, VA, WV' },
-		{ region: 'Midwest', states: 'IA, IL, IN, KS, MI, MN, MO, NE, ND, OH, SD, WI' },
-		{ region: 'Southwest', states: 'AZ, NM, OK, TX' },
-		{ region: 'West', states: 'CA, CO, ID, MT, NV, OR, UT, WA, WY' },
-	];
+const choroplethRegions = [
+	{ region: 'Northeast', states: 'CT, MA, ME, NH, NJ, NY, PA, RI, VT' },
+	{ region: 'Southeast', states: 'AL, FL, GA, KY, MD, NC, SC, TN, VA, WV' },
+	{ region: 'Midwest', states: 'IA, IL, IN, KS, MI, MN, MO, NE, ND, OH, SD, WI' },
+	{ region: 'Southwest', states: 'AZ, NM, OK, TX' },
+	{ region: 'West', states: 'CA, CO, ID, MT, NV, OR, UT, WA, WY' },
+];
 </script>
 
 <svelte:head>
@@ -265,10 +265,10 @@
 					{/snippet}
 					{#snippet code()}
 						<pre><code>{`<!-- Import svelte-maplibre-gl components directly -->
-<script>
+${"<"}script>
   import { GeoJSONSource, FillLayer, LineLayer,
     FeatureState, Popup } from 'svelte-maplibre-gl';
-</script>
+${"<"}/script>
 
 <GeoMap center={{ lng: -98, lat: 38 }} zoom={3}>
   <GeoJSONSource data={geojsonUrl}>

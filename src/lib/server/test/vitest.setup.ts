@@ -16,13 +16,15 @@ vi.mock('$env/dynamic/private', () => ({
 }));
 
 // Mock SvelteKit $env/static/private — same redirect
-vi.mock('$env/static/private', () =>
-	new Proxy(
-		{},
-		{
-			get: (_target, prop: string) => process.env[prop],
-		},
-	),
+vi.mock(
+	'$env/static/private',
+	() =>
+		new Proxy(
+			{},
+			{
+				get: (_target, prop: string) => process.env[prop],
+			},
+		),
 );
 
 // Mock $app/environment

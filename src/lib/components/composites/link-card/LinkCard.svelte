@@ -1,26 +1,25 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
-	import { localizeHref } from '$lib/i18n';
-	import type { HTMLAttributes } from 'svelte/elements';
-	import type { Snippet } from 'svelte';
+import type { Snippet } from 'svelte';
+import type { HTMLAttributes } from 'svelte/elements';
+import { localizeHref } from '$lib/i18n';
+import { cn } from '$lib/utils/cn';
 
-	interface Sublink {
-		label: string;
-		href: string;
-	}
+interface Sublink {
+	label: string;
+	href: string;
+}
 
-	interface Props extends HTMLAttributes<HTMLDivElement> {
-		href: string;
-		title: string;
-		description?: string;
-		icon?: string;
-		sublinks?: Sublink[];
-		children?: Snippet;
-		class?: string;
-	}
+interface Props extends HTMLAttributes<HTMLDivElement> {
+	href: string;
+	title: string;
+	description?: string;
+	icon?: string;
+	sublinks?: Sublink[];
+	children?: Snippet;
+	class?: string;
+}
 
-	let { href, title, description, icon, sublinks, children, class: className, ...rest }: Props =
-		$props();
+let { href, title, description, icon, sublinks, children, class: className, ...rest }: Props = $props();
 </script>
 
 <div

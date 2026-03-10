@@ -1,56 +1,55 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { Card, NavSection, ConfirmDialog, Alert } from '$lib/components/composites';
-	import { Badge, Button, Typography } from '$lib/components/primitives';
-	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
-	import { getToast } from '$lib/state/toast.svelte';
-	import { Stack, Cluster } from '$lib/components/layout';
-	import KnowledgeGraph from '$lib/components/viz/graph/knowledge/KnowledgeGraph.svelte';
+import { enhance } from '$app/forms';
+import { Alert, Card, ConfirmDialog, NavSection } from '$lib/components/composites';
+import { Cluster, Stack } from '$lib/components/layout';
+import { Badge, Body, Button, Cell, Header, HeaderCell, Row, Table, Typography } from '$lib/components/primitives';
+import KnowledgeGraph from '$lib/components/viz/graph/knowledge/KnowledgeGraph.svelte';
+import { getToast } from '$lib/state/toast.svelte';
 
-	let { data } = $props();
-	const toast = getToast();
+let { data } = $props();
+const toast = getToast();
 
-	let resetDialogOpen = $state(false);
+let resetDialogOpen = $state(false);
 
-	const sections = [
-		{ id: 'labels', label: 'Node Labels' },
-		{ id: 'relationships', label: 'Relationships' },
-		{ id: 'graph', label: 'Graph Schema' },
-		{ id: 'properties', label: 'Properties' },
-	];
+const sections = [
+	{ id: 'labels', label: 'Node Labels' },
+	{ id: 'relationships', label: 'Relationships' },
+	{ id: 'graph', label: 'Graph Schema' },
+	{ id: 'properties', label: 'Properties' },
+];
 
-	// Derive property info client-side by grouping nodes
-	const propertyGroups = $derived.by(() => {
-		const groups = new Map<string, Set<string>>();
-		for (const node of data.graphData.nodes) {
-			const type = node.entityType;
-			if (!groups.has(type)) groups.set(type, new Set());
-			const set = groups.get(type)!;
-			if (node.properties) {
-				for (const key of Object.keys(node.properties)) {
-					set.add(key);
-				}
+// Derive property info client-side by grouping nodes
+const propertyGroups = $derived.by(() => {
+	const groups = new Map<string, Set<string>>();
+	for (const node of data.graphData.nodes) {
+		const type = node.entityType;
+		if (!groups.has(type)) groups.set(type, new Set());
+		const set = groups.get(type)!;
+		if (node.properties) {
+			for (const key of Object.keys(node.properties)) {
+				set.add(key);
 			}
 		}
-		return [...groups.entries()].map(([type, keys]) => ({
-			type,
-			properties: [...keys].sort(),
-		}));
-	});
-
-	const totalNodes = $derived(data.labels.reduce((sum, l) => sum + l.count, 0));
-	const totalRels = $derived(data.relTypes.reduce((sum, r) => sum + r.count, 0));
-
-	function handleActionResult() {
-		return ({ result, update }: { result: any; update: (opts?: any) => Promise<void> }) => {
-			if (result.type === 'success') {
-				toast.success(result.data?.message || 'Done.');
-			} else if (result.type === 'failure') {
-				toast.error(result.data?.message || 'Operation failed.');
-			}
-			return update();
-		};
 	}
+	return [...groups.entries()].map(([type, keys]) => ({
+		type,
+		properties: [...keys].sort(),
+	}));
+});
+
+const totalNodes = $derived(data.labels.reduce((sum, l) => sum + l.count, 0));
+const totalRels = $derived(data.relTypes.reduce((sum, r) => sum + r.count, 0));
+
+function handleActionResult() {
+	return ({ result, update }: { result: any; update: (opts?: any) => Promise<void> }) => {
+		if (result.type === 'success') {
+			toast.success((result.data?.message as string) || 'Done.');
+		} else if (result.type === 'failure') {
+			toast.error((result.data?.message as string) || 'Operation failed.');
+		}
+		return update();
+	};
+}
 </script>
 
 <svelte:head>
@@ -162,7 +161,7 @@
 								size="sm"
 								onclick={() => (resetDialogOpen = true)}
 							>
-								<span class="i-lucide-refresh-cw h-4 w-4 mr-1" />
+								<span class="i-lucide-refresh-cw h-4 w-4 mr-1" ></span>
 								Reset Data
 							</Button>
 						</Cluster>

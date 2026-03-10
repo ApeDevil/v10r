@@ -1,8 +1,8 @@
-import type { PageServerLoad, Actions } from './$types';
 import { UPSTASH_REDIS_REST_URL } from '$env/static/private';
+import { classifyCacheError } from '$lib/server/cache/errors';
 import { verifyConnection } from '$lib/server/cache/showcase/queries';
 import { reseedCache } from '$lib/server/cache/showcase/seed';
-import { classifyCacheError } from '$lib/server/cache/errors';
+import type { Actions, PageServerLoad } from './$types';
 
 async function measureConnection() {
 	try {
@@ -12,9 +12,7 @@ async function measureConnection() {
 			connected: true,
 			latencyMs: info.latencyMs,
 			keyCount: info.keyCount,
-			endpoint: UPSTASH_REDIS_REST_URL
-				? `${UPSTASH_REDIS_REST_URL.slice(0, 30)}...`
-				: 'unknown',
+			endpoint: UPSTASH_REDIS_REST_URL ? `${UPSTASH_REDIS_REST_URL.slice(0, 30)}...` : 'unknown',
 			measuredAt: info.measuredAt,
 		};
 	} catch (err) {

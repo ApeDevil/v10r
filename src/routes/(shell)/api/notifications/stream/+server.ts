@@ -1,5 +1,5 @@
-import { requireApiUser } from '$lib/server/auth/guards';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { requireApiUser } from '$lib/server/auth/guards';
 import { SSE_HEARTBEAT_MS, SSE_RATE_LIMIT_MAX, SSE_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import { getUnreadCount } from '$lib/server/db/notifications/queries';
 import { registerStream, unregisterStream } from '$lib/server/notifications';

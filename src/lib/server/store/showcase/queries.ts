@@ -1,13 +1,8 @@
-import {
-	HeadBucketCommand,
-	ListObjectsV2Command,
-	HeadObjectCommand,
-	GetObjectCommand,
-} from '@aws-sdk/client-s3';
+import { GetObjectCommand, HeadBucketCommand, HeadObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { s3, BUCKET } from '../index';
 import { StoreError } from '../errors';
-import type { ObjectInfo, ObjectDetail, BucketStats, PresignedUrlResult, RangeResult } from '../types';
+import { BUCKET, s3 } from '../index';
+import type { BucketStats, ObjectDetail, ObjectInfo, PresignedUrlResult, RangeResult } from '../types';
 import { SHOWCASE_PREFIX } from './guards';
 
 function requireS3() {
@@ -111,10 +106,7 @@ export async function getObjectDetail(key: string): Promise<ObjectDetail> {
 	};
 }
 
-export async function generateDownloadUrl(
-	key: string,
-	expiresIn: number,
-): Promise<PresignedUrlResult> {
+export async function generateDownloadUrl(key: string, expiresIn: number): Promise<PresignedUrlResult> {
 	const client = requireS3();
 	const command = new GetObjectCommand({ Bucket: BUCKET, Key: key });
 	const url = await getSignedUrl(client, command, { expiresIn });
@@ -128,11 +120,7 @@ export async function generateDownloadUrl(
 
 // ─── Transfer page ──────────────────────────────────────
 
-export async function getObjectRange(
-	key: string,
-	start: number,
-	end: number,
-): Promise<RangeResult> {
+export async function getObjectRange(key: string, start: number, end: number): Promise<RangeResult> {
 	const client = requireS3();
 	const res = await client.send(
 		new GetObjectCommand({
@@ -142,7 +130,7 @@ export async function getObjectRange(
 		}),
 	);
 
-	const body = await res.Body!.transformToByteArray();
+	const body = await res.Body?.transformToByteArray();
 
 	return {
 		data: body,

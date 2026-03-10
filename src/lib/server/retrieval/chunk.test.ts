@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { chunkDocument } from './chunk';
 
 describe('chunkDocument', () => {
@@ -21,8 +21,9 @@ describe('chunkDocument', () => {
 
 	it('splits long text into multiple parents', async () => {
 		// Generate text longer than SECTION_CHUNK_TARGET (1000 tokens ~ 4000 chars)
-		const paragraphs = Array.from({ length: 30 }, (_, i) =>
-			`Paragraph ${i}: ${'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '.repeat(5)}`,
+		const paragraphs = Array.from(
+			{ length: 30 },
+			(_, i) => `Paragraph ${i}: ${'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '.repeat(5)}`,
 		);
 		const longText = paragraphs.join('\n\n');
 

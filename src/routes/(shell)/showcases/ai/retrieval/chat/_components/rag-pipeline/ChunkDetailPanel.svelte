@@ -1,49 +1,47 @@
 <script lang="ts">
-	import type { PipelineChunksEvent } from '$lib/types/pipeline';
-	import ChunkList from './ChunkList.svelte';
+import type { PipelineChunksEvent } from '$lib/types/pipeline';
+import ChunkList from './ChunkList.svelte';
 
-	interface Tab {
-		id: string;
-		label: string;
-		count: number;
+interface Tab {
+	id: string;
+	label: string;
+	count: number;
+}
+
+interface Props {
+	chunkData: PipelineChunksEvent;
+	onclose: () => void;
+}
+
+let { chunkData, onclose }: Props = $props();
+
+const tabs = $derived.by(() => {
+	const t: Tab[] = [];
+	for (const [key, chunks] of Object.entries(chunkData.tierChunks)) {
+		const tierNum = key.replace('tier-', 'T');
+		t.push({ id: key, label: tierNum, count: chunks.length });
 	}
+	t.push({ id: 'ranked', label: 'Ranked', count: chunkData.rankedChunks.length });
+	t.push({ id: 'context', label: 'Context', count: chunkData.contextChunks.length });
+	return t;
+});
 
-	interface Props {
-		chunkData: PipelineChunksEvent;
-		onclose: () => void;
-	}
+let activeTabId = $state(Object.keys(chunkData.tierChunks)[0] ?? 'ranked');
 
-	let { chunkData, onclose }: Props = $props();
+const activeChunks = $derived.by(() => {
+	if (activeTabId.startsWith('tier-')) return chunkData.tierChunks[activeTabId] ?? [];
+	if (activeTabId === 'ranked') return chunkData.rankedChunks;
+	if (activeTabId === 'context') return chunkData.contextChunks;
+	return [];
+});
 
-	const tabs = $derived.by(() => {
-		const t: Tab[] = [];
-		for (const [key, chunks] of Object.entries(chunkData.tierChunks)) {
-			const tierNum = key.replace('tier-', 'T');
-			t.push({ id: key, label: tierNum, count: chunks.length });
-		}
-		t.push({ id: 'ranked', label: 'Ranked', count: chunkData.rankedChunks.length });
-		t.push({ id: 'context', label: 'Context', count: chunkData.contextChunks.length });
-		return t;
-	});
+const totalFound = $derived(Object.values(chunkData.tierChunks).reduce((sum, c) => sum + c.length, 0));
 
-	let activeTabId = $state(Object.keys(chunkData.tierChunks)[0] ?? 'ranked');
-
-	const activeChunks = $derived.by(() => {
-		if (activeTabId.startsWith('tier-')) return chunkData.tierChunks[activeTabId] ?? [];
-		if (activeTabId === 'ranked') return chunkData.rankedChunks;
-		if (activeTabId === 'context') return chunkData.contextChunks;
-		return [];
-	});
-
-	const totalFound = $derived(
-		Object.values(chunkData.tierChunks).reduce((sum, c) => sum + c.length, 0),
-	);
-
-	const funnelStats = $derived(
-		activeTabId === 'ranked' || activeTabId === 'context'
-			? { found: totalFound, kept: chunkData.rankedChunks.length, context: chunkData.contextChunks.length }
-			: undefined,
-	);
+const funnelStats = $derived(
+	activeTabId === 'ranked' || activeTabId === 'context'
+		? { found: totalFound, kept: chunkData.rankedChunks.length, context: chunkData.contextChunks.length }
+		: undefined,
+);
 </script>
 
 <div class="detail-panel" role="region" aria-label="Chunk detail panel">

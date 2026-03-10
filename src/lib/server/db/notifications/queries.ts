@@ -1,4 +1,4 @@
-import { eq, and, desc, count, sql } from 'drizzle-orm';
+import { and, count, desc, eq, sql } from 'drizzle-orm';
 import { db } from '../index';
 import { notifications } from '../schema/notifications/notifications';
 
@@ -19,11 +19,7 @@ export async function getUnreadCount(userId: string): Promise<number> {
 		.select({ count: count() })
 		.from(notifications)
 		.where(
-			and(
-				eq(notifications.userId, userId),
-				eq(notifications.isRead, false),
-				sql`${notifications.archivedAt} IS NULL`,
-			),
+			and(eq(notifications.userId, userId), eq(notifications.isRead, false), sql`${notifications.archivedAt} IS NULL`),
 		);
 	return result?.count ?? 0;
 }

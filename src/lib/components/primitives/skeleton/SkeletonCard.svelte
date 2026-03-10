@@ -1,20 +1,15 @@
 <script lang="ts">
-	import Skeleton from './Skeleton.svelte';
-	import SkeletonText from './SkeletonText.svelte';
+import Skeleton from './Skeleton.svelte';
+import SkeletonText from './SkeletonText.svelte';
 
-	interface Props {
-		hasImage?: boolean;
-		hasTitle?: boolean;
-		hasDescription?: boolean;
-		class?: string;
-	}
+interface Props {
+	hasImage?: boolean;
+	hasTitle?: boolean;
+	hasDescription?: boolean;
+	class?: string;
+}
 
-	let {
-		hasImage = true,
-		hasTitle = true,
-		hasDescription = true,
-		class: className
-	}: Props = $props();
+let { hasImage = true, hasTitle = true, hasDescription = true, class: className }: Props = $props();
 </script>
 
 <div class="skeleton-card {className || ''}" role="status" aria-label="Loading card">

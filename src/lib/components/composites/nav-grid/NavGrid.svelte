@@ -1,12 +1,12 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
+import type { Snippet } from 'svelte';
 
-	interface Props {
-		minWidth?: string;
-		children: Snippet;
-	}
+interface Props {
+	minWidth?: string;
+	children: Snippet;
+}
 
-	let { minWidth = '280px', children }: Props = $props();
+let { minWidth = '280px', children }: Props = $props();
 </script>
 
 <nav class="nav-grid" style:--nav-grid-min={minWidth}>

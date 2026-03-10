@@ -1,9 +1,9 @@
 import { json } from '@sveltejs/kit';
+import { and, count, eq, gt } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { db } from '$lib/server/db';
 import { telegramVerificationTokens } from '$lib/server/db/schema/notifications/telegram';
-import { and, eq, gt, count } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ locals }) => {
@@ -19,12 +19,7 @@ export const POST: RequestHandler = async ({ locals }) => {
 	const [{ count: recentCount }] = await db
 		.select({ count: count() })
 		.from(telegramVerificationTokens)
-		.where(
-			and(
-				eq(telegramVerificationTokens.userId, user.id),
-				gt(telegramVerificationTokens.createdAt, oneHourAgo),
-			),
-		);
+		.where(and(eq(telegramVerificationTokens.userId, user.id), gt(telegramVerificationTokens.createdAt, oneHourAgo)));
 
 	if (recentCount >= 3) {
 		return json({ error: 'Too many connection attempts. Try again later.' }, { status: 429 });

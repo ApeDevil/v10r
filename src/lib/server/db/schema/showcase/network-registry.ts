@@ -3,16 +3,7 @@
  * Mutability pattern: Immutable / Append-only.
  * Once inserted, records are never updated or deleted.
  */
-import {
-	text,
-	serial,
-	timestamp,
-	point,
-	inet,
-	cidr,
-	macaddr,
-	index,
-} from 'drizzle-orm/pg-core';
+import { cidr, index, inet, macaddr, point, serial, text, timestamp } from 'drizzle-orm/pg-core';
 import { showcaseSchema } from './type-specimen';
 
 export const networkRegistry = showcaseSchema.table(

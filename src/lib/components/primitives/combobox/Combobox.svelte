@@ -1,52 +1,49 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
-	import { Combobox as ComboboxPrimitive } from 'bits-ui';
+import { Combobox as ComboboxPrimitive } from 'bits-ui';
+import { cn } from '$lib/utils/cn';
 
-	interface Option {
-		value: string;
-		label: string;
-		disabled?: boolean;
-	}
+interface Option {
+	value: string;
+	label: string;
+	disabled?: boolean;
+}
 
-	interface Props {
-		options: Option[];
-		selected?: string;
-		placeholder?: string;
-		disabled?: boolean;
-		onSelectedChange?: (value: string | undefined) => void;
-		class?: string;
-	}
+interface Props {
+	options: Option[];
+	selected?: string;
+	placeholder?: string;
+	disabled?: boolean;
+	onSelectedChange?: (value: string | undefined) => void;
+	class?: string;
+}
 
-	let {
-		options,
-		selected = $bindable(),
-		placeholder = 'Search...',
-		disabled = false,
-		onSelectedChange,
-		class: className
-	}: Props = $props();
+let {
+	options,
+	selected = $bindable(),
+	placeholder = 'Search...',
+	disabled = false,
+	onSelectedChange,
+	class: className,
+}: Props = $props();
 
-	let inputValue = $state('');
-	let touchedSinceOpen = $state(false);
+let inputValue = $state('');
+let touchedSinceOpen = $state(false);
 
-	let selectedLabel = $derived(
-		options.find((opt) => opt.value === selected)?.label ?? ''
-	);
+let selectedLabel = $derived(options.find((opt) => opt.value === selected)?.label ?? '');
 
-	function handleClear() {
-		selected = undefined;
-		inputValue = '';
-		onSelectedChange?.(undefined);
-	}
+function handleClear() {
+	selected = undefined;
+	inputValue = '';
+	onSelectedChange?.(undefined);
+}
 </script>
 
 <ComboboxPrimitive.Root
 	type="single"
 	bind:value={selected}
-	bind:inputValue
-	bind:touchedInput={touchedSinceOpen}
 	{disabled}
-	onValueChange={(v) => onSelectedChange?.(v)}
+	onValueChange={(v: string) => onSelectedChange?.(v)}
+	onOpenChange={(open: boolean) => { if (open) { touchedSinceOpen = false; inputValue = ''; } }}
 >
 	<div class="relative w-full">
 		<ComboboxPrimitive.Input
@@ -58,6 +55,7 @@
 				className
 			)}
 			placeholder={selected ? selectedLabel : placeholder}
+			oninput={(e) => { inputValue = (e.target as HTMLInputElement).value; touchedSinceOpen = true; }}
 		/>
 		<div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
 			{#if selected && !disabled}
@@ -67,11 +65,11 @@
 					onclick={handleClear}
 					tabindex="-1"
 				>
-					<span class="i-lucide-x h-4 w-4" />
+					<span class="i-lucide-x h-4 w-4" ></span>
 					<span class="sr-only">Clear selection</span>
 				</button>
 			{/if}
-			<span class="i-lucide-chevrons-up-down h-4 w-4 opacity-50 pointer-events-none" />
+			<span class="i-lucide-chevrons-up-down h-4 w-4 opacity-50 pointer-events-none" ></span>
 		</div>
 	</div>
 
@@ -97,7 +95,7 @@
 					>
 						<span>{option.label}</span>
 						{#if selected === option.value}
-							<span class="i-lucide-check ml-auto h-4 w-4" />
+							<span class="i-lucide-check ml-auto h-4 w-4" ></span>
 						{/if}
 					</ComboboxPrimitive.Item>
 				{:else}

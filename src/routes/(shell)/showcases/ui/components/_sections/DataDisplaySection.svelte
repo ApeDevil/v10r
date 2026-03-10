@@ -1,35 +1,35 @@
 <script lang="ts">
-	import { DemoCard, VariantGrid } from '../_components';
-	import {
-		Badge,
-		Tag,
-		TagSelectable,
-		TagGroup,
-		Avatar,
-		Skeleton,
-		SkeletonText,
-		SkeletonCard,
-		SkeletonAvatar,
-		Kbd,
-		Progress,
-		Spinner,
-		ScrollArea
-	} from '$lib/components';
+import {
+	Avatar,
+	Badge,
+	Kbd,
+	Progress,
+	ScrollArea,
+	Skeleton,
+	SkeletonAvatar,
+	SkeletonCard,
+	SkeletonText,
+	Spinner,
+	Tag,
+	TagGroup,
+	TagSelectable,
+} from '$lib/components';
+import { DemoCard, VariantGrid } from '../_components';
 
-	let progressValue = $state(65);
+let progressValue = $state(65);
 
-	let tags = $state(['Svelte', 'TypeScript', 'UnoCSS', 'Bits UI']);
-	let filterActive = $state(false);
-	let filterPending = $state(true);
-	let filterCompleted = $state(false);
+let tags = $state(['Svelte', 'TypeScript', 'UnoCSS', 'Bits UI']);
+let filterActive = $state(false);
+let filterPending = $state(true);
+let filterCompleted = $state(false);
 
-	let groupItems = $state([
-		{ value: 'svelte', label: 'Svelte', icon: 'i-lucide-component' },
-		{ value: 'typescript', label: 'TypeScript', icon: 'i-lucide-file-code' },
-		{ value: 'unocss', label: 'UnoCSS' },
-		{ value: 'bitsui', label: 'Bits UI' },
-		{ value: 'valibot', label: 'Valibot' }
-	]);
+let groupItems = $state([
+	{ value: 'svelte', label: 'Svelte', icon: 'i-lucide-component' },
+	{ value: 'typescript', label: 'TypeScript', icon: 'i-lucide-file-code' },
+	{ value: 'unocss', label: 'UnoCSS' },
+	{ value: 'bitsui', label: 'Bits UI' },
+	{ value: 'valibot', label: 'Valibot' },
+]);
 </script>
 
 <section id="prim-data-display" class="section">

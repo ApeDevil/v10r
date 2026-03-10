@@ -1,11 +1,11 @@
 import { fail } from '@sveltejs/kit';
+import { count, desc, eq, max, sql } from 'drizzle-orm';
+import { requireAdmin } from '$lib/server/auth/guards';
 import { db } from '$lib/server/db';
 import { jobExecution } from '$lib/server/db/schema/jobs';
 import { jobs } from '$lib/server/jobs';
 import { runJob } from '$lib/server/jobs/runner';
-import { requireAdmin } from '$lib/server/auth/guards';
-import { desc, eq, count, max, sql } from 'drizzle-orm';
-import type { PageServerLoad, Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 
 const PAGE_SIZE = 25;
 
@@ -42,12 +42,10 @@ export const load: PageServerLoad = async ({ url }) => {
 		.groupBy(jobExecution.jobSlug);
 
 	// Paginated execution history
-	const historyBase = jobFilter !== 'all'
-		? db
-				.select()
-				.from(jobExecution)
-				.where(eq(jobExecution.jobSlug, jobFilter))
-		: db.select().from(jobExecution);
+	const historyBase =
+		jobFilter !== 'all'
+			? db.select().from(jobExecution).where(eq(jobExecution.jobSlug, jobFilter))
+			: db.select().from(jobExecution);
 
 	const [stats, history, totalResult] = await Promise.all([
 		statsQuery,
@@ -89,6 +87,9 @@ export const actions: Actions = {
 			return fail(500, { message: result.errorMessage || 'Job failed.' });
 		}
 
-		return { success: true, message: `${slug}: ${result.status} (${result.durationMs}ms, ${result.resultCount ?? 0} affected)` };
+		return {
+			success: true,
+			message: `${slug}: ${result.status} (${result.durationMs}ms, ${result.resultCount ?? 0} affected)`,
+		};
 	},
 };

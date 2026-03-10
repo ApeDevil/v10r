@@ -1,5 +1,5 @@
 <script lang="ts">
-	import LayoutSection from '../components/_sections/LayoutSection.svelte';
+import LayoutSection from '../components/_sections/LayoutSection.svelte';
 </script>
 
 <svelte:head>

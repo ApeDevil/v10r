@@ -4,9 +4,9 @@
  */
 import { sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import type { RankedChunk } from '../types';
-import { reciprocalRankFusion } from '../rank';
 import { OVERFETCH_MULTIPLIER } from '../config';
+import { reciprocalRankFusion } from '../rank';
+import type { RankedChunk } from '../types';
 
 interface VectorRow {
 	chunkId: string;
@@ -14,6 +14,7 @@ interface VectorRow {
 	documentTitle: string;
 	content: string;
 	distance: number;
+	[key: string]: unknown;
 }
 
 interface BM25Row {
@@ -22,14 +23,11 @@ interface BM25Row {
 	documentTitle: string;
 	content: string;
 	rank: number;
+	[key: string]: unknown;
 }
 
 /** Search chunks by vector cosine similarity. */
-async function vectorSearch(
-	queryEmbedding: number[],
-	limit: number,
-	userId: string,
-): Promise<RankedChunk[]> {
+async function vectorSearch(queryEmbedding: number[], limit: number, userId: string): Promise<RankedChunk[]> {
 	const embeddingStr = `[${queryEmbedding.join(',')}]`;
 
 	const result = await db.execute<VectorRow>(sql`
@@ -61,11 +59,7 @@ async function vectorSearch(
 }
 
 /** Search chunks by BM25 full-text search. */
-async function fullTextSearch(
-	query: string,
-	limit: number,
-	userId: string,
-): Promise<RankedChunk[]> {
+async function fullTextSearch(query: string, limit: number, userId: string): Promise<RankedChunk[]> {
 	const result = await db.execute<BM25Row>(sql`
 		SELECT
 			c.id AS "chunkId",

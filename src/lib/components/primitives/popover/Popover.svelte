@@ -1,25 +1,25 @@
 <script lang="ts">
-	import { Popover as PopoverPrimitive } from 'bits-ui';
-	import { cn } from '$lib/utils/cn';
-	import type { Snippet } from 'svelte';
+import { Popover as PopoverPrimitive } from 'bits-ui';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		trigger: Snippet;
-		content: Snippet;
-		open?: boolean;
-		side?: 'top' | 'right' | 'bottom' | 'left';
-		align?: 'start' | 'center' | 'end';
-		class?: string;
-	}
+interface Props {
+	trigger: Snippet;
+	content: Snippet;
+	open?: boolean;
+	side?: 'top' | 'right' | 'bottom' | 'left';
+	align?: 'start' | 'center' | 'end';
+	class?: string;
+}
 
-	let {
-		trigger,
-		content,
-		open = $bindable(false),
-		side = 'bottom',
-		align = 'center',
-		class: className
-	}: Props = $props();
+let {
+	trigger,
+	content,
+	open = $bindable(false),
+	side = 'bottom',
+	align = 'center',
+	class: className,
+}: Props = $props();
 </script>
 
 <PopoverPrimitive.Root bind:open>

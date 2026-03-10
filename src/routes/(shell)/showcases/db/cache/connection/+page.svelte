@@ -1,39 +1,32 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { Card, ConfirmDialog, Alert } from '$lib/components/composites';
-	import { Badge, Button, Spinner, Typography } from '$lib/components/primitives';
-	import { Stack, Cluster } from '$lib/components/layout';
-	import { getToast } from '$lib/state/toast.svelte';
+import { enhance } from '$app/forms';
+import { Alert, Card, ConfirmDialog } from '$lib/components/composites';
+import { Cluster, Stack } from '$lib/components/layout';
+import { Badge, Button, Spinner, Typography } from '$lib/components/primitives';
+import { getToast } from '$lib/state/toast.svelte';
 
-	let { data } = $props();
-	const toast = getToast();
+let { data } = $props();
+const toast = getToast();
 
-	let testing = $state(false);
-	let reseedDialogOpen = $state(false);
-	let reseeding = $state(false);
+let testing = $state(false);
+let reseedDialogOpen = $state(false);
+let reseeding = $state(false);
 
-	const latencyTier = $derived(
-		data.latencyMs < 50 ? 'fast' :
-		data.latencyMs < 200 ? 'normal' : 'degraded'
-	);
+const latencyTier = $derived(data.latencyMs < 50 ? 'fast' : data.latencyMs < 200 ? 'normal' : 'degraded');
 
-	const tierVariant = $derived(
-		latencyTier === 'fast' ? 'success' as const :
-		latencyTier === 'normal' ? 'warning' as const : 'error' as const
-	);
+const tierVariant = $derived(
+	latencyTier === 'fast' ? ('success' as const) : latencyTier === 'normal' ? ('warning' as const) : ('error' as const),
+);
 
-	const tierLabel = $derived(
-		latencyTier === 'fast' ? 'Fast' :
-		latencyTier === 'normal' ? 'Normal' : 'Degraded'
-	);
+const tierLabel = $derived(latencyTier === 'fast' ? 'Fast' : latencyTier === 'normal' ? 'Normal' : 'Degraded');
 
-	let history = $state<{ ms: number; tier: string; variant: 'success' | 'warning' | 'error' }[]>([]);
+let history = $state<{ ms: number; tier: string; variant: 'success' | 'warning' | 'error' }[]>([]);
 
-	function recordHistory(ms: number) {
-		const tier = ms < 50 ? 'Fast' : ms < 200 ? 'Normal' : 'Degraded';
-		const variant = ms < 50 ? 'success' as const : ms < 200 ? 'warning' as const : 'error' as const;
-		history = [...history.slice(-4), { ms, tier, variant }];
-	}
+function recordHistory(ms: number) {
+	const tier = ms < 50 ? 'Fast' : ms < 200 ? 'Normal' : 'Degraded';
+	const variant = ms < 50 ? ('success' as const) : ms < 200 ? ('warning' as const) : ('error' as const);
+	history = [...history.slice(-4), { ms, tier, variant }];
+}
 </script>
 
 <svelte:head>
@@ -62,7 +55,7 @@
 							{#if testing}
 								<Spinner size="xs" class="mr-2" />
 							{/if}
-							<span class="i-lucide-activity h-4 w-4 mr-1" />
+							<span class="i-lucide-activity h-4 w-4 mr-1" ></span>
 							Re-test
 						</Button>
 					</form>
@@ -177,7 +170,7 @@
 				{#if reseeding}
 					<Spinner size="xs" class="mr-2" />
 				{/if}
-				<span class="i-lucide-rotate-ccw h-4 w-4 mr-1" />
+				<span class="i-lucide-rotate-ccw h-4 w-4 mr-1" ></span>
 				Reseed Showcase Data
 			</Button>
 		</Cluster>
@@ -206,9 +199,9 @@
 		reseeding = true;
 		return async ({ result, update }) => {
 			if (result.type === 'success') {
-				toast.success(result.data?.message || 'Showcase data reseeded.');
+				toast.success((result.data?.message as string) || 'Showcase data reseeded.');
 			} else if (result.type === 'failure') {
-				toast.error(result.data?.message || 'Reseed failed.');
+				toast.error((result.data?.message as string) || 'Reseed failed.');
 			}
 			reseeding = false;
 			return update();

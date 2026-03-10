@@ -1,80 +1,101 @@
 <script lang="ts">
-	import { DemoCard } from '../../components/_components';
-	import { MenuBar } from '$lib/components/composites';
-	import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
+import { MenuBar } from '$lib/components/composites';
+import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
+import { DemoCard } from '../../components/_components';
 
-	let wordWrap = $state(true);
-	let minimap = $state(false);
-	let lineNumbers = $state(true);
+let wordWrap = $state(true);
+let minimap = $state(false);
+let lineNumbers = $state(true);
 
-	let editorMenus: MenuBarMenu[] = $derived([
-		{
-			label: 'File',
-			items: [
-				{ label: 'New File', shortcut: 'Ctrl+N', onSelect: () => {} },
-				{ label: 'Open File', shortcut: 'Ctrl+O', onSelect: () => {} },
-				{ label: 'Open Folder', onSelect: () => {} },
-				{ type: 'separator' },
-				{ label: 'Save', shortcut: 'Ctrl+S', onSelect: () => {} },
-				{ label: 'Save As...', shortcut: 'Ctrl+Shift+S', onSelect: () => {} },
-				{ type: 'separator' },
-				{ label: 'Close Editor', shortcut: 'Ctrl+W', onSelect: () => {} },
-			],
-		},
-		{
-			label: 'Edit',
-			items: [
-				{ label: 'Undo', shortcut: 'Ctrl+Z', onSelect: () => {} },
-				{ label: 'Redo', shortcut: 'Ctrl+Shift+Z', onSelect: () => {} },
-				{ type: 'separator' },
-				{ label: 'Cut', shortcut: 'Ctrl+X', onSelect: () => {} },
-				{ label: 'Copy', shortcut: 'Ctrl+C', onSelect: () => {} },
-				{ label: 'Paste', shortcut: 'Ctrl+V', onSelect: () => {} },
-				{ type: 'separator' },
-				{ label: 'Find', shortcut: 'Ctrl+F', onSelect: () => {} },
-				{ label: 'Replace', shortcut: 'Ctrl+H', onSelect: () => {} },
-			],
-		},
-		{
-			label: 'View',
-			items: [
-				{ label: 'Word Wrap', type: 'checkbox', checked: wordWrap, onSelect: () => { wordWrap = !wordWrap; } },
-				{ label: 'Minimap', type: 'checkbox', checked: minimap, onSelect: () => { minimap = !minimap; } },
-				{ label: 'Line Numbers', type: 'checkbox', checked: lineNumbers, onSelect: () => { lineNumbers = !lineNumbers; } },
-				{ type: 'separator' },
-				{ label: 'Zoom In', shortcut: 'Ctrl++', onSelect: () => {} },
-				{ label: 'Zoom Out', shortcut: 'Ctrl+-', onSelect: () => {} },
-				{ label: 'Reset Zoom', shortcut: 'Ctrl+0', onSelect: () => {} },
-			],
-		},
-		{
-			label: 'Help',
-			items: [
-				{ label: 'Documentation', icon: 'i-lucide-book-open', onSelect: () => {} },
-				{ label: 'Keyboard Shortcuts', icon: 'i-lucide-keyboard', shortcut: 'Ctrl+/', onSelect: () => {} },
-				{ type: 'separator' },
-				{ label: 'About', icon: 'i-lucide-info', onSelect: () => {} },
-			],
-		},
-	]);
+let editorMenus: MenuBarMenu[] = $derived([
+	{
+		label: 'File',
+		items: [
+			{ label: 'New File', shortcut: 'Ctrl+N', onSelect: () => {} },
+			{ label: 'Open File', shortcut: 'Ctrl+O', onSelect: () => {} },
+			{ label: 'Open Folder', onSelect: () => {} },
+			{ type: 'separator' },
+			{ label: 'Save', shortcut: 'Ctrl+S', onSelect: () => {} },
+			{ label: 'Save As...', shortcut: 'Ctrl+Shift+S', onSelect: () => {} },
+			{ type: 'separator' },
+			{ label: 'Close Editor', shortcut: 'Ctrl+W', onSelect: () => {} },
+		],
+	},
+	{
+		label: 'Edit',
+		items: [
+			{ label: 'Undo', shortcut: 'Ctrl+Z', onSelect: () => {} },
+			{ label: 'Redo', shortcut: 'Ctrl+Shift+Z', onSelect: () => {} },
+			{ type: 'separator' },
+			{ label: 'Cut', shortcut: 'Ctrl+X', onSelect: () => {} },
+			{ label: 'Copy', shortcut: 'Ctrl+C', onSelect: () => {} },
+			{ label: 'Paste', shortcut: 'Ctrl+V', onSelect: () => {} },
+			{ type: 'separator' },
+			{ label: 'Find', shortcut: 'Ctrl+F', onSelect: () => {} },
+			{ label: 'Replace', shortcut: 'Ctrl+H', onSelect: () => {} },
+		],
+	},
+	{
+		label: 'View',
+		items: [
+			{
+				label: 'Word Wrap',
+				type: 'checkbox',
+				checked: wordWrap,
+				onSelect: () => {
+					wordWrap = !wordWrap;
+				},
+			},
+			{
+				label: 'Minimap',
+				type: 'checkbox',
+				checked: minimap,
+				onSelect: () => {
+					minimap = !minimap;
+				},
+			},
+			{
+				label: 'Line Numbers',
+				type: 'checkbox',
+				checked: lineNumbers,
+				onSelect: () => {
+					lineNumbers = !lineNumbers;
+				},
+			},
+			{ type: 'separator' },
+			{ label: 'Zoom In', shortcut: 'Ctrl++', onSelect: () => {} },
+			{ label: 'Zoom Out', shortcut: 'Ctrl+-', onSelect: () => {} },
+			{ label: 'Reset Zoom', shortcut: 'Ctrl+0', onSelect: () => {} },
+		],
+	},
+	{
+		label: 'Help',
+		items: [
+			{ label: 'Documentation', icon: 'i-lucide-book-open', onSelect: () => {} },
+			{ label: 'Keyboard Shortcuts', icon: 'i-lucide-keyboard', shortcut: 'Ctrl+/', onSelect: () => {} },
+			{ type: 'separator' },
+			{ label: 'About', icon: 'i-lucide-info', onSelect: () => {} },
+		],
+	},
+]);
 
-	const compactMenus: MenuBarMenu[] = [
-		{
-			label: 'File',
-			items: [
-				{ label: 'New', shortcut: 'Ctrl+N', onSelect: () => {} },
-				{ label: 'Open', shortcut: 'Ctrl+O', onSelect: () => {} },
-				{ label: 'Save', shortcut: 'Ctrl+S', onSelect: () => {} },
-			],
-		},
-		{
-			label: 'Edit',
-			items: [
-				{ label: 'Undo', shortcut: 'Ctrl+Z', onSelect: () => {} },
-				{ label: 'Redo', shortcut: 'Ctrl+Y', onSelect: () => {} },
-			],
-		},
-	];
+const compactMenus: MenuBarMenu[] = [
+	{
+		label: 'File',
+		items: [
+			{ label: 'New', shortcut: 'Ctrl+N', onSelect: () => {} },
+			{ label: 'Open', shortcut: 'Ctrl+O', onSelect: () => {} },
+			{ label: 'Save', shortcut: 'Ctrl+S', onSelect: () => {} },
+		],
+	},
+	{
+		label: 'Edit',
+		items: [
+			{ label: 'Undo', shortcut: 'Ctrl+Z', onSelect: () => {} },
+			{ label: 'Redo', shortcut: 'Ctrl+Y', onSelect: () => {} },
+		],
+	},
+];
 </script>
 
 <section id="menu-menubar" class="section">

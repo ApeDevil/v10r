@@ -1,14 +1,14 @@
 <script lang="ts">
-	import type { HTMLInputAttributes } from 'svelte/elements';
-	import { cn } from '$lib/utils/cn';
+import type { HTMLInputAttributes } from 'svelte/elements';
+import { cn } from '$lib/utils/cn';
 
-	interface Props extends Omit<HTMLInputAttributes, 'value'> {
-		value?: string;
-		error?: boolean;
-		class?: string;
-	}
+interface Props extends Omit<HTMLInputAttributes, 'value'> {
+	value?: string;
+	error?: boolean;
+	class?: string;
+}
 
-	let { value = $bindable(''), error = false, class: className, ...restProps }: Props = $props();
+let { value = $bindable(''), error = false, class: className, ...restProps }: Props = $props();
 </script>
 
 <input

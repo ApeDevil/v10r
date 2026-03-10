@@ -1,18 +1,18 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import { cn } from '$lib/utils/cn';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		title: string;
-		description?: string;
-		children: Snippet;
-		class?: string;
-		showCode?: boolean;
-		code?: string;
-	}
+interface Props {
+	title: string;
+	description?: string;
+	children: Snippet;
+	class?: string;
+	showCode?: boolean;
+	code?: string;
+}
 
-	let { title, description, children, class: className, showCode = false, code }: Props = $props();
-	let isCodeExpanded = $state(false);
+let { title, description, children, class: className, showCode = false, code }: Props = $props();
+let isCodeExpanded = $state(false);
 </script>
 
 <div class={cn('demo-card', className)}>

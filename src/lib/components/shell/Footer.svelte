@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { localizeHref } from '$lib/i18n';
-	import { getConsent } from '$lib/state/consent.svelte';
+import { localizeHref } from '$lib/i18n';
+import { getConsent } from '$lib/state/consent.svelte';
 
-	const currentYear = new Date().getFullYear();
-	const consent = getConsent();
+const currentYear = new Date().getFullYear();
+const consent = getConsent();
 </script>
 
 <footer class="mt-auto py-8 px-4 border-t border-border bg-surface-0">

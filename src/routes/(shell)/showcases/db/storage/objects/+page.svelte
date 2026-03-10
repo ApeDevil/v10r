@@ -1,86 +1,96 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { page } from '$app/state';
-	import { Card, NavSection, Alert } from '$lib/components/composites';
-	import { Badge, Button, Spinner, Typography } from '$lib/components/primitives';
-	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
-	import { ToggleGroup } from '$lib/components/primitives';
-	import { Stack } from '$lib/components/layout';
-	import { getToast } from '$lib/state/toast.svelte';
+import { enhance } from '$app/forms';
+import { page } from '$app/state';
+import { Alert, Card, NavSection } from '$lib/components/composites';
+import { Stack } from '$lib/components/layout';
+import {
+	Badge,
+	Body,
+	Button,
+	Cell,
+	Header,
+	HeaderCell,
+	Row,
+	Spinner,
+	Table,
+	ToggleGroup,
+	Typography,
+} from '$lib/components/primitives';
+import { getToast } from '$lib/state/toast.svelte';
 
-	let { data } = $props();
-	const toast = getToast();
+let { data } = $props();
+const toast = getToast();
 
-	const sections = [
-		{ id: 'browser', label: 'Browser' },
-		{ id: 'metadata', label: 'Metadata' },
-		{ id: 'presigned', label: 'Presigned URLs' },
-	];
+const sections = [
+	{ id: 'browser', label: 'Browser' },
+	{ id: 'metadata', label: 'Metadata' },
+	{ id: 'presigned', label: 'Presigned URLs' },
+];
 
-	// ─── Metadata inspection state ──────────────────────
-	let selectedKey = $state('');
-	let inspecting = $state(false);
-	let inspectedDetail = $state<{
-		key: string;
-		size: number;
-		sizeFormatted: string;
-		lastModified: string;
-		etag: string;
-		contentType?: string;
-		metadata: Record<string, string>;
-		cacheControl?: string;
-		contentEncoding?: string;
-	} | null>(null);
+// ─── Metadata inspection state ──────────────────────
+let selectedKey = $state('');
+let inspecting = $state(false);
+let inspectedDetail = $state<{
+	key: string;
+	size: number;
+	sizeFormatted: string;
+	lastModified: string;
+	etag: string;
+	contentType?: string;
+	metadata: Record<string, string>;
+	cacheControl?: string;
+	contentEncoding?: string;
+} | null>(null);
 
-	// ─── Presigned URL state ────────────────────────────
-	let presignKey = $state('');
-	let presignExpiry = $state('300');
-	let generating = $state(false);
-	let presignedResult = $state<{ url: string; expiresIn: number; expiresAt: string } | null>(null);
-	let countdown = $state(0);
-	let countdownInterval: ReturnType<typeof setInterval> | undefined;
+// ─── Presigned URL state ────────────────────────────
+let presignKey = $state('');
+let presignExpiry = $state('300');
+let generating = $state(false);
+let presignedResult = $state<{ url: string; expiresIn: number; expiresAt: string } | null>(null);
+let countdown = $state(0);
+let countdownInterval: ReturnType<typeof setInterval> | undefined;
 
-	function startCountdown(seconds: number) {
-		if (countdownInterval) clearInterval(countdownInterval);
-		countdown = seconds;
-		countdownInterval = setInterval(() => {
-			countdown--;
-			if (countdown <= 0) {
-				clearInterval(countdownInterval);
-				countdownInterval = undefined;
-			}
-		}, 1000);
-	}
-
-	function formatCountdown(s: number): string {
-		const m = Math.floor(s / 60);
-		const sec = s % 60;
-		return m > 0 ? `${m}m ${sec}s` : `${sec}s`;
-	}
-
-	function copyToClipboard(text: string) {
-		navigator.clipboard.writeText(text).then(
-			() => toast.success('Copied to clipboard'),
-			() => toast.error('Failed to copy'),
-		);
-	}
-
-	function handleInspect(key: string) {
-		selectedKey = key;
-		document.getElementById('metadata')?.scrollIntoView({ behavior: 'smooth' });
-	}
-
-	const actionResult = $derived(page.form);
-
-	$effect(() => {
-		if (actionResult?.detail) {
-			inspectedDetail = actionResult.detail;
+function startCountdown(seconds: number) {
+	if (countdownInterval) clearInterval(countdownInterval);
+	countdown = seconds;
+	countdownInterval = setInterval(() => {
+		countdown--;
+		if (countdown <= 0) {
+			clearInterval(countdownInterval);
+			countdownInterval = undefined;
 		}
-		if (actionResult?.presigned) {
-			presignedResult = actionResult.presigned;
-			startCountdown(actionResult.presigned.expiresIn);
-		}
-	});
+	}, 1000);
+}
+
+function formatCountdown(s: number): string {
+	const m = Math.floor(s / 60);
+	const sec = s % 60;
+	return m > 0 ? `${m}m ${sec}s` : `${sec}s`;
+}
+
+function copyToClipboard(text: string) {
+	navigator.clipboard.writeText(text).then(
+		() => toast.success('Copied to clipboard'),
+		() => toast.error('Failed to copy'),
+	);
+}
+
+function handleInspect(key: string) {
+	selectedKey = key;
+	document.getElementById('metadata')?.scrollIntoView({ behavior: 'smooth' });
+}
+
+const actionResult = $derived(page.form);
+
+$effect(() => {
+	if (actionResult?.detail) {
+		inspectedDetail = actionResult.detail;
+	}
+	if (actionResult?.presigned) {
+		presignedResult = actionResult.presigned;
+		startCountdown(actionResult.presigned.expiresIn);
+	}
+});
 </script>
 
 <svelte:head>
@@ -137,7 +147,7 @@
 														return async ({ result, update }) => {
 															inspecting = false;
 															if (result.type === 'failure') {
-																toast.error(result.data?.message || 'Inspect failed');
+																toast.error((result.data?.message as string) || 'Inspect failed');
 															}
 															await update({ reset: false });
 															document.getElementById('metadata')?.scrollIntoView({ behavior: 'smooth' });
@@ -146,7 +156,7 @@
 												>
 													<input type="hidden" name="key" value={obj.key} />
 													<Button type="submit" variant="ghost" size="sm">
-														<span class="i-lucide-eye h-3.5 w-3.5 mr-1" />
+														<span class="i-lucide-eye h-3.5 w-3.5 mr-1" ></span>
 														Inspect
 													</Button>
 												</form>
@@ -253,7 +263,7 @@
 							return async ({ result, update }) => {
 								generating = false;
 								if (result.type === 'failure') {
-									toast.error(result.data?.message || 'Failed to generate URL');
+									toast.error((result.data?.message as string) || 'Failed to generate URL');
 								}
 								await update({ reset: false });
 							};
@@ -294,7 +304,7 @@
 							{#if generating}
 								<Spinner size="xs" class="mr-2" />
 							{/if}
-							<span class="i-lucide-link h-4 w-4 mr-1" />
+							<span class="i-lucide-link h-4 w-4 mr-1" ></span>
 							Generate URL
 						</Button>
 					</form>
@@ -304,11 +314,11 @@
 							<div class="presign-url-row">
 								<code class="presign-url">{presignedResult.url}</code>
 								<Button variant="ghost" size="sm" onclick={() => copyToClipboard(presignedResult!.url)}>
-									<span class="i-lucide-copy h-3.5 w-3.5" />
+									<span class="i-lucide-copy h-3.5 w-3.5" ></span>
 								</Button>
 								<a href={presignedResult.url} target="_blank" rel="noopener noreferrer">
 									<Button variant="ghost" size="sm">
-										<span class="i-lucide-external-link h-3.5 w-3.5" />
+										<span class="i-lucide-external-link h-3.5 w-3.5" ></span>
 									</Button>
 								</a>
 							</div>

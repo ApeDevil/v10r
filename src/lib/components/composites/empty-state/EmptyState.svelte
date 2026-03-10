@@ -1,15 +1,15 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		icon?: string;
-		title: string;
-		description?: string;
-		class?: string;
-		children?: import('svelte').Snippet;
-	}
+interface Props {
+	icon?: string;
+	title: string;
+	description?: string;
+	class?: string;
+	children?: import('svelte').Snippet;
+}
 
-	let { icon, title, description, class: className, children }: Props = $props();
+let { icon, title, description, class: className, children }: Props = $props();
 </script>
 
 <div class={cn('empty-state', className)} role="status">

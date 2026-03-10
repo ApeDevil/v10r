@@ -1,4 +1,4 @@
-import type { PanelDefinition, ActivityBarItem } from '$lib/components/composites/dock';
+import type { ActivityBarItem, PanelDefinition } from '$lib/components/composites/dock';
 
 export const DESK_PANEL_TYPES = [
 	'notes',
@@ -9,7 +9,7 @@ export const DESK_PANEL_TYPES = [
 	'dashboard',
 	'chat',
 	'spreadsheet',
-	'files'
+	'files',
 ] as const;
 
 export type DeskPanelType = (typeof DESK_PANEL_TYPES)[number];

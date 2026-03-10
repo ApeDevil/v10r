@@ -9,13 +9,13 @@ export const menuBarTriggerVariants = cva([
 	'transition-colors duration-fast',
 	'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
 	'data-[state=open]:bg-muted/10',
-	'hover:bg-muted/10'
+	'hover:bg-muted/10',
 ]);
 
 export const menuBarContentVariants = cva([
 	'z-dropdown min-w-[12rem]',
 	'overflow-hidden rounded-md',
-	'border border-border bg-surface-2 shadow-lg'
+	'border border-border bg-surface-2 shadow-lg',
 ]);
 
 export const menuBarItemVariants = cva([
@@ -23,7 +23,7 @@ export const menuBarItemVariants = cva([
 	'px-3 py-2',
 	'text-fluid-sm text-fg outline-none',
 	'data-[highlighted]:bg-muted/10',
-	'data-[disabled]:pointer-events-none data-[disabled]:opacity-50'
+	'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
 ]);
 
 export const menuBarSeparatorVariants = cva(['h-px bg-border', 'my-1']);
@@ -35,13 +35,10 @@ export const menuBarCheckboxItemVariants = cva([
 	'px-3 py-2 pl-8',
 	'text-fluid-sm text-fg outline-none',
 	'data-[highlighted]:bg-muted/10',
-	'data-[disabled]:pointer-events-none data-[disabled]:opacity-50'
+	'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
 ]);
 
-export const menuBarItemIndicatorVariants = cva([
-	'absolute left-2 h-4 w-4',
-	'flex items-center justify-center'
-]);
+export const menuBarItemIndicatorVariants = cva(['absolute left-2 h-4 w-4', 'flex items-center justify-center']);
 
 export type MenuBarRootVariants = VariantProps<typeof menuBarRootVariants>;
 export type MenuBarTriggerVariants = VariantProps<typeof menuBarTriggerVariants>;

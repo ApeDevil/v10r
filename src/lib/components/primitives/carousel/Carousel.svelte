@@ -1,160 +1,158 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
-	import {
-		carouselRootVariants,
-		carouselContentVariants,
-		carouselItemVariants,
-		carouselButtonVariants,
-		carouselDotsVariants,
-		carouselDotVariants,
-		type CarouselRootVariants
-	} from './carousel';
-	import type { Snippet } from 'svelte';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils/cn';
+import {
+	type CarouselRootVariants,
+	carouselButtonVariants,
+	carouselContentVariants,
+	carouselDotsVariants,
+	carouselDotVariants,
+	carouselItemVariants,
+	carouselRootVariants,
+} from './carousel';
 
-	interface Props extends CarouselRootVariants {
-		children: Snippet;
-		class?: string;
-		loop?: boolean;
-		autoplay?: boolean;
-		autoplayInterval?: number;
-		showDots?: boolean;
-		showArrows?: boolean;
-	}
+interface Props extends CarouselRootVariants {
+	children: Snippet;
+	class?: string;
+	loop?: boolean;
+	autoplay?: boolean;
+	autoplayInterval?: number;
+	showDots?: boolean;
+	showArrows?: boolean;
+}
 
-	let {
-		children,
-		orientation = 'horizontal',
-		loop = true,
-		autoplay = false,
-		autoplayInterval = 3000,
-		showDots = true,
-		showArrows = true,
-		class: className
-	}: Props = $props();
+let {
+	children,
+	orientation = 'horizontal',
+	loop = true,
+	autoplay = false,
+	autoplayInterval = 3000,
+	showDots = true,
+	showArrows = true,
+	class: className,
+}: Props = $props();
 
-	let scrollContainer = $state<HTMLDivElement | null>(null);
-	let slides = $state<HTMLElement[]>([]);
-	let currentSlide = $state(0);
-	let isHovering = $state(false);
-	let isPlaying = $state(true);
-	let autoplayTimer = $state<ReturnType<typeof setInterval> | null>(null);
+let scrollContainer = $state<HTMLDivElement | null>(null);
+let slides = $state<HTMLElement[]>([]);
+let currentSlide = $state(0);
+let isHovering = $state(false);
+let isPlaying = $state(true);
+let autoplayTimer = $state<ReturnType<typeof setInterval> | null>(null);
 
-	// Track active slide using IntersectionObserver
-	$effect(() => {
-		if (typeof window === 'undefined' || !scrollContainer) return;
+// Track active slide using IntersectionObserver
+$effect(() => {
+	if (typeof window === 'undefined' || !scrollContainer) return;
 
-		const slideElements = Array.from(
-			scrollContainer.children
-		) as HTMLElement[];
-		slides = slideElements;
+	const slideElements = Array.from(scrollContainer.children) as HTMLElement[];
+	slides = slideElements;
 
-		const observer = new IntersectionObserver(
-			(entries) => {
-				entries.forEach((entry) => {
-					if (entry.isIntersecting) {
-						const index = slides.indexOf(entry.target as HTMLElement);
-						if (index !== -1) {
-							currentSlide = index;
-						}
+	const observer = new IntersectionObserver(
+		(entries) => {
+			entries.forEach((entry) => {
+				if (entry.isIntersecting) {
+					const index = slides.indexOf(entry.target as HTMLElement);
+					if (index !== -1) {
+						currentSlide = index;
 					}
-				});
-			},
-			{
-				root: scrollContainer,
-				threshold: 0.5
-			}
-		);
+				}
+			});
+		},
+		{
+			root: scrollContainer,
+			threshold: 0.5,
+		},
+	);
 
-		slideElements.forEach((slide) => observer.observe(slide));
+	for (const slide of slideElements) observer.observe(slide);
 
-		return () => observer.disconnect();
-	});
+	return () => observer.disconnect();
+});
 
-	// Autoplay functionality
-	$effect(() => {
-		if (!autoplay || !isPlaying || isHovering || !scrollContainer) {
-			if (autoplayTimer) {
-				clearInterval(autoplayTimer);
-				autoplayTimer = null;
-			}
-			return;
+// Autoplay functionality
+$effect(() => {
+	if (!autoplay || !isPlaying || isHovering || !scrollContainer) {
+		if (autoplayTimer) {
+			clearInterval(autoplayTimer);
+			autoplayTimer = null;
 		}
+		return;
+	}
 
-		autoplayTimer = setInterval(() => {
+	autoplayTimer = setInterval(() => {
+		goToNext();
+	}, autoplayInterval);
+
+	return () => {
+		if (autoplayTimer) {
+			clearInterval(autoplayTimer);
+		}
+	};
+});
+
+// Navigate to specific slide
+function goToSlide(index: number) {
+	if (!scrollContainer || !slides[index]) return;
+
+	const slide = slides[index];
+	const scrollProperty = orientation === 'horizontal' ? 'scrollLeft' : 'scrollTop';
+	const offsetProperty = orientation === 'horizontal' ? 'offsetLeft' : 'offsetTop';
+
+	scrollContainer[scrollProperty] = slide[offsetProperty];
+}
+
+// Navigate to previous slide
+function goToPrev() {
+	const prevIndex = currentSlide - 1;
+	if (prevIndex < 0) {
+		if (loop) {
+			goToSlide(slides.length - 1);
+		}
+	} else {
+		goToSlide(prevIndex);
+	}
+}
+
+// Navigate to next slide
+function goToNext() {
+	const nextIndex = currentSlide + 1;
+	if (nextIndex >= slides.length) {
+		if (loop) {
+			goToSlide(0);
+		}
+	} else {
+		goToSlide(nextIndex);
+	}
+}
+
+// Keyboard navigation
+function handleKeydown(e: KeyboardEvent) {
+	if (orientation === 'horizontal') {
+		if (e.key === 'ArrowLeft') {
+			e.preventDefault();
+			goToPrev();
+		} else if (e.key === 'ArrowRight') {
+			e.preventDefault();
 			goToNext();
-		}, autoplayInterval);
-
-		return () => {
-			if (autoplayTimer) {
-				clearInterval(autoplayTimer);
-			}
-		};
-	});
-
-	// Navigate to specific slide
-	function goToSlide(index: number) {
-		if (!scrollContainer || !slides[index]) return;
-
-		const slide = slides[index];
-		const scrollProperty = orientation === 'horizontal' ? 'scrollLeft' : 'scrollTop';
-		const offsetProperty = orientation === 'horizontal' ? 'offsetLeft' : 'offsetTop';
-
-		scrollContainer[scrollProperty] = slide[offsetProperty];
-	}
-
-	// Navigate to previous slide
-	function goToPrev() {
-		const prevIndex = currentSlide - 1;
-		if (prevIndex < 0) {
-			if (loop) {
-				goToSlide(slides.length - 1);
-			}
-		} else {
-			goToSlide(prevIndex);
+		}
+	} else {
+		if (e.key === 'ArrowUp') {
+			e.preventDefault();
+			goToPrev();
+		} else if (e.key === 'ArrowDown') {
+			e.preventDefault();
+			goToNext();
 		}
 	}
+}
 
-	// Navigate to next slide
-	function goToNext() {
-		const nextIndex = currentSlide + 1;
-		if (nextIndex >= slides.length) {
-			if (loop) {
-				goToSlide(0);
-			}
-		} else {
-			goToSlide(nextIndex);
-		}
-	}
+// Toggle autoplay
+function toggleAutoplay() {
+	isPlaying = !isPlaying;
+}
 
-	// Keyboard navigation
-	function handleKeydown(e: KeyboardEvent) {
-		if (orientation === 'horizontal') {
-			if (e.key === 'ArrowLeft') {
-				e.preventDefault();
-				goToPrev();
-			} else if (e.key === 'ArrowRight') {
-				e.preventDefault();
-				goToNext();
-			}
-		} else {
-			if (e.key === 'ArrowUp') {
-				e.preventDefault();
-				goToPrev();
-			} else if (e.key === 'ArrowDown') {
-				e.preventDefault();
-				goToNext();
-			}
-		}
-	}
-
-	// Toggle autoplay
-	function toggleAutoplay() {
-		isPlaying = !isPlaying;
-	}
-
-	// Check if navigation buttons should be disabled
-	const canGoPrev = $derived(loop || currentSlide > 0);
-	const canGoNext = $derived(loop || currentSlide < slides.length - 1);
+// Check if navigation buttons should be disabled
+const canGoPrev = $derived(loop || currentSlide > 0);
+const canGoNext = $derived(loop || currentSlide < slides.length - 1);
 </script>
 
 <div

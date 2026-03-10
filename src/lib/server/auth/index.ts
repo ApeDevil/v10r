@@ -1,33 +1,30 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { magicLink } from 'better-auth/plugins';
-import { emailOTP } from 'better-auth/plugins';
+import { emailOTP, magicLink } from 'better-auth/plugins';
 import {
 	BETTER_AUTH_SECRET,
 	BETTER_AUTH_URL,
 	GITHUB_CLIENT_ID,
 	GITHUB_CLIENT_SECRET,
-	GOOGLE_CLIENT_ID,
-	GOOGLE_CLIENT_SECRET,
+	// GOOGLE_CLIENT_ID,
+	// GOOGLE_CLIENT_SECRET,
 	MICROSOFT_CLIENT_ID,
 	MICROSOFT_CLIENT_SECRET,
 } from '$env/static/private';
 import {
-	SESSION_EXPIRES_IN,
-	SESSION_UPDATE_AGE,
-	SESSION_COOKIE_MAX_AGE,
-	MAGIC_LINK_EXPIRES_IN,
 	EMAIL_OTP_EXPIRES_IN,
 	EMAIL_OTP_MAX_ATTEMPTS,
+	MAGIC_LINK_EXPIRES_IN,
+	SESSION_COOKIE_MAX_AGE,
+	SESSION_EXPIRES_IN,
+	SESSION_UPDATE_AGE,
 } from '$lib/server/config';
-import { sendAuthEmail, magicLinkTemplate, otpTemplate } from './send-auth-email';
 // Use relative import — Better Auth CLI breaks on $lib aliases (Issue #2252)
 import { db } from '../db';
+import { magicLinkTemplate, otpTemplate, sendAuthEmail } from './send-auth-email';
 
 if (!BETTER_AUTH_SECRET || BETTER_AUTH_SECRET.length < 32) {
-	throw new Error(
-		'BETTER_AUTH_SECRET must be at least 32 characters. Generate one with: openssl rand -base64 32',
-	);
+	throw new Error('BETTER_AUTH_SECRET must be at least 32 characters. Generate one with: openssl rand -base64 32');
 }
 
 export const auth = betterAuth({
@@ -43,10 +40,10 @@ export const auth = betterAuth({
 			clientId: GITHUB_CLIENT_ID,
 			clientSecret: GITHUB_CLIENT_SECRET,
 		},
-		google: {
-			clientId: GOOGLE_CLIENT_ID,
-			clientSecret: GOOGLE_CLIENT_SECRET,
-		},
+		// google: {
+		// 	clientId: GOOGLE_CLIENT_ID,
+		// 	clientSecret: GOOGLE_CLIENT_SECRET,
+		// },
 		microsoft: {
 			clientId: MICROSOFT_CLIENT_ID,
 			clientSecret: MICROSOFT_CLIENT_SECRET,

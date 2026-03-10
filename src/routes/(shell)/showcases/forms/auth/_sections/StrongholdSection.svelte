@@ -1,74 +1,60 @@
 <script lang="ts">
-	import {
-		Button,
-		Input,
-		Spinner,
-		Progress,
-		CornerFrame,
-		ConcentricRings,
-		WaveDivider
-	} from '$lib/components';
+import { Button, ConcentricRings, CornerFrame, Input, Progress, Spinner, WaveDivider } from '$lib/components';
 
-	const simulate = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const simulate = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-	let name = $state('');
-	let email = $state('');
-	let password = $state('');
-	let confirmPassword = $state('');
-	let showPassword = $state(false);
-	let registering = $state(false);
-	let registered = $state(false);
+let name = $state('');
+let email = $state('');
+let password = $state('');
+let confirmPassword = $state('');
+let showPassword = $state(false);
+let registering = $state(false);
+let registered = $state(false);
 
-	const requirements = [
-		{ label: 'At least 8 characters', test: (p: string) => p.length >= 8 },
-		{ label: 'Uppercase letter', test: (p: string) => /[A-Z]/.test(p) },
-		{ label: 'Lowercase letter', test: (p: string) => /[a-z]/.test(p) },
-		{ label: 'Number', test: (p: string) => /\d/.test(p) },
-		{ label: 'Special character', test: (p: string) => /[^A-Za-z0-9]/.test(p) }
-	];
+const requirements = [
+	{ label: 'At least 8 characters', test: (p: string) => p.length >= 8 },
+	{ label: 'Uppercase letter', test: (p: string) => /[A-Z]/.test(p) },
+	{ label: 'Lowercase letter', test: (p: string) => /[a-z]/.test(p) },
+	{ label: 'Number', test: (p: string) => /\d/.test(p) },
+	{ label: 'Special character', test: (p: string) => /[^A-Za-z0-9]/.test(p) },
+];
 
-	let strength = $derived.by(() => {
-		if (!password) return { score: 0, label: '', variant: 'error' as const };
-		let score = 0;
-		for (const req of requirements) {
-			if (req.test(password)) score++;
-		}
-		if (score <= 1) return { score, label: 'Weak', variant: 'error' as const };
-		if (score <= 2) return { score, label: 'Fair', variant: 'error' as const };
-		if (score <= 3) return { score, label: 'Good', variant: 'warning' as const };
-		if (score <= 4) return { score, label: 'Strong', variant: 'success' as const };
-		return { score, label: 'Very strong', variant: 'success' as const };
-	});
-
-	let passwordsMatch = $derived(
-		confirmPassword.length > 0 && password === confirmPassword
-	);
-
-	let canSubmit = $derived(
-		name.trim().length > 0 &&
-		email.trim().length > 0 &&
-		strength.score >= 3 &&
-		passwordsMatch &&
-		!registering
-	);
-
-	async function handleRegister() {
-		if (!canSubmit) return;
-		registering = true;
-		await simulate(2000);
-		registered = true;
-		registering = false;
+let strength = $derived.by(() => {
+	if (!password) return { score: 0, label: '', variant: 'error' as const };
+	let score = 0;
+	for (const req of requirements) {
+		if (req.test(password)) score++;
 	}
+	if (score <= 1) return { score, label: 'Weak', variant: 'error' as const };
+	if (score <= 2) return { score, label: 'Fair', variant: 'error' as const };
+	if (score <= 3) return { score, label: 'Good', variant: 'warning' as const };
+	if (score <= 4) return { score, label: 'Strong', variant: 'success' as const };
+	return { score, label: 'Very strong', variant: 'success' as const };
+});
 
-	function reset() {
-		name = '';
-		email = '';
-		password = '';
-		confirmPassword = '';
-		showPassword = false;
-		registering = false;
-		registered = false;
-	}
+let passwordsMatch = $derived(confirmPassword.length > 0 && password === confirmPassword);
+
+let canSubmit = $derived(
+	name.trim().length > 0 && email.trim().length > 0 && strength.score >= 3 && passwordsMatch && !registering,
+);
+
+async function handleRegister() {
+	if (!canSubmit) return;
+	registering = true;
+	await simulate(2000);
+	registered = true;
+	registering = false;
+}
+
+function reset() {
+	name = '';
+	email = '';
+	password = '';
+	confirmPassword = '';
+	showPassword = false;
+	registering = false;
+	registered = false;
+}
 </script>
 
 <section id="auth-stronghold" class="section">

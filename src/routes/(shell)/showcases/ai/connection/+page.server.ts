@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
-import type { PageServerLoad, Actions } from './$types';
-import { verifyAIConnection, getProviderStatuses } from '$lib/server/ai/showcase/queries';
+import { getProviderStatuses, verifyAIConnection } from '$lib/server/ai/showcase/queries';
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) {

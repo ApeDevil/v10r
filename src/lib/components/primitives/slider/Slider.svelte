@@ -1,53 +1,67 @@
 <script lang="ts">
-	import { Slider as SliderPrimitive } from 'bits-ui';
-	import { cn } from '$lib/utils/cn';
+import { Slider as SliderPrimitive } from 'bits-ui';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		value?: number[];
-		min?: number;
-		max?: number;
-		step?: number;
-		disabled?: boolean;
-		orientation?: 'horizontal' | 'vertical';
-		size?: 'sm' | 'md' | 'lg';
-		class?: string;
-	}
+interface Props {
+	value?: number[];
+	min?: number;
+	max?: number;
+	step?: number;
+	disabled?: boolean;
+	orientation?: 'horizontal' | 'vertical';
+	size?: 'sm' | 'md' | 'lg';
+	class?: string;
+}
 
-	let {
-		value = $bindable([0]),
-		min = 0,
-		max = 100,
-		step = 1,
-		disabled = false,
-		orientation = 'horizontal',
-		size = 'md',
-		class: className
-	}: Props = $props();
+let {
+	value = $bindable([0]),
+	min = 0,
+	max = 100,
+	step = 1,
+	disabled = false,
+	orientation = 'horizontal',
+	size = 'md',
+	class: className,
+}: Props = $props();
 
-	const isRange = $derived(value.length === 2);
+const isRange = $derived(value.length === 2);
 </script>
 
-<SliderPrimitive.Root
-	bind:value
-	type={isRange ? 'multiple' : 'single'}
-	{min}
-	{max}
-	{step}
-	{disabled}
-	{orientation}
-	class={cn(`slider-${size}`, className)}
->
-	<span class="slider-track">
-		<SliderPrimitive.Range />
-	</span>
-
-	{#if isRange}
+{#if isRange}
+	<SliderPrimitive.Root
+		type="multiple"
+		bind:value
+		{min}
+		{max}
+		{step}
+		{disabled}
+		{orientation}
+		class={cn(`slider-${size}`, className)}
+	>
+		<span class="slider-track">
+			<SliderPrimitive.Range />
+		</span>
 		<SliderPrimitive.Thumb index={0} />
 		<SliderPrimitive.Thumb index={1} />
-	{:else}
+	</SliderPrimitive.Root>
+{:else}
+	<SliderPrimitive.Root
+		type="single"
+		value={value[0]}
+		onValueChange={(v: number) => value = [v]}
+		{min}
+		{max}
+		{step}
+		{disabled}
+		{orientation}
+		class={cn(`slider-${size}`, className)}
+	>
+		<span class="slider-track">
+			<SliderPrimitive.Range />
+		</span>
 		<SliderPrimitive.Thumb index={0} />
-	{/if}
-</SliderPrimitive.Root>
+	</SliderPrimitive.Root>
+{/if}
 
 <style>
 	/* Root */

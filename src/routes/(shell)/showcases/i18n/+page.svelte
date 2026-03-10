@@ -1,62 +1,69 @@
 <script lang="ts">
-	import * as m from '$lib/paraglide/messages';
-	import { locales, localizeHref, cookieName, cookieMaxAge, extractLocaleFromUrl, baseLocale } from '$lib/paraglide/runtime';
-	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
-	import {
-		formatDate,
-		formatNumber,
-		formatCurrency,
-		formatPercent,
-		formatRelative,
-		getFormattingLocale,
-		tc
-	} from '$lib/i18n';
-	import { PageHeader, BackLink } from '$lib/components/composites';
-	import { PageContainer } from '$lib/components/layout';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import { BackLink, PageHeader } from '$lib/components/composites';
+import { PageContainer } from '$lib/components/layout';
+import {
+	formatCurrency,
+	formatDate,
+	formatNumber,
+	formatPercent,
+	formatRelative,
+	getFormattingLocale,
+	tc,
+} from '$lib/i18n';
+import * as m from '$lib/paraglide/messages';
+import {
+	baseLocale,
+	cookieMaxAge,
+	cookieName,
+	extractLocaleFromUrl,
+	locales,
+	localizeHref,
+} from '$lib/paraglide/runtime';
 
-	const LOCALE_NAMES: Record<string, string> = {
-		en: 'English',
-		de: 'Deutsch',
-		fr: 'Français'
-	};
+const LOCALE_NAMES: Record<string, string> = {
+	en: 'English',
+	de: 'Deutsch',
+	fr: 'Français',
+};
 
-	// Derive locale from reactive page.url (not getLocale() which reads window.location)
-	// so Svelte tracks it and {#key} triggers re-render on navigation
-	const currentLocale = $derived(extractLocaleFromUrl(page.url.href) ?? baseLocale);
-	const formattingLocale = $derived(getFormattingLocale());
+// Derive locale from reactive page.url (not getLocale() which reads window.location)
+// so Svelte tracks it and {#key} triggers re-render on navigation
+const currentLocale = $derived(extractLocaleFromUrl(page.url.href) ?? baseLocale);
+const formattingLocale = $derived(getFormattingLocale());
 
-	// Client-side navigation avoids full page reloads that freeze Vite's
-	// HMR dev server. Paraglide's getLocale() reads from window.location.href,
-	// so after goto() the URL changes and all m.xxx() calls pick up the new locale.
-	let switching = $state(false);
+// Client-side navigation avoids full page reloads that freeze Vite's
+// HMR dev server. Paraglide's getLocale() reads from window.location.href,
+// so after goto() the URL changes and all m.xxx() calls pick up the new locale.
+let switching = $state(false);
 
-	async function switchLocale(event: Event, lang: string) {
-		event.preventDefault();
-		if (switching || lang === currentLocale) return;
-		switching = true;
-		// Update Paraglide's locale cookie so the server middleware resolves correctly
-		document.cookie = `${cookieName}=${lang}; path=/; max-age=${cookieMaxAge}`;
-		await goto(localizeHref(page.url.pathname, { locale: lang }), { invalidateAll: true });
-		switching = false;
-	}
+async function switchLocale(event: Event, lang: string) {
+	event.preventDefault();
+	if (switching || lang === currentLocale) return;
+	switching = true;
+	// Update Paraglide's locale cookie so the server middleware resolves correctly
+	document.cookie = `${cookieName}=${lang}; path=/; max-age=${cookieMaxAge}`;
+	await goto(localizeHref(page.url.pathname, { locale: lang }), { invalidateAll: true });
+	switching = false;
+}
 
-	// Sample dates and numbers for formatting demos
-	const sampleDate = new Date(2025, 0, 15, 14, 30);
-	const pastDate = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
-	const sampleNumber = 1234567.89;
-	const sampleCurrency = 1234.5;
-	const samplePercent = 0.8542;
+// Sample dates and numbers for formatting demos
+const sampleDate = new Date(2025, 0, 15, 14, 30);
+const pastDate = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+const sampleNumber = 1234567.89;
+const sampleCurrency = 1234.5;
+const samplePercent = 0.8542;
 
-	// Simulated database content with translations
-	const dbContent = {
-		title: { en: 'Hello World', de: 'Hallo Welt', fr: 'Bonjour le monde' },
-		description: {
-			en: 'This content is stored in the database as JSON.',
-			de: 'Dieser Inhalt ist in der Datenbank als JSON gespeichert.',
-			fr: "Ce contenu est stocké dans la base de données en JSON."
-		}
-	};
+// Simulated database content with translations
+const dbContent = {
+	title: { en: 'Hello World', de: 'Hallo Welt', fr: 'Bonjour le monde' },
+	description: {
+		en: 'This content is stored in the database as JSON.',
+		de: 'Dieser Inhalt ist in der Datenbank als JSON gespeichert.',
+		fr: 'Ce contenu est stocké dans la base de données en JSON.',
+	},
+};
 </script>
 
 <svelte:head>
@@ -138,7 +145,7 @@
 			{#each [0, 1, 2, 5, 42] as count}
 				<div class="demo-item">
 					<span class="demo-label">m.items_count(&#123; count: {count} &#125;)</span>
-					<span class="demo-value">{m.items_count({ count })}</span>
+					<span class="demo-value">{m.items_count({ count } as any)}</span>
 				</div>
 			{/each}
 		</div>

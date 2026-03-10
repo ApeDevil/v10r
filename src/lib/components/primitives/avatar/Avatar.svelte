@@ -1,33 +1,33 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		src?: string | null;
-		alt?: string;
-		fallback?: string;
-		size?: 'sm' | 'md' | 'lg';
-		class?: string;
-	}
+interface Props {
+	src?: string | null;
+	alt?: string;
+	fallback?: string;
+	size?: 'sm' | 'md' | 'lg';
+	class?: string;
+}
 
-	let { src, alt = '', fallback = '?', size = 'md', class: className }: Props = $props();
+let { src, alt = '', fallback = '?', size = 'md', class: className }: Props = $props();
 
-	let imageError = $state(false);
+let imageError = $state(false);
 
-	const sizes = {
-		sm: 'h-8 w-8 text-fluid-xs',
-		md: 'h-10 w-10 text-fluid-sm',
-		lg: 'h-12 w-12 text-fluid-base'
-	};
+const sizes = {
+	sm: 'h-8 w-8 text-fluid-xs',
+	md: 'h-10 w-10 text-fluid-sm',
+	lg: 'h-12 w-12 text-fluid-base',
+};
 
-	// Generate initials from fallback
-	let initials = $derived(
-		fallback
-			.split(' ')
-			.map((n) => n[0])
-			.join('')
-			.slice(0, 2)
-			.toUpperCase()
-	);
+// Generate initials from fallback
+let initials = $derived(
+	fallback
+		.split(' ')
+		.map((n) => n[0])
+		.join('')
+		.slice(0, 2)
+		.toUpperCase(),
+);
 </script>
 
 <div

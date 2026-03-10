@@ -1,37 +1,37 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import { getConsent, type ConsentTier } from '$lib/state/consent.svelte';
-	import { Button } from '$lib/components/primitives/button';
-	import { Switch } from '$lib/components/primitives/switch';
+import { browser } from '$app/environment';
+import { Button } from '$lib/components/primitives/button';
+import { Switch } from '$lib/components/primitives/switch';
+import { type ConsentTier, getConsent } from '$lib/state/consent.svelte';
 
-	const consent = getConsent();
+const consent = getConsent();
 
-	let showCustomize = $state(false);
-	let analyticsOn = $state(false);
-	let fullOn = $state(false);
+let showCustomize = $state(false);
+let analyticsOn = $state(false);
+let fullOn = $state(false);
 
-	function accept(tier: ConsentTier) {
-		consent.setTier(tier);
-		consent.closeBanner();
-		showCustomize = false;
-		persistToServer(tier);
-	}
+function accept(tier: ConsentTier) {
+	consent.setTier(tier);
+	consent.closeBanner();
+	showCustomize = false;
+	persistToServer(tier);
+}
 
-	function saveCustom() {
-		const tier: ConsentTier = fullOn ? 'full' : analyticsOn ? 'analytics' : 'necessary';
-		accept(tier);
-	}
+function saveCustom() {
+	const tier: ConsentTier = fullOn ? 'full' : analyticsOn ? 'analytics' : 'necessary';
+	accept(tier);
+}
 
-	/** Fire-and-forget POST to record consent event server-side */
-	function persistToServer(tier: ConsentTier) {
-		const body = new FormData();
-		body.set('tier', tier);
-		fetch('/api/consent?/set', { method: 'POST', body }).catch(() => {
-			// Best-effort audit trail — don't block the user
-		});
-	}
+/** Fire-and-forget POST to record consent event server-side */
+function persistToServer(tier: ConsentTier) {
+	const body = new FormData();
+	body.set('tier', tier);
+	fetch('/api/consent?/set', { method: 'POST', body }).catch(() => {
+		// Best-effort audit trail — don't block the user
+	});
+}
 
-	const visible = $derived(browser && (consent.needsBanner || consent.bannerOpen));
+const visible = $derived(browser && (consent.needsBanner || consent.bannerOpen));
 </script>
 
 {#if visible}

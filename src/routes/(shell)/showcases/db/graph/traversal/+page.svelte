@@ -1,71 +1,80 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { Card, NavSection, Alert } from '$lib/components/composites';
-	import { Badge, Button, Select, Spinner, Typography } from '$lib/components/primitives';
-	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
-	import { getToast } from '$lib/state/toast.svelte';
-	import { Stack } from '$lib/components/layout';
+import { enhance } from '$app/forms';
+import { Alert, Card, NavSection } from '$lib/components/composites';
+import { Stack } from '$lib/components/layout';
+import {
+	Badge,
+	Body,
+	Button,
+	Cell,
+	Header,
+	HeaderCell,
+	Row,
+	Select,
+	Spinner,
+	Table,
+	Typography,
+} from '$lib/components/primitives';
+import { getToast } from '$lib/state/toast.svelte';
 
-	let { data } = $props();
-	const toast = getToast();
+let { data } = $props();
+const toast = getToast();
 
-	const sections = [
-		{ id: 'browse', label: 'Browse' },
-		{ id: 'shortest-path', label: 'Shortest Path' },
-		{ id: 'recommendations', label: 'Recommendations' },
-		{ id: 'repl', label: 'Cypher REPL' },
-		{ id: 'vs-sql', label: 'vs SQL' },
-	];
+const sections = [
+	{ id: 'browse', label: 'Browse' },
+	{ id: 'shortest-path', label: 'Shortest Path' },
+	{ id: 'recommendations', label: 'Recommendations' },
+	{ id: 'repl', label: 'Cypher REPL' },
+	{ id: 'vs-sql', label: 'vs SQL' },
+];
 
-	// ─── Node options for selects ────────────────────────
-	const nodeOptions = $derived(
-		data.nodes.map((n) => ({ value: n.elementId, label: `${n.name} (${n.label})` }))
-	);
+// ─── Node options for selects ────────────────────────
+const nodeOptions = $derived(data.nodes.map((n) => ({ value: n.elementId, label: `${n.name} (${n.label})` })));
 
-	// ─── Browse state ────────────────────────────────────
-	let browseNodeId = $state('');
-	let browseLoading = $state(false);
-	let browseResult = $state<any>(null);
+// ─── Browse state ────────────────────────────────────
+let browseNodeId = $state('');
+let browseLoading = $state(false);
+let browseResult = $state<any>(null);
 
-	// ─── Path state ──────────────────────────────────────
-	let pathFromId = $state('');
-	let pathToId = $state('');
-	let pathLoading = $state(false);
-	let pathResult = $state<any[] | null>(null);
-	let pathMessage = $state('');
+// ─── Path state ──────────────────────────────────────
+let pathFromId = $state('');
+let pathToId = $state('');
+let pathLoading = $state(false);
+let pathResult = $state<any[] | null>(null);
+let pathMessage = $state('');
 
-	// ─── Recommendation state ────────────────────────────
-	let recNodeId = $state('');
-	let recLoading = $state(false);
-	let recommendations = $state<any[]>([]);
+// ─── Recommendation state ────────────────────────────
+let recNodeId = $state('');
+let recLoading = $state(false);
+let recommendations = $state<any[]>([]);
 
-	// ─── REPL state ──────────────────────────────────────
-	let replQuery = $state('MATCH (t:Technology) RETURN t.name AS name, t.category AS category LIMIT 5');
-	let replLoading = $state(false);
-	let replResult = $state<{ columns: string[]; rows: Record<string, unknown>[] } | null>(null);
+// ─── REPL state ──────────────────────────────────────
+let replQuery = $state('MATCH (t:Technology) RETURN t.name AS name, t.category AS category LIMIT 5');
+let replLoading = $state(false);
+let replResult = $state<{ columns: string[]; rows: Record<string, unknown>[] } | null>(null);
 
-	function handleResult(key: string) {
-		return ({ result, update }: { result: any; update: (opts?: any) => Promise<void> }) => {
-			if (result.type === 'success' && result.data) {
-				if (key === 'browse') browseResult = result.data.browseResult;
-				if (key === 'path') {
-					pathResult = result.data.pathResult;
-					pathMessage = result.data.pathMessage || '';
-				}
-				if (key === 'recommend') recommendations = result.data.recommendations ?? [];
-				if (key === 'repl') replResult = result.data.replResult;
-			} else if (result.type === 'failure') {
-				toast.error(result.data?.message || 'Operation failed.');
+function handleResult(key: string) {
+	return ({ result, update }: { result: any; update: (opts?: any) => Promise<void> }) => {
+		if (result.type === 'success' && result.data) {
+			if (key === 'browse') browseResult = result.data.browseResult;
+			if (key === 'path') {
+				pathResult = result.data.pathResult;
+				pathMessage = result.data.pathMessage || '';
 			}
-			return update();
-		};
-	}
+			if (key === 'recommend') recommendations = result.data.recommendations ?? [];
+			if (key === 'repl') replResult = result.data.replResult;
+		} else if (result.type === 'failure') {
+			toast.error((result.data?.message as string) || 'Operation failed.');
+		}
+		return update();
+	};
+}
 
-	function formatValue(val: unknown): string {
-		if (val === null || val === undefined) return 'NULL';
-		if (typeof val === 'object') return JSON.stringify(val);
-		return String(val);
-	}
+function formatValue(val: unknown): string {
+	if (val === null || val === undefined) return 'NULL';
+	if (typeof val === 'object') return JSON.stringify(val);
+	return String(val);
+}
 </script>
 
 <svelte:head>
@@ -296,7 +305,7 @@
 							></textarea>
 							<Button type="submit" variant="outline" size="sm" disabled={!replQuery.trim() || replLoading}>
 								{#if replLoading}<Spinner size="xs" class="mr-1" />{/if}
-								<span class="i-lucide-play h-4 w-4 mr-1" />
+								<span class="i-lucide-play h-4 w-4 mr-1" ></span>
 								Execute
 							</Button>
 						</div>

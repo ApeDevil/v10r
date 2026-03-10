@@ -1,20 +1,27 @@
 <script lang="ts">
-	import type { PageProps } from './$types';
-	import { superForm } from 'sveltekit-superforms';
-	import { valibotClient } from 'sveltekit-superforms/adapters';
-	import { feedbackSchema } from '$lib/schemas/showcase/advanced';
-	import { Card, Alert, FormField } from '$lib/components/composites';
-	import { Button, Input, Checkbox, Spinner } from '$lib/components/primitives';
-	import { Stack } from '$lib/components/layout';
+import { superForm } from 'sveltekit-superforms';
+import { valibotClient } from 'sveltekit-superforms/adapters';
+import { Alert, Card, FormField } from '$lib/components/composites';
+import { Stack } from '$lib/components/layout';
+import { Button, Checkbox, Input, Spinner } from '$lib/components/primitives';
+import { feedbackSchema } from '$lib/schemas/showcase/advanced';
+import type { PageProps } from './$types';
 
-	let { data }: PageProps = $props();
+let { data }: PageProps = $props();
 
-	const { form, errors, enhance, submitting, delayed, message: formMessage } = superForm(data.form, {
-		validators: valibotClient(feedbackSchema),
-		resetForm: true,
-	});
+const {
+	form,
+	errors,
+	enhance,
+	submitting,
+	delayed,
+	message: formMessage,
+} = superForm(data.form, {
+	validators: valibotClient(feedbackSchema),
+	resetForm: true,
+});
 
-	const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
+const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
 </script>
 
 <svelte:head>

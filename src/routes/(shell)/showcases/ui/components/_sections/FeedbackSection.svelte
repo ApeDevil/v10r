@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { DemoCard, VariantGrid } from '../_components';
-	import { Alert, EmptyState } from '$lib/components';
-	import { getToast } from '$lib/state/toast.svelte';
+import { Alert, EmptyState } from '$lib/components';
+import { getToast } from '$lib/state/toast.svelte';
+import { DemoCard, VariantGrid } from '../_components';
 
-	const toast = getToast();
+const toast = getToast();
 
-	function showToast(type: 'success' | 'error' | 'warning' | 'info') {
-		toast[type](`This is a ${type} toast message!`);
-	}
+function showToast(type: 'success' | 'error' | 'warning' | 'info') {
+	toast[type](`This is a ${type} toast message!`);
+}
 </script>
 
 <section id="comp-feedback" class="section">

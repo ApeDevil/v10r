@@ -14,33 +14,34 @@ export const scrollbarVariants = cva(
 				vertical:
 					'h-full w-2.5 border-l border-l-transparent p-px data-[state=visible]:animate-in data-[state=hidden]:animate-out data-[state=hidden]:fade-out-0 data-[state=visible]:fade-in-0',
 				horizontal:
-					'h-2.5 flex-col border-t border-t-transparent p-px data-[state=visible]:animate-in data-[state=hidden]:animate-out data-[state=hidden]:fade-out-0 data-[state=visible]:fade-in-0'
+					'h-2.5 flex-col border-t border-t-transparent p-px data-[state=visible]:animate-in data-[state=hidden]:animate-out data-[state=hidden]:fade-out-0 data-[state=visible]:fade-in-0',
 			},
 			size: {
 				sm: '',
-				md: ''
-			}
+				md: '',
+			},
 		},
 		compoundVariants: [
 			{
 				orientation: 'vertical',
 				size: 'sm',
-				class: 'w-2'
+				class: 'w-2',
 			},
 			{
 				orientation: 'horizontal',
 				size: 'sm',
-				class: 'h-2'
-			}
+				class: 'h-2',
+			},
 		],
 		defaultVariants: {
 			orientation: 'vertical',
-			size: 'md'
-		}
-	}
+			size: 'md',
+		},
+	},
 );
 
 /** Scrollbar thumb class */
-export const SCROLL_THUMB_CLASS = 'relative flex-1 rounded-full bg-border transition-colors duration-[var(--duration-fast)] hover:bg-muted';
+export const SCROLL_THUMB_CLASS =
+	'relative flex-1 rounded-full bg-border transition-colors duration-[var(--duration-fast)] hover:bg-muted';
 
 export type ScrollbarVariants = VariantProps<typeof scrollbarVariants>;

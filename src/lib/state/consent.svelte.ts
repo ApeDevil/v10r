@@ -3,8 +3,8 @@
  * Follows the same pattern as theme.svelte.ts — cookie-backed, context-scoped.
  */
 
-import { browser } from '$app/environment';
 import { getContext, setContext } from 'svelte';
+import { browser } from '$app/environment';
 
 export type ConsentTier = 'necessary' | 'analytics' | 'full';
 

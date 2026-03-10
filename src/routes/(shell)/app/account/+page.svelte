@@ -1,29 +1,29 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { Card, Alert, DiagGrid, DiagRow } from '$lib/components/composites';
-	import { Badge, Button, Spinner } from '$lib/components/primitives';
-	import { Stack } from '$lib/components/layout';
+import { enhance } from '$app/forms';
+import { Alert, Card, DiagGrid, DiagRow } from '$lib/components/composites';
+import { Stack } from '$lib/components/layout';
+import { Badge, Button, Spinner } from '$lib/components/primitives';
 
-	let { data, form } = $props();
+let { data, form } = $props();
 
-	let revoking = $state<string | null>(null);
-	let exporting = $state(false);
-	let deleting = $state(false);
-	let confirmDelete = $state(false);
-	let deleteConfirmText = $state('');
+let revoking = $state<string | null>(null);
+let exporting = $state(false);
+let deleting = $state(false);
+let confirmDelete = $state(false);
+let deleteConfirmText = $state('');
 
-	// If export action returned data, trigger download
-	$effect(() => {
-		if (form?.export) {
-			const blob = new Blob([form.export], { type: 'application/json' });
-			const url = URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.href = url;
-			a.download = `velociraptor-data-${Date.now()}.json`;
-			a.click();
-			URL.revokeObjectURL(url);
-		}
-	});
+// If export action returned data, trigger download
+$effect(() => {
+	if (form?.export) {
+		const blob = new Blob([form.export], { type: 'application/json' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = `velociraptor-data-${Date.now()}.json`;
+		a.click();
+		URL.revokeObjectURL(url);
+	}
+});
 </script>
 
 <svelte:head>
@@ -120,7 +120,7 @@
 				{#if exporting}
 					<Spinner size="xs" class="mr-2" />
 				{/if}
-				<span class="i-lucide-download h-4 w-4 mr-1" />
+				<span class="i-lucide-download h-4 w-4 mr-1" ></span>
 				Export My Data
 			</Button>
 		</form>
@@ -138,7 +138,7 @@
 
 		{#if !confirmDelete}
 			<Button variant="destructive" onclick={() => (confirmDelete = true)}>
-				<span class="i-lucide-trash-2 h-4 w-4 mr-1" />
+				<span class="i-lucide-trash-2 h-4 w-4 mr-1" ></span>
 				Delete Account
 			</Button>
 		{:else}

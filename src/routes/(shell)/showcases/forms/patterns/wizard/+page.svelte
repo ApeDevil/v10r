@@ -1,62 +1,68 @@
 <script lang="ts">
-	import type { PageProps } from './$types';
-	import { tick } from 'svelte';
-	import { superForm } from 'sveltekit-superforms';
-	import { valibotClient } from 'sveltekit-superforms/adapters';
-	import { wizardSchema } from '$lib/schemas/showcase/patterns';
-	import { Card, Alert, FormField } from '$lib/components/composites';
-	import { Button, Input, Select, Checkbox, Badge, Progress, Spinner } from '$lib/components/primitives';
-	import { Stack, Cluster } from '$lib/components/layout';
+import { tick } from 'svelte';
+import { superForm } from 'sveltekit-superforms';
+import { valibotClient } from 'sveltekit-superforms/adapters';
+import { Alert, Card, FormField } from '$lib/components/composites';
+import { Cluster, Stack } from '$lib/components/layout';
+import { Badge, Button, Checkbox, Input, Progress, Select, Spinner } from '$lib/components/primitives';
+import { wizardSchema } from '$lib/schemas/showcase/patterns';
+import type { PageProps } from './$types';
 
-	let { data }: PageProps = $props();
+let { data }: PageProps = $props();
 
-	const { form, errors, enhance, submitting, delayed, validateForm, message: formMessage } = superForm(data.form, {
-		validators: valibotClient(wizardSchema),
-	});
+const {
+	form,
+	errors,
+	enhance,
+	submitting,
+	delayed,
+	validateForm,
+	message: formMessage,
+} = superForm(data.form, {
+	validators: valibotClient(wizardSchema),
+});
 
-	let step = $state(1);
-	const totalSteps = 3;
+let step = $state(1);
+const totalSteps = 3;
 
-	const planOptions = [
-		{ value: 'free', label: 'Free' },
-		{ value: 'pro', label: 'Pro ($9/mo)' },
-		{ value: 'enterprise', label: 'Enterprise ($49/mo)' },
-	];
+const planOptions = [
+	{ value: 'free', label: 'Free' },
+	{ value: 'pro', label: 'Pro ($9/mo)' },
+	{ value: 'enterprise', label: 'Enterprise ($49/mo)' },
+];
 
-	const stateOptions = [
-		{ value: 'CA', label: 'California' },
-		{ value: 'NY', label: 'New York' },
-		{ value: 'TX', label: 'Texas' },
-		{ value: 'FL', label: 'Florida' },
-		{ value: 'IL', label: 'Illinois' },
-	];
+const stateOptions = [
+	{ value: 'CA', label: 'California' },
+	{ value: 'NY', label: 'New York' },
+	{ value: 'TX', label: 'Texas' },
+	{ value: 'FL', label: 'Florida' },
+	{ value: 'IL', label: 'Illinois' },
+];
 
-	// Step-specific field keys for validation checking
-	const stepFields: Record<number, string[]> = {
-		1: ['firstName', 'lastName', 'email'],
-		2: ['street', 'city', 'state', 'zip'],
-		3: ['plan', 'terms'],
-	};
+// Step-specific field keys for validation checking
+const stepFields: Record<number, string[]> = {
+	1: ['firstName', 'lastName', 'email'],
+	2: ['street', 'city', 'state', 'zip'],
+	3: ['plan', 'terms'],
+};
 
-	async function nextStep() {
-		const result = await validateForm({ update: true });
-		const currentFields = stepFields[step];
-		const hasErrors = currentFields.some(
-			(field) => result.errors[field as keyof typeof result.errors]
-		);
+async function nextStep() {
+	const result = await validateForm({ update: true });
+	const currentFields = stepFields[step];
+	const hasErrors = currentFields.some((field) => result.errors[field as keyof typeof result.errors]);
 
-		if (!hasErrors) {
-			step++;
-			await tick();
-			// Focus first input of new step
-			const firstInput = document.querySelector<HTMLInputElement>(`.step-${step} input, .step-${step} select`);
-			firstInput?.focus();
-		}
+	if (!hasErrors) {
+		step++;
+		await tick();
+		// Focus first input of new step
+		const firstInput = document.querySelector<HTMLInputElement>(`.step-${step} input, .step-${step} select`);
+		firstInput?.focus();
 	}
+}
 
-	function prevStep() {
-		step--;
-	}
+function prevStep() {
+	step--;
+}
 </script>
 
 <svelte:head>

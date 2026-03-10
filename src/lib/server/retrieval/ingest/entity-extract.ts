@@ -3,7 +3,7 @@
  * Uses the active LLM provider for structured extraction.
  */
 import { generateText } from 'ai';
-import { chatModel, aiConfigured } from '$lib/server/ai';
+import { aiConfigured, chatModel } from '$lib/server/ai';
 
 export interface ExtractedEntity {
 	name: string;
@@ -46,9 +46,7 @@ Rules:
 JSON:`;
 
 /** Extract entities and relationships from a text chunk. */
-export async function extractEntities(
-	text: string,
-): Promise<ExtractionResult> {
+export async function extractEntities(text: string): Promise<ExtractionResult> {
 	if (!aiConfigured || !chatModel) {
 		return { entities: [], relationships: [] };
 	}
@@ -74,7 +72,9 @@ export async function extractEntities(
 			.map((e: Record<string, unknown>) => ({
 				name: String(e.name).trim().slice(0, 100),
 				type: String(e.type).toLowerCase().trim(),
-				description: String(e.description ?? '').trim().slice(0, 200),
+				description: String(e.description ?? '')
+					.trim()
+					.slice(0, 200),
 			}))
 			.filter((e: ExtractedEntity) => {
 				// Validate entity type
@@ -106,9 +106,7 @@ export async function extractEntities(
  * Extract entities from multiple text sections and merge results.
  * Deduplicates entities by name (keeps first description).
  */
-export async function extractEntitiesFromSections(
-	sections: string[],
-): Promise<ExtractionResult> {
+export async function extractEntitiesFromSections(sections: string[]): Promise<ExtractionResult> {
 	const allEntities = new Map<string, ExtractedEntity>();
 	const allRelationships: ExtractedRelationship[] = [];
 

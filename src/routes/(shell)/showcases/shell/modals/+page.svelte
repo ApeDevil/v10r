@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { getModals } from '$lib/state/modals.svelte';
-	import { Button } from '$lib/components/primitives';
+import { Button } from '$lib/components/primitives';
+import { getModals } from '$lib/state/modals.svelte';
 
-	const modals = getModals();
+const modals = getModals();
 </script>
 
 <svelte:head>

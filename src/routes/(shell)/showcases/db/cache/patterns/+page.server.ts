@@ -1,32 +1,25 @@
-import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
+import { classifyCacheError } from '$lib/server/cache/errors';
 import {
-	listShowcaseEntries,
-	getShowcaseStats,
-	getEntryDetail,
-} from '$lib/server/cache/showcase/queries';
-import {
-	setString,
+	addToSortedSet,
+	decrementCounter,
+	deleteHashField,
 	deleteKey,
 	incrementCounter,
-	decrementCounter,
-	setHashField,
-	deleteHashField,
-	addToSortedSet,
-	removeFromSortedSet,
-	pushToList,
 	popFromList,
+	pushToList,
+	removeFromSortedSet,
+	setHashField,
+	setString,
 } from '$lib/server/cache/showcase/mutations';
-import { classifyCacheError } from '$lib/server/cache/errors';
+import { getEntryDetail, getShowcaseStats, listShowcaseEntries } from '$lib/server/cache/showcase/queries';
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
 	const start = performance.now();
 
 	try {
-		const [entries, stats] = await Promise.all([
-			listShowcaseEntries(),
-			getShowcaseStats(),
-		]);
+		const [entries, stats] = await Promise.all([listShowcaseEntries(), getShowcaseStats()]);
 
 		const queryMs = Math.round((performance.now() - start) * 100) / 100;
 
@@ -154,7 +147,7 @@ export const actions: Actions = {
 		const key = formData.get('key') as string;
 		const member = formData.get('member') as string;
 		const score = parseFloat(formData.get('score') as string);
-		if (!key || !member || isNaN(score)) return fail(400, { message: 'Key, member, and score are required.' });
+		if (!key || !member || Number.isNaN(score)) return fail(400, { message: 'Key, member, and score are required.' });
 
 		try {
 			await addToSortedSet(key, member, score);
@@ -204,7 +197,11 @@ export const actions: Actions = {
 
 		try {
 			const value = await popFromList(key, side);
-			return { success: true, poppedValue: value, message: value ? `Popped "${value}" from ${side}.` : 'List is empty.' };
+			return {
+				success: true,
+				poppedValue: value,
+				message: value ? `Popped "${value}" from ${side}.` : 'List is empty.',
+			};
 		} catch (err) {
 			const cacheErr = classifyCacheError(err);
 			return fail(400, { message: cacheErr.message });

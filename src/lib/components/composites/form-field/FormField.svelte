@@ -1,39 +1,31 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import { cn } from '$lib/utils/cn';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils/cn';
 
-	interface FieldContext {
-		fieldId: string;
-		errorId: string;
-		descId: string;
-		describedBy: string | undefined;
-	}
+interface FieldContext {
+	fieldId: string;
+	errorId: string;
+	descId: string;
+	describedBy: string | undefined;
+}
 
-	interface Props {
-		label: string;
-		id?: string;
-		error?: string;
-		description?: string;
-		required?: boolean;
-		children: Snippet<[FieldContext]>;
-		class?: string;
-	}
+interface Props {
+	label: string;
+	id?: string;
+	error?: string;
+	description?: string;
+	required?: boolean;
+	children: Snippet<[FieldContext]>;
+	class?: string;
+}
 
-	let {
-		label,
-		id,
-		error,
-		description,
-		required = false,
-		children,
-		class: className
-	}: Props = $props();
+let { label, id, error, description, required = false, children, class: className }: Props = $props();
 
-	// Generate IDs for accessibility
-	const fieldId = id ?? crypto.randomUUID();
-	const errorId = `${fieldId}-error`;
-	const descId = `${fieldId}-description`;
-	const describedBy = $derived(error ? errorId : description ? descId : undefined);
+// Generate IDs for accessibility
+const fieldId = id ?? crypto.randomUUID();
+const errorId = `${fieldId}-error`;
+const descId = `${fieldId}-description`;
+const describedBy = $derived(error ? errorId : description ? descId : undefined);
 </script>
 
 <div class={cn('space-y-2', className)}>

@@ -1,5 +1,5 @@
+import { activeProviderInfo, aiConfigured } from '$lib/server/ai';
 import type { PageServerLoad } from './$types';
-import { aiConfigured, activeProviderInfo } from '$lib/server/ai';
 
 export const load: PageServerLoad = async () => {
 	return {

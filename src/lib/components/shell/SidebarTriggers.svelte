@@ -1,27 +1,27 @@
 <script lang="ts">
-	/**
-	 * Quick access triggers for command palette + AI Assistant.
-	 * Persistent buttons that transition between rail (icon-only) and expanded (fake input) modes.
-	 * Icons stay mounted across expand/collapse to prevent DOM swap jank.
-	 */
+/**
+ * Quick access triggers for command palette + AI Assistant.
+ * Persistent buttons that transition between rail (icon-only) and expanded (fake input) modes.
+ * Icons stay mounted across expand/collapse to prevent DOM swap jank.
+ */
 
-	import { cn } from '$lib/utils/cn';
-	import { getSidebar } from '$lib/state/sidebar.svelte';
-	import { getModals } from '$lib/state/modals.svelte';
+import { getModals } from '$lib/state/modals.svelte';
+import { getSidebar } from '$lib/state/sidebar.svelte';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		forceExpanded?: boolean; // Force expanded mode (for drawer)
-		class?: string;
-	}
+interface Props {
+	forceExpanded?: boolean; // Force expanded mode (for drawer)
+	class?: string;
+}
 
-	let { forceExpanded = false, class: className }: Props = $props();
+let { forceExpanded = false, class: className }: Props = $props();
 
-	const sidebar = getSidebar();
-	const modals = getModals();
+const sidebar = getSidebar();
+const modals = getModals();
 
-	const isExpanded = $derived(forceExpanded || sidebar.expanded);
+const isExpanded = $derived(forceExpanded || sidebar.expanded);
 
-	const cmdKey = 'Ctrl+';
+const cmdKey = 'Ctrl+';
 </script>
 
 <div class={cn('flex flex-col gap-2 p-2', className)}>
@@ -38,7 +38,7 @@
 		aria-label={isExpanded ? 'Search' : 'Search (Ctrl+K)'}
 		title={isExpanded ? undefined : 'Search (Ctrl+K)'}
 	>
-		<span class="i-lucide-search text-icon-md shrink-0" />
+		<span class="i-lucide-search text-icon-md shrink-0" ></span>
 		{#if isExpanded}
 			<span class="trigger-placeholder flex-1 opacity-0 motion-reduce:opacity-100">Search...</span>
 			<kbd
@@ -61,7 +61,7 @@
 		aria-label={isExpanded ? 'AI Assistant' : 'AI Assistant (Ctrl+J)'}
 		title={isExpanded ? undefined : 'AI Assistant (Ctrl+J)'}
 	>
-		<span class="i-lucide-bot text-icon-md shrink-0" />
+		<span class="i-lucide-bot text-icon-md shrink-0" ></span>
 		{#if isExpanded}
 			<span class="trigger-placeholder flex-1 opacity-0 motion-reduce:opacity-100">Ask AI...</span>
 			<kbd

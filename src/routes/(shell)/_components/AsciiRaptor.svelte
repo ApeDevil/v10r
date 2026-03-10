@@ -1,11 +1,11 @@
 <script lang="ts">
-	interface Props {
-		class?: string;
-	}
+interface Props {
+	class?: string;
+}
 
-	let { class: className }: Props = $props();
+let { class: className }: Props = $props();
 
-	const frame1 = `
+const frame1 = `
         _.,----,._
       .:'        \`:.
     .'    .--.      '.
@@ -30,7 +30,7 @@
         '.____.'
   `;
 
-	const frame2 = `
+const frame2 = `
         _.,----,._
       .:'        \`:.
     .'    .--.      '.

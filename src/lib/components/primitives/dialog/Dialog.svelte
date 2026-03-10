@@ -1,17 +1,17 @@
 <script lang="ts">
-	import { Dialog as DialogPrimitive } from 'bits-ui';
-	import { cn } from '$lib/utils/cn';
-	import type { Snippet } from 'svelte';
+import { Dialog as DialogPrimitive } from 'bits-ui';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		open: boolean;
-		title?: string;
-		description?: string;
-		children?: Snippet;
-		class?: string;
-	}
+interface Props {
+	open: boolean;
+	title?: string;
+	description?: string;
+	children?: Snippet;
+	class?: string;
+}
 
-	let { open = $bindable(false), title, description, children, class: className }: Props = $props();
+let { open = $bindable(false), title, description, children, class: className }: Props = $props();
 </script>
 
 <DialogPrimitive.Root bind:open>
@@ -48,7 +48,7 @@
 			<DialogPrimitive.Close
 				class="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
 			>
-				<span class="i-lucide-x h-4 w-4" />
+				<span class="i-lucide-x h-4 w-4" ></span>
 				<span class="sr-only">Close</span>
 			</DialogPrimitive.Close>
 		</DialogPrimitive.Content>

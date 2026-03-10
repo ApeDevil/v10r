@@ -1,24 +1,26 @@
 <script lang="ts">
-	import { Button } from '$lib/components/primitives/button';
-	import { getToast } from '$lib/state/toast.svelte';
-	import { getConsent } from '$lib/state/consent.svelte';
+import { Button } from '$lib/components/primitives/button';
+import { getConsent } from '$lib/state/consent.svelte';
+import { getToast } from '$lib/state/toast.svelte';
 
-	let { data } = $props();
+let { data } = $props();
 
-	const toast = getToast();
-	const consent = getConsent();
+const toast = getToast();
+const consent = getConsent();
 
-	let revealed = $state(false);
+let revealed = $state(false);
 
-	function handleExport() {
-		toast.info('In production, this would export all data associated with your visitor ID as a JSON download (GDPR Art 20).');
-	}
+function handleExport() {
+	toast.info(
+		'In production, this would export all data associated with your visitor ID as a JSON download (GDPR Art 20).',
+	);
+}
 
-	function handleDelete() {
-		toast.warning('In production, this would delete all events and sessions linked to your visitor ID (GDPR Art 17).');
-	}
+function handleDelete() {
+	toast.warning('In production, this would delete all events and sessions linked to your visitor ID (GDPR Art 17).');
+}
 
-	const activeTier = $derived(consent.tier ?? data.consentTier);
+const activeTier = $derived(consent.tier ?? data.consentTier);
 </script>
 
 <div class="my-data-layout">

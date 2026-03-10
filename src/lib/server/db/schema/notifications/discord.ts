@@ -2,8 +2,9 @@
  * DISCORD ACCOUNTS — Links v10r users to Discord accounts for DM notifications.
  * Tokens are stored encrypted (AES-256-GCM).
  */
-import { text, boolean, timestamp, index } from 'drizzle-orm/pg-core';
+
 import { sql } from 'drizzle-orm';
+import { boolean, index, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
 import { notificationsSchema } from './notifications';
 

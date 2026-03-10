@@ -7,8 +7,9 @@
  *
  * Rule of thumb: tags/labels/small lists → array. IDs/references → junction table.
  */
-import { text, integer, jsonb, serial, timestamp, index } from 'drizzle-orm/pg-core';
+
 import { sql } from 'drizzle-orm';
+import { index, integer, jsonb, serial, text, timestamp } from 'drizzle-orm/pg-core';
 import { showcaseSchema } from './type-specimen';
 
 export const collectionShelf = showcaseSchema.table(

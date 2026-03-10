@@ -1,20 +1,27 @@
 <script lang="ts">
-	import type { PageProps } from './$types';
-	import { page } from '$app/state';
-	import { superForm } from 'sveltekit-superforms';
-	import { valibotClient } from 'sveltekit-superforms/adapters';
-	import { serverSchema } from '$lib/schemas/showcase/validation';
-	import { Card, Alert, FormField } from '$lib/components/composites';
-	import { Button, Input, Spinner } from '$lib/components/primitives';
-	import { Stack } from '$lib/components/layout';
+import { superForm } from 'sveltekit-superforms';
+import { valibotClient } from 'sveltekit-superforms/adapters';
+import { page } from '$app/state';
+import { Alert, Card, FormField } from '$lib/components/composites';
+import { Stack } from '$lib/components/layout';
+import { Button, Input, Spinner } from '$lib/components/primitives';
+import { serverSchema } from '$lib/schemas/showcase/validation';
+import type { PageProps } from './$types';
 
-	let { data }: PageProps = $props();
+let { data }: PageProps = $props();
 
-	const { form, errors, enhance, submitting, delayed, message: formMessage } = superForm(data.form, {
-		validators: valibotClient(serverSchema),
-	});
+const {
+	form,
+	errors,
+	enhance,
+	submitting,
+	delayed,
+	message: formMessage,
+} = superForm(data.form, {
+	validators: valibotClient(serverSchema),
+});
 
-	const isError = $derived(page.status >= 400);
+const isError = $derived(page.status >= 400);
 </script>
 
 <svelte:head>

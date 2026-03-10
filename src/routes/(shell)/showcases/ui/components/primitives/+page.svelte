@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { NavSection } from '$lib/components/composites';
-	import ActionsSection from '../_sections/ActionsSection.svelte';
-	import InputsSection from '../_sections/InputsSection.svelte';
-	import DataDisplaySection from '../_sections/DataDisplaySection.svelte';
-	import OverlaysSection from '../_sections/OverlaysSection.svelte';
+import { NavSection } from '$lib/components/composites';
+import ActionsSection from '../_sections/ActionsSection.svelte';
+import DataDisplaySection from '../_sections/DataDisplaySection.svelte';
+import InputsSection from '../_sections/InputsSection.svelte';
+import OverlaysSection from '../_sections/OverlaysSection.svelte';
 
-	const sections = [
-		{ id: 'prim-actions', label: 'Actions' },
-		{ id: 'prim-inputs', label: 'Inputs' },
-		{ id: 'prim-data-display', label: 'Data Display' },
-		{ id: 'prim-overlays', label: 'Overlays' }
-	];
+const sections = [
+	{ id: 'prim-actions', label: 'Actions' },
+	{ id: 'prim-inputs', label: 'Inputs' },
+	{ id: 'prim-data-display', label: 'Data Display' },
+	{ id: 'prim-overlays', label: 'Overlays' },
+];
 </script>
 
 <svelte:head>

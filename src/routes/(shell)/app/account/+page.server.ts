@@ -1,17 +1,16 @@
 import { createHash } from 'node:crypto';
-import { redirect, fail } from '@sveltejs/kit';
-import type { PageServerLoad, Actions } from './$types';
+import { fail, redirect } from '@sveltejs/kit';
+import { and, eq, ne } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import { session as sessionTable, account, user } from '$lib/server/db/schema/auth/_better-auth';
-import { eq, and, ne } from 'drizzle-orm';
-import { auth } from '$lib/server/auth';
+import { account, session as sessionTable, user } from '$lib/server/db/schema/auth/_better-auth';
+import type { Actions, PageServerLoad } from './$types';
 
 function hashForDisplay(id: string): string {
 	return createHash('sha256').update(id).digest('hex').slice(0, 12);
 }
 
 export const load: PageServerLoad = async ({ locals }) => {
-	// Auth guard handled by /app layout
+	if (!locals.user || !locals.session) redirect(303, '/auth/login');
 
 	// Fetch all active sessions for this user
 	const sessions = await db
@@ -43,7 +42,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			expiresAt: s.expiresAt.toISOString(),
 			ipAddress: s.ipAddress,
 			userAgent: s.userAgent,
-			isCurrent: s.id === locals.session!.id,
+			isCurrent: s.id === locals.session?.id,
 		})),
 		accounts: accounts.map((a) => ({
 			provider: a.providerId,
@@ -68,7 +67,7 @@ export const actions: Actions = {
 				and(
 					eq(sessionTable.id, sessionId),
 					eq(sessionTable.userId, locals.user.id),
-					ne(sessionTable.id, locals.session!.id),
+					ne(sessionTable.id, locals.session?.id),
 				),
 			);
 

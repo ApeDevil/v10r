@@ -1,4 +1,4 @@
-import type { KnowledgeData, KnowledgeNode, KnowledgeEdge } from '$lib/types/knowledge';
+import type { KnowledgeData, KnowledgeEdge, KnowledgeNode } from '$lib/types/knowledge';
 
 // ─── Relationship types ─────────────────────────────────
 
@@ -36,10 +36,7 @@ export interface Neo4jRelRecord {
  * Transform raw Neo4j node/relationship records into KnowledgeData
  * for the KnowledgeGraph visualization component.
  */
-export function toKnowledgeData(
-	nodes: Neo4jNodeRecord[],
-	relationships: Neo4jRelRecord[],
-): KnowledgeData {
+export function toKnowledgeData(nodes: Neo4jNodeRecord[], relationships: Neo4jRelRecord[]): KnowledgeData {
 	const entityTypes = [...new Set(nodes.map((n) => n.labels[0]))].sort();
 	const relationshipTypes = [...new Set(relationships.map((r) => r.type))].sort();
 

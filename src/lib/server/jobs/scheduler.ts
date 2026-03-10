@@ -1,7 +1,7 @@
 import { building } from '$app/environment';
 import { env } from '$env/dynamic/private';
-import { platform } from '$lib/server/platform';
 import { DEFAULT_JOB_INTERVAL_MS, JOB_STARTUP_DELAY_MS } from '$lib/server/config';
+import { platform } from '$lib/server/platform';
 import { jobs } from './index';
 import { runJob } from './runner';
 

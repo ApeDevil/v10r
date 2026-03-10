@@ -4,18 +4,14 @@
  * contextual metadata (Anthropic's prepended context approach),
  * full-text search (tsvector via migration), and vector similarity (pgvector HNSW).
  */
-import { text, integer, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
-import { ragSchema } from './embedding-model';
-import { document } from './document';
-import { embeddingModel } from './embedding-model';
-import { vector } from './_custom-types';
 
-export const chunkLevelEnum = ragSchema.enum('chunk_level', [
-	'sentence',
-	'paragraph',
-	'section',
-]);
+import { sql } from 'drizzle-orm';
+import { index, integer, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { vector } from './_custom-types';
+import { document } from './document';
+import { embeddingModel, ragSchema } from './embedding-model';
+
+export const chunkLevelEnum = ragSchema.enum('chunk_level', ['sentence', 'paragraph', 'section']);
 
 export const chunk = ragSchema.table(
 	'chunk',
@@ -33,8 +29,7 @@ export const chunk = ragSchema.table(
 		contentHash: text('content_hash').notNull(),
 		overlapPrev: integer('overlap_prev').notNull().default(0),
 		overlapNext: integer('overlap_next').notNull().default(0),
-		embeddingModelId: text('embedding_model_id')
-			.references(() => embeddingModel.id, { onDelete: 'restrict' }),
+		embeddingModelId: text('embedding_model_id').references(() => embeddingModel.id, { onDelete: 'restrict' }),
 		embedding: vector(1536)('embedding'),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	},
@@ -42,14 +37,8 @@ export const chunk = ragSchema.table(
 		index('chunk_document_idx').on(table.documentId),
 		index('chunk_parent_idx').on(table.parentId),
 		index('chunk_doc_level_pos_idx').on(table.documentId, table.level, table.position),
-		uniqueIndex('chunk_doc_hash_level_idx').on(
-			table.documentId,
-			table.contentHash,
-			table.level,
-		),
+		uniqueIndex('chunk_doc_hash_level_idx').on(table.documentId, table.contentHash, table.level),
 		index('chunk_embedding_model_idx').on(table.embeddingModelId),
-		index('chunk_children_idx')
-			.on(table.parentId, table.position)
-			.where(sql`parent_id IS NOT NULL`),
+		index('chunk_children_idx').on(table.parentId, table.position).where(sql`parent_id IS NOT NULL`),
 	],
 );

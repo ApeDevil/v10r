@@ -1,36 +1,36 @@
 <script lang="ts">
-	interface Props {
-		value: string;
-		loading?: boolean;
-		onsubmit: () => void;
-	}
+interface Props {
+	value: string;
+	loading?: boolean;
+	onsubmit: () => void;
+}
 
-	let { value = $bindable(''), loading = false, onsubmit }: Props = $props();
+let { value = $bindable(''), loading = false, onsubmit }: Props = $props();
 
-	let textarea: HTMLTextAreaElement | undefined = $state();
+let textarea: HTMLTextAreaElement | undefined = $state();
 
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Enter' && !e.shiftKey) {
-			e.preventDefault();
-			if (value.trim() && !loading) {
-				onsubmit();
-			}
+function handleKeydown(e: KeyboardEvent) {
+	if (e.key === 'Enter' && !e.shiftKey) {
+		e.preventDefault();
+		if (value.trim() && !loading) {
+			onsubmit();
 		}
 	}
+}
 
-	/** Auto-resize textarea to fit content */
-	function autoResize() {
-		if (!textarea) return;
+/** Auto-resize textarea to fit content */
+function autoResize() {
+	if (!textarea) return;
+	textarea.style.height = 'auto';
+	textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`;
+}
+
+$effect(() => {
+	// Reset height when value is cleared
+	if (!value && textarea) {
 		textarea.style.height = 'auto';
-		textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`;
 	}
-
-	$effect(() => {
-		// Reset height when value is cleared
-		if (!value && textarea) {
-			textarea.style.height = 'auto';
-		}
-	});
+});
 </script>
 
 <div class="chat-input-container flex items-end gap-2 border-t border-border p-3">

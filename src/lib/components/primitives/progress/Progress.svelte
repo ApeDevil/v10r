@@ -1,37 +1,33 @@
 <script lang="ts">
-	import { Progress as ProgressPrimitive } from 'bits-ui';
-	import { cn } from '$lib/utils/cn';
+import { Progress as ProgressPrimitive } from 'bits-ui';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		value?: number;
-		max?: number;
-		variant?: 'default' | 'success' | 'warning' | 'error';
-		size?: 'sm' | 'md' | 'lg';
-		showLabel?: boolean;
-		class?: string;
-	}
+interface Props {
+	value?: number;
+	max?: number;
+	variant?: 'default' | 'success' | 'warning' | 'error';
+	size?: 'sm' | 'md' | 'lg';
+	showLabel?: boolean;
+	class?: string;
+}
 
-	let {
-		value = $bindable(),
-		max = 100,
-		variant = 'default',
-		size = 'md',
-		showLabel = false,
-		class: className
-	}: Props = $props();
+let {
+	value = $bindable(),
+	max = 100,
+	variant = 'default',
+	size = 'md',
+	showLabel = false,
+	class: className,
+}: Props = $props();
 
-	// Clamp value between 0 and max
-	const clampedValue = $derived(
-		value !== undefined ? Math.min(Math.max(value, 0), max) : undefined
-	);
+// Clamp value between 0 and max
+const clampedValue = $derived(value !== undefined ? Math.min(Math.max(value, 0), max) : undefined);
 
-	// Calculate percentage
-	const percentage = $derived(
-		clampedValue !== undefined ? Math.round((clampedValue / max) * 100) : undefined
-	);
+// Calculate percentage
+const percentage = $derived(clampedValue !== undefined ? Math.round((clampedValue / max) * 100) : undefined);
 
-	// Determine if indeterminate
-	const isIndeterminate = $derived(value === undefined);
+// Determine if indeterminate
+const isIndeterminate = $derived(value === undefined);
 </script>
 
 <div

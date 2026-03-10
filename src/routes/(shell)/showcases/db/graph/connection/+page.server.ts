@@ -1,5 +1,5 @@
-import type { PageServerLoad, Actions } from './$types';
 import { verifyConnection } from '$lib/server/graph/showcase/queries';
+import type { Actions, PageServerLoad } from './$types';
 
 async function measureConnection() {
 	const start = performance.now();

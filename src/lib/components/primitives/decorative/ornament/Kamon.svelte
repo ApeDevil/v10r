@@ -1,39 +1,39 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
-	import { createDecorativeId } from '../utils';
+import { cn } from '$lib/utils/cn';
+import { createDecorativeId } from '../utils';
 
-	interface Props {
-		folds?: 3 | 4 | 5 | 6 | 7 | 8;
-		size?: number;
-		color?: string;
-		strokeWidth?: number;
-		filled?: boolean;
-		class?: string;
-	}
+interface Props {
+	folds?: 3 | 4 | 5 | 6 | 7 | 8;
+	size?: number;
+	color?: string;
+	strokeWidth?: number;
+	filled?: boolean;
+	class?: string;
+}
 
-	let {
-		folds = 6,
-		size = 64,
-		color = 'currentColor',
-		strokeWidth = 1,
-		filled = false,
-		class: className
-	}: Props = $props();
+let {
+	folds = 6,
+	size = 64,
+	color = 'currentColor',
+	strokeWidth = 1,
+	filled = false,
+	class: className,
+}: Props = $props();
 
-	const offset = 16;
-	const petalRadius = 16;
+const offset = 16;
+const petalRadius = 16;
 
-	let circles = $derived(
-		Array.from({ length: folds }, (_, i) => {
-			const angle = (2 * Math.PI * i) / folds - Math.PI / 2;
-			return {
-				cx: 50 + offset * Math.cos(angle),
-				cy: 50 + offset * Math.sin(angle)
-			};
-		})
-	);
+let circles = $derived(
+	Array.from({ length: folds }, (_, i) => {
+		const angle = (2 * Math.PI * i) / folds - Math.PI / 2;
+		return {
+			cx: 50 + offset * Math.cos(angle),
+			cy: 50 + offset * Math.sin(angle),
+		};
+	}),
+);
 
-	const clipId = createDecorativeId('kamon');
+const clipId = createDecorativeId('kamon');
 </script>
 
 <svg

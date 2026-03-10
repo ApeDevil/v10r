@@ -1,15 +1,15 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import { cn } from '$lib/utils/cn';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		header?: Snippet;
-		footer?: Snippet;
-		children?: Snippet;
-		class?: string;
-	}
+interface Props {
+	header?: Snippet;
+	footer?: Snippet;
+	children?: Snippet;
+	class?: string;
+}
 
-	let { header, footer, children, class: className }: Props = $props();
+let { header, footer, children, class: className }: Props = $props();
 </script>
 
 <article class={cn('rounded-lg border border-border bg-surface-1 shadow-sm', className)}>

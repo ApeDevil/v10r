@@ -1,8 +1,8 @@
-import { env } from '$env/dynamic/private';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createGroq } from '@ai-sdk/groq';
 import { createOpenAI } from '@ai-sdk/openai';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import type { LanguageModel } from 'ai';
+import { env } from '$env/dynamic/private';
 
 export interface ProviderEntry {
 	id: string;
@@ -61,9 +61,7 @@ export function buildProviderRegistry(): ProviderEntry[] {
 }
 
 /** Resolve which provider to use: AI_PROVIDER env var → first configured */
-export function resolveActiveProvider(
-	registry: ProviderEntry[],
-): ProviderEntry | null {
+export function resolveActiveProvider(registry: ProviderEntry[]): ProviderEntry | null {
 	const preferred = env.AI_PROVIDER ?? '';
 	if (preferred) {
 		const match = registry.find((p) => p.id === preferred && p.configured);
@@ -73,9 +71,6 @@ export function resolveActiveProvider(
 }
 
 /** Get other configured providers as fallbacks */
-export function getFallbackProviders(
-	registry: ProviderEntry[],
-	activeId: string,
-): ProviderEntry[] {
+export function getFallbackProviders(registry: ProviderEntry[], activeId: string): ProviderEntry[] {
 	return registry.filter((p) => p.configured && p.id !== activeId);
 }

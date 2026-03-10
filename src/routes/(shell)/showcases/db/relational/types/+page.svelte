@@ -1,34 +1,44 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { Card, NavSection, ConfirmDialog, Alert } from '$lib/components/composites';
-	import { Badge, Button, Tooltip, Typography } from '$lib/components/primitives';
-	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
-	import { Stack } from '$lib/components/layout';
-	import { getToast } from '$lib/state/toast.svelte';
+import { enhance } from '$app/forms';
+import { Alert, Card, ConfirmDialog, NavSection } from '$lib/components/composites';
+import { Stack } from '$lib/components/layout';
+import {
+	Badge,
+	Body,
+	Button,
+	Cell,
+	Header,
+	HeaderCell,
+	Row,
+	Table,
+	Tooltip,
+	Typography,
+} from '$lib/components/primitives';
+import { getToast } from '$lib/state/toast.svelte';
 
-	let { data } = $props();
-	const toast = getToast();
+let { data } = $props();
+const toast = getToast();
 
-	let resetDialogOpen = $state(false);
+let resetDialogOpen = $state(false);
 
-	const sections = [
-		{ id: 'numeric', label: 'Numeric' },
-		{ id: 'text', label: 'Text' },
-		{ id: 'temporal', label: 'Temporal' },
-		{ id: 'boolean', label: 'Boolean' },
-		{ id: 'uuid', label: 'UUID' },
-		{ id: 'json', label: 'JSON' },
-		{ id: 'arrays', label: 'Arrays' },
-		{ id: 'ranges', label: 'Ranges' },
-		{ id: 'network', label: 'Network' },
-		{ id: 'enums', label: 'Enums' },
-	];
+const sections = [
+	{ id: 'numeric', label: 'Numeric' },
+	{ id: 'text', label: 'Text' },
+	{ id: 'temporal', label: 'Temporal' },
+	{ id: 'boolean', label: 'Boolean' },
+	{ id: 'uuid', label: 'UUID' },
+	{ id: 'json', label: 'JSON' },
+	{ id: 'arrays', label: 'Arrays' },
+	{ id: 'ranges', label: 'Ranges' },
+	{ id: 'network', label: 'Network' },
+	{ id: 'enums', label: 'Enums' },
+];
 
-	function formatValue(val: unknown): string {
-		if (val === null || val === undefined) return 'NULL';
-		if (typeof val === 'object') return JSON.stringify(val, null, 2);
-		return String(val);
-	}
+function formatValue(val: unknown): string {
+	if (val === null || val === undefined) return 'NULL';
+	if (typeof val === 'object') return JSON.stringify(val, null, 2);
+	return String(val);
+}
 </script>
 
 <svelte:head>
@@ -414,7 +424,7 @@
 	<!-- Reset button -->
 	<Stack gap="2" class="items-center mt-6 mb-4">
 		<Button variant="outline" size="sm" onclick={() => resetDialogOpen = true}>
-			<span class="i-lucide-rotate-ccw h-4 w-4 mr-1" />
+			<span class="i-lucide-rotate-ccw h-4 w-4 mr-1" ></span>
 			Reset to Seed Data
 		</Button>
 		<span class="reset-hint">Types are read-only. See <a href="/showcases/db/relational/mutability">Mutability</a> for live write operations.</span>
@@ -444,7 +454,7 @@
 			if (result.type === 'success') {
 				toast.success('Showcase data reset.');
 			} else if (result.type === 'failure') {
-				toast.error(result.data?.message || 'Failed to reset.');
+				toast.error((result.data?.message as string) || 'Failed to reset.');
 			}
 			return update();
 		};

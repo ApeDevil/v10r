@@ -223,9 +223,7 @@ export async function reseedAnalytics(database: Database) {
 			);
 
 			if (j < pages.length - 1) {
-				eventTime = new Date(
-					eventTime.getTime() + randInt(3000, Math.floor(durationMs / pages.length)),
-				);
+				eventTime = new Date(eventTime.getTime() + randInt(3000, Math.floor(durationMs / pages.length)));
 			}
 		}
 	}
@@ -253,24 +251,28 @@ export async function reseedAnalytics(database: Database) {
 	const SESSION_BATCH = 100;
 	for (let i = 0; i < sessionRows.length; i += SESSION_BATCH) {
 		const batch = sessionRows.slice(i, i + SESSION_BATCH);
-		await database.execute(sql.raw(`
+		await database.execute(
+			sql.raw(`
 			INSERT INTO analytics.sessions
 				(id, visitor_id, started_at, ended_at, page_count, entry_path, exit_path, device, browser, country, consent_tier)
 			VALUES
 				${batch.join(',\n\t\t\t\t')}
-		`));
+		`),
+		);
 	}
 
 	// Batch insert events
 	const EVENT_BATCH = 200;
 	for (let i = 0; i < eventRows.length; i += EVENT_BATCH) {
 		const batch = eventRows.slice(i, i + EVENT_BATCH);
-		await database.execute(sql.raw(`
+		await database.execute(
+			sql.raw(`
 			INSERT INTO analytics.events
 				(session_id, visitor_id, event_type, path, referrer, metadata, consent_tier, timestamp)
 			VALUES
 				${batch.join(',\n\t\t\t\t')}
-		`));
+		`),
+		);
 	}
 
 	// Compute daily page stats from events

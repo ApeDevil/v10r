@@ -1,7 +1,7 @@
+import { and, eq, isNotNull, lt, sql } from 'drizzle-orm';
+import { NOTIFICATION_ARCHIVE_DAYS, NOTIFICATION_DELETE_DAYS } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { notifications } from '$lib/server/db/schema/notifications/notifications';
-import { and, lt, eq, isNotNull, sql } from 'drizzle-orm';
-import { NOTIFICATION_ARCHIVE_DAYS, NOTIFICATION_DELETE_DAYS } from '$lib/server/config';
 
 export async function notificationCleanup(): Promise<number> {
 	const now = new Date();
@@ -12,9 +12,7 @@ export async function notificationCleanup(): Promise<number> {
 
 	const deleted = await db
 		.delete(notifications)
-		.where(
-			and(isNotNull(notifications.archivedAt), lt(notifications.archivedAt, deleteCutoff)),
-		)
+		.where(and(isNotNull(notifications.archivedAt), lt(notifications.archivedAt, deleteCutoff)))
 		.returning({ id: notifications.id });
 
 	// Archive read notifications older than NOTIFICATION_ARCHIVE_DAYS

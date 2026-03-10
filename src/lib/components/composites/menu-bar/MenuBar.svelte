@@ -1,24 +1,24 @@
 <script lang="ts">
-	import { Menubar } from 'bits-ui';
-	import { cn } from '$lib/utils/cn';
-	import {
-		menuBarRootVariants,
-		menuBarTriggerVariants,
-		menuBarContentVariants,
-		menuBarItemVariants,
-		menuBarSeparatorVariants,
-		menuBarShortcutVariants,
-		menuBarCheckboxItemVariants,
-		menuBarItemIndicatorVariants
-	} from './menu-bar';
-	import type { MenuBarMenu } from './types';
+import { Menubar } from 'bits-ui';
+import { cn } from '$lib/utils/cn';
+import {
+	menuBarCheckboxItemVariants,
+	menuBarContentVariants,
+	menuBarItemIndicatorVariants,
+	menuBarItemVariants,
+	menuBarRootVariants,
+	menuBarSeparatorVariants,
+	menuBarShortcutVariants,
+	menuBarTriggerVariants,
+} from './menu-bar';
+import type { MenuBarMenu } from './types';
 
-	interface Props {
-		menus: MenuBarMenu[];
-		class?: string;
-	}
+interface Props {
+	menus: MenuBarMenu[];
+	class?: string;
+}
 
-	let { menus, class: className }: Props = $props();
+let { menus, class: className }: Props = $props();
 </script>
 
 <Menubar.Root class={cn(menuBarRootVariants(), className)}>
@@ -44,16 +44,18 @@
 									}
 								}}
 							>
-								<Menubar.CheckboxIndicator class={menuBarItemIndicatorVariants()}>
-									<span class="i-lucide-check h-4 w-4" />
-								</Menubar.CheckboxIndicator>
-								{#if item.icon}
-									<span class={cn(item.icon, 'h-4 w-4')} />
-								{/if}
-								<span class="flex-1">{item.label}</span>
-								{#if item.shortcut}
-									<span class={menuBarShortcutVariants()}>{item.shortcut}</span>
-								{/if}
+								{#snippet children({ checked })}
+									<span class={cn(menuBarItemIndicatorVariants(), !checked && 'invisible')}>
+										<span class="i-lucide-check h-4 w-4" ></span>
+									</span>
+									{#if item.icon}
+										<span class={cn(item.icon, 'h-4 w-4')} ></span>
+									{/if}
+									<span class="flex-1">{item.label}</span>
+									{#if item.shortcut}
+										<span class={menuBarShortcutVariants()}>{item.shortcut}</span>
+									{/if}
+								{/snippet}
 							</Menubar.CheckboxItem>
 						{:else}
 							<Menubar.Item
@@ -66,7 +68,7 @@
 								}}
 							>
 								{#if item.icon}
-									<span class={cn(item.icon, 'h-4 w-4')} />
+									<span class={cn(item.icon, 'h-4 w-4')} ></span>
 								{/if}
 								<span class="flex-1">{item.label}</span>
 								{#if item.shortcut}

@@ -3,7 +3,7 @@
  * Do NOT edit column definitions — Better Auth expects these exact shapes.
  * To extend user data, create a separate table with a foreign key.
  */
-import { pgSchema, text, timestamp, boolean, index } from 'drizzle-orm/pg-core';
+import { boolean, index, pgSchema, text, timestamp } from 'drizzle-orm/pg-core';
 
 export const authSchema = pgSchema('auth');
 
@@ -31,10 +31,7 @@ export const session = authSchema.table(
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
 	},
-	(table) => [
-		index('session_user_id_idx').on(table.userId),
-		index('session_expires_at_idx').on(table.expiresAt),
-	],
+	(table) => [index('session_user_id_idx').on(table.userId), index('session_expires_at_idx').on(table.expiresAt)],
 );
 
 export const account = authSchema.table(

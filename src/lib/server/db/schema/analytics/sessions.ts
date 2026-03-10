@@ -2,7 +2,7 @@
  * ANALYTICS SESSIONS — Visitor session records.
  * Device and country are consent-gated (only populated at 'analytics' or 'full' tier).
  */
-import { text, integer, timestamp, char, index } from 'drizzle-orm/pg-core';
+import { char, index, integer, text, timestamp } from 'drizzle-orm/pg-core';
 import { analyticsSchema, consentTierEnum } from './events';
 
 export const sessions = analyticsSchema.table(

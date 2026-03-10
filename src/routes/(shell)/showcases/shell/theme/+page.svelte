@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { getTheme } from '$lib/state/theme.svelte';
-	import { Button } from '$lib/components/primitives';
+import { Button } from '$lib/components/primitives';
+import { getTheme } from '$lib/state/theme.svelte';
 
-	const theme = getTheme();
+const theme = getTheme();
 </script>
 
 <svelte:head>

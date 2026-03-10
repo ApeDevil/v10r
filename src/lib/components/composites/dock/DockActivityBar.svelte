@@ -1,59 +1,56 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
-	import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
-	import {
-		contextMenuContentVariants,
-		contextMenuItemVariants
-	} from '$lib/components/composites/context-menu';
-	import { getDockContext } from './dock.state.svelte';
-	import { collectLeaves, hasPanelType } from './dock.operations';
-	import type { ActivityBarItem, ActivityBarPosition, PanelDefinition } from './dock.types';
+import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
+import { contextMenuContentVariants, contextMenuItemVariants } from '$lib/components/composites/context-menu';
+import { cn } from '$lib/utils/cn';
+import { collectLeaves, hasPanelType } from './dock.operations';
+import { getDockContext } from './dock.state.svelte';
+import type { ActivityBarItem, ActivityBarPosition, PanelDefinition } from './dock.types';
 
-	interface Props {
-		items: ActivityBarItem[];
-		position?: ActivityBarPosition;
-		class?: string;
-	}
+interface Props {
+	items: ActivityBarItem[];
+	position?: ActivityBarPosition;
+	class?: string;
+}
 
-	let { items, position = 'left', class: className }: Props = $props();
+let { items, position = 'left', class: className }: Props = $props();
 
-	const dock = getDockContext();
+const dock = getDockContext();
 
-	const isHorizontal = $derived(position === 'top' || position === 'bottom');
+const isHorizontal = $derived(position === 'top' || position === 'bottom');
 
-	const POSITION_OPTIONS: { pos: ActivityBarPosition; label: string; icon: string }[] = [
-		{ pos: 'left', label: 'Left', icon: 'i-lucide-panel-left' },
-		{ pos: 'right', label: 'Right', icon: 'i-lucide-panel-right' },
-		{ pos: 'top', label: 'Top', icon: 'i-lucide-panel-top' },
-		{ pos: 'bottom', label: 'Bottom', icon: 'i-lucide-panel-bottom' },
-	];
+const POSITION_OPTIONS: { pos: ActivityBarPosition; label: string; icon: string }[] = [
+	{ pos: 'left', label: 'Left', icon: 'i-lucide-panel-left' },
+	{ pos: 'right', label: 'Right', icon: 'i-lucide-panel-right' },
+	{ pos: 'top', label: 'Top', icon: 'i-lucide-panel-top' },
+	{ pos: 'bottom', label: 'Bottom', icon: 'i-lucide-panel-bottom' },
+];
 
-	function isTypeInLayout(panelType: string): boolean {
-		return hasPanelType(dock.root, panelType, dock.panels);
-	}
+function isTypeInLayout(panelType: string): boolean {
+	return hasPanelType(dock.root, panelType, dock.panels);
+}
 
-	function handleClick(item: ActivityBarItem) {
-		if (isTypeInLayout(item.panelType)) {
-			const leaves = collectLeaves(dock.root);
-			for (const leaf of leaves) {
-				for (const tabId of leaf.tabs) {
-					const panel = dock.panels[tabId];
-					if (panel?.type === item.panelType) {
-						dock.closePanel(tabId);
-					}
+function handleClick(item: ActivityBarItem) {
+	if (isTypeInLayout(item.panelType)) {
+		const leaves = collectLeaves(dock.root);
+		for (const leaf of leaves) {
+			for (const tabId of leaf.tabs) {
+				const panel = dock.panels[tabId];
+				if (panel?.type === item.panelType) {
+					dock.closePanel(tabId);
 				}
 			}
-		} else {
-			const panel: PanelDefinition = {
-				id: `${item.panelType}-${Date.now()}`,
-				type: item.panelType,
-				label: item.label,
-				icon: item.icon,
-				closable: true
-			};
-			dock.addPanel(panel);
 		}
+	} else {
+		const panel: PanelDefinition = {
+			id: `${item.panelType}-${Date.now()}`,
+			type: item.panelType,
+			label: item.label,
+			icon: item.icon,
+			closable: true,
+		};
+		dock.addPanel(panel);
 	}
+}
 </script>
 
 <ContextMenuPrimitive.Root>
@@ -82,7 +79,7 @@
 	</ContextMenuPrimitive.Trigger>
 
 	<ContextMenuPrimitive.Portal>
-		<ContextMenuPrimitive.Content class={contextMenuContentVariants()} sideOffset={4}>
+		<ContextMenuPrimitive.Content class={contextMenuContentVariants()}>
 			<ContextMenuPrimitive.Group>
 				<ContextMenuPrimitive.GroupHeading class="px-2 py-1.5 text-xs font-medium text-muted">
 					Activity Bar Position

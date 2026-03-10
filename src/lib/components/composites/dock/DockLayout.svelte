@@ -1,72 +1,71 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import { setDockContext } from './dock.state.svelte';
-	import { loadDockState, saveDockState } from './dock.persistence';
-	import DockNode from './DockNode.svelte';
-	import DockActivityBar from './DockActivityBar.svelte';
-	import { hasPanelType } from './dock.operations';
-	import type { LayoutNode, PanelDefinition, ActivityBarItem } from './dock.types';
-	import type { Snippet } from 'svelte';
+import type { Snippet } from 'svelte';
+import { browser } from '$app/environment';
+import DockActivityBar from './DockActivityBar.svelte';
+import DockNode from './DockNode.svelte';
+import { hasPanelType } from './dock.operations';
+import { loadDockState, saveDockState } from './dock.persistence';
+import { setDockContext } from './dock.state.svelte';
+import type { ActivityBarItem, LayoutNode, PanelDefinition } from './dock.types';
 
-	interface Props {
-		initialRoot: LayoutNode;
-		initialPanels: Record<string, PanelDefinition>;
-		activityBarItems?: ActivityBarItem[];
-		persist?: boolean | string;
-		openPanel?: string | null;
-		panelContent: Snippet<[string]>;
-		class?: string;
-	}
+interface Props {
+	initialRoot: LayoutNode;
+	initialPanels: Record<string, PanelDefinition>;
+	activityBarItems?: ActivityBarItem[];
+	persist?: boolean | string;
+	openPanel?: string | null;
+	panelContent: Snippet<[string]>;
+	class?: string;
+}
 
-	let {
-		initialRoot,
-		initialPanels,
-		activityBarItems,
-		persist = false,
-		openPanel,
-		panelContent,
-		class: className
-	}: Props = $props();
+let {
+	initialRoot,
+	initialPanels,
+	activityBarItems,
+	persist = false,
+	openPanel,
+	panelContent,
+	class: className,
+}: Props = $props();
 
-	const persistKey = typeof persist === 'string' ? persist : undefined;
+const persistKey = typeof persist === 'string' ? persist : undefined;
 
-	// Try to restore persisted state, fall back to initial
-	const saved = persist ? loadDockState(persistKey) : null;
-	const dock = setDockContext(
-		saved?.root ?? initialRoot,
-		saved?.panels ?? initialPanels,
-		saved?.activityBarPosition ?? 'left'
-	);
+// Try to restore persisted state, fall back to initial
+const saved = persist ? loadDockState(persistKey) : null;
+const dock = setDockContext(
+	saved?.root ?? initialRoot,
+	saved?.panels ?? initialPanels,
+	saved?.activityBarPosition ?? 'left',
+);
 
-	// Debounced persistence — $state.snapshot() creates deep tracking
-	// so in-place mutations (e.g. resizeSplit) also trigger saves.
-	if (persist && browser) {
-		let timer: ReturnType<typeof setTimeout>;
-		$effect(() => {
-			// snapshot() deeply reads all properties, establishing fine-grained tracking
-			const root = $state.snapshot(dock.root) as LayoutNode;
-			const panels = $state.snapshot(dock.panels) as Record<string, PanelDefinition>;
-			const barPos = dock.activityBarPosition;
-			clearTimeout(timer);
-			timer = setTimeout(() => saveDockState(root, panels, persistKey, barPos), 300);
-		});
-	}
-
-	// Open a panel type via prop (e.g. from URL search param)
+// Debounced persistence — $state.snapshot() creates deep tracking
+// so in-place mutations (e.g. resizeSplit) also trigger saves.
+if (persist && browser) {
+	let timer: ReturnType<typeof setTimeout>;
 	$effect(() => {
-		if (!openPanel) return;
-		if (hasPanelType(dock.root, openPanel, dock.panels)) return;
-		const def = Object.values(initialPanels).find((p) => p.type === openPanel);
-		if (!def) return;
-		dock.addPanel({
-			id: `${openPanel}-${Date.now()}`,
-			type: def.type,
-			label: def.label,
-			icon: def.icon,
-			closable: true
-		});
+		// snapshot() deeply reads all properties, establishing fine-grained tracking
+		const root = $state.snapshot(dock.root) as LayoutNode;
+		const panels = $state.snapshot(dock.panels) as Record<string, PanelDefinition>;
+		const barPos = dock.activityBarPosition;
+		clearTimeout(timer);
+		timer = setTimeout(() => saveDockState(root, panels, persistKey, barPos), 300);
 	});
+}
 
+// Open a panel type via prop (e.g. from URL search param)
+$effect(() => {
+	if (!openPanel) return;
+	if (hasPanelType(dock.root, openPanel, dock.panels)) return;
+	const def = Object.values(initialPanels).find((p) => p.type === openPanel);
+	if (!def) return;
+	dock.addPanel({
+		id: `${openPanel}-${Date.now()}`,
+		type: def.type,
+		label: def.label,
+		icon: def.icon,
+		closable: true,
+	});
+});
 </script>
 
 <div

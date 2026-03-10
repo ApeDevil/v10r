@@ -1,315 +1,315 @@
 <script lang="ts">
-	import { DemoCard, TokenSwatch } from '../_components';
-	import {
-		fontSize,
-		iconSize,
-		spacing,
-		breakpoints,
-		containers,
-		zIndex,
-		duration,
-		sidebar,
-		layout
-	} from '$lib/styles/tokens';
+import {
+	breakpoints,
+	containers,
+	duration,
+	fontSize,
+	iconSize,
+	layout,
+	sidebar,
+	spacing,
+	zIndex,
+} from '$lib/styles/tokens';
+import { DemoCard, TokenSwatch } from '../_components';
 
-	/** Border radius tokens (display-only, reference CSS variables from app.css) */
-	const borderRadius = {
-		sm: '0.25rem',
-		md: '0.375rem',
-		lg: '0.5rem',
-		xl: '0.75rem',
-		full: '9999px',
-	};
+/** Border radius tokens (display-only, reference CSS variables from app.css) */
+const borderRadius = {
+	sm: '0.25rem',
+	md: '0.375rem',
+	lg: '0.5rem',
+	xl: '0.75rem',
+	full: '9999px',
+};
 
-	/** Box shadow tokens (display-only, reference CSS variables from app.css) */
-	const boxShadow = {
-		sm: 'var(--shadow-sm)',
-		md: 'var(--shadow-md)',
-		lg: 'var(--shadow-lg)',
-		xl: 'var(--shadow-xl)',
-		modal: 'var(--shadow-modal)',
-		'glow-primary': 'var(--shadow-glow-primary)',
-		'glow-warning': 'var(--shadow-glow-warning)',
-	};
+/** Box shadow tokens (display-only, reference CSS variables from app.css) */
+const boxShadow = {
+	sm: 'var(--shadow-sm)',
+	md: 'var(--shadow-md)',
+	lg: 'var(--shadow-lg)',
+	xl: 'var(--shadow-xl)',
+	modal: 'var(--shadow-modal)',
+	'glow-primary': 'var(--shadow-glow-primary)',
+	'glow-warning': 'var(--shadow-glow-warning)',
+};
 
-	/** Maps z-index layers to their surface level based on actual component usage */
-	const zSurface: Record<string, number> = {
-		base: 0,
-		sidebar: 1,
-		fab: 1,
-		overlay: 2,
-		drawer: 2,
-		popover: 2,
-		dropdown: 2,
-		modal: 3,
-		toast: 1,
-		tooltip: 3,
-	};
+/** Maps z-index layers to their surface level based on actual component usage */
+const zSurface: Record<string, number> = {
+	base: 0,
+	sidebar: 1,
+	fab: 1,
+	overlay: 2,
+	drawer: 2,
+	popover: 2,
+	dropdown: 2,
+	modal: 3,
+	toast: 1,
+	tooltip: 3,
+};
 
-	/**
-	 * Color token groups — actual values live in app.css (single source of truth).
-	 * We display these with their CSS variable references, grouped by semantic role.
-	 */
-	const colorGroups = [
-		{
-			label: 'Base',
-			tokens: [
-				{ name: 'bg', var: '--color-bg' },
-				{ name: 'fg', var: '--color-fg' },
-				{ name: 'body', var: '--color-body' },
-				{ name: 'muted', var: '--color-muted' },
-				{ name: 'border', var: '--color-border' },
-				{ name: 'subtle', var: '--color-subtle' },
-			],
-		},
-		{
-			label: 'Semi-transparent',
-			tokens: [
-				{ name: 'bg-alpha', var: '--color-bg-alpha' },
-				{ name: 'fg-alpha', var: '--color-fg-alpha' },
-			],
-		},
-		{
-			label: 'Primary',
-			tokens: [
-				{ name: 'primary', var: '--color-primary' },
-				{ name: 'primary-hover', var: '--color-primary-hover' },
-				{ name: 'primary-bg', var: '--color-primary-bg' },
-				{ name: 'primary-fg', var: '--color-primary-fg' },
-				{ name: 'primary-light', var: '--color-primary-light' },
-			],
-		},
-		{
-			label: 'Success',
-			tokens: [
-				{ name: 'success', var: '--color-success' },
-				{ name: 'success-bg', var: '--color-success-bg' },
-				{ name: 'success-fg', var: '--color-success-fg' },
-				{ name: 'success-light', var: '--color-success-light' },
-			],
-		},
-		{
-			label: 'Warning',
-			tokens: [
-				{ name: 'warning', var: '--color-warning' },
-				{ name: 'warning-hover', var: '--color-warning-hover' },
-				{ name: 'warning-bg', var: '--color-warning-bg' },
-				{ name: 'warning-fg', var: '--color-warning-fg' },
-				{ name: 'warning-light', var: '--color-warning-light' },
-			],
-		},
-		{
-			label: 'Error',
-			tokens: [
-				{ name: 'error', var: '--color-error' },
-				{ name: 'error-bg', var: '--color-error-bg' },
-				{ name: 'error-fg', var: '--color-error-fg' },
-				{ name: 'error-light', var: '--color-error-light' },
-				{ name: 'error-border', var: '--color-error-border' },
-			],
-		},
-		{
-			label: 'Info',
-			tokens: [
-				{ name: 'info', var: '--color-info' },
-				{ name: 'info-bg', var: '--color-info-bg' },
-				{ name: 'info-fg', var: '--color-info-fg' },
-				{ name: 'info-light', var: '--color-info-light' },
-			],
-		},
-		{
-			label: 'Secondary',
-			tokens: [
-				{ name: 'secondary-bg', var: '--color-secondary-bg' },
-				{ name: 'secondary-fg', var: '--color-secondary-fg' },
-			],
-		},
-		{
-			label: 'Input',
-			tokens: [
-				{ name: 'input-border', var: '--color-input-border' },
-				{ name: 'input-bg', var: '--color-input-bg' },
-			],
-		},
-	];
+/**
+ * Color token groups — actual values live in app.css (single source of truth).
+ * We display these with their CSS variable references, grouped by semantic role.
+ */
+const colorGroups = [
+	{
+		label: 'Base',
+		tokens: [
+			{ name: 'bg', var: '--color-bg' },
+			{ name: 'fg', var: '--color-fg' },
+			{ name: 'body', var: '--color-body' },
+			{ name: 'muted', var: '--color-muted' },
+			{ name: 'border', var: '--color-border' },
+			{ name: 'subtle', var: '--color-subtle' },
+		],
+	},
+	{
+		label: 'Semi-transparent',
+		tokens: [
+			{ name: 'bg-alpha', var: '--color-bg-alpha' },
+			{ name: 'fg-alpha', var: '--color-fg-alpha' },
+		],
+	},
+	{
+		label: 'Primary',
+		tokens: [
+			{ name: 'primary', var: '--color-primary' },
+			{ name: 'primary-hover', var: '--color-primary-hover' },
+			{ name: 'primary-bg', var: '--color-primary-bg' },
+			{ name: 'primary-fg', var: '--color-primary-fg' },
+			{ name: 'primary-light', var: '--color-primary-light' },
+		],
+	},
+	{
+		label: 'Success',
+		tokens: [
+			{ name: 'success', var: '--color-success' },
+			{ name: 'success-bg', var: '--color-success-bg' },
+			{ name: 'success-fg', var: '--color-success-fg' },
+			{ name: 'success-light', var: '--color-success-light' },
+		],
+	},
+	{
+		label: 'Warning',
+		tokens: [
+			{ name: 'warning', var: '--color-warning' },
+			{ name: 'warning-hover', var: '--color-warning-hover' },
+			{ name: 'warning-bg', var: '--color-warning-bg' },
+			{ name: 'warning-fg', var: '--color-warning-fg' },
+			{ name: 'warning-light', var: '--color-warning-light' },
+		],
+	},
+	{
+		label: 'Error',
+		tokens: [
+			{ name: 'error', var: '--color-error' },
+			{ name: 'error-bg', var: '--color-error-bg' },
+			{ name: 'error-fg', var: '--color-error-fg' },
+			{ name: 'error-light', var: '--color-error-light' },
+			{ name: 'error-border', var: '--color-error-border' },
+		],
+	},
+	{
+		label: 'Info',
+		tokens: [
+			{ name: 'info', var: '--color-info' },
+			{ name: 'info-bg', var: '--color-info-bg' },
+			{ name: 'info-fg', var: '--color-info-fg' },
+			{ name: 'info-light', var: '--color-info-light' },
+		],
+	},
+	{
+		label: 'Secondary',
+		tokens: [
+			{ name: 'secondary-bg', var: '--color-secondary-bg' },
+			{ name: 'secondary-fg', var: '--color-secondary-fg' },
+		],
+	},
+	{
+		label: 'Input',
+		tokens: [
+			{ name: 'input-border', var: '--color-input-border' },
+			{ name: 'input-bg', var: '--color-input-bg' },
+		],
+	},
+];
 
-	/**
-	 * Color combinations — how tokens are actually paired in components.
-	 * Each combo shows bg + fg + optional border/accent, with where it's used.
-	 */
-	const colorCombos = [
-		{
-			label: 'Solid fills',
-			combos: [
-				{
-					name: 'Default',
-					bg: 'var(--color-fg)',
-					fg: 'var(--color-bg)',
-					usage: 'Button default',
-				},
-				{
-					name: 'Primary',
-					bg: 'var(--color-primary-bg)',
-					fg: 'var(--color-primary-fg)',
-					border: 'var(--color-primary)',
-					usage: 'Button, Alert, Badge',
-				},
-				{
-					name: 'Secondary',
-					bg: 'var(--color-secondary-bg)',
-					fg: 'var(--color-secondary-fg)',
-					usage: 'Button secondary',
-				},
-				{
-					name: 'Destructive',
-					bg: 'var(--color-error-bg)',
-					fg: 'var(--color-error-fg)',
-					border: 'var(--color-error)',
-					usage: 'Button destructive, Alert',
-				},
-				{
-					name: 'Ghost',
-					bg: 'transparent',
-					fg: 'var(--color-primary)',
-					border: 'var(--color-border)',
-					usage: 'Button ghost, outline',
-				},
-			],
-		},
-		{
-			label: 'Status',
-			combos: [
-				{
-					name: 'Success',
-					bg: 'var(--color-success-bg)',
-					fg: 'var(--color-success-fg)',
-					border: 'var(--color-success)',
-					usage: 'Alert, Badge',
-				},
-				{
-					name: 'Warning',
-					bg: 'var(--color-warning-bg)',
-					fg: 'var(--color-warning-fg)',
-					border: 'var(--color-warning)',
-					usage: 'Alert, Badge',
-				},
-				{
-					name: 'Error',
-					bg: 'var(--color-error-bg)',
-					fg: 'var(--color-error-fg)',
-					border: 'var(--color-error)',
-					usage: 'Alert, Badge',
-				},
-				{
-					name: 'Info',
-					bg: 'var(--color-info-bg)',
-					fg: 'var(--color-info-fg)',
-					border: 'var(--color-info)',
-					usage: 'Alert, Badge',
-				},
-			],
-		},
-		{
-			label: 'Tinted (color-mix)',
-			combos: [
-				{
-					name: 'Primary tint',
-					bg: 'color-mix(in srgb, var(--color-primary) 10%, transparent)',
-					fg: 'var(--color-primary)',
-					usage: 'Badge, Tag',
-				},
-				{
-					name: 'Success tint',
-					bg: 'color-mix(in srgb, var(--color-success) 10%, transparent)',
-					fg: 'var(--color-success)',
-					usage: 'Badge',
-				},
-				{
-					name: 'Warning tint',
-					bg: 'color-mix(in srgb, var(--color-warning) 10%, transparent)',
-					fg: 'var(--color-warning)',
-					usage: 'Badge',
-				},
-				{
-					name: 'Error tint',
-					bg: 'color-mix(in srgb, var(--color-error) 10%, transparent)',
-					fg: 'var(--color-error)',
-					usage: 'Badge',
-				},
-				{
-					name: 'Muted tint',
-					bg: 'color-mix(in srgb, var(--color-muted) 20%, transparent)',
-					fg: 'var(--color-muted)',
-					usage: 'Badge secondary',
-				},
-			],
-		},
-		{
-			label: 'Surfaces',
-			combos: [
-				{
-					name: 'Page',
-					bg: 'var(--color-bg)',
-					fg: 'var(--color-body)',
-					usage: 'Page body',
-				},
-				{
-					name: 'Card',
-					bg: 'var(--surface-1)',
-					fg: 'var(--color-fg)',
-					border: 'var(--color-border)',
-					usage: 'Cards, sidebar',
-				},
-				{
-					name: 'Overlay',
-					bg: 'var(--surface-2)',
-					fg: 'var(--color-fg)',
-					border: 'var(--color-border)',
-					usage: 'Dropdown, popover',
-				},
-				{
-					name: 'Modal',
-					bg: 'var(--surface-3)',
-					fg: 'var(--color-fg)',
-					border: 'var(--color-border)',
-					usage: 'Modal, tooltip',
-				},
-			],
-		},
-		{
-			label: 'Input',
-			combos: [
-				{
-					name: 'Input default',
-					bg: 'var(--color-input-bg)',
-					fg: 'var(--color-body)',
-					border: 'var(--color-input-border)',
-					usage: 'Input, Select, Combobox',
-				},
-				{
-					name: 'Input focus',
-					bg: 'var(--color-input-bg)',
-					fg: 'var(--color-body)',
-					border: 'var(--color-primary)',
-					usage: 'Input :focus',
-				},
-				{
-					name: 'Input error',
-					bg: 'var(--color-input-bg)',
-					fg: 'var(--color-body)',
-					border: 'var(--color-error)',
-					usage: 'Input :invalid',
-				},
-				{
-					name: 'Input disabled',
-					bg: 'var(--color-subtle)',
-					fg: 'var(--color-muted)',
-					border: 'var(--color-border)',
-					usage: 'Input :disabled',
-				},
-			],
-		},
-	];
+/**
+ * Color combinations — how tokens are actually paired in components.
+ * Each combo shows bg + fg + optional border/accent, with where it's used.
+ */
+const colorCombos = [
+	{
+		label: 'Solid fills',
+		combos: [
+			{
+				name: 'Default',
+				bg: 'var(--color-fg)',
+				fg: 'var(--color-bg)',
+				usage: 'Button default',
+			},
+			{
+				name: 'Primary',
+				bg: 'var(--color-primary-bg)',
+				fg: 'var(--color-primary-fg)',
+				border: 'var(--color-primary)',
+				usage: 'Button, Alert, Badge',
+			},
+			{
+				name: 'Secondary',
+				bg: 'var(--color-secondary-bg)',
+				fg: 'var(--color-secondary-fg)',
+				usage: 'Button secondary',
+			},
+			{
+				name: 'Destructive',
+				bg: 'var(--color-error-bg)',
+				fg: 'var(--color-error-fg)',
+				border: 'var(--color-error)',
+				usage: 'Button destructive, Alert',
+			},
+			{
+				name: 'Ghost',
+				bg: 'transparent',
+				fg: 'var(--color-primary)',
+				border: 'var(--color-border)',
+				usage: 'Button ghost, outline',
+			},
+		],
+	},
+	{
+		label: 'Status',
+		combos: [
+			{
+				name: 'Success',
+				bg: 'var(--color-success-bg)',
+				fg: 'var(--color-success-fg)',
+				border: 'var(--color-success)',
+				usage: 'Alert, Badge',
+			},
+			{
+				name: 'Warning',
+				bg: 'var(--color-warning-bg)',
+				fg: 'var(--color-warning-fg)',
+				border: 'var(--color-warning)',
+				usage: 'Alert, Badge',
+			},
+			{
+				name: 'Error',
+				bg: 'var(--color-error-bg)',
+				fg: 'var(--color-error-fg)',
+				border: 'var(--color-error)',
+				usage: 'Alert, Badge',
+			},
+			{
+				name: 'Info',
+				bg: 'var(--color-info-bg)',
+				fg: 'var(--color-info-fg)',
+				border: 'var(--color-info)',
+				usage: 'Alert, Badge',
+			},
+		],
+	},
+	{
+		label: 'Tinted (color-mix)',
+		combos: [
+			{
+				name: 'Primary tint',
+				bg: 'color-mix(in srgb, var(--color-primary) 10%, transparent)',
+				fg: 'var(--color-primary)',
+				usage: 'Badge, Tag',
+			},
+			{
+				name: 'Success tint',
+				bg: 'color-mix(in srgb, var(--color-success) 10%, transparent)',
+				fg: 'var(--color-success)',
+				usage: 'Badge',
+			},
+			{
+				name: 'Warning tint',
+				bg: 'color-mix(in srgb, var(--color-warning) 10%, transparent)',
+				fg: 'var(--color-warning)',
+				usage: 'Badge',
+			},
+			{
+				name: 'Error tint',
+				bg: 'color-mix(in srgb, var(--color-error) 10%, transparent)',
+				fg: 'var(--color-error)',
+				usage: 'Badge',
+			},
+			{
+				name: 'Muted tint',
+				bg: 'color-mix(in srgb, var(--color-muted) 20%, transparent)',
+				fg: 'var(--color-muted)',
+				usage: 'Badge secondary',
+			},
+		],
+	},
+	{
+		label: 'Surfaces',
+		combos: [
+			{
+				name: 'Page',
+				bg: 'var(--color-bg)',
+				fg: 'var(--color-body)',
+				usage: 'Page body',
+			},
+			{
+				name: 'Card',
+				bg: 'var(--surface-1)',
+				fg: 'var(--color-fg)',
+				border: 'var(--color-border)',
+				usage: 'Cards, sidebar',
+			},
+			{
+				name: 'Overlay',
+				bg: 'var(--surface-2)',
+				fg: 'var(--color-fg)',
+				border: 'var(--color-border)',
+				usage: 'Dropdown, popover',
+			},
+			{
+				name: 'Modal',
+				bg: 'var(--surface-3)',
+				fg: 'var(--color-fg)',
+				border: 'var(--color-border)',
+				usage: 'Modal, tooltip',
+			},
+		],
+	},
+	{
+		label: 'Input',
+		combos: [
+			{
+				name: 'Input default',
+				bg: 'var(--color-input-bg)',
+				fg: 'var(--color-body)',
+				border: 'var(--color-input-border)',
+				usage: 'Input, Select, Combobox',
+			},
+			{
+				name: 'Input focus',
+				bg: 'var(--color-input-bg)',
+				fg: 'var(--color-body)',
+				border: 'var(--color-primary)',
+				usage: 'Input :focus',
+			},
+			{
+				name: 'Input error',
+				bg: 'var(--color-input-bg)',
+				fg: 'var(--color-body)',
+				border: 'var(--color-error)',
+				usage: 'Input :invalid',
+			},
+			{
+				name: 'Input disabled',
+				bg: 'var(--color-subtle)',
+				fg: 'var(--color-muted)',
+				border: 'var(--color-border)',
+				usage: 'Input :disabled',
+			},
+		],
+	},
+];
 </script>
 
 <section class="section">

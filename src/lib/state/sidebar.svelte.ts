@@ -2,8 +2,8 @@
  * Sidebar state management (SSR-safe using context pattern)
  */
 
-import { browser } from '$app/environment';
 import { getContext, setContext } from 'svelte';
+import { browser } from '$app/environment';
 
 interface SidebarState {
 	expanded: boolean; // Rail vs full sidebar (desktop)
@@ -21,11 +21,9 @@ const SIDEBAR_CTX = Symbol('sidebar');
 export function createSidebarState() {
 	// Load from localStorage (client-side only)
 	const stored = browser ? localStorage.getItem(STORAGE_KEY) : null;
-	const initial: SidebarState = stored
-		? JSON.parse(stored)
-		: { expanded: false, pinned: false, mobileOpen: false };
+	const initial: SidebarState = stored ? JSON.parse(stored) : { expanded: false, pinned: false, mobileOpen: false };
 
-	let state = $state<SidebarState>(initial);
+	const state = $state<SidebarState>(initial);
 
 	// Persist on change (excluding mobileOpen which is ephemeral)
 	$effect(() => {
@@ -36,7 +34,7 @@ export function createSidebarState() {
 					expanded: state.expanded,
 					pinned: state.pinned,
 					// Don't persist mobileOpen - always start closed
-				})
+				}),
 			);
 		}
 	});

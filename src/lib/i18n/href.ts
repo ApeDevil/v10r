@@ -1,1 +1,1 @@
-export { localizeHref, deLocalizeHref } from '$lib/paraglide/runtime';
+export { deLocalizeHref, localizeHref } from '$lib/paraglide/runtime';

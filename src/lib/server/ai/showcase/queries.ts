@@ -1,6 +1,6 @@
 import { generateText } from 'ai';
-import { aiConfigured, chatModel, activeProviderInfo, providerRegistry } from '../index';
 import { classifyAIError } from '../errors';
+import { activeProviderInfo, aiConfigured, chatModel, providerRegistry } from '../index';
 import type { AIConnectionInfo, AIProviderStatus } from '../types';
 
 /** Verify AI provider connection with a lightweight test call */

@@ -1,5 +1,5 @@
-import { defineConfig } from 'drizzle-kit';
 import { neonConfig } from '@neondatabase/serverless';
+import { defineConfig } from 'drizzle-kit';
 
 // Bun's ws implementation mishandles WebSocket upgrade (HTTP 101).
 // Route drizzle-kit schema operations over HTTP fetch instead.

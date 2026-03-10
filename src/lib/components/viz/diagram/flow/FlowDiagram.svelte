@@ -1,63 +1,64 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { cn } from '$lib/utils/cn';
-	import { chartContainerVariants, type ChartContainerVariants } from '../../_shared/chart-container';
-	import type { Node, Edge, NodeTypes } from '@xyflow/svelte';
-	import type { Component } from 'svelte';
+import type { Edge, Node, NodeTypes } from '@xyflow/svelte';
+import type { Component } from 'svelte';
+import { onMount } from 'svelte';
+import { cn } from '$lib/utils/cn';
+import { type ChartContainerVariants, chartContainerVariants } from '../../_shared/chart-container';
 
-	interface Props {
-		nodes: Node[];
-		edges: Edge[];
-		nodeTypes?: NodeTypes;
-		fitView?: boolean;
-		nodesDraggable?: boolean;
-		nodesConnectable?: boolean;
-		aspect?: ChartContainerVariants['aspect'];
-		ariaLabel?: string;
-		class?: string;
-	}
+interface Props {
+	nodes: Node[];
+	edges: Edge[];
+	nodeTypes?: NodeTypes;
+	fitView?: boolean;
+	nodesDraggable?: boolean;
+	nodesConnectable?: boolean;
+	aspect?: ChartContainerVariants['aspect'];
+	ariaLabel?: string;
+	class?: string;
+}
 
-	let {
-		nodes: nodesProp,
-		edges: edgesProp,
-		nodeTypes: nodeTypesProp,
-		fitView = true,
-		nodesDraggable = true,
-		nodesConnectable = false,
-		aspect = 'auto',
-		ariaLabel = 'Flow diagram',
-		class: className,
-	}: Props = $props();
+let {
+	nodes: nodesProp,
+	edges: edgesProp,
+	nodeTypes: nodeTypesProp,
+	fitView = true,
+	nodesDraggable = true,
+	nodesConnectable = false,
+	aspect = 'auto',
+	ariaLabel = 'Flow diagram',
+	class: className,
+}: Props = $props();
 
-	let internalNodes = $state.raw<Node[]>([]);
-	let internalEdges = $state.raw<Edge[]>([]);
-	let ready = $state(false);
+let internalNodes = $state.raw<Node[]>([]);
+let internalEdges = $state.raw<Edge[]>([]);
+let ready = $state(false);
 
-	// Dynamically loaded components (avoid SSR import of @xyflow/svelte)
-	let SvelteFlow: Component<any> | undefined = $state();
-	let Background: Component<any> | undefined = $state();
-	let Controls: Component<any> | undefined = $state();
-	let mergedNodeTypes = $state<NodeTypes>({});
+// Dynamically loaded components (avoid SSR import of @xyflow/svelte)
+let SvelteFlow: Component<any> | undefined = $state();
+let Background: Component<any> | undefined = $state();
+let Controls: Component<any> | undefined = $state();
+let mergedNodeTypes = $state<NodeTypes>({});
 
-	$effect(() => { internalNodes = nodesProp; });
-	$effect(() => { internalEdges = edgesProp; });
+$effect(() => {
+	internalNodes = nodesProp;
+});
+$effect(() => {
+	internalEdges = edgesProp;
+});
 
-	onMount(async () => {
-		const [xyflow, flowNodeModule] = await Promise.all([
-			import('@xyflow/svelte'),
-			import('./FlowNode.svelte'),
-		]);
-		await import('@xyflow/svelte/dist/style.css');
+onMount(async () => {
+	const [xyflow, flowNodeModule] = await Promise.all([import('@xyflow/svelte'), import('./FlowNode.svelte')]);
+	await import('@xyflow/svelte/dist/style.css');
 
-		SvelteFlow = xyflow.SvelteFlow;
-		Background = xyflow.Background;
-		Controls = xyflow.Controls;
+	SvelteFlow = xyflow.SvelteFlow;
+	Background = xyflow.Background;
+	Controls = xyflow.Controls;
 
-		const defaultNodeTypes = { flow: flowNodeModule.default } as NodeTypes;
-		mergedNodeTypes = nodeTypesProp ? { ...defaultNodeTypes, ...nodeTypesProp } : defaultNodeTypes;
+	const defaultNodeTypes = { flow: flowNodeModule.default } as NodeTypes;
+	mergedNodeTypes = nodeTypesProp ? { ...defaultNodeTypes, ...nodeTypesProp } : defaultNodeTypes;
 
-		ready = true;
-	});
+	ready = true;
+});
 </script>
 
 <figure class={cn(chartContainerVariants({ aspect }), 'diagram-container', className)}>

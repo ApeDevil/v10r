@@ -1,6 +1,6 @@
-import { eq, and, isNull } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../index';
-import { document, chunk, collection, collectionDocument } from '../schema/rag';
+import { chunk, collection, collectionDocument, document } from '../schema/rag';
 
 /** Soft-delete a document and hard-delete its chunks (removes from HNSW index). */
 export async function deleteDocument(id: string, userId: string): Promise<boolean> {
@@ -33,8 +33,5 @@ export async function createCollection(userId: string, name: string, description
 
 /** Add a document to a collection. */
 export async function addDocumentToCollection(collectionId: string, documentId: string) {
-	await db
-		.insert(collectionDocument)
-		.values({ collectionId, documentId })
-		.onConflictDoNothing();
+	await db.insert(collectionDocument).values({ collectionId, documentId }).onConflictDoNothing();
 }

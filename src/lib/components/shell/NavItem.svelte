@@ -1,71 +1,61 @@
 <script lang="ts">
-	/**
-	 * Navigation item with two modes:
-	 * - Flyout (default): Hover opens a portal flyout for children
-	 * - Dropdown (mobile): Click chevron opens inline dropdown
-	 */
+/**
+ * Navigation item with two modes:
+ * - Flyout (default): Hover opens a portal flyout for children
+ * - Dropdown (mobile): Click chevron opens inline dropdown
+ */
 
-	import { page } from '$app/state';
-	import { cn } from '$lib/utils/cn';
-	import { localizeHref, deLocalizeHref } from '$lib/i18n';
-	import { Tooltip } from '$lib/components/primitives/tooltip';
-	import NavAccordion from './NavAccordion.svelte';
-	import NavFlyout from './NavFlyout.svelte';
-	import type { NavChild } from '$lib/nav';
+import { page } from '$app/state';
+import { Tooltip } from '$lib/components/primitives/tooltip';
+import { deLocalizeHref, localizeHref } from '$lib/i18n';
+import type { NavChild } from '$lib/nav';
+import { cn } from '$lib/utils/cn';
+import NavAccordion from './NavAccordion.svelte';
+import NavFlyout from './NavFlyout.svelte';
 
-	interface Props {
-		href: string;
-		/** CSS icon class (e.g., 'i-lucide-home') */
-		icon: string;
-		label: string;
-		children?: NavChild[];
-		forceExpanded?: boolean;
-		useFlyout?: boolean;
-		class?: string;
+interface Props {
+	href: string;
+	/** CSS icon class (e.g., 'i-lucide-home') */
+	icon: string;
+	label: string;
+	children?: NavChild[];
+	forceExpanded?: boolean;
+	useFlyout?: boolean;
+	class?: string;
+}
+
+let { href, icon, label, children = [], forceExpanded = false, useFlyout = true, class: className }: Props = $props();
+
+let isDropdownOpen = $state(false);
+
+// Check if current page matches this nav item or any of its children (including nested routes)
+const isActive = $derived.by(() => {
+	const path = deLocalizeHref(page.url.pathname);
+	if (path === href) return true;
+	if (children.length > 0) {
+		return children.some((child) => path === child.href || path.startsWith(`${child.href}/`));
 	}
+	return false;
+});
 
-	let {
-		href,
-		icon,
-		label,
-		children = [],
-		forceExpanded = false,
-		useFlyout = true,
-		class: className
-	}: Props = $props();
+function toggleDropdown(e: MouseEvent) {
+	e.preventDefault();
+	e.stopPropagation();
+	isDropdownOpen = !isDropdownOpen;
+}
 
-	let isDropdownOpen = $state(false);
+function closeDropdown() {
+	isDropdownOpen = false;
+}
 
-	// Check if current page matches this nav item or any of its children (including nested routes)
-	const isActive = $derived.by(() => {
-		const path = deLocalizeHref(page.url.pathname);
-		if (path === href) return true;
-		if (children.length > 0) {
-			return children.some(
-				(child) => path === child.href || path.startsWith(child.href + '/'),
-			);
-		}
-		return false;
-	});
+// Close dropdown when navigating
+$effect(() => {
+	page.url.pathname;
+	isDropdownOpen = false;
+});
 
-	function toggleDropdown(e: MouseEvent) {
-		e.preventDefault();
-		e.stopPropagation();
-		isDropdownOpen = !isDropdownOpen;
-	}
-
-	function closeDropdown() {
-		isDropdownOpen = false;
-	}
-
-	// Close dropdown when navigating
-	$effect(() => {
-		page.url.pathname;
-		isDropdownOpen = false;
-	});
-
-	const hasFlyoutChildren = $derived(children.length > 0 && useFlyout);
-	const hasDropdownChildren = $derived(children.length > 0 && !useFlyout);
+const hasFlyoutChildren = $derived(children.length > 0 && useFlyout);
+const hasDropdownChildren = $derived(children.length > 0 && !useFlyout);
 </script>
 
 {#snippet navLink()}
@@ -81,7 +71,7 @@
 		aria-current={isActive ? 'page' : undefined}
 		aria-label={forceExpanded ? undefined : label}
 	>
-		<span class={cn(icon, 'text-icon-md shrink-0 leading-none')} />
+		<span class={cn(icon, 'text-icon-md shrink-0 leading-none')} ></span>
 		{#if forceExpanded}
 			<span class="nav-label text-sm font-medium flex-1 opacity-0 motion-reduce:opacity-100">{label}</span>
 		{/if}
@@ -120,7 +110,7 @@
 					aria-label={isDropdownOpen ? 'Close submenu' : 'Open submenu'}
 					aria-expanded={isDropdownOpen}
 				>
-					<span class="i-lucide-chevron-right text-icon-sm" />
+					<span class="i-lucide-chevron-right text-icon-sm" ></span>
 				</button>
 			{/if}
 		</div>

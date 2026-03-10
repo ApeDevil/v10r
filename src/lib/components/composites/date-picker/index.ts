@@ -1,14 +1,14 @@
 export { default as DatePicker } from './DatePicker.svelte';
 
 export {
-	datePickerRootVariants,
-	datePickerTriggerVariants,
-	datePickerContentVariants,
-	datePickerCalendarVariants,
-	datePickerLabelVariants,
+	type DatePickerCalendarVariants,
+	type DatePickerContentVariants,
+	type DatePickerLabelVariants,
 	type DatePickerRootVariants,
 	type DatePickerTriggerVariants,
-	type DatePickerContentVariants,
-	type DatePickerCalendarVariants,
-	type DatePickerLabelVariants
+	datePickerCalendarVariants,
+	datePickerContentVariants,
+	datePickerLabelVariants,
+	datePickerRootVariants,
+	datePickerTriggerVariants,
 } from './date-picker';

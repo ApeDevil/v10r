@@ -1,7 +1,7 @@
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
 import UnoCSS from 'unocss/vite';
+import { defineConfig } from 'vite';
 
 export default defineConfig({
 	plugins: [
@@ -9,29 +9,25 @@ export default defineConfig({
 		paraglideVitePlugin({
 			project: './project.inlang',
 			outdir: './src/lib/paraglide',
-			strategy: ['url', 'cookie', 'baseLocale']
+			strategy: ['url', 'cookie', 'baseLocale'],
 		}),
-		sveltekit()
+		sveltekit(),
 	],
 	ssr: {
-		noExternal: ['three'] // Required for Three.js/Threlte SSR compatibility
+		noExternal: ['three'], // Required for Three.js/Threlte SSR compatibility
 	},
 	server: {
 		host: '0.0.0.0',
 		port: 5173,
 		allowedHosts: ['.trycloudflare.com'],
 		watch: {
-			usePolling: true // Required for container file watching
+			usePolling: true, // Required for container file watching
 		},
 		hmr: {
-			port: 24678
+			port: 24678,
 		},
 		warmup: {
-			clientFiles: [
-				'./src/routes/+layout.svelte',
-				'./src/lib/components/index.ts',
-				'./src/lib/styles/tokens.ts',
-			],
+			clientFiles: ['./src/routes/+layout.svelte', './src/lib/components/index.ts', './src/lib/styles/tokens.ts'],
 		},
-	}
+	},
 });

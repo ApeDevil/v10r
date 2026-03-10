@@ -6,8 +6,8 @@ export const datePickerRootVariants = cva(
 	],
 	{
 		variants: {},
-		defaultVariants: {}
-	}
+		defaultVariants: {},
+	},
 );
 
 export const datePickerTriggerVariants = cva(
@@ -17,19 +17,19 @@ export const datePickerTriggerVariants = cva(
 		'transition-colors duration-fast',
 		'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
 		'disabled:cursor-not-allowed disabled:opacity-50',
-		'data-[state=open]:ring-2 data-[state=open]:ring-primary'
+		'data-[state=open]:ring-2 data-[state=open]:ring-primary',
 	],
 	{
 		variants: {
 			error: {
 				true: 'border-error',
-				false: 'border-border'
-			}
+				false: 'border-border',
+			},
 		},
 		defaultVariants: {
-			error: false
-		}
-	}
+			error: false,
+		},
+	},
 );
 
 export const datePickerContentVariants = cva(
@@ -41,33 +41,23 @@ export const datePickerContentVariants = cva(
 		'data-[side=bottom]:slide-in-from-top-2',
 		'data-[side=left]:slide-in-from-right-2',
 		'data-[side=right]:slide-in-from-left-2',
-		'data-[side=top]:slide-in-from-bottom-2'
+		'data-[side=top]:slide-in-from-bottom-2',
 	],
 	{
 		variants: {},
-		defaultVariants: {}
-	}
+		defaultVariants: {},
+	},
 );
 
-export const datePickerCalendarVariants = cva(
-	[
-		'rounded-md border-none bg-transparent p-3'
-	],
-	{
-		variants: {},
-		defaultVariants: {}
-	}
-);
+export const datePickerCalendarVariants = cva(['rounded-md border-none bg-transparent p-3'], {
+	variants: {},
+	defaultVariants: {},
+});
 
-export const datePickerLabelVariants = cva(
-	[
-		'block text-fluid-sm font-medium text-fg mb-2'
-	],
-	{
-		variants: {},
-		defaultVariants: {}
-	}
-);
+export const datePickerLabelVariants = cva(['block text-fluid-sm font-medium text-fg mb-2'], {
+	variants: {},
+	defaultVariants: {},
+});
 
 export type DatePickerRootVariants = VariantProps<typeof datePickerRootVariants>;
 export type DatePickerTriggerVariants = VariantProps<typeof datePickerTriggerVariants>;

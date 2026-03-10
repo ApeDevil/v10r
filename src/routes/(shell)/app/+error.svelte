@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { page } from '$app/state';
-	import { ErrorDisplay } from '$lib/components/composites';
-	import { Button } from '$lib/components/primitives';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import { ErrorDisplay } from '$lib/components/composites';
+import { Button } from '$lib/components/primitives';
 </script>
 
 <svelte:head>

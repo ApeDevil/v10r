@@ -1,50 +1,46 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		data: number[];
-		type?: 'line' | 'bar' | 'area';
-		width?: number;
-		height?: number;
-		color?: string;
-		ariaLabel?: string;
-		class?: string;
-	}
+interface Props {
+	data: number[];
+	type?: 'line' | 'bar' | 'area';
+	width?: number;
+	height?: number;
+	color?: string;
+	ariaLabel?: string;
+	class?: string;
+}
 
-	let {
-		data,
-		type = 'line',
-		width = 80,
-		height = 24,
-		color = 'var(--chart-1)',
-		ariaLabel = 'Sparkline',
-		class: className,
-	}: Props = $props();
+let {
+	data,
+	type = 'line',
+	width = 80,
+	height = 24,
+	color = 'var(--chart-1)',
+	ariaLabel = 'Sparkline',
+	class: className,
+}: Props = $props();
 
-	const padding = 2;
+const padding = 2;
 
-	const min = $derived(Math.min(...data));
-	const max = $derived(Math.max(...data));
-	const range = $derived(max - min || 1);
+const min = $derived(Math.min(...data));
+const max = $derived(Math.max(...data));
+const range = $derived(max - min || 1);
 
-	const points = $derived(
-		data.map((v, i) => ({
-			x: padding + (i / (data.length - 1)) * (width - padding * 2),
-			y: padding + (1 - (v - min) / range) * (height - padding * 2),
-		}))
-	);
+const points = $derived(
+	data.map((v, i) => ({
+		x: padding + (i / (data.length - 1)) * (width - padding * 2),
+		y: padding + (1 - (v - min) / range) * (height - padding * 2),
+	})),
+);
 
-	const linePath = $derived(
-		points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ')
-	);
+const linePath = $derived(points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' '));
 
-	const areaPath = $derived(
-		`${linePath} L${points[points.length - 1]?.x ?? 0},${height - padding} L${padding},${height - padding} Z`
-	);
+const areaPath = $derived(
+	`${linePath} L${points[points.length - 1]?.x ?? 0},${height - padding} L${padding},${height - padding} Z`,
+);
 
-	const barWidth = $derived(
-		Math.max(1, (width - padding * 2) / data.length - 1)
-	);
+const barWidth = $derived(Math.max(1, (width - padding * 2) / data.length - 1));
 </script>
 
 {#if data.length >= 2}

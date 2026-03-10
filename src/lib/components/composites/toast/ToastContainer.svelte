@@ -1,39 +1,39 @@
 <script lang="ts">
-	/**
-	 * Toast notification container with auto-dismiss and transitions.
-	 * Position: Fixed top-right (desktop), top-center full-width (mobile)
-	 */
+/**
+ * Toast notification container with auto-dismiss and transitions.
+ * Position: Fixed top-right (desktop), top-center full-width (mobile)
+ */
 
-	import { fly } from 'svelte/transition';
-	import { cn } from '$lib/utils/cn';
-	import { getToast } from '$lib/state/toast.svelte';
+import { fly } from 'svelte/transition';
+import { getToast } from '$lib/state/toast.svelte';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		class?: string;
-	}
+interface Props {
+	class?: string;
+}
 
-	let { class: className }: Props = $props();
+let { class: className }: Props = $props();
 
-	const toast = getToast();
+const toast = getToast();
 
-	// Limit visible toasts to 5
-	const visibleToasts = $derived(toast.items.slice(0, 5));
+// Limit visible toasts to 5
+const visibleToasts = $derived(toast.items.slice(0, 5));
 
-	// Auto-dismiss durations by type (ms)
-	const durations = {
-		success: 5000,
-		error: 8000,
-		warning: 6000,
-		info: 5000,
-	};
+// Auto-dismiss durations by type (ms)
+const durations = {
+	success: 5000,
+	error: 8000,
+	warning: 6000,
+	info: 5000,
+};
 
-	// Toast icon classes
-	const iconClasses = {
-		success: 'i-lucide-check',
-		error: 'i-lucide-x',
-		warning: 'i-lucide-alert-triangle',
-		info: 'i-lucide-info',
-	};
+// Toast icon classes
+const iconClasses = {
+	success: 'i-lucide-check',
+	error: 'i-lucide-x',
+	warning: 'i-lucide-alert-triangle',
+	info: 'i-lucide-info',
+};
 </script>
 
 {#if visibleToasts.length > 0}
@@ -58,7 +58,7 @@
 					t.type === 'warning' && 'bg-warning',
 					t.type === 'info' && 'bg-primary'
 				)}>
-					<span class={iconClasses[t.type]} />
+					<span class={iconClasses[t.type]} ></span>
 				</div>
 				<div class="flex-1 text-sm leading-[1.4] text-fg">{t.message}</div>
 				<button
@@ -66,7 +66,7 @@
 					onclick={() => toast.remove(t.id)}
 					aria-label="Dismiss notification"
 				>
-					<span class="i-lucide-x" />
+					<span class="i-lucide-x" ></span>
 				</button>
 			</div>
 		{/each}

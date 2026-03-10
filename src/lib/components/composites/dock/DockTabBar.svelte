@@ -1,121 +1,121 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
-	import { getDockContext } from './dock.state.svelte';
-	import type { LeafNode } from './dock.types';
+import { cn } from '$lib/utils/cn';
+import { getDockContext } from './dock.state.svelte';
+import type { LeafNode } from './dock.types';
 
-	interface Props {
-		leaf: LeafNode;
-		class?: string;
+interface Props {
+	leaf: LeafNode;
+	class?: string;
+}
+
+let { leaf, class: className }: Props = $props();
+
+const dock = getDockContext();
+
+function handleClose(e: MouseEvent, panelId: string) {
+	e.stopPropagation();
+	dock.closePanel(panelId);
+}
+
+// --- Drag source ---
+let dragId = $state<string | null>(null);
+let ghostEl = $state<HTMLElement | null>(null);
+let startX = 0;
+let startY = 0;
+let didDrag = false;
+const DRAG_THRESHOLD = 5;
+
+function handlePointerDown(e: PointerEvent, panelId: string) {
+	if (e.button !== 0) return;
+	if ((e.target as HTMLElement).closest('[data-close-btn]')) return;
+
+	e.preventDefault();
+	dragId = panelId;
+	startX = e.clientX;
+	startY = e.clientY;
+	didDrag = false;
+
+	// Use document-level listeners so drag works across leaves
+	document.addEventListener('pointermove', handleDocumentPointerMove);
+	document.addEventListener('pointerup', handleDocumentPointerUp);
+}
+
+function handleDocumentPointerMove(e: PointerEvent) {
+	if (!dragId) return;
+
+	const dx = e.clientX - startX;
+	const dy = e.clientY - startY;
+
+	if (!didDrag && Math.abs(dx) + Math.abs(dy) < DRAG_THRESHOLD) return;
+
+	if (!didDrag) {
+		didDrag = true;
+		dock.startDrag(dragId, leaf.id);
+		createGhost(e);
 	}
 
-	let { leaf, class: className }: Props = $props();
+	if (ghostEl) {
+		ghostEl.style.left = `${e.clientX - 40}px`;
+		ghostEl.style.top = `${e.clientY - 12}px`;
+	}
+}
 
-	const dock = getDockContext();
+function handleDocumentPointerUp(_e: PointerEvent) {
+	document.removeEventListener('pointermove', handleDocumentPointerMove);
+	document.removeEventListener('pointerup', handleDocumentPointerUp);
 
-	function handleClose(e: MouseEvent, panelId: string) {
-		e.stopPropagation();
-		dock.closePanel(panelId);
+	if (!dragId) return;
+
+	if (didDrag) {
+		dock.endDrag();
+		removeGhost();
+	} else {
+		dock.activateTab(leaf.id, dragId);
 	}
 
-	// --- Drag source ---
-	let dragId = $state<string | null>(null);
-	let ghostEl = $state<HTMLElement | null>(null);
-	let startX = 0;
-	let startY = 0;
-	let didDrag = false;
-	const DRAG_THRESHOLD = 5;
+	dragId = null;
+	didDrag = false;
+}
 
-	function handlePointerDown(e: PointerEvent, panelId: string) {
-		if (e.button !== 0) return;
-		if ((e.target as HTMLElement).closest('[data-close-btn]')) return;
-
-		e.preventDefault();
-		dragId = panelId;
-		startX = e.clientX;
-		startY = e.clientY;
-		didDrag = false;
-
-		// Use document-level listeners so drag works across leaves
-		document.addEventListener('pointermove', handleDocumentPointerMove);
-		document.addEventListener('pointerup', handleDocumentPointerUp);
-	}
-
-	function handleDocumentPointerMove(e: PointerEvent) {
-		if (!dragId) return;
-
-		const dx = e.clientX - startX;
-		const dy = e.clientY - startY;
-
-		if (!didDrag && Math.abs(dx) + Math.abs(dy) < DRAG_THRESHOLD) return;
-
-		if (!didDrag) {
-			didDrag = true;
-			dock.startDrag(dragId, leaf.id);
-			createGhost(e);
-		}
-
-		if (ghostEl) {
-			ghostEl.style.left = `${e.clientX - 40}px`;
-			ghostEl.style.top = `${e.clientY - 12}px`;
-		}
-	}
-
-	function handleDocumentPointerUp(e: PointerEvent) {
+function handleKeyDown(e: KeyboardEvent, panelId: string, index: number) {
+	if (e.key === 'Escape' && dock.dragState) {
+		dock.cancelDrag();
+		removeGhost();
 		document.removeEventListener('pointermove', handleDocumentPointerMove);
 		document.removeEventListener('pointerup', handleDocumentPointerUp);
-
-		if (!dragId) return;
-
-		if (didDrag) {
-			dock.endDrag();
-			removeGhost();
-		} else {
-			dock.activateTab(leaf.id, dragId);
-		}
-
 		dragId = null;
 		didDrag = false;
+		return;
 	}
 
-	function handleKeyDown(e: KeyboardEvent, panelId: string, index: number) {
-		if (e.key === 'Escape' && dock.dragState) {
-			dock.cancelDrag();
-			removeGhost();
-			document.removeEventListener('pointermove', handleDocumentPointerMove);
-			document.removeEventListener('pointerup', handleDocumentPointerUp);
-			dragId = null;
-			didDrag = false;
-			return;
-		}
-
-		if (e.key === 'Enter' || e.key === ' ') {
-			e.preventDefault();
-			dock.activateTab(leaf.id, panelId);
-			return;
-		}
-
-		if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-			const dir = e.key === 'ArrowLeft' ? -1 : 1;
-			const newIndex = index + dir;
-			if (newIndex >= 0 && newIndex < leaf.tabs.length) {
-				dock.reorderTab(leaf.id, panelId, newIndex);
-				requestAnimationFrame(() => {
-					const tabBar = (e.currentTarget as HTMLElement).parentElement;
-					const tabs = tabBar?.querySelectorAll<HTMLElement>('[role="tab"]');
-					tabs?.[newIndex]?.focus();
-				});
-			}
-		}
+	if (e.key === 'Enter' || e.key === ' ') {
+		e.preventDefault();
+		dock.activateTab(leaf.id, panelId);
+		return;
 	}
 
-	function createGhost(e: PointerEvent) {
-		const panel = dock.panels[dragId!];
-		if (!panel) return;
+	if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+		const dir = e.key === 'ArrowLeft' ? -1 : 1;
+		const newIndex = index + dir;
+		if (newIndex >= 0 && newIndex < leaf.tabs.length) {
+			dock.reorderTab(leaf.id, panelId, newIndex);
+			requestAnimationFrame(() => {
+				const tabBar = (e.currentTarget as HTMLElement).parentElement;
+				const tabs = tabBar?.querySelectorAll<HTMLElement>('[role="tab"]');
+				tabs?.[newIndex]?.focus();
+			});
+		}
+	}
+}
 
-		const ghost = document.createElement('div');
-		ghost.className = 'dock-drag-ghost';
-		ghost.textContent = panel.label;
-		ghost.style.cssText = `
+function createGhost(e: PointerEvent) {
+	const panel = dock.panels[dragId!];
+	if (!panel) return;
+
+	const ghost = document.createElement('div');
+	ghost.className = 'dock-drag-ghost';
+	ghost.textContent = panel.label;
+	ghost.style.cssText = `
 			position: fixed;
 			left: ${e.clientX - 40}px;
 			top: ${e.clientY - 12}px;
@@ -130,16 +130,16 @@
 			box-shadow: var(--shadow-lg);
 			opacity: 0.9;
 		`;
-		document.body.appendChild(ghost);
-		ghostEl = ghost;
-	}
+	document.body.appendChild(ghost);
+	ghostEl = ghost;
+}
 
-	function removeGhost() {
-		if (ghostEl) {
-			ghostEl.remove();
-			ghostEl = null;
-		}
+function removeGhost() {
+	if (ghostEl) {
+		ghostEl.remove();
+		ghostEl = null;
 	}
+}
 </script>
 
 <div

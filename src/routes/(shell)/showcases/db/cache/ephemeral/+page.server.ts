@@ -1,24 +1,16 @@
-import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
-import {
-	listShowcaseEntries,
-	getTtlSnapshot,
-	checkRateLimit,
-} from '$lib/server/cache/showcase/queries';
-import { setString, slideTtl } from '$lib/server/cache/showcase/mutations';
 import { classifyCacheError } from '$lib/server/cache/errors';
+import { setString, slideTtl } from '$lib/server/cache/showcase/mutations';
+import { checkRateLimit, getTtlSnapshot, listShowcaseEntries } from '$lib/server/cache/showcase/queries';
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
 	try {
 		const allEntries = await listShowcaseEntries();
 		// Filter to TTL entries (those with positive TTL or the ttl: namespace)
-		const ttlEntries = allEntries.filter(
-			(e) => e.key.includes(':ttl:') || e.ttl > 0,
-		);
+		const ttlEntries = allEntries.filter((e) => e.key.includes(':ttl:') || e.ttl > 0);
 
-		const snapshots = await Promise.all(
-			ttlEntries.map((e) => getTtlSnapshot(e.key)),
-		);
+		const snapshots = await Promise.all(ttlEntries.map((e) => getTtlSnapshot(e.key)));
 
 		return { snapshots };
 	} catch (err) {
@@ -33,7 +25,7 @@ export const actions: Actions = {
 		const key = formData.get('key') as string;
 		const value = formData.get('value') as string;
 		const ttl = parseInt(formData.get('ttl') as string, 10);
-		if (!key || !value || isNaN(ttl) || ttl <= 0) {
+		if (!key || !value || Number.isNaN(ttl) || ttl <= 0) {
 			return fail(400, { message: 'Key, value, and positive TTL are required.' });
 		}
 

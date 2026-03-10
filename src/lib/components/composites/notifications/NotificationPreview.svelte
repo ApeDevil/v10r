@@ -1,22 +1,22 @@
 <script lang="ts">
-	import NotificationCard from './NotificationCard.svelte';
+import NotificationCard from './NotificationCard.svelte';
 
-	interface Notification {
-		id: string;
-		type: string;
-		title: string;
-		body?: string | null;
-		actionUrl?: string | null;
-		isRead: boolean;
-		createdAt: string;
-	}
+interface Notification {
+	id: string;
+	type: string;
+	title: string;
+	body?: string | null;
+	actionUrl?: string | null;
+	isRead: boolean;
+	createdAt: string;
+}
 
-	interface Props {
-		notifications: Notification[];
-		onMarkRead: (id: string) => void;
-	}
+interface Props {
+	notifications: Notification[];
+	onMarkRead: (id: string) => void;
+}
 
-	let { notifications, onMarkRead }: Props = $props();
+let { notifications, onMarkRead }: Props = $props();
 </script>
 
 <div class="notification-preview">

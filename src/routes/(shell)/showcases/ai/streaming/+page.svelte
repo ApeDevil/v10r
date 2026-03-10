@@ -1,113 +1,106 @@
 <script lang="ts">
-	import { apiFetch } from '$lib/api';
-	import { Card, Alert, BoundaryFallback } from '$lib/components/composites';
-	import { Button, Typography } from '$lib/components/primitives';
-	import { Stack } from '$lib/components/layout';
+import { apiFetch } from '$lib/api';
+import { Alert, BoundaryFallback, Card } from '$lib/components/composites';
+import { Stack } from '$lib/components/layout';
+import { Button, Typography } from '$lib/components/primitives';
 
-	let { data } = $props();
+let { data } = $props();
 
-	const PRESETS = [
-		'Explain recursion',
-		'Write a haiku',
-		'List 10 facts about TypeScript',
-		'Describe how HTTP works',
-	];
+const PRESETS = ['Explain recursion', 'Write a haiku', 'List 10 facts about TypeScript', 'Describe how HTTP works'];
 
-	let streaming = $state(false);
-	let output = $state('');
-	let error = $state('');
+let streaming = $state(false);
+let output = $state('');
+let error = $state('');
 
-	// Metrics
-	let ttft = $state<number | null>(null);
-	let totalChunks = $state(0);
-	let elapsed = $state(0);
-	let tokensPerSec = $state(0);
+// Metrics
+let ttft = $state<number | null>(null);
+let totalChunks = $state(0);
+let elapsed = $state(0);
+let tokensPerSec = $state(0);
 
-	async function runPrompt(prompt: string) {
-		// Reset state
-		streaming = true;
-		output = '';
-		error = '';
-		ttft = null;
-		totalChunks = 0;
-		elapsed = 0;
-		tokensPerSec = 0;
+async function runPrompt(prompt: string) {
+	// Reset state
+	streaming = true;
+	output = '';
+	error = '';
+	ttft = null;
+	totalChunks = 0;
+	elapsed = 0;
+	tokensPerSec = 0;
 
-		const startTime = performance.now();
-		let firstTokenReceived = false;
+	const startTime = performance.now();
+	let firstTokenReceived = false;
 
-		try {
-			const res = await apiFetch('/api/ai/streaming', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ prompt }),
-			});
+	try {
+		const res = await apiFetch('/api/ai/streaming', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ prompt }),
+		});
 
-			if (!res.ok) {
-				let errorDetail: string;
-				try {
-					const data = await res.json();
-					errorDetail = data.error || `Error ${res.status}`;
-				} catch {
-					errorDetail = `Error ${res.status}`;
-				}
-				error = errorDetail;
-				streaming = false;
-				return;
+		if (!res.ok) {
+			let errorDetail: string;
+			try {
+				const data = await res.json();
+				errorDetail = data.error || `Error ${res.status}`;
+			} catch {
+				errorDetail = `Error ${res.status}`;
 			}
+			error = errorDetail;
+			streaming = false;
+			return;
+		}
 
-			const reader = res.body?.getReader();
-			if (!reader) {
-				error = 'No stream available';
-				streaming = false;
-				return;
-			}
+		const reader = res.body?.getReader();
+		if (!reader) {
+			error = 'No stream available';
+			streaming = false;
+			return;
+		}
 
-			const decoder = new TextDecoder();
+		const decoder = new TextDecoder();
 
-			while (true) {
-				const { done, value } = await reader.read();
-				if (done) break;
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) break;
 
-				const chunk = decoder.decode(value, { stream: true });
-				const now = performance.now();
+			const chunk = decoder.decode(value, { stream: true });
+			const now = performance.now();
 
-				// Parse AI SDK data stream: text chunks start with "0:"
-				const lines = chunk.split('\n');
-				for (const line of lines) {
-					if (line.startsWith('0:')) {
-						try {
-							const text = JSON.parse(line.slice(2));
-							if (typeof text === 'string') {
-								if (!firstTokenReceived) {
-									ttft = Math.round(now - startTime);
-									firstTokenReceived = true;
-								}
-								totalChunks++;
-								output += text;
-
-								elapsed = Math.round(now - startTime);
-								tokensPerSec = elapsed > 0
-									? Math.round((totalChunks / elapsed) * 1000)
-									: 0;
+			// Parse AI SDK data stream: text chunks start with "0:"
+			const lines = chunk.split('\n');
+			for (const line of lines) {
+				if (line.startsWith('0:')) {
+					try {
+						const text = JSON.parse(line.slice(2));
+						if (typeof text === 'string') {
+							if (!firstTokenReceived) {
+								ttft = Math.round(now - startTime);
+								firstTokenReceived = true;
 							}
-						} catch {
-							// skip non-JSON lines
+							totalChunks++;
+							output += text;
+
+							elapsed = Math.round(now - startTime);
+							tokensPerSec = elapsed > 0 ? Math.round((totalChunks / elapsed) * 1000) : 0;
 						}
+					} catch {
+						// skip non-JSON lines
 					}
 				}
 			}
-
-			elapsed = Math.round(performance.now() - startTime);
-			if (totalChunks > 0 && elapsed > 0) {
-				tokensPerSec = Math.round((totalChunks / elapsed) * 1000);
-			}
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Stream failed';
-		} finally {
-			streaming = false;
 		}
+
+		elapsed = Math.round(performance.now() - startTime);
+		if (totalChunks > 0 && elapsed > 0) {
+			tokensPerSec = Math.round((totalChunks / elapsed) * 1000);
+		}
+	} catch (err) {
+		error = err instanceof Error ? err.message : 'Stream failed';
+	} finally {
+		streaming = false;
 	}
+}
 </script>
 
 <svelte:head>

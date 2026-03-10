@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { DemoCard } from '../_components';
-	import { Stack, Cluster } from '$lib/components';
+import { Cluster, Stack } from '$lib/components';
+import { DemoCard } from '../_components';
 </script>
 
 <section id="layout" class="section">

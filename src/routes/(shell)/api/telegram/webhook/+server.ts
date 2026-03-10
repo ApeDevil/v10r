@@ -1,8 +1,8 @@
 import { timingSafeEqual } from 'node:crypto';
 import { json } from '@sveltejs/kit';
+import { and, eq, gt, sql } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
 import { db } from '$lib/server/db';
-import { eq, and, gt, sql } from 'drizzle-orm';
 import { telegramVerificationTokens, userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
 import type { RequestHandler } from './$types';
 
@@ -65,7 +65,11 @@ export const POST: RequestHandler = async ({ request }) => {
 		.limit(1);
 
 	if (!verification) {
-		await sendTelegramMessage(botToken, chatId, 'Token expired or invalid. Please generate a new link from notification settings.');
+		await sendTelegramMessage(
+			botToken,
+			chatId,
+			'Token expired or invalid. Please generate a new link from notification settings.',
+		);
 		return json({ ok: true });
 	}
 

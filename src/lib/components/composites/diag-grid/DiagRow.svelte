@@ -1,14 +1,14 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import { cn } from '$lib/utils/cn';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		label: string;
-		children: Snippet;
-		class?: string;
-	}
+interface Props {
+	label: string;
+	children: Snippet;
+	class?: string;
+}
 
-	let { label, children, class: className }: Props = $props();
+let { label, children, class: className }: Props = $props();
 </script>
 
 <div class={cn('diag-row', className)}>

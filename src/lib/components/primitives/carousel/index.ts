@@ -1,16 +1,16 @@
 export { default as Carousel } from './Carousel.svelte';
 export { default as CarouselItem } from './CarouselItem.svelte';
 export {
-	carouselRootVariants,
-	carouselContentVariants,
-	carouselItemVariants,
+	type CarouselButtonVariants,
+	type CarouselContentVariants,
+	type CarouselDotsVariants,
+	type CarouselDotVariants,
+	type CarouselItemVariants,
+	type CarouselRootVariants,
 	carouselButtonVariants,
+	carouselContentVariants,
 	carouselDotsVariants,
 	carouselDotVariants,
-	type CarouselRootVariants,
-	type CarouselContentVariants,
-	type CarouselItemVariants,
-	type CarouselButtonVariants,
-	type CarouselDotsVariants,
-	type CarouselDotVariants
+	carouselItemVariants,
+	carouselRootVariants,
 } from './carousel';

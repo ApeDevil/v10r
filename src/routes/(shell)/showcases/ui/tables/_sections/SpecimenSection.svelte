@@ -1,54 +1,54 @@
 <script lang="ts">
-	import {
-		Table,
-		Header as TableHeader,
-		Body as TableBody,
-		Row as TableRow,
-		HeaderCell as TableHeaderCell,
-		Cell as TableCell,
-		Badge
-	} from '$lib/components';
-	import { EMPLOYEES, type Status } from '../_data/mock-data';
+import {
+	Badge,
+	Table,
+	Body as TableBody,
+	Cell as TableCell,
+	Header as TableHeader,
+	HeaderCell as TableHeaderCell,
+	Row as TableRow,
+} from '$lib/components';
+import { EMPLOYEES, type Status } from '../_data/mock-data';
 
-	let selected = $state<Set<string>>(new Set());
-	let headerCheckbox = $state<HTMLInputElement | null>(null);
+let selected = $state<Set<string>>(new Set());
+let headerCheckbox = $state<HTMLInputElement | null>(null);
 
-	let allSelected = $derived(selected.size === EMPLOYEES.length && EMPLOYEES.length > 0);
-	let someSelected = $derived(selected.size > 0 && !allSelected);
+let allSelected = $derived(selected.size === EMPLOYEES.length && EMPLOYEES.length > 0);
+let someSelected = $derived(selected.size > 0 && !allSelected);
 
-	$effect(() => {
-		if (headerCheckbox) {
-			headerCheckbox.indeterminate = someSelected;
-		}
-	});
-
-	function toggleAll() {
-		if (allSelected || someSelected) {
-			selected = new Set();
-		} else {
-			selected = new Set(EMPLOYEES.map(e => e.id));
-		}
+$effect(() => {
+	if (headerCheckbox) {
+		headerCheckbox.indeterminate = someSelected;
 	}
+});
 
-	function toggleRow(id: string) {
-		const next = new Set(selected);
-		if (next.has(id)) {
-			next.delete(id);
-		} else {
-			next.add(id);
-		}
-		selected = next;
-	}
-
-	function clearSelection() {
+function toggleAll() {
+	if (allSelected || someSelected) {
 		selected = new Set();
+	} else {
+		selected = new Set(EMPLOYEES.map((e) => e.id));
 	}
+}
 
-	function statusVariant(status: Status) {
-		if (status === 'active') return 'success' as const;
-		if (status === 'on-leave') return 'warning' as const;
-		return 'error' as const;
+function toggleRow(id: string) {
+	const next = new Set(selected);
+	if (next.has(id)) {
+		next.delete(id);
+	} else {
+		next.add(id);
 	}
+	selected = next;
+}
+
+function clearSelection() {
+	selected = new Set();
+}
+
+function statusVariant(status: Status) {
+	if (status === 'active') return 'success' as const;
+	if (status === 'on-leave') return 'warning' as const;
+	return 'error' as const;
+}
 </script>
 
 <section id="tbl-specimen" class="section">
@@ -103,7 +103,7 @@
 								<TableCell>
 									<span class="rating" aria-label="{emp.rating} out of 5 stars">
 										{#each Array(5) as _, i}
-											<span class="i-lucide-star star" class:filled={i < emp.rating} />
+											<span class="i-lucide-star star" class:filled={i < emp.rating} ></span>
 										{/each}
 									</span>
 								</TableCell>

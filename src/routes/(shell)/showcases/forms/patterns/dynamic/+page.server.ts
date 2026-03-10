@@ -1,13 +1,10 @@
-import type { PageServerLoad, Actions } from './$types';
-import { superValidate, fail, message } from 'sveltekit-superforms';
+import { fail, message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import { dynamicSchema } from '$lib/schemas/showcase/patterns';
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	const form = await superValidate(
-		{ title: '', tags: [] as string[] },
-		valibot(dynamicSchema)
-	);
+	const form = await superValidate({ title: '', tags: [] as string[] }, valibot(dynamicSchema));
 	return { form };
 };
 
@@ -20,6 +17,9 @@ export const actions: Actions = {
 		}
 
 		const tags = form.data.tags;
-		return message(form, `Saved "${form.data.title}" with ${tags.length} tag${tags.length !== 1 ? 's' : ''}: ${tags.join(', ')}.`);
+		return message(
+			form,
+			`Saved "${form.data.title}" with ${tags.length} tag${tags.length !== 1 ? 's' : ''}: ${tags.join(', ')}.`,
+		);
 	},
 };

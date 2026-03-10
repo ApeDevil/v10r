@@ -1,2 +1,2 @@
 export { default as TreeGraph } from './TreeGraph.svelte';
-export type { TreeNode, TreeData } from './types';
+export type { TreeData, TreeNode } from './types';

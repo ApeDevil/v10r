@@ -1,49 +1,49 @@
 <script lang="ts">
-	/**
-	 * Top progress bar during page transitions.
-	 * Uses SvelteKit's navigating state.
-	 */
+/**
+ * Top progress bar during page transitions.
+ * Uses SvelteKit's navigating state.
+ */
 
-	import { navigating } from '$app/stores';
+import { navigating } from '$app/stores';
 
-	let progress = $state(0);
-	let visible = $state(false);
+let progress = $state(0);
+let visible = $state(false);
 
-	// Animate progress when navigating
-	$effect(() => {
-		if ($navigating) {
-			visible = true;
-			progress = 0;
+// Animate progress when navigating
+$effect(() => {
+	if ($navigating) {
+		visible = true;
+		progress = 0;
 
-			// Quickly progress to 90%
-			const fastInterval = setInterval(() => {
-				if (progress < 90) {
-					progress += Math.random() * 10;
-				}
-			}, 100);
-
-			// Slow down approaching 90%
-			const slowInterval = setInterval(() => {
-				if (progress >= 90 && progress < 95) {
-					progress += 0.5;
-				}
-			}, 500);
-
-			return () => {
-				clearInterval(fastInterval);
-				clearInterval(slowInterval);
-			};
-		} else {
-			// Navigation complete - jump to 100% then fade out
-			if (visible) {
-				progress = 100;
-				setTimeout(() => {
-					visible = false;
-					progress = 0;
-				}, 300);
+		// Quickly progress to 90%
+		const fastInterval = setInterval(() => {
+			if (progress < 90) {
+				progress += Math.random() * 10;
 			}
+		}, 100);
+
+		// Slow down approaching 90%
+		const slowInterval = setInterval(() => {
+			if (progress >= 90 && progress < 95) {
+				progress += 0.5;
+			}
+		}, 500);
+
+		return () => {
+			clearInterval(fastInterval);
+			clearInterval(slowInterval);
+		};
+	} else {
+		// Navigation complete - jump to 100% then fade out
+		if (visible) {
+			progress = 100;
+			setTimeout(() => {
+				visible = false;
+				progress = 0;
+			}, 300);
 		}
-	});
+	}
+});
 </script>
 
 {#if visible}

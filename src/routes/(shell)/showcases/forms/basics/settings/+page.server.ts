@@ -1,14 +1,14 @@
-import type { PageServerLoad, Actions } from './$types';
-import { superValidate, fail, message } from 'sveltekit-superforms';
+import { fail, message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import { settingsSchema } from '$lib/schemas/showcase/basics';
+import type { Actions, PageServerLoad } from './$types';
 
 const mockSettings = {
 	displayName: 'Jane Doe',
 	email: 'jane@example.com',
 	website: 'https://janedoe.dev',
-	timezone: 'utc',
-	language: 'en',
+	timezone: 'utc' as const,
+	language: 'en' as const,
 	emailNotifications: true,
 	marketingEmails: false,
 	publicProfile: true,

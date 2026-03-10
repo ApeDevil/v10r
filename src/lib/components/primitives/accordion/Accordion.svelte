@@ -1,54 +1,54 @@
 <script lang="ts">
-	import { Accordion as AccordionPrimitive } from 'bits-ui';
-	import { cn } from '$lib/utils/cn';
-	import type { Snippet } from 'svelte';
-	import {
-		accordionItemVariants,
-		accordionTriggerVariants,
-		accordionContentVariants,
-		accordionChevronVariants,
-		type AccordionVariants
-	} from './accordion';
+import { Accordion as AccordionPrimitive } from 'bits-ui';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils/cn';
+import {
+	type AccordionVariants,
+	accordionChevronVariants,
+	accordionContentVariants,
+	accordionItemVariants,
+	accordionTriggerVariants,
+} from './accordion';
 
-	interface AccordionItem {
-		value: string;
-		title: string;
-		content: string | Snippet;
-		disabled?: boolean;
-	}
+interface AccordionItem {
+	value: string;
+	title: string;
+	content: string | Snippet;
+	disabled?: boolean;
+}
 
-	interface Props extends AccordionVariants {
-		/** Accordion type: single allows one open at a time, multiple allows many */
-		type?: 'single' | 'multiple';
-		/** Current value(s) - single: string, multiple: string[] */
-		value?: string | string[];
-		/** Array of accordion items with value, title, and content */
-		items: AccordionItem[];
-		/** Additional class for root container */
-		class?: string;
-		/** Allow collapsing the currently open item (only for type="single") */
-		collapsible?: boolean;
-	}
+interface Props extends AccordionVariants {
+	/** Accordion type: single allows one open at a time, multiple allows many */
+	type?: 'single' | 'multiple';
+	/** Current value(s) - single: string, multiple: string[] */
+	value?: string | string[];
+	/** Array of accordion items with value, title, and content */
+	items: AccordionItem[];
+	/** Additional class for root container */
+	class?: string;
+	/** Allow collapsing the currently open item (only for type="single") */
+	collapsible?: boolean;
+}
 
-	let {
-		type = 'single',
-		value = $bindable(),
-		items,
-		variant = 'default',
-		size = 'md',
-		class: className,
-		collapsible = true
-	}: Props = $props();
+let {
+	type = 'single',
+	value = $bindable(),
+	items,
+	variant = 'default',
+	size = 'md',
+	class: className,
+	collapsible = true,
+}: Props = $props();
 
-	// Default value depends on type — can't reference type in $bindable() default
-	if (value === undefined) {
-		value = type === 'single' ? '' : [];
-	}
+// Default value depends on type — can't reference type in $bindable() default
+if (value === undefined) {
+	value = type === 'single' ? '' : [];
+}
 
-	// Type guard to check if content is a snippet
-	function isSnippet(content: string | Snippet): content is Snippet {
-		return typeof content === 'function';
-	}
+// Type guard to check if content is a snippet
+function isSnippet(content: string | Snippet): content is Snippet {
+	return typeof content === 'function';
+}
 </script>
 
 {#snippet accordionItems()}
@@ -68,7 +68,7 @@
 						'[&[data-state=open]>span]:rotate-180'
 					)}
 				>
-					<span class={cn(accordionChevronVariants({ size }))} />
+					<span class={cn(accordionChevronVariants({ size }))} ></span>
 					{item.title}
 				</AccordionPrimitive.Trigger>
 			</AccordionPrimitive.Header>
@@ -92,16 +92,18 @@
 
 {#if type === 'single'}
 	<AccordionPrimitive.Root
-		bind:value
-		{collapsible}
+		type="single"
+		value={value as string}
+		onValueChange={(v: string) => value = v}
 		class={cn('w-full', className)}
 	>
 		{@render accordionItems()}
 	</AccordionPrimitive.Root>
 {:else}
 	<AccordionPrimitive.Root
-		bind:value
-		multiple
+		type="multiple"
+		value={value as string[]}
+		onValueChange={(v: string[]) => value = v}
 		class={cn('w-full', className)}
 	>
 		{@render accordionItems()}

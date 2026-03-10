@@ -1,34 +1,34 @@
 <script lang="ts">
-	import { Chat } from '@ai-sdk/svelte';
-	import { CSRF_HEADER } from '$lib/api';
-	import { Card, Alert, EmptyState, BoundaryFallback } from '$lib/components/composites';
-	import { Typography } from '$lib/components/primitives';
-	import { Stack } from '$lib/components/layout';
-	import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
-	import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
+import { Chat } from '@ai-sdk/svelte';
+import { CSRF_HEADER } from '$lib/api';
+import { Alert, BoundaryFallback, Card, EmptyState } from '$lib/components/composites';
+import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
+import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
+import { Stack } from '$lib/components/layout';
+import { Typography } from '$lib/components/primitives';
 
-	let { data } = $props();
+let { data } = $props();
 
-	const chat = new Chat({ api: '/api/ai/chat', headers: CSRF_HEADER });
+const chat = new Chat({ api: '/api/ai/chat', headers: CSRF_HEADER });
 
-	const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
+const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
 
-	let scrollContainer: HTMLDivElement | undefined = $state();
+let scrollContainer: HTMLDivElement | undefined = $state();
 
-	$effect(() => {
-		if (chat.messages.length && scrollContainer) {
-			requestAnimationFrame(() => {
-				if (scrollContainer) {
-					scrollContainer.scrollTop = scrollContainer.scrollHeight;
-				}
-			});
-		}
-	});
-
-	function submitMessage() {
-		if (!chat.input.trim() || isLoading) return;
-		chat.handleSubmit();
+$effect(() => {
+	if (chat.messages.length && scrollContainer) {
+		requestAnimationFrame(() => {
+			if (scrollContainer) {
+				scrollContainer.scrollTop = scrollContainer.scrollHeight;
+			}
+		});
 	}
+});
+
+function submitMessage() {
+	if (!chat.input.trim() || isLoading) return;
+	chat.handleSubmit();
+}
 </script>
 
 <svelte:head>

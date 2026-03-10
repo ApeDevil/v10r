@@ -1,5 +1,5 @@
 import type { InferSelectModel } from 'drizzle-orm';
-import type { events, sessions, dailyPageStats } from '$lib/server/db/schema/analytics';
+import type { dailyPageStats, events, sessions } from '$lib/server/db/schema/analytics';
 
 export type AnalyticsEvent = InferSelectModel<typeof events>;
 export type Session = InferSelectModel<typeof sessions>;

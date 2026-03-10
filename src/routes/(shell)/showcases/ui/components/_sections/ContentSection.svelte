@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { DemoCard } from '../_components';
-	import { Card, LinkCard, Pagination, ConfirmDialog, Button, Carousel, CarouselItem } from '$lib/components';
+import { Button, Card, Carousel, CarouselItem, ConfirmDialog, LinkCard, Pagination } from '$lib/components';
+import { DemoCard } from '../_components';
 
-	let currentPage = $state(1);
-	const totalPages = 10;
+let currentPage = $state(1);
+const totalPages = 10;
 
-	let confirmOpen = $state(false);
-	let confirmResult = $state<boolean | null>(null);
+let confirmOpen = $state(false);
+let confirmResult = $state<boolean | null>(null);
 </script>
 
 <section id="comp-content" class="section">

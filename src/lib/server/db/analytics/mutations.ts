@@ -1,9 +1,10 @@
 /**
  * Analytics write operations — event recording and session management.
  */
+
+import { eq, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { events, sessions } from '$lib/server/db/schema/analytics';
-import { eq, sql } from 'drizzle-orm';
 
 /** Record a single analytics event */
 export async function recordEvent(event: {
@@ -63,8 +64,5 @@ export async function upsertSession(session: {
 
 /** Close a session by setting endedAt */
 export async function closeSession(sessionId: string) {
-	await db
-		.update(sessions)
-		.set({ endedAt: new Date() })
-		.where(eq(sessions.id, sessionId));
+	await db.update(sessions).set({ endedAt: new Date() }).where(eq(sessions.id, sessionId));
 }

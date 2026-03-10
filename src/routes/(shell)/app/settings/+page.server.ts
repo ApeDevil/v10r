@@ -1,15 +1,15 @@
+import { DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
-import { superValidate, fail, message } from 'sveltekit-superforms';
+import { fail, message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import { userSettingsSchema } from '$lib/schemas/app/settings';
-import { getOrCreatePreferences, updatePreferences } from '$lib/server/db/preferences/mutations';
-import { db } from '$lib/server/db';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
-import { PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { s3, BUCKET } from '$lib/server/store';
 import { MAX_UPLOAD_SIZE } from '$lib/server/config';
-import type { PageServerLoad, Actions } from './$types';
+import { db } from '$lib/server/db';
+import { getOrCreatePreferences, updatePreferences } from '$lib/server/db/preferences/mutations';
+import { user } from '$lib/server/db/schema/auth/_better-auth';
+import { BUCKET, s3 } from '$lib/server/store';
+import type { Actions, PageServerLoad } from './$types';
 
 const AVATAR_PREFIX = 'avatars/';
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
@@ -22,11 +22,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const form = await superValidate(
 		{
 			displayName: locals.user.name,
-			theme: prefs.theme,
-			displayDensity: prefs.displayDensity,
-			locale: prefs.locale,
+			theme: prefs.theme as 'light' | 'dark' | 'system',
+			displayDensity: prefs.displayDensity as 'compact' | 'comfortable' | 'spacious',
+			locale: prefs.locale as 'en' | 'es' | 'fr' | 'de' | 'ja',
 			timezone: prefs.timezone,
-			dateFormat: prefs.dateFormat,
+			dateFormat: prefs.dateFormat as 'relative' | 'absolute' | 'iso',
 			reduceMotion: prefs.reduceMotion,
 			highContrast: prefs.highContrast,
 		},
@@ -50,10 +50,7 @@ export const actions: Actions = {
 
 		// Update display name directly if changed
 		if (displayName !== locals.user.name) {
-			await db
-				.update(user)
-				.set({ name: displayName, updatedAt: new Date() })
-				.where(eq(user.id, locals.user.id));
+			await db.update(user).set({ name: displayName, updatedAt: new Date() }).where(eq(user.id, locals.user.id));
 		}
 
 		// Update preferences
@@ -89,7 +86,7 @@ export const actions: Actions = {
 			return fail(400, { avatarError: 'File must be under 2 MB' });
 		}
 
-		const ext = file.name.includes('.') ? file.name.split('.').pop()!.toLowerCase() : 'bin';
+		const ext = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() : 'bin';
 		const key = `${AVATAR_PREFIX}${locals.user.id}.${ext}`;
 
 		await s3.send(
@@ -103,10 +100,7 @@ export const actions: Actions = {
 
 		const avatarUrl = `/${key}`;
 
-		await db
-			.update(user)
-			.set({ image: avatarUrl, updatedAt: new Date() })
-			.where(eq(user.id, locals.user.id));
+		await db.update(user).set({ image: avatarUrl, updatedAt: new Date() }).where(eq(user.id, locals.user.id));
 
 		return { avatarUrl };
 	},
@@ -120,10 +114,7 @@ export const actions: Actions = {
 			await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
 		}
 
-		await db
-			.update(user)
-			.set({ image: null, updatedAt: new Date() })
-			.where(eq(user.id, locals.user.id));
+		await db.update(user).set({ image: null, updatedAt: new Date() }).where(eq(user.id, locals.user.id));
 
 		return { avatarUrl: null };
 	},

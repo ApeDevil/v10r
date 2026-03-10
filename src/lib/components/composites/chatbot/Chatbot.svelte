@@ -1,135 +1,135 @@
 <script lang="ts">
-	import { Dialog } from 'bits-ui';
-	import { Chat } from '@ai-sdk/svelte';
-	import { cn } from '$lib/utils/cn';
-	import { apiFetch, CSRF_HEADER } from '$lib/api';
-	import ChatMessage from './ChatMessage.svelte';
-	import ChatInput from './ChatInput.svelte';
+import { Chat } from '@ai-sdk/svelte';
+import { Dialog } from 'bits-ui';
+import { apiFetch, CSRF_HEADER } from '$lib/api';
+import { cn } from '$lib/utils/cn';
+import ChatInput from './ChatInput.svelte';
+import ChatMessage from './ChatMessage.svelte';
 
-	interface Conversation {
-		id: string;
-		title: string;
-		updatedAt: string;
-	}
+interface Conversation {
+	id: string;
+	title: string;
+	updatedAt: string;
+}
 
-	interface Props {
-		open: boolean;
-	}
+interface Props {
+	open: boolean;
+}
 
-	let { open = $bindable(false) }: Props = $props();
+let { open = $bindable(false) }: Props = $props();
 
-	let conversationId: string | undefined = $state();
-	let conversations: Conversation[] = $state([]);
-	let conversationsError = $state(false);
-	let showSidebar = $state(false);
-	let pendingDeleteId: string | null = $state(null);
+let conversationId: string | undefined = $state();
+let conversations: Conversation[] = $state([]);
+let conversationsError = $state(false);
+let showSidebar = $state(false);
+let pendingDeleteId: string | null = $state(null);
 
-	const chat = new Chat({
-		api: '/api/ai/chat',
-		headers: CSRF_HEADER,
-		body: () => (conversationId ? { conversationId } : {}),
-		onResponse: (response: Response) => {
-			const id = response.headers.get('X-Conversation-Id');
-			if (id) conversationId = id;
-		},
-	});
+const chat = new Chat({
+	api: '/api/ai/chat',
+	headers: CSRF_HEADER,
+	body: () => (conversationId ? { conversationId } : {}),
+	onResponse: (response: Response) => {
+		const id = response.headers.get('X-Conversation-Id');
+		if (id) conversationId = id;
+	},
+});
 
-	const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
+const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
 
-	let scrollContainer: HTMLDivElement | undefined = $state();
+let scrollContainer: HTMLDivElement | undefined = $state();
 
-	$effect(() => {
-		if (chat.messages.length && scrollContainer) {
-			requestAnimationFrame(() => {
-				if (scrollContainer) {
-					scrollContainer.scrollTop = scrollContainer.scrollHeight;
-				}
-			});
-		}
-	});
-
-	// Load conversations when dialog opens
-	$effect(() => {
-		if (open) {
-			loadConversations();
-		}
-	});
-
-	// Refresh conversation list when streaming finishes (replaces setTimeout)
-	$effect(() => {
-		if (chat.status === 'ready' && !conversationId && chat.messages.length > 0) {
-			loadConversations();
-		}
-	});
-
-	async function loadConversations() {
-		conversationsError = false;
-		try {
-			const res = await fetch('/api/ai/conversations');
-			if (res.ok) {
-				conversations = await res.json();
-			} else {
-				conversationsError = true;
+$effect(() => {
+	if (chat.messages.length && scrollContainer) {
+		requestAnimationFrame(() => {
+			if (scrollContainer) {
+				scrollContainer.scrollTop = scrollContainer.scrollHeight;
 			}
-		} catch {
+		});
+	}
+});
+
+// Load conversations when dialog opens
+$effect(() => {
+	if (open) {
+		loadConversations();
+	}
+});
+
+// Refresh conversation list when streaming finishes (replaces setTimeout)
+$effect(() => {
+	if (chat.status === 'ready' && !conversationId && chat.messages.length > 0) {
+		loadConversations();
+	}
+});
+
+async function loadConversations() {
+	conversationsError = false;
+	try {
+		const res = await fetch('/api/ai/conversations');
+		if (res.ok) {
+			conversations = await res.json();
+		} else {
 			conversationsError = true;
 		}
+	} catch {
+		conversationsError = true;
 	}
+}
 
-	async function loadConversation(conv: Conversation) {
-		try {
-			const res = await fetch(`/api/ai/conversations/${conv.id}`);
-			if (!res.ok) return;
-			const data = await res.json();
-			conversationId = conv.id;
-			chat.messages = data.messages.map((m: { id: string; role: string; content: string }) => ({
-				id: m.id,
-				role: m.role,
-				content: m.content,
-			}));
-			showSidebar = false;
-		} catch {
-			// silently fail
-		}
+async function loadConversation(conv: Conversation) {
+	try {
+		const res = await fetch(`/api/ai/conversations/${conv.id}`);
+		if (!res.ok) return;
+		const data = await res.json();
+		conversationId = conv.id;
+		chat.messages = data.messages.map((m: { id: string; role: string; content: string }) => ({
+			id: m.id,
+			role: m.role,
+			content: m.content,
+		}));
+		showSidebar = false;
+	} catch {
+		// silently fail
 	}
+}
 
-	async function deleteConversation(id: string) {
-		try {
-			const res = await apiFetch(`/api/ai/conversations/${id}`, { method: 'DELETE' });
-			if (res.ok) {
-				conversations = conversations.filter((c) => c.id !== id);
-				if (conversationId === id) {
-					startNewChat();
-				}
+async function deleteConversation(id: string) {
+	try {
+		const res = await apiFetch(`/api/ai/conversations/${id}`, { method: 'DELETE' });
+		if (res.ok) {
+			conversations = conversations.filter((c) => c.id !== id);
+			if (conversationId === id) {
+				startNewChat();
 			}
-		} catch {
-			// silently fail
-		} finally {
-			pendingDeleteId = null;
 		}
+	} catch {
+		// silently fail
+	} finally {
+		pendingDeleteId = null;
 	}
+}
 
-	function startNewChat() {
-		conversationId = undefined;
-		chat.messages = [];
-		chat.input = '';
-	}
+function startNewChat() {
+	conversationId = undefined;
+	chat.messages = [];
+	chat.input = '';
+}
 
-	function submitMessage() {
-		if (!chat.input.trim() || isLoading) return;
-		chat.handleSubmit();
-	}
+function submitMessage() {
+	if (!chat.input.trim() || isLoading) return;
+	chat.handleSubmit();
+}
 
-	function formatRelativeTime(dateStr: string): string {
-		const diff = Date.now() - new Date(dateStr).getTime();
-		const mins = Math.floor(diff / 60000);
-		if (mins < 1) return 'just now';
-		if (mins < 60) return `${mins}m ago`;
-		const hours = Math.floor(mins / 60);
-		if (hours < 24) return `${hours}h ago`;
-		const days = Math.floor(hours / 24);
-		return `${days}d ago`;
-	}
+function formatRelativeTime(dateStr: string): string {
+	const diff = Date.now() - new Date(dateStr).getTime();
+	const mins = Math.floor(diff / 60000);
+	if (mins < 1) return 'just now';
+	if (mins < 60) return `${mins}m ago`;
+	const hours = Math.floor(mins / 60);
+	if (hours < 24) return `${hours}h ago`;
+	const days = Math.floor(hours / 24);
+	return `${days}d ago`;
+}
 </script>
 
 <Dialog.Root bind:open>

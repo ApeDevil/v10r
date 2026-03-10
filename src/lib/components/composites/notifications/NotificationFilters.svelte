@@ -1,16 +1,16 @@
 <script lang="ts">
-	interface Props {
-		active: string;
-		onchange: (filter: string) => void;
-	}
+interface Props {
+	active: string;
+	onchange: (filter: string) => void;
+}
 
-	let { active, onchange }: Props = $props();
+let { active, onchange }: Props = $props();
 
-	const filters = [
-		{ key: 'all', label: 'All' },
-		{ key: 'mentions', label: 'Mentions' },
-		{ key: 'system', label: 'System' },
-	];
+const filters = [
+	{ key: 'all', label: 'All' },
+	{ key: 'mentions', label: 'Mentions' },
+	{ key: 'system', label: 'System' },
+];
 </script>
 
 <nav class="notification-filters" aria-label="Filter notifications">

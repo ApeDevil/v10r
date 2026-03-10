@@ -8,7 +8,7 @@ export const wizardStep1Schema = v.object({
 		v.trim(),
 		v.nonEmpty('Email is required'),
 		v.toLowerCase(),
-		v.email('Invalid email address')
+		v.email('Invalid email address'),
 	),
 });
 
@@ -20,7 +20,7 @@ export const wizardStep2Schema = v.object({
 		v.string(),
 		v.trim(),
 		v.nonEmpty('ZIP code is required'),
-		v.regex(/^\d{5}(-\d{4})?$/, 'Invalid ZIP code (e.g. 12345 or 12345-6789)')
+		v.regex(/^\d{5}(-\d{4})?$/, 'Invalid ZIP code (e.g. 12345 or 12345-6789)'),
 	),
 });
 
@@ -28,7 +28,7 @@ export const wizardStep3Schema = v.object({
 	plan: v.picklist(['free', 'pro', 'enterprise'], 'Select a plan'),
 	terms: v.pipe(
 		v.boolean(),
-		v.check((val) => val === true, 'You must accept the terms')
+		v.check((val) => val === true, 'You must accept the terms'),
 	),
 });
 
@@ -44,11 +44,9 @@ export type WizardOutput = v.InferOutput<typeof wizardSchema>;
 export const dynamicSchema = v.object({
 	title: v.pipe(v.string(), v.trim(), v.nonEmpty('Title is required'), v.maxLength(100)),
 	tags: v.pipe(
-		v.array(
-			v.pipe(v.string(), v.trim(), v.nonEmpty('Tag cannot be empty'), v.maxLength(30))
-		),
+		v.array(v.pipe(v.string(), v.trim(), v.nonEmpty('Tag cannot be empty'), v.maxLength(30))),
 		v.minLength(1, 'At least one tag is required'),
-		v.maxLength(10, 'Max 10 tags')
+		v.maxLength(10, 'Max 10 tags'),
 	),
 });
 

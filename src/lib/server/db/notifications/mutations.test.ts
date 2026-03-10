@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, afterAll, beforeAll, beforeEach } from 'vitest';
 import type { PGlite } from '@electric-sql/pglite';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { makeNotification, makeUser } from '$lib/server/test/fixtures';
 import { user } from '../schema/auth/_better-auth';
-import { notifications } from '../schema/notifications/notifications';
 import { notificationSettings } from '../schema/notifications/notification-settings';
-import { makeUser, makeNotification } from '$lib/server/test/fixtures';
+import { notifications } from '../schema/notifications/notifications';
 
 let testClient: PGlite;
 
@@ -14,9 +14,7 @@ vi.mock('$lib/server/db', async () => {
 	return { db };
 });
 
-const { createNotification, markAsRead, markAllAsRead, getOrCreateSettings } = await import(
-	'./mutations'
-);
+const { createNotification, markAsRead, markAllAsRead, getOrCreateSettings } = await import('./mutations');
 const { db } = await import('$lib/server/db');
 
 const USER_A = makeUser({ id: 'user-a' });
@@ -47,11 +45,11 @@ describe('notification mutations', () => {
 			});
 
 			expect(result).toBeDefined();
-			expect(result!.userId).toBe(USER_A.id);
-			expect(result!.type).toBe('mention');
-			expect(result!.title).toBe('You were mentioned');
-			expect(result!.isRead).toBe(false);
-			expect(result!.id).toBeTruthy();
+			expect(result?.userId).toBe(USER_A.id);
+			expect(result?.type).toBe('mention');
+			expect(result?.title).toBe('You were mentioned');
+			expect(result?.isRead).toBe(false);
+			expect(result?.id).toBeTruthy();
 		});
 
 		it('creates a notification with minimal fields', async () => {
@@ -62,8 +60,8 @@ describe('notification mutations', () => {
 			});
 
 			expect(result).toBeDefined();
-			expect(result!.body).toBeNull();
-			expect(result!.actionUrl).toBeNull();
+			expect(result?.body).toBeNull();
+			expect(result?.actionUrl).toBeNull();
 		});
 	});
 
@@ -92,11 +90,13 @@ describe('notification mutations', () => {
 
 	describe('markAllAsRead', () => {
 		it('marks all unread notifications as read', async () => {
-			await db.insert(notifications).values([
-				makeNotification({ userId: USER_A.id, isRead: false }),
-				makeNotification({ userId: USER_A.id, isRead: false }),
-				makeNotification({ userId: USER_A.id, isRead: true }),
-			]);
+			await db
+				.insert(notifications)
+				.values([
+					makeNotification({ userId: USER_A.id, isRead: false }),
+					makeNotification({ userId: USER_A.id, isRead: false }),
+					makeNotification({ userId: USER_A.id, isRead: true }),
+				]);
 
 			const count = await markAllAsRead(USER_A.id);
 			expect(count).toBe(2);
@@ -108,10 +108,12 @@ describe('notification mutations', () => {
 		});
 
 		it('does not affect other users', async () => {
-			await db.insert(notifications).values([
-				makeNotification({ userId: USER_A.id, isRead: false }),
-				makeNotification({ userId: USER_B.id, isRead: false }),
-			]);
+			await db
+				.insert(notifications)
+				.values([
+					makeNotification({ userId: USER_A.id, isRead: false }),
+					makeNotification({ userId: USER_B.id, isRead: false }),
+				]);
 
 			const count = await markAllAsRead(USER_A.id);
 			expect(count).toBe(1);
@@ -123,17 +125,17 @@ describe('notification mutations', () => {
 			const settings = await getOrCreateSettings(USER_A.id);
 
 			expect(settings).toBeDefined();
-			expect(settings!.userId).toBe(USER_A.id);
-			expect(settings!.emailMention).toBe(true);
-			expect(settings!.digestFrequency).toBe('instant');
+			expect(settings?.userId).toBe(USER_A.id);
+			expect(settings?.emailMention).toBe(true);
+			expect(settings?.digestFrequency).toBe('instant');
 		});
 
 		it('returns existing settings on second call (idempotent)', async () => {
 			const first = await getOrCreateSettings(USER_A.id);
 			const second = await getOrCreateSettings(USER_A.id);
 
-			expect(first!.userId).toBe(second!.userId);
-			expect(first!.updatedAt.getTime()).toBe(second!.updatedAt.getTime());
+			expect(first?.userId).toBe(second?.userId);
+			expect(first?.updatedAt.getTime()).toBe(second?.updatedAt.getTime());
 		});
 	});
 });

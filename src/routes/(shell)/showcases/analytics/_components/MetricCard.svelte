@@ -1,26 +1,26 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
-	import { Sparkline } from '$lib/components/viz/chart/sparkline';
+import { Sparkline } from '$lib/components/viz/chart/sparkline';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		title: string;
-		value: number | string;
-		delta?: number;
-		sparklineData?: number[];
-		class?: string;
-	}
+interface Props {
+	title: string;
+	value: number | string;
+	delta?: number;
+	sparklineData?: number[];
+	class?: string;
+}
 
-	let { title, value, delta, sparklineData, class: className }: Props = $props();
+let { title, value, delta, sparklineData, class: className }: Props = $props();
 
-	const deltaLabel = $derived(
-		delta != null
-			? delta > 0
-				? `Up ${Math.abs(delta)}%`
-				: delta < 0
-					? `Down ${Math.abs(delta)}%`
-					: 'No change'
-			: undefined,
-	);
+const deltaLabel = $derived(
+	delta != null
+		? delta > 0
+			? `Up ${Math.abs(delta)}%`
+			: delta < 0
+				? `Down ${Math.abs(delta)}%`
+				: 'No change'
+		: undefined,
+);
 </script>
 
 <div

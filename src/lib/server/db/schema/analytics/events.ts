@@ -2,22 +2,13 @@
  * ANALYTICS EVENTS — Raw event log for page views, actions, errors, and timing.
  * Privacy-first: visitorId is always hashed, never raw IP.
  */
-import { pgSchema, text, integer, timestamp, jsonb, index } from 'drizzle-orm/pg-core';
+import { index, integer, jsonb, pgSchema, text, timestamp } from 'drizzle-orm/pg-core';
 
 export const analyticsSchema = pgSchema('analytics');
 
-export const eventTypeEnum = analyticsSchema.enum('event_type', [
-	'pageview',
-	'action',
-	'error',
-	'timing',
-]);
+export const eventTypeEnum = analyticsSchema.enum('event_type', ['pageview', 'action', 'error', 'timing']);
 
-export const consentTierEnum = analyticsSchema.enum('consent_tier', [
-	'necessary',
-	'analytics',
-	'full',
-]);
+export const consentTierEnum = analyticsSchema.enum('consent_tier', ['necessary', 'analytics', 'full']);
 
 export const events = analyticsSchema.table(
 	'events',

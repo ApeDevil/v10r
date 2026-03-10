@@ -1,42 +1,42 @@
 <script lang="ts">
-	import { NavSection } from '$lib/components/composites';
-	import { DemoCard, VariantGrid } from '../../components/_components';
-	import {
-		GeometricMark,
-		Divider,
-		Asterism,
-		Kamon,
-		Flourish,
-		WaveDivider,
-		CornerFrame,
-		ConcentricRings,
-		TickMarks,
-		Marquee
-	} from '$lib/components';
+import {
+	Asterism,
+	ConcentricRings,
+	CornerFrame,
+	Divider,
+	Flourish,
+	GeometricMark,
+	Kamon,
+	Marquee,
+	TickMarks,
+	WaveDivider,
+} from '$lib/components';
+import { NavSection } from '$lib/components/composites';
+import { DemoCard, VariantGrid } from '../../components/_components';
 
-	const sections = [
-		{ id: 'dec-geometric-mark', label: 'GeometricMark' },
-		{ id: 'dec-divider', label: 'Divider' },
-		{ id: 'dec-asterism', label: 'Asterism' },
-		{ id: 'dec-kamon', label: 'Kamon' },
-		{ id: 'dec-flourish', label: 'Flourish' },
-		{ id: 'dec-wave-divider', label: 'WaveDivider' },
-		{ id: 'dec-corner-frame', label: 'CornerFrame' },
-		{ id: 'dec-concentric-rings', label: 'ConcentricRings' },
-		{ id: 'dec-tick-marks', label: 'TickMarks' },
-		{ id: 'dec-marquee', label: 'Marquee' },
-	];
+const sections = [
+	{ id: 'dec-geometric-mark', label: 'GeometricMark' },
+	{ id: 'dec-divider', label: 'Divider' },
+	{ id: 'dec-asterism', label: 'Asterism' },
+	{ id: 'dec-kamon', label: 'Kamon' },
+	{ id: 'dec-flourish', label: 'Flourish' },
+	{ id: 'dec-wave-divider', label: 'WaveDivider' },
+	{ id: 'dec-corner-frame', label: 'CornerFrame' },
+	{ id: 'dec-concentric-rings', label: 'ConcentricRings' },
+	{ id: 'dec-tick-marks', label: 'TickMarks' },
+	{ id: 'dec-marquee', label: 'Marquee' },
+];
 
-	const waveShapes = ['wave', 'curve', 'zigzag', 'slant'] as const;
+const waveShapes = ['wave', 'curve', 'zigzag', 'slant'] as const;
 
-	const shapes = ['circle', 'hexagon', 'triangle', 'square', 'cross', 'diamond'] as const;
-	const motifs = ['none', 'dot', 'diamond', 'crosshair', 'flourish'] as const;
-	const patterns = ['three-dots', 'fleuron', 'dinkus', 'star'] as const;
-	const foldCounts = [3, 4, 5, 6, 7, 8] as const;
-	const positions = ['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const;
-	const frameVariants = ['bracket', 'double', 'inset', 'cross'] as const;
-	const ringShapes = ['circle', 'square', 'hexagon'] as const;
-	const ringCounts = [2, 3, 4, 5, 6, 7, 8] as const;
+const shapes = ['circle', 'hexagon', 'triangle', 'square', 'cross', 'diamond'] as const;
+const motifs = ['none', 'dot', 'diamond', 'crosshair', 'flourish'] as const;
+const patterns = ['three-dots', 'fleuron', 'dinkus', 'star'] as const;
+const foldCounts = [3, 4, 5, 6, 7, 8] as const;
+const positions = ['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const;
+const frameVariants = ['bracket', 'double', 'inset', 'cross'] as const;
+const ringShapes = ['circle', 'square', 'hexagon'] as const;
+const ringCounts = [2, 3, 4, 5, 6, 7, 8] as const;
 </script>
 
 <svelte:head>

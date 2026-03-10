@@ -4,12 +4,12 @@ export const toggleGroupVariants = cva(['inline-flex'], {
 	variants: {
 		orientation: {
 			horizontal: 'flex-row',
-			vertical: 'flex-col'
-		}
+			vertical: 'flex-col',
+		},
 	},
 	defaultVariants: {
-		orientation: 'horizontal'
-	}
+		orientation: 'horizontal',
+	},
 });
 
 export const toggleGroupItemVariants = cva(
@@ -20,25 +20,25 @@ export const toggleGroupItemVariants = cva(
 		'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary',
 		'disabled:pointer-events-none disabled:opacity-50',
 		'data-[state=off]:bg-transparent data-[state=off]:text-fg data-[state=off]:hover:bg-subtle',
-		'data-[state=on]:bg-subtle data-[state=on]:text-fg'
+		'data-[state=on]:bg-subtle data-[state=on]:text-fg',
 	],
 	{
 		variants: {
 			variant: {
 				default: '',
-				outline: ''
+				outline: '',
 			},
 			size: {
 				sm: 'h-8 px-2.5 text-sm',
 				md: 'h-10 px-3',
-				lg: 'h-12 px-4 text-lg'
-			}
+				lg: 'h-12 px-4 text-lg',
+			},
 		},
 		defaultVariants: {
 			variant: 'default',
-			size: 'md'
-		}
-	}
+			size: 'md',
+		},
+	},
 );
 
 export type ToggleGroupVariants = VariantProps<typeof toggleGroupVariants>;

@@ -2,8 +2,9 @@
  * NOTIFICATIONS — In-app notification records.
  * Each notification is scoped to a user and optionally references an actor.
  */
-import { pgSchema, text, boolean, timestamp, index } from 'drizzle-orm/pg-core';
+
 import { sql } from 'drizzle-orm';
+import { boolean, index, pgSchema, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
 
 export const notificationsSchema = pgSchema('notifications');
@@ -38,8 +39,6 @@ export const notifications = notificationsSchema.table(
 	},
 	(table) => [
 		index('notification_user_created_idx').on(table.userId, table.createdAt.desc()),
-		index('notification_user_unread_idx')
-			.on(table.userId, table.createdAt.desc())
-			.where(sql`is_read = false`),
+		index('notification_user_unread_idx').on(table.userId, table.createdAt.desc()).where(sql`is_read = false`),
 	],
 );

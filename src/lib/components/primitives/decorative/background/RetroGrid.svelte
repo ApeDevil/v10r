@@ -1,24 +1,24 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import { cn } from '$lib/utils/cn';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		perspective?: number;
-		color?: string;
-		opacity?: number;
-		animated?: boolean;
-		class?: string;
-		children?: Snippet;
-	}
+interface Props {
+	perspective?: number;
+	color?: string;
+	opacity?: number;
+	animated?: boolean;
+	class?: string;
+	children?: Snippet;
+}
 
-	let {
-		perspective = 300,
-		color = 'currentColor',
-		opacity = 0.15,
-		animated = false,
-		class: className,
-		children
-	}: Props = $props();
+let {
+	perspective = 300,
+	color = 'currentColor',
+	opacity = 0.15,
+	animated = false,
+	class: className,
+	children,
+}: Props = $props();
 </script>
 
 <div class={cn('relative overflow-hidden', className)}>

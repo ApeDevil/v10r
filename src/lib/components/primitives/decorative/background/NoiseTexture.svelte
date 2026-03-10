@@ -1,27 +1,20 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import { cn } from '$lib/utils/cn';
-	import { createDecorativeId } from '../utils';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils/cn';
+import { createDecorativeId } from '../utils';
 
-	interface Props {
-		frequency?: number;
-		octaves?: number;
-		opacity?: number;
-		blend?: 'overlay' | 'soft-light' | 'multiply' | 'screen';
-		class?: string;
-		children?: Snippet;
-	}
+interface Props {
+	frequency?: number;
+	octaves?: number;
+	opacity?: number;
+	blend?: 'overlay' | 'soft-light' | 'multiply' | 'screen';
+	class?: string;
+	children?: Snippet;
+}
 
-	let {
-		frequency = 0.65,
-		octaves = 4,
-		opacity = 0.05,
-		blend = 'overlay',
-		class: className,
-		children
-	}: Props = $props();
+let { frequency = 0.65, octaves = 4, opacity = 0.05, blend = 'overlay', class: className, children }: Props = $props();
 
-	const filterId = createDecorativeId('noise');
+const filterId = createDecorativeId('noise');
 </script>
 
 <div class={cn('relative overflow-hidden', className)}>

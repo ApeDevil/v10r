@@ -1,12 +1,12 @@
 import { json } from '@sveltejs/kit';
-import { safeParse } from 'valibot';
 import * as v from 'valibot';
-import { ingest } from '$lib/server/retrieval/ingest';
+import { safeParse } from 'valibot';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { requireApiUser } from '$lib/server/auth/guards';
+import { INGEST_RATE_LIMIT_MAX, INGEST_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import { checkDocumentLimit } from '$lib/server/db/rag/limits';
 import { RetrievalError, retrievalErrorToStatus } from '$lib/server/retrieval/errors';
-import { INGEST_RATE_LIMIT_MAX, INGEST_RATE_LIMIT_WINDOW } from '$lib/server/config';
-import { requireApiUser } from '$lib/server/auth/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { ingest } from '$lib/server/retrieval/ingest';
 import type { RequestHandler } from './$types';
 
 const ratelimit = createLimiter('rl:retrieval:ingest', INGEST_RATE_LIMIT_MAX, INGEST_RATE_LIMIT_WINDOW);
@@ -52,10 +52,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	} catch (err) {
 		console.error('[api:retrieval:ingest] Error:', err instanceof Error ? err.message : err);
 		if (err instanceof RetrievalError) {
-			return json(
-				{ error: err.message },
-				{ status: retrievalErrorToStatus(err.kind) },
-			);
+			return json({ error: err.message }, { status: retrievalErrorToStatus(err.kind) });
 		}
 		return json({ error: 'Ingestion failed' }, { status: 500 });
 	}

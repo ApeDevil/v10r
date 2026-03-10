@@ -1,15 +1,12 @@
 <script lang="ts">
-	import Switch from '$lib/components/primitives/switch/Switch.svelte';
+import Switch from '$lib/components/primitives/switch/Switch.svelte';
 
-	interface Props {
-		dataset?: string;
-		animated?: boolean;
-	}
+interface Props {
+	dataset?: string;
+	animated?: boolean;
+}
 
-	let {
-		dataset = $bindable('sales'),
-		animated = $bindable(true),
-	}: Props = $props();
+let { dataset = $bindable('sales'), animated = $bindable(true) }: Props = $props();
 </script>
 
 <div class="data-controls">

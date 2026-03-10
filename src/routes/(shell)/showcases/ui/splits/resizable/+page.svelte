@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Card } from '$lib/components';
-	import { PaneGroup, Pane, PaneResizer } from '$lib/components/primitives';
+import { Card } from '$lib/components';
+import { Pane, PaneGroup, PaneResizer } from '$lib/components/primitives';
 </script>
 
 <svelte:head>

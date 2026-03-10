@@ -1,26 +1,24 @@
 <script lang="ts">
-	import type { PipelineState } from './pipeline-state.svelte';
-	import PipelineGraph from './PipelineGraph.svelte';
-	import NodeDetail from './NodeDetail.svelte';
-	import ChunkDetailPanel from './ChunkDetailPanel.svelte';
+import ChunkDetailPanel from './ChunkDetailPanel.svelte';
+import NodeDetail from './NodeDetail.svelte';
+import PipelineGraph from './PipelineGraph.svelte';
+import type { PipelineState } from './pipeline-state.svelte';
 
-	interface Props {
-		pipeline: PipelineState;
-	}
+interface Props {
+	pipeline: PipelineState;
+}
 
-	let { pipeline }: Props = $props();
+let { pipeline }: Props = $props();
 
-	let expanded = $state(false);
+let expanded = $state(false);
 
-	const statusLabel = $derived.by(() => {
-		if (pipeline.isActive) return 'Running';
-		if (pipeline.totalDurationMs > 0) return `${pipeline.totalDurationMs}ms`;
-		return 'Idle';
-	});
+const statusLabel = $derived.by(() => {
+	if (pipeline.isActive) return 'Running';
+	if (pipeline.totalDurationMs > 0) return `${pipeline.totalDurationMs}ms`;
+	return 'Idle';
+});
 
-	const selectedChunks = $derived(
-		pipeline.selectedStepId ? pipeline.chunksForStep(pipeline.selectedStepId) : [],
-	);
+const selectedChunks = $derived(pipeline.selectedStepId ? pipeline.chunksForStep(pipeline.selectedStepId) : []);
 </script>
 
 <div class="rag-pipeline">

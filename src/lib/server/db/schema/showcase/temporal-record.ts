@@ -2,17 +2,9 @@
  * TEMPORAL RECORD — Date, Time, Timestamp, Interval types.
  * Mutability pattern: Bi-temporal (valid_from/valid_to + recorded_at).
  */
-import {
-	text,
-	date,
-	time,
-	timestamp,
-	interval,
-	serial,
-	index,
-	check,
-} from 'drizzle-orm/pg-core';
+
 import { sql } from 'drizzle-orm';
+import { check, date, index, interval, serial, text, time, timestamp } from 'drizzle-orm/pg-core';
 import { showcaseSchema } from './type-specimen';
 
 export const temporalRecord = showcaseSchema.table(
@@ -47,9 +39,6 @@ export const temporalRecord = showcaseSchema.table(
 	},
 	(table) => ({
 		validRangeIdx: index('temporal_valid_range_idx').on(table.validFrom, table.validTo),
-		validRangeCheck: check(
-			'valid_range_check',
-			sql`${table.validTo} IS NULL OR ${table.validFrom} < ${table.validTo}`,
-		),
+		validRangeCheck: check('valid_range_check', sql`${table.validTo} IS NULL OR ${table.validFrom} < ${table.validTo}`),
 	}),
 );

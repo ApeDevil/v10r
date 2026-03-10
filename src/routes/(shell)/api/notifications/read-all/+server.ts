@@ -1,9 +1,9 @@
 import { json } from '@sveltejs/kit';
-import { requireApiUser } from '$lib/server/auth/guards';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { requireApiUser } from '$lib/server/auth/guards';
 import { API_WRITE_RATE_LIMIT_MAX, API_WRITE_RATE_LIMIT_WINDOW } from '$lib/server/config';
-import { markAllAsRead } from '$lib/server/db/notifications/mutations';
 import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
+import { markAllAsRead } from '$lib/server/db/notifications/mutations';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:notifications:read-all', API_WRITE_RATE_LIMIT_MAX, API_WRITE_RATE_LIMIT_WINDOW);

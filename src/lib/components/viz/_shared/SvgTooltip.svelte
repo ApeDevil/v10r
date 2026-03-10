@@ -1,27 +1,27 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
+import type { Snippet } from 'svelte';
 
-	interface Props {
-		/** X position as percentage of container (0–100) */
-		x: number;
-		/** Y position as percentage of container (0–100) */
-		y: number;
-		/** Whether to show the tooltip */
-		visible: boolean;
-		/** Where to place relative to anchor. Default: 'top' */
-		placement?: 'top' | 'bottom' | 'left' | 'right';
-		/** Slotted content */
-		children: Snippet;
-	}
+interface Props {
+	/** X position as percentage of container (0–100) */
+	x: number;
+	/** Y position as percentage of container (0–100) */
+	y: number;
+	/** Whether to show the tooltip */
+	visible: boolean;
+	/** Where to place relative to anchor. Default: 'top' */
+	placement?: 'top' | 'bottom' | 'left' | 'right';
+	/** Slotted content */
+	children: Snippet;
+}
 
-	let { x, y, visible, placement = 'top', children }: Props = $props();
+let { x, y, visible, placement = 'top', children }: Props = $props();
 
-	const transforms: Record<string, string> = {
-		top: 'translate(-50%, calc(-100% - 12px))',
-		bottom: 'translate(-50%, 12px)',
-		left: 'translate(calc(-100% - 12px), -50%)',
-		right: 'translate(12px, -50%)',
-	};
+const transforms: Record<string, string> = {
+	top: 'translate(-50%, calc(-100% - 12px))',
+	bottom: 'translate(-50%, 12px)',
+	left: 'translate(calc(-100% - 12px), -50%)',
+	right: 'translate(12px, -50%)',
+};
 </script>
 
 {#if visible}

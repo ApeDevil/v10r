@@ -1,99 +1,101 @@
 <script lang="ts">
-	import { onDestroy, onMount, untrack } from 'svelte';
-	import { beforeNavigate } from '$app/navigation';
-	import { cn } from '$lib/utils/cn';
-	import { chartContainerVariants, type ChartContainerVariants } from '../../_shared/chart-container';
-	import { buildChartTheme } from '../../_shared/chart-theme';
-	import { getChartInfraColors, onThemeChange, resolveDatasetColors } from '../../_shared/theme-bridge';
-	import type { Chart as ChartJS, ChartData, ChartOptions } from 'chart.js';
+import type { ChartData, Chart as ChartJS, ChartOptions } from 'chart.js';
+import { onDestroy, onMount, untrack } from 'svelte';
+import { beforeNavigate } from '$app/navigation';
+import { cn } from '$lib/utils/cn';
+import { type ChartContainerVariants, chartContainerVariants } from '../../_shared/chart-container';
+import { buildChartTheme } from '../../_shared/chart-theme';
+import { getChartInfraColors, onThemeChange, resolveDatasetColors } from '../../_shared/theme-bridge';
 
-	interface Props {
-		data: ChartData<'pie'>;
-		options?: ChartOptions<'pie'>;
-		aspect?: ChartContainerVariants['aspect'];
-		ariaLabel?: string;
-		doughnut?: boolean;
-		class?: string;
-	}
+interface Props {
+	data: ChartData<'pie'>;
+	options?: ChartOptions<'pie'>;
+	aspect?: ChartContainerVariants['aspect'];
+	ariaLabel?: string;
+	doughnut?: boolean;
+	class?: string;
+}
 
-	let {
-		data,
-		options = {},
-		aspect = 'square',
-		ariaLabel = 'Pie chart',
-		doughnut = false,
-		class: className,
-	}: Props = $props();
+let {
+	data,
+	options = {},
+	aspect = 'square',
+	ariaLabel = 'Pie chart',
+	doughnut = false,
+	class: className,
+}: Props = $props();
 
-	let canvasEl: HTMLCanvasElement | undefined = $state();
-	let chart: ChartJS<'pie' | 'doughnut'> | undefined = $state();
-	let ready = $state(false);
-	let unsub: (() => void) | undefined;
+let canvasEl: HTMLCanvasElement | undefined = $state();
+let chart: ChartJS<'pie' | 'doughnut'> | undefined = $state();
+let ready = $state(false);
+let unsub: (() => void) | undefined;
 
-	/** Set slice borderColor to chart bg so gaps blend with the surface */
-	function applySliceBorders<T extends { datasets: Record<string, unknown>[] }>(chartData: T): T {
-		const bg = getChartInfraColors().bg;
-		return {
-			...chartData,
-			datasets: chartData.datasets.map((ds) => ({ ...ds, borderColor: bg })),
-		};
-	}
+/** Set slice borderColor to chart bg so gaps blend with the surface */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function applySliceBorders<T extends { datasets: any[] }>(chartData: T): T {
+	const bg = getChartInfraColors().bg;
+	const datasets = chartData.datasets as Record<string, unknown>[];
+	return {
+		...chartData,
+		datasets: datasets.map((ds) => ({ ...ds, borderColor: bg })),
+	} as T;
+}
 
-	function updateChart(d: ChartData<'pie'>, opts: ChartOptions<'pie'>, animate = true) {
-		if (!chart) return;
-		chart.data = applySliceBorders(resolveDatasetColors(d));
-		const t = buildChartTheme();
-		Object.assign(chart.options, {
-			plugins: { ...t.defaults.plugins, ...opts.plugins },
-			...opts,
-		});
-		chart.update(animate ? undefined : 'none');
-	}
+function updateChart(d: ChartData<'pie'>, opts: ChartOptions<'pie'>, animate = true) {
+	if (!chart) return;
+	chart.data = applySliceBorders(resolveDatasetColors(d));
+	const t = buildChartTheme();
+	Object.assign(chart.options, {
+		plugins: { ...t.defaults.plugins, ...opts.plugins },
+		...opts,
+	});
+	chart.update(animate ? undefined : 'none');
+}
 
-	function cleanup() {
-		unsub?.();
-		unsub = undefined;
-		chart?.destroy();
-		chart = undefined;
-	}
+function cleanup() {
+	unsub?.();
+	unsub = undefined;
+	chart?.destroy();
+	chart = undefined;
+}
 
-	beforeNavigate(cleanup);
-	onDestroy(cleanup);
+beforeNavigate(cleanup);
+onDestroy(cleanup);
 
-	onMount(async () => {
-		const { registerPieChart } = await import('../../_shared/register');
-		const Chart = await registerPieChart();
-		const theme = buildChartTheme();
+onMount(async () => {
+	const { registerPieChart } = await import('../../_shared/register');
+	const Chart = await registerPieChart();
+	const theme = buildChartTheme();
 
-		if (!canvasEl) return;
+	if (!canvasEl) return;
 
-		chart = new Chart(canvasEl, {
-			type: doughnut ? 'doughnut' : 'pie',
-			data: applySliceBorders(resolveDatasetColors(data)),
-			options: {
-				responsive: true,
-				maintainAspectRatio: true,
-				plugins: {
-					...theme.defaults.plugins,
-					...options.plugins,
-				},
-				...options,
+	chart = new Chart(canvasEl, {
+		type: (doughnut ? 'doughnut' : 'pie') as 'pie',
+		data: applySliceBorders(resolveDatasetColors(data)),
+		options: {
+			responsive: true,
+			maintainAspectRatio: true,
+			plugins: {
+				...theme.defaults.plugins,
+				...options.plugins,
 			},
-		}) as ChartJS<'pie' | 'doughnut'>;
+			...options,
+		},
+	}) as ChartJS<'pie' | 'doughnut'>;
 
-		unsub = onThemeChange(() => updateChart(data, options, false));
+	unsub = onThemeChange(() => updateChart(data, options, false));
 
-		requestAnimationFrame(() => chart?.resize());
-		ready = true;
-	});
+	requestAnimationFrame(() => chart?.resize());
+	ready = true;
+});
 
-	// Note: `doughnut` is construction-only — Chart.js type cannot change after creation
-	$effect(() => {
-		const _data = data;
-		const _options = options;
+// Note: `doughnut` is construction-only — Chart.js type cannot change after creation
+$effect(() => {
+	const _data = data;
+	const _options = options;
 
-		untrack(() => updateChart(_data, _options));
-	});
+	untrack(() => updateChart(_data, _options));
+});
 </script>
 
 <figure class={cn(chartContainerVariants({ aspect }), className)}>

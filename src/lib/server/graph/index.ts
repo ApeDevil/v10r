@@ -1,6 +1,6 @@
-import { NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD } from '$env/static/private';
-import { Neo4jError, classifyError } from './errors';
+import { NEO4J_PASSWORD, NEO4J_URI, NEO4J_USERNAME } from '$env/static/private';
 import { GRAPH_TIMEOUT_MS } from '$lib/server/config';
+import { classifyError, Neo4jError } from './errors';
 
 /** Derive HTTPS host from NEO4J_URI (neo4j+s://xxx → https://xxx) */
 function getHttpHost(): string {
@@ -68,10 +68,7 @@ export async function cypher<T = Record<string, unknown>>(
 		if (err instanceof DOMException && err.name === 'TimeoutError') {
 			throw new Neo4jError('timeout', `Query timed out after ${timeoutMs}ms`);
 		}
-		throw new Neo4jError(
-			'unavailable',
-			err instanceof Error ? err.message : 'Failed to reach Neo4j',
-		);
+		throw new Neo4jError('unavailable', err instanceof Error ? err.message : 'Failed to reach Neo4j');
 	}
 
 	if (response.status === 401 || response.status === 403) {

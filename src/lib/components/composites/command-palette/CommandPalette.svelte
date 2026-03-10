@@ -1,74 +1,70 @@
 <script lang="ts">
-	import { Command as CommandPrimitive } from 'bits-ui';
-	import { Dialog } from 'bits-ui';
-	import { goto } from '$app/navigation';
-	import { cn } from '$lib/utils/cn';
-	import type { CommandPaletteItem } from './types';
-	import {
-		commandPaletteOverlayVariants,
-		commandPaletteContentVariants,
-	} from './command-palette';
-	import {
-		commandInputVariants,
-		commandListVariants,
-		commandEmptyVariants,
-		commandGroupHeadingVariants,
-		commandItemVariants,
-		commandShortcutVariants,
-	} from '../command/command';
+import { Command as CommandPrimitive, Dialog } from 'bits-ui';
+import { goto } from '$app/navigation';
+import { cn } from '$lib/utils/cn';
+import {
+	commandEmptyVariants,
+	commandGroupHeadingVariants,
+	commandInputVariants,
+	commandItemVariants,
+	commandListVariants,
+	commandShortcutVariants,
+} from '../command/command';
+import { commandPaletteContentVariants, commandPaletteOverlayVariants } from './command-palette';
+import type { CommandPaletteItem } from './types';
 
-	interface Props {
-		open: boolean;
-		items: CommandPaletteItem[];
-		placeholder?: string;
+interface Props {
+	open: boolean;
+	items: CommandPaletteItem[];
+	placeholder?: string;
+}
+
+let { open = $bindable(false), items, placeholder = 'Search pages, panels, actions...' }: Props = $props();
+
+let inputValue = $state('');
+
+// Group items by type with per-group caps when query is active
+let grouped = $derived.by(() => {
+	const recent = items.filter((i) => i.type === 'recent');
+	const panels = items.filter((i) => i.type === 'panel');
+	const pages = items.filter((i) => i.type === 'page');
+	const actions = items.filter((i) => i.type === 'action');
+
+	if (inputValue) {
+		return {
+			recent,
+			panels: panels.slice(0, 4),
+			pages: pages.slice(0, 8),
+			actions: actions.slice(0, 3),
+		};
 	}
 
-	let { open = $bindable(false), items, placeholder = 'Search pages, panels, actions...' }: Props = $props();
+	// Hide pages when no query (too many)
+	return { recent, panels, pages: [], actions };
+});
 
-	let inputValue = $state('');
+function handleSelect(item: CommandPaletteItem) {
+	open = false;
+	inputValue = '';
+	if (item.href) {
+		goto(item.href);
+	} else if (item.action) {
+		item.action();
+	}
+}
 
-	// Group items by type with per-group caps when query is active
-	let grouped = $derived.by(() => {
-		const recent = items.filter((i) => i.type === 'recent');
-		const panels = items.filter((i) => i.type === 'panel');
-		const pages = items.filter((i) => i.type === 'page');
-		const actions = items.filter((i) => i.type === 'action');
+function handleSecondary(item: CommandPaletteItem) {
+	open = false;
+	inputValue = '';
+	item.secondary?.action();
+}
 
-		if (inputValue) {
-			return {
-				recent,
-				panels: panels.slice(0, 4),
-				pages: pages.slice(0, 8),
-				actions: actions.slice(0, 3),
-			};
-		}
-
-		// Hide pages when no query (too many)
-		return { recent, panels, pages: [], actions };
-	});
-
-	function handleSelect(item: CommandPaletteItem) {
-		open = false;
+// Reset on open
+$effect(() => {
+	if (open) {
 		inputValue = '';
-		if (item.href) {
-			goto(item.href);
-		} else if (item.action) {
-			item.action();
-		}
 	}
-
-	function handleSecondary(item: CommandPaletteItem) {
-		open = false;
-		inputValue = '';
-		item.secondary!.action();
-	}
-
-	// Reset on open
-	$effect(() => {
-		if (open) {
-			inputValue = '';
-		}
-	});
+});
 </script>
 
 <Dialog.Root bind:open>
@@ -77,14 +73,15 @@
 		<Dialog.Content class={commandPaletteContentVariants()}>
 			<CommandPrimitive.Root
 				class="flex flex-col"
-				bind:inputValue
+				shouldFilter={false}
 			>
 				<div class="cp-input-row flex items-center gap-3 px-4 py-3">
-					<span class="i-lucide-search h-5 w-5 text-muted shrink-0" />
+					<span class="i-lucide-search h-5 w-5 text-muted shrink-0" ></span>
 					<CommandPrimitive.Input
 						{placeholder}
 						class={cn(commandInputVariants(), 'flex-1')}
 						autofocus
+						bind:value={inputValue}
 					/>
 					<kbd class="cp-kbd rounded px-2 py-0.5 text-xs text-muted">ESC</kbd>
 				</div>
@@ -162,7 +159,7 @@
 			)}
 			onSelect={() => handleSelect(item)}
 		>
-			<span class={cn(item.icon, 'h-4 w-4 shrink-0')} />
+			<span class={cn(item.icon, 'h-4 w-4 shrink-0')} ></span>
 			<span class="flex flex-col min-w-0">
 				<span>{item.label}</span>
 				{#if item.hint}
@@ -183,7 +180,7 @@
 					handleSecondary(item);
 				}}
 			>
-				<span class={cn(item.secondary.icon, 'h-3.5 w-3.5')} />
+				<span class={cn(item.secondary.icon, 'h-3.5 w-3.5')} ></span>
 			</button>
 		{/if}
 	</div>

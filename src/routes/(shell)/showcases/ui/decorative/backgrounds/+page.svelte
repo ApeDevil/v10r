@@ -1,34 +1,34 @@
 <script lang="ts">
-	import { NavSection } from '$lib/components/composites';
-	import { DemoCard } from '../../components/_components';
-	import {
-		DotPattern,
-		GridPattern,
-		RetroGrid,
-		GradientBlob,
-		NoiseTexture,
-		RadialGlow,
-		FadeMask,
-		LineFill
-	} from '$lib/components';
+import {
+	DotPattern,
+	FadeMask,
+	GradientBlob,
+	GridPattern,
+	LineFill,
+	NoiseTexture,
+	RadialGlow,
+	RetroGrid,
+} from '$lib/components';
+import { NavSection } from '$lib/components/composites';
+import { DemoCard } from '../../components/_components';
 
-	const sections = [
-		{ id: 'bg-dot-pattern', label: 'DotPattern' },
-		{ id: 'bg-grid-pattern', label: 'GridPattern' },
-		{ id: 'bg-retro-grid', label: 'RetroGrid' },
-		{ id: 'bg-gradient-blob', label: 'GradientBlob' },
-		{ id: 'bg-noise-texture', label: 'NoiseTexture' },
-		{ id: 'bg-radial-glow', label: 'RadialGlow' },
-		{ id: 'bg-fade-mask', label: 'FadeMask' },
-		{ id: 'bg-line-fill', label: 'LineFill' },
-		{ id: 'bg-utilities', label: 'Utilities' },
-		{ id: 'bg-composition', label: 'Composition' },
-	];
+const sections = [
+	{ id: 'bg-dot-pattern', label: 'DotPattern' },
+	{ id: 'bg-grid-pattern', label: 'GridPattern' },
+	{ id: 'bg-retro-grid', label: 'RetroGrid' },
+	{ id: 'bg-gradient-blob', label: 'GradientBlob' },
+	{ id: 'bg-noise-texture', label: 'NoiseTexture' },
+	{ id: 'bg-radial-glow', label: 'RadialGlow' },
+	{ id: 'bg-fade-mask', label: 'FadeMask' },
+	{ id: 'bg-line-fill', label: 'LineFill' },
+	{ id: 'bg-utilities', label: 'Utilities' },
+	{ id: 'bg-composition', label: 'Composition' },
+];
 
-	const blendModes = ['overlay', 'soft-light', 'multiply', 'screen'] as const;
-	const glowPositions = ['center', 'top', 'bottom', 'top-left', 'top-right', 'bottom-left', 'bottom-right'] as const;
-	const glowSizes = ['sm', 'md', 'lg', 'full'] as const;
-	const lineVariants = ['scanline', 'hatch', 'crosshatch'] as const;
+const blendModes = ['overlay', 'soft-light', 'multiply', 'screen'] as const;
+const glowPositions = ['center', 'top', 'bottom', 'top-left', 'top-right', 'bottom-left', 'bottom-right'] as const;
+const glowSizes = ['sm', 'md', 'lg', 'full'] as const;
+const lineVariants = ['scanline', 'hatch', 'crosshatch'] as const;
 </script>
 
 <svelte:head>

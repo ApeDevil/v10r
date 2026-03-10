@@ -1,36 +1,29 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { Card, Alert } from '$lib/components/composites';
-	import { Badge, Button, Spinner } from '$lib/components/primitives';
-	import { Stack, Cluster } from '$lib/components/layout';
+import { enhance } from '$app/forms';
+import { Alert, Card } from '$lib/components/composites';
+import { Cluster, Stack } from '$lib/components/layout';
+import { Badge, Button, Spinner } from '$lib/components/primitives';
 
-	let { data } = $props();
+let { data } = $props();
 
-	let testing = $state(false);
+let testing = $state(false);
 
-	const latencyTier = $derived(
-		data.latencyMs < 100 ? 'warm' :
-		data.latencyMs < 1000 ? 'waking' : 'cold'
-	);
+const latencyTier = $derived(data.latencyMs < 100 ? 'warm' : data.latencyMs < 1000 ? 'waking' : 'cold');
 
-	const tierVariant = $derived(
-		latencyTier === 'warm' ? 'success' as const :
-		latencyTier === 'waking' ? 'warning' as const : 'error' as const
-	);
+const tierVariant = $derived(
+	latencyTier === 'warm' ? ('success' as const) : latencyTier === 'waking' ? ('warning' as const) : ('error' as const),
+);
 
-	const tierLabel = $derived(
-		latencyTier === 'warm' ? 'Warm' :
-		latencyTier === 'waking' ? 'Pool Wake' : 'Cold Start'
-	);
+const tierLabel = $derived(latencyTier === 'warm' ? 'Warm' : latencyTier === 'waking' ? 'Pool Wake' : 'Cold Start');
 
-	// Client-side latency history (last 5 results)
-	let history = $state<{ ms: number; tier: string; variant: 'success' | 'warning' | 'error' }[]>([]);
+// Client-side latency history (last 5 results)
+let history = $state<{ ms: number; tier: string; variant: 'success' | 'warning' | 'error' }[]>([]);
 
-	function recordHistory(ms: number) {
-		const tier = ms < 100 ? 'Warm' : ms < 1000 ? 'Wake' : 'Cold';
-		const variant = ms < 100 ? 'success' as const : ms < 1000 ? 'warning' as const : 'error' as const;
-		history = [...history.slice(-4), { ms, tier, variant }];
-	}
+function recordHistory(ms: number) {
+	const tier = ms < 100 ? 'Warm' : ms < 1000 ? 'Wake' : 'Cold';
+	const variant = ms < 100 ? ('success' as const) : ms < 1000 ? ('warning' as const) : ('error' as const);
+	history = [...history.slice(-4), { ms, tier, variant }];
+}
 </script>
 
 <svelte:head>
@@ -59,7 +52,7 @@
 							{#if testing}
 								<Spinner size="xs" class="mr-2" />
 							{/if}
-							<span class="i-lucide-activity h-4 w-4 mr-1" />
+							<span class="i-lucide-activity h-4 w-4 mr-1" ></span>
 							Re-test
 						</Button>
 					</form>

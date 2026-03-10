@@ -1,31 +1,31 @@
 <script lang="ts">
-	import { Typography } from '$lib/components';
-	import type { FontLoadState } from '$lib/utils/fonts';
+import { Typography } from '$lib/components';
+import type { FontLoadState } from '$lib/utils/fonts';
 
-	interface Props {
-		mode: 'single' | 'pairing';
-		fontStack: string;
-		headingFontStack: string;
-		bodyFontStack: string;
-		loadState: FontLoadState;
-		headingLoadState: FontLoadState;
-		bodyLoadState: FontLoadState;
-	}
+interface Props {
+	mode: 'single' | 'pairing';
+	fontStack: string;
+	headingFontStack: string;
+	bodyFontStack: string;
+	loadState: FontLoadState;
+	headingLoadState: FontLoadState;
+	bodyLoadState: FontLoadState;
+}
 
-	let { mode, fontStack, headingFontStack, bodyFontStack, loadState, headingLoadState, bodyLoadState }: Props = $props();
+let { mode, fontStack, headingFontStack, bodyFontStack, loadState, headingLoadState, bodyLoadState }: Props = $props();
 
-	function headingStyle(): string | undefined {
-		if (mode === 'single') return undefined;
-		return headingFontStack;
-	}
+function headingStyle(): string | undefined {
+	if (mode === 'single') return undefined;
+	return headingFontStack;
+}
 
-	function bodyStyle(): string | undefined {
-		if (mode === 'single') return undefined;
-		return bodyFontStack;
-	}
+function bodyStyle(): string | undefined {
+	if (mode === 'single') return undefined;
+	return bodyFontStack;
+}
 
-	let headingLoading = $derived(mode === 'single' ? loadState === 'loading' : headingLoadState === 'loading');
-	let bodyLoading = $derived(mode === 'single' ? loadState === 'loading' : bodyLoadState === 'loading');
+let headingLoading = $derived(mode === 'single' ? loadState === 'loading' : headingLoadState === 'loading');
+let bodyLoading = $derived(mode === 'single' ? loadState === 'loading' : bodyLoadState === 'loading');
 </script>
 
 <article class="prose" style:font-family={mode === 'single' ? fontStack : undefined}>

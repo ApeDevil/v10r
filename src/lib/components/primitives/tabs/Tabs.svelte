@@ -1,22 +1,22 @@
 <script lang="ts">
-	import { Tabs as TabsPrimitive } from 'bits-ui';
-	import { cn } from '$lib/utils/cn';
-	import type { Snippet } from 'svelte';
+import { Tabs as TabsPrimitive } from 'bits-ui';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils/cn';
 
-	interface Tab {
-		value: string;
-		label: string;
-		content: Snippet;
-		disabled?: boolean;
-	}
+interface Tab {
+	value: string;
+	label: string;
+	content: Snippet;
+	disabled?: boolean;
+}
 
-	interface Props {
-		tabs: Tab[];
-		value?: string;
-		class?: string;
-	}
+interface Props {
+	tabs: Tab[];
+	value?: string;
+	class?: string;
+}
 
-	let { tabs, value = $bindable(tabs[0]?.value ?? ''), class: className }: Props = $props();
+let { tabs, value = $bindable(tabs[0]?.value ?? ''), class: className }: Props = $props();
 </script>
 
 <div class="tabs-wrapper">

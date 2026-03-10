@@ -1,40 +1,44 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { Card, FormField } from '$lib/components/composites';
-	import { NotificationCard } from '$lib/components/composites/notifications';
-	import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
-	import { Stack } from '$lib/components/layout';
+import { enhance } from '$app/forms';
+import { Card, FormField } from '$lib/components/composites';
+import { NotificationCard } from '$lib/components/composites/notifications';
+import { Stack } from '$lib/components/layout';
+import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
 
-	let { data, form } = $props();
+let { data, form } = $props();
 
-	const quickTypes = [
-		{ type: 'mention', label: 'Mention', icon: 'i-lucide-at-sign' },
-		{ type: 'comment', label: 'Comment', icon: 'i-lucide-message-square' },
-		{ type: 'system', label: 'System', icon: 'i-lucide-info' },
-		{ type: 'success', label: 'Success', icon: 'i-lucide-check-circle' },
-		{ type: 'security', label: 'Security', icon: 'i-lucide-shield-alert' },
-		{ type: 'follow', label: 'Follow', icon: 'i-lucide-user-plus' },
-	];
+const quickTypes = [
+	{ type: 'mention', label: 'Mention', icon: 'i-lucide-at-sign' },
+	{ type: 'comment', label: 'Comment', icon: 'i-lucide-message-square' },
+	{ type: 'system', label: 'System', icon: 'i-lucide-info' },
+	{ type: 'success', label: 'Success', icon: 'i-lucide-check-circle' },
+	{ type: 'security', label: 'Security', icon: 'i-lucide-shield-alert' },
+	{ type: 'follow', label: 'Follow', icon: 'i-lucide-user-plus' },
+];
 
-	let sendingType = $state<string | null>(null);
-	let sentType = $state<string | null>(null);
-	let sendingCustom = $state(false);
-	let sentCustom = $state(false);
+let sendingType = $state<string | null>(null);
+let sentType = $state<string | null>(null);
+let sendingCustom = $state(false);
+let sentCustom = $state(false);
 
-	// Custom form state for live preview
-	let customType = $state('mention');
-	let customTitle = $state('');
-	let customBody = $state('');
+// Custom form state for live preview
+let customType = $state('mention');
+let customTitle = $state('');
+let customBody = $state('');
 
-	function flashSent(type: string) {
-		sentType = type;
-		setTimeout(() => { sentType = null; }, 2000);
-	}
+function flashSent(type: string) {
+	sentType = type;
+	setTimeout(() => {
+		sentType = null;
+	}, 2000);
+}
 
-	function flashCustomSent() {
-		sentCustom = true;
-		setTimeout(() => { sentCustom = false; }, 2000);
-	}
+function flashCustomSent() {
+	sentCustom = true;
+	setTimeout(() => {
+		sentCustom = false;
+	}, 2000);
+}
 </script>
 
 <svelte:head>

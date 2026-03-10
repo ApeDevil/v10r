@@ -1,37 +1,37 @@
 <script lang="ts">
-	import { Alert } from '$lib/components/composites';
-	import { PieChart } from '$lib/components/viz/chart/pie';
-	import ChartSection from '../_components/ChartSection.svelte';
-	import MetricCard from '../_components/MetricCard.svelte';
-	import type { ChartData } from 'chart.js';
+import type { ChartData } from 'chart.js';
+import { Alert } from '$lib/components/composites';
+import { PieChart } from '$lib/components/viz/chart/pie';
+import ChartSection from '../_components/ChartSection.svelte';
+import MetricCard from '../_components/MetricCard.svelte';
 
-	let { data } = $props();
+let { data } = $props();
 
-	const consentChartData: ChartData<'pie'> = $derived({
-		labels: data.consent.map((c) => c.tier.charAt(0).toUpperCase() + c.tier.slice(1)),
-		datasets: [
-			{
-				data: data.consent.map((c) => Number(c.count)),
-				backgroundColor: ['var(--chart-3)', 'var(--chart-1)', 'var(--chart-2)'],
-			},
-		],
+const consentChartData: ChartData<'pie'> = $derived({
+	labels: data.consent.map((c) => c.tier.charAt(0).toUpperCase() + c.tier.slice(1)),
+	datasets: [
+		{
+			data: data.consent.map((c) => Number(c.count)),
+			backgroundColor: ['var(--chart-3)', 'var(--chart-1)', 'var(--chart-2)'],
+		},
+	],
+});
+
+const totalSessions = $derived(data.consent.reduce((sum, c) => sum + Number(c.count), 0));
+
+function formatDate(ts: string | null): string {
+	if (!ts) return '—';
+	return new Date(ts).toLocaleDateString('en-US', {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric',
 	});
+}
 
-	const totalSessions = $derived(data.consent.reduce((sum, c) => sum + Number(c.count), 0));
-
-	function formatDate(ts: string | null): string {
-		if (!ts) return '—';
-		return new Date(ts).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric',
-		});
-	}
-
-	function daysOld(ts: string | null): number {
-		if (!ts) return 0;
-		return Math.floor((Date.now() - new Date(ts).getTime()) / 86400000);
-	}
+function daysOld(ts: string | null): number {
+	if (!ts) return 0;
+	return Math.floor((Date.now() - new Date(ts).getTime()) / 86400000);
+}
 </script>
 
 {#if data.error}

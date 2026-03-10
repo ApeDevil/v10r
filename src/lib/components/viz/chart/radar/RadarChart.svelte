@@ -1,97 +1,91 @@
 <script lang="ts">
-	import { onDestroy, onMount, untrack } from 'svelte';
-	import { beforeNavigate } from '$app/navigation';
-	import { cn } from '$lib/utils/cn';
-	import { chartContainerVariants, type ChartContainerVariants } from '../../_shared/chart-container';
-	import { buildChartTheme } from '../../_shared/chart-theme';
-	import { getChartInfraColors, onThemeChange, resolveDatasetColors } from '../../_shared/theme-bridge';
-	import type { Chart as ChartJS, ChartData, ChartOptions } from 'chart.js';
+import type { ChartData, Chart as ChartJS, ChartOptions } from 'chart.js';
+import { onDestroy, onMount, untrack } from 'svelte';
+import { beforeNavigate } from '$app/navigation';
+import { cn } from '$lib/utils/cn';
+import { type ChartContainerVariants, chartContainerVariants } from '../../_shared/chart-container';
+import { buildChartTheme } from '../../_shared/chart-theme';
+import { getChartInfraColors, onThemeChange, resolveDatasetColors } from '../../_shared/theme-bridge';
 
-	interface Props {
-		data: ChartData<'radar'>;
-		options?: ChartOptions<'radar'>;
-		aspect?: ChartContainerVariants['aspect'];
-		ariaLabel?: string;
-		class?: string;
-	}
+interface Props {
+	data: ChartData<'radar'>;
+	options?: ChartOptions<'radar'>;
+	aspect?: ChartContainerVariants['aspect'];
+	ariaLabel?: string;
+	class?: string;
+}
 
-	let {
-		data,
-		options = {},
-		aspect = 'square',
-		ariaLabel = 'Radar chart',
-		class: className,
-	}: Props = $props();
+let { data, options = {}, aspect = 'square', ariaLabel = 'Radar chart', class: className }: Props = $props();
 
-	let canvasEl: HTMLCanvasElement | undefined = $state();
-	let chart: ChartJS<'radar'> | undefined = $state();
-	let ready = $state(false);
-	let unsub: (() => void) | undefined;
+let canvasEl: HTMLCanvasElement | undefined = $state();
+let chart: ChartJS<'radar'> | undefined = $state();
+let ready = $state(false);
+let unsub: (() => void) | undefined;
 
-	function buildRadarDefaults() {
-		const theme = buildChartTheme();
-		const infra = getChartInfraColors();
-		return {
-			...theme.defaults,
-			scales: {
-				r: {
-					grid: { color: infra.grid },
-					ticks: { color: infra.axis, backdropColor: 'transparent' },
-					pointLabels: { color: infra.label },
-					angleLines: { color: infra.grid },
-				},
+function buildRadarDefaults() {
+	const theme = buildChartTheme();
+	const infra = getChartInfraColors();
+	return {
+		...theme.defaults,
+		scales: {
+			r: {
+				grid: { color: infra.grid },
+				ticks: { color: infra.axis, backdropColor: 'transparent' },
+				pointLabels: { color: infra.label },
+				angleLines: { color: infra.grid },
 			},
-		};
-	}
+		},
+	};
+}
 
-	function updateChart(d: ChartData<'radar'>, opts: ChartOptions<'radar'>, animate = true) {
-		if (!chart) return;
-		chart.data = resolveDatasetColors(d);
-		const defaults = buildRadarDefaults();
-		Object.assign(chart.options, defaults, opts);
-		chart.update(animate ? undefined : 'none');
-	}
+function updateChart(d: ChartData<'radar'>, opts: ChartOptions<'radar'>, animate = true) {
+	if (!chart) return;
+	chart.data = resolveDatasetColors(d);
+	const defaults = buildRadarDefaults();
+	Object.assign(chart.options, defaults, opts);
+	chart.update(animate ? undefined : 'none');
+}
 
-	function cleanup() {
-		unsub?.();
-		unsub = undefined;
-		chart?.destroy();
-		chart = undefined;
-	}
+function cleanup() {
+	unsub?.();
+	unsub = undefined;
+	chart?.destroy();
+	chart = undefined;
+}
 
-	beforeNavigate(cleanup);
-	onDestroy(cleanup);
+beforeNavigate(cleanup);
+onDestroy(cleanup);
 
-	onMount(async () => {
-		const { registerRadarChart } = await import('../../_shared/register');
-		const Chart = await registerRadarChart();
-		const defaults = buildRadarDefaults();
+onMount(async () => {
+	const { registerRadarChart } = await import('../../_shared/register');
+	const Chart = await registerRadarChart();
+	const defaults = buildRadarDefaults();
 
-		if (!canvasEl) return;
+	if (!canvasEl) return;
 
-		chart = new Chart(canvasEl, {
-			type: 'radar',
-			data: resolveDatasetColors(data),
-			options: {
-				responsive: true,
-				maintainAspectRatio: true,
-				...defaults,
-				...options,
-			},
-		});
-
-		unsub = onThemeChange(() => updateChart(data, options, false));
-
-		requestAnimationFrame(() => chart?.resize());
-		ready = true;
+	chart = new Chart(canvasEl, {
+		type: 'radar',
+		data: resolveDatasetColors(data),
+		options: {
+			responsive: true,
+			maintainAspectRatio: true,
+			...defaults,
+			...options,
+		},
 	});
 
-	$effect(() => {
-		const _data = data;
-		const _options = options;
+	unsub = onThemeChange(() => updateChart(data, options, false));
 
-		untrack(() => updateChart(_data, _options));
-	});
+	requestAnimationFrame(() => chart?.resize());
+	ready = true;
+});
+
+$effect(() => {
+	const _data = data;
+	const _options = options;
+
+	untrack(() => updateChart(_data, _options));
+});
 </script>
 
 <figure class={cn(chartContainerVariants({ aspect }), className)}>

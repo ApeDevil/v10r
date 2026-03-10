@@ -1,147 +1,142 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
-	import { beforeNavigate } from '$app/navigation';
-	import { cn } from '$lib/utils/cn';
-	import { chartContainerVariants, type ChartContainerVariants } from '../../_shared/chart-container';
-	import { getVizPalette } from '../../_shared/theme-bridge';
-	import type { TreemapNode } from './types';
-	import type { HierarchyRectangularNode } from 'd3-hierarchy';
+import type { HierarchyRectangularNode } from 'd3-hierarchy';
+import { onDestroy, onMount } from 'svelte';
+import { beforeNavigate } from '$app/navigation';
+import { cn } from '$lib/utils/cn';
+import { type ChartContainerVariants, chartContainerVariants } from '../../_shared/chart-container';
+import { getVizPalette } from '../../_shared/theme-bridge';
+import type { TreemapNode } from './types';
 
-	interface Props {
-		data: TreemapNode;
-		aspect?: ChartContainerVariants['aspect'];
-		ariaLabel?: string;
-		formatValue?: (value: number) => string;
-		class?: string;
+interface Props {
+	data: TreemapNode;
+	aspect?: ChartContainerVariants['aspect'];
+	ariaLabel?: string;
+	formatValue?: (value: number) => string;
+	class?: string;
+}
+
+let {
+	data,
+	aspect = 'chart',
+	ariaLabel = 'Treemap',
+	formatValue = (v: number) => v.toLocaleString(),
+	class: className,
+}: Props = $props();
+
+let containerEl: HTMLDivElement | undefined = $state();
+let width = $state(600);
+let height = $state(400);
+let ready = $state(false);
+let palette: string[] = [];
+let d3Mod: typeof import('d3-hierarchy') | undefined;
+let resizeObserver: ResizeObserver | undefined;
+
+let zoomStack = $state<TreemapNode[]>([]);
+let hoveredId = $state<string | null>(null);
+
+const currentRoot = $derived(zoomStack.length > 0 ? zoomStack[zoomStack.length - 1] : data);
+
+let cells = $state<HierarchyRectangularNode<TreemapNode>[]>([]);
+
+// Assign top-level category colors
+function getTopColor(node: HierarchyRectangularNode<TreemapNode>): string {
+	let current = node;
+	while (current.depth > 1 && current.parent) {
+		current = current.parent;
+	}
+	const siblings = current.parent?.children ?? [current];
+	const idx = siblings.indexOf(current);
+	return palette[idx % palette.length] || '#3b82f6';
+}
+
+function getCellOpacity(node: HierarchyRectangularNode<TreemapNode>): number {
+	// Deeper = more transparent for visual hierarchy
+	return Math.max(0.5, 1 - (node.depth - 1) * 0.15);
+}
+
+function computeLayout() {
+	if (!d3Mod) return;
+
+	const root = d3Mod
+		.hierarchy(currentRoot)
+		.sum((d) => d.value ?? 0)
+		.sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
+
+	d3Mod.treemap<TreemapNode>().size([width, height]).padding(2).round(true)(root);
+
+	cells = (root.descendants() as HierarchyRectangularNode<TreemapNode>[]).filter((d) => d.depth > 0);
+}
+
+function cleanup() {
+	resizeObserver?.disconnect();
+	resizeObserver = undefined;
+	d3Mod = undefined;
+}
+
+beforeNavigate(cleanup);
+onDestroy(cleanup);
+
+onMount(async () => {
+	palette = getVizPalette();
+	d3Mod = await import('d3-hierarchy');
+
+	if (containerEl) {
+		const rect = containerEl.getBoundingClientRect();
+		width = rect.width || 600;
+		height = rect.height || 400;
 	}
 
-	let {
-		data,
-		aspect = 'chart',
-		ariaLabel = 'Treemap',
-		formatValue = (v: number) => v.toLocaleString(),
-		class: className,
-	}: Props = $props();
+	computeLayout();
+	ready = true;
 
-	let containerEl: HTMLDivElement | undefined = $state();
-	let width = $state(600);
-	let height = $state(400);
-	let ready = $state(false);
-	let palette: string[] = [];
-	let d3Mod: typeof import('d3-hierarchy') | undefined;
-	let resizeObserver: ResizeObserver | undefined;
-
-	let zoomStack = $state<TreemapNode[]>([]);
-	let hoveredId = $state<string | null>(null);
-
-	const currentRoot = $derived(
-		zoomStack.length > 0 ? zoomStack[zoomStack.length - 1] : data
-	);
-
-	let cells = $state<HierarchyRectangularNode<TreemapNode>[]>([]);
-
-	// Assign top-level category colors
-	function getTopColor(node: HierarchyRectangularNode<TreemapNode>): string {
-		let current = node;
-		while (current.depth > 1 && current.parent) {
-			current = current.parent;
-		}
-		const siblings = current.parent?.children ?? [current];
-		const idx = siblings.indexOf(current);
-		return palette[idx % palette.length] || '#3b82f6';
+	if (containerEl) {
+		resizeObserver = new ResizeObserver((entries) => {
+			for (const entry of entries) {
+				width = entry.contentRect.width || 600;
+				height = entry.contentRect.height || 400;
+			}
+		});
+		resizeObserver.observe(containerEl);
 	}
+});
 
-	function getCellOpacity(node: HierarchyRectangularNode<TreemapNode>): number {
-		// Deeper = more transparent for visual hierarchy
-		return Math.max(0.5, 1 - (node.depth - 1) * 0.15);
-	}
-
-	function computeLayout() {
-		if (!d3Mod) return;
-
-		const root = d3Mod.hierarchy(currentRoot)
-			.sum((d) => d.value ?? 0)
-			.sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
-
-		d3Mod.treemap<TreemapNode>()
-			.size([width, height])
-			.padding(2)
-			.round(true)(root);
-
-		cells = (root.descendants() as HierarchyRectangularNode<TreemapNode>[])
-			.filter((d) => d.depth > 0);
-	}
-
-	function cleanup() {
-		resizeObserver?.disconnect();
-		resizeObserver = undefined;
-		d3Mod = undefined;
-	}
-
-	beforeNavigate(cleanup);
-	onDestroy(cleanup);
-
-	onMount(async () => {
-		palette = getVizPalette();
-		d3Mod = await import('d3-hierarchy');
-
-		if (containerEl) {
-			const rect = containerEl.getBoundingClientRect();
-			width = rect.width || 600;
-			height = rect.height || 400;
-		}
-
+// Recompute on data, zoom, or size change
+$effect(() => {
+	// Track reactive deps
+	const _data = data;
+	const _currentRoot = currentRoot;
+	const _w = width;
+	const _h = height;
+	if (d3Mod && ready) {
 		computeLayout();
-		ready = true;
-
-		if (containerEl) {
-			resizeObserver = new ResizeObserver((entries) => {
-				for (const entry of entries) {
-					width = entry.contentRect.width || 600;
-					height = entry.contentRect.height || 400;
-				}
-			});
-			resizeObserver.observe(containerEl);
-		}
-	});
-
-	// Recompute on data, zoom, or size change
-	$effect(() => {
-		// Track reactive deps
-		const _data = data;
-		const _currentRoot = currentRoot;
-		const _w = width;
-		const _h = height;
-		if (d3Mod && ready) {
-			computeLayout();
-		}
-	});
-
-	function zoomIn(node: HierarchyRectangularNode<TreemapNode>) {
-		if (node.data.children && node.data.children.length > 0) {
-			zoomStack = [...zoomStack, node.data];
-		}
 	}
+});
 
-	function zoomTo(index: number) {
-		if (index < 0) {
-			zoomStack = [];
-		} else {
-			zoomStack = zoomStack.slice(0, index + 1);
-		}
+function zoomIn(node: HierarchyRectangularNode<TreemapNode>) {
+	if (node.data.children && node.data.children.length > 0) {
+		zoomStack = [...zoomStack, node.data];
 	}
+}
 
-	function canShowLabel(node: HierarchyRectangularNode<TreemapNode>): boolean {
-		const w = (node.x1 ?? 0) - (node.x0 ?? 0);
-		const h = (node.y1 ?? 0) - (node.y0 ?? 0);
-		return w > 40 && h > 24;
+function zoomTo(index: number) {
+	if (index < 0) {
+		zoomStack = [];
+	} else {
+		zoomStack = zoomStack.slice(0, index + 1);
 	}
+}
 
-	function canShowValue(node: HierarchyRectangularNode<TreemapNode>): boolean {
-		const w = (node.x1 ?? 0) - (node.x0 ?? 0);
-		const h = (node.y1 ?? 0) - (node.y0 ?? 0);
-		return w > 50 && h > 38;
-	}
+function canShowLabel(node: HierarchyRectangularNode<TreemapNode>): boolean {
+	const w = (node.x1 ?? 0) - (node.x0 ?? 0);
+	const h = (node.y1 ?? 0) - (node.y0 ?? 0);
+	return w > 40 && h > 24;
+}
+
+function canShowValue(node: HierarchyRectangularNode<TreemapNode>): boolean {
+	const w = (node.x1 ?? 0) - (node.x0 ?? 0);
+	const h = (node.y1 ?? 0) - (node.y0 ?? 0);
+	return w > 50 && h > 38;
+}
 </script>
 
 <figure class={cn(chartContainerVariants({ aspect }), className)}>

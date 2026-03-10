@@ -2,13 +2,14 @@
  * Notification service — the main entry point for sending notifications.
  * Creates the in-app notification, pushes SSE, and routes to external channels.
  */
-import { createNotification } from '$lib/server/db/notifications/mutations';
-import { notifyUser } from './stream';
-import { routeToChannels } from './router';
-import { createDeliveries } from './outbox';
-import { db } from '$lib/server/db';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
+
 import { eq } from 'drizzle-orm';
+import { db } from '$lib/server/db';
+import { createNotification } from '$lib/server/db/notifications/mutations';
+import { user } from '$lib/server/db/schema/auth/_better-auth';
+import { createDeliveries } from './outbox';
+import { routeToChannels } from './router';
+import { notifyUser } from './stream';
 
 type NotificationType = 'mention' | 'comment' | 'system' | 'success' | 'security' | 'follow';
 
@@ -55,11 +56,7 @@ export class NotificationService {
 		if (channels.length === 0) return;
 
 		// Resolve user email for the delivery payload
-		const [u] = await db
-			.select({ email: user.email })
-			.from(user)
-			.where(eq(user.id, userId))
-			.limit(1);
+		const [u] = await db.select({ email: user.email }).from(user).where(eq(user.id, userId)).limit(1);
 
 		if (!u) return;
 

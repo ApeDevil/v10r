@@ -1,33 +1,33 @@
 <script lang="ts">
-	import type { PipelineStepState, PipelineStepId } from '$lib/types/pipeline';
+import type { PipelineStepId, PipelineStepState } from '$lib/types/pipeline';
 
-	interface Props {
-		step: PipelineStepState;
-		x: number;
-		y: number;
-		hovered?: boolean;
-		onselect: (id: PipelineStepId) => void;
-		onhover?: (id: PipelineStepId | null) => void;
-	}
+interface Props {
+	step: PipelineStepState;
+	x: number;
+	y: number;
+	hovered?: boolean;
+	onselect: (id: PipelineStepId) => void;
+	onhover?: (id: PipelineStepId | null) => void;
+}
 
-	let { step, x, y, hovered = false, onselect, onhover }: Props = $props();
+let { step, x, y, hovered = false, onselect, onhover }: Props = $props();
 
-	const r = 14;
+const r = 14;
 
-	const clickable = $derived(step.status === 'done' || step.status === 'error');
+const clickable = $derived(step.status === 'done' || step.status === 'error');
 
-	/** Simplified SVG icon paths per step */
-	const iconPaths: Record<PipelineStepId, string> = {
-		'embed': 'M-4,-4 L4,-4 L4,4 L-4,4 Z M-2,-2 L2,-2 L2,2 L-2,2 Z',
-		'tier-1': 'M0,-5 L5,3 L-5,3 Z',
-		'tier-2': 'M-4,-4 L4,-4 L4,4 L-4,4 Z',
-		'tier-3': 'M0,-5 L5,0 L0,5 L-5,0 Z',
-		'rank': 'M-4,-3 L4,-3 M-3,0 L3,0 M-2,3 L2,3',
-		'context': 'M-4,-4 L4,-4 L4,4 L-4,4 Z M-2,-2 L2,-2 M-2,0 L2,0 M-2,2 L1,2',
-		'generate': 'M0,-5 L2,-1 L5,0 L2,1 L0,5 L-2,1 L-5,0 L-2,-1 Z',
-	};
+/** Simplified SVG icon paths per step */
+const iconPaths: Record<PipelineStepId, string> = {
+	embed: 'M-4,-4 L4,-4 L4,4 L-4,4 Z M-2,-2 L2,-2 L2,2 L-2,2 Z',
+	'tier-1': 'M0,-5 L5,3 L-5,3 Z',
+	'tier-2': 'M-4,-4 L4,-4 L4,4 L-4,4 Z',
+	'tier-3': 'M0,-5 L5,0 L0,5 L-5,0 Z',
+	rank: 'M-4,-3 L4,-3 M-3,0 L3,0 M-2,3 L2,3',
+	context: 'M-4,-4 L4,-4 L4,4 L-4,4 Z M-2,-2 L2,-2 M-2,0 L2,0 M-2,2 L1,2',
+	generate: 'M0,-5 L2,-1 L5,0 L2,1 L0,5 L-2,1 L-5,0 L-2,-1 Z',
+};
 
-	const isStroke = $derived(step.id === 'rank');
+const isStroke = $derived(step.id === 'rank');
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->

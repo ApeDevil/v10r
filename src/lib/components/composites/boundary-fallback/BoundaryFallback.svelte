@@ -1,19 +1,14 @@
 <script lang="ts">
-	import { Button } from '$lib/components/primitives';
+import { Button } from '$lib/components/primitives';
 
-	interface Props {
-		title?: string;
-		description?: string;
-		minHeight?: string;
-		reset: () => void;
-	}
+interface Props {
+	title?: string;
+	description?: string;
+	minHeight?: string;
+	reset: () => void;
+}
 
-	let {
-		title = 'Something went wrong',
-		description,
-		minHeight,
-		reset,
-	}: Props = $props();
+let { title = 'Something went wrong', description, minHeight, reset }: Props = $props();
 </script>
 
 <div class="boundary-fallback" style:min-height={minHeight} role="alert">

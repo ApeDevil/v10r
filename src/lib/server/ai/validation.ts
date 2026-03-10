@@ -8,14 +8,8 @@ const ChatMessageSchema = v.object({
 });
 
 export const ChatRequestSchema = v.object({
-	messages: v.pipe(
-		v.array(ChatMessageSchema),
-		v.minLength(1),
-		v.maxLength(100),
-	),
-	conversationId: v.optional(
-		v.pipe(v.string(), v.uuid()),
-	),
+	messages: v.pipe(v.array(ChatMessageSchema), v.minLength(1), v.maxLength(100)),
+	conversationId: v.optional(v.pipe(v.string(), v.uuid())),
 	useRetrieval: v.optional(v.boolean()),
 	retrievalTiers: v.optional(v.array(v.picklist([1, 2, 3]))),
 });
@@ -25,7 +19,5 @@ export const StreamingRequestSchema = v.object({
 });
 
 export const CreateConversationSchema = v.object({
-	title: v.optional(
-		v.pipe(v.string(), v.minLength(1), v.maxLength(200)),
-	),
+	title: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(200))),
 });

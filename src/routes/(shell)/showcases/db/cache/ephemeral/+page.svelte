@@ -1,62 +1,74 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { Card, NavSection, Alert } from '$lib/components/composites';
-	import { Badge, Button, Input, Progress, Spinner, Typography } from '$lib/components/primitives';
-	import { Table, Header, Body, Row, HeaderCell, Cell } from '$lib/components/primitives';
-	import { getToast } from '$lib/state/toast.svelte';
-	import { Stack, Cluster } from '$lib/components/layout';
+import { enhance } from '$app/forms';
+import { Alert, Card, NavSection } from '$lib/components/composites';
+import { Cluster, Stack } from '$lib/components/layout';
+import {
+	Badge,
+	Body,
+	Button,
+	Cell,
+	Header,
+	HeaderCell,
+	Input,
+	Progress,
+	Row,
+	Spinner,
+	Table,
+	Typography,
+} from '$lib/components/primitives';
+import { getToast } from '$lib/state/toast.svelte';
 
-	let { data } = $props();
+let { data } = $props();
 
-	function formatTtl(seconds: number): string {
-		if (seconds === -2) return 'expired';
-		if (seconds === -1) return 'no expiry';
-		if (seconds < 60) return `${seconds}s`;
-		if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
-		const h = Math.floor(seconds / 3600);
-		const m = Math.floor((seconds % 3600) / 60);
-		return m > 0 ? `${h}h ${m}m` : `${h}h`;
-	}
-	const toast = getToast();
+function formatTtl(seconds: number): string {
+	if (seconds === -2) return 'expired';
+	if (seconds === -1) return 'no expiry';
+	if (seconds < 60) return `${seconds}s`;
+	if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+	const h = Math.floor(seconds / 3600);
+	const m = Math.floor((seconds % 3600) / 60);
+	return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
+const toast = getToast();
 
-	const sections = [
-		{ id: 'ttl-countdown', label: 'TTL Countdown' },
-		{ id: 'sliding-expiry', label: 'Sliding Expiry' },
-		{ id: 'rate-limiting', label: 'Rate Limiting' },
-		{ id: 'cache-vs-db', label: 'Cache vs DB' },
-	];
+const sections = [
+	{ id: 'ttl-countdown', label: 'TTL Countdown' },
+	{ id: 'sliding-expiry', label: 'Sliding Expiry' },
+	{ id: 'rate-limiting', label: 'Rate Limiting' },
+	{ id: 'cache-vs-db', label: 'Cache vs DB' },
+];
 
-	// ─── TTL state ──────────────────────────────────────
-	let newTtlKey = $state('showcase:ttl:');
-	let newTtlValue = $state('');
-	let newTtlSeconds = $state('60');
+// ─── TTL state ──────────────────────────────────────
+let newTtlKey = $state('showcase:ttl:');
+let newTtlValue = $state('');
+let newTtlSeconds = $state('60');
 
-	// ─── Sliding state ──────────────────────────────────
-	let slideResult = $state<{ before: any; after: any } | null>(null);
+// ─── Sliding state ──────────────────────────────────
+let slideResult = $state<{ before: any; after: any } | null>(null);
 
-	// ─── Rate limit state ───────────────────────────────
-	let rateLimitResult = $state<any>(null);
-	let rateLoading = $state(false);
+// ─── Rate limit state ───────────────────────────────
+let rateLimitResult = $state<any>(null);
+let rateLoading = $state(false);
 
-	// ─── Loading ────────────────────────────────────────
-	let actionLoading = $state('');
+// ─── Loading ────────────────────────────────────────
+let actionLoading = $state('');
 
-	function handleResult(successMsg?: string) {
-		return ({ result, update }: { result: any; update: (opts?: any) => Promise<void> }) => {
-			actionLoading = '';
-			rateLoading = false;
-			if (result.type === 'success' && result.data) {
-				if (result.data.rateLimit) rateLimitResult = result.data.rateLimit;
-				if (result.data.before && result.data.after) {
-					slideResult = { before: result.data.before, after: result.data.after };
-				}
-				toast.success(result.data.message || successMsg || 'Done.');
-			} else if (result.type === 'failure') {
-				toast.error(result.data?.message || 'Operation failed.');
+function handleResult(successMsg?: string) {
+	return ({ result, update }: { result: any; update: (opts?: any) => Promise<void> }) => {
+		actionLoading = '';
+		rateLoading = false;
+		if (result.type === 'success' && result.data) {
+			if (result.data.rateLimit) rateLimitResult = result.data.rateLimit;
+			if (result.data.before && result.data.after) {
+				slideResult = { before: result.data.before, after: result.data.after };
 			}
-			return update();
-		};
-	}
+			toast.success((result.data.message as string) || successMsg || 'Done.');
+		} else if (result.type === 'failure') {
+			toast.error((result.data?.message as string) || 'Operation failed.');
+		}
+		return update();
+	};
+}
 </script>
 
 <svelte:head>
@@ -194,7 +206,7 @@
 							<input type="hidden" name="window" value="10" />
 							<Button type="submit" variant="outline" size="sm" disabled={rateLoading}>
 								{#if rateLoading}<Spinner size="xs" class="mr-1" />{/if}
-								<span class="i-lucide-send h-4 w-4 mr-1" />
+								<span class="i-lucide-send h-4 w-4 mr-1" ></span>
 								Send Request
 							</Button>
 						</form>

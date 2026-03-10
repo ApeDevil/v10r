@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { PageHeader, BackLink } from '$lib/components';
-	import { BoundaryFallback } from '$lib/components/composites';
-	import { Canvas, T } from '@threlte/core';
-	import { OrbitControls, GLTF } from '@threlte/extras';
+import { Canvas, T } from '@threlte/core';
+import { GLTF, OrbitControls } from '@threlte/extras';
+import { BackLink, PageHeader } from '$lib/components';
+import { BoundaryFallback } from '$lib/components/composites';
 </script>
 
 <svelte:head>

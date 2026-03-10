@@ -37,9 +37,7 @@ export function onThemeChange(fn: Listener): () => void {
 /** Read a single CSS custom property value (e.g., getCSSVar('chart-1') reads --chart-1) */
 export function getCSSVar(token: string): string {
 	if (typeof document === 'undefined') return '#000';
-	return getComputedStyle(document.documentElement)
-		.getPropertyValue(`--${token}`)
-		.trim();
+	return getComputedStyle(document.documentElement).getPropertyValue(`--${token}`).trim();
 }
 
 /** Get the 8-color chart palette from CSS custom properties */
@@ -88,9 +86,8 @@ export function resolveColor(value: string): string {
  * Walk a ChartData object and resolve any CSS var() references in color properties.
  * Returns a new object (does not mutate the original).
  */
-export function resolveDatasetColors<T extends { datasets: Record<string, unknown>[] }>(
-	chartData: T,
-): T {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function resolveDatasetColors<T extends { datasets: any[] }>(chartData: T): T {
 	if (typeof document === 'undefined') return chartData;
 
 	const COLOR_KEYS = [
@@ -102,11 +99,14 @@ export function resolveDatasetColors<T extends { datasets: Record<string, unknow
 		'pointBorderColor',
 	];
 
+	type AnyDataset = Record<string, unknown>;
+	const datasets = chartData.datasets as AnyDataset[];
+
 	// Collect all color strings for batch resolution
 	const colorEntries: { dsIdx: number; key: string; arrIdx?: number; value: string }[] = [];
 
-	for (let dsIdx = 0; dsIdx < chartData.datasets.length; dsIdx++) {
-		const ds = chartData.datasets[dsIdx];
+	for (let dsIdx = 0; dsIdx < datasets.length; dsIdx++) {
+		const ds = datasets[dsIdx];
 		for (const key of COLOR_KEYS) {
 			const val = ds[key];
 			if (typeof val === 'string') {
@@ -126,13 +126,13 @@ export function resolveDatasetColors<T extends { datasets: Record<string, unknow
 	const resolved = resolveColors(colorEntries.map((e) => e.value));
 
 	// Build new datasets with resolved colors
-	const newDatasets = chartData.datasets.map((ds) => ({ ...ds }));
+	const newDatasets = datasets.map((ds) => ({ ...ds }));
 	for (let i = 0; i < colorEntries.length; i++) {
 		const { dsIdx, key, arrIdx } = colorEntries[i];
 		if (arrIdx !== undefined) {
 			// Array color — clone array on first write
-			if (!Array.isArray(newDatasets[dsIdx][key]) || newDatasets[dsIdx][key] === chartData.datasets[dsIdx][key]) {
-				newDatasets[dsIdx][key] = [...(chartData.datasets[dsIdx][key] as unknown[])];
+			if (!Array.isArray(newDatasets[dsIdx][key]) || newDatasets[dsIdx][key] === datasets[dsIdx][key]) {
+				newDatasets[dsIdx][key] = [...(datasets[dsIdx][key] as unknown[])];
 			}
 			(newDatasets[dsIdx][key] as unknown[])[arrIdx] = resolved[i];
 		} else {
@@ -140,7 +140,7 @@ export function resolveDatasetColors<T extends { datasets: Record<string, unknow
 		}
 	}
 
-	return { ...chartData, datasets: newDatasets };
+	return { ...chartData, datasets: newDatasets } as T;
 }
 
 /** Get chart infrastructure colors */

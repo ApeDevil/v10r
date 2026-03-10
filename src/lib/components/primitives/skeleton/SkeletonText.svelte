@@ -1,20 +1,24 @@
 <script lang="ts">
-	import Skeleton from './Skeleton.svelte';
+import Skeleton from './Skeleton.svelte';
 
-	interface Props {
-		lines?: number;
-		class?: string;
-	}
+interface Props {
+	lines?: number;
+	width?: string;
+	class?: string;
+}
 
-	let { lines = 3, class: className }: Props = $props();
+let { lines = 3, width, class: className }: Props = $props();
 
-	// Generate random widths for natural text appearance
-	const lineWidths = $derived(
-		Array.from({ length: lines }, (_, i) => {
-			if (i === lines - 1) return `${60 + Math.random() * 20}%`; // Last line shorter
-			return `${85 + Math.random() * 15}%`; // Other lines nearly full width
-		})
-	);
+// Generate random widths for natural text appearance
+// If width prop is provided and lines=1, use it directly
+const lineWidths = $derived(
+	width && lines === 1
+		? [width]
+		: Array.from({ length: lines }, (_, i) => {
+				if (i === lines - 1) return width || `${60 + Math.random() * 20}%`; // Last line shorter
+				return `${85 + Math.random() * 15}%`; // Other lines nearly full width
+			}),
+);
 </script>
 
 <div class="skeleton-text {className || ''}" role="status" aria-label="Loading text">

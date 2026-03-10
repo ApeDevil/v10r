@@ -7,9 +7,7 @@ const CONSTRAINTS = [
 	'CREATE CONSTRAINT showcase_name_unique IF NOT EXISTS FOR (s:Showcase) REQUIRE s.name IS UNIQUE',
 ];
 
-const INDEXES = [
-	'CREATE INDEX technology_category IF NOT EXISTS FOR (t:Technology) ON (t.category)',
-];
+const INDEXES = ['CREATE INDEX technology_category IF NOT EXISTS FOR (t:Technology) ON (t.category)'];
 
 /** Create all uniqueness constraints and indexes (idempotent). */
 export async function ensureConstraints(): Promise<void> {

@@ -1,7 +1,7 @@
-import { embed, embedMany } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { embed, embedMany } from 'ai';
 import { env } from '$env/dynamic/private';
-import { EMBEDDING_MODEL, EMBEDDING_DIMENSIONS } from './config';
+import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL } from './config';
 import { RetrievalError } from './errors';
 
 function getEmbeddingModel() {

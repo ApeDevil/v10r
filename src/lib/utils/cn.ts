@@ -3,7 +3,7 @@
  * Uses clsx for combining class names with conditionals.
  */
 
-import { clsx, type ClassValue } from 'clsx';
+import { type ClassValue, clsx } from 'clsx';
 
 /**
  * Merge class names with clsx.

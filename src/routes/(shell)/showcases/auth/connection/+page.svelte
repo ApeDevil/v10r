@@ -1,98 +1,98 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { enhance } from '$app/forms';
-	import { authClient } from '$lib/auth-client';
-	import { Card, Alert } from '$lib/components/composites';
-	import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
-	import { Stack, Cluster } from '$lib/components/layout';
+import { enhance } from '$app/forms';
+import { goto } from '$app/navigation';
+import { authClient } from '$lib/auth-client';
+import { Alert, Card } from '$lib/components/composites';
+import { Cluster, Stack } from '$lib/components/layout';
+import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
 
-	let { data } = $props();
+let { data } = $props();
 
-	let testing = $state(false);
+let testing = $state(false);
 
-	// Sign-in form state
-	let email = $state('');
-	let sendingMethod = $state<'magic-link' | 'otp' | null>(null);
-	let loadingProvider = $state<string | null>(null);
-	let signingOut = $state(false);
-	let formError = $state<string | null>(null);
-	let magicLinkSent = $state(false);
+// Sign-in form state
+let email = $state('');
+let sendingMethod = $state<'magic-link' | 'otp' | null>(null);
+let loadingProvider = $state<string | null>(null);
+let signingOut = $state(false);
+let formError = $state<string | null>(null);
+let magicLinkSent = $state(false);
 
-	let isBusy = $derived(!!sendingMethod || !!loadingProvider || signingOut);
+let isBusy = $derived(!!sendingMethod || !!loadingProvider || signingOut);
 
-	async function handleMagicLink() {
-		if (!email.trim()) return;
-		sendingMethod = 'magic-link';
-		formError = null;
+async function handleMagicLink() {
+	if (!email.trim()) return;
+	sendingMethod = 'magic-link';
+	formError = null;
 
-		try {
-			const result = await authClient.signIn.magicLink({
-				email: email.trim(),
-				callbackURL: '/showcases/auth/connection',
-			});
-			if (result.error) {
-				formError = result.error.message ?? 'Failed to send magic link.';
-			} else {
-				magicLinkSent = true;
-			}
-		} catch {
-			formError = 'Failed to send magic link. Please try again.';
-		} finally {
+	try {
+		const result = await authClient.signIn.magicLink({
+			email: email.trim(),
+			callbackURL: '/showcases/auth/connection',
+		});
+		if (result.error) {
+			formError = result.error.message ?? 'Failed to send magic link.';
+		} else {
+			magicLinkSent = true;
+		}
+	} catch {
+		formError = 'Failed to send magic link. Please try again.';
+	} finally {
+		sendingMethod = null;
+	}
+}
+
+async function handleOtp() {
+	if (!email.trim()) return;
+	sendingMethod = 'otp';
+	formError = null;
+
+	try {
+		const result = await authClient.emailOtp.sendVerificationOtp({
+			email: email.trim(),
+			type: 'sign-in',
+		});
+		if (result.error) {
+			formError = result.error.message ?? 'Failed to send code.';
 			sendingMethod = null;
-		}
-	}
-
-	async function handleOtp() {
-		if (!email.trim()) return;
-		sendingMethod = 'otp';
-		formError = null;
-
-		try {
-			const result = await authClient.emailOtp.sendVerificationOtp({
+		} else {
+			const params = new URLSearchParams({
 				email: email.trim(),
-				type: 'sign-in',
+				returnTo: '/showcases/auth/connection',
 			});
-			if (result.error) {
-				formError = result.error.message ?? 'Failed to send code.';
-				sendingMethod = null;
-			} else {
-				const params = new URLSearchParams({
-					email: email.trim(),
-					returnTo: '/showcases/auth/connection',
-				});
-				goto(`/auth/verify?${params.toString()}`);
-			}
-		} catch {
-			formError = 'Failed to send code. Please try again.';
-			sendingMethod = null;
+			goto(`/auth/verify?${params.toString()}`);
 		}
+	} catch {
+		formError = 'Failed to send code. Please try again.';
+		sendingMethod = null;
 	}
+}
 
-	async function handleOAuth(provider: 'github' | 'google' | 'microsoft') {
-		loadingProvider = provider;
-		formError = null;
+async function handleOAuth(provider: 'github' | 'google' | 'microsoft') {
+	loadingProvider = provider;
+	formError = null;
 
-		try {
-			await authClient.signIn.social({
-				provider,
-				callbackURL: '/showcases/auth/connection',
-			});
-		} catch (err) {
-			formError = err instanceof Error ? err.message : 'Sign in failed.';
-			loadingProvider = null;
-		}
+	try {
+		await authClient.signIn.social({
+			provider,
+			callbackURL: '/showcases/auth/connection',
+		});
+	} catch (err) {
+		formError = err instanceof Error ? err.message : 'Sign in failed.';
+		loadingProvider = null;
 	}
+}
 
-	async function handleSignOut() {
-		signingOut = true;
-		try {
-			await authClient.signOut();
-			window.location.reload();
-		} catch {
-			formError = 'Sign out failed.';
-			signingOut = false;
-		}
+async function handleSignOut() {
+	signingOut = true;
+	try {
+		await authClient.signOut();
+		window.location.reload();
+	} catch {
+		formError = 'Sign out failed.';
+		signingOut = false;
 	}
+}
 </script>
 
 <svelte:head>
@@ -120,7 +120,7 @@
 							{#if testing}
 								<Spinner size="xs" class="mr-2" />
 							{/if}
-							<span class="i-lucide-activity h-4 w-4 mr-1" />
+							<span class="i-lucide-activity h-4 w-4 mr-1" ></span>
 							Re-test
 						</Button>
 					</form>
@@ -232,7 +232,7 @@
 					{#if signingOut}
 						<Spinner size="xs" class="mr-2" />
 					{/if}
-					<span class="i-lucide-log-out h-4 w-4 mr-1" aria-hidden="true" />
+					<span class="i-lucide-log-out h-4 w-4 mr-1" aria-hidden="true" ></span>
 					Sign out
 				</Button>
 			{:else if magicLinkSent}

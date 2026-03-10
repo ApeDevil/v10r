@@ -11,10 +11,7 @@ interface GraphChunkResult {
  * Expand from seed chunk IDs through entity relationships.
  * Returns chunk pgIds discovered via graph traversal (max 2 hops).
  */
-export async function expandViaGraph(
-	seedChunkIds: string[],
-	maxHops: number = 2,
-): Promise<GraphChunkResult[]> {
+export async function expandViaGraph(seedChunkIds: string[], maxHops: number = 2): Promise<GraphChunkResult[]> {
 	const hops = Math.min(maxHops, 2); // Hard cap at 2
 
 	return cypher<GraphChunkResult>(
@@ -40,9 +37,7 @@ interface EntityInfo {
 }
 
 /** Get entities mentioned in specific chunks. */
-export async function getEntitiesForChunks(
-	chunkPgIds: string[],
-): Promise<EntityInfo[]> {
+export async function getEntitiesForChunks(chunkPgIds: string[]): Promise<EntityInfo[]> {
 	return cypher<EntityInfo>(
 		`UNWIND $chunkPgIds AS chunkId
 		 MATCH (c:Chunk {pgId: chunkId})-[:MENTIONS]->(e:Entity)

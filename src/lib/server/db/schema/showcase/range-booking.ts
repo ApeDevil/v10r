@@ -8,17 +8,11 @@
  * Operators: @> (contains), && (overlaps), -|- (adjacent), + (union), * (intersection)
  * Bounds: [ inclusive, ( exclusive — convention: use [lower, upper)
  */
-import {
-	text,
-	serial,
-	integer,
-	timestamp,
-	index,
-	check,
-} from 'drizzle-orm/pg-core';
+
 import { sql } from 'drizzle-orm';
+import { check, index, integer, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import { daterange, int4range, tstzrange } from './_custom-types';
 import { showcaseSchema } from './type-specimen';
-import { int4range, tstzrange, daterange } from './_custom-types';
 
 export const rangeBooking = showcaseSchema.table(
 	'range_booking',
@@ -40,13 +34,8 @@ export const rangeBooking = showcaseSchema.table(
 	},
 	(table) => ({
 		resourceIdx: index('booking_resource_name_idx').on(table.resourceName),
-		bookingPeriodGistIdx: index('booking_period_gist_idx')
-			.using('gist', table.bookingPeriod),
-		reservationGistIdx: index('booking_reservation_gist_idx')
-			.using('gist', table.reservationDates),
-		priorityValid: check(
-			'priority_valid',
-			sql`${table.priority} >= 1 AND ${table.priority} <= 10`,
-		),
+		bookingPeriodGistIdx: index('booking_period_gist_idx').using('gist', table.bookingPeriod),
+		reservationGistIdx: index('booking_reservation_gist_idx').using('gist', table.reservationDates),
+		priorityValid: check('priority_valid', sql`${table.priority} >= 1 AND ${table.priority} <= 10`),
 	}),
 );

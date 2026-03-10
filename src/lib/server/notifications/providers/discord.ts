@@ -1,9 +1,9 @@
+import { eq } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
 import { db } from '$lib/server/db';
 import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
-import { eq } from 'drizzle-orm';
-import { encrypt, decrypt } from '../crypto';
-import type { NotificationProvider, DeliveryPayload, DeliveryResult } from './types';
+import { decrypt, encrypt } from '../crypto';
+import type { DeliveryPayload, DeliveryResult, NotificationProvider } from './types';
 
 export class DiscordProvider implements NotificationProvider {
 	getProviderName() {
@@ -17,7 +17,12 @@ export class DiscordProvider implements NotificationProvider {
 	async send(payload: DeliveryPayload): Promise<DeliveryResult> {
 		const botToken = env.DISCORD_BOT_TOKEN;
 		if (!botToken) {
-			return { success: false, errorCode: 'NO_BOT_TOKEN', errorMessage: 'DISCORD_BOT_TOKEN not configured', retryable: false };
+			return {
+				success: false,
+				errorCode: 'NO_BOT_TOKEN',
+				errorMessage: 'DISCORD_BOT_TOKEN not configured',
+				retryable: false,
+			};
 		}
 
 		const discordUserId = payload.to;
@@ -100,11 +105,7 @@ export class DiscordProvider implements NotificationProvider {
 
 /** Refresh Discord OAuth2 tokens for an account */
 export async function refreshDiscordTokens(accountId: string): Promise<boolean> {
-	const [account] = await db
-		.select()
-		.from(userDiscordAccounts)
-		.where(eq(userDiscordAccounts.id, accountId))
-		.limit(1);
+	const [account] = await db.select().from(userDiscordAccounts).where(eq(userDiscordAccounts.id, accountId)).limit(1);
 
 	if (!account) return false;
 

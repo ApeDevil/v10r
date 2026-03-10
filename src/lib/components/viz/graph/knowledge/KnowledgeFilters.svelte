@@ -1,90 +1,90 @@
 <script lang="ts">
-	import type { KnowledgeData } from './knowledge-types';
+import type { KnowledgeData } from './knowledge-types';
 
-	interface Props {
-		data: KnowledgeData;
-		searchQuery?: string;
-		activeEntityTypes?: Set<string>;
-		activeRelationshipTypes?: Set<string>;
-		onFilterChange: (filters: {
-			searchQuery: string;
-			activeEntityTypes: Set<string>;
-			activeRelationshipTypes: Set<string>;
-		}) => void;
-		class?: string;
-	}
+interface Props {
+	data: KnowledgeData;
+	searchQuery?: string;
+	activeEntityTypes?: Set<string>;
+	activeRelationshipTypes?: Set<string>;
+	onFilterChange: (filters: {
+		searchQuery: string;
+		activeEntityTypes: Set<string>;
+		activeRelationshipTypes: Set<string>;
+	}) => void;
+	class?: string;
+}
 
-	let {
-		data,
-		searchQuery = '',
-		activeEntityTypes = new Set(data.entityTypes),
-		activeRelationshipTypes = new Set(data.relationshipTypes),
-		onFilterChange,
-		class: className,
-	}: Props = $props();
+let {
+	data,
+	searchQuery = '',
+	activeEntityTypes = new Set(data.entityTypes),
+	activeRelationshipTypes = new Set(data.relationshipTypes),
+	onFilterChange,
+	class: className,
+}: Props = $props();
 
-	let localSearch = $state(searchQuery);
-	let localEntityTypes = $state(new Set(activeEntityTypes));
-	let localRelTypes = $state(new Set(activeRelationshipTypes));
+let localSearch = $state(searchQuery);
+let localEntityTypes = $state(new Set(activeEntityTypes));
+let localRelTypes = $state(new Set(activeRelationshipTypes));
 
-	// Sync local state when parent resets filters (e.g. empty-state clear button)
-	$effect(() => {
-		localSearch = searchQuery;
+// Sync local state when parent resets filters (e.g. empty-state clear button)
+$effect(() => {
+	localSearch = searchQuery;
+});
+$effect(() => {
+	localEntityTypes = new Set(activeEntityTypes);
+});
+$effect(() => {
+	localRelTypes = new Set(activeRelationshipTypes);
+});
+
+function emitChange() {
+	onFilterChange({
+		searchQuery: localSearch,
+		activeEntityTypes: new Set(localEntityTypes),
+		activeRelationshipTypes: new Set(localRelTypes),
 	});
-	$effect(() => {
-		localEntityTypes = new Set(activeEntityTypes);
-	});
-	$effect(() => {
-		localRelTypes = new Set(activeRelationshipTypes);
-	});
+}
 
-	function emitChange() {
-		onFilterChange({
-			searchQuery: localSearch,
-			activeEntityTypes: new Set(localEntityTypes),
-			activeRelationshipTypes: new Set(localRelTypes),
-		});
+function handleSearchInput(e: Event) {
+	localSearch = (e.target as HTMLInputElement).value;
+	emitChange();
+}
+
+function toggleEntityType(type: string) {
+	const next = new Set(localEntityTypes);
+	if (next.has(type)) {
+		next.delete(type);
+	} else {
+		next.add(type);
 	}
+	localEntityTypes = next;
+	emitChange();
+}
 
-	function handleSearchInput(e: Event) {
-		localSearch = (e.target as HTMLInputElement).value;
-		emitChange();
+function toggleRelType(type: string) {
+	const next = new Set(localRelTypes);
+	if (next.has(type)) {
+		next.delete(type);
+	} else {
+		next.add(type);
 	}
+	localRelTypes = next;
+	emitChange();
+}
 
-	function toggleEntityType(type: string) {
-		const next = new Set(localEntityTypes);
-		if (next.has(type)) {
-			next.delete(type);
-		} else {
-			next.add(type);
-		}
-		localEntityTypes = next;
-		emitChange();
-	}
+function clearFilters() {
+	localSearch = '';
+	localEntityTypes = new Set(data.entityTypes);
+	localRelTypes = new Set(data.relationshipTypes);
+	emitChange();
+}
 
-	function toggleRelType(type: string) {
-		const next = new Set(localRelTypes);
-		if (next.has(type)) {
-			next.delete(type);
-		} else {
-			next.add(type);
-		}
-		localRelTypes = next;
-		emitChange();
-	}
-
-	function clearFilters() {
-		localSearch = '';
-		localEntityTypes = new Set(data.entityTypes);
-		localRelTypes = new Set(data.relationshipTypes);
-		emitChange();
-	}
-
-	let hasActiveFilters = $derived(
-		localSearch !== '' ||
-			localEntityTypes.size !== data.entityTypes.length ||
-			localRelTypes.size !== data.relationshipTypes.length,
-	);
+let hasActiveFilters = $derived(
+	localSearch !== '' ||
+		localEntityTypes.size !== data.entityTypes.length ||
+		localRelTypes.size !== data.relationshipTypes.length,
+);
 </script>
 
 <div class="knowledge-filters {className ?? ''}">

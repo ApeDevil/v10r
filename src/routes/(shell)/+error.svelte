@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { page } from '$app/state';
-	import { ErrorDisplay } from '$lib/components/composites';
+import { page } from '$app/state';
+import { ErrorDisplay } from '$lib/components/composites';
 </script>
 
 <svelte:head>

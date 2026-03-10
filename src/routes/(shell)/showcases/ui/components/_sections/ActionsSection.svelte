@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { DemoCard, VariantGrid } from '../_components';
-	import { Button } from '$lib/components';
+import { Button } from '$lib/components';
+import { DemoCard, VariantGrid } from '../_components';
 </script>
 
 <section id="prim-actions" class="section">

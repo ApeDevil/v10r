@@ -1,21 +1,15 @@
 <script lang="ts">
-	import {
-		Button,
-		Badge,
-		Kamon,
-		Flourish,
-		Asterism
-	} from '$lib/components';
+import { Asterism, Badge, Button, Flourish, Kamon } from '$lib/components';
 
-	let isLoggedIn = $state(false);
+let isLoggedIn = $state(false);
 
-	const mockUser = {
-		name: 'Ada Lovelace',
-		email: 'ada@example.com',
-		role: 'Admin',
-		lastLogin: 'Feb 28, 2026 at 10:42 AM',
-		initials: 'AL'
-	};
+const mockUser = {
+	name: 'Ada Lovelace',
+	email: 'ada@example.com',
+	role: 'Admin',
+	lastLogin: 'Feb 28, 2026 at 10:42 AM',
+	initials: 'AL',
+};
 </script>
 
 <section id="auth-insignia" class="section">

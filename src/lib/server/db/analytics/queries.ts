@@ -1,17 +1,14 @@
 /**
  * Analytics read queries — raw table access for session detail views.
  */
+
+import { and, desc, eq, gte, lte, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { events, sessions } from '$lib/server/db/schema/analytics';
-import { eq, desc, and, gte, lte, sql } from 'drizzle-orm';
 
 /** Get all events for a specific session, ordered by timestamp */
 export async function getSessionEvents(sessionId: string) {
-	return db
-		.select()
-		.from(events)
-		.where(eq(events.sessionId, sessionId))
-		.orderBy(events.timestamp);
+	return db.select().from(events).where(eq(events.sessionId, sessionId)).orderBy(events.timestamp);
 }
 
 /** Get a session timeline: sessions ordered by start time with optional date range */

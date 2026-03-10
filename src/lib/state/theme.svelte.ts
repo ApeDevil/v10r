@@ -2,8 +2,8 @@
  * Theme state management (SSR-safe using context pattern)
  */
 
-import { browser } from '$app/environment';
 import { getContext, setContext } from 'svelte';
+import { browser } from '$app/environment';
 
 type ThemeMode = 'light' | 'dark' | 'system';
 type AccentColor = 'blue' | 'purple' | 'green' | 'orange';
@@ -21,7 +21,7 @@ const THEME_CTX = Symbol('theme');
  * @param initial - Initial theme settings from server
  */
 export function createThemeState(initial: { mode: ThemeMode; accent: AccentColor }) {
-	let state = $state<ThemeState>({
+	const state = $state<ThemeState>({
 		mode: initial.mode,
 		accent: initial.accent,
 		resolvedMode: 'light',

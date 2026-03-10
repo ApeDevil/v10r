@@ -1,108 +1,116 @@
 <script lang="ts">
-	import type { PageProps } from './$types';
-	import { superForm } from 'sveltekit-superforms';
-	import { valibotClient } from 'sveltekit-superforms/adapters';
-	import { userSettingsSchema } from '$lib/schemas/app/settings';
-	import { Card, Alert, FormField } from '$lib/components/composites';
-	import { Button, Input, Select, Switch, Avatar, Spinner, ToggleGroup } from '$lib/components/primitives';
-	import { Stack, Cluster } from '$lib/components/layout';
+import { superForm } from 'sveltekit-superforms';
+import { valibotClient } from 'sveltekit-superforms/adapters';
+import { Alert, Card, FormField } from '$lib/components/composites';
+import { Cluster, Stack } from '$lib/components/layout';
+import { Avatar, Button, Input, Select, Spinner, Switch, ToggleGroup } from '$lib/components/primitives';
+import { userSettingsSchema } from '$lib/schemas/app/settings';
+import type { PageProps } from './$types';
 
-	let { data }: PageProps = $props();
+let { data }: PageProps = $props();
 
-	const { form, errors, enhance, submitting, delayed, tainted, message: formMessage } = superForm(data.form, {
-		validators: valibotClient(userSettingsSchema),
-	});
+const {
+	form,
+	errors,
+	enhance,
+	submitting,
+	delayed,
+	tainted,
+	message: formMessage,
+} = superForm(data.form, {
+	validators: valibotClient(userSettingsSchema),
+});
 
-	let avatarUrl = $state(data.avatarUrl);
-	let avatarError = $state('');
-	let avatarUploading = $state(false);
+let avatarUrl = $state(data.avatarUrl);
+let avatarError = $state('');
+let avatarUploading = $state(false);
 
-	let fileInput: HTMLInputElement;
+let fileInput: HTMLInputElement;
 
-	const themeItems = [
-		{ value: 'light', label: 'Light' },
-		{ value: 'system', label: 'System' },
-		{ value: 'dark', label: 'Dark' },
-	];
+const themeItems = [
+	{ value: 'light', label: 'Light' },
+	{ value: 'system', label: 'System' },
+	{ value: 'dark', label: 'Dark' },
+];
 
-	const densityItems = [
-		{ value: 'compact', label: 'Compact' },
-		{ value: 'comfortable', label: 'Comfortable' },
-		{ value: 'spacious', label: 'Spacious' },
-	];
+const densityItems = [
+	{ value: 'compact', label: 'Compact' },
+	{ value: 'comfortable', label: 'Comfortable' },
+	{ value: 'spacious', label: 'Spacious' },
+];
 
-	const localeOptions = [
-		{ value: 'en', label: 'English' },
-		{ value: 'es', label: 'Spanish' },
-		{ value: 'fr', label: 'French' },
-		{ value: 'de', label: 'German' },
-		{ value: 'ja', label: 'Japanese' },
-	];
+const localeOptions = [
+	{ value: 'en', label: 'English' },
+	{ value: 'es', label: 'Spanish' },
+	{ value: 'fr', label: 'French' },
+	{ value: 'de', label: 'German' },
+	{ value: 'ja', label: 'Japanese' },
+];
 
-	const timezoneOptions = [
-		{ value: 'UTC', label: 'UTC' },
-		{ value: 'America/New_York', label: 'Eastern (US)' },
-		{ value: 'America/Chicago', label: 'Central (US)' },
-		{ value: 'America/Denver', label: 'Mountain (US)' },
-		{ value: 'America/Los_Angeles', label: 'Pacific (US)' },
-		{ value: 'Europe/London', label: 'London' },
-		{ value: 'Europe/Berlin', label: 'Berlin' },
-		{ value: 'Europe/Paris', label: 'Paris' },
-		{ value: 'Asia/Tokyo', label: 'Tokyo' },
-		{ value: 'Asia/Shanghai', label: 'Shanghai' },
-		{ value: 'Australia/Sydney', label: 'Sydney' },
-	];
+const timezoneOptions = [
+	{ value: 'UTC', label: 'UTC' },
+	{ value: 'America/New_York', label: 'Eastern (US)' },
+	{ value: 'America/Chicago', label: 'Central (US)' },
+	{ value: 'America/Denver', label: 'Mountain (US)' },
+	{ value: 'America/Los_Angeles', label: 'Pacific (US)' },
+	{ value: 'Europe/London', label: 'London' },
+	{ value: 'Europe/Berlin', label: 'Berlin' },
+	{ value: 'Europe/Paris', label: 'Paris' },
+	{ value: 'Asia/Tokyo', label: 'Tokyo' },
+	{ value: 'Asia/Shanghai', label: 'Shanghai' },
+	{ value: 'Australia/Sydney', label: 'Sydney' },
+];
 
-	const dateFormatOptions = [
-		{ value: 'relative', label: 'Relative (2 hours ago)' },
-		{ value: 'absolute', label: 'Absolute (Mar 7, 2026)' },
-		{ value: 'iso', label: 'ISO (2026-03-07)' },
-	];
+const dateFormatOptions = [
+	{ value: 'relative', label: 'Relative (2 hours ago)' },
+	{ value: 'absolute', label: 'Absolute (Mar 7, 2026)' },
+	{ value: 'iso', label: 'ISO (2026-03-07)' },
+];
 
-	async function handleAvatarUpload() {
-		const file = fileInput?.files?.[0];
-		if (!file) return;
+async function handleAvatarUpload() {
+	const file = fileInput?.files?.[0];
+	if (!file) return;
 
-		avatarError = '';
-		avatarUploading = true;
+	avatarError = '';
+	avatarUploading = true;
 
-		try {
-			const body = new FormData();
-			body.append('avatar', file);
+	try {
+		const body = new FormData();
+		body.append('avatar', file);
 
-			const res = await fetch('?/uploadAvatar', { method: 'POST', body });
-			const result = await res.json();
+		const res = await fetch('?/uploadAvatar', { method: 'POST', body });
+		const result = await res.json();
 
-			if (result.type === 'failure') {
-				avatarError = result.data?.avatarError ?? 'Upload failed';
-			} else {
-				avatarUrl = result.data?.avatarUrl ?? avatarUrl;
-			}
-		} catch {
-			avatarError = 'Upload failed. Please try again.';
-		} finally {
-			avatarUploading = false;
-			if (fileInput) fileInput.value = '';
+		if (result.type === 'failure') {
+			avatarError = result.data?.avatarError ?? 'Upload failed';
+		} else {
+			avatarUrl = result.data?.avatarUrl ?? avatarUrl;
 		}
+	} catch {
+		avatarError = 'Upload failed. Please try again.';
+	} finally {
+		avatarUploading = false;
+		if (fileInput) fileInput.value = '';
 	}
+}
 
-	async function handleAvatarRemove() {
-		avatarError = '';
-		avatarUploading = true;
+async function handleAvatarRemove() {
+	avatarError = '';
+	avatarUploading = true;
 
-		try {
-			const res = await fetch('?/removeAvatar', { method: 'POST' });
-			const result = await res.json();
+	try {
+		const res = await fetch('?/removeAvatar', { method: 'POST' });
+		const result = await res.json();
 
-			if (result.type !== 'failure') {
-				avatarUrl = null;
-			}
-		} catch {
-			avatarError = 'Failed to remove avatar.';
-		} finally {
-			avatarUploading = false;
+		if (result.type !== 'failure') {
+			avatarUrl = null;
 		}
+	} catch {
+		avatarError = 'Failed to remove avatar.';
+	} finally {
+		avatarUploading = false;
 	}
+}
 </script>
 
 <svelte:head>

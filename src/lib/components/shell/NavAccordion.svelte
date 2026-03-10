@@ -1,73 +1,71 @@
 <script lang="ts">
-	/**
-	 * Inline accordion submenu for navigation items (mobile drawer).
-	 * Supports keyboard navigation and click-outside-to-close.
-	 */
+/**
+ * Inline accordion submenu for navigation items (mobile drawer).
+ * Supports keyboard navigation and click-outside-to-close.
+ */
 
-	import { page } from '$app/state';
-	import { cn } from '$lib/utils/cn';
-	import { localizeHref, deLocalizeHref } from '$lib/i18n';
-	import type { NavChild } from '$lib/nav';
+import { page } from '$app/state';
+import { deLocalizeHref, localizeHref } from '$lib/i18n';
+import type { NavChild } from '$lib/nav';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		items: NavChild[];
-		open: boolean;
-		onClose: () => void;
-		class?: string;
+interface Props {
+	items: NavChild[];
+	open: boolean;
+	onClose: () => void;
+	class?: string;
+}
+
+let { items, open, onClose, class: className }: Props = $props();
+
+let accordionRef: HTMLElement;
+let focusedIndex = $state(-1);
+
+// Handle keyboard navigation
+function handleKeydown(e: KeyboardEvent) {
+	if (!open) return;
+
+	switch (e.key) {
+		case 'ArrowDown':
+			e.preventDefault();
+			focusedIndex = (focusedIndex + 1) % items.length;
+			focusLink(focusedIndex);
+			break;
+		case 'ArrowUp':
+			e.preventDefault();
+			focusedIndex = (focusedIndex - 1 + items.length) % items.length;
+			focusLink(focusedIndex);
+			break;
+		case 'Enter':
+			if (focusedIndex >= 0 && focusedIndex < items.length) {
+				const link = accordionRef?.querySelector<HTMLAnchorElement>(`a[data-index="${focusedIndex}"]`);
+				link?.click();
+			}
+			break;
+		case 'Escape':
+			e.preventDefault();
+			onClose();
+			break;
 	}
+}
 
-	let { items, open, onClose, class: className }: Props = $props();
+function focusLink(index: number) {
+	const link = accordionRef?.querySelector<HTMLAnchorElement>(`a[data-index="${index}"]`);
+	link?.focus();
+}
 
-	let accordionRef: HTMLElement;
-	let focusedIndex = $state(-1);
-
-	// Handle keyboard navigation
-	function handleKeydown(e: KeyboardEvent) {
-		if (!open) return;
-
-		switch (e.key) {
-			case 'ArrowDown':
-				e.preventDefault();
-				focusedIndex = (focusedIndex + 1) % items.length;
-				focusLink(focusedIndex);
-				break;
-			case 'ArrowUp':
-				e.preventDefault();
-				focusedIndex = (focusedIndex - 1 + items.length) % items.length;
-				focusLink(focusedIndex);
-				break;
-			case 'Enter':
-				if (focusedIndex >= 0 && focusedIndex < items.length) {
-					const link = accordionRef?.querySelector<HTMLAnchorElement>(
-						`a[data-index="${focusedIndex}"]`
-					);
-					link?.click();
-				}
-				break;
-			case 'Escape':
-				e.preventDefault();
-				onClose();
-				break;
-		}
+// Reset focused index when accordion opens
+$effect(() => {
+	if (open) {
+		focusedIndex = -1;
 	}
+});
 
-	function focusLink(index: number) {
-		const link = accordionRef?.querySelector<HTMLAnchorElement>(`a[data-index="${index}"]`);
-		link?.focus();
-	}
-
-	// Reset focused index when accordion opens
-	$effect(() => {
-		if (open) {
-			focusedIndex = -1;
-		}
-	});
-
-	// Check if item is active (exact match or nested route)
-	function isActive(href: string): boolean {
-		const path = deLocalizeHref(page.url.pathname);
-		return path === href || path.startsWith(href + '/');
-	}
+// Check if item is active (exact match or nested route)
+function isActive(href: string): boolean {
+	const path = deLocalizeHref(page.url.pathname);
+	return path === href || path.startsWith(`${href}/`);
+}
 </script>
 
 <svelte:window onkeydown={handleKeydown} />

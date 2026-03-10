@@ -1,12 +1,12 @@
-import type { PageServerLoad, Actions } from './$types';
-import { superValidate, fail, message } from 'sveltekit-superforms';
+import { fail, message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import { profileEditSchema } from '$lib/schemas/showcase/advanced';
+import type { Actions, PageServerLoad } from './$types';
 
 const mockProfile = {
 	name: 'Jane Doe',
 	email: 'jane@example.com',
-	role: 'admin',
+	role: 'admin' as const,
 	bio: 'Full-stack developer with a passion for clean architecture.',
 	active: true,
 };

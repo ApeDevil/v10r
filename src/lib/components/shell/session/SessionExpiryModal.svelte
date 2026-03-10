@@ -1,21 +1,21 @@
 <script lang="ts">
-	/**
-	 * Session expiry modal
-	 * Shows when session has expired — user must sign in again.
-	 * Sessions auto-renew, so this only appears after 7 days of inactivity.
-	 */
+/**
+ * Session expiry modal
+ * Shows when session has expired — user must sign in again.
+ * Sessions auto-renew, so this only appears after 7 days of inactivity.
+ */
 
-	import { getModals } from '$lib/state';
+import { getModals } from '$lib/state';
 
-	type Props = {
-		email: string;
-		onSignIn: () => void;
-		onSwitchUser: () => void;
-	};
+type Props = {
+	email: string;
+	onSignIn: () => void;
+	onSwitchUser: () => void;
+};
 
-	let { email, onSignIn, onSwitchUser }: Props = $props();
+let { email, onSignIn, onSwitchUser }: Props = $props();
 
-	const modals = getModals();
+const modals = getModals();
 </script>
 
 {#if modals.isOpen('sessionExpiry')}

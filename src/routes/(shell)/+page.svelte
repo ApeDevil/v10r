@@ -1,88 +1,86 @@
 <script lang="ts">
-	import { CornerFrame, Divider, Asterism } from '$lib/components';
-	import { localizeHref } from '$lib/i18n';
-	import AsciiRaptor from './_components/AsciiRaptor.svelte';
-	import StructureSection from './_components/StructureSection.svelte';
-	import { fadeIn } from './_components/fadeIn';
+import { Asterism, CornerFrame, Divider } from '$lib/components';
+import { localizeHref } from '$lib/i18n';
+import AsciiRaptor from './_components/AsciiRaptor.svelte';
+import { fadeIn } from './_components/fadeIn';
+import StructureSection from './_components/StructureSection.svelte';
 
-	let revealed = $state(false);
+let revealed = $state(false);
 
-	$effect(() => {
-		revealed = true;
-	});
+$effect(() => {
+	revealed = true;
+});
 
-	const specimenName = 'Velociraptor';
+const specimenName = 'Velociraptor';
 
-	const zones: Array<{
-		name: string;
-		proven?: boolean;
-		capabilities: Array<{ icon: string; label: string; desc: string }>;
-	}> = [
-		{
-			name: 'RUNTIME',
-			capabilities: [
-				{ icon: 'i-lucide-rabbit', label: 'Bun', desc: 'JavaScript runtime & toolkit' },
-				{ icon: 'i-lucide-container', label: 'Podman', desc: 'Rootless containers' },
-				{ icon: 'i-lucide-triangle', label: 'Vercel', desc: 'Edge deployment' },
-			],
-		},
-		{
-			name: 'STRUCTURE',
-			capabilities: [
-				{ icon: 'i-lucide-blocks', label: 'SvelteKit 2', desc: 'Full-stack framework' },
-				{ icon: 'i-lucide-flame', label: 'Svelte 5', desc: 'Runes reactivity' },
-				{ icon: 'i-lucide-scan-search', label: 'Biome', desc: 'Lint & format' },
-			],
-		},
-		{
-			name: 'DATA',
-			capabilities: [
-				{ icon: 'i-lucide-database', label: 'PostgreSQL', desc: 'Neon serverless' },
-				{ icon: 'i-lucide-git-fork', label: 'Neo4j', desc: 'Graph database' },
-				{ icon: 'i-lucide-layers', label: 'Drizzle', desc: 'Type-safe ORM' },
-				{ icon: 'i-lucide-cloud', label: 'Cloudflare R2', desc: 'Object storage' },
-			],
-		},
-		{
-			name: 'INTERFACE',
-			capabilities: [
-				{ icon: 'i-lucide-paintbrush', label: 'UnoCSS', desc: 'Atomic CSS engine' },
-				{ icon: 'i-lucide-component', label: 'Bits UI', desc: 'Headless primitives' },
-				{ icon: 'i-lucide-box', label: 'Three.js', desc: '3D rendering' },
-			],
-		},
-		{
-			name: 'BEHAVIOR',
-			proven: true,
-			capabilities: [
-				{ icon: 'i-lucide-shield', label: 'Better Auth', desc: 'Session-based auth' },
-				{ icon: 'i-lucide-file-check', label: 'Superforms', desc: 'Form validation' },
-				{ icon: 'i-lucide-languages', label: 'Paraglide', desc: 'Compiled i18n' },
-			],
-		},
-		{
-			name: 'INTELLIGENCE',
-			capabilities: [
-				{ icon: 'i-lucide-brain', label: 'AI SDK', desc: 'Vendor-agnostic LLM' },
-				{ icon: 'i-lucide-network', label: 'Graph RAG', desc: 'Recursive retrieval' },
-			],
-		},
-	];
+const zones: Array<{
+	name: string;
+	proven?: boolean;
+	capabilities: Array<{ icon: string; label: string; desc: string }>;
+}> = [
+	{
+		name: 'RUNTIME',
+		capabilities: [
+			{ icon: 'i-lucide-rabbit', label: 'Bun', desc: 'JavaScript runtime & toolkit' },
+			{ icon: 'i-lucide-container', label: 'Podman', desc: 'Rootless containers' },
+			{ icon: 'i-lucide-triangle', label: 'Vercel', desc: 'Edge deployment' },
+		],
+	},
+	{
+		name: 'STRUCTURE',
+		capabilities: [
+			{ icon: 'i-lucide-blocks', label: 'SvelteKit 2', desc: 'Full-stack framework' },
+			{ icon: 'i-lucide-flame', label: 'Svelte 5', desc: 'Runes reactivity' },
+			{ icon: 'i-lucide-scan-search', label: 'Biome', desc: 'Lint & format' },
+		],
+	},
+	{
+		name: 'DATA',
+		capabilities: [
+			{ icon: 'i-lucide-database', label: 'PostgreSQL', desc: 'Neon serverless' },
+			{ icon: 'i-lucide-git-fork', label: 'Neo4j', desc: 'Graph database' },
+			{ icon: 'i-lucide-layers', label: 'Drizzle', desc: 'Type-safe ORM' },
+			{ icon: 'i-lucide-cloud', label: 'Cloudflare R2', desc: 'Object storage' },
+		],
+	},
+	{
+		name: 'INTERFACE',
+		capabilities: [
+			{ icon: 'i-lucide-paintbrush', label: 'UnoCSS', desc: 'Atomic CSS engine' },
+			{ icon: 'i-lucide-component', label: 'Bits UI', desc: 'Headless primitives' },
+			{ icon: 'i-lucide-box', label: 'Three.js', desc: '3D rendering' },
+		],
+	},
+	{
+		name: 'BEHAVIOR',
+		proven: true,
+		capabilities: [
+			{ icon: 'i-lucide-shield', label: 'Better Auth', desc: 'Session-based auth' },
+			{ icon: 'i-lucide-file-check', label: 'Superforms', desc: 'Form validation' },
+			{ icon: 'i-lucide-languages', label: 'Paraglide', desc: 'Compiled i18n' },
+		],
+	},
+	{
+		name: 'INTELLIGENCE',
+		capabilities: [
+			{ icon: 'i-lucide-brain', label: 'AI SDK', desc: 'Vendor-agnostic LLM' },
+			{ icon: 'i-lucide-network', label: 'Graph RAG', desc: 'Recursive retrieval' },
+		],
+	},
+];
 
-	const ghostIcons = [
-		'i-lucide-cpu',
-		'i-lucide-palette',
-		'i-lucide-lock',
-		'i-lucide-globe',
-		'i-lucide-terminal',
-		'i-lucide-database',
-		'i-lucide-zap',
-		'i-lucide-layers',
-		'i-lucide-eye',
-		'i-lucide-sparkles',
-	];
-
-
+const ghostIcons = [
+	'i-lucide-cpu',
+	'i-lucide-palette',
+	'i-lucide-lock',
+	'i-lucide-globe',
+	'i-lucide-terminal',
+	'i-lucide-database',
+	'i-lucide-zap',
+	'i-lucide-layers',
+	'i-lucide-eye',
+	'i-lucide-sparkles',
+];
 </script>
 
 <svelte:head>

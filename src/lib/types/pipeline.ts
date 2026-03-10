@@ -4,12 +4,7 @@ export type PipelineStepId = 'embed' | 'tier-1' | 'tier-2' | 'tier-3' | 'rank' |
 export type PipelineStepStatus = 'pending' | 'active' | 'done' | 'error' | 'skipped';
 
 /** Step-specific metadata (discriminated union) */
-export type StepDetail =
-	| EmbedDetail
-	| TierDetail
-	| RankDetail
-	| ContextDetail
-	| GenerateDetail;
+export type StepDetail = EmbedDetail | TierDetail | RankDetail | ContextDetail | GenerateDetail;
 
 export interface EmbedDetail {
 	kind: 'embed';

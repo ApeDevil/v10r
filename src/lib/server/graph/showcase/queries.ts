@@ -1,7 +1,7 @@
+import type { KnowledgeData } from '$lib/types/knowledge';
 import { cypher } from '../index';
 import type { Neo4jNodeRecord, Neo4jRelRecord } from '../types';
 import { toKnowledgeData } from '../types';
-import type { KnowledgeData } from '$lib/types/knowledge';
 
 // ─── Connection page ────────────────────────────────────
 
@@ -23,9 +23,7 @@ export async function verifyConnection(): Promise<ConnectionInfo> {
 		cypher<{ count: number }>('MATCH (n) RETURN count(n) AS count'),
 		cypher<{ count: number }>('MATCH ()-[r]->() RETURN count(r) AS count'),
 		cypher<{ label: string }>('CALL db.labels() YIELD label RETURN label'),
-		cypher<{ relationshipType: string }>(
-			'CALL db.relationshipTypes() YIELD relationshipType RETURN relationshipType',
-		),
+		cypher<{ relationshipType: string }>('CALL db.relationshipTypes() YIELD relationshipType RETURN relationshipType'),
 	]);
 
 	const comp = components[0];
@@ -54,9 +52,7 @@ export async function getLabelsWithCounts(): Promise<LabelInfo[]> {
 
 	const results: LabelInfo[] = [];
 	for (const { label } of labels) {
-		const [countResult] = await cypher<{ count: number }>(
-			`MATCH (n:\`${label}\`) RETURN count(n) AS count`,
-		);
+		const [countResult] = await cypher<{ count: number }>(`MATCH (n:\`${label}\`) RETURN count(n) AS count`);
 		const sampleResult = await cypher<{ keys: string[] }>(
 			`MATCH (n:\`${label}\`) WITH n LIMIT 1 RETURN keys(n) AS keys`,
 		);
@@ -152,10 +148,9 @@ interface NodeWithConnections {
 }
 
 export async function getNodeWithConnections(elementId: string): Promise<NodeWithConnections | null> {
-	const [nodeRow] = await cypher<{ n: Neo4jNodeRecord }>(
-		'MATCH (n) WHERE elementId(n) = $id RETURN n',
-		{ id: elementId },
-	);
+	const [nodeRow] = await cypher<{ n: Neo4jNodeRecord }>('MATCH (n) WHERE elementId(n) = $id RETURN n', {
+		id: elementId,
+	});
 	if (!nodeRow) return null;
 
 	const outgoing = await cypher<{
@@ -200,10 +195,7 @@ interface PathStep {
 	relType?: string;
 }
 
-export async function findShortestPath(
-	fromId: string,
-	toId: string,
-): Promise<PathStep[]> {
+export async function findShortestPath(fromId: string, toId: string): Promise<PathStep[]> {
 	const rows = await cypher<{ nodes: Neo4jNodeRecord[]; rels: Neo4jRelRecord[] }>(
 		`MATCH (a), (b)
 		 WHERE elementId(a) = $fromId AND elementId(b) = $toId

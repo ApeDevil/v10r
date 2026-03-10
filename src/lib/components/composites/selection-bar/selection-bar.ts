@@ -7,9 +7,7 @@ export const selectionBarVariants = cva([
 	'px-5 py-2',
 ]);
 
-export const selectionBarCountVariants = cva([
-	'text-fluid-sm font-medium text-primary whitespace-nowrap',
-]);
+export const selectionBarCountVariants = cva(['text-fluid-sm font-medium text-primary whitespace-nowrap']);
 
 export const selectionBarActionVariants = cva(
 	[

@@ -1,17 +1,24 @@
 <script lang="ts">
-	import type { PipelineStepState, TierDetail, RankDetail, ContextDetail, EmbedDetail, ChunkSummary } from '$lib/types/pipeline';
-	import ChunkList from './ChunkList.svelte';
+import type {
+	ChunkSummary,
+	ContextDetail,
+	EmbedDetail,
+	PipelineStepState,
+	RankDetail,
+	TierDetail,
+} from '$lib/types/pipeline';
+import ChunkList from './ChunkList.svelte';
 
-	interface Props {
-		step: PipelineStepState;
-		chunks?: ChunkSummary[];
-		onclose: () => void;
-		onexpand?: () => void;
-	}
+interface Props {
+	step: PipelineStepState;
+	chunks?: ChunkSummary[];
+	onclose: () => void;
+	onexpand?: () => void;
+}
 
-	let { step, chunks = [], onclose, onexpand }: Props = $props();
+let { step, chunks = [], onclose, onexpand }: Props = $props();
 
-	const hasChunks = $derived(chunks.length > 0);
+const hasChunks = $derived(chunks.length > 0);
 </script>
 
 <div class="node-detail" role="region" aria-label="Step details for {step.label}">

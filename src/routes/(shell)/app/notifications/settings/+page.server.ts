@@ -1,13 +1,13 @@
 import { fail } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
-import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
 import { getOrCreateSettings, updateSettings } from '$lib/server/db/notifications/mutations';
-import type { PageServerLoad, Actions } from './$types';
+import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
+import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
-	const userId = locals.user!.id;
+	const userId = locals.user?.id;
 
 	const [settings, telegramAccount, discordAccount] = await Promise.all([
 		getOrCreateSettings(userId),

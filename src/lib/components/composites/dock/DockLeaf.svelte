@@ -1,18 +1,18 @@
 <script lang="ts">
-	import { getDockContext } from './dock.state.svelte';
-	import DockTabBar from './DockTabBar.svelte';
-	import DockDropOverlay from './DockDropOverlay.svelte';
-	import type { LeafNode } from './dock.types';
-	import type { Snippet } from 'svelte';
+import type { Snippet } from 'svelte';
+import DockDropOverlay from './DockDropOverlay.svelte';
+import DockTabBar from './DockTabBar.svelte';
+import { getDockContext } from './dock.state.svelte';
+import type { LeafNode } from './dock.types';
 
-	interface Props {
-		leaf: LeafNode;
-		panelContent: Snippet<[string]>;
-	}
+interface Props {
+	leaf: LeafNode;
+	panelContent: Snippet<[string]>;
+}
 
-	let { leaf, panelContent }: Props = $props();
+let { leaf, panelContent }: Props = $props();
 
-	const dock = getDockContext();
+const dock = getDockContext();
 </script>
 
 <div class="dock-leaf">

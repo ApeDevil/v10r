@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { getShortcutsByCategory, formatShortcut } from '$lib/shortcuts';
+import { formatShortcut, getShortcutsByCategory } from '$lib/shortcuts';
 
-	const shortcuts = $derived(getShortcutsByCategory());
+const shortcuts = $derived(getShortcutsByCategory());
 </script>
 
 <svelte:head>

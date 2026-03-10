@@ -1,21 +1,21 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		variant?: 'text' | 'circular' | 'rectangular';
-		width?: string;
-		height?: string;
-		rounded?: string;
-		class?: string;
-	}
+interface Props {
+	variant?: 'text' | 'circular' | 'rectangular';
+	width?: string;
+	height?: string;
+	rounded?: string;
+	class?: string;
+}
 
-	let { variant = 'rectangular', width, height, rounded, class: className }: Props = $props();
+let { variant = 'rectangular', width, height, rounded, class: className }: Props = $props();
 
-	const variantClasses = {
-		text: 'h-4 w-full rounded',
-		circular: 'rounded-full',
-		rectangular: 'rounded-md'
-	};
+const variantClasses = {
+	text: 'h-4 w-full rounded',
+	circular: 'rounded-full',
+	rectangular: 'rounded-md',
+};
 </script>
 
 <div

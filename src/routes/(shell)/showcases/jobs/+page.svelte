@@ -1,20 +1,20 @@
 <script lang="ts">
-	import { Card, PageHeader, EmptyState } from '$lib/components/composites';
-	import { Badge } from '$lib/components/primitives';
-	import { PageContainer, Stack } from '$lib/components/layout';
+import { Card, EmptyState, PageHeader } from '$lib/components/composites';
+import { PageContainer, Stack } from '$lib/components/layout';
+import { Badge } from '$lib/components/primitives';
 
-	let { data } = $props();
+let { data } = $props();
 
-	function relativeTime(iso: string): string {
-		const diff = Date.now() - new Date(iso).getTime();
-		const mins = Math.floor(diff / 60000);
-		if (mins < 1) return 'just now';
-		if (mins < 60) return `${mins}m ago`;
-		const hours = Math.floor(mins / 60);
-		if (hours < 24) return `${hours}h ago`;
-		const days = Math.floor(hours / 24);
-		return `${days}d ago`;
-	}
+function relativeTime(iso: string): string {
+	const diff = Date.now() - new Date(iso).getTime();
+	const mins = Math.floor(diff / 60000);
+	if (mins < 1) return 'just now';
+	if (mins < 60) return `${mins}m ago`;
+	const hours = Math.floor(mins / 60);
+	if (hours < 24) return `${hours}h ago`;
+	const days = Math.floor(hours / 24);
+	return `${days}d ago`;
+}
 </script>
 
 <svelte:head>

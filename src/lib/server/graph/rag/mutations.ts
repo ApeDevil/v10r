@@ -42,9 +42,7 @@ export async function batchCreateHasChild(
 }
 
 /** Batch-create NEXT_CHUNK edges for sequential ordering. */
-export async function batchCreateNextChunk(
-	edges: Array<{ fromPgId: string; toPgId: string }>,
-): Promise<void> {
+export async function batchCreateNextChunk(edges: Array<{ fromPgId: string; toPgId: string }>): Promise<void> {
 	if (edges.length === 0) return;
 	await cypher(
 		`UNWIND $edges AS e
@@ -109,7 +107,5 @@ export async function deleteDocumentGraph(documentId: string): Promise<void> {
 	);
 
 	// Remove entities no longer mentioned by any chunk
-	await cypher(
-		`MATCH (e:Entity) WHERE NOT (e)<-[:MENTIONS]-() DETACH DELETE e`,
-	);
+	await cypher(`MATCH (e:Entity) WHERE NOT (e)<-[:MENTIONS]-() DETACH DELETE e`);
 }

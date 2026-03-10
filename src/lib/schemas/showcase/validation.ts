@@ -7,7 +7,7 @@ export const realtimeSchema = v.pipe(
 			v.nonEmpty('Required'),
 			v.minLength(3, 'At least 3 characters'),
 			v.maxLength(20, 'Max 20 characters'),
-			v.regex(/^[a-z0-9_-]+$/, 'Lowercase letters, numbers, hyphens, underscores only')
+			v.regex(/^[a-z0-9_-]+$/, 'Lowercase letters, numbers, hyphens, underscores only'),
 		),
 		password: v.pipe(
 			v.string(),
@@ -15,7 +15,7 @@ export const realtimeSchema = v.pipe(
 			v.minLength(8, 'At least 8 characters'),
 			v.regex(/[A-Z]/, 'Need at least one uppercase letter'),
 			v.regex(/[0-9]/, 'Need at least one number'),
-			v.regex(/[^A-Za-z0-9]/, 'Need at least one special character')
+			v.regex(/[^A-Za-z0-9]/, 'Need at least one special character'),
 		),
 		confirmPassword: v.pipe(v.string(), v.nonEmpty('Please confirm your password')),
 	}),
@@ -23,10 +23,10 @@ export const realtimeSchema = v.pipe(
 		v.partialCheck(
 			[['password'], ['confirmPassword']],
 			(d) => d.password === d.confirmPassword,
-			'Passwords do not match'
+			'Passwords do not match',
 		),
-		['confirmPassword']
-	)
+		['confirmPassword'],
+	),
 );
 
 export type RealtimeInput = v.InferInput<typeof realtimeSchema>;
@@ -38,15 +38,9 @@ export const asyncSchema = v.object({
 		v.nonEmpty('Required'),
 		v.minLength(3, 'At least 3 characters'),
 		v.maxLength(20, 'Max 20 characters'),
-		v.regex(/^[a-z0-9_-]+$/, 'Lowercase letters, numbers, hyphens, underscores only')
+		v.regex(/^[a-z0-9_-]+$/, 'Lowercase letters, numbers, hyphens, underscores only'),
 	),
-	email: v.pipe(
-		v.string(),
-		v.trim(),
-		v.nonEmpty('Required'),
-		v.toLowerCase(),
-		v.email('Invalid email address')
-	),
+	email: v.pipe(v.string(), v.trim(), v.nonEmpty('Required'), v.toLowerCase(), v.email('Invalid email address')),
 });
 
 export type AsyncInput = v.InferInput<typeof asyncSchema>;
@@ -58,13 +52,13 @@ export const serverSchema = v.object({
 		v.trim(),
 		v.nonEmpty('Email is required'),
 		v.toLowerCase(),
-		v.email('Invalid email address')
+		v.email('Invalid email address'),
 	),
 	inviteCode: v.pipe(
 		v.string(),
 		v.trim(),
 		v.nonEmpty('Invite code is required'),
-		v.minLength(4, 'At least 4 characters')
+		v.minLength(4, 'At least 4 characters'),
 	),
 });
 

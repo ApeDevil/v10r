@@ -2,7 +2,7 @@
  * Builds a Chart.js-compatible theme object from CSS custom properties.
  * Called at mount time and on dark mode toggle.
  */
-import { getVizPalette, getChartInfraColors } from './theme-bridge';
+import { getChartInfraColors, getVizPalette } from './theme-bridge';
 
 export function buildChartTheme() {
 	const palette = getVizPalette();

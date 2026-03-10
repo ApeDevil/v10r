@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import type { PipelineStepEvent, PipelineChunksEvent, ChunkSummary } from '$lib/types/pipeline';
+import { describe, expect, it } from 'vitest';
+import type { ChunkSummary, PipelineChunksEvent, PipelineStepEvent } from '$lib/types/pipeline';
 import { createPipelineState } from './pipeline-state.svelte';
 
 function makeChunkSummary(id: string): ChunkSummary {

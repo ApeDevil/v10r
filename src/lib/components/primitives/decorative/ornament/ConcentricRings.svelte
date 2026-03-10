@@ -1,41 +1,39 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		rings?: 2 | 3 | 4 | 5 | 6 | 7 | 8;
-		shape?: 'circle' | 'square' | 'hexagon';
-		spacing?: number;
-		strokeWidth?: number;
-		opacity?: number;
-		color?: string;
-		size?: number;
-		class?: string;
-	}
+interface Props {
+	rings?: 2 | 3 | 4 | 5 | 6 | 7 | 8;
+	shape?: 'circle' | 'square' | 'hexagon';
+	spacing?: number;
+	strokeWidth?: number;
+	opacity?: number;
+	color?: string;
+	size?: number;
+	class?: string;
+}
 
-	let {
-		rings = 4,
-		shape = 'circle',
-		spacing = 12,
-		strokeWidth = 1,
-		opacity = 0.2,
-		color = 'currentColor',
-		size = 120,
-		class: className
-	}: Props = $props();
+let {
+	rings = 4,
+	shape = 'circle',
+	spacing = 12,
+	strokeWidth = 1,
+	opacity = 0.2,
+	color = 'currentColor',
+	size = 120,
+	class: className,
+}: Props = $props();
 
-	let cx = $derived(size / 2);
-	let cy = $derived(size / 2);
+let cx = $derived(size / 2);
+let cy = $derived(size / 2);
 
-	let radii = $derived(
-		Array.from({ length: rings }, (_, i) => spacing * (i + 1))
-	);
+let radii = $derived(Array.from({ length: rings }, (_, i) => spacing * (i + 1)));
 
-	function hexagonPoints(centerX: number, centerY: number, r: number): string {
-		return Array.from({ length: 6 }, (_, i) => {
-			const a = (i * Math.PI) / 3 - Math.PI / 6;
-			return `${centerX + r * Math.cos(a)},${centerY + r * Math.sin(a)}`;
-		}).join(' ');
-	}
+function hexagonPoints(centerX: number, centerY: number, r: number): string {
+	return Array.from({ length: 6 }, (_, i) => {
+		const a = (i * Math.PI) / 3 - Math.PI / 6;
+		return `${centerX + r * Math.cos(a)},${centerY + r * Math.sin(a)}`;
+	}).join(' ');
+}
 </script>
 
 <svg

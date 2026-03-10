@@ -1,37 +1,35 @@
 <script lang="ts">
-	import { Alert } from '$lib/components/composites';
-	import { SankeyDiagram } from '$lib/components/viz/graph/sankey';
-	import ChartSection from '../_components/ChartSection.svelte';
-	import type { SankeyData } from '$lib/components/viz/graph/sankey/types';
+import { Alert } from '$lib/components/composites';
+import { SankeyDiagram } from '$lib/components/viz/graph/sankey';
+import type { SankeyData } from '$lib/components/viz/graph/sankey/types';
+import ChartSection from '../_components/ChartSection.svelte';
 
-	let { data } = $props();
+let { data } = $props();
 
-	function buildSankeyData(
-		paths: { source: string; target: string; count: number }[],
-	): SankeyData {
-		const nodeSet = new Set<string>();
-		for (const p of paths) {
-			nodeSet.add(p.source);
-			nodeSet.add(p.target);
-		}
-		return {
-			nodes: [...nodeSet].map((id) => ({ id, label: id === '/' ? 'Home' : id })),
-			edges: paths.map((p) => ({
-				source: p.source,
-				target: p.target,
-				value: p.count,
-			})),
-		};
+function buildSankeyData(paths: { source: string; target: string; count: number }[]): SankeyData {
+	const nodeSet = new Set<string>();
+	for (const p of paths) {
+		nodeSet.add(p.source);
+		nodeSet.add(p.target);
 	}
+	return {
+		nodes: [...nodeSet].map((id) => ({ id, label: id === '/' ? 'Home' : id })),
+		edges: paths.map((p) => ({
+			source: p.source,
+			target: p.target,
+			value: p.count,
+		})),
+	};
+}
 
-	function formatDate(d: Date): string {
-		return d.toLocaleDateString('en-US', {
-			month: 'short',
-			day: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit',
-		});
-	}
+function formatDate(d: Date): string {
+	return d.toLocaleDateString('en-US', {
+		month: 'short',
+		day: 'numeric',
+		hour: '2-digit',
+		minute: '2-digit',
+	});
+}
 </script>
 
 <div class="journeys-layout">

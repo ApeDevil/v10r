@@ -1,33 +1,33 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
-	import { Pane } from 'paneforge';
-	import type { Snippet } from 'svelte';
+import { Pane } from 'paneforge';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		defaultSize?: number;
-		minSize?: number;
-		maxSize?: number;
-		collapsible?: boolean;
-		collapsedSize?: number;
-		onCollapse?: () => void;
-		onExpand?: () => void;
-		onResize?: (size: number, prevSize: number | undefined) => void;
-		children?: Snippet;
-		class?: string;
-	}
+interface Props {
+	defaultSize?: number;
+	minSize?: number;
+	maxSize?: number;
+	collapsible?: boolean;
+	collapsedSize?: number;
+	onCollapse?: () => void;
+	onExpand?: () => void;
+	onResize?: (size: number, prevSize: number | undefined) => void;
+	children?: Snippet;
+	class?: string;
+}
 
-	let {
-		defaultSize,
-		minSize,
-		maxSize,
-		collapsible,
-		collapsedSize,
-		onCollapse,
-		onExpand,
-		onResize,
-		children,
-		class: className
-	}: Props = $props();
+let {
+	defaultSize,
+	minSize,
+	maxSize,
+	collapsible,
+	collapsedSize,
+	onCollapse,
+	onExpand,
+	onResize,
+	children,
+	class: className,
+}: Props = $props();
 </script>
 
 <Pane

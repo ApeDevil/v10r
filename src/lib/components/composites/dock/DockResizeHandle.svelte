@@ -1,79 +1,79 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
-	import { getDockContext } from './dock.state.svelte';
+import { cn } from '$lib/utils/cn';
+import { getDockContext } from './dock.state.svelte';
 
-	interface Props {
-		splitId: string;
-		direction: 'horizontal' | 'vertical';
-		sizes: [number, number];
-		class?: string;
+interface Props {
+	splitId: string;
+	direction: 'horizontal' | 'vertical';
+	sizes: [number, number];
+	class?: string;
+}
+
+let { splitId, direction, sizes, class: className }: Props = $props();
+
+const dock = getDockContext();
+const MIN_SIZE = 10;
+
+let dragging = $state(false);
+
+// --- Pointer resize ---
+
+function handlePointerDown(e: PointerEvent) {
+	if (e.button !== 0) return;
+	e.preventDefault();
+	dragging = true;
+	(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+}
+
+function handlePointerMove(e: PointerEvent) {
+	if (!dragging) return;
+
+	const handle = e.currentTarget as HTMLElement;
+	const container = handle.parentElement;
+	if (!container) return;
+
+	const rect = container.getBoundingClientRect();
+	let ratio: number;
+
+	if (direction === 'horizontal') {
+		ratio = ((e.clientX - rect.left) / rect.width) * 100;
+	} else {
+		ratio = ((e.clientY - rect.top) / rect.height) * 100;
 	}
 
-	let { splitId, direction, sizes, class: className }: Props = $props();
+	const clamped = Math.max(MIN_SIZE, Math.min(100 - MIN_SIZE, ratio));
+	dock.resizeSplit(splitId, [clamped, 100 - clamped]);
+}
 
-	const dock = getDockContext();
-	const MIN_SIZE = 10;
+function handlePointerUp(_e: PointerEvent) {
+	if (!dragging) return;
+	dragging = false;
+}
 
-	let dragging = $state(false);
+// --- Keyboard resize ---
 
-	// --- Pointer resize ---
+function handleKeyDown(e: KeyboardEvent) {
+	const step = e.shiftKey ? 10 : 2;
+	let newFirst = sizes[0];
 
-	function handlePointerDown(e: PointerEvent) {
-		if (e.button !== 0) return;
-		e.preventDefault();
-		dragging = true;
-		(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+	if (direction === 'horizontal') {
+		if (e.key === 'ArrowLeft') newFirst -= step;
+		else if (e.key === 'ArrowRight') newFirst += step;
+		else if (e.key === 'Home') newFirst = MIN_SIZE;
+		else if (e.key === 'End') newFirst = 100 - MIN_SIZE;
+		else return;
+	} else {
+		if (e.key === 'ArrowUp') newFirst -= step;
+		else if (e.key === 'ArrowDown') newFirst += step;
+		else if (e.key === 'Home') newFirst = MIN_SIZE;
+		else if (e.key === 'End') newFirst = 100 - MIN_SIZE;
+		else return;
 	}
 
-	function handlePointerMove(e: PointerEvent) {
-		if (!dragging) return;
-
-		const handle = e.currentTarget as HTMLElement;
-		const container = handle.parentElement;
-		if (!container) return;
-
-		const rect = container.getBoundingClientRect();
-		let ratio: number;
-
-		if (direction === 'horizontal') {
-			ratio = ((e.clientX - rect.left) / rect.width) * 100;
-		} else {
-			ratio = ((e.clientY - rect.top) / rect.height) * 100;
-		}
-
-		const clamped = Math.max(MIN_SIZE, Math.min(100 - MIN_SIZE, ratio));
-		dock.resizeSplit(splitId, [clamped, 100 - clamped]);
-	}
-
-	function handlePointerUp(_e: PointerEvent) {
-		if (!dragging) return;
-		dragging = false;
-	}
-
-	// --- Keyboard resize ---
-
-	function handleKeyDown(e: KeyboardEvent) {
-		const step = e.shiftKey ? 10 : 2;
-		let newFirst = sizes[0];
-
-		if (direction === 'horizontal') {
-			if (e.key === 'ArrowLeft') newFirst -= step;
-			else if (e.key === 'ArrowRight') newFirst += step;
-			else if (e.key === 'Home') newFirst = MIN_SIZE;
-			else if (e.key === 'End') newFirst = 100 - MIN_SIZE;
-			else return;
-		} else {
-			if (e.key === 'ArrowUp') newFirst -= step;
-			else if (e.key === 'ArrowDown') newFirst += step;
-			else if (e.key === 'Home') newFirst = MIN_SIZE;
-			else if (e.key === 'End') newFirst = 100 - MIN_SIZE;
-			else return;
-		}
-
-		e.preventDefault();
-		const clamped = Math.max(MIN_SIZE, Math.min(100 - MIN_SIZE, newFirst));
-		dock.resizeSplit(splitId, [clamped, 100 - clamped]);
-	}
+	e.preventDefault();
+	const clamped = Math.max(MIN_SIZE, Math.min(100 - MIN_SIZE, newFirst));
+	dock.resizeSplit(splitId, [clamped, 100 - clamped]);
+}
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->

@@ -4,7 +4,7 @@
  */
 
 import { browser } from '$app/environment';
-import type { LayoutNode, PanelDefinition, DockLayoutState, LeafNode, ActivityBarPosition } from './dock.types';
+import type { ActivityBarPosition, DockLayoutState, LayoutNode, LeafNode, PanelDefinition } from './dock.types';
 
 const DEFAULT_KEY = 'dock-layout';
 const CURRENT_VERSION = 1;
@@ -14,7 +14,7 @@ export function saveDockState(
 	root: LayoutNode,
 	panels: Record<string, PanelDefinition>,
 	storageKey = DEFAULT_KEY,
-	activityBarPosition?: ActivityBarPosition
+	activityBarPosition?: ActivityBarPosition,
 ): void {
 	if (!browser) return;
 	try {

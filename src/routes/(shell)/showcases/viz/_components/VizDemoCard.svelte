@@ -1,50 +1,39 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import { cn } from '$lib/utils/cn';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		title: string;
-		description?: string;
-		visualization: Snippet;
-		dataTable?: Snippet;
-		code?: Snippet;
-		class?: string;
+interface Props {
+	title: string;
+	description?: string;
+	visualization: Snippet;
+	dataTable?: Snippet;
+	code?: Snippet;
+	class?: string;
+}
+
+let { title, description, visualization, dataTable, code, class: className }: Props = $props();
+
+let activeTab: 'chart' | 'data' | 'code' = $state('chart');
+
+// Sanitize title for use as HTML id
+const idSlug = $derived(title.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+
+const availableTabs = $derived(
+	['chart', dataTable ? 'data' : null, code ? 'code' : null].filter(Boolean) as Array<'chart' | 'data' | 'code'>,
+);
+
+function handleKeydown(event: KeyboardEvent) {
+	const currentIndex = availableTabs.indexOf(activeTab);
+	if (event.key === 'ArrowRight') {
+		event.preventDefault();
+		activeTab = availableTabs[(currentIndex + 1) % availableTabs.length];
+		(event.currentTarget as HTMLElement).querySelector<HTMLButtonElement>(`#tab-${activeTab}-${idSlug}`)?.focus();
+	} else if (event.key === 'ArrowLeft') {
+		event.preventDefault();
+		activeTab = availableTabs[currentIndex === 0 ? availableTabs.length - 1 : currentIndex - 1];
+		(event.currentTarget as HTMLElement).querySelector<HTMLButtonElement>(`#tab-${activeTab}-${idSlug}`)?.focus();
 	}
-
-	let {
-		title,
-		description,
-		visualization,
-		dataTable,
-		code,
-		class: className,
-	}: Props = $props();
-
-	let activeTab: 'chart' | 'data' | 'code' = $state('chart');
-
-	// Sanitize title for use as HTML id
-	const idSlug = $derived(title.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
-
-	const availableTabs = $derived(
-		(['chart', dataTable ? 'data' : null, code ? 'code' : null].filter(Boolean)) as Array<'chart' | 'data' | 'code'>
-	);
-
-	function handleKeydown(event: KeyboardEvent) {
-		const currentIndex = availableTabs.indexOf(activeTab);
-		if (event.key === 'ArrowRight') {
-			event.preventDefault();
-			activeTab = availableTabs[(currentIndex + 1) % availableTabs.length];
-			(event.currentTarget as HTMLElement)
-				.querySelector<HTMLButtonElement>(`#tab-${activeTab}-${idSlug}`)
-				?.focus();
-		} else if (event.key === 'ArrowLeft') {
-			event.preventDefault();
-			activeTab = availableTabs[currentIndex === 0 ? availableTabs.length - 1 : currentIndex - 1];
-			(event.currentTarget as HTMLElement)
-				.querySelector<HTMLButtonElement>(`#tab-${activeTab}-${idSlug}`)
-				?.focus();
-		}
-	}
+}
 </script>
 
 <div class={cn('viz-demo-card', className)}>

@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { getSidebar } from '$lib/state/sidebar.svelte';
-	import { Button } from '$lib/components/primitives';
+import { Button } from '$lib/components/primitives';
+import { getSidebar } from '$lib/state/sidebar.svelte';
 
-	const sidebar = getSidebar();
+const sidebar = getSidebar();
 </script>
 
 <svelte:head>

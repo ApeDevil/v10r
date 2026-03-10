@@ -1,41 +1,41 @@
 <script lang="ts">
-	import { T, useTask } from '@threlte/core';
-	import { OrbitControls, useGltf } from '@threlte/extras';
-	import { AnimationMixer, type AnimationClip, type Group } from 'three';
+import { T, useTask } from '@threlte/core';
+import { OrbitControls, useGltf } from '@threlte/extras';
+import { type AnimationClip, AnimationMixer, type Group } from 'three';
 
-	let { currentAnimation }: { currentAnimation: string } = $props();
+let { currentAnimation }: { currentAnimation: string } = $props();
 
-	const gltf = useGltf('/models/Fox.glb');
+const gltf = useGltf('/models/Fox.glb');
 
-	let mixer: AnimationMixer | null = null;
-	let clips: AnimationClip[] = [];
-	let scene: Group | null = null;
+let mixer: AnimationMixer | null = null;
+let clips: AnimationClip[] = [];
+let scene: Group | null = null;
 
-	// Load model and create mixer once
-	gltf.then((data) => {
-		scene = data.scene;
-		clips = data.animations;
-		mixer = new AnimationMixer(data.scene);
-		playAnimation(currentAnimation);
-	});
+// Load model and create mixer once
+gltf.then((data) => {
+	scene = data.scene;
+	clips = data.animations;
+	mixer = new AnimationMixer(data.scene);
+	playAnimation(currentAnimation);
+});
 
-	function playAnimation(name: string) {
-		if (!mixer || clips.length === 0) return;
-		mixer.stopAllAction();
-		const clip = clips.find((c) => c.name === name);
-		if (clip) {
-			mixer.clipAction(clip).play();
-		}
+function playAnimation(name: string) {
+	if (!mixer || clips.length === 0) return;
+	mixer.stopAllAction();
+	const clip = clips.find((c) => c.name === name);
+	if (clip) {
+		mixer.clipAction(clip).play();
 	}
+}
 
-	// React to animation changes
-	$effect(() => {
-		playAnimation(currentAnimation);
-	});
+// React to animation changes
+$effect(() => {
+	playAnimation(currentAnimation);
+});
 
-	useTask((delta) => {
-		mixer?.update(delta);
-	});
+useTask((delta) => {
+	mixer?.update(delta);
+});
 </script>
 
 <T.PerspectiveCamera makeDefault position={[100, 50, 100]}>

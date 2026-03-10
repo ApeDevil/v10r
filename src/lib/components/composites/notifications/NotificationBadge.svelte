@@ -1,9 +1,9 @@
 <script lang="ts">
-	interface Props {
-		count: number;
-	}
+interface Props {
+	count: number;
+}
 
-	let { count }: Props = $props();
+let { count }: Props = $props();
 </script>
 
 {#if count > 0}

@@ -1,13 +1,13 @@
-import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { cypher } from '$lib/server/graph';
 import { Neo4jError } from '$lib/server/graph/errors';
 import {
+	findShortestPath,
 	getAllNodes,
 	getNodeWithConnections,
-	findShortestPath,
 	getRecommendations,
 } from '$lib/server/graph/showcase/queries';
+import type { Actions, PageServerLoad } from './$types';
 
 /** Block write operations in REPL */
 const WRITE_PATTERN = /\b(CREATE|MERGE|SET|DELETE|DETACH|REMOVE|DROP|CALL\s+\{)\b/i;
@@ -48,7 +48,8 @@ export const actions: Actions = {
 
 		try {
 			const path = await findShortestPath(fromId, toId);
-			if (path.length === 0) return { success: true, pathResult: [], pathMessage: 'No path found between these nodes.' };
+			if (path.length === 0)
+				return { success: true, pathResult: [], pathMessage: 'No path found between these nodes.' };
 			return { success: true, pathResult: path };
 		} catch (err) {
 			return fail(500, { message: err instanceof Error ? err.message : 'Path query failed.' });
@@ -74,7 +75,9 @@ export const actions: Actions = {
 		if (!query) return fail(400, { message: 'Enter a Cypher query.' });
 
 		if (WRITE_PATTERN.test(query)) {
-			return fail(400, { message: 'Write operations are not allowed in the REPL. Use read-only queries (MATCH, RETURN, etc.).' });
+			return fail(400, {
+				message: 'Write operations are not allowed in the REPL. Use read-only queries (MATCH, RETURN, etc.).',
+			});
 		}
 
 		try {

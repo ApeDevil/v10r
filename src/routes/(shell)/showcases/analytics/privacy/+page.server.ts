@@ -1,6 +1,6 @@
-import type { PageServerLoad } from './$types';
+import { ANALYTICS_AGGREGATE_RETENTION_DAYS, ANALYTICS_RETENTION_DAYS } from '$lib/server/config';
 import { getConsentSplit, getDataAgeStats } from '$lib/server/db/analytics/aggregations';
-import { ANALYTICS_RETENTION_DAYS, ANALYTICS_AGGREGATE_RETENTION_DAYS } from '$lib/server/config';
+import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
 	const start = performance.now();

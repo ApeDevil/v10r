@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
 import * as v from 'valibot';
-import { ChatRequestSchema, StreamingRequestSchema, CreateConversationSchema } from './validation';
+import { describe, expect, it } from 'vitest';
+import { ChatRequestSchema, CreateConversationSchema, StreamingRequestSchema } from './validation';
 
 describe('ChatRequestSchema', () => {
 	it('accepts valid input', () => {

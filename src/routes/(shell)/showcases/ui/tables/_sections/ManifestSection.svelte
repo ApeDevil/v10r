@@ -1,40 +1,41 @@
 <script lang="ts">
-	import {
-		Table,
-		Header as TableHeader,
-		Body as TableBody,
-		Row as TableRow,
-		HeaderCell as TableHeaderCell,
-		Cell as TableCell,
-		Badge
-	} from '$lib/components';
-	import { EMPLOYEES, DEPARTMENTS, type Department, type Status } from '../_data/mock-data';
+import {
+	Badge,
+	Table,
+	Body as TableBody,
+	Cell as TableCell,
+	Header as TableHeader,
+	HeaderCell as TableHeaderCell,
+	Row as TableRow,
+} from '$lib/components';
+import { DEPARTMENTS, type Department, EMPLOYEES, type Status } from '../_data/mock-data';
 
-	let search = $state('');
-	let departmentFilter = $state<Department | ''>('');
+let search = $state('');
+let departmentFilter = $state<Department | ''>('');
 
-	let filtered = $derived.by(() => {
-		let result = EMPLOYEES;
-		if (departmentFilter) {
-			result = result.filter(e => e.department === departmentFilter);
-		}
-		if (search) {
-			const q = search.toLowerCase();
-			result = result.filter(e =>
+let filtered = $derived.by(() => {
+	let result = EMPLOYEES;
+	if (departmentFilter) {
+		result = result.filter((e) => e.department === departmentFilter);
+	}
+	if (search) {
+		const q = search.toLowerCase();
+		result = result.filter(
+			(e) =>
 				e.name.toLowerCase().includes(q) ||
 				e.email.toLowerCase().includes(q) ||
 				e.role.toLowerCase().includes(q) ||
-				e.location.toLowerCase().includes(q)
-			);
-		}
-		return result;
-	});
-
-	function statusVariant(status: Status) {
-		if (status === 'active') return 'success' as const;
-		if (status === 'on-leave') return 'warning' as const;
-		return 'error' as const;
+				e.location.toLowerCase().includes(q),
+		);
 	}
+	return result;
+});
+
+function statusVariant(status: Status) {
+	if (status === 'active') return 'success' as const;
+	if (status === 'on-leave') return 'warning' as const;
+	return 'error' as const;
+}
 </script>
 
 <section id="tbl-manifest" class="section">

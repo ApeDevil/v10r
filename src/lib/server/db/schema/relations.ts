@@ -6,32 +6,32 @@
 import { relations } from 'drizzle-orm';
 
 import {
-	// auth
-	user,
-	session,
 	account,
-	// ai
-	conversation,
-	message,
-	// rag
-	embeddingModel,
-	document,
+	auditLog,
 	chunk,
 	collection,
 	collectionDocument,
-	// notifications
-	notifications,
+	// ai
+	conversation,
+	document,
+	// rag
+	embeddingModel,
+	message,
 	notificationDeliveries,
 	notificationSettings,
-	userTelegramAccounts,
+	// notifications
+	notifications,
+	session,
 	telegramVerificationTokens,
-	userDiscordAccounts,
 	// showcase
 	typeSpecimen,
 	typeSpecimenHistory,
-	auditLog,
+	// auth
+	user,
+	userDiscordAccounts,
 	// app
 	userPreferences,
+	userTelegramAccounts,
 } from './index';
 
 // ── Auth ─────────────────────────────────────────────────────────────
@@ -131,15 +131,12 @@ export const userTelegramAccountsRelations = relations(userTelegramAccounts, ({ 
 	user: one(user, { fields: [userTelegramAccounts.userId], references: [user.id] }),
 }));
 
-export const telegramVerificationTokensRelations = relations(
-	telegramVerificationTokens,
-	({ one }) => ({
-		user: one(user, {
-			fields: [telegramVerificationTokens.userId],
-			references: [user.id],
-		}),
+export const telegramVerificationTokensRelations = relations(telegramVerificationTokens, ({ one }) => ({
+	user: one(user, {
+		fields: [telegramVerificationTokens.userId],
+		references: [user.id],
 	}),
-);
+}));
 
 export const userDiscordAccountsRelations = relations(userDiscordAccounts, ({ one }) => ({
 	user: one(user, { fields: [userDiscordAccounts.userId], references: [user.id] }),

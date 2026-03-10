@@ -1,8 +1,8 @@
 import { json } from '@sveltejs/kit';
-import { listDocuments } from '$lib/server/db/rag/queries';
-import { requireApiUser } from '$lib/server/auth/guards';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { requireApiUser } from '$lib/server/auth/guards';
 import { API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW } from '$lib/server/config';
+import { listDocuments } from '$lib/server/db/rag/queries';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:retrieval:documents', API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW);

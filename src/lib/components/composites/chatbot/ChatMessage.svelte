@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
-	import { renderMarkdown } from '$lib/utils/markdown';
+import { cn } from '$lib/utils/cn';
+import { renderMarkdown } from '$lib/utils/markdown';
 
-	interface Props {
-		role: 'user' | 'assistant';
-		content: string;
-	}
+interface Props {
+	role: 'user' | 'assistant';
+	content: string;
+}
 
-	let { role, content }: Props = $props();
+let { role, content }: Props = $props();
 
-	const isUser = $derived(role === 'user');
-	const htmlContent = $derived(!isUser ? renderMarkdown(content) : '');
+const isUser = $derived(role === 'user');
+const htmlContent = $derived(!isUser ? renderMarkdown(content) : '');
 </script>
 
 <div class={cn('flex gap-3 px-4 py-3', isUser ? 'flex-row-reverse' : 'flex-row')}>

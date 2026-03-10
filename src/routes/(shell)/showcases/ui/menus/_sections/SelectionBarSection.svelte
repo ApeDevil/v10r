@@ -1,81 +1,81 @@
 <script lang="ts">
-	import { DemoCard } from '../../components/_components';
-	import { SelectionBar } from '$lib/components/composites';
-	import type { SelectionBarAction } from '$lib/components/composites/selection-bar/types';
+import { SelectionBar } from '$lib/components/composites';
+import type { SelectionBarAction } from '$lib/components/composites/selection-bar/types';
+import { DemoCard } from '../../components/_components';
 
-	interface ListItem {
-		id: string;
-		name: string;
-		email: string;
-	}
+interface ListItem {
+	id: string;
+	name: string;
+	email: string;
+}
 
-	const people: ListItem[] = [
-		{ id: '1', name: 'Ada Lovelace', email: 'ada@example.com' },
-		{ id: '2', name: 'Grace Hopper', email: 'grace@example.com' },
-		{ id: '3', name: 'Alan Turing', email: 'alan@example.com' },
-		{ id: '4', name: 'Margaret Hamilton', email: 'margaret@example.com' },
-		{ id: '5', name: 'Linus Torvalds', email: 'linus@example.com' },
-	];
+const people: ListItem[] = [
+	{ id: '1', name: 'Ada Lovelace', email: 'ada@example.com' },
+	{ id: '2', name: 'Grace Hopper', email: 'grace@example.com' },
+	{ id: '3', name: 'Alan Turing', email: 'alan@example.com' },
+	{ id: '4', name: 'Margaret Hamilton', email: 'margaret@example.com' },
+	{ id: '5', name: 'Linus Torvalds', email: 'linus@example.com' },
+];
 
-	let selected = $state<Set<string>>(new Set());
+let selected = $state<Set<string>>(new Set());
 
-	let allSelected = $derived(selected.size === people.length && people.length > 0);
-	let someSelected = $derived(selected.size > 0 && !allSelected);
+let allSelected = $derived(selected.size === people.length && people.length > 0);
+let someSelected = $derived(selected.size > 0 && !allSelected);
 
-	function toggleAll() {
-		if (allSelected || someSelected) {
-			selected = new Set();
-		} else {
-			selected = new Set(people.map((p) => p.id));
-		}
-	}
-
-	function toggleItem(id: string) {
-		const next = new Set(selected);
-		if (next.has(id)) {
-			next.delete(id);
-		} else {
-			next.add(id);
-		}
-		selected = next;
-	}
-
-	function clearSelection() {
+function toggleAll() {
+	if (allSelected || someSelected) {
 		selected = new Set();
+	} else {
+		selected = new Set(people.map((p) => p.id));
 	}
+}
 
-	const actions: SelectionBarAction[] = [
-		{
-			label: 'Archive',
-			icon: 'i-lucide-archive',
-			onclick: () => {
-				clearSelection();
-			},
-		},
-		{
-			label: 'Export',
-			icon: 'i-lucide-download',
-			onclick: () => {
-				clearSelection();
-			},
-		},
-		{
-			label: 'Delete',
-			icon: 'i-lucide-trash-2',
-			variant: 'destructive',
-			onclick: () => {
-				clearSelection();
-			},
-		},
-	];
+function toggleItem(id: string) {
+	const next = new Set(selected);
+	if (next.has(id)) {
+		next.delete(id);
+	} else {
+		next.add(id);
+	}
+	selected = next;
+}
 
-	let headerCheckbox: HTMLInputElement | undefined = $state();
+function clearSelection() {
+	selected = new Set();
+}
 
-	$effect(() => {
-		if (headerCheckbox) {
-			headerCheckbox.indeterminate = someSelected;
-		}
-	});
+const actions: SelectionBarAction[] = [
+	{
+		label: 'Archive',
+		icon: 'i-lucide-archive',
+		onclick: () => {
+			clearSelection();
+		},
+	},
+	{
+		label: 'Export',
+		icon: 'i-lucide-download',
+		onclick: () => {
+			clearSelection();
+		},
+	},
+	{
+		label: 'Delete',
+		icon: 'i-lucide-trash-2',
+		variant: 'destructive',
+		onclick: () => {
+			clearSelection();
+		},
+	},
+];
+
+let headerCheckbox: HTMLInputElement | undefined = $state();
+
+$effect(() => {
+	if (headerCheckbox) {
+		headerCheckbox.indeterminate = someSelected;
+	}
+});
 </script>
 
 <section id="menu-selection-bar" class="section">

@@ -1,209 +1,204 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
-	import { beforeNavigate } from '$app/navigation';
-	import { cn } from '$lib/utils/cn';
-	import SvgGraphContainer from '../_shared/SvgGraphContainer.svelte';
-	import { getVizPalette } from '../../_shared/theme-bridge';
-	import type { ChartContainerVariants } from '../../_shared/chart-container';
-	import type { SankeyData, SankeyNodeData, SankeyLinkData } from './types';
+import { onDestroy, onMount } from 'svelte';
+import { beforeNavigate } from '$app/navigation';
+import { cn } from '$lib/utils/cn';
+import type { ChartContainerVariants } from '../../_shared/chart-container';
+import { getVizPalette } from '../../_shared/theme-bridge';
+import SvgGraphContainer from '../_shared/SvgGraphContainer.svelte';
+import type { SankeyData, SankeyLinkData, SankeyNodeData } from './types';
 
-	interface Props {
-		data: SankeyData;
-		aspect?: ChartContainerVariants['aspect'];
-		ariaLabel?: string;
-		class?: string;
+interface Props {
+	data: SankeyData;
+	aspect?: ChartContainerVariants['aspect'];
+	ariaLabel?: string;
+	class?: string;
+}
+
+let { data, aspect = 'chart', ariaLabel = 'Sankey diagram', class: className }: Props = $props();
+
+// Layout output types (after d3-sankey mutates data)
+interface LayoutNode {
+	id: string;
+	label?: string;
+	category?: string;
+	x0: number;
+	x1: number;
+	y0: number;
+	y1: number;
+	value: number;
+	index: number;
+}
+
+interface LayoutLink {
+	source: LayoutNode;
+	target: LayoutNode;
+	value: number;
+	width: number;
+	y0: number;
+	y1: number;
+}
+
+let layoutNodes = $state<LayoutNode[]>([]);
+let layoutLinks = $state<LayoutLink[]>([]);
+let selectedNodeId = $state<string | null>(null);
+let hoveredNodeId = $state<string | null>(null);
+let focusedNodeIdx = $state(-1);
+let palette: string[] = [];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let d3SankeyModule: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let linkPathGenerator: any;
+let containerWidth = $state(600);
+let containerHeight = $state(400);
+
+function cleanup() {
+	d3SankeyModule = undefined;
+	linkPathGenerator = undefined;
+}
+
+beforeNavigate(cleanup);
+onDestroy(cleanup);
+
+function handleResize(w: number, h: number) {
+	containerWidth = w;
+	containerHeight = h;
+	if (d3SankeyModule) {
+		computeLayout(w, h);
 	}
+}
 
-	let {
-		data,
-		aspect = 'chart',
-		ariaLabel = 'Sankey diagram',
-		class: className,
-	}: Props = $props();
+onMount(async () => {
+	palette = getVizPalette();
+	d3SankeyModule = await import('d3-sankey');
+	linkPathGenerator = d3SankeyModule.sankeyLinkHorizontal();
+	computeLayout(containerWidth, containerHeight);
+});
 
-	// Layout output types (after d3-sankey mutates data)
-	interface LayoutNode {
-		id: string;
-		label?: string;
-		category?: string;
-		x0: number;
-		x1: number;
-		y0: number;
-		y1: number;
-		value: number;
-		index: number;
+function computeLayout(w = containerWidth, h = containerHeight) {
+	if (!d3SankeyModule) return;
+
+	try {
+		// Clone data — d3-sankey mutates input
+		const sankeyNodes = data.nodes.map((n) => ({ ...n }));
+		const sankeyLinks = data.edges.map((e) => ({
+			source: e.source,
+			target: e.target,
+			value: e.value,
+		}));
+
+		const sankeyGenerator = d3SankeyModule
+			.sankey()
+			.nodeWidth(26)
+			.nodePadding(16)
+			.extent([
+				[40, 20],
+				[w - 40, h - 20],
+			])
+			.nodeId((d: SankeyNodeData) => d.id);
+
+		const graph = sankeyGenerator({ nodes: sankeyNodes, links: sankeyLinks });
+
+		layoutNodes = graph.nodes as LayoutNode[];
+		layoutLinks = graph.links as LayoutLink[];
+	} catch {
+		layoutNodes = [];
+		layoutLinks = [];
 	}
+}
 
-	interface LayoutLink {
-		source: LayoutNode;
-		target: LayoutNode;
-		value: number;
-		width: number;
-		y0: number;
-		y1: number;
-	}
-
-	let layoutNodes = $state<LayoutNode[]>([]);
-	let layoutLinks = $state<LayoutLink[]>([]);
-	let selectedNodeId = $state<string | null>(null);
-	let hoveredNodeId = $state<string | null>(null);
-	let focusedNodeIdx = $state(-1);
-	let palette: string[] = [];
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let d3SankeyModule: any;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let linkPathGenerator: any;
-	let containerWidth = $state(600);
-	let containerHeight = $state(400);
-
-	function cleanup() {
-		d3SankeyModule = undefined;
-		linkPathGenerator = undefined;
-	}
-
-	beforeNavigate(cleanup);
-	onDestroy(cleanup);
-
-	function handleResize(w: number, h: number) {
-		containerWidth = w;
-		containerHeight = h;
-		if (d3SankeyModule) {
-			computeLayout(w, h);
-		}
-	}
-
-	onMount(async () => {
-		palette = getVizPalette();
-		d3SankeyModule = await import('d3-sankey');
-		linkPathGenerator = d3SankeyModule.sankeyLinkHorizontal();
+// Recompute when data changes
+$effect(() => {
+	const _data = data;
+	if (d3SankeyModule) {
 		computeLayout(containerWidth, containerHeight);
+	}
+});
+
+function getNodeColor(_node: LayoutNode, idx: number): string {
+	return palette[idx % palette.length] || '#3b82f6';
+}
+
+function getLinkPath(link: LayoutLink): string {
+	if (!linkPathGenerator) return '';
+	return linkPathGenerator(link) ?? '';
+}
+
+function getLinkOpacity(link: LayoutLink): number {
+	const srcId = typeof link.source === 'object' ? link.source.id : link.source;
+	const tgtId = typeof link.target === 'object' ? link.target.id : link.target;
+	if (selectedNodeId && srcId !== selectedNodeId && tgtId !== selectedNodeId) return 0.08;
+	if (hoveredNodeId && srcId !== hoveredNodeId && tgtId !== hoveredNodeId) return 0.15;
+	return 0.4;
+}
+
+function getNodeOpacity(node: LayoutNode): number {
+	if (!selectedNodeId && !hoveredNodeId) return 1;
+	if (selectedNodeId === node.id || hoveredNodeId === node.id) return 1;
+	const connected = layoutLinks.some((l) => {
+		const srcId = typeof l.source === 'object' ? l.source.id : l.source;
+		const tgtId = typeof l.target === 'object' ? l.target.id : l.target;
+		const focus = selectedNodeId || hoveredNodeId;
+		return (srcId === focus && tgtId === node.id) || (tgtId === focus && srcId === node.id);
 	});
+	return connected ? 0.8 : 0.2;
+}
 
-	function computeLayout(w = containerWidth, h = containerHeight) {
-		if (!d3SankeyModule) return;
+function nodeHeight(node: LayoutNode): number {
+	return Math.max(node.y1 - node.y0, 1);
+}
 
-		try {
-			// Clone data — d3-sankey mutates input
-			const sankeyNodes = data.nodes.map((n) => ({ ...n }));
-			const sankeyLinks = data.edges.map((e) => ({
-				source: e.source,
-				target: e.target,
-				value: e.value,
-			}));
+function shouldShowLabel(node: LayoutNode): boolean {
+	return nodeHeight(node) > 20;
+}
 
-			const sankeyGenerator = d3SankeyModule
-				.sankey()
-				.nodeWidth(26)
-				.nodePadding(16)
-				.extent([
-					[40, 20],
-					[w - 40, h - 20],
-				])
-				.nodeId((d: SankeyNodeData) => d.id);
+function formatValue(val: number): string {
+	if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(1)}M`;
+	if (val >= 1_000) return `${(val / 1_000).toFixed(1)}K`;
+	return String(val);
+}
 
-			const graph = sankeyGenerator({ nodes: sankeyNodes, links: sankeyLinks });
-
-			layoutNodes = graph.nodes as LayoutNode[];
-			layoutLinks = graph.links as LayoutLink[];
-		} catch {
-			layoutNodes = [];
-			layoutLinks = [];
-		}
+function handleNodeKeydown(event: KeyboardEvent, node: LayoutNode, idx: number) {
+	if (event.key === 'Enter' || event.key === ' ') {
+		event.preventDefault();
+		selectedNodeId = selectedNodeId === node.id ? null : node.id;
+	} else if (event.key === 'Escape') {
+		event.preventDefault();
+		selectedNodeId = null;
+		hoveredNodeId = null;
+	} else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+		event.preventDefault();
+		focusedNodeIdx = (idx + 1) % layoutNodes.length;
+	} else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+		event.preventDefault();
+		focusedNodeIdx = (idx - 1 + layoutNodes.length) % layoutNodes.length;
 	}
+}
 
-	// Recompute when data changes
-	$effect(() => {
-		const _data = data;
-		if (d3SankeyModule) {
-			computeLayout(containerWidth, containerHeight);
-		}
-	});
-
-	function getNodeColor(node: LayoutNode, idx: number): string {
-		return palette[idx % palette.length] || '#3b82f6';
+$effect(() => {
+	if (focusedNodeIdx >= 0 && focusedNodeIdx < layoutNodes.length) {
+		const el = document.querySelector(
+			`.sankey-diagram .sankey-node[data-idx="${focusedNodeIdx}"]`,
+		) as HTMLElement | null;
+		el?.focus();
 	}
+});
 
-	function getLinkPath(link: LayoutLink): string {
-		if (!linkPathGenerator) return '';
-		return linkPathGenerator(link) ?? '';
-	}
-
-	function getLinkOpacity(link: LayoutLink): number {
-		const srcId = typeof link.source === 'object' ? link.source.id : link.source;
-		const tgtId = typeof link.target === 'object' ? link.target.id : link.target;
-		if (selectedNodeId && srcId !== selectedNodeId && tgtId !== selectedNodeId) return 0.08;
-		if (hoveredNodeId && srcId !== hoveredNodeId && tgtId !== hoveredNodeId) return 0.15;
-		return 0.4;
-	}
-
-	function getNodeOpacity(node: LayoutNode): number {
-		if (!selectedNodeId && !hoveredNodeId) return 1;
-		if (selectedNodeId === node.id || hoveredNodeId === node.id) return 1;
-		const connected = layoutLinks.some((l) => {
-			const srcId = typeof l.source === 'object' ? l.source.id : l.source;
+let announcement = $derived.by(() => {
+	if (selectedNodeId) {
+		const node = layoutNodes.find((n) => n.id === selectedNodeId);
+		if (!node) return '';
+		const inflows = layoutLinks.filter((l) => {
 			const tgtId = typeof l.target === 'object' ? l.target.id : l.target;
-			const focus = selectedNodeId || hoveredNodeId;
-			return srcId === focus && tgtId === node.id || tgtId === focus && srcId === node.id;
-		});
-		return connected ? 0.8 : 0.2;
+			return tgtId === node.id;
+		}).length;
+		const outflows = layoutLinks.filter((l) => {
+			const srcId = typeof l.source === 'object' ? l.source.id : l.source;
+			return srcId === node.id;
+		}).length;
+		return `Selected ${node.label || node.id}, value ${formatValue(node.value)}, ${inflows} inflows, ${outflows} outflows`;
 	}
-
-	function nodeHeight(node: LayoutNode): number {
-		return Math.max(node.y1 - node.y0, 1);
-	}
-
-	function shouldShowLabel(node: LayoutNode): boolean {
-		return nodeHeight(node) > 20;
-	}
-
-	function formatValue(val: number): string {
-		if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(1)}M`;
-		if (val >= 1_000) return `${(val / 1_000).toFixed(1)}K`;
-		return String(val);
-	}
-
-	function handleNodeKeydown(event: KeyboardEvent, node: LayoutNode, idx: number) {
-		if (event.key === 'Enter' || event.key === ' ') {
-			event.preventDefault();
-			selectedNodeId = selectedNodeId === node.id ? null : node.id;
-		} else if (event.key === 'Escape') {
-			event.preventDefault();
-			selectedNodeId = null;
-			hoveredNodeId = null;
-		} else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
-			event.preventDefault();
-			focusedNodeIdx = (idx + 1) % layoutNodes.length;
-		} else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
-			event.preventDefault();
-			focusedNodeIdx = (idx - 1 + layoutNodes.length) % layoutNodes.length;
-		}
-	}
-
-	$effect(() => {
-		if (focusedNodeIdx >= 0 && focusedNodeIdx < layoutNodes.length) {
-			const el = document.querySelector(
-				`.sankey-diagram .sankey-node[data-idx="${focusedNodeIdx}"]`,
-			) as HTMLElement | null;
-			el?.focus();
-		}
-	});
-
-	let announcement = $derived.by(() => {
-		if (selectedNodeId) {
-			const node = layoutNodes.find((n) => n.id === selectedNodeId);
-			if (!node) return '';
-			const inflows = layoutLinks.filter((l) => {
-				const tgtId = typeof l.target === 'object' ? l.target.id : l.target;
-				return tgtId === node.id;
-			}).length;
-			const outflows = layoutLinks.filter((l) => {
-				const srcId = typeof l.source === 'object' ? l.source.id : l.source;
-				return srcId === node.id;
-			}).length;
-			return `Selected ${node.label || node.id}, value ${formatValue(node.value)}, ${inflows} inflows, ${outflows} outflows`;
-		}
-		return '';
-	});
+	return '';
+});
 </script>
 
 <SvgGraphContainer {aspect} {ariaLabel} onResize={handleResize} class={cn('sankey-diagram', className)}>

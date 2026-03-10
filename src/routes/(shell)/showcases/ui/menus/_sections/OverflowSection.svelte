@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { DemoCard } from '../../components/_components';
-	import { DropdownMenu } from '$lib/components';
+import { DropdownMenu } from '$lib/components';
+import { DemoCard } from '../../components/_components';
 
-	function noop() {}
+function noop() {}
 </script>
 
 <section id="menu-overflow" class="section">
@@ -37,7 +37,7 @@
 							class="kebab-trigger"
 							aria-label="More actions for Invoice #1042"
 						>
-							<span class="i-lucide-ellipsis-vertical h-4 w-4" />
+							<span class="i-lucide-ellipsis-vertical h-4 w-4" ></span>
 						</button>
 					{/snippet}
 				</DropdownMenu>
@@ -62,7 +62,7 @@
 				>
 					{#snippet trigger({ props })}
 						<button {...props} class="split-trigger">
-							<span class="i-lucide-chevron-down h-4 w-4" />
+							<span class="i-lucide-chevron-down h-4 w-4" ></span>
 						</button>
 					{/snippet}
 				</DropdownMenu>
@@ -76,7 +76,7 @@
 			<div class="hover-list">
 				{#each ['Project Alpha', 'Project Beta', 'Project Gamma'] as project}
 					<div class="hover-row">
-						<span class="i-lucide-folder h-4 w-4 text-muted" />
+						<span class="i-lucide-folder h-4 w-4 text-muted" ></span>
 						<span class="hover-row-label">{project}</span>
 						<div class="hover-row-actions">
 							<DropdownMenu
@@ -94,7 +94,7 @@
 										class="kebab-trigger"
 										aria-label="More actions for {project}"
 									>
-										<span class="i-lucide-ellipsis h-4 w-4" />
+										<span class="i-lucide-ellipsis h-4 w-4" ></span>
 									</button>
 								{/snippet}
 							</DropdownMenu>

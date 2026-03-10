@@ -1,98 +1,92 @@
 <script lang="ts">
-	import {
-		Button,
-		Spinner,
-		GeometricMark,
-		TickMarks,
-		GridPattern
-	} from '$lib/components';
+import { Button, GeometricMark, GridPattern, Spinner, TickMarks } from '$lib/components';
 
-	const simulate = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const simulate = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-	let digits = $state<string[]>(Array(6).fill(''));
-	let inputRefs = $state<HTMLInputElement[]>([]);
-	let verifying = $state(false);
-	let verified = $state(false);
-	let error = $state<string | null>(null);
-	let resendCooldown = $state(0);
+let digits = $state<string[]>(Array(6).fill(''));
+let inputRefs = $state<HTMLInputElement[]>([]);
+let verifying = $state(false);
+let verified = $state(false);
+let error = $state<string | null>(null);
+let resendCooldown = $state(0);
 
-	let otp = $derived(digits.join(''));
-	let isComplete = $derived(otp.length === 6 && digits.every((d) => d !== ''));
+let otp = $derived(digits.join(''));
+let isComplete = $derived(otp.length === 6 && digits.every((d) => d !== ''));
 
-	function handleInput(index: number, event: Event) {
-		const input = event.target as HTMLInputElement;
-		const value = input.value.replace(/\D/g, '');
+function handleInput(index: number, event: Event) {
+	const input = event.target as HTMLInputElement;
+	const value = input.value.replace(/\D/g, '');
 
-		if (value.length > 1) {
-			const chars = value.slice(0, 6 - index).split('');
-			for (let i = 0; i < chars.length; i++) {
-				if (index + i < 6) digits[index + i] = chars[i];
-			}
-			const nextIndex = Math.min(index + chars.length, 5);
-			inputRefs[nextIndex]?.focus();
-		} else {
-			digits[index] = value;
-			if (value && index < 5) {
-				inputRefs[index + 1]?.focus();
-			}
-		}
-	}
-
-	function handleKeydown(index: number, event: KeyboardEvent) {
-		if (event.key === 'Backspace' && !digits[index] && index > 0) {
-			digits[index - 1] = '';
-			inputRefs[index - 1]?.focus();
-		}
-	}
-
-	function handlePaste(event: ClipboardEvent) {
-		event.preventDefault();
-		const pasted = (event.clipboardData?.getData('text') ?? '').replace(/\D/g, '').slice(0, 6);
-		if (!pasted) return;
-
-		const chars = pasted.split('');
+	if (value.length > 1) {
+		const chars = value.slice(0, 6 - index).split('');
 		for (let i = 0; i < chars.length; i++) {
-			digits[i] = chars[i];
+			if (index + i < 6) digits[index + i] = chars[i];
 		}
-		const focusIndex = Math.min(chars.length, 5);
-		inputRefs[focusIndex]?.focus();
-	}
-
-	async function handleVerify() {
-		if (!isComplete) return;
-		verifying = true;
-		error = null;
-
-		await simulate(1500);
-
-		if (otp === '123456') {
-			verified = true;
-		} else {
-			error = 'Invalid code. Please try again.';
+		const nextIndex = Math.min(index + chars.length, 5);
+		inputRefs[nextIndex]?.focus();
+	} else {
+		digits[index] = value;
+		if (value && index < 5) {
+			inputRefs[index + 1]?.focus();
 		}
-		verifying = false;
 	}
+}
 
-	function startCooldown() {
-		resendCooldown = 30;
-		const interval = setInterval(() => {
-			resendCooldown--;
-			if (resendCooldown <= 0) clearInterval(interval);
-		}, 1000);
+function handleKeydown(index: number, event: KeyboardEvent) {
+	if (event.key === 'Backspace' && !digits[index] && index > 0) {
+		digits[index - 1] = '';
+		inputRefs[index - 1]?.focus();
 	}
+}
 
-	function handleResend() {
-		if (resendCooldown > 0) return;
-		startCooldown();
-	}
+function handlePaste(event: ClipboardEvent) {
+	event.preventDefault();
+	const pasted = (event.clipboardData?.getData('text') ?? '').replace(/\D/g, '').slice(0, 6);
+	if (!pasted) return;
 
-	function reset() {
-		digits = Array(6).fill('');
-		verifying = false;
-		verified = false;
-		error = null;
-		resendCooldown = 0;
+	const chars = pasted.split('');
+	for (let i = 0; i < chars.length; i++) {
+		digits[i] = chars[i];
 	}
+	const focusIndex = Math.min(chars.length, 5);
+	inputRefs[focusIndex]?.focus();
+}
+
+async function handleVerify() {
+	if (!isComplete) return;
+	verifying = true;
+	error = null;
+
+	await simulate(1500);
+
+	if (otp === '123456') {
+		verified = true;
+	} else {
+		error = 'Invalid code. Please try again.';
+	}
+	verifying = false;
+}
+
+function startCooldown() {
+	resendCooldown = 30;
+	const interval = setInterval(() => {
+		resendCooldown--;
+		if (resendCooldown <= 0) clearInterval(interval);
+	}, 1000);
+}
+
+function handleResend() {
+	if (resendCooldown > 0) return;
+	startCooldown();
+}
+
+function reset() {
+	digits = Array(6).fill('');
+	verifying = false;
+	verified = false;
+	error = null;
+	resendCooldown = 0;
+}
 </script>
 
 <section id="auth-cipher" class="section">

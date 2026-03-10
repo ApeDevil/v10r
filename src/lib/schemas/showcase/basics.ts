@@ -7,20 +7,15 @@ export const contactSchema = v.object({
 		v.trim(),
 		v.nonEmpty('Email is required'),
 		v.toLowerCase(),
-		v.email('Invalid email address')
+		v.email('Invalid email address'),
 	),
-	subject: v.pipe(
-		v.string(),
-		v.trim(),
-		v.nonEmpty('Subject is required'),
-		v.maxLength(200, 'Max 200 characters')
-	),
+	subject: v.pipe(v.string(), v.trim(), v.nonEmpty('Subject is required'), v.maxLength(200, 'Max 200 characters')),
 	message: v.pipe(
 		v.string(),
 		v.trim(),
 		v.nonEmpty('Message is required'),
 		v.minLength(10, 'At least 10 characters'),
-		v.maxLength(2000, 'Max 2000 characters')
+		v.maxLength(2000, 'Max 2000 characters'),
 	),
 });
 
@@ -32,25 +27,22 @@ export const settingsSchema = v.object({
 		v.string(),
 		v.trim(),
 		v.nonEmpty('Display name is required'),
-		v.maxLength(50, 'Max 50 characters')
+		v.maxLength(50, 'Max 50 characters'),
 	),
 	email: v.pipe(
 		v.string(),
 		v.trim(),
 		v.nonEmpty('Email is required'),
 		v.toLowerCase(),
-		v.email('Invalid email address')
+		v.email('Invalid email address'),
 	),
 	website: v.optional(
 		v.pipe(
 			v.string(),
 			v.trim(),
-			v.check(
-				(url) => url === '' || /^https?:\/\/.+/.test(url),
-				'Must start with http:// or https://'
-			)
+			v.check((url) => url === '' || /^https?:\/\/.+/.test(url), 'Must start with http:// or https://'),
 		),
-		''
+		'',
 	),
 	timezone: v.picklist(['utc', 'est', 'cst', 'pst', 'cet'], 'Select a timezone'),
 	language: v.picklist(['en', 'es', 'fr', 'de', 'ja'], 'Select a language'),

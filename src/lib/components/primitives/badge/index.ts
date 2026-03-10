@@ -1,2 +1,2 @@
 export { default as Badge } from './Badge.svelte';
-export { badgeVariants, type BadgeVariants } from './badge';
+export { type BadgeVariants, badgeVariants } from './badge';

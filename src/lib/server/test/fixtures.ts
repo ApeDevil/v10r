@@ -1,8 +1,8 @@
 import type { InferInsertModel } from 'drizzle-orm';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
-import { notifications } from '$lib/server/db/schema/notifications/notifications';
-import { conversation } from '$lib/server/db/schema/ai/conversation';
-import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
+import type { conversation } from '$lib/server/db/schema/ai/conversation';
+import type { user } from '$lib/server/db/schema/auth/_better-auth';
+import type { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
+import type { notifications } from '$lib/server/db/schema/notifications/notifications';
 
 type UserInsert = InferInsertModel<typeof user>;
 type NotificationInsert = InferInsertModel<typeof notifications>;

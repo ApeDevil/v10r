@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { getToast } from '$lib/state/toast.svelte';
-	import { Button } from '$lib/components/primitives';
+import { Button } from '$lib/components/primitives';
+import { getToast } from '$lib/state/toast.svelte';
 
-	const toast = getToast();
+const toast = getToast();
 </script>
 
 <svelte:head>

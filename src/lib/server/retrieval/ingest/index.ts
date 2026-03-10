@@ -1,17 +1,17 @@
 /**
  * Ingestion pipeline: document → chunks → embeddings → Postgres + Neo4j.
  */
-import { sql, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import { document, chunk } from '$lib/server/db/schema/rag';
+import { chunk, document } from '$lib/server/db/schema/rag';
 import { chunkDocument } from '../chunk';
+import { EMBEDDING_MODEL_ID, MAX_CHUNKS_PER_DOCUMENT } from '../config';
 import { generateEmbeddings } from '../embed';
+import { RetrievalError } from '../errors';
+import type { IngestableDocument, IngestResult } from '../types';
 import { addContextPrefixes } from './contextual-prep';
 import { extractEntitiesFromSections } from './entity-extract';
 import { storeChunkStructure, storeEntitiesAndRelationships } from './graph-store';
-import { EMBEDDING_MODEL_ID, MAX_CHUNKS_PER_DOCUMENT } from '../config';
-import type { IngestableDocument, IngestResult, RawChunk } from '../types';
-import { RetrievalError } from '../errors';
 
 /** Hash content using Web Crypto */
 async function hashContent(content: string): Promise<string> {
@@ -59,8 +59,8 @@ export async function ingest(doc: IngestableDocument): Promise<IngestResult> {
 		const contextualizedChildren = await addContextPrefixes(doc.title, children);
 
 		// 4. Generate embeddings for all child chunks (batch)
-		const textsToEmbed = contextualizedChildren.map(
-			(c) => (c.contextPrefix ? `${c.contextPrefix}\n${c.content}` : c.content),
+		const textsToEmbed = contextualizedChildren.map((c) =>
+			c.contextPrefix ? `${c.contextPrefix}\n${c.content}` : c.content,
 		);
 		const embeddings = await generateEmbeddings(textsToEmbed);
 
@@ -139,9 +139,7 @@ export async function ingest(doc: IngestableDocument): Promise<IngestResult> {
 			await storeChunkStructure(documentId, parents, contextualizedChildren);
 
 			// 7. Extract entities from parent chunks and store in Neo4j
-			const extraction = await extractEntitiesFromSections(
-				parents.map((p) => p.content),
-			);
+			const extraction = await extractEntitiesFromSections(parents.map((p) => p.content));
 
 			// Build chunk-entity mapping (link entities to their child chunks)
 			const chunkEntityMap: Array<{ chunkPgId: string; entityName: string; confidence: number }> = [];

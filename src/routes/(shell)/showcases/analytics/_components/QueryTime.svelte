@@ -1,9 +1,9 @@
 <script lang="ts">
-	interface Props {
-		ms: number;
-	}
+interface Props {
+	ms: number;
+}
 
-	let { ms }: Props = $props();
+let { ms }: Props = $props();
 </script>
 
 <span class="query-time">

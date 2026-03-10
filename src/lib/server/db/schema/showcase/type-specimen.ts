@@ -2,25 +2,26 @@
  * TYPE SPECIMEN — Numeric, Text, Boolean, UUID types.
  * Mutability pattern: Standard CRUD with updated_at.
  */
-import {
-	pgSchema,
-	text,
-	integer,
-	bigint,
-	smallint,
-	serial,
-	real,
-	doublePrecision,
-	numeric,
-	varchar,
-	char,
-	boolean,
-	uuid,
-	timestamp,
-	index,
-	check,
-} from 'drizzle-orm/pg-core';
+
 import { sql } from 'drizzle-orm';
+import {
+	bigint,
+	boolean,
+	char,
+	check,
+	doublePrecision,
+	index,
+	integer,
+	numeric,
+	pgSchema,
+	real,
+	serial,
+	smallint,
+	text,
+	timestamp,
+	uuid,
+	varchar,
+} from 'drizzle-orm/pg-core';
 
 export const showcaseSchema = pgSchema('showcase');
 
@@ -99,9 +100,6 @@ export const typeSpecimenHistory = showcaseSchema.table(
 	},
 	(table) => ({
 		specimenIdx: index('history_specimen_id_idx').on(table.specimenId),
-		specimenVersionIdx: index('history_specimen_version_idx').on(
-			table.specimenId,
-			table.version,
-		),
+		specimenVersionIdx: index('history_specimen_version_idx').on(table.specimenId, table.version),
 	}),
 );

@@ -1,9 +1,10 @@
+import { type Handle, type HandleServerError, json, redirect } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
-import { json, redirect, type Handle, type HandleServerError } from '@sveltejs/kit';
-import { paraglideMiddleware } from '$lib/paraglide/server';
-import { auth } from '$lib/server/auth';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
+import { building } from '$app/environment';
+import { paraglideMiddleware } from '$lib/paraglide/server';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { auth } from '$lib/server/auth';
 import { AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW, HSTS_MAX_AGE } from '$lib/server/config';
 import { logFeatureStatus } from '$lib/server/features';
 import '$lib/server/jobs/scheduler';
@@ -25,14 +26,8 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
 	response.headers.set('X-Frame-Options', 'DENY');
 	response.headers.set('X-Content-Type-Options', 'nosniff');
 	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-	response.headers.set(
-		'Permissions-Policy',
-		'camera=(), microphone=(), geolocation=()',
-	);
-	response.headers.set(
-		'Strict-Transport-Security',
-		`max-age=${HSTS_MAX_AGE}; includeSubDomains; preload`,
-	);
+	response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+	response.headers.set('Strict-Transport-Security', `max-age=${HSTS_MAX_AGE}; includeSubDomains; preload`);
 
 	return response;
 };
@@ -66,7 +61,7 @@ const authHandler: Handle = async ({ event, resolve }) => {
 		}
 	}
 
-	return svelteKitHandler({ event, resolve, auth });
+	return svelteKitHandler({ event, resolve, auth, building });
 };
 
 /**
@@ -128,14 +123,7 @@ const routeGuard: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
-export const handle = sequence(
-	securityHeaders,
-	i18n,
-	authHandler,
-	sessionPopulate,
-	csrfProtection,
-	routeGuard,
-);
+export const handle = sequence(securityHeaders, i18n, authHandler, sessionPopulate, csrfProtection, routeGuard);
 
 export const handleError: HandleServerError = ({ error, event, status, message }) => {
 	// 404s from unknown routes — no errorId needed

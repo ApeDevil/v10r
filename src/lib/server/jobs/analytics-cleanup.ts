@@ -1,7 +1,7 @@
-import { db } from '$lib/server/db';
-import { events, sessions } from '$lib/server/db/schema/analytics';
 import { lt, sql } from 'drizzle-orm';
 import { ANALYTICS_RETENTION_DAYS } from '$lib/server/config';
+import { db } from '$lib/server/db';
+import { events, sessions } from '$lib/server/db/schema/analytics';
 
 /** Delete raw analytics events and sessions older than the retention window. */
 export async function analyticsCleanup(): Promise<number> {

@@ -1,76 +1,71 @@
 <script lang="ts">
-	import { cn } from '$lib/utils/cn';
-	import NetworkGraph from '../network/NetworkGraph.svelte';
-	import KnowledgeFilters from './KnowledgeFilters.svelte';
-	import type { ChartContainerVariants } from '../../_shared/chart-container';
-	import type { KnowledgeData } from './knowledge-types';
-	import type { NetworkData, NetworkNode } from '../network/types';
+import { cn } from '$lib/utils/cn';
+import type { ChartContainerVariants } from '../../_shared/chart-container';
+import NetworkGraph from '../network/NetworkGraph.svelte';
+import type { NetworkData, NetworkNode } from '../network/types';
+import KnowledgeFilters from './KnowledgeFilters.svelte';
+import type { KnowledgeData } from './knowledge-types';
 
-	interface Props {
-		data: KnowledgeData;
-		aspect?: ChartContainerVariants['aspect'];
-		ariaLabel?: string;
-		class?: string;
-	}
+interface Props {
+	data: KnowledgeData;
+	aspect?: ChartContainerVariants['aspect'];
+	ariaLabel?: string;
+	class?: string;
+}
 
-	let {
-		data,
-		aspect = 'chart',
-		ariaLabel = 'Knowledge graph',
-		class: className,
-	}: Props = $props();
+let { data, aspect = 'chart', ariaLabel = 'Knowledge graph', class: className }: Props = $props();
 
-	let searchQuery = $state('');
-	let activeEntityTypes = $state(new Set(data.entityTypes));
-	let activeRelationshipTypes = $state(new Set(data.relationshipTypes));
+let searchQuery = $state('');
+let activeEntityTypes = $state(new Set(data.entityTypes));
+let activeRelationshipTypes = $state(new Set(data.relationshipTypes));
 
-	// Compute filtered data for NetworkGraph
-	let filteredData = $derived.by((): NetworkData => {
-		const searchLower = searchQuery.toLowerCase();
+// Compute filtered data for NetworkGraph
+let filteredData = $derived.by((): NetworkData => {
+	const searchLower = searchQuery.toLowerCase();
 
-		// Filter nodes by entity type + search
-		const filteredNodes = data.nodes.filter((node) => {
-			if (!activeEntityTypes.has(node.entityType)) return false;
-			if (searchLower && !(node.label ?? node.id).toLowerCase().includes(searchLower)) {
-				return false;
-			}
-			return true;
-		});
-
-		const nodeIds = new Set(filteredNodes.map((n) => n.id));
-
-		// Filter edges by relationship type + both endpoints must be visible
-		const filteredEdges = data.edges.filter((edge) => {
-			if (!activeRelationshipTypes.has(edge.relationshipType)) return false;
-			return nodeIds.has(edge.source) && nodeIds.has(edge.target);
-		});
-
-		// Map to NetworkData format — use entityType as group for coloring
-		const networkNodes: NetworkNode[] = filteredNodes.map((n) => ({
-			id: n.id,
-			label: n.label,
-			group: n.entityType,
-			size: 7,
-		}));
-
-		return {
-			nodes: networkNodes,
-			edges: filteredEdges.map((e) => ({
-				source: e.source,
-				target: e.target,
-			})),
-		};
+	// Filter nodes by entity type + search
+	const filteredNodes = data.nodes.filter((node) => {
+		if (!activeEntityTypes.has(node.entityType)) return false;
+		if (searchLower && !(node.label ?? node.id).toLowerCase().includes(searchLower)) {
+			return false;
+		}
+		return true;
 	});
 
-	function handleFilterChange(filters: {
-		searchQuery: string;
-		activeEntityTypes: Set<string>;
-		activeRelationshipTypes: Set<string>;
-	}) {
-		searchQuery = filters.searchQuery;
-		activeEntityTypes = filters.activeEntityTypes;
-		activeRelationshipTypes = filters.activeRelationshipTypes;
-	}
+	const nodeIds = new Set(filteredNodes.map((n) => n.id));
+
+	// Filter edges by relationship type + both endpoints must be visible
+	const filteredEdges = data.edges.filter((edge) => {
+		if (!activeRelationshipTypes.has(edge.relationshipType)) return false;
+		return nodeIds.has(edge.source) && nodeIds.has(edge.target);
+	});
+
+	// Map to NetworkData format — use entityType as group for coloring
+	const networkNodes: NetworkNode[] = filteredNodes.map((n) => ({
+		id: n.id,
+		label: n.label,
+		group: n.entityType,
+		size: 7,
+	}));
+
+	return {
+		nodes: networkNodes,
+		edges: filteredEdges.map((e) => ({
+			source: e.source,
+			target: e.target,
+		})),
+	};
+});
+
+function handleFilterChange(filters: {
+	searchQuery: string;
+	activeEntityTypes: Set<string>;
+	activeRelationshipTypes: Set<string>;
+}) {
+	searchQuery = filters.searchQuery;
+	activeEntityTypes = filters.activeEntityTypes;
+	activeRelationshipTypes = filters.activeRelationshipTypes;
+}
 </script>
 
 <div class={cn('knowledge-graph-wrapper', className)}>

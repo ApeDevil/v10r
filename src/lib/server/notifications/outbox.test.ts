@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, afterAll, beforeAll, beforeEach } from 'vitest';
 import type { PGlite } from '@electric-sql/pglite';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
-import { notifications } from '$lib/server/db/schema/notifications/notifications';
-import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
-import { makeUser, makeNotification } from '$lib/server/test/fixtures';
 import { eq } from 'drizzle-orm';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { user } from '$lib/server/db/schema/auth/_better-auth';
+import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
+import { notifications } from '$lib/server/db/schema/notifications/notifications';
+import { makeNotification, makeUser } from '$lib/server/test/fixtures';
 
 let testClient: PGlite;
 
@@ -15,8 +15,7 @@ vi.mock('$lib/server/db', async () => {
 	return { db };
 });
 
-const { createDeliveries, getPendingDeliveries, markProcessing, markSent, markFailed } =
-	await import('./outbox');
+const { createDeliveries, getPendingDeliveries, markProcessing, markSent, markFailed } = await import('./outbox');
 const { db } = await import('$lib/server/db');
 
 const USER_A = makeUser({ id: 'user-outbox' });
@@ -122,10 +121,7 @@ describe('notification outbox', () => {
 			const [delivery] = await createDeliveries(notificationId, ['email']);
 
 			// Simulate 3 attempts already
-			await db
-				.update(notificationDeliveries)
-				.set({ attempts: 3 })
-				.where(eq(notificationDeliveries.id, delivery.id));
+			await db.update(notificationDeliveries).set({ attempts: 3 }).where(eq(notificationDeliveries.id, delivery.id));
 
 			await markFailed(delivery.id, 'SMTP_ERR', 'Connection refused', true);
 
