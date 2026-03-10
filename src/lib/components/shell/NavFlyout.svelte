@@ -10,6 +10,7 @@ import { page } from '$app/state';
 import { deLocalizeHref, localizeHref } from '$lib/i18n';
 import type { NavChild } from '$lib/nav';
 import { cn } from '$lib/utils/cn';
+import NavLink from './NavLink.svelte';
 
 interface Props {
 	items: NavChild[];
@@ -217,19 +218,18 @@ function portal(node: HTMLElement) {
 		{/if}
 
 		{#each items as item, index}
-			<a
+			<NavLink
 				href={localizeHref(item.href)}
+				active={isActive(item.href)}
 				data-index={index}
 				class={cn(
 					'flyout-item block mx-1 px-3 py-2 text-sm text-muted no-underline rounded-sm whitespace-nowrap',
-					'focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2',
-					isActive(item.href) && 'flyout-item-active bg-primary text-white font-semibold'
+					'focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2'
 				)}
 				role="menuitem"
-				aria-current={isActive(item.href) ? 'page' : undefined}
 			>
 				{item.label}
-			</a>
+			</NavLink>
 		{/each}
 	</div>
 {/if}
@@ -239,8 +239,9 @@ function portal(node: HTMLElement) {
 		display: contents;
 	}
 
-	/* Instant hover highlight — no transition (per MEMORY.md menu item rule) */
-	.flyout-item:not(.flyout-item-active):hover {
+	/* Instant hover highlight — no transition (per MEMORY.md menu item rule).
+	   Uses :not(.nav-active) to exclude active items from hover override. */
+	.flyout-panel :global(.flyout-item:not(.nav-active):hover) {
 		background-color: color-mix(in srgb, var(--color-muted) 15%, transparent);
 		color: var(--color-fg);
 	}

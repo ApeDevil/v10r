@@ -12,6 +12,7 @@ import type { NavChild } from '$lib/nav';
 import { cn } from '$lib/utils/cn';
 import NavAccordion from './NavAccordion.svelte';
 import NavFlyout from './NavFlyout.svelte';
+import NavLink from './NavLink.svelte';
 
 interface Props {
 	href: string;
@@ -59,23 +60,22 @@ const hasDropdownChildren = $derived(children.length > 0 && !useFlyout);
 </script>
 
 {#snippet navLink()}
-	<a
+	<NavLink
 		href={localizeHref(href)}
+		active={isActive}
 		class={cn(
 			'flex items-center no-underline text-muted rounded-md transition-all duration-fast whitespace-nowrap relative hover:bg-border hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none',
 			forceExpanded
 				? 'h-10 gap-3 px-2 flex-1'
-				: 'h-10 w-10 justify-center',
-			isActive && 'bg-primary text-white font-semibold'
+				: 'h-10 w-10 justify-center'
 		)}
-		aria-current={isActive ? 'page' : undefined}
 		aria-label={forceExpanded ? undefined : label}
 	>
 		<span class={cn(icon, 'text-icon-md shrink-0 leading-none')} ></span>
 		{#if forceExpanded}
 			<span class="nav-label text-sm font-medium flex-1 opacity-0 motion-reduce:opacity-100">{label}</span>
 		{/if}
-	</a>
+	</NavLink>
 {/snippet}
 
 <div class={cn('relative', className)}>
@@ -104,7 +104,7 @@ const hasDropdownChildren = $derived(children.length > 0 && !useFlyout);
 						'absolute right-0 flex items-center justify-center w-10 h-10 p-0 bg-transparent border-none rounded-md cursor-pointer',
 						'transition-all duration-fast motion-reduce:transition-none',
 						isDropdownOpen && 'rotate-90 motion-reduce:rotate-0',
-						isActive ? 'text-white hover:bg-white/20' : 'text-muted hover:bg-border'
+						isActive ? 'nav-active-chevron' : 'text-muted hover:bg-border'
 					)}
 					onclick={toggleDropdown}
 					aria-label={isDropdownOpen ? 'Close submenu' : 'Open submenu'}
@@ -138,5 +138,14 @@ const hasDropdownChildren = $derived(children.length > 0 && !useFlyout);
 			animation: none;
 			opacity: 1;
 		}
+	}
+
+	/* Chevron button on active parent */
+	button:global(.nav-active-chevron) {
+		color: var(--color-on-primary);
+	}
+
+	button:global(.nav-active-chevron):hover {
+		background-color: color-mix(in srgb, var(--color-on-primary) 20%, transparent);
 	}
 </style>
