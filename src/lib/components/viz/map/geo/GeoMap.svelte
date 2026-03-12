@@ -5,7 +5,7 @@ import { beforeNavigate } from '$app/navigation';
 import { getTheme } from '$lib/state/theme.svelte';
 import { cn } from '$lib/utils/cn';
 import { type ChartContainerVariants, chartContainerVariants } from '../../_shared/chart-container';
-import { CARTO_DARK_MATTER, CARTO_VOYAGER } from './map-theme';
+import { CARTO_DARK_MATTER, CARTO_VOYAGER, fetchRewrittenStyle } from './map-theme';
 
 interface Props {
 	center?: { lng: number; lat: number };
@@ -41,12 +41,21 @@ let ready = $state(false);
 let MapLibreComp: Component<any> | undefined = $state();
 let NavigationControl: Component<any> | undefined = $state();
 let ScaleControl: Component<any> | undefined = $state();
+let resolvedStyle: object | string | undefined = $state();
 
 const theme = getTheme();
-const currentStyle = $derived(styleProp ?? (theme.isDark ? darkStyle : lightStyle));
+const currentStyleUrl = $derived(styleProp ?? (theme.isDark ? darkStyle : lightStyle));
 
 beforeNavigate(() => {
 	ready = false;
+});
+
+// Re-resolve style when theme changes (fall back to raw URL if rewrite fails)
+$effect(() => {
+	const url = currentStyleUrl;
+	fetchRewrittenStyle(url)
+		.then((s) => { resolvedStyle = s; })
+		.catch(() => { resolvedStyle = url; });
 });
 
 onMount(async () => {
@@ -62,7 +71,7 @@ onMount(async () => {
 <figure class={cn(chartContainerVariants({ aspect }), 'map-container', className)}>
 	<figcaption class="sr-only">{ariaLabel}</figcaption>
 
-	{#if !ready || !MapLibreComp || !NavigationControl || !ScaleControl}
+	{#if !ready || !MapLibreComp || !NavigationControl || !ScaleControl || !resolvedStyle}
 		<div class="skeleton" role="status">
 			<svg viewBox="0 0 400 300" class="skeleton-svg" aria-hidden="true">
 				<path d="M60,100 Q80,60 120,70 T160,90 Q180,100 170,130 T130,150 Q100,140 60,100Z" class="skeleton-land pulse-1" />
@@ -77,7 +86,7 @@ onMount(async () => {
 	{:else}
 		<div class="map-wrapper visible">
 			<MapLibreComp
-				style={currentStyle}
+				style={resolvedStyle}
 				{center}
 				{zoom}
 				{maxBounds}
