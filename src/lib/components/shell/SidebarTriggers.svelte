@@ -27,12 +27,13 @@ const cmdKey = 'Ctrl+';
 <div class={cn('flex flex-col gap-2 p-2', className)}>
 	<button
 		type="button"
+		style:height="var(--sidebar-item-size)"
 		class={cn(
-			'flex items-center text-muted cursor-pointer transition-all duration-fast motion-reduce:transition-none',
+			'flex items-center whitespace-nowrap text-muted cursor-pointer border overflow-hidden transition-colors duration-fast motion-reduce:transition-none',
 			'focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2',
 			isExpanded
-				? 'trigger-input h-10 gap-2 px-2 bg-bg border border-border rounded-md text-sm text-left w-full hover:border-primary hover:bg-border'
-				: 'h-10 w-10 justify-center border-none bg-transparent rounded-full opacity-60 hover:opacity-100 hover:bg-border hover:text-fg'
+				? 'trigger-input gap-2 px-2 bg-bg border-border rounded-md text-sm text-left w-full hover:border-primary hover:bg-border'
+				: 'justify-center border-transparent bg-transparent rounded-full opacity-60 hover:opacity-100 hover:bg-border hover:text-fg rail-item'
 		)}
 		onclick={() => modals.open('quickSearch')}
 		aria-label={isExpanded ? 'Search' : 'Search (Ctrl+K)'}
@@ -50,12 +51,13 @@ const cmdKey = 'Ctrl+';
 
 	<button
 		type="button"
+		style:height="var(--sidebar-item-size)"
 		class={cn(
-			'flex items-center text-muted cursor-pointer transition-all duration-fast motion-reduce:transition-none',
+			'flex items-center whitespace-nowrap text-muted cursor-pointer border overflow-hidden transition-colors duration-fast motion-reduce:transition-none',
 			'focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2',
 			isExpanded
-				? 'trigger-input h-10 gap-2 px-2 bg-bg border border-border rounded-md text-sm text-left w-full hover:border-primary hover:bg-border'
-				: 'h-10 w-10 justify-center border-none bg-transparent rounded-full opacity-60 hover:opacity-100 hover:bg-border hover:text-fg'
+				? 'trigger-input gap-2 px-2 bg-bg border-border rounded-md text-sm text-left w-full hover:border-primary hover:bg-border'
+				: 'justify-center border-transparent bg-transparent rounded-full opacity-60 hover:opacity-100 hover:bg-border hover:text-fg rail-item'
 		)}
 		onclick={() => modals.open('aiAssistant')}
 		aria-label={isExpanded ? 'AI Assistant' : 'AI Assistant (Ctrl+J)'}

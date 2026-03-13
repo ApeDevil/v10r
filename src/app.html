@@ -11,6 +11,18 @@
 				const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 				const isDark = theme === 'dark' || (theme === 'system' && prefersDark);
 				if (isDark) document.documentElement.classList.add('dark');
+				const sw = Number(document.cookie.match(/sidebar-width=(\d+)/)?.[1]);
+				if (sw >= 160) {
+					const d = document.documentElement.style;
+					d.setProperty('--sidebar-expanded-width', sw + 'px');
+					// MIRROR of: iconSize(), itemSize(), railWidth() in src/lib/state/sidebar.svelte.ts
+					const icon = Math.max(18, Math.round(18 + (sw - 160) * (6 / 160)));
+					const item = icon + Math.round(icon * 0.67);  // iconPadding
+					const rail = item + 16;  // RAIL_PADDING
+					d.setProperty('--sidebar-rail-width', rail + 'px');
+					d.setProperty('--sidebar-item-size', item + 'px');
+					d.setProperty('--sidebar-icon-size', icon + 'px');
+				}
 			})();
 		</script>
 	</head>

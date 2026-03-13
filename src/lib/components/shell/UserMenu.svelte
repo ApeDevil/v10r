@@ -44,13 +44,14 @@ async function handleSignOut() {
 	{#if user}
 		<DropdownMenu.Root>
 			<DropdownMenu.Trigger
+				style="min-height: var(--sidebar-item-size)"
 				class={cn(
 					'flex items-center bg-transparent rounded-md text-fg cursor-pointer',
 					'transition-all duration-fast hover:bg-border focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2',
 					'motion-reduce:transition-none data-[state=open]:bg-border',
 					forceExpanded
 						? 'gap-3 p-3 w-full border border-border'
-						: 'h-10 w-10 justify-center border-none'
+						: 'justify-center border-none rail-item'
 				)}
 				aria-label={forceExpanded ? 'User menu' : `User menu for ${user.name}`}
 			>

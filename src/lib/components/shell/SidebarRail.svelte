@@ -65,7 +65,7 @@ $effect(() => {
 	role="navigation"
 	aria-label="Main navigation"
 >
-	<div class="py-2 border-b border-border">
+	<div class="p-2 border-b border-border">
 		<SidebarLogo />
 	</div>
 
@@ -80,3 +80,16 @@ $effect(() => {
 		/>
 	</div>
 </aside>
+
+<style>
+	/* Scale sidebar icons with the width setting */
+	aside :global(.text-icon-md) {
+		font-size: var(--sidebar-icon-size, 1.25rem);
+	}
+
+	/* Rail items: always square, size driven by sidebar width setting */
+	aside :global(.rail-item) {
+		width: var(--sidebar-item-size, 2.5rem);
+		height: var(--sidebar-item-size, 2.5rem);
+	}
+</style>

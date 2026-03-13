@@ -63,11 +63,12 @@ const hasDropdownChildren = $derived(children.length > 0 && !useFlyout);
 	<NavLink
 		href={localizeHref(href)}
 		active={isActive}
+		style="min-height: var(--sidebar-item-size)"
 		class={cn(
 			'flex items-center no-underline text-muted rounded-md transition-all duration-fast whitespace-nowrap relative hover:bg-border hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none',
 			forceExpanded
-				? 'h-10 gap-3 px-2 flex-1'
-				: 'h-10 w-10 justify-center'
+				? 'gap-3 px-2 flex-1'
+				: 'justify-center rail-item'
 		)}
 		aria-label={forceExpanded ? undefined : label}
 	>

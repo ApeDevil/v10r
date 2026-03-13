@@ -27,6 +27,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			locale: prefs.locale as 'en' | 'es' | 'fr' | 'de' | 'ja',
 			timezone: prefs.timezone,
 			dateFormat: prefs.dateFormat as 'relative' | 'absolute' | 'iso',
+			sidebarWidth: prefs.sidebarWidth,
 			reduceMotion: prefs.reduceMotion,
 			highContrast: prefs.highContrast,
 		},
@@ -46,7 +47,7 @@ export const actions: Actions = {
 			return fail(400, { form });
 		}
 
-		const { displayName, theme, ...prefsData } = form.data;
+		const { displayName, theme, sidebarWidth, ...prefsData } = form.data;
 
 		// Update display name directly if changed
 		if (displayName !== locals.user.name) {
@@ -54,10 +55,18 @@ export const actions: Actions = {
 		}
 
 		// Update preferences
-		await updatePreferences(locals.user.id, { theme, ...prefsData });
+		await updatePreferences(locals.user.id, { theme, sidebarWidth, ...prefsData });
 
 		// Write theme cookie for SSR FOUC prevention
 		cookies.set('theme', theme, {
+			path: '/',
+			maxAge: 31536000,
+			sameSite: 'lax',
+			httpOnly: false,
+		});
+
+		// Write sidebar width cookie for SSR flash prevention
+		cookies.set('sidebar-width', String(sidebarWidth), {
 			path: '/',
 			maxAge: 31536000,
 			sameSite: 'lax',

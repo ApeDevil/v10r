@@ -19,7 +19,7 @@ const theme = setThemeContext({
 	mode: data.themeMode,
 	accent: 'blue',
 });
-const sidebar = setSidebarContext();
+const sidebar = setSidebarContext(data.sidebarWidth);
 const modals = setModalsContext();
 const toast = setToastContext();
 const consent = setConsentContext();

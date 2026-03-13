@@ -3,8 +3,9 @@ import { superForm } from 'sveltekit-superforms';
 import { valibotClient } from 'sveltekit-superforms/adapters';
 import { Alert, Card, FormField } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
-import { Avatar, Button, Input, Select, Spinner, Switch, ToggleGroup } from '$lib/components/primitives';
+import { Avatar, Button, Input, Select, Slider, Spinner, Switch, ToggleGroup } from '$lib/components/primitives';
 import { userSettingsSchema } from '$lib/schemas/app/settings';
+import { getSidebar } from '$lib/state/sidebar.svelte';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
@@ -19,6 +20,29 @@ const {
 	message: formMessage,
 } = superForm(data.form, {
 	validators: valibotClient(userSettingsSchema),
+});
+
+const sidebar = getSidebar();
+
+let sliderValue = $state<number[]>([$form.sidebarWidth]);
+
+const widthLabels: Record<number, string> = {
+	160: 'Narrow',
+	200: 'Compact',
+	240: 'Default',
+	280: 'Comfortable',
+	320: 'Wide',
+};
+
+const currentWidthLabel = $derived(widthLabels[sliderValue[0]] ?? `${sliderValue[0]}px`);
+
+// Bridge slider → form + live preview
+$effect(() => {
+	const px = sliderValue[0];
+	if (px !== $form.sidebarWidth) {
+		$form.sidebarWidth = px;
+		sidebar.setWidth(px);
+	}
 });
 
 let avatarUrl = $state(data.avatarUrl);
@@ -217,6 +241,15 @@ async function handleAvatarRemove() {
 								<ToggleGroup items={densityItems} bind:value={$form.displayDensity} />
 							{/snippet}
 						</FormField>
+
+						<div class="space-y-2">
+							<div class="flex items-center justify-between">
+								<span class="text-fluid-sm font-medium text-fg">Sidebar Width</span>
+								<span class="text-fluid-xs text-muted">{currentWidthLabel}</span>
+							</div>
+							<input type="hidden" name="sidebarWidth" value={$form.sidebarWidth} />
+							<Slider bind:value={sliderValue} min={160} max={320} step={40} />
+						</div>
 					</Stack>
 				{/snippet}
 			</Card>

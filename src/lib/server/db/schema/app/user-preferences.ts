@@ -2,7 +2,7 @@
  * USER PREFERENCES — Per-user display and accessibility settings.
  * Extends auth.user with app-specific preferences.
  */
-import { boolean, pgSchema, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, pgSchema, smallint, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
 
 export const appSchema = pgSchema('app');
@@ -19,6 +19,7 @@ export const userPreferences = appSchema.table('user_preferences', {
 	// Appearance
 	theme: themeEnum('theme').notNull().default('system'),
 	displayDensity: displayDensityEnum('display_density').notNull().default('comfortable'),
+	sidebarWidth: smallint('sidebar_width').notNull().default(240),
 
 	// Locale
 	locale: text('locale').notNull().default('en'),
@@ -35,6 +36,7 @@ export const userPreferences = appSchema.table('user_preferences', {
 export const PREFERENCE_DEFAULTS = {
 	theme: 'system',
 	displayDensity: 'comfortable',
+	sidebarWidth: 240,
 	locale: 'en',
 	timezone: 'UTC',
 	dateFormat: 'relative',

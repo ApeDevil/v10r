@@ -8,14 +8,23 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	}
 
 	const body = await request.json();
+	const updates: Record<string, unknown> = {};
 
-	// Only allow theme updates from this lightweight endpoint
-	const theme = body.theme;
-	if (!theme || !['light', 'dark', 'system'].includes(theme)) {
-		return json({ error: 'Invalid theme' }, { status: 400 });
+	// Theme
+	if (body.theme && ['light', 'dark', 'system'].includes(body.theme)) {
+		updates.theme = body.theme;
 	}
 
-	await updatePreferences(locals.user.id, { theme });
+	// Sidebar width
+	if (typeof body.sidebarWidth === 'number' && body.sidebarWidth >= 160 && body.sidebarWidth <= 320) {
+		updates.sidebarWidth = body.sidebarWidth;
+	}
+
+	if (Object.keys(updates).length === 0) {
+		return json({ error: 'No valid fields' }, { status: 400 });
+	}
+
+	await updatePreferences(locals.user.id, updates);
 
 	return json({ ok: true });
 };
