@@ -1,7 +1,32 @@
 <script lang="ts">
-import { LinkCard } from '$lib/components';
+import { pushState } from '$app/navigation';
+import { page } from '$app/state';
+import { SceneCard, ViewerDialog } from '$lib/components/3d';
 import { BackLink, NavGrid, PageHeader } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
+import { MODELS, MODELS_BY_ID } from '$lib/config/models';
+
+const activeModel = $derived(
+	page.state.modelId ? MODELS_BY_ID.get(page.state.modelId) : undefined
+);
+
+let viewerOpen = $state(false);
+
+// Sync dialog state with page state
+$effect(() => {
+	viewerOpen = !!page.state.viewerOpen;
+});
+
+function openViewer(modelId: string) {
+	pushState(`/showcases/3d/${modelId}`, {
+		viewerOpen: true,
+		modelId,
+	});
+}
+
+function closeViewer() {
+	history.back();
+}
 </script>
 
 <svelte:head>
@@ -20,19 +45,21 @@ import { PageContainer } from '$lib/components/layout';
 	/>
 
 	<NavGrid>
-		<LinkCard
-			href="/showcases/3d/static-scene"
-			icon="i-lucide-box"
-			title="Static Scene"
-			description="GLTF model (DamagedHelmet) with orbit controls and lighting"
-		/>
-		<LinkCard
-			href="/showcases/3d/animated-scene"
-			icon="i-lucide-play"
-			title="Animated Scene"
-			description="Fox model with animation controls (Survey, Walk, Run)"
-		/>
+		{#each MODELS as model (model.id)}
+			<SceneCard
+				{model}
+				onclick={() => openViewer(model.id)}
+			/>
+		{/each}
 	</NavGrid>
 
 	<BackLink href="/showcases" label="Showcases" />
 </PageContainer>
+
+{#if activeModel}
+	<ViewerDialog
+		model={activeModel}
+		bind:open={viewerOpen}
+		onclose={closeViewer}
+	/>
+{/if}
