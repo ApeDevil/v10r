@@ -19,7 +19,7 @@ Domain and multi-platform hosting configuration. Strategy for running the same a
 | `v10r.io` | Vercel | Primary production |
 | `koyeb.v10r.io` | Koyeb | Comparison/failover |
 
-**Domain:** `v10r.io` (numeronym: v + 10 letters + r = velociraptor)
+**Domain:** `v10r.io` or `v10r.tech` (numeronym: v + 10 letters + r = velociraptor) — TBD which to use as primary
 
 **Platform configuration:**
 | Platform | Adapter | Features |
