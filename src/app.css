@@ -300,3 +300,57 @@ select option:checked {
 	background: var(--color-primary);
 	color: white;
 }
+
+/* ── Noise Glow Effect ── */
+
+:root {
+	--grain-glow-opacity: 0.2;
+}
+
+.dark {
+	--grain-glow-opacity: 0.08;
+}
+
+.grain-glow {
+	position: fixed;
+	pointer-events: none;
+	opacity: 0;
+	will-change: transform, opacity;
+	filter: url(#grain-glow);
+	background: var(--grain-glow-color, var(--color-primary));
+	z-index: calc(var(--z-sidebar) - 1);
+	transition:
+		opacity 150ms var(--ease-default),
+		transform var(--duration-normal) var(--ease-default);
+}
+
+.grain-glow.active {
+	opacity: 1;
+	transform: translateX(var(--grain-glow-offset, 0));
+	transition:
+		opacity var(--duration-normal) var(--ease-default) var(--duration-normal),
+		transform var(--duration-normal) var(--ease-default);
+}
+
+.grain-glow-right {
+	top: 0;
+	width: var(--grain-glow-size, 80px);
+	height: 100dvh;
+	mask-image: linear-gradient(to right, rgba(0, 0, 0, var(--grain-glow-opacity)) 0%, rgba(0, 0, 0, calc(var(--grain-glow-opacity) * 0.4)) 40%, transparent 85%);
+	-webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, var(--grain-glow-opacity)) 0%, rgba(0, 0, 0, calc(var(--grain-glow-opacity) * 0.4)) 40%, transparent 85%);
+}
+
+.grain-glow-left {
+	top: 0;
+	width: var(--grain-glow-size, 80px);
+	height: 100dvh;
+	mask-image: linear-gradient(to left, rgba(0, 0, 0, var(--grain-glow-opacity)) 0%, rgba(0, 0, 0, calc(var(--grain-glow-opacity) * 0.4)) 40%, transparent 85%);
+	-webkit-mask-image: linear-gradient(to left, rgba(0, 0, 0, var(--grain-glow-opacity)) 0%, rgba(0, 0, 0, calc(var(--grain-glow-opacity) * 0.4)) 40%, transparent 85%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.grain-glow {
+		transition: none;
+		opacity: 0 !important;
+	}
+}

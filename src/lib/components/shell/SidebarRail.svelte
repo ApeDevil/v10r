@@ -56,7 +56,7 @@ $effect(() => {
 </script>
 
 <aside
-	class={cn('fixed top-0 left-0 bg-surface-1 border-r border-border z-sidebar flex flex-col overflow-hidden transition-all duration-normal motion-reduce:transition-none', sidebar.expanded && 'shadow-lg', className)}
+	class={cn('fixed top-0 left-0 bg-surface-1 border-r border-border z-sidebar flex flex-col overflow-hidden transition-all duration-normal motion-reduce:transition-none', className)}
 	style:width={sidebar.expanded ? 'var(--sidebar-expanded-width)' : 'var(--sidebar-rail-width)'}
 	style:height="100dvh"
 	onmouseenter={handleMouseEnter}
@@ -81,6 +81,13 @@ $effect(() => {
 	</div>
 </aside>
 
+<!-- Noise glow: lives outside aside so it isn't clipped by overflow-hidden -->
+<div
+	class="grain-glow grain-glow-right"
+	class:active={sidebar.expanded}
+	aria-hidden="true"
+></div>
+
 <style>
 	/* Scale sidebar icons with the width setting */
 	aside :global(.text-icon-md) {
@@ -91,5 +98,11 @@ $effect(() => {
 	aside :global(.rail-item) {
 		width: var(--sidebar-item-size, 2.5rem);
 		height: var(--sidebar-item-size, 2.5rem);
+	}
+
+	/* Sidebar-specific noise glow positioning */
+	.grain-glow-right {
+		left: var(--sidebar-rail-width);
+		--grain-glow-offset: calc(var(--sidebar-expanded-width) - var(--sidebar-rail-width));
 	}
 </style>
