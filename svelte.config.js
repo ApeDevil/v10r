@@ -16,10 +16,10 @@ const config = {
 		csp: {
 			directives: {
 				'default-src': ['self'],
-				'script-src': ['self'],
+				'script-src': ['self', 'wasm-unsafe-eval'],
 				'style-src': ['self', 'unsafe-inline'],
-				'img-src': ['self', 'data:', 'https:'],
-				'connect-src': ['self', 'https://basemaps.cartocdn.com'],
+				'img-src': ['self', 'data:', 'blob:', 'https:'],
+				'connect-src': ['self', 'blob:', 'https://basemaps.cartocdn.com'],
 				'worker-src': ['self', 'blob:'],
 				'object-src': ['none'],
 				'base-uri': ['self'],
