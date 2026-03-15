@@ -10,12 +10,7 @@ const activeModel = $derived(
 	page.state.modelId ? MODELS_BY_ID.get(page.state.modelId) : undefined
 );
 
-let viewerOpen = $state(false);
-
-// Sync dialog state with page state
-$effect(() => {
-	viewerOpen = !!page.state.viewerOpen;
-});
+let viewerOpen = $derived(!!page.state.viewerOpen);
 
 function openViewer(modelId: string) {
 	pushState(`/showcases/3d/${modelId}`, {
@@ -59,7 +54,7 @@ function closeViewer() {
 {#if activeModel}
 	<ViewerDialog
 		model={activeModel}
-		bind:open={viewerOpen}
+		open={viewerOpen}
 		onclose={closeViewer}
 	/>
 {/if}
