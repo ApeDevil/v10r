@@ -10,6 +10,9 @@
 // circular dependencies and preserve code-splitting.
 // ---------------------------------------------------------------------------
 
+import type { CustomizationConfig } from './customization';
+import { SOFA_CUSTOMIZATION, FOX_CUSTOMIZATION, ROBOT_CUSTOMIZATION } from './customization';
+
 /** Euler-style rotation axis */
 export type RotationAxis = 'x' | 'y' | 'z';
 
@@ -156,6 +159,11 @@ export interface Model3D {
 	/** Grid size and divisions [size, divisions] (default: [10, 10]) */
 	gridArgs?: [number, number];
 
+	// -- Customization ------------------------------------------------------
+
+	/** Runtime customization config (material variants, morph targets, etc.) */
+	customization?: CustomizationConfig;
+
 	// -- Metadata -----------------------------------------------------------
 
 	/** Icon class for LinkCard / badge (UnoCSS icon) */
@@ -219,8 +227,9 @@ export const MODELS: Model3D[] = [
 		description: 'Animated fox model with switchable Survey, Walk, and Run animations.',
 		path: '/models/Fox.glb',
 		scale: 1,
-		tags: ['animated', 'gltf', 'character'],
+		tags: ['animated', 'gltf', 'character', 'customizable'],
 		icon: 'i-lucide-play',
+		customization: FOX_CUSTOMIZATION,
 
 		camera: {
 			position: [100, 50, 100],
@@ -262,6 +271,100 @@ export const MODELS: Model3D[] = [
 
 		credit: 'PixelMannen (Sketchfab)',
 		sourceUrl: 'https://github.com/KhronosGroup/glTF-Sample-Assets',
+	},
+	{
+		id: 'glam-velvet-sofa',
+		name: 'Glam Velvet Sofa',
+		description: 'Sofa with 5 KHR_materials_variants and toggleable parts.',
+		path: '/models/GlamVelvetSofa.glb',
+		scale: 1,
+		tags: ['static', 'gltf', 'customizable', 'variants'],
+		icon: 'i-lucide-sofa',
+		customization: SOFA_CUSTOMIZATION,
+
+		camera: {
+			position: [2.5, 1.5, 2.5],
+			target: [0, 0.4, 0],
+		},
+		cardCamera: {
+			position: [3, 2, 3],
+			target: [0, 0.4, 0],
+		},
+
+		controls: {
+			enabled: true,
+			enableZoom: true,
+			enablePan: true,
+		},
+		autoRotation: {
+			enabled: true,
+			speed: 0.3,
+			axis: 'y',
+			pauseOnHover: true,
+		},
+
+		lighting: {
+			directionalPosition: [5, 8, 5],
+			directionalIntensity: 1.2,
+			ambientIntensity: 0.6,
+		},
+
+		viewportRenderMode: 'on-demand',
+		cardRenderMode: 'on-demand',
+
+		credit: 'Wayfair LLC',
+		sourceUrl: 'https://github.com/KhronosGroup/glTF-Sample-Assets',
+	},
+	{
+		id: 'robot-expressive',
+		name: 'Robot Expressive',
+		description: 'Rigged robot with morph targets, bone attachments, and 14 animations.',
+		path: '/models/RobotExpressive.glb',
+		scale: 0.4,
+		tags: ['animated', 'gltf', 'character', 'customizable', 'morph-targets'],
+		icon: 'i-lucide-bot',
+		customization: ROBOT_CUSTOMIZATION,
+
+		camera: {
+			position: [1.5, 1, 3.2],
+			target: [0, 0.55, 0],
+		},
+		cardCamera: {
+			position: [1.5, 0.8, 2.5],
+			target: [0, 0.5, 0],
+		},
+
+		controls: {
+			enabled: true,
+			enableZoom: true,
+			enablePan: true,
+		},
+		autoRotation: {
+			enabled: true,
+			speed: 0.3,
+			axis: 'y',
+			pauseOnHover: true,
+		},
+
+		lighting: {
+			directionalPosition: [5, 8, 5],
+			directionalIntensity: 1,
+			ambientIntensity: 0.6,
+		},
+
+		animations: {
+			clips: ['Idle', 'Walking', 'Running', 'Dance', 'Wave', 'Jump', 'ThumbsUp', 'Punch'],
+			defaultClip: 'Idle',
+		},
+
+		viewportRenderMode: 'always',
+		cardRenderMode: 'always',
+
+		showGrid: true,
+		gridArgs: [4, 8],
+
+		credit: 'Tomás Laulhé',
+		sourceUrl: 'https://github.com/mrdoob/three.js',
 	},
 ];
 

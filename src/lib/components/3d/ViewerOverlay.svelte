@@ -6,9 +6,11 @@
 		currentAnimation: string;
 		onanimationchange?: (clip: string) => void;
 		action: import('svelte').Snippet;
+		/** Link to the customizer page (shown when model has customization config) */
+		customizeHref?: string;
 	}
 
-	let { model, currentAnimation, onanimationchange, action }: Props = $props();
+	let { model, currentAnimation, onanimationchange, action, customizeHref }: Props = $props();
 </script>
 
 <div class="overlay">
@@ -31,6 +33,14 @@
 					</button>
 				{/each}
 			</div>
+		{/if}
+
+		{#if customizeHref}
+			<span class="divider" aria-hidden="true"></span>
+			<a href={customizeHref}>
+				<span class="i-lucide-sliders-horizontal h-4 w-4" aria-hidden="true"></span>
+				<span>Customize</span>
+			</a>
 		{/if}
 	</div>
 </div>

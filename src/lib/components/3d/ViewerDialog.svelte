@@ -26,6 +26,7 @@
 	}: Props = $props();
 
 	const config = $derived(resolveViewportConfig(model));
+	const customizeHref = $derived(model.customization ? `/showcases/3d/customize/${model.id}` : undefined);
 
 	let currentAnimation = $state(model.animations?.defaultClip ?? '');
 
@@ -64,6 +65,7 @@
 		<ViewerOverlay
 			{model}
 			{currentAnimation}
+			{customizeHref}
 			onanimationchange={(clip) => (currentAnimation = clip)}
 		>
 			{#snippet action()}
@@ -90,6 +92,7 @@
 				<ViewerOverlay
 					{model}
 					{currentAnimation}
+					{customizeHref}
 					onanimationchange={(clip) => (currentAnimation = clip)}
 				>
 					{#snippet action()}

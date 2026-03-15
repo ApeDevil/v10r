@@ -2,7 +2,7 @@
 import { T, useTask } from '@threlte/core';
 import { OrbitControls, useGltf } from '@threlte/extras';
 import type { Model3D, ResolvedViewportConfig } from '$lib/config/models';
-import { AnimationMixer } from 'three';
+import { AnimationMixer, AnimationClip } from 'three';
 
 interface Props {
 	model: Model3D;
@@ -16,6 +16,10 @@ const gltf = useGltf(model.path);
 
 let mixer: AnimationMixer | undefined;
 
+// When the model has morph target customization, strip morph tracks from
+// animations so the mixer doesn't overwrite the customizer's values.
+const hasMorphCustomization = (model.customization?.morphTargetGroups?.length ?? 0) > 0;
+
 // Create mixer and react to animation changes
 $effect(() => {
 	const data = $gltf;
@@ -23,7 +27,16 @@ $effect(() => {
 	if (!mixer) mixer = new AnimationMixer(data.scene);
 	mixer.stopAllAction();
 	const clip = data.animations.find((c) => c.name === currentAnimation);
-	if (clip) mixer.clipAction(clip).play();
+	if (clip) {
+		const playClip = hasMorphCustomization
+			? new AnimationClip(
+					clip.name,
+					clip.duration,
+					clip.tracks.filter((t) => !t.name.includes('morphTargetInfluences')),
+				)
+			: clip;
+		mixer.clipAction(playClip).play();
+	}
 });
 
 useTask((delta) => {
