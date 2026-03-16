@@ -99,7 +99,7 @@ const ghostIcons = [
 				{/each}
 			</h1>
 
-			<p class="tagline">Full-Stack Containerized Template</p>
+			<p class="tagline">here's something that does a thing for you.</p>
 
 			<div class="etymology-card">
 				<CornerFrame variant="bracket" size={20} strokeWidth={1} />
@@ -110,6 +110,7 @@ const ghostIcons = [
 v          10            r</pre>
 					<span class="sr-only">The letters v and r bracket 10 letters in Velociraptor, forming the abbreviation v10r.</span>
 					<p class="etymology-result">v10r</p>
+					<p class="etymology-class">Full-Stack Containerized Template</p>
 				</div>
 			</div>
 		</div>
@@ -285,11 +286,13 @@ v          10            r</pre>
 		}
 	}
 
-	/* Tagline */
+	/* Tagline — intentionally sans-serif to break from monospace register */
 	.tagline {
-		font-size: var(--text-fluid-lg);
+		font-size: var(--text-fluid-xl);
 		color: var(--color-muted);
-		margin: var(--spacing-3) 0 var(--spacing-7);
+		margin: var(--spacing-4) 0 var(--spacing-7);
+		font-family: system-ui, -apple-system, sans-serif;
+		font-weight: 400;
 	}
 
 	/* Etymology card */
@@ -331,6 +334,16 @@ v          10            r</pre>
 		font-weight: 700;
 		color: var(--color-fg);
 		margin: 0;
+	}
+
+	.etymology-class {
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		margin: 0;
+		border-top: 1px solid var(--color-border);
+		padding-top: var(--spacing-3);
 	}
 
 	/* Raptor */
