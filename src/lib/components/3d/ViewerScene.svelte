@@ -50,6 +50,9 @@ useTask((delta) => {
 	fov={config.camera.fov}
 	near={config.camera.near}
 	far={config.camera.far}
+	oncreate={(ref) => {
+		ref.lookAt(...config.camera.target);
+	}}
 >
 	<OrbitControls
 		target={config.camera.target}

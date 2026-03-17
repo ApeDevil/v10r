@@ -326,12 +326,12 @@ export const MODELS: Model3D[] = [
 		customization: ROBOT_CUSTOMIZATION,
 
 		camera: {
-			position: [1.5, 1, 3.2],
-			target: [0, 0.55, 0],
+			position: [1.5, 2.0, 5],
+			target: [0, 1.0, 0],
 		},
 		cardCamera: {
-			position: [1.5, 0.8, 2.5],
-			target: [0, 0.5, 0],
+			position: [1.8, 1.2, 3.5],
+			target: [0, 0.9, 0],
 		},
 
 		controls: {
