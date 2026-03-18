@@ -25,5 +25,6 @@ export const load: LayoutServerLoad = async ({ cookies, locals }) => {
 		session,
 		themeMode,
 		sidebarWidth,
+		style: locals.style,
 	};
 };

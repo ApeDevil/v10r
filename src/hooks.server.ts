@@ -7,6 +7,14 @@ import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { auth } from '$lib/server/auth';
 import { AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW, HSTS_MAX_AGE } from '$lib/server/config';
 import { logFeatureStatus } from '$lib/server/features';
+import {
+	generateRandomStyle,
+	parseStyleCookie,
+	resolveStyle,
+	serializeStyleCookie,
+	STYLE_COOKIE_NAME,
+	STYLE_COOKIE_OPTIONS,
+} from '$lib/styles/random';
 import '$lib/server/jobs/scheduler';
 import '$lib/server/jobs/delivery-scheduler';
 
@@ -33,19 +41,42 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
 };
 
 /**
- * 2. i18n — Paraglide locale detection + HTML lang attribute
+ * 2. loadStyle — reads/generates style from cookie, populates event.locals.style
+ */
+const loadStyle: Handle = async ({ event, resolve }) => {
+	const cookieValue = event.cookies.get(STYLE_COOKIE_NAME);
+	let config = parseStyleCookie(cookieValue);
+	let resolved = config ? resolveStyle(config) : null;
+
+	// Invalid or missing cookie → generate new style
+	if (!resolved) {
+		config = generateRandomStyle();
+		resolved = resolveStyle(config)!;
+		event.cookies.set(STYLE_COOKIE_NAME, serializeStyleCookie(config), STYLE_COOKIE_OPTIONS);
+	}
+
+	event.locals.style = resolved;
+	return resolve(event);
+};
+
+/**
+ * 3. i18n — Paraglide locale detection + HTML lang attribute + style attrs
  */
 const i18n: Handle = ({ event, resolve }) =>
 	paraglideMiddleware(event.request, ({ request, locale }) => {
 		const safeLocale = ALLOWED_LOCALES.has(locale) ? locale : 'en';
 		event.request = request;
 		return resolve(event, {
-			transformPageChunk: ({ html }) => html.replace('%lang%', safeLocale),
+			transformPageChunk: ({ html }) =>
+				html
+					.replace('%lang%', safeLocale)
+					.replace('%palette%', event.locals.style?.paletteId ?? '')
+					.replace('%typography%', event.locals.style?.typographyId ?? ''),
 		});
 	});
 
 /**
- * 3. Auth API handler — intercepts /api/auth/* routes
+ * 4. Auth API handler — intercepts /api/auth/* routes
  *    Includes Upstash rate limiting on all auth endpoints
  */
 const authHandler: Handle = async ({ event, resolve }) => {
@@ -65,7 +96,7 @@ const authHandler: Handle = async ({ event, resolve }) => {
 };
 
 /**
- * 4. Session populate — reads session from cookie/headers into event.locals
+ * 5. Session populate — reads session from cookie/headers into event.locals
  *    CRITICAL: svelteKitHandler does NOT populate event.locals (Issue #2188)
  */
 const sessionPopulate: Handle = async ({ event, resolve }) => {
@@ -87,7 +118,7 @@ const sessionPopulate: Handle = async ({ event, resolve }) => {
 };
 
 /**
- * 5. CSRF protection — require X-Requested-With on mutating API calls
+ * 6. CSRF protection — require X-Requested-With on mutating API calls
  *    Excludes /api/auth/* (Better Auth handles its own CSRF) and /api/cron/* (Bearer token)
  */
 const csrfProtection: Handle = async ({ event, resolve }) => {
@@ -110,7 +141,7 @@ const csrfProtection: Handle = async ({ event, resolve }) => {
 };
 
 /**
- * 6. Route guard — protect /app/* routes
+ * 7. Route guard — protect /app/* routes
  */
 const routeGuard: Handle = async ({ event, resolve }) => {
 	if (event.url.pathname.startsWith('/app')) {
@@ -123,7 +154,7 @@ const routeGuard: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
-export const handle = sequence(securityHeaders, i18n, authHandler, sessionPopulate, csrfProtection, routeGuard);
+export const handle = sequence(securityHeaders, loadStyle, i18n, authHandler, sessionPopulate, csrfProtection, routeGuard);
 
 export const handleError: HandleServerError = ({ error, event, status, message }) => {
 	// 404s from unknown routes — no errorId needed

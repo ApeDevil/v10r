@@ -1,6 +1,10 @@
 <script lang="ts">
 import 'uno.css';
 import '../app.css';
+import '@fontsource-variable/inter';
+import '@fontsource-variable/playfair-display';
+import '@fontsource-variable/space-grotesk';
+import '@fontsource-variable/jetbrains-mono';
 import { Tooltip as TooltipPrimitive } from 'bits-ui';
 import { goto } from '$app/navigation';
 import favicon from '$lib/assets/favicon.svg';
@@ -9,6 +13,7 @@ import { initKeyboardHandler, registerShortcut } from '$lib/shortcuts';
 import { setConsentContext } from '$lib/state/consent.svelte';
 import { setModalsContext } from '$lib/state/modals.svelte';
 import { setSidebarContext } from '$lib/state/sidebar.svelte';
+import { setStyleContext } from '$lib/state/style.svelte';
 import { setThemeContext } from '$lib/state/theme.svelte';
 import { setToastContext } from '$lib/state/toast.svelte';
 
@@ -22,7 +27,13 @@ const theme = setThemeContext({
 const sidebar = setSidebarContext(data.sidebarWidth);
 const modals = setModalsContext();
 const toast = setToastContext();
+const styleState = setStyleContext(data.style);
 const consent = setConsentContext();
+
+// Sync style state when data changes (after invalidateAll)
+$effect(() => {
+	styleState.update(data.style);
+});
 
 // Keyboard shortcuts
 $effect(() => {
@@ -84,6 +95,14 @@ $effect(() => {
 		action: () => goto(localizeHref('/docs')),
 	});
 
+	const unregisterShuffle = registerShortcut({
+		id: 'shuffle-style',
+		keys: 'mod+shift+r',
+		description: 'Shuffle Style',
+		category: 'global',
+		action: () => styleState.roll(toast),
+	});
+
 	return () => {
 		cleanup();
 		unregisterSearch();
@@ -93,6 +112,7 @@ $effect(() => {
 		unregisterHome();
 		unregisterSettings();
 		unregisterDocs();
+		unregisterShuffle();
 	};
 });
 </script>
@@ -104,3 +124,7 @@ $effect(() => {
 <TooltipPrimitive.Provider>
 	{@render children()}
 </TooltipPrimitive.Provider>
+
+<div class="sr-only" aria-live="polite" aria-atomic="true">
+	{styleState.announcement}
+</div>

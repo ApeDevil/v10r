@@ -10,8 +10,11 @@ declare global {
 		interface Locals {
 			user: import('better-auth').User | null;
 			session: import('better-auth').Session | null;
+			style: import('$lib/styles/random/types').ResolvedStyle;
 		}
-		// interface PageData {}
+		interface PageData {
+			style: import('$lib/styles/random/types').ResolvedStyle;
+		}
 		interface PageState {
 			viewerOpen?: boolean;
 			modelId?: string;

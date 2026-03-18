@@ -99,6 +99,17 @@ export const spacing = {
 } as const;
 
 // ═══════════════════════════════════════════════════════════════
+// FONT FAMILY
+// ═══════════════════════════════════════════════════════════════
+
+/** Font family tokens (CSS variable references, set by data-typography attribute) */
+export const fontFamily = {
+	heading: 'var(--font-heading, system-ui, sans-serif)',
+	body: 'var(--font-body, system-ui, sans-serif)',
+	mono: 'var(--font-mono, ui-monospace, monospace)',
+} as const;
+
+// ═══════════════════════════════════════════════════════════════
 // COLORS
 // ═══════════════════════════════════════════════════════════════
 

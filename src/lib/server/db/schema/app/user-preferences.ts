@@ -30,6 +30,11 @@ export const userPreferences = appSchema.table('user_preferences', {
 	reduceMotion: boolean('reduce_motion').notNull().default(false),
 	highContrast: boolean('high_contrast').notNull().default(false),
 
+	// Style randomizer
+	paletteId: text('palette_id'),
+	typographyId: text('typography_id'),
+	styleLocked: boolean('style_locked').notNull().default(false),
+
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -42,4 +47,7 @@ export const PREFERENCE_DEFAULTS = {
 	dateFormat: 'relative',
 	reduceMotion: false,
 	highContrast: false,
+	paletteId: null,
+	typographyId: null,
+	styleLocked: false,
 } as const;

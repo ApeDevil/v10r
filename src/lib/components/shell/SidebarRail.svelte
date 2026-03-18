@@ -3,6 +3,7 @@ import { MediaQuery } from 'svelte/reactivity';
 import { getSession } from '$lib/state/session.svelte';
 import { getSidebar } from '$lib/state/sidebar.svelte';
 import { cn } from '$lib/utils/cn';
+import DiceRollButton from './DiceRollButton.svelte';
 import SidebarLogo from './SidebarLogo.svelte';
 import SidebarNav from './SidebarNav.svelte';
 import SidebarTriggers from './SidebarTriggers.svelte';
@@ -70,6 +71,8 @@ $effect(() => {
 	</div>
 
 	<SidebarTriggers />
+
+	<DiceRollButton />
 
 	<SidebarNav />
 
