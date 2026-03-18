@@ -1510,6 +1510,460 @@ src/
 
 ---
 
+## Data Model Refinements (Cross-Domain)
+
+Refinements from architecture, SvelteKit, UX, research, and real-world analysis. Changes only -- everything not mentioned here remains as specified above.
+
+---
+
+### 1. OKLCH Color Format
+
+**Decision: Use OKLCH for all palette color values.**
+
+HSL is perceptually non-uniform -- `hsl(60 100% 50%)` and `hsl(240 100% 50%)` have wildly different perceived brightness despite identical lightness values. OKLCH fixes this, making programmatic scale generation and contrast prediction reliable. DaisyUI (40k+ stars) uses OKLCH exclusively in production, proving the approach at scale.
+
+**What changes:**
+
+All `PaletteColors` string values switch from `hsl(H S% L%)` to `oklch(L C H)` format:
+
+```typescript
+// BEFORE
+primary: 'hsl(210 100% 45%)',
+
+// AFTER
+primary: 'oklch(0.55 0.22 255)',
+```
+
+**Contrast validation changes:**
+
+The `getLuminance()` function currently parses HSL and converts to linear RGB. With OKLCH:
+- Use `culori` (npm library) for OKLCH-to-sRGB conversion. Do NOT hand-roll OKLCH math.
+- Fix the WCAG luminance threshold: use `0.04045`, not `0.03928` (the spec was corrected).
+- The contrast ratio formula itself (`(L1 + 0.05) / (L2 + 0.05)`) is unchanged -- it operates on relative luminance, not color space.
+
+```typescript
+// contrast.ts -- updated
+import { oklch, rgb } from 'culori';
+
+export function getLuminance(color: string): number {
+  const srgb = rgb(color); // culori handles oklch() strings
+  if (!srgb) throw new Error(`Cannot parse color: ${color}`);
+  const [r, g, b] = [srgb.r, srgb.g, srgb.b].map(c =>
+    c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)  // Fixed threshold
+  );
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+```
+
+**CSS generation:** No change needed. Modern browsers support `oklch()` natively. The generated CSS variables just contain OKLCH strings instead of HSL. No PostCSS fallback needed -- our browser support baseline already covers OKLCH (Chrome 111+, Firefox 113+, Safari 15.4+).
+
+**Build-time validation:** Unchanged. `culori` parses OKLCH at module load, contrast checks run identically.
+
+---
+
+### 2. `[data-palette]` CSS Selector Approach
+
+**Change: `generateCssVariables()` returns a CSS rule block, not an inline style string.**
+
+The original plan applied CSS variables as an inline `style` attribute on a wrapper div. The `[data-palette]` approach is better: set a single attribute on `<html>`, and let a `<style>` block do the work. This matches the DaisyUI pattern (`[data-theme="name"]`).
+
+**What changes in `generateCssVariables()`:**
+
+```typescript
+// BEFORE: Returns Record<string, string> for inline styles
+export function generateCssVariables(
+  style: ResolvedStyle,
+  theme: 'light' | 'dark'
+): Record<string, string> { ... }
+
+// AFTER: Returns a CSS rule block string
+export function generatePaletteCss(palette: Palette): string {
+  // One rule per palette, both modes
+  return `
+[data-palette="${palette.id}"] {
+${Object.entries(mapColorsToVars(palette.light)).map(([k, v]) => `  ${k}: ${v};`).join('\n')}
+}
+.dark[data-palette="${palette.id}"],
+.dark [data-palette="${palette.id}"] {
+${Object.entries(mapColorsToVars(palette.dark)).map(([k, v]) => `  ${k}: ${v};`).join('\n')}
+}`;
+}
+```
+
+**Layout integration changes:**
+
+```svelte
+<!-- BEFORE: inline style on wrapper div -->
+<div class="app-root" style={cssVarsString}>
+
+<!-- AFTER: data attribute on html + injected style block -->
+<svelte:head>
+  {@html `<style>${generatePaletteCss(style.palette)}</style>`}
+</svelte:head>
+
+<!-- In hooks.server.ts or layout: -->
+<!-- document.documentElement.dataset.palette = style.config.paletteId -->
+```
+
+The `<html>` element gets `data-palette="P3"`. The `<style>` block contains the CSS rules scoped to that attribute. Switching palettes is a single `setAttribute` call -- no inline style diffing.
+
+**Typography remains separate:** Font families are still applied via CSS variables in the style block (or inline), since they are not theme-dependent.
+
+---
+
+### 3. High-Contrast Palette Variant
+
+**Decision: Add an optional `highContrast` property to each `Palette`, not a separate registry.**
+
+Rationale: A high-contrast variant is a property of the palette itself, not a different palette. The same "Ocean" identity should have a `prefers-contrast: more` variant that intensifies its own colors rather than switching to a generic high-contrast palette.
+
+**What changes in types:**
+
+```typescript
+export interface Palette {
+  id: string;
+  name: string;
+  light: PaletteColors;
+  dark: PaletteColors;
+  highContrast?: {           // NEW -- optional for Phase 1
+    light: Partial<PaletteColors>;  // Only override tokens that need boosting
+    dark: Partial<PaletteColors>;
+  };
+}
+```
+
+Using `Partial<PaletteColors>` means high-contrast only overrides what needs changing (typically `fg`, `bg`, `border`, `muted`, `mutedForeground`). Unspecified tokens fall through to the base palette.
+
+**CSS generation adds a media query layer:**
+
+```css
+@media (prefers-contrast: more) {
+  [data-palette="P1"] {
+    --color-fg: oklch(0.05 0.01 255);    /* Darker */
+    --color-border: oklch(0.30 0.05 255); /* More visible */
+  }
+}
+```
+
+**Phase 1 scope:** The `highContrast` property is optional. Palettes without it simply pass through. This avoids blocking launch while establishing the extensibility hook. Phase 2 adds high-contrast overrides to each palette and validates them against AAA ratios (7:1 for text).
+
+---
+
+### 4. Token Coverage Map
+
+The current `app.css` defines **~40 color tokens** across `:root` and `.dark`. Each palette overrides a subset. Unmapped tokens inherit from the `app.css` defaults.
+
+**Tokens palettes OVERRIDE (palette-controlled, ~16):**
+
+| CSS Variable | PaletteColors field | Notes |
+|---|---|---|
+| `--color-bg` | `bg` | Page background |
+| `--color-fg` | `fg` | Primary text |
+| `--color-body` | `body` | **NEW** -- body text (currently missing from PaletteColors) |
+| `--color-muted` | `muted` | Muted backgrounds |
+| `--color-border` | `border` | Default borders |
+| `--color-subtle` | `subtle` | **NEW** -- subtle backgrounds |
+| `--color-primary` | `primary` | Primary actions |
+| `--color-primary-hover` | `primaryHover` | Primary hover state |
+| `--color-primary-bg` | `primaryBg` | **NEW** -- primary background tint |
+| `--color-primary-fg` | `primaryForeground` | Text on primary bg |
+| `--color-primary-light` | `primaryLight` | **NEW** -- light primary tint |
+| `--color-on-primary` | `onPrimary` | **NEW** -- text on solid primary |
+| `--color-secondary-bg` | `secondaryBg` | **NEW** -- replaces `secondary` |
+| `--color-secondary-fg` | `secondaryForeground` | Text on secondary bg |
+| `--color-input-border` | `inputBorder` | **NEW** -- input borders |
+| `--color-input-bg` | `inputBg` | **NEW** -- input backgrounds |
+
+**Tokens palettes LEAVE AS DEFAULTS (fixed, ~24):**
+
+| Category | Tokens | Rationale |
+|---|---|---|
+| Semantic status | `--color-success`, `--color-success-bg/fg/light`, `--color-warning-*`, `--color-error-*`, `--color-info-*` | Status colors must be universally recognizable. Palette should not make errors look like success. |
+| Semi-transparent | `--color-bg-alpha`, `--color-fg-alpha` | Derived from bg/fg -- can be computed from palette values if needed later |
+| Shadows | `--shadow-sm/md/lg/xl/modal`, `--shadow-glow-*` | Shadow intensity is theme-dependent, not palette-dependent |
+| Surfaces | `--surface-0/1/2/3` | Elevation system. Could be palette-controlled later, but risky in Phase 1 |
+| Layout | `--sidebar-*`, `--layout-*`, `--z-*` | Structural, not decorative |
+| Animation | `--duration-*`, `--ease-*` | Temporal, not visual |
+| Radius | `--radius-*` | Shape, not color |
+| Chart | `--chart-1` through `--chart-8`, `--chart-grid/axis/label/bg/tooltip-bg` | Data viz needs its own palette story |
+
+**Action required:** Add `body`, `subtle`, `primaryBg`, `primaryLight`, `onPrimary`, `secondaryBg`, `inputBorder`, and `inputBg` to `PaletteColors`. This brings coverage from ~16 to match the actual app.css color tokens that should be palette-controlled.
+
+Updated `PaletteColors` (complete):
+
+```typescript
+export interface PaletteColors {
+  // Core
+  bg: string;
+  fg: string;
+  body: string;              // NEW
+  muted: string;
+  mutedForeground: string;
+  border: string;
+  subtle: string;            // NEW
+  ring: string;
+
+  // Primary
+  primary: string;
+  primaryHover: string;
+  primaryBg: string;         // NEW
+  primaryForeground: string;
+  primaryLight: string;      // NEW
+  onPrimary: string;         // NEW
+
+  // Secondary
+  secondaryBg: string;       // RENAMED from secondary
+  secondaryForeground: string;
+
+  // Accent
+  accent: string;
+  accentForeground: string;
+
+  // Input
+  inputBorder: string;       // NEW
+  inputBg: string;           // NEW
+}
+```
+
+**Semantic colors removed from PaletteColors.** The `semantic: SemanticColors` nested object is removed. Status colors are fixed across all palettes.
+
+---
+
+### 5. Roll Endpoint API Response
+
+**Updated response shape for same-style detection and toast messages:**
+
+```typescript
+// POST /api/style/roll response
+interface RollResponse {
+  success: true;
+  style: {
+    paletteId: string;          // "P3" -- for same-style detection
+    paletteName: string;        // "Ocean" -- for toast message
+    typographyId: string;       // "T2" -- for same-style detection
+    typographyName: string;     // "Editorial" -- for toast message
+  };
+}
+
+// Error response (400/500)
+interface RollErrorResponse {
+  success: false;
+  error: string;
+}
+```
+
+**Same-style detection flow (client-side):**
+
+The client compares the previous `paletteId + typographyId` with the response. If both match, show a different toast ("Same style! Roll again?") instead of the standard change toast.
+
+```typescript
+// In DiceRollButton.svelte
+const prevPaletteId = styleContext.style.config.paletteId;
+const prevTypographyId = styleContext.style.config.typographyId;
+
+const response = await fetch('/api/style/roll', { method: 'POST' });
+const data = await response.json();
+
+const sameStyle = data.style.paletteId === prevPaletteId
+               && data.style.typographyId === prevTypographyId;
+
+if (sameStyle) {
+  toast('Same style! Roll again for something different.');
+} else {
+  toast(`Now wearing ${data.style.paletteName} + ${data.style.typographyName}`);
+}
+```
+
+**Locked style with deleted palette:** When `resolveStyle()` returns null (palette removed from registry), regenerate a new random config but **preserve `locked: true`**. The user's lock intent survives palette deprecation.
+
+```typescript
+// In hooks.server.ts, step 4
+if (!resolved) {
+  const wasLocked = styleConfig.locked;  // Preserve lock intent
+  styleConfig = generateRandomStyle();
+  styleConfig.locked = wasLocked;        // Restore lock
+  resolved = resolveStyle(styleConfig)!;
+  needsCookieUpdate = true;
+}
+```
+
+---
+
+### 6. Updated TypeScript Types (Complete)
+
+```typescript
+// src/lib/styles/random/types.ts
+
+// --- Color types ---
+
+/** All OKLCH color strings, e.g. 'oklch(0.55 0.22 255)' */
+export interface PaletteColors {
+  // Core
+  bg: string;
+  fg: string;
+  body: string;
+  muted: string;
+  mutedForeground: string;
+  border: string;
+  subtle: string;
+  ring: string;
+
+  // Primary
+  primary: string;
+  primaryHover: string;
+  primaryBg: string;
+  primaryForeground: string;
+  primaryLight: string;
+  onPrimary: string;
+
+  // Secondary
+  secondaryBg: string;
+  secondaryForeground: string;
+
+  // Accent
+  accent: string;
+  accentForeground: string;
+
+  // Input
+  inputBorder: string;
+  inputBg: string;
+}
+
+// --- Palette ---
+
+export interface Palette {
+  id: string;
+  name: string;
+  light: PaletteColors;
+  dark: PaletteColors;
+  highContrast?: {
+    light: Partial<PaletteColors>;
+    dark: Partial<PaletteColors>;
+  };
+}
+
+// --- Typography ---
+
+export interface FontConfig {
+  family: string;
+  weights: number[];
+  fallback: string;
+  url?: string;
+}
+
+export interface TypographySet {
+  id: string;
+  name: string;
+  heading: FontConfig;
+  body: FontConfig;
+  mono?: FontConfig;
+}
+
+// --- Branded IDs ---
+
+export type PaletteId = string & { readonly __brand: 'PaletteId' };
+export type TypographyId = string & { readonly __brand: 'TypographyId' };
+
+// --- Style config ---
+
+export interface StyleConfig {
+  paletteId: PaletteId;
+  typographyId: TypographyId;
+  locked: boolean;
+}
+
+export interface ResolvedStyle {
+  config: StyleConfig;
+  palette: Palette;
+  typography: TypographySet;
+}
+
+// --- Cookie ---
+
+export interface StyleCookieV1 {
+  pid: string;
+  tid: string;
+  lck: boolean;
+  v: 1;
+}
+
+export type StyleCookie = StyleCookieV1;
+
+// --- API Response ---
+
+export interface RollResponseSuccess {
+  success: true;
+  style: {
+    paletteId: string;
+    paletteName: string;
+    typographyId: string;
+    typographyName: string;
+  };
+}
+
+export interface RollResponseError {
+  success: false;
+  error: string;
+}
+
+export type RollResponse = RollResponseSuccess | RollResponseError;
+
+// --- Token coverage documentation ---
+
+/**
+ * Tokens controlled by palette (overridden per palette):
+ * bg, fg, body, muted, mutedForeground, border, subtle, ring,
+ * primary, primaryHover, primaryBg, primaryForeground, primaryLight, onPrimary,
+ * secondaryBg, secondaryForeground, accent, accentForeground,
+ * inputBorder, inputBg
+ *
+ * Tokens NOT controlled by palette (app.css defaults):
+ * - Semantic status: success/warning/error/info (all variants)
+ * - Semi-transparent: bg-alpha, fg-alpha
+ * - Shadows: sm, md, lg, xl, modal, glow-*
+ * - Surfaces: surface-0/1/2/3
+ * - Layout: sidebar-*, layout-*, z-*
+ * - Animation: duration-*, ease-*
+ * - Radius: radius-*
+ * - Chart: chart-1..8, chart-grid/axis/label/bg/tooltip-bg
+ */
+```
+
+---
+
+### 7. Cookie `secure` Flag
+
+**Change:** Conditional on environment, per svey finding.
+
+```typescript
+const COOKIE_OPTIONS = {
+  path: '/',
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',  // false in local dev (HTTP)
+  sameSite: 'lax' as const,
+  maxAge: STYLE_COOKIE_MAX_AGE,
+};
+```
+
+---
+
+### Summary of All Changes from Original Plan
+
+| Area | Original | Refined |
+|---|---|---|
+| Color format | HSL strings | OKLCH strings (culori for parsing) |
+| Luminance threshold | 0.03928 | 0.04045 (corrected WCAG spec) |
+| CSS application | Inline `style` attribute | `[data-palette]` CSS rule block |
+| `generateCssVariables()` | Returns `Record<string, string>` | Renamed `generatePaletteCss()`, returns CSS string |
+| PaletteColors fields | ~16 fields + nested semantic | ~22 fields, no nested semantic |
+| Semantic colors | Per-palette (in PaletteColors) | Fixed (app.css defaults, not overridden) |
+| High contrast | Not addressed | Optional `highContrast` partial overrides per palette |
+| Token coverage | Undocumented | Explicit map of 22 overridden vs 24 fixed tokens |
+| Roll response | Had names but no explicit type | Typed `RollResponse` union with IDs for same-style detection |
+| Lock preservation | Regenerate resets lock | Regenerate preserves `locked: true` intent |
+| Cookie `secure` | Always `true` | Conditional on `NODE_ENV` |
+| Dependencies | None added | `culori` (OKLCH math) |
+
 ## Related Documentation
 
 - [../foundation/style.md](../foundation/style.md) — Philosophy and principles
