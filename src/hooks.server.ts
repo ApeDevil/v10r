@@ -71,7 +71,8 @@ const i18n: Handle = ({ event, resolve }) =>
 				html
 					.replace('%lang%', safeLocale)
 					.replace('%palette%', event.locals.style?.paletteId ?? '')
-					.replace('%typography%', event.locals.style?.typographyId ?? ''),
+					.replace('%typography%', event.locals.style?.typographyId ?? '')
+					.replace('%radius%', event.locals.style?.radiusId ?? ''),
 		});
 	});
 

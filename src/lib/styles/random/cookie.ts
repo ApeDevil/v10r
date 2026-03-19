@@ -3,7 +3,7 @@
  * Cookie is non-httpOnly so the app.html blocking script can read it.
  */
 
-import type { PaletteId, StyleConfig, StyleCookie, TypographyId } from './types';
+import type { PaletteId, RadiusId, StyleConfig, StyleCookie, TypographyId } from './types';
 
 export const STYLE_COOKIE_NAME = 'v10r_style';
 
@@ -20,6 +20,7 @@ export function serializeStyleCookie(config: StyleConfig): string {
 	const cookie: StyleCookie = {
 		pid: config.paletteId,
 		tid: config.typographyId,
+		rid: config.radiusId,
 		lck: config.locked,
 		v: 1,
 	};
@@ -38,6 +39,8 @@ export function parseStyleCookie(value: string | undefined): StyleConfig | null 
 		return {
 			paletteId: parsed.pid as PaletteId,
 			typographyId: parsed.tid as TypographyId,
+			// Backward compat: missing rid defaults to R2 (current defaults)
+			radiusId: (parsed.rid ?? 'R2') as RadiusId,
 			locked: Boolean(parsed.lck),
 		};
 	} catch {

@@ -172,6 +172,19 @@ export const colors = {
 } as const;
 
 // ═══════════════════════════════════════════════════════════════
+// BORDER RADIUS
+// ═══════════════════════════════════════════════════════════════
+
+/** Border radius tokens (CSS variable references, set by data-radius attribute) */
+export const borderRadius = {
+	sm: 'var(--radius-sm)',
+	md: 'var(--radius-md)',
+	lg: 'var(--radius-lg)',
+	xl: 'var(--radius-xl)',
+	full: 'var(--radius-full)',
+} as const;
+
+// ═══════════════════════════════════════════════════════════════
 // Z-INDEX
 // ═══════════════════════════════════════════════════════════════
 

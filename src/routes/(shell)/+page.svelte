@@ -1,9 +1,12 @@
 <script lang="ts">
 import { Asterism, CornerFrame, Divider } from '$lib/components';
 import { localizeHref } from '$lib/i18n';
+import { getStyle } from '$lib/state/style.svelte';
 import AsciiRaptor from './_components/AsciiRaptor.svelte';
 import { fadeIn } from './_components/fadeIn';
 import StructureSection from './_components/StructureSection.svelte';
+
+const style = getStyle();
 
 let revealed = $state(false);
 
@@ -101,6 +104,7 @@ const ghostIcons = [
 
 			<p class="tagline">here's something that does a thing for you.</p>
 
+			<div class="etymology-row">
 			<div class="etymology-card">
 				<CornerFrame variant="bracket" size={20} strokeWidth={1} />
 				<span class="etymology-label">ETYMOLOGY</span>
@@ -112,6 +116,27 @@ v          10            r</pre>
 					<p class="etymology-result">v10r</p>
 					<p class="etymology-class">Full-Stack Containerized Template</p>
 				</div>
+			</div>
+
+			{#if !style.locked}
+				<div class="roll-block">
+					<button
+						class="roll-btn focus-ring"
+						onclick={() => style.roll()}
+						disabled={style.rolling}
+						aria-label="Randomize site style"
+					>
+						<span class="roll-icon i-lucide-dices"></span>
+						<span>{style.rollCount === 0 ? 'roll a new look' : 'roll again'}</span>
+					</button>
+					{#if style.rollCount > 0}
+						<p class="roll-label">{style.paletteName}</p>
+					{/if}
+					{#if style.rollCount >= 3}
+						<button class="lock-link focus-ring" onclick={() => style.toggleLock()}>→ lock this look</button>
+					{/if}
+				</div>
+			{/if}
 			</div>
 		</div>
 
@@ -186,8 +211,10 @@ v          10            r</pre>
 
 <style>
 	/* ─── TYPOGRAPHY ─── */
-	.classification,
-	.specimen-name,
+	.classification {
+		font-family: var(--font-heading, system-ui, sans-serif);
+	}
+
 	.etymology-label,
 	.etymology-diagram,
 	.etymology-result,
@@ -195,7 +222,15 @@ v          10            r</pre>
 	.zone-name,
 	.proven-badge,
 	.cta-link {
-		font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
+		font-family: var(--font-mono, ui-monospace, monospace);
+	}
+
+	.specimen-name {
+		font-family: var(--font-heading, system-ui, sans-serif);
+	}
+
+	.tagline {
+		font-family: var(--font-body, system-ui, sans-serif);
 	}
 
 	/* ─── ACT I: HERO ─── */
@@ -286,13 +321,97 @@ v          10            r</pre>
 		}
 	}
 
-	/* Tagline — intentionally sans-serif to break from monospace register */
 	.tagline {
 		font-size: var(--text-fluid-xl);
 		color: var(--color-muted);
 		margin: var(--spacing-4) 0 var(--spacing-7);
-		font-family: system-ui, -apple-system, sans-serif;
 		font-weight: 400;
+	}
+
+	/* Etymology row — etymology card + roll block side by side */
+	.etymology-row {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-6);
+		align-items: flex-start;
+	}
+
+	@media (min-width: 640px) {
+		.etymology-row {
+			flex-direction: row;
+			align-items: stretch;
+		}
+	}
+
+	/* Roll block */
+	.roll-block {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: center;
+		gap: var(--spacing-3);
+	}
+
+	.roll-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--spacing-3);
+		min-height: 44px;
+		padding: var(--spacing-3) var(--spacing-5);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
+		font-size: var(--text-fluid-sm);
+		color: var(--color-fg);
+		background: transparent;
+		cursor: pointer;
+		transition: border-color var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out;
+	}
+
+	.roll-btn:hover {
+		border-color: var(--color-fg);
+		background: var(--color-fg-alpha);
+	}
+
+	.roll-btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.roll-icon {
+		width: 1.25rem;
+		height: 1.25rem;
+		flex-shrink: 0;
+	}
+
+	.roll-label {
+		font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
+		letter-spacing: 0.1em;
+		margin: 0;
+		animation: fade-in var(--duration-normal) ease-out;
+	}
+
+	.lock-link {
+		font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
+		background: none;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+		letter-spacing: 0.05em;
+		animation: fade-in var(--duration-normal) ease-out;
+	}
+
+	.lock-link:hover {
+		color: var(--color-fg);
+	}
+
+	@keyframes fade-in {
+		from { opacity: 0; }
+		to { opacity: 1; }
 	}
 
 	/* Etymology card */
@@ -459,13 +578,13 @@ v          10            r</pre>
 	}
 
 	:global(:root) .proven-badge {
-		color: #a07800;
-		border-color: #a07800;
+		color: var(--color-warning);
+		border-color: var(--color-warning);
 	}
 
 	:global(.dark) .proven-badge {
-		color: #ffd700;
-		border-color: #ffd700;
+		color: var(--color-warning);
+		border-color: var(--color-warning);
 	}
 
 	.zone-capabilities {

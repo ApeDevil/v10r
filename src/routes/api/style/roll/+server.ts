@@ -13,7 +13,7 @@ import {
 	STYLE_COOKIE_OPTIONS,
 	serializeStyleCookie,
 } from '$lib/styles/random';
-import type { PaletteId, TypographyId } from '$lib/styles/random/types';
+import type { PaletteId, RadiusId, TypographyId } from '$lib/styles/random/types';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ cookies, locals }) => {
@@ -27,8 +27,9 @@ export const POST: RequestHandler = async ({ cookies, locals }) => {
 
 	const excludePaletteIds: PaletteId[] = current ? [current.paletteId] : [];
 	const excludeTypographyIds: TypographyId[] = current ? [current.typographyId] : [];
+	const excludeRadiusIds: RadiusId[] = current ? [current.radiusId] : [];
 
-	const config = generateRandomStyle({ excludePaletteIds, excludeTypographyIds });
+	const config = generateRandomStyle({ excludePaletteIds, excludeTypographyIds, excludeRadiusIds });
 	const resolved = resolveStyle(config);
 
 	if (!resolved) {
@@ -48,8 +49,10 @@ export const POST: RequestHandler = async ({ cookies, locals }) => {
 		style: {
 			paletteId: resolved.paletteId,
 			typographyId: resolved.typographyId,
+			radiusId: resolved.radiusId,
 			paletteName: resolved.paletteName,
 			typographyName: resolved.typographyName,
+			radiusName: resolved.radiusName,
 		},
 	});
 };

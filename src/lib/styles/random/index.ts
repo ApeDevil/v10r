@@ -6,10 +6,13 @@ export { contrastRatio, luminance, validatePaletteContrast } from './contrast';
 export { parseStyleCookie, STYLE_COOKIE_NAME, STYLE_COOKIE_OPTIONS, serializeStyleCookie } from './cookie';
 export { generateRandomStyle, resolveStyle } from './generator';
 export { getPalette, PALETTE_IDS, PALETTE_REGISTRY } from './palette-registry';
+export { getRadius, RADIUS_IDS, RADIUS_REGISTRY } from './radius-registry';
 export type {
 	Palette,
 	PaletteColors,
 	PaletteId,
+	RadiusId,
+	RadiusSet,
 	ResolvedStyle,
 	StyleConfig,
 	StyleCookie,

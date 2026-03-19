@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="%lang%" data-palette="%palette%" data-typography="%typography%">
+<html lang="%lang%" data-palette="%palette%" data-typography="%typography%" data-radius="%radius%">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -11,13 +11,14 @@
 				const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 				const isDark = theme === 'dark' || (theme === 'system' && prefersDark);
 				if (isDark) document.documentElement.classList.add('dark');
-				// Style palette + typography (prevents flash on client navigation)
+				// Style palette + typography + radius (prevents flash on client navigation)
 				const sm = document.cookie.match(/v10r_style=([^;]+)/);
 				if (sm) {
 					try {
 						const s = JSON.parse(decodeURIComponent(sm[1]));
 						if (s.pid) document.documentElement.dataset.palette = s.pid;
 						if (s.tid) document.documentElement.dataset.typography = s.tid;
+						if (s.rid) document.documentElement.dataset.radius = s.rid;
 					} catch {}
 				}
 				const sw = Number(document.cookie.match(/sidebar-width=(\d+)/)?.[1]);

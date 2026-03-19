@@ -5,7 +5,6 @@
 
 import { getContext, setContext } from 'svelte';
 import { browser } from '$app/environment';
-import { invalidateAll } from '$app/navigation';
 import type { ResolvedStyle } from '$lib/styles/random/types';
 
 const STYLE_CTX = Symbol('style');
@@ -16,11 +15,12 @@ export function createStyleState(initial: ResolvedStyle) {
 	let rollCount = $state(0);
 	let announcement = $state('');
 
-	// Sync data-palette and data-typography attributes to <html> when style changes
+	// Sync data-palette, data-typography, and data-radius attributes to <html> when style changes
 	$effect(() => {
 		if (!browser) return;
 		document.documentElement.dataset.palette = current.paletteId;
 		document.documentElement.dataset.typography = current.typographyId;
+		document.documentElement.dataset.radius = current.radiusId;
 	});
 
 	return {
@@ -30,11 +30,17 @@ export function createStyleState(initial: ResolvedStyle) {
 		get typographyId() {
 			return current.typographyId;
 		},
+		get radiusId() {
+			return current.radiusId;
+		},
 		get paletteName() {
 			return current.paletteName;
 		},
 		get typographyName() {
 			return current.typographyName;
+		},
+		get radiusName() {
+			return current.radiusName;
 		},
 		get locked() {
 			return current.locked;
@@ -49,7 +55,7 @@ export function createStyleState(initial: ResolvedStyle) {
 			return announcement;
 		},
 
-		/** Update from server data (e.g. after invalidateAll) */
+		/** Update from server data (e.g. after navigation) */
 		update(style: ResolvedStyle) {
 			current = { ...style };
 		},
@@ -76,17 +82,21 @@ export function createStyleState(initial: ResolvedStyle) {
 
 				const data = await res.json();
 
-				// Same style rolled — skip reload
-				if (data.style.paletteId === current.paletteId && data.style.typographyId === current.typographyId) {
+				// Same style rolled — skip
+				if (
+					data.style.paletteId === current.paletteId &&
+					data.style.typographyId === current.typographyId &&
+					data.style.radiusId === current.radiusId
+				) {
 					toast?.info('Same one — try again', 3000);
 					return;
 				}
 
+				// Apply directly — the $effect syncs data attributes to <html>, CSS cascade does the rest
+				current = { ...data.style, locked: false };
 				rollCount++;
 				announcement = `Style changed to ${data.style.paletteName} palette with ${data.style.typographyName} typography`;
 				toast?.info(`${data.style.paletteName} · ${data.style.typographyName}`, 4000);
-
-				await invalidateAll();
 			} finally {
 				rolling = false;
 			}

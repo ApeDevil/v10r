@@ -1,6 +1,6 @@
 /**
  * Type definitions for the Style Randomizer system.
- * Branded types for palette/typography IDs, palette color maps, and resolved style configs.
+ * Branded types for palette/typography/radius IDs, palette color maps, and resolved style configs.
  */
 
 /** Branded palette identifier (e.g. "P0", "P1") */
@@ -8,6 +8,9 @@ export type PaletteId = string & { readonly __brand: 'PaletteId' };
 
 /** Branded typography identifier (e.g. "T1", "T2") */
 export type TypographyId = string & { readonly __brand: 'TypographyId' };
+
+/** Branded radius identifier (e.g. "R1", "R2") */
+export type RadiusId = string & { readonly __brand: 'RadiusId' };
 
 /** The 22 overridable color tokens per palette per mode */
 export interface PaletteColors {
@@ -55,10 +58,23 @@ export interface TypographySet {
 	mono: string;
 }
 
+/** A radius preset definition */
+export interface RadiusSet {
+	id: RadiusId;
+	name: string;
+	description: string;
+	sm: string;
+	md: string;
+	lg: string;
+	xl: string;
+	full: string;
+}
+
 /** Raw style config stored in cookie */
 export interface StyleConfig {
 	paletteId: PaletteId;
 	typographyId: TypographyId;
+	radiusId: RadiusId;
 	locked: boolean;
 }
 
@@ -66,8 +82,10 @@ export interface StyleConfig {
 export interface ResolvedStyle {
 	paletteId: PaletteId;
 	typographyId: TypographyId;
+	radiusId: RadiusId;
 	paletteName: string;
 	typographyName: string;
+	radiusName: string;
 	locked: boolean;
 }
 
@@ -75,6 +93,7 @@ export interface ResolvedStyle {
 export interface StyleCookie {
 	pid: string;
 	tid: string;
+	rid: string;
 	lck: boolean;
 	v: 1;
 }

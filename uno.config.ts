@@ -1,6 +1,6 @@
 import transformerDirectives from '@unocss/transformer-directives';
 import { defineConfig, presetIcons, presetUno } from 'unocss';
-import { breakpoints, colors, containers, fontFamily, fontSize, iconSize, spacing, zIndex } from './src/lib/styles/tokens';
+import { borderRadius, breakpoints, colors, containers, fontFamily, fontSize, iconSize, spacing, zIndex } from './src/lib/styles/tokens';
 
 export default defineConfig({
 	presets: [
@@ -32,6 +32,7 @@ export default defineConfig({
 		spacing,
 		fontFamily,
 		colors,
+		borderRadius,
 		zIndex,
 	},
 

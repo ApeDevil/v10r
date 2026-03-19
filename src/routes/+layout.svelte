@@ -5,6 +5,8 @@ import '@fontsource-variable/inter';
 import '@fontsource-variable/playfair-display';
 import '@fontsource-variable/space-grotesk';
 import '@fontsource-variable/jetbrains-mono';
+import '@fontsource-variable/fraunces';
+import '@fontsource-variable/nunito';
 import { Tooltip as TooltipPrimitive } from 'bits-ui';
 import { goto } from '$app/navigation';
 import favicon from '$lib/assets/favicon.svg';
@@ -30,7 +32,7 @@ const toast = setToastContext();
 const styleState = setStyleContext(data.style);
 const consent = setConsentContext();
 
-// Sync style state when data changes (after invalidateAll)
+// Sync style state when server data changes (e.g. after navigation)
 $effect(() => {
 	styleState.update(data.style);
 });
