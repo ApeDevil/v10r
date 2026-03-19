@@ -154,6 +154,9 @@ export const colors = {
 		DEFAULT: 'var(--color-info)',
 		light: 'var(--color-info-light)',
 	},
+	'on-primary': 'var(--color-on-primary)',
+	link: 'var(--color-link)',
+	accent: 'var(--color-accent)',
 	input: {
 		border: 'var(--color-input-border)',
 	},

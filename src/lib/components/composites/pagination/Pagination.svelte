@@ -101,7 +101,7 @@ function handlePageChange(page: number) {
 			</span>
 		{:else}
 			<Button
-				variant={currentPage === page ? 'default' : 'ghost'}
+				variant={currentPage === page ? 'primary' : 'ghost'}
 				size="icon"
 				class="focus-visible:ring-1"
 				onclick={() => handlePageChange(page)}

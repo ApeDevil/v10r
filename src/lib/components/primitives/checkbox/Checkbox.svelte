@@ -30,7 +30,7 @@ const id = crypto.randomUUID();
 				'bg-subtle border-2 border-input-border',
 				'peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-1',
 				'peer-disabled:cursor-not-allowed peer-disabled:opacity-50',
-				'peer-checked:bg-primary peer-checked:border-primary peer-checked:text-white'
+				'peer-checked:bg-primary peer-checked:border-primary peer-checked:text-on-primary'
 			)}
 		>
 			{#if checked}

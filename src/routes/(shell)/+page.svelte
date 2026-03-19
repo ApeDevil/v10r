@@ -631,7 +631,7 @@ v          10            r</pre>
 
 	.cta-link {
 		font-size: var(--text-fluid-2xl);
-		color: var(--color-fg);
+		color: var(--color-primary);
 		text-decoration: none;
 		display: inline-flex;
 		align-items: center;

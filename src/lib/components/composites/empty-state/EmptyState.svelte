@@ -46,7 +46,8 @@ let { icon, title, description, class: className, children }: Props = $props();
 	.empty-icon {
 		font-size: var(--text-fluid-4xl);
 		margin-bottom: var(--spacing-4);
-		opacity: 0.5;
+		color: var(--color-primary);
+		opacity: 0.6;
 	}
 
 	.empty-title {

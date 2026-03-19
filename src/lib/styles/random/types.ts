@@ -12,7 +12,7 @@ export type TypographyId = string & { readonly __brand: 'TypographyId' };
 /** Branded radius identifier (e.g. "R1", "R2") */
 export type RadiusId = string & { readonly __brand: 'RadiusId' };
 
-/** The 22 overridable color tokens per palette per mode */
+/** The 22 overridable color tokens per palette per mode (+ optional extras) */
 export interface PaletteColors {
 	bg: string;
 	fg: string;
@@ -36,6 +36,8 @@ export interface PaletteColors {
 	'surface-1': string;
 	'surface-2': string;
 	'surface-3': string;
+	link?: string;
+	accent?: string;
 }
 
 /** A complete palette definition with light + dark mode colors */

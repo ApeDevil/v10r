@@ -37,7 +37,7 @@ let { href, title, description, icon, sublinks, children, class: className, ...r
 	{#if icon || sublinks?.length}
 		<div class="flex items-start justify-between gap-3">
 			{#if icon}
-				<span class="{icon} text-3xl text-fg shrink-0" aria-hidden="true"></span>
+				<span class="{icon} text-3xl text-primary shrink-0" aria-hidden="true"></span>
 			{/if}
 			{#if sublinks?.length}
 				<div class="flex flex-wrap justify-end gap-x-2 gap-y-1 text-xs ml-auto">
@@ -96,7 +96,8 @@ let { href, title, description, icon, sublinks, children, class: className, ...r
 	}
 
 	:global(.dark) .card-wrapper:hover {
-		box-shadow: 0 0 20px rgb(152 101 248 / 0.3), 0 0 8px rgb(152 101 248 / 0.2);
+		box-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 30%, transparent),
+			0 0 8px color-mix(in srgb, var(--color-primary) 20%, transparent);
 	}
 
 	:global(.dark) .card-wrapper:has(.sublink:hover) {
@@ -110,22 +111,22 @@ let { href, title, description, icon, sublinks, children, class: className, ...r
 		border-radius: 0.25rem;
 		padding: 0.25rem 0.5rem;
 		text-decoration: none;
-		color: var(--color-secondary-fg);
+		color: var(--color-primary);
 		transition: color 150ms, background-color 150ms;
 	}
 
 	.sublink:hover {
 		text-decoration: underline;
-		background-color: color-mix(in srgb, var(--color-secondary-bg) 40%, transparent);
+		background-color: color-mix(in srgb, var(--color-primary-bg) 40%, transparent);
 	}
 
 	.sublink:focus-visible {
-		outline: 2px solid var(--color-secondary-fg);
+		outline: 2px solid var(--color-primary);
 		outline-offset: 2px;
 	}
 
 	.sublink:active {
-		background-color: color-mix(in srgb, var(--color-secondary-bg) 60%, transparent);
+		background-color: color-mix(in srgb, var(--color-primary-bg) 60%, transparent);
 	}
 
 	@media (prefers-reduced-motion: reduce) {

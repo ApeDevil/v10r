@@ -69,7 +69,8 @@ let hovered = $state(false);
 	}
 
 	:global(.dark) .scene-card:hover {
-		box-shadow: 0 0 20px rgb(152 101 248 / 0.3), 0 0 8px rgb(152 101 248 / 0.2);
+		box-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 30%, transparent),
+			0 0 8px color-mix(in srgb, var(--color-primary) 20%, transparent);
 	}
 
 	.scene-card:focus-visible {
