@@ -59,7 +59,6 @@ export function generateRandomStyle(opts?: GenerateOptions): StyleConfig {
 		paletteId: pickRandom(palettePool),
 		typographyId: pickRandom(typographyPool),
 		radiusId: pickRandom(radiusPool),
-		locked: false,
 	};
 }
 
@@ -81,6 +80,5 @@ export function resolveStyle(config: StyleConfig): ResolvedStyle | null {
 		paletteName: palette.name,
 		typographyName: typography.name,
 		radiusName: radius.name,
-		locked: config.locked,
 	};
 }

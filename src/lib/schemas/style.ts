@@ -15,14 +15,9 @@ export const StyleCookieSchema = v.object({
 	pid: PaletteIdSchema,
 	tid: TypographyIdSchema,
 	rid: RadiusIdSchema,
-	lck: v.boolean(),
 	v: v.literal(1),
 });
 
 export const RollRequestSchema = v.object({
 	highContrast: v.optional(v.boolean(), false),
-});
-
-export const LockRequestSchema = v.object({
-	locked: v.boolean(),
 });

@@ -11,7 +11,6 @@ export async function saveStyleToDb(userId: string, config: StyleConfig) {
 		paletteId: config.paletteId,
 		typographyId: config.typographyId,
 		radiusId: config.radiusId,
-		styleLocked: config.locked,
 	});
 }
 
@@ -24,6 +23,5 @@ export async function loadStyleFromDb(userId: string): Promise<StyleConfig | nul
 		paletteId: prefs.paletteId as PaletteId,
 		typographyId: prefs.typographyId as TypographyId,
 		radiusId: (prefs.radiusId ?? 'R2') as RadiusId,
-		locked: prefs.styleLocked,
 	};
 }

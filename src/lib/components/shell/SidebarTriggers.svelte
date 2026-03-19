@@ -32,8 +32,8 @@ const cmdKey = 'Ctrl+';
 			'flex items-center whitespace-nowrap text-muted cursor-pointer border overflow-hidden transition-colors duration-fast motion-reduce:transition-none',
 			'focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2',
 			isExpanded
-				? 'trigger-input gap-2 px-2 bg-bg border-border rounded-md text-sm text-left w-full hover:border-primary hover:bg-border'
-				: 'justify-center border-transparent bg-transparent rounded-full opacity-60 hover:opacity-100 hover:bg-border hover:text-fg rail-item'
+				? 'trigger-input gap-2 px-2 bg-bg border-border rounded-md text-sm text-left w-full hover:border-primary hover:bg-fg-alpha'
+				: 'justify-center border-transparent bg-transparent rounded-full opacity-60 hover:opacity-100 hover:bg-fg-alpha hover:text-fg rail-item'
 		)}
 		onclick={() => modals.open('quickSearch')}
 		aria-label={isExpanded ? 'Search' : 'Search (Ctrl+K)'}
@@ -56,8 +56,8 @@ const cmdKey = 'Ctrl+';
 			'flex items-center whitespace-nowrap text-muted cursor-pointer border overflow-hidden transition-colors duration-fast motion-reduce:transition-none',
 			'focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2',
 			isExpanded
-				? 'trigger-input gap-2 px-2 bg-bg border-border rounded-md text-sm text-left w-full hover:border-primary hover:bg-border'
-				: 'justify-center border-transparent bg-transparent rounded-full opacity-60 hover:opacity-100 hover:bg-border hover:text-fg rail-item'
+				? 'trigger-input gap-2 px-2 bg-bg border-border rounded-md text-sm text-left w-full hover:border-primary hover:bg-fg-alpha'
+				: 'justify-center border-transparent bg-transparent rounded-full opacity-60 hover:opacity-100 hover:bg-fg-alpha hover:text-fg rail-item'
 		)}
 		onclick={() => modals.open('aiAssistant')}
 		aria-label={isExpanded ? 'AI Assistant' : 'AI Assistant (Ctrl+J)'}

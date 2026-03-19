@@ -5,3 +5,6 @@
 
 ## Color Hierarchy
 - [color-hierarchy-spec.md](color-hierarchy-spec.md) - Distribution philosophy (60–70% neutral / 5–8% primary / 2–4% secondary), token-to-element mapping, secondary-fg diagnosis across all 8 palettes, and accessibility risk table
+
+## Hover Background Token
+- [hover-bg-token.md](hover-bg-token.md) - Analysis of hover:bg-border anti-pattern; recommendation to introduce --color-hover-bg dedicated token; migration plan for 20+ components

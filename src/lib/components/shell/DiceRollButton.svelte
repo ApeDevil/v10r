@@ -22,9 +22,9 @@ const style = getStyle();
 const toast = getToast();
 
 const isExpanded = $derived(forceExpanded || sidebar.expanded);
-const showLock = $derived(style.rollCount >= 3 || style.locked);
 </script>
 
+{#if !style.corporate}
 <div class={cn('flex flex-col gap-1 px-2', className)}>
 	<button
 		type="button"
@@ -33,11 +33,11 @@ const showLock = $derived(style.rollCount >= 3 || style.locked);
 			'flex items-center whitespace-nowrap cursor-pointer border overflow-hidden transition-colors duration-fast motion-reduce:transition-none disabled:opacity-40 disabled:cursor-not-allowed',
 			'focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2',
 			isExpanded
-				? 'gap-2 px-2 bg-transparent border-transparent rounded-md text-sm text-left w-full text-muted hover:bg-border hover:text-fg'
-				: 'justify-center border-transparent bg-transparent rounded-full opacity-60 hover:opacity-100 hover:bg-border hover:text-fg rail-item'
+				? 'gap-2 px-2 bg-transparent border-transparent rounded-md text-sm text-left w-full text-muted hover:bg-fg-alpha hover:text-fg'
+				: 'justify-center border-transparent bg-transparent rounded-full opacity-60 hover:opacity-100 hover:bg-fg-alpha hover:text-fg rail-item'
 		)}
 		onclick={() => style.roll(toast)}
-		disabled={style.rolling || style.locked}
+		disabled={style.rolling}
 		aria-label={isExpanded ? undefined : 'Shuffle Style (Ctrl+Shift+R)'}
 		title={isExpanded ? undefined : 'Shuffle Style'}
 	>
@@ -48,16 +48,5 @@ const showLock = $derived(style.rollCount >= 3 || style.locked);
 			<span class="flex-1">Shuffle</span>
 		{/if}
 	</button>
-
-	{#if showLock && isExpanded}
-		<button
-			type="button"
-			class="flex items-center gap-2 px-2 min-h-[44px] text-xs text-muted hover:text-fg rounded-md hover:bg-border transition-colors duration-fast cursor-pointer border-none bg-transparent motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
-			onclick={() => style.toggleLock(toast)}
-			aria-pressed={style.locked}
-		>
-			<span class={cn('shrink-0', style.locked ? 'i-lucide-lock text-icon-sm' : 'i-lucide-unlock text-icon-sm')}></span>
-			<span>{style.locked ? 'Unlock style' : 'Lock style'}</span>
-		</button>
-	{/if}
 </div>
+{/if}

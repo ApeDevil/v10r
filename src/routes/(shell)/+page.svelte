@@ -118,8 +118,9 @@ v          10            r</pre>
 				</div>
 			</div>
 
-			{#if !style.locked}
+			{#if !style.corporate}
 				<div class="roll-block">
+					<p class="roll-label">{style.paletteName} · {style.typographyName}</p>
 					<button
 						class="roll-btn focus-ring"
 						onclick={() => style.roll()}
@@ -129,12 +130,6 @@ v          10            r</pre>
 						<span class="roll-icon i-lucide-dices"></span>
 						<span>{style.rollCount === 0 ? 'roll a new look' : 'roll again'}</span>
 					</button>
-					{#if style.rollCount > 0}
-						<p class="roll-label">{style.paletteName}</p>
-					{/if}
-					{#if style.rollCount >= 3}
-						<button class="lock-link focus-ring" onclick={() => style.toggleLock()}>→ lock this look</button>
-					{/if}
 				</div>
 			{/if}
 			</div>
@@ -390,28 +385,6 @@ v          10            r</pre>
 		color: var(--color-muted);
 		letter-spacing: 0.1em;
 		margin: 0;
-		animation: fade-in var(--duration-normal) ease-out;
-	}
-
-	.lock-link {
-		font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
-		font-size: var(--text-fluid-xs);
-		color: var(--color-muted);
-		background: none;
-		border: none;
-		padding: 0;
-		cursor: pointer;
-		letter-spacing: 0.05em;
-		animation: fade-in var(--duration-normal) ease-out;
-	}
-
-	.lock-link:hover {
-		color: var(--color-fg);
-	}
-
-	@keyframes fade-in {
-		from { opacity: 0; }
-		to { opacity: 1; }
 	}
 
 	/* Etymology card */

@@ -47,8 +47,8 @@ async function handleSignOut() {
 				style="min-height: var(--sidebar-item-size)"
 				class={cn(
 					'flex items-center bg-transparent rounded-md text-fg cursor-pointer',
-					'transition-all duration-fast hover:bg-border focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2',
-					'motion-reduce:transition-none data-[state=open]:bg-border',
+					'transition-all duration-fast hover:bg-fg-alpha focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2',
+					'motion-reduce:transition-none data-[state=open]:bg-fg-alpha',
 					forceExpanded
 						? 'gap-3 p-3 w-full border border-border'
 						: 'justify-center border-none rail-item'
@@ -82,7 +82,7 @@ async function handleSignOut() {
 					sideOffset={8}
 				>
 					<DropdownMenu.Item
-						class="flex items-center gap-3 p-2 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-border motion-reduce:transition-none"
+						class="flex items-center gap-3 p-2 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-fg-alpha motion-reduce:transition-none"
 					>
 						{#snippet child({ props })}
 							<a {...props} href={localizeHref('/app/account')} class="flex items-center gap-3 no-underline text-fg">
@@ -93,7 +93,7 @@ async function handleSignOut() {
 					</DropdownMenu.Item>
 
 					<DropdownMenu.Item
-						class="flex items-center gap-3 p-2 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-border motion-reduce:transition-none"
+						class="flex items-center gap-3 p-2 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-fg-alpha motion-reduce:transition-none"
 					>
 						{#snippet child({ props })}
 							<a {...props} href={localizeHref('/app/settings')} class="flex items-center gap-3 no-underline text-fg">
@@ -107,7 +107,7 @@ async function handleSignOut() {
 
 					<DropdownMenu.Sub bind:open={themeSubmenuOpen}>
 						<DropdownMenu.SubTrigger
-							class="flex items-center gap-3 p-2 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-border motion-reduce:transition-none"
+							class="flex items-center gap-3 p-2 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-fg-alpha motion-reduce:transition-none"
 						>
 							<span class="i-lucide-palette text-lg" ></span>
 							<span class="flex-1">Theme</span>
@@ -128,7 +128,7 @@ async function handleSignOut() {
 						>
 							<DropdownMenu.Item
 								class={cn(
-									'flex items-center gap-3 py-1.5 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-border motion-reduce:transition-none',
+									'flex items-center gap-3 py-1.5 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-fg-alpha motion-reduce:transition-none',
 									theme.mode === 'light' && 'bg-primary text-white'
 								)}
 								onclick={() => setTheme('light')}
@@ -139,7 +139,7 @@ async function handleSignOut() {
 
 							<DropdownMenu.Item
 								class={cn(
-									'flex items-center gap-3 py-1.5 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-border motion-reduce:transition-none',
+									'flex items-center gap-3 py-1.5 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-fg-alpha motion-reduce:transition-none',
 									theme.mode === 'dark' && 'bg-primary text-white'
 								)}
 								onclick={() => setTheme('dark')}
@@ -150,7 +150,7 @@ async function handleSignOut() {
 
 							<DropdownMenu.Item
 								class={cn(
-									'flex items-center gap-3 py-1.5 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-border motion-reduce:transition-none',
+									'flex items-center gap-3 py-1.5 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-fg-alpha motion-reduce:transition-none',
 									theme.mode === 'system' && 'bg-primary text-white'
 								)}
 								onclick={() => setTheme('system')}

@@ -13,6 +13,7 @@ const tabs = [
 	{ label: 'Account', href: '/app/account', icon: 'i-lucide-user' },
 	{ label: 'Notifications', href: '/app/notifications', icon: 'i-lucide-bell' },
 	{ label: 'Jobs', href: '/app/jobs', icon: 'i-lucide-clock' },
+	...(data.isAdmin ? [{ label: 'Admin', href: '/app/admin/branding', icon: 'i-lucide-shield' }] : []),
 ];
 </script>
 

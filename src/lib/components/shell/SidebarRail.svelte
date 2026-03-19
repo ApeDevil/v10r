@@ -72,11 +72,10 @@ $effect(() => {
 
 	<SidebarTriggers />
 
-	<DiceRollButton />
-
 	<SidebarNav />
 
 	<div class="p-2 border-t border-border">
+		<DiceRollButton class="!px-0" />
 		<UserMenu
 			user={session.user ? { name: session.user.name ?? '', email: session.user.email } : null}
 			forceExpanded={sidebar.expanded}

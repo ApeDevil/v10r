@@ -77,7 +77,6 @@ export interface StyleConfig {
 	paletteId: PaletteId;
 	typographyId: TypographyId;
 	radiusId: RadiusId;
-	locked: boolean;
 }
 
 /** Fully resolved style with display names */
@@ -88,7 +87,8 @@ export interface ResolvedStyle {
 	paletteName: string;
 	typographyName: string;
 	radiusName: string;
-	locked: boolean;
+	/** True when this style came from corporate brand settings */
+	corporate?: boolean;
 }
 
 /** Cookie wire format (compact keys for size) */
@@ -96,6 +96,5 @@ export interface StyleCookie {
 	pid: string;
 	tid: string;
 	rid: string;
-	lck: boolean;
 	v: 1;
 }

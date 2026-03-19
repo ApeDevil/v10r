@@ -65,7 +65,7 @@ const hasDropdownChildren = $derived(children.length > 0 && !useFlyout);
 		active={isActive}
 		style="min-height: var(--sidebar-item-size)"
 		class={cn(
-			'flex items-center no-underline text-muted rounded-md transition-all duration-fast whitespace-nowrap relative hover:bg-border hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none',
+			'flex items-center no-underline text-muted rounded-md transition-all duration-fast whitespace-nowrap relative hover:bg-fg-alpha hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none',
 			forceExpanded
 				? 'gap-3 px-2 flex-1'
 				: 'justify-center rail-item'
@@ -105,7 +105,7 @@ const hasDropdownChildren = $derived(children.length > 0 && !useFlyout);
 						'absolute right-0 flex items-center justify-center w-10 h-10 p-0 bg-transparent border-none rounded-md cursor-pointer',
 						'transition-all duration-fast motion-reduce:transition-none',
 						isDropdownOpen && 'rotate-90 motion-reduce:rotate-0',
-						isActive ? 'nav-active-chevron' : 'text-muted hover:bg-border'
+						isActive ? 'nav-active-chevron' : 'text-muted hover:bg-fg-alpha'
 					)}
 					onclick={toggleDropdown}
 					aria-label={isDropdownOpen ? 'Close submenu' : 'Open submenu'}

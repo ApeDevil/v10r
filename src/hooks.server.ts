@@ -7,6 +7,7 @@ import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { auth } from '$lib/server/auth';
 import { AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW, HSTS_MAX_AGE } from '$lib/server/config';
 import { logFeatureStatus } from '$lib/server/features';
+import { getCorporateConfig } from '$lib/server/style/corporate';
 import {
 	generateRandomStyle,
 	parseStyleCookie,
@@ -48,8 +49,17 @@ const loadStyle: Handle = async ({ event, resolve }) => {
 	let config = parseStyleCookie(cookieValue);
 	let resolved = config ? resolveStyle(config) : null;
 
-	// Invalid or missing cookie → generate new style
-	if (!resolved) {
+	// Corporate override — always checked, even with valid cookie (0ms cached)
+	const corporate = await getCorporateConfig();
+	if (corporate?.enabled) {
+		config = { ...corporate.style };
+		resolved = { ...resolveStyle(config)!, corporate: true };
+		const serialized = serializeStyleCookie(config);
+		if (cookieValue !== serialized) {
+			event.cookies.set(STYLE_COOKIE_NAME, serialized, STYLE_COOKIE_OPTIONS);
+		}
+	} else if (!resolved) {
+		// No valid cookie and no corporate → random
 		config = generateRandomStyle();
 		resolved = resolveStyle(config)!;
 		event.cookies.set(STYLE_COOKIE_NAME, serializeStyleCookie(config), STYLE_COOKIE_OPTIONS);

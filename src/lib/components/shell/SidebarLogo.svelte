@@ -21,7 +21,7 @@ const sidebar = getSidebar();
 const showText = $derived(forceExpanded || sidebar.expanded);
 </script>
 
-<a href={localizeHref('/')} style:min-height="var(--sidebar-item-size)" class={cn('logo-link flex items-center relative no-underline rounded-md transition-colors duration-fast hover:bg-border focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none', showText ? 'px-3' : 'justify-center rail-item', className)} aria-label="Home">
+<a href={localizeHref('/')} style:min-height="var(--sidebar-item-size)" class={cn('logo-link flex items-center relative no-underline rounded-md transition-colors duration-fast hover:bg-fg-alpha focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none', showText ? 'px-3' : 'justify-center rail-item', className)} aria-label="Home">
 	<span
 		class={cn('logo-short font-bold text-fg transition-opacity duration-fast motion-reduce:transition-none', showText ? 'opacity-0' : 'opacity-100')}
 		style="font-size: var(--sidebar-icon-size, 1.25rem)"

@@ -56,7 +56,7 @@ function handleKeydown(e: KeyboardEvent) {
 			<div class="flex items-center justify-between p-6 border-b border-border">
 				<h2 id="shortcuts-title" class="m-0 text-xl font-semibold text-fg">Keyboard Shortcuts</h2>
 				<button
-					class="bg-transparent border-none text-2xl leading-none cursor-pointer text-muted p-0 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-sm transition-all duration-normal hover:bg-border hover:text-fg motion-reduce:transition-none"
+					class="bg-transparent border-none text-2xl leading-none cursor-pointer text-muted p-0 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-sm transition-all duration-normal hover:bg-fg-alpha hover:text-fg motion-reduce:transition-none"
 					onclick={handleClose}
 					aria-label="Close shortcuts dialog"
 				>
@@ -70,7 +70,7 @@ function handleKeydown(e: KeyboardEvent) {
 						<h3 class="text-sm font-semibold uppercase tracking-wider text-muted m-0">Global</h3>
 						<dl class="grid gap-2 m-0">
 							{#each shortcutsByCategory.global as shortcut}
-								<div class="flex items-center justify-between gap-4 p-2 rounded-sm transition-bg duration-normal hover:bg-border motion-reduce:transition-none">
+								<div class="flex items-center justify-between gap-4 p-2 rounded-sm transition-bg duration-normal hover:bg-fg-alpha motion-reduce:transition-none">
 									<dt class="flex-1 m-0 font-normal text-fg">{shortcut.description}</dt>
 									<dd class="m-0">
 										<kbd class="inline-block px-2 py-1 font-mono text-sm bg-border border border-muted rounded-sm shadow-sm text-fg whitespace-nowrap">{formatShortcut(shortcut.keys)}</kbd>
@@ -86,7 +86,7 @@ function handleKeydown(e: KeyboardEvent) {
 						<h3 class="text-sm font-semibold uppercase tracking-wider text-muted m-0">Navigation</h3>
 						<dl class="grid gap-2 m-0">
 							{#each shortcutsByCategory.navigation as shortcut}
-								<div class="flex items-center justify-between gap-4 p-2 rounded-sm transition-bg duration-normal hover:bg-border motion-reduce:transition-none">
+								<div class="flex items-center justify-between gap-4 p-2 rounded-sm transition-bg duration-normal hover:bg-fg-alpha motion-reduce:transition-none">
 									<dt class="flex-1 m-0 font-normal text-fg">{shortcut.description}</dt>
 									<dd class="m-0">
 										<kbd class="inline-block px-2 py-1 font-mono text-sm bg-border border border-muted rounded-sm shadow-sm text-fg whitespace-nowrap">{formatShortcut(shortcut.keys)}</kbd>
@@ -102,7 +102,7 @@ function handleKeydown(e: KeyboardEvent) {
 						<h3 class="text-sm font-semibold uppercase tracking-wider text-muted m-0">Actions</h3>
 						<dl class="grid gap-2 m-0">
 							{#each shortcutsByCategory.actions as shortcut}
-								<div class="flex items-center justify-between gap-4 p-2 rounded-sm transition-bg duration-normal hover:bg-border motion-reduce:transition-none">
+								<div class="flex items-center justify-between gap-4 p-2 rounded-sm transition-bg duration-normal hover:bg-fg-alpha motion-reduce:transition-none">
 									<dt class="flex-1 m-0 font-normal text-fg">{shortcut.description}</dt>
 									<dd class="m-0">
 										<kbd class="inline-block px-2 py-1 font-mono text-sm bg-border border border-muted rounded-sm shadow-sm text-fg whitespace-nowrap">{formatShortcut(shortcut.keys)}</kbd>

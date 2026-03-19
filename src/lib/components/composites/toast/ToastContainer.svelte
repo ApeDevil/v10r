@@ -62,7 +62,7 @@ const iconClasses = {
 				</div>
 				<div class="flex-1 text-sm leading-[1.4] text-fg">{t.message}</div>
 				<button
-					class="flex items-center justify-center w-[2.75rem] h-[2.75rem] shrink-0 p-[0.625rem] border-none bg-transparent text-muted cursor-pointer rounded-sm transition-all duration-fast hover:bg-border hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none"
+					class="flex items-center justify-center w-[2.75rem] h-[2.75rem] shrink-0 p-[0.625rem] border-none bg-transparent text-muted cursor-pointer rounded-sm transition-all duration-fast hover:bg-fg-alpha hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none"
 					onclick={() => toast.remove(t.id)}
 					aria-label="Dismiss notification"
 				>

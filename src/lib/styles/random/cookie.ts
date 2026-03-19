@@ -21,7 +21,6 @@ export function serializeStyleCookie(config: StyleConfig): string {
 		pid: config.paletteId,
 		tid: config.typographyId,
 		rid: config.radiusId,
-		lck: config.locked,
 		v: 1,
 	};
 	return JSON.stringify(cookie);
@@ -41,7 +40,6 @@ export function parseStyleCookie(value: string | undefined): StyleConfig | null 
 			typographyId: parsed.tid as TypographyId,
 			// Backward compat: missing rid defaults to R2 (current defaults)
 			radiusId: (parsed.rid ?? 'R2') as RadiusId,
-			locked: Boolean(parsed.lck),
 		};
 	} catch {
 		return null;

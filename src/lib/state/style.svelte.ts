@@ -42,8 +42,8 @@ export function createStyleState(initial: ResolvedStyle) {
 		get radiusName() {
 			return current.radiusName;
 		},
-		get locked() {
-			return current.locked;
+		get corporate() {
+			return current.corporate ?? false;
 		},
 		get rolling() {
 			return rolling;
@@ -62,7 +62,7 @@ export function createStyleState(initial: ResolvedStyle) {
 
 		/** Roll a new random style via API */
 		async roll(toast?: { info: (msg: string, duration?: number) => void }) {
-			if (rolling || current.locked) return;
+			if (rolling || current.corporate) return;
 			rolling = true;
 
 			try {
@@ -93,34 +93,13 @@ export function createStyleState(initial: ResolvedStyle) {
 				}
 
 				// Apply directly — the $effect syncs data attributes to <html>, CSS cascade does the rest
-				current = { ...data.style, locked: false };
+				current = { ...data.style };
 				rollCount++;
 				announcement = `Style changed to ${data.style.paletteName} palette with ${data.style.typographyName} typography`;
 				toast?.info(`${data.style.paletteName} · ${data.style.typographyName}`, 4000);
 			} finally {
 				rolling = false;
 			}
-		},
-
-		/** Toggle lock state via API */
-		async toggleLock(toast?: { info: (msg: string, duration?: number) => void }) {
-			const newLocked = !current.locked;
-
-			try {
-				const res = await fetch('/api/style/lock', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'X-Requested-With': 'sveltekit',
-					},
-					body: JSON.stringify({ locked: newLocked }),
-				});
-
-				if (!res.ok) return;
-
-				current.locked = newLocked;
-				toast?.info(newLocked ? 'Style locked' : 'Style unlocked', 3000);
-			} catch {}
 		},
 	};
 }

@@ -34,7 +34,6 @@ export const userPreferences = appSchema.table('user_preferences', {
 	paletteId: text('palette_id'),
 	typographyId: text('typography_id'),
 	radiusId: text('radius_id'),
-	styleLocked: boolean('style_locked').notNull().default(false),
 
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -51,5 +50,4 @@ export const PREFERENCE_DEFAULTS = {
 	paletteId: null,
 	typographyId: null,
 	radiusId: null,
-	styleLocked: false,
 } as const;

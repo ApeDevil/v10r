@@ -65,7 +65,7 @@ function handleOverlayClick() {
 	>
 		<div class="flex items-center justify-between gap-3 p-4 border-b border-border">
 			<SidebarLogo forceExpanded />
-			<button class="flex items-center justify-center w-[44px] h-[44px] border-none bg-transparent text-fg cursor-pointer rounded-md transition-colors duration-fast hover:bg-border focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none" onclick={() => sidebar.closeMobile()} aria-label="Close menu">
+			<button class="flex items-center justify-center w-[44px] h-[44px] border-none bg-transparent text-fg cursor-pointer rounded-md transition-colors duration-fast hover:bg-fg-alpha focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none" onclick={() => sidebar.closeMobile()} aria-label="Close menu">
 				<svg
 					width="24"
 					height="24"
