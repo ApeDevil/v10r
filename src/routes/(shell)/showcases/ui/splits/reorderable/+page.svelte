@@ -60,7 +60,7 @@ const verticalPanes: PaneDefinition[] = [
 								</p>
 							</div>
 						{:else if pane.id === 'content'}
-							<div class="panel-content panel-surface-0">
+							<div class="panel-content panel-bg-base">
 								<h3 class="text-fluid-base font-semibold mb-2">Main Content</h3>
 								<p class="text-fluid-sm text-muted">
 									Primary content area. Notice how the pane keeps its width when reordered.
@@ -98,7 +98,7 @@ const verticalPanes: PaneDefinition[] = [
 								<p class="text-fluid-xs text-muted">Drag past minimum to collapse.</p>
 							</div>
 						{:else if pane.id === 'main'}
-							<div class="panel-content panel-surface-0">
+							<div class="panel-content panel-bg-base">
 								<h3 class="text-fluid-base font-semibold mb-2">Main</h3>
 								<p class="text-fluid-sm text-muted">
 									Expands when side panes collapse.
@@ -138,7 +138,7 @@ const verticalPanes: PaneDefinition[] = [
 								<p class="text-fluid-xs text-muted">Reorder me, then refresh.</p>
 							</div>
 						{:else if pane.id === 'content'}
-							<div class="panel-content panel-surface-0">
+							<div class="panel-content panel-bg-base">
 								<h3 class="text-fluid-base font-semibold mb-2">Content</h3>
 								<p class="text-fluid-sm text-muted">Layout persists across reloads.</p>
 							</div>
@@ -166,7 +166,7 @@ const verticalPanes: PaneDefinition[] = [
 				<ReorderablePaneLayout panes={verticalPanes} direction="vertical">
 					{#snippet children(pane)}
 						{#if pane.id === 'editor'}
-							<div class="panel-content panel-surface-0">
+							<div class="panel-content panel-bg-base">
 								<h3 class="text-fluid-base font-semibold mb-2">Editor</h3>
 								<p class="text-fluid-sm text-muted">
 									Top pane. Use the side list to reorder vertically.
@@ -300,8 +300,8 @@ const verticalPanes: PaneDefinition[] = [
 		padding: var(--spacing-fluid-4);
 	}
 
-	.panel-surface-0 {
-		background: var(--color-surface-0, var(--surface-0));
+	.panel-bg-base {
+		background: var(--color-bg);
 	}
 
 	.panel-surface-1 {

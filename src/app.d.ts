@@ -11,6 +11,7 @@ declare global {
 			user: import('better-auth').User | null;
 			session: import('better-auth').Session | null;
 			style: import('$lib/styles/random/types').ResolvedStyle;
+			customPaletteColors?: { light: Record<string, string>; dark: Record<string, string> };
 		}
 		interface PageData {
 			style: import('$lib/styles/random/types').ResolvedStyle;

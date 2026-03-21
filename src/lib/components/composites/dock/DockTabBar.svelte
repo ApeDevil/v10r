@@ -189,7 +189,7 @@ function removeGhost() {
 		display: flex;
 		align-items: stretch;
 		gap: 0;
-		background: var(--surface-0);
+		background: var(--color-bg);
 		border-bottom: 1px solid var(--color-border);
 		min-height: 32px;
 		overflow-x: auto;

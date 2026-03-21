@@ -56,6 +56,7 @@ const colorGroups = [
 		tokens: [
 			{ name: 'bg', var: '--color-bg' },
 			{ name: 'fg', var: '--color-fg' },
+			{ name: 'heading', var: '--color-heading' },
 			{ name: 'body', var: '--color-body' },
 			{ name: 'muted', var: '--color-muted' },
 			{ name: 'border', var: '--color-border' },
@@ -74,9 +75,9 @@ const colorGroups = [
 		tokens: [
 			{ name: 'primary', var: '--color-primary' },
 			{ name: 'primary-hover', var: '--color-primary-hover' },
-			{ name: 'primary-bg', var: '--color-primary-bg' },
-			{ name: 'primary-fg', var: '--color-primary-fg' },
-			{ name: 'primary-light', var: '--color-primary-light' },
+			{ name: 'primary-container', var: '--color-primary-container' },
+			{ name: 'on-primary-container', var: '--color-on-primary-container' },
+			{ name: 'primary-dim', var: '--color-primary-dim' },
 		],
 	},
 	{
@@ -120,15 +121,15 @@ const colorGroups = [
 	{
 		label: 'Secondary',
 		tokens: [
-			{ name: 'secondary-bg', var: '--color-secondary-bg' },
-			{ name: 'secondary-fg', var: '--color-secondary-fg' },
+			{ name: 'secondary', var: '--color-secondary' },
+			{ name: 'on-secondary', var: '--color-on-secondary' },
 		],
 	},
 	{
 		label: 'Input',
 		tokens: [
 			{ name: 'input-border', var: '--color-input-border' },
-			{ name: 'input-bg', var: '--color-input-bg' },
+			{ name: 'input', var: '--color-input' },
 		],
 	},
 ];
@@ -149,15 +150,15 @@ const colorCombos = [
 			},
 			{
 				name: 'Primary',
-				bg: 'var(--color-primary-bg)',
-				fg: 'var(--color-primary-fg)',
+				bg: 'var(--color-primary-container)',
+				fg: 'var(--color-on-primary-container)',
 				border: 'var(--color-primary)',
 				usage: 'Button, Alert, Badge',
 			},
 			{
 				name: 'Secondary',
-				bg: 'var(--color-secondary-bg)',
-				fg: 'var(--color-secondary-fg)',
+				bg: 'var(--color-secondary)',
+				fg: 'var(--color-on-secondary)',
 				usage: 'Button secondary',
 			},
 			{
@@ -281,21 +282,21 @@ const colorCombos = [
 		combos: [
 			{
 				name: 'Input default',
-				bg: 'var(--color-input-bg)',
+				bg: 'var(--color-input)',
 				fg: 'var(--color-body)',
 				border: 'var(--color-input-border)',
 				usage: 'Input, Select, Combobox',
 			},
 			{
 				name: 'Input focus',
-				bg: 'var(--color-input-bg)',
+				bg: 'var(--color-input)',
 				fg: 'var(--color-body)',
 				border: 'var(--color-primary)',
 				usage: 'Input :focus',
 			},
 			{
 				name: 'Input error',
-				bg: 'var(--color-input-bg)',
+				bg: 'var(--color-input)',
 				fg: 'var(--color-body)',
 				border: 'var(--color-error)',
 				usage: 'Input :invalid',

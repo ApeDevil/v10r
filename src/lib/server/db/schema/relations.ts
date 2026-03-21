@@ -30,6 +30,7 @@ import {
 	user,
 	userDiscordAccounts,
 	// app
+	customPalettes,
 	userPreferences,
 	userTelegramAccounts,
 } from './index';
@@ -169,6 +170,10 @@ export const userPreferencesRelations = relations(userPreferences, ({ one }) => 
 	user: one(user, { fields: [userPreferences.userId], references: [user.id] }),
 }));
 
+export const customPalettesRelations = relations(customPalettes, ({ one }) => ({
+	creator: one(user, { fields: [customPalettes.createdBy], references: [user.id] }),
+}));
+
 // ── User hub (the big one) ──────────────────────────────────────────
 
 export const userRelations = relations(user, ({ one, many }) => ({
@@ -189,4 +194,5 @@ export const userRelations = relations(user, ({ one, many }) => ({
 	telegramVerificationTokens: many(telegramVerificationTokens),
 	// app
 	preferences: one(userPreferences),
+	customPalettes: many(customPalettes),
 }));

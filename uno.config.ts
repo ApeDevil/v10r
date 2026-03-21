@@ -59,8 +59,8 @@ export default defineConfig({
 		...Object.keys(spacing).flatMap((k) => [`p-${k}`, `m-${k}`, `gap-${k}`]),
 		// Typography colors
 		'color-body',
+		'color-heading',
 		// Elevation surfaces
-		'bg-surface-0',
 		'bg-surface-1',
 		'bg-surface-2',
 		'bg-surface-3',

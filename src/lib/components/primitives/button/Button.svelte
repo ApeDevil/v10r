@@ -56,16 +56,16 @@ let { variant, size, class: className, children, ...rest }: Props = $props();
 		box-shadow: 0 0 16px 4px color-mix(in srgb, var(--color-primary-hover) 45%, transparent);
 	}
 
-	/* Secondary: uses secondary-bg/fg tokens */
+	/* Secondary: uses secondary/on-secondary tokens */
 	button:global(.bg-border) {
-		background-color: var(--color-secondary-bg);
-		color: var(--color-secondary-fg);
+		background-color: var(--color-secondary);
+		color: var(--color-on-secondary);
 	}
 
 	button:global(.bg-border):hover:not(:disabled) {
-		background-color: var(--color-primary-light);
+		background-color: var(--color-primary-dim);
 		filter: none;
-		box-shadow: 0 0 12px 2px color-mix(in srgb, var(--color-primary-light) 40%, transparent);
+		box-shadow: 0 0 12px 2px color-mix(in srgb, var(--color-primary-dim) 40%, transparent);
 	}
 
 	/* Outline: fg-colored border */

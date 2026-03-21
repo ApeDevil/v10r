@@ -57,13 +57,13 @@ let {
 
 	.tag-selectable:global(.bg-muted):global([data-state='on']) {
 		background-color: var(--color-primary);
-		color: var(--color-primary-fg);
+		color: var(--color-on-primary-container);
 	}
 
 	/* Outline variant states */
 	.tag-selectable:global(.border):global([data-state='on']) {
 		background-color: var(--color-primary);
-		color: var(--color-primary-fg);
+		color: var(--color-on-primary-container);
 		border-color: var(--color-primary);
 	}
 

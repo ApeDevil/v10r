@@ -193,7 +193,7 @@ const isStroke = $derived(step.id === 'rank');
 
 	.badge-check {
 		fill: none;
-		stroke: var(--color-primary-fg);
+		stroke: var(--color-on-primary-container);
 		stroke-width: 1.5;
 		stroke-linecap: round;
 		stroke-linejoin: round;

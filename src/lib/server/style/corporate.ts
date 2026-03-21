@@ -2,7 +2,7 @@ import type { PaletteId, RadiusId, StyleConfig, TypographyId } from '$lib/styles
 import { getBrandSettings } from '$lib/server/db/brand/queries';
 
 let cached: { style: StyleConfig; enabled: boolean } | null = null;
-let loading: Promise<typeof cached> | null = null;
+let loading: Promise<{ style: StyleConfig; enabled: boolean } | null> | null = null;
 
 /** Get corporate config from cache (0ms) or DB (cold start). */
 export async function getCorporateConfig() {
@@ -23,9 +23,12 @@ export async function getCorporateConfig() {
 		return cached;
 	})();
 
-	const result = await loading;
-	loading = null;
-	return result;
+	try {
+		const result = await loading;
+		return result;
+	} finally {
+		loading = null;
+	}
 }
 
 /** Invalidate cache — call after admin saves brand settings. */

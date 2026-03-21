@@ -64,7 +64,7 @@ function selectRange(value: string) {
 	}
 
 	.range-chip.active {
-		color: var(--color-primary-fg);
+		color: var(--color-on-primary-container);
 		background: var(--color-primary);
 		border-color: var(--color-primary);
 	}

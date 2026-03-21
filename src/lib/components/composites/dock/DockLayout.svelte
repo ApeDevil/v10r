@@ -90,7 +90,7 @@ $effect(() => {
 		height: 100%;
 		width: 100%;
 		overflow: hidden;
-		background: var(--surface-0);
+		background: var(--color-bg);
 	}
 
 	/* Grid layouts for each bar position */

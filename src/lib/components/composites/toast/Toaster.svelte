@@ -16,7 +16,7 @@ const styles = {
 	success: 'border-success/50 bg-success-light text-success',
 	error: 'border-error/50 bg-error-light text-error',
 	warning: 'border-warning/50 bg-warning-light text-warning',
-	info: 'border-primary/50 bg-primary-light text-primary',
+	info: 'border-primary/50 bg-primary-dim text-primary',
 };
 </script>
 

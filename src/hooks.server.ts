@@ -7,6 +7,7 @@ import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { auth } from '$lib/server/auth';
 import { AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW, HSTS_MAX_AGE } from '$lib/server/config';
 import { logFeatureStatus } from '$lib/server/features';
+import { getCustomPaletteById } from '$lib/server/branding/palette-crud';
 import { getCorporateConfig } from '$lib/server/style/corporate';
 import {
 	generateRandomStyle,
@@ -16,6 +17,9 @@ import {
 	STYLE_COOKIE_NAME,
 	STYLE_COOKIE_OPTIONS,
 } from '$lib/styles/random';
+import type { PaletteId, ResolvedStyle } from '$lib/styles/random/types';
+import { getTypography } from '$lib/styles/random/typography-registry';
+import { getRadius } from '$lib/styles/random/radius-registry';
 import '$lib/server/jobs/scheduler';
 import '$lib/server/jobs/delivery-scheduler';
 
@@ -41,28 +45,78 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
 	return response;
 };
 
+/** Allowlisted token keys for CSS injection (from PaletteColors interface) */
+const VALID_TOKEN_KEYS = new Set([
+	'bg', 'fg', 'body', 'heading', 'muted', 'border', 'subtle',
+	'primary', 'primary-hover', 'primary-container', 'on-primary-container',
+	'primary-dim', 'on-primary', 'secondary', 'on-secondary',
+	'input', 'input-border', 'surface-1', 'surface-2', 'surface-3',
+]);
+const OKLCH_RE = /^oklch\(\s*[\d.]+\s+[\d.]+\s+[\d.]+\s*\)$/;
+
 /**
  * 2. loadStyle — reads/generates style from cookie, populates event.locals.style
  */
 const loadStyle: Handle = async ({ event, resolve }) => {
 	const cookieValue = event.cookies.get(STYLE_COOKIE_NAME);
 	let config = parseStyleCookie(cookieValue);
-	let resolved = config ? resolveStyle(config) : null;
+	let resolved: ResolvedStyle | null = null;
 
 	// Corporate override — always checked, even with valid cookie (0ms cached)
-	const corporate = await getCorporateConfig();
+	let corporate: Awaited<ReturnType<typeof getCorporateConfig>> = null;
+	try {
+		corporate = await getCorporateConfig();
+	} catch {
+		// DB unreachable — fall through to cookie/random style
+	}
+
 	if (corporate?.enabled) {
 		config = { ...corporate.style };
-		resolved = { ...resolveStyle(config)!, corporate: true };
-		const serialized = serializeStyleCookie(config);
-		if (cookieValue !== serialized) {
-			event.cookies.set(STYLE_COOKIE_NAME, serialized, STYLE_COOKIE_OPTIONS);
+	}
+
+	// Resolve: CP_ path (async DB lookup) vs registry path (sync)
+	if (config?.paletteId?.startsWith('CP_')) {
+		try {
+			const cp = await getCustomPaletteById(config.paletteId);
+			if (cp) {
+				const typography = getTypography(config.typographyId);
+				const radius = getRadius(config.radiusId);
+				if (typography && radius) {
+					resolved = {
+						paletteId: config.paletteId as PaletteId,
+						typographyId: config.typographyId,
+						radiusId: config.radiusId,
+						paletteName: cp.name,
+						typographyName: typography.name,
+						radiusName: radius.name,
+						...(corporate?.enabled ? { corporate: true } : {}),
+					};
+					event.locals.customPaletteColors = {
+						light: cp.lightColors as Record<string, string>,
+						dark: cp.darkColors as Record<string, string>,
+					};
+				}
+			}
+		} catch {
+			// Custom palette not found or DB error — fall through to random
 		}
-	} else if (!resolved) {
-		// No valid cookie and no corporate → random
+	} else if (config) {
+		resolved = resolveStyle(config);
+		if (corporate?.enabled && resolved) {
+			resolved = { ...resolved, corporate: true };
+		}
+	}
+
+	// Fallback: no valid resolution → random
+	if (!resolved) {
 		config = generateRandomStyle();
 		resolved = resolveStyle(config)!;
-		event.cookies.set(STYLE_COOKIE_NAME, serializeStyleCookie(config), STYLE_COOKIE_OPTIONS);
+	}
+
+	// Set cookie if changed
+	const serialized = serializeStyleCookie(config!);
+	if (cookieValue !== serialized) {
+		event.cookies.set(STYLE_COOKIE_NAME, serialized, STYLE_COOKIE_OPTIONS);
 	}
 
 	event.locals.style = resolved;
@@ -77,12 +131,35 @@ const i18n: Handle = ({ event, resolve }) =>
 		const safeLocale = ALLOWED_LOCALES.has(locale) ? locale : 'en';
 		event.request = request;
 		return resolve(event, {
-			transformPageChunk: ({ html }) =>
-				html
+			transformPageChunk: ({ html }) => {
+				let result = html
 					.replace('%lang%', safeLocale)
 					.replace('%palette%', event.locals.style?.paletteId ?? '')
 					.replace('%typography%', event.locals.style?.typographyId ?? '')
-					.replace('%radius%', event.locals.style?.radiusId ?? ''),
+					.replace('%radius%', event.locals.style?.radiusId ?? '');
+
+				// Inject custom palette CSS vars for CP_ palettes
+				const cp = event.locals.customPaletteColors;
+				if (cp && event.locals.style?.paletteId) {
+					const pid = event.locals.style.paletteId;
+					const toVar = (k: string) =>
+						k.startsWith('surface-') ? `--${k}` : `--color-${k}`;
+					const safeEntries = (colors: Record<string, string>) =>
+						Object.entries(colors).filter(
+							([k, v]) => VALID_TOKEN_KEYS.has(k) && OKLCH_RE.test(v),
+						);
+					const lightVars = safeEntries(cp.light)
+						.map(([k, v]) => `${toVar(k)}:${v}`)
+						.join(';');
+					const darkVars = safeEntries(cp.dark)
+						.map(([k, v]) => `${toVar(k)}:${v}`)
+						.join(';');
+					const style = `<style>[data-palette="${pid}"]{${lightVars}}.dark[data-palette="${pid}"]{${darkVars}}</style>`;
+					result = result.replace('</head>', `${style}</head>`);
+				}
+
+				return result;
+			},
 		});
 	});
 

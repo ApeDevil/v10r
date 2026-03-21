@@ -256,7 +256,7 @@ function flashCustomSent() {
 		padding: var(--spacing-2) var(--spacing-3);
 		font-size: var(--text-fluid-base);
 		color: var(--color-fg);
-		background-color: var(--color-input-bg);
+		background-color: var(--color-input);
 		border: none;
 		border-bottom: 1px solid var(--color-input-border);
 		border-radius: var(--radius-md) var(--radius-md) 0 0;

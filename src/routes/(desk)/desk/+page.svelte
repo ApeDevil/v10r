@@ -443,7 +443,7 @@ function getPanelType(panelId: string): string | undefined {
 		display: flex;
 		flex-direction: column;
 		height: 100%;
-		background: var(--surface-0);
+		background: var(--color-bg);
 	}
 
 	.chat-messages {
@@ -472,7 +472,7 @@ function getPanelType(panelId: string): string | undefined {
 		height: 28px;
 		border-radius: var(--radius-full);
 		background: var(--color-primary);
-		color: var(--color-primary-fg);
+		color: var(--color-on-primary-container);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -494,7 +494,7 @@ function getPanelType(panelId: string): string | undefined {
 
 	.chat-msg.user .chat-bubble {
 		background: var(--color-primary);
-		color: var(--color-primary-fg);
+		color: var(--color-on-primary-container);
 	}
 
 	.chat-input-bar {
@@ -510,7 +510,7 @@ function getPanelType(panelId: string): string | undefined {
 		padding: 8px 12px;
 		border-radius: var(--radius-md);
 		border: 1px solid var(--color-border);
-		background: var(--surface-0);
+		background: var(--color-bg);
 		color: var(--color-fg);
 		font-size: 13px;
 	}
@@ -527,7 +527,7 @@ function getPanelType(panelId: string): string | undefined {
 		height: 36px;
 		border-radius: var(--radius-md);
 		background: var(--color-primary);
-		color: var(--color-primary-fg);
+		color: var(--color-on-primary-container);
 		cursor: pointer;
 	}
 
@@ -541,7 +541,7 @@ function getPanelType(panelId: string): string | undefined {
 		display: flex;
 		flex-direction: column;
 		height: 100%;
-		background: var(--surface-0);
+		background: var(--color-bg);
 	}
 
 	.sheet-formula-bar {
@@ -562,7 +562,7 @@ function getPanelType(panelId: string): string | undefined {
 		font-size: 11px;
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-sm);
-		background: var(--surface-0);
+		background: var(--color-bg);
 		color: var(--color-fg);
 	}
 
@@ -578,7 +578,7 @@ function getPanelType(panelId: string): string | undefined {
 		padding: 2px 8px;
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-sm);
-		background: var(--surface-0);
+		background: var(--color-bg);
 		color: var(--color-fg);
 		font-family: monospace;
 		font-size: 12px;
@@ -667,7 +667,7 @@ function getPanelType(panelId: string): string | undefined {
 		display: flex;
 		flex-direction: column;
 		height: 100%;
-		background: var(--surface-0);
+		background: var(--color-bg);
 	}
 
 	.files-toolbar {

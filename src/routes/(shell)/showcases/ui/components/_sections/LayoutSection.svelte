@@ -132,7 +132,7 @@ import { DemoCard } from '../_components';
 		width: 3rem;
 		height: 3rem;
 		border-radius: var(--radius-md);
-		background: var(--color-primary-light);
+		background: var(--color-primary-dim);
 		color: var(--color-primary);
 		font-weight: 600;
 		font-size: var(--text-fluid-sm);

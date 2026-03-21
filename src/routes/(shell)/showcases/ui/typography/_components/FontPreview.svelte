@@ -151,7 +151,7 @@ function isRoleLoading(role: 'heading' | 'body' | 'code'): boolean {
 		padding: var(--spacing-3) var(--spacing-4);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);
-		background: var(--surface-0);
+		background: var(--color-bg);
 		color: var(--color-fg);
 		font-size: var(--text-fluid-base);
 		outline: none;

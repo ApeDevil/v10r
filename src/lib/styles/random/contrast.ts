@@ -48,9 +48,10 @@ export function contrastRatio(color1: string, color2: string): number {
 const CRITICAL_PAIRS: Array<{ fg: keyof PaletteColors; bg: keyof PaletteColors; minRatio: number }> = [
 	{ fg: 'fg', bg: 'bg', minRatio: 4.5 },
 	{ fg: 'body', bg: 'bg', minRatio: 4.5 },
+	{ fg: 'heading', bg: 'bg', minRatio: 4.5 },
 	{ fg: 'muted', bg: 'bg', minRatio: 3 },
-	{ fg: 'primary-fg', bg: 'primary-bg', minRatio: 4.5 },
-	{ fg: 'secondary-fg', bg: 'secondary-bg', minRatio: 4.5 },
+	{ fg: 'on-primary-container', bg: 'primary-container', minRatio: 4.5 },
+	{ fg: 'on-secondary', bg: 'secondary', minRatio: 4.5 },
 	{ fg: 'on-primary', bg: 'primary', minRatio: 4.5 },
 ];
 
@@ -61,11 +62,6 @@ export function validatePaletteContrast(
 	const failures: Array<{ fg: string; bg: string; ratio: number; required: number }> = [];
 
 	for (const { fg, bg, minRatio } of CRITICAL_PAIRS) {
-		// Skip alpha values (can't validate without compositing)
-		if (fg.includes('alpha') || bg.includes('alpha')) continue;
-		// Skip surface tokens (they reference other vars, validated separately)
-		if (fg.startsWith('surface') || bg.startsWith('surface')) continue;
-
 		try {
 			const ratio = contrastRatio(colors[fg], colors[bg]);
 			if (ratio < minRatio) {

@@ -41,8 +41,8 @@ let {
 	}
 
 	.toggle:global([data-state='on']) {
-		background: var(--color-primary-bg);
-		color: var(--color-primary-fg);
+		background: var(--color-primary-container);
+		color: var(--color-on-primary-container);
 	}
 
 	.toggle:global([disabled]) {

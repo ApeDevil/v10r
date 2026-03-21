@@ -117,7 +117,7 @@ let { href, title, description, icon, sublinks, children, class: className, ...r
 
 	.sublink:hover {
 		text-decoration: underline;
-		background-color: color-mix(in srgb, var(--color-primary-bg) 40%, transparent);
+		background-color: color-mix(in srgb, var(--color-primary-container) 40%, transparent);
 	}
 
 	.sublink:focus-visible {
@@ -126,7 +126,7 @@ let { href, title, description, icon, sublinks, children, class: className, ...r
 	}
 
 	.sublink:active {
-		background-color: color-mix(in srgb, var(--color-primary-bg) 60%, transparent);
+		background-color: color-mix(in srgb, var(--color-primary-container) 60%, transparent);
 	}
 
 	@media (prefers-reduced-motion: reduce) {

@@ -112,7 +112,7 @@ function handleClick(item: ActivityBarItem) {
 		align-items: center;
 		gap: 2px;
 		padding: 4px;
-		background: var(--surface-0);
+		background: var(--color-bg);
 		width: 40px;
 		flex-shrink: 0;
 	}

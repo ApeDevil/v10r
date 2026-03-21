@@ -106,7 +106,7 @@ const funnelAriaLabel = $derived(
 	.funnel-count {
 		font-size: var(--text-fluid-xs);
 		font-weight: 600;
-		color: var(--color-primary-fg);
+		color: var(--color-on-primary-container);
 		white-space: nowrap;
 		font-variant-numeric: tabular-nums;
 	}

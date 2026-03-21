@@ -188,7 +188,7 @@ $effect(() => {
 
 <style>
 	.cp-input-row {
-		background-color: var(--color-input-bg);
+		background-color: var(--color-input);
 		border-radius: var(--radius-md) var(--radius-md) 0 0;
 		border: 1px solid var(--color-input-border);
 	}

@@ -3,12 +3,12 @@ import { cva, type VariantProps } from 'class-variance-authority';
 export const typographyVariants = cva('', {
 	variants: {
 		variant: {
-			h1: 'text-fluid-4xl font-bold tracking-tight color-fg',
-			h2: 'text-fluid-3xl font-semibold tracking-tight color-fg',
-			h3: 'text-fluid-2xl font-semibold color-fg',
-			h4: 'text-fluid-xl font-semibold color-fg',
-			h5: 'text-fluid-lg font-semibold color-fg',
-			h6: 'text-fluid-base font-semibold color-fg',
+			h1: 'text-fluid-4xl font-bold tracking-tight color-heading',
+			h2: 'text-fluid-3xl font-semibold tracking-tight color-heading',
+			h3: 'text-fluid-2xl font-semibold color-heading',
+			h4: 'text-fluid-xl font-semibold color-heading',
+			h5: 'text-fluid-lg font-semibold color-heading',
+			h6: 'text-fluid-base font-semibold color-heading',
 			body: 'text-fluid-base leading-relaxed color-body',
 			lead: 'text-fluid-lg color-muted leading-relaxed',
 			large: 'text-fluid-lg font-medium color-fg',

@@ -208,7 +208,7 @@ function noop() {}
 	.split-trigger {
 		padding: var(--spacing-2) var(--spacing-2);
 		border-radius: 0 var(--radius-md) var(--radius-md) 0;
-		border-left: 1px solid color-mix(in srgb, var(--color-primary-fg) 20%, transparent);
+		border-left: 1px solid color-mix(in srgb, var(--color-on-primary-container) 20%, transparent);
 	}
 
 	.split-primary:hover,

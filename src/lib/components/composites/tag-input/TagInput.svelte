@@ -212,7 +212,7 @@ function handleContainerClick() {
 		gap: var(--spacing-1);
 		min-height: 2.75rem;
 		padding: var(--spacing-2) var(--spacing-3);
-		background-color: var(--color-input-bg);
+		background-color: var(--color-input);
 		border: none;
 		border-bottom: 1px solid var(--color-input-border);
 		border-radius: var(--radius-md) var(--radius-md) 0 0;

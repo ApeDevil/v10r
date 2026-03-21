@@ -146,7 +146,7 @@ const mockUser = {
 		height: 3rem;
 		border-radius: var(--radius-full);
 		background: var(--color-primary);
-		color: var(--color-primary-fg);
+		color: var(--color-on-primary-container);
 		display: flex;
 		align-items: center;
 		justify-content: center;

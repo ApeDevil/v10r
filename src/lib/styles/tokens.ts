@@ -128,14 +128,24 @@ export const colors = {
 	bg: 'var(--color-bg)',
 	fg: 'var(--color-fg)',
 	body: 'var(--color-body)',
+	heading: 'var(--color-heading)',
 	muted: 'var(--color-muted)',
 	border: 'var(--color-border)',
 	subtle: 'var(--color-subtle)',
 	primary: {
 		DEFAULT: 'var(--color-primary)',
 		hover: 'var(--color-primary-hover)',
-		light: 'var(--color-primary-light)',
+		container: 'var(--color-primary-container)',
+		dim: 'var(--color-primary-dim)',
 	},
+	'on-primary': {
+		DEFAULT: 'var(--color-on-primary)',
+		container: 'var(--color-on-primary-container)',
+	},
+	secondary: {
+		DEFAULT: 'var(--color-secondary)',
+	},
+	'on-secondary': 'var(--color-on-secondary)',
 	success: {
 		DEFAULT: 'var(--color-success)',
 		light: 'var(--color-success-light)',
@@ -154,20 +164,15 @@ export const colors = {
 		DEFAULT: 'var(--color-info)',
 		light: 'var(--color-info-light)',
 	},
-	'on-primary': 'var(--color-on-primary)',
-	link: 'var(--color-link)',
-	accent: 'var(--color-accent)',
 	input: {
+		DEFAULT: 'var(--color-input)',
 		border: 'var(--color-input-border)',
 	},
-	// Semi-transparent variants
+	// Semi-transparent variants (derived via color-mix in app.css)
 	bgAlpha: 'var(--color-bg-alpha)',
 	fgAlpha: 'var(--color-fg-alpha)',
 	// Elevation surfaces (higher number = higher elevation)
-	// Light mode: 0 → 3 goes lighter (toward white)
-	// Dark mode: 0 → 3 goes darker (toward black)
 	surface: {
-		0: 'var(--surface-0)', // Base - page background
 		1: 'var(--surface-1)', // Raised - cards, panels
 		2: 'var(--surface-2)', // Overlay - dropdowns, popovers
 		3: 'var(--surface-3)', // Modal - highest elevation

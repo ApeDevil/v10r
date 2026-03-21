@@ -106,13 +106,13 @@ import { Pane, PaneGroup, PaneResizer } from '$lib/components/primitives';
 					<PaneResizer withHandle={true} />
 
 					<Pane defaultSize={60} minSize={40}>
-						<div class="h-full bg-surface-0 p-fluid-4 border-r border-border">
+						<div class="h-full bg-bg p-fluid-4 border-r border-border">
 							<h3 class="text-fluid-base font-semibold mb-2">Main Content</h3>
 							<p class="text-fluid-sm text-muted">
 								Primary content area. Takes the majority of the space by default.
 							</p>
 							<p class="text-fluid-sm text-muted mt-2">
-								Uses surface-0 to distinguish from the side panes.
+								Uses bg to distinguish from the side panes.
 							</p>
 						</div>
 					</Pane>

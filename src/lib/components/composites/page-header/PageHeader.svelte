@@ -67,7 +67,7 @@ const processedBreadcrumbs = $derived(
 
 <style>
 	.page-header {
-		background: var(--surface-0);
+		background: var(--color-bg);
 		border-bottom: 1px solid var(--color-border);
 		padding: var(--spacing-7) var(--spacing-7) var(--spacing-6);
 		margin: calc(-1 * var(--spacing-7)) calc(-1 * var(--spacing-7)) var(--spacing-7) calc(-1 * var(--spacing-7));
@@ -80,7 +80,7 @@ const processedBreadcrumbs = $derived(
 		top: 0;
 		z-index: 5;
 		backdrop-filter: blur(8px);
-		background: color-mix(in srgb, var(--surface-0) 80%, transparent);
+		background: color-mix(in srgb, var(--color-bg) 80%, transparent);
 	}
 
 	.breadcrumbs {

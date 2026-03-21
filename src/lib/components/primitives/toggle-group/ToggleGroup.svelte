@@ -133,8 +133,8 @@ const isHorizontal = $derived(orientation === 'horizontal');
 	}
 
 	.toggle-group-item:global([data-state='on']) {
-		background: var(--color-primary-bg);
-		color: var(--color-primary-fg);
+		background: var(--color-primary-container);
+		color: var(--color-on-primary-container);
 	}
 
 	.toggle-group-item:global([disabled]) {

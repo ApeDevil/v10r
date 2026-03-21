@@ -108,7 +108,7 @@ function handleClear() {
 
 <style>
 	:global(.combobox-input) {
-		background-color: var(--color-input-bg);
+		background-color: var(--color-input);
 		border: none;
 		border-bottom: 1px solid var(--color-input-border);
 		transition: border-bottom-color 150ms ease, border-bottom-width 150ms ease;

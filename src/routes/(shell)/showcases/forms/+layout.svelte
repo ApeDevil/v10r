@@ -43,7 +43,7 @@ const tabs = getShowcaseTabs('/showcases/forms');
 		padding: var(--spacing-3);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);
-		background: var(--color-input-bg);
+		background: var(--color-input);
 		color: var(--color-fg);
 		font-size: var(--text-fluid-sm);
 		font-family: inherit;
