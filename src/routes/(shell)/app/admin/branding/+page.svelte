@@ -3,7 +3,7 @@ import { superForm } from 'sveltekit-superforms';
 import { valibotClient } from 'sveltekit-superforms/adapters';
 import { enhance as kitEnhance } from '$app/forms';
 import { browser } from '$app/environment';
-import { beforeNavigate } from '$app/navigation';
+import { beforeNavigate, invalidateAll } from '$app/navigation';
 import { get } from 'svelte/store';
 import { Alert, Card, FormField } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
@@ -29,6 +29,12 @@ const {
 } = superForm(data.form, {
 	validators: valibotClient(brandSettingsSchema),
 	resetForm: false,
+	onUpdated({ form }) {
+		if (form.valid) {
+			brandSaved = true;
+			invalidateAll();
+		}
+	},
 });
 
 // ── Unsaved changes guard ─────────────────────────────────────────────────────
@@ -51,26 +57,29 @@ $effect(() => {
 });
 
 // ── Live preview: sync data-* attributes on <html> as admin picks options ────
+// After a successful save, skip cleanup so invalidateAll() style persists on navigation.
+
+let brandSaved = $state(false);
 
 $effect(() => {
 	if (!browser) return;
 	const prev = document.documentElement.dataset.palette;
 	document.documentElement.dataset.palette = $form.paletteId;
-	return () => { document.documentElement.dataset.palette = prev ?? ''; };
+	return () => { if (!brandSaved) document.documentElement.dataset.palette = prev ?? ''; };
 });
 
 $effect(() => {
 	if (!browser) return;
 	const prev = document.documentElement.dataset.typography;
 	document.documentElement.dataset.typography = $form.typographyId;
-	return () => { document.documentElement.dataset.typography = prev ?? ''; };
+	return () => { if (!brandSaved) document.documentElement.dataset.typography = prev ?? ''; };
 });
 
 $effect(() => {
 	if (!browser) return;
 	const prev = document.documentElement.dataset.radius;
 	document.documentElement.dataset.radius = $form.radiusId;
-	return () => { document.documentElement.dataset.radius = prev ?? ''; };
+	return () => { if (!brandSaved) document.documentElement.dataset.radius = prev ?? ''; };
 });
 
 const shapeItems = [
@@ -169,6 +178,15 @@ const editModeItems = [
 	<title>Branding - Admin - Velociraptor</title>
 </svelte:head>
 
+{#snippet saveAction()}
+	<div class="save-action">
+		<Button type="submit" form="brandForm" disabled={$submitting}>
+			{#if $delayed}<Spinner size="sm" class="mr-2" />{/if}
+			{#if $form.enabled}Save & Apply{:else}Save{/if}
+		</Button>
+	</div>
+{/snippet}
+
 <Stack gap="6">
 	{#if $formMessage}
 		<Alert variant="success" title="Saved">
@@ -185,14 +203,31 @@ const editModeItems = [
 		{/snippet}
 
 		{#snippet children()}
-			<FormField
-				label="Enable corporate mode"
-				description="When on, all visitors see this design. When off, visitors see random styles (demo mode)."
-			>
-				{#snippet children(_)}
-					<Switch bind:checked={$form.enabled} label={$form.enabled ? 'On' : 'Off'} />
-				{/snippet}
-			</FormField>
+			<Stack gap="4">
+				<FormField
+					label="Enable corporate mode"
+					description="When on, all visitors see this design. When off, visitors see random styles (demo mode)."
+				>
+					{#snippet children(_)}
+						<Switch bind:checked={$form.enabled} label={$form.enabled ? 'On' : 'Off'} />
+					{/snippet}
+				</FormField>
+
+				{#if $tainted && !$form.enabled}
+					<div class="corporate-hint" role="status">
+						<p class="text-fluid-xs">
+							Corporate mode is off — changes will be saved but visitors will still see random styles.
+							<button type="button" class="corporate-hint-action" onclick={() => ($form.enabled = true)}>
+								Turn on corporate mode
+							</button>
+						</p>
+					</div>
+				{/if}
+
+				{#if $tainted?.enabled}
+					{@render saveAction()}
+				{/if}
+			</Stack>
 		{/snippet}
 	</Card>
 
@@ -340,12 +375,16 @@ const editModeItems = [
 						</Stack>
 					</div>
 				{/if}
+
+				{#if $tainted?.paletteId}
+					{@render saveAction()}
+				{/if}
 			</Stack>
 		{/snippet}
 	</Card>
 
 	<!-- Main settings form -->
-	<form method="POST" action="?/saveBrandSettings" use:enhance>
+	<form id="brandForm" method="POST" action="?/saveBrandSettings" use:enhance>
 		<input type="hidden" name="paletteId" value={$form.paletteId} />
 		<input type="hidden" name="enabled" value={$form.enabled ? 'on' : ''} />
 		<Stack gap="6">
@@ -371,6 +410,10 @@ const editModeItems = [
 							</button>
 						{/each}
 					</div>
+
+					{#if $tainted?.typographyId}
+						{@render saveAction()}
+					{/if}
 				{/snippet}
 			</Card>
 
@@ -383,34 +426,13 @@ const editModeItems = [
 				{#snippet children()}
 					<input type="hidden" name="radiusId" value={$form.radiusId} />
 					<ToggleGroup items={shapeItems} bind:value={$form.radiusId} />
+
+					{#if $tainted?.radiusId}
+						{@render saveAction()}
+					{/if}
 				{/snippet}
 			</Card>
 
-			<!-- Corporate mode warning -->
-			{#if $tainted && !$form.enabled}
-				<div class="corporate-hint" role="status">
-					<p class="text-fluid-xs">
-						Corporate mode is off — these changes will be saved but visitors will still see random styles.
-						<button type="button" class="corporate-hint-action" onclick={() => ($form.enabled = true)}>
-							Turn on corporate mode
-						</button>
-					</p>
-				</div>
-			{/if}
-
-			<!-- Save -->
-			<Cluster justify="end">
-				<Button type="submit" disabled={$submitting || !$tainted}>
-					{#if $delayed}<Spinner size="sm" class="mr-2" />{/if}
-					{#if !$tainted}
-						No Changes
-					{:else if $form.enabled}
-						Save and Apply to All Visitors
-					{:else}
-						Save Changes
-					{/if}
-				</Button>
-			</Cluster>
 		</Stack>
 	</form>
 </Stack>
@@ -500,5 +522,12 @@ const editModeItems = [
 
 	.corporate-hint-action:hover {
 		opacity: 0.8;
+	}
+
+	.save-action {
+		display: flex;
+		justify-content: flex-end;
+		padding-top: 1rem;
+		border-top: 1px solid var(--color-border);
 	}
 </style>
