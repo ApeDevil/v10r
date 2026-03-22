@@ -1,6 +1,6 @@
 <script lang="ts">
 import { enhance } from '$app/forms';
-import { Alert, Card, DiagGrid, DiagRow, PageHeader } from '$lib/components/composites';
+import { Alert, Card, DiagGrid, DiagRow } from '$lib/components/composites';
 import { Accordion, Button, Progress, Skeleton, Spinner, Tag } from '$lib/components/primitives';
 import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives';
 import type { ProviderResult, ThresholdLevel } from '$lib/server/monitoring';
@@ -70,40 +70,29 @@ const resolvedAlert = $derived.by(() => {
 </script>
 
 <svelte:head>
-	<title>Infrastructure - Admin - Velociraptor</title>
+	<title>DB Observation - Admin - Velociraptor</title>
 </svelte:head>
 
-<PageHeader
-	title="Infrastructure"
-	description="Monitor database and storage usage against free tier limits."
-	breadcrumbs={[
-		{ label: 'Home', href: '/' },
-		{ label: 'App', href: '/app' },
-		{ label: 'Admin', href: '/app/admin' },
-		{ label: 'Infrastructure' },
-	]}
->
-	{#snippet children()}
-		<form
-			method="POST"
-			action="?/retest"
-			use:enhance={() => {
-				refreshing = true;
-				return async ({ update }) => {
-					await update();
-					refreshing = false;
-				};
-			}}
-		>
-			<Button type="submit" variant="outline" size="sm" disabled={refreshing}>
-				{#if refreshing}
-					<Spinner size="xs" class="mr-1" />
-				{/if}
-				Refresh
-			</Button>
-		</form>
-	{/snippet}
-</PageHeader>
+<div class="flex items-center justify-between mb-6">
+	<form
+		method="POST"
+		action="?/retest"
+		use:enhance={() => {
+			refreshing = true;
+			return async ({ update }) => {
+				await update();
+				refreshing = false;
+			};
+		}}
+	>
+		<Button type="submit" variant="outline" size="sm" disabled={refreshing}>
+			{#if refreshing}
+				<Spinner size="xs" class="mr-1" />
+			{/if}
+			Refresh
+		</Button>
+	</form>
+</div>
 
 {#if resolvedAlert}
 	<Alert

@@ -68,7 +68,7 @@ describe('requireAdmin', () => {
 		expect(result.user).toBe(user);
 	});
 
-	it('throws error(403) for non-admin', () => {
+	it('throws error(404) for non-admin (hides route existence)', () => {
 		mockAdminEmail = 'admin@test.com';
 		const user = { id: 'u1', email: 'other@test.com' };
 		const session = { id: 's1' };
@@ -77,11 +77,11 @@ describe('requireAdmin', () => {
 		try {
 			requireAdmin(makeLocals(user, session));
 		} catch (e: any) {
-			expect(e.status).toBe(403);
+			expect(e.status).toBe(404);
 		}
 	});
 
-	it('throws error(403) when ADMIN_EMAIL is not set', () => {
+	it('throws error(404) when ADMIN_EMAIL is not set', () => {
 		mockAdminEmail = undefined;
 		const user = { id: 'u1', email: 'any@test.com' };
 		const session = { id: 's1' };
@@ -90,7 +90,15 @@ describe('requireAdmin', () => {
 		try {
 			requireAdmin(makeLocals(user, session));
 		} catch (e: any) {
-			expect(e.status).toBe(403);
+			expect(e.status).toBe(404);
 		}
+	});
+
+	it('is case-insensitive for email comparison', () => {
+		mockAdminEmail = 'Admin@Test.com';
+		const user = { id: 'u1', email: 'admin@test.com' };
+		const session = { id: 's1' };
+		const result = requireAdmin(makeLocals(user, session));
+		expect(result.user).toBe(user);
 	});
 });

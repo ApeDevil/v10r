@@ -1,5 +1,4 @@
 import { redirect } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
 import { getUnreadCount } from '$lib/server/db/notifications/queries';
 import type { LayoutServerLoad } from './$types';
 
@@ -14,7 +13,6 @@ export const load: LayoutServerLoad = async ({ locals, depends }) => {
 
 	return {
 		user: locals.user,
-		isAdmin: !!env.ADMIN_EMAIL && locals.user.email === env.ADMIN_EMAIL,
 		unreadCount: await getUnreadCount(locals.user.id),
 	};
 };

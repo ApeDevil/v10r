@@ -12,8 +12,6 @@ const tabs = [
 	{ label: 'Dashboard', href: '/app/dashboard', icon: 'i-lucide-layout-dashboard' },
 	{ label: 'Account', href: '/app/account', icon: 'i-lucide-user' },
 	{ label: 'Notifications', href: '/app/notifications', icon: 'i-lucide-bell' },
-	{ label: 'Jobs', href: '/app/jobs', icon: 'i-lucide-clock' },
-	...(data.isAdmin ? [{ label: 'Admin', href: '/app/admin', icon: 'i-lucide-shield' }] : []),
 ];
 </script>
 

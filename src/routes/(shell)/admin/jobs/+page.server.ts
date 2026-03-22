@@ -9,7 +9,8 @@ import type { Actions, PageServerLoad } from './$types';
 
 const PAGE_SIZE = 25;
 
-export const load: PageServerLoad = async ({ url }) => {
+export const load: PageServerLoad = async ({ url, locals }) => {
+	requireAdmin(locals);
 	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
 	const jobFilter = url.searchParams.get('job') || 'all';
 	const offset = (page - 1) * PAGE_SIZE;

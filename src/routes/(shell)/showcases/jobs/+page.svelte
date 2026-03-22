@@ -52,7 +52,7 @@ function relativeTime(iso: string): string {
 					</div>
 					<div class="diag-row">
 						<span class="diag-label">Manual</span>
-						<span class="diag-value">Admin dashboard at <code class="diag-mono">/app/jobs</code></span>
+						<span class="diag-value">Admin dashboard at <code class="diag-mono">/admin/jobs</code></span>
 					</div>
 				</div>
 				<p>Every execution is logged to PostgreSQL with status, duration, trigger type, and result count. The <code>runJob()</code> wrapper handles timing and fire-and-forget logging — if the DB insert fails, the job result is still returned.</p>
@@ -154,7 +154,7 @@ function relativeTime(iso: string): string {
 				</div>
 				<div class="diag-row">
 					<span class="diag-label">Admin</span>
-					<code class="diag-mono">src/routes/app/jobs/+page.svelte</code>
+					<code class="diag-mono">src/routes/admin/jobs/+page.svelte</code>
 				</div>
 			</div>
 		</Card>

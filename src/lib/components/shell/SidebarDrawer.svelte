@@ -11,10 +11,11 @@ import SidebarTriggers from './SidebarTriggers.svelte';
 import UserMenu from './UserMenu.svelte';
 
 interface Props {
+	isAdmin?: boolean;
 	class?: string;
 }
 
-let { class: className }: Props = $props();
+let { isAdmin = false, class: className }: Props = $props();
 
 const sidebar = getSidebar();
 const session = getSession();
@@ -91,7 +92,7 @@ function handleOverlayClick() {
 
 		<DiceRollButton forceExpanded />
 
-		<SidebarNav forceExpanded useFlyout={false} />
+		<SidebarNav forceExpanded useFlyout={false} {isAdmin} />
 
 		<div class="p-2 border-t border-border">
 			<UserMenu user={session.user ? { name: session.user.name ?? '', email: session.user.email } : null} forceExpanded />

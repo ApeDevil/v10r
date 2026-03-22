@@ -5,7 +5,7 @@
  * Expanded mode: Icons + labels
  */
 
-import { navItems } from '$lib/nav';
+import { adminNavItem, navItems } from '$lib/nav';
 import { getSidebar } from '$lib/state/sidebar.svelte';
 import { cn } from '$lib/utils/cn';
 import NavItem from './NavItem.svelte';
@@ -13,19 +13,21 @@ import NavItem from './NavItem.svelte';
 interface Props {
 	forceExpanded?: boolean; // Force expanded mode (for drawer)
 	useFlyout?: boolean;
+	isAdmin?: boolean;
 	class?: string;
 }
 
-let { forceExpanded = false, useFlyout = true, class: className }: Props = $props();
+let { forceExpanded = false, useFlyout = true, isAdmin = false, class: className }: Props = $props();
 
 const sidebar = getSidebar();
 
 const isExpanded = $derived(forceExpanded || sidebar.expanded);
+const effectiveItems = $derived(isAdmin ? [...navItems, adminNavItem] : navItems);
 </script>
 
 <nav class={cn('flex-1 overflow-y-auto p-2 scrollbar-nav', className)} role="navigation" aria-label="Main navigation">
 	<ul class="list-none m-0 p-0 flex flex-col gap-1">
-		{#each navItems as item}
+		{#each effectiveItems as item}
 			<li>
 				<NavItem
 					href={item.href}

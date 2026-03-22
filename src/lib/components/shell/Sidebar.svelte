@@ -3,6 +3,12 @@ import { browser } from '$app/environment';
 import { SidebarDrawer, SidebarFab, SidebarRail } from '$lib/components/shell';
 import { getSidebar } from '$lib/state/sidebar.svelte';
 
+interface Props {
+	isAdmin?: boolean;
+}
+
+let { isAdmin = false }: Props = $props();
+
 const sidebar = getSidebar();
 
 // SSR-safe media query state
@@ -33,9 +39,9 @@ $effect(() => {
 
 {#if isMobile}
 	<!-- Mobile: Drawer + FAB -->
-	<SidebarDrawer />
+	<SidebarDrawer {isAdmin} />
 	<SidebarFab />
 {:else}
 	<!-- Tablet/Desktop: Rail -->
-	<SidebarRail />
+	<SidebarRail {isAdmin} />
 {/if}

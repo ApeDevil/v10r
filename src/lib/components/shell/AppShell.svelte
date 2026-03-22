@@ -22,11 +22,13 @@ import { getTheme } from '$lib/state/theme.svelte';
 type Props = {
 	children?: import('svelte').Snippet;
 	session?: Session;
+	/** Whether the current user has admin privileges. */
+	isAdmin?: boolean;
 	/** Immersive mode: hides the footer for full-viewport layouts like the desk. */
 	immersive?: boolean;
 };
 
-let { children, session = null, immersive = false }: Props = $props();
+let { children, session = null, isAdmin = false, immersive = false }: Props = $props();
 
 // Initialize session context so child components can use getSession()
 setSessionContext(session);
@@ -98,7 +100,7 @@ const searchItems = $derived<CommandPaletteItem[]>([
 <a href="#main-content" class="absolute -top-full left-0 py-2 px-4 bg-primary text-white z-modal no-underline focus:top-0">Skip to main content</a>
 
 <div class="flex min-h-screen">
-	<Sidebar />
+	<Sidebar {isAdmin} />
 
 	<main id="main-content" tabindex="-1" class="flex-1 min-w-0 flex flex-col overflow-x-clip md:pl-[var(--sidebar-rail-width)]">
 		{@render children?.()}

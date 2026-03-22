@@ -19,8 +19,8 @@ export function requireApiUser(locals: App.Locals) {
 export function requireAdmin(locals: App.Locals) {
 	const { user, session } = requireAuth(locals);
 	const adminEmail = env.ADMIN_EMAIL;
-	if (!adminEmail || user.email !== adminEmail) {
-		error(403, 'Forbidden');
+	if (!adminEmail || user.email.toLowerCase() !== adminEmail.toLowerCase()) {
+		error(404, 'Not Found');
 	}
 	return { user, session };
 }

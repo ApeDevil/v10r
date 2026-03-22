@@ -19,7 +19,8 @@ function settledToResult<T>(
 	};
 }
 
-export const load: PageServerLoad = async ({ depends }) => {
+export const load: PageServerLoad = async ({ depends, locals }) => {
+	requireAdmin(locals);
 	depends('admin:db');
 
 	const [upstashResult, r2Result] = await Promise.allSettled([

@@ -1,3 +1,4 @@
+import { env } from '$env/dynamic/private';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ cookies, locals }) => {
@@ -26,5 +27,9 @@ export const load: LayoutServerLoad = async ({ cookies, locals }) => {
 		themeMode,
 		sidebarWidth,
 		style: locals.style,
+		isAdmin:
+			!!locals.user &&
+			!!env.ADMIN_EMAIL &&
+			locals.user.email.toLowerCase() === env.ADMIN_EMAIL.toLowerCase(),
 	};
 };

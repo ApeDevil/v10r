@@ -11,10 +11,11 @@ import SidebarTriggers from './SidebarTriggers.svelte';
 import UserMenu from './UserMenu.svelte';
 
 interface Props {
+	isAdmin?: boolean;
 	class?: string;
 }
 
-let { class: className }: Props = $props();
+let { isAdmin = false, class: className }: Props = $props();
 
 const sidebar = getSidebar();
 const session = getSession();
@@ -73,7 +74,7 @@ $effect(() => {
 
 	<SidebarTriggers />
 
-	<SidebarNav />
+	<SidebarNav {isAdmin} />
 
 	<div class="p-2 border-t border-border">
 		{#if !session.user}

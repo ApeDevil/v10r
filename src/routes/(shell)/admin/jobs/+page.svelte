@@ -145,13 +145,13 @@ function triggerVariant(trigger: string): 'default' | 'secondary' | 'warning' {
 				{#if data.registeredJobs.length > 1}
 					<div class="filter-bar">
 						<a
-							href="/app/jobs?job=all"
+							href="/admin/jobs?job=all"
 							class="filter-link"
 							class:active={data.jobFilter === 'all'}
 						>All</a>
 						{#each data.registeredJobs as slug}
 							<a
-								href="/app/jobs?job={slug}"
+								href="/admin/jobs?job={slug}"
 								class="filter-link"
 								class:active={data.jobFilter === slug}
 							>{slug}</a>
@@ -259,13 +259,13 @@ function triggerVariant(trigger: string): 'default' | 'secondary' | 'warning' {
 			{#if data.totalPages > 1}
 				<div class="pagination">
 					{#if data.page > 1}
-						<a href="/app/jobs?page={data.page - 1}&job={data.jobFilter}" class="page-link">
+						<a href="/admin/jobs?page={data.page - 1}&job={data.jobFilter}" class="page-link">
 							<span class="i-lucide-chevron-left h-4 w-4"></span> Prev
 						</a>
 					{/if}
 					<span class="page-info">Page {data.page} of {data.totalPages}</span>
 					{#if data.page < data.totalPages}
-						<a href="/app/jobs?page={data.page + 1}&job={data.jobFilter}" class="page-link">
+						<a href="/admin/jobs?page={data.page + 1}&job={data.jobFilter}" class="page-link">
 							Next <span class="i-lucide-chevron-right h-4 w-4"></span>
 						</a>
 					{/if}

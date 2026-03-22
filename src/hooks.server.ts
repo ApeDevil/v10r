@@ -1,4 +1,5 @@
-import { type Handle, type HandleServerError, json, redirect } from '@sveltejs/kit';
+import { type Handle, type HandleServerError, error, json, redirect } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 import { sequence } from '@sveltejs/kit/hooks';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { building } from '$app/environment';
@@ -252,13 +253,23 @@ const csrfProtection: Handle = async ({ event, resolve }) => {
 };
 
 /**
- * 7. Route guard — protect /app/* routes
+ * 7. Route guard — protect /app/* and /admin/* routes
  */
 const routeGuard: Handle = async ({ event, resolve }) => {
-	if (event.url.pathname.startsWith('/app')) {
+	const path = event.url.pathname;
+
+	if (path.startsWith('/app') || path.startsWith('/admin')) {
 		if (!event.locals.user) {
-			const returnTo = encodeURIComponent(event.url.pathname + event.url.search);
+			const returnTo = encodeURIComponent(path + event.url.search);
 			redirect(303, `/auth/login?returnTo=${returnTo}`);
+		}
+
+		// Admin routes require admin privileges — return 404 to hide existence
+		if (path.startsWith('/admin')) {
+			const adminEmail = env.ADMIN_EMAIL;
+			if (!adminEmail || event.locals.user.email.toLowerCase() !== adminEmail.toLowerCase()) {
+				error(404, 'Not Found');
+			}
 		}
 	}
 

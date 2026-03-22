@@ -191,7 +191,7 @@ const totalCombinations = PALETTE_REGISTRY.length * TYPOGRAPHY_REGISTRY.length *
 	</ol>
 
 	<p>
-		<a href="/app/admin/branding" class="admin-link">Configure Visual Identity &rarr;</a>
+		<a href="/admin/branding" class="admin-link">Configure Visual Identity &rarr;</a>
 	</p>
 </section>
 

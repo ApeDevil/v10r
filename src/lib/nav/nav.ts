@@ -9,6 +9,17 @@ import type { NavItem } from './types';
  *   - Deep routes (level 3+) are reached via hub page cards, not here
  *   - Adding a route? Add one entry to the appropriate children[]
  */
+export const adminNavItem: NavItem = {
+	href: '/admin',
+	label: 'Admin',
+	icon: 'i-lucide-shield',
+	children: [
+		{ href: '/admin/db', label: 'DB Observation' },
+		{ href: '/admin/branding', label: 'Branding' },
+		{ href: '/admin/jobs', label: 'Jobs' },
+	],
+};
+
 export const navItems: NavItem[] = [
 	{
 		href: '/',
