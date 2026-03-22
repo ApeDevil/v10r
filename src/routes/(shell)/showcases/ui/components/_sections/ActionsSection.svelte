@@ -1,6 +1,13 @@
 <script lang="ts">
 import { Button, Spinner } from '$lib/components';
+import type { ComponentDoc } from '$lib/components/composites/info-dialog/types';
 import { DemoCard, VariantGrid } from '../_components';
+
+interface Props {
+	docs?: Record<string, ComponentDoc>;
+}
+
+let { docs }: Props = $props();
 
 let isSaving = $state(false);
 let isDeleting = $state(false);
@@ -22,7 +29,7 @@ function simulateDelete() {
 
 	<div class="demos">
 		<!-- Button Variants -->
-		<DemoCard title="Button Variants" description="Six visual weights — from filled primary down to ghost. Choose based on the action's importance on the page.">
+		<DemoCard title="Button Variants" description="Six visual weights — from filled primary down to ghost. Choose based on the action's importance on the page." doc={docs?.button}>
 			<VariantGrid layout="row">
 				<Button variant="primary">Primary</Button>
 				<Button variant="default">Default</Button>
@@ -75,7 +82,7 @@ function simulateDelete() {
 		</DemoCard>
 
 		<!-- Loading States -->
-		<DemoCard title="Loading States" description="Click to trigger a 2-second loading simulation. Disable the button during async work — never let users double-submit.">
+		<DemoCard title="Loading States" description="Click to trigger a 2-second loading simulation. Disable the button during async work — never let users double-submit." doc={docs?.spinner}>
 			<VariantGrid layout="row">
 				<Button variant="default" disabled={isSaving} onclick={simulateSave}>
 					{#if isSaving}

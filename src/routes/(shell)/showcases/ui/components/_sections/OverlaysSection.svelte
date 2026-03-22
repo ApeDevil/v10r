@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Accordion, Button, Dialog, Drawer, Popover, Tabs, Tooltip } from '$lib/components';
+import { InfoDialog } from '$lib/components/composites/info-dialog';
 import { DemoCard } from '../_components';
 
 let dialogOpen = $state(false);
@@ -59,6 +60,48 @@ let tabValue = $state('account');
 					<Button variant="default" onclick={() => (dialogOpen = false)}>Confirm</Button>
 				</div>
 			</Dialog>
+		</DemoCard>
+
+		<!-- Info Dialog -->
+		<DemoCard title="Info Dialog" description="Icon-triggered information dialog with flexible content modes">
+			<div class="info-dialog-demo">
+				<InfoDialog title="Feature Overview" description="What the Info Dialog can do">
+					<div class="info-demo-content">
+						<h4 class="info-demo-heading">Three Content Modes</h4>
+						<ul class="info-demo-list">
+							<li><strong>Children</strong> — simple snippet content (this example)</li>
+							<li><strong>Doc</strong> — structured component documentation with props, source, and notes tabs</li>
+							<li><strong>Sections</strong> — custom tabbed content via InfoSection[]</li>
+						</ul>
+						<p class="info-demo-text">
+							Use it anywhere: showcases, app features, process documentation, contextual help.
+						</p>
+					</div>
+				</InfoDialog>
+
+				<InfoDialog
+					title="System Status"
+					icon="i-lucide-activity"
+					description="Current operational status"
+				>
+					<div class="info-demo-content">
+						<p class="info-demo-text">All systems operational. Last checked: just now.</p>
+					</div>
+				</InfoDialog>
+
+				<InfoDialog
+					title="Help"
+					icon="i-lucide-help-circle"
+					description="Quick help reference"
+				>
+					<div class="info-demo-content">
+						<h4 class="info-demo-heading">Getting Started</h4>
+						<p class="info-demo-text">
+							Click any info icon throughout the app to learn more about a feature or component.
+						</p>
+					</div>
+				</InfoDialog>
+			</div>
 		</DemoCard>
 
 		<!-- Drawer -->
@@ -191,6 +234,40 @@ let tabValue = $state('account');
 		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);
 		line-height: 1.5;
+	}
+
+	.info-dialog-demo {
+		display: flex;
+		gap: var(--spacing-4);
+		align-items: center;
+	}
+
+	.info-demo-content {
+		line-height: 1.6;
+		color: var(--color-body);
+	}
+
+	.info-demo-heading {
+		font-size: var(--text-fluid-base);
+		font-weight: 600;
+		margin: 0 0 var(--spacing-3) 0;
+		color: var(--color-fg);
+	}
+
+	.info-demo-list {
+		margin: 0 0 var(--spacing-3) 0;
+		padding-left: var(--spacing-5);
+		font-size: var(--text-fluid-sm);
+	}
+
+	.info-demo-list li {
+		margin-bottom: var(--spacing-1);
+	}
+
+	.info-demo-text {
+		margin: 0;
+		font-size: var(--text-fluid-sm);
+		color: var(--color-muted);
 	}
 
 	.tabs-demo {

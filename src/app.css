@@ -886,3 +886,17 @@ select option:checked {
 		opacity: 0 !important;
 	}
 }
+
+/* ── Shiki Dual-Theme Support ── */
+
+.shiki,
+.shiki span {
+	color: var(--shiki-light);
+	background-color: var(--shiki-light-bg);
+}
+
+.dark .shiki,
+.dark .shiki span {
+	color: var(--shiki-dark) !important;
+	background-color: var(--shiki-dark-bg) !important;
+}

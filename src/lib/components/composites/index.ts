@@ -16,6 +16,7 @@ export * from './dropdown-menu';
 export * from './empty-state';
 export * from './error-display';
 export * from './form-field';
+export * from './info-dialog';
 export * from './link-card';
 export * from './menu-bar';
 export * from './nav-grid';

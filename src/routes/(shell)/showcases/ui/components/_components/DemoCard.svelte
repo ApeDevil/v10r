@@ -1,6 +1,8 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
 import { cn } from '$lib/utils/cn';
+import { InfoDialog } from '$lib/components/composites/info-dialog';
+import type { ComponentDoc } from '$lib/components/composites/info-dialog/types';
 
 interface Props {
 	title: string;
@@ -9,9 +11,11 @@ interface Props {
 	class?: string;
 	showCode?: boolean;
 	code?: string;
+	/** Component documentation — shows info icon trigger in header */
+	doc?: ComponentDoc;
 }
 
-let { title, description, children, class: className, showCode = false, code }: Props = $props();
+let { title, description, children, class: className, showCode = false, code, doc }: Props = $props();
 let isCodeExpanded = $state(false);
 </script>
 
@@ -23,6 +27,9 @@ let isCodeExpanded = $state(false);
 				<p class="demo-description">{description}</p>
 			{/if}
 		</div>
+		{#if doc}
+			<InfoDialog title={doc.name} description={doc.description} {doc} />
+		{/if}
 	</div>
 
 	<div class="demo-content">
@@ -46,6 +53,10 @@ let isCodeExpanded = $state(false);
 	}
 
 	.demo-header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: var(--spacing-3);
 		padding: var(--spacing-4) var(--spacing-6);
 		border-bottom: 1px solid var(--color-border);
 		background: var(--color-subtle);
