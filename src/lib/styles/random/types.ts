@@ -12,7 +12,7 @@ export type TypographyId = string & { readonly __brand: 'TypographyId' };
 /** Branded radius identifier (e.g. "R1", "R2") */
 export type RadiusId = string & { readonly __brand: 'RadiusId' };
 
-/** The 20 overridable color tokens per palette per mode */
+/** The overridable color tokens per palette per mode (accent tokens optional — derived from primary + offset) */
 export interface PaletteColors {
 	bg: string;
 	fg: string;
@@ -29,6 +29,11 @@ export interface PaletteColors {
 	'on-primary': string;
 	secondary: string;
 	'on-secondary': string;
+	accent?: string;
+	'accent-hover'?: string;
+	'on-accent'?: string;
+	'accent-container'?: string;
+	'on-accent-container'?: string;
 	input: string;
 	'input-border': string;
 	'surface-1': string;
@@ -42,6 +47,8 @@ export interface Palette {
 	name: string;
 	description: string;
 	highContrast?: boolean;
+	/** Analogous hue offset for accent derivation (-60 to +60 degrees) */
+	accentOffset: number;
 	light: PaletteColors;
 	dark: PaletteColors;
 }

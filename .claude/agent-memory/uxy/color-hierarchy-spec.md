@@ -1,6 +1,6 @@
 ---
 name: Color Hierarchy Specification
-description: UX spec for color distribution philosophy, token usage rules, palette switching drama — secondary-fg diagnosis, current audit of composites showcase, and prioritized fix list
+description: UX spec for color distribution philosophy, token usage rules, palette switching drama — secondary-fg diagnosis, polychromatic research synthesis, and the "no new chromatic token" recommendation
 type: project
 ---
 
@@ -54,7 +54,7 @@ register as "slightly different gray" rather than "completely different world."
 | Active nav item (sidebar) | `--color-primary` | Orientation; users return to this constantly |
 | Primary CTA buttons | `--color-primary` (bg) + `--color-on-primary` (text) | Already correct |
 | Card hover border | `--color-primary` | Already in LinkCard — good |
-| Sublinks | `--color-primary` (not secondary-fg — see diagnosis below) | High-value nav shortcuts |
+| Sublinks | `--color-primary` text, `--color-primary-container` hover bg | High-value nav shortcuts — already implemented |
 
 ### SOMETIMES chromatic — use judgment based on page weight
 
@@ -135,49 +135,108 @@ Dark mode secondary-fg (more readable but still under-saturated):
    (secondary-bg container + secondary-fg text pairing). Reusing it for bare links is
    semantically misaligned — it's the wrong tool.
 
-### Verdict: Need a `--color-link` token
+### Verdict: Use `--color-primary` for sublinks (already implemented)
 
-`--color-secondary-fg` cannot serve as a link color reliably. It is structurally too
-close to `--color-fg` in light mode and too unsaturated everywhere. A dedicated
-`--color-link` token should:
-- In light mode: track `--color-primary` (which already has L=0.48–0.55, C=0.12–0.22)
-  but can be slightly lighter to avoid competing with buttons
-- In dark mode: track `--color-primary` (L=0.62–0.72)
-- Optionally: be set to `--color-primary` directly with no new token needed
+LinkCard.svelte already uses `color: var(--color-primary)` for sublinks and
+`color-mix(in srgb, var(--color-primary-container) 40%, transparent)` for hover bg.
+This is correct. The secondary-fg path was the broken historical approach.
 
 ---
 
-## 4. Proposed Token Usage Rules (Actionable Mapping)
+## 4. Polychromatic Research Synthesis
+
+### The central question: how many chromatic roles?
+
+**Material Design 3 model** (3 chromatic roles):
+- Primary: main interactive elements, CTAs, active states
+- Secondary: supporting interactive elements (chips, secondary containers, filter bars)
+- Tertiary: contrasting accents, highlights, cross-category differentiation
+
+**Radix Themes / shadcn / Linear model** (1 chromatic role + semantic):
+- One accent color throughout; semantic colors (success/error/warning) for status only
+- All interactive elements use the same accent — this is the dominant modern convention
+
+**Key finding**: Most successful modern design systems use ONE chromatic role for interactive
+elements. Multiple chromatic roles are reserved for data visualization (charts), not UI chrome.
+When Stripe, Linear, Vercel, or Notion switch themes, they switch one accent color — not two.
+
+### Why adding `--color-accent` as a second interactive role creates problems
+
+1. **Cognitive load at scale**: Every interactive element now requires a decision: is this
+   primary territory or accent territory? Without a clear semantic rule, the boundary drifts
+   team-wide. You end up with inconsistent application.
+
+2. **Palette burden**: 8 palettes × 2 modes = 16 contexts. Adding one new chromatic token
+   that needs to be meaningfully different from primary in all 16 contexts is hard. A
+   secondary accent at the wrong hue relative to primary will either clash or look like
+   a variation of primary — neither is useful.
+
+3. **Harmony vs. carnival**: Two fully-saturated chromatic interactive roles compete for
+   attention. The eye doesn't know which to prioritize. The result is visual noise, not
+   hierarchy. The "carnival effect" threshold is lower than people expect — it arrives
+   with just two competing hues on the same surface.
+
+4. **The sublinks problem is already solved by primary**: The diagnosis in section 3 shows
+   the actual issue was `secondary-fg` being too desaturated to read as distinct, not that
+   sublinks needed a *different* hue from the icon. Both the icon and the sublinks being
+   primary is correct — they are the same semantic category (navigation). Same hue,
+   same family. The hierarchy is established by shape and position, not hue.
+
+### The right answer: apply primary more aggressively, not add more hues
+
+The system already has an under-utilized primary family:
+- `--color-primary` (main)
+- `--color-primary-container` (tinted bg)
+- `--color-on-primary-container` (text on tinted bg)
+- `--color-primary-dim` (softer version)
+
+These can create 3–4 distinct visual tiers *within the same hue*, avoiding carnival while
+dramatically increasing chromatic presence.
+
+### Where `--color-secondary` changing to chromatic WOULD help
+
+The one case where a distinct chromatic role genuinely adds value is **badge/tag chips
+on neutral surfaces** — when a tag chip needs to communicate a *category* visually,
+a distinct hue from primary helps. But this is:
+- Already designed for in the secondary-bg/secondary-fg pairing
+- Only relevant for actual category differentiation (not most badge uses)
+- Solvable by semantic color tokens (success, warning, info) which already exist
+
+### Recommendation: Do NOT add `--color-accent` or make `--color-secondary` chromatic
+
+**Why**: `--color-secondary` is currently used as button secondary variant background
+(light near-neutral tint, dark near-neutral tint). Changing it to a fully chromatic color
+breaks the secondary button. That fix would require decoupling secondary-button-bg from
+the secondary token — a meaningful refactor for no clear gain.
+
+**The actual gap is application density, not token count.**
+
+---
+
+## 5. Proposed Token Usage Rules (Actionable Mapping)
 
 ```
 Links (inline text)      → var(--color-primary)
-Links (sublink badges)   → var(--color-primary) text, var(--color-primary-bg) hover bg
-Active nav item          → var(--color-primary)
-Active tab underline     → var(--color-primary)
-Focus rings              → var(--color-primary)
-Primary CTA              → var(--color-primary) bg + var(--color-on-primary) text
-Card hover border        → var(--color-primary)               [already done]
-Badge/chip label         → var(--color-secondary-fg)          [on secondary-bg container]
+Links (sublink badges)   → var(--color-primary) text, var(--color-primary-container) hover bg [DONE]
+Active nav item          → var(--color-primary) bg + var(--color-on-primary) text [DONE]
+Active tab underline     → var(--color-primary) [DONE]
+Focus rings              → var(--color-primary) [DONE]
+Primary CTA              → var(--color-primary) bg + var(--color-on-primary) text [DONE]
+Card hover border        → var(--color-primary) [DONE]
+Badge/chip label         → var(--color-secondary-fg) on var(--color-secondary-bg) container [use for category chips only]
 Category eyebrow         → var(--color-primary) or var(--color-muted)
 Icon (active/selected)   → var(--color-primary)
 Icon (passive)           → var(--color-muted)
-Section heading (h2)     → var(--color-fg)                    [neutral; let accent breathe]
+Section heading (h2)     → var(--color-fg) [neutral; let accent breathe]
 Body text                → var(--color-body)
 Supporting text          → var(--color-muted)
 Page bg                  → var(--color-bg)
 Card bg                  → var(--surface-1)
 ```
 
-**For sublinks specifically:**
-Replace `color: var(--color-secondary-fg)` with `color: var(--color-primary)`.
-Replace hover bg `color-mix(in srgb, var(--color-secondary-bg) 40%, transparent)` with
-`color-mix(in srgb, var(--color-primary-bg) 40%, transparent)`.
-
-This change alone makes sublinks immediately distinct and palette-responsive.
-
 ---
 
-## 5. Accessibility Constraints
+## 6. Accessibility Constraints
 
 ### Mandatory WCAG AA pairs (4.5:1 for text, 3:1 for large/UI)
 
@@ -190,7 +249,7 @@ This change alone makes sublinks immediately distinct and palette-responsive.
 | `--color-muted` on `--color-bg` | Medium risk | L=0.45–0.50 on light bg can be borderline. WCAG AA requires 4.5:1. Avoid for essential info. |
 | Focus rings (`--color-primary`) | Requires 3:1 against adjacent colors | Already meets 3:1 in most palettes; P3/Forest (low-chroma green) needs verification |
 
-### Specific risks with the "use primary for links" recommendation
+### Specific risks with "use primary for links"
 
 - P3 Forest light: primary is `oklch(0.48, 0.12, 155)` — medium green on near-white bg.
   Contrast should be checked. If it fails AA, the fix is increasing chroma to 0.15+.
@@ -198,24 +257,13 @@ This change alone makes sublinks immediately distinct and palette-responsive.
   should pass comfortably.
 - P4 Neon Lime light: primary is `oklch(0.55, 0.20, 135)` — mid-green. Borderline.
 
-The build-time `validatePaletteContrast` function in `contrast.ts` should cover this if
-it checks `primary` vs `bg`. Confirm it does when implementing.
-
-### P0 High Contrast special case
-
-P0's secondary-fg in light mode is `oklch(0.15, 0, 0)` — nearly pure black on near-white.
-This is actually readable (good contrast), but it is completely achromatic. Sublinks in P0
-will look identical to regular fg text. For P0, using primary (which has chroma 0.15) is
-especially important because it's the only chromatic signal available.
-
 ---
 
-## 6. Palette Drama: Additional Opportunities Beyond Sublinks
+## 7. Palette Drama: Additional Opportunities Beyond Sublinks
 
 The following elements are palette-transparent today but could amplify the switch:
 
-1. **Sidebar active item background**: Currently uses `primary-bg`. Good. Ensure it's
-   actually applied — it creates a "glow" in the dominant accent hue.
+1. **Sidebar active item background**: Already uses `primary` bg + `on-primary` text. Good.
 
 2. **Section heading accent mark**: A left border `border-l-4 border-primary` on
    major section h2s would make palette hue visible in the information hierarchy without
@@ -224,8 +272,13 @@ The following elements are palette-transparent today but could amplify the switc
 3. **Empty state icon**: Currently `text-muted`. Switching to `text-primary` would be
    a low-surface-area but high-attention chromatic moment.
 
-4. **Nav grid hover**: If NavGrid uses link cards, the hover border (already primary)
-   creates a grid of color on hover — dramatic.
+4. **Nav grid hover**: LinkCard hover border (already primary) creates a grid of color
+   on hover — dramatic.
 
-5. **Kbd / code inline**: Currently probably neutral. Tinting with `primary-bg` bg and
-   `primary-fg` text makes even code examples palette-responsive.
+5. **Kbd / code inline**: Currently probably neutral. Tinting with `primary-container` bg and
+   `on-primary-container` text makes even code examples palette-responsive.
+
+6. **NavSection active chip**: Already uses `color: var(--color-primary)` and
+   `color-mix(in srgb, var(--color-primary) 10%, transparent)` bg. Good.
+
+7. **TabNav active underline**: Already `border-bottom-color: var(--color-primary)`. Good.

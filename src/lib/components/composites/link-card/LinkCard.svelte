@@ -111,22 +111,22 @@ let { href, title, description, icon, sublinks, children, class: className, ...r
 		border-radius: 0.25rem;
 		padding: 0.25rem 0.5rem;
 		text-decoration: none;
-		color: var(--color-primary);
+		color: var(--color-accent);
 		transition: color 150ms, background-color 150ms;
 	}
 
 	.sublink:hover {
 		text-decoration: underline;
-		background-color: color-mix(in srgb, var(--color-primary-container) 40%, transparent);
+		background-color: color-mix(in srgb, var(--color-accent-container) 40%, transparent);
 	}
 
 	.sublink:focus-visible {
-		outline: 2px solid var(--color-primary);
+		outline: 2px solid var(--color-accent);
 		outline-offset: 2px;
 	}
 
 	.sublink:active {
-		background-color: color-mix(in srgb, var(--color-primary-container) 60%, transparent);
+		background-color: color-mix(in srgb, var(--color-accent-container) 60%, transparent);
 	}
 
 	@media (prefers-reduced-motion: reduce) {

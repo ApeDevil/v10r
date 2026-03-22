@@ -3,22 +3,11 @@
  * Uses the corrected linearization threshold (0.04045 per CSS Color Level 4).
  */
 
-import { converter, type Oklch } from 'culori';
+import { converter } from 'culori';
+import { parseOklch } from './oklch';
 import type { PaletteColors } from './types';
 
 const toRgb = converter('rgb');
-
-/** Parse an OKLCH string like "oklch(0.55 0.18 260)" into a culori color */
-function parseOklch(value: string): Oklch {
-	const match = value.match(/oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*\)/);
-	if (!match) throw new Error(`Invalid OKLCH value: ${value}`);
-	return {
-		mode: 'oklch',
-		l: Number(match[1]),
-		c: Number(match[2]),
-		h: Number(match[3]),
-	};
-}
 
 /** Convert a single sRGB channel to linear (CSS Color Level 4 threshold: 0.04045) */
 function linearize(c: number): number {
@@ -53,6 +42,8 @@ const CRITICAL_PAIRS: Array<{ fg: keyof PaletteColors; bg: keyof PaletteColors; 
 	{ fg: 'on-primary-container', bg: 'primary-container', minRatio: 4.5 },
 	{ fg: 'on-secondary', bg: 'secondary', minRatio: 4.5 },
 	{ fg: 'on-primary', bg: 'primary', minRatio: 4.5 },
+	{ fg: 'on-accent', bg: 'accent', minRatio: 4.5 },
+	{ fg: 'on-accent-container', bg: 'accent-container', minRatio: 4.5 },
 ];
 
 /** Validate all critical contrast pairs for a palette color set. Returns failures. */

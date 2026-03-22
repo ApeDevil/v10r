@@ -146,6 +146,15 @@ export const colors = {
 		DEFAULT: 'var(--color-secondary)',
 	},
 	'on-secondary': 'var(--color-on-secondary)',
+	accent: {
+		DEFAULT: 'var(--color-accent)',
+		hover: 'var(--color-accent-hover)',
+		container: 'var(--color-accent-container)',
+	},
+	'on-accent': {
+		DEFAULT: 'var(--color-on-accent)',
+		container: 'var(--color-on-accent-container)',
+	},
 	success: {
 		DEFAULT: 'var(--color-success)',
 		light: 'var(--color-success-light)',

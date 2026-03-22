@@ -17,6 +17,7 @@ import {
 	STYLE_COOKIE_NAME,
 	STYLE_COOKIE_OPTIONS,
 } from '$lib/styles/random';
+import { deriveAccentTokens } from '$lib/styles/random/accent';
 import type { PaletteId, ResolvedStyle } from '$lib/styles/random/types';
 import { getTypography } from '$lib/styles/random/typography-registry';
 import { getRadius } from '$lib/styles/random/radius-registry';
@@ -50,6 +51,7 @@ const VALID_TOKEN_KEYS = new Set([
 	'bg', 'fg', 'body', 'heading', 'muted', 'border', 'subtle',
 	'primary', 'primary-hover', 'primary-container', 'on-primary-container',
 	'primary-dim', 'on-primary', 'secondary', 'on-secondary',
+	'accent', 'accent-hover', 'on-accent', 'accent-container', 'on-accent-container',
 	'input', 'input-border', 'surface-1', 'surface-2', 'surface-3',
 ]);
 const OKLCH_RE = /^oklch\(\s*[\d.]+\s+[\d.]+\s+[\d.]+\s*\)$/;
@@ -95,6 +97,7 @@ const loadStyle: Handle = async ({ event, resolve }) => {
 						light: cp.lightColors as Record<string, string>,
 						dark: cp.darkColors as Record<string, string>,
 					};
+					event.locals.customPaletteAccentOffset = cp.accentOffset ?? 0;
 				}
 			}
 		} catch {
@@ -148,10 +151,30 @@ const i18n: Handle = ({ event, resolve }) =>
 						Object.entries(colors).filter(
 							([k, v]) => VALID_TOKEN_KEYS.has(k) && OKLCH_RE.test(v),
 						);
-					const lightVars = safeEntries(cp.light)
+
+					// Derive accent tokens from primary + offset (only for tokens not explicitly set)
+					const accentOffset = event.locals.customPaletteAccentOffset ?? 0;
+					const lightAccent = cp.light.primary
+						? deriveAccentTokens(cp.light.primary, accentOffset)
+						: {};
+					const darkAccent = cp.dark.primary
+						? deriveAccentTokens(cp.dark.primary, accentOffset)
+						: {};
+
+					// Admin-set accent tokens win over derived ones
+					const lightExplicit = new Set(safeEntries(cp.light).map(([k]) => k));
+					const darkExplicit = new Set(safeEntries(cp.dark).map(([k]) => k));
+
+					const lightVars = [
+						...safeEntries(cp.light),
+						...Object.entries(lightAccent).filter(([k]) => !lightExplicit.has(k)),
+					]
 						.map(([k, v]) => `${toVar(k)}:${v}`)
 						.join(';');
-					const darkVars = safeEntries(cp.dark)
+					const darkVars = [
+						...safeEntries(cp.dark),
+						...Object.entries(darkAccent).filter(([k]) => !darkExplicit.has(k)),
+					]
 						.map(([k, v]) => `${toVar(k)}:${v}`)
 						.join(';');
 					const style = `<style>[data-palette="${pid}"]{${lightVars}}.dark[data-palette="${pid}"]{${darkVars}}</style>`;

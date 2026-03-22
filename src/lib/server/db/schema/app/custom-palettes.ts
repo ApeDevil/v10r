@@ -1,7 +1,7 @@
 /**
  * CUSTOM PALETTES — User-created color palettes based on preset modifications.
  */
-import { index, jsonb, text, timestamp } from 'drizzle-orm/pg-core';
+import { index, integer, jsonb, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
 import { appSchema } from './user-preferences';
 
@@ -14,6 +14,7 @@ export const customPalettes = appSchema.table(
 		basePaletteId: text('base_palette_id').notNull(), // P0-P7 source preset
 		lightColors: jsonb('light_colors').notNull().$type<Record<string, string>>(),
 		darkColors: jsonb('dark_colors').notNull().$type<Record<string, string>>(),
+		accentOffset: integer('accent_offset').notNull().default(0),
 		createdBy: text('created_by')
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),

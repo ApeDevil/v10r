@@ -147,6 +147,50 @@ function handleChange(token: string, value: string) {
 		</div>
 	</details>
 
+	<!-- Accent Section -->
+	<details>
+		<summary class="section-header">
+			<span class="section-title">Accent</span>
+			<span class="section-hint">secondary navigation, sublinks, badges</span>
+		</summary>
+		<div class="section-body">
+			<OklchColorInput
+				label="accent"
+				bind:value={palette.accent}
+				onchange={(v) => handleChange('accent', v)}
+			/>
+			<OklchColorInput
+				label="accent-hover"
+				bind:value={palette['accent-hover']}
+				onchange={(v) => handleChange('accent-hover', v)}
+			/>
+			<OklchColorInput
+				label="accent-container"
+				bind:value={palette['accent-container']}
+				onchange={(v) => handleChange('accent-container', v)}
+			/>
+			<div class="token-with-badge">
+				<OklchColorInput
+					label="on-accent"
+					bind:value={palette['on-accent']}
+					onchange={(v) => handleChange('on-accent', v)}
+				/>
+				<ContrastBadge fgColor={palette['on-accent'] ?? ''} bgColor={palette.accent ?? ''} />
+			</div>
+			<div class="token-with-badge">
+				<OklchColorInput
+					label="on-accent-container"
+					bind:value={palette['on-accent-container']}
+					onchange={(v) => handleChange('on-accent-container', v)}
+				/>
+				<ContrastBadge
+					fgColor={palette['on-accent-container'] ?? ''}
+					bgColor={palette['accent-container'] ?? ''}
+				/>
+			</div>
+		</div>
+	</details>
+
 	<!-- Input Section -->
 	<details>
 		<summary class="section-header">

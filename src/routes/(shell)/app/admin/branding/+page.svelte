@@ -7,7 +7,7 @@ import { beforeNavigate, invalidateAll } from '$app/navigation';
 import { get } from 'svelte/store';
 import { Alert, Card, FormField } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
-import { Button, Spinner, Switch, ToggleGroup } from '$lib/components/primitives';
+import { Button, Input, Spinner, Switch, ToggleGroup } from '$lib/components/primitives';
 import CascadePrompt from '$lib/components/branding/CascadePrompt.svelte';
 import CustomPaletteEditor from '$lib/components/branding/CustomPaletteEditor.svelte';
 import { brandSettingsSchema } from '$lib/schemas/app/branding';
@@ -100,11 +100,12 @@ let customDarkColors = $state<PaletteColors | null>(null);
 let editingPaletteId = $state<string | null>(null);
 let showCascade = $state(false);
 
-/** All 20 token keys — used when removing inline styles on close */
+/** All 25 token keys — used when removing inline styles on close */
 const TOKEN_KEYS: (keyof PaletteColors)[] = [
 	'bg', 'fg', 'body', 'heading', 'muted', 'border', 'subtle',
 	'primary', 'primary-hover', 'primary-container', 'on-primary-container',
 	'primary-dim', 'on-primary', 'secondary', 'on-secondary',
+	'accent', 'accent-hover', 'on-accent', 'accent-container', 'on-accent-container',
 	'input', 'input-border', 'surface-1', 'surface-2', 'surface-3',
 ];
 
@@ -163,7 +164,12 @@ $effect(() => {
 	if (!colors) return;
 	const el = document.documentElement;
 	for (const key of TOKEN_KEYS) {
-		el.style.setProperty(tokenToCssVar(key), colors[key]);
+		const val = colors[key];
+		if (val) {
+			el.style.setProperty(tokenToCssVar(key), val);
+		} else {
+			el.style.removeProperty(tokenToCssVar(key));
+		}
 	}
 	return () => clearInlineStyles();
 });
@@ -318,16 +324,14 @@ const editModeItems = [
 
 						<Stack gap="4">
 							<div class="flex gap-3">
-								<input
-									class="flex-1 rounded-md border border-input-border px-3 py-2 text-fluid-sm"
-									style="background: var(--color-input); color: var(--color-fg);"
+								<Input
+									class="flex-1"
 									bind:value={customName}
 									placeholder="Palette name"
 									required
 								/>
-								<input
-									class="flex-1 rounded-md border border-input-border px-3 py-2 text-fluid-sm"
-									style="background: var(--color-input); color: var(--color-fg);"
+								<Input
+									class="flex-1"
 									bind:value={customDescription}
 									placeholder="Description (optional)"
 								/>

@@ -10,6 +10,7 @@ export async function createCustomPalette(data: {
 	basePaletteId: string;
 	lightColors: PaletteColors;
 	darkColors: PaletteColors;
+	accentOffset?: number;
 	createdBy: string;
 }) {
 	const id = createId.palette();
@@ -22,6 +23,7 @@ export async function createCustomPalette(data: {
 			basePaletteId: data.basePaletteId,
 			lightColors: data.lightColors,
 			darkColors: data.darkColors,
+			accentOffset: data.accentOffset ?? 0,
 			createdBy: data.createdBy,
 		})
 		.returning();
@@ -63,6 +65,7 @@ export async function updateCustomPalette(
 		description?: string;
 		lightColors?: PaletteColors;
 		darkColors?: PaletteColors;
+		accentOffset?: number;
 	},
 ) {
 	const [updated] = await db

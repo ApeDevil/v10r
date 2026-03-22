@@ -12,6 +12,7 @@ declare global {
 			session: import('better-auth').Session | null;
 			style: import('$lib/styles/random/types').ResolvedStyle;
 			customPaletteColors?: { light: Record<string, string>; dark: Record<string, string> };
+			customPaletteAccentOffset?: number;
 		}
 		interface PageData {
 			style: import('$lib/styles/random/types').ResolvedStyle;

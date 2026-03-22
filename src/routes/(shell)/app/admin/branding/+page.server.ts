@@ -50,7 +50,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 				bg: p.light.bg,
 				fg: p.light.fg,
 				muted: p.light.muted,
-				accent: p.light['primary-dim'],
+				accent: p.light.accent ?? p.light['primary-dim'],
 			},
 		})),
 		typographySets: TYPOGRAPHY_REGISTRY.map((t) => ({
