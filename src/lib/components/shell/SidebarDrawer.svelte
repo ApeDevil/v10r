@@ -4,6 +4,7 @@ import { getSidebar } from '$lib/state/sidebar.svelte';
 import { cn } from '$lib/utils/cn';
 import { trapFocus } from '$lib/utils/focus-trap';
 import DiceRollButton from './DiceRollButton.svelte';
+import ThemeToggle from './ThemeToggle.svelte';
 import SidebarLogo from './SidebarLogo.svelte';
 import SidebarNav from './SidebarNav.svelte';
 import SidebarTriggers from './SidebarTriggers.svelte';
@@ -83,6 +84,10 @@ function handleOverlayClick() {
 		</div>
 
 		<SidebarTriggers forceExpanded />
+
+		{#if !session.user}
+			<ThemeToggle forceExpanded />
+		{/if}
 
 		<DiceRollButton forceExpanded />
 

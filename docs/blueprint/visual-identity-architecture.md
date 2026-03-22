@@ -1,16 +1,16 @@
-# Corporate Theme Architecture
+# Visual Identity Architecture
 
-> Final architecture for the admin-configurable "corporate theme" system that allows an admin to set site-wide palette, typography, and border-radius — overriding the style randomizer for all visitors.
+> Final architecture for the admin-configurable "visual identity" system that allows an admin to lock a site-wide palette, typography, and border-radius — overriding the style randomizer for all visitors.
 
 ## Decision Summary
 
 | Tension | Decision | Rationale |
 |---------|----------|-----------|
 | Cookie vs DB vs Edge Config | **Cookie (same as randomizer)** | The pipeline already works, zero DB queries per page load, and this is a template not a SaaS product |
-| Generic `site_config` vs dedicated table | **Dedicated `site_theme` table** | Only two concrete use cases exist (randomizer + corporate), a generic config table is speculative |
+| Generic `site_config` vs dedicated table | **Dedicated `site_theme` table** | Only two concrete use cases exist (randomizer + visual identity), a generic config table is speculative |
 | Build-time CSS vs runtime injection | **Neither -- reuse `data-palette` attribute cascade** | The CSS already exists in `app.css`, the pipeline already works, adding a new mechanism is unnecessary |
 | Admin UI location | **`(shell)/app/admin/branding/`** | Admin-level config is not user settings; separate route group enables future admin gating |
-| Randomizer coexistence | **`data-palette` priority: corporate cookie > user cookie > randomizer** | CSS cascade stays identical; only the cookie value changes |
+| Randomizer coexistence | **`data-palette` priority: brand cookie > user cookie > randomizer** | CSS cascade stays identical; only the cookie value changes |
 
 ---
 
@@ -27,21 +27,21 @@ Cookie (v10r_style)
   --> app.html inline <script> (reads cookie client-side to prevent FOUC on navigation)
 ```
 
-This pipeline handles 8 palettes, 5 typography sets, and 3 radius presets with zero DB queries per page load. The corporate theme feature should **extend this pipeline**, not replace it.
+This pipeline handles 8 palettes, 5 typography sets, and 3 radius presets with zero DB queries per page load. The visual identity feature should **extend this pipeline**, not replace it.
 
 ---
 
 ## 2. Architecture: Cookie Priority Chain
 
-The core insight is that "corporate theme" is just a different source for the same `data-palette`/`data-typography`/`data-radius` attributes. The question is: which cookie wins?
+The core insight is that "visual identity" is just a different source for the same `data-palette`/`data-typography`/`data-radius` attributes. The question is: which cookie wins?
 
 ### Priority (highest to lowest):
 
-1. **Corporate theme cookie** (`v10r_brand`) -- if set, always wins
+1. **Visual identity cookie** (`v10r_brand`) -- if set, always wins
 2. **User's locked style cookie** (`v10r_style` with `lck: true`) -- user chose to keep a style
 3. **Randomizer** -- generates a new style
 
-### Where corporate theme cookie gets set:
+### Where visual identity cookie gets set:
 
 - Admin saves theme in admin UI --> form action writes to DB **and** sets `v10r_brand` cookie
 - On every page load, `loadStyle` hook checks for `v10r_brand` cookie first
@@ -53,15 +53,15 @@ The research agent correctly identified that DB-per-request is bad. But the solu
 
 The DB stores the admin's intent. The cookie delivers it to the browser. Admin saves once, cookie persists for a year.
 
-### How do new visitors get the corporate cookie?
+### How do new visitors get the brand cookie?
 
 They do not have it on first visit. The `loadStyle` hook must check the DB **once** on first visit (no cookie present) and set the cookie. This is the only DB query, and it happens once per visitor per year.
 
 ```
 First visit (no cookies):
   1. loadStyle: no v10r_brand cookie, no v10r_style cookie
-  2. Check: is there a published corporate theme in DB?
-     YES --> set v10r_brand cookie, use corporate palette/typo/radius
+  2. Check: is there a published visual identity in DB?
+     YES --> set v10r_brand cookie, use brand palette/typo/radius
      NO  --> generate random style, set v10r_style cookie
   3. All subsequent requests: cookie-driven, zero DB queries
 ```
@@ -122,7 +122,7 @@ export interface SiteThemeConfig {
   radiusId: string;
 }
 
-/** Get the published corporate theme, or null if none is active */
+/** Get the published visual identity, or null if none is active */
 export async function getPublishedTheme(): Promise<SiteThemeConfig | null> {
   const [row] = await db
     .select({
@@ -137,7 +137,7 @@ export async function getPublishedTheme(): Promise<SiteThemeConfig | null> {
   return row ?? null;
 }
 
-/** Save (upsert) the corporate theme */
+/** Save (upsert) the visual identity */
 export async function upsertTheme(
   config: SiteThemeConfig & { published: boolean },
   userId: string,
@@ -190,7 +190,7 @@ Modify the existing `loadStyle` hook in `hooks.server.ts`. The change is minimal
 
 ```typescript
 const loadStyle: Handle = async ({ event, resolve }) => {
-  // 1. Check for corporate theme cookie (highest priority)
+  // 1. Check for visual identity cookie (highest priority)
   const brandCookie = event.cookies.get('v10r_brand');
   if (brandCookie) {
     const config = parseStyleCookie(brandCookie);
@@ -209,7 +209,7 @@ const loadStyle: Handle = async ({ event, resolve }) => {
   let config = parseStyleCookie(cookieValue);
   let resolved = config ? resolveStyle(config) : null;
 
-  // 3. No valid cookie -- check DB for published corporate theme (once per visitor)
+  // 3. No valid cookie -- check DB for published visual identity (once per visitor)
   if (!resolved) {
     const published = await getPublishedTheme(); // uses cache if warm
     if (published) {
@@ -228,7 +228,7 @@ const loadStyle: Handle = async ({ event, resolve }) => {
       }
     }
 
-    // 4. No corporate theme -- generate random style (existing behavior)
+    // 4. No visual identity -- generate random style (existing behavior)
     config = generateRandomStyle();
     resolved = resolveStyle(config)!;
     event.cookies.set(STYLE_COOKIE_NAME, serializeStyleCookie(config), STYLE_COOKIE_OPTIONS);
@@ -297,7 +297,7 @@ Three sections, each using existing palette/typography/radius registries:
 1. **Color Palette** -- grid of 8 palette swatches (P0-P7), click to select
 2. **Typography** -- 5 typography preset cards (T1-T5), click to select
 3. **Border Radius** -- 3 radius preset cards (R1-R3), click to select
-4. **Publish toggle** -- switch to activate/deactivate corporate theme
+4. **Publish toggle** -- switch to activate/deactivate visual identity
 5. **Live preview** -- client-side `style.setProperty` via `$effect` (changes `data-palette` attribute on `<html>` in real-time, reverts on cancel)
 
 **No custom color picker in v1.** The UX agent's "brand color picker with auto-derivation" is a good idea but requires a color generation library (`culori`), WCAG validation UI, and a 9th dynamic palette slot. That is a v2 feature. For v1, the admin picks from the existing 8 palettes. This means:
@@ -310,14 +310,14 @@ Three sections, each using existing palette/typography/radius registries:
 
 ## 7. Cookie Propagation to Other Visitors
 
-When admin publishes a corporate theme, the admin's browser gets the `v10r_brand` cookie immediately. But other visitors (who already have `v10r_style` cookies) will not see the change until:
+When admin publishes a visual identity, the admin's browser gets the `v10r_brand` cookie immediately. But other visitors (who already have `v10r_style` cookies) will not see the change until:
 
 1. Their `v10r_brand` cookie is missing (first visit, or cookie expired)
 2. The `loadStyle` hook queries the DB and sets the cookie
 
 **The propagation strategy**: When admin publishes, do NOT attempt to invalidate all visitors' cookies (impossible without a broadcast mechanism). Instead:
 
-- New visitors get the corporate theme on first visit (DB query path)
+- New visitors get the visual identity on first visit (DB query path)
 - Existing visitors keep their randomizer style until their `v10r_style` cookie expires (1 year)
 - To force-propagate sooner: add a `v10r_brand_v` (version) check. When admin publishes, increment a version counter. The `loadStyle` hook checks if the brand cookie's version matches the DB version. If not, re-query and update.
 
@@ -327,21 +327,21 @@ When admin publishes a corporate theme, the admin's browser gets the `v10r_brand
 
 ## 8. Randomizer Coexistence
 
-The randomizer continues to work exactly as it does today. The corporate theme is simply a higher-priority source for the same data:
+The randomizer continues to work exactly as it does today. The visual identity is simply a higher-priority source for the same data:
 
 ```
 Priority cascade:
-  v10r_brand cookie present and valid  --> use corporate palette/typo/radius
+  v10r_brand cookie present and valid  --> use brand palette/typo/radius
   v10r_style cookie present and valid  --> use user's randomizer selection
-  neither present                      --> check DB for published corporate theme
+  neither present                      --> check DB for published visual identity
                                            found --> set v10r_brand, use it
                                            not found --> randomize, set v10r_style
 ```
 
-When corporate theme is unpublished (admin toggles off):
+When visual identity is unpublished (admin toggles off):
 - `loadStyle` hook: `v10r_brand` cookie is no longer set for new visitors
 - Existing visitors: their `v10r_brand` cookie should be deleted. The unpublish action can set `v10r_brand` with `maxAge: 0` on the admin's browser, but other visitors' brand cookies will linger until they expire or the hook detects the theme is unpublished.
-- Simple fix: store `published` state in the brand cookie itself. The hook can check `published` before using the brand cookie values. Or: the brand cookie simply is not set when no corporate theme is published. New visitors go through the randomizer path.
+- Simple fix: store `published` state in the brand cookie itself. The hook can check `published` before using the brand cookie values. Or: the brand cookie simply is not set when no visual identity is published. New visitors go through the randomizer path.
 
 ---
 

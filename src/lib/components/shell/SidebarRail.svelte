@@ -4,6 +4,7 @@ import { getSession } from '$lib/state/session.svelte';
 import { getSidebar } from '$lib/state/sidebar.svelte';
 import { cn } from '$lib/utils/cn';
 import DiceRollButton from './DiceRollButton.svelte';
+import ThemeToggle from './ThemeToggle.svelte';
 import SidebarLogo from './SidebarLogo.svelte';
 import SidebarNav from './SidebarNav.svelte';
 import SidebarTriggers from './SidebarTriggers.svelte';
@@ -75,6 +76,9 @@ $effect(() => {
 	<SidebarNav />
 
 	<div class="p-2 border-t border-border">
+		{#if !session.user}
+			<ThemeToggle class="!px-0" />
+		{/if}
 		<DiceRollButton class="!px-0" />
 		<UserMenu
 			user={session.user ? { name: session.user.name ?? '', email: session.user.email } : null}

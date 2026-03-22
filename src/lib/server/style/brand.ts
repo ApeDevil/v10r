@@ -4,8 +4,8 @@ import { getBrandSettings } from '$lib/server/db/brand/queries';
 let cached: { style: StyleConfig; enabled: boolean } | null = null;
 let loading: Promise<{ style: StyleConfig; enabled: boolean } | null> | null = null;
 
-/** Get corporate config from cache (0ms) or DB (cold start). */
-export async function getCorporateConfig() {
+/** Get brand config from cache (0ms) or DB (cold start). */
+export async function getBrandConfig() {
 	if (cached) return cached;
 	if (loading) return loading;
 
@@ -32,7 +32,7 @@ export async function getCorporateConfig() {
 }
 
 /** Invalidate cache — call after admin saves brand settings. */
-export function invalidateCorporateCache() {
+export function invalidateBrandCache() {
 	cached = null;
 	loading = null;
 }

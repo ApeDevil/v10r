@@ -36,7 +36,7 @@ export const showcases: ShowcaseCard[] = [
 		description: 'Keyboard shortcuts, modals, toasts, session lifecycle, navigation',
 		sublinks: [
 			{ label: 'Sidebar', href: '/showcases/shell/sidebar' },
-			{ label: 'Theme', href: '/showcases/shell/theme' },
+			{ label: 'Style', href: '/showcases/shell/style' },
 			{ label: 'Toasts', href: '/showcases/shell/toasts' },
 			{ label: 'Modals', href: '/showcases/shell/modals' },
 			{ label: 'Shortcuts', href: '/showcases/shell/shortcuts' },

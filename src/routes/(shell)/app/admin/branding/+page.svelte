@@ -175,14 +175,14 @@ const editModeItems = [
 </script>
 
 <svelte:head>
-	<title>Branding - Admin - Velociraptor</title>
+	<title>Visual Identity - Admin - Velociraptor</title>
 </svelte:head>
 
 {#snippet saveAction()}
 	<div class="save-action">
 		<Button type="submit" form="brandForm" disabled={$submitting}>
 			{#if $delayed}<Spinner size="sm" class="mr-2" />{/if}
-			{#if $form.enabled}Save & Apply{:else}Save{/if}
+			{#if $form.enabled}Save & Lock{:else}Save{/if}
 		</Button>
 	</div>
 {/snippet}
@@ -196,29 +196,29 @@ const editModeItems = [
 		</Alert>
 	{/if}
 
-	<!-- Corporate Mode — first, controls whether branding is applied -->
+	<!-- Visual Identity — first, controls whether branding is locked -->
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">Corporate Mode</h2>
+			<h2 class="text-fluid-lg font-semibold">Visual Identity</h2>
 		{/snippet}
 
 		{#snippet children()}
 			<Stack gap="4">
 				<FormField
-					label="Enable corporate mode"
-					description="When on, all visitors see this design. When off, visitors see random styles (demo mode)."
+					label="Lock visual identity"
+					description="When locked, all visitors see your brand. When unlocked, visitors explore random styles."
 				>
 					{#snippet children(_)}
-						<Switch bind:checked={$form.enabled} label={$form.enabled ? 'On' : 'Off'} />
+						<Switch bind:checked={$form.enabled} label={$form.enabled ? 'Locked' : 'Exploring'} />
 					{/snippet}
 				</FormField>
 
 				{#if $tainted && !$form.enabled}
-					<div class="corporate-hint" role="status">
+					<div class="identity-hint" role="status">
 						<p class="text-fluid-xs">
-							Corporate mode is off — changes will be saved but visitors will still see random styles.
-							<button type="button" class="corporate-hint-action" onclick={() => ($form.enabled = true)}>
-								Turn on corporate mode
+							Visual identity is unlocked — changes will be saved but visitors will still see random styles.
+							<button type="button" class="identity-hint-action" onclick={() => ($form.enabled = true)}>
+								Lock visual identity
 							</button>
 						</p>
 					</div>
@@ -497,7 +497,7 @@ const editModeItems = [
 		color: inherit;
 	}
 
-	.corporate-hint {
+	.identity-hint {
 		padding: 0.625rem 1rem;
 		border-left: 3px solid var(--color-warning-fg, oklch(0.75 0.15 85));
 		border-radius: var(--radius-sm);
@@ -505,11 +505,11 @@ const editModeItems = [
 		color: var(--color-fg);
 	}
 
-	:global(.dark) .corporate-hint {
+	:global(.dark) .identity-hint {
 		background: var(--color-warning-bg, oklch(0.25 0.05 85));
 	}
 
-	.corporate-hint-action {
+	.identity-hint-action {
 		background: none;
 		border: none;
 		padding: 0;
@@ -520,7 +520,7 @@ const editModeItems = [
 		text-underline-offset: 2px;
 	}
 
-	.corporate-hint-action:hover {
+	.identity-hint-action:hover {
 		opacity: 0.8;
 	}
 

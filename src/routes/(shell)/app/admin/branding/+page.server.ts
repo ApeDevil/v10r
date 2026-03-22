@@ -10,7 +10,7 @@ import {
 	listCustomPalettes,
 	updateCustomPalette,
 } from '$lib/server/branding/palette-crud';
-import { invalidateCorporateCache } from '$lib/server/style/corporate';
+import { invalidateBrandCache } from '$lib/server/style/brand';
 import { PALETTE_REGISTRY } from '$lib/styles/random/palette-registry';
 import { RADIUS_REGISTRY } from '$lib/styles/random/radius-registry';
 import { TYPOGRAPHY_REGISTRY } from '$lib/styles/random/typography-registry';
@@ -79,13 +79,13 @@ export const actions: Actions = {
 		}
 
 		await upsertBrandSettings(form.data);
-		invalidateCorporateCache();
+		invalidateBrandCache();
 
 		return message(
 			form,
 			form.data.enabled
-				? 'Corporate branding applied to all visitors.'
-				: 'Settings saved. Corporate mode is off — enable it to apply this design to all visitors.',
+				? 'Visual identity locked — all visitors see your brand.'
+				: 'Settings saved. Visual identity is unlocked — visitors still see random styles.',
 		);
 	},
 

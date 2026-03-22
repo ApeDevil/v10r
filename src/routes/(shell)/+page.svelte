@@ -2,11 +2,23 @@
 import { Asterism, CornerFrame, Divider } from '$lib/components';
 import { localizeHref } from '$lib/i18n';
 import { getStyle } from '$lib/state/style.svelte';
+import { getTheme } from '$lib/state/theme.svelte';
 import AsciiRaptor from './_components/AsciiRaptor.svelte';
 import { fadeIn } from './_components/fadeIn';
 import StructureSection from './_components/StructureSection.svelte';
 
 const style = getStyle();
+const theme = getTheme();
+
+type ToggleMode = 'light' | 'dark';
+const themeIcons: Record<ToggleMode, string> = { light: 'i-lucide-sun', dark: 'i-lucide-moon' };
+const themeLabels: Record<ToggleMode, string> = { light: 'light', dark: 'dark' };
+
+const displayMode: ToggleMode = $derived(theme.resolvedMode === 'dark' ? 'dark' : 'light');
+
+function cycleTheme() {
+	theme.setMode(displayMode === 'light' ? 'dark' : 'light');
+}
 
 let revealed = $state(false);
 
@@ -118,18 +130,28 @@ v          10            r</pre>
 				</div>
 			</div>
 
-			{#if !style.corporate}
+			{#if !style.branded}
 				<div class="roll-block">
 					<p class="roll-label">{style.paletteName} · {style.typographyName}</p>
-					<button
-						class="roll-btn focus-ring"
-						onclick={() => style.roll()}
-						disabled={style.rolling}
-						aria-label="Randomize site style"
-					>
-						<span class="roll-icon i-lucide-dices"></span>
-						<span>{style.rollCount === 0 ? 'roll a new look' : 'roll again'}</span>
-					</button>
+					<div class="roll-actions">
+						<button
+							class="roll-btn focus-ring"
+							onclick={() => style.roll()}
+							disabled={style.rolling}
+							aria-label="Randomize site style"
+						>
+							<span class="roll-icon i-lucide-dices"></span>
+							<span>{style.rollCount === 0 ? 'roll a new look' : 'roll again'}</span>
+						</button>
+						<button
+							class="theme-btn focus-ring"
+							onclick={cycleTheme}
+							aria-label="Theme: {themeLabels[displayMode]}"
+						>
+							<span class="roll-icon {themeIcons[displayMode]}"></span>
+							<span>{themeLabels[displayMode]}</span>
+						</button>
+					</div>
 				</div>
 			{/if}
 			</div>
@@ -347,6 +369,12 @@ v          10            r</pre>
 		gap: var(--spacing-3);
 	}
 
+	.roll-actions {
+		display: flex;
+		gap: var(--spacing-3);
+		flex-wrap: wrap;
+	}
+
 	.roll-btn {
 		display: inline-flex;
 		align-items: center;
@@ -377,6 +405,28 @@ v          10            r</pre>
 		width: 1.25rem;
 		height: 1.25rem;
 		flex-shrink: 0;
+	}
+
+	.theme-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--spacing-3);
+		min-height: 44px;
+		padding: var(--spacing-3) var(--spacing-5);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
+		font-size: var(--text-fluid-sm);
+		color: var(--color-muted);
+		background: transparent;
+		cursor: pointer;
+		transition: border-color var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
+	}
+
+	.theme-btn:hover {
+		border-color: var(--color-fg);
+		color: var(--color-fg);
+		background: var(--color-fg-alpha);
 	}
 
 	.roll-label {

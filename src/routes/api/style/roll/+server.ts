@@ -4,7 +4,7 @@
  */
 
 import { json } from '@sveltejs/kit';
-import { getCorporateConfig } from '$lib/server/style/corporate';
+import { getBrandConfig } from '$lib/server/style/brand';
 import { saveStyleToDb } from '$lib/server/style/persist';
 import {
 	generateRandomStyle,
@@ -21,10 +21,10 @@ export const POST: RequestHandler = async ({ cookies, locals }) => {
 	// Read current style to exclude from re-roll
 	const current = parseStyleCookie(cookies.get(STYLE_COOKIE_NAME));
 
-	// Reject if corporate mode is active
-	const corporate = await getCorporateConfig();
-	if (corporate?.enabled) {
-		return json({ error: 'Corporate theme is active' }, { status: 409 });
+	// Reject if visual identity is locked
+	const brand = await getBrandConfig();
+	if (brand?.enabled) {
+		return json({ error: 'Visual identity is locked' }, { status: 409 });
 	}
 
 	const excludePaletteIds: PaletteId[] = current ? [current.paletteId] : [];

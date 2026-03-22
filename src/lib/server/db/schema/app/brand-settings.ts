@@ -1,5 +1,5 @@
 /**
- * BRAND SETTINGS — Singleton table for corporate design configuration.
+ * BRAND SETTINGS — Singleton table for visual identity configuration.
  * Controls whether visitors see a fixed brand style or random demo styles.
  */
 import { boolean, text, timestamp } from 'drizzle-orm/pg-core';

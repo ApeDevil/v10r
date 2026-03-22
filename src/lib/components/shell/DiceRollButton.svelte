@@ -24,7 +24,7 @@ const toast = getToast();
 const isExpanded = $derived(forceExpanded || sidebar.expanded);
 </script>
 
-{#if !style.corporate}
+{#if !style.branded}
 <div class={cn('flex flex-col gap-1 px-2', className)}>
 	<button
 		type="button"

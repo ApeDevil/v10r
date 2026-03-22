@@ -8,7 +8,7 @@ import { auth } from '$lib/server/auth';
 import { AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW, HSTS_MAX_AGE } from '$lib/server/config';
 import { logFeatureStatus } from '$lib/server/features';
 import { getCustomPaletteById } from '$lib/server/branding/palette-crud';
-import { getCorporateConfig } from '$lib/server/style/corporate';
+import { getBrandConfig } from '$lib/server/style/brand';
 import {
 	generateRandomStyle,
 	parseStyleCookie,
@@ -62,16 +62,16 @@ const loadStyle: Handle = async ({ event, resolve }) => {
 	let config = parseStyleCookie(cookieValue);
 	let resolved: ResolvedStyle | null = null;
 
-	// Corporate override — always checked, even with valid cookie (0ms cached)
-	let corporate: Awaited<ReturnType<typeof getCorporateConfig>> = null;
+	// Brand override — always checked, even with valid cookie (0ms cached)
+	let brand: Awaited<ReturnType<typeof getBrandConfig>> = null;
 	try {
-		corporate = await getCorporateConfig();
+		brand = await getBrandConfig();
 	} catch {
 		// DB unreachable — fall through to cookie/random style
 	}
 
-	if (corporate?.enabled) {
-		config = { ...corporate.style };
+	if (brand?.enabled) {
+		config = { ...brand.style };
 	}
 
 	// Resolve: CP_ path (async DB lookup) vs registry path (sync)
@@ -89,7 +89,7 @@ const loadStyle: Handle = async ({ event, resolve }) => {
 						paletteName: cp.name,
 						typographyName: typography.name,
 						radiusName: radius.name,
-						...(corporate?.enabled ? { corporate: true } : {}),
+						...(brand?.enabled ? { branded: true } : {}),
 					};
 					event.locals.customPaletteColors = {
 						light: cp.lightColors as Record<string, string>,
@@ -102,8 +102,8 @@ const loadStyle: Handle = async ({ event, resolve }) => {
 		}
 	} else if (config) {
 		resolved = resolveStyle(config);
-		if (corporate?.enabled && resolved) {
-			resolved = { ...resolved, corporate: true };
+		if (brand?.enabled && resolved) {
+			resolved = { ...resolved, branded: true };
 		}
 	}
 

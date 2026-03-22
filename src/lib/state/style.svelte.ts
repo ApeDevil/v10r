@@ -42,8 +42,8 @@ export function createStyleState(initial: ResolvedStyle) {
 		get radiusName() {
 			return current.radiusName;
 		},
-		get corporate() {
-			return current.corporate ?? false;
+		get branded() {
+			return current.branded ?? false;
 		},
 		get rolling() {
 			return rolling;
@@ -62,7 +62,7 @@ export function createStyleState(initial: ResolvedStyle) {
 
 		/** Roll a new random style via API */
 		async roll(toast?: { info: (msg: string, duration?: number) => void }) {
-			if (rolling || current.corporate) return;
+			if (rolling || current.branded) return;
 			rolling = true;
 
 			try {

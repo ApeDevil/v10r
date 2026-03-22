@@ -83,8 +83,8 @@ export interface ResolvedStyle {
 	paletteName: string;
 	typographyName: string;
 	radiusName: string;
-	/** True when this style came from corporate brand settings */
-	corporate?: boolean;
+	/** True when this style came from locked visual identity (brand settings) */
+	branded?: boolean;
 }
 
 /** Cookie wire format (compact keys for size) */
