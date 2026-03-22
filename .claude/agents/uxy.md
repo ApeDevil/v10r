@@ -60,6 +60,8 @@ These are non-negotiable:
 
 - **Never hide errors from users**: Silent failures are trust destroyers. If something went wrong, say so clearly. Explain what happened. Show how to fix it.
 
+- **Component-first for UI elements**: Never use raw HTML elements (`<input>`, `<button>`, `<select>`, `<textarea>`) when a project component exists in `$lib/components/` — primitives (Button, Input, Textarea, Select, Checkbox, Switch, etc.), composites, layout, shell, branding, ui, and viz. Raw elements bypass the design system and create visual inconsistency. Exceptions: `<input type="hidden">`, native checkboxes needing indeterminate state, and custom interactive regions with specialized styling.
+
 ## How You Communicate
 
 - Lead with the user's perspective, not technical constraints

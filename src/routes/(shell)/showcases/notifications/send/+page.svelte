@@ -3,7 +3,7 @@ import { enhance } from '$app/forms';
 import { Card, FormField } from '$lib/components/composites';
 import { NotificationCard } from '$lib/components/composites/notifications';
 import { Stack } from '$lib/components/layout';
-import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
+import { Badge, Button, Input, Select, Spinner, Textarea } from '$lib/components/primitives';
 
 let { data, form } = $props();
 
@@ -113,18 +113,12 @@ function flashCustomSent() {
 			>
 				<Stack gap="4">
 					<FormField label="Type" id="custom-type">
-						{#snippet children({ fieldId, describedBy })}
-							<select
-								id={fieldId}
-								name="type"
+						{#snippet children(_)}
+							<input type="hidden" name="type" value={customType} />
+							<Select
+								options={data.notificationTypes.map((t) => ({ value: t, label: t.charAt(0).toUpperCase() + t.slice(1) }))}
 								bind:value={customType}
-								aria-describedby={describedBy}
-								class="form-select"
-							>
-								{#each data.notificationTypes as t}
-									<option value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
-								{/each}
-							</select>
+							/>
 						{/snippet}
 					</FormField>
 
@@ -144,15 +138,14 @@ function flashCustomSent() {
 
 					<FormField label="Body" id="custom-body" description="Optional">
 						{#snippet children({ fieldId, describedBy })}
-							<textarea
+							<Textarea
 								id={fieldId}
 								name="body"
-								rows="3"
+								rows={3}
 								placeholder="Optional description..."
 								bind:value={customBody}
 								aria-describedby={describedBy}
-								class="form-textarea"
-							></textarea>
+							/>
 						{/snippet}
 					</FormField>
 
@@ -247,30 +240,6 @@ function flashCustomSent() {
 		.custom-layout {
 			grid-template-columns: 1fr;
 		}
-	}
-
-	/* Native select/textarea styled to match Input component */
-	.form-select,
-	.form-textarea {
-		width: 100%;
-		padding: var(--spacing-2) var(--spacing-3);
-		font-size: var(--text-fluid-base);
-		color: var(--color-fg);
-		background-color: var(--color-input);
-		border: none;
-		border-bottom: 1px solid var(--color-input-border);
-		border-radius: var(--radius-md) var(--radius-md) 0 0;
-		transition: border-bottom-color 150ms ease, border-bottom-width 150ms ease;
-	}
-
-	.form-select:focus,
-	.form-textarea:focus {
-		outline: none;
-		border-bottom: 2px solid var(--color-primary);
-	}
-
-	.form-textarea {
-		resize: vertical;
 	}
 
 	/* Preview */

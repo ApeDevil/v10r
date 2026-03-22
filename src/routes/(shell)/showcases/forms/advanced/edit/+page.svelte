@@ -3,7 +3,7 @@ import { superForm } from 'sveltekit-superforms';
 import { valibotClient } from 'sveltekit-superforms/adapters';
 import { Alert, Card, FormField } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
-import { Badge, Button, Input, Select, Spinner, Switch } from '$lib/components/primitives';
+import { Badge, Button, Input, Select, Spinner, Switch, Textarea } from '$lib/components/primitives';
 import { profileEditSchema } from '$lib/schemas/showcase/advanced';
 import type { PageProps } from './$types';
 
@@ -90,16 +90,15 @@ const roleOptions = [
 
 			<FormField label="Bio" error={$errors.bio?.[0]} description="Max 300 characters">
 				{#snippet children({ fieldId, describedBy })}
-					<textarea
+					<Textarea
 						id={fieldId}
 						name="bio"
 						bind:value={$form.bio}
 						placeholder="Tell us about yourself..."
-						rows="3"
-						class="form-textarea"
-						aria-invalid={$errors.bio ? 'true' : undefined}
+						rows={3}
+						error={!!$errors.bio}
 						aria-describedby={describedBy}
-					></textarea>
+					/>
 				{/snippet}
 			</FormField>
 

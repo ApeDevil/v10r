@@ -156,32 +156,32 @@ function handleChange(token: string, value: string) {
 		<div class="section-body">
 			<OklchColorInput
 				label="accent"
-				bind:value={palette.accent}
-				onchange={(v) => handleChange('accent', v)}
+				value={palette.accent ?? ''}
+				onchange={(v) => { palette.accent = v; handleChange('accent', v); }}
 			/>
 			<OklchColorInput
 				label="accent-hover"
-				bind:value={palette['accent-hover']}
-				onchange={(v) => handleChange('accent-hover', v)}
+				value={palette['accent-hover'] ?? ''}
+				onchange={(v) => { palette['accent-hover'] = v; handleChange('accent-hover', v); }}
 			/>
 			<OklchColorInput
 				label="accent-container"
-				bind:value={palette['accent-container']}
-				onchange={(v) => handleChange('accent-container', v)}
+				value={palette['accent-container'] ?? ''}
+				onchange={(v) => { palette['accent-container'] = v; handleChange('accent-container', v); }}
 			/>
 			<div class="token-with-badge">
 				<OklchColorInput
 					label="on-accent"
-					bind:value={palette['on-accent']}
-					onchange={(v) => handleChange('on-accent', v)}
+					value={palette['on-accent'] ?? ''}
+					onchange={(v) => { palette['on-accent'] = v; handleChange('on-accent', v); }}
 				/>
 				<ContrastBadge fgColor={palette['on-accent'] ?? ''} bgColor={palette.accent ?? ''} />
 			</div>
 			<div class="token-with-badge">
 				<OklchColorInput
 					label="on-accent-container"
-					bind:value={palette['on-accent-container']}
-					onchange={(v) => handleChange('on-accent-container', v)}
+					value={palette['on-accent-container'] ?? ''}
+					onchange={(v) => { palette['on-accent-container'] = v; handleChange('on-accent-container', v); }}
 				/>
 				<ContrastBadge
 					fgColor={palette['on-accent-container'] ?? ''}

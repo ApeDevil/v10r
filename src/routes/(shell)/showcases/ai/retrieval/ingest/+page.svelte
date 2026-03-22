@@ -2,7 +2,7 @@
 import { apiFetch } from '$lib/api';
 import { Alert, Card, FormField } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
-import { Button, Typography } from '$lib/components/primitives';
+import { Button, Input, Textarea, Typography } from '$lib/components/primitives';
 
 let { data } = $props();
 
@@ -124,12 +124,10 @@ A +page.server.ts file can also export actions for progressive form handling. Ac
 				<Stack gap="4">
 					<FormField label="Title" id="doc-title">
 						{#snippet children(_)}
-							<input
+							<Input
 								id="doc-title"
-								type="text"
 								bind:value={title}
 								placeholder="Document title..."
-								class="ingest-input"
 								disabled={loading}
 							/>
 						{/snippet}
@@ -137,14 +135,13 @@ A +page.server.ts file can also export actions for progressive form handling. Ac
 
 					<FormField label="Content" id="doc-content">
 						{#snippet children(_)}
-							<textarea
+							<Textarea
 								id="doc-content"
 								bind:value={content}
 								placeholder="Paste document content (markdown supported)..."
-								class="ingest-textarea"
-								rows="12"
+								rows={12}
 								disabled={loading}
-							></textarea>
+							/>
 						{/snippet}
 					</FormField>
 
@@ -214,13 +211,14 @@ A +page.server.ts file can also export actions for progressive form handling. Ac
 										· {doc.status}
 									</span>
 								</div>
-								<button
-									class="doc-delete"
+								<Button
+									variant="ghost"
+									size="icon"
 									onclick={() => deleteDocument(doc.id)}
 									aria-label="Delete {doc.title}"
 								>
 									<span class="i-lucide-trash-2 h-4 w-4"></span>
-								</button>
+								</Button>
 							</div>
 						{/each}
 					</div>
@@ -230,30 +228,6 @@ A +page.server.ts file can also export actions for progressive form handling. Ac
 	</Stack>
 
 <style>
-	.ingest-input,
-	.ingest-textarea {
-		width: 100%;
-		padding: var(--spacing-3) var(--spacing-4);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-lg);
-		background-color: var(--color-surface-1);
-		color: var(--color-fg);
-		font-size: var(--text-fluid-sm);
-		font-family: inherit;
-		outline: none;
-		transition: border-color 150ms;
-	}
-
-	.ingest-input:focus,
-	.ingest-textarea:focus {
-		border-color: var(--color-primary);
-	}
-
-	.ingest-textarea {
-		resize: vertical;
-		min-height: 120px;
-	}
-
 	.result-grid {
 		display: grid;
 		grid-template-columns: auto 1fr;
@@ -284,17 +258,4 @@ A +page.server.ts file can also export actions for progressive form handling. Ac
 		gap: var(--spacing-1);
 	}
 
-	.doc-delete {
-		padding: var(--spacing-2);
-		border: none;
-		background: none;
-		color: var(--color-muted);
-		cursor: pointer;
-		border-radius: var(--radius-sm);
-		transition: color 150ms;
-	}
-
-	.doc-delete:hover {
-		color: var(--color-error-fg);
-	}
 </style>

@@ -2,7 +2,7 @@
 import { apiFetch } from '$lib/api';
 import { Alert, Card } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
-import { Button, Typography } from '$lib/components/primitives';
+import { Button, Input, Typography } from '$lib/components/primitives';
 
 let { data } = $props();
 
@@ -84,12 +84,11 @@ function handleKeydown(e: KeyboardEvent) {
 					</div>
 
 					<div class="search-form">
-						<input
-							type="text"
+						<Input
 							bind:value={query}
 							onkeydown={handleKeydown}
 							placeholder="Enter a search query..."
-							class="search-input"
+							class="flex-1"
 							disabled={loading}
 							aria-label="Search query"
 						/>
@@ -154,21 +153,6 @@ function handleKeydown(e: KeyboardEvent) {
 	.search-form {
 		display: flex;
 		gap: var(--spacing-3);
-	}
-
-	.search-input {
-		flex: 1;
-		padding: var(--spacing-3) var(--spacing-4);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-lg);
-		background-color: var(--color-surface-1);
-		color: var(--color-fg);
-		font-size: var(--text-fluid-sm);
-		outline: none;
-	}
-
-	.search-input:focus {
-		border-color: var(--color-primary);
 	}
 
 	.meta-bar {

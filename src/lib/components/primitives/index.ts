@@ -44,6 +44,7 @@ export { Spinner } from './spinner';
 
 export { Switch } from './switch';
 export { Body, Cell, Header, HeaderCell, Row, Table } from './table';
+export { Textarea } from './textarea';
 export { default as Tabs } from './tabs/Tabs.svelte';
 export { Tag, TagSelectable, type TagSelectableVariants, type TagVariants, tagVariants } from './tag';
 export { TagGroup } from './tag-group';

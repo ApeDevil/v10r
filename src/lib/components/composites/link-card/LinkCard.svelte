@@ -88,20 +88,9 @@ let { href, title, description, icon, sublinks, children, class: className, ...r
 		transform: translateY(-2px);
 	}
 
-	/* Suppress card hover when sublink is hovered */
-	.card-wrapper:has(.sublink:hover) {
-		border-color: var(--color-border);
-		box-shadow: none;
-		transform: none;
-	}
-
 	:global(.dark) .card-wrapper:hover {
 		box-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 30%, transparent),
 			0 0 8px color-mix(in srgb, var(--color-primary) 20%, transparent);
-	}
-
-	:global(.dark) .card-wrapper:has(.sublink:hover) {
-		box-shadow: none;
 	}
 
 	/* Sublinks sit above the stretched link */
@@ -120,6 +109,10 @@ let { href, title, description, icon, sublinks, children, class: className, ...r
 		background-color: color-mix(in srgb, var(--color-accent-container) 40%, transparent);
 	}
 
+	:global(.dark) .sublink:hover {
+		background-color: color-mix(in srgb, var(--color-accent) 15%, transparent);
+	}
+
 	.sublink:focus-visible {
 		outline: 2px solid var(--color-accent);
 		outline-offset: 2px;
@@ -127,6 +120,10 @@ let { href, title, description, icon, sublinks, children, class: className, ...r
 
 	.sublink:active {
 		background-color: color-mix(in srgb, var(--color-accent-container) 60%, transparent);
+	}
+
+	:global(.dark) .sublink:active {
+		background-color: color-mix(in srgb, var(--color-accent) 25%, transparent);
 	}
 
 	@media (prefers-reduced-motion: reduce) {

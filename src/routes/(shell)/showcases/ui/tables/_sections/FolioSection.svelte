@@ -7,6 +7,7 @@ import {
 	HeaderCell as TableHeaderCell,
 	Row as TableRow,
 } from '$lib/components';
+import { Button } from '$lib/components/primitives';
 import { DEPARTMENTS, type Department, EMPLOYEES, formatDate, formatSalary } from '../_data/mock-data';
 
 let expandedGroups = $state<Set<Department>>(new Set(DEPARTMENTS));
@@ -53,8 +54,8 @@ function avgSalary(employees: typeof EMPLOYEES): string {
 	<div class="demos">
 		<div class="folio-frame">
 			<div class="folio-controls">
-				<button class="folio-btn" onclick={expandAll}>Expand all</button>
-				<button class="folio-btn" onclick={collapseAll}>Collapse all</button>
+				<Button variant="outline" size="sm" onclick={expandAll}>Expand all</Button>
+				<Button variant="outline" size="sm" onclick={collapseAll}>Collapse all</Button>
 			</div>
 
 			<div class="table-container">
@@ -145,27 +146,6 @@ function avgSalary(employees: typeof EMPLOYEES): string {
 	.folio-controls {
 		display: flex;
 		gap: var(--spacing-3);
-	}
-
-	.folio-btn {
-		padding: var(--spacing-1) var(--spacing-3);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		background: var(--color-bg);
-		color: var(--color-muted);
-		font-size: var(--text-fluid-sm);
-		cursor: pointer;
-		transition: color var(--duration-fast), border-color var(--duration-fast);
-	}
-
-	.folio-btn:hover {
-		color: var(--color-fg);
-		border-color: var(--color-fg);
-	}
-
-	.folio-btn:focus-visible {
-		outline: 2px solid var(--color-primary);
-		outline-offset: 2px;
 	}
 
 	.table-container {

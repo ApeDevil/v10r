@@ -8,6 +8,7 @@ import {
 	HeaderCell as TableHeaderCell,
 	Row as TableRow,
 } from '$lib/components';
+import { Button } from '$lib/components/primitives';
 import { EMPLOYEES, type Status } from '../_data/mock-data';
 
 let selected = $state<Set<string>>(new Set());
@@ -60,7 +61,7 @@ function statusVariant(status: Status) {
 			{#if selected.size > 0}
 				<div class="selection-toolbar">
 					<span class="selection-count">{selected.size} selected</span>
-					<button class="clear-btn" onclick={clearSelection}>Clear selection</button>
+					<Button variant="ghost" size="sm" onclick={clearSelection}>Clear selection</Button>
 				</div>
 			{/if}
 
@@ -173,28 +174,6 @@ function statusVariant(status: Status) {
 	.selection-count {
 		font-weight: 600;
 		color: var(--color-fg);
-	}
-
-	.clear-btn {
-		background: none;
-		border: none;
-		padding: 0;
-		font: inherit;
-		font-size: var(--text-fluid-sm);
-		color: var(--color-primary);
-		cursor: pointer;
-		text-decoration: underline;
-		text-underline-offset: 2px;
-	}
-
-	.clear-btn:hover {
-		opacity: 0.8;
-	}
-
-	.clear-btn:focus-visible {
-		outline: 2px solid var(--color-primary);
-		outline-offset: 2px;
-		border-radius: 2px;
 	}
 
 	.table-container {

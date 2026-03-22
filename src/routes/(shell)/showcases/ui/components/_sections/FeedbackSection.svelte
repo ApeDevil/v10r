@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Alert, EmptyState } from '$lib/components';
+import { Button } from '$lib/components/primitives';
 import { getToast } from '$lib/state/toast.svelte';
 import { DemoCard, VariantGrid } from '../_components';
 
@@ -38,10 +39,10 @@ function showToast(type: 'success' | 'error' | 'warning' | 'info') {
 		<!-- Toast -->
 		<DemoCard title="Toast" description="Temporary notifications">
 			<VariantGrid layout="row">
-				<button class="toast-btn" onclick={() => showToast('success')}>Success Toast</button>
-				<button class="toast-btn" onclick={() => showToast('error')}>Error Toast</button>
-				<button class="toast-btn" onclick={() => showToast('warning')}>Warning Toast</button>
-				<button class="toast-btn" onclick={() => showToast('info')}>Info Toast</button>
+				<Button variant="outline" onclick={() => showToast('success')}>Success Toast</Button>
+				<Button variant="outline" onclick={() => showToast('error')}>Error Toast</Button>
+				<Button variant="outline" onclick={() => showToast('warning')}>Warning Toast</Button>
+				<Button variant="outline" onclick={() => showToast('info')}>Info Toast</Button>
 			</VariantGrid>
 		</DemoCard>
 
@@ -89,22 +90,4 @@ function showToast(type: 'success' | 'error' | 'warning' | 'info') {
 		width: 100%;
 	}
 
-	.toast-btn {
-		padding: var(--spacing-2) var(--spacing-4);
-		border-radius: var(--radius-md);
-		border: 1px solid var(--color-border);
-		background: var(--color-bg);
-		color: var(--color-fg);
-		font-size: var(--text-fluid-sm);
-		cursor: pointer;
-		transition: all var(--duration-fast);
-	}
-
-	.toast-btn:hover {
-		background: var(--color-subtle);
-	}
-
-	.toast-btn:active {
-		transform: scale(0.98);
-	}
 </style>

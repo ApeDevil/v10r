@@ -3,7 +3,7 @@ import { superForm } from 'sveltekit-superforms';
 import { valibotClient } from 'sveltekit-superforms/adapters';
 import { Alert, Card, FormField } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
-import { Button, Checkbox, Input, Spinner } from '$lib/components/primitives';
+import { Button, Checkbox, Input, Spinner, Textarea } from '$lib/components/primitives';
 import { feedbackSchema } from '$lib/schemas/showcase/advanced';
 import type { PageProps } from './$types';
 
@@ -71,16 +71,15 @@ const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
 
 			<FormField label="Comment" error={$errors.comment?.[0]} required>
 				{#snippet children({ fieldId, describedBy })}
-					<textarea
+					<Textarea
 						id={fieldId}
 						name="comment"
 						bind:value={$form.comment}
 						placeholder="Tell us what you think (min 10 characters)..."
-						rows="4"
-						class="form-textarea"
-						aria-invalid={$errors.comment ? 'true' : undefined}
+						rows={4}
+						error={!!$errors.comment}
 						aria-describedby={describedBy}
-					></textarea>
+					/>
 				{/snippet}
 			</FormField>
 

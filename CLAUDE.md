@@ -33,6 +33,10 @@ The backend follows a multi-client core pattern: domain modules in `$lib/server/
 
 The AI subsystem includes a Graph RAG retrieval pipeline. See `docs/blueprint/ai/` for architecture details.
 
+### Component-First Rule
+
+**Never use raw HTML elements when a project component exists.** The project has a layered component system in `$lib/components/` — primitives (Button, Input, Textarea, Select, Checkbox, Switch, etc.), composites (LinkCard, etc.), layout, shell, branding, ui, and viz — that enforce consistent styling via design tokens. Always check for an existing component at any layer before reaching for a raw HTML element. Using raw `<input>`, `<button>`, `<select>`, or `<textarea>` bypasses the design system and creates visual inconsistency. Exceptions: `<input type="hidden">` (form data), `<input type="checkbox">` inside table rows (native indeterminate support), `<select>` binding numeric values (Select component only supports strings), and custom interactive regions (palette cards, sort headers) that need specialized styling.
+
 ## Local Development
 
 **Container-first architecture** - the host machine stays clean.

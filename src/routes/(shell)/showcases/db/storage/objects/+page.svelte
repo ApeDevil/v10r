@@ -11,6 +11,7 @@ import {
 	Header,
 	HeaderCell,
 	Row,
+	Select,
 	Spinner,
 	Table,
 	ToggleGroup,
@@ -271,18 +272,13 @@ $effect(() => {
 					>
 						<div class="presign-controls">
 							<div class="presign-field">
-								<label for="presign-select" class="field-label">Object</label>
-								<select
-									id="presign-select"
-									name="key"
-									class="presign-select"
+								<span class="field-label">Object</span>
+								<input type="hidden" name="key" value={presignKey} />
+								<Select
+									options={data.objects.map((obj) => ({ value: obj.key, label: obj.key }))}
 									bind:value={presignKey}
-								>
-									<option value="" disabled>Select an object...</option>
-									{#each data.objects as obj}
-										<option value={obj.key}>{obj.key}</option>
-									{/each}
-								</select>
+									placeholder="Select an object..."
+								/>
 							</div>
 
 							<div class="presign-field">
@@ -433,16 +429,6 @@ $effect(() => {
 		font-size: var(--text-fluid-xs);
 		font-weight: 500;
 		color: var(--color-muted);
-	}
-
-	.presign-select {
-		padding: var(--spacing-2) var(--spacing-3);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		background: var(--color-bg);
-		color: var(--color-fg);
-		font-size: var(--text-fluid-sm);
-		font-family: ui-monospace, monospace;
 	}
 
 	.presign-url-row {

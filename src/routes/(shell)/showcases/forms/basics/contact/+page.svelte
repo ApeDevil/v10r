@@ -3,7 +3,7 @@ import { superForm } from 'sveltekit-superforms';
 import { valibotClient } from 'sveltekit-superforms/adapters';
 import { Alert, Card, FormField } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
-import { Button, Input, Spinner } from '$lib/components/primitives';
+import { Button, Input, Spinner, Textarea } from '$lib/components/primitives';
 import { contactSchema } from '$lib/schemas/showcase/basics';
 import type { PageProps } from './$types';
 
@@ -83,16 +83,15 @@ const {
 
 			<FormField label="Message" error={$errors.message?.[0]} required>
 				{#snippet children({ fieldId, describedBy })}
-					<textarea
+					<Textarea
 						id={fieldId}
 						name="message"
 						bind:value={$form.message}
 						placeholder="Your message (min 10 characters)..."
-						rows="5"
-						class="form-textarea"
-						aria-invalid={$errors.message ? 'true' : undefined}
+						rows={5}
+						error={!!$errors.message}
 						aria-describedby={describedBy}
-					></textarea>
+					/>
 				{/snippet}
 			</FormField>
 

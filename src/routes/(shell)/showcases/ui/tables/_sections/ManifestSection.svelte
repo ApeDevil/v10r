@@ -8,6 +8,7 @@ import {
 	HeaderCell as TableHeaderCell,
 	Row as TableRow,
 } from '$lib/components';
+import { Input, Select } from '$lib/components/primitives';
 import { DEPARTMENTS, type Department, EMPLOYEES, type Status } from '../_data/mock-data';
 
 let search = $state('');
@@ -46,23 +47,20 @@ function statusVariant(status: Status) {
 		<div class="manifest-layout">
 			<div class="manifest-main">
 				<div class="manifest-controls">
-					<input
-						type="search"
-						class="manifest-search"
+					<Input
+						class="flex-1 min-w-[200px]"
 						placeholder="Search name, email, role, location..."
 						bind:value={search}
 						aria-label="Search employees"
 					/>
-					<select
-						class="manifest-select"
+					<Select
+						options={[
+							{ value: '', label: 'All departments' },
+							...DEPARTMENTS.map((d) => ({ value: d, label: d })),
+						]}
 						bind:value={departmentFilter}
-						aria-label="Filter by department"
-					>
-						<option value="">All departments</option>
-						{#each DEPARTMENTS as dept}
-							<option value={dept}>{dept}</option>
-						{/each}
-					</select>
+						placeholder="All departments"
+					/>
 				</div>
 
 				<p class="result-count" aria-live="polite">
@@ -153,40 +151,6 @@ function statusVariant(status: Status) {
 		display: flex;
 		gap: var(--spacing-3);
 		flex-wrap: wrap;
-	}
-
-	.manifest-search {
-		flex: 1;
-		min-width: 200px;
-		padding: var(--spacing-2) var(--spacing-3);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		background: var(--color-bg);
-		color: var(--color-fg);
-		font-size: var(--text-fluid-sm);
-	}
-
-	.manifest-search::placeholder {
-		color: var(--color-muted);
-	}
-
-	.manifest-search:focus {
-		outline: 2px solid var(--color-primary);
-		outline-offset: -1px;
-	}
-
-	.manifest-select {
-		padding: var(--spacing-2) var(--spacing-3);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		background: var(--color-bg);
-		color: var(--color-fg);
-		font-size: var(--text-fluid-sm);
-	}
-
-	.manifest-select:focus {
-		outline: 2px solid var(--color-primary);
-		outline-offset: -1px;
 	}
 
 	.result-count {

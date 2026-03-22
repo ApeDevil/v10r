@@ -9,6 +9,7 @@ import {
 	HeaderCell as TableHeaderCell,
 	Row as TableRow,
 } from '$lib/components';
+import { Input, Select } from '$lib/components/primitives';
 import {
 	DEPARTMENTS,
 	type Department,
@@ -132,23 +133,20 @@ const columns: { key: SortKey; label: string; align?: 'right' }[] = [
 		<div class="cartograph-frame">
 			<div class="cartograph-main">
 				<div class="cartograph-controls">
-					<input
-						type="search"
-						class="carto-search"
+					<Input
+						class="flex-1 min-w-[150px]"
 						placeholder="Search..."
 						bind:value={search}
 						aria-label="Search employees"
 					/>
-					<select
-						class="carto-select"
+					<Select
+						options={[
+							{ value: '', label: 'All departments' },
+							...DEPARTMENTS.map((d) => ({ value: d, label: d })),
+						]}
 						bind:value={departmentFilter}
-						aria-label="Filter by department"
-					>
-						<option value="">All departments</option>
-						{#each DEPARTMENTS as dept}
-							<option value={dept}>{dept}</option>
-						{/each}
-					</select>
+						placeholder="All departments"
+					/>
 					{#if selected.size > 0}
 						<span class="carto-selection-count">{selected.size} selected</span>
 					{/if}
@@ -298,40 +296,6 @@ const columns: { key: SortKey; label: string; align?: 'right' }[] = [
 		gap: var(--spacing-3);
 		flex-wrap: wrap;
 		align-items: center;
-	}
-
-	.carto-search {
-		flex: 1;
-		min-width: 150px;
-		padding: var(--spacing-2) var(--spacing-3);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		background: var(--color-bg);
-		color: var(--color-fg);
-		font-size: var(--text-fluid-sm);
-	}
-
-	.carto-search::placeholder {
-		color: var(--color-muted);
-	}
-
-	.carto-search:focus {
-		outline: 2px solid var(--color-primary);
-		outline-offset: -1px;
-	}
-
-	.carto-select {
-		padding: var(--spacing-2) var(--spacing-3);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		background: var(--color-bg);
-		color: var(--color-fg);
-		font-size: var(--text-fluid-sm);
-	}
-
-	.carto-select:focus {
-		outline: 2px solid var(--color-primary);
-		outline-offset: -1px;
 	}
 
 	.carto-selection-count {

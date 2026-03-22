@@ -37,22 +37,5 @@ const tabs = getShowcaseTabs('/showcases/forms');
 		padding-top: var(--spacing-2);
 	}
 
-	:global(.forms-showcase .form-textarea) {
-		width: 100%;
-		min-height: 6rem;
-		padding: var(--spacing-3);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		background: var(--color-input);
-		color: var(--color-fg);
-		font-size: var(--text-fluid-sm);
-		font-family: inherit;
-		resize: vertical;
-	}
 
-	:global(.forms-showcase .form-textarea:focus) {
-		outline: none;
-		border-color: var(--color-primary);
-		box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 25%, transparent);
-	}
 </style>
