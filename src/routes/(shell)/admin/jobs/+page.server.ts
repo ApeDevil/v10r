@@ -1,6 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import { count, desc, eq, max, sql } from 'drizzle-orm';
 import { requireAdmin } from '$lib/server/auth/guards';
+import { recordAuditEvent, getAuditContext } from '$lib/server/admin';
 import { db } from '$lib/server/db';
 import { jobExecution } from '$lib/server/db/schema/jobs';
 import { jobs } from '$lib/server/jobs';
@@ -73,9 +74,9 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 };
 
 export const actions: Actions = {
-	trigger: async ({ request, locals }) => {
-		requireAdmin(locals);
-		const formData = await request.formData();
+	trigger: async (event) => {
+		requireAdmin(event.locals);
+		const formData = await event.request.formData();
 		const slug = formData.get('slug');
 
 		if (typeof slug !== 'string' || !jobs[slug]) {
@@ -83,6 +84,15 @@ export const actions: Actions = {
 		}
 
 		const result = await runJob(slug, 'manual');
+
+		const ctx = getAuditContext(event);
+		await recordAuditEvent({
+			...ctx,
+			action: 'job.trigger',
+			targetType: 'job',
+			targetId: slug,
+			detail: { status: result.status, durationMs: result.durationMs, resultCount: result.resultCount },
+		});
 
 		if (result.status === 'failure') {
 			return fail(500, { message: result.errorMessage || 'Job failed.' });

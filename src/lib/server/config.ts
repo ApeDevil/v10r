@@ -227,3 +227,12 @@ export const ANALYTICS_CONSENT_MAX_AGE = 15_552_000;
 
 // ADMIN_EMAIL is read from $env/dynamic/private at usage sites to avoid
 // top-level env access during build. See src/lib/server/auth/guards.ts.
+
+/** Audit log entries per page */
+export const ADMIN_AUDIT_PAGE_SIZE = 50;
+
+/** Users per page in admin user management */
+export const ADMIN_USERS_PAGE_SIZE = 25;
+
+/** Feature flag in-process cache TTL (ms) */
+export const ADMIN_FLAG_CACHE_TTL_MS = 30_000;

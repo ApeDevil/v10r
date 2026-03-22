@@ -1,3 +1,4 @@
+export * from './admin';
 export * from './ai';
 export * from './analytics';
 export * from './app';

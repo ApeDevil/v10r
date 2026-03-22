@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { emailOTP, magicLink } from 'better-auth/plugins';
+import { admin, emailOTP, magicLink } from 'better-auth/plugins';
 import {
 	BETTER_AUTH_SECRET,
 	BETTER_AUTH_URL,
@@ -72,6 +72,7 @@ export const auth = betterAuth({
 			},
 			expiresIn: MAGIC_LINK_EXPIRES_IN,
 		}),
+		admin(),
 		emailOTP({
 			sendVerificationOTP: async ({ email, otp, type }: { email: string; otp: string; type: string }) => {
 				await sendAuthEmail({

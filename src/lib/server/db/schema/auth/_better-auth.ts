@@ -15,6 +15,12 @@ export const user = authSchema.table('user', {
 	image: text('image'),
 	createdAt: timestamp('created_at').notNull().defaultNow(),
 	updatedAt: timestamp('updated_at').notNull().defaultNow(),
+
+	// ── Admin plugin columns ──────────────────────────────────────────
+	role: text('role').notNull().default('user'),
+	banned: boolean('banned').default(false),
+	bannedAt: timestamp('banned_at'),
+	banReason: text('ban_reason'),
 });
 
 export const session = authSchema.table(
@@ -30,6 +36,9 @@ export const session = authSchema.table(
 		userId: text('user_id')
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
+
+		// ── Admin plugin columns ──────────────────────────────────────
+		impersonatedBy: text('impersonated_by'),
 	},
 	(table) => [index('session_user_id_idx').on(table.userId), index('session_expires_at_idx').on(table.expiresAt)],
 );

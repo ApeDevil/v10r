@@ -3,6 +3,7 @@ import { valibot } from 'sveltekit-superforms/adapters';
 import { brandSettingsSchema, customPaletteSchema } from '$lib/schemas/app/branding';
 import * as v from 'valibot';
 import { requireAdmin } from '$lib/server/auth/guards';
+import { recordAuditEvent, getAuditContext } from '$lib/server/admin';
 import { getBrandSettings, upsertBrandSettings } from '$lib/server/db/brand/queries';
 import {
 	createCustomPalette,
@@ -68,10 +69,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-	saveBrandSettings: async ({ request, locals }) => {
-		requireAdmin(locals);
+	saveBrandSettings: async (event) => {
+		requireAdmin(event.locals);
 
-		const form = await superValidate(request, valibot(brandSettingsSchema));
+		const form = await superValidate(event.request, valibot(brandSettingsSchema));
 
 		if (!form.valid) {
 			return fail(400, { form });
@@ -79,6 +80,14 @@ export const actions: Actions = {
 
 		await upsertBrandSettings(form.data);
 		invalidateBrandCache();
+
+		const ctx = getAuditContext(event);
+		await recordAuditEvent({
+			...ctx,
+			action: 'branding.update',
+			targetType: 'brand_settings',
+			detail: { ...form.data },
+		});
 
 		return message(
 			form,
@@ -88,9 +97,10 @@ export const actions: Actions = {
 		);
 	},
 
-	saveCustomPalette: async ({ request, locals }) => {
-		requireAdmin(locals);
-		const formData = await request.formData();
+	saveCustomPalette: async (event) => {
+		requireAdmin(event.locals);
+		const locals = event.locals;
+		const formData = await event.request.formData();
 		const raw = formData.get('paletteData');
 		if (!raw || typeof raw !== 'string') return fail(400, { error: 'Missing palette data' });
 
@@ -106,12 +116,20 @@ export const actions: Actions = {
 
 		const id = formData.get('paletteId') as string | null;
 		try {
+			const ctx = getAuditContext(event);
 			if (id) {
 				await updateCustomPalette(id, locals.user!.id, {
 					name: data.name,
 					description: data.description,
 					lightColors: data.lightColors,
 					darkColors: data.darkColors,
+				});
+				await recordAuditEvent({
+					...ctx,
+					action: 'palette.update',
+					targetType: 'custom_palette',
+					targetId: id,
+					detail: { name: data.name },
 				});
 				return { success: true, paletteId: id };
 			} else {
@@ -123,6 +141,13 @@ export const actions: Actions = {
 					darkColors: data.darkColors,
 					createdBy: locals.user!.id,
 				});
+				await recordAuditEvent({
+					...ctx,
+					action: 'palette.create',
+					targetType: 'custom_palette',
+					targetId: palette.id,
+					detail: { name: data.name },
+				});
 				return { success: true, paletteId: palette.id };
 			}
 		} catch {
@@ -130,14 +155,21 @@ export const actions: Actions = {
 		}
 	},
 
-	deleteCustomPalette: async ({ request, locals }) => {
-		requireAdmin(locals);
-		const formData = await request.formData();
+	deleteCustomPalette: async (event) => {
+		requireAdmin(event.locals);
+		const formData = await event.request.formData();
 		const id = formData.get('paletteId') as string;
 		if (!id) return fail(400, { error: 'Missing palette ID' });
 
 		try {
-			await deleteCustomPalette(id, locals.user!.id);
+			await deleteCustomPalette(id, event.locals.user!.id);
+			const ctx = getAuditContext(event);
+			await recordAuditEvent({
+				...ctx,
+				action: 'palette.delete',
+				targetType: 'custom_palette',
+				targetId: id,
+			});
 		} catch {
 			return fail(500, { error: 'Failed to delete palette' });
 		}

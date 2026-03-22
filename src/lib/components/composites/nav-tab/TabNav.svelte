@@ -9,12 +9,20 @@ interface Tab {
 	icon?: string;
 }
 
-interface Props {
+interface TabGroup {
+	label: string;
 	tabs: Tab[];
+}
+
+interface Props {
+	tabs?: Tab[];
+	groups?: TabGroup[];
 	ariaLabel?: string;
 }
 
-let { tabs, ariaLabel = 'Section navigation' }: Props = $props();
+let { tabs, groups, ariaLabel = 'Section navigation' }: Props = $props();
+
+const allTabs = $derived(groups ? groups.flatMap((g) => g.tabs) : tabs ?? []);
 
 let chipsEl: HTMLElement | undefined = $state();
 let canScrollRight = $state(false);
@@ -65,20 +73,43 @@ $effect(() => {
 		class:fade-right={canScrollRight}
 		role="tablist"
 	>
-		{#each tabs as tab}
-			<a
-				href={localizeHref(tab.href)}
-				class="tab-item"
-				class:active={isActive(tab.href)}
-				role="tab"
-				aria-selected={isActive(tab.href)}
-			>
-				{#if tab.icon}
-					<span class="{tab.icon} tab-icon" aria-hidden="true"></span>
+		{#if groups}
+			{#each groups as group, gi}
+				{#if gi > 0}
+					<span class="tab-divider" aria-hidden="true"></span>
 				{/if}
-				{tab.label}
-			</a>
-		{/each}
+				<span class="tab-group-label" aria-hidden="true">{group.label}</span>
+				{#each group.tabs as tab}
+					<a
+						href={localizeHref(tab.href)}
+						class="tab-item"
+						class:active={isActive(tab.href)}
+						role="tab"
+						aria-selected={isActive(tab.href)}
+					>
+						{#if tab.icon}
+							<span class="{tab.icon} tab-icon" aria-hidden="true"></span>
+						{/if}
+						{tab.label}
+					</a>
+				{/each}
+			{/each}
+		{:else}
+			{#each allTabs as tab}
+				<a
+					href={localizeHref(tab.href)}
+					class="tab-item"
+					class:active={isActive(tab.href)}
+					role="tab"
+					aria-selected={isActive(tab.href)}
+				>
+					{#if tab.icon}
+						<span class="{tab.icon} tab-icon" aria-hidden="true"></span>
+					{/if}
+					{tab.label}
+				</a>
+			{/each}
+		{/if}
 	</div>
 </nav>
 
@@ -167,6 +198,26 @@ $effect(() => {
 			black calc(100% - 32px),
 			transparent 100%
 		);
+	}
+
+	.tab-group-label {
+		flex-shrink: 0;
+		padding: var(--spacing-2) var(--spacing-2) var(--spacing-2) var(--spacing-3);
+		font-size: 0.625rem;
+		font-weight: 600;
+		color: var(--color-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		white-space: nowrap;
+		user-select: none;
+	}
+
+	.tab-divider {
+		flex-shrink: 0;
+		width: 1px;
+		height: 1.25rem;
+		background: var(--color-input-border);
+		margin-inline: var(--spacing-1);
 	}
 
 	.tab-item {
