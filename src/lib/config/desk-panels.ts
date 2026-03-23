@@ -1,6 +1,9 @@
 import type { ActivityBarItem, PanelDefinition } from '$lib/components/composites/dock';
 
 export const DESK_PANEL_TYPES = [
+	'documents',
+	'editor',
+	'preview',
 	'notes',
 	'canvas',
 	'terminal',
@@ -15,6 +18,9 @@ export const DESK_PANEL_TYPES = [
 export type DeskPanelType = (typeof DESK_PANEL_TYPES)[number];
 
 export const DESK_PANELS: Record<string, PanelDefinition> = {
+	documents: { id: 'documents', type: 'documents', label: 'Documents', icon: 'i-lucide-file-text', closable: true },
+	editor: { id: 'editor', type: 'editor', label: 'Editor', icon: 'i-lucide-pen-line', closable: true },
+	preview: { id: 'preview', type: 'preview', label: 'Preview', icon: 'i-lucide-eye', closable: true },
 	notes: { id: 'notes', type: 'notes', label: 'Notes', icon: 'i-lucide-notebook-pen', closable: true },
 	canvas: { id: 'canvas', type: 'canvas', label: 'Canvas', icon: 'i-lucide-pen-tool', closable: true },
 	terminal: { id: 'terminal', type: 'terminal', label: 'Terminal', icon: 'i-lucide-terminal', closable: true },
@@ -27,6 +33,9 @@ export const DESK_PANELS: Record<string, PanelDefinition> = {
 };
 
 export const DESK_ACTIVITY_BAR_ITEMS: ActivityBarItem[] = [
+	{ panelType: 'documents', icon: 'i-lucide-file-text', label: 'Documents' },
+	{ panelType: 'editor', icon: 'i-lucide-pen-line', label: 'Editor' },
+	{ panelType: 'preview', icon: 'i-lucide-eye', label: 'Preview' },
 	{ panelType: 'notes', icon: 'i-lucide-notebook-pen', label: 'Notes' },
 	{ panelType: 'canvas', icon: 'i-lucide-pen-tool', label: 'Canvas' },
 	{ panelType: 'terminal', icon: 'i-lucide-terminal', label: 'Terminal' },

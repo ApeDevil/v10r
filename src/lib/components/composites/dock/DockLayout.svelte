@@ -5,6 +5,7 @@ import DockActivityBar from './DockActivityBar.svelte';
 import DockNode from './DockNode.svelte';
 import { hasPanelType } from './dock.operations';
 import { loadDockState, saveDockState } from './dock.persistence';
+import { setDeskBusContext } from './desk-bus.svelte';
 import { setDockContext } from './dock.state.svelte';
 import type { ActivityBarItem, LayoutNode, PanelDefinition } from './dock.types';
 
@@ -37,6 +38,9 @@ const dock = setDockContext(
 	saved?.panels ?? initialPanels,
 	saved?.activityBarPosition ?? 'left',
 );
+
+// DeskBus: typed pub/sub available to all panels via context
+setDeskBusContext();
 
 // Debounced persistence — $state.snapshot() creates deep tracking
 // so in-place mutations (e.g. resizeSplit) also trigger saves.

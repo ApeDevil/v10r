@@ -35,6 +35,11 @@ export const navItems: NavItem[] = [
 		icon: 'i-lucide-home',
 	},
 	{
+		href: '/blog',
+		label: 'Blog',
+		icon: 'i-lucide-newspaper',
+	},
+	{
 		href: '/desk',
 		label: 'Desk',
 		icon: 'i-lucide-panel-top',

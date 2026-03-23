@@ -27,6 +27,13 @@
 			],
 		},
 		{
+			label: 'Content',
+			items: [
+				{ label: 'Posts', href: '/admin/content/posts', icon: 'i-lucide-file-text' },
+				{ label: 'Tags', href: '/admin/content/tags', icon: 'i-lucide-tag' },
+			],
+		},
+		{
 			label: 'System',
 			items: [
 				{ label: 'Jobs', href: '/admin/jobs', icon: 'i-lucide-clock' },

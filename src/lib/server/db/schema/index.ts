@@ -6,4 +6,5 @@ export * from './auth';
 export * from './jobs';
 export * from './notifications';
 export * from './rag';
+export * from './blog';
 export * from './showcase';

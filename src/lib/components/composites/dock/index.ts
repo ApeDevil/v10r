@@ -20,6 +20,8 @@ export {
 	splitLeaf,
 } from './dock.operations';
 export { clearDockState, loadDockState, saveDockState } from './dock.persistence';
+export { createDeskBus, type DeskBus, type DeskEvents, getDeskBus, setDeskBusContext } from './desk-bus.svelte';
+export { LAYOUT_PRESETS, type LayoutPreset } from './layout-presets';
 export { createDockState, type DockState, getDockContext, setDockContext } from './dock.state.svelte';
 export type {
 	ActivityBarItem,

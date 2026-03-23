@@ -33,6 +33,14 @@ import {
 	customPalettes,
 	userPreferences,
 	userTelegramAccounts,
+	// blog
+	post,
+	revision,
+	publishedRevision,
+	tag,
+	postTag,
+	asset,
+	postAsset,
 } from './index';
 
 // ── Auth ─────────────────────────────────────────────────────────────
@@ -174,6 +182,46 @@ export const customPalettesRelations = relations(customPalettes, ({ one }) => ({
 	creator: one(user, { fields: [customPalettes.createdBy], references: [user.id] }),
 }));
 
+// ── Blog ─────────────────────────────────────────────────────────────
+
+export const postRelations = relations(post, ({ one, many }) => ({
+	author: one(user, { fields: [post.authorId], references: [user.id] }),
+	coverImage: one(asset, { fields: [post.coverImageId], references: [asset.id] }),
+	revisions: many(revision),
+	publishedRevisions: many(publishedRevision),
+	postTags: many(postTag),
+	postAssets: many(postAsset),
+}));
+
+export const revisionRelations = relations(revision, ({ one }) => ({
+	post: one(post, { fields: [revision.postId], references: [post.id] }),
+	author: one(user, { fields: [revision.authorId], references: [user.id] }),
+}));
+
+export const publishedRevisionRelations = relations(publishedRevision, ({ one }) => ({
+	post: one(post, { fields: [publishedRevision.postId], references: [post.id] }),
+	revision: one(revision, { fields: [publishedRevision.revisionId], references: [revision.id] }),
+}));
+
+export const tagRelations = relations(tag, ({ many }) => ({
+	postTags: many(postTag),
+}));
+
+export const postTagRelations = relations(postTag, ({ one }) => ({
+	post: one(post, { fields: [postTag.postId], references: [post.id] }),
+	tag: one(tag, { fields: [postTag.tagId], references: [tag.id] }),
+}));
+
+export const blogAssetRelations = relations(asset, ({ one, many }) => ({
+	uploader: one(user, { fields: [asset.uploaderId], references: [user.id] }),
+	postAssets: many(postAsset),
+}));
+
+export const postAssetRelations = relations(postAsset, ({ one }) => ({
+	post: one(post, { fields: [postAsset.postId], references: [post.id] }),
+	asset: one(asset, { fields: [postAsset.assetId], references: [asset.id] }),
+}));
+
 // ── User hub (the big one) ──────────────────────────────────────────
 
 export const userRelations = relations(user, ({ one, many }) => ({
@@ -195,4 +243,8 @@ export const userRelations = relations(user, ({ one, many }) => ({
 	// app
 	preferences: one(userPreferences),
 	customPalettes: many(customPalettes),
+	// blog
+	posts: many(post),
+	revisions: many(revision),
+	blogAssets: many(asset),
 }));

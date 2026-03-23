@@ -3,6 +3,8 @@ import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import type { LayoutNode } from '$lib/components/composites/dock';
 import { DockLayout } from '$lib/components/composites/dock';
+import { DocumentsPanel, EditorPanel } from '$lib/components/editor';
+import { PreviewPanel } from '$lib/components/preview';
 import {
 	DotPattern,
 	GradientBlob,
@@ -93,7 +95,13 @@ function getPanelType(panelId: string): string | undefined {
 		{#snippet panelContent(panelId)}
 			{@const type = getPanelType(panelId)}
 			<div class="desk-panel">
-				{#if type === 'chat'}
+				{#if type === 'documents'}
+					<DocumentsPanel />
+				{:else if type === 'editor'}
+					<EditorPanel {panelId} />
+				{:else if type === 'preview'}
+					<PreviewPanel />
+				{:else if type === 'chat'}
 					<div class="chat-panel">
 						<div class="chat-messages">
 							<div class="chat-msg assistant">

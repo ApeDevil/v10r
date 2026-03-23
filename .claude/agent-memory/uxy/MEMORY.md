@@ -18,6 +18,9 @@
 ## Blog Editor Final UX Specifications (Round 2)
 - [blog-final-ux-specs.md](blog-final-ux-specs.md) - Binding design contract: toolbar layout, save/publish inline confirmation, Documents panel spec, two-tier optimistic preview, MetadataDrawer fields, keyboard shortcut ownership policy, multi-author soft-lock, role-based panel visibility
 
+## Blog Implementation UX Review
+- [blog-implementation-review.md](blog-implementation-review.md) - Full UX audit of feature/blog implementation: error states, loading, empty states, save/publish flow, keyboard shortcuts, MetadataDrawer usability, navigation, accessibility, responsive, and feedback loops. Rated GOOD/WARNING/ISSUE with specific observations.
+
 ## Admin Panel Expansion
 - [admin-expansion-round2.md](admin-expansion-round2.md) - Round 2 refined UX: navigation reconciliation, impersonation banner, feature flags, maintenance mode, announcements, canonical data table pattern, prioritized page list
 - [admin-phase3-ux.md](admin-phase3-ux.md) - Phase 3 UX spec: Analytics page, Notifications page, Broadcast Announcements compose/list, user-facing announcement banner, empty/loading/error states, accessibility patterns

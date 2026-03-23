@@ -251,3 +251,6 @@ export const ADMIN_RAG_PAGE_SIZE = 25;
 
 /** Cache keys per page in admin */
 export const ADMIN_CACHE_PAGE_SIZE = 50;
+
+/** Blog posts per page in admin */
+export const ADMIN_BLOG_PAGE_SIZE = 25;

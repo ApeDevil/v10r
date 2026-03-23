@@ -27,6 +27,8 @@
 		"validate": "bun run check && bun biome check . && bun run test"
 	},
 	"dependencies": {
+		"@flowershow/remark-wiki-link": "^2.0.0",
+		"@shikijs/rehype": "^3.0.0",
 		"@ai-sdk/google": "^1.0.0",
 		"@fontsource-variable/fraunces": "^5.0.0",
 		"@fontsource-variable/inter": "^5.0.0",
@@ -60,15 +62,28 @@
 		"d3-selection": "^3.0.0",
 		"d3-zoom": "^3.0.0",
 		"drizzle-orm": "^0.45.0",
+		"hast-util-to-string": "^3.0.0",
 		"isomorphic-dompurify": "^2.0.0",
 		"maplibre-gl": "^5.0.0",
 		"marked": "^15.0.0",
 		"shiki": "^3.0.0",
 		"paneforge": "^1.0.2",
+		"rehype-sanitize": "^6.0.0",
+		"rehype-slug": "^6.0.0",
+		"rehype-stringify": "^10.0.0",
+		"remark-directive": "^4.0.0",
+		"remark-extract-frontmatter": "^3.0.0",
+		"remark-frontmatter": "^5.0.0",
+		"remark-gfm": "^4.0.0",
+		"remark-parse": "^11.0.0",
+		"remark-rehype": "^11.0.0",
 		"svelte-maplibre-gl": "^1.0.3",
 		"three": "^0.170.0",
 		"sveltekit-superforms": "^2.22.1",
-		"valibot": "^1.2.0"
+		"unified": "^11.0.0",
+		"unist-util-visit": "^5.0.0",
+		"valibot": "^1.2.0",
+		"yaml": "^2.0.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.0.0",

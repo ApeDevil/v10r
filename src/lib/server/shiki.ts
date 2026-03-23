@@ -3,7 +3,7 @@ import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
 
 let highlighterPromise: Promise<Highlighter> | null = null;
 
-function getHighlighter(): Promise<Highlighter> {
+export function getHighlighter(): Promise<Highlighter> {
 	if (!highlighterPromise) {
 		highlighterPromise = createHighlighter({
 			themes: ['github-light', 'github-dark'],

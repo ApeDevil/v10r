@@ -56,7 +56,7 @@ const toast = getToast();
 						<Button
 							variant="ghost"
 							size="icon"
-							class="bg-transparent border-none text-white text-xl p-0 w-6 h-6 hover:bg-white/20"
+							class="bg-transparent border-none text-current text-xl p-0 w-6 h-6 opacity-70 hover:opacity-100"
 							onclick={() => toast.remove(t.id)}
 						>
 							×
@@ -120,11 +120,30 @@ const toast = getToast();
 		padding: var(--spacing-3);
 		margin-bottom: var(--spacing-2);
 		border-radius: var(--radius-md);
-		color: var(--color-bg);
+		border: 1px solid;
 	}
 
-	.toast-success { background: var(--color-success); }
-	.toast-error { background: var(--color-error); }
-	.toast-warning { background: var(--color-warning); }
-	.toast-info { background: var(--color-primary); }
+	.toast-success {
+		border-color: var(--color-success);
+		background: var(--color-success-bg);
+		color: var(--color-success-fg);
+	}
+
+	.toast-error {
+		border-color: var(--color-error);
+		background: var(--color-error-bg);
+		color: var(--color-error-fg);
+	}
+
+	.toast-warning {
+		border-color: var(--color-warning);
+		background: var(--color-warning-bg);
+		color: var(--color-warning-fg);
+	}
+
+	.toast-info {
+		border-color: var(--color-info);
+		background: var(--color-info-bg);
+		color: var(--color-info-fg);
+	}
 </style>

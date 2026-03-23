@@ -5,6 +5,7 @@
 🪲 Debug
 
 🏛️ Library (lib)
+⚙️ Server
 📟 Notifications
 🧩 Components
 🧭 Navigation
