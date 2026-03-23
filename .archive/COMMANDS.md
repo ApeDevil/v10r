@@ -21,7 +21,7 @@ lsof -i :5173
 kill 
 podman rm -f v10r
 
-# -------------------------------------- Test
+# ---------------------------------- Test
 podman exec -it v10r bun run check
 podman exec -it v10r bun run lint
 podman exec -it v10r bun run test
@@ -37,7 +37,7 @@ podman ps
 podman ps -a 
 
 
-# --------------------------------------------- DB
+# ------------------------------------ DB
 podman exec v10r bun run db:generate
 podman exec v10r bun run db:migrate
 podman exec v10r bun run db:push

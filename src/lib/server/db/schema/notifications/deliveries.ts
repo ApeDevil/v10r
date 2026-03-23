@@ -13,6 +13,8 @@ export const deliveryStatusEnum = notificationsSchema.enum('delivery_status', [
 	'sent',
 	'failed',
 	'skipped',
+	'retrying',
+	'dead',
 ]);
 
 export const notificationChannelEnum = notificationsSchema.enum('notification_channel', [
@@ -42,5 +44,11 @@ export const notificationDeliveries = notificationsSchema.table(
 		index('delivery_pending_idx').on(table.createdAt).where(sql`status = 'pending'`),
 		index('delivery_failed_idx').on(table.createdAt).where(sql`status = 'failed'`),
 		index('delivery_notification_idx').on(table.notificationId),
+		index('delivery_channel_recent_idx')
+			.on(table.channel, table.createdAt.desc())
+			.where(sql`status IN ('sent', 'failed', 'dead')`),
+		index('delivery_dead_idx')
+			.on(table.channel, table.createdAt.desc())
+			.where(sql`status = 'dead'`),
 	],
 );

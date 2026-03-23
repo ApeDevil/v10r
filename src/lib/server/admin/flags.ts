@@ -11,6 +11,10 @@ export function invalidateFlagCache(): void {
 	cache.clear();
 }
 
+export function getFlagCacheSize(): number {
+	return cache.size;
+}
+
 // ── Read ──────────────────────────────────────────────────────────────────────
 
 export async function getFlag(key: string): Promise<unknown | null> {

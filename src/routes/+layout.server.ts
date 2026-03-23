@@ -1,7 +1,9 @@
 import { env } from '$env/dynamic/private';
+import { getActiveAnnouncements } from '$lib/server/admin/announcements';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ cookies, locals }) => {
+export const load: LayoutServerLoad = async ({ cookies, locals, depends }) => {
+	depends('app:announcements');
 	const session = locals.session
 		? {
 				expiresAt: locals.session.expiresAt,
@@ -22,6 +24,11 @@ export const load: LayoutServerLoad = async ({ cookies, locals }) => {
 	const rawWidth = Number(cookies.get('sidebar-width'));
 	const sidebarWidth = rawWidth >= 160 && rawWidth <= 320 ? rawWidth : 240;
 
+	// Active announcements for shell banner (cached per user, 30s TTL)
+	const announcements = locals.user
+		? await getActiveAnnouncements(locals.user.id)
+		: [];
+
 	return {
 		session,
 		themeMode,
@@ -31,5 +38,6 @@ export const load: LayoutServerLoad = async ({ cookies, locals }) => {
 			!!locals.user &&
 			!!env.ADMIN_EMAIL &&
 			locals.user.email.toLowerCase() === env.ADMIN_EMAIL.toLowerCase(),
+		announcements,
 	};
 };

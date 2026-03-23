@@ -5,6 +5,7 @@ import { Chatbot } from '$lib/components/composites/chatbot';
 import type { CommandPaletteItem } from '$lib/components/composites/command-palette';
 import { CommandPalette } from '$lib/components/composites/command-palette';
 import {
+	AnnouncementBanner,
 	ConsentBanner,
 	Footer,
 	NavigationProgress,
@@ -16,6 +17,7 @@ import {
 import { DESK_PANELS } from '$lib/config/desk-panels';
 import { searchPages } from '$lib/nav';
 import { getModals } from '$lib/state/modals.svelte';
+import type { ActiveAnnouncement } from '$lib/server/admin/announcements';
 import { type Session, setSessionContext } from '$lib/state/session.svelte';
 import { getTheme } from '$lib/state/theme.svelte';
 
@@ -26,9 +28,11 @@ type Props = {
 	isAdmin?: boolean;
 	/** Immersive mode: hides the footer for full-viewport layouts like the desk. */
 	immersive?: boolean;
+	/** Active system announcements to display as banners. */
+	announcements?: ActiveAnnouncement[];
 };
 
-let { children, session = null, isAdmin = false, immersive = false }: Props = $props();
+let { children, session = null, isAdmin = false, immersive = false, announcements = [] }: Props = $props();
 
 // Initialize session context so child components can use getSession()
 setSessionContext(session);
@@ -103,6 +107,9 @@ const searchItems = $derived<CommandPaletteItem[]>([
 	<Sidebar {isAdmin} />
 
 	<main id="main-content" tabindex="-1" class="flex-1 min-w-0 flex flex-col overflow-x-clip md:pl-[var(--sidebar-rail-width)]">
+		{#if announcements.length > 0}
+			<AnnouncementBanner {announcements} />
+		{/if}
 		{@render children?.()}
 
 		{#if !immersive}

@@ -236,3 +236,18 @@ export const ADMIN_USERS_PAGE_SIZE = 25;
 
 /** Feature flag in-process cache TTL (ms) */
 export const ADMIN_FLAG_CACHE_TTL_MS = 30_000;
+
+/** Announcement in-process cache TTL (ms) */
+export const ADMIN_ANNOUNCEMENT_CACHE_TTL_MS = 30_000;
+
+/** Delivery log entries per page in admin */
+export const ADMIN_DELIVERY_PAGE_SIZE = 50;
+
+/** AI conversations per page in admin */
+export const ADMIN_AI_PAGE_SIZE = 25;
+
+/** RAG documents per page in admin */
+export const ADMIN_RAG_PAGE_SIZE = 25;
+
+/** Cache keys per page in admin */
+export const ADMIN_CACHE_PAGE_SIZE = 50;

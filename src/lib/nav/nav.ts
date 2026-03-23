@@ -15,8 +15,16 @@ export const adminNavItem: NavItem = {
 	icon: 'i-lucide-shield',
 	children: [
 		{ href: '/admin/db', label: 'DB Observation' },
+		{ href: '/admin/analytics', label: 'Analytics' },
+		{ href: '/admin/audit', label: 'Audit Log' },
+		{ href: '/admin/users', label: 'Users' },
+		{ href: '/admin/flags', label: 'Feature Flags' },
 		{ href: '/admin/branding', label: 'Branding' },
 		{ href: '/admin/jobs', label: 'Jobs' },
+		{ href: '/admin/notifications', label: 'Notifications' },
+		{ href: '/admin/ai', label: 'AI Usage' },
+		{ href: '/admin/rag', label: 'RAG' },
+		{ href: '/admin/cache', label: 'Cache' },
 	],
 };
 
