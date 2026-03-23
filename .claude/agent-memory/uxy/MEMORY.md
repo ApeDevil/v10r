@@ -12,6 +12,12 @@
 ## Blog System Editor UX
 - [blog-editor-ux.md](blog-editor-ux.md) - Paradigm recommendation (split-pane), custom syntax via slash commands, preview strategy per embed complexity, content management flows, embed insertion UX, mobile scope, and accessibility patterns
 
+## Blog System Blueprint Review
+- [blog-system-review.md](blog-system-review.md) - Full UX review of docs/blueprint/blog.md: strengths, concerns (3 critical / 7 major / 5 minor), suggestions, and 5 open questions for the team
+
+## Blog Editor Final UX Specifications (Round 2)
+- [blog-final-ux-specs.md](blog-final-ux-specs.md) - Binding design contract: toolbar layout, save/publish inline confirmation, Documents panel spec, two-tier optimistic preview, MetadataDrawer fields, keyboard shortcut ownership policy, multi-author soft-lock, role-based panel visibility
+
 ## Admin Panel Expansion
 - [admin-expansion-round2.md](admin-expansion-round2.md) - Round 2 refined UX: navigation reconciliation, impersonation banner, feature flags, maintenance mode, announcements, canonical data table pattern, prioritized page list
 - [admin-phase3-ux.md](admin-phase3-ux.md) - Phase 3 UX spec: Analytics page, Notifications page, Broadcast Announcements compose/list, user-facing announcement banner, empty/loading/error states, accessibility patterns
