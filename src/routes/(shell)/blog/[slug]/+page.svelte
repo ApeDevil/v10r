@@ -56,6 +56,14 @@ const jsonLdScript = $derived(
 
 <PageContainer width="content" class="pt-7 pb-8">
 	<Stack class="gap-7">
+		<nav class="breadcrumbs" aria-label="Breadcrumb">
+			<ol>
+				<li><a href="/">Home</a><span class="sep" aria-hidden="true">/</span></li>
+				<li><a href="/blog">Blog</a><span class="sep" aria-hidden="true">/</span></li>
+				<li><span aria-current="page">{post.revision.title}</span></li>
+			</ol>
+		</nav>
+
 		<header class="post-header">
 			<Typography variant="h1">{post.revision.title}</Typography>
 
@@ -93,12 +101,6 @@ const jsonLdScript = $derived(
 			<Renderer html={post.revision.renderedHtml} embeds={post.revision.embedDescriptors} />
 		</div>
 
-		<nav class="back-nav">
-			<a href="/blog" class="back-link">
-				<span class="i-lucide-arrow-left back-icon" aria-hidden="true"></span>
-				All posts
-			</a>
-		</nav>
 	</Stack>
 </PageContainer>
 
@@ -144,26 +146,46 @@ const jsonLdScript = $derived(
 		text-decoration: none;
 	}
 
-	.back-nav {
-		padding-top: var(--spacing-4, 1rem);
-		border-top: 1px solid var(--color-border);
+	.breadcrumbs ol {
+		display: flex;
+		flex-wrap: wrap;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		gap: var(--spacing-2);
 	}
 
-	.back-link {
-		display: inline-flex;
+	.breadcrumbs li {
+		display: flex;
 		align-items: center;
-		gap: 0.375rem;
-		font-size: 0.875rem;
-		color: var(--color-muted);
-		text-decoration: none;
+		gap: var(--spacing-2);
+		font-size: var(--text-fluid-sm);
 	}
 
-	.back-link:hover {
+	.breadcrumbs a {
 		color: var(--color-primary);
+		text-decoration: none;
+		transition: color var(--duration-fast);
 	}
 
-	.back-icon {
-		width: 1em;
-		height: 1em;
+	.breadcrumbs a:hover {
+		color: var(--color-primary-hover);
+		text-decoration: underline;
+	}
+
+	.breadcrumbs a:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+		border-radius: var(--radius-sm);
+	}
+
+	.breadcrumbs span[aria-current] {
+		color: var(--color-muted);
+		font-weight: 500;
+	}
+
+	.sep {
+		color: var(--color-muted);
+		user-select: none;
 	}
 </style>
