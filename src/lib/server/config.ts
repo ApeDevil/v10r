@@ -102,6 +102,12 @@ export const MAX_SHOWCASE_KEYS = 50;
 /** Max S3 objects in showcase namespace */
 export const MAX_SHOWCASE_OBJECTS = 20;
 
+/** Max S3 objects in blog namespace */
+export const MAX_BLOG_ASSETS = 100;
+
+/** Max blog image upload size (bytes, 10 MB) */
+export const MAX_BLOG_UPLOAD_SIZE = 10 * 1024 * 1024;
+
 /** Max conversations per user */
 export const MAX_CONVERSATIONS_PER_USER = 50;
 

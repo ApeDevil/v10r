@@ -19,6 +19,43 @@
 		value = target.value;
 		oninput?.(value);
 	}
+
+	function handleDragOver(e: DragEvent) {
+		if (e.dataTransfer?.types.includes('application/x-explorer-asset')) {
+			e.preventDefault();
+			e.dataTransfer.dropEffect = 'copy';
+		}
+	}
+
+	function handleDrop(e: DragEvent) {
+		const json = e.dataTransfer?.getData('application/x-explorer-asset');
+		if (!json) return;
+		e.preventDefault();
+
+		try {
+			const data = JSON.parse(json) as { altText: string; downloadUrl: string };
+			const markdown = `![${data.altText}](${data.downloadUrl})`;
+
+			const textarea = e.currentTarget as HTMLTextAreaElement;
+			const pos = textarea.selectionStart ?? value.length;
+			const before = value.slice(0, pos);
+			const after = value.slice(pos);
+			const needsNewline = before.length > 0 && !before.endsWith('\n');
+
+			value = before + (needsNewline ? '\n' : '') + markdown + '\n' + after;
+			oninput?.(value);
+
+			// Move cursor after inserted text
+			const newPos = pos + (needsNewline ? 1 : 0) + markdown.length + 1;
+			requestAnimationFrame(() => {
+				textarea.selectionStart = newPos;
+				textarea.selectionEnd = newPos;
+				textarea.focus();
+			});
+		} catch {
+			// Invalid JSON — ignore
+		}
+	}
 </script>
 
 <div class="markdown-source">
@@ -27,6 +64,8 @@
 		{value}
 		oninput={handleInput}
 		onkeydown={handleKeydown}
+		ondragover={handleDragOver}
+		ondrop={handleDrop}
 		placeholder="Start writing markdown..."
 		spellcheck="true"
 	></textarea>

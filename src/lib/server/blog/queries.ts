@@ -1,8 +1,8 @@
 import { and, count, desc, asc, eq, isNull, sql, inArray } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import { post, revision, publishedRevision, tag, postTag } from '$lib/server/db/schema/blog';
+import { post, revision, publishedRevision, tag, postTag, asset, postAsset } from '$lib/server/db/schema/blog';
 import { user } from '$lib/server/db/schema/auth';
-import type { BlogTag, ListPostsOptions, PostListItem, PublishedPost, TagWithCount } from './types';
+import type { BlogAsset, BlogTag, ListPostsOptions, PostListItem, PublishedPost, TagWithCount } from './types';
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -391,4 +391,45 @@ export async function isSlugTaken(slug: string, excludePostId?: string): Promise
 		.where(and(...conditions))
 		.limit(1);
 	return !!row;
+}
+
+// ── Assets ───────────────────────────────────────────────────────────
+
+/** List all assets, optionally filtered by uploader. */
+export async function listAssets(uploaderId?: string): Promise<BlogAsset[]> {
+	const conditions = [];
+	if (uploaderId) conditions.push(eq(asset.uploaderId, uploaderId));
+
+	return db
+		.select()
+		.from(asset)
+		.where(conditions.length > 0 ? and(...conditions) : undefined)
+		.orderBy(desc(asset.createdAt));
+}
+
+/** Get a single asset by ID. */
+export async function getAssetById(id: string): Promise<BlogAsset | null> {
+	const [row] = await db.select().from(asset).where(eq(asset.id, id)).limit(1);
+	return row ?? null;
+}
+
+/** Get all assets linked to a post. */
+export async function getAssetsForPost(postId: string): Promise<BlogAsset[]> {
+	return db
+		.select({
+			id: asset.id,
+			uploaderId: asset.uploaderId,
+			fileName: asset.fileName,
+			mimeType: asset.mimeType,
+			fileSize: asset.fileSize,
+			storageKey: asset.storageKey,
+			altText: asset.altText,
+			width: asset.width,
+			height: asset.height,
+			createdAt: asset.createdAt,
+		})
+		.from(asset)
+		.innerJoin(postAsset, eq(asset.id, postAsset.assetId))
+		.where(eq(postAsset.postId, postId))
+		.orderBy(desc(asset.createdAt));
 }

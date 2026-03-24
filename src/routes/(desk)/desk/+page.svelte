@@ -3,7 +3,8 @@ import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import type { LayoutNode } from '$lib/components/composites/dock';
 import { DockLayout } from '$lib/components/composites/dock';
-import { DocumentsPanel, EditorPanel } from '$lib/components/editor';
+import { EditorPanel } from '$lib/components/editor';
+import { ExplorerPanel } from '$lib/components/explorer';
 import { PreviewPanel } from '$lib/components/preview';
 import {
 	DotPattern,
@@ -39,8 +40,8 @@ const initialRoot: LayoutNode = {
 				{
 					type: 'leaf',
 					id: 'desk-left-top',
-					tabs: ['notes', 'inbox'],
-					activeTab: 'notes',
+					tabs: ['explorer', 'inbox'],
+					activeTab: 'explorer',
 				},
 				{
 					type: 'leaf',
@@ -65,7 +66,7 @@ const initialRoot: LayoutNode = {
 				{
 					type: 'leaf',
 					id: 'desk-right-bottom',
-					tabs: ['terminal', 'gallery', 'files'],
+					tabs: ['terminal', 'gallery', 'notes'],
 					activeTab: 'terminal',
 				},
 			],
@@ -75,6 +76,9 @@ const initialRoot: LayoutNode = {
 
 /** Resolve panel type — handles dynamic IDs from activity bar (e.g. "notes-1709312345") */
 function getPanelType(panelId: string): string | undefined {
+	// Backward compat: legacy panel types map to explorer
+	if (panelId === 'documents' || panelId === 'files') return 'explorer';
+	if (panelId.startsWith('documents-') || panelId.startsWith('files-')) return 'explorer';
 	return DESK_PANEL_TYPES.find((t) => panelId === t || panelId.startsWith(`${t}-`));
 }
 </script>
@@ -95,8 +99,8 @@ function getPanelType(panelId: string): string | undefined {
 		{#snippet panelContent(panelId)}
 			{@const type = getPanelType(panelId)}
 			<div class="desk-panel">
-				{#if type === 'documents'}
-					<DocumentsPanel />
+				{#if type === 'explorer'}
+					<ExplorerPanel />
 				{:else if type === 'editor'}
 					<EditorPanel {panelId} />
 				{:else if type === 'preview'}
@@ -245,103 +249,6 @@ function getPanelType(panelId: string): string | undefined {
 							<span>Sum: <strong>2,847</strong></span>
 							<span>Count: <strong>4</strong></span>
 							<span>Average: <strong>711.75</strong></span>
-						</div>
-					</div>
-				{:else if type === 'files'}
-					<div class="files-panel">
-						<div class="files-toolbar">
-							<span class="files-title"><span class="i-lucide-folder-tree"></span> Explorer</span>
-							<span class="files-actions">
-								<button class="files-action" disabled><span class="i-lucide-file-plus"></span></button>
-								<button class="files-action" disabled><span class="i-lucide-folder-plus"></span></button>
-								<button class="files-action" disabled><span class="i-lucide-refresh-cw"></span></button>
-							</span>
-						</div>
-						<div class="files-tree">
-							<div class="ft-item ft-folder ft-open ft-depth-0">
-								<span class="ft-toggle">&#9662;</span>
-								<span class="i-lucide-folder-open ft-icon ft-icon-folder"></span>
-								<span class="ft-label">src</span>
-							</div>
-							<div class="ft-item ft-folder ft-open ft-depth-1">
-								<span class="ft-toggle">&#9662;</span>
-								<span class="i-lucide-folder-open ft-icon ft-icon-folder"></span>
-								<span class="ft-label">lib</span>
-							</div>
-							<div class="ft-item ft-folder ft-depth-2">
-								<span class="ft-toggle">&#9656;</span>
-								<span class="i-lucide-folder ft-icon ft-icon-folder"></span>
-								<span class="ft-label">components</span>
-							</div>
-							<div class="ft-item ft-folder ft-depth-2">
-								<span class="ft-toggle">&#9656;</span>
-								<span class="i-lucide-folder ft-icon ft-icon-folder"></span>
-								<span class="ft-label">server</span>
-							</div>
-							<div class="ft-item ft-file ft-depth-2">
-								<span class="ft-toggle"></span>
-								<span class="i-lucide-file-code ft-icon ft-icon-ts"></span>
-								<span class="ft-label">utils.ts</span>
-							</div>
-							<div class="ft-item ft-file ft-depth-2">
-								<span class="ft-toggle"></span>
-								<span class="i-lucide-file-code ft-icon ft-icon-ts"></span>
-								<span class="ft-label">constants.ts</span>
-							</div>
-							<div class="ft-item ft-folder ft-open ft-depth-1">
-								<span class="ft-toggle">&#9662;</span>
-								<span class="i-lucide-folder-open ft-icon ft-icon-folder"></span>
-								<span class="ft-label">routes</span>
-							</div>
-							<div class="ft-item ft-file ft-selected ft-depth-2">
-								<span class="ft-toggle"></span>
-								<span class="i-lucide-file ft-icon ft-icon-svelte"></span>
-								<span class="ft-label">+page.svelte</span>
-							</div>
-							<div class="ft-item ft-file ft-depth-2">
-								<span class="ft-toggle"></span>
-								<span class="i-lucide-file ft-icon ft-icon-svelte"></span>
-								<span class="ft-label">+layout.svelte</span>
-							</div>
-							<div class="ft-item ft-file ft-depth-2">
-								<span class="ft-toggle"></span>
-								<span class="i-lucide-file-code ft-icon ft-icon-ts"></span>
-								<span class="ft-label">+page.server.ts</span>
-							</div>
-							<div class="ft-item ft-folder ft-depth-1">
-								<span class="ft-toggle">&#9656;</span>
-								<span class="i-lucide-folder ft-icon ft-icon-folder"></span>
-								<span class="ft-label">styles</span>
-							</div>
-							<div class="ft-item ft-file ft-depth-0">
-								<span class="ft-toggle"></span>
-								<span class="i-lucide-file ft-icon ft-icon-svelte"></span>
-								<span class="ft-label">app.html</span>
-							</div>
-							<div class="ft-item ft-file ft-depth-0">
-								<span class="ft-toggle"></span>
-								<span class="i-lucide-file-code ft-icon ft-icon-css"></span>
-								<span class="ft-label">app.css</span>
-							</div>
-							<div class="ft-item ft-file ft-depth-0">
-								<span class="ft-toggle"></span>
-								<span class="i-lucide-file-text ft-icon"></span>
-								<span class="ft-label">package.json</span>
-							</div>
-							<div class="ft-item ft-file ft-depth-0">
-								<span class="ft-toggle"></span>
-								<span class="i-lucide-file-text ft-icon"></span>
-								<span class="ft-label">svelte.config.js</span>
-							</div>
-							<div class="ft-item ft-file ft-depth-0">
-								<span class="ft-toggle"></span>
-								<span class="i-lucide-file-text ft-icon"></span>
-								<span class="ft-label">uno.config.ts</span>
-							</div>
-						</div>
-						<div class="files-status-bar">
-							<span>16 items</span>
-							<span>4 folders</span>
 						</div>
 					</div>
 				{:else}
@@ -670,138 +577,4 @@ function getPanelType(panelId: string): string | undefined {
 		background: var(--surface-1);
 	}
 
-	/* File browser panel */
-	.files-panel {
-		display: flex;
-		flex-direction: column;
-		height: 100%;
-		background: var(--color-bg);
-	}
-
-	.files-toolbar {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 6px 10px;
-		border-bottom: 1px solid var(--color-border);
-		background: var(--surface-1);
-	}
-
-	.files-title {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		font-size: 11px;
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: var(--color-muted);
-	}
-
-	.files-actions {
-		display: flex;
-		gap: 2px;
-	}
-
-	.files-action {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 24px;
-		height: 24px;
-		border-radius: var(--radius-sm);
-		background: transparent;
-		color: var(--color-muted);
-		cursor: pointer;
-		font-size: 14px;
-	}
-
-	.files-action:hover:not(:disabled) {
-		background: var(--surface-2);
-		color: var(--color-fg);
-	}
-
-	.files-action:disabled {
-		opacity: 0.4;
-		cursor: not-allowed;
-	}
-
-	.files-tree {
-		flex: 1;
-		overflow-y: auto;
-		padding: 4px 0;
-	}
-
-	.ft-item {
-		display: flex;
-		align-items: center;
-		gap: 4px;
-		padding: 2px 8px;
-		cursor: pointer;
-		font-size: 13px;
-		color: var(--color-fg);
-		border-radius: 0;
-	}
-
-	.ft-item:hover {
-		background: color-mix(in srgb, var(--surface-2) 60%, transparent);
-	}
-
-	.ft-item.ft-selected {
-		background: color-mix(in srgb, var(--color-primary) 12%, transparent);
-		color: var(--color-primary);
-	}
-
-	.ft-depth-0 { padding-left: 8px; }
-	.ft-depth-1 { padding-left: 24px; }
-	.ft-depth-2 { padding-left: 40px; }
-
-	.ft-toggle {
-		width: 14px;
-		font-size: 10px;
-		text-align: center;
-		color: var(--color-muted);
-		flex-shrink: 0;
-	}
-
-	.ft-icon {
-		font-size: 15px;
-		flex-shrink: 0;
-	}
-
-	.ft-icon-folder {
-		color: var(--color-warning, #d4a72c);
-	}
-
-	.ft-icon-svelte {
-		color: #ff3e00;
-	}
-
-	.ft-icon-ts {
-		color: #3178c6;
-	}
-
-	.ft-icon-css {
-		color: #1572b6;
-	}
-
-	.ft-label {
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	.ft-folder > .ft-label {
-		font-weight: 500;
-	}
-
-	.files-status-bar {
-		display: flex;
-		gap: 16px;
-		padding: 4px 10px;
-		font-size: 11px;
-		color: var(--color-muted);
-		border-top: 1px solid var(--color-border);
-		background: var(--surface-1);
-	}
 </style>

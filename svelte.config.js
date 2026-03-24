@@ -19,7 +19,7 @@ const config = {
 				'script-src': ['self', 'wasm-unsafe-eval'],
 				'style-src': ['self', 'unsafe-inline'],
 				'img-src': ['self', 'data:', 'blob:', 'https:'],
-				'connect-src': ['self', 'blob:', 'https://basemaps.cartocdn.com'],
+				'connect-src': ['self', 'blob:', 'https://basemaps.cartocdn.com', 'https://*.r2.cloudflarestorage.com'],
 				'worker-src': ['self', 'blob:'],
 				'object-src': ['none'],
 				'base-uri': ['self'],

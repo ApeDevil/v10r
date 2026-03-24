@@ -235,6 +235,8 @@ export async function createAsset(data: {
 	fileSize: number;
 	storageKey: string;
 	altText?: string;
+	width?: number;
+	height?: number;
 }): Promise<BlogAsset> {
 	const [row] = await db
 		.insert(asset)
@@ -253,4 +255,26 @@ export async function unlinkAssetFromPost(postId: string, assetId: string): Prom
 	await db
 		.delete(postAsset)
 		.where(and(eq(postAsset.postId, postId), eq(postAsset.assetId, assetId)));
+}
+
+/** Update asset metadata (alt text, dimensions). */
+export async function updateAssetMetadata(
+	assetId: string,
+	data: { altText?: string; width?: number; height?: number },
+): Promise<BlogAsset | null> {
+	const [row] = await db
+		.update(asset)
+		.set(data)
+		.where(eq(asset.id, assetId))
+		.returning();
+	return row ?? null;
+}
+
+/** Delete an asset record. Fails with FK RESTRICT if still linked to posts. */
+export async function deleteAsset(assetId: string): Promise<boolean> {
+	const [row] = await db
+		.delete(asset)
+		.where(eq(asset.id, assetId))
+		.returning({ id: asset.id });
+	return !!row;
 }

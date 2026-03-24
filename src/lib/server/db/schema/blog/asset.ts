@@ -4,7 +4,7 @@
  * post_asset uses RESTRICT to prevent deleting in-use assets.
  */
 import { sql } from 'drizzle-orm';
-import { check, index, integer, primaryKey, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { check, foreignKey, index, integer, primaryKey, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
 import { blogSchema, post } from './post';
 
@@ -18,6 +18,8 @@ export const asset = blogSchema.table(
 		fileSize: integer('file_size').notNull(),
 		storageKey: text('storage_key').notNull(),
 		altText: text('alt_text'),
+		width: integer('width'),
+		height: integer('height'),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	},
 	(table) => [
@@ -42,3 +44,10 @@ export const postAsset = blogSchema.table(
 		index('blog_post_asset_asset_idx').on(table.assetId),
 	],
 );
+
+/** FK from post.cover_image_id → asset.id (defined here to avoid circular import). */
+export const postCoverImageFk = foreignKey({
+	columns: [post.coverImageId],
+	foreignColumns: [asset.id],
+	name: 'blog_post_cover_image_fk',
+}).onDelete('set null');

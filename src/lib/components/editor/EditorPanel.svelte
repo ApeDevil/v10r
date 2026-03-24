@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import { apiFetch } from '$lib/api';
-	import { getDeskBus } from '$lib/components/composites/dock';
+	import { getDeskBus, getDockContext, findLeafWithPanel } from '$lib/components/composites/dock';
 	import { Spinner } from '$lib/components/primitives';
 	import EditorToolbar from './EditorToolbar.svelte';
 	import MarkdownSource from './MarkdownSource.svelte';
@@ -15,9 +15,22 @@
 	let { panelId }: Props = $props();
 
 	const bus = getDeskBus();
+	const dock = getDockContext();
 
 	// Extract documentId from panelId (e.g. "editor-pst_abc123" → "pst_abc123")
 	const documentId = $derived(panelId.startsWith('editor-') ? panelId.slice(7) : '');
+
+	// Re-publish content when this editor tab becomes active (so preview follows)
+	const isActiveTab = $derived.by(() => {
+		const leaf = findLeafWithPanel(dock.root, panelId);
+		return leaf ? leaf.activeTab === panelId : false;
+	});
+
+	$effect(() => {
+		if (isActiveTab && postId) {
+			publishContent();
+		}
+	});
 
 	// Document state
 	let loading = $state(true);
@@ -104,6 +117,7 @@
 	}
 
 	function publishContent() {
+		if (!isActiveTab) return;
 		bus.publish('editor:content', {
 			content: markdown,
 			type: 'blog-post',
@@ -212,9 +226,20 @@
 		}, 500);
 	}
 
+	// Subscribe to image insertion from Explorer
+	const unsubInsert = bus.subscribe('files:insert-image', (payload) => {
+		if (!postId) return;
+		const md = `![${payload.altText}](${payload.downloadUrl})`;
+		markdown = markdown ? markdown + '\n' + md + '\n' : md + '\n';
+		saveState = 'unsaved';
+		clearTimeout(contentTimer);
+		contentTimer = setTimeout(publishContent, 300);
+	});
+
 	onDestroy(() => {
 		clearTimeout(contentTimer);
 		clearTimeout(tagTimer);
+		unsubInsert();
 	});
 </script>
 
@@ -227,7 +252,7 @@
 	{:else if !documentId}
 		<div class="editor-center">
 			<span class="i-lucide-pen-line empty-icon"></span>
-			<p class="empty-text">Open a document from the Documents panel</p>
+			<p class="empty-text">Open a document from the Explorer</p>
 		</div>
 	{:else}
 		<EditorToolbar

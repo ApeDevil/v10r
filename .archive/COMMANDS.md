@@ -38,9 +38,11 @@ podman ps -a
 
 
 # ------------------------------------ DB
+## dev
+podman exec v10r bun run db:push
+## production
 podman exec v10r bun run db:generate
 podman exec v10r bun run db:migrate
-podman exec v10r bun run db:push
 ## migrations (schema push)
 podman exec -it v10r bun run drizzle-kit push
 ### neon rag

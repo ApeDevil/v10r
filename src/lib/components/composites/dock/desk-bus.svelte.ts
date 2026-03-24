@@ -11,6 +11,19 @@ export interface DeskEvents {
 	'editor:content': { content: string; type: string; metadata: Record<string, unknown> };
 	'editor:document': { documentId: string; type: string } | null;
 	'editor:save': { documentId: string; revisionId: string };
+	'files:select': {
+		type: 'post' | 'asset';
+		id: string;
+		data: Record<string, unknown>;
+	} | null;
+	'files:insert-image': {
+		assetId: string;
+		fileName: string;
+		altText: string;
+		downloadUrl: string;
+		/** Unique nonce to deduplicate replayed events across panel remounts. */
+		_nonce: string;
+	};
 }
 
 export interface SubscribeOptions {

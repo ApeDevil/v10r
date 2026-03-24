@@ -19,7 +19,11 @@ const dock = getDockContext();
 	{#if leaf.tabs.length > 0}
 		<DockTabBar {leaf} />
 		<div class="dock-leaf-content">
-			{@render panelContent(leaf.activeTab)}
+			{#each leaf.tabs as tabId (tabId)}
+				<div class="dock-tab-panel" class:active={leaf.activeTab === tabId}>
+					{@render panelContent(tabId)}
+				</div>
+			{/each}
 			<DockDropOverlay leafId={leaf.id} />
 		</div>
 	{:else}
@@ -43,10 +47,22 @@ const dock = getDockContext();
 
 	.dock-leaf-content {
 		flex: 1;
-		overflow: auto;
+		overflow: hidden;
 		position: relative;
 		min-width: 0;
 		min-height: 0;
+	}
+
+	.dock-tab-panel {
+		position: absolute;
+		inset: 0;
+		overflow: auto;
+		display: none;
+	}
+
+	.dock-tab-panel.active {
+		display: flex;
+		flex-direction: column;
 	}
 
 	.dock-leaf-empty {

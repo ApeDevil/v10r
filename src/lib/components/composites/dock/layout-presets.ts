@@ -10,7 +10,7 @@ export interface LayoutPreset {
 	};
 }
 
-/** Writing layout: Documents | Editor | Preview */
+/** Writing layout: Explorer | Editor | Preview */
 const writingPreset: LayoutPreset = {
 	id: 'writing',
 	label: 'Writing',
@@ -18,7 +18,7 @@ const writingPreset: LayoutPreset = {
 	buildLayout(context) {
 		const editorId = context?.documentId ? `editor-${context.documentId}` : 'editor';
 		const panels: Record<string, PanelDefinition> = {
-			documents: { id: 'documents', type: 'documents', label: 'Documents', icon: 'i-lucide-file-text', closable: true },
+			explorer: { id: 'explorer', type: 'explorer', label: 'Explorer', icon: 'i-lucide-folder-tree', closable: true },
 			[editorId]: { id: editorId, type: 'editor', label: 'Editor', icon: 'i-lucide-pen-line', closable: true },
 			preview: { id: 'preview', type: 'preview', label: 'Preview', icon: 'i-lucide-eye', closable: true },
 		};
@@ -27,13 +27,13 @@ const writingPreset: LayoutPreset = {
 			type: 'split',
 			id: 'writing-root',
 			direction: 'horizontal',
-			sizes: [20, 80],
+			sizes: [22, 78],
 			children: [
 				{
 					type: 'leaf',
 					id: 'writing-docs',
-					tabs: ['documents'],
-					activeTab: 'documents',
+					tabs: ['explorer'],
+					activeTab: 'explorer',
 				},
 				{
 					type: 'split',
