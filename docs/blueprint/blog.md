@@ -201,7 +201,7 @@ Three zones:
 
 ### Publish Flow
 
-1. Author clicks **Publish** button in toolbar (or changes status in MetadataDrawer)
+1. Author clicks **Publish** in the kebab menu (Post > Publish) or changes status in MetadataDrawer
 2. Button transitions to inline **"Confirm publish" / "Cancel"** (persistent, not timed — accessible to keyboard/screen reader users)
 3. On confirm: triggers `publishPost()` (RAG ingest + Neo4j sync + ISR revalidation)
 4. Button label changes to **"Update"** (for already-published posts)
@@ -223,7 +223,7 @@ First explicit save (Cmd+S):
 
 Subsequent saves: POST /api/blog/[id]/revision (creates new revision)
 Preview: auto-updates on content change (cross-panel pub/sub, debounced 300ms)
-Publish: toolbar button -> inline confirm -> publishPost()
+Publish: kebab menu (Post > Publish) -> inline confirm strip -> publishPost()
 ```
 
 ### Editor Paradigm: Source Editor, Never WYSIWYG
@@ -282,7 +282,7 @@ For blog posts, it runs the unified pipeline and renders with `blog/Renderer.sve
 - **Error**: last successful render with error banner ("Preview failed: [error]. Fix and save again.")
 - **Embed placeholders**: three distinct visual states — skeleton (loading), dashed-border card with type label (placeholder), red-border card with error message (error)
 
-**Full preview** (toolbar button): server-rendered view via the same route the public uses. Honest preview for posts with 3D embeds or `asset://` media that require presigned URL resolution.
+**Full preview** (kebab menu): server-rendered view via the same route the public uses. Honest preview for posts with 3D embeds or media that require proxy URL resolution.
 
 ### Cross-Panel Communication (DeskBus)
 
@@ -321,7 +321,7 @@ This is valuable beyond editor/preview — the chat panel can subscribe to `edit
 
 ### MetadataDrawer
 
-Accessible via toolbar button. Fields:
+Accessible via kebab menu (File > Metadata) or keyboard shortcut. Fields:
 
 | Field | Behavior |
 |-------|----------|
@@ -329,7 +329,7 @@ Accessible via toolbar button. Fields:
 | **Slug** | Auto-generates from title. Editable with "manual mode" toggle. "Reset to auto" escape. CHECK: `^[a-z0-9]([a-z0-9-]*[a-z0-9])?$` |
 | **Summary** | Optional excerpt / meta description |
 | **Tags** | Multi-select Combobox with chip display. "Create new" affordance when tag not found. |
-| **Status** | Segmented control: Draft / Published / Archived. Changing to "Published" triggers inline confirm (same as toolbar Publish). |
+| **Status** | Segmented control: Draft / Published / Archived. Changing to "Published" triggers inline confirm (same as kebab Post > Publish). |
 | **Locale** | Select for revision locale |
 | **Revision history** | Collapsible section showing timestamps + author. "Restore" loads content as unsaved-in-editor (safe, reversible). |
 
@@ -437,7 +437,7 @@ Indexes: `(slug)` unique, `(author_id)`, `(status, published_at DESC)`, `(create
 | `summary` | text | nullable | Excerpt / meta description |
 | `markdown` | text | NOT NULL | Raw markdown source |
 | `locale` | text | NOT NULL, DEFAULT 'en', CHECK `^[a-z]{2}(-[A-Z]{2})?$` | i18n: translations are separate revisions |
-| `rendered_html` | text | nullable | Cached pipeline output (contains `asset://` URIs) |
+| `rendered_html` | text | nullable | Cached pipeline output (image URLs are stable proxy paths) |
 | `embed_descriptors` | jsonb | nullable | `EmbedDescriptor[]` cached from pipeline |
 | `content_hash` | text | NOT NULL | SHA-256 of markdown, used as re-ingest gate |
 | `search_vector` | tsvector | GENERATED STORED | Weighted: title(A), summary(B), markdown(C) |
@@ -549,9 +549,16 @@ RESTRICT on asset deletion — don't delete assets that posts reference.
 
 All additive — no existing tables need modification.
 
-### `asset://` Protocol
+### Image URL Strategy
 
-Markdown references media via `asset://ast_abc123`. Resolution happens at render time (revision save). The `rendered_html` stores `asset://` URIs; resolution to CDN URLs happens at serve time via a thin string replacement pass (~1ms). This makes asset URL changes zero-cost — no re-rendering needed on CDN domain changes.
+Images are referenced via stable proxy URLs rather than presigned R2 URLs (which expire after ~1 hour). Two proxy endpoints handle resolution:
+
+- **`/api/blog/assets/[id]/image`** — looks up asset by ID, 302-redirects to a fresh presigned R2 URL. Used when inserting new images from the Explorer panel.
+- **`/api/blog/media/[...path]`** — accepts R2 storage keys directly (e.g. `blog/uuid.ext`), 302-redirects to a fresh presigned URL. Used by `Renderer.svelte` to rewrite legacy presigned URLs in existing content.
+
+Both endpoints set `Cache-Control: public, max-age=300` so browsers cache the redirect for 5 minutes. The presigned URL itself is valid for 1 hour.
+
+The original `asset://` protocol design was not implemented — proxy URLs achieve the same goal (URL-change resilience) without requiring a custom protocol parser in the rendering pipeline.
 
 ### Full-Text Search: Dual Strategy
 
@@ -889,8 +896,8 @@ $lib/components/blog/              # Rendering
     ...
 
 $lib/components/editor/            # Authoring (desk panel)
-  EditorPanel.svelte                # Panel wrapper (documentId, documentType)
-  EditorToolbar.svelte              # 3-zone toolbar with save indicator + publish button
+  EditorPanel.svelte                # Panel wrapper (documentId, documentType, menus, publish flow)
+  PublishConfirmStrip.svelte        # Inline confirm/cancel strip for publish action
   MarkdownSource.svelte             # Textarea (Phase 1) -> CM6 (Phase 2)
   SlashMenu.svelte                  # Slash command palette
   MetadataDrawer.svelte             # Title, slug, tags, status, locale, revision history
@@ -928,7 +935,7 @@ Blog posts are the first implementation. The domain module (`$lib/server/blog/`)
 - **New post**: Documents panel -> "New" button -> desk opens writing layout preset -> start writing -> IndexedDB autosave protects -> first explicit save (Cmd+S) creates post record + first revision in DB
 - **Existing post**: Documents panel -> browse/search -> click to open in editor panel
 - **Autosave**: client-side autosave to IndexedDB (prevents lost work on tab close). Call `navigator.storage.persist()` opportunistically on editor open. Explicit save to server creates a new immutable revision — no 30s autosave to avoid revision bloat.
-- **Publish**: toolbar Publish button -> inline confirm -> `publishPost()` -> RAG ingest + Neo4j blog graph sync + ISR revalidation
+- **Publish**: kebab menu (Post > Publish/Update) -> inline confirm strip -> `publishPost()` -> RAG ingest + Neo4j blog graph sync + ISR revalidation
 - **Unpublish**: MetadataDrawer -> status to "Archived" -> `unpublishPost()` -> soft-delete RAG document + remove Neo4j nodes + ISR revalidation
 
 ---
@@ -1096,7 +1103,7 @@ Approximate bundle: ~40-60KB minified + gzipped (server-side only). Public pages
 
 13. Typed DeskBus: `desk-bus.svelte.ts` with `DeskEvents` interface + `replayLast` option
 14. Layout presets: `layout-presets.ts` with writing preset (Editor | Preview)
-15. `$lib/components/editor/` — EditorPanel, EditorToolbar (3-zone with save indicator + publish button), MarkdownSource (Textarea), SlashMenu
+15. `$lib/components/editor/` — EditorPanel (with panel-menus registration for File/Post menus), PublishConfirmStrip, MarkdownSource (Textarea), SlashMenu
 16. `$lib/components/preview/` — PreviewPanel with loading/error/placeholder states + renderer registry
 17. Documents panel: renamed from Files, `i-lucide-file-text`, "New" button in header
 18. Add `editor` + `preview` + `documents` panel types to desk configuration
