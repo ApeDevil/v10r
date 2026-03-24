@@ -28,6 +28,10 @@
 ## Desk Menu System
 - [desk-menu-final-spec.md](desk-menu-final-spec.md) - FINAL spec: 3-label fixed MenuBar (File/View/Post), tab-dot save indicator (no StatusStrip), context menus with exact item lists, publish confirmation strip pattern, focusedLeafId in DockState, keyboard shortcut ownership table, accessibility checklist
 
+## Blog 3D Embed UX
+- [blog-3d-embed-ux.md](blog-3d-embed-ux.md) - Round 1 UX analysis: loading states, click-to-activate scroll pattern, fallback, fullscreen, mobile, multi-embed lazy init, author syntax spec, aria/keyboard/reduced-motion patterns
+- [blog-3d-embed-final-spec.md](blog-3d-embed-final-spec.md) - FINAL implementation contract: resolved alt semantics (optional), exact 7-state machine with transitions, mobile always-poster strategy, fullscreen re-mount rationale, render mode table, multi-embed coordination store, full accessibility annotation table
+
 ## Admin Panel Expansion
 - [admin-expansion-round2.md](admin-expansion-round2.md) - Round 2 refined UX: navigation reconciliation, impersonation banner, feature flags, maintenance mode, announcements, canonical data table pattern, prioritized page list
 - [admin-phase3-ux.md](admin-phase3-ux.md) - Phase 3 UX spec: Analytics page, Notifications page, Broadcast Announcements compose/list, user-facing announcement banner, empty/loading/error states, accessibility patterns

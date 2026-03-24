@@ -40,7 +40,7 @@ export const syntaxes = {
 		directive: 'leaf',
 		name: 'scene',
 		requiredAttrs: ['src'],
-		optionalAttrs: ['height', 'controls'],
+		optionalAttrs: ['height', 'controls', 'alt', 'poster'],
 		hasContent: false,
 		embedKind: 'scene',
 	},

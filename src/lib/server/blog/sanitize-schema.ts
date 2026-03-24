@@ -18,8 +18,11 @@ export const blogSanitizeSchema: Schema = {
 		...defaultSchema.attributes,
 		div: mergeArrays(defaultSchema.attributes?.div as string[] | undefined, [
 			'dataEmbedId',
+			'data-embed-id',
 			'dataEmbedKind',
+			'data-embed-kind',
 			'dataEmbedAttrs',
+			'data-embed-attrs',
 			'className',
 		]),
 		span: mergeArrays(defaultSchema.attributes?.span as string[] | undefined, [

@@ -108,6 +108,9 @@ export const MAX_BLOG_ASSETS = 100;
 /** Max blog image upload size (bytes, 10 MB) */
 export const MAX_BLOG_UPLOAD_SIZE = 10 * 1024 * 1024;
 
+/** Max blog 3D model upload size (bytes, 50 MB) */
+export const MAX_BLOG_3D_UPLOAD_SIZE = 50 * 1024 * 1024;
+
 /** Max conversations per user */
 export const MAX_CONVERSATIONS_PER_USER = 50;
 

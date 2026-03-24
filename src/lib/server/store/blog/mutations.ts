@@ -1,6 +1,6 @@
 import { DeleteObjectCommand, HeadObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { MAX_BLOG_UPLOAD_SIZE, PRESIGNED_URL_EXPIRY } from '$lib/server/config';
+import { MAX_BLOG_UPLOAD_SIZE, MAX_BLOG_3D_UPLOAD_SIZE, PRESIGNED_URL_EXPIRY } from '$lib/server/config';
 import { StoreError } from '../errors';
 import { BUCKET, s3 } from '../index';
 import type { PresignedUrlResult, UploadResult } from '../types';
@@ -17,6 +17,7 @@ const ALLOWED_MIME_TYPES = [
 	'image/gif',
 	'image/webp',
 	'image/svg+xml',
+	'model/gltf-binary',
 ];
 
 /**
@@ -37,10 +38,14 @@ export async function generateBlogUploadUrl(
 		);
 	}
 
-	if (fileSize > MAX_BLOG_UPLOAD_SIZE) {
+	const is3D = mimeType.startsWith('model/');
+	const maxSize = is3D ? MAX_BLOG_3D_UPLOAD_SIZE : MAX_BLOG_UPLOAD_SIZE;
+	const maxSizeMB = maxSize / (1024 * 1024);
+
+	if (fileSize > maxSize) {
 		throw new StoreError(
 			'limit',
-			`File size ${(fileSize / 1024 / 1024).toFixed(1)} MB exceeds the 10 MB limit`,
+			`File size ${(fileSize / 1024 / 1024).toFixed(1)} MB exceeds the ${maxSizeMB} MB limit`,
 		);
 	}
 

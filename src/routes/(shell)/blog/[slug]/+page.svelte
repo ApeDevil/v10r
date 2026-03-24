@@ -5,6 +5,7 @@ import { Typography } from '$lib/components/primitives';
 import { Tag } from '$lib/components/primitives';
 import { Renderer } from '$lib/components/blog';
 import { formatDate } from '$lib/i18n/formatting';
+import { hydrateEmbeds } from '$lib/actions/hydrate-embeds';
 
 let { data } = $props();
 
@@ -88,7 +89,9 @@ const jsonLdScript = $derived(
 			{/if}
 		</header>
 
-		<Renderer html={post.revision.renderedHtml} embeds={post.revision.embedDescriptors} />
+		<div use:hydrateEmbeds={post.revision.embedDescriptors ?? []}>
+			<Renderer html={post.revision.renderedHtml} embeds={post.revision.embedDescriptors} />
+		</div>
 
 		<nav class="back-nav">
 			<a href="/blog" class="back-link">

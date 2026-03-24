@@ -1,11 +1,11 @@
 /**
  * Embed component registry.
  * Maps embed kind -> dynamic import of Svelte component.
- * Phase 3: empty — embeds render as styled placeholders.
+ * Components are lazily loaded and code-split automatically.
  */
 export const embedRegistry: Record<string, () => Promise<{ default: unknown }>> = {
+	scene: () => import('./SceneEmbed.svelte'),
 	// 'callout': () => import('./Callout.svelte'),
 	// 'chart': () => import('./ChartEmbed.svelte'),
-	// 'scene': () => import('./SceneEmbed.svelte'),
 	// 'video': () => import('./VideoEmbed.svelte'),
 };
