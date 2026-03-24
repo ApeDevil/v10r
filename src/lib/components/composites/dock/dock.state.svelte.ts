@@ -29,6 +29,7 @@ export function createDockState(
 	let panels = $state<Record<string, PanelDefinition>>({ ...initialPanels });
 	let dragState = $state<DragState | null>(null);
 	let activityBarPosition = $state<ActivityBarPosition>(initialBarPosition);
+	let focusedLeafId = $state<string | null>(null);
 
 	// --- Tab operations ---
 
@@ -190,6 +191,44 @@ export function createDockState(
 		if (newRoot) root = newRoot;
 	}
 
+	// --- Focus tracking ---
+
+	function setFocusedLeaf(leafId: string): void {
+		if (focusedLeafId === leafId) return;
+		focusedLeafId = leafId;
+	}
+
+	// --- Panel updates ---
+
+	function updatePanel(panelId: string, partial: Partial<PanelDefinition>): void {
+		const existing = panels[panelId];
+		if (!existing) return;
+		// Avoid unnecessary reactive updates
+		const changed = Object.entries(partial).some(
+			([k, v]) => existing[k as keyof PanelDefinition] !== v,
+		);
+		if (!changed) return;
+		panels = { ...panels, [panelId]: { ...existing, ...partial } };
+	}
+
+	// --- Bulk close operations ---
+
+	function closeOtherPanels(leafId: string, keepPanelId: string): void {
+		const leaf = findNode(root, leafId);
+		if (!leaf || leaf.type !== 'leaf') return;
+		for (const tabId of leaf.tabs) {
+			if (tabId !== keepPanelId) closePanel(tabId);
+		}
+	}
+
+	function closeAllPanels(leafId: string): void {
+		const leaf = findNode(root, leafId);
+		if (!leaf || leaf.type !== 'leaf') return;
+		for (const tabId of [...leaf.tabs]) {
+			closePanel(tabId);
+		}
+	}
+
 	return {
 		get root() {
 			return root;
@@ -203,12 +242,25 @@ export function createDockState(
 		get activityBarPosition() {
 			return activityBarPosition;
 		},
+		get focusedLeafId() {
+			return focusedLeafId;
+		},
+		/** The panelId of the active tab in the focused leaf */
+		get focusedPanelId(): string | null {
+			if (!focusedLeafId) return null;
+			const leaf = findNode(root, focusedLeafId);
+			if (!leaf || leaf.type !== 'leaf') return null;
+			return leaf.activeTab || null;
+		},
 
 		activateTab,
 		closePanel,
+		closeOtherPanels,
+		closeAllPanels,
 		movePanel,
 		addPanel,
 		removePanel,
+		updatePanel,
 		resizeSplit,
 		reorderTab,
 
@@ -217,6 +269,7 @@ export function createDockState(
 		endDrag,
 		cancelDrag,
 
+		setFocusedLeaf,
 		setActivityBarPosition(pos: ActivityBarPosition) {
 			activityBarPosition = pos;
 		},

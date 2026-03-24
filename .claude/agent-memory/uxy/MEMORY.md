@@ -25,6 +25,9 @@
 - [files-panel-ux.md](files-panel-ux.md) - Unified Explorer panel design: tree structure, click behaviors per file type, upload UX, image-insertion mechanisms, file actions, visual hierarchy (DB vs R2), empty states, DocumentsPanel replacement recommendation, new DeskBus events, accessibility checklist
 - [explorer-final-spec.md](explorer-final-spec.md) - FINAL implementation-ready spec: resolves image preview location (FilePreview inside FilesPanel), image insertion MVP (drag + copy-markdown), exact row anatomy, component wireframes, upload flow with presigned URL gotcha, all empty states, inline delete/rename patterns, DeskBus additions, layout-presets update, accessibility checklist
 
+## Desk Menu System
+- [desk-menu-final-spec.md](desk-menu-final-spec.md) - FINAL spec: 3-label fixed MenuBar (File/View/Post), tab-dot save indicator (no StatusStrip), context menus with exact item lists, publish confirmation strip pattern, focusedLeafId in DockState, keyboard shortcut ownership table, accessibility checklist
+
 ## Admin Panel Expansion
 - [admin-expansion-round2.md](admin-expansion-round2.md) - Round 2 refined UX: navigation reconciliation, impersonation banner, feature flags, maintenance mode, announcements, canonical data table pattern, prioritized page list
 - [admin-phase3-ux.md](admin-phase3-ux.md) - Phase 3 UX spec: Analytics page, Notifications page, Broadcast Announcements compose/list, user-facing announcement banner, empty/loading/error states, accessibility patterns

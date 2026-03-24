@@ -1,14 +1,26 @@
 <script lang="ts">
+import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
 import { cn } from '$lib/utils/cn';
+import {
+	contextMenuContentVariants,
+	contextMenuItemVariants,
+	contextMenuSeparatorVariants,
+} from '$lib/components/composites/context-menu';
+import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import { getDockContext } from './dock.state.svelte';
 import type { LeafNode } from './dock.types';
+import DockLeafMenu from './DockLeafMenu.svelte';
+import DockLeafHelp from './DockLeafHelp.svelte';
 
 interface Props {
 	leaf: LeafNode;
+	isFocused?: boolean;
+	menus?: MenuBarMenu[];
+	panelType?: string | null;
 	class?: string;
 }
 
-let { leaf, class: className }: Props = $props();
+let { leaf, isFocused = false, menus = [], panelType = null, class: className }: Props = $props();
 
 const dock = getDockContext();
 
@@ -144,44 +156,113 @@ function removeGhost() {
 
 <div
 	class={cn('dock-tab-bar', className)}
-	role="tablist"
 	aria-label="Panel tabs"
 >
+	<div class="dock-tab-scroll" role="tablist">
 	{#each leaf.tabs as panelId, i (panelId)}
 		{@const panel = dock.panels[panelId]}
 		{@const isActive = leaf.activeTab === panelId}
 		{@const isDragging = dock.dragState?.panelId === panelId}
 		{#if panel}
-			<button
-				role="tab"
-				aria-selected={isActive}
-				tabindex={isActive ? 0 : -1}
-				class={cn(
-					'dock-tab',
-					isActive && 'active',
-					isDragging && 'dragging'
-				)}
-				onpointerdown={(e) => handlePointerDown(e, panelId)}
-				onkeydown={(e) => handleKeyDown(e, panelId, i)}
-			>
-				{#if panel.icon}
-					<span class={cn('dock-tab-icon', panel.icon)}></span>
-				{/if}
-				<span class="dock-tab-label">{panel.label}</span>
-				{#if panel.closable !== false}
-					<button
-						data-close-btn
-						class="dock-tab-close"
-						aria-label="Close {panel.label}"
-						tabindex={-1}
-						onclick={(e) => handleClose(e, panelId)}
-					>
-						<span class="i-lucide-x"></span>
-					</button>
-				{/if}
-			</button>
+			<ContextMenuPrimitive.Root>
+				<ContextMenuPrimitive.Trigger class="dock-tab-ctx-trigger">
+					{#snippet child({ props })}
+						<button
+							{...props}
+							role="tab"
+							aria-selected={isActive}
+							tabindex={isActive ? 0 : -1}
+							class={cn(
+								'dock-tab',
+								isActive && 'active',
+								isDragging && 'dragging'
+							)}
+							aria-label={panel.indicator ? `${panel.label} (${panel.indicator})` : panel.label}
+							onpointerdown={(e) => handlePointerDown(e, panelId)}
+							onkeydown={(e) => handleKeyDown(e, panelId, i)}
+						>
+							{#if panel.icon}
+								<span class={cn('dock-tab-icon', panel.icon)}></span>
+							{/if}
+							<span class="dock-tab-label">{panel.label}</span>
+							{#if panel.indicator}
+								<span
+									class={cn('dock-tab-dot', `dot-${panel.indicator}`)}
+									aria-hidden="true"
+								></span>
+							{/if}
+							{#if panel.closable !== false}
+								<button
+									data-close-btn
+									class="dock-tab-close"
+									aria-label="Close {panel.label}"
+									tabindex={-1}
+									onclick={(e) => handleClose(e, panelId)}
+								>
+									<span class="i-lucide-x"></span>
+								</button>
+							{/if}
+						</button>
+					{/snippet}
+				</ContextMenuPrimitive.Trigger>
+
+				<ContextMenuPrimitive.Portal>
+					<ContextMenuPrimitive.Content class={contextMenuContentVariants()}>
+						<ContextMenuPrimitive.Item
+							class={contextMenuItemVariants()}
+							onclick={() => dock.closePanel(panelId)}
+						>
+							<span class="i-lucide-x ctx-icon"></span>
+							Close
+						</ContextMenuPrimitive.Item>
+						<ContextMenuPrimitive.Item
+							class={contextMenuItemVariants()}
+							disabled={leaf.tabs.length <= 1}
+							onclick={() => dock.closeOtherPanels(leaf.id, panelId)}
+						>
+							<span class="i-lucide-x-circle ctx-icon"></span>
+							Close Others
+						</ContextMenuPrimitive.Item>
+						<ContextMenuPrimitive.Item
+							class={contextMenuItemVariants()}
+							onclick={() => dock.closeAllPanels(leaf.id)}
+						>
+							<span class="i-lucide-x-square ctx-icon"></span>
+							Close All
+						</ContextMenuPrimitive.Item>
+						<ContextMenuPrimitive.Separator class={contextMenuSeparatorVariants()} />
+						<ContextMenuPrimitive.Item
+							class={contextMenuItemVariants()}
+							onclick={() => dock.addPanel(
+								{ id: `${panel.type}-${Date.now()}`, type: panel.type, label: panel.label, icon: panel.icon, closable: true },
+								{ leafId: leaf.id, zone: 'right' },
+							)}
+						>
+							<span class="i-lucide-columns-2 ctx-icon"></span>
+							Split Right
+						</ContextMenuPrimitive.Item>
+						<ContextMenuPrimitive.Item
+							class={contextMenuItemVariants()}
+							onclick={() => dock.addPanel(
+								{ id: `${panel.type}-${Date.now()}`, type: panel.type, label: panel.label, icon: panel.icon, closable: true },
+								{ leafId: leaf.id, zone: 'bottom' },
+							)}
+						>
+							<span class="i-lucide-rows-2 ctx-icon"></span>
+							Split Down
+						</ContextMenuPrimitive.Item>
+					</ContextMenuPrimitive.Content>
+				</ContextMenuPrimitive.Portal>
+			</ContextMenuPrimitive.Root>
 		{/if}
 	{/each}
+	</div>
+	{#if isFocused}
+		<div class="dock-tab-actions">
+			<DockLeafHelp {panelType} />
+			<DockLeafMenu {menus} />
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -192,13 +273,29 @@ function removeGhost() {
 		background: var(--color-bg);
 		border-bottom: 1px solid var(--color-border);
 		min-height: 32px;
-		overflow-x: auto;
-		scrollbar-width: none;
 		user-select: none;
 	}
 
-	.dock-tab-bar::-webkit-scrollbar {
+	.dock-tab-scroll {
+		display: flex;
+		align-items: stretch;
+		flex: 1;
+		min-width: 0;
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+
+	.dock-tab-scroll::-webkit-scrollbar {
 		display: none;
+	}
+
+	.dock-tab-actions {
+		display: flex;
+		align-items: center;
+		flex-shrink: 0;
+		border-left: 1px solid var(--color-border);
+		padding: 0 2px;
+		gap: 1px;
 	}
 
 	.dock-tab {
@@ -248,6 +345,40 @@ function removeGhost() {
 		min-width: 0;
 	}
 
+	/* Context menu trigger must not add layout */
+	:global(.dock-tab-ctx-trigger) {
+		display: contents;
+	}
+
+	.dock-tab-dot {
+		width: 5px;
+		height: 5px;
+		border-radius: 50%;
+		flex-shrink: 0;
+	}
+
+	.dock-tab-dot.dot-unsaved {
+		background: var(--color-warning, #f59e0b);
+	}
+
+	.dock-tab-dot.dot-saving {
+		background: var(--color-muted);
+		animation: dot-pulse 1s ease-in-out infinite;
+	}
+
+	.dock-tab-dot.dot-error {
+		background: var(--color-error);
+	}
+
+	@keyframes dot-pulse {
+		50% { opacity: 0.3; }
+	}
+
+	.ctx-icon {
+		font-size: 14px;
+		flex-shrink: 0;
+	}
+
 	.dock-tab-close {
 		display: flex;
 		align-items: center;
@@ -268,5 +399,10 @@ function removeGhost() {
 	.dock-tab-close:hover {
 		opacity: 1 !important;
 		background: color-mix(in srgb, var(--color-fg) 15%, transparent);
+	}
+
+	/* Context menu highlight — same fix as ContextMenu.svelte */
+	:global([data-context-menu-content] [role='menuitem'][data-highlighted]) {
+		background-color: color-mix(in srgb, var(--color-muted) 10%, transparent);
 	}
 </style>

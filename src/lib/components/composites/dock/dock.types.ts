@@ -10,6 +10,8 @@ export interface PanelDefinition {
 	label: string;
 	icon?: string;
 	closable?: boolean;
+	/** Tab status indicator (e.g. unsaved dot on editor tabs) */
+	indicator?: 'unsaved' | 'saving' | 'error';
 }
 
 /** Binary split node — exactly 2 children */

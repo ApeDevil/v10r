@@ -20,18 +20,22 @@
 
 	let copied = $state(false);
 
+	function imageUrl(a: AssetListItem) {
+		return `/api/blog/assets/${a.id}/image`;
+	}
+
 	function copyMarkdown() {
 		if (!asset) return;
 		const alt = asset.altText || asset.fileName.replace(/\.[^.]+$/, '');
-		const md = `![${alt}](${asset.downloadUrl})`;
+		const md = `![${alt}](${imageUrl(asset)})`;
 		navigator.clipboard.writeText(md);
 		copied = true;
 		setTimeout(() => { copied = false; }, 1500);
 	}
 
 	function copyUrl() {
-		if (!asset?.downloadUrl) return;
-		navigator.clipboard.writeText(asset.downloadUrl);
+		if (!asset) return;
+		navigator.clipboard.writeText(imageUrl(asset));
 	}
 </script>
 
@@ -44,11 +48,9 @@
 			</button>
 		</div>
 
-		{#if asset.downloadUrl}
-			<div class="preview-image">
-				<img src={asset.downloadUrl} alt={asset.altText || asset.fileName} />
-			</div>
-		{/if}
+		<div class="preview-image">
+			<img src={imageUrl(asset)} alt={asset.altText || asset.fileName} />
+		</div>
 
 		<div class="preview-meta">
 			{#if asset.width && asset.height}

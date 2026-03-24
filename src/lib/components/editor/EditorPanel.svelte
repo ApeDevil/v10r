@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import { apiFetch } from '$lib/api';
-	import { getDeskBus, getDockContext, findLeafWithPanel } from '$lib/components/composites/dock';
+	import { getDeskBus, getDockContext, findLeafWithPanel, registerPanelMenus } from '$lib/components/composites/dock';
 	import { Spinner } from '$lib/components/primitives';
-	import EditorToolbar from './EditorToolbar.svelte';
+	import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 	import MarkdownSource from './MarkdownSource.svelte';
+	import PublishConfirmStrip from './PublishConfirmStrip.svelte';
 	import MetadataDrawer from './MetadataDrawer.svelte';
 	import type { SaveState } from './types';
 
@@ -51,6 +52,14 @@
 	let lastSavedAt = $state<Date | null>(null);
 	let savedMarkdown = $state('');
 	let showMetadata = $state(false);
+	let confirmingPublish = $state(false);
+	let confirmTimer: ReturnType<typeof setTimeout>;
+
+	// Sync tab indicator with save state
+	$effect(() => {
+		const indicator = saveState === 'saved' ? undefined : saveState === 'saving' ? 'saving' : 'unsaved';
+		dock.updatePanel(panelId, { indicator });
+	});
 
 	// Content change debounce for DeskBus
 	let contentTimer: ReturnType<typeof setTimeout>;
@@ -226,19 +235,100 @@
 		}, 500);
 	}
 
+	function startPublishConfirm() {
+		confirmingPublish = true;
+		clearTimeout(confirmTimer);
+		confirmTimer = setTimeout(() => { confirmingPublish = false; }, 10000);
+	}
+
+	function handlePublishConfirm() {
+		clearTimeout(confirmTimer);
+		confirmingPublish = false;
+		publish();
+	}
+
+	function cancelPublishConfirm() {
+		clearTimeout(confirmTimer);
+		confirmingPublish = false;
+	}
+
 	// Subscribe to image insertion from Explorer
 	const unsubInsert = bus.subscribe('files:insert-image', (payload) => {
 		if (!postId) return;
-		const md = `![${payload.altText}](${payload.downloadUrl})`;
+		const md = `![${payload.altText}](${payload.imageUrl})`;
 		markdown = markdown ? markdown + '\n' + md + '\n' : md + '\n';
 		saveState = 'unsaved';
 		clearTimeout(contentTimer);
 		contentTimer = setTimeout(publishContent, 300);
 	});
 
+	// Register menus for the global MenuBar
+	const editorMenus = $derived<MenuBarMenu[]>([
+		{
+			label: 'File',
+			items: [
+				...(saveState !== 'saved'
+					? [{ label: 'Save', icon: 'i-lucide-save', shortcut: 'Ctrl+S', onSelect: save }]
+					: []),
+				...(postId
+					? [
+							{ type: 'separator' as const },
+							{
+								label: 'Export as Markdown',
+								icon: 'i-lucide-download',
+								shortcut: 'Ctrl+Shift+X',
+								onSelect: async () => {
+									if (!postId) return;
+									try {
+										const res = await apiFetch(`/api/blog/posts/${postId}/export`);
+										if (!res.ok) throw new Error('Export failed');
+										const blob = await res.blob();
+										const url = URL.createObjectURL(blob);
+										const a = document.createElement('a');
+										a.href = url;
+										a.download = `${slug}.md`;
+										a.click();
+										URL.revokeObjectURL(url);
+									} catch (e) {
+										error = e instanceof Error ? e.message : 'Export failed';
+									}
+								},
+							},
+						]
+					: []),
+			],
+		},
+		...(postId
+			? [
+					{
+						label: 'Post',
+						items: [
+							{
+								label: 'Metadata...',
+								icon: 'i-lucide-settings',
+								shortcut: 'Ctrl+,',
+								onSelect: () => { showMetadata = !showMetadata; },
+							},
+							{ type: 'separator' as const },
+							...(status !== 'published'
+								? [{ label: 'Publish...', icon: 'i-lucide-globe', onSelect: startPublishConfirm }]
+								: [
+										{ label: 'Update...', icon: 'i-lucide-globe', onSelect: startPublishConfirm },
+									]),
+						],
+					} satisfies MenuBarMenu,
+				]
+			: []),
+	]);
+
+	$effect(() => {
+		return registerPanelMenus(panelId, { menuBar: editorMenus });
+	});
+
 	onDestroy(() => {
 		clearTimeout(contentTimer);
 		clearTimeout(tagTimer);
+		clearTimeout(confirmTimer);
 		unsubInsert();
 	});
 </script>
@@ -255,15 +345,13 @@
 			<p class="empty-text">Open a document from the Explorer</p>
 		</div>
 	{:else}
-		<EditorToolbar
-			{saveState}
-			{lastSavedAt}
-			postStatus={status}
-			hasDocument={!!postId}
-			onsave={save}
-			onpublish={publish}
-			ontogglemetadata={() => { showMetadata = !showMetadata; }}
-		/>
+		{#if confirmingPublish}
+			<PublishConfirmStrip
+				postStatus={status}
+				onconfirm={handlePublishConfirm}
+				oncancel={cancelPublishConfirm}
+			/>
+		{/if}
 
 		{#if error}
 			<div class="editor-error" role="alert">

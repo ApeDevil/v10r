@@ -2,9 +2,9 @@
 	import { onMount } from 'svelte';
 	import { apiFetch } from '$lib/api';
 	import { Button, Spinner } from '$lib/components/primitives';
-	import { getDockContext, getDeskBus } from '$lib/components/composites/dock';
+	import { getDockContext, getDeskBus, registerPanelMenus } from '$lib/components/composites/dock';
 	import type { PanelDefinition } from '$lib/components/composites/dock';
-	import ExplorerToolbar from './ExplorerToolbar.svelte';
+	import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 	import ExplorerTree from './ExplorerTree.svelte';
 	import ExplorerPreview from './ExplorerPreview.svelte';
 	import type { AssetListItem, PostListItem, UploadingItem } from './types';
@@ -94,7 +94,7 @@
 			assetId: a.id,
 			fileName: a.fileName,
 			altText: alt,
-			downloadUrl: a.downloadUrl ?? '',
+			imageUrl: `/api/blog/assets/${a.id}/image`,
 			_nonce: crypto.randomUUID(),
 		});
 	}
@@ -296,6 +296,25 @@
 		}
 	}
 
+	// Register menus for the global MenuBar
+	const explorerMenus = $derived<MenuBarMenu[]>([
+		{
+			label: 'File',
+			items: [
+				{ label: 'New Post', icon: 'i-lucide-plus', shortcut: 'Ctrl+N', onSelect: () => { showNewPostForm = !showNewPostForm; } },
+				{ type: 'separator' },
+				{ label: 'Import Markdown...', icon: 'i-lucide-file-up', onSelect: handleImportClick },
+				{ label: 'Upload Image...', icon: 'i-lucide-upload', onSelect: handleUploadClick },
+				{ type: 'separator' },
+				{ label: 'Refresh', icon: 'i-lucide-refresh-cw', onSelect: fetchAll },
+			],
+		},
+	]);
+
+	$effect(() => {
+		return registerPanelMenus('explorer', { menuBar: explorerMenus });
+	});
+
 	onMount(() => {
 		fetchAll();
 	});
@@ -327,13 +346,6 @@
 	role="region"
 	aria-label="Explorer"
 >
-	<ExplorerToolbar
-		onrefresh={fetchAll}
-		onnewpost={() => { showNewPostForm = !showNewPostForm; }}
-		onupload={handleUploadClick}
-		onimport={handleImportClick}
-	/>
-
 	{#if showNewPostForm}
 		<form class="new-post-form" onsubmit={(e) => { e.preventDefault(); createNewPost(); }}>
 			<label class="sr-only" for="new-post-slug">Post slug</label>
@@ -380,6 +392,8 @@
 			onselectpost={openPost}
 			onselectasset={selectAsset}
 			onexportpost={exportPost}
+			oninsertasset={insertAsset}
+			oncopyasseturl={(a) => { navigator.clipboard.writeText(`/api/blog/assets/${a.id}/image`); }}
 			ondeleteasset={deleteAsset}
 		/>
 

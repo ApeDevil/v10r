@@ -1,9 +1,10 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
 import { browser } from '$app/environment';
+import DeskShortcuts from './DeskShortcuts.svelte';
 import DockActivityBar from './DockActivityBar.svelte';
 import DockNode from './DockNode.svelte';
-import { hasPanelType } from './dock.operations';
+import { collectLeaves, hasPanelType } from './dock.operations';
 import { loadDockState, saveDockState } from './dock.persistence';
 import { setDeskBusContext } from './desk-bus.svelte';
 import { setDockContext } from './dock.state.svelte';
@@ -56,6 +57,15 @@ if (persist && browser) {
 	});
 }
 
+// Auto-focus the first leaf so the kebab menu is visible on load
+if (browser) {
+	$effect(() => {
+		if (dock.focusedLeafId) return;
+		const leaves = collectLeaves(dock.root);
+		if (leaves.length > 0) dock.setFocusedLeaf(leaves[0].id);
+	});
+}
+
 // Open a panel type via prop (e.g. from URL search param)
 $effect(() => {
 	if (!openPanel) return;
@@ -76,6 +86,8 @@ $effect(() => {
 	class="dock-layout {className ?? ''}"
 	data-bar-position={dock.activityBarPosition}
 >
+	<DeskShortcuts />
+
 	{#if activityBarItems && activityBarItems.length > 0}
 		<DockActivityBar
 			items={activityBarItems}

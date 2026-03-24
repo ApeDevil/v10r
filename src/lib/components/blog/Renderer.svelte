@@ -8,10 +8,21 @@ interface Props {
 }
 
 let { html, embeds, class: className }: Props = $props();
+
+/**
+ * Rewrite legacy presigned R2 URLs to stable proxy URLs.
+ * Matches: https://*.r2.cloudflarestorage.com/blog/uuid.ext?X-Amz-...
+ * Rewrites to: /api/blog/media/blog/uuid.ext
+ */
+const R2_IMG_RE = /https:\/\/[^"'\s]+\.r2\.cloudflarestorage\.com\/(blog\/[^"'\s?]+)\?[^"'\s]*/g;
+
+const safeHtml = $derived(
+	html.replace(R2_IMG_RE, (_match, key) => `/api/blog/media/${key}`),
+);
 </script>
 
 <article class={cn('blog-prose', className)}>
-	{@html html}
+	{@html safeHtml}
 </article>
 
 <style>

@@ -1,5 +1,11 @@
 <script lang="ts">
+	import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
 	import { Badge } from '$lib/components/primitives';
+	import {
+		contextMenuContentVariants,
+		contextMenuItemVariants,
+		contextMenuSeparatorVariants,
+	} from '$lib/components/composites/context-menu';
 	import type { AssetListItem, PostListItem, UploadingItem } from './types';
 
 	function formatBytes(bytes: number): string {
@@ -20,6 +26,9 @@
 		onselectpost: (post: PostListItem) => void;
 		onselectasset: (asset: AssetListItem) => void;
 		onexportpost: (post: PostListItem) => void;
+		ondeletepost?: (post: PostListItem) => void;
+		oninsertasset?: (asset: AssetListItem) => void;
+		oncopyasseturl?: (asset: AssetListItem) => void;
 		ondeleteasset: (asset: AssetListItem) => void;
 	}
 
@@ -33,6 +42,9 @@
 		onselectpost,
 		onselectasset,
 		onexportpost,
+		ondeletepost,
+		oninsertasset,
+		oncopyasseturl,
 		ondeleteasset,
 	}: Props = $props();
 
@@ -45,14 +57,13 @@
 	function handleDragStart(e: DragEvent, asset: AssetListItem) {
 		if (!e.dataTransfer) return;
 		const alt = asset.altText || asset.fileName.replace(/\.[^.]+$/, '');
-		const markdown = `![${alt}](${asset.downloadUrl})`;
+		const imageUrl = `/api/blog/assets/${asset.id}/image`;
+		const markdown = `![${alt}](${imageUrl})`;
 		e.dataTransfer.setData('text/plain', markdown);
 		e.dataTransfer.setData(
 			'application/x-explorer-asset',
 			JSON.stringify({
-				assetId: asset.id,
-				fileName: asset.fileName,
-				downloadUrl: asset.downloadUrl,
+				id: asset.id,
 				altText: alt,
 			}),
 		);
@@ -83,27 +94,53 @@
 			</div>
 		{:else}
 			{#each posts as p (p.id)}
-				<div class="tree-file tree-depth-1 tree-file-post" role="treeitem" aria-selected={false}>
-					<button class="tree-file-btn" onclick={() => onselectpost(p)}>
-						<span class="tree-toggle"></span>
-						<span class="i-lucide-file-text tree-icon tree-icon-md"></span>
-						<span class="tree-file-info">
-							<span class="tree-file-name">{p.slug}.md</span>
-							<span class="tree-file-meta">
-								<Badge variant={statusVariant(p.status)}>{p.status}</Badge>
-								<span class="tree-file-title">{p.title || '(untitled)'}</span>
-							</span>
-						</span>
-					</button>
-					<button
-						class="tree-action"
-						onclick={(e) => { e.stopPropagation(); onexportpost(p); }}
-						title="Download .md"
-						aria-label="Download {p.slug}.md"
-					>
-						<span class="i-lucide-download"></span>
-					</button>
-				</div>
+				<ContextMenuPrimitive.Root>
+					<ContextMenuPrimitive.Trigger class="tree-ctx-trigger">
+						{#snippet child({ props })}
+							<div {...props} class="tree-file tree-depth-1 tree-file-post" role="treeitem" aria-selected={false}>
+								<button class="tree-file-btn" onclick={() => onselectpost(p)}>
+									<span class="tree-toggle"></span>
+									<span class="i-lucide-file-text tree-icon tree-icon-md"></span>
+									<span class="tree-file-info">
+										<span class="tree-file-name">{p.slug}.md</span>
+										<span class="tree-file-meta">
+											<Badge variant={statusVariant(p.status)}>{p.status}</Badge>
+											<span class="tree-file-title">{p.title || '(untitled)'}</span>
+										</span>
+									</span>
+								</button>
+								<button
+									class="tree-action"
+									onclick={(e) => { e.stopPropagation(); onexportpost(p); }}
+									title="Download .md"
+									aria-label="Download {p.slug}.md"
+								>
+									<span class="i-lucide-download"></span>
+								</button>
+							</div>
+						{/snippet}
+					</ContextMenuPrimitive.Trigger>
+					<ContextMenuPrimitive.Portal>
+						<ContextMenuPrimitive.Content class={contextMenuContentVariants()}>
+							<ContextMenuPrimitive.Item class={contextMenuItemVariants()} onclick={() => onselectpost(p)}>
+								<span class="i-lucide-pen-line ctx-icon"></span>
+								Open
+							</ContextMenuPrimitive.Item>
+							<ContextMenuPrimitive.Separator class={contextMenuSeparatorVariants()} />
+							<ContextMenuPrimitive.Item class={contextMenuItemVariants()} onclick={() => onexportpost(p)}>
+								<span class="i-lucide-download ctx-icon"></span>
+								Export as Markdown
+							</ContextMenuPrimitive.Item>
+							{#if ondeletepost}
+								<ContextMenuPrimitive.Separator class={contextMenuSeparatorVariants()} />
+								<ContextMenuPrimitive.Item class={contextMenuItemVariants()} onclick={() => ondeletepost(p)}>
+									<span class="i-lucide-trash-2 ctx-icon"></span>
+									Delete
+								</ContextMenuPrimitive.Item>
+							{/if}
+						</ContextMenuPrimitive.Content>
+					</ContextMenuPrimitive.Portal>
+				</ContextMenuPrimitive.Root>
 			{/each}
 		{/if}
 	{/if}
@@ -161,30 +198,59 @@
 				</div>
 			{:else}
 				{#each assets as a (a.id)}
-					<div
-						class="tree-file tree-depth-2"
-						class:tree-selected={selectedAssetId === a.id}
-						role="treeitem"
-						aria-selected={selectedAssetId === a.id}
-						tabindex={0}
-					draggable="true"
-						ondragstart={(e) => handleDragStart(e, a)}
-					>
-						<button class="tree-file-btn" onclick={() => onselectasset(a)}>
-							<span class="tree-toggle"></span>
-							<span class="i-lucide-image tree-icon tree-icon-image"></span>
-							<span class="tree-file-name">{a.fileName}</span>
-							<span class="tree-file-size">{formatBytes(a.fileSize)}</span>
-						</button>
-						<button
-							class="tree-action"
-							onclick={(e) => { e.stopPropagation(); ondeleteasset(a); }}
-							title="Delete"
-							aria-label="Delete {a.fileName}"
-						>
-							<span class="i-lucide-trash-2"></span>
-						</button>
-					</div>
+					<ContextMenuPrimitive.Root>
+						<ContextMenuPrimitive.Trigger class="tree-ctx-trigger">
+							{#snippet child({ props })}
+								<div
+									{...props}
+									class="tree-file tree-depth-2"
+									class:tree-selected={selectedAssetId === a.id}
+									role="treeitem"
+									aria-selected={selectedAssetId === a.id}
+									tabindex={0}
+									draggable="true"
+									ondragstart={(e) => handleDragStart(e, a)}
+								>
+									<button class="tree-file-btn" onclick={() => onselectasset(a)}>
+										<span class="tree-toggle"></span>
+										<span class="i-lucide-image tree-icon tree-icon-image"></span>
+										<span class="tree-file-name">{a.fileName}</span>
+										<span class="tree-file-size">{formatBytes(a.fileSize)}</span>
+									</button>
+									<button
+										class="tree-action"
+										onclick={(e) => { e.stopPropagation(); ondeleteasset(a); }}
+										title="Delete"
+										aria-label="Delete {a.fileName}"
+									>
+										<span class="i-lucide-trash-2"></span>
+									</button>
+								</div>
+							{/snippet}
+						</ContextMenuPrimitive.Trigger>
+						<ContextMenuPrimitive.Portal>
+							<ContextMenuPrimitive.Content class={contextMenuContentVariants()}>
+								{#if oninsertasset}
+									<ContextMenuPrimitive.Item class={contextMenuItemVariants()} onclick={() => oninsertasset(a)}>
+										<span class="i-lucide-image-plus ctx-icon"></span>
+										Insert into Document
+									</ContextMenuPrimitive.Item>
+									<ContextMenuPrimitive.Separator class={contextMenuSeparatorVariants()} />
+								{/if}
+								{#if oncopyasseturl && a.downloadUrl}
+									<ContextMenuPrimitive.Item class={contextMenuItemVariants()} onclick={() => oncopyasseturl(a)}>
+										<span class="i-lucide-link ctx-icon"></span>
+										Copy URL
+									</ContextMenuPrimitive.Item>
+									<ContextMenuPrimitive.Separator class={contextMenuSeparatorVariants()} />
+								{/if}
+								<ContextMenuPrimitive.Item class={contextMenuItemVariants()} onclick={() => ondeleteasset(a)}>
+									<span class="i-lucide-trash-2 ctx-icon"></span>
+									Delete
+								</ContextMenuPrimitive.Item>
+							</ContextMenuPrimitive.Content>
+						</ContextMenuPrimitive.Portal>
+					</ContextMenuPrimitive.Root>
 				{/each}
 			{/if}
 		{/if}
@@ -399,5 +465,19 @@
 	.tree-empty-icon {
 		font-size: 14px;
 		opacity: 0.5;
+	}
+
+	/* Context menu trigger must not add layout */
+	:global(.tree-ctx-trigger) {
+		display: contents;
+	}
+
+	.ctx-icon {
+		font-size: 14px;
+		flex-shrink: 0;
+	}
+
+	:global([data-context-menu-content] [role='menuitem'][data-highlighted]) {
+		background-color: color-mix(in srgb, var(--color-muted) 10%, transparent);
 	}
 </style>

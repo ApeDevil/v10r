@@ -33,8 +33,8 @@
 		e.preventDefault();
 
 		try {
-			const data = JSON.parse(json) as { altText: string; downloadUrl: string };
-			const markdown = `![${data.altText}](${data.downloadUrl})`;
+			const data = JSON.parse(json) as { id: string; altText: string };
+			const markdown = `![${data.altText}](/api/blog/assets/${data.id}/image)`;
 
 			const textarea = e.currentTarget as HTMLTextAreaElement;
 			const pos = textarea.selectionStart ?? value.length;

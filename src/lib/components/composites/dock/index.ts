@@ -1,3 +1,4 @@
+export { default as DeskShortcuts } from './DeskShortcuts.svelte';
 export { default as DockActivityBar } from './DockActivityBar.svelte';
 export { default as DockDropOverlay } from './DockDropOverlay.svelte';
 export { default as DockLayout } from './DockLayout.svelte';
@@ -23,6 +24,14 @@ export { clearDockState, loadDockState, saveDockState } from './dock.persistence
 export { createDeskBus, type DeskBus, type DeskEvents, getDeskBus, setDeskBusContext } from './desk-bus.svelte';
 export { LAYOUT_PRESETS, type LayoutPreset } from './layout-presets';
 export { createDockState, type DockState, getDockContext, setDockContext } from './dock.state.svelte';
+export {
+	getActiveMenus,
+	getFocusedPanelId,
+	hasPanelMenus,
+	type PanelMenus,
+	registerPanelMenus,
+	setFocusedPanel,
+} from './panel-menus.svelte';
 export type {
 	ActivityBarItem,
 	ActivityBarPosition,

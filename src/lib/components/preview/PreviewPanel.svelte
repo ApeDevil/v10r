@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import { apiFetch } from '$lib/api';
-	import { getDeskBus } from '$lib/components/composites/dock';
+	import { getDeskBus, registerPanelMenus } from '$lib/components/composites/dock';
 	import { Spinner } from '$lib/components/primitives';
 	import Renderer from '$lib/components/blog/Renderer.svelte';
+	import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 
 	const bus = getDeskBus();
 
@@ -64,6 +65,13 @@
 			html = '';
 			embeds = null;
 		}
+	});
+
+	// Register menus for the global MenuBar
+	const previewMenus: MenuBarMenu[] = [];
+
+	$effect(() => {
+		return registerPanelMenus('preview', { menuBar: previewMenus });
 	});
 
 	onDestroy(() => {
