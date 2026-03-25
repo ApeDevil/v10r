@@ -20,9 +20,9 @@ export interface PostListItem {
 	title: string;
 	summary: string | null;
 	/** Subject area (one per post, null for drafts) */
-	domain: { id: string; slug: string; name: string } | null;
+	domain: { id: string; slug: string; name: string; icon: string | null; color: number | null } | null;
 	/** Content format categories (zero-to-many) */
-	tags: { id: string; slug: string; name: string }[];
+	tags: { id: string; slug: string; name: string; icon: string | null; color: number | null; glyph: string | null }[];
 }
 
 export interface PostDetail extends BlogPost {
@@ -45,7 +45,7 @@ export interface PublishedPost {
 		locale: string;
 		createdAt: Date;
 	};
-	domain: { id: string; slug: string; name: string } | null;
+	domain: { id: string; slug: string; name: string; icon: string | null; color: number | null } | null;
 	tags: BlogTag[];
 }
 

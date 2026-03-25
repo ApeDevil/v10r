@@ -32,6 +32,9 @@
 - [blog-3d-embed-ux.md](blog-3d-embed-ux.md) - Round 1 UX analysis: loading states, click-to-activate scroll pattern, fallback, fullscreen, mobile, multi-embed lazy init, author syntax spec, aria/keyboard/reduced-motion patterns
 - [blog-3d-embed-final-spec.md](blog-3d-embed-final-spec.md) - FINAL implementation contract: resolved alt semantics (optional), exact 7-state machine with transitions, mobile always-poster strategy, fullscreen re-mount rationale, render mode table, multi-embed coordination store, full accessibility annotation table
 
+## Domain Icon Customization UX
+- [domain-icon-ux.md](domain-icon-ux.md) - UX spec: two-tier icon input (Lucide preset grid + paste SVG), Edit modal per domain row, live preview chip, initial-letter fallback, chart color swatches, SVG sanitization contract, DB schema additions
+
 ## Admin Panel Expansion
 - [admin-expansion-round2.md](admin-expansion-round2.md) - Round 2 refined UX: navigation reconciliation, impersonation banner, feature flags, maintenance mode, announcements, canonical data table pattern, prioritized page list
 - [admin-phase3-ux.md](admin-phase3-ux.md) - Phase 3 UX spec: Analytics page, Notifications page, Broadcast Announcements compose/list, user-facing announcement banner, empty/loading/error states, accessibility patterns

@@ -122,24 +122,27 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 			tagId: tag.id,
 			tagSlug: tag.slug,
 			tagName: tag.name,
+			tagIcon: tag.icon,
+			tagColor: tag.color,
+			tagGlyph: tag.glyph,
 		})
 		.from(postTag)
 		.innerJoin(tag, eq(postTag.tagId, tag.id))
 		.where(inArray(postTag.postId, postIds));
 
-	const tagMap = new Map<string, { id: string; slug: string; name: string }[]>();
+	const tagMap = new Map<string, { id: string; slug: string; name: string; icon: string | null; color: number | null; glyph: string | null }[]>();
 	for (const row of postTagRows) {
 		const tags = tagMap.get(row.postId) ?? [];
-		tags.push({ id: row.tagId, slug: row.tagSlug, name: row.tagName });
+		tags.push({ id: row.tagId, slug: row.tagSlug, name: row.tagName, icon: row.tagIcon, color: row.tagColor, glyph: row.tagGlyph });
 		tagMap.set(row.postId, tags);
 	}
 
 	// Fetch domains for posts that have one
 	const domainIds = [...new Set(posts.map((p) => p.domainId).filter(Boolean))] as string[];
-	const domainMap = new Map<string, { id: string; slug: string; name: string }>();
+	const domainMap = new Map<string, { id: string; slug: string; name: string; icon: string | null; color: number | null }>();
 	if (domainIds.length > 0) {
 		const domainRows = await db
-			.select({ id: domain.id, slug: domain.slug, name: domain.name })
+			.select({ id: domain.id, slug: domain.slug, name: domain.name, icon: domain.icon, color: domain.color })
 			.from(domain)
 			.where(inArray(domain.id, domainIds));
 		for (const d of domainRows) {
@@ -210,10 +213,10 @@ export async function getPublishedPostForSlug(
 	if (!row) return null;
 
 	// Fetch domain
-	let postDomain: { id: string; slug: string; name: string } | null = null;
+	let postDomain: { id: string; slug: string; name: string; icon: string | null; color: number | null } | null = null;
 	if (row.domainId) {
 		const [d] = await db
-			.select({ id: domain.id, slug: domain.slug, name: domain.name })
+			.select({ id: domain.id, slug: domain.slug, name: domain.name, icon: domain.icon, color: domain.color })
 			.from(domain)
 			.where(eq(domain.id, row.domainId))
 			.limit(1);
@@ -222,7 +225,7 @@ export async function getPublishedPostForSlug(
 
 	// Fetch tags
 	const tags = await db
-		.select({ id: tag.id, slug: tag.slug, name: tag.name })
+		.select({ id: tag.id, slug: tag.slug, name: tag.name, icon: tag.icon, color: tag.color, glyph: tag.glyph })
 		.from(tag)
 		.innerJoin(postTag, eq(tag.id, postTag.tagId))
 		.where(eq(postTag.postId, row.postId));
@@ -306,11 +309,14 @@ export async function listTags(): Promise<TagWithCount[]> {
 			id: tag.id,
 			slug: tag.slug,
 			name: tag.name,
+			icon: tag.icon,
+			color: tag.color,
+			glyph: tag.glyph,
 			postCount: count(postTag.postId),
 		})
 		.from(tag)
 		.leftJoin(postTag, eq(tag.id, postTag.tagId))
-		.groupBy(tag.id, tag.slug, tag.name)
+		.groupBy(tag.id, tag.slug, tag.name, tag.icon, tag.color, tag.glyph)
 		.orderBy(asc(tag.name));
 
 	return rows;
@@ -323,11 +329,14 @@ export async function listDomains(): Promise<DomainWithCount[]> {
 			id: domain.id,
 			slug: domain.slug,
 			name: domain.name,
+			icon: domain.icon,
+			color: domain.color,
+			description: domain.description,
 			postCount: count(post.id),
 		})
 		.from(domain)
 		.leftJoin(post, and(eq(post.domainId, domain.id), isNull(post.deletedAt)))
-		.groupBy(domain.id, domain.slug, domain.name)
+		.groupBy(domain.id, domain.slug, domain.name, domain.icon, domain.color, domain.description)
 		.orderBy(asc(domain.name));
 }
 
@@ -439,7 +448,7 @@ export async function listPublishedPostsForFeed(limit = 20): Promise<
 /** Get tags for a specific post. */
 export async function getTagsForPost(postId: string) {
 	return db
-		.select({ id: tag.id, slug: tag.slug, name: tag.name })
+		.select({ id: tag.id, slug: tag.slug, name: tag.name, icon: tag.icon, color: tag.color, glyph: tag.glyph })
 		.from(tag)
 		.innerJoin(postTag, eq(tag.id, postTag.tagId))
 		.where(eq(postTag.postId, postId));

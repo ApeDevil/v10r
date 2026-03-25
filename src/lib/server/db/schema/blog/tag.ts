@@ -3,7 +3,7 @@
  * Tags have no timestamps or soft delete. post_tag is a junction table.
  */
 import { sql } from 'drizzle-orm';
-import { check, index, primaryKey, text, uniqueIndex } from 'drizzle-orm/pg-core';
+import { check, index, integer, primaryKey, text, uniqueIndex } from 'drizzle-orm/pg-core';
 import { blogSchema, post } from './post';
 
 export const tag = blogSchema.table(
@@ -12,10 +12,14 @@ export const tag = blogSchema.table(
 		id: text('id').primaryKey(),
 		slug: text('slug').notNull(),
 		name: text('name').notNull(),
+		icon: text('icon'),
+		color: integer('color'),
+		glyph: text('glyph'),
 	},
 	(table) => [
 		uniqueIndex('blog_tag_slug_idx').on(table.slug),
 		check('tag_slug_format', sql`${table.slug} ~ '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$'`),
+		check('tag_color_range', sql`${table.color} IS NULL OR (${table.color} >= 1 AND ${table.color} <= 8)`),
 	],
 );
 

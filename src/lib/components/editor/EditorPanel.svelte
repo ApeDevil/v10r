@@ -43,10 +43,10 @@
 	let summary = $state('');
 	let markdown = $state('');
 	let locale = $state('en');
-	let tags = $state<{ id: string; slug: string; name: string }[]>([]);
-	let availableTags = $state<{ id: string; slug: string; name: string }[]>([]);
-	let domain = $state<{ id: string; slug: string; name: string } | null>(null);
-	let availableDomains = $state<{ id: string; slug: string; name: string }[]>([]);
+	let tags = $state<{ id: string; slug: string; name: string; icon: string | null; color: number | null; glyph: string | null }[]>([]);
+	let availableTags = $state<{ id: string; slug: string; name: string; icon: string | null; color: number | null; glyph: string | null }[]>([]);
+	let domain = $state<{ id: string; slug: string; name: string; icon: string | null; color: number | null } | null>(null);
+	let availableDomains = $state<{ id: string; slug: string; name: string; icon: string | null; color: number | null }[]>([]);
 	let revisionId = $state<string | null>(null);
 
 	// Editor state

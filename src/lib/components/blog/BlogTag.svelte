@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { Tag } from '$lib/components/primitives';
-	import { resolveBlogTagVisuals } from '$lib/config/blog-tags';
 
 	interface Props {
-		tag: { slug: string; name: string };
+		tag: { slug: string; name: string; icon?: string | null; color?: number | null; glyph?: string | null };
 		tier: 'domain' | 'category';
 		size?: 'sm' | 'md';
 		class?: string;
@@ -11,24 +10,28 @@
 
 	let { tag, tier, size = 'sm', class: className }: Props = $props();
 
-	const visuals = $derived(resolveBlogTagVisuals(tag, tier));
+	const tagIcon = $derived(tag.icon || undefined);
+	const tagColor = $derived(tag.color || undefined);
+	const tagGlyph = $derived(tag.glyph || (!tag.icon ? tag.name.charAt(0).toUpperCase() : undefined));
 </script>
 
-{#if tier === 'domain' && visuals.chartColor}
-	<span class="domain-tag" style="--tag-hue: var(--chart-{visuals.chartColor})">
+{#if tagColor}
+	<span class="colored-tag" style="--tag-hue: var(--chart-{tagColor})">
 		<Tag
-			label={visuals.label}
-			icon={visuals.icon}
-			shape={visuals.shape}
+			label={tag.name}
+			icon={tagIcon}
+			glyph={!tagIcon ? tagGlyph : undefined}
+			shape={tier === 'domain' ? 'pill' : 'rounded'}
 			{size}
 			class={className}
 		/>
 	</span>
 {:else}
 	<Tag
-		label={visuals.label}
-		glyph={visuals.glyph}
-		shape={visuals.shape}
+		label={tag.name}
+		icon={tagIcon}
+		glyph={!tagIcon ? tagGlyph : undefined}
+		shape={tier === 'domain' ? 'pill' : 'rounded'}
 		variant="secondary"
 		{size}
 		class={className}
@@ -36,7 +39,7 @@
 {/if}
 
 <style>
-	.domain-tag :global(.tag) {
+	.colored-tag :global(.tag) {
 		border: 1px solid var(--tag-hue);
 		color: var(--tag-hue);
 		background: color-mix(in srgb, var(--tag-hue) 10%, transparent);

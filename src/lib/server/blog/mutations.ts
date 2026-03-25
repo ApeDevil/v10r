@@ -199,18 +199,29 @@ export async function unpublishPost(postId: string): Promise<void> {
 // ── Tags ─────────────────────────────────────────────────────────────
 
 /** Create a new tag. */
-export async function createTag(name: string, slug: string): Promise<BlogTag> {
+export async function createTag(
+	name: string,
+	slug: string,
+	opts?: { icon?: string | null; color?: number | null; glyph?: string | null },
+): Promise<BlogTag> {
 	const [row] = await db
 		.insert(tag)
-		.values({ id: createId.tag(), slug, name })
+		.values({
+			id: createId.tag(),
+			slug,
+			name,
+			icon: opts?.icon ?? null,
+			color: opts?.color ?? null,
+			glyph: opts?.glyph ?? null,
+		})
 		.returning();
 	return row;
 }
 
-/** Rename a tag. */
-export async function renameTag(
+/** Update a tag. */
+export async function updateTag(
 	tagId: string,
-	data: { name?: string; slug?: string },
+	data: { name?: string; slug?: string; icon?: string | null; color?: number | null; glyph?: string | null },
 ): Promise<BlogTag | null> {
 	const [row] = await db
 		.update(tag)
@@ -239,18 +250,29 @@ export async function setPostTags(postId: string, tagIds: string[]): Promise<voi
 // ── Domains ─────────────────────────────────────────────────────────
 
 /** Create a new domain. */
-export async function createDomain(name: string, slug: string): Promise<BlogDomain> {
+export async function createDomain(
+	name: string,
+	slug: string,
+	opts?: { icon?: string | null; color?: number | null; description?: string | null },
+): Promise<BlogDomain> {
 	const [row] = await db
 		.insert(domain)
-		.values({ id: createId.domain(), slug, name })
+		.values({
+			id: createId.domain(),
+			slug,
+			name,
+			icon: opts?.icon ?? null,
+			color: opts?.color ?? null,
+			description: opts?.description ?? null,
+		})
 		.returning();
 	return row;
 }
 
-/** Rename a domain. */
-export async function renameDomain(
+/** Update a domain. */
+export async function updateDomain(
 	domainId: string,
-	data: { name?: string; slug?: string },
+	data: { name?: string; slug?: string; icon?: string | null; color?: number | null; description?: string | null },
 ): Promise<BlogDomain | null> {
 	const [row] = await db
 		.update(domain)

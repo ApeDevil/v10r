@@ -7,7 +7,7 @@ export interface EditorDocument {
 	title: string;
 	summary: string;
 	markdown: string;
-	tags: { id: string; slug: string; name: string }[];
+	tags: { id: string; slug: string; name: string; icon: string | null; color: number | null; glyph: string | null }[];
 	locale: string;
 	lastSavedAt: Date | null;
 	revisionId: string | null;

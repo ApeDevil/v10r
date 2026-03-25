@@ -21,7 +21,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	let postDomain = null;
 	if (post.domainId) {
 		const [d] = await db
-			.select({ id: domain.id, slug: domain.slug, name: domain.name })
+			.select({ id: domain.id, slug: domain.slug, name: domain.name, icon: domain.icon, color: domain.color })
 			.from(domain)
 			.where(eq(domain.id, post.domainId))
 			.limit(1);

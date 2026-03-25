@@ -8,11 +8,11 @@
 		slug: string;
 		summary: string;
 		status: 'draft' | 'published' | 'archived';
-		domain: { id: string; slug: string; name: string } | null;
-		availableDomains: { id: string; slug: string; name: string }[];
-		tags: { id: string; slug: string; name: string }[];
+		domain: { id: string; slug: string; name: string; icon: string | null; color: number | null } | null;
+		availableDomains: { id: string; slug: string; name: string; icon: string | null; color: number | null }[];
+		tags: { id: string; slug: string; name: string; icon: string | null; color: number | null; glyph: string | null }[];
 		locale: string;
-		availableTags: { id: string; slug: string; name: string }[];
+		availableTags: { id: string; slug: string; name: string; icon: string | null; color: number | null; glyph: string | null }[];
 		ontitlechange: (v: string) => void;
 		onslugchange: (v: string) => void;
 		onsummarychange: (v: string) => void;
