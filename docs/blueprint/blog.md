@@ -475,15 +475,31 @@ Index: `(revision_id)` for reverse lookups.
 
 **Rationale**: a single `published_revision_id` column cannot represent per-locale publication. This junction table stores exactly one published revision per `(post_id, locale)` pair. Publishing a new revision for a locale is an UPSERT on this table.
 
-#### `blog.tag`
+#### `blog.domain` — Subject Areas
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | text | PK, `dom_` prefix |
+| `slug` | text | NOT NULL, UNIQUE, CHECK `^[a-z0-9]([a-z0-9-]*[a-z0-9])?$` |
+| `name` | text | NOT NULL |
+| `icon` | text | Nullable. Lucide icon CSS class (e.g. `i-lucide-code`) |
+| `color` | integer | Nullable. Chart token index 1-8, CHECK `1 <= color <= 8` |
+| `description` | text | Nullable. Short description for SEO |
+
+Each post belongs to at most one domain (`post.domain_id` FK). Domains represent broad subject areas (Engineering, Design, AI, etc.). Icon and color are admin-configurable and rendered via UnoCSS icon preset + `--chart-N` design tokens.
+
+#### `blog.tag` — Content Categories
 
 | Column | Type | Constraints |
 |--------|------|-------------|
 | `id` | text | PK, `tag_` prefix |
 | `slug` | text | NOT NULL, UNIQUE, CHECK `^[a-z0-9]([a-z0-9-]*[a-z0-9])?$` |
 | `name` | text | NOT NULL |
+| `icon` | text | Nullable. Lucide icon CSS class (overrides glyph) |
+| `color` | integer | Nullable. Chart token index 1-8, CHECK `1 <= color <= 8` |
+| `glyph` | text | Nullable. Single unicode character (e.g. →, ∞, §) |
 
-No soft delete, no timestamps. Tags are lightweight reference data.
+No soft delete, no timestamps. Tags are lightweight reference data. Visual properties (icon, color, glyph) are admin-configurable — no hardcoded config file.
 
 #### `blog.post_tag` — Junction
 
