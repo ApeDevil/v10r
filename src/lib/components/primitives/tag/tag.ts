@@ -1,14 +1,19 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import { pillColorVariants, pillSizeVariants } from '../pill-variants';
 
-export const tagVariants = cva('inline-flex items-center rounded-full font-medium cursor-default', {
+export const tagVariants = cva('inline-flex items-center font-medium cursor-default', {
 	variants: {
 		variant: pillColorVariants,
 		size: pillSizeVariants,
+		shape: {
+			pill: 'rounded-full',
+			rounded: 'rounded-md',
+		},
 	},
 	defaultVariants: {
 		variant: 'default',
 		size: 'md',
+		shape: 'pill',
 	},
 });
 

@@ -18,6 +18,8 @@ export const createId = {
 	revision: () => `rev_${shortId()}`,
 	/** Blog tag: tag_a8f3e1b2c4d9 */
 	tag: () => `tag_${shortId()}`,
+	/** Blog domain: dom_a8f3e1b2c4d9 */
+	domain: () => `dom_${shortId()}`,
 	/** Blog asset: ast_a8f3e1b2c4d9 */
 	asset: () => `ast_${shortId()}`,
 	/** Generic UUID */

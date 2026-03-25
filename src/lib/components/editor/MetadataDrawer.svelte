@@ -8,6 +8,8 @@
 		slug: string;
 		summary: string;
 		status: 'draft' | 'published' | 'archived';
+		domain: { id: string; slug: string; name: string } | null;
+		availableDomains: { id: string; slug: string; name: string }[];
 		tags: { id: string; slug: string; name: string }[];
 		locale: string;
 		availableTags: { id: string; slug: string; name: string }[];
@@ -15,6 +17,7 @@
 		onslugchange: (v: string) => void;
 		onsummarychange: (v: string) => void;
 		onlocalechange: (v: string) => void;
+		ondomainchange: (domainId: string | null) => void;
 		ontagstoggle: (tagId: string) => void;
 	}
 
@@ -24,6 +27,8 @@
 		slug,
 		summary,
 		status,
+		domain,
+		availableDomains,
 		tags,
 		locale,
 		availableTags,
@@ -31,6 +36,7 @@
 		onslugchange,
 		onsummarychange,
 		onlocalechange,
+		ondomainchange,
 		ontagstoggle,
 	}: Props = $props();
 
@@ -123,11 +129,32 @@
 			/>
 		</div>
 
-		<!-- Tags -->
+		<!-- Domain -->
 		<div class="field">
-			<span class="field-label">Tags</span>
+			<span class="field-label">Domain</span>
+			{#if availableDomains.length === 0}
+				<p class="field-hint">No domains available. Create domains in admin.</p>
+			{:else}
+				<div class="tag-grid">
+					{#each availableDomains as d}
+						<button
+							class="tag-chip"
+							class:tag-selected={domain?.id === d.id}
+							aria-pressed={domain?.id === d.id}
+							onclick={() => ondomainchange(domain?.id === d.id ? null : d.id)}
+						>
+							{d.name}
+						</button>
+					{/each}
+				</div>
+			{/if}
+		</div>
+
+		<!-- Categories -->
+		<div class="field">
+			<span class="field-label">Categories</span>
 			{#if availableTags.length === 0}
-				<p class="field-hint">No tags available. Create tags in admin.</p>
+				<p class="field-hint">No categories available. Create tags in admin.</p>
 			{:else}
 				<div class="tag-grid">
 					{#each availableTags as t}

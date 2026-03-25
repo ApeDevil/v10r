@@ -1,8 +1,8 @@
 import { and, count, desc, asc, eq, isNull, sql, inArray } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import { post, revision, publishedRevision, tag, postTag, asset, postAsset } from '$lib/server/db/schema/blog';
+import { post, revision, publishedRevision, tag, postTag, asset, postAsset, domain } from '$lib/server/db/schema/blog';
 import { user } from '$lib/server/db/schema/auth';
-import type { BlogAsset, BlogTag, ListPostsOptions, PostListItem, PublishedPost, TagWithCount } from './types';
+import type { BlogAsset, BlogDomain, BlogTag, DomainWithCount, ListPostsOptions, PostListItem, PublishedPost, TagWithCount } from './types';
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -14,6 +14,7 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 	const {
 		status,
 		authorId,
+		domainSlug,
 		tagSlug,
 		search,
 		page = 1,
@@ -25,6 +26,17 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 	const conditions = [isNull(post.deletedAt)];
 	if (status) conditions.push(eq(post.status, status));
 	if (authorId) conditions.push(eq(post.authorId, authorId));
+
+	// Filter by domain
+	if (domainSlug) {
+		const [domainRow] = await db
+			.select({ id: domain.id })
+			.from(domain)
+			.where(eq(domain.slug, domainSlug))
+			.limit(1);
+		if (!domainRow) return { items: [], total: 0 };
+		conditions.push(eq(post.domainId, domainRow.id));
+	}
 
 	// If filtering by tag, find matching post IDs first
 	let tagFilterPostIds: string[] | undefined;
@@ -69,6 +81,7 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 			status: post.status,
 			authorId: post.authorId,
 			authorName: user.name,
+			domainId: post.domainId,
 			publishedAt: post.publishedAt,
 			createdAt: post.createdAt,
 			updatedAt: post.updatedAt,
@@ -121,6 +134,19 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 		tagMap.set(row.postId, tags);
 	}
 
+	// Fetch domains for posts that have one
+	const domainIds = [...new Set(posts.map((p) => p.domainId).filter(Boolean))] as string[];
+	const domainMap = new Map<string, { id: string; slug: string; name: string }>();
+	if (domainIds.length > 0) {
+		const domainRows = await db
+			.select({ id: domain.id, slug: domain.slug, name: domain.name })
+			.from(domain)
+			.where(inArray(domain.id, domainIds));
+		for (const d of domainRows) {
+			domainMap.set(d.id, d);
+		}
+	}
+
 	// Search filter (post-query for now; can optimize with search_vector later)
 	let items: PostListItem[] = posts.map((p) => {
 		const rev = revisionMap.get(p.id);
@@ -128,6 +154,7 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 			...p,
 			title: rev?.title ?? '(untitled)',
 			summary: rev?.summary ?? null,
+			domain: p.domainId ? domainMap.get(p.domainId) ?? null : null,
 			tags: tagMap.get(p.id) ?? [],
 		};
 	});
@@ -154,6 +181,7 @@ export async function getPublishedPostForSlug(
 		.select({
 			postId: post.id,
 			slug: post.slug,
+			domainId: post.domainId,
 			publishedAt: post.publishedAt,
 			authorId: user.id,
 			authorName: user.name,
@@ -181,6 +209,17 @@ export async function getPublishedPostForSlug(
 
 	if (!row) return null;
 
+	// Fetch domain
+	let postDomain: { id: string; slug: string; name: string } | null = null;
+	if (row.domainId) {
+		const [d] = await db
+			.select({ id: domain.id, slug: domain.slug, name: domain.name })
+			.from(domain)
+			.where(eq(domain.id, row.domainId))
+			.limit(1);
+		postDomain = d ?? null;
+	}
+
 	// Fetch tags
 	const tags = await db
 		.select({ id: tag.id, slug: tag.slug, name: tag.name })
@@ -205,6 +244,7 @@ export async function getPublishedPostForSlug(
 			locale: row.revisionLocale,
 			createdAt: row.revisionCreatedAt,
 		},
+		domain: postDomain,
 		tags,
 	};
 }
@@ -274,6 +314,31 @@ export async function listTags(): Promise<TagWithCount[]> {
 		.orderBy(asc(tag.name));
 
 	return rows;
+}
+
+/** List all domains ordered by name with post counts. */
+export async function listDomains(): Promise<DomainWithCount[]> {
+	return db
+		.select({
+			id: domain.id,
+			slug: domain.slug,
+			name: domain.name,
+			postCount: count(post.id),
+		})
+		.from(domain)
+		.leftJoin(post, and(eq(post.domainId, domain.id), isNull(post.deletedAt)))
+		.groupBy(domain.id, domain.slug, domain.name)
+		.orderBy(asc(domain.name));
+}
+
+/** Get a single domain by slug. */
+export async function getDomainBySlug(slug: string): Promise<BlogDomain | null> {
+	const [row] = await db
+		.select()
+		.from(domain)
+		.where(eq(domain.slug, slug))
+		.limit(1);
+	return row ?? null;
 }
 
 /** Full-text search on revisions using tsvector. */

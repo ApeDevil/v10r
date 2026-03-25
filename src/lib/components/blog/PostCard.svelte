@@ -1,7 +1,7 @@
 <script lang="ts">
 import type { PostListItem } from '$lib/server/blog/types';
 import { formatDate } from '$lib/i18n/formatting';
-import { Tag } from '$lib/components/primitives';
+import { BlogTag } from '$lib/components/blog';
 
 interface Props {
 	post: PostListItem;
@@ -31,17 +31,29 @@ let { post }: Props = $props();
 			{/if}
 		</span>
 
-		{#if post.tags.length > 0}
+		{#if post.domain || post.tags.length > 0}
 			<div class="post-tags">
-				{#each post.tags as t (t.id)}
+				{#if post.domain}
+					<a
+						href="/blog/domain/{post.domain.slug}"
+						class="tag-link"
+						onclick={(e) => e.stopPropagation()}
+					>
+						<BlogTag tag={post.domain} tier="domain" />
+					</a>
+				{/if}
+				{#each post.tags.slice(0, 2) as t (t.id)}
 					<a
 						href="/blog/tag/{t.slug}"
 						class="tag-link"
 						onclick={(e) => e.stopPropagation()}
 					>
-						<Tag label={t.name} size="sm" variant="muted" />
+						<BlogTag tag={t} tier="category" />
 					</a>
 				{/each}
+				{#if post.tags.length > 2}
+					<span class="tag-overflow">+{post.tags.length - 2}</span>
+				{/if}
 			</div>
 		{/if}
 	</div>
@@ -121,5 +133,11 @@ let { post }: Props = $props();
 		text-decoration: none;
 		position: relative;
 		z-index: 1;
+	}
+
+	.tag-overflow {
+		font-size: 0.75rem;
+		color: var(--color-muted);
+		align-self: center;
 	}
 </style>

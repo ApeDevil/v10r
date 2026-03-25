@@ -11,6 +11,8 @@
 	const toast = getToast();
 
 	let submitting = $state('');
+
+	// Tag editing
 	let editingTagId = $state('');
 	let editName = $state('');
 	let editSlug = $state('');
@@ -19,6 +21,16 @@
 	let deleteTagId = $state('');
 	let deleteTagName = $state('');
 	let deletePostCount = $state(0);
+
+	// Domain editing
+	let editingDomainId = $state('');
+	let editDomainName = $state('');
+	let editDomainSlug = $state('');
+
+	let showDeleteDomainDialog = $state(false);
+	let deleteDomainId = $state('');
+	let deleteDomainName = $state('');
+	let deleteDomainPostCount = $state(0);
 
 	function startEditing(tag: { id: string; name: string; slug: string }) {
 		editingTagId = tag.id;
@@ -52,17 +64,156 @@
 		document.body.appendChild(form);
 		form.submit();
 	}
+
+	function startEditingDomain(d: { id: string; name: string; slug: string }) {
+		editingDomainId = d.id;
+		editDomainName = d.name;
+		editDomainSlug = d.slug;
+	}
+
+	function cancelEditingDomain() {
+		editingDomainId = '';
+		editDomainName = '';
+		editDomainSlug = '';
+	}
+
+	function openDeleteDomainDialog(d: { id: string; name: string; postCount: number }) {
+		deleteDomainId = d.id;
+		deleteDomainName = d.name;
+		deleteDomainPostCount = d.postCount;
+		showDeleteDomainDialog = true;
+	}
+
+	function submitDeleteDomainForm() {
+		showDeleteDomainDialog = false;
+		const form = document.createElement('form');
+		form.method = 'POST';
+		form.style.display = 'none';
+		const input = document.createElement('input');
+		input.name = 'domainId';
+		input.value = deleteDomainId;
+		form.appendChild(input);
+		form.action = '?/deleteDomain';
+		document.body.appendChild(form);
+		form.submit();
+	}
 </script>
 
 <svelte:head>
-	<title>Tags - Velociraptor</title>
+	<title>Tags & Domains - Velociraptor</title>
 </svelte:head>
 
 <Stack gap="6">
+	<!-- Domain Management -->
 	<Card>
 		{#snippet header()}
 			<Cluster justify="between" align="center">
-				<h2 class="text-fluid-lg font-semibold">Tag Management</h2>
+				<h2 class="text-fluid-lg font-semibold">Domain Management</h2>
+				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>
+					<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
+					Refresh
+				</Button>
+			</Cluster>
+		{/snippet}
+
+		<form
+			method="POST"
+			action="?/createDomain"
+			class="create-form"
+			use:enhance={() => {
+				submitting = 'createDomain';
+				return async ({ result, update }) => {
+					if (result.type === 'success' && result.data) toast.success(result.data.message as string);
+					else if (result.type === 'failure') toast.error((result.data?.message as string) || 'Failed');
+					submitting = '';
+					return update({ reset: true });
+				};
+			}}
+		>
+			<Input name="name" placeholder="Domain name" required />
+			<Input name="slug" placeholder="domain-slug" required />
+			<Button type="submit" variant="outline" size="sm" disabled={submitting === 'createDomain'}>
+				{#if submitting === 'createDomain'}<Spinner size="xs" class="mr-1" />{/if}
+				Create Domain
+			</Button>
+		</form>
+
+		{#if data.domains.length === 0}
+			<EmptyState
+				icon="i-lucide-folder"
+				title="No domains yet"
+				description="Create a domain to organize blog posts by subject area."
+			/>
+		{:else}
+			<div class="table-wrap">
+				<table class="tag-table">
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>Slug</th>
+							<th>Posts</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each data.domains as d}
+							<tr>
+								{#if editingDomainId === d.id}
+									<td colspan="4">
+										<form
+											method="POST"
+											action="?/renameDomain"
+											class="edit-form"
+											use:enhance={() => {
+												submitting = d.id + ':renameDomain';
+												return async ({ result, update }) => {
+													if (result.type === 'success' && result.data) {
+														toast.success(result.data.message as string);
+														cancelEditingDomain();
+													} else if (result.type === 'failure') {
+														toast.error((result.data?.message as string) || 'Failed');
+													}
+													submitting = '';
+													return update();
+												};
+											}}
+										>
+											<input type="hidden" name="domainId" value={d.id} />
+											<Input name="name" value={editDomainName} placeholder="Name" required />
+											<Input name="slug" value={editDomainSlug} placeholder="slug" required />
+											<Cluster gap="1">
+												<Button type="submit" variant="outline" size="sm" disabled={submitting === d.id + ':renameDomain'}>
+													{#if submitting === d.id + ':renameDomain'}<Spinner size="xs" class="mr-1" />{/if}
+													Save
+												</Button>
+												<Button variant="ghost" size="sm" onclick={cancelEditingDomain}>Cancel</Button>
+											</Cluster>
+										</form>
+									</td>
+								{:else}
+									<td>{d.name}</td>
+									<td><code class="slug-code">{d.slug}</code></td>
+									<td><Badge variant="secondary">{d.postCount}</Badge></td>
+									<td>
+										<Cluster gap="1">
+											<Button variant="outline" size="sm" onclick={() => startEditingDomain(d)}>Rename</Button>
+											<Button variant="ghost" size="sm" onclick={() => openDeleteDomainDialog(d)}>Delete</Button>
+										</Cluster>
+									</td>
+								{/if}
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+		{/if}
+	</Card>
+
+	<!-- Category Management -->
+	<Card>
+		{#snippet header()}
+			<Cluster justify="between" align="center">
+				<h2 class="text-fluid-lg font-semibold">Category Management</h2>
 				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>
 					<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
 					Refresh
@@ -173,6 +324,16 @@
 	destructive
 	onconfirm={submitDeleteForm}
 	oncancel={() => { showDeleteDialog = false; }}
+/>
+
+<ConfirmDialog
+	open={showDeleteDomainDialog}
+	title="Delete Domain"
+	description='Delete domain "{deleteDomainName}" and unset it from {deleteDomainPostCount} post(s).'
+	confirmLabel="Delete"
+	destructive
+	onconfirm={submitDeleteDomainForm}
+	oncancel={() => { showDeleteDomainDialog = false; }}
 />
 
 <style>

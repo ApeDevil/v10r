@@ -1,6 +1,9 @@
 import { fail } from '@sveltejs/kit';
 import { requireAdmin } from '$lib/server/auth/guards';
-import { listTags, createTag, renameTag, deleteTag } from '$lib/server/blog';
+import {
+	listTags, createTag, renameTag, deleteTag,
+	listDomains, createDomain, renameDomain, deleteDomain,
+} from '$lib/server/blog';
 import { recordAuditEvent, getAuditContext } from '$lib/server/admin';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -9,8 +12,8 @@ const SLUG_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
 export const load: PageServerLoad = async ({ locals }) => {
 	requireAdmin(locals);
 
-	const tags = await listTags();
-	return { tags };
+	const [tags, domains] = await Promise.all([listTags(), listDomains()]);
+	return { tags, domains };
 };
 
 export const actions: Actions = {
@@ -101,6 +104,98 @@ export const actions: Actions = {
 			return { success: true, message: 'Tag deleted.' };
 		} catch (e) {
 			return fail(500, { message: e instanceof Error ? e.message : 'Failed to delete tag.' });
+		}
+	},
+
+	// ── Domain actions ─────────────────────────────────────────────
+
+	createDomain: async (event) => {
+		requireAdmin(event.locals);
+		const formData = await event.request.formData();
+		const name = (formData.get('name') as string)?.trim();
+		const slug = (formData.get('slug') as string)?.trim();
+
+		if (!name) return fail(400, { message: 'Domain name is required.' });
+		if (!slug) return fail(400, { message: 'Domain slug is required.' });
+		if (!SLUG_RE.test(slug)) return fail(400, { message: 'Slug must be lowercase alphanumeric with hyphens.' });
+
+		try {
+			const domain = await createDomain(name, slug);
+
+			const ctx = getAuditContext(event);
+			await recordAuditEvent({
+				...ctx,
+				action: 'blog.domain.create',
+				targetType: 'domain',
+				targetId: domain.id,
+				detail: { name, slug },
+			});
+
+			return { success: true, message: `Domain "${name}" created.` };
+		} catch (e) {
+			if (e instanceof Error && e.message.includes('unique')) {
+				return fail(400, { message: 'Domain slug already exists.' });
+			}
+			return fail(500, { message: e instanceof Error ? e.message : 'Failed to create domain.' });
+		}
+	},
+
+	renameDomain: async (event) => {
+		requireAdmin(event.locals);
+		const formData = await event.request.formData();
+		const domainId = formData.get('domainId') as string;
+		const name = (formData.get('name') as string)?.trim();
+		const slug = (formData.get('slug') as string)?.trim();
+
+		if (!domainId) return fail(400, { message: 'Domain ID required.' });
+		if (!name) return fail(400, { message: 'Domain name is required.' });
+		if (!slug) return fail(400, { message: 'Domain slug is required.' });
+		if (!SLUG_RE.test(slug)) return fail(400, { message: 'Slug must be lowercase alphanumeric with hyphens.' });
+
+		try {
+			const updated = await renameDomain(domainId, { name, slug });
+			if (!updated) return fail(404, { message: 'Domain not found.' });
+
+			const ctx = getAuditContext(event);
+			await recordAuditEvent({
+				...ctx,
+				action: 'blog.domain.rename',
+				targetType: 'domain',
+				targetId: domainId,
+				detail: { name, slug },
+			});
+
+			return { success: true, message: `Domain renamed to "${name}".` };
+		} catch (e) {
+			if (e instanceof Error && e.message.includes('unique')) {
+				return fail(400, { message: 'Domain slug already exists.' });
+			}
+			return fail(500, { message: e instanceof Error ? e.message : 'Failed to rename domain.' });
+		}
+	},
+
+	deleteDomain: async (event) => {
+		requireAdmin(event.locals);
+		const formData = await event.request.formData();
+		const domainId = formData.get('domainId') as string;
+
+		if (!domainId) return fail(400, { message: 'Domain ID required.' });
+
+		try {
+			const deleted = await deleteDomain(domainId);
+			if (!deleted) return fail(404, { message: 'Domain not found.' });
+
+			const ctx = getAuditContext(event);
+			await recordAuditEvent({
+				...ctx,
+				action: 'blog.domain.delete',
+				targetType: 'domain',
+				targetId: domainId,
+			});
+
+			return { success: true, message: 'Domain deleted.' };
+		} catch (e) {
+			return fail(500, { message: e instanceof Error ? e.message : 'Failed to delete domain.' });
 		}
 	},
 };

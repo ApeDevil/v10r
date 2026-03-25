@@ -2,7 +2,7 @@
 import { page } from '$app/state';
 import { PageContainer, Stack } from '$lib/components/layout';
 import { Typography } from '$lib/components/primitives';
-import { Tag } from '$lib/components/primitives';
+import { BlogTag } from '$lib/components/blog';
 import { Renderer } from '$lib/components/blog';
 import { formatDate } from '$lib/i18n/formatting';
 import { hydrateEmbeds } from '$lib/actions/hydrate-embeds';
@@ -47,6 +47,9 @@ const jsonLdScript = $derived(
 		<meta property="og:description" content={post.revision.summary} />
 	{/if}
 	<meta property="article:published_time" content={post.publishedAt.toISOString()} />
+	{#if post.domain}
+		<meta property="article:tag" content={post.domain.name} />
+	{/if}
 	{#each post.tags as t (t.id)}
 		<meta property="article:tag" content={t.name} />
 	{/each}
@@ -86,11 +89,16 @@ const jsonLdScript = $derived(
 				</time>
 			</div>
 
-			{#if post.tags.length > 0}
+			{#if post.domain || post.tags.length > 0}
 				<div class="post-tags">
+					{#if post.domain}
+						<a href="/blog/domain/{post.domain.slug}" class="tag-link">
+							<BlogTag tag={post.domain} tier="domain" />
+						</a>
+					{/if}
 					{#each post.tags as t (t.id)}
 						<a href="/blog/tag/{t.slug}" class="tag-link">
-							<Tag label={t.name} size="sm" variant="muted" />
+							<BlogTag tag={t} tier="category" />
 						</a>
 					{/each}
 				</div>

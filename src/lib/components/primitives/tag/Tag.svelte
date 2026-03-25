@@ -7,6 +7,7 @@ import { type TagVariants, tagCloseVariants, tagVariants } from './tag';
 interface Props extends TagVariants, HTMLAttributes<HTMLSpanElement> {
 	label?: string;
 	icon?: string;
+	glyph?: string;
 	disabled?: boolean;
 	ondismiss?: () => void;
 	class?: string;
@@ -16,8 +17,10 @@ interface Props extends TagVariants, HTMLAttributes<HTMLSpanElement> {
 let {
 	label,
 	icon,
+	glyph,
 	variant = 'default',
 	size = 'md',
+	shape = 'pill',
 	disabled = false,
 	ondismiss,
 	class: className,
@@ -27,7 +30,7 @@ let {
 </script>
 
 <span
-	class={cn('tag', tagVariants({ variant, size }), className)}
+	class={cn('tag', tagVariants({ variant, size, shape }), className)}
 	class:disabled
 	role={ondismiss ? 'group' : undefined}
 	aria-label={label}
@@ -35,6 +38,10 @@ let {
 >
 	{#if icon}
 		<span class={cn('tag-icon', icon)} aria-hidden="true"></span>
+	{/if}
+
+	{#if glyph}
+		<span class="tag-glyph" aria-hidden="true">{glyph}</span>
 	{/if}
 
 	<span class="tag-label">
@@ -79,6 +86,12 @@ let {
 		flex-shrink: 0;
 		width: 1em;
 		height: 1em;
+	}
+
+	.tag-glyph {
+		font-family: ui-monospace, monospace;
+		font-size: 0.9em;
+		flex-shrink: 0;
 	}
 
 	.tag-close {

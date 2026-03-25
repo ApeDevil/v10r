@@ -9,8 +9,9 @@ import {
 	postTag,
 	asset,
 	postAsset,
+	domain,
 } from '$lib/server/db/schema/blog';
-import type { BlogPost, BlogRevision, BlogTag, BlogAsset } from './types';
+import type { BlogPost, BlogRevision, BlogTag, BlogAsset, BlogDomain } from './types';
 import { contentHash } from './content-hash';
 import { renderBlogPost } from './pipeline';
 
@@ -149,6 +150,16 @@ export async function publishRevision(
 		throw new Error('Revision does not belong to post');
 	}
 
+	// Verify post has a domain assigned
+	const [postRow] = await db
+		.select({ domainId: post.domainId })
+		.from(post)
+		.where(eq(post.id, postId))
+		.limit(1);
+	if (!postRow?.domainId) {
+		throw new Error('Domain is required to publish a post');
+	}
+
 	await db.transaction(async (tx) => {
 		// UPSERT published revision pointer
 		await tx
@@ -223,6 +234,44 @@ export async function setPostTags(postId: string, tagIds: string[]): Promise<voi
 			await tx.insert(postTag).values(tagIds.map((tagId) => ({ postId, tagId })));
 		}
 	});
+}
+
+// ── Domains ─────────────────────────────────────────────────────────
+
+/** Create a new domain. */
+export async function createDomain(name: string, slug: string): Promise<BlogDomain> {
+	const [row] = await db
+		.insert(domain)
+		.values({ id: createId.domain(), slug, name })
+		.returning();
+	return row;
+}
+
+/** Rename a domain. */
+export async function renameDomain(
+	domainId: string,
+	data: { name?: string; slug?: string },
+): Promise<BlogDomain | null> {
+	const [row] = await db
+		.update(domain)
+		.set(data)
+		.where(eq(domain.id, domainId))
+		.returning();
+	return row ?? null;
+}
+
+/** Delete a domain (posts get domainId = null via onDelete: 'set null'). */
+export async function deleteDomain(domainId: string): Promise<boolean> {
+	const [row] = await db.delete(domain).where(eq(domain.id, domainId)).returning({ id: domain.id });
+	return !!row;
+}
+
+/** Set the domain for a post. Pass null to unset. */
+export async function setPostDomain(postId: string, domainId: string | null): Promise<void> {
+	await db
+		.update(post)
+		.set({ domainId, updatedAt: new Date() })
+		.where(and(eq(post.id, postId), isNull(post.deletedAt)));
 }
 
 // ── Assets ───────────────────────────────────────────────────────────

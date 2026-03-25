@@ -41,6 +41,7 @@ import {
 	postTag,
 	asset,
 	postAsset,
+	domain,
 } from './index';
 
 // ── Auth ─────────────────────────────────────────────────────────────
@@ -187,10 +188,15 @@ export const customPalettesRelations = relations(customPalettes, ({ one }) => ({
 export const postRelations = relations(post, ({ one, many }) => ({
 	author: one(user, { fields: [post.authorId], references: [user.id] }),
 	coverImage: one(asset, { fields: [post.coverImageId], references: [asset.id] }),
+	domain: one(domain, { fields: [post.domainId], references: [domain.id] }),
 	revisions: many(revision),
 	publishedRevisions: many(publishedRevision),
 	postTags: many(postTag),
 	postAssets: many(postAsset),
+}));
+
+export const domainRelations = relations(domain, ({ many }) => ({
+	posts: many(post),
 }));
 
 export const revisionRelations = relations(revision, ({ one }) => ({

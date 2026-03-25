@@ -45,6 +45,8 @@
 	let locale = $state('en');
 	let tags = $state<{ id: string; slug: string; name: string }[]>([]);
 	let availableTags = $state<{ id: string; slug: string; name: string }[]>([]);
+	let domain = $state<{ id: string; slug: string; name: string } | null>(null);
+	let availableDomains = $state<{ id: string; slug: string; name: string }[]>([]);
 	let revisionId = $state<string | null>(null);
 
 	// Editor state
@@ -99,13 +101,15 @@
 			}
 
 			tags = data.tags ?? [];
+			domain = data.domain ?? null;
 			saveState = 'saved';
 
 			bus.publish('editor:document', { documentId: postId, type: 'blog-post' });
 			publishContent();
 
-			// Fetch available tags for metadata drawer
+			// Fetch available tags and domains for metadata drawer
 			fetchAvailableTags();
+			fetchAvailableDomains();
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load';
 		} finally {
@@ -122,6 +126,34 @@
 			}
 		} catch {
 			// Non-critical
+		}
+	}
+
+	async function fetchAvailableDomains() {
+		try {
+			const res = await apiFetch('/api/blog/domains');
+			if (res.ok) {
+				const data = await res.json();
+				availableDomains = data;
+			}
+		} catch {
+			// Non-critical
+		}
+	}
+
+	async function handleDomainChange(domainId: string | null) {
+		const prev = domain;
+		domain = domainId ? availableDomains.find((d) => d.id === domainId) ?? null : null;
+		try {
+			const res = await apiFetch(`/api/blog/posts/${postId}/domain`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ domainId }),
+			});
+			if (!res.ok) throw new Error('Failed to save domain');
+		} catch (e) {
+			domain = prev;
+			error = e instanceof Error ? e.message : 'Failed to save domain';
 		}
 	}
 
@@ -374,6 +406,8 @@
 			{slug}
 			{summary}
 			{status}
+			{domain}
+			{availableDomains}
 			{tags}
 			{locale}
 			{availableTags}
@@ -381,6 +415,7 @@
 			onslugchange={(v) => { slug = v; }}
 			onsummarychange={(v) => { summary = v; saveState = 'unsaved'; }}
 			onlocalechange={(v) => { locale = v; }}
+			ondomainchange={handleDomainChange}
 			ontagstoggle={handleTagToggle}
 		/>
 	{/if}

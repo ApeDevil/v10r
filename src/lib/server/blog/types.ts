@@ -1,10 +1,11 @@
 import type { InferSelectModel } from 'drizzle-orm';
-import type { post, revision, tag, asset } from '$lib/server/db/schema/blog';
+import type { post, revision, tag, asset, domain } from '$lib/server/db/schema/blog';
 
 export type BlogPost = InferSelectModel<typeof post>;
 export type BlogRevision = InferSelectModel<typeof revision>;
 export type BlogTag = InferSelectModel<typeof tag>;
 export type BlogAsset = InferSelectModel<typeof asset>;
+export type BlogDomain = InferSelectModel<typeof domain>;
 
 export interface PostListItem {
 	id: string;
@@ -18,12 +19,16 @@ export interface PostListItem {
 	/** From the latest revision */
 	title: string;
 	summary: string | null;
+	/** Subject area (one per post, null for drafts) */
+	domain: { id: string; slug: string; name: string } | null;
+	/** Content format categories (zero-to-many) */
 	tags: { id: string; slug: string; name: string }[];
 }
 
 export interface PostDetail extends BlogPost {
 	author: { id: string; name: string; email: string; image: string | null } | null;
 	latestRevision: BlogRevision | null;
+	domain: BlogDomain | null;
 	tags: BlogTag[];
 }
 
@@ -40,10 +45,15 @@ export interface PublishedPost {
 		locale: string;
 		createdAt: Date;
 	};
+	domain: { id: string; slug: string; name: string } | null;
 	tags: BlogTag[];
 }
 
 export interface TagWithCount extends BlogTag {
+	postCount: number;
+}
+
+export interface DomainWithCount extends BlogDomain {
 	postCount: number;
 }
 
@@ -63,6 +73,7 @@ export interface TocEntry {
 export interface ListPostsOptions {
 	status?: 'draft' | 'published' | 'archived';
 	authorId?: string;
+	domainSlug?: string;
 	tagSlug?: string;
 	search?: string;
 	page?: number;
