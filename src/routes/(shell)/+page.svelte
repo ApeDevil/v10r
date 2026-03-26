@@ -5,6 +5,7 @@ import { getStyle } from '$lib/state/style.svelte';
 import { getTheme } from '$lib/state/theme.svelte';
 import AsciiRaptor from './_components/AsciiRaptor.svelte';
 import { fadeIn } from './_components/fadeIn';
+import InstancesSection from './_components/InstancesSection.svelte';
 import StructureSection from './_components/StructureSection.svelte';
 
 const style = getStyle();
@@ -30,55 +31,53 @@ const specimenName = 'Velociraptor';
 
 const zones: Array<{
 	name: string;
-	proven?: boolean;
-	capabilities: Array<{ icon: string; label: string; desc: string }>;
+capabilities: Array<{ icon: string; label: string; desc: string }>;
 }> = [
 	{
 		name: 'RUNTIME',
 		capabilities: [
-			{ icon: 'i-lucide-rabbit', label: 'Bun', desc: 'JavaScript runtime & toolkit' },
-			{ icon: 'i-lucide-container', label: 'Podman', desc: 'Rootless containers' },
-			{ icon: 'i-lucide-triangle', label: 'Vercel', desc: 'Edge deployment' },
+			{ icon: 'i-lucide-zap', label: 'Runtime', desc: 'Bun' },
+			{ icon: 'i-lucide-container', label: 'Containers', desc: 'Podman (rootless)' },
+			{ icon: 'i-lucide-rocket', label: 'Deployment', desc: 'Vercel / Netlify' },
 		],
 	},
 	{
 		name: 'STRUCTURE',
 		capabilities: [
-			{ icon: 'i-lucide-blocks', label: 'SvelteKit 2', desc: 'Full-stack framework' },
-			{ icon: 'i-lucide-flame', label: 'Svelte 5', desc: 'Runes reactivity' },
-			{ icon: 'i-lucide-scan-search', label: 'Biome', desc: 'Lint & format' },
+			{ icon: 'i-lucide-blocks', label: 'Full-stack Framework', desc: 'SvelteKit 2' },
+			{ icon: 'i-lucide-sparkles', label: 'Reactive UI', desc: 'Svelte 5 runes' },
+			{ icon: 'i-lucide-check-check', label: 'Lint & Format', desc: 'Biome' },
 		],
 	},
 	{
 		name: 'DATA',
 		capabilities: [
-			{ icon: 'i-lucide-database', label: 'PostgreSQL', desc: 'Neon serverless' },
-			{ icon: 'i-lucide-git-fork', label: 'Neo4j', desc: 'Graph database' },
-			{ icon: 'i-lucide-layers', label: 'Drizzle', desc: 'Type-safe ORM' },
-			{ icon: 'i-lucide-cloud', label: 'Cloudflare R2', desc: 'Object storage' },
+			{ icon: 'i-lucide-database', label: 'Relational DB', desc: 'PostgreSQL via Neon' },
+			{ icon: 'i-lucide-share-2', label: 'Graph DB', desc: 'Neo4j Aura' },
+			{ icon: 'i-lucide-layers', label: 'Type-safe ORM', desc: 'Drizzle' },
+			{ icon: 'i-lucide-cloud', label: 'Object Storage', desc: 'Cloudflare R2' },
 		],
 	},
 	{
 		name: 'INTERFACE',
 		capabilities: [
-			{ icon: 'i-lucide-paintbrush', label: 'UnoCSS', desc: 'Atomic CSS engine' },
-			{ icon: 'i-lucide-component', label: 'Bits UI', desc: 'Headless primitives' },
-			{ icon: 'i-lucide-box', label: 'Three.js', desc: '3D rendering' },
+			{ icon: 'i-lucide-paintbrush', label: 'Atomic CSS', desc: 'UnoCSS' },
+			{ icon: 'i-lucide-component', label: 'Headless UI', desc: 'Bits UI' },
+			{ icon: 'i-lucide-box', label: '3D Rendering', desc: 'Three.js + Threlte' },
 		],
 	},
 	{
 		name: 'BEHAVIOR',
-		proven: true,
 		capabilities: [
-			{ icon: 'i-lucide-shield', label: 'Better Auth', desc: 'Session-based auth' },
-			{ icon: 'i-lucide-file-check', label: 'Superforms', desc: 'Form validation' },
-			{ icon: 'i-lucide-languages', label: 'Paraglide', desc: 'Compiled i18n' },
+			{ icon: 'i-lucide-shield', label: 'Session Auth', desc: 'Better Auth' },
+			{ icon: 'i-lucide-file-check', label: 'Form Validation', desc: 'Superforms + Valibot' },
+			{ icon: 'i-lucide-languages', label: 'Compiled i18n', desc: 'Paraglide' },
 		],
 	},
 	{
 		name: 'INTELLIGENCE',
 		capabilities: [
-			{ icon: 'i-lucide-brain', label: 'AI SDK', desc: 'Vendor-agnostic LLM' },
+			{ icon: 'i-lucide-brain', label: 'LLM Integration', desc: 'Vercel AI SDK' },
 			{ icon: 'i-lucide-network', label: 'Graph RAG', desc: 'Recursive retrieval' },
 		],
 	},
@@ -176,13 +175,10 @@ v          10            r</pre>
 
 	<div class="taxonomy-grid">
 		{#each zones as zone}
-			<article class="zone-card" class:zone-card--wide={zone.name === 'INTELLIGENCE'} use:fadeIn>
+			<article class="zone-card" use:fadeIn>
 				<header class="zone-header">
 					<h3 class="zone-name">
 						{zone.name}
-						{#if zone.proven}
-							<span class="proven-badge">★ PROVEN</span>
-						{/if}
 					</h3>
 				</header>
 				<ul class="zone-capabilities">
@@ -201,14 +197,21 @@ v          10            r</pre>
 	</div>
 </section>
 
-<!-- ACT III: Internal Structure -->
+<!-- ACT III: Instances -->
+<div class="divider-wrap">
+	<Divider motif="crosshair" width="content" />
+</div>
+
+<InstancesSection />
+
+<!-- ACT IV: Internal Structure -->
 <div class="divider-wrap">
 	<Divider motif="crosshair" width="content" />
 </div>
 
 <StructureSection />
 
-<!-- ACT IV: Showcase Entry -->
+<!-- ACT V: Showcase Entry -->
 <div class="asterism-wrap">
 	<Asterism pattern="three-dots" />
 </div>
@@ -237,7 +240,6 @@ v          10            r</pre>
 	.etymology-result,
 	.taxonomy-title,
 	.zone-name,
-	.proven-badge,
 	.cta-link {
 		font-family: var(--font-mono, ui-monospace, monospace);
 	}
@@ -567,16 +569,6 @@ v          10            r</pre>
 		border-color: var(--color-primary);
 	}
 
-	.zone-card--wide {
-		grid-column: span 2;
-	}
-
-	@media (max-width: 1023px) {
-		.zone-card--wide {
-			grid-column: span 1;
-		}
-	}
-
 	.zone-header {
 		border-bottom: 1px solid var(--color-border);
 		padding-bottom: var(--spacing-3);
@@ -590,24 +582,6 @@ v          10            r</pre>
 		display: flex;
 		align-items: center;
 		gap: var(--spacing-3);
-	}
-
-	.proven-badge {
-		font-size: 0.65rem;
-		letter-spacing: 0.1em;
-		padding: 1px 6px;
-		border: 1px solid;
-		line-height: 1.6;
-	}
-
-	:global(:root) .proven-badge {
-		color: var(--color-warning);
-		border-color: var(--color-warning);
-	}
-
-	:global(.dark) .proven-badge {
-		color: var(--color-warning);
-		border-color: var(--color-warning);
 	}
 
 	.zone-capabilities {

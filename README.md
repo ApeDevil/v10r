@@ -83,10 +83,10 @@ The naming follows function-call syntax: `v10r(content or application)` — v10r
 
 ### Examples
 
-| Instance | What it uses | What it drops |
-|---|---|---|
-| `v10r(landing-page)` | SvelteKit, UnoCSS, Vercel | Auth, DB, ORM, AI, 3D |
-| `v10r(full-platform)` | Everything | Nothing — full stack |
+| Instance | What it uses |
+|---|---|
+| `v10r(landing-page)` | SvelteKit, UnoCSS (2 of 18) |
+| `v10r(full-platform)` | Everything (18 of 18) |
 
 ### Creating a new instance
 
