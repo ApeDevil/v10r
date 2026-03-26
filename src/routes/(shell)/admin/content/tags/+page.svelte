@@ -2,9 +2,12 @@
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { BlogTag } from '$lib/components/blog';
-	import { Card, ConfirmDialog, EmptyState } from '$lib/components/composites';
+	import { Card, ConfirmDialog, EmptyState, FormField } from '$lib/components/composites';
 	import { Cluster, Stack } from '$lib/components/layout';
-	import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
+	import {
+		Badge, Button, Dialog, Input, Spinner, Textarea,
+		Table, Header, HeaderCell, Body, Row, Cell,
+	} from '$lib/components/primitives';
 	import { getToast } from '$lib/state/toast.svelte';
 	import type { PageProps } from './$types';
 
@@ -27,6 +30,7 @@
 	let deleteTagId = $state('');
 	let deleteTagName = $state('');
 	let deletePostCount = $state(0);
+	let deleteTagFormEl: HTMLFormElement;
 
 	// Domain editing modal
 	let showDomainModal = $state(false);
@@ -42,6 +46,7 @@
 	let deleteDomainId = $state('');
 	let deleteDomainName = $state('');
 	let deleteDomainPostCount = $state(0);
+	let deleteDomainFormEl: HTMLFormElement;
 
 	const ICON_OPTIONS = [
 		{ name: 'code', class: 'i-lucide-code' },
@@ -83,6 +88,17 @@
 	];
 
 	const COLOR_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
+
+	const COLOR_NAMES: Record<number, string> = {
+		1: 'Blue',
+		2: 'Green',
+		3: 'Orange',
+		4: 'Purple',
+		5: 'Red',
+		6: 'Teal',
+		7: 'Yellow',
+		8: 'Pink',
+	};
 
 	const filteredIcons = $derived(
 		iconFilter
@@ -131,30 +147,11 @@
 		showTagModal = true;
 	}
 
-	function closeTagModal() {
-		showTagModal = false;
-		editTagId = '';
-	}
-
 	function openDeleteDialog(tag: { id: string; name: string; postCount: number }) {
 		deleteTagId = tag.id;
 		deleteTagName = tag.name;
 		deletePostCount = tag.postCount;
 		showDeleteDialog = true;
-	}
-
-	function submitDeleteForm() {
-		showDeleteDialog = false;
-		const form = document.createElement('form');
-		form.method = 'POST';
-		form.style.display = 'none';
-		const input = document.createElement('input');
-		input.name = 'tagId';
-		input.value = deleteTagId;
-		form.appendChild(input);
-		form.action = '?/delete';
-		document.body.appendChild(form);
-		form.submit();
 	}
 
 	function openDomainModal(d?: { id: string; name: string; slug: string; icon: string | null; color: number | null; description: string | null }) {
@@ -177,11 +174,6 @@
 		showDomainModal = true;
 	}
 
-	function closeDomainModal() {
-		showDomainModal = false;
-		editDomainId = '';
-	}
-
 	function openDeleteDomainDialog(d: { id: string; name: string; postCount: number }) {
 		deleteDomainId = d.id;
 		deleteDomainName = d.name;
@@ -189,24 +181,57 @@
 		showDeleteDomainDialog = true;
 	}
 
-	function submitDeleteDomainForm() {
-		showDeleteDomainDialog = false;
-		const form = document.createElement('form');
-		form.method = 'POST';
-		form.style.display = 'none';
-		const input = document.createElement('input');
-		input.name = 'domainId';
-		input.value = deleteDomainId;
-		form.appendChild(input);
-		form.action = '?/deleteDomain';
-		document.body.appendChild(form);
-		form.submit();
+	function handleDeleteEnhance() {
+		submitting = 'deleteTag';
+		return async ({ result, update }: { result: any; update: (opts?: any) => Promise<void> }) => {
+			if (result.type === 'success' && result.data) {
+				toast.success(result.data.message as string);
+			} else if (result.type === 'failure') {
+				toast.error((result.data?.message as string) || 'Failed to delete tag.');
+			}
+			submitting = '';
+			return update({ reset: false });
+		};
+	}
+
+	function handleDeleteDomainEnhance() {
+		submitting = 'deleteDomain';
+		return async ({ result, update }: { result: any; update: (opts?: any) => Promise<void> }) => {
+			if (result.type === 'success' && result.data) {
+				toast.success(result.data.message as string);
+			} else if (result.type === 'failure') {
+				toast.error((result.data?.message as string) || 'Failed to delete domain.');
+			}
+			submitting = '';
+			return update({ reset: false });
+		};
 	}
 </script>
 
 <svelte:head>
 	<title>Tags & Domains - Velociraptor</title>
 </svelte:head>
+
+<!-- Hidden delete forms with proper enhance -->
+<form
+	bind:this={deleteTagFormEl}
+	method="POST"
+	action="?/delete"
+	use:enhance={handleDeleteEnhance}
+	class="hidden"
+>
+	<input type="hidden" name="tagId" value={deleteTagId} />
+</form>
+
+<form
+	bind:this={deleteDomainFormEl}
+	method="POST"
+	action="?/deleteDomain"
+	use:enhance={handleDeleteDomainEnhance}
+	class="hidden"
+>
+	<input type="hidden" name="domainId" value={deleteDomainId} />
+</form>
 
 <Stack gap="6">
 	<!-- Domain Management -->
@@ -234,49 +259,47 @@
 				description="Create a domain to organize blog posts by subject area."
 			/>
 		{:else}
-			<div class="table-wrap">
-				<table class="tag-table">
-					<thead>
-						<tr>
-							<th>Icon</th>
-							<th>Name</th>
-							<th>Slug</th>
-							<th>Color</th>
-							<th>Posts</th>
-							<th>Actions</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each data.domains as d}
-							<tr>
-								<td>
-									{#if d.icon}
-										<span class="{d.icon} h-4 w-4 inline-block"></span>
-									{:else}
-										<span class="letter-icon">{d.name.charAt(0).toUpperCase()}</span>
-									{/if}
-								</td>
-								<td>{d.name}</td>
-								<td><code class="slug-code">{d.slug}</code></td>
-								<td>
-									{#if d.color}
-										<span class="color-dot" style="background: var(--chart-{d.color})"></span>
-									{:else}
-										<span class="text-muted">—</span>
-									{/if}
-								</td>
-								<td><Badge variant="secondary">{d.postCount}</Badge></td>
-								<td>
-									<Cluster gap="1">
-										<Button variant="outline" size="sm" onclick={() => openDomainModal(d)}>Edit</Button>
-										<Button variant="ghost" size="sm" onclick={() => openDeleteDomainDialog(d)}>Delete</Button>
-									</Cluster>
-								</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-			</div>
+			<Table>
+				<Header>
+					<Row hoverable={false}>
+						<HeaderCell>Icon</HeaderCell>
+						<HeaderCell>Name</HeaderCell>
+						<HeaderCell>Slug</HeaderCell>
+						<HeaderCell>Color</HeaderCell>
+						<HeaderCell>Posts</HeaderCell>
+						<HeaderCell>Actions</HeaderCell>
+					</Row>
+				</Header>
+				<Body>
+					{#each data.domains as d}
+						<Row>
+							<Cell>
+								{#if d.icon}
+									<span class="{d.icon} h-4 w-4 inline-block"></span>
+								{:else}
+									<span class="letter-icon">{d.name.charAt(0).toUpperCase()}</span>
+								{/if}
+							</Cell>
+							<Cell>{d.name}</Cell>
+							<Cell><code class="font-mono text-fluid-xs">{d.slug}</code></Cell>
+							<Cell>
+								{#if d.color}
+									<span class="color-dot" style="background: var(--chart-{d.color})"></span>
+								{:else}
+									<span class="text-muted">—</span>
+								{/if}
+							</Cell>
+							<Cell><Badge variant="secondary">{d.postCount}</Badge></Cell>
+							<Cell>
+								<Cluster gap="1">
+									<Button variant="outline" size="sm" onclick={() => openDomainModal(d)}>Edit</Button>
+									<Button variant="ghost" size="sm" onclick={() => openDeleteDomainDialog(d)}>Delete</Button>
+								</Cluster>
+							</Cell>
+						</Row>
+					{/each}
+				</Body>
+			</Table>
 		{/if}
 	</Card>
 
@@ -305,307 +328,299 @@
 				description="Create a tag to organize your blog posts."
 			/>
 		{:else}
-			<div class="table-wrap">
-				<table class="tag-table">
-					<thead>
-						<tr>
-							<th>Visual</th>
-							<th>Name</th>
-							<th>Slug</th>
-							<th>Posts</th>
-							<th>Actions</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each data.tags as t}
-							<tr>
-								<td>
-									{#if t.icon}
-										<span class="{t.icon} h-4 w-4 inline-block"></span>
-									{:else if t.glyph}
-										<span class="glyph-icon">{t.glyph}</span>
-									{:else}
-										<span class="letter-icon">{t.name.charAt(0).toUpperCase()}</span>
-									{/if}
-								</td>
-								<td>{t.name}</td>
-								<td><code class="slug-code">{t.slug}</code></td>
-								<td><Badge variant="secondary">{t.postCount}</Badge></td>
-								<td>
-									<Cluster gap="1">
-										<Button variant="outline" size="sm" onclick={() => openTagModal(t)}>Edit</Button>
-										<Button variant="ghost" size="sm" onclick={() => openDeleteDialog(t)}>Delete</Button>
-									</Cluster>
-								</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-			</div>
+			<Table>
+				<Header>
+					<Row hoverable={false}>
+						<HeaderCell>Visual</HeaderCell>
+						<HeaderCell>Name</HeaderCell>
+						<HeaderCell>Slug</HeaderCell>
+						<HeaderCell>Posts</HeaderCell>
+						<HeaderCell>Actions</HeaderCell>
+					</Row>
+				</Header>
+				<Body>
+					{#each data.tags as t}
+						<Row>
+							<Cell>
+								{#if t.icon}
+									<span class="{t.icon} h-4 w-4 inline-block"></span>
+								{:else if t.glyph}
+									<span class="glyph-icon">{t.glyph}</span>
+								{:else}
+									<span class="letter-icon">{t.name.charAt(0).toUpperCase()}</span>
+								{/if}
+							</Cell>
+							<Cell>{t.name}</Cell>
+							<Cell><code class="font-mono text-fluid-xs">{t.slug}</code></Cell>
+							<Cell><Badge variant="secondary">{t.postCount}</Badge></Cell>
+							<Cell>
+								<Cluster gap="1">
+									<Button variant="outline" size="sm" onclick={() => openTagModal(t)}>Edit</Button>
+									<Button variant="ghost" size="sm" onclick={() => openDeleteDialog(t)}>Delete</Button>
+								</Cluster>
+							</Cell>
+						</Row>
+					{/each}
+				</Body>
+			</Table>
 		{/if}
 	</Card>
 </Stack>
 
-<!-- Domain Edit/Create Modal -->
-{#if showDomainModal}
-	<div class="modal-overlay" role="presentation" onclick={closeDomainModal}>
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div class="modal" onclick={(e) => e.stopPropagation()} role="dialog" aria-labelledby="domain-modal-title">
-			<h2 id="domain-modal-title" class="text-fluid-lg font-semibold mb-4">
-				{editDomainId ? 'Edit Domain' : 'Create Domain'}
-			</h2>
+<!-- Domain Edit/Create Dialog -->
+<Dialog
+	bind:open={showDomainModal}
+	title={editDomainId ? 'Edit Domain' : 'Create Domain'}
+	description={editDomainId ? `Update "${editDomainName}" settings.` : 'Add a new domain to organize blog posts.'}
+	class="max-h-[85dvh] overflow-y-auto"
+>
+	<form
+		method="POST"
+		action={editDomainId ? '?/updateDomain' : '?/createDomain'}
+		class="dialog-form"
+		use:enhance={() => {
+			submitting = 'domainModal';
+			return async ({ result, update }) => {
+				if (result.type === 'success' && result.data) {
+					toast.success(result.data.message as string);
+					showDomainModal = false;
+				} else if (result.type === 'failure') {
+					toast.error((result.data?.message as string) || 'Failed');
+				}
+				submitting = '';
+				return update({ reset: false });
+			};
+		}}
+	>
+		{#if editDomainId}
+			<input type="hidden" name="domainId" value={editDomainId} />
+		{/if}
 
-			<form
-				method="POST"
-				action={editDomainId ? '?/updateDomain' : '?/createDomain'}
-				use:enhance={() => {
-					submitting = 'domainModal';
-					return async ({ result, update }) => {
-						if (result.type === 'success' && result.data) {
-							toast.success(result.data.message as string);
-							closeDomainModal();
-						} else if (result.type === 'failure') {
-							toast.error((result.data?.message as string) || 'Failed');
-						}
-						submitting = '';
-						return update({ reset: false });
-					};
-				}}
-			>
-				{#if editDomainId}
-					<input type="hidden" name="domainId" value={editDomainId} />
-				{/if}
+		<div class="dialog-fields">
+			<FormField label="Name" id="domain-name" required>
+				{#snippet children({ fieldId, describedBy })}
+					<Input id={fieldId} name="name" bind:value={editDomainName} placeholder="Domain name" required aria-describedby={describedBy} />
+				{/snippet}
+			</FormField>
 
-				<Stack gap="4">
-					<!-- Name & Slug -->
-					<div class="form-row">
-						<label class="form-label" for="domain-name">Name</label>
-						<Input id="domain-name" name="name" bind:value={editDomainName} placeholder="Domain name" required />
-					</div>
-					<div class="form-row">
-						<label class="form-label" for="domain-slug">Slug</label>
-						<Input id="domain-slug" name="slug" bind:value={editDomainSlug} placeholder="domain-slug" required />
-					</div>
+			<FormField label="Slug" id="domain-slug" required>
+				{#snippet children({ fieldId, describedBy })}
+					<Input id={fieldId} name="slug" bind:value={editDomainSlug} placeholder="domain-slug" required aria-describedby={describedBy} />
+				{/snippet}
+			</FormField>
 
-					<!-- Live Preview -->
-					<div class="preview-row">
-						<BlogTag tag={previewTag} tier="domain" size="md" />
-					</div>
+			<!-- Live Preview -->
+			<div class="preview-row">
+				<BlogTag tag={previewTag} tier="domain" size="md" />
+			</div>
 
-					<!-- Icon Picker -->
-					<div class="form-row">
-						<label class="form-label">Icon</label>
-						<input type="hidden" name="icon" value={editDomainIcon ?? ''} />
-						<Input placeholder="Filter icons..." bind:value={iconFilter} />
-						<div class="icon-grid">
-							<button
-								type="button"
-								class="icon-btn"
-								class:selected={editDomainIcon === null}
-								onclick={() => { editDomainIcon = null; }}
-								aria-label="No icon"
-								aria-pressed={editDomainIcon === null}
-							>
-								<span class="i-lucide-x h-4 w-4 op-40"></span>
-							</button>
-							{#each filteredIcons as icon}
-								<button
-									type="button"
-									class="icon-btn"
-									class:selected={editDomainIcon === icon.class}
-									onclick={() => { editDomainIcon = icon.class; }}
-									aria-label={icon.name}
-									aria-pressed={editDomainIcon === icon.class}
-								>
-									<span class="{icon.class} h-4 w-4 inline-block"></span>
-								</button>
-							{/each}
-						</div>
-					</div>
+			<!-- Icon Picker -->
+			<fieldset class="flex flex-col gap-1">
+				<legend class="text-fluid-sm font-medium text-fg mb-1">Icon</legend>
+				<input type="hidden" name="icon" value={editDomainIcon ?? ''} />
+				<Input placeholder="Filter icons..." bind:value={iconFilter} />
+				<div class="icon-grid">
+					<button
+						type="button"
+						class="icon-btn"
+						class:selected={editDomainIcon === null}
+						onclick={() => { editDomainIcon = null; }}
+						aria-label="No icon (clear selection)"
+						aria-pressed={editDomainIcon === null}
+					>
+						<span class="i-lucide-x h-4 w-4 op-40"></span>
+					</button>
+					{#each filteredIcons as icon}
+						<button
+							type="button"
+							class="icon-btn"
+							class:selected={editDomainIcon === icon.class}
+							onclick={() => { editDomainIcon = icon.class; }}
+							aria-label={icon.name}
+							aria-pressed={editDomainIcon === icon.class}
+						>
+							<span class="{icon.class} h-4 w-4 inline-block"></span>
+						</button>
+					{/each}
+				</div>
+			</fieldset>
 
-					<!-- Color Picker -->
-					<div class="form-row">
-						<label class="form-label">Color</label>
-						<input type="hidden" name="color" value={editDomainColor ?? ''} />
-						<div class="color-row">
-							<button
-								type="button"
-								class="color-swatch none"
-								class:selected={editDomainColor === null}
-								onclick={() => { editDomainColor = null; }}
-								aria-label="No color"
-								aria-pressed={editDomainColor === null}
-							>
-								<span class="i-lucide-x h-3 w-3 op-40"></span>
-							</button>
-							{#each COLOR_OPTIONS as c}
-								<button
-									type="button"
-									class="color-swatch"
-									class:selected={editDomainColor === c}
-									style="--swatch-color: var(--chart-{c})"
-									onclick={() => { editDomainColor = c; }}
-									aria-label="Color {c}"
-									aria-pressed={editDomainColor === c}
-								></button>
-							{/each}
-						</div>
-					</div>
+			<!-- Color Picker -->
+			<fieldset class="flex flex-col gap-1">
+				<legend class="text-fluid-sm font-medium text-fg mb-1">Color</legend>
+				<input type="hidden" name="color" value={editDomainColor ?? ''} />
+				<div class="color-row">
+					<button
+						type="button"
+						class="color-swatch none"
+						class:selected={editDomainColor === null}
+						onclick={() => { editDomainColor = null; }}
+						aria-label="No color (clear selection)"
+						aria-pressed={editDomainColor === null}
+					>
+						<span class="i-lucide-x h-3 w-3 op-40"></span>
+					</button>
+					{#each COLOR_OPTIONS as c}
+						<button
+							type="button"
+							class="color-swatch"
+							class:selected={editDomainColor === c}
+							style="--swatch-color: var(--chart-{c})"
+							onclick={() => { editDomainColor = c; }}
+							aria-label="{COLOR_NAMES[c]}, chart color {c}"
+							aria-pressed={editDomainColor === c}
+						></button>
+					{/each}
+				</div>
+			</fieldset>
 
-					<!-- Description -->
-					<div class="form-row">
-						<label class="form-label" for="domain-desc">Description</label>
-						<input type="hidden" name="description" value={editDomainDescription} />
-						<textarea
-							id="domain-desc"
-							class="desc-textarea"
-							bind:value={editDomainDescription}
-							placeholder="Brief description for this domain..."
-							rows="2"
-						></textarea>
-					</div>
-
-					<!-- Actions -->
-					<Cluster justify="end" gap="2">
-						<Button variant="ghost" size="sm" onclick={closeDomainModal}>Cancel</Button>
-						<Button type="submit" size="sm" disabled={submitting === 'domainModal'}>
-							{#if submitting === 'domainModal'}<Spinner size="xs" class="mr-1" />{/if}
-							{editDomainId ? 'Save Changes' : 'Create Domain'}
-						</Button>
-					</Cluster>
-				</Stack>
-			</form>
+			<FormField label="Description" id="domain-desc">
+				{#snippet children({ fieldId, describedBy })}
+					<Textarea
+						id={fieldId}
+						name="description"
+						bind:value={editDomainDescription}
+						placeholder="Brief description for this domain..."
+						rows={2}
+						aria-describedby={describedBy}
+					/>
+				{/snippet}
+			</FormField>
 		</div>
-	</div>
-{/if}
 
-<!-- Category Edit/Create Modal -->
-{#if showTagModal}
-	<div class="modal-overlay" role="presentation" onclick={closeTagModal}>
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div class="modal" onclick={(e) => e.stopPropagation()} role="dialog" aria-labelledby="tag-modal-title">
-			<h2 id="tag-modal-title" class="text-fluid-lg font-semibold mb-4">
-				{editTagId ? 'Edit Category' : 'Create Category'}
-			</h2>
-
-			<form
-				method="POST"
-				action={editTagId ? '?/updateTag' : '?/create'}
-				use:enhance={() => {
-					submitting = 'tagModal';
-					return async ({ result, update }) => {
-						if (result.type === 'success' && result.data) {
-							toast.success(result.data.message as string);
-							closeTagModal();
-						} else if (result.type === 'failure') {
-							toast.error((result.data?.message as string) || 'Failed');
-						}
-						submitting = '';
-						return update({ reset: false });
-					};
-				}}
-			>
-				{#if editTagId}
-					<input type="hidden" name="tagId" value={editTagId} />
-				{/if}
-
-				<Stack gap="4">
-					<!-- Name & Slug -->
-					<div class="form-row">
-						<label class="form-label" for="tag-name">Name</label>
-						<Input id="tag-name" name="name" bind:value={editTagName} placeholder="Category name" required />
-					</div>
-					<div class="form-row">
-						<label class="form-label" for="tag-slug">Slug</label>
-						<Input id="tag-slug" name="slug" bind:value={editTagSlug} placeholder="category-slug" required />
-					</div>
-
-					<!-- Live Preview -->
-					<div class="preview-row">
-						<BlogTag tag={previewCategoryTag} tier="category" size="md" />
-					</div>
-
-					<!-- Glyph -->
-					<div class="form-row">
-						<label class="form-label" for="tag-glyph">Glyph (single character)</label>
-						<Input id="tag-glyph" name="glyph" bind:value={editTagGlyph} placeholder="e.g. → ∞ § # @" maxlength={2} />
-					</div>
-
-					<!-- Icon Picker -->
-					<div class="form-row">
-						<label class="form-label">Icon (overrides glyph)</label>
-						<input type="hidden" name="icon" value={editTagIcon ?? ''} />
-						<Input placeholder="Filter icons..." bind:value={tagIconFilter} />
-						<div class="icon-grid">
-							<button
-								type="button"
-								class="icon-btn"
-								class:selected={editTagIcon === null}
-								onclick={() => { editTagIcon = null; }}
-								aria-label="No icon"
-								aria-pressed={editTagIcon === null}
-							>
-								<span class="i-lucide-x h-4 w-4 op-40"></span>
-							</button>
-							{#each filteredTagIcons as icon}
-								<button
-									type="button"
-									class="icon-btn"
-									class:selected={editTagIcon === icon.class}
-									onclick={() => { editTagIcon = icon.class; }}
-									aria-label={icon.name}
-									aria-pressed={editTagIcon === icon.class}
-								>
-									<span class="{icon.class} h-4 w-4 inline-block"></span>
-								</button>
-							{/each}
-						</div>
-					</div>
-
-					<!-- Color Picker -->
-					<div class="form-row">
-						<label class="form-label">Color</label>
-						<input type="hidden" name="color" value={editTagColor ?? ''} />
-						<div class="color-row">
-							<button
-								type="button"
-								class="color-swatch none"
-								class:selected={editTagColor === null}
-								onclick={() => { editTagColor = null; }}
-								aria-label="No color"
-								aria-pressed={editTagColor === null}
-							>
-								<span class="i-lucide-x h-3 w-3 op-40"></span>
-							</button>
-							{#each COLOR_OPTIONS as c}
-								<button
-									type="button"
-									class="color-swatch"
-									class:selected={editTagColor === c}
-									style="--swatch-color: var(--chart-{c})"
-									onclick={() => { editTagColor = c; }}
-									aria-label="Color {c}"
-									aria-pressed={editTagColor === c}
-								></button>
-							{/each}
-						</div>
-					</div>
-
-					<!-- Actions -->
-					<Cluster justify="end" gap="2">
-						<Button variant="ghost" size="sm" onclick={closeTagModal}>Cancel</Button>
-						<Button type="submit" size="sm" disabled={submitting === 'tagModal'}>
-							{#if submitting === 'tagModal'}<Spinner size="xs" class="mr-1" />{/if}
-							{editTagId ? 'Save Changes' : 'Create Category'}
-						</Button>
-					</Cluster>
-				</Stack>
-			</form>
+		<div class="dialog-actions">
+			<Button type="button" variant="outline" size="sm" onclick={() => { showDomainModal = false; }}>Cancel</Button>
+			<Button type="submit" variant="default" size="sm" disabled={submitting === 'domainModal'}>
+				{#if submitting === 'domainModal'}<Spinner size="xs" class="mr-1" />{/if}
+				{editDomainId ? 'Save Changes' : 'Create Domain'}
+			</Button>
 		</div>
-	</div>
-{/if}
+	</form>
+</Dialog>
+
+<!-- Category Edit/Create Dialog -->
+<Dialog
+	bind:open={showTagModal}
+	title={editTagId ? 'Edit Category' : 'Create Category'}
+	description={editTagId ? `Update "${editTagName}" settings.` : 'Add a new category for blog posts.'}
+	class="max-h-[85dvh] overflow-y-auto"
+>
+	<form
+		method="POST"
+		action={editTagId ? '?/updateTag' : '?/create'}
+		class="dialog-form"
+		use:enhance={() => {
+			submitting = 'tagModal';
+			return async ({ result, update }) => {
+				if (result.type === 'success' && result.data) {
+					toast.success(result.data.message as string);
+					showTagModal = false;
+				} else if (result.type === 'failure') {
+					toast.error((result.data?.message as string) || 'Failed');
+				}
+				submitting = '';
+				return update({ reset: false });
+			};
+		}}
+	>
+		{#if editTagId}
+			<input type="hidden" name="tagId" value={editTagId} />
+		{/if}
+
+		<div class="dialog-fields">
+			<FormField label="Name" id="tag-name" required>
+				{#snippet children({ fieldId, describedBy })}
+					<Input id={fieldId} name="name" bind:value={editTagName} placeholder="Category name" required aria-describedby={describedBy} />
+				{/snippet}
+			</FormField>
+
+			<FormField label="Slug" id="tag-slug" required>
+				{#snippet children({ fieldId, describedBy })}
+					<Input id={fieldId} name="slug" bind:value={editTagSlug} placeholder="category-slug" required aria-describedby={describedBy} />
+				{/snippet}
+			</FormField>
+
+			<!-- Live Preview -->
+			<div class="preview-row">
+				<BlogTag tag={previewCategoryTag} tier="category" size="md" />
+			</div>
+
+			<FormField label="Glyph (single character)" id="tag-glyph">
+				{#snippet children({ fieldId, describedBy })}
+					<Input id={fieldId} name="glyph" bind:value={editTagGlyph} placeholder="e.g. → ∞ § # @" maxlength={2} aria-describedby={describedBy} />
+				{/snippet}
+			</FormField>
+
+			<!-- Icon Picker -->
+			<fieldset class="flex flex-col gap-1">
+				<legend class="text-fluid-sm font-medium text-fg mb-1">Icon (overrides glyph)</legend>
+				<input type="hidden" name="icon" value={editTagIcon ?? ''} />
+				<Input placeholder="Filter icons..." bind:value={tagIconFilter} />
+				<div class="icon-grid">
+					<button
+						type="button"
+						class="icon-btn"
+						class:selected={editTagIcon === null}
+						onclick={() => { editTagIcon = null; }}
+						aria-label="No icon (clear selection)"
+						aria-pressed={editTagIcon === null}
+					>
+						<span class="i-lucide-x h-4 w-4 op-40"></span>
+					</button>
+					{#each filteredTagIcons as icon}
+						<button
+							type="button"
+							class="icon-btn"
+							class:selected={editTagIcon === icon.class}
+							onclick={() => { editTagIcon = icon.class; }}
+							aria-label={icon.name}
+							aria-pressed={editTagIcon === icon.class}
+						>
+							<span class="{icon.class} h-4 w-4 inline-block"></span>
+						</button>
+					{/each}
+				</div>
+			</fieldset>
+
+			<!-- Color Picker -->
+			<fieldset class="flex flex-col gap-1">
+				<legend class="text-fluid-sm font-medium text-fg mb-1">Color</legend>
+				<input type="hidden" name="color" value={editTagColor ?? ''} />
+				<div class="color-row">
+					<button
+						type="button"
+						class="color-swatch none"
+						class:selected={editTagColor === null}
+						onclick={() => { editTagColor = null; }}
+						aria-label="No color (clear selection)"
+						aria-pressed={editTagColor === null}
+					>
+						<span class="i-lucide-x h-3 w-3 op-40"></span>
+					</button>
+					{#each COLOR_OPTIONS as c}
+						<button
+							type="button"
+							class="color-swatch"
+							class:selected={editTagColor === c}
+							style="--swatch-color: var(--chart-{c})"
+							onclick={() => { editTagColor = c; }}
+							aria-label="{COLOR_NAMES[c]}, chart color {c}"
+							aria-pressed={editTagColor === c}
+						></button>
+					{/each}
+				</div>
+			</fieldset>
+		</div>
+
+		<div class="dialog-actions">
+			<Button type="button" variant="outline" size="sm" onclick={() => { showTagModal = false; }}>Cancel</Button>
+			<Button type="submit" variant="default" size="sm" disabled={submitting === 'tagModal'}>
+				{#if submitting === 'tagModal'}<Spinner size="xs" class="mr-1" />{/if}
+				{editTagId ? 'Save Changes' : 'Create Category'}
+			</Button>
+		</div>
+	</form>
+</Dialog>
 
 <ConfirmDialog
 	open={showDeleteDialog}
@@ -613,7 +628,7 @@
 	description='Delete tag "{deleteTagName}" and unlink it from {deletePostCount} post(s).'
 	confirmLabel="Delete"
 	destructive
-	onconfirm={submitDeleteForm}
+	onconfirm={() => { showDeleteDialog = false; deleteTagFormEl.requestSubmit(); }}
 	oncancel={() => { showDeleteDialog = false; }}
 />
 
@@ -623,11 +638,32 @@
 	description='Delete domain "{deleteDomainName}" and unset it from {deleteDomainPostCount} post(s).'
 	confirmLabel="Delete"
 	destructive
-	onconfirm={submitDeleteDomainForm}
+	onconfirm={() => { showDeleteDomainDialog = false; deleteDomainFormEl.requestSubmit(); }}
 	oncancel={() => { showDeleteDomainDialog = false; }}
 />
 
 <style>
+	/* Dialog form structure (matches showcase pattern) */
+	.dialog-form {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-4);
+	}
+
+	.dialog-fields {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-3);
+	}
+
+	.dialog-actions {
+		display: flex;
+		justify-content: flex-end;
+		gap: var(--spacing-2);
+		padding-top: var(--spacing-3);
+		border-top: 1px solid var(--color-border);
+	}
+
 	.glyph-icon {
 		display: inline-flex;
 		align-items: center;
@@ -637,40 +673,6 @@
 		font-size: 0.875rem;
 		font-weight: 600;
 		color: var(--color-muted);
-	}
-
-	.table-wrap {
-		overflow-x: auto;
-	}
-
-	.tag-table {
-		width: 100%;
-		border-collapse: collapse;
-		font-size: var(--text-fluid-sm);
-	}
-
-	.tag-table th {
-		text-align: left;
-		padding: var(--spacing-2) var(--spacing-3);
-		font-weight: 600;
-		color: var(--color-muted);
-		border-bottom: 1px solid var(--color-border);
-		white-space: nowrap;
-	}
-
-	.tag-table td {
-		padding: var(--spacing-2) var(--spacing-3);
-		border-bottom: 1px solid var(--color-border);
-		white-space: nowrap;
-	}
-
-	.tag-table tbody tr:hover {
-		background: var(--color-subtle);
-	}
-
-	.slug-code {
-		font-family: ui-monospace, monospace;
-		font-size: var(--text-fluid-xs);
 	}
 
 	.letter-icon {
@@ -692,42 +694,6 @@
 		border-radius: 50%;
 	}
 
-	/* Modal */
-	.modal-overlay {
-		position: fixed;
-		inset: 0;
-		z-index: 50;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: rgb(0 0 0 / 0.5);
-		backdrop-filter: blur(4px);
-	}
-
-	.modal {
-		background: var(--color-page);
-		border: 1px solid var(--color-border);
-		border-radius: var(--spacing-3);
-		padding: var(--spacing-6);
-		width: min(480px, 90vw);
-		max-height: 85vh;
-		overflow-y: auto;
-	}
-
-	.form-row {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-1);
-	}
-
-	.form-label {
-		font-size: var(--text-fluid-xs);
-		font-weight: 600;
-		color: var(--color-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
 	.preview-row {
 		display: flex;
 		align-items: center;
@@ -737,6 +703,7 @@
 		border-radius: var(--spacing-2);
 	}
 
+	/* Icon picker grid */
 	.icon-grid {
 		display: grid;
 		grid-template-columns: repeat(6, 1fr);
@@ -744,6 +711,8 @@
 		max-height: 160px;
 		overflow-y: auto;
 		margin-top: var(--spacing-1);
+		mask-image: linear-gradient(to bottom, black calc(100% - 24px), transparent);
+		-webkit-mask-image: linear-gradient(to bottom, black calc(100% - 24px), transparent);
 	}
 
 	.icon-btn {
@@ -768,6 +737,7 @@
 		background: color-mix(in srgb, var(--color-primary) 10%, transparent);
 	}
 
+	/* Color picker swatches */
 	.color-row {
 		display: flex;
 		gap: var(--spacing-2);
@@ -795,23 +765,5 @@
 	.color-swatch.selected {
 		outline: 2px solid var(--color-primary);
 		outline-offset: 2px;
-	}
-
-	.desc-textarea {
-		width: 100%;
-		padding: var(--spacing-2);
-		background: var(--color-input-bg, var(--color-subtle));
-		border: 1px solid var(--color-input-border, var(--color-border));
-		border-radius: var(--spacing-1);
-		color: var(--color-fg);
-		font-family: inherit;
-		font-size: var(--text-fluid-sm);
-		resize: vertical;
-	}
-
-	.desc-textarea:focus {
-		outline: none;
-		ring: 2px;
-		ring-color: var(--color-primary);
 	}
 </style>
