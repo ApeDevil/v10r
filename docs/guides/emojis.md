@@ -4,6 +4,9 @@
 ⚠️ Warning
 🪲 Debug
 
+🔆 Source
+
+
 🏛️ Library (lib)
 ⚙️ Server
 📟 Notifications

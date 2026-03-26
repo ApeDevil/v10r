@@ -75,6 +75,24 @@ Every showcase page serves three purposes simultaneously:
 | **Template** | Copy-paste starting point |
 
 
+## v10r(x) — Instances
+
+v10r isn't clone-once scaffolding. It's a continuous template — a living upstream that keeps evolving. Downstream projects are **instances** that take what they need and leave the rest.
+
+The naming follows function-call syntax: `v10r(content or application)` — v10r is the function, the content/application is the variable.
+
+### Examples
+
+| Instance | What it uses | What it drops |
+|---|---|---|
+| `v10r(landing-page)` | SvelteKit, UnoCSS, Vercel | Auth, DB, ORM, AI, 3D |
+| `v10r(full-platform)` | Everything | Nothing — full stack |
+
+### Creating a new instance
+
+Shape it to the content. Strip what you don't need, add what you do. The upstream keeps growing — pull new patterns when they're useful.
+
+
 ## Documentation Structure
 
 The `docs/` folder uses an AI-optimized navigation structure. Each directory has a README.md that acts as a **navigation hub** with topic tables showing which file covers what.
