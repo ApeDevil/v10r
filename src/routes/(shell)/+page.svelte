@@ -3,7 +3,7 @@ import { Asterism, CornerFrame, Divider } from '$lib/components';
 import { localizeHref } from '$lib/i18n';
 import { getStyle } from '$lib/state/style.svelte';
 import { getTheme } from '$lib/state/theme.svelte';
-import AsciiRaptor from './_components/AsciiRaptor.svelte';
+import LogoHero from '$lib/components/branding/LogoHero.svelte';
 import { fadeIn } from './_components/fadeIn';
 import InstancesSection from './_components/InstancesSection.svelte';
 import StructureSection from './_components/StructureSection.svelte';
@@ -104,7 +104,7 @@ const ghostIcons = [
 <!-- ACT I: Hero -->
 <section class="hero">
 	<div class="hero-grid">
-		<div class="hero-content">
+		<div class="hero-identity">
 			<p class="classification">born to be fast & light</p>
 
 			<h1 class="specimen-name" class:revealed>
@@ -115,7 +115,6 @@ const ghostIcons = [
 
 			<p class="tagline">Containerized Full-Stack Template</p>
 
-			<div class="etymology-row">
 			<div class="etymology-card">
 				<CornerFrame variant="bracket" size={20} strokeWidth={1} />
 				<span class="etymology-label">ETYMOLOGY</span>
@@ -126,6 +125,12 @@ v          10            r</pre>
 					<span class="sr-only">The letters v and r bracket 10 letters in Velociraptor, forming the abbreviation v10r.</span>
 					<p class="etymology-result">v10r</p>
 				</div>
+			</div>
+		</div>
+
+		<div class="hero-experience">
+			<div class="hero-raptor">
+				<LogoHero />
 			</div>
 
 			{#if !style.branded}
@@ -152,11 +157,6 @@ v          10            r</pre>
 					</div>
 				</div>
 			{/if}
-			</div>
-		</div>
-
-		<div class="hero-raptor">
-			<AsciiRaptor />
 		</div>
 	</div>
 </section>
@@ -270,37 +270,42 @@ v          10            r</pre>
 
 	@media (min-width: 1024px) {
 		.hero-grid {
-			display: grid;
-			grid-template-columns: 3fr 2fr;
+			flex-direction: row;
 			align-items: center;
+			gap: var(--spacing-8);
 		}
 	}
 
-	.hero-content {
+	/* Block 1: Identity */
+	.hero-identity {
 		display: flex;
 		flex-direction: column;
+		flex: 3;
+		min-width: 0;
 	}
 
-	/* Classification row */
+	/* Block 2: Experience */
+	.hero-experience {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--spacing-6);
+		flex: 2;
+		min-width: 0;
+	}
+
 	.classification {
 		font-size: var(--text-fluid-xs);
 		color: var(--color-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.15em;
 		font-variant: small-caps;
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--spacing-2);
-		margin-bottom: var(--spacing-5);
-	}
-
-	.classification-sep {
-		opacity: 0.4;
+		margin: 0 0 var(--spacing-4);
 	}
 
 	/* Specimen name */
 	.specimen-name {
-		font-size: clamp(3rem, 7.5vw, 6rem);
+		font-size: clamp(2rem, 5.5vw, 6rem);
 		font-weight: 700;
 		text-transform: uppercase;
 		line-height: 0.9;
@@ -346,27 +351,11 @@ v          10            r</pre>
 		font-weight: 400;
 	}
 
-	/* Etymology row — etymology card + roll block side by side */
-	.etymology-row {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-6);
-		align-items: flex-start;
-	}
-
-	@media (min-width: 640px) {
-		.etymology-row {
-			flex-direction: row;
-			align-items: stretch;
-		}
-	}
-
 	/* Roll block */
 	.roll-block {
 		display: flex;
 		flex-direction: column;
-		align-items: flex-start;
-		justify-content: center;
+		align-items: center;
 		gap: var(--spacing-3);
 	}
 
@@ -481,16 +470,8 @@ v          10            r</pre>
 
 	/* Raptor */
 	.hero-raptor {
-		display: flex;
-		justify-content: center;
-		opacity: 0.6;
-		color: var(--color-fg);
-	}
-
-	@media (min-width: 1024px) {
-		.hero-raptor {
-			justify-content: flex-end;
-		}
+		width: 100%;
+		max-width: 280px;
 	}
 
 	/* ─── DIVIDERS ─── */
@@ -676,9 +657,4 @@ v          10            r</pre>
 		justify-self: center;
 	}
 
-	@media (forced-colors: active) {
-		.hero-raptor {
-			opacity: 1;
-		}
-	}
 </style>

@@ -90,11 +90,10 @@ function handleOverlayClick() {
 			<ThemeToggle forceExpanded />
 		{/if}
 
-		<DiceRollButton forceExpanded />
-
 		<SidebarNav forceExpanded useFlyout={false} {isAdmin} />
 
 		<div class="p-2 border-t border-border">
+			<DiceRollButton forceExpanded />
 			<UserMenu user={session.user ? { name: session.user.name ?? '', email: session.user.email } : null} forceExpanded />
 		</div>
 	</aside>
