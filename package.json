@@ -1,7 +1,25 @@
 {
 	"name": "velociraptor",
 	"private": true,
+	"license": "MIT",
 	"version": "0.0.1",
+	"description": "Full-stack SvelteKit template focused on performance and lightweight deployment",
+	"author": "ApeDevil (https://github.com/ApeDevil)",
+	"repository": {
+		"type": "git",
+		"url": "https://gitlab.com/ApeDevil/velociraptor"
+	},
+	"keywords": [
+		"sveltekit",
+		"svelte5",
+		"bun",
+		"template",
+		"drizzle",
+		"unocss",
+		"better-auth",
+		"neon",
+		"neo4j"
+	],
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
