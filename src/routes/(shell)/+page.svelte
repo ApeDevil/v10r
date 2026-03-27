@@ -113,7 +113,7 @@ const ghostIcons = [
 				{/each}
 			</h1>
 
-			<p class="tagline">here's something that does a thing for you.</p>
+			<p class="tagline">Containerized Full-Stack Template</p>
 
 			<div class="etymology-row">
 			<div class="etymology-card">
@@ -125,7 +125,6 @@ const ghostIcons = [
 v          10            r</pre>
 					<span class="sr-only">The letters v and r bracket 10 letters in Velociraptor, forming the abbreviation v10r.</span>
 					<p class="etymology-result">v10r</p>
-					<p class="etymology-class">Full-Stack Containerized Template</p>
 				</div>
 			</div>
 
@@ -174,8 +173,8 @@ v          10            r</pre>
 	</header>
 
 	<div class="taxonomy-grid">
-		{#each zones as zone}
-			<article class="zone-card" use:fadeIn>
+		{#each zones as zone, i}
+			<article class="zone-card" use:fadeIn={{ delay: i * 60, translate: 8 }}>
 				<header class="zone-header">
 					<h3 class="zone-name">
 						{zone.name}
@@ -478,16 +477,6 @@ v          10            r</pre>
 		font-weight: 700;
 		color: var(--color-fg);
 		margin: 0;
-	}
-
-	.etymology-class {
-		font-size: var(--text-fluid-xs);
-		color: var(--color-muted);
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-		margin: 0;
-		border-top: 1px solid var(--color-border);
-		padding-top: var(--spacing-3);
 	}
 
 	/* Raptor */
