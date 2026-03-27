@@ -1,0 +1,19 @@
+import { buildProviderRegistry, getFallbackProviders, resolveActiveProvider } from './providers';
+
+const registry = buildProviderRegistry();
+const active = resolveActiveProvider(registry);
+
+/** Whether any AI provider is configured */
+export const aiConfigured = active !== null;
+
+/** Active chat model — null when no provider is available */
+export const chatModel = active?.getInstance() ?? null;
+
+/** Info about the active provider */
+export const activeProviderInfo = active ? { id: active.id, name: active.name, model: active.model } : null;
+
+/** Full provider registry for status pages */
+export const providerRegistry = registry;
+
+/** Fallback providers (configured, excluding active) */
+export const fallbackProviders = active ? getFallbackProviders(registry, active.id) : [];

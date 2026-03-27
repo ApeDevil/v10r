@@ -1,0 +1,22 @@
+{
+	"greeting": "Hello, {name}!",
+	"items_count": "{count, plural, one {# item} other {# items}}",
+	"welcome_message": "Welcome to the internationalization showcase",
+	"showcase_title": "Internationalization",
+	"showcase_description": "Type-safe translations, pluralization, date/number formatting, and language switching with Paraglide JS.",
+	"current_language": "Current language",
+	"switch_language": "Switch Language",
+	"section_messages": "Translated Messages",
+	"section_pluralization": "Pluralization",
+	"section_formatting": "Date & Number Formatting",
+	"section_switcher": "Language Switcher",
+	"section_type_safety": "Type Safety",
+	"type_safety_desc": "All message keys are compile-time checked with full IntelliSense support. Missing keys or wrong parameters cause build errors, not runtime errors.",
+	"formatted_date": "Formatted date",
+	"formatted_number": "Formatted number",
+	"formatted_currency": "Formatted currency",
+	"formatted_percent": "Formatted percentage",
+	"formatted_relative": "Relative time",
+	"sample_text": "This text is translated based on the current locale.",
+	"locale_strategy": "Detection order: URL prefix → Cookie → Base locale (English)"
+}

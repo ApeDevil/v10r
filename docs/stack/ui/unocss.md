@@ -48,65 +48,22 @@ UnoCSS should be configured to meet WCAG 2.1 AA baseline (with AAA targets for t
 | **Color contrast** | Use semantic tokens with 4.5:1 minimum ratio | AA (1.4.3) |
 | **Screen reader** | `sr-only` utility for visually hidden text | A (1.3.1) |
 
-**Focus states (required on all interactive elements):**
-```html
-<button class="focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
-               dark:focus-visible:ring-offset-gray-900">
-  Click me
-</button>
-```
-
-**Reduced motion support:**
-```html
-<div class="motion-safe:transition-all motion-reduce:transition-none">
-  Animated content
-</div>
-```
-
-**Screen reader only text:**
-```html
-<span class="sr-only">Required field</span>
-```
+**Key utility patterns:**
+- Focus: `focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2` on all interactive elements
+- Motion: `motion-safe:transition-all motion-reduce:transition-none` for animation respect
+- Screen reader: `sr-only` for visually hidden but accessible text
 
 See [design/tokens.md](../../blueprint/design/tokens.md) for WCAG-compliant color tokens.
 
 ## Dark Mode
 
-UnoCSS supports class-based dark mode via `preset-wind`:
+Class-based dark mode via `preset-wind`. Toggle `.dark` on `<html>` to switch themes. Prefix any utility with `dark:` for theme-aware styling (e.g., `dark:bg-gray-900`).
 
-```typescript
-// uno.config.ts
-import { defineConfig, presetWind } from 'unocss';
-
-export default defineConfig({
-  presets: [presetWind()],
-  // Class-based dark mode (default)
-  // Toggle .dark on <html> to switch themes
-});
-```
-
-**Usage:**
-```html
-<div class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-  Theme-aware content
-</div>
-```
-
-**Toggle implementation:** See [shell-state.md](../../blueprint/app-shell/shell-state.md#theme-state) for SSR-safe theme state management with cookie persistence.
+See [shell-state.md](../../blueprint/app-shell/shell-state.md#theme-state) for SSR-safe theme state management with cookie persistence.
 
 ## Container Queries
 
-Use container queries for component-scoped responsive design (instead of viewport-based breakpoints):
-
-```html
-<!-- Define container -->
-<div class="@container">
-  <!-- Respond to container width, not viewport -->
-  <div class="@md:flex @lg:grid @lg:grid-cols-2">
-    Content adapts to container size
-  </div>
-</div>
-```
+Container queries enable component-scoped responsive design. Wrap with `@container`, then use `@md:`, `@lg:` prefixes to respond to container width instead of viewport.
 
 **When to use:**
 | Pattern | Use Case |

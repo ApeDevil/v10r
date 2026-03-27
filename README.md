@@ -25,6 +25,15 @@ Each layer evolves from and is based on the previous:
 3. **[blueprint/](./docs/blueprint/)** — Implementation specs & strategy based on stack
 
 
+## Getting Started
+
+```bash
+cp .env.example .env          # fill in DATABASE_URL
+podman compose up -d           # start container
+podman exec v10r bun run db:setup   # bootstrap DB (extensions → migrate → RAG → Neo4j)
+podman exec v10r bun run dev --host 0.0.0.0
+```
+
 ## Local Development
 
 Clean host system + portable setup
@@ -66,6 +75,24 @@ Every showcase page serves three purposes simultaneously:
 | **Template** | Copy-paste starting point |
 
 
+## v10r(x) — Instances
+
+v10r isn't clone-once scaffolding. It's a continuous template — a living upstream that keeps evolving. Downstream projects are **instances** that take what they need and leave the rest.
+
+The naming follows function-call syntax: `v10r(content or application)` — v10r is the function, the content/application is the variable.
+
+### Examples
+
+| Instance | What it uses |
+|---|---|
+| `v10r(landing-page)` | SvelteKit, UnoCSS (2 of 18) |
+| `v10r(full-platform)` | Everything (18 of 18) |
+
+### Creating a new instance
+
+Shape it to the content. Strip what you don't need, add what you do. The upstream keeps growing — pull new patterns when they're useful.
+
+
 ## Documentation Structure
 
 The `docs/` folder uses an AI-optimized navigation structure. Each directory has a README.md that acts as a **navigation hub** with topic tables showing which file covers what.
@@ -97,5 +124,7 @@ The `docs/` folder uses an AI-optimized navigation structure. Each directory has
 | `vite.config.ts` | Vite config (HMR for containers) |
 | `svelte.config.js` | SvelteKit config |
 | `tsconfig.json` | TypeScript config |
+| `drizzle/` | Migration SQL files (committed, applied via `db:migrate`) |
+| `drizzle.config.ts` | Drizzle ORM config |
 | `CLAUDE.md` | AI agent instructions |
 | `.claude/` | Claude Code agents and skills |

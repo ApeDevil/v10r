@@ -1,4 +1,5 @@
 node_modules
+.bun
 
 # Output
 .output
@@ -7,6 +8,7 @@ node_modules
 .wrangler
 /.svelte-kit
 /build
+/src/lib/paraglide
 
 # OS
 .DS_Store
@@ -17,6 +19,9 @@ Thumbs.db
 .env.*
 !.env.example
 !.env.test
+
+# Drizzle — push-only workflow, generated transiently for test harness
+/drizzle
 
 # Vite
 vite.config.js.timestamp-*

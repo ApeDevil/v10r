@@ -20,6 +20,7 @@ services:
       - .env
     environment:
       - NODE_ENV=development
+      - CONTAINER=1
 
 volumes:
   node_modules:  # Named volume keeps deps off your host system

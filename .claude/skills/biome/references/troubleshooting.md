@@ -21,9 +21,6 @@ Common issues and solutions when using Biome.
 
 **Solutions:**
 ```bash
-# Ensure installed
-bun add -D @biomejs/biome
-
 # Use bunx instead of npx
 bunx biome check .
 
@@ -40,10 +37,7 @@ ls node_modules/.bin/biome
 - macOS (x64, arm64)
 - Windows (x64)
 
-For other platforms, use the WASM version:
-```bash
-bun add -D @biomejs/wasm-bundler
-```
+For other platforms, use the WASM version (`@biomejs/wasm-bundler`).
 
 ### Bun Postinstall Warning
 

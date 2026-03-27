@@ -1,10 +1,25 @@
 
+Don't Include:
+- Installation commands
+- Basic concept explanations
+- 
 
-let resy make a deep dive into claude code skills! i wanna know what are the best functional practices!
+
+let resy & scout make a deep dive into claude code skills! i wanna know what are the best functional practices!
 
 goal: use skills for knowledge gaps of ai - things post-training cutoff or underdocumented info!
 
+after ther research is done
+
+
 examine our currently skills set-up! let resy validate the existing information inside skills!
+
+
+
+now let resy & scout validate/verify that the made (skills contents) changes/optimizations are correct!
+  
+
+
 
 ---
 

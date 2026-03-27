@@ -275,7 +275,7 @@ Before shipping a new typography set:
 | **Documentation** | Reading focus over visual novelty |
 | **Admin panels** | Professionalism, predictability expected |
 | **Accessibility-critical apps** | Risk of contrast failures too high |
-| **Brand-critical B2B** | Corporate identity must be stable |
+| **Brand-critical B2B** | Visual identity must be stable |
 
 ### Velociraptor Context
 

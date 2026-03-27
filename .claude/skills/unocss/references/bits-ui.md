@@ -5,7 +5,6 @@ Styling patterns for Bits UI headless components.
 ## Contents
 
 - [Overview](#overview)
-- [Installation](#installation)
 - [Basic Pattern](#basic-pattern)
 - [Component Examples](#component-examples) - Accordion, Dialog, Select, Tabs, Tooltip
 - [Data Attribute Styling](#data-attribute-styling) - In class strings, style blocks, common attributes
@@ -18,12 +17,6 @@ Styling patterns for Bits UI headless components.
 ## Overview
 
 Bits UI provides **unstyled, accessible** components. Apply UnoCSS classes directly - no style conflicts to fight.
-
-## Installation
-
-```bash
-bun add bits-ui
-```
 
 ## Basic Pattern
 

@@ -2,6 +2,19 @@
 
 Implementation strategy for extending the in-app notification system to external channels (Email, Telegram, Discord).
 
+## Design Principle: Container-First, Serverless-Compatible
+
+The notification system is designed for a **persistent Bun container** as the primary runtime, with Vercel serverless as a compatible deployment target. This matters because persistent runtimes unlock better real-time delivery (SSE, in-memory connection maps, background workers) that serverless constrains.
+
+| Capability | Container (Primary) | Vercel Serverless |
+|---|---|---|
+| Real-time delivery | SSE + in-memory map | Polling + `invalidate()` |
+| Outbox processing | `setInterval` worker | Inngest or Vercel cron |
+| PG `LISTEN`/`NOTIFY` | Works (direct connection) | Blocked (pooled HTTP) |
+| Background workers | Native, persistent | Need external service |
+
+The architecture adapts automatically based on the runtime — the same codebase works in both environments.
+
 ## Overview
 
 Users connect their preferred channels and control which notification types go where via a Channel × Type preference matrix.
@@ -33,7 +46,7 @@ Users connect their preferred channels and control which notification types go w
 
 | File | Topics |
 |------|--------|
-| **[routing.md](./routing.md)** | • Notification router architecture<br>• Provider abstraction and rate limiting<br>• Outbox pattern with Inngest<br>• Delivery tracking and retry logic |
+| **[routing.md](./routing.md)** | • Notification router architecture<br>• Provider abstraction and rate limiting<br>• Outbox pattern with runtime-adaptive processing<br>• Delivery tracking and retry logic |
 | **[channels.md](./channels.md)** | • Telegram deep link connection flow<br>• Discord OAuth2 flow and DM limitations<br>• Credential storage and token refresh<br>• Channel health monitoring |
 | **[settings.md](./settings.md)** | • Route structure (`/app/settings/notifications`)<br>• Channel × Type settings matrix UI<br>• Connection management UX<br>• Mobile considerations |
 | **[schema.md](./schema.md)** | • `user_telegram_accounts` table<br>• `user_discord_accounts` table<br>• Extended settings columns<br>• Delivery tracking tables |
@@ -54,11 +67,13 @@ Users connect their preferred channels and control which notification types go w
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| **Routing approach** | Outbox + Inngest | Serverless-compatible, built-in retries |
-| **Telegram SDK** | GramIO | Official Bun support (grammY works but via compatibility layer) |
+| **Routing approach** | Outbox + runtime-adaptive worker | Container: direct `setInterval` worker. Vercel: Inngest or cron. Same outbox table either way. |
+| **Telegram delivery** | Raw `fetch()` to Bot API | Zero dependencies for outbound-only notifications. Add grammY only if bidirectional bot commands needed. |
 | **Rate limiting** | Dynamic header parsing | Discord rate limits are not hard-coded, must parse response headers |
 | **Token encryption** | AES-256-GCM + envelope | Industry standard; unique nonce per operation |
 | **Channel tables** | Separate per channel | Type-safe columns, Discord needs extra token fields |
+| **Real-time (in-app)** | SSE on container, polling on serverless | Container has persistent process for in-memory connection map. Serverless lacks this. |
+| **Unread count cache** | Direct DB query (defer Redis) | Properly indexed `WHERE is_read = false` is fast enough for MVP. Add Upstash Redis only when measured as bottleneck. |
 
 ## Build vs Buy: Novu Consideration
 
@@ -84,7 +99,7 @@ Industry research suggests notification platforms like Novu are recommended for 
 | Component | Integration |
 |-----------|------------|
 | **In-app notifications** | [../app-shell/notifications.md](../app-shell/notifications.md) - Extends existing system |
-| **Background jobs** | Inngest for async delivery |
+| **Background jobs** | Container: existing job runner (`setInterval`). Vercel: Inngest or cron. See [routing.md](./routing.md). |
 | **Auth** | [../auth.md](../auth.md) - Discord OAuth uses same patterns |
 | **Rate limiting** | [../rate-limiting.md](../rate-limiting.md) - Per-provider limits |
 | **Error handling** | [../error-handling.md](../error-handling.md) - Delivery failure patterns |

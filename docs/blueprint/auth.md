@@ -50,7 +50,7 @@
 "better-auth": "^1.x"
 ```
 
-> See [development-environment.md](./development-environment.md) for installation workflow.
+> See [development-environment.md](../foundation/development-environment.md) for installation workflow.
 
 ---
 

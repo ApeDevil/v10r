@@ -12,10 +12,10 @@ Vendor-agnostic relational database patterns. Currently implemented with Postgre
 - [Data Modeling](#data-modeling) - Normalization, denormalization, JSONB
 - [Index Strategy](#index-strategy) - B-tree, GIN, partial indexes
 - [Query Patterns](#query-patterns) - CTEs, window functions, N+1 prevention
-- [Row-Level Security](#row-level-security) - Multi-tenancy, policies
+- [Row-Level Security](#row-level-security) - See references/rls.md
 - [Performance](#performance) - EXPLAIN, optimization, batch operations
 - [Security](#security) - Injection, encryption, least privilege
-- [Transactions](#transactions) - Isolation levels, patterns
+- [Transactions](#transactions) - See references/transactions.md
 - [Migrations](#migrations) - Strategy, versioning
 - [Anti-Patterns](#anti-patterns) - Common mistakes
 - [References](#references) - Vendor-specific details
@@ -258,54 +258,11 @@ const result = await db.select()
 
 ## Row-Level Security
 
-Database-enforced access control for multi-tenancy.
+Database-enforced access control for multi-tenancy. See **references/rls.md** for full patterns.
 
-### Why RLS
+**Pattern:** Enable RLS → Create policy with `current_setting('app.tenant_id')` → Set context in hooks.server.ts with `SET LOCAL`.
 
-- **Defense in depth** - Buggy code can't access wrong tenant's data
-- **Centralized** - Security at DB level, not scattered in app
-- **Query-planner aware** - PostgreSQL optimizes with tenant_id indexes
-
-### Implementation Pattern
-
-```sql
--- 1. Enable RLS on table
-ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
-
--- 2. Create policy using session variable
-CREATE POLICY tenant_isolation ON documents
-FOR ALL
-USING (tenant_id = current_setting('app.current_tenant_id')::uuid);
-
--- 3. Set tenant context per request (in app code)
-SET LOCAL app.current_tenant_id = 'tenant-uuid-here';
-```
-
-### In SvelteKit
-
-```typescript
-// hooks.server.ts
-export const handle: Handle = async ({ event, resolve }) => {
-  const session = await getSession(event);
-
-  // Set tenant context for all queries in this request
-  if (session?.tenantId) {
-    await db.execute(sql`
-      SET LOCAL app.current_tenant_id = ${session.tenantId}
-    `);
-  }
-
-  return resolve(event);
-};
-```
-
-### RLS Best Practices
-
-1. **Use session variables, not per-tenant DB users**
-2. **Include tenant_id in every tenant table**
-3. **Use non-superuser roles** (superusers bypass RLS)
-4. **Test thoroughly** - Complex queries may have unintended behavior
-5. **Combine with application-level checks** for complex logic
+**Critical:** Use non-superuser roles (superusers bypass RLS).
 
 ## Performance
 
@@ -420,7 +377,7 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_user;
 
 ## Transactions
 
-### Basic Pattern
+See **references/transactions.md** for isolation levels and patterns.
 
 ```typescript
 await db.transaction(async (tx) => {
@@ -430,29 +387,7 @@ await db.transaction(async (tx) => {
 });
 ```
 
-### Isolation Levels
-
-| Level | Dirty Read | Non-Repeatable | Phantom |
-|-------|------------|----------------|---------|
-| Read Uncommitted | Possible | Possible | Possible |
-| **Read Committed** (default) | No | Possible | Possible |
-| Repeatable Read | No | No | Possible |
-| Serializable | No | No | No |
-
-```typescript
-await db.transaction(async (tx) => {
-  // ...
-}, {
-  isolationLevel: 'serializable', // For strict consistency
-});
-```
-
-### Best Practices
-
-1. **Keep transactions short** - Hold locks briefly
-2. **No external APIs inside** - Network latency extends lock time
-3. **Use appropriate isolation** - Read Committed is usually fine
-4. **Handle conflicts** - Retry on serialization failures
+**Rules:** Keep short, no external APIs inside, Read Committed is usually fine.
 
 ## Migrations
 
@@ -481,14 +416,7 @@ npx drizzle-kit push
 
 ### Schema Organization
 
-```typescript
-// src/lib/server/db/schema/index.ts
-export * from './users';
-export * from './posts';
-export * from './auth';
-
-// Export all tables for Drizzle Kit to find
-```
+Re-export all tables from `src/lib/server/db/schema/index.ts` for Drizzle Kit to find.
 
 ## Anti-Patterns
 
@@ -565,4 +493,6 @@ const usersWithPosts = await db.query.users.findMany({
 ## References
 
 - **references/neon.md** - Neon serverless specifics, connection pooling, branching
+- **references/rls.md** - Row-Level Security patterns, multi-tenancy
+- **references/transactions.md** - Isolation levels, error handling, savepoints
 - **See also:** `drizzle` skill for ORM-specific patterns

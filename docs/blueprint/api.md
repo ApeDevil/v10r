@@ -632,7 +632,7 @@ export const GET: RequestHandler = async ({ url }) => {
 
 > **Security:** Never trust client-provided MIME types (`file.type`). Validate actual file content using magic bytes.
 
-**Required:** `"file-type": "^19.x"` — see [development-environment.md](./development-environment.md)
+**Required:** `"file-type": "^19.x"` — see [development-environment.md](../foundation/development-environment.md)
 
 ```typescript
 // src/lib/server/upload/validate.ts
@@ -808,7 +808,7 @@ GraphQL is **not** the primary API pattern for Velociraptor. REST endpoints with
 
 GraphQL Yoga is lightweight (~15KB) and works well with SvelteKit.
 
-**Required:** `"graphql": "^16.x"`, `"graphql-yoga": "^5.x"` — see [development-environment.md](./development-environment.md)
+**Required:** `"graphql": "^16.x"`, `"graphql-yoga": "^5.x"` — see [development-environment.md](../foundation/development-environment.md)
 
 ### Schema Definition
 

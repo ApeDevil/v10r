@@ -193,10 +193,9 @@ Biome:   noExplicitAny (no prefix needed)
 
 ## Manual Migration Steps
 
-### Step 1: Install Biome
+### Step 1: Initialize Biome
 
 ```bash
-bun add -D -E @biomejs/biome
 bunx biome init
 ```
 

@@ -6,4 +6,4 @@ Internationalization and localization.
 
 | File | Main Topics |
 |------|-------------|
-| **[svelte-i18n.md](./svelte-i18n.md)** | • Library choice, • ICU MessageFormat, • Lazy loading, • URL-based routing |
+| **[paraglide.md](./paraglide.md)** | • Library choice, • Type-safe messages, • Compiler-based i18n, • URL routing via reroute hook |

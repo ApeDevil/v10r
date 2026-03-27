@@ -9,12 +9,6 @@ Better Auth's built-in rate limiting has issues:
 
 Use `sveltekit-rate-limiter` instead.
 
-## Installation
-
-```bash
-bun add sveltekit-rate-limiter
-```
-
 ## Basic Usage
 
 ```typescript
@@ -173,11 +167,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 ## Distributed Rate Limiting (Redis/Upstash)
 
-For multi-instance deployments:
-
-```bash
-bun add @upstash/ratelimit @upstash/redis
-```
+For multi-instance deployments, use `@upstash/ratelimit` with `@upstash/redis`:
 
 ```typescript
 import { Ratelimit } from '@upstash/ratelimit';

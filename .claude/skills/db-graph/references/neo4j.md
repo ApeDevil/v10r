@@ -13,12 +13,6 @@ Neo4j-specific implementation details for Velociraptor.
 
 ## Driver Setup
 
-### Installation
-
-```bash
-bun add neo4j-driver
-```
-
 ### Connection
 
 ```typescript

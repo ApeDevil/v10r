@@ -27,7 +27,7 @@ Graph data model for relationships, navigation, and future RAG capabilities.
 "neo4j-driver": "^5.x"
 ```
 
-> See [development-environment.md](../development-environment.md) for installation workflow.
+> See [development-environment.md](../../foundation/development-environment.md) for installation workflow.
 
 ### Client Configuration
 

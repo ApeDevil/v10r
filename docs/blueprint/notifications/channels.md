@@ -67,6 +67,21 @@ User clicks "Connect Telegram"
 
 **Use `https://t.me/` format**, not `tg://` which doesn't work in browsers.
 
+### Webhook Handler
+
+The webhook receives Telegram `/start` commands. For outbound-only notification delivery, use raw `fetch()` to the Telegram Bot API — no framework needed:
+
+```typescript
+// Outbound notification delivery — zero dependencies
+await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' })
+});
+```
+
+For the webhook handler (inbound `/start` command processing), use grammY only if you need middleware, session state, or complex command routing. For simple token validation, raw request parsing is sufficient.
+
 ### Verification Token
 
 | Property | Value |

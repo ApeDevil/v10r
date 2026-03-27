@@ -16,7 +16,7 @@ Technology decisions and vendor choices. Each directory contains focused files o
 | [ops/](./ops/) | Deployment, logging, caching |
 | [ai/](./ai/) | LLM integration |
 | [notifications/](./notifications/) | Email, Telegram, Discord, user settings |
-| [features/](./features/) | Cross-cutting features |
+| [capabilities/](./capabilities/) | Cross-cutting features |
 
 ## Quick Reference
 
@@ -32,11 +32,12 @@ Technology decisions and vendor choices. Each directory contains focused files o
 | Neo4j | [data/neo4j.md](./data/neo4j.md) |
 | Drizzle | [data/drizzle.md](./data/drizzle.md) |
 | Cloudflare R2 | [data/r2.md](./data/r2.md) |
+| Redis (Upstash) | [data/redis.md](./data/redis.md) |
 | Better Auth | [auth/better-auth.md](./auth/better-auth.md) |
 | Valibot | [forms/valibot.md](./forms/valibot.md) |
 | Superforms | [forms/superforms.md](./forms/superforms.md) |
 | Biome | [quality/biome.md](./quality/biome.md) |
-| svelte-i18n | [i18n/svelte-i18n.md](./i18n/svelte-i18n.md) |
+| Paraglide JS | [i18n/paraglide.md](./i18n/paraglide.md) |
 | Deployment | [ops/deployment.md](./ops/deployment.md) |
 | Logging | [ops/logging.md](./ops/logging.md) |
 | AI SDK | [ai/ai-sdk.md](./ai/ai-sdk.md) |
@@ -44,8 +45,8 @@ Technology decisions and vendor choices. Each directory contains focused files o
 | Email (Resend) | [notifications/resend.md](./notifications/resend.md) |
 | Telegram | [notifications/telegram.md](./notifications/telegram.md) |
 | Discord | [notifications/discord.md](./notifications/discord.md) |
-| GDPR | [features/gdpr.md](./features/gdpr.md) |
-| PWA | [features/pwa.md](./features/pwa.md) |
+| GDPR | [capabilities/gdpr.md](./capabilities/gdpr.md) |
+| PWA | [capabilities/pwa.md](./capabilities/pwa.md) |
 
 ## Vendors
 

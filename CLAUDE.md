@@ -18,16 +18,24 @@ Velociraptor (v10r) is a full-stack template/test-sandbox focused on performance
 | Styling | UnoCSS + Bits UI | `docs/stack/ui/unocss.md`, `docs/stack/ui/bits-ui.md` |
 | Validation | Valibot + Superforms | `docs/stack/forms/valibot.md`, `docs/stack/forms/superforms.md` |
 | Code Quality | Biome | `docs/stack/quality/biome.md` |
-| Container | Podman | `docs/stack/core/podman.md` |
 | Hosting | Vercel | `docs/stack/ops/deployment.md` |
 | Storage | Cloudflare R2 | `docs/stack/data/r2.md` |
-| i18n | svelte-i18n | `docs/stack/i18n/svelte-i18n.md` |
+| i18n | Paraglide JS | `docs/stack/i18n/paraglide.md` |
 | AI | Vercel AI SDK | `docs/stack/ai/ai-sdk.md` |
+| 3D | Three.js + Threlte | `docs/stack/capabilities/3d-web.md` |
 
 
 ## Architecture
 
 The project uses a self-documenting architecture where showcase pages serve as documentation, tests, and templates simultaneously. If a showcase page works, the feature is proven functional.
+
+The backend follows a multi-client core pattern: domain modules in `$lib/server/[domain]/` contain pure business logic with no framework imports, so the same functions serve UI form actions, AI SDK tool calls, REST API, and background jobs. Route handlers are thin adapters. See `docs/blueprint/architecture/multi-client-core.md` for the full blueprint.
+
+The AI subsystem includes a Graph RAG retrieval pipeline. See `docs/blueprint/ai/` for architecture details.
+
+### Component-First Rule
+
+**Never use raw HTML elements when a project component exists.** The project has a layered component system in `$lib/components/` — primitives (Button, Input, Textarea, Select, Checkbox, Switch, etc.), composites (LinkCard, etc.), layout, shell, branding, ui, and viz — that enforce consistent styling via design tokens. Always check for an existing component at any layer before reaching for a raw HTML element. Using raw `<input>`, `<button>`, `<select>`, or `<textarea>` bypasses the design system and creates visual inconsistency. Exceptions: `<input type="hidden">` (form data), `<input type="checkbox">` inside table rows (native indeterminate support), `<select>` binding numeric values (Select component only supports strings), and custom interactive regions (palette cards, sort headers) that need specialized styling.
 
 ## Local Development
 
@@ -42,23 +50,11 @@ The project uses a self-documenting architecture where showcase pages serve as d
 
 ### Key Principles
 
-1. **Never install on host** - No `bun install`, `npm install`, or any package manager commands on the host machine
+1. **Never install on host** - No `bun install` or any package manager commands on the host machine
 2. **Container has everything** - All tools, dependencies, and runtime are inside the v10r container
 3. **Databases are remote** - PostgreSQL (Neon) and Neo4j (Aura) are cloud-hosted, not containerized locally
 4. **Dependencies via package.json** - Add dependencies to `package.json`, then rebuild/restart container
 
-### Workflow
-
-```bash
-# Start development (from host)
-podman-compose up -d
-
-# Container runs: bun install && bun run dev
-# Access app at http://localhost:5173
-
-# Add a new dependency (edit package.json, then restart)
-podman-compose restart app
-```
 
 
 ## Documentation
@@ -88,21 +84,6 @@ Never grep blindly through docs. The READMEs are the index.
 ## Agent Delegation Policy
 
 **IMPORTANT:** This project uses specialized agents for domain-specific work. You MUST delegate tasks to the appropriate agent rather than handling them directly. Agents provide deeper expertise and keep the main context clean.
-
-### Mandatory Delegation Rules
-
-| When you encounter... | ALWAYS delegate to |
-|----------------------|-------------------|
-| Database schemas, data models, entity relationships | **daty** |
-| SvelteKit routes, load functions, rendering modes | **svey** |
-| Security review, auth flows, vulnerability assessment | **secy** |
-| System architecture, module boundaries, refactoring | **archy** |
-| UI/UX review, forms, error states, accessibility | **uxy** |
-| Runtime optimization, package management, Bun config | **buny** |
-| Errors, failures, debugging, test failures | **tray** |
-| Technical research, technology evaluation, verification | **resy** |
-| Documentation writing, README, guides | **docy** |
-| Real-world technology research, community practices | **scout** |
 
 ### Delegation Triggers
 
@@ -138,6 +119,7 @@ DELEGATE when the task involves:
 - Biome linting and formatting → `biome`
 - Security patterns, CSRF, injection, headers → `security`
 - AI/LLM integration, streaming, prompts, tool calling → `ai-tools`
+- Three.js, Threlte, 3D scenes, GLTF, physics → `3d`
 
 ### Skill Usage Rules
 
@@ -161,3 +143,4 @@ DELEGATE when the task involves:
 | biome | Biome linter and formatter configuration |
 | security | Security patterns, CSRF, injection, headers, rate limiting |
 | ai-tools | Vendor-agnostic LLM integration, Vercel AI SDK, streaming, caching |
+| 3d | Three.js + Threlte patterns, physics, WebGL/WebGPU |

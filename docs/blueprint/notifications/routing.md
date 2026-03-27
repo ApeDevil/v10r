@@ -2,6 +2,8 @@
 
 Backend architecture for multi-channel notification delivery.
 
+**Runtime model:** Container-first (persistent Bun process), with Vercel serverless as compatible fallback.
+
 ---
 
 ## Routing Flow
@@ -11,7 +13,7 @@ Backend architecture for multi-channel notification delivery.
 │                         NotificationService.send()                           │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│  Input: { userId, type, title, body, entityRef?, actionUrl? }               │
+│  Input: { userId, type, title, body, entityRef?, actionUrl?, groupKey? }    │
 │                                                                              │
 │  1. Create in-app notification record (always)                              │
 │  2. Load user settings + connected channels                                  │
@@ -20,7 +22,9 @@ Backend architecture for multi-channel notification delivery.
 │     - Check settings matrix for each channel                                │
 │     - Skip disconnected/inactive channels                                   │
 │  4. Create delivery records in outbox                                       │
-│  5. Trigger Inngest event: "notification/queued"                            │
+│  5. Trigger delivery:                                                        │
+│     - Container: notify in-process worker (immediate pickup)                │
+│     - Vercel: emit Inngest event "notification/queued"                      │
 │                                                                              │
 │  Output: { notificationId, queuedChannels[] }                               │
 │                                                                              │
@@ -61,11 +65,11 @@ Each channel provider implements a common interface:
 | **Failure modes** | Bounce, spam block, invalid address |
 | **Retry strategy** | 3 attempts with exponential backoff |
 
-### Telegram Provider (GramIO)
+### Telegram Provider (Bot API via fetch)
 
 | Aspect | Detail |
 |--------|--------|
-| **SDK** | `gramio` (native Bun support) |
+| **SDK** | Raw `fetch()` to `https://api.telegram.org/bot<TOKEN>/sendMessage`. No framework needed for outbound-only. Add grammY only if bidirectional bot commands required. |
 | **Rate limit** | 30 msg/sec global, ~1 msg/sec per chat |
 | **Failure modes** | Bot blocked, chat not found, rate limited |
 | **Retry strategy** | Retry on 429, mark inactive on 403 |
@@ -98,13 +102,14 @@ Each channel provider implements a common interface:
 
 ### Implementation Options
 
-| Approach | Pros | Cons |
-|----------|------|------|
-| **Inngest built-in** | Zero config, per-step limits | Requires Inngest |
-| **Database-backed** | No external deps | Adds DB queries |
-| **Upstash Redis** | Fast, distributed | Another service |
+| Approach | Runtime | Pros | Cons |
+|----------|---------|------|------|
+| **In-process tracker** | Container | Zero deps, in-memory, fast | Lost on restart |
+| **Database-backed** | Both | Persistent, no external deps | Adds DB queries |
+| **Inngest built-in** | Vercel | Zero config, per-step limits | Requires Inngest |
+| **Upstash Redis** | Both | Fast, distributed, survives restarts | Another service |
 
-**Recommendation:** Use Inngest's `rateLimit` option for provider steps. Falls back naturally to retry behavior.
+**Recommendation:** Database-backed rate tracking for container (simple, persistent). Inngest's `rateLimit` for Vercel deployments. Both use the same outbox table.
 
 ---
 
@@ -113,14 +118,21 @@ Each channel provider implements a common interface:
 Store pending deliveries in database before async processing:
 
 ```
-┌─────────────┐     ┌─────────────────────┐     ┌─────────────┐
-│  Sync       │────▶│ notification_       │────▶│  Inngest    │
-│  Handler    │     │ deliveries (outbox) │     │  Worker     │
-└─────────────┘     └─────────────────────┘     └─────────────┘
-      │                       │                       │
-      ▼                       ▼                       ▼
+Container runtime:
+┌─────────────┐     ┌─────────────────────┐     ┌──────────────────┐
+│  Sync       │────▶│ notification_       │────▶│  In-process      │
+│  Handler    │     │ deliveries (outbox) │     │  Worker          │
+└─────────────┘     └─────────────────────┘     │  (setInterval)   │
+      │                       │                  └──────────────────┘
+      ▼                       ▼                       │
  In-app notif           Delivery          External providers
    created              persisted            called async
+
+Vercel serverless:
+┌─────────────┐     ┌─────────────────────┐     ┌──────────────────┐
+│  Sync       │────▶│ notification_       │────▶│  Inngest /       │
+│  Handler    │     │ deliveries (outbox) │     │  Vercel Cron     │
+└─────────────┘     └─────────────────────┘     └──────────────────┘
 ```
 
 ### Why Outbox?
@@ -131,29 +143,53 @@ Store pending deliveries in database before async processing:
 | **Retry from source** | Failed deliveries can be retried from database state |
 | **Observability** | Full audit trail of what was sent where |
 | **Decoupling** | Request handler doesn't wait for external APIs |
+| **Runtime-agnostic** | Same outbox table works regardless of who processes it |
 
 ---
 
-## Inngest Workflow
+## Delivery Processing (Runtime-Adaptive)
 
-### Event: `notification/queued`
+The outbox table is the contract. **Who processes it** depends on the runtime.
 
-Triggered when notification is created with external deliveries.
+### Container: In-Process Worker (Primary)
 
-| Step | Action |
-|------|--------|
-| 1 | Load delivery records for notification |
-| 2 | Fan out to provider steps (parallel) |
-| 3 | Each step: call provider, update delivery status |
-| 4 | On failure: retry with backoff (max 3) |
-| 5 | On permanent failure: mark inactive, alert |
+The existing job runner at `src/lib/server/jobs/scheduler.ts` already supports `setInterval`-based background jobs. Add a `notification-delivery` job:
+
+| Aspect | Detail |
+|--------|--------|
+| **Trigger** | `setInterval` (every 10-30 seconds, configurable) |
+| **Processing** | SELECT pending deliveries, process in batches of 50 |
+| **Retry** | Built into worker loop — failed records stay pending, attempts incremented |
+| **Advantage** | Zero external dependencies, immediate pickup, full control |
+
+### Vercel: Inngest (Fallback)
+
+When deployed on serverless, Inngest provides step-level durability:
+
+| Aspect | Detail |
+|--------|--------|
+| **Trigger** | `inngest.send({ name: 'notification/queued' })` after outbox write |
+| **Processing** | Each channel is a separate step (parallel fan-out) |
+| **Retry** | Per-step retry with exponential backoff (max 3) |
+| **Advantage** | Survives function timeouts, per-step retry prevents double-sends |
+| **Free tier** | 50K executions/month |
+
+### Vercel: Cron Sweep (Safety Net)
+
+Regardless of runtime, a periodic cron job sweeps for any outbox records stuck in `pending` state (belt-and-suspenders):
+
+| Setting | Value |
+|---------|-------|
+| **Schedule** | Every 60 seconds |
+| **Endpoint** | `/api/cron/notification-delivery` |
+| **Purpose** | Catch leaked records, process retries |
 
 ### Retry Configuration
 
 | Setting | Value | Rationale |
 |---------|-------|-----------|
-| `retries` | 3 | Balance reliability vs spam |
-| `backoff` | Exponential | Respect rate limits |
+| `maxAttempts` | 3 | Balance reliability vs spam |
+| `backoff` | Exponential (1s, 4s, 16s) | Respect rate limits |
 | `maxDelay` | 1 hour | Don't delay too long |
 
 ---
@@ -206,7 +242,7 @@ When a channel fails permanently:
 | `failed` | 30 days |
 | `skipped` | 7 days |
 
-Clean up via scheduled Inngest job (daily).
+Clean up via scheduled job (daily) — runs as `setInterval` in container, Vercel cron on serverless.
 
 ---
 
@@ -214,18 +250,36 @@ Clean up via scheduled Inngest job (daily).
 
 ```
 src/lib/server/notifications/
-├── service.ts              # NotificationService (main entry)
+├── index.ts                # Re-exports public API
+├── service.ts              # NotificationService.send() — single entry point
 ├── router.ts               # Preference resolution, channel selection
+├── queries.ts              # DB queries (getUnread, markRead, etc.)
+├── types.ts                # NotificationType, DeliveryResult, etc.
+├── stream.ts               # SSE: notifyUser() + connection registry (container only)
 ├── providers/
-│   ├── index.ts            # Provider registry
+│   ├── index.ts            # Provider registry (getProvider by channel)
+│   ├── types.ts            # Provider interface
 │   ├── email.ts            # Resend provider
-│   ├── telegram.ts         # GramIO provider
+│   ├── telegram.ts         # Raw fetch() to Bot API
 │   └── discord.ts          # Discord REST provider
 ├── outbox.ts               # Delivery record management
-└── inngest/
+└── inngest/                # Only used on Vercel deployments
     ├── client.ts           # Inngest client setup
     └── functions/
         └── deliver.ts      # notification/queued handler
+```
+
+### Runtime Detection
+
+```typescript
+// Use the same pattern as existing job scheduler
+const IS_SERVERLESS = !!process.env.VERCEL;
+
+// In service.ts, after outbox write:
+if (IS_SERVERLESS && inngest) {
+  await inngest.send({ name: 'notification/queued', data: { notificationId } });
+}
+// On container, the in-process worker picks up pending records automatically
 ```
 
 ---

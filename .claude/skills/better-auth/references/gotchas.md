@@ -32,10 +32,6 @@ export const auth = betterAuth({
 
 ### Option 1: sveltekit-rate-limiter (Simple)
 
-```bash
-bun add sveltekit-rate-limiter
-```
-
 ```typescript
 // src/hooks.server.ts
 import { RateLimiter } from 'sveltekit-rate-limiter/server';
@@ -58,10 +54,6 @@ export const handle = sequence(rateLimitHandle, authHandle, sessionHandle);
 ```
 
 ### Option 2: Upstash (Production)
-
-```bash
-bun add @upstash/ratelimit @upstash/redis
-```
 
 ```typescript
 import { Ratelimit } from '@upstash/ratelimit';

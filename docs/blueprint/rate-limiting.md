@@ -56,7 +56,7 @@ export const auth = betterAuth({
 "sveltekit-rate-limiter": "^0.5.x"
 ```
 
-> See [development-environment.md](./development-environment.md) for installation workflow.
+> See [development-environment.md](../foundation/development-environment.md) for installation workflow.
 
 ---
 
@@ -350,7 +350,7 @@ For distributed rate limiting across serverless functions, use Upstash:
 "@upstash/redis": "^1.x"
 ```
 
-> See [development-environment.md](./development-environment.md) for installation workflow.
+> See [development-environment.md](../foundation/development-environment.md) for installation workflow.
 
 ### Configuration
 

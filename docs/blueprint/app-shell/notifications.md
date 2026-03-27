@@ -2,6 +2,8 @@
 
 In-app notification system with full-page notification center, preference management, and real-time updates.
 
+**Runtime model:** Container-first. SSE with in-memory connection map is the primary real-time strategy (persistent Bun process). Polling via `invalidate()` is the serverless fallback.
+
 ## Route Structure
 
 ```
@@ -119,10 +121,11 @@ Sidebar Header:
   let { data } = $props();
   let filter = $state<'all' | 'mentions' | 'system'>('all');
 
-  let filtered = $derived(() => {
-    if (filter === 'all') return data.notifications;
-    return data.notifications.filter(n => n.type === filter);
-  });
+  let filtered = $derived(
+    filter === 'all'
+      ? data.notifications
+      : data.notifications.filter(n => n.type === filter)
+  );
 
   async function markAsRead(id: string) {
     // Optimistic update
@@ -255,197 +258,256 @@ Sidebar Header:
 
 ## Real-Time Updates Strategy
 
-### Option 1: Polling (MVP)
+### Runtime-Adaptive Approach
 
-Simple, works everywhere, serverless-friendly.
+| Runtime | Strategy | Latency | Mechanism |
+|---|---|---|---|
+| **Container (primary)** | SSE + in-memory connection map | ~instant | `notifyUser()` pushes to open streams |
+| **Vercel serverless** | Polling + `invalidate()` | ~30s average | SvelteKit dependency invalidation |
+
+The container runtime is the primary target. SSE works naturally in a persistent Bun process — in-memory state survives across requests, connections stay open indefinitely. On Vercel serverless, the same codebase falls back to polling.
+
+### Container: SSE with In-Memory Connection Map
 
 ```typescript
-// Poll every 30 seconds
-setInterval(async () => {
-  const res = await fetch('/api/notifications/unread-count');
-  const { count } = await res.json();
-  unreadCount = count;
-}, 30_000);
+// src/lib/server/notifications/stream.ts
+// In-process connection registry — works because Bun is a persistent process
+
+const userStreams = new Map<string, Set<ReadableStreamDefaultController>>();
+
+/** Push a notification event to all open SSE connections for a user */
+export function notifyUser(userId: string, payload: unknown) {
+  const controllers = userStreams.get(userId);
+  if (!controllers) return;
+  const data = `data: ${JSON.stringify(payload)}\n\n`;
+  const encoded = new TextEncoder().encode(data);
+  for (const ctrl of controllers) {
+    try { ctrl.enqueue(encoded); } catch { /* connection gone */ }
+  }
+}
+
+export function registerStream(userId: string, ctrl: ReadableStreamDefaultController) {
+  if (!userStreams.has(userId)) userStreams.set(userId, new Set());
+  userStreams.get(userId)!.add(ctrl);
+}
+
+export function unregisterStream(userId: string, ctrl: ReadableStreamDefaultController) {
+  userStreams.get(userId)?.delete(ctrl);
+  if (userStreams.get(userId)?.size === 0) userStreams.delete(userId);
+}
 ```
-
-### Option 2: Server-Sent Events (Recommended)
-
-One-way server → client push. More efficient than polling.
 
 ```typescript
 // src/routes/api/notifications/stream/+server.ts
 import type { RequestHandler } from './$types';
+import { registerStream, unregisterStream } from '$lib/server/notifications/stream';
+import { getUnreadCount } from '$lib/server/notifications/queries';
 
-export const GET: RequestHandler = async ({ locals }) => {
-  const userId = locals.user?.id;
-  if (!userId) return new Response('Unauthorized', { status: 401 });
+const MAX_PER_USER = 3;
+
+export const GET: RequestHandler = async ({ locals, request }) => {
+  if (!locals.user || !locals.session) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
+  const userId = locals.user.id;
+  const abortSignal = request.signal;
+  let controller: ReadableStreamDefaultController;
 
   const stream = new ReadableStream({
-    async start(controller) {
-      const encoder = new TextEncoder();
+    async start(ctrl) {
+      controller = ctrl;
+      registerStream(userId, ctrl);
 
-      // Send initial count
+      // Send initial unread count
       const count = await getUnreadCount(userId);
-      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ count })}\n\n`));
+      ctrl.enqueue(new TextEncoder().encode(
+        `data: ${JSON.stringify({ type: 'init', count })}\n\n`
+      ));
 
-      // Subscribe to new notifications (e.g., via Redis pub/sub)
-      const unsubscribe = subscribeToNotifications(userId, (notification) => {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(notification)}\n\n`));
+      // Heartbeat keeps connection alive through proxies
+      const heartbeat = setInterval(() => {
+        try { ctrl.enqueue(new TextEncoder().encode(': heartbeat\n\n')); }
+        catch { clearInterval(heartbeat); }
+      }, 25_000);
+
+      // Cleanup on client disconnect
+      abortSignal.addEventListener('abort', () => {
+        clearInterval(heartbeat);
+        unregisterStream(userId, ctrl);
+        try { ctrl.close(); } catch { /* already closed */ }
       });
-
-      // Cleanup on disconnect
-      return () => unsubscribe();
     }
   });
 
   return new Response(stream, {
     headers: {
       'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
+      'Cache-Control': 'no-cache, no-transform',
+      'X-Accel-Buffering': 'no',
       'Connection': 'keep-alive',
     },
   });
 };
 ```
 
+**Trigger from anywhere** — after creating a notification in any form action or API route:
+
 ```typescript
-// Client-side
-const eventSource = new EventSource('/api/notifications/stream');
-eventSource.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  unreadCount = data.count;
-};
+import { notifyUser } from '$lib/server/notifications/stream';
+
+// After DB insert:
+notifyUser(targetUserId, { type: 'new', count: newUnreadCount, title: notification.title });
+```
+
+### Serverless Fallback: Polling with `invalidate()`
+
+On Vercel (no persistent process), use SvelteKit's native invalidation:
+
+```svelte
+<!-- src/lib/components/shell/NotificationPoller.svelte -->
+<script lang="ts">
+  import { invalidate } from '$app/navigation';
+  import { onMount } from 'svelte';
+
+  const POLL_INTERVAL = 30_000;
+
+  onMount(() => {
+    const timer = setInterval(() => {
+      invalidate('app:notifications');
+    }, POLL_INTERVAL);
+    return () => clearInterval(timer);
+  });
+</script>
+```
+
+The layout load function declares `depends('app:notifications')`, so `invalidate('app:notifications')` re-runs only that load — not all load functions. This is critical; using `invalidateAll()` would refetch everything.
+
+### Client-Side SSE Consumer
+
+```svelte
+<!-- src/lib/components/shell/SidebarNotifications.svelte -->
+<script lang="ts">
+  import { getNotifications } from '$lib/state/notifications.svelte';
+
+  const notif = getNotifications();
+  let sseSource: EventSource | null = null;
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  let attempts = 0;
+
+  function connect() {
+    sseSource?.close();
+    sseSource = new EventSource('/api/notifications/stream');
+
+    sseSource.onmessage = (e) => {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'init' || msg.type === 'count') {
+        notif.setCount(msg.count);
+      } else if (msg.type === 'new') {
+        notif.increment();
+      }
+      attempts = 0; // reset backoff on success
+    };
+
+    sseSource.onerror = () => {
+      sseSource?.close();
+      const delay = Math.min(1000 * 2 ** attempts, 30_000);
+      attempts++;
+      reconnectTimer = setTimeout(connect, delay);
+    };
+  }
+
+  // $effect runs only on client — SSE is not available during SSR
+  $effect(() => {
+    connect();
+    return () => {
+      sseSource?.close();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+    };
+  });
+</script>
 ```
 
 ### SSE Security Hardening
 
-**Critical:** Long-lived SSE connections require careful security handling.
+Long-lived SSE connections require careful security handling.
 
-#### Authentication
+#### Authentication & Session Validation
 
 ```typescript
-// src/routes/api/notifications/stream/+server.ts
-export const GET: RequestHandler = async ({ locals, url }) => {
-  // 1. Verify session exists
-  if (!locals.session || !locals.user) {
-    return new Response('Unauthorized', { status: 401 });
-  }
-
-  // 2. Check session not expired
-  if (new Date(locals.session.expiresAt) < new Date()) {
-    return new Response('Session expired', { status: 401 });
-  }
-
-  // 3. Optional: CSRF token for extra protection
-  const csrfToken = url.searchParams.get('csrf');
-  if (!csrfToken || csrfToken !== locals.session.csrfToken) {
-    return new Response('Invalid CSRF token', { status: 403 });
-  }
-
-  const userId = locals.user.id;
-  // ... rest of SSE setup
-};
+// In the SSE endpoint — verify session on connect
+if (!locals.session || !locals.user) {
+  return new Response('Unauthorized', { status: 401 });
+}
+if (new Date(locals.session.expiresAt) < new Date()) {
+  return new Response('Session expired', { status: 401 });
+}
 ```
 
-#### Client with Credentials
+For session expiry during a long-lived connection, the heartbeat interval can re-validate the session and send a `session-expired` event:
 
 ```typescript
-// Client-side - ensure cookies are sent
-const eventSource = new EventSource('/api/notifications/stream?csrf=' + csrfToken, {
-  withCredentials: true, // Required for cookies
-});
-
-// Handle auth errors
-eventSource.onerror = (event) => {
-  if (eventSource.readyState === EventSource.CLOSED) {
-    // Connection closed, likely auth issue
-    handleSessionExpiry();
-  }
-};
-```
-
-#### Heartbeat & Timeout
-
-Detect stale connections and session expiry during long-lived connections:
-
-```typescript
-// Server: Send heartbeat every 30 seconds
-const stream = new ReadableStream({
-  async start(controller) {
-    const encoder = new TextEncoder();
-    let sessionValid = true;
-
-    // Heartbeat interval
-    const heartbeat = setInterval(async () => {
-      // Re-check session validity
-      const session = await getSession(sessionToken);
-      if (!session || new Date(session.expiresAt) < new Date()) {
-        sessionValid = false;
-        controller.enqueue(encoder.encode('event: session-expired\ndata: {}\n\n'));
-        controller.close();
-        return;
-      }
-
-      controller.enqueue(encoder.encode(': heartbeat\n\n'));
-    }, 30_000);
-
-    // Cleanup
-    return () => {
-      clearInterval(heartbeat);
-    };
-  }
-});
+// Inside heartbeat interval:
+const session = await getSession(sessionToken);
+if (!session || new Date(session.expiresAt) < new Date()) {
+  ctrl.enqueue(encoder.encode('event: session-expired\ndata: {}\n\n'));
+  ctrl.close();
+  return;
+}
 ```
 
 ```typescript
-// Client: Handle session expiry event
+// Client handles session expiry:
 eventSource.addEventListener('session-expired', () => {
   eventSource.close();
   showSessionExpiredModal();
 });
-
-// Reconnect on transient errors
-let reconnectAttempts = 0;
-const maxReconnects = 5;
-
-eventSource.onerror = () => {
-  if (reconnectAttempts < maxReconnects) {
-    setTimeout(() => {
-      reconnectAttempts++;
-      connectSSE(); // Recreate EventSource
-    }, Math.min(1000 * 2 ** reconnectAttempts, 30000)); // Exponential backoff
-  }
-};
 ```
 
 #### Connection Limits
 
-Prevent resource exhaustion from too many SSE connections:
+Prevent resource exhaustion — max 3 SSE connections per user:
 
 ```typescript
-// Track active connections per user
-const activeConnections = new Map<string, number>();
-const MAX_CONNECTIONS_PER_USER = 3;
-
-export const GET: RequestHandler = async ({ locals }) => {
-  const userId = locals.user.id;
-  const current = activeConnections.get(userId) ?? 0;
-
-  if (current >= MAX_CONNECTIONS_PER_USER) {
-    return new Response('Too many connections', { status: 429 });
-  }
-
-  activeConnections.set(userId, current + 1);
-
-  // Decrement on disconnect
-  const cleanup = () => {
-    const count = activeConnections.get(userId) ?? 1;
-    activeConnections.set(userId, count - 1);
-  };
-
-  // ... SSE setup with cleanup in cancel handler
-};
+const existing = userStreams.get(userId)?.size ?? 0;
+if (existing >= MAX_PER_USER) {
+  return new Response('Too many connections', { status: 429 });
+}
 ```
+
+### Reconnection & Catch-Up
+
+On reconnect after a drop, the client may have missed events. Two approaches:
+
+**Simple (recommended):** Always send the current unread count as the `init` event on every reconnect. Badge accuracy is restored without event replay.
+
+**Advanced:** Use SSE `id:` fields + `Last-Event-ID` header for event replay:
+
+```typescript
+// Server: include event IDs
+ctrl.enqueue(encoder.encode(`id: ${notification.id}\ndata: ${JSON.stringify(payload)}\n\n`));
+
+// On reconnect, check Last-Event-ID and send missed notifications
+const lastEventId = request.headers.get('last-event-id');
+if (lastEventId) {
+  const missed = await getNotificationsSince(userId, lastEventId);
+  for (const n of missed) {
+    ctrl.enqueue(encoder.encode(`data: ${JSON.stringify(n)}\n\n`));
+  }
+}
+```
+
+### Future Upgrade Path: External Real-Time Service
+
+If SSE + in-memory map proves insufficient at scale (multiple container instances), consider:
+
+| Service | Free Tier | Notes |
+|---|---|---|
+| **Ably** | 200 connections, 6M msg/month | Best free tier, global edge |
+| **Pusher** | 100 connections, 200K msg/day | Most proven, transparent pricing |
+| **Upstash Realtime** | Included with Redis | Same vendor, Redis Streams-based |
+
+Replace the in-memory map with a pub/sub broker; the rest of the architecture stays the same.
 
 ---
 
@@ -498,6 +560,7 @@ export const notifications = pgTable('notifications', {
   title: text('title').notNull(),
   body: text('body'),
   entityRef: text('entity_ref'),  // "type:id" format
+  groupKey: text('group_key'),    // For collapsing: "Alice and 3 others commented..."
   actionUrl: text('action_url'),
   isRead: boolean('is_read').notNull().default(false),
   readAt: timestamp('read_at', { withTimezone: true }),
@@ -538,9 +601,8 @@ export const notificationSettings = pgTable('notification_settings', {
   emailSecurity: boolean('email_security').notNull().default(true), // Cannot disable
   emailSystem: boolean('email_system').notNull().default(true),
 
-  // Push preferences
-  pushMention: boolean('push_mention').notNull().default(true),
-  pushSecurity: boolean('push_security').notNull().default(true),
+  // Telegram + Discord columns added in schema extension
+  // See ../notifications/schema.md for telegram_* and discord_* columns
 
   // Digest settings
   emailDigestFrequency: digestFrequencyEnum('email_digest_frequency')
@@ -562,7 +624,7 @@ export const notificationSettings = pgTable('notification_settings', {
 
 ## Notification Cleanup
 
-Automated cleanup prevents table bloat.
+Automated cleanup prevents table bloat. Runs as a registered job in the existing job runner (container: `setInterval`, Vercel: cron).
 
 ```typescript
 // src/lib/server/jobs/notification-cleanup.ts
@@ -642,6 +704,55 @@ src/lib/components/composites/notifications/
 ├── NotificationPreview.svelte   # Popover preview (desktop)
 ├── NotificationBadge.svelte     # Unread count indicator
 └── NotificationFilters.svelte   # Filter tabs
+
+src/lib/components/shell/
+└── SidebarNotifications.svelte  # Bell icon + SSE consumer + popover
+
+src/lib/state/
+└── notifications.svelte.ts      # Context-based state (SSR-safe, like toast.svelte.ts)
+```
+
+### Notification State (Svelte 5 Runes)
+
+Follows the same context pattern as `toast.svelte.ts` — no module-level singletons (SSR would share state across requests):
+
+```typescript
+// src/lib/state/notifications.svelte.ts
+import { getContext, setContext } from 'svelte';
+
+const NOTIF_CTX = Symbol('notifications');
+
+export function createNotificationState(initialCount: number) {
+  let unreadCount = $state(initialCount);
+
+  return {
+    get unreadCount() { return unreadCount; },
+    setCount(n: number) { unreadCount = n; },
+    increment() { unreadCount++; },
+    decrementBy(n: number) { unreadCount = Math.max(0, unreadCount - n); },
+  };
+}
+
+export function setNotificationContext(initialCount: number) {
+  return setContext(NOTIF_CTX, createNotificationState(initialCount));
+}
+
+export function getNotifications() {
+  return getContext<ReturnType<typeof createNotificationState>>(NOTIF_CTX);
+}
+```
+
+### Data Loading
+
+Unread count loaded in root layout — one DB query per full page load, then SSE (or polling) keeps it current:
+
+```typescript
+// src/routes/app/+layout.server.ts
+export const load: LayoutServerLoad = async ({ locals, depends }) => {
+  depends('app:notifications');
+  if (!locals.user) return { unreadCount: 0 };
+  return { unreadCount: await getUnreadCount(locals.user.id) };
+};
 ```
 
 ---

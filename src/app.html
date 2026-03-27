@@ -1,9 +1,48 @@
 <!doctype html>
-<html lang="en">
+<html lang="%lang%" data-palette="%palette%" data-typography="%typography%" data-radius="%radius%">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		%sveltekit.head%
+		<!-- Inline script to prevent theme flash -->
+		<script>
+			(() => {
+				const theme = document.cookie.match(/theme=(\w+)/)?.[1] ?? 'system';
+				const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+				const isDark = theme === 'dark' || (theme === 'system' && prefersDark);
+				if (isDark) document.documentElement.classList.add('dark');
+				// Style palette + typography + radius (prevents flash on client navigation)
+				const sm = document.cookie.match(/v10r_style=([^;]+)/);
+				if (sm) {
+					try {
+						const s = JSON.parse(decodeURIComponent(sm[1]));
+						if (s.pid) document.documentElement.dataset.palette = s.pid;
+						if (s.tid) document.documentElement.dataset.typography = s.tid;
+						if (s.rid) document.documentElement.dataset.radius = s.rid;
+					} catch {}
+				}
+				const sw = Number(document.cookie.match(/sidebar-width=(\d+)/)?.[1]);
+				if (sw >= 160) {
+					const d = document.documentElement.style;
+					d.setProperty('--sidebar-expanded-width', sw + 'px');
+					// MIRROR of: iconSize(), itemSize(), railWidth() in src/lib/state/sidebar.svelte.ts
+					const icon = Math.max(18, Math.round(18 + (sw - 160) * (6 / 160)));
+					const item = icon + Math.round(icon * 0.67);  // iconPadding
+					const rail = item + 16;  // RAIL_PADDING
+					d.setProperty('--sidebar-rail-width', rail + 'px');
+					d.setProperty('--sidebar-item-size', item + 'px');
+					d.setProperty('--sidebar-icon-size', icon + 'px');
+				}
+			})();
+		</script>
+		<svg width="0" height="0" aria-hidden="true" style="position:absolute">
+			<filter id="grain-glow" x="0" y="0" width="1" height="1">
+				<feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" stitchTiles="stitch" result="noise" />
+				<feColorMatrix in="noise" type="saturate" values="0" result="grain" />
+				<feBlend in="SourceGraphic" in2="grain" mode="screen" result="noisy" />
+				<feGaussianBlur in="noisy" stdDeviation="0.3" />
+			</filter>
+		</svg>
 	</head>
 	<body data-sveltekit-preload-data="hover">
 		<div style="display: contents">%sveltekit.body%</div>

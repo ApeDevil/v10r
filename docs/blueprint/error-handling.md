@@ -351,36 +351,17 @@ export async function POST({ request }) {
 
 ### Drizzle Error Handling
 
-```typescript
-// src/lib/server/db/errors.ts
-import { PostgresError } from 'postgres';
-
-export function handleDbError(error: unknown): never {
-  if (error instanceof PostgresError) {
-    switch (error.code) {
-      case '23505': // unique_violation
-        throw new Error('Resource already exists');
-      case '23503': // foreign_key_violation
-        throw new Error('Referenced resource not found');
-      case '23502': // not_null_violation
-        throw new Error('Required field missing');
-      default:
-        console.error('Database error:', error);
-        throw new Error('Database error');
-    }
-  }
-  throw error;
-}
-```
+Handle database errors inline in load functions and form actions. Map PG error codes to user-friendly messages at the route level, not in a shared utility.
 
 ```typescript
-// Usage in route
-import { handleDbError } from '$lib/server/db/errors';
-
+// In +page.server.ts form action
 try {
   await db.insert(items).values(data);
 } catch (e) {
-  handleDbError(e);
+  const msg = e instanceof Error ? e.message : 'Database error';
+  if (msg.includes('23505')) return fail(409, { error: 'Resource already exists' });
+  if (msg.includes('23503')) return fail(400, { error: 'Referenced resource not found' });
+  return fail(500, { error: 'Database error' });
 }
 ```
 

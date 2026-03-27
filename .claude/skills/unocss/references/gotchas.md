@@ -168,10 +168,7 @@ rules: [
 
 ### Missing Icon Collection
 
-```bash
-# Install the collection you're using
-bun add -D @iconify-json/mdi
-```
+Ensure the icon collection package (e.g., `@iconify-json/mdi`) is installed.
 
 ### Wrong Syntax
 
