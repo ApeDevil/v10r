@@ -77,20 +77,25 @@ Every showcase page serves three purposes simultaneously:
 
 ## v10r(x) — Instances
 
-v10r isn't clone-once scaffolding. It's a continuous template — a living upstream that keeps evolving. Downstream projects are **instances** that take what they need and leave the rest.
+v10r is a living reference implementation. The code proves patterns work. The knowledge — CLAUDE.md, skills, docs — is what transfers to new projects.
 
-The naming follows function-call syntax: `v10r(content or application)` — v10r is the function, the content/application is the variable.
+Instances don't clone files. An AI agent reads v10r's tested patterns and adapts only the pieces a new project needs. Static scaffolds (`create-app`, `degit`) give you files. v10r gives you a working model to build from.
 
-### Examples
+The naming follows function-call syntax: `v10r(x)` — v10r is the function, x is the argument.
 
-| Instance | What it uses |
+### Spectrum
+
+| Instance | Capabilities used |
 |---|---|
-| `v10r(landing-page)` | SvelteKit, UnoCSS (2 of 18) |
-| `v10r(full-platform)` | Everything (18 of 18) |
+| `v10r(landing-page)` | SvelteKit, UnoCSS — 2 of 18 |
+| `v10r(lynx)` | SvelteKit, UnoCSS, Bits UI, markdown pipeline — 5 of 18 |
+| `v10r(full-platform)` | Everything — 18 of 18 |
+
+**`v10r(lynx)`** is [v4.lynxware.org](https://v4.lynxware.org/) — a keyboard firmware documentation site. Static prerendered. Dropped: auth, databases, API, i18n, AI, 3D.
 
 ### Creating a new instance
 
-Shape it to the content. Strip what you don't need, add what you do. The upstream keeps growing — pull new patterns when they're useful.
+Study v10r. Identify the capabilities the project needs. Build with AI assistance, adapting patterns — not copying files. Pull upstream changes when new patterns are useful.
 
 
 ## Documentation Structure

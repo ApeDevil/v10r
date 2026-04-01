@@ -169,7 +169,7 @@ v          10            r</pre>
 <section class="taxonomy">
 	<header class="taxonomy-header">
 		<h2 class="taxonomy-title">CAPABILITY TAXONOMY</h2>
-		<p class="taxonomy-subtitle">Documented, tested, and deployed</p>
+		<p class="taxonomy-subtitle">A combinable technology set — lightweight and fast, documented and tested</p>
 	</header>
 
 	<div class="taxonomy-grid">
