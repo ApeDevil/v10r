@@ -26,6 +26,7 @@ export {
 	type ContextStatus,
 	type PanelContext,
 	type SerializedContext,
+	dismissContext,
 	getActiveContexts,
 	getContextChips,
 	getTokenEstimate,

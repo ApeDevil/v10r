@@ -2,6 +2,7 @@
 	import { Chat } from '@ai-sdk/svelte';
 	import { CSRF_HEADER } from '$lib/api';
 	import {
+		dismissContext,
 		getContextChips,
 		getTokenEstimate,
 		markResponseReceived,
@@ -55,7 +56,7 @@
 	});
 
 	function handleDismiss(ctxPanelId: string) {
-		unpinContext(ctxPanelId);
+		dismissContext(ctxPanelId);
 	}
 
 	// ── Scroll ──────────────────────────────────────────────────────

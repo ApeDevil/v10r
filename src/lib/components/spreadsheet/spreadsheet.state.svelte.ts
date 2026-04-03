@@ -75,6 +75,7 @@ export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 	let selectionRange = $state<SelectionRange | null>(null);
 	let editing = $state(false);
 	let editValue = $state('');
+	let dirty = $state(0);
 
 	// ── Cell key helpers ────────────────────────────────────────────
 
@@ -107,6 +108,7 @@ export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 		}
 		// Recalculate all formula cells that might depend on this one
 		recalculateAll();
+		dirty++;
 	}
 
 	function evaluateCell(raw: string, col: number, row: number): CellValue {
@@ -262,15 +264,22 @@ export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 
 	/** Load from JSONB sparse map */
 	function fromJSON(data: Record<string, PersistedCell>): void {
-		cells.clear();
+		// Build a new Map and reassign — mutation alone doesn't trigger re-renders
+		// for cells that were read as undefined during the initial render.
+		const next = new Map<string, SpreadsheetCell>();
 		for (const [label, persisted] of Object.entries(data)) {
 			const ref = parseCellRef(label.toUpperCase());
 			if (!ref) continue;
 			const raw = persisted.f ?? String(persisted.v ?? '');
-			const value = typeof persisted.v === 'number' ? persisted.v : evaluateCell(raw, ref.col, ref.row);
+			// Store raw value first; formulas re-evaluated after assignment
+			const value = persisted.f ? null : (typeof persisted.v === 'number' ? persisted.v : evaluateCell(raw, ref.col, ref.row));
 			const error = typeof value === 'string' && value.startsWith('#') ? value : null;
-			cells.set(key(ref.col, ref.row), { raw, value, error });
+			next.set(key(ref.col, ref.row), { raw, value, error });
 		}
+		// Assign first so getCellValue reads from the populated Map
+		cells = next;
+		// Now recalculate all formulas against the full dataset
+		recalculateAll();
 	}
 
 	// ── AI Context serialization ────────────────────────────────────
@@ -364,6 +373,7 @@ export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 		get selectionStats() { return selectionStats; },
 		get activeCellLabel() { return activeCellLabel; },
 		get activeCellRaw() { return activeCellRaw; },
+		get dirty() { return dirty; },
 		getCell,
 		getCellValue,
 		setCellRaw,

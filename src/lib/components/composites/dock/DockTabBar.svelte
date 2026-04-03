@@ -192,15 +192,17 @@ function removeGhost() {
 								></span>
 							{/if}
 							{#if panel.closable !== false}
-								<button
+								<span
+									role="button"
 									data-close-btn
 									class="dock-tab-close"
 									aria-label="Close {panel.label}"
 									tabindex={-1}
 									onclick={(e) => handleClose(e, panelId)}
+									onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); dock.closePanel(panelId); } }}
 								>
 									<span class="i-lucide-x"></span>
-								</button>
+								</span>
 							{/if}
 						</button>
 					{/snippet}

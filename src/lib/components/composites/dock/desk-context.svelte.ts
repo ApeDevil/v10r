@@ -55,6 +55,9 @@ const registry = new Map<string, PanelContext>();
 /** Which panels the user has explicitly pinned */
 let pinnedIds = $state(new Set<string>());
 
+/** Which panels the user has explicitly dismissed (excluded from implicit focus) */
+let dismissedIds = $state(new Set<string>());
+
 /** The currently focused panel — drives implicit context */
 let focusedPanelId = $state<string | null>(null);
 
@@ -82,6 +85,7 @@ export function registerPanelContext(entry: PanelContext): () => void {
 	return () => {
 		registry.delete(entry.panelId);
 		pinnedIds.delete(entry.panelId);
+		dismissedIds.delete(entry.panelId);
 		queueMicrotask(() => {
 			registryVersion++;
 		});
@@ -120,6 +124,12 @@ export function setContextFocus(panelId: string | null): void {
 export function pinContext(panelId: string): void {
 	if (!registry.has(panelId)) return;
 	pinnedIds = new Set([...pinnedIds, panelId]);
+	// Clear dismissed state — explicit pin overrides dismiss
+	if (dismissedIds.has(panelId)) {
+		const next = new Set(dismissedIds);
+		next.delete(panelId);
+		dismissedIds = next;
+	}
 }
 
 /** Unpin a panel's context */
@@ -127,6 +137,18 @@ export function unpinContext(panelId: string): void {
 	const next = new Set(pinnedIds);
 	next.delete(panelId);
 	pinnedIds = next;
+}
+
+/** Dismiss a panel's context — removes it from active inclusion entirely */
+export function dismissContext(panelId: string): void {
+	// Remove from pinned
+	if (pinnedIds.has(panelId)) {
+		const nextPinned = new Set(pinnedIds);
+		nextPinned.delete(panelId);
+		pinnedIds = nextPinned;
+	}
+	// Add to dismissed so implicit focus won't re-include it
+	dismissedIds = new Set([...dismissedIds, panelId]);
 }
 
 /** Toggle pin state for a panel */
@@ -156,10 +178,11 @@ const contextChips = $derived.by((): ContextChip[] => {
 	const chips: ContextChip[] = [];
 
 	for (const [panelId, context] of registry) {
+		const isDismissed = dismissedIds.has(panelId);
 		let status: ContextStatus;
-		if (focusedPanelId === panelId) {
+		if (!isDismissed && focusedPanelId === panelId) {
 			status = 'implicit';
-		} else if (pinnedIds.has(panelId)) {
+		} else if (!isDismissed && pinnedIds.has(panelId)) {
 			status = 'pinned';
 		} else {
 			status = 'available';
@@ -184,6 +207,7 @@ const activeContexts = $derived.by((): PanelContext[] => {
 	const active: PanelContext[] = [];
 
 	for (const [panelId, context] of registry) {
+		if (dismissedIds.has(panelId)) continue;
 		if (focusedPanelId === panelId || pinnedIds.has(panelId)) {
 			active.push(context);
 		}

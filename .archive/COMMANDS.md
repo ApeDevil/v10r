@@ -37,7 +37,7 @@ podman ps
 podman ps -a 
 
 
-# ------------------------------------ DB
+# ---------------------------------------- DB
 ## dev
 podman exec v10r bun run db:push
 ## production
