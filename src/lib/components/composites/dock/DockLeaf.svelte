@@ -4,6 +4,7 @@ import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import DockDropOverlay from './DockDropOverlay.svelte';
 import DockTabBar from './DockTabBar.svelte';
 import { getDockContext } from './dock.state.svelte';
+import { setContextFocus } from './desk-context.svelte';
 import { getActiveMenus, setFocusedPanel } from './panel-menus.svelte';
 import { hasPanelType, collectLeaves } from './dock.operations';
 import type { LeafNode } from './dock.types';
@@ -77,7 +78,7 @@ const leafMenus = $derived<MenuBarMenu[]>([
 ]);
 </script>
 
-<div class="dock-leaf" onfocusin={() => { dock.setFocusedLeaf(leaf.id); setFocusedPanel(leaf.activeTab); }} onpointerdown={() => { dock.setFocusedLeaf(leaf.id); setFocusedPanel(leaf.activeTab); }}>
+<div class="dock-leaf" onfocusin={() => { dock.setFocusedLeaf(leaf.id); setFocusedPanel(leaf.activeTab); setContextFocus(leaf.activeTab); }} onpointerdown={() => { dock.setFocusedLeaf(leaf.id); setFocusedPanel(leaf.activeTab); setContextFocus(leaf.activeTab); }}>
 	{#if leaf.tabs.length > 0}
 		<DockTabBar {leaf} {isFocused} menus={leafMenus} panelType={focusedPanelType} />
 		<div class="dock-leaf-content">

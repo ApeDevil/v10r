@@ -27,7 +27,6 @@ let pendingDeleteId: string | null = $state(null);
 const chat = new Chat({
 	api: '/api/ai/chat',
 	headers: CSRF_HEADER,
-	body: () => (conversationId ? { conversationId } : {}),
 	onResponse: (response: Response) => {
 		const id = response.headers.get('X-Conversation-Id');
 		if (id) conversationId = id;
@@ -117,7 +116,9 @@ function startNewChat() {
 
 function submitMessage() {
 	if (!chat.input.trim() || isLoading) return;
-	chat.handleSubmit();
+	chat.handleSubmit(undefined, {
+		body: conversationId ? { conversationId } : {},
+	});
 }
 
 function formatRelativeTime(dateStr: string): string {

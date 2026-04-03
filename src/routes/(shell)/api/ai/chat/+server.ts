@@ -37,7 +37,18 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return json({ error: 'Invalid request.' }, { status: 400 });
 	}
 
-	const { messages, conversationId: existingConvId, useRetrieval, retrievalTiers } = parsed.output;
+	const { messages, conversationId: existingConvId, useRetrieval, retrievalTiers, panelContext } = parsed.output;
+
+		// Build base system prompt with optional desk panel context
+		let baseSystemPrompt = SYSTEM_PROMPT;
+		if (panelContext?.length) {
+			const sanitized = panelContext.map((pc) => ({
+				...pc,
+				content: pc.content.replace(/(?:sk-|ghp_|AKIA|Bearer\s)\S+/gi, '[REDACTED]'),
+			}));
+			const deskBlock = sanitized.map((pc) => `## ${pc.label}\n${pc.content}`).join('\n\n---\n\n');
+			baseSystemPrompt += `\n\n<desk-context>\n${deskBlock}\n</desk-context>\n\nThe above is context from the user's workspace panels. Reference it when relevant.`;
+		}
 
 	try {
 		// Auto-create conversation if none provided
@@ -82,7 +93,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			return createDataStreamResponse({
 				headers: responseHeaders,
 				execute: async (dataStream) => {
-					let systemPrompt = SYSTEM_PROMPT;
+					let systemPrompt = baseSystemPrompt;
 
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					const emitEvent = (event: PipelineStepEvent | PipelineChunksEvent) => {
@@ -98,7 +109,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 						const contextBlock = formatContextForPrompt(retrievalResult);
 						if (contextBlock) {
-							systemPrompt = `${SYSTEM_PROMPT}\n\n<context>\n${contextBlock}\n</context>\n\nUse the above context to inform your response. Cite sources when relevant.`;
+							systemPrompt = `${baseSystemPrompt}\n\n<retrieval-context>\n${contextBlock}\n</retrieval-context>\n\nUse the above context to inform your response. Cite sources when relevant.`;
 						}
 
 						// Keep X-Retrieval-Meta as fallback for basic chat page
@@ -144,10 +155,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			});
 		}
 
-		// --- Non-retrieval path: unchanged ---
+		// --- Non-retrieval path ---
 		const result = streamText({
 			model,
-			system: SYSTEM_PROMPT,
+			system: baseSystemPrompt,
 			messages,
 			maxTokens: MAX_TOKENS,
 			onFinish: async ({ text }) => {
@@ -179,7 +190,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 					const result = streamText({
 						model: fallbackModel,
-						system: SYSTEM_PROMPT,
+						system: baseSystemPrompt,
 						messages,
 						maxTokens: MAX_TOKENS,
 						onFinish: async ({ text }) => {

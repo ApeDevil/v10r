@@ -35,6 +35,9 @@
 ## Domain Icon Customization UX
 - [domain-icon-ux.md](domain-icon-ux.md) - UX spec: two-tier icon input (Lucide preset grid + paste SVG), Edit modal per domain row, live preview chip, initial-letter fallback, chart color swatches, SVG sanitization contract, DB schema additions
 
+## AI Chat Panel + Spreadsheet Context UX
+- [ai-context-ux.md](ai-context-ux.md) - Context tray design, spreadsheet panel, DeskBus extensions, multi-panel context flow, progressive disclosure strategy, accessibility
+
 ## Admin Panel Expansion
 - [admin-expansion-round2.md](admin-expansion-round2.md) - Round 2 refined UX: navigation reconciliation, impersonation banner, feature flags, maintenance mode, announcements, canonical data table pattern, prioritized page list
 - [admin-phase3-ux.md](admin-phase3-ux.md) - Phase 3 UX spec: Analytics page, Notifications page, Broadcast Announcements compose/list, user-facing announcement banner, empty/loading/error states, accessibility patterns

@@ -2,7 +2,7 @@
  * AI CONVERSATION — Chat history persistence.
  * Stores conversations and messages scoped to authenticated users.
  */
-import { index, pgSchema, text, timestamp } from 'drizzle-orm/pg-core';
+import { index, jsonb, pgSchema, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
 
 export const aiSchema = pgSchema('ai');
@@ -32,6 +32,8 @@ export const message = aiSchema.table(
 			.references(() => conversation.id, { onDelete: 'cascade' }),
 		role: messageRoleEnum('role').notNull(),
 		content: text('content').notNull(),
+		/** Snapshot of active panel context when message was sent. Null for non-desk messages. */
+		context: jsonb('context'),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	},
 	(table) => [index('message_conv_created_idx').on(table.conversationId, table.createdAt)],

@@ -22,6 +22,8 @@ import {
 	// notifications
 	notifications,
 	session,
+	// desk
+	spreadsheet,
 	telegramVerificationTokens,
 	// showcase
 	typeSpecimen,
@@ -173,6 +175,12 @@ export const auditLogRelations = relations(auditLog, ({ one }) => ({
 	}),
 }));
 
+// ── Desk ────────────────────────────────────────────────────────────
+
+export const spreadsheetRelations = relations(spreadsheet, ({ one }) => ({
+	user: one(user, { fields: [spreadsheet.userId], references: [user.id] }),
+}));
+
 // ── App ─────────────────────────────────────────────────────────────
 
 export const userPreferencesRelations = relations(userPreferences, ({ one }) => ({
@@ -249,6 +257,8 @@ export const userRelations = relations(user, ({ one, many }) => ({
 	// app
 	preferences: one(userPreferences),
 	customPalettes: many(customPalettes),
+	// desk
+	spreadsheets: many(spreadsheet),
 	// blog
 	posts: many(post),
 	revisions: many(revision),

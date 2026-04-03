@@ -22,6 +22,8 @@ export const createId = {
 	domain: () => `dom_${shortId()}`,
 	/** Blog asset: ast_a8f3e1b2c4d9 */
 	asset: () => `ast_${shortId()}`,
+	/** Desk spreadsheet: spr_a8f3e1b2c4d9 */
+	spreadsheet: () => `spr_${shortId()}`,
 	/** Generic UUID */
 	uuid: () => crypto.randomUUID(),
 } as const;

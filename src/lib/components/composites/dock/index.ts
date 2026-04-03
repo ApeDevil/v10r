@@ -21,6 +21,24 @@ export {
 	splitLeaf,
 } from './dock.operations';
 export { clearDockState, loadDockState, saveDockState } from './dock.persistence';
+export {
+	type ContextChip,
+	type ContextStatus,
+	type PanelContext,
+	type SerializedContext,
+	getActiveContexts,
+	getContextChips,
+	getTokenEstimate,
+	hasContext,
+	markResponseReceived,
+	pinContext,
+	registerPanelContext,
+	serializeForRequest,
+	setContextFocus,
+	togglePin,
+	unpinContext,
+	updatePanelContext,
+} from './desk-context.svelte';
 export { createDeskBus, type DeskBus, type DeskEvents, getDeskBus, setDeskBusContext } from './desk-bus.svelte';
 export { LAYOUT_PRESETS, type LayoutPreset } from './layout-presets';
 export { createDockState, type DockState, getDockContext, setDockContext } from './dock.state.svelte';
