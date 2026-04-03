@@ -90,7 +90,7 @@ const wild: Instance = {
 
 	<p class="instances-description">
 		v10r is not cloned — it's instantiated. An AI agent reads the tested patterns,
-		architecture, and documentation, then adapts only the pieces the new project needs.
+		architecture, and documentation, then emulates only the pieces the new project needs.
 		The reference stays live. The instance is purpose-built.
 	</p>
 

@@ -113,7 +113,7 @@ const ghostIcons = [
 				{/each}
 			</h1>
 
-			<p class="tagline">Containerized Full-Stack Template</p>
+			<p class="tagline">Instantiate Through Emulation</p>
 
 			<div class="etymology-card">
 				<CornerFrame variant="bracket" size={20} strokeWidth={1} />
@@ -124,6 +124,7 @@ const ghostIcons = [
 v          10            r</pre>
 					<span class="sr-only">The letters v and r bracket 10 letters in Velociraptor, forming the abbreviation v10r.</span>
 					<p class="etymology-result">v10r</p>
+					<p class="etymology-descriptor">Containerized Full-Stack Template</p>
 				</div>
 			</div>
 		</div>
@@ -466,6 +467,14 @@ v          10            r</pre>
 		font-weight: 700;
 		color: var(--color-fg);
 		margin: 0;
+	}
+
+	.etymology-descriptor {
+		font-family: var(--font-body, system-ui, sans-serif);
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
+		margin: 0;
+		letter-spacing: 0.05em;
 	}
 
 	/* Raptor */

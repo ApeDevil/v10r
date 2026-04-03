@@ -31,7 +31,6 @@ Each layer evolves from and is based on the previous:
 cp .env.example .env          # fill in DATABASE_URL
 podman compose up -d           # start container
 podman exec v10r bun run db:setup   # bootstrap DB (extensions → migrate → RAG → Neo4j)
-podman exec v10r bun run dev --host 0.0.0.0
 ```
 
 ## Local Development
@@ -95,7 +94,20 @@ The naming follows function-call syntax: `v10r(x)` — v10r is the function, x i
 
 ### Creating a new instance
 
-Study v10r. Identify the capabilities the project needs. Build with AI assistance, adapting patterns — not copying files. Pull upstream changes when new patterns are useful.
+Point your coding agent at v10r, identify the capabilities the project needs, and let it emulate only the relevant patterns.
+
+**Local** — place the repos side by side:
+
+```
+dev/
+├── velociraptor/      ← reference
+├── your-project/      ← instance
+```
+
+**Remote** — point your agent to the hosted repo:
+
+- `https://gitlab.com/ApeDevil/velociraptor`
+- `https://github.com/ApeDevil/v10r`
 
 
 ## Documentation Structure

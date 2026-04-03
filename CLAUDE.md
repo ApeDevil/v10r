@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Velociraptor (v10r) is a full-stack template/test-sandbox focused on performance and lightweight deployment. The project simultaneously serves as documentation, a test environment, and a reusable template for new projects.
+Velociraptor (v10r) is a full-stack template/test-sandbox focused on performance and lightweight deployment. The project simultaneously serves as documentation, a test environment, and a reference that new projects instantiate through emulation — an AI agent reads v10r's tested patterns and adapts only the pieces needed.
 
 
 ## Stack
