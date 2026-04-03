@@ -6,7 +6,7 @@
 
 A multipurpose markdown editor that lives in the **desk** (DockLayout), with **blog posts as the first content type**. Custom syntax via `remark-directive`, wikilinks for cross-references, rendered through a unified pipeline. DB-backed with immutable revisions, multi-author, i18n, public + authenticated reading.
 
-The editor is content-type-agnostic — blog posts are the first implementation, but the same infrastructure serves notes, docs, announcements, and any future markdown-based content.
+The editor is content-type-agnostic — blog posts are the first implementation, but the same infrastructure serves notes, docs, announcements, and any future markdown-based content. Non-markdown content types (spreadsheets, future diagrams) are documented separately in [desk/](./desk/).
 
 ---
 
@@ -317,7 +317,7 @@ Channels:
 - `editor:document` — editor emits `{ documentId, type }` when a different document opens
 - `editor:save` — editor emits after successful save (preview can refresh from server)
 
-This is valuable beyond editor/preview — the chat panel can subscribe to `editor:document` to know what the user is working on, enabling contextual writing suggestions about the current post.
+This is valuable beyond editor/preview — the chat panel can subscribe to `editor:document` to know what the user is working on, enabling contextual writing suggestions about the current post. For the full channel list (including `files:select`, `spreadsheet:open`, `files:insert-image`), see [desk/README.md](./desk/README.md#cross-panel-communication-deskbus).
 
 ### MetadataDrawer
 
