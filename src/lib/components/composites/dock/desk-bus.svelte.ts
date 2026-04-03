@@ -12,10 +12,11 @@ export interface DeskEvents {
 	'editor:document': { documentId: string; type: string } | null;
 	'editor:save': { documentId: string; revisionId: string };
 	'files:select': {
-		type: 'post' | 'asset';
+		type: 'post' | 'asset' | 'spreadsheet';
 		id: string;
 		data: Record<string, unknown>;
 	} | null;
+	'spreadsheet:open': { fileId: string; name: string };
 	'files:insert-image': {
 		assetId: string;
 		fileName: string;

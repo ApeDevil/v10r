@@ -23,6 +23,7 @@ import {
 	notifications,
 	session,
 	// desk
+	file,
 	spreadsheet,
 	telegramVerificationTokens,
 	// showcase
@@ -177,8 +178,14 @@ export const auditLogRelations = relations(auditLog, ({ one }) => ({
 
 // ── Desk ────────────────────────────────────────────────────────────
 
+export const fileRelations = relations(file, ({ one }) => ({
+	user: one(user, { fields: [file.userId], references: [user.id] }),
+	spreadsheet: one(spreadsheet),
+}));
+
 export const spreadsheetRelations = relations(spreadsheet, ({ one }) => ({
 	user: one(user, { fields: [spreadsheet.userId], references: [user.id] }),
+	file: one(file, { fields: [spreadsheet.fileId], references: [file.id] }),
 }));
 
 // ── App ─────────────────────────────────────────────────────────────
@@ -258,6 +265,7 @@ export const userRelations = relations(user, ({ one, many }) => ({
 	preferences: one(userPreferences),
 	customPalettes: many(customPalettes),
 	// desk
+	files: many(file),
 	spreadsheets: many(spreadsheet),
 	// blog
 	posts: many(post),

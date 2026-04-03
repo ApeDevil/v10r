@@ -6,7 +6,7 @@
 		contextMenuItemVariants,
 		contextMenuSeparatorVariants,
 	} from '$lib/components/composites/context-menu';
-	import type { AssetListItem, PostListItem, UploadingItem } from './types';
+	import type { AssetListItem, FileListItem, PostListItem, UploadingItem } from './types';
 
 	function formatBytes(bytes: number): string {
 		if (bytes === 0) return '0 B';
@@ -20,6 +20,7 @@
 		posts: PostListItem[];
 		assets: AssetListItem[];
 		uploading: UploadingItem[];
+		spreadsheetFiles: FileListItem[];
 		expandedFolders: Set<string>;
 		selectedAssetId: string | null;
 		ontogglefolder: (folder: string) => void;
@@ -30,12 +31,15 @@
 		oninsertasset?: (asset: AssetListItem) => void;
 		oncopyasseturl?: (asset: AssetListItem) => void;
 		ondeleteasset: (asset: AssetListItem) => void;
+		onselectspreadsheet: (file: FileListItem) => void;
+		ondeletespreadsheet: (file: FileListItem) => void;
 	}
 
 	let {
 		posts,
 		assets,
 		uploading,
+		spreadsheetFiles,
 		expandedFolders,
 		selectedAssetId,
 		ontogglefolder,
@@ -46,6 +50,8 @@
 		oninsertasset,
 		oncopyasseturl,
 		ondeleteasset,
+		onselectspreadsheet,
+		ondeletespreadsheet,
 	}: Props = $props();
 
 	function statusVariant(status: string): 'success' | 'secondary' | 'warning' {
@@ -255,6 +261,66 @@
 			{/if}
 		{/if}
 	{/if}
+
+	<!-- Data folder (spreadsheets) -->
+	<button
+		class="tree-folder tree-depth-0"
+		role="treeitem"
+		aria-selected={false}
+		aria-expanded={expandedFolders.has('data')}
+		onclick={() => ontogglefolder('data')}
+	>
+		<span class="tree-toggle">{expandedFolders.has('data') ? '▾' : '▸'}</span>
+		<span class="i-lucide-database tree-icon tree-icon-data"></span>
+		<span class="tree-label">data</span>
+		<span class="tree-count">{spreadsheetFiles.length}</span>
+	</button>
+
+	{#if expandedFolders.has('data')}
+		{#if spreadsheetFiles.length === 0}
+			<div class="tree-empty tree-depth-1">
+				<span class="i-lucide-sheet tree-empty-icon"></span>
+				<span>No spreadsheets yet</span>
+			</div>
+		{:else}
+			{#each spreadsheetFiles as f (f.id)}
+				<ContextMenuPrimitive.Root>
+					<ContextMenuPrimitive.Trigger class="tree-ctx-trigger">
+						{#snippet child({ props })}
+							<div {...props} class="tree-file tree-depth-1" role="treeitem" aria-selected={false}>
+								<button class="tree-file-btn" onclick={() => onselectspreadsheet(f)}>
+									<span class="tree-toggle"></span>
+									<span class="i-lucide-sheet tree-icon tree-icon-sheet"></span>
+									<span class="tree-file-name">{f.name}</span>
+								</button>
+								<button
+									class="tree-action"
+									onclick={(e) => { e.stopPropagation(); ondeletespreadsheet(f); }}
+									title="Delete"
+									aria-label="Delete {f.name}"
+								>
+									<span class="i-lucide-trash-2"></span>
+								</button>
+							</div>
+						{/snippet}
+					</ContextMenuPrimitive.Trigger>
+					<ContextMenuPrimitive.Portal>
+						<ContextMenuPrimitive.Content class={contextMenuContentVariants()}>
+							<ContextMenuPrimitive.Item class={contextMenuItemVariants()} onclick={() => onselectspreadsheet(f)}>
+								<span class="i-lucide-sheet ctx-icon"></span>
+								Open
+							</ContextMenuPrimitive.Item>
+							<ContextMenuPrimitive.Separator class={contextMenuSeparatorVariants()} />
+							<ContextMenuPrimitive.Item class={contextMenuItemVariants()} onclick={() => ondeletespreadsheet(f)}>
+								<span class="i-lucide-trash-2 ctx-icon"></span>
+								Delete
+							</ContextMenuPrimitive.Item>
+						</ContextMenuPrimitive.Content>
+					</ContextMenuPrimitive.Portal>
+				</ContextMenuPrimitive.Root>
+			{/each}
+		{/if}
+	{/if}
 </div>
 
 <style>
@@ -317,6 +383,14 @@
 	}
 
 	.tree-icon-image {
+		color: var(--color-success, #22c55e);
+	}
+
+	.tree-icon-data {
+		color: var(--color-warning, #d4a72c);
+	}
+
+	.tree-icon-sheet {
 		color: var(--color-success, #22c55e);
 	}
 

@@ -7,7 +7,7 @@
 	import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 	import ExplorerTree from './ExplorerTree.svelte';
 	import ExplorerPreview from './ExplorerPreview.svelte';
-	import type { AssetListItem, PostListItem, UploadingItem } from './types';
+	import type { AssetListItem, FileListItem, PostListItem, UploadingItem } from './types';
 
 	const dock = getDockContext();
 	const bus = getDeskBus();
@@ -17,8 +17,9 @@
 	let posts = $state<PostListItem[]>([]);
 	let assets = $state<AssetListItem[]>([]);
 	let uploading = $state<UploadingItem[]>([]);
+	let spreadsheetFiles = $state<FileListItem[]>([]);
 	let selectedAsset = $state<AssetListItem | null>(null);
-	let expandedFolders = $state(new Set(['blog', 'assets', 'images']));
+	let expandedFolders = $state(new Set(['blog', 'assets', 'images', 'data']));
 
 	let showNewPostForm = $state(false);
 	let slugInput = $state('');
@@ -35,9 +36,10 @@
 		loading = true;
 		error = '';
 		try {
-			const [postsRes, assetsRes] = await Promise.all([
+			const [postsRes, assetsRes, filesRes] = await Promise.all([
 				apiFetch('/api/blog/posts'),
 				apiFetch('/api/blog/assets'),
+				apiFetch('/api/desk/files?type=spreadsheet'),
 			]);
 
 			if (postsRes.ok) {
@@ -54,6 +56,11 @@
 			if (assetsRes.ok) {
 				const data = await assetsRes.json();
 				assets = data.items ?? [];
+			}
+
+			if (filesRes.ok) {
+				const data = await filesRes.json();
+				spreadsheetFiles = data.files ?? [];
 			}
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load';
@@ -85,6 +92,53 @@
 			});
 		} else {
 			bus.publish('files:select', null);
+		}
+	}
+
+	function openSpreadsheet(f: FileListItem) {
+		const panelId = `spreadsheet-${f.id}`;
+		const panel: PanelDefinition = {
+			id: panelId,
+			type: 'spreadsheet',
+			label: f.name,
+			icon: 'i-lucide-sheet',
+			closable: true,
+		};
+		dock.addPanel(panel);
+		bus.publish('spreadsheet:open', { fileId: f.id, name: f.name });
+	}
+
+	async function createSpreadsheet() {
+		error = '';
+		try {
+			const res = await apiFetch('/api/desk/files', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ type: 'spreadsheet', name: 'Untitled' }),
+			});
+			if (!res.ok) {
+				const data = await res.json().catch(() => ({}));
+				throw new Error(data.error || 'Failed to create spreadsheet');
+			}
+			const { file } = await res.json();
+			await fetchAll();
+			openSpreadsheet({ id: file.id, type: 'spreadsheet', name: file.name, createdAt: file.createdAt, updatedAt: file.updatedAt });
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Failed to create';
+		}
+	}
+
+	async function deleteSpreadsheet(f: FileListItem) {
+		if (!confirm(`Delete "${f.name}"? This cannot be undone.`)) return;
+		try {
+			const res = await apiFetch(`/api/desk/files/${f.id}`, { method: 'DELETE' });
+			if (!res.ok) {
+				const data = await res.json().catch(() => ({}));
+				throw new Error(data.error || 'Delete failed');
+			}
+			await fetchAll();
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Delete failed';
 		}
 	}
 
@@ -302,6 +356,7 @@
 			label: 'File',
 			items: [
 				{ label: 'New Post', icon: 'i-lucide-plus', shortcut: 'Ctrl+N', onSelect: () => { showNewPostForm = !showNewPostForm; } },
+				{ label: 'New Spreadsheet', icon: 'i-lucide-sheet', onSelect: createSpreadsheet },
 				{ type: 'separator' },
 				{ label: 'Import Markdown...', icon: 'i-lucide-file-up', onSelect: handleImportClick },
 				{ label: 'Upload Image...', icon: 'i-lucide-upload', onSelect: handleUploadClick },
@@ -382,6 +437,7 @@
 			{posts}
 			{assets}
 			{uploading}
+			{spreadsheetFiles}
 			{expandedFolders}
 			selectedAssetId={selectedAsset?.id ?? null}
 			ontogglefolder={(f) => {
@@ -395,6 +451,8 @@
 			oninsertasset={insertAsset}
 			oncopyasseturl={(a) => { navigator.clipboard.writeText(`/api/blog/assets/${a.id}/image`); }}
 			ondeleteasset={deleteAsset}
+			onselectspreadsheet={openSpreadsheet}
+			ondeletespreadsheet={deleteSpreadsheet}
 		/>
 
 		<ExplorerPreview

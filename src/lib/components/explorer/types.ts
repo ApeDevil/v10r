@@ -25,3 +25,12 @@ export interface UploadingItem {
 	status: 'uploading' | 'error';
 	error?: string;
 }
+
+/** Unified file entry from desk.file API. */
+export interface FileListItem {
+	id: string;
+	type: 'spreadsheet';
+	name: string;
+	createdAt: string;
+	updatedAt: string;
+}

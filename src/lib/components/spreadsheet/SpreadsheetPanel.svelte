@@ -19,13 +19,37 @@
 
 	// ── Persistence ─────────────────────────────────────────────────
 
+	/** File-mode: panelId is "spreadsheet-fil_xxx" → extract fileId. Legacy: null. */
+	const fileId = $derived(
+		panelId.startsWith('spreadsheet-fil_') ? panelId.replace('spreadsheet-', '') : null,
+	);
+
 	const STORAGE_KEY = `desk-spreadsheet-${panelId}`;
 	let spreadsheetId: string | null = $state(null);
 	let saveStatus: 'idle' | 'saving' | 'saved' | 'error' = $state('idle');
 	let loaded = $state(false);
 
-	/** Load existing spreadsheet or create a new one. */
-	async function initSpreadsheet() {
+	/** File-mode: load spreadsheet by file ID from desk.file API. */
+	async function initFromFile(fId: string) {
+		try {
+			const res = await apiFetch(`/api/desk/files/${fId}`);
+			if (res.ok) {
+				const data = await res.json();
+				const cells = data.spreadsheet?.cells as Record<string, { v: string | number | null; f?: string; t?: string }> | undefined;
+				if (cells && Object.keys(cells).length > 0) {
+					sheet.fromJSON(cells);
+				}
+				loaded = true;
+				return;
+			}
+		} catch {
+			// File not found or network error
+		}
+		loaded = true;
+	}
+
+	/** Legacy mode: load from localStorage or create new. */
+	async function initFromLocalStorage() {
 		const storedId = localStorage.getItem(STORAGE_KEY);
 
 		if (storedId) {
@@ -99,7 +123,11 @@
 
 	// Init on mount (not $effect — setCellRaw writes $state, which would trigger infinite loops)
 	onMount(() => {
-		initSpreadsheet();
+		if (fileId) {
+			initFromFile(fileId);
+		} else {
+			initFromLocalStorage();
+		}
 	});
 
 	// ── Auto-save (1.5s debounce after cell changes) ────────────────
@@ -108,14 +136,19 @@
 
 	$effect(() => {
 		const dirty = sheet.dirty;
-		if (!loaded || !spreadsheetId || dirty === 0) return;
+		const fId = fileId;
+		if (!loaded || dirty === 0) return;
+		// Need either a fileId (file-mode) or spreadsheetId (legacy) to save
+		if (!fId && !spreadsheetId) return;
 
 		clearTimeout(saveTimer);
 		saveTimer = setTimeout(async () => {
-			if (!spreadsheetId) return;
 			saveStatus = 'saving';
 			try {
-				const res = await apiFetch(`/api/desk/spreadsheets/${spreadsheetId}`, {
+				const url = fId
+					? `/api/desk/files/${fId}`
+					: `/api/desk/spreadsheets/${spreadsheetId}`;
+				const res = await apiFetch(url, {
 					method: 'PUT',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ cells: sheet.toJSON() }),

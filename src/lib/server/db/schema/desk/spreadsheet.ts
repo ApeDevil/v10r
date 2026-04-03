@@ -12,15 +12,19 @@
  *   f = formula text (optional, omitted if not a formula)
  *   t = format type (optional, omitted for 'auto')
  */
-import { index, jsonb, pgSchema, text, timestamp } from 'drizzle-orm/pg-core';
+import { index, jsonb, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
+import { deskSchema } from './schema';
+import { file } from './file';
 
-export const deskSchema = pgSchema('desk');
+export { deskSchema };
 
 export const spreadsheet = deskSchema.table(
 	'spreadsheet',
 	{
 		id: text('id').primaryKey(),
+		/** FK to desk.file — links to the unified file registry. Nullable during migration. */
+		fileId: text('file_id').references(() => file.id, { onDelete: 'cascade' }),
 		userId: text('user_id')
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),

@@ -38,6 +38,9 @@
 ## AI Chat Panel + Spreadsheet Context UX
 - [ai-context-ux.md](ai-context-ux.md) - Context tray design, spreadsheet panel, DeskBus extensions, multi-panel context flow, progressive disclosure strategy, accessibility
 
+## Spreadsheet Explorer Integration
+- [spreadsheet-explorer-ux.md](spreadsheet-explorer-ux.md) - Full UX spec: data/ folder section, sheet row anatomy, single-click open, multi-sheet management, inline preview, context menu actions, creation flow (auto-name+rename), drag-and-drop scope, DeskBus additions, SpreadsheetPanel props change, API additions, accessibility checklist
+
 ## Admin Panel Expansion
 - [admin-expansion-round2.md](admin-expansion-round2.md) - Round 2 refined UX: navigation reconciliation, impersonation banner, feature flags, maintenance mode, announcements, canonical data table pattern, prioritized page list
 - [admin-phase3-ux.md](admin-phase3-ux.md) - Phase 3 UX spec: Analytics page, Notifications page, Broadcast Announcements compose/list, user-facing announcement banner, empty/loading/error states, accessibility patterns
