@@ -31,7 +31,7 @@ UnoCSS atomic CSS engine patterns for SvelteKit 2 + Svelte 5 projects.
 | Dynamic class interpolation | Classes not generated | Use safelist or static object maps |
 | `.js/.ts` files not scanned | Missing classes in production | Add `@unocss-include` comment |
 | Tailwind comma syntax | Grid cols broken | Use underscore: `grid-cols-[1fr_10px_max-content]` |
-| Icons not showing | Empty space in UI | Install icon collection: `@iconify-json/{collection}` |
+| Icons not showing | Empty space in UI | Install icon collection AND safelist dynamic icons |
 | FOUC in production | Flash of unstyled content | Set `cssCodeSplit: false` in vite config |
 
 ## SvelteKit Integration
@@ -222,30 +222,32 @@ export default defineConfig({
 
 ## Icons
 
-Requires `@unocss/preset-icons` and icon collections like `@iconify-json/mdi`, `@iconify-json/tabler`.
+Requires `@unocss/preset-icons` and icon collections like `@iconify-json/lucide`.
 
 ### Usage
 
 ```svelte
 <!-- Syntax: i-{collection}-{icon-name} -->
-<div class="i-mdi-account"></div>
-<div class="i-tabler-home w-6 h-6 text-blue-500"></div>
+<span class="i-lucide-home text-icon-lg"></span>
+<span class="i-lucide-settings text-icon-md"></span>
 ```
 
-### Dynamic Icons (With Safelist)
+### Dynamic Icons — MUST Safelist
 
-```svelte
-<script>
-  // @unocss-include
-  const icons = {
-    home: 'i-mdi-home',
-    user: 'i-mdi-account',
-    settings: 'i-mdi-cog',
-  };
-</script>
+**Any icon used in a JS data structure (`icon: 'i-lucide-...'`) MUST be added to the `safelist` in `uno.config.ts`.** UnoCSS cannot reliably extract icon classes from JS objects/arrays. Without safelisting, icons silently render as invisible zero-width spans.
 
-<div class={icons[type]}></div>
+```typescript
+// When adding icon: 'i-lucide-new-icon' to any data structure,
+// also add to uno.config.ts safelist under the appropriate group:
+safelist: [
+  // Admin sidebar
+  'i-lucide-database',
+  'i-lucide-bar-chart-2',
+  // ...
+]
 ```
+
+Static icon classes in Svelte templates (`class="i-lucide-check"`) are extracted automatically and do NOT need safelisting.
 
 ## Variant Groups
 

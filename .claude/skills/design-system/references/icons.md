@@ -155,6 +155,10 @@ safelist: [
 
 Always use `flex items-center` when combining icons with text.
 
+## Safelist Rule
+
+Icons used in JS data structures (`icon: 'i-lucide-...'` in objects, arrays, props) **must** be added to the `safelist` in `uno.config.ts`. UnoCSS cannot extract class names from JS data at build time. Without safelisting, icons render as invisible zero-width spans. Static icon classes in Svelte templates are extracted automatically and do not need safelisting. See `docs/stack/ui/unocss.md` for details.
+
 ## Icon + Text Spacing
 
 | Context | Gap |

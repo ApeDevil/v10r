@@ -61,6 +61,37 @@ Class-based dark mode via `preset-wind`. Toggle `.dark` on `<html>` to switch th
 
 See [shell-state.md](../../blueprint/app-shell/shell-state.md#theme-state) for SSR-safe theme state management with cookie persistence.
 
+## Icons
+
+`presetIcons` generates CSS rules (mask-image with SVG data URIs) for classes like `i-lucide-database`. CSS is generated at **build time** via static extraction — UnoCSS scans source files for matching class strings.
+
+### Static vs dynamic usage
+
+| Usage | Example | Extracted automatically? |
+|-------|---------|--------------------------|
+| Static — class directly in template | `<span class="i-lucide-check">` | Yes |
+| Dynamic — class in a JS object/array, passed as prop | `{ icon: 'i-lucide-database' }` | **No — must safelist** |
+
+UnoCSS cannot reliably extract class names from JS data structures. During dev-mode HMR, there's also a race between CSS injection and component rendering. Without safelisting, icons render as invisible zero-width spans — no broken-image fallback, no error.
+
+### Safelist pattern
+
+Any icon class used in a data structure (navigation configs, sidebar items, menu definitions) must be added to the `safelist` in `uno.config.ts`. Group entries semantically for maintainability.
+
+```typescript
+// uno.config.ts
+safelist: [
+  // Navigation
+  'i-lucide-home',
+  'i-lucide-settings',
+  // Admin
+  'i-lucide-database',
+  'i-lucide-users',
+]
+```
+
+Static icon classes in Svelte templates are extracted automatically and do not need safelisting.
+
 ## Container Queries
 
 Container queries enable component-scoped responsive design. Wrap with `@container`, then use `@md:`, `@lg:` prefixes to respond to container width instead of viewport.

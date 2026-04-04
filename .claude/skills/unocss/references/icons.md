@@ -176,7 +176,23 @@ Syntax: `i-{collection}-{icon-name}`
 
 ## Dynamic Icons
 
-### Static Object Map (Recommended)
+**Icons used in JS data structures (objects, arrays, props) MUST be safelisted in `uno.config.ts`.** UnoCSS cannot reliably extract class names from JS objects/arrays at build time. Without safelisting, icons render as invisible zero-width spans — no error, no fallback.
+
+### Safelist (Required for Data-Driven Icons)
+
+```typescript
+// uno.config.ts — add under the appropriate semantic group
+safelist: [
+  // Admin sidebar
+  'i-lucide-database',
+  'i-lucide-bar-chart-2',
+  // ... grouped by feature area
+],
+```
+
+When adding a new icon to any data structure (`icon: 'i-lucide-...'`), always add it to the safelist. Forgetting this causes invisible icons in production.
+
+### Static Object Map
 
 ```svelte
 <script>
@@ -192,20 +208,6 @@ Syntax: `i-{collection}-{icon-name}`
 </script>
 
 <div class={statusIcons[status]}></div>
-```
-
-### With Safelist (Use Sparingly)
-
-```typescript
-// uno.config.ts
-export default defineConfig({
-  safelist: [
-    'i-mdi-check-circle',
-    'i-mdi-alert-circle',
-    'i-mdi-alert',
-    'i-mdi-information',
-  ],
-});
 ```
 
 ### Conditional Rendering

@@ -194,6 +194,19 @@ Ensure the icon collection package (e.g., `@iconify-json/mdi`) is installed.
 <div class={icons[iconName]}></div>
 ```
 
+### Icon in JS Data Structure (Most Common in Velociraptor)
+
+Icons passed via `icon:` properties in data objects/arrays are not reliably extracted. They render as invisible zero-width spans with no error.
+
+```typescript
+// This icon MUST be in uno.config.ts safelist
+const navItems = [
+  { label: 'Home', icon: 'i-lucide-home' },
+];
+```
+
+**Fix:** Add the icon to the `safelist` in `uno.config.ts` under the appropriate semantic group. This is the single most common cause of missing icons in this project.
+
 ## @apply Not Working
 
 **Issue:** `@apply` directive does nothing.
