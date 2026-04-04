@@ -41,6 +41,9 @@ export {
 	updatePanelContext,
 } from './desk-context.svelte';
 export { createDeskBus, type DeskBus, type DeskEvents, getDeskBus, setDeskBusContext } from './desk-bus.svelte';
+export { createDeskSettings, type DeskSettings, type DeskSettingsOptions, getDeskSettings, setDeskSettingsContext } from './desk-settings.svelte';
+export { buildThemeFromServer, clearDeskSettings, DEFAULT_THEME, loadDeskSettings, saveDeskSettings, BUILT_IN_PRESETS } from './desk-settings.persistence';
+export type { DeskPreset, DeskTheme, PanelColorOverride, WorkspaceColors } from './desk-settings.types';
 export { LAYOUT_PRESETS, type LayoutPreset } from './layout-presets';
 export { createDockState, type DockState, getDockContext, setDockContext } from './dock.state.svelte';
 export {

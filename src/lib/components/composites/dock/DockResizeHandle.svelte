@@ -125,7 +125,7 @@ function handleKeyDown(e: KeyboardEvent) {
 
 	.dock-resizer-line {
 		position: absolute;
-		background: var(--color-border);
+		background: var(--desk-shell-border, var(--color-border));
 		pointer-events: none;
 		transition: background-color 150ms;
 	}

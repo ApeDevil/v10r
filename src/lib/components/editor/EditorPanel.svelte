@@ -426,7 +426,7 @@
 		display: flex;
 		flex-direction: column;
 		height: 100%;
-		background: var(--color-bg);
+		background: var(--desk-panel-bg, var(--color-bg));
 	}
 
 	.editor-center {

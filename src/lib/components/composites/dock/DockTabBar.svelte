@@ -8,6 +8,7 @@ import {
 } from '$lib/components/composites/context-menu';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import { getDockContext } from './dock.state.svelte';
+import { getDeskSettings } from './desk-settings.svelte';
 import type { LeafNode } from './dock.types';
 import DockLeafMenu from './DockLeafMenu.svelte';
 import DockLeafHelp from './DockLeafHelp.svelte';
@@ -23,6 +24,7 @@ interface Props {
 let { leaf, isFocused = false, menus = [], panelType = null, class: className }: Props = $props();
 
 const dock = getDockContext();
+const deskSettings = getDeskSettings();
 
 function handleClose(e: MouseEvent, panelId: string) {
 	e.stopPropagation();
@@ -253,6 +255,14 @@ function removeGhost() {
 							<span class="i-lucide-rows-2 ctx-icon"></span>
 							Split Down
 						</ContextMenuPrimitive.Item>
+						<ContextMenuPrimitive.Separator class={contextMenuSeparatorVariants()} />
+						<ContextMenuPrimitive.Item
+							class={contextMenuItemVariants()}
+							onclick={() => deskSettings.openDialog()}
+						>
+							<span class="i-lucide-settings ctx-icon"></span>
+							Preferences…
+						</ContextMenuPrimitive.Item>
 					</ContextMenuPrimitive.Content>
 				</ContextMenuPrimitive.Portal>
 			</ContextMenuPrimitive.Root>
@@ -272,8 +282,8 @@ function removeGhost() {
 		display: flex;
 		align-items: stretch;
 		gap: 0;
-		background: var(--color-bg);
-		border-bottom: 1px solid var(--color-border);
+		background: var(--desk-shell-bg, var(--color-bg));
+		border-bottom: 1px solid var(--desk-shell-border, var(--color-border));
 		min-height: 32px;
 		user-select: none;
 	}
@@ -295,7 +305,7 @@ function removeGhost() {
 		display: flex;
 		align-items: center;
 		flex-shrink: 0;
-		border-left: 1px solid var(--color-border);
+		border-left: 1px solid var(--desk-shell-border, var(--color-border));
 		padding: 0 2px;
 		gap: 1px;
 	}
@@ -310,7 +320,7 @@ function removeGhost() {
 		color: var(--color-muted);
 		background: transparent;
 		border: none;
-		border-right: 1px solid var(--color-border);
+		border-right: 1px solid var(--desk-shell-border, var(--color-border));
 		white-space: nowrap;
 		cursor: pointer;
 		position: relative;
@@ -324,8 +334,8 @@ function removeGhost() {
 
 	.dock-tab.active {
 		color: var(--color-fg);
-		background: var(--surface-1);
-		border-bottom: 2px solid var(--color-primary);
+		background: var(--desk-panel-bg, var(--surface-1));
+		border-bottom: 2px solid var(--desk-tab-active-indicator, var(--color-primary));
 	}
 
 	.dock-tab.dragging {

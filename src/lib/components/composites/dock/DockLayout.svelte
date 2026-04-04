@@ -6,8 +6,12 @@ import DockActivityBar from './DockActivityBar.svelte';
 import DockNode from './DockNode.svelte';
 import { collectLeaves, hasPanelType } from './dock.operations';
 import { loadDockState, saveDockState } from './dock.persistence';
+import { buildThemeFromServer, loadDeskSettings, saveDeskSettings, clearDeskSettings, DEFAULT_THEME } from './desk-settings.persistence';
+import { setDeskSettingsContext } from './desk-settings.svelte';
+import type { DeskTheme } from './desk-settings.types';
 import { setDeskBusContext } from './desk-bus.svelte';
 import { setDockContext } from './dock.state.svelte';
+import DeskPreferencesDialog from './DeskPreferencesDialog.svelte';
 import type { ActivityBarItem, LayoutNode, PanelDefinition } from './dock.types';
 
 interface Props {
@@ -16,6 +20,21 @@ interface Props {
 	activityBarItems?: ActivityBarItem[];
 	persist?: boolean | string;
 	openPanel?: string | null;
+	/** Whether the user is authenticated (enables DB persistence). */
+	authenticated?: boolean;
+	/** Server-loaded desk theme (from DB). Null = no DB row yet. */
+	serverTheme?: {
+		workspace: Record<string, string | undefined>;
+		typeStyles: Record<string, { bg?: string; border?: string }>;
+		activePresetId: string | null;
+	} | null;
+	/** Server-loaded user presets (from DB). */
+	serverPresets?: Array<{
+		id: string;
+		name: string;
+		workspace: Record<string, string | undefined>;
+		typeStyles: Record<string, { bg?: string; border?: string }>;
+	}>;
 	panelContent: Snippet<[string]>;
 	class?: string;
 }
@@ -26,6 +45,9 @@ let {
 	activityBarItems,
 	persist = false,
 	openPanel,
+	authenticated = false,
+	serverTheme = null,
+	serverPresets = [],
 	panelContent,
 	class: className,
 }: Props = $props();
@@ -43,6 +65,58 @@ const dock = setDockContext(
 // DeskBus: typed pub/sub available to all panels via context
 setDeskBusContext();
 
+// Desk settings: panel color customization via context
+// Priority: server data (DB) > localStorage cache > defaults
+const hasServerData = authenticated && serverTheme !== null;
+const initialTheme: DeskTheme = hasServerData
+	? buildThemeFromServer(serverTheme, serverPresets)
+	: (browser ? loadDeskSettings() : null) ?? DEFAULT_THEME;
+
+// DB sync callbacks (no-op when not authenticated / no server data)
+async function saveThemeToApi(theme: DeskTheme) {
+	try {
+		await fetch('/api/desk/theme', {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				workspace: theme.workspace,
+				typeStyles: theme.typeStyles,
+				activePresetId: theme.activePresetId,
+			}),
+		});
+	} catch { /* silent — localStorage is the fallback */ }
+}
+
+const deskSettings = setDeskSettingsContext(initialTheme, {
+	onCommit: (theme) => {
+		// Always cache to localStorage for instant next-load
+		saveDeskSettings(theme);
+		// If authenticated, also persist to DB
+		if (authenticated) saveThemeToApi(theme);
+	},
+	onCreatePreset: async (name, workspace, typeStyles) => {
+		try {
+			const res = await fetch('/api/desk/theme', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ action: 'create-preset', name, workspace, typeStyles }),
+			});
+			const data = await res.json();
+			return data.preset?.id ?? null;
+		} catch { return null; }
+	},
+	onDeletePreset: async (presetId) => {
+		try {
+			const res = await fetch('/api/desk/theme', {
+				method: 'DELETE',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ id: presetId }),
+			});
+			return res.ok;
+		} catch { return false; }
+	},
+});
+
 // Debounced persistence — $state.snapshot() creates deep tracking
 // so in-place mutations (e.g. resizeSplit) also trigger saves.
 if (persist && browser) {
@@ -54,6 +128,60 @@ if (persist && browser) {
 		const barPos = dock.activityBarPosition;
 		clearTimeout(timer);
 		timer = setTimeout(() => saveDockState(root, panels, persistKey, barPos), 300);
+	});
+}
+
+// Desk settings persistence — localStorage cache (DB save happens via onCommit callback)
+if (browser) {
+	let themeTimer: ReturnType<typeof setTimeout>;
+	$effect(() => {
+		const theme = $state.snapshot(deskSettings.theme) as DeskTheme;
+		clearTimeout(themeTimer);
+		themeTimer = setTimeout(() => saveDeskSettings(theme), 300);
+	});
+}
+
+// One-time migration: if authenticated but server has no theme, push localStorage to DB
+if (browser && authenticated && !hasServerData) {
+	const localTheme = loadDeskSettings();
+	if (localTheme) {
+		const builtInIds = new Set(['preset-default', 'preset-midnight', 'preset-forest']);
+		const userPresets = localTheme.presets
+			.filter((p) => !p.builtIn && !builtInIds.has(p.id))
+			.map((p) => ({ name: p.name, workspace: p.workspace, typeStyles: p.typeStyles }));
+
+		fetch('/api/desk/theme', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				action: 'migrate',
+				workspace: localTheme.workspace,
+				typeStyles: localTheme.typeStyles,
+				activePresetId: localTheme.activePresetId,
+				userPresets,
+			}),
+		}).then((res) => {
+			if (res.ok) res.json().then((d) => { if (d.migrated) clearDeskSettings(); });
+		}).catch(() => {});
+	}
+}
+
+// CSS variable injection from desk settings onto the layout container
+let layoutEl = $state<HTMLElement | undefined>(undefined);
+if (browser) {
+	let prevKeys = new Set<string>();
+	$effect(() => {
+		if (!layoutEl) return;
+		const vars = deskSettings.cssVarsMap;
+		const currentKeys = new Set<string>();
+		for (const [prop, value] of vars) {
+			layoutEl.style.setProperty(prop, value);
+			currentKeys.add(prop);
+		}
+		for (const key of prevKeys) {
+			if (!currentKeys.has(key)) layoutEl.style.removeProperty(key);
+		}
+		prevKeys = currentKeys;
 	});
 }
 
@@ -83,10 +211,12 @@ $effect(() => {
 </script>
 
 <div
+	bind:this={layoutEl}
 	class="dock-layout {className ?? ''}"
 	data-bar-position={dock.activityBarPosition}
 >
 	<DeskShortcuts />
+	<DeskPreferencesDialog />
 
 	{#if activityBarItems && activityBarItems.length > 0}
 		<DockActivityBar

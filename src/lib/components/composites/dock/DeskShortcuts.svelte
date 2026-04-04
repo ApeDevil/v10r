@@ -2,9 +2,11 @@
 	import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 	import { getActiveMenus } from './panel-menus.svelte';
 	import { getDockContext } from './dock.state.svelte';
+	import { getDeskSettings } from './desk-settings.svelte';
 	import { hasPanelType, collectLeaves } from './dock.operations';
 
 	const dock = getDockContext();
+	const deskSettings = getDeskSettings();
 
 	// Build View menu for shortcut matching
 	const viewMenu = $derived<MenuBarMenu>({
@@ -82,6 +84,10 @@
 				case 'P':
 					e.preventDefault();
 					togglePanelType('preview');
+					return;
+				case ',':
+					e.preventDefault();
+					deskSettings.openDialog();
 					return;
 			}
 		}

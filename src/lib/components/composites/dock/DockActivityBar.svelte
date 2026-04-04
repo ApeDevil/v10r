@@ -4,6 +4,7 @@ import { contextMenuContentVariants, contextMenuItemVariants } from '$lib/compon
 import { cn } from '$lib/utils/cn';
 import { collectLeaves, hasPanelType } from './dock.operations';
 import { getDockContext } from './dock.state.svelte';
+import { getDeskSettings } from './desk-settings.svelte';
 import type { ActivityBarItem, ActivityBarPosition, PanelDefinition } from './dock.types';
 
 interface Props {
@@ -15,6 +16,7 @@ interface Props {
 let { items, position = 'left', class: className }: Props = $props();
 
 const dock = getDockContext();
+const deskSettings = getDeskSettings();
 
 const isHorizontal = $derived(position === 'top' || position === 'bottom');
 
@@ -74,6 +76,14 @@ function handleClick(item: ActivityBarItem) {
 						<span class={cn('dock-activity-icon', item.icon)}></span>
 					</button>
 				{/each}
+					<div class="dock-activity-spacer"></div>
+					<button
+						class="dock-activity-btn"
+						title="Desk Preferences"
+						onclick={() => deskSettings.openDialog()}
+					>
+						<span class={cn('dock-activity-icon', 'i-lucide-settings')}></span>
+					</button>
 			</div>
 		{/snippet}
 	</ContextMenuPrimitive.Trigger>
@@ -112,9 +122,13 @@ function handleClick(item: ActivityBarItem) {
 		align-items: center;
 		gap: 2px;
 		padding: 4px;
-		background: var(--color-bg);
+		background: var(--desk-shell-bg, var(--color-bg));
 		width: 40px;
 		flex-shrink: 0;
+	}
+
+	.dock-activity-spacer {
+		flex: 1;
 	}
 
 	.dock-activity-bar.horizontal {

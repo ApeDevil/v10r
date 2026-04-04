@@ -25,6 +25,8 @@ import {
 	// desk
 	file,
 	spreadsheet,
+	deskTheme,
+	deskThemePreset,
 	telegramVerificationTokens,
 	// showcase
 	typeSpecimen,
@@ -188,6 +190,14 @@ export const spreadsheetRelations = relations(spreadsheet, ({ one }) => ({
 	file: one(file, { fields: [spreadsheet.fileId], references: [file.id] }),
 }));
 
+export const deskThemeRelations = relations(deskTheme, ({ one }) => ({
+	user: one(user, { fields: [deskTheme.userId], references: [user.id] }),
+}));
+
+export const deskThemePresetRelations = relations(deskThemePreset, ({ one }) => ({
+	user: one(user, { fields: [deskThemePreset.userId], references: [user.id] }),
+}));
+
 // ── App ─────────────────────────────────────────────────────────────
 
 export const userPreferencesRelations = relations(userPreferences, ({ one }) => ({
@@ -267,6 +277,8 @@ export const userRelations = relations(user, ({ one, many }) => ({
 	// desk
 	files: many(file),
 	spreadsheets: many(spreadsheet),
+	deskTheme: one(deskTheme),
+	deskThemePresets: many(deskThemePreset),
 	// blog
 	posts: many(post),
 	revisions: many(revision),

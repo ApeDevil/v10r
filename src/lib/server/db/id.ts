@@ -26,6 +26,8 @@ export const createId = {
 	file: () => `fil_${shortId()}`,
 	/** Desk spreadsheet: spr_a8f3e1b2c4d9 */
 	spreadsheet: () => `spr_${shortId()}`,
+	/** Desk theme preset: dtp_a8f3e1b2c4d9 */
+	themePreset: () => `dtp_${shortId()}`,
 	/** Generic UUID */
 	uuid: () => crypto.randomUUID(),
 } as const;

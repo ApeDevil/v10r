@@ -4,6 +4,7 @@ import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import DockDropOverlay from './DockDropOverlay.svelte';
 import DockTabBar from './DockTabBar.svelte';
 import { getDockContext } from './dock.state.svelte';
+import { getDeskSettings } from './desk-settings.svelte';
 import { setContextFocus } from './desk-context.svelte';
 import { getActiveMenus, setFocusedPanel } from './panel-menus.svelte';
 import { hasPanelType, collectLeaves } from './dock.operations';
@@ -17,6 +18,7 @@ interface Props {
 let { leaf, panelContent }: Props = $props();
 
 const dock = getDockContext();
+const deskSettings = getDeskSettings();
 
 const isFocused = $derived(dock.focusedLeafId === leaf.id);
 const focusedPanelType = $derived(dock.panels[leaf.activeTab]?.type ?? null);
@@ -69,6 +71,8 @@ const viewMenu = $derived<MenuBarMenu>({
 		{ label: 'Split Down', icon: 'i-lucide-rows-2', onSelect: () => splitFocused('bottom') },
 		{ type: 'separator' },
 		{ label: 'Close Active Panel', icon: 'i-lucide-x', shortcut: 'Ctrl+W', onSelect: closeFocusedPanel },
+		{ type: 'separator' },
+		{ label: 'Desk Preferences\u2026', icon: 'i-lucide-settings', shortcut: 'Ctrl+Shift+,', onSelect: () => deskSettings.openDialog() },
 	],
 });
 
@@ -76,9 +80,18 @@ const leafMenus = $derived<MenuBarMenu[]>([
 	...getActiveMenus().menuBar,
 	viewMenu,
 ]);
+
+// Per-panel-type color override (inline CSS vars on the leaf element)
+const leafStyle = $derived.by(() => {
+	const panelType = dock.panels[leaf.activeTab]?.type ?? '';
+	const resolved = deskSettings.resolvePanel(panelType);
+	const parts: string[] = [];
+	if (resolved.bg) parts.push(`--desk-panel-bg: ${resolved.bg}`);
+	return parts.join('; ') || undefined;
+});
 </script>
 
-<div class="dock-leaf" onfocusin={() => { dock.setFocusedLeaf(leaf.id); setFocusedPanel(leaf.activeTab); setContextFocus(leaf.activeTab); }} onpointerdown={() => { dock.setFocusedLeaf(leaf.id); setFocusedPanel(leaf.activeTab); setContextFocus(leaf.activeTab); }}>
+<div class="dock-leaf" style={leafStyle} onfocusin={() => { dock.setFocusedLeaf(leaf.id); setFocusedPanel(leaf.activeTab); setContextFocus(leaf.activeTab); }} onpointerdown={() => { dock.setFocusedLeaf(leaf.id); setFocusedPanel(leaf.activeTab); setContextFocus(leaf.activeTab); }}>
 	{#if leaf.tabs.length > 0}
 		<DockTabBar {leaf} {isFocused} menus={leafMenus} panelType={focusedPanelType} />
 		<div class="dock-leaf-content">
@@ -105,7 +118,7 @@ const leafMenus = $derived<MenuBarMenu[]>([
 		width: 100%;
 		min-width: 0;
 		min-height: 0;
-		background: var(--surface-1);
+		background: var(--desk-panel-bg, var(--surface-1));
 	}
 
 	.dock-leaf-content {
