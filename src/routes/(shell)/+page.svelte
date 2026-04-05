@@ -380,6 +380,43 @@ v          10            r</pre>
 		background: transparent;
 		cursor: pointer;
 		transition: border-color var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out;
+		position: relative;
+		overflow: hidden;
+	}
+
+	.roll-btn::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		padding: 1px;
+		background: conic-gradient(
+			from var(--glow-angle, 0deg),
+			transparent 0%,
+			transparent 30%,
+			var(--color-primary) 45%,
+			transparent 60%,
+			transparent 100%
+		);
+		mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+		mask-composite: exclude;
+		-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+		-webkit-mask-composite: xor;
+		opacity: 0.5;
+		animation: border-sweep 4s linear infinite;
+		pointer-events: none;
+	}
+
+	@property --glow-angle {
+		syntax: '<angle>';
+		initial-value: 0deg;
+		inherits: false;
+	}
+
+	@keyframes border-sweep {
+		to {
+			--glow-angle: 360deg;
+		}
 	}
 
 	.roll-btn:hover {
@@ -387,9 +424,17 @@ v          10            r</pre>
 		background: var(--color-fg-alpha);
 	}
 
+	.roll-btn:hover::before {
+		opacity: 0.8;
+	}
+
 	.roll-btn:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
+	}
+
+	.roll-btn:disabled::before {
+		animation-play-state: paused;
 	}
 
 	.roll-icon {
