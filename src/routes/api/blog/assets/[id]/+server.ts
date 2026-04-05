@@ -1,8 +1,7 @@
-import { json, error } from '@sveltejs/kit';
+import { error, json } from '@sveltejs/kit';
 import { requireApiAuthor } from '$lib/server/auth/guards';
-import { getAssetById, updateAssetMetadata, deleteAsset } from '$lib/server/blog';
-import { deleteBlogObject } from '$lib/server/store/blog';
-import { generateBlogDownloadUrl } from '$lib/server/store/blog';
+import { deleteAsset, getAssetById, updateAssetMetadata } from '$lib/server/blog';
+import { deleteBlogObject, generateBlogDownloadUrl } from '$lib/server/store/blog';
 import { classifyS3Error } from '$lib/server/store/errors';
 import type { RequestHandler } from './$types';
 
@@ -32,11 +31,12 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 	if (!asset) error(404, 'Asset not found');
 
 	const body = await request.json();
-	const data: { altText?: string; width?: number; height?: number } = {};
+	const data: { altText?: string; width?: number; height?: number; fileName?: string } = {};
 
 	if ('altText' in body) data.altText = body.altText as string;
 	if ('width' in body) data.width = body.width as number;
 	if ('height' in body) data.height = body.height as number;
+	if ('fileName' in body) data.fileName = body.fileName as string;
 
 	const updated = await updateAssetMetadata(params.id, data);
 	return json({ asset: updated });

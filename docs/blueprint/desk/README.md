@@ -39,10 +39,54 @@ The Explorer (`ExplorerPanel.svelte`) is the unified file browser for all desk c
 blog/                    # Blog posts (draft/published/archived)
 assets/
   images/                # Uploaded images (R2-backed)
-data/                    # Spreadsheet files (desk.file-backed)
+data/                    # Desk folders + spreadsheet files
+  [user folders]/        # Nested desk.folder hierarchy
 ```
 
-The Explorer fetches from three sources in parallel: `/api/blog/posts`, `/api/blog/assets`, `/api/desk/files?type=spreadsheet`. Panel commands menu (File) offers: New Post, New Spreadsheet, Import Markdown, Upload Image, Refresh.
+The Explorer fetches from four sources in parallel: `/api/blog/posts`, `/api/blog/assets`, `/api/desk/files`, `/api/desk/folders`. Panel commands menu (File) offers: New Post, New Spreadsheet, Import Markdown, Upload Image, Refresh.
+
+#### Architecture
+
+Every API item (post, asset, folder, file) is normalized into a unified **ExplorerNode** before rendering. This replaces the old hardcoded per-type rendering.
+
+**ExplorerNode** (`node.ts`) — unified tree item interface:
+
+| Field | Description |
+|-------|-------------|
+| `id`, `parentId` | Flat tree addressing |
+| `source` | `blog-post`, `blog-asset`, `desk-file`, `desk-folder` |
+| `label`, `icon`, `isFolder` | Display |
+| `capabilities` | `Set<NodeCapability>` — drives context menu |
+| `aiContext`, `sortKey`, `badge`, `subtitle` | Optional metadata |
+
+**Adapters** (`adapters/`) normalize raw API responses into `ExplorerNode[]`:
+
+| Adapter | Input | Capabilities |
+|---------|-------|--------------|
+| `blog-posts.ts` | `PostListItem[]` | open, open-new-panel, rename, ai-context, export-markdown, delete |
+| `blog-assets.ts` | `AssetListItem[]` | open, open-new-panel, rename, insert-into-document, copy-url, delete |
+| `desk-files.ts` | `FileListItem[]` + `FolderListItem[]` | files: open, open-new-panel, rename, duplicate, move, ai-context, delete; folders: rename, move, delete, new-folder, new-spreadsheet |
+
+Virtual root nodes (`blog/`, `assets/`, `images/`, `data/`) are created by the adapters.
+
+**ExplorerState** (`explorer-state.svelte.ts`) — reactive flat `Map<string, ExplorerNode>` with `$state`:
+
+- O(1) lookups: `getChildren(parentId)`, `getRoots()`
+- Mutations: `toggleExpanded()`, `moveNode()` (optimistic + rollback), `startRename/cancelRename`, `startDelete/cancelDelete`, `updateAiContext()`
+- Separate `aiPins` Map for pin state (works around `svelte:self` deep-reactivity limitation)
+
+**Context menu** (`context-menu-items.ts`) — capability-driven builder. Items only appear if `node.capabilities` includes the matching key. Groups: Open → AI Context → Edit → Type-specific → Create → Destructive.
+
+**TreeNode.svelte** — recursive component (`svelte:self`) rendering any `ExplorerNode`. Handles: expand/collapse, context menu, inline rename (input swap), inline delete confirmation strip, AI context pin icon (hover-reveal, persistent when pinned), drag-and-drop.
+
+**ExplorerTree.svelte** — thin root iterator. Renders `<TreeNode>` for each `state.getRoots()` item. Handles F2 keyboard shortcut and upload state.
+
+#### AI Context Pinning
+
+- **Desk files**: persisted server-side via `PUT /api/desk/files/:id` with `{ aiContext: boolean }`
+- **Blog posts**: client-side only (pin state in ExplorerState, no DB column)
+- Pin icon is hover-reveal; stays visible (primary color) when pinned
+- Context menu: "Pin to AI Context" / "Unpin from AI Context"
 
 ### File Structure
 
@@ -52,10 +96,19 @@ $lib/components/composites/dock/
   layout-presets.ts                 # Writing, reviewing, dashboard presets
 
 $lib/components/explorer/
-  ExplorerPanel.svelte              # File browser: posts, assets, spreadsheets
-  ExplorerTree.svelte               # Tree view with folders, context menus
+  ExplorerPanel.svelte              # Orchestrator: fetch, adapt, dispatch
+  ExplorerTree.svelte               # Thin root iterator + keyboard shortcuts
   ExplorerPreview.svelte            # Asset preview sidebar
-  types.ts                          # PostListItem, AssetListItem, FileListItem, UploadingItem
+  TreeNode.svelte                   # Recursive node: context menu, rename, delete, DnD
+  explorer-state.svelte.ts          # Flat Map state with $state reactivity
+  context-menu-items.ts             # Capability-driven menu builder
+  node.ts                           # ExplorerNode interface, NodeCapability, NodeSource
+  types.ts                          # PostListItem, AssetListItem, FileListItem, FolderListItem, UploadingItem
+  adapters/
+    index.ts                        # Barrel export
+    blog-posts.ts                   # PostListItem → ExplorerNode
+    blog-assets.ts                  # AssetListItem → ExplorerNode
+    desk-files.ts                   # FileListItem + FolderListItem → ExplorerNode
 
 $lib/config/desk-panels.ts         # Panel type -> component registry
 ```

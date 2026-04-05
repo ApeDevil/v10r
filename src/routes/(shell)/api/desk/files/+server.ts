@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
-import { safeParse } from 'valibot';
 import * as v from 'valibot';
+import { safeParse } from 'valibot';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { createSpreadsheetFile } from '$lib/server/db/desk/mutations';
 import { listFiles } from '$lib/server/db/desk/queries';
@@ -10,6 +10,7 @@ const CreateFileSchema = v.variant('type', [
 	v.object({
 		type: v.literal('spreadsheet'),
 		name: v.optional(v.pipe(v.string(), v.maxLength(200))),
+		folderId: v.optional(v.nullable(v.string())),
 	}),
 ]);
 
@@ -31,10 +32,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return json({ error: 'Invalid request.' }, { status: 400 });
 	}
 
-	const { type, name } = parsed.output;
+	const { type, name, folderId } = parsed.output;
 
 	if (type === 'spreadsheet') {
-		const result = await createSpreadsheetFile(user.id, name);
+		const result = await createSpreadsheetFile(user.id, name, {}, folderId ?? null);
 		return json({ file: result.file, spreadsheet: result.spreadsheet }, { status: 201 });
 	}
 

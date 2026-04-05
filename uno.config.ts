@@ -140,6 +140,11 @@ export default defineConfig({
 		'i-lucide-download',
 		'i-lucide-scroll-text',
 		'i-lucide-search',
+		'i-lucide-pin-off',
+		'i-lucide-image-plus',
+		'i-lucide-link',
+		'i-lucide-panels-top-left',
+		'i-lucide-square-arrow-out-up-right',
 
 		// Shell (theme toggle, dice, announcements, notifications)
 		'i-lucide-sun',

@@ -1,8 +1,8 @@
 import { and, eq } from 'drizzle-orm';
-import { db } from '../index';
 import { createId } from '../id';
+import { db } from '../index';
 import { deskTheme, deskThemePreset } from '../schema/desk';
-import type { WorkspaceColorsJson, TypeStylesJson } from '../schema/desk/theme';
+import type { TypeStylesJson, WorkspaceColorsJson } from '../schema/desk/theme';
 
 /** Upsert the user's active desk theme. */
 export async function saveDeskTheme(

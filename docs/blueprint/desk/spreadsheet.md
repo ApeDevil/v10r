@@ -85,12 +85,17 @@ The panel registers with the dock's AI context system via `registerPanelContext(
 
 ## Explorer Integration
 
-The Explorer's `data/` folder shows spreadsheet files fetched from `GET /api/desk/files?type=spreadsheet`.
+The Explorer's `data/` section shows desk folders and spreadsheet files. Folders come from `GET /api/desk/folders`; files from `GET /api/desk/files`.
 
-- **Open**: click or context menu "Open" -> `dock.addPanel()` with deduplication (reuses existing tab if already open)
-- **Create**: File menu "New Spreadsheet" -> `POST /api/desk/files` -> opens panel
-- **Delete**: context menu "Delete" -> confirmation -> `DELETE /api/desk/files/:id` -> refresh list
-- **Icon**: `i-lucide-sheet` for both folder and individual files
+- **Open**: click or context menu "Open" → `dock.addPanel()` with deduplication (reuses existing tab if already open)
+- **Open in New Panel**: context menu → creates second panel with timestamp-suffixed ID
+- **Create**: File menu "New Spreadsheet" or folder context menu → `POST /api/desk/files` → opens panel
+- **Rename**: inline input via context menu or F2 → `PUT /api/desk/files/:id` with `{ name }`
+- **Duplicate**: context menu → `POST` creates copy with "X copy" naming → auto-enters rename
+- **Move**: drag-and-drop between folders → optimistic `state.moveNode()` + API
+- **AI Context**: pin icon toggle → `PUT /api/desk/files/:id` with `{ aiContext }` → persisted server-side
+- **Delete**: inline confirmation strip (replaces `window.confirm`) → `DELETE /api/desk/files/:id`
+- **Icon**: `i-lucide-sheet` (green) for files, `i-lucide-folder` (amber) for folders
 
 ## File Structure
 
@@ -98,14 +103,19 @@ The Explorer's `data/` folder shows spreadsheet files fetched from `GET /api/des
 $lib/server/db/schema/desk/
   schema.ts                          # deskSchema = pgSchema('desk')
   file.ts                            # desk.file table + file_type enum
+  folder.ts                          # desk.folder table
   spreadsheet.ts                     # desk.spreadsheet (added fileId FK)
   index.ts                           # Re-exports all desk schema objects
 
 $lib/server/db/desk/
-  queries.ts                         # listFiles, getFile, getSpreadsheetByFileId
-  mutations.ts                       # createSpreadsheetFile, renameFile, deleteFile, updateSpreadsheetByFileId
+  queries.ts                         # listFiles, getFile, getSpreadsheetByFileId, listFolders, getFolder, countFolderContents
+  mutations.ts                       # createSpreadsheetFile, renameFile, deleteFile, updateSpreadsheetByFileId, folder mutations, moveFile, duplicateSpreadsheetFile, toggleFileAiContext
 
 src/routes/(shell)/api/desk/files/
+  +server.ts                         # GET (list) + POST (create)
+  [id]/+server.ts                    # GET + PUT + DELETE
+
+src/routes/(shell)/api/desk/folders/
   +server.ts                         # GET (list) + POST (create)
   [id]/+server.ts                    # GET + PUT + DELETE
 
@@ -113,7 +123,12 @@ $lib/components/spreadsheet/
   SpreadsheetPanel.svelte            # Dual-mode panel (file vs legacy)
 
 $lib/components/explorer/
-  ExplorerPanel.svelte               # Fetches spreadsheet files, open/create/delete handlers
-  ExplorerTree.svelte                # data/ folder rendering, context menus
-  types.ts                           # FileListItem interface
+  ExplorerPanel.svelte               # Orchestrator: fetch, adapt, dispatch
+  ExplorerTree.svelte                # Thin root iterator + keyboard shortcuts
+  TreeNode.svelte                    # Recursive node: context menu, rename, delete, DnD
+  explorer-state.svelte.ts           # Flat Map state with $state reactivity
+  context-menu-items.ts              # Capability-driven menu builder
+  node.ts                            # ExplorerNode interface, NodeCapability, NodeSource
+  types.ts                           # FileListItem, FolderListItem interfaces
+  adapters/desk-files.ts             # FileListItem + FolderListItem → ExplorerNode
 ```

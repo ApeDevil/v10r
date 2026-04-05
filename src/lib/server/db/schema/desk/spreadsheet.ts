@@ -14,8 +14,8 @@
  */
 import { index, jsonb, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
-import { deskSchema } from './schema';
 import { file } from './file';
+import { deskSchema } from './schema';
 
 export { deskSchema };
 

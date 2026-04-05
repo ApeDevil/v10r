@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../index';
 import { deskTheme, deskThemePreset } from '../schema/desk';
-import type { WorkspaceColorsJson, TypeStylesJson } from '../schema/desk/theme';
+import type { TypeStylesJson, WorkspaceColorsJson } from '../schema/desk/theme';
 
 export interface DeskThemeRow {
 	userId: string;
@@ -20,11 +20,7 @@ export interface DeskThemePresetRow {
 
 /** Get a user's active desk theme. Returns null if none saved. */
 export async function getDeskTheme(userId: string): Promise<DeskThemeRow | null> {
-	const [row] = await db
-		.select()
-		.from(deskTheme)
-		.where(eq(deskTheme.userId, userId))
-		.limit(1);
+	const [row] = await db.select().from(deskTheme).where(eq(deskTheme.userId, userId)).limit(1);
 	return row ?? null;
 }
 

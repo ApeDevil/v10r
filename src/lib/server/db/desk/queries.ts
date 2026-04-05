@@ -1,6 +1,6 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, count, desc, eq } from 'drizzle-orm';
 import { db } from '../index';
-import { file, spreadsheet } from '../schema/desk';
+import { file, folder, spreadsheet } from '../schema/desk';
 
 // ── Legacy queries (kept for backward compat) ──────────────────────
 
@@ -42,6 +42,8 @@ export async function listFiles(userId: string, type?: string) {
 			id: file.id,
 			type: file.type,
 			name: file.name,
+			folderId: file.folderId,
+			aiContext: file.aiContext,
 			createdAt: file.createdAt,
 			updatedAt: file.updatedAt,
 		})
@@ -69,6 +71,8 @@ export async function getSpreadsheetByFileId(fileId: string, userId: string) {
 				id: file.id,
 				type: file.type,
 				name: file.name,
+				folderId: file.folderId,
+				aiContext: file.aiContext,
 				createdAt: file.createdAt,
 				updatedAt: file.updatedAt,
 			},
@@ -83,4 +87,57 @@ export async function getSpreadsheetByFileId(fileId: string, userId: string) {
 		.where(and(eq(file.id, fileId), eq(file.userId, userId)))
 		.limit(1);
 	return row ?? null;
+}
+
+// ── Folder queries ────────────────────────────────────────────────
+
+/** List all folders for a user (flat). Client builds the tree. */
+export async function listFolders(userId: string) {
+	return db
+		.select({
+			id: folder.id,
+			parentId: folder.parentId,
+			name: folder.name,
+			createdAt: folder.createdAt,
+			updatedAt: folder.updatedAt,
+		})
+		.from(folder)
+		.where(eq(folder.userId, userId))
+		.orderBy(folder.name);
+}
+
+/** Get a single folder with ownership check. */
+export async function getFolder(id: string, userId: string) {
+	const [row] = await db
+		.select()
+		.from(folder)
+		.where(and(eq(folder.id, id), eq(folder.userId, userId)))
+		.limit(1);
+	return row ?? null;
+}
+
+/** Count subfolders + files inside a folder (for delete confirmation). */
+export async function countFolderContents(id: string, userId: string) {
+	const [subfolders] = await db
+		.select({ count: count() })
+		.from(folder)
+		.where(and(eq(folder.parentId, id), eq(folder.userId, userId)));
+	const [files] = await db
+		.select({ count: count() })
+		.from(file)
+		.where(and(eq(file.folderId, id), eq(file.userId, userId)));
+	return (subfolders?.count ?? 0) + (files?.count ?? 0);
+}
+
+/** Get all files with ai_context = true for a user. */
+export async function getAiContextFiles(userId: string) {
+	return db
+		.select({
+			id: file.id,
+			type: file.type,
+			name: file.name,
+			folderId: file.folderId,
+		})
+		.from(file)
+		.where(and(eq(file.userId, userId), eq(file.aiContext, true)));
 }

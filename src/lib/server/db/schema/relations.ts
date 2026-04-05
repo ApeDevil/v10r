@@ -23,6 +23,7 @@ import {
 	notifications,
 	session,
 	// desk
+	folder,
 	file,
 	spreadsheet,
 	deskTheme,
@@ -180,8 +181,16 @@ export const auditLogRelations = relations(auditLog, ({ one }) => ({
 
 // ── Desk ────────────────────────────────────────────────────────────
 
+export const folderRelations = relations(folder, ({ one, many }) => ({
+	user: one(user, { fields: [folder.userId], references: [user.id] }),
+	parent: one(folder, { fields: [folder.parentId], references: [folder.id], relationName: 'folderTree' }),
+	children: many(folder, { relationName: 'folderTree' }),
+	files: many(file),
+}));
+
 export const fileRelations = relations(file, ({ one }) => ({
 	user: one(user, { fields: [file.userId], references: [user.id] }),
+	folder: one(folder, { fields: [file.folderId], references: [folder.id] }),
 	spreadsheet: one(spreadsheet),
 }));
 

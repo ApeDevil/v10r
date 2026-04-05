@@ -1,27 +1,15 @@
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { createId } from '$lib/server/db/id';
-import {
-	post,
-	revision,
-	publishedRevision,
-	tag,
-	postTag,
-	asset,
-	postAsset,
-	domain,
-} from '$lib/server/db/schema/blog';
-import type { BlogPost, BlogRevision, BlogTag, BlogAsset, BlogDomain } from './types';
+import { asset, domain, post, postAsset, postTag, publishedRevision, revision, tag } from '$lib/server/db/schema/blog';
 import { contentHash } from './content-hash';
 import { renderBlogPost } from './pipeline';
+import type { BlogAsset, BlogDomain, BlogPost, BlogRevision, BlogTag } from './types';
 
 // ── Posts ────────────────────────────────────────────────────────────
 
 /** Create a new blog post (draft). */
-export async function createPost(
-	authorId: string,
-	data: { slug: string },
-): Promise<BlogPost> {
+export async function createPost(authorId: string, data: { slug: string }): Promise<BlogPost> {
 	const [row] = await db
 		.insert(post)
 		.values({
@@ -82,10 +70,7 @@ export async function createRevision(
 	let embedDescriptors: unknown = null;
 
 	try {
-		const [hashResult, renderResult] = await Promise.all([
-			contentHash(data.markdown),
-			renderBlogPost(data.markdown),
-		]);
+		const [hashResult, renderResult] = await Promise.all([contentHash(data.markdown), renderBlogPost(data.markdown)]);
 		hash = hashResult;
 		renderedHtml = renderResult.html;
 		embedDescriptors = renderResult.embeds;
@@ -124,10 +109,7 @@ export async function createRevision(
 	});
 
 	// Update post's updatedAt
-	await db
-		.update(post)
-		.set({ updatedAt: new Date() })
-		.where(eq(post.id, postId));
+	await db.update(post).set({ updatedAt: new Date() }).where(eq(post.id, postId));
 
 	return row;
 }
@@ -135,27 +117,15 @@ export async function createRevision(
 // ── Publishing ───────────────────────────────────────────────────────
 
 /** Publish a specific revision for a locale. UPSERT on published_revision. */
-export async function publishRevision(
-	postId: string,
-	locale: string,
-	revisionId: string,
-): Promise<void> {
+export async function publishRevision(postId: string, locale: string, revisionId: string): Promise<void> {
 	// Verify revision belongs to this post
-	const [rev] = await db
-		.select({ postId: revision.postId })
-		.from(revision)
-		.where(eq(revision.id, revisionId))
-		.limit(1);
+	const [rev] = await db.select({ postId: revision.postId }).from(revision).where(eq(revision.id, revisionId)).limit(1);
 	if (!rev || rev.postId !== postId) {
 		throw new Error('Revision does not belong to post');
 	}
 
 	// Verify post has a domain assigned
-	const [postRow] = await db
-		.select({ domainId: post.domainId })
-		.from(post)
-		.where(eq(post.id, postId))
-		.limit(1);
+	const [postRow] = await db.select({ domainId: post.domainId }).from(post).where(eq(post.id, postId)).limit(1);
 	if (!postRow?.domainId) {
 		throw new Error('Domain is required to publish a post');
 	}
@@ -185,14 +155,9 @@ export async function publishRevision(
 /** Unpublish a post: remove all published_revision rows, set status to archived. */
 export async function unpublishPost(postId: string): Promise<void> {
 	await db.transaction(async (tx) => {
-		await tx
-			.delete(publishedRevision)
-			.where(eq(publishedRevision.postId, postId));
+		await tx.delete(publishedRevision).where(eq(publishedRevision.postId, postId));
 
-		await tx
-			.update(post)
-			.set({ status: 'archived', updatedAt: new Date() })
-			.where(eq(post.id, postId));
+		await tx.update(post).set({ status: 'archived', updatedAt: new Date() }).where(eq(post.id, postId));
 	});
 }
 
@@ -223,11 +188,7 @@ export async function updateTag(
 	tagId: string,
 	data: { name?: string; slug?: string; icon?: string | null; color?: number | null; glyph?: string | null },
 ): Promise<BlogTag | null> {
-	const [row] = await db
-		.update(tag)
-		.set(data)
-		.where(eq(tag.id, tagId))
-		.returning();
+	const [row] = await db.update(tag).set(data).where(eq(tag.id, tagId)).returning();
 	return row ?? null;
 }
 
@@ -274,11 +235,7 @@ export async function updateDomain(
 	domainId: string,
 	data: { name?: string; slug?: string; icon?: string | null; color?: number | null; description?: string | null },
 ): Promise<BlogDomain | null> {
-	const [row] = await db
-		.update(domain)
-		.set(data)
-		.where(eq(domain.id, domainId))
-		.returning();
+	const [row] = await db.update(domain).set(data).where(eq(domain.id, domainId)).returning();
 	return row ?? null;
 }
 
@@ -323,29 +280,20 @@ export async function linkAssetToPost(postId: string, assetId: string): Promise<
 
 /** Unlink an asset from a post. */
 export async function unlinkAssetFromPost(postId: string, assetId: string): Promise<void> {
-	await db
-		.delete(postAsset)
-		.where(and(eq(postAsset.postId, postId), eq(postAsset.assetId, assetId)));
+	await db.delete(postAsset).where(and(eq(postAsset.postId, postId), eq(postAsset.assetId, assetId)));
 }
 
 /** Update asset metadata (alt text, dimensions). */
 export async function updateAssetMetadata(
 	assetId: string,
-	data: { altText?: string; width?: number; height?: number },
+	data: { altText?: string; width?: number; height?: number; fileName?: string },
 ): Promise<BlogAsset | null> {
-	const [row] = await db
-		.update(asset)
-		.set(data)
-		.where(eq(asset.id, assetId))
-		.returning();
+	const [row] = await db.update(asset).set(data).where(eq(asset.id, assetId)).returning();
 	return row ?? null;
 }
 
 /** Delete an asset record. Fails with FK RESTRICT if still linked to posts. */
 export async function deleteAsset(assetId: string): Promise<boolean> {
-	const [row] = await db
-		.delete(asset)
-		.where(eq(asset.id, assetId))
-		.returning({ id: asset.id });
+	const [row] = await db.delete(asset).where(eq(asset.id, assetId)).returning({ id: asset.id });
 	return !!row;
 }

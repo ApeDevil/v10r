@@ -1,42 +1,44 @@
 <script lang="ts">
-	import { Button } from '$lib/components/primitives';
-	import type { AssetListItem } from './types';
+import { Button } from '$lib/components/primitives';
+import type { AssetListItem } from './types';
 
-	function formatBytes(bytes: number): string {
-		if (bytes === 0) return '0 B';
-		const units = ['B', 'KB', 'MB', 'GB'];
-		const i = Math.floor(Math.log(bytes) / Math.log(1024));
-		const value = bytes / 1024 ** i;
-		return `${value.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
-	}
+function formatBytes(bytes: number): string {
+	if (bytes === 0) return '0 B';
+	const units = ['B', 'KB', 'MB', 'GB'];
+	const i = Math.floor(Math.log(bytes) / Math.log(1024));
+	const value = bytes / 1024 ** i;
+	return `${value.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+}
 
-	interface Props {
-		asset: AssetListItem | null;
-		onclose: () => void;
-		oninsert: (asset: AssetListItem) => void;
-	}
+interface Props {
+	asset: AssetListItem | null;
+	onclose: () => void;
+	oninsert: (asset: AssetListItem) => void;
+}
 
-	let { asset, onclose, oninsert }: Props = $props();
+let { asset, onclose, oninsert }: Props = $props();
 
-	let copied = $state(false);
+let copied = $state(false);
 
-	function imageUrl(a: AssetListItem) {
-		return `/api/blog/assets/${a.id}/image`;
-	}
+function imageUrl(a: AssetListItem) {
+	return `/api/blog/assets/${a.id}/image`;
+}
 
-	function copyMarkdown() {
-		if (!asset) return;
-		const alt = asset.altText || asset.fileName.replace(/\.[^.]+$/, '');
-		const md = `![${alt}](${imageUrl(asset)})`;
-		navigator.clipboard.writeText(md);
-		copied = true;
-		setTimeout(() => { copied = false; }, 1500);
-	}
+function copyMarkdown() {
+	if (!asset) return;
+	const alt = asset.altText || asset.fileName.replace(/\.[^.]+$/, '');
+	const md = `![${alt}](${imageUrl(asset)})`;
+	navigator.clipboard.writeText(md);
+	copied = true;
+	setTimeout(() => {
+		copied = false;
+	}, 1500);
+}
 
-	function copyUrl() {
-		if (!asset) return;
-		navigator.clipboard.writeText(imageUrl(asset));
-	}
+function copyUrl() {
+	if (!asset) return;
+	navigator.clipboard.writeText(imageUrl(asset));
+}
 </script>
 
 {#if asset}

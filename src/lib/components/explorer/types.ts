@@ -31,6 +31,17 @@ export interface FileListItem {
 	id: string;
 	type: 'spreadsheet';
 	name: string;
+	folderId: string | null;
+	aiContext: boolean;
+	createdAt: string;
+	updatedAt: string;
+}
+
+/** Folder entry from desk.folder API. */
+export interface FolderListItem {
+	id: string;
+	parentId: string | null;
+	name: string;
 	createdAt: string;
 	updatedAt: string;
 }

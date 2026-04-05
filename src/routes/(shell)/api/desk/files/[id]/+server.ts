@@ -1,13 +1,22 @@
 import { json } from '@sveltejs/kit';
-import { safeParse } from 'valibot';
 import * as v from 'valibot';
+import { safeParse } from 'valibot';
 import { requireApiUser } from '$lib/server/auth/guards';
-import { deleteFile, renameFile, updateSpreadsheetByFileId } from '$lib/server/db/desk/mutations';
+import {
+	deleteFile,
+	duplicateSpreadsheetFile,
+	moveFile,
+	renameFile,
+	toggleFileAiContext,
+	updateSpreadsheetByFileId,
+} from '$lib/server/db/desk/mutations';
 import { getFile, getSpreadsheetByFileId } from '$lib/server/db/desk/queries';
 import type { RequestHandler } from './$types';
 
 const UpdateFileSchema = v.object({
 	name: v.optional(v.pipe(v.string(), v.maxLength(200))),
+	folderId: v.optional(v.nullable(v.string())),
+	aiContext: v.optional(v.boolean()),
 	cells: v.optional(v.record(v.string(), v.any())),
 	columnMeta: v.optional(v.nullable(v.record(v.string(), v.any()))),
 });
@@ -27,7 +36,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	return json({ file: fileRow });
 };
 
-/** Update a file (rename) and/or its detail data (cells, columnMeta). */
+/** Update a file (rename, move, toggle AI context) and/or its detail data. */
 export const PUT: RequestHandler = async ({ params, request, locals }) => {
 	const { user } = requireApiUser(locals);
 
@@ -39,10 +48,22 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 		return json({ error: 'Invalid request.' }, { status: 400 });
 	}
 
-	const { name, cells, columnMeta } = parsed.output;
-	const hasCellUpdate = cells !== undefined || columnMeta !== undefined;
+	const { name, folderId, aiContext, cells, columnMeta } = parsed.output;
 
-	// If only renaming (no cell data), use the simpler rename path
+	// Handle move
+	if (folderId !== undefined) {
+		const row = await moveFile(params.id, user.id, folderId);
+		if (!row) return json({ error: 'Not found.' }, { status: 404 });
+	}
+
+	// Handle AI context toggle
+	if (aiContext !== undefined) {
+		const row = await toggleFileAiContext(params.id, user.id, aiContext);
+		if (!row) return json({ error: 'Not found.' }, { status: 404 });
+	}
+
+	// Handle rename (no cell data)
+	const hasCellUpdate = cells !== undefined || columnMeta !== undefined;
 	if (name !== undefined && !hasCellUpdate) {
 		const row = await renameFile(params.id, user.id, name);
 		if (!row) return json({ error: 'Not found.' }, { status: 404 });
@@ -56,7 +77,21 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 		return json({ file: row });
 	}
 
+	// If only moved or toggled AI context, re-fetch
+	if (folderId !== undefined || aiContext !== undefined) {
+		const row = await getFile(params.id, user.id);
+		return json({ file: row });
+	}
+
 	return json({ error: 'No update fields provided.' }, { status: 400 });
+};
+
+/** Duplicate a file. */
+export const POST: RequestHandler = async ({ params, locals }) => {
+	const { user } = requireApiUser(locals);
+	const result = await duplicateSpreadsheetFile(params.id, user.id);
+	if (!result) return json({ error: 'Not found.' }, { status: 404 });
+	return json({ file: result.file, spreadsheet: result.spreadsheet }, { status: 201 });
 };
 
 /** Delete a file (cascades to detail table). */
