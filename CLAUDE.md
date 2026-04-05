@@ -99,6 +99,7 @@ DELEGATE when the task involves:
 - **tray**: "error", "failure", "exception", "debug", "trace", "not working", "failing"
 - **resy**: "research", "evaluate", "compare", "best practice", "is X good for"
 - **docy**: "document", "README", "explain", "write docs"
+- **apy**: "api", "endpoint", "+server.ts", "REST", "GraphQL", "SSE", "streaming", "webhook", "AI tool schema", "response format", "pagination", "versioning", "OpenAPI", "error response", "idempotency", "HMAC", "DataLoader"
 - **scout**: "how do people actually use", "what problems do teams hit", "is this production-ready", "find implementations"
 
 
@@ -120,6 +121,7 @@ DELEGATE when the task involves:
 - UnoCSS styling and configuration → `unocss`
 - Biome linting and formatting → `biome`
 - Security patterns, CSRF, injection, headers → `security`
+- API contracts (REST, GraphQL, SSE, webhooks, AI tools), pagination, errors → `api-design`
 - AI/LLM integration, streaming, prompts, tool calling → `ai-tools`
 - Three.js, Threlte, 3D scenes, GLTF, physics → `3d`
 
@@ -145,4 +147,5 @@ DELEGATE when the task involves:
 | biome | Biome linter and formatter configuration |
 | security | Security patterns, CSRF, injection, headers, rate limiting |
 | ai-tools | Vendor-agnostic LLM integration, Vercel AI SDK, streaming, caching |
+| api-design | API contracts (REST, GraphQL, SSE, webhooks, AI tools), pagination, errors |
 | 3d | Three.js + Threlte patterns, physics, WebGL/WebGPU |
