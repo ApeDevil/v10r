@@ -16,7 +16,7 @@
 	import { CustomizerPanel } from '$lib/components/3d/customizer';
 	import { resolveViewportConfig } from '$lib/config/models';
 
-	const model = $derived(MODELS_BY_ID.get(page.params.model));
+	const model = $derived(MODELS_BY_ID.get(page.params.model!));
 	const customization = $derived(model?.customization);
 	const config = $derived(model ? resolveViewportConfig(model) : undefined);
 

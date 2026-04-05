@@ -21,8 +21,8 @@ export async function createCustomPalette(data: {
 			name: data.name,
 			description: data.description ?? '',
 			basePaletteId: data.basePaletteId,
-			lightColors: data.lightColors,
-			darkColors: data.darkColors,
+			lightColors: data.lightColors as unknown as Record<string, string>,
+			darkColors: data.darkColors as unknown as Record<string, string>,
 			accentOffset: data.accentOffset ?? 0,
 			createdBy: data.createdBy,
 		})
@@ -68,9 +68,15 @@ export async function updateCustomPalette(
 		accentOffset?: number;
 	},
 ) {
+	const { lightColors, darkColors, ...rest } = data;
 	const [updated] = await db
 		.update(customPalettes)
-		.set({ ...data, updatedAt: new Date() })
+		.set({
+			...rest,
+			...(lightColors && { lightColors: lightColors as unknown as Record<string, string> }),
+			...(darkColors && { darkColors: darkColors as unknown as Record<string, string> }),
+			updatedAt: new Date(),
+		})
 		.where(and(eq(customPalettes.id, id), eq(customPalettes.createdBy, userId)))
 		.returning();
 	return updated ?? null;

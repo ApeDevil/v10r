@@ -4,14 +4,14 @@ import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ cookies, locals, depends }) => {
 	depends('app:announcements');
-	const session = locals.session
+	const session = locals.session && locals.user
 		? {
 				expiresAt: locals.session.expiresAt,
 				user: {
-					id: locals.user?.id,
-					email: locals.user?.email,
-					name: locals.user?.name,
-					image: locals.user?.image ?? null,
+					id: locals.user.id,
+					email: locals.user.email,
+					name: locals.user.name,
+					image: locals.user.image ?? null,
 				},
 			}
 		: null;

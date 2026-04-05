@@ -78,6 +78,6 @@ export interface ListPostsOptions {
 	search?: string;
 	page?: number;
 	pageSize?: number;
-	sort?: 'created' | 'updated' | 'published' | 'title';
+	sort?: 'created' | 'updated' | 'published' | 'title' | 'status';
 	dir?: 'asc' | 'desc';
 }

@@ -54,7 +54,10 @@ export function validatePaletteContrast(
 
 	for (const { fg, bg, minRatio } of CRITICAL_PAIRS) {
 		try {
-			const ratio = contrastRatio(colors[fg], colors[bg]);
+			const fgVal = colors[fg];
+			const bgVal = colors[bg];
+			if (!fgVal || !bgVal) continue;
+			const ratio = contrastRatio(fgVal, bgVal);
 			if (ratio < minRatio) {
 				failures.push({ fg, bg, ratio: Math.round(ratio * 100) / 100, required: minRatio });
 			}

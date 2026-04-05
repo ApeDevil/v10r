@@ -69,7 +69,7 @@ export function loadDeskSettings(storageKey = DEFAULT_KEY): DeskTheme | null {
 
 		// Ensure built-in presets are always present
 		const builtInIds = new Set(BUILT_IN_PRESETS.map((p) => p.id));
-		const userPresets = (state.presets ?? []).filter((p) => !builtInIds.has(p.id));
+		const userPresets = (state.presets ?? []).filter((p: DeskPreset) => !builtInIds.has(p.id));
 		state.presets = [...BUILT_IN_PRESETS, ...userPresets];
 
 		return state;

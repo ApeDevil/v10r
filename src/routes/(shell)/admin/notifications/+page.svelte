@@ -187,7 +187,7 @@ function resetComposeForm() {
 				<Cluster gap="2" align="center">
 					<span class="i-lucide-alert-triangle h-5 w-5 text-error" aria-hidden="true"></span>
 					<h2 class="text-fluid-lg font-semibold">Needs Attention</h2>
-					<Tag variant="error" label="{data.deadEntries.length}" />
+					<Tag variant="error" label={String(data.deadEntries.length)} />
 				</Cluster>
 			{/snippet}
 
@@ -475,7 +475,7 @@ function resetComposeForm() {
 				<Cluster gap="2" align="center">
 					<h3 class="text-fluid-lg font-semibold">Active</h3>
 					{#if activeAnnouncements.length > 0}
-						<Tag variant="secondary" label="{activeAnnouncements.length}" />
+						<Tag variant="secondary" label={String(activeAnnouncements.length)} />
 					{/if}
 				</Cluster>
 			{/snippet}
@@ -547,6 +547,7 @@ function resetComposeForm() {
 		document.body.appendChild(form);
 		form.submit();
 	}}
+	oncancel={() => { confirmDeactivate = false; }}
 />
 
 <style>

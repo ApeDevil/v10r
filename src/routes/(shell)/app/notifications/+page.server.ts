@@ -7,8 +7,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const offset = (page - 1) * NOTIFICATIONS_PAGE_SIZE;
 
 	const [notifications, unreadCount] = await Promise.all([
-		getNotifications(locals.user?.id, NOTIFICATIONS_PAGE_SIZE, offset),
-		getUnreadCount(locals.user?.id),
+		getNotifications(locals.user!.id, NOTIFICATIONS_PAGE_SIZE, offset),
+		getUnreadCount(locals.user!.id),
 	]);
 
 	return {

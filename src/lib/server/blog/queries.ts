@@ -69,6 +69,7 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 		updated: post.updatedAt,
 		published: post.publishedAt,
 		title: post.slug, // sort by slug as proxy; title is on revision
+		status: post.status,
 	}[sort];
 	const orderFn = dir === 'asc' ? asc : desc;
 

@@ -215,7 +215,8 @@
 		// Save first if there are unsaved changes
 		if (saveState === 'unsaved') {
 			await save();
-			if (saveState !== 'saved') return; // save failed
+			// save() mutates saveState via $state — re-check after await
+			if ((saveState as SaveState) !== 'saved') return;
 		}
 
 		try {
@@ -287,7 +288,7 @@
 	// Subscribe to image insertion from Explorer
 	const unsubInsert = bus.subscribe('files:insert-image', (payload) => {
 		if (!postId) return;
-		const md = `![${payload.altText}](${payload.imageUrl})`;
+		const md = `![${payload.altText}](${payload.downloadUrl})`;
 		markdown = markdown ? markdown + '\n' + md + '\n' : md + '\n';
 		saveState = 'unsaved';
 		clearTimeout(contentTimer);

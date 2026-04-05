@@ -56,9 +56,10 @@ function rehypeToc() {
 
 // ── Lazy pipeline initialization ────────────────────────────────────
 
-let processorPromise: Promise<Processor> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- unified chain loses generic precision after many .use() calls
+let processorPromise: Promise<Processor<any, any, any, any, any>> | null = null;
 
-async function buildProcessor(): Promise<Processor> {
+async function buildProcessor(): Promise<Processor<any, any, any, any, any>> {
 	const highlighter = await getHighlighter();
 
 	return unified()
@@ -79,7 +80,7 @@ async function buildProcessor(): Promise<Processor> {
 		.use(rehypeStringify);
 }
 
-function getProcessor(): Promise<Processor> {
+function getProcessor(): Promise<Processor<any, any, any, any, any>> {
 	if (!processorPromise) {
 		processorPromise = buildProcessor();
 	}

@@ -4,7 +4,7 @@
 	import { MODELS_BY_ID } from '$lib/config/models';
 	import { ViewerDialog } from '$lib/components/3d';
 
-	const model = $derived(MODELS_BY_ID.get(page.params.model));
+	const model = $derived(MODELS_BY_ID.get(page.params.model!));
 
 	let open = $state(true);
 

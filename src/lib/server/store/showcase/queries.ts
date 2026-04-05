@@ -131,6 +131,7 @@ export async function getObjectRange(key: string, start: number, end: number): P
 	);
 
 	const body = await res.Body?.transformToByteArray();
+	if (!body) throw new StoreError('not_found', `Empty response body for key: ${key}`);
 
 	return {
 		data: body,

@@ -7,7 +7,7 @@ import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegr
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
-	const userId = locals.user?.id;
+	const userId = locals.user!.id;
 
 	const [settings, telegramAccount, discordAccount] = await Promise.all([
 		getOrCreateSettings(userId),
