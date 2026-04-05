@@ -100,6 +100,7 @@ DELEGATE when the task involves:
 - **resy**: "research", "evaluate", "compare", "best practice", "is X good for"
 - **docy**: "document", "README", "explain", "write docs"
 - **apy**: "api", "endpoint", "+server.ts", "REST", "GraphQL", "SSE", "streaming", "webhook", "AI tool schema", "response format", "pagination", "versioning", "OpenAPI", "error response", "idempotency", "HMAC", "DataLoader"
+- **aiy**: "AI", "LLM", "streamText", "Chat class", "useChat", "tool calling", "RAG", "retrieval", "embedding", "prompt engineering", "system prompt", "model routing", "token budget", "AI SDK", "streaming chat", "agent loop", "stopWhen", "maxSteps", "prompt caching", "prompt injection"
 - **scout**: "how do people actually use", "what problems do teams hit", "is this production-ready", "find implementations"
 
 
@@ -122,7 +123,7 @@ DELEGATE when the task involves:
 - Biome linting and formatting → `biome`
 - Security patterns, CSRF, injection, headers → `security`
 - API contracts (REST, GraphQL, SSE, webhooks, AI tools), pagination, errors → `api-design`
-- AI/LLM integration, streaming, prompts, tool calling → `ai-tools`
+- AI/LLM integration, streaming, RAG, tool calling, model routing, prompts → `ai-tools`
 - Three.js, Threlte, 3D scenes, GLTF, physics → `3d`
 
 ### Skill Usage Rules
@@ -146,6 +147,6 @@ DELEGATE when the task involves:
 | unocss | UnoCSS atomic CSS with Bits UI |
 | biome | Biome linter and formatter configuration |
 | security | Security patterns, CSRF, injection, headers, rate limiting |
-| ai-tools | Vendor-agnostic LLM integration, Vercel AI SDK, streaming, caching |
+| ai-tools | Vercel AI SDK v6, streaming, RAG, tool orchestration, model routing, prompt engineering |
 | api-design | API contracts (REST, GraphQL, SSE, webhooks, AI tools), pagination, errors |
 | 3d | Three.js + Threlte patterns, physics, WebGL/WebGPU |
