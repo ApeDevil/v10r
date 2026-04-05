@@ -57,6 +57,9 @@ The AI subsystem includes a Graph RAG retrieval pipeline. See `docs/blueprint/ai
 3. **Databases are remote** - PostgreSQL (Neon) and Neo4j (Aura) are cloud-hosted, not containerized locally
 4. **Dependencies via package.json** - Add dependencies to `package.json`, then rebuild/restart container
 
+### No CI Pipeline
+
+Solo dev, no deployment — CI is unnecessary overhead. Use `bun run validate` (check + biome + test) locally when needed. Revisit when deploying or collaborating.
 
 
 ## Documentation
