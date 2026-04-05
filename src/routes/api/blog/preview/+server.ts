@@ -1,28 +1,35 @@
-import { json, error } from '@sveltejs/kit';
+import * as v from 'valibot';
 import { requireApiAuthor } from '$lib/server/auth/guards';
 import { renderBlogPost } from '$lib/server/blog';
+import { PreviewSchema } from '$lib/server/blog/schemas';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { apiOk, apiError, apiValidationError } from '$lib/server/api/response';
+import { BLOG_PREVIEW_RATE_LIMIT_PREFIX, BLOG_PREVIEW_RATE_LIMIT_MAX, BLOG_PREVIEW_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import type { RequestHandler } from './$types';
 
-const MAX_MARKDOWN_SIZE = 500_000;
+const ratelimit = createLimiter(BLOG_PREVIEW_RATE_LIMIT_PREFIX, BLOG_PREVIEW_RATE_LIMIT_MAX, BLOG_PREVIEW_RATE_LIMIT_WINDOW);
 
 /** Render markdown preview (server-side pipeline). */
 export const POST: RequestHandler = async ({ request, locals }) => {
-	requireApiAuthor(locals);
+	const { user } = requireApiAuthor(locals);
 
-	const body = await request.json();
-	const markdown = body.markdown as string;
+	const { success, reset } = await ratelimit.limit(user.id);
+	if (!success) return rateLimitResponse(reset);
 
-	if (typeof markdown !== 'string') error(400, 'Markdown content is required');
-	if (markdown.length > MAX_MARKDOWN_SIZE) error(413, 'Content too large');
+	const body = await request.json().catch(() => null);
+	if (!body) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
+
+	const parsed = v.safeParse(PreviewSchema, body);
+	if (!parsed.success) return apiValidationError(parsed.issues);
 
 	try {
-		const result = await renderBlogPost(markdown);
-		return json({
+		const result = await renderBlogPost(parsed.output.markdown);
+		return apiOk({
 			html: result.html,
 			embeds: result.embeds,
 			toc: result.toc,
 		});
 	} catch {
-		error(500, 'Preview rendering failed');
+		return apiError(500, 'render_failed', 'Preview rendering failed');
 	}
 };

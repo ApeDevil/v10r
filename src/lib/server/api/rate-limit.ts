@@ -37,7 +37,7 @@ export function createLimiter(prefix: string, max: number, window: Duration): Li
 
 export function rateLimitResponse(reset: number, message = 'Too many requests. Please wait a moment.'): Response {
 	return json(
-		{ error: message },
+		{ error: { code: 'rate_limited', message } },
 		{
 			status: 429,
 			headers: { 'Retry-After': String(Math.ceil((reset - Date.now()) / 1000)) },

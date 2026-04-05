@@ -3,6 +3,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { StoreError } from '../errors';
 import { BUCKET, s3 } from '../index';
 import type { PresignedUrlResult } from '../types';
+import { assertBlogKey } from './guards';
 
 function requireS3() {
 	if (!s3) throw new StoreError('credentials', 'R2 storage is not configured');
@@ -14,6 +15,7 @@ export async function generateBlogDownloadUrl(
 	key: string,
 	expiresIn = 3600,
 ): Promise<PresignedUrlResult> {
+	assertBlogKey(key);
 	const client = requireS3();
 	const command = new GetObjectCommand({ Bucket: BUCKET, Key: key });
 	const url = await getSignedUrl(client, command, { expiresIn });

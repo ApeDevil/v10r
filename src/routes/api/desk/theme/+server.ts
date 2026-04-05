@@ -1,69 +1,60 @@
-import { json } from '@sveltejs/kit';
-import { saveDeskTheme, createDeskPreset, deleteDeskPreset, migrateDeskTheme } from '$lib/server/db/desk/theme-mutations';
+import * as v from 'valibot';
+import { requireApiUser } from '$lib/server/auth/guards';
+import { saveDeskTheme, createDeskPreset, migrateDeskTheme } from '$lib/server/desk';
+import { SaveThemeSchema, MigrateThemeSchema, CreatePresetSchema } from '$lib/server/desk/schemas';
+import { apiOk, apiError, apiValidationError } from '$lib/server/api/response';
 import type { RequestHandler } from './$types';
 
 /** Save the user's active desk theme. */
-export const PUT: RequestHandler = async ({ locals, request }) => {
-	if (!locals.user) return json({ error: 'Unauthorized' }, { status: 401 });
+export const PATCH: RequestHandler = async ({ locals, request }) => {
+	const { user } = requireApiUser(locals);
 
-	const body = await request.json();
-	if (!body.workspace || typeof body.workspace !== 'object') {
-		return json({ error: 'Invalid workspace' }, { status: 400 });
-	}
+	const body = await request.json().catch(() => null);
+	if (!body) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
 
-	await saveDeskTheme(locals.user.id, {
-		workspace: body.workspace,
-		typeStyles: body.typeStyles ?? {},
-		activePresetId: body.activePresetId ?? null,
+	const parsed = v.safeParse(SaveThemeSchema, body);
+	if (!parsed.success) return apiValidationError(parsed.issues);
+
+	await saveDeskTheme(user.id, {
+		workspace: parsed.output.workspace,
+		typeStyles: parsed.output.typeStyles ?? {},
+		activePresetId: parsed.output.activePresetId ?? null,
 	});
 
-	return json({ ok: true });
+	return apiOk({ saved: true });
 };
 
 /** Create a preset or migrate from localStorage. */
 export const POST: RequestHandler = async ({ locals, request }) => {
-	if (!locals.user) return json({ error: 'Unauthorized' }, { status: 401 });
+	const { user } = requireApiUser(locals);
 
-	const body = await request.json();
+	const body = await request.json().catch(() => null);
+	if (!body) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
 
-	// Migration from localStorage
 	if (body.action === 'migrate') {
-		const migrated = await migrateDeskTheme(locals.user.id, {
-			workspace: body.workspace ?? {},
-			typeStyles: body.typeStyles ?? {},
-			activePresetId: body.activePresetId ?? null,
-			userPresets: Array.isArray(body.userPresets) ? body.userPresets : [],
+		const parsed = v.safeParse(MigrateThemeSchema, body);
+		if (!parsed.success) return apiValidationError(parsed.issues);
+
+		const migrated = await migrateDeskTheme(user.id, {
+			workspace: parsed.output.workspace ?? {},
+			typeStyles: parsed.output.typeStyles ?? {},
+			activePresetId: parsed.output.activePresetId ?? null,
+			userPresets: Array.isArray(parsed.output.userPresets) ? parsed.output.userPresets : [],
 		});
-		return json({ ok: true, migrated });
+		return apiOk({ migrated });
 	}
 
-	// Create preset
 	if (body.action === 'create-preset') {
-		if (!body.name || typeof body.name !== 'string') {
-			return json({ error: 'Name required' }, { status: 400 });
-		}
-		const preset = await createDeskPreset(locals.user.id, {
-			name: body.name,
-			workspace: body.workspace ?? {},
-			typeStyles: body.typeStyles ?? {},
+		const parsed = v.safeParse(CreatePresetSchema, body);
+		if (!parsed.success) return apiValidationError(parsed.issues);
+
+		const preset = await createDeskPreset(user.id, {
+			name: parsed.output.name,
+			workspace: parsed.output.workspace ?? {},
+			typeStyles: parsed.output.typeStyles ?? {},
 		});
-		return json({ ok: true, preset: { id: preset.id, name: preset.name } });
+		return apiOk({ preset: { id: preset.id, name: preset.name } });
 	}
 
-	return json({ error: 'Unknown action' }, { status: 400 });
-};
-
-/** Delete a user preset. */
-export const DELETE: RequestHandler = async ({ locals, request }) => {
-	if (!locals.user) return json({ error: 'Unauthorized' }, { status: 401 });
-
-	const body = await request.json();
-	if (!body.id || typeof body.id !== 'string') {
-		return json({ error: 'Preset ID required' }, { status: 400 });
-	}
-
-	const deleted = await deleteDeskPreset(body.id, locals.user.id);
-	if (!deleted) return json({ error: 'Not found' }, { status: 404 });
-
-	return json({ ok: true });
+	return apiError(400, 'unknown_action', 'Unknown action');
 };

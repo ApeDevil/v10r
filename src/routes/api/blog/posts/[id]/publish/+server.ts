@@ -1,6 +1,8 @@
-import { json, error } from '@sveltejs/kit';
+import * as v from 'valibot';
 import { requireApiAuthor, requirePostOwnership } from '$lib/server/auth/guards';
 import { getPostById, getLatestRevision, publishRevision } from '$lib/server/blog';
+import { PublishSchema } from '$lib/server/blog/schemas';
+import { apiOk, apiError, apiValidationError } from '$lib/server/api/response';
 import type { RequestHandler } from './$types';
 
 /** Publish the latest revision for a post. */
@@ -11,12 +13,13 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 	requirePostOwnership(post, user);
 
 	const body = await request.json().catch(() => ({}));
-	const locale = (body.locale as string) || 'en';
+	const parsed = v.safeParse(PublishSchema, body);
+	const locale = parsed.success ? (parsed.output.locale ?? 'en') : 'en';
 
 	const rev = await getLatestRevision(params.id, locale);
-	if (!rev) error(400, 'Post has no revisions to publish');
+	if (!rev) return apiError(400, 'no_revisions', 'Post has no revisions to publish');
 
 	await publishRevision(params.id, locale, rev.id);
 
-	return json({ success: true, revisionId: rev.id });
+	return apiOk({ revisionId: rev.id });
 };

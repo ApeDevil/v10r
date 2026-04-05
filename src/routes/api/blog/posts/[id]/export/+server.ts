@@ -31,7 +31,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	return new Response(content, {
 		headers: {
 			'Content-Type': 'text/markdown; charset=utf-8',
-			'Content-Disposition': `attachment; filename="${post.slug}.md"`,
+			'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(post.slug)}.md`,
 		},
 	});
 };

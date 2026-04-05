@@ -51,11 +51,24 @@ export function requireApiAuthor(locals: App.Locals) {
 export function requirePostOwnership(
 	post: { authorId: string } | null,
 	user: { id: string; email: string },
-) {
+): asserts post is { authorId: string } {
 	if (!post) error(404, 'Post not found');
 	const adminEmail = env.ADMIN_EMAIL;
 	const isAdmin = adminEmail && user.email.toLowerCase() === adminEmail.toLowerCase();
 	if (post.authorId !== user.id && !isAdmin) {
+		error(403, 'Forbidden');
+	}
+}
+
+/** Verify the authenticated user owns the asset (or is admin). */
+export function requireAssetOwnership(
+	asset: { uploaderId: string | null } | null,
+	user: { id: string; email: string },
+): asserts asset is { uploaderId: string | null } {
+	if (!asset) error(404, 'Asset not found');
+	const adminEmail = env.ADMIN_EMAIL;
+	const isAdmin = adminEmail && user.email.toLowerCase() === adminEmail.toLowerCase();
+	if (asset.uploaderId !== user.id && !isAdmin) {
 		error(403, 'Forbidden');
 	}
 }

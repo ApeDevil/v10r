@@ -20,7 +20,7 @@ import { toString as hastToString } from 'hast-util-to-string';
 
 import { getHighlighter } from '$lib/server/shiki';
 import { remarkDirectiveHandlers } from '$lib/content-syntax/remark-adapter';
-import { blogSanitizeSchema } from './sanitize-schema';
+import { blogSanitizeSchema, rehypeSanitizeStyles } from './sanitize-schema';
 import type { EmbedDescriptor, TocEntry } from './types';
 import type { Element, Root as HastRoot } from 'hast';
 
@@ -75,6 +75,7 @@ async function buildProcessor(): Promise<Processor> {
 			themes: { light: 'github-light', dark: 'github-dark' },
 		})
 		.use(rehypeSanitize, blogSanitizeSchema)
+		.use(rehypeSanitizeStyles)
 		.use(rehypeStringify);
 }
 

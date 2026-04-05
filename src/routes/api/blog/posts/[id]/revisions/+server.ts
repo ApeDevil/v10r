@@ -1,9 +1,9 @@
-import { json, error } from '@sveltejs/kit';
+import * as v from 'valibot';
 import { requireApiAuthor, requirePostOwnership } from '$lib/server/auth/guards';
 import { getPostById, createRevision } from '$lib/server/blog';
+import { CreateRevisionSchema } from '$lib/server/blog/schemas';
+import { apiCreated, apiError, apiValidationError } from '$lib/server/api/response';
 import type { RequestHandler } from './$types';
-
-const MAX_MARKDOWN_SIZE = 500_000;
 
 /** Save a new revision. */
 export const POST: RequestHandler = async ({ params, request, locals }) => {
@@ -12,24 +12,18 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 	const post = await getPostById(params.id);
 	requirePostOwnership(post, user);
 
-	const body = await request.json();
+	const body = await request.json().catch(() => null);
+	if (!body) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
 
-	const title = (body.title as string)?.trim();
-	const summary = (body.summary as string)?.trim() || undefined;
-	const markdown = body.markdown as string;
-	const locale = (body.locale as string)?.trim() || 'en';
-
-	if (!title) error(400, 'Title is required');
-	if (typeof markdown !== 'string') error(400, 'Markdown content is required');
-	if (markdown.length > MAX_MARKDOWN_SIZE) error(413, 'Content too large');
+	const parsed = v.safeParse(CreateRevisionSchema, body);
+	if (!parsed.success) return apiValidationError(parsed.issues);
 
 	const revision = await createRevision(params.id, {
-		title,
-		summary,
-		markdown,
-		locale,
+		...parsed.output,
+		summary: parsed.output.summary || undefined,
+		locale: parsed.output.locale ?? 'en',
 		authorId: user.id,
 	});
 
-	return json({ revision }, { status: 201 });
+	return apiCreated({ revision });
 };

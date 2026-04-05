@@ -1,25 +1,32 @@
-import { json, error } from '@sveltejs/kit';
-import { requireApiAuthor } from '$lib/server/auth/guards';
+import { requireApiAuthor, requirePostOwnership } from '$lib/server/auth/guards';
 import { createPost, createRevision, getPostBySlug } from '$lib/server/blog';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { apiOk, apiCreated, apiError } from '$lib/server/api/response';
+import { BLOG_WRITE_RATE_LIMIT_PREFIX, BLOG_WRITE_RATE_LIMIT_MAX, BLOG_WRITE_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import { parse as parseYaml } from 'yaml';
 import type { RequestHandler } from './$types';
+
+const ratelimit = createLimiter(BLOG_WRITE_RATE_LIMIT_PREFIX, BLOG_WRITE_RATE_LIMIT_MAX, BLOG_WRITE_RATE_LIMIT_WINDOW);
 
 /** Import a .md file with YAML frontmatter to create/update a post. */
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const { user } = requireApiAuthor(locals);
 
+	const { success, reset } = await ratelimit.limit(user.id);
+	if (!success) return rateLimitResponse(reset);
+
 	const text = await request.text();
-	if (!text.trim()) error(400, 'Empty file');
+	if (!text.trim()) return apiError(400, 'empty_file', 'Empty file');
 
 	// Parse frontmatter
 	const fmMatch = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
-	if (!fmMatch) error(400, 'Invalid markdown file: missing YAML frontmatter (---...---)');
+	if (!fmMatch) return apiError(400, 'invalid_frontmatter', 'Invalid markdown file: missing YAML frontmatter (---...---)');
 
 	let frontmatter: Record<string, unknown>;
 	try {
 		frontmatter = parseYaml(fmMatch[1]) as Record<string, unknown>;
 	} catch {
-		error(400, 'Invalid YAML frontmatter');
+		return apiError(400, 'invalid_yaml', 'Invalid YAML frontmatter');
 	}
 
 	const markdown = (fmMatch[2] ?? '').trim();
@@ -29,7 +36,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	let slug = (frontmatter.slug as string)?.trim();
 
 	if (!slug) {
-		// Derive slug from title
 		slug = title
 			.toLowerCase()
 			.replace(/[^a-z0-9]+/g, '-')
@@ -37,13 +43,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(slug)) {
-		error(400, 'Invalid slug format');
+		return apiError(400, 'invalid_slug', 'Invalid slug format');
 	}
 
 	// Check if post with this slug already exists
 	const existingPost = await getPostBySlug(slug);
 
 	if (existingPost) {
+		requirePostOwnership(existingPost, user);
 		// Create new revision on existing post
 		const revision = await createRevision(existingPost.id, {
 			title,
@@ -52,7 +59,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			locale,
 			authorId: user.id,
 		});
-		return json({ post: existingPost, revision, created: false });
+		return apiOk({ post: existingPost, revision, created: false });
 	}
 
 	// Create new post + first revision
@@ -65,5 +72,5 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		authorId: user.id,
 	});
 
-	return json({ post, revision, created: true }, { status: 201 });
+	return apiCreated({ post, revision, created: true });
 };

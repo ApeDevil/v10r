@@ -1,16 +1,18 @@
-import { error, json } from '@sveltejs/kit';
-import { requireApiAuthor } from '$lib/server/auth/guards';
-import { deleteAsset, getAssetById, updateAssetMetadata } from '$lib/server/blog';
+import * as v from 'valibot';
+import { requireApiAuthor, requireAssetOwnership } from '$lib/server/auth/guards';
+import { getAssetById, updateAssetMetadata, deleteAsset } from '$lib/server/blog';
+import { PatchAssetSchema } from '$lib/server/blog/schemas';
 import { deleteBlogObject, generateBlogDownloadUrl } from '$lib/server/store/blog';
 import { classifyS3Error } from '$lib/server/store/errors';
+import { apiOk, apiNoContent, apiError, apiValidationError } from '$lib/server/api/response';
 import type { RequestHandler } from './$types';
 
 /** Get asset detail with download URL. */
 export const GET: RequestHandler = async ({ params, locals }) => {
-	requireApiAuthor(locals);
+	const { user } = requireApiAuthor(locals);
 
 	const asset = await getAssetById(params.id);
-	if (!asset) error(404, 'Asset not found');
+	requireAssetOwnership(asset, user);
 
 	let downloadUrl: string | null = null;
 	try {
@@ -20,52 +22,49 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		// R2 not configured
 	}
 
-	return json({ asset: { ...asset, downloadUrl } });
+	return apiOk({ asset: { ...asset, downloadUrl } });
 };
 
 /** Update asset metadata (alt text, dimensions). */
 export const PATCH: RequestHandler = async ({ params, request, locals }) => {
-	requireApiAuthor(locals);
+	const { user } = requireApiAuthor(locals);
 
 	const asset = await getAssetById(params.id);
-	if (!asset) error(404, 'Asset not found');
+	requireAssetOwnership(asset, user);
 
-	const body = await request.json();
-	const data: { altText?: string; width?: number; height?: number; fileName?: string } = {};
+	const body = await request.json().catch(() => null);
+	if (!body) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
 
-	if ('altText' in body) data.altText = body.altText as string;
-	if ('width' in body) data.width = body.width as number;
-	if ('height' in body) data.height = body.height as number;
-	if ('fileName' in body) data.fileName = body.fileName as string;
+	const parsed = v.safeParse(PatchAssetSchema, body);
+	if (!parsed.success) return apiValidationError(parsed.issues);
 
-	const updated = await updateAssetMetadata(params.id, data);
-	return json({ asset: updated });
+	const updated = await updateAssetMetadata(params.id, parsed.output);
+	return apiOk({ asset: updated });
 };
 
 /** Delete asset from R2 and DB. */
 export const DELETE: RequestHandler = async ({ params, locals }) => {
-	requireApiAuthor(locals);
+	const { user } = requireApiAuthor(locals);
 
 	const asset = await getAssetById(params.id);
-	if (!asset) error(404, 'Asset not found');
+	requireAssetOwnership(asset, user);
 
 	// Delete from R2 first
 	try {
 		await deleteBlogObject(asset.storageKey);
 	} catch (err) {
 		const storeErr = classifyS3Error(err);
-		// If not found in R2, still proceed with DB cleanup
 		if (storeErr.kind !== 'not_found') {
-			error(storeErr.toStatus(), storeErr.message);
+			return apiError(storeErr.toStatus(), 'storage_error', storeErr.message);
 		}
 	}
 
 	// Delete from DB (will fail with FK RESTRICT if still linked to posts)
 	try {
 		await deleteAsset(params.id);
-	} catch (err) {
-		error(409, 'Asset is still linked to posts. Unlink it first.');
+	} catch {
+		return apiError(409, 'asset_linked', 'Asset is still linked to posts. Unlink it first.');
 	}
 
-	return json({ success: true });
+	return apiNoContent();
 };

@@ -1,6 +1,8 @@
-import { json, error } from '@sveltejs/kit';
+import * as v from 'valibot';
 import { requireApiAuthor, requirePostOwnership } from '$lib/server/auth/guards';
 import { getPostById, setPostTags } from '$lib/server/blog';
+import { SetTagsSchema } from '$lib/server/blog/schemas';
+import { apiNoContent, apiError, apiValidationError } from '$lib/server/api/response';
 import type { RequestHandler } from './$types';
 
 /** Set tags for a post. */
@@ -10,14 +12,12 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 	const post = await getPostById(params.id);
 	requirePostOwnership(post, user);
 
-	const body = await request.json();
-	const tagIds = body.tagIds;
+	const body = await request.json().catch(() => null);
+	if (!body) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
 
-	if (!Array.isArray(tagIds) || tagIds.length > 50) error(400, 'tagIds must be an array (max 50)');
-	if (!tagIds.every((id: unknown) => typeof id === 'string' && id.startsWith('tag_'))) {
-		error(400, 'Invalid tag IDs');
-	}
+	const parsed = v.safeParse(SetTagsSchema, body);
+	if (!parsed.success) return apiValidationError(parsed.issues);
 
-	await setPostTags(params.id, tagIds);
-	return json({ success: true });
+	await setPostTags(params.id, parsed.output.tagIds);
+	return apiNoContent();
 };

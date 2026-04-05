@@ -11,13 +11,17 @@ interface GraphChunkResult {
  * Expand from seed chunk IDs through entity relationships.
  * Returns chunk pgIds discovered via graph traversal (max 2 hops).
  */
+const HOP_PATTERNS: Record<number, string> = { 1: '*1..1', 2: '*1..2' };
+
 export async function expandViaGraph(seedChunkIds: string[], maxHops: number = 2): Promise<GraphChunkResult[]> {
 	const hops = Math.min(maxHops, 2); // Hard cap at 2
+	const hopPattern = HOP_PATTERNS[hops];
+	if (!hopPattern) throw new Error(`Invalid hops value: ${hops}. Must be 1 or 2.`);
 
 	return cypher<GraphChunkResult>(
 		`UNWIND $seedChunkIds AS seedId
 		 MATCH (seed:Chunk {pgId: seedId})-[:MENTIONS]->(e:Entity)
-		 MATCH (e)-[:RELATED_TO*1..${hops}]->(related:Entity)
+		 MATCH (e)-[:RELATED_TO${hopPattern}]->(related:Entity)
 		 MATCH (related)<-[:MENTIONS]-(relChunk:Chunk)
 		 WHERE NOT relChunk.pgId IN $seedChunkIds
 		 RETURN DISTINCT relChunk.pgId AS pgId,

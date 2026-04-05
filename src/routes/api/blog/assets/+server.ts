@@ -1,10 +1,15 @@
-import { json, error } from '@sveltejs/kit';
+import * as v from 'valibot';
 import { requireApiAuthor } from '$lib/server/auth/guards';
 import { listAssets } from '$lib/server/blog';
-import { generateBlogUploadUrl } from '$lib/server/store/blog';
-import { generateBlogDownloadUrl } from '$lib/server/store/blog';
+import { RequestUploadSchema } from '$lib/server/blog/schemas';
+import { generateBlogUploadUrl, generateBlogDownloadUrl } from '$lib/server/store/blog';
 import { classifyS3Error } from '$lib/server/store/errors';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { apiOk, apiCreated, apiError, apiValidationError } from '$lib/server/api/response';
+import { BLOG_WRITE_RATE_LIMIT_PREFIX, BLOG_WRITE_RATE_LIMIT_MAX, BLOG_WRITE_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import type { RequestHandler } from './$types';
+
+const ratelimit = createLimiter(BLOG_WRITE_RATE_LIMIT_PREFIX, BLOG_WRITE_RATE_LIMIT_MAX, BLOG_WRITE_RATE_LIMIT_WINDOW);
 
 /** List all assets for the current author, with download URLs. */
 export const GET: RequestHandler = async ({ locals }) => {
@@ -25,27 +30,31 @@ export const GET: RequestHandler = async ({ locals }) => {
 		}),
 	);
 
-	return json({ items });
+	return apiOk({ items });
 };
 
 /** Request a presigned upload URL (step 1 of 3-step upload). */
 export const POST: RequestHandler = async ({ request, locals }) => {
-	requireApiAuthor(locals);
+	const { user } = requireApiAuthor(locals);
 
-	const body = await request.json();
-	const fileName = body.fileName as string;
-	const mimeType = body.mimeType as string;
-	const fileSize = body.fileSize as number;
+	const { success, reset } = await ratelimit.limit(user.id);
+	if (!success) return rateLimitResponse(reset);
 
-	if (!fileName || !mimeType || !fileSize) {
-		error(400, 'fileName, mimeType, and fileSize are required');
-	}
+	const body = await request.json().catch(() => null);
+	if (!body) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
+
+	const parsed = v.safeParse(RequestUploadSchema, body);
+	if (!parsed.success) return apiValidationError(parsed.issues);
 
 	try {
-		const result = await generateBlogUploadUrl(fileName, mimeType, fileSize);
-		return json({ upload: result });
+		const result = await generateBlogUploadUrl(
+			parsed.output.fileName,
+			parsed.output.mimeType,
+			parsed.output.fileSize,
+		);
+		return apiCreated({ upload: result });
 	} catch (err) {
 		const storeErr = classifyS3Error(err);
-		error(storeErr.toStatus(), storeErr.message);
+		return apiError(storeErr.toStatus(), 'storage_error', storeErr.message);
 	}
 };

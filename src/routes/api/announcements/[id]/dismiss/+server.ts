@@ -1,23 +1,15 @@
-import { json } from '@sveltejs/kit';
+import { requireApiUser } from '$lib/server/auth/guards';
+import { apiNoContent, apiError } from '$lib/server/api/response';
 import { dismissAnnouncement, getAnnouncementById } from '$lib/server/admin/announcements';
 import type { RequestHandler } from './$types';
 
-export const POST: RequestHandler = async ({ params, locals, request }) => {
-	// CSRF check
-	if (request.headers.get('X-Requested-With') !== 'XMLHttpRequest') {
-		return json({ error: 'Forbidden' }, { status: 403 });
-	}
-
-	if (!locals.user) {
-		return json({ error: 'Unauthorized' }, { status: 401 });
-	}
+export const POST: RequestHandler = async ({ params, locals }) => {
+	const { user } = requireApiUser(locals);
 
 	const announcement = await getAnnouncementById(params.id);
-	if (!announcement) {
-		return json({ error: 'Not found' }, { status: 404 });
-	}
+	if (!announcement) return apiError(404, 'not_found', 'Announcement not found');
 
-	await dismissAnnouncement(params.id, locals.user.id, announcement.severity);
+	await dismissAnnouncement(params.id, user.id, announcement.severity);
 
-	return json({ success: true });
+	return apiNoContent();
 };

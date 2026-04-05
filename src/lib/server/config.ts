@@ -215,6 +215,21 @@ export const SSE_RATE_LIMIT_MAX = 10;
 /** SSE connection attempt rate limit: window duration */
 export const SSE_RATE_LIMIT_WINDOW = '60 s';
 
+/** Blog write operations rate limit: requests per window */
+export const BLOG_WRITE_RATE_LIMIT_PREFIX = 'ratelimit:blog:write';
+export const BLOG_WRITE_RATE_LIMIT_MAX = 30;
+export const BLOG_WRITE_RATE_LIMIT_WINDOW = '60 s' as const;
+
+/** Blog preview rate limit (CPU-intensive): requests per window */
+export const BLOG_PREVIEW_RATE_LIMIT_PREFIX = 'ratelimit:blog:preview';
+export const BLOG_PREVIEW_RATE_LIMIT_MAX = 10;
+export const BLOG_PREVIEW_RATE_LIMIT_WINDOW = '60 s' as const;
+
+/** Desk write operations rate limit: requests per window */
+export const DESK_WRITE_RATE_LIMIT_PREFIX = 'ratelimit:desk:write';
+export const DESK_WRITE_RATE_LIMIT_MAX = 30;
+export const DESK_WRITE_RATE_LIMIT_WINDOW = '60 s' as const;
+
 // ── Analytics ─────────────────────────────────────────────────────────────────
 
 /** Raw event retention period (days) */

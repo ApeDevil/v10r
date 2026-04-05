@@ -2,8 +2,7 @@
  * Contextual preparation: generate context prefix for each chunk.
  * Uses Anthropic's approach of prepending a context sentence before embedding.
  */
-import { generateText } from 'ai';
-import { aiConfigured, chatModel } from '$lib/server/ai';
+import { generateText, type LanguageModel } from 'ai';
 import type { RawChunk } from '../types';
 
 const CONTEXT_PROMPT = `You are a technical writing assistant. Given a document title and a text chunk from that document, write a single brief sentence (under 30 words) that situates this chunk within the broader document context.
@@ -19,14 +18,14 @@ Document: "{title}"
 Context sentence:`;
 
 /** Generate a context prefix for a single chunk. */
-async function generateContextPrefix(documentTitle: string, chunkContent: string): Promise<string> {
-	if (!aiConfigured || !chatModel) {
+async function generateContextPrefix(model: LanguageModel | null, documentTitle: string, chunkContent: string): Promise<string> {
+	if (!model) {
 		return `From "${documentTitle}":`;
 	}
 
 	try {
 		const result = await generateText({
-			model: chatModel,
+			model,
 			prompt: CONTEXT_PROMPT.replace('{title}', documentTitle).replace('{chunk}', chunkContent.slice(0, 1000)),
 			maxTokens: 60,
 		});
@@ -42,11 +41,11 @@ async function generateContextPrefix(documentTitle: string, chunkContent: string
  * Add context prefixes to child chunks.
  * Processes in sequence to respect rate limits.
  */
-export async function addContextPrefixes(documentTitle: string, chunks: RawChunk[]): Promise<RawChunk[]> {
+export async function addContextPrefixes(model: LanguageModel | null, documentTitle: string, chunks: RawChunk[]): Promise<RawChunk[]> {
 	const results: RawChunk[] = [];
 
 	for (const chunk of chunks) {
-		const contextPrefix = await generateContextPrefix(documentTitle, chunk.content);
+		const contextPrefix = await generateContextPrefix(model, documentTitle, chunk.content);
 		results.push({ ...chunk, contextPrefix });
 	}
 

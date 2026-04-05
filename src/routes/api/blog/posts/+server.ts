@@ -1,7 +1,13 @@
-import { json, error } from '@sveltejs/kit';
+import * as v from 'valibot';
 import { requireApiAuthor } from '$lib/server/auth/guards';
 import { listPosts, createPost, isSlugTaken } from '$lib/server/blog';
+import { CreatePostSchema } from '$lib/server/blog/schemas';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { apiOk, apiCreated, apiError, apiValidationError } from '$lib/server/api/response';
+import { BLOG_WRITE_RATE_LIMIT_PREFIX, BLOG_WRITE_RATE_LIMIT_MAX, BLOG_WRITE_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import type { RequestHandler } from './$types';
+
+const ratelimit = createLimiter(BLOG_WRITE_RATE_LIMIT_PREFIX, BLOG_WRITE_RATE_LIMIT_MAX, BLOG_WRITE_RATE_LIMIT_WINDOW);
 
 /** List posts for current author (all statuses). */
 export const GET: RequestHandler = async ({ url, locals }) => {
@@ -20,23 +26,25 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		dir: 'desc',
 	});
 
-	return json(result);
+	return apiOk(result);
 };
 
 /** Create a new draft post. */
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const { user } = requireApiAuthor(locals);
-	const body = await request.json();
-	const slug = (body.slug as string)?.trim();
 
-	if (!slug) error(400, 'Slug is required');
-	if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(slug)) {
-		error(400, 'Slug must be lowercase alphanumeric with hyphens');
-	}
+	const { success, reset } = await ratelimit.limit(user.id);
+	if (!success) return rateLimitResponse(reset);
 
-	const taken = await isSlugTaken(slug);
-	if (taken) error(400, 'Slug already taken');
+	const body = await request.json().catch(() => null);
+	if (!body) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
 
-	const post = await createPost(user.id, { slug });
-	return json({ post }, { status: 201 });
+	const parsed = v.safeParse(CreatePostSchema, body);
+	if (!parsed.success) return apiValidationError(parsed.issues);
+
+	const taken = await isSlugTaken(parsed.output.slug);
+	if (taken) return apiError(409, 'slug_taken', 'Slug already taken');
+
+	const post = await createPost(user.id, { slug: parsed.output.slug });
+	return apiCreated({ post });
 };

@@ -1,30 +1,20 @@
-import { json } from '@sveltejs/kit';
-import { updatePreferences } from '$lib/server/db/preferences/mutations';
+import * as v from 'valibot';
+import { requireApiUser } from '$lib/server/auth/guards';
+import { updatePreferences } from '$lib/server/preferences';
+import { UpdatePreferencesSchema } from '$lib/server/preferences/schemas';
+import { apiNoContent, apiError, apiValidationError } from '$lib/server/api/response';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ locals, request }) => {
-	if (!locals.user) {
-		return json({ error: 'Unauthorized' }, { status: 401 });
-	}
+	const { user } = requireApiUser(locals);
 
-	const body = await request.json();
-	const updates: Record<string, unknown> = {};
+	const body = await request.json().catch(() => null);
+	if (!body) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
 
-	// Theme
-	if (body.theme && ['light', 'dark', 'system'].includes(body.theme)) {
-		updates.theme = body.theme;
-	}
+	const parsed = v.safeParse(UpdatePreferencesSchema, body);
+	if (!parsed.success) return apiValidationError(parsed.issues);
 
-	// Sidebar width
-	if (typeof body.sidebarWidth === 'number' && body.sidebarWidth >= 160 && body.sidebarWidth <= 320) {
-		updates.sidebarWidth = body.sidebarWidth;
-	}
+	await updatePreferences(user.id, parsed.output);
 
-	if (Object.keys(updates).length === 0) {
-		return json({ error: 'No valid fields' }, { status: 400 });
-	}
-
-	await updatePreferences(locals.user.id, updates);
-
-	return json({ ok: true });
+	return apiNoContent();
 };

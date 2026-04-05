@@ -2,8 +2,7 @@
  * Entity extraction: extract named entities and relationships from text.
  * Uses the active LLM provider for structured extraction.
  */
-import { generateText } from 'ai';
-import { aiConfigured, chatModel } from '$lib/server/ai';
+import { generateText, type LanguageModel } from 'ai';
 
 export interface ExtractedEntity {
 	name: string;
@@ -46,14 +45,14 @@ Rules:
 JSON:`;
 
 /** Extract entities and relationships from a text chunk. */
-export async function extractEntities(text: string): Promise<ExtractionResult> {
-	if (!aiConfigured || !chatModel) {
+export async function extractEntities(text: string, model?: LanguageModel | null): Promise<ExtractionResult> {
+	if (!model) {
 		return { entities: [], relationships: [] };
 	}
 
 	try {
 		const result = await generateText({
-			model: chatModel,
+			model,
 			prompt: EXTRACTION_PROMPT.replace('{text}', text.slice(0, 3000)),
 			maxTokens: 1024,
 		});
@@ -106,12 +105,12 @@ export async function extractEntities(text: string): Promise<ExtractionResult> {
  * Extract entities from multiple text sections and merge results.
  * Deduplicates entities by name (keeps first description).
  */
-export async function extractEntitiesFromSections(sections: string[]): Promise<ExtractionResult> {
+export async function extractEntitiesFromSections(sections: string[], model?: LanguageModel | null): Promise<ExtractionResult> {
 	const allEntities = new Map<string, ExtractedEntity>();
 	const allRelationships: ExtractedRelationship[] = [];
 
 	for (const section of sections) {
-		const result = await extractEntities(section);
+		const result = await extractEntities(section, model);
 
 		for (const entity of result.entities) {
 			if (!allEntities.has(entity.name)) {

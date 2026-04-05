@@ -1,32 +1,27 @@
-import { json, error } from '@sveltejs/kit';
+import * as v from 'valibot';
 import { requireApiAuthor } from '$lib/server/auth/guards';
 import { createAsset } from '$lib/server/blog';
+import { ConfirmUploadSchema } from '$lib/server/blog/schemas';
 import { confirmBlogUpload } from '$lib/server/store/blog';
 import { classifyS3Error } from '$lib/server/store/errors';
+import { apiCreated, apiError, apiValidationError } from '$lib/server/api/response';
 import type { RequestHandler } from './$types';
 
 /** Confirm an upload and create the DB record (step 3 of 3-step upload). */
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const { user } = requireApiAuthor(locals);
-	const body = await request.json();
 
-	const key = body.key as string;
-	const fileName = body.fileName as string;
-	const mimeType = body.mimeType as string;
-	const fileSize = body.fileSize as number;
-	const width = (body.width as number) || undefined;
-	const height = (body.height as number) || undefined;
-	const altText = (body.altText as string) || undefined;
+	const body = await request.json().catch(() => null);
+	if (!body) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
 
-	if (!key || !fileName || !mimeType || !fileSize) {
-		error(400, 'key, fileName, mimeType, and fileSize are required');
-	}
+	const parsed = v.safeParse(ConfirmUploadSchema, body);
+	if (!parsed.success) return apiValidationError(parsed.issues);
+
+	const { key, fileName, mimeType, fileSize, width, height, altText } = parsed.output;
 
 	try {
-		// Verify object exists in R2
 		await confirmBlogUpload(key);
 
-		// Create DB record
 		const asset = await createAsset({
 			uploaderId: user.id,
 			fileName,
@@ -38,9 +33,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			height,
 		});
 
-		return json({ asset }, { status: 201 });
+		return apiCreated({ asset });
 	} catch (err) {
 		const storeErr = classifyS3Error(err);
-		error(storeErr.toStatus(), storeErr.message);
+		return apiError(storeErr.toStatus(), 'storage_error', storeErr.message);
 	}
 };
