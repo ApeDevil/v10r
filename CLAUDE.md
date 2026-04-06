@@ -104,6 +104,7 @@ DELEGATE when the task involves:
 - **docy**: "document", "README", "explain", "write docs"
 - **apy**: "api", "endpoint", "+server.ts", "REST", "GraphQL", "SSE", "streaming", "webhook", "AI tool schema", "response format", "pagination", "versioning", "OpenAPI", "error response", "idempotency", "HMAC", "DataLoader"
 - **aiy**: "AI", "LLM", "streamText", "Chat class", "useChat", "tool calling", "RAG", "retrieval", "embedding", "prompt engineering", "system prompt", "model routing", "token budget", "AI SDK", "streaming chat", "agent loop", "stopWhen", "maxSteps", "prompt caching", "prompt injection"
+- **tesy**: "test", "coverage", "regression", "spec", "assertion", "mock", "fixture", "flaky", "test design", "find issues", "probe", "audit"
 - **scout**: "how do people actually use", "what problems do teams hit", "is this production-ready", "find implementations"
 
 
@@ -127,6 +128,7 @@ DELEGATE when the task involves:
 - Security patterns, CSRF, injection, headers → `security`
 - API contracts (REST, GraphQL, SSE, webhooks, AI tools), pagination, errors → `api-design`
 - AI/LLM integration, streaming, RAG, tool calling, model routing, prompts → `ai-tools`
+- Testing patterns, Vitest, mocking, DB testing, AI testing → `testing`
 - Three.js, Threlte, 3D scenes, GLTF, physics → `3d`
 
 ### Skill Usage Rules
@@ -152,4 +154,5 @@ DELEGATE when the task involves:
 | security | Security patterns, CSRF, injection, headers, rate limiting |
 | ai-tools | Vercel AI SDK v6, streaming, RAG, tool orchestration, model routing, prompt engineering |
 | api-design | API contracts (REST, GraphQL, SSE, webhooks, AI tools), pagination, errors |
+| testing | Vitest patterns, SvelteKit mocking, DB testing, AI SDK testing, Svelte 5 state testing |
 | 3d | Three.js + Threlte patterns, physics, WebGL/WebGPU |
