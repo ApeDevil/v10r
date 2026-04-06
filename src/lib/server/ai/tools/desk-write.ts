@@ -13,7 +13,7 @@ export function createWriteTools(userId: string) {
 			description:
 				'Update cells in a spreadsheet. Provide an array of cell updates — ' +
 				'only the specified cells are changed. Other cells remain untouched.',
-			parameters: jsonSchema<{
+			inputSchema: jsonSchema<{
 				file_id: string;
 				updates: { cell: string; value: string | number | null }[];
 			}>({
@@ -61,7 +61,7 @@ export function createWriteTools(userId: string) {
 
 					const effects: DeskEffect[] = [
 						{ type: 'desk:refresh_file', fileId: file_id },
-						{ type: 'desk:tab_indicator', fileId: file_id, variant: 'modified' },
+						{ type: 'desk:tab_indicator', fileId: file_id, panelType: 'spreadsheet', variant: 'modified' },
 					];
 
 					return {
@@ -79,7 +79,7 @@ export function createWriteTools(userId: string) {
 
 		desk_rename_file: tool({
 			description: "Rename a file on the user's desk.",
-			parameters: jsonSchema<{ file_id: string; name: string }>({
+			inputSchema: jsonSchema<{ file_id: string; name: string }>({
 				type: 'object',
 				properties: {
 					file_id: { type: 'string', description: 'The file ID to rename.' },

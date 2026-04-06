@@ -8,13 +8,31 @@ import { createSpreadsheetFile, createMarkdownFile, deleteFile } from '$lib/serv
 import { getFile } from '$lib/server/db/desk/queries';
 import type { DeskEffect } from './_types';
 
+/**
+ * Tracks which (userId, fileId) pairs have had a deletion preview (dry-run).
+ * Entries expire after PREVIEW_TTL_MS to prevent stale confirmations.
+ */
+const deletionPreviews = new Map<string, number>();
+const PREVIEW_TTL_MS = 60_000;
+
+function pruneExpiredPreviews(): void {
+	const now = Date.now();
+	for (const [key, ts] of deletionPreviews) {
+		if (now - ts > PREVIEW_TTL_MS) deletionPreviews.delete(key);
+	}
+}
+
+function previewKey(userId: string, fileId: string): string {
+	return `${userId}:${fileId}`;
+}
+
 export function createCreateTools(userId: string) {
 	return {
 		desk_create_spreadsheet: tool({
 			description:
 				"Create a new spreadsheet on the user's desk. " +
 				'Optionally provide initial cell data as an array of {cell, value} pairs.',
-			parameters: jsonSchema<{
+			inputSchema: jsonSchema<{
 				name: string;
 				cells: { cell: string; value: string | number | null }[];
 			}>({
@@ -58,7 +76,7 @@ export function createCreateTools(userId: string) {
 							fileId: result.file.id,
 							label: result.file.name,
 						},
-						{ type: 'desk:tab_indicator', fileId: result.file.id, variant: 'created' },
+						{ type: 'desk:tab_indicator', fileId: result.file.id, panelType: 'spreadsheet', variant: 'created' },
 					];
 
 					return {
@@ -77,7 +95,7 @@ export function createCreateTools(userId: string) {
 			description:
 				"Create a new markdown document on the user's desk. " +
 				'Provide the file name and initial markdown content.',
-			parameters: jsonSchema<{ name: string; content: string }>({
+			inputSchema: jsonSchema<{ name: string; content: string }>({
 				type: 'object',
 				properties: {
 					name: {
@@ -100,7 +118,7 @@ export function createCreateTools(userId: string) {
 
 					const effects: DeskEffect[] = [
 						{ type: 'desk:refresh_explorer' },
-						{ type: 'desk:tab_indicator', fileId: result.file.id, variant: 'created' },
+						{ type: 'desk:tab_indicator', fileId: result.file.id, panelType: 'markdown', variant: 'created' },
 						{ type: 'desk:notify', message: `Created "${name}"`, level: 'success' },
 					];
 
@@ -125,7 +143,7 @@ export function createDeleteTools(userId: string) {
 				"Delete a file from the user's desk. This is destructive. " +
 				'First call with confirmed=false to preview what will be deleted. ' +
 				'Then call again with confirmed=true only after the user explicitly agrees.',
-			parameters: jsonSchema<{ file_id: string; confirmed: boolean }>({
+			inputSchema: jsonSchema<{ file_id: string; confirmed: boolean }>({
 				type: 'object',
 				properties: {
 					file_id: { type: 'string', description: 'The file ID to delete.' },
@@ -138,10 +156,13 @@ export function createDeleteTools(userId: string) {
 			}),
 			execute: async ({ file_id, confirmed }) => {
 				try {
+					pruneExpiredPreviews();
 					const fileRow = await getFile(file_id, userId);
 					if (!fileRow) return { error: 'File not found or not accessible.' };
 
 					if (!confirmed) {
+						// Record the preview so a subsequent confirmed=true is allowed
+						deletionPreviews.set(previewKey(userId, file_id), Date.now());
 						return {
 							requiresConfirmation: true,
 							description: `Delete "${fileRow.name}"? This cannot be undone.`,
@@ -149,6 +170,14 @@ export function createDeleteTools(userId: string) {
 							fileName: fileRow.name,
 						};
 					}
+
+					// Server-side guard: reject unless a preview happened recently
+					const key = previewKey(userId, file_id);
+					const previewTs = deletionPreviews.get(key);
+					if (!previewTs || Date.now() - previewTs > PREVIEW_TTL_MS) {
+						return { error: 'Deletion preview expired or missing. Call with confirmed=false first.' };
+					}
+					deletionPreviews.delete(key); // One-time use
 
 					const result = await deleteFile(file_id, userId);
 					if (!result) return { error: 'File not found or already deleted.' };

@@ -40,6 +40,9 @@ export async function getConversationIOLog(
 
 	if (!conv) return { entries: [], total: 0 };
 
+	// Cap SQL fetch to what pagination actually needs
+	const fetchLimit = offset + limit;
+
 	// Fetch tool calls
 	const toolCalls = await db
 		.select({
@@ -55,7 +58,8 @@ export async function getConversationIOLog(
 		.from(toolCall)
 		.innerJoin(message, eq(toolCall.messageId, message.id))
 		.where(eq(message.conversationId, conversationId))
-		.orderBy(asc(toolCall.createdAt));
+		.orderBy(asc(toolCall.createdAt))
+		.limit(fetchLimit);
 
 	// Fetch steps
 	const steps = await db
@@ -70,7 +74,8 @@ export async function getConversationIOLog(
 		})
 		.from(conversationStep)
 		.where(eq(conversationStep.conversationId, conversationId))
-		.orderBy(asc(conversationStep.createdAt));
+		.orderBy(asc(conversationStep.createdAt))
+		.limit(fetchLimit);
 
 	// Merge and sort by timestamp
 	const entries: IOLogTimelineEntry[] = [

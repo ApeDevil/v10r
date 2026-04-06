@@ -234,6 +234,7 @@ export async function updateSpreadsheetByFileId(
 	if (data.columnMeta !== undefined) sheetUpdate.columnMeta = data.columnMeta;
 
 	if (Object.keys(sheetUpdate).length > 0) {
+		sheetUpdate.updatedAt = new Date();
 		await db.update(spreadsheet).set(sheetUpdate).where(eq(spreadsheet.fileId, fileId));
 	}
 

@@ -2,10 +2,29 @@ import * as v from 'valibot';
 
 const MessageRole = v.picklist(['user', 'assistant']);
 
-const ChatMessageSchema = v.object({
-	role: MessageRole,
-	content: v.pipe(v.string(), v.minLength(1), v.maxLength(32_000)),
-});
+/** UIMessage part — text, file, or tool-related parts from AI SDK v6. */
+const UIMessagePart = v.union([
+	v.object({ type: v.literal('text'), text: v.pipe(v.string(), v.maxLength(32_000)) }),
+	v.object({ type: v.literal('file'), url: v.string(), mediaType: v.string() }),
+	v.object({ type: v.literal('tool-invocation'), toolInvocation: v.record(v.string(), v.unknown()) }),
+	v.object({ type: v.literal('source-url'), url: v.string(), title: v.optional(v.string()) }),
+	v.object({ type: v.literal('reasoning'), text: v.string() }),
+	v.object({ type: v.literal('step-start') }),
+]);
+
+/** Accept both legacy {role, content} and UIMessage {id, role, parts} formats. */
+const ChatMessageSchema = v.union([
+	v.object({
+		role: MessageRole,
+		content: v.pipe(v.string(), v.minLength(1), v.maxLength(32_000)),
+	}),
+	v.object({
+		id: v.string(),
+		role: MessageRole,
+		parts: v.array(UIMessagePart),
+		metadata: v.optional(v.unknown()),
+	}),
+]);
 
 const PanelContextEntry = v.object({
 	panelType: v.string(),

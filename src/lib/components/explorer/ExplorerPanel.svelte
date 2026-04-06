@@ -50,7 +50,7 @@ async function fetchAll() {
 		const [postsRes, assetsRes, filesRes, foldersRes] = await Promise.all([
 			apiFetch('/api/blog/posts'),
 			apiFetch('/api/blog/assets'),
-			apiFetch('/api/desk/files?type=spreadsheet'),
+			apiFetch('/api/desk/files'),
 			apiFetch('/api/desk/folders'),
 		]);
 
@@ -63,7 +63,7 @@ async function fetchAll() {
 		];
 
 		if (postsRes.ok) {
-			const data = await postsRes.json();
+			const { data } = await postsRes.json();
 			const posts: PostListItem[] = (data.items ?? []).map((p: any) => ({
 				id: p.id,
 				slug: p.slug,
@@ -75,7 +75,7 @@ async function fetchAll() {
 		}
 
 		if (assetsRes.ok) {
-			const data = await assetsRes.json();
+			const { data } = await assetsRes.json();
 			nodes.push(...adaptBlogAssets(data.items ?? []));
 		}
 

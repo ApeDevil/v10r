@@ -29,7 +29,7 @@ export interface UploadingItem {
 /** Unified file entry from desk.file API. */
 export interface FileListItem {
 	id: string;
-	type: 'spreadsheet';
+	type: 'spreadsheet' | 'markdown';
 	name: string;
 	folderId: string | null;
 	aiContext: boolean;

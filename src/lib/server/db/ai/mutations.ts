@@ -25,6 +25,8 @@ export async function deleteConversation(id: string, userId: string) {
 	return !!deleted;
 }
 
+const VALID_ROLES = new Set(['user', 'assistant', 'system', 'tool'] as const);
+
 /** Save messages in bulk (idempotent via onConflictDoNothing). Auth-scoped. */
 export async function saveMessages(
 	conversationId: string,
@@ -32,6 +34,10 @@ export async function saveMessages(
 	messages: { id: string; role: string; content: string }[],
 ) {
 	if (messages.length === 0) return;
+
+	// Filter to valid roles before insert
+	const valid = messages.filter((m) => VALID_ROLES.has(m.role as any));
+	if (valid.length === 0) return;
 
 	// Verify conversation ownership before inserting
 	const [conv] = await db
@@ -45,10 +51,10 @@ export async function saveMessages(
 	await db
 		.insert(message)
 		.values(
-			messages.map((m) => ({
+			valid.map((m) => ({
 				id: m.id,
 				conversationId,
-				role: m.role as 'user' | 'assistant' | 'system',
+				role: m.role as 'user' | 'assistant' | 'system' | 'tool',
 				content: m.content,
 			})),
 		)
@@ -56,6 +62,14 @@ export async function saveMessages(
 
 	// Touch updatedAt so listing reflects recent activity
 	await db.update(conversation).set({ updatedAt: new Date() }).where(eq(conversation.id, conversationId));
+}
+
+/** Update message content (used to backfill pre-inserted assistant messages). */
+export async function updateMessageContent(messageId: string, content: string) {
+	await db
+		.update(message)
+		.set({ content })
+		.where(eq(message.id, messageId));
 }
 
 /** Update conversation title and touch updatedAt. Auth-scoped. */

@@ -46,8 +46,8 @@ const initialRoot: LayoutNode = {
 				{
 					type: 'leaf',
 					id: 'desk-left-bottom',
-					tabs: ['chat'],
-					activeTab: 'chat',
+					tabs: ['bot'],
+					activeTab: 'bot',
 				},
 			],
 		},
@@ -105,7 +105,7 @@ function getPanelType(panelId: string): string | undefined {
 					<EditorPanel {panelId} />
 				{:else if type === 'preview'}
 					<PreviewPanel />
-				{:else if type === 'chat'}
+				{:else if type === 'bot'}
 					<ChatPanel {panelId} />
 				{:else if type === 'spreadsheet'}
 					<SpreadsheetPanel {panelId} />

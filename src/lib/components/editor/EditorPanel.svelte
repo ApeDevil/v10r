@@ -34,7 +34,7 @@
 	});
 
 	// Document state
-	let loading = $state(true);
+	let loading = $state(false);
 	let error = $state('');
 	let postId = $state('');
 	let slug = $state('');

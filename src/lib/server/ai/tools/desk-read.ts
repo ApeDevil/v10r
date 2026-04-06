@@ -3,7 +3,7 @@
  * No side effects, no mutations. Always safe to call.
  */
 import { tool, jsonSchema } from 'ai';
-import { listFiles, getFile, getSpreadsheetByFileId } from '$lib/server/db/desk/queries';
+import { listFiles, getFile, getSpreadsheetByFileId, getMarkdownByFileId } from '$lib/server/db/desk/queries';
 
 /** Summarize spreadsheet cells to stay under ~400 tokens. */
 function summarizeCells(cells: Record<string, unknown>): string {
@@ -22,7 +22,7 @@ export function createReadTools(userId: string) {
 				"List files in the user's desk workspace. " +
 				'Returns file names, IDs, types, and last-updated timestamps. ' +
 				'Use this to discover what files exist before reading or editing.',
-			parameters: jsonSchema<{ file_type: string | null }>({
+			inputSchema: jsonSchema<{ file_type: string | null }>({
 				type: 'object',
 				properties: {
 					file_type: {
@@ -56,7 +56,7 @@ export function createReadTools(userId: string) {
 				'Read the full contents of a desk file by ID. ' +
 				'For spreadsheets, returns cell data summary. ' +
 				'Use desk_list_files first to find the file ID.',
-			parameters: jsonSchema<{ file_id: string }>({
+			inputSchema: jsonSchema<{ file_id: string }>({
 				type: 'object',
 				properties: {
 					file_id: {
@@ -80,7 +80,15 @@ export function createReadTools(userId: string) {
 						};
 					}
 
-					// Future: markdown file reading
+					if (fileRow.type === 'markdown') {
+						const md = await getMarkdownByFileId(file_id, userId);
+						if (!md) return { error: 'Markdown data not found.' };
+						return {
+							file: { id: fileRow.id, name: fileRow.name, type: fileRow.type },
+							content: md.markdown.content.slice(0, 4000),
+						};
+					}
+
 					return {
 						file: { id: fileRow.id, name: fileRow.name, type: fileRow.type },
 					};
@@ -94,7 +102,7 @@ export function createReadTools(userId: string) {
 			description:
 				'Search for files by name. Returns matching file names and IDs. ' +
 				'Use when the user mentions a file by name.',
-			parameters: jsonSchema<{ query: string }>({
+			inputSchema: jsonSchema<{ query: string }>({
 				type: 'object',
 				properties: {
 					query: {

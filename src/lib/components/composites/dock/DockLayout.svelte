@@ -55,10 +55,18 @@ let {
 const persistKey = typeof persist === 'string' ? persist : undefined;
 
 // Try to restore persisted state, fall back to initial
+// Merge initialPanels over saved panels so config changes (label, icon) always win
 const saved = persist ? loadDockState(persistKey) : null;
+const mergedPanels = saved?.panels
+	? Object.fromEntries(
+		Object.entries(saved.panels)
+			.filter(([id]) => id in initialPanels)
+			.map(([id, p]) => [id, { ...p, ...initialPanels[id] }]),
+	)
+	: initialPanels;
 const dock = setDockContext(
 	saved?.root ?? initialRoot,
-	saved?.panels ?? initialPanels,
+	mergedPanels,
 	saved?.activityBarPosition ?? 'left',
 );
 

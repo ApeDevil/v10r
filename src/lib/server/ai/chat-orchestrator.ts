@@ -3,20 +3,25 @@
  * Handles conversation management, retrieval integration, streaming, and fallback rotation.
  * No SvelteKit imports — reusable from AI tools, REST, and background jobs.
  */
-import { createUIMessageStreamResponse, streamText } from 'ai';
+import { createUIMessageStreamResponse, convertToModelMessages, stepCountIs, streamText, type UIMessage } from 'ai';
 import { chatModel, toolModel, fallbackProviders } from '$lib/server/ai';
 import { MAX_TOKENS, SYSTEM_PROMPT, DESK_SYSTEM_PROMPT } from '$lib/server/ai/config';
 import { classifyAIError, safeAIMessage, aiErrorToStatus } from '$lib/server/ai/errors';
 import { createDeskTools, type DeskToolScope } from '$lib/server/ai/tools';
 import { checkConversationLimit } from '$lib/server/db/ai/limits';
-import { createConversation, refreshConversationTokens, saveConversationStep, saveMessages, saveToolCall } from '$lib/server/db/ai/mutations';
+import { createConversation, refreshConversationTokens, saveConversationStep, saveMessages, saveToolCall, updateMessageContent } from '$lib/server/db/ai/mutations';
 import { getConversation } from '$lib/server/db/ai/queries';
 import { formatContextForPrompt, retrieve } from '$lib/server/retrieval';
 import type { PipelineChunksEvent, PipelineStepEvent } from '$lib/types/pipeline';
 
+/** A legacy simple message or a full UIMessage from the AI SDK v6 client. */
+export type ChatMessage =
+	| { role: 'user' | 'assistant'; content: string }
+	| UIMessage;
+
 export interface ChatInput {
 	userId: string;
-	messages: { role: 'user' | 'assistant'; content: string }[];
+	messages: ChatMessage[];
 	conversationId?: string;
 	useRetrieval?: boolean;
 	retrievalTiers?: (1 | 2 | 3)[];
@@ -37,6 +42,18 @@ interface ChatError {
 	message: string;
 }
 
+/** Extract text content from a ChatMessage (handles both legacy and UIMessage format). */
+function getMessageText(msg: ChatMessage): string {
+	if ('content' in msg && typeof msg.content === 'string') return msg.content;
+	if ('parts' in msg) {
+		return msg.parts
+			.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+			.map((p) => p.text)
+			.join('\n');
+	}
+	return '';
+}
+
 /**
  * Window conversation history to last N turns to stay within token budget.
  * Always keeps the most recent messages. Rough estimate: 4 chars ≈ 1 token.
@@ -48,7 +65,22 @@ function windowMessages(
 	// Each "turn" is a user+assistant pair = 2 messages. Keep last N turns.
 	const maxMessages = maxTurns * 2;
 	if (messages.length <= maxMessages) return messages;
-	return messages.slice(-maxMessages);
+	const result = messages.slice(-maxMessages);
+	// Ensure context starts with a user message (some providers reject assistant-first)
+	if (result.length > 0 && result[0].role === 'assistant') {
+		return result.slice(1);
+	}
+	return result;
+}
+
+/** Escape XML-special characters to prevent attribute breakout in system prompts. */
+function escapeXmlAttr(str: string): string {
+	return str
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&apos;');
 }
 
 /** Build the system prompt with optional desk panel context. */
@@ -67,14 +99,14 @@ function buildSystemPrompt(
 				.slice(0, 8000),
 		}));
 		const deskBlock = sanitized
-			.map((pc) => `<panel type="${pc.panelType}" label="${pc.label}">\n${pc.content}\n</panel>`)
+			.map((pc) => `<panel type="${escapeXmlAttr(pc.panelType)}" label="${escapeXmlAttr(pc.label)}">\n${pc.content}\n</panel>`)
 			.join('\n');
 		prompt += `\n\n<desk-context>\n${deskBlock}\n</desk-context>`;
 	}
 
 	if (deskLayout?.length && hasTools) {
 		const layoutBlock = deskLayout
-			.map((p) => `- ${p.label} (${p.fileType ?? 'panel'})${p.fileId ? ` [${p.fileId}]` : ''}`)
+			.map((p) => `- ${escapeXmlAttr(p.label)} (${escapeXmlAttr(p.fileType ?? 'panel')})${p.fileId ? ` [${p.fileId}]` : ''}`)
 			.join('\n');
 		prompt += `\n\n<desk-layout>\nOpen panels:\n${layoutBlock}\n</desk-layout>`;
 	}
@@ -116,7 +148,7 @@ async function resolveConversation(
 	if (limitError) return { type: 'error', status: 403, code: 'limit_exceeded', message: limitError };
 
 	const firstUserMsg = messages.find((m) => m.role === 'user');
-	const title = firstUserMsg ? firstUserMsg.content.slice(0, 80) : 'New conversation';
+	const title = firstUserMsg ? getMessageText(firstUserMsg).slice(0, 80) : 'New conversation';
 	const conv = await createConversation(userId, title);
 	return { conversationId: conv.id };
 }
@@ -167,7 +199,13 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 	const { userId, messages: rawMessages, conversationId: existingConvId, useRetrieval, retrievalTiers, panelContext, toolScopes, deskLayout } = input;
 
 	// Window conversation history to prevent context overflow in multi-turn chats
-	const messages = windowMessages(rawMessages);
+	const windowedMessages = windowMessages(rawMessages);
+
+	// Convert UIMessages to CoreMessages for streamText compatibility
+	const isUIMessages = windowedMessages.some((m) => 'parts' in m);
+	const messages = isUIMessages
+		? await convertToModelMessages(windowedMessages as UIMessage[])
+		: windowedMessages as { role: 'user' | 'assistant'; content: string }[];
 
 	if (!chatModel) {
 		return Response.json(
@@ -183,8 +221,8 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 	const deskTools = hasTools ? createDeskTools(userId, toolScopes) : undefined;
 	const baseSystemPrompt = buildSystemPrompt(panelContext, hasTools, deskLayout);
 
-	// Resolve conversation
-	const convResult = await resolveConversation(userId, existingConvId, messages);
+	// Resolve conversation (pass raw messages for title extraction)
+	const convResult = await resolveConversation(userId, existingConvId, windowedMessages);
 	if ('type' in convResult) {
 		const err = convResult as ChatError;
 		return Response.json(
@@ -195,10 +233,11 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 	const { conversationId } = convResult;
 
 	// Save user message
-	const userMsg = messages[messages.length - 1];
-	if (conversationId && userMsg?.role === 'user') {
+	const lastRawMsg = windowedMessages[windowedMessages.length - 1];
+	const userMsgText = lastRawMsg?.role === 'user' ? getMessageText(lastRawMsg) : '';
+	if (conversationId && lastRawMsg?.role === 'user' && userMsgText) {
 		await saveMessages(conversationId, userId, [
-			{ id: crypto.randomUUID(), role: userMsg.role, content: userMsg.content },
+			{ id: crypto.randomUUID(), role: 'user', content: userMsgText },
 		]);
 	}
 
@@ -207,7 +246,7 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 
 	try {
 		// Retrieval path — uses createUIMessageStreamResponse for custom pipeline events
-		if (useRetrieval && userMsg?.role === 'user') {
+		if (useRetrieval && lastRawMsg?.role === 'user' && userMsgText) {
 			return createUIMessageStreamResponse({
 				headers: responseHeaders,
 				execute: async (writer) => {
@@ -219,7 +258,7 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 
 					try {
 						const retrievalResult = await retrieve(
-							userMsg.content,
+							userMsgText,
 							{ userId, maxChunks: 3, tiers: retrievalTiers ?? [1] },
 							emitEvent,
 						);
@@ -259,8 +298,13 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 			});
 		}
 
-		// Non-retrieval path
+		// Non-retrieval path — pre-insert assistant message so tool_call FK is satisfied
 		const assistantMsgId = crypto.randomUUID();
+		if (conversationId) {
+			await saveMessages(conversationId, userId, [
+				{ id: assistantMsgId, role: 'assistant', content: '' },
+			]);
+		}
 		let stepCounter = 0;
 
 		const result = streamText({
@@ -272,7 +316,7 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 			...(deskTools ? {
 				tools: deskTools,
 				toolChoice: 'auto' as const,
-				maxSteps: 3,
+				stopWhen: stepCountIs(3),
 				// Compress earlier tool results after step 2 to prevent context explosion
 				prepareStep: async ({ stepNumber, messages: stepMessages }: { stepNumber: number; messages: unknown[] }) => {
 					if (stepNumber < 2) return {};
@@ -327,7 +371,10 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 				}
 			},
 			onFinish: async ({ text }) => {
-				await createOnFinish(conversationId, userId)({ text });
+				// Update the pre-inserted assistant message with final content
+				if (conversationId && text) {
+					await updateMessageContent(assistantMsgId, text);
+				}
 				// Refresh cached token totals
 				if (conversationId) {
 					try { await refreshConversationTokens(conversationId); } catch { /* non-critical */ }

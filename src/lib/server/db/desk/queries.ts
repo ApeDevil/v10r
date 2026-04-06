@@ -1,6 +1,6 @@
 import { and, count, desc, eq } from 'drizzle-orm';
 import { db } from '../index';
-import { file, folder, spreadsheet } from '../schema/desk';
+import { file, folder, markdown, spreadsheet } from '../schema/desk';
 
 // ── Legacy queries (kept for backward compat) ──────────────────────
 
@@ -35,7 +35,7 @@ export async function listSpreadsheets(userId: string) {
 export async function listFiles(userId: string, type?: string) {
 	const conditions = [eq(file.userId, userId)];
 	if (type) {
-		conditions.push(eq(file.type, type as 'spreadsheet'));
+		conditions.push(eq(file.type, type as 'spreadsheet' | 'markdown'));
 	}
 	return db
 		.select({
@@ -84,6 +84,31 @@ export async function getSpreadsheetByFileId(fileId: string, userId: string) {
 		})
 		.from(file)
 		.innerJoin(spreadsheet, eq(spreadsheet.fileId, file.id))
+		.where(and(eq(file.id, fileId), eq(file.userId, userId)))
+		.limit(1);
+	return row ?? null;
+}
+
+/** Get a markdown document by its file ID (joined). */
+export async function getMarkdownByFileId(fileId: string, userId: string) {
+	const [row] = await db
+		.select({
+			file: {
+				id: file.id,
+				type: file.type,
+				name: file.name,
+				folderId: file.folderId,
+				aiContext: file.aiContext,
+				createdAt: file.createdAt,
+				updatedAt: file.updatedAt,
+			},
+			markdown: {
+				id: markdown.id,
+				content: markdown.content,
+			},
+		})
+		.from(file)
+		.innerJoin(markdown, eq(markdown.fileId, file.id))
 		.where(and(eq(file.id, fileId), eq(file.userId, userId)))
 		.limit(1);
 	return row ?? null;

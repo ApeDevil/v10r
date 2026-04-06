@@ -11,6 +11,15 @@ const SPREADSHEET_CAPABILITIES: NodeCapability[] = [
 	'delete',
 ];
 
+const MARKDOWN_CAPABILITIES: NodeCapability[] = [
+	'open',
+	'open-new-panel',
+	'rename',
+	'move',
+	'ai-context',
+	'delete',
+];
+
 const FOLDER_CAPABILITIES: NodeCapability[] = ['rename', 'move', 'delete', 'new-folder', 'new-spreadsheet'];
 
 export function dataRootNode(): ExplorerNode {
@@ -44,17 +53,20 @@ export function adaptDeskFolders(folders: FolderListItem[]): ExplorerNode[] {
 }
 
 export function adaptDeskFiles(files: FileListItem[]): ExplorerNode[] {
-	return files.map((f) => ({
-		id: f.id,
-		parentId: f.folderId ?? 'virtual:data',
-		source: 'desk-file' as const,
-		sourceData: f as unknown as Record<string, unknown>,
-		label: f.name,
-		icon: 'i-lucide-sheet',
-		iconColor: 'var(--color-success, #22c55e)',
-		isFolder: false,
-		capabilities: new Set<NodeCapability>(SPREADSHEET_CAPABILITIES),
-		aiContext: f.aiContext,
-		sortKey: `1_${f.name.toLowerCase()}`,
-	}));
+	return files.map((f) => {
+		const isMarkdown = f.type === 'markdown';
+		return {
+			id: f.id,
+			parentId: f.folderId ?? 'virtual:data',
+			source: 'desk-file' as const,
+			sourceData: f as unknown as Record<string, unknown>,
+			label: f.name,
+			icon: isMarkdown ? 'i-lucide-file-text' : 'i-lucide-sheet',
+			iconColor: isMarkdown ? 'var(--color-primary, #6366f1)' : 'var(--color-success, #22c55e)',
+			isFolder: false,
+			capabilities: new Set<NodeCapability>(isMarkdown ? MARKDOWN_CAPABILITIES : SPREADSHEET_CAPABILITIES),
+			aiContext: f.aiContext,
+			sortKey: `1_${f.name.toLowerCase()}`,
+		};
+	});
 }

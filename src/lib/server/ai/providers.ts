@@ -88,7 +88,13 @@ export function getFallbackProviders(registry: ProviderEntry[], activeId: string
  */
 export function resolveToolProvider(registry: ProviderEntry[]): ProviderEntry | null {
 	const toolProviders = registry.filter((p) => p.configured && p.supportsTools);
-	// Prefer OpenAI for reliability, then others
+	// Respect AI_PROVIDER if it supports tools
+	const envProvider = env.AI_PROVIDER ?? '';
+	if (envProvider) {
+		const envMatch = toolProviders.find((p) => p.id === envProvider);
+		if (envMatch) return envMatch;
+	}
+	// Fallback to hardcoded preference
 	const preferred = ['openai', 'google'];
 	for (const id of preferred) {
 		const match = toolProviders.find((p) => p.id === id);

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Chat } from '@ai-sdk/svelte';
+	import { DefaultChatTransport } from 'ai';
 	import { CSRF_HEADER } from '$lib/api';
 	import {
 		appendIOLog,
@@ -28,17 +29,22 @@
 	let { panelId }: Props = $props();
 
 	let conversationId: string | undefined = $state();
+	let inputValue = $state('');
 
 	const bus = getDeskBus();
 	const dock = getDockContext();
 
 	const chat = new Chat({
-		api: '/api/ai/chat',
-		headers: CSRF_HEADER,
-		onResponse: (response: Response) => {
-			const id = response.headers.get('X-Conversation-Id');
-			if (id) conversationId = id;
-		},
+		transport: new DefaultChatTransport({
+			api: '/api/ai/chat',
+			headers: CSRF_HEADER,
+			fetch: async (url, init) => {
+				const response = await fetch(url, init);
+				const id = response.headers.get('X-Conversation-Id');
+				if (id) conversationId = id;
+				return response;
+			},
+		}),
 		onFinish: () => {
 			markResponseReceived();
 		},
@@ -48,9 +54,19 @@
 
 	// ── Token usage estimate ────────────────────────────────────────
 
-	/** Rough client-side token estimate from message content lengths (~4 chars/token). */
+	/** Rough client-side token estimate (~4 chars/token), using parts when available. */
+	function estimateMessageTokens(m: { content?: string; parts?: { type: string; text?: string }[] }): number {
+		if (m.parts?.length) {
+			const textLen = m.parts
+				.filter((p) => p.type === 'text')
+				.reduce((sum, p) => sum + (p.text?.length ?? 0), 0);
+			return Math.ceil(textLen / 4);
+		}
+		return Math.ceil((m.content?.length ?? 0) / 4);
+	}
+
 	const conversationTokens = $derived(
-		chat.messages.reduce((sum, m) => sum + Math.ceil((m.content?.length ?? 0) / 4), 0),
+		chat.messages.reduce((sum, m) => sum + estimateMessageTokens(m), 0),
 	);
 
 	// ── AI desk effect dispatch ─────────────────────────────────────
@@ -128,7 +144,7 @@
 				bus.publish('ai:refresh_explorer', {});
 				break;
 			case 'desk:tab_indicator':
-				dock.updatePanel(`spreadsheet-${effect.fileId}`, { indicator: effect.variant === 'modified' ? 'ai-modified' : undefined });
+				dock.updatePanel(`${effect.panelType}-${effect.fileId}`, { indicator: effect.variant === 'modified' ? 'ai-modified' : undefined });
 				break;
 			case 'desk:notify':
 				bus.publish('ai:notify', { message: effect.message, level: effect.level });
@@ -176,11 +192,11 @@
 	function startNewChat() {
 		conversationId = undefined;
 		chat.messages = [];
-		chat.input = '';
+		inputValue = '';
 	}
 
 	function submitMessage() {
-		if (!chat.input.trim() || isLoading) return;
+		if (!inputValue.trim() || isLoading) return;
 		const context = serializeForRequest();
 
 		// Log context reads to I/O log
@@ -192,8 +208,11 @@
 			});
 		}
 
+		const text = inputValue;
+		inputValue = '';
+
 		chat.sendMessage({
-			text: chat.input,
+			text,
 			body: {
 				...(conversationId ? { conversationId } : {}),
 				...(context.length > 0 ? { panelContext: context } : {}),
@@ -279,7 +298,7 @@
 	/>
 
 	<!-- Input (reuse existing ChatInput) -->
-	<ChatInput bind:value={chat.input} loading={isLoading} onsubmit={submitMessage} />
+	<ChatInput bind:value={inputValue} loading={isLoading} onsubmit={submitMessage} />
 </div>
 
 <style>

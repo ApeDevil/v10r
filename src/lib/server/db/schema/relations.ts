@@ -299,7 +299,6 @@ export const userRelations = relations(user, ({ one, many }) => ({
 	accounts: many(account),
 	// ai
 	conversations: many(conversation),
-	toolCalls: many(toolCall),
 	// rag
 	documents: many(document),
 	collections: many(collection),

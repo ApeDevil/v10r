@@ -64,6 +64,87 @@ describe('ChatRequestSchema', () => {
 		});
 		expect(result.success).toBe(true);
 	});
+
+	it('accepts valid toolScopes array', () => {
+		const result = v.safeParse(ChatRequestSchema, {
+			messages: [{ role: 'user', content: 'Hello' }],
+			toolScopes: ['desk:read', 'desk:write', 'desk:create', 'desk:delete'],
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it('rejects invalid toolScopes values', () => {
+		const result = v.safeParse(ChatRequestSchema, {
+			messages: [{ role: 'user', content: 'Hello' }],
+			toolScopes: ['desk:admin'],
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it('accepts empty toolScopes array', () => {
+		const result = v.safeParse(ChatRequestSchema, {
+			messages: [{ role: 'user', content: 'Hello' }],
+			toolScopes: [],
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it('accepts panelContext with valid entries', () => {
+		const result = v.safeParse(ChatRequestSchema, {
+			messages: [{ role: 'user', content: 'Hello' }],
+			panelContext: [{ panelType: 'spreadsheet', label: 'Budget', content: 'A1: 100' }],
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it('rejects panelContext over 5 entries', () => {
+		const panelContext = Array.from({ length: 6 }, (_, i) => ({
+			panelType: 'note',
+			label: `Panel ${i}`,
+			content: 'data',
+		}));
+		const result = v.safeParse(ChatRequestSchema, {
+			messages: [{ role: 'user', content: 'Hello' }],
+			panelContext,
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it('rejects panelContext entry content over 16000 chars', () => {
+		const result = v.safeParse(ChatRequestSchema, {
+			messages: [{ role: 'user', content: 'Hello' }],
+			panelContext: [{ panelType: 'note', label: 'x', content: 'x'.repeat(16_001) }],
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it('accepts deskLayout with valid entries', () => {
+		const result = v.safeParse(ChatRequestSchema, {
+			messages: [{ role: 'user', content: 'Hello' }],
+			deskLayout: [{ panelId: 'p1', fileId: 'f1', fileType: 'spreadsheet', label: 'Budget' }],
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it('rejects message with invalid role', () => {
+		const result = v.safeParse(ChatRequestSchema, {
+			messages: [{ role: 'system', content: 'Hello' }],
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it('accepts all optional fields together', () => {
+		const result = v.safeParse(ChatRequestSchema, {
+			messages: [{ role: 'user', content: 'Hello' }],
+			conversationId: '550e8400-e29b-41d4-a716-446655440000',
+			useRetrieval: true,
+			retrievalTiers: [1, 2],
+			panelContext: [{ panelType: 'spreadsheet', label: 'Budget', content: 'A1: 100' }],
+			toolScopes: ['desk:read', 'desk:write'],
+			deskLayout: [{ panelId: 'p1', fileId: 'f1', fileType: 'spreadsheet', label: 'Budget' }],
+		});
+		expect(result.success).toBe(true);
+	});
 });
 
 describe('StreamingRequestSchema', () => {
