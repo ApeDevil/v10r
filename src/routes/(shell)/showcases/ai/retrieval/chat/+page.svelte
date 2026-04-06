@@ -69,7 +69,7 @@ function submitMessage() {
 	if (!chat.input.trim() || isLoading) return;
 	pipeline.reset();
 	pipeline.resetCursor();
-	chat.handleSubmit();
+	chat.sendMessage({ text: chat.input });
 }
 </script>
 
@@ -104,7 +104,7 @@ function submitMessage() {
 							</EmptyState>
 						{:else}
 							{#each chat.messages as message (message.id)}
-								<ChatMessage role={message.role as 'user' | 'assistant'} content={message.content} />
+								<ChatMessage role={message.role as 'user' | 'assistant'} parts={message.parts} content={message.content} />
 							{/each}
 
 							{#if isLoading && chat.messages[chat.messages.length - 1]?.role === 'user'}

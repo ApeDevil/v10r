@@ -1,6 +1,7 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
+import { createId } from '../id';
 import { db } from '../index';
-import { conversation, message } from '../schema/ai/conversation';
+import { conversation, conversationStep, message, toolCall } from '../schema/ai/conversation';
 
 /** Create a new conversation */
 export async function createConversation(userId: string, title?: string) {
@@ -63,4 +64,50 @@ export async function updateConversationTitle(id: string, userId: string, title:
 		.update(conversation)
 		.set({ title, updatedAt: new Date() })
 		.where(and(eq(conversation.id, id), eq(conversation.userId, userId)));
+}
+
+/** Persist a tool call record. */
+export async function saveToolCall(data: {
+	messageId: string;
+	toolName: string;
+	args: Record<string, unknown>;
+	result?: Record<string, unknown>;
+	status: 'pending' | 'success' | 'error';
+	errorMessage?: string;
+	entityKind?: string;
+	entityId?: string;
+}) {
+	const id = createId.toolCall();
+	const [row] = await db
+		.insert(toolCall)
+		.values({ id, ...data })
+		.returning();
+	return row;
+}
+
+/** Persist a conversation step (one per AI SDK step). */
+export async function saveConversationStep(data: {
+	conversationId: string;
+	messageId: string;
+	stepIndex: number;
+	stepType: 'initial' | 'tool-result' | 'continue';
+	inputTokens: number;
+	outputTokens: number;
+	toolCallIds?: string[];
+}) {
+	const id = createId.conversationStep();
+	await db.insert(conversationStep).values({
+		id,
+		...data,
+		toolCallIds: data.toolCallIds ?? null,
+	});
+}
+
+/** Recalculate cached token totals on a conversation from its steps. */
+export async function refreshConversationTokens(conversationId: string) {
+	await db.update(conversation).set({
+		totalInputTokens: sql`(SELECT COALESCE(SUM(${conversationStep.inputTokens}), 0) FROM ${conversationStep} WHERE ${conversationStep.conversationId} = ${conversationId})`,
+		totalOutputTokens: sql`(SELECT COALESCE(SUM(${conversationStep.outputTokens}), 0) FROM ${conversationStep} WHERE ${conversationStep.conversationId} = ${conversationId})`,
+		updatedAt: new Date(),
+	}).where(eq(conversation.id, conversationId));
 }

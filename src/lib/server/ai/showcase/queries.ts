@@ -21,7 +21,7 @@ export async function verifyAIConnection(): Promise<AIConnectionInfo> {
 		await generateText({
 			model: chatModel,
 			prompt: 'Reply with "ok".',
-			maxTokens: 5,
+			maxOutputTokens: 5,
 		});
 
 		return {

@@ -3,13 +3,13 @@ claude --chrome
 
 cd dev/velociraptor/
 
-#
+# -------------------run
 podman-compose up
 podman-compose up -d
 podman logs -f v10r
 podman restart v10r
 
-# stop
+# -------------------stop
 psv(podman stop v10r)
 podman-compose down
 

@@ -382,6 +382,19 @@ function removeGhost() {
 		background: var(--color-error);
 	}
 
+	.dock-tab-dot.dot-ai-active {
+		background: var(--color-primary);
+		animation: dot-pulse 1s ease-in-out infinite;
+	}
+
+	.dock-tab-dot.dot-ai-modified {
+		background: var(--color-warning, #f59e0b);
+	}
+
+	.dock-tab-dot.dot-ai-error {
+		background: var(--color-error);
+	}
+
 	@keyframes dot-pulse {
 		50% { opacity: 0.3; }
 	}

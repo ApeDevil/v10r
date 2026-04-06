@@ -33,5 +33,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		useRetrieval: parsed.output.useRetrieval,
 		retrievalTiers: parsed.output.retrievalTiers,
 		panelContext: parsed.output.panelContext,
+		toolScopes: parsed.output.toolScopes,
+		deskLayout: parsed.output.deskLayout,
 	});
 };

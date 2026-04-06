@@ -8,6 +8,7 @@ import { EditorPanel } from '$lib/components/editor';
 import { ExplorerPanel } from '$lib/components/explorer';
 import { PreviewPanel } from '$lib/components/preview';
 import { SpreadsheetPanel } from '$lib/components/spreadsheet';
+import IOLogPanel from '$lib/components/io-log/IOLogPanel.svelte';
 import { DESK_ACTIVITY_BAR_ITEMS, DESK_PANEL_TYPES, DESK_PANELS } from '$lib/config/desk-panels';
 
 // Server data from (desk)/+layout.server.ts
@@ -108,6 +109,8 @@ function getPanelType(panelId: string): string | undefined {
 					<ChatPanel {panelId} />
 				{:else if type === 'spreadsheet'}
 					<SpreadsheetPanel {panelId} />
+				{:else if type === 'io-log'}
+					<IOLogPanel {panelId} />
 				{:else}
 					<div class="desk-chip"><span class="i-lucide-layout-grid"></span> {panelId}</div>
 				{/if}

@@ -10,6 +10,8 @@ export interface ProviderEntry {
 	configured: boolean;
 	model: string;
 	envVar: string;
+	/** Whether this provider reliably supports tool calling. */
+	supportsTools: boolean;
 	getInstance: () => LanguageModel | null;
 }
 
@@ -18,6 +20,7 @@ const PROVIDER_CONFIGS: {
 	name: string;
 	model: string;
 	envVar: string;
+	supportsTools: boolean;
 	factory: (apiKey: string) => LanguageModel;
 }[] = [
 	{
@@ -25,6 +28,7 @@ const PROVIDER_CONFIGS: {
 		name: 'Groq',
 		model: 'llama-3.3-70b-versatile',
 		envVar: 'GROQ_API_KEY',
+		supportsTools: false, // Llama drifts to text after ~5 messages with tools
 		factory: (apiKey) => createGroq({ apiKey })('llama-3.3-70b-versatile'),
 	},
 	{
@@ -32,6 +36,7 @@ const PROVIDER_CONFIGS: {
 		name: 'OpenAI',
 		model: 'gpt-4o-mini',
 		envVar: 'OPENAI_API_KEY',
+		supportsTools: true, // Most reliable for tool calling
 		factory: (apiKey) => createOpenAI({ apiKey })('gpt-4o-mini'),
 	},
 	{
@@ -39,6 +44,7 @@ const PROVIDER_CONFIGS: {
 		name: 'Google Gemini',
 		model: 'gemini-2.0-flash',
 		envVar: 'GOOGLE_GENERATIVE_AI_API_KEY',
+		supportsTools: true, // Works but known issues with optional arrays
 		factory: (apiKey) => createGoogleGenerativeAI({ apiKey })('gemini-2.0-flash'),
 	},
 ];
@@ -55,6 +61,7 @@ export function buildProviderRegistry(): ProviderEntry[] {
 			configured,
 			model: config.model,
 			envVar: config.envVar,
+			supportsTools: config.supportsTools,
 			getInstance: () => (configured ? config.factory(apiKey) : null),
 		};
 	});
@@ -73,4 +80,19 @@ export function resolveActiveProvider(registry: ProviderEntry[]): ProviderEntry 
 /** Get other configured providers as fallbacks */
 export function getFallbackProviders(registry: ProviderEntry[], activeId: string): ProviderEntry[] {
 	return registry.filter((p) => p.configured && p.id !== activeId);
+}
+
+/**
+ * Resolve a provider that supports tool calling.
+ * Prefers OpenAI > Google > others. Returns null if no tool-capable provider is configured.
+ */
+export function resolveToolProvider(registry: ProviderEntry[]): ProviderEntry | null {
+	const toolProviders = registry.filter((p) => p.configured && p.supportsTools);
+	// Prefer OpenAI for reliability, then others
+	const preferred = ['openai', 'google'];
+	for (const id of preferred) {
+		const match = toolProviders.find((p) => p.id === id);
+		if (match) return match;
+	}
+	return toolProviders[0] ?? null;
 }

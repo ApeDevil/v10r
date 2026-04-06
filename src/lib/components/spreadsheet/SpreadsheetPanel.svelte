@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
 	import { apiFetch } from '$lib/api';
-	import { registerPanelContext, updatePanelContext } from '$lib/components/composites/dock';
+	import { getDeskBus, registerPanelContext, updatePanelContext } from '$lib/components/composites/dock';
 	import { registerPanelMenus } from '$lib/components/composites/dock';
 	import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 	import SpreadsheetFormulaBar from './SpreadsheetFormulaBar.svelte';
@@ -128,6 +128,33 @@
 		} else {
 			initFromLocalStorage();
 		}
+	});
+
+	// ── AI refresh subscription ─────────────────────────────────────
+
+	const bus = getDeskBus();
+
+	$effect(() => {
+		const fId = fileId;
+		if (!fId) return;
+
+		return bus.subscribe('ai:refresh_file', async ({ fileId: refreshId }) => {
+			if (refreshId !== fId) return;
+			try {
+				const res = await apiFetch(`/api/desk/files/${fId}`);
+				if (res.ok) {
+					const data = await res.json();
+					const cells = data.spreadsheet?.cells as Record<string, { v: string | number | null; f?: string; t?: string }> | undefined;
+					if (cells) {
+						sheet.fromJSON(cells);
+						saveStatus = 'saved';
+						setTimeout(() => { saveStatus = 'idle'; }, 2000);
+					}
+				}
+			} catch {
+				saveStatus = 'error';
+			}
+		});
 	});
 
 	// ── Auto-save (1.5s debounce after cell changes) ────────────────

@@ -295,6 +295,12 @@
 		contentTimer = setTimeout(publishContent, 300);
 	});
 
+	// Subscribe to AI-triggered file refresh
+	const unsubAiRefresh = bus.subscribe('ai:refresh_file', ({ fileId }) => {
+		if (!postId || fileId !== postId) return;
+		// Reload from server — future: re-fetch markdown content
+	});
+
 	// Register menus for the global MenuBar
 	const editorMenus = $derived<MenuBarMenu[]>([
 		{
@@ -363,6 +369,7 @@
 		clearTimeout(tagTimer);
 		clearTimeout(confirmTimer);
 		unsubInsert();
+		unsubAiRefresh();
 	});
 </script>
 

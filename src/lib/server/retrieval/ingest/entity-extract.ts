@@ -54,7 +54,7 @@ export async function extractEntities(text: string, model?: LanguageModel | null
 		const result = await generateText({
 			model,
 			prompt: EXTRACTION_PROMPT.replace('{text}', text.slice(0, 3000)),
-			maxTokens: 1024,
+			maxOutputTokens: 1024,
 		});
 
 		// Parse JSON from response (handle markdown code blocks)

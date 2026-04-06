@@ -27,7 +27,7 @@ async function generateContextPrefix(model: LanguageModel | null, documentTitle:
 		const result = await generateText({
 			model,
 			prompt: CONTEXT_PROMPT.replace('{title}', documentTitle).replace('{chunk}', chunkContent.slice(0, 1000)),
-			maxTokens: 60,
+			maxOutputTokens: 60,
 		});
 
 		return result.text.trim() || `From "${documentTitle}":`;

@@ -11,7 +11,9 @@ export interface PanelDefinition {
 	icon?: string;
 	closable?: boolean;
 	/** Tab status indicator (e.g. unsaved dot on editor tabs) */
-	indicator?: 'unsaved' | 'saving' | 'error';
+	indicator?: 'unsaved' | 'saving' | 'error' | 'ai-active' | 'ai-modified' | 'ai-error';
+	/** Arbitrary metadata for panel initialization (e.g. fileId for AI-created panels). */
+	meta?: Record<string, unknown>;
 }
 
 /** Binary split node — exactly 2 children */

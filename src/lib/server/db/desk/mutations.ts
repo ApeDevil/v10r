@@ -1,7 +1,7 @@
 import { and, eq, like, sql } from 'drizzle-orm';
 import { createId } from '../id';
 import { db } from '../index';
-import { file, folder, spreadsheet } from '../schema/desk';
+import { file, folder, markdown, spreadsheet } from '../schema/desk';
 
 // ── Legacy mutations (kept for backward compat) ────────────────────
 
@@ -244,4 +244,25 @@ export async function updateSpreadsheetByFileId(
 	const [updated] = await db.update(file).set(fileUpdate).where(eq(file.id, fileId)).returning();
 
 	return updated ?? null;
+}
+
+/** Create a new markdown file (file + markdown detail in a transaction). */
+export async function createMarkdownFile(
+	userId: string,
+	name = 'Untitled',
+	content = '',
+	folderId: string | null = null,
+) {
+	return db.transaction(async (tx) => {
+		const fileId = createId.file();
+		const [fileRow] = await tx
+			.insert(file)
+			.values({ id: fileId, userId, type: 'markdown', name, folderId })
+			.returning();
+		const [markdownRow] = await tx
+			.insert(markdown)
+			.values({ id: createId.markdown(), fileId, userId, content })
+			.returning();
+		return { file: fileRow, markdown: markdownRow };
+	});
 }

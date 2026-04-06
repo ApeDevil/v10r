@@ -116,7 +116,8 @@ function startNewChat() {
 
 function submitMessage() {
 	if (!chat.input.trim() || isLoading) return;
-	chat.handleSubmit(undefined, {
+	chat.sendMessage({
+		text: chat.input,
 		body: conversationId ? { conversationId } : {},
 	});
 }
@@ -241,7 +242,11 @@ function formatRelativeTime(dateStr: string): string {
 						{:else}
 							<div class="flex flex-col gap-1 py-2">
 								{#each chat.messages as message (message.id)}
-									<ChatMessage role={message.role as 'user' | 'assistant'} content={message.content} />
+									<ChatMessage
+									role={message.role as 'user' | 'assistant'}
+									parts={message.parts}
+									content={message.content}
+								/>
 								{/each}
 
 								{#if isLoading && chat.messages[chat.messages.length - 1]?.role === 'user'}

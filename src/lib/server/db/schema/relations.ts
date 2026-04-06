@@ -13,6 +13,8 @@ import {
 	collectionDocument,
 	// ai
 	conversation,
+	conversationStep,
+	toolCall,
 	document,
 	// rag
 	embeddingModel,
@@ -25,6 +27,7 @@ import {
 	// desk
 	folder,
 	file,
+	markdown,
 	spreadsheet,
 	deskTheme,
 	deskThemePreset,
@@ -65,12 +68,32 @@ export const accountRelations = relations(account, ({ one }) => ({
 export const conversationRelations = relations(conversation, ({ one, many }) => ({
 	user: one(user, { fields: [conversation.userId], references: [user.id] }),
 	messages: many(message),
+	steps: many(conversationStep),
 }));
 
-export const messageRelations = relations(message, ({ one }) => ({
+export const messageRelations = relations(message, ({ one, many }) => ({
 	conversation: one(conversation, {
 		fields: [message.conversationId],
 		references: [conversation.id],
+	}),
+	toolCalls: many(toolCall),
+}));
+
+export const toolCallRelations = relations(toolCall, ({ one }) => ({
+	message: one(message, {
+		fields: [toolCall.messageId],
+		references: [message.id],
+	}),
+}));
+
+export const conversationStepRelations = relations(conversationStep, ({ one }) => ({
+	conversation: one(conversation, {
+		fields: [conversationStep.conversationId],
+		references: [conversation.id],
+	}),
+	message: one(message, {
+		fields: [conversationStep.messageId],
+		references: [message.id],
 	}),
 }));
 
@@ -192,11 +215,17 @@ export const fileRelations = relations(file, ({ one }) => ({
 	user: one(user, { fields: [file.userId], references: [user.id] }),
 	folder: one(folder, { fields: [file.folderId], references: [folder.id] }),
 	spreadsheet: one(spreadsheet),
+	markdown: one(markdown),
 }));
 
 export const spreadsheetRelations = relations(spreadsheet, ({ one }) => ({
 	user: one(user, { fields: [spreadsheet.userId], references: [user.id] }),
 	file: one(file, { fields: [spreadsheet.fileId], references: [file.id] }),
+}));
+
+export const markdownRelations = relations(markdown, ({ one }) => ({
+	user: one(user, { fields: [markdown.userId], references: [user.id] }),
+	file: one(file, { fields: [markdown.fileId], references: [file.id] }),
 }));
 
 export const deskThemeRelations = relations(deskTheme, ({ one }) => ({
@@ -270,6 +299,7 @@ export const userRelations = relations(user, ({ one, many }) => ({
 	accounts: many(account),
 	// ai
 	conversations: many(conversation),
+	toolCalls: many(toolCall),
 	// rag
 	documents: many(document),
 	collections: many(collection),
@@ -286,6 +316,7 @@ export const userRelations = relations(user, ({ one, many }) => ({
 	// desk
 	files: many(file),
 	spreadsheets: many(spreadsheet),
+	markdowns: many(markdown),
 	deskTheme: one(deskTheme),
 	deskThemePresets: many(deskThemePreset),
 	// blog

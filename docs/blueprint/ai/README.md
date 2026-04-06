@@ -975,6 +975,7 @@ docs/blueprint/ai/
 
 ## Related
 
+- [desk-integration.md](./desk-integration.md) - Desk + AI tool-calling architecture (bridge, effects, permissions, phased plan)
 - [toon.md](./toon.md) - TOON format for token-efficient RAG context
 - [graph-rag.md](./graph-rag.md) - Hybrid retrieval with Neo4j knowledge graphs
 - [app-shell.md](../app-shell.md) - Sidebar integration

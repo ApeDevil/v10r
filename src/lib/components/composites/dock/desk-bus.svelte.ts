@@ -25,6 +25,13 @@ export interface DeskEvents {
 		/** Unique nonce to deduplicate replayed events across panel remounts. */
 		_nonce: string;
 	};
+
+	// ── AI-originated desk actions ──────────────────────────────────
+	'ai:open_panel': { panelType: string; fileId?: string; label?: string };
+	'ai:refresh_file': { fileId: string };
+	'ai:refresh_explorer': Record<string, never>;
+	'ai:highlight': { panelId: string; cells?: { row: number; col: number }[]; duration?: number };
+	'ai:notify': { message: string; level: 'info' | 'success' | 'error' };
 }
 
 export interface SubscribeOptions {

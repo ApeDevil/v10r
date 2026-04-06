@@ -5,12 +5,14 @@
 		chips: ContextChip[];
 		totalTokens: number;
 		budget?: number;
+		/** Cumulative conversation token usage (input + output from AI responses). */
+		conversationTokens?: number;
 		onpin: (panelId: string) => void;
 		onunpin: (panelId: string) => void;
 		ondismiss: (panelId: string) => void;
 	}
 
-	let { chips, totalTokens, budget = 8000, onpin, onunpin, ondismiss }: Props = $props();
+	let { chips, totalTokens, budget = 8000, conversationTokens = 0, onpin, onunpin, ondismiss }: Props = $props();
 
 	const fillPercent = $derived(Math.min(100, Math.round((totalTokens / budget) * 100)));
 	const fillLevel = $derived<'normal' | 'warning' | 'error'>(
@@ -114,6 +116,12 @@
 				<span class="token-label" class:warning={fillLevel === 'warning'} class:error={fillLevel === 'error'}>
 					~{formatTokens(totalTokens)} / {formatTokens(budget)} tokens
 				</span>
+				{#if conversationTokens > 0}
+					<span class="conv-tokens" aria-label="Total tokens used in this conversation">
+						<span class="i-lucide-zap" style="font-size: 10px;"></span>
+						{formatTokens(conversationTokens)} used
+					</span>
+				{/if}
 			</div>
 		{/if}
 	</div>
@@ -246,5 +254,14 @@
 
 	.token-label.error {
 		color: var(--color-error-fg, #ef4444);
+	}
+
+	.conv-tokens {
+		display: flex;
+		align-items: center;
+		gap: 3px;
+		font-size: 10px;
+		color: var(--color-muted);
+		margin-left: auto;
 	}
 </style>

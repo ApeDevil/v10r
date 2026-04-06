@@ -1,16 +1,55 @@
 <script lang="ts">
 import { cn } from '$lib/utils/cn';
 import { renderMarkdown } from '$lib/utils/markdown';
+import ConfirmationCard from '$lib/components/chat/ConfirmationCard.svelte';
+import ToolCallStatus from './ToolCallStatus.svelte';
+
+interface TextPart {
+	type: 'text';
+	text: string;
+}
+
+interface ToolInvocationPart {
+	type: 'tool-invocation';
+	toolInvocation: {
+		toolName: string;
+		toolCallId: string;
+		state: 'call' | 'partial-call' | 'result';
+		args?: unknown;
+		output?: unknown;
+	};
+}
+
+type MessagePart = TextPart | ToolInvocationPart | { type: string };
 
 interface Props {
 	role: 'user' | 'assistant';
-	content: string;
+	/** v6 parts array — preferred for assistant messages */
+	parts?: MessagePart[];
+	/** Fallback content string — used when parts is unavailable */
+	content?: string;
+	/** Callback when user confirms a destructive AI action */
+	onconfirmaction?: (description: string) => void;
 }
 
-let { role, content }: Props = $props();
+let { role, parts, content, onconfirmaction }: Props = $props();
 
 const isUser = $derived(role === 'user');
-const htmlContent = $derived(!isUser ? renderMarkdown(content) : '');
+
+/** Resolve display parts: prefer parts array, fall back to wrapping content as a text part */
+const displayParts = $derived.by((): MessagePart[] => {
+	if (parts?.length) return parts;
+	if (content) return [{ type: 'text', text: content }];
+	return [];
+});
+
+function getTextContent(part: MessagePart): string {
+	return 'text' in part ? (part as TextPart).text : '';
+}
+
+function getToolInvocation(part: MessagePart) {
+	return 'toolInvocation' in part ? (part as ToolInvocationPart).toolInvocation : null;
+}
 </script>
 
 <div class={cn('flex gap-3 px-4 py-3', isUser ? 'flex-row-reverse' : 'flex-row')}>
@@ -23,17 +62,42 @@ const htmlContent = $derived(!isUser ? renderMarkdown(content) : '');
 		<span class={cn(isUser ? 'i-lucide-user' : 'i-lucide-bot', 'h-4 w-4')}></span>
 	</div>
 
-	<div
-		class={cn(
-			'chat-bubble max-w-[80%] rounded-lg px-4 py-2 text-fluid-sm',
-			isUser ? 'chat-bubble-user text-white' : 'chat-bubble-assistant text-fg'
-		)}
-	>
-		{#if isUser}
-			<p class="whitespace-pre-wrap">{content}</p>
-		{:else}
-			<div class="chat-prose">{@html htmlContent}</div>
-		{/if}
+	<div class="flex max-w-[80%] flex-col gap-1">
+		{#each displayParts as part}
+			{#if part.type === 'text'}
+				{@const text = getTextContent(part)}
+				{#if text}
+					<div
+						class={cn(
+							'chat-bubble rounded-lg px-4 py-2 text-fluid-sm',
+							isUser ? 'chat-bubble-user text-white' : 'chat-bubble-assistant text-fg'
+						)}
+					>
+						{#if isUser}
+							<p class="whitespace-pre-wrap">{text}</p>
+						{:else}
+							<div class="chat-prose">{@html renderMarkdown(text)}</div>
+						{/if}
+					</div>
+				{/if}
+			{:else if part.type === 'tool-invocation'}
+				{@const invocation = getToolInvocation(part)}
+				{#if invocation}
+					<ToolCallStatus
+						toolName={invocation.toolName}
+						state={invocation.state}
+						output={invocation.output}
+					/>
+					{#if invocation.state === 'result' && invocation.output && typeof invocation.output === 'object' && 'requiresConfirmation' in invocation.output}
+						<ConfirmationCard
+							description={(invocation.output as { description?: string }).description ?? 'Confirm this action?'}
+							onconfirm={() => onconfirmaction?.((invocation.output as { description?: string }).description ?? '')}
+							onskip={() => {}}
+						/>
+					{/if}
+				{/if}
+			{/if}
+		{/each}
 	</div>
 </div>
 

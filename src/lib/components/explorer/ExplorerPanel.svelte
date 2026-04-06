@@ -592,6 +592,13 @@ $effect(() => {
 onMount(() => {
 	fetchAll();
 });
+
+// Re-fetch when AI creates/deletes files
+$effect(() => {
+	return bus.subscribe('ai:refresh_explorer', () => {
+		fetchAll();
+	});
+});
 </script>
 
 <!-- Hidden file inputs -->

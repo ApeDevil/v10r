@@ -2,8 +2,12 @@
 	import { Chat } from '@ai-sdk/svelte';
 	import { CSRF_HEADER } from '$lib/api';
 	import {
+		appendIOLog,
 		dismissContext,
+		findLeafWithPanel,
 		getContextChips,
+		getDeskBus,
+		getDockContext,
 		getTokenEstimate,
 		markResponseReceived,
 		pinContext,
@@ -11,6 +15,7 @@
 		serializeForRequest,
 		unpinContext,
 	} from '$lib/components/composites/dock';
+	import type { DeskEffect } from '$lib/server/ai/tools/_types';
 	import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 	import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
 	import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
@@ -23,6 +28,9 @@
 	let { panelId }: Props = $props();
 
 	let conversationId: string | undefined = $state();
+
+	const bus = getDeskBus();
+	const dock = getDockContext();
 
 	const chat = new Chat({
 		api: '/api/ai/chat',
@@ -37,6 +45,96 @@
 	});
 
 	const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
+
+	// ── Token usage estimate ────────────────────────────────────────
+
+	/** Rough client-side token estimate from message content lengths (~4 chars/token). */
+	const conversationTokens = $derived(
+		chat.messages.reduce((sum, m) => sum + Math.ceil((m.content?.length ?? 0) / 4), 0),
+	);
+
+	// ── AI desk effect dispatch ─────────────────────────────────────
+
+	/** Track which tool call IDs we've already dispatched effects for. */
+	const processedToolCalls = new Set<string>();
+
+	/**
+	 * Watch assistant messages for settled tool-invocation parts.
+	 * Extract DeskEffect from tool results and dispatch to desk bus / dock.
+	 */
+	$effect(() => {
+		const messages = chat.messages;
+		if (!messages.length) return;
+
+		const lastMsg = messages[messages.length - 1];
+		if (lastMsg.role !== 'assistant' || !lastMsg.parts) return;
+
+		for (const part of lastMsg.parts) {
+			if (part.type !== 'tool-invocation') continue;
+			const inv = (part as { toolInvocation: { toolCallId: string; toolName?: string; state: string; output?: { effects?: DeskEffect[]; error?: string } } }).toolInvocation;
+
+			const callKey = `${inv.toolCallId}-${inv.state}`;
+			if (processedToolCalls.has(callKey)) continue;
+			processedToolCalls.add(callKey);
+
+			if (inv.state === 'call') {
+				appendIOLog({
+					source: 'tool-call',
+					toolName: inv.toolName,
+					label: `Calling ${inv.toolName}...`,
+				});
+			} else if (inv.state === 'result') {
+				appendIOLog({
+					source: 'tool-result',
+					toolName: inv.toolName,
+					label: inv.output?.error
+						? `${inv.toolName} failed`
+						: `${inv.toolName} completed`,
+					level: inv.output?.error ? 'error' : 'success',
+				});
+
+				const effects = inv.output?.effects;
+				if (effects) {
+					for (const effect of effects) {
+						dispatchDeskEffect(effect);
+					}
+				}
+			}
+		}
+	});
+
+	function dispatchDeskEffect(effect: DeskEffect) {
+		switch (effect.type) {
+			case 'desk:open_panel': {
+				const existingLeaf = findLeafWithPanel(dock.root, `${effect.panelType}-${effect.fileId}`);
+				if (existingLeaf) {
+					dock.activateTab(existingLeaf.id, `${effect.panelType}-${effect.fileId}`);
+				} else {
+					const newPanelId = `${effect.panelType}-${effect.fileId}`;
+					dock.addPanel({
+						id: newPanelId,
+						type: effect.panelType,
+						label: effect.label,
+						closable: true,
+						meta: { fileId: effect.fileId },
+					});
+				}
+				break;
+			}
+			case 'desk:refresh_file':
+				bus.publish('ai:refresh_file', { fileId: effect.fileId });
+				break;
+			case 'desk:refresh_explorer':
+				bus.publish('ai:refresh_explorer', {});
+				break;
+			case 'desk:tab_indicator':
+				dock.updatePanel(`spreadsheet-${effect.fileId}`, { indicator: effect.variant === 'modified' ? 'ai-modified' : undefined });
+				break;
+			case 'desk:notify':
+				bus.publish('ai:notify', { message: effect.message, level: effect.level });
+				break;
+		}
+	}
 
 	// ── Context ─────────────────────────────────────────────────────
 
@@ -84,10 +182,22 @@
 	function submitMessage() {
 		if (!chat.input.trim() || isLoading) return;
 		const context = serializeForRequest();
-		chat.handleSubmit(undefined, {
+
+		// Log context reads to I/O log
+		for (const ctx of context) {
+			appendIOLog({
+				source: 'context-read',
+				label: `${ctx.panelType}: ${ctx.label}`,
+				detail: `${ctx.content.length} chars`,
+			});
+		}
+
+		chat.sendMessage({
+			text: chat.input,
 			body: {
 				...(conversationId ? { conversationId } : {}),
 				...(context.length > 0 ? { panelContext: context } : {}),
+				toolScopes: ['desk:read', 'desk:write', 'desk:create'],
 			},
 		});
 	}
@@ -123,7 +233,11 @@
 		{:else}
 			<div class="chat-messages-list">
 				{#each chat.messages as message (message.id)}
-					<ChatMessage role={message.role as 'user' | 'assistant'} content={message.content} />
+					<ChatMessage
+						role={message.role as 'user' | 'assistant'}
+						parts={message.parts}
+						content={message.content}
+					/>
 				{/each}
 
 				{#if isLoading && chat.messages[chat.messages.length - 1]?.role === 'user'}
@@ -158,6 +272,7 @@
 	<ContextTray
 		chips={contextChips}
 		totalTokens={tokenEstimate}
+		{conversationTokens}
 		onpin={pinContext}
 		onunpin={unpinContext}
 		ondismiss={handleDismiss}

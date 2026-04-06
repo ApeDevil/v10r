@@ -11,7 +11,7 @@ import { user } from '../auth/_better-auth';
 import { folder } from './folder';
 import { deskSchema } from './schema';
 
-export const fileTypeEnum = deskSchema.enum('file_type', ['spreadsheet']);
+export const fileTypeEnum = deskSchema.enum('file_type', ['spreadsheet', 'markdown']);
 
 export const file = deskSchema.table(
 	'file',

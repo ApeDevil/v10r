@@ -39,12 +39,16 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			model: chatModel,
 			system: SYSTEM_PROMPT,
 			messages: [{ role: 'user', content: prompt }],
-			maxTokens: MAX_TOKENS,
+			maxOutputTokens: MAX_TOKENS,
+			abortSignal: AbortSignal.timeout(30_000),
+			onError: ({ error }) => {
+				console.error('[ai:streaming] Stream error:', error);
+			},
 		});
 
 		result.consumeStream();
 
-		return result.toDataStreamResponse();
+		return result.toUIMessageStreamResponse();
 	} catch (err) {
 		const aiErr = classifyAIError(err);
 		return json({ error: safeAIMessage(aiErr.kind) }, { status: aiErrorToStatus(aiErr.kind) });

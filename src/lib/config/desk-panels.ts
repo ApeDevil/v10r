@@ -6,6 +6,7 @@ export const DESK_PANEL_TYPES = [
 	'preview',
 	'chat',
 	'spreadsheet',
+	'io-log',
 ] as const;
 
 export type DeskPanelType = (typeof DESK_PANEL_TYPES)[number];
@@ -16,6 +17,7 @@ export const DESK_PANELS: Record<string, PanelDefinition> = {
 	preview: { id: 'preview', type: 'preview', label: 'Preview', icon: 'i-lucide-eye', closable: true },
 	chat: { id: 'chat', type: 'chat', label: 'Chat', icon: 'i-lucide-message-circle', closable: true },
 	spreadsheet: { id: 'spreadsheet', type: 'spreadsheet', label: 'Spreadsheet', icon: 'i-lucide-sheet', closable: true },
+	'io-log': { id: 'io-log', type: 'io-log', label: 'I/O Log', icon: 'i-lucide-activity', closable: true },
 };
 
 export const DESK_ACTIVITY_BAR_ITEMS: ActivityBarItem[] = [
@@ -24,4 +26,5 @@ export const DESK_ACTIVITY_BAR_ITEMS: ActivityBarItem[] = [
 	{ panelType: 'preview', icon: 'i-lucide-eye', label: 'Preview' },
 	{ panelType: 'chat', icon: 'i-lucide-message-circle', label: 'Chat' },
 	{ panelType: 'spreadsheet', icon: 'i-lucide-sheet', label: 'Spreadsheet' },
+	{ panelType: 'io-log', icon: 'i-lucide-activity', label: 'I/O Log' },
 ];

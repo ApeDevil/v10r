@@ -30,6 +30,12 @@ export const createId = {
 	spreadsheet: () => `spr_${shortId()}`,
 	/** Desk theme preset: dtp_a8f3e1b2c4d9 */
 	themePreset: () => `dtp_${shortId()}`,
+	/** Desk markdown: mkd_a8f3e1b2c4d9 */
+	markdown: () => `mkd_${shortId()}`,
+	/** AI tool call: tcl_a8f3e1b2c4d9 */
+	toolCall: () => `tcl_${shortId()}`,
+	/** AI conversation step: stp_a8f3e1b2c4d9 */
+	conversationStep: () => `stp_${shortId()}`,
 	/** Generic UUID */
 	uuid: () => crypto.randomUUID(),
 } as const;
