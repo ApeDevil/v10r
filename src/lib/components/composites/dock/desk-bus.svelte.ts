@@ -5,7 +5,7 @@
 
 import { getContext, setContext } from 'svelte';
 
-// ── Event types ──────────────────────────────────────────────────────
+// ── Event types ──────────────────────��───────────────────────────────
 
 export interface DeskEvents {
 	'editor:content': { content: string; type: string; metadata: Record<string, unknown> };
@@ -24,11 +24,67 @@ export interface DeskEvents {
 		/** Unique nonce to deduplicate replayed events across panel remounts. */
 		_nonce: string;
 	};
+
+	// ── AI tool dispatch events ──���───────────────────────────────────
+
+	/** AI requests a tool call — dispatched by ChatPanel onToolCall */
+	'ai:toolCall': {
+		toolCallId: string;
+		toolName: string;
+		args: Record<string, unknown>;
+		turnId: string;
+		_nonce: string;
+	};
+
+	/** Tool execution result — dispatched after handler executes */
+	'ai:toolResult': {
+		toolCallId: string;
+		toolName: string;
+		result: string;
+		turnId: string;
+		_nonce: string;
+	};
+
+	/** AI requests a spreadsheet cell write */
+	'spreadsheet:setCell': {
+		panelId: string;
+		cell: string;
+		value: string | number;
+		turnId: string;
+		_nonce: string;
+	};
+
+	/** AI requests an editor write */
+	'editor:aiWrite': {
+		panelId: string;
+		content: string;
+		mode: 'append' | 'replace' | 'prepend';
+		turnId: string;
+		_nonce: string;
+	};
 }
 
 export interface SubscribeOptions {
 	/** Replay the last published payload immediately on subscribe. */
 	replayLast?: boolean;
+}
+
+// ── Dedup helper ────────────────────────────────────────────────────
+
+/** Wrap a handler to skip duplicate _nonce values. Caps internal set at 200 entries. */
+export function deduped<T extends { _nonce: string }>(
+	handler: (payload: T) => void,
+): (payload: T) => void {
+	const seen = new Set<string>();
+	return (payload: T) => {
+		if (seen.has(payload._nonce)) return;
+		seen.add(payload._nonce);
+		if (seen.size > 200) {
+			const first = seen.values().next().value;
+			if (first) seen.delete(first);
+		}
+		handler(payload);
+	};
 }
 
 // ── Bus implementation ───────────────────────────────────────────────
@@ -59,9 +115,11 @@ export function createDeskBus() {
 		}
 		subs.add(handler as (payload: any) => void);
 
-		// Replay last value if requested and available
+		// Replay last value if requested and available — deferred via microtask
+		// to avoid $state writes during $effect initialization
 		if (options?.replayLast && lastPayload.has(channel)) {
-			handler(lastPayload.get(channel) as DeskEvents[K]);
+			const payload = lastPayload.get(channel) as DeskEvents[K];
+			queueMicrotask(() => handler(payload));
 		}
 
 		return () => {

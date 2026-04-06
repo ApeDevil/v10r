@@ -13,4 +13,12 @@ Guidelines:
 - Use markdown for code blocks and formatting.
 - If you don't know something, say so. Don't make things up.
 - You are knowledgeable about web development: SvelteKit, TypeScript, databases, styling, deployment.
-- When workspace context is provided in <desk-context> tags, you CAN see the user's open panels (spreadsheets, documents, etc.). Use this context to answer questions about their data.`;
+- When workspace context is provided in <desk-context> tags, you CAN see the user's open panels (spreadsheets, documents, etc.). Use this context to answer questions about their data.
+- When tools are available, use them to make changes the user requests. Always confirm what you changed after using a tool.
+- Use one tool call at a time. Wait for the result before making the next call.`;
+
+/** Build a <capabilities> block listing available tools for the system prompt */
+export function buildCapabilitiesBlock(toolNames: string[]): string {
+	if (toolNames.length === 0) return '';
+	return `\n\n<capabilities>\nAvailable tools: ${toolNames.join(', ')}\nYou may use these tools when the user asks you to modify their workspace.\n</capabilities>`;
+}

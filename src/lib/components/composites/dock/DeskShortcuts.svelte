@@ -3,6 +3,7 @@
 	import { getActiveMenus } from './panel-menus.svelte';
 	import { getDockContext } from './dock.state.svelte';
 	import { hasPanelType, collectLeaves } from './dock.operations';
+	import { undo } from './desk-undo.svelte';
 
 	const dock = getDockContext();
 
@@ -90,6 +91,12 @@
 			case 'w':
 				e.preventDefault();
 				closeFocusedPanel();
+				return;
+			case 'z':
+				// Ctrl+Z: undo AI actions (only when not in a text input)
+				if (!e.shiftKey && undo()) {
+					e.preventDefault();
+				}
 				return;
 		}
 

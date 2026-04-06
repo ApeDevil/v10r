@@ -19,6 +19,13 @@ export interface PostListItem {
 	updatedAt: string;
 }
 
+export interface SpreadsheetListItem {
+	id: string;
+	name: string;
+	cellCount: number;
+	updatedAt: string;
+}
+
 export interface UploadingItem {
 	id: string;
 	fileName: string;

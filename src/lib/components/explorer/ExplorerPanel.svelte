@@ -7,7 +7,7 @@
 	import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 	import ExplorerTree from './ExplorerTree.svelte';
 	import ExplorerPreview from './ExplorerPreview.svelte';
-	import type { AssetListItem, PostListItem, UploadingItem } from './types';
+	import type { AssetListItem, PostListItem, SpreadsheetListItem, UploadingItem } from './types';
 
 	const dock = getDockContext();
 	const bus = getDeskBus();
@@ -16,9 +16,10 @@
 	let error = $state('');
 	let posts = $state<PostListItem[]>([]);
 	let assets = $state<AssetListItem[]>([]);
+	let spreadsheets = $state<SpreadsheetListItem[]>([]);
 	let uploading = $state<UploadingItem[]>([]);
 	let selectedAsset = $state<AssetListItem | null>(null);
-	let expandedFolders = $state(new Set(['blog', 'assets', 'images']));
+	let expandedFolders = $state(new Set(['blog', 'assets', 'images', 'data']));
 
 	let showNewPostForm = $state(false);
 	let slugInput = $state('');
@@ -35,9 +36,10 @@
 		loading = true;
 		error = '';
 		try {
-			const [postsRes, assetsRes] = await Promise.all([
+			const [postsRes, assetsRes, sheetsRes] = await Promise.all([
 				apiFetch('/api/blog/posts'),
 				apiFetch('/api/blog/assets'),
+				apiFetch('/api/desk/spreadsheets'),
 			]);
 
 			if (postsRes.ok) {
@@ -54,6 +56,16 @@
 			if (assetsRes.ok) {
 				const data = await assetsRes.json();
 				assets = data.items ?? [];
+			}
+
+			if (sheetsRes.ok) {
+				const data = await sheetsRes.json();
+				spreadsheets = (data.spreadsheets ?? []).map((s: any) => ({
+					id: s.id,
+					name: s.name ?? 'Untitled',
+					cellCount: s.cells ? Object.keys(s.cells).length : 0,
+					updatedAt: s.updatedAt ?? '',
+				}));
 			}
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load';
@@ -73,6 +85,37 @@
 		};
 		dock.addPanel(panel);
 		bus.publish('editor:document', { documentId: p.id, type: 'blog-post' });
+	}
+
+	function openSpreadsheet(s: SpreadsheetListItem) {
+		const sheetPanelId = `spreadsheet-${s.id}`;
+		// Store the mapping so SpreadsheetPanel can find the DB record
+		localStorage.setItem(`desk-spreadsheet-${sheetPanelId}`, s.id);
+		const panel: PanelDefinition = {
+			id: sheetPanelId,
+			type: 'spreadsheet',
+			label: s.name,
+			icon: 'i-lucide-sheet',
+			closable: true,
+		};
+		dock.addPanel(panel);
+	}
+
+	async function createSpreadsheet() {
+		error = '';
+		try {
+			const res = await apiFetch('/api/desk/spreadsheets', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ name: 'Untitled' }),
+			});
+			if (!res.ok) throw new Error('Failed to create spreadsheet');
+			const { spreadsheet } = await res.json();
+			await fetchAll();
+			openSpreadsheet({ id: spreadsheet.id, name: spreadsheet.name ?? 'Untitled', cellCount: 0, updatedAt: '' });
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Failed to create';
+		}
 	}
 
 	function selectAsset(a: AssetListItem) {
@@ -302,6 +345,7 @@
 			label: 'File',
 			items: [
 				{ label: 'New Post', icon: 'i-lucide-plus', shortcut: 'Ctrl+N', onSelect: () => { showNewPostForm = !showNewPostForm; } },
+				{ label: 'New Spreadsheet', icon: 'i-lucide-sheet', onSelect: createSpreadsheet },
 				{ type: 'separator' },
 				{ label: 'Import Markdown...', icon: 'i-lucide-file-up', onSelect: handleImportClick },
 				{ label: 'Upload Image...', icon: 'i-lucide-upload', onSelect: handleUploadClick },
@@ -381,6 +425,7 @@
 		<ExplorerTree
 			{posts}
 			{assets}
+			{spreadsheets}
 			{uploading}
 			{expandedFolders}
 			selectedAssetId={selectedAsset?.id ?? null}
@@ -391,6 +436,7 @@
 			}}
 			onselectpost={openPost}
 			onselectasset={selectAsset}
+			onselectspreadsheet={openSpreadsheet}
 			onexportpost={exportPost}
 			oninsertasset={insertAsset}
 			oncopyasseturl={(a) => { navigator.clipboard.writeText(`/api/blog/assets/${a.id}/image`); }}

@@ -1,16 +1,24 @@
 <script lang="ts">
-	import type { ContextChip } from '$lib/components/composites/dock';
+	import type { ContextChip, PermissionTier } from '$lib/components/composites/dock';
 
 	interface Props {
 		chips: ContextChip[];
 		totalTokens: number;
 		budget?: number;
+		permissionTier?: PermissionTier;
 		onpin: (panelId: string) => void;
 		onunpin: (panelId: string) => void;
 		ondismiss: (panelId: string) => void;
+		onpermissionchange?: (tier: PermissionTier) => void;
 	}
 
-	let { chips, totalTokens, budget = 8000, onpin, onunpin, ondismiss }: Props = $props();
+	let { chips, totalTokens, budget = 8000, permissionTier = 'suggest', onpin, onunpin, ondismiss, onpermissionchange }: Props = $props();
+
+	const TIERS: { value: PermissionTier; label: string; icon: string }[] = [
+		{ value: 'read-only', label: 'Read-only', icon: 'i-lucide-eye' },
+		{ value: 'suggest', label: 'Suggest', icon: 'i-lucide-message-square' },
+		{ value: 'auto', label: 'Auto', icon: 'i-lucide-zap' },
+	];
 
 	const fillPercent = $derived(Math.min(100, Math.round((totalTokens / budget) * 100)));
 	const fillLevel = $derived<'normal' | 'warning' | 'error'>(
@@ -98,7 +106,33 @@
 			{/each}
 		</div>
 
-		<!-- Token budget bar (only if there are active entries) -->
+		<!-- Permission tier + token bar row -->
+		{#if activeChips.length > 0 || onpermissionchange}
+			<div class="token-bar-row">
+				<!-- Permission tier selector -->
+				{#if onpermissionchange}
+					<div class="permission-selector">
+						{#each TIERS as tier (tier.value)}
+							<button
+								type="button"
+								class="permission-btn"
+								class:active={permissionTier === tier.value}
+								class:read-only={tier.value === 'read-only' && permissionTier === tier.value}
+								class:suggest={tier.value === 'suggest' && permissionTier === tier.value}
+								class:auto={tier.value === 'auto' && permissionTier === tier.value}
+								aria-label="Set AI mode to {tier.label}"
+								aria-pressed={permissionTier === tier.value}
+								onclick={() => onpermissionchange?.(tier.value)}
+							>
+								<span class={tier.icon} style="font-size: 10px;"></span>
+								<span class="permission-label">{tier.label}</span>
+							</button>
+						{/each}
+					</div>
+				{/if}
+			</div>
+		{/if}
+
 		{#if activeChips.length > 0}
 			<div class="token-bar-row">
 				<div
@@ -246,5 +280,53 @@
 
 	.token-label.error {
 		color: var(--color-error-fg, #ef4444);
+	}
+
+	/* Permission selector */
+	.permission-selector {
+		display: flex;
+		gap: 2px;
+		padding: 1px;
+		border-radius: var(--radius-sm);
+		background: color-mix(in srgb, var(--color-muted) 10%, transparent);
+	}
+
+	.permission-btn {
+		display: flex;
+		align-items: center;
+		gap: 3px;
+		padding: 2px 6px;
+		border: none;
+		border-radius: var(--radius-sm);
+		background: transparent;
+		color: var(--color-muted);
+		font-size: 10px;
+		cursor: pointer;
+	}
+
+	.permission-btn:hover {
+		color: var(--color-fg);
+		background: color-mix(in srgb, var(--color-muted) 15%, transparent);
+	}
+
+	.permission-btn.active {
+		color: var(--color-fg);
+		background: var(--color-bg);
+	}
+
+	.permission-btn.read-only {
+		color: var(--color-muted);
+	}
+
+	.permission-btn.suggest {
+		color: var(--color-warning, #f59e0b);
+	}
+
+	.permission-btn.auto {
+		color: var(--color-success, #22c55e);
+	}
+
+	.permission-label {
+		font-size: 10px;
 	}
 </style>

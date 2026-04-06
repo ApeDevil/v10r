@@ -40,7 +40,44 @@ export {
 	unpinContext,
 	updatePanelContext,
 } from './desk-context.svelte';
-export { createDeskBus, type DeskBus, type DeskEvents, getDeskBus, setDeskBusContext } from './desk-bus.svelte';
+export { createDeskBus, deduped, type DeskBus, type DeskEvents, getDeskBus, setDeskBusContext } from './desk-bus.svelte';
+export {
+	type EntityOperation,
+	type PanelEntity,
+	type SerializedEntity,
+	getAvailableToolNames,
+	hasEntities,
+	registerPanelEntity,
+	resolveToolHandler,
+	serializeEntitiesForRequest,
+	updatePanelEntity,
+} from './desk-entities.svelte';
+export {
+	type IOEntryKind,
+	type IOLogEntry,
+	type IOLogTurn,
+	appendIOLog,
+	clearIOLog,
+	getIOLogEntries,
+	getIOLogTurns,
+	getUnreadCount,
+	markAllRead,
+} from './desk-io-log.svelte';
+export {
+	type UndoSnapshot,
+	clearUndoForPanel,
+	clearUndoStack,
+	getUndoStackSize,
+	peekUndo,
+	pushUndo,
+	undo,
+	undoTurn,
+} from './desk-undo.svelte';
+export {
+	type PermissionTier,
+	getPermissionTier,
+	setPermissionTier,
+} from './desk-permissions.svelte';
 export { LAYOUT_PRESETS, type LayoutPreset } from './layout-presets';
 export { createDockState, type DockState, getDockContext, setDockContext } from './dock.state.svelte';
 export {

@@ -3,18 +3,26 @@
 	import { CSRF_HEADER } from '$lib/api';
 	import {
 		dismissContext,
+		getAvailableToolNames,
 		getContextChips,
+		getDeskBus,
+		getPermissionTier,
 		getTokenEstimate,
 		markResponseReceived,
 		pinContext,
+		pushUndo,
 		registerPanelMenus,
+		resolveToolHandler,
 		serializeForRequest,
+		setPermissionTier,
 		unpinContext,
 	} from '$lib/components/composites/dock';
+	import type { PermissionTier } from '$lib/components/composites/dock';
 	import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 	import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
 	import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
 	import ContextTray from './ContextTray.svelte';
+	import ToolPreview from './ToolPreview.svelte';
 
 	interface Props {
 		panelId: string;
@@ -23,6 +31,73 @@
 	let { panelId }: Props = $props();
 
 	let conversationId: string | undefined = $state();
+	let currentTurnId: string | null = $state(null);
+
+	const bus = getDeskBus();
+
+	// ── Suggest mode state ──────────────────────────────────────────
+
+	interface PendingToolCall {
+		toolCallId: string;
+		toolName: string;
+		args: Record<string, unknown>;
+		turnId: string;
+	}
+
+	let pendingToolCalls = $state<PendingToolCall[]>([]);
+
+	function executeToolCall(toolCallId: string, toolName: string, args: Record<string, unknown>, turnId: string): string {
+		const handler = resolveToolHandler(toolName);
+		if (!handler) {
+			return `Error: no handler for tool "${toolName}"`;
+		}
+
+		// Capture snapshot for undo before executing
+		if (handler.operation.snapshot && handler.operation.restore) {
+			pushUndo({
+				turnId,
+				panelId: handler.entity.panelId,
+				toolName,
+				snapshot: handler.operation.snapshot(),
+				restore: handler.operation.restore,
+			});
+		}
+
+		return handler.operation.execute(args);
+	}
+
+	function approveToolCall(pending: PendingToolCall) {
+		const result = executeToolCall(pending.toolCallId, pending.toolName, pending.args, pending.turnId);
+
+		bus.publish('ai:toolResult', {
+			toolCallId: pending.toolCallId,
+			toolName: pending.toolName,
+			result,
+			turnId: pending.turnId,
+			_nonce: crypto.randomUUID(),
+		});
+
+		// Resume the stream
+		chat.addToolResult({ toolCallId: pending.toolCallId, result });
+		pendingToolCalls = pendingToolCalls.filter((p) => p.toolCallId !== pending.toolCallId);
+	}
+
+	function rejectToolCall(pending: PendingToolCall) {
+		const result = 'User rejected this tool call.';
+
+		bus.publish('ai:toolResult', {
+			toolCallId: pending.toolCallId,
+			toolName: pending.toolName,
+			result,
+			turnId: pending.turnId,
+			_nonce: crypto.randomUUID(),
+		});
+
+		chat.addToolResult({ toolCallId: pending.toolCallId, result });
+		pendingToolCalls = pendingToolCalls.filter((p) => p.toolCallId !== pending.toolCallId);
+	}
+
+	// ── Chat setup ──────────────────────────────────────────────────
 
 	const chat = new Chat({
 		api: '/api/ai/chat',
@@ -30,9 +105,61 @@
 		onResponse: (response: Response) => {
 			const id = response.headers.get('X-Conversation-Id');
 			if (id) conversationId = id;
+			currentTurnId = crypto.randomUUID();
 		},
 		onFinish: () => {
 			markResponseReceived();
+			currentTurnId = null;
+		},
+		onToolCall: ({ toolCall }) => {
+			const nonce = crypto.randomUUID();
+			const turnId = currentTurnId ?? 'unknown';
+			const tier = getPermissionTier();
+
+			// Read-only: reject immediately
+			if (tier === 'read-only') {
+				return 'Tool execution is disabled (read-only mode).';
+			}
+
+			// Publish tool call event for I/O log
+			bus.publish('ai:toolCall', {
+				toolCallId: toolCall.toolCallId,
+				toolName: toolCall.toolName,
+				args: toolCall.args as Record<string, unknown>,
+				turnId,
+				_nonce: nonce,
+			});
+
+			// Auto mode: execute immediately
+			if (tier === 'auto') {
+				const result = executeToolCall(
+					toolCall.toolCallId,
+					toolCall.toolName,
+					toolCall.args as Record<string, unknown>,
+					turnId,
+				);
+
+				bus.publish('ai:toolResult', {
+					toolCallId: toolCall.toolCallId,
+					toolName: toolCall.toolName,
+					result,
+					turnId,
+					_nonce: crypto.randomUUID(),
+				});
+
+				return result;
+			}
+
+			// Suggest mode: defer execution, show preview
+			pendingToolCalls = [...pendingToolCalls, {
+				toolCallId: toolCall.toolCallId,
+				toolName: toolCall.toolName,
+				args: toolCall.args as Record<string, unknown>,
+				turnId,
+			}];
+
+			// Return undefined to pause the stream
+			return undefined;
 		},
 	});
 
@@ -42,6 +169,7 @@
 
 	const contextChips = $derived(getContextChips());
 	const tokenEstimate = $derived(getTokenEstimate());
+	const permissionTier = $derived(getPermissionTier());
 
 	const activeContextTypes = $derived(
 		contextChips
@@ -57,6 +185,10 @@
 
 	function handleDismiss(ctxPanelId: string) {
 		dismissContext(ctxPanelId);
+	}
+
+	function handlePermissionChange(tier: PermissionTier) {
+		setPermissionTier(tier);
 	}
 
 	// ── Scroll ──────────────────────────────────────────────────────
@@ -79,15 +211,19 @@
 		conversationId = undefined;
 		chat.messages = [];
 		chat.input = '';
+		pendingToolCalls = [];
 	}
 
 	function submitMessage() {
 		if (!chat.input.trim() || isLoading) return;
 		const context = serializeForRequest();
+		const tier = getPermissionTier();
+		const availableTools = tier !== 'read-only' ? getAvailableToolNames() : [];
 		chat.handleSubmit(undefined, {
 			body: {
 				...(conversationId ? { conversationId } : {}),
 				...(context.length > 0 ? { panelContext: context } : {}),
+				...(availableTools.length > 0 ? { availableTools } : {}),
 			},
 		});
 	}
@@ -123,7 +259,30 @@
 		{:else}
 			<div class="chat-messages-list">
 				{#each chat.messages as message (message.id)}
+					{#if message.role === 'assistant' && message.toolInvocations?.length}
+						{#each message.toolInvocations as invocation}
+							<div class="tool-call-indicator">
+								<span class="i-lucide-wrench tool-call-icon"></span>
+								<span class="tool-call-name">{invocation.toolName}</span>
+								{#if invocation.state === 'result'}
+									<span class="tool-call-result">{typeof invocation.result === 'string' ? invocation.result.slice(0, 80) : ''}{typeof invocation.result === 'string' && invocation.result.length > 80 ? '...' : ''}</span>
+								{:else if invocation.state === 'call' || invocation.state === 'partial-call'}
+									<span class="tool-call-pending">executing...</span>
+								{/if}
+							</div>
+						{/each}
+					{/if}
 					<ChatMessage role={message.role as 'user' | 'assistant'} content={message.content} />
+				{/each}
+
+				<!-- Pending tool call previews (suggest mode) -->
+				{#each pendingToolCalls as pending (pending.toolCallId)}
+					<ToolPreview
+						toolName={pending.toolName}
+						args={pending.args}
+						onapprove={() => approveToolCall(pending)}
+						onreject={() => rejectToolCall(pending)}
+					/>
 				{/each}
 
 				{#if isLoading && chat.messages[chat.messages.length - 1]?.role === 'user'}
@@ -158,9 +317,11 @@
 	<ContextTray
 		chips={contextChips}
 		totalTokens={tokenEstimate}
+		{permissionTier}
 		onpin={pinContext}
 		onunpin={unpinContext}
 		ondismiss={handleDismiss}
+		onpermissionchange={handlePermissionChange}
 	/>
 
 	<!-- Input (reuse existing ChatInput) -->
@@ -213,6 +374,34 @@
 		background: color-mix(in srgb, var(--color-error-fg, #ef4444) 10%, transparent);
 		border: 1px solid color-mix(in srgb, var(--color-error-fg, #ef4444) 20%, transparent);
 		color: var(--color-error-fg, #ef4444);
+	}
+
+	/* Tool call indicator */
+	.tool-call-indicator {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		padding: 4px 16px 4px 60px;
+		font-size: 11px;
+		color: var(--color-muted);
+	}
+
+	.tool-call-icon {
+		font-size: 11px;
+		opacity: 0.6;
+	}
+
+	.tool-call-name {
+		font-family: var(--font-mono);
+	}
+
+	.tool-call-result {
+		opacity: 0.7;
+	}
+
+	.tool-call-pending {
+		opacity: 0.5;
+		font-style: italic;
 	}
 
 	/* Typing indicator */

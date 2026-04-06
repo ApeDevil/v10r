@@ -1,15 +1,19 @@
 import * as v from 'valibot';
 
-const MessageRole = v.picklist(['user', 'assistant']);
-
-const ChatMessageSchema = v.object({
-	role: MessageRole,
-	content: v.pipe(v.string(), v.minLength(1), v.maxLength(32_000)),
+// AI SDK sends complex message formats after tool calls:
+// - role can be 'user' | 'assistant' | 'system' | 'tool'
+// - content can be string or array of parts (text, tool-call, tool-result)
+const ChatMessageSchema = v.looseObject({
+	role: v.picklist(['user', 'assistant', 'system', 'tool']),
+	content: v.union([
+		v.pipe(v.string(), v.maxLength(32_000)),
+		v.array(v.looseObject({})),
+	]),
 });
 
 const PanelContextEntry = v.object({
-	panelType: v.string(),
-	label: v.string(),
+	panelType: v.pipe(v.string(), v.maxLength(64)),
+	label: v.pipe(v.string(), v.maxLength(200)),
 	content: v.pipe(v.string(), v.maxLength(16_000)),
 });
 
@@ -19,6 +23,7 @@ export const ChatRequestSchema = v.object({
 	useRetrieval: v.optional(v.boolean()),
 	retrievalTiers: v.optional(v.array(v.picklist([1, 2, 3]))),
 	panelContext: v.optional(v.pipe(v.array(PanelContextEntry), v.maxLength(5))),
+	availableTools: v.optional(v.pipe(v.array(v.pipe(v.string(), v.minLength(1), v.maxLength(64))), v.maxLength(20))),
 });
 
 export const StreamingRequestSchema = v.object({

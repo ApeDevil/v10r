@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
 	import { apiFetch } from '$lib/api';
-	import { registerPanelContext, updatePanelContext } from '$lib/components/composites/dock';
+	import { registerPanelContext, registerPanelEntity, updatePanelContext } from '$lib/components/composites/dock';
 	import { registerPanelMenus } from '$lib/components/composites/dock';
+	import { parseCellRef } from '$lib/utils/spreadsheet';
 	import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 	import SpreadsheetFormulaBar from './SpreadsheetFormulaBar.svelte';
 	import SpreadsheetGrid from './SpreadsheetGrid.svelte';
@@ -178,6 +179,56 @@
 		}, 800);
 
 		return () => clearTimeout(contextTimer);
+	});
+
+	// ── AI Entity registration (write capabilities) ────────────────
+
+	$effect(() => {
+		return registerPanelEntity({
+			panelId,
+			panelType: 'spreadsheet',
+			label: 'Sheet1',
+			operations: [
+				{
+					toolName: 'spreadsheet_setCell',
+					description: 'Set a single cell value. Args: {cell: "A1", value: "hello"}',
+					snapshot: () => sheet.toJSON(),
+					restore: (snap) => sheet.fromJSON(snap as Record<string, { v: string | number | null; f?: string; t?: string }>),
+					execute: (args) => {
+						if (typeof args.cell !== 'string') return 'Error: cell must be a string';
+						if (args.value === undefined || args.value === null) return 'Error: value is required';
+						const cellStr = args.cell.toUpperCase();
+						if (!/^[A-Z]{1,2}[1-9]\d{0,3}$/.test(cellStr)) return `Error: invalid cell reference "${args.cell}"`;
+						const ref = parseCellRef(cellStr);
+						if (!ref) return `Error: invalid cell reference "${args.cell}"`;
+						sheet.setCellRaw(ref.col, ref.row, String(args.value));
+						return `Set ${cellStr} = ${args.value}`;
+					},
+				},
+				{
+					toolName: 'spreadsheet_setRange',
+					description: 'Set multiple cells. Args: {cells: [{cell: "A1", value: "x"}, ...]}',
+					snapshot: () => sheet.toJSON(),
+					restore: (snap) => sheet.fromJSON(snap as Record<string, { v: string | number | null; f?: string; t?: string }>),
+					execute: (args) => {
+						const cells = args.cells as Array<{ cell: string; value: string | number }> | undefined;
+						if (!Array.isArray(cells)) return 'Error: cells must be an array';
+						if (cells.length > 50) return 'Error: maximum 50 cells per call';
+						let count = 0;
+						for (const c of cells) {
+							if (typeof c.cell !== 'string' || c.value === undefined) continue;
+							const cellStr = c.cell.toUpperCase();
+							if (!/^[A-Z]{1,2}[1-9]\d{0,3}$/.test(cellStr)) continue;
+							const ref = parseCellRef(cellStr);
+							if (!ref) continue;
+							sheet.setCellRaw(ref.col, ref.row, String(c.value));
+							count++;
+						}
+						return `Set ${count} cell${count !== 1 ? 's' : ''}`;
+					},
+				},
+			],
+		});
 	});
 
 	// ── Panel menus ─────────────────────────────────────────────────

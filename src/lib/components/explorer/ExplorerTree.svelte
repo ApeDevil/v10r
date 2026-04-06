@@ -6,7 +6,7 @@
 		contextMenuItemVariants,
 		contextMenuSeparatorVariants,
 	} from '$lib/components/composites/context-menu';
-	import type { AssetListItem, PostListItem, UploadingItem } from './types';
+	import type { AssetListItem, PostListItem, SpreadsheetListItem, UploadingItem } from './types';
 
 	function formatBytes(bytes: number): string {
 		if (bytes === 0) return '0 B';
@@ -16,15 +16,29 @@
 		return `${value.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 	}
 
+	function timeAgo(dateStr: string): string {
+		if (!dateStr) return '';
+		const diff = Date.now() - new Date(dateStr).getTime();
+		const mins = Math.floor(diff / 60_000);
+		if (mins < 1) return 'just now';
+		if (mins < 60) return `${mins}m ago`;
+		const hours = Math.floor(mins / 60);
+		if (hours < 24) return `${hours}h ago`;
+		const days = Math.floor(hours / 24);
+		return `${days}d ago`;
+	}
+
 	interface Props {
 		posts: PostListItem[];
 		assets: AssetListItem[];
+		spreadsheets: SpreadsheetListItem[];
 		uploading: UploadingItem[];
 		expandedFolders: Set<string>;
 		selectedAssetId: string | null;
 		ontogglefolder: (folder: string) => void;
 		onselectpost: (post: PostListItem) => void;
 		onselectasset: (asset: AssetListItem) => void;
+		onselectspreadsheet: (sheet: SpreadsheetListItem) => void;
 		onexportpost: (post: PostListItem) => void;
 		ondeletepost?: (post: PostListItem) => void;
 		oninsertasset?: (asset: AssetListItem) => void;
@@ -35,12 +49,14 @@
 	let {
 		posts,
 		assets,
+		spreadsheets,
 		uploading,
 		expandedFolders,
 		selectedAssetId,
 		ontogglefolder,
 		onselectpost,
 		onselectasset,
+		onselectspreadsheet,
 		onexportpost,
 		ondeletepost,
 		oninsertasset,
@@ -138,6 +154,58 @@
 									Delete
 								</ContextMenuPrimitive.Item>
 							{/if}
+						</ContextMenuPrimitive.Content>
+					</ContextMenuPrimitive.Portal>
+				</ContextMenuPrimitive.Root>
+			{/each}
+		{/if}
+	{/if}
+
+	<!-- Data folder (spreadsheets) -->
+	<button
+		class="tree-folder tree-depth-0"
+		role="treeitem"
+		aria-selected={false}
+		aria-expanded={expandedFolders.has('data')}
+		onclick={() => ontogglefolder('data')}
+	>
+		<span class="tree-toggle">{expandedFolders.has('data') ? '▾' : '▸'}</span>
+		<span class="i-lucide-database tree-icon tree-icon-data"></span>
+		<span class="tree-label">data</span>
+		<span class="tree-count">{spreadsheets.length}</span>
+	</button>
+
+	{#if expandedFolders.has('data')}
+		{#if spreadsheets.length === 0}
+			<div class="tree-empty tree-depth-1">
+				<span class="i-lucide-sheet tree-empty-icon"></span>
+				<span>No spreadsheets yet</span>
+			</div>
+		{:else}
+			{#each spreadsheets as s (s.id)}
+				<ContextMenuPrimitive.Root>
+					<ContextMenuPrimitive.Trigger class="tree-ctx-trigger">
+						{#snippet child({ props })}
+							<div {...props} class="tree-file tree-depth-1" role="treeitem" aria-selected={false}>
+								<button class="tree-file-btn" onclick={() => onselectspreadsheet(s)}>
+									<span class="tree-toggle"></span>
+									<span class="i-lucide-sheet tree-icon tree-icon-sheet"></span>
+									<span class="tree-file-info">
+										<span class="tree-file-name">{s.name}</span>
+										<span class="tree-file-meta">
+											<span class="tree-file-title">{s.cellCount} cells · {timeAgo(s.updatedAt)}</span>
+										</span>
+									</span>
+								</button>
+							</div>
+						{/snippet}
+					</ContextMenuPrimitive.Trigger>
+					<ContextMenuPrimitive.Portal>
+						<ContextMenuPrimitive.Content class={contextMenuContentVariants()}>
+							<ContextMenuPrimitive.Item class={contextMenuItemVariants()} onclick={() => onselectspreadsheet(s)}>
+								<span class="i-lucide-external-link ctx-icon"></span>
+								Open
+							</ContextMenuPrimitive.Item>
 						</ContextMenuPrimitive.Content>
 					</ContextMenuPrimitive.Portal>
 				</ContextMenuPrimitive.Root>
@@ -302,6 +370,14 @@
 
 	.tree-icon-blog {
 		color: var(--color-primary);
+	}
+
+	.tree-icon-data {
+		color: var(--color-success, #22c55e);
+	}
+
+	.tree-icon-sheet {
+		color: var(--color-success, #22c55e);
 	}
 
 	.tree-icon-assets {

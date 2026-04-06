@@ -2,6 +2,7 @@
 import type { Snippet } from 'svelte';
 import { browser } from '$app/environment';
 import DeskShortcuts from './DeskShortcuts.svelte';
+import { IOLogRecorder } from '$lib/components/io-log';
 import DockActivityBar from './DockActivityBar.svelte';
 import DockNode from './DockNode.svelte';
 import { collectLeaves, hasPanelType } from './dock.operations';
@@ -87,6 +88,7 @@ $effect(() => {
 	data-bar-position={dock.activityBarPosition}
 >
 	<DeskShortcuts />
+	<IOLogRecorder />
 
 	{#if activityBarItems && activityBarItems.length > 0}
 		<DockActivityBar

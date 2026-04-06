@@ -108,6 +108,9 @@ export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 		}
 		// Recalculate all formula cells that might depend on this one
 		recalculateAll();
+		// Force reactivity: Map.set() on $state(Map) doesn't always trigger
+		// re-renders when called from external callbacks (e.g. AI tool handlers)
+		cells = new Map(cells);
 		dirty++;
 	}
 

@@ -105,6 +105,7 @@
 		</thead>
 		<tbody>
 			{#each { length: sheet.rows } as _, r}
+				{@const _dirty = sheet.dirty}
 				<tr>
 					<td class="sheet-row-header" class:sheet-row-selected={sheet.activeCell?.row === r}>{r + 1}</td>
 					{#each { length: sheet.cols } as _, c}
