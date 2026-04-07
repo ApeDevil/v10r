@@ -397,7 +397,7 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 
 		return Response.json(
 			{ error: { code: aiErr.kind, message: safeAIMessage(aiErr.kind) } },
-			{ status: aiErrorToStatus(aiErr.kind) },
+			{ status: aiErrorToStatus(aiErr.kind), headers: { 'X-AI-Error-Kind': aiErr.kind } },
 		);
 	}
 }

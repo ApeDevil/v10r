@@ -30,9 +30,31 @@
 
 	let conversationId: string | undefined = $state();
 	let inputValue = $state('');
+	let lastErrorKind = $state<string | null>(null);
 
 	const bus = getDeskBus();
 	const dock = getDockContext();
+
+	const ERROR_MESSAGES: Record<string, string> = {
+		rate_limit: 'Rate limit reached. Wait a moment and try again.',
+		timeout: 'AI service timed out. Try again.',
+		unavailable: 'AI service is temporarily unavailable.',
+		context_length: 'Message too long. Try a shorter message.',
+		authentication: 'AI authentication failed. Check provider config.',
+		model: 'AI model unavailable. Try again later.',
+	};
+
+	/** Classify an error kind from message text when no header is available. */
+	function classifyErrorMessage(msg: string): string | null {
+		const lower = msg.toLowerCase();
+		if (lower.includes('rate') || lower.includes('quota') || lower.includes('429') || lower.includes('too many')) return 'rate_limit';
+		if (lower.includes('timeout') || lower.includes('timed out') || lower.includes('etimedout')) return 'timeout';
+		if (lower.includes('unavailable') || lower.includes('503') || lower.includes('fetch failed')) return 'unavailable';
+		if (lower.includes('context length') || lower.includes('too long') || lower.includes('token')) return 'context_length';
+		if (lower.includes('401') || lower.includes('403') || lower.includes('authentication')) return 'authentication';
+		if (lower.includes('model') || lower.includes('404')) return 'model';
+		return null;
+	}
 
 	const chat = new Chat({
 		transport: new DefaultChatTransport({
@@ -42,6 +64,12 @@
 				const response = await fetch(url, init);
 				const id = response.headers.get('X-Conversation-Id');
 				if (id) conversationId = id;
+				const errorKind = response.headers.get('X-AI-Error-Kind');
+				if (errorKind) {
+					lastErrorKind = errorKind;
+					const msg = ERROR_MESSAGES[errorKind] ?? 'Something went wrong.';
+					appendIOLog({ source: 'effect', level: 'error', label: `AI error: ${msg}`, detail: errorKind });
+				}
 				return response;
 			},
 		}),
@@ -51,6 +79,18 @@
 	});
 
 	const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
+
+	// ── Error classification (stream errors bypass response headers) ──
+
+	$effect(() => {
+		const err = chat.error;
+		if (!err) return;
+		if (lastErrorKind) return; // already classified via header
+		const kind = classifyErrorMessage(err.message ?? '');
+		if (kind) lastErrorKind = kind;
+		const msg = ERROR_MESSAGES[kind ?? ''] ?? 'Something went wrong.';
+		appendIOLog({ source: 'effect', level: 'error', label: `AI error: ${msg}`, detail: kind ?? 'unknown' });
+	});
 
 	// ── Token usage estimate ────────────────────────────────────────
 
@@ -197,6 +237,7 @@
 
 	function submitMessage() {
 		if (!inputValue.trim() || isLoading) return;
+		lastErrorKind = null;
 		const context = serializeForRequest();
 
 		// Log context reads to I/O log
@@ -207,6 +248,7 @@
 				detail: `${ctx.content.length} chars`,
 			});
 		}
+		appendIOLog({ source: 'progress', label: 'Sending message...' });
 
 		const text = inputValue;
 		inputValue = '';
@@ -281,11 +323,7 @@
 	{#if chat.error}
 		<div class="chat-error" role="alert" aria-live="polite">
 			<span class="font-medium">Could not get a response.</span>
-			{#if chat.error.message?.includes('503')}
-				The AI service is temporarily unavailable.
-			{:else}
-				Something went wrong. Try again.
-			{/if}
+			{ERROR_MESSAGES[lastErrorKind ?? ''] ?? 'Something went wrong. Try again.'}
 		</div>
 	{/if}
 
