@@ -28,7 +28,7 @@ const PROVIDER_CONFIGS: {
 		name: 'Groq',
 		model: 'llama-3.3-70b-versatile',
 		envVar: 'GROQ_API_KEY',
-		supportsTools: false, // Llama drifts to text after ~5 messages with tools
+		supportsTools: true, // Llama can drift in long multi-turn, but our stepCountIs(3) bounds it
 		factory: (apiKey) => createGroq({ apiKey })('llama-3.3-70b-versatile'),
 	},
 	{
@@ -42,10 +42,10 @@ const PROVIDER_CONFIGS: {
 	{
 		id: 'google',
 		name: 'Google Gemini',
-		model: 'gemini-2.0-flash',
+		model: 'gemini-2.5-flash',
 		envVar: 'GOOGLE_GENERATIVE_AI_API_KEY',
 		supportsTools: true, // Works but known issues with optional arrays
-		factory: (apiKey) => createGoogleGenerativeAI({ apiKey })('gemini-2.0-flash'),
+		factory: (apiKey) => createGoogleGenerativeAI({ apiKey })('gemini-2.5-flash'),
 	},
 ];
 
@@ -80,6 +80,26 @@ export function resolveActiveProvider(registry: ProviderEntry[]): ProviderEntry 
 /** Get other configured providers as fallbacks */
 export function getFallbackProviders(registry: ProviderEntry[], activeId: string): ProviderEntry[] {
 	return registry.filter((p) => p.configured && p.id !== activeId);
+}
+
+// ── Circuit breaker — cooldown for rate-limited providers ──────────
+
+const cooldowns = new Map<string, number>();
+
+/** Mark a provider as rate-limited for `durationMs` (default 60s). */
+export function markCooldown(providerId: string, durationMs = 60_000): void {
+	cooldowns.set(providerId, Date.now() + durationMs);
+}
+
+/** Check if a provider is currently in cooldown. Auto-clears expired entries. */
+export function isCooledDown(providerId: string): boolean {
+	const resumeAt = cooldowns.get(providerId);
+	if (!resumeAt) return false;
+	if (Date.now() >= resumeAt) {
+		cooldowns.delete(providerId);
+		return false;
+	}
+	return true;
 }
 
 /**

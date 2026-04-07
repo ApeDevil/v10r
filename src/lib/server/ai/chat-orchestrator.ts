@@ -4,9 +4,10 @@
  * No SvelteKit imports — reusable from AI tools, REST, and background jobs.
  */
 import { createUIMessageStreamResponse, convertToModelMessages, stepCountIs, streamText, type UIMessage } from 'ai';
-import { chatModel, toolModel, fallbackProviders } from '$lib/server/ai';
+import { chatModel, toolModel, toolProviderId, activeProviderInfo, fallbackProviders } from '$lib/server/ai';
 import { MAX_TOKENS, SYSTEM_PROMPT, DESK_SYSTEM_PROMPT } from '$lib/server/ai/config';
 import { classifyAIError, safeAIMessage, aiErrorToStatus } from '$lib/server/ai/errors';
+import { isCooledDown, markCooldown } from '$lib/server/ai/providers';
 import { createDeskTools, type DeskToolScope } from '$lib/server/ai/tools';
 import { checkConversationLimit } from '$lib/server/db/ai/limits';
 import { createConversation, refreshConversationTokens, saveConversationStep, saveMessages, saveToolCall, updateMessageContent } from '$lib/server/db/ai/mutations';
@@ -159,18 +160,26 @@ function tryFallback(
 	messages: ChatInput['messages'],
 	conversationId: string | undefined,
 	userId: string,
+	wantsTools = false,
+	deskTools?: ReturnType<typeof createDeskTools>,
 ): Response | null {
 	for (const fallback of fallbackProviders) {
+		if (isCooledDown(fallback.id)) continue;
+		// For tool requests, prefer tool-capable providers
+		if (wantsTools && !fallback.supportsTools) continue;
 		try {
 			const fallbackModel = fallback.getInstance();
 			if (!fallbackModel) continue;
 
+			const useTools = wantsTools && fallback.supportsTools && deskTools;
 			const result = streamText({
 				model: fallbackModel,
 				system: baseSystemPrompt,
 				messages,
+				maxRetries: 0,
 				maxOutputTokens: MAX_TOKENS,
 				abortSignal: AbortSignal.timeout(30_000),
+				...(useTools ? { tools: deskTools, toolChoice: 'auto' as const, stopWhen: stepCountIs(3) } : {}),
 				onFinish: createOnFinish(conversationId, userId),
 				onError: ({ error }) => {
 					console.error('[ai:chat:fallback] Stream error:', error);
@@ -216,7 +225,8 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 
 	// Use tool-capable provider when tools requested, fall back to chatModel without tools
 	const wantsTools = !!toolScopes?.length;
-	const hasTools = wantsTools && !!toolModel;
+	const toolProviderAvailable = !!toolModel && !!toolProviderId && !isCooledDown(toolProviderId);
+	const hasTools = wantsTools && toolProviderAvailable;
 	const model = hasTools ? toolModel : chatModel;
 	const deskTools = hasTools ? createDeskTools(userId, toolScopes) : undefined;
 	const baseSystemPrompt = buildSystemPrompt(panelContext, hasTools, deskLayout);
@@ -277,6 +287,7 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 						model,
 						system: systemPrompt,
 						messages,
+						maxRetries: 0,
 						maxOutputTokens: MAX_TOKENS,
 						abortSignal: AbortSignal.timeout(30_000),
 						onFinish: async ({ text }) => {
@@ -311,6 +322,7 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 			model,
 			system: baseSystemPrompt,
 			messages,
+			maxRetries: 0,
 			maxOutputTokens: MAX_TOKENS,
 			abortSignal: AbortSignal.timeout(30_000),
 			...(deskTools ? {
@@ -390,8 +402,15 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 	} catch (err) {
 		const aiErr = classifyAIError(err);
 
+		// Circuit breaker: cooldown the provider that just failed with rate limit
+		if (aiErr.kind === 'rate_limit') {
+			const failedProvider = hasTools ? toolProviderId : (activeProviderInfo?.id ?? null);
+			if (failedProvider) markCooldown(failedProvider);
+		}
+
 		if (['unavailable', 'timeout', 'unknown', 'rate_limit'].includes(aiErr.kind)) {
-			const fallbackResponse = tryFallback(baseSystemPrompt, messages, conversationId, userId);
+			const fallbackTools = wantsTools ? (deskTools ?? createDeskTools(userId, toolScopes)) : undefined;
+			const fallbackResponse = tryFallback(baseSystemPrompt, messages, conversationId, userId, wantsTools, fallbackTools);
 			if (fallbackResponse) return fallbackResponse;
 		}
 

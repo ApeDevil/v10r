@@ -13,6 +13,9 @@ export const chatModel = active?.getInstance() ?? null;
 /** Tool-capable model — may differ from chatModel. Null if no tool-capable provider. */
 export const toolModel = toolProvider?.getInstance() ?? null;
 
+/** Tool provider ID for circuit breaker tracking */
+export const toolProviderId = toolProvider?.id ?? null;
+
 /** Info about the active provider */
 export const activeProviderInfo = active ? { id: active.id, name: active.name, model: active.model } : null;
 
