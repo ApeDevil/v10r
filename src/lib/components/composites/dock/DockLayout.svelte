@@ -4,7 +4,7 @@ import { browser } from '$app/environment';
 import DeskShortcuts from './DeskShortcuts.svelte';
 import DockActivityBar from './DockActivityBar.svelte';
 import DockNode from './DockNode.svelte';
-import { collectLeaves, hasPanelType } from './dock.operations';
+import { collectLeaves, collapseEmptyLeaves, hasPanelType } from './dock.operations';
 import { loadDockState, saveDockState } from './dock.persistence';
 import { buildThemeFromServer, loadDeskSettings, saveDeskSettings, clearDeskSettings, DEFAULT_THEME } from './desk-settings.persistence';
 import { setDeskSettingsContext } from './desk-settings.svelte';
@@ -64,8 +64,23 @@ const mergedPanels = saved?.panels
 			.map(([id, p]) => [id, { ...p, ...initialPanels[id] }]),
 	)
 	: initialPanels;
+
+// Re-prune the saved tree against mergedPanels — the mergedPanels filter may have
+// removed panels still referenced in tabs, leaving orphaned empty leaves.
+function pruneAndCollapse(node: LayoutNode, panels: Record<string, PanelDefinition>): LayoutNode {
+	const strip = (n: LayoutNode): LayoutNode => {
+		if (n.type === 'leaf') {
+			const tabs = n.tabs.filter((id) => id in panels);
+			return { ...n, tabs, activeTab: tabs.includes(n.activeTab) ? n.activeTab : (tabs[0] ?? '') };
+		}
+		return { ...n, children: [strip(n.children[0]), strip(n.children[1])] } as LayoutNode;
+	};
+	return collapseEmptyLeaves(strip(node)) ?? initialRoot;
+}
+
+const restoredRoot = saved?.root ? pruneAndCollapse(saved.root, mergedPanels) : initialRoot;
 const dock = setDockContext(
-	saved?.root ?? initialRoot,
+	restoredRoot,
 	mergedPanels,
 	saved?.activityBarPosition ?? 'left',
 );

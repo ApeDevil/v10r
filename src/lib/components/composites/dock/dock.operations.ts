@@ -136,6 +136,19 @@ export function collectLeaves(node: LayoutNode): LeafNode[] {
 	return [...collectLeaves(node.children[0]), ...collectLeaves(node.children[1])];
 }
 
+/** Collapse empty leaves from the tree, promoting siblings. Returns null if entire tree is empty. */
+export function collapseEmptyLeaves(node: LayoutNode): LayoutNode | null {
+	if (node.type === 'leaf') {
+		return node.tabs.length === 0 ? null : node;
+	}
+	const left = collapseEmptyLeaves(node.children[0]);
+	const right = collapseEmptyLeaves(node.children[1]);
+	if (left === null && right === null) return null;
+	if (left === null) return right;
+	if (right === null) return left;
+	return { ...node, children: [left, right] };
+}
+
 /** Check if a panel type exists anywhere in the tree */
 export function hasPanelType(root: LayoutNode, panelType: string, panels: Record<string, PanelDefinition>): boolean {
 	const leaves = collectLeaves(root);
