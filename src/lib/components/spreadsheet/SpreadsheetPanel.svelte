@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
 	import { apiFetch } from '$lib/api';
-	import { getDeskBus, registerPanelContext, updatePanelContext } from '$lib/components/composites/dock';
+	import { getDeskBus, getDockContext, registerPanelContext, updatePanelContext } from '$lib/components/composites/dock';
 	import { registerPanelMenus } from '$lib/components/composites/dock';
 	import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 	import SpreadsheetFormulaBar from './SpreadsheetFormulaBar.svelte';
@@ -16,6 +16,7 @@
 	let { panelId }: Props = $props();
 
 	const sheet = createSpreadsheetState();
+	const dock = getDockContext();
 
 	// ── Persistence ─────────────────────────────────────────────────
 
@@ -34,8 +35,9 @@
 		try {
 			const res = await apiFetch(`/api/desk/files/${fId}`);
 			if (res.ok) {
-				const data = await res.json();
-				const cells = data.spreadsheet?.cells as Record<string, { v: string | number | null; f?: string; t?: string }> | undefined;
+				const json = await res.json();
+				const payload = json.data ?? json;
+				const cells = payload.spreadsheet?.cells as Record<string, { v: string | number | null; f?: string; t?: string }> | undefined;
 				if (cells && Object.keys(cells).length > 0) {
 					sheet.fromJSON(cells);
 				}
@@ -79,7 +81,7 @@
 			const res = await apiFetch('/api/desk/spreadsheets', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ name: 'Sheet1', cells: sheet.toJSON() }),
+				body: JSON.stringify({ name: sheetName, cells: sheet.toJSON() }),
 			});
 			if (res.ok) {
 				const { spreadsheet } = await res.json();
@@ -143,8 +145,9 @@
 			try {
 				const res = await apiFetch(`/api/desk/files/${fId}`);
 				if (res.ok) {
-					const data = await res.json();
-					const cells = data.spreadsheet?.cells as Record<string, { v: string | number | null; f?: string; t?: string }> | undefined;
+					const json = await res.json();
+					const payload = json.data ?? json;
+					const cells = payload.spreadsheet?.cells as Record<string, { v: string | number | null; f?: string; t?: string }> | undefined;
 					if (cells) {
 						sheet.fromJSON(cells);
 						saveStatus = 'saved';
@@ -198,9 +201,12 @@
 	// Plain variable (not $state) — only used as a guard flag within this component
 	let contextRegistered = false;
 
+	/** Derive the sheet name from the dock panel label (falls back to 'Sheet'). */
+	const sheetName = $derived(dock.panels[panelId]?.label || 'Sheet');
+
 	// Register once on mount. untrack prevents re-running when sheet state changes.
 	$effect(() => {
-		const ctx = untrack(() => sheet.serializeContext('Sheet1'));
+		const ctx = untrack(() => sheet.serializeContext(sheetName));
 		const cleanup = registerPanelContext({
 			panelId,
 			panelType: 'spreadsheet',
@@ -228,7 +234,7 @@
 
 		clearTimeout(contextTimer);
 		contextTimer = setTimeout(() => {
-			const ctx = sheet.serializeContext('Sheet1');
+			const ctx = sheet.serializeContext(sheetName);
 			updatePanelContext(panelId, {
 				label: ctx.label,
 				content: ctx.content,
