@@ -1,4 +1,5 @@
 # claude
+claude --resume
 claude --chrome
 
 cd dev/velociraptor/
