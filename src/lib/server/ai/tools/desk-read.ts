@@ -4,6 +4,7 @@
  */
 import { tool, jsonSchema } from 'ai';
 import { listFiles, getFile, getSpreadsheetByFileId, getMarkdownByFileId } from '$lib/server/db/desk/queries';
+import { getFileTree, renderFileTreeWithIndex } from '$lib/server/desk/file-tree';
 
 /** Summarize spreadsheet cells to stay under ~400 tokens. */
 function summarizeCells(cells: Record<string, unknown>): string {
@@ -94,6 +95,25 @@ export function createReadTools(userId: string) {
 					};
 				} catch {
 					return { error: 'Failed to read file.' };
+				}
+			},
+		}),
+
+		desk_file_tree: tool({
+			description:
+				'Get the full file tree showing all folders, desk files, blog posts, and image assets. ' +
+				'Returns a text tree with IDs for cross-referencing with desk_read_file. ' +
+				'Use this first to understand what content exists.',
+			inputSchema: jsonSchema<Record<string, never>>({
+				type: 'object',
+				properties: {},
+			}),
+			execute: async () => {
+				try {
+					const tree = await getFileTree(userId);
+					return { tree: renderFileTreeWithIndex(tree) };
+				} catch {
+					return { error: 'Failed to load file tree.' };
 				}
 			},
 		}),
