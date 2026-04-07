@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Chat } from '@ai-sdk/svelte';
 	import { DefaultChatTransport } from 'ai';
+	import { onDestroy } from 'svelte';
 	import { CSRF_HEADER } from '$lib/api';
 	import {
 		appendIOLog,
@@ -21,6 +22,7 @@
 	import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
 	import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
 	import ContextTray from './ContextTray.svelte';
+	import { chatStateCache } from './chat-state-cache';
 
 	interface Props {
 		panelId: string;
@@ -28,7 +30,8 @@
 
 	let { panelId }: Props = $props();
 
-	let conversationId: string | undefined = $state();
+	const cached = chatStateCache.get(panelId);
+	let conversationId: string | undefined = $state(cached?.conversationId);
 	let inputValue = $state('');
 	let lastErrorKind = $state<string | null>(null);
 
@@ -57,6 +60,7 @@
 	}
 
 	const chat = new Chat({
+		...(cached?.messages?.length ? { messages: cached.messages } : {}),
 		transport: new DefaultChatTransport({
 			api: '/api/ai/chat',
 			headers: CSRF_HEADER,
@@ -76,6 +80,16 @@
 		onFinish: () => {
 			markResponseReceived();
 		},
+	});
+
+	// Persist state when component is destroyed (panel move / close)
+	onDestroy(() => {
+		if (chat.messages.length > 0 || conversationId) {
+			chatStateCache.set(panelId, {
+				conversationId,
+				messages: $state.snapshot(chat.messages) as typeof chat.messages,
+			});
+		}
 	});
 
 	const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
@@ -233,6 +247,7 @@
 		conversationId = undefined;
 		chat.messages = [];
 		inputValue = '';
+		chatStateCache.delete(panelId);
 	}
 
 	function submitMessage() {
