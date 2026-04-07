@@ -22,20 +22,20 @@ export function createReadTools(userId: string) {
 				"List files in the user's desk workspace. " +
 				'Returns file names, IDs, types, and last-updated timestamps. ' +
 				'Use this to discover what files exist before reading or editing.',
-			inputSchema: jsonSchema<{ file_type: string | null }>({
+			inputSchema: jsonSchema<{ file_type: string }>({
 				type: 'object',
 				properties: {
 					file_type: {
-						type: ['string', 'null'],
-						enum: ['spreadsheet', 'markdown', null],
-						description: 'Filter by file type. Null returns all types.',
+						type: 'string',
+						enum: ['spreadsheet', 'markdown', 'all'],
+						description: 'Filter by file type. "all" returns all types.',
 					},
 				},
 				required: ['file_type'],
 			}),
 			execute: async ({ file_type }) => {
 				try {
-					const files = await listFiles(userId, file_type ?? undefined);
+					const files = await listFiles(userId, file_type === 'all' ? undefined : file_type);
 					return {
 						files: files.map((f) => ({
 							id: f.id,

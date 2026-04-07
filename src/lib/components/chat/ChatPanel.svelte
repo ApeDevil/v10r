@@ -211,14 +211,16 @@
 		const text = inputValue;
 		inputValue = '';
 
-		chat.sendMessage({
-			text,
-			body: {
-				...(conversationId ? { conversationId } : {}),
-				...(context.length > 0 ? { panelContext: context } : {}),
-				toolScopes: ['desk:read', 'desk:write', 'desk:create'],
+		chat.sendMessage(
+			{ text },
+			{
+				body: {
+					...(conversationId ? { conversationId } : {}),
+					...(context.length > 0 ? { panelContext: context } : {}),
+					toolScopes: ['desk:read', 'desk:write', 'desk:create'],
+				},
 			},
-		});
+		);
 	}
 
 	// ── Panel menus ─────────────────────────────────────────────────
