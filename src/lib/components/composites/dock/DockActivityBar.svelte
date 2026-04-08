@@ -5,6 +5,7 @@ import { cn } from '$lib/utils/cn';
 import { collectLeaves, hasPanelType } from './dock.operations';
 import { getDockContext } from './dock.state.svelte';
 import { getDeskSettings } from './desk-settings.svelte';
+import WorkspaceZone from './WorkspaceZone.svelte';
 import type { ActivityBarItem, ActivityBarPosition, PanelDefinition } from './dock.types';
 
 interface Props {
@@ -77,6 +78,7 @@ function handleClick(item: ActivityBarItem) {
 					</button>
 				{/each}
 					<div class="dock-activity-spacer"></div>
+					<WorkspaceZone />
 					<button
 						class="dock-activity-btn"
 						title="Desk Preferences"

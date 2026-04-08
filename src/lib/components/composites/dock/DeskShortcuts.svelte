@@ -5,8 +5,11 @@
 	import { getDeskSettings } from './desk-settings.svelte';
 	import { hasPanelType, collectLeaves } from './dock.operations';
 
+	import { getWorkspaceContext } from './workspace.state.svelte';
+
 	const dock = getDockContext();
 	const deskSettings = getDeskSettings();
+	const workspace = getWorkspaceContext();
 
 	// Build View menu for shortcut matching
 	const viewMenu = $derived<MenuBarMenu>({
@@ -73,6 +76,19 @@
 
 		const ctrl = e.ctrlKey || e.metaKey;
 		if (!ctrl) return;
+
+		// Workspace shortcuts: Ctrl+Alt+1-9
+		if (e.altKey && !e.shiftKey) {
+			const num = Number.parseInt(e.key);
+			if (num >= 1 && num <= 9) {
+				const target = workspace.workspaces[num - 1];
+				if (target) {
+					e.preventDefault();
+					workspace.switchTo(target.id);
+					return;
+				}
+			}
+		}
 
 		// Global shortcuts (always active)
 		if (e.shiftKey) {

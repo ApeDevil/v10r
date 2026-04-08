@@ -27,4 +27,6 @@ export interface DeskTheme {
 	typeStyles: Record<string, PanelColorOverride>;
 	presets: DeskPreset[];
 	activePresetId: string | null;
+	/** Workspace switcher display mode in the activity bar. */
+	workspaceSwitcherMode?: 'numbers' | 'select' | 'auto';
 }

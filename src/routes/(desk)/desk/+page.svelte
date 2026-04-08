@@ -15,6 +15,8 @@ import { DESK_ACTIVITY_BAR_ITEMS, DESK_PANEL_TYPES, DESK_PANELS } from '$lib/con
 const authenticated = $derived(!!page.data.session?.user?.id);
 const serverTheme = $derived(page.data.deskTheme ?? null);
 const serverPresets = $derived(page.data.deskPresets ?? []);
+const serverWorkspaces = $derived(page.data.deskWorkspaces ?? []);
+const serverActiveWorkspaceId = $derived(page.data.deskActiveWorkspaceId ?? null);
 
 let openPanel = $derived(page.url.searchParams.get('open'));
 
@@ -94,6 +96,8 @@ function getPanelType(panelId: string): string | undefined {
 		{authenticated}
 		{serverTheme}
 		{serverPresets}
+		{serverWorkspaces}
+		{serverActiveWorkspaceId}
 		class="desk-dock"
 	>
 		{#snippet panelContent(panelId)}

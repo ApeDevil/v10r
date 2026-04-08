@@ -29,6 +29,7 @@ export interface ChatInput {
 	panelContext?: { panelType: string; label: string; content: string }[];
 	toolScopes?: DeskToolScope[];
 	deskLayout?: { panelId: string; fileId?: string; fileType?: string; label: string }[];
+	activeWorkspace?: { id: string; name: string };
 }
 
 export interface ChatResult {
@@ -89,8 +90,13 @@ function buildSystemPrompt(
 	panelContext?: ChatInput['panelContext'],
 	hasTools = false,
 	deskLayout?: ChatInput['deskLayout'],
+	activeWorkspace?: ChatInput['activeWorkspace'],
 ): string {
 	let prompt = hasTools ? DESK_SYSTEM_PROMPT : SYSTEM_PROMPT;
+
+	if (activeWorkspace) {
+		prompt += `\n\nThe user is in workspace "${escapeXmlAttr(activeWorkspace.name)}".`;
+	}
 
 	if (panelContext?.length) {
 		const sanitized = panelContext.map((pc) => ({
@@ -205,7 +211,7 @@ function tryFallback(
  * Returns a Response (either streaming or error JSON).
  */
 export async function orchestrateChat(input: ChatInput): Promise<Response> {
-	const { userId, messages: rawMessages, conversationId: existingConvId, useRetrieval, retrievalTiers, panelContext, toolScopes, deskLayout } = input;
+	const { userId, messages: rawMessages, conversationId: existingConvId, useRetrieval, retrievalTiers, panelContext, toolScopes, deskLayout, activeWorkspace } = input;
 
 	// Window conversation history to prevent context overflow in multi-turn chats
 	const windowedMessages = windowMessages(rawMessages);
@@ -229,7 +235,7 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 	const hasTools = wantsTools && toolProviderAvailable;
 	const model = hasTools ? toolModel : chatModel;
 	const deskTools = hasTools ? createDeskTools(userId, toolScopes) : undefined;
-	const baseSystemPrompt = buildSystemPrompt(panelContext, hasTools, deskLayout);
+	const baseSystemPrompt = buildSystemPrompt(panelContext, hasTools, deskLayout, activeWorkspace);
 
 	// Resolve conversation (pass raw messages for title extraction)
 	const convResult = await resolveConversation(userId, existingConvId, windowedMessages);

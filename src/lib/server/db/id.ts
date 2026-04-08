@@ -36,6 +36,8 @@ export const createId = {
 	toolCall: () => `tcl_${shortId()}`,
 	/** AI conversation step: stp_a8f3e1b2c4d9 */
 	conversationStep: () => `stp_${shortId()}`,
+	/** Desk workspace: wsp_a8f3e1b2c4d9 */
+	workspace: () => `wsp_${shortId()}`,
 	/** Generic UUID */
 	uuid: () => crypto.randomUUID(),
 } as const;

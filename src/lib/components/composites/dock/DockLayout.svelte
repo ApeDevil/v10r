@@ -11,8 +11,11 @@ import { setDeskSettingsContext } from './desk-settings.svelte';
 import type { DeskTheme } from './desk-settings.types';
 import { setDeskBusContext } from './desk-bus.svelte';
 import { setDockContext } from './dock.state.svelte';
+import { setWorkspaceContext } from './workspace.state.svelte';
+import { buildWorkspacesFromServer, saveWorkspaceStore, loadWorkspaceStore } from './workspace.persistence';
 import DeskPreferencesDialog from './DeskPreferencesDialog.svelte';
 import type { ActivityBarItem, LayoutNode, PanelDefinition } from './dock.types';
+import type { Workspace } from './workspace.types';
 
 interface Props {
 	initialRoot: LayoutNode;
@@ -35,6 +38,17 @@ interface Props {
 		workspace: Record<string, string | undefined>;
 		typeStyles: Record<string, { bg?: string; border?: string }>;
 	}>;
+	/** Server-loaded workspaces (from DB). */
+	serverWorkspaces?: Array<{
+		id: string;
+		name: string;
+		layout: unknown;
+		sortOrder: number;
+		createdAt: string;
+		updatedAt: string;
+	}>;
+	/** Server-loaded active workspace ID. */
+	serverActiveWorkspaceId?: string | null;
 	panelContent: Snippet<[string]>;
 	class?: string;
 }
@@ -48,6 +62,8 @@ let {
 	authenticated = false,
 	serverTheme = null,
 	serverPresets = [],
+	serverWorkspaces = [],
+	serverActiveWorkspaceId = null,
 	panelContent,
 	class: className,
 }: Props = $props();
@@ -140,17 +156,99 @@ const deskSettings = setDeskSettingsContext(initialTheme, {
 	},
 });
 
+// ── Workspace state ─────────────────────────────────────────────
+// Priority: server data (DB) > localStorage cache > empty
+const hasServerWorkspaces = authenticated && serverWorkspaces.length > 0;
+const initialWorkspaces: Workspace[] = hasServerWorkspaces
+	? buildWorkspacesFromServer(serverWorkspaces)
+	: (browser ? loadWorkspaceStore()?.workspaces : null) ?? [];
+const initialActiveWorkspaceId = hasServerWorkspaces
+	? serverActiveWorkspaceId
+	: (browser ? loadWorkspaceStore()?.activeId : null) ?? null;
+
+const workspace = setWorkspaceContext(initialWorkspaces, initialActiveWorkspaceId, dock, {
+	onSync: (data) => {
+		if (!authenticated) return;
+		try {
+			fetch('/api/desk/workspaces/sync', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(data),
+			});
+		} catch { /* silent */ }
+	},
+	onCreate: async (data) => {
+		if (!authenticated) return null;
+		try {
+			const res = await fetch('/api/desk/workspaces', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(data),
+			});
+			const result = await res.json();
+			return result.data?.id ?? null;
+		} catch { return null; }
+	},
+	onUpdate: async (id, data) => {
+		if (!authenticated) return;
+		try {
+			await fetch(`/api/desk/workspaces/${id}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(data),
+			});
+		} catch { /* silent */ }
+	},
+	onDelete: async (id) => {
+		if (!authenticated) return;
+		try {
+			await fetch(`/api/desk/workspaces/${id}`, { method: 'DELETE' });
+		} catch { /* silent */ }
+	},
+});
+
 // Debounced persistence — $state.snapshot() creates deep tracking
 // so in-place mutations (e.g. resizeSplit) also trigger saves.
 if (persist && browser) {
 	let timer: ReturnType<typeof setTimeout>;
 	$effect(() => {
+		// Skip saving during workspace switches
+		if (workspace.isSwitching) return;
 		// snapshot() deeply reads all properties, establishing fine-grained tracking
 		const root = $state.snapshot(dock.root) as LayoutNode;
 		const panels = $state.snapshot(dock.panels) as Record<string, PanelDefinition>;
 		const barPos = dock.activityBarPosition;
 		clearTimeout(timer);
-		timer = setTimeout(() => saveDockState(root, panels, persistKey, barPos), 300);
+		timer = setTimeout(() => {
+			saveDockState(root, panels, persistKey, barPos);
+			// Bump workspace modification tracking
+			if (workspace.activeId) workspace.onDockChange();
+		}, 300);
+	});
+}
+
+// Workspace store persistence (localStorage cache)
+if (browser) {
+	let wsTimer: ReturnType<typeof setTimeout>;
+	$effect(() => {
+		const ws = $state.snapshot(workspace.workspaces) as Workspace[];
+		const aid = workspace.activeId;
+		clearTimeout(wsTimer);
+		wsTimer = setTimeout(() => saveWorkspaceStore(ws, aid), 300);
+	});
+}
+
+// Save current workspace layout on tab close via sendBeacon
+if (browser) {
+	function handleBeforeUnload() {
+		if (!authenticated || !workspace.activeId) return;
+		const layout = workspace.captureLayout();
+		const body = JSON.stringify({ save: { id: workspace.activeId, layout }, activate: workspace.activeId });
+		navigator.sendBeacon('/api/desk/workspaces/sync', new Blob([body], { type: 'application/json' }));
+	}
+	$effect(() => {
+		window.addEventListener('beforeunload', handleBeforeUnload);
+		return () => window.removeEventListener('beforeunload', handleBeforeUnload);
 	});
 }
 

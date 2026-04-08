@@ -1,14 +1,17 @@
 import type { LayoutServerLoad } from './$types';
 import { getDeskTheme, listDeskPresets } from '$lib/server/db/desk/theme-queries';
+import { listWorkspaces, getActiveWorkspaceId } from '$lib/server/db/desk/workspace-queries';
 
 export const load: LayoutServerLoad = async ({ locals }) => {
 	if (!locals.user) {
-		return { deskTheme: null, deskPresets: [] };
+		return { deskTheme: null, deskPresets: [], deskWorkspaces: [], deskActiveWorkspaceId: null };
 	}
 
-	const [theme, presets] = await Promise.all([
+	const [theme, presets, workspaces, activeWorkspaceId] = await Promise.all([
 		getDeskTheme(locals.user.id),
 		listDeskPresets(locals.user.id),
+		listWorkspaces(locals.user.id),
+		getActiveWorkspaceId(locals.user.id),
 	]);
 
 	return {
@@ -25,5 +28,14 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 			workspace: p.workspace,
 			typeStyles: p.typeStyles,
 		})),
+		deskWorkspaces: workspaces.map((w) => ({
+			id: w.id,
+			name: w.name,
+			layout: w.layout,
+			sortOrder: w.sortOrder,
+			createdAt: w.createdAt.toISOString(),
+			updatedAt: w.updatedAt.toISOString(),
+		})),
+		deskActiveWorkspaceId: activeWorkspaceId,
 	};
 };

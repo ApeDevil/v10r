@@ -40,3 +40,39 @@ export const CreatePresetSchema = v.object({
 	workspace: v.optional(WorkspaceColorsSchema, {}),
 	typeStyles: v.optional(TypeStylesSchema, {}),
 });
+
+// ── Workspace schemas ───────────────────────────────────────────
+
+/**
+ * DockLayoutState validation — structural only.
+ * The recursive tree is validated at the top level; deep node validation
+ * is the client's responsibility.
+ */
+const DockLayoutStateSchema = v.object({
+	version: v.number(),
+	root: v.record(v.string(), v.unknown()), // opaque recursive tree
+	panels: v.record(v.string(), v.unknown()),
+	activityBarPosition: v.optional(v.picklist(['left', 'right', 'top', 'bottom'])),
+});
+
+export const CreateWorkspaceSchema = v.object({
+	name: v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
+	layout: DockLayoutStateSchema,
+	sortOrder: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(8))),
+});
+
+export const UpdateWorkspaceSchema = v.object({
+	name: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(100))),
+	layout: v.optional(DockLayoutStateSchema),
+	sortOrder: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(8))),
+});
+
+export const SyncWorkspaceSchema = v.object({
+	save: v.optional(
+		v.object({
+			id: v.string(),
+			layout: DockLayoutStateSchema,
+		}),
+	),
+	activate: v.string(),
+});

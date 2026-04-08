@@ -11,6 +11,7 @@
 		getDeskBus,
 		getDockContext,
 		getTokenEstimate,
+		getWorkspaceContext,
 		markResponseReceived,
 		pinContext,
 		registerPanelMenus,
@@ -37,6 +38,7 @@
 
 	const bus = getDeskBus();
 	const dock = getDockContext();
+	const wsState = getWorkspaceContext();
 
 	const ERROR_MESSAGES: Record<string, string> = {
 		rate_limit: 'Rate limit reached. Wait a moment and try again.',
@@ -275,6 +277,7 @@
 					...(conversationId ? { conversationId } : {}),
 					...(context.length > 0 ? { panelContext: context } : {}),
 					toolScopes: ['desk:read', 'desk:write', 'desk:create'],
+					...(wsState.active ? { activeWorkspace: { id: wsState.active.id, name: wsState.active.name } } : {}),
 				},
 			},
 		);

@@ -51,6 +51,11 @@ export const ChatRequestSchema = v.object({
 	toolScopes: v.optional(v.array(ToolScope)),
 	/** Current desk layout so AI knows what panels are open. */
 	deskLayout: v.optional(v.array(DeskLayoutEntry)),
+	/** Active workspace name for AI context. */
+	activeWorkspace: v.optional(v.object({
+		id: v.string(),
+		name: v.string(),
+	})),
 });
 
 export const StreamingRequestSchema = v.object({

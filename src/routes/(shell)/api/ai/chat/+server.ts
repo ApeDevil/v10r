@@ -35,5 +35,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		panelContext: parsed.output.panelContext,
 		toolScopes: parsed.output.toolScopes,
 		deskLayout: parsed.output.deskLayout,
+		activeWorkspace: parsed.output.activeWorkspace,
 	});
 };
