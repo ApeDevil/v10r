@@ -35,7 +35,7 @@ export function hydrateEmbeds(node: HTMLElement, descriptors: EmbedDescriptor[] 
 	let destroyed = false;
 
 	// Svelte's mount/unmount — imported lazily to avoid SSR evaluation
-	let svelteMod: { mount: Function; unmount: Function } | null = null;
+	let svelteMod: typeof import('svelte') | null = null;
 
 	async function getSvelte() {
 		if (!svelteMod) {
@@ -134,7 +134,8 @@ export function hydrateEmbeds(node: HTMLElement, descriptors: EmbedDescriptor[] 
 		initInProgress = true;
 
 		while (initQueue.length > 0 && !destroyed) {
-			const instance = initQueue.shift()!;
+			const instance = initQueue.shift();
+			if (!instance) continue;
 
 			// Skip if already mounted or destroyed
 			if (instance.phase === 'mounted') continue;

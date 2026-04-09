@@ -246,7 +246,7 @@ $effect(() => {
 	}
 
 	.cp-item-row:hover .cp-secondary-btn,
-	.cp-item-row:has([data-highlighted]) .cp-secondary-btn,
+	:global(.cp-item-row:has([data-highlighted])) .cp-secondary-btn,
 	.cp-item-row:focus-within .cp-secondary-btn {
 		opacity: 1;
 	}

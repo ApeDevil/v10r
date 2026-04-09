@@ -28,6 +28,7 @@ const dock = getDockContext();
 /** File-mode: panelId is "spreadsheet-fil_xxx" → extract fileId. Legacy: null. */
 const fileId = $derived(panelId.startsWith('spreadsheet-fil_') ? panelId.replace('spreadsheet-', '') : null);
 
+// svelte-ignore state_referenced_locally
 const STORAGE_KEY = `desk-spreadsheet-${panelId}`;
 let spreadsheetId: string | null = $state(null);
 let saveStatus: 'idle' | 'saving' | 'saved' | 'error' = $state('idle');
@@ -218,6 +219,7 @@ let contextRegistered = false;
 const sheetName = $derived(dock.panels[panelId]?.label || 'Sheet');
 
 // Register once on mount. untrack prevents re-running when sheet state changes.
+// svelte-ignore state_referenced_locally
 $effect(() => {
 	const ctx = untrack(() => sheet.serializeContext(sheetName));
 	const cleanup = registerPanelContext({
@@ -276,6 +278,7 @@ const spreadsheetMenus = $derived<MenuBarMenu[]>([
 	},
 ]);
 
+// svelte-ignore state_referenced_locally
 $effect(() => {
 	return registerPanelMenus(panelId, { menuBar: spreadsheetMenus });
 });

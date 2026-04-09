@@ -160,7 +160,9 @@ function resetColors(root: Object3D) {
 		const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
 		for (const mat of mats) {
 			if (mat instanceof MeshStandardMaterial && originalColors.has(mat.name)) {
-				mat.color.copy(originalColors.get(mat.name)!);
+				const orig = originalColors.get(mat.name);
+				if (!orig) continue;
+				mat.color.copy(orig);
 				mat.needsUpdate = true;
 			}
 		}

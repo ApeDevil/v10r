@@ -7,19 +7,27 @@ import FontPreview from './_components/FontPreview.svelte';
 import ProsePreview from './_components/ProsePreview.svelte';
 
 // --- Mode state ---
+// svelte-ignore state_referenced_locally
 const urlHeading = page.url.searchParams.get('heading');
+// svelte-ignore state_referenced_locally
 const urlBody = page.url.searchParams.get('body');
+// svelte-ignore state_referenced_locally
 const urlView = page.url.searchParams.get('view');
 
+// svelte-ignore state_referenced_locally
 let mode = $state<'single' | 'pairing'>(urlHeading && urlBody ? 'pairing' : 'single');
+// svelte-ignore state_referenced_locally
 let viewMode = $state<'scale' | 'prose'>(urlView === 'prose' ? 'prose' : 'scale');
 
 // --- Single mode ---
+// svelte-ignore state_referenced_locally
 let selectedFamily = $state(page.url.searchParams.get('font') ?? 'System');
 let loadState = $state<FontLoadState>('idle');
 
 // --- Pairing mode ---
+// svelte-ignore state_referenced_locally
 let headingFamily = $state(urlHeading ?? 'Playfair Display');
+// svelte-ignore state_referenced_locally
 let bodyFamily = $state(urlBody ?? 'Inter');
 let headingLoadState = $state<FontLoadState>('idle');
 let bodyLoadState = $state<FontLoadState>('idle');
@@ -141,6 +149,7 @@ function handleViewChange(newView: 'scale' | 'prose') {
 }
 
 // --- Load initial fonts if arriving via URL params ---
+// svelte-ignore state_referenced_locally
 if (mode === 'pairing') {
 	selectHeadingFont(headingFamily);
 	selectBodyFont(bodyFamily);
@@ -221,9 +230,6 @@ if (mode === 'pairing') {
 </main>
 
 <style>
-	.content {
-	}
-
 	.layout {
 		display: flex;
 		flex-direction: column;

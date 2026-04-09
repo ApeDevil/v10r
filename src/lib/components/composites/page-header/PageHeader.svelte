@@ -28,7 +28,7 @@ const processedBreadcrumbs = $derived(
 
 <header
 	class="page-header {sticky ? 'sticky' : ''} {className || ''}"
-	role="banner"
+
 >
 	{#if breadcrumbs.length > 0}
 		<nav class="breadcrumbs" aria-label="Breadcrumb">

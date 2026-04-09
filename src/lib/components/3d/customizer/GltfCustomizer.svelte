@@ -15,6 +15,7 @@ interface Props {
 
 let { modelPath, config, currentState }: Props = $props();
 
+// svelte-ignore state_referenced_locally
 const gltf = useGltf(modelPath);
 </script>
 

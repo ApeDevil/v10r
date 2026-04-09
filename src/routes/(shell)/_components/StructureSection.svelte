@@ -7,7 +7,9 @@ import { type StructureItem, sections } from './structure-map';
 const [intelligence, structural] = sections;
 
 function group(sectionIdx: number, groupValue: string) {
-	return sections[sectionIdx].groups.find((g) => g.value === groupValue)!;
+	const found = sections[sectionIdx].groups.find((g) => g.value === groupValue);
+	if (!found) throw new Error(`Group "${groupValue}" not found in section ${sectionIdx}`);
+	return found;
 }
 
 function getItemHref(item: StructureItem): string | null {

@@ -9,6 +9,7 @@ import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
 
+// svelte-ignore state_referenced_locally
 const {
 	form,
 	errors,
@@ -20,6 +21,7 @@ const {
 	validators: valibotClient(dependentSchema),
 });
 
+// svelte-ignore state_referenced_locally
 const locationData = data.locationData;
 
 type Country = (typeof locationData)[keyof typeof locationData];

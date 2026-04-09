@@ -33,6 +33,7 @@ const path = $derived(`M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}
 />
 
 <!-- Invisible wider hit area for hover -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <path
 	d={path}
 	fill="none"

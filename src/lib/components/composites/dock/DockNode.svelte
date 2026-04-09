@@ -1,6 +1,7 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
 import DockLeaf from './DockLeaf.svelte';
+import DockNode from './DockNode.svelte';
 import DockResizeHandle from './DockResizeHandle.svelte';
 import type { LayoutNode } from './dock.types';
 
@@ -21,7 +22,7 @@ let { node, panelContent }: Props = $props();
 		class:vertical={node.direction === 'vertical'}
 	>
 		<div class="dock-split-child" style="flex-basis:{node.sizes[0]}%">
-			<svelte:self node={node.children[0]} {panelContent} />
+			<DockNode node={node.children[0]} {panelContent} />
 		</div>
 
 		<DockResizeHandle
@@ -31,7 +32,7 @@ let { node, panelContent }: Props = $props();
 		/>
 
 		<div class="dock-split-child" style="flex-basis:{node.sizes[1]}%">
-			<svelte:self node={node.children[1]} {panelContent} />
+			<DockNode node={node.children[1]} {panelContent} />
 		</div>
 	</div>
 {/if}

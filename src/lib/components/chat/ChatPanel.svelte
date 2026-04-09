@@ -31,6 +31,7 @@ interface Props {
 
 let { panelId }: Props = $props();
 
+// svelte-ignore state_referenced_locally
 const cached = chatStateCache.get(panelId);
 let conversationId: string | undefined = $state(cached?.conversationId);
 let inputValue = $state('');
@@ -296,6 +297,7 @@ const chatMenus = $derived<MenuBarMenu[]>([
 	},
 ]);
 
+// svelte-ignore state_referenced_locally
 $effect(() => {
 	return registerPanelMenus(panelId, { menuBar: chatMenus });
 });

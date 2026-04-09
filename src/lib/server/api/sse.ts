@@ -55,14 +55,14 @@ export class SSEBuffer {
 		if (Number.isNaN(lastCounter)) return null;
 
 		const startIdx = this.events.findIndex((e) => {
-			const c = Number.parseInt(e.id.split(':').pop()!, 10);
+			const c = Number.parseInt(e.id.split(':').pop() ?? '', 10);
 			return c > lastCounter;
 		});
 
 		if (startIdx === -1) {
 			// Either all events are older or the ID is too far back
 			if (this.events.length > 0) {
-				const oldestCounter = Number.parseInt(this.events[0].id.split(':').pop()!, 10);
+				const oldestCounter = Number.parseInt(this.events[0].id.split(':').pop() ?? '', 10);
 				if (lastCounter < oldestCounter) return null; // gap — can't replay
 			}
 			return []; // no new events

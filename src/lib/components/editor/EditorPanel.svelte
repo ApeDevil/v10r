@@ -366,6 +366,7 @@ const editorMenus = $derived<MenuBarMenu[]>([
 		: []),
 ]);
 
+// svelte-ignore state_referenced_locally
 $effect(() => {
 	return registerPanelMenus(panelId, { menuBar: editorMenus });
 });

@@ -4,6 +4,7 @@
 
 import { getContext, setContext } from 'svelte';
 import { browser } from '$app/environment';
+import { setCookie } from '$lib/utils/cookies';
 
 interface SidebarState {
 	expanded: boolean; // Rail vs full sidebar (desktop)
@@ -140,7 +141,7 @@ export function createSidebarState(initialWidth = 240) {
 
 			if (browser) {
 				// Cookie for SSR flash prevention
-				document.cookie = `sidebar-width=${clamped};path=/;max-age=31536000;SameSite=Lax`;
+				setCookie('sidebar-width', String(clamped), { maxAge: 31536000 });
 
 				// Broadcast to other tabs
 				const bc = new BroadcastChannel(BROADCAST_CHANNEL);

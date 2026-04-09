@@ -266,7 +266,7 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 	const wantsTools = !!toolScopes?.length;
 	const toolProviderAvailable = !!toolModel && !!toolProviderId && !isCooledDown(toolProviderId);
 	const hasTools = wantsTools && toolProviderAvailable;
-	const model = (hasTools ? toolModel : chatModel)!;
+	const model = (hasTools ? toolModel : chatModel) ?? chatModel;
 	const deskTools = hasTools ? createDeskTools(userId, toolScopes) : undefined;
 	const baseSystemPrompt = buildSystemPrompt(panelContext, hasTools, deskLayout, activeWorkspace);
 

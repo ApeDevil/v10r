@@ -21,6 +21,7 @@ import {
 	locales,
 	localizeHref,
 } from '$lib/paraglide/runtime';
+import { setCookie } from '$lib/utils/cookies';
 
 const LOCALE_NAMES: Record<string, string> = {
 	en: 'English',
@@ -43,7 +44,7 @@ async function switchLocale(event: Event, lang: string) {
 	if (switching || lang === currentLocale) return;
 	switching = true;
 	// Update Paraglide's locale cookie so the server middleware resolves correctly
-	document.cookie = `${cookieName}=${lang}; path=/; max-age=${cookieMaxAge}`;
+	setCookie(cookieName, lang, { maxAge: cookieMaxAge });
 	await goto(localizeHref(page.url.pathname, { locale: lang }), { invalidateAll: true });
 	switching = false;
 }

@@ -155,6 +155,7 @@ const canGoPrev = $derived(loop || currentSlide > 0);
 const canGoNext = $derived(loop || currentSlide < slides.length - 1);
 </script>
 
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
 	class={cn(carouselRootVariants({ orientation }), className)}
 	onmouseenter={() => (isHovering = true)}

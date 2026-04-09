@@ -19,8 +19,8 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	requireAdmin(locals);
-	// requireAdmin guarantees locals.user is present
-	const user = locals.user!;
+	const user = locals.user;
+	if (!user) throw new Error('User required');
 	const [row, customPalettes] = await Promise.all([getBrandSettings(), listCustomPalettes(user.id)]);
 
 	const initialData = row
@@ -100,7 +100,8 @@ export const actions: Actions = {
 
 	saveCustomPalette: async (event) => {
 		requireAdmin(event.locals);
-		const user = event.locals.user!;
+		const user = event.locals.user;
+		if (!user) throw new Error('User required');
 		const formData = await event.request.formData();
 		const raw = formData.get('paletteData');
 		if (!raw || typeof raw !== 'string') return fail(400, { error: 'Missing palette data' });
@@ -158,7 +159,8 @@ export const actions: Actions = {
 
 	deleteCustomPalette: async (event) => {
 		requireAdmin(event.locals);
-		const user = event.locals.user!;
+		const user = event.locals.user;
+		if (!user) throw new Error('User required');
 		const formData = await event.request.formData();
 		const id = formData.get('paletteId') as string;
 		if (!id) return fail(400, { error: 'Missing palette ID' });

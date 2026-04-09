@@ -99,7 +99,8 @@ function buildDataTree(
 	const dataNode: FileTreeNode = { id: 'virtual:data', name: 'data', kind: 'folder', children: [] };
 
 	for (const f of folders) {
-		const node = folderMap.get(f.id)!;
+		const node = folderMap.get(f.id);
+		if (!node) continue;
 		const parent = f.parentId ? folderMap.get(f.parentId) : undefined;
 		if (parent) {
 			parent.children?.push(node);

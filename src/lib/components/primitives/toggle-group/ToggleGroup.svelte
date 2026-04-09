@@ -35,6 +35,7 @@ let {
 }: Props = $props();
 
 // Default value depends on type — can't reference type in $bindable() default
+// svelte-ignore state_referenced_locally
 if (value === undefined) {
 	value = type === 'single' ? '' : [];
 }

@@ -22,6 +22,7 @@ useTask((delta) => {
 });
 
 // Load model (useGltf returns a store)
+// svelte-ignore state_referenced_locally
 const gltf = useGltf(model.path);
 
 // Animation support

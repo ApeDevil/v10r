@@ -18,14 +18,6 @@ interface ChildHit {
 	[key: string]: unknown;
 }
 
-interface ParentRow {
-	chunkId: string;
-	documentId: string;
-	documentTitle: string;
-	content: string;
-	bestChildScore: number;
-}
-
 /** Search child chunks by vector similarity. */
 async function searchChildren(queryEmbedding: number[], limit: number, userId: string): Promise<ChildHit[]> {
 	const embeddingStr = `[${queryEmbedding.join(',')}]`;

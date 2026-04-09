@@ -282,7 +282,7 @@ $effect(() => {
 							</div>
 
 							<div class="presign-field">
-								<label class="field-label">Expiry</label>
+								<span class="field-label">Expiry</span>
 								<input type="hidden" name="expiresIn" value={presignExpiry} />
 								<ToggleGroup
 									type="single"

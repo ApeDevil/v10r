@@ -4,6 +4,7 @@
 
 import { getContext, setContext } from 'svelte';
 import { browser } from '$app/environment';
+import { setCookie } from '$lib/utils/cookies';
 
 type ThemeMode = 'light' | 'dark' | 'system';
 type AccentColor = 'blue' | 'purple' | 'green' | 'orange';
@@ -69,7 +70,7 @@ export function createThemeState(initial: { mode: ThemeMode; accent: AccentColor
 		setMode(mode: ThemeMode) {
 			state.mode = mode;
 			if (browser) {
-				document.cookie = `theme=${mode};path=/;max-age=31536000;SameSite=Lax`;
+				setCookie('theme', mode, { maxAge: 31536000 });
 				// Fire-and-forget DB persistence for authenticated users
 				fetch('/api/preferences', {
 					method: 'POST',

@@ -15,7 +15,7 @@ const modals = getModals();
 // Get shortcuts grouped by category
 const shortcutsByCategory = $derived(getShortcutsByCategory());
 
-let modalRef: HTMLElement;
+let modalRef: HTMLElement | undefined = $state();
 
 // Set up focus trap when modal opens
 $effect(() => {

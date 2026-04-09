@@ -319,8 +319,6 @@ ${"<"}/script>
 		box-sizing: border-box;
 	}
 
-	.content {
-	}
 
 	.section {
 		scroll-margin-top: 5rem;

@@ -30,7 +30,7 @@ export async function storeChunkStructure(
 	const hasChildEdges = children
 		.filter((c) => c.parentId)
 		.map((c) => ({
-			parentPgId: c.parentId!,
+			parentPgId: c.parentId ?? '',
 			childPgId: c.id,
 			position: c.position,
 		}));

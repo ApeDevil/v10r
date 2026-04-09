@@ -141,7 +141,7 @@ export async function reseedBucket(): Promise<{ objectCount: number }> {
 			}),
 		);
 
-		const keys = (list.Contents ?? []).map((obj) => obj.Key!).filter(Boolean);
+		const keys = (list.Contents ?? []).map((obj) => obj.Key ?? '').filter(Boolean);
 
 		if (keys.length > 0) {
 			await client.send(

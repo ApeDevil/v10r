@@ -10,6 +10,7 @@ import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
 
+// svelte-ignore state_referenced_locally
 const {
 	form,
 	errors,
@@ -45,6 +46,7 @@ $effect(() => {
 	}
 });
 
+// svelte-ignore state_referenced_locally
 let avatarUrl = $state(data.avatarUrl);
 let avatarError = $state('');
 let avatarUploading = $state(false);

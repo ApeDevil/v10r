@@ -16,6 +16,7 @@ let { sections, ariaLabel = 'Section navigation' }: Props = $props();
 let sentinelEl: HTMLElement | undefined = $state();
 let chipsEl: HTMLElement | undefined = $state();
 let isStuck = $state(false);
+// svelte-ignore state_referenced_locally
 let activeSection = $state(sections[0]?.id ?? '');
 let canScrollRight = $state(false);
 let canScrollLeft = $state(false);

@@ -49,7 +49,7 @@ const isIndeterminate = $derived(value === undefined);
 				isIndeterminate && 'progress-indeterminate'
 			)}
 			style={!isIndeterminate ? `width: ${percentage}%` : undefined}
-		/>
+		></div>
 	</ProgressPrimitive.Root>
 
 	{#if showLabel && !isIndeterminate}

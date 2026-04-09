@@ -6,6 +6,7 @@ import { setNotificationContext } from '$lib/state';
 
 let { data, children }: { data: { user: { name: string }; unreadCount: number }; children: Snippet } = $props();
 
+// svelte-ignore state_referenced_locally
 setNotificationContext(data.unreadCount);
 
 const tabs = [

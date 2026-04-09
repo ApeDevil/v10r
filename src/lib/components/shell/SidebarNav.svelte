@@ -25,7 +25,7 @@ const isExpanded = $derived(forceExpanded || sidebar.expanded);
 const effectiveItems = $derived(isAdmin ? [...navItems, adminNavItem] : navItems);
 </script>
 
-<nav class={cn('flex-1 overflow-y-auto p-2 scrollbar-nav', className)} role="navigation" aria-label="Main navigation">
+<nav class={cn('flex-1 overflow-y-auto p-2 scrollbar-nav', className)} aria-label="Main navigation">
 	<ul class="list-none m-0 p-0 flex flex-col gap-1">
 		{#each effectiveItems as item}
 			<li>

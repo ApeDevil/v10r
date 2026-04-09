@@ -298,7 +298,7 @@ function reset() {
 		position: relative;
 	}
 
-	.toggle-vis {
+	:global(.toggle-vis) {
 		position: absolute;
 		right: var(--spacing-3);
 		top: 50%;
@@ -312,7 +312,7 @@ function reset() {
 		align-items: center;
 	}
 
-	.toggle-vis:hover {
+	:global(.toggle-vis):hover {
 		color: var(--color-fg);
 	}
 

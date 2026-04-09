@@ -25,7 +25,8 @@ const propertyGroups = $derived.by(() => {
 	for (const node of data.graphData.nodes) {
 		const type = node.entityType;
 		if (!groups.has(type)) groups.set(type, new Set());
-		const set = groups.get(type)!;
+		const set = groups.get(type);
+		if (!set) continue;
 		if (node.properties) {
 			for (const key of Object.keys(node.properties)) {
 				set.add(key);

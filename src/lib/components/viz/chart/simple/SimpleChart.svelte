@@ -325,6 +325,7 @@ function getDataPoints(seriesIndex: number) {
 					{#each s.data as point, dataIndex}
 						{@const value = typeof point === 'number' ? point : point.value}
 						{@const barProps = renderBar(seriesIndex, dataIndex, value)}
+						<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 						<rect
 							{...barProps}
 							tabindex="0"
@@ -345,6 +346,7 @@ function getDataPoints(seriesIndex: number) {
 
 					<!-- Data point circles -->
 					{#each getDataPoints(seriesIndex) as point}
+						<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 						<circle
 							cx={point.x}
 							cy={point.y}

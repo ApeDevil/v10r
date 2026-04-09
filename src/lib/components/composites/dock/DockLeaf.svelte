@@ -51,7 +51,7 @@ function splitFocused(zone: 'right' | 'bottom') {
 	if (!panel) return;
 	dock.addPanel(
 		{ id: `${panel.type}-${Date.now()}`, type: panel.type, label: panel.label, icon: panel.icon, closable: true },
-		{ leafId: dock.focusedLeafId!, zone },
+		{ leafId: dock.focusedLeafId ?? '', zone },
 	);
 }
 

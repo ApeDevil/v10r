@@ -74,11 +74,14 @@ let {
 	class: className,
 }: Props = $props();
 
+// svelte-ignore state_referenced_locally
 const persistKey = typeof persist === 'string' ? persist : undefined;
 
 // Try to restore persisted state, fall back to initial
 // Merge initialPanels over saved panels so config changes (label, icon) always win
+// svelte-ignore state_referenced_locally
 const saved = persist ? loadDockState(persistKey) : null;
+// svelte-ignore state_referenced_locally
 const mergedPanels = saved?.panels
 	? Object.fromEntries(
 			Object.entries(saved.panels)
@@ -100,7 +103,9 @@ function pruneAndCollapse(node: LayoutNode, panels: Record<string, PanelDefiniti
 	return collapseEmptyLeaves(strip(node)) ?? initialRoot;
 }
 
+// svelte-ignore state_referenced_locally
 const restoredRoot = saved?.root ? pruneAndCollapse(saved.root, mergedPanels) : initialRoot;
+// svelte-ignore state_referenced_locally
 const dock = setDockContext(restoredRoot, mergedPanels, saved?.activityBarPosition ?? 'left');
 
 // DeskBus: typed pub/sub available to all panels via context
@@ -108,7 +113,9 @@ setDeskBusContext();
 
 // Desk settings: panel color customization via context
 // Priority: server data (DB) > localStorage cache > defaults
+// svelte-ignore state_referenced_locally
 const hasServerData = authenticated && serverTheme !== null;
+// svelte-ignore state_referenced_locally
 const initialTheme: DeskTheme = hasServerData
 	? buildThemeFromServer(serverTheme, serverPresets)
 	: ((browser ? loadDeskSettings() : null) ?? DEFAULT_THEME);
@@ -130,6 +137,7 @@ async function saveThemeToApi(theme: DeskTheme) {
 	}
 }
 
+// svelte-ignore state_referenced_locally
 const deskSettings = setDeskSettingsContext(initialTheme, {
 	onCommit: (theme) => {
 		// Always cache to localStorage for instant next-load
@@ -166,14 +174,18 @@ const deskSettings = setDeskSettingsContext(initialTheme, {
 
 // ── Workspace state ─────────────────────────────────────────────
 // Priority: server data (DB) > localStorage cache > empty
+// svelte-ignore state_referenced_locally
 const hasServerWorkspaces = authenticated && serverWorkspaces.length > 0;
+// svelte-ignore state_referenced_locally
 const initialWorkspaces: Workspace[] = hasServerWorkspaces
 	? buildWorkspacesFromServer(serverWorkspaces)
 	: ((browser ? loadWorkspaceStore()?.workspaces : null) ?? []);
+// svelte-ignore state_referenced_locally
 const initialActiveWorkspaceId = hasServerWorkspaces
 	? serverActiveWorkspaceId
 	: ((browser ? loadWorkspaceStore()?.activeId : null) ?? null);
 
+// svelte-ignore state_referenced_locally
 const workspace = setWorkspaceContext(initialWorkspaces, initialActiveWorkspaceId, dock, {
 	onSync: (data) => {
 		if (!authenticated) return;
@@ -225,6 +237,7 @@ const workspace = setWorkspaceContext(initialWorkspaces, initialActiveWorkspaceI
 
 // Debounced persistence — $state.snapshot() creates deep tracking
 // so in-place mutations (e.g. resizeSplit) also trigger saves.
+// svelte-ignore state_referenced_locally
 if (persist && browser) {
 	let timer: ReturnType<typeof setTimeout>;
 	$effect(() => {
@@ -279,6 +292,7 @@ if (browser) {
 }
 
 // One-time migration: if authenticated but server has no theme, push localStorage to DB
+// svelte-ignore state_referenced_locally
 if (browser && authenticated && !hasServerData) {
 	const localTheme = loadDeskSettings();
 	if (localTheme) {
@@ -337,6 +351,7 @@ if (browser) {
 }
 
 // Open a panel type via prop (e.g. from URL search param)
+// svelte-ignore state_referenced_locally
 $effect(() => {
 	if (!openPanel) return;
 	if (hasPanelType(dock.root, openPanel, dock.panels)) return;

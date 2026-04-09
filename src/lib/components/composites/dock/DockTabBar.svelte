@@ -144,7 +144,8 @@ function handleKeyDown(e: KeyboardEvent, panelId: string, index: number) {
 }
 
 function createGhost(e: PointerEvent) {
-	const panel = dock.panels[dragId!];
+	if (!dragId) return;
+	const panel = dock.panels[dragId];
 	if (!panel) return;
 
 	const ghost = document.createElement('div');

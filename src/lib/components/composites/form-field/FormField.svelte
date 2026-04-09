@@ -22,6 +22,7 @@ interface Props {
 let { label, id, error, description, required = false, children, class: className }: Props = $props();
 
 // Generate IDs for accessibility
+// svelte-ignore state_referenced_locally
 const fieldId = id ?? crypto.randomUUID();
 const errorId = `${fieldId}-error`;
 const descId = `${fieldId}-description`;

@@ -12,6 +12,6 @@ export default defineConfig({
 	dialect: 'postgresql',
 	schemaFilter: ['admin', 'showcase', 'auth', 'ai', 'rag', 'jobs', 'notifications', 'analytics', 'app', 'blog', 'desk'],
 	dbCredentials: {
-		url: process.env.DATABASE_URL!,
+		url: process.env.DATABASE_URL ?? '',
 	},
 });

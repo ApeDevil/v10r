@@ -131,12 +131,14 @@ const sourceColors: Record<ChunkSummary['source'], string> = {
 		color: var(--color-muted);
 		display: -webkit-box;
 		-webkit-line-clamp: 2;
+		line-clamp: 2;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
 	}
 
 	.preview-expanded {
 		-webkit-line-clamp: unset;
+		line-clamp: unset;
 		display: block;
 	}
 

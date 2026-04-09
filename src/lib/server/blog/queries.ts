@@ -243,9 +243,9 @@ export async function getPublishedPostForSlug(slug: string, locale = 'en'): Prom
 	return {
 		id: row.postId,
 		slug: row.slug,
-		publishedAt: row.publishedAt!,
+		publishedAt: row.publishedAt ?? new Date(),
 		author: {
-			id: row.authorId!,
+			id: row.authorId ?? '',
 			name: row.authorName ?? 'Unknown',
 			image: row.authorImage,
 		},
@@ -433,7 +433,7 @@ export async function listPublishedPostsForFeed(limit = 20): Promise<
 			slug: p.slug,
 			title: rev?.title ?? '(untitled)',
 			summary: rev?.summary ?? null,
-			publishedAt: p.publishedAt!,
+			publishedAt: p.publishedAt ?? new Date(),
 			authorName: p.authorName,
 		};
 	});

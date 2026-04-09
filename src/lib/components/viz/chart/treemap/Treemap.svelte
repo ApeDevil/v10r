@@ -101,6 +101,7 @@ onMount(async () => {
 });
 
 // Recompute on data, zoom, or size change
+// svelte-ignore state_referenced_locally
 $effect(() => {
 	// Track reactive deps
 	const _data = data;
@@ -191,6 +192,7 @@ function canShowValue(node: HierarchyRectangularNode<TreemapNode>): boolean {
 				{@const cellW = cell.x1 - cell.x0}
 				{@const cellH = cell.y1 - cell.y0}
 				{@const hasChildren = (cell.data.children?.length ?? 0) > 0}
+				<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 				<g
 					class="treemap-cell"
 					class:clickable={hasChildren}

@@ -19,7 +19,7 @@ interface Props {
 
 let { items, open, onClose, class: className }: Props = $props();
 
-let accordionRef: HTMLElement;
+let accordionRef: HTMLElement | undefined = $state();
 let focusedIndex = $state(-1);
 
 // Handle keyboard navigation
@@ -72,7 +72,7 @@ function isActive(href: string): boolean {
 <svelte:window onkeydown={handleKeydown} />
 
 {#if open}
-	<nav bind:this={accordionRef} class={cn('nav-accordion flex flex-col gap-[0.125rem] py-1 pl-[2.5rem] overflow-hidden origin-top motion-reduce:animate-none', className)} role="menu" aria-label="Submenu">
+	<div bind:this={accordionRef} class={cn('nav-accordion flex flex-col gap-[0.125rem] py-1 pl-[2.5rem] overflow-hidden origin-top motion-reduce:animate-none', className)} role="menu" aria-label="Submenu">
 		{#each items as item, index}
 			<NavLink
 				href={localizeHref(item.href)}
@@ -84,7 +84,7 @@ function isActive(href: string): boolean {
 				{item.label}
 			</NavLink>
 		{/each}
-	</nav>
+	</div>
 {/if}
 
 <style>

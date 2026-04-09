@@ -93,7 +93,7 @@ function formatDisplay(value: import('$lib/utils/spreadsheet').CellValue): strin
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-<div class="sheet-grid-wrap" tabindex="0" onkeydown={handleGridKeydown}>
+<div class="sheet-grid-wrap" role="grid" tabindex="0" onkeydown={handleGridKeydown}>
 	<table class="sheet-grid">
 		<thead>
 			<tr>

@@ -15,7 +15,7 @@ import {
 } from '$lib/config/customization';
 import { MODELS_BY_ID, resolveViewportConfig } from '$lib/config/models';
 
-const model = $derived(MODELS_BY_ID.get(page.params.model!));
+const model = $derived(MODELS_BY_ID.get(page.params.model ?? ''));
 const customization = $derived(model?.customization);
 const config = $derived(model ? resolveViewportConfig(model) : undefined);
 
@@ -28,6 +28,7 @@ $effect(() => {
 });
 
 // State management
+// svelte-ignore state_referenced_locally
 let custState = $state<CustomizationState>(
 	customization
 		? getDefaultState(customization)

@@ -22,6 +22,7 @@ let { model, open = $bindable(false), onclose, standalone = false, backHref = '/
 const config = $derived(resolveViewportConfig(model));
 const customizeHref = $derived(model.customization ? `/showcases/3d/customize/${model.id}` : undefined);
 
+// svelte-ignore state_referenced_locally
 let currentAnimation = $state(model.animations?.defaultClip ?? '');
 
 function handleOpenChange(isOpen: boolean) {
@@ -103,7 +104,7 @@ function handleOpenChange(isOpen: boolean) {
 {/if}
 
 <style>
-	.viewer-content {
+	:global(.viewer-content) {
 		display: flex;
 		flex-direction: column;
 	}

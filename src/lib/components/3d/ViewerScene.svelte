@@ -12,12 +12,14 @@ interface Props {
 
 let { model, config, currentAnimation }: Props = $props();
 
+// svelte-ignore state_referenced_locally
 const gltf = useGltf(model.path);
 
 let mixer: AnimationMixer | undefined;
 
 // When the model has morph target customization, strip morph tracks from
 // animations so the mixer doesn't overwrite the customizer's values.
+// svelte-ignore state_referenced_locally
 const hasMorphCustomization = (model.customization?.morphTargetGroups?.length ?? 0) > 0;
 
 // Create mixer and react to animation changes

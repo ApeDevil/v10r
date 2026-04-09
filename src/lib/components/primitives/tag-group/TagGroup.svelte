@@ -95,6 +95,7 @@ async function handleDismiss(value: string) {
 }
 </script>
 
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <ul
 	bind:this={listEl}
 	role="list"
@@ -103,6 +104,7 @@ async function handleDismiss(value: string) {
 	onkeydown={handleKeydown}
 >
 	{#each items as item, i (item.value)}
+		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 		<li
 			data-tag-item
 			tabindex={i === 0 ? 0 : -1}

@@ -117,9 +117,9 @@ function handleError() {
 		<p class="error-text">{resolved.reason}</p>
 	</div>
 {:else}
+	<!-- svelte-ignore a11y_no_noninteractive_element_interactions a11y_no_noninteractive_tabindex a11y_no_noninteractive_element_to_interactive_role -->
 	<figure
 		class="scene-embed"
-		role="figure"
 		aria-label={alt}
 		bind:this={containerEl}
 		tabindex="0"

@@ -17,14 +17,19 @@ interface Props {
 let {
 	data,
 	searchQuery = '',
+	// svelte-ignore state_referenced_locally
 	activeEntityTypes = new Set(data.entityTypes),
+	// svelte-ignore state_referenced_locally
 	activeRelationshipTypes = new Set(data.relationshipTypes),
 	onFilterChange,
 	class: className,
 }: Props = $props();
 
+// svelte-ignore state_referenced_locally
 let localSearch = $state(searchQuery);
+// svelte-ignore state_referenced_locally
 let localEntityTypes = $state(new Set(activeEntityTypes));
+// svelte-ignore state_referenced_locally
 let localRelTypes = $state(new Set(activeRelationshipTypes));
 
 // Sync local state when parent resets filters (e.g. empty-state clear button)

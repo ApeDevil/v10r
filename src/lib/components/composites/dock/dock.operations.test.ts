@@ -86,15 +86,15 @@ describe('replaceNode', () => {
 describe('removePanelFromLeaf', () => {
 	it('removes tab and returns updated leaf', () => {
 		const l = leaf('a', ['p1', 'p2', 'p3'], 'p1');
-		const result = removePanelFromLeaf(l, 'p2')!;
-		expect(result.tabs).toEqual(['p1', 'p3']);
-		expect(result.activeTab).toBe('p1');
+		const result = removePanelFromLeaf(l, 'p2');
+		expect(result?.tabs).toEqual(['p1', 'p3']);
+		expect(result?.activeTab).toBe('p1');
 	});
 
 	it('updates activeTab when active panel is removed', () => {
 		const l = leaf('a', ['p1', 'p2'], 'p1');
-		const result = removePanelFromLeaf(l, 'p1')!;
-		expect(result.activeTab).toBe('p2');
+		const result = removePanelFromLeaf(l, 'p1');
+		expect(result?.activeTab).toBe('p2');
 	});
 
 	it('returns null when leaf becomes empty', () => {

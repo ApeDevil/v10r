@@ -46,7 +46,7 @@ function handleKeydown(event: KeyboardEvent) {
 		</div>
 	</div>
 
-	<div class="viz-tabs" role="tablist" aria-label="View options" onkeydown={handleKeydown}>
+	<div class="viz-tabs" role="tablist" aria-label="View options" tabindex="0" onkeydown={handleKeydown}>
 		<button
 			role="tab"
 			id="tab-chart-{idSlug}"

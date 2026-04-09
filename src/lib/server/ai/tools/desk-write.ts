@@ -40,7 +40,7 @@ export function createWriteTools(userId: string) {
 				},
 				required: ['file_id', 'updates'],
 			}),
-			execute: async ({ file_id, updates }, { abortSignal }) => {
+			execute: async ({ file_id, updates }, { abortSignal: _abortSignal }) => {
 				try {
 					const sheet = await getSpreadsheetByFileId(file_id, userId);
 					if (!sheet) return { error: 'Spreadsheet not found or not accessible.' };
@@ -87,7 +87,7 @@ export function createWriteTools(userId: string) {
 				},
 				required: ['file_id', 'name'],
 			}),
-			execute: async ({ file_id, name }, { abortSignal }) => {
+			execute: async ({ file_id, name }, { abortSignal: _abortSignal }) => {
 				try {
 					const result = await renameFile(file_id, userId, name);
 					if (!result) return { error: 'File not found or not accessible.' };

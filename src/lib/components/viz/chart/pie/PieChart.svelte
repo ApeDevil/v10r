@@ -89,6 +89,7 @@ onMount(async () => {
 });
 
 // Note: `doughnut` is construction-only — Chart.js type cannot change after creation
+// svelte-ignore state_referenced_locally
 $effect(() => {
 	const _data = data;
 	const _options = options;
@@ -114,7 +115,6 @@ $effect(() => {
 
 	<canvas
 		bind:this={canvasEl}
-		role="img"
 		aria-label={ariaLabel}
 		class="chart-canvas"
 		class:visible={ready}

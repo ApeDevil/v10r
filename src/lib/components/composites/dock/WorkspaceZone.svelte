@@ -101,7 +101,7 @@ function getPanelSummary(ws: Workspace): string {
 {#if workspace.workspaces.length > 0}
 	<!-- Stop contextmenu from bubbling to the activity bar's ContextMenu.Trigger -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class={cn('dock-workspace-zone', isHorizontal && 'horizontal')} role="tablist" aria-label="Workspaces" oncontextmenu={(e) => e.stopPropagation()}>
+	<div class={cn('dock-workspace-zone', isHorizontal && 'horizontal')} role="tablist" aria-label="Workspaces" tabindex="0" oncontextmenu={(e) => e.stopPropagation()}>
 		{#each workspace.workspaces as ws, i (ws.id)}
 			{#if useNumbers || i < VISIBLE_WORKSPACE_BUTTONS}
 				<CtxMenu.Root>
@@ -228,6 +228,7 @@ function getPanelSummary(ws: Workspace): string {
 				class="dock-ws-rename-form"
 				onsubmit={(e) => { e.preventDefault(); handleRename(renamingId!); }}
 			>
+				<!-- svelte-ignore a11y_autofocus -->
 				<input
 					type="text"
 					bind:value={renameValue}
@@ -236,7 +237,7 @@ function getPanelSummary(ws: Workspace): string {
 					autofocus
 					onkeydown={(e) => { if (e.key === 'Escape') { renamingId = null; } }}
 				/>
-				<button type="submit" class="dock-ws-rename-submit" disabled={!renameValue.trim()}>
+				<button type="submit" class="dock-ws-rename-submit" disabled={!renameValue.trim()} aria-label="Close">
 					<span class="i-lucide-check h-3.5 w-3.5"></span>
 				</button>
 			</form>
@@ -265,6 +266,7 @@ function getPanelSummary(ws: Workspace): string {
 				class="dock-ws-create-form"
 				onsubmit={(e) => { e.preventDefault(); handleCreate(); }}
 			>
+				<!-- svelte-ignore a11y_autofocus -->
 				<input
 					type="text"
 					bind:value={newName}

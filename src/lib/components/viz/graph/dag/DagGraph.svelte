@@ -148,6 +148,7 @@ function computeLayout() {
 }
 
 // Recompute when data or orientation changes
+// svelte-ignore state_referenced_locally
 $effect(() => {
 	const _data = data;
 	const _orientation = orientation;

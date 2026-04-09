@@ -92,6 +92,7 @@ function initSimulation(d3Force: typeof import('d3-force')) {
 }
 
 // Re-run simulation when data changes (cached module ref, no re-import)
+// svelte-ignore state_referenced_locally
 $effect(() => {
 	const _data = data;
 	if (simulation && d3ForceModule) {

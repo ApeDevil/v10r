@@ -221,6 +221,7 @@ onMount(() => {
 });
 
 // Reactive redraw
+// svelte-ignore state_referenced_locally
 $effect(() => {
 	// Track all dependencies that affect rendering
 	const _data = data;
@@ -237,6 +238,7 @@ $effect(() => {
 });
 
 // Reset hover state when data dimensions change
+// svelte-ignore state_referenced_locally
 $effect(() => {
 	const _data = data;
 	if (hoverRow >= _data.yLabels.length || hoverCol >= _data.xLabels.length) {
@@ -280,7 +282,6 @@ $effect(() => {
 
 		<canvas
 			bind:this={canvasEl}
-			role="img"
 			aria-label={ariaLabel}
 			class="heatmap-canvas"
 			class:visible={ready}

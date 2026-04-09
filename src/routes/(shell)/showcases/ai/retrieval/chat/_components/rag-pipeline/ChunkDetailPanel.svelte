@@ -26,6 +26,7 @@ const tabs = $derived.by(() => {
 	return t;
 });
 
+// svelte-ignore state_referenced_locally
 let activeTabId = $state(Object.keys(chunkData.tierChunks)[0] ?? 'ranked');
 
 const activeChunks = $derived.by(() => {

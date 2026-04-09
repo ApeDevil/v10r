@@ -14,22 +14,39 @@ let connectingTelegram = $state(false);
 let telegramDeepLink = $state<string | null>(null);
 
 // Local mutable state for Switch components (initialized from server data)
+// svelte-ignore state_referenced_locally
 let emailMention = $state(data.settings.emailMention);
+// svelte-ignore state_referenced_locally
 let emailComment = $state(data.settings.emailComment);
+// svelte-ignore state_referenced_locally
 let emailSystem = $state(data.settings.emailSystem);
+// svelte-ignore state_referenced_locally
 let emailSuccess = $state(data.settings.emailSuccess);
+// svelte-ignore state_referenced_locally
 let emailSecurity = $state(data.settings.emailSecurity);
+// svelte-ignore state_referenced_locally
 let emailFollow = $state(data.settings.emailFollow);
+// svelte-ignore state_referenced_locally
 let telegramMention = $state(data.settings.telegramMention);
+// svelte-ignore state_referenced_locally
 let telegramComment = $state(data.settings.telegramComment);
+// svelte-ignore state_referenced_locally
 let telegramSystem = $state(data.settings.telegramSystem);
+// svelte-ignore state_referenced_locally
 let telegramSecurity = $state(data.settings.telegramSecurity);
+// svelte-ignore state_referenced_locally
 let discordMention = $state(data.settings.discordMention);
+// svelte-ignore state_referenced_locally
 let discordComment = $state(data.settings.discordComment);
+// svelte-ignore state_referenced_locally
 let discordSystem = $state(data.settings.discordSystem);
+// svelte-ignore state_referenced_locally
 let discordSecurity = $state(data.settings.discordSecurity);
+// svelte-ignore state_referenced_locally
 let digestFrequency = $state(data.settings.digestFrequency);
+// svelte-ignore state_referenced_locally
 let quietStart = $state(data.settings.quietStart ?? '');
+// svelte-ignore state_referenced_locally
 let quietEnd = $state(data.settings.quietEnd ?? '');
 
 $effect(() => {

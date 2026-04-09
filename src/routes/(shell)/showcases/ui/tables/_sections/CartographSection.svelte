@@ -251,6 +251,7 @@ const columns: { key: SortKey; label: string; align?: 'right' }[] = [
 				</div>
 		</div>
 	</div>
+	</div>
 </section>
 
 <style>

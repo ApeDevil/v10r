@@ -5,6 +5,7 @@
 
 import { getContext, setContext } from 'svelte';
 import { browser } from '$app/environment';
+import { getCookie, setCookie } from '$lib/utils/cookies';
 
 export type ConsentTier = 'necessary' | 'analytics' | 'full';
 
@@ -24,9 +25,8 @@ export function createConsentState() {
 	// Read cookie on client (mirrors theme.svelte.ts pattern)
 	$effect(() => {
 		if (!browser) return;
-		const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${COOKIE_NAME}=([^;]*)`));
-		if (match) {
-			const raw = match[1];
+		const raw = getCookie(COOKIE_NAME);
+		if (raw) {
 			if (raw === 'necessary' || raw === 'analytics' || raw === 'full') {
 				tier = raw;
 			}
@@ -53,7 +53,7 @@ export function createConsentState() {
 		setTier(newTier: ConsentTier) {
 			tier = newTier;
 			if (browser) {
-				document.cookie = `${COOKIE_NAME}=${newTier};path=/;max-age=${COOKIE_MAX_AGE};SameSite=Lax;Secure`;
+				setCookie(COOKIE_NAME, newTier, { maxAge: COOKIE_MAX_AGE, secure: true });
 			}
 		},
 
@@ -69,7 +69,7 @@ export function createConsentState() {
 		resetTier() {
 			tier = null;
 			if (browser) {
-				document.cookie = `${COOKIE_NAME}=;path=/;max-age=0;SameSite=Lax;Secure`;
+				setCookie(COOKIE_NAME, '', { maxAge: 0, secure: true });
 			}
 		},
 	};

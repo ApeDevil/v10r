@@ -22,13 +22,16 @@ import { setToastContext } from '$lib/state/toast.svelte';
 let { children, data } = $props();
 
 // Initialize all shell contexts (SSR-safe, request-scoped)
+// svelte-ignore state_referenced_locally
 const theme = setThemeContext({
 	mode: data.themeMode,
 	accent: 'blue',
 });
+// svelte-ignore state_referenced_locally
 const sidebar = setSidebarContext(data.sidebarWidth);
 const modals = setModalsContext();
 const toast = setToastContext();
+// svelte-ignore state_referenced_locally
 const styleState = setStyleContext(data.style);
 const consent = setConsentContext();
 

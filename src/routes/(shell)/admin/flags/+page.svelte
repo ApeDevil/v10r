@@ -121,7 +121,7 @@ function relativeTime(iso: string): string {
 {#if showCreateDialog}
 	<div class="dialog-overlay" role="presentation" onclick={() => { showCreateDialog = false; }}>
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<div class="dialog-content" role="dialog" aria-label="Create Feature Flag" onclick={(e) => e.stopPropagation()}>
+		<div class="dialog-content" role="dialog" aria-label="Create Feature Flag" tabindex="-1" onclick={(e) => e.stopPropagation()}>
 			<h3 class="dialog-title">Create Feature Flag</h3>
 			<form
 				method="POST"

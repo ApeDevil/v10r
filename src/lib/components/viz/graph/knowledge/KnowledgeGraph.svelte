@@ -16,7 +16,9 @@ interface Props {
 let { data, aspect = 'chart', ariaLabel = 'Knowledge graph', class: className }: Props = $props();
 
 let searchQuery = $state('');
+// svelte-ignore state_referenced_locally
 let activeEntityTypes = $state(new Set(data.entityTypes));
+// svelte-ignore state_referenced_locally
 let activeRelationshipTypes = $state(new Set(data.relationshipTypes));
 
 // Compute filtered data for NetworkGraph

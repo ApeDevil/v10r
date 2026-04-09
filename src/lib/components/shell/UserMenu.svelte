@@ -67,7 +67,7 @@ async function handleSignOut() {
 						class={cn(
 							'i-lucide-chevron-up flex-shrink-0 transition-transform duration-fast motion-reduce:transition-none [.data-\\[state\\=open\\]_&]:rotate-180'
 						)}
-					/>
+					></span>
 				{/if}
 			</DropdownMenu.Trigger>
 
@@ -116,7 +116,7 @@ async function handleSignOut() {
 									'i-lucide-chevron-right transition-transform duration-fast motion-reduce:transition-none',
 									themeSubmenuOpen && 'rotate-90'
 								)}
-							/>
+							></span>
 						</DropdownMenu.SubTrigger>
 
 						<DropdownMenu.SubContent

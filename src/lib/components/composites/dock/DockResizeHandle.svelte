@@ -76,12 +76,12 @@ function handleKeyDown(e: KeyboardEvent) {
 }
 </script>
 
-<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions a11y_no_noninteractive_tabindex -->
 <div
+	role="separator"
 	class={cn('dock-resize-handle', className)}
 	data-direction={direction}
 	data-dragging={dragging || undefined}
-	role="separator"
 	tabindex="0"
 	aria-orientation={direction === 'horizontal' ? 'vertical' : 'horizontal'}
 	aria-valuenow={Math.round(sizes[0])}

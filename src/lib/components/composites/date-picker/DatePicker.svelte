@@ -21,6 +21,8 @@ interface Props {
 
 let { value = $bindable(), placeholder, label, disabled = false, error = false, class: className }: Props = $props();
 
+const triggerId = $derived(label ? `dp-trigger-${label.replace(/\s+/g, '-').toLowerCase()}` : undefined);
+
 // Format the selected date for display
 function formatDate(date: DateValue | undefined): string {
 	if (!date) return '';
@@ -44,13 +46,14 @@ let displayValue = $derived(formatDate(value));
 -->
 <div class={cn(datePickerRootVariants(), className)}>
 	{#if label}
-		<label class={datePickerLabelVariants()}>
+		<label class={datePickerLabelVariants()} for={triggerId}>
 			{label}
 		</label>
 	{/if}
 
 	<DatePickerPrimitive.Root bind:value {placeholder} {disabled}>
 		<DatePickerPrimitive.Trigger
+			id={triggerId}
 			class={datePickerTriggerVariants({ error })}
 			aria-invalid={error ? 'true' : undefined}
 		>

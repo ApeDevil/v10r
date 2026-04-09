@@ -34,7 +34,7 @@ export function createReadTools(userId: string) {
 				},
 				required: ['file_type'],
 			}),
-			execute: async ({ file_type }, { abortSignal }) => {
+			execute: async ({ file_type }, { abortSignal: _abortSignal }) => {
 				try {
 					const files = await listFiles(userId, file_type === 'all' ? undefined : file_type);
 					return {
@@ -67,7 +67,7 @@ export function createReadTools(userId: string) {
 				},
 				required: ['file_id'],
 			}),
-			execute: async ({ file_id }, { abortSignal }) => {
+			execute: async ({ file_id }, { abortSignal: _abortSignal }) => {
 				try {
 					const fileRow = await getFile(file_id, userId);
 					if (!fileRow) return { error: 'File not found or not accessible.' };
@@ -108,7 +108,7 @@ export function createReadTools(userId: string) {
 				type: 'object',
 				properties: {},
 			}),
-			execute: async (_input, { abortSignal }) => {
+			execute: async (_input, { abortSignal: _abortSignal }) => {
 				try {
 					const tree = await getFileTree(userId);
 					return { tree: renderFileTreeWithIndex(tree) };
@@ -134,7 +134,7 @@ export function createReadTools(userId: string) {
 				},
 				required: ['query'],
 			}),
-			execute: async ({ query }, { abortSignal }) => {
+			execute: async ({ query }, { abortSignal: _abortSignal }) => {
 				try {
 					const files = await listFiles(userId);
 					const q = query.toLowerCase();

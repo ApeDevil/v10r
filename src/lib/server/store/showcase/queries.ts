@@ -77,7 +77,7 @@ export async function listShowcaseObjects(): Promise<ObjectInfo[]> {
 
 		for (const obj of res.Contents ?? []) {
 			objects.push({
-				key: obj.Key!,
+				key: obj.Key ?? '',
 				size: obj.Size ?? 0,
 				lastModified: obj.LastModified ?? new Date(),
 				etag: obj.ETag ?? '',

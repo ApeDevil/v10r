@@ -20,8 +20,8 @@ let { isAdmin = false, class: className }: Props = $props();
 const sidebar = getSidebar();
 const session = getSession();
 
-let drawerRef: HTMLElement;
-let overlayRef: HTMLElement;
+let drawerRef: HTMLElement | undefined = $state();
+let overlayRef: HTMLElement | undefined = $state();
 
 // Set up focus trap when drawer opens
 $effect(() => {
@@ -63,7 +63,6 @@ function handleOverlayClick() {
 		style:height="100dvh"
 		role="navigation"
 		aria-label="Main navigation"
-		aria-modal="true"
 	>
 		<div class="flex items-center justify-between gap-3 p-4 border-b border-border">
 			<SidebarLogo forceExpanded />

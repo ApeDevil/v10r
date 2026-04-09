@@ -377,7 +377,7 @@ function handleResult(successMsg?: string) {
 		border-top: 1px solid var(--color-border);
 	}
 
-	.ttl-input {
+	:global(.ttl-input) {
 		max-width: 100px;
 	}
 

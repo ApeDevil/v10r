@@ -33,7 +33,7 @@ function handleTreeKeydown(e: KeyboardEvent) {
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<div class="explorer-tree" role="tree" aria-label="Content files" onkeydown={handleTreeKeydown}>
+<div class="explorer-tree" role="tree" aria-label="Content files" tabindex="0" onkeydown={handleTreeKeydown}>
 	{#each roots as node (node.id)}
 		<TreeNode {node} treeState={explorerState} depth={0} {callbacks} />
 

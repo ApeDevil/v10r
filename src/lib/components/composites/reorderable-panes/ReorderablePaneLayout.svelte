@@ -20,7 +20,9 @@ let { panes, direction = 'horizontal', persistId, children, class: className }: 
 let paneMap = $derived(Object.fromEntries(panes.map((p) => [p.id, p])) as Record<string, PaneDefinition>);
 
 // State: order + sizes keyed by panel ID
+// svelte-ignore state_referenced_locally
 let order = $state<string[]>(panes.map((p) => p.id));
+// svelte-ignore state_referenced_locally
 let sizes = $state<Record<string, number>>(Object.fromEntries(panes.map((p) => [p.id, p.defaultSize])));
 
 let groupRef = $state<PaneGroupHandle | undefined>();

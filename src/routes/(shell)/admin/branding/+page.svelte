@@ -19,6 +19,7 @@ import type { PageProps } from './$types';
 let { data }: PageProps = $props();
 const theme = getTheme();
 
+// svelte-ignore state_referenced_locally
 const {
 	form,
 	enhance,

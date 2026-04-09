@@ -134,11 +134,14 @@ const loadStyle: Handle = async ({ event, resolve }) => {
 	// Fallback: no valid resolution → random
 	if (!resolved) {
 		config = generateRandomStyle();
-		resolved = resolveStyle(config)!;
+		const fallback = resolveStyle(config);
+		if (!fallback) throw new Error('Failed to resolve random style');
+		resolved = fallback;
 	}
 
 	// Set cookie if changed
-	const serialized = serializeStyleCookie(config!);
+	if (!config) throw new Error('Style config missing after resolution');
+	const serialized = serializeStyleCookie(config);
 	if (cookieValue !== serialized) {
 		event.cookies.set(STYLE_COOKIE_NAME, serialized, STYLE_COOKIE_OPTIONS);
 	}

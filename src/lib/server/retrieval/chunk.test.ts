@@ -3,7 +3,7 @@ import { chunkDocument } from './chunk';
 
 describe('chunkDocument', () => {
 	it('returns a single parent for short text', async () => {
-		const { parents, children } = await chunkDocument('Hello world.');
+		const { parents, children: _children } = await chunkDocument('Hello world.');
 		expect(parents).toHaveLength(1);
 		expect(parents[0].level).toBe('section');
 		expect(parents[0].content).toBe('Hello world.');

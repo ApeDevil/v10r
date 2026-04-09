@@ -22,10 +22,12 @@ type Props = {
 let { session }: Props = $props();
 
 // Create session state with initial session
+// svelte-ignore state_referenced_locally
 const sessionState = setSessionContext(session);
 const modals = getModals();
 
 // Track initial session to detect actual changes (not just initial hydration)
+// svelte-ignore state_referenced_locally
 let lastExpiresAt = session?.expiresAt?.toString() ?? null;
 
 // Update session state when prop changes (skip initial render - already set by setSessionContext)

@@ -68,7 +68,6 @@ let sorted = $derived.by(() => {
 											class="sort-btn"
 											class:active={sortKey === col.key}
 											onclick={() => toggleSort(col.key)}
-											aria-sort={ariaSortValue(col.key)}
 										>
 											{col.label}
 											{#if sortKey === col.key}

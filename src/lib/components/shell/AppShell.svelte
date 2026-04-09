@@ -35,6 +35,7 @@ type Props = {
 let { children, session = null, isAdmin = false, immersive = false, announcements = [] }: Props = $props();
 
 // Initialize session context so child components can use getSession()
+// svelte-ignore state_referenced_locally
 setSessionContext(session);
 
 const modals = getModals();

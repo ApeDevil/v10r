@@ -14,6 +14,7 @@ import {
 } from './context-menu-items';
 import type { ExplorerState } from './explorer-state.svelte';
 import type { ExplorerNode } from './node';
+import TreeNode from './TreeNode.svelte';
 
 interface Props {
 	node: ExplorerNode;
@@ -269,7 +270,7 @@ const descendantCount = $derived(node.isFolder ? treeState.countDescendants(node
 		</div>
 	{:else}
 		{#each children as child (child.id)}
-			<svelte:self node={child} {treeState} depth={depth + 1} {callbacks} />
+			<TreeNode node={child} {treeState} depth={depth + 1} {callbacks} />
 		{/each}
 	{/if}
 {/if}

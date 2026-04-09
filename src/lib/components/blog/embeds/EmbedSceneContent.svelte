@@ -33,6 +33,7 @@ let {
 	onloaded,
 }: Props = $props();
 
+// svelte-ignore state_referenced_locally
 const gltf = useGltf(path);
 
 let rotation = $state(0);

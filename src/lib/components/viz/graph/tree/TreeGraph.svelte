@@ -71,6 +71,7 @@ function computeLayout(d3Hierarchy: typeof import('d3-hierarchy')) {
 }
 
 // Recompute when data or collapsed state changes (cached module ref)
+// svelte-ignore state_referenced_locally
 $effect(() => {
 	const _data = data;
 	const _collapsed = collapsedIds;

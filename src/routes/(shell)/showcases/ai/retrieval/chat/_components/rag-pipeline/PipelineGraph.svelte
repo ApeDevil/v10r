@@ -38,7 +38,7 @@ let panStartX = 0;
 let panStartY = 0;
 let panStartPanX = 0;
 let panStartPanY = 0;
-let didPan = false;
+let didPan = $state(false);
 
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 4;
@@ -71,7 +71,9 @@ const edges: [PipelineStepId, PipelineStepId][] = [
 ];
 
 function getStep(id: PipelineStepId): PipelineStepState {
-	return steps.find((s) => s.id === id)!;
+	const step = steps.find((s) => s.id === id);
+	if (!step) throw new Error(`Pipeline step "${id}" not found`);
+	return step;
 }
 
 function edgeStatus(fromId: PipelineStepId, toId: PipelineStepId) {

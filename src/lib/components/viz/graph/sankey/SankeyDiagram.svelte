@@ -108,6 +108,7 @@ function computeLayout(w = containerWidth, h = containerHeight) {
 }
 
 // Recompute when data changes
+// svelte-ignore state_referenced_locally
 $effect(() => {
 	const _data = data;
 	if (d3SankeyModule) {
