@@ -76,13 +76,13 @@ function handleKeyDown(e: KeyboardEvent) {
 }
 </script>
 
-<!-- svelte-ignore a11y_no_noninteractive_element_interactions a11y_no_noninteractive_tabindex -->
 <div
-	role="separator"
+	role="slider"
 	class={cn('dock-resize-handle', className)}
 	data-direction={direction}
 	data-dragging={dragging || undefined}
 	tabindex="0"
+	aria-label="Resize"
 	aria-orientation={direction === 'horizontal' ? 'vertical' : 'horizontal'}
 	aria-valuenow={Math.round(sizes[0])}
 	aria-valuemin={MIN_SIZE}

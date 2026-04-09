@@ -152,7 +152,7 @@ function handleContainerClick() {
 }
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions a11y_no_noninteractive_element_interactions a11y_no_noninteractive_tabindex -->
+<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions, a11y_no_noninteractive_element_interactions, a11y_no_noninteractive_tabindex -->
 <div
 	class={cn('tag-input-container', error && 'tag-input-error', disabled && 'tag-input-disabled', className)}
 	class:size-sm={size === 'sm'}

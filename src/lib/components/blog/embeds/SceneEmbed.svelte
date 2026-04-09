@@ -117,9 +117,10 @@ function handleError() {
 		<p class="error-text">{resolved.reason}</p>
 	</div>
 {:else}
-	<!-- svelte-ignore a11y_no_noninteractive_element_interactions a11y_no_noninteractive_tabindex a11y_no_noninteractive_element_to_interactive_role -->
-	<figure
+	<!-- svelte-ignore a11y_no_noninteractive_element_interactions, a11y_no_noninteractive_tabindex -->
+	<div
 		class="scene-embed"
+		role="application"
 		aria-label={alt}
 		bind:this={containerEl}
 		tabindex="0"
@@ -197,7 +198,7 @@ function handleError() {
 				<p>{descriptor.attrs.alt}</p>
 			</noscript>
 		{/if}
-	</figure>
+	</div>
 {/if}
 
 <style>
