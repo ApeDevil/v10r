@@ -23,6 +23,9 @@ kill
 podman rm -f v10r
 
 # ---------------------------------- Test
+## test everything
+podman exec -it v10r bun run validate 
+## induvidual tests
 podman exec -it v10r bun run check
 podman exec -it v10r bun run lint
 podman exec -it v10r bun run test
