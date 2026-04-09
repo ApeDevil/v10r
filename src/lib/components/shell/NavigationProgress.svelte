@@ -11,7 +11,7 @@ let visible = $state(false);
 
 // Animate progress when navigating
 $effect(() => {
-	if (navigating) {
+	if (navigating.to) {
 		visible = true;
 		progress = 0;
 
