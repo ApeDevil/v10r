@@ -1,8 +1,8 @@
 import { count, desc, eq, isNull, sql, sum } from 'drizzle-orm';
-import { db } from '../index';
-import { chunk, collection, collectionDocument, document } from '../schema/rag';
-import { user } from '../schema/auth/_better-auth';
 import { ADMIN_RAG_PAGE_SIZE } from '$lib/server/config';
+import { db } from '../index';
+import { user } from '../schema/auth/_better-auth';
+import { chunk, collection, document } from '../schema/rag';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -85,9 +85,7 @@ export async function getDocumentsAdmin(filters: {
 		conditions.push(eq(document.status, status as 'pending' | 'processing' | 'ready' | 'error'));
 	}
 
-	const where = conditions.length > 1
-		? sql`${conditions[0]} AND ${conditions[1]}`
-		: conditions[0];
+	const where = conditions.length > 1 ? sql`${conditions[0]} AND ${conditions[1]}` : conditions[0];
 
 	const [entries, totalResult] = await Promise.all([
 		db

@@ -28,18 +28,22 @@ export async function fetchRewrittenStyle(url: string): Promise<object> {
 	// Resolve TileJSON sources so MapLibre doesn't fetch them itself
 	if (style.sources) {
 		await Promise.all(
-			Object.values(style.sources as Record<string, any>).map(async (src) => {
-				if (src.type === 'vector' && src.url && !src.tiles) {
-					try {
-						const tj = await (await fetch(rewriteUrl(src.url))).json();
-						src.tiles = (tj.tiles as string[]).map(rewriteUrl);
-						if (tj.minzoom != null) src.minzoom = tj.minzoom;
-						if (tj.maxzoom != null) src.maxzoom = tj.maxzoom;
-						if (tj.attribution) src.attribution = tj.attribution;
-						delete src.url;
-					} catch { /* fall back to url */ }
-				}
-			}),
+			Object.values(style.sources as Record<string, Record<string, unknown>>).map(
+				async (src: Record<string, unknown>) => {
+					if (src.type === 'vector' && typeof src.url === 'string' && !src.tiles) {
+						try {
+							const tj = await (await fetch(rewriteUrl(src.url))).json();
+							src.tiles = (tj.tiles as string[]).map(rewriteUrl);
+							if (tj.minzoom != null) src.minzoom = tj.minzoom;
+							if (tj.maxzoom != null) src.maxzoom = tj.maxzoom;
+							if (tj.attribution) src.attribution = tj.attribution;
+							delete src.url;
+						} catch {
+							/* fall back to url */
+						}
+					}
+				},
+			),
 		);
 	}
 

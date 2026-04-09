@@ -5,8 +5,8 @@
  * - Dropdown (mobile): Click chevron opens inline dropdown
  */
 
-import { page } from '$app/state';
 import { untrack } from 'svelte';
+import { page } from '$app/state';
 import { Tooltip } from '$lib/components/primitives/tooltip';
 import { deLocalizeHref, localizeHref } from '$lib/i18n';
 import type { NavChild } from '$lib/nav';
@@ -53,7 +53,9 @@ function closeDropdown() {
 // Close dropdown when navigating to a new route
 $effect(() => {
 	page.url.pathname; // tracked: re-runs on every route change
-	untrack(() => { isDropdownOpen = false; }); // untracked: mutation only, no dependency
+	untrack(() => {
+		isDropdownOpen = false;
+	}); // untracked: mutation only, no dependency
 });
 
 const hasFlyoutChildren = $derived(children.length > 0 && useFlyout);

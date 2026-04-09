@@ -23,11 +23,7 @@ import {
 import type { PaletteId, RadiusId, TypographyId } from '$lib/styles/random/types';
 import type { RequestHandler } from './$types';
 
-const limiter = createLimiter(
-	STYLE_ROLL_RATE_LIMIT_PREFIX,
-	STYLE_ROLL_RATE_LIMIT_MAX,
-	STYLE_ROLL_RATE_LIMIT_WINDOW,
-);
+const limiter = createLimiter(STYLE_ROLL_RATE_LIMIT_PREFIX, STYLE_ROLL_RATE_LIMIT_MAX, STYLE_ROLL_RATE_LIMIT_WINDOW);
 
 export const POST: RequestHandler = async ({ cookies, locals, getClientAddress }) => {
 	const ip = getClientAddress();

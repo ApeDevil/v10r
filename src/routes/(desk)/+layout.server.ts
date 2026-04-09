@@ -1,6 +1,6 @@
-import type { LayoutServerLoad } from './$types';
 import { getDeskTheme, listDeskPresets } from '$lib/server/db/desk/theme-queries';
-import { listWorkspaces, getActiveWorkspaceId } from '$lib/server/db/desk/workspace-queries';
+import { getActiveWorkspaceId, listWorkspaces } from '$lib/server/db/desk/workspace-queries';
+import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals }) => {
 	if (!locals.user) {

@@ -1,8 +1,8 @@
 import * as v from 'valibot';
+import { apiError, apiOk } from '$lib/server/api/response';
 import { requireApiAuthor, requirePostOwnership } from '$lib/server/auth/guards';
-import { getPostById, getLatestRevision, publishRevision } from '$lib/server/blog';
+import { getLatestRevision, getPostById, publishRevision } from '$lib/server/blog';
 import { PublishSchema } from '$lib/server/blog/schemas';
-import { apiOk, apiError, apiValidationError } from '$lib/server/api/response';
 import type { RequestHandler } from './$types';
 
 /** Publish the latest revision for a post. */

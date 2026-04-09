@@ -1,14 +1,14 @@
 <script lang="ts">
-	import type { AttachmentPoint } from '$lib/config/customization';
+import type { AttachmentPoint } from '$lib/config/customization';
 
-	interface Props {
-		points: AttachmentPoint[];
-		enabled: Record<string, boolean>;
-		disabledIds?: Set<string>;
-		ontoggle: (accessoryId: string, active: boolean) => void;
-	}
+interface Props {
+	points: AttachmentPoint[];
+	enabled: Record<string, boolean>;
+	disabledIds?: Set<string>;
+	ontoggle: (accessoryId: string, active: boolean) => void;
+}
 
-	let { points, enabled, disabledIds, ontoggle }: Props = $props();
+let { points, enabled, disabledIds, ontoggle }: Props = $props();
 </script>
 
 {#each points as point (point.id)}

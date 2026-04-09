@@ -1,4 +1,5 @@
 <script lang="ts">
+import type { ActionResult } from '@sveltejs/kit';
 import { enhance } from '$app/forms';
 import { Alert, Card, NavSection } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
@@ -34,19 +35,23 @@ const nodeOptions = $derived(data.nodes.map((n) => ({ value: n.elementId, label:
 // ─── Browse state ────────────────────────────────────
 let browseNodeId = $state('');
 let browseLoading = $state(false);
-let browseResult = $state<any>(null);
+let browseResult = $state<{
+	labels: string[];
+	properties: Record<string, unknown>;
+	connections: Array<{ direction: string; relType: string; neighborName: string; neighborLabel: string }>;
+} | null>(null);
 
 // ─── Path state ──────────────────────────────────────
 let pathFromId = $state('');
 let pathToId = $state('');
 let pathLoading = $state(false);
-let pathResult = $state<any[] | null>(null);
+let pathResult = $state<Array<{ label: string; name: string; relType?: string }> | null>(null);
 let pathMessage = $state('');
 
 // ─── Recommendation state ────────────────────────────
 let recNodeId = $state('');
 let recLoading = $state(false);
-let recommendations = $state<any[]>([]);
+let recommendations = $state<Array<{ label: string; name: string; score: number; via: string }>>([]);
 
 // ─── REPL state ──────────────────────────────────────
 let replQuery = $state('MATCH (t:Technology) RETURN t.name AS name, t.category AS category LIMIT 5');
@@ -54,7 +59,13 @@ let replLoading = $state(false);
 let replResult = $state<{ columns: string[]; rows: Record<string, unknown>[] } | null>(null);
 
 function handleResult(key: string) {
-	return ({ result, update }: { result: any; update: (opts?: any) => Promise<void> }) => {
+	return ({
+		result,
+		update,
+	}: {
+		result: ActionResult;
+		update: (opts?: { reset?: boolean; invalidateAll?: boolean }) => Promise<void>;
+	}) => {
 		if (result.type === 'success' && result.data) {
 			if (key === 'browse') browseResult = result.data.browseResult;
 			if (key === 'path') {

@@ -105,7 +105,10 @@ export async function extractEntities(text: string, model?: LanguageModel | null
  * Extract entities from multiple text sections and merge results.
  * Deduplicates entities by name (keeps first description).
  */
-export async function extractEntitiesFromSections(sections: string[], model?: LanguageModel | null): Promise<ExtractionResult> {
+export async function extractEntitiesFromSections(
+	sections: string[],
+	model?: LanguageModel | null,
+): Promise<ExtractionResult> {
 	const allEntities = new Map<string, ExtractedEntity>();
 	const allRelationships: ExtractedRelationship[] = [];
 

@@ -44,7 +44,7 @@ export interface SubscribeOptions {
 const DESK_BUS_CTX = Symbol('desk-bus');
 
 export function createDeskBus() {
-	const listeners = new Map<keyof DeskEvents, Set<(payload: any) => void>>();
+	const listeners = new Map<keyof DeskEvents, Set<(payload: DeskEvents[keyof DeskEvents]) => void>>();
 	const lastPayload = new Map<keyof DeskEvents, unknown>();
 
 	function publish<K extends keyof DeskEvents>(channel: K, payload: DeskEvents[K]): void {
@@ -65,7 +65,7 @@ export function createDeskBus() {
 			subs = new Set();
 			listeners.set(channel, subs);
 		}
-		subs.add(handler as (payload: any) => void);
+		subs.add(handler as (payload: DeskEvents[keyof DeskEvents]) => void);
 
 		// Replay last value if requested and available
 		if (options?.replayLast && lastPayload.has(channel)) {
@@ -73,8 +73,8 @@ export function createDeskBus() {
 		}
 
 		return () => {
-			subs!.delete(handler as (payload: any) => void);
-			if (subs!.size === 0) listeners.delete(channel);
+			subs?.delete(handler as (payload: DeskEvents[keyof DeskEvents]) => void);
+			if (subs?.size === 0) listeners.delete(channel);
 		};
 	}
 

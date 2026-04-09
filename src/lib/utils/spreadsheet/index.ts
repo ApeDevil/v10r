@@ -1,9 +1,9 @@
 export {
+	type CellGetter,
+	type CellValue,
 	cellLabel,
 	colLabel,
 	evaluateFormula,
 	expandRange,
 	parseCellRef,
-	type CellGetter,
-	type CellValue,
 } from './formula';

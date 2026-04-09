@@ -1,68 +1,78 @@
 <script lang="ts">
-	import { registerPanelMenus } from '$lib/components/composites/dock';
-	import { getIOLogEntries, clearIOLog, type IOLogEntry } from '$lib/components/composites/dock/io-log.svelte';
-	import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
+import { registerPanelMenus } from '$lib/components/composites/dock';
+import { clearIOLog, getIOLogEntries, type IOLogEntry } from '$lib/components/composites/dock/io-log.svelte';
+import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 
-	interface Props {
-		panelId: string;
+interface Props {
+	panelId: string;
+}
+
+let { panelId }: Props = $props();
+
+const entries = $derived(getIOLogEntries());
+
+let scrollEl: HTMLDivElement | undefined = $state();
+
+// Auto-scroll to bottom on new entries
+$effect(() => {
+	const count = entries.length;
+	if (count && scrollEl) {
+		requestAnimationFrame(() => {
+			if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
+		});
 	}
+});
 
-	let { panelId }: Props = $props();
-
-	const entries = $derived(getIOLogEntries());
-
-	let scrollEl: HTMLDivElement | undefined = $state();
-
-	// Auto-scroll to bottom on new entries
-	$effect(() => {
-		const count = entries.length;
-		if (count && scrollEl) {
-			requestAnimationFrame(() => {
-				if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
-			});
-		}
-	});
-
-	function badgeClass(entry: IOLogEntry): string {
-		switch (entry.source) {
-			case 'context-read': return 'badge-read';
-			case 'tool-call': return 'badge-tool';
-			case 'tool-result': return entry.level === 'error' ? 'badge-error' : 'badge-write';
-			case 'effect': return 'badge-effect';
-			case 'progress': return 'badge-progress';
-			default: return '';
-		}
+function badgeClass(entry: IOLogEntry): string {
+	switch (entry.source) {
+		case 'context-read':
+			return 'badge-read';
+		case 'tool-call':
+			return 'badge-tool';
+		case 'tool-result':
+			return entry.level === 'error' ? 'badge-error' : 'badge-write';
+		case 'effect':
+			return 'badge-effect';
+		case 'progress':
+			return 'badge-progress';
+		default:
+			return '';
 	}
+}
 
-	function badgeLabel(entry: IOLogEntry): string {
-		switch (entry.source) {
-			case 'context-read': return 'READ';
-			case 'tool-call': return 'CALL';
-			case 'tool-result': return entry.level === 'error' ? 'ERR' : 'DONE';
-			case 'effect': return 'FX';
-			case 'progress': return 'STEP';
-			default: return '?';
-		}
+function badgeLabel(entry: IOLogEntry): string {
+	switch (entry.source) {
+		case 'context-read':
+			return 'READ';
+		case 'tool-call':
+			return 'CALL';
+		case 'tool-result':
+			return entry.level === 'error' ? 'ERR' : 'DONE';
+		case 'effect':
+			return 'FX';
+		case 'progress':
+			return 'STEP';
+		default:
+			return '?';
 	}
+}
 
-	function formatTime(ts: number): string {
-		return new Date(ts).toLocaleTimeString(undefined, { hour12: false });
-	}
+function formatTime(ts: number): string {
+	return new Date(ts).toLocaleTimeString(undefined, { hour12: false });
+}
 
-	// ── Panel menus ─────────────────────────────────────────────────
+// ── Panel menus ─────────────────────────────────────────────────
 
-	const logMenus = $derived<MenuBarMenu[]>([
-		{
-			label: 'Log',
-			items: [
-				{ label: 'Clear', icon: 'i-lucide-trash-2', onSelect: clearIOLog },
-			],
-		},
-	]);
+const logMenus = $derived<MenuBarMenu[]>([
+	{
+		label: 'Log',
+		items: [{ label: 'Clear', icon: 'i-lucide-trash-2', onSelect: clearIOLog }],
+	},
+]);
 
-	$effect(() => {
-		return registerPanelMenus(panelId, { menuBar: logMenus });
-	});
+$effect(() => {
+	return registerPanelMenus(panelId, { menuBar: logMenus });
+});
 </script>
 
 <div class="io-log-panel">

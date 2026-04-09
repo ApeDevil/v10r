@@ -1,106 +1,107 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { page } from '$app/state';
-	import { Canvas } from '@threlte/core';
-	import { MODELS_BY_ID } from '$lib/config/models';
-	import {
-		getDefaultState,
-		applyPreset,
-		type CustomizationState,
-		type CustomizationPreset,
-	} from '$lib/config/customization';
-	import { BoundaryFallback } from '$lib/components/composites';
-	import ViewerScene from '$lib/components/3d/ViewerScene.svelte';
-	import ViewerOverlay from '$lib/components/3d/ViewerOverlay.svelte';
-	import GltfCustomizer from '$lib/components/3d/customizer/GltfCustomizer.svelte';
-	import { CustomizerPanel } from '$lib/components/3d/customizer';
-	import { resolveViewportConfig } from '$lib/config/models';
+import { Canvas } from '@threlte/core';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import { CustomizerPanel } from '$lib/components/3d/customizer';
+import GltfCustomizer from '$lib/components/3d/customizer/GltfCustomizer.svelte';
+import ViewerOverlay from '$lib/components/3d/ViewerOverlay.svelte';
+import ViewerScene from '$lib/components/3d/ViewerScene.svelte';
+import { BoundaryFallback } from '$lib/components/composites';
+import {
+	applyPreset,
+	type CustomizationPreset,
+	type CustomizationState,
+	getDefaultState,
+} from '$lib/config/customization';
+import { MODELS_BY_ID, resolveViewportConfig } from '$lib/config/models';
 
-	const model = $derived(MODELS_BY_ID.get(page.params.model!));
-	const customization = $derived(model?.customization);
-	const config = $derived(model ? resolveViewportConfig(model) : undefined);
+const model = $derived(MODELS_BY_ID.get(page.params.model!));
+const customization = $derived(model?.customization);
+const config = $derived(model ? resolveViewportConfig(model) : undefined);
 
-	let redirected = false;
-	$effect(() => {
-		if ((!model || !customization) && !redirected) {
-			redirected = true;
-			goto('/showcases/3d');
+let redirected = false;
+$effect(() => {
+	if ((!model || !customization) && !redirected) {
+		redirected = true;
+		goto('/showcases/3d');
+	}
+});
+
+// State management
+let custState = $state<CustomizationState>(
+	customization
+		? getDefaultState(customization)
+		: { materials: {}, partVisibility: {}, morphValues: {}, accessories: {} },
+);
+let activePresetId = $state<string | undefined>(undefined);
+
+// Apply preset from URL on load
+$effect(() => {
+	if (!customization?.presets) return;
+	const presetParam = new URLSearchParams(window.location.search).get('preset');
+	if (presetParam) {
+		const preset = customization.presets.find((p) => p.id === presetParam);
+		if (preset) {
+			custState = applyPreset(getDefaultState(customization), preset);
+			activePresetId = preset.id;
 		}
-	});
-
-	// State management
-	let custState = $state<CustomizationState>(
-		customization ? getDefaultState(customization) : { materials: {}, partVisibility: {}, morphValues: {}, accessories: {} }
-	);
-	let activePresetId = $state<string | undefined>(undefined);
-
-	// Apply preset from URL on load
-	$effect(() => {
-		if (!customization?.presets) return;
-		const presetParam = new URLSearchParams(window.location.search).get('preset');
-		if (presetParam) {
-			const preset = customization.presets.find((p) => p.id === presetParam);
-			if (preset) {
-				custState = applyPreset(getDefaultState(customization), preset);
-				activePresetId = preset.id;
-			}
-		}
-	});
-
-	function handleMaterialChange(groupId: string, optionId: string) {
-		custState.materials[groupId] = optionId;
-		activePresetId = undefined;
-		clearPresetParam();
 	}
+});
 
-	function handlePartToggle(partId: string, visible: boolean) {
-		custState.partVisibility[partId] = visible;
-		activePresetId = undefined;
-		clearPresetParam();
-	}
+function handleMaterialChange(groupId: string, optionId: string) {
+	custState.materials[groupId] = optionId;
+	activePresetId = undefined;
+	clearPresetParam();
+}
 
-	function handleMorphChange(key: string, value: number) {
-		custState.morphValues[key] = value;
-		activePresetId = undefined;
-		clearPresetParam();
-	}
+function handlePartToggle(partId: string, visible: boolean) {
+	custState.partVisibility[partId] = visible;
+	activePresetId = undefined;
+	clearPresetParam();
+}
 
-	function handleAccessoryToggle(accessoryId: string, active: boolean) {
-		custState.accessories[accessoryId] = active;
-		activePresetId = undefined;
-		clearPresetParam();
-	}
+function handleMorphChange(key: string, value: number) {
+	custState.morphValues[key] = value;
+	activePresetId = undefined;
+	clearPresetParam();
+}
 
-	function handlePresetSelect(preset: CustomizationPreset) {
-		if (!customization) return;
-		custState = applyPreset(getDefaultState(customization), preset);
-		activePresetId = preset.id;
-		const url = new URL(window.location.href);
-		url.searchParams.set('preset', preset.id);
+function handleAccessoryToggle(accessoryId: string, active: boolean) {
+	custState.accessories[accessoryId] = active;
+	activePresetId = undefined;
+	clearPresetParam();
+}
+
+function handlePresetSelect(preset: CustomizationPreset) {
+	if (!customization) return;
+	custState = applyPreset(getDefaultState(customization), preset);
+	activePresetId = preset.id;
+	const url = new URL(window.location.href);
+	url.searchParams.set('preset', preset.id);
+	history.replaceState(history.state, '', url.toString());
+}
+
+function handleReset() {
+	if (!customization) return;
+	custState = getDefaultState(customization);
+	activePresetId = undefined;
+	clearPresetParam();
+}
+
+function clearPresetParam() {
+	const url = new URL(window.location.href);
+	if (url.searchParams.has('preset')) {
+		url.searchParams.delete('preset');
 		history.replaceState(history.state, '', url.toString());
 	}
+}
 
-	function handleReset() {
-		if (!customization) return;
-		custState = getDefaultState(customization);
-		activePresetId = undefined;
-		clearPresetParam();
+let currentAnimation = $state('');
+$effect(() => {
+	if (model?.animations) {
+		currentAnimation = model.animations.defaultClip;
 	}
-
-	function clearPresetParam() {
-		const url = new URL(window.location.href);
-		if (url.searchParams.has('preset')) {
-			url.searchParams.delete('preset');
-			history.replaceState(history.state, '', url.toString());
-		}
-	}
-
-	let currentAnimation = $state('');
-	$effect(() => {
-		if (model?.animations) {
-			currentAnimation = model.animations.defaultClip;
-		}
-	});
+});
 </script>
 
 <svelte:head>

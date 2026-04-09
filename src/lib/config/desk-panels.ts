@@ -1,13 +1,6 @@
 import type { ActivityBarItem, PanelDefinition } from '$lib/components/composites/dock';
 
-export const DESK_PANEL_TYPES = [
-	'explorer',
-	'editor',
-	'preview',
-	'bot',
-	'spreadsheet',
-	'io-log',
-] as const;
+export const DESK_PANEL_TYPES = ['explorer', 'editor', 'preview', 'bot', 'spreadsheet', 'io-log'] as const;
 
 export type DeskPanelType = (typeof DESK_PANEL_TYPES)[number];
 

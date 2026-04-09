@@ -8,11 +8,11 @@
  *   bun run scripts/migrate-desk-files.ts
  */
 import { neonConfig, Pool } from '@neondatabase/serverless';
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { eq, isNull } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import { file, fileTypeEnum } from '../src/lib/server/db/schema/desk/file';
-import { spreadsheet } from '../src/lib/server/db/schema/desk/spreadsheet';
 import { createId } from '../src/lib/server/db/id';
+import { file } from '../src/lib/server/db/schema/desk/file';
+import { spreadsheet } from '../src/lib/server/db/schema/desk/spreadsheet';
 
 neonConfig.poolQueryViaFetch = true;
 
@@ -61,10 +61,7 @@ async function migrate() {
 			});
 
 			// Link spreadsheet to file
-			await tx
-				.update(spreadsheet)
-				.set({ fileId })
-				.where(eq(spreadsheet.id, s.id));
+			await tx.update(spreadsheet).set({ fileId }).where(eq(spreadsheet.id, s.id));
 		});
 
 		migrated++;

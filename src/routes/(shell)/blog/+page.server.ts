@@ -1,5 +1,5 @@
-import type { PageServerLoad } from './$types';
 import { listPosts } from '$lib/server/blog';
+import type { PageServerLoad } from './$types';
 
 const PAGE_SIZE = 12;
 

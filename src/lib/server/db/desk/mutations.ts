@@ -192,7 +192,7 @@ export async function moveFolder(id: string, userId: string, parentId: string | 
 			)
 			SELECT EXISTS(SELECT 1 FROM ancestors WHERE id = ${id}) AS is_cycle
 		`);
-		if ((result as any).rows?.[0]?.is_cycle) {
+		if ((result as unknown as { rows?: { is_cycle: boolean }[] }).rows?.[0]?.is_cycle) {
 			throw new Error('Cannot move folder into its own descendant.');
 		}
 	}

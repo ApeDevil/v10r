@@ -3,13 +3,13 @@
  * for the admin notifications dashboard.
  */
 
-import { and, count, desc, eq, gte, inArray, max, sql } from 'drizzle-orm';
+import { and, count, desc, eq, gte, max, sql } from 'drizzle-orm';
+import { ADMIN_DELIVERY_PAGE_SIZE } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
-import { notifications } from '$lib/server/db/schema/notifications/notifications';
 import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
+import { notifications } from '$lib/server/db/schema/notifications/notifications';
 import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
-import { ADMIN_DELIVERY_PAGE_SIZE } from '$lib/server/config';
 
 // Per-user error codes excluded from channel health calculation
 const PER_USER_ERROR_CODES = ['50007', '403'];
@@ -33,9 +33,15 @@ export async function getChannelHealthStats(): Promise<ChannelHealthStats[]> {
 			channel: notificationDeliveries.channel,
 			sent: sql<number>`count(*) filter (where ${notificationDeliveries.status} = 'sent')`,
 			systemFailures: sql<number>`count(*) filter (where ${notificationDeliveries.status} IN ('failed', 'dead')
-				AND (${notificationDeliveries.errorCode} IS NULL OR ${notificationDeliveries.errorCode} NOT IN (${sql.join(PER_USER_ERROR_CODES.map((c) => sql`${c}`), sql`, `)})))`,
+				AND (${notificationDeliveries.errorCode} IS NULL OR ${notificationDeliveries.errorCode} NOT IN (${sql.join(
+					PER_USER_ERROR_CODES.map((c) => sql`${c}`),
+					sql`, `,
+				)})))`,
 			userFailures: sql<number>`count(*) filter (where ${notificationDeliveries.status} IN ('failed', 'dead')
-				AND ${notificationDeliveries.errorCode} IN (${sql.join(PER_USER_ERROR_CODES.map((c) => sql`${c}`), sql`, `)}))`,
+				AND ${notificationDeliveries.errorCode} IN (${sql.join(
+					PER_USER_ERROR_CODES.map((c) => sql`${c}`),
+					sql`, `,
+				)}))`,
 			dead: sql<number>`count(*) filter (where ${notificationDeliveries.status} = 'dead')`,
 			lastSentAt: max(notificationDeliveries.sentAt),
 		})
@@ -84,7 +90,12 @@ export async function getDeliveryLog(filters: DeliveryLogFilters = {}) {
 		conditions.push(eq(notificationDeliveries.channel, filters.channel as 'email' | 'telegram' | 'discord'));
 	}
 	if (filters.status && filters.status !== 'all') {
-		conditions.push(eq(notificationDeliveries.status, filters.status as any));
+		conditions.push(
+			eq(
+				notificationDeliveries.status,
+				filters.status as 'pending' | 'processing' | 'sent' | 'failed' | 'skipped' | 'retrying' | 'dead',
+			),
+		);
 	}
 
 	const where = conditions.length > 0 ? and(...conditions) : undefined;
@@ -110,10 +121,7 @@ export async function getDeliveryLog(filters: DeliveryLogFilters = {}) {
 			.orderBy(desc(notificationDeliveries.createdAt))
 			.limit(ADMIN_DELIVERY_PAGE_SIZE)
 			.offset(offset),
-		db
-			.select({ total: count() })
-			.from(notificationDeliveries)
-			.where(where),
+		db.select({ total: count() }).from(notificationDeliveries).where(where),
 	]);
 
 	const total = totalResult[0]?.total ?? 0;

@@ -6,7 +6,8 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 
-// Mock all DB dependencies so the tool modules can import without DATABASE_URL
+// Mock the DB connection so modules can import without DATABASE_URL
+vi.mock('$lib/server/db', () => ({ db: {} }));
 vi.mock('$lib/server/db/desk/queries', () => ({
 	listFiles: vi.fn(),
 	getFile: vi.fn(),
@@ -91,15 +92,16 @@ describe('createDeskTools scope gating', () => {
 	it('each tool object has an execute function', () => {
 		const tools = createDeskTools(USER_ID, ['desk:read', 'desk:write', 'desk:create', 'desk:delete']);
 		for (const [name, t] of Object.entries(tools)) {
-			expect(typeof (t as any).execute, `${name}.execute should be a function`).toBe('function');
+			expect(typeof (t as Record<string, unknown>).execute, `${name}.execute should be a function`).toBe('function');
 		}
 	});
 
 	it('each tool object has a description string', () => {
 		const tools = createDeskTools(USER_ID, ['desk:read']);
 		for (const [name, t] of Object.entries(tools)) {
-			expect(typeof (t as any).description, `${name}.description should be a string`).toBe('string');
-			expect((t as any).description.length, `${name}.description should be non-empty`).toBeGreaterThan(0);
+			const tool = t as Record<string, unknown>;
+			expect(typeof tool.description, `${name}.description should be a string`).toBe('string');
+			expect((tool.description as string).length, `${name}.description should be non-empty`).toBeGreaterThan(0);
 		}
 	});
 });

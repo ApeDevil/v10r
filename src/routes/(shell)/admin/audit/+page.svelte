@@ -35,7 +35,7 @@ function buildUrl(params: Record<string, string>): string {
 }
 
 function exportUrl(): string {
-	const u = new URL(page.url.origin + '/admin/audit/export');
+	const u = new URL(`${page.url.origin}/admin/audit/export`);
 	if (data.filters.action) u.searchParams.set('action', data.filters.action);
 	if (data.filters.actor) u.searchParams.set('actor', data.filters.actor);
 	if (data.filters.targetType) u.searchParams.set('target_type', data.filters.targetType);

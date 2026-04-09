@@ -1,19 +1,16 @@
 import * as v from 'valibot';
+import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
-import { listWorkspaces, getActiveWorkspaceId, createWorkspace } from '$lib/server/desk';
-import { CreateWorkspaceSchema } from '$lib/server/desk/schemas';
-import { apiOk, apiCreated, apiError, apiValidationError } from '$lib/server/api/response';
 import type { WorkspaceLayoutJson } from '$lib/server/db/schema/desk/workspace';
+import { createWorkspace, getActiveWorkspaceId, listWorkspaces } from '$lib/server/desk';
+import { CreateWorkspaceSchema } from '$lib/server/desk/schemas';
 import type { RequestHandler } from './$types';
 
 /** List all workspaces (with layouts) + active ID. */
 export const GET: RequestHandler = async ({ locals }) => {
 	const { user } = requireApiUser(locals);
 
-	const [workspaces, activeId] = await Promise.all([
-		listWorkspaces(user.id),
-		getActiveWorkspaceId(user.id),
-	]);
+	const [workspaces, activeId] = await Promise.all([listWorkspaces(user.id), getActiveWorkspaceId(user.id)]);
 
 	return apiOk({
 		workspaces: workspaces.map((w) => ({
@@ -40,7 +37,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 
 	const workspace = await createWorkspace(user.id, {
 		name: parsed.output.name,
-		layout: parsed.output.layout as WorkspaceLayoutJson,
+		layout: parsed.output.layout as unknown as WorkspaceLayoutJson,
 		sortOrder: parsed.output.sortOrder,
 	});
 

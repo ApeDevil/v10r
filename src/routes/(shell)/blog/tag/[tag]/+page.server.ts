@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
+import { getTagBySlug, listPosts } from '$lib/server/blog';
 import type { PageServerLoad } from './$types';
-import { listPosts, getTagBySlug } from '$lib/server/blog';
 
 const PAGE_SIZE = 12;
 

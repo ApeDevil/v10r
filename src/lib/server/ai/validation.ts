@@ -52,10 +52,12 @@ export const ChatRequestSchema = v.object({
 	/** Current desk layout so AI knows what panels are open. */
 	deskLayout: v.optional(v.array(DeskLayoutEntry)),
 	/** Active workspace name for AI context. */
-	activeWorkspace: v.optional(v.object({
-		id: v.string(),
-		name: v.string(),
-	})),
+	activeWorkspace: v.optional(
+		v.object({
+			id: v.string(),
+			name: v.string(),
+		}),
+	),
 });
 
 export const StreamingRequestSchema = v.object({

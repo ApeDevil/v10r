@@ -16,10 +16,7 @@ export interface ChannelProbes {
 	telegram: ProbeResult | null;
 }
 
-async function probeWithTimeout(
-	fn: () => Promise<ProbeResult>,
-	timeoutMs = 5000,
-): Promise<ProbeResult> {
+async function probeWithTimeout(fn: () => Promise<ProbeResult>, timeoutMs = 5000): Promise<ProbeResult> {
 	const controller = new AbortController();
 	const timer = setTimeout(() => controller.abort(), timeoutMs);
 	try {
@@ -92,7 +89,9 @@ export async function probeChannels(): Promise<ChannelProbes> {
 	]);
 
 	return {
-		discord: discord.status === 'fulfilled' ? discord.value : { status: 'error', latencyMs: 0, message: 'Probe failed' },
-		telegram: telegram.status === 'fulfilled' ? telegram.value : { status: 'error', latencyMs: 0, message: 'Probe failed' },
+		discord:
+			discord.status === 'fulfilled' ? discord.value : { status: 'error', latencyMs: 0, message: 'Probe failed' },
+		telegram:
+			telegram.status === 'fulfilled' ? telegram.value : { status: 'error', latencyMs: 0, message: 'Probe failed' },
 	};
 }

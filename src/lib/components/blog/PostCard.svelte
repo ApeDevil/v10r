@@ -1,7 +1,7 @@
 <script lang="ts">
-import type { PostListItem } from '$lib/server/blog/types';
-import { formatDate } from '$lib/i18n/formatting';
 import { BlogTag } from '$lib/components/blog';
+import { formatDate } from '$lib/i18n/formatting';
+import type { PostListItem } from '$lib/server/blog/types';
 
 interface Props {
 	post: PostListItem;

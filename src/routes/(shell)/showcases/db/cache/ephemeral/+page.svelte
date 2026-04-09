@@ -1,4 +1,5 @@
 <script lang="ts">
+import type { ActionResult } from '@sveltejs/kit';
 import { enhance } from '$app/forms';
 import { Alert, Card, NavSection } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
@@ -44,17 +45,29 @@ let newTtlValue = $state('');
 let newTtlSeconds = $state('60');
 
 // ─── Sliding state ──────────────────────────────────
-let slideResult = $state<{ before: any; after: any } | null>(null);
+let slideResult = $state<{ before: { remainingSeconds: number }; after: { remainingSeconds: number } } | null>(null);
 
 // ─── Rate limit state ───────────────────────────────
-let rateLimitResult = $state<any>(null);
+let rateLimitResult = $state<{
+	allowed: boolean;
+	remaining: number;
+	limit: number;
+	windowSeconds: number;
+	resetAt: number;
+} | null>(null);
 let rateLoading = $state(false);
 
 // ─── Loading ────────────────────────────────────────
 let actionLoading = $state('');
 
 function handleResult(successMsg?: string) {
-	return ({ result, update }: { result: any; update: (opts?: any) => Promise<void> }) => {
+	return ({
+		result,
+		update,
+	}: {
+		result: ActionResult;
+		update: (opts?: { reset?: boolean; invalidateAll?: boolean }) => Promise<void>;
+	}) => {
 		actionLoading = '';
 		rateLoading = false;
 		if (result.type === 'success' && result.data) {

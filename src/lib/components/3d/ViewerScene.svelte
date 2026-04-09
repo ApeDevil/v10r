@@ -1,8 +1,8 @@
 <script lang="ts">
 import { T, useTask } from '@threlte/core';
 import { OrbitControls, useGltf } from '@threlte/extras';
+import { AnimationClip, AnimationMixer } from 'three';
 import type { Model3D, ResolvedViewportConfig } from '$lib/config/models';
-import { AnimationMixer, AnimationClip } from 'three';
 
 interface Props {
 	model: Model3D;

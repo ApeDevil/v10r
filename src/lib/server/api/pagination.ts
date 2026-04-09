@@ -56,8 +56,9 @@ export function paginatedResponse<T>(
 	return {
 		items: trimmed,
 		has_more: hasMore,
-		...(hasMore && trimmed.length > 0 && {
-			cursor: encodeCursor(cursorFn(trimmed[trimmed.length - 1])),
-		}),
+		...(hasMore &&
+			trimmed.length > 0 && {
+				cursor: encodeCursor(cursorFn(trimmed[trimmed.length - 1])),
+			}),
 	};
 }

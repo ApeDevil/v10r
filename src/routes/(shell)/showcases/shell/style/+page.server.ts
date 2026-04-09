@@ -1,5 +1,5 @@
-import type { PageServerLoad } from './$types';
 import { getBrandConfig } from '$lib/server/style/brand';
+import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
 	let brand: { paletteId: string; typographyId: string; radiusId: string; enabled: boolean } | null = null;

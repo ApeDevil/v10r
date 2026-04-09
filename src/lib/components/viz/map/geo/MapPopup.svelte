@@ -11,7 +11,7 @@ interface Props {
 
 let { offset = 25, closeButton = true, class: className, children }: Props = $props();
 
-let PopupComp: Component<any> | undefined = $state();
+let PopupComp: Component<Record<string, unknown>> | undefined = $state();
 
 onMount(async () => {
 	const sml = await import('svelte-maplibre-gl');

@@ -1,13 +1,13 @@
 <script lang="ts">
-	import type { ToggleablePart } from '$lib/config/customization';
+import type { ToggleablePart } from '$lib/config/customization';
 
-	interface Props {
-		parts: ToggleablePart[];
-		visibility: Record<string, boolean>;
-		ontoggle: (partId: string, visible: boolean) => void;
-	}
+interface Props {
+	parts: ToggleablePart[];
+	visibility: Record<string, boolean>;
+	ontoggle: (partId: string, visible: boolean) => void;
+}
 
-	let { parts, visibility, ontoggle }: Props = $props();
+let { parts, visibility, ontoggle }: Props = $props();
 </script>
 
 <fieldset class="toggle-list">

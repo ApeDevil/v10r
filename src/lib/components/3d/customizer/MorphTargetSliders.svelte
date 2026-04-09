@@ -1,13 +1,13 @@
 <script lang="ts">
-	import type { MorphTargetGroup } from '$lib/config/customization';
+import type { MorphTargetGroup } from '$lib/config/customization';
 
-	interface Props {
-		groups: MorphTargetGroup[];
-		values: Record<string, number>;
-		onchange: (key: string, value: number) => void;
-	}
+interface Props {
+	groups: MorphTargetGroup[];
+	values: Record<string, number>;
+	onchange: (key: string, value: number) => void;
+}
 
-	let { groups, values, onchange }: Props = $props();
+let { groups, values, onchange }: Props = $props();
 </script>
 
 {#each groups as group (group.id)}

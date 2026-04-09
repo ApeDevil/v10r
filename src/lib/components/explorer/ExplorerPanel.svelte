@@ -64,13 +64,15 @@ async function fetchAll() {
 
 		if (postsRes.ok) {
 			const { data } = await postsRes.json();
-			const posts: PostListItem[] = (data.items ?? []).map((p: any) => ({
-				id: p.id,
-				slug: p.slug,
-				status: p.status,
-				title: p.title ?? '(untitled)',
-				updatedAt: p.updatedAt,
-			}));
+			const posts: PostListItem[] = (data.items ?? []).map(
+				(p: { id: string; slug: string; status: PostListItem['status']; title?: string; updatedAt: string }) => ({
+					id: p.id,
+					slug: p.slug,
+					status: p.status,
+					title: p.title ?? '(untitled)',
+					updatedAt: p.updatedAt,
+				}),
+			);
 			nodes.push(...adaptBlogPosts(posts));
 		}
 
@@ -204,7 +206,9 @@ async function handleDuplicate(node: ExplorerNode) {
 	try {
 		const res = await apiFetch(`/api/desk/files/${node.id}`, { method: 'POST' });
 		if (!res.ok) throw new Error('Duplicate failed');
-		const { data: { file: newFile } } = await res.json();
+		const {
+			data: { file: newFile },
+		} = await res.json();
 		await fetchAll();
 		explorerState.startRename(newFile.id);
 	} catch (e) {
@@ -286,7 +290,9 @@ async function handleNewFolder(node: ExplorerNode) {
 			body: JSON.stringify({ parentId }),
 		});
 		if (!res.ok) throw new Error('Failed to create folder');
-		const { data: { folder } } = await res.json();
+		const {
+			data: { folder },
+		} = await res.json();
 		await fetchAll();
 		explorerState.startRename(folder.id);
 		// Expand parent to show new folder
@@ -305,7 +311,9 @@ async function handleNewSpreadsheet(node: ExplorerNode) {
 			body: JSON.stringify({ type: 'spreadsheet', name: 'Untitled', folderId }),
 		});
 		if (!res.ok) throw new Error('Failed to create spreadsheet');
-		const { data: { file } } = await res.json();
+		const {
+			data: { file },
+		} = await res.json();
 		await fetchAll();
 		openSpreadsheet({
 			id: file.id,

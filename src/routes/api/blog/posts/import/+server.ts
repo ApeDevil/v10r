@@ -1,9 +1,13 @@
+import { parse as parseYaml } from 'yaml';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { apiCreated, apiError, apiOk } from '$lib/server/api/response';
 import { requireApiAuthor, requirePostOwnership } from '$lib/server/auth/guards';
 import { createPost, createRevision, getPostBySlug } from '$lib/server/blog';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiOk, apiCreated, apiError } from '$lib/server/api/response';
-import { BLOG_WRITE_RATE_LIMIT_PREFIX, BLOG_WRITE_RATE_LIMIT_MAX, BLOG_WRITE_RATE_LIMIT_WINDOW } from '$lib/server/config';
-import { parse as parseYaml } from 'yaml';
+import {
+	BLOG_WRITE_RATE_LIMIT_MAX,
+	BLOG_WRITE_RATE_LIMIT_PREFIX,
+	BLOG_WRITE_RATE_LIMIT_WINDOW,
+} from '$lib/server/config';
 import type { RequestHandler } from './$types';
 
 const ratelimit = createLimiter(BLOG_WRITE_RATE_LIMIT_PREFIX, BLOG_WRITE_RATE_LIMIT_MAX, BLOG_WRITE_RATE_LIMIT_WINDOW);
@@ -20,7 +24,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	// Parse frontmatter
 	const fmMatch = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
-	if (!fmMatch) return apiError(400, 'invalid_frontmatter', 'Invalid markdown file: missing YAML frontmatter (---...---)');
+	if (!fmMatch)
+		return apiError(400, 'invalid_frontmatter', 'Invalid markdown file: missing YAML frontmatter (---...---)');
 
 	let frontmatter: Record<string, unknown>;
 	try {

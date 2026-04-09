@@ -1,8 +1,20 @@
 <script lang="ts">
 import { enhance } from '$app/forms';
 import { Alert, Card, DiagGrid, DiagRow } from '$lib/components/composites';
-import { Accordion, Button, Progress, Skeleton, Spinner, Tag } from '$lib/components/primitives';
-import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives';
+import {
+	Accordion,
+	Body,
+	Button,
+	Cell,
+	Header,
+	HeaderCell,
+	Progress,
+	Row,
+	Skeleton,
+	Spinner,
+	Table,
+	Tag,
+} from '$lib/components/primitives';
 import type { ProviderResult, ThresholdLevel } from '$lib/server/monitoring';
 import type { PageProps } from './$types';
 
@@ -17,7 +29,7 @@ function formatBytes(bytes: number): string {
 	const k = 1024;
 	const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
 	const i = Math.floor(Math.log(bytes) / Math.log(k));
-	return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+	return `${parseFloat((bytes / k ** i).toFixed(1))} ${sizes[i]}`;
 }
 
 function formatNumber(n: number): string {

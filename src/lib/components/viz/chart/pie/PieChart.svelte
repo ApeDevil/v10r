@@ -31,8 +31,7 @@ let ready = $state(false);
 let unsub: (() => void) | undefined;
 
 /** Set slice borderColor to chart bg so gaps blend with the surface */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function applySliceBorders<T extends { datasets: any[] }>(chartData: T): T {
+function applySliceBorders<T extends { datasets: unknown[] }>(chartData: T): T {
 	const bg = getChartInfraColors().bg;
 	const datasets = chartData.datasets as Record<string, unknown>[];
 	return {

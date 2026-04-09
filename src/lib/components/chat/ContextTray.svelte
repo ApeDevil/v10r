@@ -1,41 +1,46 @@
 <script lang="ts">
-	import type { ContextChip } from '$lib/components/composites/dock';
+import type { ContextChip } from '$lib/components/composites/dock';
 
-	interface Props {
-		chips: ContextChip[];
-		totalTokens: number;
-		budget?: number;
-		/** Cumulative conversation token usage (input + output from AI responses). */
-		conversationTokens?: number;
-		onpin: (panelId: string) => void;
-		onunpin: (panelId: string) => void;
-		ondismiss: (panelId: string) => void;
+interface Props {
+	chips: ContextChip[];
+	totalTokens: number;
+	budget?: number;
+	/** Cumulative conversation token usage (input + output from AI responses). */
+	conversationTokens?: number;
+	onpin: (panelId: string) => void;
+	onunpin: (panelId: string) => void;
+	ondismiss: (panelId: string) => void;
+}
+
+let { chips, totalTokens, budget = 8000, conversationTokens = 0, onpin, onunpin, ondismiss }: Props = $props();
+
+const fillPercent = $derived(Math.min(100, Math.round((totalTokens / budget) * 100)));
+const fillLevel = $derived<'normal' | 'warning' | 'error'>(
+	fillPercent >= 90 ? 'error' : fillPercent >= 70 ? 'warning' : 'normal',
+);
+
+const activeChips = $derived(chips.filter((c) => c.status !== 'available'));
+
+function formatTokens(n: number): string {
+	if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+	return String(n);
+}
+
+/** Icon class for panel type */
+function panelIcon(panelType: string): string {
+	switch (panelType) {
+		case 'spreadsheet':
+			return 'i-lucide-sheet';
+		case 'editor':
+			return 'i-lucide-file-text';
+		case 'explorer':
+			return 'i-lucide-folder-tree';
+		case 'preview':
+			return 'i-lucide-eye';
+		default:
+			return 'i-lucide-layout-grid';
 	}
-
-	let { chips, totalTokens, budget = 8000, conversationTokens = 0, onpin, onunpin, ondismiss }: Props = $props();
-
-	const fillPercent = $derived(Math.min(100, Math.round((totalTokens / budget) * 100)));
-	const fillLevel = $derived<'normal' | 'warning' | 'error'>(
-		fillPercent >= 90 ? 'error' : fillPercent >= 70 ? 'warning' : 'normal',
-	);
-
-	const activeChips = $derived(chips.filter((c) => c.status !== 'available'));
-
-	function formatTokens(n: number): string {
-		if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
-		return String(n);
-	}
-
-	/** Icon class for panel type */
-	function panelIcon(panelType: string): string {
-		switch (panelType) {
-			case 'spreadsheet': return 'i-lucide-sheet';
-			case 'editor': return 'i-lucide-file-text';
-			case 'explorer': return 'i-lucide-folder-tree';
-			case 'preview': return 'i-lucide-eye';
-			default: return 'i-lucide-layout-grid';
-		}
-	}
+}
 </script>
 
 {#if chips.length > 0}

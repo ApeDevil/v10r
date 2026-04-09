@@ -14,11 +14,7 @@ export interface WorkspacesPersistedState {
 	workspaces: Workspace[];
 }
 
-export function saveWorkspaceStore(
-	workspaces: Workspace[],
-	activeId: string | null,
-	storageKey = DEFAULT_KEY,
-): void {
+export function saveWorkspaceStore(workspaces: Workspace[], activeId: string | null, storageKey = DEFAULT_KEY): void {
 	if (!browser) return;
 	try {
 		const state: WorkspacesPersistedState = { version: CURRENT_VERSION, activeId, workspaces };

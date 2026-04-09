@@ -13,13 +13,7 @@ export const userSettingsSchema = v.object({
 	timezone: v.pipe(v.string(), v.trim(), v.nonEmpty('Timezone is required')),
 	dateFormat: v.picklist(['relative', 'absolute', 'iso'], 'Select a date format'),
 	sidebarWidth: v.optional(
-		v.pipe(
-			v.union([v.string(), v.number()]),
-			v.transform(Number),
-			v.integer(),
-			v.minValue(160),
-			v.maxValue(320),
-		),
+		v.pipe(v.union([v.string(), v.number()]), v.transform(Number), v.integer(), v.minValue(160), v.maxValue(320)),
 		240,
 	),
 	reduceMotion: v.optional(v.boolean(), false),

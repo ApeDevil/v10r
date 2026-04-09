@@ -1,15 +1,15 @@
 <script lang="ts">
-	import type { SelectionStats } from './spreadsheet.state.svelte';
+import type { SelectionStats } from './spreadsheet.state.svelte';
 
-	interface Props {
-		stats: SelectionStats;
-	}
+interface Props {
+	stats: SelectionStats;
+}
 
-	let { stats }: Props = $props();
+let { stats }: Props = $props();
 
-	function formatNum(n: number): string {
-		return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
-	}
+function formatNum(n: number): string {
+	return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
 </script>
 
 <div class="sheet-status-bar">

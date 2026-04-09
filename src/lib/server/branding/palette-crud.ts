@@ -32,11 +32,7 @@ export async function createCustomPalette(data: {
 
 /** Get a custom palette by ID only (no user check — for SSR rendering) */
 export async function getCustomPaletteById(id: string) {
-	const [palette] = await db
-		.select()
-		.from(customPalettes)
-		.where(eq(customPalettes.id, id))
-		.limit(1);
+	const [palette] = await db.select().from(customPalettes).where(eq(customPalettes.id, id)).limit(1);
 	return palette ?? null;
 }
 
@@ -50,11 +46,7 @@ export async function getCustomPalette(id: string, userId: string) {
 }
 
 export async function listCustomPalettes(userId: string) {
-	return db
-		.select()
-		.from(customPalettes)
-		.where(eq(customPalettes.createdBy, userId))
-		.orderBy(customPalettes.createdAt);
+	return db.select().from(customPalettes).where(eq(customPalettes.createdBy, userId)).orderBy(customPalettes.createdAt);
 }
 
 export async function updateCustomPalette(

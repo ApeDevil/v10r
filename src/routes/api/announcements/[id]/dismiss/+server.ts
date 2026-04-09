@@ -1,6 +1,6 @@
-import { requireApiUser } from '$lib/server/auth/guards';
-import { apiNoContent, apiError } from '$lib/server/api/response';
 import { dismissAnnouncement, getAnnouncementById } from '$lib/server/admin/announcements';
+import { apiError, apiNoContent } from '$lib/server/api/response';
+import { requireApiUser } from '$lib/server/auth/guards';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ params, locals }) => {

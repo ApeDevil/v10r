@@ -116,10 +116,7 @@ export async function syncWorkspace(
 }
 
 /** Swap sort orders of two workspaces atomically. */
-export async function reorderWorkspaces(
-	userId: string,
-	orderedIds: string[],
-) {
+export async function reorderWorkspaces(userId: string, orderedIds: string[]) {
 	await db.transaction(async (tx) => {
 		for (let i = 0; i < orderedIds.length; i++) {
 			await tx

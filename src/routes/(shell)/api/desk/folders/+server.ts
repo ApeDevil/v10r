@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 import { safeParse } from 'valibot';
-import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/api/response';
+import { apiCreated, apiOk, apiValidationError } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { createFolder } from '$lib/server/db/desk/mutations';
 import { listFolders } from '$lib/server/db/desk/queries';

@@ -6,9 +6,7 @@ import { BackLink, NavGrid, PageHeader } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
 import { MODELS, MODELS_BY_ID } from '$lib/config/models';
 
-const activeModel = $derived(
-	page.state.modelId ? MODELS_BY_ID.get(page.state.modelId) : undefined
-);
+const activeModel = $derived(page.state.modelId ? MODELS_BY_ID.get(page.state.modelId) : undefined);
 
 let viewerOpen = $derived(!!page.state.viewerOpen);
 

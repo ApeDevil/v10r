@@ -1,22 +1,22 @@
 <script lang="ts">
-	import {
-		Table,
-		Header as TableHeader,
-		HeaderCell as TableHeaderCell,
-		Body as TableBody,
-		Row as TableRow,
-		Cell as TableCell,
-	} from '$lib/components/primitives/table';
-	import { ScrollArea } from '$lib/components/primitives/scroll-area';
-	import type { PropDef } from './types';
-	import { cn } from '$lib/utils/cn';
+import { ScrollArea } from '$lib/components/primitives/scroll-area';
+import {
+	Table,
+	Body as TableBody,
+	Cell as TableCell,
+	Header as TableHeader,
+	HeaderCell as TableHeaderCell,
+	Row as TableRow,
+} from '$lib/components/primitives/table';
+import { cn } from '$lib/utils/cn';
+import type { PropDef } from './types';
 
-	interface Props {
-		props: PropDef[];
-		class?: string;
-	}
+interface Props {
+	props: PropDef[];
+	class?: string;
+}
 
-	let { props, class: className }: Props = $props();
+let { props, class: className }: Props = $props();
 </script>
 
 <ScrollArea orientation="horizontal" class={cn('props-table-scroll', className)}>

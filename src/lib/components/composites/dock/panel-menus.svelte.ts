@@ -39,10 +39,14 @@ let focusedPanelId = $state<string | null>(null);
  */
 export function registerPanelMenus(panelId: string, menus: PanelMenus): () => void {
 	registry.set(panelId, menus);
-	queueMicrotask(() => { registryVersion++; });
+	queueMicrotask(() => {
+		registryVersion++;
+	});
 	return () => {
 		registry.delete(panelId);
-		queueMicrotask(() => { registryVersion++; });
+		queueMicrotask(() => {
+			registryVersion++;
+		});
 	};
 }
 

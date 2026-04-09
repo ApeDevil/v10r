@@ -1,6 +1,6 @@
 /** Valibot schemas for blog API endpoints. */
 import * as v from 'valibot';
-import { SlugParam, Markdown, LocaleParam } from '$lib/server/schemas/shared';
+import { LocaleParam, Markdown, SlugParam } from '$lib/server/schemas/shared';
 
 const MAX_MARKDOWN_SIZE = 500_000;
 
@@ -18,10 +18,7 @@ export const CreateRevisionSchema = v.object({
 });
 
 export const SetTagsSchema = v.object({
-	tagIds: v.pipe(
-		v.array(v.pipe(v.string(), v.startsWith('tag_'))),
-		v.maxLength(50),
-	),
+	tagIds: v.pipe(v.array(v.pipe(v.string(), v.startsWith('tag_'))), v.maxLength(50)),
 });
 
 export const SetDomainSchema = v.object({

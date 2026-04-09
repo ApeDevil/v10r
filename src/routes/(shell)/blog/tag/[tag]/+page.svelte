@@ -1,7 +1,7 @@
 <script lang="ts">
-import { PageContainer, Stack } from '$lib/components/layout';
-import { PageHeader, EmptyState } from '$lib/components/composites';
 import { PostList } from '$lib/components/blog';
+import { EmptyState, PageHeader } from '$lib/components/composites';
+import { PageContainer, Stack } from '$lib/components/layout';
 
 let { data } = $props();
 </script>

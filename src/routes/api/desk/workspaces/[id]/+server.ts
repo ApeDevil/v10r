@@ -1,9 +1,9 @@
 import * as v from 'valibot';
+import { apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
-import { updateWorkspace, deleteWorkspace } from '$lib/server/desk';
-import { UpdateWorkspaceSchema } from '$lib/server/desk/schemas';
-import { apiOk, apiNoContent, apiError, apiValidationError } from '$lib/server/api/response';
 import type { WorkspaceLayoutJson } from '$lib/server/db/schema/desk/workspace';
+import { deleteWorkspace, updateWorkspace } from '$lib/server/desk';
+import { UpdateWorkspaceSchema } from '$lib/server/desk/schemas';
 import type { RequestHandler } from './$types';
 
 /** Partial update: name, layout, and/or sortOrder. */

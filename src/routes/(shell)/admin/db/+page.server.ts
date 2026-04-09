@@ -1,14 +1,12 @@
 import { requireAdmin } from '$lib/server/auth/guards';
-import { fetchNeonMetrics } from '$lib/server/monitoring/neon';
-import { fetchNeo4jMetrics } from '$lib/server/monitoring/neo4j';
-import { fetchUpstashMetrics } from '$lib/server/monitoring/upstash';
-import { fetchR2Metrics } from '$lib/server/monitoring/r2';
 import type { ProviderResult } from '$lib/server/monitoring';
+import { fetchNeo4jMetrics } from '$lib/server/monitoring/neo4j';
+import { fetchNeonMetrics } from '$lib/server/monitoring/neon';
+import { fetchR2Metrics } from '$lib/server/monitoring/r2';
+import { fetchUpstashMetrics } from '$lib/server/monitoring/upstash';
 import type { Actions, PageServerLoad } from './$types';
 
-function settledToResult<T>(
-	result: PromiseSettledResult<ProviderResult<T>>,
-): ProviderResult<T> {
+function settledToResult<T>(result: PromiseSettledResult<ProviderResult<T>>): ProviderResult<T> {
 	if (result.status === 'fulfilled') return result.value;
 	return {
 		status: 'unavailable',
@@ -23,10 +21,7 @@ export const load: PageServerLoad = async ({ depends, locals }) => {
 	requireAdmin(locals);
 	depends('admin:db');
 
-	const [upstashResult, r2Result] = await Promise.allSettled([
-		fetchUpstashMetrics(),
-		fetchR2Metrics(),
-	]);
+	const [upstashResult, r2Result] = await Promise.allSettled([fetchUpstashMetrics(), fetchR2Metrics()]);
 
 	return {
 		neon: fetchNeonMetrics(),

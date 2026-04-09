@@ -2,8 +2,8 @@
  * Desk write tools — modify existing files.
  * Gated by 'desk:write' scope.
  */
-import { tool, jsonSchema } from 'ai';
-import { updateSpreadsheetByFileId, renameFile } from '$lib/server/db/desk/mutations';
+import { jsonSchema, tool } from 'ai';
+import { renameFile, updateSpreadsheetByFileId } from '$lib/server/db/desk/mutations';
 import { getSpreadsheetByFileId } from '$lib/server/db/desk/queries';
 import type { DeskEffect } from './_types';
 

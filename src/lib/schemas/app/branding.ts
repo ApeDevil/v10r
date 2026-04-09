@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { PALETTE_IDS } from '$lib/styles/random/palette-registry';
-import { TYPOGRAPHY_IDS } from '$lib/styles/random/typography-registry';
 import { RADIUS_IDS } from '$lib/styles/random/radius-registry';
+import { TYPOGRAPHY_IDS } from '$lib/styles/random/typography-registry';
 
 export const brandSettingsSchema = v.object({
 	paletteId: v.pipe(

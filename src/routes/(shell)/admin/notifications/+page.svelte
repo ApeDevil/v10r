@@ -59,21 +59,21 @@ const channels = [
 // Preview announcement for live preview
 const previewAnnouncement = $derived(
 	composeTitle.trim()
-		? [{
-				id: 'preview',
-				title: composeTitle,
-				body: composeBody,
-				severity: composeSeverity,
-				startsAt: null,
-				endsAt: null,
-				createdAt: new Date(),
-			}]
+		? [
+				{
+					id: 'preview',
+					title: composeTitle,
+					body: composeBody,
+					severity: composeSeverity,
+					startsAt: null,
+					endsAt: null,
+					createdAt: new Date(),
+				},
+			]
 		: [],
 );
 
-const activeAnnouncements = $derived(
-	data.announcements.filter((a) => a.active),
-);
+const activeAnnouncements = $derived(data.announcements.filter((a) => a.active));
 
 function resetComposeForm() {
 	composeTitle = '';

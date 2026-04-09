@@ -149,7 +149,5 @@ export const conversationStep = aiSchema.table(
 		toolCallIds: jsonb('tool_call_ids').$type<string[] | null>(),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	},
-	(table) => [
-		index('conv_step_conv_msg_idx').on(table.conversationId, table.messageId),
-	],
+	(table) => [index('conv_step_conv_msg_idx').on(table.conversationId, table.messageId)],
 );

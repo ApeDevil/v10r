@@ -34,9 +34,9 @@ let internalEdges = $state.raw<Edge[]>([]);
 let ready = $state(false);
 
 // Dynamically loaded components (avoid SSR import of @xyflow/svelte)
-let SvelteFlow: Component<any> | undefined = $state();
-let Background: Component<any> | undefined = $state();
-let Controls: Component<any> | undefined = $state();
+let SvelteFlow: Component<Record<string, unknown>> | undefined = $state();
+let Background: Component<Record<string, unknown>> | undefined = $state();
+let Controls: Component<Record<string, unknown>> | undefined = $state();
 let mergedNodeTypes = $state<NodeTypes>({});
 
 $effect(() => {

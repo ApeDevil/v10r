@@ -1,10 +1,10 @@
-import { redis } from '../index';
-import { CacheError } from '../errors';
-import { fetchUpstashMetrics } from '$lib/server/monitoring/upstash';
-import { getFlagCacheSize } from '$lib/server/admin/flags';
 import { getAnnouncementCacheSize } from '$lib/server/admin/announcements';
-import type { CacheEntry, CacheEntryDetail, RedisType } from '../types';
+import { getFlagCacheSize } from '$lib/server/admin/flags';
 import type { ProviderResult, UpstashMetrics } from '$lib/server/monitoring';
+import { fetchUpstashMetrics } from '$lib/server/monitoring/upstash';
+import { CacheError } from '../errors';
+import { redis } from '../index';
+import type { CacheEntry, CacheEntryDetail, RedisType } from '../types';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -96,7 +96,7 @@ export async function getCacheOverview(): Promise<CacheOverview> {
 
 	for (const { key, type } of typeResults) {
 		// Prefix grouping: take first segment before ':'
-		const prefix = key.includes(':') ? key.split(':')[0] + ':' : 'other';
+		const prefix = key.includes(':') ? `${key.split(':')[0]}:` : 'other';
 		keysByPrefix[prefix] = (keysByPrefix[prefix] ?? 0) + 1;
 		keysByType[type] = (keysByType[type] ?? 0) + 1;
 	}

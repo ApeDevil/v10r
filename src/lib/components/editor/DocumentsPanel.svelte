@@ -1,105 +1,105 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { apiFetch } from '$lib/api';
-	import { Badge, Button, Spinner } from '$lib/components/primitives';
-	import { getDockContext, getDeskBus } from '$lib/components/composites/dock';
-	import type { PanelDefinition } from '$lib/components/composites/dock';
+import { onMount } from 'svelte';
+import { apiFetch } from '$lib/api';
+import type { PanelDefinition } from '$lib/components/composites/dock';
+import { getDeskBus, getDockContext } from '$lib/components/composites/dock';
+import { Badge, Button, Spinner } from '$lib/components/primitives';
 
-	let loading = $state(true);
-	let posts = $state<
-		{
-			id: string;
-			slug: string;
-			status: string;
-			title: string;
-			updatedAt: string;
-		}[]
-	>([]);
-	let creating = $state(false);
-	let slugInput = $state('');
-	let showNewForm = $state(false);
-	let error = $state('');
+let loading = $state(true);
+let posts = $state<
+	{
+		id: string;
+		slug: string;
+		status: string;
+		title: string;
+		updatedAt: string;
+	}[]
+>([]);
+let creating = $state(false);
+let slugInput = $state('');
+let showNewForm = $state(false);
+let error = $state('');
 
-	const dock = getDockContext();
-	const bus = getDeskBus();
+const dock = getDockContext();
+const bus = getDeskBus();
 
-	async function fetchPosts() {
-		loading = true;
-		error = '';
-		try {
-			const res = await apiFetch('/api/blog/posts');
-			if (!res.ok) throw new Error('Failed to load posts');
-			const data = await res.json();
-			posts = data.items;
-		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to load';
-		} finally {
-			loading = false;
+async function fetchPosts() {
+	loading = true;
+	error = '';
+	try {
+		const res = await apiFetch('/api/blog/posts');
+		if (!res.ok) throw new Error('Failed to load posts');
+		const data = await res.json();
+		posts = data.items;
+	} catch (e) {
+		error = e instanceof Error ? e.message : 'Failed to load';
+	} finally {
+		loading = false;
+	}
+}
+
+function openPost(postId: string) {
+	const editorPanelId = `editor-${postId}`;
+
+	const panel: PanelDefinition = {
+		id: editorPanelId,
+		type: 'editor',
+		label: 'Editor',
+		icon: 'i-lucide-pen-line',
+		closable: true,
+	};
+	dock.addPanel(panel);
+
+	bus.publish('editor:document', { documentId: postId, type: 'blog-post' });
+}
+
+async function createNewPost() {
+	const slug = slugInput.trim();
+	if (!slug) return;
+	creating = true;
+	error = '';
+	try {
+		const res = await apiFetch('/api/blog/posts', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ slug }),
+		});
+		const data = await res.json().catch(() => ({}));
+		if (!res.ok) {
+			throw new Error(data.message || 'Failed to create post');
 		}
+		const { post } = data;
+		slugInput = '';
+		showNewForm = false;
+		await fetchPosts();
+		openPost(post.id);
+	} catch (e) {
+		error = e instanceof Error ? e.message : 'Failed to create';
+	} finally {
+		creating = false;
 	}
+}
 
-	function openPost(postId: string) {
-		const editorPanelId = `editor-${postId}`;
+function statusVariant(status: string): 'success' | 'secondary' | 'warning' {
+	if (status === 'published') return 'success';
+	if (status === 'archived') return 'warning';
+	return 'secondary';
+}
 
-		const panel: PanelDefinition = {
-			id: editorPanelId,
-			type: 'editor',
-			label: 'Editor',
-			icon: 'i-lucide-pen-line',
-			closable: true,
-		};
-		dock.addPanel(panel);
+function relativeTime(iso: string): string {
+	const diff = Date.now() - new Date(iso).getTime();
+	const mins = Math.floor(diff / 60000);
+	if (mins < 1) return 'just now';
+	if (mins < 60) return `${mins}m ago`;
+	const hours = Math.floor(mins / 60);
+	if (hours < 24) return `${hours}h ago`;
+	const days = Math.floor(hours / 24);
+	return `${days}d ago`;
+}
 
-		bus.publish('editor:document', { documentId: postId, type: 'blog-post' });
-	}
-
-	async function createNewPost() {
-		const slug = slugInput.trim();
-		if (!slug) return;
-		creating = true;
-		error = '';
-		try {
-			const res = await apiFetch('/api/blog/posts', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ slug }),
-			});
-			const data = await res.json().catch(() => ({}));
-			if (!res.ok) {
-				throw new Error(data.message || 'Failed to create post');
-			}
-			const { post } = data;
-			slugInput = '';
-			showNewForm = false;
-			await fetchPosts();
-			openPost(post.id);
-		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to create';
-		} finally {
-			creating = false;
-		}
-	}
-
-	function statusVariant(status: string): 'success' | 'secondary' | 'warning' {
-		if (status === 'published') return 'success';
-		if (status === 'archived') return 'warning';
-		return 'secondary';
-	}
-
-	function relativeTime(iso: string): string {
-		const diff = Date.now() - new Date(iso).getTime();
-		const mins = Math.floor(diff / 60000);
-		if (mins < 1) return 'just now';
-		if (mins < 60) return `${mins}m ago`;
-		const hours = Math.floor(mins / 60);
-		if (hours < 24) return `${hours}h ago`;
-		const days = Math.floor(hours / 24);
-		return `${days}d ago`;
-	}
-
-	onMount(() => {
-		fetchPosts();
-	});
+onMount(() => {
+	fetchPosts();
+});
 </script>
 
 <div class="documents-panel">

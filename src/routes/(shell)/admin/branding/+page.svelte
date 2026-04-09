@@ -1,19 +1,19 @@
 <script lang="ts">
+import { get } from 'svelte/store';
 import { superForm } from 'sveltekit-superforms';
 import { valibotClient } from 'sveltekit-superforms/adapters';
-import { enhance as kitEnhance } from '$app/forms';
 import { browser } from '$app/environment';
+import { enhance as kitEnhance } from '$app/forms';
 import { beforeNavigate, invalidateAll } from '$app/navigation';
-import { get } from 'svelte/store';
+import CascadePrompt from '$lib/components/branding/CascadePrompt.svelte';
+import CustomPaletteEditor from '$lib/components/branding/CustomPaletteEditor.svelte';
 import { Alert, Card, FormField } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Button, Input, Spinner, Switch, ToggleGroup } from '$lib/components/primitives';
-import CascadePrompt from '$lib/components/branding/CascadePrompt.svelte';
-import CustomPaletteEditor from '$lib/components/branding/CustomPaletteEditor.svelte';
 import { brandSettingsSchema } from '$lib/schemas/app/branding';
-import { getPalette } from '$lib/styles/random/palette-registry';
 import { getTheme } from '$lib/state/theme.svelte';
-import type { PaletteColors } from '$lib/styles/random/types';
+import { getPalette } from '$lib/styles/random/palette-registry';
+import type { PaletteColors, PaletteId } from '$lib/styles/random/types';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
@@ -65,21 +65,27 @@ $effect(() => {
 	if (!browser) return;
 	const prev = document.documentElement.dataset.palette;
 	document.documentElement.dataset.palette = $form.paletteId;
-	return () => { if (!brandSaved) document.documentElement.dataset.palette = prev ?? ''; };
+	return () => {
+		if (!brandSaved) document.documentElement.dataset.palette = prev ?? '';
+	};
 });
 
 $effect(() => {
 	if (!browser) return;
 	const prev = document.documentElement.dataset.typography;
 	document.documentElement.dataset.typography = $form.typographyId;
-	return () => { if (!brandSaved) document.documentElement.dataset.typography = prev ?? ''; };
+	return () => {
+		if (!brandSaved) document.documentElement.dataset.typography = prev ?? '';
+	};
 });
 
 $effect(() => {
 	if (!browser) return;
 	const prev = document.documentElement.dataset.radius;
 	document.documentElement.dataset.radius = $form.radiusId;
-	return () => { if (!brandSaved) document.documentElement.dataset.radius = prev ?? ''; };
+	return () => {
+		if (!brandSaved) document.documentElement.dataset.radius = prev ?? '';
+	};
 });
 
 const shapeItems = [
@@ -102,11 +108,31 @@ let showCascade = $state(false);
 
 /** All 25 token keys — used when removing inline styles on close */
 const TOKEN_KEYS: (keyof PaletteColors)[] = [
-	'bg', 'fg', 'body', 'heading', 'muted', 'border', 'subtle',
-	'primary', 'primary-hover', 'primary-container', 'on-primary-container',
-	'primary-dim', 'on-primary', 'secondary', 'on-secondary',
-	'accent', 'accent-hover', 'on-accent', 'accent-container', 'on-accent-container',
-	'input', 'input-border', 'surface-1', 'surface-2', 'surface-3',
+	'bg',
+	'fg',
+	'body',
+	'heading',
+	'muted',
+	'border',
+	'subtle',
+	'primary',
+	'primary-hover',
+	'primary-container',
+	'on-primary-container',
+	'primary-dim',
+	'on-primary',
+	'secondary',
+	'on-secondary',
+	'accent',
+	'accent-hover',
+	'on-accent',
+	'accent-container',
+	'on-accent-container',
+	'input',
+	'input-border',
+	'surface-1',
+	'surface-2',
+	'surface-3',
 ];
 
 function tokenToCssVar(key: string): string {
@@ -126,7 +152,7 @@ function clearInlineStyles() {
 
 function startCustomize() {
 	const id = $form.paletteId;
-	const preset = getPalette(id as any);
+	const preset = getPalette(id as PaletteId);
 	if (!preset) return;
 	customBasePaletteId = id;
 	customName = `Custom ${preset.name}`;
@@ -139,7 +165,7 @@ function startCustomize() {
 	editingCustom = true;
 }
 
-function editExistingCustom(cp: typeof data.customPalettes[number]) {
+function editExistingCustom(cp: (typeof data.customPalettes)[number]) {
 	customName = cp.name;
 	customDescription = cp.description ?? '';
 	customBasePaletteId = cp.basePaletteId;

@@ -21,7 +21,7 @@ export function parseOklch(value: string): Oklch {
 export function formatOklch(color: Oklch): string {
 	const l = clamp(color.l, 0, 1);
 	const c = clamp(color.c, 0, 0.4);
-	const h = ((color.h ?? 0) % 360 + 360) % 360;
+	const h = (((color.h ?? 0) % 360) + 360) % 360;
 	return `oklch(${round(l)} ${round(c)} ${round(h)})`;
 }
 

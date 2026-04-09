@@ -5,15 +5,9 @@
 
 import { and, eq, gt, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import {
-	telegramVerificationTokens,
-	userTelegramAccounts,
-} from '$lib/server/db/schema/notifications/telegram';
+import { telegramVerificationTokens, userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
 
-export type LinkResult =
-	| { status: 'invalid_token' }
-	| { status: 'expired' }
-	| { status: 'linked'; userId: string };
+export type LinkResult = { status: 'invalid_token' } | { status: 'expired' } | { status: 'linked'; userId: string };
 
 /**
  * Validate a verification token and link a Telegram chat to the owning user.

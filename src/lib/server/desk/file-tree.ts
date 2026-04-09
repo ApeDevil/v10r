@@ -5,8 +5,9 @@
  *
  * No SvelteKit imports — pure domain function.
  */
-import { listFiles, listFolders } from '$lib/server/db/desk/queries';
+
 import { listAssets, listPosts } from '$lib/server/blog/queries';
+import { listFiles, listFolders } from '$lib/server/db/desk/queries';
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -34,7 +35,8 @@ export async function getFileTree(userId: string): Promise<FileTreeNode[]> {
 	const assets = assetsResult.status === 'fulfilled' ? assetsResult.value : [];
 
 	if (filesResult.status === 'rejected') console.warn('[file-tree] Failed to fetch desk files:', filesResult.reason);
-	if (foldersResult.status === 'rejected') console.warn('[file-tree] Failed to fetch desk folders:', foldersResult.reason);
+	if (foldersResult.status === 'rejected')
+		console.warn('[file-tree] Failed to fetch desk folders:', foldersResult.reason);
 	if (postsResult.status === 'rejected') console.warn('[file-tree] Failed to fetch blog posts:', postsResult.reason);
 	if (assetsResult.status === 'rejected') console.warn('[file-tree] Failed to fetch blog assets:', assetsResult.reason);
 
@@ -100,9 +102,9 @@ function buildDataTree(
 		const node = folderMap.get(f.id)!;
 		const parent = f.parentId ? folderMap.get(f.parentId) : undefined;
 		if (parent) {
-			parent.children!.push(node);
+			parent.children?.push(node);
 		} else {
-			dataNode.children!.push(node);
+			dataNode.children?.push(node);
 		}
 	}
 
@@ -114,9 +116,9 @@ function buildDataTree(
 		};
 		const parent = f.folderId ? folderMap.get(f.folderId) : undefined;
 		if (parent) {
-			parent.children!.push(fileNode);
+			parent.children?.push(fileNode);
 		} else {
-			dataNode.children!.push(fileNode);
+			dataNode.children?.push(fileNode);
 		}
 	}
 

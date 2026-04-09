@@ -1,8 +1,8 @@
 import { fail } from '@sveltejs/kit';
 import * as v from 'valibot';
-import { requireAdmin } from '$lib/server/auth/guards';
-import { getAllFlags, setFlag, deleteFlag, recordAuditEvent, getAuditContext } from '$lib/server/admin';
 import { flagCreateSchema } from '$lib/schemas/admin/flags';
+import { deleteFlag, getAllFlags, getAuditContext, recordAuditEvent, setFlag } from '$lib/server/admin';
+import { requireAdmin } from '$lib/server/auth/guards';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {

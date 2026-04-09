@@ -1,13 +1,13 @@
 import { fail } from '@sveltejs/kit';
+import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
 import { requireAdmin } from '$lib/server/auth/guards';
-import { recordAuditEvent, getAuditContext } from '$lib/server/admin';
-import {
-	getRAGOverviewStats,
-	getErrorDocuments,
-	getDocumentsAdmin,
-	getCollectionsAdmin,
-} from '$lib/server/db/rag/admin-queries';
 import { adminDeleteDocument, adminResetDocument } from '$lib/server/db/rag/admin-mutations';
+import {
+	getCollectionsAdmin,
+	getDocumentsAdmin,
+	getErrorDocuments,
+	getRAGOverviewStats,
+} from '$lib/server/db/rag/admin-queries';
 import { safeDeferPromise } from '$lib/server/utils/safe-defer';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -17,19 +17,17 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	const status = url.searchParams.get('status') || 'all';
 	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
 
-	const [overview, errorDocs] = await Promise.all([
-		getRAGOverviewStats(),
-		getErrorDocuments(),
-	]);
+	const [overview, errorDocs] = await Promise.all([getRAGOverviewStats(), getErrorDocuments()]);
 
 	return {
 		overview,
 		errorDocs,
 		filters: { status, page },
-		documents: safeDeferPromise(
-			getDocumentsAdmin({ status: status !== 'all' ? status : undefined, page }),
-			{ entries: [], total: 0, totalPages: 1 },
-		),
+		documents: safeDeferPromise(getDocumentsAdmin({ status: status !== 'all' ? status : undefined, page }), {
+			entries: [],
+			total: 0,
+			totalPages: 1,
+		}),
 		collections: safeDeferPromise(getCollectionsAdmin(), []),
 	};
 };

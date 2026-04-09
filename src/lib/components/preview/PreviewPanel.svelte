@@ -1,85 +1,85 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
-	import { apiFetch } from '$lib/api';
-	import { getDeskBus, registerPanelMenus } from '$lib/components/composites/dock';
-	import { Spinner } from '$lib/components/primitives';
-	import Renderer from '$lib/components/blog/Renderer.svelte';
-	import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
+import { onDestroy } from 'svelte';
+import { apiFetch } from '$lib/api';
+import Renderer from '$lib/components/blog/Renderer.svelte';
+import { getDeskBus, registerPanelMenus } from '$lib/components/composites/dock';
+import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
+import { Spinner } from '$lib/components/primitives';
 
-	const bus = getDeskBus();
+const bus = getDeskBus();
 
-	let html = $state('');
-	let embeds = $state<unknown>(null);
-	let rendering = $state(false);
-	let error = $state('');
-	let hasDocument = $state(false);
-	let debounceTimer: ReturnType<typeof setTimeout>;
-	let abortController: AbortController | null = null;
+let html = $state('');
+let embeds = $state<unknown>(null);
+let rendering = $state(false);
+let error = $state('');
+let hasDocument = $state(false);
+let debounceTimer: ReturnType<typeof setTimeout>;
+let abortController: AbortController | null = null;
 
-	async function renderPreview(markdown: string) {
-		rendering = true;
-		error = '';
+async function renderPreview(markdown: string) {
+	rendering = true;
+	error = '';
 
-		// Abort previous request
-		abortController?.abort();
-		abortController = new AbortController();
+	// Abort previous request
+	abortController?.abort();
+	abortController = new AbortController();
 
-		try {
-			const res = await apiFetch('/api/blog/preview', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ markdown }),
-				signal: abortController.signal,
-			});
+	try {
+		const res = await apiFetch('/api/blog/preview', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ markdown }),
+			signal: abortController.signal,
+		});
 
-			if (!res.ok) throw new Error('Preview failed');
+		if (!res.ok) throw new Error('Preview failed');
 
-			const data = await res.json();
-			html = data.html;
-			embeds = data.embeds;
-		} catch (e) {
-			if (e instanceof DOMException && e.name === 'AbortError') return;
-			error = e instanceof Error ? e.message : 'Preview failed';
-		} finally {
-			rendering = false;
-		}
+		const data = await res.json();
+		html = data.html;
+		embeds = data.embeds;
+	} catch (e) {
+		if (e instanceof DOMException && e.name === 'AbortError') return;
+		error = e instanceof Error ? e.message : 'Preview failed';
+	} finally {
+		rendering = false;
 	}
+}
 
-	// Subscribe to editor content changes
-	const unsubContent = bus.subscribe(
-		'editor:content',
-		(payload) => {
-			hasDocument = true;
-			clearTimeout(debounceTimer);
-			debounceTimer = setTimeout(() => {
-				if (payload.content) renderPreview(payload.content);
-			}, 300);
-		},
-		{ replayLast: true },
-	);
-
-	// Clear when document changes
-	const unsubDocument = bus.subscribe('editor:document', (payload) => {
-		if (!payload) {
-			hasDocument = false;
-			html = '';
-			embeds = null;
-		}
-	});
-
-	// Register menus for the global MenuBar
-	const previewMenus: MenuBarMenu[] = [];
-
-	$effect(() => {
-		return registerPanelMenus('preview', { menuBar: previewMenus });
-	});
-
-	onDestroy(() => {
-		unsubContent();
-		unsubDocument();
+// Subscribe to editor content changes
+const unsubContent = bus.subscribe(
+	'editor:content',
+	(payload) => {
+		hasDocument = true;
 		clearTimeout(debounceTimer);
-		abortController?.abort();
-	});
+		debounceTimer = setTimeout(() => {
+			if (payload.content) renderPreview(payload.content);
+		}, 300);
+	},
+	{ replayLast: true },
+);
+
+// Clear when document changes
+const unsubDocument = bus.subscribe('editor:document', (payload) => {
+	if (!payload) {
+		hasDocument = false;
+		html = '';
+		embeds = null;
+	}
+});
+
+// Register menus for the global MenuBar
+const previewMenus: MenuBarMenu[] = [];
+
+$effect(() => {
+	return registerPanelMenus('preview', { menuBar: previewMenus });
+});
+
+onDestroy(() => {
+	unsubContent();
+	unsubDocument();
+	clearTimeout(debounceTimer);
+	abortController?.abort();
+});
 </script>
 
 <div class="preview-panel">

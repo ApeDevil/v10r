@@ -1,22 +1,18 @@
 import { fail } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
+import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
+import { createAnnouncement, deactivateAnnouncement, getAllAnnouncementsAdmin } from '$lib/server/admin/announcements';
 import { requireAdmin } from '$lib/server/auth/guards';
-import { recordAuditEvent, getAuditContext } from '$lib/server/admin';
-import {
-	createAnnouncement,
-	deactivateAnnouncement,
-	getAllAnnouncementsAdmin,
-} from '$lib/server/admin/announcements';
+import { db } from '$lib/server/db';
 import {
 	getChannelHealthStats,
-	getDeliveryLog,
-	getDeadDeliveries,
 	getConnectedAccountsCounts,
+	getDeadDeliveries,
+	getDeliveryLog,
 } from '$lib/server/db/notifications/admin-queries';
+import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
 import { probeChannels } from '$lib/server/notifications/health';
 import { safeDeferPromise } from '$lib/server/utils/safe-defer';
-import { db } from '$lib/server/db';
-import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url, locals }) => {
@@ -43,10 +39,12 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		// Deferred: live probes (external API, may be slow)
 		liveProbes: safeDeferPromise(probeChannels(), { discord: null, telegram: null }),
 		// Deferred: paginated delivery log
-		deliveryLog: safeDeferPromise(
-			getDeliveryLog({ channel, status, page }),
-			{ entries: [], total: 0, page: 1, totalPages: 1 },
-		),
+		deliveryLog: safeDeferPromise(getDeliveryLog({ channel, status, page }), {
+			entries: [],
+			total: 0,
+			page: 1,
+			totalPages: 1,
+		}),
 	};
 };
 

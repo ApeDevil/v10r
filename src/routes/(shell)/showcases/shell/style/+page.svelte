@@ -1,18 +1,18 @@
 <script lang="ts">
-import type { PageData } from './$types';
 import { Button } from '$lib/components/primitives';
-import { getTheme } from '$lib/state/theme.svelte';
 import { getStyle } from '$lib/state/style.svelte';
+import { getTheme } from '$lib/state/theme.svelte';
 import { getToast } from '$lib/state/toast.svelte';
 import {
-	PALETTE_REGISTRY,
-	TYPOGRAPHY_REGISTRY,
-	RADIUS_REGISTRY,
 	getPalette,
-	getTypography,
 	getRadius,
+	getTypography,
+	PALETTE_REGISTRY,
+	RADIUS_REGISTRY,
+	TYPOGRAPHY_REGISTRY,
 } from '$lib/styles/random';
-import type { PaletteId, TypographyId, RadiusId } from '$lib/styles/random/types';
+import type { PaletteId, RadiusId, TypographyId } from '$lib/styles/random/types';
+import type { PageData } from './$types';
 
 let { data }: { data: PageData } = $props();
 
@@ -21,15 +21,13 @@ const style = getStyle();
 const toast = getToast();
 
 const brandPaletteName = $derived(
-	data.brand ? getPalette(data.brand.paletteId as PaletteId)?.name ?? data.brand.paletteId : null,
+	data.brand ? (getPalette(data.brand.paletteId as PaletteId)?.name ?? data.brand.paletteId) : null,
 );
 const brandTypographyName = $derived(
-	data.brand
-		? getTypography(data.brand.typographyId as TypographyId)?.name ?? data.brand.typographyId
-		: null,
+	data.brand ? (getTypography(data.brand.typographyId as TypographyId)?.name ?? data.brand.typographyId) : null,
 );
 const brandRadiusName = $derived(
-	data.brand ? getRadius(data.brand.radiusId as RadiusId)?.name ?? data.brand.radiusId : null,
+	data.brand ? (getRadius(data.brand.radiusId as RadiusId)?.name ?? data.brand.radiusId) : null,
 );
 
 const totalCombinations = PALETTE_REGISTRY.length * TYPOGRAPHY_REGISTRY.length * RADIUS_REGISTRY.length;

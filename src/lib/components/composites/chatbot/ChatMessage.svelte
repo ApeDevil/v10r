@@ -1,7 +1,7 @@
 <script lang="ts">
+import ConfirmationCard from '$lib/components/chat/ConfirmationCard.svelte';
 import { cn } from '$lib/utils/cn';
 import { renderMarkdown } from '$lib/utils/markdown';
-import ConfirmationCard from '$lib/components/chat/ConfirmationCard.svelte';
 import ToolCallStatus from './ToolCallStatus.svelte';
 
 interface TextPart {

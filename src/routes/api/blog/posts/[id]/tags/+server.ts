@@ -1,8 +1,8 @@
 import * as v from 'valibot';
+import { apiError, apiNoContent, apiValidationError } from '$lib/server/api/response';
 import { requireApiAuthor, requirePostOwnership } from '$lib/server/auth/guards';
 import { getPostById, setPostTags } from '$lib/server/blog';
 import { SetTagsSchema } from '$lib/server/blog/schemas';
-import { apiNoContent, apiError, apiValidationError } from '$lib/server/api/response';
 import type { RequestHandler } from './$types';
 
 /** Set tags for a post. */

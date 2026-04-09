@@ -1,83 +1,84 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
-	import { page } from '$app/state';
-	import { Card, ConfirmDialog, EmptyState } from '$lib/components/composites';
-	import { Cluster, Stack } from '$lib/components/layout';
-	import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
-	import { getToast } from '$lib/state/toast.svelte';
-	import type { PageProps } from './$types';
+import type { ActionResult } from '@sveltejs/kit';
+import { enhance } from '$app/forms';
+import { invalidateAll } from '$app/navigation';
+import { page } from '$app/state';
+import { Card, ConfirmDialog, EmptyState } from '$lib/components/composites';
+import { Cluster, Stack } from '$lib/components/layout';
+import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
+import { getToast } from '$lib/state/toast.svelte';
+import type { PageProps } from './$types';
 
-	let { data }: PageProps = $props();
-	const toast = getToast();
+let { data }: PageProps = $props();
+const toast = getToast();
 
-	let submitting = $state('');
-	let deletePostId = $state('');
-	let showDeleteDialog = $state(false);
-	let unpublishPostId = $state('');
-	let showUnpublishDialog = $state(false);
+let submitting = $state('');
+let deletePostId = $state('');
+let showDeleteDialog = $state(false);
+let unpublishPostId = $state('');
+let showUnpublishDialog = $state(false);
 
-	function relativeTime(iso: string | null): string {
-		if (!iso) return '—';
-		const diff = Date.now() - new Date(iso).getTime();
-		const mins = Math.floor(diff / 60000);
-		if (mins < 1) return 'just now';
-		if (mins < 60) return `${mins}m ago`;
-		const hours = Math.floor(mins / 60);
-		if (hours < 24) return `${hours}h ago`;
-		const days = Math.floor(hours / 24);
-		return `${days}d ago`;
+function relativeTime(iso: string | null): string {
+	if (!iso) return '—';
+	const diff = Date.now() - new Date(iso).getTime();
+	const mins = Math.floor(diff / 60000);
+	if (mins < 1) return 'just now';
+	if (mins < 60) return `${mins}m ago`;
+	const hours = Math.floor(mins / 60);
+	if (hours < 24) return `${hours}h ago`;
+	const days = Math.floor(hours / 24);
+	return `${days}d ago`;
+}
+
+function buildUrl(params: Record<string, string>): string {
+	const u = new URL(page.url);
+	for (const [k, v] of Object.entries(params)) {
+		if (v) u.searchParams.set(k, v);
+		else u.searchParams.delete(k);
 	}
+	return u.pathname + u.search;
+}
 
-	function buildUrl(params: Record<string, string>): string {
-		const u = new URL(page.url);
-		for (const [k, v] of Object.entries(params)) {
-			if (v) u.searchParams.set(k, v);
-			else u.searchParams.delete(k);
-		}
-		return u.pathname + u.search;
-	}
+function sortHref(col: string): string {
+	const newDir = data.sort === col && data.dir === 'asc' ? 'desc' : 'asc';
+	return buildUrl({ sort: col, dir: newDir, page: '1' });
+}
 
-	function sortHref(col: string): string {
-		const newDir = data.sort === col && data.dir === 'asc' ? 'desc' : 'asc';
-		return buildUrl({ sort: col, dir: newDir, page: '1' });
-	}
+function sortIcon(col: string): string {
+	if (data.sort !== col) return 'i-lucide-chevrons-up-down';
+	return data.dir === 'asc' ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down';
+}
 
-	function sortIcon(col: string): string {
-		if (data.sort !== col) return 'i-lucide-chevrons-up-down';
-		return data.dir === 'asc' ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down';
-	}
+function statusVariant(status: string): 'success' | 'secondary' | 'warning' {
+	if (status === 'published') return 'success';
+	if (status === 'archived') return 'warning';
+	return 'secondary';
+}
 
-	function statusVariant(status: string): 'success' | 'secondary' | 'warning' {
-		if (status === 'published') return 'success';
-		if (status === 'archived') return 'warning';
-		return 'secondary';
-	}
-
-	function enhanceHandler(actionKey: string) {
-		return () => {
-			submitting = actionKey;
-			return async ({ result, update }: { result: any; update: () => Promise<void> }) => {
-				if (result.type === 'success' && result.data) toast.success(result.data.message as string);
-				else if (result.type === 'failure') toast.error((result.data?.message as string) || 'Failed');
-				submitting = '';
-				return update();
-			};
+function enhanceHandler(actionKey: string) {
+	return () => {
+		submitting = actionKey;
+		return async ({ result, update }: { result: ActionResult; update: () => Promise<void> }) => {
+			if (result.type === 'success' && result.data) toast.success(result.data.message as string);
+			else if (result.type === 'failure') toast.error((result.data?.message as string) || 'Failed');
+			submitting = '';
+			return update();
 		};
-	}
+	};
+}
 
-	function submitHiddenForm(action: string, postId: string) {
-		const form = document.createElement('form');
-		form.method = 'POST';
-		form.style.display = 'none';
-		const input = document.createElement('input');
-		input.name = 'postId';
-		input.value = postId;
-		form.appendChild(input);
-		form.action = `?/${action}`;
-		document.body.appendChild(form);
-		form.submit();
-	}
+function submitHiddenForm(action: string, postId: string) {
+	const form = document.createElement('form');
+	form.method = 'POST';
+	form.style.display = 'none';
+	const input = document.createElement('input');
+	input.name = 'postId';
+	input.value = postId;
+	form.appendChild(input);
+	form.action = `?/${action}`;
+	document.body.appendChild(form);
+	form.submit();
+}
 </script>
 
 <svelte:head>

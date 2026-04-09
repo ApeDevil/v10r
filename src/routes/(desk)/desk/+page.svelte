@@ -1,14 +1,14 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
+import { ChatPanel } from '$lib/components/chat';
 import type { LayoutNode } from '$lib/components/composites/dock';
 import { DockLayout } from '$lib/components/composites/dock';
-import { ChatPanel } from '$lib/components/chat';
 import { EditorPanel } from '$lib/components/editor';
 import { ExplorerPanel } from '$lib/components/explorer';
+import IOLogPanel from '$lib/components/io-log/IOLogPanel.svelte';
 import { PreviewPanel } from '$lib/components/preview';
 import { SpreadsheetPanel } from '$lib/components/spreadsheet';
-import IOLogPanel from '$lib/components/io-log/IOLogPanel.svelte';
 import { DESK_ACTIVITY_BAR_ITEMS, DESK_PANEL_TYPES, DESK_PANELS } from '$lib/config/desk-panels';
 
 // Server data from (desk)/+layout.server.ts

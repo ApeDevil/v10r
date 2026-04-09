@@ -14,12 +14,16 @@ let isDeleting = $state(false);
 
 function simulateSave() {
 	isSaving = true;
-	setTimeout(() => { isSaving = false; }, 2000);
+	setTimeout(() => {
+		isSaving = false;
+	}, 2000);
 }
 
 function simulateDelete() {
 	isDeleting = true;
-	setTimeout(() => { isDeleting = false; }, 2000);
+	setTimeout(() => {
+		isDeleting = false;
+	}, 2000);
 }
 </script>
 

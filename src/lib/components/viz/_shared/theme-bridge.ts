@@ -86,8 +86,7 @@ export function resolveColor(value: string): string {
  * Walk a ChartData object and resolve any CSS var() references in color properties.
  * Returns a new object (does not mutate the original).
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function resolveDatasetColors<T extends { datasets: any[] }>(chartData: T): T {
+export function resolveDatasetColors<T extends { datasets: unknown[] }>(chartData: T): T {
 	if (typeof document === 'undefined') return chartData;
 
 	const COLOR_KEYS = [

@@ -11,10 +11,7 @@ function requireS3() {
 }
 
 /** Generate a presigned download URL for a blog asset. */
-export async function generateBlogDownloadUrl(
-	key: string,
-	expiresIn = 3600,
-): Promise<PresignedUrlResult> {
+export async function generateBlogDownloadUrl(key: string, expiresIn = 3600): Promise<PresignedUrlResult> {
 	assertBlogKey(key);
 	const client = requireS3();
 	const command = new GetObjectCommand({ Bucket: BUCKET, Key: key });

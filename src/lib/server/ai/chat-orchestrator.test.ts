@@ -21,10 +21,7 @@ function escapeXmlAttr(str: string): string {
 		.replace(/'/g, '&apos;');
 }
 
-function windowMessages(
-	messages: { role: 'user' | 'assistant'; content: string }[],
-	maxTurns = 5,
-): typeof messages {
+function windowMessages(messages: { role: 'user' | 'assistant'; content: string }[], maxTurns = 5): typeof messages {
 	const maxMessages = maxTurns * 2;
 	if (messages.length <= maxMessages) return messages;
 	const result = messages.slice(-maxMessages);
@@ -44,19 +41,23 @@ function buildSystemPrompt(
 	if (panelContext?.length) {
 		const sanitized = panelContext.map((pc) => ({
 			...pc,
-			content: pc.content
-				.replace(/(?:sk-|ghp_|AKIA|Bearer\s)\S+/gi, '[REDACTED]')
-				.slice(0, 8000),
+			content: pc.content.replace(/(?:sk-|ghp_|AKIA|Bearer\s)\S+/gi, '[REDACTED]').slice(0, 8000),
 		}));
 		const deskBlock = sanitized
-			.map((pc) => `<panel type="${escapeXmlAttr(pc.panelType)}" label="${escapeXmlAttr(pc.label)}">\n${pc.content}\n</panel>`)
+			.map(
+				(pc) =>
+					`<panel type="${escapeXmlAttr(pc.panelType)}" label="${escapeXmlAttr(pc.label)}">\n${pc.content}\n</panel>`,
+			)
 			.join('\n');
 		prompt += `\n\n<desk-context>\n${deskBlock}\n</desk-context>`;
 	}
 
 	if (deskLayout?.length && hasTools) {
 		const layoutBlock = deskLayout
-			.map((p) => `- ${escapeXmlAttr(p.label)} (${escapeXmlAttr(p.fileType ?? 'panel')})${p.fileId ? ` [${p.fileId}]` : ''}`)
+			.map(
+				(p) =>
+					`- ${escapeXmlAttr(p.label)} (${escapeXmlAttr(p.fileType ?? 'panel')})${p.fileId ? ` [${p.fileId}]` : ''}`,
+			)
 			.join('\n');
 		prompt += `\n\n<desk-layout>\nOpen panels:\n${layoutBlock}\n</desk-layout>`;
 	}
@@ -165,10 +166,7 @@ describe('buildSystemPrompt', () => {
 	});
 
 	it('includes panel context in <desk-context> block', () => {
-		const result = buildSystemPrompt(
-			[{ panelType: 'spreadsheet', label: 'Budget', content: 'A1: 100' }],
-			false,
-		);
+		const result = buildSystemPrompt([{ panelType: 'spreadsheet', label: 'Budget', content: 'A1: 100' }], false);
 		expect(result).toContain('<desk-context>');
 		expect(result).toContain('<panel type="spreadsheet" label="Budget">');
 		expect(result).toContain('A1: 100');
@@ -184,33 +182,23 @@ describe('buildSystemPrompt', () => {
 	});
 
 	it('omits <desk-layout> when hasTools=false', () => {
-		const result = buildSystemPrompt(undefined, false, [
-			{ panelId: 'p1', label: 'Budget' },
-		]);
+		const result = buildSystemPrompt(undefined, false, [{ panelId: 'p1', label: 'Budget' }]);
 		expect(result).not.toContain('<desk-layout>');
 	});
 
 	it('uses "panel" as fallback fileType when none provided', () => {
-		const result = buildSystemPrompt(undefined, true, [
-			{ panelId: 'p1', label: 'Chat' },
-		]);
+		const result = buildSystemPrompt(undefined, true, [{ panelId: 'p1', label: 'Chat' }]);
 		expect(result).toContain('Chat (panel)');
 	});
 
 	it('redacts sk- API keys in panel content', () => {
-		const result = buildSystemPrompt(
-			[{ panelType: 'note', label: 'S', content: 'key=sk-abcXYZ1234567890' }],
-			false,
-		);
+		const result = buildSystemPrompt([{ panelType: 'note', label: 'S', content: 'key=sk-abcXYZ1234567890' }], false);
 		expect(result).not.toContain('sk-abcXYZ1234567890');
 		expect(result).toContain('[REDACTED]');
 	});
 
 	it('redacts ghp_ GitHub tokens in panel content', () => {
-		const result = buildSystemPrompt(
-			[{ panelType: 'note', label: 'G', content: 'token=ghp_ABCDEF1234567890' }],
-			false,
-		);
+		const result = buildSystemPrompt([{ panelType: 'note', label: 'G', content: 'token=ghp_ABCDEF1234567890' }], false);
 		expect(result).not.toContain('ghp_ABCDEF1234567890');
 		expect(result).toContain('[REDACTED]');
 	});
@@ -235,13 +223,10 @@ describe('buildSystemPrompt', () => {
 
 	it('truncates content to 8000 chars per panel', () => {
 		const longContent = 'x'.repeat(9000);
-		const result = buildSystemPrompt(
-			[{ panelType: 'note', label: 'Big', content: longContent }],
-			false,
-		);
+		const result = buildSystemPrompt([{ panelType: 'note', label: 'Big', content: longContent }], false);
 		const panelMatch = result.match(/<panel[^>]*>\n([\s\S]*?)\n<\/panel>/);
 		expect(panelMatch).not.toBeNull();
-		expect(panelMatch![1].length).toBe(8000);
+		expect(panelMatch?.[1].length).toBe(8000);
 	});
 
 	it('does not include <desk-context> for empty panelContext array', () => {
@@ -253,19 +238,13 @@ describe('buildSystemPrompt', () => {
 	});
 
 	it('escapes XML-special chars in panelType to prevent injection', () => {
-		const result = buildSystemPrompt(
-			[{ panelType: '"></panel><injected>evil', label: 'n', content: 'safe' }],
-			false,
-		);
+		const result = buildSystemPrompt([{ panelType: '"></panel><injected>evil', label: 'n', content: 'safe' }], false);
 		expect(result).not.toContain('<injected>');
 		expect(result).toContain('&quot;&gt;&lt;/panel&gt;&lt;injected&gt;evil');
 	});
 
 	it('escapes XML-special chars in label to prevent injection', () => {
-		const result = buildSystemPrompt(
-			[{ panelType: 'note', label: '"></panel><hack>', content: 'data' }],
-			false,
-		);
+		const result = buildSystemPrompt([{ panelType: 'note', label: '"></panel><hack>', content: 'data' }], false);
 		expect(result).not.toContain('<hack>');
 		expect(result).toContain('&quot;&gt;&lt;/panel&gt;&lt;hack&gt;');
 	});

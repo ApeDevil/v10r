@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'vitest';
 import {
+	type CellGetter,
+	type CellValue,
 	cellLabel,
 	colLabel,
 	evaluateFormula,
 	expandRange,
 	parseCellRef,
-	type CellGetter,
-	type CellValue,
 } from './formula';
 
 // ── Helpers ──────────────────────────────────────────────────────────

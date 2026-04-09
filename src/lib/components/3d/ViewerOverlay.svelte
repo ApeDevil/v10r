@@ -1,16 +1,16 @@
 <script lang="ts">
-	import type { Model3D } from '$lib/config/models';
+import type { Model3D } from '$lib/config/models';
 
-	interface Props {
-		model: Model3D;
-		currentAnimation: string;
-		onanimationchange?: (clip: string) => void;
-		action: import('svelte').Snippet;
-		/** Link to the customizer page (shown when model has customization config) */
-		customizeHref?: string;
-	}
+interface Props {
+	model: Model3D;
+	currentAnimation: string;
+	onanimationchange?: (clip: string) => void;
+	action: import('svelte').Snippet;
+	/** Link to the customizer page (shown when model has customization config) */
+	customizeHref?: string;
+}
 
-	let { model, currentAnimation, onanimationchange, action, customizeHref }: Props = $props();
+let { model, currentAnimation, onanimationchange, action, customizeHref }: Props = $props();
 </script>
 
 <div class="overlay">

@@ -1,18 +1,18 @@
 <script lang="ts">
-	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
-	import { cn } from '$lib/utils/cn';
-	import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
-	import {
-		dropdownMenuContentVariants,
-		dropdownMenuItemVariants,
-		dropdownMenuSeparatorVariants,
-	} from '$lib/components/composites/dropdown-menu/dropdown-menu';
+import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
+import {
+	dropdownMenuContentVariants,
+	dropdownMenuItemVariants,
+	dropdownMenuSeparatorVariants,
+} from '$lib/components/composites/dropdown-menu/dropdown-menu';
+import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		menus: MenuBarMenu[];
-	}
+interface Props {
+	menus: MenuBarMenu[];
+}
 
-	let { menus }: Props = $props();
+let { menus }: Props = $props();
 </script>
 
 <DropdownMenuPrimitive.Root>

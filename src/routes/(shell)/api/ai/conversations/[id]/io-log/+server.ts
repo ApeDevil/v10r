@@ -1,6 +1,6 @@
 import { apiOk } from '$lib/server/api/response';
-import { getConversationIOLog } from '$lib/server/db/ai/io-log-queries';
 import { requireApiUser } from '$lib/server/auth/guards';
+import { getConversationIOLog } from '$lib/server/db/ai/io-log-queries';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ params, locals, url }) => {

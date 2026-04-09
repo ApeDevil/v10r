@@ -1,44 +1,44 @@
 <script lang="ts">
-	import { Button } from '$lib/components/primitives';
-	import { ScrollArea } from '$lib/components/primitives/scroll-area';
-	import { cn } from '$lib/utils/cn';
+import { Button } from '$lib/components/primitives';
+import { ScrollArea } from '$lib/components/primitives/scroll-area';
+import { cn } from '$lib/utils/cn';
 
-	interface Props {
-		/** Pre-highlighted HTML from Shiki */
-		highlightedHtml?: string;
-		/** Raw code text (fallback when no highlighted HTML) */
-		code?: string;
-		/** Language label */
-		language?: string;
-		/** Optional filename */
-		filename?: string;
-		class?: string;
+interface Props {
+	/** Pre-highlighted HTML from Shiki */
+	highlightedHtml?: string;
+	/** Raw code text (fallback when no highlighted HTML) */
+	code?: string;
+	/** Language label */
+	language?: string;
+	/** Optional filename */
+	filename?: string;
+	class?: string;
+}
+
+let { highlightedHtml, code, language, filename, class: className }: Props = $props();
+
+let copied = $state(false);
+let copyTimeout: ReturnType<typeof setTimeout> | undefined;
+
+function getRawCode(): string {
+	if (code) return code;
+	if (highlightedHtml) {
+		const div = document.createElement('div');
+		div.innerHTML = highlightedHtml;
+		return div.textContent ?? '';
 	}
+	return '';
+}
 
-	let { highlightedHtml, code, language, filename, class: className }: Props = $props();
-
-	let copied = $state(false);
-	let copyTimeout: ReturnType<typeof setTimeout> | undefined;
-
-	function getRawCode(): string {
-		if (code) return code;
-		if (highlightedHtml) {
-			const div = document.createElement('div');
-			div.innerHTML = highlightedHtml;
-			return div.textContent ?? '';
-		}
-		return '';
-	}
-
-	async function handleCopy() {
-		if (!navigator?.clipboard) return;
-		await navigator.clipboard.writeText(getRawCode());
-		copied = true;
-		clearTimeout(copyTimeout);
-		copyTimeout = setTimeout(() => {
-			copied = false;
-		}, 2000);
-	}
+async function handleCopy() {
+	if (!navigator?.clipboard) return;
+	await navigator.clipboard.writeText(getRawCode());
+	copied = true;
+	clearTimeout(copyTimeout);
+	copyTimeout = setTimeout(() => {
+		copied = false;
+	}, 2000);
+}
 </script>
 
 <div class={cn('code-block', className)}>

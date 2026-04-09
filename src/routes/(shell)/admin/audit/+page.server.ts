@@ -1,5 +1,5 @@
+import { getDistinctActions, queryAuditLog } from '$lib/server/admin';
 import { requireAdmin } from '$lib/server/auth/guards';
-import { queryAuditLog, getDistinctActions } from '$lib/server/admin';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url, locals }) => {
@@ -21,7 +21,13 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		entries: result.entries,
 		page: result.page,
 		totalPages: result.totalPages,
-		filters: { action: action ?? '', actor: actor ?? '', targetType: targetType ?? '', dateFrom: dateFrom ?? '', dateTo: dateTo ?? '' },
+		filters: {
+			action: action ?? '',
+			actor: actor ?? '',
+			targetType: targetType ?? '',
+			dateFrom: dateFrom ?? '',
+			dateTo: dateTo ?? '',
+		},
 		distinctActions,
 	};
 };

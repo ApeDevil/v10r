@@ -26,24 +26,26 @@ const markers = [
 // --- Section 3: Choropleth (dynamic imports) ---
 const STATES_GEOJSON = 'https://maplibre.org/maplibre-gl-js/docs/assets/us_states.geojson';
 
-let GeoJSONSource: Component<any> | undefined = $state();
-let FillLayer: Component<any> | undefined = $state();
-let LineLayer: Component<any> | undefined = $state();
-let FeatureStateComp: Component<any> | undefined = $state();
-let PopupComp: Component<any> | undefined = $state();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic imports with varied prop types
+type AnyComponent = Component<Record<string, unknown>, Record<string, unknown>, string>;
+let GeoJSONSource: AnyComponent | undefined = $state();
+let FillLayer: AnyComponent | undefined = $state();
+let LineLayer: AnyComponent | undefined = $state();
+let FeatureStateComp: AnyComponent | undefined = $state();
+let PopupComp: AnyComponent | undefined = $state();
 let choroplethReady = $state(false);
 let palette = $state<string[]>([]);
 
-let hoveredFeature: any = $state(undefined);
+let hoveredFeature: { id?: string | number; properties?: Record<string, unknown> } | undefined = $state(undefined);
 let hoverLngLat: { lng: number; lat: number } | undefined = $state(undefined);
 
 onMount(async () => {
 	const sml = await import('svelte-maplibre-gl');
-	GeoJSONSource = sml.GeoJSONSource;
-	FillLayer = sml.FillLayer;
-	LineLayer = sml.LineLayer;
-	FeatureStateComp = sml.FeatureState;
-	PopupComp = sml.Popup;
+	GeoJSONSource = sml.GeoJSONSource as unknown as AnyComponent;
+	FillLayer = sml.FillLayer as unknown as AnyComponent;
+	LineLayer = sml.LineLayer as unknown as AnyComponent;
+	FeatureStateComp = sml.FeatureState as unknown as AnyComponent;
+	PopupComp = sml.Popup as unknown as AnyComponent;
 	palette = getVizPalette();
 	choroplethReady = true;
 });
@@ -219,7 +221,7 @@ const choroplethRegions = [
 											'fill-color': palette[0] || '#3b82f6',
 											'fill-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.5, 0.2],
 										}}
-										onmousemove={(ev: any) => {
+										onmousemove={(ev: { features?: Array<{ id?: string | number; properties?: Record<string, unknown> }>; lngLat?: { lng: number; lat: number } }) => {
 											hoveredFeature = ev.features?.[0];
 											hoverLngLat = ev.lngLat;
 										}}

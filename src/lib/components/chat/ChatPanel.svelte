@@ -1,306 +1,304 @@
 <script lang="ts">
-	import { Chat } from '@ai-sdk/svelte';
-	import { DefaultChatTransport } from 'ai';
-	import { onDestroy } from 'svelte';
-	import { CSRF_HEADER } from '$lib/api';
-	import {
-		appendIOLog,
-		dismissContext,
-		findLeafWithPanel,
-		getContextChips,
-		getDeskBus,
-		getDockContext,
-		getTokenEstimate,
-		getWorkspaceContext,
-		markResponseReceived,
-		pinContext,
-		registerPanelMenus,
-		serializeForRequest,
-		unpinContext,
-	} from '$lib/components/composites/dock';
-	import type { DeskEffect } from '$lib/server/ai/tools/_types';
-	import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
-	import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
-	import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
-	import ContextTray from './ContextTray.svelte';
-	import { chatStateCache } from './chat-state-cache';
+import { Chat } from '@ai-sdk/svelte';
+import { DefaultChatTransport } from 'ai';
+import { onDestroy } from 'svelte';
+import { CSRF_HEADER } from '$lib/api';
+import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
+import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
+import {
+	appendIOLog,
+	dismissContext,
+	findLeafWithPanel,
+	getContextChips,
+	getDeskBus,
+	getDockContext,
+	getTokenEstimate,
+	getWorkspaceContext,
+	markResponseReceived,
+	pinContext,
+	registerPanelMenus,
+	serializeForRequest,
+	unpinContext,
+} from '$lib/components/composites/dock';
+import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
+import type { DeskEffect } from '$lib/server/ai/tools/_types';
+import ContextTray from './ContextTray.svelte';
+import { chatStateCache } from './chat-state-cache';
 
-	interface Props {
-		panelId: string;
-	}
+interface Props {
+	panelId: string;
+}
 
-	let { panelId }: Props = $props();
+let { panelId }: Props = $props();
 
-	const cached = chatStateCache.get(panelId);
-	let conversationId: string | undefined = $state(cached?.conversationId);
-	let inputValue = $state('');
-	let lastErrorKind = $state<string | null>(null);
+const cached = chatStateCache.get(panelId);
+let conversationId: string | undefined = $state(cached?.conversationId);
+let inputValue = $state('');
+let lastErrorKind = $state<string | null>(null);
 
-	const bus = getDeskBus();
-	const dock = getDockContext();
-	const wsState = getWorkspaceContext();
+const bus = getDeskBus();
+const dock = getDockContext();
+const wsState = getWorkspaceContext();
 
-	const ERROR_MESSAGES: Record<string, string> = {
-		rate_limit: 'Rate limit reached. Wait a moment and try again.',
-		timeout: 'AI service timed out. Try again.',
-		unavailable: 'AI service is temporarily unavailable.',
-		context_length: 'Message too long. Try a shorter message.',
-		authentication: 'AI authentication failed. Check provider config.',
-		model: 'AI model unavailable. Try again later.',
-	};
+const ERROR_MESSAGES: Record<string, string> = {
+	rate_limit: 'Rate limit reached. Wait a moment and try again.',
+	timeout: 'AI service timed out. Try again.',
+	unavailable: 'AI service is temporarily unavailable.',
+	context_length: 'Message too long. Try a shorter message.',
+	authentication: 'AI authentication failed. Check provider config.',
+	model: 'AI model unavailable. Try again later.',
+};
 
-	/** Classify an error kind from message text when no header is available. */
-	function classifyErrorMessage(msg: string): string | null {
-		const lower = msg.toLowerCase();
-		if (lower.includes('rate') || lower.includes('quota') || lower.includes('429') || lower.includes('too many')) return 'rate_limit';
-		if (lower.includes('timeout') || lower.includes('timed out') || lower.includes('etimedout')) return 'timeout';
-		if (lower.includes('unavailable') || lower.includes('503') || lower.includes('fetch failed')) return 'unavailable';
-		if (lower.includes('context length') || lower.includes('too long') || lower.includes('token')) return 'context_length';
-		if (lower.includes('401') || lower.includes('403') || lower.includes('authentication')) return 'authentication';
-		if (lower.includes('model') || lower.includes('404')) return 'model';
-		return null;
-	}
+/** Classify an error kind from message text when no header is available. */
+function classifyErrorMessage(msg: string): string | null {
+	const lower = msg.toLowerCase();
+	if (lower.includes('rate') || lower.includes('quota') || lower.includes('429') || lower.includes('too many'))
+		return 'rate_limit';
+	if (lower.includes('timeout') || lower.includes('timed out') || lower.includes('etimedout')) return 'timeout';
+	if (lower.includes('unavailable') || lower.includes('503') || lower.includes('fetch failed')) return 'unavailable';
+	if (lower.includes('context length') || lower.includes('too long') || lower.includes('token'))
+		return 'context_length';
+	if (lower.includes('401') || lower.includes('403') || lower.includes('authentication')) return 'authentication';
+	if (lower.includes('model') || lower.includes('404')) return 'model';
+	return null;
+}
 
-	const chat = new Chat({
-		...(cached?.messages?.length ? { messages: cached.messages } : {}),
-		transport: new DefaultChatTransport({
-			api: '/api/ai/chat',
-			headers: CSRF_HEADER,
-			fetch: async (url, init) => {
-				const response = await fetch(url, init);
-				const id = response.headers.get('X-Conversation-Id');
-				if (id) conversationId = id;
-				const errorKind = response.headers.get('X-AI-Error-Kind');
-				if (errorKind) {
-					lastErrorKind = errorKind;
-					const msg = ERROR_MESSAGES[errorKind] ?? 'Something went wrong.';
-					appendIOLog({ source: 'effect', level: 'error', label: `AI error: ${msg}`, detail: errorKind });
-				}
-				return response;
-			},
-		}),
-		onFinish: () => {
-			markResponseReceived();
+const chat = new Chat({
+	...(cached?.messages?.length ? { messages: cached.messages as Chat['messages'] } : {}),
+	transport: new DefaultChatTransport({
+		api: '/api/ai/chat',
+		headers: CSRF_HEADER,
+		fetch: async (url, init) => {
+			const response = await fetch(url, init);
+			const id = response.headers.get('X-Conversation-Id');
+			if (id) conversationId = id;
+			const errorKind = response.headers.get('X-AI-Error-Kind');
+			if (errorKind) {
+				lastErrorKind = errorKind;
+				const msg = ERROR_MESSAGES[errorKind] ?? 'Something went wrong.';
+				appendIOLog({ source: 'effect', level: 'error', label: `AI error: ${msg}`, detail: errorKind });
+			}
+			return response;
 		},
-	});
+	}) as Chat['transport'],
+	onFinish: () => {
+		markResponseReceived();
+	},
+});
 
-	// Persist state when component is destroyed (panel move / close)
-	onDestroy(() => {
-		if (chat.messages.length > 0 || conversationId) {
-			chatStateCache.set(panelId, {
-				conversationId,
-				messages: $state.snapshot(chat.messages) as typeof chat.messages,
-			});
-		}
-	});
-
-	const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
-
-	// ── Error classification (stream errors bypass response headers) ──
-
-	$effect(() => {
-		const err = chat.error;
-		if (!err) return;
-		if (lastErrorKind) return; // already classified via header
-		const kind = classifyErrorMessage(err.message ?? '');
-		if (kind) lastErrorKind = kind;
-		const msg = ERROR_MESSAGES[kind ?? ''] ?? 'Something went wrong.';
-		appendIOLog({ source: 'effect', level: 'error', label: `AI error: ${msg}`, detail: kind ?? 'unknown' });
-	});
-
-	// ── Token usage estimate ────────────────────────────────────────
-
-	/** Rough client-side token estimate (~4 chars/token), using parts when available. */
-	function estimateMessageTokens(m: { content?: string; parts?: { type: string; text?: string }[] }): number {
-		if (m.parts?.length) {
-			const textLen = m.parts
-				.filter((p) => p.type === 'text')
-				.reduce((sum, p) => sum + (p.text?.length ?? 0), 0);
-			return Math.ceil(textLen / 4);
-		}
-		return Math.ceil((m.content?.length ?? 0) / 4);
+// Persist state when component is destroyed (panel move / close)
+onDestroy(() => {
+	if (chat.messages.length > 0 || conversationId) {
+		chatStateCache.set(panelId, {
+			conversationId,
+			messages: $state.snapshot(chat.messages) as typeof chat.messages,
+		});
 	}
+});
 
-	const conversationTokens = $derived(
-		chat.messages.reduce((sum, m) => sum + estimateMessageTokens(m), 0),
-	);
+const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
 
-	// ── AI desk effect dispatch ─────────────────────────────────────
+// ── Error classification (stream errors bypass response headers) ──
 
-	/** Track which tool call IDs we've already dispatched effects for. */
-	const processedToolCalls = new Set<string>();
+$effect(() => {
+	const err = chat.error;
+	if (!err) return;
+	if (lastErrorKind) return; // already classified via header
+	const kind = classifyErrorMessage(err.message ?? '');
+	if (kind) lastErrorKind = kind;
+	const msg = ERROR_MESSAGES[kind ?? ''] ?? 'Something went wrong.';
+	appendIOLog({ source: 'effect', level: 'error', label: `AI error: ${msg}`, detail: kind ?? 'unknown' });
+});
 
-	/**
-	 * Watch assistant messages for settled tool-invocation parts.
-	 * Extract DeskEffect from tool results and dispatch to desk bus / dock.
-	 */
-	$effect(() => {
-		const messages = chat.messages;
-		if (!messages.length) return;
+// ── Token usage estimate ────────────────────────────────────────
 
-		const lastMsg = messages[messages.length - 1];
-		if (lastMsg.role !== 'assistant' || !lastMsg.parts) return;
+/** Rough client-side token estimate (~4 chars/token), derived from text parts. */
+function estimateMessageTokens(m: { parts: { type: string; text?: string }[] }): number {
+	const textLen = m.parts.filter((p) => p.type === 'text').reduce((sum, p) => sum + (p.text?.length ?? 0), 0);
+	return Math.ceil(textLen / 4);
+}
 
-		for (const part of lastMsg.parts) {
-			if (part.type !== 'tool-invocation') continue;
-			const inv = (part as { toolInvocation: { toolCallId: string; toolName?: string; state: string; output?: { effects?: DeskEffect[]; error?: string } } }).toolInvocation;
+const conversationTokens = $derived(chat.messages.reduce((sum, m) => sum + estimateMessageTokens(m), 0));
 
-			const callKey = `${inv.toolCallId}-${inv.state}`;
-			if (processedToolCalls.has(callKey)) continue;
-			processedToolCalls.add(callKey);
+// ── AI desk effect dispatch ─────────────────────────────────────
 
-			if (inv.state === 'call') {
-				appendIOLog({
-					source: 'tool-call',
-					toolName: inv.toolName,
-					label: `Calling ${inv.toolName}...`,
-				});
-			} else if (inv.state === 'result') {
-				appendIOLog({
-					source: 'tool-result',
-					toolName: inv.toolName,
-					label: inv.output?.error
-						? `${inv.toolName} failed`
-						: `${inv.toolName} completed`,
-					level: inv.output?.error ? 'error' : 'success',
-				});
+/** Track which tool call IDs we've already dispatched effects for. */
+const processedToolCalls = new Set<string>();
 
-				const effects = inv.output?.effects;
-				if (effects) {
-					for (const effect of effects) {
-						dispatchDeskEffect(effect);
-					}
-				}
-			}
-		}
-	});
+/**
+ * Watch assistant messages for settled tool-invocation parts.
+ * Extract DeskEffect from tool results and dispatch to desk bus / dock.
+ */
+$effect(() => {
+	const messages = chat.messages;
+	if (!messages.length) return;
 
-	function dispatchDeskEffect(effect: DeskEffect) {
-		switch (effect.type) {
-			case 'desk:open_panel': {
-				const existingLeaf = findLeafWithPanel(dock.root, `${effect.panelType}-${effect.fileId}`);
-				if (existingLeaf) {
-					dock.activateTab(existingLeaf.id, `${effect.panelType}-${effect.fileId}`);
-				} else {
-					const newPanelId = `${effect.panelType}-${effect.fileId}`;
-					dock.addPanel({
-						id: newPanelId,
-						type: effect.panelType,
-						label: effect.label,
-						closable: true,
-						meta: { fileId: effect.fileId },
-					});
-				}
-				break;
-			}
-			case 'desk:refresh_file':
-				bus.publish('ai:refresh_file', { fileId: effect.fileId });
-				break;
-			case 'desk:refresh_explorer':
-				bus.publish('ai:refresh_explorer', {});
-				break;
-			case 'desk:tab_indicator':
-				dock.updatePanel(`${effect.panelType}-${effect.fileId}`, { indicator: effect.variant === 'modified' ? 'ai-modified' : undefined });
-				break;
-			case 'desk:notify':
-				bus.publish('ai:notify', { message: effect.message, level: effect.level });
-				break;
-		}
-	}
+	const lastMsg = messages[messages.length - 1];
+	if (lastMsg.role !== 'assistant' || !lastMsg.parts) return;
 
-	// ── Context ─────────────────────────────────────────────────────
+	for (const part of lastMsg.parts) {
+		if (part.type !== 'tool-invocation') continue;
+		const inv = part as unknown as {
+			toolCallId: string;
+			toolName: string;
+			state: string;
+			output?: { effects?: DeskEffect[]; error?: string };
+		};
 
-	const contextChips = $derived(getContextChips());
-	const tokenEstimate = $derived(getTokenEstimate());
+		const callKey = `${inv.toolCallId}-${inv.state}`;
+		if (processedToolCalls.has(callKey)) continue;
+		processedToolCalls.add(callKey);
 
-	const activeContextTypes = $derived(
-		contextChips
-			.filter((c) => c.status !== 'available')
-			.map((c) => c.context.panelType),
-	);
-
-	const placeholder = $derived.by(() => {
-		if (activeContextTypes.includes('spreadsheet')) return 'Ask about your selection...';
-		if (activeContextTypes.includes('editor')) return 'Ask about this document...';
-		return 'Ask anything...';
-	});
-
-	function handleDismiss(ctxPanelId: string) {
-		dismissContext(ctxPanelId);
-	}
-
-	// ── Scroll ──────────────────────────────────────────────────────
-
-	let scrollContainer: HTMLDivElement | undefined = $state();
-
-	$effect(() => {
-		if (chat.messages.length && scrollContainer) {
-			requestAnimationFrame(() => {
-				if (scrollContainer) {
-					scrollContainer.scrollTop = scrollContainer.scrollHeight;
-				}
-			});
-		}
-	});
-
-	// ── Actions ─────────────────────────────────────────────────────
-
-	function startNewChat() {
-		conversationId = undefined;
-		chat.messages = [];
-		inputValue = '';
-		chatStateCache.delete(panelId);
-	}
-
-	function submitMessage() {
-		if (!inputValue.trim() || isLoading) return;
-		lastErrorKind = null;
-		const context = serializeForRequest();
-
-		// Log context reads to I/O log
-		for (const ctx of context) {
+		if (inv.state === 'call') {
 			appendIOLog({
-				source: 'context-read',
-				label: `${ctx.panelType}: ${ctx.label}`,
-				detail: `${ctx.content.length} chars`,
+				source: 'tool-call',
+				toolName: inv.toolName,
+				label: `Calling ${inv.toolName}...`,
 			});
+		} else if (inv.state === 'result') {
+			appendIOLog({
+				source: 'tool-result',
+				toolName: inv.toolName,
+				label: inv.output?.error ? `${inv.toolName} failed` : `${inv.toolName} completed`,
+				level: inv.output?.error ? 'error' : 'success',
+			});
+
+			const effects = inv.output?.effects;
+			if (effects) {
+				for (const effect of effects) {
+					dispatchDeskEffect(effect);
+				}
+			}
 		}
-		appendIOLog({ source: 'progress', label: 'Sending message...' });
-
-		const text = inputValue;
-		inputValue = '';
-
-		chat.sendMessage(
-			{ text },
-			{
-				body: {
-					...(conversationId ? { conversationId } : {}),
-					...(context.length > 0 ? { panelContext: context } : {}),
-					toolScopes: ['desk:read', 'desk:write', 'desk:create'],
-					...(wsState.active ? { activeWorkspace: { id: wsState.active.id, name: wsState.active.name } } : {}),
-				},
-			},
-		);
 	}
+});
 
-	// ── Panel menus ─────────────────────────────────────────────────
+function dispatchDeskEffect(effect: DeskEffect) {
+	switch (effect.type) {
+		case 'desk:open_panel': {
+			const existingLeaf = findLeafWithPanel(dock.root, `${effect.panelType}-${effect.fileId}`);
+			if (existingLeaf) {
+				dock.activateTab(existingLeaf.id, `${effect.panelType}-${effect.fileId}`);
+			} else {
+				const newPanelId = `${effect.panelType}-${effect.fileId}`;
+				dock.addPanel({
+					id: newPanelId,
+					type: effect.panelType,
+					label: effect.label,
+					closable: true,
+					meta: { fileId: effect.fileId },
+				});
+			}
+			break;
+		}
+		case 'desk:refresh_file':
+			bus.publish('ai:refresh_file', { fileId: effect.fileId });
+			break;
+		case 'desk:refresh_explorer':
+			bus.publish('ai:refresh_explorer', {});
+			break;
+		case 'desk:tab_indicator':
+			dock.updatePanel(`${effect.panelType}-${effect.fileId}`, {
+				indicator: effect.variant === 'modified' ? 'ai-modified' : undefined,
+			});
+			break;
+		case 'desk:notify':
+			bus.publish('ai:notify', { message: effect.message, level: effect.level });
+			break;
+	}
+}
 
-	const chatMenus = $derived<MenuBarMenu[]>([
+// ── Context ─────────────────────────────────────────────────────
+
+const contextChips = $derived(getContextChips());
+const tokenEstimate = $derived(getTokenEstimate());
+
+const activeContextTypes = $derived(
+	contextChips.filter((c) => c.status !== 'available').map((c) => c.context.panelType),
+);
+
+const placeholder = $derived.by(() => {
+	if (activeContextTypes.includes('spreadsheet')) return 'Ask about your selection...';
+	if (activeContextTypes.includes('editor')) return 'Ask about this document...';
+	return 'Ask anything...';
+});
+
+function handleDismiss(ctxPanelId: string) {
+	dismissContext(ctxPanelId);
+}
+
+// ── Scroll ──────────────────────────────────────────────────────
+
+let scrollContainer: HTMLDivElement | undefined = $state();
+
+$effect(() => {
+	if (chat.messages.length && scrollContainer) {
+		requestAnimationFrame(() => {
+			if (scrollContainer) {
+				scrollContainer.scrollTop = scrollContainer.scrollHeight;
+			}
+		});
+	}
+});
+
+// ── Actions ─────────────────────────────────────────────────────
+
+function startNewChat() {
+	conversationId = undefined;
+	chat.messages = [];
+	inputValue = '';
+	chatStateCache.delete(panelId);
+}
+
+function submitMessage() {
+	if (!inputValue.trim() || isLoading) return;
+	lastErrorKind = null;
+	const context = serializeForRequest();
+
+	// Log context reads to I/O log
+	for (const ctx of context) {
+		appendIOLog({
+			source: 'context-read',
+			label: `${ctx.panelType}: ${ctx.label}`,
+			detail: `${ctx.content.length} chars`,
+		});
+	}
+	appendIOLog({ source: 'progress', label: 'Sending message...' });
+
+	const text = inputValue;
+	inputValue = '';
+
+	chat.sendMessage(
+		{ text },
 		{
-			label: 'Chat',
-			items: [
-				{
-					label: 'New Conversation',
-					icon: 'i-lucide-plus',
-					onSelect: startNewChat,
-				},
-			],
+			body: {
+				...(conversationId ? { conversationId } : {}),
+				...(context.length > 0 ? { panelContext: context } : {}),
+				toolScopes: ['desk:read', 'desk:write', 'desk:create'],
+				...(wsState.active ? { activeWorkspace: { id: wsState.active.id, name: wsState.active.name } } : {}),
+			},
 		},
-	]);
+	);
+}
 
-	$effect(() => {
-		return registerPanelMenus(panelId, { menuBar: chatMenus });
-	});
+// ── Panel menus ─────────────────────────────────────────────────
+
+const chatMenus = $derived<MenuBarMenu[]>([
+	{
+		label: 'Chat',
+		items: [
+			{
+				label: 'New Conversation',
+				icon: 'i-lucide-plus',
+				onSelect: startNewChat,
+			},
+		],
+	},
+]);
+
+$effect(() => {
+	return registerPanelMenus(panelId, { menuBar: chatMenus });
+});
 </script>
 
 <div class="chat-panel-container">
@@ -317,7 +315,6 @@
 					<ChatMessage
 						role={message.role as 'user' | 'assistant'}
 						parts={message.parts}
-						content={message.content}
 					/>
 				{/each}
 

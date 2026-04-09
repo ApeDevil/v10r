@@ -4,7 +4,7 @@ import { PageHeader, TabNav } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
 import { setNotificationContext } from '$lib/state';
 
-let { data, children }: { data: any; children: Snippet } = $props();
+let { data, children }: { data: { user: { name: string }; unreadCount: number }; children: Snippet } = $props();
 
 setNotificationContext(data.unreadCount);
 

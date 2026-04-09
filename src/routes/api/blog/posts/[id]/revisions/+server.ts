@@ -1,8 +1,8 @@
 import * as v from 'valibot';
-import { requireApiAuthor, requirePostOwnership } from '$lib/server/auth/guards';
-import { getPostById, createRevision } from '$lib/server/blog';
-import { CreateRevisionSchema } from '$lib/server/blog/schemas';
 import { apiCreated, apiError, apiValidationError } from '$lib/server/api/response';
+import { requireApiAuthor, requirePostOwnership } from '$lib/server/auth/guards';
+import { createRevision, getPostById } from '$lib/server/blog';
+import { CreateRevisionSchema } from '$lib/server/blog/schemas';
 import type { RequestHandler } from './$types';
 
 /** Save a new revision. */

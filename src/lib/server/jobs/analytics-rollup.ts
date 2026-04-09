@@ -44,5 +44,5 @@ export async function analyticsRollup(): Promise<number> {
 			bounce_rate = EXCLUDED.bounce_rate
 	`);
 
-	return (result as any)?.rowCount ?? 0;
+	return (result as { rowCount?: number })?.rowCount ?? 0;
 }

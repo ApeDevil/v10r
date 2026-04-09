@@ -1,20 +1,20 @@
 <script lang="ts">
-	import { Button } from '$lib/components/primitives';
+import { Button } from '$lib/components/primitives';
 
-	interface Props {
-		postStatus: 'draft' | 'published' | 'archived';
-		onconfirm: () => void;
-		oncancel: () => void;
+interface Props {
+	postStatus: 'draft' | 'published' | 'archived';
+	onconfirm: () => void;
+	oncancel: () => void;
+}
+
+let { postStatus, onconfirm, oncancel }: Props = $props();
+
+function handleKeyDown(e: KeyboardEvent) {
+	if (e.key === 'Escape') {
+		e.preventDefault();
+		oncancel();
 	}
-
-	let { postStatus, onconfirm, oncancel }: Props = $props();
-
-	function handleKeyDown(e: KeyboardEvent) {
-		if (e.key === 'Escape') {
-			e.preventDefault();
-			oncancel();
-		}
-	}
+}
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->

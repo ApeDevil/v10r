@@ -5,7 +5,6 @@
 
 import { getContext, setContext } from 'svelte';
 import type { DeskTheme, PanelColorOverride, WorkspaceColors } from './desk-settings.types';
-import { DEFAULT_THEME } from './desk-settings.persistence';
 
 const DESK_SETTINGS_CTX = Symbol('desk-settings');
 
@@ -13,7 +12,11 @@ export interface DeskSettingsOptions {
 	/** Called after commitDraft to persist to DB. */
 	onCommit?: (theme: DeskTheme) => void;
 	/** Called when a preset is created. Returns the server-assigned ID. */
-	onCreatePreset?: (name: string, workspace: WorkspaceColors, typeStyles: Record<string, PanelColorOverride>) => Promise<string | null>;
+	onCreatePreset?: (
+		name: string,
+		workspace: WorkspaceColors,
+		typeStyles: Record<string, PanelColorOverride>,
+	) => Promise<string | null>;
 	/** Called when a preset is deleted. */
 	onDeletePreset?: (presetId: string) => Promise<boolean>;
 }
@@ -94,10 +97,7 @@ export function createDeskSettings(initial: DeskTheme, options: DeskSettingsOpti
 		const serverId = await options.onCreatePreset?.(name, ws, ts);
 		const id = serverId ?? `preset-${Date.now()}`;
 
-		draft.presets = [
-			...draft.presets,
-			{ id, name, builtIn: false, workspace: ws, typeStyles: ts },
-		];
+		draft.presets = [...draft.presets, { id, name, builtIn: false, workspace: ws, typeStyles: ts }];
 		draft.activePresetId = id;
 	}
 
@@ -141,16 +141,28 @@ export function createDeskSettings(initial: DeskTheme, options: DeskSettingsOpti
 	}
 
 	return {
-		get theme() { return committed; },
-		get draft() { return draft; },
-		get dialogOpen() { return dialogOpen; },
+		get theme() {
+			return committed;
+		},
+		get draft() {
+			return draft;
+		},
+		get dialogOpen() {
+			return dialogOpen;
+		},
 		set dialogOpen(v: boolean) {
 			if (!v && draft) discardDraft();
 			else dialogOpen = v;
 		},
-		get dialogTab() { return dialogTab; },
-		set dialogTab(v: 'workspace' | 'panels' | 'presets') { dialogTab = v; },
-		get cssVarsMap() { return cssVarsMap; },
+		get dialogTab() {
+			return dialogTab;
+		},
+		set dialogTab(v: 'workspace' | 'panels' | 'presets') {
+			dialogTab = v;
+		},
+		get cssVarsMap() {
+			return cssVarsMap;
+		},
 
 		openDialog,
 		commitDraft,

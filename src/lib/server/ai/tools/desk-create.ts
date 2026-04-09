@@ -3,8 +3,8 @@
  * Create: gated by 'desk:create' scope.
  * Delete: gated by 'desk:delete' scope, two-phase confirmation via `confirmed` parameter.
  */
-import { tool, jsonSchema } from 'ai';
-import { createSpreadsheetFile, createMarkdownFile, deleteFile } from '$lib/server/db/desk/mutations';
+import { jsonSchema, tool } from 'ai';
+import { createMarkdownFile, createSpreadsheetFile, deleteFile } from '$lib/server/db/desk/mutations';
 import { getFile } from '$lib/server/db/desk/queries';
 import type { DeskEffect } from './_types';
 
@@ -93,8 +93,7 @@ export function createCreateTools(userId: string) {
 
 		desk_create_markdown: tool({
 			description:
-				"Create a new markdown document on the user's desk. " +
-				'Provide the file name and initial markdown content.',
+				"Create a new markdown document on the user's desk. " + 'Provide the file name and initial markdown content.',
 			inputSchema: jsonSchema<{ name: string; content: string }>({
 				type: 'object',
 				properties: {

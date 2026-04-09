@@ -525,7 +525,16 @@ const P7: Palette = {
 
 export const PALETTE_REGISTRY: readonly Palette[] = [P0, P1, P2, P3, P4, P5, P6, P7] as const;
 
-export const PALETTE_IDS: readonly [PaletteId, ...PaletteId[]] = [P0.id, P1.id, P2.id, P3.id, P4.id, P5.id, P6.id, P7.id];
+export const PALETTE_IDS: readonly [PaletteId, ...PaletteId[]] = [
+	P0.id,
+	P1.id,
+	P2.id,
+	P3.id,
+	P4.id,
+	P5.id,
+	P6.id,
+	P7.id,
+];
 
 export function getPalette(id: PaletteId): Palette | undefined {
 	return PALETTE_REGISTRY.find((p) => p.id === id);

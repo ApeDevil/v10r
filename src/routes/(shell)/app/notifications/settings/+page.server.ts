@@ -1,4 +1,4 @@
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { getOrCreateSettings, updateSettings } from '$lib/server/db/notifications/mutations';
@@ -7,7 +7,8 @@ import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegr
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
-	const userId = locals.user!.id;
+	if (!locals.user) redirect(303, '/auth/login');
+	const userId = locals.user.id;
 
 	const [settings, telegramAccount, discordAccount] = await Promise.all([
 		getOrCreateSettings(userId),

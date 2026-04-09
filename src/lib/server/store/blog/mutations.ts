@@ -1,6 +1,6 @@
 import { DeleteObjectCommand, HeadObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { MAX_BLOG_UPLOAD_SIZE, MAX_BLOG_3D_UPLOAD_SIZE, PRESIGNED_URL_EXPIRY } from '$lib/server/config';
+import { MAX_BLOG_3D_UPLOAD_SIZE, MAX_BLOG_UPLOAD_SIZE, PRESIGNED_URL_EXPIRY } from '$lib/server/config';
 import { StoreError } from '../errors';
 import { BUCKET, s3 } from '../index';
 import type { PresignedUrlResult, UploadResult } from '../types';
@@ -11,14 +11,7 @@ function requireS3() {
 	return s3;
 }
 
-const ALLOWED_MIME_TYPES = [
-	'image/png',
-	'image/jpeg',
-	'image/gif',
-	'image/webp',
-	'image/svg+xml',
-	'model/gltf-binary',
-];
+const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml', 'model/gltf-binary'];
 
 /**
  * Generate a presigned PUT URL for direct browser upload.

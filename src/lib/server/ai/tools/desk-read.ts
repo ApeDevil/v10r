@@ -2,8 +2,8 @@
  * Desk read tools — list, read, and search files.
  * No side effects, no mutations. Always safe to call.
  */
-import { tool, jsonSchema } from 'ai';
-import { listFiles, getFile, getSpreadsheetByFileId, getMarkdownByFileId } from '$lib/server/db/desk/queries';
+import { jsonSchema, tool } from 'ai';
+import { getFile, getMarkdownByFileId, getSpreadsheetByFileId, listFiles } from '$lib/server/db/desk/queries';
 import { getFileTree, renderFileTreeWithIndex } from '$lib/server/desk/file-tree';
 
 /** Summarize spreadsheet cells to stay under ~400 tokens. */
@@ -138,9 +138,7 @@ export function createReadTools(userId: string) {
 				try {
 					const files = await listFiles(userId);
 					const q = query.toLowerCase();
-					const matches = files
-						.filter((f) => f.name.toLowerCase().includes(q))
-						.slice(0, 20);
+					const matches = files.filter((f) => f.name.toLowerCase().includes(q)).slice(0, 20);
 					return {
 						files: matches.map((f) => ({
 							id: f.id,

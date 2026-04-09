@@ -36,7 +36,7 @@ export async function saveMessages(
 	if (messages.length === 0) return;
 
 	// Filter to valid roles before insert
-	const valid = messages.filter((m) => VALID_ROLES.has(m.role as any));
+	const valid = messages.filter((m) => VALID_ROLES.has(m.role as typeof VALID_ROLES extends Set<infer T> ? T : never));
 	if (valid.length === 0) return;
 
 	await db.transaction(async (tx) => {
@@ -68,10 +68,7 @@ export async function saveMessages(
 
 /** Update message content (used to backfill pre-inserted assistant messages). */
 export async function updateMessageContent(messageId: string, content: string) {
-	await db
-		.update(message)
-		.set({ content })
-		.where(eq(message.id, messageId));
+	await db.update(message).set({ content }).where(eq(message.id, messageId));
 }
 
 /** Update conversation title and touch updatedAt. Auth-scoped. */
@@ -121,9 +118,12 @@ export async function saveConversationStep(data: {
 
 /** Recalculate cached token totals on a conversation from its steps. */
 export async function refreshConversationTokens(conversationId: string) {
-	await db.update(conversation).set({
-		totalInputTokens: sql`(SELECT COALESCE(SUM(${conversationStep.inputTokens}), 0) FROM ${conversationStep} WHERE ${conversationStep.conversationId} = ${conversationId})`,
-		totalOutputTokens: sql`(SELECT COALESCE(SUM(${conversationStep.outputTokens}), 0) FROM ${conversationStep} WHERE ${conversationStep.conversationId} = ${conversationId})`,
-		updatedAt: new Date(),
-	}).where(eq(conversation.id, conversationId));
+	await db
+		.update(conversation)
+		.set({
+			totalInputTokens: sql`(SELECT COALESCE(SUM(${conversationStep.inputTokens}), 0) FROM ${conversationStep} WHERE ${conversationStep.conversationId} = ${conversationId})`,
+			totalOutputTokens: sql`(SELECT COALESCE(SUM(${conversationStep.outputTokens}), 0) FROM ${conversationStep} WHERE ${conversationStep.conversationId} = ${conversationId})`,
+			updatedAt: new Date(),
+		})
+		.where(eq(conversation.id, conversationId));
 }

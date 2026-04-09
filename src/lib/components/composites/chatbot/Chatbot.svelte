@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Chat } from '@ai-sdk/svelte';
+import { DefaultChatTransport } from 'ai';
 import { Dialog } from 'bits-ui';
 import { apiFetch, CSRF_HEADER } from '$lib/api';
 import { cn } from '$lib/utils/cn';
@@ -23,14 +24,19 @@ let conversations: Conversation[] = $state([]);
 let conversationsError = $state(false);
 let showSidebar = $state(false);
 let pendingDeleteId: string | null = $state(null);
+let inputValue = $state('');
 
 const chat = new Chat({
-	api: '/api/ai/chat',
-	headers: CSRF_HEADER,
-	onResponse: (response: Response) => {
-		const id = response.headers.get('X-Conversation-Id');
-		if (id) conversationId = id;
-	},
+	transport: new DefaultChatTransport({
+		api: '/api/ai/chat',
+		headers: CSRF_HEADER,
+		fetch: async (url, init) => {
+			const response = await fetch(url, init);
+			const id = response.headers.get('X-Conversation-Id');
+			if (id) conversationId = id;
+			return response;
+		},
+	}) as Chat['transport'],
 });
 
 const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
@@ -85,7 +91,7 @@ async function loadConversation(conv: Conversation) {
 		chat.messages = data.messages.map((m: { id: string; role: string; content: string }) => ({
 			id: m.id,
 			role: m.role,
-			content: m.content,
+			parts: [{ type: 'text' as const, text: m.content }],
 		}));
 		showSidebar = false;
 	} catch {
@@ -112,15 +118,19 @@ async function deleteConversation(id: string) {
 function startNewChat() {
 	conversationId = undefined;
 	chat.messages = [];
-	chat.input = '';
+	inputValue = '';
 }
 
 function submitMessage() {
-	if (!chat.input.trim() || isLoading) return;
-	chat.sendMessage({
-		text: chat.input,
-		body: conversationId ? { conversationId } : {},
-	});
+	if (!inputValue.trim() || isLoading) return;
+	const text = inputValue;
+	inputValue = '';
+	chat.sendMessage(
+		{ text },
+		{
+			body: conversationId ? { conversationId } : {},
+		},
+	);
 }
 
 function formatRelativeTime(dateStr: string): string {
@@ -246,7 +256,6 @@ function formatRelativeTime(dateStr: string): string {
 									<ChatMessage
 									role={message.role as 'user' | 'assistant'}
 									parts={message.parts}
-									content={message.content}
 								/>
 								{/each}
 
@@ -283,7 +292,7 @@ function formatRelativeTime(dateStr: string): string {
 					{/if}
 
 					<!-- Input -->
-					<ChatInput bind:value={chat.input} loading={isLoading} onsubmit={submitMessage} />
+					<ChatInput bind:value={inputValue} loading={isLoading} onsubmit={submitMessage} />
 				</div>
 			</div>
 		</Dialog.Content>

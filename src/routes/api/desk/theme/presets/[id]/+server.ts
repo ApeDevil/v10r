@@ -1,6 +1,6 @@
+import { apiError, apiNoContent } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { deleteDeskPreset } from '$lib/server/desk';
-import { apiNoContent, apiError } from '$lib/server/api/response';
 import type { RequestHandler } from './$types';
 
 /** Delete a user preset. */

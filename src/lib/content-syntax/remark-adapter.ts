@@ -7,11 +7,12 @@
  * 2. Extracts an EmbedDescriptor and pushes it to vfile.data.embeds
  * 3. Transforms the mdast node into an HTML placeholder div
  */
-import { visit } from 'unist-util-visit';
-import { syntaxes, type SyntaxDefinition } from './index';
-import type { EmbedDescriptor } from '$lib/server/blog/types';
+
 import type { Root } from 'mdast';
+import { visit } from 'unist-util-visit';
 import type { VFile } from 'vfile';
+import type { EmbedDescriptor } from '$lib/server/blog/types';
+import { type SyntaxDefinition, syntaxes } from './index';
 
 type DirectiveNode = {
 	type: 'textDirective' | 'leafDirective' | 'containerDirective';
@@ -41,7 +42,7 @@ function nextEmbedId(): string {
 
 export function remarkDirectiveHandlers() {
 	return (tree: Root, file: VFile) => {
-		const embeds: EmbedDescriptor[] = file.data.embeds as EmbedDescriptor[] ?? [];
+		const embeds: EmbedDescriptor[] = (file.data.embeds as EmbedDescriptor[]) ?? [];
 		file.data.embeds = embeds;
 
 		visit(tree, (node) => {
@@ -71,7 +72,8 @@ export function remarkDirectiveHandlers() {
 			const missing = def.requiredAttrs.filter((a) => !attrs[a]);
 			if (missing.length > 0) {
 				// Produce a warning placeholder
-				const data = directive.data ?? (directive.data = {});
+				if (!directive.data) directive.data = {};
+				const data = directive.data;
 				data.hName = 'div';
 				data.hProperties = {
 					class: 'embed-warning',
@@ -104,7 +106,8 @@ export function remarkDirectiveHandlers() {
 			embeds.push(descriptor);
 
 			// Transform to HTML placeholder via hast properties
-			const data = directive.data ?? (directive.data = {});
+			if (!directive.data) directive.data = {};
+			const data = directive.data;
 			data.hName = 'div';
 			data.hProperties = {
 				'data-embed-id': embedId,

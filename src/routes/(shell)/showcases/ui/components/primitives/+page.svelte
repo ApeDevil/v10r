@@ -1,11 +1,11 @@
 <script lang="ts">
-import type { PageData } from './$types';
-import type { ComponentDoc } from '$lib/components/composites/info-dialog/types';
 import { NavSection } from '$lib/components/composites';
+import type { ComponentDoc } from '$lib/components/composites/info-dialog/types';
 import ActionsSection from '../_sections/ActionsSection.svelte';
 import DataDisplaySection from '../_sections/DataDisplaySection.svelte';
 import InputsSection from '../_sections/InputsSection.svelte';
 import OverlaysSection from '../_sections/OverlaysSection.svelte';
+import type { PageData } from './$types';
 
 let { data }: { data: PageData } = $props();
 
@@ -21,7 +21,12 @@ const actionsDocs: Record<string, ComponentDoc> = $derived({
 		name: 'Button',
 		description: 'Interactive button element with CVA variant system.',
 		props: [
-			{ name: 'variant', type: "'default' | 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive'", default: "'default'", description: 'Visual style variant' },
+			{
+				name: 'variant',
+				type: "'default' | 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive'",
+				default: "'default'",
+				description: 'Visual style variant',
+			},
 			{ name: 'size', type: "'sm' | 'md' | 'lg' | 'icon'", default: "'md'", description: 'Size variant' },
 			{ name: 'children', type: 'Snippet', required: true, description: 'Button content' },
 			{ name: 'class', type: 'string', description: 'Additional CSS classes' },
@@ -29,7 +34,8 @@ const actionsDocs: Record<string, ComponentDoc> = $derived({
 			{ name: '...rest', type: 'HTMLButtonAttributes', description: 'Native button attributes (onclick, type, etc.)' },
 		],
 		source: data.sources?.button,
-		notes: 'CVA variants in `button.ts` define class markers. Scoped CSS in `Button.svelte` handles actual visual styling via `:global()` selectors targeting those markers.\n\nThis two-file pattern is needed because UnoCSS cannot reliably extract complex classes from `.ts` files.',
+		notes:
+			'CVA variants in `button.ts` define class markers. Scoped CSS in `Button.svelte` handles actual visual styling via `:global()` selectors targeting those markers.\n\nThis two-file pattern is needed because UnoCSS cannot reliably extract complex classes from `.ts` files.',
 	},
 	spinner: {
 		name: 'Spinner',

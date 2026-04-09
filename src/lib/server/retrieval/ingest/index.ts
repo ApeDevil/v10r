@@ -2,6 +2,7 @@
  * Ingestion pipeline: document → chunks → embeddings → Postgres + Neo4j.
  */
 import { eq } from 'drizzle-orm';
+import { chatModel } from '$lib/server/ai';
 import { db } from '$lib/server/db';
 import { chunk, document } from '$lib/server/db/schema/rag';
 import { chunkDocument } from '../chunk';
@@ -11,7 +12,6 @@ import { RetrievalError } from '../errors';
 import type { IngestableDocument, IngestResult } from '../types';
 import { addContextPrefixes } from './contextual-prep';
 import { extractEntitiesFromSections } from './entity-extract';
-import { chatModel } from '$lib/server/ai';
 import { storeChunkStructure, storeEntitiesAndRelationships } from './graph-store';
 
 /** Hash content using Web Crypto */
@@ -140,7 +140,10 @@ export async function ingest(doc: IngestableDocument): Promise<IngestResult> {
 			await storeChunkStructure(documentId, parents, contextualizedChildren);
 
 			// 7. Extract entities from parent chunks and store in Neo4j
-			const extraction = await extractEntitiesFromSections(parents.map((p) => p.content), chatModel);
+			const extraction = await extractEntitiesFromSections(
+				parents.map((p) => p.content),
+				chatModel,
+			);
 
 			// Build chunk-entity mapping (link entities to their child chunks)
 			const chunkEntityMap: Array<{ chunkPgId: string; entityName: string; confidence: number }> = [];

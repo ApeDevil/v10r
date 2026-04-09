@@ -1,14 +1,14 @@
 import { error, fail } from '@sveltejs/kit';
+import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
 import { requireAdmin } from '$lib/server/auth/guards';
 import {
-	listPosts,
 	getLatestRevision,
+	listPosts,
 	publishRevision,
-	updatePostMetadata,
-	unpublishPost,
 	softDeletePost,
+	unpublishPost,
+	updatePostMetadata,
 } from '$lib/server/blog';
-import { recordAuditEvent, getAuditContext } from '$lib/server/admin';
 import { ADMIN_BLOG_PAGE_SIZE } from '$lib/server/config';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -30,9 +30,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	const statusFilter = url.searchParams.get('status') ?? 'all';
 
 	const status =
-		statusFilter === 'draft' || statusFilter === 'published' || statusFilter === 'archived'
-			? statusFilter
-			: undefined;
+		statusFilter === 'draft' || statusFilter === 'published' || statusFilter === 'archived' ? statusFilter : undefined;
 
 	const { items, total } = await listPosts({
 		status,

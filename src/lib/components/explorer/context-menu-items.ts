@@ -5,7 +5,7 @@
  * Items only appear if the node's capabilities include the matching action.
  * Empty groups are omitted.
  */
-import type { ExplorerNode } from './node';
+import type { ExplorerNode, NodeCapability } from './node';
 
 export interface MenuItemDef {
 	type: 'item';
@@ -95,7 +95,7 @@ export function buildContextMenuItems(node: ExplorerNode): MenuEntry[] {
 	for (const group of GROUPS) {
 		const groupItems: MenuItemDef[] = [];
 		for (const def of group) {
-			if (!node.capabilities.has(def.capability as any)) continue;
+			if (!node.capabilities.has(def.capability as NodeCapability)) continue;
 			groupItems.push({
 				type: 'item',
 				label: typeof def.label === 'function' ? def.label(node) : def.label,

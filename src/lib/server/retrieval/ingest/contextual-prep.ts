@@ -18,7 +18,11 @@ Document: "{title}"
 Context sentence:`;
 
 /** Generate a context prefix for a single chunk. */
-async function generateContextPrefix(model: LanguageModel | null, documentTitle: string, chunkContent: string): Promise<string> {
+async function generateContextPrefix(
+	model: LanguageModel | null,
+	documentTitle: string,
+	chunkContent: string,
+): Promise<string> {
 	if (!model) {
 		return `From "${documentTitle}":`;
 	}
@@ -41,7 +45,11 @@ async function generateContextPrefix(model: LanguageModel | null, documentTitle:
  * Add context prefixes to child chunks.
  * Processes in sequence to respect rate limits.
  */
-export async function addContextPrefixes(model: LanguageModel | null, documentTitle: string, chunks: RawChunk[]): Promise<RawChunk[]> {
+export async function addContextPrefixes(
+	model: LanguageModel | null,
+	documentTitle: string,
+	chunks: RawChunk[],
+): Promise<RawChunk[]> {
 	const results: RawChunk[] = [];
 
 	for (const chunk of chunks) {

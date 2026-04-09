@@ -1,16 +1,16 @@
 import { fail, message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
-import { brandSettingsSchema, customPaletteSchema } from '$lib/schemas/app/branding';
 import * as v from 'valibot';
+import { brandSettingsSchema, customPaletteSchema } from '$lib/schemas/app/branding';
+import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
 import { requireAdmin } from '$lib/server/auth/guards';
-import { recordAuditEvent, getAuditContext } from '$lib/server/admin';
-import { getBrandSettings, upsertBrandSettings } from '$lib/server/db/brand/queries';
 import {
 	createCustomPalette,
 	deleteCustomPalette,
 	listCustomPalettes,
 	updateCustomPalette,
 } from '$lib/server/branding/palette-crud';
+import { getBrandSettings, upsertBrandSettings } from '$lib/server/db/brand/queries';
 import { invalidateBrandCache } from '$lib/server/style/brand';
 import { PALETTE_REGISTRY } from '$lib/styles/random/palette-registry';
 import { RADIUS_REGISTRY } from '$lib/styles/random/radius-registry';
@@ -19,11 +19,9 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	requireAdmin(locals);
-	// requireAdmin guarantees locals.user is present — fetch in parallel
-	const [row, customPalettes] = await Promise.all([
-		getBrandSettings(),
-		listCustomPalettes(locals.user!.id),
-	]);
+	// requireAdmin guarantees locals.user is present
+	const user = locals.user!;
+	const [row, customPalettes] = await Promise.all([getBrandSettings(), listCustomPalettes(user.id)]);
 
 	const initialData = row
 		? {
@@ -102,7 +100,7 @@ export const actions: Actions = {
 
 	saveCustomPalette: async (event) => {
 		requireAdmin(event.locals);
-		const locals = event.locals;
+		const user = event.locals.user!;
 		const formData = await event.request.formData();
 		const raw = formData.get('paletteData');
 		if (!raw || typeof raw !== 'string') return fail(400, { error: 'Missing palette data' });
@@ -121,7 +119,7 @@ export const actions: Actions = {
 		try {
 			const ctx = getAuditContext(event);
 			if (id) {
-				await updateCustomPalette(id, locals.user!.id, {
+				await updateCustomPalette(id, user.id, {
 					name: data.name,
 					description: data.description,
 					lightColors: data.lightColors,
@@ -142,7 +140,7 @@ export const actions: Actions = {
 					basePaletteId: data.basePaletteId,
 					lightColors: data.lightColors,
 					darkColors: data.darkColors,
-					createdBy: locals.user!.id,
+					createdBy: user.id,
 				});
 				await recordAuditEvent({
 					...ctx,
@@ -160,12 +158,13 @@ export const actions: Actions = {
 
 	deleteCustomPalette: async (event) => {
 		requireAdmin(event.locals);
+		const user = event.locals.user!;
 		const formData = await event.request.formData();
 		const id = formData.get('paletteId') as string;
 		if (!id) return fail(400, { error: 'Missing palette ID' });
 
 		try {
-			await deleteCustomPalette(id, event.locals.user!.id);
+			await deleteCustomPalette(id, user.id);
 			const ctx = getAuditContext(event);
 			await recordAuditEvent({
 				...ctx,

@@ -2,9 +2,9 @@
 import { Canvas } from '@threlte/core';
 import { MediaQuery } from 'svelte/reactivity';
 import { BoundaryFallback } from '$lib/components/composites';
-import { resolveScene } from './resolve-scene';
 import type { EmbedDescriptor } from '$lib/server/blog/types';
 import EmbedSceneContent from './EmbedSceneContent.svelte';
+import { resolveScene } from './resolve-scene';
 
 interface Props {
 	descriptor: EmbedDescriptor;
@@ -61,23 +61,17 @@ function handleKeydown(e: KeyboardEvent) {
 
 // Derive model path and config for the scene content
 const modelPath = $derived(
-	resolved.type === 'registry'
-		? resolved.model.path
-		: resolved.type === 'url'
-			? resolved.path
-			: null,
+	resolved.type === 'registry' ? resolved.model.path : resolved.type === 'url' ? resolved.path : null,
 );
 
-const modelScale = $derived(
-	resolved.type === 'registry' ? (resolved.model.scale ?? 1) : 1,
-);
+const modelScale = $derived(resolved.type === 'registry' ? (resolved.model.scale ?? 1) : 1);
 
 const cameraPosition = $derived(
 	resolved.type === 'registry'
 		? resolved.model.camera.position
 		: resolved.type === 'url'
 			? resolved.config.camera.position
-			: [3, 3, 3] as [number, number, number],
+			: ([3, 3, 3] as [number, number, number]),
 );
 
 const cameraTarget = $derived(
@@ -85,44 +79,28 @@ const cameraTarget = $derived(
 		? resolved.model.camera.target
 		: resolved.type === 'url'
 			? resolved.config.camera.target
-			: [0, 0, 0] as [number, number, number],
+			: ([0, 0, 0] as [number, number, number]),
 );
 
-const cameraFov = $derived(
-	resolved.type === 'registry'
-		? (resolved.model.camera.fov ?? 50)
-		: 50,
-);
+const cameraFov = $derived(resolved.type === 'registry' ? (resolved.model.camera.fov ?? 50) : 50);
 
 const lightPosition = $derived(
 	resolved.type === 'registry'
 		? resolved.model.lighting.directionalPosition
 		: resolved.type === 'url'
 			? resolved.config.lighting.directionalPosition
-			: [10, 10, 10] as [number, number, number],
+			: ([10, 10, 10] as [number, number, number]),
 );
 
-const lightIntensity = $derived(
-	resolved.type === 'registry'
-		? (resolved.model.lighting.directionalIntensity ?? 1)
-		: 1,
-);
+const lightIntensity = $derived(resolved.type === 'registry' ? (resolved.model.lighting.directionalIntensity ?? 1) : 1);
 
 const ambientIntensity = $derived(
-	resolved.type === 'registry'
-		? (resolved.model.lighting.ambientIntensity ?? 0.5)
-		: 0.5,
+	resolved.type === 'registry' ? (resolved.model.lighting.ambientIntensity ?? 0.5) : 0.5,
 );
 
-const hasAnimations = $derived(
-	resolved.type === 'registry' && !!resolved.model.animations,
-);
+const hasAnimations = $derived(resolved.type === 'registry' && !!resolved.model.animations);
 
-const defaultAnimation = $derived(
-	resolved.type === 'registry'
-		? resolved.model.animations?.defaultClip
-		: undefined,
-);
+const defaultAnimation = $derived(resolved.type === 'registry' ? resolved.model.animations?.defaultClip : undefined);
 
 const autoRotate = $derived(phase === 'dormant' && !reducedMotion.current);
 const controlsEnabled = $derived(phase === 'active' && hasControls);

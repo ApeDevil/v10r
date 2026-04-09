@@ -1,8 +1,8 @@
 import * as v from 'valibot';
+import { apiError, apiNoContent, apiValidationError } from '$lib/server/api/response';
 import { requireApiAuthor, requirePostOwnership } from '$lib/server/auth/guards';
 import { getPostById, setPostDomain } from '$lib/server/blog';
 import { SetDomainSchema } from '$lib/server/blog/schemas';
-import { apiNoContent, apiError, apiValidationError } from '$lib/server/api/response';
 import type { RequestHandler } from './$types';
 
 /** Set domain for a post. */

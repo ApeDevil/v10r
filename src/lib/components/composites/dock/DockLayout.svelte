@@ -1,20 +1,26 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
 import { browser } from '$app/environment';
+import DeskPreferencesDialog from './DeskPreferencesDialog.svelte';
 import DeskShortcuts from './DeskShortcuts.svelte';
 import DockActivityBar from './DockActivityBar.svelte';
 import DockNode from './DockNode.svelte';
-import { collectLeaves, collapseEmptyLeaves, hasPanelType } from './dock.operations';
-import { loadDockState, saveDockState } from './dock.persistence';
-import { buildThemeFromServer, loadDeskSettings, saveDeskSettings, clearDeskSettings, DEFAULT_THEME } from './desk-settings.persistence';
+import { setDeskBusContext } from './desk-bus.svelte';
+import {
+	buildThemeFromServer,
+	clearDeskSettings,
+	DEFAULT_THEME,
+	loadDeskSettings,
+	saveDeskSettings,
+} from './desk-settings.persistence';
 import { setDeskSettingsContext } from './desk-settings.svelte';
 import type { DeskTheme } from './desk-settings.types';
-import { setDeskBusContext } from './desk-bus.svelte';
+import { collapseEmptyLeaves, collectLeaves, hasPanelType } from './dock.operations';
+import { loadDockState, saveDockState } from './dock.persistence';
 import { setDockContext } from './dock.state.svelte';
-import { setWorkspaceContext } from './workspace.state.svelte';
-import { buildWorkspacesFromServer, saveWorkspaceStore, loadWorkspaceStore } from './workspace.persistence';
-import DeskPreferencesDialog from './DeskPreferencesDialog.svelte';
 import type { ActivityBarItem, LayoutNode, PanelDefinition } from './dock.types';
+import { buildWorkspacesFromServer, loadWorkspaceStore, saveWorkspaceStore } from './workspace.persistence';
+import { setWorkspaceContext } from './workspace.state.svelte';
 import type { Workspace } from './workspace.types';
 
 interface Props {
@@ -75,10 +81,10 @@ const persistKey = typeof persist === 'string' ? persist : undefined;
 const saved = persist ? loadDockState(persistKey) : null;
 const mergedPanels = saved?.panels
 	? Object.fromEntries(
-		Object.entries(saved.panels)
-			.filter(([id]) => id in initialPanels)
-			.map(([id, p]) => [id, { ...p, ...initialPanels[id] }]),
-	)
+			Object.entries(saved.panels)
+				.filter(([id]) => id in initialPanels)
+				.map(([id, p]) => [id, { ...p, ...initialPanels[id] }]),
+		)
 	: initialPanels;
 
 // Re-prune the saved tree against mergedPanels — the mergedPanels filter may have
@@ -95,11 +101,7 @@ function pruneAndCollapse(node: LayoutNode, panels: Record<string, PanelDefiniti
 }
 
 const restoredRoot = saved?.root ? pruneAndCollapse(saved.root, mergedPanels) : initialRoot;
-const dock = setDockContext(
-	restoredRoot,
-	mergedPanels,
-	saved?.activityBarPosition ?? 'left',
-);
+const dock = setDockContext(restoredRoot, mergedPanels, saved?.activityBarPosition ?? 'left');
 
 // DeskBus: typed pub/sub available to all panels via context
 setDeskBusContext();
@@ -109,7 +111,7 @@ setDeskBusContext();
 const hasServerData = authenticated && serverTheme !== null;
 const initialTheme: DeskTheme = hasServerData
 	? buildThemeFromServer(serverTheme, serverPresets)
-	: (browser ? loadDeskSettings() : null) ?? DEFAULT_THEME;
+	: ((browser ? loadDeskSettings() : null) ?? DEFAULT_THEME);
 
 // DB sync callbacks (no-op when not authenticated / no server data)
 async function saveThemeToApi(theme: DeskTheme) {
@@ -123,7 +125,9 @@ async function saveThemeToApi(theme: DeskTheme) {
 				activePresetId: theme.activePresetId,
 			}),
 		});
-	} catch { /* silent — localStorage is the fallback */ }
+	} catch {
+		/* silent — localStorage is the fallback */
+	}
 }
 
 const deskSettings = setDeskSettingsContext(initialTheme, {
@@ -142,7 +146,9 @@ const deskSettings = setDeskSettingsContext(initialTheme, {
 			});
 			const data = await res.json();
 			return data.preset?.id ?? null;
-		} catch { return null; }
+		} catch {
+			return null;
+		}
 	},
 	onDeletePreset: async (presetId) => {
 		try {
@@ -152,7 +158,9 @@ const deskSettings = setDeskSettingsContext(initialTheme, {
 				body: JSON.stringify({ id: presetId }),
 			});
 			return res.ok;
-		} catch { return false; }
+		} catch {
+			return false;
+		}
 	},
 });
 
@@ -161,10 +169,10 @@ const deskSettings = setDeskSettingsContext(initialTheme, {
 const hasServerWorkspaces = authenticated && serverWorkspaces.length > 0;
 const initialWorkspaces: Workspace[] = hasServerWorkspaces
 	? buildWorkspacesFromServer(serverWorkspaces)
-	: (browser ? loadWorkspaceStore()?.workspaces : null) ?? [];
+	: ((browser ? loadWorkspaceStore()?.workspaces : null) ?? []);
 const initialActiveWorkspaceId = hasServerWorkspaces
 	? serverActiveWorkspaceId
-	: (browser ? loadWorkspaceStore()?.activeId : null) ?? null;
+	: ((browser ? loadWorkspaceStore()?.activeId : null) ?? null);
 
 const workspace = setWorkspaceContext(initialWorkspaces, initialActiveWorkspaceId, dock, {
 	onSync: (data) => {
@@ -175,7 +183,9 @@ const workspace = setWorkspaceContext(initialWorkspaces, initialActiveWorkspaceI
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(data),
 			});
-		} catch { /* silent */ }
+		} catch {
+			/* silent */
+		}
 	},
 	onCreate: async (data) => {
 		if (!authenticated) return null;
@@ -187,7 +197,9 @@ const workspace = setWorkspaceContext(initialWorkspaces, initialActiveWorkspaceI
 			});
 			const result = await res.json();
 			return result.data?.id ?? null;
-		} catch { return null; }
+		} catch {
+			return null;
+		}
 	},
 	onUpdate: async (id, data) => {
 		if (!authenticated) return;
@@ -197,13 +209,17 @@ const workspace = setWorkspaceContext(initialWorkspaces, initialActiveWorkspaceI
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(data),
 			});
-		} catch { /* silent */ }
+		} catch {
+			/* silent */
+		}
 	},
 	onDelete: async (id) => {
 		if (!authenticated) return;
 		try {
 			await fetch(`/api/desk/workspaces/${id}`, { method: 'DELETE' });
-		} catch { /* silent */ }
+		} catch {
+			/* silent */
+		}
 	},
 });
 
@@ -281,9 +297,14 @@ if (browser && authenticated && !hasServerData) {
 				activePresetId: localTheme.activePresetId,
 				userPresets,
 			}),
-		}).then((res) => {
-			if (res.ok) res.json().then((d) => { if (d.migrated) clearDeskSettings(); });
-		}).catch(() => {});
+		})
+			.then((res) => {
+				if (res.ok)
+					res.json().then((d) => {
+						if (d.migrated) clearDeskSettings();
+					});
+			})
+			.catch(() => {});
 	}
 }
 

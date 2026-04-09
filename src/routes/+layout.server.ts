@@ -4,17 +4,18 @@ import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ cookies, locals, depends }) => {
 	depends('app:announcements');
-	const session = locals.session && locals.user
-		? {
-				expiresAt: locals.session.expiresAt,
-				user: {
-					id: locals.user.id,
-					email: locals.user.email,
-					name: locals.user.name,
-					image: locals.user.image ?? null,
-				},
-			}
-		: null;
+	const session =
+		locals.session && locals.user
+			? {
+					expiresAt: locals.session.expiresAt,
+					user: {
+						id: locals.user.id,
+						email: locals.user.email,
+						name: locals.user.name,
+						image: locals.user.image ?? null,
+					},
+				}
+			: null;
 
 	// Read theme preference from cookie to prevent flash on full-page reload
 	const raw = cookies.get('theme');
@@ -25,19 +26,14 @@ export const load: LayoutServerLoad = async ({ cookies, locals, depends }) => {
 	const sidebarWidth = rawWidth >= 160 && rawWidth <= 320 ? rawWidth : 240;
 
 	// Active announcements for shell banner (cached per user, 30s TTL)
-	const announcements = locals.user
-		? await getActiveAnnouncements(locals.user.id)
-		: [];
+	const announcements = locals.user ? await getActiveAnnouncements(locals.user.id) : [];
 
 	return {
 		session,
 		themeMode,
 		sidebarWidth,
 		style: locals.style,
-		isAdmin:
-			!!locals.user &&
-			!!env.ADMIN_EMAIL &&
-			locals.user.email.toLowerCase() === env.ADMIN_EMAIL.toLowerCase(),
+		isAdmin: !!locals.user && !!env.ADMIN_EMAIL && locals.user.email.toLowerCase() === env.ADMIN_EMAIL.toLowerCase(),
 		announcements,
 	};
 };

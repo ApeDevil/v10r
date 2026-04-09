@@ -1,8 +1,8 @@
 import * as v from 'valibot';
+import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
-import { saveDeskTheme, createDeskPreset, migrateDeskTheme } from '$lib/server/desk';
-import { SaveThemeSchema, MigrateThemeSchema, CreatePresetSchema } from '$lib/server/desk/schemas';
-import { apiOk, apiError, apiValidationError } from '$lib/server/api/response';
+import { createDeskPreset, migrateDeskTheme, saveDeskTheme } from '$lib/server/desk';
+import { CreatePresetSchema, MigrateThemeSchema, SaveThemeSchema } from '$lib/server/desk/schemas';
 import type { RequestHandler } from './$types';
 
 /** Save the user's active desk theme. */

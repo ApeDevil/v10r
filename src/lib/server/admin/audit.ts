@@ -1,7 +1,7 @@
-import { and, count, desc, eq, gte, ilike, lte, sql } from 'drizzle-orm';
+import { and, count, desc, eq, gte, ilike, lte } from 'drizzle-orm';
+import { ADMIN_AUDIT_PAGE_SIZE } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { adminAuditLog } from '$lib/server/db/schema/admin';
-import { ADMIN_AUDIT_PAGE_SIZE } from '$lib/server/config';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -70,13 +70,7 @@ export async function queryAuditLog(filters: AuditLogFilters = {}) {
 	const where = buildWhereClause(filters);
 
 	const [entries, totalResult] = await Promise.all([
-		db
-			.select()
-			.from(adminAuditLog)
-			.where(where)
-			.orderBy(desc(adminAuditLog.occurredAt))
-			.limit(pageSize)
-			.offset(offset),
+		db.select().from(adminAuditLog).where(where).orderBy(desc(adminAuditLog.occurredAt)).limit(pageSize).offset(offset),
 		db.select({ total: count() }).from(adminAuditLog).where(where),
 	]);
 
@@ -104,11 +98,7 @@ export async function getDistinctActions(): Promise<string[]> {
 export async function exportAuditLogCsv(filters: AuditLogFilters = {}): Promise<string> {
 	const where = buildWhereClause(filters);
 
-	const entries = await db
-		.select()
-		.from(adminAuditLog)
-		.where(where)
-		.orderBy(desc(adminAuditLog.occurredAt));
+	const entries = await db.select().from(adminAuditLog).where(where).orderBy(desc(adminAuditLog.occurredAt));
 
 	const headers = ['Timestamp', 'Action', 'Actor Email', 'Target Type', 'Target ID', 'Detail', 'IP Address'];
 	const rows = entries.map((e) => [

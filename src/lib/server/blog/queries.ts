@@ -1,8 +1,17 @@
-import { and, count, desc, asc, eq, isNull, sql, inArray } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import { post, revision, publishedRevision, tag, postTag, asset, postAsset, domain } from '$lib/server/db/schema/blog';
 import { user } from '$lib/server/db/schema/auth';
-import type { BlogAsset, BlogDomain, BlogTag, DomainWithCount, ListPostsOptions, PostListItem, PublishedPost, TagWithCount } from './types';
+import { asset, domain, post, postAsset, postTag, publishedRevision, revision, tag } from '$lib/server/db/schema/blog';
+import type {
+	BlogAsset,
+	BlogDomain,
+	BlogTag,
+	DomainWithCount,
+	ListPostsOptions,
+	PostListItem,
+	PublishedPost,
+	TagWithCount,
+} from './types';
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -29,11 +38,7 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 
 	// Filter by domain
 	if (domainSlug) {
-		const [domainRow] = await db
-			.select({ id: domain.id })
-			.from(domain)
-			.where(eq(domain.slug, domainSlug))
-			.limit(1);
+		const [domainRow] = await db.select({ id: domain.id }).from(domain).where(eq(domain.slug, domainSlug)).limit(1);
 		if (!domainRow) return { items: [], total: 0 };
 		conditions.push(eq(post.domainId, domainRow.id));
 	}
@@ -41,11 +46,7 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 	// If filtering by tag, find matching post IDs first
 	let tagFilterPostIds: string[] | undefined;
 	if (tagSlug) {
-		const tagRow = await db
-			.select({ id: tag.id })
-			.from(tag)
-			.where(eq(tag.slug, tagSlug))
-			.limit(1);
+		const tagRow = await db.select({ id: tag.id }).from(tag).where(eq(tag.slug, tagSlug)).limit(1);
 		if (tagRow.length === 0) return { items: [], total: 0 };
 
 		const taggedPosts = await db
@@ -131,16 +132,29 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 		.innerJoin(tag, eq(postTag.tagId, tag.id))
 		.where(inArray(postTag.postId, postIds));
 
-	const tagMap = new Map<string, { id: string; slug: string; name: string; icon: string | null; color: number | null; glyph: string | null }[]>();
+	const tagMap = new Map<
+		string,
+		{ id: string; slug: string; name: string; icon: string | null; color: number | null; glyph: string | null }[]
+	>();
 	for (const row of postTagRows) {
 		const tags = tagMap.get(row.postId) ?? [];
-		tags.push({ id: row.tagId, slug: row.tagSlug, name: row.tagName, icon: row.tagIcon, color: row.tagColor, glyph: row.tagGlyph });
+		tags.push({
+			id: row.tagId,
+			slug: row.tagSlug,
+			name: row.tagName,
+			icon: row.tagIcon,
+			color: row.tagColor,
+			glyph: row.tagGlyph,
+		});
 		tagMap.set(row.postId, tags);
 	}
 
 	// Fetch domains for posts that have one
 	const domainIds = [...new Set(posts.map((p) => p.domainId).filter(Boolean))] as string[];
-	const domainMap = new Map<string, { id: string; slug: string; name: string; icon: string | null; color: number | null }>();
+	const domainMap = new Map<
+		string,
+		{ id: string; slug: string; name: string; icon: string | null; color: number | null }
+	>();
 	if (domainIds.length > 0) {
 		const domainRows = await db
 			.select({ id: domain.id, slug: domain.slug, name: domain.name, icon: domain.icon, color: domain.color })
@@ -158,7 +172,7 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 			...p,
 			title: rev?.title ?? '(untitled)',
 			summary: rev?.summary ?? null,
-			domain: p.domainId ? domainMap.get(p.domainId) ?? null : null,
+			domain: p.domainId ? (domainMap.get(p.domainId) ?? null) : null,
 			tags: tagMap.get(p.id) ?? [],
 		};
 	});
@@ -167,9 +181,7 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 		const q = search.toLowerCase();
 		items = items.filter(
 			(item) =>
-				item.title.toLowerCase().includes(q) ||
-				item.slug.includes(q) ||
-				item.summary?.toLowerCase().includes(q),
+				item.title.toLowerCase().includes(q) || item.slug.includes(q) || item.summary?.toLowerCase().includes(q),
 		);
 	}
 
@@ -177,10 +189,7 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 }
 
 /** Get a post by slug with its published revision for a locale. */
-export async function getPublishedPostForSlug(
-	slug: string,
-	locale = 'en',
-): Promise<PublishedPost | null> {
+export async function getPublishedPostForSlug(slug: string, locale = 'en'): Promise<PublishedPost | null> {
 	const [row] = await db
 		.select({
 			postId: post.id,
@@ -343,11 +352,7 @@ export async function listDomains(): Promise<DomainWithCount[]> {
 
 /** Get a single domain by slug. */
 export async function getDomainBySlug(slug: string): Promise<BlogDomain | null> {
-	const [row] = await db
-		.select()
-		.from(domain)
-		.where(eq(domain.slug, slug))
-		.limit(1);
+	const [row] = await db.select().from(domain).where(eq(domain.slug, slug)).limit(1);
 	return row ?? null;
 }
 
@@ -368,11 +373,7 @@ export async function searchPosts(query: string, limit = 20) {
 
 /** Get a single tag by slug. */
 export async function getTagBySlug(slug: string): Promise<BlogTag | null> {
-	const [row] = await db
-		.select()
-		.from(tag)
-		.where(eq(tag.slug, slug))
-		.limit(1);
+	const [row] = await db.select().from(tag).where(eq(tag.slug, slug)).limit(1);
 	return row ?? null;
 }
 
@@ -394,12 +395,7 @@ export async function listPublishedPostsForFeed(limit = 20): Promise<
 		})
 		.from(post)
 		.leftJoin(user, eq(post.authorId, user.id))
-		.where(
-			and(
-				eq(post.status, 'published'),
-				isNull(post.deletedAt),
-			),
-		)
+		.where(and(eq(post.status, 'published'), isNull(post.deletedAt)))
 		.orderBy(desc(post.publishedAt))
 		.limit(limit);
 
@@ -408,10 +404,7 @@ export async function listPublishedPostsForFeed(limit = 20): Promise<
 	const postSlugs = posts.map((p) => p.slug);
 
 	// Get latest revision title/summary for each post via slug -> post_id lookup
-	const postRows = await db
-		.select({ id: post.id, slug: post.slug })
-		.from(post)
-		.where(inArray(post.slug, postSlugs));
+	const postRows = await db.select({ id: post.id, slug: post.slug }).from(post).where(inArray(post.slug, postSlugs));
 
 	const slugToId = new Map(postRows.map((p) => [p.slug, p.id]));
 	const postIds = [...slugToId.values()];

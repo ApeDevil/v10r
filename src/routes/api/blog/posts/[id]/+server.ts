@@ -1,10 +1,10 @@
 import { eq } from 'drizzle-orm';
 import * as v from 'valibot';
+import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
 import { requireApiAuthor, requirePostOwnership } from '$lib/server/auth/guards';
 import { getLatestRevision, getPostById, getTagsForPost, updatePostMetadata } from '$lib/server/blog';
 import { db } from '$lib/server/db';
 import { domain } from '$lib/server/db/schema/blog';
-import { apiOk, apiError, apiValidationError } from '$lib/server/api/response';
 import type { RequestHandler } from './$types';
 
 const PatchPostSchema = v.object({
@@ -50,8 +50,8 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 		const updated = await updatePostMetadata(params.id, parsed.output);
 		if (!updated) return apiError(404, 'not_found', 'Post not found.');
 		return apiOk({ post: updated });
-	} catch (e: any) {
-		if (e?.code === '23505') {
+	} catch (e: unknown) {
+		if (e instanceof Error && 'code' in e && (e as { code: string }).code === '23505') {
 			return apiError(409, 'slug_taken', 'A post with this slug already exists.');
 		}
 		throw e;

@@ -1,65 +1,65 @@
 <script lang="ts">
-	import { Dialog } from 'bits-ui';
-	import type { Snippet } from 'svelte';
-	import { Tabs } from '$lib/components/primitives/tabs';
-	import { Button } from '$lib/components/primitives';
-	import { ScrollArea } from '$lib/components/primitives/scroll-area';
-	import { cn } from '$lib/utils/cn';
-	import { renderMarkdown } from '$lib/utils/markdown';
-	import CodeBlock from './CodeBlock.svelte';
-	import PropsTable from './PropsTable.svelte';
-	import type { ComponentDoc, InfoSection } from './types';
+import { Dialog } from 'bits-ui';
+import type { Snippet } from 'svelte';
+import { Button } from '$lib/components/primitives';
+import { ScrollArea } from '$lib/components/primitives/scroll-area';
+import { Tabs } from '$lib/components/primitives/tabs';
+import { cn } from '$lib/utils/cn';
+import { renderMarkdown } from '$lib/utils/markdown';
+import CodeBlock from './CodeBlock.svelte';
+import PropsTable from './PropsTable.svelte';
+import type { ComponentDoc, InfoSection } from './types';
 
-	interface Props {
-		/** Dialog title */
-		title: string;
-		/** Optional subtitle */
-		description?: string;
-		/** Trigger icon class */
-		icon?: string;
-		/** Trigger aria-label */
-		ariaLabel?: string;
-		/** Structured documentation mode */
-		doc?: ComponentDoc;
-		/** Simple content mode */
-		children?: Snippet;
-		/** Custom tabbed mode */
-		sections?: InfoSection[];
-		/** Additional dialog classes */
-		class?: string;
-		/** Externally controlled open state */
-		open?: boolean;
-		/** Hide the built-in trigger button (use when controlled externally) */
-		noTrigger?: boolean;
-	}
+interface Props {
+	/** Dialog title */
+	title: string;
+	/** Optional subtitle */
+	description?: string;
+	/** Trigger icon class */
+	icon?: string;
+	/** Trigger aria-label */
+	ariaLabel?: string;
+	/** Structured documentation mode */
+	doc?: ComponentDoc;
+	/** Simple content mode */
+	children?: Snippet;
+	/** Custom tabbed mode */
+	sections?: InfoSection[];
+	/** Additional dialog classes */
+	class?: string;
+	/** Externally controlled open state */
+	open?: boolean;
+	/** Hide the built-in trigger button (use when controlled externally) */
+	noTrigger?: boolean;
+}
 
-	let {
-		title,
-		description,
-		icon = 'i-lucide-info',
-		ariaLabel,
-		doc,
-		children,
-		sections,
-		class: className,
-		open = $bindable(false),
-		noTrigger = false,
-	}: Props = $props();
+let {
+	title,
+	description,
+	icon = 'i-lucide-info',
+	ariaLabel,
+	doc,
+	children,
+	sections,
+	class: className,
+	open = $bindable(false),
+	noTrigger = false,
+}: Props = $props();
 
-	const docTabs = $derived.by(() => {
-		if (!doc) return [];
-		const tabs: { id: string; label: string; icon: string }[] = [];
-		if (doc.props?.length) tabs.push({ id: 'props', label: 'Props', icon: 'i-lucide-list' });
-		if (doc.source) tabs.push({ id: 'source', label: 'Source', icon: 'i-lucide-code-2' });
-		if (doc.usage) tabs.push({ id: 'usage', label: 'Usage', icon: 'i-lucide-file-code' });
-		if (doc.notes) tabs.push({ id: 'notes', label: 'Notes', icon: 'i-lucide-book-open' });
-		return tabs;
-	});
+const docTabs = $derived.by(() => {
+	if (!doc) return [];
+	const tabs: { id: string; label: string; icon: string }[] = [];
+	if (doc.props?.length) tabs.push({ id: 'props', label: 'Props', icon: 'i-lucide-list' });
+	if (doc.source) tabs.push({ id: 'source', label: 'Source', icon: 'i-lucide-code-2' });
+	if (doc.usage) tabs.push({ id: 'usage', label: 'Usage', icon: 'i-lucide-file-code' });
+	if (doc.notes) tabs.push({ id: 'notes', label: 'Notes', icon: 'i-lucide-book-open' });
+	return tabs;
+});
 
-	const hasDocContent = $derived(docTabs.length > 0);
-	const hasSections = $derived(sections && sections.length > 0);
-	const useDocMode = $derived(doc && hasDocContent);
-	const useSectionsMode = $derived(!useDocMode && hasSections);
+const hasDocContent = $derived(docTabs.length > 0);
+const hasSections = $derived(sections && sections.length > 0);
+const useDocMode = $derived(doc && hasDocContent);
+const useSectionsMode = $derived(!useDocMode && hasSections);
 </script>
 
 {#snippet propsContent()}

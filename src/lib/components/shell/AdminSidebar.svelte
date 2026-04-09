@@ -1,28 +1,28 @@
 <script lang="ts">
-	import { page } from '$app/state';
-	import { deLocalizeHref, localizeHref } from '$lib/i18n';
+import { page } from '$app/state';
+import { deLocalizeHref, localizeHref } from '$lib/i18n';
 
-	interface AdminNavItem {
-		label: string;
-		href: string;
-		icon: string;
-	}
+interface AdminNavItem {
+	label: string;
+	href: string;
+	icon: string;
+}
 
-	interface AdminNavGroup {
-		label: string;
-		items: AdminNavItem[];
-	}
+interface AdminNavGroup {
+	label: string;
+	items: AdminNavItem[];
+}
 
-	interface Props {
-		groups: AdminNavGroup[];
-		class?: string;
-	}
+interface Props {
+	groups: AdminNavGroup[];
+	class?: string;
+}
 
-	let { groups, class: className }: Props = $props();
+let { groups, class: className }: Props = $props();
 
-	function isActive(href: string): boolean {
-		return deLocalizeHref(page.url.pathname).startsWith(href);
-	}
+function isActive(href: string): boolean {
+	return deLocalizeHref(page.url.pathname).startsWith(href);
+}
 </script>
 
 <nav class="admin-sidebar {className ?? ''}" aria-label="Admin navigation">

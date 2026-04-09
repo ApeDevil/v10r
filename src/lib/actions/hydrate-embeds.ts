@@ -26,10 +26,7 @@ interface EmbedInstance {
 	exitTimer: ReturnType<typeof setTimeout> | null;
 }
 
-export function hydrateEmbeds(
-	node: HTMLElement,
-	descriptors: EmbedDescriptor[] | unknown,
-) {
+export function hydrateEmbeds(node: HTMLElement, descriptors: EmbedDescriptor[] | unknown) {
 	const embeds = Array.isArray(descriptors) ? (descriptors as EmbedDescriptor[]) : [];
 	const instances = new Map<string, EmbedInstance>();
 	let observer: IntersectionObserver | null = null;
@@ -68,9 +65,7 @@ export function hydrateEmbeds(
 			if (!embedRegistry[descriptor.kind]) continue;
 
 			// Lock layout height to prevent CLS
-			const height = descriptor.attrs.height
-				? `${descriptor.attrs.height}px`
-				: DEFAULT_HEIGHT;
+			const height = descriptor.attrs.height ? `${descriptor.attrs.height}px` : DEFAULT_HEIGHT;
 			el.style.minHeight = height;
 
 			instances.set(embedId, {
@@ -159,14 +154,11 @@ export function hydrateEmbeds(
 		if (destroyed) return;
 
 		try {
-			const [componentModule, { mount }] = await Promise.all([
-				embedRegistry[instance.descriptor.kind](),
-				getSvelte(),
-			]);
+			const [componentModule, { mount }] = await Promise.all([embedRegistry[instance.descriptor.kind](), getSvelte()]);
 
 			if (destroyed || instance.phase === 'mounted') return;
 
-			const Component = componentModule.default as any;
+			const Component = componentModule.default as import('svelte').Component;
 
 			// Clear placeholder content (the "scene embed" CSS ::before text)
 			instance.placeholder.removeAttribute('data-embed-kind');

@@ -1,4 +1,5 @@
 <script lang="ts">
+import type { ActionResult } from '@sveltejs/kit';
 import { enhance } from '$app/forms';
 import { Alert, Card, FormField, NavSection } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
@@ -41,7 +42,7 @@ const sections = [
 
 // ─── Inspect state ──────────────────────────────────
 let inspectLoading = $state(false);
-let inspectResult = $state<any>(null);
+let inspectResult = $state<{ key: string; type: string; value: unknown } | null>(null);
 
 // ─── String state ───────────────────────────────────
 let newStringKey = $state('showcase:');
@@ -63,7 +64,13 @@ let listValue = $state('');
 let actionLoading = $state('');
 
 function handleResult(successMsg?: string) {
-	return ({ result, update }: { result: any; update: (opts?: any) => Promise<void> }) => {
+	return ({
+		result,
+		update,
+	}: {
+		result: ActionResult;
+		update: (opts?: { reset?: boolean; invalidateAll?: boolean }) => Promise<void>;
+	}) => {
 		actionLoading = '';
 		if (result.type === 'success' && result.data) {
 			if (result.data.detail) inspectResult = result.data.detail;
@@ -153,7 +160,7 @@ const typeBadgeVariant = (type: string) => {
 														return async (event) => {
 															inspectLoading = false;
 															if (event.result.type === 'success' && event.result.data?.detail) {
-																inspectResult = event.result.data.detail;
+																inspectResult = event.result.data.detail as { key: string; type: string; value: unknown };
 															} else if (event.result.type === 'failure') {
 																toast.error((event.result.data?.message as string) || 'Inspect failed.');
 															}
@@ -249,7 +256,7 @@ const typeBadgeVariant = (type: string) => {
 								use:enhance={() => {
 									return async (event) => {
 										if (event.result.type === 'success' && event.result.data?.detail) {
-											inspectResult = event.result.data.detail;
+											inspectResult = event.result.data.detail as { key: string; type: string; value: unknown };
 										}
 										return event.update();
 									};
@@ -317,7 +324,7 @@ const typeBadgeVariant = (type: string) => {
 									<form method="POST" action="?/inspect" use:enhance={() => {
 										return async (event) => {
 											if (event.result.type === 'success' && event.result.data?.detail) {
-												inspectResult = event.result.data.detail;
+												inspectResult = event.result.data.detail as { key: string; type: string; value: unknown };
 											}
 											return event.update();
 										};
@@ -351,7 +358,7 @@ const typeBadgeVariant = (type: string) => {
 							<form method="POST" action="?/inspect" use:enhance={() => {
 								return async (event) => {
 									if (event.result.type === 'success' && event.result.data?.detail) {
-										inspectResult = event.result.data.detail;
+										inspectResult = event.result.data.detail as { key: string; type: string; value: unknown };
 									}
 									return event.update();
 								};
@@ -396,7 +403,7 @@ const typeBadgeVariant = (type: string) => {
 							<form method="POST" action="?/inspect" use:enhance={() => {
 								return async (event) => {
 									if (event.result.type === 'success' && event.result.data?.detail) {
-										inspectResult = event.result.data.detail;
+										inspectResult = event.result.data.detail as { key: string; type: string; value: unknown };
 									}
 									return event.update();
 								};

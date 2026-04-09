@@ -1,83 +1,90 @@
 <script lang="ts">
-	import { Drawer, Input, Badge, Button } from '$lib/components/primitives';
-	import { Stack } from '$lib/components/layout';
+import { Stack } from '$lib/components/layout';
+import { Badge, Button, Drawer, Input } from '$lib/components/primitives';
 
-	interface Props {
-		open: boolean;
-		title: string;
+interface Props {
+	open: boolean;
+	title: string;
+	slug: string;
+	summary: string;
+	status: 'draft' | 'published' | 'archived';
+	domain: { id: string; slug: string; name: string; icon: string | null; color: number | null } | null;
+	availableDomains: { id: string; slug: string; name: string; icon: string | null; color: number | null }[];
+	tags: { id: string; slug: string; name: string; icon: string | null; color: number | null; glyph: string | null }[];
+	locale: string;
+	availableTags: {
+		id: string;
 		slug: string;
-		summary: string;
-		status: 'draft' | 'published' | 'archived';
-		domain: { id: string; slug: string; name: string; icon: string | null; color: number | null } | null;
-		availableDomains: { id: string; slug: string; name: string; icon: string | null; color: number | null }[];
-		tags: { id: string; slug: string; name: string; icon: string | null; color: number | null; glyph: string | null }[];
-		locale: string;
-		availableTags: { id: string; slug: string; name: string; icon: string | null; color: number | null; glyph: string | null }[];
-		ontitlechange: (v: string) => void;
-		onslugchange: (v: string) => void;
-		onsummarychange: (v: string) => void;
-		onlocalechange: (v: string) => void;
-		ondomainchange: (domainId: string | null) => void;
-		ontagstoggle: (tagId: string) => void;
+		name: string;
+		icon: string | null;
+		color: number | null;
+		glyph: string | null;
+	}[];
+	ontitlechange: (v: string) => void;
+	onslugchange: (v: string) => void;
+	onsummarychange: (v: string) => void;
+	onlocalechange: (v: string) => void;
+	ondomainchange: (domainId: string | null) => void;
+	ontagstoggle: (tagId: string) => void;
+}
+
+let {
+	open = $bindable(false),
+	title,
+	slug,
+	summary,
+	status,
+	domain,
+	availableDomains,
+	tags,
+	locale,
+	availableTags,
+	ontitlechange,
+	onslugchange,
+	onsummarychange,
+	onlocalechange,
+	ondomainchange,
+	ontagstoggle,
+}: Props = $props();
+
+let manualSlug = $state(false);
+
+function slugify(text: string): string {
+	return text
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '')
+		.slice(0, 80);
+}
+
+function handleTitleInput(e: Event) {
+	const v = (e.target as HTMLInputElement).value;
+	ontitlechange(v);
+	if (!manualSlug) {
+		onslugchange(slugify(v));
 	}
+}
 
-	let {
-		open = $bindable(false),
-		title,
-		slug,
-		summary,
-		status,
-		domain,
-		availableDomains,
-		tags,
-		locale,
-		availableTags,
-		ontitlechange,
-		onslugchange,
-		onsummarychange,
-		onlocalechange,
-		ondomainchange,
-		ontagstoggle,
-	}: Props = $props();
+function handleSlugInput(e: Event) {
+	const v = (e.target as HTMLInputElement).value;
+	manualSlug = true;
+	onslugchange(v);
+}
 
-	let manualSlug = $state(false);
+function resetSlug() {
+	manualSlug = false;
+	onslugchange(slugify(title));
+}
 
-	function slugify(text: string): string {
-		return text
-			.toLowerCase()
-			.replace(/[^a-z0-9]+/g, '-')
-			.replace(/^-+|-+$/g, '')
-			.slice(0, 80);
-	}
+function statusVariant(s: string): 'success' | 'secondary' | 'warning' {
+	if (s === 'published') return 'success';
+	if (s === 'archived') return 'warning';
+	return 'secondary';
+}
 
-	function handleTitleInput(e: Event) {
-		const v = (e.target as HTMLInputElement).value;
-		ontitlechange(v);
-		if (!manualSlug) {
-			onslugchange(slugify(v));
-		}
-	}
-
-	function handleSlugInput(e: Event) {
-		const v = (e.target as HTMLInputElement).value;
-		manualSlug = true;
-		onslugchange(v);
-	}
-
-	function resetSlug() {
-		manualSlug = false;
-		onslugchange(slugify(title));
-	}
-
-	function statusVariant(s: string): 'success' | 'secondary' | 'warning' {
-		if (s === 'published') return 'success';
-		if (s === 'archived') return 'warning';
-		return 'secondary';
-	}
-
-	function isTagSelected(tagId: string): boolean {
-		return tags.some((t) => t.id === tagId);
-	}
+function isTagSelected(tagId: string): boolean {
+	return tags.some((t) => t.id === tagId);
+}
 </script>
 
 <Drawer bind:open title="Post Metadata">

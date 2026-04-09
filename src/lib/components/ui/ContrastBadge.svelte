@@ -7,11 +7,7 @@ interface Props {
 	level?: 'AA' | 'AAA';
 }
 
-let {
-	fgColor,
-	bgColor,
-	level = 'AA',
-}: Props = $props();
+let { fgColor, bgColor, level = 'AA' }: Props = $props();
 
 const ratio = $derived.by(() => {
 	try {
@@ -27,13 +23,7 @@ const thresholds = $derived({
 });
 
 const status = $derived(
-	ratio === null
-		? 'error'
-		: ratio >= thresholds.aa
-			? 'pass'
-			: ratio >= thresholds.large
-				? 'large'
-				: 'fail'
+	ratio === null ? 'error' : ratio >= thresholds.aa ? 'pass' : ratio >= thresholds.large ? 'large' : 'fail',
 );
 
 const ratioLabel = $derived(ratio !== null ? `${ratio.toFixed(1)}:1` : '--');

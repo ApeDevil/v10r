@@ -6,12 +6,12 @@
  */
 
 import {
+	type CellGetter,
+	type CellValue,
 	cellLabel,
 	colLabel,
 	evaluateFormula,
 	parseCellRef,
-	type CellGetter,
-	type CellValue,
 } from '$lib/utils/spreadsheet';
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -51,7 +51,7 @@ const SENSITIVE_PATTERNS = [
 	/sk-[a-zA-Z0-9]{20,}/g,
 	/ghp_[a-zA-Z0-9]{36}/g,
 	/AKIA[A-Z0-9]{16}/g,
-	/Bearer\s+[a-zA-Z0-9._\-]+/gi,
+	/Bearer\s+[a-zA-Z0-9._-]+/gi,
 	/postgres:\/\/[^\s]+/gi,
 	/mysql:\/\/[^\s]+/gi,
 	/mongodb(\+srv)?:\/\/[^\s]+/gi,
@@ -118,7 +118,7 @@ export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 		}
 		// Try number
 		const num = Number(raw);
-		if (!isNaN(num) && raw !== '') return num;
+		if (!Number.isNaN(num) && raw !== '') return num;
 		return raw;
 	}
 
@@ -272,7 +272,11 @@ export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 			if (!ref) continue;
 			const raw = persisted.f ?? String(persisted.v ?? '');
 			// Store raw value first; formulas re-evaluated after assignment
-			const value = persisted.f ? null : (typeof persisted.v === 'number' ? persisted.v : evaluateCell(raw, ref.col, ref.row));
+			const value = persisted.f
+				? null
+				: typeof persisted.v === 'number'
+					? persisted.v
+					: evaluateCell(raw, ref.col, ref.row);
 			const error = typeof value === 'string' && value.startsWith('#') ? value : null;
 			next.set(key(ref.col, ref.row), { raw, value, error });
 		}
@@ -306,15 +310,17 @@ export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 			maxRow = Math.max(range.startRow, range.endRow);
 		} else {
 			// Single cell: include 2-cell neighborhood
-			minCol = Math.max(0, active!.col - 2);
-			maxCol = Math.min(colCount - 1, active!.col + 2);
-			minRow = Math.max(0, active!.row - 2);
-			maxRow = Math.min(rowCount - 1, active!.row + 2);
+			const ac = active?.col ?? 0;
+			const ar = active?.row ?? 0;
+			minCol = Math.max(0, ac - 2);
+			maxCol = Math.min(colCount - 1, ac + 2);
+			minRow = Math.max(0, ar - 2);
+			maxRow = Math.min(rowCount - 1, ar + 2);
 		}
 
 		const selLabel = range
 			? `${cellLabel(minCol, minRow)}:${cellLabel(maxCol, maxRow)}`
-			: cellLabel(active!.col, active!.row);
+			: cellLabel(active?.col ?? 0, active?.row ?? 0);
 
 		// Build markdown table
 		const lines: string[] = [];
@@ -362,18 +368,42 @@ export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 	}
 
 	return {
-		get rows() { return rowCount; },
-		get cols() { return colCount; },
-		get cells() { return cells; },
-		get activeCell() { return activeCell; },
-		get selectionRange() { return selectionRange; },
-		get editing() { return editing; },
-		get editValue() { return editValue; },
-		set editValue(v: string) { editValue = v; },
-		get selectionStats() { return selectionStats; },
-		get activeCellLabel() { return activeCellLabel; },
-		get activeCellRaw() { return activeCellRaw; },
-		get dirty() { return dirty; },
+		get rows() {
+			return rowCount;
+		},
+		get cols() {
+			return colCount;
+		},
+		get cells() {
+			return cells;
+		},
+		get activeCell() {
+			return activeCell;
+		},
+		get selectionRange() {
+			return selectionRange;
+		},
+		get editing() {
+			return editing;
+		},
+		get editValue() {
+			return editValue;
+		},
+		set editValue(v: string) {
+			editValue = v;
+		},
+		get selectionStats() {
+			return selectionStats;
+		},
+		get activeCellLabel() {
+			return activeCellLabel;
+		},
+		get activeCellRaw() {
+			return activeCellRaw;
+		},
+		get dirty() {
+			return dirty;
+		},
 		getCell,
 		getCellValue,
 		setCellRaw,

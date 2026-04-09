@@ -1,31 +1,31 @@
 <script lang="ts">
-	import Dialog from '$lib/components/primitives/dialog/Dialog.svelte';
-	import Tabs from '$lib/components/primitives/tabs/Tabs.svelte';
-	import OklchColorInput from '$lib/components/ui/OklchColorInput.svelte';
-	import { Button } from '$lib/components/primitives';
-	import { DESK_PANELS, DESK_PANEL_TYPES } from '$lib/config/desk-panels';
-	import { cn } from '$lib/utils/cn';
-	import { getDeskSettings } from './desk-settings.svelte';
+import { Button } from '$lib/components/primitives';
+import Dialog from '$lib/components/primitives/dialog/Dialog.svelte';
+import Tabs from '$lib/components/primitives/tabs/Tabs.svelte';
+import OklchColorInput from '$lib/components/ui/OklchColorInput.svelte';
+import { DESK_PANEL_TYPES, DESK_PANELS } from '$lib/config/desk-panels';
+import { cn } from '$lib/utils/cn';
+import { getDeskSettings } from './desk-settings.svelte';
 
-	const settings = getDeskSettings();
+const settings = getDeskSettings();
 
-	let presetName = $state('');
+let presetName = $state('');
 
-	function handleSavePreset() {
-		const name = presetName.trim();
-		if (!name) return;
-		settings.saveAsPreset(name);
-		presetName = '';
-	}
+function handleSavePreset() {
+	const name = presetName.trim();
+	if (!name) return;
+	settings.saveAsPreset(name);
+	presetName = '';
+}
 
-	// Workspace color helpers — read from draft, fallback to empty string for OklchColorInput
-	function wsColor(key: 'shellBg' | 'panelBg' | 'shellBorder' | 'tabActiveIndicator'): string {
-		return settings.draft?.workspace[key] ?? '';
-	}
+// Workspace color helpers — read from draft, fallback to empty string for OklchColorInput
+function wsColor(key: 'shellBg' | 'panelBg' | 'shellBorder' | 'tabActiveIndicator'): string {
+	return settings.draft?.workspace[key] ?? '';
+}
 
-	function typeColor(panelType: string): string {
-		return settings.draft?.typeStyles[panelType]?.bg ?? '';
-	}
+function typeColor(panelType: string): string {
+	return settings.draft?.typeStyles[panelType]?.bg ?? '';
+}
 </script>
 
 <Dialog

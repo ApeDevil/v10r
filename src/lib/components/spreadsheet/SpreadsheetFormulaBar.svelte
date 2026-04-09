@@ -1,28 +1,28 @@
 <script lang="ts">
-	import type { SpreadsheetState } from './spreadsheet.state.svelte';
+import type { SpreadsheetState } from './spreadsheet.state.svelte';
 
-	interface Props {
-		sheet: SpreadsheetState;
+interface Props {
+	sheet: SpreadsheetState;
+}
+
+let { sheet }: Props = $props();
+
+function handleFormulaKeydown(event: KeyboardEvent) {
+	if (event.key === 'Enter') {
+		event.preventDefault();
+		sheet.commitEdit();
+	} else if (event.key === 'Escape') {
+		sheet.cancelEdit();
 	}
+}
 
-	let { sheet }: Props = $props();
-
-	function handleFormulaKeydown(event: KeyboardEvent) {
-		if (event.key === 'Enter') {
-			event.preventDefault();
-			sheet.commitEdit();
-		} else if (event.key === 'Escape') {
-			sheet.cancelEdit();
-		}
+function handleFormulaInput(event: Event) {
+	const target = event.target as HTMLInputElement;
+	sheet.editValue = target.value;
+	if (!sheet.editing) {
+		sheet.startEditing();
 	}
-
-	function handleFormulaInput(event: Event) {
-		const target = event.target as HTMLInputElement;
-		sheet.editValue = target.value;
-		if (!sheet.editing) {
-			sheet.startEditing();
-		}
-	}
+}
 </script>
 
 <div class="sheet-formula-bar">

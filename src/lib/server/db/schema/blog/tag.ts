@@ -33,8 +33,5 @@ export const postTag = blogSchema.table(
 			.notNull()
 			.references(() => tag.id, { onDelete: 'cascade' }),
 	},
-	(table) => [
-		primaryKey({ columns: [table.postId, table.tagId] }),
-		index('blog_post_tag_tag_idx').on(table.tagId),
-	],
+	(table) => [primaryKey({ columns: [table.postId, table.tagId] }), index('blog_post_tag_tag_idx').on(table.tagId)],
 );

@@ -1,11 +1,11 @@
 import { env } from '$env/dynamic/private';
 import {
-	type ProviderResult,
-	type UpstashMetrics,
-	FREE_TIER_LIMITS,
 	computePercentage,
 	computeThreshold,
+	FREE_TIER_LIMITS,
+	type ProviderResult,
 	sanitizeError,
+	type UpstashMetrics,
 } from './index';
 
 export async function fetchUpstashMetrics(): Promise<ProviderResult<UpstashMetrics>> {

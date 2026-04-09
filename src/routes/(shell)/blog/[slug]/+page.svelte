@@ -1,11 +1,10 @@
 <script lang="ts">
 import { page } from '$app/state';
+import { hydrateEmbeds } from '$lib/actions/hydrate-embeds';
+import { BlogTag, Renderer } from '$lib/components/blog';
 import { PageContainer, Stack } from '$lib/components/layout';
 import { Typography } from '$lib/components/primitives';
-import { BlogTag } from '$lib/components/blog';
-import { Renderer } from '$lib/components/blog';
 import { formatDate } from '$lib/i18n/formatting';
-import { hydrateEmbeds } from '$lib/actions/hydrate-embeds';
 
 let { data } = $props();
 
@@ -29,7 +28,9 @@ const jsonLd = $derived({
 });
 
 const jsonLdScript = $derived(
-	`<script type="application/ld+json">${JSON.stringify(jsonLd).replace(/<\/script/gi, '<\\/script').replace(/<!--/g, '<\\!--')}<\/script>`
+	`<script type="application/ld+json">${JSON.stringify(jsonLd)
+		.replace(/<\/script/gi, '<\\/script')
+		.replace(/<!--/g, '<\\!--')}${'<'}/script>`,
 );
 </script>
 

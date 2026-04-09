@@ -85,7 +85,7 @@ export function createWorkspaceState(
 			dock.setActivityBarPosition(target.layout.activityBarPosition);
 		}
 
-		const previousActiveId = activeId;
+		const _previousActiveId = activeId;
 		activeId = id;
 
 		// 4. Reset version counters for the new workspace
@@ -226,11 +226,21 @@ export function createWorkspaceState(
 	}
 
 	return {
-		get workspaces() { return workspaces; },
-		get activeId() { return activeId; },
-		get active() { return active; },
-		get isSwitching() { return isSwitching; },
-		get isModified() { return isModified; },
+		get workspaces() {
+			return workspaces;
+		},
+		get activeId() {
+			return activeId;
+		},
+		get active() {
+			return active;
+		},
+		get isSwitching() {
+			return isSwitching;
+		},
+		get isModified() {
+			return isModified;
+		},
 
 		switchTo,
 		createWorkspace,
@@ -246,8 +256,12 @@ export function createWorkspaceState(
 		snapshotCurrent,
 
 		// For persistence layer
-		setWorkspaces(ws: Workspace[]) { workspaces = ws; },
-		setActiveId(id: string | null) { activeId = id; },
+		setWorkspaces(ws: Workspace[]) {
+			workspaces = ws;
+		},
+		setActiveId(id: string | null) {
+			activeId = id;
+		},
 	};
 }
 

@@ -7,11 +7,12 @@
  * Max 9 per user (enforced by CHECK on sort_order 0-8).
  * Layout JSONB is opaque — the recursive split tree is stored as-is.
  */
-import { check, index, jsonb, smallint, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+
 import { sql } from 'drizzle-orm';
+import { check, index, jsonb, smallint, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import type { DockLayoutState } from '$lib/components/composites/dock/dock.types';
 import { user } from '../auth/_better-auth';
 import { deskSchema } from './schema';
-import type { DockLayoutState } from '$lib/components/composites/dock/dock.types';
 
 // ── JSONB column type ───────────────────────────────────────────
 

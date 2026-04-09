@@ -4,8 +4,8 @@
  * Isomorphic — runs server-side (SSR injection) and client-side (editor preview).
  */
 
-import { parseOklch, formatOklch } from './oklch';
 import { contrastRatio } from './contrast';
+import { formatOklch, parseOklch } from './oklch';
 
 /** The 5 accent token keys */
 export const ACCENT_TOKEN_KEYS = [
@@ -88,7 +88,7 @@ function pickContrastText(bgL: number, bgC: number, bgH: number): string {
 	const bg = formatOklch({ mode: 'oklch', l: bgL, c: bgC, h: bgH });
 
 	// Candidates: dark text with slight hue tint, light text with slight hue tint
-	const dark = formatOklch({ mode: 'oklch', l: 0.20, c: Math.min(bgC * 0.3, 0.03), h: bgH });
+	const dark = formatOklch({ mode: 'oklch', l: 0.2, c: Math.min(bgC * 0.3, 0.03), h: bgH });
 	const light = formatOklch({ mode: 'oklch', l: 0.95, c: Math.min(bgC * 0.15, 0.015), h: bgH });
 
 	const darkRatio = contrastRatio(dark, bg);

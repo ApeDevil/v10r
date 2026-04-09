@@ -39,7 +39,9 @@ function checkUsername() {
 	debounceTimer = setTimeout(async () => {
 		try {
 			const res = await fetch(`/api/showcases/check-username?u=${encodeURIComponent(username)}`);
-			const { data: { available } } = await res.json();
+			const {
+				data: { available },
+			} = await res.json();
 			// Only update if the username hasn't changed while we were checking
 			if ($form.username === username) {
 				usernameAvailable = available;

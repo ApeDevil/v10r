@@ -47,8 +47,6 @@ export const notificationDeliveries = notificationsSchema.table(
 		index('delivery_channel_recent_idx')
 			.on(table.channel, table.createdAt.desc())
 			.where(sql`status IN ('sent', 'failed', 'dead')`),
-		index('delivery_dead_idx')
-			.on(table.channel, table.createdAt.desc())
-			.where(sql`status = 'dead'`),
+		index('delivery_dead_idx').on(table.channel, table.createdAt.desc()).where(sql`status = 'dead'`),
 	],
 );

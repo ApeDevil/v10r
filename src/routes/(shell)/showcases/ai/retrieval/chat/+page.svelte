@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Chat } from '@ai-sdk/svelte';
+import { DefaultChatTransport } from 'ai';
 import { CSRF_HEADER } from '$lib/api';
 import { Alert, Card, EmptyState } from '$lib/components/composites';
 import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
@@ -19,20 +20,23 @@ const tierItems = [
 ];
 
 let drawerOpen = $state(false);
+let inputValue = $state('');
 
 const pipeline = createPipelineState();
 
 const chat = new Chat({
-	api: '/api/ai/chat',
-	headers: CSRF_HEADER,
-	body: {
-		get useRetrieval() {
-			return true;
+	transport: new DefaultChatTransport({
+		api: '/api/ai/chat',
+		headers: CSRF_HEADER,
+		body: {
+			get useRetrieval() {
+				return true;
+			},
+			get retrievalTiers() {
+				return selectedTiers;
+			},
 		},
-		get retrievalTiers() {
-			return selectedTiers;
-		},
-	},
+	}) as Chat['transport'],
 });
 
 const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
@@ -55,21 +59,26 @@ $effect(() => {
 	}
 });
 
-// Process pipeline annotations from the last assistant message
+// Process pipeline data from the last assistant message metadata
 $effect(() => {
 	const msgs = chat.messages;
 	if (msgs.length === 0) return;
 	const lastMsg = msgs[msgs.length - 1];
-	if (lastMsg?.role === 'assistant' && lastMsg.annotations) {
-		pipeline.processAnnotations(lastMsg.annotations as unknown[]);
+	if (lastMsg?.role === 'assistant' && lastMsg.metadata) {
+		const meta = lastMsg.metadata as Record<string, unknown>;
+		if (meta.pipeline) {
+			pipeline.processAnnotations([meta.pipeline] as unknown[]);
+		}
 	}
 });
 
 function submitMessage() {
-	if (!chat.input.trim() || isLoading) return;
+	if (!inputValue.trim() || isLoading) return;
 	pipeline.reset();
 	pipeline.resetCursor();
-	chat.sendMessage({ text: chat.input });
+	const text = inputValue;
+	inputValue = '';
+	chat.sendMessage({ text });
 }
 </script>
 
@@ -104,7 +113,7 @@ function submitMessage() {
 							</EmptyState>
 						{:else}
 							{#each chat.messages as message (message.id)}
-								<ChatMessage role={message.role as 'user' | 'assistant'} parts={message.parts} content={message.content} />
+								<ChatMessage role={message.role as 'user' | 'assistant'} parts={message.parts} />
 							{/each}
 
 							{#if isLoading && chat.messages[chat.messages.length - 1]?.role === 'user'}
@@ -130,7 +139,7 @@ function submitMessage() {
 					{/if}
 
 					<div class="chat-input-row">
-						<ChatInput bind:value={chat.input} loading={isLoading} onsubmit={submitMessage} />
+						<ChatInput bind:value={inputValue} loading={isLoading} onsubmit={submitMessage} />
 
 						{#if pipeline.isActive || pipeline.totalDurationMs > 0}
 							<button class="pipeline-chip" onclick={() => { drawerOpen = true; }}>

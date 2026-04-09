@@ -1,9 +1,9 @@
 import * as v from 'valibot';
+import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
+import type { WorkspaceLayoutJson } from '$lib/server/db/schema/desk/workspace';
 import { syncWorkspace } from '$lib/server/desk';
 import { SyncWorkspaceSchema } from '$lib/server/desk/schemas';
-import { apiOk, apiError, apiValidationError } from '$lib/server/api/response';
-import type { WorkspaceLayoutJson } from '$lib/server/db/schema/desk/workspace';
 import type { RequestHandler } from './$types';
 
 /**
@@ -21,7 +21,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 
 	const data = parsed.output;
 	const result = await syncWorkspace(user.id, {
-		save: data.save ? { id: data.save.id, layout: data.save.layout as WorkspaceLayoutJson } : undefined,
+		save: data.save ? { id: data.save.id, layout: data.save.layout as unknown as WorkspaceLayoutJson } : undefined,
 		activate: data.activate,
 	});
 	return apiOk(result);

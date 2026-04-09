@@ -46,7 +46,9 @@ $effect(() => {
 				renameInput.focus();
 				renameInput.select();
 				// Arm blur-commit only after focus is stable
-				requestAnimationFrame(() => { renameBlurArmed = true; });
+				requestAnimationFrame(() => {
+					renameBlurArmed = true;
+				});
 			}
 		});
 	}

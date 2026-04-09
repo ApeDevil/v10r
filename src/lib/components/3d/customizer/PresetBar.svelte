@@ -1,13 +1,13 @@
 <script lang="ts">
-	import type { CustomizationPreset } from '$lib/config/customization';
+import type { CustomizationPreset } from '$lib/config/customization';
 
-	interface Props {
-		presets: CustomizationPreset[];
-		activeId?: string;
-		onselect: (preset: CustomizationPreset) => void;
-	}
+interface Props {
+	presets: CustomizationPreset[];
+	activeId?: string;
+	onselect: (preset: CustomizationPreset) => void;
+}
 
-	let { presets, activeId, onselect }: Props = $props();
+let { presets, activeId, onselect }: Props = $props();
 </script>
 
 <div class="preset-bar" role="group" aria-label="Presets">

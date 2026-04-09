@@ -1,11 +1,11 @@
 <script lang="ts">
-	interface Props {
-		description: string;
-		onconfirm: () => void;
-		onskip: () => void;
-	}
+interface Props {
+	description: string;
+	onconfirm: () => void;
+	onskip: () => void;
+}
 
-	let { description, onconfirm, onskip }: Props = $props();
+let { description, onconfirm, onskip }: Props = $props();
 </script>
 
 <div class="confirm-card" role="alert">

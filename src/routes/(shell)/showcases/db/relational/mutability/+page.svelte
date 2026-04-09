@@ -1,4 +1,5 @@
 <script lang="ts">
+import type { ActionResult } from '@sveltejs/kit';
 import { enhance } from '$app/forms';
 import { page } from '$app/state';
 import { Alert, Card, ConfirmDialog, FormField, NavSection } from '$lib/components/composites';
@@ -66,7 +67,13 @@ function formatTs(val: unknown): string {
 }
 
 function handleActionResult(opts: { successMsg?: string } = {}) {
-	return ({ result, update }: { result: any; update: (opts?: any) => Promise<void> }) => {
+	return ({
+		result,
+		update,
+	}: {
+		result: ActionResult;
+		update: (opts?: { reset?: boolean; invalidateAll?: boolean }) => Promise<void>;
+	}) => {
 		if (result.type === 'success') {
 			const msg = (result.data?.message as string) || opts.successMsg || 'Done.';
 			toast.success(msg);

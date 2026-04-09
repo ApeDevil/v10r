@@ -4,8 +4,9 @@
  * at save time. search_vector is a GENERATED STORED column added via
  * raw SQL migration (Drizzle doesn't support generated columns).
  */
-import { check, index, integer, jsonb, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+
 import { sql } from 'drizzle-orm';
+import { check, index, integer, jsonb, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
 import { blogSchema, post } from './post';
 
@@ -29,16 +30,8 @@ export const revision = blogSchema.table(
 	},
 	(table) => [
 		index('blog_revision_post_created_idx').on(table.postId, table.createdAt.desc()),
-		index('blog_revision_post_locale_created_idx').on(
-			table.postId,
-			table.locale,
-			table.createdAt.desc(),
-		),
-		uniqueIndex('blog_revision_post_locale_number_idx').on(
-			table.postId,
-			table.locale,
-			table.revisionNumber,
-		),
+		index('blog_revision_post_locale_created_idx').on(table.postId, table.locale, table.createdAt.desc()),
+		uniqueIndex('blog_revision_post_locale_number_idx').on(table.postId, table.locale, table.revisionNumber),
 		index('blog_revision_author_idx').on(table.authorId),
 		check('locale_format', sql`${table.locale} ~ '^[a-z]{2}(-[A-Z]{2})?$'`),
 	],

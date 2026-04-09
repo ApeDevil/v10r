@@ -1,10 +1,10 @@
 import * as v from 'valibot';
+import { apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/api/response';
 import { requireApiAuthor, requireAssetOwnership } from '$lib/server/auth/guards';
-import { getAssetById, updateAssetMetadata, deleteAsset } from '$lib/server/blog';
+import { deleteAsset, getAssetById, updateAssetMetadata } from '$lib/server/blog';
 import { PatchAssetSchema } from '$lib/server/blog/schemas';
 import { deleteBlogObject, generateBlogDownloadUrl } from '$lib/server/store/blog';
 import { classifyS3Error } from '$lib/server/store/errors';
-import { apiOk, apiNoContent, apiError, apiValidationError } from '$lib/server/api/response';
 import type { RequestHandler } from './$types';
 
 /** Get asset detail with download URL. */

@@ -16,9 +16,7 @@ let { html, embeds, class: className }: Props = $props();
  */
 const R2_IMG_RE = /https:\/\/[^"'\s]+\.r2\.cloudflarestorage\.com\/(blog\/[^"'\s?]+)\?[^"'\s]*/g;
 
-const safeHtml = $derived(
-	html.replace(R2_IMG_RE, (_match, key) => `/api/blog/media/${key}`),
-);
+const safeHtml = $derived(html.replace(R2_IMG_RE, (_match, key) => `/api/blog/media/${key}`));
 </script>
 
 <article class={cn('blog-prose', className)}>

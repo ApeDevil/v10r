@@ -1,7 +1,14 @@
 import type { ExplorerNode, NodeCapability } from '../node';
 import type { PostListItem } from '../types';
 
-const POST_CAPABILITIES: NodeCapability[] = ['open', 'open-new-panel', 'rename', 'ai-context', 'export-markdown', 'delete'];
+const POST_CAPABILITIES: NodeCapability[] = [
+	'open',
+	'open-new-panel',
+	'rename',
+	'ai-context',
+	'export-markdown',
+	'delete',
+];
 
 function statusVariant(status: string): 'success' | 'secondary' | 'warning' {
 	if (status === 'published') return 'success';

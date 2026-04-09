@@ -1,27 +1,25 @@
 <script lang="ts">
-	interface Props {
-		toolName: string;
-		state: 'call' | 'partial-call' | 'result';
-		output?: unknown;
-	}
+interface Props {
+	toolName: string;
+	state: 'call' | 'partial-call' | 'result';
+	output?: unknown;
+}
 
-	let { toolName, state, output }: Props = $props();
+let { toolName, state, output }: Props = $props();
 
-	const TOOL_LABELS: Record<string, string> = {
-		desk_list_files: 'Listing files',
-		desk_read_file: 'Reading file',
-		desk_search_files: 'Searching files',
-		desk_update_cells: 'Updating cells',
-		desk_rename_file: 'Renaming file',
-		desk_create_spreadsheet: 'Creating spreadsheet',
-		desk_create_markdown: 'Creating document',
-		desk_delete_file: 'Deleting file',
-	};
+const TOOL_LABELS: Record<string, string> = {
+	desk_list_files: 'Listing files',
+	desk_read_file: 'Reading file',
+	desk_search_files: 'Searching files',
+	desk_update_cells: 'Updating cells',
+	desk_rename_file: 'Renaming file',
+	desk_create_spreadsheet: 'Creating spreadsheet',
+	desk_create_markdown: 'Creating document',
+	desk_delete_file: 'Deleting file',
+};
 
-	const label = $derived(TOOL_LABELS[toolName] ?? toolName);
-	const hasError = $derived(
-		state === 'result' && output != null && typeof output === 'object' && 'error' in output,
-	);
+const label = $derived(TOOL_LABELS[toolName] ?? toolName);
+const hasError = $derived(state === 'result' && output != null && typeof output === 'object' && 'error' in output);
 </script>
 
 <div class="tool-status">

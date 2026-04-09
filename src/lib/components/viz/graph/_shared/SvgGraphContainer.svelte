@@ -33,14 +33,11 @@ let showZoomIndicator = $state(false);
 let zoomIndicatorTimeout: ReturnType<typeof setTimeout> | undefined;
 
 let resizeObserver: ResizeObserver | undefined;
-// D3 zoom/selection types are complex generics — use any for internal state
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let zoomBehavior: any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let d3Sel: any;
+// D3 zoom/selection types are complex generics — use unknown for internal state
+let zoomBehavior: import('d3-zoom').ZoomBehavior<SVGSVGElement, unknown> | undefined;
+let d3Sel: import('d3-selection').Selection<SVGSVGElement, unknown, null, undefined> | undefined;
 // Cached from onMount to avoid re-importing
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let zoomIdentity: any;
+let zoomIdentity: import('d3-zoom').ZoomTransform | undefined;
 
 function cleanup() {
 	resizeObserver?.disconnect();

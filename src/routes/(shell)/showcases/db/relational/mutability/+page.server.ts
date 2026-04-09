@@ -218,8 +218,8 @@ export const actions: Actions = {
 
 		try {
 			await appendAuditEntry({
-				action: String(action) as any,
-				severity: String(severity) as any,
+				action: String(action) as 'create' | 'update' | 'delete' | 'restore' | 'export' | 'import' | 'login' | 'logout',
+				severity: String(severity) as 'debug' | 'info' | 'warning' | 'error' | 'critical',
 				description: String(description),
 			});
 			return { success: true, message: 'Audit entry appended.' };

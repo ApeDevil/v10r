@@ -1,18 +1,18 @@
 <script lang="ts">
 import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
-import { cn } from '$lib/utils/cn';
 import {
 	contextMenuContentVariants,
 	contextMenuItemVariants,
 	contextMenuSeparatorVariants,
 } from '$lib/components/composites/context-menu';
-import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import { InfoDialog } from '$lib/components/composites/info-dialog';
+import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import { DESK_PANEL_HELP } from '$lib/config/desk-help';
-import { getDockContext } from './dock.state.svelte';
-import { getDeskSettings } from './desk-settings.svelte';
-import type { LeafNode } from './dock.types';
+import { cn } from '$lib/utils/cn';
 import DockLeafMenu from './DockLeafMenu.svelte';
+import { getDeskSettings } from './desk-settings.svelte';
+import { getDockContext } from './dock.state.svelte';
+import type { LeafNode } from './dock.types';
 
 interface Props {
 	leaf: LeafNode;
@@ -28,9 +28,7 @@ const deskSettings = getDeskSettings();
 
 let helpOpen = $state(false);
 
-const panelHelp = $derived(
-	panelType ? DESK_PANEL_HELP[panelType as keyof typeof DESK_PANEL_HELP] ?? null : null,
-);
+const panelHelp = $derived(panelType ? (DESK_PANEL_HELP[panelType as keyof typeof DESK_PANEL_HELP] ?? null) : null);
 
 const menusWithHelp = $derived.by(() => {
 	if (!panelHelp) return menus;
@@ -40,7 +38,9 @@ const menusWithHelp = $derived.by(() => {
 			{
 				label: `About ${panelHelp.title}`,
 				icon: 'i-lucide-info',
-				onSelect: () => { helpOpen = true; },
+				onSelect: () => {
+					helpOpen = true;
+				},
 			},
 		],
 	};

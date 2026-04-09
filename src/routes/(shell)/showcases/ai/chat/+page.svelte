@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Chat } from '@ai-sdk/svelte';
+import { DefaultChatTransport } from 'ai';
 import { CSRF_HEADER } from '$lib/api';
 import { Alert, BoundaryFallback, Card, EmptyState } from '$lib/components/composites';
 import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
@@ -9,7 +10,11 @@ import { Typography } from '$lib/components/primitives';
 
 let { data } = $props();
 
-const chat = new Chat({ api: '/api/ai/chat', headers: CSRF_HEADER });
+let inputValue = $state('');
+
+const chat = new Chat({
+	transport: new DefaultChatTransport({ api: '/api/ai/chat', headers: CSRF_HEADER }) as Chat['transport'],
+});
 
 const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
 
@@ -26,8 +31,10 @@ $effect(() => {
 });
 
 function submitMessage() {
-	if (!chat.input.trim() || isLoading) return;
-	chat.sendMessage({ text: chat.input });
+	if (!inputValue.trim() || isLoading) return;
+	const text = inputValue;
+	inputValue = '';
+	chat.sendMessage({ text });
 }
 </script>
 
@@ -59,7 +66,7 @@ function submitMessage() {
 								/>
 							{:else}
 								{#each chat.messages as message (message.id)}
-									<ChatMessage role={message.role as 'user' | 'assistant'} parts={message.parts} content={message.content} />
+									<ChatMessage role={message.role as 'user' | 'assistant'} parts={message.parts} />
 								{/each}
 
 								{#if isLoading && chat.messages[chat.messages.length - 1]?.role === 'user'}
@@ -92,7 +99,7 @@ function submitMessage() {
 							</div>
 						{/if}
 
-						<ChatInput bind:value={chat.input} loading={isLoading} onsubmit={submitMessage} />
+						<ChatInput bind:value={inputValue} loading={isLoading} onsubmit={submitMessage} />
 					</div>
 				</Card>
 

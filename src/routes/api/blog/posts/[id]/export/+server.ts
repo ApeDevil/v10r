@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
-import { requireApiAuthor } from '$lib/server/auth/guards';
-import { getPostById, getLatestRevision, getTagsForPost } from '$lib/server/blog';
 import { stringify } from 'yaml';
+import { requireApiAuthor } from '$lib/server/auth/guards';
+import { getLatestRevision, getPostById, getTagsForPost } from '$lib/server/blog';
 import type { RequestHandler } from './$types';
 
 /** Export a post as a .md file with YAML frontmatter. */

@@ -1,8 +1,8 @@
-import { and, count, desc, eq, gte, isNull, lte, sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { announcements, announcementDismissals } from '$lib/server/db/schema/admin';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
+import { and, count, desc, eq, sql } from 'drizzle-orm';
 import { ADMIN_ANNOUNCEMENT_CACHE_TTL_MS } from '$lib/server/config';
+import { db } from '$lib/server/db';
+import { announcementDismissals, announcements } from '$lib/server/db/schema/admin';
+import { user } from '$lib/server/db/schema/auth/_better-auth';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -155,10 +155,7 @@ export async function createAnnouncement(input: CreateAnnouncementInput) {
 }
 
 export async function deactivateAnnouncement(id: string): Promise<void> {
-	await db
-		.update(announcements)
-		.set({ active: false, updatedAt: new Date() })
-		.where(eq(announcements.id, id));
+	await db.update(announcements).set({ active: false, updatedAt: new Date() }).where(eq(announcements.id, id));
 
 	invalidateAnnouncementCache();
 }
@@ -186,10 +183,6 @@ export async function dismissAnnouncement(
 }
 
 export async function getAnnouncementById(id: string) {
-	const rows = await db
-		.select()
-		.from(announcements)
-		.where(eq(announcements.id, id))
-		.limit(1);
+	const rows = await db.select().from(announcements).where(eq(announcements.id, id)).limit(1);
 	return rows[0] ?? null;
 }

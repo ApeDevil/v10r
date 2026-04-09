@@ -1,14 +1,14 @@
 <script lang="ts">
-	import type { MaterialGroup } from '$lib/config/customization';
+import type { MaterialGroup } from '$lib/config/customization';
 
-	interface Props {
-		group: MaterialGroup;
-		selectedId: string;
-		disabledIds?: Set<string>;
-		onselect: (optionId: string) => void;
-	}
+interface Props {
+	group: MaterialGroup;
+	selectedId: string;
+	disabledIds?: Set<string>;
+	onselect: (optionId: string) => void;
+}
 
-	let { group, selectedId, disabledIds, onselect }: Props = $props();
+let { group, selectedId, disabledIds, onselect }: Props = $props();
 </script>
 
 <fieldset class="material-picker">

@@ -1,61 +1,61 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import { page } from '$app/state';
-	import { deLocalizeHref } from '$lib/i18n';
-	import { AdminSidebar } from '$lib/components/shell';
-	import { PageContainer } from '$lib/components/layout';
+import type { Snippet } from 'svelte';
+import { page } from '$app/state';
+import { PageContainer } from '$lib/components/layout';
+import { AdminSidebar } from '$lib/components/shell';
+import { deLocalizeHref } from '$lib/i18n';
 
-	let { children }: { children: Snippet } = $props();
+let { children }: { children: Snippet } = $props();
 
-	let mobileNavOpen = $state(false);
+let mobileNavOpen = $state(false);
 
-	const groups = [
-		{
-			label: 'Observe',
-			items: [
-				{ label: 'DB Observation', href: '/admin/db', icon: 'i-lucide-database' },
-				{ label: 'Analytics', href: '/admin/analytics', icon: 'i-lucide-bar-chart-2' },
-				{ label: 'Audit Log', href: '/admin/audit', icon: 'i-lucide-shield-check' },
-			],
-		},
-		{
-			label: 'Manage',
-			items: [
-				{ label: 'Users', href: '/admin/users', icon: 'i-lucide-users' },
-				{ label: 'Feature Flags', href: '/admin/flags', icon: 'i-lucide-toggle-right' },
-				{ label: 'Branding', href: '/admin/branding', icon: 'i-lucide-palette' },
-			],
-		},
-		{
-			label: 'Content',
-			items: [
-				{ label: 'Posts', href: '/admin/content/posts', icon: 'i-lucide-file-text' },
-				{ label: 'Tags', href: '/admin/content/tags', icon: 'i-lucide-tag' },
-			],
-		},
-		{
-			label: 'System',
-			items: [
-				{ label: 'Jobs', href: '/admin/jobs', icon: 'i-lucide-clock' },
-				{ label: 'Notifications', href: '/admin/notifications', icon: 'i-lucide-bell' },
-				{ label: 'AI Usage', href: '/admin/ai', icon: 'i-lucide-bot' },
-				{ label: 'RAG', href: '/admin/rag', icon: 'i-lucide-book-open' },
-				{ label: 'Cache', href: '/admin/cache', icon: 'i-lucide-hard-drive' },
-			],
-		},
-	];
+const groups = [
+	{
+		label: 'Observe',
+		items: [
+			{ label: 'DB Observation', href: '/admin/db', icon: 'i-lucide-database' },
+			{ label: 'Analytics', href: '/admin/analytics', icon: 'i-lucide-bar-chart-2' },
+			{ label: 'Audit Log', href: '/admin/audit', icon: 'i-lucide-shield-check' },
+		],
+	},
+	{
+		label: 'Manage',
+		items: [
+			{ label: 'Users', href: '/admin/users', icon: 'i-lucide-users' },
+			{ label: 'Feature Flags', href: '/admin/flags', icon: 'i-lucide-toggle-right' },
+			{ label: 'Branding', href: '/admin/branding', icon: 'i-lucide-palette' },
+		],
+	},
+	{
+		label: 'Content',
+		items: [
+			{ label: 'Posts', href: '/admin/content/posts', icon: 'i-lucide-file-text' },
+			{ label: 'Tags', href: '/admin/content/tags', icon: 'i-lucide-tag' },
+		],
+	},
+	{
+		label: 'System',
+		items: [
+			{ label: 'Jobs', href: '/admin/jobs', icon: 'i-lucide-clock' },
+			{ label: 'Notifications', href: '/admin/notifications', icon: 'i-lucide-bell' },
+			{ label: 'AI Usage', href: '/admin/ai', icon: 'i-lucide-bot' },
+			{ label: 'RAG', href: '/admin/rag', icon: 'i-lucide-book-open' },
+			{ label: 'Cache', href: '/admin/cache', icon: 'i-lucide-hard-drive' },
+		],
+	},
+];
 
-	const allItems = groups.flatMap((g) => g.items);
+const allItems = groups.flatMap((g) => g.items);
 
-	const currentPage = $derived(
-		allItems.find((item) => deLocalizeHref(page.url.pathname).startsWith(item.href)) ?? allItems[0],
-	);
+const currentPage = $derived(
+	allItems.find((item) => deLocalizeHref(page.url.pathname).startsWith(item.href)) ?? allItems[0],
+);
 
-	// Close mobile nav on navigation
-	$effect(() => {
-		page.url.pathname;
-		mobileNavOpen = false;
-	});
+// Close mobile nav on navigation
+$effect(() => {
+	page.url.pathname;
+	mobileNavOpen = false;
+});
 </script>
 
 <div class="admin-layout">

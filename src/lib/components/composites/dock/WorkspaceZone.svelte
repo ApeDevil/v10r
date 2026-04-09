@@ -1,92 +1,97 @@
 <script lang="ts">
-	import { ContextMenu as CtxMenu, Popover, Tooltip } from 'bits-ui';
-	import { contextMenuContentVariants, contextMenuItemVariants, contextMenuSeparatorVariants } from '$lib/components/composites/context-menu';
-	import { cn } from '$lib/utils/cn';
-	import { getWorkspaceContext } from './workspace.state.svelte';
-	import { getDeskSettings } from './desk-settings.svelte';
-	import { getDockContext } from './dock.state.svelte';
-	import { collectLeaves } from './dock.operations';
-	import { VISIBLE_WORKSPACE_BUTTONS, MAX_WORKSPACES } from './workspace.types';
-	import type { Workspace } from './workspace.types';
+import { ContextMenu as CtxMenu, Popover, Tooltip } from 'bits-ui';
+import {
+	contextMenuContentVariants,
+	contextMenuItemVariants,
+	contextMenuSeparatorVariants,
+} from '$lib/components/composites/context-menu';
+import { cn } from '$lib/utils/cn';
+import { getDeskSettings } from './desk-settings.svelte';
+import { collectLeaves } from './dock.operations';
+import { getDockContext } from './dock.state.svelte';
+import { getWorkspaceContext } from './workspace.state.svelte';
+import type { Workspace } from './workspace.types';
+import { MAX_WORKSPACES, VISIBLE_WORKSPACE_BUTTONS } from './workspace.types';
 
-	const workspace = getWorkspaceContext();
-	const deskSettings = getDeskSettings();
-	const dock = getDockContext();
+const workspace = getWorkspaceContext();
+const deskSettings = getDeskSettings();
+const dock = getDockContext();
 
-	const isHorizontal = $derived(
-		dock.activityBarPosition === 'top' || dock.activityBarPosition === 'bottom',
-	);
+const isHorizontal = $derived(dock.activityBarPosition === 'top' || dock.activityBarPosition === 'bottom');
 
-	/** Popover opens away from the bar edge */
-	const popoverSide = $derived<'top' | 'bottom' | 'left' | 'right'>(
-		dock.activityBarPosition === 'top' ? 'bottom'
-		: dock.activityBarPosition === 'bottom' ? 'top'
-		: dock.activityBarPosition === 'right' ? 'left'
-		: 'right',
-	);
+/** Popover opens away from the bar edge */
+const popoverSide = $derived<'top' | 'bottom' | 'left' | 'right'>(
+	dock.activityBarPosition === 'top'
+		? 'bottom'
+		: dock.activityBarPosition === 'bottom'
+			? 'top'
+			: dock.activityBarPosition === 'right'
+				? 'left'
+				: 'right',
+);
 
-	// Display mode
-	const mode = $derived(deskSettings.theme.workspaceSwitcherMode ?? 'auto');
-	const useNumbers = $derived(
-		mode === 'numbers' || (mode === 'auto' && workspace.workspaces.length <= VISIBLE_WORKSPACE_BUTTONS),
-	);
+// Display mode
+const mode = $derived(deskSettings.theme.workspaceSwitcherMode ?? 'auto');
+const useNumbers = $derived(
+	mode === 'numbers' || (mode === 'auto' && workspace.workspaces.length <= VISIBLE_WORKSPACE_BUTTONS),
+);
 
-	// Create workspace popover
-	let createOpen = $state(false);
-	let newName = $state('');
+// Create workspace popover
+let createOpen = $state(false);
+let newName = $state('');
 
-	// Rename popover
-	let renamingId = $state<string | null>(null);
-	let renameValue = $state('');
+// Rename popover
+let renamingId = $state<string | null>(null);
+let renameValue = $state('');
 
-	// Undo state
-	let pendingDelete = $state<{ workspace: Workspace; timer: ReturnType<typeof setTimeout> } | null>(null);
+// Undo state
+let pendingDelete = $state<{ workspace: Workspace; timer: ReturnType<typeof setTimeout> } | null>(null);
 
-	function handleCreate() {
-		const name = newName.trim() || `Workspace ${workspace.workspaces.length + 1}`;
-		workspace.createWorkspace(name);
-		newName = '';
-		createOpen = false;
-	}
+function handleCreate() {
+	const name = newName.trim() || `Workspace ${workspace.workspaces.length + 1}`;
+	workspace.createWorkspace(name);
+	newName = '';
+	createOpen = false;
+}
 
-	function handleRename(id: string) {
-		const name = renameValue.trim();
-		if (name) workspace.renameWorkspace(id, name);
-		renamingId = null;
-		renameValue = '';
-	}
+function handleRename(id: string) {
+	const name = renameValue.trim();
+	if (name) workspace.renameWorkspace(id, name);
+	renamingId = null;
+	renameValue = '';
+}
 
-	function handleDelete(id: string) {
-		const deleted = workspace.deleteWorkspace(id);
-		if (!deleted) return;
+function handleDelete(id: string) {
+	const deleted = workspace.deleteWorkspace(id);
+	if (!deleted) return;
 
-		// Start undo timer
-		const timer = setTimeout(() => {
-			workspace.confirmDelete(id);
-			pendingDelete = null;
-		}, 5000);
-		pendingDelete = { workspace: deleted, timer };
-	}
-
-	function handleUndo() {
-		if (!pendingDelete) return;
-		clearTimeout(pendingDelete.timer);
-		workspace.restoreWorkspace(pendingDelete.workspace);
+	// Start undo timer
+	const timer = setTimeout(() => {
+		workspace.confirmDelete(id);
 		pendingDelete = null;
-	}
+	}, 5000);
+	pendingDelete = { workspace: deleted, timer };
+}
 
-	function startRename(ws: Workspace) {
-		renamingId = ws.id;
-		renameValue = ws.name;
-	}
+function handleUndo() {
+	if (!pendingDelete) return;
+	clearTimeout(pendingDelete.timer);
+	workspace.restoreWorkspace(pendingDelete.workspace);
+	pendingDelete = null;
+}
 
-	/** Get panel type summary for tooltip */
-	function getPanelSummary(ws: Workspace): string {
-		const types = Object.values(ws.layout.panels)
-			.map((p) => p.type)
-			.filter((v, i, a) => a.indexOf(v) === i);
-		return types.map((t) => t.charAt(0).toUpperCase() + t.slice(1)).join(' \u00b7 ');
-	}
+function startRename(ws: Workspace) {
+	renamingId = ws.id;
+	renameValue = ws.name;
+}
+
+/** Get panel type summary for tooltip */
+function getPanelSummary(ws: Workspace): string {
+	const types = Object.values(ws.layout.panels)
+		.map((p) => p.type)
+		.filter((v, i, a) => a.indexOf(v) === i);
+	return types.map((t) => t.charAt(0).toUpperCase() + t.slice(1)).join(' \u00b7 ');
+}
 </script>
 
 {#if workspace.workspaces.length > 0 || pendingDelete}

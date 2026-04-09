@@ -34,9 +34,10 @@ describe('requireAuth', () => {
 		expect(() => requireAuth(makeLocals())).toThrow();
 		try {
 			requireAuth(makeLocals());
-		} catch (e: any) {
-			expect(e.status).toBe(303);
-			expect(e.location).toBe('/auth/login');
+		} catch (e: unknown) {
+			const err = e as { status: number; location: string };
+			expect(err.status).toBe(303);
+			expect(err.location).toBe('/auth/login');
 		}
 	});
 });
@@ -53,8 +54,8 @@ describe('requireApiUser', () => {
 		expect(() => requireApiUser(makeLocals())).toThrow();
 		try {
 			requireApiUser(makeLocals());
-		} catch (e: any) {
-			expect(e.status).toBe(401);
+		} catch (e: unknown) {
+			expect((e as { status: number }).status).toBe(401);
 		}
 	});
 });
@@ -76,8 +77,8 @@ describe('requireAdmin', () => {
 		expect(() => requireAdmin(makeLocals(user, session))).toThrow();
 		try {
 			requireAdmin(makeLocals(user, session));
-		} catch (e: any) {
-			expect(e.status).toBe(404);
+		} catch (e: unknown) {
+			expect((e as { status: number }).status).toBe(404);
 		}
 	});
 
@@ -89,8 +90,8 @@ describe('requireAdmin', () => {
 		expect(() => requireAdmin(makeLocals(user, session))).toThrow();
 		try {
 			requireAdmin(makeLocals(user, session));
-		} catch (e: any) {
-			expect(e.status).toBe(404);
+		} catch (e: unknown) {
+			expect((e as { status: number }).status).toBe(404);
 		}
 	});
 

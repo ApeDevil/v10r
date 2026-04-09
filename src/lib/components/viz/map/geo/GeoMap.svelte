@@ -38,9 +38,9 @@ let {
 }: Props = $props();
 
 let ready = $state(false);
-let MapLibreComp: Component<any> | undefined = $state();
-let NavigationControl: Component<any> | undefined = $state();
-let ScaleControl: Component<any> | undefined = $state();
+let MapLibreComp: Component<Record<string, unknown>> | undefined = $state();
+let NavigationControl: Component<Record<string, unknown>> | undefined = $state();
+let ScaleControl: Component<Record<string, unknown>> | undefined = $state();
 let resolvedStyle: object | string | undefined = $state();
 
 const theme = getTheme();
@@ -54,8 +54,12 @@ beforeNavigate(() => {
 $effect(() => {
 	const url = currentStyleUrl;
 	fetchRewrittenStyle(url)
-		.then((s) => { resolvedStyle = s; })
-		.catch(() => { resolvedStyle = url; });
+		.then((s) => {
+			resolvedStyle = s;
+		})
+		.catch(() => {
+			resolvedStyle = url;
+		});
 });
 
 onMount(async () => {

@@ -44,10 +44,8 @@ let selectedNodeId = $state<string | null>(null);
 let hoveredNodeId = $state<string | null>(null);
 let focusedNodeIdx = $state(-1);
 let palette: string[] = [];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let d3SankeyModule: any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let linkPathGenerator: any;
+let d3SankeyModule: typeof import('d3-sankey') | undefined;
+let linkPathGenerator: ((link: unknown) => string | null) | undefined;
 let containerWidth = $state(600);
 let containerHeight = $state(400);
 
@@ -70,7 +68,7 @@ function handleResize(w: number, h: number) {
 onMount(async () => {
 	palette = getVizPalette();
 	d3SankeyModule = await import('d3-sankey');
-	linkPathGenerator = d3SankeyModule.sankeyLinkHorizontal();
+	linkPathGenerator = d3SankeyModule.sankeyLinkHorizontal() as unknown as (link: unknown) => string | null;
 	computeLayout(containerWidth, containerHeight);
 });
 
@@ -87,16 +85,19 @@ function computeLayout(w = containerWidth, h = containerHeight) {
 		}));
 
 		const sankeyGenerator = d3SankeyModule
-			.sankey()
+			.sankey<SankeyNodeData, SankeyLinkData>()
 			.nodeWidth(26)
 			.nodePadding(16)
 			.extent([
 				[40, 20],
 				[w - 40, h - 20],
 			])
-			.nodeId((d: SankeyNodeData) => d.id);
+			.nodeId((d) => d.id);
 
-		const graph = sankeyGenerator({ nodes: sankeyNodes, links: sankeyLinks });
+		const graph = sankeyGenerator({
+			nodes: sankeyNodes,
+			links: sankeyLinks as { source: string; target: string; value: number }[],
+		});
 
 		layoutNodes = graph.nodes as LayoutNode[];
 		layoutLinks = graph.links as LayoutLink[];

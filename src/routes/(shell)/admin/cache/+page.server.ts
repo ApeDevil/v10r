@@ -1,19 +1,10 @@
 import { fail } from '@sveltejs/kit';
+import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
 import { requireAdmin } from '$lib/server/auth/guards';
-import { recordAuditEvent, getAuditContext } from '$lib/server/admin';
-import {
-	getCacheOverview,
-	getInProcessCacheStatus,
-	getAllKeys,
-	getKeyDetail,
-} from '$lib/server/cache/admin/queries';
-import {
-	adminDeleteKey,
-	adminFlushByPrefix,
-	adminInvalidateInProcessCaches,
-} from '$lib/server/cache/admin/mutations';
-import { safeDeferPromise } from '$lib/server/utils/safe-defer';
+import { adminDeleteKey, adminFlushByPrefix, adminInvalidateInProcessCaches } from '$lib/server/cache/admin/mutations';
+import { getAllKeys, getCacheOverview, getInProcessCacheStatus, getKeyDetail } from '$lib/server/cache/admin/queries';
 import { ADMIN_CACHE_PAGE_SIZE } from '$lib/server/config';
+import { safeDeferPromise } from '$lib/server/utils/safe-defer';
 import type { Actions, PageServerLoad } from './$types';
 
 const ALLOWED_FLUSH_PREFIXES = ['showcase:', 'ratelimit:'];
@@ -24,13 +15,10 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	const prefix = url.searchParams.get('prefix') || '';
 	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
 
-	let overview;
-	let inProcessStatus;
+	let overview: Awaited<ReturnType<typeof getCacheOverview>> | null;
+	let inProcessStatus: ReturnType<typeof getInProcessCacheStatus>;
 	try {
-		[overview, inProcessStatus] = await Promise.all([
-			getCacheOverview(),
-			Promise.resolve(getInProcessCacheStatus()),
-		]);
+		[overview, inProcessStatus] = await Promise.all([getCacheOverview(), Promise.resolve(getInProcessCacheStatus())]);
 	} catch {
 		overview = null;
 		inProcessStatus = getInProcessCacheStatus();

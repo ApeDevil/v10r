@@ -10,9 +10,7 @@ let { announcements }: Props = $props();
 
 // Sort: critical first, then warning, then info
 const sortOrder = { critical: 0, warning: 1, info: 2 } as const;
-const sorted = $derived(
-	[...announcements].sort((a, b) => sortOrder[a.severity] - sortOrder[b.severity]),
-);
+const sorted = $derived([...announcements].sort((a, b) => sortOrder[a.severity] - sortOrder[b.severity]));
 
 let dismissing = $state<string | null>(null);
 let dismissed = $state<Set<string>>(new Set());

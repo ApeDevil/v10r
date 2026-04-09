@@ -16,8 +16,8 @@ import {
 } from '$lib/components/shell';
 import { DESK_PANELS } from '$lib/config/desk-panels';
 import { searchPages } from '$lib/nav';
-import { getModals } from '$lib/state/modals.svelte';
 import type { ActiveAnnouncement } from '$lib/server/admin/announcements';
+import { getModals } from '$lib/state/modals.svelte';
 import { type Session, setSessionContext } from '$lib/state/session.svelte';
 import { getTheme } from '$lib/state/theme.svelte';
 

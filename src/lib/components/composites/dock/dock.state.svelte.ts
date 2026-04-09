@@ -204,9 +204,7 @@ export function createDockState(
 		const existing = panels[panelId];
 		if (!existing) return;
 		// Avoid unnecessary reactive updates
-		const changed = Object.entries(partial).some(
-			([k, v]) => existing[k as keyof PanelDefinition] !== v,
-		);
+		const changed = Object.entries(partial).some(([k, v]) => existing[k as keyof PanelDefinition] !== v);
 		if (!changed) return;
 		panels = { ...panels, [panelId]: { ...existing, ...partial } };
 	}

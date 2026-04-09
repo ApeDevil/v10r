@@ -1,5 +1,5 @@
-import type { PaletteId, RadiusId, StyleConfig, TypographyId } from '$lib/styles/random/types';
 import { getBrandSettings } from '$lib/server/db/brand/queries';
+import type { PaletteId, RadiusId, StyleConfig, TypographyId } from '$lib/styles/random/types';
 
 let cached: { style: StyleConfig; enabled: boolean } | null = null;
 let loading: Promise<{ style: StyleConfig; enabled: boolean } | null> | null = null;

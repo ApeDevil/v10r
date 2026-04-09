@@ -67,7 +67,7 @@ export const actions: Actions = {
 				and(
 					eq(sessionTable.id, sessionId),
 					eq(sessionTable.userId, locals.user.id),
-					ne(sessionTable.id, locals.session!.id),
+					ne(sessionTable.id, locals.session?.id ?? ''),
 				),
 			);
 

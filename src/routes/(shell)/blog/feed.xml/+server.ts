@@ -1,5 +1,5 @@
-import type { RequestHandler } from './$types';
 import { listPublishedPostsForFeed } from '$lib/server/blog';
+import type { RequestHandler } from './$types';
 
 function escapeCdata(s: string): string {
 	return s.replace(/]]>/g, ']]]]><![CDATA[>');

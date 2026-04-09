@@ -100,10 +100,7 @@ export function registerPanelContext(entry: PanelContext): () => void {
  * Update an existing panel's context without re-registering.
  * No-op if panelId is not registered.
  */
-export function updatePanelContext(
-	panelId: string,
-	partial: Partial<Omit<PanelContext, 'panelId'>>,
-): void {
+export function updatePanelContext(panelId: string, partial: Partial<Omit<PanelContext, 'panelId'>>): void {
 	const existing = registry.get(panelId);
 	if (!existing) return;
 	registry.set(panelId, { ...existing, ...partial, updatedAt: Date.now() });

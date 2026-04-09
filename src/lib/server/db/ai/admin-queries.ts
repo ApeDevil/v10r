@@ -1,8 +1,8 @@
 import { count, desc, eq, gte, sql } from 'drizzle-orm';
+import { ADMIN_AI_PAGE_SIZE, MAX_CONVERSATIONS_PER_USER } from '$lib/server/config';
 import { db } from '../index';
 import { conversation, message } from '../schema/ai/conversation';
 import { user } from '../schema/auth/_better-auth';
-import { ADMIN_AI_PAGE_SIZE, MAX_CONVERSATIONS_PER_USER } from '$lib/server/config';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

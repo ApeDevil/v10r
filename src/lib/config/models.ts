@@ -11,7 +11,7 @@
 // ---------------------------------------------------------------------------
 
 import type { CustomizationConfig } from './customization';
-import { SOFA_CUSTOMIZATION, FOX_CUSTOMIZATION, ROBOT_CUSTOMIZATION } from './customization';
+import { FOX_CUSTOMIZATION, ROBOT_CUSTOMIZATION, SOFA_CUSTOMIZATION } from './customization';
 
 /** Euler-style rotation axis */
 export type RotationAxis = 'x' | 'y' | 'z';

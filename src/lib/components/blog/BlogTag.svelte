@@ -1,18 +1,18 @@
 <script lang="ts">
-	import { Tag } from '$lib/components/primitives';
+import { Tag } from '$lib/components/primitives';
 
-	interface Props {
-		tag: { slug: string; name: string; icon?: string | null; color?: number | null; glyph?: string | null };
-		tier: 'domain' | 'category';
-		size?: 'sm' | 'md';
-		class?: string;
-	}
+interface Props {
+	tag: { slug: string; name: string; icon?: string | null; color?: number | null; glyph?: string | null };
+	tier: 'domain' | 'category';
+	size?: 'sm' | 'md';
+	class?: string;
+}
 
-	let { tag, tier, size = 'sm', class: className }: Props = $props();
+let { tag, tier, size = 'sm', class: className }: Props = $props();
 
-	const tagIcon = $derived(tag.icon || undefined);
-	const tagColor = $derived(tag.color || undefined);
-	const tagGlyph = $derived(tag.glyph || (!tag.icon ? tag.name.charAt(0).toUpperCase() : undefined));
+const tagIcon = $derived(tag.icon || undefined);
+const tagColor = $derived(tag.color || undefined);
+const tagGlyph = $derived(tag.glyph || (!tag.icon ? tag.name.charAt(0).toUpperCase() : undefined));
 </script>
 
 {#if tagColor}

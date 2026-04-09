@@ -1,8 +1,8 @@
 import * as v from 'valibot';
+import { apiError, apiNoContent, apiValidationError } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { updatePreferences } from '$lib/server/preferences';
 import { UpdatePreferencesSchema } from '$lib/server/preferences/schemas';
-import { apiNoContent, apiError, apiValidationError } from '$lib/server/api/response';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ locals, request }) => {

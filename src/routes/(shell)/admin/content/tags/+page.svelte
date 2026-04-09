@@ -1,211 +1,244 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
-	import { BlogTag } from '$lib/components/blog';
-	import { Card, ConfirmDialog, EmptyState, FormField } from '$lib/components/composites';
-	import { Cluster, Stack } from '$lib/components/layout';
-	import {
-		Badge, Button, Dialog, Input, Spinner, Textarea,
-		Table, Header, HeaderCell, Body, Row, Cell,
-	} from '$lib/components/primitives';
-	import { getToast } from '$lib/state/toast.svelte';
-	import type { PageProps } from './$types';
+import type { ActionResult } from '@sveltejs/kit';
+import { enhance } from '$app/forms';
+import { invalidateAll } from '$app/navigation';
+import { BlogTag } from '$lib/components/blog';
+import { Card, ConfirmDialog, EmptyState, FormField } from '$lib/components/composites';
+import { Cluster, Stack } from '$lib/components/layout';
+import {
+	Badge,
+	Body,
+	Button,
+	Cell,
+	Dialog,
+	Header,
+	HeaderCell,
+	Input,
+	Row,
+	Spinner,
+	Table,
+	Textarea,
+} from '$lib/components/primitives';
+import { getToast } from '$lib/state/toast.svelte';
+import type { PageProps } from './$types';
 
-	let { data }: PageProps = $props();
-	const toast = getToast();
+let { data }: PageProps = $props();
+const toast = getToast();
 
-	let submitting = $state('');
+let submitting = $state('');
 
-	// Tag editing modal
-	let showTagModal = $state(false);
-	let editTagId = $state('');
-	let editTagName = $state('');
-	let editTagSlug = $state('');
-	let editTagIcon = $state<string | null>(null);
-	let editTagColor = $state<number | null>(null);
-	let editTagGlyph = $state('');
-	let tagIconFilter = $state('');
+// Tag editing modal
+let showTagModal = $state(false);
+let editTagId = $state('');
+let editTagName = $state('');
+let editTagSlug = $state('');
+let editTagIcon = $state<string | null>(null);
+let editTagColor = $state<number | null>(null);
+let editTagGlyph = $state('');
+let tagIconFilter = $state('');
 
-	let showDeleteDialog = $state(false);
-	let deleteTagId = $state('');
-	let deleteTagName = $state('');
-	let deletePostCount = $state(0);
-	let deleteTagFormEl: HTMLFormElement;
+let showDeleteDialog = $state(false);
+let deleteTagId = $state('');
+let deleteTagName = $state('');
+let deletePostCount = $state(0);
+let deleteTagFormEl: HTMLFormElement;
 
-	// Domain editing modal
-	let showDomainModal = $state(false);
-	let editDomainId = $state('');
-	let editDomainName = $state('');
-	let editDomainSlug = $state('');
-	let editDomainIcon = $state<string | null>(null);
-	let editDomainColor = $state<number | null>(null);
-	let editDomainDescription = $state('');
-	let iconFilter = $state('');
+// Domain editing modal
+let showDomainModal = $state(false);
+let editDomainId = $state('');
+let editDomainName = $state('');
+let editDomainSlug = $state('');
+let editDomainIcon = $state<string | null>(null);
+let editDomainColor = $state<number | null>(null);
+let editDomainDescription = $state('');
+let iconFilter = $state('');
 
-	let showDeleteDomainDialog = $state(false);
-	let deleteDomainId = $state('');
-	let deleteDomainName = $state('');
-	let deleteDomainPostCount = $state(0);
-	let deleteDomainFormEl: HTMLFormElement;
+let showDeleteDomainDialog = $state(false);
+let deleteDomainId = $state('');
+let deleteDomainName = $state('');
+let deleteDomainPostCount = $state(0);
+let deleteDomainFormEl: HTMLFormElement;
 
-	const ICON_OPTIONS = [
-		{ name: 'code', class: 'i-lucide-code' },
-		{ name: 'terminal', class: 'i-lucide-terminal' },
-		{ name: 'palette', class: 'i-lucide-palette' },
-		{ name: 'brain', class: 'i-lucide-brain' },
-		{ name: 'box', class: 'i-lucide-box' },
-		{ name: 'users', class: 'i-lucide-users' },
-		{ name: 'globe', class: 'i-lucide-globe' },
-		{ name: 'layers', class: 'i-lucide-layers' },
-		{ name: 'zap', class: 'i-lucide-zap' },
-		{ name: 'database', class: 'i-lucide-database' },
-		{ name: 'book', class: 'i-lucide-book-open' },
-		{ name: 'microscope', class: 'i-lucide-microscope' },
-		{ name: 'cloud', class: 'i-lucide-cloud' },
-		{ name: 'rocket', class: 'i-lucide-rocket' },
-		{ name: 'shield', class: 'i-lucide-shield' },
-		{ name: 'briefcase', class: 'i-lucide-briefcase' },
-		{ name: 'heart', class: 'i-lucide-heart' },
-		{ name: 'camera', class: 'i-lucide-camera' },
-		{ name: 'music', class: 'i-lucide-music' },
-		{ name: 'pen-tool', class: 'i-lucide-pen-tool' },
-		{ name: 'cpu', class: 'i-lucide-cpu' },
-		{ name: 'wifi', class: 'i-lucide-wifi' },
-		{ name: 'key', class: 'i-lucide-key' },
-		{ name: 'flag', class: 'i-lucide-flag' },
-		{ name: 'compass', class: 'i-lucide-compass' },
-		{ name: 'lightbulb', class: 'i-lucide-lightbulb' },
-		{ name: 'sparkles', class: 'i-lucide-sparkles' },
-		{ name: 'flame', class: 'i-lucide-flame' },
-		{ name: 'gem', class: 'i-lucide-gem' },
-		{ name: 'trophy', class: 'i-lucide-trophy' },
-		{ name: 'container', class: 'i-lucide-container' },
-		{ name: 'server', class: 'i-lucide-server' },
-		{ name: 'puzzle', class: 'i-lucide-puzzle' },
-		{ name: 'wrench', class: 'i-lucide-wrench' },
-		{ name: 'megaphone', class: 'i-lucide-megaphone' },
-		{ name: 'beaker', class: 'i-lucide-flask-conical' },
-	];
+const ICON_OPTIONS = [
+	{ name: 'code', class: 'i-lucide-code' },
+	{ name: 'terminal', class: 'i-lucide-terminal' },
+	{ name: 'palette', class: 'i-lucide-palette' },
+	{ name: 'brain', class: 'i-lucide-brain' },
+	{ name: 'box', class: 'i-lucide-box' },
+	{ name: 'users', class: 'i-lucide-users' },
+	{ name: 'globe', class: 'i-lucide-globe' },
+	{ name: 'layers', class: 'i-lucide-layers' },
+	{ name: 'zap', class: 'i-lucide-zap' },
+	{ name: 'database', class: 'i-lucide-database' },
+	{ name: 'book', class: 'i-lucide-book-open' },
+	{ name: 'microscope', class: 'i-lucide-microscope' },
+	{ name: 'cloud', class: 'i-lucide-cloud' },
+	{ name: 'rocket', class: 'i-lucide-rocket' },
+	{ name: 'shield', class: 'i-lucide-shield' },
+	{ name: 'briefcase', class: 'i-lucide-briefcase' },
+	{ name: 'heart', class: 'i-lucide-heart' },
+	{ name: 'camera', class: 'i-lucide-camera' },
+	{ name: 'music', class: 'i-lucide-music' },
+	{ name: 'pen-tool', class: 'i-lucide-pen-tool' },
+	{ name: 'cpu', class: 'i-lucide-cpu' },
+	{ name: 'wifi', class: 'i-lucide-wifi' },
+	{ name: 'key', class: 'i-lucide-key' },
+	{ name: 'flag', class: 'i-lucide-flag' },
+	{ name: 'compass', class: 'i-lucide-compass' },
+	{ name: 'lightbulb', class: 'i-lucide-lightbulb' },
+	{ name: 'sparkles', class: 'i-lucide-sparkles' },
+	{ name: 'flame', class: 'i-lucide-flame' },
+	{ name: 'gem', class: 'i-lucide-gem' },
+	{ name: 'trophy', class: 'i-lucide-trophy' },
+	{ name: 'container', class: 'i-lucide-container' },
+	{ name: 'server', class: 'i-lucide-server' },
+	{ name: 'puzzle', class: 'i-lucide-puzzle' },
+	{ name: 'wrench', class: 'i-lucide-wrench' },
+	{ name: 'megaphone', class: 'i-lucide-megaphone' },
+	{ name: 'beaker', class: 'i-lucide-flask-conical' },
+];
 
-	const COLOR_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
+const COLOR_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
-	const COLOR_NAMES: Record<number, string> = {
-		1: 'Blue',
-		2: 'Green',
-		3: 'Orange',
-		4: 'Purple',
-		5: 'Red',
-		6: 'Teal',
-		7: 'Yellow',
-		8: 'Pink',
+const COLOR_NAMES: Record<number, string> = {
+	1: 'Blue',
+	2: 'Green',
+	3: 'Orange',
+	4: 'Purple',
+	5: 'Red',
+	6: 'Teal',
+	7: 'Yellow',
+	8: 'Pink',
+};
+
+const filteredIcons = $derived(
+	iconFilter ? ICON_OPTIONS.filter((i) => i.name.includes(iconFilter.toLowerCase())) : ICON_OPTIONS,
+);
+
+const previewTag = $derived({
+	slug: editDomainSlug || 'preview',
+	name: editDomainName || 'Domain',
+	icon: editDomainIcon,
+	color: editDomainColor,
+});
+
+const filteredTagIcons = $derived(
+	tagIconFilter ? ICON_OPTIONS.filter((i) => i.name.includes(tagIconFilter.toLowerCase())) : ICON_OPTIONS,
+);
+
+const previewCategoryTag = $derived({
+	slug: editTagSlug || 'preview',
+	name: editTagName || 'Category',
+	icon: editTagIcon,
+	color: editTagColor,
+	glyph: editTagGlyph || null,
+});
+
+function openTagModal(t?: {
+	id: string;
+	name: string;
+	slug: string;
+	icon: string | null;
+	color: number | null;
+	glyph: string | null;
+}) {
+	if (t) {
+		editTagId = t.id;
+		editTagName = t.name;
+		editTagSlug = t.slug;
+		editTagIcon = t.icon;
+		editTagColor = t.color;
+		editTagGlyph = t.glyph ?? '';
+	} else {
+		editTagId = '';
+		editTagName = '';
+		editTagSlug = '';
+		editTagIcon = null;
+		editTagColor = null;
+		editTagGlyph = '';
+	}
+	tagIconFilter = '';
+	showTagModal = true;
+}
+
+function openDeleteDialog(tag: { id: string; name: string; postCount: number }) {
+	deleteTagId = tag.id;
+	deleteTagName = tag.name;
+	deletePostCount = tag.postCount;
+	showDeleteDialog = true;
+}
+
+function openDomainModal(d?: {
+	id: string;
+	name: string;
+	slug: string;
+	icon: string | null;
+	color: number | null;
+	description: string | null;
+}) {
+	if (d) {
+		editDomainId = d.id;
+		editDomainName = d.name;
+		editDomainSlug = d.slug;
+		editDomainIcon = d.icon;
+		editDomainColor = d.color;
+		editDomainDescription = d.description ?? '';
+	} else {
+		editDomainId = '';
+		editDomainName = '';
+		editDomainSlug = '';
+		editDomainIcon = null;
+		editDomainColor = null;
+		editDomainDescription = '';
+	}
+	iconFilter = '';
+	showDomainModal = true;
+}
+
+function openDeleteDomainDialog(d: { id: string; name: string; postCount: number }) {
+	deleteDomainId = d.id;
+	deleteDomainName = d.name;
+	deleteDomainPostCount = d.postCount;
+	showDeleteDomainDialog = true;
+}
+
+function handleDeleteEnhance() {
+	submitting = 'deleteTag';
+	return async ({
+		result,
+		update,
+	}: {
+		result: ActionResult;
+		update: (opts?: { reset?: boolean; invalidateAll?: boolean }) => Promise<void>;
+	}) => {
+		if (result.type === 'success' && result.data) {
+			toast.success(result.data.message as string);
+		} else if (result.type === 'failure') {
+			toast.error((result.data?.message as string) || 'Failed to delete tag.');
+		}
+		submitting = '';
+		return update({ reset: false });
 	};
+}
 
-	const filteredIcons = $derived(
-		iconFilter
-			? ICON_OPTIONS.filter((i) => i.name.includes(iconFilter.toLowerCase()))
-			: ICON_OPTIONS,
-	);
-
-	const previewTag = $derived({
-		slug: editDomainSlug || 'preview',
-		name: editDomainName || 'Domain',
-		icon: editDomainIcon,
-		color: editDomainColor,
-	});
-
-	const filteredTagIcons = $derived(
-		tagIconFilter
-			? ICON_OPTIONS.filter((i) => i.name.includes(tagIconFilter.toLowerCase()))
-			: ICON_OPTIONS,
-	);
-
-	const previewCategoryTag = $derived({
-		slug: editTagSlug || 'preview',
-		name: editTagName || 'Category',
-		icon: editTagIcon,
-		color: editTagColor,
-		glyph: editTagGlyph || null,
-	});
-
-	function openTagModal(t?: { id: string; name: string; slug: string; icon: string | null; color: number | null; glyph: string | null }) {
-		if (t) {
-			editTagId = t.id;
-			editTagName = t.name;
-			editTagSlug = t.slug;
-			editTagIcon = t.icon;
-			editTagColor = t.color;
-			editTagGlyph = t.glyph ?? '';
-		} else {
-			editTagId = '';
-			editTagName = '';
-			editTagSlug = '';
-			editTagIcon = null;
-			editTagColor = null;
-			editTagGlyph = '';
+function handleDeleteDomainEnhance() {
+	submitting = 'deleteDomain';
+	return async ({
+		result,
+		update,
+	}: {
+		result: ActionResult;
+		update: (opts?: { reset?: boolean; invalidateAll?: boolean }) => Promise<void>;
+	}) => {
+		if (result.type === 'success' && result.data) {
+			toast.success(result.data.message as string);
+		} else if (result.type === 'failure') {
+			toast.error((result.data?.message as string) || 'Failed to delete domain.');
 		}
-		tagIconFilter = '';
-		showTagModal = true;
-	}
-
-	function openDeleteDialog(tag: { id: string; name: string; postCount: number }) {
-		deleteTagId = tag.id;
-		deleteTagName = tag.name;
-		deletePostCount = tag.postCount;
-		showDeleteDialog = true;
-	}
-
-	function openDomainModal(d?: { id: string; name: string; slug: string; icon: string | null; color: number | null; description: string | null }) {
-		if (d) {
-			editDomainId = d.id;
-			editDomainName = d.name;
-			editDomainSlug = d.slug;
-			editDomainIcon = d.icon;
-			editDomainColor = d.color;
-			editDomainDescription = d.description ?? '';
-		} else {
-			editDomainId = '';
-			editDomainName = '';
-			editDomainSlug = '';
-			editDomainIcon = null;
-			editDomainColor = null;
-			editDomainDescription = '';
-		}
-		iconFilter = '';
-		showDomainModal = true;
-	}
-
-	function openDeleteDomainDialog(d: { id: string; name: string; postCount: number }) {
-		deleteDomainId = d.id;
-		deleteDomainName = d.name;
-		deleteDomainPostCount = d.postCount;
-		showDeleteDomainDialog = true;
-	}
-
-	function handleDeleteEnhance() {
-		submitting = 'deleteTag';
-		return async ({ result, update }: { result: any; update: (opts?: any) => Promise<void> }) => {
-			if (result.type === 'success' && result.data) {
-				toast.success(result.data.message as string);
-			} else if (result.type === 'failure') {
-				toast.error((result.data?.message as string) || 'Failed to delete tag.');
-			}
-			submitting = '';
-			return update({ reset: false });
-		};
-	}
-
-	function handleDeleteDomainEnhance() {
-		submitting = 'deleteDomain';
-		return async ({ result, update }: { result: any; update: (opts?: any) => Promise<void> }) => {
-			if (result.type === 'success' && result.data) {
-				toast.success(result.data.message as string);
-			} else if (result.type === 'failure') {
-				toast.error((result.data?.message as string) || 'Failed to delete domain.');
-			}
-			submitting = '';
-			return update({ reset: false });
-		};
-	}
+		submitting = '';
+		return update({ reset: false });
+	};
+}
 </script>
 
 <svelte:head>

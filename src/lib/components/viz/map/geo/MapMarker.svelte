@@ -10,11 +10,11 @@ interface Props {
 
 let { lnglat, draggable = false, children }: Props = $props();
 
-let MarkerComp: Component<any> | undefined = $state();
+let MarkerComp: Component<Props> | undefined = $state();
 
 onMount(async () => {
 	const sml = await import('svelte-maplibre-gl');
-	MarkerComp = sml.Marker;
+	MarkerComp = sml.Marker as unknown as Component<Props>;
 });
 </script>
 

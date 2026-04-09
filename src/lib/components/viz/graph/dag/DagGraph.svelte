@@ -44,8 +44,7 @@ let layoutLinks = $state<LayoutLink[]>([]);
 let selectedNodeId = $state<string | null>(null);
 let focusedNodeIdx = $state(-1);
 let palette: string[] = [];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let d3DagModule: any;
+let d3DagModule: typeof import('d3-dag') | undefined;
 
 function cleanup() {
 	d3DagModule = undefined;

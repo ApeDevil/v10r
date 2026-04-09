@@ -2,11 +2,11 @@
 import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
 import { contextMenuContentVariants, contextMenuItemVariants } from '$lib/components/composites/context-menu';
 import { cn } from '$lib/utils/cn';
+import { getDeskSettings } from './desk-settings.svelte';
 import { collectLeaves, hasPanelType } from './dock.operations';
 import { getDockContext } from './dock.state.svelte';
-import { getDeskSettings } from './desk-settings.svelte';
-import WorkspaceZone from './WorkspaceZone.svelte';
 import type { ActivityBarItem, ActivityBarPosition, PanelDefinition } from './dock.types';
+import WorkspaceZone from './WorkspaceZone.svelte';
 
 interface Props {
 	items: ActivityBarItem[];

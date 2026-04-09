@@ -1,4 +1,5 @@
 <script lang="ts">
+import type { ActionResult } from '@sveltejs/kit';
 import { enhance } from '$app/forms';
 import { Alert, Card, ConfirmDialog, NavSection } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
@@ -41,7 +42,13 @@ const totalNodes = $derived(data.labels.reduce((sum, l) => sum + l.count, 0));
 const totalRels = $derived(data.relTypes.reduce((sum, r) => sum + r.count, 0));
 
 function handleActionResult() {
-	return ({ result, update }: { result: any; update: (opts?: any) => Promise<void> }) => {
+	return ({
+		result,
+		update,
+	}: {
+		result: ActionResult;
+		update: (opts?: { reset?: boolean; invalidateAll?: boolean }) => Promise<void>;
+	}) => {
 		if (result.type === 'success') {
 			toast.success((result.data?.message as string) || 'Done.');
 		} else if (result.type === 'failure') {

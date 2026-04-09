@@ -3,12 +3,14 @@ import { getNotifications, getUnreadCount } from '$lib/server/db/notifications/q
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
+	if (!locals.user) return { notifications: [], unreadCount: 0, page: 1, pageSize: NOTIFICATIONS_PAGE_SIZE };
+
 	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
 	const offset = (page - 1) * NOTIFICATIONS_PAGE_SIZE;
 
 	const [notifications, unreadCount] = await Promise.all([
-		getNotifications(locals.user!.id, NOTIFICATIONS_PAGE_SIZE, offset),
-		getUnreadCount(locals.user!.id),
+		getNotifications(locals.user.id, NOTIFICATIONS_PAGE_SIZE, offset),
+		getUnreadCount(locals.user.id),
 	]);
 
 	return {

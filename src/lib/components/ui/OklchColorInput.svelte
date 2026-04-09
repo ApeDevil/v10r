@@ -1,5 +1,5 @@
 <script lang="ts">
-import { formatHex, converter, parse } from 'culori';
+import { converter, formatHex, parse } from 'culori';
 
 const toOklch = converter('oklch');
 const toRgb = converter('rgb');
@@ -10,11 +10,7 @@ interface Props {
 	onchange?: (value: string) => void;
 }
 
-let {
-	label,
-	value = $bindable(),
-	onchange,
-}: Props = $props();
+let { label, value = $bindable(), onchange }: Props = $props();
 
 // ── Internal slider state ──────────────────────────────────────
 let l = $state(0.5);
@@ -94,13 +90,13 @@ function onHexChange(raw: string) {
 
 // Gradient helpers for slider tracks
 const lGradient = $derived(
-	`linear-gradient(to right, oklch(0 ${c.toFixed(3)} ${h.toFixed(0)}), oklch(1 ${c.toFixed(3)} ${h.toFixed(0)}))`
+	`linear-gradient(to right, oklch(0 ${c.toFixed(3)} ${h.toFixed(0)}), oklch(1 ${c.toFixed(3)} ${h.toFixed(0)}))`,
 );
 const cGradient = $derived(
-	`linear-gradient(to right, oklch(${l.toFixed(3)} 0 ${h.toFixed(0)}), oklch(${l.toFixed(3)} 0.4 ${h.toFixed(0)}))`
+	`linear-gradient(to right, oklch(${l.toFixed(3)} 0 ${h.toFixed(0)}), oklch(${l.toFixed(3)} 0.4 ${h.toFixed(0)}))`,
 );
 const hGradient = $derived(
-	`linear-gradient(to right, oklch(${l.toFixed(3)} ${c.toFixed(3)} 0), oklch(${l.toFixed(3)} ${c.toFixed(3)} 60), oklch(${l.toFixed(3)} ${c.toFixed(3)} 120), oklch(${l.toFixed(3)} ${c.toFixed(3)} 180), oklch(${l.toFixed(3)} ${c.toFixed(3)} 240), oklch(${l.toFixed(3)} ${c.toFixed(3)} 300), oklch(${l.toFixed(3)} ${c.toFixed(3)} 360))`
+	`linear-gradient(to right, oklch(${l.toFixed(3)} ${c.toFixed(3)} 0), oklch(${l.toFixed(3)} ${c.toFixed(3)} 60), oklch(${l.toFixed(3)} ${c.toFixed(3)} 120), oklch(${l.toFixed(3)} ${c.toFixed(3)} 180), oklch(${l.toFixed(3)} ${c.toFixed(3)} 240), oklch(${l.toFixed(3)} ${c.toFixed(3)} 300), oklch(${l.toFixed(3)} ${c.toFixed(3)} 360))`,
 );
 
 const currentColor = $derived(buildOklchString(l, c, h));

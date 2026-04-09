@@ -7,6 +7,7 @@ import { relations } from 'drizzle-orm';
 
 import {
 	account,
+	asset,
 	auditLog,
 	chunk,
 	collection,
@@ -14,45 +15,44 @@ import {
 	// ai
 	conversation,
 	conversationStep,
-	toolCall,
+	// app
+	customPalettes,
+	deskTheme,
+	deskThemePreset,
+	deskWorkspace,
+	deskWorkspaceActive,
 	document,
+	domain,
 	// rag
 	embeddingModel,
+	file,
+	// desk
+	folder,
+	markdown,
 	message,
 	notificationDeliveries,
 	notificationSettings,
 	// notifications
 	notifications,
+	// blog
+	post,
+	postAsset,
+	postTag,
+	publishedRevision,
+	revision,
 	session,
-	// desk
-	folder,
-	file,
-	markdown,
 	spreadsheet,
-	deskTheme,
-	deskThemePreset,
-	deskWorkspace,
-	deskWorkspaceActive,
+	tag,
 	telegramVerificationTokens,
+	toolCall,
 	// showcase
 	typeSpecimen,
 	typeSpecimenHistory,
 	// auth
 	user,
 	userDiscordAccounts,
-	// app
-	customPalettes,
 	userPreferences,
 	userTelegramAccounts,
-	// blog
-	post,
-	revision,
-	publishedRevision,
-	tag,
-	postTag,
-	asset,
-	postAsset,
-	domain,
 } from './index';
 
 // ── Auth ─────────────────────────────────────────────────────────────

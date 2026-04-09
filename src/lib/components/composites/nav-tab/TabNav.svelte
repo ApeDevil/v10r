@@ -22,7 +22,7 @@ interface Props {
 
 let { tabs, groups, ariaLabel = 'Section navigation' }: Props = $props();
 
-const allTabs = $derived(groups ? groups.flatMap((g) => g.tabs) : tabs ?? []);
+const allTabs = $derived(groups ? groups.flatMap((g) => g.tabs) : (tabs ?? []));
 
 let chipsEl: HTMLElement | undefined = $state();
 let canScrollRight = $state(false);

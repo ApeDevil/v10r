@@ -1,46 +1,46 @@
 <script lang="ts">
-	import type { CustomizationConfig, CustomizationState, CustomizationPreset } from '$lib/config/customization';
-	import { checkConflicts, getDefaultState } from '$lib/config/customization';
-	import MaterialPicker from './MaterialPicker.svelte';
-	import PartToggleList from './PartToggleList.svelte';
-	import MorphTargetSliders from './MorphTargetSliders.svelte';
-	import AccessoryPicker from './AccessoryPicker.svelte';
-	import PresetBar from './PresetBar.svelte';
+import type { CustomizationConfig, CustomizationPreset, CustomizationState } from '$lib/config/customization';
+import { checkConflicts, getDefaultState } from '$lib/config/customization';
+import AccessoryPicker from './AccessoryPicker.svelte';
+import MaterialPicker from './MaterialPicker.svelte';
+import MorphTargetSliders from './MorphTargetSliders.svelte';
+import PartToggleList from './PartToggleList.svelte';
+import PresetBar from './PresetBar.svelte';
 
-	interface Props {
-		config: CustomizationConfig;
-		currentState: CustomizationState;
-		activePresetId?: string;
-		onmaterialchange: (groupId: string, optionId: string) => void;
-		onparttoggle: (partId: string, visible: boolean) => void;
-		onmorphchange: (key: string, value: number) => void;
-		onaccessorytoggle: (accessoryId: string, active: boolean) => void;
-		onpresetselect: (preset: CustomizationPreset) => void;
-		onreset: () => void;
-	}
+interface Props {
+	config: CustomizationConfig;
+	currentState: CustomizationState;
+	activePresetId?: string;
+	onmaterialchange: (groupId: string, optionId: string) => void;
+	onparttoggle: (partId: string, visible: boolean) => void;
+	onmorphchange: (key: string, value: number) => void;
+	onaccessorytoggle: (accessoryId: string, active: boolean) => void;
+	onpresetselect: (preset: CustomizationPreset) => void;
+	onreset: () => void;
+}
 
-	let {
-		config,
-		currentState,
-		activePresetId,
-		onmaterialchange,
-		onparttoggle,
-		onmorphchange,
-		onaccessorytoggle,
-		onpresetselect,
-		onreset,
-	}: Props = $props();
+let {
+	config,
+	currentState,
+	activePresetId,
+	onmaterialchange,
+	onparttoggle,
+	onmorphchange,
+	onaccessorytoggle,
+	onpresetselect,
+	onreset,
+}: Props = $props();
 
-	let collapsed = $state(false);
+let collapsed = $state(false);
 
-	const disabledIds = $derived(checkConflicts(currentState, config));
+const disabledIds = $derived(checkConflicts(currentState, config));
 
-	const hasContent = $derived(
-		(config.materialGroups?.length ?? 0) > 0 ||
+const hasContent = $derived(
+	(config.materialGroups?.length ?? 0) > 0 ||
 		(config.toggleableParts?.length ?? 0) > 0 ||
 		(config.morphTargetGroups?.length ?? 0) > 0 ||
-		(config.attachmentPoints?.length ?? 0) > 0
-	);
+		(config.attachmentPoints?.length ?? 0) > 0,
+);
 </script>
 
 <div class="panel" class:collapsed>

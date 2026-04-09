@@ -1,8 +1,8 @@
 import { safeParse } from 'valibot';
 import { aiConfigured } from '$lib/server/ai';
+import { orchestrateChat } from '$lib/server/ai/chat-orchestrator';
 import { RATE_LIMIT_MAX, RATE_LIMIT_PREFIX, RATE_LIMIT_WINDOW } from '$lib/server/ai/config';
 import { ChatRequestSchema } from '$lib/server/ai/validation';
-import { orchestrateChat } from '$lib/server/ai/chat-orchestrator';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiValidationError } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
@@ -28,7 +28,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	return orchestrateChat({
 		userId: user.id,
-		messages: parsed.output.messages,
+		messages: parsed.output.messages as Parameters<typeof orchestrateChat>[0]['messages'],
 		conversationId: parsed.output.conversationId,
 		useRetrieval: parsed.output.useRetrieval,
 		retrievalTiers: parsed.output.retrievalTiers,

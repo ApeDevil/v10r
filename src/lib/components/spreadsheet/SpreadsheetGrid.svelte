@@ -1,95 +1,95 @@
 <script lang="ts">
-	import type { SpreadsheetState } from './spreadsheet.state.svelte';
+import type { SpreadsheetState } from './spreadsheet.state.svelte';
 
-	interface Props {
-		sheet: SpreadsheetState;
+interface Props {
+	sheet: SpreadsheetState;
+}
+
+let { sheet }: Props = $props();
+
+let editInput: HTMLInputElement | undefined = $state();
+
+// Focus edit input when editing starts
+$effect(() => {
+	if (sheet.editing && editInput) {
+		editInput.focus();
 	}
+});
 
-	let { sheet }: Props = $props();
+function handleCellClick(col: number, row: number, event: MouseEvent) {
+	sheet.select(col, row, event.shiftKey);
+}
 
-	let editInput: HTMLInputElement | undefined = $state();
+function handleCellDblClick(col: number, row: number) {
+	sheet.select(col, row);
+	sheet.startEditing();
+}
 
-	// Focus edit input when editing starts
-	$effect(() => {
-		if (sheet.editing && editInput) {
-			editInput.focus();
-		}
-	});
-
-	function handleCellClick(col: number, row: number, event: MouseEvent) {
-		sheet.select(col, row, event.shiftKey);
+function handleEditKeydown(event: KeyboardEvent) {
+	if (event.key === 'Enter') {
+		event.preventDefault();
+		sheet.commitEdit();
+		sheet.moveSelection(0, 1);
+	} else if (event.key === 'Escape') {
+		sheet.cancelEdit();
+	} else if (event.key === 'Tab') {
+		event.preventDefault();
+		sheet.commitEdit();
+		sheet.moveSelection(event.shiftKey ? -1 : 1, 0);
 	}
+}
 
-	function handleCellDblClick(col: number, row: number) {
-		sheet.select(col, row);
-		sheet.startEditing();
-	}
+function handleGridKeydown(event: KeyboardEvent) {
+	if (sheet.editing) return;
 
-	function handleEditKeydown(event: KeyboardEvent) {
-		if (event.key === 'Enter') {
+	switch (event.key) {
+		case 'ArrowUp':
 			event.preventDefault();
-			sheet.commitEdit();
+			sheet.moveSelection(0, -1);
+			break;
+		case 'ArrowDown':
+			event.preventDefault();
 			sheet.moveSelection(0, 1);
-		} else if (event.key === 'Escape') {
-			sheet.cancelEdit();
-		} else if (event.key === 'Tab') {
+			break;
+		case 'ArrowLeft':
 			event.preventDefault();
-			sheet.commitEdit();
+			sheet.moveSelection(-1, 0);
+			break;
+		case 'ArrowRight':
+			event.preventDefault();
+			sheet.moveSelection(1, 0);
+			break;
+		case 'Enter':
+		case 'F2':
+			event.preventDefault();
+			sheet.startEditing();
+			break;
+		case 'Delete':
+		case 'Backspace':
+			if (sheet.activeCell) {
+				sheet.setCellRaw(sheet.activeCell.col, sheet.activeCell.row, '');
+			}
+			break;
+		case 'Tab':
+			event.preventDefault();
 			sheet.moveSelection(event.shiftKey ? -1 : 1, 0);
-		}
-	}
-
-	function handleGridKeydown(event: KeyboardEvent) {
-		if (sheet.editing) return;
-
-		switch (event.key) {
-			case 'ArrowUp':
-				event.preventDefault();
-				sheet.moveSelection(0, -1);
-				break;
-			case 'ArrowDown':
-				event.preventDefault();
-				sheet.moveSelection(0, 1);
-				break;
-			case 'ArrowLeft':
-				event.preventDefault();
-				sheet.moveSelection(-1, 0);
-				break;
-			case 'ArrowRight':
-				event.preventDefault();
-				sheet.moveSelection(1, 0);
-				break;
-			case 'Enter':
-			case 'F2':
-				event.preventDefault();
+			break;
+		default:
+			// Start editing on printable character
+			if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+				sheet.editValue = event.key;
 				sheet.startEditing();
-				break;
-			case 'Delete':
-			case 'Backspace':
-				if (sheet.activeCell) {
-					sheet.setCellRaw(sheet.activeCell.col, sheet.activeCell.row, '');
-				}
-				break;
-			case 'Tab':
-				event.preventDefault();
-				sheet.moveSelection(event.shiftKey ? -1 : 1, 0);
-				break;
-			default:
-				// Start editing on printable character
-				if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
-					sheet.editValue = event.key;
-					sheet.startEditing();
-				}
-		}
+			}
 	}
+}
 
-	function formatDisplay(value: import('$lib/utils/spreadsheet').CellValue): string {
-		if (value === null) return '';
-		if (typeof value === 'number') {
-			return value.toLocaleString();
-		}
-		return String(value);
+function formatDisplay(value: import('$lib/utils/spreadsheet').CellValue): string {
+	if (value === null) return '';
+	if (typeof value === 'number') {
+		return value.toLocaleString();
 	}
+	return String(value);
+}
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->

@@ -1,42 +1,36 @@
 <script lang="ts">
-	import { Dialog as DialogPrimitive } from 'bits-ui';
-	import { Canvas } from '@threlte/core';
-	import type { Model3D } from '$lib/config/models';
-	import { resolveViewportConfig } from '$lib/config/models';
-	import { BoundaryFallback } from '$lib/components/composites';
-	import ViewerScene from './ViewerScene.svelte';
-	import ViewerOverlay from './ViewerOverlay.svelte';
+import { Canvas } from '@threlte/core';
+import { Dialog as DialogPrimitive } from 'bits-ui';
+import { BoundaryFallback } from '$lib/components/composites';
+import type { Model3D } from '$lib/config/models';
+import { resolveViewportConfig } from '$lib/config/models';
+import ViewerOverlay from './ViewerOverlay.svelte';
+import ViewerScene from './ViewerScene.svelte';
 
-	interface Props {
-		model: Model3D;
-		open: boolean;
-		onclose?: () => void;
-		/** Render as standalone full-page viewer (no dialog wrapper, always open) */
-		standalone?: boolean;
-		/** Back href for standalone mode (default: '/showcases/3d') */
-		backHref?: string;
+interface Props {
+	model: Model3D;
+	open: boolean;
+	onclose?: () => void;
+	/** Render as standalone full-page viewer (no dialog wrapper, always open) */
+	standalone?: boolean;
+	/** Back href for standalone mode (default: '/showcases/3d') */
+	backHref?: string;
+}
+
+let { model, open = $bindable(false), onclose, standalone = false, backHref = '/showcases/3d' }: Props = $props();
+
+const config = $derived(resolveViewportConfig(model));
+const customizeHref = $derived(model.customization ? `/showcases/3d/customize/${model.id}` : undefined);
+
+let currentAnimation = $state(model.animations?.defaultClip ?? '');
+
+function handleOpenChange(isOpen: boolean) {
+	open = isOpen;
+	if (!isOpen) {
+		currentAnimation = model.animations?.defaultClip ?? '';
+		onclose?.();
 	}
-
-	let {
-		model,
-		open = $bindable(false),
-		onclose,
-		standalone = false,
-		backHref = '/showcases/3d',
-	}: Props = $props();
-
-	const config = $derived(resolveViewportConfig(model));
-	const customizeHref = $derived(model.customization ? `/showcases/3d/customize/${model.id}` : undefined);
-
-	let currentAnimation = $state(model.animations?.defaultClip ?? '');
-
-	function handleOpenChange(isOpen: boolean) {
-		open = isOpen;
-		if (!isOpen) {
-			currentAnimation = model.animations?.defaultClip ?? '';
-			onclose?.();
-		}
-	}
+}
 </script>
 
 {#snippet viewerContent()}

@@ -1,9 +1,9 @@
 import { requireAdmin } from '$lib/server/auth/guards';
 import {
-	getOverviewMetrics,
-	getTrafficTrend,
-	getTopPages,
 	getConsentSplit,
+	getOverviewMetrics,
+	getTopPages,
+	getTrafficTrend,
 } from '$lib/server/db/analytics/aggregations';
 import { safeDeferPromise } from '$lib/server/utils/safe-defer';
 import type { PageServerLoad } from './$types';
@@ -15,16 +15,11 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	requireAdmin(locals);
 
 	const rangeParam = url.searchParams.get('range') ?? '30';
-	const range: Range = (VALID_RANGES as readonly string[]).includes(rangeParam)
-		? (rangeParam as Range)
-		: '30';
+	const range: Range = (VALID_RANGES as readonly string[]).includes(rangeParam) ? (rangeParam as Range) : '30';
 	const days = Number(range);
 
 	// Eager: headline stats + consent breakdown (fast aggregate queries)
-	const [overview, consentSplit] = await Promise.all([
-		getOverviewMetrics(days),
-		getConsentSplit(days),
-	]);
+	const [overview, consentSplit] = await Promise.all([getOverviewMetrics(days), getConsentSplit(days)]);
 
 	return {
 		range,

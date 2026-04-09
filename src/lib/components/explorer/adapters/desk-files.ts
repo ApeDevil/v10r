@@ -11,14 +11,7 @@ const SPREADSHEET_CAPABILITIES: NodeCapability[] = [
 	'delete',
 ];
 
-const MARKDOWN_CAPABILITIES: NodeCapability[] = [
-	'open',
-	'open-new-panel',
-	'rename',
-	'move',
-	'ai-context',
-	'delete',
-];
+const MARKDOWN_CAPABILITIES: NodeCapability[] = ['open', 'open-new-panel', 'rename', 'move', 'ai-context', 'delete'];
 
 const FOLDER_CAPABILITIES: NodeCapability[] = ['rename', 'move', 'delete', 'new-folder', 'new-spreadsheet'];
 

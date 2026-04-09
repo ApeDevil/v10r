@@ -3,12 +3,12 @@ import type { Snippet } from 'svelte';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import DockDropOverlay from './DockDropOverlay.svelte';
 import DockTabBar from './DockTabBar.svelte';
-import { getDockContext } from './dock.state.svelte';
-import { getDeskSettings } from './desk-settings.svelte';
 import { setContextFocus } from './desk-context.svelte';
-import { getActiveMenus, setFocusedPanel } from './panel-menus.svelte';
-import { hasPanelType, collectLeaves } from './dock.operations';
+import { getDeskSettings } from './desk-settings.svelte';
+import { collectLeaves, hasPanelType } from './dock.operations';
+import { getDockContext } from './dock.state.svelte';
 import type { LeafNode } from './dock.types';
+import { getActiveMenus, setFocusedPanel } from './panel-menus.svelte';
 
 interface Props {
 	leaf: LeafNode;
@@ -63,22 +63,34 @@ function closeFocusedPanel() {
 const viewMenu = $derived<MenuBarMenu>({
 	label: 'View',
 	items: [
-		{ label: 'Toggle Explorer', icon: 'i-lucide-folder-tree', shortcut: 'Ctrl+Shift+E', onSelect: () => togglePanelType('explorer') },
-		{ label: 'Toggle Preview', icon: 'i-lucide-eye', shortcut: 'Ctrl+Shift+P', onSelect: () => togglePanelType('preview') },
+		{
+			label: 'Toggle Explorer',
+			icon: 'i-lucide-folder-tree',
+			shortcut: 'Ctrl+Shift+E',
+			onSelect: () => togglePanelType('explorer'),
+		},
+		{
+			label: 'Toggle Preview',
+			icon: 'i-lucide-eye',
+			shortcut: 'Ctrl+Shift+P',
+			onSelect: () => togglePanelType('preview'),
+		},
 		{ type: 'separator' },
 		{ label: 'Split Right', icon: 'i-lucide-columns-2', onSelect: () => splitFocused('right') },
 		{ label: 'Split Down', icon: 'i-lucide-rows-2', onSelect: () => splitFocused('bottom') },
 		{ type: 'separator' },
 		{ label: 'Close Active Panel', icon: 'i-lucide-x', shortcut: 'Ctrl+W', onSelect: closeFocusedPanel },
 		{ type: 'separator' },
-		{ label: 'Desk Preferences\u2026', icon: 'i-lucide-settings', shortcut: 'Ctrl+Shift+,', onSelect: () => deskSettings.openDialog() },
+		{
+			label: 'Desk Preferences\u2026',
+			icon: 'i-lucide-settings',
+			shortcut: 'Ctrl+Shift+,',
+			onSelect: () => deskSettings.openDialog(),
+		},
 	],
 });
 
-const leafMenus = $derived<MenuBarMenu[]>([
-	...getActiveMenus().menuBar,
-	viewMenu,
-]);
+const leafMenus = $derived<MenuBarMenu[]>([...getActiveMenus().menuBar, viewMenu]);
 
 // Per-panel-type color override (inline CSS vars on the leaf element)
 const leafStyle = $derived.by(() => {

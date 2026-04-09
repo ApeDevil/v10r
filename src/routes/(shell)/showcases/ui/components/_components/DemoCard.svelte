@@ -1,8 +1,8 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
-import { cn } from '$lib/utils/cn';
 import { InfoDialog } from '$lib/components/composites/info-dialog';
 import type { ComponentDoc } from '$lib/components/composites/info-dialog/types';
+import { cn } from '$lib/utils/cn';
 
 interface Props {
 	title: string;

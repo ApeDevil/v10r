@@ -1,7 +1,7 @@
-import { redis } from '../index';
-import { CacheError } from '../errors';
-import { invalidateFlagCache } from '$lib/server/admin/flags';
 import { invalidateAnnouncementCache } from '$lib/server/admin/announcements';
+import { invalidateFlagCache } from '$lib/server/admin/flags';
+import { CacheError } from '../errors';
+import { redis } from '../index';
 
 function requireRedis() {
 	if (!redis) throw new CacheError('credentials', 'Redis is not configured');

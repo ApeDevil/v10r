@@ -23,16 +23,8 @@ export function apiNoContent() {
 	return new Response(null, { status: 204 });
 }
 
-export function apiError(
-	status: number,
-	code: string,
-	message: string,
-	fields?: Record<string, string>,
-) {
-	return json(
-		{ error: { code, message, ...(fields && { fields }) } },
-		{ status },
-	);
+export function apiError(status: number, code: string, message: string, fields?: Record<string, string>) {
+	return json({ error: { code, message, ...(fields && { fields }) } }, { status });
 }
 
 export function apiValidationError(issues: BaseIssue<unknown>[]) {

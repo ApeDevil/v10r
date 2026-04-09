@@ -1,9 +1,9 @@
 <script lang="ts">
 import { Asterism, CornerFrame, Divider } from '$lib/components';
+import LogoHero from '$lib/components/branding/LogoHero.svelte';
 import { localizeHref } from '$lib/i18n';
 import { getStyle } from '$lib/state/style.svelte';
 import { getTheme } from '$lib/state/theme.svelte';
-import LogoHero from '$lib/components/branding/LogoHero.svelte';
 import { fadeIn } from './_components/fadeIn';
 import InstancesSection from './_components/InstancesSection.svelte';
 import StructureSection from './_components/StructureSection.svelte';
@@ -31,7 +31,7 @@ const specimenName = 'Velociraptor';
 
 const zones: Array<{
 	name: string;
-capabilities: Array<{ icon: string; label: string; desc: string }>;
+	capabilities: Array<{ icon: string; label: string; desc: string }>;
 }> = [
 	{
 		name: 'RUNTIME',

@@ -58,11 +58,7 @@ export function expandRange(from: string, to: string): { col: number; row: numbe
  * Evaluate a formula string. Input should start with "=".
  * Returns computed value or an error string prefixed with "#".
  */
-export function evaluateFormula(
-	expr: string,
-	getCell: CellGetter,
-	visiting: Set<string> = new Set(),
-): CellValue {
+export function evaluateFormula(expr: string, getCell: CellGetter, visiting: Set<string> = new Set()): CellValue {
 	if (!expr.startsWith('=')) return expr;
 	const body = expr.slice(1).trim();
 	if (!body) return '#ERROR';
@@ -99,7 +95,7 @@ function evalExpression(expr: string, getCell: CellGetter, visiting: Set<string>
 
 	// Try number
 	const num = Number(trimmed);
-	if (!isNaN(num) && trimmed !== '') return num;
+	if (!Number.isNaN(num) && trimmed !== '') return num;
 
 	// Try quoted string (preserve original case)
 	if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
@@ -109,12 +105,7 @@ function evalExpression(expr: string, getCell: CellGetter, visiting: Set<string>
 	return '#ERROR';
 }
 
-function evalFunction(
-	fn: string,
-	argsStr: string,
-	getCell: CellGetter,
-	visiting: Set<string>,
-): CellValue {
+function evalFunction(fn: string, argsStr: string, getCell: CellGetter, visiting: Set<string>): CellValue {
 	if (fn === 'IF') {
 		return evalIf(argsStr, getCell, visiting);
 	}
@@ -207,7 +198,7 @@ function evalIf(argsStr: string, getCell: CellGetter, visiting: Set<string>): Ce
 
 	const leftNum = typeof left === 'number' ? left : Number(left);
 	const rightNum = typeof right === 'number' ? right : Number(right);
-	const useNumeric = !isNaN(leftNum) && !isNaN(rightNum);
+	const useNumeric = !Number.isNaN(leftNum) && !Number.isNaN(rightNum);
 
 	let result: boolean;
 	switch (op) {

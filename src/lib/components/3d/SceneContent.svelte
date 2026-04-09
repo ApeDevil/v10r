@@ -1,8 +1,8 @@
 <script lang="ts">
 import { T, useTask } from '@threlte/core';
 import { useGltf } from '@threlte/extras';
-import type { Model3D, ResolvedCardConfig } from '$lib/config/models';
 import { AnimationMixer, type PerspectiveCamera, Vector3 } from 'three';
+import type { Model3D, ResolvedCardConfig } from '$lib/config/models';
 
 interface Props {
 	model: Model3D;
@@ -31,7 +31,7 @@ $effect(() => {
 	const data = $gltf;
 	if (!data || !model.animations) return;
 	mixer = new AnimationMixer(data.scene);
-	const clip = data.animations.find((c) => c.name === model.animations!.defaultClip);
+	const clip = data.animations.find((c) => c.name === model.animations?.defaultClip);
 	if (clip) mixer.clipAction(clip).play();
 });
 

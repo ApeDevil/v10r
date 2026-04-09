@@ -1,11 +1,11 @@
 import { fail } from '@sveltejs/kit';
 import { and, asc, count, desc, eq, ilike, or, sql } from 'drizzle-orm';
-import { requireAdmin } from '$lib/server/auth/guards';
+import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
 import { auth } from '$lib/server/auth';
+import { requireAdmin } from '$lib/server/auth/guards';
+import { ADMIN_USERS_PAGE_SIZE } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema/auth';
-import { recordAuditEvent, getAuditContext } from '$lib/server/admin';
-import { ADMIN_USERS_PAGE_SIZE } from '$lib/server/config';
 import type { Actions, PageServerLoad } from './$types';
 
 const SORTABLE_COLUMNS = ['email', 'name', 'createdAt'] as const;

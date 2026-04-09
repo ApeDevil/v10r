@@ -16,10 +16,14 @@ let deleteDocTitle = $state('');
 
 function statusVariant(status: string): 'success' | 'error' | 'warning' | 'secondary' {
 	switch (status) {
-		case 'ready': return 'success';
-		case 'error': return 'error';
-		case 'processing': return 'warning';
-		default: return 'secondary';
+		case 'ready':
+			return 'success';
+		case 'error':
+			return 'error';
+		case 'processing':
+			return 'warning';
+		default:
+			return 'secondary';
 	}
 }
 

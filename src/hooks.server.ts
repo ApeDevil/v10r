@@ -1,27 +1,27 @@
-import { type Handle, type HandleServerError, error, json, redirect } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
+import { error, type Handle, type HandleServerError, json, redirect } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { building } from '$app/environment';
+import { env } from '$env/dynamic/private';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { auth } from '$lib/server/auth';
+import { getCustomPaletteById } from '$lib/server/branding/palette-crud';
 import { AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW, HSTS_MAX_AGE } from '$lib/server/config';
 import { logFeatureStatus } from '$lib/server/features';
-import { getCustomPaletteById } from '$lib/server/branding/palette-crud';
 import { getBrandConfig } from '$lib/server/style/brand';
 import {
 	generateRandomStyle,
 	parseStyleCookie,
 	resolveStyle,
-	serializeStyleCookie,
 	STYLE_COOKIE_NAME,
 	STYLE_COOKIE_OPTIONS,
+	serializeStyleCookie,
 } from '$lib/styles/random';
 import { deriveAccentTokens } from '$lib/styles/random/accent';
+import { getRadius } from '$lib/styles/random/radius-registry';
 import type { PaletteId, ResolvedStyle } from '$lib/styles/random/types';
 import { getTypography } from '$lib/styles/random/typography-registry';
-import { getRadius } from '$lib/styles/random/radius-registry';
 import '$lib/server/jobs/scheduler';
 import '$lib/server/jobs/delivery-scheduler';
 
@@ -49,11 +49,31 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
 
 /** Allowlisted token keys for CSS injection (from PaletteColors interface) */
 const VALID_TOKEN_KEYS = new Set([
-	'bg', 'fg', 'body', 'heading', 'muted', 'border', 'subtle',
-	'primary', 'primary-hover', 'primary-container', 'on-primary-container',
-	'primary-dim', 'on-primary', 'secondary', 'on-secondary',
-	'accent', 'accent-hover', 'on-accent', 'accent-container', 'on-accent-container',
-	'input', 'input-border', 'surface-1', 'surface-2', 'surface-3',
+	'bg',
+	'fg',
+	'body',
+	'heading',
+	'muted',
+	'border',
+	'subtle',
+	'primary',
+	'primary-hover',
+	'primary-container',
+	'on-primary-container',
+	'primary-dim',
+	'on-primary',
+	'secondary',
+	'on-secondary',
+	'accent',
+	'accent-hover',
+	'on-accent',
+	'accent-container',
+	'on-accent-container',
+	'input',
+	'input-border',
+	'surface-1',
+	'surface-2',
+	'surface-3',
 ]);
 const OKLCH_RE = /^oklch\(\s*[\d.]+\s+[\d.]+\s+[\d.]+\s*\)$/;
 
@@ -146,21 +166,14 @@ const i18n: Handle = ({ event, resolve }) =>
 				const cp = event.locals.customPaletteColors;
 				if (cp && event.locals.style?.paletteId) {
 					const pid = event.locals.style.paletteId;
-					const toVar = (k: string) =>
-						k.startsWith('surface-') ? `--${k}` : `--color-${k}`;
+					const toVar = (k: string) => (k.startsWith('surface-') ? `--${k}` : `--color-${k}`);
 					const safeEntries = (colors: Record<string, string>) =>
-						Object.entries(colors).filter(
-							([k, v]) => VALID_TOKEN_KEYS.has(k) && OKLCH_RE.test(v),
-						);
+						Object.entries(colors).filter(([k, v]) => VALID_TOKEN_KEYS.has(k) && OKLCH_RE.test(v));
 
 					// Derive accent tokens from primary + offset (only for tokens not explicitly set)
 					const accentOffset = event.locals.customPaletteAccentOffset ?? 0;
-					const lightAccent = cp.light.primary
-						? deriveAccentTokens(cp.light.primary, accentOffset)
-						: {};
-					const darkAccent = cp.dark.primary
-						? deriveAccentTokens(cp.dark.primary, accentOffset)
-						: {};
+					const lightAccent = cp.light.primary ? deriveAccentTokens(cp.light.primary, accentOffset) : {};
+					const darkAccent = cp.dark.primary ? deriveAccentTokens(cp.dark.primary, accentOffset) : {};
 
 					// Admin-set accent tokens win over derived ones
 					const lightExplicit = new Set(safeEntries(cp.light).map(([k]) => k));
@@ -276,7 +289,15 @@ const routeGuard: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
-export const handle = sequence(securityHeaders, loadStyle, i18n, authHandler, sessionPopulate, csrfProtection, routeGuard);
+export const handle = sequence(
+	securityHeaders,
+	loadStyle,
+	i18n,
+	authHandler,
+	sessionPopulate,
+	csrfProtection,
+	routeGuard,
+);
 
 export const handleError: HandleServerError = ({ error, event, status, message }) => {
 	// 404s from unknown routes — no errorId needed

@@ -5,11 +5,12 @@
  * - Heading IDs from rehype-slug
  * - Shiki syntax highlighting classes/styles (safe properties only)
  */
-import { defaultSchema } from 'rehype-sanitize';
+
+import type { Element, Root as HastRoot } from 'hast';
 import type { Schema } from 'hast-util-sanitize';
-import { visit } from 'unist-util-visit';
-import type { Root as HastRoot, Element } from 'hast';
+import { defaultSchema } from 'rehype-sanitize';
 import type { Plugin } from 'unified';
+import { visit } from 'unist-util-visit';
 
 function mergeArrays(existing: string[] | undefined, additions: string[]): string[] {
 	return [...(existing ?? []), ...additions];
@@ -40,7 +41,10 @@ export function sanitizeStyle(style: string): string {
 			const colonIdx = decl.indexOf(':');
 			if (colonIdx === -1) return false;
 			const prop = decl.slice(0, colonIdx).trim().toLowerCase();
-			const value = decl.slice(colonIdx + 1).trim().toLowerCase();
+			const value = decl
+				.slice(colonIdx + 1)
+				.trim()
+				.toLowerCase();
 			// Block url(), expression(), and other dangerous CSS values
 			if (/\b(url|expression|javascript)\s*\(/.test(value)) return false;
 			return SAFE_CSS_PROPERTIES.has(prop);
@@ -62,7 +66,7 @@ export const rehypeSanitizeStyles: Plugin<[], HastRoot> = () => {
 			}
 		});
 	};
-}
+};
 
 export const blogSanitizeSchema: Schema = {
 	...defaultSchema,
@@ -77,18 +81,9 @@ export const blogSanitizeSchema: Schema = {
 			'data-embed-attrs',
 			'className',
 		]),
-		span: mergeArrays(defaultSchema.attributes?.span as string[] | undefined, [
-			'className',
-		]),
-		pre: mergeArrays(defaultSchema.attributes?.pre as string[] | undefined, [
-			'className',
-			'style',
-			'tabIndex',
-		]),
-		code: mergeArrays(defaultSchema.attributes?.code as string[] | undefined, [
-			'className',
-			'style',
-		]),
+		span: mergeArrays(defaultSchema.attributes?.span as string[] | undefined, ['className']),
+		pre: mergeArrays(defaultSchema.attributes?.pre as string[] | undefined, ['className', 'style', 'tabIndex']),
+		code: mergeArrays(defaultSchema.attributes?.code as string[] | undefined, ['className', 'style']),
 		// Allow id on all elements (heading IDs from rehype-slug)
 		'*': mergeArrays(defaultSchema.attributes?.['*'] as string[] | undefined, ['id']),
 	},

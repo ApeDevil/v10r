@@ -9,16 +9,18 @@ function getEmbeddingModel() {
 	if (!apiKey) {
 		throw new RetrievalError('embedding', 'GOOGLE_GENERATIVE_AI_API_KEY is not set for embeddings');
 	}
-	return createGoogleGenerativeAI({ apiKey }).embedding(EMBEDDING_MODEL, {
-		outputDimensionality: EMBEDDING_DIMENSIONS,
-	});
+	return createGoogleGenerativeAI({ apiKey }).embedding(EMBEDDING_MODEL);
 }
+
+const embeddingProviderOptions = {
+	google: { outputDimensionality: EMBEDDING_DIMENSIONS },
+};
 
 /** Generate a single embedding for a query string. */
 export async function generateEmbedding(text: string): Promise<number[]> {
 	try {
 		const model = getEmbeddingModel();
-		const result = await embed({ model, value: text });
+		const result = await embed({ model, value: text, providerOptions: embeddingProviderOptions });
 		return result.embedding;
 	} catch (err) {
 		if (err instanceof RetrievalError) throw err;
@@ -35,7 +37,7 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
 
 	try {
 		const model = getEmbeddingModel();
-		const result = await embedMany({ model, values: texts });
+		const result = await embedMany({ model, values: texts, providerOptions: embeddingProviderOptions });
 		return result.embeddings;
 	} catch (err) {
 		if (err instanceof RetrievalError) throw err;

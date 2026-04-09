@@ -1,10 +1,10 @@
 <script lang="ts">
+import type { ChartData } from 'chart.js';
 import { invalidateAll } from '$app/navigation';
 import { Alert, Card, DiagGrid, DiagRow, EmptyState } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Button, Skeleton, Tag } from '$lib/components/primitives';
 import LineChart from '$lib/components/viz/chart/line/LineChart.svelte';
-import type { ChartData } from 'chart.js';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();

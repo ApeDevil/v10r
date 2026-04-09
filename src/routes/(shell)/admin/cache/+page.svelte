@@ -31,20 +31,29 @@ let inspecting = $state('');
 
 function typeVariant(type: string): 'default' | 'success' | 'warning' | 'error' | 'secondary' {
 	switch (type) {
-		case 'string': return 'default';
-		case 'hash': return 'success';
-		case 'list': return 'warning';
-		case 'set': return 'secondary';
-		case 'zset': return 'error';
-		default: return 'secondary';
+		case 'string':
+			return 'default';
+		case 'hash':
+			return 'success';
+		case 'list':
+			return 'warning';
+		case 'set':
+			return 'secondary';
+		case 'zset':
+			return 'error';
+		default:
+			return 'secondary';
 	}
 }
 
 function thresholdVariant(threshold: string): 'success' | 'warning' | 'error' {
 	switch (threshold) {
-		case 'warning': return 'warning';
-		case 'error': return 'error';
-		default: return 'success';
+		case 'warning':
+			return 'warning';
+		case 'error':
+			return 'error';
+		default:
+			return 'success';
 	}
 }
 
