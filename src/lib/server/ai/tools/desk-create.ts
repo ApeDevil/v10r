@@ -59,7 +59,7 @@ export function createCreateTools(userId: string) {
 				},
 				required: ['name', 'cells'],
 			}),
-			execute: async ({ name, cells }) => {
+			execute: async ({ name, cells }, { abortSignal }) => {
 				try {
 					const cellMap: Record<string, unknown> = {};
 					for (const { cell, value } of cells) {
@@ -112,7 +112,7 @@ export function createCreateTools(userId: string) {
 				},
 				required: ['name', 'content'],
 			}),
-			execute: async ({ name, content }) => {
+			execute: async ({ name, content }, { abortSignal }) => {
 				try {
 					const result = await createMarkdownFile(userId, name, content);
 
@@ -154,7 +154,7 @@ export function createDeleteTools(userId: string) {
 				},
 				required: ['file_id', 'confirmed'],
 			}),
-			execute: async ({ file_id, confirmed }) => {
+			execute: async ({ file_id, confirmed }, { abortSignal }) => {
 				try {
 					pruneExpiredPreviews();
 					const fileRow = await getFile(file_id, userId);

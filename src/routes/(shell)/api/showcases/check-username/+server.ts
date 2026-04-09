@@ -1,4 +1,4 @@
-import { json } from '@sveltejs/kit';
+import { apiError, apiOk } from '$lib/server/api/response';
 import { USERNAME_CHECK_RATE_LIMIT_MAX, USERNAME_CHECK_RATE_LIMIT_WINDOW_MS } from '$lib/server/config';
 import type { RequestHandler } from './$types';
 
@@ -25,7 +25,7 @@ function checkRateLimit(ip: string): boolean {
 export const GET: RequestHandler = async ({ url, getClientAddress }) => {
 	const ip = getClientAddress();
 	if (!checkRateLimit(ip)) {
-		return json({ error: 'Too many requests' }, { status: 429 });
+		return apiError(429, 'rate_limited', 'Too many requests.');
 	}
 
 	const username = url.searchParams.get('u')?.toLowerCase() ?? '';
@@ -35,5 +35,5 @@ export const GET: RequestHandler = async ({ url, getClientAddress }) => {
 
 	const available = username.length >= 3 && !TAKEN_USERNAMES.includes(username);
 
-	return json({ available });
+	return apiOk({ available });
 };

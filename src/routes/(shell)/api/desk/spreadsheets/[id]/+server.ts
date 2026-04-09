@@ -1,6 +1,6 @@
-import { json } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { safeParse } from 'valibot';
+import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { updateSpreadsheet } from '$lib/server/db/desk/mutations';
 import { getSpreadsheet } from '$lib/server/db/desk/queries';
@@ -16,8 +16,8 @@ const UpdateSchema = v.object({
 export const GET: RequestHandler = async ({ params, locals }) => {
 	const { user } = requireApiUser(locals);
 	const row = await getSpreadsheet(params.id, user.id);
-	if (!row) return json({ error: 'Not found.' }, { status: 404 });
-	return json({ spreadsheet: row });
+	if (!row) return apiError(404, 'not_found', 'Spreadsheet not found.');
+	return apiOk({ spreadsheet: row });
 };
 
 /** Save/update a spreadsheet. */
@@ -25,14 +25,14 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 	const { user } = requireApiUser(locals);
 
 	const body = await request.json().catch(() => null);
-	if (!body) return json({ error: 'Invalid request body.' }, { status: 400 });
+	if (!body) return apiError(400, 'invalid_body', 'Invalid request body.');
 
 	const parsed = safeParse(UpdateSchema, body);
 	if (!parsed.success) {
-		return json({ error: 'Invalid request.' }, { status: 400 });
+		return apiValidationError(parsed.issues);
 	}
 
 	const row = await updateSpreadsheet(params.id, user.id, parsed.output);
-	if (!row) return json({ error: 'Not found.' }, { status: 404 });
-	return json({ spreadsheet: row });
+	if (!row) return apiError(404, 'not_found', 'Spreadsheet not found.');
+	return apiOk({ spreadsheet: row });
 };

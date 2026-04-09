@@ -58,7 +58,7 @@
 			try {
 				const res = await apiFetch(`/api/desk/spreadsheets/${storedId}`);
 				if (res.ok) {
-					const { spreadsheet } = await res.json();
+					const { data: { spreadsheet } } = await res.json();
 					spreadsheetId = spreadsheet.id;
 					const cells = spreadsheet.cells as Record<string, { v: string | number | null; f?: string; t?: string }>;
 					if (cells && Object.keys(cells).length > 0) {
@@ -84,7 +84,7 @@
 				body: JSON.stringify({ name: sheetName, cells: sheet.toJSON() }),
 			});
 			if (res.ok) {
-				const { spreadsheet } = await res.json();
+				const { data: { spreadsheet } } = await res.json();
 				spreadsheetId = spreadsheet.id;
 				localStorage.setItem(STORAGE_KEY, spreadsheet.id);
 			}

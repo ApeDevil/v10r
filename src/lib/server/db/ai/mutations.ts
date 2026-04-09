@@ -39,29 +39,31 @@ export async function saveMessages(
 	const valid = messages.filter((m) => VALID_ROLES.has(m.role as any));
 	if (valid.length === 0) return;
 
-	// Verify conversation ownership before inserting
-	const [conv] = await db
-		.select({ id: conversation.id })
-		.from(conversation)
-		.where(and(eq(conversation.id, conversationId), eq(conversation.userId, userId)))
-		.limit(1);
+	await db.transaction(async (tx) => {
+		// Verify conversation ownership before inserting
+		const [conv] = await tx
+			.select({ id: conversation.id })
+			.from(conversation)
+			.where(and(eq(conversation.id, conversationId), eq(conversation.userId, userId)))
+			.limit(1);
 
-	if (!conv) return;
+		if (!conv) return;
 
-	await db
-		.insert(message)
-		.values(
-			valid.map((m) => ({
-				id: m.id,
-				conversationId,
-				role: m.role as 'user' | 'assistant' | 'system' | 'tool',
-				content: m.content,
-			})),
-		)
-		.onConflictDoNothing();
+		await tx
+			.insert(message)
+			.values(
+				valid.map((m) => ({
+					id: m.id,
+					conversationId,
+					role: m.role as 'user' | 'assistant' | 'system' | 'tool',
+					content: m.content,
+				})),
+			)
+			.onConflictDoNothing();
 
-	// Touch updatedAt so listing reflects recent activity
-	await db.update(conversation).set({ updatedAt: new Date() }).where(eq(conversation.id, conversationId));
+		// Touch updatedAt so listing reflects recent activity
+		await tx.update(conversation).set({ updatedAt: new Date() }).where(eq(conversation.id, conversationId));
+	});
 }
 
 /** Update message content (used to backfill pre-inserted assistant messages). */

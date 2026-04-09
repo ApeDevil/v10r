@@ -20,7 +20,7 @@ const variantClasses = {
 
 <div
 	class={cn(
-		'animate-pulse bg-muted/30',
+		'animate-pulse skeleton-bg',
 		variantClasses[variant],
 		rounded && `rounded-${rounded}`,
 		className
@@ -44,5 +44,10 @@ const variantClasses = {
 
 	.animate-pulse {
 		animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+	}
+
+	/* UnoCSS can't apply opacity modifiers to CSS custom property colors */
+	.skeleton-bg {
+		background-color: color-mix(in srgb, var(--color-muted) 30%, transparent);
 	}
 </style>

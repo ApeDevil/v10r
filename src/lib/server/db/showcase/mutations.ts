@@ -17,32 +17,34 @@ export async function createSpecimen(data: {
 	quantity?: number;
 	isActive?: boolean;
 }) {
-	const [row] = await db
-		.insert(typeSpecimen)
-		.values({
-			label: data.label,
-			code: data.code,
-			rating: data.rating ?? null,
-			quantity: data.quantity ?? 0,
-			isActive: data.isActive ?? true,
-		})
-		.returning();
+	return db.transaction(async (tx) => {
+		const [row] = await tx
+			.insert(typeSpecimen)
+			.values({
+				label: data.label,
+				code: data.code,
+				rating: data.rating ?? null,
+				quantity: data.quantity ?? 0,
+				isActive: data.isActive ?? true,
+			})
+			.returning();
 
-	// Also insert initial history entry
-	await db.insert(typeSpecimenHistory).values({
-		specimenId: row.id,
-		version: 1,
-		label: row.label,
-		code: row.code,
-		rating: row.rating,
-		quantity: row.quantity,
-		price: row.price,
-		isActive: row.isActive,
-		changedBy: 'showcase-user',
-		changeType: 'create',
+		// Also insert initial history entry
+		await tx.insert(typeSpecimenHistory).values({
+			specimenId: row.id,
+			version: 1,
+			label: row.label,
+			code: row.code,
+			rating: row.rating,
+			quantity: row.quantity,
+			price: row.price,
+			isActive: row.isActive,
+			changedBy: 'showcase-user',
+			changeType: 'create',
+		});
+
+		return row;
 	});
-
-	return row;
 }
 
 export async function updateSpecimen(
@@ -79,38 +81,40 @@ export async function updateWithHistory(
 		isActive?: boolean;
 	},
 ) {
-	// Get current max version for this specimen
-	const [versionResult] = await db
-		.select({ maxVersion: max(typeSpecimenHistory.version) })
-		.from(typeSpecimenHistory)
-		.where(eq(typeSpecimenHistory.specimenId, id));
+	return db.transaction(async (tx) => {
+		// Get current max version for this specimen
+		const [versionResult] = await tx
+			.select({ maxVersion: max(typeSpecimenHistory.version) })
+			.from(typeSpecimenHistory)
+			.where(eq(typeSpecimenHistory.specimenId, id));
 
-	const nextVersion = (versionResult?.maxVersion ?? 0) + 1;
+		const nextVersion = (versionResult?.maxVersion ?? 0) + 1;
 
-	// Update the specimen
-	const [updated] = await db
-		.update(typeSpecimen)
-		.set({ ...data, updatedAt: new Date() })
-		.where(eq(typeSpecimen.id, id))
-		.returning();
+		// Update the specimen
+		const [updated] = await tx
+			.update(typeSpecimen)
+			.set({ ...data, updatedAt: new Date() })
+			.where(eq(typeSpecimen.id, id))
+			.returning();
 
-	if (!updated) return null;
+		if (!updated) return null;
 
-	// Insert history snapshot
-	await db.insert(typeSpecimenHistory).values({
-		specimenId: updated.id,
-		version: nextVersion,
-		label: updated.label,
-		code: updated.code,
-		rating: updated.rating,
-		quantity: updated.quantity,
-		price: updated.price,
-		isActive: updated.isActive,
-		changedBy: 'showcase-user',
-		changeType: 'update',
+		// Insert history snapshot
+		await tx.insert(typeSpecimenHistory).values({
+			specimenId: updated.id,
+			version: nextVersion,
+			label: updated.label,
+			code: updated.code,
+			rating: updated.rating,
+			quantity: updated.quantity,
+			price: updated.price,
+			isActive: updated.isActive,
+			changedBy: 'showcase-user',
+			changeType: 'update',
+		});
+
+		return { specimen: updated, version: nextVersion };
 	});
-
-	return { specimen: updated, version: nextVersion };
 }
 
 // ─── Soft Delete ────────────────────────────────────────────────
@@ -119,7 +123,7 @@ export async function softDeleteDocument(id: string) {
 	const [doc] = await db
 		.update(documentVault)
 		.set({ deletedAt: new Date(), updatedAt: new Date() })
-		.where(eq(documentVault.id, id))
+		.where(and(eq(documentVault.id, id), isNull(documentVault.deletedAt)))
 		.returning();
 	return doc;
 }

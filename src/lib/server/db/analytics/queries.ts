@@ -8,7 +8,7 @@ import { events, sessions } from '$lib/server/db/schema/analytics';
 
 /** Get all events for a specific session, ordered by timestamp */
 export async function getSessionEvents(sessionId: string) {
-	return db.select().from(events).where(eq(events.sessionId, sessionId)).orderBy(events.timestamp);
+	return db.select().from(events).where(eq(events.sessionId, sessionId)).orderBy(events.timestamp).limit(1000);
 }
 
 /** Get a session timeline: sessions ordered by start time with optional date range */

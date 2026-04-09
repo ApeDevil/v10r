@@ -155,13 +155,13 @@
 	}
 
 	.badge-tool {
-		background: color-mix(in srgb, #8b5cf6 15%, transparent);
-		color: #8b5cf6;
+		background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+		color: var(--color-accent);
 	}
 
 	.badge-write {
-		background: color-mix(in srgb, #f59e0b 15%, transparent);
-		color: #f59e0b;
+		background: color-mix(in srgb, var(--color-warning) 15%, transparent);
+		color: var(--color-warning);
 	}
 
 	.badge-error {

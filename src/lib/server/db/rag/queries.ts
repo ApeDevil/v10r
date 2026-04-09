@@ -50,5 +50,6 @@ export async function listCollections(userId: string) {
 		})
 		.from(collection)
 		.where(and(eq(collection.userId, userId), isNull(collection.deletedAt)))
-		.orderBy(desc(collection.createdAt));
+		.orderBy(desc(collection.createdAt))
+		.limit(100);
 }

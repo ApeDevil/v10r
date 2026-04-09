@@ -1,5 +1,6 @@
 import { error, redirect } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
+import { apiError } from '$lib/server/api/response';
 
 export function requireAuth(locals: App.Locals) {
 	if (!locals.user || !locals.session) {
@@ -71,4 +72,33 @@ export function requireAssetOwnership(
 	if (asset.uploaderId !== user.id && !isAdmin) {
 		error(403, 'Forbidden');
 	}
+}
+
+// ---------------------------------------------------------------------------
+// API-safe guards — return Response objects instead of throwing HttpError.
+// Use these in +server.ts endpoints for consistent { error: { code, message } } shape.
+// ---------------------------------------------------------------------------
+
+type ApiGuardSuccess = { user: App.Locals['user'] & {}; session: App.Locals['session'] & {} };
+type ApiGuardResult = ApiGuardSuccess | { error: Response };
+
+/** Like requireApiUser but returns apiError(401) instead of throwing. */
+export function guardApiUser(locals: App.Locals): ApiGuardResult {
+	if (!locals.user || !locals.session) {
+		return { error: apiError(401, 'unauthorized', 'Authentication required') };
+	}
+	return { user: locals.user, session: locals.session };
+}
+
+/** Like requireApiAuthor but returns apiError instead of throwing. */
+export function guardApiAuthor(locals: App.Locals): ApiGuardResult {
+	if (!locals.user || !locals.session) {
+		return { error: apiError(401, 'unauthorized', 'Authentication required') };
+	}
+	const adminEmail = env.ADMIN_EMAIL;
+	const isAdmin = adminEmail && locals.user.email.toLowerCase() === adminEmail.toLowerCase();
+	if (!isAdmin && locals.user.role !== 'author') {
+		return { error: apiError(403, 'forbidden', 'Insufficient permissions') };
+	}
+	return { user: locals.user, session: locals.session };
 }

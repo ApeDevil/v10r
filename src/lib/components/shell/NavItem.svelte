@@ -6,6 +6,7 @@
  */
 
 import { page } from '$app/state';
+import { untrack } from 'svelte';
 import { Tooltip } from '$lib/components/primitives/tooltip';
 import { deLocalizeHref, localizeHref } from '$lib/i18n';
 import type { NavChild } from '$lib/nav';
@@ -49,10 +50,10 @@ function closeDropdown() {
 	isDropdownOpen = false;
 }
 
-// Close dropdown when navigating
+// Close dropdown when navigating to a new route
 $effect(() => {
-	page.url.pathname;
-	isDropdownOpen = false;
+	page.url.pathname; // tracked: re-runs on every route change
+	untrack(() => { isDropdownOpen = false; }); // untracked: mutation only, no dependency
 });
 
 const hasFlyoutChildren = $derived(children.length > 0 && useFlyout);

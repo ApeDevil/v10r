@@ -3,7 +3,13 @@
  * Sets cookie and fire-and-forget DB persistence for auth users.
  */
 
-import { json } from '@sveltejs/kit';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { apiError, apiOk } from '$lib/server/api/response';
+import {
+	STYLE_ROLL_RATE_LIMIT_MAX,
+	STYLE_ROLL_RATE_LIMIT_PREFIX,
+	STYLE_ROLL_RATE_LIMIT_WINDOW,
+} from '$lib/server/config';
 import { getBrandConfig } from '$lib/server/style/brand';
 import { saveStyleToDb } from '$lib/server/style/persist';
 import {
@@ -17,14 +23,27 @@ import {
 import type { PaletteId, RadiusId, TypographyId } from '$lib/styles/random/types';
 import type { RequestHandler } from './$types';
 
-export const POST: RequestHandler = async ({ cookies, locals }) => {
+const limiter = createLimiter(
+	STYLE_ROLL_RATE_LIMIT_PREFIX,
+	STYLE_ROLL_RATE_LIMIT_MAX,
+	STYLE_ROLL_RATE_LIMIT_WINDOW,
+);
+
+export const POST: RequestHandler = async ({ cookies, locals, getClientAddress }) => {
+	const ip = getClientAddress();
+	const { success, reset } = await limiter.limit(ip);
+
+	if (!success) {
+		return rateLimitResponse(reset);
+	}
+
 	// Read current style to exclude from re-roll
 	const current = parseStyleCookie(cookies.get(STYLE_COOKIE_NAME));
 
 	// Reject if visual identity is locked
 	const brand = await getBrandConfig();
 	if (brand?.enabled) {
-		return json({ error: 'Visual identity is locked' }, { status: 409 });
+		return apiError(409, 'brand_locked', 'Visual identity is locked.');
 	}
 
 	const excludePaletteIds: PaletteId[] = current ? [current.paletteId] : [];
@@ -35,7 +54,7 @@ export const POST: RequestHandler = async ({ cookies, locals }) => {
 	const resolved = resolveStyle(config);
 
 	if (!resolved) {
-		return json({ error: 'Failed to resolve style' }, { status: 500 });
+		return apiError(500, 'resolve_failed', 'Failed to resolve style.');
 	}
 
 	// Set cookie
@@ -46,8 +65,7 @@ export const POST: RequestHandler = async ({ cookies, locals }) => {
 		saveStyleToDb(locals.user.id, config).catch(() => {});
 	}
 
-	return json({
-		success: true,
+	return apiOk({
 		style: {
 			paletteId: resolved.paletteId,
 			typographyId: resolved.typographyId,

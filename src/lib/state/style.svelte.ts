@@ -80,7 +80,7 @@ export function createStyleState(initial: ResolvedStyle) {
 					return;
 				}
 
-				const data = await res.json();
+				const { data } = await res.json();
 
 				// Same style rolled — skip
 				if (

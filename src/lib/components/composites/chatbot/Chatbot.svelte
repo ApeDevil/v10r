@@ -66,7 +66,8 @@ async function loadConversations() {
 	try {
 		const res = await fetch('/api/ai/conversations');
 		if (res.ok) {
-			conversations = await res.json();
+			const json = await res.json();
+			conversations = json.data;
 		} else {
 			conversationsError = true;
 		}
@@ -79,7 +80,7 @@ async function loadConversation(conv: Conversation) {
 	try {
 		const res = await fetch(`/api/ai/conversations/${conv.id}`);
 		if (!res.ok) return;
-		const data = await res.json();
+		const { data } = await res.json();
 		conversationId = conv.id;
 		chat.messages = data.messages.map((m: { id: string; role: string; content: string }) => ({
 			id: m.id,

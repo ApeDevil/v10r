@@ -53,7 +53,7 @@
 		</span>
 		<Button variant="ghost" size="icon" class="copy-btn" onclick={handleCopy} aria-label="Copy code">
 			{#if copied}
-				<span class="i-lucide-check h-3.5 w-3.5 text-green-500" aria-hidden="true"></span>
+				<span class="i-lucide-check h-3.5 w-3.5 text-success" aria-hidden="true"></span>
 			{:else}
 				<span class="i-lucide-copy h-3.5 w-3.5" aria-hidden="true"></span>
 			{/if}

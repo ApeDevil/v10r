@@ -1,4 +1,4 @@
-import { json } from '@sveltejs/kit';
+import { apiOk } from '$lib/server/api/response';
 import { getConversationIOLog } from '$lib/server/db/ai/io-log-queries';
 import { requireApiUser } from '$lib/server/auth/guards';
 import type { RequestHandler } from './$types';
@@ -12,5 +12,5 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 	const offset = Math.max(Number.isNaN(rawOffset) ? 0 : rawOffset, 0);
 
 	const result = await getConversationIOLog(params.id, user.id, limit, offset);
-	return json(result);
+	return apiOk(result);
 };

@@ -1,6 +1,6 @@
-import { json } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { safeParse } from 'valibot';
+import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { createSpreadsheetFile } from '$lib/server/db/desk/mutations';
 import { listFiles } from '$lib/server/db/desk/queries';
@@ -19,7 +19,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	const { user } = requireApiUser(locals);
 	const type = url.searchParams.get('type') ?? undefined;
 	const rows = await listFiles(user.id, type);
-	return json({ files: rows });
+	return apiOk({ files: rows });
 };
 
 /** Create a new file. */
@@ -29,15 +29,15 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const body = await request.json().catch(() => ({}));
 	const parsed = safeParse(CreateFileSchema, body);
 	if (!parsed.success) {
-		return json({ error: 'Invalid request.' }, { status: 400 });
+		return apiValidationError(parsed.issues);
 	}
 
 	const { type, name, folderId } = parsed.output;
 
 	if (type === 'spreadsheet') {
 		const result = await createSpreadsheetFile(user.id, name, {}, folderId ?? null);
-		return json({ file: result.file, spreadsheet: result.spreadsheet }, { status: 201 });
+		return apiCreated({ file: result.file, spreadsheet: result.spreadsheet });
 	}
 
-	return json({ error: 'Unsupported file type.' }, { status: 400 });
+	return apiError(400, 'unsupported_type', 'Unsupported file type.');
 };

@@ -6,7 +6,7 @@
  */
 
 import { sql } from 'drizzle-orm';
-import { index, integer, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { type AnyPgColumn, index, integer, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { vector } from './_custom-types';
 import { document } from './document';
 import { embeddingModel, ragSchema } from './embedding-model';
@@ -20,7 +20,7 @@ export const chunk = ragSchema.table(
 		documentId: text('document_id')
 			.notNull()
 			.references(() => document.id, { onDelete: 'cascade' }),
-		parentId: text('parent_id'),
+		parentId: text('parent_id').references((): AnyPgColumn => chunk.id, { onDelete: 'cascade' }),
 		level: chunkLevelEnum('level').notNull(),
 		position: integer('position').notNull(),
 		content: text('content').notNull(),

@@ -19,8 +19,11 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	requireAdmin(locals);
-	const row = await getBrandSettings();
-	const customPalettes = locals.user ? await listCustomPalettes(locals.user.id) : [];
+	// requireAdmin guarantees locals.user is present — fetch in parallel
+	const [row, customPalettes] = await Promise.all([
+		getBrandSettings(),
+		listCustomPalettes(locals.user!.id),
+	]);
 
 	const initialData = row
 		? {

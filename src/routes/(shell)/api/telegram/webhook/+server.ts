@@ -1,9 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { json } from '@sveltejs/kit';
-import { and, eq, gt, sql } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
-import { db } from '$lib/server/db';
-import { telegramVerificationTokens, userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
+import { linkTelegramAccount, sendTelegramMessage } from '$lib/server/notifications/telegram';
 import type { RequestHandler } from './$types';
 
 function safeEqual(a: string, b: string): boolean {
@@ -20,7 +18,6 @@ export const POST: RequestHandler = async ({ request }) => {
 	}
 
 	// Verify request originates from Telegram via secret token
-	// Set via: POST https://api.telegram.org/bot{token}/setWebhook with secret_token param
 	const webhookSecret = env.TELEGRAM_WEBHOOK_SECRET;
 	if (!webhookSecret) {
 		return json({ ok: false }, { status: 503 });
@@ -40,7 +37,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	const text: string = message.text;
 	const username = message.from?.username ?? null;
 
-	// Handle /start TOKEN command
+	// Only handle /start TOKEN command
 	if (!text.startsWith('/start ')) {
 		return json({ ok: true });
 	}
@@ -51,20 +48,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		return json({ ok: true });
 	}
 
-	// Validate token
-	const [verification] = await db
-		.select()
-		.from(telegramVerificationTokens)
-		.where(
-			and(
-				eq(telegramVerificationTokens.token, token),
-				gt(telegramVerificationTokens.expiresAt, new Date()),
-				sql`${telegramVerificationTokens.usedAt} IS NULL`,
-			),
-		)
-		.limit(1);
+	const result = await linkTelegramAccount({ token, chatId, username });
 
-	if (!verification) {
+	if (result.status === 'expired') {
 		await sendTelegramMessage(
 			botToken,
 			chatId,
@@ -73,41 +59,6 @@ export const POST: RequestHandler = async ({ request }) => {
 		return json({ ok: true });
 	}
 
-	// Mark token as used
-	await db
-		.update(telegramVerificationTokens)
-		.set({ usedAt: new Date() })
-		.where(eq(telegramVerificationTokens.id, verification.id));
-
-	// Upsert telegram account
-	await db
-		.insert(userTelegramAccounts)
-		.values({
-			id: crypto.randomUUID(),
-			userId: verification.userId,
-			telegramChatId: chatId,
-			telegramUsername: username,
-		})
-		.onConflictDoUpdate({
-			target: userTelegramAccounts.userId,
-			set: {
-				telegramChatId: chatId,
-				telegramUsername: username,
-				isActive: true,
-				linkedAt: new Date(),
-				unlinkedAt: null,
-			},
-		});
-
 	await sendTelegramMessage(botToken, chatId, 'Connected! You will now receive notifications here.');
-
 	return json({ ok: true });
 };
-
-async function sendTelegramMessage(botToken: string, chatId: string, text: string) {
-	await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ chat_id: chatId, text }),
-	}).catch(() => {});
-}

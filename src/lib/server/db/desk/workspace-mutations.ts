@@ -11,32 +11,34 @@ export async function createWorkspace(
 	userId: string,
 	data: { name: string; layout: WorkspaceLayoutJson; sortOrder?: number },
 ) {
-	// Check limit
-	const existing = await db
-		.select({ id: deskWorkspace.id })
-		.from(deskWorkspace)
-		.where(eq(deskWorkspace.userId, userId));
+	return db.transaction(async (tx) => {
+		// Check limit (inside transaction to prevent races)
+		const existing = await tx
+			.select({ id: deskWorkspace.id })
+			.from(deskWorkspace)
+			.where(eq(deskWorkspace.userId, userId));
 
-	if (existing.length >= MAX_WORKSPACES) return null;
+		if (existing.length >= MAX_WORKSPACES) return null;
 
-	const id = createId.workspace();
-	const sortOrder = data.sortOrder ?? existing.length;
+		const id = createId.workspace();
+		const sortOrder = data.sortOrder ?? existing.length;
 
-	const [workspace] = await db
-		.insert(deskWorkspace)
-		.values({ id, userId, name: data.name, layout: data.layout, sortOrder })
-		.returning();
+		const [workspace] = await tx
+			.insert(deskWorkspace)
+			.values({ id, userId, name: data.name, layout: data.layout, sortOrder })
+			.returning();
 
-	// Auto-activate via upsert
-	await db
-		.insert(deskWorkspaceActive)
-		.values({ userId, workspaceId: id, updatedAt: new Date() })
-		.onConflictDoUpdate({
-			target: deskWorkspaceActive.userId,
-			set: { workspaceId: id, updatedAt: new Date() },
-		});
+		// Auto-activate via upsert
+		await tx
+			.insert(deskWorkspaceActive)
+			.values({ userId, workspaceId: id, updatedAt: new Date() })
+			.onConflictDoUpdate({
+				target: deskWorkspaceActive.userId,
+				set: { workspaceId: id, updatedAt: new Date() },
+			});
 
-	return workspace;
+		return workspace;
+	});
 }
 
 /** Partial update of a workspace (name, layout, sortOrder). */
@@ -88,27 +90,29 @@ export async function syncWorkspace(
 	userId: string,
 	data: { save?: { id: string; layout: WorkspaceLayoutJson }; activate: string },
 ) {
-	let saved = false;
+	return db.transaction(async (tx) => {
+		let saved = false;
 
-	if (data.save) {
-		const [result] = await db
-			.update(deskWorkspace)
-			.set({ layout: data.save.layout, updatedAt: new Date() })
-			.where(and(eq(deskWorkspace.id, data.save.id), eq(deskWorkspace.userId, userId)))
-			.returning({ id: deskWorkspace.id });
-		saved = !!result;
-	}
+		if (data.save) {
+			const [result] = await tx
+				.update(deskWorkspace)
+				.set({ layout: data.save.layout, updatedAt: new Date() })
+				.where(and(eq(deskWorkspace.id, data.save.id), eq(deskWorkspace.userId, userId)))
+				.returning({ id: deskWorkspace.id });
+			saved = !!result;
+		}
 
-	// Activate target
-	await db
-		.insert(deskWorkspaceActive)
-		.values({ userId, workspaceId: data.activate, updatedAt: new Date() })
-		.onConflictDoUpdate({
-			target: deskWorkspaceActive.userId,
-			set: { workspaceId: data.activate, updatedAt: new Date() },
-		});
+		// Activate target
+		await tx
+			.insert(deskWorkspaceActive)
+			.values({ userId, workspaceId: data.activate, updatedAt: new Date() })
+			.onConflictDoUpdate({
+				target: deskWorkspaceActive.userId,
+				set: { workspaceId: data.activate, updatedAt: new Date() },
+			});
 
-	return { saved, activeId: data.activate };
+		return { saved, activeId: data.activate };
+	});
 }
 
 /** Swap sort orders of two workspaces atomically. */

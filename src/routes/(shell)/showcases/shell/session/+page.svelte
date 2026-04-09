@@ -53,14 +53,14 @@ function resetSession() {
 		</Button>
 		<Button
 			variant="default"
-			class="bg-warning text-white hover:bg-warning/90"
+			class="bg-warning text-white session-btn-warning"
 			onclick={simulateExpiry}
 		>
 			Simulate Expiry
 		</Button>
 		<Button
 			variant="default"
-			class="bg-success text-white hover:bg-success/90"
+			class="bg-success text-white session-btn-success"
 			onclick={resetSession}
 		>
 			Reset to Valid
@@ -168,5 +168,13 @@ function resetSession() {
 		border-radius: var(--radius-sm);
 		font-family: ui-monospace, monospace;
 		color: var(--color-primary);
+	}
+
+	/* UnoCSS can't apply opacity modifiers to CSS custom property colors */
+	:global(.session-btn-warning:hover) {
+		background-color: color-mix(in srgb, var(--color-warning) 90%, transparent);
+	}
+	:global(.session-btn-success:hover) {
+		background-color: color-mix(in srgb, var(--color-success) 90%, transparent);
 	}
 </style>

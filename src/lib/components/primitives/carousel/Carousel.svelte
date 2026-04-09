@@ -37,7 +37,7 @@ let slides = $state<HTMLElement[]>([]);
 let currentSlide = $state(0);
 let isHovering = $state(false);
 let isPlaying = $state(true);
-let autoplayTimer = $state<ReturnType<typeof setInterval> | null>(null);
+let autoplayTimer: ReturnType<typeof setInterval> | null = null;
 
 // Track active slide using IntersectionObserver
 $effect(() => {
@@ -221,7 +221,7 @@ const canGoNext = $derived(loop || currentSlide < slides.length - 1);
 					class={cn(
 						'ml-2 inline-flex items-center justify-center',
 						'h-6 w-6 rounded-full',
-						'bg-surface-3/80 text-fg/70',
+						'carousel-autoplay-btn',
 						'border border-border',
 						'transition-colors duration-fast',
 						'hover:bg-surface-3 hover:text-fg',
@@ -254,5 +254,11 @@ const canGoNext = $derived(loop || currentSlide < slides.length - 1);
 	.scrollbar-hide {
 		-ms-overflow-style: none;
 		scrollbar-width: none;
+	}
+
+	/* UnoCSS can't apply opacity modifiers to CSS custom property colors */
+	.carousel-autoplay-btn {
+		background-color: color-mix(in srgb, var(--color-surface-3) 80%, transparent);
+		color: color-mix(in srgb, var(--color-fg) 70%, transparent);
 	}
 </style>

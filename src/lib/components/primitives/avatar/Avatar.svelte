@@ -32,7 +32,7 @@ let initials = $derived(
 
 <div
 	class={cn(
-		'relative flex shrink-0 items-center justify-center rounded-full bg-muted/20 overflow-hidden',
+		'relative flex shrink-0 items-center justify-center rounded-full avatar-bg overflow-hidden',
 		sizes[size],
 		className
 	)}
@@ -43,3 +43,10 @@ let initials = $derived(
 		<span class="font-medium text-muted">{initials}</span>
 	{/if}
 </div>
+
+<style>
+	/* UnoCSS can't apply opacity modifiers to CSS custom property colors */
+	.avatar-bg {
+		background-color: color-mix(in srgb, var(--color-muted) 20%, transparent);
+	}
+</style>

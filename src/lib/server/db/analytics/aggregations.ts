@@ -103,7 +103,8 @@ export async function getDeviceSplit(days: number): Promise<DeviceSplit[]> {
 		.from(sessions)
 		.where(gte(sessions.startedAt, cutoff))
 		.groupBy(sessions.device)
-		.orderBy(desc(sql`count(*)`));
+		.orderBy(desc(sql`count(*)`))
+		.limit(50);
 }
 
 export async function getBrowserSplit(days: number): Promise<BrowserSplit[]> {
@@ -117,7 +118,8 @@ export async function getBrowserSplit(days: number): Promise<BrowserSplit[]> {
 		.from(sessions)
 		.where(gte(sessions.startedAt, cutoff))
 		.groupBy(sessions.browser)
-		.orderBy(desc(sql`count(*)`));
+		.orderBy(desc(sql`count(*)`))
+		.limit(50);
 }
 
 export async function getCountrySplit(days: number): Promise<CountrySplit[]> {
@@ -131,7 +133,8 @@ export async function getCountrySplit(days: number): Promise<CountrySplit[]> {
 		.from(sessions)
 		.where(gte(sessions.startedAt, cutoff))
 		.groupBy(sessions.country)
-		.orderBy(desc(sql`count(*)`));
+		.orderBy(desc(sql`count(*)`))
+		.limit(50);
 }
 
 // ── Consent distribution ─────────────────────────────────────────────────────
@@ -147,7 +150,8 @@ export async function getConsentSplit(days: number): Promise<ConsentSplit[]> {
 		.from(sessions)
 		.where(gte(sessions.startedAt, cutoff))
 		.groupBy(sessions.consentTier)
-		.orderBy(desc(sql`count(*)`));
+		.orderBy(desc(sql`count(*)`))
+		.limit(50);
 }
 
 // ── Funnel analysis ──────────────────────────────────────────────────────────

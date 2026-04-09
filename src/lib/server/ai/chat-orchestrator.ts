@@ -123,12 +123,18 @@ function buildSystemPrompt(
 
 /** Persist assistant message after stream finishes. */
 function createOnFinish(conversationId: string | undefined, userId: string) {
-	return async ({ text }: { text: string }) => {
+	return async ({ text, totalUsage }: { text: string; totalUsage?: { inputTokens?: number; outputTokens?: number } }) => {
 		try {
 			if (conversationId && text) {
 				await saveMessages(conversationId, userId, [
 					{ id: crypto.randomUUID(), role: 'assistant', content: text },
 				]);
+			}
+			if (totalUsage) {
+				console.info('[ai:chat] totalUsage:', {
+					inputTokens: totalUsage.inputTokens,
+					outputTokens: totalUsage.outputTokens,
+				});
 			}
 		} catch (err) {
 			console.error('[ai:chat] Failed to persist assistant message:', {
@@ -216,7 +222,7 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 	// Window conversation history to prevent context overflow in multi-turn chats
 	const windowedMessages = windowMessages(rawMessages);
 
-	// Convert UIMessages to CoreMessages for streamText compatibility
+	// Convert UIMessages to ModelMessages for streamText compatibility
 	const isUIMessages = windowedMessages.some((m) => 'parts' in m);
 	const messages = isUIMessages
 		? await convertToModelMessages(windowedMessages as UIMessage[])
@@ -296,9 +302,9 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 						maxRetries: 0,
 						maxOutputTokens: MAX_TOKENS,
 						abortSignal: AbortSignal.timeout(30_000),
-						onFinish: async ({ text }) => {
+						onFinish: async ({ text, totalUsage }) => {
 							emitEvent({ type: 'pipeline:step', step: 'generate', status: 'done' });
-							await createOnFinish(conversationId, userId)({ text });
+							await createOnFinish(conversationId, userId)({ text, totalUsage });
 						},
 						onError: ({ error }) => {
 							console.error('[ai:chat:retrieval] Stream error:', error);
@@ -388,7 +394,7 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 					console.error('[ai:chat] Failed to persist step:', err);
 				}
 			},
-			onFinish: async ({ text }) => {
+			onFinish: async ({ text, totalUsage }) => {
 				// Update the pre-inserted assistant message with final content
 				if (conversationId && text) {
 					await updateMessageContent(assistantMsgId, text);
@@ -396,6 +402,12 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 				// Refresh cached token totals
 				if (conversationId) {
 					try { await refreshConversationTokens(conversationId); } catch { /* non-critical */ }
+				}
+				if (totalUsage) {
+					console.info('[ai:chat] totalUsage:', {
+						inputTokens: totalUsage.inputTokens,
+						outputTokens: totalUsage.outputTokens,
+					});
 				}
 			},
 			onError: ({ error }) => {

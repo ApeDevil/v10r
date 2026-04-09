@@ -4,14 +4,14 @@
  * Uses SvelteKit's navigating state.
  */
 
-import { navigating } from '$app/stores';
+import { navigating } from '$app/state';
 
 let progress = $state(0);
 let visible = $state(false);
 
 // Animate progress when navigating
 $effect(() => {
-	if ($navigating) {
+	if (navigating) {
 		visible = true;
 		progress = 0;
 

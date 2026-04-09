@@ -13,10 +13,10 @@ const iconClasses = {
 };
 
 const styles = {
-	success: 'border-success/50 bg-success-light text-success',
-	error: 'border-error/50 bg-error-light text-error',
-	warning: 'border-warning/50 bg-warning-light text-warning',
-	info: 'border-primary/50 bg-primary-dim text-primary',
+	success: 'toast-success bg-success-light text-success',
+	error: 'toast-error bg-error-light text-error',
+	warning: 'toast-warning bg-warning-light text-warning',
+	info: 'toast-info bg-primary-dim text-primary',
 };
 </script>
 
@@ -43,3 +43,19 @@ const styles = {
 		</div>
 	{/each}
 </div>
+
+<style>
+	/* UnoCSS can't apply opacity modifiers to CSS custom property colors */
+	:global(.toast-success) {
+		border-color: color-mix(in srgb, var(--color-success) 50%, transparent);
+	}
+	:global(.toast-error) {
+		border-color: color-mix(in srgb, var(--color-error) 50%, transparent);
+	}
+	:global(.toast-warning) {
+		border-color: color-mix(in srgb, var(--color-warning) 50%, transparent);
+	}
+	:global(.toast-info) {
+		border-color: color-mix(in srgb, var(--color-primary) 50%, transparent);
+	}
+</style>

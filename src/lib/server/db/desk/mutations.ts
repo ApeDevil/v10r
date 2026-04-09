@@ -220,31 +220,33 @@ export async function updateSpreadsheetByFileId(
 	userId: string,
 	data: { name?: string; cells?: Record<string, unknown>; columnMeta?: Record<string, unknown> | null },
 ) {
-	// Verify ownership via file table
-	const [fileRow] = await db
-		.select({ id: file.id })
-		.from(file)
-		.where(and(eq(file.id, fileId), eq(file.userId, userId)))
-		.limit(1);
-	if (!fileRow) return null;
+	return db.transaction(async (tx) => {
+		// Verify ownership via file table
+		const [fileRow] = await tx
+			.select({ id: file.id })
+			.from(file)
+			.where(and(eq(file.id, fileId), eq(file.userId, userId)))
+			.limit(1);
+		if (!fileRow) return null;
 
-	// Update spreadsheet detail
-	const sheetUpdate: Record<string, unknown> = {};
-	if (data.cells !== undefined) sheetUpdate.cells = data.cells;
-	if (data.columnMeta !== undefined) sheetUpdate.columnMeta = data.columnMeta;
+		// Update spreadsheet detail
+		const sheetUpdate: Record<string, unknown> = {};
+		if (data.cells !== undefined) sheetUpdate.cells = data.cells;
+		if (data.columnMeta !== undefined) sheetUpdate.columnMeta = data.columnMeta;
 
-	if (Object.keys(sheetUpdate).length > 0) {
-		sheetUpdate.updatedAt = new Date();
-		await db.update(spreadsheet).set(sheetUpdate).where(eq(spreadsheet.fileId, fileId));
-	}
+		if (Object.keys(sheetUpdate).length > 0) {
+			sheetUpdate.updatedAt = new Date();
+			await tx.update(spreadsheet).set(sheetUpdate).where(eq(spreadsheet.fileId, fileId));
+		}
 
-	// Update file metadata (name + touch updatedAt)
-	const fileUpdate: Record<string, unknown> = { updatedAt: new Date() };
-	if (data.name !== undefined) fileUpdate.name = data.name;
+		// Update file metadata (name + touch updatedAt)
+		const fileUpdate: Record<string, unknown> = { updatedAt: new Date() };
+		if (data.name !== undefined) fileUpdate.name = data.name;
 
-	const [updated] = await db.update(file).set(fileUpdate).where(eq(file.id, fileId)).returning();
+		const [updated] = await tx.update(file).set(fileUpdate).where(eq(file.id, fileId)).returning();
 
-	return updated ?? null;
+		return updated ?? null;
+	});
 }
 
 /** Create a new markdown file (file + markdown detail in a transaction). */

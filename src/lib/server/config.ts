@@ -225,6 +225,11 @@ export const BLOG_PREVIEW_RATE_LIMIT_PREFIX = 'ratelimit:blog:preview';
 export const BLOG_PREVIEW_RATE_LIMIT_MAX = 10;
 export const BLOG_PREVIEW_RATE_LIMIT_WINDOW = '60 s' as const;
 
+/** Style roll rate limit: requests per window */
+export const STYLE_ROLL_RATE_LIMIT_PREFIX = 'ratelimit:style:roll';
+export const STYLE_ROLL_RATE_LIMIT_MAX = 10;
+export const STYLE_ROLL_RATE_LIMIT_WINDOW = '60 s' as const;
+
 /** Desk write operations rate limit: requests per window */
 export const DESK_WRITE_RATE_LIMIT_PREFIX = 'ratelimit:desk:write';
 export const DESK_WRITE_RATE_LIMIT_MAX = 30;

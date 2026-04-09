@@ -12,26 +12,26 @@ function hashForDisplay(id: string): string {
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user || !locals.session) redirect(303, '/auth/login');
 
-	// Fetch all active sessions for this user
-	const sessions = await db
-		.select({
-			id: sessionTable.id,
-			createdAt: sessionTable.createdAt,
-			expiresAt: sessionTable.expiresAt,
-			ipAddress: sessionTable.ipAddress,
-			userAgent: sessionTable.userAgent,
-		})
-		.from(sessionTable)
-		.where(eq(sessionTable.userId, locals.user.id));
-
-	// Fetch linked accounts
-	const accounts = await db
-		.select({
-			providerId: account.providerId,
-			createdAt: account.createdAt,
-		})
-		.from(account)
-		.where(eq(account.userId, locals.user.id));
+	// Fetch sessions and linked accounts in parallel
+	const [sessions, accounts] = await Promise.all([
+		db
+			.select({
+				id: sessionTable.id,
+				createdAt: sessionTable.createdAt,
+				expiresAt: sessionTable.expiresAt,
+				ipAddress: sessionTable.ipAddress,
+				userAgent: sessionTable.userAgent,
+			})
+			.from(sessionTable)
+			.where(eq(sessionTable.userId, locals.user.id)),
+		db
+			.select({
+				providerId: account.providerId,
+				createdAt: account.createdAt,
+			})
+			.from(account)
+			.where(eq(account.userId, locals.user.id)),
+	]);
 
 	return {
 		user: locals.user,

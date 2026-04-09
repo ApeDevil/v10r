@@ -3,6 +3,16 @@ import { cypher } from '../index';
 import type { Neo4jNodeRecord, Neo4jRelRecord } from '../types';
 import { toKnowledgeData } from '../types';
 
+// ─── Sanitization ──────────────────────────────────────
+
+/** Strip non-alphanumeric characters to prevent Cypher injection via label/type names.
+ *  Current queries use db.labels()/db.relationshipTypes() within Cypher's own WITH
+ *  binding (not string interpolation), but this guards against second-order injection
+ *  if queries are ever refactored or returned values are used downstream. */
+function sanitizeIdentifier(name: string): string {
+	return name.replace(/[^a-zA-Z0-9_]/g, '');
+}
+
 // ─── Connection page ────────────────────────────────────
 
 interface ConnectionInfo {
@@ -48,22 +58,35 @@ interface LabelInfo {
 }
 
 export async function getLabelsWithCounts(): Promise<LabelInfo[]> {
-	const labels = await cypher<{ label: string }>('CALL db.labels() YIELD label RETURN label');
+	const [counts, samples] = await Promise.all([
+		cypher<{ label: string; count: number }>(
+			`CALL db.labels() YIELD label
+			 CALL {
+			   WITH label
+			   MATCH (n) WHERE label IN labels(n)
+			   RETURN count(n) AS count
+			 }
+			 RETURN label, count`,
+		),
+		cypher<{ label: string; keys: string[] }>(
+			`CALL db.labels() YIELD label
+			 CALL {
+			   WITH label
+			   MATCH (n) WHERE label IN labels(n)
+			   WITH n LIMIT 1
+			   RETURN keys(n) AS keys
+			 }
+			 RETURN label, keys`,
+		),
+	]);
 
-	const results: LabelInfo[] = [];
-	for (const { label } of labels) {
-		const [countResult] = await cypher<{ count: number }>(`MATCH (n:\`${label}\`) RETURN count(n) AS count`);
-		const sampleResult = await cypher<{ keys: string[] }>(
-			`MATCH (n:\`${label}\`) WITH n LIMIT 1 RETURN keys(n) AS keys`,
-		);
-		results.push({
-			label,
-			count: Number(countResult?.count ?? 0),
-			sampleProperties: sampleResult[0]?.keys ?? [],
-		});
-	}
+	const sampleMap = new Map(samples.map((s) => [s.label, s.keys ?? []]));
 
-	return results;
+	return counts.map(({ label, count }) => ({
+		label: sanitizeIdentifier(label),
+		count: Number(count),
+		sampleProperties: sampleMap.get(label) ?? [],
+	}));
 }
 
 interface RelTypeInfo {
@@ -74,29 +97,36 @@ interface RelTypeInfo {
 }
 
 export async function getRelTypesWithCounts(): Promise<RelTypeInfo[]> {
-	const types = await cypher<{ relationshipType: string }>(
-		'CALL db.relationshipTypes() YIELD relationshipType RETURN relationshipType',
-	);
+	const [counts, samples] = await Promise.all([
+		cypher<{ type: string; count: number }>(
+			`CALL db.relationshipTypes() YIELD relationshipType
+			 CALL {
+			   WITH relationshipType
+			   MATCH ()-[r]->() WHERE type(r) = relationshipType
+			   RETURN count(r) AS count
+			 }
+			 RETURN relationshipType AS type, count`,
+		),
+		cypher<{ type: string; startLabel: string; endLabel: string }>(
+			`CALL db.relationshipTypes() YIELD relationshipType
+			 CALL {
+			   WITH relationshipType
+			   MATCH (a)-[r]->(b) WHERE type(r) = relationshipType
+			   RETURN labels(a)[0] AS startLabel, labels(b)[0] AS endLabel
+			   LIMIT 1
+			 }
+			 RETURN relationshipType AS type, startLabel, endLabel`,
+		),
+	]);
 
-	const results: RelTypeInfo[] = [];
-	for (const { relationshipType } of types) {
-		const [countResult] = await cypher<{ count: number }>(
-			`MATCH ()-[r:\`${relationshipType}\`]->() RETURN count(r) AS count`,
-		);
-		const [sample] = await cypher<{ startLabel: string; endLabel: string }>(
-			`MATCH (a)-[r:\`${relationshipType}\`]->(b)
-			 RETURN labels(a)[0] AS startLabel, labels(b)[0] AS endLabel
-			 LIMIT 1`,
-		);
-		results.push({
-			type: relationshipType,
-			count: Number(countResult?.count ?? 0),
-			startLabel: sample?.startLabel ?? '?',
-			endLabel: sample?.endLabel ?? '?',
-		});
-	}
+	const sampleMap = new Map(samples.map((s) => [s.type, { startLabel: s.startLabel, endLabel: s.endLabel }]));
 
-	return results;
+	return counts.map(({ type, count }) => ({
+		type: sanitizeIdentifier(type),
+		count: Number(count),
+		startLabel: sanitizeIdentifier(sampleMap.get(type)?.startLabel ?? '?'),
+		endLabel: sanitizeIdentifier(sampleMap.get(type)?.endLabel ?? '?'),
+	}));
 }
 
 export async function getFullGraph(): Promise<KnowledgeData> {

@@ -1,6 +1,6 @@
 import { timingSafeEqual } from 'node:crypto';
-import { error, json } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
+import { apiError, apiOk } from '$lib/server/api/response';
 import { jobs } from '$lib/server/jobs';
 import { runJob } from '$lib/server/jobs/runner';
 import type { RequestHandler } from './$types';
@@ -16,13 +16,13 @@ export const GET: RequestHandler = async ({ request, params }) => {
 	const secret = env.CRON_SECRET;
 	const auth = request.headers.get('authorization');
 	if (!secret || !auth || !safeEqual(auth, `Bearer ${secret}`)) {
-		error(401, 'Unauthorized');
+		return apiError(401, 'unauthorized', 'Unauthorized');
 	}
 
 	if (!jobs[params.job]) {
-		error(404, `Unknown job: ${params.job}`);
+		return apiError(404, 'unknown_job', `Unknown job: ${params.job}`);
 	}
 
 	const result = await runJob(params.job, 'cron');
-	return json(result);
+	return apiOk(result);
 };

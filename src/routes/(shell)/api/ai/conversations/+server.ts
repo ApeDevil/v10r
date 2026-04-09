@@ -1,7 +1,7 @@
-import { json } from '@sveltejs/kit';
 import { safeParse } from 'valibot';
 import { CreateConversationSchema } from '$lib/server/ai/validation';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { apiCreated, apiError, apiOk } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { CONV_RATE_LIMIT_MAX, CONV_RATE_LIMIT_PREFIX, CONV_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import { checkConversationLimit } from '$lib/server/db/ai/limits';
@@ -20,10 +20,10 @@ export const GET: RequestHandler = async ({ locals }) => {
 
 	try {
 		const conversations = await listConversations(user.id);
-		return json(conversations);
+		return apiOk(conversations);
 	} catch (err) {
 		const dbErr = classifyDbError(err);
-		return json({ error: safeDbMessage(dbErr.kind) }, { status: dbErr.toStatus() });
+		return apiError(dbErr.toStatus(), dbErr.kind, safeDbMessage(dbErr.kind));
 	}
 };
 
@@ -35,7 +35,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	const limitError = await checkConversationLimit(user.id);
 	if (limitError) {
-		return json({ error: limitError }, { status: 403 });
+		return apiError(403, 'limit_exceeded', limitError);
 	}
 
 	const body = await request.json().catch(() => ({}));
@@ -44,9 +44,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	try {
 		const conv = await createConversation(user.id, title);
-		return json(conv, { status: 201 });
+		return apiCreated(conv);
 	} catch (err) {
 		const dbErr = classifyDbError(err);
-		return json({ error: safeDbMessage(dbErr.kind) }, { status: dbErr.toStatus() });
+		return apiError(dbErr.toStatus(), dbErr.kind, safeDbMessage(dbErr.kind));
 	}
 };

@@ -1,7 +1,7 @@
-import { json } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { safeParse } from 'valibot';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { SEARCH_RATE_LIMIT_MAX, SEARCH_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import { retrieve } from '$lib/server/retrieval';
@@ -25,12 +25,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	const body = await request.json().catch(() => null);
 	if (!body) {
-		return json({ error: 'Invalid request body.' }, { status: 400 });
+		return apiError(400, 'invalid_body', 'Invalid request body.');
 	}
 
 	const parsed = safeParse(SearchSchema, body);
 	if (!parsed.success) {
-		return json({ error: 'Invalid request.' }, { status: 400 });
+		return apiValidationError(parsed.issues);
 	}
 
 	try {
@@ -41,12 +41,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			graphDepth: parsed.output.graphDepth ?? 2,
 		});
 
-		return json(result);
+		return apiOk(result);
 	} catch (err) {
 		console.error('[api:retrieval:search] Error:', err instanceof Error ? err.message : err);
 		if (err instanceof RetrievalError) {
-			return json({ error: err.message }, { status: retrievalErrorToStatus(err.kind) });
+			return apiError(retrievalErrorToStatus(err.kind), err.kind, err.message);
 		}
-		return json({ error: 'Search failed' }, { status: 500 });
+		return apiError(500, 'search_failed', 'Search failed.');
 	}
 };

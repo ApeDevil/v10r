@@ -3,7 +3,7 @@
  * Creates Page nodes, Session nodes, and relationships between them.
  */
 
-import { eq, sql } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { events, sessions } from '$lib/server/db/schema/analytics';
 import { cypher } from '$lib/server/graph';
@@ -12,68 +12,103 @@ export async function seedAnalyticsGraph() {
 	// Clear existing analytics graph data
 	await cypher('MATCH (n) WHERE n:AnalyticsPage OR n:AnalyticsSession DETACH DELETE n');
 
-	// Create page nodes from distinct paths
+	// Create page nodes from distinct paths (batch)
 	const paths = await db.selectDistinct({ path: events.path }).from(events).where(eq(events.eventType, 'pageview'));
 
-	for (const { path } of paths) {
-		await cypher('MERGE (p:AnalyticsPage {path: $path}) SET p.title = $title', {
-			path,
-			title: path === '/' ? 'Home' : (path.split('/').pop() ?? path),
-		});
+	if (paths.length > 0) {
+		await cypher(
+			`UNWIND $pages AS page
+			 MERGE (p:AnalyticsPage {path: page.path})
+			 SET p.title = page.title`,
+			{
+				pages: paths.map(({ path }) => ({
+					path,
+					title: path === '/' ? 'Home' : (path.split('/').pop() ?? path),
+				})),
+			},
+		);
 	}
 
 	// Create session nodes (limited to most recent 200 for demo)
 	const recentSessions = await db.select().from(sessions).orderBy(sql`started_at DESC`).limit(200);
 
-	for (const s of recentSessions) {
+	if (recentSessions.length > 0) {
+		// Batch create all session nodes
 		await cypher(
-			`MERGE (sess:AnalyticsSession {id: $id})
-			 SET sess.startedAt = $startedAt,
-			     sess.device = $device,
-			     sess.country = $country`,
+			`UNWIND $items AS s
+			 MERGE (sess:AnalyticsSession {id: s.id})
+			 SET sess.startedAt = s.startedAt,
+			     sess.device = s.device,
+			     sess.country = s.country`,
 			{
-				id: s.id,
-				startedAt: s.startedAt.toISOString(),
-				device: s.device ?? 'unknown',
-				country: s.country ?? '??',
+				items: recentSessions.map((s) => ({
+					id: s.id,
+					startedAt: s.startedAt.toISOString(),
+					device: s.device ?? 'unknown',
+					country: s.country ?? '??',
+				})),
 			},
 		);
 
-		// Entry and exit relationships
+		// Batch create ENTERED_VIA relationships
 		await cypher(
-			`MATCH (sess:AnalyticsSession {id: $id}), (p:AnalyticsPage {path: $path})
+			`UNWIND $items AS s
+			 MATCH (sess:AnalyticsSession {id: s.id}), (p:AnalyticsPage {path: s.entryPath})
 			 MERGE (sess)-[:ENTERED_VIA]->(p)`,
-			{ id: s.id, path: s.entryPath },
+			{ items: recentSessions.map((s) => ({ id: s.id, entryPath: s.entryPath })) },
 		);
 
-		if (s.exitPath) {
+		// Batch create EXITED_VIA relationships
+		const withExit = recentSessions.filter((s) => s.exitPath);
+		if (withExit.length > 0) {
 			await cypher(
-				`MATCH (sess:AnalyticsSession {id: $id}), (p:AnalyticsPage {path: $path})
+				`UNWIND $items AS s
+				 MATCH (sess:AnalyticsSession {id: s.id}), (p:AnalyticsPage {path: s.exitPath})
 				 MERGE (sess)-[:EXITED_VIA]->(p)`,
-				{ id: s.id, path: s.exitPath },
+				{ items: withExit.map((s) => ({ id: s.id, exitPath: s.exitPath })) },
 			);
 		}
 	}
 
-	// Create VISITED relationships with sequence from events
-	for (const s of recentSessions) {
-		const sessionEvents = await db
-			.select({ path: events.path, timestamp: events.timestamp })
+	// Fetch all events for recent sessions in one query, then batch VISITED relationships
+	const sessionIds = recentSessions.map((s) => s.id);
+	if (sessionIds.length > 0) {
+		const allEvents = await db
+			.select({
+				sessionId: events.sessionId,
+				path: events.path,
+				timestamp: events.timestamp,
+			})
 			.from(events)
-			.where(eq(events.sessionId, s.id))
-			.orderBy(events.timestamp);
+			.where(inArray(events.sessionId, sessionIds))
+			.orderBy(events.sessionId, events.timestamp);
 
-		for (let i = 0; i < sessionEvents.length; i++) {
+		// Build visit items with sequence numbers per session
+		const visitItems: Array<{ sessionId: string; path: string; seq: number; ts: string }> = [];
+		let currentSessionId = '';
+		let seq = 0;
+
+		for (const evt of allEvents) {
+			if (evt.sessionId !== currentSessionId) {
+				currentSessionId = evt.sessionId;
+				seq = 0;
+			}
+			visitItems.push({
+				sessionId: evt.sessionId,
+				path: evt.path,
+				seq,
+				ts: evt.timestamp.toISOString(),
+			});
+			seq++;
+		}
+
+		if (visitItems.length > 0) {
 			await cypher(
-				`MATCH (sess:AnalyticsSession {id: $sessionId}), (p:AnalyticsPage {path: $path})
-				 MERGE (sess)-[v:VISITED]->(p)
-				 SET v.sequence = $seq, v.timestamp = $ts`,
-				{
-					sessionId: s.id,
-					path: sessionEvents[i].path,
-					seq: i,
-					ts: sessionEvents[i].timestamp.toISOString(),
-				},
+				`UNWIND $items AS v
+				 MATCH (sess:AnalyticsSession {id: v.sessionId}), (p:AnalyticsPage {path: v.path})
+				 MERGE (sess)-[rel:VISITED]->(p)
+				 SET rel.sequence = v.seq, rel.timestamp = v.ts`,
+				{ items: visitItems },
 			);
 		}
 	}

@@ -2,6 +2,10 @@
  * I/O Log — ephemeral client state for AI context monitoring.
  * Module-level $state — same pattern as desk-context.svelte.ts.
  * Any component that imports getIOLogEntries() gets reactive updates.
+ *
+ * Module-level $state is safe here because the desk route sets `ssr = false`
+ * in src/routes/(desk)/+layout.ts. This module only ever runs in the browser,
+ * so state is per-tab and never shared across server requests.
  */
 
 export type IOLogSource = 'tool-call' | 'tool-result' | 'context-read' | 'progress' | 'effect';

@@ -34,11 +34,11 @@ async function search() {
 		});
 
 		if (!res.ok) {
-			const data = await res.json().catch(() => ({}));
-			throw new Error(data.error ?? `HTTP ${res.status}`);
+			const errJson = await res.json().catch(() => ({}));
+			throw new Error(errJson.error?.message ?? `HTTP ${res.status}`);
 		}
 
-		const data = await res.json();
+		const { data } = await res.json();
 		results = data.chunks ?? [];
 		meta = { durationMs: data.durationMs, tierUsed: data.tierUsed };
 		searched = true;

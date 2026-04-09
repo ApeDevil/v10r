@@ -1,6 +1,6 @@
-import { json } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { safeParse } from 'valibot';
+import { apiCreated, apiOk, apiValidationError } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { createSpreadsheet } from '$lib/server/db/desk/mutations';
 import { listSpreadsheets } from '$lib/server/db/desk/queries';
@@ -15,7 +15,7 @@ const CreateSchema = v.object({
 export const GET: RequestHandler = async ({ locals }) => {
 	const { user } = requireApiUser(locals);
 	const rows = await listSpreadsheets(user.id);
-	return json({ spreadsheets: rows });
+	return apiOk({ spreadsheets: rows });
 };
 
 /** Create a new spreadsheet. */
@@ -25,9 +25,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const body = await request.json().catch(() => ({}));
 	const parsed = safeParse(CreateSchema, body);
 	if (!parsed.success) {
-		return json({ error: 'Invalid request.' }, { status: 400 });
+		return apiValidationError(parsed.issues);
 	}
 
 	const row = await createSpreadsheet(user.id, parsed.output.name, parsed.output.cells);
-	return json({ spreadsheet: row }, { status: 201 });
+	return apiCreated({ spreadsheet: row });
 };

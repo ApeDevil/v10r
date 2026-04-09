@@ -26,7 +26,7 @@ async function loadDocuments() {
 	try {
 		const res = await fetch('/api/retrieval/documents');
 		if (res.ok) {
-			const data = await res.json();
+			const { data } = await res.json();
 			documents = data.documents ?? [];
 		}
 	} catch {
@@ -49,11 +49,12 @@ async function ingestDocument() {
 		});
 
 		if (!res.ok) {
-			const data = await res.json().catch(() => ({}));
-			throw new Error(data.error ?? `HTTP ${res.status}`);
+			const errJson = await res.json().catch(() => ({}));
+			throw new Error(errJson.error?.message ?? `HTTP ${res.status}`);
 		}
 
-		result = await res.json();
+		const { data: ingestResult } = await res.json();
+		result = ingestResult;
 		title = '';
 		content = '';
 		await loadDocuments();

@@ -1,5 +1,5 @@
-import { json } from '@sveltejs/kit';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { apiError, apiOk } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import { listDocuments } from '$lib/server/db/rag/queries';
@@ -15,9 +15,9 @@ export const GET: RequestHandler = async ({ locals }) => {
 
 	try {
 		const documents = await listDocuments(user.id);
-		return json({ documents });
+		return apiOk({ documents });
 	} catch (err) {
 		console.error('[api:retrieval:documents] Error:', err instanceof Error ? err.message : err);
-		return json({ error: 'Failed to list documents' }, { status: 500 });
+		return apiError(500, 'list_failed', 'Failed to list documents.');
 	}
 };

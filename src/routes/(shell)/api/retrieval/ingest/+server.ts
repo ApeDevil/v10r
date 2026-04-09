@@ -1,7 +1,7 @@
-import { json } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { safeParse } from 'valibot';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { apiCreated, apiError, apiValidationError } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { INGEST_RATE_LIMIT_MAX, INGEST_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import { checkDocumentLimit } from '$lib/server/db/rag/limits';
@@ -26,17 +26,17 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	const body = await request.json().catch(() => null);
 	if (!body) {
-		return json({ error: 'Invalid request body.' }, { status: 400 });
+		return apiError(400, 'invalid_body', 'Invalid request body.');
 	}
 
 	const parsed = safeParse(IngestSchema, body);
 	if (!parsed.success) {
-		return json({ error: 'Invalid request.' }, { status: 400 });
+		return apiValidationError(parsed.issues);
 	}
 
 	const limitError = await checkDocumentLimit(user.id);
 	if (limitError) {
-		return json({ error: limitError }, { status: 403 });
+		return apiError(403, 'limit_exceeded', limitError);
 	}
 
 	try {
@@ -48,12 +48,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			userId: user.id,
 		});
 
-		return json(result, { status: 201 });
+		return apiCreated(result);
 	} catch (err) {
 		console.error('[api:retrieval:ingest] Error:', err instanceof Error ? err.message : err);
 		if (err instanceof RetrievalError) {
-			return json({ error: err.message }, { status: retrievalErrorToStatus(err.kind) });
+			return apiError(retrievalErrorToStatus(err.kind), err.kind, err.message);
 		}
-		return json({ error: 'Ingestion failed' }, { status: 500 });
+		return apiError(500, 'ingestion_failed', 'Ingestion failed.');
 	}
 };
