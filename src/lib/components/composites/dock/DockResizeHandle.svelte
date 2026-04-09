@@ -142,7 +142,7 @@ function handleKeyDown(e: KeyboardEvent) {
 		left: 0;
 		right: 0;
 		top: 50%;
-		height: 1px;
+		height: 2px;
 		transform: translateY(-50%);
 	}
 

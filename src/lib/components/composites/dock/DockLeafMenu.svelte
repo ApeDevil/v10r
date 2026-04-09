@@ -17,7 +17,7 @@
 
 <DropdownMenuPrimitive.Root>
 	<DropdownMenuPrimitive.Trigger class="dock-leaf-menu-trigger" aria-label="Panel commands">
-		<span class="i-lucide-ellipsis-vertical h-3.5 w-3.5"></span>
+		<span class="i-lucide-ellipsis-vertical"></span>
 	</DropdownMenuPrimitive.Trigger>
 
 	<DropdownMenuPrimitive.Portal>
@@ -87,18 +87,21 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 24px;
-		height: 28px;
+		width: 16px;
+		height: 16px;
 		border-radius: var(--radius-sm);
 		color: var(--color-muted);
 		background: transparent;
 		border: none;
 		cursor: pointer;
+		opacity: 0.6;
+		font-size: 12px;
 	}
 
 	:global(.dock-leaf-menu-trigger:hover) {
+		opacity: 1;
 		color: var(--color-fg);
-		background: color-mix(in srgb, var(--color-muted) 10%, transparent);
+		background: color-mix(in srgb, var(--color-fg) 15%, transparent);
 	}
 
 	:global(.dock-leaf-menu-trigger:focus-visible) {

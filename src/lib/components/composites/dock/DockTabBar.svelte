@@ -7,24 +7,45 @@ import {
 	contextMenuSeparatorVariants,
 } from '$lib/components/composites/context-menu';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
+import { InfoDialog } from '$lib/components/composites/info-dialog';
+import { DESK_PANEL_HELP } from '$lib/config/desk-help';
 import { getDockContext } from './dock.state.svelte';
 import { getDeskSettings } from './desk-settings.svelte';
 import type { LeafNode } from './dock.types';
 import DockLeafMenu from './DockLeafMenu.svelte';
-import DockLeafHelp from './DockLeafHelp.svelte';
 
 interface Props {
 	leaf: LeafNode;
-	isFocused?: boolean;
 	menus?: MenuBarMenu[];
 	panelType?: string | null;
 	class?: string;
 }
 
-let { leaf, isFocused = false, menus = [], panelType = null, class: className }: Props = $props();
+let { leaf, menus = [], panelType = null, class: className }: Props = $props();
 
 const dock = getDockContext();
 const deskSettings = getDeskSettings();
+
+let helpOpen = $state(false);
+
+const panelHelp = $derived(
+	panelType ? DESK_PANEL_HELP[panelType as keyof typeof DESK_PANEL_HELP] ?? null : null,
+);
+
+const menusWithHelp = $derived.by(() => {
+	if (!panelHelp) return menus;
+	const helpMenu: MenuBarMenu = {
+		label: 'Help',
+		items: [
+			{
+				label: `About ${panelHelp.title}`,
+				icon: 'i-lucide-info',
+				onSelect: () => { helpOpen = true; },
+			},
+		],
+	};
+	return [...menus, helpMenu];
+});
 
 function handleClose(e: MouseEvent, panelId: string) {
 	e.stopPropagation();
@@ -41,7 +62,7 @@ const DRAG_THRESHOLD = 5;
 
 function handlePointerDown(e: PointerEvent, panelId: string) {
 	if (e.button !== 0) return;
-	if ((e.target as HTMLElement).closest('[data-close-btn]')) return;
+	if ((e.target as HTMLElement).closest('[data-close-btn], [data-menu-btn]')) return;
 
 	e.preventDefault();
 	dragId = panelId;
@@ -206,6 +227,11 @@ function removeGhost() {
 									<span class="i-lucide-x"></span>
 								</span>
 							{/if}
+							{#if isActive && menusWithHelp.length > 0}
+								<span data-menu-btn class="dock-tab-menu-wrap">
+									<DockLeafMenu menus={menusWithHelp} />
+								</span>
+							{/if}
 						</button>
 					{/snippet}
 				</ContextMenuPrimitive.Trigger>
@@ -269,13 +295,19 @@ function removeGhost() {
 		{/if}
 	{/each}
 	</div>
-	{#if isFocused}
-		<div class="dock-tab-actions">
-			<DockLeafHelp {panelType} />
-			<DockLeafMenu {menus} />
-		</div>
-	{/if}
 </div>
+
+{#if panelHelp}
+	<InfoDialog
+		bind:open={helpOpen}
+		noTrigger
+		title={panelHelp.title}
+		description={panelHelp.description}
+		icon={panelHelp.icon}
+		ariaLabel="About {panelHelp.title}"
+		doc={{ name: panelHelp.title, notes: panelHelp.notes }}
+	/>
+{/if}
 
 <style>
 	.dock-tab-bar {
@@ -283,7 +315,6 @@ function removeGhost() {
 		align-items: stretch;
 		gap: 0;
 		background: var(--desk-shell-bg, var(--color-bg));
-		border-bottom: 1px solid var(--desk-shell-border, var(--color-border));
 		min-height: 32px;
 		user-select: none;
 	}
@@ -301,13 +332,10 @@ function removeGhost() {
 		display: none;
 	}
 
-	.dock-tab-actions {
+	.dock-tab-menu-wrap {
 		display: flex;
 		align-items: center;
 		flex-shrink: 0;
-		border-left: 1px solid var(--desk-shell-border, var(--color-border));
-		padding: 0 2px;
-		gap: 1px;
 	}
 
 	.dock-tab {
@@ -321,6 +349,7 @@ function removeGhost() {
 		background: transparent;
 		border: none;
 		border-right: 1px solid var(--desk-shell-border, var(--color-border));
+		border-bottom: 1px solid var(--desk-shell-border, var(--color-border));
 		white-space: nowrap;
 		cursor: pointer;
 		position: relative;
@@ -335,7 +364,8 @@ function removeGhost() {
 	.dock-tab.active {
 		color: var(--color-fg);
 		background: var(--desk-panel-bg, var(--surface-1));
-		border-bottom: 2px solid var(--desk-tab-active-indicator, var(--color-primary));
+		border-top: 2px solid var(--desk-tab-active-indicator, var(--color-primary));
+		border-bottom-color: transparent;
 	}
 
 	.dock-tab.dragging {

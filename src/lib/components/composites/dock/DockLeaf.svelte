@@ -20,7 +20,6 @@ let { leaf, panelContent }: Props = $props();
 const dock = getDockContext();
 const deskSettings = getDeskSettings();
 
-const isFocused = $derived(dock.focusedLeafId === leaf.id);
 const focusedPanelType = $derived(dock.panels[leaf.activeTab]?.type ?? null);
 
 // View menu — same items as the old DeskMenuBar
@@ -93,7 +92,7 @@ const leafStyle = $derived.by(() => {
 
 <div class="dock-leaf" style={leafStyle} onfocusin={() => { dock.setFocusedLeaf(leaf.id); setFocusedPanel(leaf.activeTab); setContextFocus(leaf.activeTab); }} onpointerdown={() => { dock.setFocusedLeaf(leaf.id); setFocusedPanel(leaf.activeTab); setContextFocus(leaf.activeTab); }}>
 	{#if leaf.tabs.length > 0}
-		<DockTabBar {leaf} {isFocused} menus={leafMenus} panelType={focusedPanelType} />
+		<DockTabBar {leaf} menus={leafMenus} panelType={focusedPanelType} />
 		<div class="dock-leaf-content">
 			{#each leaf.tabs as tabId (tabId)}
 				<div class="dock-tab-panel" class:active={leaf.activeTab === tabId}>

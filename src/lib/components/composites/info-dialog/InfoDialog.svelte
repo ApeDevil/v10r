@@ -27,6 +27,10 @@
 		sections?: InfoSection[];
 		/** Additional dialog classes */
 		class?: string;
+		/** Externally controlled open state */
+		open?: boolean;
+		/** Hide the built-in trigger button (use when controlled externally) */
+		noTrigger?: boolean;
 	}
 
 	let {
@@ -38,9 +42,9 @@
 		children,
 		sections,
 		class: className,
+		open = $bindable(false),
+		noTrigger = false,
 	}: Props = $props();
-
-	let open = $state(false);
 
 	const docTabs = $derived.by(() => {
 		if (!doc) return [];
@@ -92,6 +96,7 @@
 	{/if}
 {/snippet}
 
+{#if !noTrigger}
 <Button
 	variant="ghost"
 	size="icon"
@@ -102,6 +107,7 @@
 >
 	<span class="{icon} h-4 w-4" aria-hidden="true"></span>
 </Button>
+{/if}
 
 <Dialog.Root bind:open>
 	<Dialog.Portal>
