@@ -13,7 +13,7 @@ import {
 	type UIMessage,
 } from 'ai';
 import { activeProviderInfo, chatModel, fallbackProviders, toolModel, toolProviderId } from '$lib/server/ai';
-import { DESK_SYSTEM_PROMPT, MAX_TOKENS, SYSTEM_PROMPT } from '$lib/server/ai/config';
+import { buildPermissionsBlock, DESK_SYSTEM_PROMPT, MAX_TOKENS, SYSTEM_PROMPT } from '$lib/server/ai/config';
 import { aiErrorToStatus, classifyAIError, safeAIMessage } from '$lib/server/ai/errors';
 import { isCooledDown, markCooldown } from '$lib/server/ai/providers';
 import { createDeskTools, type DeskToolScope } from '$lib/server/ai/tools';
@@ -95,14 +95,19 @@ function escapeXmlAttr(str: string): string {
 		.replace(/'/g, '&apos;');
 }
 
-/** Build the system prompt with optional desk panel context. */
+/** Build the system prompt with optional desk panel context and tool scope awareness. */
 function buildSystemPrompt(
 	panelContext?: ChatInput['panelContext'],
-	hasTools = false,
+	toolScopes?: DeskToolScope[],
 	deskLayout?: ChatInput['deskLayout'],
 	activeWorkspace?: ChatInput['activeWorkspace'],
 ): string {
+	const hasTools = !!toolScopes?.length;
 	let prompt = hasTools ? DESK_SYSTEM_PROMPT : SYSTEM_PROMPT;
+
+	if (hasTools && toolScopes) {
+		prompt += `\n\n${buildPermissionsBlock(toolScopes)}`;
+	}
 
 	if (activeWorkspace) {
 		prompt += `\n\nThe user is in workspace "${escapeXmlAttr(activeWorkspace.name)}".`;
@@ -268,7 +273,7 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 	const hasTools = wantsTools && toolProviderAvailable;
 	const model = (hasTools ? toolModel : chatModel) ?? chatModel;
 	const deskTools = hasTools ? createDeskTools(userId, toolScopes) : undefined;
-	const baseSystemPrompt = buildSystemPrompt(panelContext, hasTools, deskLayout, activeWorkspace);
+	const baseSystemPrompt = buildSystemPrompt(panelContext, toolScopes, deskLayout, activeWorkspace);
 
 	// Resolve conversation (pass raw messages for title extraction)
 	const convResult = await resolveConversation(userId, existingConvId, windowedMessages);

@@ -5,6 +5,8 @@ export {
 	AI_RATE_LIMIT_WINDOW as RATE_LIMIT_WINDOW,
 } from '$lib/server/config';
 
+import type { DeskToolScope } from './tools/_types';
+
 /** System prompt for the AI assistant (non-tool mode). */
 export const SYSTEM_PROMPT = `You are the Velociraptor AI assistant — a helpful, concise assistant embedded in a full-stack SvelteKit workspace.
 
@@ -21,12 +23,6 @@ You are the Velociraptor workspace assistant — concise, tool-using, workspace-
 You can see and interact with the user's open panels (spreadsheets, documents, files).
 </role>
 
-<capabilities>
-- Read panel contents from desk-context or via desk_read_file tool
-- List and search workspace files via desk_list_files and desk_search_files
-- Answer questions about web development, SvelteKit, TypeScript, databases
-</capabilities>
-
 <instructions>
 Use tools to discover information rather than guessing.
 When the user references "this spreadsheet" or "the document", check desk-context first. If not available, use desk_list_files to identify the target, then read its contents.
@@ -36,4 +32,20 @@ Summarize data insights concisely. Use markdown tables for tabular results.
 When citing spreadsheet data, reference cells by column letter and row number (e.g. A3, B12).
 Be concise. Keep answers under 300 words unless the user asks for detail.
 If you don't know something, say so.
+If a user asks you to perform an action that requires a disabled permission, explain what you can't do and suggest they enable it in Bot Manager.
 </instructions>`;
+
+const SCOPE_DESCRIPTIONS: Record<DeskToolScope, string> = {
+	'desk:read': 'read: List files, read contents, search workspace',
+	'desk:write': 'write: Update spreadsheet cells, rename files',
+	'desk:create': 'create: Create new spreadsheets and documents',
+	'desk:delete': 'delete: Delete files (requires user confirmation per action)',
+};
+
+/** Build a <permissions> block listing which tool scopes are enabled/disabled. */
+export function buildPermissionsBlock(scopes: DeskToolScope[]): string {
+	const lines = (['desk:read', 'desk:write', 'desk:create', 'desk:delete'] as const).map(
+		(s) => `- ${SCOPE_DESCRIPTIONS[s]} [${scopes.includes(s) ? 'enabled' : 'disabled'}]`,
+	);
+	return `<permissions>\n${lines.join('\n')}\n</permissions>`;
+}

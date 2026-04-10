@@ -29,6 +29,8 @@ export interface PanelContext {
 	tokenEstimate: number;
 	/** When this context was last updated */
 	updatedAt: number;
+	/** Content type hint for viewer rendering in Bot Manager */
+	contentType?: 'structured' | 'code' | 'plaintext';
 }
 
 export type ContextStatus = 'implicit' | 'pinned' | 'available';
@@ -150,6 +152,14 @@ export function dismissContext(panelId: string): void {
 	}
 	// Add to dismissed so implicit focus won't re-include it
 	dismissedIds = new Set([...dismissedIds, panelId]);
+}
+
+/** Restore a dismissed panel to natural state (implicit-eligible, not pinned) */
+export function restoreContext(panelId: string): void {
+	if (!dismissedIds.has(panelId)) return;
+	const next = new Set(dismissedIds);
+	next.delete(panelId);
+	dismissedIds = next;
 }
 
 /** Toggle pin state for a panel */

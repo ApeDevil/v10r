@@ -7,21 +7,18 @@ import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
 import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
 import {
 	appendIOLog,
-	dismissContext,
 	findLeafWithPanel,
-	getContextChips,
 	getDeskBus,
 	getDockContext,
-	getTokenEstimate,
+	getEnabledScopes,
 	getWorkspaceContext,
 	markResponseReceived,
-	pinContext,
 	registerPanelMenus,
 	serializeForRequest,
-	unpinContext,
 } from '$lib/components/composites/dock';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import type { DeskEffect } from '$lib/server/ai/tools/_types';
+import BotManagerDialog from './BotManagerDialog.svelte';
 import ContextTray from './ContextTray.svelte';
 import { chatStateCache } from './chat-state-cache';
 
@@ -36,6 +33,7 @@ const cached = chatStateCache.get(panelId);
 let conversationId: string | undefined = $state(cached?.conversationId);
 let inputValue = $state('');
 let lastErrorKind = $state<string | null>(null);
+let managerOpen = $state(false);
 
 const bus = getDeskBus();
 const dock = getDockContext();
@@ -110,16 +108,6 @@ $effect(() => {
 	const msg = ERROR_MESSAGES[kind ?? ''] ?? 'Something went wrong.';
 	appendIOLog({ source: 'effect', level: 'error', label: `AI error: ${msg}`, detail: kind ?? 'unknown' });
 });
-
-// ── Token usage estimate ────────────────────────────────────────
-
-/** Rough client-side token estimate (~4 chars/token), derived from text parts. */
-function estimateMessageTokens(m: { parts: { type: string; text?: string }[] }): number {
-	const textLen = m.parts.filter((p) => p.type === 'text').reduce((sum, p) => sum + (p.text?.length ?? 0), 0);
-	return Math.ceil(textLen / 4);
-}
-
-const conversationTokens = $derived(chat.messages.reduce((sum, m) => sum + estimateMessageTokens(m), 0));
 
 // ── AI desk effect dispatch ─────────────────────────────────────
 
@@ -209,25 +197,6 @@ function dispatchDeskEffect(effect: DeskEffect) {
 	}
 }
 
-// ── Context ─────────────────────────────────────────────────────
-
-const contextChips = $derived(getContextChips());
-const tokenEstimate = $derived(getTokenEstimate());
-
-const activeContextTypes = $derived(
-	contextChips.filter((c) => c.status !== 'available').map((c) => c.context.panelType),
-);
-
-const placeholder = $derived.by(() => {
-	if (activeContextTypes.includes('spreadsheet')) return 'Ask about your selection...';
-	if (activeContextTypes.includes('editor')) return 'Ask about this document...';
-	return 'Ask anything...';
-});
-
-function handleDismiss(ctxPanelId: string) {
-	dismissContext(ctxPanelId);
-}
-
 // ── Scroll ──────────────────────────────────────────────────────
 
 let scrollContainer: HTMLDivElement | undefined = $state();
@@ -275,7 +244,7 @@ function submitMessage() {
 			body: {
 				...(conversationId ? { conversationId } : {}),
 				...(context.length > 0 ? { panelContext: context } : {}),
-				toolScopes: ['desk:read', 'desk:write', 'desk:create'],
+				toolScopes: getEnabledScopes(),
 				...(wsState.active ? { activeWorkspace: { id: wsState.active.id, name: wsState.active.name } } : {}),
 			},
 		},
@@ -345,17 +314,13 @@ $effect(() => {
 	{/if}
 
 	<!-- Context tray -->
-	<ContextTray
-		chips={contextChips}
-		totalTokens={tokenEstimate}
-		{conversationTokens}
-		onpin={pinContext}
-		onunpin={unpinContext}
-		ondismiss={handleDismiss}
-	/>
+	<ContextTray onopensettings={() => managerOpen = true} />
 
 	<!-- Input (reuse existing ChatInput) -->
 	<ChatInput bind:value={inputValue} loading={isLoading} onsubmit={submitMessage} />
+
+	<!-- Bot Manager Dialog -->
+	<BotManagerDialog bind:open={managerOpen} />
 </div>
 
 <style>

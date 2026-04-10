@@ -1,3 +1,14 @@
+export {
+	cancelDelete,
+	confirmDelete,
+	disableScope,
+	enableScope,
+	getEnabledScopes,
+	hasWriteAccess,
+	isDeletePending,
+	isScopeEnabled,
+	toggleScope,
+} from './bot-config.svelte';
 export { default as DeskShortcuts } from './DeskShortcuts.svelte';
 export { default as DockActivityBar } from './DockActivityBar.svelte';
 export { default as DockDropOverlay } from './DockDropOverlay.svelte';
@@ -19,6 +30,7 @@ export {
 	type PanelContext,
 	pinContext,
 	registerPanelContext,
+	restoreContext,
 	type SerializedContext,
 	serializeForRequest,
 	setContextFocus,

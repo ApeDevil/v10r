@@ -9,6 +9,8 @@ interface Props extends SwitchVariants {
 	disabled?: boolean;
 	label?: string;
 	class?: string;
+	/** Callback fired when checked state changes. Use instead of bind:checked in list contexts. */
+	onCheckedChange?: (checked: boolean) => void;
 }
 
 let {
@@ -18,6 +20,7 @@ let {
 	size = 'md',
 	label,
 	class: className,
+	onCheckedChange,
 }: Props = $props();
 
 // svelte-ignore state_referenced_locally
@@ -30,6 +33,7 @@ const id = propId ?? `switch-${Math.random().toString(36).slice(2, 9)}`;
 			bind:checked
 			{disabled}
 			{id}
+			{onCheckedChange}
 			class={cn(switchRootVariants({ size }))}
 		>
 			<SwitchPrimitive.Thumb class={cn(switchThumbVariants({ size }))} />
@@ -48,6 +52,7 @@ const id = propId ?? `switch-${Math.random().toString(36).slice(2, 9)}`;
 		<SwitchPrimitive.Root
 			bind:checked
 			{disabled}
+			{onCheckedChange}
 			class={cn(switchRootVariants({ size }), className)}
 		>
 			<SwitchPrimitive.Thumb class={cn(switchThumbVariants({ size }))} />
