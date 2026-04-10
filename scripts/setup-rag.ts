@@ -1,12 +1,12 @@
 /**
  * RAG schema setup — two phases.
  *
- * Phase 1 (pre-migrate):  pgvector extension — must run BEFORE db:migrate
- * Phase 2 (post-migrate): tsvector column, HNSW + GIN indexes, seed data — must run AFTER migrate
+ * Phase 1 (pre-push):  pgvector extension — must run BEFORE db:push
+ * Phase 2 (post-push): tsvector column, HNSW + GIN indexes, seed data — must run AFTER push
  *
  * Usage (standalone):
  *   bun run db:rag-pre    # phase 1
- *   bun run db:migrate    # apply migrations
+ *   bun run db:push       # apply schema
  *   bun run db:rag-post   # phase 2
  *
  * Or use the composite command:
@@ -36,7 +36,7 @@ async function prePush() {
 	console.log('[rag:pre] Enabling pgvector extension...');
 	await db.execute(sql`CREATE EXTENSION IF NOT EXISTS vector`);
 
-	console.log('[rag:pre] Done. Now run: bun run db:migrate');
+	console.log('[rag:pre] Done. Now run: bun run db:push');
 }
 
 /** Phase 2: features drizzle-kit can't express. */

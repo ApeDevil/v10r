@@ -19,7 +19,7 @@ Type-safe SQL with Neon PostgreSQL serverless. Schema-first, zero runtime overhe
 - [Type Inference](#type-inference) - InferSelectModel, composite types
 - [Transactions](#transactions) - Atomic operations
 - [Error Handling](#error-handling) - PostgreSQL error codes
-- [Migrations](#migrations) - drizzle-kit commands
+- [Schema Management](#schema-management) - push vs migrations
 - [Anti-Patterns](#anti-patterns) - Common mistakes
 - [File Structure](#file-structure)
 - [References](#references) - Detailed guides
@@ -83,7 +83,7 @@ Better Auth auto-generates schema. **Never edit manually.**
 
 ```bash
 bunx @better-auth/cli generate
-bunx drizzle-kit migrate
+bunx drizzle-kit push
 ```
 
 ```typescript
@@ -351,7 +351,7 @@ try {
 }
 ```
 
-## Migrations
+## Schema Management
 
 ```typescript
 // drizzle.config.ts
@@ -365,11 +365,18 @@ export default defineConfig({
 });
 ```
 
+**Development:** `db:push` diffs schema against live DB and applies directly. No migration files needed.
+
 ```bash
-bunx drizzle-kit generate  # Generate migration from schema changes
-bunx drizzle-kit migrate   # Apply migrations
-bunx drizzle-kit push      # Push directly (dev only, destructive)
+bunx drizzle-kit push      # Dev: direct schema sync
 bunx drizzle-kit studio    # Visual database browser
+```
+
+**Production:** `generate` + `migrate` produces versioned SQL for ordered, reviewable changes. Only needed when real user data exists.
+
+```bash
+bunx drizzle-kit generate  # Generate migration SQL from schema diff
+# Apply via programmatic migrate() — CLI is unreliable with Bun
 ```
 
 ## Anti-Patterns

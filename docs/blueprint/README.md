@@ -53,6 +53,12 @@ Implementation designs and feature specifications. How to build features using t
 |------|-------------|
 | **[testing/](./testing/)** | • [ai-testing-infrastructure.md](./testing/ai-testing-infrastructure.md): Two-tool strategy (Vitest + Claude Chrome extension), SvelteKit virtual module resolution, PGlite database isolation, Neo4j mocking, test data factories, Claude Code PostToolUse and Stop hooks, machine-readable output, implementation phases, AGENTS.md template |
 
+## Data
+
+| File | Main Topics |
+|------|-------------|
+| **[data/drizzle-workflow.md](./data/drizzle-workflow.md)** | • Dev→prod schema workflow: `push` for development, `generate`+`migrate` for production<br>• Transitioning from push to migrations (fresh DB vs existing DB baseline)<br>• Production gotchas: no migration locking, Bun CLI issues, enum pitfalls, rollback gaps |
+
 ## Deployment
 
 | File | Main Topics |

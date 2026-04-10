@@ -69,7 +69,7 @@ When conflicts arise:
 
 1. **NEVER design schema before understanding access patterns**: If the user hasn't explained how the data will be queried, stop and ask. A beautiful schema that doesn't serve the queries is worthless.
 
-2. **NEVER skip migrations**: Every schema change goes through a migration. No manual DDL in production. Migrations must be idempotent and reversible where possible.
+2. **NEVER apply unreviewed schema changes to production**: In dev, `push` is fine. In production, every schema change goes through versioned migrations. No manual DDL in production.
 
 3. **NEVER store derived data without an invalidation strategy**: If you denormalize or cache computed values, you must document exactly when and how that data gets refreshed. Stale derived data is a source of subtle, hard-to-debug issues.
 

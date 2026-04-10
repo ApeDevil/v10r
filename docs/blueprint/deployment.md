@@ -611,14 +611,14 @@ jobs:
 Add to build command in Vercel dashboard:
 
 ```bash
-bun run db:migrate && bun run build
+bun run db:push && bun run build
 ```
 
 Or use Vercel's build hooks:
 
 ```json
 {
-  "buildCommand": "bun run db:migrate && bun run build"
+  "buildCommand": "bun run db:push && bun run build"
 }
 ```
 
@@ -628,14 +628,14 @@ Run migrations before starting the app in Dockerfile:
 
 ```dockerfile
 # Add migration step
-CMD ["sh", "-c", "bun run db:migrate && bun run ./build/index.js"]
+CMD ["sh", "-c", "bun run db:push && bun run ./build/index.js"]
 ```
 
 Or use a separate migration job:
 
 ```bash
 # Run migration manually
-koyeb service exec <service> -- bun run db:migrate
+koyeb service exec <service> -- bun run db:push
 ```
 
 ---

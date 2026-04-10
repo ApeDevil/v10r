@@ -389,34 +389,26 @@ await db.transaction(async (tx) => {
 
 **Rules:** Keep short, no external APIs inside, Read Committed is usually fine.
 
-## Migrations
+## Schema Management
 
-### Codebase-First (Recommended)
+Schema in TypeScript is source of truth (codebase-first).
 
-Schema in TypeScript is source of truth:
+**Development:** `drizzle-kit push` — diffs schema against live DB and applies directly. No migration files needed.
+
+**Production:** `drizzle-kit generate` + programmatic `migrate()` — produces versioned SQL for ordered, reviewable changes. Only needed when real user data exists. Use direct (non-pooled) connection for migrations.
 
 ```bash
-# Generate migration from schema changes
-npx drizzle-kit generate
-
-# Apply migrations
-DATABASE_URL=$DIRECT_URL npx drizzle-kit migrate
-
-# Dev: Push without migration files
-npx drizzle-kit push
+npx drizzle-kit push       # Dev: direct schema sync
+npx drizzle-kit generate   # Prod: generate migration SQL
+npx drizzle-kit studio     # Visual database browser
 ```
 
-### Migration Best Practices
+### Best Practices
 
 1. **Review generated SQL** before applying
-2. **Use direct (non-pooled) connection** for migrations
-3. **Test on branch first** (Neon branching)
-4. **Make migrations reversible** when possible
-5. **Small, focused migrations** - Easier to debug
-
-### Schema Organization
-
-Re-export all tables from `src/lib/server/db/schema/index.ts` for Drizzle Kit to find.
+2. **Test on branch first** (Neon branching)
+3. **Small, focused migrations** - Easier to debug
+4. Re-export all tables from schema index for Drizzle Kit to find
 
 ## Anti-Patterns
 
