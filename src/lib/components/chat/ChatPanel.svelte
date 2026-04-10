@@ -8,6 +8,7 @@ import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
 import {
 	appendIOLog,
 	findLeafWithPanel,
+	getContextChips,
 	getDeskBus,
 	getDockContext,
 	getEnabledScopes,
@@ -19,7 +20,6 @@ import {
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import type { DeskEffect } from '$lib/server/ai/tools/_types';
 import BotManagerDialog from './BotManagerDialog.svelte';
-import ContextTray from './ContextTray.svelte';
 import { chatStateCache } from './chat-state-cache';
 
 interface Props {
@@ -96,6 +96,7 @@ onDestroy(() => {
 });
 
 const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
+const activeContextCount = $derived(getContextChips().filter((c) => c.status !== 'available').length);
 
 // ── Error classification (stream errors bypass response headers) ──
 
@@ -313,11 +314,14 @@ $effect(() => {
 		</div>
 	{/if}
 
-	<!-- Context tray -->
-	<ContextTray onopensettings={() => managerOpen = true} />
-
-	<!-- Input (reuse existing ChatInput) -->
-	<ChatInput bind:value={inputValue} loading={isLoading} onsubmit={submitMessage} />
+	<!-- Input -->
+	<ChatInput
+		bind:value={inputValue}
+		loading={isLoading}
+		contextCount={activeContextCount}
+		onsubmit={submitMessage}
+		onopensettings={() => managerOpen = true}
+	/>
 
 	<!-- Bot Manager Dialog -->
 	<BotManagerDialog bind:open={managerOpen} />

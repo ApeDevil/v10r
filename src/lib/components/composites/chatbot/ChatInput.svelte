@@ -2,10 +2,12 @@
 interface Props {
 	value: string;
 	loading?: boolean;
+	contextCount?: number;
 	onsubmit: () => void;
+	onopensettings?: () => void;
 }
 
-let { value = $bindable(''), loading = false, onsubmit }: Props = $props();
+let { value = $bindable(''), loading = false, contextCount = 0, onsubmit, onopensettings }: Props = $props();
 
 let textarea: HTMLTextAreaElement | undefined = $state();
 
@@ -34,6 +36,20 @@ $effect(() => {
 </script>
 
 <div class="chat-input-container flex items-end gap-2 border-t border-border p-3">
+	{#if onopensettings}
+		<button
+			type="button"
+			onclick={onopensettings}
+			class="settings-btn"
+			aria-label="Bot manager settings"
+		>
+			<span class="i-lucide-sliders-horizontal settings-icon"></span>
+			{#if contextCount > 0}
+				<span class="context-badge">{contextCount}</span>
+			{/if}
+		</button>
+	{/if}
+
 	<textarea
 		bind:this={textarea}
 		bind:value
@@ -66,6 +82,47 @@ $effect(() => {
 
 	.chat-textarea:focus {
 		background-color: transparent;
+	}
+
+	.settings-btn {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 36px;
+		height: 36px;
+		flex-shrink: 0;
+		border-radius: var(--radius-md);
+		border: none;
+		background: none;
+		color: var(--color-muted);
+		cursor: pointer;
+		padding: 0;
+	}
+
+	.settings-btn:hover {
+		color: var(--color-fg);
+		background: color-mix(in srgb, var(--color-muted) 12%, transparent);
+	}
+
+	.settings-icon {
+		font-size: 16px;
+	}
+
+	.context-badge {
+		position: absolute;
+		top: 2px;
+		right: 2px;
+		min-width: 16px;
+		height: 16px;
+		padding: 0 4px;
+		border-radius: 8px;
+		font-size: 10px;
+		font-weight: 600;
+		line-height: 16px;
+		text-align: center;
+		background: var(--color-primary);
+		color: white;
 	}
 
 	.chat-send-btn {
