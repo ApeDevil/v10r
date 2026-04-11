@@ -16,7 +16,7 @@ let { timeRemaining, onExtend, onSignOut, onDismiss }: Props = $props();
 let extending = $state(false);
 
 // Format time as MM:SS
-const formattedTime = $derived(() => {
+const formattedTime = $derived.by(() => {
 	const minutes = Math.floor(timeRemaining / 60);
 	const seconds = timeRemaining % 60;
 	return `${minutes}:${seconds.toString().padStart(2, '0')}`;

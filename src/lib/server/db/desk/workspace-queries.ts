@@ -14,28 +14,19 @@ export interface DeskWorkspaceRow {
 
 /** List all workspaces for a user, ordered by sortOrder. */
 export async function listWorkspaces(userId: string): Promise<DeskWorkspaceRow[]> {
-	try {
-		return await db
-			.select()
-			.from(deskWorkspace)
-			.where(eq(deskWorkspace.userId, userId))
-			.orderBy(deskWorkspace.sortOrder);
-	} catch {
-		// Table may not exist yet (pre-migration)
-		return [];
-	}
+	return db
+		.select()
+		.from(deskWorkspace)
+		.where(eq(deskWorkspace.userId, userId))
+		.orderBy(deskWorkspace.sortOrder);
 }
 
 /** Get the active workspace ID for a user. Returns null if none set. */
 export async function getActiveWorkspaceId(userId: string): Promise<string | null> {
-	try {
-		const [row] = await db
-			.select({ workspaceId: deskWorkspaceActive.workspaceId })
-			.from(deskWorkspaceActive)
-			.where(eq(deskWorkspaceActive.userId, userId))
-			.limit(1);
-		return row?.workspaceId ?? null;
-	} catch {
-		return null;
-	}
+	const [row] = await db
+		.select({ workspaceId: deskWorkspaceActive.workspaceId })
+		.from(deskWorkspaceActive)
+		.where(eq(deskWorkspaceActive.userId, userId))
+		.limit(1);
+	return row?.workspaceId ?? null;
 }

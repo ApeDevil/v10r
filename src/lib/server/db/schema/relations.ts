@@ -324,6 +324,7 @@ export const userRelations = relations(user, ({ one, many }) => ({
 	preferences: one(userPreferences),
 	customPalettes: many(customPalettes),
 	// desk
+	folders: many(folder),
 	files: many(file),
 	spreadsheets: many(spreadsheet),
 	markdowns: many(markdown),

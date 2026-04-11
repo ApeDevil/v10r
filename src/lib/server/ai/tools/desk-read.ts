@@ -7,6 +7,15 @@ import { getFile, getMarkdownByFileId, getSpreadsheetByFileId, listFiles } from 
 import { getFileTree, renderFileTreeWithIndex } from '$lib/server/desk/file-tree';
 import type { DeskLayoutEntry } from './_types';
 
+/** Max output size per tool call (characters). Prevents prompt injection exfiltration. */
+const MAX_TOOL_OUTPUT_CHARS = 8_000;
+
+/** Truncate tool output to budget with a notice. */
+function truncateOutput(text: string): string {
+	if (text.length <= MAX_TOOL_OUTPUT_CHARS) return text;
+	return `${text.slice(0, MAX_TOOL_OUTPUT_CHARS)}\n... (truncated at ${MAX_TOOL_OUTPUT_CHARS} chars)`;
+}
+
 /** Summarize spreadsheet cells to stay under ~400 tokens. */
 function summarizeCells(cells: Record<string, unknown>): string {
 	const entries = Object.entries(cells);
@@ -14,7 +23,7 @@ function summarizeCells(cells: Record<string, unknown>): string {
 	const preview = entries.slice(0, 20);
 	const lines = preview.map(([k, v]) => `${k}: ${JSON.stringify(v)}`);
 	if (entries.length > 20) lines.push(`... and ${entries.length - 20} more cells`);
-	return lines.join('\n');
+	return truncateOutput(lines.join('\n'));
 }
 
 export function createReadTools(userId: string, deskLayout?: DeskLayoutEntry[]) {
@@ -87,7 +96,7 @@ export function createReadTools(userId: string, deskLayout?: DeskLayoutEntry[]) 
 						if (!md) return { error: 'Markdown data not found.' };
 						return {
 							file: { id: fileRow.id, name: fileRow.name, type: fileRow.type },
-							content: md.markdown.content.slice(0, 4000),
+							content: truncateOutput(md.markdown.content),
 						};
 					}
 
@@ -112,7 +121,7 @@ export function createReadTools(userId: string, deskLayout?: DeskLayoutEntry[]) 
 			execute: async (_input, { abortSignal: _abortSignal }) => {
 				try {
 					const tree = await getFileTree(userId);
-					return { tree: renderFileTreeWithIndex(tree) };
+					return { tree: truncateOutput(renderFileTreeWithIndex(tree)) };
 				} catch {
 					return { error: 'Failed to load file tree.' };
 				}

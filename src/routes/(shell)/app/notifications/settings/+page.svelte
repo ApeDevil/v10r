@@ -1,5 +1,7 @@
 <script lang="ts">
 import { enhance } from '$app/forms';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
 import { BackLink, Card } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Switch } from '$lib/components/primitives';
@@ -55,9 +57,11 @@ $effect(() => {
 	}
 	if (data.successMessage === 'discord_connected') {
 		toast.success('Discord connected successfully');
+		goto(page.url.pathname, { replaceState: true });
 	}
 	if (data.errorMessage === 'discord_denied') {
 		toast.error('Discord connection was denied');
+		goto(page.url.pathname, { replaceState: true });
 	}
 });
 

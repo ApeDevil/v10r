@@ -48,7 +48,19 @@ async function resolveRecipient(userId: string, channel: string): Promise<string
 	return null;
 }
 
+let processing = false;
+
 export async function notificationDelivery(): Promise<number> {
+	if (processing) return 0;
+	processing = true;
+	try {
+		return await processDeliveryBatch();
+	} finally {
+		processing = false;
+	}
+}
+
+async function processDeliveryBatch(): Promise<number> {
 	const deliveries = await getPendingDeliveries(50);
 	if (deliveries.length === 0) return 0;
 

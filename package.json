@@ -40,7 +40,7 @@
 		"check:biome": "biome ci .",
 		"test": "vitest run",
 		"test:watch": "vitest",
-		"validate": "bun run check && bun biome check . && bun run test",
+		"validate": "bun run check && biome ci . && bun run test",
 		"knip": "knip"
 	},
 	"dependencies": {

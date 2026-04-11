@@ -231,7 +231,13 @@ function tryFallback(
 
 			const headers: Record<string, string> = {};
 			if (conversationId) headers['X-Conversation-Id'] = conversationId;
-			return result.toUIMessageStreamResponse({ headers });
+			const stream = createUIMessageStream({
+				execute: ({ writer }) => {
+					writer.merge(result.toUIMessageStream());
+				},
+				onError: classifyStreamError,
+			});
+			return createUIMessageStreamResponse({ stream, headers });
 		} catch {
 			// try next fallback
 		}

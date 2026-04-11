@@ -38,7 +38,7 @@ export const RequestUploadSchema = v.object({
 });
 
 export const ConfirmUploadSchema = v.object({
-	key: v.pipe(v.string(), v.minLength(1)),
+	key: v.pipe(v.string(), v.regex(/^blog\/[0-9a-f-]{36}\.\w{1,10}$/)),
 	fileName: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
 	mimeType: v.pipe(v.string(), v.regex(/^[\w-]+\/[\w.+-]+$/)),
 	fileSize: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(50_000_000)),

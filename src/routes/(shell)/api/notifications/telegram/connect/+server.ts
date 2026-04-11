@@ -1,6 +1,6 @@
-import { json } from '@sveltejs/kit';
 import { and, count, eq, gt } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
+import { apiError, apiOk } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { db } from '$lib/server/db';
 import { telegramVerificationTokens } from '$lib/server/db/schema/notifications/telegram';
@@ -11,7 +11,7 @@ export const POST: RequestHandler = async ({ locals }) => {
 
 	const botUsername = env.TELEGRAM_BOT_USERNAME;
 	if (!botUsername) {
-		return json({ error: 'Telegram not configured' }, { status: 503 });
+		return apiError(503, 'unavailable', 'Telegram not configured');
 	}
 
 	// Rate limit: max 3 tokens per hour per user
@@ -22,7 +22,7 @@ export const POST: RequestHandler = async ({ locals }) => {
 		.where(and(eq(telegramVerificationTokens.userId, user.id), gt(telegramVerificationTokens.createdAt, oneHourAgo)));
 
 	if (recentCount >= 3) {
-		return json({ error: 'Too many connection attempts. Try again later.' }, { status: 429 });
+		return apiError(429, 'rate_limited', 'Too many connection attempts. Try again later.');
 	}
 
 	// Generate verification token (32-byte Base64URL)
@@ -45,5 +45,5 @@ export const POST: RequestHandler = async ({ locals }) => {
 
 	const deepLink = `https://t.me/${botUsername}?start=${token}`;
 
-	return json({ deepLink, expiresAt: expiresAt.toISOString() });
+	return apiOk({ deepLink, expiresAt: expiresAt.toISOString() });
 };

@@ -2,7 +2,7 @@
 import { enhance } from '$app/forms';
 import { Alert, Card, DiagGrid, DiagRow } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
-import { Badge, Button, Spinner } from '$lib/components/primitives';
+import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
 
 let { data, form } = $props();
 
@@ -146,12 +146,13 @@ $effect(() => {
 				{#snippet children()}
 					<p>This will permanently delete your account, all sessions, and linked providers.</p>
 					<p class="text-sm mt-2">Type <strong>DELETE</strong> to confirm:</p>
-					<input
+					<Input
 						type="text"
 						bind:value={deleteConfirmText}
 						placeholder="DELETE"
 						class="delete-confirm-input"
 						autocomplete="off"
+						aria-label="Type DELETE to confirm account deletion"
 					/>
 					<div class="flex gap-3 mt-4">
 						<form

@@ -36,15 +36,15 @@ The AI Assistant is a chat interface accessible from the sidebar header. Unlike 
 │                    Vercel AI SDK (unified API)                  │
 ├────────────────┬────────────────┬────────────────┬─────────────┤
 │     Chat       │   Embeddings   │     Image      │    Audio    │
-│     Groq       │    Mistral     │  Together AI   │ Groq Whisper│
-│  (14K req/day) │ (1B tokens/mo) │  (3mo free)    │ (free tier) │
+│     Groq       │ Google Gemini  │  Together AI   │ Groq Whisper│
+│  (14K req/day) │  (free tier)   │  (3mo free)    │ (free tier) │
 └────────────────┴────────────────┴────────────────┴─────────────┘
 ```
 
 | Capability | Provider | Free Tier | AI SDK Package |
 |------------|----------|-----------|----------------|
 | **Chat** | Groq | 14,400 req/day | `@ai-sdk/groq` |
-| **Embeddings** | Mistral | 1B tokens/mo | `@ai-sdk/mistral` |
+| **Embeddings** | Google Gemini | Free tier | `@ai-sdk/google` |
 | **Image Gen** | Together AI | 3 months unlimited | `@ai-sdk/togetherai` |
 | **Audio/STT** | Groq | 7,200 audio-sec/min | `@ai-sdk/groq` |
 

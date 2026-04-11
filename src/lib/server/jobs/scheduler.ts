@@ -28,7 +28,7 @@ if (!building && platform.persistent && !globalThis.__v10r_scheduler) {
 	timer.unref();
 	globalThis.__v10r_scheduler = timer;
 
-	process.once('SIGTERM', () => {
+	process.on('SIGTERM', () => {
 		console.log('[scheduler] SIGTERM received, clearing interval');
 		clearInterval(timer);
 		globalThis.__v10r_scheduler = undefined;

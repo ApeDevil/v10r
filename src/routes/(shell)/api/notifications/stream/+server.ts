@@ -28,8 +28,13 @@ export const GET: RequestHandler = async ({ locals }) => {
 			}
 
 			// Send initial unread count
-			const count = await getUnreadCount(user.id);
-			controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'init', unreadCount: count })}\n\n`));
+			try {
+				const count = await getUnreadCount(user.id);
+				controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'init', unreadCount: count })}\n\n`));
+			} catch (err) {
+				console.error('[sse:notifications] Failed to fetch initial count:', err);
+				controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'init', unreadCount: 0 })}\n\n`));
+			}
 
 			// Heartbeat to keep connection alive
 			heartbeatTimer = setInterval(() => {

@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
+import { apiError } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import type { RequestHandler } from './$types';
 
@@ -10,7 +11,7 @@ export const GET: RequestHandler = async ({ locals, cookies }) => {
 	const redirectUri = env.DISCORD_REDIRECT_URI;
 
 	if (!clientId || !redirectUri) {
-		return new Response('Discord not configured', { status: 503 });
+		return apiError(503, 'unavailable', 'Discord not configured');
 	}
 
 	// Generate CSRF state token

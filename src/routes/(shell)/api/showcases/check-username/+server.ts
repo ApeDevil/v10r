@@ -11,6 +11,13 @@ function checkRateLimit(ip: string): boolean {
 	const now = Date.now();
 	const entry = requestCounts.get(ip);
 
+	// Periodic cleanup: remove expired entries when map grows large
+	if (requestCounts.size > 1000) {
+		for (const [key, val] of requestCounts) {
+			if (now > val.resetAt) requestCounts.delete(key);
+		}
+	}
+
 	if (!entry || now > entry.resetAt) {
 		requestCounts.set(ip, { count: 1, resetAt: now + USERNAME_CHECK_RATE_LIMIT_WINDOW_MS });
 		return true;

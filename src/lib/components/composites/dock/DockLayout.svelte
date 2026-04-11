@@ -283,11 +283,10 @@ if (browser) {
 
 // Desk settings persistence — localStorage cache (DB save happens via onCommit callback)
 if (browser) {
-	let themeTimer: ReturnType<typeof setTimeout>;
 	$effect(() => {
 		const theme = $state.snapshot(deskSettings.theme) as DeskTheme;
-		clearTimeout(themeTimer);
-		themeTimer = setTimeout(() => saveDeskSettings(theme), 300);
+		const timer = setTimeout(() => saveDeskSettings(theme), 300);
+		return () => clearTimeout(timer);
 	});
 }
 

@@ -2,14 +2,14 @@
  * ANALYTICS DAILY PAGE STATS — Pre-computed rollup table for fast dashboard queries.
  * One row per (date, path) combination, computed from raw events.
  */
-import { index, integer, text, unique } from 'drizzle-orm/pg-core';
+import { date, index, integer, text, unique } from 'drizzle-orm/pg-core';
 import { analyticsSchema } from './events';
 
 export const dailyPageStats = analyticsSchema.table(
 	'daily_page_stats',
 	{
 		id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
-		date: text('date').notNull(),
+		date: date('date', { mode: 'string' }).notNull(),
 		path: text('path').notNull(),
 		uniqueVisitors: integer('unique_visitors').notNull().default(0),
 		pageviews: integer('pageviews').notNull().default(0),

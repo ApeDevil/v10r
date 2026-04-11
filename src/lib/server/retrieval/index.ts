@@ -183,11 +183,26 @@ export async function retrieve(query: string, options: RetrievalOptions, onEvent
 	};
 }
 
+/** Redact credential patterns before injecting into LLM context. */
+const CREDENTIAL_RE = /(?:sk-|ghp_|gho_|glpat-|AKIA|Bearer\s)\S+/gi;
+
+/** Max characters for RAG context injection (~4K tokens). */
+const MAX_CONTEXT_CHARS = 16_000;
+
 /** Format retrieved chunks for injection into an LLM system prompt. */
-export function formatContextForPrompt(result: RetrievalResult): string {
+export function formatContextForPrompt(result: RetrievalResult, maxChars = MAX_CONTEXT_CHARS): string {
 	if (result.chunks.length === 0) return '';
 
-	const chunkText = result.chunks.map((c, i) => `[${i + 1}] ${c.documentTitle}\n${c.content}`).join('\n\n---\n\n');
+	const parts: string[] = [];
+	let totalLen = 0;
 
-	return chunkText;
+	for (let i = 0; i < result.chunks.length; i++) {
+		const c = result.chunks[i];
+		const part = `[${i + 1}] ${c.documentTitle}\n${c.content}`;
+		if (totalLen + part.length > maxChars) break;
+		parts.push(part);
+		totalLen += part.length;
+	}
+
+	return parts.join('\n\n---\n\n').replace(CREDENTIAL_RE, '[REDACTED]');
 }

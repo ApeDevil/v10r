@@ -123,6 +123,7 @@ async function handleOAuth(provider: 'github' | 'google' | 'microsoft') {
 					placeholder="you@example.com"
 					bind:value={email}
 					disabled={isBusy}
+					aria-label="Email address"
 				/>
 
 				<div class="email-actions">

@@ -1,9 +1,9 @@
 export const pillColorVariants = {
-	default: 'bg-primary text-primary',
-	secondary: 'bg-muted text-muted',
-	success: 'bg-success text-success',
-	warning: 'bg-warning text-warning',
-	error: 'bg-error text-error',
+	default: 'bg-primary-container text-primary',
+	secondary: 'bg-surface-2 text-muted',
+	success: 'bg-success-light text-success',
+	warning: 'bg-warning-light text-warning',
+	error: 'bg-error-bg text-error',
 	outline: 'border border-solid border-fg text-fg',
 };
 

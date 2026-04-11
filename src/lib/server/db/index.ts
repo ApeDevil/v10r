@@ -1,6 +1,6 @@
 import { neonConfig, Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import { DATABASE_URL } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import * as schema from './schema';
 import * as relations from './schema/relations';
 
@@ -9,7 +9,7 @@ import * as relations from './schema/relations';
 // Same approach used in drizzle.config.ts.
 neonConfig.poolQueryViaFetch = true;
 
-const pool = new Pool({ connectionString: DATABASE_URL });
+const pool = new Pool({ connectionString: env.DATABASE_URL });
 
 export const db = drizzle(pool, { schema: { ...schema, ...relations } });
 

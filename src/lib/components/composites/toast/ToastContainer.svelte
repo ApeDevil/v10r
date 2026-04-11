@@ -105,8 +105,8 @@ const iconClasses: Record<string, string> = {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 1.5rem;
-		height: 1.5rem;
+		width: 2.75rem;
+		height: 2.75rem;
 		border: none;
 		background: none;
 		color: inherit;

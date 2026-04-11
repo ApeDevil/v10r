@@ -23,8 +23,10 @@ export const spreadsheet = deskSchema.table(
 	'spreadsheet',
 	{
 		id: text('id').primaryKey(),
-		/** FK to desk.file — links to the unified file registry. Nullable during migration. */
-		fileId: text('file_id').references(() => file.id, { onDelete: 'cascade' }),
+		/** FK to desk.file — links to the unified file registry. */
+		fileId: text('file_id')
+			.notNull()
+			.references(() => file.id, { onDelete: 'cascade' }),
 		userId: text('user_id')
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
@@ -36,5 +38,8 @@ export const spreadsheet = deskSchema.table(
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 	},
-	(table) => [index('spreadsheet_user_updated_idx').on(table.userId, table.updatedAt)],
+	(table) => [
+		index('spreadsheet_user_updated_idx').on(table.userId, table.updatedAt),
+		index('spreadsheet_file_id_idx').on(table.fileId),
+	],
 );

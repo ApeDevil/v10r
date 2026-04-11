@@ -35,6 +35,9 @@ let { value = $bindable(''), error = false, class: className, ...restProps }: Pr
 
 	input:focus-visible {
 		border-bottom: 2px solid var(--color-primary);
+		outline: 2px solid var(--color-primary);
+		outline-offset: -2px;
+		border-radius: 6px;
 	}
 
 	input.input-error {

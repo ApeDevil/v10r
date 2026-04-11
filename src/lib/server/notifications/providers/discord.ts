@@ -153,10 +153,14 @@ export async function refreshDiscordTokens(accountId: string): Promise<boolean> 
 
 		return true;
 	} catch {
-		await db
-			.update(userDiscordAccounts)
-			.set({ tokenRefreshFailedAt: new Date() })
-			.where(eq(userDiscordAccounts.id, accountId));
+		try {
+			await db
+				.update(userDiscordAccounts)
+				.set({ tokenRefreshFailedAt: new Date() })
+				.where(eq(userDiscordAccounts.id, accountId));
+		} catch (dbErr) {
+			console.error('[discord] Failed to record token refresh failure:', dbErr);
+		}
 		return false;
 	}
 }

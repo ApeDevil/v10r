@@ -146,6 +146,7 @@ async function handleResend() {
 						class="otp-digit"
 						autocomplete="one-time-code"
 						disabled={verifying}
+						aria-label={`Digit ${i + 1} of 6`}
 						oninput={(e) => handleInput(i, e)}
 						onkeydown={(e) => handleKeydown(i, e)}
 					/>

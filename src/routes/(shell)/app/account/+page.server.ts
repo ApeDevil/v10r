@@ -77,36 +77,36 @@ export const actions: Actions = {
 	exportData: async ({ locals }) => {
 		if (!locals.user) redirect(303, '/auth/login');
 
-		const userData = await db
-			.select({
-				id: user.id,
-				name: user.name,
-				email: user.email,
-				emailVerified: user.emailVerified,
-				image: user.image,
-				createdAt: user.createdAt,
-			})
-			.from(user)
-			.where(eq(user.id, locals.user.id));
-
-		const accountData = await db
-			.select({
-				providerId: account.providerId,
-				createdAt: account.createdAt,
-			})
-			.from(account)
-			.where(eq(account.userId, locals.user.id));
-
-		const sessionData = await db
-			.select({
-				id: sessionTable.id,
-				createdAt: sessionTable.createdAt,
-				expiresAt: sessionTable.expiresAt,
-				ipAddress: sessionTable.ipAddress,
-				userAgent: sessionTable.userAgent,
-			})
-			.from(sessionTable)
-			.where(eq(sessionTable.userId, locals.user.id));
+		const [userData, accountData, sessionData] = await Promise.all([
+			db
+				.select({
+					id: user.id,
+					name: user.name,
+					email: user.email,
+					emailVerified: user.emailVerified,
+					image: user.image,
+					createdAt: user.createdAt,
+				})
+				.from(user)
+				.where(eq(user.id, locals.user.id)),
+			db
+				.select({
+					providerId: account.providerId,
+					createdAt: account.createdAt,
+				})
+				.from(account)
+				.where(eq(account.userId, locals.user.id)),
+			db
+				.select({
+					id: sessionTable.id,
+					createdAt: sessionTable.createdAt,
+					expiresAt: sessionTable.expiresAt,
+					ipAddress: sessionTable.ipAddress,
+					userAgent: sessionTable.userAgent,
+				})
+				.from(sessionTable)
+				.where(eq(sessionTable.userId, locals.user.id)),
+		]);
 
 		return {
 			export: JSON.stringify(

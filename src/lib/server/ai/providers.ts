@@ -136,6 +136,7 @@ export function resolveToolProvider(registry: ProviderEntry[], preference?: stri
 
 // ── User provider preferences (in-memory, resets on server restart) ──
 
+const MAX_PREFERENCES = 10_000;
 const userPreferences = new Map<string, string>();
 
 /** Get a user's preferred provider ID, or null for server default. */
@@ -145,6 +146,11 @@ export function getUserPreference(userId: string): string | null {
 
 /** Set a user's preferred provider. */
 export function setUserPreference(userId: string, providerId: string): void {
+	if (userPreferences.size >= MAX_PREFERENCES) {
+		// Evict oldest entry (Map maintains insertion order)
+		const oldest = userPreferences.keys().next().value;
+		if (oldest !== undefined) userPreferences.delete(oldest);
+	}
 	userPreferences.set(userId, providerId);
 }
 

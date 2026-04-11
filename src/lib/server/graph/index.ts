@@ -1,11 +1,11 @@
-import { NEO4J_PASSWORD, NEO4J_URI, NEO4J_USERNAME } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { GRAPH_TIMEOUT_MS } from '$lib/server/config';
 import { classifyError, Neo4jError } from './errors';
 
 /** Derive HTTPS host from NEO4J_URI (neo4j+s://xxx → https://xxx) */
 function getHttpHost(): string {
-	if (!NEO4J_URI) throw new Neo4jError('unavailable', 'NEO4J_URI is not set');
-	return NEO4J_URI.replace(/^neo4j(\+s)?:\/\//, 'https://');
+	if (!env.NEO4J_URI) throw new Neo4jError('unavailable', 'NEO4J_URI is not set');
+	return env.NEO4J_URI.replace(/^neo4j(\+s)?:\/\//, 'https://');
 }
 
 /** Base64-encode Basic auth header (memoized — credentials don't change at runtime) */
@@ -13,10 +13,10 @@ let cachedAuthHeader: string | undefined;
 
 function getAuthHeader(): string {
 	if (cachedAuthHeader) return cachedAuthHeader;
-	if (!NEO4J_USERNAME || !NEO4J_PASSWORD) {
+	if (!env.NEO4J_USERNAME || !env.NEO4J_PASSWORD) {
 		throw new Neo4jError('authentication', 'NEO4J_USERNAME or NEO4J_PASSWORD is not set');
 	}
-	cachedAuthHeader = `Basic ${btoa(`${NEO4J_USERNAME}:${NEO4J_PASSWORD}`)}`;
+	cachedAuthHeader = `Basic ${btoa(`${env.NEO4J_USERNAME}:${env.NEO4J_PASSWORD}`)}`;
 	return cachedAuthHeader;
 }
 

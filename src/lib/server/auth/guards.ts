@@ -9,10 +9,10 @@ export function requireAuth(locals: App.Locals) {
 	return { user: locals.user, session: locals.session };
 }
 
-/** For API routes — throws 401 instead of redirecting. */
+/** For API routes — throws apiError(401) for consistent { error: { code, message } } shape. */
 export function requireApiUser(locals: App.Locals) {
 	if (!locals.user || !locals.session) {
-		error(401, 'Authentication required');
+		throw apiError(401, 'unauthorized', 'Authentication required');
 	}
 	return { user: locals.user, session: locals.session };
 }
@@ -37,13 +37,13 @@ export function requireAuthor(locals: App.Locals) {
 	return { user, session };
 }
 
-/** For API routes — throws 403 instead of redirecting. */
+/** For API routes — throws apiError(403) for consistent { error: { code, message } } shape. */
 export function requireApiAuthor(locals: App.Locals) {
 	const { user, session } = requireApiUser(locals);
 	const adminEmail = env.ADMIN_EMAIL;
 	const isAdmin = adminEmail && user.email.toLowerCase() === adminEmail.toLowerCase();
 	if (!isAdmin && user.role !== 'author') {
-		error(403, 'Forbidden');
+		throw apiError(403, 'forbidden', 'Insufficient permissions');
 	}
 	return { user, session };
 }
@@ -53,11 +53,11 @@ export function requirePostOwnership(
 	post: { authorId: string } | null,
 	user: { id: string; email: string },
 ): asserts post is { authorId: string } {
-	if (!post) error(404, 'Post not found');
+	if (!post) throw apiError(404, 'not_found', 'Post not found');
 	const adminEmail = env.ADMIN_EMAIL;
 	const isAdmin = adminEmail && user.email.toLowerCase() === adminEmail.toLowerCase();
 	if (post.authorId !== user.id && !isAdmin) {
-		error(403, 'Forbidden');
+		throw apiError(403, 'forbidden', 'Forbidden');
 	}
 }
 
@@ -66,11 +66,11 @@ export function requireAssetOwnership(
 	asset: { uploaderId: string | null } | null,
 	user: { id: string; email: string },
 ): asserts asset is { uploaderId: string | null } {
-	if (!asset) error(404, 'Asset not found');
+	if (!asset) throw apiError(404, 'not_found', 'Asset not found');
 	const adminEmail = env.ADMIN_EMAIL;
 	const isAdmin = adminEmail && user.email.toLowerCase() === adminEmail.toLowerCase();
 	if (asset.uploaderId !== user.id && !isAdmin) {
-		error(403, 'Forbidden');
+		throw apiError(403, 'forbidden', 'Forbidden');
 	}
 }
 

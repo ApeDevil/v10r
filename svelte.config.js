@@ -14,6 +14,7 @@ const config = {
 		adapter: adapter(),
 
 		csp: {
+			mode: 'nonce',
 			directives: {
 				'default-src': ['self'],
 				'script-src': ['self', 'wasm-unsafe-eval'],

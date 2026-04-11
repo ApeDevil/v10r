@@ -1,5 +1,5 @@
-import { json } from '@sveltejs/kit';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { apiError, apiOk } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { API_WRITE_RATE_LIMIT_MAX, API_WRITE_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
@@ -16,9 +16,9 @@ export const POST: RequestHandler = async ({ locals }) => {
 
 	try {
 		const count = await markAllAsRead(user.id);
-		return json({ success: true, count });
+		return apiOk({ count });
 	} catch (err) {
 		const dbErr = classifyDbError(err);
-		return json({ error: safeDbMessage(dbErr.kind) }, { status: dbErr.toStatus() });
+		return apiError(dbErr.toStatus(), 'db_error', safeDbMessage(dbErr.kind));
 	}
 };

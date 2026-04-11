@@ -194,7 +194,8 @@ const i18n: Handle = ({ event, resolve }) =>
 					]
 						.map(([k, v]) => `${toVar(k)}:${v}`)
 						.join(';');
-					const style = `<style>[data-palette="${pid}"]{${lightVars}}.dark[data-palette="${pid}"]{${darkVars}}</style>`;
+					const safePid = pid.replace(/[^a-zA-Z0-9_-]/g, '');
+					const style = `<style>[data-palette="${safePid}"]{${lightVars}}.dark[data-palette="${safePid}"]{${darkVars}}</style>`;
 					result = result.replace('</head>', `${style}</head>`);
 				}
 

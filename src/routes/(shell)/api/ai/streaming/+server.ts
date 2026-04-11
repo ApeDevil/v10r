@@ -1,4 +1,3 @@
-import { json } from '@sveltejs/kit';
 import { streamText } from 'ai';
 import { safeParse } from 'valibot';
 import { aiConfigured, chatModel } from '$lib/server/ai';
@@ -6,6 +5,7 @@ import { MAX_TOKENS, RATE_LIMIT_MAX, RATE_LIMIT_PREFIX, RATE_LIMIT_WINDOW, SYSTE
 import { aiErrorToStatus, classifyAIError, safeAIMessage } from '$lib/server/ai/errors';
 import { StreamingRequestSchema } from '$lib/server/ai/validation';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { apiError } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import type { RequestHandler } from './$types';
 
@@ -15,7 +15,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const { user } = requireApiUser(locals);
 
 	if (!aiConfigured || !chatModel) {
-		return json({ error: 'No AI provider configured.' }, { status: 503 });
+		return apiError(503, 'unavailable', 'No AI provider configured.');
 	}
 
 	const { success, reset } = await ratelimit.limit(user.id);
@@ -24,12 +24,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	// Parse and validate request body
 	const body = await request.json().catch(() => null);
 	if (!body) {
-		return json({ error: 'Invalid request body.' }, { status: 400 });
+		return apiError(400, 'invalid_body', 'Invalid request body.');
 	}
 
 	const parsed = safeParse(StreamingRequestSchema, body);
 	if (!parsed.success) {
-		return json({ error: 'Invalid request.' }, { status: 400 });
+		return apiError(400, 'validation_failed', 'Invalid request.');
 	}
 
 	try {
@@ -51,6 +51,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return result.toUIMessageStreamResponse();
 	} catch (err) {
 		const aiErr = classifyAIError(err);
-		return json({ error: safeAIMessage(aiErr.kind) }, { status: aiErrorToStatus(aiErr.kind) });
+		return apiError(aiErrorToStatus(aiErr.kind), 'ai_error', safeAIMessage(aiErr.kind));
 	}
 };
