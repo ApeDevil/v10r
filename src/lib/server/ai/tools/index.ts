@@ -4,19 +4,19 @@
  */
 
 import type { ToolSet } from 'ai';
-import type { DeskToolScope } from './_types';
+import type { DeskLayoutEntry, DeskToolScope } from './_types';
 import { createCreateTools, createDeleteTools } from './desk-create';
 import { createReadTools } from './desk-read';
 import { createWriteTools } from './desk-write';
 
-export type { DeskEffect, DeskToolScope } from './_types';
+export type { DeskEffect, DeskLayoutEntry, DeskToolScope } from './_types';
 
-export function createDeskTools(userId: string, scopes: DeskToolScope[]): ToolSet {
+export function createDeskTools(userId: string, scopes: DeskToolScope[], deskLayout?: DeskLayoutEntry[]): ToolSet {
 	const tools: ToolSet = {} as ToolSet;
 
 	// Read tools available when any desk scope is granted
 	if (scopes.length > 0) {
-		Object.assign(tools, createReadTools(userId));
+		Object.assign(tools, createReadTools(userId, deskLayout));
 	}
 
 	if (scopes.includes('desk:write')) {
@@ -32,4 +32,9 @@ export function createDeskTools(userId: string, scopes: DeskToolScope[]): ToolSe
 	}
 
 	return tools;
+}
+
+/** Determine step limit based on tool scopes. Read-only = 3, mutation = 5. */
+export function stepsForScopes(scopes: DeskToolScope[]): number {
+	return scopes.some((s) => s !== 'desk:read') ? 5 : 3;
 }

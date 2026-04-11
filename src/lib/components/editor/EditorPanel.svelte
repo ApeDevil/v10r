@@ -1,7 +1,7 @@
 <script lang="ts">
-import { onDestroy } from 'svelte';
+import { onDestroy, untrack } from 'svelte';
 import { apiFetch } from '$lib/api';
-import { findLeafWithPanel, getDeskBus, getDockContext, registerPanelMenus } from '$lib/components/composites/dock';
+import { findLeafWithPanel, getDeskBus, getDockContext, registerPanelContext, registerPanelMenus, updatePanelContext } from '$lib/components/composites/dock';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import { Spinner } from '$lib/components/primitives';
 import MarkdownSource from './MarkdownSource.svelte';
@@ -371,8 +371,58 @@ $effect(() => {
 	return registerPanelMenus(panelId, { menuBar: editorMenus });
 });
 
+// ── AI Context registration ─────────────────────────────────────
+let contextTimer2: ReturnType<typeof setTimeout>;
+
+function serializeEditorContext(): string {
+	if (!postId) return 'Editor: no document open';
+	const parts = [`# ${title || '(untitled)'}`, `slug: ${slug}`, `status: ${status}`];
+	if (summary) parts.push(`summary: ${summary}`);
+	if (markdown) parts.push('', markdown);
+	return parts.join('\n');
+}
+
+// Register unconditionally on mount (like SpreadsheetPanel)
+// svelte-ignore state_referenced_locally
+$effect(() => {
+	const content = untrack(serializeEditorContext);
+	const cleanup = registerPanelContext({
+		panelId,
+		panelType: 'editor',
+		label: untrack(() => title || slug || 'Editor'),
+		content,
+		tokenEstimate: Math.ceil(content.length / 4),
+		updatedAt: Date.now(),
+		contentType: 'code',
+	});
+	return () => {
+		clearTimeout(contextTimer2);
+		cleanup();
+	};
+});
+
+// Debounced context updates when content changes
+$effect(() => {
+	// Track reactive deps
+	void markdown;
+	void title;
+	void summary;
+	void postId;
+	clearTimeout(contextTimer2);
+	contextTimer2 = setTimeout(() => {
+		const content = serializeEditorContext();
+		updatePanelContext(panelId, {
+			label: title || slug || 'Editor',
+			content,
+			tokenEstimate: Math.ceil(content.length / 4),
+			contentType: 'code',
+		});
+	}, 800);
+});
+
 onDestroy(() => {
 	clearTimeout(contentTimer);
+	clearTimeout(contextTimer2);
 	clearTimeout(tagTimer);
 	clearTimeout(confirmTimer);
 	unsubInsert();

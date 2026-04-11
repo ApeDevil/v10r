@@ -32,6 +32,7 @@ export interface DeskEvents {
 	'ai:refresh_explorer': Record<string, never>;
 	'ai:highlight': { panelId: string; cells?: { row: number; col: number }[]; duration?: number };
 	'ai:notify': { message: string; level: 'info' | 'success' | 'error' };
+	'ai:scroll_to': { panelId: string; target: string };
 }
 
 export interface SubscribeOptions {

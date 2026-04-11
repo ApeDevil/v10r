@@ -269,3 +269,29 @@ export async function createMarkdownFile(
 		return { file: fileRow, markdown: markdownRow };
 	});
 }
+
+/** Update markdown content by file ID. Touches file updatedAt. */
+export async function updateMarkdownByFileId(fileId: string, userId: string, content: string) {
+	return db.transaction(async (tx) => {
+		// Verify ownership via file table
+		const [fileRow] = await tx
+			.select({ id: file.id })
+			.from(file)
+			.where(and(eq(file.id, fileId), eq(file.userId, userId)))
+			.limit(1);
+		if (!fileRow) return null;
+
+		await tx
+			.update(markdown)
+			.set({ content, updatedAt: new Date() })
+			.where(eq(markdown.fileId, fileId));
+
+		const [updated] = await tx
+			.update(file)
+			.set({ updatedAt: new Date() })
+			.where(eq(file.id, fileId))
+			.returning();
+
+		return updated ?? null;
+	});
+}

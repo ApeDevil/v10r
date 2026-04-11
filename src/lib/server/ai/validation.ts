@@ -30,6 +30,9 @@ const PanelContextEntry = v.object({
 	panelType: v.string(),
 	label: v.string(),
 	content: v.pipe(v.string(), v.maxLength(16_000)),
+	status: v.optional(v.picklist(['focused', 'active', 'background'])),
+	contentLevel: v.optional(v.picklist(['full', 'summary', 'title-only'])),
+	tokenEstimate: v.optional(v.number()),
 });
 
 const ToolScope = v.picklist(['desk:read', 'desk:write', 'desk:create', 'desk:delete']);

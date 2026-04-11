@@ -16,6 +16,20 @@
  * so state is per-tab and never shared across server requests.
  */
 
+import {
+	budgetAwareSerialize,
+	computeActiveContexts,
+	computeContextChips,
+	CONTEXT_TOKEN_BUDGET,
+	type ContentLevel,
+	type PanelStatus,
+	type SerializedContext,
+} from './desk-context.pure';
+
+// Re-export pure types so existing consumers keep working
+export type { ContentLevel, PanelStatus, SerializedContext };
+export { CONTEXT_TOKEN_BUDGET };
+
 // ── Types ────────────────────────────────────────────────────────────
 
 /** What a panel publishes as its AI-visible state */
@@ -43,13 +57,6 @@ export interface ContextChip {
 	stale: boolean;
 }
 
-/** What gets sent to the server in the request body */
-export interface SerializedContext {
-	panelType: string;
-	label: string;
-	content: string;
-}
-
 // ── Module-level state ───────────────────────────────────────────────
 
 /** Reactive registry version — bumped on every register/unregister/update */
@@ -70,6 +77,24 @@ let focusedPanelId = $state<string | null>(null);
 /** Timestamp of the last AI response — drives staleness detection */
 let lastResponseAt = $state(0);
 
+// ── Microtask coalescing ─────────────────────────────────────────────
+
+/**
+ * Coalesce multiple registry mutations within the same microtask into
+ * a single registryVersion bump. Prevents N simultaneous panel
+ * registrations from triggering N re-derivations.
+ */
+let versionBumpPending = false;
+
+function scheduleVersionBump(): void {
+	if (versionBumpPending) return;
+	versionBumpPending = true;
+	queueMicrotask(() => {
+		versionBumpPending = false;
+		registryVersion++;
+	});
+}
+
 // ── Public API ───────────────────────────────────────────────────────
 
 /**
@@ -82,19 +107,17 @@ let lastResponseAt = $state(0);
 export function registerPanelContext(entry: PanelContext): () => void {
 	registry.set(entry.panelId, entry);
 	queueMicrotask(() => {
-		registryVersion++;
 		// Auto-focus the first context provider if nothing is focused
 		if (focusedPanelId === null) {
 			focusedPanelId = entry.panelId;
 		}
 	});
+	scheduleVersionBump();
 	return () => {
 		registry.delete(entry.panelId);
 		pinnedIds.delete(entry.panelId);
 		dismissedIds.delete(entry.panelId);
-		queueMicrotask(() => {
-			registryVersion++;
-		});
+		scheduleVersionBump();
 	};
 }
 
@@ -106,9 +129,7 @@ export function updatePanelContext(panelId: string, partial: Partial<Omit<PanelC
 	const existing = registry.get(panelId);
 	if (!existing) return;
 	registry.set(panelId, { ...existing, ...partial, updatedAt: Date.now() });
-	queueMicrotask(() => {
-		registryVersion++;
-	});
+	scheduleVersionBump();
 }
 
 /**
@@ -181,50 +202,20 @@ export function markResponseReceived(): void {
 /**
  * All context entries with their status and staleness.
  * Reactive via registryVersion + focusedPanelId + pinnedIds + lastResponseAt.
+ * Delegates to pure function for testability.
  */
 const contextChips = $derived.by((): ContextChip[] => {
-	// Read version to establish reactive dependency on registry changes
 	void registryVersion;
-
-	const chips: ContextChip[] = [];
-
-	for (const [panelId, context] of registry) {
-		const isDismissed = dismissedIds.has(panelId);
-		let status: ContextStatus;
-		if (!isDismissed && focusedPanelId === panelId) {
-			status = 'implicit';
-		} else if (!isDismissed && pinnedIds.has(panelId)) {
-			status = 'pinned';
-		} else {
-			status = 'available';
-		}
-
-		const stale = status !== 'available' && lastResponseAt > 0 && context.updatedAt > lastResponseAt;
-
-		chips.push({ context, status, stale });
-	}
-
-	// Sort: implicit first, then pinned, then available
-	const order: Record<ContextStatus, number> = { implicit: 0, pinned: 1, available: 2 };
-	chips.sort((a, b) => order[a.status] - order[b.status]);
-
-	return chips;
+	return computeContextChips(registry, focusedPanelId, pinnedIds, dismissedIds, lastResponseAt);
 });
 
-/** Active contexts only (implicit + pinned) — what gets sent to AI */
+/**
+ * Active contexts only (implicit + pinned) — what gets sent to AI.
+ * Delegates to pure function for testability.
+ */
 const activeContexts = $derived.by((): PanelContext[] => {
 	void registryVersion;
-
-	const active: PanelContext[] = [];
-
-	for (const [panelId, context] of registry) {
-		if (dismissedIds.has(panelId)) continue;
-		if (focusedPanelId === panelId || pinnedIds.has(panelId)) {
-			active.push(context);
-		}
-	}
-
-	return active;
+	return computeActiveContexts(registry, focusedPanelId, pinnedIds, dismissedIds);
 });
 
 /** Total estimated tokens across all active (implicit + pinned) entries */
@@ -247,13 +238,9 @@ export function getTokenEstimate(): number {
 	return tokenEstimate;
 }
 
-/** Serialize active contexts for the API request body */
+/** Serialize active contexts for the API request body with budget awareness */
 export function serializeForRequest(): SerializedContext[] {
-	return activeContexts.map((c) => ({
-		panelType: c.panelType,
-		label: c.label,
-		content: c.content,
-	}));
+	return budgetAwareSerialize(activeContexts, focusedPanelId, CONTEXT_TOKEN_BUDGET);
 }
 
 /** Check if any context is registered */

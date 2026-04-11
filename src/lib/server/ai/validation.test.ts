@@ -191,3 +191,50 @@ describe('CreateConversationSchema', () => {
 		expect(result.success).toBe(false);
 	});
 });
+
+describe('PanelContextEntry extended fields', () => {
+	it('accepts panelContext with status and contentLevel', () => {
+		const result = v.safeParse(ChatRequestSchema, {
+			messages: [{ role: 'user', content: 'Hello' }],
+			panelContext: [
+				{
+					panelType: 'spreadsheet',
+					label: 'Budget',
+					content: 'A1: 100',
+					status: 'focused',
+					contentLevel: 'full',
+					tokenEstimate: 2,
+				},
+			],
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it('accepts panelContext without optional fields (backward compat)', () => {
+		const result = v.safeParse(ChatRequestSchema, {
+			messages: [{ role: 'user', content: 'Hello' }],
+			panelContext: [{ panelType: 'editor', label: 'Notes', content: '# Hello' }],
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it('rejects invalid status value', () => {
+		const result = v.safeParse(ChatRequestSchema, {
+			messages: [{ role: 'user', content: 'Hello' }],
+			panelContext: [
+				{ panelType: 'editor', label: 'Notes', content: 'x', status: 'unknown' },
+			],
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it('rejects invalid contentLevel value', () => {
+		const result = v.safeParse(ChatRequestSchema, {
+			messages: [{ role: 'user', content: 'Hello' }],
+			panelContext: [
+				{ panelType: 'editor', label: 'Notes', content: 'x', contentLevel: 'minimal' },
+			],
+		});
+		expect(result.success).toBe(false);
+	});
+});

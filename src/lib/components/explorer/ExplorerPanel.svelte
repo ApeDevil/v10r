@@ -1,8 +1,8 @@
 <script lang="ts">
-import { onMount } from 'svelte';
+import { onMount, untrack } from 'svelte';
 import { apiFetch } from '$lib/api';
 import type { PanelDefinition } from '$lib/components/composites/dock';
-import { getDeskBus, getDockContext, registerPanelMenus } from '$lib/components/composites/dock';
+import { getDeskBus, getDockContext, registerPanelContext, registerPanelMenus, updatePanelContext } from '$lib/components/composites/dock';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import { Button, Spinner } from '$lib/components/primitives';
 import {
@@ -597,6 +597,48 @@ $effect(() => {
 	return registerPanelMenus('explorer', { menuBar: explorerMenus });
 });
 
+// ── AI Context registration ─────────────────────────────────────
+
+function serializeExplorerContext(): string {
+	const allNodes = [...explorerState.nodes.values()];
+	if (!allNodes.length) return 'Explorer: loading...';
+	const lines = allNodes
+		.filter((n) => !n.id.startsWith('virtual:'))
+		.map((n) => {
+			const prefix = n.isFolder ? 'folder' : n.source;
+			return `- ${n.label} (${prefix}:${n.id})`;
+		});
+	return `Workspace files (${lines.length} items):\n${lines.join('\n')}`;
+}
+
+// Register unconditionally on mount (like SpreadsheetPanel)
+// svelte-ignore state_referenced_locally
+$effect(() => {
+	const content = untrack(serializeExplorerContext);
+	const cleanup = registerPanelContext({
+		panelId: 'explorer',
+		panelType: 'explorer',
+		label: 'Explorer',
+		content,
+		tokenEstimate: Math.ceil(content.length / 4),
+		updatedAt: Date.now(),
+		contentType: 'structured',
+	});
+	return cleanup;
+});
+
+// Update context when nodes change
+$effect(() => {
+	void explorerState.nodes;
+	if (!loading) {
+		const content = serializeExplorerContext();
+		updatePanelContext('explorer', {
+			content,
+			tokenEstimate: Math.ceil(content.length / 4),
+		});
+	}
+});
+
 onMount(() => {
 	fetchAll();
 });
@@ -607,6 +649,8 @@ $effect(() => {
 		fetchAll();
 	});
 });
+
+
 </script>
 
 <!-- Hidden file inputs -->

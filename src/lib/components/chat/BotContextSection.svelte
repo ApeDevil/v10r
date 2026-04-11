@@ -1,5 +1,6 @@
 <script lang="ts">
 import {
+	CONTEXT_TOKEN_BUDGET,
 	dismissContext,
 	getContextChips,
 	getTokenEstimate,
@@ -10,7 +11,7 @@ import Switch from '$lib/components/primitives/switch/Switch.svelte';
 
 const chips = $derived(getContextChips());
 const totalTokens = $derived(getTokenEstimate());
-const budget = 8000;
+const budget = CONTEXT_TOKEN_BUDGET;
 const fillPercent = $derived(Math.min(100, Math.round((totalTokens / budget) * 100)));
 const fillLevel = $derived<'normal' | 'warning' | 'error'>(
 	fillPercent >= 90 ? 'error' : fillPercent >= 70 ? 'warning' : 'normal',

@@ -1,10 +1,11 @@
 /**
- * Desk read tools — list, read, and search files.
+ * Desk read tools — list, read, search files, and introspect layout.
  * No side effects, no mutations. Always safe to call.
  */
 import { jsonSchema, tool } from 'ai';
 import { getFile, getMarkdownByFileId, getSpreadsheetByFileId, listFiles } from '$lib/server/db/desk/queries';
 import { getFileTree, renderFileTreeWithIndex } from '$lib/server/desk/file-tree';
+import type { DeskLayoutEntry } from './_types';
 
 /** Summarize spreadsheet cells to stay under ~400 tokens. */
 function summarizeCells(cells: Record<string, unknown>): string {
@@ -16,7 +17,7 @@ function summarizeCells(cells: Record<string, unknown>): string {
 	return lines.join('\n');
 }
 
-export function createReadTools(userId: string) {
+export function createReadTools(userId: string, deskLayout?: DeskLayoutEntry[]) {
 	return {
 		desk_list_files: tool({
 			description:
@@ -150,6 +151,28 @@ export function createReadTools(userId: string) {
 				} catch {
 					return { error: 'Search failed.' };
 				}
+			},
+		}),
+
+		desk_get_open_panels: tool({
+			description:
+				"Get the list of currently open panels in the desk — their IDs, types, labels, and file associations. " +
+				"Use this to understand the user's current workspace layout.",
+			inputSchema: jsonSchema<Record<string, never>>({
+				type: 'object',
+				properties: {},
+			}),
+			execute: async () => {
+				if (!deskLayout?.length) return { panels: [], total: 0 };
+				return {
+					panels: deskLayout.map((p) => ({
+						panelId: p.panelId,
+						fileId: p.fileId ?? null,
+						fileType: p.fileType ?? null,
+						label: p.label,
+					})),
+					total: deskLayout.length,
+				};
 			},
 		}),
 	};

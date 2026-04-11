@@ -16,13 +16,14 @@ vi.mock('$lib/server/db/desk/queries', () => ({
 }));
 vi.mock('$lib/server/db/desk/mutations', () => ({
 	updateSpreadsheetByFileId: vi.fn(),
+	updateMarkdownByFileId: vi.fn(),
 	renameFile: vi.fn(),
 	createSpreadsheetFile: vi.fn(),
 	createMarkdownFile: vi.fn(),
 	deleteFile: vi.fn(),
 }));
 
-const { createDeskTools } = await import('./index');
+const { createDeskTools, stepsForScopes } = await import('./index');
 
 const USER_ID = 'usr_test_scope_gating';
 
@@ -103,5 +104,36 @@ describe('createDeskTools scope gating', () => {
 			expect(typeof tool.description, `${name}.description should be a string`).toBe('string');
 			expect((tool.description as string).length, `${name}.description should be non-empty`).toBeGreaterThan(0);
 		}
+	});
+
+	it('includes desk_get_open_panels when any scope is enabled', () => {
+		const tools = createDeskTools(USER_ID, ['desk:read']);
+		expect(Object.keys(tools)).toContain('desk_get_open_panels');
+	});
+
+	it('includes desk_update_markdown with desk:write scope', () => {
+		const tools = createDeskTools(USER_ID, ['desk:write']);
+		expect(Object.keys(tools)).toContain('desk_update_markdown');
+	});
+
+	it('does not include desk_update_markdown without desk:write scope', () => {
+		const tools = createDeskTools(USER_ID, ['desk:read']);
+		expect(Object.keys(tools)).not.toContain('desk_update_markdown');
+	});
+});
+
+describe('stepsForScopes', () => {
+	it('returns 3 for read-only scopes', () => {
+		expect(stepsForScopes(['desk:read'])).toBe(3);
+	});
+
+	it('returns 5 when any mutation scope is present', () => {
+		expect(stepsForScopes(['desk:read', 'desk:write'])).toBe(5);
+		expect(stepsForScopes(['desk:create'])).toBe(5);
+		expect(stepsForScopes(['desk:delete'])).toBe(5);
+	});
+
+	it('returns 3 for empty scopes', () => {
+		expect(stepsForScopes([])).toBe(3);
 	});
 });

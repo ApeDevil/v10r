@@ -50,6 +50,9 @@
 ## Bot Manager Dialog UX
 - [bot-manager-ux.md](bot-manager-ux.md) - Icon tab navigation, tool scope rows grouped by risk, desk:delete three-layer confirmation (inline icon + wording + strip), trigger button, 480px sizing, density strategy, accessibility
 
+## Bot Panel Evolution UX
+- [bot-panel-evolution-spec.md](bot-panel-evolution-spec.md) - Full spec: three-tier context hierarchy (active/open-included/available), dock tab indicators (left dot when bot focused), AI nav feedback (narration + NAV ToolCallCard), panel discovery (closed-tier + suggest chip), content manipulation consent ("open in the desk" narration hint), token budget overflow (segmented bar, auto-summarize open tier, per-panel collapse, amber chat tab dot)
+
 ## Admin Panel Expansion
 - [admin-expansion-round2.md](admin-expansion-round2.md) - Round 2 refined UX: navigation reconciliation, impersonation banner, feature flags, maintenance mode, announcements, canonical data table pattern, prioritized page list
 - [admin-phase3-ux.md](admin-phase3-ux.md) - Phase 3 UX spec: Analytics page, Notifications page, Broadcast Announcements compose/list, user-facing announcement banner, empty/loading/error states, accessibility patterns

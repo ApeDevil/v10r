@@ -19,6 +19,8 @@ export { default as DockResizeHandle } from './DockResizeHandle.svelte';
 export { default as DockTabBar } from './DockTabBar.svelte';
 export { createDeskBus, type DeskBus, type DeskEvents, getDeskBus, setDeskBusContext } from './desk-bus.svelte';
 export {
+	type ContentLevel,
+	CONTEXT_TOKEN_BUDGET,
 	type ContextChip,
 	type ContextStatus,
 	dismissContext,
@@ -28,6 +30,7 @@ export {
 	hasContext,
 	markResponseReceived,
 	type PanelContext,
+	type PanelStatus,
 	pinContext,
 	registerPanelContext,
 	restoreContext,
@@ -38,6 +41,15 @@ export {
 	unpinContext,
 	updatePanelContext,
 } from './desk-context.svelte';
+export {
+	budgetAwareSerialize,
+	computeActiveContexts,
+	computeContextChips,
+	computePanelStatus,
+	estimateTokens,
+	truncateToTokenBudget,
+} from './desk-context.pure';
+export { dispatchDeskEffect, type EffectActions } from './dispatch-desk-effect';
 export {
 	BUILT_IN_PRESETS,
 	buildThemeFromServer,

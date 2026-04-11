@@ -3,7 +3,7 @@
  * Gated by 'desk:write' scope.
  */
 import { jsonSchema, tool } from 'ai';
-import { renameFile, updateSpreadsheetByFileId } from '$lib/server/db/desk/mutations';
+import { renameFile, updateMarkdownByFileId, updateSpreadsheetByFileId } from '$lib/server/db/desk/mutations';
 import { getSpreadsheetByFileId } from '$lib/server/db/desk/queries';
 import type { DeskEffect } from './_types';
 
@@ -100,6 +100,43 @@ export function createWriteTools(userId: string) {
 					return { renamed: true, fileId: file_id, name, effects };
 				} catch {
 					return { error: 'Failed to rename file.' };
+				}
+			},
+		}),
+
+		desk_update_markdown: tool({
+			description:
+				'Replace the full content of a markdown document. ' +
+				'Use desk_read_file first to see current content. ' +
+				'Provide the complete new markdown (not a diff).',
+			inputSchema: jsonSchema<{ file_id: string; content: string }>({
+				type: 'object',
+				properties: {
+					file_id: {
+						type: 'string',
+						description: 'Markdown file ID. Get from desk_list_files or desk context.',
+					},
+					content: {
+						type: 'string',
+						maxLength: 50000,
+						description: 'Complete new markdown content to replace the document.',
+					},
+				},
+				required: ['file_id', 'content'],
+			}),
+			execute: async ({ file_id, content }) => {
+				try {
+					const result = await updateMarkdownByFileId(file_id, userId, content);
+					if (!result) return { error: 'Markdown file not found or not accessible.' };
+
+					const effects: DeskEffect[] = [
+						{ type: 'desk:refresh_file', fileId: file_id },
+						{ type: 'desk:tab_indicator', fileId: file_id, panelType: 'editor', variant: 'modified' },
+					];
+
+					return { updated: true, fileId: file_id, fileName: result.name, effects };
+				} catch {
+					return { error: 'Failed to update markdown.' };
 				}
 			},
 		}),

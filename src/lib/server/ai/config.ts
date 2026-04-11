@@ -33,11 +33,14 @@ When citing spreadsheet data, reference cells by column letter and row number (e
 Be concise. Keep answers under 300 words unless the user asks for detail.
 If you don't know something, say so.
 If a user asks you to perform an action that requires a disabled permission, explain what you can't do and suggest they enable it in Bot Manager.
+Panel context includes a status (focused/active/background) and content level (full/summary/title-only).
+The focused panel is what the user is currently looking at — prioritize it.
+When context is at summary or title-only level, use desk_read_file to get full content if needed.
 </instructions>`;
 
 const SCOPE_DESCRIPTIONS: Record<DeskToolScope, string> = {
 	'desk:read': 'read: List files, read contents, search workspace',
-	'desk:write': 'write: Update spreadsheet cells, rename files',
+	'desk:write': 'write: Update spreadsheet cells, update markdown content, rename files',
 	'desk:create': 'create: Create new spreadsheets and documents',
 	'desk:delete': 'delete: Delete files (requires user confirmation per action)',
 };
@@ -48,4 +51,22 @@ export function buildPermissionsBlock(scopes: DeskToolScope[]): string {
 		(s) => `- ${SCOPE_DESCRIPTIONS[s]} [${scopes.includes(s) ? 'enabled' : 'disabled'}]`,
 	);
 	return `<permissions>\n${lines.join('\n')}\n</permissions>`;
+}
+
+/** Panel type capabilities — what each panel can do, for AI awareness. */
+export const PANEL_CAPABILITIES: Record<string, { description: string; tools: string[] }> = {
+	spreadsheet: { description: 'Tabular data editor with cell addressing (A1, B3)', tools: ['desk_read_file', 'desk_update_cells', 'desk_create_spreadsheet'] },
+	editor: { description: 'Markdown document editor', tools: ['desk_read_file', 'desk_update_markdown', 'desk_create_markdown'] },
+	explorer: { description: 'File browser — workspace files and folders', tools: ['desk_list_files', 'desk_file_tree', 'desk_search_files'] },
+	preview: { description: 'Rendered preview of active document (read-only)', tools: [] },
+	'io-log': { description: 'AI tool call and effect audit log (read-only)', tools: [] },
+};
+
+/** Build an <available-panels> block listing panel types and their capabilities. */
+export function buildCapabilitiesBlock(): string {
+	const lines = Object.entries(PANEL_CAPABILITIES).map(
+		([type, cap]) =>
+			`- ${type}: ${cap.description}${cap.tools.length ? ` [tools: ${cap.tools.join(', ')}]` : ''}`,
+	);
+	return `<available-panels>\n${lines.join('\n')}\n</available-panels>`;
 }

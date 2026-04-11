@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Chat } from '@ai-sdk/svelte';
 import { DefaultChatTransport } from 'ai';
-import { onDestroy } from 'svelte';
+import { onDestroy, untrack } from 'svelte';
 import { CSRF_HEADER } from '$lib/api';
 import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
 import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
@@ -17,6 +17,7 @@ import {
 	registerPanelMenus,
 	serializeForRequest,
 } from '$lib/components/composites/dock';
+import { dispatchDeskEffect as dispatchEffect } from '$lib/components/composites/dock/dispatch-desk-effect';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import type { DeskEffect } from '$lib/server/ai/tools/_types';
 import BotManagerDialog from './BotManagerDialog.svelte';
@@ -48,18 +49,27 @@ const ERROR_MESSAGES: Record<string, string> = {
 	model: 'AI model unavailable. Try again later.',
 };
 
-/** Classify an error kind from message text when no header is available. */
-function classifyErrorMessage(msg: string): string | null {
+/** Parse `[kind] message` format from classified stream errors, or heuristic-match. */
+function classifyErrorMessage(msg: string): { kind: string | null; detail: string } {
+	// Server sends classified errors as "[kind] user-safe message"
+	const bracketMatch = msg.match(/^\[(\w+)]\s*(.+)/);
+	if (bracketMatch) return { kind: bracketMatch[1], detail: bracketMatch[2] };
+
+	// Heuristic fallback for unclassified errors
 	const lower = msg.toLowerCase();
 	if (lower.includes('rate') || lower.includes('quota') || lower.includes('429') || lower.includes('too many'))
-		return 'rate_limit';
-	if (lower.includes('timeout') || lower.includes('timed out') || lower.includes('etimedout')) return 'timeout';
-	if (lower.includes('unavailable') || lower.includes('503') || lower.includes('fetch failed')) return 'unavailable';
+		return { kind: 'rate_limit', detail: msg };
+	if (lower.includes('timeout') || lower.includes('timed out') || lower.includes('etimedout'))
+		return { kind: 'timeout', detail: msg };
+	if (lower.includes('unavailable') || lower.includes('503') || lower.includes('fetch failed'))
+		return { kind: 'unavailable', detail: msg };
 	if (lower.includes('context length') || lower.includes('too long') || lower.includes('token'))
-		return 'context_length';
-	if (lower.includes('401') || lower.includes('403') || lower.includes('authentication')) return 'authentication';
-	if (lower.includes('model') || lower.includes('404')) return 'model';
-	return null;
+		return { kind: 'context_length', detail: msg };
+	if (lower.includes('401') || lower.includes('403') || lower.includes('authentication'))
+		return { kind: 'authentication', detail: msg };
+	if (lower.includes('model') || lower.includes('404'))
+		return { kind: 'model', detail: msg };
+	return { kind: null, detail: msg };
 }
 
 const chat = new Chat({
@@ -104,10 +114,10 @@ $effect(() => {
 	const err = chat.error;
 	if (!err) return;
 	if (lastErrorKind) return; // already classified via header
-	const kind = classifyErrorMessage(err.message ?? '');
+	const { kind, detail } = classifyErrorMessage(err.message ?? '');
 	if (kind) lastErrorKind = kind;
-	const msg = ERROR_MESSAGES[kind ?? ''] ?? 'Something went wrong.';
-	appendIOLog({ source: 'effect', level: 'error', label: `AI error: ${msg}`, detail: kind ?? 'unknown' });
+	const msg = ERROR_MESSAGES[kind ?? ''] ?? (detail || 'Something went wrong.');
+	untrack(() => appendIOLog({ source: 'effect', level: 'error', label: `AI error: ${msg}`, detail: kind ?? (detail || 'unknown') }));
 });
 
 // ── AI desk effect dispatch ─────────────────────────────────────
@@ -126,76 +136,56 @@ $effect(() => {
 	const lastMsg = messages[messages.length - 1];
 	if (lastMsg.role !== 'assistant' || !lastMsg.parts) return;
 
-	for (const part of lastMsg.parts) {
-		if (part.type !== 'tool-invocation') continue;
-		const inv = part as unknown as {
-			toolCallId: string;
-			toolName: string;
-			state: string;
-			output?: { effects?: DeskEffect[]; error?: string };
-		};
+	untrack(() => {
+		for (const part of lastMsg.parts) {
+			if (part.type !== 'tool-invocation') continue;
+			const inv = part as unknown as {
+				toolCallId: string;
+				toolName: string;
+				state: string;
+				output?: { effects?: DeskEffect[]; error?: string };
+			};
 
-		const callKey = `${inv.toolCallId}-${inv.state}`;
-		if (processedToolCalls.has(callKey)) continue;
-		processedToolCalls.add(callKey);
+			const callKey = `${inv.toolCallId}-${inv.state}`;
+			if (processedToolCalls.has(callKey)) continue;
+			processedToolCalls.add(callKey);
 
-		if (inv.state === 'call') {
-			appendIOLog({
-				source: 'tool-call',
-				toolName: inv.toolName,
-				label: `Calling ${inv.toolName}...`,
-			});
-		} else if (inv.state === 'result') {
-			appendIOLog({
-				source: 'tool-result',
-				toolName: inv.toolName,
-				label: inv.output?.error ? `${inv.toolName} failed` : `${inv.toolName} completed`,
-				level: inv.output?.error ? 'error' : 'success',
-			});
+			if (inv.state === 'call') {
+				appendIOLog({
+					source: 'tool-call',
+					toolName: inv.toolName,
+					label: `Calling ${inv.toolName}...`,
+				});
+			} else if (inv.state === 'result') {
+				appendIOLog({
+					source: 'tool-result',
+					toolName: inv.toolName,
+					label: inv.output?.error ? `${inv.toolName} failed` : `${inv.toolName} completed`,
+					level: inv.output?.error ? 'error' : 'success',
+				});
 
-			const effects = inv.output?.effects;
-			if (effects) {
-				for (const effect of effects) {
-					dispatchDeskEffect(effect);
+				const effects = inv.output?.effects;
+				if (effects) {
+					for (const effect of effects) {
+						dispatchDeskEffect(effect);
+					}
 				}
 			}
 		}
-	}
+	});
 });
 
+/** Extracted to dispatch-desk-effect.ts for testability */
+const effectActions = {
+	findLeafWithPanel,
+	activateTab: dock.activateTab,
+	addPanel: dock.addPanel,
+	updatePanel: dock.updatePanel,
+	publish: bus.publish,
+};
+
 function dispatchDeskEffect(effect: DeskEffect) {
-	switch (effect.type) {
-		case 'desk:open_panel': {
-			const existingLeaf = findLeafWithPanel(dock.root, `${effect.panelType}-${effect.fileId}`);
-			if (existingLeaf) {
-				dock.activateTab(existingLeaf.id, `${effect.panelType}-${effect.fileId}`);
-			} else {
-				const newPanelId = `${effect.panelType}-${effect.fileId}`;
-				dock.addPanel({
-					id: newPanelId,
-					type: effect.panelType,
-					label: effect.label,
-					closable: true,
-					meta: { fileId: effect.fileId },
-				});
-			}
-			break;
-		}
-		case 'desk:refresh_file':
-			bus.publish('ai:refresh_file', { fileId: effect.fileId });
-			break;
-		case 'desk:refresh_explorer':
-			bus.publish('ai:refresh_explorer', {});
-			break;
-		case 'desk:tab_indicator':
-			dock.updatePanel(`${effect.panelType}-${effect.fileId}`, {
-				indicator: effect.variant === 'modified' ? 'ai-modified' : undefined,
-			});
-			break;
-		case 'desk:notify':
-			bus.publish('ai:notify', { message: effect.message, level: effect.level });
-			break;
-	}
+	dispatchEffect(effect, effectActions, dock.root);
 }
 
 // ── Scroll ──────────────────────────────────────────────────────
@@ -308,9 +298,10 @@ $effect(() => {
 
 	<!-- Error display -->
 	{#if chat.error}
+		{@const { detail } = classifyErrorMessage(chat.error.message ?? '')}
 		<div class="chat-error" role="alert" aria-live="polite">
 			<span class="font-medium">Could not get a response.</span>
-			{ERROR_MESSAGES[lastErrorKind ?? ''] ?? 'Something went wrong. Try again.'}
+			{ERROR_MESSAGES[lastErrorKind ?? ''] ?? (detail || 'Something went wrong. Try again.')}
 		</div>
 	{/if}
 
