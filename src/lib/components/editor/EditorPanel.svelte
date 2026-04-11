@@ -3,7 +3,8 @@ import { onDestroy, untrack } from 'svelte';
 import { apiFetch } from '$lib/api';
 import { findLeafWithPanel, getDeskBus, getDockContext, registerPanelContext, registerPanelMenus, updatePanelContext } from '$lib/components/composites/dock';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
-import { Spinner } from '$lib/components/primitives';
+import PanelEmptyState from '$lib/components/composites/dock/PanelEmptyState.svelte';
+import { Button, Spinner } from '$lib/components/primitives';
 import MarkdownSource from './MarkdownSource.svelte';
 import MetadataDrawer from './MetadataDrawer.svelte';
 import PublishConfirmStrip from './PublishConfirmStrip.svelte';
@@ -437,10 +438,16 @@ onDestroy(() => {
 			<p class="loading-text">Loading document...</p>
 		</div>
 	{:else if !documentId}
-		<div class="editor-center">
-			<span class="i-lucide-pen-line empty-icon"></span>
-			<p class="empty-text">Open a document from the Explorer</p>
-		</div>
+		<PanelEmptyState
+			icon="i-lucide-pen-line"
+			heading="No document open"
+			description="Select a markdown file from Explorer"
+		>
+			<Button size="sm" variant="outline" class="gap-1.5" onclick={() => dock.ensurePanelType('explorer', 'Explorer', 'i-lucide-folder-tree')}>
+				<span class="i-lucide-folder-tree"></span>
+				Browse files
+			</Button>
+		</PanelEmptyState>
 	{:else}
 		{#if confirmingPublish}
 			<PublishConfirmStrip
@@ -504,17 +511,6 @@ onDestroy(() => {
 	}
 
 	.loading-text {
-		font-size: 13px;
-		color: var(--color-muted);
-	}
-
-	.empty-icon {
-		font-size: 40px;
-		color: var(--color-muted);
-		opacity: 0.3;
-	}
-
-	.empty-text {
 		font-size: 13px;
 		color: var(--color-muted);
 	}

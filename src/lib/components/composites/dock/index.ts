@@ -17,6 +17,7 @@ export { default as DockLeaf } from './DockLeaf.svelte';
 export { default as DockNode } from './DockNode.svelte';
 export { default as DockResizeHandle } from './DockResizeHandle.svelte';
 export { default as DockTabBar } from './DockTabBar.svelte';
+export { default as PanelEmptyState } from './PanelEmptyState.svelte';
 export { createDeskBus, type DeskBus, type DeskEvents, getDeskBus, setDeskBusContext } from './desk-bus.svelte';
 export {
 	type ContentLevel,

@@ -11,6 +11,7 @@ import {
 	findNode,
 	generateId,
 	getDepth,
+	hasPanelType,
 	removePanelFromLeaf,
 	replaceNode,
 	splitLeaf,
@@ -191,6 +192,36 @@ export function createDockState(
 		if (newRoot) root = newRoot;
 	}
 
+	// --- Panel type operations ---
+
+	/** Ensure a panel of the given type is open and focused. If absent, create one. */
+	function ensurePanelType(panelType: string, label?: string, icon?: string): void {
+		// Check if already in layout
+		if (hasPanelType(root, panelType, panels)) {
+			// Find and activate it
+			const leaves = collectLeaves(root);
+			for (const leaf of leaves) {
+				for (const tabId of leaf.tabs) {
+					if (panels[tabId]?.type === panelType) {
+						activateTab(leaf.id, tabId);
+						setFocusedLeaf(leaf.id);
+						return;
+					}
+				}
+			}
+			return;
+		}
+		// Not in layout — add it
+		const panel: PanelDefinition = {
+			id: `${panelType}-${Date.now()}`,
+			type: panelType,
+			label: label ?? panelType,
+			icon,
+			closable: true,
+		};
+		addPanel(panel);
+	}
+
 	// --- Focus tracking ---
 
 	function setFocusedLeaf(leafId: string): void {
@@ -259,6 +290,7 @@ export function createDockState(
 		addPanel,
 		removePanel,
 		updatePanel,
+		ensurePanelType,
 		resizeSplit,
 		reorderTab,
 

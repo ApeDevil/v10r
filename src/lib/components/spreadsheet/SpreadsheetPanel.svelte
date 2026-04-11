@@ -8,7 +8,9 @@ import {
 	registerPanelMenus,
 	updatePanelContext,
 } from '$lib/components/composites/dock';
+import PanelEmptyState from '$lib/components/composites/dock/PanelEmptyState.svelte';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
+import { Button } from '$lib/components/primitives';
 import SpreadsheetFormulaBar from './SpreadsheetFormulaBar.svelte';
 import SpreadsheetGrid from './SpreadsheetGrid.svelte';
 import SpreadsheetStatusBar from './SpreadsheetStatusBar.svelte';
@@ -28,8 +30,6 @@ const dock = getDockContext();
 /** File-mode: panelId is "spreadsheet-fil_xxx" → extract fileId. Legacy: null. */
 const fileId = $derived(panelId.startsWith('spreadsheet-fil_') ? panelId.replace('spreadsheet-', '') : null);
 
-// svelte-ignore state_referenced_locally
-const STORAGE_KEY = `desk-spreadsheet-${panelId}`;
 let spreadsheetId: string | null = $state(null);
 let saveStatus: 'idle' | 'saving' | 'saved' | 'error' = $state('idle');
 let loaded = $state(false);
@@ -56,89 +56,13 @@ async function initFromFile(fId: string) {
 	loaded = true;
 }
 
-/** Legacy mode: load from localStorage or create new. */
-async function initFromLocalStorage() {
-	const storedId = localStorage.getItem(STORAGE_KEY);
-
-	if (storedId) {
-		try {
-			const res = await apiFetch(`/api/desk/spreadsheets/${storedId}`);
-			if (res.ok) {
-				const {
-					data: { spreadsheet },
-				} = await res.json();
-				spreadsheetId = spreadsheet.id;
-				const cells = spreadsheet.cells as Record<string, { v: string | number | null; f?: string; t?: string }>;
-				if (cells && Object.keys(cells).length > 0) {
-					sheet.fromJSON(cells);
-				} else {
-					loadSampleData();
-				}
-				loaded = true;
-				return;
-			}
-		} catch {
-			// Stored ID invalid — fall through to create
-		}
-		localStorage.removeItem(STORAGE_KEY);
-	}
-
-	// Create new spreadsheet
-	try {
-		loadSampleData();
-		const res = await apiFetch('/api/desk/spreadsheets', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ name: sheetName, cells: sheet.toJSON() }),
-		});
-		if (res.ok) {
-			const {
-				data: { spreadsheet },
-			} = await res.json();
-			spreadsheetId = spreadsheet.id;
-			localStorage.setItem(STORAGE_KEY, spreadsheet.id);
-		}
-	} catch {
-		// Offline or auth issue — still works locally
-	}
-	loaded = true;
-}
-
-function loadSampleData() {
-	sheet.fromJSON({
-		A1: { v: 'Category' },
-		B1: { v: 'Jan' },
-		C1: { v: 'Feb' },
-		D1: { v: 'Mar' },
-		A2: { v: 'Engineering' },
-		B2: { v: 1200 },
-		C2: { v: 1350 },
-		D2: { v: 1400 },
-		A3: { v: 'Marketing' },
-		B3: { v: 800 },
-		C3: { v: 950 },
-		D3: { v: 1100 },
-		A4: { v: 'Operations' },
-		B4: { v: 450 },
-		C4: { v: 475 },
-		D4: { v: 500 },
-		A5: { v: 'Design' },
-		B5: { v: 397 },
-		C5: { v: 420 },
-		D5: { v: 380 },
-		A6: { v: 'Total' },
-		B6: { v: null, f: '=SUM(B2:B5)' },
-		C6: { v: null, f: '=SUM(C2:C5)' },
-		D6: { v: null, f: '=SUM(D2:D5)' },
-	});
-}
-
 // Init on mount (not $effect — setCellRaw writes $state, which would trigger infinite loops)
 onMount(() => {
 	if (fileId) {
 		initFromFile(fileId);
 	} else {
-		initFromLocalStorage();
+		// No file — show empty state
+		loaded = true;
 	}
 });
 
@@ -285,15 +209,30 @@ $effect(() => {
 </script>
 
 <div class="sheet-panel">
-	<SpreadsheetFormulaBar {sheet} />
-	<SpreadsheetGrid {sheet} />
-	<SpreadsheetStatusBar stats={sheet.selectionStats} />
-	{#if saveStatus === 'saving'}
-		<div class="save-indicator">Saving...</div>
-	{:else if saveStatus === 'saved'}
-		<div class="save-indicator saved">Saved</div>
-	{:else if saveStatus === 'error'}
-		<div class="save-indicator error">Save failed</div>
+	{#if !loaded}
+		<!-- loading -->
+	{:else if !fileId && !spreadsheetId}
+		<PanelEmptyState
+			icon="i-lucide-sheet"
+			heading="No spreadsheet open"
+			description="Select a spreadsheet from Explorer"
+		>
+			<Button size="sm" variant="outline" class="gap-1.5" onclick={() => dock.ensurePanelType('explorer', 'Explorer', 'i-lucide-folder-tree')}>
+				<span class="i-lucide-folder-tree"></span>
+				Browse files
+			</Button>
+		</PanelEmptyState>
+	{:else}
+		<SpreadsheetFormulaBar {sheet} />
+		<SpreadsheetGrid {sheet} />
+		<SpreadsheetStatusBar stats={sheet.selectionStats} />
+		{#if saveStatus === 'saving'}
+			<div class="save-indicator">Saving...</div>
+		{:else if saveStatus === 'saved'}
+			<div class="save-indicator saved">Saved</div>
+		{:else if saveStatus === 'error'}
+			<div class="save-indicator error">Save failed</div>
+		{/if}
 	{/if}
 </div>
 
