@@ -1,4 +1,4 @@
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { createId } from '../id';
 import { db } from '../index';
 import { conversation, conversationStep, message, toolCall } from '../schema/ai/conversation';
@@ -23,6 +23,16 @@ export async function deleteConversation(id: string, userId: string) {
 		.where(and(eq(conversation.id, id), eq(conversation.userId, userId)))
 		.returning({ id: conversation.id });
 	return !!deleted;
+}
+
+/** Delete multiple conversations by ID, auth-scoped. Returns count deleted. */
+export async function bulkDeleteConversations(ids: string[], userId: string): Promise<number> {
+	if (ids.length === 0) return 0;
+	const deleted = await db
+		.delete(conversation)
+		.where(and(inArray(conversation.id, ids), eq(conversation.userId, userId)))
+		.returning({ id: conversation.id });
+	return deleted.length;
 }
 
 const VALID_ROLES = new Set(['user', 'assistant', 'system', 'tool'] as const);

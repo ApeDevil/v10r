@@ -95,6 +95,22 @@ export type {
 	SplitNode,
 } from './dock.types';
 export {
+	type ConversationSummary,
+	deleteConversations,
+	deleteSingleConversation,
+	fetchConversationStorage,
+	getStorageState,
+	resetStorageState,
+	type StorageMeta,
+} from './conversation-storage.svelte';
+export {
+	fetchProviders,
+	getActiveProviderId,
+	getProviderState,
+	type ProviderInfo,
+	switchProvider,
+} from './provider-preference.svelte';
+export {
 	appendIOLog,
 	clearIOLog,
 	getIOLogCount,

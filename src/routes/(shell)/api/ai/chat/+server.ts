@@ -28,6 +28,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	return orchestrateChat({
 		userId: user.id,
+		providerId: parsed.output.providerId,
 		messages: parsed.output.messages as Parameters<typeof orchestrateChat>[0]['messages'],
 		conversationId: parsed.output.conversationId,
 		useRetrieval: parsed.output.useRetrieval,

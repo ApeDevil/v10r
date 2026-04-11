@@ -12,7 +12,8 @@ import {
 	streamText,
 	type UIMessage,
 } from 'ai';
-import { activeProviderInfo, chatModel, fallbackProviders, toolModel, toolProviderId } from '$lib/server/ai';
+import { getActiveProvider, getActiveProviderInfo, getFallbacksForUser, getToolProvider } from '$lib/server/ai';
+import type { ProviderEntry } from '$lib/server/ai/providers';
 import { buildCapabilitiesBlock, buildPermissionsBlock, DESK_SYSTEM_PROMPT, MAX_TOKENS, SYSTEM_PROMPT } from '$lib/server/ai/config';
 import { aiErrorToStatus, classifyAIError, safeAIMessage } from '$lib/server/ai/errors';
 import { isCooledDown, markCooldown } from '$lib/server/ai/providers';
@@ -35,6 +36,7 @@ export type ChatMessage = { role: 'user' | 'assistant'; content: string } | UIMe
 
 export interface ChatInput {
 	userId: string;
+	providerId?: string;
 	messages: ChatMessage[];
 	conversationId?: string;
 	useRetrieval?: boolean;
@@ -197,11 +199,12 @@ function tryFallback(
 	messages: ModelMessage[],
 	conversationId: string | undefined,
 	userId: string,
+	fallbacks: ProviderEntry[],
 	wantsTools = false,
 	deskTools?: ReturnType<typeof createDeskTools>,
 	toolScopes?: DeskToolScope[],
 ): Response | null {
-	for (const fallback of fallbackProviders) {
+	for (const fallback of fallbacks) {
 		if (isCooledDown(fallback.id)) continue;
 		// For tool requests, prefer tool-capable providers
 		if (wantsTools && !fallback.supportsTools) continue;
@@ -245,6 +248,7 @@ function tryFallback(
 export async function orchestrateChat(input: ChatInput): Promise<Response> {
 	const {
 		userId,
+		providerId,
 		messages: rawMessages,
 		conversationId: existingConvId,
 		useRetrieval,
@@ -266,15 +270,24 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 	});
 	const messages = await convertToModelMessages(normalized);
 
-	if (!chatModel) {
+	// Resolve provider dynamically per-request (request override → stored preference → env → first configured)
+	const activeProvider = getActiveProvider(userId, providerId);
+	const activeInfo = getActiveProviderInfo(userId, providerId);
+	const resolvedChatModel = activeProvider?.getInstance() ?? null;
+	const resolvedToolProvider = getToolProvider(userId, providerId);
+	const resolvedToolModel = resolvedToolProvider?.getInstance() ?? null;
+	const resolvedToolProviderId = resolvedToolProvider?.id ?? null;
+	const resolvedFallbacks = getFallbacksForUser(userId, providerId);
+
+	if (!resolvedChatModel) {
 		return Response.json({ error: { code: 'ai_unavailable', message: 'No AI provider configured.' } }, { status: 503 });
 	}
 
 	// Use tool-capable provider when tools requested, fall back to chatModel without tools
 	const wantsTools = !!toolScopes?.length;
-	const toolProviderAvailable = !!toolModel && !!toolProviderId && !isCooledDown(toolProviderId);
+	const toolProviderAvailable = !!resolvedToolModel && !!resolvedToolProviderId && !isCooledDown(resolvedToolProviderId);
 	const hasTools = wantsTools && toolProviderAvailable;
-	const model = (hasTools ? toolModel : chatModel) ?? chatModel;
+	const model = (hasTools ? resolvedToolModel : resolvedChatModel) ?? resolvedChatModel;
 	const deskTools = hasTools ? createDeskTools(userId, toolScopes, deskLayout) : undefined;
 	const baseSystemPrompt = buildSystemPrompt(panelContext, toolScopes, deskLayout, activeWorkspace);
 
@@ -282,7 +295,10 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 	const convResult = await resolveConversation(userId, existingConvId, windowedMessages);
 	if ('type' in convResult) {
 		const err = convResult as ChatError;
-		return Response.json({ error: { code: err.code, message: err.message } }, { status: err.status });
+		return Response.json(
+			{ error: { code: err.code, message: err.message } },
+			{ status: err.status, headers: { 'X-AI-Error-Kind': err.code } },
+		);
 	}
 	const { conversationId } = convResult;
 
@@ -304,7 +320,7 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 
 		// Circuit breaker for rate limits during streaming
 		if (aiErr.kind === 'rate_limit') {
-			const failedProvider = hasTools ? toolProviderId : (activeProviderInfo?.id ?? null);
+			const failedProvider = hasTools ? resolvedToolProviderId : (activeInfo?.id ?? null);
 			if (failedProvider) markCooldown(failedProvider);
 		}
 
@@ -472,7 +488,7 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 
 		// Circuit breaker: cooldown the provider that just failed with rate limit
 		if (aiErr.kind === 'rate_limit') {
-			const failedProvider = hasTools ? toolProviderId : (activeProviderInfo?.id ?? null);
+			const failedProvider = hasTools ? resolvedToolProviderId : (activeInfo?.id ?? null);
 			if (failedProvider) markCooldown(failedProvider);
 		}
 
@@ -483,6 +499,7 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 				messages,
 				conversationId,
 				userId,
+				resolvedFallbacks,
 				wantsTools,
 				fallbackTools,
 				toolScopes,

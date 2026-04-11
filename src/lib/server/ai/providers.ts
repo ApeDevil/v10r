@@ -67,11 +67,15 @@ export function buildProviderRegistry(): ProviderEntry[] {
 	});
 }
 
-/** Resolve which provider to use: AI_PROVIDER env var → first configured */
-export function resolveActiveProvider(registry: ProviderEntry[]): ProviderEntry | null {
-	const preferred = env.AI_PROVIDER ?? '';
-	if (preferred) {
-		const match = registry.find((p) => p.id === preferred && p.configured);
+/** Resolve which provider to use: user preference → AI_PROVIDER env var → first configured */
+export function resolveActiveProvider(registry: ProviderEntry[], preference?: string | null): ProviderEntry | null {
+	if (preference) {
+		const match = registry.find((p) => p.id === preference && p.configured);
+		if (match) return match;
+	}
+	const envPref = env.AI_PROVIDER ?? '';
+	if (envPref) {
+		const match = registry.find((p) => p.id === envPref && p.configured);
 		if (match) return match;
 	}
 	return registry.find((p) => p.configured) ?? null;
@@ -85,6 +89,11 @@ export function getFallbackProviders(registry: ProviderEntry[], activeId: string
 // ── Circuit breaker — cooldown for rate-limited providers ──────────
 
 const cooldowns = new Map<string, number>();
+
+/** Reset all cooldowns. For test cleanup only. */
+export function resetCooldowns(): void {
+	cooldowns.clear();
+}
 
 /** Mark a provider as rate-limited for `durationMs` (default 60s). */
 export function markCooldown(providerId: string, durationMs = 60_000): void {
@@ -104,21 +113,53 @@ export function isCooledDown(providerId: string): boolean {
 
 /**
  * Resolve a provider that supports tool calling.
- * Prefers OpenAI > Google > others. Returns null if no tool-capable provider is configured.
+ * User preference → AI_PROVIDER → OpenAI > Google > others.
  */
-export function resolveToolProvider(registry: ProviderEntry[]): ProviderEntry | null {
+export function resolveToolProvider(registry: ProviderEntry[], preference?: string | null): ProviderEntry | null {
 	const toolProviders = registry.filter((p) => p.configured && p.supportsTools);
-	// Respect AI_PROVIDER if it supports tools
+	if (preference) {
+		const match = toolProviders.find((p) => p.id === preference);
+		if (match) return match;
+	}
 	const envProvider = env.AI_PROVIDER ?? '';
 	if (envProvider) {
 		const envMatch = toolProviders.find((p) => p.id === envProvider);
 		if (envMatch) return envMatch;
 	}
-	// Fallback to hardcoded preference
 	const preferred = ['openai', 'google'];
 	for (const id of preferred) {
 		const match = toolProviders.find((p) => p.id === id);
 		if (match) return match;
 	}
 	return toolProviders[0] ?? null;
+}
+
+// ── User provider preferences (in-memory, resets on server restart) ──
+
+const userPreferences = new Map<string, string>();
+
+/** Get a user's preferred provider ID, or null for server default. */
+export function getUserPreference(userId: string): string | null {
+	return userPreferences.get(userId) ?? null;
+}
+
+/** Set a user's preferred provider. */
+export function setUserPreference(userId: string, providerId: string): void {
+	userPreferences.set(userId, providerId);
+}
+
+/** Clear a user's preference (revert to server default). */
+export function clearUserPreference(userId: string): void {
+	userPreferences.delete(userId);
+}
+
+/** Get the cooldown resume time as ISO string, or null if not cooled down. Auto-clears expired. */
+export function getCooldownResumeAt(providerId: string): string | null {
+	const resumeAt = cooldowns.get(providerId);
+	if (!resumeAt) return null;
+	if (Date.now() >= resumeAt) {
+		cooldowns.delete(providerId);
+		return null;
+	}
+	return new Date(resumeAt).toISOString();
 }

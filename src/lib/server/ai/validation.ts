@@ -45,6 +45,7 @@ const DeskLayoutEntry = v.object({
 });
 
 export const ChatRequestSchema = v.object({
+	providerId: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(20))),
 	messages: v.pipe(v.array(ChatMessageSchema), v.minLength(1), v.maxLength(100)),
 	conversationId: v.optional(v.pipe(v.string(), v.uuid())),
 	useRetrieval: v.optional(v.boolean()),

@@ -8,6 +8,7 @@ import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
 import {
 	appendIOLog,
 	findLeafWithPanel,
+	getActiveProviderId,
 	getContextChips,
 	getDeskBus,
 	getDockContext,
@@ -35,6 +36,7 @@ let conversationId: string | undefined = $state(cached?.conversationId);
 let inputValue = $state('');
 let lastErrorKind = $state<string | null>(null);
 let managerOpen = $state(false);
+let managerInitialTab = $state<string | undefined>();
 
 const bus = getDeskBus();
 const dock = getDockContext();
@@ -47,7 +49,13 @@ const ERROR_MESSAGES: Record<string, string> = {
 	context_length: 'Message too long. Try a shorter message.',
 	authentication: 'AI authentication failed. Check provider config.',
 	model: 'AI model unavailable. Try again later.',
+	limit_exceeded: 'Conversation limit reached. Free up space in Storage.',
 };
+
+function openManagerToTab(tab?: string) {
+	managerInitialTab = tab;
+	managerOpen = true;
+}
 
 /** Parse `[kind] message` format from classified stream errors, or heuristic-match. */
 function classifyErrorMessage(msg: string): { kind: string | null; detail: string } {
@@ -236,6 +244,7 @@ function submitMessage() {
 				...(conversationId ? { conversationId } : {}),
 				...(context.length > 0 ? { panelContext: context } : {}),
 				toolScopes: getEnabledScopes(),
+				...(getActiveProviderId() ? { providerId: getActiveProviderId() } : {}),
 				...(wsState.active ? { activeWorkspace: { id: wsState.active.id, name: wsState.active.name } } : {}),
 			},
 		},
@@ -302,6 +311,11 @@ $effect(() => {
 		<div class="chat-error" role="alert" aria-live="polite">
 			<span class="font-medium">Could not get a response.</span>
 			{ERROR_MESSAGES[lastErrorKind ?? ''] ?? (detail || 'Something went wrong. Try again.')}
+			{#if lastErrorKind === 'limit_exceeded'}
+				<button class="chat-error-action" type="button" onclick={() => openManagerToTab('storage')}>
+					Manage Storage
+				</button>
+			{/if}
 		</div>
 	{/if}
 
@@ -311,11 +325,11 @@ $effect(() => {
 		loading={isLoading}
 		contextCount={activeContextCount}
 		onsubmit={submitMessage}
-		onopensettings={() => managerOpen = true}
+		onopensettings={() => openManagerToTab()}
 	/>
 
 	<!-- Bot Manager Dialog -->
-	<BotManagerDialog bind:open={managerOpen} />
+	<BotManagerDialog bind:open={managerOpen} initialTab={managerInitialTab} />
 </div>
 
 <style>
@@ -364,6 +378,19 @@ $effect(() => {
 		background: color-mix(in srgb, var(--color-error-fg, #ef4444) 10%, transparent);
 		border: 1px solid color-mix(in srgb, var(--color-error-fg, #ef4444) 20%, transparent);
 		color: var(--color-error-fg, #ef4444);
+	}
+
+	.chat-error-action {
+		display: inline;
+		margin-left: 4px;
+		padding: 0;
+		border: none;
+		background: none;
+		color: var(--color-error-fg, #ef4444);
+		font-size: 12px;
+		font-weight: 600;
+		text-decoration: underline;
+		cursor: pointer;
 	}
 
 	/* Typing indicator */

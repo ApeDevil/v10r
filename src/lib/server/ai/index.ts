@@ -1,26 +1,59 @@
-import { buildProviderRegistry, getFallbackProviders, resolveActiveProvider, resolveToolProvider } from './providers';
+import { buildProviderRegistry, getFallbackProviders, getUserPreference, resolveActiveProvider, resolveToolProvider } from './providers';
+import type { ProviderEntry } from './providers';
 
 const registry = buildProviderRegistry();
-const active = resolveActiveProvider(registry);
-const toolProvider = resolveToolProvider(registry);
 
-/** Whether any AI provider is configured */
-export const aiConfigured = active !== null;
+/** Whether any AI provider is configured (static — doesn't change at runtime). */
+export const aiConfigured = registry.some((p) => p.configured);
 
-/** Active chat model — null when no provider is available */
-export const chatModel = active?.getInstance() ?? null;
-
-/** Tool-capable model — may differ from chatModel. Null if no tool-capable provider. */
-export const toolModel = toolProvider?.getInstance() ?? null;
-
-/** Tool provider ID for circuit breaker tracking */
-export const toolProviderId = toolProvider?.id ?? null;
-
-/** Info about the active provider */
-export const activeProviderInfo = active ? { id: active.id, name: active.name, model: active.model } : null;
-
-/** Full provider registry for status pages */
+/** Full provider registry for status pages and API endpoints. */
 export const providerRegistry = registry;
 
-/** Fallback providers (configured, excluding active) */
-export const fallbackProviders = active ? getFallbackProviders(registry, active.id) : [];
+// ── Per-request resolution functions ────────────────────────────────
+
+/**
+ * Get the active provider for a given user.
+ * Resolution: explicit override → stored preference → env → first configured.
+ */
+export function getActiveProvider(userId?: string, overrideProviderId?: string): ProviderEntry | null {
+	const pref = overrideProviderId ?? (userId ? getUserPreference(userId) : null);
+	return resolveActiveProvider(registry, pref);
+}
+
+/**
+ * Get the tool-capable provider for a given user.
+ * Resolution: explicit override → stored preference → env → hardcoded order.
+ */
+export function getToolProvider(userId?: string, overrideProviderId?: string): ProviderEntry | null {
+	const pref = overrideProviderId ?? (userId ? getUserPreference(userId) : null);
+	return resolveToolProvider(registry, pref);
+}
+
+/** Get provider info { id, name, model } for a given user, or null. */
+export function getActiveProviderInfo(userId?: string, overrideProviderId?: string): { id: string; name: string; model: string } | null {
+	const active = getActiveProvider(userId, overrideProviderId);
+	return active ? { id: active.id, name: active.name, model: active.model } : null;
+}
+
+/** Get fallback providers for a given user's active provider. */
+export function getFallbacksForUser(userId?: string, overrideProviderId?: string): ProviderEntry[] {
+	const active = getActiveProvider(userId, overrideProviderId);
+	return active ? getFallbackProviders(registry, active.id) : [];
+}
+
+// ── Deprecated static exports (for showcase/admin/retrieval that lack userId) ──
+
+/** @deprecated Use getActiveProvider(userId)?.getInstance() */
+export const chatModel = getActiveProvider()?.getInstance() ?? null;
+
+/** @deprecated Use getToolProvider(userId)?.getInstance() */
+export const toolModel = getToolProvider()?.getInstance() ?? null;
+
+/** @deprecated Use getToolProvider(userId)?.id */
+export const toolProviderId = getToolProvider()?.id ?? null;
+
+/** @deprecated Use getActiveProviderInfo(userId) */
+export const activeProviderInfo = getActiveProviderInfo();
+
+/** @deprecated Use getFallbacksForUser(userId) */
+export const fallbackProviders = getFallbacksForUser();

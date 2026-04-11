@@ -112,7 +112,7 @@ export const MAX_BLOG_UPLOAD_SIZE = 10 * 1024 * 1024;
 export const MAX_BLOG_3D_UPLOAD_SIZE = 50 * 1024 * 1024;
 
 /** Max conversations per user */
-export const MAX_CONVERSATIONS_PER_USER = 50;
+export const MAX_CONVERSATIONS_PER_USER = 200;
 
 /** Conversation CRUD rate limit: requests per window */
 export const CONV_RATE_LIMIT_MAX = 30;
