@@ -142,12 +142,14 @@ export async function searchGraph(
 
 /** Get entity context for visualization. */
 export async function getGraphEntities(chunkIds: string[]): Promise<RetrievedEntity[]> {
+	if (chunkIds.length === 0) return [];
 	try {
 		const entities = await getEntitiesForChunks(chunkIds);
 		return entities.map((e) => ({
+			elementId: e.elementId,
 			name: e.name,
 			type: e.type,
-			related: e.relatedNames ?? [],
+			related: e.related ?? [],
 		}));
 	} catch {
 		return [];

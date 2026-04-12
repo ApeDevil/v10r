@@ -19,9 +19,10 @@ export interface RetrievalResult {
 
 /** Entity context from graph traversal */
 export interface RetrievedEntity {
+	elementId: string;
 	name: string;
 	type: string;
-	related: string[];
+	related: Array<{ elementId: string; name: string }>;
 }
 
 /** Options for retrieve() */

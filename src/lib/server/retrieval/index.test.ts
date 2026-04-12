@@ -21,6 +21,7 @@ vi.mock('./tiers/parent-child', () => ({
 
 vi.mock('./tiers/graph', () => ({
 	searchGraph: mockSearchGraph,
+	getGraphEntities: vi.fn().mockResolvedValue([]),
 }));
 
 const { retrieve, formatContextForPrompt } = await import('./index');

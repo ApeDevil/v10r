@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { Simulation, SimulationNodeDatum } from 'd3-force';
+import type { ForceLink, Simulation, SimulationNodeDatum } from 'd3-force';
 import { onDestroy, onMount } from 'svelte';
 import { beforeNavigate } from '$app/navigation';
 import { cn } from '$lib/utils/cn';
@@ -7,7 +7,7 @@ import type { ChartContainerVariants } from '../../_shared/chart-container';
 import { getVizPalette } from '../../_shared/theme-bridge';
 import SvgGraphContainer from '../_shared/SvgGraphContainer.svelte';
 import { arrowMarker } from '../_shared/svg-markers';
-import type { NetworkData, NetworkNode } from './types';
+import type { NetworkData, NetworkEdge, NetworkNode } from './types';
 
 interface Props {
 	data: NetworkData;
@@ -16,6 +16,10 @@ interface Props {
 	ariaLabel?: string;
 	class?: string;
 	onNodeClick?: (nodeId: string) => void;
+	/** Node IDs to emphasize; others dim. */
+	highlightedNodeIds?: Set<string> | null;
+	/** Edge keys (`source→target`) to emphasize; others dim. */
+	highlightedEdgeKeys?: Set<string> | null;
 }
 
 let {
@@ -25,6 +29,8 @@ let {
 	ariaLabel = 'Network graph',
 	class: className,
 	onNodeClick,
+	highlightedNodeIds = null,
+	highlightedEdgeKeys = null,
 }: Props = $props();
 
 // Internal simulation nodes with D3-mutated x/y positions
@@ -39,6 +45,10 @@ interface SimEdge {
 let nodes = $state<SimNode[]>([]);
 let edges = $state<SimEdge[]>([]);
 let simulation: Simulation<SimNode, SimEdge> | undefined;
+let linkForce: ForceLink<SimNode, SimEdge> | undefined;
+// Stable sim arrays — mutated in place by reconcile() so d3-force preserves positions
+const simNodes: SimNode[] = [];
+const simEdges: SimEdge[] = [];
 let d3ForceModule: typeof import('d3-force') | undefined;
 let palette: string[] = [];
 let groups: string[] = [];
@@ -66,45 +76,127 @@ onMount(async () => {
 	palette = getVizPalette();
 
 	initSimulation(d3ForceModule);
+	reconcile(data);
 });
 
 function initSimulation(d3Force: typeof import('d3-force')) {
-	// Stop previous but keep drag cleanup
-	simulation?.stop();
-	simulation = undefined;
-
-	// Clone data to avoid mutating props
-	const simNodes: SimNode[] = data.nodes.map((n) => ({ ...n }));
-	const simEdges: SimEdge[] = data.edges.map((e) => ({ ...e }));
-
-	// Collect unique groups for coloring
-	groups = [...new Set(simNodes.map((n) => n.group).filter(Boolean))] as string[];
-
+	linkForce = d3Force.forceLink<SimNode, SimEdge>(simEdges).id((d) => d.id).distance(80);
 	simulation = d3Force
 		.forceSimulation(simNodes)
-		.force(
-			'link',
-			d3Force
-				.forceLink<SimNode, SimEdge>(simEdges)
-				.id((d) => d.id)
-				.distance(80),
-		)
+		.force('link', linkForce)
 		.force('charge', d3Force.forceManyBody().strength(-200))
 		.force('x', d3Force.forceX().strength(0.05))
 		.force('y', d3Force.forceY().strength(0.05))
 		.on('tick', () => {
-			// Trigger Svelte reactivity by reassigning
+			// Trigger Svelte reactivity by reassigning the shallow array
 			nodes = [...simNodes];
 			edges = [...simEdges];
 		});
 }
 
-// Re-run simulation when data changes (cached module ref, no re-import)
+function edgeEndpointId(end: SimNode | string): string {
+	return typeof end === 'string' ? end : end.id;
+}
+
+function edgeKey(e: { source: SimNode | string; target: SimNode | string }): string {
+	return `${edgeEndpointId(e.source)}→${edgeEndpointId(e.target)}`;
+}
+
+/**
+ * Reconcile sim state with incoming props.
+ * Reuses existing SimNode object refs so d3-force preserves x/y/vx/vy.
+ * New nodes are seeded near the centroid of their already-positioned neighbors
+ * so they slide in rather than springing from the origin.
+ */
+function reconcile(newData: NetworkData) {
+	if (!simulation || !linkForce) return;
+
+	const existingById = new Map(simNodes.map((n) => [n.id, n]));
+	const incomingIds = new Set(newData.nodes.map((n) => n.id));
+
+	// Precompute neighbor elementIds from the incoming edge list so we can
+	// seed new nodes near their connections when they come in together.
+	const neighborIdsByNodeId = new Map<string, string[]>();
+	for (const e of newData.edges as NetworkEdge[]) {
+		const src = e.source;
+		const tgt = e.target;
+		(neighborIdsByNodeId.get(src) ?? neighborIdsByNodeId.set(src, []).get(src))?.push(tgt);
+		(neighborIdsByNodeId.get(tgt) ?? neighborIdsByNodeId.set(tgt, []).get(tgt))?.push(src);
+	}
+
+	// Rebuild simNodes in place, preserving existing refs
+	const nextSimNodes: SimNode[] = [];
+	for (const incoming of newData.nodes) {
+		const existing = existingById.get(incoming.id);
+		if (existing) {
+			// Update mutable display fields without disturbing positions
+			existing.label = incoming.label;
+			existing.group = incoming.group;
+			existing.size = incoming.size;
+			nextSimNodes.push(existing);
+		} else {
+			// Seed near centroid of neighbors that are already positioned
+			const neighborIds = neighborIdsByNodeId.get(incoming.id) ?? [];
+			const positioned = neighborIds
+				.map((id) => existingById.get(id))
+				.filter((n): n is SimNode => n !== undefined && n.x !== undefined && n.y !== undefined);
+
+			let seedX = 0;
+			let seedY = 0;
+			if (positioned.length > 0) {
+				for (const n of positioned) {
+					seedX += n.x ?? 0;
+					seedY += n.y ?? 0;
+				}
+				seedX /= positioned.length;
+				seedY /= positioned.length;
+			}
+			// Small random jitter to avoid perfect overlap
+			const jitter = positioned.length > 0 ? 20 : 40;
+			seedX += (Math.random() - 0.5) * jitter;
+			seedY += (Math.random() - 0.5) * jitter;
+
+			nextSimNodes.push({ ...incoming, x: seedX, y: seedY });
+		}
+	}
+
+	// Commit node changes into the stable array
+	simNodes.length = 0;
+	simNodes.push(...nextSimNodes);
+
+	// Reconcile edges by composite key — reuse refs so d3-force's link
+	// bookkeeping (source/target swapped from string → node ref) persists
+	const existingEdgesByKey = new Map(simEdges.map((e) => [edgeKey(e), e]));
+	const nextSimEdges: SimEdge[] = [];
+	for (const incoming of newData.edges as NetworkEdge[]) {
+		const key = `${incoming.source}→${incoming.target}`;
+		const existing = existingEdgesByKey.get(key);
+		if (existing && incomingIds.has(edgeEndpointId(existing.source)) && incomingIds.has(edgeEndpointId(existing.target))) {
+			existing.weight = incoming.weight;
+			nextSimEdges.push(existing);
+		} else {
+			nextSimEdges.push({ source: incoming.source, target: incoming.target, weight: incoming.weight });
+		}
+	}
+	simEdges.length = 0;
+	simEdges.push(...nextSimEdges);
+
+	// Recompute groups for coloring
+	groups = [...new Set(simNodes.map((n) => n.group).filter(Boolean))] as string[];
+
+	// Re-attach arrays and warm-restart — d3-force uses current refs,
+	// preserving positions on reused nodes and gently integrating new ones.
+	simulation.nodes(simNodes);
+	linkForce.links(simEdges);
+	simulation.alpha(0.3).restart();
+}
+
+// Reconcile whenever data changes (after initial mount)
 // svelte-ignore state_referenced_locally
 $effect(() => {
 	const _data = data;
 	if (simulation && d3ForceModule) {
-		initSimulation(d3ForceModule);
+		reconcile(_data);
 	}
 });
 
@@ -118,15 +210,28 @@ function getNodeRadius(node: SimNode): number {
 	return node.size || 6;
 }
 
+function isEdgeHighlighted(edge: SimEdge): boolean {
+	if (!highlightedEdgeKeys || highlightedEdgeKeys.size === 0) return false;
+	const src = typeof edge.source === 'string' ? edge.source : edge.source.id;
+	const tgt = typeof edge.target === 'string' ? edge.target : edge.target.id;
+	return highlightedEdgeKeys.has(`${src}→${tgt}`) || highlightedEdgeKeys.has(`${tgt}→${src}`);
+}
+
 function getEdgeOpacity(edge: SimEdge): number {
 	const src = typeof edge.source === 'string' ? edge.source : edge.source.id;
 	const tgt = typeof edge.target === 'string' ? edge.target : edge.target.id;
+	if (highlightedEdgeKeys && highlightedEdgeKeys.size > 0) {
+		return isEdgeHighlighted(edge) ? 1 : 0.05;
+	}
 	if (selectedNodeId && src !== selectedNodeId && tgt !== selectedNodeId) return 0.1;
 	if (hoveredNodeId && src !== hoveredNodeId && tgt !== hoveredNodeId) return 0.2;
 	return 0.6;
 }
 
 function getNodeOpacity(node: SimNode): number {
+	if (highlightedNodeIds && highlightedNodeIds.size > 0) {
+		return highlightedNodeIds.has(node.id) ? 1 : 0.15;
+	}
 	if (!selectedNodeId && !hoveredNodeId) return 1;
 	if (selectedNodeId === node.id || hoveredNodeId === node.id) return 1;
 	// Show connected nodes
@@ -287,6 +392,7 @@ let announcement = $derived.by(() => {
 				x2={edgeX2(edge)}
 				y2={edgeY2(edge)}
 				class="graph-edge"
+				class:highlighted={isEdgeHighlighted(edge)}
 				style:opacity={getEdgeOpacity(edge)}
 				marker-end={directed ? `url(#${arrowMarker.id})` : undefined}
 			/>
@@ -369,7 +475,12 @@ let announcement = $derived.by(() => {
 	.graph-edge {
 		stroke: var(--chart-axis);
 		stroke-width: 1.5;
-		transition: opacity 0.15s ease;
+		transition: opacity 0.15s ease, stroke 0.15s ease, stroke-width 0.15s ease;
+	}
+
+	.graph-edge.highlighted {
+		stroke: var(--color-primary);
+		stroke-width: 3;
 	}
 
 	:global(.arrow-fill) {

@@ -91,8 +91,8 @@ describe('fuseAndRank', () => {
 		expect(result[0].chunkId).toBe('a');
 	});
 
-	it('returns empty entities array', () => {
-		const { entities } = fuseAndRank([], 10);
-		expect(entities).toEqual([]);
+	it('handles empty input', () => {
+		const { chunks } = fuseAndRank([], 10);
+		expect(chunks).toEqual([]);
 	});
 });

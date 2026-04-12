@@ -6,13 +6,35 @@ import type { KnowledgeEdge, KnowledgeNode } from '$lib/types/knowledge';
 interface Props {
 	node: KnowledgeNode;
 	edges: KnowledgeEdge[];
+	allNodes?: KnowledgeNode[];
 	expanded: boolean;
 	expandLoading: boolean;
 	onExpand: (nodeId: string) => void;
 	onClose: () => void;
+	pathFromId?: string | null;
+	pathToId?: string | null;
+	onSetPathFrom?: (nodeId: string) => void;
+	onSetPathTo?: (nodeId: string) => void;
 }
 
-let { node, edges, expanded, expandLoading, onExpand, onClose }: Props = $props();
+let {
+	node,
+	edges,
+	allNodes = [],
+	expanded,
+	expandLoading,
+	onExpand,
+	onClose,
+	pathFromId = null,
+	pathToId = null,
+	onSetPathFrom,
+	onSetPathTo,
+}: Props = $props();
+
+const labelById = $derived(new Map(allNodes.map((n) => [n.id, n.label ?? n.id])));
+const labelOf = (id: string): string => labelById.get(id) ?? id;
+const isPathFrom = $derived(pathFromId === node.id);
+const isPathTo = $derived(pathToId === node.id);
 
 const outgoing = $derived(edges.filter((e) => e.source === node.id));
 const incoming = $derived(edges.filter((e) => e.target === node.id));
@@ -54,7 +76,7 @@ const properties = $derived(node.properties ? Object.entries(node.properties).fi
 						{#each outgoing as edge}
 							<div class="edge-item">
 								<Badge variant="secondary">{edge.relationshipType}</Badge>
-								<span class="edge-target">&rarr; {edge.target}</span>
+								<span class="edge-target">&rarr; {labelOf(edge.target)}</span>
 							</div>
 						{/each}
 					</div>
@@ -67,7 +89,7 @@ const properties = $derived(node.properties ? Object.entries(node.properties).fi
 					<div class="edge-list">
 						{#each incoming as edge}
 							<div class="edge-item">
-								<span class="edge-target">{edge.source} &rarr;</span>
+								<span class="edge-target">{labelOf(edge.source)} &rarr;</span>
 								<Badge variant="secondary">{edge.relationshipType}</Badge>
 							</div>
 						{/each}
@@ -90,6 +112,30 @@ const properties = $derived(node.properties ? Object.entries(node.properties).fi
 				</Button>
 			{:else}
 				<Typography variant="muted" as="p">Neighbors loaded</Typography>
+			{/if}
+
+			{#if onSetPathFrom && onSetPathTo}
+				<div class="prop-section">
+					<Typography variant="muted" as="p" class="section-label">Path finding</Typography>
+					<div class="path-buttons">
+						<Button
+							variant={isPathFrom ? 'primary' : 'outline'}
+							size="sm"
+							onclick={() => onSetPathFrom?.(node.id)}
+						>
+							<span class="i-lucide-flag h-4 w-4 mr-1"></span>
+							{isPathFrom ? 'Start (set)' : 'Set as start'}
+						</Button>
+						<Button
+							variant={isPathTo ? 'primary' : 'outline'}
+							size="sm"
+							onclick={() => onSetPathTo?.(node.id)}
+						>
+							<span class="i-lucide-target h-4 w-4 mr-1"></span>
+							{isPathTo ? 'End (set)' : 'Set as end'}
+						</Button>
+					</div>
+				</div>
 			{/if}
 		</Stack>
 	</div>
@@ -218,5 +264,11 @@ const properties = $derived(node.properties ? Object.entries(node.properties).fi
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+	}
+
+	.path-buttons {
+		display: flex;
+		gap: var(--spacing-2);
+		flex-wrap: wrap;
 	}
 </style>

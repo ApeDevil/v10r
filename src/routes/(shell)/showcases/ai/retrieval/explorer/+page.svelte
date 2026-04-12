@@ -16,8 +16,14 @@ let query = $state('');
 let searchLoading = $state(false);
 let graphLoading = $state(false);
 let expandLoading = $state(false);
+let pathLoading = $state(false);
 let error = $state<string | null>(null);
 let searchMeta = $state<{ seeds: number; graphDiscovered: number; durationMs: number } | null>(null);
+
+// Path-finding state
+let pathFromId = $state<string | null>(null);
+let pathToId = $state<string | null>(null);
+let pathHighlight = $state<{ nodeIds: Set<string>; edgeKeys: Set<string> } | null>(null);
 
 const sections = [
 	{ id: 'search', label: 'Search' },
@@ -38,9 +44,10 @@ let searchResults = $state<
 >([]);
 
 interface RetrievedEntity {
+	elementId: string;
 	name: string;
 	type: string;
-	related: string[];
+	related: Array<{ elementId: string; name: string }>;
 }
 
 function entitiesToKnowledgeData(entities: RetrievedEntity[]): KnowledgeData {
@@ -48,23 +55,23 @@ function entitiesToKnowledgeData(entities: RetrievedEntity[]): KnowledgeData {
 	const edges: KnowledgeEdge[] = [];
 
 	for (const entity of entities) {
-		nodeMap.set(entity.name, {
-			id: entity.name,
+		nodeMap.set(entity.elementId, {
+			id: entity.elementId,
 			label: entity.name,
 			entityType: entity.type,
 		});
 		// Ensure related entities exist as nodes too
 		for (const related of entity.related) {
-			if (!nodeMap.has(related)) {
-				nodeMap.set(related, {
-					id: related,
-					label: related,
+			if (!nodeMap.has(related.elementId)) {
+				nodeMap.set(related.elementId, {
+					id: related.elementId,
+					label: related.name,
 					entityType: 'unknown',
 				});
 			}
 			edges.push({
-				source: entity.name,
-				target: related,
+				source: entity.elementId,
+				target: related.elementId,
 				relationshipType: 'RELATED_TO',
 				label: 'RELATED_TO',
 			});
@@ -180,6 +187,47 @@ function handleCloseDetail() {
 	explorer.selectedNodeId = null;
 }
 
+function handleSetPathFrom(nodeId: string) {
+	pathFromId = pathFromId === nodeId ? null : nodeId;
+	pathHighlight = null;
+}
+
+function handleSetPathTo(nodeId: string) {
+	pathToId = pathToId === nodeId ? null : nodeId;
+	pathHighlight = null;
+}
+
+async function findPath() {
+	if (!pathFromId || !pathToId || pathFromId === pathToId || pathLoading) return;
+	pathLoading = true;
+	error = null;
+	try {
+		const params = new URLSearchParams({ from: pathFromId, to: pathToId, maxHops: '4' });
+		const res = await apiFetch(`/api/retrieval/graph/path?${params}`);
+		if (!res.ok) {
+			const errJson = await res.json().catch(() => ({}));
+			throw new Error(errJson.error?.message ?? `HTTP ${res.status}`);
+		}
+		const { data: pathData } = await res.json();
+		explorer.merge(pathData.data);
+		pathHighlight = {
+			nodeIds: new Set(pathData.nodeIds),
+			edgeKeys: new Set(pathData.edgeKeys),
+		};
+	} catch (err) {
+		error = err instanceof Error ? err.message : 'Failed to find path';
+		pathHighlight = null;
+	} finally {
+		pathLoading = false;
+	}
+}
+
+function clearPath() {
+	pathFromId = null;
+	pathToId = null;
+	pathHighlight = null;
+}
+
 function handleKeydown(e: KeyboardEvent) {
 	if (e.key === 'Enter' && !e.shiftKey) {
 		e.preventDefault();
@@ -238,7 +286,7 @@ function handleKeydown(e: KeyboardEvent) {
 						</Button>
 
 						{#if explorer.nodes.length > 0}
-							<Button variant="ghost" size="sm" onclick={() => { explorer.clear(); searchResults = []; searchMeta = null; error = null; }}>
+							<Button variant="ghost" size="sm" onclick={() => { explorer.clear(); searchResults = []; searchMeta = null; error = null; clearPath(); }}>
 								<span class="i-lucide-trash-2 h-4 w-4 mr-1"></span>
 								Clear
 							</Button>
@@ -274,6 +322,37 @@ function handleKeydown(e: KeyboardEvent) {
 		<!-- EXPLORER -->
 		<section id="explorer">
 			{#if explorer.nodes.length > 0}
+				{#if pathFromId || pathToId || pathHighlight}
+					<div class="path-bar">
+						<span class="path-label">
+							<span class="i-lucide-route h-4 w-4"></span>
+							Path:
+						</span>
+						<span class="path-endpoint">
+							{pathFromId ? (explorer.nodes.find((n) => n.id === pathFromId)?.label ?? pathFromId) : '—'}
+						</span>
+						<span class="i-lucide-arrow-right h-4 w-4"></span>
+						<span class="path-endpoint">
+							{pathToId ? (explorer.nodes.find((n) => n.id === pathToId)?.label ?? pathToId) : '—'}
+						</span>
+						<Button
+							variant="primary"
+							size="sm"
+							onclick={findPath}
+							disabled={!pathFromId || !pathToId || pathFromId === pathToId || pathLoading}
+						>
+							{#if pathLoading}
+								<Spinner size="xs" class="mr-1" />
+							{/if}
+							Find path
+						</Button>
+						<Button variant="ghost" size="sm" onclick={clearPath}>Clear</Button>
+						{#if pathHighlight}
+							<span class="path-info">{pathHighlight.nodeIds.size} nodes, {pathHighlight.edgeKeys.size} edges</span>
+						{/if}
+					</div>
+				{/if}
+
 				<div class="explorer-layout" class:has-detail={explorer.selectedNode}>
 					<div class="graph-area">
 						<KnowledgeGraph
@@ -281,6 +360,8 @@ function handleKeydown(e: KeyboardEvent) {
 							aspect="wide"
 							ariaLabel="RAG entity graph"
 							onNodeClick={handleNodeClick}
+							highlightedNodeIds={pathHighlight?.nodeIds ?? null}
+							highlightedEdgeKeys={pathHighlight?.edgeKeys ?? null}
 						/>
 					</div>
 
@@ -289,10 +370,15 @@ function handleKeydown(e: KeyboardEvent) {
 							<NodeDetailPanel
 								node={explorer.selectedNode}
 								edges={explorer.selectedNodeEdges}
+								allNodes={explorer.nodes}
 								expanded={explorer.isExpanded(explorer.selectedNode.id)}
 								{expandLoading}
 								onExpand={expandNode}
 								onClose={handleCloseDetail}
+								{pathFromId}
+								{pathToId}
+								onSetPathFrom={handleSetPathFrom}
+								onSetPathTo={handleSetPathTo}
 							/>
 						</div>
 					{/if}
@@ -373,6 +459,45 @@ function handleKeydown(e: KeyboardEvent) {
 		display: flex;
 		align-items: center;
 		gap: var(--spacing-2);
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
+	}
+
+	/* ─── Path Bar ──────────────────────────────────────── */
+
+	.path-bar {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-3);
+		padding: var(--spacing-3) var(--spacing-4);
+		margin-bottom: var(--spacing-4);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		background: var(--color-surface-1);
+		flex-wrap: wrap;
+		font-size: var(--text-fluid-sm);
+	}
+
+	.path-label {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-2);
+		color: var(--color-muted);
+		font-weight: 500;
+	}
+
+	.path-endpoint {
+		color: var(--color-fg);
+		font-family: ui-monospace, monospace;
+		font-size: var(--text-fluid-xs);
+		max-width: 140px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.path-info {
+		margin-left: auto;
 		font-size: var(--text-fluid-xs);
 		color: var(--color-muted);
 	}

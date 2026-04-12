@@ -3,7 +3,7 @@ import { EMBEDDING_DIMENSIONS, MAX_CONTEXT_CHUNKS, MAX_GRAPH_HOPS } from './conf
 import { generateEmbedding } from './embed';
 import { fuseAndRank } from './rank';
 import { searchContextual } from './tiers/contextual';
-import { searchGraph } from './tiers/graph';
+import { getGraphEntities, searchGraph } from './tiers/graph';
 import { searchParentChild } from './tiers/parent-child';
 import type { RankedChunk, RetrievalOptions, RetrievalResult } from './types';
 
@@ -129,7 +129,10 @@ export async function retrieve(query: string, options: RetrievalOptions, onEvent
 	onEvent && emit(onEvent, 'rank', 'active');
 	const rankStart = performance.now();
 	const allChunks = tierResults.flat();
-	const { chunks, entities } = fuseAndRank(allChunks, opts.maxChunks);
+	const { chunks } = fuseAndRank(allChunks, opts.maxChunks);
+
+	// Entities only populated when tier 3 (graph) ran and produced chunks
+	const entities = requestedTiers.has(3) ? await getGraphEntities(chunks.map((c) => c.chunkId)) : [];
 	onEvent &&
 		emit(onEvent, 'rank', 'done', {
 			durationMs: Math.round(performance.now() - rankStart),

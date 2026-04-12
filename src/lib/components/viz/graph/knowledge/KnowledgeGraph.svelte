@@ -12,9 +12,19 @@ interface Props {
 	ariaLabel?: string;
 	class?: string;
 	onNodeClick?: (nodeId: string) => void;
+	highlightedNodeIds?: Set<string> | null;
+	highlightedEdgeKeys?: Set<string> | null;
 }
 
-let { data, aspect = 'chart', ariaLabel = 'Knowledge graph', class: className, onNodeClick }: Props = $props();
+let {
+	data,
+	aspect = 'chart',
+	ariaLabel = 'Knowledge graph',
+	class: className,
+	onNodeClick,
+	highlightedNodeIds = null,
+	highlightedEdgeKeys = null,
+}: Props = $props();
 
 let searchQuery = $state('');
 // svelte-ignore state_referenced_locally
@@ -108,6 +118,8 @@ function handleFilterChange(filters: {
 				{aspect}
 				{ariaLabel}
 				{onNodeClick}
+				{highlightedNodeIds}
+				{highlightedEdgeKeys}
 			/>
 		{/if}
 	</div>

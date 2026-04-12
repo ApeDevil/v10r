@@ -37,10 +37,11 @@ export async function expandViaGraph(seedChunkIds: string[], maxHops: number = 2
 }
 
 interface EntityInfo {
+	elementId: string;
 	name: string;
 	type: string;
 	description: string;
-	relatedNames: string[];
+	related: Array<{ elementId: string; name: string }>;
 }
 
 /** Get entities mentioned in specific chunks. */
@@ -49,10 +50,12 @@ export async function getEntitiesForChunks(chunkPgIds: string[]): Promise<Entity
 		`UNWIND $chunkPgIds AS chunkId
 		 MATCH (c:Chunk {pgId: chunkId})-[:MENTIONS]->(e:Entity)
 		 OPTIONAL MATCH (e)-[:RELATED_TO]-(related:Entity)
-		 RETURN DISTINCT e.name AS name,
+		 WITH e, collect(DISTINCT related) AS relatedNodes
+		 RETURN elementId(e) AS elementId,
+		        e.name AS name,
 		        e.type AS type,
 		        e.description AS description,
-		        collect(DISTINCT related.name) AS relatedNames`,
+		        [r IN relatedNodes WHERE r IS NOT NULL | {elementId: elementId(r), name: r.name}] AS related`,
 		{ chunkPgIds },
 	);
 }
@@ -95,6 +98,50 @@ export async function getEntityNeighborhood(elementId: string): Promise<Knowledg
 		nodeRows.map((row) => row.n),
 		relRows.map((row) => ({ ...row.r, startNodeElementId: row.startId, endNodeElementId: row.endId })),
 	);
+}
+
+/**
+ * Find the shortest RELATED_TO path between two entities.
+ * Returns the path as KnowledgeData (nodes + edges along the path)
+ * so the explorer can merge any missing nodes and highlight the trail.
+ * Returns null if no path exists within maxHops.
+ */
+export async function findShortestPath(
+	fromId: string,
+	toId: string,
+	maxHops: number = 4,
+): Promise<{ data: KnowledgeData; nodeIds: string[]; edgeKeys: string[] } | null> {
+	const hops = Math.max(1, Math.min(maxHops, 6));
+
+	// Pull the path's nodes/rels separately so we can use the same map shape
+	// toKnowledgeData expects (startId/endId alongside the rel record).
+	const [nodeRows, relRows] = await Promise.all([
+		cypher<{ n: Neo4jNodeRecord }>(
+			`MATCH (a:Entity) WHERE elementId(a) = $fromId
+			 MATCH (b:Entity) WHERE elementId(b) = $toId
+			 MATCH p = shortestPath((a)-[:RELATED_TO*..${hops}]-(b))
+			 UNWIND nodes(p) AS n RETURN DISTINCT n`,
+			{ fromId, toId },
+		),
+		cypher<{ r: Neo4jRelRecord; startId: string; endId: string }>(
+			`MATCH (a:Entity) WHERE elementId(a) = $fromId
+			 MATCH (b:Entity) WHERE elementId(b) = $toId
+			 MATCH p = shortestPath((a)-[:RELATED_TO*..${hops}]-(b))
+			 UNWIND relationships(p) AS r
+			 RETURN r, elementId(startNode(r)) AS startId, elementId(endNode(r)) AS endId`,
+			{ fromId, toId },
+		),
+	]);
+
+	if (nodeRows.length === 0) return null;
+
+	const data = toKnowledgeData(
+		nodeRows.map((row) => row.n),
+		relRows.map((row) => ({ ...row.r, startNodeElementId: row.startId, endNodeElementId: row.endId })),
+	);
+	const nodeIds = nodeRows.map((row) => row.n.elementId);
+	const edgeKeys = relRows.map((row) => `${row.startId}→${row.endId}`);
+	return { data, nodeIds, edgeKeys };
 }
 
 /** Get the document graph structure for visualization. */

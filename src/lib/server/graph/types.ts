@@ -37,13 +37,16 @@ export interface Neo4jRelRecord {
  * for the KnowledgeGraph visualization component.
  */
 export function toKnowledgeData(nodes: Neo4jNodeRecord[], relationships: Neo4jRelRecord[]): KnowledgeData {
-	const entityTypes = [...new Set(nodes.map((n) => n.labels[0]))].sort();
+	const resolveEntityType = (n: Neo4jNodeRecord): string =>
+		(typeof n.properties.type === 'string' && n.properties.type) || n.labels[0];
+
+	const entityTypes = [...new Set(nodes.map(resolveEntityType))].sort();
 	const relationshipTypes = [...new Set(relationships.map((r) => r.type))].sort();
 
 	const knowledgeNodes: KnowledgeNode[] = nodes.map((n) => ({
 		id: n.elementId,
 		label: (n.properties.name as string) ?? n.elementId,
-		entityType: n.labels[0],
+		entityType: resolveEntityType(n),
 		properties: n.properties,
 	}));
 

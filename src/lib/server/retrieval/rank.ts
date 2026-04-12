@@ -1,5 +1,5 @@
 import { RRF_K } from './config';
-import type { RankedChunk, RetrievedEntity } from './types';
+import type { RankedChunk } from './types';
 
 /**
  * Reciprocal Rank Fusion: combine results from multiple ranked lists.
@@ -56,7 +56,7 @@ export function deduplicateAndCap(chunks: RankedChunk[], maxChunks: number): Ran
 export function fuseAndRank(
 	allChunks: RankedChunk[],
 	maxChunks: number,
-): { chunks: RankedChunk[]; entities: RetrievedEntity[] } {
+): { chunks: RankedChunk[] } {
 	// Group by tier for RRF
 	const tierGroups = new Map<number, RankedChunk[]>();
 	for (const chunk of allChunks) {
@@ -76,5 +76,5 @@ export function fuseAndRank(
 
 	const chunks = deduplicateAndCap(fused, maxChunks);
 
-	return { chunks, entities: [] };
+	return { chunks };
 }
