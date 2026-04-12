@@ -61,7 +61,7 @@ export async function fetchConversationStorage(): Promise<void> {
 		const res = await apiFetch('/api/ai/conversations?sort=oldest');
 		if (!res.ok) throw new Error('Failed to fetch conversations');
 		const { data } = await res.json();
-		state.conversations = data.conversations;
+		state.conversations = data.items;
 		state.meta = data.meta;
 	} catch (err) {
 		state.error = err instanceof Error ? err.message : 'Failed to fetch conversations';

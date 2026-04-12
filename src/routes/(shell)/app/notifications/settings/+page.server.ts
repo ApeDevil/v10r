@@ -1,5 +1,8 @@
-import { fail, redirect } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
+import { fail, message, superValidate } from 'sveltekit-superforms';
+import { valibot } from 'sveltekit-superforms/adapters';
+import { notificationSettingsSchema } from '$lib/schemas/app/notification-settings';
 import { db } from '$lib/server/db';
 import { getOrCreateSettings, updateSettings } from '$lib/server/db/notifications/mutations';
 import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
@@ -32,8 +35,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			.then((rows) => rows[0] ?? null),
 	]);
 
+	const form = await superValidate(settings, valibot(notificationSettingsSchema));
+
 	return {
-		settings,
+		form,
 		telegram: telegramAccount,
 		discord: discordAccount,
 		successMessage: url.searchParams.get('success'),
@@ -45,30 +50,11 @@ export const actions: Actions = {
 	default: async ({ request, locals }) => {
 		if (!locals.user) return fail(401, { error: 'Not authenticated' });
 
-		const formData = await request.formData();
+		const form = await superValidate(request, valibot(notificationSettingsSchema));
+		if (!form.valid) return fail(400, { form });
 
-		const data = {
-			emailMention: formData.get('emailMention') === 'on',
-			emailComment: formData.get('emailComment') === 'on',
-			emailSystem: formData.get('emailSystem') === 'on',
-			emailSuccess: formData.get('emailSuccess') === 'on',
-			emailSecurity: formData.get('emailSecurity') === 'on',
-			emailFollow: formData.get('emailFollow') === 'on',
-			telegramMention: formData.get('telegramMention') === 'on',
-			telegramComment: formData.get('telegramComment') === 'on',
-			telegramSystem: formData.get('telegramSystem') === 'on',
-			telegramSecurity: formData.get('telegramSecurity') === 'on',
-			discordMention: formData.get('discordMention') === 'on',
-			discordComment: formData.get('discordComment') === 'on',
-			discordSystem: formData.get('discordSystem') === 'on',
-			discordSecurity: formData.get('discordSecurity') === 'on',
-			digestFrequency: formData.get('digestFrequency') as 'instant' | 'daily' | 'weekly' | 'never',
-			quietStart: (formData.get('quietStart') as string) || null,
-			quietEnd: (formData.get('quietEnd') as string) || null,
-		};
+		await updateSettings(locals.user.id, form.data);
 
-		await updateSettings(locals.user.id, data);
-
-		return { success: true };
+		return message(form, 'Notification settings saved');
 	},
 };

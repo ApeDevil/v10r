@@ -1,10 +1,13 @@
 import * as v from 'valibot';
 import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/api/response';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { requireApiUser } from '$lib/server/auth/guards';
 import type { WorkspaceLayoutJson } from '$lib/server/db/schema/desk/workspace';
 import { createWorkspace, getActiveWorkspaceId, listWorkspaces } from '$lib/server/desk';
 import { CreateWorkspaceSchema } from '$lib/server/desk/schemas';
 import type { RequestHandler } from './$types';
+
+const limiter = createLimiter('rl:desk:workspaces', 10, '1 m');
 
 /** List all workspaces (with layouts) + active ID. */
 export const GET: RequestHandler = async ({ locals }) => {
@@ -28,6 +31,9 @@ export const GET: RequestHandler = async ({ locals }) => {
 /** Create a new workspace from current layout. Auto-activates. */
 export const POST: RequestHandler = async ({ locals, request }) => {
 	const { user } = requireApiUser(locals);
+
+	const { success, reset } = await limiter.limit(user.id);
+	if (!success) return rateLimitResponse(reset);
 
 	const body = await request.json().catch(() => null);
 	if (!body) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');

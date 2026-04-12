@@ -1,13 +1,19 @@
 import * as v from 'valibot';
 import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { createDeskPreset, migrateDeskTheme, saveDeskTheme } from '$lib/server/desk';
 import { CreatePresetSchema, MigrateThemeSchema, SaveThemeSchema } from '$lib/server/desk/schemas';
 import type { RequestHandler } from './$types';
 
+const limiter = createLimiter('rl:desk:theme', 30, '1 m');
+
 /** Save the user's active desk theme. */
 export const PATCH: RequestHandler = async ({ locals, request }) => {
 	const { user } = requireApiUser(locals);
+
+	const { success, reset } = await limiter.limit(user.id);
+	if (!success) return rateLimitResponse(reset);
 
 	const body = await request.json().catch(() => null);
 	if (!body) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
@@ -27,6 +33,9 @@ export const PATCH: RequestHandler = async ({ locals, request }) => {
 /** Create a preset or migrate from localStorage. */
 export const POST: RequestHandler = async ({ locals, request }) => {
 	const { user } = requireApiUser(locals);
+
+	const { success: rlOk, reset } = await limiter.limit(user.id);
+	if (!rlOk) return rateLimitResponse(reset);
 
 	const body = await request.json().catch(() => null);
 	if (!body) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');

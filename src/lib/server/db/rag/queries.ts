@@ -3,21 +3,27 @@ import { db } from '../index';
 import { collection, document } from '../schema/rag';
 
 /** List documents for a user (active only, newest first). */
-export async function listDocuments(userId: string) {
-	return db
-		.select({
-			id: document.id,
-			title: document.title,
-			source: document.source,
-			status: document.status,
-			totalChunks: document.totalChunks,
-			totalTokens: document.totalTokens,
-			createdAt: document.createdAt,
-		})
-		.from(document)
-		.where(and(eq(document.userId, userId), isNull(document.deletedAt)))
-		.orderBy(desc(document.createdAt))
-		.limit(100);
+export async function listDocuments(userId: string, offset = 0, limit = 50) {
+	const where = and(eq(document.userId, userId), isNull(document.deletedAt));
+	const [items, [countResult]] = await Promise.all([
+		db
+			.select({
+				id: document.id,
+				title: document.title,
+				source: document.source,
+				status: document.status,
+				totalChunks: document.totalChunks,
+				totalTokens: document.totalTokens,
+				createdAt: document.createdAt,
+			})
+			.from(document)
+			.where(where)
+			.orderBy(desc(document.createdAt))
+			.offset(offset)
+			.limit(limit),
+		db.select({ total: count() }).from(document).where(where),
+	]);
+	return { items, total: countResult?.total ?? 0 };
 }
 
 /** Get a single document with ownership check. */

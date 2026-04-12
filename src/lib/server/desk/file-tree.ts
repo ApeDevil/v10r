@@ -29,10 +29,10 @@ export async function getFileTree(userId: string): Promise<FileTreeNode[]> {
 		listAssets(userId),
 	]);
 
-	const files = filesResult.status === 'fulfilled' ? filesResult.value : [];
-	const folders = foldersResult.status === 'fulfilled' ? foldersResult.value : [];
+	const files = filesResult.status === 'fulfilled' ? filesResult.value.items : [];
+	const folders = foldersResult.status === 'fulfilled' ? foldersResult.value.items : [];
 	const posts = postsResult.status === 'fulfilled' ? postsResult.value.items : [];
-	const assets = assetsResult.status === 'fulfilled' ? assetsResult.value : [];
+	const assets = assetsResult.status === 'fulfilled' ? assetsResult.value.items : [];
 
 	if (filesResult.status === 'rejected') console.warn('[file-tree] Failed to fetch desk files:', filesResult.reason);
 	if (foldersResult.status === 'rejected')

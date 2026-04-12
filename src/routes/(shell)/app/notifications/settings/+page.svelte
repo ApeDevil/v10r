@@ -1,60 +1,26 @@
 <script lang="ts">
-import { enhance } from '$app/forms';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
+import { superForm } from 'sveltekit-superforms';
 import { BackLink, Card } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Switch } from '$lib/components/primitives';
 import { buttonVariants } from '$lib/components/primitives/button';
 import { getToast } from '$lib/state';
 
-let { data, form } = $props();
+let { data } = $props();
 
 const toast = getToast();
-let saving = $state(false);
 let connectingTelegram = $state(false);
 let telegramDeepLink = $state<string | null>(null);
 
-// Local mutable state for Switch components (initialized from server data)
-// svelte-ignore state_referenced_locally
-let emailMention = $state(data.settings.emailMention);
-// svelte-ignore state_referenced_locally
-let emailComment = $state(data.settings.emailComment);
-// svelte-ignore state_referenced_locally
-let emailSystem = $state(data.settings.emailSystem);
-// svelte-ignore state_referenced_locally
-let emailSuccess = $state(data.settings.emailSuccess);
-// svelte-ignore state_referenced_locally
-let emailSecurity = $state(data.settings.emailSecurity);
-// svelte-ignore state_referenced_locally
-let emailFollow = $state(data.settings.emailFollow);
-// svelte-ignore state_referenced_locally
-let telegramMention = $state(data.settings.telegramMention);
-// svelte-ignore state_referenced_locally
-let telegramComment = $state(data.settings.telegramComment);
-// svelte-ignore state_referenced_locally
-let telegramSystem = $state(data.settings.telegramSystem);
-// svelte-ignore state_referenced_locally
-let telegramSecurity = $state(data.settings.telegramSecurity);
-// svelte-ignore state_referenced_locally
-let discordMention = $state(data.settings.discordMention);
-// svelte-ignore state_referenced_locally
-let discordComment = $state(data.settings.discordComment);
-// svelte-ignore state_referenced_locally
-let discordSystem = $state(data.settings.discordSystem);
-// svelte-ignore state_referenced_locally
-let discordSecurity = $state(data.settings.discordSecurity);
-// svelte-ignore state_referenced_locally
-let digestFrequency = $state(data.settings.digestFrequency);
-// svelte-ignore state_referenced_locally
-let quietStart = $state(data.settings.quietStart ?? '');
-// svelte-ignore state_referenced_locally
-let quietEnd = $state(data.settings.quietEnd ?? '');
+const { form, enhance, submitting, message } = superForm(data.form, {
+	onUpdated({ form }) {
+		if (form.message) toast.success(form.message);
+	},
+});
 
 $effect(() => {
-	if (form?.success) {
-		toast.success('Notification settings saved');
-	}
 	if (data.successMessage === 'discord_connected') {
 		toast.success('Discord connected successfully');
 		goto(page.url.pathname, { replaceState: true });
@@ -91,33 +57,7 @@ async function connectTelegram() {
 <Stack gap="5">
 	<h2 class="text-fluid-lg font-semibold">Notification Settings</h2>
 
-	<form
-		method="POST"
-		use:enhance={() => {
-			saving = true;
-			return async ({ update }) => {
-				saving = false;
-				await update();
-			};
-		}}
-	>
-		<!-- Hidden inputs for Switch values (form submission) -->
-		<input type="hidden" name="emailMention" value={emailMention ? 'on' : ''} />
-		<input type="hidden" name="emailComment" value={emailComment ? 'on' : ''} />
-		<input type="hidden" name="emailSystem" value={emailSystem ? 'on' : ''} />
-		<input type="hidden" name="emailSuccess" value={emailSuccess ? 'on' : ''} />
-		<input type="hidden" name="emailSecurity" value={emailSecurity ? 'on' : ''} />
-		<input type="hidden" name="emailFollow" value={emailFollow ? 'on' : ''} />
-		<input type="hidden" name="telegramMention" value={telegramMention ? 'on' : ''} />
-		<input type="hidden" name="telegramComment" value={telegramComment ? 'on' : ''} />
-		<input type="hidden" name="telegramSystem" value={telegramSystem ? 'on' : ''} />
-		<input type="hidden" name="telegramSecurity" value={telegramSecurity ? 'on' : ''} />
-		<input type="hidden" name="discordMention" value={discordMention ? 'on' : ''} />
-		<input type="hidden" name="discordComment" value={discordComment ? 'on' : ''} />
-		<input type="hidden" name="discordSystem" value={discordSystem ? 'on' : ''} />
-		<input type="hidden" name="discordSecurity" value={discordSecurity ? 'on' : ''} />
-		<input type="hidden" name="digestFrequency" value={digestFrequency} />
-
+	<form method="POST" use:enhance>
 		<Stack gap="5">
 			<!-- Email -->
 			<Card>
@@ -127,12 +67,12 @@ async function connectTelegram() {
 				{/snippet}
 
 				<Stack gap="3">
-					<Switch bind:checked={emailMention} label="Mentions" size="sm" />
-					<Switch bind:checked={emailComment} label="Comments" size="sm" />
-					<Switch bind:checked={emailSystem} label="System" size="sm" />
-					<Switch bind:checked={emailSuccess} label="Success" size="sm" />
-					<Switch bind:checked={emailSecurity} label="Security" size="sm" />
-					<Switch bind:checked={emailFollow} label="Follows" size="sm" />
+					<Switch bind:checked={$form.emailMention} label="Mentions" size="sm" />
+					<Switch bind:checked={$form.emailComment} label="Comments" size="sm" />
+					<Switch bind:checked={$form.emailSystem} label="System" size="sm" />
+					<Switch bind:checked={$form.emailSuccess} label="Success" size="sm" />
+					<Switch bind:checked={$form.emailSecurity} label="Security" size="sm" />
+					<Switch bind:checked={$form.emailFollow} label="Follows" size="sm" />
 				</Stack>
 			</Card>
 
@@ -154,10 +94,10 @@ async function connectTelegram() {
 
 				{#if data.telegram?.isActive}
 					<Stack gap="3">
-						<Switch bind:checked={telegramMention} label="Mentions" size="sm" />
-						<Switch bind:checked={telegramComment} label="Comments" size="sm" />
-						<Switch bind:checked={telegramSystem} label="System" size="sm" />
-						<Switch bind:checked={telegramSecurity} label="Security" size="sm" />
+						<Switch bind:checked={$form.telegramMention} label="Mentions" size="sm" />
+						<Switch bind:checked={$form.telegramComment} label="Comments" size="sm" />
+						<Switch bind:checked={$form.telegramSystem} label="System" size="sm" />
+						<Switch bind:checked={$form.telegramSecurity} label="Security" size="sm" />
 					</Stack>
 				{:else}
 					<Stack gap="3">
@@ -192,10 +132,10 @@ async function connectTelegram() {
 
 				{#if data.discord?.isActive}
 					<Stack gap="3">
-						<Switch bind:checked={discordMention} label="Mentions" size="sm" />
-						<Switch bind:checked={discordComment} label="Comments" size="sm" />
-						<Switch bind:checked={discordSystem} label="System" size="sm" />
-						<Switch bind:checked={discordSecurity} label="Security" size="sm" />
+						<Switch bind:checked={$form.discordMention} label="Mentions" size="sm" />
+						<Switch bind:checked={$form.discordComment} label="Comments" size="sm" />
+						<Switch bind:checked={$form.discordSystem} label="System" size="sm" />
+						<Switch bind:checked={$form.discordSecurity} label="Security" size="sm" />
 					</Stack>
 				{:else}
 					<Stack gap="3">
@@ -221,8 +161,8 @@ async function connectTelegram() {
 							<input
 								type="radio"
 								value={freq}
-								checked={digestFrequency === freq}
-								onchange={() => digestFrequency = freq as typeof digestFrequency}
+								checked={$form.digestFrequency === freq}
+								onchange={() => $form.digestFrequency = freq as typeof $form.digestFrequency}
 							/>
 							<span class="capitalize">{freq}</span>
 						</label>
@@ -240,18 +180,18 @@ async function connectTelegram() {
 				<Cluster gap="5">
 					<label class="time-field">
 						<span class="text-fluid-sm">Start</span>
-						<Input type="time" name="quietStart" bind:value={quietStart} />
+						<Input type="time" name="quietStart" bind:value={$form.quietStart} />
 					</label>
 					<label class="time-field">
 						<span class="text-fluid-sm">End</span>
-						<Input type="time" name="quietEnd" bind:value={quietEnd} />
+						<Input type="time" name="quietEnd" bind:value={$form.quietEnd} />
 					</label>
 				</Cluster>
 			</Card>
 
 			<Cluster justify="end">
-				<Button type="submit" disabled={saving}>
-					{saving ? 'Saving...' : 'Save settings'}
+				<Button type="submit" disabled={$submitting}>
+					{$submitting ? 'Saving...' : 'Save settings'}
 				</Button>
 			</Cluster>
 		</Stack>

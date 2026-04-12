@@ -1,10 +1,13 @@
 import * as v from 'valibot';
 import { safeParse } from 'valibot';
 import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { deleteFolder, moveFolder, renameFolder } from '$lib/server/db/desk/mutations';
 import { countFolderContents, getFolder } from '$lib/server/db/desk/queries';
 import type { RequestHandler } from './$types';
+
+const limiter = createLimiter('rl:desk:folders:mutate', 30, '1 m');
 
 const UpdateFolderSchema = v.object({
 	name: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(200))),
@@ -22,6 +25,9 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 /** Update folder (rename and/or move). */
 export const PUT: RequestHandler = async ({ params, request, locals }) => {
 	const { user } = requireApiUser(locals);
+
+	const { success, reset } = await limiter.limit(user.id);
+	if (!success) return rateLimitResponse(reset);
 
 	const body = await request.json().catch(() => null);
 	if (!body) return apiError(400, 'invalid_body', 'Invalid request body.');
@@ -58,6 +64,9 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 /** Delete a folder (cascades to subfolders). */
 export const DELETE: RequestHandler = async ({ params, locals }) => {
 	const { user } = requireApiUser(locals);
+
+	const { success: rlOk, reset } = await limiter.limit(user.id);
+	if (!rlOk) return rateLimitResponse(reset);
 
 	const childCount = await countFolderContents(params.id, user.id);
 	const row = await deleteFolder(params.id, user.id);

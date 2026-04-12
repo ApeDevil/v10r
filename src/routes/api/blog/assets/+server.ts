@@ -1,6 +1,7 @@
 import * as v from 'valibot';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/api/response';
+import { apiPaginated, parsePagination } from '$lib/server/api/pagination';
+import { apiCreated, apiError, apiValidationError } from '$lib/server/api/response';
 import { requireApiAuthor } from '$lib/server/auth/guards';
 import { listAssets } from '$lib/server/blog';
 import { RequestUploadSchema } from '$lib/server/blog/schemas';
@@ -16,10 +17,11 @@ import type { RequestHandler } from './$types';
 const ratelimit = createLimiter(BLOG_WRITE_RATE_LIMIT_PREFIX, BLOG_WRITE_RATE_LIMIT_MAX, BLOG_WRITE_RATE_LIMIT_WINDOW);
 
 /** List all assets for the current author, with download URLs. */
-export const GET: RequestHandler = async ({ locals }) => {
+export const GET: RequestHandler = async ({ url, locals }) => {
 	const { user } = requireApiAuthor(locals);
+	const pagination = parsePagination(url);
 
-	const assets = await listAssets(user.id);
+	const { items: assets, total } = await listAssets(user.id, pagination.offset, pagination.pageSize);
 
 	const items = await Promise.all(
 		assets.map(async (a) => {
@@ -34,7 +36,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 		}),
 	);
 
-	return apiOk({ items });
+	return apiPaginated(items, total, pagination);
 };
 
 /** Request a presigned upload URL (step 1 of 3-step upload). */

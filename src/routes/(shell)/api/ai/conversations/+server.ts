@@ -1,7 +1,9 @@
+import { json } from '@sveltejs/kit';
 import { safeParse } from 'valibot';
 import { CreateConversationSchema } from '$lib/server/ai/validation';
+import { parsePagination } from '$lib/server/api/pagination';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiCreated, apiError, apiOk } from '$lib/server/api/response';
+import { apiCreated, apiError } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { CONV_RATE_LIMIT_MAX, CONV_RATE_LIMIT_PREFIX, CONV_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import { checkConversationLimit } from '$lib/server/db/ai/limits';
@@ -22,11 +24,23 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	const sort: ConversationSort = url.searchParams.get('sort') === 'oldest' ? 'oldest' : 'newest';
 
 	try {
-		const [conversations, meta] = await Promise.all([
-			listConversations(user.id, sort),
+		const pagination = parsePagination(url);
+		const [{ items: conversations, total }, meta] = await Promise.all([
+			listConversations(user.id, sort, pagination.offset, pagination.pageSize),
 			getConversationStats(user.id),
 		]);
-		return apiOk({ conversations, meta });
+		return json({
+			data: {
+				items: conversations,
+				meta,
+				pagination: {
+					page: pagination.page,
+					pageSize: pagination.pageSize,
+					total,
+					totalPages: Math.ceil(total / pagination.pageSize),
+				},
+			},
+		});
 	} catch (err) {
 		const dbErr = classifyDbError(err);
 		return apiError(dbErr.toStatus(), dbErr.kind, safeDbMessage(dbErr.kind));

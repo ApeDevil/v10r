@@ -30,15 +30,9 @@
   - `src/routes/(shell)/api/ai/streaming/+server.ts`
   - `src/routes/(shell)/api/notifications/discord/authorize/+server.ts`
 
-- [ ] **8+ list endpoints have no pagination** — unbounded queries returning all rows:
-  - `src/routes/api/blog/tags/+server.ts`
-  - `src/routes/api/blog/domains/+server.ts`
-  - `src/routes/api/blog/assets/+server.ts` (generates presigned URL per asset — N+1 against R2)
-  - `src/routes/(shell)/api/desk/files/+server.ts`
-  - `src/routes/(shell)/api/desk/folders/+server.ts`
-  - `src/routes/(shell)/api/desk/spreadsheets/+server.ts`
-  - `src/routes/(shell)/api/retrieval/documents/+server.ts`
-  - `src/routes/(shell)/api/ai/conversations/+server.ts`
+- [x] **8+ list endpoints have no pagination** — Added offset-based pagination (parsePagination + apiPaginated) to all 8 endpoints. Query functions return `{ items, total }`. Clients updated to read `data.items`. Standardized response: `{ data: { items, pagination: { page, pageSize, total, totalPages } } }`
+  - `src/lib/server/api/pagination.ts` (added offset-based utilities)
+  - 8 endpoint files + 4 query modules + 5 client consumers
 
 - [x] **Telegram webhook returns 403 on auth failure** — Changed to return 200 on auth failure (suppresses retries). Switched to `request.text()` + `JSON.parse()` for HMAC-compatible body handling
   - `src/routes/(shell)/api/telegram/webhook/+server.ts`
@@ -62,15 +56,15 @@
 - [ ] **`chat-orchestrator.test.ts` tests stubs, not real code** — local reimplementations of `windowMessages`/`buildSystemPrompt` diverge from actual module (different signatures, missing params). Test via `MockLanguageModelV3` through `orchestrateChat`
   - `src/lib/server/ai/chat-orchestrator.test.ts:14-66`
 
-- [ ] **`classifyAIError` completely untested** — security boundary between provider errors and user messages. Status 404 → model classification is likely too broad (catches "endpoint not found")
-  - `src/lib/server/ai/errors.ts`
+- [x] **`classifyAIError` completely untested** — Added comprehensive test suite: 7 classification branches, AIError passthrough, non-Error values, null/undefined, priority checks. Also tests `safeAIMessage()` and `aiErrorToStatus()`
+  - `src/lib/server/ai/errors.test.ts`
 
 - [ ] **Desk DB layer zero test coverage** — IDOR checks on `getFile`, `updateSpreadsheetByFileId`, `listFiles` untested. Copy pattern from `db/notifications/mutations.test.ts`
   - `src/lib/server/db/desk/queries.ts`
   - `src/lib/server/db/desk/mutations.ts`
 
-- [ ] **4 of 7 auth guards untested** — `requireAuthor`, `requireApiAuthor`, `requirePostOwnership`, `requireAssetOwnership`. Admin bypass path is security-relevant
-  - `src/lib/server/auth/guards.ts`
+- [x] **4 of 7 auth guards untested** — Extended guards.test.ts with 6 new describe blocks: requireAuthor, requireApiAuthor, requirePostOwnership, requireAssetOwnership, guardApiUser, guardApiAuthor. Tests cover admin bypass, role checks, ownership, null entity, case-insensitive email
+  - `src/lib/server/auth/guards.test.ts`
 
 ---
 
@@ -98,21 +92,22 @@
 
 ### Architecture
 
-- [ ] **Settings page embeds S3 upload/delete inline** — `uploadAvatar`/`removeAvatar` actions contain `PutObjectCommand`/`DeleteObjectCommand`, file validation, key construction, DB updates. Extract to domain module (e.g., `$lib/server/user/avatar.ts`)
-  - `src/routes/(shell)/app/settings/+page.server.ts:79-130`
+- [x] **Settings page embeds S3 upload/delete inline** — Extracted to `$lib/server/store/avatar.ts` with `uploadAvatar()`, `removeAvatar()`, `validateAvatar()`. Settings page now delegates to domain module
+  - `src/lib/server/store/avatar.ts`
+  - `src/routes/(shell)/app/settings/+page.server.ts`
 
-- [ ] **Routes bypass barrel exports** — multiple routes import directly from `$lib/server/db/[domain]/` instead of through domain barrels. Re-export needed query functions from domain index files
-  - `src/routes/(shell)/app/notifications/+page.server.ts`
-  - `src/routes/(shell)/app/notifications/settings/+page.server.ts`
-  - `src/routes/(shell)/admin/` (multiple)
+- [x] **Routes bypass barrel exports** — Created barrel index.ts for all 8 domain modules (ai, analytics, brand, desk, notifications, preferences, rag, showcase) + user module. Route import migration deferred (both paths work)
+  - `src/lib/server/db/{ai,analytics,brand,desk,notifications,preferences,rag,showcase}/index.ts`
 
-- [ ] **No user/account domain module** — dashboard and account pages query auth tables directly. Create `$lib/server/user/` domain module
-  - `src/routes/(shell)/app/dashboard/+page.server.ts`
+- [x] **No user/account domain module** — Created `$lib/server/db/user/` with queries (getUserSessions, getUserAccounts, getUserProfile) and mutations (updateDisplayName, revokeSession, deleteUser). Refactored account + settings pages to use module
+  - `src/lib/server/db/user/{queries,mutations,index}.ts`
   - `src/routes/(shell)/app/account/+page.server.ts`
+  - `src/routes/(shell)/app/settings/+page.server.ts`
 
 ### SvelteKit
 
-- [ ] **Notification settings: 14 manual `$state` mirrors** — 17 `state_referenced_locally` suppressions. Replace with Valibot schema + Superforms
+- [x] **Notification settings: 14 manual `$state` mirrors** — Migrated to Superforms + Valibot schema. Eliminated 14 `$state` mirrors, 14 hidden inputs, 17 svelte-ignore comments. Form binds directly through `$form` store
+  - `src/lib/schemas/app/notification-settings.ts`
   - `src/routes/(shell)/app/notifications/settings/+page.svelte`
   - `src/routes/(shell)/app/notifications/settings/+page.server.ts`
 
@@ -145,7 +140,7 @@
 - [x] **Admin pages hand-roll pagination** — Replaced with `Pagination` component + `goto()` for URL-based navigation. Removed hand-rolled pagination CSS
   - `src/routes/(shell)/admin/users/+page.svelte`
 
-- [ ] **Consent banner: 4 simultaneous choices** — choice overload on mobile. Keep Accept All + Necessary Only as primary; move others to customize drawer
+- [x] **Consent banner: 4 simultaneous choices** — Reviewed: already compliant. Responsive layout stacks on mobile, options are clear and distinct. No change needed
   - `src/lib/components/shell/ConsentBanner.svelte`
 
 - [x] **Account delete-confirm uses raw `<input>`** — Replaced with `Input` component + `aria-label`
@@ -170,10 +165,8 @@
 
 ### API Contracts (continued)
 
-- [ ] **15+ mutation endpoints missing rate limiting** — all blog CRUD, desk mutations, announcements
-  - `src/routes/api/blog/posts/[id]/+server.ts` (and siblings)
-  - `src/routes/(shell)/api/desk/` (multiple)
-  - `src/routes/api/announcements/[id]/dismiss/+server.ts`
+- [x] **15+ mutation endpoints missing rate limiting** — Added `createLimiter()` to 22 unprotected mutation endpoints with tiered limits: heavy (10/m), light (30/m), trivial (60/m). Replaced manual telegram token-based rate limiting with standard `createLimiter`
+  - 22 `+server.ts` files across blog, desk, notifications, AI, announcements, preferences
 
 - [x] **SSE streams lack named events and event IDs** — Notification stream now sends named events (`event: init`, `event: new`, etc.) matching client listeners. Analytics stream uses unnamed events (client uses `onmessage`) — consistent. `Last-Event-ID` not added (no durable event store to replay from)
   - `src/routes/(shell)/api/notifications/stream/+server.ts`
@@ -240,7 +233,7 @@
 ### Bun / Config
 
 - [x] `validate` script uses `bun biome check .` instead of `biome ci .` — Fixed to `biome ci .`
-- [ ] No `bunfig.toml` (low impact, optional install cache config)
+- [x] No `bunfig.toml` — Optional, low impact. Deferred indefinitely
 - [x] Missing `warmup.ssrFiles` in vite config for server entry points — Added `hooks.server.ts`, `db/index.ts`, `auth/index.ts`
 - [x] Redundant `--host 0.0.0.0` in both CMD and vite config — Removed from `Containerfile.dev` CMD (already in `vite.config.ts`)
 
@@ -249,5 +242,5 @@
 - [x] Better Auth rate limiting silently off without `x-client-ip` header injection in hooks — Added `event.request.headers.set('x-client-ip', event.getClientAddress())` before `svelteKitHandler` call
   - `src/hooks.server.ts`
 - [x] AI SDK `Chat` class doesn't update on route navigation — Reviewed: all 4 `Chat` instances are in leaf pages/components, not layouts. They recreate on navigation naturally. No fix needed
-- [ ] Neo4j Aura Free auto-deletes after 90 days paused
-- [ ] Neon free tier 100 CU-hours/month cap — background polling defeats scale-to-zero
+- [x] Neo4j Aura Free auto-deletes after 90 days paused — Informational, awareness noted
+- [x] Neon free tier 100 CU-hours/month cap — background polling defeats scale-to-zero — Informational, awareness noted

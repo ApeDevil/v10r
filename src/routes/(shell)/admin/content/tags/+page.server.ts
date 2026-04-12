@@ -19,8 +19,8 @@ const ICON_RE = /^i-(lucide|mdi|ph|tabler)-[a-z0-9-]+$/;
 export const load: PageServerLoad = async ({ locals }) => {
 	requireAdmin(locals);
 
-	const [tags, domains] = await Promise.all([listTags(), listDomains()]);
-	return { tags, domains };
+	const [tagsResult, domainsResult] = await Promise.all([listTags(), listDomains()]);
+	return { tags: tagsResult.items, domains: domainsResult.items };
 };
 
 export const actions: Actions = {

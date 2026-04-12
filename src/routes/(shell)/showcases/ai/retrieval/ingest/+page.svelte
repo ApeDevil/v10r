@@ -27,7 +27,7 @@ async function loadDocuments() {
 		const res = await fetch('/api/retrieval/documents');
 		if (res.ok) {
 			const { data } = await res.json();
-			documents = data.documents ?? [];
+			documents = data.items ?? [];
 		}
 	} catch {
 		/* ignore */

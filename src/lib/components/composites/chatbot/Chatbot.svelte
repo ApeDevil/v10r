@@ -73,7 +73,7 @@ async function loadConversations() {
 		const res = await fetch('/api/ai/conversations');
 		if (res.ok) {
 			const json = await res.json();
-			conversations = json.data;
+			conversations = json.data.items;
 		} else {
 			conversationsError = true;
 		}

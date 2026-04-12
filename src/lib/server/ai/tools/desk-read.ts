@@ -46,7 +46,7 @@ export function createReadTools(userId: string, deskLayout?: DeskLayoutEntry[]) 
 			}),
 			execute: async ({ file_type }, { abortSignal: _abortSignal }) => {
 				try {
-					const files = await listFiles(userId, file_type === 'all' ? undefined : file_type);
+					const { items: files, total } = await listFiles(userId, file_type === 'all' ? undefined : file_type);
 					return {
 						files: files.map((f) => ({
 							id: f.id,
@@ -54,7 +54,7 @@ export function createReadTools(userId: string, deskLayout?: DeskLayoutEntry[]) 
 							type: f.type,
 							updatedAt: f.updatedAt.toISOString(),
 						})),
-						total: files.length,
+						total,
 					};
 				} catch {
 					return { error: 'Failed to list files.' };
@@ -146,7 +146,7 @@ export function createReadTools(userId: string, deskLayout?: DeskLayoutEntry[]) 
 			}),
 			execute: async ({ query }, { abortSignal: _abortSignal }) => {
 				try {
-					const files = await listFiles(userId);
+					const { items: files } = await listFiles(userId);
 					const q = query.toLowerCase();
 					const matches = files.filter((f) => f.name.toLowerCase().includes(q)).slice(0, 20);
 					return {

@@ -1,28 +1,22 @@
-import { and, count, eq, gt } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
 import { apiError, apiOk } from '$lib/server/api/response';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { db } from '$lib/server/db';
 import { telegramVerificationTokens } from '$lib/server/db/schema/notifications/telegram';
 import type { RequestHandler } from './$types';
 
+const limiter = createLimiter('rl:notifications:telegram', 10, '1 m');
+
 export const POST: RequestHandler = async ({ locals }) => {
 	const { user } = requireApiUser(locals);
+
+	const { success, reset } = await limiter.limit(user.id);
+	if (!success) return rateLimitResponse(reset);
 
 	const botUsername = env.TELEGRAM_BOT_USERNAME;
 	if (!botUsername) {
 		return apiError(503, 'unavailable', 'Telegram not configured');
-	}
-
-	// Rate limit: max 3 tokens per hour per user
-	const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-	const [{ count: recentCount }] = await db
-		.select({ count: count() })
-		.from(telegramVerificationTokens)
-		.where(and(eq(telegramVerificationTokens.userId, user.id), gt(telegramVerificationTokens.createdAt, oneHourAgo)));
-
-	if (recentCount >= 3) {
-		return apiError(429, 'rate_limited', 'Too many connection attempts. Try again later.');
 	}
 
 	// Generate verification token (32-byte Base64URL)

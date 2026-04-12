@@ -6,19 +6,26 @@ import { conversation, message } from '../schema/ai/conversation';
 export type ConversationSort = 'newest' | 'oldest';
 
 /** List conversations for a user with token totals. */
-export async function listConversations(userId: string, sort: ConversationSort = 'newest') {
+export async function listConversations(userId: string, sort: ConversationSort = 'newest', offset = 0, limit = 50) {
 	const orderBy = sort === 'oldest' ? asc(conversation.createdAt) : desc(conversation.updatedAt);
-	return db
-		.select({
-			id: conversation.id,
-			title: conversation.title,
-			totalTokens: sql<number>`${conversation.totalInputTokens} + ${conversation.totalOutputTokens}`,
-			createdAt: conversation.createdAt,
-			updatedAt: conversation.updatedAt,
-		})
-		.from(conversation)
-		.where(eq(conversation.userId, userId))
-		.orderBy(orderBy);
+	const where = eq(conversation.userId, userId);
+	const [items, [countResult]] = await Promise.all([
+		db
+			.select({
+				id: conversation.id,
+				title: conversation.title,
+				totalTokens: sql<number>`${conversation.totalInputTokens} + ${conversation.totalOutputTokens}`,
+				createdAt: conversation.createdAt,
+				updatedAt: conversation.updatedAt,
+			})
+			.from(conversation)
+			.where(where)
+			.orderBy(orderBy)
+			.offset(offset)
+			.limit(limit),
+		db.select({ total: count() }).from(conversation).where(where),
+	]);
+	return { items, total: countResult?.total ?? 0 };
 }
 
 /** Get aggregate stats for a user's conversation storage. */

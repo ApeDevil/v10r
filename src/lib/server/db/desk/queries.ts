@@ -15,42 +15,54 @@ export async function getSpreadsheet(id: string, userId: string) {
 }
 
 /** List user's spreadsheets, newest first. */
-export async function listSpreadsheets(userId: string) {
-	return db
-		.select({
-			id: spreadsheet.id,
-			name: spreadsheet.name,
-			createdAt: spreadsheet.createdAt,
-			updatedAt: spreadsheet.updatedAt,
-		})
-		.from(spreadsheet)
-		.where(eq(spreadsheet.userId, userId))
-		.orderBy(desc(spreadsheet.updatedAt))
-		.limit(50);
+export async function listSpreadsheets(userId: string, offset = 0, limit = 50) {
+	const where = eq(spreadsheet.userId, userId);
+	const [items, [countResult]] = await Promise.all([
+		db
+			.select({
+				id: spreadsheet.id,
+				name: spreadsheet.name,
+				createdAt: spreadsheet.createdAt,
+				updatedAt: spreadsheet.updatedAt,
+			})
+			.from(spreadsheet)
+			.where(where)
+			.orderBy(desc(spreadsheet.updatedAt))
+			.offset(offset)
+			.limit(limit),
+		db.select({ total: count() }).from(spreadsheet).where(where),
+	]);
+	return { items, total: countResult?.total ?? 0 };
 }
 
 // ── File registry queries ──────────────────────────────────────────
 
 /** List all files for a user, optionally filtered by type. Newest first. */
-export async function listFiles(userId: string, type?: string) {
+export async function listFiles(userId: string, type?: string, offset = 0, limit = 50) {
 	const conditions = [eq(file.userId, userId)];
 	if (type) {
 		conditions.push(eq(file.type, type as 'spreadsheet' | 'markdown'));
 	}
-	return db
-		.select({
-			id: file.id,
-			type: file.type,
-			name: file.name,
-			folderId: file.folderId,
-			aiContext: file.aiContext,
-			createdAt: file.createdAt,
-			updatedAt: file.updatedAt,
-		})
-		.from(file)
-		.where(and(...conditions))
-		.orderBy(desc(file.updatedAt))
-		.limit(200);
+	const where = and(...conditions);
+	const [items, [countResult]] = await Promise.all([
+		db
+			.select({
+				id: file.id,
+				type: file.type,
+				name: file.name,
+				folderId: file.folderId,
+				aiContext: file.aiContext,
+				createdAt: file.createdAt,
+				updatedAt: file.updatedAt,
+			})
+			.from(file)
+			.where(where)
+			.orderBy(desc(file.updatedAt))
+			.offset(offset)
+			.limit(limit),
+		db.select({ total: count() }).from(file).where(where),
+	]);
+	return { items, total: countResult?.total ?? 0 };
 }
 
 /** Get a single file with ownership check. */
@@ -117,18 +129,25 @@ export async function getMarkdownByFileId(fileId: string, userId: string) {
 // ── Folder queries ────────────────────────────────────────────────
 
 /** List all folders for a user (flat). Client builds the tree. */
-export async function listFolders(userId: string) {
-	return db
-		.select({
-			id: folder.id,
-			parentId: folder.parentId,
-			name: folder.name,
-			createdAt: folder.createdAt,
-			updatedAt: folder.updatedAt,
-		})
-		.from(folder)
-		.where(eq(folder.userId, userId))
-		.orderBy(folder.name);
+export async function listFolders(userId: string, offset = 0, limit = 50) {
+	const where = eq(folder.userId, userId);
+	const [items, [countResult]] = await Promise.all([
+		db
+			.select({
+				id: folder.id,
+				parentId: folder.parentId,
+				name: folder.name,
+				createdAt: folder.createdAt,
+				updatedAt: folder.updatedAt,
+			})
+			.from(folder)
+			.where(where)
+			.orderBy(folder.name)
+			.offset(offset)
+			.limit(limit),
+		db.select({ total: count() }).from(folder).where(where),
+	]);
+	return { items, total: countResult?.total ?? 0 };
 }
 
 /** Get a single folder with ownership check. */

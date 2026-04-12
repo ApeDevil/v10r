@@ -313,41 +313,53 @@ export async function getLatestRevision(postId: string, locale = 'en') {
 }
 
 /** List all tags ordered by name. */
-export async function listTags(): Promise<TagWithCount[]> {
-	const rows = await db
-		.select({
-			id: tag.id,
-			slug: tag.slug,
-			name: tag.name,
-			icon: tag.icon,
-			color: tag.color,
-			glyph: tag.glyph,
-			postCount: count(postTag.postId),
-		})
-		.from(tag)
-		.leftJoin(postTag, eq(tag.id, postTag.tagId))
-		.groupBy(tag.id, tag.slug, tag.name, tag.icon, tag.color, tag.glyph)
-		.orderBy(asc(tag.name));
+export async function listTags(offset = 0, limit = 50): Promise<{ items: TagWithCount[]; total: number }> {
+	const [items, [countResult]] = await Promise.all([
+		db
+			.select({
+				id: tag.id,
+				slug: tag.slug,
+				name: tag.name,
+				icon: tag.icon,
+				color: tag.color,
+				glyph: tag.glyph,
+				postCount: count(postTag.postId),
+			})
+			.from(tag)
+			.leftJoin(postTag, eq(tag.id, postTag.tagId))
+			.groupBy(tag.id, tag.slug, tag.name, tag.icon, tag.color, tag.glyph)
+			.orderBy(asc(tag.name))
+			.offset(offset)
+			.limit(limit),
+		db.select({ total: count() }).from(tag),
+	]);
 
-	return rows;
+	return { items, total: countResult?.total ?? 0 };
 }
 
 /** List all domains ordered by name with post counts. */
-export async function listDomains(): Promise<DomainWithCount[]> {
-	return db
-		.select({
-			id: domain.id,
-			slug: domain.slug,
-			name: domain.name,
-			icon: domain.icon,
-			color: domain.color,
-			description: domain.description,
-			postCount: count(post.id),
-		})
-		.from(domain)
-		.leftJoin(post, and(eq(post.domainId, domain.id), isNull(post.deletedAt)))
-		.groupBy(domain.id, domain.slug, domain.name, domain.icon, domain.color, domain.description)
-		.orderBy(asc(domain.name));
+export async function listDomains(offset = 0, limit = 50): Promise<{ items: DomainWithCount[]; total: number }> {
+	const [items, [countResult]] = await Promise.all([
+		db
+			.select({
+				id: domain.id,
+				slug: domain.slug,
+				name: domain.name,
+				icon: domain.icon,
+				color: domain.color,
+				description: domain.description,
+				postCount: count(post.id),
+			})
+			.from(domain)
+			.leftJoin(post, and(eq(post.domainId, domain.id), isNull(post.deletedAt)))
+			.groupBy(domain.id, domain.slug, domain.name, domain.icon, domain.color, domain.description)
+			.orderBy(asc(domain.name))
+			.offset(offset)
+			.limit(limit),
+		db.select({ total: count() }).from(domain),
+	]);
+
+	return { items, total: countResult?.total ?? 0 };
 }
 
 /** Get a single domain by slug. */
@@ -464,15 +476,21 @@ export async function isSlugTaken(slug: string, excludePostId?: string): Promise
 // ── Assets ───────────────────────────────────────────────────────────
 
 /** List all assets, optionally filtered by uploader. */
-export async function listAssets(uploaderId?: string): Promise<BlogAsset[]> {
-	const conditions = [];
-	if (uploaderId) conditions.push(eq(asset.uploaderId, uploaderId));
+export async function listAssets(uploaderId?: string, offset = 0, limit = 50): Promise<{ items: BlogAsset[]; total: number }> {
+	const where = uploaderId ? eq(asset.uploaderId, uploaderId) : undefined;
 
-	return db
-		.select()
-		.from(asset)
-		.where(conditions.length > 0 ? and(...conditions) : undefined)
-		.orderBy(desc(asset.createdAt));
+	const [items, [countResult]] = await Promise.all([
+		db
+			.select()
+			.from(asset)
+			.where(where)
+			.orderBy(desc(asset.createdAt))
+			.offset(offset)
+			.limit(limit),
+		db.select({ total: count() }).from(asset).where(where),
+	]);
+
+	return { items, total: countResult?.total ?? 0 };
 }
 
 /** Get a single asset by ID. */

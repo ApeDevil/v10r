@@ -1,12 +1,55 @@
 /**
- * Cursor-based pagination utilities.
+ * Pagination utilities — offset-based and cursor-based.
  *
- * Standard response shape:
- * { items: T[], has_more: boolean, cursor?: string }
+ * Offset-based (simpler):
+ *   Query: ?page=1&pageSize=50
+ *   Response: { items: T[], pagination: { page, pageSize, total, totalPages } }
  *
- * Cursors are opaque base64-encoded JSON containing sort column values.
- * Clients pass `?cursor=X&limit=N` query params.
+ * Cursor-based (for large/sorted sets):
+ *   Query: ?cursor=X&limit=N
+ *   Response: { items: T[], has_more: boolean, cursor?: string }
  */
+
+import { json } from '@sveltejs/kit';
+
+// ---------------------------------------------------------------------------
+// Offset-based pagination
+// ---------------------------------------------------------------------------
+
+const DEFAULT_PAGE_SIZE = 50;
+const MAX_PAGE_SIZE = 200;
+
+export interface PaginationParams {
+	page: number;
+	pageSize: number;
+	offset: number;
+}
+
+/** Parse page/pageSize query params with bounds enforcement. */
+export function parsePagination(url: URL, defaultPageSize = DEFAULT_PAGE_SIZE): PaginationParams {
+	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
+	const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, Number(url.searchParams.get('pageSize')) || defaultPageSize));
+	return { page, pageSize, offset: (page - 1) * pageSize };
+}
+
+/** Return a standardized paginated JSON response. */
+export function apiPaginated<T>(items: T[], total: number, params: PaginationParams) {
+	return json({
+		data: {
+			items,
+			pagination: {
+				page: params.page,
+				pageSize: params.pageSize,
+				total,
+				totalPages: Math.ceil(total / params.pageSize),
+			},
+		},
+	});
+}
+
+// ---------------------------------------------------------------------------
+// Cursor-based pagination
+// ---------------------------------------------------------------------------
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;

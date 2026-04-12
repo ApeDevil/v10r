@@ -128,8 +128,8 @@ async function fetchAvailableTags() {
 	try {
 		const res = await apiFetch('/api/blog/tags');
 		if (res.ok) {
-			const data = await res.json();
-			availableTags = data;
+			const { data } = await res.json();
+			availableTags = data.items;
 		}
 	} catch {
 		// Non-critical
@@ -140,8 +140,8 @@ async function fetchAvailableDomains() {
 	try {
 		const res = await apiFetch('/api/blog/domains');
 		if (res.ok) {
-			const data = await res.json();
-			availableDomains = data;
+			const { data } = await res.json();
+			availableDomains = data.items;
 		}
 	} catch {
 		// Non-critical

@@ -83,12 +83,12 @@ async function fetchAll() {
 
 		if (foldersRes.ok) {
 			const { data } = await foldersRes.json();
-			nodes.push(...adaptDeskFolders(data.folders ?? []));
+			nodes.push(...adaptDeskFolders(data.items ?? []));
 		}
 
 		if (filesRes.ok) {
 			const { data } = await filesRes.json();
-			nodes.push(...adaptDeskFiles(data.files ?? []));
+			nodes.push(...adaptDeskFiles(data.items ?? []));
 		}
 
 		explorerState.setNodes(nodes);

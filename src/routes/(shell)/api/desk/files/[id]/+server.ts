@@ -1,5 +1,6 @@
 import * as v from 'valibot';
 import { apiCreated, apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/api/response';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { requireApiUser } from '$lib/server/auth/guards';
 import {
 	deleteFile,
@@ -16,6 +17,8 @@ import type { RequestHandler } from './$types';
 const CellValue = v.union([v.string(), v.number(), v.boolean(), v.null()]);
 const CellObject = v.record(v.string(), CellValue);
 const MAX_CELLS_JSON = 500_000; // ~500KB max
+
+const limiter = createLimiter('rl:desk:files:mutate', 30, '1 m');
 
 const UpdateFileSchema = v.object({
 	name: v.optional(v.pipe(v.string(), v.maxLength(200))),
@@ -43,6 +46,9 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 /** Update a file (rename, move, toggle AI context) and/or its detail data. */
 export const PUT: RequestHandler = async ({ params, request, locals }) => {
 	const { user } = requireApiUser(locals);
+
+	const { success, reset } = await limiter.limit(user.id);
+	if (!success) return rateLimitResponse(reset);
 
 	const body = await request.json().catch(() => null);
 	if (!body) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
@@ -91,6 +97,9 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 /** Duplicate a file. */
 export const POST: RequestHandler = async ({ params, locals }) => {
 	const { user } = requireApiUser(locals);
+
+	const { success: rlOk, reset } = await limiter.limit(user.id);
+	if (!rlOk) return rateLimitResponse(reset);
 	const result = await duplicateSpreadsheetFile(params.id, user.id);
 	if (!result) return apiError(404, 'not_found', 'Not found.');
 	return apiCreated({ file: result.file, spreadsheet: result.spreadsheet });
@@ -99,6 +108,9 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 /** Delete a file (cascades to detail table). */
 export const DELETE: RequestHandler = async ({ params, locals }) => {
 	const { user } = requireApiUser(locals);
+
+	const { success: rlDel, reset: rlReset } = await limiter.limit(user.id);
+	if (!rlDel) return rateLimitResponse(rlReset);
 	const row = await deleteFile(params.id, user.id);
 	if (!row) return apiError(404, 'not_found', 'Not found.');
 	return apiNoContent();

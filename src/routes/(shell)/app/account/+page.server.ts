@@ -1,8 +1,7 @@
 import { createHash } from 'node:crypto';
 import { fail, redirect } from '@sveltejs/kit';
-import { and, eq, ne } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { account, session as sessionTable, user } from '$lib/server/db/schema/auth/_better-auth';
+import { deleteUser, revokeSession } from '$lib/server/db/user';
+import { getUserAccounts, getUserProfile, getUserSessions } from '$lib/server/db/user';
 import type { Actions, PageServerLoad } from './$types';
 
 function hashForDisplay(id: string): string {
@@ -14,23 +13,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	// Fetch sessions and linked accounts in parallel
 	const [sessions, accounts] = await Promise.all([
-		db
-			.select({
-				id: sessionTable.id,
-				createdAt: sessionTable.createdAt,
-				expiresAt: sessionTable.expiresAt,
-				ipAddress: sessionTable.ipAddress,
-				userAgent: sessionTable.userAgent,
-			})
-			.from(sessionTable)
-			.where(eq(sessionTable.userId, locals.user.id)),
-		db
-			.select({
-				providerId: account.providerId,
-				createdAt: account.createdAt,
-			})
-			.from(account)
-			.where(eq(account.userId, locals.user.id)),
+		getUserSessions(locals.user.id),
+		getUserAccounts(locals.user.id),
 	]);
 
 	return {
@@ -46,7 +30,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		})),
 		accounts: accounts.map((a) => ({
 			provider: a.providerId,
-			linkedAt: a.createdAt.toISOString(),
+			linkedAt: a.createdAt?.toISOString() ?? '',
 		})),
 	};
 };
@@ -61,15 +45,7 @@ export const actions: Actions = {
 		if (!sessionId) return fail(400, { error: 'Missing session ID' });
 
 		// Only allow revoking own sessions (not the current one)
-		await db
-			.delete(sessionTable)
-			.where(
-				and(
-					eq(sessionTable.id, sessionId),
-					eq(sessionTable.userId, locals.user.id),
-					ne(sessionTable.id, locals.session?.id ?? ''),
-				),
-			);
+		await revokeSession(sessionId, locals.user.id, locals.session?.id ?? '');
 
 		return { success: true };
 	},
@@ -77,41 +53,16 @@ export const actions: Actions = {
 	exportData: async ({ locals }) => {
 		if (!locals.user) redirect(303, '/auth/login');
 
-		const [userData, accountData, sessionData] = await Promise.all([
-			db
-				.select({
-					id: user.id,
-					name: user.name,
-					email: user.email,
-					emailVerified: user.emailVerified,
-					image: user.image,
-					createdAt: user.createdAt,
-				})
-				.from(user)
-				.where(eq(user.id, locals.user.id)),
-			db
-				.select({
-					providerId: account.providerId,
-					createdAt: account.createdAt,
-				})
-				.from(account)
-				.where(eq(account.userId, locals.user.id)),
-			db
-				.select({
-					id: sessionTable.id,
-					createdAt: sessionTable.createdAt,
-					expiresAt: sessionTable.expiresAt,
-					ipAddress: sessionTable.ipAddress,
-					userAgent: sessionTable.userAgent,
-				})
-				.from(sessionTable)
-				.where(eq(sessionTable.userId, locals.user.id)),
+		const [profile, accountData, sessionData] = await Promise.all([
+			getUserProfile(locals.user.id),
+			getUserAccounts(locals.user.id),
+			getUserSessions(locals.user.id),
 		]);
 
 		return {
 			export: JSON.stringify(
 				{
-					user: userData[0],
+					user: profile,
 					accounts: accountData.map((a) => ({
 						provider: a.providerId,
 						createdAt: a.createdAt,
@@ -136,7 +87,7 @@ export const actions: Actions = {
 		}
 
 		// Delete user — cascades to sessions and accounts via FK
-		await db.delete(user).where(eq(user.id, locals.user.id));
+		await deleteUser(locals.user.id);
 
 		redirect(303, '/');
 	},
