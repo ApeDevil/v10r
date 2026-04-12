@@ -15,9 +15,17 @@ interface Props {
 	aspect?: ChartContainerVariants['aspect'];
 	ariaLabel?: string;
 	class?: string;
+	onNodeClick?: (nodeId: string) => void;
 }
 
-let { data, directed = false, aspect = 'chart', ariaLabel = 'Network graph', class: className }: Props = $props();
+let {
+	data,
+	directed = false,
+	aspect = 'chart',
+	ariaLabel = 'Network graph',
+	class: className,
+	onNodeClick,
+}: Props = $props();
 
 // Internal simulation nodes with D3-mutated x/y positions
 type SimNode = NetworkNode & SimulationNodeDatum;
@@ -296,7 +304,10 @@ let announcement = $derived.by(() => {
 				onmousedown={(e) => handleNodeMousedown(e, node)}
 				onmouseenter={() => (hoveredNodeId = node.id)}
 				onmouseleave={() => (hoveredNodeId = null)}
-				onclick={() => (selectedNodeId = selectedNodeId === node.id ? null : node.id)}
+				onclick={() => {
+						selectedNodeId = selectedNodeId === node.id ? null : node.id;
+						if (selectedNodeId) onNodeClick?.(node.id);
+					}}
 				onkeydown={(e) => handleNodeKeydown(e, node, idx)}
 				onfocus={() => (hoveredNodeId = node.id)}
 				onblur={() => (hoveredNodeId = null)}

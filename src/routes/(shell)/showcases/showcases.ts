@@ -221,6 +221,7 @@ export const showcases: ShowcaseCard[] = [
 					{ label: 'Contextual', href: '/showcases/ai/retrieval/contextual' },
 					{ label: 'Parent-Child', href: '/showcases/ai/retrieval/parent-child' },
 					{ label: 'Graph', href: '/showcases/ai/retrieval/graph' },
+					{ label: 'Explorer', href: '/showcases/ai/retrieval/explorer' },
 					{ label: 'Chat', href: '/showcases/ai/retrieval/chat' },
 				],
 			},

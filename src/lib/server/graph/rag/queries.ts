@@ -1,4 +1,7 @@
+import type { KnowledgeData } from '$lib/types/knowledge';
 import { cypher } from '../index';
+import type { Neo4jNodeRecord, Neo4jRelRecord } from '../types';
+import { toKnowledgeData } from '../types';
 
 interface GraphChunkResult {
 	pgId: string;
@@ -51,6 +54,45 @@ export async function getEntitiesForChunks(chunkPgIds: string[]): Promise<Entity
 		        e.description AS description,
 		        collect(DISTINCT related.name) AS relatedNames`,
 		{ chunkPgIds },
+	);
+}
+
+/** Get all RAG entities and their relationships as KnowledgeData for visualization. */
+export async function getAllRagEntities(): Promise<KnowledgeData> {
+	const [nodeRows, relRows] = await Promise.all([
+		cypher<{ n: Neo4jNodeRecord }>('MATCH (n:Entity) RETURN n'),
+		cypher<{ r: Neo4jRelRecord; startId: string; endId: string }>(
+			`MATCH (e1:Entity)-[r:RELATED_TO]->(e2:Entity)
+			 RETURN r, elementId(e1) AS startId, elementId(e2) AS endId`,
+		),
+	]);
+	return toKnowledgeData(
+		nodeRows.map((row) => row.n),
+		relRows.map((row) => ({ ...row.r, startNodeElementId: row.startId, endNodeElementId: row.endId })),
+	);
+}
+
+/** Get a single entity node and its immediate neighbors as KnowledgeData. */
+export async function getEntityNeighborhood(elementId: string): Promise<KnowledgeData> {
+	const [nodeRows, relRows] = await Promise.all([
+		cypher<{ n: Neo4jNodeRecord }>(
+			`MATCH (center:Entity) WHERE elementId(center) = $id
+			 OPTIONAL MATCH (center)-[:RELATED_TO]-(neighbor:Entity)
+			 WITH collect(neighbor) + [center] AS all
+			 UNWIND all AS n
+			 RETURN DISTINCT n`,
+			{ id: elementId },
+		),
+		cypher<{ r: Neo4jRelRecord; startId: string; endId: string }>(
+			`MATCH (center:Entity) WHERE elementId(center) = $id
+			 MATCH (center)-[r:RELATED_TO]-(neighbor:Entity)
+			 RETURN r, elementId(startNode(r)) AS startId, elementId(endNode(r)) AS endId`,
+			{ id: elementId },
+		),
+	]);
+	return toKnowledgeData(
+		nodeRows.map((row) => row.n),
+		relRows.map((row) => ({ ...row.r, startNodeElementId: row.startId, endNodeElementId: row.endId })),
 	);
 }
 
