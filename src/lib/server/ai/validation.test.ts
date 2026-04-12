@@ -221,9 +221,7 @@ describe('PanelContextEntry extended fields', () => {
 	it('rejects invalid status value', () => {
 		const result = v.safeParse(ChatRequestSchema, {
 			messages: [{ role: 'user', content: 'Hello' }],
-			panelContext: [
-				{ panelType: 'editor', label: 'Notes', content: 'x', status: 'unknown' },
-			],
+			panelContext: [{ panelType: 'editor', label: 'Notes', content: 'x', status: 'unknown' }],
 		});
 		expect(result.success).toBe(false);
 	});
@@ -231,9 +229,7 @@ describe('PanelContextEntry extended fields', () => {
 	it('rejects invalid contentLevel value', () => {
 		const result = v.safeParse(ChatRequestSchema, {
 			messages: [{ role: 'user', content: 'Hello' }],
-			panelContext: [
-				{ panelType: 'editor', label: 'Notes', content: 'x', contentLevel: 'minimal' },
-			],
+			panelContext: [{ panelType: 'editor', label: 'Notes', content: 'x', contentLevel: 'minimal' }],
 		});
 		expect(result.success).toBe(false);
 	});

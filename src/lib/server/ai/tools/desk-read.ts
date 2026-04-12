@@ -165,7 +165,7 @@ export function createReadTools(userId: string, deskLayout?: DeskLayoutEntry[]) 
 
 		desk_get_open_panels: tool({
 			description:
-				"Get the list of currently open panels in the desk — their IDs, types, labels, and file associations. " +
+				'Get the list of currently open panels in the desk — their IDs, types, labels, and file associations. ' +
 				"Use this to understand the user's current workspace layout.",
 			inputSchema: jsonSchema<Record<string, never>>({
 				type: 'object',

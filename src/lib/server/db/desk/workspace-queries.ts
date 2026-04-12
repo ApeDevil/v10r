@@ -14,11 +14,7 @@ export interface DeskWorkspaceRow {
 
 /** List all workspaces for a user, ordered by sortOrder. */
 export async function listWorkspaces(userId: string): Promise<DeskWorkspaceRow[]> {
-	return db
-		.select()
-		.from(deskWorkspace)
-		.where(eq(deskWorkspace.userId, userId))
-		.orderBy(deskWorkspace.sortOrder);
+	return db.select().from(deskWorkspace).where(eq(deskWorkspace.userId, userId)).orderBy(deskWorkspace.sortOrder);
 }
 
 /** Get the active workspace ID for a user. Returns null if none set. */

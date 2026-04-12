@@ -32,7 +32,7 @@ let hovered = $state(false);
 			</Canvas>
 		</div>
 
-		{#snippet failed(error, reset)}
+		{#snippet failed(error: unknown, reset: () => void)}
 			<BoundaryFallback
 				title="3D unavailable"
 				description="WebGL required"

@@ -9,6 +9,15 @@ export {
 	isScopeEnabled,
 	toggleScope,
 } from './bot-config.svelte';
+export {
+	type ConversationSummary,
+	deleteConversations,
+	deleteSingleConversation,
+	fetchConversationStorage,
+	getStorageState,
+	resetStorageState,
+	type StorageMeta,
+} from './conversation-storage.svelte';
 export { default as DeskShortcuts } from './DeskShortcuts.svelte';
 export { default as DockActivityBar } from './DockActivityBar.svelte';
 export { default as DockDropOverlay } from './DockDropOverlay.svelte';
@@ -17,11 +26,18 @@ export { default as DockLeaf } from './DockLeaf.svelte';
 export { default as DockNode } from './DockNode.svelte';
 export { default as DockResizeHandle } from './DockResizeHandle.svelte';
 export { default as DockTabBar } from './DockTabBar.svelte';
-export { default as PanelEmptyState } from './PanelEmptyState.svelte';
 export { createDeskBus, type DeskBus, type DeskEvents, getDeskBus, setDeskBusContext } from './desk-bus.svelte';
 export {
-	type ContentLevel,
+	budgetAwareSerialize,
+	computeActiveContexts,
+	computeContextChips,
+	computePanelStatus,
+	estimateTokens,
+	truncateToTokenBudget,
+} from './desk-context.pure';
+export {
 	CONTEXT_TOKEN_BUDGET,
+	type ContentLevel,
 	type ContextChip,
 	type ContextStatus,
 	dismissContext,
@@ -43,15 +59,6 @@ export {
 	updatePanelContext,
 } from './desk-context.svelte';
 export {
-	budgetAwareSerialize,
-	computeActiveContexts,
-	computeContextChips,
-	computePanelStatus,
-	estimateTokens,
-	truncateToTokenBudget,
-} from './desk-context.pure';
-export { dispatchDeskEffect, type EffectActions } from './dispatch-desk-effect';
-export {
 	BUILT_IN_PRESETS,
 	buildThemeFromServer,
 	clearDeskSettings,
@@ -67,6 +74,7 @@ export {
 	setDeskSettingsContext,
 } from './desk-settings.svelte';
 export type { DeskPreset, DeskTheme, PanelColorOverride, WorkspaceColors } from './desk-settings.types';
+export { dispatchDeskEffect, type EffectActions } from './dispatch-desk-effect';
 export {
 	addPanelToLeaf,
 	collectLeaves,
@@ -96,22 +104,6 @@ export type {
 	SplitNode,
 } from './dock.types';
 export {
-	type ConversationSummary,
-	deleteConversations,
-	deleteSingleConversation,
-	fetchConversationStorage,
-	getStorageState,
-	resetStorageState,
-	type StorageMeta,
-} from './conversation-storage.svelte';
-export {
-	fetchProviders,
-	getActiveProviderId,
-	getProviderState,
-	type ProviderInfo,
-	switchProvider,
-} from './provider-preference.svelte';
-export {
 	appendIOLog,
 	clearIOLog,
 	getIOLogCount,
@@ -120,6 +112,7 @@ export {
 	type IOLogSource,
 } from './io-log.svelte';
 export { LAYOUT_PRESETS, type LayoutPreset } from './layout-presets';
+export { default as PanelEmptyState } from './PanelEmptyState.svelte';
 export {
 	getActiveMenus,
 	getFocusedPanelId,
@@ -128,6 +121,13 @@ export {
 	registerPanelMenus,
 	setFocusedPanel,
 } from './panel-menus.svelte';
+export {
+	fetchProviders,
+	getActiveProviderId,
+	getProviderState,
+	type ProviderInfo,
+	switchProvider,
+} from './provider-preference.svelte';
 export {
 	buildWorkspacesFromServer,
 	clearWorkspaceStore,

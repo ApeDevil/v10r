@@ -3,7 +3,7 @@ import type { Snippet } from 'svelte';
 import { onMount, tick } from 'svelte';
 import { browser } from '$app/environment';
 import { Pane, PaneGroup, PaneResizer } from '$lib/components/primitives';
-import type { PaneGroupHandle } from '$lib/components/primitives/pane/PaneGroup.svelte';
+import type { PaneGroupHandle } from '$lib/components/primitives/pane/types';
 import PaneTabBar from './PaneTabBar.svelte';
 import type { PaneDefinition } from './reorderable-panes';
 

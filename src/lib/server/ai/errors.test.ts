@@ -119,7 +119,15 @@ describe('classifyAIError', () => {
 
 describe('safeAIMessage', () => {
 	it('returns user-safe messages for all kinds', () => {
-		const kinds = ['authentication', 'rate_limit', 'model', 'context_length', 'timeout', 'unavailable', 'unknown'] as const;
+		const kinds = [
+			'authentication',
+			'rate_limit',
+			'model',
+			'context_length',
+			'timeout',
+			'unavailable',
+			'unknown',
+		] as const;
 		for (const kind of kinds) {
 			const msg = safeAIMessage(kind);
 			expect(msg).toBeTruthy();

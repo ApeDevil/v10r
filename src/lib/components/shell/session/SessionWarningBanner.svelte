@@ -41,7 +41,7 @@ async function handleExtend() {
 
 		<div class="banner-text">
 			<strong class="banner-title">Session expiring soon</strong>
-			<span class="banner-time">Your session will expire in {formattedTime()}</span>
+			<span class="banner-time">Your session will expire in {formattedTime}</span>
 		</div>
 
 		<div class="banner-actions">

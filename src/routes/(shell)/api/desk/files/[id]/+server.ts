@@ -1,6 +1,6 @@
 import * as v from 'valibot';
-import { apiCreated, apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/api/response';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { apiCreated, apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import {
 	deleteFile,
@@ -24,8 +24,20 @@ const UpdateFileSchema = v.object({
 	name: v.optional(v.pipe(v.string(), v.maxLength(200))),
 	folderId: v.optional(v.nullable(v.string())),
 	aiContext: v.optional(v.boolean()),
-	cells: v.optional(v.pipe(v.record(v.string(), CellObject), v.check((v) => JSON.stringify(v).length <= MAX_CELLS_JSON, 'Cell data too large'))),
-	columnMeta: v.optional(v.nullable(v.pipe(v.record(v.string(), CellObject), v.check((v) => JSON.stringify(v).length <= MAX_CELLS_JSON, 'Column meta too large')))),
+	cells: v.optional(
+		v.pipe(
+			v.record(v.string(), CellObject),
+			v.check((v) => JSON.stringify(v).length <= MAX_CELLS_JSON, 'Cell data too large'),
+		),
+	),
+	columnMeta: v.optional(
+		v.nullable(
+			v.pipe(
+				v.record(v.string(), CellObject),
+				v.check((v) => JSON.stringify(v).length <= MAX_CELLS_JSON, 'Column meta too large'),
+			),
+		),
+	),
 });
 
 /** Get a file with its detail data. */

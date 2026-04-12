@@ -75,8 +75,7 @@ function classifyErrorMessage(msg: string): { kind: string | null; detail: strin
 		return { kind: 'context_length', detail: msg };
 	if (lower.includes('401') || lower.includes('403') || lower.includes('authentication'))
 		return { kind: 'authentication', detail: msg };
-	if (lower.includes('model') || lower.includes('404'))
-		return { kind: 'model', detail: msg };
+	if (lower.includes('model') || lower.includes('404')) return { kind: 'model', detail: msg };
 	return { kind: null, detail: msg };
 }
 
@@ -125,7 +124,9 @@ $effect(() => {
 	const { kind, detail } = classifyErrorMessage(err.message ?? '');
 	if (kind) lastErrorKind = kind;
 	const msg = ERROR_MESSAGES[kind ?? ''] ?? (detail || 'Something went wrong.');
-	untrack(() => appendIOLog({ source: 'effect', level: 'error', label: `AI error: ${msg}`, detail: kind ?? (detail || 'unknown') }));
+	untrack(() =>
+		appendIOLog({ source: 'effect', level: 'error', label: `AI error: ${msg}`, detail: kind ?? (detail || 'unknown') }),
+	);
 });
 
 // ── AI desk effect dispatch ─────────────────────────────────────

@@ -18,11 +18,14 @@ let { html, embeds, class: className }: Props = $props();
 const R2_IMG_RE = /https:\/\/[^"'\s]+\.r2\.cloudflarestorage\.com\/(blog\/[^"'\s?]+)\?[^"'\s]*/g;
 
 const safeHtml = $derived(
-	DOMPurify.sanitize(html.replace(R2_IMG_RE, (_match, key) => `/api/blog/media/${key}`), {
-		ADD_TAGS: ['iframe'],
-		ADD_ATTR: ['target', 'rel', 'data-embed-kind', 'loading', 'allowfullscreen'],
-		FORBID_TAGS: ['script', 'style'],
-	})
+	DOMPurify.sanitize(
+		html.replace(R2_IMG_RE, (_match, key) => `/api/blog/media/${key}`),
+		{
+			ADD_TAGS: ['iframe'],
+			ADD_ATTR: ['target', 'rel', 'data-embed-kind', 'loading', 'allowfullscreen'],
+			FORBID_TAGS: ['script', 'style'],
+		},
+	),
 );
 </script>
 

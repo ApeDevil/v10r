@@ -5,8 +5,8 @@ import {
 	fetchConversationStorage,
 	getStorageState,
 } from '$lib/components/composites/dock';
-import Button from '$lib/components/primitives/button/Button.svelte';
 import { Spinner } from '$lib/components/primitives';
+import Button from '$lib/components/primitives/button/Button.svelte';
 
 const storage = $derived(getStorageState());
 const fillPercent = $derived(storage.meta?.usagePercent ?? 0);

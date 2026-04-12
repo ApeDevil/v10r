@@ -22,11 +22,7 @@ export interface EffectActions {
  * Dispatch a single DeskEffect to the dock/bus layer.
  * Unknown effect types are silently ignored (defensive).
  */
-export function dispatchDeskEffect(
-	effect: DeskEffect,
-	actions: EffectActions,
-	root: LayoutNode,
-): void {
+export function dispatchDeskEffect(effect: DeskEffect, actions: EffectActions, root: LayoutNode): void {
 	if (!effect?.type) return;
 
 	switch (effect.type) {

@@ -53,15 +53,18 @@
 
 ### Testing
 
-- [ ] **`chat-orchestrator.test.ts` tests stubs, not real code** — local reimplementations of `windowMessages`/`buildSystemPrompt` diverge from actual module (different signatures, missing params). Test via `MockLanguageModelV3` through `orchestrateChat`
-  - `src/lib/server/ai/chat-orchestrator.test.ts:14-66`
+- [x] **`chat-orchestrator.test.ts` tests stubs, not real code** — Exported 5 internal helpers, rewrote test file with real imports. 44 tests: getMessageText, windowMessages, escapeXmlAttr, buildSystemPrompt (with toolScopes, panelContext, deskLayout, activeWorkspace, credential redaction, XML escaping), createOnFinish, orchestrateChat error paths (503/404/403). Also deleted broken legacy `createSpreadsheet` function (missing fileId)
+  - `src/lib/server/ai/chat-orchestrator.ts` (exported helpers)
+  - `src/lib/server/ai/chat-orchestrator.test.ts` (complete rewrite)
 
 - [x] **`classifyAIError` completely untested** — Added comprehensive test suite: 7 classification branches, AIError passthrough, non-Error values, null/undefined, priority checks. Also tests `safeAIMessage()` and `aiErrorToStatus()`
   - `src/lib/server/ai/errors.test.ts`
 
-- [ ] **Desk DB layer zero test coverage** — IDOR checks on `getFile`, `updateSpreadsheetByFileId`, `listFiles` untested. Copy pattern from `db/notifications/mutations.test.ts`
-  - `src/lib/server/db/desk/queries.ts`
-  - `src/lib/server/db/desk/mutations.ts`
+- [x] **Desk DB layer zero test coverage** — 79 tests across 2 files. Queries (33 tests): all 10 functions with ownership isolation, pagination, type filtering, joined results. Mutations (46 tests): all 14 functions with ownership checks, transaction atomicity, cascade deletes, moveFolder cycle detection, duplicate naming. Fixed test infrastructure: `createTestDb()` now uses `pushSchema` from drizzle-kit API (no migration files needed). Added 4 desk fixtures to test/fixtures.ts
+  - `src/lib/server/db/desk/queries.test.ts`
+  - `src/lib/server/db/desk/mutations.test.ts`
+  - `src/lib/server/test/db.ts` (pushSchema approach)
+  - `src/lib/server/test/fixtures.ts` (makeFile, makeFolder, makeSpreadsheet, makeMarkdown)
 
 - [x] **4 of 7 auth guards untested** — Extended guards.test.ts with 6 new describe blocks: requireAuthor, requireApiAuthor, requirePostOwnership, requireAssetOwnership, guardApiUser, guardApiAuthor. Tests cover admin bypass, role checks, ownership, null entity, case-insensitive email
   - `src/lib/server/auth/guards.test.ts`
@@ -198,11 +201,11 @@
 
 ### Dependencies
 
-- [ ] **bits-ui `^1.0.0-next.0`** — severely outdated, current is 2.16.3. Pre-release pin won't resolve to stable. Highest-risk dep gap. Migration involves `el`→`ref`, `asChild`→`child` snippet, Select API redesign
-- [ ] **UnoCSS `^0.58.0`** — significantly behind (current 66.x). Version discontinuity means `^` won't auto-upgrade
-- [ ] **Vite `^7.2.6`** — Vite 8 shipped March 2026. Rename `rollupOptions`→`rolldownOptions`. ~15s build improvement
-- [ ] **Better Auth `~1.4.18`** — behind 1.6.2. Tilde pin blocks minor updates. v1.6.0 `freshAge` breaking change requires migration step
-- [ ] **Three.js `^0.170.0`** — 13 revisions behind (r183). Will jump on next install due to `^` range
+- [x] **bits-ui `^1.0.0-next.0`** — Upgraded 1.8.0 → 2.17.3. No `asChild`/`el` usage found — clean upgrade, dev server starts without errors
+- [x] **UnoCSS `^0.58.0`** — Upgraded 0.58.9 → 65.5.0. UnoCSS 66.x causes Bun 1.3.9 segfault; 65.x is the latest compatible version
+- [x] **Vite `^7.2.6`** — Upgraded 7.3.0 → 8.0.8. No `rollupOptions` in config — clean upgrade. Deprecation warnings from SvelteKit plugin (not our config)
+- [x] **Better Auth `~1.4.18`** — Upgraded 1.4.18 → 1.6.2. `freshAge` defaults to 0 (no behavior change with cookieCache enabled). Dev server starts clean
+- [x] **Three.js `^0.170.0`** — Upgraded 0.170.0 → 0.183.2 (+ @types/three 0.183.1). Dev server starts clean
 
 ### Latent Issues
 

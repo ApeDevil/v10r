@@ -1,10 +1,5 @@
 <script lang="ts">
-import {
-	fetchProviders,
-	getProviderState,
-	switchProvider,
-} from '$lib/components/composites/dock';
-import { getEnabledScopes } from '$lib/components/composites/dock';
+import { fetchProviders, getEnabledScopes, getProviderState, switchProvider } from '$lib/components/composites/dock';
 import { Spinner } from '$lib/components/primitives';
 
 const state = $derived(getProviderState());

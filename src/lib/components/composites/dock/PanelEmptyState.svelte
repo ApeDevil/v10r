@@ -1,14 +1,14 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
+import type { Snippet } from 'svelte';
 
-	interface Props {
-		icon?: string;
-		heading: string;
-		description?: string;
-		children?: Snippet;
-	}
+interface Props {
+	icon?: string;
+	heading: string;
+	description?: string;
+	children?: Snippet;
+}
 
-	let { icon = 'i-lucide-file', heading, description, children }: Props = $props();
+let { icon = 'i-lucide-file', heading, description, children }: Props = $props();
 </script>
 
 <div class="empty-state">

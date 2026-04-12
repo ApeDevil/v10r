@@ -1,9 +1,16 @@
 <script lang="ts">
 import { onDestroy, untrack } from 'svelte';
 import { apiFetch } from '$lib/api';
-import { findLeafWithPanel, getDeskBus, getDockContext, registerPanelContext, registerPanelMenus, updatePanelContext } from '$lib/components/composites/dock';
-import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
+import {
+	findLeafWithPanel,
+	getDeskBus,
+	getDockContext,
+	registerPanelContext,
+	registerPanelMenus,
+	updatePanelContext,
+} from '$lib/components/composites/dock';
 import PanelEmptyState from '$lib/components/composites/dock/PanelEmptyState.svelte';
+import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import { Button, Spinner } from '$lib/components/primitives';
 import MarkdownSource from './MarkdownSource.svelte';
 import MetadataDrawer from './MetadataDrawer.svelte';

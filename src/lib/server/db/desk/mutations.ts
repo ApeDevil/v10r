@@ -3,14 +3,6 @@ import { createId } from '../id';
 import { db } from '../index';
 import { file, folder, markdown, spreadsheet } from '../schema/desk';
 
-// ── Legacy mutations (kept for backward compat) ────────────────────
-
-/** Create a new spreadsheet. */
-export async function createSpreadsheet(userId: string, name = 'Untitled', cells: Record<string, unknown> = {}) {
-	const [row] = await db.insert(spreadsheet).values({ id: createId.spreadsheet(), userId, name, cells }).returning();
-	return row;
-}
-
 /** Update a spreadsheet (ownership enforced via WHERE). Returns null if not found/not owned. */
 export async function updateSpreadsheet(
 	id: string,
@@ -281,16 +273,9 @@ export async function updateMarkdownByFileId(fileId: string, userId: string, con
 			.limit(1);
 		if (!fileRow) return null;
 
-		await tx
-			.update(markdown)
-			.set({ content, updatedAt: new Date() })
-			.where(eq(markdown.fileId, fileId));
+		await tx.update(markdown).set({ content, updatedAt: new Date() }).where(eq(markdown.fileId, fileId));
 
-		const [updated] = await tx
-			.update(file)
-			.set({ updatedAt: new Date() })
-			.where(eq(file.id, fileId))
-			.returning();
+		const [updated] = await tx.update(file).set({ updatedAt: new Date() }).where(eq(file.id, fileId)).returning();
 
 		return updated ?? null;
 	});

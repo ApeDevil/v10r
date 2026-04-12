@@ -55,9 +55,18 @@ export function buildPermissionsBlock(scopes: DeskToolScope[]): string {
 
 /** Panel type capabilities — what each panel can do, for AI awareness. */
 export const PANEL_CAPABILITIES: Record<string, { description: string; tools: string[] }> = {
-	spreadsheet: { description: 'Tabular data editor with cell addressing (A1, B3)', tools: ['desk_read_file', 'desk_update_cells', 'desk_create_spreadsheet'] },
-	editor: { description: 'Markdown document editor', tools: ['desk_read_file', 'desk_update_markdown', 'desk_create_markdown'] },
-	explorer: { description: 'File browser — workspace files and folders', tools: ['desk_list_files', 'desk_file_tree', 'desk_search_files'] },
+	spreadsheet: {
+		description: 'Tabular data editor with cell addressing (A1, B3)',
+		tools: ['desk_read_file', 'desk_update_cells', 'desk_create_spreadsheet'],
+	},
+	editor: {
+		description: 'Markdown document editor',
+		tools: ['desk_read_file', 'desk_update_markdown', 'desk_create_markdown'],
+	},
+	explorer: {
+		description: 'File browser — workspace files and folders',
+		tools: ['desk_list_files', 'desk_file_tree', 'desk_search_files'],
+	},
 	preview: { description: 'Rendered preview of active document (read-only)', tools: [] },
 	'io-log': { description: 'AI tool call and effect audit log (read-only)', tools: [] },
 };
@@ -65,8 +74,7 @@ export const PANEL_CAPABILITIES: Record<string, { description: string; tools: st
 /** Build an <available-panels> block listing panel types and their capabilities. */
 export function buildCapabilitiesBlock(): string {
 	const lines = Object.entries(PANEL_CAPABILITIES).map(
-		([type, cap]) =>
-			`- ${type}: ${cap.description}${cap.tools.length ? ` [tools: ${cap.tools.join(', ')}]` : ''}`,
+		([type, cap]) => `- ${type}: ${cap.description}${cap.tools.length ? ` [tools: ${cap.tools.join(', ')}]` : ''}`,
 	);
 	return `<available-panels>\n${lines.join('\n')}\n</available-panels>`;
 }

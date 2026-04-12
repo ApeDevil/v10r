@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import { makePanelContext, makeRegistry, SAMPLES } from './desk-context.fixtures';
 import {
 	budgetAwareSerialize,
+	CONTEXT_TOKEN_BUDGET,
 	computeActiveContexts,
 	computeContextChips,
 	computePanelStatus,
-	CONTEXT_TOKEN_BUDGET,
 	estimateTokens,
 	truncateToTokenBudget,
 } from './desk-context.pure';
-import { makePanelContext, makeRegistry, SAMPLES } from './desk-context.fixtures';
 
 // ── estimateTokens ──────────────────────────────────────────────────
 

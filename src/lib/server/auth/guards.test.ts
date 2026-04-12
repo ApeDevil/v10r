@@ -15,17 +15,11 @@ vi.mock('$env/dynamic/private', () => ({
 	),
 }));
 
-const {
-	requireAuth,
-	requireApiUser,
-	requireAdmin,
-	requireAuthor,
-	requireApiAuthor,
-	requirePostOwnership,
-	requireAssetOwnership,
-	guardApiUser,
-	guardApiAuthor,
-} = await import('./guards');
+const guards = await import('./guards');
+const { requireAuth, requireApiUser, requireAdmin, requireAuthor, requireApiAuthor, guardApiUser, guardApiAuthor } =
+	guards;
+const requirePostOwnership: typeof guards.requirePostOwnership = guards.requirePostOwnership;
+const requireAssetOwnership: typeof guards.requireAssetOwnership = guards.requireAssetOwnership;
 
 function makeLocals(user?: object, session?: object): App.Locals {
 	return { user, session } as unknown as App.Locals;

@@ -8,8 +8,8 @@ import { requireApiUser } from '$lib/server/auth/guards';
 import { CONV_RATE_LIMIT_MAX, CONV_RATE_LIMIT_PREFIX, CONV_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import { checkConversationLimit } from '$lib/server/db/ai/limits';
 import { createConversation } from '$lib/server/db/ai/mutations';
-import { getConversationStats, listConversations } from '$lib/server/db/ai/queries';
 import type { ConversationSort } from '$lib/server/db/ai/queries';
+import { getConversationStats, listConversations } from '$lib/server/db/ai/queries';
 import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
 import type { RequestHandler } from './$types';
 

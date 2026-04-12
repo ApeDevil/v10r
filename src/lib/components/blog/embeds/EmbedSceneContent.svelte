@@ -69,6 +69,7 @@ useTask((delta) => {
 });
 </script>
 
+<!-- @ts-ignore: Threlte makeDefault type requires tsgo conditional type support -->
 <T.PerspectiveCamera
 	makeDefault
 	position={cameraPosition}

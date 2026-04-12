@@ -31,8 +31,8 @@ export interface SerializedContext {
 export const CONTEXT_TOKEN_BUDGET = 8000;
 
 /** Budget thresholds — fractions of CONTEXT_TOKEN_BUDGET. */
-const COMPACT_THRESHOLD = 0.70;
-const TITLE_ONLY_THRESHOLD = 0.90;
+const COMPACT_THRESHOLD = 0.7;
+const TITLE_ONLY_THRESHOLD = 0.9;
 
 /** Max chars for a summary-level truncation. */
 const SUMMARY_MAX_CHARS = 500;

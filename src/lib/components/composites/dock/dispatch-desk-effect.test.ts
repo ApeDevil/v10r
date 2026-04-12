@@ -79,11 +79,7 @@ describe('dispatchDeskEffect', () => {
 
 	it('desk:notify publishes to bus with level', () => {
 		const actions = makeMockActions(vi);
-		dispatchDeskEffect(
-			{ type: 'desk:notify', message: 'Done!', level: 'success' },
-			actions,
-			root,
-		);
+		dispatchDeskEffect({ type: 'desk:notify', message: 'Done!', level: 'success' }, actions, root);
 
 		expect(actions.publish).toHaveBeenCalledWith('ai:notify', { message: 'Done!', level: 'success' });
 	});

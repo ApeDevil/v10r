@@ -42,7 +42,7 @@ function handleOpenChange(isOpen: boolean) {
 			</Canvas>
 		</div>
 
-		{#snippet failed(error, reset)}
+		{#snippet failed(error: unknown, reset: () => void)}
 			<BoundaryFallback
 				title="3D scene unavailable"
 				description="WebGL is required."

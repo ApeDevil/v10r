@@ -2,8 +2,9 @@
  * EMBEDDING MODEL — Registry of embedding models used to generate vectors.
  * Tracks which model produced each embedding for future migration support.
  */
-import { boolean, integer, pgSchema, text, timestamp, unique, uniqueIndex } from 'drizzle-orm/pg-core';
+
 import { sql } from 'drizzle-orm';
+import { boolean, integer, pgSchema, text, timestamp, unique, uniqueIndex } from 'drizzle-orm/pg-core';
 
 export const ragSchema = pgSchema('rag');
 
@@ -20,8 +21,6 @@ export const embeddingModel = ragSchema.table(
 	},
 	(table) => [
 		unique('embedding_model_provider_name_uniq').on(table.provider, table.modelName),
-		uniqueIndex('embedding_model_is_default_uniq')
-			.on(table.isDefault)
-			.where(sql`${table.isDefault} = true`),
+		uniqueIndex('embedding_model_is_default_uniq').on(table.isDefault).where(sql`${table.isDefault} = true`),
 	],
 );

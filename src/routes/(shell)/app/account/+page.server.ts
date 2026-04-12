@@ -1,7 +1,6 @@
 import { createHash } from 'node:crypto';
 import { fail, redirect } from '@sveltejs/kit';
-import { deleteUser, revokeSession } from '$lib/server/db/user';
-import { getUserAccounts, getUserProfile, getUserSessions } from '$lib/server/db/user';
+import { deleteUser, getUserAccounts, getUserProfile, getUserSessions, revokeSession } from '$lib/server/db/user';
 import type { Actions, PageServerLoad } from './$types';
 
 function hashForDisplay(id: string): string {
@@ -12,10 +11,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user || !locals.session) redirect(303, '/auth/login');
 
 	// Fetch sessions and linked accounts in parallel
-	const [sessions, accounts] = await Promise.all([
-		getUserSessions(locals.user.id),
-		getUserAccounts(locals.user.id),
-	]);
+	const [sessions, accounts] = await Promise.all([getUserSessions(locals.user.id), getUserAccounts(locals.user.id)]);
 
 	return {
 		user: locals.user,

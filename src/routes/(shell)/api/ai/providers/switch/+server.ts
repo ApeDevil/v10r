@@ -1,8 +1,8 @@
 import * as v from 'valibot';
 import { getActiveProviderInfo, providerRegistry } from '$lib/server/ai';
 import { clearUserPreference, setUserPreference } from '$lib/server/ai/providers';
-import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import type { RequestHandler } from './$types';
 

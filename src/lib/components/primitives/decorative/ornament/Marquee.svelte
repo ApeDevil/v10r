@@ -47,7 +47,7 @@ let displayItems = $derived(items.flatMap((item, i) => (i < items.length - 1 ? [
 		style:--marquee-direction={direction === 'right' ? 'reverse' : 'normal'}
 		style:gap="{gap}px"
 	>
-		{#each { length: 2 } as _}
+		{#each Array(2) as _}
 			<span class="marquee-set" style:gap="{gap}px">
 				{#each displayItems as item}
 					<span class="marquee-item">{item}</span>

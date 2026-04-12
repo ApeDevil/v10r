@@ -1,10 +1,10 @@
 import * as v from 'valibot';
 import { safeParse } from 'valibot';
 import { apiPaginated, parsePagination } from '$lib/server/api/pagination';
-import { apiCreated, apiValidationError } from '$lib/server/api/response';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { apiCreated, apiValidationError } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
-import { createSpreadsheet } from '$lib/server/db/desk/mutations';
+import { createSpreadsheetFile } from '$lib/server/db/desk/mutations';
 import { listSpreadsheets } from '$lib/server/db/desk/queries';
 import type { RequestHandler } from './$types';
 
@@ -36,6 +36,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return apiValidationError(parsed.issues);
 	}
 
-	const row = await createSpreadsheet(user.id, parsed.output.name, parsed.output.cells);
-	return apiCreated({ spreadsheet: row });
+	const result = await createSpreadsheetFile(user.id, parsed.output.name, parsed.output.cells);
+	return apiCreated(result);
 };

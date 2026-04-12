@@ -38,7 +38,7 @@ interface StorageState {
 
 // ── Module-level state ──────────────────────────────────────────────
 
-let state = $state<StorageState>({
+const state = $state<StorageState>({
 	conversations: [],
 	meta: null,
 	loading: false,
@@ -84,7 +84,11 @@ export async function deleteSingleConversation(id: string): Promise<boolean> {
 		// Success — remove from list and update meta
 		state.conversations = state.conversations.filter((c) => c.id !== id);
 		if (state.meta) {
-			state.meta = { ...state.meta, total: state.meta.total - 1, usagePercent: Math.round(((state.meta.total - 1) / state.meta.limit) * 100) };
+			state.meta = {
+				...state.meta,
+				total: state.meta.total - 1,
+				usagePercent: Math.round(((state.meta.total - 1) / state.meta.limit) * 100),
+			};
 		}
 		return true;
 	} catch {

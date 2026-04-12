@@ -476,17 +476,15 @@ export async function isSlugTaken(slug: string, excludePostId?: string): Promise
 // ── Assets ───────────────────────────────────────────────────────────
 
 /** List all assets, optionally filtered by uploader. */
-export async function listAssets(uploaderId?: string, offset = 0, limit = 50): Promise<{ items: BlogAsset[]; total: number }> {
+export async function listAssets(
+	uploaderId?: string,
+	offset = 0,
+	limit = 50,
+): Promise<{ items: BlogAsset[]; total: number }> {
 	const where = uploaderId ? eq(asset.uploaderId, uploaderId) : undefined;
 
 	const [items, [countResult]] = await Promise.all([
-		db
-			.select()
-			.from(asset)
-			.where(where)
-			.orderBy(desc(asset.createdAt))
-			.offset(offset)
-			.limit(limit),
+		db.select().from(asset).where(where).orderBy(desc(asset.createdAt)).offset(offset).limit(limit),
 		db.select({ total: count() }).from(asset).where(where),
 	]);
 

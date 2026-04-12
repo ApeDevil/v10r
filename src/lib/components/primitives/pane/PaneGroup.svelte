@@ -2,12 +2,7 @@
 import { PaneGroup } from 'paneforge';
 import type { Snippet } from 'svelte';
 import { cn } from '$lib/utils/cn';
-
-export interface PaneGroupHandle {
-	getLayout: () => number[];
-	setLayout: (layout: number[]) => void;
-	getId: () => string;
-}
+import type { PaneGroupHandle } from './types';
 
 interface Props {
 	direction?: 'horizontal' | 'vertical';

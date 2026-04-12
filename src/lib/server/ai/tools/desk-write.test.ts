@@ -27,10 +27,7 @@ describe('desk_update_markdown', () => {
 	it('returns updated=true with effects on success', async () => {
 		mockUpdateMarkdown.mockResolvedValueOnce({ id: 'f1', name: 'Notes.md' });
 		const tools = createWriteTools(USER_ID);
-		const result = await tools.desk_update_markdown.execute!(
-			{ file_id: 'f1', content: '# Updated' },
-			ctx,
-		);
+		const result = await tools.desk_update_markdown.execute!({ file_id: 'f1', content: '# Updated' }, ctx);
 
 		expect(result).toMatchObject({
 			updated: true,
@@ -46,10 +43,7 @@ describe('desk_update_markdown', () => {
 	it('returns error when file not found', async () => {
 		mockUpdateMarkdown.mockResolvedValueOnce(null);
 		const tools = createWriteTools(USER_ID);
-		const result = await tools.desk_update_markdown.execute!(
-			{ file_id: 'nonexistent', content: '# x' },
-			ctx,
-		);
+		const result = await tools.desk_update_markdown.execute!({ file_id: 'nonexistent', content: '# x' }, ctx);
 
 		expect(result).toEqual({ error: 'Markdown file not found or not accessible.' });
 	});
@@ -57,10 +51,7 @@ describe('desk_update_markdown', () => {
 	it('returns error on DB exception', async () => {
 		mockUpdateMarkdown.mockRejectedValueOnce(new Error('DB fail'));
 		const tools = createWriteTools(USER_ID);
-		const result = await tools.desk_update_markdown.execute!(
-			{ file_id: 'f1', content: '# x' },
-			ctx,
-		);
+		const result = await tools.desk_update_markdown.execute!({ file_id: 'f1', content: '# x' }, ctx);
 
 		expect(result).toEqual({ error: 'Failed to update markdown.' });
 	});

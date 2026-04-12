@@ -15,6 +15,6 @@ export const DESK_PANELS: Record<string, PanelDefinition> = {
 
 export const DESK_ACTIVITY_BAR_ITEMS: ActivityBarItem[] = Object.values(DESK_PANELS).map((p) => ({
 	panelType: p.type,
-	icon: p.icon,
+	icon: p.icon ?? '',
 	label: p.label,
 }));

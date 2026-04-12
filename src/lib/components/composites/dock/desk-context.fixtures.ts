@@ -35,9 +35,13 @@ export function makeMockActions(
 	leafOverride?: { id: string; panelId: string } | null,
 ): EffectActions {
 	return {
-		findLeafWithPanel: vi.fn().mockReturnValue(
-			leafOverride ? { type: 'leaf', id: leafOverride.id, tabs: [leafOverride.panelId], activeTab: leafOverride.panelId } : null,
-		),
+		findLeafWithPanel: vi
+			.fn()
+			.mockReturnValue(
+				leafOverride
+					? { type: 'leaf', id: leafOverride.id, tabs: [leafOverride.panelId], activeTab: leafOverride.panelId }
+					: null,
+			),
 		activateTab: vi.fn(),
 		addPanel: vi.fn(),
 		updatePanel: vi.fn(),

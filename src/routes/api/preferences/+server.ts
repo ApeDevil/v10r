@@ -1,6 +1,6 @@
 import * as v from 'valibot';
-import { apiError, apiNoContent, apiValidationError } from '$lib/server/api/response';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { apiError, apiNoContent, apiValidationError } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { updatePreferences } from '$lib/server/preferences';
 import { UpdatePreferencesSchema } from '$lib/server/preferences/schemas';

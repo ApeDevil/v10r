@@ -1,5 +1,11 @@
-import { buildProviderRegistry, getFallbackProviders, getUserPreference, resolveActiveProvider, resolveToolProvider } from './providers';
 import type { ProviderEntry } from './providers';
+import {
+	buildProviderRegistry,
+	getFallbackProviders,
+	getUserPreference,
+	resolveActiveProvider,
+	resolveToolProvider,
+} from './providers';
 
 const registry = buildProviderRegistry();
 
@@ -30,7 +36,10 @@ export function getToolProvider(userId?: string, overrideProviderId?: string): P
 }
 
 /** Get provider info { id, name, model } for a given user, or null. */
-export function getActiveProviderInfo(userId?: string, overrideProviderId?: string): { id: string; name: string; model: string } | null {
+export function getActiveProviderInfo(
+	userId?: string,
+	overrideProviderId?: string,
+): { id: string; name: string; model: string } | null {
 	const active = getActiveProvider(userId, overrideProviderId);
 	return active ? { id: active.id, name: active.name, model: active.model } : null;
 }

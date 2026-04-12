@@ -14,12 +14,11 @@ interface Props {
 	class?: string;
 }
 
+// svelte-ignore state_referenced_locally
 let {
 	data,
 	searchQuery = '',
-	// svelte-ignore state_referenced_locally
 	activeEntityTypes = new Set(data.entityTypes),
-	// svelte-ignore state_referenced_locally
 	activeRelationshipTypes = new Set(data.relationshipTypes),
 	onFilterChange,
 	class: className,

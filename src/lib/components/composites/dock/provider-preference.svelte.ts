@@ -32,7 +32,7 @@ interface ProviderState {
 
 // ── Module-level state ──────────────────────────────────────────────
 
-let state = $state<ProviderState>({
+const state = $state<ProviderState>({
 	providers: [],
 	activeId: null,
 	preference: null,

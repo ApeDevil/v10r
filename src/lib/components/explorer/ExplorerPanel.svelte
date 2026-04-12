@@ -2,7 +2,13 @@
 import { onMount, untrack } from 'svelte';
 import { apiFetch } from '$lib/api';
 import type { PanelDefinition } from '$lib/components/composites/dock';
-import { getDeskBus, getDockContext, registerPanelContext, registerPanelMenus, updatePanelContext } from '$lib/components/composites/dock';
+import {
+	getDeskBus,
+	getDockContext,
+	registerPanelContext,
+	registerPanelMenus,
+	updatePanelContext,
+} from '$lib/components/composites/dock';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import { Button, Spinner } from '$lib/components/primitives';
 import {
@@ -649,8 +655,6 @@ $effect(() => {
 		fetchAll();
 	});
 });
-
-
 </script>
 
 <!-- Hidden file inputs -->

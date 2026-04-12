@@ -18,10 +18,10 @@
 
 import {
 	budgetAwareSerialize,
-	computeActiveContexts,
-	computeContextChips,
 	CONTEXT_TOKEN_BUDGET,
 	type ContentLevel,
+	computeActiveContexts,
+	computeContextChips,
 	type PanelStatus,
 	type SerializedContext,
 } from './desk-context.pure';

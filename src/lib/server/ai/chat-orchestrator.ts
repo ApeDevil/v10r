@@ -13,9 +13,15 @@ import {
 	type UIMessage,
 } from 'ai';
 import { getActiveProvider, getActiveProviderInfo, getFallbacksForUser, getToolProvider } from '$lib/server/ai';
-import type { ProviderEntry } from '$lib/server/ai/providers';
-import { buildCapabilitiesBlock, buildPermissionsBlock, DESK_SYSTEM_PROMPT, MAX_TOKENS, SYSTEM_PROMPT } from '$lib/server/ai/config';
+import {
+	buildCapabilitiesBlock,
+	buildPermissionsBlock,
+	DESK_SYSTEM_PROMPT,
+	MAX_TOKENS,
+	SYSTEM_PROMPT,
+} from '$lib/server/ai/config';
 import { aiErrorToStatus, classifyAIError, safeAIMessage } from '$lib/server/ai/errors';
+import type { ProviderEntry } from '$lib/server/ai/providers';
 import { isCooledDown, markCooldown } from '$lib/server/ai/providers';
 import { createDeskTools, type DeskToolScope, stepsForScopes } from '$lib/server/ai/tools';
 import { checkConversationLimit } from '$lib/server/db/ai/limits';
@@ -41,7 +47,14 @@ export interface ChatInput {
 	conversationId?: string;
 	useRetrieval?: boolean;
 	retrievalTiers?: (1 | 2 | 3)[];
-	panelContext?: { panelType: string; label: string; content: string; status?: string; contentLevel?: string; tokenEstimate?: number }[];
+	panelContext?: {
+		panelType: string;
+		label: string;
+		content: string;
+		status?: string;
+		contentLevel?: string;
+		tokenEstimate?: number;
+	}[];
 	toolScopes?: DeskToolScope[];
 	deskLayout?: { panelId: string; fileId?: string; fileType?: string; label: string }[];
 	activeWorkspace?: { id: string; name: string };
@@ -60,7 +73,7 @@ interface ChatError {
 }
 
 /** Extract text content from a ChatMessage (handles both legacy and UIMessage format). */
-function getMessageText(msg: ChatMessage): string {
+export function getMessageText(msg: ChatMessage): string {
 	if ('content' in msg && typeof msg.content === 'string') return msg.content;
 	if ('parts' in msg) {
 		return msg.parts
@@ -75,7 +88,7 @@ function getMessageText(msg: ChatMessage): string {
  * Window conversation history to last N turns to stay within token budget.
  * Always keeps the most recent messages. Rough estimate: 4 chars ≈ 1 token.
  */
-function windowMessages(messages: ChatInput['messages'], maxTurns = 5): ChatInput['messages'] {
+export function windowMessages(messages: ChatInput['messages'], maxTurns = 5): ChatInput['messages'] {
 	// Each "turn" is a user+assistant pair = 2 messages. Keep last N turns.
 	const maxMessages = maxTurns * 2;
 	if (messages.length <= maxMessages) return messages;
@@ -88,7 +101,7 @@ function windowMessages(messages: ChatInput['messages'], maxTurns = 5): ChatInpu
 }
 
 /** Escape XML-special characters to prevent attribute breakout in system prompts. */
-function escapeXmlAttr(str: string): string {
+export function escapeXmlAttr(str: string): string {
 	return str
 		.replace(/&/g, '&amp;')
 		.replace(/</g, '&lt;')
@@ -98,7 +111,7 @@ function escapeXmlAttr(str: string): string {
 }
 
 /** Build the system prompt with optional desk panel context and tool scope awareness. */
-function buildSystemPrompt(
+export function buildSystemPrompt(
 	panelContext?: ChatInput['panelContext'],
 	toolScopes?: DeskToolScope[],
 	deskLayout?: ChatInput['deskLayout'],
@@ -145,7 +158,7 @@ function buildSystemPrompt(
 }
 
 /** Persist assistant message after stream finishes. */
-function createOnFinish(conversationId: string | undefined, userId: string) {
+export function createOnFinish(conversationId: string | undefined, userId: string) {
 	return async ({
 		text,
 		totalUsage,
@@ -220,7 +233,9 @@ function tryFallback(
 				maxRetries: 0,
 				maxOutputTokens: MAX_TOKENS,
 				abortSignal: AbortSignal.timeout(30_000),
-				...(useTools ? { tools: deskTools, toolChoice: 'auto' as const, stopWhen: stepCountIs(stepsForScopes(toolScopes ?? [])) } : {}),
+				...(useTools
+					? { tools: deskTools, toolChoice: 'auto' as const, stopWhen: stepCountIs(stepsForScopes(toolScopes ?? [])) }
+					: {}),
 				onFinish: createOnFinish(conversationId, userId),
 				onError: ({ error }) => {
 					console.error('[ai:chat:fallback] Stream error:', error);
@@ -235,7 +250,12 @@ function tryFallback(
 				execute: ({ writer }) => {
 					writer.merge(result.toUIMessageStream());
 				},
-				onError: classifyStreamError,
+				onError: (error: unknown): string => {
+					const aiErr = classifyAIError(error);
+					console.error(`[ai:chat:fallback] Stream classify [${aiErr.kind}]:`, error);
+					if (aiErr.kind === 'rate_limit') markCooldown(fallback.id);
+					return `[${aiErr.kind}] ${safeAIMessage(aiErr.kind)}`;
+				},
 			});
 			return createUIMessageStreamResponse({ stream, headers });
 		} catch {
@@ -291,7 +311,8 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 
 	// Use tool-capable provider when tools requested, fall back to chatModel without tools
 	const wantsTools = !!toolScopes?.length;
-	const toolProviderAvailable = !!resolvedToolModel && !!resolvedToolProviderId && !isCooledDown(resolvedToolProviderId);
+	const toolProviderAvailable =
+		!!resolvedToolModel && !!resolvedToolProviderId && !isCooledDown(resolvedToolProviderId);
 	const hasTools = wantsTools && toolProviderAvailable;
 	const model = (hasTools ? resolvedToolModel : resolvedChatModel) ?? resolvedChatModel;
 	const deskTools = hasTools ? createDeskTools(userId, toolScopes, deskLayout) : undefined;
@@ -396,91 +417,111 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 
 		const stream = createUIMessageStream({
 			execute: async ({ writer }) => {
-				const result = streamText({
+				// biome-ignore lint/suspicious/noExplicitAny: conditional tool spread confuses TS inference
+				const streamOpts: Record<string, any> = {
 					model,
 					system: baseSystemPrompt,
 					messages,
 					maxRetries: 0,
 					maxOutputTokens: MAX_TOKENS,
 					abortSignal: AbortSignal.timeout(30_000),
-					...(deskTools
-						? {
-								tools: deskTools,
-								toolChoice: 'auto' as const,
-								stopWhen: stepCountIs(stepsForScopes(toolScopes ?? [])),
-								prepareStep: async ({ stepNumber, messages: stepMessages }) => {
-									if (stepNumber < 2) return {};
-									return {
-										messages: stepMessages.map((msg: ModelMessage) => {
-											if (msg.role === 'tool' && typeof msg.content === 'string' && msg.content.length > 500) {
-												return { ...msg, content: `${msg.content.slice(0, 500)}\n[truncated]` };
-											}
-											return msg;
-										}),
-									};
-								},
-							}
-						: {}),
-					onStepFinish: async ({ toolResults, usage }) => {
-						if (!conversationId) return;
-						const currentStep = stepCounter++;
-
-						const toolCallIds: string[] = [];
-						if (toolResults) {
-							for (const tr of toolResults) {
-								try {
-									const hasError = tr.output && typeof tr.output === 'object' && 'error' in tr.output;
-									const saved = await saveToolCall({
-										messageId: assistantMsgId,
-										toolName: tr.toolName,
-										args: (tr.input ?? {}) as Record<string, unknown>,
-										result: (tr.output ?? {}) as Record<string, unknown>,
-										status: hasError ? 'error' : 'success',
-										errorMessage: hasError ? String((tr.output as { error: string }).error) : undefined,
-									});
-									toolCallIds.push(saved.id);
-								} catch (err) {
-									console.error('[ai:chat] Failed to persist tool call:', err);
+				};
+				if (deskTools) {
+					streamOpts.tools = deskTools;
+					streamOpts.toolChoice = 'auto';
+					streamOpts.stopWhen = stepCountIs(stepsForScopes(toolScopes ?? []));
+					streamOpts.prepareStep = async ({
+						stepNumber,
+						messages: stepMessages,
+					}: {
+						stepNumber: number;
+						messages: ModelMessage[];
+					}) => {
+						if (stepNumber < 2) return {};
+						return {
+							messages: stepMessages.map((msg: ModelMessage) => {
+								const c = (msg as Record<string, unknown>).content;
+								if (msg.role === 'tool' && typeof c === 'string' && c.length > 500) {
+									return { ...msg, content: `${c.slice(0, 500)}\n[truncated]` };
 								}
-							}
-						}
+								return msg;
+							}),
+						};
+					};
+				}
+				// biome-ignore lint/suspicious/noExplicitAny: toolResults type depends on conditional tools
+				streamOpts.onStepFinish = async ({
+					toolResults,
+					usage,
+				}: {
+					toolResults?: any[];
+					usage?: { inputTokens: number; outputTokens: number };
+				}) => {
+					if (!conversationId) return;
+					const currentStep = stepCounter++;
 
-						try {
-							await saveConversationStep({
-								conversationId,
-								messageId: assistantMsgId,
-								stepIndex: currentStep,
-								stepType: currentStep === 0 ? 'initial' : 'tool-result',
-								inputTokens: usage?.inputTokens ?? 0,
-								outputTokens: usage?.outputTokens ?? 0,
-								toolCallIds: toolCallIds.length > 0 ? toolCallIds : undefined,
-							});
-						} catch (err) {
-							console.error('[ai:chat] Failed to persist step:', err);
-						}
-					},
-					onFinish: async ({ text, totalUsage }) => {
-						if (conversationId && text) {
-							await updateMessageContent(assistantMsgId, text);
-						}
-						if (conversationId) {
+					const toolCallIds: string[] = [];
+					if (toolResults) {
+						for (const tr of toolResults) {
 							try {
-								await refreshConversationTokens(conversationId);
-							} catch {
-								/* non-critical */
+								const hasError = tr.output && typeof tr.output === 'object' && 'error' in tr.output;
+								const saved = await saveToolCall({
+									messageId: assistantMsgId,
+									toolName: tr.toolName,
+									args: (tr.input ?? {}) as Record<string, unknown>,
+									result: (tr.output ?? {}) as Record<string, unknown>,
+									status: hasError ? 'error' : 'success',
+									errorMessage: hasError ? String((tr.output as { error: string }).error) : undefined,
+								});
+								toolCallIds.push(saved.id);
+							} catch (err) {
+								console.error('[ai:chat] Failed to persist tool call:', err);
 							}
 						}
-						if (totalUsage) {
-							console.info('[ai:chat] totalUsage:', {
-								inputTokens: totalUsage.inputTokens,
-								outputTokens: totalUsage.outputTokens,
-							});
+					}
+
+					try {
+						await saveConversationStep({
+							conversationId,
+							messageId: assistantMsgId,
+							stepIndex: currentStep,
+							stepType: currentStep === 0 ? 'initial' : 'tool-result',
+							inputTokens: usage?.inputTokens ?? 0,
+							outputTokens: usage?.outputTokens ?? 0,
+							toolCallIds: toolCallIds.length > 0 ? toolCallIds : undefined,
+						});
+					} catch (err) {
+						console.error('[ai:chat] Failed to persist step:', err);
+					}
+				};
+				streamOpts.onFinish = async ({
+					text,
+					totalUsage,
+				}: {
+					text?: string;
+					totalUsage?: { inputTokens: number; outputTokens: number };
+				}) => {
+					if (conversationId && text) {
+						await updateMessageContent(assistantMsgId, text);
+					}
+					if (conversationId) {
+						try {
+							await refreshConversationTokens(conversationId);
+						} catch {
+							/* non-critical */
 						}
-					},
-					onError: ({ error }) => {
-						console.error('[ai:chat] Inner stream error:', error);
-					},
-				});
+					}
+					if (totalUsage) {
+						console.info('[ai:chat] totalUsage:', {
+							inputTokens: totalUsage.inputTokens,
+							outputTokens: totalUsage.outputTokens,
+						});
+					}
+				};
+				streamOpts.onError = ({ error }: { error: unknown }) => {
+					console.error('[ai:chat] Inner stream error:', error);
+				};
+				const result = streamText(streamOpts as Parameters<typeof streamText>[0]);
 
 				result.consumeStream();
 				writer.merge(result.toUIMessageStream());

@@ -31,7 +31,7 @@ const dock = getDockContext();
 const fileId = $derived(panelId.startsWith('spreadsheet-fil_') ? panelId.replace('spreadsheet-', '') : null);
 
 let spreadsheetId: string | null = $state(null);
-let saveStatus: 'idle' | 'saving' | 'saved' | 'error' = $state('idle');
+let saveStatus = $state<'idle' | 'saving' | 'saved' | 'error'>('idle');
 let loaded = $state(false);
 
 /** File-mode: load spreadsheet by file ID from desk.file API. */
