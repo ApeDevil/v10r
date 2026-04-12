@@ -4,14 +4,18 @@ Post-audit priorities. Ordered by leverage — what connects the most unused inf
 
 ---
 
-## 1. Graph Explorer Showcase
+## 1. Graph Explorer Showcase ✅ DONE
 
-Interactive knowledge graph visualization. Exercises Neo4j queries, XYFlow, D3-force — all installed but unused. Proves tier-2 graph traversal works end-to-end.
+Interactive knowledge graph visualization at `/showcases/ai/retrieval/explorer`. Exercises Neo4j queries and d3-force end-to-end.
 
-- Neo4j constraints and RAG nodes already exist
-- `@xyflow/svelte`, `d3-force`, `d3-dag`, `d3-hierarchy` installed
-- Route: `/showcases/ai/retrieval/graph/+page.svelte` (placeholder exists)
-- Needs: node/edge rendering, force layout, click-to-expand traversal, search
+- [x] KnowledgeGraph + NetworkGraph with d3-force layout
+- [x] Search (via RAG tier 3) + "Load All Entities"
+- [x] Click node → detail panel (properties, outgoing/incoming edges)
+- [x] Expand-neighbors traversal via `/api/retrieval/graph/node/[elementId]`
+- [x] Entity/relationship type filters
+- [x] v2: incremental force layout — positions preserved on merge
+- [x] v2: shortest-path highlighting via `/api/retrieval/graph/path`
+- [x] v2: elementId plumbed through retrieval so search results expand too
 
 ## 2. Real Analytics Dashboard
 
