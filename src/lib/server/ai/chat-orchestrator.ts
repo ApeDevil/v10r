@@ -411,10 +411,9 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 								prepareStep: async ({ stepNumber, messages: stepMessages }) => {
 									if (stepNumber < 2) return {};
 									return {
-										messages: stepMessages.map((msg) => {
-											const raw = msg as unknown as { role: string; content: unknown };
-											if (raw.role === 'tool' && typeof raw.content === 'string' && raw.content.length > 500) {
-												return { ...msg, content: `${raw.content.slice(0, 500)}\n[truncated]` } as typeof msg;
+										messages: stepMessages.map((msg: ModelMessage) => {
+											if (msg.role === 'tool' && typeof msg.content === 'string' && msg.content.length > 500) {
+												return { ...msg, content: `${msg.content.slice(0, 500)}\n[truncated]` };
 											}
 											return msg;
 										}),

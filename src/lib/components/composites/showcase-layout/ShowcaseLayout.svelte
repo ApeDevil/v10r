@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
-import { PageHeader, TabNav } from '$lib/components/composites';
+import { PageHeader, NavTab } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
 
 interface Props {
@@ -34,7 +34,7 @@ let {
 <PageContainer {width} class={containerClass}>
 	<PageHeader {title} {description} {breadcrumbs} />
 
-	<TabNav {tabs} {ariaLabel} />
+	<NavTab {tabs} {ariaLabel} />
 
 	<div class={wrapperClass ? `pt-6 ${wrapperClass}` : 'pt-6'}>
 		{@render children()}

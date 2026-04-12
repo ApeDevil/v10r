@@ -221,6 +221,9 @@ const authHandler: Handle = async ({ event, resolve }) => {
 		}
 	}
 
+	// Inject x-client-ip so Better Auth's built-in rate limiting works behind proxies
+	event.request.headers.set('x-client-ip', event.getClientAddress());
+
 	return svelteKitHandler({ event, resolve, auth, building });
 };
 

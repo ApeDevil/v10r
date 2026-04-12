@@ -34,7 +34,9 @@ export function notifyUser(userId: string, data: Record<string, unknown>) {
 	if (!userStreams) return;
 
 	const encoder = new TextEncoder();
-	const payload = encoder.encode(`data: ${JSON.stringify(data)}\n\n`);
+	const eventName = typeof data.type === 'string' ? data.type : null;
+	const prefix = eventName ? `event: ${eventName}\n` : '';
+	const payload = encoder.encode(`${prefix}data: ${JSON.stringify(data)}\n\n`);
 
 	for (const controller of userStreams) {
 		try {

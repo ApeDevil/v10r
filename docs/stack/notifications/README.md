@@ -101,6 +101,6 @@ Users control notifications through a **Channel × Type Matrix** (notification c
 ## Related
 
 - [../vendors.md](../vendors.md) - Provider pricing and alternatives
-- [../features/gdpr.md](../features/gdpr.md) - Consent for marketing notifications
+- [../capabilities/gdpr.md](../capabilities/gdpr.md) - Consent for marketing notifications
 - [../auth/better-auth.md](../auth/better-auth.md) - User identification
-- [../features/pwa.md](../features/pwa.md) - Push notifications (browser-based)
+- [../capabilities/pwa.md](../capabilities/pwa.md) - Push notifications (browser-based)

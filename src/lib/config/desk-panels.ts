@@ -13,11 +13,8 @@ export const DESK_PANELS: Record<string, PanelDefinition> = {
 	'io-log': { id: 'io-log', type: 'io-log', label: 'I/O Log', icon: 'i-lucide-activity', closable: true },
 };
 
-export const DESK_ACTIVITY_BAR_ITEMS: ActivityBarItem[] = [
-	{ panelType: 'explorer', icon: 'i-lucide-folder-tree', label: 'Explorer' },
-	{ panelType: 'editor', icon: 'i-lucide-pen-line', label: 'Editor' },
-	{ panelType: 'preview', icon: 'i-lucide-eye', label: 'Preview' },
-	{ panelType: 'bot', icon: 'i-lucide-bot', label: 'Bot' },
-	{ panelType: 'spreadsheet', icon: 'i-lucide-sheet', label: 'Spreadsheet' },
-	{ panelType: 'io-log', icon: 'i-lucide-activity', label: 'I/O Log' },
-];
+export const DESK_ACTIVITY_BAR_ITEMS: ActivityBarItem[] = Object.values(DESK_PANELS).map((p) => ({
+	panelType: p.type,
+	icon: p.icon,
+	label: p.label,
+}));

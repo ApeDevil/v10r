@@ -12,12 +12,17 @@ import {
 import { getFile, getSpreadsheetByFileId } from '$lib/server/db/desk/queries';
 import type { RequestHandler } from './$types';
 
+/** Constrained cell/meta value — allows primitives and shallow objects, capped by JSON size. */
+const CellValue = v.union([v.string(), v.number(), v.boolean(), v.null()]);
+const CellObject = v.record(v.string(), CellValue);
+const MAX_CELLS_JSON = 500_000; // ~500KB max
+
 const UpdateFileSchema = v.object({
 	name: v.optional(v.pipe(v.string(), v.maxLength(200))),
 	folderId: v.optional(v.nullable(v.string())),
 	aiContext: v.optional(v.boolean()),
-	cells: v.optional(v.record(v.string(), v.any())),
-	columnMeta: v.optional(v.nullable(v.record(v.string(), v.any()))),
+	cells: v.optional(v.pipe(v.record(v.string(), CellObject), v.check((v) => JSON.stringify(v).length <= MAX_CELLS_JSON, 'Cell data too large'))),
+	columnMeta: v.optional(v.nullable(v.pipe(v.record(v.string(), CellObject), v.check((v) => JSON.stringify(v).length <= MAX_CELLS_JSON, 'Column meta too large')))),
 });
 
 /** Get a file with its detail data. */

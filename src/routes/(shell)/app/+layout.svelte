@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
-import { PageHeader, TabNav } from '$lib/components/composites';
+import { PageHeader, NavTab } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
 import { setNotificationContext } from '$lib/state';
 
@@ -26,7 +26,7 @@ const tabs = [
 		]}
 	/>
 
-	<TabNav {tabs} ariaLabel="App sections" />
+	<NavTab {tabs} ariaLabel="App sections" />
 
 	<div class="pt-6">
 		{@render children()}

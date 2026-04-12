@@ -66,7 +66,7 @@ No foreign keys across stores. References between Postgres, Neo4j, R2, and Redis
 - Static assets that need CDN delivery
 - Anything > 1MB
 
-See [../../stack/data/r2.md](../../stack/data/r2.md) and [../../implementation/storage-showcase.md](../../implementation/storage-showcase.md) for implementation details.
+See [../../stack/data/r2.md](../../stack/data/r2.md) for implementation details.
 
 ### Redis / Upstash
 
@@ -77,7 +77,7 @@ See [../../stack/data/r2.md](../../stack/data/r2.md) and [../../implementation/s
 - Atomic counters (view counts, download tallies)
 - Caching hot queries (pre-computed results for expensive reads)
 
-See [../../stack/data/redis.md](../../stack/data/redis.md) and [../../implementation/cache.md](../../implementation/cache.md) for implementation details.
+See [../../stack/data/redis.md](../../stack/data/redis.md) for implementation details.
 
 ## Architecture
 
@@ -107,56 +107,33 @@ See [../../stack/data/redis.md](../../stack/data/redis.md) and [../../implementa
 | [relational.md](./relational.md) | Drizzle schema, Better Auth tables, migrations |
 | [graph.md](./graph.md) | Neo4j connection, Cypher queries, graph model |
 | [polyglot-freshness.md](./polyglot-freshness.md) | Cross-database reference integrity, orphan cleanup |
-| [../../implementation/cache.md](../../implementation/cache.md) | Cache layer implementation record (Upstash Redis) |
-| [../../implementation/storage-showcase.md](../../implementation/storage-showcase.md) | R2 storage implementation record |
-
 ## Local Development
 
-Three services run in containers; Redis uses the Upstash dev database directly:
+All databases are cloud-hosted — no local containers needed:
 
-```yaml
-# compose.yaml
-services:
-  postgres:
-    image: postgres:16-alpine
-    ports: ["5432:5432"]
-    environment:
-      POSTGRES_DB: velociraptor
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-
-  neo4j:
-    image: neo4j:5-community
-    ports: ["7474:7474", "7687:7687"]
-    environment:
-      NEO4J_AUTH: neo4j/password
-
-  minio:
-    image: minio/minio
-    ports: ["9000:9000", "9001:9001"]
-    command: server /data --console-address ":9001"
-```
-
-Upstash Redis: use your Upstash dev database directly — HTTP transport means no local container needed.
+- **PostgreSQL**: Neon (serverless, auto-scales to zero)
+- **Neo4j**: Neo4j Aura Free (cloud graph database)
+- **R2**: Cloudflare R2 (S3-compatible object storage)
+- **Redis**: Upstash (HTTP-based, no local container needed)
 
 ## Environment Variables
 
 ```bash
-# PostgreSQL (Neon in prod, local in dev)
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/velociraptor"
+# PostgreSQL (Neon)
+DATABASE_URL="postgresql://..."
 
-# Neo4j
-NEO4J_URI="bolt://localhost:7687"
+# Neo4j (Aura)
+NEO4J_URI="neo4j+s://..."
 NEO4J_USER="neo4j"
-NEO4J_PASSWORD="password"
+NEO4J_PASSWORD="..."
 
-# R2 (MinIO in dev, Cloudflare in prod)
-R2_ENDPOINT="http://localhost:9000"
-R2_ACCESS_KEY_ID="minioadmin"
-R2_SECRET_ACCESS_KEY="minioadmin"
+# R2 (Cloudflare)
+R2_ENDPOINT="https://..."
+R2_ACCESS_KEY_ID="..."
+R2_SECRET_ACCESS_KEY="..."
 R2_BUCKET="velociraptor"
 
-# Redis (Upstash in both dev and prod)
-UPSTASH_REDIS_REST_URL="https://xxx.upstash.io"
-UPSTASH_REDIS_REST_TOKEN="AXxx..."
+# Redis (Upstash)
+UPSTASH_REDIS_REST_URL="https://..."
+UPSTASH_REDIS_REST_TOKEN="..."
 ```

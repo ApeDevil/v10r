@@ -28,6 +28,7 @@ export default defineConfig({
 		},
 		warmup: {
 			clientFiles: ['./src/routes/+layout.svelte', './src/lib/components/index.ts', './src/lib/styles/tokens.ts'],
+			ssrFiles: ['./src/hooks.server.ts', './src/lib/server/db/index.ts', './src/lib/server/auth/index.ts'],
 		},
 	},
 });

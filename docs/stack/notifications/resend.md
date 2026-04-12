@@ -92,4 +92,4 @@ For burst sending (marketing campaigns), use background jobs with rate limiting.
 
 - [README.md](./README.md) - Notification architecture
 - [../vendors.md](../vendors.md#resend) - Pricing, alternatives
-- [../features/gdpr.md](../features/gdpr.md) - Email consent requirements
+- [../capabilities/gdpr.md](../capabilities/gdpr.md) - Email consent requirements

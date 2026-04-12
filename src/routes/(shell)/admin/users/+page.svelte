@@ -2,7 +2,7 @@
 import { enhance } from '$app/forms';
 import { goto, invalidateAll } from '$app/navigation';
 import { page } from '$app/state';
-import { Card, ConfirmDialog, EmptyState } from '$lib/components/composites';
+import { Card, ConfirmDialog, EmptyState, Pagination } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
 import { getToast } from '$lib/state/toast.svelte';
@@ -231,19 +231,11 @@ function openBanDialog(userId: string) {
 			</div>
 
 			{#if data.totalPages > 1}
-				<div class="pagination">
-					{#if data.page > 1}
-						<a href={buildUrl({ page: String(data.page - 1) })} class="page-link">
-							<span class="i-lucide-chevron-left h-4 w-4"></span> Prev
-						</a>
-					{/if}
-					<span class="page-info">Page {data.page} of {data.totalPages}</span>
-					{#if data.page < data.totalPages}
-						<a href={buildUrl({ page: String(data.page + 1) })} class="page-link">
-							Next <span class="i-lucide-chevron-right h-4 w-4"></span>
-						</a>
-					{/if}
-				</div>
+				<Pagination
+					currentPage={data.page}
+					totalPages={data.totalPages}
+					onPageChange={(p) => goto(buildUrl({ page: String(p) }))}
+				/>
 			{/if}
 		{/if}
 	</Card>
@@ -382,35 +374,7 @@ function openBanDialog(userId: string) {
 		color: var(--color-muted);
 	}
 
-	.pagination {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		gap: var(--spacing-4);
-		padding-top: var(--spacing-4);
-		border-top: 1px solid var(--color-border);
-		margin-top: var(--spacing-4);
-	}
-
-	.page-link {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-1);
-		font-size: var(--text-fluid-sm);
-		color: var(--color-primary);
-		text-decoration: none;
-	}
-
-	.page-link:hover {
-		text-decoration: underline;
-	}
-
-	.page-info {
-		font-size: var(--text-fluid-sm);
-		color: var(--color-muted);
-	}
-
-	.ban-reason-label {
+.ban-reason-label {
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-2);

@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
-import { PageHeader, TabNav } from '$lib/components/composites';
+import { PageHeader, NavTab } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
 import { getTheme } from '$lib/state/theme.svelte';
 import { getShowcaseTabs } from '../showcases';
@@ -26,7 +26,7 @@ const tabs = getShowcaseTabs('/showcases/ui');
 		]}
 	/>
 
-	<TabNav {tabs} ariaLabel="UI sections" />
+	<NavTab {tabs} ariaLabel="UI sections" />
 
 	<div class="pt-6">
 		{@render children()}

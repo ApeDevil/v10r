@@ -26,37 +26,48 @@ function addEvent(event: LiveEvent) {
 }
 
 $effect(() => {
-	const source = new EventSource('/api/analytics/stream');
+	let source: EventSource;
+	let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+
+	function connect() {
+		source = new EventSource('/api/analytics/stream');
+
+		source.onopen = () => {
+			connectionStatus = 'connected';
+		};
+
+		source.onmessage = (e) => {
+			try {
+				const data = JSON.parse(e.data);
+				if (data.type === 'init') {
+					activeSessions = data.activeSessions ?? 0;
+				} else if (data.type === 'event') {
+					addEvent(data.event);
+				} else if (data.type === 'sessions') {
+					activeSessions = data.count;
+				}
+			} catch {
+				// Ignore parse errors (heartbeats, etc.)
+			}
+		};
+
+		source.onerror = () => {
+			connectionStatus = 'disconnected';
+			source.close();
+			reconnectTimer = setTimeout(connect, 3000);
+		};
+	}
+
+	connect();
+
 	const bucketTimer = setInterval(() => {
 		minuteBuckets = [...minuteBuckets.slice(1), 0];
 	}, 60000);
 
-	source.onopen = () => {
-		connectionStatus = 'connected';
-	};
-
-	source.onmessage = (e) => {
-		try {
-			const data = JSON.parse(e.data);
-			if (data.type === 'init') {
-				activeSessions = data.activeSessions ?? 0;
-			} else if (data.type === 'event') {
-				addEvent(data.event);
-			} else if (data.type === 'sessions') {
-				activeSessions = data.count;
-			}
-		} catch {
-			// Ignore parse errors (heartbeats, etc.)
-		}
-	};
-
-	source.onerror = () => {
-		connectionStatus = 'disconnected';
-	};
-
 	return () => {
 		source.close();
 		clearInterval(bucketTimer);
+		if (reconnectTimer) clearTimeout(reconnectTimer);
 	};
 });
 

@@ -1,1 +1,1 @@
-export { default as TabNav } from './TabNav.svelte';
+export { default as NavTab } from './NavTab.svelte';

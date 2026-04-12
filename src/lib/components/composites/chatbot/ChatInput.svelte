@@ -1,4 +1,6 @@
 <script lang="ts">
+import { Button } from '$lib/components/primitives/button';
+
 interface Props {
 	value: string;
 	loading?: boolean;
@@ -37,8 +39,9 @@ $effect(() => {
 
 <div class="chat-input-container flex items-end gap-2 border-t border-border p-3">
 	{#if onopensettings}
-		<button
-			type="button"
+		<Button
+			variant="ghost"
+			size="icon"
 			onclick={onopensettings}
 			class="settings-btn"
 			aria-label="Bot manager settings"
@@ -47,7 +50,7 @@ $effect(() => {
 			{#if contextCount > 0}
 				<span class="context-badge">{contextCount}</span>
 			{/if}
-		</button>
+		</Button>
 	{/if}
 
 	<textarea
@@ -60,11 +63,12 @@ $effect(() => {
 		rows={1}
 		class="chat-textarea flex-1 resize-none rounded-md border border-border px-3 py-2 text-fluid-base text-fg placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary"
 	></textarea>
-	<button
-		type="button"
+	<Button
+		variant="primary"
+		size="icon"
 		onclick={onsubmit}
 		disabled={loading || !value.trim()}
-		class="chat-send-btn flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary text-white disabled:opacity-40"
+		class="shrink-0"
 		aria-label="Send message"
 	>
 		{#if loading}
@@ -72,7 +76,7 @@ $effect(() => {
 		{:else}
 			<span class="i-lucide-send h-4 w-4"></span>
 		{/if}
-	</button>
+	</Button>
 </div>
 
 <style>
@@ -84,25 +88,9 @@ $effect(() => {
 		background-color: transparent;
 	}
 
-	.settings-btn {
+	:global(.settings-btn) {
 		position: relative;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 36px;
-		height: 36px;
-		flex-shrink: 0;
-		border-radius: var(--radius-md);
-		border: none;
-		background: none;
 		color: var(--color-muted);
-		cursor: pointer;
-		padding: 0;
-	}
-
-	.settings-btn:hover {
-		color: var(--color-fg);
-		background: color-mix(in srgb, var(--color-muted) 12%, transparent);
 	}
 
 	.settings-icon {
@@ -125,19 +113,4 @@ $effect(() => {
 		color: white;
 	}
 
-	.chat-send-btn {
-		transition:
-			translate var(--duration-fast) var(--ease-out),
-			box-shadow var(--duration-fast) var(--ease-default);
-	}
-
-	.chat-send-btn:not(:disabled):hover {
-		translate: 0 -2px;
-		box-shadow: 0 0 16px 4px color-mix(in srgb, var(--color-primary) 45%, transparent);
-	}
-
-	.chat-send-btn:not(:disabled):active {
-		translate: 0 0;
-		box-shadow: none;
-	}
 </style>

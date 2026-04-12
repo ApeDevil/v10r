@@ -73,4 +73,3 @@ Need caching?
 - [deployment.md](./deployment.md) - Vercel configuration
 - [../data/postgres.md](../data/postgres.md) - Database queries
 - [../data/redis.md](../data/redis.md) - Redis technology details, SDK reference, known limitations
-- [../../implementation/cache.md](../../implementation/cache.md) - Cache showcase implementation record

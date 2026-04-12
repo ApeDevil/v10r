@@ -89,6 +89,6 @@ The `theme-bridge` utility (`$lib/components/viz/_shared/theme-bridge`) reads CS
 
 ## Related
 
-- [../features/3d-web.md](../features/3d-web.md) — WebGL-based 3D rendering (Three.js, Threlte)
+- [3d-web.md](./3d-web.md) — WebGL-based 3D rendering (Three.js, Threlte)
 - [../core/sveltekit.md](../core/sveltekit.md) — SSR/CSR configuration, `browser` guard
 - [Showcase: /showcases/viz](../../../../src/routes/showcases/viz/+page.svelte) — hub page

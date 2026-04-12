@@ -93,7 +93,7 @@
 - [x] **Missing `folders` in `userRelations`** — Added `folders: many(folder)` to userRelations
   - `src/lib/server/db/schema/relations.ts:327`
 
-- [ ] **Neo4j missing existence constraints** — no NOT NULL on `Technology.category`, `Layer.order`, `Showcase.path`
+- [x] **Neo4j missing existence constraints** — Added `IS NOT NULL` constraints for `Technology.category`, `Layer.order`, `Showcase.path`
   - `src/lib/server/graph/showcase/constraints.ts`
 
 ### Architecture
@@ -133,7 +133,7 @@
 - [x] **OTP digit inputs have no accessible labels** — Added `aria-label="Digit {n} of 6"` to each input
   - `src/routes/(shell)/auth/verify/+page.svelte:140`
 
-- [ ] **Session expiry modal: no focus trap, raw buttons** — keyboard focus not trapped. Buttons bypass `Button` component, hardcode `color: white`. Use Bits UI `Dialog` primitive
+- [x] **Session expiry modal: no focus trap, raw buttons** — Rewrote to use `Dialog` primitive (Bits UI focus trap) + `Button` component. Removed all custom modal CSS
   - `src/lib/components/shell/session/SessionExpiryModal.svelte`
 
 - [x] **Input focus state fails WCAG 2.4.11** — Added `outline: 2px solid var(--color-primary)` on `:focus-visible` alongside bottom border
@@ -142,8 +142,8 @@
 - [x] **Toast close button 24px tap target** — Expanded to 2.75rem (44px) to meet WCAG 2.5.5 minimum
   - `src/lib/components/composites/toast/ToastContainer.svelte:103`
 
-- [ ] **Admin pages hand-roll pagination** — `Pagination` component exists but not used
-  - `src/routes/(shell)/admin/users/+page.svelte:234-247`
+- [x] **Admin pages hand-roll pagination** — Replaced with `Pagination` component + `goto()` for URL-based navigation. Removed hand-rolled pagination CSS
+  - `src/routes/(shell)/admin/users/+page.svelte`
 
 - [ ] **Consent banner: 4 simultaneous choices** — choice overload on mobile. Keep Accept All + Necessary Only as primary; move others to customize drawer
   - `src/lib/components/shell/ConsentBanner.svelte`
@@ -156,7 +156,7 @@
 
 ### AI/LLM
 
-- [ ] **Streaming endpoint uses deprecated static `chatModel`** — bypasses dynamic provider resolution and user preferences. Route through `orchestrateChat()` or resolve provider dynamically
+- [x] **Streaming endpoint uses deprecated static `chatModel`** — Replaced with `getActiveProvider(user.id)` for dynamic per-user provider resolution
   - `src/routes/(shell)/api/ai/streaming/+server.ts:4`
 
 - [x] **Fallback path skips error classification** — Wrapped in `createUIMessageStream` with `onError: classifyStreamError`
@@ -175,28 +175,28 @@
   - `src/routes/(shell)/api/desk/` (multiple)
   - `src/routes/api/announcements/[id]/dismiss/+server.ts`
 
-- [ ] **SSE streams lack named events and event IDs** — no `Last-Event-ID` reconnection support. `type` in JSON payload duplicates what SSE event names should provide
+- [x] **SSE streams lack named events and event IDs** — Notification stream now sends named events (`event: init`, `event: new`, etc.) matching client listeners. Analytics stream uses unnamed events (client uses `onmessage`) — consistent. `Last-Event-ID` not added (no durable event store to replay from)
   - `src/routes/(shell)/api/notifications/stream/+server.ts`
-  - `src/routes/(shell)/api/analytics/stream/+server.ts`
+  - `src/lib/server/notifications/stream.ts`
 
-- [ ] **`v.any()` in cell/columnMeta validation** — no depth/size constraint on arbitrary values
-  - `src/routes/(shell)/api/desk/files/[id]/+server.ts:20`
+- [x] **`v.any()` in cell/columnMeta validation** — Replaced with typed `CellValue` union (string|number|boolean|null) + `CellObject` record + 500KB JSON size check
+  - `src/routes/(shell)/api/desk/files/[id]/+server.ts`
 
-- [ ] **Audit export: inline auth, no validation, no rate limiting**
-  - `src/routes/(shell)/admin/audit/export/+server.ts:7-13`
+- [x] **Audit export: inline auth, no validation, no rate limiting** — Replaced inline auth with `requireAdmin()` guard, added rate limiter (10/min), added date format validation
+  - `src/routes/(shell)/admin/audit/export/+server.ts`
 
 ### Aesthetics
 
 - [x] **`pill-variants.ts` — `bg-primary text-primary` = invisible text** — Fixed to use container/light bg tokens with contrasting text colors
   - `src/lib/components/primitives/pill-variants.ts`
 
-- [ ] **`desk-panels.ts` duplicates label/icon** — `DESK_ACTIVITY_BAR_ITEMS` repeats data from `DESK_PANELS`. Derive it
+- [x] **`desk-panels.ts` duplicates label/icon** — Derived `DESK_ACTIVITY_BAR_ITEMS` from `Object.values(DESK_PANELS).map()`
   - `src/lib/config/desk-panels.ts`
 
-- [ ] **`TabNav` naming inconsistency** — other nav components use `Nav[Noun]` (`NavSection`, `NavGrid`). Rename to `NavTab`
-  - `src/lib/components/composites/nav-tab/TabNav.svelte`
+- [x] **`TabNav` naming inconsistency** — Renamed to `NavTab` across 15 consumer files + barrel export
+  - `src/lib/components/composites/nav-tab/NavTab.svelte`
 
-- [ ] **`ChatInput` raw buttons** — re-implements what `Button` component provides (lift, glow, focus ring). Use `<Button variant="primary" size="icon">`
+- [x] **`ChatInput` raw buttons** — Replaced raw `<button>` with `<Button variant="primary" size="icon">` (send) and `<Button variant="ghost" size="icon">` (settings). Removed redundant scoped CSS
   - `src/lib/components/composites/chatbot/ChatInput.svelte`
 
 ---
@@ -216,33 +216,38 @@
 - [x] SSE `start()` uncaught async error can kill notification stream silently — Wrapped `getUnreadCount` in try/catch with fallback
 - [x] `userPreferences` Map in `providers.ts` never cleans up (slow memory leak) — Added MAX_PREFERENCES (10K) with FIFO eviction
 - [x] Workspace queries swallow all DB errors, return empty arrays — Removed stale try/catch blocks, errors now propagate
-- [ ] Analytics SSE has no reconnection on error — `src/routes/(shell)/showcases/analytics/live/+page.svelte:53-55`
+- [x] Analytics SSE has no reconnection on error — Added auto-reconnect with 3s delay on `onerror`, cleanup on effect teardown
+  - `src/routes/(shell)/showcases/analytics/live/+page.svelte`
 - [x] `DockLayout` theme timer not cleaned on unmount — Refactored to use `$effect` cleanup return
-- [ ] Notification pipeline showcase page silently broken (named event listeners never fire, server sends unnamed events) — `src/routes/(shell)/showcases/notifications/pipeline/+page.svelte:23`
-- [ ] `prepareStep` double-cast through `unknown` — fragile if AI SDK changes `ModelMessage` structure — `src/lib/server/ai/chat-orchestrator.ts:409`
+- [x] Notification pipeline showcase page silently broken — Server now sends named SSE events (`event: init\n`, `event: new\n`, etc.) matching client `addEventListener()` listeners. Fixed both `stream.ts` and `notifyUser()`
+  - `src/lib/server/notifications/stream.ts`
+  - `src/routes/(shell)/api/notifications/stream/+server.ts`
+- [x] `prepareStep` double-cast through `unknown` — Replaced `msg as unknown as { role: string; content: unknown }` with direct `msg: ModelMessage` type annotation (already imported)
+  - `src/lib/server/ai/chat-orchestrator.ts`
 - [x] `refreshDiscordTokens` catch block can throw on its own DB write — Wrapped inner DB write in try/catch
 - [x] In-memory rate limiter in showcase endpoint leaks memory — Added periodic cleanup when map exceeds 1000 entries
 - [x] Palette CSS `data-palette` attribute interpolated without sanitizing `pid` — Added regex sanitization `[^a-zA-Z0-9_-]`
 
 ### Documentation
 
-- [ ] `docs/README.md` references non-existent `implementation/` directory
-- [ ] `docs/blueprint/ai/README.md` is ~1000 lines of stale implementation (not an index)
-- [ ] 8 broken links across README files (mostly `features/` vs `capabilities/` paths, stale `implementation/` refs)
+- [x] `docs/README.md` references non-existent `implementation/` directory — Removed implementation row, fixed `primary/` → `core/` + actual subdirectory paths
+- [x] `docs/blueprint/ai/README.md` is ~1000 lines of stale implementation (not an index) — Rewrote as navigation hub: overview, provider table, module map, architecture diagram, document index. 1000 lines → 40 lines
+- [x] 8 broken links across README files — Fixed `features/` → `capabilities/` in viz.md, notifications/README.md, resend.md. Removed stale `implementation/` refs from db/README.md and caching.md
 - [x] `docs/blueprint/i18n.md` says sveltekit-i18n — Reviewed: doc already references Paraglide JS v2 (false positive in original audit)
-- [ ] `docs/blueprint/db/README.md` describes fictional `compose.yaml` local setup
-- [ ] `docs/guides/` and `docs/blueprint/data/` missing README.md indexes
+- [x] `docs/blueprint/db/README.md` describes fictional `compose.yaml` local setup — Replaced with actual cloud-hosted setup (Neon, Neo4j Aura, R2, Upstash). Removed broken implementation/ links
+- [x] `docs/guides/` and `docs/blueprint/data/` missing README.md indexes — Added both README.md files with topic tables
 
 ### Bun / Config
 
 - [x] `validate` script uses `bun biome check .` instead of `biome ci .` — Fixed to `biome ci .`
 - [ ] No `bunfig.toml` (low impact, optional install cache config)
-- [ ] Missing `warmup.ssrFiles` in vite config for server entry points
-- [ ] Redundant `--host 0.0.0.0` in both CMD and vite config
+- [x] Missing `warmup.ssrFiles` in vite config for server entry points — Added `hooks.server.ts`, `db/index.ts`, `auth/index.ts`
+- [x] Redundant `--host 0.0.0.0` in both CMD and vite config — Removed from `Containerfile.dev` CMD (already in `vite.config.ts`)
 
 ### Real-World Gotchas (from scout)
 
-- [ ] Better Auth rate limiting silently off without `x-client-ip` header injection in hooks
-- [ ] AI SDK `Chat` class doesn't update on route navigation — needs `$derived(new Chat(...))`
+- [x] Better Auth rate limiting silently off without `x-client-ip` header injection in hooks — Added `event.request.headers.set('x-client-ip', event.getClientAddress())` before `svelteKitHandler` call
+  - `src/hooks.server.ts`
+- [x] AI SDK `Chat` class doesn't update on route navigation — Reviewed: all 4 `Chat` instances are in leaf pages/components, not layouts. They recreate on navigation naturally. No fix needed
 - [ ] Neo4j Aura Free auto-deletes after 90 days paused
 - [ ] Neon free tier 100 CU-hours/month cap — background polling defeats scale-to-zero

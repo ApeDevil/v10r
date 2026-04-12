@@ -1,6 +1,6 @@
 import { streamText } from 'ai';
 import { safeParse } from 'valibot';
-import { aiConfigured, chatModel } from '$lib/server/ai';
+import { aiConfigured, getActiveProvider } from '$lib/server/ai';
 import { MAX_TOKENS, RATE_LIMIT_MAX, RATE_LIMIT_PREFIX, RATE_LIMIT_WINDOW, SYSTEM_PROMPT } from '$lib/server/ai/config';
 import { aiErrorToStatus, classifyAIError, safeAIMessage } from '$lib/server/ai/errors';
 import { StreamingRequestSchema } from '$lib/server/ai/validation';
@@ -14,7 +14,9 @@ const ratelimit = createLimiter(RATE_LIMIT_PREFIX, RATE_LIMIT_MAX, RATE_LIMIT_WI
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const { user } = requireApiUser(locals);
 
-	if (!aiConfigured || !chatModel) {
+	const provider = aiConfigured ? getActiveProvider(user.id) : null;
+	const model = provider?.getInstance() ?? null;
+	if (!model) {
 		return apiError(503, 'unavailable', 'No AI provider configured.');
 	}
 
@@ -36,7 +38,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		const { prompt } = parsed.output;
 
 		const result = streamText({
-			model: chatModel,
+			model,
 			system: SYSTEM_PROMPT,
 			messages: [{ role: 'user', content: prompt }],
 			maxOutputTokens: MAX_TOKENS,
