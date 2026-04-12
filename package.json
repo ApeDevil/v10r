@@ -44,7 +44,7 @@
 		"knip": "knip"
 	},
 	"dependencies": {
-		"@ai-sdk/google": "^2.0.0",
+		"@ai-sdk/google": "^3.0.62",
 		"@ai-sdk/groq": "^2.0.0",
 		"@ai-sdk/openai": "^2.0.0",
 		"@ai-sdk/svelte": "^3.0.0",

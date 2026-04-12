@@ -27,7 +27,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		return apiOk(data);
 	} catch (err) {
 		if (err instanceof Neo4jError) {
-			return apiError(err.httpStatus, 'graph_error', err.message);
+			return apiError(err.toStatus(), 'graph_error', err.message);
 		}
 		console.error('[api:retrieval:graph:node] Error:', err instanceof Error ? err.message : err);
 		return apiError(500, 'expand_failed', 'Failed to expand node neighborhood.');

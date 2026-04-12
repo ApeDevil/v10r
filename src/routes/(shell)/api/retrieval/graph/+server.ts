@@ -19,7 +19,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 		return apiOk(data);
 	} catch (err) {
 		if (err instanceof Neo4jError) {
-			return apiError(err.httpStatus, 'graph_error', err.message);
+			return apiError(err.toStatus(), 'graph_error', err.message);
 		}
 		console.error('[api:retrieval:graph] Error:', err instanceof Error ? err.message : err);
 		return apiError(500, 'graph_failed', 'Failed to load graph data.');

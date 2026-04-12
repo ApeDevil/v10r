@@ -16,10 +16,11 @@ if (!NEO4J_URI || !NEO4J_USERNAME || !NEO4J_PASSWORD) {
 }
 
 const host = NEO4J_URI.replace(/^neo4j(\+s)?:\/\//, 'https://');
+const database = process.env.NEO4J_DATABASE || 'neo4j';
 const auth = `Basic ${btoa(`${NEO4J_USERNAME}:${NEO4J_PASSWORD}`)}`;
 
 async function cypher(statement: string): Promise<void> {
-	const response = await fetch(`${host}/db/neo4j/query/v2`, {
+	const response = await fetch(`${host}/db/${database}/query/v2`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',

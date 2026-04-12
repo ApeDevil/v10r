@@ -8,6 +8,10 @@ function getHttpHost(): string {
 	return env.NEO4J_URI.replace(/^neo4j(\+s)?:\/\//, 'https://');
 }
 
+function getDatabase(): string {
+	return env.NEO4J_DATABASE || 'neo4j';
+}
+
 /** Base64-encode Basic auth header (memoized — credentials don't change at runtime) */
 let cachedAuthHeader: string | undefined;
 
@@ -44,7 +48,7 @@ export async function cypher<T = Record<string, unknown>>(
 	options?: { timeoutMs?: number },
 ): Promise<T[]> {
 	const host = getHttpHost();
-	const url = `${host}/db/neo4j/query/v2`;
+	const url = `${host}/db/${getDatabase()}/query/v2`;
 	const timeoutMs = options?.timeoutMs ?? GRAPH_TIMEOUT_MS;
 
 	const body: Record<string, unknown> = { statement };

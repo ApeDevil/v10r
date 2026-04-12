@@ -78,8 +78,9 @@ export async function getEntityNeighborhood(elementId: string): Promise<Knowledg
 		cypher<{ n: Neo4jNodeRecord }>(
 			`MATCH (center:Entity) WHERE elementId(center) = $id
 			 OPTIONAL MATCH (center)-[:RELATED_TO]-(neighbor:Entity)
-			 WITH collect(neighbor) + [center] AS all
-			 UNWIND all AS n
+			 WITH center, collect(DISTINCT neighbor) AS neighbors
+			 UNWIND (neighbors + [center]) AS n
+			 WITH n WHERE n IS NOT NULL
 			 RETURN DISTINCT n`,
 			{ id: elementId },
 		),

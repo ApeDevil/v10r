@@ -14,9 +14,13 @@ export class RetrievalError extends ServerError {
 	constructor(
 		public readonly kind: RetrievalErrorKind,
 		message: string,
+		options?: { cause?: unknown },
 	) {
 		super(kind, message);
 		this.name = 'RetrievalError';
+		if (options?.cause !== undefined) {
+			(this as { cause?: unknown }).cause = options.cause;
+		}
 	}
 
 	override toStatus(): number {

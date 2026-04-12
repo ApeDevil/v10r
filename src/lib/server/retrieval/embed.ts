@@ -27,6 +27,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 		throw new RetrievalError(
 			'embedding',
 			`Failed to generate embedding: ${err instanceof Error ? err.message : 'Unknown error'}`,
+			{ cause: err },
 		);
 	}
 }
@@ -44,6 +45,7 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
 		throw new RetrievalError(
 			'embedding',
 			`Failed to generate embeddings: ${err instanceof Error ? err.message : 'Unknown error'}`,
+			{ cause: err },
 		);
 	}
 }
