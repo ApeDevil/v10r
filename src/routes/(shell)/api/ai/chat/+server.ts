@@ -33,6 +33,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		conversationId: parsed.output.conversationId,
 		useRetrieval: parsed.output.useRetrieval,
 		retrievalTiers: parsed.output.retrievalTiers,
+		fusion: parsed.output.fusion,
 		panelContext: parsed.output.panelContext,
 		toolScopes: parsed.output.toolScopes,
 		deskLayout: parsed.output.deskLayout,

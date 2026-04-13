@@ -1,4 +1,10 @@
-import type { ChunkSummary, PipelineChunksEvent, PipelineStepEvent, StepDetail } from '$lib/types/pipeline';
+import type {
+	ChunkSummary,
+	PipelineChunksEvent,
+	PipelinePromptEvent,
+	PipelineStepEvent,
+	StepDetail,
+} from '$lib/types/pipeline';
 import { EMBEDDING_DIMENSIONS, MAX_CONTEXT_CHUNKS, MAX_GRAPH_HOPS } from './config';
 import { generateEmbedding } from './embed';
 import { fuseAndRank } from './rank';
@@ -11,11 +17,21 @@ const DEFAULT_OPTIONS: Required<Omit<RetrievalOptions, 'collectionId' | 'userId'
 	maxChunks: MAX_CONTEXT_CHUNKS,
 	tiers: [1],
 	graphDepth: MAX_GRAPH_HOPS,
+	fusion: 'rrf',
 };
 
-type EmitFn = (event: PipelineStepEvent | PipelineChunksEvent) => void;
+type EmitFn = (event: PipelineStepEvent | PipelineChunksEvent | PipelinePromptEvent) => void;
 
-function toSummary(chunk: RankedChunk, survived: boolean): ChunkSummary {
+function toSummary(
+	chunk: RankedChunk,
+	survived: boolean,
+	extras?: { rrfRank?: number; rrfContribution?: number; survivalReason?: ChunkSummary['survivalReason'] },
+): ChunkSummary {
+	const retrieverScores: ChunkSummary['retrieverScores'] = {};
+	if (chunk.source === 'vector' || chunk.source === 'bm25') retrieverScores.vector = chunk.score;
+	else if (chunk.tier === 2) retrieverScores.parentChild = chunk.score;
+	else if (chunk.tier === 3 || chunk.source === 'graph') retrieverScores.graph = chunk.score;
+
 	return {
 		chunkId: chunk.chunkId,
 		documentId: chunk.documentId,
@@ -26,6 +42,10 @@ function toSummary(chunk: RankedChunk, survived: boolean): ChunkSummary {
 		source: chunk.source,
 		tier: chunk.tier,
 		survived,
+		retrieverScores,
+		rrfRank: extras?.rrfRank,
+		rrfContribution: extras?.rrfContribution,
+		survivalReason: extras?.survivalReason,
 	};
 }
 
@@ -59,7 +79,7 @@ export async function retrieve(query: string, options: RetrievalOptions, onEvent
 		onEvent &&
 			emit(onEvent, 'embed', 'done', {
 				durationMs: Math.round(performance.now() - embedStart),
-				detail: { kind: 'embed', dimensions: EMBEDDING_DIMENSIONS },
+				detail: { kind: 'embed', dimensions: EMBEDDING_DIMENSIONS, query },
 			});
 	} catch (err) {
 		onEvent &&
@@ -161,11 +181,24 @@ export async function retrieve(query: string, options: RetrievalOptions, onEvent
 	// --- Emit chunk details ---
 	if (onEvent) {
 		const survivedIds = new Set(chunks.map((c) => c.chunkId));
+		const rrfRankById = new Map<string, number>();
+		for (let idx = 0; idx < chunks.length; idx++) {
+			rrfRankById.set(chunks[idx].chunkId, idx + 1);
+		}
+		const multiTier = opts.tiers.length > 1;
+		const defaultReason: ChunkSummary['survivalReason'] = multiTier ? 'rrf_threshold' : 'top_k';
+
 		const tierChunks: Record<string, ChunkSummary[]> = {};
 		for (let i = 0; i < opts.tiers.length; i++) {
 			const tier = opts.tiers[i];
 			const tierResult = tierResults[i];
-			tierChunks[`tier-${tier}`] = tierResult.map((c) => toSummary(c, survivedIds.has(c.chunkId)));
+			tierChunks[`tier-${tier}`] = tierResult.map((c) =>
+				toSummary(c, survivedIds.has(c.chunkId), {
+					rrfRank: rrfRankById.get(c.chunkId),
+					rrfContribution: survivedIds.has(c.chunkId) ? c.score : undefined,
+					survivalReason: survivedIds.has(c.chunkId) ? defaultReason : undefined,
+				}),
+			);
 		}
 		onEvent({
 			type: 'pipeline:chunks',
@@ -173,8 +206,20 @@ export async function retrieve(query: string, options: RetrievalOptions, onEvent
 			rankedChunks: allChunks
 				.filter((c) => survivedIds.has(c.chunkId))
 				.sort((a, b) => b.score - a.score)
-				.map((c) => toSummary(c, true)),
-			contextChunks: chunks.map((c) => toSummary(c, true)),
+				.map((c) =>
+					toSummary(c, true, {
+						rrfRank: rrfRankById.get(c.chunkId),
+						rrfContribution: c.score,
+						survivalReason: defaultReason,
+					}),
+				),
+			contextChunks: chunks.map((c) =>
+				toSummary(c, true, {
+					rrfRank: rrfRankById.get(c.chunkId),
+					rrfContribution: c.score,
+					survivalReason: defaultReason,
+				}),
+			),
 		});
 	}
 

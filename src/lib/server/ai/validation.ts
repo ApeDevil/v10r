@@ -50,6 +50,7 @@ export const ChatRequestSchema = v.object({
 	conversationId: v.optional(v.pipe(v.string(), v.uuid())),
 	useRetrieval: v.optional(v.boolean()),
 	retrievalTiers: v.optional(v.array(v.picklist([1, 2, 3]))),
+	fusion: v.optional(v.picklist(['none', 'rrf'])),
 	panelContext: v.optional(v.pipe(v.array(PanelContextEntry), v.maxLength(5))),
 	/** Tool permission scopes — empty or omitted means no tools. */
 	toolScopes: v.optional(v.array(ToolScope)),

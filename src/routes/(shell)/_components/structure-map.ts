@@ -119,9 +119,9 @@ export const sections: StructureSection[] = [
 				items: [
 					{
 						segments: [
-							{ label: 'ai', href: '/showcases/ai/retrieval/graph' },
-							{ label: 'graph', href: '/showcases/ai/retrieval/graph' },
-							{ label: 'retrieval', href: '/showcases/ai/retrieval/graph' },
+							{ label: 'ai', href: '/showcases/ai/retrieval' },
+							{ label: 'graph', href: '/showcases/ai/retrieval/rag-chat?mode=graph' },
+							{ label: 'retrieval', href: '/showcases/ai/retrieval/rag-chat' },
 						],
 						description: 'intelligence',
 					},

@@ -210,19 +210,15 @@ export const showcases: ShowcaseCard[] = [
 		title: 'AI',
 		description: 'AI assistant with Vercel AI SDK and Groq',
 		sublinks: [
-			{ label: 'Connection', href: '/showcases/ai/connection' },
-			{ label: 'Chat', href: '/showcases/ai/chat' },
-			{ label: 'Streaming', href: '/showcases/ai/streaming' },
+			{ label: 'Simple Chat', href: '/showcases/ai/chat' },
 			{
 				label: 'Retrieval',
 				href: '/showcases/ai/retrieval',
 				children: [
+					{ label: 'Overview', href: '/showcases/ai/retrieval' },
 					{ label: 'Ingest', href: '/showcases/ai/retrieval/ingest' },
-					{ label: 'Contextual', href: '/showcases/ai/retrieval/contextual' },
-					{ label: 'Parent-Child', href: '/showcases/ai/retrieval/parent-child' },
-					{ label: 'Graph', href: '/showcases/ai/retrieval/graph' },
+					{ label: 'RAG Chat', href: '/showcases/ai/retrieval/rag-chat' },
 					{ label: 'Explorer', href: '/showcases/ai/retrieval/explorer' },
-					{ label: 'Chat', href: '/showcases/ai/retrieval/chat' },
 				],
 			},
 		],

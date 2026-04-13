@@ -15,6 +15,7 @@ interface Props {
 	pathToId?: string | null;
 	onSetPathFrom?: (nodeId: string) => void;
 	onSetPathTo?: (nodeId: string) => void;
+	onAskAbout?: (node: KnowledgeNode) => void;
 }
 
 let {
@@ -29,6 +30,7 @@ let {
 	pathToId = null,
 	onSetPathFrom,
 	onSetPathTo,
+	onAskAbout,
 }: Props = $props();
 
 const labelById = $derived(new Map(allNodes.map((n) => [n.id, n.label ?? n.id])));
@@ -97,22 +99,31 @@ const properties = $derived(node.properties ? Object.entries(node.properties).fi
 				</div>
 			{/if}
 
-			{#if !expanded}
-				<Button
-					variant="outline"
-					size="sm"
-					onclick={() => onExpand(node.id)}
-					disabled={expandLoading}
-				>
-					{#if expandLoading}
-						<Spinner size="xs" class="mr-1" />
-					{/if}
-					<span class="i-lucide-network h-4 w-4 mr-1"></span>
-					Expand neighbors
-				</Button>
-			{:else}
-				<Typography variant="muted" as="p">Neighbors loaded</Typography>
-			{/if}
+			<div class="action-row">
+				{#if !expanded}
+					<Button
+						variant="outline"
+						size="sm"
+						onclick={() => onExpand(node.id)}
+						disabled={expandLoading}
+					>
+						{#if expandLoading}
+							<Spinner size="xs" class="mr-1" />
+						{/if}
+						<span class="i-lucide-network h-4 w-4 mr-1"></span>
+						Expand neighbors
+					</Button>
+				{:else}
+					<Typography variant="muted" as="p">Neighbors loaded</Typography>
+				{/if}
+
+				{#if onAskAbout}
+					<Button variant="primary" size="sm" onclick={() => onAskAbout?.(node)}>
+						<span class="i-lucide-message-square h-4 w-4 mr-1"></span>
+						Ask about this node
+					</Button>
+				{/if}
+			</div>
 
 			{#if onSetPathFrom && onSetPathTo}
 				<div class="prop-section">
@@ -270,5 +281,11 @@ const properties = $derived(node.properties ? Object.entries(node.properties).fi
 		display: flex;
 		gap: var(--spacing-2);
 		flex-wrap: wrap;
+	}
+
+	.action-row {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-2);
 	}
 </style>

@@ -35,7 +35,7 @@ import {
 } from '$lib/server/db/ai/mutations';
 import { getConversation } from '$lib/server/db/ai/queries';
 import { formatContextForPrompt, retrieve } from '$lib/server/retrieval';
-import type { PipelineChunksEvent, PipelineStepEvent } from '$lib/types/pipeline';
+import type { PipelineChunksEvent, PipelinePromptEvent, PipelineStepEvent } from '$lib/types/pipeline';
 
 /** A legacy simple message or a full UIMessage from the AI SDK v6 client. */
 export type ChatMessage = { role: 'user' | 'assistant'; content: string } | UIMessage;
@@ -47,6 +47,7 @@ export interface ChatInput {
 	conversationId?: string;
 	useRetrieval?: boolean;
 	retrievalTiers?: (1 | 2 | 3)[];
+	fusion?: 'none' | 'rrf';
 	panelContext?: {
 		panelType: string;
 		label: string;
@@ -279,6 +280,7 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 		conversationId: existingConvId,
 		useRetrieval,
 		retrievalTiers,
+		fusion,
 		panelContext,
 		toolScopes,
 		deskLayout,
@@ -357,12 +359,18 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 	try {
 		// Retrieval path — uses createUIMessageStream for custom pipeline events
 		if (useRetrieval && lastRawMsg?.role === 'user' && userMsgText) {
+			const requestId = crypto.randomUUID();
+			const generateStartedAt = { t: 0 };
 			const stream = createUIMessageStream({
 				execute: async ({ writer }) => {
 					let systemPrompt = baseSystemPrompt;
 
-					const pipelineEvents: (PipelineStepEvent | PipelineChunksEvent)[] = [];
-					const emitEvent = (event: PipelineStepEvent | PipelineChunksEvent) => {
+					type AnyPipelineEvent = PipelineStepEvent | PipelineChunksEvent | PipelinePromptEvent;
+					const pipelineEvents: AnyPipelineEvent[] = [];
+					const emitEvent = (event: AnyPipelineEvent) => {
+						if (event.type === 'pipeline:step') {
+							event.requestId = requestId;
+						}
 						pipelineEvents.push(event);
 						writer.write({ type: 'message-metadata', messageMetadata: { pipeline: pipelineEvents } });
 					};
@@ -370,7 +378,7 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 					try {
 						const retrievalResult = await retrieve(
 							userMsgText,
-							{ userId, maxChunks: 3, tiers: retrievalTiers ?? [1] },
+							{ userId, maxChunks: 3, tiers: retrievalTiers ?? [1], fusion },
 							emitEvent,
 						);
 
@@ -378,11 +386,42 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 						if (contextBlock) {
 							systemPrompt = `${baseSystemPrompt}\n\n<retrieval-context>\n${contextBlock}\n</retrieval-context>\n\nUse the above context to inform your response. Cite sources when relevant.`;
 						}
+
+						// Emit assembled prompt (dev/admin only receives full text; others get hash)
+						const isDevOrAdmin = !!import.meta.env?.DEV;
+						const contextBlocks = retrievalResult.chunks.map((c) => ({
+							chunkId: c.chunkId,
+							tokens: Math.ceil(c.content.length / 4),
+						}));
+						const totalTokens = contextBlocks.reduce((sum, b) => sum + b.tokens, 0);
+						const promptEvent: PipelinePromptEvent = {
+							type: 'pipeline:prompt_assembled',
+							userPrompt: userMsgText,
+							contextBlocks,
+							totalTokens,
+						};
+						if (isDevOrAdmin) {
+							promptEvent.systemPrompt = systemPrompt;
+						} else {
+							// Short stable hash — not cryptographic, just an identifier.
+							let h = 0;
+							for (let i = 0; i < systemPrompt.length; i++) {
+								h = ((h << 5) - h + systemPrompt.charCodeAt(i)) | 0;
+							}
+							promptEvent.systemPromptHash = `sys:${Math.abs(h).toString(16)}`;
+						}
+						emitEvent(promptEvent);
 					} catch (err) {
 						console.error('[ai:chat] Retrieval failed, proceeding without context:', err);
 					}
 
-					emitEvent({ type: 'pipeline:step', step: 'generate', status: 'active' });
+					generateStartedAt.t = performance.now();
+					emitEvent({
+						type: 'pipeline:step',
+						step: 'generate',
+						status: 'active',
+						startedAt: generateStartedAt.t,
+					});
 
 					const textResult = streamText({
 						model,
@@ -392,7 +431,18 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 						maxOutputTokens: MAX_TOKENS,
 						abortSignal: AbortSignal.timeout(30_000),
 						onFinish: async ({ text, totalUsage }) => {
-							emitEvent({ type: 'pipeline:step', step: 'generate', status: 'done' });
+							emitEvent({
+								type: 'pipeline:step',
+								step: 'generate',
+								status: 'done',
+								durationMs: Math.round(performance.now() - generateStartedAt.t),
+								detail: {
+									kind: 'generate',
+									model: activeInfo?.id,
+									inputTokens: totalUsage?.inputTokens,
+									outputTokens: totalUsage?.outputTokens,
+								},
+							});
 							await createOnFinish(conversationId, userId)({ text, totalUsage });
 						},
 						onError: ({ error }) => {

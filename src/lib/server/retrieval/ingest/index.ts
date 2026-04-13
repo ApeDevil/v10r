@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { chatModel } from '$lib/server/ai';
 import { db } from '$lib/server/db';
 import { chunk, document } from '$lib/server/db/schema/rag';
+import type { IngestEvent, IngestStepEvent, IngestStepId, IngestStepStatus } from '$lib/types/ingest-pipeline';
 import { chunkDocument } from '../chunk';
 import { EMBEDDING_MODEL_ID, MAX_CHUNKS_PER_DOCUMENT } from '../config';
 import { generateEmbeddings } from '../embed';
@@ -13,6 +14,8 @@ import type { IngestableDocument, IngestResult } from '../types';
 import { addContextPrefixes } from './contextual-prep';
 import { extractEntitiesFromSections } from './entity-extract';
 import { storeChunkStructure, storeEntitiesAndRelationships } from './graph-store';
+
+type IngestEmitFn = (event: IngestEvent) => void;
 
 /** Hash content using Web Crypto */
 async function hashContent(content: string): Promise<string> {
@@ -23,11 +26,23 @@ async function hashContent(content: string): Promise<string> {
 		.join('');
 }
 
+function emit(
+	fn: IngestEmitFn | undefined,
+	step: IngestStepId,
+	status: IngestStepStatus,
+	extra?: { durationMs?: number; error?: string; detail?: Record<string, unknown> },
+) {
+	if (!fn) return;
+	fn({ type: 'ingest:step', step, status, ...extra } as IngestStepEvent);
+}
+
 /**
  * Ingest a document into the retrieval system.
  * Pipeline: chunk → contextualize → embed → store PG → extract entities → store Neo4j
+ *
+ * When `onEvent` is provided, emits pipeline events at each step for real-time UI feedback.
  */
-export async function ingest(doc: IngestableDocument): Promise<IngestResult> {
+export async function ingest(doc: IngestableDocument, onEvent?: IngestEmitFn): Promise<IngestResult> {
 	const start = performance.now();
 
 	if (!doc.content.trim()) {
@@ -37,6 +52,8 @@ export async function ingest(doc: IngestableDocument): Promise<IngestResult> {
 	const contentHash = await hashContent(doc.content);
 
 	// 1. Create document record
+	emit(onEvent, 'insert', 'active');
+	const insertStart = performance.now();
 	const documentId = `doc_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
 
 	await db.insert(document).values({
@@ -48,24 +65,46 @@ export async function ingest(doc: IngestableDocument): Promise<IngestResult> {
 		status: 'processing',
 		contentHash,
 	});
+	emit(onEvent, 'insert', 'done', {
+		durationMs: Math.round(performance.now() - insertStart),
+		detail: { documentId },
+	});
 
 	try {
 		// 2. Chunk the document
+		emit(onEvent, 'chunk', 'active');
+		const chunkStart = performance.now();
 		const { parents, children: allChildren } = await chunkDocument(doc.content);
-
-		// Cap child chunks to limit LLM calls during ingestion
 		const children = allChildren.slice(0, MAX_CHUNKS_PER_DOCUMENT);
+		emit(onEvent, 'chunk', 'done', {
+			durationMs: Math.round(performance.now() - chunkStart),
+			detail: { parents: parents.length, children: children.length },
+		});
 
 		// 3. Add context prefixes to child chunks
+		emit(onEvent, 'contextual_prep', 'active');
+		const ctxStart = performance.now();
 		const contextualizedChildren = await addContextPrefixes(chatModel, doc.title, children);
+		emit(onEvent, 'contextual_prep', 'done', {
+			durationMs: Math.round(performance.now() - ctxStart),
+			detail: { childrenProcessed: contextualizedChildren.length },
+		});
 
 		// 4. Generate embeddings for all child chunks (batch)
+		emit(onEvent, 'embed', 'active');
+		const embedStart = performance.now();
 		const textsToEmbed = contextualizedChildren.map((c) =>
 			c.contextPrefix ? `${c.contextPrefix}\n${c.content}` : c.content,
 		);
 		const embeddings = await generateEmbeddings(textsToEmbed);
+		emit(onEvent, 'embed', 'done', {
+			durationMs: Math.round(performance.now() - embedStart),
+			detail: { vectors: embeddings.length, model: EMBEDDING_MODEL_ID },
+		});
 
 		// 5. Store chunks in Postgres
+		emit(onEvent, 'pg_upsert', 'active');
+		const pgStart = performance.now();
 		const allChunks: Array<{
 			id: string;
 			documentId: string;
@@ -115,7 +154,6 @@ export async function ingest(doc: IngestableDocument): Promise<IngestResult> {
 			});
 		}
 
-		// Insert chunks in batches
 		const BATCH_SIZE = 50;
 		for (let i = 0; i < allChunks.length; i += BATCH_SIZE) {
 			const batch = allChunks.slice(i, i + BATCH_SIZE);
@@ -133,19 +171,30 @@ export async function ingest(doc: IngestableDocument): Promise<IngestResult> {
 				updatedAt: new Date(),
 			})
 			.where(eq(document.id, documentId));
+		emit(onEvent, 'pg_upsert', 'done', {
+			durationMs: Math.round(performance.now() - pgStart),
+			detail: { chunks: allChunks.length, totalTokens },
+		});
 
 		// 6. Store chunk structure in Neo4j
 		let entityCount = 0;
 		try {
+			emit(onEvent, 'graph_mirror', 'active');
+			const mirrorStart = performance.now();
 			await storeChunkStructure(documentId, parents, contextualizedChildren);
+			emit(onEvent, 'graph_mirror', 'done', {
+				durationMs: Math.round(performance.now() - mirrorStart),
+				detail: { parents: parents.length, children: contextualizedChildren.length },
+			});
 
 			// 7. Extract entities from parent chunks and store in Neo4j
+			emit(onEvent, 'entity_extract', 'active');
+			const entStart = performance.now();
 			const extraction = await extractEntitiesFromSections(
 				parents.map((p) => p.content),
 				chatModel,
 			);
 
-			// Build chunk-entity mapping (link entities to their child chunks)
 			const chunkEntityMap: Array<{ chunkPgId: string; entityName: string; confidence: number }> = [];
 			for (const child of contextualizedChildren) {
 				for (const entity of extraction.entities) {
@@ -161,17 +210,31 @@ export async function ingest(doc: IngestableDocument): Promise<IngestResult> {
 
 			const graphResult = await storeEntitiesAndRelationships(extraction, chunkEntityMap);
 			entityCount = graphResult.entityCount;
+			emit(onEvent, 'entity_extract', 'done', {
+				durationMs: Math.round(performance.now() - entStart),
+				detail: { entities: entityCount, relationships: extraction.relationships.length },
+			});
 		} catch (err) {
 			// Graph storage is non-critical — log and continue
-			console.error('[retrieval:ingest] Neo4j storage failed:', err instanceof Error ? err.message : err);
+			const msg = err instanceof Error ? err.message : 'graph storage failed';
+			console.error('[retrieval:ingest] Neo4j storage failed:', msg);
+			emit(onEvent, 'graph_mirror', 'error', { error: msg });
+			emit(onEvent, 'entity_extract', 'skipped');
 		}
 
-		return {
+		const durationMs = Math.round(performance.now() - start);
+		const result: IngestResult = {
 			documentId,
 			chunkCount: allChunks.length,
 			entityCount,
-			durationMs: Math.round(performance.now() - start),
+			durationMs,
 		};
+
+		if (onEvent) {
+			onEvent({ type: 'ingest:done', ...result });
+		}
+
+		return result;
 	} catch (err) {
 		// Mark document as errored
 		await db

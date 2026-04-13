@@ -32,6 +32,8 @@ export interface RetrievalOptions {
 	tiers?: (1 | 2 | 3)[];
 	graphDepth?: number;
 	collectionId?: string;
+	/** Fusion strategy when multiple tiers run. 'rrf' forces fusion; 'none' skips it. */
+	fusion?: 'none' | 'rrf';
 }
 
 /** Input for the ingestion pipeline */

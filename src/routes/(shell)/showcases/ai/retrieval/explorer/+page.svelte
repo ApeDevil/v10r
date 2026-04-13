@@ -1,4 +1,5 @@
 <script lang="ts">
+import { goto } from '$app/navigation';
 import { apiFetch } from '$lib/api';
 import { Alert, Card, NavSection } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
@@ -228,6 +229,12 @@ function clearPath() {
 	pathHighlight = null;
 }
 
+function askAboutNode(node: KnowledgeNode) {
+	const label = node.label ?? node.id;
+	const params = new URLSearchParams({ mode: 'graph', seed: label });
+	goto(`/showcases/ai/retrieval/rag-chat?${params}`);
+}
+
 function handleKeydown(e: KeyboardEvent) {
 	if (e.key === 'Enter' && !e.shiftKey) {
 		e.preventDefault();
@@ -379,6 +386,7 @@ function handleKeydown(e: KeyboardEvent) {
 								{pathToId}
 								onSetPathFrom={handleSetPathFrom}
 								onSetPathTo={handleSetPathTo}
+								onAskAbout={askAboutNode}
 							/>
 						</div>
 					{/if}

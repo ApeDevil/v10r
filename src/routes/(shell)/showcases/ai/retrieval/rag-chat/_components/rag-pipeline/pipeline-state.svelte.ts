@@ -2,6 +2,7 @@ import {
 	type ChunkSummary,
 	PIPELINE_STEPS,
 	type PipelineChunksEvent,
+	type PipelinePromptEvent,
 	type PipelineStepEvent,
 	type PipelineStepId,
 	type PipelineStepState,
@@ -22,6 +23,7 @@ export function createPipelineState() {
 	let selectedStepId = $state<PipelineStepId | null>(null);
 	let annotationCursor = $state(0);
 	let chunkData = $state<PipelineChunksEvent | null>(null);
+	let assembledPrompt = $state<PipelinePromptEvent | null>(null);
 
 	function handleEvent(event: PipelineStepEvent) {
 		steps = steps.map((s) => {
@@ -45,6 +47,8 @@ export function createPipelineState() {
 				handleEvent(ann as unknown as PipelineStepEvent);
 			} else if (ann && ann.type === 'pipeline:chunks') {
 				chunkData = ann as unknown as PipelineChunksEvent;
+			} else if (ann && ann.type === 'pipeline:prompt_assembled') {
+				assembledPrompt = ann as unknown as PipelinePromptEvent;
 			}
 		}
 		annotationCursor = annotations.length;
@@ -54,6 +58,7 @@ export function createPipelineState() {
 		steps = createInitialSteps();
 		selectedStepId = null;
 		chunkData = null;
+		assembledPrompt = null;
 	}
 
 	function resetCursor() {
@@ -93,6 +98,9 @@ export function createPipelineState() {
 		},
 		get chunkData() {
 			return chunkData;
+		},
+		get assembledPrompt() {
+			return assembledPrompt;
 		},
 		get chunkCounts(): Record<string, number> {
 			if (!chunkData) return {};

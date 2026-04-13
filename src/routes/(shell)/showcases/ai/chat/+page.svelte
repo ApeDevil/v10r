@@ -46,7 +46,6 @@ function submitMessage() {
 		{#if !data.configured}
 			<Alert variant="info" title="AI Not Configured">
 				<p>Configure an AI provider in your <code>.env</code> file to enable the chat demo.</p>
-				<p>See <a href="/showcases/ai/connection">Connection</a> for setup instructions.</p>
 			</Alert>
 		{:else}
 			<svelte:boundary>

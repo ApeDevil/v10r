@@ -60,6 +60,23 @@ export async function getEntitiesForChunks(chunkPgIds: string[]): Promise<Entity
 	);
 }
 
+/** Lightweight graph corpus stats for the retrieval overview. */
+export async function getRagGraphStats(): Promise<{
+	nodes: number;
+	edges: number;
+	labels: string[];
+}> {
+	const [nodeCount, edgeCount] = await Promise.all([
+		cypher<{ c: number }>('MATCH (n:Entity) RETURN count(n) AS c'),
+		cypher<{ c: number }>('MATCH ()-[r:RELATED_TO]->() RETURN count(r) AS c'),
+	]);
+	return {
+		nodes: Number(nodeCount[0]?.c ?? 0),
+		edges: Number(edgeCount[0]?.c ?? 0),
+		labels: ['Entity'],
+	};
+}
+
 /** Get all RAG entities and their relationships as KnowledgeData for visualization. */
 export async function getAllRagEntities(): Promise<KnowledgeData> {
 	const [nodeRows, relRows] = await Promise.all([
