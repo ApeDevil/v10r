@@ -38,5 +38,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		toolScopes: parsed.output.toolScopes,
 		deskLayout: parsed.output.deskLayout,
 		activeWorkspace: parsed.output.activeWorkspace,
+		resumeFromProposalId: parsed.output.resumeFromProposalId,
 	});
 };

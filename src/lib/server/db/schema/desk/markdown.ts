@@ -22,6 +22,8 @@ export const markdown = deskSchema.table(
 			.references(() => user.id, { onDelete: 'cascade' }),
 		/** Raw markdown content. */
 		content: text('content').notNull().default(''),
+		/** Soft-delete — kept in sync with `file.deletedAt`. See `desk/file.ts` for rationale. */
+		deletedAt: timestamp('deleted_at', { withTimezone: true }),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 	},

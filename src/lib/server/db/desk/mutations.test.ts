@@ -157,10 +157,10 @@ describe('desk mutations', () => {
 		});
 	});
 
-	// ── deleteFile ───────────────────────────────────────────────────
+	// ── deleteFile (soft-delete) ─────────────────────────────────────
 
-	describe('deleteFile', () => {
-		it('deletes a file and returns the deleted row', async () => {
+	describe('deleteFile (soft delete)', () => {
+		it('sets deleted_at on the file row and returns it', async () => {
 			const f = makeFile({ userId: USER_A.id });
 			await db.insert(file).values(f);
 
@@ -168,21 +168,23 @@ describe('desk mutations', () => {
 
 			expect(result).not.toBeNull();
 			expect(result?.id).toBe(f.id);
+			expect(result?.deletedAt).not.toBeNull();
 
+			// Row still physically present — soft-deleted, not dropped.
 			const [check] = await db.select().from(file).where(eq(file.id, f.id));
-			expect(check).toBeUndefined();
+			expect(check).toBeDefined();
+			expect(check?.deletedAt).not.toBeNull();
 		});
 
-		it('cascades to spreadsheet when file is deleted', async () => {
+		it('soft-deletes the matching spreadsheet detail row', async () => {
 			const { file: fileRow, spreadsheet: sheetRow } = await createSpreadsheetFile(USER_A.id, 'Cascade Test');
 
 			await deleteFile(fileRow.id, USER_A.id);
 
-			const sheetsAfter = await db.select().from(spreadsheet).where(eq(spreadsheet.fileId, fileRow.id));
-			expect(sheetsAfter).toHaveLength(0);
-			// Verify the specific spreadsheet row is gone
+			// The spreadsheet row is still present but deletedAt is set.
 			const [sheetCheck] = await db.select().from(spreadsheet).where(eq(spreadsheet.id, sheetRow.id));
-			expect(sheetCheck).toBeUndefined();
+			expect(sheetCheck).toBeDefined();
+			expect(sheetCheck?.deletedAt).not.toBeNull();
 		});
 
 		it('returns null when file belongs to different user', async () => {
@@ -192,9 +194,21 @@ describe('desk mutations', () => {
 			const result = await deleteFile(f.id, USER_B.id);
 			expect(result).toBeNull();
 
-			// File must still exist
+			// File must still exist and must NOT be soft-deleted.
 			const [check] = await db.select().from(file).where(eq(file.id, f.id));
 			expect(check).toBeDefined();
+			expect(check?.deletedAt).toBeNull();
+		});
+
+		it('returns null when the file is already soft-deleted', async () => {
+			const f = makeFile({ userId: USER_A.id });
+			await db.insert(file).values(f);
+
+			const first = await deleteFile(f.id, USER_A.id);
+			expect(first).not.toBeNull();
+
+			const second = await deleteFile(f.id, USER_A.id);
+			expect(second).toBeNull();
 		});
 	});
 

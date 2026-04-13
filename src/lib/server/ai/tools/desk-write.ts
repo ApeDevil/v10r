@@ -5,7 +5,14 @@
 import { jsonSchema, tool } from 'ai';
 import { renameFile, updateMarkdownByFileId, updateSpreadsheetByFileId } from '$lib/server/db/desk/mutations';
 import { getSpreadsheetByFileId } from '$lib/server/db/desk/queries';
-import type { DeskEffect } from './_types';
+import type { DeskEffect, DeskToolMeta } from './_types';
+
+/** Metadata registry for write tools. */
+export const writeToolMeta: Record<string, DeskToolMeta> = {
+	desk_update_cells: { risk: 'write', scope: 'desk:write' },
+	desk_rename_file: { risk: 'write', scope: 'desk:write' },
+	desk_update_markdown: { risk: 'write', scope: 'desk:write' },
+};
 
 export function createWriteTools(userId: string) {
 	return {

@@ -13,14 +13,10 @@ import {
 	type UIMessage,
 } from 'ai';
 import { getActiveProvider, getActiveProviderInfo, getFallbacksForUser, getToolProvider } from '$lib/server/ai';
-import {
-	buildCapabilitiesBlock,
-	buildPermissionsBlock,
-	DESK_SYSTEM_PROMPT,
-	MAX_TOKENS,
-	SYSTEM_PROMPT,
-} from '$lib/server/ai/config';
+import { MAX_TOKENS } from '$lib/server/ai/config';
+import { buildSystemPrompt, getMessageText, windowMessages } from '$lib/server/ai/context/system-prompt';
 import { aiErrorToStatus, classifyAIError, safeAIMessage } from '$lib/server/ai/errors';
+import { compactToolResults, DEFAULT_BUDGET, runWithCompaction } from '$lib/server/ai/loop/compact';
 import type { ProviderEntry } from '$lib/server/ai/providers';
 import { isCooledDown, markCooldown } from '$lib/server/ai/providers';
 import { createDeskTools, type DeskToolScope, stepsForScopes } from '$lib/server/ai/tools';
@@ -33,6 +29,7 @@ import {
 	saveToolCall,
 	updateMessageContent,
 } from '$lib/server/db/ai/mutations';
+import { createProposal } from '$lib/server/db/ai/proposals';
 import { getConversation } from '$lib/server/db/ai/queries';
 import { formatContextForPrompt, retrieve } from '$lib/server/retrieval';
 import type { PipelineChunksEvent, PipelinePromptEvent, PipelineStepEvent } from '$lib/types/pipeline';
@@ -59,6 +56,12 @@ export interface ChatInput {
 	toolScopes?: DeskToolScope[];
 	deskLayout?: { panelId: string; fileId?: string; fileType?: string; label: string }[];
 	activeWorkspace?: { id: string; name: string };
+	/**
+	 * When set, the caller is resuming a previously approved `agent_proposal`.
+	 * The orchestrator can look up the proposal's cached execution result and
+	 * inject it as context instead of re-planning. See `db/ai/proposals.ts`.
+	 */
+	resumeFromProposalId?: string;
 }
 
 export interface ChatResult {
@@ -73,90 +76,8 @@ interface ChatError {
 	message: string;
 }
 
-/** Extract text content from a ChatMessage (handles both legacy and UIMessage format). */
-export function getMessageText(msg: ChatMessage): string {
-	if ('content' in msg && typeof msg.content === 'string') return msg.content;
-	if ('parts' in msg) {
-		return msg.parts
-			.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
-			.map((p) => p.text)
-			.join('\n');
-	}
-	return '';
-}
-
-/**
- * Window conversation history to last N turns to stay within token budget.
- * Always keeps the most recent messages. Rough estimate: 4 chars ≈ 1 token.
- */
-export function windowMessages(messages: ChatInput['messages'], maxTurns = 5): ChatInput['messages'] {
-	// Each "turn" is a user+assistant pair = 2 messages. Keep last N turns.
-	const maxMessages = maxTurns * 2;
-	if (messages.length <= maxMessages) return messages;
-	const result = messages.slice(-maxMessages);
-	// Ensure context starts with a user message (some providers reject assistant-first)
-	if (result.length > 0 && result[0].role === 'assistant') {
-		return result.slice(1);
-	}
-	return result;
-}
-
-/** Escape XML-special characters to prevent attribute breakout in system prompts. */
-export function escapeXmlAttr(str: string): string {
-	return str
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;')
-		.replace(/'/g, '&apos;');
-}
-
-/** Build the system prompt with optional desk panel context and tool scope awareness. */
-export function buildSystemPrompt(
-	panelContext?: ChatInput['panelContext'],
-	toolScopes?: DeskToolScope[],
-	deskLayout?: ChatInput['deskLayout'],
-	activeWorkspace?: ChatInput['activeWorkspace'],
-): string {
-	const hasTools = !!toolScopes?.length;
-	let prompt = hasTools ? DESK_SYSTEM_PROMPT : SYSTEM_PROMPT;
-
-	if (hasTools && toolScopes) {
-		prompt += `\n\n${buildPermissionsBlock(toolScopes)}`;
-		prompt += `\n\n${buildCapabilitiesBlock()}`;
-	}
-
-	if (activeWorkspace) {
-		prompt += `\n\nThe user is in workspace "${escapeXmlAttr(activeWorkspace.name)}".`;
-	}
-
-	if (panelContext?.length) {
-		const sanitized = panelContext.map((pc) => ({
-			...pc,
-			content: pc.content.replace(/(?:sk-|ghp_|AKIA|Bearer\s)\S+/gi, '[REDACTED]').slice(0, 8000),
-		}));
-		const deskBlock = sanitized
-			.map((pc) => {
-				const statusAttr = pc.status ? ` status="${escapeXmlAttr(pc.status)}"` : '';
-				const levelAttr = pc.contentLevel ? ` level="${escapeXmlAttr(pc.contentLevel)}"` : '';
-				return `<panel type="${escapeXmlAttr(pc.panelType)}" label="${escapeXmlAttr(pc.label)}"${statusAttr}${levelAttr}>\n${pc.content}\n</panel>`;
-			})
-			.join('\n');
-		prompt += `\n\n<desk-context>\n${deskBlock}\n</desk-context>`;
-	}
-
-	if (deskLayout?.length && hasTools) {
-		const layoutBlock = deskLayout
-			.map(
-				(p) =>
-					`- ${escapeXmlAttr(p.label)} (${escapeXmlAttr(p.fileType ?? 'panel')})${p.fileId ? ` [${p.fileId}]` : ''}`,
-			)
-			.join('\n');
-		prompt += `\n\n<desk-layout>\nOpen panels:\n${layoutBlock}\n</desk-layout>`;
-	}
-
-	return prompt;
-}
+// System-prompt assembly, message windowing, and XML escape helpers live in
+// `src/lib/server/ai/context/system-prompt.ts`.
 
 /** Persist assistant message after stream finishes. */
 export function createOnFinish(conversationId: string | undefined, userId: string) {
@@ -270,9 +191,17 @@ function tryFallback(
  * Orchestrate a chat request: resolve conversation, optionally retrieve context,
  * stream the response, and persist messages.
  *
+ * Runs the entire request inside a compaction context (`runWithCompaction`) so
+ * tool results above the budget are transparently replaced with refs the model
+ * can pull back via `resolve_ref` — the AI SDK #9631 workaround.
+ *
  * Returns a Response (either streaming or error JSON).
  */
 export async function orchestrateChat(input: ChatInput): Promise<Response> {
+	return runWithCompaction(DEFAULT_BUDGET, () => orchestrateChatInner(input));
+}
+
+async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	const {
 		userId,
 		providerId,
@@ -296,7 +225,9 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 		if ('parts' in m) return m as UIMessage;
 		return { id: crypto.randomUUID(), role: m.role, parts: [{ type: 'text' as const, text: m.content }] };
 	});
-	const messages = await convertToModelMessages(normalized);
+	// Compact loaded history so oversized tool results from resumed conversations
+	// don't blow the context window before the first step even runs.
+	const messages = compactToolResults(await convertToModelMessages(normalized));
 
 	// Resolve provider dynamically per-request (request override → stored preference → env → first configured)
 	const activeProvider = getActiveProvider(userId, providerId);
@@ -318,7 +249,7 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 	const hasTools = wantsTools && toolProviderAvailable;
 	const model = (hasTools ? resolvedToolModel : resolvedChatModel) ?? resolvedChatModel;
 	const deskTools = hasTools ? createDeskTools(userId, toolScopes, deskLayout) : undefined;
-	const baseSystemPrompt = buildSystemPrompt(panelContext, toolScopes, deskLayout, activeWorkspace);
+	const baseSystemPrompt = buildSystemPrompt({ panelContext, toolScopes, deskLayout, activeWorkspace });
 
 	// Resolve conversation (pass raw messages for title extraction)
 	const convResult = await resolveConversation(userId, existingConvId, windowedMessages);
@@ -465,6 +396,25 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 		}
 		let stepCounter = 0;
 
+		/**
+		 * Harness metadata accumulator — per SVEY's gotcha, `message-metadata`
+		 * events REPLACE (not merge) on the client, so every write must include
+		 * the full accumulated object. The retrieval path already does this for
+		 * pipeline events; here we do the same for `harness.proposal` events.
+		 */
+		type HarnessMetadata = {
+			proposal?: {
+				id: string;
+				goal: string;
+				steps: unknown[];
+				estimatedWrites: number;
+				rollback: string;
+				riskTier: 'low' | 'medium' | 'high';
+				status: 'pending';
+			};
+		};
+		const harnessMetadata: HarnessMetadata = {};
+
 		const stream = createUIMessageStream({
 			execute: async ({ writer }) => {
 				// biome-ignore lint/suspicious/noExplicitAny: conditional tool spread confuses TS inference
@@ -480,24 +430,11 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 					streamOpts.tools = deskTools;
 					streamOpts.toolChoice = 'auto';
 					streamOpts.stopWhen = stepCountIs(stepsForScopes(toolScopes ?? []));
-					streamOpts.prepareStep = async ({
-						stepNumber,
-						messages: stepMessages,
-					}: {
-						stepNumber: number;
-						messages: ModelMessage[];
-					}) => {
-						if (stepNumber < 2) return {};
-						return {
-							messages: stepMessages.map((msg: ModelMessage) => {
-								const c = (msg as Record<string, unknown>).content;
-								if (msg.role === 'tool' && typeof c === 'string' && c.length > 500) {
-									return { ...msg, content: `${c.slice(0, 500)}\n[truncated]` };
-								}
-								return msg;
-							}),
-						};
-					};
+					// NOTE: per-step tool-result compaction used to live here via `prepareStep`,
+					// but AI SDK #9631 silently drops message mutations returned from `prepareStep`.
+					// Compaction is now applied at tool-execute time via `wrapToolsWithCompaction`
+					// inside `createDeskTools`, and the whole request runs inside a
+					// `runWithCompaction` context (see below) so refs resolve consistently.
 				}
 				// biome-ignore lint/suspicious/noExplicitAny: toolResults type depends on conditional tools
 				streamOpts.onStepFinish = async ({
@@ -524,6 +461,50 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 									errorMessage: hasError ? String((tr.output as { error: string }).error) : undefined,
 								});
 								toolCallIds.push(saved.id);
+
+								// Plan-before-execute interception: if the model called
+								// `desk_propose_plan`, persist an `agent_proposal` row and
+								// emit a `harness.proposal` metadata event so the client
+								// can render a PlanCard. The stream's natural termination
+								// (via `stopWhen` + the model's own "awaiting_approval"
+								// response) closes the loop without extra machinery.
+								if (tr.toolName === 'desk_propose_plan' && !hasError) {
+									try {
+										const input = (tr.input ?? {}) as {
+											goal: string;
+											steps: Array<{ action: string; tool: string; risk: string; rationale: string }>;
+											estimated_writes: number;
+											rollback: string;
+										};
+										const proposal = await createProposal({
+											conversationId,
+											messageId: assistantMsgId,
+											riskTier: input.steps.some((s) => s.risk === 'destructive') ? 'high' : 'medium',
+											payload: input.steps.map((s) => ({
+												toolName: s.tool,
+												args: {},
+												rationale: s.rationale,
+											})),
+											rationale: input.goal,
+										});
+										harnessMetadata.proposal = {
+											id: proposal.id,
+											goal: input.goal,
+											steps: input.steps,
+											estimatedWrites: input.estimated_writes,
+											rollback: input.rollback,
+											riskTier: proposal.riskTier,
+											status: 'pending',
+										};
+										// Always write the full accumulated object — metadata REPLACES on client.
+										writer.write({
+											type: 'message-metadata',
+											messageMetadata: { harness: harnessMetadata },
+										});
+									} catch (err) {
+										console.error('[ai:chat] Failed to persist proposal:', err);
+									}
+								}
 							} catch (err) {
 								console.error('[ai:chat] Failed to persist tool call:', err);
 							}

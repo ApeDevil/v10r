@@ -53,28 +53,35 @@ export function buildPermissionsBlock(scopes: DeskToolScope[]): string {
 	return `<permissions>\n${lines.join('\n')}\n</permissions>`;
 }
 
-/** Panel type capabilities — what each panel can do, for AI awareness. */
-export const PANEL_CAPABILITIES: Record<string, { description: string; tools: string[] }> = {
-	spreadsheet: {
-		description: 'Tabular data editor with cell addressing (A1, B3)',
-		tools: ['desk_read_file', 'desk_update_cells', 'desk_create_spreadsheet'],
-	},
-	editor: {
-		description: 'Markdown document editor',
-		tools: ['desk_read_file', 'desk_update_markdown', 'desk_create_markdown'],
-	},
-	explorer: {
-		description: 'File browser — workspace files and folders',
-		tools: ['desk_list_files', 'desk_file_tree', 'desk_search_files'],
-	},
-	preview: { description: 'Rendered preview of active document (read-only)', tools: [] },
-	'io-log': { description: 'AI tool call and effect audit log (read-only)', tools: [] },
-};
+/**
+ * <completion> guidance — mitigates AI SDK #8544 (stopWhen is a no-op when the model
+ * emits zero tool calls) by telling the model explicitly when it may stop. Also
+ * nudges it to continue executing an approved plan rather than emitting a final
+ * response mid-plan.
+ *
+ * Always inject when tools are registered.
+ */
+export const COMPLETION_BLOCK = `<completion>
+You may stop calling tools when the user's request is fully satisfied.
+If you have more planned steps from an approved plan, continue executing them before emitting your final response.
+</completion>`;
 
-/** Build an <available-panels> block listing panel types and their capabilities. */
-export function buildCapabilitiesBlock(): string {
-	const lines = Object.entries(PANEL_CAPABILITIES).map(
-		([type, cap]) => `- ${type}: ${cap.description}${cap.tools.length ? ` [tools: ${cap.tools.join(', ')}]` : ''}`,
-	);
-	return `<available-panels>\n${lines.join('\n')}\n</available-panels>`;
-}
+/**
+ * <planning> guidance — injected only when `shouldRequirePlan` fires (destructive
+ * multi-step batch). Uses conditional phrasing because the common-case one-shot
+ * interaction must NOT plan first.
+ *
+ * See `shouldRequirePlan` in `src/lib/server/ai/policy/governor.ts`.
+ */
+export const PLANNING_BLOCK = `<planning>
+Before any step that writes, deletes, or modifies more than one desk item,
+call desk_propose_plan first with the full sequence you intend to execute.
+
+Do NOT call desk_propose_plan for:
+- Single-tool read operations (desk_list_files, desk_read_file, desk_file_tree, desk_search_files, desk_get_open_panels)
+- Single-target destructive actions (desk_delete_file already has its own two-phase confirmation)
+- Answering questions from retrieved context or desk-context alone
+- Acknowledgements or clarifications
+
+If the user has already approved a plan in this conversation and you are executing a step from it, proceed directly — do not re-plan.
+</planning>`;

@@ -1,6 +1,13 @@
-import { and, count, desc, eq } from 'drizzle-orm';
+import { and, count, desc, eq, isNull } from 'drizzle-orm';
 import { db } from '../index';
 import { file, folder, markdown, spreadsheet } from '../schema/desk';
+
+// ── Soft-delete note ───────────────────────────────────────────────
+// All queries below filter `file.deleted_at IS NULL` (and the same on
+// spreadsheet / markdown when joined). Soft-deleted rows are preserved
+// so the I/O Log can surface an "undo" chip; a retention job can sweep
+// them on a schedule (not shipped with the template).
+// ───────────────────────────────────────────────────────────────────
 
 // ── Legacy queries (kept for backward compat) ──────────────────────
 
@@ -9,14 +16,14 @@ export async function getSpreadsheet(id: string, userId: string) {
 	const [row] = await db
 		.select()
 		.from(spreadsheet)
-		.where(and(eq(spreadsheet.id, id), eq(spreadsheet.userId, userId)))
+		.where(and(eq(spreadsheet.id, id), eq(spreadsheet.userId, userId), isNull(spreadsheet.deletedAt)))
 		.limit(1);
 	return row ?? null;
 }
 
 /** List user's spreadsheets, newest first. */
 export async function listSpreadsheets(userId: string, offset = 0, limit = 50) {
-	const where = eq(spreadsheet.userId, userId);
+	const where = and(eq(spreadsheet.userId, userId), isNull(spreadsheet.deletedAt));
 	const [items, [countResult]] = await Promise.all([
 		db
 			.select({
@@ -37,9 +44,9 @@ export async function listSpreadsheets(userId: string, offset = 0, limit = 50) {
 
 // ── File registry queries ──────────────────────────────────────────
 
-/** List all files for a user, optionally filtered by type. Newest first. */
+/** List all files for a user, optionally filtered by type. Newest first. Excludes soft-deleted rows. */
 export async function listFiles(userId: string, type?: string, offset = 0, limit = 50) {
-	const conditions = [eq(file.userId, userId)];
+	const conditions = [eq(file.userId, userId), isNull(file.deletedAt)];
 	if (type) {
 		conditions.push(eq(file.type, type as 'spreadsheet' | 'markdown'));
 	}
@@ -65,17 +72,17 @@ export async function listFiles(userId: string, type?: string, offset = 0, limit
 	return { items, total: countResult?.total ?? 0 };
 }
 
-/** Get a single file with ownership check. */
+/** Get a single file with ownership check. Excludes soft-deleted. */
 export async function getFile(id: string, userId: string) {
 	const [row] = await db
 		.select()
 		.from(file)
-		.where(and(eq(file.id, id), eq(file.userId, userId)))
+		.where(and(eq(file.id, id), eq(file.userId, userId), isNull(file.deletedAt)))
 		.limit(1);
 	return row ?? null;
 }
 
-/** Get a spreadsheet by its file ID (joined). */
+/** Get a spreadsheet by its file ID (joined). Excludes soft-deleted on both sides. */
 export async function getSpreadsheetByFileId(fileId: string, userId: string) {
 	const [row] = await db
 		.select({
@@ -96,12 +103,12 @@ export async function getSpreadsheetByFileId(fileId: string, userId: string) {
 		})
 		.from(file)
 		.innerJoin(spreadsheet, eq(spreadsheet.fileId, file.id))
-		.where(and(eq(file.id, fileId), eq(file.userId, userId)))
+		.where(and(eq(file.id, fileId), eq(file.userId, userId), isNull(file.deletedAt), isNull(spreadsheet.deletedAt)))
 		.limit(1);
 	return row ?? null;
 }
 
-/** Get a markdown document by its file ID (joined). */
+/** Get a markdown document by its file ID (joined). Excludes soft-deleted on both sides. */
 export async function getMarkdownByFileId(fileId: string, userId: string) {
 	const [row] = await db
 		.select({
@@ -121,7 +128,7 @@ export async function getMarkdownByFileId(fileId: string, userId: string) {
 		})
 		.from(file)
 		.innerJoin(markdown, eq(markdown.fileId, file.id))
-		.where(and(eq(file.id, fileId), eq(file.userId, userId)))
+		.where(and(eq(file.id, fileId), eq(file.userId, userId), isNull(file.deletedAt), isNull(markdown.deletedAt)))
 		.limit(1);
 	return row ?? null;
 }
@@ -160,7 +167,7 @@ export async function getFolder(id: string, userId: string) {
 	return row ?? null;
 }
 
-/** Count subfolders + files inside a folder (for delete confirmation). */
+/** Count subfolders + files inside a folder (for delete confirmation). Skips soft-deleted files. */
 export async function countFolderContents(id: string, userId: string) {
 	const [subfolders] = await db
 		.select({ count: count() })
@@ -169,11 +176,11 @@ export async function countFolderContents(id: string, userId: string) {
 	const [files] = await db
 		.select({ count: count() })
 		.from(file)
-		.where(and(eq(file.folderId, id), eq(file.userId, userId)));
+		.where(and(eq(file.folderId, id), eq(file.userId, userId), isNull(file.deletedAt)));
 	return (subfolders?.count ?? 0) + (files?.count ?? 0);
 }
 
-/** Get all files with ai_context = true for a user. */
+/** Get all files with ai_context = true for a user. Skips soft-deleted. */
 export async function getAiContextFiles(userId: string) {
 	return db
 		.select({
@@ -183,5 +190,5 @@ export async function getAiContextFiles(userId: string) {
 			folderId: file.folderId,
 		})
 		.from(file)
-		.where(and(eq(file.userId, userId), eq(file.aiContext, true)));
+		.where(and(eq(file.userId, userId), eq(file.aiContext, true), isNull(file.deletedAt)));
 }

@@ -106,11 +106,18 @@ export const toolCall = aiSchema.table(
 		entityKind: text('entity_kind'),
 		/** ID of the targeted entity. NULL when entityKind is NULL. */
 		entityId: text('entity_id'),
+		/**
+		 * Proposal this tool call was executed as part of. NULL for tool calls
+		 * that ran directly (no plan-before-execute gate). Closes the loop from
+		 * execution back to the proposal state machine.
+		 */
+		proposalId: text('proposal_id'),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	},
 	(table) => [
 		index('tool_call_message_idx').on(table.messageId),
 		index('tool_call_entity_idx').on(table.entityKind, table.entityId),
+		index('tool_call_proposal_idx').on(table.proposalId),
 	],
 );
 

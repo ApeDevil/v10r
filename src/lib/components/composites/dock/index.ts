@@ -1,11 +1,8 @@
 export {
-	cancelDelete,
-	confirmDelete,
 	disableScope,
 	enableScope,
 	getEnabledScopes,
 	hasWriteAccess,
-	isDeletePending,
 	isScopeEnabled,
 	toggleScope,
 } from './bot-config.svelte';

@@ -36,6 +36,10 @@ export const createId = {
 	toolCall: () => `tcl_${shortId()}`,
 	/** AI conversation step: stp_a8f3e1b2c4d9 */
 	conversationStep: () => `stp_${shortId()}`,
+	/** Agent proposal (plan-before-execute): prp_a8f3e1b2c4d9 */
+	agentProposal: () => `prp_${shortId()}`,
+	/** Agent audit log entry: aud_a8f3e1b2c4d9 */
+	agentAudit: () => `aud_${shortId()}`,
 	/** Desk workspace: wsp_a8f3e1b2c4d9 */
 	workspace: () => `wsp_${shortId()}`,
 	/** Generic UUID */

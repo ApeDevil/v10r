@@ -53,10 +53,7 @@ export function deduplicateAndCap(chunks: RankedChunk[], maxChunks: number): Ran
 /**
  * Fuse results from multiple tiers, deduplicate, and cap.
  */
-export function fuseAndRank(
-	allChunks: RankedChunk[],
-	maxChunks: number,
-): { chunks: RankedChunk[] } {
+export function fuseAndRank(allChunks: RankedChunk[], maxChunks: number): { chunks: RankedChunk[] } {
 	// Group by tier for RRF
 	const tierGroups = new Map<number, RankedChunk[]>();
 	for (const chunk of allChunks) {

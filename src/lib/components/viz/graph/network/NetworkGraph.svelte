@@ -80,7 +80,10 @@ onMount(async () => {
 });
 
 function initSimulation(d3Force: typeof import('d3-force')) {
-	linkForce = d3Force.forceLink<SimNode, SimEdge>(simEdges).id((d) => d.id).distance(80);
+	linkForce = d3Force
+		.forceLink<SimNode, SimEdge>(simEdges)
+		.id((d) => d.id)
+		.distance(80);
 	simulation = d3Force
 		.forceSimulation(simNodes)
 		.force('link', linkForce)
@@ -171,7 +174,11 @@ function reconcile(newData: NetworkData) {
 	for (const incoming of newData.edges as NetworkEdge[]) {
 		const key = `${incoming.source}→${incoming.target}`;
 		const existing = existingEdgesByKey.get(key);
-		if (existing && incomingIds.has(edgeEndpointId(existing.source)) && incomingIds.has(edgeEndpointId(existing.target))) {
+		if (
+			existing &&
+			incomingIds.has(edgeEndpointId(existing.source)) &&
+			incomingIds.has(edgeEndpointId(existing.target))
+		) {
 			existing.weight = incoming.weight;
 			nextSimEdges.push(existing);
 		} else {

@@ -1,18 +1,21 @@
 <script lang="ts">
-import {
-	cancelDelete,
-	confirmDelete,
-	disableScope,
-	enableScope,
-	isDeletePending,
-	isScopeEnabled,
-} from '$lib/components/composites/dock';
-import Button from '$lib/components/primitives/button/Button.svelte';
+import { disableScope, enableScope, isScopeEnabled } from '$lib/components/composites/dock';
 import Switch from '$lib/components/primitives/switch/Switch.svelte';
 
+/**
+ * Per the harness adoption plan, `desk:read` and `desk:create` are now
+ * always-on — they're safe because delete is soft and create's undo path
+ * is "delete the file you just created." Only the two genuinely-policy
+ * toggles remain user-visible.
+ *
+ * The 12-second delete revert timer was removed along with the
+ * "pending" confirmation flow: consent for destructive actions now
+ * lives in the per-action `ConfirmCard` in the chat stream, not in a
+ * standing configuration dialog.
+ */
 const SCOPE_INFO = [
 	{
-		group: 'Read access',
+		group: 'Always on',
 		scopes: [
 			{
 				scope: 'desk:read' as const,
@@ -20,37 +23,31 @@ const SCOPE_INFO = [
 				description: 'List files, read contents, search workspace',
 				alwaysOn: true,
 			},
-		],
-	},
-	{
-		group: 'Write access',
-		scopes: [
-			{
-				scope: 'desk:write' as const,
-				label: 'Edit files',
-				description: 'Update spreadsheet cells, rename files',
-			},
 			{
 				scope: 'desk:create' as const,
 				label: 'Create files',
-				description: 'Create new spreadsheets and documents',
+				description: 'Create new spreadsheets and documents (reversible via delete)',
+				alwaysOn: true,
 			},
 		],
 	},
 	{
-		group: 'Destructive',
+		group: 'Policy toggles',
 		scopes: [
 			{
+				scope: 'desk:write' as const,
+				label: 'Allow editing existing files',
+				description: 'Update spreadsheet cells, rename files, rewrite markdown',
+			},
+			{
 				scope: 'desk:delete' as const,
-				label: 'Delete files',
-				description: 'Delete files permanently',
+				label: 'Allow deleting files',
+				description: 'Soft-delete files (recoverable from the I/O Log)',
 				destructive: true,
 			},
 		],
 	},
 ] as const;
-
-const deletePending = $derived(isDeletePending());
 </script>
 
 <div class="tools-section">
@@ -88,19 +85,6 @@ const deletePending = $derived(isDeletePending());
 					/>
 				</div>
 
-				{#if 'destructive' in info && info.destructive && deletePending}
-					<div class="confirm-strip" role="alert">
-						<span class="confirm-text">AI will be able to delete files. This is irreversible.</span>
-						<div class="confirm-actions">
-							<Button variant="ghost" size="sm" onclick={confirmDelete}>
-								{#snippet children()}Keep enabled{/snippet}
-							</Button>
-							<Button variant="primary" size="sm" onclick={cancelDelete}>
-								{#snippet children()}Turn off{/snippet}
-							</Button>
-						</div>
-					</div>
-				{/if}
 			{/each}
 		</div>
 	{/each}

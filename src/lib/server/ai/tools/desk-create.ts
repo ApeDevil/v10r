@@ -6,7 +6,18 @@
 import { jsonSchema, tool } from 'ai';
 import { createMarkdownFile, createSpreadsheetFile, deleteFile } from '$lib/server/db/desk/mutations';
 import { getFile } from '$lib/server/db/desk/queries';
-import type { DeskEffect } from './_types';
+import type { DeskEffect, DeskToolMeta } from './_types';
+
+/** Metadata registry for create tools. */
+export const createToolMeta: Record<string, DeskToolMeta> = {
+	desk_create_spreadsheet: { risk: 'create', scope: 'desk:create' },
+	desk_create_markdown: { risk: 'create', scope: 'desk:create' },
+};
+
+/** Metadata registry for delete tools. */
+export const deleteToolMeta: Record<string, DeskToolMeta> = {
+	desk_delete_file: { risk: 'destructive', scope: 'desk:delete' },
+};
 
 /**
  * Tracks which (userId, fileId) pairs have had a deletion preview (dry-run).

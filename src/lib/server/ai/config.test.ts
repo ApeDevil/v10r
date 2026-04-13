@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildCapabilitiesBlock, buildPermissionsBlock, PANEL_CAPABILITIES } from './config';
+import { buildPermissionsBlock, COMPLETION_BLOCK, PLANNING_BLOCK } from './config';
 
 describe('buildPermissionsBlock', () => {
 	it('marks all scopes as enabled when all provided', () => {
@@ -48,32 +48,38 @@ describe('buildPermissionsBlock', () => {
 	});
 });
 
-describe('buildCapabilitiesBlock', () => {
-	it('wraps in <available-panels> tags', () => {
-		const result = buildCapabilitiesBlock();
-		expect(result).toMatch(/^<available-panels>\n/);
-		expect(result).toMatch(/\n<\/available-panels>$/);
+describe('COMPLETION_BLOCK', () => {
+	it('wraps in <completion> tags', () => {
+		expect(COMPLETION_BLOCK).toMatch(/^<completion>\n/);
+		expect(COMPLETION_BLOCK).toMatch(/\n<\/completion>$/);
 	});
 
-	it('lists all panel types from PANEL_CAPABILITIES', () => {
-		const result = buildCapabilitiesBlock();
-		for (const type of Object.keys(PANEL_CAPABILITIES)) {
-			expect(result).toContain(type);
-		}
+	it('tells the model it may stop when request is satisfied', () => {
+		expect(COMPLETION_BLOCK).toMatch(/may stop calling tools/i);
 	});
 
-	it('includes tool names for panels that have them', () => {
-		const result = buildCapabilitiesBlock();
-		expect(result).toContain('desk_read_file');
-		expect(result).toContain('desk_update_cells');
-		expect(result).toContain('desk_update_markdown');
+	it('instructs continuation through approved plans', () => {
+		expect(COMPLETION_BLOCK).toMatch(/approved plan/i);
+	});
+});
+
+describe('PLANNING_BLOCK', () => {
+	it('wraps in <planning> tags', () => {
+		expect(PLANNING_BLOCK).toMatch(/^<planning>\n/);
+		expect(PLANNING_BLOCK).toMatch(/\n<\/planning>$/);
 	});
 
-	it('does not include tools for read-only panels', () => {
-		const result = buildCapabilitiesBlock();
-		// preview line should not have [tools: ...] since it has empty tools array
-		const lines = result.split('\n');
-		const previewLine = lines.find((l) => l.includes('preview:'));
-		expect(previewLine).not.toContain('[tools:');
+	it('references the desk_propose_plan tool', () => {
+		expect(PLANNING_BLOCK).toContain('desk_propose_plan');
+	});
+
+	it('excludes single-tool reads from the planning requirement', () => {
+		expect(PLANNING_BLOCK).toMatch(/Do NOT/i);
+		expect(PLANNING_BLOCK).toContain('desk_list_files');
+		expect(PLANNING_BLOCK).toContain('desk_read_file');
+	});
+
+	it('prevents re-planning after plan approval', () => {
+		expect(PLANNING_BLOCK).toMatch(/already approved/i);
 	});
 });

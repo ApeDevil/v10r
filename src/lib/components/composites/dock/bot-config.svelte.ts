@@ -1,119 +1,93 @@
 /**
  * Bot configuration state for the Desk workspace.
  *
- * Manages AI tool scope permissions that the user can toggle
- * via the Bot Manager Dialog. Follows the same module-level $state
- * pattern as desk-context.svelte.ts.
+ * Exposes two *user-visible* toggles — "Allow editing existing files"
+ * (`desk:write`) and "Allow deleting files" (`desk:delete`). Read and
+ * create scopes are always-on: they're safe because delete is soft and
+ * create's undo path is "delete the file you just created."
  *
- * Module-level $state is safe here because the desk route sets `ssr = false`
- * in src/routes/(desk)/+layout.ts. This module only ever runs in the browser,
- * so state is per-tab and never shared across server requests.
+ * Per-action gating lives in the PlanCard / ConfirmCard components, not
+ * here. The old 12-second revert timer was removed because plan-before-
+ * execute moves consent to *before* the action, not after — a countdown
+ * to stop something that already happened is the wrong posture.
+ *
+ * Module-level $state is safe because the desk route sets `ssr = false`
+ * in src/routes/(desk)/+layout.ts. This module only ever runs in the
+ * browser, so state is per-tab and never shared across server requests.
  */
 
 import type { DeskToolScope } from '$lib/server/ai/tools/_types';
 
 // ── Module-level state ───────────────────────────────────────────────
 
-/** Tool scopes the user has enabled. Default: read-only (least privilege). */
-let enabledScopes = $state(new Set<DeskToolScope>(['desk:read']));
-
-/** Whether the delete scope is pending user confirmation (12s window). */
-let deleteConfirmPending = $state(false);
-
-/** Timer for auto-reverting delete enable. Non-reactive — no UI dependency on the timer itself. */
-let deleteRevertTimer: ReturnType<typeof setTimeout> | null = null;
+/**
+ * Scopes the user has explicitly opted into.
+ *
+ * Read and create are ALWAYS granted when any scope is present — they
+ * never appear in this set and can't be toggled off. Write and delete
+ * are the only user-facing toggles.
+ */
+let optInScopes = $state(new Set<Exclude<DeskToolScope, 'desk:read' | 'desk:create'>>());
 
 // ── Derived ──────────────────────────────────────────────────────────
 
-/** Reactive array of enabled scopes — use in reactive contexts. */
-const scopeArray = $derived([...enabledScopes]);
+/**
+ * The full scope set to send in requests — always includes read+create,
+ * plus whichever mutating scopes the user opted into.
+ */
+const effectiveScopes = $derived<DeskToolScope[]>(['desk:read', 'desk:create', ...[...optInScopes]]);
 
-/** Whether any non-read scope is enabled (write, create, or delete). */
-const hasWriteCapabilities = $derived(
-	enabledScopes.has('desk:write') || enabledScopes.has('desk:create') || enabledScopes.has('desk:delete'),
-);
+const hasWriteCapabilities = $derived(optInScopes.has('desk:write') || optInScopes.has('desk:delete'));
 
 // ── Public API ───────────────────────────────────────────────────────
 
 /** Get enabled scopes as an array for request serialization. */
 export function getEnabledScopes(): DeskToolScope[] {
-	return scopeArray;
+	return effectiveScopes;
 }
 
-/** Check if a specific scope is enabled. */
+/**
+ * Check if a specific scope is enabled.
+ *
+ * `desk:read` and `desk:create` are always enabled whenever any scope
+ * is available, so they return `true` unconditionally.
+ */
 export function isScopeEnabled(scope: DeskToolScope): boolean {
-	void scopeArray; // establish reactive dependency
-	return enabledScopes.has(scope);
+	void effectiveScopes; // establish reactive dependency
+	if (scope === 'desk:read' || scope === 'desk:create') return true;
+	return optInScopes.has(scope);
 }
 
-/** Check if any write capabilities are enabled. */
+/** Check if any write/delete capabilities are enabled. */
 export function hasWriteAccess(): boolean {
 	return hasWriteCapabilities;
 }
 
-/** Enable a tool scope. For desk:delete, triggers confirmation flow. */
+/**
+ * Enable a user-toggleable scope. Read and create are always-on and
+ * calling `enableScope('desk:read')` is a no-op.
+ */
 export function enableScope(scope: DeskToolScope): void {
-	if (enabledScopes.has(scope)) return;
-
-	if (scope === 'desk:delete') {
-		// Don't add immediately — require confirmation
-		deleteConfirmPending = true;
-		clearDeleteTimer();
-		deleteRevertTimer = setTimeout(() => {
-			cancelDelete();
-		}, 12_000);
-		return;
-	}
-
-	enabledScopes = new Set([...enabledScopes, scope]);
+	if (scope === 'desk:read' || scope === 'desk:create') return;
+	if (optInScopes.has(scope)) return;
+	optInScopes = new Set([...optInScopes, scope]);
 }
 
-/** Disable a tool scope. */
+/** Disable a user-toggleable scope. */
 export function disableScope(scope: DeskToolScope): void {
-	if (!enabledScopes.has(scope)) return;
-
-	if (scope === 'desk:delete') {
-		clearDeleteTimer();
-		deleteConfirmPending = false;
-	}
-
-	const next = new Set(enabledScopes);
+	if (scope === 'desk:read' || scope === 'desk:create') return;
+	if (!optInScopes.has(scope)) return;
+	const next = new Set(optInScopes);
 	next.delete(scope);
-	enabledScopes = next;
+	optInScopes = next;
 }
 
-/** Toggle a scope on/off. */
+/** Toggle a user-toggleable scope on/off. */
 export function toggleScope(scope: DeskToolScope): void {
-	if (enabledScopes.has(scope)) {
+	if (scope === 'desk:read' || scope === 'desk:create') return;
+	if (optInScopes.has(scope)) {
 		disableScope(scope);
 	} else {
 		enableScope(scope);
-	}
-}
-
-/** Whether delete confirmation is pending. */
-export function isDeletePending(): boolean {
-	return deleteConfirmPending;
-}
-
-/** Confirm delete scope — actually adds desk:delete to enabled scopes. */
-export function confirmDelete(): void {
-	clearDeleteTimer();
-	deleteConfirmPending = false;
-	enabledScopes = new Set([...enabledScopes, 'desk:delete']);
-}
-
-/** Cancel pending delete enable. */
-export function cancelDelete(): void {
-	clearDeleteTimer();
-	deleteConfirmPending = false;
-}
-
-// ── Internal ─────────────────────────────────────────────────────────
-
-function clearDeleteTimer(): void {
-	if (deleteRevertTimer !== null) {
-		clearTimeout(deleteRevertTimer);
-		deleteRevertTimer = null;
 	}
 }

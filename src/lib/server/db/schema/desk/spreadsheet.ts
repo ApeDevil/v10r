@@ -35,6 +35,8 @@ export const spreadsheet = deskSchema.table(
 		cells: jsonb('cells').notNull().default({}),
 		/** Column metadata: header labels, widths. Key = "A", Value = { label?, width? } */
 		columnMeta: jsonb('column_meta'),
+		/** Soft-delete — kept in sync with `file.deletedAt`. See `file.ts` for rationale. */
+		deletedAt: timestamp('deleted_at', { withTimezone: true }),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 	},

@@ -2,15 +2,33 @@ import * as v from 'valibot';
 
 const MessageRole = v.picklist(['user', 'assistant']);
 
-/** UIMessage part — text, file, or tool-related parts from AI SDK v6. */
-const UIMessagePart = v.union([
+/**
+ * UIMessage part — AI SDK v6 emits dynamic `tool-<toolName>` part types with
+ * `state: 'output-available'|'input-available'|...`, so we accept any
+ * `type` that starts with `tool-` via a loose object check and validate
+ * the fixed parts strictly.
+ */
+const FixedUIMessagePart = v.union([
 	v.object({ type: v.literal('text'), text: v.pipe(v.string(), v.maxLength(32_000)) }),
 	v.object({ type: v.literal('file'), url: v.string(), mediaType: v.string() }),
-	v.object({ type: v.literal('tool-invocation'), toolInvocation: v.record(v.string(), v.unknown()) }),
 	v.object({ type: v.literal('source-url'), url: v.string(), title: v.optional(v.string()) }),
 	v.object({ type: v.literal('reasoning'), text: v.string() }),
 	v.object({ type: v.literal('step-start') }),
 ]);
+
+const DynamicToolPart = v.object({
+	type: v.pipe(
+		v.string(),
+		v.check((s) => s.startsWith('tool-'), 'tool part type must start with "tool-"'),
+	),
+	toolCallId: v.optional(v.string()),
+	state: v.optional(v.string()),
+	input: v.optional(v.unknown()),
+	output: v.optional(v.unknown()),
+	errorText: v.optional(v.string()),
+});
+
+const UIMessagePart = v.union([FixedUIMessagePart, DynamicToolPart]);
 
 /** Accept both legacy {role, content} and UIMessage {id, role, parts} formats. */
 const ChatMessageSchema = v.union([
@@ -63,6 +81,15 @@ export const ChatRequestSchema = v.object({
 			name: v.string(),
 		}),
 	),
+	/**
+	 * When present, the chat turn is a "resume after approval" continuation
+	 * of a previously approved `agent_proposal`. The orchestrator looks up
+	 * the proposal's execution result and injects it as a synthetic tool
+	 * result in the model's context instead of re-running the plan.
+	 *
+	 * Sent by the client after hitting `POST /api/ai/proposals/:id/approve`.
+	 */
+	resumeFromProposalId: v.optional(v.string()),
 });
 
 export const StreamingRequestSchema = v.object({

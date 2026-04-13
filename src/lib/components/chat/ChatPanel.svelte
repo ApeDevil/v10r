@@ -5,6 +5,8 @@ import { onDestroy, untrack } from 'svelte';
 import { CSRF_HEADER } from '$lib/api';
 import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
 import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
+import type { HarnessMetadata, ProposalMetadata } from '$lib/components/composites/chatbot/harness-types';
+import PlanCard from '$lib/components/composites/chatbot/PlanCard.svelte';
 import {
 	appendIOLog,
 	findLeafWithPanel,
@@ -217,7 +219,72 @@ function startNewChat() {
 	conversationId = undefined;
 	chat.messages = [];
 	inputValue = '';
+	proposalBusy = {};
 	chatStateCache.delete(panelId);
+}
+
+// ── Harness proposal state ──────────────────────────────────────
+
+/** Map of proposalId → in-flight flag, so the PlanCard disables buttons during approve/reject. */
+let proposalBusy = $state<Record<string, boolean>>({});
+
+/** Read the harness metadata the orchestrator streams on assistant messages. */
+function getProposalForMessage(msg: unknown): ProposalMetadata | null {
+	const meta = (msg as { metadata?: { harness?: HarnessMetadata } }).metadata?.harness;
+	return meta?.proposal ?? null;
+}
+
+async function approveProposal(proposalId: string) {
+	proposalBusy[proposalId] = true;
+	try {
+		const res = await fetch(`/api/ai/proposals/${proposalId}/approve`, {
+			method: 'POST',
+			headers: { ...CSRF_HEADER, 'content-type': 'application/json' },
+			body: '{}',
+		});
+		if (!res.ok) {
+			appendIOLog({
+				source: 'effect',
+				level: 'error',
+				label: `Plan approval failed: ${res.status}`,
+			});
+			return;
+		}
+		appendIOLog({ source: 'effect', level: 'success', label: 'Plan executed.' });
+		// Resume the conversation with a sentinel so the model sees the result.
+		chat.sendMessage(
+			{ text: `[resumeFromProposalId:${proposalId}]` },
+			{
+				body: {
+					...(conversationId ? { conversationId } : {}),
+					toolScopes: getEnabledScopes(),
+					resumeFromProposalId: proposalId,
+				},
+			},
+		);
+	} catch (err) {
+		appendIOLog({
+			source: 'effect',
+			level: 'error',
+			label: 'Plan approval failed.',
+			detail: err instanceof Error ? err.message : String(err),
+		});
+	} finally {
+		proposalBusy[proposalId] = false;
+	}
+}
+
+async function rejectProposal(proposalId: string) {
+	proposalBusy[proposalId] = true;
+	try {
+		await fetch(`/api/ai/proposals/${proposalId}/approve`, {
+			method: 'DELETE',
+			headers: CSRF_HEADER,
+		});
+		appendIOLog({ source: 'effect', label: 'Plan rejected.' });
+	} finally {
+		proposalBusy[proposalId] = false;
+	}
 }
 
 function submitMessage() {
@@ -288,6 +355,18 @@ $effect(() => {
 						role={message.role as 'user' | 'assistant'}
 						parts={message.parts}
 					/>
+					{#if message.role === 'assistant'}
+						{@const proposal = getProposalForMessage(message)}
+						{#if proposal}
+							<PlanCard
+								{proposal}
+								streamReady={!isLoading}
+								busy={!!proposalBusy[proposal.id]}
+								onapprove={() => approveProposal(proposal.id)}
+								onreject={() => rejectProposal(proposal.id)}
+							/>
+						{/if}
+					{/if}
 				{/each}
 
 				{#if isLoading && chat.messages[chat.messages.length - 1]?.role === 'user'}
