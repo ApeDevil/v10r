@@ -66,8 +66,8 @@ $effect(() => {
 	const lastMsg = msgs[msgs.length - 1];
 	if (lastMsg?.role === 'assistant' && lastMsg.metadata) {
 		const meta = lastMsg.metadata as Record<string, unknown>;
-		if (meta.pipeline) {
-			pipeline.processAnnotations([meta.pipeline] as unknown[]);
+		if (Array.isArray(meta.pipeline)) {
+			pipeline.processAnnotations(meta.pipeline as unknown[]);
 		}
 	}
 });
