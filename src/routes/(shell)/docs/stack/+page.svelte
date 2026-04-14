@@ -1,139 +1,109 @@
 <script lang="ts">
 import { BackLink, PageHeader } from '$lib/components/composites';
+import { PageContainer } from '$lib/components/layout';
+
+let { data } = $props();
 </script>
 
 <svelte:head>
-	<title>Stack - Docs - Velociraptor</title>
+	<title>Stack — Docs — Velociraptor</title>
 </svelte:head>
 
-<div class="page">
+<PageContainer width="wide" class="pt-7">
 	<PageHeader
-		title="Stack Documentation"
-		description="Technology stack documentation organized by layer."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Docs', href: '/docs' },
-			{ label: 'Stack' }
-		]}
+		title="Stack"
+		description="Every tool, why it was chosen, and how to use it."
+		breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Docs', href: '/docs' }, { label: 'Stack' }]}
 	/>
 
-	<div class="stack-grid">
-		<section class="stack-group">
-			<h3 class="group-title">Core</h3>
-			<ul>
-				<li>Bun</li>
-				<li>SvelteKit</li>
-				<li>Svelte</li>
-				<li>Podman</li>
-			</ul>
-		</section>
-
-		<section class="stack-group">
-			<h3 class="group-title">Data</h3>
-			<ul>
-				<li>PostgreSQL (Neon)</li>
-				<li>Neo4j (Aura)</li>
-				<li>Drizzle ORM</li>
-				<li>Cloudflare R2</li>
-			</ul>
-		</section>
-
-		<section class="stack-group">
-			<h3 class="group-title">Auth</h3>
-			<ul>
-				<li>Better Auth</li>
-			</ul>
-		</section>
-
-		<section class="stack-group">
-			<h3 class="group-title">UI</h3>
-			<ul>
-				<li>UnoCSS</li>
-				<li>Bits UI</li>
-			</ul>
-		</section>
-
-		<section class="stack-group">
-			<h3 class="group-title">Forms</h3>
-			<ul>
-				<li>Valibot</li>
-				<li>Superforms</li>
-			</ul>
-		</section>
-
-		<section class="stack-group">
-			<h3 class="group-title">Quality</h3>
-			<ul>
-				<li>Biome</li>
-			</ul>
-		</section>
-
-		<section class="stack-group">
-			<h3 class="group-title">Ops</h3>
-			<ul>
-				<li>Vercel Deployment</li>
-			</ul>
-		</section>
-
-		<section class="stack-group">
-			<h3 class="group-title">AI</h3>
-			<ul>
-				<li>Vercel AI SDK</li>
-			</ul>
-		</section>
-
-		<section class="stack-group">
-			<h3 class="group-title">i18n</h3>
-			<ul>
-				<li>Paraglide JS</li>
-			</ul>
-		</section>
+	<div class="stack">
+		{#each data.layers as layer (layer.layer)}
+			<section class="layer">
+				<h2 id={layer.layer}>{layer.layer}</h2>
+				<dl>
+					{#each layer.items as item (item.slug)}
+						<a class="row" href={`/docs/stack/${item.slug}`}>
+							<dt>{item.title}</dt>
+							<dd>{item.description}</dd>
+						</a>
+					{/each}
+				</dl>
+			</section>
+		{/each}
 	</div>
 
 	<BackLink href="/docs" label="Docs" />
-</div>
+</PageContainer>
 
 <style>
-	.page {
-		max-width: var(--layout-wide-width, 72rem);
-		margin: 0 auto;
-		padding: var(--spacing-7) var(--spacing-4);
-	}
-
-	.stack-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-		gap: var(--spacing-6);
+	.stack {
 		margin-bottom: var(--spacing-7);
 	}
 
-	.stack-group {
-		padding: var(--spacing-4);
-		border: 1px solid var(--color-border);
-		border-radius: 0.5rem;
-		background: var(--color-surface-1);
+	.layer {
+		margin-top: var(--spacing-7);
+	}
+	.layer:first-child {
+		margin-top: 0;
 	}
 
-	.group-title {
-		font-size: var(--text-sm);
+	.layer h2 {
+		font-size: var(--text-xs);
 		font-weight: 600;
-		letter-spacing: 0.05em;
 		text-transform: uppercase;
-		color: var(--color-primary);
+		letter-spacing: 0.08em;
+		color: var(--color-muted);
 		margin: 0 0 var(--spacing-3);
+		scroll-margin-top: var(--spacing-6);
 	}
 
-	ul {
-		list-style: none;
+	dl {
 		margin: 0;
 		padding: 0;
 		display: flex;
 		flex-direction: column;
-		gap: var(--spacing-2);
 	}
 
-	li {
-		font-size: var(--text-sm);
+	.row {
+		display: grid;
+		grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
+		gap: var(--spacing-5);
+		align-items: baseline;
+		padding: var(--spacing-3) var(--spacing-4);
+		border-left: 2px solid transparent;
+		text-decoration: none;
+		color: inherit;
+		transition: background-color var(--duration-fast), border-color var(--duration-fast);
+	}
+
+	.row:hover {
+		background-color: color-mix(in srgb, var(--color-muted) 8%, transparent);
+		border-left-color: var(--color-accent, var(--color-primary));
+	}
+
+	.row:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: -2px;
+	}
+
+	dt {
+		font-size: var(--text-base);
+		font-weight: 600;
 		color: var(--color-fg);
+		margin: 0;
+	}
+
+	dd {
+		font-size: var(--text-sm);
+		color: var(--color-muted);
+		margin: 0;
+		line-height: 1.5;
+	}
+
+	@media (max-width: 640px) {
+		.row {
+			grid-template-columns: 1fr;
+			gap: var(--spacing-1);
+		}
 	}
 </style>

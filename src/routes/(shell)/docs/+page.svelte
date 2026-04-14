@@ -5,46 +5,34 @@ import { PageContainer } from '$lib/components/layout';
 </script>
 
 <svelte:head>
-	<title>Docs - Velociraptor</title>
+	<title>Docs — Velociraptor</title>
 </svelte:head>
 
 <PageContainer width="wide" class="pt-7">
 	<PageHeader
 		title="Documentation"
-		description="Technical documentation and guides for the Velociraptor template."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Docs' }
-		]}
+		description="Reference docs for how Velociraptor is built — stack decisions, architecture patterns, and the principles behind them."
+		breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Docs' }]}
 	/>
 
 	<nav class="docs-nav">
 		<LinkCard
-			href="/docs"
+			href="/docs/foundation"
 			icon="i-lucide-compass"
 			title="Foundation"
-			description="Core vision, principles, architecture"
-			class="card-disabled"
+			description="Understand why this project exists before touching a line of code."
 		/>
 		<LinkCard
 			href="/docs/stack"
-			icon="i-lucide-settings"
+			icon="i-lucide-layers"
 			title="Stack"
-			description="Technology decisions per layer"
+			description="Every tool, why it was chosen, and how to use it."
 		/>
 		<LinkCard
-			href="/docs"
-			icon="i-lucide-drafting-compass"
+			href="/docs/blueprint"
+			icon="i-lucide-map"
 			title="Blueprint"
-			description="Architecture specs and feature designs"
-			class="card-disabled"
-		/>
-		<LinkCard
-			href="/docs"
-			icon="i-lucide-hammer"
-			title="Implementation"
-			description="What shipped, what diverged"
-			class="card-disabled"
+			description="Cross-cutting patterns: auth, data, notifications, AI, deployment."
 		/>
 	</nav>
 
@@ -54,12 +42,8 @@ import { PageContainer } from '$lib/components/layout';
 <style>
 	.docs-nav {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 		gap: var(--spacing-6);
-	}
-
-	.docs-nav :global(.card-disabled) {
-		opacity: 0.5;
-		pointer-events: none;
+		margin-bottom: var(--spacing-7);
 	}
 </style>
