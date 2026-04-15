@@ -33,6 +33,10 @@ export interface ContextMenuCallbacks {
 	onCopyUrl?: (node: ExplorerNode) => void;
 	onNewFolder?: (node: ExplorerNode) => void;
 	onNewSpreadsheet?: (node: ExplorerNode) => void;
+	/** Open the "Move to…" dialog for a node. */
+	onMoveRequest?: (node: ExplorerNode) => void;
+	/** Commit a move (drag-drop or dialog confirm). */
+	onMove?: (nodeId: string, newParentId: string | null) => void;
 }
 
 type CapabilityItemDef = {
@@ -66,6 +70,7 @@ const GROUPS: CapabilityItemDef[][] = [
 	// Group 3: Edit
 	[
 		{ capability: 'rename', label: 'Rename', icon: 'i-lucide-pencil', action: 'rename' },
+		{ capability: 'move', label: 'Move to…', icon: 'i-lucide-folder-input', action: 'moveRequest' },
 		{ capability: 'duplicate', label: 'Duplicate', icon: 'i-lucide-copy', action: 'duplicate' },
 	],
 	// Group 4: Type-specific
@@ -128,6 +133,7 @@ export function dispatchMenuAction(action: string, node: ExplorerNode, callbacks
 		copyUrl: 'onCopyUrl',
 		newFolder: 'onNewFolder',
 		newSpreadsheet: 'onNewSpreadsheet',
+		moveRequest: 'onMoveRequest',
 	};
 	const key = map[action];
 	if (key) (callbacks[key] as (n: ExplorerNode) => void)?.(node);

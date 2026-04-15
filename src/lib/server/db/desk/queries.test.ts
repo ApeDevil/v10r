@@ -240,7 +240,7 @@ describe('desk queries', () => {
 		it('returns empty list when user has no folders', async () => {
 			const result = await listFolders(USER_A.id);
 			expect(result.items).toHaveLength(0);
-			expect(result.total).toBe(0);
+			expect(result.overflow).toBe(false);
 		});
 
 		it('returns all folders for a user', async () => {
@@ -250,7 +250,6 @@ describe('desk queries', () => {
 
 			const result = await listFolders(USER_A.id);
 			expect(result.items).toHaveLength(2);
-			expect(result.total).toBe(2);
 		});
 
 		it('does not return folders belonging to other users', async () => {

@@ -29,6 +29,7 @@ export async function updatePostMetadata(
 		status?: 'draft' | 'published' | 'archived';
 		coverImageId?: string | null;
 		publishedAt?: Date | null;
+		folderId?: string | null;
 	},
 ): Promise<BlogPost | null> {
 	const [row] = await db
@@ -283,10 +284,10 @@ export async function unlinkAssetFromPost(postId: string, assetId: string): Prom
 	await db.delete(postAsset).where(and(eq(postAsset.postId, postId), eq(postAsset.assetId, assetId)));
 }
 
-/** Update asset metadata (alt text, dimensions). */
+/** Update asset metadata (alt text, dimensions, folder placement). */
 export async function updateAssetMetadata(
 	assetId: string,
-	data: { altText?: string; width?: number; height?: number; fileName?: string },
+	data: { altText?: string; width?: number; height?: number; fileName?: string; folderId?: string | null },
 ): Promise<BlogAsset | null> {
 	const [row] = await db.update(asset).set(data).where(eq(asset.id, assetId)).returning();
 	return row ?? null;

@@ -7,7 +7,7 @@
  * Only desk files (spreadsheets, etc.) can be placed in folders.
  * Blog posts and assets appear as virtual folders in the Explorer.
  */
-import { type AnyPgColumn, index, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { type AnyPgColumn, index, text, timestamp, unique } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
 import { deskSchema } from './schema';
 
@@ -25,7 +25,14 @@ export const folder = deskSchema.table(
 		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 	},
 	(table) => [
-		uniqueIndex('desk_folder_user_parent_name_idx').on(table.userId, table.parentId, table.name),
+		// NULLS NOT DISTINCT: Postgres defaults treat NULL parent as distinct, which
+		// would allow two root-level folders with the same name. A table-level UNIQUE
+		// constraint (not uniqueIndex) exposes the `.nullsNotDistinct()` option in
+		// drizzle-orm 0.45. Postgres 15+ creates an implicit unique index, which still
+		// covers `(userId, parentId)` as a leftmost prefix for cycle-check queries.
+		unique('desk_folder_user_parent_name_key')
+			.on(table.userId, table.parentId, table.name)
+			.nullsNotDistinct(),
 		index('desk_folder_user_idx').on(table.userId),
 	],
 );

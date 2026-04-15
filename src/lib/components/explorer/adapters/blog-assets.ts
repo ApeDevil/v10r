@@ -1,14 +1,17 @@
 import type { ExplorerNode, NodeCapability } from '../node';
-import type { AssetListItem } from '../types';
+import type { AssetListItem, FolderListItem } from '../types';
 
 const ASSET_CAPABILITIES: NodeCapability[] = [
 	'open',
 	'open-new-panel',
 	'rename',
+	'move',
 	'insert-into-document',
 	'copy-url',
 	'delete',
 ];
+
+const ASSET_FOLDER_CAPABILITIES: NodeCapability[] = ['rename', 'move', 'new-folder', 'delete'];
 
 function formatBytes(bytes: number): string {
 	if (bytes === 0) return '0 B';
@@ -28,34 +31,34 @@ export function assetsRootNode(): ExplorerNode {
 		icon: 'i-lucide-layers',
 		iconColor: 'var(--color-muted)',
 		isFolder: true,
-		capabilities: new Set(),
+		capabilities: new Set<NodeCapability>(['new-folder']),
 		sortKey: '0_1_assets',
 	};
 }
 
-export function imagesRootNode(): ExplorerNode {
-	return {
-		id: 'virtual:images',
-		parentId: 'virtual:assets',
-		source: 'virtual',
-		sourceData: {},
-		label: 'images',
-		icon: 'i-lucide-image',
-		iconColor: 'var(--color-warning, #d4a72c)',
+export function adaptAssetFolders(folders: FolderListItem[]): ExplorerNode[] {
+	return folders.map((f) => ({
+		id: f.id,
+		parentId: f.parentId ?? 'virtual:assets',
+		source: 'asset-folder' as const,
+		sourceData: f as unknown as Record<string, unknown>,
+		label: f.name,
+		icon: 'i-lucide-folder',
+		iconColor: 'var(--color-muted)',
 		isFolder: true,
-		capabilities: new Set(),
-		sortKey: '0_0_images',
-	};
+		capabilities: new Set<NodeCapability>(ASSET_FOLDER_CAPABILITIES),
+		sortKey: `0_${f.name.toLowerCase()}`,
+	}));
 }
 
 export function adaptBlogAssets(assets: AssetListItem[]): ExplorerNode[] {
 	return assets.map((a) => ({
 		id: a.id,
-		parentId: 'virtual:images',
+		parentId: a.folderId ?? 'virtual:assets',
 		source: 'blog-asset' as const,
 		sourceData: a as unknown as Record<string, unknown>,
 		label: a.fileName,
-		icon: 'i-lucide-image',
+		icon: a.mimeType.startsWith('image/') ? 'i-lucide-image' : 'i-lucide-file',
 		iconColor: 'var(--color-success, #22c55e)',
 		isFolder: false,
 		capabilities: new Set<NodeCapability>(ASSET_CAPABILITIES),

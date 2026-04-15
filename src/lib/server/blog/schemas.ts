@@ -52,6 +52,8 @@ export const PatchAssetSchema = v.object({
 	width: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
 	height: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
 	fileName: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(255))),
+	/** Null moves the asset to the assets root (virtual:assets on the client). */
+	folderId: v.optional(v.nullable(v.pipe(v.string(), v.startsWith('afd_')))),
 });
 
 // ── Preview ─────────────────────────────────────────────────────────

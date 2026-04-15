@@ -8,7 +8,7 @@
  * need blogSchema from this file, and this file needs domain for the FK.
  */
 import { sql } from 'drizzle-orm';
-import { check, index, integer, pgSchema, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { check, foreignKey, index, integer, pgSchema, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
 
 export const blogSchema = pgSchema('blog');
@@ -42,6 +42,8 @@ export const post = blogSchema.table(
 			.references(() => user.id, { onDelete: 'restrict' }),
 		coverImageId: text('cover_image_id'),
 		domainId: text('domain_id').references(() => domain.id, { onDelete: 'set null' }),
+		/** Parent folder (nullable = root level under virtual:blog). FK defined below to avoid circular imports. */
+		folderId: text('folder_id'),
 		status: postStatusEnum('status').notNull().default('draft'),
 		publishedAt: timestamp('published_at', { withTimezone: true }),
 		deletedAt: timestamp('deleted_at', { withTimezone: true }),
@@ -55,5 +57,6 @@ export const post = blogSchema.table(
 		index('blog_post_active_idx').on(table.createdAt).where(sql`deleted_at IS NULL`),
 		check('slug_format', sql`${table.slug} ~ '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$'`),
 		index('blog_post_domain_idx').on(table.domainId),
+		index('blog_post_author_folder_idx').on(table.authorId, table.folderId),
 	],
 );

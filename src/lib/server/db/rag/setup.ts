@@ -2,8 +2,12 @@
  * RAG schema setup — idempotent SQL for features Drizzle can't express natively.
  * Run via `bun run db:rag-post` after `drizzle-kit push`.
  *
- * Creates: pgvector extension, generated tsvector column, HNSW + GIN indexes,
- * and seeds the default embedding model.
+ * Creates: pgvector extension, HNSW index, and seeds the default embedding model.
+ *
+ * The `search_vector` generated column and its GIN index now live in the
+ * Drizzle schema itself (`schema/rag/chunk.ts`) via `customType('tsvector')`
+ * + `.generatedAlwaysAs(...)` and `.using('gin', ...)`. HNSW stays here because
+ * Drizzle's index DSL can't express `USING hnsw (... vector_cosine_ops) WITH (...)`.
  */
 import { sql } from 'drizzle-orm';
 import {
@@ -19,35 +23,6 @@ import { db } from '../index';
 /** Enable the pgvector extension (Neon supports this on all plans). */
 async function enablePgvector() {
 	await db.execute(sql`CREATE EXTENSION IF NOT EXISTS vector`);
-}
-
-/**
- * Add generated tsvector column for BM25 full-text search.
- * Combines context_prefix + content for comprehensive searchability.
- */
-async function addSearchVectorColumn() {
-	await db.execute(sql`
-		DO $$
-		BEGIN
-			IF NOT EXISTS (
-				SELECT 1 FROM information_schema.columns
-				WHERE table_schema = 'rag' AND table_name = 'chunk' AND column_name = 'search_vector'
-			) THEN
-				ALTER TABLE rag.chunk ADD COLUMN search_vector tsvector
-					GENERATED ALWAYS AS (
-						to_tsvector('english', coalesce(context_prefix, '') || ' ' || content)
-					) STORED;
-			END IF;
-		END $$
-	`);
-}
-
-/** GIN index on search_vector for full-text search. */
-async function createSearchVectorIndex() {
-	await db.execute(sql`
-		CREATE INDEX IF NOT EXISTS chunk_search_vector_idx
-			ON rag.chunk USING gin(search_vector)
-	`);
 }
 
 /**
@@ -77,12 +52,6 @@ async function seedEmbeddingModel() {
 export async function ensureRagSchema(): Promise<void> {
 	console.log('[rag:setup] Enabling pgvector extension...');
 	await enablePgvector();
-
-	console.log('[rag:setup] Adding search_vector column...');
-	await addSearchVectorColumn();
-
-	console.log('[rag:setup] Creating GIN index on search_vector...');
-	await createSearchVectorIndex();
 
 	console.log('[rag:setup] Creating HNSW index on embedding...');
 	await createEmbeddingIndex();

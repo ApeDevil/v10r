@@ -361,16 +361,23 @@ describe('desk mutations', () => {
 
 			const result = await renameFolder(fol.id, USER_A.id, 'New');
 
-			expect(result).not.toBeNull();
-			expect(result?.name).toBe('New');
+			expect(result.name).toBe('New');
 		});
 
-		it('returns null when folder belongs to different user', async () => {
+		it('throws FolderNotFoundError when folder belongs to different user', async () => {
+			const { FolderNotFoundError } = await import('./errors');
 			const fol = makeFolder({ userId: USER_A.id });
 			await db.insert(folder).values(fol);
 
-			const result = await renameFolder(fol.id, USER_B.id, 'Hijacked');
-			expect(result).toBeNull();
+			await expect(renameFolder(fol.id, USER_B.id, 'Hijacked')).rejects.toBeInstanceOf(FolderNotFoundError);
+		});
+
+		it('throws FolderNameConflictError when sibling already has that name', async () => {
+			const { FolderNameConflictError } = await import('./errors');
+			await createFolder(USER_A.id, 'Existing');
+			const other = await createFolder(USER_A.id, 'Other');
+
+			await expect(renameFolder(other.id, USER_A.id, 'Existing')).rejects.toBeInstanceOf(FolderNameConflictError);
 		});
 	});
 
@@ -383,8 +390,7 @@ describe('desk mutations', () => {
 
 			const result = await moveFolder(child.id, USER_A.id, parent.id);
 
-			expect(result).not.toBeNull();
-			expect(result?.parentId).toBe(parent.id);
+			expect(result.parentId).toBe(parent.id);
 		});
 
 		it('moves a folder to root (null parentId)', async () => {
@@ -393,50 +399,95 @@ describe('desk mutations', () => {
 
 			const result = await moveFolder(child.id, USER_A.id, null);
 
-			expect(result?.parentId).toBeNull();
+			expect(result.parentId).toBeNull();
 		});
 
-		it('returns null when folder belongs to different user', async () => {
+		it('throws FolderNotFoundError when folder belongs to different user', async () => {
+			const { FolderNotFoundError } = await import('./errors');
 			const fol = makeFolder({ userId: USER_A.id });
 			await db.insert(folder).values(fol);
 
-			const result = await moveFolder(fol.id, USER_B.id, null);
-			expect(result).toBeNull();
+			await expect(moveFolder(fol.id, USER_B.id, null)).rejects.toBeInstanceOf(FolderNotFoundError);
 		});
 
-		it('throws when moving a folder into its own descendant (cycle)', async () => {
+		it('throws FolderCycleError when moving a folder into its own descendant', async () => {
+			const { FolderCycleError } = await import('./errors');
 			const a = await createFolder(USER_A.id, 'A');
 			const b = await createFolder(USER_A.id, 'B', a.id);
+			const c = await createFolder(USER_A.id, 'C', b.id);
 
-			await expect(moveFolder(a.id, USER_A.id, b.id)).rejects.toThrow('Cannot move folder into its own descendant.');
+			await expect(moveFolder(a.id, USER_A.id, c.id)).rejects.toBeInstanceOf(FolderCycleError);
+		});
+
+		it('throws FolderCycleError when moving a folder into itself', async () => {
+			const { FolderCycleError } = await import('./errors');
+			const a = await createFolder(USER_A.id, 'A');
+
+			await expect(moveFolder(a.id, USER_A.id, a.id)).rejects.toBeInstanceOf(FolderCycleError);
+		});
+
+		it('throws FolderNameConflictError when destination parent already has a sibling with the same name', async () => {
+			const { FolderNameConflictError } = await import('./errors');
+			const parent = await createFolder(USER_A.id, 'Parent');
+			await createFolder(USER_A.id, 'Docs', parent.id);
+			const loose = await createFolder(USER_A.id, 'Docs');
+
+			await expect(moveFolder(loose.id, USER_A.id, parent.id)).rejects.toBeInstanceOf(FolderNameConflictError);
 		});
 	});
 
 	// ── deleteFolder ─────────────────────────────────────────────────
 
 	describe('deleteFolder', () => {
-		it('deletes a folder and returns the deleted row', async () => {
+		it('deletes an empty folder and returns its id', async () => {
 			const fol = makeFolder({ userId: USER_A.id });
 			await db.insert(folder).values(fol);
 
 			const result = await deleteFolder(fol.id, USER_A.id);
 
-			expect(result).not.toBeNull();
-			expect(result?.id).toBe(fol.id);
+			expect(result.id).toBe(fol.id);
+			expect(result.deletedIds).toEqual([fol.id]);
 
 			const [check] = await db.select().from(folder).where(eq(folder.id, fol.id));
 			expect(check).toBeUndefined();
 		});
 
-		it('returns null when folder belongs to different user', async () => {
+		it('throws FolderNotFoundError when folder belongs to different user', async () => {
+			const { FolderNotFoundError } = await import('./errors');
 			const fol = makeFolder({ userId: USER_A.id });
 			await db.insert(folder).values(fol);
 
-			const result = await deleteFolder(fol.id, USER_B.id);
-			expect(result).toBeNull();
+			await expect(deleteFolder(fol.id, USER_B.id)).rejects.toBeInstanceOf(FolderNotFoundError);
 
 			const [check] = await db.select().from(folder).where(eq(folder.id, fol.id));
 			expect(check).toBeDefined();
+		});
+
+		it('throws FolderNotEmptyError when folder has children and recursive is false', async () => {
+			const { FolderNotEmptyError } = await import('./errors');
+			const parent = await createFolder(USER_A.id, 'Parent');
+			await createFolder(USER_A.id, 'Child', parent.id);
+
+			await expect(deleteFolder(parent.id, USER_A.id)).rejects.toBeInstanceOf(FolderNotEmptyError);
+
+			// Untouched
+			const [check] = await db.select().from(folder).where(eq(folder.id, parent.id));
+			expect(check).toBeDefined();
+		});
+
+		it('recursively deletes a 3-level tree and reports every deleted id', async () => {
+			const a = await createFolder(USER_A.id, 'A');
+			const b = await createFolder(USER_A.id, 'B', a.id);
+			const c = await createFolder(USER_A.id, 'C', b.id);
+
+			const result = await deleteFolder(a.id, USER_A.id, { recursive: true });
+
+			expect(result.deletedIds).toHaveLength(3);
+			expect(new Set(result.deletedIds)).toEqual(new Set([a.id, b.id, c.id]));
+
+			// All gone via CASCADE
+			const remaining = await db.select().from(folder).where(eq(folder.userId, USER_A.id));
+			expect(remaining).toHaveLength(0);
 		});
 	});
 

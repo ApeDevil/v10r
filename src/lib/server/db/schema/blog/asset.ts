@@ -20,11 +20,14 @@ export const asset = blogSchema.table(
 		altText: text('alt_text'),
 		width: integer('width'),
 		height: integer('height'),
+		/** Parent folder (nullable = root under virtual:assets). FK defined in folder-fks.ts. */
+		folderId: text('folder_id'),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	},
 	(table) => [
 		uniqueIndex('blog_asset_storage_key_idx').on(table.storageKey),
 		index('blog_asset_uploader_idx').on(table.uploaderId),
+		index('blog_asset_uploader_folder_idx').on(table.uploaderId, table.folderId),
 		check('file_size_positive', sql`${table.fileSize} > 0`),
 	],
 );

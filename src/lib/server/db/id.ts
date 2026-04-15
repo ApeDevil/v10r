@@ -22,6 +22,10 @@ export const createId = {
 	domain: () => `dom_${shortId()}`,
 	/** Blog asset: ast_a8f3e1b2c4d9 */
 	asset: () => `ast_${shortId()}`,
+	/** Blog post folder: pfd_a8f3e1b2c4d9 */
+	postFolder: () => `pfd_${shortId()}`,
+	/** Blog asset folder: afd_a8f3e1b2c4d9 */
+	assetFolder: () => `afd_${shortId()}`,
 	/** Desk folder: fld_a8f3e1b2c4d9 */
 	folder: () => `fld_${shortId()}`,
 	/** Desk file: fil_a8f3e1b2c4d9 */

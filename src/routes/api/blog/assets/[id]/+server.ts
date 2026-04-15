@@ -3,6 +3,7 @@ import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/api/response';
 import { requireApiAuthor, requireAssetOwnership } from '$lib/server/auth/guards';
 import { deleteAsset, getAssetById, updateAssetMetadata } from '$lib/server/blog';
+import { getAssetFolder } from '$lib/server/blog/asset-folders';
 import { PatchAssetSchema } from '$lib/server/blog/schemas';
 import { deleteBlogObject, generateBlogDownloadUrl } from '$lib/server/store/blog';
 import { classifyS3Error } from '$lib/server/store/errors';
@@ -43,6 +44,11 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 
 	const parsed = v.safeParse(PatchAssetSchema, body);
 	if (!parsed.success) return apiValidationError(parsed.issues);
+
+	if (parsed.output.folderId) {
+		const folder = await getAssetFolder(parsed.output.folderId, user.id);
+		if (!folder) return apiError(404, 'folder_not_found', 'Target folder not found.');
+	}
 
 	const updated = await updateAssetMetadata(params.id, parsed.output);
 	return apiOk({ asset: updated });

@@ -7,6 +7,7 @@ export interface AssetListItem {
 	altText: string | null;
 	width: number | null;
 	height: number | null;
+	folderId: string | null;
 	createdAt: string;
 	downloadUrl: string | null;
 }
@@ -16,6 +17,7 @@ export interface PostListItem {
 	slug: string;
 	status: 'draft' | 'published' | 'archived';
 	title: string;
+	folderId: string | null;
 	updatedAt: string;
 }
 

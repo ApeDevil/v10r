@@ -57,25 +57,18 @@ export async function getFileTree(userId: string): Promise<FileTreeNode[]> {
 		});
 	}
 
-	// assets/images/
+	// assets/ (flat — client-side "Images only" chip filters by mime type)
 	if (assets.length > 0) {
 		roots.push({
 			id: 'virtual:assets',
 			name: 'assets',
 			kind: 'folder',
-			children: [
-				{
-					id: 'virtual:images',
-					name: 'images',
-					kind: 'folder',
-					children: assets.map((a) => ({
-						id: a.id,
-						name: a.fileName,
-						kind: 'image' as const,
-						meta: `(${formatBytes(a.fileSize)})`,
-					})),
-				},
-			],
+			children: assets.map((a) => ({
+				id: a.id,
+				name: a.fileName,
+				kind: 'image' as const,
+				meta: `(${formatBytes(a.fileSize)})`,
+			})),
 		});
 	}
 

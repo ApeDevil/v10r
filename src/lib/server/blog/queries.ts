@@ -84,6 +84,7 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 			authorId: post.authorId,
 			authorName: user.name,
 			domainId: post.domainId,
+			folderId: post.folderId,
 			publishedAt: post.publishedAt,
 			createdAt: post.createdAt,
 			updatedAt: post.updatedAt,

@@ -12,6 +12,7 @@ import {
 	dispatchMenuAction,
 	type MenuEntry,
 } from './context-menu-items';
+import { isSameVirtualTree, VIRTUAL_ROOT } from './explorer-actions';
 import type { ExplorerState } from './explorer-state.svelte';
 import type { ExplorerNode } from './node';
 import TreeNode from './TreeNode.svelte';
@@ -33,6 +34,7 @@ let isRenaming = $derived(treeState.renamingId === node.id);
 let isDeleting = $derived(treeState.deletingId === node.id);
 let isExpanded = $derived(treeState.expanded.has(node.id));
 let isSelected = $derived(treeState.selectedId === node.id);
+let isFocused = $derived(treeState.focusedId === node.id);
 let isAiPinned = $derived(treeState.isAiPinned(node.id));
 let children = $derived(node.isFolder ? treeState.getChildren(node.id) : []);
 let menuItems = $derived(buildContextMenuItems({ ...node, aiContext: isAiPinned }));
@@ -92,6 +94,8 @@ function handleDragStart(e: DragEvent) {
 	if (!e.dataTransfer) return;
 	e.dataTransfer.setData('application/x-explorer-node', node.id);
 	e.dataTransfer.effectAllowed = 'move';
+	// Shared state for cross-node cycle checks — Firefox can't read getData() in dragover.
+	treeState.draggingId = node.id;
 
 	// For assets, also set the markdown data for editor drops
 	if (node.source === 'blog-asset') {
@@ -104,29 +108,76 @@ function handleDragStart(e: DragEvent) {
 	}
 }
 
+function handleDragEnd() {
+	treeState.draggingId = null;
+	dragOver = false;
+	clearExpandTimer();
+}
+
 let dragOver = $state(false);
+// Plain reference — not $state — since the timer handle isn't rendered.
+let expandTimer: ReturnType<typeof setTimeout> | null = null;
+
+function clearExpandTimer() {
+	if (expandTimer) {
+		clearTimeout(expandTimer);
+		expandTimer = null;
+	}
+}
+
+function isValidDropTarget(): boolean {
+	if (!node.isFolder) return false;
+	const draggingId = treeState.draggingId;
+	if (!draggingId) return false;
+	const dragged = treeState.getNode(draggingId);
+	if (!dragged) return false;
+	// Cross-root moves forbidden (silent ignore — no highlight, system no-drop cursor only).
+	if (!isSameVirtualTree(dragged, node)) return false;
+	// Virtual root of the dragged item accepts its own content types as drop target.
+	if (node.source === 'virtual' && node.id === VIRTUAL_ROOT[dragged.source]) {
+		return dragged.parentId !== node.id;
+	}
+	if (node.source === 'virtual') return false;
+	// Can't drop onto self or any descendant (matches server-side cycle detection).
+	return !treeState.isCycleMove(draggingId, node.id);
+}
 
 function handleDragOver(e: DragEvent) {
-	if (!node.isFolder || node.source === 'virtual') return;
 	if (!e.dataTransfer?.types.includes('application/x-explorer-node')) return;
+	if (!isValidDropTarget()) {
+		if (e.dataTransfer) e.dataTransfer.dropEffect = 'none';
+		return;
+	}
 	e.preventDefault();
 	e.dataTransfer.dropEffect = 'move';
 	dragOver = true;
+
+	// Expand-on-hover: if hovering a collapsed folder for 600ms, auto-expand.
+	// Only expand — never collapse — to keep drop targets stable during drag.
+	if (!isExpanded && !expandTimer) {
+		expandTimer = setTimeout(() => {
+			treeState.expanded.add(node.id);
+			expandTimer = null;
+		}, 600);
+	}
 }
 
 function handleDragLeave() {
 	dragOver = false;
+	clearExpandTimer();
 }
 
 function handleDrop(e: DragEvent) {
 	e.preventDefault();
 	dragOver = false;
-	const nodeId = e.dataTransfer?.getData('application/x-explorer-node');
-	if (!nodeId || nodeId === node.id) return;
-	// Dispatch move via callback — the parent handles the API call
-	callbacks.onOpen?.(node); // Expand target folder
-	treeState.moveNode(nodeId, node.id);
-	// TODO: Phase 12 will add actual API dispatch for moves
+	clearExpandTimer();
+	const draggedId = e.dataTransfer?.getData('application/x-explorer-node') || treeState.draggingId;
+	treeState.draggingId = null;
+	if (!draggedId || draggedId === node.id) return;
+	if (treeState.isCycleMove(draggedId, node.id)) return;
+	// Expand the drop target so the user can see where the node landed.
+	if (!treeState.expanded.has(node.id)) treeState.expanded.add(node.id);
+	callbacks.onMove?.(draggedId, node.id);
 }
 
 const paddingLeft = $derived(8 + depth * 16);
@@ -140,10 +191,23 @@ const descendantCount = $derived(node.isFolder ? treeState.countDescendants(node
 				<button
 					{...props}
 					class="tree-folder"
+					class:drag-over={dragOver}
+					class:tree-focused={isFocused}
+					class:tree-selected={isSelected}
 					style="padding-left: {paddingLeft}px"
 					role="treeitem"
 					aria-expanded={isExpanded}
-					onclick={() => treeState.toggleExpanded(node.id)}
+					aria-selected={isSelected}
+					draggable={node.capabilities.has('move') ? 'true' : undefined}
+					ondragstart={handleDragStart}
+					ondragend={handleDragEnd}
+					ondragover={handleDragOver}
+					ondragleave={handleDragLeave}
+					ondrop={handleDrop}
+					onclick={() => {
+						treeState.selectedId = node.id;
+						treeState.toggleExpanded(node.id);
+					}}
 				>
 					<span class="tree-toggle">{isExpanded ? '▾' : '▸'}</span>
 					<span class="{node.icon} tree-icon" style:color={node.iconColor}></span>
@@ -170,12 +234,14 @@ const descendantCount = $derived(node.isFolder ? treeState.countDescendants(node
 					{...props}
 					class="tree-file"
 					class:tree-selected={isSelected}
+					class:tree-focused={isFocused}
 					style="padding-left: {paddingLeft}px"
 					role="treeitem"
 					aria-selected={isSelected}
-					tabindex={0}
+					tabindex={-1}
 					draggable={node.capabilities.has('move') || node.source === 'blog-asset' ? 'true' : undefined}
 					ondragstart={handleDragStart}
+					ondragend={handleDragEnd}
 					ondragover={handleDragOver}
 					ondragleave={handleDragLeave}
 					ondrop={handleDrop}
@@ -295,6 +361,17 @@ const descendantCount = $derived(node.isFolder ? treeState.countDescendants(node
 		background: color-mix(in srgb, var(--surface-2) 60%, transparent);
 	}
 
+	.tree-folder.drag-over {
+		background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+		box-shadow: inset 3px 0 0 var(--color-primary);
+	}
+
+	.tree-folder.tree-focused,
+	.tree-file.tree-focused {
+		outline: 2px solid var(--color-primary);
+		outline-offset: -2px;
+	}
+
 	.tree-toggle {
 		width: 14px;
 		font-size: 10px;
@@ -332,7 +409,7 @@ const descendantCount = $derived(node.isFolder ? treeState.countDescendants(node
 		align-items: center;
 		gap: 4px;
 		width: 100%;
-		padding: 3px 8px;
+		padding: 3px 8px 3px 0;
 		border: none;
 		background: transparent;
 		cursor: pointer;

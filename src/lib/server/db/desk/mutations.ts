@@ -2,6 +2,16 @@ import { and, eq, isNull, like, sql } from 'drizzle-orm';
 import { createId } from '../id';
 import { db } from '../index';
 import { file, folder, markdown, spreadsheet } from '../schema/desk';
+import {
+	collectSubtreeIds,
+	FolderCycleError,
+	FolderNameConflictError,
+	FolderNotEmptyError,
+	FolderNotFoundError,
+	isCycleMove,
+	isUniqueViolation,
+	suggestNextName,
+} from '../shared/folder-tree';
 
 /** Update a spreadsheet (ownership enforced via WHERE). Returns null if not found/not owned or soft-deleted. */
 export async function updateSpreadsheet(
@@ -201,25 +211,53 @@ export async function duplicateSpreadsheetFile(id: string, userId: string) {
 
 // ── Folder mutations ──────────────────────────────────────────────
 
-/** Create a new folder. */
+/**
+ * Create a new folder.
+ * @throws FolderNameConflictError when `(userId, parentId, name)` collides.
+ */
 export async function createFolder(userId: string, name = 'New Folder', parentId: string | null = null) {
-	const [row] = await db.insert(folder).values({ id: createId.folder(), userId, parentId, name }).returning();
-	return row;
-}
-
-/** Rename a folder. */
-export async function renameFolder(id: string, userId: string, name: string) {
-	const [row] = await db
-		.update(folder)
-		.set({ name, updatedAt: new Date() })
-		.where(and(eq(folder.id, id), eq(folder.userId, userId)))
-		.returning();
-	return row ?? null;
+	try {
+		const [row] = await db.insert(folder).values({ id: createId.folder(), userId, parentId, name }).returning();
+		return row;
+	} catch (e) {
+		if (isUniqueViolation(e)) throw new FolderNameConflictError(parentId, name, suggestNextName(name));
+		throw e;
+	}
 }
 
 /**
- * Move a folder to a new parent. Validates no cycle via ancestor walk.
- * Returns null if not found, throws if cycle detected.
+ * Rename a folder.
+ * @throws FolderNotFoundError when the row doesn't exist.
+ * @throws FolderNameConflictError on sibling name collision.
+ */
+export async function renameFolder(id: string, userId: string, name: string) {
+	try {
+		const [row] = await db
+			.update(folder)
+			.set({ name, updatedAt: new Date() })
+			.where(and(eq(folder.id, id), eq(folder.userId, userId)))
+			.returning();
+		if (!row) throw new FolderNotFoundError(id);
+		return row;
+	} catch (e) {
+		if (isUniqueViolation(e)) {
+			// Need parentId for the suggested name context — look it up.
+			const [row] = await db
+				.select({ parentId: folder.parentId })
+				.from(folder)
+				.where(and(eq(folder.id, id), eq(folder.userId, userId)))
+				.limit(1);
+			throw new FolderNameConflictError(row?.parentId ?? null, name, suggestNextName(name));
+		}
+		throw e;
+	}
+}
+
+/**
+ * Move a folder to a new parent. Validates no cycle via recursive CTE walk.
+ * @throws FolderNotFoundError when the row doesn't exist.
+ * @throws FolderCycleError when `parentId` is `id` or any descendant.
+ * @throws FolderNameConflictError on sibling name collision at the new parent.
  */
 export async function moveFolder(id: string, userId: string, parentId: string | null) {
 	// Check ownership
@@ -228,38 +266,84 @@ export async function moveFolder(id: string, userId: string, parentId: string | 
 		.from(folder)
 		.where(and(eq(folder.id, id), eq(folder.userId, userId)))
 		.limit(1);
-	if (!target) return null;
+	if (!target) throw new FolderNotFoundError(id);
 
-	// Cycle detection: walk ancestors of new parent, ensure `id` is not among them
-	if (parentId) {
-		const result = await db.execute(sql`
-			WITH RECURSIVE ancestors AS (
-				SELECT id, parent_id FROM desk.folder WHERE id = ${parentId} AND user_id = ${userId}
-				UNION ALL
-				SELECT f.id, f.parent_id FROM desk.folder f JOIN ancestors a ON f.id = a.parent_id
-			)
-			SELECT EXISTS(SELECT 1 FROM ancestors WHERE id = ${id}) AS is_cycle
-		`);
-		if ((result as unknown as { rows?: { is_cycle: boolean }[] }).rows?.[0]?.is_cycle) {
-			throw new Error('Cannot move folder into its own descendant.');
-		}
+	// Cycle detection: walk ancestors of new parent, ensure `id` is not among them.
+	if (parentId && (await isCycleMove(db, folder, id, parentId, userId))) {
+		throw new FolderCycleError(id, parentId);
 	}
 
-	const [row] = await db
-		.update(folder)
-		.set({ parentId, updatedAt: new Date() })
-		.where(and(eq(folder.id, id), eq(folder.userId, userId)))
-		.returning();
-	return row ?? null;
+	try {
+		const [row] = await db
+			.update(folder)
+			.set({ parentId, updatedAt: new Date() })
+			.where(and(eq(folder.id, id), eq(folder.userId, userId)))
+			.returning();
+		if (!row) throw new FolderNotFoundError(id);
+		return row;
+	} catch (e) {
+		if (isUniqueViolation(e)) throw new FolderNameConflictError(parentId, target.name, suggestNextName(target.name));
+		throw e;
+	}
 }
 
-/** Delete a folder (cascades to subfolders via FK). */
-export async function deleteFolder(id: string, userId: string) {
+/**
+ * Delete a folder.
+ *
+ * Default is **non-recursive**: if the folder has any child folder or non-soft-deleted file,
+ * throws `FolderNotEmptyError`. Pass `{ recursive: true }` to cascade.
+ *
+ * Recursive mode collects descendant IDs via CTE first (for audit log / Neo4j sync), then
+ * deletes in a transaction. Files under deleted folders get `folderId = null` via existing FK.
+ *
+ * @throws FolderNotFoundError when the row doesn't exist.
+ * @throws FolderNotEmptyError when non-empty and `recursive` is false.
+ */
+export async function deleteFolder(
+	id: string,
+	userId: string,
+	options: { recursive?: boolean } = {},
+): Promise<{ id: string; name: string; deletedIds: string[] }> {
+	const { recursive = false } = options;
+
+	const [target] = await db
+		.select()
+		.from(folder)
+		.where(and(eq(folder.id, id), eq(folder.userId, userId)))
+		.limit(1);
+	if (!target) throw new FolderNotFoundError(id);
+
+	// Non-recursive: enforce empty precondition.
+	if (!recursive) {
+		const [sub] = await db
+			.select({ n: sql<number>`count(*)::int` })
+			.from(folder)
+			.where(and(eq(folder.parentId, id), eq(folder.userId, userId)));
+		const [files] = await db
+			.select({ n: sql<number>`count(*)::int` })
+			.from(file)
+			.where(and(eq(file.folderId, id), eq(file.userId, userId), isNull(file.deletedAt)));
+		const total = (sub?.n ?? 0) + (files?.n ?? 0);
+		if (total > 0) throw new FolderNotEmptyError(id, total);
+
+		const [row] = await db
+			.delete(folder)
+			.where(and(eq(folder.id, id), eq(folder.userId, userId)))
+			.returning();
+		if (!row) throw new FolderNotFoundError(id);
+		return { id: row.id, name: row.name, deletedIds: [row.id] };
+	}
+
+	// Recursive: collect the full subtree first so we can return per-node IDs for audit.
+	const deletedIds = await collectSubtreeIds(db, folder, id, userId);
+
+	// One DELETE — the self-FK ON DELETE CASCADE handles the subtree atomically.
 	const [row] = await db
 		.delete(folder)
 		.where(and(eq(folder.id, id), eq(folder.userId, userId)))
 		.returning();
-	return row ?? null;
+	if (!row) throw new FolderNotFoundError(id);
+	return { id: row.id, name: row.name, deletedIds };
 }
 
 /** Update spreadsheet cells by file ID. Touches file updatedAt. Skips soft-deleted. */

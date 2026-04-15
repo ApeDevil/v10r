@@ -12,19 +12,23 @@ import {
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import { Button, Spinner } from '$lib/components/primitives';
 import {
+	adaptAssetFolders,
 	adaptBlogAssets,
+	adaptBlogFolders,
 	adaptBlogPosts,
 	adaptDeskFiles,
 	adaptDeskFolders,
 	assetsRootNode,
 	blogRootNode,
 	dataRootNode,
-	imagesRootNode,
 } from './adapters';
 import type { ContextMenuCallbacks } from './context-menu-items';
+import ExplorerBreadcrumb from './ExplorerBreadcrumb.svelte';
+import { dispatchDeleteFolder, dispatchMove, VIRTUAL_ROOT } from './explorer-actions';
 import ExplorerPreview from './ExplorerPreview.svelte';
 import ExplorerTree from './ExplorerTree.svelte';
 import { ExplorerState } from './explorer-state.svelte';
+import MoveToDialog from './MoveToDialog.svelte';
 import type { ExplorerNode } from './node';
 import type { AssetListItem, FileListItem, PostListItem, UploadingItem } from './types';
 
@@ -49,37 +53,66 @@ let dragOver = $state(false);
 
 const explorerState = new ExplorerState();
 
+const actionContext = {
+	refresh: () => fetchAll(),
+	setError: (msg: string) => {
+		error = msg;
+	},
+	announce: (msg: string) => {
+		explorerState.moveAnnouncement = msg;
+	},
+};
+
+async function handleMove(nodeId: string, newParentId: string | null) {
+	await dispatchMove(explorerState, nodeId, newParentId, actionContext);
+}
+
 async function fetchAll() {
 	loading = true;
 	error = '';
 	try {
-		const [postsRes, assetsRes, filesRes, foldersRes] = await Promise.all([
+		const [postsRes, postFoldersRes, assetsRes, assetFoldersRes, filesRes, foldersRes] = await Promise.all([
 			apiFetch('/api/blog/posts'),
+			apiFetch('/api/blog/post-folders'),
 			apiFetch('/api/blog/assets'),
+			apiFetch('/api/blog/asset-folders'),
 			apiFetch('/api/desk/files'),
 			apiFetch('/api/desk/folders'),
 		]);
 
 		const nodes: ExplorerNode[] = [
-			// Virtual roots
+			// Virtual roots — `virtual:images` is gone; an "Images only" filter chip
+			// on the assets root replaces the separate tree.
 			blogRootNode(),
 			assetsRootNode(),
-			imagesRootNode(),
 			dataRootNode(),
 		];
 
 		if (postsRes.ok) {
 			const { data } = await postsRes.json();
 			const posts: PostListItem[] = (data.items ?? []).map(
-				(p: { id: string; slug: string; status: PostListItem['status']; title?: string; updatedAt: string }) => ({
+				(p: {
+					id: string;
+					slug: string;
+					status: PostListItem['status'];
+					title?: string;
+					folderId: string | null;
+					updatedAt: string;
+				}) => ({
 					id: p.id,
 					slug: p.slug,
 					status: p.status,
 					title: p.title ?? '(untitled)',
+					folderId: p.folderId ?? null,
 					updatedAt: p.updatedAt,
 				}),
 			);
 			nodes.push(...adaptBlogPosts(posts));
+		}
+
+		if (postFoldersRes.ok) {
+			const { data } = await postFoldersRes.json();
+			nodes.push(...adaptBlogFolders(data.folders ?? []));
 		}
 
 		if (assetsRes.ok) {
@@ -87,9 +120,14 @@ async function fetchAll() {
 			nodes.push(...adaptBlogAssets(data.items ?? []));
 		}
 
+		if (assetFoldersRes.ok) {
+			const { data } = await assetFoldersRes.json();
+			nodes.push(...adaptAssetFolders(data.folders ?? []));
+		}
+
 		if (foldersRes.ok) {
 			const { data } = await foldersRes.json();
-			nodes.push(...adaptDeskFolders(data.items ?? []));
+			nodes.push(...adaptDeskFolders(data.folders ?? []));
 		}
 
 		if (filesRes.ok) {
@@ -176,13 +214,42 @@ async function handleRename(node: ExplorerNode) {
 					body: JSON.stringify({ name: newLabel }),
 				});
 				break;
-			case 'desk-folder':
-				await apiFetch(`/api/desk/folders/${node.id}`, {
+			case 'desk-folder': {
+				const res = await apiFetch(`/api/desk/folders/${node.id}`, {
 					method: 'PUT',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ name: newLabel }),
 				});
+				if (!res.ok) {
+					const body = await res.json().catch(() => ({}));
+					throw new Error(body.error?.message ?? 'Rename failed');
+				}
 				break;
+			}
+			case 'blog-folder': {
+				const res = await apiFetch(`/api/blog/post-folders/${node.id}`, {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ name: newLabel }),
+				});
+				if (!res.ok) {
+					const body = await res.json().catch(() => ({}));
+					throw new Error(body.error?.message ?? 'Rename failed');
+				}
+				break;
+			}
+			case 'asset-folder': {
+				const res = await apiFetch(`/api/blog/asset-folders/${node.id}`, {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ name: newLabel }),
+				});
+				if (!res.ok) {
+					const body = await res.json().catch(() => ({}));
+					throw new Error(body.error?.message ?? 'Rename failed');
+				}
+				break;
+			}
 			case 'blog-post': {
 				const slug = newLabel.replace(/\.md$/, '');
 				await apiFetch(`/api/blog/posts/${node.id}`, {
@@ -224,13 +291,17 @@ async function handleDuplicate(node: ExplorerNode) {
 
 async function handleDelete(node: ExplorerNode) {
 	explorerState.cancelDelete();
+
+	// Folders go through the centralized action primitive (recursive=true, typed errors).
+	if (node.source === 'desk-folder' || node.source === 'blog-folder' || node.source === 'asset-folder') {
+		await dispatchDeleteFolder(explorerState, node.id, actionContext);
+		return;
+	}
+
 	try {
 		switch (node.source) {
 			case 'desk-file':
 				await apiFetch(`/api/desk/files/${node.id}`, { method: 'DELETE' });
-				break;
-			case 'desk-folder':
-				await apiFetch(`/api/desk/folders/${node.id}`, { method: 'DELETE' });
 				break;
 			case 'blog-post':
 				await apiFetch(`/api/blog/posts/${node.id}`, { method: 'DELETE' });
@@ -287,10 +358,33 @@ function handleCopyUrl(node: ExplorerNode) {
 	navigator.clipboard.writeText(`/api/blog/assets/${node.id}/image`);
 }
 
+const FOLDER_ENDPOINTS: Record<string, string> = {
+	'virtual:data': '/api/desk/folders',
+	'virtual:blog': '/api/blog/post-folders',
+	'virtual:assets': '/api/blog/asset-folders',
+};
+
+function resolveVirtualRoot(node: ExplorerNode): string {
+	if (node.source === 'virtual') return node.id;
+	return VIRTUAL_ROOT[node.source] ?? 'virtual:data';
+}
+
 async function handleNewFolder(node: ExplorerNode) {
-	const parentId = node.source === 'virtual' ? null : node.id;
+	const virtualRoot = resolveVirtualRoot(node);
+	const endpoint = FOLDER_ENDPOINTS[virtualRoot];
+	if (!endpoint) {
+		error = 'Folders are not supported here.';
+		return;
+	}
+
+	// Non-virtual folders hold the new child directly; leaves create a sibling.
+	let parentId: string | null = null;
+	if (node.source !== 'virtual') {
+		parentId = node.isFolder ? node.id : (node.parentId && !node.parentId.startsWith('virtual:') ? node.parentId : null);
+	}
+
 	try {
-		const res = await apiFetch('/api/desk/folders', {
+		const res = await apiFetch(endpoint, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ parentId }),
@@ -301,8 +395,9 @@ async function handleNewFolder(node: ExplorerNode) {
 		} = await res.json();
 		await fetchAll();
 		explorerState.startRename(folder.id);
-		// Expand parent to show new folder
-		if (node.id !== 'virtual:data') explorerState.expanded.add(node.id);
+		// Expand the target parent so the new folder lands visible.
+		if (parentId) explorerState.expanded.add(parentId);
+		else explorerState.expanded.add(virtualRoot);
 	} catch (e) {
 		error = e instanceof Error ? e.message : 'Failed to create folder';
 	}
@@ -335,6 +430,8 @@ async function handleNewSpreadsheet(node: ExplorerNode) {
 	}
 }
 
+let moveToDialogSource = $state<ExplorerNode | null>(null);
+
 const menuCallbacks: ContextMenuCallbacks = {
 	onOpen: openNode,
 	onOpenNewPanel: openInNewPanel,
@@ -351,6 +448,10 @@ const menuCallbacks: ContextMenuCallbacks = {
 	onCopyUrl: handleCopyUrl,
 	onNewFolder: handleNewFolder,
 	onNewSpreadsheet: handleNewSpreadsheet,
+	onMoveRequest(node) {
+		moveToDialogSource = node;
+	},
+	onMove: handleMove,
 };
 
 // The rename callback is special: TreeNode passes the node with the new label
@@ -575,6 +676,12 @@ function handleDrop(e: DragEvent) {
 	if (e.dataTransfer?.files.length) uploadFiles(e.dataTransfer.files);
 }
 
+/** Infer the target node for MenuBar folder/spreadsheet creation from current selection. */
+function inferSelectedAnchor(): ExplorerNode {
+	const sel = explorerState.selectedId ? explorerState.getNode(explorerState.selectedId) : null;
+	return sel ?? dataRootNode();
+}
+
 // Register menus for the global MenuBar
 const explorerMenus = $derived<MenuBarMenu[]>([
 	{
@@ -589,7 +696,7 @@ const explorerMenus = $derived<MenuBarMenu[]>([
 				},
 			},
 			{ label: 'New Spreadsheet', icon: 'i-lucide-sheet', onSelect: () => handleNewSpreadsheet(dataRootNode()) },
-			{ label: 'New Folder', icon: 'i-lucide-folder-plus', onSelect: () => handleNewFolder(dataRootNode()) },
+			{ label: 'New Folder', icon: 'i-lucide-folder-plus', onSelect: () => handleNewFolder(inferSelectedAnchor()) },
 			{ type: 'separator' },
 			{ label: 'Import Markdown...', icon: 'i-lucide-file-up', onSelect: handleImportClick },
 			{ label: 'Upload Image...', icon: 'i-lucide-upload', onSelect: handleUploadClick },
@@ -609,10 +716,15 @@ function serializeExplorerContext(): string {
 	const allNodes = [...explorerState.nodes.values()];
 	if (!allNodes.length) return 'Explorer: loading...';
 	const lines = allNodes
-		.filter((n) => !n.id.startsWith('virtual:'))
+		.filter((n) => n.source !== 'virtual')
 		.map((n) => {
+			const ancestors = explorerState
+				.getBreadcrumbPath(n.id)
+				.filter((a) => a.source !== 'virtual')
+				.map((a) => a.label);
+			const path = ancestors.length > 0 ? `${ancestors.join('/')}/${n.label}` : n.label;
 			const prefix = n.isFolder ? 'folder' : n.source;
-			return `- ${n.label} (${prefix}:${n.id})`;
+			return `- ${path} (${prefix}:${n.id})`;
 		});
 	return `Workspace files (${lines.length} items):\n${lines.join('\n')}`;
 }
@@ -709,18 +821,43 @@ $effect(() => {
 		</div>
 	{/if}
 
+	<div class="sr-only" role="status" aria-live="polite">{explorerState.moveAnnouncement}</div>
+
 	{#if loading}
 		<div class="explorer-center">
 			<Spinner size="sm" />
 			<p class="loading-text">Loading...</p>
 		</div>
 	{:else}
+		<ExplorerBreadcrumb {explorerState} />
+		<div class="assets-filter">
+			<button
+				type="button"
+				class="filter-chip"
+				class:active={explorerState.showImagesOnly}
+				aria-pressed={explorerState.showImagesOnly}
+				onclick={() => {
+					explorerState.showImagesOnly = !explorerState.showImagesOnly;
+				}}
+				title="Filter assets to image files only"
+			>
+				<span class="i-lucide-image filter-icon" aria-hidden="true"></span>
+				<span>Images only</span>
+			</button>
+		</div>
 		<ExplorerTree {explorerState} {uploading} callbacks={treeCallbacks} />
 
 		<ExplorerPreview
 			asset={selectedAsset}
 			onclose={() => { selectedAsset = null; }}
 			oninsert={insertAsset}
+		/>
+
+		<MoveToDialog
+			{explorerState}
+			source={moveToDialogSource}
+			onConfirm={handleMove}
+			onClose={() => { moveToDialogSource = null; }}
 		/>
 	{/if}
 
@@ -830,6 +967,41 @@ $effect(() => {
 		font-size: 13px;
 		font-weight: 500;
 		color: var(--color-primary);
+	}
+
+	.assets-filter {
+		display: flex;
+		justify-content: flex-end;
+		padding: 4px 10px 0;
+	}
+
+	.filter-chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		height: 22px;
+		padding: 0 8px;
+		font-size: 11px;
+		color: var(--color-muted);
+		background: transparent;
+		border: 1px solid var(--color-border);
+		border-radius: 999px;
+		cursor: pointer;
+	}
+
+	.filter-chip:hover {
+		color: var(--color-fg);
+		border-color: var(--color-primary);
+	}
+
+	.filter-chip.active {
+		color: var(--color-primary);
+		border-color: var(--color-primary);
+		background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+	}
+
+	.filter-icon {
+		font-size: 12px;
 	}
 
 	.sr-only {

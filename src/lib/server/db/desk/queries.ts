@@ -1,4 +1,4 @@
-import { and, count, desc, eq, isNull } from 'drizzle-orm';
+import { and, count, desc, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../index';
 import { file, folder, markdown, spreadsheet } from '../schema/desk';
 
@@ -135,26 +135,33 @@ export async function getMarkdownByFileId(fileId: string, userId: string) {
 
 // ── Folder queries ────────────────────────────────────────────────
 
-/** List all folders for a user (flat). Client builds the tree. */
-export async function listFolders(userId: string, offset = 0, limit = 50) {
+/** Hard cap on folders returned by `listFolders`. Exceeding it indicates a pathological user state. */
+export const FOLDER_LIST_CAP = 500;
+
+/**
+ * List all folders for a user (flat). Client builds the tree.
+ *
+ * **Unpaginated by design**: a paginated tree is unrenderable — children on page 2 whose parent
+ * is on page 1 become orphans. Capped at `FOLDER_LIST_CAP` as a safety valve; exceeding the cap
+ * signals either a bug or an abuse pattern worth investigating, not a real user need.
+ *
+ * Sorted by `(parentId NULLS FIRST, name)` so the client can build the tree in one pass.
+ */
+export async function listFolders(userId: string) {
 	const where = eq(folder.userId, userId);
-	const [items, [countResult]] = await Promise.all([
-		db
-			.select({
-				id: folder.id,
-				parentId: folder.parentId,
-				name: folder.name,
-				createdAt: folder.createdAt,
-				updatedAt: folder.updatedAt,
-			})
-			.from(folder)
-			.where(where)
-			.orderBy(folder.name)
-			.offset(offset)
-			.limit(limit),
-		db.select({ total: count() }).from(folder).where(where),
-	]);
-	return { items, total: countResult?.total ?? 0 };
+	const items = await db
+		.select({
+			id: folder.id,
+			parentId: folder.parentId,
+			name: folder.name,
+			createdAt: folder.createdAt,
+			updatedAt: folder.updatedAt,
+		})
+		.from(folder)
+		.where(where)
+		.orderBy(sql`${folder.parentId} NULLS FIRST`, folder.name)
+		.limit(FOLDER_LIST_CAP + 1);
+	return { items: items.slice(0, FOLDER_LIST_CAP), overflow: items.length > FOLDER_LIST_CAP };
 }
 
 /** Get a single folder with ownership check. */

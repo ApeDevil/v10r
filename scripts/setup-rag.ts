@@ -39,30 +39,15 @@ async function prePush() {
 	console.log('[rag:pre] Done. Now run: bun run db:push');
 }
 
-/** Phase 2: features drizzle-kit can't express. */
+/**
+ * Phase 2: features drizzle-kit can't express.
+ *
+ * `search_vector` and its GIN index are now declared in the Drizzle schema
+ * (`schema/rag/chunk.ts`) via `customType('tsvector') + .generatedAlwaysAs()`
+ * and `.using('gin', ...)`. Only HNSW (which needs operator-class + `WITH` params)
+ * and the embedding-model seed remain here.
+ */
 async function postPush() {
-	console.log('[rag:post] Adding search_vector column...');
-	await db.execute(sql`
-		DO $$
-		BEGIN
-			IF NOT EXISTS (
-				SELECT 1 FROM information_schema.columns
-				WHERE table_schema = 'rag' AND table_name = 'chunk' AND column_name = 'search_vector'
-			) THEN
-				ALTER TABLE rag.chunk ADD COLUMN search_vector tsvector
-					GENERATED ALWAYS AS (
-						to_tsvector('english', coalesce(context_prefix, '') || ' ' || content)
-					) STORED;
-			END IF;
-		END $$
-	`);
-
-	console.log('[rag:post] Creating GIN index on search_vector...');
-	await db.execute(sql`
-		CREATE INDEX IF NOT EXISTS chunk_search_vector_idx
-			ON rag.chunk USING gin(search_vector)
-	`);
-
 	console.log('[rag:post] Creating HNSW index on embedding...');
 	await db.execute(sql`
 		CREATE INDEX IF NOT EXISTS chunk_embedding_hnsw_idx

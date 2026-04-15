@@ -17,9 +17,17 @@ export type NodeCapability =
 	| 'insert-into-document'
 	| 'copy-url'
 	| 'new-folder'
-	| 'new-spreadsheet';
+	| 'new-spreadsheet'
+	| 'new-post';
 
-export type NodeSource = 'desk-file' | 'desk-folder' | 'blog-post' | 'blog-asset' | 'virtual';
+export type NodeSource =
+	| 'desk-file'
+	| 'desk-folder'
+	| 'blog-post'
+	| 'blog-folder'
+	| 'blog-asset'
+	| 'asset-folder'
+	| 'virtual';
 
 export interface ExplorerNode {
 	/** Unique across all sources (prefixed IDs handle this, virtual nodes use `virtual:` prefix). */

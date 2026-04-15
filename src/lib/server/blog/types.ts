@@ -13,6 +13,7 @@ export interface PostListItem {
 	status: 'draft' | 'published' | 'archived';
 	authorId: string;
 	authorName: string | null;
+	folderId: string | null;
 	publishedAt: Date | null;
 	createdAt: Date;
 	updatedAt: Date;

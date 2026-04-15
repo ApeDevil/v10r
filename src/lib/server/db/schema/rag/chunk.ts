@@ -5,9 +5,9 @@
  * full-text search (tsvector via migration), and vector similarity (pgvector HNSW).
  */
 
-import { sql } from 'drizzle-orm';
+import { type SQL, sql } from 'drizzle-orm';
 import { type AnyPgColumn, index, integer, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
-import { vector } from './_custom-types';
+import { tsvector, vector } from './_custom-types';
 import { document } from './document';
 import { embeddingModel, ragSchema } from './embedding-model';
 
@@ -31,6 +31,14 @@ export const chunk = ragSchema.table(
 		overlapNext: integer('overlap_next').notNull().default(0),
 		embeddingModelId: text('embedding_model_id').references(() => embeddingModel.id, { onDelete: 'restrict' }),
 		embedding: vector(1536)('embedding'),
+		/**
+		 * Full-text search vector — generated from context_prefix + content.
+		 * Column references use string-literal form to avoid TS hoisting
+		 * and match Postgres's canonical stored expression.
+		 */
+		searchVector: tsvector('search_vector').generatedAlwaysAs(
+			(): SQL => sql`to_tsvector('english', coalesce(context_prefix, '') || ' ' || content)`,
+		),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	},
 	(table) => [
@@ -40,5 +48,6 @@ export const chunk = ragSchema.table(
 		uniqueIndex('chunk_doc_hash_level_idx').on(table.documentId, table.contentHash, table.level),
 		index('chunk_embedding_model_idx').on(table.embeddingModelId),
 		index('chunk_children_idx').on(table.parentId, table.position).where(sql`parent_id IS NOT NULL`),
+		index('chunk_search_vector_idx').using('gin', table.searchVector),
 	],
 );
