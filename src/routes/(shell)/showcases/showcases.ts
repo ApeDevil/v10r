@@ -205,6 +205,17 @@ export const showcases: ShowcaseCard[] = [
 		],
 	},
 	{
+		href: '/showcases/cycle',
+		icon: 'i-lucide-orbit',
+		title: 'Request Cycle',
+		description: 'Visualize the complete request lifecycle with real-time animation',
+		sublinks: [
+			{ label: 'Form', href: '/showcases/cycle/form' },
+			{ label: 'API', href: '/showcases/cycle/api' },
+			{ label: 'AI', href: '/showcases/cycle/ai' },
+		],
+	},
+	{
 		href: '/showcases/ai',
 		icon: 'i-lucide-bot',
 		title: 'AI',

@@ -1,5 +1,6 @@
 export * from './audit-log';
 export * from './collection-shelf';
+export * from './cycle-run';
 export * from './document-vault';
 export * from './network-registry';
 export * from './range-booking';
