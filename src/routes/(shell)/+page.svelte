@@ -124,7 +124,7 @@ const ghostIcons = [
 v          10            r</pre>
 					<span class="sr-only">The letters v and r bracket 10 letters in Velociraptor, forming the abbreviation v10r.</span>
 					<p class="etymology-result">v10r</p>
-					<p class="etymology-descriptor">Containerized Full-Stack Template</p>
+					<p class="etymology-descriptor">Containerized Full-Stack Pattern Library</p>
 				</div>
 			</div>
 		</div>
