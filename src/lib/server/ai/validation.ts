@@ -69,6 +69,9 @@ export const ChatRequestSchema = v.object({
 	useRetrieval: v.optional(v.boolean()),
 	retrievalTiers: v.optional(v.array(v.picklist([1, 2, 3]))),
 	fusion: v.optional(v.picklist(['none', 'rrf'])),
+	/** Route this turn through the llmwiki layer (primary surface + drill-down tools). */
+	useLlmwiki: v.optional(v.boolean()),
+	llmwikiCollectionId: v.optional(v.nullable(v.string())),
 	panelContext: v.optional(v.pipe(v.array(PanelContextEntry), v.maxLength(5))),
 	/** Tool permission scopes — empty or omitted means no tools. */
 	toolScopes: v.optional(v.array(ToolScope)),

@@ -44,8 +44,15 @@ export interface LlmwikiSearchOptions {
 	pointerCap?: number;
 }
 
-/** Result of post-hoc verification. */
-export type LlmwikiCitationVerification = 'none' | 'quote' | 'paraphrase' | 'unverified';
+/**
+ * Result of post-hoc verification.
+ *   'none'        — chunk was not drilled (no raw fetch happened)
+ *   'uncited'     — drilled chunk is not cited by any wiki page (no row in llmwiki_page_source)
+ *   'drifted'     — cited, but chunk.content_hash has changed since compile
+ *   'paraphrase'  — cited, hash matches — answer paraphrases the source
+ *   'quote'       — hash matches AND answer contains a verbatim snippet
+ */
+export type LlmwikiCitationVerification = 'none' | 'uncited' | 'drifted' | 'paraphrase' | 'quote';
 
 export interface LlmwikiCitation {
 	ordinal: number;

@@ -5,7 +5,7 @@
  * document. Nothing here should mutate.
  */
 
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { llmwikiPage, llmwikiPageRedirect } from '$lib/server/db/schema/rag';
 import { POINTER_CAP } from './config';
@@ -109,14 +109,19 @@ export async function computeCoverage(
 	return result;
 }
 
-/** Fetch full pages by ID (for the get_llmwiki_pages tool). */
+/**
+ * Fetch full pages by ID *or* slug.
+ * The `get_llmwiki_pages` tool advertises "slug or id", so we match both.
+ * Result map is keyed by whatever the caller passed in (id OR slug), so
+ * `missing = keys - Object.keys(result)` works symmetrically.
+ */
 export async function fetchPagesByIds(
-	ids: string[],
+	keys: string[],
 	userId: string,
 	options: { includeBody?: boolean } = {},
 ): Promise<Map<string, LlmwikiPage>> {
 	const result = new Map<string, LlmwikiPage>();
-	if (ids.length === 0) return result;
+	if (keys.length === 0) return result;
 
 	const rows = await db
 		.select({
@@ -131,7 +136,13 @@ export async function fetchPagesByIds(
 			compiledByModel: llmwikiPage.compiledByModel,
 		})
 		.from(llmwikiPage)
-		.where(and(inArray(llmwikiPage.id, ids), eq(llmwikiPage.userId, userId), isNull(llmwikiPage.deletedAt)));
+		.where(
+			and(
+				or(inArray(llmwikiPage.id, keys), inArray(llmwikiPage.slug, keys)),
+				eq(llmwikiPage.userId, userId),
+				isNull(llmwikiPage.deletedAt),
+			),
+		);
 
 	const pointers = await hydratePointers(
 		rows.map((r) => r.id),
@@ -142,8 +153,19 @@ export async function fetchPagesByIds(
 		userId,
 	);
 
+	// Build lookup by BOTH id and slug, so either key format resolves.
+	const byId = new Map<string, (typeof rows)[number]>();
+	const bySlug = new Map<string, (typeof rows)[number]>();
 	for (const r of rows) {
-		result.set(r.id, {
+		byId.set(r.id, r);
+		bySlug.set(r.slug, r);
+	}
+
+	for (const key of keys) {
+		const r = byId.get(key) ?? bySlug.get(key);
+		if (!r) continue;
+		if (result.has(key)) continue;
+		result.set(key, {
 			slug: r.slug,
 			title: r.title,
 			tldr: r.tldr,

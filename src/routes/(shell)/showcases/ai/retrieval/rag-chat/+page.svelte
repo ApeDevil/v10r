@@ -20,7 +20,7 @@ import { DEMO_QUERIES } from './demo-queries';
 
 let { data } = $props();
 
-const VALID_MODES: RagMode[] = ['vector', 'small-to-big', 'graph', 'fused'];
+const VALID_MODES: RagMode[] = ['vector', 'small-to-big', 'graph', 'fused', 'llmwiki'];
 
 function parseMode(value: string | null): RagMode {
 	return VALID_MODES.includes(value as RagMode) ? (value as RagMode) : 'vector';
@@ -28,6 +28,7 @@ function parseMode(value: string | null): RagMode {
 
 let mode = $state<RagMode>(parseMode(page.url.searchParams.get('mode')));
 
+const isLlmwiki = $derived(mode === 'llmwiki');
 const retrievalTiers = $derived(
 	mode === 'vector' ? [1] : mode === 'small-to-big' ? [2] : mode === 'graph' ? [3] : [1, 2, 3],
 );
@@ -64,13 +65,19 @@ const chat = new Chat({
 		headers: CSRF_HEADER,
 		body: {
 			get useRetrieval() {
-				return true;
+				return !isLlmwiki;
 			},
 			get retrievalTiers() {
 				return retrievalTiers;
 			},
 			get fusion() {
 				return fusion;
+			},
+			get useLlmwiki() {
+				return isLlmwiki;
+			},
+			get llmwikiCollectionId() {
+				return null;
 			},
 		},
 	}) as Chat['transport'],

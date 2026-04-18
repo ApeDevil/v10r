@@ -30,11 +30,13 @@ export function createGetRawragChunksTool(userId: string, sink?: DrilledChunkSin
 	return {
 		get_rawrag_chunks: tool({
 			description:
-				'Fetch raw source chunks by ID for drill-down. ' +
-				'Call this when the user asks for exact wording, quotations, ' +
-				'specific details, or challenges a claim. IDs are discovered ' +
-				'from the `pointers` carried on each llmwiki hit. Do not call ' +
-				'preemptively on broad questions.',
+				'Fetch raw source chunks by ID for drill-down. Call this ONLY when the ' +
+				'user asks for exact wording, quotations, specific details, or challenges a ' +
+				'claim. The ONLY valid `ids` are those listed verbatim under a page\'s ' +
+				'`pointers:` section in the <llmwiki-hits> block — for example, if a page ' +
+				'lists `chk_seed_rrf | doc_x | "Title" | w=1.00`, pass `ids: ["chk_seed_rrf"]`. ' +
+				'NEVER invent, guess, or transform chunk IDs. If no pointer matches the ' +
+				'user\'s need, do not call this tool — say so in your answer instead.',
 			inputSchema: jsonSchema<ToolInput>({
 				type: 'object',
 				properties: {

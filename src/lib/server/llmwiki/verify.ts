@@ -52,33 +52,43 @@ export async function verifyCitations(input: VerifyInput): Promise<VerifyResult>
 			and(inArray(chunkTable.id, input.drilledChunkIds), eq(document.userId, input.userId), isNull(document.deletedAt)),
 		);
 
-	// Collapse per chunk — a chunk may be cited by multiple wiki pages.
-	// A chunk verifies if ANY source_hash_at_compile matches the current hash.
-	const perChunk = new Map<string, { hashMatch: boolean; content: string | null }>();
+	// Collapse per chunk. A chunk may be cited by multiple wiki pages — it
+	// verifies if ANY source_hash_at_compile matches the current hash.
+	// Distinguish three cases:
+	//   (a) chunk exists but has no llmwiki_page_source row → 'uncited'
+	//   (b) chunk has source rows, none match current hash → 'drifted'
+	//   (c) at least one source row matches → 'paraphrase' (or 'quote' if verbatim)
+	const perChunk = new Map<string, { hashMatch: boolean; hasCitation: boolean; content: string | null }>();
 	for (const r of rows) {
 		const existing = perChunk.get(r.chunkId);
-		const match = r.recordedHash !== null && r.recordedHash === r.currentHash;
+		const hasCitation = r.recordedHash !== null;
+		const match = hasCitation && r.recordedHash === r.currentHash;
 		if (!existing) {
-			perChunk.set(r.chunkId, { hashMatch: match, content: r.content });
-		} else if (match) {
-			existing.hashMatch = true;
+			perChunk.set(r.chunkId, { hashMatch: match, hasCitation, content: r.content });
+		} else {
+			if (match) existing.hashMatch = true;
+			if (hasCitation) existing.hasCitation = true;
 		}
 	}
 
 	for (const chunkId of input.drilledChunkIds) {
 		const entry = perChunk.get(chunkId);
 		if (!entry) {
-			verifications.set(chunkId, 'unverified');
+			verifications.set(chunkId, 'uncited');
+			continue;
+		}
+
+		if (!entry.hasCitation) {
+			verifications.set(chunkId, 'uncited');
 			continue;
 		}
 
 		if (!entry.hashMatch) {
 			driftedChunkIds.push(chunkId);
-			verifications.set(chunkId, 'unverified');
+			verifications.set(chunkId, 'drifted');
 			continue;
 		}
 
-		// Optional cheap quote check
 		if (input.answerText && entry.content) {
 			const snippet = entry.content.slice(0, 80).trim();
 			if (snippet && input.answerText.includes(snippet)) {

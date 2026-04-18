@@ -320,7 +320,17 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 						]);
 						const contextBlock = formatLlmwikiContext(overview, hits);
 						if (contextBlock) {
-							systemPrompt = `${baseSystemPrompt}\n\n${contextBlock}\n\nAnswer from llmwiki pages first. Each page carries \`pointers\` — raw chunk IDs — which you may expand via \`get_rawrag_chunks\` when the user asks for exact wording, quotations, specific details, or challenges a claim. Do not expand pointers preemptively on broad questions.`;
+							systemPrompt = `${baseSystemPrompt}
+
+${contextBlock}
+
+Retrieval rules:
+1. Answer from the llmwiki pages above. Their TLDRs and bodies are your primary source.
+2. Each page's \`pointers:\` list contains raw chunk IDs (e.g. \`chk_seed_rrf\`). These are the ONLY valid inputs to \`get_rawrag_chunks\`.
+3. Call \`get_rawrag_chunks\` ONLY when the user asks for exact wording, a verbatim quote, specific details not in the TLDR, or challenges a claim.
+4. When calling \`get_rawrag_chunks\`, you MUST copy chunk IDs verbatim from a page's \`pointers:\` list. NEVER invent, guess, transform, or abbreviate a chunk ID.
+5. If no pointer exists for what the user asked, say so plainly instead of fabricating an ID.
+6. Do not expand pointers preemptively on broad questions.`;
 						}
 					} catch (err) {
 						console.error('[ai:chat:llmwiki] Retrieval failed, proceeding without context:', err);

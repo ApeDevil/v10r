@@ -20,7 +20,7 @@ import { LlmwikiError } from './errors';
 import { computeCoverage, hydratePointers } from './queries';
 import type { LlmwikiHit, LlmwikiSearchOptions } from './types';
 
-interface RankedPage {
+export interface RankedPage {
 	pageId: string;
 	slug: string;
 	title: string;
@@ -29,8 +29,8 @@ interface RankedPage {
 	score: number;
 }
 
-/** Reciprocal rank fusion across vector + BM25 result lists. */
-function rrf(lists: RankedPage[][]): RankedPage[] {
+/** Reciprocal rank fusion across vector + BM25 result lists. Exported for unit tests. */
+export function rrf(lists: RankedPage[][]): RankedPage[] {
 	const scores = new Map<string, RankedPage & { rrfScore: number }>();
 	for (const list of lists) {
 		for (let rank = 0; rank < list.length; rank++) {

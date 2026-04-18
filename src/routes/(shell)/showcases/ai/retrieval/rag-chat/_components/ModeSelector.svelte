@@ -1,7 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 
-export type RagMode = 'vector' | 'small-to-big' | 'graph' | 'fused';
+export type RagMode = 'vector' | 'small-to-big' | 'graph' | 'fused' | 'llmwiki';
 
 interface Props {
 	value: RagMode;
@@ -19,6 +19,7 @@ const modes: {
 	{ id: 'vector', label: 'Vector Search', subtitle: 'semantic + keyword hybrid' },
 	{ id: 'small-to-big', label: 'Small-to-Big', subtitle: 'precise chunks, expanded parents' },
 	{ id: 'graph', label: 'Entity Graph', subtitle: 'follow relationships' },
+	{ id: 'llmwiki', label: 'LLM Wiki', subtitle: 'compiled pages + drill-down' },
 ];
 
 const fusedMode = { id: 'fused' as RagMode, label: 'All Three Fused', subtitle: 'run all, RRF fusion' };

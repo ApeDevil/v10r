@@ -3,7 +3,7 @@
  * Exercises: user-scoping (closure is respected, not forged),
  * drilled-chunk sink wiring, input validation, and pointer limits.
  */
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('$lib/server/db', () => ({ db: {} }));
 
@@ -31,11 +31,18 @@ function execCtx() {
 }
 
 describe('get_rawrag_chunks tool', () => {
-	it('rejects empty ids array', async () => {
-		fetchChunksByIds.mockResolvedValueOnce(new Map());
+	// Reset queued mockResolvedValueOnce between tests so unused queues don't
+	// bleed into later tests that DO consume them.
+	beforeEach(() => {
+		fetchChunksByIds.mockReset();
+		fetchPagesByIds.mockReset();
+	});
+
+	it('rejects empty ids array (without touching fetchChunksByIds)', async () => {
 		const tool = createGetRawragChunksTool(USER).get_rawrag_chunks;
 		const result = await tool.execute!({ ids: [] }, execCtx());
 		expect((result as { error?: string }).error).toBeDefined();
+		expect(fetchChunksByIds).not.toHaveBeenCalled();
 	});
 
 	it('passes the closure userId to fetchChunksByIds (not a model-supplied one)', async () => {
@@ -82,11 +89,16 @@ describe('get_rawrag_chunks tool', () => {
 });
 
 describe('get_llmwiki_pages tool', () => {
-	it('rejects empty ids array', async () => {
-		fetchPagesByIds.mockResolvedValueOnce(new Map());
+	beforeEach(() => {
+		fetchChunksByIds.mockReset();
+		fetchPagesByIds.mockReset();
+	});
+
+	it('rejects empty ids array (without touching fetchPagesByIds)', async () => {
 		const tool = createGetLlmwikiPagesTool(USER).get_llmwiki_pages;
 		const result = await tool.execute!({ ids: [], include_body: false }, execCtx());
 		expect((result as { error?: string }).error).toBeDefined();
+		expect(fetchPagesByIds).not.toHaveBeenCalled();
 	});
 
 	it('forwards include_body flag to fetchPagesByIds', async () => {
@@ -103,5 +115,27 @@ describe('get_llmwiki_pages tool', () => {
 		await tool.execute!({ ids: manyIds, include_body: false }, execCtx());
 		const [idsArg] = fetchPagesByIds.mock.calls[0];
 		expect((idsArg as string[]).length).toBeLessThanOrEqual(10);
+	});
+
+	it('resolves slug keys AND reports unresolved keys as missing (covers the id-OR-slug contract)', async () => {
+		const fakePage = {
+			slug: 'oauth-pkce',
+			title: 'OAuth PKCE',
+			tldr: '',
+			body: '',
+			tags: [],
+			coverage: { sourceCount: 0, stale: false },
+			pointers: [],
+			compiledAt: new Date().toISOString(),
+			compiledByModel: 'seed',
+		};
+		fetchPagesByIds.mockResolvedValueOnce(new Map([['oauth-pkce', fakePage]]));
+		const tool = createGetLlmwikiPagesTool(USER).get_llmwiki_pages;
+		const result = (await tool.execute!(
+			{ ids: ['oauth-pkce', 'not-a-real-slug'], include_body: false },
+			execCtx(),
+		)) as { pages: unknown[]; missing: string[] };
+		expect(result.pages).toHaveLength(1);
+		expect(result.missing).toEqual(['not-a-real-slug']);
 	});
 });
