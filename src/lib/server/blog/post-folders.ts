@@ -58,10 +58,7 @@ export async function listPostFolders(userId: string) {
 /** Create a new post folder. @throws FolderNameConflictError on sibling collision. */
 export async function createPostFolder(userId: string, name = 'New Folder', parentId: string | null = null) {
 	try {
-		const [row] = await db
-			.insert(postFolder)
-			.values({ id: createId.postFolder(), userId, parentId, name })
-			.returning();
+		const [row] = await db.insert(postFolder).values({ id: createId.postFolder(), userId, parentId, name }).returning();
 		return row;
 	} catch (e) {
 		if (isUniqueViolation(e)) throw new FolderNameConflictError(parentId, name, suggestNextName(name));

@@ -1,7 +1,7 @@
 <script lang="ts">
 import type { ChunkSummary, DrillDetail, PipelineStepState } from '$lib/types/pipeline';
-import type { LlmwikiTraceState } from './llmwiki-trace.svelte';
 import CitationBadge from './CitationBadge.svelte';
+import type { LlmwikiTraceState } from './llmwiki-trace.svelte';
 
 interface Props {
 	step: PipelineStepState & { drillOrdinal: number };

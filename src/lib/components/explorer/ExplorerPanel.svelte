@@ -24,9 +24,9 @@ import {
 } from './adapters';
 import type { ContextMenuCallbacks } from './context-menu-items';
 import ExplorerBreadcrumb from './ExplorerBreadcrumb.svelte';
-import { dispatchDeleteFolder, dispatchMove, VIRTUAL_ROOT } from './explorer-actions';
 import ExplorerPreview from './ExplorerPreview.svelte';
 import ExplorerTree from './ExplorerTree.svelte';
+import { dispatchDeleteFolder, dispatchMove, VIRTUAL_ROOT } from './explorer-actions';
 import { ExplorerState } from './explorer-state.svelte';
 import MoveToDialog from './MoveToDialog.svelte';
 import type { ExplorerNode } from './node';
@@ -380,7 +380,7 @@ async function handleNewFolder(node: ExplorerNode) {
 	// Non-virtual folders hold the new child directly; leaves create a sibling.
 	let parentId: string | null = null;
 	if (node.source !== 'virtual') {
-		parentId = node.isFolder ? node.id : (node.parentId && !node.parentId.startsWith('virtual:') ? node.parentId : null);
+		parentId = node.isFolder ? node.id : node.parentId && !node.parentId.startsWith('virtual:') ? node.parentId : null;
 	}
 
 	try {
@@ -529,7 +529,14 @@ async function createNewPost() {
 		slugInput = '';
 		showNewPostForm = false;
 		await fetchAll();
-		openPost({ id: data.post.id, slug: data.post.slug, status: 'draft', title: '(untitled)', updatedAt: '' });
+		openPost({
+			id: data.post.id,
+			slug: data.post.slug,
+			status: 'draft',
+			title: '(untitled)',
+			folderId: data.post.folderId ?? null,
+			updatedAt: '',
+		});
 	} catch (e) {
 		error = e instanceof Error ? e.message : 'Failed to create';
 	} finally {
@@ -653,6 +660,7 @@ async function handleImportChange(e: Event) {
 			slug: data.post.slug,
 			status: data.post.status ?? 'draft',
 			title: data.revision?.title ?? '(untitled)',
+			folderId: data.post.folderId ?? null,
 			updatedAt: '',
 		});
 	} catch (e) {

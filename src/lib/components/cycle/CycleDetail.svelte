@@ -3,40 +3,38 @@
   Shows Code Path (default, always populated), Timing, and Payload tabs.
 -->
 <script lang="ts">
-	import { Button } from '$lib/components/primitives';
-	import type { CycleStageState, CycleTrace } from './types';
+import { Button } from '$lib/components/primitives';
+import type { CycleStageState, CycleTrace } from './types';
 
-	interface Props {
-		stage: CycleStageState;
-		trace: CycleTrace;
-		totalDurationMs: number;
-		onclose: () => void;
-	}
+interface Props {
+	stage: CycleStageState;
+	trace: CycleTrace;
+	totalDurationMs: number;
+	onclose: () => void;
+}
 
-	let { stage, trace: _trace, totalDurationMs, onclose }: Props = $props();
+let { stage, trace: _trace, totalDurationMs, onclose }: Props = $props();
 
-	let activeTab = $state<'code' | 'timing' | 'payload'>('code');
+let activeTab = $state<'code' | 'timing' | 'payload'>('code');
 
-	/** Code paths for each stage — shows where this stage runs in the codebase. */
-	const codePaths: Record<string, string> = {
-		browser: 'Client → form.submit() / fetch()',
-		network: 'HTTP POST → SvelteKit adapter → hooks.server.ts',
-		server: '$lib/server/cycle/handlers.ts → executeCycle() [validation]',
-		domain: '$lib/server/cycle/handlers.ts → executeCycle() [business logic]',
-		database: '$lib/server/db → db.insert(cycleRun).values(...).returning()',
-		response: '$lib/server/cycle/handlers.ts → executeCycle() [serialization]',
-		embed: '$lib/server/rawrag/embed.ts → generateEmbedding(query)',
-		retrieve: '$lib/server/rawrag → searchContextual / parentChild / graph',
-		rank: '$lib/server/rawrag/rank.ts → fuseAndRank(chunks) [RRF]',
-		context: '$lib/server/rawrag → formatContextForPrompt(result)',
-		generate: '$lib/server/ai → streamText({ model, prompt, context })',
-	};
+/** Code paths for each stage — shows where this stage runs in the codebase. */
+const codePaths: Record<string, string> = {
+	browser: 'Client → form.submit() / fetch()',
+	network: 'HTTP POST → SvelteKit adapter → hooks.server.ts',
+	server: '$lib/server/cycle/handlers.ts → executeCycle() [validation]',
+	domain: '$lib/server/cycle/handlers.ts → executeCycle() [business logic]',
+	database: '$lib/server/db → db.insert(cycleRun).values(...).returning()',
+	response: '$lib/server/cycle/handlers.ts → executeCycle() [serialization]',
+	embed: '$lib/server/rawrag/embed.ts → generateEmbedding(query)',
+	retrieve: '$lib/server/rawrag → searchContextual / parentChild / graph',
+	rank: '$lib/server/rawrag/rank.ts → fuseAndRank(chunks) [RRF]',
+	context: '$lib/server/rawrag → formatContextForPrompt(result)',
+	generate: '$lib/server/ai → streamText({ model, prompt, context })',
+};
 
-	const pct = $derived(
-		totalDurationMs > 0 && stage.durationMs != null
-			? Math.round((stage.durationMs / totalDurationMs) * 100)
-			: 0,
-	);
+const pct = $derived(
+	totalDurationMs > 0 && stage.durationMs != null ? Math.round((stage.durationMs / totalDurationMs) * 100) : 0,
+);
 </script>
 
 <div class="detail-panel">

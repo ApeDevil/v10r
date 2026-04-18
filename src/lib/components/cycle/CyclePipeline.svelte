@@ -4,80 +4,80 @@
   stages when an upstream stage errors.
 -->
 <script lang="ts">
-	import type { CycleStageId, CycleStageState } from './types';
-	import { STAGE_COLORS } from './types';
+import type { CycleStageId, CycleStageState } from './types';
+import { STAGE_COLORS } from './types';
 
-	interface Props {
-		stages: CycleStageState[];
-		selectedStageId?: CycleStageId | null;
-		onselect: (id: CycleStageId) => void;
-	}
+interface Props {
+	stages: CycleStageState[];
+	selectedStageId?: CycleStageId | null;
+	onselect: (id: CycleStageId) => void;
+}
 
-	let { stages, selectedStageId = null, onselect }: Props = $props();
+let { stages, selectedStageId = null, onselect }: Props = $props();
 
-	const PILL_W = 92;
-	const PILL_H = 38;
-	const PILL_RX = 19;
-	const GAP = 22;
-	const PADDING = 18;
-	const BAND_H = 10;
+const PILL_W = 92;
+const PILL_H = 38;
+const PILL_RX = 19;
+const GAP = 22;
+const PADDING = 18;
+const BAND_H = 10;
 
-	const totalW = $derived(stages.length * PILL_W + (stages.length - 1) * GAP + PADDING * 2);
-	const viewH = 100;
-	const cy = viewH / 2 + BAND_H / 2;
+const totalW = $derived(stages.length * PILL_W + (stages.length - 1) * GAP + PADDING * 2);
+const viewH = 100;
+const cy = viewH / 2 + BAND_H / 2;
 
-	/** Index of the first errored stage — downstream stages are dimmed. */
-	const errorIdx = $derived(stages.findIndex((s) => s.status === 'error'));
-	const hasError = $derived(errorIdx !== -1);
+/** Index of the first errored stage — downstream stages are dimmed. */
+const errorIdx = $derived(stages.findIndex((s) => s.status === 'error'));
+const hasError = $derived(errorIdx !== -1);
 
-	/** Icon paths — simple glyphs sized to a 10px box (centered on 0,0). */
-	const iconPaths: Record<CycleStageId, { d: string; stroke?: boolean }> = {
-		browser: { d: 'M-5,-3 h10 v7 h-10 z M-5,-1 h10', stroke: true },
-		network: { d: 'M-5,0 L3,0 M0,-3 L3,0 L0,3', stroke: true },
-		server: { d: 'M-4,-4 L4,-4 L4,4 L-4,4 Z M-4,-1 L4,-1 M-2,-3 L-2,-2' },
-		domain: { d: 'M0,-5 L5,0 L0,5 L-5,0 Z' },
-		database: { d: 'M-4,-4 h8 v8 h-8 z M-4,0 h8', stroke: true },
-		response: { d: 'M5,0 L-3,0 M0,-3 L-3,0 L0,3', stroke: true },
-		embed: { d: 'M-4,-2 L0,2 L4,-2 M-4,2 L0,-2 L4,2', stroke: true },
-		retrieve: { d: 'M0,-5 a5,5 0 1,0 0.01,0 M2,2 L5,5', stroke: true },
-		rank: { d: 'M-4,3 v-3 M0,3 v-5 M4,3 v-7', stroke: true },
-		context: { d: 'M-4,-4 h8 M-4,0 h8 M-4,4 h5', stroke: true },
-		generate: { d: 'M-3,-4 L3,0 L-3,4 Z' },
-	};
+/** Icon paths — simple glyphs sized to a 10px box (centered on 0,0). */
+const iconPaths: Record<CycleStageId, { d: string; stroke?: boolean }> = {
+	browser: { d: 'M-5,-3 h10 v7 h-10 z M-5,-1 h10', stroke: true },
+	network: { d: 'M-5,0 L3,0 M0,-3 L3,0 L0,3', stroke: true },
+	server: { d: 'M-4,-4 L4,-4 L4,4 L-4,4 Z M-4,-1 L4,-1 M-2,-3 L-2,-2' },
+	domain: { d: 'M0,-5 L5,0 L0,5 L-5,0 Z' },
+	database: { d: 'M-4,-4 h8 v8 h-8 z M-4,0 h8', stroke: true },
+	response: { d: 'M5,0 L-3,0 M0,-3 L-3,0 L0,3', stroke: true },
+	embed: { d: 'M-4,-2 L0,2 L4,-2 M-4,2 L0,-2 L4,2', stroke: true },
+	retrieve: { d: 'M0,-5 a5,5 0 1,0 0.01,0 M2,2 L5,5', stroke: true },
+	rank: { d: 'M-4,3 v-3 M0,3 v-5 M4,3 v-7', stroke: true },
+	context: { d: 'M-4,-4 h8 M-4,0 h8 M-4,4 h5', stroke: true },
+	generate: { d: 'M-3,-4 L3,0 L-3,4 Z' },
+};
 
-	function pillX(i: number): number {
-		return PADDING + i * (PILL_W + GAP);
-	}
+function pillX(i: number): number {
+	return PADDING + i * (PILL_W + GAP);
+}
 
-	function isClickable(status: string): boolean {
-		return status === 'done' || status === 'error';
-	}
+function isClickable(status: string): boolean {
+	return status === 'done' || status === 'error';
+}
 
-	function pillDimmed(i: number, status: string): boolean {
-		if (status === 'blocked') return true;
-		return hasError && i > errorIdx;
-	}
+function pillDimmed(i: number, status: string): boolean {
+	if (status === 'blocked') return true;
+	return hasError && i > errorIdx;
+}
 
-	const clientCount = $derived(stages.filter((s) => s.side === 'client').length);
-	const clientEndX = $derived(clientCount > 0 ? pillX(clientCount - 1) + PILL_W + GAP / 2 : 0);
+const clientCount = $derived(stages.filter((s) => s.side === 'client').length);
+const clientEndX = $derived(clientCount > 0 ? pillX(clientCount - 1) + PILL_W + GAP / 2 : 0);
 
-	const stageDescriptions: Record<string, string> = {
-		browser: 'client-side form submission or fetch call',
-		network: 'HTTP round-trip between browser and server',
-		server: 'SvelteKit hooks, validation, auth',
-		domain: 'pure business logic, no framework deps',
-		database: 'Drizzle insert into showcase.cycle_run',
-		response: 'serialization back to the client',
-		embed: 'embed query into vector representation',
-		retrieve: 'vector + graph search across tiers',
-		rank: 'RRF fusion of multi-tier results',
-		context: 'assemble final prompt context block',
-		generate: 'LLM streaming — first token → final token',
-	};
+const stageDescriptions: Record<string, string> = {
+	browser: 'client-side form submission or fetch call',
+	network: 'HTTP round-trip between browser and server',
+	server: 'SvelteKit hooks, validation, auth',
+	domain: 'pure business logic, no framework deps',
+	database: 'Drizzle insert into showcase.cycle_run',
+	response: 'serialization back to the client',
+	embed: 'embed query into vector representation',
+	retrieve: 'vector + graph search across tiers',
+	rank: 'RRF fusion of multi-tier results',
+	context: 'assemble final prompt context block',
+	generate: 'LLM streaming — first token → final token',
+};
 
-	function stageDescription(id: string): string {
-		return stageDescriptions[id] ?? 'cycle stage';
-	}
+function stageDescription(id: string): string {
+	return stageDescriptions[id] ?? 'cycle stage';
+}
 </script>
 
 <svg

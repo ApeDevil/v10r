@@ -26,10 +26,7 @@ export interface CycleResult {
 	error?: string;
 }
 
-export async function executeCycle(
-	input: CycleInput,
-	trigger: 'form' | 'api' | 'ai',
-): Promise<CycleResult> {
+export async function executeCycle(input: CycleInput, trigger: 'form' | 'api' | 'ai'): Promise<CycleResult> {
 	const { trace, traceStart } = createTrace(trigger);
 	trace.inputPayload = input as unknown as Record<string, unknown>;
 

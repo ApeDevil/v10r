@@ -40,7 +40,7 @@ describe('get_rawrag_chunks tool', () => {
 
 	it('rejects empty ids array (without touching fetchChunksByIds)', async () => {
 		const tool = createGetRawragChunksTool(USER).get_rawrag_chunks;
-		const result = await tool.execute!({ ids: [] }, execCtx());
+		const result = await tool.execute?.({ ids: [] }, execCtx());
 		expect((result as { error?: string }).error).toBeDefined();
 		expect(fetchChunksByIds).not.toHaveBeenCalled();
 	});
@@ -48,7 +48,7 @@ describe('get_rawrag_chunks tool', () => {
 	it('passes the closure userId to fetchChunksByIds (not a model-supplied one)', async () => {
 		fetchChunksByIds.mockResolvedValueOnce(new Map([['chk_1', { chunkId: 'chk_1' }]]));
 		const tool = createGetRawragChunksTool(USER).get_rawrag_chunks;
-		await tool.execute!({ ids: ['chk_1'] }, execCtx());
+		await tool.execute?.({ ids: ['chk_1'] }, execCtx());
 		expect(fetchChunksByIds).toHaveBeenCalledWith(['chk_1'], USER);
 	});
 
@@ -61,7 +61,7 @@ describe('get_rawrag_chunks tool', () => {
 		);
 		const recorded: string[] = [];
 		const tool = createGetRawragChunksTool(USER, { record: (ids) => recorded.push(...ids) }).get_rawrag_chunks;
-		await tool.execute!({ ids: ['chk_a', 'chk_b'] }, execCtx());
+		await tool.execute?.({ ids: ['chk_a', 'chk_b'] }, execCtx());
 		expect(recorded.sort()).toEqual(['chk_a', 'chk_b']);
 	});
 
@@ -69,7 +69,7 @@ describe('get_rawrag_chunks tool', () => {
 		fetchChunksByIds.mockResolvedValueOnce(new Map());
 		const tool = createGetRawragChunksTool(USER).get_rawrag_chunks;
 		const manyIds = Array.from({ length: 30 }, (_, i) => `chk_${i}`);
-		await tool.execute!({ ids: manyIds }, execCtx());
+		await tool.execute?.({ ids: manyIds }, execCtx());
 		const [idsArg] = fetchChunksByIds.mock.calls[0];
 		expect((idsArg as string[]).length).toBeLessThanOrEqual(20);
 	});
@@ -79,7 +79,7 @@ describe('get_rawrag_chunks tool', () => {
 			new Map([['chk_a', { chunkId: 'chk_a', documentId: 'd', documentTitle: 'x', content: '' }]]),
 		);
 		const tool = createGetRawragChunksTool(USER).get_rawrag_chunks;
-		const result = (await tool.execute!({ ids: ['chk_a', 'chk_missing'] }, execCtx())) as {
+		const result = (await tool.execute?.({ ids: ['chk_a', 'chk_missing'] }, execCtx())) as {
 			chunks: unknown[];
 			missing: string[];
 		};
@@ -96,7 +96,7 @@ describe('get_llmwiki_pages tool', () => {
 
 	it('rejects empty ids array (without touching fetchPagesByIds)', async () => {
 		const tool = createGetLlmwikiPagesTool(USER).get_llmwiki_pages;
-		const result = await tool.execute!({ ids: [], include_body: false }, execCtx());
+		const result = await tool.execute?.({ ids: [], include_body: false }, execCtx());
 		expect((result as { error?: string }).error).toBeDefined();
 		expect(fetchPagesByIds).not.toHaveBeenCalled();
 	});
@@ -104,7 +104,7 @@ describe('get_llmwiki_pages tool', () => {
 	it('forwards include_body flag to fetchPagesByIds', async () => {
 		fetchPagesByIds.mockResolvedValueOnce(new Map());
 		const tool = createGetLlmwikiPagesTool(USER).get_llmwiki_pages;
-		await tool.execute!({ ids: ['lwp_1'], include_body: true }, execCtx());
+		await tool.execute?.({ ids: ['lwp_1'], include_body: true }, execCtx());
 		expect(fetchPagesByIds).toHaveBeenCalledWith(['lwp_1'], USER, { includeBody: true });
 	});
 
@@ -112,7 +112,7 @@ describe('get_llmwiki_pages tool', () => {
 		fetchPagesByIds.mockResolvedValueOnce(new Map());
 		const tool = createGetLlmwikiPagesTool(USER).get_llmwiki_pages;
 		const manyIds = Array.from({ length: 25 }, (_, i) => `lwp_${i}`);
-		await tool.execute!({ ids: manyIds, include_body: false }, execCtx());
+		await tool.execute?.({ ids: manyIds, include_body: false }, execCtx());
 		const [idsArg] = fetchPagesByIds.mock.calls[0];
 		expect((idsArg as string[]).length).toBeLessThanOrEqual(10);
 	});
@@ -131,7 +131,7 @@ describe('get_llmwiki_pages tool', () => {
 		};
 		fetchPagesByIds.mockResolvedValueOnce(new Map([['oauth-pkce', fakePage]]));
 		const tool = createGetLlmwikiPagesTool(USER).get_llmwiki_pages;
-		const result = (await tool.execute!(
+		const result = (await tool.execute?.(
 			{ ids: ['oauth-pkce', 'not-a-real-slug'], include_body: false },
 			execCtx(),
 		)) as { pages: unknown[]; missing: string[] };

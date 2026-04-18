@@ -14,10 +14,7 @@ import type { LlmwikiPage } from './types';
 const CHARS_PER_TOKEN = 4;
 
 /** Load the overview page for a user/collection, truncated to budget. */
-export async function loadOverview(
-	userId: string,
-	collectionId: string | null,
-): Promise<LlmwikiPage | null> {
+export async function loadOverview(userId: string, collectionId: string | null): Promise<LlmwikiPage | null> {
 	const page = await getOverviewRow(userId, collectionId);
 	if (!page) return null;
 

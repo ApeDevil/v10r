@@ -1,6 +1,6 @@
 <script lang="ts">
-import type { LlmwikiTraceState } from './llmwiki-trace.svelte';
 import DrillRound from './DrillRound.svelte';
+import type { LlmwikiTraceState } from './llmwiki-trace.svelte';
 import PageList from './PageList.svelte';
 
 interface Props {

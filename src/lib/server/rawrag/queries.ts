@@ -7,12 +7,12 @@ import { sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 
 /** A raw chunk with its document context. */
-export interface RawChunkRow {
+export type RawChunkRow = {
 	chunkId: string;
 	documentId: string;
 	documentTitle: string;
 	content: string;
-}
+};
 
 /**
  * Fetch chunk content by IDs, user-scoped.

@@ -33,7 +33,12 @@ vi.mock('$lib/server/db', () => ({
 }));
 
 vi.mock('$lib/server/db/schema/rag', () => ({
-	chunk: { id: 'chunk.id', content: 'chunk.content', contentHash: 'chunk.content_hash', documentId: 'chunk.document_id' },
+	chunk: {
+		id: 'chunk.id',
+		content: 'chunk.content',
+		contentHash: 'chunk.content_hash',
+		documentId: 'chunk.document_id',
+	},
 	document: { id: 'document.id', userId: 'document.user_id', deletedAt: 'document.deleted_at' },
 	llmwikiPageSource: { chunkId: 'lps.chunk_id', sourceHashAtCompile: 'lps.source_hash_at_compile' },
 }));
@@ -57,9 +62,7 @@ describe('verifyCitations', () => {
 	});
 
 	it('marks a drilled chunk with NO source row as "uncited"', async () => {
-		whereMock.mockResolvedValueOnce(
-			rows({ chunkId: 'chk_a', content: 'abc', currentHash: 'h1', recordedHash: null }),
-		);
+		whereMock.mockResolvedValueOnce(rows({ chunkId: 'chk_a', content: 'abc', currentHash: 'h1', recordedHash: null }));
 		const result = await verifyCitations({ userId: 'u1', drilledChunkIds: ['chk_a'] });
 		expect(result.verifications.get('chk_a')).toBe('uncited');
 		expect(result.driftedChunkIds).toEqual([]);

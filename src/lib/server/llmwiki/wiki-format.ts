@@ -46,7 +46,9 @@ export function formatHitsForPrompt(hits: LlmwikiHit[]): string {
 		lines.push(`   coverage: ${h.coverage.sourceCount} sources, stale=${h.coverage.stale}`);
 		if (h.pointers.length > 0) {
 			lines.push('   pointers:');
-			h.pointers.forEach((p, idx) => lines.push(formatPointer(idx, p)));
+			for (const [idx, p] of h.pointers.entries()) {
+				lines.push(formatPointer(idx, p));
+			}
 		}
 	}
 	lines.push('</llmwiki-hits>');

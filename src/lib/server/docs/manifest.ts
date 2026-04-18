@@ -1,10 +1,5 @@
 import { parse as parseYaml } from 'yaml';
-import {
-	type DocEntry,
-	type DocSection,
-	type DocsManifest,
-	STACK_LAYER_ORDER,
-} from '$lib/docs/types';
+import { type DocEntry, type DocSection, type DocsManifest, STACK_LAYER_ORDER } from '$lib/docs/types';
 
 const rawModules = import.meta.glob('/docs/**/*.md', {
 	query: '?raw',
@@ -117,7 +112,13 @@ function buildEntry(absPath: string, raw: string): DocEntry | null {
 	const parts = sourcePath.split('/');
 	const sectionDir = parts[1];
 	const section: DocSection | null =
-		sectionDir === 'foundation' ? 'foundation' : sectionDir === 'blueprint' ? 'blueprint' : sectionDir === 'stack' ? 'stack' : null;
+		sectionDir === 'foundation'
+			? 'foundation'
+			: sectionDir === 'blueprint'
+				? 'blueprint'
+				: sectionDir === 'stack'
+					? 'stack'
+					: null;
 	if (!section) return null;
 
 	const { frontmatter, body } = parseFrontmatter(raw);
@@ -197,15 +198,11 @@ function buildManifest(): DocsManifest {
 	foundation.sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.title.localeCompare(b.title));
 	stack.sort(
 		(a, b) =>
-			layerIdx(a.layer) - layerIdx(b.layer) ||
-			(a.order ?? 0) - (b.order ?? 0) ||
-			a.title.localeCompare(b.title),
+			layerIdx(a.layer) - layerIdx(b.layer) || (a.order ?? 0) - (b.order ?? 0) || a.title.localeCompare(b.title),
 	);
 	blueprint.sort(
 		(a, b) =>
-			(a.group ?? '').localeCompare(b.group ?? '') ||
-			(a.order ?? 0) - (b.order ?? 0) ||
-			a.title.localeCompare(b.title),
+			(a.group ?? '').localeCompare(b.group ?? '') || (a.order ?? 0) - (b.order ?? 0) || a.title.localeCompare(b.title),
 	);
 
 	return { foundation, blueprint, stack };

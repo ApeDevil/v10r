@@ -20,11 +20,6 @@ import { compactToolResults, DEFAULT_BUDGET, runWithCompaction } from '$lib/serv
 import type { ProviderEntry } from '$lib/server/ai/providers';
 import { isCooledDown, markCooldown } from '$lib/server/ai/providers';
 import { buildRetrievalTools, createDeskTools, type DeskToolScope, stepsForScopes } from '$lib/server/ai/tools';
-import { MAX_RAWRAG_TOOL_CALLS_PER_TURN } from '$lib/server/llmwiki/config';
-import { loadOverview } from '$lib/server/llmwiki/overview';
-import { searchLlmwiki } from '$lib/server/llmwiki/search';
-import { verifyCitations } from '$lib/server/llmwiki/verify';
-import { formatLlmwikiContext } from '$lib/server/llmwiki/wiki-format';
 import { checkConversationLimit } from '$lib/server/db/ai/limits';
 import {
 	createConversation,
@@ -36,6 +31,11 @@ import {
 } from '$lib/server/db/ai/mutations';
 import { createProposal } from '$lib/server/db/ai/proposals';
 import { getConversation } from '$lib/server/db/ai/queries';
+import { MAX_RAWRAG_TOOL_CALLS_PER_TURN } from '$lib/server/llmwiki/config';
+import { loadOverview } from '$lib/server/llmwiki/overview';
+import { searchLlmwiki } from '$lib/server/llmwiki/search';
+import { verifyCitations } from '$lib/server/llmwiki/verify';
+import { formatLlmwikiContext } from '$lib/server/llmwiki/wiki-format';
 import { formatContextForPrompt, retrieve } from '$lib/server/rawrag';
 import type {
 	ChunkSummary,
@@ -320,12 +320,9 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 				execute: async ({ writer }) => {
 					let systemPrompt = baseSystemPrompt;
 					let toolCallCount = 0;
+					const isDevOrAdmin = !!import.meta.env?.DEV;
 
-					type AnyLlmwikiEvent =
-						| PipelineStepEvent
-						| PipelineChunksEvent
-						| PipelinePromptEvent
-						| LlmwikiCitationsEvent;
+					type AnyLlmwikiEvent = PipelineStepEvent | PipelineChunksEvent | PipelinePromptEvent | LlmwikiCitationsEvent;
 					const pipelineEvents: AnyLlmwikiEvent[] = [];
 					// Mirror rawrag's citations extra payload so existing consumers still read it.
 					let citationsPayload: {
@@ -364,7 +361,10 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 								step: 'llmwiki:overview',
 								status: 'error',
 								durationMs: overviewMs,
-								error: overviewResult.reason instanceof Error ? overviewResult.reason.message : String(overviewResult.reason),
+								error:
+									overviewResult.reason instanceof Error
+										? overviewResult.reason.message
+										: String(overviewResult.reason),
 							});
 						}
 

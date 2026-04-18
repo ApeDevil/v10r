@@ -1,59 +1,59 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import type { ActionResult } from '@sveltejs/kit';
-	import { invalidateAll } from '$app/navigation';
-	import { Alert, Card, FormField } from '$lib/components/composites';
-	import { Stack } from '$lib/components/layout';
-	import { Button, Input, Select, Spinner } from '$lib/components/primitives';
-	import { CycleDetail, CyclePipeline, CycleVizCard, CycleWaterfall } from '$lib/components/cycle';
-	import { createCycleState } from '$lib/components/cycle/cycle-state.svelte';
-	import type { CycleTrace } from '$lib/components/cycle/types';
+import type { ActionResult } from '@sveltejs/kit';
+import { enhance } from '$app/forms';
+import { invalidateAll } from '$app/navigation';
+import { Alert, Card, FormField } from '$lib/components/composites';
+import { CycleDetail, CyclePipeline, CycleVizCard, CycleWaterfall } from '$lib/components/cycle';
+import { createCycleState } from '$lib/components/cycle/cycle-state.svelte';
+import type { CycleTrace } from '$lib/components/cycle/types';
+import { Stack } from '$lib/components/layout';
+import { Button, Input, Select, Spinner } from '$lib/components/primitives';
 
-	const cycle = createCycleState('default');
-	let submitting = $state(false);
-	let browserStart = 0;
-	let lastTrace = $state<CycleTrace | null>(null);
-	let resultMessage = $state<string | null>(null);
-	let errorMessage = $state<string | null>(null);
+const cycle = createCycleState('default');
+let submitting = $state(false);
+let browserStart = 0;
+let lastTrace = $state<CycleTrace | null>(null);
+let resultMessage = $state<string | null>(null);
+let errorMessage = $state<string | null>(null);
 
-	let label = $state('API Call');
-	let selectedError = $state('');
+let label = $state('API Call');
+let selectedError = $state('');
 
-	const errorOptions = [
-		{ value: '', label: 'None (happy path)' },
-		{ value: 'validation', label: 'Validation error' },
-		{ value: 'domain', label: 'Domain error' },
-		{ value: 'db', label: 'Database error' },
-	];
+const errorOptions = [
+	{ value: '', label: 'None (happy path)' },
+	{ value: 'validation', label: 'Validation error' },
+	{ value: 'domain', label: 'Domain error' },
+	{ value: 'db', label: 'Database error' },
+];
 
-	function handleSubmit() {
-		return async ({ result, update: _u }: { result: ActionResult; update: () => Promise<void> }) => {
-			submitting = false;
-			const browserEnd = performance.now();
+function handleSubmit() {
+	return async ({ result, update: _u }: { result: ActionResult; update: () => Promise<void> }) => {
+		submitting = false;
+		const browserEnd = performance.now();
 
-			if (result.type === 'success' && result.data) {
-				const { trace, success, error } = result.data as {
-					trace: CycleTrace;
-					success: boolean;
-					error?: string;
-				};
-				if (trace) {
-					lastTrace = trace;
-					const roundTrip = browserEnd - browserStart;
-					const serverMs = trace.totalDurationMs ?? 0;
-					const browserMs = Math.max(0.5, Math.min(5, (roundTrip - serverMs) * 0.1));
-					cycle.animateTrace(trace, browserMs, roundTrip);
+		if (result.type === 'success' && result.data) {
+			const { trace, success, error } = result.data as {
+				trace: CycleTrace;
+				success: boolean;
+				error?: string;
+			};
+			if (trace) {
+				lastTrace = trace;
+				const roundTrip = browserEnd - browserStart;
+				const serverMs = trace.totalDurationMs ?? 0;
+				const browserMs = Math.max(0.5, Math.min(5, (roundTrip - serverMs) * 0.1));
+				cycle.animateTrace(trace, browserMs, roundTrip);
 
-					if (success) {
-						resultMessage = `API cycle completed in ${Math.round(serverMs)}ms (round-trip ${Math.round(roundTrip)}ms)`;
-					} else {
-						errorMessage = error ?? 'Cycle failed';
-					}
+				if (success) {
+					resultMessage = `API cycle completed in ${Math.round(serverMs)}ms (round-trip ${Math.round(roundTrip)}ms)`;
+				} else {
+					errorMessage = error ?? 'Cycle failed';
 				}
 			}
-			await invalidateAll();
-		};
-	}
+		}
+		await invalidateAll();
+	};
+}
 </script>
 
 <svelte:head>

@@ -8,7 +8,7 @@
  * need blogSchema from this file, and this file needs domain for the FK.
  */
 import { sql } from 'drizzle-orm';
-import { check, foreignKey, index, integer, pgSchema, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { check, index, integer, pgSchema, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
 
 export const blogSchema = pgSchema('blog');

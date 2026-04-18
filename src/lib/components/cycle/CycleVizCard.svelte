@@ -4,18 +4,18 @@
   Reactive state flows through both instances automatically.
 -->
 <script lang="ts">
-	import { Dialog as DialogPrimitive } from 'bits-ui';
-	import type { Snippet } from 'svelte';
-	import { Card } from '$lib/components/composites';
+import { Dialog as DialogPrimitive } from 'bits-ui';
+import type { Snippet } from 'svelte';
+import { Card } from '$lib/components/composites';
 
-	interface Props {
-		title: string;
-		subtitle?: string;
-		children: Snippet;
-	}
+interface Props {
+	title: string;
+	subtitle?: string;
+	children: Snippet;
+}
 
-	let { title, subtitle, children }: Props = $props();
-	let expanded = $state(false);
+let { title, subtitle, children }: Props = $props();
+let expanded = $state(false);
 </script>
 
 <Card>

@@ -1,97 +1,93 @@
 <script lang="ts">
-	import { superForm } from 'sveltekit-superforms';
-	import { valibotClient } from 'sveltekit-superforms/adapters';
-	import { Alert, Card, FormField } from '$lib/components/composites';
-	import { Stack } from '$lib/components/layout';
-	import { Button, Input, Select, Spinner } from '$lib/components/primitives';
-	import { cycleSchema } from '$lib/schemas/showcase/cycle';
-	import { CycleDetail, CyclePipeline, CycleVizCard, CycleWaterfall } from '$lib/components/cycle';
-	import { createCycleState } from '$lib/components/cycle/cycle-state.svelte';
-	import type { CycleSpan, CycleTrace } from '$lib/components/cycle/types';
-	import type { PageProps } from './$types';
+import { superForm } from 'sveltekit-superforms';
+import { valibotClient } from 'sveltekit-superforms/adapters';
+import { Alert, Card, FormField } from '$lib/components/composites';
+import { CycleDetail, CyclePipeline, CycleVizCard, CycleWaterfall } from '$lib/components/cycle';
+import { createCycleState } from '$lib/components/cycle/cycle-state.svelte';
+import type { CycleSpan, CycleTrace } from '$lib/components/cycle/types';
+import { Stack } from '$lib/components/layout';
+import { Button, Input, Select, Spinner } from '$lib/components/primitives';
+import { cycleSchema } from '$lib/schemas/showcase/cycle';
+import type { PageProps } from './$types';
 
-	let { data }: PageProps = $props();
+let { data }: PageProps = $props();
 
-	const cycle = createCycleState('default');
-	let browserStart = 0;
-	let browserEnd = 0;
-	let lastTrace = $state<CycleTrace | null>(null);
-	let resultMessage = $state<string | null>(null);
-	let errorMessage = $state<string | null>(null);
+const cycle = createCycleState('default');
+let browserStart = 0;
+let browserEnd = 0;
+let lastTrace = $state<CycleTrace | null>(null);
+let resultMessage = $state<string | null>(null);
+let errorMessage = $state<string | null>(null);
 
-	const errorOptions = [
-		{ value: '', label: 'None (happy path)' },
-		{ value: 'validation', label: 'Validation error' },
-		{ value: 'domain', label: 'Domain error' },
-		{ value: 'db', label: 'Database error' },
-	];
+const errorOptions = [
+	{ value: '', label: 'None (happy path)' },
+	{ value: 'validation', label: 'Validation error' },
+	{ value: 'domain', label: 'Domain error' },
+	{ value: 'db', label: 'Database error' },
+];
 
-	// svelte-ignore state_referenced_locally
-	const { form, errors, enhance, submitting, delayed } = superForm(data.form, {
-		validators: valibotClient(cycleSchema),
-		onSubmit() {
-			cycle.reset();
-			browserStart = performance.now();
-			resultMessage = null;
-			errorMessage = null;
-		},
-		onResult({ result }) {
-			browserEnd = performance.now();
-			if (result.type === 'success' && result.data) {
-				const { trace, success, error } = result.data as {
-					trace: CycleTrace;
-					success: boolean;
-					error?: string;
-				};
-				if (trace) {
-					lastTrace = trace;
-					const roundTrip = browserEnd - browserStart;
-					const serverMs = trace.totalDurationMs ?? 0;
-					const browserMs = Math.max(0.5, Math.min(5, (roundTrip - serverMs) * 0.1));
-					cycle.animateTrace(trace, browserMs, roundTrip);
+// svelte-ignore state_referenced_locally
+const { form, errors, enhance, submitting, delayed } = superForm(data.form, {
+	validators: valibotClient(cycleSchema),
+	onSubmit() {
+		cycle.reset();
+		browserStart = performance.now();
+		resultMessage = null;
+		errorMessage = null;
+	},
+	onResult({ result }) {
+		browserEnd = performance.now();
+		if (result.type === 'success' && result.data) {
+			const { trace, success, error } = result.data as {
+				trace: CycleTrace;
+				success: boolean;
+				error?: string;
+			};
+			if (trace) {
+				lastTrace = trace;
+				const roundTrip = browserEnd - browserStart;
+				const serverMs = trace.totalDurationMs ?? 0;
+				const browserMs = Math.max(0.5, Math.min(5, (roundTrip - serverMs) * 0.1));
+				cycle.animateTrace(trace, browserMs, roundTrip);
 
-					if (success) {
-						resultMessage = `Cycle completed in ${Math.round(serverMs)}ms (round-trip ${Math.round(roundTrip)}ms)`;
-					} else {
-						errorMessage = error ?? 'Cycle failed';
-					}
+				if (success) {
+					resultMessage = `Cycle completed in ${Math.round(serverMs)}ms (round-trip ${Math.round(roundTrip)}ms)`;
+				} else {
+					errorMessage = error ?? 'Cycle failed';
 				}
 			}
-		},
-	});
-
-	function replayHistory(traceData: string) {
-		if (!traceData) return;
-		try {
-			const entry = JSON.parse(traceData);
-			const spans = (entry.spans ?? []) as CycleSpan[];
-			if (spans.length === 0) {
-				resultMessage = `Run #${entry.id} — ${entry.status} (${entry.totalDurationMs ?? 0}ms, no span data)`;
-				return;
-			}
-			const trace: CycleTrace = {
-				id: String(entry.id),
-				trigger: entry.trigger,
-				spans,
-				totalDurationMs: entry.totalDurationMs,
-				inputPayload: entry.inputPayload,
-				outputPayload: entry.outputPayload,
-			};
-			lastTrace = trace;
-			// Replay without client-side browser/network spans (historical; we never measured them).
-			cycle.animateTrace(trace);
-			resultMessage =
-				entry.status === 'success'
-					? `Replaying Run #${entry.id} (${entry.totalDurationMs ?? 0}ms)`
-					: null;
-			errorMessage =
-				entry.status === 'error' ? `Replaying Run #${entry.id} — ${entry.errorMessage}` : null;
-		} catch {
-			// ignore
 		}
-	}
+	},
+});
 
-	let selectedError = $state('');
+function replayHistory(traceData: string) {
+	if (!traceData) return;
+	try {
+		const entry = JSON.parse(traceData);
+		const spans = (entry.spans ?? []) as CycleSpan[];
+		if (spans.length === 0) {
+			resultMessage = `Run #${entry.id} — ${entry.status} (${entry.totalDurationMs ?? 0}ms, no span data)`;
+			return;
+		}
+		const trace: CycleTrace = {
+			id: String(entry.id),
+			trigger: entry.trigger,
+			spans,
+			totalDurationMs: entry.totalDurationMs,
+			inputPayload: entry.inputPayload,
+			outputPayload: entry.outputPayload,
+		};
+		lastTrace = trace;
+		// Replay without client-side browser/network spans (historical; we never measured them).
+		cycle.animateTrace(trace);
+		resultMessage = entry.status === 'success' ? `Replaying Run #${entry.id} (${entry.totalDurationMs ?? 0}ms)` : null;
+		errorMessage = entry.status === 'error' ? `Replaying Run #${entry.id} — ${entry.errorMessage}` : null;
+	} catch {
+		// ignore
+	}
+}
+
+let selectedError = $state('');
 </script>
 
 <svelte:head>

@@ -65,8 +65,20 @@ describe('createLlmwikiTrace', () => {
 	it('accumulates drill steps dynamically (no pre-allocation)', () => {
 		const t = createLlmwikiTrace();
 		const evs: PipelineStepEvent[] = [
-			{ type: 'pipeline:step', step: 'rawrag:drill', status: 'done', durationMs: 50, detail: { kind: 'drill', callIndex: 0, idsRequested: 1, chunksReturned: 1 } },
-			{ type: 'pipeline:step', step: 'rawrag:drill', status: 'done', durationMs: 30, detail: { kind: 'drill', callIndex: 1, idsRequested: 2, chunksReturned: 2 } },
+			{
+				type: 'pipeline:step',
+				step: 'rawrag:drill',
+				status: 'done',
+				durationMs: 50,
+				detail: { kind: 'drill', callIndex: 0, idsRequested: 1, chunksReturned: 1 },
+			},
+			{
+				type: 'pipeline:step',
+				step: 'rawrag:drill',
+				status: 'done',
+				durationMs: 30,
+				detail: { kind: 'drill', callIndex: 1, idsRequested: 2, chunksReturned: 2 },
+			},
 		];
 		t.processAnnotations(evs);
 		expect(t.drillCount).toBe(2);
@@ -86,7 +98,13 @@ describe('createLlmwikiTrace', () => {
 	it('steps() interleaves drill steps between generate and verify', () => {
 		const t = createLlmwikiTrace();
 		t.processAnnotations([
-			{ type: 'pipeline:step', step: 'rawrag:drill', status: 'done', durationMs: 10, detail: { kind: 'drill', callIndex: 0, idsRequested: 1, chunksReturned: 1 } } satisfies PipelineStepEvent,
+			{
+				type: 'pipeline:step',
+				step: 'rawrag:drill',
+				status: 'done',
+				durationMs: 10,
+				detail: { kind: 'drill', callIndex: 0, idsRequested: 1, chunksReturned: 1 },
+			} satisfies PipelineStepEvent,
 		]);
 		const ids = t.steps.map((s) => s.id);
 		const generateIdx = ids.indexOf('generate');
@@ -142,7 +160,13 @@ describe('createLlmwikiTrace', () => {
 	it('annotation cursor is idempotent — reprocessing does not duplicate drill steps', () => {
 		const t = createLlmwikiTrace();
 		const evs: PipelineStepEvent[] = [
-			{ type: 'pipeline:step', step: 'rawrag:drill', status: 'done', durationMs: 10, detail: { kind: 'drill', callIndex: 0, idsRequested: 1, chunksReturned: 1 } },
+			{
+				type: 'pipeline:step',
+				step: 'rawrag:drill',
+				status: 'done',
+				durationMs: 10,
+				detail: { kind: 'drill', callIndex: 0, idsRequested: 1, chunksReturned: 1 },
+			},
 		];
 		t.processAnnotations(evs);
 		t.processAnnotations(evs);
@@ -184,7 +208,13 @@ describe('createLlmwikiTrace', () => {
 		const t = createLlmwikiTrace();
 		t.processAnnotations([
 			{ type: 'pipeline:step', step: 'llmwiki:search', status: 'done', durationMs: 20 } satisfies PipelineStepEvent,
-			{ type: 'pipeline:step', step: 'rawrag:drill', status: 'done', durationMs: 10, detail: { kind: 'drill', callIndex: 0, idsRequested: 1, chunksReturned: 1 } } satisfies PipelineStepEvent,
+			{
+				type: 'pipeline:step',
+				step: 'rawrag:drill',
+				status: 'done',
+				durationMs: 10,
+				detail: { kind: 'drill', callIndex: 0, idsRequested: 1, chunksReturned: 1 },
+			} satisfies PipelineStepEvent,
 			{ type: 'pipeline:step', step: 'llmwiki:verify', status: 'done', durationMs: 5 } satisfies PipelineStepEvent,
 		]);
 		expect(t.totalDurationMs).toBe(35);
@@ -194,7 +224,13 @@ describe('createLlmwikiTrace', () => {
 		const t = createLlmwikiTrace();
 		t.processAnnotations([
 			{ type: 'pipeline:step', step: 'llmwiki:search', status: 'done', durationMs: 20 } satisfies PipelineStepEvent,
-			{ type: 'pipeline:step', step: 'rawrag:drill', status: 'done', durationMs: 10, detail: { kind: 'drill', callIndex: 0, idsRequested: 1, chunksReturned: 1 } } satisfies PipelineStepEvent,
+			{
+				type: 'pipeline:step',
+				step: 'rawrag:drill',
+				status: 'done',
+				durationMs: 10,
+				detail: { kind: 'drill', callIndex: 0, idsRequested: 1, chunksReturned: 1 },
+			} satisfies PipelineStepEvent,
 		]);
 		t.selectStep('llmwiki:search');
 		t.reset();

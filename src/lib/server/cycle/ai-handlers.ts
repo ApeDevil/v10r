@@ -8,10 +8,10 @@
  */
 
 import { streamText } from 'ai';
+import { getActiveProvider, getActiveProviderInfo } from '$lib/server/ai';
 import { db } from '$lib/server/db';
 import { cycleRun } from '$lib/server/db/schema';
 import { checkRowLimit } from '$lib/server/db/showcase/guards';
-import { getActiveProvider, getActiveProviderInfo } from '$lib/server/ai';
 import { formatContextForPrompt, retrieve } from '$lib/server/rawrag';
 import type { PipelineChunksEvent, PipelinePromptEvent, PipelineStepEvent } from '$lib/types/pipeline';
 import { blockRemaining, createTrace, endSpan, failSpan, finalizeTrace, startSpan } from './trace';
@@ -223,11 +223,7 @@ export async function executeAiCycle(input: AiCycleInput, userId: string): Promi
 	return { success: true, trace, answer };
 }
 
-async function simulatePipelineGaps(
-	trace: CycleTrace,
-	traceStart: number,
-	existing: Map<CycleStageId, CycleSpan>,
-) {
+async function simulatePipelineGaps(trace: CycleTrace, traceStart: number, existing: Map<CycleStageId, CycleSpan>) {
 	// Create spans for any retrieval stages that didn't get emitted.
 	const ids: CycleStageId[] = ['embed', 'retrieve', 'rank', 'context'];
 	for (const id of ids) {
@@ -240,11 +236,7 @@ async function simulatePipelineGaps(
 	}
 }
 
-async function simulatePipelineUntil(
-	trace: CycleTrace,
-	traceStart: number,
-	failAt: 'embed' | 'retrieve',
-) {
+async function simulatePipelineUntil(trace: CycleTrace, traceStart: number, failAt: 'embed' | 'retrieve') {
 	const order: CycleStageId[] = ['embed', 'retrieve'];
 	for (const id of order) {
 		const sp = startSpan(trace, id, traceStart);

@@ -24,9 +24,7 @@ export const assetFolder = blogSchema.table(
 		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 	},
 	(table) => [
-		unique('blog_asset_folder_user_parent_name_key')
-			.on(table.userId, table.parentId, table.name)
-			.nullsNotDistinct(),
+		unique('blog_asset_folder_user_parent_name_key').on(table.userId, table.parentId, table.name).nullsNotDistinct(),
 		index('blog_asset_folder_user_idx').on(table.userId),
 	],
 );

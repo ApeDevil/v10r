@@ -32,7 +32,7 @@ export async function uploadAvatar(userId: string, file: File): Promise<string> 
 	const ext = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() : 'bin';
 	const key = `${AVATAR_PREFIX}${userId}.${ext}`;
 
-	await s3!.send(
+	await s3?.send(
 		new PutObjectCommand({
 			Bucket: BUCKET,
 			Key: key,

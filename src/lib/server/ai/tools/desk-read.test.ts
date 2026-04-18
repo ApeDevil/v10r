@@ -26,7 +26,7 @@ describe('desk_get_open_panels', () => {
 			{ panelId: 'editor-f2', fileId: 'f2', fileType: 'markdown', label: 'Notes' },
 		];
 		const tools = createReadTools(USER_ID, layout);
-		const result = await tools.desk_get_open_panels.execute!(
+		const result = await tools.desk_get_open_panels.execute?.(
 			{},
 			{ toolCallId: 'tc1', messages: [], abortSignal: new AbortController().signal },
 		);
@@ -42,7 +42,7 @@ describe('desk_get_open_panels', () => {
 
 	it('returns empty when no deskLayout provided', async () => {
 		const tools = createReadTools(USER_ID);
-		const result = await tools.desk_get_open_panels.execute!(
+		const result = await tools.desk_get_open_panels.execute?.(
 			{},
 			{ toolCallId: 'tc2', messages: [], abortSignal: new AbortController().signal },
 		);
@@ -52,7 +52,7 @@ describe('desk_get_open_panels', () => {
 
 	it('returns empty for empty deskLayout array', async () => {
 		const tools = createReadTools(USER_ID, []);
-		const result = await tools.desk_get_open_panels.execute!(
+		const result = await tools.desk_get_open_panels.execute?.(
 			{},
 			{ toolCallId: 'tc3', messages: [], abortSignal: new AbortController().signal },
 		);
@@ -63,7 +63,7 @@ describe('desk_get_open_panels', () => {
 	it('maps null fileId and fileType correctly', async () => {
 		const layout = [{ panelId: 'explorer', label: 'Explorer' }];
 		const tools = createReadTools(USER_ID, layout);
-		const result = await tools.desk_get_open_panels.execute!(
+		const result = await tools.desk_get_open_panels.execute?.(
 			{},
 			{ toolCallId: 'tc4', messages: [], abortSignal: new AbortController().signal },
 		);

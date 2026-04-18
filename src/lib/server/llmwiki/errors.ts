@@ -3,14 +3,7 @@
  * error-to-status mapper in $lib/server/errors stays consistent.
  */
 
-export type LlmwikiErrorKind =
-	| 'search'
-	| 'hydrate'
-	| 'compile'
-	| 'lint'
-	| 'verify'
-	| 'not_found'
-	| 'invalid_input';
+export type LlmwikiErrorKind = 'search' | 'hydrate' | 'compile' | 'lint' | 'verify' | 'not_found' | 'invalid_input';
 
 export class LlmwikiError extends Error {
 	constructor(

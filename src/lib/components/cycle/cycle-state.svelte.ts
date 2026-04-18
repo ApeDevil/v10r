@@ -8,12 +8,12 @@
 import {
 	AI_CYCLE_STAGES,
 	CYCLE_STAGES,
-	STAGE_SIDES,
 	type CycleSpan,
 	type CycleStageId,
 	type CycleStageState,
 	type CycleTrace,
 	type CycleViewMode,
+	STAGE_SIDES,
 } from './types';
 
 export type StageSet = 'default' | 'ai';
@@ -71,11 +71,7 @@ export function createCycleState(set: StageSet = 'default') {
 	 * `browserDurationMs` and `networkDurationMs` come from client measurement
 	 * (performance.now() before submit and after response).
 	 */
-	function animateTrace(
-		trace: CycleTrace,
-		browserDurationMs?: number,
-		networkDurationMs?: number,
-	) {
+	function animateTrace(trace: CycleTrace, browserDurationMs?: number, networkDurationMs?: number) {
 		clearTimers();
 		stages = initialStages(set);
 		selectedStageId = null;
@@ -83,10 +79,7 @@ export function createCycleState(set: StageSet = 'default') {
 
 		const allSpans = buildFullSpans(trace, browserDurationMs, networkDurationMs);
 
-		const maxEnd = allSpans.reduce(
-			(max, s) => Math.max(max, s.startMs + (s.durationMs ?? 0)),
-			0,
-		);
+		const maxEnd = allSpans.reduce((max, s) => Math.max(max, s.startMs + (s.durationMs ?? 0)), 0);
 
 		// Compress real timings into a visible range (~1.5–3s animation).
 		const speedFactor = maxEnd > 0 ? Math.max(1, 2000 / maxEnd) : 1;
@@ -117,10 +110,7 @@ export function createCycleState(set: StageSet = 'default') {
 		}
 
 		const totalAnimationMs =
-			allSpans.reduce(
-				(max, s) => Math.max(max, (s.startMs + (s.durationMs ?? 10)) * speedFactor),
-				0,
-			) + 100;
+			allSpans.reduce((max, s) => Math.max(max, (s.startMs + (s.durationMs ?? 10)) * speedFactor), 0) + 100;
 
 		pendingTimers.push(
 			setTimeout(() => {
@@ -165,10 +155,7 @@ export function createCycleState(set: StageSet = 'default') {
 		get totalDurationMs() {
 			const doneStages = stages.filter((s) => s.durationMs != null);
 			if (doneStages.length === 0) return 0;
-			return doneStages.reduce(
-				(max, s) => Math.max(max, (s.startOffset ?? 0) + (s.durationMs ?? 0)),
-				0,
-			);
+			return doneStages.reduce((max, s) => Math.max(max, (s.startOffset ?? 0) + (s.durationMs ?? 0)), 0);
 		},
 		applyTrace,
 		animateTrace,
@@ -181,11 +168,7 @@ export function createCycleState(set: StageSet = 'default') {
  * Merge server trace spans with client-measured browser/network spans.
  * Never mutates the input trace — returns a fresh span array.
  */
-function buildFullSpans(
-	trace: CycleTrace,
-	browserDurationMs?: number,
-	networkDurationMs?: number,
-): CycleSpan[] {
+function buildFullSpans(trace: CycleTrace, browserDurationMs?: number, networkDurationMs?: number): CycleSpan[] {
 	const serverSpans = trace.spans.map((s) => ({ ...s }));
 
 	// No client timing available — return server spans as-is.

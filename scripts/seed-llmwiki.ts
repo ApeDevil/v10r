@@ -16,12 +16,13 @@
  * If userId is omitted, picks the first user in the `user` table. For
  * production you obviously pass an explicit one.
  */
+
+import { createHash } from 'node:crypto';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { neonConfig, Pool } from '@neondatabase/serverless';
 import { embed, embedMany } from 'ai';
 import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import { createHash } from 'node:crypto';
-import { neonConfig, Pool } from '@neondatabase/serverless';
 
 neonConfig.poolQueryViaFetch = true;
 
@@ -151,7 +152,9 @@ async function insertDocumentAndChunks(userId: string) {
 async function insertLlmwikiPages(userId: string) {
 	console.log('[seed:llmwiki] Inserting overview + wiki pages...');
 
-	const overviewEmbed = await embedOne(`${OVERVIEW_TEXT.title}\n${OVERVIEW_TEXT.tldr}\n${OVERVIEW_TEXT.tags.join(' ')}`);
+	const overviewEmbed = await embedOne(
+		`${OVERVIEW_TEXT.title}\n${OVERVIEW_TEXT.tldr}\n${OVERVIEW_TEXT.tags.join(' ')}`,
+	);
 	await db.execute(sql`
 		INSERT INTO rag.llmwiki_page (
 			id, user_id, collection_id, slug, kind, title, tldr, tldr_hash, body, tags,

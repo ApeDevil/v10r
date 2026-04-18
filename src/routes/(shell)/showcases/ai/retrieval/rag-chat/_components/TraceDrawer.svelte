@@ -2,7 +2,7 @@
 import { CSRF_HEADER } from '$lib/api';
 import { Drawer } from '$lib/components/primitives';
 import { type LlmwikiTraceState, WikiTrace } from './llmwiki';
-import { type RawragTraceState, RawragTrace } from './rawrag';
+import { RawragTrace, type RawragTraceState } from './rawrag';
 
 interface Props {
 	open: boolean;

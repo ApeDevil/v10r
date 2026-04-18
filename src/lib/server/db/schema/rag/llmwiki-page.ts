@@ -67,9 +67,7 @@ export const llmwikiPage = ragSchema.table(
 	},
 	(t) => [
 		uniqueIndex('llmwiki_page_slug_uq').on(t.collectionId, t.slug).where(sql`deleted_at IS NULL`),
-		uniqueIndex('llmwiki_overview_uq')
-			.on(t.collectionId)
-			.where(sql`kind = 'overview' AND deleted_at IS NULL`),
+		uniqueIndex('llmwiki_overview_uq').on(t.collectionId).where(sql`kind = 'overview' AND deleted_at IS NULL`),
 		index('llmwiki_page_user_idx').on(t.userId),
 		index('llmwiki_page_collection_idx').on(t.collectionId),
 		index('llmwiki_page_stale_idx').on(t.stale).where(sql`stale = true AND deleted_at IS NULL`),

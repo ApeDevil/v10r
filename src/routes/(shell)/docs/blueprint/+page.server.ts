@@ -1,5 +1,5 @@
-import { getManifest } from '$lib/server/docs/loader';
 import type { DocEntry } from '$lib/docs/types';
+import { getManifest } from '$lib/server/docs/loader';
 
 export const load = () => {
 	const entries = getManifest().blueprint;

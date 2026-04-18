@@ -30,9 +30,7 @@ export const folder = deskSchema.table(
 		// constraint (not uniqueIndex) exposes the `.nullsNotDistinct()` option in
 		// drizzle-orm 0.45. Postgres 15+ creates an implicit unique index, which still
 		// covers `(userId, parentId)` as a leftmost prefix for cycle-check queries.
-		unique('desk_folder_user_parent_name_key')
-			.on(table.userId, table.parentId, table.name)
-			.nullsNotDistinct(),
+		unique('desk_folder_user_parent_name_key').on(table.userId, table.parentId, table.name).nullsNotDistinct(),
 		index('desk_folder_user_idx').on(table.userId),
 	],
 );

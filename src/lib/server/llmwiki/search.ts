@@ -10,12 +10,7 @@
 import { sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { generateEmbedding } from '$lib/server/rawrag/embed';
-import {
-	LLMWIKI_OVERFETCH_MULTIPLIER,
-	LLMWIKI_RRF_K,
-	LLMWIKI_SEARCH_LIMIT,
-	POINTER_CAP,
-} from './config';
+import { LLMWIKI_OVERFETCH_MULTIPLIER, LLMWIKI_RRF_K, LLMWIKI_SEARCH_LIMIT, POINTER_CAP } from './config';
 import { LlmwikiError } from './errors';
 import { computeCoverage, hydratePointers } from './queries';
 import type { LlmwikiHit, LlmwikiSearchOptions } from './types';

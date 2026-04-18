@@ -10,7 +10,7 @@
  * by `user_id`, and returns whether the folder being moved appears in its own
  * ancestor chain. Mirrors the server-side recursion, not the client `isCycleMove`.
  */
-import { sql, type SQL } from 'drizzle-orm';
+import { type SQL, sql } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
 
 // ── Typed errors ──────────────────────────────────────────────────

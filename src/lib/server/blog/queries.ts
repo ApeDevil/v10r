@@ -511,6 +511,7 @@ export async function getAssetsForPost(postId: string): Promise<BlogAsset[]> {
 			altText: asset.altText,
 			width: asset.width,
 			height: asset.height,
+			folderId: asset.folderId,
 			createdAt: asset.createdAt,
 		})
 		.from(asset)

@@ -1,62 +1,62 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import type { ActionResult } from '@sveltejs/kit';
-	import { invalidateAll } from '$app/navigation';
-	import { Alert, Card, FormField } from '$lib/components/composites';
-	import { Stack } from '$lib/components/layout';
-	import { Button, Input, Select, Spinner } from '$lib/components/primitives';
-	import { CycleDetail, CyclePipeline, CycleVizCard, CycleWaterfall } from '$lib/components/cycle';
-	import { createCycleState } from '$lib/components/cycle/cycle-state.svelte';
-	import type { CycleTrace } from '$lib/components/cycle/types';
+import type { ActionResult } from '@sveltejs/kit';
+import { enhance } from '$app/forms';
+import { invalidateAll } from '$app/navigation';
+import { Alert, Card, FormField } from '$lib/components/composites';
+import { CycleDetail, CyclePipeline, CycleVizCard, CycleWaterfall } from '$lib/components/cycle';
+import { createCycleState } from '$lib/components/cycle/cycle-state.svelte';
+import type { CycleTrace } from '$lib/components/cycle/types';
+import { Stack } from '$lib/components/layout';
+import { Button, Input, Select, Spinner } from '$lib/components/primitives';
 
-	const cycle = createCycleState('ai');
-	let submitting = $state(false);
-	let browserStart = 0;
-	let lastTrace = $state<CycleTrace | null>(null);
-	let answer = $state<string | null>(null);
-	let errorMessage = $state<string | null>(null);
+const cycle = createCycleState('ai');
+let submitting = $state(false);
+let browserStart = 0;
+let lastTrace = $state<CycleTrace | null>(null);
+let answer = $state<string | null>(null);
+let errorMessage = $state<string | null>(null);
 
-	let query = $state('What is Velociraptor?');
-	let selectedError = $state('');
+let query = $state('What is Velociraptor?');
+let selectedError = $state('');
 
-	const errorOptions = [
-		{ value: '', label: 'None (happy path)' },
-		{ value: 'embed', label: 'Embed error' },
-		{ value: 'retrieve', label: 'Retrieve error' },
-		{ value: 'generate', label: 'LLM timeout' },
-	];
+const errorOptions = [
+	{ value: '', label: 'None (happy path)' },
+	{ value: 'embed', label: 'Embed error' },
+	{ value: 'retrieve', label: 'Retrieve error' },
+	{ value: 'generate', label: 'LLM timeout' },
+];
 
-	function handleSubmit() {
-		return async ({ result }: { result: ActionResult; update: () => Promise<void> }) => {
-			submitting = false;
-			const browserEnd = performance.now();
+function handleSubmit() {
+	return async ({ result }: { result: ActionResult; update: () => Promise<void> }) => {
+		submitting = false;
+		const browserEnd = performance.now();
 
-			if (result.type === 'success' && result.data) {
-				const data = result.data as {
-					trace: CycleTrace;
-					success: boolean;
-					error?: string;
-					answer?: string;
-				};
-				if (data.trace) {
-					lastTrace = data.trace;
-					const roundTrip = browserEnd - browserStart;
-					const serverMs = data.trace.totalDurationMs ?? 0;
-					const browserMs = Math.max(0.5, Math.min(5, (roundTrip - serverMs) * 0.1));
-					cycle.animateTrace(data.trace, browserMs, roundTrip);
+		if (result.type === 'success' && result.data) {
+			const data = result.data as {
+				trace: CycleTrace;
+				success: boolean;
+				error?: string;
+				answer?: string;
+			};
+			if (data.trace) {
+				lastTrace = data.trace;
+				const roundTrip = browserEnd - browserStart;
+				const serverMs = data.trace.totalDurationMs ?? 0;
+				const browserMs = Math.max(0.5, Math.min(5, (roundTrip - serverMs) * 0.1));
+				cycle.animateTrace(data.trace, browserMs, roundTrip);
 
-					if (data.success) {
-						answer = data.answer ?? null;
-						errorMessage = null;
-					} else {
-						errorMessage = data.error ?? 'AI cycle failed';
-						answer = null;
-					}
+				if (data.success) {
+					answer = data.answer ?? null;
+					errorMessage = null;
+				} else {
+					errorMessage = data.error ?? 'AI cycle failed';
+					answer = null;
 				}
 			}
-			await invalidateAll();
-		};
-	}
+		}
+		await invalidateAll();
+	};
+}
 </script>
 
 <svelte:head>

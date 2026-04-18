@@ -10,8 +10,8 @@
  * MoveToDialog candidate filtering import from here.
  */
 import { apiFetch } from '$lib/api';
-import type { ExplorerNode, NodeSource } from './node';
 import type { ExplorerState } from './explorer-state.svelte';
+import type { ExplorerNode, NodeSource } from './node';
 
 interface ApiErrorBody {
 	error?: { code?: string; message?: string; fields?: Record<string, string> };
@@ -185,11 +185,7 @@ const FOLDER_DELETE_URLS: Partial<Record<NodeSource, (id: string) => string>> = 
  * the user already saw the item count and confirmed. Folder-type is inferred
  * from `node.source` so the same handler works for all three.
  */
-export async function dispatchDeleteFolder(
-	state: ExplorerState,
-	nodeId: string,
-	ctx: ActionContext,
-): Promise<boolean> {
+export async function dispatchDeleteFolder(state: ExplorerState, nodeId: string, ctx: ActionContext): Promise<boolean> {
 	const node = state.getNode(nodeId);
 	if (!node) return false;
 

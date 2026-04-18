@@ -1,5 +1,5 @@
+import { type DocEntry, STACK_LAYER_ORDER } from '$lib/docs/types';
 import { getManifest } from '$lib/server/docs/loader';
-import { STACK_LAYER_ORDER, type DocEntry } from '$lib/docs/types';
 
 export const load = () => {
 	const entries = getManifest().stack;

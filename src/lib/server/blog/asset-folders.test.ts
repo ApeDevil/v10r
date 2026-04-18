@@ -1,7 +1,6 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { makeUser } from '$lib/server/test/fixtures';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
 import { assetFolder } from '$lib/server/db/schema/blog';
 import {
@@ -10,6 +9,7 @@ import {
 	FolderNotEmptyError,
 	FolderNotFoundError,
 } from '$lib/server/db/shared/folder-tree';
+import { makeUser } from '$lib/server/test/fixtures';
 
 let testClient: PGlite;
 

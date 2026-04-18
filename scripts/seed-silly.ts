@@ -9,12 +9,13 @@
  * Run inside the v10r container:
  *   podman exec -it v10r bun run scripts/seed-silly.ts <userId>
  */
+
+import { createHash } from 'node:crypto';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { neonConfig, Pool } from '@neondatabase/serverless';
 import { embed, embedMany } from 'ai';
 import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import { createHash } from 'node:crypto';
-import { neonConfig, Pool } from '@neondatabase/serverless';
 
 neonConfig.poolQueryViaFetch = true;
 
@@ -221,7 +222,9 @@ async function main() {
 	await insertLlmwikiPages(userId);
 	await insertPageSources();
 	console.log(`[seed:silly] Done. 1 doc, ${CHUNKS.length} chunks, ${PAGES.length + 1} wiki pages.`);
-	console.log(`[seed:silly] Try: "what is the sacred rotation constant of the Quorblaxian cheese ritual?" with mode=llmwiki.`);
+	console.log(
+		`[seed:silly] Try: "what is the sacred rotation constant of the Quorblaxian cheese ritual?" with mode=llmwiki.`,
+	);
 	await pool.end();
 }
 

@@ -10,6 +10,6 @@ export {
 	FolderNameConflictError,
 	FolderNotEmptyError,
 	FolderNotFoundError,
-	PG_UNIQUE_VIOLATION,
 	isUniqueViolation,
+	PG_UNIQUE_VIOLATION,
 } from '../shared/folder-tree';

@@ -134,7 +134,7 @@ export function truncateToTokenBudget(
 	}
 
 	// Try summary: first SUMMARY_MAX_CHARS + truncation marker
-	const summary = content.slice(0, SUMMARY_MAX_CHARS) + '\n[truncated]';
+	const summary = `${content.slice(0, SUMMARY_MAX_CHARS)}\n[truncated]`;
 	const summaryTokens = estimateTokens(summary);
 	if (summaryTokens <= maxTokens) {
 		return { text: summary, level: 'summary' };

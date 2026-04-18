@@ -188,10 +188,7 @@ export async function findRedirect(oldSlug: string, collectionId: string | null)
 		.where(
 			collectionId === null
 				? and(eq(llmwikiPageRedirect.oldSlug, oldSlug), isNull(llmwikiPageRedirect.collectionId))
-				: and(
-						eq(llmwikiPageRedirect.oldSlug, oldSlug),
-						eq(llmwikiPageRedirect.collectionId, collectionId),
-					),
+				: and(eq(llmwikiPageRedirect.oldSlug, oldSlug), eq(llmwikiPageRedirect.collectionId, collectionId)),
 		)
 		.limit(1);
 	return rows[0]?.newPageId ?? null;

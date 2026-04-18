@@ -32,11 +32,7 @@ export function startSpan(trace: CycleTrace, stage: CycleStageId, traceStart: nu
 }
 
 /** Mark a span as successfully completed. */
-export function endSpan(
-	span: CycleSpan,
-	traceStart: number,
-	detail?: Record<string, unknown>,
-): void {
+export function endSpan(span: CycleSpan, traceStart: number, detail?: Record<string, unknown>): void {
 	span.durationMs = round(performance.now() - traceStart - span.startMs);
 	span.status = 'done';
 	if (detail) span.detail = detail;

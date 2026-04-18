@@ -1,8 +1,8 @@
 import {
 	type ChunkSummary,
 	LLMWIKI_STEPS,
-	type LlmwikiCitationVerdict,
 	type LlmwikiCitationsEvent,
+	type LlmwikiCitationVerdict,
 	type PipelineChunksEvent,
 	type PipelinePromptEvent,
 	type PipelineStepEvent,
@@ -116,11 +116,7 @@ export function createLlmwikiTrace() {
 		get steps(): PipelineStepState[] {
 			const generateIdx = baseSteps.findIndex((s) => s.id === 'generate');
 			if (generateIdx === -1 || drillSteps.length === 0) return baseSteps;
-			return [
-				...baseSteps.slice(0, generateIdx + 1),
-				...drillSteps,
-				...baseSteps.slice(generateIdx + 1),
-			];
+			return [...baseSteps.slice(0, generateIdx + 1), ...drillSteps, ...baseSteps.slice(generateIdx + 1)];
 		},
 		get baseSteps() {
 			return baseSteps;
@@ -138,8 +134,12 @@ export function createLlmwikiTrace() {
 			return baseSteps.some((s) => s.status === 'active') || drillSteps.some((s) => s.status === 'active');
 		},
 		get totalDurationMs() {
-			const base = baseSteps.filter((s) => s.status === 'done' && s.durationMs).reduce((sum, s) => sum + (s.durationMs ?? 0), 0);
-			const drill = drillSteps.filter((s) => s.status === 'done' && s.durationMs).reduce((sum, s) => sum + (s.durationMs ?? 0), 0);
+			const base = baseSteps
+				.filter((s) => s.status === 'done' && s.durationMs)
+				.reduce((sum, s) => sum + (s.durationMs ?? 0), 0);
+			const drill = drillSteps
+				.filter((s) => s.status === 'done' && s.durationMs)
+				.reduce((sum, s) => sum + (s.durationMs ?? 0), 0);
 			return base + drill;
 		},
 		get chunkData() {

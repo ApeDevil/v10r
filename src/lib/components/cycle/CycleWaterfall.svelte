@@ -3,33 +3,33 @@
   Each bar shows duration proportional to total cycle time.
 -->
 <script lang="ts">
-	import type { CycleStageId, CycleStageState } from './types';
-	import { STAGE_COLORS } from './types';
+import type { CycleStageId, CycleStageState } from './types';
+import { STAGE_COLORS } from './types';
 
-	interface Props {
-		stages: CycleStageState[];
-		totalDurationMs: number;
-		selectedStageId?: CycleStageId | null;
-		onselect: (id: CycleStageId) => void;
-	}
+interface Props {
+	stages: CycleStageState[];
+	totalDurationMs: number;
+	selectedStageId?: CycleStageId | null;
+	onselect: (id: CycleStageId) => void;
+}
 
-	let { stages, totalDurationMs, selectedStageId = null, onselect }: Props = $props();
+let { stages, totalDurationMs, selectedStageId = null, onselect }: Props = $props();
 
-	const ROW_H = 24;
+const ROW_H = 24;
 
-	function barLeft(stage: CycleStageState): string {
-		if (!totalDurationMs || stage.startOffset == null) return '0%';
-		return `${(stage.startOffset / totalDurationMs) * 100}%`;
-	}
+function barLeft(stage: CycleStageState): string {
+	if (!totalDurationMs || stage.startOffset == null) return '0%';
+	return `${(stage.startOffset / totalDurationMs) * 100}%`;
+}
 
-	function barWidth(stage: CycleStageState): string {
-		if (!totalDurationMs || !stage.durationMs) return '0%';
-		return `${Math.max(1, (stage.durationMs / totalDurationMs) * 100)}%`;
-	}
+function barWidth(stage: CycleStageState): string {
+	if (!totalDurationMs || !stage.durationMs) return '0%';
+	return `${Math.max(1, (stage.durationMs / totalDurationMs) * 100)}%`;
+}
 
-	function isVisible(stage: CycleStageState): boolean {
-		return stage.status === 'done' || stage.status === 'error';
-	}
+function isVisible(stage: CycleStageState): boolean {
+	return stage.status === 'done' || stage.status === 'error';
+}
 </script>
 
 <div class="waterfall" style="height: {stages.length * ROW_H + 8}px;">
