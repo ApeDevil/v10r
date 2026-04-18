@@ -1,22 +1,40 @@
 /**
- * Cycle state machine — follows pipeline-state.svelte.ts pattern.
- * Manages 6 stages with staggered animation replay.
+ * Cycle state machine — reactive stage list with staggered animation replay.
+ *
+ * Stage list is injectable: form/api use default (6 stages), AI uses 9 stages.
+ * Browser/network stages are measured client-side and merged with the server trace.
  */
 
-import { CYCLE_STAGES, type CycleStageId, type CycleStageState, type CycleTrace, type CycleViewMode } from './types';
+import {
+	AI_CYCLE_STAGES,
+	CYCLE_STAGES,
+	STAGE_SIDES,
+	type CycleSpan,
+	type CycleStageId,
+	type CycleStageState,
+	type CycleTrace,
+	type CycleViewMode,
+} from './types';
 
-function createInitialStages(): CycleStageState[] {
-	return CYCLE_STAGES.map((s) => ({
+export type StageSet = 'default' | 'ai';
+
+function stagesFor(set: StageSet): { id: CycleStageId; label: string }[] {
+	return set === 'ai' ? AI_CYCLE_STAGES : CYCLE_STAGES;
+}
+
+function initialStages(set: StageSet): CycleStageState[] {
+	return stagesFor(set).map((s) => ({
 		id: s.id,
 		label: s.label,
 		status: 'pending',
+		side: STAGE_SIDES[s.id],
 	}));
 }
 
 export type CycleState = ReturnType<typeof createCycleState>;
 
-export function createCycleState() {
-	let stages = $state<CycleStageState[]>(createInitialStages());
+export function createCycleState(set: StageSet = 'default') {
+	let stages = $state<CycleStageState[]>(initialStages(set));
 	let selectedStageId = $state<CycleStageId | null>(null);
 	let mode = $state<CycleViewMode>('idle');
 	let pendingTimers: ReturnType<typeof setTimeout>[] = [];
@@ -28,7 +46,7 @@ export function createCycleState() {
 	/** Apply a trace instantly (no animation). Used for history replay. */
 	function applyTrace(trace: CycleTrace) {
 		clearTimers();
-		const newStages = createInitialStages();
+		const newStages = initialStages(set);
 
 		for (const span of trace.spans) {
 			const idx = newStages.findIndex((s) => s.id === span.stage);
@@ -50,36 +68,33 @@ export function createCycleState() {
 
 	/**
 	 * Animate a trace with staggered timing.
-	 * browserStartMs and networkDurationMs are client-measured.
+	 * `browserDurationMs` and `networkDurationMs` come from client measurement
+	 * (performance.now() before submit and after response).
 	 */
 	function animateTrace(
 		trace: CycleTrace,
-		browserStartMs?: number,
+		browserDurationMs?: number,
 		networkDurationMs?: number,
 	) {
 		clearTimers();
-		stages = createInitialStages();
+		stages = initialStages(set);
 		selectedStageId = null;
 		mode = 'running';
 
-		// Build the full span list including client-side stages
-		const allSpans = buildFullSpans(trace, browserStartMs, networkDurationMs);
+		const allSpans = buildFullSpans(trace, browserDurationMs, networkDurationMs);
 
-		// Calculate total time for animation pacing
 		const maxEnd = allSpans.reduce(
 			(max, s) => Math.max(max, s.startMs + (s.durationMs ?? 0)),
 			0,
 		);
 
-		// Animation speed: compress real timings into a visible range
-		// Real cycle might take 50-200ms, we want animation to take ~1.5-3s
+		// Compress real timings into a visible range (~1.5–3s animation).
 		const speedFactor = maxEnd > 0 ? Math.max(1, 2000 / maxEnd) : 1;
 
 		for (const span of allSpans) {
 			const activateAt = span.startMs * speedFactor;
 			const completeAt = (span.startMs + (span.durationMs ?? 10)) * speedFactor;
 
-			// Set to active
 			pendingTimers.push(
 				setTimeout(() => {
 					updateStage(span.stage, {
@@ -89,7 +104,6 @@ export function createCycleState() {
 				}, activateAt),
 			);
 
-			// Set to done/error
 			pendingTimers.push(
 				setTimeout(() => {
 					updateStage(span.stage, {
@@ -102,7 +116,6 @@ export function createCycleState() {
 			);
 		}
 
-		// Set final mode after all animations complete
 		const totalAnimationMs =
 			allSpans.reduce(
 				(max, s) => Math.max(max, (s.startMs + (s.durationMs ?? 10)) * speedFactor),
@@ -118,7 +131,7 @@ export function createCycleState() {
 
 	function reset() {
 		clearTimers();
-		stages = createInitialStages();
+		stages = initialStages(set);
 		selectedStageId = null;
 		mode = 'idle';
 	}
@@ -164,47 +177,50 @@ export function createCycleState() {
 	};
 }
 
-/** Merge server trace spans with client-measured browser/network spans. */
+/**
+ * Merge server trace spans with client-measured browser/network spans.
+ * Never mutates the input trace — returns a fresh span array.
+ */
 function buildFullSpans(
 	trace: CycleTrace,
-	browserStartMs?: number,
+	browserDurationMs?: number,
 	networkDurationMs?: number,
-) {
-	const spans = [...trace.spans];
+): CycleSpan[] {
+	const serverSpans = trace.spans.map((s) => ({ ...s }));
 
-	// Client-side browser span: instant (form submission to fetch call)
-	if (browserStartMs != null) {
-		const browserDuration = Math.round(Math.random() * 3 + 1); // 1-4ms simulated
-		spans.unshift({
-			stage: 'browser' as const,
-			status: 'done' as const,
+	// No client timing available — return server spans as-is.
+	if (browserDurationMs == null) return serverSpans;
+
+	const browserMs = Math.max(0.5, Math.round(browserDurationMs * 100) / 100);
+	const prefixed: CycleSpan[] = [
+		{
+			stage: 'browser',
+			status: 'done',
 			startMs: 0,
-			durationMs: browserDuration,
+			durationMs: browserMs,
+		},
+	];
+
+	// Network span: measured round-trip minus server processing.
+	if (networkDurationMs != null) {
+		const serverTotal = trace.totalDurationMs ?? 0;
+		const netMs = Math.max(1, Math.round(networkDurationMs - serverTotal - browserMs));
+		prefixed.push({
+			stage: 'network',
+			status: 'done',
+			startMs: browserMs,
+			durationMs: netMs,
 		});
 
-		// Network span: measured round-trip minus server processing
-		if (networkDurationMs != null) {
-			const serverTotal = trace.totalDurationMs ?? 0;
-			const netMs = Math.max(1, Math.round(networkDurationMs - serverTotal));
-			spans.splice(1, 0, {
-				stage: 'network' as const,
-				status: 'done' as const,
-				startMs: browserDuration,
-				durationMs: netMs,
-			});
-
-			// Shift server spans to account for browser + network offset
-			const offset = browserDuration + netMs;
-			for (const span of spans) {
-				if (
-					span.stage !== 'browser' &&
-					span.stage !== 'network'
-				) {
-					span.startMs += offset;
-				}
-			}
+		const offset = browserMs + netMs;
+		for (const span of serverSpans) {
+			span.startMs += offset;
+		}
+	} else {
+		for (const span of serverSpans) {
+			span.startMs += browserMs;
 		}
 	}
 
-	return spans;
+	return [...prefixed, ...serverSpans];
 }

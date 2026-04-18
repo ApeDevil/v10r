@@ -1,6 +1,6 @@
 <!--
-  Detail panel — slides in when a pipeline stage is selected.
-  Shows Payload, Timing, and Code Path tabs.
+  Detail panel — appears when a pipeline stage is selected.
+  Shows Code Path (default, always populated), Timing, and Payload tabs.
 -->
 <script lang="ts">
 	import { Button } from '$lib/components/primitives';
@@ -13,9 +13,9 @@
 		onclose: () => void;
 	}
 
-	let { stage, trace, totalDurationMs, onclose }: Props = $props();
+	let { stage, trace: _trace, totalDurationMs, onclose }: Props = $props();
 
-	let activeTab = $state<'payload' | 'timing' | 'code'>('payload');
+	let activeTab = $state<'code' | 'timing' | 'payload'>('code');
 
 	/** Code paths for each stage — shows where this stage runs in the codebase. */
 	const codePaths: Record<string, string> = {
@@ -25,6 +25,11 @@
 		domain: '$lib/server/cycle/handlers.ts → executeCycle() [business logic]',
 		database: '$lib/server/db → db.insert(cycleRun).values(...).returning()',
 		response: '$lib/server/cycle/handlers.ts → executeCycle() [serialization]',
+		embed: '$lib/server/retrieval/embed.ts → generateEmbedding(query)',
+		retrieve: '$lib/server/retrieval → searchContextual / parentChild / graph',
+		rank: '$lib/server/retrieval/rank.ts → fuseAndRank(chunks) [RRF]',
+		context: '$lib/server/retrieval → formatContextForPrompt(result)',
+		generate: '$lib/server/ai → streamText({ model, prompt, context })',
 	};
 
 	const pct = $derived(
@@ -44,38 +49,36 @@
 			{#if stage.status === 'error'}
 				<span class="stage-error-badge">Error</span>
 			{/if}
+			{#if stage.status === 'blocked'}
+				<span class="stage-blocked-badge">Blocked</span>
+			{/if}
 		</div>
 		<Button variant="ghost" size="sm" onclick={onclose} aria-label="Close detail panel">
 			&times;
 		</Button>
 	</div>
 
-	<!-- Tab bar -->
 	<div class="tab-bar">
 		<button
-			class="tab" class:tab-active={activeTab === 'payload'}
-			onclick={() => (activeTab = 'payload')}
-		>Payload</button>
+			class="tab"
+			class:tab-active={activeTab === 'code'}
+			onclick={() => (activeTab = 'code')}
+		>Code Path</button>
 		<button
-			class="tab" class:tab-active={activeTab === 'timing'}
+			class="tab"
+			class:tab-active={activeTab === 'timing'}
 			onclick={() => (activeTab = 'timing')}
 		>Timing</button>
 		<button
-			class="tab" class:tab-active={activeTab === 'code'}
-			onclick={() => (activeTab = 'code')}
-		>Code Path</button>
+			class="tab"
+			class:tab-active={activeTab === 'payload'}
+			onclick={() => (activeTab = 'payload')}
+		>Payload</button>
 	</div>
 
-	<!-- Tab content -->
 	<div class="tab-content">
-		{#if activeTab === 'payload'}
-			{#if stage.detail}
-				<pre class="json-display"><code>{JSON.stringify(stage.detail, null, 2)}</code></pre>
-			{:else if stage.error}
-				<div class="error-message">{stage.error}</div>
-			{:else}
-				<p class="empty-text">No payload data for this stage.</p>
-			{/if}
+		{#if activeTab === 'code'}
+			<code class="code-path">{codePaths[stage.id] ?? 'Unknown stage'}</code>
 		{:else if activeTab === 'timing'}
 			<div class="timing-grid">
 				<div class="timing-row">
@@ -95,8 +98,12 @@
 					<span class="timing-value status-{stage.status}">{stage.status}</span>
 				</div>
 			</div>
+		{:else if stage.detail}
+			<pre class="json-display"><code>{JSON.stringify(stage.detail, null, 2)}</code></pre>
+		{:else if stage.error}
+			<div class="error-message">{stage.error}</div>
 		{:else}
-			<code class="code-path">{codePaths[stage.id] ?? 'Unknown stage'}</code>
+			<p class="empty-text">No payload captured for this stage.</p>
 		{/if}
 	</div>
 </div>
@@ -141,6 +148,15 @@
 		border-radius: var(--radius-sm);
 		background: color-mix(in srgb, var(--color-error-fg) 15%, transparent);
 		color: var(--color-error-fg);
+		font-weight: 500;
+	}
+
+	.stage-blocked-badge {
+		font-size: 10px;
+		padding: 1px 6px;
+		border-radius: var(--radius-sm);
+		background: color-mix(in srgb, var(--color-muted) 15%, transparent);
+		color: var(--color-muted);
 		font-weight: 500;
 	}
 
@@ -229,8 +245,9 @@
 		display: block;
 		font-size: 11px;
 		line-height: 1.6;
-		color: var(--color-muted);
+		color: var(--color-fg);
 		word-break: break-all;
+		font-family: var(--font-mono);
 	}
 
 	@keyframes slide-in {

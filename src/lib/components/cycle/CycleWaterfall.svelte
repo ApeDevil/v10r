@@ -9,14 +9,13 @@
 	interface Props {
 		stages: CycleStageState[];
 		totalDurationMs: number;
+		selectedStageId?: CycleStageId | null;
 		onselect: (id: CycleStageId) => void;
 	}
 
-	let { stages, totalDurationMs, onselect }: Props = $props();
+	let { stages, totalDurationMs, selectedStageId = null, onselect }: Props = $props();
 
 	const ROW_H = 24;
-	const BAR_H = 16;
-	const LABEL_W = 80;
 
 	function barLeft(stage: CycleStageState): string {
 		if (!totalDurationMs || stage.startOffset == null) return '0%';
@@ -34,22 +33,22 @@
 </script>
 
 <div class="waterfall" style="height: {stages.length * ROW_H + 8}px;">
-	{#each stages as stage, i}
+	{#each stages as stage, i (stage.id)}
 		{@const color = STAGE_COLORS[stage.id]}
-		{@const clickable = isVisible(stage)}
-		<div class="row" style="top: {i * ROW_H}px;">
-			<!-- Label -->
+		{@const selected = selectedStageId === stage.id}
+		<div
+			class="row"
+			class:row-selected={selected}
+			style="top: {i * ROW_H}px; --stage-color: {color};"
+		>
 			<span class="label" class:label-dimmed={!isVisible(stage)}>
 				{stage.label}
 			</span>
 
-			<!-- Bar container -->
 			<div class="bar-track">
-				{#if stage.status === 'skipped'}
-					<!-- Ghost bar for skipped stages -->
-					<div class="bar-ghost"></div>
+				{#if stage.status === 'blocked'}
+					<div class="bar-blocked"></div>
 				{:else if isVisible(stage)}
-					<!-- Actual timing bar -->
 					<button
 						type="button"
 						class="bar"
@@ -63,7 +62,6 @@
 						onclick={() => onselect(stage.id)}
 						aria-label="{stage.label}: {stage.durationMs}ms"
 					></button>
-					<!-- Duration label -->
 					<span
 						class="duration"
 						style="left: calc({barLeft(stage)} + {barWidth(stage)} + 4px);"
@@ -75,7 +73,6 @@
 		</div>
 	{/each}
 
-	<!-- Total duration -->
 	{#if totalDurationMs > 0}
 		<div class="total" style="top: {stages.length * ROW_H}px;">
 			Total: {Math.round(totalDurationMs * 100) / 100}ms
@@ -98,6 +95,14 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
+		padding: 0 4px;
+		border-radius: var(--radius-sm);
+		transition: background-color 150ms ease-out;
+	}
+
+	.row-selected {
+		background: color-mix(in srgb, var(--stage-color) 10%, transparent);
+		box-shadow: inset 2px 0 0 var(--stage-color);
 	}
 
 	.label {
@@ -123,7 +128,7 @@
 		top: 0;
 		height: 100%;
 		border-radius: var(--radius-sm);
-		opacity: 0.75;
+		opacity: 0.8;
 		cursor: pointer;
 		border: none;
 		padding: 0;
@@ -134,36 +139,44 @@
 		opacity: 1;
 	}
 
-	.bar-error {
-		opacity: 0.85;
+	.row-selected .bar {
+		opacity: 1;
+		box-shadow: 0 0 0 1.5px var(--stage-color);
 	}
 
-	.bar-ghost {
+	.bar-error {
+		opacity: 0.9;
+	}
+
+	.bar-blocked {
 		position: absolute;
 		top: 0;
 		left: 0;
 		width: 100%;
 		height: 100%;
 		border-left: 2px dashed var(--color-border);
-		opacity: 0.15;
+		opacity: 0.18;
 		border-radius: var(--radius-sm);
 	}
 
 	.duration {
 		position: absolute;
-		top: 2px;
+		top: 50%;
+		transform: translateY(-50%);
 		font-size: 10px;
 		color: var(--color-muted);
+		font-variant-numeric: tabular-nums;
 		white-space: nowrap;
 		pointer-events: none;
 	}
 
 	.total {
 		position: absolute;
-		right: 0;
+		right: 4px;
 		font-size: 11px;
 		font-weight: 500;
 		color: var(--color-muted);
+		font-variant-numeric: tabular-nums;
 	}
 
 	@keyframes bar-fill {

@@ -1,39 +1,61 @@
 <script lang="ts">
-	import { Alert, Card } from '$lib/components/composites';
+	import { enhance } from '$app/forms';
+	import type { ActionResult } from '@sveltejs/kit';
+	import { invalidateAll } from '$app/navigation';
+	import { Alert, Card, FormField } from '$lib/components/composites';
 	import { Stack } from '$lib/components/layout';
-	import { Button } from '$lib/components/primitives';
-	import { CyclePipeline, CycleWaterfall } from '$lib/components/cycle';
+	import { Button, Input, Select, Spinner } from '$lib/components/primitives';
+	import { CycleDetail, CyclePipeline, CycleVizCard, CycleWaterfall } from '$lib/components/cycle';
 	import { createCycleState } from '$lib/components/cycle/cycle-state.svelte';
 	import type { CycleTrace } from '$lib/components/cycle/types';
 
-	const cycle = createCycleState();
+	const cycle = createCycleState('ai');
+	let submitting = $state(false);
+	let browserStart = 0;
 	let lastTrace = $state<CycleTrace | null>(null);
+	let answer = $state<string | null>(null);
+	let errorMessage = $state<string | null>(null);
 
-	/**
-	 * Simulates an AI pipeline cycle with realistic timing.
-	 * In the full implementation, this would connect to /api/ai/chat
-	 * and read pipeline events from message-metadata annotations.
-	 */
-	function runAiCycle() {
-		cycle.reset();
+	let query = $state('What is Velociraptor?');
+	let selectedError = $state('');
 
-		// Simulate an AI RAG pipeline trace
-		const trace: CycleTrace = {
-			id: crypto.randomUUID(),
-			trigger: 'ai',
-			spans: [
-				{ stage: 'server', status: 'done', startMs: 0, durationMs: 3, detail: { action: 'auth + parse' } },
-				{ stage: 'domain', status: 'done', startMs: 3, durationMs: 45, detail: { steps: ['embed', 'retrieve', 'rank', 'context'] } },
-				{ stage: 'database', status: 'done', startMs: 8, durationMs: 35, detail: { operation: 'vector search + graph traversal' } },
-				{ stage: 'response', status: 'done', startMs: 48, durationMs: 120, detail: { streaming: true, model: 'claude-sonnet-4-6', tokens: 284 } },
-			],
-			totalDurationMs: 168,
-			inputPayload: { query: 'What is Velociraptor?' },
-			outputPayload: { tokens: 284, model: 'claude-sonnet-4-6' },
+	const errorOptions = [
+		{ value: '', label: 'None (happy path)' },
+		{ value: 'embed', label: 'Embed error' },
+		{ value: 'retrieve', label: 'Retrieve error' },
+		{ value: 'generate', label: 'LLM timeout' },
+	];
+
+	function handleSubmit() {
+		return async ({ result }: { result: ActionResult; update: () => Promise<void> }) => {
+			submitting = false;
+			const browserEnd = performance.now();
+
+			if (result.type === 'success' && result.data) {
+				const data = result.data as {
+					trace: CycleTrace;
+					success: boolean;
+					error?: string;
+					answer?: string;
+				};
+				if (data.trace) {
+					lastTrace = data.trace;
+					const roundTrip = browserEnd - browserStart;
+					const serverMs = data.trace.totalDurationMs ?? 0;
+					const browserMs = Math.max(0.5, Math.min(5, (roundTrip - serverMs) * 0.1));
+					cycle.animateTrace(data.trace, browserMs, roundTrip);
+
+					if (data.success) {
+						answer = data.answer ?? null;
+						errorMessage = null;
+					} else {
+						errorMessage = data.error ?? 'AI cycle failed';
+						answer = null;
+					}
+				}
+			}
+			await invalidateAll();
 		};
-
-		lastTrace = trace;
-		cycle.animateTrace(trace, performance.now(), 12);
 	}
 </script>
 
@@ -46,57 +68,95 @@
 		{#snippet header()}
 			<h2 class="text-fluid-lg font-semibold">AI Pipeline Cycle</h2>
 			<p class="text-fluid-sm text-muted">
-				Visualize the RAG pipeline lifecycle: query → embedding → retrieval → ranking → LLM generation → streamed response.
+				Watch the full RAG lifecycle: embed → retrieve → rank → context → generate → stream.
+				<code>generate</code> typically dominates the waterfall — that's the teaching moment.
 			</p>
 		{/snippet}
 
-		<div class="flex items-center gap-4">
-			<code class="text-fluid-sm text-muted flex-1 p-3 rounded-md bg-surface-1">
-				"What is Velociraptor?"
-			</code>
-			<Button onclick={runAiCycle} disabled={cycle.mode === 'running'}>
-				Run AI Cycle
-			</Button>
-		</div>
+		<form
+			method="POST"
+			action="?/run"
+			use:enhance={() => {
+				cycle.reset();
+				browserStart = performance.now();
+				submitting = true;
+				answer = null;
+				errorMessage = null;
+				return handleSubmit();
+			}}
+		>
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+				<FormField label="Query">
+					{#snippet children({ fieldId })}
+						<Input
+							id={fieldId}
+							name="query"
+							bind:value={query}
+							placeholder="Ask something..."
+						/>
+					{/snippet}
+				</FormField>
 
-		<Alert variant="info" title="Simulated Pipeline">
-			{#snippet children()}
-				<p>
-					This demonstrates the visualization with simulated timing data. The full implementation
-					connects to <code>/api/ai/chat</code> and reads pipeline events from <code>message-metadata</code>
-					annotations via the existing RAG infrastructure.
-				</p>
-			{/snippet}
-		</Alert>
+				<FormField label="Simulate Error">
+					{#snippet children()}
+						<Select options={errorOptions} bind:value={selectedError} />
+						<input type="hidden" name="simulateError" value={selectedError} />
+					{/snippet}
+				</FormField>
+
+				<div class="flex items-end">
+					<Button type="submit" disabled={submitting} class="w-full">
+						{#if submitting}<Spinner size="sm" class="mr-2" />{/if}
+						Run AI Cycle
+					</Button>
+				</div>
+			</div>
+		</form>
+
+		{#if answer}
+			<Alert variant="info" title="Answer">
+				{#snippet children()}<p class="whitespace-pre-wrap">{answer}</p>{/snippet}
+			</Alert>
+		{/if}
+		{#if errorMessage}
+			<Alert variant="error" title="Cycle Error">
+				{#snippet children()}<p>{errorMessage}</p>{/snippet}
+			</Alert>
+		{/if}
 	</Card>
 
-	<!-- Visualization Zone -->
-	{#if cycle.mode !== 'idle'}
-		<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-			<Card>
-				{#snippet header()}
-					<h3 class="text-fluid-sm font-semibold">Pipeline</h3>
-				{/snippet}
-				<CyclePipeline stages={cycle.stages} onselect={cycle.selectStage} />
-			</Card>
+	<!-- Visualization Zone — always visible -->
+	<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+		<CycleVizCard title="Pipeline" subtitle="order & status">
+			<CyclePipeline
+				stages={cycle.stages}
+				selectedStageId={cycle.selectedStageId}
+				onselect={cycle.selectStage}
+			/>
+		</CycleVizCard>
 
-			<Card>
-				{#snippet header()}
-					<div class="flex items-center justify-between">
-						<h3 class="text-fluid-sm font-semibold">Waterfall</h3>
-						{#if cycle.totalDurationMs > 0}
-							<span class="text-fluid-xs text-muted font-mono">
-								{Math.round(cycle.totalDurationMs * 100) / 100}ms
-							</span>
-						{/if}
-					</div>
-				{/snippet}
-				<CycleWaterfall
-					stages={cycle.stages}
-					totalDurationMs={cycle.totalDurationMs}
-					onselect={cycle.selectStage}
-				/>
-			</Card>
-		</div>
+		<CycleVizCard
+			title="Waterfall"
+			subtitle={cycle.totalDurationMs > 0
+				? `${Math.round(cycle.totalDurationMs * 100) / 100}ms total`
+				: 'relative timing'}
+		>
+			<CycleWaterfall
+				stages={cycle.stages}
+				totalDurationMs={cycle.totalDurationMs}
+				selectedStageId={cycle.selectedStageId}
+				onselect={cycle.selectStage}
+			/>
+		</CycleVizCard>
+	</div>
+
+	<!-- Detail Zone -->
+	{#if cycle.selectedStage && lastTrace}
+		<CycleDetail
+			stage={cycle.selectedStage}
+			trace={lastTrace}
+			totalDurationMs={cycle.totalDurationMs}
+			onclose={() => cycle.selectStage(null)}
+		/>
 	{/if}
 </Stack>

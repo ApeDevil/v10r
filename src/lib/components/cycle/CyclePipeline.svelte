@@ -1,6 +1,7 @@
 <!--
   Horizontal SVG pipeline — pill-shaped stage nodes with animated traveling dots.
-  Status CSS patterns reused from PipelineNode.svelte (color-mix, sonar, shake).
+  Renders a Client | Server boundary band, ghost pending pills, and dims downstream
+  stages when an upstream stage errors.
 -->
 <script lang="ts">
 	import type { CycleStageId, CycleStageState } from './types';
@@ -8,79 +9,144 @@
 
 	interface Props {
 		stages: CycleStageState[];
+		selectedStageId?: CycleStageId | null;
 		onselect: (id: CycleStageId) => void;
 	}
 
-	let { stages, onselect }: Props = $props();
+	let { stages, selectedStageId = null, onselect }: Props = $props();
 
 	const PILL_W = 92;
-	const PILL_H = 36;
-	const PILL_RX = 18;
-	const GAP = 24;
-	const PADDING = 16;
-	const TOTAL_W = 6 * PILL_W + 5 * GAP + PADDING * 2;
-	const VIEW_H = 80;
+	const PILL_H = 38;
+	const PILL_RX = 19;
+	const GAP = 22;
+	const PADDING = 18;
+	const BAND_H = 10;
 
-	/** Icon paths for each stage (simplified inline SVGs). */
+	const totalW = $derived(stages.length * PILL_W + (stages.length - 1) * GAP + PADDING * 2);
+	const viewH = 100;
+	const cy = viewH / 2 + BAND_H / 2;
+
+	/** Index of the first errored stage — downstream stages are dimmed. */
+	const errorIdx = $derived(stages.findIndex((s) => s.status === 'error'));
+	const hasError = $derived(errorIdx !== -1);
+
+	/** Icon paths — simple glyphs sized to a 10px box (centered on 0,0). */
 	const iconPaths: Record<CycleStageId, { d: string; stroke?: boolean }> = {
-		browser: { d: 'M-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0 M-5,0 L5,0 M0,-5 L0,5' },
+		browser: { d: 'M-5,-3 h10 v7 h-10 z M-5,-1 h10', stroke: true },
 		network: { d: 'M-5,0 L3,0 M0,-3 L3,0 L0,3', stroke: true },
 		server: { d: 'M-4,-4 L4,-4 L4,4 L-4,4 Z M-4,-1 L4,-1 M-2,-3 L-2,-2' },
 		domain: { d: 'M0,-5 L5,0 L0,5 L-5,0 Z' },
-		database: { d: 'M-4,-4 L4,-4 L4,4 L-4,4 Z M-4,0 L4,0' },
+		database: { d: 'M-4,-4 h8 v8 h-8 z M-4,0 h8', stroke: true },
 		response: { d: 'M5,0 L-3,0 M0,-3 L-3,0 L0,3', stroke: true },
+		embed: { d: 'M-4,-2 L0,2 L4,-2 M-4,2 L0,-2 L4,2', stroke: true },
+		retrieve: { d: 'M0,-5 a5,5 0 1,0 0.01,0 M2,2 L5,5', stroke: true },
+		rank: { d: 'M-4,3 v-3 M0,3 v-5 M4,3 v-7', stroke: true },
+		context: { d: 'M-4,-4 h8 M-4,0 h8 M-4,4 h5', stroke: true },
+		generate: { d: 'M-3,-4 L3,0 L-3,4 Z' },
 	};
 
-	function pillX(index: number): number {
-		return PADDING + index * (PILL_W + GAP);
+	function pillX(i: number): number {
+		return PADDING + i * (PILL_W + GAP);
 	}
 
 	function isClickable(status: string): boolean {
 		return status === 'done' || status === 'error';
 	}
+
+	function pillDimmed(i: number, status: string): boolean {
+		if (status === 'blocked') return true;
+		return hasError && i > errorIdx;
+	}
+
+	const clientCount = $derived(stages.filter((s) => s.side === 'client').length);
+	const clientEndX = $derived(clientCount > 0 ? pillX(clientCount - 1) + PILL_W + GAP / 2 : 0);
+
+	const stageDescriptions: Record<string, string> = {
+		browser: 'client-side form submission or fetch call',
+		network: 'HTTP round-trip between browser and server',
+		server: 'SvelteKit hooks, validation, auth',
+		domain: 'pure business logic, no framework deps',
+		database: 'Drizzle insert into showcase.cycle_run',
+		response: 'serialization back to the client',
+		embed: 'embed query into vector representation',
+		retrieve: 'vector + graph search across tiers',
+		rank: 'RRF fusion of multi-tier results',
+		context: 'assemble final prompt context block',
+		generate: 'LLM streaming — first token → final token',
+	};
+
+	function stageDescription(id: string): string {
+		return stageDescriptions[id] ?? 'cycle stage';
+	}
 </script>
 
 <svg
-	viewBox="0 0 {TOTAL_W} {VIEW_H}"
+	viewBox="0 0 {totalW} {viewH}"
 	class="w-full h-auto"
 	role="img"
 	aria-label="Request lifecycle pipeline"
 >
+	<!-- Client/Server boundary band -->
+	{#if clientCount > 0 && clientCount < stages.length}
+		<g class="boundary">
+			<rect
+				x={PADDING - 8}
+				y={BAND_H - 2}
+				width={clientEndX - PADDING + 8}
+				height={BAND_H}
+				rx="3"
+				class="boundary-client"
+			/>
+			<rect
+				x={clientEndX}
+				y={BAND_H - 2}
+				width={totalW - clientEndX - PADDING + 8}
+				height={BAND_H}
+				rx="3"
+				class="boundary-server"
+			/>
+			<text x={PADDING - 4} y={BAND_H + 5} class="boundary-label" dominant-baseline="middle">
+				CLIENT
+			</text>
+			<text x={clientEndX + 6} y={BAND_H + 5} class="boundary-label" dominant-baseline="middle">
+				SERVER
+			</text>
+		</g>
+	{/if}
+
 	<!-- Edges between pills -->
-	{#each stages as stage, i}
+	{#each stages as stage, i (stage.id)}
 		{#if i > 0}
 			{@const x1 = pillX(i - 1) + PILL_W}
 			{@const x2 = pillX(i)}
-			{@const y = VIEW_H / 2}
 			{@const prevStatus = stages[i - 1].status}
 			{@const isActive = stage.status === 'active'}
+			{@const isDimmed = pillDimmed(i, stage.status)}
 			<line
-				{x1} y1={y} {x2} y2={y}
+				{x1}
+				y1={cy}
+				{x2}
+				y2={cy}
 				class="edge"
 				class:edge-active={isActive}
 				class:edge-done={prevStatus === 'done' && stage.status !== 'pending'}
-				class:edge-dimmed={prevStatus === 'pending' || prevStatus === 'skipped'}
+				class:edge-dimmed={isDimmed || prevStatus === 'pending' || prevStatus === 'blocked'}
 			/>
-			<!-- Traveling dot -->
 			{#if isActive}
-				<circle
-					r="3"
-					class="traveling-dot"
-					style="--edge-x1: {x1}px; --edge-x2: {x2}px; --edge-y: {y}px;"
-				>
+				<circle r="3" class="traveling-dot" cy={cy}>
 					<animate
 						attributeName="cx"
 						from={x1}
 						to={x2}
-						dur="0.4s"
-						fill="freeze"
+						dur="0.45s"
+						repeatCount="indefinite"
 					/>
 					<animate
-						attributeName="cy"
-						from={y}
-						to={y}
-						dur="0.4s"
-						fill="freeze"
+						attributeName="opacity"
+						values="0;1;1;0"
+						keyTimes="0;0.2;0.8;1"
+						dur="0.45s"
+						repeatCount="indefinite"
 					/>
 				</circle>
 			{/if}
@@ -88,86 +154,93 @@
 	{/each}
 
 	<!-- Stage pills -->
-	{#each stages as stage, i}
+	{#each stages as stage, i (stage.id)}
 		{@const x = pillX(i)}
-		{@const y = VIEW_H / 2 - PILL_H / 2}
-		{@const cx = x + PILL_W / 2}
-		{@const cy = VIEW_H / 2}
+		{@const y = cy - PILL_H / 2}
 		{@const clickable = isClickable(stage.status)}
 		{@const color = STAGE_COLORS[stage.id]}
-		{@const icon = iconPaths[stage.id]}
+		{@const icon = iconPaths[stage.id] ?? iconPaths.server}
+		{@const dimmed = pillDimmed(i, stage.status)}
+		{@const selected = selectedStageId === stage.id}
 
 		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 		<g
 			class="pill"
 			class:pill-clickable={clickable}
+			class:pill-selected={selected}
 			class:pill-error-shake={stage.status === 'error'}
+			class:pill-dimmed={dimmed}
 			onclick={() => clickable && onselect(stage.id)}
 			onkeydown={(e) => e.key === 'Enter' && clickable && onselect(stage.id)}
 			tabindex={clickable ? 0 : undefined}
 			role={clickable ? 'button' : undefined}
-			aria-label="{stage.label}: {stage.status}{stage.durationMs ? ` (${stage.durationMs}ms)` : ''}"
+			aria-label="{stage.label}: {stage.status}{stage.durationMs
+				? ` (${stage.durationMs}ms)`
+				: ''}"
 		>
-			<!-- Sonar pulse for active -->
+			<title>{stage.label} — {stageDescription(stage.id)}</title>
+
 			{#if stage.status === 'active'}
 				<rect
-					{x} {y} width={PILL_W} height={PILL_H} rx={PILL_RX}
+					{x}
+					{y}
+					width={PILL_W}
+					height={PILL_H}
+					rx={PILL_RX}
 					class="sonar"
 					style="--stage-color: {color};"
 				/>
 			{/if}
 
-			<!-- Main pill -->
 			<rect
-				{x} {y} width={PILL_W} height={PILL_H} rx={PILL_RX}
+				{x}
+				{y}
+				width={PILL_W}
+				height={PILL_H}
+				rx={PILL_RX}
 				class="pill-rect"
 				class:pill-pending={stage.status === 'pending'}
 				class:pill-active={stage.status === 'active'}
 				class:pill-done={stage.status === 'done'}
 				class:pill-error={stage.status === 'error'}
-				class:pill-skipped={stage.status === 'skipped'}
+				class:pill-blocked={stage.status === 'blocked'}
 				style="--stage-color: {color};"
 			/>
 
-			<!-- Icon -->
 			<path
 				d={icon.d}
-				transform="translate({x + 20}, {cy})"
+				transform="translate({x + 18}, {cy})"
 				class="pill-icon"
-				class:icon-active={stage.status === 'active' || stage.status === 'done'}
-				class:icon-error={stage.status === 'error'}
+				class:icon-active={stage.status === 'active' ||
+					stage.status === 'done' ||
+					stage.status === 'error'}
 				fill={icon.stroke ? 'none' : 'currentColor'}
 				stroke={icon.stroke ? 'currentColor' : 'none'}
 				stroke-width={icon.stroke ? 1.5 : 0}
 				stroke-linecap="round"
+				stroke-linejoin="round"
 				style="--stage-color: {color};"
 			/>
 
-			<!-- Label -->
 			<text
-				x={x + 36} y={cy - 2}
+				x={x + 34}
+				y={cy - 3}
 				class="pill-label"
-				class:label-dimmed={stage.status === 'pending' || stage.status === 'skipped'}
+				class:label-dimmed={stage.status === 'pending' || stage.status === 'blocked'}
 				dominant-baseline="middle"
 			>
 				{stage.label}
 			</text>
 
-			<!-- Duration -->
 			{#if stage.durationMs != null && (stage.status === 'done' || stage.status === 'error')}
-				<text
-					x={x + 36} y={cy + 10}
-					class="pill-duration"
-					dominant-baseline="middle"
-				>
+				<text x={x + 34} y={cy + 9} class="pill-duration" dominant-baseline="middle">
 					{stage.durationMs}ms
 				</text>
 			{/if}
 
-			<!-- Done badge -->
 			{#if stage.status === 'done'}
-				{@const bx = x + PILL_W - 8}
-				{@const by = y + 4}
+				{@const bx = x + PILL_W - 9}
+				{@const by = y + 5}
 				<circle cx={bx} cy={by} r="5" class="badge-done" />
 				<path
 					d="M{bx - 3},{by} L{bx - 1},{by + 2.5} L{bx + 3},{by - 2}"
@@ -175,21 +248,44 @@
 				/>
 			{/if}
 
-			<!-- Error badge -->
 			{#if stage.status === 'error'}
-				{@const bx = x + PILL_W - 8}
-				{@const by = y + 4}
+				{@const bx = x + PILL_W - 9}
+				{@const by = y + 5}
 				<circle cx={bx} cy={by} r="5" class="badge-error" />
 				<path
 					d="M{bx - 2},{by - 2} L{bx + 2},{by + 2} M{bx + 2},{by - 2} L{bx - 2},{by + 2}"
 					class="badge-x"
 				/>
 			{/if}
+
+			{#if stage.status === 'error'}
+				<text x={x + PILL_W / 2} y={y + PILL_H + 10} class="stopped-label" text-anchor="middle">
+					stopped here
+				</text>
+			{/if}
 		</g>
 	{/each}
 </svg>
 
 <style>
+	/* --- Boundary band --- */
+	.boundary-client {
+		fill: color-mix(in srgb, var(--chart-6) 12%, transparent);
+	}
+
+	.boundary-server {
+		fill: color-mix(in srgb, var(--color-primary) 10%, transparent);
+	}
+
+	.boundary-label {
+		font-size: 7.5px;
+		fill: var(--color-muted);
+		letter-spacing: 0.1em;
+		font-weight: 600;
+		pointer-events: none;
+		text-transform: uppercase;
+	}
+
 	/* --- Edges --- */
 	.edge {
 		stroke: var(--color-border);
@@ -210,13 +306,14 @@
 	}
 
 	.edge-dimmed {
-		opacity: 0.3;
+		opacity: 0.25;
 	}
 
 	/* --- Pills --- */
 	.pill {
 		cursor: default;
 		outline: none;
+		transition: opacity 180ms ease-out;
 	}
 
 	.pill-clickable {
@@ -226,7 +323,16 @@
 	.pill-clickable:hover .pill-rect,
 	.pill-clickable:focus-visible .pill-rect {
 		stroke-width: 2.5;
-		filter: brightness(1.15);
+		filter: brightness(1.12);
+	}
+
+	.pill-selected .pill-rect {
+		stroke-width: 2.5;
+		filter: brightness(1.15) saturate(1.2);
+	}
+
+	.pill-dimmed {
+		opacity: 0.35;
 	}
 
 	.pill-rect {
@@ -234,30 +340,30 @@
 	}
 
 	.pill-pending {
-		fill: color-mix(in srgb, var(--color-border) 10%, transparent);
+		fill: color-mix(in srgb, var(--color-border) 8%, transparent);
 		stroke: var(--color-border);
 	}
 
 	.pill-active {
-		fill: color-mix(in srgb, var(--stage-color) 20%, transparent);
+		fill: color-mix(in srgb, var(--stage-color) 22%, transparent);
 		stroke: var(--stage-color);
 	}
 
 	.pill-done {
-		fill: color-mix(in srgb, var(--stage-color) 12%, transparent);
+		fill: color-mix(in srgb, var(--stage-color) 14%, transparent);
 		stroke: var(--stage-color);
-		opacity: 0.85;
 	}
 
 	.pill-error {
-		fill: color-mix(in srgb, var(--color-error-fg) 15%, transparent);
+		fill: color-mix(in srgb, var(--color-error-fg) 16%, transparent);
 		stroke: var(--color-error-fg);
 	}
 
-	.pill-skipped {
+	.pill-blocked {
 		fill: color-mix(in srgb, var(--color-border) 5%, transparent);
 		stroke: var(--color-border);
-		opacity: 0.35;
+		stroke-dasharray: 2 3;
+		opacity: 0.45;
 	}
 
 	/* --- Icon --- */
@@ -269,25 +375,35 @@
 		color: var(--stage-color);
 	}
 
-	.icon-error {
+	.pill-error .pill-icon {
 		color: var(--color-error-fg);
 	}
 
 	/* --- Labels --- */
 	.pill-label {
-		font-size: 9px;
+		font-size: 10px;
+		font-weight: 500;
 		fill: var(--color-fg);
 		pointer-events: none;
 	}
 
 	.label-dimmed {
-		opacity: 0.4;
+		opacity: 0.45;
 	}
 
 	.pill-duration {
-		font-size: 7.5px;
+		font-size: 8px;
 		fill: var(--color-muted);
+		font-variant-numeric: tabular-nums;
 		pointer-events: none;
+	}
+
+	.stopped-label {
+		font-size: 8.5px;
+		fill: var(--color-error-fg);
+		font-weight: 500;
+		pointer-events: none;
+		letter-spacing: 0.02em;
 	}
 
 	/* --- Sonar pulse --- */
@@ -366,19 +482,14 @@
 
 	/* --- Reduced motion --- */
 	@media (prefers-reduced-motion: reduce) {
-		.sonar {
-			animation: none;
-			opacity: 0.25;
-		}
-
-		.pill-error-shake {
-			animation: none;
-		}
-
+		.sonar,
+		.pill-error-shake,
 		.edge-active {
 			animation: none;
 		}
-
+		.sonar {
+			opacity: 0.25;
+		}
 		.traveling-dot {
 			display: none;
 		}

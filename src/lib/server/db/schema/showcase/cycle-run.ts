@@ -1,7 +1,8 @@
 /**
  * CYCLE RUN — Self-referential demo entity for the Request Cycle showcase.
  * Each cycle execution creates a row — the showcase demonstrates itself
- * by writing to and reading from this table.
+ * by writing to and reading from this table. Spans are persisted so history
+ * entries can fully replay the pipeline animation.
  */
 
 import { index, integer, jsonb, serial, text, timestamp } from 'drizzle-orm/pg-core';
@@ -18,16 +19,19 @@ export const cycleRun = showcaseSchema.table(
 		/** The user-submitted data that started this cycle */
 		inputPayload: jsonb('input_payload').notNull(),
 
-		/** The processed result returned to the client */
+		/** The processed result returned to the client (null on error) */
 		outputPayload: jsonb('output_payload'),
+
+		/** Full span array — enables full pipeline replay from history */
+		spans: jsonb('spans'),
 
 		/** Total wall-clock time for the full server-side cycle */
 		totalDurationMs: integer('total_duration_ms'),
 
-		/** Final status of the cycle: pending → success | error */
-		status: text('status').notNull().default('pending'),
+		/** Final status of the cycle: success | error */
+		status: text('status').notNull(),
 
-		/** Which stage failed, if any (server, domain, database) */
+		/** Which stage failed, if any */
 		errorStage: text('error_stage'),
 
 		/** Human-readable error message */

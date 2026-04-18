@@ -49,12 +49,15 @@ export function failSpan(span: CycleSpan, traceStart: number, error: string): vo
 	span.error = error;
 }
 
-/** Mark remaining stages as skipped after an error. */
-export function skipRemaining(trace: CycleTrace, stages: CycleStageId[]): void {
+/**
+ * Mark remaining stages as blocked (upstream error prevented execution).
+ * `blocked` is pedagogically distinct from `skipped` — it communicates causality.
+ */
+export function blockRemaining(trace: CycleTrace, stages: CycleStageId[]): void {
 	const existingStages = new Set(trace.spans.map((s) => s.stage));
 	for (const stage of stages) {
 		if (!existingStages.has(stage)) {
-			trace.spans.push({ stage, status: 'skipped', startMs: 0 });
+			trace.spans.push({ stage, status: 'blocked', startMs: 0 });
 		}
 	}
 }
@@ -68,24 +71,6 @@ export function finalizeTrace(trace: CycleTrace): void {
 		);
 		trace.totalDurationMs = round(lastSpan.startMs + (lastSpan.durationMs ?? 0));
 	}
-}
-
-/** In-memory store for cross-request trace lookup (AI path). */
-const traceStore = new Map<string, { trace: CycleTrace; expiresAt: number }>();
-const TTL_MS = 10 * 60 * 1000;
-
-export function storeTrace(trace: CycleTrace): void {
-	traceStore.set(trace.id, { trace, expiresAt: Date.now() + TTL_MS });
-}
-
-export function getStoredTrace(id: string): CycleTrace | null {
-	const entry = traceStore.get(id);
-	if (!entry) return null;
-	if (entry.expiresAt < Date.now()) {
-		traceStore.delete(id);
-		return null;
-	}
-	return entry.trace;
 }
 
 function round(n: number): number {

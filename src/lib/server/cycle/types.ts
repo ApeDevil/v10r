@@ -9,6 +9,7 @@ export type {
 	CycleStageId,
 	CycleStageStatus,
 	CycleTrace,
+	SimulateAiError,
 	SimulateError,
 } from '$lib/components/cycle/types';
 

@@ -5,15 +5,16 @@
 	import { Stack } from '$lib/components/layout';
 	import { Button, Input, Select, Spinner } from '$lib/components/primitives';
 	import { cycleSchema } from '$lib/schemas/showcase/cycle';
-	import { CycleDetail, CyclePipeline, CycleWaterfall } from '$lib/components/cycle';
+	import { CycleDetail, CyclePipeline, CycleVizCard, CycleWaterfall } from '$lib/components/cycle';
 	import { createCycleState } from '$lib/components/cycle/cycle-state.svelte';
-	import type { CycleTrace } from '$lib/components/cycle/types';
+	import type { CycleSpan, CycleTrace } from '$lib/components/cycle/types';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 
-	const cycle = createCycleState();
-	let browserSubmitTime = 0;
+	const cycle = createCycleState('default');
+	let browserStart = 0;
+	let browserEnd = 0;
 	let lastTrace = $state<CycleTrace | null>(null);
 	let resultMessage = $state<string | null>(null);
 	let errorMessage = $state<string | null>(null);
@@ -30,11 +31,12 @@
 		validators: valibotClient(cycleSchema),
 		onSubmit() {
 			cycle.reset();
-			browserSubmitTime = performance.now();
+			browserStart = performance.now();
 			resultMessage = null;
 			errorMessage = null;
 		},
 		onResult({ result }) {
+			browserEnd = performance.now();
 			if (result.type === 'success' && result.data) {
 				const { trace, success, error } = result.data as {
 					trace: CycleTrace;
@@ -43,11 +45,13 @@
 				};
 				if (trace) {
 					lastTrace = trace;
-					const networkDuration = performance.now() - browserSubmitTime;
-					cycle.animateTrace(trace, browserSubmitTime, networkDuration);
+					const roundTrip = browserEnd - browserStart;
+					const serverMs = trace.totalDurationMs ?? 0;
+					const browserMs = Math.max(0.5, Math.min(5, (roundTrip - serverMs) * 0.1));
+					cycle.animateTrace(trace, browserMs, roundTrip);
 
 					if (success) {
-						resultMessage = `Cycle completed in ${Math.round(trace.totalDurationMs ?? 0)}ms`;
+						resultMessage = `Cycle completed in ${Math.round(serverMs)}ms (round-trip ${Math.round(roundTrip)}ms)`;
 					} else {
 						errorMessage = error ?? 'Cycle failed';
 					}
@@ -60,9 +64,28 @@
 		if (!traceData) return;
 		try {
 			const entry = JSON.parse(traceData);
-			// History entries from layout are cycle_run DB rows, not full traces
-			// Show a simplified replay
-			resultMessage = `Run #${entry.id} — ${entry.status} (${entry.totalDurationMs ?? 0}ms)`;
+			const spans = (entry.spans ?? []) as CycleSpan[];
+			if (spans.length === 0) {
+				resultMessage = `Run #${entry.id} — ${entry.status} (${entry.totalDurationMs ?? 0}ms, no span data)`;
+				return;
+			}
+			const trace: CycleTrace = {
+				id: String(entry.id),
+				trigger: entry.trigger,
+				spans,
+				totalDurationMs: entry.totalDurationMs,
+				inputPayload: entry.inputPayload,
+				outputPayload: entry.outputPayload,
+			};
+			lastTrace = trace;
+			// Replay without client-side browser/network spans (historical; we never measured them).
+			cycle.animateTrace(trace);
+			resultMessage =
+				entry.status === 'success'
+					? `Replaying Run #${entry.id} (${entry.totalDurationMs ?? 0}ms)`
+					: null;
+			errorMessage =
+				entry.status === 'error' ? `Replaying Run #${entry.id} — ${entry.errorMessage}` : null;
 		} catch {
 			// ignore
 		}
@@ -116,11 +139,8 @@
 				</FormField>
 
 				<FormField label="Simulate Error">
-					{#snippet children({ fieldId })}
-						<Select
-							options={errorOptions}
-							bind:value={selectedError}
-						/>
+					{#snippet children()}
+						<Select options={errorOptions} bind:value={selectedError} />
 						<input type="hidden" name="simulateError" value={selectedError} />
 					{/snippet}
 				</FormField>
@@ -134,52 +154,42 @@
 			</div>
 		</form>
 
-		<!-- Result area -->
 		{#if resultMessage}
 			<Alert variant="success" title="Success">
-				{#snippet children()}
-					<p>{resultMessage}</p>
-				{/snippet}
+				{#snippet children()}<p>{resultMessage}</p>{/snippet}
 			</Alert>
 		{/if}
 		{#if errorMessage}
 			<Alert variant="error" title="Cycle Error">
-				{#snippet children()}
-					<p>{errorMessage}</p>
-				{/snippet}
+				{#snippet children()}<p>{errorMessage}</p>{/snippet}
 			</Alert>
 		{/if}
 	</Card>
 
-	<!-- Visualization Zone -->
-	{#if cycle.mode !== 'idle'}
-		<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-			<Card>
-				{#snippet header()}
-					<h3 class="text-fluid-sm font-semibold">Pipeline</h3>
-				{/snippet}
-				<CyclePipeline stages={cycle.stages} onselect={cycle.selectStage} />
-			</Card>
+	<!-- Visualization Zone — always visible; ghost pills invite interaction -->
+	<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+		<CycleVizCard title="Pipeline" subtitle="order & status">
+			<CyclePipeline
+				stages={cycle.stages}
+				selectedStageId={cycle.selectedStageId}
+				onselect={cycle.selectStage}
+			/>
+		</CycleVizCard>
 
-			<Card>
-				{#snippet header()}
-					<div class="flex items-center justify-between">
-						<h3 class="text-fluid-sm font-semibold">Waterfall</h3>
-						{#if cycle.totalDurationMs > 0}
-							<span class="text-fluid-xs text-muted font-mono">
-								{Math.round(cycle.totalDurationMs * 100) / 100}ms
-							</span>
-						{/if}
-					</div>
-				{/snippet}
-				<CycleWaterfall
-					stages={cycle.stages}
-					totalDurationMs={cycle.totalDurationMs}
-					onselect={cycle.selectStage}
-				/>
-			</Card>
-		</div>
-	{/if}
+		<CycleVizCard
+			title="Waterfall"
+			subtitle={cycle.totalDurationMs > 0
+				? `${Math.round(cycle.totalDurationMs * 100) / 100}ms total`
+				: 'relative timing'}
+		>
+			<CycleWaterfall
+				stages={cycle.stages}
+				totalDurationMs={cycle.totalDurationMs}
+				selectedStageId={cycle.selectedStageId}
+				onselect={cycle.selectStage}
+			/>
+		</CycleVizCard>
+	</div>
 
 	<!-- Detail Zone -->
 	{#if cycle.selectedStage && lastTrace}
