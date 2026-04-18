@@ -24,9 +24,9 @@ The answer is not a new architecture layer. Domain modules in `$lib/server/[doma
 │                      DOMAIN MODULES                          │
 │                 $lib/server/[domain]/                         │
 │                                                              │
-│  notifications/    auth/         retrieval/                   │
-│  ├── index.ts      ├── index.ts  ├── index.ts                │
-│  ├── service.ts    └── guards.ts └── ...                     │
+│  notifications/    auth/         rawrag/      llmwiki/        │
+│  ├── index.ts      ├── index.ts  ├── index.ts ├── search.ts  │
+│  ├── service.ts    └── guards.ts └── ...      └── ...        │
 │  └── ...                                                     │
 │                                                              │
 │  db/[domain]/                                                │
@@ -71,6 +71,15 @@ src/lib/server/
   auth/
     guards.ts                  ← requireAuth(), requireApiUser(), requireAdmin()
     index.ts                   ← Better Auth instance
+  rawrag/
+    index.ts                   ← retrieve(), formatContextForPrompt()
+    chunk.ts / embed.ts        ← chunking + embedding pipeline
+    ingest/                    ← ingestion pipeline
+  llmwiki/
+    search.ts                  ← hybrid vector+BM25 wiki search
+    queries.ts                 ← hydratePointers
+    verify.ts                  ← citation verification
+    overview.ts / wiki-format.ts / compile/ / lint/
   ai/
     index.ts                   ← provider registry + active model
     errors.ts                  ← classifyAIError(), AIError

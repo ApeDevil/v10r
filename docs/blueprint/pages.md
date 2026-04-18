@@ -487,7 +487,7 @@ AI integration showcase using the Vercel AI SDK. Covers basic chat through full 
 | `/chat` | Basic chat interface with message history |
 | `/streaming` | Streaming text responses, token-by-token rendering |
 | `/retrieval/ingest` | Document ingestion: chunking, embedding, indexing |
-| `/retrieval/chat` | RAG-augmented chat with source attribution and pipeline visualization |
+| `/retrieval/chat` | RAG-augmented chat with source attribution and pipeline visualization (modes: retrieve / llmwiki, selectable from UI) |
 | `/retrieval/contextual` | Contextual retrieval: context-enriched chunk embedding |
 | `/retrieval/parent-child` | Parent-child chunking: small retrieval, large context |
 | `/retrieval/graph` | Graph-based retrieval: entity extraction, relationship traversal |

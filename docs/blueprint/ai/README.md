@@ -20,13 +20,15 @@ Multi-provider chat assistant with tool calling, Graph RAG retrieval, and desk i
 | Chat orchestrator | `src/lib/server/ai/chat-orchestrator.ts` | Streaming, fallback rotation, tool calling |
 | Error classification | `src/lib/server/ai/errors.ts` | Provider error → user-safe message mapping |
 | Tool definitions | `src/lib/server/ai/tools/` | Desk-read, desk-write, retrieval tools |
-| Retrieval pipeline | `src/lib/server/retrieval/` | Graph RAG with recursive retrieval |
+| rawrag pipeline | `src/lib/server/rawrag/` | Source chunks, embeddings, hybrid/graph retrieval |
+| llmwiki layer | `src/lib/server/llmwiki/` | Wiki layer: compile, search, verify |
 
 ## Documents
 
 | File | Topics |
 |------|--------|
-| [graph-rag.md](./graph-rag.md) | Graph RAG retrieval architecture, recursive retrieval, embedding pipeline |
+| [layered-rag.md](./layered-rag.md) | **Primary RAG doc.** Two-layer split (llmwiki + rawrag), tables, tool contracts, read path, citation verification |
+| [graph-rag.md](./graph-rag.md) | rawrag internals: chunking, embeddings, parent-child, graph traversal, recursive retrieval |
 | [desk-integration.md](./desk-integration.md) | AI tool calling for desk operations, I/O log, effect system |
 | [toon.md](./toon.md) | TOON format for token-efficient RAG context injection |
 
@@ -37,7 +39,8 @@ User → ChatPanel/Chatbot → /api/ai/chat → orchestrateChat()
                                               ├── resolveProvider (user pref → env → first configured)
                                               ├── streamText (with tools if desk scopes)
                                               ├── fallback rotation on rate limit
-                                              └── RAG context injection (if retrieval enabled)
+                                              └── llmwiki-first RAG (overview + search + pointer hydration)
+                                                    └── rawrag drill-down (get_rawrag_chunks, on-demand only)
 ```
 
 Provider resolution: user preference → `AI_PROVIDER` env var → first configured. Circuit breaker with 60s cooldown on rate-limited providers.

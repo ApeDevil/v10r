@@ -30,7 +30,7 @@ Implementation designs and feature specifications. How to build features using t
 
 | File | Main Topics |
 |------|-------------|
-| **[ai/](./ai/)** | • [README.md](./ai/README.md): AI Assistant architecture, multi-provider setup, Vercel AI SDK, chat/embed/image/audio endpoints, sidebar integration<br>• [graph-rag.md](./ai/graph-rag.md): Hybrid retrieval pipeline, Neo4j knowledge graphs, recursive chunking, entity extraction, three-tier search<br>• [toon.md](./ai/toon.md): TOON format for token-efficient RAG context |
+| **[ai/](./ai/)** | • [README.md](./ai/README.md): AI Assistant architecture, multi-provider setup, Vercel AI SDK, chat/embed/image/audio endpoints, sidebar integration<br>• [layered-rag.md](./ai/layered-rag.md): **Primary RAG entry point.** Two-layer split (llmwiki + rawrag), tool contracts, read path, citation verification<br>• [graph-rag.md](./ai/graph-rag.md): rawrag internals — hybrid retrieval pipeline, Neo4j knowledge graphs, recursive chunking, entity extraction<br>• [toon.md](./ai/toon.md): TOON format for token-efficient RAG context |
 
 ## Features
 

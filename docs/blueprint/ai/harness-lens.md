@@ -18,7 +18,7 @@ We use the term as a diagnostic. Asking "does v10r have all the harness primitiv
 | Provider fallback & cooldown | `ai/loop` | `loop/fallback.ts` — `tryFallback` |
 | Context compaction (fixes AI SDK #9631) | `ai/loop` | `loop/compact.ts` — `compactToolResults` + `resolve_ref` tool |
 | System prompt assembly | `ai/context` | `context/system-prompt.ts` — `buildSystemPrompt`, cache-stable prefix ordering |
-| Retrieval integration | `ai/context` | `context/retrieval-integration.ts` — Graph RAG pipeline events |
+| Retrieval integration | `ai` | `chat-orchestrator.ts` — llmwiki + rawrag pipeline events |
 | Conversation windowing | `ai/context` | `context/system-prompt.ts` — `windowMessages` |
 | Policy resolution (client floor ∩ server ceiling) | `ai/policy` | `policy/governor.ts` — `resolveEffectivePolicy` |
 | Per-execute governor wrap (arg-dependent risk) | `ai/policy` | `policy/governor.ts` — `withGovernor` |
