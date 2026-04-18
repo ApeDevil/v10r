@@ -130,6 +130,31 @@ function getItemHref(item: StructureItem): string | null {
 	</div>
 {/snippet}
 
+{#snippet nragContent()}
+	<div class="structure-content">
+		<p class="nrag-lede">Retrieval-Augmented Generation where the model chooses its own depth.</p>
+		<p>Two layers: a standard chunk index below, and above it an LLM-authored wiki with typed pointers into specific chunk IDs. The model reads TLDRs first and calls a drill-down tool only when it needs the raw source.</p>
+		{@render renderItems([
+			{
+				segments: [{ label: 'raw-RAG', href: '/showcases/ai/retrieval/rag-chat' }],
+				description: 'hybrid vector + BM25 retrieval over raw document chunks',
+			},
+			{
+				segments: [{ label: 'LLM-Wiki', href: '/showcases/ai/retrieval/rag-chat?mode=llmwiki' }],
+				description: 'synthesized pages with typed pointers back to chunk IDs',
+			},
+			{
+				segments: [{ label: 'drill-down', href: null }],
+				description: 'tool-call escalation when the TLDR is not enough — budget 3 per turn',
+			},
+			{
+				segments: [{ label: 'verify', href: null }],
+				description: 'post-hoc citation taxonomy — quote, paraphrase, drifted, uncited',
+			},
+		])}
+	</div>
+{/snippet}
+
 <section class="structure" use:fadeIn>
 	<header class="structure-header">
 		<h2 class="structure-title">INTERNAL STRUCTURE</h2>
@@ -140,6 +165,7 @@ function getItemHref(item: StructureItem): string | null {
 		items={[
 			{ value: 'intelligence', title: 'Intelligence Layer', content: intelligenceContent },
 			{ value: 'structural', title: 'Structural Map', content: structuralContent },
+			{ value: 'nrag', title: 'nRAG: raw-RAG ∘ LLM-Wiki', content: nragContent },
 		]}
 		type="multiple"
 		size="sm"
@@ -242,6 +268,13 @@ function getItemHref(item: StructureItem): string | null {
 		border-top: 1px solid var(--color-border);
 		color: var(--color-muted);
 		font-size: var(--text-fluid-xs);
+	}
+
+	.structure-content .nrag-lede {
+		font-size: var(--text-fluid-base);
+		color: var(--color-fg);
+		font-weight: 500;
+		margin-bottom: var(--spacing-4);
 	}
 
 	/* Linked items — whole row is click target */
