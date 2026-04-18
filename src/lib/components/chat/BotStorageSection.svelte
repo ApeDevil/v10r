@@ -61,14 +61,15 @@ function cancelPrune() {
 function startDeleteAll() {
 	deleteAllConfirming = true;
 	deleteAllCountdown = 5;
-	countdownTimer = setInterval(() => {
+	const timer = setInterval(() => {
 		deleteAllCountdown--;
 		if (deleteAllCountdown <= 0) {
-			clearInterval(countdownTimer!);
+			clearInterval(timer);
 			countdownTimer = null;
 			executeDeleteAll();
 		}
 	}, 1000);
+	countdownTimer = timer;
 }
 
 function cancelDeleteAll() {

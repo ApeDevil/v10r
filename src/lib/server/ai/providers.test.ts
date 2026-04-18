@@ -140,8 +140,8 @@ describe('getCooldownResumeAt', () => {
 	it('returns ISO string when cooled down', () => {
 		markCooldown('groq', 60_000);
 		const result = getCooldownResumeAt('groq');
-		expect(result).not.toBeNull();
-		expect(new Date(result!).getTime()).toBeGreaterThan(Date.now());
+		if (result === null) throw new Error('expected non-null cooldown timestamp');
+		expect(new Date(result).getTime()).toBeGreaterThan(Date.now());
 	});
 
 	it('auto-clears expired cooldowns', () => {

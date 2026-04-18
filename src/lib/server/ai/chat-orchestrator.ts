@@ -731,12 +731,16 @@ Retrieval rules:
 					// inside `createDeskTools`, and the whole request runs inside a
 					// `runWithCompaction` context (see below) so refs resolve consistently.
 				}
-				// biome-ignore lint/suspicious/noExplicitAny: toolResults type depends on conditional tools
+				type ToolResultRecord = {
+					toolName: string;
+					input?: unknown;
+					output?: unknown;
+				};
 				streamOpts.onStepFinish = async ({
 					toolResults,
 					usage,
 				}: {
-					toolResults?: any[];
+					toolResults?: ToolResultRecord[];
 					usage?: { inputTokens: number; outputTokens: number };
 				}) => {
 					if (!conversationId) return;

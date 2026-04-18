@@ -76,13 +76,14 @@ export const actions: Actions = {
 		const file = formData.get('avatar') as File | null;
 
 		const validationError = validateAvatar(file);
-		if (validationError) {
-			return fail(validationError === 'storage_unavailable' ? 503 : 400, {
-				avatarError: AVATAR_ERROR_MESSAGES[validationError],
+		if (validationError || !file) {
+			const error = validationError ?? 'no_file';
+			return fail(error === 'storage_unavailable' ? 503 : 400, {
+				avatarError: AVATAR_ERROR_MESSAGES[error],
 			});
 		}
 
-		const avatarUrl = await uploadAvatar(locals.user.id, file!);
+		const avatarUrl = await uploadAvatar(locals.user.id, file);
 		return { avatarUrl };
 	},
 
