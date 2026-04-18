@@ -37,7 +37,7 @@ function emit(
 }
 
 /**
- * Ingest a document into the retrieval system.
+ * Ingest a document into the rawrag retrieval system.
  * Pipeline: chunk → contextualize → embed → store PG → extract entities → store Neo4j
  *
  * When `onEvent` is provided, emits pipeline events at each step for real-time UI feedback.
@@ -217,7 +217,7 @@ export async function ingest(doc: IngestableDocument, onEvent?: IngestEmitFn): P
 		} catch (err) {
 			// Graph storage is non-critical — log and continue
 			const msg = err instanceof Error ? err.message : 'graph storage failed';
-			console.error('[retrieval:ingest] Neo4j storage failed:', msg);
+			console.error('[rawrag:ingest] Neo4j storage failed:', msg);
 			emit(onEvent, 'graph_mirror', 'error', { error: msg });
 			emit(onEvent, 'entity_extract', 'skipped');
 		}

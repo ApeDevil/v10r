@@ -19,7 +19,12 @@ import { aiErrorToStatus, classifyAIError, safeAIMessage } from '$lib/server/ai/
 import { compactToolResults, DEFAULT_BUDGET, runWithCompaction } from '$lib/server/ai/loop/compact';
 import type { ProviderEntry } from '$lib/server/ai/providers';
 import { isCooledDown, markCooldown } from '$lib/server/ai/providers';
-import { createDeskTools, type DeskToolScope, stepsForScopes } from '$lib/server/ai/tools';
+import { buildRetrievalTools, createDeskTools, type DeskToolScope, stepsForScopes } from '$lib/server/ai/tools';
+import { MAX_RAWRAG_TOOL_CALLS_PER_TURN } from '$lib/server/llmwiki/config';
+import { loadOverview } from '$lib/server/llmwiki/overview';
+import { searchLlmwiki } from '$lib/server/llmwiki/search';
+import { verifyCitations } from '$lib/server/llmwiki/verify';
+import { formatLlmwikiContext } from '$lib/server/llmwiki/wiki-format';
 import { checkConversationLimit } from '$lib/server/db/ai/limits';
 import {
 	createConversation,
@@ -31,7 +36,7 @@ import {
 } from '$lib/server/db/ai/mutations';
 import { createProposal } from '$lib/server/db/ai/proposals';
 import { getConversation } from '$lib/server/db/ai/queries';
-import { formatContextForPrompt, retrieve } from '$lib/server/retrieval';
+import { formatContextForPrompt, retrieve } from '$lib/server/rawrag';
 import type { PipelineChunksEvent, PipelinePromptEvent, PipelineStepEvent } from '$lib/types/pipeline';
 
 /** A legacy simple message or a full UIMessage from the AI SDK v6 client. */
@@ -45,6 +50,15 @@ export interface ChatInput {
 	useRetrieval?: boolean;
 	retrievalTiers?: (1 | 2 | 3)[];
 	fusion?: 'none' | 'rrf';
+	/**
+	 * Use the llmwiki layer as the primary retrieval surface.
+	 * Loads the overview, searches llmwiki pages, hydrates rawrag pointers,
+	 * and exposes `get_llmwiki_pages` + `get_rawrag_chunks` tools for drill-down.
+	 * Mutually exclusive with the legacy `useRetrieval` path.
+	 */
+	useLlmwiki?: boolean;
+	/** Optional collection scope for llmwiki search. `null` means global. */
+	llmwikiCollectionId?: string | null;
 	panelContext?: {
 		panelType: string;
 		label: string;
@@ -210,6 +224,8 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 		useRetrieval,
 		retrievalTiers,
 		fusion,
+		useLlmwiki,
+		llmwikiCollectionId,
 		panelContext,
 		toolScopes,
 		deskLayout,
@@ -288,6 +304,88 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	}
 
 	try {
+		// llmwiki path — primary answer surface; exposes drill-down tools for rawrag.
+		if (useLlmwiki && lastRawMsg?.role === 'user' && userMsgText) {
+			const collectionId = llmwikiCollectionId ?? null;
+			const { tools: retrievalTools, drilledChunks } = buildRetrievalTools(userId);
+
+			const stream = createUIMessageStream({
+				execute: async ({ writer }) => {
+					let systemPrompt = baseSystemPrompt;
+					let toolCallCount = 0;
+					try {
+						const [overview, hits] = await Promise.all([
+							loadOverview(userId, collectionId),
+							searchLlmwiki(userMsgText, { userId, collectionId }),
+						]);
+						const contextBlock = formatLlmwikiContext(overview, hits);
+						if (contextBlock) {
+							systemPrompt = `${baseSystemPrompt}\n\n${contextBlock}\n\nAnswer from llmwiki pages first. Each page carries \`pointers\` — raw chunk IDs — which you may expand via \`get_rawrag_chunks\` when the user asks for exact wording, quotations, specific details, or challenges a claim. Do not expand pointers preemptively on broad questions.`;
+						}
+					} catch (err) {
+						console.error('[ai:chat:llmwiki] Retrieval failed, proceeding without context:', err);
+					}
+
+					const textResult = streamText({
+						model,
+						system: systemPrompt,
+						messages,
+						tools: retrievalTools,
+						toolChoice: 'auto',
+						stopWhen: stepCountIs(3),
+						maxRetries: 0,
+						maxOutputTokens: MAX_TOKENS,
+						abortSignal: AbortSignal.timeout(30_000),
+						onStepFinish: ({ toolCalls }: { toolCalls?: Array<{ toolName: string }> }) => {
+							if (!toolCalls) return;
+							for (const tc of toolCalls) {
+								if (tc.toolName === 'get_rawrag_chunks') {
+									toolCallCount++;
+									if (toolCallCount > MAX_RAWRAG_TOOL_CALLS_PER_TURN) {
+										console.warn(
+											`[ai:chat:llmwiki] get_rawrag_chunks called ${toolCallCount} times, cap is ${MAX_RAWRAG_TOOL_CALLS_PER_TURN}`,
+										);
+									}
+								}
+							}
+						},
+						onFinish: async ({ text, totalUsage }) => {
+							try {
+								if (drilledChunks.size > 0) {
+									const { verifications, driftedChunkIds } = await verifyCitations({
+										userId,
+										drilledChunkIds: Array.from(drilledChunks),
+										answerText: text,
+									});
+									writer.write({
+										type: 'message-metadata',
+										messageMetadata: {
+											citations: Array.from(verifications.entries()).map(([chunkId, verification]) => ({
+												chunkId,
+												verification,
+												tier: 'rawrag' as const,
+											})),
+											driftedChunkIds,
+										},
+									});
+								}
+							} catch (err) {
+								console.error('[ai:chat:llmwiki] Verification failed:', err);
+							}
+							await createOnFinish(conversationId, userId)({ text, totalUsage });
+						},
+						onError: ({ error }) => {
+							console.error('[ai:chat:llmwiki] Stream error:', error);
+						},
+					});
+					textResult.consumeStream();
+					writer.merge(textResult.toUIMessageStream());
+				},
+				onError: classifyStreamError,
+			});
+			return createUIMessageStreamResponse({ stream, headers: responseHeaders });
+		}
+
 		// Retrieval path — uses createUIMessageStream for custom pipeline events
 		if (useRetrieval && lastRawMsg?.role === 'user' && userMsgText) {
 			const requestId = crypto.randomUUID();

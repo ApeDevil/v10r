@@ -2,3 +2,8 @@ export * from './chunk';
 export * from './collection';
 export * from './document';
 export * from './embedding-model';
+export * from './llmwiki-lint-issue';
+export * from './llmwiki-page';
+export * from './llmwiki-page-link';
+export * from './llmwiki-page-redirect';
+export * from './llmwiki-page-source';

@@ -6,6 +6,7 @@
 import { sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { expandViaGraph, getEntitiesForChunks } from '$lib/server/graph/rag/queries';
+import { fetchChunksByIds } from '../queries';
 import type { RankedChunk, RetrievedEntity } from '../types';
 
 /** Vector search for seed chunks (top 3 for graph seeding). */
@@ -34,44 +35,6 @@ async function getSeeds(
 		chunkId: r.chunkId,
 		score: 1 - Number(r.distance),
 	}));
-}
-
-/** Fetch chunk content from Postgres by IDs (user-scoped). */
-async function fetchChunksByIds(
-	chunkIds: string[],
-	userId: string,
-): Promise<Map<string, { documentId: string; documentTitle: string; content: string }>> {
-	if (chunkIds.length === 0) return new Map();
-
-	const result = await db.execute<{
-		chunkId: string;
-		documentId: string;
-		documentTitle: string;
-		content: string;
-	}>(sql`
-		SELECT
-			c.id AS "chunkId",
-			c.document_id AS "documentId",
-			d.title AS "documentTitle",
-			COALESCE(c.context_prefix || E'\n' || c.content, c.content) AS content
-		FROM rag.chunk c
-		JOIN rag.document d ON d.id = c.document_id
-		WHERE c.id IN (${sql.join(
-			chunkIds.map((id) => sql`${id}`),
-			sql`, `,
-		)})
-		  AND d.user_id = ${userId}
-	`);
-
-	const map = new Map<string, { documentId: string; documentTitle: string; content: string }>();
-	for (const row of result.rows) {
-		map.set(row.chunkId, {
-			documentId: row.documentId,
-			documentTitle: row.documentTitle,
-			content: row.content,
-		});
-	}
-	return map;
 }
 
 /** Tier 3: Graph-expanded retrieval — seeds + entity traversal. */

@@ -4,8 +4,8 @@ import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { SEARCH_RATE_LIMIT_MAX, SEARCH_RATE_LIMIT_WINDOW } from '$lib/server/config';
-import { retrieve } from '$lib/server/retrieval';
-import { RetrievalError, retrievalErrorToStatus } from '$lib/server/retrieval/errors';
+import { retrieve } from '$lib/server/rawrag';
+import { RetrievalError, retrievalErrorToStatus } from '$lib/server/rawrag/errors';
 import type { RequestHandler } from './$types';
 
 const ratelimit = createLimiter('rl:retrieval:search', SEARCH_RATE_LIMIT_MAX, SEARCH_RATE_LIMIT_WINDOW);

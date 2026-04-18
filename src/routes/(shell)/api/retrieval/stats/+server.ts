@@ -2,7 +2,7 @@ import { apiOk } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { getRAGOverviewStats } from '$lib/server/db/rag/admin-queries';
 import { getRagGraphStats } from '$lib/server/graph/rag/queries';
-import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL_ID } from '$lib/server/retrieval/config';
+import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL_ID } from '$lib/server/rawrag/config';
 import type { RequestHandler } from './$types';
 
 export interface RetrievalStats {

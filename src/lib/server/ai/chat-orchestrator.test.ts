@@ -40,7 +40,7 @@ vi.mock('$lib/server/ai/providers', () => ({
 	markCooldown: vi.fn(),
 }));
 
-vi.mock('$lib/server/retrieval', () => ({
+vi.mock('$lib/server/rawrag', () => ({
 	retrieve: vi.fn(),
 	formatContextForPrompt: vi.fn(),
 }));
@@ -48,6 +48,27 @@ vi.mock('$lib/server/retrieval', () => ({
 vi.mock('$lib/server/ai/tools', () => ({
 	createDeskTools: vi.fn(() => ({})),
 	stepsForScopes: vi.fn(() => 5),
+	buildRetrievalTools: vi.fn(() => ({ tools: {}, drilledChunks: new Set<string>() })),
+}));
+
+vi.mock('$lib/server/llmwiki/overview', () => ({
+	loadOverview: vi.fn(async () => null),
+}));
+
+vi.mock('$lib/server/llmwiki/search', () => ({
+	searchLlmwiki: vi.fn(async () => []),
+}));
+
+vi.mock('$lib/server/llmwiki/verify', () => ({
+	verifyCitations: vi.fn(async () => ({ verifications: new Map(), driftedChunkIds: [] })),
+}));
+
+vi.mock('$lib/server/llmwiki/wiki-format', () => ({
+	formatLlmwikiContext: vi.fn(() => ''),
+}));
+
+vi.mock('$lib/server/llmwiki/config', () => ({
+	MAX_RAWRAG_TOOL_CALLS_PER_TURN: 3,
 }));
 
 vi.mock('$lib/server/ai/errors', () => ({

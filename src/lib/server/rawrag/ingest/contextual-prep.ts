@@ -36,7 +36,7 @@ async function generateContextPrefix(
 
 		return result.text.trim() || `From "${documentTitle}":`;
 	} catch (err) {
-		console.error('[retrieval:contextual-prep] Context generation failed:', err instanceof Error ? err.message : err);
+		console.error('[rawrag:contextual-prep] Context generation failed:', err instanceof Error ? err.message : err);
 		return `From "${documentTitle}":`;
 	}
 }

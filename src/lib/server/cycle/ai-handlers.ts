@@ -12,7 +12,7 @@ import { db } from '$lib/server/db';
 import { cycleRun } from '$lib/server/db/schema';
 import { checkRowLimit } from '$lib/server/db/showcase/guards';
 import { getActiveProvider, getActiveProviderInfo } from '$lib/server/ai';
-import { formatContextForPrompt, retrieve } from '$lib/server/retrieval';
+import { formatContextForPrompt, retrieve } from '$lib/server/rawrag';
 import type { PipelineChunksEvent, PipelinePromptEvent, PipelineStepEvent } from '$lib/types/pipeline';
 import { blockRemaining, createTrace, endSpan, failSpan, finalizeTrace, startSpan } from './trace';
 import type { CycleSpan, CycleStageId, CycleTrace, SimulateAiError } from './types';

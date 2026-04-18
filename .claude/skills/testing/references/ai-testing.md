@@ -161,7 +161,7 @@ Test each stage independently:
 
 ```typescript
 // Chunking
-import { chunkText } from '$lib/server/retrieval/chunk';
+import { chunkText } from '$lib/server/rawrag/chunk';
 
 it('chunks text within token limits', () => {
   const chunks = chunkText(longDocument, { maxTokens: 500 });
@@ -179,7 +179,7 @@ it('preserves all content across chunks', () => {
 
 ```typescript
 // Ranking
-import { rankByRelevance } from '$lib/server/retrieval/rank';
+import { rankByRelevance } from '$lib/server/rawrag/rank';
 
 it('ranks exact matches higher than partial', () => {
   const results = rankByRelevance(

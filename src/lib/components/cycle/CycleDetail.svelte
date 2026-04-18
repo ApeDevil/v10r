@@ -25,10 +25,10 @@
 		domain: '$lib/server/cycle/handlers.ts → executeCycle() [business logic]',
 		database: '$lib/server/db → db.insert(cycleRun).values(...).returning()',
 		response: '$lib/server/cycle/handlers.ts → executeCycle() [serialization]',
-		embed: '$lib/server/retrieval/embed.ts → generateEmbedding(query)',
-		retrieve: '$lib/server/retrieval → searchContextual / parentChild / graph',
-		rank: '$lib/server/retrieval/rank.ts → fuseAndRank(chunks) [RRF]',
-		context: '$lib/server/retrieval → formatContextForPrompt(result)',
+		embed: '$lib/server/rawrag/embed.ts → generateEmbedding(query)',
+		retrieve: '$lib/server/rawrag → searchContextual / parentChild / graph',
+		rank: '$lib/server/rawrag/rank.ts → fuseAndRank(chunks) [RRF]',
+		context: '$lib/server/rawrag → formatContextForPrompt(result)',
 		generate: '$lib/server/ai → streamText({ model, prompt, context })',
 	};
 

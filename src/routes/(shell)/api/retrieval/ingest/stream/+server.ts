@@ -5,8 +5,8 @@ import { apiError, apiValidationError } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import { INGEST_RATE_LIMIT_MAX, INGEST_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import { checkDocumentLimit } from '$lib/server/db/rag/limits';
-import { RetrievalError } from '$lib/server/retrieval/errors';
-import { ingest } from '$lib/server/retrieval/ingest';
+import { RetrievalError } from '$lib/server/rawrag/errors';
+import { ingest } from '$lib/server/rawrag/ingest';
 import type { IngestEvent } from '$lib/types/ingest-pipeline';
 import type { RequestHandler } from './$types';
 

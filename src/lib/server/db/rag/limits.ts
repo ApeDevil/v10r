@@ -1,4 +1,4 @@
-import { MAX_DOCUMENTS_PER_USER } from '$lib/server/retrieval/config';
+import { MAX_DOCUMENTS_PER_USER } from '$lib/server/rawrag/config';
 import { countDocuments } from './queries';
 
 /** Check if user has hit document limit. Returns null if under limit, error message if at/over. */

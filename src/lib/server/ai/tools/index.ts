@@ -9,6 +9,8 @@ import type { DeskLayoutEntry, DeskToolMeta, DeskToolScope } from './_types';
 import { createCreateTools, createDeleteTools, createToolMeta, deleteToolMeta } from './desk-create';
 import { createReadTools, readToolMeta } from './desk-read';
 import { createWriteTools, writeToolMeta } from './desk-write';
+import { createGetLlmwikiPagesTool, llmwikiPagesToolMeta } from './get-llmwiki-pages';
+import { createGetRawragChunksTool, type DrilledChunkSink, rawragChunksToolMeta } from './get-rawrag-chunks';
 import { createProposePlanTool, proposePlanMeta } from './propose-plan';
 import { createResolveRefTool } from './resolve-ref';
 
@@ -21,6 +23,8 @@ export const deskToolMeta: Record<string, DeskToolMeta> = {
 	...createToolMeta,
 	...deleteToolMeta,
 	...proposePlanMeta,
+	...llmwikiPagesToolMeta,
+	...rawragChunksToolMeta,
 };
 
 /** Get the risk classification for a tool name, or `undefined` if unknown. */
@@ -97,4 +101,29 @@ export function createDeskTools(userId: string, scopes: DeskToolScope[], deskLay
 /** Determine step limit based on tool scopes. Read-only = 3, mutation = 5. */
 export function stepsForScopes(scopes: DeskToolScope[]): number {
 	return scopes.some((s) => s !== 'desk:read') ? 5 : 3;
+}
+
+/**
+ * Build the retrieval tool set for a chat turn.
+ *
+ * Returns both tools plus a `drilledChunks` set populated by any
+ * `get_rawrag_chunks` invocation during the turn. Pass that set to
+ * `verifyCitations` after `streamText` resolves.
+ *
+ * Compaction wrapping is applied consistently with desk tools.
+ */
+export function buildRetrievalTools(userId: string): { tools: ToolSet; drilledChunks: Set<string> } {
+	const drilledChunks = new Set<string>();
+	const sink: DrilledChunkSink = {
+		record(ids) {
+			for (const id of ids) drilledChunks.add(id);
+		},
+	};
+
+	const raw: ToolSet = {
+		...createGetLlmwikiPagesTool(userId),
+		...createGetRawragChunksTool(userId, sink),
+	} as ToolSet;
+
+	return { tools: wrapToolsWithCompaction(raw), drilledChunks };
 }

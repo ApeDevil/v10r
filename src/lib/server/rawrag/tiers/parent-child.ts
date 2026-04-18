@@ -6,6 +6,7 @@
 import { sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { OVERFETCH_MULTIPLIER } from '../config';
+import { fetchChunksByIds } from '../queries';
 import type { RankedChunk } from '../types';
 
 interface ChildHit {
@@ -44,42 +45,6 @@ async function searchChildren(queryEmbedding: number[], limit: number, userId: s
 	return result.rows;
 }
 
-/** Resolve child matches to their parent chunks. */
-async function resolveParents(
-	parentIds: string[],
-): Promise<Map<string, { content: string; documentId: string; documentTitle: string }>> {
-	if (parentIds.length === 0) return new Map();
-
-	const result = await db.execute<{
-		chunkId: string;
-		documentId: string;
-		documentTitle: string;
-		content: string;
-	}>(sql`
-		SELECT
-			c.id AS "chunkId",
-			c.document_id AS "documentId",
-			d.title AS "documentTitle",
-			COALESCE(c.context_prefix || E'\n' || c.content, c.content) AS content
-		FROM rag.chunk c
-		JOIN rag.document d ON d.id = c.document_id
-		WHERE c.id IN (${sql.join(
-			parentIds.map((id) => sql`${id}`),
-			sql`, `,
-		)})
-	`);
-
-	const map = new Map<string, { content: string; documentId: string; documentTitle: string }>();
-	for (const row of result.rows) {
-		map.set(row.chunkId, {
-			content: row.content,
-			documentId: row.documentId,
-			documentTitle: row.documentTitle,
-		});
-	}
-	return map;
-}
-
 /** Tier 2: Small-to-big retrieval — search children, return parents. */
 export async function searchParentChild(
 	queryEmbedding: number[],
@@ -106,9 +71,9 @@ export async function searchParentChild(
 		}
 	}
 
-	// Fetch parent content
+	// Fetch parent content via shared helper (user-scoped)
 	const parentIds = Array.from(parentScores.keys());
-	const parents = await resolveParents(parentIds);
+	const parents = await fetchChunksByIds(parentIds, userId);
 
 	// Build ranked results using parent content with child's best score
 	const results: RankedChunk[] = [];

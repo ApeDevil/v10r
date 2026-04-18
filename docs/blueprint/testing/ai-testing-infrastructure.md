@@ -467,8 +467,8 @@ Start with modules that have zero external dependencies — no DB, no mocks, max
 
 **Priority order:**
 
-1. `$lib/server/retrieval/rank.ts` — RRF algorithm, deduplication, fusion. Four functions, deterministic math, highest ROI. The ranking logic is non-trivial and could easily have off-by-one errors.
-2. `$lib/server/retrieval/chunk.ts` — text splitting with overlap and hierarchy. Only needs `crypto.subtle` (available in Bun). Complex enough to have real bugs.
+1. `$lib/server/rawrag/rank.ts` — RRF algorithm, deduplication, fusion. Four functions, deterministic math, highest ROI. The ranking logic is non-trivial and could easily have off-by-one errors.
+2. `$lib/server/rawrag/chunk.ts` — text splitting with overlap and hierarchy. Only needs `crypto.subtle` (available in Bun). Complex enough to have real bugs.
 3. `$lib/server/errors/index.ts` — `ServerError` class, `toStatus()` mapping, JSON serialization. Pure logic, validates the pipeline.
 4. `$lib/schemas/showcase/` — Valibot schema rules. Test with `v.safeParse()`. The `realtimeSchema` password-confirm cross-field validation is the most interesting.
 
@@ -573,7 +573,7 @@ Priority order based on codebase analysis (highest value first):
 **Orchestration layer:**
 
 5. `$lib/server/notifications/service.ts` — `NotificationService.send()` coordinates DB insert, SSE push, and external routing. Requires mocking SSE and router in addition to the DB.
-6. `$lib/server/retrieval/index.ts` — 176 lines of pure orchestration over embedding, three retrieval tiers, and ranking. Highly testable with mocked tier functions, no DB needed.
+6. `$lib/server/rawrag/index.ts` — 176 lines of pure orchestration over embedding, three retrieval tiers, and ranking. Highly testable with mocked tier functions, no DB needed.
 
 **Auth and security:**
 

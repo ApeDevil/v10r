@@ -9,7 +9,7 @@ export interface RankedChunk {
 	tier: 1 | 2 | 3;
 }
 
-/** What the retrieval system returns */
+/** What the rawrag retrieval system returns */
 export interface RetrievalResult {
 	chunks: RankedChunk[];
 	entities: RetrievedEntity[];

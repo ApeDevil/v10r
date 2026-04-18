@@ -96,7 +96,7 @@ export async function extractEntities(text: string, model?: LanguageModel | null
 
 		return { entities, relationships };
 	} catch (err) {
-		console.error('[retrieval:entity-extract] Extraction failed:', err instanceof Error ? err.message : err);
+		console.error('[rawrag:entity-extract] Extraction failed:', err instanceof Error ? err.message : err);
 		return { entities: [], relationships: [] };
 	}
 }
