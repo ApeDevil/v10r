@@ -123,7 +123,6 @@ const ghostIcons = [
 │ └──── 10 letters ────┘ │
 v          10            r</pre>
 					<span class="sr-only">The letters v and r bracket 10 letters in Velociraptor, forming the abbreviation v10r.</span>
-					<p class="etymology-result">v10r</p>
 					<p class="etymology-descriptor">Containerized Full-Stack Pattern Library</p>
 				</div>
 			</div>
@@ -237,7 +236,6 @@ v          10            r</pre>
 
 	.etymology-label,
 	.etymology-diagram,
-	.etymology-result,
 	.taxonomy-title,
 	.zone-name,
 	.cta-link {
@@ -505,13 +503,6 @@ v          10            r</pre>
 		margin: 0;
 		white-space: pre;
 		line-height: 1.4;
-	}
-
-	.etymology-result {
-		font-size: var(--text-fluid-2xl);
-		font-weight: 700;
-		color: var(--color-fg);
-		margin: 0;
 	}
 
 	.etymology-descriptor {
