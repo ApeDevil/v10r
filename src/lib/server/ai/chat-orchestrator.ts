@@ -37,7 +37,13 @@ import {
 import { createProposal } from '$lib/server/db/ai/proposals';
 import { getConversation } from '$lib/server/db/ai/queries';
 import { formatContextForPrompt, retrieve } from '$lib/server/rawrag';
-import type { PipelineChunksEvent, PipelinePromptEvent, PipelineStepEvent } from '$lib/types/pipeline';
+import type {
+	ChunkSummary,
+	LlmwikiCitationsEvent,
+	PipelineChunksEvent,
+	PipelinePromptEvent,
+	PipelineStepEvent,
+} from '$lib/types/pipeline';
 
 /** A legacy simple message or a full UIMessage from the AI SDK v6 client. */
 export type ChatMessage = { role: 'user' | 'assistant'; content: string } | UIMessage;
@@ -308,19 +314,105 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 		if (useLlmwiki && lastRawMsg?.role === 'user' && userMsgText) {
 			const collectionId = llmwikiCollectionId ?? null;
 			const { tools: retrievalTools, drilledChunks } = buildRetrievalTools(userId);
+			const requestId = crypto.randomUUID();
 
 			const stream = createUIMessageStream({
 				execute: async ({ writer }) => {
 					let systemPrompt = baseSystemPrompt;
 					let toolCallCount = 0;
+
+					type AnyLlmwikiEvent =
+						| PipelineStepEvent
+						| PipelineChunksEvent
+						| PipelinePromptEvent
+						| LlmwikiCitationsEvent;
+					const pipelineEvents: AnyLlmwikiEvent[] = [];
+					// Mirror rawrag's citations extra payload so existing consumers still read it.
+					let citationsPayload: {
+						citations: Array<{ chunkId: string; verification: string; tier: 'rawrag' }>;
+						driftedChunkIds: string[];
+					} | null = null;
+
+					const flush = () => {
+						const meta: Record<string, unknown> = { pipeline: pipelineEvents };
+						if (citationsPayload) Object.assign(meta, citationsPayload);
+						writer.write({ type: 'message-metadata', messageMetadata: meta });
+					};
+					const emit = (event: AnyLlmwikiEvent) => {
+						if (event.type === 'pipeline:step') event.requestId = requestId;
+						pipelineEvents.push(event);
+						flush();
+					};
+
 					try {
-						const [overview, hits] = await Promise.all([
+						const overviewStart = performance.now();
+						emit({ type: 'pipeline:step', step: 'llmwiki:overview', status: 'active', startedAt: overviewStart });
+						const searchStart = performance.now();
+						emit({ type: 'pipeline:step', step: 'llmwiki:search', status: 'active', startedAt: searchStart });
+
+						const [overviewResult, hitsResult] = await Promise.allSettled([
 							loadOverview(userId, collectionId),
 							searchLlmwiki(userMsgText, { userId, collectionId }),
 						]);
-						const contextBlock = formatLlmwikiContext(overview, hits);
-						if (contextBlock) {
-							systemPrompt = `${baseSystemPrompt}
+
+						const overviewMs = Math.round(performance.now() - overviewStart);
+						if (overviewResult.status === 'fulfilled') {
+							emit({ type: 'pipeline:step', step: 'llmwiki:overview', status: 'done', durationMs: overviewMs });
+						} else {
+							emit({
+								type: 'pipeline:step',
+								step: 'llmwiki:overview',
+								status: 'error',
+								durationMs: overviewMs,
+								error: overviewResult.reason instanceof Error ? overviewResult.reason.message : String(overviewResult.reason),
+							});
+						}
+
+						const searchMs = Math.round(performance.now() - searchStart);
+						if (hitsResult.status === 'fulfilled') {
+							const hits = hitsResult.value;
+							const pointersHydrated = hits.reduce((sum, h) => sum + h.pointers.length, 0);
+							emit({
+								type: 'pipeline:step',
+								step: 'llmwiki:search',
+								status: 'done',
+								durationMs: searchMs,
+								detail: {
+									kind: 'llmwiki-search',
+									hits: hits.length,
+									vectorHits: hits.length,
+									bm25Hits: hits.length,
+									pointersHydrated,
+									rrfK: 60,
+								},
+							});
+							// Emit llmwiki hits as tierChunks.llmwiki so the viz can render them as pages.
+							const llmwikiSummaries: ChunkSummary[] = hits.map((h) => ({
+								chunkId: h.slug,
+								documentId: h.slug,
+								documentTitle: h.title,
+								contentPreview: h.tldr,
+								contentLength: h.tldr.length,
+								score: 0,
+								source: 'llmwiki',
+								tier: 'llmwiki',
+								survived: true,
+								survivalReason: 'pointer-only',
+							}));
+							emit({
+								type: 'pipeline:chunks',
+								tierChunks: { llmwiki: llmwikiSummaries },
+								rankedChunks: [],
+								contextChunks: [],
+							});
+
+							const overview = overviewResult.status === 'fulfilled' ? overviewResult.value : null;
+							const ctxStart = performance.now();
+							emit({ type: 'pipeline:step', step: 'llmwiki:context', status: 'active', startedAt: ctxStart });
+							const contextBlock = formatLlmwikiContext(overview, hits);
+							const ctxMs = Math.round(performance.now() - ctxStart);
+							if (contextBlock) {
+								systemPrompt = `${baseSystemPrompt}
 
 ${contextBlock}
 
@@ -331,10 +423,45 @@ Retrieval rules:
 4. When calling \`get_rawrag_chunks\`, you MUST copy chunk IDs verbatim from a page's \`pointers:\` list. NEVER invent, guess, transform, or abbreviate a chunk ID.
 5. If no pointer exists for what the user asked, say so plainly instead of fabricating an ID.
 6. Do not expand pointers preemptively on broad questions.`;
+							}
+							emit({
+								type: 'pipeline:step',
+								step: 'llmwiki:context',
+								status: 'done',
+								durationMs: ctxMs,
+								detail: {
+									kind: 'context',
+									tokenEstimate: Math.ceil(contextBlock.length / 4),
+									chunkCount: hits.length,
+								},
+							});
+							const promptEvent: PipelinePromptEvent = {
+								type: 'pipeline:prompt_assembled',
+								userPrompt: userMsgText,
+								contextBlocks: hits.map((h) => ({ chunkId: h.slug, tokens: Math.ceil(h.tldr.length / 4) })),
+								totalTokens: Math.ceil(contextBlock.length / 4),
+							};
+							if (isDevOrAdmin) {
+								promptEvent.systemPrompt = systemPrompt;
+							} else {
+								promptEvent.systemPromptHash = `sys:${systemPrompt.length.toString(16)}`;
+							}
+							emit(promptEvent);
+						} else {
+							emit({
+								type: 'pipeline:step',
+								step: 'llmwiki:search',
+								status: 'error',
+								durationMs: searchMs,
+								error: hitsResult.reason instanceof Error ? hitsResult.reason.message : String(hitsResult.reason),
+							});
 						}
 					} catch (err) {
 						console.error('[ai:chat:llmwiki] Retrieval failed, proceeding without context:', err);
 					}
+
+					const generateStart = performance.now();
+					emit({ type: 'pipeline:step', step: 'generate', status: 'active', startedAt: generateStart });
 
 					const textResult = streamText({
 						model,
@@ -346,41 +473,101 @@ Retrieval rules:
 						maxRetries: 0,
 						maxOutputTokens: MAX_TOKENS,
 						abortSignal: AbortSignal.timeout(30_000),
-						onStepFinish: ({ toolCalls }: { toolCalls?: Array<{ toolName: string }> }) => {
+						onStepFinish: ({
+							toolCalls,
+							toolResults,
+						}: {
+							toolCalls?: Array<{ toolName: string; args?: { ids?: string[] } }>;
+							toolResults?: Array<{ toolName: string; result?: { chunks?: unknown[] } }>;
+						}) => {
 							if (!toolCalls) return;
-							for (const tc of toolCalls) {
-								if (tc.toolName === 'get_rawrag_chunks') {
-									toolCallCount++;
-									if (toolCallCount > MAX_RAWRAG_TOOL_CALLS_PER_TURN) {
-										console.warn(
-											`[ai:chat:llmwiki] get_rawrag_chunks called ${toolCallCount} times, cap is ${MAX_RAWRAG_TOOL_CALLS_PER_TURN}`,
-										);
-									}
+							for (let i = 0; i < toolCalls.length; i++) {
+								const tc = toolCalls[i];
+								if (tc.toolName !== 'get_rawrag_chunks') continue;
+								const callIndex = toolCallCount as 0 | 1 | 2;
+								toolCallCount++;
+								if (toolCallCount > MAX_RAWRAG_TOOL_CALLS_PER_TURN) {
+									console.warn(
+										`[ai:chat:llmwiki] get_rawrag_chunks called ${toolCallCount} times, cap is ${MAX_RAWRAG_TOOL_CALLS_PER_TURN}`,
+									);
 								}
+								const idsRequested = tc.args?.ids?.length ?? 0;
+								const chunksReturned = toolResults?.[i]?.result?.chunks?.length ?? 0;
+								emit({
+									type: 'pipeline:step',
+									step: 'rawrag:drill',
+									status: 'done',
+									detail: {
+										kind: 'drill',
+										callIndex: callIndex <= 2 ? callIndex : 2,
+										idsRequested,
+										chunksReturned,
+									},
+								});
 							}
 						},
 						onFinish: async ({ text, totalUsage }) => {
+							emit({
+								type: 'pipeline:step',
+								step: 'generate',
+								status: 'done',
+								durationMs: Math.round(performance.now() - generateStart),
+								detail: {
+									kind: 'generate',
+									model: activeInfo?.id,
+									inputTokens: totalUsage?.inputTokens,
+									outputTokens: totalUsage?.outputTokens,
+								},
+							});
 							try {
 								if (drilledChunks.size > 0) {
+									const verifyStart = performance.now();
+									emit({ type: 'pipeline:step', step: 'llmwiki:verify', status: 'active', startedAt: verifyStart });
 									const { verifications, driftedChunkIds } = await verifyCitations({
 										userId,
 										drilledChunkIds: Array.from(drilledChunks),
 										answerText: text,
 									});
-									writer.write({
-										type: 'message-metadata',
-										messageMetadata: {
-											citations: Array.from(verifications.entries()).map(([chunkId, verification]) => ({
-												chunkId,
-												verification,
-												tier: 'rawrag' as const,
-											})),
-											driftedChunkIds,
-										},
+									const verifyMs = Math.round(performance.now() - verifyStart);
+									const verdicts = Array.from(verifications.entries()).map(([chunkId, status]) => ({
+										pageSlug: '',
+										chunkId,
+										status,
+									}));
+									const summary = {
+										total: verdicts.length,
+										quote: verdicts.filter((v) => v.status === 'quote').length,
+										paraphrase: verdicts.filter((v) => v.status === 'paraphrase').length,
+										drifted: verdicts.filter((v) => v.status === 'drifted').length,
+										uncited: verdicts.filter((v) => v.status === 'uncited').length,
+									};
+									emit({
+										type: 'pipeline:step',
+										step: 'llmwiki:verify',
+										status: 'done',
+										durationMs: verifyMs,
+										detail: { kind: 'llmwiki-verify', ...summary },
 									});
+									emit({ type: 'llmwiki:citations', verdicts, summary });
+									// Preserve the existing citations metadata shape for legacy consumers.
+									citationsPayload = {
+										citations: Array.from(verifications.entries()).map(([chunkId, verification]) => ({
+											chunkId,
+											verification,
+											tier: 'rawrag' as const,
+										})),
+										driftedChunkIds,
+									};
+									flush();
 								}
 							} catch (err) {
 								console.error('[ai:chat:llmwiki] Verification failed:', err);
+								emit({
+									type: 'pipeline:step',
+									step: 'llmwiki:verify',
+									status: 'error',
+									error: err instanceof Error ? err.message : String(err),
+								});
 							}
 							await createOnFinish(conversationId, userId)({ text, totalUsage });
 						},

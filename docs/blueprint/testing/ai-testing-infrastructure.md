@@ -591,7 +591,7 @@ Priority order based on codebase analysis (highest value first):
 
 **State machines (high value, tested as factories):**
 
-12. `createPipelineState()` from `pipeline-state.svelte.ts` — streaming annotation processing, cursor tracking, step status transitions. Pure factory, no external imports.
+12. `createRawragTrace()` from `rawrag-trace.svelte.ts` — streaming annotation processing, cursor tracking, step status transitions. Pure factory, no external imports.
 13. `createDockState()` from `dock.state.svelte.ts` — tab activation, panel close, split creation. Pure factory.
 
 **What NOT to test (thin adapters):**

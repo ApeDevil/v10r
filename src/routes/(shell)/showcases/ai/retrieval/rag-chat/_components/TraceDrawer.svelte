@@ -1,17 +1,20 @@
 <script lang="ts">
 import { CSRF_HEADER } from '$lib/api';
 import { Drawer } from '$lib/components/primitives';
-import { type PipelineState, RagPipeline } from './rag-pipeline';
+import { type LlmwikiTraceState, WikiTrace } from './llmwiki';
+import { type RawragTraceState, RawragTrace } from './rawrag';
 
 interface Props {
 	open: boolean;
-	pipeline: PipelineState;
+	rawrag: RawragTraceState;
+	llmwiki: LlmwikiTraceState;
+	isLlmwiki: boolean;
 	lastUserMessage: string;
 }
 
-let { open = $bindable(), pipeline, lastUserMessage }: Props = $props();
+let { open = $bindable(), rawrag, llmwiki, isLlmwiki, lastUserMessage }: Props = $props();
 
-const assembledPrompt = $derived(pipeline.assembledPrompt);
+const assembledPrompt = $derived(isLlmwiki ? llmwiki.assembledPrompt : rawrag.assembledPrompt);
 
 let promptOpen = $state(false);
 let counterfactualLoading = $state(false);
@@ -77,7 +80,11 @@ function resetCounterfactual() {
 	<div class="drawer-body">
 		<section class="section">
 			<h3 class="section-title">Pipeline steps</h3>
-			<RagPipeline {pipeline} />
+			{#if isLlmwiki}
+				<WikiTrace trace={llmwiki} />
+			{:else}
+				<RawragTrace pipeline={rawrag} />
+			{/if}
 		</section>
 
 		{#if assembledPrompt}

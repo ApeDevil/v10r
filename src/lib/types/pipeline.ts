@@ -1,10 +1,30 @@
 /** Pipeline step identifiers — ordered by execution flow */
-export type PipelineStepId = 'embed' | 'tier-1' | 'tier-2' | 'tier-3' | 'rank' | 'context' | 'generate';
+export type PipelineStepId =
+	| 'embed'
+	| 'tier-1'
+	| 'tier-2'
+	| 'tier-3'
+	| 'rank'
+	| 'context'
+	| 'generate'
+	| 'llmwiki:overview'
+	| 'llmwiki:search'
+	| 'llmwiki:context'
+	| 'rawrag:drill'
+	| 'llmwiki:verify';
 
 export type PipelineStepStatus = 'pending' | 'active' | 'done' | 'error' | 'skipped';
 
 /** Step-specific metadata (discriminated union) */
-export type StepDetail = EmbedDetail | TierDetail | RankDetail | ContextDetail | GenerateDetail;
+export type StepDetail =
+	| EmbedDetail
+	| TierDetail
+	| RankDetail
+	| ContextDetail
+	| GenerateDetail
+	| LlmwikiSearchDetail
+	| LlmwikiVerifyDetail
+	| DrillDetail;
 
 export interface EmbedDetail {
 	kind: 'embed';
@@ -40,6 +60,31 @@ export interface GenerateDetail {
 	outputTokens?: number;
 }
 
+export interface LlmwikiSearchDetail {
+	kind: 'llmwiki-search';
+	hits: number;
+	vectorHits: number;
+	bm25Hits: number;
+	pointersHydrated: number;
+	rrfK: number;
+}
+
+export interface LlmwikiVerifyDetail {
+	kind: 'llmwiki-verify';
+	total: number;
+	quote: number;
+	paraphrase: number;
+	drifted: number;
+	uncited: number;
+}
+
+export interface DrillDetail {
+	kind: 'drill';
+	callIndex: 0 | 1 | 2;
+	idsRequested: number;
+	chunksReturned: number;
+}
+
 /** Event emitted by the instrumented retrieval pipeline */
 export interface PipelineStepEvent {
 	type: 'pipeline:step';
@@ -62,7 +107,14 @@ export interface ChunkRetrieverScores {
 }
 
 /** Why a chunk survived fusion into the final context */
-export type ChunkSurvivalReason = 'top_k' | 'rrf_threshold' | 'graph_expansion' | 'parent_promoted';
+export type ChunkSurvivalReason =
+	| 'top_k'
+	| 'rrf_threshold'
+	| 'graph_expansion'
+	| 'parent_promoted'
+	| 'pointer-only'
+	| 'drilled-cited'
+	| 'drilled-uncited';
 
 /** Summary of a single retrieved chunk, sent to the client */
 export interface ChunkSummary {
@@ -72,8 +124,8 @@ export interface ChunkSummary {
 	contentPreview: string;
 	contentLength: number;
 	score: number;
-	source: 'vector' | 'bm25' | 'graph';
-	tier: 1 | 2 | 3;
+	source: 'vector' | 'bm25' | 'graph' | 'llmwiki';
+	tier: 1 | 2 | 3 | 'llmwiki';
 	survived: boolean;
 	/** Per-retriever raw scores (for provenance UI) */
 	retrieverScores?: ChunkRetrieverScores;
@@ -103,6 +155,28 @@ export interface PipelinePromptEvent {
 	totalTokens: number;
 }
 
+/** Citation verdict for a single drilled chunk (or pointer-only page). */
+export type LlmwikiCitationStatus = 'quote' | 'paraphrase' | 'drifted' | 'uncited' | 'none';
+
+export interface LlmwikiCitationVerdict {
+	pageSlug: string;
+	chunkId: string | null;
+	status: LlmwikiCitationStatus;
+}
+
+/** Terminal event emitted once verifyCitations resolves (post-stream). */
+export interface LlmwikiCitationsEvent {
+	type: 'llmwiki:citations';
+	verdicts: LlmwikiCitationVerdict[];
+	summary: {
+		total: number;
+		quote: number;
+		paraphrase: number;
+		drifted: number;
+		uncited: number;
+	};
+}
+
 /** Per-step UI state */
 export interface PipelineStepState {
 	id: PipelineStepId;
@@ -113,7 +187,7 @@ export interface PipelineStepState {
 	detail?: StepDetail;
 }
 
-/** Step definitions with labels for the UI */
+/** Step definitions with labels for the UI (rawrag factory only). */
 export const PIPELINE_STEPS: { id: PipelineStepId; label: string }[] = [
 	{ id: 'embed', label: 'Embed' },
 	{ id: 'tier-1', label: 'Vector' },
@@ -122,4 +196,13 @@ export const PIPELINE_STEPS: { id: PipelineStepId; label: string }[] = [
 	{ id: 'rank', label: 'Rank' },
 	{ id: 'context', label: 'Context' },
 	{ id: 'generate', label: 'Generate' },
+];
+
+/** Fixed-order prefix for the llmwiki pipeline. Drill steps are inserted dynamically. */
+export const LLMWIKI_STEPS: { id: PipelineStepId; label: string }[] = [
+	{ id: 'llmwiki:overview', label: 'Overview' },
+	{ id: 'llmwiki:search', label: 'Search' },
+	{ id: 'llmwiki:context', label: 'Context' },
+	{ id: 'generate', label: 'Generate' },
+	{ id: 'llmwiki:verify', label: 'Verify' },
 ];

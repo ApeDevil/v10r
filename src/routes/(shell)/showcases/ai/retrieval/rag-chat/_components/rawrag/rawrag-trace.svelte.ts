@@ -16,9 +16,9 @@ function createInitialSteps(): PipelineStepState[] {
 	}));
 }
 
-export type PipelineState = ReturnType<typeof createPipelineState>;
+export type RawragTraceState = ReturnType<typeof createRawragTrace>;
 
-export function createPipelineState() {
+export function createRawragTrace() {
 	let steps = $state<PipelineStepState[]>(createInitialSteps());
 	let selectedStepId = $state<PipelineStepId | null>(null);
 	let annotationCursor = $state(0);
@@ -111,6 +111,11 @@ export function createPipelineState() {
 			counts.rank = chunkData.rankedChunks.length;
 			counts.context = chunkData.contextChunks.length;
 			return counts;
+		},
+		get summaryLabel(): string {
+			const ctx = chunkData?.contextChunks.length ?? 0;
+			if (ctx === 0) return '';
+			return `${ctx} chunk${ctx === 1 ? '' : 's'} used`;
 		},
 		handleEvent,
 		processAnnotations,

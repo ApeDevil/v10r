@@ -12,8 +12,9 @@ import { Stack } from '$lib/components/layout';
 import { Typography } from '$lib/components/primitives';
 import ChatLayout from './_components/ChatLayout.svelte';
 import GraphLayout from './_components/GraphLayout.svelte';
+import { createLlmwikiTrace } from './_components/llmwiki';
 import ModeSelector, { type RagMode } from './_components/ModeSelector.svelte';
-import { createPipelineState } from './_components/rag-pipeline';
+import { createRawragTrace } from './_components/rawrag';
 import TraceDrawer from './_components/TraceDrawer.svelte';
 import TraceRail from './_components/TraceRail.svelte';
 import { DEMO_QUERIES } from './demo-queries';
@@ -35,10 +36,19 @@ const retrievalTiers = $derived(
 const fusion = $derived<'none' | 'rrf'>(mode === 'fused' ? 'rrf' : 'none');
 
 function handleModeChange(next: RagMode) {
+	const wasLlmwiki = mode === 'llmwiki';
+	const nowLlmwiki = next === 'llmwiki';
 	mode = next;
 	const url = new URL(page.url);
 	url.searchParams.set('mode', next);
 	pushState(url, {});
+	// Reset traces on any mode change; state is per-turn, not preserved across modes.
+	if (wasLlmwiki !== nowLlmwiki) {
+		rawragTrace.reset();
+		rawragTrace.resetCursor();
+		llmwikiTrace.reset();
+		llmwikiTrace.resetCursor();
+	}
 }
 
 let drawerOpen = $state(false);
@@ -57,7 +67,8 @@ function useDemoChip(query: string) {
 	inputValue = query;
 }
 
-const pipeline = createPipelineState();
+const rawragTrace = createRawragTrace();
+const llmwikiTrace = createLlmwikiTrace();
 
 const chat = new Chat({
 	transport: new DefaultChatTransport({
@@ -120,15 +131,25 @@ $effect(() => {
 	if (lastMsg?.role === 'assistant' && lastMsg.metadata) {
 		const meta = lastMsg.metadata as Record<string, unknown>;
 		if (Array.isArray(meta.pipeline)) {
-			pipeline.processAnnotations(meta.pipeline as unknown[]);
+			const events = meta.pipeline as unknown[];
+			if (isLlmwiki) {
+				llmwikiTrace.processAnnotations(events);
+			} else {
+				rawragTrace.processAnnotations(events);
+			}
 		}
 	}
 });
 
 function submitMessage() {
 	if (!inputValue.trim() || isLoading) return;
-	pipeline.reset();
-	pipeline.resetCursor();
+	if (isLlmwiki) {
+		llmwikiTrace.reset();
+		llmwikiTrace.resetCursor();
+	} else {
+		rawragTrace.reset();
+		rawragTrace.resetCursor();
+	}
 	const text = inputValue;
 	inputValue = '';
 	chat.sendMessage({ text });
@@ -208,7 +229,12 @@ function submitMessage() {
 						<ChatInput bind:value={inputValue} loading={isLoading} onsubmit={submitMessage} />
 					</div>
 
-					<TraceRail {pipeline} onExpand={() => (drawerOpen = true)} />
+					<TraceRail
+						rawrag={rawragTrace}
+						llmwiki={llmwikiTrace}
+						{isLlmwiki}
+						onExpand={() => (drawerOpen = true)}
+					/>
 				</div>
 			{/snippet}
 
@@ -223,7 +249,13 @@ function submitMessage() {
 			{/if}
 		</Card>
 
-		<TraceDrawer bind:open={drawerOpen} {pipeline} {lastUserMessage} />
+		<TraceDrawer
+			bind:open={drawerOpen}
+			rawrag={rawragTrace}
+			llmwiki={llmwikiTrace}
+			{isLlmwiki}
+			{lastUserMessage}
+		/>
 	{/if}
 </Stack>
 

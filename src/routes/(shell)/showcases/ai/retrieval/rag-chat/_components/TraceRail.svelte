@@ -1,30 +1,37 @@
 <script lang="ts">
-import type { PipelineState } from './rag-pipeline';
+import type { LlmwikiTraceState } from './llmwiki';
+import type { RawragTraceState } from './rawrag';
 
 interface Props {
-	pipeline: PipelineState;
+	rawrag: RawragTraceState;
+	llmwiki: LlmwikiTraceState;
+	isLlmwiki: boolean;
 	onExpand: () => void;
 }
 
-let { pipeline, onExpand }: Props = $props();
+let { rawrag, llmwiki, isLlmwiki, onExpand }: Props = $props();
 
-const steps = $derived(pipeline.steps);
-const totalMs = $derived(pipeline.totalDurationMs);
-const isActive = $derived(pipeline.isActive);
-const chunkData = $derived(pipeline.chunkData);
+const steps = $derived(isLlmwiki ? llmwiki.steps : rawrag.steps);
+const totalMs = $derived(isLlmwiki ? llmwiki.totalDurationMs : rawrag.totalDurationMs);
+const isActive = $derived(isLlmwiki ? llmwiki.isActive : rawrag.isActive);
+const summary = $derived(isLlmwiki ? llmwiki.summaryLabel : rawrag.summaryLabel);
+const drillCount = $derived(isLlmwiki ? llmwiki.drillCount : 0);
 
 const visibleSteps = $derived(steps.filter((s) => s.status !== 'skipped' && s.status !== 'pending'));
 const maxDuration = $derived(Math.max(...visibleSteps.map((s) => s.durationMs ?? 0), 1));
 
-const contextCount = $derived(chunkData?.contextChunks.length ?? 0);
-const topChunks = $derived((chunkData?.contextChunks ?? []).slice(0, 2));
+const topChunks = $derived(isLlmwiki ? [] : (rawrag.chunkData?.contextChunks ?? []).slice(0, 2));
 
 function stepColor(id: string): string {
 	if (id === 'embed') return 'var(--color-primary)';
 	if (id.startsWith('tier-')) return 'var(--color-accent)';
 	if (id === 'rank') return 'var(--color-info-fg, var(--color-primary))';
-	if (id === 'context') return 'var(--color-success-fg, var(--color-accent))';
+	if (id === 'context' || id === 'llmwiki:context') return 'var(--color-success-fg, var(--color-accent))';
 	if (id === 'generate') return 'var(--color-fg)';
+	if (id === 'llmwiki:overview') return 'var(--color-muted)';
+	if (id === 'llmwiki:search') return 'var(--color-accent)';
+	if (id === 'rawrag:drill') return 'var(--color-primary)';
+	if (id === 'llmwiki:verify') return 'var(--color-success-fg, var(--color-accent))';
 	return 'var(--color-muted)';
 }
 </script>
@@ -66,9 +73,15 @@ function stepColor(id: string): string {
 	</div>
 
 	<div class="rail-right">
-		{#if contextCount > 0}
+		{#if drillCount > 0}
+			<span class="drill-glyph" title="{drillCount} drill-down call{drillCount === 1 ? '' : 's'}">
+				<span class="i-lucide-git-fork h-3 w-3" aria-hidden="true"></span>
+				{#if drillCount > 1}<sup class="drill-sup">{drillCount}</sup>{/if}
+			</span>
+		{/if}
+		{#if summary}
 			<div class="chunk-summary">
-				<span class="chunk-count">{contextCount} chunk{contextCount === 1 ? '' : 's'} used</span>
+				<span class="chunk-count">{summary}</span>
 				{#if topChunks.length > 0}
 					<span class="top-titles">
 						{topChunks.map((c) => c.documentTitle).join(' · ')}
@@ -244,6 +257,20 @@ function stepColor(id: string): string {
 	.expand-btn:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
+	}
+
+	.drill-glyph {
+		display: inline-flex;
+		align-items: flex-start;
+		color: var(--color-primary);
+		font-size: 11px;
+		font-weight: 600;
+	}
+
+	.drill-sup {
+		font-size: 9px;
+		margin-left: 1px;
+		line-height: 1;
 	}
 
 	@media (max-width: 640px) {

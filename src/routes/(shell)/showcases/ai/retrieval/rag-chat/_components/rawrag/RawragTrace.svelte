@@ -2,10 +2,10 @@
 import ChunkDetailPanel from './ChunkDetailPanel.svelte';
 import NodeDetail from './NodeDetail.svelte';
 import PipelineGraph from './PipelineGraph.svelte';
-import type { PipelineState } from './pipeline-state.svelte';
+import type { RawragTraceState } from './rawrag-trace.svelte';
 
 interface Props {
-	pipeline: PipelineState;
+	pipeline: RawragTraceState;
 }
 
 let { pipeline }: Props = $props();
@@ -21,7 +21,7 @@ const statusLabel = $derived.by(() => {
 const selectedChunks = $derived(pipeline.selectedStepId ? pipeline.chunksForStep(pipeline.selectedStepId) : []);
 </script>
 
-<div class="rag-pipeline">
+<div class="rawrag-trace">
 	<div class="pipeline-header">
 		<span class="pipeline-title">Retrieval Trace</span>
 		<span
@@ -60,7 +60,7 @@ const selectedChunks = $derived(pipeline.selectedStepId ? pipeline.chunksForStep
 </div>
 
 <style>
-	.rag-pipeline {
+	.rawrag-trace {
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-3);

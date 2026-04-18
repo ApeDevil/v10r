@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ChunkSummary, PipelineChunksEvent, PipelineStepEvent } from '$lib/types/pipeline';
-import { createPipelineState } from './pipeline-state.svelte';
+import { createRawragTrace } from './rawrag-trace.svelte';
 
 function makeChunkSummary(id: string): ChunkSummary {
 	return {
@@ -16,9 +16,9 @@ function makeChunkSummary(id: string): ChunkSummary {
 	};
 }
 
-describe('createPipelineState', () => {
+describe('createRawragTrace', () => {
 	it('initial steps all pending', () => {
-		const state = createPipelineState();
+		const state = createRawragTrace();
 		for (const step of state.steps) {
 			expect(step.status).toBe('pending');
 		}
@@ -26,7 +26,7 @@ describe('createPipelineState', () => {
 
 	describe('handleEvent', () => {
 		it('updates step status', () => {
-			const state = createPipelineState();
+			const state = createRawragTrace();
 			state.handleEvent({
 				type: 'pipeline:step',
 				step: 'embed',
@@ -38,7 +38,7 @@ describe('createPipelineState', () => {
 		});
 
 		it('updates durationMs', () => {
-			const state = createPipelineState();
+			const state = createRawragTrace();
 			state.handleEvent({
 				type: 'pipeline:step',
 				step: 'embed',
@@ -53,7 +53,7 @@ describe('createPipelineState', () => {
 
 	describe('processAnnotations', () => {
 		it('processes pipeline:step annotations', () => {
-			const state = createPipelineState();
+			const state = createRawragTrace();
 			const annotations: unknown[] = [
 				{ type: 'pipeline:step', step: 'embed', status: 'active' } satisfies PipelineStepEvent,
 				{ type: 'pipeline:step', step: 'embed', status: 'done', durationMs: 50 } satisfies PipelineStepEvent,
@@ -67,7 +67,7 @@ describe('createPipelineState', () => {
 		});
 
 		it('processes pipeline:chunks annotations', () => {
-			const state = createPipelineState();
+			const state = createRawragTrace();
 			const chunks: PipelineChunksEvent = {
 				type: 'pipeline:chunks',
 				tierChunks: { 'tier-1': [makeChunkSummary('c1')] },
@@ -82,7 +82,7 @@ describe('createPipelineState', () => {
 		});
 
 		it('is idempotent (cursor prevents reprocessing)', () => {
-			const state = createPipelineState();
+			const state = createRawragTrace();
 			const annotations: unknown[] = [
 				{ type: 'pipeline:step', step: 'embed', status: 'active' } satisfies PipelineStepEvent,
 			];
@@ -97,7 +97,7 @@ describe('createPipelineState', () => {
 
 	describe('reset', () => {
 		it('returns to initial state', () => {
-			const state = createPipelineState();
+			const state = createRawragTrace();
 			state.handleEvent({ type: 'pipeline:step', step: 'embed', status: 'done', durationMs: 100 });
 			state.selectStep('embed');
 
@@ -111,13 +111,13 @@ describe('createPipelineState', () => {
 
 	describe('selectStep', () => {
 		it('toggles selection on', () => {
-			const state = createPipelineState();
+			const state = createRawragTrace();
 			state.selectStep('embed');
 			expect(state.selectedStepId).toBe('embed');
 		});
 
 		it('toggles selection off when same step selected again', () => {
-			const state = createPipelineState();
+			const state = createRawragTrace();
 			state.selectStep('embed');
 			state.selectStep('embed');
 			expect(state.selectedStepId).toBeNull();
@@ -126,7 +126,7 @@ describe('createPipelineState', () => {
 
 	describe('chunksForStep', () => {
 		it('returns tier chunks', () => {
-			const state = createPipelineState();
+			const state = createRawragTrace();
 			const chunks: PipelineChunksEvent = {
 				type: 'pipeline:chunks',
 				tierChunks: { 'tier-1': [makeChunkSummary('c1'), makeChunkSummary('c2')] },
@@ -139,7 +139,7 @@ describe('createPipelineState', () => {
 		});
 
 		it('returns ranked chunks', () => {
-			const state = createPipelineState();
+			const state = createRawragTrace();
 			const chunks: PipelineChunksEvent = {
 				type: 'pipeline:chunks',
 				tierChunks: {},
@@ -152,7 +152,7 @@ describe('createPipelineState', () => {
 		});
 
 		it('returns context chunks', () => {
-			const state = createPipelineState();
+			const state = createRawragTrace();
 			const chunks: PipelineChunksEvent = {
 				type: 'pipeline:chunks',
 				tierChunks: {},
@@ -165,19 +165,19 @@ describe('createPipelineState', () => {
 		});
 
 		it('returns empty when no chunkData', () => {
-			const state = createPipelineState();
+			const state = createRawragTrace();
 			expect(state.chunksForStep('tier-1')).toEqual([]);
 		});
 	});
 
 	describe('isActive', () => {
 		it('false when all pending', () => {
-			const state = createPipelineState();
+			const state = createRawragTrace();
 			expect(state.isActive).toBe(false);
 		});
 
 		it('true when any step is active', () => {
-			const state = createPipelineState();
+			const state = createRawragTrace();
 			state.handleEvent({ type: 'pipeline:step', step: 'embed', status: 'active' });
 			expect(state.isActive).toBe(true);
 		});
@@ -185,7 +185,7 @@ describe('createPipelineState', () => {
 
 	describe('totalDurationMs', () => {
 		it('sums done steps', () => {
-			const state = createPipelineState();
+			const state = createRawragTrace();
 			state.handleEvent({ type: 'pipeline:step', step: 'embed', status: 'done', durationMs: 100 });
 			state.handleEvent({ type: 'pipeline:step', step: 'tier-1', status: 'done', durationMs: 200 });
 
@@ -193,7 +193,7 @@ describe('createPipelineState', () => {
 		});
 
 		it('returns 0 when no steps are done', () => {
-			const state = createPipelineState();
+			const state = createRawragTrace();
 			expect(state.totalDurationMs).toBe(0);
 		});
 	});
