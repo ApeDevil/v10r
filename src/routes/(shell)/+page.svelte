@@ -102,7 +102,7 @@ const ghostIcons = [
 </svelte:head>
 
 <!-- ACT I: Hero -->
-<section class="hero">
+<section class="hero" class:hero-revealed={revealed}>
 	<div class="hero-grid">
 		<div class="hero-identity">
 			<p class="classification">born to be fast & light</p>
@@ -332,6 +332,63 @@ v          10            r</pre>
 		}
 	}
 
+	/* Hero entrance choreography — four legs converging on the title */
+	.hero .classification,
+	.hero .tagline,
+	.hero .hero-experience,
+	.hero .etymology-card {
+		opacity: 0;
+	}
+
+	@keyframes hero-enter-from-top {
+		from { opacity: 0; transform: translateY(-16px); }
+		to   { opacity: 1; transform: translateY(0); }
+	}
+	@keyframes hero-enter-from-bottom {
+		from { opacity: 0; transform: translateY(16px); }
+		to   { opacity: 1; transform: translateY(0); }
+	}
+	@keyframes hero-enter-from-left {
+		from { opacity: 0; transform: translateX(-32px); }
+		to   { opacity: 1; transform: translateX(0); }
+	}
+	@keyframes hero-enter-from-right {
+		from { opacity: 0; transform: translateX(32px); }
+		to   { opacity: 1; transform: translateX(0); }
+	}
+	@keyframes hero-enter-vertical {
+		from { opacity: 0; transform: translateY(-12px); }
+		to   { opacity: 1; transform: translateY(0); }
+	}
+
+	.hero-revealed .classification {
+		animation: hero-enter-from-top 240ms cubic-bezier(0.16, 1, 0.3, 1) 200ms both;
+	}
+	.hero-revealed .tagline {
+		animation: hero-enter-from-bottom 240ms cubic-bezier(0.16, 1, 0.3, 1) 240ms both;
+	}
+	.hero-revealed .hero-experience {
+		animation: hero-enter-from-left 280ms cubic-bezier(0.16, 1, 0.3, 1) 260ms both;
+	}
+	.hero-revealed .etymology-card {
+		animation: hero-enter-from-right 280ms cubic-bezier(0.16, 1, 0.3, 1) 280ms both;
+	}
+
+	@media (max-width: 1023px) {
+		.hero-revealed .classification {
+			animation: hero-enter-vertical 240ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both;
+		}
+		.hero-revealed .tagline {
+			animation: hero-enter-vertical 240ms cubic-bezier(0.16, 1, 0.3, 1) 280ms both;
+		}
+		.hero-revealed .hero-experience {
+			animation: hero-enter-vertical 280ms cubic-bezier(0.16, 1, 0.3, 1) 360ms both;
+		}
+		.hero-revealed .etymology-card {
+			animation: hero-enter-vertical 280ms cubic-bezier(0.16, 1, 0.3, 1) 440ms both;
+		}
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		.char {
 			opacity: 1;
@@ -339,6 +396,13 @@ v          10            r</pre>
 			transform: none;
 		}
 		.revealed .char {
+			animation: none;
+		}
+		.hero .classification,
+		.hero .tagline,
+		.hero .hero-experience,
+		.hero .etymology-card {
+			opacity: 1;
 			animation: none;
 		}
 	}
