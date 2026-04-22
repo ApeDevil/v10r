@@ -1,7 +1,6 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import { Chatbot } from '$lib/components/composites/chatbot';
 import type { CommandPaletteItem } from '$lib/components/composites/command-palette';
 import { CommandPalette } from '$lib/components/composites/command-palette';
 import {
@@ -40,6 +39,18 @@ setSessionContext(session);
 
 const modals = getModals();
 const theme = getTheme();
+
+// Dynamic Chatbot — loads the ai / @ai-sdk/svelte / bits-ui Dialog module graph only when the user opens the assistant.
+// Prevents the heavy AI SDK bundle from being part of the initial page payload.
+let ChatbotComponent: typeof import('$lib/components/composites/chatbot').Chatbot | null = $state(null);
+
+$effect(() => {
+	if (modals.aiAssistantOpen && !ChatbotComponent) {
+		import('$lib/components/composites/chatbot').then((m) => {
+			ChatbotComponent = m.Chatbot;
+		});
+	}
+});
 
 const pageSearchItems = searchPages.map((p) => ({
 	id: p.id,
@@ -128,8 +139,10 @@ const searchItems = $derived<CommandPaletteItem[]>([
 <!-- Command palette -->
 <CommandPalette bind:open={modals.quickSearchOpen} items={searchItems} />
 
-<!-- AI assistant chatbot -->
-<Chatbot bind:open={modals.aiAssistantOpen} />
+<!-- AI assistant chatbot: dynamically imported on first open (keeps the ai/@ai-sdk/svelte graph out of the initial page payload) -->
+{#if ChatbotComponent && modals.aiAssistantOpen}
+	<svelte:component this={ChatbotComponent} bind:open={modals.aiAssistantOpen} />
+{/if}
 
 <!-- Shortcuts modal -->
 <ShortcutsModal />

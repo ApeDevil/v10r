@@ -852,8 +852,6 @@ select option:checked {
 	position: fixed;
 	pointer-events: none;
 	opacity: 0;
-	will-change: transform, opacity;
-	filter: url(#grain-glow);
 	background: var(--grain-glow-color, var(--color-primary));
 	z-index: calc(var(--z-sidebar) - 1);
 	transition:

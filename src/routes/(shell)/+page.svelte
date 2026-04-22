@@ -332,10 +332,11 @@ v          10            r</pre>
 		}
 	}
 
-	/* Hero entrance choreography — four legs converging on the title */
+	/* Hero entrance choreography — four legs converging on the title. */
 	.hero .classification,
 	.hero .tagline,
-	.hero .hero-experience,
+	.hero .hero-raptor,
+	.hero .roll-block,
 	.hero .etymology-card {
 		opacity: 0;
 	}
@@ -367,7 +368,8 @@ v          10            r</pre>
 	.hero-revealed .tagline {
 		animation: hero-enter-from-bottom 240ms cubic-bezier(0.16, 1, 0.3, 1) 240ms both;
 	}
-	.hero-revealed .hero-experience {
+	.hero-revealed .hero-raptor,
+	.hero-revealed .roll-block {
 		animation: hero-enter-from-left 280ms cubic-bezier(0.16, 1, 0.3, 1) 260ms both;
 	}
 	.hero-revealed .etymology-card {
@@ -381,7 +383,8 @@ v          10            r</pre>
 		.hero-revealed .tagline {
 			animation: hero-enter-vertical 240ms cubic-bezier(0.16, 1, 0.3, 1) 280ms both;
 		}
-		.hero-revealed .hero-experience {
+		.hero-revealed .hero-raptor,
+		.hero-revealed .roll-block {
 			animation: hero-enter-vertical 280ms cubic-bezier(0.16, 1, 0.3, 1) 360ms both;
 		}
 		.hero-revealed .etymology-card {
@@ -400,7 +403,8 @@ v          10            r</pre>
 		}
 		.hero .classification,
 		.hero .tagline,
-		.hero .hero-experience,
+		.hero .hero-raptor,
+		.hero .roll-block,
 		.hero .etymology-card {
 			opacity: 1;
 			animation: none;
@@ -434,7 +438,7 @@ v          10            r</pre>
 		gap: var(--spacing-3);
 		min-height: 44px;
 		padding: var(--spacing-3) var(--spacing-5);
-		border: 1px solid var(--color-border);
+		border: 1px solid var(--color-primary);
 		border-radius: var(--radius-md);
 		font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
 		font-size: var(--text-fluid-sm);
@@ -442,61 +446,15 @@ v          10            r</pre>
 		background: transparent;
 		cursor: pointer;
 		transition: border-color var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out;
-		position: relative;
-		overflow: hidden;
-	}
-
-	.roll-btn::before {
-		content: '';
-		position: absolute;
-		inset: 0;
-		border-radius: inherit;
-		padding: 1px;
-		background: conic-gradient(
-			from var(--glow-angle, 0deg),
-			transparent 0%,
-			transparent 30%,
-			var(--color-primary) 45%,
-			transparent 60%,
-			transparent 100%
-		);
-		mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-		mask-composite: exclude;
-		-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-		-webkit-mask-composite: xor;
-		opacity: 0.5;
-		animation: border-sweep 4s linear infinite;
-		pointer-events: none;
-	}
-
-	@property --glow-angle {
-		syntax: '<angle>';
-		initial-value: 0deg;
-		inherits: false;
-	}
-
-	@keyframes border-sweep {
-		to {
-			--glow-angle: 360deg;
-		}
 	}
 
 	.roll-btn:hover {
-		border-color: var(--color-fg);
 		background: var(--color-fg-alpha);
-	}
-
-	.roll-btn:hover::before {
-		opacity: 0.8;
 	}
 
 	.roll-btn:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
-	}
-
-	.roll-btn:disabled::before {
-		animation-play-state: paused;
 	}
 
 	.roll-icon {

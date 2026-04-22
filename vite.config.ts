@@ -21,11 +21,13 @@ export default defineConfig({
 		port: 5173,
 		allowedHosts: ['.trycloudflare.com'],
 		watch: {
-			usePolling: true, // Required for container file watching
+			usePolling: true, // Required for container file watching (volume-mounted FS)
+			interval: 300, // Slower polling reduces CPU churn and HMR-ping frequency
 		},
-		hmr: {
-			port: 24678,
-		},
+		// HMR multiplexed over the main HTTP port (5173). Previously was on a separate
+		// port 24678, which in Chrome + Podman port-forwarding caused WebSocket
+		// connections to accumulate across hard reloads (Firefox tore them down
+		// aggressively, Chrome didn't — freeze after ~3 reloads).
 		warmup: {
 			clientFiles: ['./src/routes/+layout.svelte', './src/lib/components/index.ts', './src/lib/styles/tokens.ts'],
 			ssrFiles: ['./src/hooks.server.ts', './src/lib/server/db/index.ts', './src/lib/server/auth/index.ts'],
