@@ -14,7 +14,12 @@ import {
 } from 'ai';
 import { getActiveProvider, getActiveProviderInfo, getFallbacksForUser, getToolProvider } from '$lib/server/ai';
 import { MAX_TOKENS } from '$lib/server/ai/config';
-import { buildSystemPrompt, getMessageText, windowMessages } from '$lib/server/ai/context/system-prompt';
+import {
+	buildPromptAssembledEvent,
+	buildSystemPrompt,
+	getMessageText,
+	windowMessages,
+} from '$lib/server/ai/context/system-prompt';
 import { aiErrorToStatus, classifyAIError, safeAIMessage } from '$lib/server/ai/errors';
 import { compactToolResults, DEFAULT_BUDGET, runWithCompaction } from '$lib/server/ai/loop/compact';
 import type { ProviderEntry } from '$lib/server/ai/providers';
@@ -29,8 +34,9 @@ import {
 	saveToolCall,
 	updateMessageContent,
 } from '$lib/server/db/ai/mutations';
-import { createProposal } from '$lib/server/db/ai/proposals';
+import { createProposal, getProposal } from '$lib/server/db/ai/proposals';
 import { getConversation } from '$lib/server/db/ai/queries';
+import type { ProposalExecutionResult } from '$lib/server/db/schema/ai/proposal';
 import { MAX_RAWRAG_TOOL_CALLS_PER_TURN } from '$lib/server/llmwiki/config';
 import { loadOverview } from '$lib/server/llmwiki/overview';
 import { searchLlmwiki } from '$lib/server/llmwiki/search';
@@ -78,8 +84,12 @@ export interface ChatInput {
 	activeWorkspace?: { id: string; name: string };
 	/**
 	 * When set, the caller is resuming a previously approved `agent_proposal`.
-	 * The orchestrator can look up the proposal's cached execution result and
-	 * inject it as context instead of re-planning. See `db/ai/proposals.ts`.
+	 * The orchestrator looks up the proposal's cached `executionResult`, injects
+	 * a `<plan-execution-result>` block into the system prompt, strips the
+	 * `[resumeFromProposalId:...]` sentinel from the user message, and skips
+	 * llmwiki/retrieval branches for the turn. Stale or invalid ids degrade
+	 * silently to a normal turn (the user already saw their plan execute —
+	 * a 500 here would be hostile).
 	 */
 	resumeFromProposalId?: string;
 }
@@ -125,6 +135,84 @@ export function createOnFinish(conversationId: string | undefined, userId: strin
 			});
 		}
 	};
+}
+
+/**
+ * Format a proposal's cached execution result into a human-readable summary block
+ * the model can ingest as `<plan-execution-result>` context on a resume turn.
+ */
+function formatExecutionSummary(proposalId: string, result: ProposalExecutionResult | null): string {
+	if (!result || !result.results.length) {
+		return `Plan ${proposalId} executed (no step output recorded).`;
+	}
+	const lines: string[] = [`Plan ${proposalId} executed:`];
+	for (const step of result.results) {
+		if (step.ok) {
+			const out = step.output ? JSON.stringify(step.output) : 'ok';
+			lines.push(`- ${step.toolName} → ok: ${out}`);
+		} else {
+			lines.push(`- ${step.toolName} → FAILED: ${step.errorMessage ?? 'unknown error'}`);
+		}
+	}
+	return lines.join('\n');
+}
+
+/**
+ * Resolve a resume-from-proposal turn. Returns `null` if not a resume, or if the
+ * lookup/ownership/status checks fail (in which case the orchestrator proceeds
+ * as a normal turn — a stale or invalid id should not 500 the user's chat).
+ *
+ * Mutates `windowedMessages` in place: when the last user message is the
+ * `[resumeFromProposalId:X]` sentinel, replaces its text with a clean
+ * "I approved the plan." so the persisted log isn't polluted.
+ */
+async function resolveResumeContext(
+	userId: string,
+	resumeFromProposalId: string | undefined,
+	existingConvId: string | undefined,
+	windowedMessages: ChatMessage[],
+): Promise<{ summary: string } | null> {
+	if (!resumeFromProposalId) return null;
+	if (!existingConvId) {
+		console.warn('[ai:chat:resume] resumeFromProposalId without conversationId — ignored');
+		return null;
+	}
+
+	const proposal = await getProposal(resumeFromProposalId);
+	if (!proposal) {
+		console.warn(`[ai:chat:resume] proposal ${resumeFromProposalId} not found`);
+		return null;
+	}
+	if (proposal.conversationId !== existingConvId) {
+		console.warn(`[ai:chat:resume] proposal ${resumeFromProposalId} belongs to a different conversation`);
+		return null;
+	}
+	const conv = await getConversation(proposal.conversationId, userId);
+	if (!conv) {
+		console.warn(`[ai:chat:resume] proposal ${resumeFromProposalId} not owned by user`);
+		return null;
+	}
+	if (proposal.status !== 'executed') {
+		console.warn(`[ai:chat:resume] proposal ${resumeFromProposalId} status is ${proposal.status} (need executed)`);
+		return null;
+	}
+
+	// Strip the `[resumeFromProposalId:X]` sentinel from the last user message
+	// so the persisted conversation log shows clean text, not a control marker.
+	const sentinel = `[resumeFromProposalId:${resumeFromProposalId}]`;
+	const cleanText = 'I approved the plan.';
+	const idx = windowedMessages.length - 1;
+	const last = windowedMessages[idx];
+	if (last?.role === 'user' && getMessageText(last) === sentinel) {
+		if ('parts' in last) {
+			const parts = last.parts.map((p) => (p.type === 'text' ? { ...p, text: cleanText } : p));
+			windowedMessages[idx] = { ...last, parts };
+		} else {
+			windowedMessages[idx] = { ...last, content: cleanText };
+		}
+	}
+
+	return { summary: formatExecutionSummary(proposal.id, proposal.executionResult) };
 }
 
 /** Resolve or auto-create the conversation. Returns conversationId or error. */
@@ -236,10 +324,23 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 		toolScopes,
 		deskLayout,
 		activeWorkspace,
+		resumeFromProposalId,
 	} = input;
 
-	// Window conversation history to prevent context overflow in multi-turn chats
-	const windowedMessages = windowMessages(rawMessages);
+	// Window conversation history to prevent context overflow in multi-turn chats.
+	// Cloned to a mutable array so resume injection can rewrite the sentinel user message.
+	const windowedMessages = [...windowMessages(rawMessages)];
+
+	// Resume-from-approval: lookup the executed proposal, strip the sentinel from the
+	// user message, and prepare a context block for the system prompt. Returns null on
+	// any failed lookup/ownership/status check (resume turns silently degrade to a normal
+	// turn rather than 500ing the user mid-flow).
+	const resumeContext = await resolveResumeContext(
+		userId,
+		resumeFromProposalId,
+		existingConvId,
+		windowedMessages,
+	);
 
 	// Convert to ModelMessages for streamText compatibility.
 	// Legacy {role, content} messages are wrapped as UIMessages with text parts first.
@@ -271,7 +372,16 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	const hasTools = wantsTools && toolProviderAvailable;
 	const model = (hasTools ? resolvedToolModel : resolvedChatModel) ?? resolvedChatModel;
 	const deskTools = hasTools ? createDeskTools(userId, toolScopes, deskLayout) : undefined;
-	const baseSystemPrompt = buildSystemPrompt({ panelContext, toolScopes, deskLayout, activeWorkspace });
+	let baseSystemPrompt = buildSystemPrompt({ panelContext, toolScopes, deskLayout, activeWorkspace });
+	if (resumeContext) {
+		baseSystemPrompt = `${baseSystemPrompt}
+
+<plan-execution-result>
+${resumeContext.summary}
+</plan-execution-result>
+
+The user has just approved the plan above and the listed steps were executed. Acknowledge what was done in your reply and continue the conversation. Do NOT call \`desk_propose_plan\` again for the same goal.`;
+	}
 
 	// Resolve conversation (pass raw messages for title extraction)
 	const convResult = await resolveConversation(userId, existingConvId, windowedMessages);
@@ -311,7 +421,9 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 
 	try {
 		// llmwiki path — primary answer surface; exposes drill-down tools for rawrag.
-		if (useLlmwiki && lastRawMsg?.role === 'user' && userMsgText) {
+		// Resume turns skip retrieval branches: the model just needs to acknowledge the
+		// executed plan from `<plan-execution-result>`, not re-search for context.
+		if (useLlmwiki && lastRawMsg?.role === 'user' && userMsgText && !resumeContext) {
 			const collectionId = llmwikiCollectionId ?? null;
 			const { tools: retrievalTools, drilledChunks } = buildRetrievalTools(userId);
 			const requestId = crypto.randomUUID();
@@ -435,18 +547,18 @@ Retrieval rules:
 									chunkCount: hits.length,
 								},
 							});
-							const promptEvent: PipelinePromptEvent = {
-								type: 'pipeline:prompt_assembled',
-								userPrompt: userMsgText,
-								contextBlocks: hits.map((h) => ({ chunkId: h.slug, tokens: Math.ceil(h.tldr.length / 4) })),
-								totalTokens: Math.ceil(contextBlock.length / 4),
-							};
-							if (isDevOrAdmin) {
-								promptEvent.systemPrompt = systemPrompt;
-							} else {
-								promptEvent.systemPromptHash = `sys:${systemPrompt.length.toString(16)}`;
-							}
-							emit(promptEvent);
+							emit(
+								buildPromptAssembledEvent({
+									userPrompt: userMsgText,
+									systemPrompt,
+									contextBlocks: hits.map((h) => ({
+										chunkId: h.slug,
+										tokens: Math.ceil(h.tldr.length / 4),
+									})),
+									totalTokens: Math.ceil(contextBlock.length / 4),
+									isDevOrAdmin,
+								}),
+							);
 						} else {
 							emit({
 								type: 'pipeline:step',
@@ -584,7 +696,7 @@ Retrieval rules:
 		}
 
 		// Retrieval path — uses createUIMessageStream for custom pipeline events
-		if (useRetrieval && lastRawMsg?.role === 'user' && userMsgText) {
+		if (useRetrieval && lastRawMsg?.role === 'user' && userMsgText && !resumeContext) {
 			const requestId = crypto.randomUUID();
 			const generateStartedAt = { t: 0 };
 			const stream = createUIMessageStream({
@@ -614,29 +726,19 @@ Retrieval rules:
 						}
 
 						// Emit assembled prompt (dev/admin only receives full text; others get hash)
-						const isDevOrAdmin = !!import.meta.env?.DEV;
 						const contextBlocks = retrievalResult.chunks.map((c) => ({
 							chunkId: c.chunkId,
 							tokens: Math.ceil(c.content.length / 4),
 						}));
-						const totalTokens = contextBlocks.reduce((sum, b) => sum + b.tokens, 0);
-						const promptEvent: PipelinePromptEvent = {
-							type: 'pipeline:prompt_assembled',
-							userPrompt: userMsgText,
-							contextBlocks,
-							totalTokens,
-						};
-						if (isDevOrAdmin) {
-							promptEvent.systemPrompt = systemPrompt;
-						} else {
-							// Short stable hash — not cryptographic, just an identifier.
-							let h = 0;
-							for (let i = 0; i < systemPrompt.length; i++) {
-								h = ((h << 5) - h + systemPrompt.charCodeAt(i)) | 0;
-							}
-							promptEvent.systemPromptHash = `sys:${Math.abs(h).toString(16)}`;
-						}
-						emitEvent(promptEvent);
+						emitEvent(
+							buildPromptAssembledEvent({
+								userPrompt: userMsgText,
+								systemPrompt,
+								contextBlocks,
+								totalTokens: contextBlocks.reduce((sum, b) => sum + b.tokens, 0),
+								isDevOrAdmin: !!import.meta.env?.DEV,
+							}),
+						);
 					} catch (err) {
 						console.error('[ai:chat] Retrieval failed, proceeding without context:', err);
 					}

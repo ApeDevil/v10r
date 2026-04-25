@@ -1,10 +1,4 @@
-/**
- * Analytics collector hook — records pageview events server-side.
- * Fire-and-forget: never blocks the response.
- *
- * Wire into hooks.server.ts sequence when switching from synthetic to live data:
- *   sequence(sessionPopulate, analyticsCollector, csrfProtection, ...)
- */
+// Dormant — see docs/blueprint/analytics/activation.md
 import type { Handle } from '@sveltejs/kit';
 import { ANALYTICS_CONSENT_COOKIE, ANALYTICS_SESSION_TIMEOUT_MS } from '$lib/server/config';
 import { recordEvent, upsertSession } from '$lib/server/db/analytics/mutations';

@@ -26,6 +26,7 @@ const config: KnipConfig = {
 		'src/lib/components/viz/plot/index.ts',
 		// Server modules imported via chains Knip's Svelte compiler misses
 		'src/lib/schemas/style.ts',
+		// Dormant — see docs/blueprint/analytics/activation.md
 		'src/lib/server/analytics/hook.ts',
 		'src/lib/server/analytics/index.ts',
 		'src/lib/server/api/pagination.ts',
@@ -34,7 +35,6 @@ const config: KnipConfig = {
 		'src/lib/server/db/analytics/graph-seed.ts',
 		'src/lib/server/db/analytics/mutations.ts',
 		'src/lib/server/db/rag/setup.ts',
-		'src/lib/server/db/schema/core.ts',
 	],
 
 	// SvelteKit virtual modules ($types) produce false "unresolved" reports

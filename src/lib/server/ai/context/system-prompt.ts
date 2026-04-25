@@ -21,6 +21,7 @@ import {
 	SYSTEM_PROMPT,
 } from '$lib/server/ai/config';
 import type { DeskToolScope } from '$lib/server/ai/tools/_types';
+import type { PipelinePromptEvent } from '$lib/types/pipeline';
 
 /** A legacy simple message or a full UIMessage from the AI SDK v6 client. */
 export type ChatMessage = { role: 'user' | 'assistant'; content: string } | UIMessage;
@@ -67,6 +68,49 @@ export function windowMessages(messages: ChatMessage[], maxTurns = 5): ChatMessa
 		return result.slice(1);
 	}
 	return result;
+}
+
+/**
+ * Stable short hash of a system prompt — used as a non-cryptographic identifier
+ * in pipeline events when the full prompt isn't safe to expose (non-dev/admin).
+ *
+ * Single canonical implementation for both retrieval branches in the chat
+ * orchestrator — previously they diverged (`length.toString(16)` vs djb2),
+ * which made cross-branch event correlation impossible.
+ */
+export function hashSystemPrompt(s: string): string {
+	let h = 0;
+	for (let i = 0; i < s.length; i++) {
+		h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+	}
+	return `sys:${Math.abs(h).toString(16)}`;
+}
+
+/**
+ * Build a `pipeline:prompt_assembled` event from the assembled prompt + retrieval
+ * context. Dev/admin callers receive the full system prompt; others get a stable
+ * hash via `hashSystemPrompt`. Returns the event for the caller to emit — keeps
+ * the function pure and decoupled from the emitter shape (which differs per path).
+ */
+export function buildPromptAssembledEvent(opts: {
+	userPrompt: string;
+	systemPrompt: string;
+	contextBlocks: { chunkId: string; tokens: number }[];
+	totalTokens: number;
+	isDevOrAdmin: boolean;
+}): PipelinePromptEvent {
+	const event: PipelinePromptEvent = {
+		type: 'pipeline:prompt_assembled',
+		userPrompt: opts.userPrompt,
+		contextBlocks: opts.contextBlocks,
+		totalTokens: opts.totalTokens,
+	};
+	if (opts.isDevOrAdmin) {
+		event.systemPrompt = opts.systemPrompt;
+	} else {
+		event.systemPromptHash = hashSystemPrompt(opts.systemPrompt);
+	}
+	return event;
 }
 
 /** Escape XML-special characters to prevent attribute breakout in system prompts. */
