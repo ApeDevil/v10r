@@ -106,6 +106,8 @@ DELEGATE when the task involves:
 - **aiy**: "AI", "LLM", "streamText", "Chat class", "useChat", "tool calling", "RAG", "retrieval", "embedding", "prompt engineering", "system prompt", "model routing", "token budget", "AI SDK", "streaming chat", "agent loop", "stopWhen", "maxSteps", "prompt caching", "prompt injection"
 - **tesy**: "test", "coverage", "regression", "spec", "assertion", "mock", "fixture", "flaky", "test design", "find issues", "probe", "audit"
 - **scout**: "how do people actually use", "what problems do teams hit", "is this production-ready", "find implementations"
+- **arty**: "visual design", "aesthetics", "spacing", "hierarchy", "polish", "looks off", "feels off", "microcopy", "UI tone", "design system fit", "component aesthetics"
+- **clyn**: "dead code", "unused export", "unreachable", "duplication", "complexity", "code smell", "audit code", "what can be removed", "is this still used", "remove residue"
 
 
 ## Skills Policy
