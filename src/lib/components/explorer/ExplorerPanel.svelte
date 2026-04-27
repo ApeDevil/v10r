@@ -2,42 +2,38 @@
 import { onMount, untrack } from 'svelte';
 import { apiFetch } from '$lib/api';
 import type { PanelDefinition } from '$lib/components/composites/dock';
-import {
-	getDeskBus,
-	getDockContext,
-	registerPanelContext,
-	registerPanelMenus,
-	updatePanelContext,
-} from '$lib/components/composites/dock';
+import { getDeskBus, getDockContext, registerPanelMenus } from '$lib/components/composites/dock';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import { Button, Spinner } from '$lib/components/primitives';
-import {
-	adaptAssetFolders,
-	adaptBlogAssets,
-	adaptBlogFolders,
-	adaptBlogPosts,
-	adaptDeskFiles,
-	adaptDeskFolders,
-	assetsRootNode,
-	blogRootNode,
-	dataRootNode,
-} from './adapters';
+import { dataRootNode } from './adapters';
 import type { ContextMenuCallbacks } from './context-menu-items';
+import {
+	registerExplorerAiContext,
+	updateExplorerAiContext,
+} from './explorer-ai-context';
 import ExplorerBreadcrumb from './ExplorerBreadcrumb.svelte';
 import ExplorerPreview from './ExplorerPreview.svelte';
 import ExplorerTree from './ExplorerTree.svelte';
-import { dispatchDeleteFolder, dispatchMove, VIRTUAL_ROOT } from './explorer-actions';
+import {
+	dispatchDeleteFolder,
+	dispatchDeleteLeaf,
+	dispatchDuplicate,
+	dispatchMove,
+	dispatchNewFolder,
+	dispatchNewSpreadsheet,
+	dispatchRename,
+	dispatchToggleAiContext,
+} from './explorer-actions';
+import { ExplorerData } from './explorer-data.svelte';
 import { ExplorerState } from './explorer-state.svelte';
+import { ExplorerUploads } from './explorer-uploads.svelte';
 import MoveToDialog from './MoveToDialog.svelte';
 import type { ExplorerNode } from './node';
-import type { AssetListItem, FileListItem, PostListItem, UploadingItem } from './types';
+import type { AssetListItem, FileListItem, PostListItem } from './types';
 
 const dock = getDockContext();
 const bus = getDeskBus();
 
-let loading = $state(true);
-let error = $state('');
-let uploading = $state<UploadingItem[]>([]);
 let selectedAsset = $state<AssetListItem | null>(null);
 
 let showNewPostForm = $state(false);
@@ -48,16 +44,13 @@ let creating = $state(false);
 let uploadInput: HTMLInputElement;
 let importInput: HTMLInputElement;
 
-// Drag-and-drop state
-let dragOver = $state(false);
-
 const explorerState = new ExplorerState();
+const data = new ExplorerData();
+const uploads = new ExplorerUploads();
 
 const actionContext = {
-	refresh: () => fetchAll(),
-	setError: (msg: string) => {
-		error = msg;
-	},
+	refresh: () => data.fetchAll(explorerState),
+	setError: (msg: string) => data.setError(msg),
 	announce: (msg: string) => {
 		explorerState.moveAnnouncement = msg;
 	},
@@ -65,82 +58,6 @@ const actionContext = {
 
 async function handleMove(nodeId: string, newParentId: string | null) {
 	await dispatchMove(explorerState, nodeId, newParentId, actionContext);
-}
-
-async function fetchAll() {
-	loading = true;
-	error = '';
-	try {
-		const [postsRes, postFoldersRes, assetsRes, assetFoldersRes, filesRes, foldersRes] = await Promise.all([
-			apiFetch('/api/blog/posts'),
-			apiFetch('/api/blog/post-folders'),
-			apiFetch('/api/blog/assets'),
-			apiFetch('/api/blog/asset-folders'),
-			apiFetch('/api/desk/files'),
-			apiFetch('/api/desk/folders'),
-		]);
-
-		const nodes: ExplorerNode[] = [
-			// Virtual roots — `virtual:images` is gone; an "Images only" filter chip
-			// on the assets root replaces the separate tree.
-			blogRootNode(),
-			assetsRootNode(),
-			dataRootNode(),
-		];
-
-		if (postsRes.ok) {
-			const { data } = await postsRes.json();
-			const posts: PostListItem[] = (data.items ?? []).map(
-				(p: {
-					id: string;
-					slug: string;
-					status: PostListItem['status'];
-					title?: string;
-					folderId: string | null;
-					updatedAt: string;
-				}) => ({
-					id: p.id,
-					slug: p.slug,
-					status: p.status,
-					title: p.title ?? '(untitled)',
-					folderId: p.folderId ?? null,
-					updatedAt: p.updatedAt,
-				}),
-			);
-			nodes.push(...adaptBlogPosts(posts));
-		}
-
-		if (postFoldersRes.ok) {
-			const { data } = await postFoldersRes.json();
-			nodes.push(...adaptBlogFolders(data.folders ?? []));
-		}
-
-		if (assetsRes.ok) {
-			const { data } = await assetsRes.json();
-			nodes.push(...adaptBlogAssets(data.items ?? []));
-		}
-
-		if (assetFoldersRes.ok) {
-			const { data } = await assetFoldersRes.json();
-			nodes.push(...adaptAssetFolders(data.folders ?? []));
-		}
-
-		if (foldersRes.ok) {
-			const { data } = await foldersRes.json();
-			nodes.push(...adaptDeskFolders(data.folders ?? []));
-		}
-
-		if (filesRes.ok) {
-			const { data } = await filesRes.json();
-			nodes.push(...adaptDeskFiles(data.items ?? []));
-		}
-
-		explorerState.setNodes(nodes);
-	} catch (e) {
-		error = e instanceof Error ? e.message : 'Failed to load';
-	} finally {
-		loading = false;
-	}
 }
 
 // ── Action dispatchers ────────────────────────────────────────────
@@ -204,141 +121,28 @@ function openInNewPanel(node: ExplorerNode) {
 }
 
 async function handleRename(node: ExplorerNode) {
-	const newLabel = node.label; // node was modified with new label by TreeNode
-	try {
-		switch (node.source) {
-			case 'desk-file':
-				await apiFetch(`/api/desk/files/${node.id}`, {
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ name: newLabel }),
-				});
-				break;
-			case 'desk-folder': {
-				const res = await apiFetch(`/api/desk/folders/${node.id}`, {
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ name: newLabel }),
-				});
-				if (!res.ok) {
-					const body = await res.json().catch(() => ({}));
-					throw new Error(body.error?.message ?? 'Rename failed');
-				}
-				break;
-			}
-			case 'blog-folder': {
-				const res = await apiFetch(`/api/blog/post-folders/${node.id}`, {
-					method: 'PATCH',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ name: newLabel }),
-				});
-				if (!res.ok) {
-					const body = await res.json().catch(() => ({}));
-					throw new Error(body.error?.message ?? 'Rename failed');
-				}
-				break;
-			}
-			case 'asset-folder': {
-				const res = await apiFetch(`/api/blog/asset-folders/${node.id}`, {
-					method: 'PATCH',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ name: newLabel }),
-				});
-				if (!res.ok) {
-					const body = await res.json().catch(() => ({}));
-					throw new Error(body.error?.message ?? 'Rename failed');
-				}
-				break;
-			}
-			case 'blog-post': {
-				const slug = newLabel.replace(/\.md$/, '');
-				await apiFetch(`/api/blog/posts/${node.id}`, {
-					method: 'PATCH',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ slug }),
-				});
-				break;
-			}
-			case 'blog-asset':
-				await apiFetch(`/api/blog/assets/${node.id}`, {
-					method: 'PATCH',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ fileName: newLabel }),
-				});
-				break;
-		}
-		await fetchAll();
-	} catch (e) {
-		error = e instanceof Error ? e.message : 'Rename failed';
-		await fetchAll(); // Revert optimistic update
-	}
+	await dispatchRename(explorerState, node, actionContext);
 }
 
 async function handleDuplicate(node: ExplorerNode) {
-	if (node.source !== 'desk-file') return;
-	try {
-		const res = await apiFetch(`/api/desk/files/${node.id}`, { method: 'POST' });
-		if (!res.ok) throw new Error('Duplicate failed');
-		const {
-			data: { file: newFile },
-		} = await res.json();
-		await fetchAll();
-		explorerState.startRename(newFile.id);
-	} catch (e) {
-		error = e instanceof Error ? e.message : 'Duplicate failed';
-	}
+	await dispatchDuplicate(explorerState, node, actionContext);
 }
 
 async function handleDelete(node: ExplorerNode) {
 	explorerState.cancelDelete();
 
-	// Folders go through the centralized action primitive (recursive=true, typed errors).
 	if (node.source === 'desk-folder' || node.source === 'blog-folder' || node.source === 'asset-folder') {
 		await dispatchDeleteFolder(explorerState, node.id, actionContext);
 		return;
 	}
 
-	try {
-		switch (node.source) {
-			case 'desk-file':
-				await apiFetch(`/api/desk/files/${node.id}`, { method: 'DELETE' });
-				break;
-			case 'blog-post':
-				await apiFetch(`/api/blog/posts/${node.id}`, { method: 'DELETE' });
-				break;
-			case 'blog-asset': {
-				const res = await apiFetch(`/api/blog/assets/${node.id}`, { method: 'DELETE' });
-				if (!res.ok) {
-					const data = await res.json().catch(() => ({}));
-					throw new Error(data.message || 'Delete failed');
-				}
-				if (selectedAsset?.id === node.id) selectedAsset = null;
-				break;
-			}
-		}
-		await fetchAll();
-	} catch (e) {
-		error = e instanceof Error ? e.message : 'Delete failed';
-	}
+	// Clear preview before delete so a successful blog-asset removal doesn't leave a stale selection.
+	if (node.source === 'blog-asset' && selectedAsset?.id === node.id) selectedAsset = null;
+	await dispatchDeleteLeaf(explorerState, node, actionContext);
 }
 
 async function handleToggleAiContext(node: ExplorerNode) {
-	const newValue = !node.aiContext;
-	explorerState.updateAiContext(node.id, newValue);
-
-	// Desk files persist pin state server-side; blog posts are client-side only
-	if (node.source === 'desk-file') {
-		try {
-			await apiFetch(`/api/desk/files/${node.id}`, {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ aiContext: newValue }),
-			});
-		} catch (e) {
-			explorerState.updateAiContext(node.id, !newValue); // Rollback
-			error = e instanceof Error ? e.message : 'Failed to toggle AI context';
-		}
-	}
+	await dispatchToggleAiContext(explorerState, node, actionContext);
 }
 
 function handleExportMarkdown(node: ExplorerNode) {
@@ -358,76 +162,12 @@ function handleCopyUrl(node: ExplorerNode) {
 	navigator.clipboard.writeText(`/api/blog/assets/${node.id}/image`);
 }
 
-const FOLDER_ENDPOINTS: Record<string, string> = {
-	'virtual:data': '/api/desk/folders',
-	'virtual:blog': '/api/blog/post-folders',
-	'virtual:assets': '/api/blog/asset-folders',
-};
-
-function resolveVirtualRoot(node: ExplorerNode): string {
-	if (node.source === 'virtual') return node.id;
-	return VIRTUAL_ROOT[node.source] ?? 'virtual:data';
-}
-
 async function handleNewFolder(node: ExplorerNode) {
-	const virtualRoot = resolveVirtualRoot(node);
-	const endpoint = FOLDER_ENDPOINTS[virtualRoot];
-	if (!endpoint) {
-		error = 'Folders are not supported here.';
-		return;
-	}
-
-	// Non-virtual folders hold the new child directly; leaves create a sibling.
-	let parentId: string | null = null;
-	if (node.source !== 'virtual') {
-		parentId = node.isFolder ? node.id : node.parentId && !node.parentId.startsWith('virtual:') ? node.parentId : null;
-	}
-
-	try {
-		const res = await apiFetch(endpoint, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ parentId }),
-		});
-		if (!res.ok) throw new Error('Failed to create folder');
-		const {
-			data: { folder },
-		} = await res.json();
-		await fetchAll();
-		explorerState.startRename(folder.id);
-		// Expand the target parent so the new folder lands visible.
-		if (parentId) explorerState.expanded.add(parentId);
-		else explorerState.expanded.add(virtualRoot);
-	} catch (e) {
-		error = e instanceof Error ? e.message : 'Failed to create folder';
-	}
+	await dispatchNewFolder(explorerState, node, actionContext);
 }
 
 async function handleNewSpreadsheet(node: ExplorerNode) {
-	const folderId = node.source === 'virtual' ? null : node.id;
-	try {
-		const res = await apiFetch('/api/desk/files', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ type: 'spreadsheet', name: 'Untitled', folderId }),
-		});
-		if (!res.ok) throw new Error('Failed to create spreadsheet');
-		const {
-			data: { file },
-		} = await res.json();
-		await fetchAll();
-		openSpreadsheet({
-			id: file.id,
-			type: 'spreadsheet',
-			name: file.name,
-			folderId: file.folderId ?? null,
-			aiContext: false,
-			createdAt: file.createdAt,
-			updatedAt: file.updatedAt,
-		});
-	} catch (e) {
-		error = e instanceof Error ? e.message : 'Failed to create spreadsheet';
-	}
+	await dispatchNewSpreadsheet(explorerState, node, actionContext, openSpreadsheet);
 }
 
 let moveToDialogSource = $state<ExplorerNode | null>(null);
@@ -517,28 +257,28 @@ async function createNewPost() {
 	const slug = slugInput.trim();
 	if (!slug) return;
 	creating = true;
-	error = '';
+	data.clearError();
 	try {
 		const res = await apiFetch('/api/blog/posts', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ slug }),
 		});
-		const data = await res.json().catch(() => ({}));
-		if (!res.ok) throw new Error(data.message || 'Failed to create post');
+		const body = await res.json().catch(() => ({}));
+		if (!res.ok) throw new Error(body.message || 'Failed to create post');
 		slugInput = '';
 		showNewPostForm = false;
-		await fetchAll();
+		await data.fetchAll(explorerState);
 		openPost({
-			id: data.post.id,
-			slug: data.post.slug,
+			id: body.post.id,
+			slug: body.post.slug,
 			status: 'draft',
 			title: '(untitled)',
-			folderId: data.post.folderId ?? null,
+			folderId: body.post.folderId ?? null,
 			updatedAt: '',
 		});
 	} catch (e) {
-		error = e instanceof Error ? e.message : 'Failed to create';
+		data.setError(e instanceof Error ? e.message : 'Failed to create');
 	} finally {
 		creating = false;
 	}
@@ -556,73 +296,7 @@ async function exportPost(p: PostListItem) {
 		a.click();
 		URL.revokeObjectURL(url);
 	} catch (e) {
-		error = e instanceof Error ? e.message : 'Export failed';
-	}
-}
-
-async function uploadFiles(files: FileList | File[]) {
-	for (const file of files) {
-		if (!file.type.startsWith('image/')) {
-			error = `"${file.name}" is not an image file.`;
-			continue;
-		}
-
-		const uploadId = crypto.randomUUID();
-		uploading = [...uploading, { id: uploadId, fileName: file.name, status: 'uploading' }];
-
-		try {
-			const urlRes = await apiFetch('/api/blog/assets', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ fileName: file.name, mimeType: file.type, fileSize: file.size }),
-			});
-			if (!urlRes.ok) {
-				const data = await urlRes.json().catch(() => ({}));
-				throw new Error(data.message || 'Failed to get upload URL');
-			}
-			const { upload } = await urlRes.json();
-
-			const putRes = await fetch(upload.url, {
-				method: 'PUT',
-				body: file,
-				headers: { 'Content-Type': file.type },
-			});
-			if (!putRes.ok) throw new Error('Upload to storage failed');
-
-			let width: number | undefined;
-			let height: number | undefined;
-			try {
-				const bitmap = await createImageBitmap(file);
-				width = bitmap.width;
-				height = bitmap.height;
-				bitmap.close();
-			} catch {
-				/* Non-image or unsupported format */
-			}
-
-			const confirmRes = await apiFetch('/api/blog/assets/confirm', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					key: upload.key,
-					fileName: file.name,
-					mimeType: file.type,
-					fileSize: file.size,
-					width,
-					height,
-				}),
-			});
-			if (!confirmRes.ok) throw new Error('Failed to confirm upload');
-
-			uploading = uploading.filter((u) => u.id !== uploadId);
-			await fetchAll();
-		} catch (e) {
-			uploading = uploading.map((u) =>
-				u.id === uploadId
-					? { ...u, status: 'error' as const, error: e instanceof Error ? e.message : 'Upload failed' }
-					: u,
-			);
-		}
+		data.setError(e instanceof Error ? e.message : 'Export failed');
 	}
 }
 
@@ -632,7 +306,7 @@ function handleUploadClick() {
 function handleUploadChange(e: Event) {
 	const input = e.target as HTMLInputElement;
 	if (input.files?.length) {
-		uploadFiles(input.files);
+		void uploads.uploadFiles(input.files, actionContext);
 		input.value = '';
 	}
 }
@@ -644,7 +318,7 @@ async function handleImportChange(e: Event) {
 	const file = input.files?.[0];
 	if (!file) return;
 	input.value = '';
-	error = '';
+	data.clearError();
 	try {
 		const text = await file.text();
 		const res = await apiFetch('/api/blog/posts/import', {
@@ -652,36 +326,20 @@ async function handleImportChange(e: Event) {
 			headers: { 'Content-Type': 'text/markdown' },
 			body: text,
 		});
-		const data = await res.json().catch(() => ({}));
-		if (!res.ok) throw new Error(data.message || 'Import failed');
-		await fetchAll();
+		const body = await res.json().catch(() => ({}));
+		if (!res.ok) throw new Error(body.message || 'Import failed');
+		await data.fetchAll(explorerState);
 		openPost({
-			id: data.post.id,
-			slug: data.post.slug,
-			status: data.post.status ?? 'draft',
-			title: data.revision?.title ?? '(untitled)',
-			folderId: data.post.folderId ?? null,
+			id: body.post.id,
+			slug: body.post.slug,
+			status: body.post.status ?? 'draft',
+			title: body.revision?.title ?? '(untitled)',
+			folderId: body.post.folderId ?? null,
 			updatedAt: '',
 		});
 	} catch (e) {
-		error = e instanceof Error ? e.message : 'Import failed';
+		data.setError(e instanceof Error ? e.message : 'Import failed');
 	}
-}
-
-// Drop zone handlers
-function handleDragOver(e: DragEvent) {
-	if (e.dataTransfer?.types.includes('Files')) {
-		e.preventDefault();
-		dragOver = true;
-	}
-}
-function handleDragLeave() {
-	dragOver = false;
-}
-function handleDrop(e: DragEvent) {
-	e.preventDefault();
-	dragOver = false;
-	if (e.dataTransfer?.files.length) uploadFiles(e.dataTransfer.files);
 }
 
 /** Infer the target node for MenuBar folder/spreadsheet creation from current selection. */
@@ -709,7 +367,7 @@ const explorerMenus = $derived<MenuBarMenu[]>([
 			{ label: 'Import Markdown...', icon: 'i-lucide-file-up', onSelect: handleImportClick },
 			{ label: 'Upload Image...', icon: 'i-lucide-upload', onSelect: handleUploadClick },
 			{ type: 'separator' },
-			{ label: 'Refresh', icon: 'i-lucide-refresh-cw', onSelect: fetchAll },
+			{ label: 'Refresh', icon: 'i-lucide-refresh-cw', onSelect: () => data.fetchAll(explorerState) },
 		],
 	},
 ]);
@@ -720,59 +378,24 @@ $effect(() => {
 
 // ── AI Context registration ─────────────────────────────────────
 
-function serializeExplorerContext(): string {
-	const allNodes = [...explorerState.nodes.values()];
-	if (!allNodes.length) return 'Explorer: loading...';
-	const lines = allNodes
-		.filter((n) => n.source !== 'virtual')
-		.map((n) => {
-			const ancestors = explorerState
-				.getBreadcrumbPath(n.id)
-				.filter((a) => a.source !== 'virtual')
-				.map((a) => a.label);
-			const path = ancestors.length > 0 ? `${ancestors.join('/')}/${n.label}` : n.label;
-			const prefix = n.isFolder ? 'folder' : n.source;
-			return `- ${path} (${prefix}:${n.id})`;
-		});
-	return `Workspace files (${lines.length} items):\n${lines.join('\n')}`;
-}
-
 // Register unconditionally on mount (like SpreadsheetPanel)
 // svelte-ignore state_referenced_locally
-$effect(() => {
-	const content = untrack(serializeExplorerContext);
-	const cleanup = registerPanelContext({
-		panelId: 'explorer',
-		panelType: 'explorer',
-		label: 'Explorer',
-		content,
-		tokenEstimate: Math.ceil(content.length / 4),
-		updatedAt: Date.now(),
-		contentType: 'structured',
-	});
-	return cleanup;
-});
+$effect(() => untrack(() => registerExplorerAiContext(explorerState)));
 
 // Update context when nodes change
 $effect(() => {
 	void explorerState.nodes;
-	if (!loading) {
-		const content = serializeExplorerContext();
-		updatePanelContext('explorer', {
-			content,
-			tokenEstimate: Math.ceil(content.length / 4),
-		});
-	}
+	if (!data.loading) updateExplorerAiContext(explorerState);
 });
 
 onMount(() => {
-	fetchAll();
+	data.fetchAll(explorerState);
 });
 
 // Re-fetch when AI creates/deletes files
 $effect(() => {
 	return bus.subscribe('ai:refresh_explorer', () => {
-		fetchAll();
+		data.fetchAll(explorerState);
 	});
 });
 </script>
@@ -796,10 +419,10 @@ $effect(() => {
 
 <div
 	class="explorer-panel"
-	class:drag-over={dragOver}
-	ondragover={handleDragOver}
-	ondragleave={handleDragLeave}
-	ondrop={handleDrop}
+	class:drag-over={uploads.dragOver}
+	ondragover={(e) => uploads.onDragOver(e)}
+	ondragleave={() => uploads.onDragLeave()}
+	ondrop={(e) => uploads.onDrop(e, actionContext)}
 	role="region"
 	aria-label="Explorer"
 >
@@ -820,10 +443,10 @@ $effect(() => {
 		</form>
 	{/if}
 
-	{#if error}
+	{#if data.error}
 		<div class="explorer-error" role="alert">
-			<span>{error}</span>
-			<button class="dismiss-btn" onclick={() => { error = ''; }} aria-label="Dismiss">
+			<span>{data.error}</span>
+			<button class="dismiss-btn" onclick={() => data.clearError()} aria-label="Dismiss">
 				<span class="i-lucide-x"></span>
 			</button>
 		</div>
@@ -831,7 +454,7 @@ $effect(() => {
 
 	<div class="sr-only" role="status" aria-live="polite">{explorerState.moveAnnouncement}</div>
 
-	{#if loading}
+	{#if data.loading}
 		<div class="explorer-center">
 			<Spinner size="sm" />
 			<p class="loading-text">Loading...</p>
@@ -853,7 +476,7 @@ $effect(() => {
 				<span>Images only</span>
 			</button>
 		</div>
-		<ExplorerTree {explorerState} {uploading} callbacks={treeCallbacks} />
+		<ExplorerTree {explorerState} uploading={uploads.uploading} callbacks={treeCallbacks} />
 
 		<ExplorerPreview
 			asset={selectedAsset}
@@ -869,7 +492,7 @@ $effect(() => {
 		/>
 	{/if}
 
-	{#if dragOver}
+	{#if uploads.dragOver}
 		<div class="drop-overlay">
 			<span class="i-lucide-upload drop-icon"></span>
 			<span class="drop-text">Drop images to upload</span>

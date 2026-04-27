@@ -12,6 +12,7 @@
 import { apiFetch } from '$lib/api';
 import type { ExplorerState } from './explorer-state.svelte';
 import type { ExplorerNode, NodeSource } from './node';
+import type { FileListItem } from './types';
 
 interface ApiErrorBody {
 	error?: { code?: string; message?: string; fields?: Record<string, string> };
@@ -211,5 +212,256 @@ export async function dispatchDeleteFolder(state: ExplorerState, nodeId: string,
 		ctx.setError(e instanceof Error ? e.message : 'Delete failed.');
 		await ctx.refresh();
 		return false;
+	}
+}
+
+// ── Rename dispatch ───────────────────────────────────────────────
+
+type RenameSpec = {
+	url: (id: string) => string;
+	method: 'PUT' | 'PATCH';
+	body: (label: string) => Record<string, string>;
+	/** When true, ignore non-OK responses (legacy lenient endpoints — desk-file, blog-post, blog-asset). */
+	silent?: boolean;
+};
+
+const RENAME_ROUTES: Partial<Record<NodeSource, RenameSpec>> = {
+	'desk-file': {
+		url: (id) => `/api/desk/files/${id}`,
+		method: 'PUT',
+		body: (label) => ({ name: label }),
+		silent: true,
+	},
+	'desk-folder': {
+		url: (id) => `/api/desk/folders/${id}`,
+		method: 'PUT',
+		body: (label) => ({ name: label }),
+	},
+	'blog-folder': {
+		url: (id) => `/api/blog/post-folders/${id}`,
+		method: 'PATCH',
+		body: (label) => ({ name: label }),
+	},
+	'asset-folder': {
+		url: (id) => `/api/blog/asset-folders/${id}`,
+		method: 'PATCH',
+		body: (label) => ({ name: label }),
+	},
+	'blog-post': {
+		url: (id) => `/api/blog/posts/${id}`,
+		method: 'PATCH',
+		body: (label) => ({ slug: label.replace(/\.md$/, '') }),
+		silent: true,
+	},
+	'blog-asset': {
+		url: (id) => `/api/blog/assets/${id}`,
+		method: 'PATCH',
+		body: (label) => ({ fileName: label }),
+		silent: true,
+	},
+};
+
+/**
+ * Rename a node. The TreeNode passes the node with the already-mutated `label`,
+ * so this dispatcher just sends it. On failure, refreshes from server to revert
+ * the optimistic update.
+ */
+export async function dispatchRename(state: ExplorerState, node: ExplorerNode, ctx: ActionContext): Promise<void> {
+	const spec = RENAME_ROUTES[node.source];
+	if (!spec) return;
+
+	try {
+		const res = await apiFetch(spec.url(node.id), {
+			method: spec.method,
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(spec.body(node.label)),
+		});
+		if (!spec.silent && !res.ok) {
+			const err = await parseError(res);
+			throw new Error(err?.message ?? 'Rename failed');
+		}
+		await ctx.refresh();
+	} catch (e) {
+		ctx.setError(e instanceof Error ? e.message : 'Rename failed');
+		await ctx.refresh(); // Revert optimistic update
+	}
+}
+
+// ── Leaf delete dispatch (non-folder) ─────────────────────────────
+
+type LeafDeleteSpec = {
+	url: (id: string) => string;
+	/** When true, parse error body and throw on !ok (legacy strict endpoint — blog-asset). */
+	strict?: boolean;
+};
+
+const LEAF_DELETE_ROUTES: Partial<Record<NodeSource, LeafDeleteSpec>> = {
+	'desk-file': { url: (id) => `/api/desk/files/${id}` },
+	'blog-post': { url: (id) => `/api/blog/posts/${id}` },
+	'blog-asset': { url: (id) => `/api/blog/assets/${id}`, strict: true },
+};
+
+/**
+ * Delete a non-folder leaf (desk-file, blog-post, blog-asset). For folders use
+ * `dispatchDeleteFolder` — they require recursive=true and a different state
+ * machine. Caller is responsible for clearing any UI selection (e.g. the asset
+ * preview) before invoking.
+ */
+export async function dispatchDeleteLeaf(state: ExplorerState, node: ExplorerNode, ctx: ActionContext): Promise<void> {
+	const spec = LEAF_DELETE_ROUTES[node.source];
+	if (!spec) return;
+
+	try {
+		const res = await apiFetch(spec.url(node.id), { method: 'DELETE' });
+		if (spec.strict && !res.ok) {
+			const data = await res.json().catch(() => ({}));
+			throw new Error((data as { message?: string }).message || 'Delete failed');
+		}
+		await ctx.refresh();
+	} catch (e) {
+		ctx.setError(e instanceof Error ? e.message : 'Delete failed');
+	}
+}
+
+// ── Duplicate dispatch (desk-file only) ───────────────────────────
+
+/**
+ * Duplicate a desk file. Refreshes, then enters rename mode on the copy so the
+ * user can immediately retitle it.
+ */
+export async function dispatchDuplicate(state: ExplorerState, node: ExplorerNode, ctx: ActionContext): Promise<void> {
+	if (node.source !== 'desk-file') return;
+	try {
+		const res = await apiFetch(`/api/desk/files/${node.id}`, { method: 'POST' });
+		if (!res.ok) throw new Error('Duplicate failed');
+		const {
+			data: { file: newFile },
+		} = (await res.json()) as { data: { file: { id: string } } };
+		await ctx.refresh();
+		state.startRename(newFile.id);
+	} catch (e) {
+		ctx.setError(e instanceof Error ? e.message : 'Duplicate failed');
+	}
+}
+
+// ── AI context toggle dispatch ────────────────────────────────────
+
+/**
+ * Toggle a node's AI context pin. Optimistic with rollback on failure. Desk
+ * files persist server-side; blog posts are client-state only (no API call).
+ */
+export async function dispatchToggleAiContext(
+	state: ExplorerState,
+	node: ExplorerNode,
+	ctx: ActionContext,
+): Promise<void> {
+	const newValue = !node.aiContext;
+	state.updateAiContext(node.id, newValue);
+
+	if (node.source !== 'desk-file') return;
+
+	try {
+		await apiFetch(`/api/desk/files/${node.id}`, {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ aiContext: newValue }),
+		});
+	} catch (e) {
+		state.updateAiContext(node.id, !newValue); // Rollback
+		ctx.setError(e instanceof Error ? e.message : 'Failed to toggle AI context');
+	}
+}
+
+// ── New folder dispatch ───────────────────────────────────────────
+
+const FOLDER_ENDPOINTS: Record<string, string> = {
+	'virtual:data': '/api/desk/folders',
+	'virtual:blog': '/api/blog/post-folders',
+	'virtual:assets': '/api/blog/asset-folders',
+};
+
+function resolveVirtualRoot(node: ExplorerNode): string {
+	if (node.source === 'virtual') return node.id;
+	return VIRTUAL_ROOT[node.source] ?? 'virtual:data';
+}
+
+/**
+ * Create a new folder under the appropriate virtual root. Non-virtual folders
+ * receive the new folder as a direct child; leaves create a sibling. After
+ * creation, expands the parent so the new folder lands visible and enters
+ * rename mode on it.
+ */
+export async function dispatchNewFolder(state: ExplorerState, node: ExplorerNode, ctx: ActionContext): Promise<void> {
+	const virtualRoot = resolveVirtualRoot(node);
+	const endpoint = FOLDER_ENDPOINTS[virtualRoot];
+	if (!endpoint) {
+		ctx.setError('Folders are not supported here.');
+		return;
+	}
+
+	let parentId: string | null = null;
+	if (node.source !== 'virtual') {
+		parentId = node.isFolder ? node.id : node.parentId && !node.parentId.startsWith('virtual:') ? node.parentId : null;
+	}
+
+	try {
+		const res = await apiFetch(endpoint, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ parentId }),
+		});
+		if (!res.ok) throw new Error('Failed to create folder');
+		const {
+			data: { folder },
+		} = (await res.json()) as { data: { folder: { id: string } } };
+		await ctx.refresh();
+		state.startRename(folder.id);
+		if (parentId) state.expanded.add(parentId);
+		else state.expanded.add(virtualRoot);
+	} catch (e) {
+		ctx.setError(e instanceof Error ? e.message : 'Failed to create folder');
+	}
+}
+
+// ── New spreadsheet dispatch ──────────────────────────────────────
+
+/**
+ * Create a new spreadsheet under the given anchor (folder or virtual root).
+ * The created file is passed back via `onCreated` so the panel can open it in
+ * the dock — keeps DOM/dock concerns out of this module.
+ */
+export async function dispatchNewSpreadsheet(
+	state: ExplorerState,
+	node: ExplorerNode,
+	ctx: ActionContext,
+	onCreated: (file: FileListItem) => void,
+): Promise<void> {
+	const folderId = node.source === 'virtual' ? null : node.id;
+	try {
+		const res = await apiFetch('/api/desk/files', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ type: 'spreadsheet', name: 'Untitled', folderId }),
+		});
+		if (!res.ok) throw new Error('Failed to create spreadsheet');
+		const {
+			data: { file },
+		} = (await res.json()) as {
+			data: {
+				file: { id: string; name: string; folderId: string | null; createdAt: string; updatedAt: string };
+			};
+		};
+		await ctx.refresh();
+		onCreated({
+			id: file.id,
+			type: 'spreadsheet',
+			name: file.name,
+			folderId: file.folderId ?? null,
+			aiContext: false,
+			createdAt: file.createdAt,
+			updatedAt: file.updatedAt,
+		});
+	} catch (e) {
+		ctx.setError(e instanceof Error ? e.message : 'Failed to create spreadsheet');
 	}
 }
