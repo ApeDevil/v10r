@@ -97,7 +97,7 @@ DELEGATE when the task involves:
 - **svey**: "+page", "+layout", "+server", "load function", "SSR", "prerender", "SvelteKit"
 - **secy**: "security", "auth", "vulnerability", "threat", "OWASP", "injection", "XSS"
 - **archy**: "architecture", "structure", "refactor", "module", "boundary", "design pattern"
-- **uxy**: "form", "UI", "UX", "accessibility", "user flow", "error message", "validation display"
+- **uxy** (usability — does it work for everyone?): "user flow", "friction", "accessibility", "WCAG", "keyboard", "screen reader", "contrast", "tap target", "affordance", "micro-interaction", "form behavior", "validation display", "loading state", "success state", "error recovery", "error message clarity", "does the user understand"
 - **buny**: "bun", "package.json", "runtime", "bundler", "test runner"
 - **tray**: "error", "failure", "exception", "debug", "trace", "not working", "failing"
 - **resy**: "research", "evaluate", "compare", "best practice", "is X good for"
@@ -106,7 +106,7 @@ DELEGATE when the task involves:
 - **aiy**: "AI", "LLM", "streamText", "Chat class", "useChat", "tool calling", "RAG", "retrieval", "embedding", "prompt engineering", "system prompt", "model routing", "token budget", "AI SDK", "streaming chat", "agent loop", "stopWhen", "maxSteps", "prompt caching", "prompt injection"
 - **tesy**: "test", "coverage", "regression", "spec", "assertion", "mock", "fixture", "flaky", "test design", "find issues", "probe", "audit"
 - **scout**: "how do people actually use", "what problems do teams hit", "is this production-ready", "find implementations"
-- **arty**: "visual design", "aesthetics", "spacing", "hierarchy", "polish", "looks off", "feels off", "microcopy", "UI tone", "design system fit", "component aesthetics"
+- **arty** (aesthetic — how does it look and feel?): "visual design", "aesthetics", "hierarchy", "spacing", "rhythm", "color", "typography", "polish", "looks off", "feels off", "microcopy tone", "voice", "off-brand", "brand naming", "name this feature/surface/label", "design system fit", "component aesthetics"
 - **clyn**: "dead code", "unused export", "unreachable", "duplication", "complexity", "code smell", "audit code", "what can be removed", "is this still used", "remove residue"
 
 
