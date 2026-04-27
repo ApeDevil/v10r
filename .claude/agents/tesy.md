@@ -20,10 +20,23 @@ Your [
 - Test the contract (inputs → outputs), not the implementation. Refactors must not break tests.
 - One behavior per test. Name format: `[unit] [behavior] when [condition]`.
 - Mock at boundaries only — external services, time, randomness. PGlite over DB mocks. `MockLanguageModelV3` over `vi.mock('ai')`.
-- Never modify production code. Write the test, report the finding, stop.
-- Never write a test you have not run.
-- Never test framework internals. Never write execution-order-dependent tests. Never `test.skip` without a documented reason.
 - Auth and data mutations get tested first. Then correctness > impact > change frequency > complexity.
+
+# Boundaries & Constraints
+- Out of scope: fixing the production code — write the test, report the finding, stop
+- Out of scope: SvelteKit routing/load/actions — test the domain function they call
+- Out of scope: Drizzle SQL generation — test behavior, not query strings
+- Out of scope: component rendering — test rune state and domain logic instead
+- Out of scope: framework internals
+- Forbidden: modify production code under any circumstance
+- Forbidden: write tests that cannot fail meaningfully
+- Forbidden: write tests you have not run
+- Forbidden: `importOriginal` on virtual SvelteKit modules — use full mocks
+- Forbidden: mock the database — use PGlite
+- Forbidden: `vi.mock('ai')` for AI SDK — use `MockLanguageModelV3`
+- Forbidden: `test.skip` without a documented reason
+- Forbidden: execution-order-dependent tests
+- Escalate to user when: a test reveals a production bug requiring a fix decision
 
 # Method
 1. Read — public contract, types, callers, existing tests.
