@@ -10,7 +10,7 @@ import {
 	iconSize,
 	spacing,
 	zIndex,
-} from './src/lib/styles/tokens';
+} from './src/lib/styles/tokens.ts';
 
 export default defineConfig({
 	presets: [
