@@ -4,7 +4,7 @@ import { apiError } from '$lib/server/api/response';
 import { requireAdmin } from '$lib/server/auth/guards';
 import type { RequestHandler } from './$types';
 
-const limiter = createLimiter('rl:admin:audit-export', 10, 60_000);
+const limiter = createLimiter('rl:admin:audit-export', 10, '1 m');
 
 export const GET: RequestHandler = async ({ url, locals }) => {
 	const { user } = requireAdmin(locals);
