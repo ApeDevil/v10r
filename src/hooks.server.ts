@@ -209,6 +209,11 @@ const i18n: Handle = ({ event, resolve }) =>
  *    Includes Upstash rate limiting on all auth endpoints
  */
 const authHandler: Handle = async ({ event, resolve }) => {
+	// During prerender there is no client — getClientAddress() throws. Skip rate-limit/IP injection.
+	if (building) {
+		return svelteKitHandler({ event, resolve, auth, building });
+	}
+
 	const path = event.url.pathname;
 
 	// Rate limit all auth endpoints (sign-in, sign-out, callback, get-session)
