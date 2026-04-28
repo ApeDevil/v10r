@@ -43,7 +43,7 @@ dev/
 
 **Remote** — point your agent to the hosted repo:
 
-- `https://gitlab.com/ApeDevil/velociraptor`
+- `https://gitlab.com/ApeDevil/v10r`
 - `https://github.com/ApeDevil/v10r`
 
 
