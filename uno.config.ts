@@ -17,7 +17,7 @@ export default defineConfig({
 		presetUno(),
 		presetIcons({
 			collections: {
-				lucide: () => import('@iconify-json/lucide/icons.json').then((i) => i.default),
+				lucide: () => import('@iconify-json/lucide/icons.json', { with: { type: 'json' } }).then((i) => i.default),
 			},
 			scale: 1.2,
 			warn: true,
