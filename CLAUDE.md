@@ -93,21 +93,21 @@ Never grep blindly through docs. The READMEs are the index.
 ### Delegation Triggers
 
 DELEGATE when the task involves:
-- **daty**: "schema", "table", "migration", "entity", "relationship", "database design", "data model"
-- **svey**: "+page", "+layout", "+server", "load function", "SSR", "prerender", "SvelteKit"
-- **secy**: "security", "auth", "vulnerability", "threat", "OWASP", "injection", "XSS"
-- **archy**: "architecture", "structure", "refactor", "module", "boundary", "design pattern"
+- **daty** (data model — what does data look like at rest?): "schema", "table", "migration", "entity", "relationship", "database design", "data model"
+- **svey** (SvelteKit — routes, loads, render strategy): "+page", "+layout", "+server", "load function", "SSR", "prerender", "SvelteKit"
+- **secy** (security — what is the threat?): "security", "auth", "vulnerability", "threat", "OWASP", "injection", "XSS"
+- **archy** (source code structure — how do we organize modules?): "architecture", "structure", "refactor", "module", "boundary", "design pattern"
 - **uxy** (usability — does it work for everyone?): "user flow", "friction", "accessibility", "WCAG", "keyboard", "screen reader", "contrast", "tap target", "affordance", "micro-interaction", "form behavior", "validation display", "loading state", "success state", "error recovery", "error message clarity", "does the user understand"
-- **buny**: "bun", "package.json", "runtime", "bundler", "test runner"
-- **tray**: "error", "failure", "exception", "debug", "trace", "not working", "failing"
-- **resy**: "research", "evaluate", "compare", "best practice", "is X good for"
-- **docy**: "document", "README", "explain", "write docs"
-- **apy**: "api", "endpoint", "+server.ts", "REST", "GraphQL", "SSE", "streaming", "webhook", "AI tool schema", "response format", "pagination", "versioning", "OpenAPI", "error response", "idempotency", "HMAC", "DataLoader"
-- **aiy**: "AI", "LLM", "streamText", "Chat class", "useChat", "tool calling", "RAG", "retrieval", "embedding", "prompt engineering", "system prompt", "model routing", "token budget", "AI SDK", "streaming chat", "agent loop", "stopWhen", "maxSteps", "prompt caching", "prompt injection"
-- **tesy**: "test", "coverage", "regression", "spec", "assertion", "mock", "fixture", "flaky", "test design", "find issues", "probe", "audit"
-- **scout**: "how do people actually use", "what problems do teams hit", "is this production-ready", "find implementations"
+- **buny** (Bun runtime — packaging, execution, deps): "bun", "package.json", "runtime", "bundler", "test runner config"
+- **tray** (debugging — why is it broken right now?): "error", "failure", "exception", "debug", "trace", "stack trace", "not working", "regression appeared"
+- **resy** (authoritative sources — what does the spec say?): "research", "evaluate", "compare specs", "best practice", "is X good for", "what does the doc say"
+- **docy** (documentation — how do we explain it?): "document", "README", "explain", "write docs", "API docs"
+- **apy** (API contracts — what is the interface?): "api", "endpoint", "+server.ts", "REST", "GraphQL", "SSE", "streaming", "webhook", "AI tool schema", "response format", "pagination", "versioning", "OpenAPI", "error response", "idempotency", "HMAC", "DataLoader"
+- **aiy** (AI/LLM integration — how do we use the model?): "AI", "LLM", "streamText", "Chat class", "useChat", "tool calling", "RAG", "retrieval", "embedding", "prompt engineering", "system prompt", "model routing", "token budget", "AI SDK", "streaming chat", "agent loop", "stopWhen", "maxSteps", "prompt caching", "prompt injection"
+- **tesy** (test design — how do we expose hidden issues?): "test", "coverage", "regression test", "spec", "assertion", "mock", "fixture", "flaky", "test design", "probe"
+- **scout** (community practice — how do teams actually use this?): "how do people actually use", "what problems do teams hit", "is this production-ready", "find implementations", "real-world examples"
 - **arty** (aesthetic — how does it look and feel?): "visual design", "aesthetics", "hierarchy", "spacing", "rhythm", "color", "typography", "polish", "looks off", "feels off", "microcopy tone", "voice", "off-brand", "brand naming", "name this feature/surface/label", "design system fit", "component aesthetics"
-- **clyn**: "dead code", "unused export", "unreachable", "duplication", "complexity", "code smell", "audit code", "what can be removed", "is this still used", "remove residue"
+- **clyn** (detection only — what code is dead/duplicated/complex?): "dead code", "unused export", "unreachable", "duplication", "complexity", "code smell", "audit code", "what can be removed", "is this still used", "remove residue"
 
 
 ## Skills Policy

@@ -212,9 +212,102 @@ All 15 agent files received a `# Boundaries & Constraints` section. Two files re
 
 ---
 
+---
+
+## Pass 3 — Routing sharpness (2026-04-28)
+
+### Why a third pass
+
+The arty/uxy split at the end of Pass 2 introduced two patterns the other 13 agents lacked:
+
+1. **Scope-hint parenthetical** in the CLAUDE.md delegation-trigger line — e.g., `(usability — does it work for everyone?)` and `(aesthetic — how does it look and feel?)`.
+2. **Counter-example block** in the agent's `description:` field — an `<example>` showing a request that *sounds like* this agent's domain but routes to a sibling.
+
+An audit found 13 of 15 agents missing both, and 5 ambiguous keyword overlaps in CLAUDE.md competing for routing:
+
+| Overlap | Competing agents |
+|---|---|
+| "error" / "failure" / "exception" | tray vs tesy vs aiy |
+| "audit" / "find issues" / "complexity" | clyn vs tesy vs archy |
+| "evaluate" / "compare" | resy vs scout |
+| "entity" / "relationship" / "module" | daty vs archy |
+| "test" / "test runner" | tesy vs buny |
+
+### Why we did *not* add a "shadow" tagline
+
+A poetic shadow line (e.g., `Shadow: "Chaos that scales"` paired with archy's `Soul: "Order that scales"`) was considered and rejected. Research found:
+
+- **Zero precedent** in any major Claude Code subagent collection (vijaythecoder, VoltAgent, wshobson, Piebald-AI's reverse-engineered Anthropic agents, SOUL.md ecosystem).
+- **Waluigi Effect** (LessWrong 2023; *Nature* 2025 fine-tuning paper): naming a failure mode as a vivid character in the prompt's highest-attention position *strengthens* the latent representation of that failure mode.
+- **Anthropic prompting guidance**: positive instructions outperform negative ones; identity opening lines should stay minimal.
+- **Pink Elephant problem**: "Don't think of X" activates X.
+
+Counter-examples in positive-routing form (`→ route to <sibling>`) sidestep this — they tell the orchestrator where to send the request rather than naming what the agent must refuse. The closest precedent (nobody_agents' SOUL.md) uses the same routing-positive shape.
+
+### What changed
+
+**CLAUDE.md — delegation triggers (Agent Delegation Policy section):**
+
+- Added scope-hint parenthetical to all 13 missing trigger lines (`uxy` and `arty` already had them from Pass 2).
+- Disambiguated 4 keyword overlaps:
+  - `audit` removed from `tesy` (kept on `clyn`) — clyn detects, tesy probes.
+  - `test runner` → `test runner config` on `buny` — distinguishes from tesy's test design.
+  - Bare `error`/`failure` on `tray` replaced with `stack trace` / `regression appeared` / `not working` — concrete debugging signals, not generic terms shared with tesy/aiy.
+  - `evaluate`/`compare` split: resy gets `compare specs` + `what does the doc say`; scout gets `real-world examples` + `how do teams actually use this`.
+
+**Agent files — `description:` field counter-examples (13 files):**
+
+One `<example>` block appended to each `description:`, routing the highest-leverage misroute to the correct sibling. Format mirrors uxy.md's existing counter-example block.
+
+| Agent | Routes to | User phrasing that triggers misroute |
+|---|---|---|
+| aiy | tray | "AI endpoint throwing 500s intermittently" |
+| apy | tray | "SSE stream randomly drops connections" |
+| archy | clyn | "modules have unused exports we should remove" |
+| buny | tesy | "structure my test suite for the domain layer" |
+| clyn | archy | "module's cohesion is poor" |
+| daty | tray | "query suddenly 10x slower in production" |
+| docy | uxy | "error message is unclear" |
+| resy | scout | "what problems do teams actually hit with X" |
+| scout | resy | "what does the spec say about X" |
+| secy | uxy | "auth flow too clunky, users abandon signup" |
+| svey | apy | "REST endpoint pagination cursors" |
+| tesy | clyn | "find unreachable code" |
+| tray | tesy | "design a test that catches this regression" |
+
+Restraint: one counter-example per agent. Adding a second tempts the Pink Elephant problem and crowds the description; the single counter-example targets the most likely misroute, and the orchestrator can still consult sibling descriptions if needed.
+
+### How Pass 3 was applied
+
+1. **Two parallel Explore audits** — one cataloguing each agent's existing examples and likely confusion partners, one auditing CLAUDE.md trigger lines for overlap and stale phrasing.
+2. **Plan written** to `/home/ad/.claude/plans/modular-twirling-mitten.md`, approved before execution.
+3. **Single Edit on CLAUDE.md** covering all 13 trigger lines.
+4. **13 parallel Edits on agent files** appending counter-examples; each Edit matched the file's existing YAML escape style (double-quoted with `\n`, double-quoted with `\\n`, or unquoted with `\n`-as-literal).
+5. **Verified** with three checks:
+   - `grep -c '^- \*\*[a-z]\+\*\* (' CLAUDE.md` → 15 (was 2).
+   - `grep -l 'Counter-example (NOT' .claude/agents/*.md` → 15 files (was 2).
+   - YAML frontmatter parses on the same files it parsed on before. (`archy.md` and `svey.md` fail strict `yaml.safe_load` due to unquoted descriptions containing colons — pre-existing condition, confirmed by stash-and-reparse against HEAD; Claude Code's frontmatter parser is more lenient.)
+
+### Why this matters operationally
+
+The orchestrator's routing decisions read two surfaces: CLAUDE.md delegation triggers (keyword match) and the agent descriptions themselves (which the orchestrator scans before delegating). Pass 3 sharpens both:
+
+- Scope hints translate the keyword list into a question the orchestrator can answer about the request ("is this a *usability* question or an *aesthetic* one?").
+- Counter-examples teach the boundary by showing exactly the request that *sounds like* this agent's domain but isn't — the highest-leverage signal for ambiguous prompts.
+
+### Files changed in Pass 3
+
+- `CLAUDE.md` — Agent Delegation Policy section (lines 96–110)
+- `.claude/agents/aiy.md`, `apy.md`, `archy.md`, `buny.md`, `clyn.md`, `daty.md`, `docy.md`, `resy.md`, `scout.md`, `secy.md`, `svey.md`, `tesy.md`, `tray.md`
+
+`arty.md` and `uxy.md` unchanged (already had counter-examples from Pass 2).
+
+---
+
 ## References
 
 - [Anthropic — Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
+- [Anthropic — Prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices)
 - [Piebald-AI/claude-code-system-prompts](https://github.com/Piebald-AI/claude-code-system-prompts) — reverse-engineered Claude Code agent-creation prompt
 - [wshobson/agents](https://github.com/wshobson/agents) — 184-agent collection, three-tier model routing
 - [VoltAgent/awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents)
@@ -223,3 +316,6 @@ All 15 agent files received a `# Boundaries & Constraints` section. Two files re
 - [Addy Osmani — Code Agent Orchestra](https://addyosmani.com/blog/code-agent-orchestra/)
 - [PubNub — Best practices for Claude Code sub-agents (Part I)](https://www.pubnub.com/blog/best-practices-for-claude-code-sub-agents/)
 - [morphllm — Claude subagents](https://www.morphllm.com/claude-subagents)
+- [The Waluigi Effect — Alignment Forum](https://www.alignmentforum.org/posts/D7PumeYTDPfBTp3i7/the-waluigi-effect-mega-post) — Pass 3 rejection rationale
+- [Pink Elephant Problem — eval.16x.engineer](https://eval.16x.engineer/blog/the-pink-elephant-negative-instructions-llms-effectiveness-analysis) — Pass 3 rejection rationale
+- [SOUL.md: How nobody_agents gave three AI agents distinct personalities — dev.to](https://dev.to/nobody_agents/soulmd-how-we-gave-three-ai-agents-distinct-personalities-and-why-generic-personas-fail-54dg) — closest production precedent for named characteristic failure
