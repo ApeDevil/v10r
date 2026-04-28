@@ -127,7 +127,7 @@
 		"@typescript/native-preview": "latest",
 		"typescript": "^5.9.3",
 		"unocss": "^66",
-		"vite": "^8.0.8",
+		"vite": "^7.0.0",
 		"vitest": "^4.0.0"
 	}
 }
