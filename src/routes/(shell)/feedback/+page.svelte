@@ -4,7 +4,7 @@ import { valibotClient } from 'sveltekit-superforms/adapters';
 import { Card, FormField } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Button, Input, Select, Textarea } from '$lib/components/primitives';
-import { feedbackSubmissionSchema } from '$lib/server/feedback/validation';
+import { feedbackSubmissionSchema } from '$lib/feedback/validation';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();

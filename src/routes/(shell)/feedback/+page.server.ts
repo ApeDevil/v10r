@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
+import { feedbackSubmissionSchema } from '$lib/feedback/validation';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import {
 	FEEDBACK_MIN_FILL_MS,
@@ -9,7 +10,6 @@ import {
 	FEEDBACK_RATE_LIMIT_WINDOW,
 } from '$lib/server/config';
 import { submitFeedback } from '$lib/server/feedback';
-import { feedbackSubmissionSchema } from '$lib/server/feedback/validation';
 import type { Actions, PageServerLoad } from './$types';
 
 const limiter = createLimiter(FEEDBACK_RATE_LIMIT_PREFIX, FEEDBACK_RATE_LIMIT_MAX, FEEDBACK_RATE_LIMIT_WINDOW);
