@@ -26,7 +26,11 @@ function saveCustom() {
 function persistToServer(tier: ConsentTier) {
 	const body = new FormData();
 	body.set('tier', tier);
-	fetch('/api/consent?/set', { method: 'POST', body }).catch(() => {
+	fetch('/api/consent?/set', {
+		method: 'POST',
+		body,
+		headers: { 'x-requested-with': 'fetch' },
+	}).catch(() => {
 		// Best-effort audit trail — don't block the user
 	});
 }
