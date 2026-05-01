@@ -30,6 +30,21 @@ export function getShowcaseSubTabs(parentPath: string): { label: string; href: s
 
 export const showcases: ShowcaseCard[] = [
 	{
+		href: '/showcases/admin',
+		icon: 'i-lucide-shield-check',
+		title: 'Admin & Privacy',
+		description:
+			'How v10r exposes admin surfaces to a single operator — controller, lawful basis, retention, and your rights.',
+		sublinks: [
+			{ label: 'Overview', href: '/showcases/admin' },
+			{ label: 'Data', href: '/showcases/admin/data' },
+			{ label: 'Retention', href: '/showcases/admin/retention' },
+			{ label: 'Your Rights', href: '/showcases/admin/rights' },
+			{ label: 'Cookies', href: '/showcases/admin/cookies' },
+			{ label: 'Admin Powers', href: '/showcases/admin/powers' },
+		],
+	},
+	{
 		href: '/showcases/shell',
 		icon: 'i-lucide-layout',
 		title: 'App Shell',

@@ -40,9 +40,10 @@ const ratingOptions = [
 		<aside class="privacy-notice" role="note" aria-label="Privacy notice">
 			<p class="privacy-title">What we do with your message</p>
 			<p>
-				Controller: stas-k@gmx.de. We process your submission to respond to your feedback (lawful basis:
-				legitimate interests, Art. 6(1)(f) GDPR). Messages are retained until you ask us to delete them.
-				You have the right to access, correct, or erase your data — email us at stas-k@gmx.de.
+				Controller: <a href="mailto:stas-k@gmx.de">stas-k@gmx.de</a>. We process your submission to respond to your feedback
+				(lawful basis: legitimate interests, Art. 6(1)(f) GDPR). Messages are retained until you ask us to delete them.
+				You have the right to access, correct, or erase your data — email the controller, or read the full
+				disclosure at <a href="/showcases/admin">/showcases/admin</a>.
 			</p>
 		</aside>
 
@@ -192,6 +193,12 @@ const ratingOptions = [
 	.privacy-title {
 		font-weight: 600;
 		color: var(--color-fg);
+	}
+
+	.privacy-notice a {
+		color: var(--color-fg);
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
 	}
 
 	.actions {

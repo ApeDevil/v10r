@@ -60,14 +60,18 @@ const visible = $derived(browser && (consent.needsBanner || consent.bannerOpen))
 				</div>
 			</div>
 
-			<button
-				type="button"
-				class="customize-toggle"
-				aria-expanded={showCustomize}
-				onclick={() => (showCustomize = !showCustomize)}
-			>
-				{showCustomize ? 'Hide options' : 'Customize'}
-			</button>
+			<div class="consent-meta">
+				<button
+					type="button"
+					class="customize-toggle"
+					aria-expanded={showCustomize}
+					onclick={() => (showCustomize = !showCustomize)}
+				>
+					{showCustomize ? 'Hide options' : 'Customize'}
+				</button>
+				<span class="meta-sep" aria-hidden="true">·</span>
+				<a class="meta-link" href="/showcases/admin/cookies">Learn more</a>
+			</div>
 
 			{#if showCustomize}
 				<div class="customize-panel">
@@ -158,12 +162,19 @@ const visible = $derived(browser && (consent.needsBanner || consent.bannerOpen))
 		flex-wrap: wrap;
 	}
 
+	.consent-meta {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-2);
+		margin-top: var(--spacing-2);
+		font-size: var(--text-fluid-xs);
+	}
+
 	.customize-toggle {
 		appearance: none;
 		background: transparent;
 		border: none;
 		padding: 0;
-		margin-top: var(--spacing-2);
 		font: inherit;
 		font-size: var(--text-fluid-xs);
 		color: var(--color-muted);
@@ -173,6 +184,21 @@ const visible = $derived(browser && (consent.needsBanner || consent.bannerOpen))
 
 	.customize-toggle:hover,
 	.customize-toggle:focus-visible {
+		color: var(--color-fg);
+	}
+
+	.meta-sep {
+		color: var(--color-muted);
+		opacity: 0.5;
+	}
+
+	.meta-link {
+		color: var(--color-muted);
+		text-decoration: underline;
+	}
+
+	.meta-link:hover,
+	.meta-link:focus-visible {
 		color: var(--color-fg);
 	}
 
