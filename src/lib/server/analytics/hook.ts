@@ -1,18 +1,27 @@
-// Dormant — see docs/blueprint/analytics/activation.md
 import type { Handle } from '@sveltejs/kit';
 import { ANALYTICS_CONSENT_COOKIE, ANALYTICS_SESSION_TIMEOUT_MS } from '$lib/server/config';
 import { recordEvent, upsertSession } from '$lib/server/db/analytics/mutations';
 import { hasConsent, hashVisitorId, parseConsentTier } from './consent';
 
+const BOT_UA_RE =
+	/bot|crawler|spider|slurp|baiduspider|facebookexternalhit|whatsapp|twitterbot|linkedinbot|googlebot|bingbot|yandexbot|duckduckbot|applebot|prerender|headless|lighthouse/i;
+
 export const analyticsCollector: Handle = async ({ event, resolve }) => {
 	const response = await resolve(event);
 
-	// Only track GET requests to pages (not API, not assets)
+	// Skip non-trackable requests: non-GET, asset paths, internal areas, prefetches, bots
+	const path = event.url.pathname;
 	if (
 		event.request.method !== 'GET' ||
-		event.url.pathname.startsWith('/api/') ||
-		event.url.pathname.startsWith('/_app/') ||
-		event.url.pathname.includes('.')
+		path.startsWith('/api/') ||
+		path.startsWith('/_app/') ||
+		path.startsWith('/admin') ||
+		path.startsWith('/app') ||
+		path.includes('.') ||
+		event.request.headers.get('sec-purpose') === 'prefetch' ||
+		event.request.headers.get('purpose') === 'prefetch' ||
+		event.request.headers.get('x-sveltekit-prefetch') !== null ||
+		BOT_UA_RE.test(event.request.headers.get('user-agent') ?? '')
 	) {
 		return response;
 	}

@@ -6,8 +6,9 @@ import { eq, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { events, sessions } from '$lib/server/db/schema/analytics';
 
-/** Record a single analytics event */
+/** Record a single analytics event. If `eventId` is supplied, insert is idempotent on it. */
 export async function recordEvent(event: {
+	eventId?: string;
 	sessionId: string;
 	visitorId: string;
 	eventType: 'pageview' | 'action' | 'error' | 'timing';
@@ -15,8 +16,10 @@ export async function recordEvent(event: {
 	referrer?: string;
 	metadata?: Record<string, unknown>;
 	consentTier?: 'necessary' | 'analytics' | 'full';
+	occurredAt?: Date;
 }) {
-	await db.insert(events).values({
+	const insert = db.insert(events).values({
+		eventId: event.eventId ?? null,
 		sessionId: event.sessionId,
 		visitorId: event.visitorId,
 		eventType: event.eventType,
@@ -24,7 +27,13 @@ export async function recordEvent(event: {
 		referrer: event.referrer ?? null,
 		metadata: event.metadata ?? null,
 		consentTier: event.consentTier ?? 'necessary',
+		...(event.occurredAt ? { timestamp: event.occurredAt } : {}),
 	});
+	if (event.eventId) {
+		await insert.onConflictDoNothing({ target: events.eventId });
+	} else {
+		await insert;
+	}
 }
 
 /** Create or update a session record */

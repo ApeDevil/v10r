@@ -235,10 +235,22 @@ export const DESK_WRITE_RATE_LIMIT_PREFIX = 'ratelimit:desk:write';
 export const DESK_WRITE_RATE_LIMIT_MAX = 30;
 export const DESK_WRITE_RATE_LIMIT_WINDOW = '60 s' as const;
 
+// ── Feedback ──────────────────────────────────────────────────────────────────
+
+/** Public feedback submission rate limit (per IP) */
+export const FEEDBACK_RATE_LIMIT_PREFIX = 'rl:feedback:submit';
+export const FEEDBACK_RATE_LIMIT_MAX = 3;
+export const FEEDBACK_RATE_LIMIT_WINDOW = '1 h' as const;
+/** Minimum form-fill time in milliseconds — submissions faster than this are silently rejected as bot traffic. */
+export const FEEDBACK_MIN_FILL_MS = 2_000;
+
 // ── Analytics ─────────────────────────────────────────────────────────────────
 
 /** Raw event retention period (days) */
-export const ANALYTICS_RETENTION_DAYS = 90;
+export const ANALYTICS_RETENTION_DAYS = 60;
+
+/** Consent record retention (days, ~13 months for GDPR Art. 7(1) demonstrability) */
+export const CONSENT_RETENTION_DAYS = 395;
 
 /** Aggregate rollup retention period (days) */
 export const ANALYTICS_AGGREGATE_RETENTION_DAYS = 365;

@@ -15,6 +15,8 @@ declare global {
 			style: import('$lib/styles/random/types').ResolvedStyle;
 			customPaletteColors?: { light: Record<string, string>; dark: Record<string, string> };
 			customPaletteAccentOffset?: number;
+			/** Analytics consent tier resolved from the v10r_consent cookie. Defaults to 'necessary'. */
+			consentTier: import('$lib/server/analytics/consent').ConsentTier;
 		}
 		interface PageData {
 			style: import('$lib/styles/random/types').ResolvedStyle;

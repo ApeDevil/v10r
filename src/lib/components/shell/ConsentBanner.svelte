@@ -43,39 +43,45 @@ const visible = $derived(browser && (consent.needsBanner || consent.bannerOpen))
 	>
 		<div class="consent-inner">
 			<div class="consent-body">
-				<p class="consent-text">
-					This site uses cookies to measure performance. Necessary cookies are always active.
-				</p>
+				<div class="consent-text">
+					<p class="consent-headline">We use cookies</p>
+					<p class="consent-blurb">
+						Some help us understand how the site is used. You choose which ones we set.
+					</p>
+				</div>
 
 				<div class="consent-actions">
 					<Button variant="outline" size="md" onclick={() => accept('necessary')}>
-						Necessary Only
-					</Button>
-					<Button variant="outline" size="md" onclick={() => accept('analytics')}>
-						Analytics Only
+						Reject all
 					</Button>
 					<Button variant="primary" size="md" onclick={() => accept('full')}>
-						Accept All
-					</Button>
-					<Button variant="ghost" size="md" onclick={() => (showCustomize = !showCustomize)}>
-						{showCustomize ? 'Hide options' : 'Customize'}
+						Accept all
 					</Button>
 				</div>
 			</div>
+
+			<button
+				type="button"
+				class="customize-toggle"
+				aria-expanded={showCustomize}
+				onclick={() => (showCustomize = !showCustomize)}
+			>
+				{showCustomize ? 'Hide options' : 'Customize'}
+			</button>
 
 			{#if showCustomize}
 				<div class="customize-panel">
 					<div class="customize-row">
 						<Switch disabled checked={true} label="Necessary" size="sm" />
-						<span class="customize-desc">Session management — always active</span>
+						<span class="customize-desc">Required for the site to work. Cannot be turned off.</span>
 					</div>
 					<div class="customize-row">
 						<Switch bind:checked={analyticsOn} label="Analytics" size="sm" />
-						<span class="customize-desc">Page views, device type, country</span>
+						<span class="customize-desc">Page views, device type, country.</span>
 					</div>
 					<div class="customize-row">
 						<Switch bind:checked={fullOn} label="Full" size="sm" />
-						<span class="customize-desc">Behavioral tracking, custom events</span>
+						<span class="customize-desc">Adds journey tracking and custom events.</span>
 					</div>
 					<Button variant="outline" size="sm" onclick={saveCustom}>
 						Save preferences
@@ -125,11 +131,24 @@ const visible = $derived(browser && (consent.needsBanner || consent.bannerOpen))
 	}
 
 	.consent-text {
-		margin: 0;
-		font-size: var(--text-fluid-sm);
-		color: var(--color-fg);
 		flex: 1;
 		min-width: 200px;
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-1);
+	}
+
+	.consent-headline {
+		margin: 0;
+		font-size: var(--text-fluid-base);
+		font-weight: 600;
+		color: var(--color-fg);
+	}
+
+	.consent-blurb {
+		margin: 0;
+		font-size: var(--text-fluid-sm);
+		color: var(--color-muted);
 	}
 
 	.consent-actions {
@@ -137,6 +156,24 @@ const visible = $derived(browser && (consent.needsBanner || consent.bannerOpen))
 		align-items: center;
 		gap: var(--spacing-3);
 		flex-wrap: wrap;
+	}
+
+	.customize-toggle {
+		appearance: none;
+		background: transparent;
+		border: none;
+		padding: 0;
+		margin-top: var(--spacing-2);
+		font: inherit;
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
+		text-decoration: underline;
+		cursor: pointer;
+	}
+
+	.customize-toggle:hover,
+	.customize-toggle:focus-visible {
+		color: var(--color-fg);
 	}
 
 	.customize-panel {

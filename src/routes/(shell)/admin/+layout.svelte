@@ -31,6 +31,7 @@ const groups = [
 		items: [
 			{ label: 'Posts', href: '/admin/content/posts', icon: 'i-lucide-file-text' },
 			{ label: 'Tags', href: '/admin/content/tags', icon: 'i-lucide-tag' },
+			{ label: 'Feedback', href: '/admin/feedback', icon: 'i-lucide-message-square' },
 		],
 	},
 	{

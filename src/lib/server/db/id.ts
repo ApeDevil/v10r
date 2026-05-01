@@ -46,6 +46,8 @@ export const createId = {
 	agentAudit: () => `aud_${shortId()}`,
 	/** Desk workspace: wsp_a8f3e1b2c4d9 */
 	workspace: () => `wsp_${shortId()}`,
+	/** Feedback submission: fbk_a8f3e1b2c4d9 */
+	feedback: () => `fbk_${shortId()}`,
 	/** Generic UUID */
 	uuid: () => crypto.randomUUID(),
 } as const;

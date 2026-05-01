@@ -9,6 +9,7 @@ import '@fontsource-variable/fraunces';
 import '@fontsource-variable/nunito';
 import { Tooltip as TooltipPrimitive } from 'bits-ui';
 import { goto } from '$app/navigation';
+import { initJourneyBeacon } from '$lib/analytics/journey-beacon';
 import favicon from '$lib/assets/favicon.svg';
 import { localizeHref } from '$lib/i18n';
 import { initKeyboardHandler, registerShortcut } from '$lib/shortcuts';
@@ -38,6 +39,11 @@ const consent = setConsentContext();
 // Sync style state when server data changes (e.g. after navigation)
 $effect(() => {
 	styleState.update(data.style);
+});
+
+// SPA-navigation analytics beacon (idempotent, no-op when consent < 'analytics' is rejected server-side)
+$effect(() => {
+	initJourneyBeacon();
 });
 
 // Keyboard shortcuts

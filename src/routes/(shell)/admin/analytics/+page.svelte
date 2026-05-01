@@ -18,8 +18,25 @@ const consentedSessions = $derived(
 );
 const consentRate = $derived(totalSessions > 0 ? Math.round((consentedSessions / totalSessions) * 100) : 0);
 
+const HOUR_MS = 60 * 60 * 1000;
+const cleanupAgeMs = $derived(
+	data.lastCleanup.startedAt ? Date.now() - new Date(data.lastCleanup.startedAt).getTime() : null,
+);
+const cleanupOverdue = $derived(cleanupAgeMs == null || cleanupAgeMs > 26 * HOUR_MS);
+
 function formatNumber(n: number): string {
 	return n.toLocaleString();
+}
+
+function formatRelativeAge(ms: number | null): string {
+	if (ms == null) return 'never';
+	const minutes = Math.round(ms / 60_000);
+	if (minutes < 1) return 'just now';
+	if (minutes < 60) return `${minutes}m ago`;
+	const hours = Math.round(minutes / 60);
+	if (hours < 48) return `${hours}h ago`;
+	const days = Math.round(hours / 24);
+	return `${days}d ago`;
 }
 
 function formatDuration(ms: number): string {
@@ -100,6 +117,19 @@ const ranges = [
 			Counts reflect consented sessions only. {consentRate}% of {formatNumber(totalSessions)} sessions have analytics consent.
 		</p>
 	{/if}
+
+	<!-- Retention cleanup status -->
+	<p class="consent-caveat">
+		<span class="i-lucide-broom caveat-icon" aria-hidden="true"></span>
+		Last cleanup: {formatRelativeAge(cleanupAgeMs)}{#if data.lastCleanup.resultCount != null}
+			· {formatNumber(data.lastCleanup.resultCount)} rows removed
+		{/if}
+		{#if cleanupOverdue}
+			<Tag variant="warning" label="Cleanup overdue" />
+		{:else if data.lastCleanup.status === 'failure'}
+			<Tag variant="error" label="Last run failed" />
+		{/if}
+	</p>
 
 	<!-- Range selector -->
 	<Card>

@@ -4,10 +4,17 @@ import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { building } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import { paraglideMiddleware } from '$lib/paraglide/server';
+import { parseConsentTier } from '$lib/server/analytics/consent';
+import { analyticsCollector } from '$lib/server/analytics/hook';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { auth } from '$lib/server/auth';
 import { getCustomPaletteById } from '$lib/server/branding/palette-crud';
-import { AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW, HSTS_MAX_AGE } from '$lib/server/config';
+import {
+	ANALYTICS_CONSENT_COOKIE,
+	AUTH_RATE_LIMIT_MAX,
+	AUTH_RATE_LIMIT_WINDOW,
+	HSTS_MAX_AGE,
+} from '$lib/server/config';
 import { logFeatureStatus } from '$lib/server/features';
 import { getBrandConfig } from '$lib/server/style/brand';
 import {
@@ -267,13 +274,23 @@ const csrfProtection: Handle = async ({ event, resolve }) => {
 		path.startsWith('/api/') &&
 		!path.startsWith('/api/auth/') &&
 		!path.startsWith('/api/cron/') &&
-		!path.startsWith('/api/telegram/')
+		!path.startsWith('/api/telegram/') &&
+		!path.startsWith('/api/v1/journey')
 	) {
 		if (!event.request.headers.get('x-requested-with')) {
 			return json({ error: 'Forbidden' }, { status: 403 });
 		}
 	}
 
+	return resolve(event);
+};
+
+/**
+ * 6b. Consent loader — populate event.locals.consentTier from cookie. Defaults to
+ *     'necessary'. Lives before routeGuard so admin pages also have a consistent value.
+ */
+const consentLoader: Handle = async ({ event, resolve }) => {
+	event.locals.consentTier = parseConsentTier(event.cookies.get(ANALYTICS_CONSENT_COOKIE));
 	return resolve(event);
 };
 
@@ -308,7 +325,9 @@ export const handle = sequence(
 	authHandler,
 	sessionPopulate,
 	csrfProtection,
+	consentLoader,
 	routeGuard,
+	analyticsCollector,
 );
 
 export const handleError: HandleServerError = ({ error, event, status, message }) => {
