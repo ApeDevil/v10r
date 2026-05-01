@@ -60,6 +60,7 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
 };
 
 // Strip control characters before sanitisation to close the historical control-char-in-href bypass class.
+// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional — this regex strips control characters before HTML sanitisation
 const CONTROL_CHARS_RE = /[\u0000-\u001F\u007F]/g;
 
 /** Parse markdown to sanitized HTML. Sync, safe for chat rendering. SSR-compatible. */

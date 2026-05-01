@@ -335,12 +335,7 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	// user message, and prepare a context block for the system prompt. Returns null on
 	// any failed lookup/ownership/status check (resume turns silently degrade to a normal
 	// turn rather than 500ing the user mid-flow).
-	const resumeContext = await resolveResumeContext(
-		userId,
-		resumeFromProposalId,
-		existingConvId,
-		windowedMessages,
-	);
+	const resumeContext = await resolveResumeContext(userId, resumeFromProposalId, existingConvId, windowedMessages);
 
 	// Convert to ModelMessages for streamText compatibility.
 	// Legacy {role, content} messages are wrapped as UIMessages with text parts first.

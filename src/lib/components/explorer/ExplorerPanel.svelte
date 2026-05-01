@@ -7,10 +7,6 @@ import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import { Button, Spinner } from '$lib/components/primitives';
 import { dataRootNode } from './adapters';
 import type { ContextMenuCallbacks } from './context-menu-items';
-import {
-	registerExplorerAiContext,
-	updateExplorerAiContext,
-} from './explorer-ai-context';
 import ExplorerBreadcrumb from './ExplorerBreadcrumb.svelte';
 import ExplorerPreview from './ExplorerPreview.svelte';
 import ExplorerTree from './ExplorerTree.svelte';
@@ -24,6 +20,7 @@ import {
 	dispatchRename,
 	dispatchToggleAiContext,
 } from './explorer-actions';
+import { registerExplorerAiContext, updateExplorerAiContext } from './explorer-ai-context';
 import { ExplorerData } from './explorer-data.svelte';
 import { ExplorerState } from './explorer-state.svelte';
 import { ExplorerUploads } from './explorer-uploads.svelte';

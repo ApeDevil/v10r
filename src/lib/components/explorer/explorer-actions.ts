@@ -266,7 +266,7 @@ const RENAME_ROUTES: Partial<Record<NodeSource, RenameSpec>> = {
  * so this dispatcher just sends it. On failure, refreshes from server to revert
  * the optimistic update.
  */
-export async function dispatchRename(state: ExplorerState, node: ExplorerNode, ctx: ActionContext): Promise<void> {
+export async function dispatchRename(_state: ExplorerState, node: ExplorerNode, ctx: ActionContext): Promise<void> {
 	const spec = RENAME_ROUTES[node.source];
 	if (!spec) return;
 
@@ -307,7 +307,7 @@ const LEAF_DELETE_ROUTES: Partial<Record<NodeSource, LeafDeleteSpec>> = {
  * machine. Caller is responsible for clearing any UI selection (e.g. the asset
  * preview) before invoking.
  */
-export async function dispatchDeleteLeaf(state: ExplorerState, node: ExplorerNode, ctx: ActionContext): Promise<void> {
+export async function dispatchDeleteLeaf(_state: ExplorerState, node: ExplorerNode, ctx: ActionContext): Promise<void> {
 	const spec = LEAF_DELETE_ROUTES[node.source];
 	if (!spec) return;
 
@@ -431,7 +431,7 @@ export async function dispatchNewFolder(state: ExplorerState, node: ExplorerNode
  * the dock — keeps DOM/dock concerns out of this module.
  */
 export async function dispatchNewSpreadsheet(
-	state: ExplorerState,
+	_state: ExplorerState,
 	node: ExplorerNode,
 	ctx: ActionContext,
 	onCreated: (file: FileListItem) => void,
