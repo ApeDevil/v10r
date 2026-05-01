@@ -1,4 +1,5 @@
 import type { Handle } from '@sveltejs/kit';
+import { building } from '$app/environment';
 import { ANALYTICS_CONSENT_COOKIE, ANALYTICS_SESSION_TIMEOUT_MS } from '$lib/server/config';
 import { recordEvent, upsertSession } from '$lib/server/db/analytics/mutations';
 import { type ConsentTier, hasConsent, hashVisitorId, parseConsentTier } from './consent';
@@ -16,6 +17,7 @@ interface TrackContext {
 export const analyticsCollector: Handle = async ({ event, resolve }) => {
 	const path = event.url.pathname;
 	const shouldTrack =
+		!building &&
 		event.request.method === 'GET' &&
 		!path.startsWith('/api/') &&
 		!path.startsWith('/_app/') &&
