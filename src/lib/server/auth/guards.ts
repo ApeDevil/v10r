@@ -2,9 +2,10 @@ import { error, redirect } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { apiError } from '$lib/server/api/response';
 
-export function requireAuth(locals: App.Locals) {
+export function requireAuth(locals: App.Locals, returnTo?: string) {
 	if (!locals.user || !locals.session) {
-		redirect(303, '/auth/login');
+		const target = returnTo ? `/auth/login?returnTo=${encodeURIComponent(returnTo)}` : '/auth/login';
+		redirect(303, target);
 	}
 	return { user: locals.user, session: locals.session };
 }
@@ -17,8 +18,8 @@ export function requireApiUser(locals: App.Locals) {
 	return { user: locals.user, session: locals.session };
 }
 
-export function requireAdmin(locals: App.Locals) {
-	const { user, session } = requireAuth(locals);
+export function requireAdmin(locals: App.Locals, returnTo?: string) {
+	const { user, session } = requireAuth(locals, returnTo);
 	const adminEmail = env.ADMIN_EMAIL;
 	if (!adminEmail || user.email.toLowerCase() !== adminEmail.toLowerCase()) {
 		error(404, 'Not Found');

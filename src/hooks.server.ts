@@ -1,4 +1,4 @@
-import { error, type Handle, type HandleServerError, json, redirect } from '@sveltejs/kit';
+import { error, type Handle, type HandleServerError, json } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { building } from '$app/environment';
@@ -326,30 +326,13 @@ const debugOwnerLoader: Handle = async ({ event, resolve }) => {
 };
 
 /**
- * 7. Route guard — protect /app/* and /admin/* routes; hide (dev) routes outside dev.
+ * 7. Dev route guard — hide (dev) routes outside dev.
+ * Member and admin auth gates live in (member)/+layout.server.ts and (admin)/+layout.server.ts.
  */
-const routeGuard: Handle = async ({ event, resolve }) => {
-	const path = event.url.pathname;
-
+const devRouteGuard: Handle = async ({ event, resolve }) => {
 	if (!import.meta.env.DEV && event.route.id?.startsWith('/(dev)/')) {
 		error(404, 'Not Found');
 	}
-
-	if (path.startsWith('/app') || path.startsWith('/admin')) {
-		if (!event.locals.user) {
-			const returnTo = encodeURIComponent(path + event.url.search);
-			redirect(303, `/auth/login?returnTo=${returnTo}`);
-		}
-
-		// Admin routes require admin privileges — return 404 to hide existence
-		if (path.startsWith('/admin')) {
-			const adminEmail = env.ADMIN_EMAIL;
-			if (!adminEmail || event.locals.user.email.toLowerCase() !== adminEmail.toLowerCase()) {
-				error(404, 'Not Found');
-			}
-		}
-	}
-
 	return resolve(event);
 };
 
@@ -362,7 +345,7 @@ export const handle = sequence(
 	csrfProtection,
 	consentLoader,
 	debugOwnerLoader,
-	routeGuard,
+	devRouteGuard,
 	analyticsCollector,
 );
 
