@@ -6,7 +6,6 @@ import { Cluster, Stack } from '$lib/components/layout';
 import { Avatar, Button, Input, Select, Slider, Spinner, Switch, ToggleGroup } from '$lib/components/primitives';
 import { userSettingsSchema } from '$lib/schemas/app/settings';
 import { getSidebar } from '$lib/state/sidebar.svelte';
-import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
 

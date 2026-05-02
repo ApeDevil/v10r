@@ -6,7 +6,6 @@ import { Card, ConfirmDialog, EmptyState, Pagination } from '$lib/components/com
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
 import { getToast } from '$lib/state/toast.svelte';
-import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
 const toast = getToast();

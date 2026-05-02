@@ -3,11 +3,11 @@ import { getUnreadCount } from '$lib/server/db/notifications/queries';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, url, depends }) => {
-	requireAuth(locals, url.pathname + url.search);
+	const { user } = requireAuth(locals, url.pathname + url.search);
 	depends('app:notifications');
 
 	return {
-		user: locals.user!,
-		unreadCount: await getUnreadCount(locals.user!.id),
+		user,
+		unreadCount: await getUnreadCount(user.id),
 	};
 };

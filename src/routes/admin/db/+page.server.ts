@@ -9,7 +9,6 @@ import type { Actions, PageServerLoad } from './$types';
 function settledToResult<T>(result: PromiseSettledResult<ProviderResult<T>>): ProviderResult<T> {
 	if (result.status === 'fulfilled') return result.value;
 	return {
-		title: 'DB Observation - Admin',
 		status: 'unavailable',
 		data: null,
 		error: result.reason instanceof Error ? result.reason.message : 'Unknown error',
@@ -25,6 +24,7 @@ export const load: PageServerLoad = async ({ depends, locals }) => {
 	const [upstashResult, r2Result] = await Promise.allSettled([fetchUpstashMetrics(), fetchR2Metrics()]);
 
 	return {
+		title: 'DB Observation',
 		neon: fetchNeonMetrics(),
 		neo4j: fetchNeo4jMetrics(),
 		upstash: settledToResult(upstashResult),

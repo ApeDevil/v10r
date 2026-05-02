@@ -16,7 +16,6 @@ import {
 	Tag,
 } from '$lib/components/primitives';
 import type { ProviderResult, ThresholdLevel } from '$lib/server/monitoring';
-import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
 

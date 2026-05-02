@@ -4,7 +4,6 @@ import { page } from '$app/state';
 import { Card, EmptyState } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Select } from '$lib/components/primitives';
-import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
 

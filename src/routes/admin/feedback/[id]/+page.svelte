@@ -5,20 +5,19 @@ import { BackLink, Card, ConfirmDialog } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Button, Tag } from '$lib/components/primitives';
 import { formatRelative } from '$lib/i18n/formatting';
-import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
 
 let confirmDeleteOpen = $state(false);
 
 function statusVariant(status: string) {
-	if (status === 'new') return 'info' as const;
-	if (status === 'read') return 'default' as const;
-	return 'muted' as const;
+	if (status === 'new') return 'default' as const;
+	if (status === 'read') return 'success' as const;
+	return 'secondary' as const;
 }
 </script>
 <Stack gap="6">
-	<BackLink href="/admin/feedback">Back to feedback</BackLink>
+	<BackLink href="/admin/feedback" label="feedback" />
 
 	<header class="detail-header">
 		<div>
@@ -93,14 +92,15 @@ function statusVariant(status: string) {
 		title="Delete this feedback?"
 		description="This permanently removes the message. There's no undo."
 		confirmLabel="Delete"
-		variant="destructive"
-		onConfirm={async () => {
+		destructive
+		onconfirm={async () => {
 			const res = await fetch(`/admin/feedback/${data.item.id}?/delete`, {
 				method: 'POST',
 				headers: { 'x-requested-with': 'fetch' },
 			});
 			if (res.ok) goto('/admin/feedback');
 		}}
+		oncancel={() => (confirmDeleteOpen = false)}
 	/>
 </Stack>
 

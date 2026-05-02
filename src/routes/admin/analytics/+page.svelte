@@ -6,7 +6,6 @@ import { Alert, Card, DiagGrid, DiagRow, EmptyState } from '$lib/components/comp
 import { Cluster, Stack } from '$lib/components/layout';
 import { Button, Skeleton, Tag } from '$lib/components/primitives';
 import LineChart from '$lib/components/viz/chart/line/LineChart.svelte';
-import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
 let pairedActive = $state(data.pairedActive);

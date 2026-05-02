@@ -30,7 +30,7 @@ async function getLastCleanupStatus(): Promise<{
 		.limit(1);
 
 	const row = rows[0];
-	if (!row) return { title: 'Analytics - Admin', startedAt: null, status: null, resultCount: null };
+	if (!row) return { startedAt: null, status: null, resultCount: null };
 	return { startedAt: row.startedAt, status: row.status, resultCount: row.resultCount };
 }
 
@@ -57,6 +57,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		]);
 
 	return {
+		title: 'Analytics',
 		range,
 		overview,
 		consentSplit,

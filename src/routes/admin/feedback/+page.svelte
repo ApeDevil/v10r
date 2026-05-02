@@ -4,7 +4,6 @@ import { Card } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Button, Tag } from '$lib/components/primitives';
 import { formatRelative } from '$lib/i18n/formatting';
-import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
 
@@ -20,9 +19,9 @@ const statusFilters: Array<{
 ];
 
 function statusTagVariant(status: string) {
-	if (status === 'new') return 'info' as const;
-	if (status === 'read') return 'default' as const;
-	return 'muted' as const;
+	if (status === 'new') return 'default' as const;
+	if (status === 'read') return 'success' as const;
+	return 'secondary' as const;
 }
 </script>
 <Stack gap="6">

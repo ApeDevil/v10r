@@ -89,7 +89,7 @@ export const actions: Actions = {
 
 	removeAvatar: async ({ locals }) => {
 		if (!locals.user) redirect(303, '/auth/login');
-		await removeAvatar(locals.user.id, locals.user.image);
+		await removeAvatar(locals.user.id, locals.user.image ?? null);
 		return { avatarUrl: null };
 	},
 };

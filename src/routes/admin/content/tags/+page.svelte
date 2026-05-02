@@ -20,7 +20,6 @@ import {
 	Textarea,
 } from '$lib/components/primitives';
 import { getToast } from '$lib/state/toast.svelte';
-import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
 const toast = getToast();

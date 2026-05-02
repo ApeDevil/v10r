@@ -14,7 +14,6 @@ import { brandSettingsSchema } from '$lib/schemas/app/branding';
 import { getTheme } from '$lib/state/theme.svelte';
 import { getPalette } from '$lib/styles/random/palette-registry';
 import type { PaletteColors, PaletteId } from '$lib/styles/random/types';
-import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
 const theme = getTheme();

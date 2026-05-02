@@ -6,7 +6,6 @@ import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Skeleton, Spinner, Tag, Textarea } from '$lib/components/primitives';
 import AnnouncementBanner from '$lib/components/shell/AnnouncementBanner.svelte';
 import { getToast } from '$lib/state/toast.svelte';
-import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
 const toast = getToast();
