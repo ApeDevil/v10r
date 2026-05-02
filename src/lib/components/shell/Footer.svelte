@@ -17,7 +17,6 @@ const consent = getConsent();
 		</div>
 		<nav class="flex gap-6 flex-wrap">
 			<a href={localizeHref('/about')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">About</a>
-			<a href={localizeHref('/privacy')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">Privacy</a>
 			<a href={localizeHref('/terms')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">Terms</a>
 			<button onclick={() => consent.reopenBanner()} class="text-muted text-sm cursor-pointer bg-transparent border-none p-0 transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">Cookie preferences</button>
 		</nav>
