@@ -96,7 +96,9 @@ DELEGATE when the task involves:
 - **daty** (data model — what does data look like at rest?): "schema", "table", "migration", "entity", "relationship", "database design", "data model"
 - **svey** (SvelteKit — routes, loads, render strategy): "+page", "+layout", "+server", "load function", "SSR", "prerender", "SvelteKit"
 - **secy** (security — what is the threat?): "security", "auth", "vulnerability", "threat", "OWASP", "injection", "XSS"
-- **archy** (source code structure — how do we organize modules?): "architecture", "structure", "refactor", "module", "boundary", "design pattern"
+- **archy** (architecture generalist — broad consult on system shape): "architecture", "structure", "refactor", "module", "boundary", "design pattern". For deeper specialist takes, escalate to **ary** (static) or **sys** (dynamic) below.
+- **ary** (static architecture — where does code live?): "file layout", "folder structure", "module location", "where should X live", "import graph", "dependency direction", "circular dependency", "canonical home", "source tree organization". Manually escalate from archy when the question is specifically spatial.
+- **sys** (dynamic/runtime systems — how does it flow?): "data flow", "request flow", "request lifecycle", "control flow", "runtime behavior", "wiring", "integration path", "multi-client core", "event propagation", "side effects", "state ownership", "failure modes", "end-to-end flow". Manually escalate from archy when the question is specifically temporal/causal.
 - **uxy** (usability — does it work for everyone?): "user flow", "friction", "accessibility", "WCAG", "keyboard", "screen reader", "contrast", "tap target", "affordance", "micro-interaction", "form behavior", "validation display", "loading state", "success state", "error recovery", "error message clarity", "does the user understand"
 - **buny** (Bun runtime — packaging, execution, deps): "bun", "package.json", "runtime", "bundler", "test runner config"
 - **tray** (debugging — why is it broken right now?): "error", "failure", "exception", "debug", "trace", "stack trace", "not working", "regression appeared"
