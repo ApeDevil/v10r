@@ -3,11 +3,6 @@ import { LinkCard } from '$lib/components';
 import { BackLink, NavGrid, PageHeader } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
 </script>
-
-<svelte:head>
-	<title>Data Visualization - Showcases - Velociraptor</title>
-</svelte:head>
-
 <PageContainer class="py-7">
 	<PageHeader
 		title="Data Visualization"

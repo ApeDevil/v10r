@@ -53,11 +53,6 @@ function checkUsername() {
 	}, 400);
 }
 </script>
-
-<svelte:head>
-	<title>Async - Validation - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<Card>
 		{#snippet header()}

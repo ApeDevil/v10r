@@ -5,7 +5,7 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
 	const form = await superValidate({ rating: 3, comment: '', recommend: false }, valibot(feedbackSchema));
-	return { form };
+	return { title: 'Reset - Advanced - Showcases', form };
 };
 
 export const actions: Actions = {

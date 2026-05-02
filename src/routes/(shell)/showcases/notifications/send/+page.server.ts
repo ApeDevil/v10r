@@ -17,6 +17,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) redirect(303, '/auth/login');
 
 	return {
+		title: 'Send - Notifications - Showcases',
 		userId: locals.user.id,
 		userName: locals.user.name,
 		notificationTypes: VALID_TYPES,

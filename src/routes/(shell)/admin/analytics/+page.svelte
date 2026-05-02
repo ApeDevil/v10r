@@ -77,11 +77,6 @@ const ranges = [
 	{ value: '90', label: '90d' },
 ];
 </script>
-
-<svelte:head>
-	<title>Analytics - Admin - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<!-- Headline Stats -->
 	<div class="stat-grid">

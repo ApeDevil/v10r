@@ -79,11 +79,6 @@ const rights: Right[] = [
 	},
 ];
 </script>
-
-<svelte:head>
-	<title>Your rights — Admin & Privacy</title>
-</svelte:head>
-
 <div class="rights">
 	<header class="lede">
 		<h2>Eight rights, one inbox.</h2>

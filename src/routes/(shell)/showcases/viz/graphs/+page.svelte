@@ -421,11 +421,6 @@ function flattenTree(
 	return result;
 }
 </script>
-
-<svelte:head>
-	<title>Graphs - Viz Showcase - Velociraptor</title>
-</svelte:head>
-
 <div class="page">
 	<PageHeader
 		title="Graphs"

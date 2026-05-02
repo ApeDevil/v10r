@@ -27,7 +27,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		valibot(userSettingsSchema),
 	);
 
-	return { form, avatarUrl: locals.user.image };
+	return { title: 'Settings', form, avatarUrl: locals.user.image };
 };
 
 export const actions: Actions = {

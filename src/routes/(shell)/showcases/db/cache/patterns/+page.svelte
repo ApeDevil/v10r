@@ -99,11 +99,6 @@ const typeBadgeVariant = (type: string) => {
 	return map[type] ?? 'secondary';
 };
 </script>
-
-<svelte:head>
-	<title>Patterns - Cache - Showcases - Velociraptor</title>
-</svelte:head>
-
 {#if data.error}
 		<Alert variant="error" title="Cache Error">
 			<code>{data.error}</code>

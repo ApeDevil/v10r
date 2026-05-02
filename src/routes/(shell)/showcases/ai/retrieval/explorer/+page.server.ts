@@ -2,5 +2,5 @@ import { aiConfigured } from '$lib/server/ai';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	return { configured: aiConfigured };
+	return { title: 'Graph Explorer - Retrieval - AI - Showcases', configured: aiConfigured };
 };

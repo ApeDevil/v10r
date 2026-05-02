@@ -87,11 +87,6 @@ function jobOverdue(ts: string | Date | null, hoursThreshold: number): boolean {
 	return Date.now() - date.getTime() > hoursThreshold * 3_600_000;
 }
 </script>
-
-<svelte:head>
-	<title>Retention — Admin & Privacy</title>
-</svelte:head>
-
 <div class="retention">
 	<header class="lede">
 		<h2>Storage limitation, made enforceable.</h2>

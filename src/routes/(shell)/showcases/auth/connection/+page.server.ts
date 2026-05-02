@@ -11,6 +11,7 @@ async function measureAuth(headers: Headers) {
 		const latencyMs = Math.round((performance.now() - start) * 100) / 100;
 
 		return {
+			title: 'Connection - Auth - Showcases',
 			reachable: true,
 			latencyMs,
 			authenticated: !!session?.user,

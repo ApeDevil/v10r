@@ -20,6 +20,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	const [overview, errorDocs] = await Promise.all([getRAGOverviewStats(), getErrorDocuments()]);
 
 	return {
+		title: 'RAG Management',
 		overview,
 		errorDocs,
 		filters: { status, page },

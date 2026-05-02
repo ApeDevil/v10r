@@ -33,11 +33,6 @@ const verticalPanes: PaneDefinition[] = [
 	{ id: 'terminal', label: 'Terminal', defaultSize: 40, minSize: 20 },
 ];
 </script>
-
-<svelte:head>
-	<title>Reorderable Splits - UI Showcase - Velociraptor</title>
-</svelte:head>
-
 <main class="content">
 	<!-- Basic Reorderable -->
 	<section>

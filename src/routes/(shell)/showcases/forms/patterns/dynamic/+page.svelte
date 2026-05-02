@@ -22,11 +22,6 @@ const {
 	dataType: 'json',
 });
 </script>
-
-<svelte:head>
-	<title>Dynamic - Patterns - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<Card>
 		{#snippet header()}

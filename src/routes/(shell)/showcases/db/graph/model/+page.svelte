@@ -59,11 +59,6 @@ function handleActionResult() {
 	};
 }
 </script>
-
-<svelte:head>
-	<title>Model - Graph - Showcases - Velociraptor</title>
-</svelte:head>
-
 {#if data.error}
 		<Alert variant="error" title="Database Error">
 			<code>{data.error}</code>

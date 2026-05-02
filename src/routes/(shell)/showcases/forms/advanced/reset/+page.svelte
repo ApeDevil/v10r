@@ -24,11 +24,6 @@ const {
 
 const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
 </script>
-
-<svelte:head>
-	<title>Reset - Advanced - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<Card>
 		{#snippet header()}

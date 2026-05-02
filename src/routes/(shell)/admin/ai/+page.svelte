@@ -23,11 +23,6 @@ function limitBadgeVariant(pct: number): 'success' | 'warning' | 'error' {
 	return 'success';
 }
 </script>
-
-<svelte:head>
-	<title>AI Usage - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<!-- Overview Stats -->
 	<Card>

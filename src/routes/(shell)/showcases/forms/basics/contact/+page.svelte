@@ -21,11 +21,6 @@ const {
 	validators: valibotClient(contactSchema),
 });
 </script>
-
-<svelte:head>
-	<title>Contact - Basics - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<Card>
 		{#snippet header()}

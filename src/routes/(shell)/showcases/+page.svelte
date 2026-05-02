@@ -4,11 +4,6 @@ import { BackLink, NavGrid, PageHeader } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
 import { showcases } from './showcases';
 </script>
-
-<svelte:head>
-	<title>Showcases - Velociraptor</title>
-</svelte:head>
-
 <PageContainer width="wide" class="pt-7">
 	<PageHeader
 		title="Showcases"

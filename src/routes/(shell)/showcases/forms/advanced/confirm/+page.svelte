@@ -36,11 +36,6 @@ function handleCancel() {
 	showConfirm = false;
 }
 </script>
-
-<svelte:head>
-	<title>Confirm - Advanced - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<Card>
 		{#snippet header()}

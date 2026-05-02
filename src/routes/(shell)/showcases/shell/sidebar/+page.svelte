@@ -4,11 +4,6 @@ import { getSidebar } from '$lib/state/sidebar.svelte';
 
 const sidebar = getSidebar();
 </script>
-
-<svelte:head>
-	<title>Sidebar - Shell - Showcases - Velociraptor</title>
-</svelte:head>
-
 <section class="demo-section">
 	<h2>Sidebar State</h2>
 	<dl class="state-list">

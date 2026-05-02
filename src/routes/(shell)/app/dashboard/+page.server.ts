@@ -17,6 +17,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		.where(eq(account.userId, locals.user.id));
 
 	return {
+		title: 'Dashboard',
 		user: locals.user,
 		accounts: accounts.map((a) => ({
 			provider: a.providerId,

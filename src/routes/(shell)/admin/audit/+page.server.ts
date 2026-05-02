@@ -18,6 +18,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	]);
 
 	return {
+		title: 'Audit Log',
 		entries: result.entries,
 		page: result.page,
 		totalPages: result.totalPages,

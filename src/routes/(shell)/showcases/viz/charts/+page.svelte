@@ -375,11 +375,6 @@ const treemapNested: TreemapNode = {
 	],
 };
 </script>
-
-<svelte:head>
-	<title>Charts - Viz Showcase - Velociraptor</title>
-</svelte:head>
-
 <div class="page">
 	<PageHeader
 		title="Charts"

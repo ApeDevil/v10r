@@ -83,11 +83,6 @@ function resetComposeForm() {
 	composeEndsAt = '';
 }
 </script>
-
-<svelte:head>
-	<title>Notifications - Admin - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 
 	<!-- ═══ Section 1: Channel Health ═══════════════════════════════════════════ -->

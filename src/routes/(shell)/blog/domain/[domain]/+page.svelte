@@ -5,11 +5,6 @@ import { PageContainer, Stack } from '$lib/components/layout';
 
 let { data } = $props();
 </script>
-
-<svelte:head>
-	<title>{data.domainName} - Blog - Velociraptor</title>
-</svelte:head>
-
 <PageContainer width="wide" class="pt-7 pb-8">
 	<Stack class="gap-7">
 		<PageHeader

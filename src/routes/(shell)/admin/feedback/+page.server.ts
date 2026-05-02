@@ -16,7 +16,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 
 	const [list, counts] = await Promise.all([listFeedback({ status, limit: 50, offset }), getFeedbackCounts()]);
 
-	return { ...list, status, counts };
+	return { title: 'Feedback · Admin', ...list, status, counts };
 };
 
 export const actions: Actions = {

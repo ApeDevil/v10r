@@ -84,16 +84,10 @@ async function handleOAuth(provider: 'github' | 'google' | 'microsoft') {
 	}
 }
 </script>
-
-<svelte:head>
-	<title>Sign In - Velociraptor</title>
-</svelte:head>
-
 <div class="login-page">
 	<div class="login-card">
 		<div class="login-header">
-			<span class="i-lucide-zap text-4xl text-primary" aria-hidden="true"></span>
-			<h1 class="text-2xl font-bold text-fg">Welcome to Velociraptor</h1>
+			<h1 class="text-2xl font-bold text-fg">Welcome to V10r</h1>
 			<p class="text-sm text-muted">Sign in to access your dashboard</p>
 		</div>
 

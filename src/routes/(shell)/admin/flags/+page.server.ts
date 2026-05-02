@@ -8,7 +8,7 @@ import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ locals }) => {
 	requireAdmin(locals);
 	const flags = await getAllFlags();
-	return { flags };
+	return { title: 'Feature Flags', flags };
 };
 
 export const actions: Actions = {

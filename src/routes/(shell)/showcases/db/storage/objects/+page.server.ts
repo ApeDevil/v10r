@@ -12,6 +12,7 @@ export const load: PageServerLoad = async () => {
 		const queryMs = Math.round((performance.now() - start) * 100) / 100;
 
 		return {
+			title: 'Objects - Storage - Showcases',
 			objects: objects.map((o) => ({
 				...o,
 				sizeFormatted: formatBytes(o.size),

@@ -96,11 +96,6 @@ const ghostIcons = [
 	'i-lucide-sparkles',
 ];
 </script>
-
-<svelte:head>
-	<title>Velociraptor — v10r</title>
-</svelte:head>
-
 <!-- ACT I: Hero -->
 <section class="hero" class:hero-revealed={revealed}>
 	<div class="hero-grid">

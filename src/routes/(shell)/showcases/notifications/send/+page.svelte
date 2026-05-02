@@ -40,11 +40,6 @@ function flashCustomSent() {
 	}, 2000);
 }
 </script>
-
-<svelte:head>
-	<title>Send - Notifications - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<!-- Quick Fire -->
 	<Card>

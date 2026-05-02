@@ -3,11 +3,6 @@ import { LinkCard } from '$lib/components';
 import { BackLink, PageHeader } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
 </script>
-
-<svelte:head>
-	<title>Docs — Velociraptor</title>
-</svelte:head>
-
 <PageContainer width="wide" class="pt-7">
 	<PageHeader
 		title="Documentation"

@@ -59,11 +59,6 @@ function submitDelete() {
 
 const statusFilters = ['all', 'pending', 'processing', 'ready', 'error'] as const;
 </script>
-
-<svelte:head>
-	<title>RAG Management - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<!-- Overview -->
 	<Card>

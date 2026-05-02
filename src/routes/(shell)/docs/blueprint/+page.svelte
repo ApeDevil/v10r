@@ -5,11 +5,6 @@ import { PageContainer } from '$lib/components/layout';
 
 let { data } = $props();
 </script>
-
-<svelte:head>
-	<title>Blueprint — Docs — Velociraptor</title>
-</svelte:head>
-
 <PageContainer width="wide" class="pt-7">
 	<PageHeader
 		title="Blueprint"

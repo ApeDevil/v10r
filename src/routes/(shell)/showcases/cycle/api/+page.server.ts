@@ -12,6 +12,11 @@ export const actions: Actions = {
 
 		const result = await executeCycle({ label, simulateError }, 'api');
 
-		return { trace: result.trace, success: result.success, error: result.error };
+		return {
+			title: 'API Cycle - Request Cycle - Showcases',
+			trace: result.trace,
+			success: result.success,
+			error: result.error,
+		};
 	},
 };

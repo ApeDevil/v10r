@@ -47,6 +47,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	return {
+		title: 'Channels - Notifications - Showcases',
 		providers,
 		userChannels,
 		config: {

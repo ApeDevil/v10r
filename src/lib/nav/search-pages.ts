@@ -107,7 +107,7 @@ function buildSearchPages(): SearchPageDescriptor[] {
 
 	// 3. Manual entries for non-registry pages
 	const manual: Omit<SearchPageDescriptor, 'id'>[] = [
-		{ label: 'Sign In', icon: 'i-lucide-key', href: '/auth/login' },
+		{ label: 'Log In', icon: 'i-lucide-key', href: '/auth/login' },
 		{ label: 'Jobs', icon: 'i-lucide-clock', href: '/showcases/jobs' },
 		{ label: 'Notification Settings', icon: 'i-lucide-bell', href: '/app/notifications/settings' },
 	];

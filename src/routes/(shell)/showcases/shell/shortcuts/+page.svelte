@@ -3,11 +3,6 @@ import { formatShortcut, getShortcutsByCategory } from '$lib/shortcuts';
 
 const shortcuts = $derived(getShortcutsByCategory());
 </script>
-
-<svelte:head>
-	<title>Shortcuts - Shell - Showcases - Velociraptor</title>
-</svelte:head>
-
 <section class="demo-section">
 	<h2>Keyboard Shortcuts</h2>
 	<p>

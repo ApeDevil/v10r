@@ -93,11 +93,6 @@ $effect(() => {
 	}
 });
 </script>
-
-<svelte:head>
-	<title>Objects - Storage - Showcases - Velociraptor</title>
-</svelte:head>
-
 {#if data.error}
 		<Alert variant="error" title="Error" description={data.error} />
 	{:else}

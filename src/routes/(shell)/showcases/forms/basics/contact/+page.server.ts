@@ -5,7 +5,7 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
 	const form = await superValidate(valibot(contactSchema));
-	return { form };
+	return { title: 'Contact - Basics - Showcases', form };
 };
 
 export const actions: Actions = {

@@ -240,11 +240,6 @@ function handleDeleteDomainEnhance() {
 	};
 }
 </script>
-
-<svelte:head>
-	<title>Tags & Domains - Velociraptor</title>
-</svelte:head>
-
 <!-- Hidden delete forms with proper enhance -->
 <form
 	bind:this={deleteTagFormEl}

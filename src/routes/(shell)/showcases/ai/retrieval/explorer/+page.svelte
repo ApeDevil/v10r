@@ -242,11 +242,6 @@ function handleKeydown(e: KeyboardEvent) {
 	}
 }
 </script>
-
-<svelte:head>
-	<title>Graph Explorer - Retrieval - AI - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	{#if !data.configured}
 		<Alert variant="info" title="AI Not Configured">

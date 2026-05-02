@@ -9,6 +9,7 @@ import type { Actions, PageServerLoad } from './$types';
 function settledToResult<T>(result: PromiseSettledResult<ProviderResult<T>>): ProviderResult<T> {
 	if (result.status === 'fulfilled') return result.value;
 	return {
+		title: 'DB Observation - Admin',
 		status: 'unavailable',
 		data: null,
 		error: result.reason instanceof Error ? result.reason.message : 'Unknown error',

@@ -15,7 +15,7 @@ export const load: PageServerLoad = async () => {
 
 		const queryMs = Math.round((performance.now() - start) * 100) / 100;
 
-		return { labels, relTypes, graphData, queryMs };
+		return { title: 'Model - Graph - Showcases', labels, relTypes, graphData, queryMs };
 	} catch (err) {
 		return {
 			labels: [],

@@ -95,11 +95,6 @@ const activityBarItems: ActivityBarItem[] = [
 	{ panelType: 'preview', icon: 'i-lucide-eye', label: 'Preview' },
 ];
 </script>
-
-<svelte:head>
-	<title>Workbench - UI Showcase - Velociraptor</title>
-</svelte:head>
-
 <main class="content">
 	<section>
 		<h2 class="text-fluid-2xl font-bold mb-fluid-3">Interactive Dock</h2>

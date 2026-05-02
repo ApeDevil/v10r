@@ -11,7 +11,7 @@ const mockItems = [
 
 export const load: PageServerLoad = async () => {
 	const form = await superValidate(valibot(confirmSchema));
-	return { form, items: mockItems };
+	return { title: 'Confirm - Advanced - Showcases', form, items: mockItems };
 };
 
 export const actions: Actions = {

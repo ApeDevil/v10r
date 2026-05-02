@@ -5,7 +5,7 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
 	const form = await superValidate({ title: '', tags: [] as string[] }, valibot(dynamicSchema));
-	return { form };
+	return { title: 'Dynamic - Patterns - Showcases', form };
 };
 
 export const actions: Actions = {

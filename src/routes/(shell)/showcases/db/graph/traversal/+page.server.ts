@@ -15,7 +15,7 @@ const WRITE_PATTERN = /\b(CREATE|MERGE|SET|DELETE|DETACH|REMOVE|DROP|CALL\s+\{)\
 export const load: PageServerLoad = async () => {
 	try {
 		const nodes = await getAllNodes();
-		return { nodes };
+		return { title: 'Traversal - Graph - Showcases', nodes };
 	} catch (err) {
 		return {
 			nodes: [],

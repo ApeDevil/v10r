@@ -12,11 +12,6 @@ const sections = [
 	{ id: 'auth-insignia', label: 'Insignia' },
 ];
 </script>
-
-<svelte:head>
-	<title>Auth - Forms - Showcases - Velociraptor</title>
-</svelte:head>
-
 <NavSection {sections} />
 
 <main class="content">

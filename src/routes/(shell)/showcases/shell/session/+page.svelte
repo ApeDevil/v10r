@@ -27,11 +27,6 @@ function resetSession() {
 	});
 }
 </script>
-
-<svelte:head>
-	<title>Session - Shell - Showcases - Velociraptor</title>
-</svelte:head>
-
 <section class="demo-section">
 	<h2>Session Lifecycle</h2>
 	<p>Test session expiry warnings and re-authentication:</p>

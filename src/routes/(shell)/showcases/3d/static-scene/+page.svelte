@@ -4,11 +4,6 @@ import { GLTF, OrbitControls } from '@threlte/extras';
 import { BackLink, PageHeader } from '$lib/components';
 import { BoundaryFallback } from '$lib/components/composites';
 </script>
-
-<svelte:head>
-	<title>Static Scene - 3D - Velociraptor</title>
-</svelte:head>
-
 <div class="page">
 	<PageHeader
 		title="Static Scene"

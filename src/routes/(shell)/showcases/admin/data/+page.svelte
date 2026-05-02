@@ -129,11 +129,6 @@ const categories: DataCategory[] = [
 	},
 ];
 </script>
-
-<svelte:head>
-	<title>Data we collect — Admin & Privacy</title>
-</svelte:head>
-
 <div class="data-page">
 	<header class="lede">
 		<h2>What we collect, and why it's lawful.</h2>

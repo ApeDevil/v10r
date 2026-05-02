@@ -29,11 +29,6 @@ const roleOptions = [
 	{ value: 'owner', label: 'Owner' },
 ];
 </script>
-
-<svelte:head>
-	<title>Edit - Advanced - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<Card>
 		{#snippet header()}

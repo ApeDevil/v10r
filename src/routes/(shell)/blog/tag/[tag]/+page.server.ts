@@ -23,6 +23,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 	});
 
 	return {
+		title: `Posts tagged "${tagRow.name}"`,
 		posts: items,
 		total,
 		page,

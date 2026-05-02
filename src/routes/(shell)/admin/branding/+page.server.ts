@@ -40,6 +40,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const form = await superValidate(initialData as Record<string, unknown>, valibot(brandSettingsSchema));
 
 	return {
+		title: 'Visual Identity - Admin',
 		form,
 		customPalettes,
 		palettes: PALETTE_REGISTRY.map((p) => ({

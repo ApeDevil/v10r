@@ -25,11 +25,6 @@ function statusTagVariant(status: string) {
 	return 'muted' as const;
 }
 </script>
-
-<svelte:head>
-	<title>Feedback · Admin</title>
-</svelte:head>
-
 <Stack gap="6">
 	<header>
 		<h1 class="page-title">Feedback</h1>

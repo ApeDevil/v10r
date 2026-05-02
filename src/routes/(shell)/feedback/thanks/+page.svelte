@@ -3,11 +3,6 @@ import { Card } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Button } from '$lib/components/primitives';
 </script>
-
-<svelte:head>
-	<title>Thanks for the feedback · v10r.dev</title>
-</svelte:head>
-
 <div class="thanks-page">
 	<Card>
 		<Stack gap="4">

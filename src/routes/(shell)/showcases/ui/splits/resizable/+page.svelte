@@ -2,11 +2,6 @@
 import { Card } from '$lib/components';
 import { Pane, PaneGroup, PaneResizer } from '$lib/components/primitives';
 </script>
-
-<svelte:head>
-	<title>Resizable Splits - UI Showcase - Velociraptor</title>
-</svelte:head>
-
 <main class="content">
 	<!-- Basic Horizontal Example -->
 	<section>

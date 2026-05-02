@@ -5,7 +5,7 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
 	const form = await superValidate(valibot(realtimeSchema));
-	return { form };
+	return { title: 'Realtime - Validation - Showcases', form };
 };
 
 export const actions: Actions = {

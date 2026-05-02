@@ -9,5 +9,5 @@ export const load: PageServerLoad = async ({ params }) => {
 		error(404, 'Post not found');
 	}
 
-	return { post };
+	return { title: post.revision.title, post };
 };

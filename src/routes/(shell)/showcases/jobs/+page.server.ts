@@ -10,6 +10,7 @@ export const load: PageServerLoad = async () => {
 	const recentExecutions = await db.select().from(jobExecution).orderBy(desc(jobExecution.startedAt)).limit(10);
 
 	return {
+		title: 'Jobs - Showcases',
 		registeredJobs,
 		recentExecutions: recentExecutions.map((e) => ({
 			...e,

@@ -17,11 +17,6 @@ function statusVariant(status: string) {
 	return 'muted' as const;
 }
 </script>
-
-<svelte:head>
-	<title>{data.item.subject} · Feedback · Admin</title>
-</svelte:head>
-
 <Stack gap="6">
 	<BackLink href="/admin/feedback">Back to feedback</BackLink>
 

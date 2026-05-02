@@ -29,7 +29,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		valibot(feedbackSubmissionSchema),
 	);
 
-	return { form };
+	return { title: 'Send feedback', form };
 };
 
 export const actions: Actions = {

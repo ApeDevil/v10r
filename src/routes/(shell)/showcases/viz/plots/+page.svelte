@@ -108,11 +108,6 @@ const serverData: HeatMapData = {
 	],
 };
 </script>
-
-<svelte:head>
-	<title>Plots - Viz Showcase - Velociraptor</title>
-</svelte:head>
-
 <div class="page">
 	<PageHeader
 		title="Plots"

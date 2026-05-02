@@ -12,7 +12,7 @@ export const load: PageServerLoad = async () => {
 
 		const snapshots = await Promise.all(ttlEntries.map((e) => getTtlSnapshot(e.key)));
 
-		return { snapshots };
+		return { title: 'Ephemeral - Cache - Showcases', snapshots };
 	} catch (err) {
 		const cacheErr = classifyCacheError(err);
 		return { snapshots: [], error: cacheErr.message };

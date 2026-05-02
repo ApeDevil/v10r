@@ -80,11 +80,6 @@ const resolvedAlert = $derived.by(() => {
 	return null;
 });
 </script>
-
-<svelte:head>
-	<title>DB Observation - Admin - Velociraptor</title>
-</svelte:head>
-
 <div class="flex items-center justify-between mb-6">
 	<form
 		method="POST"

@@ -131,11 +131,6 @@ const guarantees = [
 	},
 ];
 </script>
-
-<svelte:head>
-	<title>Admin powers — Admin & Privacy</title>
-</svelte:head>
-
 <div class="powers">
 	<header class="lede">
 		<h2>What the operator can see — and what stops them from doing more.</h2>

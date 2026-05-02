@@ -81,11 +81,6 @@ function getPanelType(panelId: string): string | undefined {
 	return DESK_PANEL_TYPES.find((t) => panelId === t || panelId.startsWith(`${t}-`));
 }
 </script>
-
-<svelte:head>
-	<title>Desk - Velociraptor</title>
-</svelte:head>
-
 <div class="desk-page">
 	<DockLayout
 		{initialRoot}

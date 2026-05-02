@@ -45,6 +45,7 @@ export const load: PageServerLoad = async () => {
 		const queryMs = Math.round((performance.now() - start) * 100) / 100;
 
 		return {
+			title: 'Mutability - Relational - Showcases',
 			mutableRows,
 			versionHistory,
 			activeDocuments,

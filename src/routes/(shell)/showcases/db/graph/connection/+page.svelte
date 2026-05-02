@@ -24,11 +24,6 @@ function recordHistory(ms: number) {
 	history = [...history.slice(-4), { ms, tier, variant }];
 }
 </script>
-
-<svelte:head>
-	<title>Connection - Graph - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 		<!-- Status -->
 		<Card>

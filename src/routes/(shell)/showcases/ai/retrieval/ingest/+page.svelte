@@ -211,11 +211,6 @@ A +page.server.ts file exports a load function that runs on the server. It provi
 
 A +page.server.ts file can also export actions for progressive form handling. Actions run on the server when a form is submitted and can return validation errors.`;
 </script>
-
-<svelte:head>
-	<title>Ingest - Retrieval - AI - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	{#if !data.configured}
 		<Alert variant="info" title="AI Not Configured">

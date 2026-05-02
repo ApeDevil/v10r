@@ -37,11 +37,6 @@ function submitMessage() {
 	chat.sendMessage({ text });
 }
 </script>
-
-<svelte:head>
-	<title>Chat - AI - Showcases - Velociraptor</title>
-</svelte:head>
-
 	<Stack gap="6">
 		{#if !data.configured}
 			<Alert variant="info" title="AI Not Configured">

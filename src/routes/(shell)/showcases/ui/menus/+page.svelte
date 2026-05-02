@@ -14,11 +14,6 @@ const sections = [
 	{ id: 'menu-menubar', label: 'Menu Bar' },
 ];
 </script>
-
-<svelte:head>
-	<title>Menus - UI Showcase - Velociraptor</title>
-</svelte:head>
-
 <NavSection {sections} />
 
 <main class="content">

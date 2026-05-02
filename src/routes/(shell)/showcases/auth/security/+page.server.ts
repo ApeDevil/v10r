@@ -3,6 +3,7 @@ import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
 	return {
+		title: 'Security - Auth - Showcases',
 		headers: {
 			'X-Frame-Options': 'DENY',
 			'X-Content-Type-Options': 'nosniff',

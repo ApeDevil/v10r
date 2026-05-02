@@ -58,11 +58,6 @@ function handleSubmit() {
 	};
 }
 </script>
-
-<svelte:head>
-	<title>AI Cycle - Request Cycle - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<Card>
 		{#snippet header()}

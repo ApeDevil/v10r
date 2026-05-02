@@ -70,7 +70,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	const recentNotifications = await loadRecentNotifications(locals.user.id);
 
-	return { recentNotifications };
+	return { title: 'Pipeline - Notifications - Showcases', recentNotifications };
 };
 
 export const actions: Actions = {

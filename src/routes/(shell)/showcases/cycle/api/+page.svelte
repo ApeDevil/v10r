@@ -55,11 +55,6 @@ function handleSubmit() {
 	};
 }
 </script>
-
-<svelte:head>
-	<title>API Cycle - Request Cycle - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<!-- Trigger Zone -->
 	<Card>

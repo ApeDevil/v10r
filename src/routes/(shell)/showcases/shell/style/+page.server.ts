@@ -18,5 +18,5 @@ export const load: PageServerLoad = async () => {
 		// DB unreachable — brand status unknown
 	}
 
-	return { brand };
+	return { title: 'Style - Shell - Showcases', brand };
 };

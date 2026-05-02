@@ -32,11 +32,6 @@ const brandRadiusName = $derived(
 
 const totalCombinations = PALETTE_REGISTRY.length * TYPOGRAPHY_REGISTRY.length * RADIUS_REGISTRY.length;
 </script>
-
-<svelte:head>
-	<title>Style - Shell - Showcases - Velociraptor</title>
-</svelte:head>
-
 <!-- Section 1: Theme -->
 <section class="demo-section">
 	<h2>Theme</h2>

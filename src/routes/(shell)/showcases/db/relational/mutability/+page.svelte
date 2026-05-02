@@ -107,11 +107,6 @@ const severityOptions = [
 let appendAction = $state('create');
 let appendSeverity = $state('info');
 </script>
-
-<svelte:head>
-	<title>Mutability - Relational - Showcases - Velociraptor</title>
-</svelte:head>
-
 {#if data.error}
 		<Alert variant="error" title="Database Error">
 			{#snippet children()}

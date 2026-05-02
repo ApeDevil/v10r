@@ -16,11 +16,6 @@ $effect(() => {
 	}
 });
 </script>
-
-<svelte:head>
-	<title>{model ? `${model.name} - 3D Viewer` : '3D Viewer'} - Velociraptor</title>
-</svelte:head>
-
 {#if model}
 	<ViewerDialog {model} bind:open standalone />
 {/if}

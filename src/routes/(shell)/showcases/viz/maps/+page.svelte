@@ -58,11 +58,6 @@ const choroplethRegions = [
 	{ region: 'West', states: 'CA, CO, ID, MT, NV, OR, UT, WA, WY' },
 ];
 </script>
-
-<svelte:head>
-	<title>Maps - Viz Showcase - Velociraptor</title>
-</svelte:head>
-
 <div class="page">
 	<PageHeader
 		title="Maps"

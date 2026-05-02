@@ -94,11 +94,6 @@ async function handleSignOut() {
 	}
 }
 </script>
-
-<svelte:head>
-	<title>Connection - Auth - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 		<!-- Status -->
 		<Card>

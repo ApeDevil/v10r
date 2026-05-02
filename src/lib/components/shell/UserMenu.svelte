@@ -182,11 +182,11 @@ async function handleSignOut() {
 				'motion-reduce:transition-none',
 				!forceExpanded && 'justify-center'
 			)}
-			aria-label="Sign in"
+			aria-label="Log in"
 		>
 			<span class="i-lucide-key text-xl" ></span>
 			{#if forceExpanded}
-				<span class="sign-in-label">Sign in</span>
+				<span class="sign-in-label">Log in</span>
 			{/if}
 		</a>
 	{/if}

@@ -44,11 +44,6 @@ const passwordStrength = $derived.by(() => {
 	return levels[score];
 });
 </script>
-
-<svelte:head>
-	<title>Realtime - Validation - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<Card>
 		{#snippet header()}

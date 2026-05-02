@@ -1,3 +1,4 @@
+import { BRAND_NAME } from '$lib/branding';
 import { listPublishedPostsForFeed } from '$lib/server/blog';
 import type { RequestHandler } from './$types';
 
@@ -26,7 +27,7 @@ export const GET: RequestHandler = async ({ url }) => {
 	const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">
 	<channel>
-		<title>Velociraptor Blog</title>
+		<title>${BRAND_NAME} Blog</title>
 		<link>${siteUrl}/blog</link>
 		<description>Thoughts, tutorials, and updates</description>
 		<language>en</language>

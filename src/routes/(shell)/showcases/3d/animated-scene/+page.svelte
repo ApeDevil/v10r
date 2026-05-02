@@ -7,11 +7,6 @@ import Scene from './Scene.svelte';
 let currentAnimation = $state('Survey');
 const animationNames = ['Survey', 'Walk', 'Run'];
 </script>
-
-<svelte:head>
-	<title>Animated Scene - 3D - Velociraptor</title>
-</svelte:head>
-
 <div class="page">
 	<PageHeader
 		title="Animated Scene"

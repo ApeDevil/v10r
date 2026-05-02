@@ -83,11 +83,6 @@ function handleResult(successMsg?: string) {
 	};
 }
 </script>
-
-<svelte:head>
-	<title>Ephemeral - Cache - Showcases - Velociraptor</title>
-</svelte:head>
-
 {#if data.error}
 		<Alert variant="error" title="Cache Error">
 			<code>{data.error}</code>

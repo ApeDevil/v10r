@@ -9,8 +9,10 @@ import '@fontsource-variable/fraunces';
 import '@fontsource-variable/nunito';
 import { Tooltip as TooltipPrimitive } from 'bits-ui';
 import { goto } from '$app/navigation';
+import { page } from '$app/state';
 import { initJourneyBeacon } from '$lib/analytics/journey-beacon';
 import favicon from '$lib/assets/favicon.svg';
+import { BRAND_NAME } from '$lib/branding';
 import { localizeHref } from '$lib/i18n';
 import { initKeyboardHandler, registerShortcut } from '$lib/shortcuts';
 import { setConsentContext } from '$lib/state/consent.svelte';
@@ -130,6 +132,7 @@ $effect(() => {
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
+	<title>{page.data.title ? `${page.data.title} - ${BRAND_NAME}` : BRAND_NAME}</title>
 </svelte:head>
 
 <TooltipPrimitive.Provider>

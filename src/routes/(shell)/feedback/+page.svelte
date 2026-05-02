@@ -24,7 +24,6 @@ const ratingOptions = [
 </script>
 
 <svelte:head>
-	<title>Send feedback · v10r.dev</title>
 	<meta name="description" content="Tell us what worked, what didn't, or what you'd like to see." />
 </svelte:head>
 

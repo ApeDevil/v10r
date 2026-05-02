@@ -38,11 +38,6 @@ const languageOptions = [
 	{ value: 'ja', label: 'Japanese' },
 ];
 </script>
-
-<svelte:head>
-	<title>Settings - Basics - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	{#if $formMessage}
 		<Alert variant="success" title="Saved">

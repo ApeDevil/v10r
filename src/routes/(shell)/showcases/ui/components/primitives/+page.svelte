@@ -50,11 +50,6 @@ const actionsDocs: Record<string, ComponentDoc> = $derived({
 	},
 });
 </script>
-
-<svelte:head>
-	<title>Primitives - UI Showcase - Velociraptor</title>
-</svelte:head>
-
 <NavSection {sections} />
 
 <main class="content">

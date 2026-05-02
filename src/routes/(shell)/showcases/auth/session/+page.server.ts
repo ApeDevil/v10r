@@ -5,6 +5,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const user = locals.user;
 
 	return {
+		title: 'Session - Auth - Showcases',
 		authenticated: !!session,
 		session: session
 			? {

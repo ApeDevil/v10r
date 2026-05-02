@@ -15,6 +15,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	});
 
 	return {
+		title: 'Blog',
 		posts: items,
 		total,
 		page,

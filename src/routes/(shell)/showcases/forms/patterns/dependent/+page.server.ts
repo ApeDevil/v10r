@@ -32,7 +32,7 @@ const locationData = {
 
 export const load: PageServerLoad = async () => {
 	const form = await superValidate(valibot(dependentSchema));
-	return { form, locationData };
+	return { title: 'Dependent - Patterns - Showcases', form, locationData };
 };
 
 export const actions: Actions = {

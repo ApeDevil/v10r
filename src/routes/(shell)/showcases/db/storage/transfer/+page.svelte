@@ -150,11 +150,6 @@ $effect(() => {
 	}
 });
 </script>
-
-<svelte:head>
-	<title>Transfer - Storage - Showcases - Velociraptor</title>
-</svelte:head>
-
 <NavSection {sections} ariaLabel="Transfer operations" />
 
 	<Stack gap="7">

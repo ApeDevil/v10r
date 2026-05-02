@@ -5,11 +5,6 @@ import { Typography } from '$lib/components/primitives';
 
 let { data } = $props();
 </script>
-
-<svelte:head>
-	<title>Retrieval - AI - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<div>
 		<Typography variant="h4" as="h1">Retrieval-Augmented Generation</Typography>

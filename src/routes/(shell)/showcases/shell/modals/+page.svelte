@@ -4,11 +4,6 @@ import { getModals } from '$lib/state/modals.svelte';
 
 const modals = getModals();
 </script>
-
-<svelte:head>
-	<title>Modals - Shell - Showcases - Velociraptor</title>
-</svelte:head>
-
 <section class="demo-section">
 	<h2>Modal Triggers</h2>
 	<p>

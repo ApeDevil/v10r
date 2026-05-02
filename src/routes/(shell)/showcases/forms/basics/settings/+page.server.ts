@@ -16,7 +16,7 @@ const mockSettings = {
 
 export const load: PageServerLoad = async () => {
 	const form = await superValidate(mockSettings, valibot(settingsSchema));
-	return { form };
+	return { title: 'Settings - Basics - Showcases', form };
 };
 
 export const actions: Actions = {

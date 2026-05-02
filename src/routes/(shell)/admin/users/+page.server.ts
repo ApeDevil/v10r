@@ -65,6 +65,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	const total = totalResult[0]?.total ?? 0;
 
 	return {
+		title: 'Users',
 		users: users.map((u) => ({
 			...u,
 			createdAt: u.createdAt.toISOString(),

@@ -26,7 +26,6 @@ const navToc = $derived(toc.filter((t) => t.depth === 2 || t.depth === 3));
 </script>
 
 <svelte:head>
-	<title>{entry.title} — Docs — Velociraptor</title>
 	<meta name="description" content={entry.description} />
 </svelte:head>
 

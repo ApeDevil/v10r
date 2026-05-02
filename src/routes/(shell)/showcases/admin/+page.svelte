@@ -65,7 +65,6 @@ const subPages = [
 </script>
 
 <svelte:head>
-	<title>Admin & Privacy — Velociraptor</title>
 	<meta
 		name="description"
 		content="How v10r.dev handles your data: controller, lawful basis, retention, your rights."

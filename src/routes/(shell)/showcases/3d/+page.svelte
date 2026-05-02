@@ -21,11 +21,6 @@ function closeViewer() {
 	history.back();
 }
 </script>
-
-<svelte:head>
-	<title>3D Showcase - Velociraptor</title>
-</svelte:head>
-
 <PageContainer width="default" class="pt-7">
 	<PageHeader
 		title="3D Showcase"

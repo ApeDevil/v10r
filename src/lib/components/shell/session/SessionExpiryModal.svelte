@@ -40,11 +40,11 @@ let open = $derived(modals.isOpen('sessionExpiry'));
 
 		<div class="flex flex-col gap-3">
 			<Button variant="primary" onclick={onSignIn}>
-				Sign In Again
+				Log In Again
 			</Button>
 
 			<Button variant="secondary" onclick={onSwitchUser}>
-				Sign In as Different User
+				Log In as Different User
 			</Button>
 		</div>
 	</div>

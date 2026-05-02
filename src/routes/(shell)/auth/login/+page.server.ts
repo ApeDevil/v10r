@@ -25,5 +25,5 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		redirect(303, returnTo);
 	}
 
-	return { returnTo };
+	return { title: 'Log In', returnTo };
 };

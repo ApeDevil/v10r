@@ -13,6 +13,7 @@ async function measureConnection() {
 		const latencyMs = Math.round((performance.now() - start) * 100) / 100;
 
 		return {
+			title: 'Connection - Storage - Showcases',
 			connected: true,
 			latencyMs,
 			bucketName: info.bucketName,

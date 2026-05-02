@@ -15,11 +15,6 @@ function handleReset() {
 	crashKey++;
 }
 </script>
-
-<svelte:head>
-	<title>Errors - Shell - Showcases - Velociraptor</title>
-</svelte:head>
-
 <div class="sections">
 	<!-- Section 1: Live Component Boundary -->
 	<section class="demo-section">

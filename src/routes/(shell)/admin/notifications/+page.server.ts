@@ -31,6 +31,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	]);
 
 	return {
+		title: 'Notifications - Admin',
 		healthStats,
 		deadEntries,
 		announcements,

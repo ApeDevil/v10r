@@ -56,11 +56,6 @@ function onStateChange() {
 	$form.city = '';
 }
 </script>
-
-<svelte:head>
-	<title>Dependent - Patterns - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<Card>
 		{#snippet header()}

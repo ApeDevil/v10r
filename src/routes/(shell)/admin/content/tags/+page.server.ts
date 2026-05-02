@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	requireAdmin(locals);
 
 	const [tagsResult, domainsResult] = await Promise.all([listTags(), listDomains()]);
-	return { tags: tagsResult.items, domains: domainsResult.items };
+	return { title: 'Tags & Domains', tags: tagsResult.items, domains: domainsResult.items };
 };
 
 export const actions: Actions = {

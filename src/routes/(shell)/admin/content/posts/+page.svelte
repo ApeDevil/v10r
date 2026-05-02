@@ -80,11 +80,6 @@ function submitHiddenForm(action: string, postId: string) {
 	form.submit();
 }
 </script>
-
-<svelte:head>
-	<title>Posts - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<Card>
 		{#snippet header()}

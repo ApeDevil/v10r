@@ -81,11 +81,6 @@ function channelStatus(deliveries: { channel: string; status: string }[], channe
 	return d?.status ?? null;
 }
 </script>
-
-<svelte:head>
-	<title>Pipeline - Notifications - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<!-- SSE Live -->
 	<Card>

@@ -14,6 +14,7 @@ export const load: PageServerLoad = async () => {
 	]);
 
 	return {
+		title: 'Primitives - UI Showcase',
 		sources: {
 			button: { html: buttonHtml, language: 'svelte', filename: 'Button.svelte' },
 			buttonVariants: {

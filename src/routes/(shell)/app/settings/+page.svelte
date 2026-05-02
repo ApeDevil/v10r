@@ -138,11 +138,6 @@ async function handleAvatarRemove() {
 	}
 }
 </script>
-
-<svelte:head>
-	<title>Settings - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	{#if $formMessage}
 		<Alert variant="success" title="Saved">

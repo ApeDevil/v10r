@@ -10,11 +10,6 @@ const sections = [
 	{ id: 'comp-navigation', label: 'Navigation' },
 ];
 </script>
-
-<svelte:head>
-	<title>Composites - UI Showcase - Velociraptor</title>
-</svelte:head>
-
 <NavSection {sections} />
 
 <main class="content">

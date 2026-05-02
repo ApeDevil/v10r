@@ -29,11 +29,6 @@ function relativeTime(iso: string): string {
 	return `${days}d ago`;
 }
 </script>
-
-<svelte:head>
-	<title>Feature Flags - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<Card>
 		{#snippet header()}

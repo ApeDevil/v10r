@@ -16,11 +16,6 @@ function relativeTime(iso: string): string {
 	return `${days}d ago`;
 }
 </script>
-
-<svelte:head>
-	<title>Jobs - Showcases - Velociraptor</title>
-</svelte:head>
-
 <PageContainer class="py-7">
 	<PageHeader
 		title="Scheduled Jobs"

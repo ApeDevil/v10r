@@ -51,11 +51,6 @@ function actionVariant(action: string): 'default' | 'secondary' | 'warning' | 'e
 	return 'secondary';
 }
 </script>
-
-<svelte:head>
-	<title>Audit Log - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<Card>
 		{#snippet header()}

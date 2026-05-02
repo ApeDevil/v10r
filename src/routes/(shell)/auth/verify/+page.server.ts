@@ -26,6 +26,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	}
 
 	return {
+		title: 'Verify Code',
 		email,
 		returnTo: sanitizeReturnTo(url.searchParams.get('returnTo')),
 	};

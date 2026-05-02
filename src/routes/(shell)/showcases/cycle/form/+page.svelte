@@ -89,11 +89,6 @@ function replayHistory(traceData: string) {
 
 let selectedError = $state('');
 </script>
-
-<svelte:head>
-	<title>Form Cycle - Request Cycle - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<!-- Trigger Zone -->
 	<Card>

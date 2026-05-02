@@ -9,6 +9,7 @@ async function measureConnection() {
 		const latencyMs = Math.round((performance.now() - start) * 100) / 100;
 
 		return {
+			title: 'Connection - Graph - Showcases',
 			connected: true,
 			latencyMs,
 			neo4jVersion: info.neo4jVersion,

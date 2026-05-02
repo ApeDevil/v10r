@@ -13,7 +13,7 @@ const mockProfile = {
 
 export const load: PageServerLoad = async () => {
 	const form = await superValidate(mockProfile, valibot(profileEditSchema));
-	return { form };
+	return { title: 'Edit - Advanced - Showcases', form };
 };
 
 export const actions: Actions = {

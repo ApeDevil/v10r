@@ -26,6 +26,7 @@ async function getLastJobRun(slug: string) {
 
 export const load: PageServerLoad = async () => {
 	return {
+		title: 'Retention — Admin & Privacy',
 		retention: {
 			events: ANALYTICS_RETENTION_DAYS,
 			sessions: ANALYTICS_RETENTION_DAYS,

@@ -20,6 +20,8 @@ declare global {
 		}
 		interface PageData {
 			style: import('$lib/styles/random/types').ResolvedStyle;
+			/** Per-page title fragment. Layout renders `${title} - ${BRAND_NAME}`. Omit on the homepage and the layout falls back to BRAND_NAME alone. */
+			title?: string;
 		}
 		interface PageState {
 			viewerOpen?: boolean;

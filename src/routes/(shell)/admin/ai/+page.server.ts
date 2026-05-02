@@ -24,6 +24,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	]);
 
 	return {
+		title: 'AI Usage',
 		overview,
 		topUsers,
 		usersNearLimit,

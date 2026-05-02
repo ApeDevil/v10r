@@ -4,11 +4,6 @@ import { getToast } from '$lib/state/toast.svelte';
 
 const toast = getToast();
 </script>
-
-<svelte:head>
-	<title>Toasts - Shell - Showcases - Velociraptor</title>
-</svelte:head>
-
 <section class="demo-section">
 	<h2>Toast Notifications</h2>
 	<p>

@@ -9,6 +9,7 @@ async function measureConnection() {
 		const info = await verifyConnection();
 
 		return {
+			title: 'Connection - Cache - Showcases',
 			connected: true,
 			latencyMs: info.latencyMs,
 			keyCount: info.keyCount,

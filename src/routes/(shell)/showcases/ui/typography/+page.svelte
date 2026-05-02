@@ -159,7 +159,6 @@ if (mode === 'pairing') {
 </script>
 
 <svelte:head>
-	<title>Typography - UI Showcase - Velociraptor</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
 </svelte:head>

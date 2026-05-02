@@ -66,11 +66,6 @@ const dbContent = {
 	},
 };
 </script>
-
-<svelte:head>
-	<title>{m.showcase_title()} - Showcases - Velociraptor</title>
-</svelte:head>
-
 {#key currentLocale}
 <PageContainer class="py-7">
 	<PageHeader

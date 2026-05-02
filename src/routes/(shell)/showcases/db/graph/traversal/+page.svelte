@@ -87,11 +87,6 @@ function formatValue(val: unknown): string {
 	return String(val);
 }
 </script>
-
-<svelte:head>
-	<title>Traversal - Graph - Showcases - Velociraptor</title>
-</svelte:head>
-
 {#if data.error}
 		<Alert variant="error" title="Database Error">
 			<code>{data.error}</code>

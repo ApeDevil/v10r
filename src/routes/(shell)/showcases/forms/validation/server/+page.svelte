@@ -24,11 +24,6 @@ const {
 
 const isError = $derived(page.status >= 400);
 </script>
-
-<svelte:head>
-	<title>Server - Validation - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<Card>
 		{#snippet header()}

@@ -18,11 +18,6 @@ const sections = [
 	{ id: 'tok-layout', label: 'Layout' },
 ];
 </script>
-
-<svelte:head>
-	<title>Theme Tokens - UI Showcase - Velociraptor</title>
-</svelte:head>
-
 <NavSection {sections} />
 
 <main class="content">

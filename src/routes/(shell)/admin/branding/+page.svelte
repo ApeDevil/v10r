@@ -206,11 +206,6 @@ const editModeItems = [
 	{ value: 'dark', label: 'Dark' },
 ];
 </script>
-
-<svelte:head>
-	<title>Visual Identity - Admin - Velociraptor</title>
-</svelte:head>
-
 {#snippet saveAction()}
 	<div class="save-action">
 		<Button type="submit" form="brandForm" disabled={$submitting}>

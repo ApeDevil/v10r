@@ -20,6 +20,7 @@ async function measureConnection() {
 		const meta = rows[0] as Record<string, string>;
 
 		return {
+			title: 'Connection - Relational - Showcases',
 			connected: true,
 			latencyMs,
 			pgVersion: meta.pg_version,

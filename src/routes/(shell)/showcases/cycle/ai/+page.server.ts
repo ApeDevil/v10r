@@ -16,6 +16,7 @@ export const actions: Actions = {
 
 		const result = await executeAiCycle({ query, simulateError }, userId);
 		return {
+			title: 'AI Cycle - Request Cycle - Showcases',
 			trace: result.trace,
 			success: result.success,
 			error: result.error,

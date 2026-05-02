@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		item.status = 'read';
 	}
 
-	return { item, journey };
+	return { title: `${item.subject} · Feedback · Admin`, item, journey };
 };
 
 export const actions: Actions = {

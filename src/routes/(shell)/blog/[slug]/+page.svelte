@@ -35,7 +35,6 @@ const jsonLdScript = $derived(
 </script>
 
 <svelte:head>
-	<title>{post.revision.title} - Velociraptor</title>
 	{#if post.revision.summary}
 		<meta name="description" content={post.revision.summary} />
 	{/if}

@@ -18,5 +18,5 @@ export const load = () => {
 			ordered.push({ layer: layer as (typeof STACK_LAYER_ORDER)[number], items });
 		}
 	}
-	return { layers: ordered };
+	return { title: 'Stack — Docs', layers: ordered };
 };

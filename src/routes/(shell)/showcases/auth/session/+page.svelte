@@ -5,11 +5,6 @@ import { Badge } from '$lib/components/primitives';
 
 let { data } = $props();
 </script>
-
-<svelte:head>
-	<title>Session - Auth - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 		<!-- Current Session -->
 		<Card>

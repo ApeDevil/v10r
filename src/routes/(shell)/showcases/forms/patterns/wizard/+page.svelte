@@ -65,11 +65,6 @@ function prevStep() {
 	step--;
 }
 </script>
-
-<svelte:head>
-	<title>Wizard - Patterns - Showcases - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<Card>
 		{#snippet header()}

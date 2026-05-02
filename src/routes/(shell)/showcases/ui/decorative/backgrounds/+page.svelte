@@ -30,11 +30,6 @@ const glowPositions = ['center', 'top', 'bottom', 'top-left', 'top-right', 'bott
 const glowSizes = ['sm', 'md', 'lg', 'full'] as const;
 const lineVariants = ['scanline', 'hatch', 'crosshatch'] as const;
 </script>
-
-<svelte:head>
-	<title>Backgrounds - Decorative - UI Showcase - Velociraptor</title>
-</svelte:head>
-
 <NavSection {sections} />
 
 <main class="content">

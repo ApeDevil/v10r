@@ -25,11 +25,6 @@ $effect(() => {
 	}
 });
 </script>
-
-<svelte:head>
-	<title>Account - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<!-- Active Sessions -->
 	<Card>

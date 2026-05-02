@@ -10,6 +10,7 @@ export const load = () => {
 		groups.get(key)?.push(e);
 	}
 	return {
+		title: 'Blueprint — Docs',
 		groups: Array.from(groups.entries()).map(([name, items]) => ({ name, items })),
 	};
 };

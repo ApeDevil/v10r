@@ -23,7 +23,7 @@ export const load: PageServerLoad = async () => {
 
 		const queryMs = Math.round((performance.now() - start) * 100) / 100;
 
-		return { entries, stats, queryMs };
+		return { title: 'Patterns - Cache - Showcases', entries, stats, queryMs };
 	} catch (err) {
 		const cacheErr = classifyCacheError(err);
 		return {

@@ -57,11 +57,6 @@ const cookies: CookieRow[] = [
 	},
 ];
 </script>
-
-<svelte:head>
-	<title>Cookies — Admin & Privacy</title>
-</svelte:head>
-
 <div class="cookies">
 	<header class="lede">
 		<h2>Three cookies, exactly.</h2>

@@ -102,11 +102,6 @@ function formatValue(value: unknown): string {
 const prefixFilters = ['', 'showcase:', 'ratelimit:'] as const;
 const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase:', 'ratelimit:': 'ratelimit:' };
 </script>
-
-<svelte:head>
-	<title>Cache Inspector - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<!-- Stats -->
 	{#if data.overview}

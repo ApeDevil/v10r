@@ -73,11 +73,6 @@ const cicdEdges: Edge[] = [
 	{ id: 'e-staging-prod', source: 'deploy-staging', target: 'deploy-prod', type: 'smoothstep' },
 ];
 </script>
-
-<svelte:head>
-	<title>Diagrams - Viz Showcase - Velociraptor</title>
-</svelte:head>
-
 <div class="page">
 	<PageHeader
 		title="Diagrams"

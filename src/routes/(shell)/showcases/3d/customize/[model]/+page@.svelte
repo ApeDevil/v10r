@@ -104,11 +104,6 @@ $effect(() => {
 	}
 });
 </script>
-
-<svelte:head>
-	<title>{model ? `Customize ${model.name}` : 'Customizer'} - Velociraptor</title>
-</svelte:head>
-
 {#if model && customization && config}
 	<div class="customizer-layout">
 		<div class="canvas-area">

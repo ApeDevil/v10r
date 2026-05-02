@@ -14,6 +14,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const [sessions, accounts] = await Promise.all([getUserSessions(locals.user.id), getUserAccounts(locals.user.id)]);
 
 	return {
+		title: 'Account',
 		user: locals.user,
 		sessions: sessions.map((s) => ({
 			id: s.id,

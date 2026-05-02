@@ -38,11 +38,6 @@ const frameVariants = ['bracket', 'double', 'inset', 'cross'] as const;
 const ringShapes = ['circle', 'square', 'hexagon'] as const;
 const ringCounts = [2, 3, 4, 5, 6, 7, 8] as const;
 </script>
-
-<svelte:head>
-	<title>Ornaments - Decorative - UI Showcase - Velociraptor</title>
-</svelte:head>
-
 <NavSection {sections} />
 
 <main class="content">

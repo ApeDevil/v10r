@@ -42,6 +42,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	});
 
 	return {
+		title: 'Posts',
 		posts: items.map((p) => ({
 			...p,
 			createdAt: p.createdAt.toISOString(),

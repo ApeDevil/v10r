@@ -41,11 +41,6 @@ function triggerVariant(trigger: string): 'default' | 'secondary' | 'warning' {
 	return 'secondary';
 }
 </script>
-
-<svelte:head>
-	<title>Jobs - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<!-- Registered Jobs -->
 	<Card>

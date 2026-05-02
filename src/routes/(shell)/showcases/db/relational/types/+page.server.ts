@@ -30,6 +30,7 @@ export const load: PageServerLoad = async () => {
 		const queryMs = Math.round((performance.now() - start) * 100) / 100;
 
 		return {
+			title: 'Type System - Relational - Showcases',
 			specimens,
 			temporals,
 			documents,

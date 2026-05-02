@@ -25,6 +25,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	}
 
 	return {
+		title: 'Cache Inspector',
 		overview,
 		inProcessStatus,
 		filters: { prefix, page },

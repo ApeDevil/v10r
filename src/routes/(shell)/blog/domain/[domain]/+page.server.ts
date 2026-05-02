@@ -23,6 +23,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 	});
 
 	return {
+		title: `${domainRow.name} - Blog`,
 		posts: items,
 		total,
 		page,

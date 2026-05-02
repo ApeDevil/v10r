@@ -52,11 +52,6 @@ function openBanDialog(userId: string) {
 	showBanDialog = true;
 }
 </script>
-
-<svelte:head>
-	<title>Users - Velociraptor</title>
-</svelte:head>
-
 <Stack gap="6">
 	<Card>
 		{#snippet header()}

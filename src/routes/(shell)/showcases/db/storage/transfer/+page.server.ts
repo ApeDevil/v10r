@@ -6,7 +6,7 @@ import { formatBytes } from '$lib/server/store/types';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	return {};
+	return { title: 'Transfer - Storage - Showcases' };
 };
 
 export const actions: Actions = {

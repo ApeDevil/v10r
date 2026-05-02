@@ -16,11 +16,6 @@ const sections = [
 	{ id: 'tbl-cartograph', label: 'Cartograph' },
 ];
 </script>
-
-<svelte:head>
-	<title>Tables - UI Showcase - Velociraptor</title>
-</svelte:head>
-
 <NavSection {sections} />
 
 <main class="content">

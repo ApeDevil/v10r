@@ -107,7 +107,7 @@ const visible = $derived(browser && (consent.needsBanner || consent.bannerOpen))
 		left: 0;
 		right: 0;
 		z-index: var(--z-toast);
-		background: var(--color-bg-alpha);
+		background: var(--surface-2);
 		backdrop-filter: blur(8px);
 		-webkit-backdrop-filter: blur(8px);
 		border-top: 1px solid var(--color-border);

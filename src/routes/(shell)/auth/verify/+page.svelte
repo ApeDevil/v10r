@@ -107,11 +107,6 @@ async function handleResend() {
 	}
 }
 </script>
-
-<svelte:head>
-	<title>Verify Code - Velociraptor</title>
-</svelte:head>
-
 <div class="verify-page">
 	<div class="verify-card">
 		<div class="verify-header">
