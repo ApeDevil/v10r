@@ -130,7 +130,7 @@ Every route group should have an `+error.svelte` file for graceful error handlin
 |----------|---------|---------|
 | `/+error.svelte` | Root fallback | Generic error, "Go home" link |
 | `/app/+error.svelte` | Authenticated area | Maintains app shell, "Back to dashboard" |
-| `/(auth)/+error.svelte` | Auth flows | Clean layout, "Try again" link |
+| `/auth/+error.svelte` | Auth flows | Clean layout, "Try again" link |
 | `/showcase/+error.svelte` | Showcase area | Shows error within showcase layout |
 
 ### Error Boundary File Structure
@@ -140,7 +140,7 @@ src/routes/
 ├── +error.svelte              # Root fallback (REQUIRED)
 ├── +layout.svelte
 │
-├── (auth)/
+├── auth/
 │   ├── +error.svelte          # Auth-specific errors
 │   ├── login/+page.svelte
 │   └── verify/+page.svelte

@@ -327,7 +327,7 @@ const debugOwnerLoader: Handle = async ({ event, resolve }) => {
 
 /**
  * 7. Dev route guard — hide (dev) routes outside dev.
- * Member and admin auth gates live in (member)/+layout.server.ts and (admin)/+layout.server.ts.
+ * Member and admin auth gates live in app/+layout.server.ts and admin/+layout.server.ts.
  */
 const devRouteGuard: Handle = async ({ event, resolve }) => {
 	if (!import.meta.env.DEV && event.route.id?.startsWith('/(dev)/')) {

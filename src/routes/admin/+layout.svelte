@@ -2,10 +2,11 @@
 import type { Snippet } from 'svelte';
 import { page } from '$app/state';
 import { PageContainer } from '$lib/components/layout';
-import { AdminSidebar } from '$lib/components/shell';
+import { AdminSidebar, AppShell } from '$lib/components/shell';
 import { deLocalizeHref } from '$lib/i18n';
+import type { LayoutData } from './$types';
 
-let { children }: { children: Snippet } = $props();
+let { children, data }: { children: Snippet; data: LayoutData } = $props();
 
 let mobileNavOpen = $state(false);
 
@@ -59,6 +60,7 @@ $effect(() => {
 });
 </script>
 
+<AppShell session={data.session} isAdmin={data.isAdmin} announcements={data.announcements}>
 <div class="admin-layout">
 	<!-- Desktop sidebar -->
 	<div class="admin-desktop-sidebar">
@@ -93,6 +95,7 @@ $effect(() => {
 		</PageContainer>
 	</div>
 </div>
+</AppShell>
 
 <style>
 	.admin-layout {
