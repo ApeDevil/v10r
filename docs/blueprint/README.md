@@ -10,6 +10,12 @@ Implementation designs and feature specifications. How to build features using t
 | **[desk/](./desk/)** | • [README.md](./desk/README.md): Desk workspace infrastructure — DeskBus channels, Explorer panel, panel registry, file structure<br>• [spreadsheet.md](./desk/spreadsheet.md): Spreadsheet as file type — `desk.file` registry (STI), REST API (`/api/desk/files`), dual-mode panel, auto-save, Explorer integration |
 | **[blog.md](./blog.md)** | • Multipurpose markdown editor in desk (DockLayout panels), blog posts as first content type<br>• Default editor layout preset, Documents panel (renamed from Files), multipurpose preview panel<br>• Typed cross-panel pub/sub (`DeskBus` with `DeskEvents` interface, `replayLast` option)<br>• Custom syntax via `remark-directive` (inline/block/container directives), `[[wikilinks]]` for cross-references<br>• Unified pipeline: remark-parse → remark-directive → rehype-shiki → rehype-stringify, cached on immutable revision rows<br>• Editor: source editor (Textarea → CodeMirror 6), slash commands, panel-specific menus via kebab dropdown (File/Post/View), inline publish confirm strip, never WYSIWYG<br>• Shared syntax definitions (`$lib/content-syntax/`) preventing editor/renderer drift<br>• Data model: 8 tables v1 (post, revision, published\_revision junction, tag, post\_tag, asset, post\_asset + collection seed), locale-aware publishing, content\_hash for re-ingest gate<br>• AI integration: blog posts as RAG documents + first-class Neo4j entities (hybrid Option C), publishPost() + unpublishPost() orchestration with ISR revalidation<br>• Source attribution in chat: entity type badges, clickable links to original content, citation rendering (no raw scores in tooltips)<br>• Multi-author, i18n (locale per revision), public + authenticated, dual search (tsvector generated column + GIN index + RAG)<br>• Auth: `author` role prerequisite, form actions for admin, API endpoints for desk, 3-tier route guards<br>• SEO: JSON-LD BlogPosting, Open Graph, RSS feed, sitemap, ISR with on-demand revalidation<br>• 9-step migration order with non-transactional enum migration first<br>• Review provenance: 24 agent consultations (2 rounds × 6 agents with cross-pollination) |
 
+## Admin
+
+| File | Main Topics |
+|------|-------------|
+| **[admin/](./admin/)** | • [pairing.md](./admin/pairing.md): Cross-device debug pairing — QR flow, pairing_codes schema, 6-digit code design, HMAC cookie, hook chain position, cleanup sweeps, threat model |
+
 ## Application Structure
 
 | File | Main Topics |

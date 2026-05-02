@@ -1,47 +1,32 @@
-# Analytics Collector — Activation Plan
+# Analytics Collector — Active
 
-## Status: dormant (intentional)
+## Status: active
 
-`src/lib/server/analytics/hook.ts` exports `analyticsCollector` but it is **not** wired into the `sequence(...)` in `src/hooks.server.ts`. Showcases currently render against synthetic/seed data, so a live collector would only pollute the dataset.
+`analyticsCollector` is wired into the `sequence(...)` in `src/hooks.server.ts` at the final position in the chain.
 
-This is staged code, not residue. The hook owns non-trivial logic (consent gating, visitor hashing, session-cookie management, fire-and-forget dispatch) and a working DB schema (`src/lib/server/db/analytics/`) — deleting it would throw away decisions worth preserving.
+**Full sequence:**
 
-## Activation criterion
-
-Wire the collector when **all** of the following are true:
-
-1. There is a real visitor population whose pageviews would be useful (i.e. the project has shipped or is in a public preview).
-2. The synthetic-data seeders (`src/lib/server/db/analytics/seed.ts`, `graph-seed.ts`) are no longer needed for showcase pages — or the showcases have been moved to a separate, isolated dataset.
-3. A consent banner is present in the UI and writing the `ANALYTICS_CONSENT_COOKIE` (otherwise every visitor is gated out).
-
-## How to activate
-
-In `src/hooks.server.ts`, insert `analyticsCollector` into the sequence **after** `sessionPopulate` and **before** `csrfProtection`:
-
-```ts
-import { analyticsCollector } from '$lib/server/analytics/hook';
-
-export const handle = sequence(
-  securityHeaders,
-  loadStyle,
-  i18n,
-  authHandler,
-  sessionPopulate,
-  analyticsCollector, // ← here
-  csrfProtection,
-  routeGuard,
-);
+```
+securityHeaders → loadStyle → i18n → authHandler → sessionPopulate
+→ csrfProtection → consentLoader → debugOwnerLoader → routeGuard
+→ analyticsCollector
 ```
 
-**Ordering rationale:**
-- After `sessionPopulate`: the collector may want to associate events with `event.locals.user` (currently it only uses hashed visitor IDs, but the slot is reserved).
-- Before `csrfProtection`: the collector observes responses, not requests — placing it earlier means it still wraps blocked-by-CSRF responses, which is undesirable. Placing it just before keeps it in the "post-auth, pre-mutation-guard" band.
-- Not in `securityHeaders` band: that runs first specifically to set headers on every response including errors; analytics should not record analytics-of-errors here.
+`debugOwnerLoader` (position 8) verifies the `v10r_debug_owner` HMAC cookie and populates `event.locals.debugOwnerId`. This runs before `analyticsCollector` so the collector can attribute events to a paired admin session without requiring the phone to be logged in.
 
-After wiring, also remove the `'src/lib/server/analytics/hook.ts'` line from the `ignore` list in `knip.config.ts` — it will then be reachable through the import chain and no longer needs the false-positive override.
+`analyticsCollector` runs last — after route guards — so it only records requests that have fully resolved through auth and routing.
 
-## Reconsider deletion if
+## What it writes
 
-- Six months pass without activation, **or**
-- The analytics DB schema diverges from the shape this hook writes (`recordEvent` / `upsertSession` signatures), **or**
-- A different analytics provider is chosen (Plausible, PostHog, Vercel Analytics) — at that point this hook becomes vestigial and should be removed in the same change that wires the replacement.
+- `analytics.events` — one row per pageview, with path, referrer, consent tier, and `debug_owner_id` if a debug cookie is present.
+- `analytics.sessions` — one row per visitor session; updated on each event with last-seen timestamp. Tagged with `paired_admin_user_id` and `paired_at` when the session is paired.
+
+## Consent gating
+
+The collector reads `event.locals.consentTier` (set by `consentLoader` from the `ANALYTICS_CONSENT_COOKIE`). Visitors with only the `necessary` tier have their `sessionFragment` and device fingerprint suppressed — no PII is recorded. Events are still written, but as unlinked rows with no visitor identity.
+
+## Daily rollup
+
+`analyticsRollup()` at `src/lib/server/jobs/analytics-rollup.ts` aggregates **yesterday's** events into `analytics.daily_page_stats`. It runs as a scheduled background job.
+
+Today's events exist only in the raw `analytics.events` table. They appear in the Live Activity feed immediately. They do not appear in the Traffic Trend chart until the next rollup runs (the following day).

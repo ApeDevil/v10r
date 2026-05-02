@@ -220,7 +220,7 @@ Reference implementation: `/admin/jobs` page (already follows this pattern).
 | Page | Strategy | Rationale |
 |------|----------|-----------|
 | DB Observation | Streaming load | Already implemented, queries complete within timeout |
-| Analytics | Streaming load | Fast summary eager, slow charts as Promises |
+| Analytics | Streaming load (aggregates) + 5s polling (live feed) | Summary stats eager via streaming; Live Activity feed polls every 5s for new raw events |
 | Users | On-demand only | User data doesn't change in real-time |
 | Feature Flags | On-demand + optimistic UI | Admin is the one making changes |
 | Audit Log | On-demand only | Historical data, stable snapshot |
@@ -320,7 +320,7 @@ Plugin adds columns to `auth.user`. Must regenerate schema. May conflict with cu
 Manual `recordAuditEvent()` calls will be forgotten on new pages. **Mitigation**: code review checklist — every form action that mutates state must include an audit call.
 
 ### 3. Analytics Query Performance
-Raw `analytics.events` table grows unbounded. **Mitigation**: analytics page queries ONLY aggregate tables (`daily_page_stats`), never raw events. Extend rollup job when new aggregates are needed.
+Raw `analytics.events` table grows unbounded. **Mitigation**: the analytics page uses aggregates (`daily_page_stats`) for historical ranges; the Live Activity feed reads raw events for a 5-minute window only (via `getRecentEvents()`). Bounded-cost controls: a 5-minute time window cap on the raw query, a partial index on `(debug_owner_id, id) WHERE debug_owner_id IS NOT NULL` for the paired-session filter, and consent-tier gating on returned fields. Extend the rollup job when new historical aggregates are needed.
 
 ---
 
