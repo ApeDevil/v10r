@@ -47,6 +47,7 @@ const visible = $derived(browser && (consent.needsBanner || consent.bannerOpen))
 	>
 		<div class="consent-inner">
 			<div class="consent-body">
+				<span class="consent-icon i-lucide-cookie" aria-hidden="true"></span>
 				<div class="consent-text">
 					<p class="consent-headline">We use cookies</p>
 					<p class="consent-blurb">
@@ -136,6 +137,13 @@ const visible = $derived(browser && (consent.needsBanner || consent.bannerOpen))
 		align-items: center;
 		gap: var(--spacing-5);
 		flex-wrap: wrap;
+	}
+
+	.consent-icon {
+		flex-shrink: 0;
+		width: 1.75rem;
+		height: 1.75rem;
+		color: var(--color-primary);
 	}
 
 	.consent-text {
