@@ -16,6 +16,7 @@ export async function recordEvent(event: {
 	referrer?: string;
 	metadata?: Record<string, unknown>;
 	consentTier?: 'necessary' | 'analytics' | 'full';
+	debugOwnerId?: string | null;
 	occurredAt?: Date;
 }) {
 	const insert = db.insert(events).values({
@@ -27,6 +28,7 @@ export async function recordEvent(event: {
 		referrer: event.referrer ?? null,
 		metadata: event.metadata ?? null,
 		consentTier: event.consentTier ?? 'necessary',
+		debugOwnerId: event.debugOwnerId ?? null,
 		...(event.occurredAt ? { timestamp: event.occurredAt } : {}),
 	});
 	if (event.eventId) {
@@ -47,6 +49,7 @@ export async function upsertSession(session: {
 	browser?: string;
 	country?: string;
 	consentTier?: 'necessary' | 'analytics' | 'full';
+	pairedAdminUserId?: string | null;
 }) {
 	await db
 		.insert(sessions)
@@ -60,6 +63,8 @@ export async function upsertSession(session: {
 			browser: session.browser ?? null,
 			country: session.country ?? null,
 			consentTier: session.consentTier ?? 'necessary',
+			pairedAdminUserId: session.pairedAdminUserId ?? null,
+			pairedAt: session.pairedAdminUserId ? new Date() : null,
 		})
 		.onConflictDoUpdate({
 			target: sessions.id,

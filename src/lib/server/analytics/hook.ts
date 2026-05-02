@@ -60,6 +60,7 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 
 	if (context) {
 		const { sessionId, visitorId, consentTier, referrer } = context;
+		const debugOwnerId = event.locals.debugOwnerId ?? null;
 		// Fire-and-forget — DB writes only, no cookie ops here.
 		Promise.all([
 			recordEvent({
@@ -69,6 +70,7 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 				path,
 				referrer,
 				consentTier,
+				debugOwnerId,
 			}),
 			upsertSession({
 				id: sessionId,
@@ -76,6 +78,7 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 				entryPath: path,
 				exitPath: path,
 				consentTier,
+				pairedAdminUserId: debugOwnerId,
 			}),
 		]).catch((err) => {
 			console.error('[analytics] Failed to track pageview:', err);

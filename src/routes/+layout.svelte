@@ -13,6 +13,7 @@ import { page } from '$app/state';
 import { initJourneyBeacon } from '$lib/analytics/journey-beacon';
 import favicon from '$lib/assets/favicon.svg';
 import { BRAND_NAME } from '$lib/branding';
+import PairingStrip from '$lib/components/shell/PairingStrip.svelte';
 import { localizeHref } from '$lib/i18n';
 import { initKeyboardHandler, registerShortcut } from '$lib/shortcuts';
 import { setConsentContext } from '$lib/state/consent.svelte';
@@ -138,6 +139,10 @@ $effect(() => {
 <TooltipPrimitive.Provider>
 	{@render children()}
 </TooltipPrimitive.Provider>
+
+{#if data.debugOwnerActive}
+	<PairingStrip />
+{/if}
 
 <div class="sr-only" aria-live="polite" aria-atomic="true">
 	{styleState.announcement}

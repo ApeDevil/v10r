@@ -35,5 +35,6 @@ export const load: LayoutServerLoad = async ({ cookies, locals, depends }) => {
 		style: locals.style,
 		isAdmin: !!locals.user && !!env.ADMIN_EMAIL && locals.user.email.toLowerCase() === env.ADMIN_EMAIL.toLowerCase(),
 		announcements,
+		debugOwnerActive: locals.debugOwnerId != null,
 	};
 };

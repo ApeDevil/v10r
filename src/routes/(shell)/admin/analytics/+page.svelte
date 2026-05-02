@@ -1,6 +1,7 @@
 <script lang="ts">
 import type { ChartData } from 'chart.js';
 import { invalidateAll } from '$app/navigation';
+import LiveFeed from '$lib/components/admin/LiveFeed.svelte';
 import { Alert, Card, DiagGrid, DiagRow, EmptyState } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Button, Skeleton, Tag } from '$lib/components/primitives';
@@ -8,6 +9,7 @@ import LineChart from '$lib/components/viz/chart/line/LineChart.svelte';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
+let pairedActive = $state(data.pairedActive);
 
 // Consent rate as percentage
 const totalSessions = $derived(data.consentSplit.reduce((sum, s) => sum + Number(s.count), 0));
@@ -241,6 +243,9 @@ const ranges = [
 			{/if}
 		</Card>
 	</div>
+
+	<!-- Live Activity Feed -->
+	<LiveFeed initialEvents={data.recentEvents} bind:pairedActive />
 </Stack>
 
 <style>

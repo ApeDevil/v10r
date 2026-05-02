@@ -16,6 +16,7 @@ import {
 	HSTS_MAX_AGE,
 } from '$lib/server/config';
 import { logFeatureStatus } from '$lib/server/features';
+import { clearOwnerCookie, PAIRING_COOKIE, verifyOwnerCookie } from '$lib/server/pairing/cookie';
 import { getBrandConfig } from '$lib/server/style/brand';
 import {
 	generateRandomStyle,
@@ -295,6 +296,32 @@ const consentLoader: Handle = async ({ event, resolve }) => {
 };
 
 /**
+ * 6c. Debug-owner loader — verifies the v10r_debug_owner HMAC cookie and stamps
+ *     locals.debugOwnerId so the analyticsCollector can attribute events to the
+ *     paired admin. Independent of Better Auth — the phone is not logged in.
+ */
+const debugOwnerLoader: Handle = async ({ event, resolve }) => {
+	const raw = event.cookies.get(PAIRING_COOKIE);
+	if (!raw) {
+		event.locals.debugOwnerId = null;
+		return resolve(event);
+	}
+	try {
+		const verified = await verifyOwnerCookie(raw);
+		if (verified && verified.expiresAt > Date.now()) {
+			event.locals.debugOwnerId = verified.adminUserId;
+		} else {
+			event.locals.debugOwnerId = null;
+			clearOwnerCookie(event.cookies);
+		}
+	} catch {
+		// PAIRING_SECRET missing or other crypto failure — fail closed, don't crash.
+		event.locals.debugOwnerId = null;
+	}
+	return resolve(event);
+};
+
+/**
  * 7. Route guard — protect /app/* and /admin/* routes
  */
 const routeGuard: Handle = async ({ event, resolve }) => {
@@ -326,6 +353,7 @@ export const handle = sequence(
 	sessionPopulate,
 	csrfProtection,
 	consentLoader,
+	debugOwnerLoader,
 	routeGuard,
 	analyticsCollector,
 );

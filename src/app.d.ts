@@ -17,6 +17,8 @@ declare global {
 			customPaletteAccentOffset?: number;
 			/** Analytics consent tier resolved from the v10r_consent cookie. Defaults to 'necessary'. */
 			consentTier: import('$lib/server/analytics/consent').ConsentTier;
+			/** Admin user id this request is paired to via the debug-owner cookie. NULL when not paired. */
+			debugOwnerId: string | null;
 		}
 		interface PageData {
 			style: import('$lib/styles/random/types').ResolvedStyle;

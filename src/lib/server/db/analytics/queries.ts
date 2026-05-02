@@ -1,10 +1,13 @@
 /**
- * Analytics read queries — raw table access for session detail views.
+ * Analytics read queries — raw table access for session detail views and live feed.
  */
 
-import { and, desc, eq, gte, lte, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, gte, isNotNull, lte, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { events, sessions } from '$lib/server/db/schema/analytics';
+import type { LiveEvent } from '$lib/types/analytics-live';
+
+export type { LiveEvent } from '$lib/types/analytics-live';
 
 /** Get all events for a specific session, ordered by timestamp */
 export async function getSessionEvents(sessionId: string) {
@@ -25,28 +28,86 @@ export async function getSessionTimeline(opts: { from?: Date; to?: Date; limit?:
 		.limit(opts.limit ?? 50);
 }
 
-/** Get recent events for the live feed */
-export async function getRecentEvents(limit = 20) {
-	return db
-		.select({
-			id: events.id,
-			sessionId: events.sessionId,
-			eventType: events.eventType,
-			path: events.path,
-			metadata: events.metadata,
-			timestamp: events.timestamp,
-		})
-		.from(events)
-		.orderBy(desc(events.timestamp))
-		.limit(limit);
+export interface RecentEventsOptions {
+	adminUserId: string;
+	sinceId?: number;
+	filter?: 'all' | 'paired';
+	limit?: number;
+	/** Window in seconds — events older than this are excluded. */
+	windowSec?: number;
 }
 
-/** Count active sessions in a time window */
-export async function getActiveSessionCount(windowMs: number) {
-	const cutoff = new Date(Date.now() - windowMs);
+/**
+ * Live-feed query. Returns events newer than `sinceId`, joined with their session
+ * for paired/device/country context. Consent-tier-gated: fields the visitor
+ * didn't authorize are returned as null.
+ */
+export async function getRecentEvents(opts: RecentEventsOptions): Promise<LiveEvent[]> {
+	const sinceId = opts.sinceId ?? 0;
+	const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
+	const windowCutoff = new Date(Date.now() - (opts.windowSec ?? 300) * 1000);
+
+	const conditions = [gt(events.id, sinceId), gt(events.timestamp, windowCutoff)];
+	if (opts.filter === 'paired') {
+		conditions.push(eq(events.debugOwnerId, opts.adminUserId));
+	}
+
+	const rows = await db
+		.select({
+			id: events.id,
+			ts: events.timestamp,
+			sessionId: events.sessionId,
+			visitorId: events.visitorId,
+			path: events.path,
+			consentTier: events.consentTier,
+			debugOwnerId: events.debugOwnerId,
+			device: sessions.device,
+			country: sessions.country,
+		})
+		.from(events)
+		.innerJoin(sessions, eq(events.sessionId, sessions.id))
+		.where(and(...conditions))
+		.orderBy(asc(events.id))
+		.limit(limit);
+
+	return rows.map((r) => {
+		const tier = r.consentTier;
+		const showDevice = tier === 'analytics' || tier === 'full';
+		const showCountry = tier === 'analytics' || tier === 'full';
+		return {
+			id: r.id,
+			ts: r.ts.toISOString(),
+			sessionId: r.sessionId,
+			visitorFragment: r.visitorId.slice(0, 10),
+			path: r.path,
+			device: showDevice ? r.device : null,
+			country: showCountry ? r.country : null,
+			consentTier: tier,
+			isPaired: r.debugOwnerId === opts.adminUserId,
+		};
+	});
+}
+
+/** Count active sessions: sessions with `endedAt` (last activity) in the last 5 min. */
+export async function getActiveSessionCount(opts?: { adminUserId?: string }): Promise<number> {
+	const cutoff = new Date(Date.now() - 5 * 60 * 1000);
+	const conditions = [gte(sessions.endedAt, cutoff)];
+	if (opts?.adminUserId) conditions.push(eq(sessions.pairedAdminUserId, opts.adminUserId));
 	const result = await db
-		.select({ count: sql<number>`count(*)` })
+		.select({ count: sql<number>`count(*)::int` })
 		.from(sessions)
-		.where(gte(sessions.startedAt, cutoff));
-	return result[0]?.count ?? 0;
+		.where(and(...conditions));
+	return Number(result[0]?.count ?? 0);
+}
+
+/** Count of currently paired sessions for an admin (pairedAt within 2h, recent activity). */
+export async function getPairedSessionCount(adminUserId: string): Promise<number> {
+	const cutoff = new Date(Date.now() - 2 * 60 * 60 * 1000);
+	const result = await db
+		.select({ count: sql<number>`count(*)::int` })
+		.from(sessions)
+		.where(
+			and(eq(sessions.pairedAdminUserId, adminUserId), isNotNull(sessions.pairedAt), gt(sessions.pairedAt, cutoff)),
+		);
+	return Number(result[0]?.count ?? 0);
 }
