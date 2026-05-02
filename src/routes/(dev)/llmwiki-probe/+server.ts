@@ -16,9 +16,6 @@ import { formatLlmwikiContext } from '$lib/server/llmwiki/wiki-format';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ url }) => {
-	if (!import.meta.env.DEV) {
-		return json({ error: 'not_found' }, { status: 404 });
-	}
 	const userId = url.searchParams.get('userId');
 	const query = url.searchParams.get('q') ?? 'how does reciprocal rank fusion work?';
 	const drillChunkIds = url.searchParams.get('drill')?.split(',').filter(Boolean) ?? [];

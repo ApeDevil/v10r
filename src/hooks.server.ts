@@ -263,9 +263,16 @@ const sessionPopulate: Handle = async ({ event, resolve }) => {
 };
 
 /**
- * 6. CSRF protection — require X-Requested-With on mutating API calls
- *    Excludes /api/auth/* (Better Auth handles its own CSRF) and /api/cron/* (Bearer token)
+ * 6. CSRF protection — require X-Requested-With on mutating API calls.
+ *    Exempt prefixes carry their own auth (Better Auth, Bearer, HMAC, beacon).
  */
+const CSRF_EXEMPT_PREFIXES = [
+	'/api/auth/', // Better Auth (own CSRF)
+	'/api/cron/', // Vercel cron + Bearer token
+	'/api/webhooks/', // Third-party webhooks (HMAC signature)
+	'/api/analytics/journey', // navigator.sendBeacon (no custom headers possible)
+] as const;
+
 const csrfProtection: Handle = async ({ event, resolve }) => {
 	const method = event.request.method;
 	const path = event.url.pathname;
@@ -273,10 +280,7 @@ const csrfProtection: Handle = async ({ event, resolve }) => {
 	if (
 		(method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE') &&
 		path.startsWith('/api/') &&
-		!path.startsWith('/api/auth/') &&
-		!path.startsWith('/api/cron/') &&
-		!path.startsWith('/api/telegram/') &&
-		!path.startsWith('/api/v1/journey')
+		!CSRF_EXEMPT_PREFIXES.some((prefix) => path.startsWith(prefix))
 	) {
 		if (!event.request.headers.get('x-requested-with')) {
 			return json({ error: 'Forbidden' }, { status: 403 });
@@ -322,10 +326,14 @@ const debugOwnerLoader: Handle = async ({ event, resolve }) => {
 };
 
 /**
- * 7. Route guard — protect /app/* and /admin/* routes
+ * 7. Route guard — protect /app/* and /admin/* routes; hide (dev) routes outside dev.
  */
 const routeGuard: Handle = async ({ event, resolve }) => {
 	const path = event.url.pathname;
+
+	if (!import.meta.env.DEV && event.route.id?.startsWith('/(dev)/')) {
+		error(404, 'Not Found');
+	}
 
 	if (path.startsWith('/app') || path.startsWith('/admin')) {
 		if (!event.locals.user) {

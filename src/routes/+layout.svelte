@@ -11,7 +11,6 @@ import { Tooltip as TooltipPrimitive } from 'bits-ui';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import { initJourneyBeacon } from '$lib/analytics/journey-beacon';
-import favicon from '$lib/assets/favicon.svg';
 import { BRAND_NAME } from '$lib/branding';
 import PairingStrip from '$lib/components/shell/PairingStrip.svelte';
 import { localizeHref } from '$lib/i18n';
@@ -132,7 +131,7 @@ $effect(() => {
 </script>
 
 <svelte:head>
-	<link rel="icon" href={favicon} />
+	<link rel="icon" href="/favicon.svg" />
 	<title>{page.data.title ? `${page.data.title} - ${BRAND_NAME}` : BRAND_NAME}</title>
 </svelte:head>
 

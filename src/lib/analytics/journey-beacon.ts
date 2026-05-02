@@ -15,7 +15,7 @@ interface QueuedEvent {
 	occurredAt: string;
 }
 
-const ENDPOINT = '/api/v1/journey';
+const ENDPOINT = '/api/analytics/journey';
 const MAX_BATCH = 20;
 
 let initialized = false;

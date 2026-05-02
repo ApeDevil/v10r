@@ -6,7 +6,7 @@
  * pattern as bot-config.svelte.ts and provider-preference.svelte.ts.
  *
  * Module-level $state is safe here because the desk route sets `ssr = false`
- * in src/routes/(desk)/+layout.ts.
+ * in src/routes/desk/+layout.ts.
  */
 
 import { apiFetch } from '$lib/api';

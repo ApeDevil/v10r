@@ -12,7 +12,7 @@
  * to stop something that already happened is the wrong posture.
  *
  * Module-level $state is safe because the desk route sets `ssr = false`
- * in src/routes/(desk)/+layout.ts. This module only ever runs in the
+ * in src/routes/desk/+layout.ts. This module only ever runs in the
  * browser, so state is per-tab and never shared across server requests.
  */
 

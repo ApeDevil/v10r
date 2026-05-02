@@ -1,4 +1,4 @@
-import { type ShowcaseSublink, showcases } from '../../routes/(shell)/showcases/showcases';
+import { type ShowcaseSublink, showcases } from '../../routes/(app)/showcases/showcases';
 import { navItems } from './nav';
 
 export interface SearchPageDescriptor {

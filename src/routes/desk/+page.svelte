@@ -11,7 +11,7 @@ import { PreviewPanel } from '$lib/components/preview';
 import { SpreadsheetPanel } from '$lib/components/spreadsheet';
 import { DESK_ACTIVITY_BAR_ITEMS, DESK_PANEL_TYPES, DESK_PANELS } from '$lib/config/desk-panels';
 
-// Server data from (desk)/+layout.server.ts
+// Server data from desk/+layout.server.ts
 const authenticated = $derived(!!page.data.session?.user?.id);
 const serverTheme = $derived(page.data.deskTheme ?? null);
 const serverPresets = $derived(page.data.deskPresets ?? []);

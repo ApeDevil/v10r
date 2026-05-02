@@ -5,7 +5,7 @@
  * The DeskMenuBar reads `getActiveMenus()` which derives from the focused panel.
  *
  * Module-level $state is safe here because the desk route sets `ssr = false`
- * in src/routes/(desk)/+layout.ts. This module only ever runs in the browser,
+ * in src/routes/desk/+layout.ts. This module only ever runs in the browser,
  * so state is per-tab and never shared across server requests.
  */
 

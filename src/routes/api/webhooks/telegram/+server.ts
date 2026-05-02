@@ -24,7 +24,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	}
 	const secretHeader = request.headers.get('x-telegram-bot-api-secret-token');
 	if (!secretHeader || !safeEqual(secretHeader, webhookSecret)) {
-		return json({ ok: false });
+		return json({ ok: false }, { status: 401 });
 	}
 
 	const rawBody = await request.text().catch(() => '');
