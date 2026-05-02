@@ -9,6 +9,7 @@ import { DropdownMenu } from 'bits-ui';
 import { goto } from '$app/navigation';
 import { authClient } from '$lib/auth-client';
 import { localizeHref } from '$lib/i18n';
+import * as m from '$lib/paraglide/messages';
 import { getTheme } from '$lib/state/theme.svelte';
 import { cn } from '$lib/utils/cn';
 
@@ -36,7 +37,7 @@ function setTheme(mode: 'light' | 'dark' | 'system') {
 
 async function handleSignOut() {
 	await authClient.signOut();
-	goto('/');
+	goto(localizeHref('/'));
 }
 </script>
 
@@ -53,7 +54,7 @@ async function handleSignOut() {
 						? 'gap-3 p-3 w-full border border-border'
 						: 'justify-center border-none rail-item'
 				)}
-				aria-label={forceExpanded ? 'User menu' : `User menu for ${user.name}`}
+				aria-label={forceExpanded ? m.shell_user_menu() : m.shell_user_menu_for({ name: user.name })}
 			>
 				<span class="i-lucide-user text-icon-md shrink-0" ></span>
 
@@ -87,7 +88,7 @@ async function handleSignOut() {
 						{#snippet child({ props })}
 							<a {...props} href={localizeHref('/app/account')} class="flex items-center gap-3 no-underline text-fg">
 								<span class="i-lucide-user text-lg" ></span>
-								<span>Account</span>
+								<span>{m.shell_account()}</span>
 							</a>
 						{/snippet}
 					</DropdownMenu.Item>
@@ -98,7 +99,7 @@ async function handleSignOut() {
 						{#snippet child({ props })}
 							<a {...props} href={localizeHref('/app/settings')} class="flex items-center gap-3 no-underline text-fg">
 								<span class="i-lucide-settings text-lg" ></span>
-								<span>Settings</span>
+								<span>{m.shell_settings()}</span>
 							</a>
 						{/snippet}
 					</DropdownMenu.Item>
@@ -110,7 +111,7 @@ async function handleSignOut() {
 							class="flex items-center gap-3 p-2 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-fg-alpha motion-reduce:transition-none"
 						>
 							<span class="i-lucide-palette text-lg" ></span>
-							<span class="flex-1">Theme</span>
+							<span class="flex-1">{m.shell_theme()}</span>
 							<span
 								class={cn(
 									'i-lucide-chevron-right transition-transform duration-fast motion-reduce:transition-none',
@@ -134,7 +135,7 @@ async function handleSignOut() {
 								onclick={() => setTheme('light')}
 							>
 								<span class="i-lucide-sun text-lg" ></span>
-								<span>Light</span>
+								<span>{m.shell_theme_light()}</span>
 							</DropdownMenu.Item>
 
 							<DropdownMenu.Item
@@ -145,7 +146,7 @@ async function handleSignOut() {
 								onclick={() => setTheme('dark')}
 							>
 								<span class="i-lucide-moon text-lg" ></span>
-								<span>Dark</span>
+								<span>{m.shell_theme_dark()}</span>
 							</DropdownMenu.Item>
 
 							<DropdownMenu.Item
@@ -156,7 +157,7 @@ async function handleSignOut() {
 								onclick={() => setTheme('system')}
 							>
 								<span class="i-lucide-monitor text-lg" ></span>
-								<span>System</span>
+								<span>{m.shell_theme_system()}</span>
 							</DropdownMenu.Item>
 						</DropdownMenu.SubContent>
 					</DropdownMenu.Sub>
@@ -168,7 +169,7 @@ async function handleSignOut() {
 						onclick={handleSignOut}
 					>
 						<span class="i-lucide-log-out text-lg" ></span>
-						<span>Sign out</span>
+						<span>{m.shell_sign_out()}</span>
 					</DropdownMenu.Item>
 				</DropdownMenu.Content>
 			</DropdownMenu.Portal>
@@ -182,11 +183,11 @@ async function handleSignOut() {
 				'motion-reduce:transition-none',
 				!forceExpanded && 'justify-center'
 			)}
-			aria-label="Log in"
+			aria-label={m.nav_log_in()}
 		>
 			<span class="i-lucide-key text-xl" ></span>
 			{#if forceExpanded}
-				<span class="sign-in-label">Log in</span>
+				<span class="sign-in-label">{m.nav_log_in()}</span>
 			{/if}
 		</a>
 	{/if}

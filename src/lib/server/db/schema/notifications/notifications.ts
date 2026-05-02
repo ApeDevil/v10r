@@ -1,10 +1,16 @@
 /**
  * NOTIFICATIONS — In-app notification records.
- * Each notification is scoped to a user and optionally references an actor.
+ *
+ * Locale-neutral payload pattern:
+ *   - `messageKey` names a Paraglide message (e.g. 'notif_feedback_received').
+ *   - `messageParams` carries ICU interpolation values (e.g. {name: 'Anna'}).
+ *   - The viewer (in-app list) and the delivery worker (email/push) render via
+ *     Paraglide using the *recipient's* preferred locale, NOT the locale of
+ *     the request that created the notification.
  */
 
 import { sql } from 'drizzle-orm';
-import { boolean, index, pgSchema, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, index, jsonb, pgSchema, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
 
 export const notificationsSchema = pgSchema('notifications');
@@ -18,6 +24,9 @@ export const notificationTypeEnum = notificationsSchema.enum('notification_type'
 	'follow',
 ]);
 
+/** ICU interpolation values for a notification message. Keep flat and JSON-safe. */
+export type NotificationParams = Record<string, string | number>;
+
 export const notifications = notificationsSchema.table(
 	'notifications',
 	{
@@ -27,8 +36,8 @@ export const notifications = notificationsSchema.table(
 			.references(() => user.id, { onDelete: 'cascade' }),
 		actorId: text('actor_id').references(() => user.id, { onDelete: 'set null' }),
 		type: notificationTypeEnum('type').notNull(),
-		title: text('title').notNull(),
-		body: text('body'),
+		messageKey: text('message_key').notNull(),
+		messageParams: jsonb('message_params').$type<NotificationParams>().notNull().default(sql`'{}'::jsonb`),
 		entityRef: text('entity_ref'),
 		groupKey: text('group_key'),
 		actionUrl: text('action_url'),

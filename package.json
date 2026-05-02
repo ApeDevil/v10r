@@ -41,7 +41,8 @@
 		"check:biome": "biome ci .",
 		"test": "vitest run",
 		"test:watch": "vitest",
-		"validate": "bun run check && biome ci . && bun run test",
+		"i18n:check-missing": "bun run scripts/i18n/check-missing.ts",
+		"validate": "bun run check && biome ci . && bun run test && bun run i18n:check-missing",
 		"knip": "knip"
 	},
 	"dependencies": {

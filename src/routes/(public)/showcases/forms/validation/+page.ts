@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
+import { localizeHref } from '$lib/i18n';
 
 export const load = () => {
-	redirect(303, '/showcases/forms/validation/realtime');
+	redirect(303, localizeHref('/showcases/forms/validation/realtime'));
 };

@@ -2,6 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { fail, message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
+import { localizeHref } from '$lib/i18n';
 import { notificationSettingsSchema } from '$lib/schemas/app/notification-settings';
 import { db } from '$lib/server/db';
 import { getOrCreateSettings, updateSettings } from '$lib/server/db/notifications/mutations';
@@ -10,7 +11,7 @@ import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegr
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
-	if (!locals.user) redirect(303, '/auth/login');
+	if (!locals.user) redirect(303, localizeHref('/auth/login'));
 	const userId = locals.user.id;
 
 	const [settings, telegramAccount, discordAccount] = await Promise.all([

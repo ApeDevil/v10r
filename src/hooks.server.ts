@@ -34,7 +34,7 @@ import '$lib/server/jobs/delivery-scheduler';
 
 logFeatureStatus();
 
-const ALLOWED_LOCALES = new Set(['en', 'de', 'fr']);
+const ALLOWED_LOCALES = new Set(['en', 'de', 'ru']);
 
 /** Upstash rate limiter for auth endpoints */
 const authRatelimit = createLimiter('ratelimit:auth', AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW);
@@ -159,10 +159,25 @@ const loadStyle: Handle = async ({ event, resolve }) => {
 
 /**
  * 3. i18n — Paraglide locale detection + HTML lang attribute + style attrs
+ *
+ * Stamps event.locals.locale (canonical adapter handoff so domain code never
+ * imports from $lib/paraglide). Persists URL-resolved locale to the
+ * PARAGLIDE_LOCALE cookie when it diverges, so later non-prefixed requests
+ * resolve consistently (Paraglide v2 does not auto-write on URL resolution).
  */
 const i18n: Handle = ({ event, resolve }) =>
 	paraglideMiddleware(event.request, ({ request, locale }) => {
-		const safeLocale = ALLOWED_LOCALES.has(locale) ? locale : 'en';
+		const safeLocale = (ALLOWED_LOCALES.has(locale) ? locale : 'en') as App.Locals['locale'];
+		event.locals.locale = safeLocale;
+		if (event.cookies.get('PARAGLIDE_LOCALE') !== safeLocale) {
+			event.cookies.set('PARAGLIDE_LOCALE', safeLocale, {
+				path: '/',
+				httpOnly: false,
+				secure: typeof process !== 'undefined' ? process.env.NODE_ENV === 'production' : true,
+				sameSite: 'lax',
+				maxAge: 60 * 60 * 24 * 365,
+			});
+		}
 		event.request = request;
 		return resolve(event, {
 			transformPageChunk: ({ html }) => {

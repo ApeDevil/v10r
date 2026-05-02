@@ -1,4 +1,5 @@
 import { redirect } from '@sveltejs/kit';
+import { localizeHref } from '$lib/i18n';
 import type { PageServerLoad } from './$types';
 
 const DEFAULT_REDIRECT = '/app/dashboard';
@@ -22,7 +23,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	// Already logged in → redirect to returnTo or dashboard
 	if (locals.user) {
-		redirect(303, returnTo);
+		redirect(303, localizeHref(returnTo));
 	}
 
 	return { title: 'Log In', returnTo };

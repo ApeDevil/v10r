@@ -8,10 +8,19 @@
  * need blogSchema from this file, and this file needs domain for the FK.
  */
 import { sql } from 'drizzle-orm';
-import { check, index, integer, pgSchema, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { check, index, integer, jsonb, pgSchema, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
 
 export const blogSchema = pgSchema('blog');
+
+/**
+ * Translatable text per non-base locale.
+ *   - `name` / `description` are EN canonical (NOT NULL).
+ *   - `nameI18n` / `descriptionI18n` carry de/ru only; resolved at read via `tc()`.
+ *   - No drift-tracking metadata: translations are author-edited (Claude updates
+ *     all locales in one edit, not via a translation pipeline).
+ */
+export type DomainTextI18n = Partial<Record<'de' | 'ru', string>>;
 
 export const domain = blogSchema.table(
 	'domain',
@@ -22,6 +31,8 @@ export const domain = blogSchema.table(
 		icon: text('icon'),
 		color: integer('color'),
 		description: text('description'),
+		nameI18n: jsonb('name_i18n').$type<DomainTextI18n>().notNull().default(sql`'{}'::jsonb`),
+		descriptionI18n: jsonb('description_i18n').$type<DomainTextI18n>().notNull().default(sql`'{}'::jsonb`),
 	},
 	(table) => [
 		uniqueIndex('blog_domain_slug_idx').on(table.slug),

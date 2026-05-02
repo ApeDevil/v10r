@@ -3,7 +3,7 @@ import { getLocale } from '$lib/paraglide/runtime';
 const LOCALE_DEFAULTS: Record<string, string> = {
 	en: 'en-US',
 	de: 'de-DE',
-	fr: 'fr-FR',
+	ru: 'ru-RU',
 };
 
 /**

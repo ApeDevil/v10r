@@ -1,14 +1,16 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '../index';
 import { notificationSettings } from '../schema/notifications/notification-settings';
-import { notifications } from '../schema/notifications/notifications';
+import { type NotificationParams, notifications } from '../schema/notifications/notifications';
 
 interface CreateNotificationInput {
 	userId: string;
 	actorId?: string;
 	type: 'mention' | 'comment' | 'system' | 'success' | 'security' | 'follow';
-	title: string;
-	body?: string;
+	/** Paraglide message key resolved at render time (e.g. 'notif_feedback_received'). */
+	messageKey: string;
+	/** ICU interpolation values for the message. Defaults to {}. */
+	messageParams?: NotificationParams;
 	entityRef?: string;
 	groupKey?: string;
 	actionUrl?: string;
@@ -20,6 +22,7 @@ export async function createNotification(data: CreateNotificationInput) {
 		.insert(notifications)
 		.values({
 			id: crypto.randomUUID(),
+			messageParams: data.messageParams ?? {},
 			...data,
 		})
 		.returning();

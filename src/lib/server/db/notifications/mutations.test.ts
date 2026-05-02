@@ -39,15 +39,16 @@ describe('notification mutations', () => {
 			const result = await createNotification({
 				userId: USER_A.id,
 				type: 'mention',
-				title: 'You were mentioned',
-				body: 'In a comment',
+				messageKey: 'notif_mention',
+				messageParams: { name: 'Alice' },
 				actionUrl: '/post/123',
 			});
 
 			expect(result).toBeDefined();
 			expect(result?.userId).toBe(USER_A.id);
 			expect(result?.type).toBe('mention');
-			expect(result?.title).toBe('You were mentioned');
+			expect(result?.messageKey).toBe('notif_mention');
+			expect(result?.messageParams).toEqual({ name: 'Alice' });
 			expect(result?.isRead).toBe(false);
 			expect(result?.id).toBeTruthy();
 		});
@@ -56,11 +57,11 @@ describe('notification mutations', () => {
 			const result = await createNotification({
 				userId: USER_A.id,
 				type: 'system',
-				title: 'System update',
+				messageKey: 'notif_system',
 			});
 
 			expect(result).toBeDefined();
-			expect(result?.body).toBeNull();
+			expect(result?.messageParams).toEqual({});
 			expect(result?.actionUrl).toBeNull();
 		});
 	});

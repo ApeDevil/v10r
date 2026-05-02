@@ -4,6 +4,8 @@
  * Shows when <5 minutes remain, allows extension or sign out
  */
 
+import * as m from '$lib/paraglide/messages';
+
 type Props = {
 	timeRemaining: number; // seconds
 	onExtend: () => Promise<void>;
@@ -40,8 +42,8 @@ async function handleExtend() {
 		<span class="i-lucide-timer text-2xl leading-none" aria-hidden="true"></span>
 
 		<div class="banner-text">
-			<strong class="banner-title">Session expiring soon</strong>
-			<span class="banner-time">Your session will expire in {formattedTime}</span>
+			<strong class="banner-title">{m.session_warning_title()}</strong>
+			<span class="banner-time">{m.session_warning_body({ time: formattedTime })}</span>
 		</div>
 
 		<div class="banner-actions">
@@ -50,9 +52,9 @@ async function handleExtend() {
 				class="btn-extend"
 				onclick={handleExtend}
 				disabled={extending}
-				aria-label="Extend session"
+				aria-label={m.session_warning_extend()}
 			>
-				{extending ? 'Extending...' : 'Extend Session'}
+				{extending ? m.session_warning_extending() : m.session_warning_extend()}
 			</button>
 
 			<button
@@ -60,9 +62,9 @@ async function handleExtend() {
 				class="btn-signout"
 				onclick={onSignOut}
 				disabled={extending}
-				aria-label="Sign out"
+				aria-label={m.shell_sign_out()}
 			>
-				Sign Out
+				{m.shell_sign_out()}
 			</button>
 
 			<button
@@ -70,7 +72,7 @@ async function handleExtend() {
 				class="btn-dismiss"
 				onclick={onDismiss}
 				disabled={extending}
-				aria-label="Dismiss warning"
+				aria-label={m.session_warning_dismiss()}
 			>
 				<span class="i-lucide-x"></span>
 			</button>

@@ -14,6 +14,7 @@ import {
 	getDefaultState,
 } from '$lib/config/customization';
 import { MODELS_BY_ID, resolveViewportConfig } from '$lib/config/models';
+import { localizeHref } from '$lib/i18n';
 
 const model = $derived(MODELS_BY_ID.get(page.params.model ?? ''));
 const customization = $derived(model?.customization);
@@ -23,7 +24,7 @@ let redirected = false;
 $effect(() => {
 	if ((!model || !customization) && !redirected) {
 		redirected = true;
-		goto('/showcases/3d');
+		goto(localizeHref('/showcases/3d'));
 	}
 });
 

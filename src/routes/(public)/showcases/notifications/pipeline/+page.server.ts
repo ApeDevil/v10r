@@ -1,8 +1,10 @@
 import { redirect } from '@sveltejs/kit';
 import { desc, eq } from 'drizzle-orm';
+import { localizeHref } from '$lib/i18n';
 import { db } from '$lib/server/db';
 import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
 import { notifications } from '$lib/server/db/schema/notifications/notifications';
+import { renderNotification } from '$lib/server/notifications/render-message';
 import type { Actions, PageServerLoad } from './$types';
 
 interface DeliveryInfo {
@@ -20,12 +22,13 @@ interface GroupedNotification {
 	deliveries: DeliveryInfo[];
 }
 
-async function loadRecentNotifications(userId: string): Promise<GroupedNotification[]> {
+async function loadRecentNotifications(userId: string, locale: string): Promise<GroupedNotification[]> {
 	const rows = await db
 		.select({
 			id: notifications.id,
 			type: notifications.type,
-			title: notifications.title,
+			messageKey: notifications.messageKey,
+			messageParams: notifications.messageParams,
 			isRead: notifications.isRead,
 			createdAt: notifications.createdAt,
 			deliveryChannel: notificationDeliveries.channel,
@@ -46,7 +49,7 @@ async function loadRecentNotifications(userId: string): Promise<GroupedNotificat
 			map.set(row.id, {
 				id: row.id,
 				type: row.type,
-				title: row.title,
+				title: renderNotification(row.messageKey, row.messageParams, locale),
 				isRead: row.isRead,
 				createdAt: row.createdAt.toISOString(),
 				deliveries: [],
@@ -66,18 +69,18 @@ async function loadRecentNotifications(userId: string): Promise<GroupedNotificat
 }
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (!locals.user) redirect(303, '/auth/login');
+	if (!locals.user) redirect(303, localizeHref('/auth/login'));
 
-	const recentNotifications = await loadRecentNotifications(locals.user.id);
+	const recentNotifications = await loadRecentNotifications(locals.user.id, locals.locale);
 
 	return { title: 'Pipeline - Notifications - Showcases', recentNotifications };
 };
 
 export const actions: Actions = {
 	refresh: async ({ locals }) => {
-		if (!locals.user) redirect(303, '/auth/login');
+		if (!locals.user) redirect(303, localizeHref('/auth/login'));
 
-		const recentNotifications = await loadRecentNotifications(locals.user.id);
+		const recentNotifications = await loadRecentNotifications(locals.user.id, locals.locale);
 
 		return { recentNotifications };
 	},

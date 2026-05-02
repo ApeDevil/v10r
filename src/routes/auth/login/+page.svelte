@@ -2,6 +2,8 @@
 import { goto } from '$app/navigation';
 import { authClient } from '$lib/auth-client';
 import { Button, Input, Spinner } from '$lib/components/primitives';
+import { errorMessage } from '$lib/errors';
+import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
 
@@ -27,13 +29,13 @@ async function handleMagicLink() {
 			callbackURL: data.returnTo,
 		});
 		if (result.error) {
-			error = result.error.message ?? 'Failed to send magic link.';
+			error = result.error.message ?? m.auth_login_error_magic_link_failed();
 			flowState = 'error';
 		} else {
 			flowState = 'magic-link-sent';
 		}
 	} catch {
-		error = 'Failed to send magic link. Please try again.';
+		error = m.auth_login_error_magic_link_failed();
 		flowState = 'error';
 	} finally {
 		sendingMethod = null;
@@ -52,7 +54,7 @@ async function handleOtp() {
 			type: 'sign-in',
 		});
 		if (result.error) {
-			error = result.error.message ?? 'Failed to send code.';
+			error = result.error.message ?? m.auth_login_error_otp_failed();
 			flowState = 'error';
 			sendingMethod = null;
 		} else {
@@ -63,7 +65,7 @@ async function handleOtp() {
 			goto(`/auth/verify?${params.toString()}`);
 		}
 	} catch {
-		error = 'Failed to send code. Please try again.';
+		error = m.auth_login_error_otp_failed();
 		flowState = 'error';
 		sendingMethod = null;
 	}
@@ -79,7 +81,7 @@ async function handleOAuth(provider: 'github' | 'google' | 'microsoft') {
 			callbackURL: data.returnTo,
 		});
 	} catch (err) {
-		error = err instanceof Error ? err.message : 'Sign in failed. Please try again.';
+		error = err instanceof Error ? err.message : errorMessage('INTERNAL');
 		loadingProvider = null;
 	}
 }
@@ -87,8 +89,8 @@ async function handleOAuth(provider: 'github' | 'google' | 'microsoft') {
 <div class="login-page">
 	<div class="login-card">
 		<div class="login-header">
-			<h1 class="text-2xl font-bold text-fg">Welcome to V10r</h1>
-			<p class="text-sm text-muted">Sign in to access your dashboard</p>
+			<h1 class="text-2xl font-bold text-fg">{m.auth_login_title()}</h1>
+			<p class="text-sm text-muted">{m.auth_login_subtitle()}</p>
 		</div>
 
 		{#if error}
@@ -102,22 +104,22 @@ async function handleOAuth(provider: 'github' | 'google' | 'microsoft') {
 			<div class="success-alert" role="status">
 				<span class="i-lucide-mail-check text-lg" aria-hidden="true"></span>
 				<div>
-					<p class="font-medium">Check your email</p>
-					<p class="text-sm">We sent a sign-in link to <strong>{email}</strong></p>
+					<p class="font-medium">{m.auth_login_check_email_title()}</p>
+					<p class="text-sm">{m.auth_login_check_email_body()} <strong>{email}</strong></p>
 				</div>
 			</div>
 
 			<Button variant="ghost" class="mt-4 w-full justify-center" onclick={() => { flowState = 'idle'; error = null; }}>
-				Use a different email
+				{m.auth_login_use_different_email()}
 			</Button>
 		{:else}
 			<div class="email-section">
 				<Input
 					type="email"
-					placeholder="you@example.com"
+					placeholder={m.auth_login_email_placeholder()}
 					bind:value={email}
 					disabled={isBusy}
-					aria-label="Email address"
+					aria-label={m.auth_login_email_aria_label()}
 				/>
 
 				<div class="email-actions">
@@ -133,7 +135,7 @@ async function handleOAuth(provider: 'github' | 'google' | 'microsoft') {
 						{:else}
 							<span class="i-lucide-link text-lg mr-2" aria-hidden="true"></span>
 						{/if}
-						Magic link
+						{m.auth_login_magic_link()}
 					</Button>
 
 					<Button
@@ -148,13 +150,13 @@ async function handleOAuth(provider: 'github' | 'google' | 'microsoft') {
 						{:else}
 							<span class="i-lucide-hash text-lg mr-2" aria-hidden="true"></span>
 						{/if}
-						Send code
+						{m.auth_login_send_code()}
 					</Button>
 				</div>
 			</div>
 
 			<div class="divider">
-				<span>or continue with</span>
+				<span>{m.auth_login_or_continue_with()}</span>
 			</div>
 
 			<div class="login-actions">
@@ -215,7 +217,7 @@ async function handleOAuth(provider: 'github' | 'google' | 'microsoft') {
 			</div>
 
 			<p class="text-xs text-muted text-center mt-6">
-				By signing in, you agree to our terms of service.
+				{m.auth_login_terms()}
 			</p>
 		{/if}
 	</div>

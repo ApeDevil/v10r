@@ -1,11 +1,12 @@
 import { error, redirect } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
+import { localizeHref } from '$lib/i18n';
 import { apiError } from '$lib/server/api/response';
 
 export function requireAuth(locals: App.Locals, returnTo?: string) {
 	if (!locals.user || !locals.session) {
 		const target = returnTo ? `/auth/login?returnTo=${encodeURIComponent(returnTo)}` : '/auth/login';
-		redirect(303, target);
+		redirect(303, localizeHref(target));
 	}
 	return { user: locals.user, session: locals.session };
 }

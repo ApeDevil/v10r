@@ -2,6 +2,7 @@
 import type { Snippet } from 'svelte';
 import { goto } from '$app/navigation';
 import { Button } from '$lib/components/primitives';
+import { localizeHref } from '$lib/i18n';
 
 interface Props {
 	status: number;
@@ -69,9 +70,9 @@ function copyErrorId() {
 			{@render actions()}
 		{:else if status >= 500}
 			<Button variant="default" onclick={() => location.reload()}>Try again</Button>
-			<Button variant="outline" onclick={() => goto('/')}>Go home</Button>
+			<Button variant="outline" onclick={() => goto(localizeHref('/'))}>Go home</Button>
 		{:else}
-			<Button variant="default" onclick={() => goto('/')}>Go home</Button>
+			<Button variant="default" onclick={() => goto(localizeHref('/'))}>Go home</Button>
 			<Button variant="outline" onclick={() => history.back()}>Go back</Button>
 		{/if}
 	</div>

@@ -1,6 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import { fail, message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
+import { localizeHref } from '$lib/i18n';
 import { userSettingsSchema } from '$lib/schemas/app/settings';
 import { getOrCreatePreferences, updatePreferences } from '$lib/server/db/preferences/mutations';
 import { updateDisplayName } from '$lib/server/db/user';
@@ -8,7 +9,7 @@ import { AVATAR_ERROR_MESSAGES, removeAvatar, uploadAvatar, validateAvatar } fro
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (!locals.user) redirect(303, '/auth/login');
+	if (!locals.user) redirect(303, localizeHref('/auth/login'));
 
 	const prefs = await getOrCreatePreferences(locals.user.id);
 
@@ -32,7 +33,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
 	default: async ({ request, locals, cookies }) => {
-		if (!locals.user) redirect(303, '/auth/login');
+		if (!locals.user) redirect(303, localizeHref('/auth/login'));
 
 		const form = await superValidate(request, valibot(userSettingsSchema));
 
@@ -70,7 +71,7 @@ export const actions: Actions = {
 	},
 
 	uploadAvatar: async ({ request, locals }) => {
-		if (!locals.user) redirect(303, '/auth/login');
+		if (!locals.user) redirect(303, localizeHref('/auth/login'));
 
 		const formData = await request.formData();
 		const file = formData.get('avatar') as File | null;
@@ -88,7 +89,7 @@ export const actions: Actions = {
 	},
 
 	removeAvatar: async ({ locals }) => {
-		if (!locals.user) redirect(303, '/auth/login');
+		if (!locals.user) redirect(303, localizeHref('/auth/login'));
 		await removeAvatar(locals.user.id, locals.user.image ?? null);
 		return { avatarUrl: null };
 	},

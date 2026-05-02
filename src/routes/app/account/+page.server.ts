@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { fail, redirect } from '@sveltejs/kit';
+import { localizeHref } from '$lib/i18n';
 import { deleteUser, getUserAccounts, getUserProfile, getUserSessions, revokeSession } from '$lib/server/db/user';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -8,7 +9,7 @@ function hashForDisplay(id: string): string {
 }
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (!locals.user || !locals.session) redirect(303, '/auth/login');
+	if (!locals.user || !locals.session) redirect(303, localizeHref('/auth/login'));
 
 	// Fetch sessions and linked accounts in parallel
 	const [sessions, accounts] = await Promise.all([getUserSessions(locals.user.id), getUserAccounts(locals.user.id)]);
@@ -34,7 +35,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
 	revokeSession: async ({ request, locals }) => {
-		if (!locals.user) redirect(303, '/auth/login');
+		if (!locals.user) redirect(303, localizeHref('/auth/login'));
 
 		const formData = await request.formData();
 		const sessionId = formData.get('sessionId') as string;
@@ -48,7 +49,7 @@ export const actions: Actions = {
 	},
 
 	exportData: async ({ locals }) => {
-		if (!locals.user) redirect(303, '/auth/login');
+		if (!locals.user) redirect(303, localizeHref('/auth/login'));
 
 		const [profile, accountData, sessionData] = await Promise.all([
 			getUserProfile(locals.user.id),
@@ -74,7 +75,7 @@ export const actions: Actions = {
 	},
 
 	deleteAccount: async ({ request, locals }) => {
-		if (!locals.user) redirect(303, '/auth/login');
+		if (!locals.user) redirect(303, localizeHref('/auth/login'));
 
 		const formData = await request.formData();
 		const confirmation = formData.get('confirmation');
@@ -86,6 +87,6 @@ export const actions: Actions = {
 		// Delete user — cascades to sessions and accounts via FK
 		await deleteUser(locals.user.id);
 
-		redirect(303, '/');
+		redirect(303, localizeHref('/'));
 	},
 };

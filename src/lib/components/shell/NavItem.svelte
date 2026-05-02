@@ -9,7 +9,7 @@ import { untrack } from 'svelte';
 import { page } from '$app/state';
 import { Tooltip } from '$lib/components/primitives/tooltip';
 import { deLocalizeHref, localizeHref } from '$lib/i18n';
-import type { NavChild } from '$lib/nav';
+import type { LabelFn, NavChild } from '$lib/nav';
 import { cn } from '$lib/utils/cn';
 import NavAccordion from './NavAccordion.svelte';
 import NavFlyout from './NavFlyout.svelte';
@@ -19,7 +19,7 @@ interface Props {
 	href: string;
 	/** CSS icon class (e.g., 'i-lucide-home') */
 	icon: string;
-	label: string;
+	label: LabelFn;
 	children?: NavChild[];
 	forceExpanded?: boolean;
 	useFlyout?: boolean;
@@ -73,11 +73,11 @@ const hasDropdownChildren = $derived(children.length > 0 && !useFlyout);
 				? 'gap-3 px-2 flex-1'
 				: 'justify-center rail-item'
 		)}
-		aria-label={forceExpanded ? undefined : label}
+		aria-label={forceExpanded ? undefined : label()}
 	>
 		<span class={cn(icon, 'text-icon-md shrink-0 leading-none')} ></span>
 		{#if forceExpanded}
-			<span class="nav-label text-sm font-medium flex-1 opacity-0 motion-reduce:opacity-100">{label}</span>
+			<span class="nav-label text-sm font-medium flex-1 opacity-0 motion-reduce:opacity-100">{label()}</span>
 		{/if}
 	</NavLink>
 {/snippet}
@@ -96,7 +96,7 @@ const hasDropdownChildren = $derived(children.length > 0 && !useFlyout);
 			{#if forceExpanded}
 				{@render navLink()}
 			{:else}
-				<Tooltip content={label} side="right" delayDuration={300}>
+				<Tooltip content={label()} side="right" delayDuration={300}>
 					{@render navLink()}
 				</Tooltip>
 			{/if}

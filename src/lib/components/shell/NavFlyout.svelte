@@ -8,13 +8,13 @@
 import type { Snippet } from 'svelte';
 import { page } from '$app/state';
 import { deLocalizeHref, localizeHref } from '$lib/i18n';
-import type { NavChild } from '$lib/nav';
+import type { LabelFn, NavChild } from '$lib/nav';
 import { cn } from '$lib/utils/cn';
 import NavLink from './NavLink.svelte';
 
 interface Props {
 	items: NavChild[];
-	label: string;
+	label: LabelFn;
 	forceExpanded: boolean;
 	children: Snippet;
 }
@@ -210,10 +210,10 @@ function portal(node: HTMLElement) {
 		onpointerenter={handleFlyoutEnter}
 		onpointerleave={handleFlyoutLeave}
 		role="menu"
-		aria-label="{label} submenu"
+		aria-label="{label()} submenu"
 	>
 		{#if !forceExpanded}
-			<div class="px-3 py-2 text-xs font-semibold text-muted uppercase tracking-wide">{label}</div>
+			<div class="px-3 py-2 text-xs font-semibold text-muted uppercase tracking-wide">{label()}</div>
 			<div class="h-px bg-border mx-2 mb-1"></div>
 		{/if}
 
@@ -228,7 +228,7 @@ function portal(node: HTMLElement) {
 				)}
 				role="menuitem"
 			>
-				{item.label}
+				{item.label()}
 			</NavLink>
 		{/each}
 	</div>

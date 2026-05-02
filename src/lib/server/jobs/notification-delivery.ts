@@ -6,12 +6,14 @@
 
 import { and, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db';
+import { userPreferences } from '$lib/server/db/schema/app/user-preferences';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
 import { notifications } from '$lib/server/db/schema/notifications/notifications';
 import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
 import { getPendingDeliveries, markFailed, markProcessing, markSent } from '$lib/server/notifications/outbox';
 import { getProvider } from '$lib/server/notifications/providers';
 import type { DeliveryPayload } from '$lib/server/notifications/providers/types';
+import { renderNotification } from '$lib/server/notifications/render-message';
 
 /** Resolve the recipient address for a given channel + user */
 async function resolveRecipient(userId: string, channel: string): Promise<string | null> {
@@ -93,10 +95,19 @@ async function processDeliveryBatch(): Promise<number> {
 			continue;
 		}
 
+		// Resolve recipient locale (default 'en' if no preferences row).
+		const [prefs] = await db
+			.select({ locale: userPreferences.locale })
+			.from(userPreferences)
+			.where(eq(userPreferences.userId, notif.userId))
+			.limit(1);
+		const recipientLocale = prefs?.locale ?? 'en';
+
+		const rendered = renderNotification(notif.messageKey, notif.messageParams, recipientLocale);
 		const payload: DeliveryPayload = {
 			to: recipient,
-			subject: notif.title,
-			body: notif.body ?? notif.title,
+			subject: rendered,
+			body: rendered,
 		};
 
 		const result = await provider.send(payload);

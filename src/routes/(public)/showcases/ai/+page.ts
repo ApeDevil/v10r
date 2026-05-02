@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
+import { localizeHref } from '$lib/i18n';
 
 export const load = () => {
-	redirect(303, '/showcases/ai/retrieval');
+	redirect(303, localizeHref('/showcases/ai/retrieval'));
 };

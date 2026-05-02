@@ -7,6 +7,7 @@
  *   3. Redirect to / on success; render error page on failure.
  */
 import { redirect } from '@sveltejs/kit';
+import { localizeHref } from '$lib/i18n';
 import { ANALYTICS_SESSION_TIMEOUT_MS } from '$lib/server/config';
 import { claimPairingCode, PAIRED_SESSION_TTL_MS, setOwnerCookie, signOwnerCookie } from '$lib/server/pairing';
 import type { PageServerLoad } from './$types';
@@ -41,5 +42,5 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
 	const cookieValue = await signOwnerCookie(result.adminUserId, expiresAt);
 	setOwnerCookie(cookies, cookieValue, expiresAt);
 
-	throw redirect(303, '/');
+	throw redirect(303, localizeHref('/'));
 };

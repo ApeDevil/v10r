@@ -3,6 +3,7 @@ import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import { BackLink, PageHeader } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
+import { ErrorCode, errorMessage } from '$lib/errors';
 import {
 	formatCurrency,
 	formatDate,
@@ -26,7 +27,7 @@ import { setCookie } from '$lib/utils/cookies';
 const LOCALE_NAMES: Record<string, string> = {
 	en: 'English',
 	de: 'Deutsch',
-	fr: 'Français',
+	ru: 'Русский',
 };
 
 // Derive locale from reactive page.url (not getLocale() which reads window.location)
@@ -56,14 +57,15 @@ const sampleNumber = 1234567.89;
 const sampleCurrency = 1234.5;
 const samplePercent = 0.8542;
 
-// Simulated database content with translations
+// Simulated DB row: EN canonical + JSONB i18n sibling (mirrors blog.domain shape)
 const dbContent = {
-	title: { en: 'Hello World', de: 'Hallo Welt', fr: 'Bonjour le monde' },
-	description: {
-		en: 'This content is stored in the database as JSON.',
+	title: 'Hello World',
+	titleI18n: { de: 'Hallo Welt', ru: 'Привет, мир' } as const,
+	description: 'This content is stored in the database as JSON.',
+	descriptionI18n: {
 		de: 'Dieser Inhalt ist in der Datenbank als JSON gespeichert.',
-		fr: 'Ce contenu est stocké dans la base de données en JSON.',
-	},
+		ru: 'Это содержимое хранится в базе данных в формате JSON.',
+	} as const,
 };
 </script>
 {#key currentLocale}
@@ -191,20 +193,48 @@ const dbContent = {
 
 		<div class="message-demos">
 			<div class="demo-item">
-				<span class="demo-label">tc(post.title)</span>
-				<span class="demo-value">{tc(dbContent.title)}</span>
+				<span class="demo-label">tc(post.title, post.titleI18n, locale)</span>
+				<span class="demo-value">{tc(dbContent.title, dbContent.titleI18n, currentLocale)}</span>
 			</div>
 			<div class="demo-item">
-				<span class="demo-label">tc(post.description)</span>
-				<span class="demo-value">{tc(dbContent.description)}</span>
+				<span class="demo-label">tc(post.description, post.descriptionI18n, locale)</span>
+				<span class="demo-value">{tc(dbContent.description, dbContent.descriptionI18n, currentLocale)}</span>
 			</div>
 		</div>
 
 		<div class="code-note">
 			<h3>Database Schema Pattern</h3>
-			<pre><code>// JSON columns for translated content
-title: jsonb('title').$type&lt;Record&lt;string, string&gt;&gt;()
-// Data: &#123; "en": "Hello", "de": "Hallo", "fr": "Bonjour" &#125;</code></pre>
+			<pre><code>// EN canonical column + JSONB i18n sibling per non-base locale
+name: text('name').notNull(),
+nameI18n: jsonb('name_i18n')
+  .$type&lt;Partial&lt;Record&lt;'de'|'ru', string&gt;&gt;&gt;()
+  .notNull().default(sql`'&#123;&#125;'::jsonb`),
+// Render: tc(row.name, row.nameI18n, locale)</code></pre>
+		</div>
+	</section>
+
+	<!-- Error Codes → Localized Messages -->
+	<section class="demo-section">
+		<h2>Error Codes</h2>
+		<p>Domain code throws stable error <em>codes</em>; adapters resolve them to localized strings via <code>errorMessage(code)</code>. Switching locale re-renders without re-submitting.</p>
+
+		<div class="message-demos">
+			<div class="demo-item">
+				<span class="demo-label">errorMessage(ErrorCode.AUTH_INVALID)</span>
+				<span class="demo-value">{errorMessage(ErrorCode.AUTH_INVALID)}</span>
+			</div>
+			<div class="demo-item">
+				<span class="demo-label">errorMessage(ErrorCode.VALIDATION_REQUIRED)</span>
+				<span class="demo-value">{errorMessage(ErrorCode.VALIDATION_REQUIRED)}</span>
+			</div>
+			<div class="demo-item">
+				<span class="demo-label">errorMessage(ErrorCode.RATE_LIMITED)</span>
+				<span class="demo-value">{errorMessage(ErrorCode.RATE_LIMITED)}</span>
+			</div>
+			<div class="demo-item">
+				<span class="demo-label">errorMessage(ErrorCode.RESOURCE_NOT_FOUND)</span>
+				<span class="demo-value">{errorMessage(ErrorCode.RESOURCE_NOT_FOUND)}</span>
+			</div>
 		</div>
 	</section>
 

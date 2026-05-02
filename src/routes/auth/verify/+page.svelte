@@ -2,6 +2,7 @@
 import { goto } from '$app/navigation';
 import { authClient } from '$lib/auth-client';
 import { Button, Spinner } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
 
@@ -66,13 +67,13 @@ async function handleVerify() {
 			otp,
 		});
 		if (result.error) {
-			error = result.error.message ?? 'Invalid code. Please try again.';
+			error = result.error.message ?? m.auth_verify_error_invalid();
 			verifying = false;
 		} else {
 			goto(data.returnTo);
 		}
 	} catch {
-		error = 'Verification failed. Please try again.';
+		error = m.auth_verify_error_failed();
 		verifying = false;
 	}
 }
@@ -96,12 +97,12 @@ async function handleResend() {
 			type: 'sign-in',
 		});
 		if (result.error) {
-			error = result.error.message ?? 'Failed to resend code.';
+			error = result.error.message ?? m.auth_verify_error_resend_failed();
 		} else {
 			startCooldown();
 		}
 	} catch {
-		error = 'Failed to resend code. Please try again.';
+		error = m.auth_verify_error_resend_failed();
 	} finally {
 		resending = false;
 	}
@@ -111,9 +112,9 @@ async function handleResend() {
 	<div class="verify-card">
 		<div class="verify-header">
 			<span class="i-lucide-shield-check text-4xl text-primary" aria-hidden="true"></span>
-			<h1 class="text-2xl font-bold text-fg">Enter verification code</h1>
+			<h1 class="text-2xl font-bold text-fg">{m.auth_verify_title()}</h1>
 			<p class="text-sm text-muted">
-				We sent a 6-digit code to <strong class="text-fg">{data.email}</strong>
+				{m.auth_verify_subtitle()} <strong class="text-fg">{data.email}</strong>
 			</p>
 		</div>
 
@@ -141,7 +142,7 @@ async function handleResend() {
 						class="otp-digit"
 						autocomplete="one-time-code"
 						disabled={verifying}
-						aria-label={`Digit ${i + 1} of 6`}
+						aria-label={m.auth_verify_digit_aria_label({ index: i + 1 })}
 						oninput={(e) => handleInput(i, e)}
 						onkeydown={(e) => handleKeydown(i, e)}
 					/>
@@ -158,7 +159,7 @@ async function handleResend() {
 				{#if verifying}
 					<Spinner size="sm" class="mr-2" />
 				{/if}
-				Verify
+				{m.auth_verify_submit()}
 			</Button>
 		</form>
 
@@ -169,15 +170,15 @@ async function handleResend() {
 				onclick={handleResend}
 			>
 				{#if resending}
-					Sending...
+					{m.auth_verify_sending()}
 				{:else if resendCooldown > 0}
-					Resend code ({resendCooldown}s)
+					{m.auth_verify_resend_cooldown({ seconds: resendCooldown })}
 				{:else}
-					Resend code
+					{m.auth_verify_resend()}
 				{/if}
 			</button>
 
-			<a href="/auth/login" class="text-sm text-muted underline">Back to sign in</a>
+			<a href="/auth/login" class="text-sm text-muted underline">{m.auth_back_to_sign_in()}</a>
 		</div>
 	</div>
 </div>

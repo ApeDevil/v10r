@@ -2,6 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import { feedbackSubmissionSchema } from '$lib/feedback/validation';
+import { localizeHref } from '$lib/i18n';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import {
 	FEEDBACK_MIN_FILL_MS,
@@ -70,6 +71,6 @@ export const actions: Actions = {
 			nonce: form.data.nonce,
 		});
 
-		redirect(303, '/feedback/thanks');
+		redirect(303, localizeHref('/feedback/thanks'));
 	},
 };

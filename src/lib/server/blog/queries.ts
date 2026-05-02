@@ -349,11 +349,13 @@ export async function listDomains(offset = 0, limit = 50): Promise<{ items: Doma
 				icon: domain.icon,
 				color: domain.color,
 				description: domain.description,
+				nameI18n: domain.nameI18n,
+				descriptionI18n: domain.descriptionI18n,
 				postCount: count(post.id),
 			})
 			.from(domain)
 			.leftJoin(post, and(eq(post.domainId, domain.id), isNull(post.deletedAt)))
-			.groupBy(domain.id, domain.slug, domain.name, domain.icon, domain.color, domain.description)
+			.groupBy(domain.id)
 			.orderBy(asc(domain.name))
 			.offset(offset)
 			.limit(limit),

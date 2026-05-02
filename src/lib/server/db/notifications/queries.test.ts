@@ -36,55 +36,55 @@ describe('notification queries', () => {
 		it('returns notifications for a user, most recent first', async () => {
 			const older = makeNotification({
 				userId: USER_A.id,
-				title: 'Older',
+				messageKey: 'notif_older',
 				createdAt: new Date('2024-01-01'),
 			});
 			const newer = makeNotification({
 				userId: USER_A.id,
-				title: 'Newer',
+				messageKey: 'notif_newer',
 				createdAt: new Date('2024-06-01'),
 			});
 			await db.insert(notifications).values([older, newer]);
 
 			const result = await getNotifications(USER_A.id, 10, 0);
 			expect(result).toHaveLength(2);
-			expect(result[0].title).toBe('Newer');
-			expect(result[1].title).toBe('Older');
+			expect(result[0].messageKey).toBe('notif_newer');
+			expect(result[1].messageKey).toBe('notif_older');
 		});
 
 		it('excludes other users notifications', async () => {
 			await db
 				.insert(notifications)
 				.values([
-					makeNotification({ userId: USER_A.id, title: 'A' }),
-					makeNotification({ userId: USER_B.id, title: 'B' }),
+					makeNotification({ userId: USER_A.id, messageKey: 'notif_a' }),
+					makeNotification({ userId: USER_B.id, messageKey: 'notif_b' }),
 				]);
 
 			const result = await getNotifications(USER_A.id, 10, 0);
 			expect(result).toHaveLength(1);
-			expect(result[0].title).toBe('A');
+			expect(result[0].messageKey).toBe('notif_a');
 		});
 
 		it('excludes archived notifications', async () => {
 			await db.insert(notifications).values([
-				makeNotification({ userId: USER_A.id, title: 'Active' }),
+				makeNotification({ userId: USER_A.id, messageKey: 'notif_active' }),
 				makeNotification({
 					userId: USER_A.id,
-					title: 'Archived',
+					messageKey: 'notif_archived',
 					archivedAt: new Date(),
 				}),
 			]);
 
 			const result = await getNotifications(USER_A.id, 10, 0);
 			expect(result).toHaveLength(1);
-			expect(result[0].title).toBe('Active');
+			expect(result[0].messageKey).toBe('notif_active');
 		});
 
 		it('respects limit and offset', async () => {
 			const items = Array.from({ length: 5 }, (_, i) =>
 				makeNotification({
 					userId: USER_A.id,
-					title: `N${i}`,
+					messageKey: `notif_n${i}`,
 					createdAt: new Date(2024, 0, i + 1),
 				}),
 			);
@@ -122,16 +122,16 @@ describe('notification queries', () => {
 
 	describe('getNotificationById', () => {
 		it('returns notification for the correct user', async () => {
-			const n = makeNotification({ userId: USER_A.id, title: 'Mine' });
+			const n = makeNotification({ userId: USER_A.id, messageKey: 'notif_mine' });
 			await db.insert(notifications).values(n);
 
 			const result = await getNotificationById(n.id, USER_A.id);
 			expect(result).not.toBeNull();
-			expect(result?.title).toBe('Mine');
+			expect(result?.messageKey).toBe('notif_mine');
 		});
 
 		it('returns null for wrong user (IDOR protection)', async () => {
-			const n = makeNotification({ userId: USER_A.id, title: 'Secret' });
+			const n = makeNotification({ userId: USER_A.id, messageKey: 'notif_secret' });
 			await db.insert(notifications).values(n);
 
 			const result = await getNotificationById(n.id, USER_B.id);

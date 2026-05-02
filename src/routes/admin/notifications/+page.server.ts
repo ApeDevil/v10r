@@ -25,7 +25,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	// Eager: fast aggregate queries
 	const [healthStats, deadEntries, announcements, connectedAccounts] = await Promise.all([
 		getChannelHealthStats(),
-		getDeadDeliveries(),
+		getDeadDeliveries(locals.locale),
 		getAllAnnouncementsAdmin(),
 		getConnectedAccountsCounts(),
 	]);
@@ -40,7 +40,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		// Deferred: live probes (external API, may be slow)
 		liveProbes: safeDeferPromise(probeChannels(), { discord: null, telegram: null }),
 		// Deferred: paginated delivery log
-		deliveryLog: safeDeferPromise(getDeliveryLog({ channel, status, page }), {
+		deliveryLog: safeDeferPromise(getDeliveryLog({ channel, status, page }, locals.locale), {
 			entries: [],
 			total: 0,
 			page: 1,

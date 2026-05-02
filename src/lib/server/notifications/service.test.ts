@@ -47,16 +47,16 @@ describe('NotificationService', () => {
 	const input = {
 		userId: 'user-1',
 		type: 'mention' as const,
-		title: 'You were mentioned',
-		body: 'In a discussion',
+		messageKey: 'notif_mention',
+		messageParams: {},
 	};
 
 	const fakeNotification = {
 		id: 'notif-1',
 		userId: 'user-1',
 		type: 'mention',
-		title: 'You were mentioned',
-		body: 'In a discussion',
+		messageKey: 'notif_mention',
+		messageParams: {},
 		actionUrl: null,
 		createdAt: new Date(),
 	};
@@ -80,7 +80,7 @@ describe('NotificationService', () => {
 			notification: expect.objectContaining({
 				id: 'notif-1',
 				type: 'mention',
-				title: 'You were mentioned',
+				messageKey: 'notif_mention',
 			}),
 		});
 	});

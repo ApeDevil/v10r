@@ -1,4 +1,5 @@
 import { redirect } from '@sveltejs/kit';
+import { localizeHref } from '$lib/i18n';
 import type { PageServerLoad } from './$types';
 
 const DEFAULT_REDIRECT = '/app/dashboard';
@@ -17,12 +18,12 @@ function sanitizeReturnTo(raw: string | null): string {
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	if (locals.user) {
-		redirect(303, sanitizeReturnTo(url.searchParams.get('returnTo')));
+		redirect(303, localizeHref(sanitizeReturnTo(url.searchParams.get('returnTo'))));
 	}
 
 	const email = url.searchParams.get('email');
 	if (!email) {
-		redirect(303, '/auth/login');
+		redirect(303, localizeHref('/auth/login'));
 	}
 
 	return {

@@ -7,6 +7,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { createNotification } from '$lib/server/db/notifications/mutations';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
+import type { NotificationParams } from '$lib/server/db/schema/notifications/notifications';
 import { createDeliveries } from './outbox';
 import { routeToChannels } from './router';
 import { notifyUser } from './stream';
@@ -17,8 +18,9 @@ interface SendInput {
 	userId: string;
 	actorId?: string;
 	type: NotificationType;
-	title: string;
-	body?: string;
+	/** Paraglide message key — rendered at viewer/delivery time using the recipient's locale. */
+	messageKey: string;
+	messageParams?: NotificationParams;
 	entityRef?: string;
 	groupKey?: string;
 	actionUrl?: string;
@@ -44,8 +46,8 @@ export const NotificationService = {
 			notification: {
 				id: notification.id,
 				type: notification.type,
-				title: notification.title,
-				body: notification.body,
+				messageKey: notification.messageKey,
+				messageParams: notification.messageParams,
 				actionUrl: notification.actionUrl,
 				createdAt: notification.createdAt.toISOString(),
 			},

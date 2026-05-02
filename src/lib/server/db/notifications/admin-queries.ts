@@ -10,6 +10,7 @@ import { notificationDeliveries } from '$lib/server/db/schema/notifications/deli
 import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
 import { notifications } from '$lib/server/db/schema/notifications/notifications';
 import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
+import { renderNotification } from '$lib/server/notifications/render-message';
 
 // Per-user error codes excluded from channel health calculation
 const PER_USER_ERROR_CODES = ['50007', '403'];
@@ -71,6 +72,7 @@ export interface DeliveryLogEntry {
 	id: string;
 	channel: string;
 	status: string;
+	/** Pre-rendered notification title in the admin viewer's locale. */
 	notificationTitle: string;
 	notificationType: string;
 	errorCode: string | null;
@@ -81,7 +83,7 @@ export interface DeliveryLogEntry {
 	createdAt: Date;
 }
 
-export async function getDeliveryLog(filters: DeliveryLogFilters = {}) {
+export async function getDeliveryLog(filters: DeliveryLogFilters = {}, locale = 'en') {
 	const page = Math.max(1, filters.page ?? 1);
 	const offset = (page - 1) * ADMIN_DELIVERY_PAGE_SIZE;
 
@@ -100,13 +102,14 @@ export async function getDeliveryLog(filters: DeliveryLogFilters = {}) {
 
 	const where = conditions.length > 0 ? and(...conditions) : undefined;
 
-	const [entries, totalResult] = await Promise.all([
+	const [rows, totalResult] = await Promise.all([
 		db
 			.select({
 				id: notificationDeliveries.id,
 				channel: notificationDeliveries.channel,
 				status: notificationDeliveries.status,
-				notificationTitle: notifications.title,
+				messageKey: notifications.messageKey,
+				messageParams: notifications.messageParams,
 				notificationType: notifications.type,
 				errorCode: notificationDeliveries.errorCode,
 				errorMessage: notificationDeliveries.errorMessage,
@@ -124,6 +127,20 @@ export async function getDeliveryLog(filters: DeliveryLogFilters = {}) {
 		db.select({ total: count() }).from(notificationDeliveries).where(where),
 	]);
 
+	const entries: DeliveryLogEntry[] = rows.map((r) => ({
+		id: r.id,
+		channel: r.channel,
+		status: r.status,
+		notificationTitle: renderNotification(r.messageKey, r.messageParams, locale),
+		notificationType: r.notificationType,
+		errorCode: r.errorCode,
+		errorMessage: r.errorMessage,
+		attempts: r.attempts,
+		attemptedAt: r.attemptedAt,
+		sentAt: r.sentAt,
+		createdAt: r.createdAt,
+	}));
+
 	const total = totalResult[0]?.total ?? 0;
 
 	return {
@@ -136,12 +153,13 @@ export async function getDeliveryLog(filters: DeliveryLogFilters = {}) {
 
 // ── Dead Deliveries (Needs Attention) ────────────────────────────────────────
 
-export async function getDeadDeliveries() {
-	return db
+export async function getDeadDeliveries(locale = 'en') {
+	const rows = await db
 		.select({
 			id: notificationDeliveries.id,
 			channel: notificationDeliveries.channel,
-			notificationTitle: notifications.title,
+			messageKey: notifications.messageKey,
+			messageParams: notifications.messageParams,
 			errorCode: notificationDeliveries.errorCode,
 			errorMessage: notificationDeliveries.errorMessage,
 			attempts: notificationDeliveries.attempts,
@@ -152,6 +170,16 @@ export async function getDeadDeliveries() {
 		.where(eq(notificationDeliveries.status, 'dead'))
 		.orderBy(desc(notificationDeliveries.createdAt))
 		.limit(20);
+
+	return rows.map((r) => ({
+		id: r.id,
+		channel: r.channel,
+		notificationTitle: renderNotification(r.messageKey, r.messageParams, locale),
+		errorCode: r.errorCode,
+		errorMessage: r.errorMessage,
+		attempts: r.attempts,
+		createdAt: r.createdAt,
+	}));
 }
 
 // ── Connected Accounts ───────────────────────────────────────────────────────

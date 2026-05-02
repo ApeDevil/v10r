@@ -81,7 +81,7 @@ function isActive(href: string): boolean {
 				class="block p-2 px-3 text-sm text-muted no-underline rounded-sm transition-all duration-fast whitespace-nowrap hover:bg-fg-alpha hover:text-fg focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 motion-reduce:transition-none"
 				role="menuitem"
 			>
-				{item.label}
+				{item.label()}
 			</NavLink>
 		{/each}
 	</div>

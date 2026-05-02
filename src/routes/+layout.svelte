@@ -14,6 +14,7 @@ import { initJourneyBeacon } from '$lib/analytics/journey-beacon';
 import { BRAND_NAME } from '$lib/branding';
 import PairingStrip from '$lib/components/shell/PairingStrip.svelte';
 import { localizeHref } from '$lib/i18n';
+import { baseLocale, locales } from '$lib/paraglide/runtime';
 import { initKeyboardHandler, registerShortcut } from '$lib/shortcuts';
 import { setConsentContext } from '$lib/state/consent.svelte';
 import { setModalsContext } from '$lib/state/modals.svelte';
@@ -133,6 +134,10 @@ $effect(() => {
 <svelte:head>
 	<link rel="icon" href="/favicon.svg" />
 	<title>{page.data.title ? `${page.data.title} - ${BRAND_NAME}` : BRAND_NAME}</title>
+	{#each locales as lang}
+		<link rel="alternate" hreflang={lang} href={localizeHref(page.url.pathname, { locale: lang })} />
+	{/each}
+	<link rel="alternate" hreflang="x-default" href={localizeHref(page.url.pathname, { locale: baseLocale })} />
 </svelte:head>
 
 <TooltipPrimitive.Provider>

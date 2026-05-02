@@ -15,6 +15,7 @@ import {
 } from '$lib/components/shell';
 import { DESK_PANELS } from '$lib/config/desk-panels';
 import { searchPages } from '$lib/nav';
+import * as m from '$lib/paraglide/messages';
 import type { ActiveAnnouncement } from '$lib/server/admin/announcements';
 import { getModals } from '$lib/state/modals.svelte';
 import { type Session, setSessionContext } from '$lib/state/session.svelte';
@@ -52,19 +53,22 @@ $effect(() => {
 	}
 });
 
-const pageSearchItems = searchPages.map((p) => ({
-	id: p.id,
-	type: 'page' as const,
-	label: p.label,
-	icon: p.icon,
-	href: p.href,
-	hint: p.hint,
-	secondary: {
-		icon: 'i-lucide-external-link',
-		label: 'Open in new tab',
-		action: () => window.open(p.href, '_blank'),
-	},
-}));
+// Re-derive labels per render so locale switches refresh search results.
+const pageSearchItems = $derived(
+	searchPages.map((p) => ({
+		id: p.id,
+		type: 'page' as const,
+		label: p.label(),
+		icon: p.icon,
+		href: p.href,
+		hint: p.hint?.(),
+		secondary: {
+			icon: 'i-lucide-external-link',
+			label: m.shell_open_in_new_tab(),
+			action: () => window.open(p.href, '_blank'),
+		},
+	})),
+);
 
 const panelSearchItems = $derived(
 	Object.values(DESK_PANELS).map((p) => ({
@@ -73,10 +77,10 @@ const panelSearchItems = $derived(
 		label: p.label,
 		icon: p.icon ?? 'i-lucide-layout-grid',
 		action: () => goto(`/desk?open=${p.type}`),
-		hint: page.url.pathname !== '/desk' ? 'Opens in Desk' : undefined,
+		hint: page.url.pathname !== '/desk' ? m.shell_opens_in_desk() : undefined,
 		secondary: {
 			icon: 'i-lucide-external-link',
-			label: `Open ${p.label} in new tab`,
+			label: m.shell_open_panel_in_new_tab({ panel: p.label }),
 			action: () => window.open(`/desk?open=${p.type}`, '_blank'),
 		},
 	})),
@@ -88,21 +92,21 @@ const searchItems = $derived<CommandPaletteItem[]>([
 	{
 		id: 'toggle-theme',
 		type: 'action' as const,
-		label: 'Toggle Theme',
+		label: m.shell_toggle_theme(),
 		icon: 'i-lucide-sun-moon',
 		action: () => theme.setMode(theme.isDark ? 'light' : 'dark'),
 	},
 	{
 		id: 'shortcuts',
 		type: 'action' as const,
-		label: 'Keyboard Shortcuts',
+		label: m.shell_keyboard_shortcuts(),
 		icon: 'i-lucide-keyboard',
 		action: () => modals.open('shortcuts'),
 	},
 	{
 		id: 'ai-assistant',
 		type: 'action' as const,
-		label: 'AI Assistant',
+		label: m.shell_ai_assistant(),
 		icon: 'i-lucide-bot',
 		action: () => modals.open('aiAssistant'),
 	},
@@ -113,7 +117,7 @@ const searchItems = $derived<CommandPaletteItem[]>([
 <NavigationProgress />
 
 <!-- Skip link for accessibility -->
-<a href="#main-content" class="absolute -top-full left-0 py-2 px-4 bg-primary text-white z-modal no-underline focus:top-0">Skip to main content</a>
+<a href="#main-content" class="absolute -top-full left-0 py-2 px-4 bg-primary text-white z-modal no-underline focus:top-0">{m.shell_skip_to_main()}</a>
 
 <div class="flex min-h-screen">
 	<Sidebar {isAdmin} />

@@ -1,19 +1,20 @@
 import { error, redirect } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
+import { localizeHref } from '$lib/i18n';
 import { db } from '$lib/server/db';
 import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
 import { encrypt } from '$lib/server/notifications/crypto';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url, locals, cookies }) => {
-	if (!locals.user) redirect(303, '/auth/login');
+	if (!locals.user) redirect(303, localizeHref('/auth/login'));
 
 	const code = url.searchParams.get('code');
 	const state = url.searchParams.get('state');
 	const errorParam = url.searchParams.get('error');
 
 	if (errorParam) {
-		redirect(303, '/app/notifications/settings?error=discord_denied');
+		redirect(303, localizeHref('/app/notifications/settings?error=discord_denied'));
 	}
 
 	if (!code || !state) {
@@ -99,5 +100,5 @@ export const load: PageServerLoad = async ({ url, locals, cookies }) => {
 			},
 		});
 
-	redirect(303, '/app/notifications/settings?success=discord_connected');
+	redirect(303, localizeHref('/app/notifications/settings?success=discord_connected'));
 };

@@ -1,12 +1,15 @@
+import * as m from '$lib/paraglide/messages';
 import { type ShowcaseSublink, showcases } from '../../routes/(public)/showcases/showcases';
 import { navItems } from './nav';
+import type { LabelFn } from './types';
 
 export interface SearchPageDescriptor {
 	id: string;
-	label: string;
+	/** Paraglide message function (call at render time to pick up current locale). */
+	label: LabelFn;
 	icon: string;
 	href: string;
-	hint?: string;
+	hint?: LabelFn;
 }
 
 /** Hrefs that redirect and should not appear in search results. */
@@ -34,6 +37,12 @@ const REDIRECT_HREFS = new Set([
 	'/showcases/ui/decorative',
 ]);
 
+/** Wrap a static string as a LabelFn for showcase sublinks (not yet i18n-migrated). */
+const literal =
+	(s: string): LabelFn =>
+	() =>
+		s;
+
 function walkSublinks(
 	subs: ShowcaseSublink[],
 	icon: string,
@@ -46,10 +55,10 @@ function walkSublinks(
 			seen.add(sub.href);
 			out.push({
 				id: `page-${sub.href}`,
-				label: sub.label,
+				label: literal(sub.label),
 				icon,
 				href: sub.href,
-				hint: breadcrumbs.length > 0 ? breadcrumbs.join(' / ') : undefined,
+				hint: breadcrumbs.length > 0 ? literal(breadcrumbs.join(' / ')) : undefined,
 			});
 		}
 		if (sub.children) {
@@ -62,7 +71,7 @@ function buildSearchPages(): SearchPageDescriptor[] {
 	const pages: SearchPageDescriptor[] = [];
 	const seen = new Set<string>();
 
-	// 1. Flatten navItems (top-level + children)
+	// 1. Flatten navItems (top-level + children) — labels are Paraglide functions
 	for (const item of navItems) {
 		if (!REDIRECT_HREFS.has(item.href) && !seen.has(item.href)) {
 			seen.add(item.href);
@@ -89,13 +98,13 @@ function buildSearchPages(): SearchPageDescriptor[] {
 		}
 	}
 
-	// 2. Walk showcases tree recursively
+	// 2. Walk showcases tree recursively (showcase labels are still hardcoded English — out of Phase E scope)
 	for (const card of showcases) {
 		if (!REDIRECT_HREFS.has(card.href) && !seen.has(card.href)) {
 			seen.add(card.href);
 			pages.push({
 				id: `page-${card.href}`,
-				label: card.title,
+				label: literal(card.title),
 				icon: card.icon,
 				href: card.href,
 			});
@@ -106,10 +115,10 @@ function buildSearchPages(): SearchPageDescriptor[] {
 	}
 
 	// 3. Manual entries for non-registry pages
-	const manual: Omit<SearchPageDescriptor, 'id'>[] = [
-		{ label: 'Log In', icon: 'i-lucide-key', href: '/auth/login' },
-		{ label: 'Jobs', icon: 'i-lucide-clock', href: '/showcases/jobs' },
-		{ label: 'Notification Settings', icon: 'i-lucide-bell', href: '/app/notifications/settings' },
+	const manual: Array<Omit<SearchPageDescriptor, 'id'>> = [
+		{ label: m.nav_log_in, icon: 'i-lucide-key', href: '/auth/login' },
+		{ label: m.nav_jobs, icon: 'i-lucide-clock', href: '/showcases/jobs' },
+		{ label: m.nav_notification_settings, icon: 'i-lucide-bell', href: '/app/notifications/settings' },
 	];
 	for (const entry of manual) {
 		if (!seen.has(entry.href)) {

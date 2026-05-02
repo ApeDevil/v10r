@@ -4,6 +4,7 @@ import { goto } from '$app/navigation';
 import { BackLink, Card, ConfirmDialog } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Button, Tag } from '$lib/components/primitives';
+import { localizeHref } from '$lib/i18n';
 import { formatRelative } from '$lib/i18n/formatting';
 
 let { data }: PageProps = $props();
@@ -98,7 +99,7 @@ function statusVariant(status: string) {
 				method: 'POST',
 				headers: { 'x-requested-with': 'fetch' },
 			});
-			if (res.ok) goto('/admin/feedback');
+			if (res.ok) goto(localizeHref('/admin/feedback'));
 		}}
 		oncancel={() => (confirmDeleteOpen = false)}
 	/>
