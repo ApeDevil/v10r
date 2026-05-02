@@ -106,7 +106,7 @@ const jsonLdScript = $derived(
 		</header>
 
 		<div use:hydrateEmbeds={post.revision.embedDescriptors ?? []}>
-			<Renderer html={post.revision.renderedHtml} embeds={post.revision.embedDescriptors} />
+			<Renderer html={post.revision.renderedHtml} />
 		</div>
 
 	</Stack>

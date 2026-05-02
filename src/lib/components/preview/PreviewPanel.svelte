@@ -9,7 +9,6 @@ import { Spinner } from '$lib/components/primitives';
 const bus = getDeskBus();
 
 let html = $state('');
-let embeds = $state<unknown>(null);
 let rendering = $state(false);
 let error = $state('');
 let hasDocument = $state(false);
@@ -36,7 +35,6 @@ async function renderPreview(markdown: string) {
 
 		const data = await res.json();
 		html = data.html;
-		embeds = data.embeds;
 	} catch (e) {
 		if (e instanceof DOMException && e.name === 'AbortError') return;
 		error = e instanceof Error ? e.message : 'Preview failed';
@@ -63,7 +61,6 @@ const unsubDocument = bus.subscribe('editor:document', (payload) => {
 	if (!payload) {
 		hasDocument = false;
 		html = '';
-		embeds = null;
 	}
 });
 
@@ -110,7 +107,7 @@ onDestroy(() => {
 			{/if}
 
 			<div class="preview-content" role="region" aria-label="Post preview" aria-live="polite">
-				<Renderer {html} {embeds} />
+				<Renderer {html} />
 			</div>
 		{/if}
 	{/if}

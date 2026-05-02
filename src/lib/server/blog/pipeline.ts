@@ -22,6 +22,7 @@ import { visit } from 'unist-util-visit';
 import { parse as parseYaml } from 'yaml';
 import { remarkDirectiveHandlers } from '$lib/content-syntax/remark-adapter';
 import { getHighlighter } from '$lib/server/shiki';
+import { rehypeRewriteR2 } from './rehype-rewrite-r2';
 import { blogSanitizeSchema, rehypeSanitizeStyles } from './sanitize-schema';
 import type { EmbedDescriptor, TocEntry } from './types';
 
@@ -77,6 +78,7 @@ async function buildProcessor(): Promise<BlogProcessor> {
 		.use(rehypeShikiFromHighlighter, highlighter, {
 			themes: { light: 'github-light', dark: 'github-dark' },
 		})
+		.use(rehypeRewriteR2)
 		.use(rehypeSanitize, blogSanitizeSchema)
 		.use(rehypeSanitizeStyles)
 		.use(rehypeStringify) as unknown as BlogProcessor;

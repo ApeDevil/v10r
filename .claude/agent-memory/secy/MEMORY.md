@@ -1,0 +1,1 @@
+- [Blog/Docs sanitization posture](project_blog_sanitization_posture.md) — sanitize once in unified pipeline (rehype-sanitize), not in Renderer.svelte
