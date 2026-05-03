@@ -13,7 +13,7 @@ import { page } from '$app/state';
 import { initJourneyBeacon } from '$lib/analytics/journey-beacon';
 import { BRAND_NAME } from '$lib/branding';
 import PairingStrip from '$lib/components/shell/PairingStrip.svelte';
-import { localizeHref } from '$lib/i18n';
+import { deLocalizeHref, localizeHref } from '$lib/i18n';
 import { baseLocale, locales } from '$lib/paraglide/runtime';
 import { initKeyboardHandler, registerShortcut } from '$lib/shortcuts';
 import { setConsentContext } from '$lib/state/consent.svelte';
@@ -138,6 +138,7 @@ $effect(() => {
 		<link rel="alternate" hreflang={lang} href={localizeHref(page.url.pathname, { locale: lang })} />
 	{/each}
 	<link rel="alternate" hreflang="x-default" href={localizeHref(page.url.pathname, { locale: baseLocale })} />
+	<link rel="canonical" href={page.url.origin + deLocalizeHref(page.url.pathname)} />
 </svelte:head>
 
 <TooltipPrimitive.Provider>

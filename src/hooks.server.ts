@@ -2,7 +2,7 @@ import { error, type Handle, type HandleServerError, json } from '@sveltejs/kit'
 import { sequence } from '@sveltejs/kit/hooks';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { building } from '$app/environment';
-import { locales } from '$lib/i18n';
+import { cookieMaxAge, locales, cookieName as PARAGLIDE_LOCALE_COOKIE } from '$lib/i18n';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import { parseConsentTier } from '$lib/server/analytics/consent';
 import { analyticsCollector } from '$lib/server/analytics/hook';
@@ -159,6 +159,29 @@ const loadStyle: Handle = async ({ event, resolve }) => {
 };
 
 /**
+ * 2b. Strip leading /en/ — base locale must not be URL-prefixed.
+ *
+ * Paraglide's URL pattern serves the base locale at unprefixed paths.
+ * /en/foo has no canonical place to live; redirect to /foo (308 = permanent,
+ * preserves method) so typed/shared URLs land on the canonical form and
+ * search engines don't see duplicates.
+ *
+ * Scoped to startsWith('/en/') only — `/en` (no trailing slash) is preserved
+ * because it currently matches a real SvelteKit route (separate concern).
+ */
+const stripBaseLocalePrefix: Handle = ({ event, resolve }) => {
+	const { pathname, search, hash } = event.url;
+	if (pathname.startsWith('/en/')) {
+		const stripped = pathname.slice(3);
+		return new Response(null, {
+			status: 308,
+			headers: { Location: stripped + search + hash },
+		});
+	}
+	return resolve(event);
+};
+
+/**
  * 3. i18n — Paraglide locale detection + HTML lang attribute + style attrs
  *
  * Stamps event.locals.locale (canonical adapter handoff so domain code never
@@ -173,15 +196,15 @@ const i18n: Handle = ({ event, resolve }) =>
 		// Skip Set-Cookie when the resolved locale equals baseLocale AND no cookie
 		// is present yet — avoids polluting CDN-cacheable responses for first-visit
 		// anonymous users on the default locale.
-		const existingCookie = event.cookies.get('PARAGLIDE_LOCALE');
+		const existingCookie = event.cookies.get(PARAGLIDE_LOCALE_COOKIE);
 		const isDefaultFirstVisit = existingCookie === undefined && safeLocale === 'en';
 		if (!isDefaultFirstVisit && existingCookie !== safeLocale) {
-			event.cookies.set('PARAGLIDE_LOCALE', safeLocale, {
+			event.cookies.set(PARAGLIDE_LOCALE_COOKIE, safeLocale, {
 				path: '/',
 				httpOnly: false,
 				secure: typeof process !== 'undefined' ? process.env.NODE_ENV === 'production' : true,
 				sameSite: 'lax',
-				maxAge: 60 * 60 * 24 * 365,
+				maxAge: cookieMaxAge,
 			});
 		}
 		event.request = request;
@@ -364,6 +387,7 @@ const devRouteGuard: Handle = async ({ event, resolve }) => {
 export const handle = sequence(
 	securityHeaders,
 	loadStyle,
+	stripBaseLocalePrefix,
 	i18n,
 	authHandler,
 	sessionPopulate,

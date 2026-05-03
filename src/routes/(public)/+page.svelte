@@ -1,7 +1,9 @@
 <script lang="ts">
+import { page } from '$app/state';
 import { Asterism, CornerFrame, Divider } from '$lib/components';
 import LogoHero from '$lib/components/branding/LogoHero.svelte';
-import { localizeHref } from '$lib/i18n';
+import { locales, localizeHref } from '$lib/i18n';
+import * as m from '$lib/paraglide/messages';
 import { getStyle } from '$lib/state/style.svelte';
 import { getTheme } from '$lib/state/theme.svelte';
 import { fadeIn } from './_components/fadeIn';
@@ -19,6 +21,22 @@ const displayMode: ToggleMode = $derived(theme.resolvedMode === 'dark' ? 'dark' 
 
 function cycleTheme() {
 	theme.setMode(displayMode === 'light' ? 'dark' : 'light');
+}
+
+const currentLocale = $derived(page.data.locale ?? 'en');
+const currentHref = $derived(page.url.pathname + page.url.search + page.url.hash);
+
+function localeLabel(locale: string): string {
+	switch (locale) {
+		case 'en':
+			return m.shell_language_en();
+		case 'de':
+			return m.shell_language_de();
+		case 'ru':
+			return m.shell_language_ru();
+		default:
+			return locale;
+	}
 }
 
 let revealed = $state(false);
@@ -150,6 +168,22 @@ v          10            r</pre>
 							<span>{themeLabels[displayMode]}</span>
 						</button>
 					</div>
+					<nav class="locale-pills" aria-label={m.shell_language_choose()}>
+						{#each locales as locale}
+							{@const isActive = locale === currentLocale}
+							<a
+								class="locale-btn focus-ring"
+								class:locale-btn-active={isActive}
+								href={localizeHref(currentHref, { locale })}
+								lang={locale}
+								aria-current={isActive ? 'page' : undefined}
+								data-sveltekit-reload
+							>
+								{#if isActive}<span class="roll-icon i-lucide-check"></span>{/if}
+								<span>{localeLabel(locale)}</span>
+							</a>
+						{/each}
+					</nav>
 				</div>
 			{/if}
 		</div>
@@ -475,6 +509,42 @@ v          10            r</pre>
 	}
 
 	.theme-btn:hover {
+		border-color: var(--color-fg);
+		color: var(--color-fg);
+		background: var(--color-fg-alpha);
+	}
+
+	.locale-pills {
+		display: flex;
+		gap: var(--spacing-3);
+		flex-wrap: wrap;
+		margin-top: var(--spacing-3);
+	}
+
+	.locale-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--spacing-3);
+		min-height: 44px;
+		padding: var(--spacing-3) var(--spacing-5);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
+		font-size: var(--text-fluid-sm);
+		color: var(--color-muted);
+		background: transparent;
+		cursor: pointer;
+		text-decoration: none;
+		transition: border-color var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
+	}
+
+	.locale-btn:hover {
+		border-color: var(--color-fg);
+		color: var(--color-fg);
+		background: var(--color-fg-alpha);
+	}
+
+	.locale-btn-active {
 		border-color: var(--color-fg);
 		color: var(--color-fg);
 		background: var(--color-fg-alpha);

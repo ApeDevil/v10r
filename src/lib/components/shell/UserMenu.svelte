@@ -7,8 +7,9 @@
 
 import { DropdownMenu } from 'bits-ui';
 import { goto } from '$app/navigation';
+import { page } from '$app/state';
 import { authClient } from '$lib/auth-client';
-import { localizeHref } from '$lib/i18n';
+import { locales, localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 import { getTheme } from '$lib/state/theme.svelte';
 import { cn } from '$lib/utils/cn';
@@ -30,6 +31,23 @@ let { user, forceExpanded = false, class: className }: Props = $props();
 const theme = getTheme();
 
 let themeSubmenuOpen = $state(false);
+let languageSubmenuOpen = $state(false);
+
+const currentLocale = $derived(page.data.locale ?? 'en');
+const currentHref = $derived(page.url.pathname + page.url.search + page.url.hash);
+
+function localeLabel(locale: string): string {
+	switch (locale) {
+		case 'en':
+			return m.shell_language_en();
+		case 'de':
+			return m.shell_language_de();
+		case 'ru':
+			return m.shell_language_ru();
+		default:
+			return locale;
+	}
+}
 
 function setTheme(mode: 'light' | 'dark' | 'system') {
 	theme.setMode(mode);
@@ -159,6 +177,51 @@ async function handleSignOut() {
 								<span class="i-lucide-monitor text-lg" ></span>
 								<span>{m.shell_theme_system()}</span>
 							</DropdownMenu.Item>
+						</DropdownMenu.SubContent>
+					</DropdownMenu.Sub>
+
+					<DropdownMenu.Sub bind:open={languageSubmenuOpen}>
+						<DropdownMenu.SubTrigger
+							class="flex items-center gap-3 p-2 px-3 rounded-sm text-fg text-sm cursor-pointer transition-all duration-fast outline-none data-[highlighted]:bg-fg-alpha motion-reduce:transition-none"
+						>
+							<span class="i-lucide-languages text-lg" ></span>
+							<span class="flex-1">{m.shell_language()}</span>
+							<span
+								class={cn(
+									'i-lucide-chevron-right transition-transform duration-fast motion-reduce:transition-none',
+									languageSubmenuOpen && 'rotate-90'
+								)}
+							></span>
+						</DropdownMenu.SubTrigger>
+
+						<DropdownMenu.SubContent
+							class={cn(
+								'min-w-[10rem] bg-surface-2 border border-border rounded-md shadow-lg p-2 ml-2',
+								'animate-in slide-in-from-left-2 motion-reduce:animate-none'
+							)}
+							sideOffset={4}
+						>
+							{#each locales as locale}
+								{@const isActive = locale === currentLocale}
+								<DropdownMenu.Item>
+									{#snippet child({ props })}
+										<a
+											{...props}
+											href={localizeHref(currentHref, { locale })}
+											lang={locale}
+											aria-current={isActive ? 'true' : undefined}
+											data-sveltekit-reload
+											class={cn(
+												'flex items-center gap-3 py-1.5 px-3 rounded-sm text-fg text-sm no-underline cursor-pointer outline-none transition-all duration-fast motion-reduce:transition-none data-[highlighted]:bg-fg-alpha',
+												isActive && 'bg-fg-alpha'
+											)}
+										>
+											<span class="flex-1">{localeLabel(locale)}</span>
+											{#if isActive}<span class="i-lucide-check text-base"></span>{/if}
+										</a>
+									{/snippet}
+								</DropdownMenu.Item>
+							{/each}
 						</DropdownMenu.SubContent>
 					</DropdownMenu.Sub>
 
