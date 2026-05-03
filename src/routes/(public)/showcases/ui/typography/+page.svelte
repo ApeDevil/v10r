@@ -1,6 +1,7 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
+import * as m from '$lib/paraglide/messages';
 import { type FontLoadState, findFont, isFontLoaded, loadFont } from '$lib/utils/fonts';
 import FontPicker from './_components/FontPicker.svelte';
 import FontPreview from './_components/FontPreview.svelte';
@@ -190,7 +191,7 @@ if (mode === 'pairing') {
 					class:active={viewMode === 'scale'}
 					onclick={() => handleViewChange('scale')}
 				>
-					Type Scale
+					{m.showcase_ui_typography_tab_scale()}
 				</button>
 				<button
 					role="tab"
@@ -199,7 +200,7 @@ if (mode === 'pairing') {
 					class:active={viewMode === 'prose'}
 					onclick={() => handleViewChange('prose')}
 				>
-					Prose
+					{m.showcase_ui_typography_tab_prose()}
 				</button>
 			</div>
 

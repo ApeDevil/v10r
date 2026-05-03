@@ -7,6 +7,7 @@ import { createCycleState } from '$lib/components/cycle/cycle-state.svelte';
 import type { CycleSpan, CycleTrace } from '$lib/components/cycle/types';
 import { Stack } from '$lib/components/layout';
 import { Button, Input, Select, Spinner } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { cycleSchema } from '$lib/schemas/showcase/cycle';
 import type { PageProps } from './$types';
 
@@ -95,7 +96,7 @@ let selectedError = $state('');
 		{#snippet header()}
 			<div class="flex items-center justify-between">
 				<div>
-					<h2 class="text-fluid-lg font-semibold">Form Action Cycle</h2>
+					<h2 class="text-fluid-lg font-semibold">{m.showcase_cycle_form_card_title()}</h2>
 					<p class="text-fluid-sm text-muted">
 						Submit a form and watch the request flow through SvelteKit's form action pipeline.
 					</p>
@@ -106,7 +107,7 @@ let selectedError = $state('');
 							value: JSON.stringify(h),
 							label: `#${h.id} — ${h.status} (${h.totalDurationMs ?? 0}ms)`,
 						}))}
-						placeholder="History"
+						placeholder={m.showcase_cycle_form_history_placeholder()}
 						onchange={replayHistory}
 						class="w-48"
 					/>
@@ -139,7 +140,7 @@ let selectedError = $state('');
 				<div class="flex items-end">
 					<Button type="submit" disabled={$submitting} class="w-full">
 						{#if $delayed}<Spinner size="sm" class="mr-2" />{/if}
-						Run Cycle
+						{m.showcase_cycle_form_btn_run()}
 					</Button>
 				</div>
 			</div>

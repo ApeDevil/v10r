@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import * as m from '$lib/paraglide/messages';
 import { cn } from '$lib/utils/cn';
 import {
 	type CarouselRootVariants,
@@ -163,7 +164,7 @@ const canGoNext = $derived(loop || currentSlide < slides.length - 1);
 	onkeydown={handleKeydown}
 	role="region"
 	aria-roledescription="carousel"
-	aria-label="Carousel"
+	aria-label={m.primitives_carousel_label()}
 >
 	<div
 		bind:this={scrollContainer}
@@ -178,7 +179,7 @@ const canGoNext = $derived(loop || currentSlide < slides.length - 1);
 			class={cn(carouselButtonVariants({ orientation, direction: 'prev' }))}
 			onclick={goToPrev}
 			disabled={!canGoPrev}
-			aria-label="Previous slide"
+			aria-label={m.primitives_carousel_previous()}
 			type="button"
 		>
 			{#if orientation === 'horizontal'}
@@ -192,7 +193,7 @@ const canGoNext = $derived(loop || currentSlide < slides.length - 1);
 			class={cn(carouselButtonVariants({ orientation, direction: 'next' }))}
 			onclick={goToNext}
 			disabled={!canGoNext}
-			aria-label="Next slide"
+			aria-label={m.primitives_carousel_next()}
 			type="button"
 		>
 			{#if orientation === 'horizontal'}
@@ -204,13 +205,13 @@ const canGoNext = $derived(loop || currentSlide < slides.length - 1);
 	{/if}
 
 	{#if showDots && slides.length > 0}
-		<div class={cn(carouselDotsVariants({ orientation }), 'relative')} role="tablist" aria-label="Slide indicators">
+		<div class={cn(carouselDotsVariants({ orientation }), 'relative')} role="tablist" aria-label={m.primitives_carousel_indicators()}>
 			{#each slides as _, index}
 				<button
 					class={cn(carouselDotVariants({ active: index === currentSlide }))}
 					onclick={() => goToSlide(index)}
 					role="tab"
-					aria-label="Go to slide {index + 1}"
+					aria-label={m.primitives_carousel_go_to_slide({ index: index + 1 })}
 					aria-selected={index === currentSlide}
 					aria-controls="carousel-slide-{index}"
 					type="button"
@@ -229,7 +230,7 @@ const canGoNext = $derived(loop || currentSlide < slides.length - 1);
 						'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary'
 					)}
 					onclick={toggleAutoplay}
-					aria-label={isPlaying ? 'Pause carousel autoplay' : 'Resume carousel autoplay'}
+					aria-label={isPlaying ? m.primitives_carousel_pause_autoplay() : m.primitives_carousel_resume_autoplay()}
 					type="button"
 				>
 					<div class={cn(isPlaying ? 'i-lucide-pause' : 'i-lucide-play', 'h-3 w-3')} aria-hidden="true"></div>
@@ -241,7 +242,7 @@ const canGoNext = $derived(loop || currentSlide < slides.length - 1);
 	<!-- Live region for screen reader slide announcements -->
 	{#if slides.length > 0}
 		<div class="sr-only" aria-live="polite" aria-atomic="true">
-			Slide {currentSlide + 1} of {slides.length}
+			{m.primitives_carousel_slide_status({ current: currentSlide + 1, total: slides.length })}
 		</div>
 	{/if}
 </div>

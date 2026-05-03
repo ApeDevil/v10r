@@ -3,6 +3,7 @@ import { BackLink, BoundaryFallback, NavSection, PageHeader } from '$lib/compone
 import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
 import { DagGraph, KnowledgeGraph, NetworkGraph, SankeyDiagram, TreeGraph } from '$lib/components/viz';
 import type { DagData, KnowledgeData, NetworkData, SankeyData, TreeData } from '$lib/components/viz/graph';
+import * as m from '$lib/paraglide/messages';
 import VizDemoCard from '../_components/VizDemoCard.svelte';
 
 const sections = [
@@ -423,13 +424,13 @@ function flattenTree(
 </script>
 <div class="page">
 	<PageHeader
-		title="Graphs"
-		description="Network, directed, tree, DAG, Sankey, and knowledge graph visualizations. D3 modules for layout math, Svelte renders all SVG."
+		title={m.showcase_viz_graphs_title()}
+		description={m.showcase_viz_graphs_description()}
 		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'Viz', href: '/showcases/viz' },
-			{ label: 'Graphs' }
+			{ label: m.showcase_breadcrumb_home(), href: '/' },
+			{ label: m.showcase_breadcrumb_showcases(), href: '/showcases' },
+			{ label: m.showcase_viz_breadcrumb(), href: '/showcases/viz' },
+			{ label: m.showcase_viz_graphs_breadcrumb() }
 		]}
 	/>
 
@@ -439,7 +440,7 @@ function flattenTree(
 	<main class="content">
 		<!-- Network Graph -->
 		<section id="network-graph" class="section">
-			<h2 class="section-title">Network Graph</h2>
+			<h2 class="section-title">{m.showcase_viz_graphs_section_network()}</h2>
 			<p class="section-description">Force-directed layout using D3-force. Drag nodes, click to select and highlight connections. Ctrl/Cmd+scroll to zoom.</p>
 
 			<div class="demos">
@@ -516,7 +517,7 @@ function flattenTree(
 
 		<!-- Directed Graph -->
 		<section id="directed-graph" class="section">
-			<h2 class="section-title">Directed Graph</h2>
+			<h2 class="section-title">{m.showcase_viz_graphs_section_directed()}</h2>
 			<p class="section-description">Same NetworkGraph component with <code>directed</code> prop. Adds arrow markers to edges showing direction.</p>
 
 			<div class="demos">
@@ -576,7 +577,7 @@ function flattenTree(
 
 		<!-- Tree Graph -->
 		<section id="tree-graph" class="section">
-			<h2 class="section-title">Tree Diagram</h2>
+			<h2 class="section-title">{m.showcase_viz_graphs_section_tree()}</h2>
 			<p class="section-description">Hierarchical layout using D3-hierarchy. Click nodes to expand/collapse branches. Supports horizontal and vertical orientations.</p>
 
 			<div class="demos">
@@ -644,7 +645,7 @@ function flattenTree(
 
 		<!-- DAG Graph -->
 		<section id="dag-graph" class="section">
-			<h2 class="section-title">DAG Visualization</h2>
+			<h2 class="section-title">{m.showcase_viz_graphs_section_dag()}</h2>
 			<p class="section-description">Directed acyclic graph layout using d3-dag Sugiyama algorithm. Nodes arranged in layers with minimized edge crossings.</p>
 
 			<div class="demos">
@@ -723,7 +724,7 @@ function flattenTree(
 
 		<!-- Sankey Diagram -->
 		<section id="sankey-diagram" class="section">
-			<h2 class="section-title">Sankey Diagram</h2>
+			<h2 class="section-title">{m.showcase_viz_graphs_section_sankey()}</h2>
 			<p class="section-description">Flow visualization using d3-sankey. Width of flows proportional to value. Hover nodes to highlight connected flows.</p>
 
 			<div class="demos">
@@ -792,7 +793,7 @@ function flattenTree(
 
 		<!-- Knowledge Graph -->
 		<section id="knowledge-graph" class="section">
-			<h2 class="section-title">Knowledge Graph</h2>
+			<h2 class="section-title">{m.showcase_viz_graphs_section_knowledge()}</h2>
 			<p class="section-description">Filtered network graph with entity and relationship type controls. Wraps NetworkGraph with domain-specific filtering.</p>
 
 			<div class="demos">
@@ -858,7 +859,7 @@ function flattenTree(
 
 		<!-- Layout Comparison -->
 		<section id="layout-comparison" class="section">
-			<h2 class="section-title">Layout Comparison</h2>
+			<h2 class="section-title">{m.showcase_viz_graphs_section_comparison()}</h2>
 			<p class="section-description">Same data rendered with three different layout algorithms. Force-directed (physics), tree (hierarchy), and DAG (layered).</p>
 
 			<div class="comparison-grid">
@@ -911,7 +912,7 @@ function flattenTree(
 	{/snippet}
 	</svelte:boundary>
 
-	<BackLink href="/showcases/viz" label="Viz" />
+	<BackLink href="/showcases/viz" label={m.showcase_viz_breadcrumb()} />
 </div>
 
 <style>

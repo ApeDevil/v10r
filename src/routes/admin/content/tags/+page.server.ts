@@ -73,6 +73,11 @@ export const actions: Actions = {
 		const colorStr = formData.get('color') as string;
 		const color = colorStr ? Number.parseInt(colorStr, 10) : null;
 		const glyph = (formData.get('glyph') as string)?.trim() || null;
+		const nameDe = (formData.get('nameDe') as string)?.trim();
+		const nameRu = (formData.get('nameRu') as string)?.trim();
+		const nameI18n: { de?: string; ru?: string } = {};
+		if (nameDe) nameI18n.de = nameDe;
+		if (nameRu) nameI18n.ru = nameRu;
 
 		if (!tagId) return fail(400, { message: 'Tag ID required.' });
 		if (!name) return fail(400, { message: 'Tag name is required.' });
@@ -84,7 +89,7 @@ export const actions: Actions = {
 			return fail(400, { message: 'Color must be 1-8.' });
 
 		try {
-			const updated = await updateTag(tagId, { name, slug, icon, color, glyph });
+			const updated = await updateTag(tagId, { name, slug, icon, color, glyph, nameI18n });
 			if (!updated) return fail(404, { message: 'Tag not found.' });
 
 			const ctx = getAuditContext(event);

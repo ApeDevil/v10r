@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Combobox as ComboboxPrimitive } from 'bits-ui';
+import * as m from '$lib/paraglide/messages';
 import { cn } from '$lib/utils/cn';
 
 interface Option {
@@ -20,7 +21,7 @@ interface Props {
 let {
 	options,
 	selected = $bindable(),
-	placeholder = 'Search...',
+	placeholder = m.primitives_combobox_placeholder(),
 	disabled = false,
 	onSelectedChange,
 	class: className,
@@ -66,7 +67,7 @@ function handleClear() {
 					tabindex="-1"
 				>
 					<span class="i-lucide-x h-4 w-4" ></span>
-					<span class="sr-only">Clear selection</span>
+					<span class="sr-only">{m.primitives_combobox_clear_selection()}</span>
 				</button>
 			{/if}
 			<span class="i-lucide-chevrons-up-down h-4 w-4 opacity-50 pointer-events-none" ></span>
@@ -99,7 +100,7 @@ function handleClear() {
 						{/if}
 					</ComboboxPrimitive.Item>
 				{:else}
-					<div class="py-6 text-center text-fluid-sm text-muted">No results found.</div>
+					<div class="py-6 text-center text-fluid-sm text-muted">{m.primitives_combobox_no_results()}</div>
 				{/each}
 			</div>
 		</ComboboxPrimitive.Content>

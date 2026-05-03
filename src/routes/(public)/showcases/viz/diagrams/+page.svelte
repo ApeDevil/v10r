@@ -3,6 +3,7 @@ import type { Edge, Node } from '@xyflow/svelte';
 import { BackLink, NavSection, PageHeader } from '$lib/components/composites';
 import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
 import { FlowDiagram, StateDiagram } from '$lib/components/viz';
+import * as m from '$lib/paraglide/messages';
 import VizDemoCard from '../_components/VizDemoCard.svelte';
 
 const sections = [
@@ -75,13 +76,13 @@ const cicdEdges: Edge[] = [
 </script>
 <div class="page">
 	<PageHeader
-		title="Diagrams"
-		description="Interactive flow diagrams and state machines powered by Svelte Flow. Custom themed nodes, edge labels, and zoom/pan controls."
+		title={m.showcase_viz_diagrams_title()}
+		description={m.showcase_viz_diagrams_description()}
 		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'Viz', href: '/showcases/viz' },
-			{ label: 'Diagrams' }
+			{ label: m.showcase_breadcrumb_home(), href: '/' },
+			{ label: m.showcase_breadcrumb_showcases(), href: '/showcases' },
+			{ label: m.showcase_viz_breadcrumb(), href: '/showcases/viz' },
+			{ label: m.showcase_viz_diagrams_breadcrumb() }
 		]}
 	/>
 
@@ -90,7 +91,7 @@ const cicdEdges: Edge[] = [
 	<main class="content">
 		<!-- Authentication Flow -->
 		<section id="auth-flow" class="section">
-			<h2 class="section-title">Authentication Flow</h2>
+			<h2 class="section-title">{m.showcase_viz_diagrams_section_auth()}</h2>
 			<p class="section-description">A login flow with branching logic. Decision nodes for validation, terminal nodes for start/end, and animated retry edges.</p>
 
 			<div class="demos">
@@ -159,7 +160,7 @@ const cicdEdges: Edge[] = [
 
 		<!-- Order State Machine -->
 		<section id="order-state" class="section">
-			<h2 class="section-title">Order State Machine</h2>
+			<h2 class="section-title">{m.showcase_viz_diagrams_section_order()}</h2>
 			<p class="section-description">State diagram showing order lifecycle transitions. Read-only visualization with labeled edges for transition events.</p>
 
 			<div class="demos">
@@ -223,7 +224,7 @@ const cicdEdges: Edge[] = [
 
 		<!-- CI/CD Pipeline -->
 		<section id="cicd-pipeline" class="section">
-			<h2 class="section-title">CI/CD Pipeline</h2>
+			<h2 class="section-title">{m.showcase_viz_diagrams_section_cicd()}</h2>
 			<p class="section-description">Build pipeline with parallel test paths converging before deployment. Shows how FlowDiagram handles fan-out and fan-in patterns.</p>
 
 			<div class="demos">
@@ -285,7 +286,7 @@ const cicdEdges: Edge[] = [
 		</section>
 	</main>
 
-	<BackLink href="/showcases/viz" label="Viz" />
+	<BackLink href="/showcases/viz" label={m.showcase_viz_breadcrumb()} />
 </div>
 
 <style>

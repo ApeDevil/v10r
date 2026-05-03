@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Select as SelectPrimitive } from 'bits-ui';
+import * as m from '$lib/paraglide/messages';
 import { cn } from '$lib/utils/cn';
 
 interface Option {
@@ -21,7 +22,7 @@ interface Props {
 let {
 	options,
 	value = $bindable(''),
-	placeholder = 'Select...',
+	placeholder = m.primitives_select_placeholder(),
 	disabled = false,
 	error = false,
 	onchange,

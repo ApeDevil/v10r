@@ -2,6 +2,7 @@
 import { Card, DiagGrid, DiagRow } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Badge } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
 </script>
@@ -9,7 +10,7 @@ let { data } = $props();
 	<!-- Provider Config -->
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">Provider Configuration</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.showcase_notifications_channels_card_providers()}</h2>
 		{/snippet}
 
 		<DiagGrid>
@@ -43,7 +44,7 @@ let { data } = $props();
 	{#if data.userChannels}
 		<Card>
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Your Channels</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.showcase_notifications_channels_card_user()}</h2>
 			{/snippet}
 
 			<DiagGrid>
@@ -81,7 +82,7 @@ let { data } = $props();
 	<!-- System Config -->
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">System Configuration</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.showcase_notifications_channels_card_system()}</h2>
 		{/snippet}
 
 		<DiagGrid>
@@ -95,7 +96,7 @@ let { data } = $props();
 	<!-- Key Files -->
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">Key Files</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.showcase_notifications_channels_card_files()}</h2>
 		{/snippet}
 
 		<DiagGrid>

@@ -5,6 +5,7 @@ import { page } from '$app/state';
 import { Alert, Card, FormField } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Button, Input, Spinner } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { serverSchema } from '$lib/schemas/showcase/validation';
 import type { PageProps } from './$types';
 
@@ -27,7 +28,7 @@ const isError = $derived(page.status >= 400);
 <Stack gap="6">
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">Server-Side Errors</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.showcase_forms_server_heading()}</h2>
 			<p class="text-fluid-sm text-muted">Errors that only the server can detect: duplicate emails, expired codes.</p>
 		{/snippet}
 
@@ -40,7 +41,7 @@ const isError = $derived(page.status >= 400);
 		{/if}
 
 		<form method="POST" use:enhance class="form-grid">
-			<FormField label="Email" error={$errors.email?.[0]} required description="Try an email containing 'taken' to trigger server error">
+			<FormField label={m.showcase_forms_field_email()} error={$errors.email?.[0]} required description="Try an email containing 'taken' to trigger server error">
 				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
@@ -54,7 +55,7 @@ const isError = $derived(page.status >= 400);
 				{/snippet}
 			</FormField>
 
-			<FormField label="Invite Code" error={$errors.inviteCode?.[0]} required description="Try EXPIRED1 or INVALID1 to trigger server errors">
+			<FormField label={m.showcase_forms_field_invite_code()} error={$errors.inviteCode?.[0]} required description="Try EXPIRED1 or INVALID1 to trigger server errors">
 				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
@@ -70,7 +71,7 @@ const isError = $derived(page.status >= 400);
 			<div class="form-actions">
 				<Button type="submit" disabled={$submitting}>
 					{#if $delayed}<Spinner size="sm" class="mr-2" />{/if}
-					Join
+					{m.showcase_forms_server_join()}
 				</Button>
 			</div>
 		</form>

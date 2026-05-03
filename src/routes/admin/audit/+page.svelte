@@ -4,6 +4,7 @@ import { page } from '$app/state';
 import { Card, EmptyState } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Select } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 
 let { data }: PageProps = $props();
 
@@ -54,17 +55,17 @@ function actionVariant(action: string): 'default' | 'secondary' | 'warning' | 'e
 	<Card>
 		{#snippet header()}
 			<Cluster justify="between" align="center">
-				<h2 class="text-fluid-lg font-semibold">Audit Log</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.admin_audit_title()}</h2>
 				<Cluster gap="2">
 					<a href={exportUrl()} download>
 						<Button variant="outline" size="sm">
 							<span class="i-lucide-download h-4 w-4 mr-1"></span>
-							Export CSV
+							{m.admin_audit_export_csv()}
 						</Button>
 					</a>
 					<Button variant="outline" size="sm" onclick={() => invalidateAll()}>
 						<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
-						Refresh
+						{m.admin_action_refresh()}
 					</Button>
 				</Cluster>
 			</Cluster>
@@ -73,31 +74,31 @@ function actionVariant(action: string): 'default' | 'secondary' | 'warning' | 'e
 		<!-- Filter Bar -->
 		<form method="GET" class="filter-bar">
 			<div class="filter-field">
-				<label class="filter-label" for="filter-action">Action</label>
+				<label class="filter-label" for="filter-action">{m.admin_audit_filter_action_label()}</label>
 				<select name="action" id="filter-action" class="filter-select">
-					<option value="">All actions</option>
+					<option value="">{m.admin_audit_filter_all_actions()}</option>
 					{#each data.distinctActions as action}
 						<option value={action} selected={data.filters.action === action}>{action}</option>
 					{/each}
 				</select>
 			</div>
 			<div class="filter-field">
-				<label class="filter-label" for="filter-actor">Actor</label>
-				<Input name="actor" id="filter-actor" value={data.filters.actor} placeholder="Email..." />
+				<label class="filter-label" for="filter-actor">{m.admin_audit_filter_actor_label()}</label>
+				<Input name="actor" id="filter-actor" value={data.filters.actor} placeholder={m.admin_audit_filter_actor_placeholder()} />
 			</div>
 			<div class="filter-field">
-				<label class="filter-label" for="filter-from">From</label>
+				<label class="filter-label" for="filter-from">{m.admin_audit_filter_from_label()}</label>
 				<input type="date" name="from" id="filter-from" value={data.filters.dateFrom} class="filter-date" />
 			</div>
 			<div class="filter-field">
-				<label class="filter-label" for="filter-to">To</label>
+				<label class="filter-label" for="filter-to">{m.admin_audit_filter_to_label()}</label>
 				<input type="date" name="to" id="filter-to" value={data.filters.dateTo} class="filter-date" />
 			</div>
 			<div class="filter-actions">
-				<Button type="submit" variant="outline" size="sm">Filter</Button>
+				<Button type="submit" variant="outline" size="sm">{m.admin_action_filter()}</Button>
 				{#if hasFilters}
 					<a href="/admin/audit">
-						<Button variant="ghost" size="sm">Clear</Button>
+						<Button variant="ghost" size="sm">{m.admin_action_clear()}</Button>
 					</a>
 				{/if}
 			</div>
@@ -107,18 +108,18 @@ function actionVariant(action: string): 'default' | 'secondary' | 'warning' | 'e
 			{#if hasFilters}
 				<EmptyState
 					icon="i-lucide-search-x"
-					title="No events match these filters"
-					description="Try adjusting the filters or clearing them."
+					title={m.admin_audit_empty_filtered_title()}
+					description={m.admin_audit_empty_filtered_description()}
 				>
 					<a href="/admin/audit">
-						<Button variant="outline" size="sm">Clear filters</Button>
+						<Button variant="outline" size="sm">{m.admin_audit_clear_filters()}</Button>
 					</a>
 				</EmptyState>
 			{:else}
 				<EmptyState
 					icon="i-lucide-shield-check"
-					title="No audit events yet"
-					description="Admin actions will appear here once they occur."
+					title={m.admin_audit_empty_title()}
+					description={m.admin_audit_empty_description()}
 				/>
 			{/if}
 		{:else}
@@ -126,11 +127,11 @@ function actionVariant(action: string): 'default' | 'secondary' | 'warning' | 'e
 				<table class="audit-table">
 					<thead>
 						<tr>
-							<th>Timestamp</th>
-							<th>Action</th>
-							<th>Actor</th>
-							<th>Target</th>
-							<th>Detail</th>
+							<th>{m.admin_audit_col_timestamp()}</th>
+							<th>{m.admin_audit_col_action()}</th>
+							<th>{m.admin_audit_col_actor()}</th>
+							<th>{m.admin_audit_col_target()}</th>
+							<th>{m.admin_audit_col_detail()}</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -152,7 +153,7 @@ function actionVariant(action: string): 'default' | 'secondary' | 'warning' | 'e
 											class="detail-toggle"
 											onclick={() => { expandedId = expandedId === entry.id ? null : entry.id; }}
 										>
-											{expandedId === entry.id ? 'Hide' : 'Show'}
+											{expandedId === entry.id ? m.admin_audit_detail_hide() : m.admin_audit_detail_show()}
 										</button>
 									{:else}
 										<span class="text-muted">—</span>
@@ -175,13 +176,13 @@ function actionVariant(action: string): 'default' | 'secondary' | 'warning' | 'e
 				<div class="pagination">
 					{#if data.page > 1}
 						<a href={buildUrl({ page: String(data.page - 1) })} class="page-link">
-							<span class="i-lucide-chevron-left h-4 w-4"></span> Prev
+							<span class="i-lucide-chevron-left h-4 w-4"></span> {m.admin_audit_pagination_prev()}
 						</a>
 					{/if}
-					<span class="page-info">Page {data.page} of {data.totalPages}</span>
+					<span class="page-info">{m.admin_audit_pagination_info({ page: data.page, total: data.totalPages })}</span>
 					{#if data.page < data.totalPages}
 						<a href={buildUrl({ page: String(data.page + 1) })} class="page-link">
-							Next <span class="i-lucide-chevron-right h-4 w-4"></span>
+							{m.admin_audit_pagination_next()} <span class="i-lucide-chevron-right h-4 w-4"></span>
 						</a>
 					{/if}
 				</div>

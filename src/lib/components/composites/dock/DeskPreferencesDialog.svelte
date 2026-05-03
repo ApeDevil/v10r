@@ -4,6 +4,7 @@ import Dialog from '$lib/components/primitives/dialog/Dialog.svelte';
 import Tabs from '$lib/components/primitives/tabs/Tabs.svelte';
 import OklchColorInput from '$lib/components/ui/OklchColorInput.svelte';
 import { DESK_PANEL_TYPES, DESK_PANELS } from '$lib/config/desk-panels';
+import * as m from '$lib/paraglide/messages';
 import { cn } from '$lib/utils/cn';
 import { getDeskSettings } from './desk-settings.svelte';
 
@@ -30,22 +31,22 @@ function typeColor(panelType: string): string {
 
 <Dialog
 	bind:open={settings.dialogOpen}
-	title="Desk Preferences"
+	title={m.composites_desk_prefs_title()}
 	class="max-w-2xl"
 >
 	{#snippet children()}
 		<Tabs
 			tabs={[
-				{ value: 'workspace', label: 'Workspace', content: workspaceTab },
-				{ value: 'panels', label: 'Panels', content: panelsTab },
-				{ value: 'presets', label: 'Presets', content: presetsTab },
+				{ value: 'workspace', label: m.composites_desk_prefs_tab_workspace(), content: workspaceTab },
+				{ value: 'panels', label: m.composites_desk_prefs_tab_panels(), content: panelsTab },
+				{ value: 'presets', label: m.composites_desk_prefs_tab_presets(), content: presetsTab },
 			]}
 			bind:value={settings.dialogTab}
 		/>
 
 		<div class="dialog-footer">
-			<Button variant="outline" onclick={() => settings.discardDraft()}>Cancel</Button>
-			<Button onclick={() => settings.commitDraft()}>Apply</Button>
+			<Button variant="outline" onclick={() => settings.discardDraft()}>{m.composites_confirm_dialog_cancel()}</Button>
+			<Button onclick={() => settings.commitDraft()}>{m.composites_desk_prefs_apply()}</Button>
 		</div>
 	{/snippet}
 </Dialog>
@@ -53,28 +54,28 @@ function typeColor(panelType: string): string {
 {#snippet workspaceTab()}
 	<div class="settings-section">
 		<OklchColorInput
-			label="Shell"
+			label={m.composites_desk_prefs_color_shell()}
 			value={wsColor('shellBg')}
 			onchange={(v) => settings.setWorkspaceColor('shellBg', v)}
 		/>
 		<OklchColorInput
-			label="Panel Background"
+			label={m.composites_desk_prefs_color_panel_bg()}
 			value={wsColor('panelBg')}
 			onchange={(v) => settings.setWorkspaceColor('panelBg', v)}
 		/>
 		<OklchColorInput
-			label="Border"
+			label={m.composites_desk_prefs_color_border()}
 			value={wsColor('shellBorder')}
 			onchange={(v) => settings.setWorkspaceColor('shellBorder', v)}
 		/>
 		<OklchColorInput
-			label="Tab Indicator"
+			label={m.composites_desk_prefs_color_tab_indicator()}
 			value={wsColor('tabActiveIndicator')}
 			onchange={(v) => settings.setWorkspaceColor('tabActiveIndicator', v)}
 		/>
 		<div class="reset-row">
 			<Button variant="ghost" onclick={() => settings.resetToDefaults()}>
-				Reset to defaults
+				{m.composites_desk_prefs_reset()}
 			</Button>
 		</div>
 	</div>
@@ -90,7 +91,7 @@ function typeColor(panelType: string): string {
 					<span class={cn('panel-type-icon', panel.icon)}></span>
 					<span class="panel-type-label">{panel.label}</span>
 					{#if hasOverride}
-						<span class="panel-type-badge">customized</span>
+						<span class="panel-type-badge">{m.composites_desk_prefs_panel_customized()}</span>
 					{/if}
 					<span class="panel-type-chevron" aria-hidden="true">
 						<span class="i-lucide-chevron-down"></span>
@@ -98,7 +99,7 @@ function typeColor(panelType: string): string {
 				</summary>
 				<div class="panel-type-body">
 					<OklchColorInput
-						label="Background"
+						label={m.composites_desk_prefs_panel_background()}
 						value={typeColor(panelType)}
 						onchange={(v) => settings.setTypeStyle(panelType, 'bg', v)}
 					/>
@@ -108,7 +109,7 @@ function typeColor(panelType: string): string {
 							class="clear-btn"
 							onclick={() => settings.clearTypeStyle(panelType)}
 						>
-							Clear
+							{m.composites_desk_prefs_clear()}
 						</Button>
 					{/if}
 				</div>
@@ -122,12 +123,12 @@ function typeColor(panelType: string): string {
 		<div class="preset-save-row">
 			<input
 				class="preset-name-input"
-				placeholder="Preset name…"
+				placeholder={m.composites_desk_prefs_preset_name_placeholder()}
 				bind:value={presetName}
 				onkeydown={(e) => e.key === 'Enter' && handleSavePreset()}
 			/>
 			<Button onclick={handleSavePreset} disabled={!presetName.trim()}>
-				Save current
+				{m.composites_desk_prefs_save_current()}
 			</Button>
 		</div>
 
@@ -138,7 +139,7 @@ function typeColor(panelType: string): string {
 					<span class="preset-name">
 						{preset.name}
 						{#if preset.builtIn}
-							<span class="preset-built-in">built-in</span>
+							<span class="preset-built-in">{m.composites_desk_prefs_built_in()}</span>
 						{/if}
 					</span>
 					<div class="preset-actions">
@@ -147,7 +148,7 @@ function typeColor(panelType: string): string {
 							class="preset-action-btn"
 							onclick={() => settings.applyPreset(preset.id)}
 						>
-							{isActive ? 'Active' : 'Apply'}
+							{isActive ? m.composites_desk_prefs_active() : m.composites_desk_prefs_apply_preset()}
 						</Button>
 						{#if !preset.builtIn}
 							<Button
@@ -155,7 +156,7 @@ function typeColor(panelType: string): string {
 								class="preset-action-btn preset-delete"
 								onclick={() => settings.deletePreset(preset.id)}
 							>
-								Delete
+								{m.composites_desk_prefs_delete()}
 							</Button>
 						{/if}
 					</div>

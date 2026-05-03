@@ -16,18 +16,19 @@ import {
 	Table,
 	Typography,
 } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
 
 let { data } = $props();
 const toast = getToast();
 
-const sections = [
-	{ id: 'browse', label: 'Browse' },
-	{ id: 'shortest-path', label: 'Shortest Path' },
-	{ id: 'recommendations', label: 'Recommendations' },
-	{ id: 'repl', label: 'Cypher REPL' },
-	{ id: 'vs-sql', label: 'vs SQL' },
-];
+const sections = $derived([
+	{ id: 'browse', label: m.showcase_db_graph_traversal_nav_browse() },
+	{ id: 'shortest-path', label: m.showcase_db_graph_traversal_nav_path() },
+	{ id: 'recommendations', label: m.showcase_db_graph_traversal_nav_recommendations() },
+	{ id: 'repl', label: m.showcase_db_graph_traversal_nav_repl() },
+	{ id: 'vs-sql', label: m.showcase_db_graph_traversal_nav_vs_sql() },
+]);
 
 // ─── Node options for selects ────────────────────────
 const nodeOptions = $derived(data.nodes.map((n) => ({ value: n.elementId, label: `${n.name} (${n.label})` })));
@@ -100,7 +101,7 @@ function formatValue(val: unknown): string {
 			<section id="browse">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Browse</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_graph_traversal_card_browse()}</Typography>
 						<Typography variant="muted" as="p">Select a node to see its properties and all connected neighbors.</Typography>
 					{/snippet}
 
@@ -120,7 +121,7 @@ function formatValue(val: unknown): string {
 							<input type="hidden" name="elementId" value={browseNodeId} />
 							<Button type="submit" variant="outline" size="sm" disabled={!browseNodeId || browseLoading}>
 								{#if browseLoading}<Spinner size="xs" class="mr-1" />{/if}
-								Browse
+								{m.showcase_db_graph_traversal_browse_btn()}
 							</Button>
 						</div>
 					</form>
@@ -149,10 +150,10 @@ function formatValue(val: unknown): string {
 									<Table>
 										<Header>
 											<Row>
-												<HeaderCell>Direction</HeaderCell>
-												<HeaderCell>Relationship</HeaderCell>
-												<HeaderCell>Neighbor</HeaderCell>
-												<HeaderCell>Type</HeaderCell>
+												<HeaderCell>{m.showcase_db_graph_traversal_col_direction()}</HeaderCell>
+												<HeaderCell>{m.showcase_db_graph_traversal_col_relationship()}</HeaderCell>
+												<HeaderCell>{m.showcase_db_graph_traversal_col_neighbor()}</HeaderCell>
+												<HeaderCell>{m.showcase_db_graph_traversal_col_type()}</HeaderCell>
 											</Row>
 										</Header>
 										<Body>
@@ -181,7 +182,7 @@ function formatValue(val: unknown): string {
 			<section id="shortest-path">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Shortest Path</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_graph_traversal_card_path()}</Typography>
 						<Typography variant="muted" as="p">Find the shortest connection between any two nodes using <code>shortestPath()</code>.</Typography>
 					{/snippet}
 
@@ -204,7 +205,7 @@ function formatValue(val: unknown): string {
 							<input type="hidden" name="toId" value={pathToId} />
 							<Button type="submit" variant="outline" size="sm" disabled={!pathFromId || !pathToId || pathLoading}>
 								{#if pathLoading}<Spinner size="xs" class="mr-1" />{/if}
-								Find Path
+								{m.showcase_db_graph_traversal_path_btn()}
 							</Button>
 						</div>
 					</form>
@@ -237,7 +238,7 @@ function formatValue(val: unknown): string {
 			<section id="recommendations">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Recommendations</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_graph_traversal_card_recommendations()}</Typography>
 						<Typography variant="muted" as="p">Find related items by traversing 2 hops through the graph. Items with more connecting paths score higher.</Typography>
 					{/snippet}
 
@@ -257,7 +258,7 @@ function formatValue(val: unknown): string {
 							<input type="hidden" name="nodeId" value={recNodeId} />
 							<Button type="submit" variant="outline" size="sm" disabled={!recNodeId || recLoading}>
 								{#if recLoading}<Spinner size="xs" class="mr-1" />{/if}
-								Recommend
+								{m.showcase_db_graph_traversal_recommend_btn()}
 							</Button>
 						</div>
 					</form>
@@ -285,7 +286,7 @@ function formatValue(val: unknown): string {
 			<section id="repl">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Cypher REPL</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_graph_traversal_card_repl()}</Typography>
 						<Typography variant="muted" as="p">Run read-only Cypher queries against the graph. Write operations (CREATE, DELETE, etc.) are blocked.</Typography>
 					{/snippet}
 
@@ -312,7 +313,7 @@ function formatValue(val: unknown): string {
 							<Button type="submit" variant="outline" size="sm" disabled={!replQuery.trim() || replLoading}>
 								{#if replLoading}<Spinner size="xs" class="mr-1" />{/if}
 								<span class="i-lucide-play h-4 w-4 mr-1" ></span>
-								Execute
+								{m.showcase_db_graph_traversal_execute_btn()}
 							</Button>
 						</div>
 					</form>
@@ -351,7 +352,7 @@ function formatValue(val: unknown): string {
 			<section id="vs-sql">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Graph vs SQL</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_graph_traversal_card_vs_sql()}</Typography>
 						<Typography variant="muted" as="p">Side-by-side comparison of common queries in Cypher and SQL.</Typography>
 					{/snippet}
 

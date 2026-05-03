@@ -1,6 +1,7 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
 import { ShowcaseLayout } from '$lib/components/composites';
+import * as m from '$lib/paraglide/messages';
 import { getShowcaseTabs } from '../showcases';
 
 let { children }: { children: Snippet } = $props();
@@ -9,12 +10,12 @@ const tabs = getShowcaseTabs('/showcases/forms');
 </script>
 
 <ShowcaseLayout
-	title="Forms"
-	description="Form validation patterns with Superforms v2 + Valibot v1."
+	title={m.showcase_forms_title()}
+	description={m.showcase_forms_description()}
 	breadcrumbs={[
-		{ label: 'Home', href: '/' },
-		{ label: 'Showcases', href: '/showcases' },
-		{ label: 'Forms' }
+		{ label: m.showcase_breadcrumb_home(), href: '/' },
+		{ label: m.showcase_breadcrumb_showcases(), href: '/showcases' },
+		{ label: m.showcase_forms_breadcrumb() }
 	]}
 	{tabs}
 	ariaLabel="Form sections"

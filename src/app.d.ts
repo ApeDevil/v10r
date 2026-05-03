@@ -20,7 +20,7 @@ declare global {
 			/** Admin user id this request is paired to via the debug-owner cookie. NULL when not paired. */
 			debugOwnerId: string | null;
 			/** Resolved locale for this request. URL > cookie > baseLocale, validated against ALLOWED_LOCALES. */
-			locale: import('$lib/paraglide/runtime').Locale;
+			locale: import('$lib/i18n').Locale;
 		}
 		interface PageData {
 			style: import('$lib/styles/random/types').ResolvedStyle;

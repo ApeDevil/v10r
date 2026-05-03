@@ -24,6 +24,7 @@ export * from './empty-state';
 export * from './error-display';
 export * from './form-field';
 export * from './link-card';
+export * from './locale-fallback-banner';
 export * from './menu-bar';
 export * from './nav-grid';
 export * from './nav-section';

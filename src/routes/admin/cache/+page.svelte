@@ -4,18 +4,19 @@ import { invalidateAll } from '$app/navigation';
 import { Card, ConfirmDialog, EmptyState } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Spinner } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
 
 let { data } = $props();
 
 function formatTtl(seconds: number): string {
-	if (seconds === -2) return 'expired';
-	if (seconds === -1) return 'no expiry';
+	if (seconds === -2) return m.admin_cache_ttl_expired();
+	if (seconds === -1) return m.admin_cache_ttl_no_expiry();
 	if (seconds < 60) return `${seconds}s`;
 	if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
 	const h = Math.floor(seconds / 3600);
-	const m = Math.floor((seconds % 3600) / 60);
-	return m > 0 ? `${h}h ${m}m` : `${h}h`;
+	const min = Math.floor((seconds % 3600) / 60);
+	return min > 0 ? `${h}h ${min}m` : `${h}h`;
 }
 const toast = getToast();
 
@@ -100,7 +101,11 @@ function formatValue(value: unknown): string {
 }
 
 const prefixFilters = ['', 'showcase:', 'ratelimit:'] as const;
-const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase:', 'ratelimit:': 'ratelimit:' };
+const prefixLabels = $derived<Record<string, string>>({
+	'': m.admin_filter_all(),
+	'showcase:': 'showcase:',
+	'ratelimit:': 'ratelimit:',
+});
 </script>
 <Stack gap="6">
 	<!-- Stats -->
@@ -108,22 +113,22 @@ const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase
 		<Card>
 			{#snippet header()}
 				<Cluster justify="between">
-					<h2 class="text-fluid-lg font-semibold">Cache Stats</h2>
+					<h2 class="text-fluid-lg font-semibold">{m.admin_cache_section_stats()}</h2>
 					<Button variant="outline" size="sm" onclick={() => invalidateAll()}>
 						<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
-						Refresh
+						{m.admin_action_refresh()}
 					</Button>
 				</Cluster>
 			{/snippet}
 
 			<div class="stat-grid">
 				<div class="stat-card">
-					<span class="stat-label">Total Keys</span>
+					<span class="stat-label">{m.admin_cache_stat_total_keys()}</span>
 					<span class="stat-value">{data.overview.totalKeys}</span>
 				</div>
 				{#if data.overview.upstash.data}
 					<div class="stat-card">
-						<span class="stat-label">Commands (Monthly)</span>
+						<span class="stat-label">{m.admin_cache_stat_commands_monthly()}</span>
 						<Cluster gap="2" align="center">
 							<span class="stat-value">{data.overview.upstash.data.commandsPercentage}%</span>
 							<Badge variant={thresholdVariant(data.overview.upstash.data.commandsThreshold)}>
@@ -132,7 +137,7 @@ const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase
 						</Cluster>
 					</div>
 					<div class="stat-card">
-						<span class="stat-label">Storage</span>
+						<span class="stat-label">{m.admin_cache_stat_storage()}</span>
 						<Cluster gap="2" align="center">
 							<span class="stat-value">{data.overview.upstash.data.storagePercentage}%</span>
 							<Badge variant={thresholdVariant(data.overview.upstash.data.storageThreshold)}>
@@ -142,15 +147,15 @@ const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase
 					</div>
 				{:else}
 					<div class="stat-card">
-						<span class="stat-label">Upstash Metrics</span>
-						<span class="stat-muted">Not configured</span>
+						<span class="stat-label">{m.admin_cache_stat_upstash_metrics()}</span>
+						<span class="stat-muted">{m.admin_cache_not_configured()}</span>
 					</div>
 				{/if}
 			</div>
 
 			{#if Object.keys(data.overview.keysByPrefix).length > 0}
 				<div class="breakdown-section">
-					<h3 class="breakdown-title">Keys by Prefix</h3>
+					<h3 class="breakdown-title">{m.admin_cache_breakdown_by_prefix()}</h3>
 					<div class="breakdown-list">
 						{#each Object.entries(data.overview.keysByPrefix).sort((a, b) => b[1] - a[1]) as [prefix, count]}
 							<Cluster gap="2" align="center">
@@ -164,7 +169,7 @@ const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase
 
 			{#if Object.keys(data.overview.keysByType).length > 0}
 				<div class="breakdown-section">
-					<h3 class="breakdown-title">Keys by Type</h3>
+					<h3 class="breakdown-title">{m.admin_cache_breakdown_by_type()}</h3>
 					<div class="breakdown-list">
 						{#each Object.entries(data.overview.keysByType).sort((a, b) => b[1] - a[1]) as [type, count]}
 							<Cluster gap="2" align="center">
@@ -179,12 +184,12 @@ const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase
 	{:else}
 		<Card>
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Cache Stats</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.admin_cache_section_stats()}</h2>
 			{/snippet}
 			<EmptyState
 				icon="i-lucide-hard-drive"
-				title="Redis not available"
-				description="Redis is not configured or unreachable."
+				title={m.admin_cache_redis_unavailable_title()}
+				description={m.admin_cache_redis_unavailable_desc()}
 			/>
 		</Card>
 	{/if}
@@ -193,7 +198,7 @@ const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase
 	<Card>
 		{#snippet header()}
 			<Cluster justify="between" align="center">
-				<h2 class="text-fluid-lg font-semibold">In-Process Caches</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.admin_cache_section_in_process()}</h2>
 				<form
 					method="POST"
 					action="?/invalidateInProcess"
@@ -202,7 +207,7 @@ const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase
 							if (result.type === 'success' && result.data) {
 								toast.success(result.data.message as string);
 							} else if (result.type === 'failure') {
-								toast.error((result.data?.message as string) || 'Failed.');
+								toast.error((result.data?.message as string) || m.admin_action_failed_generic());
 							}
 							showInvalidateDialog = false;
 							return update();
@@ -216,7 +221,7 @@ const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase
 						onclick={() => { showInvalidateDialog = true; }}
 					>
 						<span class="i-lucide-rotate-ccw h-3 w-3 mr-1"></span>
-						Invalidate All
+						{m.admin_cache_action_invalidate_all()}
 					</Button>
 				</form>
 			</Cluster>
@@ -224,17 +229,17 @@ const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase
 
 		<div class="in-process-grid">
 			<div class="in-process-card">
-				<span class="in-process-label">Feature Flags</span>
+				<span class="in-process-label">{m.admin_cache_inprocess_feature_flags()}</span>
 				<Cluster gap="2" align="center">
 					<code class="in-process-value">{data.inProcessStatus.flagsCacheSize}</code>
-					<span class="in-process-unit">entries</span>
+					<span class="in-process-unit">{m.admin_cache_entries_unit()}</span>
 				</Cluster>
 			</div>
 			<div class="in-process-card">
-				<span class="in-process-label">Announcements</span>
+				<span class="in-process-label">{m.admin_cache_inprocess_announcements()}</span>
 				<Cluster gap="2" align="center">
 					<code class="in-process-value">{data.inProcessStatus.announcementsCacheSize}</code>
-					<span class="in-process-unit">entries</span>
+					<span class="in-process-unit">{m.admin_cache_entries_unit()}</span>
 				</Cluster>
 			</div>
 		</div>
@@ -244,7 +249,7 @@ const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase
 	{#await data.keys}
 		<Card>
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Key Browser</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.admin_cache_section_key_browser()}</h2>
 			{/snippet}
 			<div class="skeleton-table"></div>
 		</Card>
@@ -252,7 +257,7 @@ const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase
 		<Card>
 			{#snippet header()}
 				<Cluster justify="between" align="center">
-					<h2 class="text-fluid-lg font-semibold">Key Browser</h2>
+					<h2 class="text-fluid-lg font-semibold">{m.admin_cache_section_key_browser()}</h2>
 					<div class="filter-bar">
 						{#each prefixFilters as p}
 							<a
@@ -268,12 +273,12 @@ const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase
 			{#if keyData.entries.length === 0}
 				<EmptyState
 					icon="i-lucide-key"
-					title={data.filters.prefix ? `No keys with prefix "${data.filters.prefix}"` : 'No keys'}
-					description={data.filters.prefix ? 'No keys match this prefix filter.' : 'Redis has no keys.'}
+					title={data.filters.prefix ? m.admin_cache_no_keys_prefix({ prefix: data.filters.prefix }) : m.admin_cache_no_keys()}
+					description={data.filters.prefix ? m.admin_cache_no_keys_prefix_desc() : m.admin_cache_no_keys_desc()}
 				>
 					{#if data.filters.prefix}
 						<a href="/admin/cache">
-							<Button variant="outline">Clear filter</Button>
+							<Button variant="outline">{m.admin_cache_action_clear_filter()}</Button>
 						</a>
 					{/if}
 				</EmptyState>
@@ -282,9 +287,9 @@ const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase
 					<table class="data-table">
 						<thead>
 							<tr>
-								<th>Key</th>
-								<th>Type</th>
-								<th>TTL</th>
+								<th>{m.admin_cache_col_key()}</th>
+								<th>{m.admin_cache_col_type()}</th>
+								<th>{m.admin_cache_col_ttl()}</th>
 								<th></th>
 							</tr>
 						</thead>
@@ -309,7 +314,7 @@ const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase
 															inspectedValues = { ...inspectedValues, [entry.key]: detail.value };
 															expandedKey = expandedKey === entry.key ? null : entry.key;
 														} else if (result.type === 'failure') {
-															toast.error((result.data?.message as string) || 'Inspect failed.');
+															toast.error((result.data?.message as string) || m.admin_cache_inspect_failed());
 														}
 														inspecting = '';
 														await update({ reset: false });
@@ -359,16 +364,16 @@ const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase
 								href="/admin/cache?page={data.filters.page - 1}{data.filters.prefix ? `&prefix=${data.filters.prefix}` : ''}"
 								class="page-link"
 							>
-								<span class="i-lucide-chevron-left h-4 w-4"></span> Prev
+								<span class="i-lucide-chevron-left h-4 w-4"></span> {m.admin_cache_pagination_prev()}
 							</a>
 						{/if}
-						<span class="page-info">Page {data.filters.page} of {keyData.totalPages}</span>
+						<span class="page-info">{m.admin_cache_pagination_page_of({ page: data.filters.page, total: keyData.totalPages })}</span>
 						{#if data.filters.page < keyData.totalPages}
 							<a
 								href="/admin/cache?page={data.filters.page + 1}{data.filters.prefix ? `&prefix=${data.filters.prefix}` : ''}"
 								class="page-link"
 							>
-								Next <span class="i-lucide-chevron-right h-4 w-4"></span>
+								{m.admin_cache_pagination_next()} <span class="i-lucide-chevron-right h-4 w-4"></span>
 							</a>
 						{/if}
 					</div>
@@ -378,9 +383,9 @@ const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase
 	{:catch}
 		<Card>
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Key Browser</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.admin_cache_section_key_browser()}</h2>
 			{/snippet}
-			<p class="error-text">Failed to load keys. Redis may be unavailable.</p>
+			<p class="error-text">{m.admin_cache_error_load_keys()}</p>
 		</Card>
 	{/await}
 
@@ -388,31 +393,28 @@ const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase
 	{#if data.overview}
 		<Card>
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Flush Actions</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.admin_cache_section_flush()}</h2>
 			{/snippet}
 
 			<div class="flush-actions">
 				<div class="flush-action">
 					<div class="flush-info">
-						<span class="flush-label">Flush showcase keys</span>
-						<span class="flush-desc">Delete all keys with the <code>showcase:</code> prefix. Safe — only affects demo data.</span>
+						<span class="flush-label">{m.admin_cache_flush_showcase_label()}</span>
+						<span class="flush-desc">{m.admin_cache_flush_showcase_desc()}</span>
 					</div>
 					<Button variant="outline" size="sm" onclick={() => confirmFlush('showcase:')}>
 						<span class="i-lucide-trash h-3 w-3 mr-1"></span>
-						Flush
+						{m.admin_cache_action_flush()}
 					</Button>
 				</div>
 				<div class="flush-action flush-action--danger">
 					<div class="flush-info">
-						<span class="flush-label">Flush rate limit keys</span>
-						<span class="flush-desc">
-							Delete all keys with the <code>ratelimit:</code> prefix.
-							<strong>Warning:</strong> This resets all rate limits immediately.
-						</span>
+						<span class="flush-label">{m.admin_cache_flush_ratelimit_label()}</span>
+						<span class="flush-desc">{m.admin_cache_flush_ratelimit_desc()}</span>
 					</div>
 					<Button variant="destructive" size="sm" onclick={() => confirmFlush('ratelimit:')}>
 						<span class="i-lucide-alert-triangle h-3 w-3 mr-1"></span>
-						Flush
+						{m.admin_cache_action_flush()}
 					</Button>
 				</div>
 			</div>
@@ -422,9 +424,9 @@ const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase
 
 <ConfirmDialog
 	open={showDeleteDialog}
-	title="Delete Key"
-	description="Delete Redis key &quot;{deleteKeyName}&quot;? This action cannot be undone."
-	confirmLabel="Delete"
+	title={m.admin_cache_dialog_delete_key_title()}
+	description={m.admin_cache_dialog_delete_key_desc({ key: deleteKeyName })}
+	confirmLabel={m.admin_action_delete()}
 	destructive
 	onconfirm={submitDelete}
 	oncancel={() => { showDeleteDialog = false; }}
@@ -432,9 +434,9 @@ const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase
 
 <ConfirmDialog
 	open={showFlushDialog}
-	title="Flush Keys"
-	description="Delete all keys with prefix &quot;{flushPrefix}&quot;? This action cannot be undone."
-	confirmLabel="Flush"
+	title={m.admin_cache_dialog_flush_title()}
+	description={m.admin_cache_dialog_flush_desc({ prefix: flushPrefix })}
+	confirmLabel={m.admin_cache_action_flush()}
 	destructive
 	onconfirm={submitFlush}
 	oncancel={() => { showFlushDialog = false; }}
@@ -442,9 +444,9 @@ const prefixLabels: Record<string, string> = { '': 'All', 'showcase:': 'showcase
 
 <ConfirmDialog
 	open={showInvalidateDialog}
-	title="Invalidate In-Process Caches"
-	description="Clear all in-process caches (feature flags, announcements)? Entries will be re-fetched from the database on next access."
-	confirmLabel="Invalidate"
+	title={m.admin_cache_dialog_invalidate_title()}
+	description={m.admin_cache_dialog_invalidate_desc()}
+	confirmLabel={m.admin_cache_action_invalidate()}
 	onconfirm={() => {
 		const form = document.createElement('form');
 		form.method = 'POST';

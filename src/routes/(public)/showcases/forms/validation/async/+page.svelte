@@ -4,6 +4,7 @@ import { valibotClient } from 'sveltekit-superforms/adapters';
 import { Alert, Card, FormField } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { asyncSchema } from '$lib/schemas/showcase/validation';
 import type { PageProps } from './$types';
 
@@ -56,12 +57,12 @@ function checkUsername() {
 <Stack gap="6">
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">Async Validation</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.showcase_forms_async_heading()}</h2>
 			<p class="text-fluid-sm text-muted">Debounced server-side username check with loading indicator.</p>
 		{/snippet}
 
 		{#if $formMessage}
-			<Alert variant="success" title="Success">
+			<Alert variant="success" title={m.showcase_forms_success()}>
 				{#snippet children()}
 					<p>{$formMessage}</p>
 				{/snippet}
@@ -69,7 +70,7 @@ function checkUsername() {
 		{/if}
 
 		<form method="POST" use:enhance class="form-grid">
-			<FormField label="Username" error={$errors.username?.[0]} required>
+			<FormField label={m.showcase_forms_field_username()} error={$errors.username?.[0]} required>
 				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
@@ -83,17 +84,17 @@ function checkUsername() {
 					<div class="availability">
 						{#if checkingUsername}
 							<Spinner size="sm" variant="muted" />
-							<span class="text-fluid-xs text-muted">Checking...</span>
+							<span class="text-fluid-xs text-muted">{m.showcase_forms_async_checking()}</span>
 						{:else if usernameAvailable === true}
-							<Badge variant="success">Available</Badge>
+							<Badge variant="success">{m.showcase_forms_async_available()}</Badge>
 						{:else if usernameAvailable === false}
-							<Badge variant="error">Taken</Badge>
+							<Badge variant="error">{m.showcase_forms_async_taken()}</Badge>
 						{/if}
 					</div>
 				{/snippet}
 			</FormField>
 
-			<FormField label="Email" error={$errors.email?.[0]} required>
+			<FormField label={m.showcase_forms_field_email()} error={$errors.email?.[0]} required>
 				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
@@ -110,7 +111,7 @@ function checkUsername() {
 			<div class="form-actions">
 				<Button type="submit" disabled={$submitting}>
 					{#if $delayed}<Spinner size="sm" class="mr-2" />{/if}
-					Register
+					{m.showcase_forms_async_register()}
 				</Button>
 			</div>
 		</form>

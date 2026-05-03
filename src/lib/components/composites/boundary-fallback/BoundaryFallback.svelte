@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Button } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 
 interface Props {
 	title?: string;
@@ -8,7 +9,7 @@ interface Props {
 	reset: () => void;
 }
 
-let { title = 'Something went wrong', description, minHeight, reset }: Props = $props();
+let { title = m.composites_boundary_fallback_title(), description, minHeight, reset }: Props = $props();
 </script>
 
 <div class="boundary-fallback" style:min-height={minHeight} role="alert">
@@ -24,7 +25,7 @@ let { title = 'Something went wrong', description, minHeight, reset }: Props = $
 
 	<Button variant="ghost" size="sm" onclick={reset}>
 		<span class="i-lucide-rotate-cw mr-2 h-3.5 w-3.5" aria-hidden="true"></span>
-		Retry
+		{m.composites_boundary_fallback_retry()}
 	</Button>
 </div>
 

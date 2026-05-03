@@ -1,11 +1,12 @@
 <script lang="ts">
 import { Card } from '$lib/components';
 import { Pane, PaneGroup, PaneResizer } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 </script>
 <main class="content">
 	<!-- Basic Horizontal Example -->
 	<section>
-		<h2 class="text-fluid-2xl font-bold mb-fluid-3">Horizontal Layout</h2>
+		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_resizable_section_horizontal()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			Two panes side-by-side with a draggable divider. Includes visual grip indicator.
 		</p>
@@ -44,7 +45,7 @@ import { Pane, PaneGroup, PaneResizer } from '$lib/components/primitives';
 
 	<!-- Vertical Layout Example -->
 	<section>
-		<h2 class="text-fluid-2xl font-bold mb-fluid-3">Vertical Layout</h2>
+		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_resizable_section_vertical()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			Stacked panes with a horizontal divider. Cursor changes to row-resize for vertical splits.
 		</p>
@@ -80,7 +81,7 @@ import { Pane, PaneGroup, PaneResizer } from '$lib/components/primitives';
 
 	<!-- Three Panel Example -->
 	<section>
-		<h2 class="text-fluid-2xl font-bold mb-fluid-3">Three-Pane Layout</h2>
+		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_resizable_section_three_pane()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			Multiple panes with independent resize handles. Common pattern for navigation, content, and
 			sidebar.
@@ -129,7 +130,7 @@ import { Pane, PaneGroup, PaneResizer } from '$lib/components/primitives';
 
 	<!-- Persistent Layout -->
 	<section>
-		<h2 class="text-fluid-2xl font-bold mb-fluid-3">Persistent Layout</h2>
+		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_resizable_section_persistent()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			Layout is saved to localStorage via <code class="bg-subtle px-1 rounded">autoSaveId</code>. Resize the panes, then refresh the page to see them restored.
 		</p>
@@ -159,7 +160,7 @@ import { Pane, PaneGroup, PaneResizer } from '$lib/components/primitives';
 
 	<!-- Collapsible Pane -->
 	<section>
-		<h2 class="text-fluid-2xl font-bold mb-fluid-3">Collapsible Pane</h2>
+		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_resizable_section_collapsible()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			The sidebar can be collapsed by dragging past the minimum size threshold.
 		</p>
@@ -191,7 +192,7 @@ import { Pane, PaneGroup, PaneResizer } from '$lib/components/primitives';
 
 	<!-- Without Handle Indicator -->
 	<section>
-		<h2 class="text-fluid-2xl font-bold mb-fluid-3">Minimal Divider</h2>
+		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_resizable_section_minimal()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			Simple divider without the grip indicator. Cleaner look when visual affordance isn't needed.
 		</p>

@@ -3,6 +3,7 @@ import { enhance } from '$app/forms';
 import { Card, DiagGrid, DiagRow, EmptyState } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Spinner } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
 
@@ -85,7 +86,7 @@ function channelStatus(deliveries: { channel: string; status: string }[], channe
 	<!-- SSE Live -->
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">SSE Stream</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.showcase_notifications_pipeline_card_sse()}</h2>
 		{/snippet}
 
 		<DiagGrid>
@@ -118,7 +119,7 @@ function channelStatus(deliveries: { channel: string; status: string }[], channe
 	<Card>
 		{#snippet header()}
 			<Cluster justify="between">
-				<h2 class="text-fluid-lg font-semibold">Recent Deliveries</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.showcase_notifications_pipeline_card_deliveries()}</h2>
 				<form
 					method="POST"
 					action="?/refresh"
@@ -135,7 +136,7 @@ function channelStatus(deliveries: { channel: string; status: string }[], channe
 							<Spinner size="xs" class="mr-2" />
 						{/if}
 						<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
-						Refresh
+						{m.showcase_notifications_pipeline_btn_refresh()}
 					</Button>
 				</form>
 			</Cluster>
@@ -144,21 +145,21 @@ function channelStatus(deliveries: { channel: string; status: string }[], channe
 		{#if data.recentNotifications.length === 0}
 			<EmptyState
 				icon="i-lucide-send"
-				title="No notifications sent yet"
-				description="Use the Send tab to trigger test notifications."
+				title={m.showcase_notifications_pipeline_empty_title()}
+				description={m.showcase_notifications_pipeline_empty_desc()}
 			/>
 		{:else}
 			<div class="history-table-wrap">
 				<table class="history-table">
 					<thead>
 						<tr>
-							<th>Title</th>
-							<th>Type</th>
-							<th>In-App</th>
-							<th>Email</th>
-							<th>Telegram</th>
-							<th>Discord</th>
-							<th>Time</th>
+							<th>{m.showcase_notifications_pipeline_col_title()}</th>
+							<th>{m.showcase_notifications_pipeline_col_type()}</th>
+							<th>{m.showcase_notifications_pipeline_col_inapp()}</th>
+							<th>{m.showcase_notifications_pipeline_col_email()}</th>
+							<th>{m.showcase_notifications_pipeline_col_telegram()}</th>
+							<th>{m.showcase_notifications_pipeline_col_discord()}</th>
+							<th>{m.showcase_notifications_pipeline_col_time()}</th>
 						</tr>
 					</thead>
 					<tbody>

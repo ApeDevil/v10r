@@ -4,6 +4,7 @@ import { valibotClient } from 'sveltekit-superforms/adapters';
 import { Alert, Card, FormField } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Progress, Spinner } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { realtimeSchema } from '$lib/schemas/showcase/validation';
 import type { PageProps } from './$types';
 
@@ -47,12 +48,12 @@ const passwordStrength = $derived.by(() => {
 <Stack gap="6">
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">Realtime Validation</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.showcase_forms_realtime_heading()}</h2>
 			<p class="text-fluid-sm text-muted">Live feedback on every keystroke. Password strength indicator and character counter.</p>
 		{/snippet}
 
 		{#if $formMessage}
-			<Alert variant="success" title="Success">
+			<Alert variant="success" title={m.showcase_forms_success()}>
 				{#snippet children()}
 					<p>{$formMessage}</p>
 				{/snippet}
@@ -60,7 +61,7 @@ const passwordStrength = $derived.by(() => {
 		{/if}
 
 		<form method="POST" use:enhance class="form-grid">
-			<FormField label="Username" error={$errors.username?.[0]} required>
+			<FormField label={m.showcase_forms_field_username()} error={$errors.username?.[0]} required>
 				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
@@ -77,7 +78,7 @@ const passwordStrength = $derived.by(() => {
 				{/snippet}
 			</FormField>
 
-			<FormField label="Password" error={$errors.password?.[0]} required>
+			<FormField label={m.showcase_forms_field_password()} error={$errors.password?.[0]} required>
 				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
@@ -101,7 +102,7 @@ const passwordStrength = $derived.by(() => {
 				{/snippet}
 			</FormField>
 
-			<FormField label="Confirm Password" error={$errors.confirmPassword?.[0]} required>
+			<FormField label={m.showcase_forms_field_confirm_password()} error={$errors.confirmPassword?.[0]} required>
 				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
@@ -118,7 +119,7 @@ const passwordStrength = $derived.by(() => {
 			<div class="form-actions">
 				<Button type="submit" disabled={$submitting}>
 					{#if $delayed}<Spinner size="sm" class="mr-2" />{/if}
-					Create Account
+					{m.showcase_forms_realtime_submit()}
 				</Button>
 			</div>
 		</form>

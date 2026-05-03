@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Tag } from '$lib/components/primitives/tag';
+import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
 
@@ -81,7 +82,7 @@ const rights: Right[] = [
 </script>
 <div class="rights">
 	<header class="lede">
-		<h2>Eight rights, one inbox.</h2>
+		<h2>{m.showcase_admin_rights_heading()}</h2>
 		<p>
 			These are not user requests we hope you'll never make — they're features the GDPR builds in for you,
 			and we honour them in plain text. The contact for every right below is

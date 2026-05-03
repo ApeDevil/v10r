@@ -7,7 +7,7 @@ cd dev/velociraptor/
 # -------------------run
 podman-compose up
 podman-compose up -d
-podman logs -f v10r
+podman logs -f v10rs
 podman restart v10r
 
 # -------------------stop
@@ -24,11 +24,12 @@ podman rm -f v10r
 
 # ---------------------------------- Test
 ## test everything
-podman exec -it v10r bun run validate 
+podman exec -it v10r bun run validate
 ## induvidual tests
 podman exec -it v10r bun run check
 podman exec -it v10r bun run lint
 podman exec -it v10r bun run test
+podman exec v10r bun run i18n:check-missing
 
 
 # shows only running containers

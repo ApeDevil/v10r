@@ -4,6 +4,7 @@ import { Card, FormField } from '$lib/components/composites';
 import { NotificationCard } from '$lib/components/composites/notifications';
 import { Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Select, Spinner, Textarea } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 
 let { data, form } = $props();
 
@@ -45,7 +46,7 @@ function flashCustomSent() {
 	<Card>
 		{#snippet header()}
 			<div>
-				<h2 class="text-fluid-lg font-semibold">Quick Fire</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.showcase_notifications_send_card_quick()}</h2>
 				<p class="text-fluid-sm text-muted mt-1">Send preset notifications to test each type.</p>
 			</div>
 		{/snippet}
@@ -86,7 +87,7 @@ function flashCustomSent() {
 	<Card>
 		{#snippet header()}
 			<div>
-				<h2 class="text-fluid-lg font-semibold">Custom Send</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.showcase_notifications_send_card_custom()}</h2>
 				<p class="text-fluid-sm text-muted mt-1">Compose a notification with custom content.</p>
 			</div>
 		{/snippet}
@@ -152,13 +153,13 @@ function flashCustomSent() {
 						<Button type="submit" disabled={sendingCustom || !customTitle.trim()}>
 							{#if sendingCustom}
 								<Spinner size="xs" class="mr-2" />
-								Sending...
+								{m.showcase_notifications_send_btn_sending()}
 							{:else if sentCustom}
 								<span class="i-lucide-check h-4 w-4 mr-1"></span>
-								Sent
+								{m.showcase_notifications_send_btn_sent()}
 							{:else}
 								<span class="i-lucide-send h-4 w-4 mr-1"></span>
-								Send
+								{m.showcase_notifications_send_btn_send()}
 							{/if}
 						</Button>
 					</div>

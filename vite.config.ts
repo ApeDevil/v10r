@@ -10,6 +10,11 @@ export default defineConfig({
 			project: './project.inlang',
 			outdir: './src/lib/paraglide',
 			strategy: ['url', 'cookie', 'baseLocale'],
+			// Dev: one bundled module per locale (avoids paraglide issue #486 where
+			// message-modules emits one .js per key and Vite fires one HTTP request
+			// per key on cold load). Prod: per-message modules so the bundler can
+			// tree-shake unused keys out of the client bundle.
+			outputStructure: process.env.NODE_ENV === 'production' ? 'message-modules' : 'locale-modules',
 		}),
 		sveltekit(),
 	],
@@ -22,7 +27,7 @@ export default defineConfig({
 		allowedHosts: ['.trycloudflare.com'],
 		watch: {
 			usePolling: true, // Required for container file watching (volume-mounted FS)
-			interval: 300, // Slower polling reduces CPU churn and HMR-ping frequency
+			interval: 1000, // 1s poll: trades ~1s HMR latency for materially less cold-load CPU contention
 		},
 		// HMR multiplexed over the main HTTP port (5173). Previously was on a separate
 		// port 24678, which in Chrome + Podman port-forwarding caused WebSocket
@@ -30,7 +35,13 @@ export default defineConfig({
 		// aggressively, Chrome didn't — freeze after ~3 reloads).
 		warmup: {
 			clientFiles: ['./src/routes/+layout.svelte', './src/lib/components/index.ts', './src/lib/styles/tokens.ts'],
-			ssrFiles: ['./src/hooks.server.ts', './src/lib/server/db/index.ts', './src/lib/server/auth/index.ts'],
+			ssrFiles: [
+				'./src/hooks.server.ts',
+				'./src/lib/server/db/index.ts',
+				'./src/lib/server/auth/index.ts',
+				'./src/lib/paraglide/messages.js',
+				'./src/lib/paraglide/runtime.js',
+			],
 		},
 	},
 });

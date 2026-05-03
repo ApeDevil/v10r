@@ -4,16 +4,17 @@ import { page } from '$app/state';
 import { Alert, Card, NavSection } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Progress, Spinner, Typography } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
 
 let { data } = $props();
 const toast = getToast();
 
-const sections = [
-	{ id: 'upload', label: 'Upload' },
-	{ id: 'range', label: 'Range Requests' },
-	{ id: 'mime', label: 'MIME Enforcement' },
-];
+const sections = $derived([
+	{ id: 'upload', label: m.showcase_db_storage_transfer_nav_upload() },
+	{ id: 'range', label: m.showcase_db_storage_transfer_nav_range() },
+	{ id: 'mime', label: m.showcase_db_storage_transfer_nav_mime() },
+]);
 
 // ─── Upload state machine ───────────────────────────
 type UploadState = 'idle' | 'requesting' | 'uploading' | 'confirming' | 'done' | 'error';
@@ -157,7 +158,7 @@ $effect(() => {
 		<section id="upload">
 			<Card>
 				{#snippet header()}
-					<Typography variant="h5" as="h2">Upload</Typography>
+					<Typography variant="h5" as="h2">{m.showcase_db_storage_transfer_card_upload()}</Typography>
 					<p class="section-desc">Upload a file directly to R2 via a presigned URL. The server generates the URL, then the browser uploads directly to R2 — the file never passes through the server.</p>
 				{/snippet}
 
@@ -213,7 +214,7 @@ $effect(() => {
 								<input type="hidden" name="fileSize" value={selectedFile.size} />
 								<Button type="submit" variant="primary" size="sm">
 									<span class="i-lucide-upload h-4 w-4 mr-1" ></span>
-									Upload
+									{m.showcase_db_storage_transfer_upload()}
 								</Button>
 							</form>
 						</div>
@@ -263,7 +264,7 @@ $effect(() => {
 						<Cluster gap="4" align="center">
 							<Button variant="outline" size="sm" onclick={resetUpload}>
 								<span class="i-lucide-upload h-4 w-4 mr-1" ></span>
-								Upload Another
+								{m.showcase_db_storage_transfer_upload_another()}
 							</Button>
 							<a href="/showcases/db/storage/objects" class="text-fluid-sm text-primary">
 								View on Objects page
@@ -297,7 +298,7 @@ $effect(() => {
 		<section id="range">
 			<Card>
 				{#snippet header()}
-					<Typography variant="h5" as="h2">Range Requests</Typography>
+					<Typography variant="h5" as="h2">{m.showcase_db_storage_transfer_card_range()}</Typography>
 					<p class="section-desc">Fetch a byte range from <code>showcase/large/padded.bin</code> (1 MB repeating pattern). R2 supports the <code>Range</code> HTTP header for partial reads.</p>
 				{/snippet}
 
@@ -354,7 +355,7 @@ $effect(() => {
 							<Spinner size="xs" class="mr-2" />
 						{/if}
 						<span class="i-lucide-download h-4 w-4 mr-1" ></span>
-						Fetch Range
+						{m.showcase_db_storage_transfer_fetch_range()}
 					</Button>
 
 					{#if rangeEnd - rangeStart > 1024}
@@ -378,7 +379,7 @@ $effect(() => {
 		<section id="mime">
 			<Card>
 				{#snippet header()}
-					<Typography variant="h5" as="h2">MIME Enforcement</Typography>
+					<Typography variant="h5" as="h2">{m.showcase_db_storage_transfer_card_mime()}</Typography>
 					<p class="section-desc">How presigned URLs lock Content-Type into the signature, preventing type-mismatch attacks.</p>
 				{/snippet}
 

@@ -4,6 +4,7 @@ import { valibotClient } from 'sveltekit-superforms/adapters';
 import { Alert, Card, FormField } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Select, Spinner, Switch, Textarea } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { profileEditSchema } from '$lib/schemas/showcase/advanced';
 import type { PageProps } from './$types';
 
@@ -34,17 +35,17 @@ const roleOptions = [
 		{#snippet header()}
 			<Cluster justify="between">
 				<div>
-					<h2 class="text-fluid-lg font-semibold">Edit Profile</h2>
+					<h2 class="text-fluid-lg font-semibold">{m.showcase_forms_edit_heading()}</h2>
 					<p class="text-fluid-sm text-muted">Pre-populated form. Save disabled until changes are detected.</p>
 				</div>
 				{#if $tainted}
-					<Badge variant="warning">Unsaved Changes</Badge>
+					<Badge variant="warning">{m.showcase_forms_edit_unsaved()}</Badge>
 				{/if}
 			</Cluster>
 		{/snippet}
 
 		{#if $formMessage}
-			<Alert variant="success" title="Saved">
+			<Alert variant="success" title={m.showcase_forms_edit_saved()}>
 				{#snippet children()}
 					<p>{$formMessage}</p>
 				{/snippet}
@@ -52,7 +53,7 @@ const roleOptions = [
 		{/if}
 
 		<form method="POST" use:enhance class="form-grid">
-			<FormField label="Name" error={$errors.name?.[0]} required>
+			<FormField label={m.showcase_forms_field_name()} error={$errors.name?.[0]} required>
 				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
@@ -64,7 +65,7 @@ const roleOptions = [
 				{/snippet}
 			</FormField>
 
-			<FormField label="Email" error={$errors.email?.[0]} required>
+			<FormField label={m.showcase_forms_field_email()} error={$errors.email?.[0]} required>
 				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
@@ -77,14 +78,14 @@ const roleOptions = [
 				{/snippet}
 			</FormField>
 
-			<FormField label="Role" error={$errors.role?.[0]} required>
+			<FormField label={m.showcase_forms_field_role()} error={$errors.role?.[0]} required>
 				{#snippet children(_)}
 					<input type="hidden" name="role" value={$form.role} />
 					<Select options={roleOptions} bind:value={$form.role} error={!!$errors.role} />
 				{/snippet}
 			</FormField>
 
-			<FormField label="Bio" error={$errors.bio?.[0]} description="Max 300 characters">
+			<FormField label={m.showcase_forms_field_bio()} error={$errors.bio?.[0]} description={m.showcase_forms_settings_bio_description()}>
 				{#snippet children({ fieldId, describedBy })}
 					<Textarea
 						id={fieldId}
@@ -98,7 +99,7 @@ const roleOptions = [
 				{/snippet}
 			</FormField>
 
-			<FormField label="Status">
+			<FormField label={m.showcase_forms_field_status()}>
 				{#snippet children(_)}
 					<input type="hidden" name="active" value={$form.active ? 'on' : ''} />
 					<Switch bind:checked={$form.active} label={$form.active ? 'Active' : 'Inactive'} />
@@ -108,7 +109,7 @@ const roleOptions = [
 			<div class="form-actions">
 				<Button type="submit" disabled={$submitting || !$tainted}>
 					{#if $delayed}<Spinner size="sm" class="mr-2" />{/if}
-					{$tainted ? 'Save Changes' : 'No Changes'}
+					{$tainted ? m.showcase_forms_save_changes() : m.showcase_forms_no_changes()}
 				</Button>
 			</div>
 		</form>

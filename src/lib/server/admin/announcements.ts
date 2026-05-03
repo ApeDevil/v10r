@@ -6,7 +6,25 @@ import { user } from '$lib/server/db/schema/auth/_better-auth';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
+import type { TranslationMap } from '$lib/i18n';
+
 export interface ActiveAnnouncement {
+	id: string;
+	title: string;
+	body: string;
+	titleI18n: TranslationMap;
+	bodyI18n: TranslationMap;
+	severity: 'info' | 'warning' | 'critical';
+	startsAt: Date | null;
+	endsAt: Date | null;
+	createdAt: Date;
+}
+
+/**
+ * Locale-resolved view passed to UI components.
+ * Created at the layout edge by mapping `tc()` over `ActiveAnnouncement`.
+ */
+export interface ResolvedAnnouncement {
 	id: string;
 	title: string;
 	body: string;
@@ -68,6 +86,8 @@ export async function getActiveAnnouncements(userId: string): Promise<ActiveAnno
 			id: announcements.id,
 			title: announcements.title,
 			body: announcements.body,
+			titleI18n: announcements.titleI18n,
+			bodyI18n: announcements.bodyI18n,
 			severity: announcements.severity,
 			startsAt: announcements.startsAt,
 			endsAt: announcements.endsAt,

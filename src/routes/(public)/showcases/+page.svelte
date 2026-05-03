@@ -2,15 +2,16 @@
 import { LinkCard } from '$lib/components';
 import { BackLink, NavGrid, PageHeader } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
+import * as m from '$lib/paraglide/messages';
 import { showcases } from './showcases';
 </script>
 <PageContainer width="wide" class="pt-7">
 	<PageHeader
-		title="Showcases"
-		description="Feature demonstrations and examples showing the capabilities of the Velociraptor stack."
+		title={m.showcase_index_title()}
+		description={m.showcase_index_description()}
 		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases' }
+			{ label: m.showcase_breadcrumb_home(), href: '/' },
+			{ label: m.showcase_breadcrumb_showcases() }
 		]}
 	/>
 
@@ -26,5 +27,5 @@ import { showcases } from './showcases';
 		{/each}
 	</NavGrid>
 
-	<BackLink href="/" label="Home" />
+	<BackLink href="/" label={m.showcase_breadcrumb_home()} />
 </PageContainer>

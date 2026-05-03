@@ -5,6 +5,7 @@ import { authClient } from '$lib/auth-client';
 import { Alert, Card } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
 
@@ -99,7 +100,7 @@ async function handleSignOut() {
 		<Card>
 			{#snippet header()}
 				<Cluster justify="between">
-					<h2 class="text-fluid-lg font-semibold">Status</h2>
+					<h2 class="text-fluid-lg font-semibold">{m.showcase_auth_connection_card_status()}</h2>
 					<form
 						method="POST"
 						action="?/retest"

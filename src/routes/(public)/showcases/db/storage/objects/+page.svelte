@@ -17,16 +17,17 @@ import {
 	ToggleGroup,
 	Typography,
 } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
 
 let { data } = $props();
 const toast = getToast();
 
-const sections = [
-	{ id: 'browser', label: 'Browser' },
-	{ id: 'metadata', label: 'Metadata' },
-	{ id: 'presigned', label: 'Presigned URLs' },
-];
+const sections = $derived([
+	{ id: 'browser', label: m.showcase_db_storage_objects_nav_browser() },
+	{ id: 'metadata', label: m.showcase_db_storage_objects_nav_metadata() },
+	{ id: 'presigned', label: m.showcase_db_storage_objects_nav_presigned() },
+]);
 
 // ─── Metadata inspection state ──────────────────────
 let selectedKey = $state('');
@@ -103,7 +104,7 @@ $effect(() => {
 			<section id="browser">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Browser</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_storage_objects_card_browser()}</Typography>
 						<p class="section-desc">{data.objects.length} objects in the showcase namespace.</p>
 					{/snippet}
 
@@ -112,10 +113,10 @@ $effect(() => {
 							<Table>
 								<Header>
 									<Row>
-										<HeaderCell>Key</HeaderCell>
-										<HeaderCell>Size</HeaderCell>
-										<HeaderCell>Last Modified</HeaderCell>
-										<HeaderCell>Action</HeaderCell>
+										<HeaderCell>{m.showcase_db_storage_objects_col_key()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_storage_objects_col_size()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_storage_objects_col_modified()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_storage_objects_col_action()}</HeaderCell>
 									</Row>
 								</Header>
 								<Body>
@@ -153,7 +154,7 @@ $effect(() => {
 													<input type="hidden" name="key" value={obj.key} />
 													<Button type="submit" variant="ghost" size="sm">
 														<span class="i-lucide-eye h-3.5 w-3.5 mr-1" ></span>
-														Inspect
+														{m.showcase_db_storage_objects_inspect()}
 													</Button>
 												</form>
 											</Cell>
@@ -172,7 +173,7 @@ $effect(() => {
 			<section id="metadata">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Metadata</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_storage_objects_card_metadata()}</Typography>
 						<p class="section-desc">
 							{#if inspectedDetail}
 								Inspecting <code>{inspectedDetail.key}</code>
@@ -246,7 +247,7 @@ $effect(() => {
 			<section id="presigned">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Presigned URLs</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_storage_objects_card_presigned()}</Typography>
 						<p class="section-desc">Generate a temporary, signed URL for direct download. The URL expires after the selected duration.</p>
 					{/snippet}
 
@@ -296,7 +297,7 @@ $effect(() => {
 								<Spinner size="xs" class="mr-2" />
 							{/if}
 							<span class="i-lucide-link h-4 w-4 mr-1" ></span>
-							Generate URL
+							{m.showcase_db_storage_objects_generate_url()}
 						</Button>
 					</form>
 

@@ -3,16 +3,17 @@ import { Canvas, T } from '@threlte/core';
 import { GLTF, OrbitControls } from '@threlte/extras';
 import { BackLink, PageHeader } from '$lib/components';
 import { BoundaryFallback } from '$lib/components/composites';
+import * as m from '$lib/paraglide/messages';
 </script>
 <div class="page">
 	<PageHeader
-		title="Static Scene"
-		description="GLTF model with orbit controls and directional lighting."
+		title={m.showcase_3d_static_title()}
+		description={m.showcase_3d_static_description()}
 		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: '3D', href: '/showcases/3d' },
-			{ label: 'Static Scene' }
+			{ label: m.showcase_breadcrumb_home(), href: '/' },
+			{ label: m.showcase_breadcrumb_showcases(), href: '/showcases' },
+			{ label: m.showcase_3d_breadcrumb(), href: '/showcases/3d' },
+			{ label: m.showcase_3d_static_breadcrumb() }
 		]}
 	/>
 </div>
@@ -41,7 +42,7 @@ import { BoundaryFallback } from '$lib/components/composites';
 </svelte:boundary>
 
 <div class="page">
-	<BackLink href="/showcases/3d" label="3D" />
+	<BackLink href="/showcases/3d" label={m.showcase_3d_breadcrumb()} />
 </div>
 
 <style>

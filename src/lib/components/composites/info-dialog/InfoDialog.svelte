@@ -4,6 +4,7 @@ import type { Snippet } from 'svelte';
 import { Button } from '$lib/components/primitives';
 import { ScrollArea } from '$lib/components/primitives/scroll-area';
 import { Tabs } from '$lib/components/primitives/tabs';
+import * as m from '$lib/paraglide/messages';
 import { cn } from '$lib/utils/cn';
 import { renderMarkdown } from '$lib/utils/markdown';
 import CodeBlock from './CodeBlock.svelte';
@@ -49,10 +50,10 @@ let {
 const docTabs = $derived.by(() => {
 	if (!doc) return [];
 	const tabs: { id: string; label: string; icon: string }[] = [];
-	if (doc.props?.length) tabs.push({ id: 'props', label: 'Props', icon: 'i-lucide-list' });
-	if (doc.source) tabs.push({ id: 'source', label: 'Source', icon: 'i-lucide-code-2' });
-	if (doc.usage) tabs.push({ id: 'usage', label: 'Usage', icon: 'i-lucide-file-code' });
-	if (doc.notes) tabs.push({ id: 'notes', label: 'Notes', icon: 'i-lucide-book-open' });
+	if (doc.props?.length) tabs.push({ id: 'props', label: m.composites_info_dialog_props(), icon: 'i-lucide-list' });
+	if (doc.source) tabs.push({ id: 'source', label: m.composites_info_dialog_source(), icon: 'i-lucide-code-2' });
+	if (doc.usage) tabs.push({ id: 'usage', label: m.composites_info_dialog_usage(), icon: 'i-lucide-file-code' });
+	if (doc.notes) tabs.push({ id: 'notes', label: m.composites_info_dialog_notes(), icon: 'i-lucide-book-open' });
 	return tabs;
 });
 
@@ -102,7 +103,7 @@ const useSectionsMode = $derived(!useDocMode && hasSections);
 	size="icon"
 	class="info-trigger"
 	title={ariaLabel ?? title}
-	aria-label={ariaLabel ?? `${title} info`}
+	aria-label={ariaLabel ?? m.composites_info_dialog_aria({ title })}
 	onclick={() => (open = true)}
 >
 	<span class="{icon} h-4 w-4" aria-hidden="true"></span>
@@ -137,7 +138,7 @@ const useSectionsMode = $derived(!useDocMode && hasSections);
 				</div>
 				<Dialog.Close class="dialog-close">
 					<span class="i-lucide-x h-4 w-4" aria-hidden="true"></span>
-					<span class="sr-only">Close</span>
+					<span class="sr-only">{m.composites_dialog_close()}</span>
 				</Dialog.Close>
 			</div>
 

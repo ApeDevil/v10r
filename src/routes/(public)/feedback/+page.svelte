@@ -5,6 +5,7 @@ import { Card, FormField } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Button, Input, Select, Textarea } from '$lib/components/primitives';
 import { feedbackSubmissionSchema } from '$lib/feedback/validation';
+import * as m from '$lib/paraglide/messages';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
@@ -13,14 +14,14 @@ const { form, errors, enhance, submitting } = superForm(data.form, {
 	validators: valibotClient(feedbackSubmissionSchema),
 });
 
-const ratingOptions = [
-	{ value: '', label: 'No rating' },
-	{ value: '1', label: '1 — needs work' },
+const ratingOptions = $derived([
+	{ value: '', label: m.feedback_field_rating_none() },
+	{ value: '1', label: m.feedback_field_rating_1() },
 	{ value: '2', label: '2' },
-	{ value: '3', label: '3 — okay' },
+	{ value: '3', label: m.feedback_field_rating_3() },
 	{ value: '4', label: '4' },
-	{ value: '5', label: '5 — great' },
-];
+	{ value: '5', label: m.feedback_field_rating_5() },
+]);
 </script>
 
 <svelte:head>
@@ -30,26 +31,21 @@ const ratingOptions = [
 <div class="feedback-page">
 	<Stack gap="6">
 		<header class="feedback-header">
-			<h1 class="feedback-title">Send feedback</h1>
+			<h1 class="feedback-title">{m.feedback_title()}</h1>
 			<p class="feedback-lede">
-				Tell us what worked, what didn't, or what you'd like to see. Replies are not guaranteed.
+				{m.feedback_lede()}
 			</p>
 		</header>
 
-		<aside class="privacy-notice" role="note" aria-label="Privacy notice">
-			<p class="privacy-title">What we do with your message</p>
-			<p>
-				Controller: <a href="mailto:stas-k@gmx.de">stas-k@gmx.de</a>. We process your submission to respond to your feedback
-				(lawful basis: legitimate interests, Art. 6(1)(f) GDPR). Messages are retained until you ask us to delete them.
-				You have the right to access, correct, or erase your data — email the controller, or read the full
-				disclosure at <a href="/showcases/admin">/showcases/admin</a>.
-			</p>
+		<aside class="privacy-notice" role="note" aria-label={m.feedback_privacy_title()}>
+			<p class="privacy-title">{m.feedback_privacy_title()}</p>
+			<p>{m.feedback_privacy_body()}</p>
 		</aside>
 
 		<Card>
 			<form method="POST" use:enhance>
 				<Stack gap="5">
-					<FormField label="Subject" id="feedback-subject" required error={$errors.subject?.[0]}>
+					<FormField label={m.feedback_field_subject_label()} id="feedback-subject" required error={$errors.subject?.[0]}>
 						{#snippet children({ fieldId, describedBy })}
 							<Input
 								id={fieldId}
@@ -60,16 +56,16 @@ const ratingOptions = [
 								aria-invalid={$errors.subject ? true : undefined}
 								required
 								maxlength={120}
-								placeholder="Short summary"
+								placeholder={m.feedback_field_subject_placeholder()}
 							/>
 						{/snippet}
 					</FormField>
 
 					<FormField
-						label="Message"
+						label={m.feedback_field_message_label()}
 						id="feedback-body"
 						required
-						description="Up to 4000 characters."
+						description={m.feedback_field_message_description()}
 						error={$errors.body?.[0]}
 					>
 						{#snippet children({ fieldId, describedBy })}
@@ -82,28 +78,28 @@ const ratingOptions = [
 								required
 								rows={8}
 								maxlength={4000}
-								placeholder="What happened, what worked, what you'd change…"
+								placeholder={m.feedback_field_message_placeholder()}
 							/>
 						{/snippet}
 					</FormField>
 
-					<FormField label="Rating" id="feedback-rating" description="Optional. How would you rate this experience?">
+					<FormField label={m.feedback_field_rating_label()} id="feedback-rating" description={m.feedback_field_rating_description()}>
 						{#snippet children({ fieldId })}
 							<Select
 								name="rating"
 								options={ratingOptions}
 								value={$form.rating == null ? '' : String($form.rating)}
 								onchange={(value) => ($form.rating = value === '' ? null : Number(value))}
-								placeholder="No rating"
+								placeholder={m.feedback_field_rating_none()}
 							/>
 							<input type="hidden" id={fieldId} value={$form.rating ?? ''} />
 						{/snippet}
 					</FormField>
 
 					<FormField
-						label="Contact email"
+						label={m.feedback_field_email_label()}
 						id="feedback-email"
-						description="Optional — only if you'd like a reply."
+						description={m.feedback_field_email_description()}
 						error={$errors.contactEmail?.[0]}
 					>
 						{#snippet children({ fieldId, describedBy })}
@@ -140,7 +136,7 @@ const ratingOptions = [
 
 					<div class="actions">
 						<Button type="submit" variant="primary" size="md" disabled={$submitting}>
-							{$submitting ? 'Sending…' : 'Send feedback'}
+							{$submitting ? m.feedback_submitting() : m.feedback_submit()}
 						</Button>
 					</div>
 				</Stack>

@@ -3,6 +3,7 @@ import { enhance } from '$app/forms';
 import { Alert, Card } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Spinner, Typography } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
 
@@ -29,7 +30,7 @@ function recordHistory(ms: number) {
 		<Card>
 			{#snippet header()}
 				<Cluster justify="between">
-					<Typography variant="h5" as="h2">Status</Typography>
+					<Typography variant="h5" as="h2">{m.showcase_db_graph_connection_card_status()}</Typography>
 					<form
 						method="POST"
 						action="?/retest"
@@ -47,7 +48,7 @@ function recordHistory(ms: number) {
 								<Spinner size="xs" class="mr-2" />
 							{/if}
 							<span class="i-lucide-activity h-4 w-4 mr-1" ></span>
-							Re-test
+							{m.showcase_db_graph_connection_retest()}
 						</Button>
 					</form>
 				</Cluster>
@@ -93,7 +94,7 @@ function recordHistory(ms: number) {
 			<!-- Instance Info -->
 			<Card>
 				{#snippet header()}
-					<Typography variant="h5" as="h2">Instance Info</Typography>
+					<Typography variant="h5" as="h2">{m.showcase_db_graph_connection_card_instance()}</Typography>
 				{/snippet}
 
 				<div class="diag-grid">
@@ -132,7 +133,7 @@ function recordHistory(ms: number) {
 			<!-- Latency Explanation -->
 			<Card>
 				{#snippet header()}
-					<Typography variant="h5" as="h2">About Aura Latency</Typography>
+					<Typography variant="h5" as="h2">{m.showcase_db_graph_connection_card_latency()}</Typography>
 				{/snippet}
 
 				<div class="explanation">

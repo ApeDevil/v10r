@@ -8,6 +8,7 @@ import { createCycleState } from '$lib/components/cycle/cycle-state.svelte';
 import type { CycleTrace } from '$lib/components/cycle/types';
 import { Stack } from '$lib/components/layout';
 import { Button, Input, Select, Spinner } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 
 const cycle = createCycleState('ai');
 let submitting = $state(false);
@@ -61,7 +62,7 @@ function handleSubmit() {
 <Stack gap="6">
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">AI Pipeline Cycle</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.showcase_cycle_ai_card_title()}</h2>
 			<p class="text-fluid-sm text-muted">
 				Watch the full RAG lifecycle: embed → retrieve → rank → context → generate → stream.
 				<code>generate</code> typically dominates the waterfall — that's the teaching moment.
@@ -102,7 +103,7 @@ function handleSubmit() {
 				<div class="flex items-end">
 					<Button type="submit" disabled={submitting} class="w-full">
 						{#if submitting}<Spinner size="sm" class="mr-2" />{/if}
-						Run AI Cycle
+						{m.showcase_cycle_ai_btn_run()}
 					</Button>
 				</div>
 			</div>

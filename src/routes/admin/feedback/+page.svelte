@@ -1,33 +1,44 @@
 <script lang="ts">
 import { enhance } from '$app/forms';
+import { page } from '$app/state';
 import { Card } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Button, Tag } from '$lib/components/primitives';
-import { formatRelative } from '$lib/i18n/formatting';
+import { formatRelative } from '$lib/i18n';
+import * as m from '$lib/paraglide/messages';
 
 let { data }: PageProps = $props();
 
-const statusFilters: Array<{
-	value: '' | 'new' | 'read' | 'archived';
-	label: string;
-	key: 'new' | 'read' | 'archived' | null;
-}> = [
-	{ value: '', label: 'All', key: null },
-	{ value: 'new', label: 'New', key: 'new' },
-	{ value: 'read', label: 'Read', key: 'read' },
-	{ value: 'archived', label: 'Archived', key: 'archived' },
-];
+const statusFilters = $derived<
+	Array<{
+		value: '' | 'new' | 'read' | 'archived';
+		label: string;
+		key: 'new' | 'read' | 'archived' | null;
+	}>
+>([
+	{ value: '', label: m.admin_filter_all(), key: null },
+	{ value: 'new', label: m.admin_status_new(), key: 'new' },
+	{ value: 'read', label: m.admin_status_read(), key: 'read' },
+	{ value: 'archived', label: m.admin_status_archived(), key: 'archived' },
+]);
 
 function statusTagVariant(status: string) {
 	if (status === 'new') return 'default' as const;
 	if (status === 'read') return 'success' as const;
 	return 'secondary' as const;
 }
+
+function statusLabel(status: string): string {
+	if (status === 'new') return m.admin_status_new();
+	if (status === 'read') return m.admin_status_read();
+	if (status === 'archived') return m.admin_status_archived();
+	return status;
+}
 </script>
 <Stack gap="6">
 	<header>
-		<h1 class="page-title">Feedback</h1>
-		<p class="page-lede">Submissions from <code>/feedback</code>. Click a row to view detail and journey.</p>
+		<h1 class="page-title">{m.admin_feedback_title()}</h1>
+		<p class="page-lede">{m.admin_feedback_lede()}</p>
 	</header>
 
 	<div class="filter-bar">
@@ -46,18 +57,18 @@ function statusTagVariant(status: string) {
 
 	<Card>
 		{#if data.items.length === 0}
-			<p class="empty">No feedback {data.status ? `with status "${data.status}"` : 'yet'}.</p>
+			<p class="empty">{data.status ? m.admin_feedback_empty_filtered({ status: statusLabel(data.status) }) : m.admin_feedback_empty_none()}</p>
 		{:else}
 			<table class="feedback-table">
 				<thead>
 					<tr>
-						<th>Received</th>
-						<th>Subject</th>
-						<th>Rating</th>
-						<th>Page</th>
-						<th>Journey</th>
-						<th>Status</th>
-						<th aria-label="Actions"></th>
+						<th>{m.admin_feedback_col_received()}</th>
+						<th>{m.admin_feedback_col_subject()}</th>
+						<th>{m.admin_feedback_col_rating()}</th>
+						<th>{m.admin_feedback_col_page()}</th>
+						<th>{m.admin_feedback_col_journey()}</th>
+						<th>{m.admin_feedback_col_status()}</th>
+						<th aria-label={m.admin_feedback_col_actions()}></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -65,7 +76,7 @@ function statusTagVariant(status: string) {
 						<tr>
 							<td>
 								<a href={`/admin/feedback/${item.id}`} class="row-link">
-									{formatRelative(item.submittedAt)}
+									{formatRelative(item.submittedAt, page.data.locale)}
 								</a>
 							</td>
 							<td>{item.subject}</td>
@@ -73,23 +84,23 @@ function statusTagVariant(status: string) {
 							<td><code class="page-cell">{item.pageOfOrigin}</code></td>
 							<td>
 								{#if item.sessionId}
-									<span class="i-lucide-link-2" aria-label="Linked journey"></span>
+									<span class="i-lucide-link-2" aria-label={m.admin_feedback_journey_linked()}></span>
 								{:else}
 									<span class="muted">—</span>
 								{/if}
 							</td>
 							<td>
-								<Tag variant={statusTagVariant(item.status)} size="sm">{item.status}</Tag>
+								<Tag variant={statusTagVariant(item.status)} size="sm">{statusLabel(item.status)}</Tag>
 							</td>
 							<td>
 								<form method="POST" action="?/updateStatus" use:enhance class="inline-form">
 									<input type="hidden" name="id" value={item.id} />
 									{#if item.status === 'new'}
-										<Button type="submit" name="status" value="read" variant="ghost" size="sm">Mark read</Button>
+										<Button type="submit" name="status" value="read" variant="ghost" size="sm">{m.admin_feedback_mark_read()}</Button>
 									{:else if item.status === 'read'}
-										<Button type="submit" name="status" value="archived" variant="ghost" size="sm">Archive</Button>
+										<Button type="submit" name="status" value="archived" variant="ghost" size="sm">{m.admin_action_archive()}</Button>
 									{:else}
-										<Button type="submit" name="status" value="new" variant="ghost" size="sm">Reopen</Button>
+										<Button type="submit" name="status" value="new" variant="ghost" size="sm">{m.admin_action_reopen()}</Button>
 									{/if}
 								</form>
 							</td>
@@ -101,7 +112,7 @@ function statusTagVariant(status: string) {
 	</Card>
 
 	{#if data.total > data.items.length}
-		<p class="muted">Showing {data.items.length} of {data.total}.</p>
+		<p class="muted">{m.admin_feedback_showing_of_total({ shown: data.items.length, total: data.total })}</p>
 	{/if}
 </Stack>
 

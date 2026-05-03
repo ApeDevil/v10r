@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Tag } from '$lib/components/primitives/tag';
+import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
 
@@ -89,7 +90,7 @@ function jobOverdue(ts: string | Date | null, hoursThreshold: number): boolean {
 </script>
 <div class="retention">
 	<header class="lede">
-		<h2>Storage limitation, made enforceable.</h2>
+		<h2>{m.showcase_admin_retention_heading()}</h2>
 		<p>
 			GDPR Art. 5(1)(e) says personal data must be kept "no longer than is necessary." Below is the live
 			retention table, sourced from <code>src/lib/server/config.ts</code>, and the timestamps of the cron
@@ -99,7 +100,7 @@ function jobOverdue(ts: string | Date | null, hoursThreshold: number): boolean {
 
 	<section class="table-section">
 		<header class="section-head">
-			<h3>Per-table retention</h3>
+			<h3>{m.showcase_admin_retention_section_table()}</h3>
 			<Tag variant="muted" size="sm" label="Live values" />
 		</header>
 
@@ -107,10 +108,10 @@ function jobOverdue(ts: string | Date | null, hoursThreshold: number): boolean {
 			<table class="retention-table">
 				<thead>
 					<tr>
-						<th>Table</th>
-						<th>Window</th>
-						<th>Policy</th>
-						<th>Why this number</th>
+						<th>{m.showcase_admin_retention_col_table()}</th>
+						<th>{m.showcase_admin_retention_col_window()}</th>
+						<th>{m.showcase_admin_retention_col_policy()}</th>
+						<th>{m.showcase_admin_retention_col_rationale()}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -134,7 +135,7 @@ function jobOverdue(ts: string | Date | null, hoursThreshold: number): boolean {
 
 	<section class="cron-section">
 		<header class="section-head">
-			<h3>Cron status</h3>
+			<h3>{m.showcase_admin_retention_section_cron()}</h3>
 			<Tag variant="muted" size="sm" label="Live" />
 		</header>
 
@@ -221,7 +222,7 @@ function jobOverdue(ts: string | Date | null, hoursThreshold: number): boolean {
 	</section>
 
 	<section class="explainer">
-		<h3>How a row dies</h3>
+		<h3>{m.showcase_admin_retention_section_lifecycle()}</h3>
 		<ol class="death-flow">
 			<li>
 				<strong>Daily at 02:00 UTC</strong> Vercel Cron pings <code>/api/cron/analytics-cleanup</code> with a Bearer token.

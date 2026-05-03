@@ -1,6 +1,7 @@
 <script lang="ts">
+import { page } from '$app/state';
 import { BlogTag } from '$lib/components/blog';
-import { formatDate } from '$lib/i18n/formatting';
+import { formatDate } from '$lib/i18n';
 import type { PostListItem } from '$lib/server/blog/types';
 
 interface Props {
@@ -26,7 +27,7 @@ let { post }: Props = $props();
 			{/if}
 			{#if post.publishedAt}
 				<time datetime={post.publishedAt.toISOString()}>
-					{formatDate(post.publishedAt)}
+					{formatDate(post.publishedAt, page.data.locale)}
 				</time>
 			{/if}
 		</span>

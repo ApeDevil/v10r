@@ -33,7 +33,7 @@ const LOCALE_NAMES: Record<string, string> = {
 // Derive locale from reactive page.url (not getLocale() which reads window.location)
 // so Svelte tracks it and {#key} triggers re-render on navigation
 const currentLocale = $derived(extractLocaleFromUrl(page.url.href) ?? baseLocale);
-const formattingLocale = $derived(getFormattingLocale());
+const formattingLocale = $derived(getFormattingLocale(currentLocale));
 
 // Client-side navigation avoids full page reloads that freeze Vite's
 // HMR dev server. Paraglide's getLocale() reads from window.location.href,
@@ -157,31 +157,31 @@ const dbContent = {
 		<div class="message-demos">
 			<div class="demo-item">
 				<span class="demo-label">{m.formatted_date()}</span>
-				<span class="demo-value">{formatDate(sampleDate)}</span>
+				<span class="demo-value">{formatDate(sampleDate, currentLocale)}</span>
 			</div>
 			<div class="demo-item">
 				<span class="demo-label">{m.formatted_date()} (long)</span>
-				<span class="demo-value">{formatDate(sampleDate, { dateStyle: 'full' })}</span>
+				<span class="demo-value">{formatDate(sampleDate, currentLocale, { dateStyle: 'full' })}</span>
 			</div>
 			<div class="demo-item">
 				<span class="demo-label">{m.formatted_number()}</span>
-				<span class="demo-value">{formatNumber(sampleNumber)}</span>
+				<span class="demo-value">{formatNumber(sampleNumber, currentLocale)}</span>
 			</div>
 			<div class="demo-item">
 				<span class="demo-label">{m.formatted_currency()} (EUR)</span>
-				<span class="demo-value">{formatCurrency(sampleCurrency, 'EUR')}</span>
+				<span class="demo-value">{formatCurrency(sampleCurrency, currentLocale, 'EUR')}</span>
 			</div>
 			<div class="demo-item">
 				<span class="demo-label">{m.formatted_currency()} (USD)</span>
-				<span class="demo-value">{formatCurrency(sampleCurrency, 'USD')}</span>
+				<span class="demo-value">{formatCurrency(sampleCurrency, currentLocale, 'USD')}</span>
 			</div>
 			<div class="demo-item">
 				<span class="demo-label">{m.formatted_percent()}</span>
-				<span class="demo-value">{formatPercent(samplePercent)}</span>
+				<span class="demo-value">{formatPercent(samplePercent, currentLocale)}</span>
 			</div>
 			<div class="demo-item">
 				<span class="demo-label">{m.formatted_relative()}</span>
-				<span class="demo-value">{formatRelative(pastDate)}</span>
+				<span class="demo-value">{formatRelative(pastDate, currentLocale)}</span>
 			</div>
 		</div>
 	</section>

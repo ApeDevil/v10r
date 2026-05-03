@@ -4,7 +4,8 @@ import { hydrateEmbeds } from '$lib/actions/hydrate-embeds';
 import { BlogTag, Renderer } from '$lib/components/blog';
 import { PageContainer, Stack } from '$lib/components/layout';
 import { Typography } from '$lib/components/primitives';
-import { formatDate } from '$lib/i18n/formatting';
+import { formatDate } from '$lib/i18n';
+import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
 
@@ -61,8 +62,8 @@ const jsonLdScript = $derived(
 	<Stack class="gap-7">
 		<nav class="breadcrumbs" aria-label="Breadcrumb">
 			<ol>
-				<li><a href="/">Home</a><span class="sep" aria-hidden="true">/</span></li>
-				<li><a href="/blog">Blog</a><span class="sep" aria-hidden="true">/</span></li>
+				<li><a href="/">{m.showcase_breadcrumb_home()}</a><span class="sep" aria-hidden="true">/</span></li>
+				<li><a href="/blog">{m.blog_breadcrumb_blog()}</a><span class="sep" aria-hidden="true">/</span></li>
 				<li><span aria-current="page">{post.revision.title}</span></li>
 			</ol>
 		</nav>
@@ -85,7 +86,7 @@ const jsonLdScript = $derived(
 				</span>
 				<span class="meta-sep" aria-hidden="true">&middot;</span>
 				<time datetime={post.publishedAt.toISOString()}>
-					{formatDate(post.publishedAt)}
+					{formatDate(post.publishedAt, page.data.locale)}
 				</time>
 			</div>
 

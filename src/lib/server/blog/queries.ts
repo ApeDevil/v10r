@@ -125,6 +125,7 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 			tagId: tag.id,
 			tagSlug: tag.slug,
 			tagName: tag.name,
+			tagNameI18n: tag.nameI18n,
 			tagIcon: tag.icon,
 			tagColor: tag.color,
 			tagGlyph: tag.glyph,
@@ -133,16 +134,14 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 		.innerJoin(tag, eq(postTag.tagId, tag.id))
 		.where(inArray(postTag.postId, postIds));
 
-	const tagMap = new Map<
-		string,
-		{ id: string; slug: string; name: string; icon: string | null; color: number | null; glyph: string | null }[]
-	>();
+	const tagMap = new Map<string, PostListItem['tags']>();
 	for (const row of postTagRows) {
 		const tags = tagMap.get(row.postId) ?? [];
 		tags.push({
 			id: row.tagId,
 			slug: row.tagSlug,
 			name: row.tagName,
+			nameI18n: row.tagNameI18n,
 			icon: row.tagIcon,
 			color: row.tagColor,
 			glyph: row.tagGlyph,
@@ -236,7 +235,15 @@ export async function getPublishedPostForSlug(slug: string, locale = 'en'): Prom
 
 	// Fetch tags
 	const tags = await db
-		.select({ id: tag.id, slug: tag.slug, name: tag.name, icon: tag.icon, color: tag.color, glyph: tag.glyph })
+		.select({
+			id: tag.id,
+			slug: tag.slug,
+			name: tag.name,
+			nameI18n: tag.nameI18n,
+			icon: tag.icon,
+			color: tag.color,
+			glyph: tag.glyph,
+		})
 		.from(tag)
 		.innerJoin(postTag, eq(tag.id, postTag.tagId))
 		.where(eq(postTag.postId, row.postId));
@@ -321,6 +328,7 @@ export async function listTags(offset = 0, limit = 50): Promise<{ items: TagWith
 				id: tag.id,
 				slug: tag.slug,
 				name: tag.name,
+				nameI18n: tag.nameI18n,
 				icon: tag.icon,
 				color: tag.color,
 				glyph: tag.glyph,
@@ -328,7 +336,7 @@ export async function listTags(offset = 0, limit = 50): Promise<{ items: TagWith
 			})
 			.from(tag)
 			.leftJoin(postTag, eq(tag.id, postTag.tagId))
-			.groupBy(tag.id, tag.slug, tag.name, tag.icon, tag.color, tag.glyph)
+			.groupBy(tag.id, tag.slug, tag.name, tag.nameI18n, tag.icon, tag.color, tag.glyph)
 			.orderBy(asc(tag.name))
 			.offset(offset)
 			.limit(limit),

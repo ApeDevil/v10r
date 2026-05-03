@@ -3,6 +3,7 @@ import { enhance } from '$app/forms';
 import { Alert, Card, DiagGrid, DiagRow } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 
 let { data, form } = $props();
 
@@ -29,7 +30,7 @@ $effect(() => {
 	<!-- Active Sessions -->
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">Active Sessions</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.app_account_heading_sessions()}</h2>
 		{/snippet}
 
 		<DiagGrid>
@@ -39,14 +40,14 @@ $effect(() => {
 						<div class="flex items-center gap-2">
 							<code class="font-mono text-fluid-xs">{sess.displayId}</code>
 							{#if sess.isCurrent}
-								<Badge variant="success">Current</Badge>
+								<Badge variant="success">{m.app_account_session_badge_current()}</Badge>
 							{/if}
 						</div>
 						{#if sess.ipAddress}
-							<span class="text-xs text-muted">IP: {sess.ipAddress}</span>
+							<span class="text-xs text-muted">{m.app_account_session_ip({ ip: sess.ipAddress })}</span>
 						{/if}
 						<span class="text-xs text-muted">
-							Expires: {new Date(sess.expiresAt).toLocaleDateString()}
+							{m.app_account_session_expires({ date: new Date(sess.expiresAt).toLocaleDateString() })}
 						</span>
 					</div>
 					{#if !sess.isCurrent}
@@ -66,7 +67,7 @@ $effect(() => {
 								{#if revoking === sess.id}
 									<Spinner size="xs" class="mr-1" />
 								{/if}
-								Revoke
+								{m.app_account_session_revoke()}
 							</Button>
 						</form>
 					{/if}
@@ -78,13 +79,13 @@ $effect(() => {
 	<!-- Linked Accounts -->
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">Linked Accounts</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.app_account_heading_linked_accounts()}</h2>
 		{/snippet}
 
 		<DiagGrid>
 			{#each data.accounts as acc}
 				<DiagRow label={acc.provider} class="capitalize">
-					<Badge variant="success">Connected</Badge>
+					<Badge variant="success">{m.app_account_badge_connected()}</Badge>
 				</DiagRow>
 			{/each}
 		</DiagGrid>
@@ -93,11 +94,11 @@ $effect(() => {
 	<!-- Data Export -->
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">Export Data</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.app_account_heading_export()}</h2>
 		{/snippet}
 
 		<p class="text-sm text-muted mb-4">
-			Download a JSON file containing all your account data including profile, linked accounts, and sessions.
+			{m.app_account_export_description()}
 		</p>
 
 		<form
@@ -116,7 +117,7 @@ $effect(() => {
 					<Spinner size="xs" class="mr-2" />
 				{/if}
 				<span class="i-lucide-download h-4 w-4 mr-1" ></span>
-				Export My Data
+				{m.app_account_export_button()}
 			</Button>
 		</form>
 	</Card>
@@ -124,30 +125,30 @@ $effect(() => {
 	<!-- Delete Account -->
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold text-error">Danger Zone</h2>
+			<h2 class="text-fluid-lg font-semibold text-error">{m.app_account_heading_danger()}</h2>
 		{/snippet}
 
 		<p class="text-sm text-muted mb-4">
-			Permanently delete your account and all associated data. This action cannot be undone.
+			{m.app_account_delete_description()}
 		</p>
 
 		{#if !confirmDelete}
 			<Button variant="destructive" onclick={() => (confirmDelete = true)}>
 				<span class="i-lucide-trash-2 h-4 w-4 mr-1" ></span>
-				Delete Account
+				{m.app_account_delete_button()}
 			</Button>
 		{:else}
-			<Alert variant="error" title="Are you sure?">
+			<Alert variant="error" title={m.app_account_delete_confirm_title()}>
 				{#snippet children()}
-					<p>This will permanently delete your account, all sessions, and linked providers.</p>
-					<p class="text-sm mt-2">Type <strong>DELETE</strong> to confirm:</p>
+					<p>{m.app_account_delete_confirm_body()}</p>
+					<p class="text-sm mt-2">{m.app_account_delete_confirm_instruction()}</p>
 					<Input
 						type="text"
 						bind:value={deleteConfirmText}
 						placeholder="DELETE"
 						class="delete-confirm-input"
 						autocomplete="off"
-						aria-label="Type DELETE to confirm account deletion"
+						aria-label={m.app_account_delete_confirm_aria()}
 					/>
 					<div class="flex gap-3 mt-4">
 						<form
@@ -166,11 +167,11 @@ $effect(() => {
 								{#if deleting}
 									<Spinner size="xs" class="mr-2" />
 								{/if}
-								Yes, Delete My Account
+								{m.app_account_delete_confirm_submit()}
 							</Button>
 						</form>
 						<Button variant="outline" onclick={() => { confirmDelete = false; deleteConfirmText = ''; }}>
-							Cancel
+							{m.admin_action_cancel()}
 						</Button>
 					</div>
 				{/snippet}

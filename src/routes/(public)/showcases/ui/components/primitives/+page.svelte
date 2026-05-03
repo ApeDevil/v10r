@@ -1,6 +1,7 @@
 <script lang="ts">
 import { NavSection } from '$lib/components/composites';
 import type { ComponentDoc } from '$lib/components/composites/info-dialog/types';
+import * as m from '$lib/paraglide/messages';
 import ActionsSection from '../_sections/ActionsSection.svelte';
 import DataDisplaySection from '../_sections/DataDisplaySection.svelte';
 import InputsSection from '../_sections/InputsSection.svelte';
@@ -9,12 +10,12 @@ import type { PageData } from './$types';
 
 let { data }: { data: PageData } = $props();
 
-const sections = [
-	{ id: 'prim-actions', label: 'Actions' },
-	{ id: 'prim-inputs', label: 'Inputs' },
-	{ id: 'prim-data-display', label: 'Data Display' },
-	{ id: 'prim-overlays', label: 'Overlays' },
-];
+const sections = $derived([
+	{ id: 'prim-actions', label: m.showcase_ui_primitives_section_actions() },
+	{ id: 'prim-inputs', label: m.showcase_ui_primitives_section_inputs() },
+	{ id: 'prim-data-display', label: m.showcase_ui_primitives_section_data_display() },
+	{ id: 'prim-overlays', label: m.showcase_ui_primitives_section_overlays() },
+]);
 
 const actionsDocs: Record<string, ComponentDoc> = $derived({
 	button: {

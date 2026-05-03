@@ -1,9 +1,9 @@
 <script lang="ts">
 import { invalidate } from '$app/navigation';
-import type { ActiveAnnouncement } from '$lib/server/admin/announcements';
+import type { ResolvedAnnouncement } from '$lib/server/admin/announcements';
 
 interface Props {
-	announcements: ActiveAnnouncement[];
+	announcements: ResolvedAnnouncement[];
 }
 
 let { announcements }: Props = $props();

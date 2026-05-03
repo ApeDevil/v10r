@@ -16,7 +16,7 @@ import {
 import { DESK_PANELS } from '$lib/config/desk-panels';
 import { searchPages } from '$lib/nav';
 import * as m from '$lib/paraglide/messages';
-import type { ActiveAnnouncement } from '$lib/server/admin/announcements';
+import type { ResolvedAnnouncement } from '$lib/server/admin/announcements';
 import { getModals } from '$lib/state/modals.svelte';
 import { type Session, setSessionContext } from '$lib/state/session.svelte';
 import { getTheme } from '$lib/state/theme.svelte';
@@ -29,7 +29,7 @@ type Props = {
 	/** Immersive mode: hides the footer for full-viewport layouts like the desk. */
 	immersive?: boolean;
 	/** Active system announcements to display as banners. */
-	announcements?: ActiveAnnouncement[];
+	announcements?: ResolvedAnnouncement[];
 };
 
 let { children, session = null, isAdmin = false, immersive = false, announcements = [] }: Props = $props();

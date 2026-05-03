@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Dialog as DialogPrimitive } from 'bits-ui';
 import type { Snippet } from 'svelte';
+import * as m from '$lib/paraglide/messages';
 import { cn } from '$lib/utils/cn';
 
 interface Props {
@@ -11,7 +12,13 @@ interface Props {
 	class?: string;
 }
 
-let { open = $bindable(false), side = 'right', title = 'Menu', children, class: className }: Props = $props();
+let {
+	open = $bindable(false),
+	side = 'right',
+	title = m.primitives_drawer_title(),
+	children,
+	class: className,
+}: Props = $props();
 
 const sideClasses = {
 	left: 'inset-y-0 left-0 h-full w-3/4 max-w-sm data-[state=open]:slide-in-from-left data-[state=closed]:slide-out-to-left',
@@ -44,7 +51,7 @@ const sideClasses = {
 						class="rounded-sm opacity-70 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
 					>
 						<span class="i-lucide-x h-4 w-4" ></span>
-						<span class="sr-only">Close</span>
+						<span class="sr-only">{m.primitives_drawer_close()}</span>
 					</DialogPrimitive.Close>
 				</div>
 

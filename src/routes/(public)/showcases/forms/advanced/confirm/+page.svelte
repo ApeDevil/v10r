@@ -4,6 +4,7 @@ import { valibotClient } from 'sveltekit-superforms/adapters';
 import { Alert, Card, ConfirmDialog, FormField } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { confirmSchema } from '$lib/schemas/showcase/advanced';
 import type { PageProps } from './$types';
 
@@ -39,12 +40,12 @@ function handleCancel() {
 <Stack gap="6">
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">Destructive Action Confirmation</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.showcase_forms_confirm_heading()}</h2>
 			<p class="text-fluid-sm text-muted">Type DELETE to confirm. Uses a confirmation dialog before submission.</p>
 		{/snippet}
 
 		{#if $formMessage}
-			<Alert variant="success" title="Deleted">
+			<Alert variant="success" title={m.showcase_forms_confirm_deleted()}>
 				{#snippet children()}
 					<p>{$formMessage}</p>
 				{/snippet}
@@ -52,7 +53,7 @@ function handleCancel() {
 		{/if}
 
 		<div class="items-list">
-			<h3 class="text-fluid-sm font-medium text-fg mb-3">Items to delete:</h3>
+			<h3 class="text-fluid-sm font-medium text-fg mb-3">{m.showcase_forms_confirm_items_title()}</h3>
 			<Stack gap="2">
 				{#each data.items as item (item.id)}
 					<Cluster justify="between" class="item-row">
@@ -64,7 +65,7 @@ function handleCancel() {
 		</div>
 
 		<form method="POST" action="?/delete" use:enhance bind:this={formRef} class="form-grid">
-			<FormField label="Type DELETE to confirm" error={$errors.confirmation?.[0]} required>
+			<FormField label={m.showcase_forms_field_confirmation()} error={$errors.confirmation?.[0]} required>
 				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
@@ -80,7 +81,7 @@ function handleCancel() {
 			<div class="form-actions">
 				<Button type="button" variant="destructive" onclick={handleDeleteClick} disabled={$submitting || $form.confirmation !== 'DELETE'}>
 					{#if $delayed}<Spinner size="sm" class="mr-2" />{/if}
-					Delete All Items
+					{m.showcase_forms_confirm_delete_btn()}
 				</Button>
 			</div>
 		</form>
@@ -88,9 +89,9 @@ function handleCancel() {
 
 	<ConfirmDialog
 		bind:open={showConfirm}
-		title="Confirm Deletion"
-		description="This action cannot be undone. All items will be permanently deleted."
-		confirmLabel="Delete"
+		title={m.showcase_forms_confirm_dialog_title()}
+		description={m.showcase_forms_confirm_dialog_description()}
+		confirmLabel={m.showcase_forms_confirm_dialog_btn()}
 		destructive
 		onconfirm={() => {
 			handleConfirm();

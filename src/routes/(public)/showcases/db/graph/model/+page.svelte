@@ -5,6 +5,7 @@ import { Alert, Card, ConfirmDialog, NavSection } from '$lib/components/composit
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Body, Button, Cell, Header, HeaderCell, Row, Table, Typography } from '$lib/components/primitives';
 import KnowledgeGraph from '$lib/components/viz/graph/knowledge/KnowledgeGraph.svelte';
+import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
 
 let { data } = $props();
@@ -12,12 +13,12 @@ const toast = getToast();
 
 let resetDialogOpen = $state(false);
 
-const sections = [
-	{ id: 'labels', label: 'Node Labels' },
-	{ id: 'relationships', label: 'Relationships' },
-	{ id: 'graph', label: 'Graph Schema' },
-	{ id: 'properties', label: 'Properties' },
-];
+const sections = $derived([
+	{ id: 'labels', label: m.showcase_db_graph_model_nav_labels() },
+	{ id: 'relationships', label: m.showcase_db_graph_model_nav_relationships() },
+	{ id: 'graph', label: m.showcase_db_graph_model_nav_graph() },
+	{ id: 'properties', label: m.showcase_db_graph_model_nav_properties() },
+]);
 
 // Derive property info client-side by grouping nodes
 const propertyGroups = $derived.by(() => {
@@ -72,7 +73,7 @@ function handleActionResult() {
 			<section id="labels">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Node Labels</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_graph_model_card_labels()}</Typography>
 						<Typography variant="muted" as="p">Each label represents a category of nodes in the graph. Like tables in a relational database, but schema-flexible.</Typography>
 					{/snippet}
 
@@ -81,9 +82,9 @@ function handleActionResult() {
 							<Table>
 								<Header>
 									<Row>
-										<HeaderCell>Label</HeaderCell>
-										<HeaderCell>Count</HeaderCell>
-										<HeaderCell>Sample Properties</HeaderCell>
+										<HeaderCell>{m.showcase_db_graph_model_col_label()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_graph_model_col_count()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_graph_model_col_sample_props()}</HeaderCell>
 									</Row>
 								</Header>
 								<Body>
@@ -113,7 +114,7 @@ function handleActionResult() {
 			<section id="relationships">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Relationship Types</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_graph_model_card_relationships()}</Typography>
 						<Typography variant="muted" as="p">Relationships connect nodes with typed, directed edges. Each type represents a distinct semantic connection.</Typography>
 					{/snippet}
 
@@ -122,9 +123,9 @@ function handleActionResult() {
 							<Table>
 								<Header>
 									<Row>
-										<HeaderCell>Type</HeaderCell>
-										<HeaderCell>Count</HeaderCell>
-										<HeaderCell>Pattern</HeaderCell>
+										<HeaderCell>{m.showcase_db_graph_model_col_type()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_graph_model_col_count()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_graph_model_col_pattern()}</HeaderCell>
 									</Row>
 								</Header>
 								<Body>
@@ -156,7 +157,7 @@ function handleActionResult() {
 					{#snippet header()}
 						<Cluster justify="between" align="start">
 							<div>
-								<Typography variant="h5" as="h2">Graph Schema</Typography>
+								<Typography variant="h5" as="h2">{m.showcase_db_graph_model_card_graph()}</Typography>
 								<Typography variant="muted" as="p">Interactive visualization of all nodes and relationships. Filter by entity type or search by name.</Typography>
 							</div>
 							<Button
@@ -165,7 +166,7 @@ function handleActionResult() {
 								onclick={() => (resetDialogOpen = true)}
 							>
 								<span class="i-lucide-refresh-cw h-4 w-4 mr-1" ></span>
-								Reset Data
+								{m.showcase_db_graph_model_reset()}
 							</Button>
 						</Cluster>
 					{/snippet}
@@ -185,7 +186,7 @@ function handleActionResult() {
 			<section id="properties">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Properties</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_graph_model_card_properties()}</Typography>
 						<Typography variant="muted" as="p">Property keys collected from each entity type. Unlike relational columns, graph properties are schema-flexible per node.</Typography>
 					{/snippet}
 

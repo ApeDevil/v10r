@@ -19,18 +19,19 @@ import {
 	Table,
 	Typography,
 } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
 
 let { data } = $props();
 const toast = getToast();
 
-const sections = [
-	{ id: 'mutable', label: 'Mutable CRUD' },
-	{ id: 'versioned', label: 'Versioned' },
-	{ id: 'soft-delete', label: 'Soft Delete' },
-	{ id: 'append-only', label: 'Append-Only' },
-	{ id: 'temporal', label: 'Temporal' },
-];
+const sections = $derived([
+	{ id: 'mutable', label: m.showcase_db_relational_mutability_nav_mutable() },
+	{ id: 'versioned', label: m.showcase_db_relational_mutability_nav_versioned() },
+	{ id: 'soft-delete', label: m.showcase_db_relational_mutability_nav_soft_delete() },
+	{ id: 'append-only', label: m.showcase_db_relational_mutability_nav_append_only() },
+	{ id: 'temporal', label: m.showcase_db_relational_mutability_nav_temporal() },
+]);
 
 // ─── CRUD state ──────────────────────────────────────────
 let showCreateForm = $state(false);
@@ -133,12 +134,12 @@ let appendSeverity = $state('info');
 					{#snippet header()}
 						<Cluster justify="between" align="start" gap="4">
 							<div>
-								<Typography variant="h5" as="h2">Mutable CRUD</Typography>
+								<Typography variant="h5" as="h2">{m.showcase_db_relational_mutability_card_mutable()}</Typography>
 								<p class="section-desc">Rows are created, read, updated, and deleted. <code>updated_at</code> tracks last modification. Try creating, editing, and deleting rows below.</p>
 							</div>
 							<Button variant="primary" size="sm" onclick={() => showCreateForm = !showCreateForm}>
 								<span class="i-lucide-plus h-4 w-4 mr-1" ></span>
-								Add Row
+								{m.showcase_db_relational_mutability_add_row()}
 							</Button>
 						</Cluster>
 					{/snippet}
@@ -166,8 +167,8 @@ let appendSeverity = $state('info');
 							<Input name="rating" type="number" placeholder="Rating (1-5)" min={1} max={5} />
 							<Input name="quantity" type="number" placeholder="Quantity" min={0} />
 							<div class="form-actions">
-								<Button type="submit" variant="default" size="sm">Insert</Button>
-								<Button type="button" variant="outline" size="sm" onclick={() => showCreateForm = false}>Cancel</Button>
+								<Button type="submit" variant="default" size="sm">{m.showcase_db_relational_mutability_insert()}</Button>
+								<Button type="button" variant="outline" size="sm" onclick={() => showCreateForm = false}>{m.showcase_db_relational_mutability_cancel()}</Button>
 							</div>
 						</form>
 					{/if}
@@ -177,12 +178,12 @@ let appendSeverity = $state('info');
 							<Table>
 								<Header>
 									<Row>
-										<HeaderCell>Label</HeaderCell>
-										<HeaderCell>Code</HeaderCell>
-										<HeaderCell>Active</HeaderCell>
-										<HeaderCell>Created</HeaderCell>
-										<HeaderCell>Updated</HeaderCell>
-										<HeaderCell>Actions</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_label()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_code()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_active()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_created()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_updated()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_actions()}</HeaderCell>
 									</Row>
 								</Header>
 								<Body>
@@ -234,21 +235,21 @@ let appendSeverity = $state('info');
 			<section id="versioned">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Versioned Records</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_relational_mutability_card_versioned()}</Typography>
 						<p class="section-desc">Every update inserts a snapshot into the history table. Edit a specimen below and watch the history grow.</p>
 					{/snippet}
 
 					{#if data.mutableRows.length > 0}
-						<h3 class="sub-heading">Current Specimens</h3>
+						<h3 class="sub-heading">{m.showcase_db_relational_mutability_sub_current()}</h3>
 						<div class="table-wrap">
 							<Table>
 								<Header>
 									<Row>
-										<HeaderCell>Label</HeaderCell>
-										<HeaderCell>Rating</HeaderCell>
-										<HeaderCell>Quantity</HeaderCell>
-										<HeaderCell>Active</HeaderCell>
-										<HeaderCell>Action</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_label()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_rating()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_quantity()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_active()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_action()}</HeaderCell>
 									</Row>
 								</Header>
 								<Body>
@@ -269,7 +270,7 @@ let appendSeverity = $state('info');
 													onclick={() => { editingVersioned = r; versionedDialogOpen = true; }}
 												>
 													<span class="i-lucide-history h-3.5 w-3.5 mr-1" ></span>
-													Edit + Version
+													{m.showcase_db_relational_mutability_edit_version()}
 												</Button>
 											</Cell>
 										</Row>
@@ -280,18 +281,18 @@ let appendSeverity = $state('info');
 					{/if}
 
 					{#if data.versionHistory.length > 0}
-						<h3 class="sub-heading">Version History</h3>
+						<h3 class="sub-heading">{m.showcase_db_relational_mutability_sub_history()}</h3>
 						<div class="table-wrap">
 							<Table>
 								<Header>
 									<Row>
-										<HeaderCell>Specimen</HeaderCell>
-										<HeaderCell>Version</HeaderCell>
-										<HeaderCell>Change</HeaderCell>
-										<HeaderCell>Label</HeaderCell>
-										<HeaderCell>Rating</HeaderCell>
-										<HeaderCell>Changed By</HeaderCell>
-										<HeaderCell>Changed At</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_specimen()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_version()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_change()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_label()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_rating()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_changed_by()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_changed_at()}</HeaderCell>
 									</Row>
 								</Header>
 								<Body>
@@ -324,14 +325,14 @@ let appendSeverity = $state('info');
 			<section id="soft-delete">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Soft Delete</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_relational_mutability_card_soft_delete()}</Typography>
 						<p class="section-desc"><code>deleted_at IS NULL</code> = active. Non-NULL = soft-deleted (recoverable). Click delete to move a document right. Click restore to move it back.</p>
 					{/snippet}
 
 					<div class="soft-delete-groups">
 						<div>
 							<h3 class="group-heading">
-								Active Documents
+								{m.showcase_db_relational_mutability_active_documents()}
 								<Badge variant="success">{data.activeDocuments.length}</Badge>
 							</h3>
 							{#each data.activeDocuments as doc (doc.id)}
@@ -356,7 +357,7 @@ let appendSeverity = $state('info');
 
 						<div>
 							<h3 class="group-heading">
-								Soft-Deleted
+								{m.showcase_db_relational_mutability_soft_deleted()}
 								<Badge variant="error">{data.deletedDocuments.length}</Badge>
 							</h3>
 							{#each data.deletedDocuments as doc (doc.id)}
@@ -398,21 +399,21 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 			<section id="append-only">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Append-Only / Immutable</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_relational_mutability_card_append_only()}</Typography>
 						<p class="section-desc">Records are inserted and never modified. There is no Edit button. There is no Delete button. This is intentional.</p>
 					{/snippet}
 
 					{#if data.appendLog.length > 0}
-						<h3 class="sub-heading">Audit Log</h3>
+						<h3 class="sub-heading">{m.showcase_db_relational_mutability_sub_audit()}</h3>
 						<div class="table-wrap">
 							<Table>
 								<Header>
 									<Row>
-										<HeaderCell>Seq</HeaderCell>
-										<HeaderCell>Action</HeaderCell>
-										<HeaderCell>Severity</HeaderCell>
-										<HeaderCell>Description</HeaderCell>
-										<HeaderCell>Occurred</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_seq()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_action()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_severity()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_description()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_occurred()}</HeaderCell>
 									</Row>
 								</Header>
 								<Body>
@@ -437,7 +438,7 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 
 					<!-- Always-visible append form -->
 					<div class="append-form-section">
-						<h3 class="sub-heading">Add Entry</h3>
+						<h3 class="sub-heading">{m.showcase_db_relational_mutability_sub_add_entry()}</h3>
 						<form
 							method="POST"
 							action="?/appendAuditEntry"
@@ -465,7 +466,7 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 							</div>
 							<Button type="submit" variant="primary" size="sm">
 								<span class="i-lucide-plus h-4 w-4 mr-1" ></span>
-								Append
+								{m.showcase_db_relational_mutability_append()}
 							</Button>
 						</form>
 						<p class="append-note">There is no Edit button. There is no Delete button. This is intentional.</p>
@@ -477,20 +478,20 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 			<section id="temporal">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Temporal / Bi-temporal</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_relational_mutability_card_temporal()}</Typography>
 						<p class="section-desc"><code>valid_from</code> / <code>valid_to</code> track when a fact is true in the real world. Use the date picker to query "what was valid on date X?"</p>
 					{/snippet}
 
 					{#if data.temporalRows.length > 0}
-						<h3 class="sub-heading">All Temporal Records</h3>
+						<h3 class="sub-heading">{m.showcase_db_relational_mutability_sub_all_temporal()}</h3>
 						<div class="table-wrap">
 							<Table>
 								<Header>
 									<Row>
-										<HeaderCell>Description</HeaderCell>
-										<HeaderCell>Valid From</HeaderCell>
-										<HeaderCell>Valid To</HeaderCell>
-										<HeaderCell>Recorded At</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_description()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_valid_from()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_valid_to()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_mutability_col_recorded_at()}</HeaderCell>
 									</Row>
 								</Header>
 								<Body>
@@ -539,7 +540,7 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 							<Input name="date" type="date" required />
 							<Button type="submit" variant="outline" size="sm" disabled={temporalQueryActive}>
 								<span class="i-lucide-search h-4 w-4 mr-1" ></span>
-								Query
+								{m.showcase_db_relational_mutability_query()}
 							</Button>
 						</form>
 
@@ -550,9 +551,9 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 									<Table>
 										<Header>
 											<Row>
-												<HeaderCell>Description</HeaderCell>
-												<HeaderCell>Valid From</HeaderCell>
-												<HeaderCell>Valid To</HeaderCell>
+												<HeaderCell>{m.showcase_db_relational_mutability_col_description()}</HeaderCell>
+												<HeaderCell>{m.showcase_db_relational_mutability_col_valid_from()}</HeaderCell>
+												<HeaderCell>{m.showcase_db_relational_mutability_col_valid_to()}</HeaderCell>
 											</Row>
 										</Header>
 										<Body>
@@ -580,7 +581,7 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 
 					<!-- Add temporal record -->
 					<div class="temporal-add">
-						<h3 class="sub-heading">Add Temporal Record</h3>
+						<h3 class="sub-heading">{m.showcase_db_relational_mutability_sub_add_temporal()}</h3>
 						<form
 							method="POST"
 							action="?/addTemporalRecord"
@@ -606,7 +607,7 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 							</div>
 							<Button type="submit" variant="primary" size="sm">
 								<span class="i-lucide-plus h-4 w-4 mr-1" ></span>
-								Add Record
+								{m.showcase_db_relational_mutability_add_record()}
 							</Button>
 						</form>
 					</div>
@@ -618,7 +619,7 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 		<Cluster justify="center" class="mt-6 mb-4">
 			<Button variant="outline" size="sm" onclick={() => resetDialogOpen = true}>
 				<span class="i-lucide-rotate-ccw h-4 w-4 mr-1" ></span>
-				Reset All Showcase Data
+				{m.showcase_db_relational_mutability_reset()}
 			</Button>
 		</Cluster>
 	{/if}
@@ -673,8 +674,8 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 				</FormField>
 			</div>
 			<div class="dialog-actions">
-				<Button type="button" variant="outline" size="sm" onclick={() => { editDialogOpen = false; editingSpecimen = null; }}>Cancel</Button>
-				<Button type="submit" variant="default" size="sm">Save</Button>
+				<Button type="button" variant="outline" size="sm" onclick={() => { editDialogOpen = false; editingSpecimen = null; }}>{m.showcase_db_relational_mutability_cancel()}</Button>
+				<Button type="submit" variant="default" size="sm">{m.showcase_db_relational_mutability_save()}</Button>
 			</div>
 		</form>
 	</Dialog>
@@ -728,10 +729,10 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 				</FormField>
 			</div>
 			<div class="dialog-actions">
-				<Button type="button" variant="outline" size="sm" onclick={() => { versionedDialogOpen = false; editingVersioned = null; }}>Cancel</Button>
+				<Button type="button" variant="outline" size="sm" onclick={() => { versionedDialogOpen = false; editingVersioned = null; }}>{m.showcase_db_relational_mutability_cancel()}</Button>
 				<Button type="submit" variant="default" size="sm">
 					<span class="i-lucide-history h-3.5 w-3.5 mr-1" ></span>
-					Save + Version
+					{m.showcase_db_relational_mutability_save_version()}
 				</Button>
 			</div>
 		</form>

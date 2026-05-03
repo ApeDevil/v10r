@@ -8,6 +8,7 @@ import { createCycleState } from '$lib/components/cycle/cycle-state.svelte';
 import type { CycleTrace } from '$lib/components/cycle/types';
 import { Stack } from '$lib/components/layout';
 import { Button, Input, Select, Spinner } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 
 const cycle = createCycleState('default');
 let submitting = $state(false);
@@ -59,7 +60,7 @@ function handleSubmit() {
 	<!-- Trigger Zone -->
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">API Route Cycle</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.showcase_cycle_api_card_title()}</h2>
 			<p class="text-fluid-sm text-muted">
 				Trigger a cycle via a named form action, demonstrating the fetch-based API pattern.
 			</p>
@@ -94,7 +95,7 @@ function handleSubmit() {
 				<div class="flex items-end">
 					<Button type="submit" disabled={submitting} class="w-full">
 						{#if submitting}<Spinner size="sm" class="mr-2" />{/if}
-						Run API Cycle
+						{m.showcase_cycle_api_btn_run()}
 					</Button>
 				</div>
 			</div>

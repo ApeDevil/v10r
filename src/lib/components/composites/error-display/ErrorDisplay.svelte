@@ -3,6 +3,7 @@ import type { Snippet } from 'svelte';
 import { goto } from '$app/navigation';
 import { Button } from '$lib/components/primitives';
 import { localizeHref } from '$lib/i18n';
+import * as m from '$lib/paraglide/messages';
 
 interface Props {
 	status: number;
@@ -23,10 +24,10 @@ const icon = $derived.by(() => {
 });
 
 const heading = $derived.by(() => {
-	if (status === 404) return "This page doesn't exist";
-	if (status === 403) return "You don't have access";
-	if (status >= 500) return 'Something went wrong';
-	return 'An error occurred';
+	if (status === 404) return m.composites_error_display_404_heading();
+	if (status === 403) return m.composites_error_display_403_heading();
+	if (status >= 500) return m.composites_error_display_500_heading();
+	return m.composites_error_display_default_heading();
 });
 
 const showMessage = $derived(message && !message.includes('\n') && message.length < 200);
@@ -57,9 +58,9 @@ function copyErrorId() {
 
 	{#if errorId && status >= 500}
 		<div class="error-id">
-			<span class="error-id-label">Error ID:</span>
+			<span class="error-id-label">{m.composites_error_display_id_label()}</span>
 			<code class="error-id-value">{errorId}</code>
-			<Button variant="ghost" size="icon" class="error-id-copy" onclick={copyErrorId} aria-label="Copy error ID">
+			<Button variant="ghost" size="icon" class="error-id-copy" onclick={copyErrorId} aria-label={m.composites_error_display_copy_id()}>
 				<span class={copied ? 'i-lucide-check' : 'i-lucide-copy'}></span>
 			</Button>
 		</div>
@@ -69,11 +70,11 @@ function copyErrorId() {
 		{#if actions}
 			{@render actions()}
 		{:else if status >= 500}
-			<Button variant="default" onclick={() => location.reload()}>Try again</Button>
-			<Button variant="outline" onclick={() => goto(localizeHref('/'))}>Go home</Button>
+			<Button variant="default" onclick={() => location.reload()}>{m.composites_error_display_try_again()}</Button>
+			<Button variant="outline" onclick={() => goto(localizeHref('/'))}>{m.composites_error_display_go_home()}</Button>
 		{:else}
-			<Button variant="default" onclick={() => goto(localizeHref('/'))}>Go home</Button>
-			<Button variant="outline" onclick={() => history.back()}>Go back</Button>
+			<Button variant="default" onclick={() => goto(localizeHref('/'))}>{m.composites_error_display_go_home()}</Button>
+			<Button variant="outline" onclick={() => history.back()}>{m.composites_error_display_go_back()}</Button>
 		{/if}
 	</div>
 

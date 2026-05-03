@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Button } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { getModals } from '$lib/state/modals.svelte';
 import { getSession } from '$lib/state/session.svelte';
 
@@ -28,7 +29,7 @@ function resetSession() {
 }
 </script>
 <section class="demo-section">
-	<h2>Session Lifecycle</h2>
+	<h2>{m.showcase_shell_session_section()}</h2>
 	<p>Test session expiry warnings and re-authentication:</p>
 
 	<div class="session-info">
@@ -44,26 +45,26 @@ function resetSession() {
 
 	<div class="button-group">
 		<Button variant="secondary" onclick={simulateWarning}>
-			Simulate Warning (4 min)
+			{m.showcase_shell_session_btn_warning()}
 		</Button>
 		<Button
 			variant="default"
 			class="bg-warning text-white session-btn-warning"
 			onclick={simulateExpiry}
 		>
-			Simulate Expiry
+			{m.showcase_shell_session_btn_expiry()}
 		</Button>
 		<Button
 			variant="default"
 			class="bg-success text-white session-btn-success"
 			onclick={resetSession}
 		>
-			Reset to Valid
+			{m.showcase_shell_session_btn_reset()}
 		</Button>
 	</div>
 
 	<div class="session-notes">
-		<h3>Test Instructions:</h3>
+		<h3>{m.showcase_shell_session_instructions()}</h3>
 		<ol>
 			<li><strong>Warning State:</strong> Click "Simulate Warning" to show the expiry banner (appears when &lt;5 min remain)</li>
 			<li><strong>Expired State:</strong> Click "Simulate Expiry" to show the re-authentication modal</li>

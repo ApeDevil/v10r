@@ -2,6 +2,7 @@ import { error, type Handle, type HandleServerError, json } from '@sveltejs/kit'
 import { sequence } from '@sveltejs/kit/hooks';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { building } from '$app/environment';
+import { locales } from '$lib/i18n';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import { parseConsentTier } from '$lib/server/analytics/consent';
 import { analyticsCollector } from '$lib/server/analytics/hook';
@@ -34,7 +35,7 @@ import '$lib/server/jobs/delivery-scheduler';
 
 logFeatureStatus();
 
-const ALLOWED_LOCALES = new Set(['en', 'de', 'ru']);
+const ALLOWED_LOCALES = new Set<string>(locales);
 
 /** Upstash rate limiter for auth endpoints */
 const authRatelimit = createLimiter('ratelimit:auth', AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW);
@@ -169,7 +170,12 @@ const i18n: Handle = ({ event, resolve }) =>
 	paraglideMiddleware(event.request, ({ request, locale }) => {
 		const safeLocale = (ALLOWED_LOCALES.has(locale) ? locale : 'en') as App.Locals['locale'];
 		event.locals.locale = safeLocale;
-		if (event.cookies.get('PARAGLIDE_LOCALE') !== safeLocale) {
+		// Skip Set-Cookie when the resolved locale equals baseLocale AND no cookie
+		// is present yet — avoids polluting CDN-cacheable responses for first-visit
+		// anonymous users on the default locale.
+		const existingCookie = event.cookies.get('PARAGLIDE_LOCALE');
+		const isDefaultFirstVisit = existingCookie === undefined && safeLocale === 'en';
+		if (!isDefaultFirstVisit && existingCookie !== safeLocale) {
 			event.cookies.set('PARAGLIDE_LOCALE', safeLocale, {
 				path: '/',
 				httpOnly: false,
@@ -179,48 +185,53 @@ const i18n: Handle = ({ event, resolve }) =>
 			});
 		}
 		event.request = request;
+
+		// Hoist all per-response derivations OUT of the per-chunk callback. The
+		// callback used to recompute the custom-palette <style> block (including
+		// two culori-backed deriveAccentTokens calls) on every HTML chunk. Now it
+		// is computed once and only injected when the </head> marker passes.
+		const style = event.locals.style;
+		const paletteId = style?.paletteId ?? '';
+		const typographyId = style?.typographyId ?? '';
+		const radiusId = style?.radiusId ?? '';
+
+		let customPaletteStyle = '';
+		const cp = event.locals.customPaletteColors;
+		if (cp && paletteId) {
+			const toVar = (k: string) => (k.startsWith('surface-') ? `--${k}` : `--color-${k}`);
+			const safeEntries = (colors: Record<string, string>) =>
+				Object.entries(colors).filter(([k, v]) => VALID_TOKEN_KEYS.has(k) && OKLCH_RE.test(v));
+
+			const accentOffset = event.locals.customPaletteAccentOffset ?? 0;
+			const lightAccent = cp.light.primary ? deriveAccentTokens(cp.light.primary, accentOffset) : {};
+			const darkAccent = cp.dark.primary ? deriveAccentTokens(cp.dark.primary, accentOffset) : {};
+
+			const lightExplicit = new Set(safeEntries(cp.light).map(([k]) => k));
+			const darkExplicit = new Set(safeEntries(cp.dark).map(([k]) => k));
+
+			const lightVars = [
+				...safeEntries(cp.light),
+				...Object.entries(lightAccent).filter(([k]) => !lightExplicit.has(k)),
+			]
+				.map(([k, v]) => `${toVar(k)}:${v}`)
+				.join(';');
+			const darkVars = [...safeEntries(cp.dark), ...Object.entries(darkAccent).filter(([k]) => !darkExplicit.has(k))]
+				.map(([k, v]) => `${toVar(k)}:${v}`)
+				.join(';');
+			const safePid = paletteId.replace(/[^a-zA-Z0-9_-]/g, '');
+			customPaletteStyle = `<style>[data-palette="${safePid}"]{${lightVars}}.dark[data-palette="${safePid}"]{${darkVars}}</style>`;
+		}
+
 		return resolve(event, {
 			transformPageChunk: ({ html }) => {
 				let result = html
 					.replace('%lang%', safeLocale)
-					.replace('%palette%', event.locals.style?.paletteId ?? '')
-					.replace('%typography%', event.locals.style?.typographyId ?? '')
-					.replace('%radius%', event.locals.style?.radiusId ?? '');
-
-				// Inject custom palette CSS vars for CP_ palettes
-				const cp = event.locals.customPaletteColors;
-				if (cp && event.locals.style?.paletteId) {
-					const pid = event.locals.style.paletteId;
-					const toVar = (k: string) => (k.startsWith('surface-') ? `--${k}` : `--color-${k}`);
-					const safeEntries = (colors: Record<string, string>) =>
-						Object.entries(colors).filter(([k, v]) => VALID_TOKEN_KEYS.has(k) && OKLCH_RE.test(v));
-
-					// Derive accent tokens from primary + offset (only for tokens not explicitly set)
-					const accentOffset = event.locals.customPaletteAccentOffset ?? 0;
-					const lightAccent = cp.light.primary ? deriveAccentTokens(cp.light.primary, accentOffset) : {};
-					const darkAccent = cp.dark.primary ? deriveAccentTokens(cp.dark.primary, accentOffset) : {};
-
-					// Admin-set accent tokens win over derived ones
-					const lightExplicit = new Set(safeEntries(cp.light).map(([k]) => k));
-					const darkExplicit = new Set(safeEntries(cp.dark).map(([k]) => k));
-
-					const lightVars = [
-						...safeEntries(cp.light),
-						...Object.entries(lightAccent).filter(([k]) => !lightExplicit.has(k)),
-					]
-						.map(([k, v]) => `${toVar(k)}:${v}`)
-						.join(';');
-					const darkVars = [
-						...safeEntries(cp.dark),
-						...Object.entries(darkAccent).filter(([k]) => !darkExplicit.has(k)),
-					]
-						.map(([k, v]) => `${toVar(k)}:${v}`)
-						.join(';');
-					const safePid = pid.replace(/[^a-zA-Z0-9_-]/g, '');
-					const style = `<style>[data-palette="${safePid}"]{${lightVars}}.dark[data-palette="${safePid}"]{${darkVars}}</style>`;
-					result = result.replace('</head>', `${style}</head>`);
+					.replace('%palette%', paletteId)
+					.replace('%typography%', typographyId)
+					.replace('%radius%', radiusId);
+				if (customPaletteStyle && result.includes('</head>')) {
+					result = result.replace('</head>', `${customPaletteStyle}</head>`);
 				}
-
 				return result;
 			},
 		});

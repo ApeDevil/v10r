@@ -10,6 +10,7 @@ import CustomPaletteEditor from '$lib/components/branding/CustomPaletteEditor.sv
 import { Alert, Card, FormField } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Button, Input, Spinner, Switch, ToggleGroup } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { brandSettingsSchema } from '$lib/schemas/app/branding';
 import { getTheme } from '$lib/state/theme.svelte';
 import { getPalette } from '$lib/styles/random/palette-registry';
@@ -41,7 +42,7 @@ const {
 
 beforeNavigate(({ cancel }) => {
 	if (get(tainted) || editingCustom) {
-		if (!confirm('You have unsaved changes. Leave anyway?')) cancel();
+		if (!confirm(m.admin_branding_unsaved_changes_confirm())) cancel();
 	}
 });
 
@@ -88,11 +89,11 @@ $effect(() => {
 	};
 });
 
-const shapeItems = [
-	{ value: 'R1', label: 'Sharp' },
-	{ value: 'R2', label: 'Smooth' },
-	{ value: 'R3', label: 'Round' },
-];
+const shapeItems = $derived([
+	{ value: 'R1', label: m.admin_branding_shape_sharp() },
+	{ value: 'R2', label: m.admin_branding_shape_smooth() },
+	{ value: 'R3', label: m.admin_branding_shape_round() },
+]);
 
 // ── Custom palette editor state ───────────────────────────────────────────────
 
@@ -200,23 +201,23 @@ $effect(() => {
 	return () => clearInlineStyles();
 });
 
-const editModeItems = [
-	{ value: 'light', label: 'Light' },
-	{ value: 'dark', label: 'Dark' },
-];
+const editModeItems = $derived([
+	{ value: 'light', label: m.shell_theme_light() },
+	{ value: 'dark', label: m.shell_theme_dark() },
+]);
 </script>
 {#snippet saveAction()}
 	<div class="save-action">
 		<Button type="submit" form="brandForm" disabled={$submitting}>
 			{#if $delayed}<Spinner size="sm" class="mr-2" />{/if}
-			{#if $form.enabled}Save & Lock{:else}Save{/if}
+			{#if $form.enabled}{m.admin_branding_save_lock()}{:else}{m.admin_action_save()}{/if}
 		</Button>
 	</div>
 {/snippet}
 
 <Stack gap="6">
 	{#if $formMessage}
-		<Alert variant="success" title="Saved">
+		<Alert variant="success" title={m.admin_branding_saved_title()}>
 			{#snippet children()}
 				<p>{$formMessage}</p>
 			{/snippet}
@@ -226,26 +227,26 @@ const editModeItems = [
 	<!-- Visual Identity — first, controls whether branding is locked -->
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">Visual Identity</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.admin_branding_section_visual_identity()}</h2>
 		{/snippet}
 
 		{#snippet children()}
 			<Stack gap="4">
 				<FormField
-					label="Lock visual identity"
-					description="When locked, all visitors see your brand. When unlocked, visitors explore random styles."
+					label={m.admin_branding_lock_identity_label()}
+					description={m.admin_branding_lock_identity_desc()}
 				>
 					{#snippet children(_)}
-						<Switch bind:checked={$form.enabled} label={$form.enabled ? 'Locked' : 'Exploring'} />
+						<Switch bind:checked={$form.enabled} label={$form.enabled ? m.admin_branding_identity_locked() : m.admin_branding_identity_exploring()} />
 					{/snippet}
 				</FormField>
 
 				{#if $tainted && !$form.enabled}
 					<div class="identity-hint" role="status">
 						<p class="text-fluid-xs">
-							Visual identity is unlocked — changes will be saved but visitors will still see random styles.
+							{m.admin_branding_identity_hint()}
 							<button type="button" class="identity-hint-action" onclick={() => ($form.enabled = true)}>
-								Lock visual identity
+								{m.admin_branding_lock_identity_label()}
 							</button>
 						</p>
 					</div>
@@ -261,7 +262,7 @@ const editModeItems = [
 	<!-- Palette -->
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">Palette</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.admin_branding_section_palette()}</h2>
 		{/snippet}
 
 		{#snippet children()}
@@ -293,14 +294,14 @@ const editModeItems = [
 					<Cluster justify="end">
 						<Button type="button" variant="outline" onclick={startCustomize}>
 							<span class="i-lucide-wand-2 mr-1 inline-block" aria-hidden="true"></span>
-							Customize
+							{m.admin_branding_action_customize()}
 						</Button>
 					</Cluster>
 				{/if}
 
 				{#if data.customPalettes.length > 0}
 					<div>
-						<h3 class="text-fluid-sm font-semibold mb-3">My Custom Palettes</h3>
+						<h3 class="text-fluid-sm font-semibold mb-3">{m.admin_branding_my_custom_palettes()}</h3>
 						<div class="flex flex-col gap-2">
 							{#each data.customPalettes as cp}
 								<div class="custom-palette-row" class:selected={$form.paletteId === cp.id}>
@@ -317,14 +318,14 @@ const editModeItems = [
 									</button>
 									<div class="flex items-center gap-2">
 										<Button type="button" variant="outline" size="sm" onclick={() => editExistingCustom(cp)}>
-											Edit
+											{m.admin_action_edit()}
 										</Button>
 										<form method="POST" action="?/deleteCustomPalette" use:kitEnhance={({ cancel }) => {
-											if (!confirm('Delete this palette?')) { cancel(); return; }
+											if (!confirm(m.admin_branding_delete_palette_confirm())) { cancel(); return; }
 											return async ({ update }) => { await update(); };
 										}}>
 											<input type="hidden" name="paletteId" value={cp.id} />
-											<Button type="submit" variant="ghost" size="sm">Delete</Button>
+											<Button type="submit" variant="ghost" size="sm">{m.admin_action_delete()}</Button>
 										</form>
 									</div>
 								</div>
@@ -336,10 +337,10 @@ const editModeItems = [
 				{#if editingCustom && customLightColors && customDarkColors}
 					<div class="editor-section">
 						<div class="flex items-center justify-between gap-3 mb-4">
-							<h3 class="text-fluid-sm font-semibold">Custom Palette Editor</h3>
+							<h3 class="text-fluid-sm font-semibold">{m.admin_branding_custom_palette_editor()}</h3>
 							<div class="flex items-center gap-3">
 								<ToggleGroup items={editModeItems} bind:value={editMode} />
-								<Button type="button" variant="ghost" onclick={cancelEdit}>Cancel</Button>
+								<Button type="button" variant="ghost" onclick={cancelEdit}>{m.admin_action_cancel()}</Button>
 							</div>
 						</div>
 
@@ -348,13 +349,13 @@ const editModeItems = [
 								<Input
 									class="flex-1"
 									bind:value={customName}
-									placeholder="Palette name"
+									placeholder={m.admin_branding_palette_name_placeholder()}
 									required
 								/>
 								<Input
 									class="flex-1"
 									bind:value={customDescription}
-									placeholder="Description (optional)"
+									placeholder={m.admin_branding_palette_desc_placeholder()}
 								/>
 							</div>
 
@@ -394,7 +395,7 @@ const editModeItems = [
 											darkColors: customDarkColors,
 										})}
 									/>
-									<Button type="submit" disabled={!customName.trim()}>Save Palette</Button>
+									<Button type="submit" disabled={!customName.trim()}>{m.admin_branding_action_save_palette()}</Button>
 								</form>
 							</Cluster>
 						</Stack>
@@ -416,7 +417,7 @@ const editModeItems = [
 			<!-- Typography -->
 			<Card>
 				{#snippet header()}
-					<h2 class="text-fluid-lg font-semibold">Typography</h2>
+					<h2 class="text-fluid-lg font-semibold">{m.admin_branding_section_typography()}</h2>
 				{/snippet}
 
 				{#snippet children()}
@@ -445,7 +446,7 @@ const editModeItems = [
 			<!-- Shape -->
 			<Card>
 				{#snippet header()}
-					<h2 class="text-fluid-lg font-semibold">Shape</h2>
+					<h2 class="text-fluid-lg font-semibold">{m.admin_branding_section_shape()}</h2>
 				{/snippet}
 
 				{#snippet children()}

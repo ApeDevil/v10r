@@ -1,4 +1,5 @@
 <script lang="ts">
+import * as m from '$lib/paraglide/messages';
 import { cn } from '$lib/utils/cn';
 import { type SpinnerVariants, spinnerVariants } from './spinner';
 
@@ -7,7 +8,7 @@ interface Props extends SpinnerVariants {
 	class?: string;
 }
 
-let { size = 'md', variant = 'primary', label = 'Loading', class: className }: Props = $props();
+let { size = 'md', variant = 'primary', label = m.primitives_spinner_label(), class: className }: Props = $props();
 </script>
 
 <div

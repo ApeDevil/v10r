@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Button } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { cn } from '$lib/utils/cn';
 
 interface Props {
@@ -69,7 +70,7 @@ function handlePageChange(page: number) {
 }
 </script>
 
-<nav class={cn('flex items-center justify-center gap-1', className)} aria-label="Pagination">
+<nav class={cn('flex items-center justify-center gap-1', className)} aria-label={m.composites_pagination_label()}>
 	{#if showFirstLast}
 		<Button
 			variant="ghost"
@@ -77,7 +78,7 @@ function handlePageChange(page: number) {
 			class="focus-visible:ring-1"
 			onclick={() => handlePageChange(1)}
 			disabled={currentPage === 1}
-			aria-label="First page"
+			aria-label={m.composites_pagination_first()}
 		>
 			<span class="i-lucide-chevrons-left h-4 w-4" ></span>
 		</Button>
@@ -89,7 +90,7 @@ function handlePageChange(page: number) {
 		class="focus-visible:ring-1"
 		onclick={() => handlePageChange(currentPage - 1)}
 		disabled={currentPage === 1}
-		aria-label="Previous page"
+		aria-label={m.composites_pagination_previous()}
 	>
 		<span class="i-lucide-chevron-left h-4 w-4" ></span>
 	</Button>
@@ -105,7 +106,7 @@ function handlePageChange(page: number) {
 				size="icon"
 				class="focus-visible:ring-1"
 				onclick={() => handlePageChange(page)}
-				aria-label={`Page ${page}`}
+				aria-label={m.composites_pagination_page({ page })}
 				aria-current={currentPage === page ? 'page' : undefined}
 			>
 				{page}
@@ -119,7 +120,7 @@ function handlePageChange(page: number) {
 		class="focus-visible:ring-1"
 		onclick={() => handlePageChange(currentPage + 1)}
 		disabled={currentPage === totalPages}
-		aria-label="Next page"
+		aria-label={m.composites_pagination_next()}
 	>
 		<span class="i-lucide-chevron-right h-4 w-4" ></span>
 	</Button>
@@ -131,7 +132,7 @@ function handlePageChange(page: number) {
 			class="focus-visible:ring-1"
 			onclick={() => handlePageChange(totalPages)}
 			disabled={currentPage === totalPages}
-			aria-label="Last page"
+			aria-label={m.composites_pagination_last()}
 		>
 			<span class="i-lucide-chevrons-right h-4 w-4" ></span>
 		</Button>

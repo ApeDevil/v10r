@@ -16,6 +16,7 @@ import {
 	Table,
 	Typography,
 } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
 
 let { data } = $props();
@@ -31,14 +32,14 @@ function formatTtl(seconds: number): string {
 }
 const toast = getToast();
 
-const sections = [
-	{ id: 'overview', label: 'Overview' },
-	{ id: 'strings', label: 'Strings' },
-	{ id: 'hashes', label: 'Hashes' },
-	{ id: 'counters', label: 'Counters' },
-	{ id: 'sorted-sets', label: 'Sorted Sets' },
-	{ id: 'lists', label: 'Lists' },
-];
+const sections = $derived([
+	{ id: 'overview', label: m.showcase_db_cache_patterns_nav_overview() },
+	{ id: 'strings', label: m.showcase_db_cache_patterns_nav_strings() },
+	{ id: 'hashes', label: m.showcase_db_cache_patterns_nav_hashes() },
+	{ id: 'counters', label: m.showcase_db_cache_patterns_nav_counters() },
+	{ id: 'sorted-sets', label: m.showcase_db_cache_patterns_nav_sorted_sets() },
+	{ id: 'lists', label: m.showcase_db_cache_patterns_nav_lists() },
+]);
 
 // ─── Inspect state ──────────────────────────────────
 let inspectLoading = $state(false);
@@ -112,7 +113,7 @@ const typeBadgeVariant = (type: string) => {
 			<section id="overview">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Overview</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_cache_patterns_card_overview()}</Typography>
 						<Typography variant="muted" as="p">All showcase keys with their Redis data type and TTL status.</Typography>
 					{/snippet}
 
@@ -134,9 +135,9 @@ const typeBadgeVariant = (type: string) => {
 							<Table>
 								<Header>
 									<Row>
-										<HeaderCell>Key</HeaderCell>
-										<HeaderCell>Type</HeaderCell>
-										<HeaderCell>TTL</HeaderCell>
+										<HeaderCell>{m.showcase_db_cache_patterns_col_key()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_cache_patterns_col_type()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_cache_patterns_col_ttl()}</HeaderCell>
 										<HeaderCell><span class="sr-only">Actions</span></HeaderCell>
 									</Row>
 								</Header>
@@ -164,7 +165,7 @@ const typeBadgeVariant = (type: string) => {
 													}}
 												>
 													<input type="hidden" name="key" value={entry.key} />
-													<Button type="submit" variant="outline" size="sm">Inspect</Button>
+													<Button type="submit" variant="outline" size="sm">{m.showcase_db_cache_patterns_inspect()}</Button>
 												</form>
 											</Cell>
 										</Row>
@@ -195,7 +196,7 @@ const typeBadgeVariant = (type: string) => {
 			<section id="strings">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Strings</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_cache_patterns_card_strings()}</Typography>
 						<Typography variant="muted" as="p">The most basic Redis type. SET stores a value, GET retrieves it. Optionally attach a TTL for auto-expiry.</Typography>
 					{/snippet}
 
@@ -238,7 +239,7 @@ const typeBadgeVariant = (type: string) => {
 			<section id="hashes">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Hashes</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_cache_patterns_card_hashes()}</Typography>
 						<Typography variant="muted" as="p">A hash maps string fields to string values — like a lightweight row. Use HSET/HGET to manipulate individual fields.</Typography>
 					{/snippet}
 
@@ -302,7 +303,7 @@ const typeBadgeVariant = (type: string) => {
 			<section id="counters">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Counters</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_cache_patterns_card_counters()}</Typography>
 						<Typography variant="muted" as="p">Redis strings that hold numeric values. INCR/DECR are atomic — safe for concurrent access without locks.</Typography>
 					{/snippet}
 
@@ -343,7 +344,7 @@ const typeBadgeVariant = (type: string) => {
 			<section id="sorted-sets">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Sorted Sets</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_cache_patterns_card_sorted_sets()}</Typography>
 						<Typography variant="muted" as="p">Each member has a score — the set stays sorted automatically. Perfect for leaderboards, rankings, and priority queues.</Typography>
 					{/snippet}
 
@@ -388,7 +389,7 @@ const typeBadgeVariant = (type: string) => {
 			<section id="lists">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Lists</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_cache_patterns_card_lists()}</Typography>
 						<Typography variant="muted" as="p">Ordered sequences of strings. Push to either end, pop from either end — a double-ended queue (deque).</Typography>
 					{/snippet}
 

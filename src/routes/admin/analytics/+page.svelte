@@ -6,6 +6,7 @@ import { Alert, Card, DiagGrid, DiagRow, EmptyState } from '$lib/components/comp
 import { Cluster, Stack } from '$lib/components/layout';
 import { Button, Skeleton, Tag } from '$lib/components/primitives';
 import LineChart from '$lib/components/viz/chart/line/LineChart.svelte';
+import * as m from '$lib/paraglide/messages';
 
 let { data }: PageProps = $props();
 let pairedActive = $state(data.pairedActive);
@@ -44,8 +45,8 @@ function formatDuration(ms: number): string {
 	if (ms < 1000) return `${ms}ms`;
 	const s = Math.round(ms / 1000);
 	if (s < 60) return `${s}s`;
-	const m = Math.floor(s / 60);
-	return `${m}m ${s % 60}s`;
+	const mins = Math.floor(s / 60);
+	return `${mins}m ${s % 60}s`;
 }
 
 function buildChartData(trend: typeof data.trend extends Promise<infer T> ? T : never): ChartData<'line'> {
@@ -53,7 +54,7 @@ function buildChartData(trend: typeof data.trend extends Promise<infer T> ? T : 
 		labels: trend.map((t) => t.date),
 		datasets: [
 			{
-				label: 'Pageviews',
+				label: m.admin_analytics_chart_pageviews(),
 				data: trend.map((t) => Number(t.pageviews)),
 				borderColor: 'primary',
 				backgroundColor: 'primary/20',
@@ -61,7 +62,7 @@ function buildChartData(trend: typeof data.trend extends Promise<infer T> ? T : 
 				tension: 0.3,
 			},
 			{
-				label: 'Unique Visitors',
+				label: m.admin_analytics_chart_unique_visitors(),
 				data: trend.map((t) => Number(t.uniqueVisitors)),
 				borderColor: 'accent',
 				backgroundColor: 'accent/20',
@@ -82,25 +83,25 @@ const ranges = [
 	<!-- Headline Stats -->
 	<div class="stat-grid">
 		<div class="stat-card">
-			<span class="stat-label">Pageviews ({data.range}d)</span>
+			<span class="stat-label">{m.admin_analytics_stat_pageviews({ range: data.range })}</span>
 			<span class="stat-value">{formatNumber(data.overview.totalPageviews)}</span>
 		</div>
 		<div class="stat-card">
-			<span class="stat-label">Unique Visitors ({data.range}d)</span>
+			<span class="stat-label">{m.admin_analytics_stat_unique_visitors({ range: data.range })}</span>
 			<span class="stat-value">{formatNumber(data.overview.uniqueVisitors)}</span>
 		</div>
 		<div class="stat-card">
-			<span class="stat-label">Avg Duration</span>
+			<span class="stat-label">{m.admin_analytics_stat_avg_duration()}</span>
 			<span class="stat-value">{formatDuration(data.overview.avgSessionDuration)}</span>
 		</div>
 		<div class="stat-card">
-			<span class="stat-label">Consent Rate</span>
+			<span class="stat-label">{m.admin_analytics_stat_consent_rate()}</span>
 			<span class="stat-value">
 				{consentRate}%
 				{#if consentRate < 40}
-					<Tag variant="error" label="Low" />
+					<Tag variant="error" label={m.admin_analytics_consent_low()} />
 				{:else if consentRate < 60}
-					<Tag variant="warning" label="Moderate" />
+					<Tag variant="warning" label={m.admin_analytics_consent_moderate()} />
 				{/if}
 			</span>
 		</div>
@@ -110,20 +111,20 @@ const ranges = [
 	{#if totalSessions > 0}
 		<p class="consent-caveat">
 			<span class="i-lucide-info caveat-icon" aria-hidden="true"></span>
-			Counts reflect consented sessions only. {consentRate}% of {formatNumber(totalSessions)} sessions have analytics consent.
+			{m.admin_analytics_consent_caveat({ rate: consentRate, total: formatNumber(totalSessions) })}
 		</p>
 	{/if}
 
 	<!-- Retention cleanup status -->
 	<p class="consent-caveat">
 		<span class="i-lucide-broom caveat-icon" aria-hidden="true"></span>
-		Last cleanup: {formatRelativeAge(cleanupAgeMs)}{#if data.lastCleanup.resultCount != null}
-			· {formatNumber(data.lastCleanup.resultCount)} rows removed
+		{m.admin_analytics_cleanup_last()} {formatRelativeAge(cleanupAgeMs)}{#if data.lastCleanup.resultCount != null}
+			{m.admin_analytics_cleanup_rows_removed({ count: data.lastCleanup.resultCount })}
 		{/if}
 		{#if cleanupOverdue}
-			<Tag variant="warning" label="Cleanup overdue" />
+			<Tag variant="warning" label={m.admin_analytics_cleanup_overdue()} />
 		{:else if data.lastCleanup.status === 'failure'}
-			<Tag variant="error" label="Last run failed" />
+			<Tag variant="error" label={m.admin_analytics_cleanup_last_run_failed()} />
 		{/if}
 	</p>
 
@@ -131,7 +132,7 @@ const ranges = [
 	<Card>
 		{#snippet header()}
 			<Cluster justify="between" align="center">
-				<h2 class="text-fluid-lg font-semibold">Traffic Trend</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.admin_analytics_traffic_trend()}</h2>
 				<div class="filter-bar">
 					{#each ranges as r}
 						<a
@@ -152,28 +153,28 @@ const ranges = [
 			{#if trend.length === 0}
 				<EmptyState
 					icon="i-lucide-bar-chart-2"
-					title="No data for this period"
-					description="Try a wider date range."
+					title={m.admin_analytics_trend_empty_title()}
+					description={m.admin_analytics_trend_empty_description()}
 				>
 					{#if data.range !== '90'}
 						<a href="/admin/analytics?range=90" class="text-primary hover:underline text-fluid-sm">
-							Try 90 days
+							{m.admin_analytics_trend_try_90_days()}
 						</a>
 					{/if}
 				</EmptyState>
 			{:else}
 				<LineChart
 					data={buildChartData(trend)}
-					ariaLabel="Pageview trend for the last {data.range} days"
+					ariaLabel={m.admin_analytics_trend_aria_label({ range: data.range })}
 				/>
 			{/if}
 		{:catch}
 			<Alert
 				variant="error"
-				title="Failed to load trend data"
-				description="Could not fetch traffic trend."
+				title={m.admin_analytics_trend_error_title()}
+				description={m.admin_analytics_trend_error_description()}
 			>
-				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>Try again</Button>
+				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>{m.composites_error_display_try_again()}</Button>
 			</Alert>
 		{/await}
 	</Card>
@@ -183,7 +184,7 @@ const ranges = [
 		<!-- Top Pages -->
 		<Card>
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Top Pages</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.admin_analytics_top_pages()}</h2>
 			{/snippet}
 
 			{#await data.topPages}
@@ -194,7 +195,7 @@ const ranges = [
 				</div>
 			{:then pages}
 				{#if pages.length === 0}
-					<p class="text-muted text-fluid-sm">No page data available.</p>
+					<p class="text-muted text-fluid-sm">{m.admin_analytics_top_pages_empty()}</p>
 				{:else}
 					{@const maxViews = Math.max(...pages.map((p) => Number(p.pageviews)))}
 					<div class="top-pages">
@@ -213,10 +214,10 @@ const ranges = [
 			{:catch}
 				<Alert
 					variant="error"
-					title="Failed to load top pages"
-					description="Could not fetch page data."
+					title={m.admin_analytics_top_pages_error_title()}
+					description={m.admin_analytics_top_pages_error_description()}
 				>
-					<Button variant="outline" size="sm" onclick={() => invalidateAll()}>Try again</Button>
+					<Button variant="outline" size="sm" onclick={() => invalidateAll()}>{m.composites_error_display_try_again()}</Button>
 				</Alert>
 			{/await}
 		</Card>
@@ -224,11 +225,11 @@ const ranges = [
 		<!-- Consent Breakdown -->
 		<Card>
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Consent Breakdown</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.admin_analytics_consent_breakdown()}</h2>
 			{/snippet}
 
 			{#if data.consentSplit.length === 0}
-				<p class="text-muted text-fluid-sm">No session data available.</p>
+				<p class="text-muted text-fluid-sm">{m.admin_analytics_consent_breakdown_empty()}</p>
 			{:else}
 				<DiagGrid>
 					{#each data.consentSplit as split}

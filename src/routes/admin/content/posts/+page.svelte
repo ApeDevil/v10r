@@ -6,6 +6,7 @@ import { page } from '$app/state';
 import { Card, ConfirmDialog, EmptyState } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
 
 let { data }: PageProps = $props();
@@ -83,10 +84,10 @@ function submitHiddenForm(action: string, postId: string) {
 	<Card>
 		{#snippet header()}
 			<Cluster justify="between" align="center">
-				<h2 class="text-fluid-lg font-semibold">Post Management</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.admin_posts_title()}</h2>
 				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>
 					<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
-					Refresh
+					{m.admin_action_refresh()}
 				</Button>
 			</Cluster>
 		{/snippet}
@@ -94,19 +95,19 @@ function submitHiddenForm(action: string, postId: string) {
 		<!-- Search & Filter Bar -->
 		<div class="filter-bar">
 			<form method="GET" class="search-form">
-				<Input name="q" value={data.q} placeholder="Search posts..." />
+				<Input name="q" value={data.q} placeholder={m.admin_posts_search_placeholder()} />
 				<input type="hidden" name="page" value="1" />
 				{#if data.sort !== 'created'}<input type="hidden" name="sort" value={data.sort} />{/if}
 				{#if data.dir !== 'desc'}<input type="hidden" name="dir" value={data.dir} />{/if}
 				{#if data.statusFilter !== 'all'}<input type="hidden" name="status" value={data.statusFilter} />{/if}
-				<Button type="submit" variant="outline" size="sm">Search</Button>
+				<Button type="submit" variant="outline" size="sm">{m.admin_action_search()}</Button>
 			</form>
 
 			<div class="status-filters">
-				<a href={buildUrl({ status: '', page: '1' })} class="filter-link" class:active={data.statusFilter === 'all'}>All</a>
-				<a href={buildUrl({ status: 'draft', page: '1' })} class="filter-link" class:active={data.statusFilter === 'draft'}>Draft</a>
-				<a href={buildUrl({ status: 'published', page: '1' })} class="filter-link" class:active={data.statusFilter === 'published'}>Published</a>
-				<a href={buildUrl({ status: 'archived', page: '1' })} class="filter-link" class:active={data.statusFilter === 'archived'}>Archived</a>
+				<a href={buildUrl({ status: '', page: '1' })} class="filter-link" class:active={data.statusFilter === 'all'}>{m.admin_filter_all()}</a>
+				<a href={buildUrl({ status: 'draft', page: '1' })} class="filter-link" class:active={data.statusFilter === 'draft'}>{m.admin_status_draft()}</a>
+				<a href={buildUrl({ status: 'published', page: '1' })} class="filter-link" class:active={data.statusFilter === 'published'}>{m.admin_status_published()}</a>
+				<a href={buildUrl({ status: 'archived', page: '1' })} class="filter-link" class:active={data.statusFilter === 'archived'}>{m.admin_status_archived()}</a>
 			</div>
 		</div>
 
@@ -114,18 +115,18 @@ function submitHiddenForm(action: string, postId: string) {
 			{#if data.q || data.statusFilter !== 'all'}
 				<EmptyState
 					icon="i-lucide-search-x"
-					title="No results"
-					description={data.q ? `No posts match "${data.q}"` : 'No posts match these filters.'}
+					title={m.admin_posts_empty_results_title()}
+					description={data.q ? m.admin_posts_empty_results_description_query({ query: data.q }) : m.admin_posts_empty_results_description_filter()}
 				>
 					<a href="/admin/content/posts">
-						<Button variant="outline" size="sm">Clear filters</Button>
+						<Button variant="outline" size="sm">{m.admin_posts_clear_filters()}</Button>
 					</a>
 				</EmptyState>
 			{:else}
 				<EmptyState
 					icon="i-lucide-file-text"
-					title="No posts yet"
-					description="Blog posts will appear here once they are created."
+					title={m.admin_posts_empty_title()}
+					description={m.admin_posts_empty_description()}
 				/>
 			{/if}
 		{:else}
@@ -135,34 +136,34 @@ function submitHiddenForm(action: string, postId: string) {
 						<tr>
 							<th>
 								<a href={sortHref('title')} class="sort-header">
-									Title <span class="{sortIcon('title')} sort-icon"></span>
+									{m.admin_posts_col_title()} <span class="{sortIcon('title')} sort-icon"></span>
 								</a>
 							</th>
-							<th>Slug</th>
+							<th>{m.admin_posts_col_slug()}</th>
 							<th>
 								<a href={sortHref('status')} class="sort-header">
-									Status <span class="{sortIcon('status')} sort-icon"></span>
+									{m.admin_posts_col_status()} <span class="{sortIcon('status')} sort-icon"></span>
 								</a>
 							</th>
-							<th>Author</th>
-							<th>Tags</th>
+							<th>{m.admin_posts_col_author()}</th>
+							<th>{m.admin_posts_col_tags()}</th>
 							<th>
 								<a href={sortHref('published')} class="sort-header">
-									Published <span class="{sortIcon('published')} sort-icon"></span>
+									{m.admin_posts_col_published()} <span class="{sortIcon('published')} sort-icon"></span>
 								</a>
 							</th>
 							<th>
 								<a href={sortHref('updated')} class="sort-header">
-									Updated <span class="{sortIcon('updated')} sort-icon"></span>
+									{m.admin_posts_col_updated()} <span class="{sortIcon('updated')} sort-icon"></span>
 								</a>
 							</th>
-							<th>Actions</th>
+							<th>{m.admin_posts_col_actions()}</th>
 						</tr>
 					</thead>
 					<tbody>
 						{#each data.posts as p}
 							<tr>
-								<td class="title-cell">{p.title ?? '(untitled)'}</td>
+								<td class="title-cell">{p.title ?? m.admin_posts_untitled()}</td>
 								<td><code class="slug-code">{p.slug}</code></td>
 								<td><Badge variant={statusVariant(p.status)}>{p.status}</Badge></td>
 								<td>{p.authorName ?? '—'}</td>
@@ -190,7 +191,7 @@ function submitHiddenForm(action: string, postId: string) {
 												<input type="hidden" name="postId" value={p.id} />
 												<Button type="submit" variant="outline" size="sm" disabled={submitting === p.id + ':publish'}>
 													{#if submitting === p.id + ':publish'}<Spinner size="xs" class="mr-1" />{/if}
-													Publish
+													{m.admin_action_publish()}
 												</Button>
 											</form>
 										{/if}
@@ -201,7 +202,7 @@ function submitHiddenForm(action: string, postId: string) {
 												size="sm"
 												onclick={() => { unpublishPostId = p.id; showUnpublishDialog = true; }}
 											>
-												Unpublish
+												{m.admin_action_unpublish()}
 											</Button>
 										{/if}
 
@@ -214,7 +215,7 @@ function submitHiddenForm(action: string, postId: string) {
 												<input type="hidden" name="postId" value={p.id} />
 												<Button type="submit" variant="ghost" size="sm" disabled={submitting === p.id + ':archive'}>
 													{#if submitting === p.id + ':archive'}<Spinner size="xs" class="mr-1" />{/if}
-													Archive
+													{m.admin_action_archive()}
 												</Button>
 											</form>
 										{/if}
@@ -224,7 +225,7 @@ function submitHiddenForm(action: string, postId: string) {
 											size="sm"
 											onclick={() => { deletePostId = p.id; showDeleteDialog = true; }}
 										>
-											Delete
+											{m.admin_action_delete()}
 										</Button>
 									</Cluster>
 								</td>
@@ -238,13 +239,13 @@ function submitHiddenForm(action: string, postId: string) {
 				<div class="pagination">
 					{#if data.page > 1}
 						<a href={buildUrl({ page: String(data.page - 1) })} class="page-link">
-							<span class="i-lucide-chevron-left h-4 w-4"></span> Prev
+							<span class="i-lucide-chevron-left h-4 w-4"></span> {m.admin_posts_pagination_prev()}
 						</a>
 					{/if}
-					<span class="page-info">Page {data.page} of {data.totalPages}</span>
+					<span class="page-info">{m.admin_posts_pagination_info({ page: data.page, total: data.totalPages })}</span>
 					{#if data.page < data.totalPages}
 						<a href={buildUrl({ page: String(data.page + 1) })} class="page-link">
-							Next <span class="i-lucide-chevron-right h-4 w-4"></span>
+							{m.admin_posts_pagination_next()} <span class="i-lucide-chevron-right h-4 w-4"></span>
 						</a>
 					{/if}
 				</div>
@@ -256,9 +257,9 @@ function submitHiddenForm(action: string, postId: string) {
 <!-- Delete Confirmation -->
 <ConfirmDialog
 	open={showDeleteDialog}
-	title="Delete Post"
-	description="This will soft-delete the post. It can be recovered from the database."
-	confirmLabel="Delete"
+	title={m.admin_posts_delete_dialog_title()}
+	description={m.admin_posts_delete_dialog_description()}
+	confirmLabel={m.admin_action_delete()}
 	destructive
 	onconfirm={() => {
 		showDeleteDialog = false;
@@ -270,9 +271,9 @@ function submitHiddenForm(action: string, postId: string) {
 <!-- Unpublish Confirmation -->
 <ConfirmDialog
 	open={showUnpublishDialog}
-	title="Unpublish Post"
-	description="This will remove the post from the public site and set its status to archived."
-	confirmLabel="Unpublish"
+	title={m.admin_posts_unpublish_dialog_title()}
+	description={m.admin_posts_unpublish_dialog_description()}
+	confirmLabel={m.admin_action_unpublish()}
 	destructive
 	onconfirm={() => {
 		showUnpublishDialog = false;

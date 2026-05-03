@@ -4,6 +4,7 @@ import { valibotClient } from 'sveltekit-superforms/adapters';
 import { Alert, Card, FormField } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Button, Select, Spinner } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { dependentSchema } from '$lib/schemas/showcase/patterns';
 import type { PageProps } from './$types';
 
@@ -59,12 +60,12 @@ function onStateChange() {
 <Stack gap="6">
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">Cascading Selects</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.showcase_forms_dependent_heading()}</h2>
 			<p class="text-fluid-sm text-muted">Country → State → City. Each level filters the next.</p>
 		{/snippet}
 
 		{#if $formMessage}
-			<Alert variant="success" title="Success">
+			<Alert variant="success" title={m.showcase_forms_success()}>
 				{#snippet children()}
 					<p>{$formMessage}</p>
 				{/snippet}
@@ -72,14 +73,14 @@ function onStateChange() {
 		{/if}
 
 		<form method="POST" use:enhance class="form-grid">
-			<FormField label="Country" error={$errors.country?.[0]} required>
+			<FormField label={m.showcase_forms_field_country()} error={$errors.country?.[0]} required>
 				{#snippet children(_)}
 					<input type="hidden" name="country" value={$form.country} />
 					<Select options={countryOptions} bind:value={$form.country} placeholder="Select country..." onchange={onCountryChange} error={!!$errors.country} />
 				{/snippet}
 			</FormField>
 
-			<FormField label="State / Region" error={$errors.state?.[0]} required>
+			<FormField label={m.showcase_forms_field_state_region()} error={$errors.state?.[0]} required>
 				{#snippet children(_)}
 					<input type="hidden" name="state" value={$form.state} />
 					<Select
@@ -93,7 +94,7 @@ function onStateChange() {
 				{/snippet}
 			</FormField>
 
-			<FormField label="City" error={$errors.city?.[0]} required>
+			<FormField label={m.showcase_forms_field_city()} error={$errors.city?.[0]} required>
 				{#snippet children(_)}
 					<input type="hidden" name="city" value={$form.city} />
 					<Select
@@ -109,7 +110,7 @@ function onStateChange() {
 			<div class="form-actions">
 				<Button type="submit" disabled={$submitting}>
 					{#if $delayed}<Spinner size="sm" class="mr-2" />{/if}
-					Submit
+					{m.showcase_forms_submit()}
 				</Button>
 			</div>
 		</form>

@@ -1,4 +1,5 @@
 <script lang="ts">
+import * as m from '$lib/paraglide/messages';
 import Skeleton from './Skeleton.svelte';
 
 interface Props {
@@ -21,7 +22,7 @@ const lineWidths = $derived(
 );
 </script>
 
-<div class="skeleton-text {className || ''}" role="status" aria-label="Loading text">
+<div class="skeleton-text {className || ''}" role="status" aria-label={m.primitives_skeleton_text()}>
 	{#each lineWidths as width, i}
 		<Skeleton height="1rem" {width} rounded="sm" class="text-line" />
 	{/each}

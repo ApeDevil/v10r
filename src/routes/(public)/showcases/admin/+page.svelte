@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Tag } from '$lib/components/primitives/tag';
+import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
 
@@ -83,7 +84,7 @@ const subPages = [
 
 	<section class="controller">
 		<header class="section-head">
-			<h3 class="section-title">Controller</h3>
+			<h3 class="section-title">{m.showcase_admin_section_controller()}</h3>
 			<Tag variant="muted" size="sm" label="GDPR Art. 13(1)(a)" />
 		</header>
 		<dl class="controller-grid">
@@ -113,7 +114,7 @@ const subPages = [
 
 	<section class="principles">
 		<header class="section-head">
-			<h3 class="section-title">Principles</h3>
+			<h3 class="section-title">{m.showcase_admin_section_principles()}</h3>
 			<Tag variant="muted" size="sm" label="GDPR Art. 5" />
 		</header>
 		<div class="principle-grid">
@@ -131,7 +132,7 @@ const subPages = [
 
 	<section class="subpages">
 		<header class="section-head">
-			<h3 class="section-title">The detail pages</h3>
+			<h3 class="section-title">{m.showcase_admin_section_subpages()}</h3>
 		</header>
 		<div class="subpage-grid">
 			{#each subPages as s}

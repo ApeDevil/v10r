@@ -5,6 +5,7 @@ import { SceneCard, ViewerDialog } from '$lib/components/3d';
 import { BackLink, NavGrid, PageHeader } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
 import { MODELS, MODELS_BY_ID } from '$lib/config/models';
+import * as m from '$lib/paraglide/messages';
 
 const activeModel = $derived(page.state.modelId ? MODELS_BY_ID.get(page.state.modelId) : undefined);
 
@@ -23,12 +24,12 @@ function closeViewer() {
 </script>
 <PageContainer width="default" class="pt-7">
 	<PageHeader
-		title="3D Showcase"
-		description="Three.js + Threlte 3D demonstrations with GLTF models, animations, and interactive controls."
+		title={m.showcase_3d_title()}
+		description={m.showcase_3d_description()}
 		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: '3D' }
+			{ label: m.showcase_breadcrumb_home(), href: '/' },
+			{ label: m.showcase_breadcrumb_showcases(), href: '/showcases' },
+			{ label: m.showcase_3d_breadcrumb() }
 		]}
 	/>
 
@@ -41,7 +42,7 @@ function closeViewer() {
 		{/each}
 	</NavGrid>
 
-	<BackLink href="/showcases" label="Showcases" />
+	<BackLink href="/showcases" label={m.showcase_breadcrumb_showcases()} />
 </PageContainer>
 
 {#if activeModel}

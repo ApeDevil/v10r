@@ -4,6 +4,7 @@ import { valibotClient } from 'sveltekit-superforms/adapters';
 import { Alert, Card, FormField } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Button, Input, Spinner, Textarea } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { contactSchema } from '$lib/schemas/showcase/basics';
 import type { PageProps } from './$types';
 
@@ -24,7 +25,7 @@ const {
 <Stack gap="6">
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">Contact Form</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.showcase_forms_contact_heading()}</h2>
 			<p class="text-fluid-sm text-muted">Standard form with progressive enhancement. Works with and without JavaScript.</p>
 		{/snippet}
 
@@ -37,7 +38,7 @@ const {
 		{/if}
 
 		<form method="POST" use:enhance class="form-grid">
-			<FormField label="Name" error={$errors.name?.[0]} required>
+			<FormField label={m.showcase_forms_field_name()} error={$errors.name?.[0]} required>
 				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
@@ -50,7 +51,7 @@ const {
 				{/snippet}
 			</FormField>
 
-			<FormField label="Email" error={$errors.email?.[0]} required>
+			<FormField label={m.showcase_forms_field_email()} error={$errors.email?.[0]} required>
 				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
@@ -64,7 +65,7 @@ const {
 				{/snippet}
 			</FormField>
 
-			<FormField label="Subject" error={$errors.subject?.[0]} required>
+			<FormField label={m.showcase_forms_field_subject()} error={$errors.subject?.[0]} required>
 				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
@@ -77,7 +78,7 @@ const {
 				{/snippet}
 			</FormField>
 
-			<FormField label="Message" error={$errors.message?.[0]} required>
+			<FormField label={m.showcase_forms_field_message()} error={$errors.message?.[0]} required>
 				{#snippet children({ fieldId, describedBy })}
 					<Textarea
 						id={fieldId}
@@ -94,7 +95,7 @@ const {
 			<div class="form-actions">
 				<Button type="submit" disabled={$submitting}>
 					{#if $delayed}<Spinner size="sm" class="mr-2" />{/if}
-					Send Message
+					{m.showcase_forms_contact_submit()}
 				</Button>
 			</div>
 		</form>

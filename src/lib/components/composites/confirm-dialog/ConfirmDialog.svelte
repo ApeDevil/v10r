@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Dialog } from 'bits-ui';
 import { Button } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { cn } from '$lib/utils/cn';
 
 interface Props {
@@ -18,8 +19,8 @@ let {
 	open = $bindable(),
 	title,
 	description,
-	confirmLabel = 'Confirm',
-	cancelLabel = 'Cancel',
+	confirmLabel = m.composites_confirm_dialog_confirm(),
+	cancelLabel = m.composites_confirm_dialog_cancel(),
 	destructive = false,
 	onconfirm,
 	oncancel,
@@ -62,7 +63,7 @@ let {
 				class="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100"
 			>
 				<span class="i-lucide-x h-4 w-4" ></span>
-				<span class="sr-only">Close</span>
+				<span class="sr-only">{m.composites_dialog_close()}</span>
 			</Dialog.Close>
 		</Dialog.Content>
 	</Dialog.Portal>

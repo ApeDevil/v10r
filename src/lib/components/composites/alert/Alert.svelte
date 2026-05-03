@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import * as m from '$lib/paraglide/messages';
 import { cn } from '$lib/utils/cn';
 
 interface Props {
@@ -56,7 +57,7 @@ function handleClose() {
 			<button
 				onclick={handleClose}
 				class="alert-close"
-				aria-label="Close alert"
+				aria-label={m.composites_alert_close()}
 			>
 				<span class="i-lucide-x alert-close-icon" ></span>
 			</button>

@@ -17,6 +17,7 @@ import {
 	Table,
 	Typography,
 } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
 
 let { data } = $props();
@@ -32,12 +33,12 @@ function formatTtl(seconds: number): string {
 }
 const toast = getToast();
 
-const sections = [
-	{ id: 'ttl-countdown', label: 'TTL Countdown' },
-	{ id: 'sliding-expiry', label: 'Sliding Expiry' },
-	{ id: 'rate-limiting', label: 'Rate Limiting' },
-	{ id: 'cache-vs-db', label: 'Cache vs DB' },
-];
+const sections = $derived([
+	{ id: 'ttl-countdown', label: m.showcase_db_cache_ephemeral_nav_ttl() },
+	{ id: 'sliding-expiry', label: m.showcase_db_cache_ephemeral_nav_sliding() },
+	{ id: 'rate-limiting', label: m.showcase_db_cache_ephemeral_nav_rate() },
+	{ id: 'cache-vs-db', label: m.showcase_db_cache_ephemeral_nav_vs() },
+]);
 
 // ─── TTL state ──────────────────────────────────────
 let newTtlKey = $state('showcase:ttl:');
@@ -96,7 +97,7 @@ function handleResult(successMsg?: string) {
 			<section id="ttl-countdown">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">TTL Countdown</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_cache_ephemeral_card_ttl()}</Typography>
 						<Typography variant="muted" as="p">Every key below has a Time-To-Live. When the TTL reaches 0, Redis deletes the key automatically.</Typography>
 					{/snippet}
 
@@ -136,7 +137,7 @@ function handleResult(successMsg?: string) {
 								<Input name="ttl" type="number" bind:value={newTtlSeconds} placeholder="TTL (s)" aria-label="TTL in seconds" class="ttl-input" />
 								<Button type="submit" variant="outline" size="sm" disabled={!newTtlKey || !newTtlValue || !newTtlSeconds}>
 									{#if actionLoading === 'createTtl'}<Spinner size="xs" class="mr-1" />{/if}
-									Create
+									{m.showcase_db_cache_ephemeral_create()}
 								</Button>
 							</div>
 						</form>
@@ -148,7 +149,7 @@ function handleResult(successMsg?: string) {
 			<section id="sliding-expiry">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Sliding Expiry</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_cache_ephemeral_card_sliding()}</Typography>
 						<Typography variant="muted" as="p">Access extends the TTL — like a session that stays alive while you're active. Click "Access" to reset the TTL.</Typography>
 					{/snippet}
 
@@ -196,7 +197,7 @@ function handleResult(successMsg?: string) {
 			<section id="rate-limiting">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Rate Limiting</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_cache_ephemeral_card_rate()}</Typography>
 						<Typography variant="muted" as="p">Sliding window rate limiter powered by <code>@upstash/ratelimit</code>. Click repeatedly to see the limit in action.</Typography>
 					{/snippet}
 
@@ -215,7 +216,7 @@ function handleResult(successMsg?: string) {
 							<Button type="submit" variant="outline" size="sm" disabled={rateLoading}>
 								{#if rateLoading}<Spinner size="xs" class="mr-1" />{/if}
 								<span class="i-lucide-send h-4 w-4 mr-1" ></span>
-								Send Request
+								{m.showcase_db_cache_ephemeral_send_request()}
 							</Button>
 						</form>
 
@@ -255,7 +256,7 @@ function handleResult(successMsg?: string) {
 			<section id="cache-vs-db">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Cache vs DB</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_cache_ephemeral_card_vs()}</Typography>
 						<Typography variant="muted" as="p">When to use each data paradigm — a quick reference for choosing the right tool.</Typography>
 					{/snippet}
 
@@ -264,10 +265,10 @@ function handleResult(successMsg?: string) {
 							<Header>
 								<Row>
 									<HeaderCell></HeaderCell>
-									<HeaderCell>Cache (Redis)</HeaderCell>
-									<HeaderCell>Relational (PostgreSQL)</HeaderCell>
-									<HeaderCell>Graph (Neo4j)</HeaderCell>
-									<HeaderCell>Object Storage (R2)</HeaderCell>
+									<HeaderCell>{m.showcase_db_cache_ephemeral_col_cache()}</HeaderCell>
+									<HeaderCell>{m.showcase_db_cache_ephemeral_col_relational()}</HeaderCell>
+									<HeaderCell>{m.showcase_db_cache_ephemeral_col_graph()}</HeaderCell>
+									<HeaderCell>{m.showcase_db_cache_ephemeral_col_storage()}</HeaderCell>
 								</Row>
 							</Header>
 							<Body>

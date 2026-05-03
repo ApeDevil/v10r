@@ -2,6 +2,7 @@
 import { Card } from '$lib/components';
 import type { ActivityBarItem, LayoutNode, PanelDefinition } from '$lib/components/composites/dock';
 import { DockLayout } from '$lib/components/composites/dock';
+import * as m from '$lib/paraglide/messages';
 
 // --- Panel definitions ---
 const panels: Record<string, PanelDefinition> = {
@@ -97,7 +98,7 @@ const activityBarItems: ActivityBarItem[] = [
 </script>
 <main class="content">
 	<section>
-		<h2 class="text-fluid-2xl font-bold mb-fluid-3">Interactive Dock</h2>
+		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_workbench_section_dock()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			Drag tabs between panels to rearrange. Drop on edges to split, center to add as tab. Close tabs with the X button. Use the activity bar to toggle panel visibility.
 		</p>
@@ -149,11 +150,11 @@ const activityBarItems: ActivityBarItem[] = [
 	</section>
 
 	<section>
-		<h2 class="text-fluid-2xl font-bold mb-fluid-3">Features</h2>
+		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_workbench_section_features()}</h2>
 
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-fluid-4">
 			<Card>
-				<h3 class="text-fluid-lg font-semibold mb-2">Drag & Drop</h3>
+				<h3 class="text-fluid-lg font-semibold mb-2">{m.showcase_ui_workbench_card_drag_drop()}</h3>
 				<ul class="list-disc list-inside text-fluid-sm text-muted space-y-1">
 					<li>Drag tabs between panels</li>
 					<li>Drop on edges to create splits</li>
@@ -163,7 +164,7 @@ const activityBarItems: ActivityBarItem[] = [
 			</Card>
 
 			<Card>
-				<h3 class="text-fluid-lg font-semibold mb-2">Layout Control</h3>
+				<h3 class="text-fluid-lg font-semibold mb-2">{m.showcase_ui_workbench_card_layout_control()}</h3>
 				<ul class="list-disc list-inside text-fluid-sm text-muted space-y-1">
 					<li>Activity bar toggles panel visibility</li>
 					<li>Close tabs to collapse empty splits</li>
@@ -173,7 +174,7 @@ const activityBarItems: ActivityBarItem[] = [
 			</Card>
 
 			<Card>
-				<h3 class="text-fluid-lg font-semibold mb-2">Keyboard</h3>
+				<h3 class="text-fluid-lg font-semibold mb-2">{m.showcase_ui_workbench_card_keyboard()}</h3>
 				<ul class="list-disc list-inside text-fluid-sm text-muted space-y-1">
 					<li>Tab to navigate between elements</li>
 					<li>Arrow keys to reorder tabs</li>
@@ -183,7 +184,7 @@ const activityBarItems: ActivityBarItem[] = [
 			</Card>
 
 			<Card>
-				<h3 class="text-fluid-lg font-semibold mb-2">Architecture</h3>
+				<h3 class="text-fluid-lg font-semibold mb-2">{m.showcase_ui_workbench_card_architecture()}</h3>
 				<ul class="list-disc list-inside text-fluid-sm text-muted space-y-1">
 					<li>Binary split tree (SplitNode | LeafNode)</li>
 					<li>PaneForge at each split level</li>

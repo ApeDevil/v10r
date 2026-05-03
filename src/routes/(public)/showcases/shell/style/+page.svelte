@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Button } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { getStyle } from '$lib/state/style.svelte';
 import { getTheme } from '$lib/state/theme.svelte';
 import { getToast } from '$lib/state/toast.svelte';
@@ -34,7 +35,7 @@ const totalCombinations = PALETTE_REGISTRY.length * TYPOGRAPHY_REGISTRY.length *
 </script>
 <!-- Section 1: Theme -->
 <section class="demo-section">
-	<h2>Theme</h2>
+	<h2>{m.showcase_shell_style_section_theme()}</h2>
 	<p>Dark or light — your eyes decide.</p>
 
 	<dl class="state-list">
@@ -49,15 +50,15 @@ const totalCombinations = PALETTE_REGISTRY.length * TYPOGRAPHY_REGISTRY.length *
 	</dl>
 
 	<div class="button-group">
-		<Button variant="secondary" onclick={() => theme.setMode('light')}>Light</Button>
-		<Button variant="secondary" onclick={() => theme.setMode('dark')}>Dark</Button>
-		<Button variant="secondary" onclick={() => theme.setMode('system')}>System</Button>
+		<Button variant="secondary" onclick={() => theme.setMode('light')}>{m.showcase_shell_style_btn_light()}</Button>
+		<Button variant="secondary" onclick={() => theme.setMode('dark')}>{m.showcase_shell_style_btn_dark()}</Button>
+		<Button variant="secondary" onclick={() => theme.setMode('system')}>{m.showcase_shell_style_btn_system()}</Button>
 	</div>
 </section>
 
 <!-- Section 2: Style Randomizer -->
 <section class="demo-section">
-	<h2>Style Randomizer</h2>
+	<h2>{m.showcase_shell_style_section_randomizer()}</h2>
 	<p>
 		{PALETTE_REGISTRY.length} palettes &times; {TYPOGRAPHY_REGISTRY.length} typography sets &times;
 		{RADIUS_REGISTRY.length} radius presets = <strong>{totalCombinations} combinations</strong>.
@@ -81,14 +82,14 @@ const totalCombinations = PALETTE_REGISTRY.length * TYPOGRAPHY_REGISTRY.length *
 		<div class="button-group">
 			<Button variant="secondary" onclick={() => style.roll(toast)} disabled={style.rolling}>
 				{#if style.rolling}
-					Rolling...
+					{m.showcase_shell_style_btn_rolling()}
 				{:else}
-					Roll the dice
+					{m.showcase_shell_style_btn_roll()}
 				{/if}
 			</Button>
 			<Button variant="secondary" onclick={() => style.roll(toast)} disabled={style.rolling}>
 				<span class="i-lucide-shuffle text-icon-sm"></span>
-				Shuffle
+				{m.showcase_shell_style_btn_shuffle()}
 			</Button>
 		</div>
 	{:else}
@@ -97,7 +98,7 @@ const totalCombinations = PALETTE_REGISTRY.length * TYPOGRAPHY_REGISTRY.length *
 
 	<div class="registry">
 		<div class="registry-group">
-			<h3>Palettes</h3>
+			<h3>{m.showcase_shell_style_registry_palettes()}</h3>
 			<div class="chip-list">
 				{#each PALETTE_REGISTRY as p}
 					<span class="chip" class:active={style.paletteId === p.id}>{p.name}</span>
@@ -106,7 +107,7 @@ const totalCombinations = PALETTE_REGISTRY.length * TYPOGRAPHY_REGISTRY.length *
 		</div>
 
 		<div class="registry-group">
-			<h3>Typography</h3>
+			<h3>{m.showcase_shell_style_registry_typography()}</h3>
 			<div class="chip-list">
 				{#each TYPOGRAPHY_REGISTRY as t}
 					<span class="chip" class:active={style.typographyId === t.id}>{t.name}</span>
@@ -115,7 +116,7 @@ const totalCombinations = PALETTE_REGISTRY.length * TYPOGRAPHY_REGISTRY.length *
 		</div>
 
 		<div class="registry-group">
-			<h3>Radius</h3>
+			<h3>{m.showcase_shell_style_registry_radius()}</h3>
 			<div class="chip-list">
 				{#each RADIUS_REGISTRY as r}
 					<span class="chip" class:active={style.radiusId === r.id}>{r.name}</span>
@@ -127,7 +128,7 @@ const totalCombinations = PALETTE_REGISTRY.length * TYPOGRAPHY_REGISTRY.length *
 
 <!-- Section 3: Visual Identity -->
 <section class="demo-section">
-	<h2>Visual Identity</h2>
+	<h2>{m.showcase_shell_style_section_identity()}</h2>
 	<p>Lock your brand — all visitors see the same design.</p>
 
 	{#if data.brand}
@@ -167,7 +168,7 @@ const totalCombinations = PALETTE_REGISTRY.length * TYPOGRAPHY_REGISTRY.length *
 		</p>
 	{/if}
 
-	<h3>Priority Cascade</h3>
+	<h3>{m.showcase_shell_style_section_cascade()}</h3>
 	<ol class="cascade">
 		<li>
 			<strong>Brand cookie</strong>

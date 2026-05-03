@@ -3,6 +3,7 @@ import { enhance } from '$app/forms';
 import { Alert, Card } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Spinner } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
 
@@ -30,7 +31,7 @@ function recordHistory(ms: number) {
 		<Card>
 			{#snippet header()}
 				<Cluster justify="between">
-					<h2 class="text-fluid-lg font-semibold">Status</h2>
+					<h2 class="text-fluid-lg font-semibold">{m.showcase_db_relational_connection_card_status()}</h2>
 					<form
 						method="POST"
 						action="?/retest"
@@ -48,7 +49,7 @@ function recordHistory(ms: number) {
 								<Spinner size="xs" class="mr-2" />
 							{/if}
 							<span class="i-lucide-activity h-4 w-4 mr-1" ></span>
-							Re-test
+							{m.showcase_db_relational_connection_retest()}
 						</Button>
 					</form>
 				</Cluster>
@@ -94,7 +95,7 @@ function recordHistory(ms: number) {
 			<!-- Database Info -->
 			<Card>
 				{#snippet header()}
-					<h2 class="text-fluid-lg font-semibold">Database Info</h2>
+					<h2 class="text-fluid-lg font-semibold">{m.showcase_db_relational_connection_card_db_info()}</h2>
 				{/snippet}
 
 				<div class="diag-grid">
@@ -128,7 +129,7 @@ function recordHistory(ms: number) {
 			<!-- Latency Explanation -->
 			<Card>
 				{#snippet header()}
-					<h2 class="text-fluid-lg font-semibold">About Neon Latency</h2>
+					<h2 class="text-fluid-lg font-semibold">{m.showcase_db_relational_connection_card_latency()}</h2>
 				{/snippet}
 
 				<div class="explanation">

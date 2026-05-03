@@ -1,6 +1,7 @@
 <script lang="ts">
 import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
 import { contextMenuContentVariants, contextMenuItemVariants } from '$lib/components/composites/context-menu';
+import * as m from '$lib/paraglide/messages';
 import { cn } from '$lib/utils/cn';
 import { getDeskSettings } from './desk-settings.svelte';
 import { collectLeaves, hasPanelType } from './dock.operations';
@@ -21,12 +22,12 @@ const deskSettings = getDeskSettings();
 
 const isHorizontal = $derived(position === 'top' || position === 'bottom');
 
-const POSITION_OPTIONS: { pos: ActivityBarPosition; label: string; icon: string }[] = [
-	{ pos: 'left', label: 'Left', icon: 'i-lucide-panel-left' },
-	{ pos: 'right', label: 'Right', icon: 'i-lucide-panel-right' },
-	{ pos: 'top', label: 'Top', icon: 'i-lucide-panel-top' },
-	{ pos: 'bottom', label: 'Bottom', icon: 'i-lucide-panel-bottom' },
-];
+const POSITION_OPTIONS = $derived<{ pos: ActivityBarPosition; label: string; icon: string }[]>([
+	{ pos: 'left', label: m.composites_dock_position_left(), icon: 'i-lucide-panel-left' },
+	{ pos: 'right', label: m.composites_dock_position_right(), icon: 'i-lucide-panel-right' },
+	{ pos: 'top', label: m.composites_dock_position_top(), icon: 'i-lucide-panel-top' },
+	{ pos: 'bottom', label: m.composites_dock_position_bottom(), icon: 'i-lucide-panel-bottom' },
+]);
 
 function isTypeInLayout(panelType: string): boolean {
 	return hasPanelType(dock.root, panelType, dock.panels);
@@ -64,7 +65,7 @@ function handleClick(item: ActivityBarItem) {
 				class={cn('dock-activity-bar', isHorizontal && 'horizontal', className)}
 				data-position={position}
 				role="toolbar"
-				aria-label="Activity bar"
+				aria-label={m.composites_dock_activity_bar()}
 			>
 				{#each items as item (item.panelType)}
 					{@const active = isTypeInLayout(item.panelType)}
@@ -81,7 +82,7 @@ function handleClick(item: ActivityBarItem) {
 					<WorkspaceZone />
 					<button
 						class="dock-activity-btn"
-						title="Desk Preferences"
+						title={m.composites_desk_prefs_title()}
 						onclick={() => deskSettings.openDialog()}
 					>
 						<span class={cn('dock-activity-icon', 'i-lucide-settings')}></span>
@@ -94,7 +95,7 @@ function handleClick(item: ActivityBarItem) {
 		<ContextMenuPrimitive.Content class={contextMenuContentVariants()}>
 			<ContextMenuPrimitive.Group>
 				<ContextMenuPrimitive.GroupHeading class="px-2 py-1.5 text-xs font-medium text-muted">
-					Activity Bar Position
+					{m.composites_dock_activity_bar_position()}
 				</ContextMenuPrimitive.GroupHeading>
 				{#each POSITION_OPTIONS as opt (opt.pos)}
 					<ContextMenuPrimitive.CheckboxItem

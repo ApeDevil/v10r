@@ -5,6 +5,7 @@ import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/prim
 import { HeatMap, ScatterPlot } from '$lib/components/viz';
 import { getVizPalette } from '$lib/components/viz/_shared/theme-bridge';
 import type { HeatMapData } from '$lib/components/viz/plot';
+import * as m from '$lib/paraglide/messages';
 import VizDemoCard from '../_components/VizDemoCard.svelte';
 
 const sections = [
@@ -110,13 +111,13 @@ const serverData: HeatMapData = {
 </script>
 <div class="page">
 	<PageHeader
-		title="Plots"
-		description="Scatter plots and heatmaps for dense data visualization. ScatterPlot uses Chart.js; HeatMap is zero-dependency pure Canvas with ResizeObserver, DPI scaling, and design token theming."
+		title={m.showcase_viz_plots_title()}
+		description={m.showcase_viz_plots_description()}
 		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'Viz', href: '/showcases/viz' },
-			{ label: 'Plots' },
+			{ label: m.showcase_breadcrumb_home(), href: '/' },
+			{ label: m.showcase_breadcrumb_showcases(), href: '/showcases' },
+			{ label: m.showcase_viz_breadcrumb(), href: '/showcases/viz' },
+			{ label: m.showcase_viz_plots_breadcrumb() },
 		]}
 	/>
 
@@ -125,7 +126,7 @@ const serverData: HeatMapData = {
 	<main class="content">
 		<!-- Scatter Plot -->
 		<section id="scatter-plot" class="section">
-			<h2 class="section-title">Scatter Plot</h2>
+			<h2 class="section-title">{m.showcase_viz_plots_section_scatter()}</h2>
 			<p class="section-description">Chart.js scatter plots for correlation analysis. Each dataset renders as a distinct point cloud.</p>
 
 			<div class="demos">
@@ -179,7 +180,7 @@ const serverData: HeatMapData = {
 
 		<!-- Activity Heatmap -->
 		<section id="activity-heatmap" class="section">
-			<h2 class="section-title">Activity Heatmap</h2>
+			<h2 class="section-title">{m.showcase_viz_plots_section_activity()}</h2>
 			<p class="section-description">GitHub-style contribution graph showing activity intensity across days and weeks. Green color scale for growth/activity data.</p>
 
 			<div class="demos">
@@ -233,7 +234,7 @@ const serverData: HeatMapData = {
 
 		<!-- Correlation Matrix -->
 		<section id="correlation-matrix" class="section">
-			<h2 class="section-title">Correlation Matrix</h2>
+			<h2 class="section-title">{m.showcase_viz_plots_section_correlation()}</h2>
 			<p class="section-description">Symmetric correlation matrix with numeric values displayed inside cells. Uses the default chart color scale.</p>
 
 			<div class="demos">
@@ -278,7 +279,7 @@ const serverData: HeatMapData = {
 
 		<!-- Server Load -->
 		<section id="server-load" class="section">
-			<h2 class="section-title">Server Load</h2>
+			<h2 class="section-title">{m.showcase_viz_plots_section_server()}</h2>
 			<p class="section-description">Response time heatmap showing server load patterns across time of day and day of week. Red color scale for alert-level data.</p>
 
 			<div class="demos">
@@ -321,7 +322,7 @@ const serverData: HeatMapData = {
 		</section>
 	</main>
 
-	<BackLink href="/showcases/viz" label="Viz" />
+	<BackLink href="/showcases/viz" label={m.showcase_viz_breadcrumb()} />
 </div>
 
 <style>

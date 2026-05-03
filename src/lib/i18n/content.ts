@@ -13,7 +13,8 @@
  * coupling DB-content reads to Paraglide's AsyncLocalStorage scope.
  */
 
-export type Locale = 'en' | 'de' | 'ru';
+import type { Locale } from './runtime';
+
 export type TranslationMap = Partial<Record<Exclude<Locale, 'en'>, string>>;
 
 export function tc(source: string, i18n: TranslationMap | null | undefined, requested: Locale): string {

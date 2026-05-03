@@ -1,4 +1,5 @@
 <script lang="ts">
+import * as m from '$lib/paraglide/messages';
 import Skeleton from './Skeleton.svelte';
 
 interface Props {
@@ -17,7 +18,7 @@ const dimensions = $derived(
 );
 </script>
 
-<div aria-label="Loading avatar">
+<div aria-label={m.primitives_skeleton_avatar()}>
 	<Skeleton
 		width={dimensions}
 		height={dimensions}

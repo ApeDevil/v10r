@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Button, CornerFrame, Divider, Input, RadialGlow, Spinner } from '$lib/components';
+import * as m from '$lib/paraglide/messages';
 
 type FlowState = 'idle' | 'sending' | 'magic-link-sent' | 'otp-sent';
 
@@ -45,7 +46,7 @@ function reset() {
 </script>
 
 <section id="auth-gateway" class="section">
-	<h2 class="section-title">Gateway</h2>
+	<h2 class="section-title">{m.showcase_forms_auth_section_gateway()}</h2>
 	<p class="section-description">
 		Sign-in form with email magic link, OTP code, and OAuth social buttons.
 		All actions are simulated with a 1.5s delay.
@@ -59,33 +60,33 @@ function reset() {
 				<div class="gateway-inner">
 					<div class="gateway-header">
 						<span class="i-lucide-key-round text-3xl text-primary" aria-hidden="true"></span>
-						<h3 class="text-xl font-bold text-fg">Welcome back</h3>
-						<p class="text-sm text-muted">Sign in to your account</p>
+						<h3 class="text-xl font-bold text-fg">{m.showcase_forms_auth_gateway_welcome()}</h3>
+						<p class="text-sm text-muted">{m.showcase_forms_auth_gateway_subtitle()}</p>
 					</div>
 
 					{#if flowState === 'magic-link-sent'}
 						<div class="success-alert" role="status">
 							<span class="i-lucide-mail-check text-lg" aria-hidden="true"></span>
 							<div>
-								<p class="font-medium">Check your email</p>
-								<p class="text-sm">We sent a sign-in link to <strong>{email}</strong></p>
+								<p class="font-medium">{m.showcase_forms_auth_gateway_check_email_title()}</p>
+								<p class="text-sm">{m.showcase_forms_auth_gateway_check_email_body()} <strong>{email}</strong></p>
 							</div>
 						</div>
 
 						<Button variant="ghost" onclick={reset}>
-							Use a different email
+							{m.showcase_forms_auth_gateway_use_different_email()}
 						</Button>
 					{:else if flowState === 'otp-sent'}
 						<div class="success-alert" role="status">
 							<span class="i-lucide-hash text-lg" aria-hidden="true"></span>
 							<div>
-								<p class="font-medium">Code sent</p>
-								<p class="text-sm">A 6-digit code was sent to <strong>{email}</strong></p>
+								<p class="font-medium">{m.showcase_forms_auth_gateway_code_sent_title()}</p>
+								<p class="text-sm">{m.showcase_forms_auth_gateway_code_sent_body()} <strong>{email}</strong></p>
 							</div>
 						</div>
 
 						<Button variant="ghost" onclick={reset}>
-							Use a different email
+							{m.showcase_forms_auth_gateway_use_different_email()}
 						</Button>
 					{:else}
 						<div class="email-section">
@@ -109,7 +110,7 @@ function reset() {
 									{:else}
 										<span class="i-lucide-link text-lg mr-2" aria-hidden="true"></span>
 									{/if}
-									Magic link
+									{m.showcase_forms_auth_magic_link()}
 								</Button>
 
 								<Button
@@ -124,13 +125,13 @@ function reset() {
 									{:else}
 										<span class="i-lucide-hash text-lg mr-2" aria-hidden="true"></span>
 									{/if}
-									Send code
+									{m.showcase_forms_auth_send_code()}
 								</Button>
 							</div>
 						</div>
 
 						<Divider motif="diamond" />
-						<p class="text-center text-sm text-muted">or continue with</p>
+						<p class="text-center text-sm text-muted">{m.showcase_forms_auth_gateway_or_continue()}</p>
 
 						<div class="oauth-actions">
 							<Button
@@ -195,7 +196,7 @@ function reset() {
 					<div class="reset-bar">
 						<Button variant="ghost" size="sm" onclick={reset}>
 							<span class="i-lucide-rotate-ccw text-sm mr-1" aria-hidden="true"></span>
-							Reset Demo
+							{m.showcase_forms_auth_gateway_reset()}
 						</Button>
 					</div>
 				{/if}

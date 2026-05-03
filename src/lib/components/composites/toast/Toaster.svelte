@@ -1,5 +1,6 @@
 <script lang="ts">
 import { fly } from 'svelte/transition';
+import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
 import { cn } from '$lib/utils/cn';
 
@@ -36,7 +37,7 @@ const styles = {
 			<button
 				onclick={() => toast.remove(item.id)}
 				class="shrink-0 opacity-70 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm"
-				aria-label="Close notification"
+				aria-label={m.composites_toast_close()}
 			>
 				<span class="i-lucide-x h-4 w-4" ></span>
 			</button>

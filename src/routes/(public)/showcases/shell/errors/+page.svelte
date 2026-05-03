@@ -2,6 +2,7 @@
 import { goto } from '$app/navigation';
 import { BoundaryFallback } from '$lib/components/composites';
 import { Button } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 
 let crashKey = $state(0);
 let crashed = $state(false);
@@ -18,7 +19,7 @@ function handleReset() {
 <div class="sections">
 	<!-- Section 1: Live Component Boundary -->
 	<section class="demo-section">
-		<h2>Component Boundary</h2>
+		<h2>{m.showcase_shell_errors_section_boundary()}</h2>
 		<p>
 			Svelte's <code>&lt;svelte:boundary&gt;</code> catches runtime errors within a component tree
 			and renders a fallback UI instead of crashing the entire page.
@@ -35,7 +36,7 @@ function handleReset() {
 						<p class="demo-widget-text">This component is alive and well.</p>
 						<Button variant="destructive" size="sm" onclick={triggerCrash}>
 							<span class="i-lucide-zap mr-2 h-3.5 w-3.5" aria-hidden="true"></span>
-							Crash this component
+							{m.showcase_shell_errors_btn_crash()}
 						</Button>
 					</div>
 				{/key}
@@ -53,7 +54,7 @@ function handleReset() {
 
 	<!-- Section 2: BoundaryFallback Variants -->
 	<section class="demo-section">
-		<h2>BoundaryFallback Variants</h2>
+		<h2>{m.showcase_shell_errors_section_variants()}</h2>
 		<p>
 			The <code>BoundaryFallback</code> component accepts custom titles, descriptions, and
 			minimum heights to fit different contexts.
@@ -80,7 +81,7 @@ function handleReset() {
 
 	<!-- Section 3: Route Error Pages -->
 	<section class="demo-section">
-		<h2>Route Error Pages</h2>
+		<h2>{m.showcase_shell_errors_section_routes()}</h2>
 		<p>
 			SvelteKit errors that escape component boundaries are caught by <code>+error.svelte</code>
 			pages. The system has three layers:
@@ -101,7 +102,7 @@ function handleReset() {
 			</div>
 		</div>
 
-		<h3>Error Boundaries</h3>
+		<h3>{m.showcase_shell_errors_section_boundaries()}</h3>
 		<p>
 			Four <code>+error.svelte</code> files provide contextual recovery actions for each area:
 		</p>
@@ -126,23 +127,23 @@ function handleReset() {
 		</div>
 
 		<div class="route-links">
-			<p class="route-links-label">Trigger a real error page:</p>
+			<p class="route-links-label">{m.showcase_shell_errors_trigger_label()}</p>
 			<div class="button-group">
 				<Button variant="secondary" size="sm" onclick={() => goto('/this-does-not-exist')}>
 					<span class="i-lucide-compass mr-2 h-3.5 w-3.5" aria-hidden="true"></span>
-					Root 404
+					{m.showcase_shell_errors_btn_root404()}
 				</Button>
 				<Button variant="secondary" size="sm" onclick={() => goto('/app/nonexistent')}>
 					<span class="i-lucide-layout-dashboard mr-2 h-3.5 w-3.5" aria-hidden="true"></span>
-					App 404
+					{m.showcase_shell_errors_btn_app404()}
 				</Button>
 				<Button variant="secondary" size="sm" onclick={() => goto('/auth/nonexistent')}>
 					<span class="i-lucide-log-in mr-2 h-3.5 w-3.5" aria-hidden="true"></span>
-					Auth 404
+					{m.showcase_shell_errors_btn_auth404()}
 				</Button>
 				<Button variant="secondary" size="sm" onclick={() => goto('/showcases/nonexistent')}>
 					<span class="i-lucide-lightbulb mr-2 h-3.5 w-3.5" aria-hidden="true"></span>
-					Showcase 404
+					{m.showcase_shell_errors_btn_showcase404()}
 				</Button>
 			</div>
 		</div>

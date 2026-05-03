@@ -2,18 +2,16 @@
 import { Card } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Button } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 </script>
 <div class="thanks-page">
 	<Card>
 		<Stack gap="4">
-			<h1 class="thanks-title">Thanks — we got it.</h1>
-			<p class="thanks-body">
-				Your message was saved. If you left an email and we have something useful to say back, we'll reach out.
-				Otherwise, no news = signal received.
-			</p>
+			<h1 class="thanks-title">{m.feedback_thanks_title()}</h1>
+			<p class="thanks-body">{m.feedback_thanks_body()}</p>
 			<div class="actions">
-				<Button variant="outline" size="md" href="/">Back home</Button>
-				<Button variant="ghost" size="md" href="/feedback">Send another</Button>
+				<Button variant="outline" size="md" href="/">{m.feedback_thanks_back_home()}</Button>
+				<Button variant="ghost" size="md" href="/feedback">{m.feedback_thanks_send_another()}</Button>
 			</div>
 		</Stack>
 	</Card>

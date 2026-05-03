@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Button, GeometricMark, GridPattern, Spinner, TickMarks } from '$lib/components';
+import * as m from '$lib/paraglide/messages';
 
 const simulate = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -62,7 +63,7 @@ async function handleVerify() {
 	if (otp === '123456') {
 		verified = true;
 	} else {
-		error = 'Invalid code. Please try again.';
+		error = m.showcase_forms_auth_cipher_invalid();
 	}
 	verifying = false;
 }
@@ -92,7 +93,7 @@ function reset() {
 <section id="auth-cipher" class="section">
 	<h2 class="section-title">
 		<GeometricMark shape="hexagon" size={14} class="inline-mark" />
-		Cipher
+		{m.showcase_forms_auth_section_cipher()}
 	</h2>
 	<p class="section-description">
 		6-digit OTP verification with auto-advance, paste support, and backspace navigation.
@@ -107,9 +108,9 @@ function reset() {
 				<div class="cipher-inner">
 					<div class="cipher-header">
 						<span class="i-lucide-shield-check text-3xl text-primary" aria-hidden="true"></span>
-						<h3 class="text-xl font-bold text-fg">Enter verification code</h3>
+						<h3 class="text-xl font-bold text-fg">{m.showcase_forms_auth_cipher_title()}</h3>
 						<p class="text-sm text-muted">
-							We sent a 6-digit code to <strong class="text-fg">demo@example.com</strong>
+							{m.showcase_forms_auth_cipher_subtitle()} <strong class="text-fg">demo@example.com</strong>
 						</p>
 					</div>
 
@@ -124,8 +125,8 @@ function reset() {
 						<div class="success-alert" role="status">
 							<span class="i-lucide-check-circle text-lg" aria-hidden="true"></span>
 							<div>
-								<p class="font-medium">Verified successfully</p>
-								<p class="text-sm">Your identity has been confirmed.</p>
+								<p class="font-medium">{m.showcase_forms_auth_cipher_verified_title()}</p>
+								<p class="text-sm">{m.showcase_forms_auth_cipher_verified_body()}</p>
 							</div>
 						</div>
 					{:else}
@@ -162,16 +163,16 @@ function reset() {
 								{#if verifying}
 									<Spinner size="sm" class="mr-2" />
 								{/if}
-								Verify
+								{m.showcase_forms_auth_cipher_verify()}
 							</Button>
 						</form>
 
 						<div class="cipher-footer">
 							<Button variant="ghost" disabled={resendCooldown > 0} onclick={handleResend}>
 								{#if resendCooldown > 0}
-									Resend code ({resendCooldown}s)
+									{m.showcase_forms_auth_cipher_resend_cooldown({ seconds: resendCooldown })}
 								{:else}
-									Resend code
+									{m.showcase_forms_auth_cipher_resend()}
 								{/if}
 							</Button>
 						</div>
@@ -181,7 +182,7 @@ function reset() {
 						<div class="reset-bar">
 							<Button variant="ghost" size="sm" onclick={reset}>
 								<span class="i-lucide-rotate-ccw text-sm mr-1" aria-hidden="true"></span>
-								Reset Demo
+								{m.showcase_forms_auth_gateway_reset()}
 							</Button>
 						</div>
 					{/if}

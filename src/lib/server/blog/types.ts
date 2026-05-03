@@ -1,4 +1,5 @@
 import type { InferSelectModel } from 'drizzle-orm';
+import type { TranslationMap } from '$lib/i18n';
 import type { asset, domain, post, revision, tag } from '$lib/server/db/schema/blog';
 
 export type BlogPost = InferSelectModel<typeof post>;
@@ -23,7 +24,15 @@ export interface PostListItem {
 	/** Subject area (one per post, null for drafts) */
 	domain: { id: string; slug: string; name: string; icon: string | null; color: number | null } | null;
 	/** Content format categories (zero-to-many) */
-	tags: { id: string; slug: string; name: string; icon: string | null; color: number | null; glyph: string | null }[];
+	tags: {
+		id: string;
+		slug: string;
+		name: string;
+		nameI18n: TranslationMap;
+		icon: string | null;
+		color: number | null;
+		glyph: string | null;
+	}[];
 }
 
 export interface PostDetail extends BlogPost {

@@ -19,6 +19,7 @@ import {
 	Table,
 	Textarea,
 } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
 
 let { data }: PageProps = $props();
@@ -30,6 +31,8 @@ let submitting = $state('');
 let showTagModal = $state(false);
 let editTagId = $state('');
 let editTagName = $state('');
+let editTagNameDe = $state('');
+let editTagNameRu = $state('');
 let editTagSlug = $state('');
 let editTagIcon = $state<string | null>(null);
 let editTagColor = $state<number | null>(null);
@@ -140,6 +143,7 @@ function openTagModal(t?: {
 	icon: string | null;
 	color: number | null;
 	glyph: string | null;
+	nameI18n?: { de?: string; ru?: string };
 }) {
 	if (t) {
 		editTagId = t.id;
@@ -148,6 +152,8 @@ function openTagModal(t?: {
 		editTagIcon = t.icon;
 		editTagColor = t.color;
 		editTagGlyph = t.glyph ?? '';
+		editTagNameDe = t.nameI18n?.de ?? '';
+		editTagNameRu = t.nameI18n?.ru ?? '';
 	} else {
 		editTagId = '';
 		editTagName = '';
@@ -155,6 +161,8 @@ function openTagModal(t?: {
 		editTagIcon = null;
 		editTagColor = null;
 		editTagGlyph = '';
+		editTagNameDe = '';
+		editTagNameRu = '';
 	}
 	tagIconFilter = '';
 	showTagModal = true;
@@ -265,15 +273,15 @@ function handleDeleteDomainEnhance() {
 	<Card>
 		{#snippet header()}
 			<Cluster justify="between" align="center">
-				<h2 class="text-fluid-lg font-semibold">Domain Management</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.admin_tags_domains_heading()}</h2>
 				<Cluster gap="2">
 					<Button variant="outline" size="sm" onclick={() => openDomainModal()}>
 						<span class="i-lucide-plus h-4 w-4 mr-1"></span>
-						New Domain
+						{m.admin_tags_new_domain()}
 					</Button>
 					<Button variant="ghost" size="sm" onclick={() => invalidateAll()}>
 						<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
-						Refresh
+						{m.admin_action_refresh()}
 					</Button>
 				</Cluster>
 			</Cluster>
@@ -282,19 +290,19 @@ function handleDeleteDomainEnhance() {
 		{#if data.domains.length === 0}
 			<EmptyState
 				icon="i-lucide-folder"
-				title="No domains yet"
-				description="Create a domain to organize blog posts by subject area."
+				title={m.admin_tags_domains_empty_title()}
+				description={m.admin_tags_domains_empty_desc()}
 			/>
 		{:else}
 			<Table>
 				<Header>
 					<Row hoverable={false}>
-						<HeaderCell>Icon</HeaderCell>
-						<HeaderCell>Name</HeaderCell>
-						<HeaderCell>Slug</HeaderCell>
-						<HeaderCell>Color</HeaderCell>
-						<HeaderCell>Posts</HeaderCell>
-						<HeaderCell>Actions</HeaderCell>
+						<HeaderCell>{m.admin_tags_col_icon()}</HeaderCell>
+						<HeaderCell>{m.admin_tags_col_name()}</HeaderCell>
+						<HeaderCell>{m.admin_tags_col_slug()}</HeaderCell>
+						<HeaderCell>{m.admin_tags_col_color()}</HeaderCell>
+						<HeaderCell>{m.admin_tags_col_posts()}</HeaderCell>
+						<HeaderCell>{m.admin_tags_col_actions()}</HeaderCell>
 					</Row>
 				</Header>
 				<Body>
@@ -319,8 +327,8 @@ function handleDeleteDomainEnhance() {
 							<Cell><Badge variant="secondary">{d.postCount}</Badge></Cell>
 							<Cell>
 								<Cluster gap="1">
-									<Button variant="outline" size="sm" onclick={() => openDomainModal(d)}>Edit</Button>
-									<Button variant="ghost" size="sm" onclick={() => openDeleteDomainDialog(d)}>Delete</Button>
+									<Button variant="outline" size="sm" onclick={() => openDomainModal(d)}>{m.admin_action_edit()}</Button>
+									<Button variant="ghost" size="sm" onclick={() => openDeleteDomainDialog(d)}>{m.admin_action_delete()}</Button>
 								</Cluster>
 							</Cell>
 						</Row>
@@ -334,15 +342,15 @@ function handleDeleteDomainEnhance() {
 	<Card>
 		{#snippet header()}
 			<Cluster justify="between" align="center">
-				<h2 class="text-fluid-lg font-semibold">Category Management</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.admin_tags_categories_heading()}</h2>
 				<Cluster gap="2">
 					<Button variant="outline" size="sm" onclick={() => openTagModal()}>
 						<span class="i-lucide-plus h-4 w-4 mr-1"></span>
-						New Category
+						{m.admin_tags_new_category()}
 					</Button>
 					<Button variant="ghost" size="sm" onclick={() => invalidateAll()}>
 						<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
-						Refresh
+						{m.admin_action_refresh()}
 					</Button>
 				</Cluster>
 			</Cluster>
@@ -351,18 +359,18 @@ function handleDeleteDomainEnhance() {
 		{#if data.tags.length === 0}
 			<EmptyState
 				icon="i-lucide-tag"
-				title="No tags yet"
-				description="Create a tag to organize your blog posts."
+				title={m.admin_tags_categories_empty_title()}
+				description={m.admin_tags_categories_empty_desc()}
 			/>
 		{:else}
 			<Table>
 				<Header>
 					<Row hoverable={false}>
-						<HeaderCell>Visual</HeaderCell>
-						<HeaderCell>Name</HeaderCell>
-						<HeaderCell>Slug</HeaderCell>
-						<HeaderCell>Posts</HeaderCell>
-						<HeaderCell>Actions</HeaderCell>
+						<HeaderCell>{m.admin_tags_col_visual()}</HeaderCell>
+						<HeaderCell>{m.admin_tags_col_name()}</HeaderCell>
+						<HeaderCell>{m.admin_tags_col_slug()}</HeaderCell>
+						<HeaderCell>{m.admin_tags_col_posts()}</HeaderCell>
+						<HeaderCell>{m.admin_tags_col_actions()}</HeaderCell>
 					</Row>
 				</Header>
 				<Body>
@@ -382,8 +390,8 @@ function handleDeleteDomainEnhance() {
 							<Cell><Badge variant="secondary">{t.postCount}</Badge></Cell>
 							<Cell>
 								<Cluster gap="1">
-									<Button variant="outline" size="sm" onclick={() => openTagModal(t)}>Edit</Button>
-									<Button variant="ghost" size="sm" onclick={() => openDeleteDialog(t)}>Delete</Button>
+									<Button variant="outline" size="sm" onclick={() => openTagModal(t)}>{m.admin_action_edit()}</Button>
+									<Button variant="ghost" size="sm" onclick={() => openDeleteDialog(t)}>{m.admin_action_delete()}</Button>
 								</Cluster>
 							</Cell>
 						</Row>
@@ -397,8 +405,8 @@ function handleDeleteDomainEnhance() {
 <!-- Domain Edit/Create Dialog -->
 <Dialog
 	bind:open={showDomainModal}
-	title={editDomainId ? 'Edit Domain' : 'Create Domain'}
-	description={editDomainId ? `Update "${editDomainName}" settings.` : 'Add a new domain to organize blog posts.'}
+	title={editDomainId ? m.admin_tags_dialog_edit_domain_title() : m.admin_tags_dialog_create_domain_title()}
+	description={editDomainId ? m.admin_tags_dialog_edit_domain_desc({ name: editDomainName }) : m.admin_tags_dialog_create_domain_desc()}
 	class="max-h-[85dvh] overflow-y-auto"
 >
 	<form
@@ -424,15 +432,15 @@ function handleDeleteDomainEnhance() {
 		{/if}
 
 		<div class="dialog-fields">
-			<FormField label="Name" id="domain-name" required>
+			<FormField label={m.admin_tags_field_name_label()} id="domain-name" required>
 				{#snippet children({ fieldId, describedBy })}
-					<Input id={fieldId} name="name" bind:value={editDomainName} placeholder="Domain name" required aria-describedby={describedBy} />
+					<Input id={fieldId} name="name" bind:value={editDomainName} placeholder={m.admin_tags_field_name_domain_placeholder()} required aria-describedby={describedBy} />
 				{/snippet}
 			</FormField>
 
-			<FormField label="Slug" id="domain-slug" required>
+			<FormField label={m.admin_tags_field_slug_label()} id="domain-slug" required>
 				{#snippet children({ fieldId, describedBy })}
-					<Input id={fieldId} name="slug" bind:value={editDomainSlug} placeholder="domain-slug" required aria-describedby={describedBy} />
+					<Input id={fieldId} name="slug" bind:value={editDomainSlug} placeholder={m.admin_tags_field_slug_domain_placeholder()} required aria-describedby={describedBy} />
 				{/snippet}
 			</FormField>
 
@@ -443,16 +451,16 @@ function handleDeleteDomainEnhance() {
 
 			<!-- Icon Picker -->
 			<fieldset class="flex flex-col gap-1">
-				<legend class="text-fluid-sm font-medium text-fg mb-1">Icon</legend>
+				<legend class="text-fluid-sm font-medium text-fg mb-1">{m.admin_tags_legend_icon()}</legend>
 				<input type="hidden" name="icon" value={editDomainIcon ?? ''} />
-				<Input placeholder="Filter icons..." bind:value={iconFilter} />
+				<Input placeholder={m.admin_tags_filter_icons_placeholder()} bind:value={iconFilter} />
 				<div class="icon-grid">
 					<button
 						type="button"
 						class="icon-btn"
 						class:selected={editDomainIcon === null}
 						onclick={() => { editDomainIcon = null; }}
-						aria-label="No icon (clear selection)"
+						aria-label={m.admin_tags_icon_clear_aria()}
 						aria-pressed={editDomainIcon === null}
 					>
 						<span class="i-lucide-x h-4 w-4 op-40"></span>
@@ -474,7 +482,7 @@ function handleDeleteDomainEnhance() {
 
 			<!-- Color Picker -->
 			<fieldset class="flex flex-col gap-1">
-				<legend class="text-fluid-sm font-medium text-fg mb-1">Color</legend>
+				<legend class="text-fluid-sm font-medium text-fg mb-1">{m.admin_tags_legend_color()}</legend>
 				<input type="hidden" name="color" value={editDomainColor ?? ''} />
 				<div class="color-row">
 					<button
@@ -482,7 +490,7 @@ function handleDeleteDomainEnhance() {
 						class="color-swatch none"
 						class:selected={editDomainColor === null}
 						onclick={() => { editDomainColor = null; }}
-						aria-label="No color (clear selection)"
+						aria-label={m.admin_tags_color_clear_aria()}
 						aria-pressed={editDomainColor === null}
 					>
 						<span class="i-lucide-x h-3 w-3 op-40"></span>
@@ -494,20 +502,20 @@ function handleDeleteDomainEnhance() {
 							class:selected={editDomainColor === c}
 							style="--swatch-color: var(--chart-{c})"
 							onclick={() => { editDomainColor = c; }}
-							aria-label="{COLOR_NAMES[c]}, chart color {c}"
+							aria-label={m.admin_tags_color_aria({ colorName: COLOR_NAMES[c], colorNum: String(c) })}
 							aria-pressed={editDomainColor === c}
 						></button>
 					{/each}
 				</div>
 			</fieldset>
 
-			<FormField label="Description" id="domain-desc">
+			<FormField label={m.admin_tags_field_desc_label()} id="domain-desc">
 				{#snippet children({ fieldId, describedBy })}
 					<Textarea
 						id={fieldId}
 						name="description"
 						bind:value={editDomainDescription}
-						placeholder="Brief description for this domain..."
+						placeholder={m.admin_tags_field_desc_placeholder()}
 						rows={2}
 						aria-describedby={describedBy}
 					/>
@@ -516,10 +524,10 @@ function handleDeleteDomainEnhance() {
 		</div>
 
 		<div class="dialog-actions">
-			<Button type="button" variant="outline" size="sm" onclick={() => { showDomainModal = false; }}>Cancel</Button>
+			<Button type="button" variant="outline" size="sm" onclick={() => { showDomainModal = false; }}>{m.admin_action_cancel()}</Button>
 			<Button type="submit" variant="default" size="sm" disabled={submitting === 'domainModal'}>
 				{#if submitting === 'domainModal'}<Spinner size="xs" class="mr-1" />{/if}
-				{editDomainId ? 'Save Changes' : 'Create Domain'}
+				{editDomainId ? m.admin_tags_btn_save_changes() : m.admin_tags_btn_create_domain()}
 			</Button>
 		</div>
 	</form>
@@ -528,8 +536,8 @@ function handleDeleteDomainEnhance() {
 <!-- Category Edit/Create Dialog -->
 <Dialog
 	bind:open={showTagModal}
-	title={editTagId ? 'Edit Category' : 'Create Category'}
-	description={editTagId ? `Update "${editTagName}" settings.` : 'Add a new category for blog posts.'}
+	title={editTagId ? m.admin_tags_dialog_edit_category_title() : m.admin_tags_dialog_create_category_title()}
+	description={editTagId ? m.admin_tags_dialog_edit_category_desc({ name: editTagName }) : m.admin_tags_dialog_create_category_desc()}
 	class="max-h-[85dvh] overflow-y-auto"
 >
 	<form
@@ -555,41 +563,55 @@ function handleDeleteDomainEnhance() {
 		{/if}
 
 		<div class="dialog-fields">
-			<FormField label="Name" id="tag-name" required>
+			<FormField label={m.admin_tags_field_name_label()} id="tag-name" required>
 				{#snippet children({ fieldId, describedBy })}
-					<Input id={fieldId} name="name" bind:value={editTagName} placeholder="Category name" required aria-describedby={describedBy} />
+					<Input id={fieldId} name="name" bind:value={editTagName} placeholder={m.admin_tags_field_name_category_placeholder()} required aria-describedby={describedBy} />
 				{/snippet}
 			</FormField>
 
-			<FormField label="Slug" id="tag-slug" required>
+			<FormField label={m.admin_tags_field_slug_label()} id="tag-slug" required>
 				{#snippet children({ fieldId, describedBy })}
-					<Input id={fieldId} name="slug" bind:value={editTagSlug} placeholder="category-slug" required aria-describedby={describedBy} />
+					<Input id={fieldId} name="slug" bind:value={editTagSlug} placeholder={m.admin_tags_field_slug_category_placeholder()} required aria-describedby={describedBy} />
 				{/snippet}
 			</FormField>
+
+			{#if editTagId}
+				<FormField label="DE" id="tag-name-de">
+					{#snippet children({ fieldId, describedBy })}
+						<Input id={fieldId} name="nameDe" bind:value={editTagNameDe} placeholder="Deutsche Übersetzung" aria-describedby={describedBy} />
+					{/snippet}
+				</FormField>
+
+				<FormField label="RU" id="tag-name-ru">
+					{#snippet children({ fieldId, describedBy })}
+						<Input id={fieldId} name="nameRu" bind:value={editTagNameRu} placeholder="Русский перевод" aria-describedby={describedBy} />
+					{/snippet}
+				</FormField>
+			{/if}
 
 			<!-- Live Preview -->
 			<div class="preview-row">
 				<BlogTag tag={previewCategoryTag} tier="category" size="md" />
 			</div>
 
-			<FormField label="Glyph (single character)" id="tag-glyph">
+			<FormField label={m.admin_tags_field_glyph_label()} id="tag-glyph">
 				{#snippet children({ fieldId, describedBy })}
-					<Input id={fieldId} name="glyph" bind:value={editTagGlyph} placeholder="e.g. → ∞ § # @" maxlength={2} aria-describedby={describedBy} />
+					<Input id={fieldId} name="glyph" bind:value={editTagGlyph} placeholder={m.admin_tags_field_glyph_placeholder()} maxlength={2} aria-describedby={describedBy} />
 				{/snippet}
 			</FormField>
 
 			<!-- Icon Picker -->
 			<fieldset class="flex flex-col gap-1">
-				<legend class="text-fluid-sm font-medium text-fg mb-1">Icon (overrides glyph)</legend>
+				<legend class="text-fluid-sm font-medium text-fg mb-1">{m.admin_tags_legend_icon_overrides()}</legend>
 				<input type="hidden" name="icon" value={editTagIcon ?? ''} />
-				<Input placeholder="Filter icons..." bind:value={tagIconFilter} />
+				<Input placeholder={m.admin_tags_filter_icons_placeholder()} bind:value={tagIconFilter} />
 				<div class="icon-grid">
 					<button
 						type="button"
 						class="icon-btn"
 						class:selected={editTagIcon === null}
 						onclick={() => { editTagIcon = null; }}
-						aria-label="No icon (clear selection)"
+						aria-label={m.admin_tags_icon_clear_aria()}
 						aria-pressed={editTagIcon === null}
 					>
 						<span class="i-lucide-x h-4 w-4 op-40"></span>
@@ -611,7 +633,7 @@ function handleDeleteDomainEnhance() {
 
 			<!-- Color Picker -->
 			<fieldset class="flex flex-col gap-1">
-				<legend class="text-fluid-sm font-medium text-fg mb-1">Color</legend>
+				<legend class="text-fluid-sm font-medium text-fg mb-1">{m.admin_tags_legend_color()}</legend>
 				<input type="hidden" name="color" value={editTagColor ?? ''} />
 				<div class="color-row">
 					<button
@@ -619,7 +641,7 @@ function handleDeleteDomainEnhance() {
 						class="color-swatch none"
 						class:selected={editTagColor === null}
 						onclick={() => { editTagColor = null; }}
-						aria-label="No color (clear selection)"
+						aria-label={m.admin_tags_color_clear_aria()}
 						aria-pressed={editTagColor === null}
 					>
 						<span class="i-lucide-x h-3 w-3 op-40"></span>
@@ -631,7 +653,7 @@ function handleDeleteDomainEnhance() {
 							class:selected={editTagColor === c}
 							style="--swatch-color: var(--chart-{c})"
 							onclick={() => { editTagColor = c; }}
-							aria-label="{COLOR_NAMES[c]}, chart color {c}"
+							aria-label={m.admin_tags_color_aria({ colorName: COLOR_NAMES[c], colorNum: String(c) })}
 							aria-pressed={editTagColor === c}
 						></button>
 					{/each}
@@ -640,10 +662,10 @@ function handleDeleteDomainEnhance() {
 		</div>
 
 		<div class="dialog-actions">
-			<Button type="button" variant="outline" size="sm" onclick={() => { showTagModal = false; }}>Cancel</Button>
+			<Button type="button" variant="outline" size="sm" onclick={() => { showTagModal = false; }}>{m.admin_action_cancel()}</Button>
 			<Button type="submit" variant="default" size="sm" disabled={submitting === 'tagModal'}>
 				{#if submitting === 'tagModal'}<Spinner size="xs" class="mr-1" />{/if}
-				{editTagId ? 'Save Changes' : 'Create Category'}
+				{editTagId ? m.admin_tags_btn_save_changes() : m.admin_tags_btn_create_category()}
 			</Button>
 		</div>
 	</form>
@@ -651,9 +673,9 @@ function handleDeleteDomainEnhance() {
 
 <ConfirmDialog
 	open={showDeleteDialog}
-	title="Delete Tag"
-	description='Delete tag "{deleteTagName}" and unlink it from {deletePostCount} post(s).'
-	confirmLabel="Delete"
+	title={m.admin_tags_delete_tag_title()}
+	description={m.admin_tags_delete_tag_desc({ name: deleteTagName, count: deletePostCount })}
+	confirmLabel={m.admin_action_delete()}
 	destructive
 	onconfirm={() => { showDeleteDialog = false; deleteTagFormEl.requestSubmit(); }}
 	oncancel={() => { showDeleteDialog = false; }}
@@ -661,9 +683,9 @@ function handleDeleteDomainEnhance() {
 
 <ConfirmDialog
 	open={showDeleteDomainDialog}
-	title="Delete Domain"
-	description='Delete domain "{deleteDomainName}" and unset it from {deleteDomainPostCount} post(s).'
-	confirmLabel="Delete"
+	title={m.admin_tags_delete_domain_title()}
+	description={m.admin_tags_delete_domain_desc({ name: deleteDomainName, count: deleteDomainPostCount })}
+	confirmLabel={m.admin_action_delete()}
 	destructive
 	onconfirm={() => { showDeleteDomainDialog = false; deleteDomainFormEl.requestSubmit(); }}
 	oncancel={() => { showDeleteDomainDialog = false; }}

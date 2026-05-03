@@ -2,6 +2,7 @@
 import { Card } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Badge } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
 </script>
@@ -9,7 +10,7 @@ let { data } = $props();
 		<!-- Security Headers -->
 		<Card>
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Security Headers</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.showcase_auth_security_card_headers()}</h2>
 			{/snippet}
 
 			<div class="diag-grid">
@@ -25,7 +26,7 @@ let { data } = $props();
 		<!-- CSRF -->
 		<Card>
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">CSRF Protection</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.showcase_auth_security_card_csrf()}</h2>
 			{/snippet}
 
 			<div class="diag-grid">
@@ -45,7 +46,7 @@ let { data } = $props();
 		<!-- Trusted Origins -->
 		<Card>
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Trusted Origins</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.showcase_auth_security_card_origins()}</h2>
 			{/snippet}
 
 			<div class="diag-grid">
@@ -65,7 +66,7 @@ let { data } = $props();
 		<!-- Rate Limiting -->
 		<Card>
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Rate Limiting</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.showcase_auth_security_card_rate()}</h2>
 			{/snippet}
 
 			<div class="diag-grid">
@@ -83,7 +84,7 @@ let { data } = $props();
 		<!-- Version -->
 		<Card>
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">System Info</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.showcase_auth_security_card_info()}</h2>
 			{/snippet}
 
 			<div class="diag-grid">

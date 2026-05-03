@@ -6,6 +6,7 @@
  */
 
 import { fly } from 'svelte/transition';
+import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
 import { cn } from '$lib/utils/cn';
 
@@ -30,7 +31,7 @@ const iconClasses: Record<string, string> = {
 </script>
 
 {#if visibleToasts.length > 0}
-	<div class={cn('toast-region', className)} role="region" aria-live="polite" aria-label="Notifications">
+	<div class={cn('toast-region', className)} role="region" aria-live="polite" aria-label={m.composites_toast_region_label()}>
 		{#each visibleToasts as t (t.id)}
 			<div
 				class={cn('toast', `toast-${t.type}`)}
@@ -43,7 +44,7 @@ const iconClasses: Record<string, string> = {
 				<button
 					class="toast-close"
 					onclick={() => toast.remove(t.id)}
-					aria-label="Dismiss notification"
+					aria-label={m.composites_toast_dismiss()}
 				>
 					<span class="i-lucide-x toast-close-icon"></span>
 				</button>

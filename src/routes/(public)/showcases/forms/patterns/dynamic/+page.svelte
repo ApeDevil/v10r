@@ -4,6 +4,7 @@ import { valibotClient } from 'sveltekit-superforms/adapters';
 import { Alert, Card, FormField, TagInput } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { dynamicSchema } from '$lib/schemas/showcase/patterns';
 import type { PageProps } from './$types';
 
@@ -27,7 +28,7 @@ const {
 		{#snippet header()}
 			<Cluster justify="between">
 				<div>
-					<h2 class="text-fluid-lg font-semibold">Dynamic Array Fields</h2>
+					<h2 class="text-fluid-lg font-semibold">{m.showcase_forms_dynamic_heading()}</h2>
 					<p class="text-fluid-sm text-muted">Add/remove tags dynamically with per-item validation.</p>
 				</div>
 				<Badge variant="outline">{$form.tags.length} tag{$form.tags.length !== 1 ? 's' : ''}</Badge>
@@ -35,7 +36,7 @@ const {
 		{/snippet}
 
 		{#if $formMessage}
-			<Alert variant="success" title="Success">
+			<Alert variant="success" title={m.showcase_forms_success()}>
 				{#snippet children()}
 					<p>{$formMessage}</p>
 				{/snippet}
@@ -43,7 +44,7 @@ const {
 		{/if}
 
 		<form method="POST" use:enhance class="form-grid">
-			<FormField label="Title" error={$errors.title?.[0]} required>
+			<FormField label={m.showcase_forms_field_title()} error={$errors.title?.[0]} required>
 				{#snippet children({ fieldId, describedBy })}
 					<Input
 						id={fieldId}
@@ -56,7 +57,7 @@ const {
 				{/snippet}
 			</FormField>
 
-			<FormField label="Tags" error={$errors.tags?._errors?.[0]} required>
+			<FormField label={m.showcase_forms_field_tags()} error={$errors.tags?._errors?.[0]} required>
 				{#snippet children({ fieldId, describedBy })}
 					<TagInput
 						id={fieldId}
@@ -73,7 +74,7 @@ const {
 			<div class="form-actions">
 				<Button type="submit" disabled={$submitting}>
 					{#if $delayed}<Spinner size="sm" class="mr-2" />{/if}
-					Save
+					{m.showcase_forms_save()}
 				</Button>
 			</div>
 		</form>

@@ -4,6 +4,7 @@ import { valibotClient } from 'sveltekit-superforms/adapters';
 import { Alert, Card, FormField } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Avatar, Button, Input, Select, Slider, Spinner, Switch, ToggleGroup } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { userSettingsSchema } from '$lib/schemas/app/settings';
 import { getSidebar } from '$lib/state/sidebar.svelte';
 
@@ -26,15 +27,15 @@ const sidebar = getSidebar();
 
 let sliderValue = $state<number[]>([$form.sidebarWidth]);
 
-const widthLabels: Record<number, string> = {
-	160: 'Narrow',
-	200: 'Compact',
-	240: 'Default',
-	280: 'Comfortable',
-	320: 'Wide',
+const widthLabels: Record<number, () => string> = {
+	160: m.app_settings_appearance_sidebar_narrow,
+	200: m.app_settings_appearance_sidebar_compact,
+	240: m.app_settings_appearance_sidebar_default,
+	280: m.app_settings_appearance_sidebar_comfortable,
+	320: m.app_settings_appearance_sidebar_wide,
 };
 
-const currentWidthLabel = $derived(widthLabels[sliderValue[0]] ?? `${sliderValue[0]}px`);
+const currentWidthLabel = $derived(widthLabels[sliderValue[0]]?.() ?? `${sliderValue[0]}px`);
 
 // Bridge slider → form + live preview
 $effect(() => {
@@ -52,45 +53,45 @@ let avatarUploading = $state(false);
 
 let fileInput: HTMLInputElement;
 
-const themeItems = [
-	{ value: 'light', label: 'Light' },
-	{ value: 'system', label: 'System' },
-	{ value: 'dark', label: 'Dark' },
-];
+const themeItems = $derived([
+	{ value: 'light', label: m.app_settings_appearance_theme_light() },
+	{ value: 'system', label: m.app_settings_appearance_theme_system() },
+	{ value: 'dark', label: m.app_settings_appearance_theme_dark() },
+]);
 
-const densityItems = [
-	{ value: 'compact', label: 'Compact' },
-	{ value: 'comfortable', label: 'Comfortable' },
-	{ value: 'spacious', label: 'Spacious' },
-];
+const densityItems = $derived([
+	{ value: 'compact', label: m.app_settings_appearance_density_compact() },
+	{ value: 'comfortable', label: m.app_settings_appearance_density_comfortable() },
+	{ value: 'spacious', label: m.app_settings_appearance_density_spacious() },
+]);
 
-const localeOptions = [
-	{ value: 'en', label: 'English' },
-	{ value: 'es', label: 'Spanish' },
-	{ value: 'fr', label: 'French' },
-	{ value: 'de', label: 'German' },
-	{ value: 'ja', label: 'Japanese' },
-];
+const localeOptions = $derived([
+	{ value: 'en', label: m.app_settings_locale_lang_en() },
+	{ value: 'es', label: m.app_settings_locale_lang_es() },
+	{ value: 'fr', label: m.app_settings_locale_lang_fr() },
+	{ value: 'de', label: m.app_settings_locale_lang_de() },
+	{ value: 'ja', label: m.app_settings_locale_lang_ja() },
+]);
 
-const timezoneOptions = [
+const timezoneOptions = $derived([
 	{ value: 'UTC', label: 'UTC' },
-	{ value: 'America/New_York', label: 'Eastern (US)' },
-	{ value: 'America/Chicago', label: 'Central (US)' },
-	{ value: 'America/Denver', label: 'Mountain (US)' },
-	{ value: 'America/Los_Angeles', label: 'Pacific (US)' },
+	{ value: 'America/New_York', label: m.app_settings_locale_tz_eastern() },
+	{ value: 'America/Chicago', label: m.app_settings_locale_tz_central() },
+	{ value: 'America/Denver', label: m.app_settings_locale_tz_mountain() },
+	{ value: 'America/Los_Angeles', label: m.app_settings_locale_tz_pacific() },
 	{ value: 'Europe/London', label: 'London' },
 	{ value: 'Europe/Berlin', label: 'Berlin' },
 	{ value: 'Europe/Paris', label: 'Paris' },
 	{ value: 'Asia/Tokyo', label: 'Tokyo' },
 	{ value: 'Asia/Shanghai', label: 'Shanghai' },
 	{ value: 'Australia/Sydney', label: 'Sydney' },
-];
+]);
 
-const dateFormatOptions = [
-	{ value: 'relative', label: 'Relative (2 hours ago)' },
-	{ value: 'absolute', label: 'Absolute (Mar 7, 2026)' },
-	{ value: 'iso', label: 'ISO (2026-03-07)' },
-];
+const dateFormatOptions = $derived([
+	{ value: 'relative', label: m.app_settings_locale_date_relative() },
+	{ value: 'absolute', label: m.app_settings_locale_date_absolute() },
+	{ value: 'iso', label: m.app_settings_locale_date_iso() },
+]);
 
 async function handleAvatarUpload() {
 	const file = fileInput?.files?.[0];
@@ -107,12 +108,12 @@ async function handleAvatarUpload() {
 		const result = await res.json();
 
 		if (result.type === 'failure') {
-			avatarError = result.data?.avatarError ?? 'Upload failed';
+			avatarError = result.data?.avatarError ?? m.app_settings_avatar_upload_failed();
 		} else {
 			avatarUrl = result.data?.avatarUrl ?? avatarUrl;
 		}
 	} catch {
-		avatarError = 'Upload failed. Please try again.';
+		avatarError = m.app_settings_avatar_upload_failed_retry();
 	} finally {
 		avatarUploading = false;
 		if (fileInput) fileInput.value = '';
@@ -131,7 +132,7 @@ async function handleAvatarRemove() {
 			avatarUrl = null;
 		}
 	} catch {
-		avatarError = 'Failed to remove avatar.';
+		avatarError = m.app_settings_avatar_remove_failed();
 	} finally {
 		avatarUploading = false;
 	}
@@ -139,7 +140,7 @@ async function handleAvatarRemove() {
 </script>
 <Stack gap="6">
 	{#if $formMessage}
-		<Alert variant="success" title="Saved">
+		<Alert variant="success" title={m.app_settings_alert_saved()}>
 			{#snippet children()}
 				<p>{$formMessage}</p>
 			{/snippet}
@@ -149,12 +150,12 @@ async function handleAvatarRemove() {
 	<!-- Avatar section (separate from main form) -->
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">Avatar</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.app_settings_avatar_heading()}</h2>
 		{/snippet}
 
 		{#snippet children()}
 			<Cluster gap="4" align="center">
-				<Avatar src={avatarUrl} alt="Your avatar" fallback={$form.displayName || '?'} size="lg" />
+				<Avatar src={avatarUrl} alt={m.app_settings_avatar_alt()} fallback={$form.displayName || '?'} size="lg" />
 				<Stack gap="2">
 					<Cluster gap="2">
 						<Button
@@ -164,7 +165,7 @@ async function handleAvatarRemove() {
 							onclick={() => fileInput?.click()}
 						>
 							{#if avatarUploading}<Spinner size="sm" class="mr-2" />{/if}
-							Change photo
+							{m.app_settings_avatar_change()}
 						</Button>
 						{#if avatarUrl}
 							<Button
@@ -173,7 +174,7 @@ async function handleAvatarRemove() {
 								disabled={avatarUploading}
 								onclick={handleAvatarRemove}
 							>
-								Remove
+								{m.app_settings_avatar_remove()}
 							</Button>
 						{/if}
 					</Cluster>
@@ -197,12 +198,12 @@ async function handleAvatarRemove() {
 		<Stack gap="6">
 			<Card>
 				{#snippet header()}
-					<h2 class="text-fluid-lg font-semibold">Profile</h2>
+					<h2 class="text-fluid-lg font-semibold">{m.app_settings_profile_heading()}</h2>
 				{/snippet}
 
 				{#snippet children()}
 					<div class="form-grid">
-						<FormField label="Display Name" error={$errors.displayName?.[0]} required>
+						<FormField label={m.app_settings_profile_display_name()} error={$errors.displayName?.[0]} required>
 							{#snippet children({ fieldId, describedBy })}
 								<Input
 									id={fieldId}
@@ -219,19 +220,19 @@ async function handleAvatarRemove() {
 
 			<Card>
 				{#snippet header()}
-					<h2 class="text-fluid-lg font-semibold">Appearance</h2>
+					<h2 class="text-fluid-lg font-semibold">{m.app_settings_appearance_heading()}</h2>
 				{/snippet}
 
 				{#snippet children()}
 					<Stack gap="4">
-						<FormField label="Theme">
+						<FormField label={m.app_settings_appearance_theme()}>
 							{#snippet children(_)}
 								<input type="hidden" name="theme" value={$form.theme} />
 								<ToggleGroup items={themeItems} bind:value={$form.theme} />
 							{/snippet}
 						</FormField>
 
-						<FormField label="Display Density">
+						<FormField label={m.app_settings_appearance_density()}>
 							{#snippet children(_)}
 								<input type="hidden" name="displayDensity" value={$form.displayDensity} />
 								<ToggleGroup items={densityItems} bind:value={$form.displayDensity} />
@@ -240,7 +241,7 @@ async function handleAvatarRemove() {
 
 						<div class="space-y-2">
 							<div class="flex items-center justify-between">
-								<span class="text-fluid-sm font-medium text-fg">Sidebar Width</span>
+								<span class="text-fluid-sm font-medium text-fg">{m.app_settings_appearance_sidebar_width()}</span>
 								<span class="text-fluid-xs text-muted">{currentWidthLabel}</span>
 							</div>
 							<input type="hidden" name="sidebarWidth" value={$form.sidebarWidth} />
@@ -252,26 +253,26 @@ async function handleAvatarRemove() {
 
 			<Card>
 				{#snippet header()}
-					<h2 class="text-fluid-lg font-semibold">Locale</h2>
+					<h2 class="text-fluid-lg font-semibold">{m.app_settings_locale_heading()}</h2>
 				{/snippet}
 
 				{#snippet children()}
 					<div class="form-grid">
-						<FormField label="Language" error={$errors.locale?.[0]}>
+						<FormField label={m.app_settings_locale_language()} error={$errors.locale?.[0]}>
 							{#snippet children(_)}
 								<input type="hidden" name="locale" value={$form.locale} />
 								<Select options={localeOptions} bind:value={$form.locale} error={!!$errors.locale} />
 							{/snippet}
 						</FormField>
 
-						<FormField label="Timezone" error={$errors.timezone?.[0]}>
+						<FormField label={m.app_settings_locale_timezone()} error={$errors.timezone?.[0]}>
 							{#snippet children(_)}
 								<input type="hidden" name="timezone" value={$form.timezone} />
 								<Select options={timezoneOptions} bind:value={$form.timezone} error={!!$errors.timezone} />
 							{/snippet}
 						</FormField>
 
-						<FormField label="Date Format" error={$errors.dateFormat?.[0]}>
+						<FormField label={m.app_settings_locale_date_format()} error={$errors.dateFormat?.[0]}>
 							{#snippet children(_)}
 								<input type="hidden" name="dateFormat" value={$form.dateFormat} />
 								<Select options={dateFormatOptions} bind:value={$form.dateFormat} error={!!$errors.dateFormat} />
@@ -283,22 +284,22 @@ async function handleAvatarRemove() {
 
 			<Card>
 				{#snippet header()}
-					<h2 class="text-fluid-lg font-semibold">Accessibility</h2>
+					<h2 class="text-fluid-lg font-semibold">{m.app_settings_a11y_heading()}</h2>
 				{/snippet}
 
 				{#snippet children()}
 					<Stack gap="4">
-						<FormField label="Reduce Motion" description="Minimize animations and transitions">
+						<FormField label={m.app_settings_a11y_reduce_motion()} description={m.app_settings_a11y_reduce_motion_description()}>
 							{#snippet children(_)}
 								<input type="hidden" name="reduceMotion" value={$form.reduceMotion ? 'on' : ''} />
-								<Switch bind:checked={$form.reduceMotion} label={$form.reduceMotion ? 'On' : 'Off'} />
+								<Switch bind:checked={$form.reduceMotion} label={$form.reduceMotion ? m.app_settings_toggle_on() : m.app_settings_toggle_off()} />
 							{/snippet}
 						</FormField>
 
-						<FormField label="High Contrast" description="Increase contrast for better readability">
+						<FormField label={m.app_settings_a11y_high_contrast()} description={m.app_settings_a11y_high_contrast_description()}>
 							{#snippet children(_)}
 								<input type="hidden" name="highContrast" value={$form.highContrast ? 'on' : ''} />
-								<Switch bind:checked={$form.highContrast} label={$form.highContrast ? 'On' : 'Off'} />
+								<Switch bind:checked={$form.highContrast} label={$form.highContrast ? m.app_settings_toggle_on() : m.app_settings_toggle_off()} />
 							{/snippet}
 						</FormField>
 					</Stack>
@@ -308,7 +309,7 @@ async function handleAvatarRemove() {
 			<Cluster justify="end">
 				<Button type="submit" disabled={$submitting || !$tainted}>
 					{#if $delayed}<Spinner size="sm" class="mr-2" />{/if}
-					{$tainted ? 'Save Changes' : 'No Changes'}
+					{$tainted ? m.app_settings_save() : m.app_settings_no_changes()}
 				</Button>
 			</Cluster>
 		</Stack>

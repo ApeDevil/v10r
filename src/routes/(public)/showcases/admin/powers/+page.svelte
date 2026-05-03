@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Tag } from '$lib/components/primitives/tag';
+import * as m from '$lib/paraglide/messages';
 
 interface Group {
 	label: string;
@@ -133,7 +134,7 @@ const guarantees = [
 </script>
 <div class="powers">
 	<header class="lede">
-		<h2>What the operator can see — and what stops them from doing more.</h2>
+		<h2>{m.showcase_admin_powers_heading()}</h2>
 		<p>
 			Transparency cuts both ways. You should know not just what is collected, but what the person
 			running v10r.dev can do with it. Below is the full inventory of admin capabilities, along with the
@@ -143,7 +144,7 @@ const guarantees = [
 
 	<section class="guarantees">
 		<header class="section-head">
-			<h3>Four hard guarantees</h3>
+			<h3>{m.showcase_admin_powers_section_guarantees()}</h3>
 			<Tag variant="muted" size="sm" label="Code-enforced" />
 		</header>
 		<div class="guarantee-grid">
@@ -161,7 +162,7 @@ const guarantees = [
 
 	<section class="capabilities">
 		<header class="section-head">
-			<h3>What the admin sidebar exposes</h3>
+			<h3>{m.showcase_admin_powers_section_capabilities()}</h3>
 			<Tag variant="muted" size="sm" label="admin-only — non-admins 404" />
 		</header>
 

@@ -2,6 +2,7 @@
 import { Canvas } from '@threlte/core';
 import { BackLink, PageHeader } from '$lib/components';
 import { BoundaryFallback } from '$lib/components/composites';
+import * as m from '$lib/paraglide/messages';
 import Scene from './Scene.svelte';
 
 let currentAnimation = $state('Survey');
@@ -9,13 +10,13 @@ const animationNames = ['Survey', 'Walk', 'Run'];
 </script>
 <div class="page">
 	<PageHeader
-		title="Animated Scene"
-		description="Fox model with switchable animations and orbit controls."
+		title={m.showcase_3d_animated_title()}
+		description={m.showcase_3d_animated_description()}
 		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: '3D', href: '/showcases/3d' },
-			{ label: 'Animated Scene' }
+			{ label: m.showcase_breadcrumb_home(), href: '/' },
+			{ label: m.showcase_breadcrumb_showcases(), href: '/showcases' },
+			{ label: m.showcase_3d_breadcrumb(), href: '/showcases/3d' },
+			{ label: m.showcase_3d_animated_breadcrumb() }
 		]}
 	/>
 </div>
@@ -46,7 +47,7 @@ const animationNames = ['Survey', 'Walk', 'Run'];
 </svelte:boundary>
 
 <div class="page">
-	<BackLink href="/showcases/3d" label="3D" />
+	<BackLink href="/showcases/3d" label={m.showcase_3d_breadcrumb()} />
 </div>
 
 <style>

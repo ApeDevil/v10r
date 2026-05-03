@@ -16,6 +16,7 @@ import {
 } from '$lib/components/viz';
 import { getVizPalette } from '$lib/components/viz/_shared/theme-bridge';
 import type { TreemapNode } from '$lib/components/viz/chart/treemap/types';
+import * as m from '$lib/paraglide/messages';
 import DataControls from '../_components/DataControls.svelte';
 import VizDemoCard from '../_components/VizDemoCard.svelte';
 
@@ -377,13 +378,13 @@ const treemapNested: TreemapNode = {
 </script>
 <div class="page">
 	<PageHeader
-		title="Charts"
-		description="Bar, line, area, pie, radar, bubble, sparkline, gauge, and treemap charts. SimpleChart and Sparkline/Gauge are zero-dependency SVG. The rest use Chart.js or d3-hierarchy."
+		title={m.showcase_viz_charts_title()}
+		description={m.showcase_viz_charts_description()}
 		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'Viz', href: '/showcases/viz' },
-			{ label: 'Charts' }
+			{ label: m.showcase_breadcrumb_home(), href: '/' },
+			{ label: m.showcase_breadcrumb_showcases(), href: '/showcases' },
+			{ label: m.showcase_viz_breadcrumb(), href: '/showcases/viz' },
+			{ label: m.showcase_viz_charts_breadcrumb() }
 		]}
 	/>
 
@@ -395,7 +396,7 @@ const treemapNested: TreemapNode = {
 	<main class="content">
 		<!-- Simple Chart (zero-dep SVG) -->
 		<section id="simple-chart" class="section">
-			<h2 class="section-title">Simple Chart (SVG, Zero Dependencies)</h2>
+			<h2 class="section-title">{m.showcase_viz_charts_section_simple()}</h2>
 			<p class="section-description">Built-in SVG chart with no external dependencies. Supports bar, line, and area types.</p>
 
 			<div class="demos">
@@ -430,7 +431,7 @@ const treemapNested: TreemapNode = {
 
 		<!-- Bar Chart (Chart.js) -->
 		<section id="bar-chart" class="section">
-			<h2 class="section-title">Bar Chart</h2>
+			<h2 class="section-title">{m.showcase_viz_charts_section_bar()}</h2>
 			<p class="section-description">Chart.js bar charts with tree-shaken imports. Vertical, grouped, and stacked variants.</p>
 
 			<div class="demos">
@@ -510,7 +511,7 @@ const treemapNested: TreemapNode = {
 
 		<!-- Line Chart (Chart.js) -->
 		<section id="line-chart" class="section">
-			<h2 class="section-title">Line Chart</h2>
+			<h2 class="section-title">{m.showcase_viz_charts_section_line()}</h2>
 			<p class="section-description">Chart.js line charts for trends and comparisons.</p>
 
 			<div class="demos">
@@ -554,7 +555,7 @@ const treemapNested: TreemapNode = {
 
 		<!-- Area Chart (Chart.js) -->
 		<section id="area-chart" class="section">
-			<h2 class="section-title">Area Chart</h2>
+			<h2 class="section-title">{m.showcase_viz_charts_section_area()}</h2>
 			<p class="section-description">Filled line charts showing magnitude and trends.</p>
 
 			<div class="demos">
@@ -589,7 +590,7 @@ const treemapNested: TreemapNode = {
 
 		<!-- Pie Chart (Chart.js) -->
 		<section id="pie-chart" class="section">
-			<h2 class="section-title">Pie Chart</h2>
+			<h2 class="section-title">{m.showcase_viz_charts_section_pie()}</h2>
 			<p class="section-description">Pie and doughnut charts for part-to-whole relationships.</p>
 
 			<div class="demos">
@@ -633,7 +634,7 @@ const treemapNested: TreemapNode = {
 
 		<!-- Radar Chart (Chart.js) -->
 		<section id="radar-chart" class="section">
-			<h2 class="section-title">Radar Chart</h2>
+			<h2 class="section-title">{m.showcase_viz_charts_section_radar()}</h2>
 			<p class="section-description">Chart.js radar charts for multi-dimensional comparisons. Uses radial scales instead of Cartesian axes.</p>
 
 			<div class="demos">
@@ -690,7 +691,7 @@ const treemapNested: TreemapNode = {
 
 		<!-- Bubble Chart (Chart.js) -->
 		<section id="bubble-chart" class="section">
-			<h2 class="section-title">Bubble Chart</h2>
+			<h2 class="section-title">{m.showcase_viz_charts_section_bubble()}</h2>
 			<p class="section-description">Chart.js bubble charts for multi-variable analysis. Each point encodes x, y position and radius as a third variable.</p>
 
 			<div class="demos">
@@ -741,7 +742,7 @@ const treemapNested: TreemapNode = {
 
 		<!-- Sparkline (Pure SVG) -->
 		<section id="sparkline" class="section">
-			<h2 class="section-title">Sparkline</h2>
+			<h2 class="section-title">{m.showcase_viz_charts_section_sparkline()}</h2>
 			<p class="section-description">Lightweight inline micro-charts. Pure SVG, zero dependencies. Ideal for embedding in tables and dashboards.</p>
 
 			<div class="demos">
@@ -791,7 +792,7 @@ const treemapNested: TreemapNode = {
 
 		<!-- Gauge (Pure SVG) -->
 		<section id="gauge" class="section">
-			<h2 class="section-title">Gauge</h2>
+			<h2 class="section-title">{m.showcase_viz_charts_section_gauge()}</h2>
 			<p class="section-description">Single-value radial meters. Pure SVG, zero dependencies. 270-degree arc sweep with optional color segments.</p>
 
 			<div class="demos">
@@ -848,7 +849,7 @@ const treemapNested: TreemapNode = {
 
 		<!-- Treemap (d3-hierarchy) -->
 		<section id="treemap" class="section">
-			<h2 class="section-title">Treemap</h2>
+			<h2 class="section-title">{m.showcase_viz_charts_section_treemap()}</h2>
 			<p class="section-description">Nested rectangles showing hierarchical data proportions. Uses d3-hierarchy for layout. Click to zoom into nested categories.</p>
 
 			<div class="demos">
@@ -913,7 +914,7 @@ const treemapNested: TreemapNode = {
 	{/snippet}
 	</svelte:boundary>
 
-	<BackLink href="/showcases/viz" label="Viz" />
+	<BackLink href="/showcases/viz" label={m.showcase_viz_breadcrumb()} />
 </div>
 
 <style>

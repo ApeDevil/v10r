@@ -1,11 +1,12 @@
 <script lang="ts">
 import { Button } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { getSidebar } from '$lib/state/sidebar.svelte';
 
 const sidebar = getSidebar();
 </script>
 <section class="demo-section">
-	<h2>Sidebar State</h2>
+	<h2>{m.showcase_shell_sidebar_section_state()}</h2>
 	<dl class="state-list">
 		<dt>Expanded:</dt>
 		<dd>{sidebar.expanded ? 'Yes' : 'No'}</dd>
@@ -18,14 +19,14 @@ const sidebar = getSidebar();
 	</dl>
 
 	<div class="button-group">
-		<Button variant="secondary" onclick={() => sidebar.expand()}>Expand</Button>
-		<Button variant="secondary" onclick={() => sidebar.collapse()}>Collapse</Button>
-		<Button variant="secondary" onclick={() => sidebar.togglePin()}>Toggle Pin</Button>
+		<Button variant="secondary" onclick={() => sidebar.expand()}>{m.showcase_shell_sidebar_btn_expand()}</Button>
+		<Button variant="secondary" onclick={() => sidebar.collapse()}>{m.showcase_shell_sidebar_btn_collapse()}</Button>
+		<Button variant="secondary" onclick={() => sidebar.togglePin()}>{m.showcase_shell_sidebar_btn_pin()}</Button>
 	</div>
 </section>
 
 <section class="demo-section">
-	<h2>Responsive Breakpoints</h2>
+	<h2>{m.showcase_shell_sidebar_section_breakpoints()}</h2>
 	<p>Resize the browser window to see the sidebar behavior change:</p>
 	<ul>
 		<li><strong>Mobile (&lt;768px):</strong> Drawer + FAB (bottom-right)</li>
@@ -35,7 +36,7 @@ const sidebar = getSidebar();
 </section>
 
 <section class="demo-section">
-	<h2>Navigation Components</h2>
+	<h2>{m.showcase_shell_sidebar_section_navigation()}</h2>
 	<p>
 		The sidebar includes enhanced navigation with dropdowns and user menu:
 	</p>
@@ -45,7 +46,7 @@ const sidebar = getSidebar();
 		<li><strong>UserMenu</strong> - Avatar dropdown with profile, settings, theme, and sign out</li>
 	</ul>
 
-	<h3>Features</h3>
+	<h3>{m.showcase_shell_sidebar_section_features()}</h3>
 	<ul>
 		<li><strong>Active state detection:</strong> Highlights current page and parent nav items</li>
 		<li><strong>Compound button:</strong> Main area navigates, chevron toggles dropdown</li>

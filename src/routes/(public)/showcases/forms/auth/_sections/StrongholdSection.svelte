@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Button, ConcentricRings, CornerFrame, Input, Progress, Spinner, WaveDivider } from '$lib/components';
+import * as m from '$lib/paraglide/messages';
 
 const simulate = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -58,7 +59,7 @@ function reset() {
 </script>
 
 <section id="auth-stronghold" class="section">
-	<h2 class="section-title">Stronghold</h2>
+	<h2 class="section-title">{m.showcase_forms_auth_section_stronghold()}</h2>
 	<p class="section-description">
 		Registration form with live password strength meter and requirements checklist.
 		Password must score "Good" or better to submit.
@@ -72,15 +73,15 @@ function reset() {
 			<div class="stronghold-inner">
 				<div class="stronghold-header">
 					<span class="i-lucide-shield text-3xl text-primary" aria-hidden="true"></span>
-					<h3 class="text-xl font-bold text-fg">Create account</h3>
-					<p class="text-sm text-muted">Set up your credentials</p>
+					<h3 class="text-xl font-bold text-fg">{m.showcase_forms_auth_stronghold_title()}</h3>
+					<p class="text-sm text-muted">{m.showcase_forms_auth_stronghold_subtitle()}</p>
 				</div>
 
 				{#if registered}
 					<div class="success-alert" role="status">
 						<span class="i-lucide-check-circle text-lg" aria-hidden="true"></span>
 						<div>
-							<p class="font-medium">Account created</p>
+							<p class="font-medium">{m.showcase_forms_auth_stronghold_account_created_title()}</p>
 							<p class="text-sm">Welcome, <strong>{name}</strong>! Your account is ready.</p>
 						</div>
 					</div>
@@ -88,13 +89,13 @@ function reset() {
 					<div class="reset-bar">
 						<Button variant="ghost" size="sm" onclick={reset}>
 							<span class="i-lucide-rotate-ccw text-sm mr-1" aria-hidden="true"></span>
-							Reset Demo
+							{m.showcase_forms_auth_gateway_reset()}
 						</Button>
 					</div>
 				{:else}
 					<div class="form-fields">
 						<div class="field">
-							<label class="field-label" for="reg-name">Full name</label>
+							<label class="field-label" for="reg-name">{m.showcase_forms_auth_stronghold_field_full_name()}</label>
 							<Input
 								id="reg-name"
 								type="text"
@@ -105,7 +106,7 @@ function reset() {
 						</div>
 
 						<div class="field">
-							<label class="field-label" for="reg-email">Email</label>
+							<label class="field-label" for="reg-email">{m.showcase_forms_field_email()}</label>
 							<Input
 								id="reg-email"
 								type="email"
@@ -118,7 +119,7 @@ function reset() {
 						<WaveDivider shape="zigzag" height={8} />
 
 						<div class="field">
-							<label class="field-label" for="reg-password">Password</label>
+							<label class="field-label" for="reg-password">{m.showcase_forms_field_password()}</label>
 							<div class="password-wrap">
 								<Input
 									id="reg-password"
@@ -133,7 +134,7 @@ function reset() {
 									size="icon"
 									class="toggle-vis"
 									onclick={() => showPassword = !showPassword}
-									aria-label={showPassword ? 'Hide password' : 'Show password'}
+									aria-label={showPassword ? m.showcase_forms_auth_stronghold_hide_password() : m.showcase_forms_auth_stronghold_show_password()}
 								>
 									<span
 										class={showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'}
@@ -170,7 +171,7 @@ function reset() {
 						</div>
 
 						<div class="field">
-							<label class="field-label" for="reg-confirm">Confirm password</label>
+							<label class="field-label" for="reg-confirm">{m.showcase_forms_auth_stronghold_field_confirm()}</label>
 							<Input
 								id="reg-confirm"
 								type={showPassword ? 'text' : 'password'}
@@ -181,13 +182,13 @@ function reset() {
 							{#if confirmPassword && !passwordsMatch}
 								<p class="field-error">
 									<span class="i-lucide-alert-circle text-sm" aria-hidden="true"></span>
-									Passwords do not match
+									{m.showcase_forms_auth_stronghold_passwords_no_match()}
 								</p>
 							{/if}
 							{#if passwordsMatch}
 								<p class="field-success">
 									<span class="i-lucide-check-circle text-sm" aria-hidden="true"></span>
-									Passwords match
+									{m.showcase_forms_auth_stronghold_passwords_match()}
 								</p>
 							{/if}
 						</div>
@@ -205,7 +206,7 @@ function reset() {
 						{:else}
 							<span class="i-lucide-user-plus text-lg mr-2" aria-hidden="true"></span>
 						{/if}
-						Create account
+						{m.showcase_forms_auth_stronghold_cta()}
 					</Button>
 				{/if}
 			</div>

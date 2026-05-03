@@ -1,11 +1,12 @@
 <script lang="ts">
 import { Button } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { getModals } from '$lib/state/modals.svelte';
 
 const modals = getModals();
 </script>
 <section class="demo-section">
-	<h2>Modal Triggers</h2>
+	<h2>{m.showcase_shell_modals_section()}</h2>
 	<p>
 		Try the keyboard shortcuts or click the triggers in the sidebar:
 	</p>
@@ -16,13 +17,13 @@ const modals = getModals();
 
 	<div class="button-group">
 		<Button variant="secondary" onclick={() => modals.open('quickSearch')}>
-			Open Quick Search
+			{m.showcase_shell_modals_btn_search()}
 		</Button>
 		<Button variant="secondary" onclick={() => modals.open('aiAssistant')}>
-			Open AI Assistant
+			{m.showcase_shell_modals_btn_ai()}
 		</Button>
 		<Button variant="secondary" onclick={() => modals.open('shortcuts')}>
-			Show Shortcuts Help
+			{m.showcase_shell_modals_btn_shortcuts()}
 		</Button>
 	</div>
 

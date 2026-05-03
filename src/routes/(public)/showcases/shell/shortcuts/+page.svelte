@@ -1,10 +1,11 @@
 <script lang="ts">
+import * as m from '$lib/paraglide/messages';
 import { formatShortcut, getShortcutsByCategory } from '$lib/shortcuts';
 
 const shortcuts = $derived(getShortcutsByCategory());
 </script>
 <section class="demo-section">
-	<h2>Keyboard Shortcuts</h2>
+	<h2>{m.showcase_shell_shortcuts_section()}</h2>
 	<p>
 		Press <kbd>?</kbd> to view all keyboard shortcuts.
 	</p>
@@ -12,7 +13,7 @@ const shortcuts = $derived(getShortcutsByCategory());
 	<div class="shortcuts-demo">
 		{#if shortcuts.global.length > 0}
 			<div class="shortcut-group">
-				<h3>Global</h3>
+				<h3>{m.showcase_shell_shortcuts_group_global()}</h3>
 				<div class="shortcut-list">
 					{#each shortcuts.global as shortcut}
 						<div class="shortcut-item">
@@ -26,7 +27,7 @@ const shortcuts = $derived(getShortcutsByCategory());
 
 		{#if shortcuts.navigation.length > 0}
 			<div class="shortcut-group">
-				<h3>Navigation</h3>
+				<h3>{m.showcase_shell_shortcuts_group_navigation()}</h3>
 				<div class="shortcut-list">
 					{#each shortcuts.navigation as shortcut}
 						<div class="shortcut-item">

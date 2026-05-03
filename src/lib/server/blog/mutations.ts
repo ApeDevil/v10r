@@ -1,4 +1,5 @@
 import { and, eq, isNull, sql } from 'drizzle-orm';
+import type { TranslationMap } from '$lib/i18n';
 import { db } from '$lib/server/db';
 import { createId } from '$lib/server/db/id';
 import { asset, domain, post, postAsset, postTag, publishedRevision, revision, tag } from '$lib/server/db/schema/blog';
@@ -187,7 +188,14 @@ export async function createTag(
 /** Update a tag. */
 export async function updateTag(
 	tagId: string,
-	data: { name?: string; slug?: string; icon?: string | null; color?: number | null; glyph?: string | null },
+	data: {
+		name?: string;
+		slug?: string;
+		icon?: string | null;
+		color?: number | null;
+		glyph?: string | null;
+		nameI18n?: TranslationMap;
+	},
 ): Promise<BlogTag | null> {
 	const [row] = await db.update(tag).set(data).where(eq(tag.id, tagId)).returning();
 	return row ?? null;

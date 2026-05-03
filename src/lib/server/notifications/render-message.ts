@@ -11,7 +11,7 @@
  * narrowed with a runtime check + sensible fallback.
  */
 
-import * as m from '$lib/paraglide/messages';
+import { m } from '$lib/i18n';
 import type { NotificationParams } from '$lib/server/db/schema/notifications/notifications';
 
 type AnyMessageFn = (params?: Record<string, unknown>, options?: { locale?: string }) => string;

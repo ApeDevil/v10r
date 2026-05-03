@@ -5,6 +5,7 @@ import { page } from '$app/state';
 import { Card, ConfirmDialog, EmptyState, Pagination } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
 
 let { data }: PageProps = $props();
@@ -55,10 +56,10 @@ function openBanDialog(userId: string) {
 	<Card>
 		{#snippet header()}
 			<Cluster justify="between" align="center">
-				<h2 class="text-fluid-lg font-semibold">User Management</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.admin_users_title()}</h2>
 				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>
 					<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
-					Refresh
+					{m.admin_action_refresh()}
 				</Button>
 			</Cluster>
 		{/snippet}
@@ -66,18 +67,18 @@ function openBanDialog(userId: string) {
 		<!-- Search & Filter Bar -->
 		<div class="filter-bar">
 			<form method="GET" class="search-form">
-				<Input name="q" value={data.q} placeholder="Search by name or email..." />
+				<Input name="q" value={data.q} placeholder={m.admin_users_search_placeholder()} />
 				<input type="hidden" name="page" value="1" />
 				{#if data.sort !== 'createdAt'}<input type="hidden" name="sort" value={data.sort} />{/if}
 				{#if data.dir !== 'desc'}<input type="hidden" name="dir" value={data.dir} />{/if}
 				{#if data.statusFilter !== 'all'}<input type="hidden" name="status" value={data.statusFilter} />{/if}
-				<Button type="submit" variant="outline" size="sm">Search</Button>
+				<Button type="submit" variant="outline" size="sm">{m.admin_action_search()}</Button>
 			</form>
 
 			<div class="status-filters">
-				<a href={buildUrl({ status: '', page: '1' })} class="filter-link" class:active={data.statusFilter === 'all'}>All</a>
-				<a href={buildUrl({ status: 'active', page: '1' })} class="filter-link" class:active={data.statusFilter === 'active'}>Active</a>
-				<a href={buildUrl({ status: 'banned', page: '1' })} class="filter-link" class:active={data.statusFilter === 'banned'}>Banned</a>
+				<a href={buildUrl({ status: '', page: '1' })} class="filter-link" class:active={data.statusFilter === 'all'}>{m.admin_filter_all()}</a>
+				<a href={buildUrl({ status: 'active', page: '1' })} class="filter-link" class:active={data.statusFilter === 'active'}>{m.admin_status_active()}</a>
+				<a href={buildUrl({ status: 'banned', page: '1' })} class="filter-link" class:active={data.statusFilter === 'banned'}>{m.admin_users_status_banned()}</a>
 			</div>
 		</div>
 
@@ -85,18 +86,18 @@ function openBanDialog(userId: string) {
 			{#if data.q || data.statusFilter !== 'all'}
 				<EmptyState
 					icon="i-lucide-search-x"
-					title="No results"
-					description={data.q ? `No users match "${data.q}"` : 'No users match these filters.'}
+					title={m.admin_users_empty_results_title()}
+					description={data.q ? m.admin_users_empty_results_description_query({ query: data.q }) : m.admin_users_empty_results_description_filter()}
 				>
 					<a href="/admin/users">
-						<Button variant="outline" size="sm">Clear filters</Button>
+						<Button variant="outline" size="sm">{m.admin_users_clear_filters()}</Button>
 					</a>
 				</EmptyState>
 			{:else}
 				<EmptyState
 					icon="i-lucide-users"
-					title="No users yet"
-					description="Users will appear here once they register."
+					title={m.admin_users_empty_title()}
+					description={m.admin_users_empty_description()}
 				/>
 			{/if}
 		{:else}
@@ -106,22 +107,22 @@ function openBanDialog(userId: string) {
 						<tr>
 							<th>
 								<a href={sortHref('name')} class="sort-header">
-									Name <span class="{sortIcon('name')} sort-icon"></span>
+									{m.admin_users_col_name()} <span class="{sortIcon('name')} sort-icon"></span>
 								</a>
 							</th>
 							<th>
 								<a href={sortHref('email')} class="sort-header">
-									Email <span class="{sortIcon('email')} sort-icon"></span>
+									{m.admin_users_col_email()} <span class="{sortIcon('email')} sort-icon"></span>
 								</a>
 							</th>
-							<th>Role</th>
-							<th>Status</th>
+							<th>{m.admin_users_col_role()}</th>
+							<th>{m.admin_users_col_status()}</th>
 							<th>
 								<a href={sortHref('createdAt')} class="sort-header">
-									Created <span class="{sortIcon('createdAt')} sort-icon"></span>
+									{m.admin_users_col_created()} <span class="{sortIcon('createdAt')} sort-icon"></span>
 								</a>
 							</th>
-							<th>Actions</th>
+							<th>{m.admin_users_col_actions()}</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -141,9 +142,9 @@ function openBanDialog(userId: string) {
 								<td><Badge variant={u.role === 'admin' ? 'default' : 'secondary'}>{u.role}</Badge></td>
 								<td>
 									{#if u.banned}
-										<Badge variant="error">Banned</Badge>
+										<Badge variant="error">{m.admin_users_status_banned()}</Badge>
 									{:else}
-										<Badge variant="success">Active</Badge>
+										<Badge variant="success">{m.admin_status_active()}</Badge>
 									{/if}
 								</td>
 								<td class="time-cell" title={u.createdAt}>{relativeTime(u.createdAt)}</td>
@@ -166,12 +167,12 @@ function openBanDialog(userId: string) {
 												<input type="hidden" name="userId" value={u.id} />
 												<Button type="submit" variant="outline" size="sm" disabled={submitting === u.id}>
 													{#if submitting === u.id}<Spinner size="xs" class="mr-1" />{/if}
-													Unban
+													{m.admin_users_action_unban()}
 												</Button>
 											</form>
 										{:else}
 											<Button variant="outline" size="sm" onclick={() => openBanDialog(u.id)}>
-												Ban
+												{m.admin_users_action_ban()}
 											</Button>
 										{/if}
 
@@ -192,7 +193,7 @@ function openBanDialog(userId: string) {
 												<input type="hidden" name="userId" value={u.id} />
 												<input type="hidden" name="role" value="admin" />
 												<Button type="submit" variant="ghost" size="sm" disabled={submitting === u.id + ':role'}>
-													Promote
+													{m.admin_users_action_promote()}
 												</Button>
 											</form>
 										{:else}
@@ -212,7 +213,7 @@ function openBanDialog(userId: string) {
 												<input type="hidden" name="userId" value={u.id} />
 												<input type="hidden" name="role" value="user" />
 												<Button type="submit" variant="ghost" size="sm" disabled={submitting === u.id + ':role'}>
-													Demote
+													{m.admin_users_action_demote()}
 												</Button>
 											</form>
 										{/if}
@@ -238,9 +239,9 @@ function openBanDialog(userId: string) {
 <!-- Ban Confirmation Dialog -->
 <ConfirmDialog
 	open={showBanDialog}
-	title="Ban User"
-	description="This will revoke all active sessions for this user."
-	confirmLabel="Ban"
+	title={m.admin_users_ban_dialog_title()}
+	description={m.admin_users_ban_dialog_description()}
+	confirmLabel={m.admin_users_action_ban()}
 	destructive
 	onconfirm={() => {
 		showBanDialog = false;

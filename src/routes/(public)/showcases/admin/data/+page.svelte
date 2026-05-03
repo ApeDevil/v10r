@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Tag } from '$lib/components/primitives/tag';
+import * as m from '$lib/paraglide/messages';
 
 interface DataRow {
 	field: string;
@@ -131,7 +132,7 @@ const categories: DataCategory[] = [
 </script>
 <div class="data-page">
 	<header class="lede">
-		<h2>What we collect, and why it's lawful.</h2>
+		<h2>{m.showcase_admin_data_heading()}</h2>
 		<p>
 			Four categories. The first applies to every visitor; the others only kick in when you explicitly opt in,
 			send feedback, or sign in. Every field below is sourced from the actual database schema in
@@ -168,9 +169,9 @@ const categories: DataCategory[] = [
 				<table class="field-table">
 					<thead>
 						<tr>
-							<th>Field</th>
-							<th>Type</th>
-							<th>Example / note</th>
+							<th>{m.showcase_admin_data_col_field()}</th>
+							<th>{m.showcase_admin_data_col_type()}</th>
+							<th>{m.showcase_admin_data_col_example()}</th>
 						</tr>
 					</thead>
 					<tbody>

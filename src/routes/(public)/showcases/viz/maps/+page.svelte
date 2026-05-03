@@ -5,6 +5,7 @@ import { BackLink, BoundaryFallback, NavSection, PageHeader } from '$lib/compone
 import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
 import { GeoMap, MapMarker, MapPopup } from '$lib/components/viz';
 import { getVizPalette } from '$lib/components/viz/_shared/theme-bridge';
+import * as m from '$lib/paraglide/messages';
 import VizDemoCard from '../_components/VizDemoCard.svelte';
 
 const sections = [
@@ -60,13 +61,13 @@ const choroplethRegions = [
 </script>
 <div class="page">
 	<PageHeader
-		title="Maps"
-		description="Interactive maps with markers, popups, and data layers powered by MapLibre GL. Auto-switching light/dark tile themes."
+		title={m.showcase_viz_maps_title()}
+		description={m.showcase_viz_maps_description()}
 		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'Viz', href: '/showcases/viz' },
-			{ label: 'Maps' }
+			{ label: m.showcase_breadcrumb_home(), href: '/' },
+			{ label: m.showcase_breadcrumb_showcases(), href: '/showcases' },
+			{ label: m.showcase_viz_breadcrumb(), href: '/showcases/viz' },
+			{ label: m.showcase_viz_maps_breadcrumb() }
 		]}
 	/>
 
@@ -76,7 +77,7 @@ const choroplethRegions = [
 	<main class="content">
 		<!-- Basic Map -->
 		<section id="basic-map" class="section">
-			<h2 class="section-title">Basic Map</h2>
+			<h2 class="section-title">{m.showcase_viz_maps_section_basic()}</h2>
 			<p class="section-description">A simple interactive map centered on Europe. Includes zoom/pan controls and scale bar. Tile theme auto-switches with dark mode.</p>
 
 			<div class="demos">
@@ -132,7 +133,7 @@ const choroplethRegions = [
 
 		<!-- Markers & Popups -->
 		<section id="markers-popups" class="section">
-			<h2 class="section-title">Markers &amp; Popups</h2>
+			<h2 class="section-title">{m.showcase_viz_maps_section_markers()}</h2>
 			<p class="section-description">Map markers at global tech hubs. Click a marker to open its popup with location details.</p>
 
 			<div class="demos">
@@ -195,7 +196,7 @@ const choroplethRegions = [
 
 		<!-- GeoJSON Choropleth -->
 		<section id="choropleth" class="section">
-			<h2 class="section-title">GeoJSON Choropleth</h2>
+			<h2 class="section-title">{m.showcase_viz_maps_section_choropleth()}</h2>
 			<p class="section-description">US states rendered from GeoJSON with data-driven fill colors. Uses GeoJSONSource, FillLayer, and LineLayer from svelte-maplibre-gl directly.</p>
 
 			<div class="demos">
@@ -302,7 +303,7 @@ ${"<"}/script>
 	{/snippet}
 	</svelte:boundary>
 
-	<BackLink href="/showcases/viz" label="Viz" />
+	<BackLink href="/showcases/viz" label={m.showcase_viz_breadcrumb()} />
 </div>
 
 <style>

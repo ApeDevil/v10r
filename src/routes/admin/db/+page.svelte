@@ -15,6 +15,7 @@ import {
 	Table,
 	Tag,
 } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import type { ProviderResult, ThresholdLevel } from '$lib/server/monitoring';
 
 let { data }: PageProps = $props();
@@ -52,18 +53,18 @@ function statusToTagVariant(status: ProviderResult<unknown>['status']): 'success
 }
 
 function statusLabel(status: ProviderResult<unknown>['status']): string {
-	if (status === 'ok') return 'Healthy';
-	if (status === 'error') return 'Error';
-	return 'Unavailable';
+	if (status === 'ok') return m.admin_db_status_healthy();
+	if (status === 'error') return m.admin_db_status_error();
+	return m.admin_db_status_unavailable();
 }
 
 function timeAgo(iso: string): string {
 	const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-	if (seconds < 60) return 'just now';
+	if (seconds < 60) return m.admin_db_time_just_now();
 	const minutes = Math.floor(seconds / 60);
-	if (minutes < 60) return `${minutes}m ago`;
+	if (minutes < 60) return m.admin_db_time_minutes_ago({ minutes });
 	const hours = Math.floor(minutes / 60);
-	return `${hours}h ago`;
+	return m.admin_db_time_hours_ago({ hours });
 }
 
 // ── Alert visibility: any resolved provider in warning/error state ─────────────
@@ -95,7 +96,7 @@ const resolvedAlert = $derived.by(() => {
 			{#if refreshing}
 				<Spinner size="xs" class="mr-1" />
 			{/if}
-			Refresh
+			{m.admin_action_refresh()}
 		</Button>
 	</form>
 </div>
@@ -103,8 +104,8 @@ const resolvedAlert = $derived.by(() => {
 {#if resolvedAlert}
 	<Alert
 		variant={resolvedAlert}
-		title={resolvedAlert === 'error' ? 'Provider error' : 'Provider unavailable'}
-		description="One or more infrastructure providers could not be reached. Check configuration or retry."
+		title={resolvedAlert === 'error' ? m.admin_db_alert_error_title() : m.admin_db_alert_unavailable_title()}
+		description={m.admin_db_alert_desc()}
 		closable
 		class="mb-6"
 	/>
@@ -144,7 +145,7 @@ const resolvedAlert = $derived.by(() => {
 					{#if neon.status === 'ok' && neon.data}
 						<Tag
 							variant={thresholdToTagVariant(neon.data.threshold)}
-							label={neon.data.threshold === 'ok' ? 'Healthy' : neon.data.threshold === 'warning' ? 'Warning' : 'Critical'}
+							label={neon.data.threshold === 'ok' ? m.admin_db_status_healthy() : neon.data.threshold === 'warning' ? m.admin_db_status_warning() : m.admin_db_status_critical()}
 						/>
 					{:else}
 						<Tag variant={statusToTagVariant(neon.status)} label={statusLabel(neon.status)} />
@@ -160,7 +161,7 @@ const resolvedAlert = $derived.by(() => {
 					<div class="flex flex-col gap-4">
 						<div>
 							<div class="flex justify-between text-fluid-xs text-muted mb-1">
-								<span>Storage</span>
+								<span>{m.admin_db_label_storage()}</span>
 								<span>{d.percentage}%</span>
 							</div>
 							<Progress
@@ -172,10 +173,10 @@ const resolvedAlert = $derived.by(() => {
 						</div>
 
 						<DiagGrid>
-							<DiagRow label="DB Size">{formatBytes(d.totalBytes)}</DiagRow>
-							<DiagRow label="Limit">{formatBytes(d.limitBytes)}</DiagRow>
-							<DiagRow label="Tables">{d.tables.length}</DiagRow>
-							<DiagRow label="Latency"><code>{neon.latencyMs}ms</code></DiagRow>
+							<DiagRow label={m.admin_db_label_db_size()}>{formatBytes(d.totalBytes)}</DiagRow>
+							<DiagRow label={m.admin_db_label_limit()}>{formatBytes(d.limitBytes)}</DiagRow>
+							<DiagRow label={m.admin_db_label_tables()}>{d.tables.length}</DiagRow>
+							<DiagRow label={m.admin_db_label_latency()}><code>{neon.latencyMs}ms</code></DiagRow>
 						</DiagGrid>
 
 						{#snippet neonTableBreakdown()}
@@ -185,12 +186,12 @@ const resolvedAlert = $derived.by(() => {
 										{#snippet children()}
 											<Row hoverable={false}>
 												{#snippet children()}
-													<HeaderCell>Schema</HeaderCell>
-													<HeaderCell>Table</HeaderCell>
-													<HeaderCell>Size</HeaderCell>
-													<HeaderCell>Live Rows</HeaderCell>
-													<HeaderCell>Dead Rows</HeaderCell>
-													<HeaderCell>Last Vacuum</HeaderCell>
+													<HeaderCell>{m.admin_db_col_schema()}</HeaderCell>
+													<HeaderCell>{m.admin_db_col_table()}</HeaderCell>
+													<HeaderCell>{m.admin_db_col_size()}</HeaderCell>
+													<HeaderCell>{m.admin_db_col_live_rows()}</HeaderCell>
+													<HeaderCell>{m.admin_db_col_dead_rows()}</HeaderCell>
+													<HeaderCell>{m.admin_db_col_last_vacuum()}</HeaderCell>
 												{/snippet}
 											</Row>
 										{/snippet}
@@ -209,7 +210,7 @@ const resolvedAlert = $derived.by(() => {
 															{#if t.lastAutovacuum}
 																{timeAgo(t.lastAutovacuum)}
 															{:else}
-																<span class="text-muted">never</span>
+																<span class="text-muted">{m.admin_db_vacuum_never()}</span>
 															{/if}
 														</Cell>
 													{/snippet}
@@ -225,7 +226,7 @@ const resolvedAlert = $derived.by(() => {
 							items={[
 								{
 									value: 'tables',
-									title: `Table breakdown (${d.tables.length})`,
+									title: m.admin_db_table_breakdown({ count: d.tables.length }),
 									content: neonTableBreakdown,
 								},
 							]}
@@ -234,8 +235,8 @@ const resolvedAlert = $derived.by(() => {
 				{:else}
 					<Alert
 						variant="error"
-						title="PostgreSQL unavailable"
-						description={neon.error ?? 'Could not connect to database.'}
+						title={m.admin_db_pg_unavailable_title()}
+						description={neon.error ?? m.admin_db_pg_unavailable_desc()}
 					/>
 					<p class="text-fluid-xs text-muted mt-3">
 						<a
@@ -243,7 +244,7 @@ const resolvedAlert = $derived.by(() => {
 							target="_blank"
 							rel="noopener noreferrer"
 							class="text-primary hover:underline"
-						>View Neon console</a>
+						>{m.admin_db_pg_view_console()}</a>
 					</p>
 				{/if}
 			{/snippet}
@@ -256,14 +257,14 @@ const resolvedAlert = $derived.by(() => {
 						<span class="i-lucide-database provider-icon" aria-hidden="true"></span>
 						<h2 class="text-fluid-base font-semibold">PostgreSQL</h2>
 					</div>
-					<Tag variant="error" label="Error" />
+					<Tag variant="error" label={m.admin_db_status_error()} />
 				</div>
 			{/snippet}
 			{#snippet children()}
 				<Alert
 					variant="error"
-					title="PostgreSQL unavailable"
-					description="Could not connect to database."
+					title={m.admin_db_pg_unavailable_title()}
+					description={m.admin_db_pg_unavailable_desc()}
 				/>
 			{/snippet}
 		</Card>
@@ -306,7 +307,7 @@ const resolvedAlert = $derived.by(() => {
 								: 'ok'}
 						<Tag
 							variant={thresholdToTagVariant(worstThreshold)}
-							label={worstThreshold === 'ok' ? 'Healthy' : worstThreshold === 'warning' ? 'Warning' : 'Critical'}
+							label={worstThreshold === 'ok' ? m.admin_db_status_healthy() : worstThreshold === 'warning' ? m.admin_db_status_warning() : m.admin_db_status_critical()}
 						/>
 					{:else}
 						<Tag variant={statusToTagVariant(neo4j.status)} label={statusLabel(neo4j.status)} />
@@ -321,34 +322,34 @@ const resolvedAlert = $derived.by(() => {
 					{@const d = neo4j.data}
 					<div class="flex flex-col gap-4">
 						<DiagGrid>
-							<DiagRow label="Nodes">
+							<DiagRow label={m.admin_db_label_nodes()}>
 								{formatNumber(d.nodeCount)}
 								<span class="text-muted text-fluid-xs">/ {formatNumber(d.nodeLimit)}</span>
 							</DiagRow>
-							<DiagRow label="Relationships">
+							<DiagRow label={m.admin_db_label_relationships()}>
 								{formatNumber(d.relCount)}
 								<span class="text-muted text-fluid-xs">/ {formatNumber(d.relLimit)}</span>
 							</DiagRow>
-							<DiagRow label="Node usage">{d.nodePercentage}%</DiagRow>
-							<DiagRow label="Rel. usage">{d.relPercentage}%</DiagRow>
-							<DiagRow label="Latency"><code>{neo4j.latencyMs}ms</code></DiagRow>
+							<DiagRow label={m.admin_db_label_node_usage()}>{d.nodePercentage}%</DiagRow>
+							<DiagRow label={m.admin_db_label_rel_usage()}>{d.relPercentage}%</DiagRow>
+							<DiagRow label={m.admin_db_label_latency()}><code>{neo4j.latencyMs}ms</code></DiagRow>
 						</DiagGrid>
 
 						<p class="text-fluid-xs text-muted">
-							Storage metrics not available on free tier —
+							{m.admin_db_neo4j_storage_note()}
 							<a
 								href="https://console.neo4j.io"
 								target="_blank"
 								rel="noopener noreferrer"
 								class="text-primary hover:underline"
-							>View in Aura console</a>
+							>{m.admin_db_neo4j_view_console()}</a>
 						</p>
 
 						{#snippet neo4jDetail()}
 							<div class="neo4j-detail">
 								{#if d.labels.length > 0}
 									<div class="detail-section">
-										<h4 class="detail-section-title">Node Labels</h4>
+										<h4 class="detail-section-title">{m.admin_db_neo4j_node_labels()}</h4>
 										<DiagGrid>
 											{#each d.labels as l}
 												<DiagRow label={l.label}>{formatNumber(l.count)}</DiagRow>
@@ -358,7 +359,7 @@ const resolvedAlert = $derived.by(() => {
 								{/if}
 								{#if d.relTypes.length > 0}
 									<div class="detail-section">
-										<h4 class="detail-section-title">Relationship Types</h4>
+										<h4 class="detail-section-title">{m.admin_db_neo4j_rel_types()}</h4>
 										<DiagGrid>
 											{#each d.relTypes as r}
 												<DiagRow label={r.type}>{formatNumber(r.count)}</DiagRow>
@@ -367,7 +368,7 @@ const resolvedAlert = $derived.by(() => {
 									</div>
 								{/if}
 								{#if d.labels.length === 0 && d.relTypes.length === 0}
-									<p class="text-fluid-sm text-muted">No data in graph.</p>
+									<p class="text-fluid-sm text-muted">{m.admin_db_neo4j_no_data()}</p>
 								{/if}
 							</div>
 						{/snippet}
@@ -376,7 +377,7 @@ const resolvedAlert = $derived.by(() => {
 							items={[
 								{
 									value: 'topology',
-									title: `Topology (${d.labels.length} labels, ${d.relTypes.length} rel. types)`,
+									title: m.admin_db_neo4j_topology({ labels: d.labels.length, rels: d.relTypes.length }),
 									content: neo4jDetail,
 								},
 							]}
@@ -385,8 +386,8 @@ const resolvedAlert = $derived.by(() => {
 				{:else}
 					<Alert
 						variant="error"
-						title="Neo4j unavailable"
-						description={neo4j.error ?? 'Could not connect to graph database.'}
+						title={m.admin_db_neo4j_unavailable_title()}
+						description={neo4j.error ?? m.admin_db_neo4j_unavailable_desc()}
 					/>
 					<p class="text-fluid-xs text-muted mt-3">
 						<a
@@ -394,7 +395,7 @@ const resolvedAlert = $derived.by(() => {
 							target="_blank"
 							rel="noopener noreferrer"
 							class="text-primary hover:underline"
-						>View Aura console</a>
+						>{m.admin_db_neo4j_view_console()}</a>
 					</p>
 				{/if}
 			{/snippet}
@@ -407,14 +408,14 @@ const resolvedAlert = $derived.by(() => {
 						<span class="i-lucide-share-2 provider-icon" aria-hidden="true"></span>
 						<h2 class="text-fluid-base font-semibold">Neo4j</h2>
 					</div>
-					<Tag variant="error" label="Error" />
+					<Tag variant="error" label={m.admin_db_status_error()} />
 				</div>
 			{/snippet}
 			{#snippet children()}
 				<Alert
 					variant="error"
-					title="Neo4j unavailable"
-					description="Could not connect to graph database."
+					title={m.admin_db_neo4j_unavailable_title()}
+					description={m.admin_db_neo4j_unavailable_desc()}
 				/>
 			{/snippet}
 		</Card>
@@ -436,7 +437,7 @@ const resolvedAlert = $derived.by(() => {
 							: 'ok'}
 					<Tag
 						variant={thresholdToTagVariant(worstThreshold)}
-						label={worstThreshold === 'ok' ? 'Healthy' : worstThreshold === 'warning' ? 'Warning' : 'Critical'}
+						label={worstThreshold === 'ok' ? m.admin_db_status_healthy() : worstThreshold === 'warning' ? m.admin_db_status_warning() : m.admin_db_status_critical()}
 					/>
 				{:else}
 					<Tag variant={statusToTagVariant(data.upstash.status)} label={statusLabel(data.upstash.status)} />
@@ -452,7 +453,7 @@ const resolvedAlert = $derived.by(() => {
 				<div class="flex flex-col gap-4">
 					<div>
 						<div class="flex justify-between text-fluid-xs text-muted mb-1">
-							<span>Commands this month</span>
+							<span>{m.admin_db_upstash_commands_month()}</span>
 							<span>{d.commandsPercentage}%</span>
 						</div>
 						<Progress
@@ -465,7 +466,7 @@ const resolvedAlert = $derived.by(() => {
 
 					<div>
 						<div class="flex justify-between text-fluid-xs text-muted mb-1">
-							<span>Storage</span>
+							<span>{m.admin_db_label_storage()}</span>
 							<span>{d.storagePercentage}%</span>
 						</div>
 						<Progress
@@ -477,18 +478,18 @@ const resolvedAlert = $derived.by(() => {
 					</div>
 
 					<DiagGrid>
-						<DiagRow label="Commands used">{formatNumber(d.commandsUsed)}</DiagRow>
-						<DiagRow label="Commands limit">{formatNumber(d.commandsLimit)} / mo</DiagRow>
-						<DiagRow label="Storage used">{formatBytes(d.storageBytes)}</DiagRow>
-						<DiagRow label="Storage limit">{formatBytes(d.storageLimit)}</DiagRow>
-						<DiagRow label="Latency"><code>{data.upstash.latencyMs}ms</code></DiagRow>
+						<DiagRow label={m.admin_db_label_commands_used()}>{formatNumber(d.commandsUsed)}</DiagRow>
+						<DiagRow label={m.admin_db_label_commands_limit()}>{formatNumber(d.commandsLimit)} {m.admin_db_label_commands_limit_suffix()}</DiagRow>
+						<DiagRow label={m.admin_db_label_storage_used()}>{formatBytes(d.storageBytes)}</DiagRow>
+						<DiagRow label={m.admin_db_label_storage_limit()}>{formatBytes(d.storageLimit)}</DiagRow>
+						<DiagRow label={m.admin_db_label_latency()}><code>{data.upstash.latencyMs}ms</code></DiagRow>
 					</DiagGrid>
 				</div>
 			{:else}
 				<Alert
 					variant={data.upstash.status === 'error' ? 'error' : 'warning'}
-					title="Upstash unavailable"
-					description={data.upstash.error ?? 'Could not connect to Redis.'}
+					title={m.admin_db_upstash_unavailable_title()}
+					description={data.upstash.error ?? m.admin_db_upstash_unavailable_desc()}
 				/>
 				<p class="text-fluid-xs text-muted mt-3">
 					<a
@@ -496,7 +497,7 @@ const resolvedAlert = $derived.by(() => {
 						target="_blank"
 						rel="noopener noreferrer"
 						class="text-primary hover:underline"
-					>View Upstash console</a>
+					>{m.admin_db_upstash_view_console()}</a>
 				</p>
 			{/if}
 		{/snippet}
@@ -513,7 +514,7 @@ const resolvedAlert = $derived.by(() => {
 				{#if data.r2.status === 'ok' && data.r2.data}
 					<Tag
 						variant={thresholdToTagVariant(data.r2.data.storageThreshold)}
-						label={data.r2.data.storageThreshold === 'ok' ? 'Healthy' : data.r2.data.storageThreshold === 'warning' ? 'Warning' : 'Critical'}
+						label={data.r2.data.storageThreshold === 'ok' ? m.admin_db_status_healthy() : data.r2.data.storageThreshold === 'warning' ? m.admin_db_status_warning() : m.admin_db_status_critical()}
 					/>
 				{:else}
 					<Tag variant={statusToTagVariant(data.r2.status)} label={statusLabel(data.r2.status)} />
@@ -529,7 +530,7 @@ const resolvedAlert = $derived.by(() => {
 				<div class="flex flex-col gap-4">
 					<div>
 						<div class="flex justify-between text-fluid-xs text-muted mb-1">
-							<span>Storage</span>
+							<span>{m.admin_db_label_storage()}</span>
 							<span>{d.storagePercentage}%</span>
 						</div>
 						<Progress
@@ -541,22 +542,22 @@ const resolvedAlert = $derived.by(() => {
 					</div>
 
 					<DiagGrid>
-						<DiagRow label="Storage used">{formatBytes(d.storageBytes)}</DiagRow>
-						<DiagRow label="Storage limit">{formatBytes(d.storageLimit)}</DiagRow>
-						<DiagRow label="Objects">{formatNumber(d.objectCount)}</DiagRow>
-						<DiagRow label="Latency"><code>{data.r2.latencyMs}ms</code></DiagRow>
+						<DiagRow label={m.admin_db_label_storage_used()}>{formatBytes(d.storageBytes)}</DiagRow>
+						<DiagRow label={m.admin_db_label_storage_limit()}>{formatBytes(d.storageLimit)}</DiagRow>
+						<DiagRow label={m.admin_db_label_objects()}>{formatNumber(d.objectCount)}</DiagRow>
+						<DiagRow label={m.admin_db_label_latency()}><code>{data.r2.latencyMs}ms</code></DiagRow>
 					</DiagGrid>
 
 					<p class="text-fluid-xs text-muted">
 						<span class="i-lucide-info inline-block mr-1 align-middle" aria-hidden="true"></span>
-						Configure <code>CLOUDFLARE_ANALYTICS_TOKEN</code> for detailed request metrics.
+						{m.admin_db_r2_analytics_note()}
 					</p>
 				</div>
 			{:else}
 				<Alert
 					variant={data.r2.status === 'error' ? 'error' : 'warning'}
-					title="R2 unavailable"
-					description={data.r2.error ?? 'Could not connect to Cloudflare R2.'}
+					title={m.admin_db_r2_unavailable_title()}
+					description={data.r2.error ?? m.admin_db_r2_unavailable_desc()}
 				/>
 				<p class="text-fluid-xs text-muted mt-3">
 					<a
@@ -564,7 +565,7 @@ const resolvedAlert = $derived.by(() => {
 						target="_blank"
 						rel="noopener noreferrer"
 						class="text-primary hover:underline"
-					>View Cloudflare dashboard</a>
+					>{m.admin_db_r2_view_console()}</a>
 				</p>
 			{/if}
 		{/snippet}

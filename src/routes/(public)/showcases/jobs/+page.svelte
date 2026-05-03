@@ -2,6 +2,7 @@
 import { Card, EmptyState, PageHeader } from '$lib/components/composites';
 import { PageContainer, Stack } from '$lib/components/layout';
 import { Badge } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
 
@@ -18,12 +19,12 @@ function relativeTime(iso: string): string {
 </script>
 <PageContainer class="py-7">
 	<PageHeader
-		title="Scheduled Jobs"
-		description="Hosting-agnostic background job system with execution logging."
+		title={m.showcase_jobs_title()}
+		description={m.showcase_jobs_description()}
 		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'Jobs' }
+			{ label: m.showcase_breadcrumb_home(), href: '/' },
+			{ label: m.showcase_breadcrumb_showcases(), href: '/showcases' },
+			{ label: m.showcase_jobs_breadcrumb() }
 		]}
 	/>
 
@@ -31,7 +32,7 @@ function relativeTime(iso: string): string {
 		<!-- How it works -->
 		<Card>
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">How It Works</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.showcase_jobs_section_how()}</h2>
 			{/snippet}
 
 			<div class="explanation">
@@ -57,7 +58,7 @@ function relativeTime(iso: string): string {
 		<!-- Registered Jobs -->
 		<Card>
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Registered Jobs</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.showcase_jobs_section_registered()}</h2>
 			{/snippet}
 
 			<div class="diag-grid">
@@ -75,26 +76,26 @@ function relativeTime(iso: string): string {
 		<!-- Recent Executions -->
 		<Card>
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Recent Executions</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.showcase_jobs_section_recent()}</h2>
 			{/snippet}
 
 			{#if data.recentExecutions.length === 0}
 				<EmptyState
 					icon="i-lucide-history"
-					title="No executions yet"
-					description="Jobs will appear here after their first run."
+					title={m.showcase_jobs_empty_title()}
+					description={m.showcase_jobs_empty_description()}
 				/>
 			{:else}
 				<div class="history-table-wrap">
 					<table class="history-table">
 						<thead>
 							<tr>
-								<th>Job</th>
-								<th>Status</th>
-								<th>Trigger</th>
-								<th>Duration</th>
-								<th>Result</th>
-								<th>Time</th>
+								<th>{m.showcase_jobs_col_job()}</th>
+								<th>{m.showcase_jobs_col_status()}</th>
+								<th>{m.showcase_jobs_col_trigger()}</th>
+								<th>{m.showcase_jobs_col_duration()}</th>
+								<th>{m.showcase_jobs_col_result()}</th>
+								<th>{m.showcase_jobs_col_time()}</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -123,7 +124,7 @@ function relativeTime(iso: string): string {
 		<!-- Architecture -->
 		<Card>
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Key Files</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.showcase_jobs_section_files()}</h2>
 			{/snippet}
 
 			<div class="diag-grid">

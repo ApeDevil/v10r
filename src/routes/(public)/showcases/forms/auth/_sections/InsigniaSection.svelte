@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Asterism, Badge, Button, Flourish, Kamon } from '$lib/components';
+import * as m from '$lib/paraglide/messages';
 
 let isLoggedIn = $state(false);
 
@@ -13,7 +14,7 @@ const mockUser = {
 </script>
 
 <section id="auth-insignia" class="section">
-	<h2 class="section-title">Insignia</h2>
+	<h2 class="section-title">{m.showcase_forms_auth_section_insignia()}</h2>
 	<p class="section-description">
 		Session state display toggling between authenticated and unauthenticated views.
 	</p>
@@ -25,7 +26,7 @@ const mockUser = {
 			<div class="insignia-inner">
 				<div class="insignia-header">
 					<Kamon folds={6} size={48} />
-					<h3 class="text-xl font-bold text-fg">Session State</h3>
+					<h3 class="text-xl font-bold text-fg">{m.showcase_forms_auth_insignia_session_state()}</h3>
 				</div>
 
 				<Asterism pattern="fleuron" />
@@ -52,13 +53,13 @@ const mockUser = {
 						onclick={() => isLoggedIn = false}
 					>
 						<span class="i-lucide-log-out text-lg mr-2" aria-hidden="true"></span>
-						Sign out
+						{m.showcase_forms_auth_insignia_sign_out()}
 					</Button>
 				{:else}
 					<div class="signed-out">
 						<span class="i-lucide-lock text-4xl text-muted" aria-hidden="true"></span>
-						<p class="text-lg font-medium text-fg">Not signed in</p>
-						<p class="text-sm text-muted">Sign in to access your account</p>
+						<p class="text-lg font-medium text-fg">{m.showcase_forms_auth_insignia_not_signed_in()}</p>
+						<p class="text-sm text-muted">{m.showcase_forms_auth_insignia_not_signed_in_sub()}</p>
 					</div>
 
 					<Button
@@ -68,7 +69,7 @@ const mockUser = {
 						onclick={() => isLoggedIn = true}
 					>
 						<span class="i-lucide-log-in text-lg mr-2" aria-hidden="true"></span>
-						Sign in
+						{m.showcase_forms_auth_insignia_sign_in()}
 					</Button>
 				{/if}
 			</div>

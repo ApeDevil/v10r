@@ -14,6 +14,7 @@ import {
 	Tooltip,
 	Typography,
 } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
 
 let { data } = $props();
@@ -21,18 +22,18 @@ const toast = getToast();
 
 let resetDialogOpen = $state(false);
 
-const sections = [
-	{ id: 'numeric', label: 'Numeric' },
-	{ id: 'text', label: 'Text' },
-	{ id: 'temporal', label: 'Temporal' },
-	{ id: 'boolean', label: 'Boolean' },
-	{ id: 'uuid', label: 'UUID' },
-	{ id: 'json', label: 'JSON' },
-	{ id: 'arrays', label: 'Arrays' },
-	{ id: 'ranges', label: 'Ranges' },
-	{ id: 'network', label: 'Network' },
-	{ id: 'enums', label: 'Enums' },
-];
+const sections = $derived([
+	{ id: 'numeric', label: m.showcase_db_relational_types_nav_numeric() },
+	{ id: 'text', label: m.showcase_db_relational_types_nav_text() },
+	{ id: 'temporal', label: m.showcase_db_relational_types_nav_temporal() },
+	{ id: 'boolean', label: m.showcase_db_relational_types_nav_boolean() },
+	{ id: 'uuid', label: m.showcase_db_relational_types_nav_uuid() },
+	{ id: 'json', label: m.showcase_db_relational_types_nav_json() },
+	{ id: 'arrays', label: m.showcase_db_relational_types_nav_arrays() },
+	{ id: 'ranges', label: m.showcase_db_relational_types_nav_ranges() },
+	{ id: 'network', label: m.showcase_db_relational_types_nav_network() },
+	{ id: 'enums', label: m.showcase_db_relational_types_nav_enums() },
+]);
 
 function formatValue(val: unknown): string {
 	if (val === null || val === undefined) return 'NULL';
@@ -55,7 +56,7 @@ function formatValue(val: unknown): string {
 			<section id="numeric">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Numeric Types</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_relational_types_card_numeric()}</Typography>
 						<p class="section-desc">PostgreSQL stores exact and approximate numbers. Choose based on precision — <code>numeric</code> is exact, <code>real</code>/<code>double</code> are not.</p>
 					{/snippet}
 
@@ -64,7 +65,7 @@ function formatValue(val: unknown): string {
 							<Table>
 								<Header>
 									<Row>
-										<HeaderCell>Label</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_types_col_label()}</HeaderCell>
 										<HeaderCell><Tooltip content="2-byte signed integer, range -32,768 to +32,767. Use for small bounded values like ratings." side="bottom"><span class="type-hint">smallint</span></Tooltip></HeaderCell>
 										<HeaderCell><Tooltip content="4-byte signed integer, range ±2.1 billion. The default integer type." side="bottom"><span class="type-hint">integer</span></Tooltip></HeaderCell>
 										<HeaderCell><Tooltip content="8-byte signed integer, range ±9.2 quintillion. Use for counters that may exceed 2 billion." side="bottom"><span class="type-hint">bigint</span></Tooltip></HeaderCell>
@@ -98,7 +99,7 @@ function formatValue(val: unknown): string {
 			<section id="text">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Text / String Types</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_relational_types_card_text()}</Typography>
 						<p class="section-desc"><code>text</code> is the workhorse — no performance penalty vs <code>varchar</code>. Use <code>varchar(n)</code> only when you need a constraint. <code>char(n)</code> is space-padded and rarely useful.</p>
 					{/snippet}
 
@@ -131,7 +132,7 @@ function formatValue(val: unknown): string {
 			<section id="temporal">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Date & Time Types</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_relational_types_card_temporal()}</Typography>
 						<p class="section-desc">Always use <code>timestamptz</code> for wall-clock times. <code>timestamp</code> without timezone is rarely correct. <code>interval</code> stores durations PostgreSQL can do arithmetic with.</p>
 					{/snippet}
 
@@ -140,7 +141,7 @@ function formatValue(val: unknown): string {
 							<Table>
 								<Header>
 									<Row>
-										<HeaderCell>Description</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_types_col_description()}</HeaderCell>
 										<HeaderCell><Tooltip content="Calendar date only (no time), 4 bytes. Format: YYYY-MM-DD." side="bottom"><span class="type-hint">date</span></Tooltip></HeaderCell>
 										<HeaderCell><Tooltip content="Time of day without date or timezone, 8 bytes. Use timestamptz for most real-world needs." side="bottom"><span class="type-hint">time</span></Tooltip></HeaderCell>
 										<HeaderCell><Tooltip content="Date + time + timezone, always stored as UTC internally. The correct choice for wall-clock times." side="bottom"><span class="type-hint">timestamptz</span></Tooltip></HeaderCell>
@@ -170,7 +171,7 @@ function formatValue(val: unknown): string {
 			<section id="boolean">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Boolean</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_relational_types_card_boolean()}</Typography>
 						<p class="section-desc">PostgreSQL accepts many literals: <code>true</code>, <code>'yes'</code>, <code>'on'</code>, <code>'1'</code>. Always store as <code>boolean</code>, never as integer or string.</p>
 					{/snippet}
 
@@ -193,7 +194,7 @@ function formatValue(val: unknown): string {
 			<section id="uuid">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">UUID</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_relational_types_card_uuid()}</Typography>
 						<p class="section-desc">128-bit universally unique identifiers. <code>gen_random_uuid()</code> generates v4 UUIDs natively (PG 13+, no extension needed). Use for external-facing IDs — keep <code>serial</code> for internal references.</p>
 					{/snippet}
 
@@ -214,7 +215,7 @@ function formatValue(val: unknown): string {
 			<section id="json">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">JSON Types</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_relational_types_card_json()}</Typography>
 						<p class="section-desc">Always use <code>jsonb</code>. It's parsed binary — indexable with GIN, queryable with <code>@&gt;</code> containment and <code>-&gt;&gt;</code> path extraction. <code>json</code> stores verbatim text (preserving whitespace and duplicate keys).</p>
 					{/snippet}
 
@@ -251,7 +252,7 @@ function formatValue(val: unknown): string {
 			<section id="arrays">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Arrays</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_relational_types_card_arrays()}</Typography>
 						<p class="section-desc">PostgreSQL arrays are powerful for tags, labels, and ordered lists. GIN indexes enable fast <code>@&gt;</code> containment queries. Use junction tables instead when elements need foreign keys.</p>
 					{/snippet}
 
@@ -260,7 +261,7 @@ function formatValue(val: unknown): string {
 							<Table>
 								<Header>
 									<Row>
-										<HeaderCell>Name</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_types_col_name()}</HeaderCell>
 										<HeaderCell><Tooltip content="Variable-length array of 4-byte integers. Supports indexing with GIN for fast @> containment queries." side="bottom"><span class="type-hint">integer[]</span></Tooltip></HeaderCell>
 										<HeaderCell><Tooltip content="Variable-length array of strings. Great for tags and labels — use a junction table when elements need foreign keys." side="bottom"><span class="type-hint">text[]</span></Tooltip></HeaderCell>
 									</Row>
@@ -296,7 +297,7 @@ function formatValue(val: unknown): string {
 			<section id="ranges">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Range Types</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_relational_types_card_ranges()}</Typography>
 						<p class="section-desc">One of PostgreSQL's most underappreciated features. A single <code>tstzrange</code> replaces separate start/end columns, with native overlap (<code>&amp;&amp;</code>), containment (<code>@&gt;</code>), and adjacency (<code>-|-</code>) operators. GiST indexes make them fast.</p>
 					{/snippet}
 
@@ -305,11 +306,11 @@ function formatValue(val: unknown): string {
 							<Table>
 								<Header>
 									<Row>
-										<HeaderCell>Resource</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_types_col_resource()}</HeaderCell>
 										<HeaderCell><Tooltip content="Range of integers with inclusive/exclusive bounds [). Supports overlap (&&), containment (@>), and adjacency (-|-) operators." side="bottom"><span class="type-hint">int4range</span></Tooltip></HeaderCell>
 										<HeaderCell><Tooltip content="Range of timestamptz values. Replaces separate start/end columns with native overlap and containment queries. Use GiST index." side="bottom"><span class="type-hint">tstzrange</span></Tooltip></HeaderCell>
 										<HeaderCell><Tooltip content="Range of dates for period-based queries. Same operators as other range types." side="bottom"><span class="type-hint">daterange</span></Tooltip></HeaderCell>
-										<HeaderCell>Priority</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_types_col_priority()}</HeaderCell>
 									</Row>
 								</Header>
 								<Body>
@@ -335,7 +336,7 @@ function formatValue(val: unknown): string {
 			<section id="network">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Network & Geometry Types</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_relational_types_card_network()}</Typography>
 						<p class="section-desc"><code>inet</code> for host addresses, <code>cidr</code> for networks, <code>macaddr</code> for hardware. All support containment operators (<code>&lt;&lt;</code>, <code>&gt;&gt;</code>). <code>point</code> for simple 2D coordinates — use PostGIS for serious GIS work.</p>
 					{/snippet}
 
@@ -344,7 +345,7 @@ function formatValue(val: unknown): string {
 							<Table>
 								<Header>
 									<Row>
-										<HeaderCell>Device</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_types_col_device()}</HeaderCell>
 										<HeaderCell><Tooltip content="IPv4 or IPv6 host address with optional subnet mask. Supports containment operators (<< and >>)." side="bottom"><span class="type-hint">inet</span></Tooltip></HeaderCell>
 										<HeaderCell><Tooltip content="IPv4 or IPv6 network address. Unlike inet, always stores the network portion only (host bits zeroed)." side="bottom"><span class="type-hint">cidr</span></Tooltip></HeaderCell>
 										<HeaderCell><Tooltip content="6-byte MAC address in colon-separated hex notation. Accepts multiple input formats." side="bottom"><span class="type-hint">macaddr</span></Tooltip></HeaderCell>
@@ -374,7 +375,7 @@ function formatValue(val: unknown): string {
 			<section id="enums">
 				<Card>
 					{#snippet header()}
-						<Typography variant="h5" as="h2">Enums & Audit Log</Typography>
+						<Typography variant="h5" as="h2">{m.showcase_db_relational_types_card_enums()}</Typography>
 						<p class="section-desc"><code>pgEnum</code> creates real PostgreSQL ENUM types — 4-byte storage, type-safe at DB level. Caveat: adding values requires <code>ALTER TYPE</code>, can't remove without recreation. Use for stable sets only.</p>
 					{/snippet}
 
@@ -384,10 +385,10 @@ function formatValue(val: unknown): string {
 								<Header>
 									<Row>
 										<HeaderCell><Tooltip content="bigserial — auto-incrementing 8-byte integer. Like serial but for tables that may exceed 2 billion rows." side="bottom"><span class="type-hint">#</span></Tooltip></HeaderCell>
-										<HeaderCell><Tooltip content="pgEnum 'audit_action' — fixed set: create, update, delete, login, export, restore. Type-safe at the DB level, 4-byte storage." side="bottom"><span class="type-hint">Action (enum)</span></Tooltip></HeaderCell>
-										<HeaderCell><Tooltip content="pgEnum 'audit_severity' — fixed set: info, warning, error, critical. Adding values requires ALTER TYPE." side="bottom"><span class="type-hint">Severity (enum)</span></Tooltip></HeaderCell>
-										<HeaderCell>Description</HeaderCell>
-										<HeaderCell>Actor</HeaderCell>
+										<HeaderCell><Tooltip content="pgEnum 'audit_action' — fixed set: create, update, delete, login, export, restore. Type-safe at the DB level, 4-byte storage." side="bottom"><span class="type-hint">{m.showcase_db_relational_types_col_action_enum()}</span></Tooltip></HeaderCell>
+										<HeaderCell><Tooltip content="pgEnum 'audit_severity' — fixed set: info, warning, error, critical. Adding values requires ALTER TYPE." side="bottom"><span class="type-hint">{m.showcase_db_relational_types_col_severity_enum()}</span></Tooltip></HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_types_col_description()}</HeaderCell>
+										<HeaderCell>{m.showcase_db_relational_types_col_actor()}</HeaderCell>
 									</Row>
 								</Header>
 								<Body>
@@ -420,7 +421,7 @@ function formatValue(val: unknown): string {
 	<Stack gap="2" class="items-center mt-6 mb-4">
 		<Button variant="outline" size="sm" onclick={() => resetDialogOpen = true}>
 			<span class="i-lucide-rotate-ccw h-4 w-4 mr-1" ></span>
-			Reset to Seed Data
+			{m.showcase_db_relational_types_reset()}
 		</Button>
 		<span class="reset-hint">Types are read-only. See <a href="/showcases/db/relational/mutability">Mutability</a> for live write operations.</span>
 	</Stack>

@@ -1,11 +1,12 @@
 <script lang="ts">
 import { Button } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
 
 const toast = getToast();
 </script>
 <section class="demo-section">
-	<h2>Toast Notifications</h2>
+	<h2>{m.showcase_shell_toasts_section()}</h2>
 	<p>
 		Toast notifications appear in the top-right (desktop) or top-center (mobile). They auto-dismiss
 		after a duration based on type.
@@ -13,16 +14,16 @@ const toast = getToast();
 
 	<div class="button-group">
 		<Button variant="secondary" onclick={() => toast.success('Operation completed successfully!')}>
-			Success
+			{m.showcase_shell_toasts_btn_success()}
 		</Button>
 		<Button variant="secondary" onclick={() => toast.error('Something went wrong. Please try again.')}>
-			Error
+			{m.showcase_shell_toasts_btn_error()}
 		</Button>
 		<Button variant="secondary" onclick={() => toast.warning('This action cannot be undone.')}>
-			Warning
+			{m.showcase_shell_toasts_btn_warning()}
 		</Button>
 		<Button variant="secondary" onclick={() => toast.info('New updates are available.')}>
-			Info
+			{m.showcase_shell_toasts_btn_info()}
 		</Button>
 	</div>
 
@@ -37,13 +38,13 @@ const toast = getToast();
 				setTimeout(() => toast.success('Fifth toast'), 1200);
 			}}
 		>
-			Show Multiple Toasts (max 5)
+			{m.showcase_shell_toasts_btn_multiple()}
 		</Button>
 	</div>
 
 	{#if toast.items.length > 0}
 		<div class="toast-preview">
-			<h3>Active Toasts:</h3>
+			<h3>{m.showcase_shell_toasts_active()}</h3>
 			<ul class="toast-list">
 				{#each toast.items as t}
 					<li class="toast-item toast-{t.type}">

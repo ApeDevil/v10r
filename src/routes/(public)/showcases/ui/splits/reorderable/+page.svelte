@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Card, ReorderablePaneLayout } from '$lib/components';
 import type { PaneDefinition } from '$lib/components/composites/reorderable-panes';
+import * as m from '$lib/paraglide/messages';
 
 const basicPanes: PaneDefinition[] = [
 	{ id: 'nav', label: 'Navigation', defaultSize: 20, minSize: 15, maxSize: 30 },
@@ -36,7 +37,7 @@ const verticalPanes: PaneDefinition[] = [
 <main class="content">
 	<!-- Basic Reorderable -->
 	<section>
-		<h2 class="text-fluid-2xl font-bold mb-fluid-3">Basic Reorderable</h2>
+		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_reorderable_section_basic()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			Three panes with a tab bar above. Drag the grip icon to reorder tabs, or use Arrow keys
 			when a grip is focused. Panes keep their width when reordered.
@@ -77,7 +78,7 @@ const verticalPanes: PaneDefinition[] = [
 
 	<!-- Reorderable + Collapsible -->
 	<section>
-		<h2 class="text-fluid-2xl font-bold mb-fluid-3">Reorderable + Collapsible</h2>
+		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_reorderable_section_collapsible()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			Side panes can be collapsed by dragging past the minimum size. Reorder still works after
 			collapse/expand.
@@ -113,7 +114,7 @@ const verticalPanes: PaneDefinition[] = [
 
 	<!-- Persistent Reorderable -->
 	<section>
-		<h2 class="text-fluid-2xl font-bold mb-fluid-3">Persistent Layout</h2>
+		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_reorderable_section_persistent()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			Both pane order and sizes are saved to localStorage. Reorder and resize, then refresh the
 			page to see them restored.
@@ -151,7 +152,7 @@ const verticalPanes: PaneDefinition[] = [
 
 	<!-- Vertical Direction -->
 	<section>
-		<h2 class="text-fluid-2xl font-bold mb-fluid-3">Vertical Layout</h2>
+		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_reorderable_section_vertical()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			Side list for vertical direction. Grip icons and Arrow Up/Down for keyboard reorder.
 		</p>
@@ -183,7 +184,7 @@ const verticalPanes: PaneDefinition[] = [
 
 	<!-- Props Reference -->
 	<section>
-		<h2 class="text-fluid-2xl font-bold mb-fluid-3">Component Props</h2>
+		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_reorderable_section_props()}</h2>
 
 		<div class="grid grid-cols-1 lg:grid-cols-2 gap-fluid-4">
 			<Card>
@@ -245,12 +246,12 @@ const verticalPanes: PaneDefinition[] = [
 
 	<!-- Accessibility -->
 	<section>
-		<h2 class="text-fluid-2xl font-bold mb-fluid-3">Accessibility</h2>
+		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_reorderable_section_a11y()}</h2>
 
 		<Card>
 			<div class="space-y-fluid-3">
 				<div>
-					<h4 class="text-fluid-base font-semibold mb-2">Keyboard Reorder</h4>
+					<h4 class="text-fluid-base font-semibold mb-2">{m.showcase_ui_reorderable_a11y_keyboard()}</h4>
 					<ul class="list-disc list-inside text-fluid-sm text-muted space-y-1">
 						<li>Tab to focus a grip handle in the tab bar</li>
 						<li>Arrow Left/Right to reorder (horizontal layout)</li>
@@ -259,7 +260,7 @@ const verticalPanes: PaneDefinition[] = [
 					</ul>
 				</div>
 				<div>
-					<h4 class="text-fluid-base font-semibold mb-2">Screen Reader</h4>
+					<h4 class="text-fluid-base font-semibold mb-2">{m.showcase_ui_reorderable_a11y_screen_reader()}</h4>
 					<ul class="list-disc list-inside text-fluid-sm text-muted space-y-1">
 						<li>
 							Tab bar uses <code class="bg-subtle px-1 rounded">role="list"</code> (panes are always
@@ -270,7 +271,7 @@ const verticalPanes: PaneDefinition[] = [
 					</ul>
 				</div>
 				<div>
-					<h4 class="text-fluid-base font-semibold mb-2">Motion & Contrast</h4>
+					<h4 class="text-fluid-base font-semibold mb-2">{m.showcase_ui_reorderable_a11y_motion()}</h4>
 					<ul class="list-disc list-inside text-fluid-sm text-muted space-y-1">
 						<li>
 							<code class="bg-subtle px-1 rounded">prefers-reduced-motion</code> disables drag animations

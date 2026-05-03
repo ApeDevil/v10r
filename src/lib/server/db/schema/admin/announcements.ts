@@ -5,7 +5,8 @@
  */
 
 import { sql } from 'drizzle-orm';
-import { boolean, index, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, index, jsonb, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
+import type { TranslationMap } from '$lib/i18n';
 import { user } from '../auth/_better-auth';
 import { adminSchema } from './audit-log';
 
@@ -19,6 +20,8 @@ export const announcements = adminSchema.table(
 
 		title: text('title').notNull(),
 		body: text('body').notNull(),
+		titleI18n: jsonb('title_i18n').$type<TranslationMap>().notNull().default(sql`'{}'::jsonb`),
+		bodyI18n: jsonb('body_i18n').$type<TranslationMap>().notNull().default(sql`'{}'::jsonb`),
 
 		severity: announcementSeverityEnum('severity').notNull(),
 

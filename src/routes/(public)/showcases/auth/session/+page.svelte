@@ -2,6 +2,7 @@
 import { Card } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Badge } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
 </script>
@@ -9,7 +10,7 @@ let { data } = $props();
 		<!-- Current Session -->
 		<Card>
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Current Session</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.showcase_auth_session_card_current()}</h2>
 			{/snippet}
 
 			{#if data.authenticated && data.session}
@@ -61,7 +62,7 @@ let { data } = $props();
 		<!-- Cookie Cache -->
 		<Card>
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Cookie Cache</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.showcase_auth_session_card_cookie()}</h2>
 			{/snippet}
 
 			<div class="diag-grid">
@@ -85,7 +86,7 @@ let { data } = $props();
 		<!-- Lifecycle -->
 		<Card>
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">Session Lifecycle</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.showcase_auth_session_card_lifecycle()}</h2>
 			{/snippet}
 
 			<div class="diag-grid">

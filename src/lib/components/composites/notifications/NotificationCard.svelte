@@ -1,4 +1,5 @@
 <script lang="ts">
+import * as m from '$lib/paraglide/messages';
 import { cn } from '$lib/utils/cn';
 
 interface Props {
@@ -27,12 +28,12 @@ const iconMap: Record<string, string> = {
 function timeAgo(dateStr: string): string {
 	const diff = Date.now() - new Date(dateStr).getTime();
 	const minutes = Math.floor(diff / 60_000);
-	if (minutes < 1) return 'just now';
-	if (minutes < 60) return `${minutes}m ago`;
+	if (minutes < 1) return m.composites_notification_just_now();
+	if (minutes < 60) return m.composites_notification_minutes_ago({ minutes });
 	const hours = Math.floor(minutes / 60);
-	if (hours < 24) return `${hours}h ago`;
+	if (hours < 24) return m.composites_notification_hours_ago({ hours });
 	const days = Math.floor(hours / 24);
-	return `${days}d ago`;
+	return m.composites_notification_days_ago({ days });
 }
 </script>
 
@@ -59,7 +60,7 @@ function timeAgo(dateStr: string): string {
 		<button
 			class="mark-read-btn"
 			onclick={() => onMarkRead(id)}
-			aria-label="Mark as read"
+			aria-label={m.composites_notification_mark_read()}
 		>
 			<span class="i-lucide-check"></span>
 		</button>

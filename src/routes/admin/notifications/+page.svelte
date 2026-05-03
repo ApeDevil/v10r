@@ -5,6 +5,7 @@ import { Alert, Card, ConfirmDialog, EmptyState } from '$lib/components/composit
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Skeleton, Spinner, Tag, Textarea } from '$lib/components/primitives';
 import AnnouncementBanner from '$lib/components/shell/AnnouncementBanner.svelte';
+import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
 
 let { data }: PageProps = $props();
@@ -27,26 +28,26 @@ let composeEndsAt = $state('');
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function relativeTime(d: Date | string | null): string {
-	if (!d) return 'never';
+	if (!d) return m.admin_notifications_time_never();
 	const diff = Date.now() - new Date(d).getTime();
 	const mins = Math.floor(diff / 60000);
-	if (mins < 1) return 'just now';
-	if (mins < 60) return `${mins}m ago`;
+	if (mins < 1) return m.admin_notifications_time_just_now();
+	if (mins < 60) return m.admin_notifications_time_mins_ago({ mins });
 	const hours = Math.floor(mins / 60);
-	if (hours < 24) return `${hours}h ago`;
+	if (hours < 24) return m.admin_notifications_time_hours_ago({ hours });
 	const days = Math.floor(hours / 24);
-	return `${days}d ago`;
+	return m.admin_notifications_time_days_ago({ days });
 }
 
 function healthStatus(channel: string): { label: string; variant: 'success' | 'warning' | 'error' | 'secondary' } {
 	const stat = data.healthStats.find((s) => s.channel === channel);
-	if (!stat) return { label: 'No data', variant: 'secondary' };
+	if (!stat) return { label: m.admin_notifications_health_no_data(), variant: 'secondary' };
 	const total = stat.sent + stat.systemFailures;
-	if (total === 0) return { label: 'No activity', variant: 'secondary' };
+	if (total === 0) return { label: m.admin_notifications_health_no_activity(), variant: 'secondary' };
 	const failRate = stat.systemFailures / total;
-	if (failRate >= 0.25 || stat.dead > 0) return { label: 'Unhealthy', variant: 'error' };
-	if (failRate >= 0.05) return { label: 'Degraded', variant: 'warning' };
-	return { label: 'Healthy', variant: 'success' };
+	if (failRate >= 0.25 || stat.dead > 0) return { label: m.admin_notifications_health_unhealthy(), variant: 'error' };
+	if (failRate >= 0.05) return { label: m.admin_notifications_health_degraded(), variant: 'warning' };
+	return { label: m.admin_notifications_health_healthy(), variant: 'success' };
 }
 
 const channels = [
@@ -88,11 +89,11 @@ function resetComposeForm() {
 	<Card>
 		{#snippet header()}
 			<Cluster justify="between" align="center">
-				<h2 class="text-fluid-lg font-semibold">Channel Health</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.admin_notifications_channel_health_heading()}</h2>
 				<form method="POST" action="?/retest" use:enhance>
 					<Button type="submit" variant="outline" size="sm">
 						<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
-						Retest
+						{m.admin_notifications_retest()}
 					</Button>
 				</form>
 			</Cluster>
@@ -116,30 +117,30 @@ function resetComposeForm() {
 					<div class="channel-stats">
 						{#if stat}
 							<div class="channel-stat">
-								<span class="channel-stat-label">Last sent</span>
+								<span class="channel-stat-label">{m.admin_notifications_stat_last_sent()}</span>
 								<span class="channel-stat-value">{relativeTime(stat.lastSentAt)}</span>
 							</div>
 							<div class="channel-stat">
-								<span class="channel-stat-label">Sent (24h)</span>
+								<span class="channel-stat-label">{m.admin_notifications_stat_sent_24h()}</span>
 								<span class="channel-stat-value">{stat.sent}</span>
 							</div>
 							<div class="channel-stat">
-								<span class="channel-stat-label">Failures</span>
+								<span class="channel-stat-label">{m.admin_notifications_stat_failures()}</span>
 								<span class="channel-stat-value">{stat.systemFailures}</span>
 							</div>
 							{#if stat.userFailures > 0}
 								<div class="channel-stat">
-									<span class="channel-stat-label">User issues</span>
+									<span class="channel-stat-label">{m.admin_notifications_stat_user_issues()}</span>
 									<span class="channel-stat-value text-warning">{stat.userFailures}</span>
 								</div>
 							{/if}
 						{:else}
-							<p class="text-muted text-fluid-xs">No delivery data</p>
+							<p class="text-muted text-fluid-xs">{m.admin_notifications_no_delivery_data()}</p>
 						{/if}
 						{#if connected !== null}
 							<div class="channel-stat">
-								<span class="channel-stat-label">Connected</span>
-								<span class="channel-stat-value">{connected} users</span>
+								<span class="channel-stat-label">{m.admin_notifications_stat_connected()}</span>
+								<span class="channel-stat-value">{m.admin_notifications_stat_connected_users({ count: connected })}</span>
 							</div>
 						{/if}
 					</div>
@@ -154,9 +155,9 @@ function resetComposeForm() {
 						{#if probe}
 							<div class="probe-status">
 								{#if probe.status === 'ok'}
-									<span class="text-fluid-xs text-success">API reachable ({probe.latencyMs}ms)</span>
+									<span class="text-fluid-xs text-success">{m.admin_notifications_probe_api_reachable({ latencyMs: probe.latencyMs })}</span>
 								{:else if probe.status === 'unconfigured'}
-									<span class="text-fluid-xs text-warning">Not configured</span>
+									<span class="text-fluid-xs text-warning">{m.admin_notifications_probe_not_configured()}</span>
 								{:else}
 									<span class="text-fluid-xs text-error">{probe.message}</span>
 								{/if}
@@ -164,7 +165,7 @@ function resetComposeForm() {
 						{/if}
 					{:catch}
 						<div class="probe-status">
-							<span class="text-fluid-xs text-muted">Probe failed</span>
+							<span class="text-fluid-xs text-muted">{m.admin_notifications_probe_failed()}</span>
 						</div>
 					{/await}
 				</div>
@@ -180,7 +181,7 @@ function resetComposeForm() {
 			{#snippet header()}
 				<Cluster gap="2" align="center">
 					<span class="i-lucide-alert-triangle h-5 w-5 text-error" aria-hidden="true"></span>
-					<h2 class="text-fluid-lg font-semibold">Needs Attention</h2>
+					<h2 class="text-fluid-lg font-semibold">{m.admin_notifications_needs_attention_heading()}</h2>
 					<Tag variant="error" label={String(data.deadEntries.length)} />
 				</Cluster>
 			{/snippet}
@@ -198,13 +199,13 @@ function resetComposeForm() {
 						<form method="POST" action="?/retryDelivery" use:enhance={() => {
 							return async ({ result, update }) => {
 								if (result.type === 'success') {
-									toast.success('Delivery queued for retry.');
+									toast.success(m.admin_notifications_toast_delivery_queued());
 								}
 								return update();
 							};
 						}}>
 							<input type="hidden" name="delivery_id" value={entry.id} />
-							<Button type="submit" variant="outline" size="sm">Retry</Button>
+							<Button type="submit" variant="outline" size="sm">{m.admin_action_retry()}</Button>
 						</form>
 					</div>
 				{/each}
@@ -216,10 +217,10 @@ function resetComposeForm() {
 	<Card>
 		{#snippet header()}
 			<Cluster justify="between" align="center">
-				<h2 class="text-fluid-lg font-semibold">Delivery Log</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.admin_notifications_delivery_log_heading()}</h2>
 				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>
 					<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
-					Refresh
+					{m.admin_action_refresh()}
 				</Button>
 			</Cluster>
 		{/snippet}
@@ -227,21 +228,21 @@ function resetComposeForm() {
 		<!-- Filters -->
 		<form method="GET" class="filter-form">
 			<select name="channel" class="filter-select">
-				<option value="all" selected={data.filters.channel === 'all'}>All channels</option>
+				<option value="all" selected={data.filters.channel === 'all'}>{m.admin_notifications_filter_all_channels()}</option>
 				{#each channels as ch}
 					<option value={ch.key} selected={data.filters.channel === ch.key}>{ch.label}</option>
 				{/each}
 			</select>
 			<select name="status" class="filter-select">
-				<option value="all" selected={data.filters.status === 'all'}>All statuses</option>
-				<option value="sent" selected={data.filters.status === 'sent'}>Sent</option>
-				<option value="failed" selected={data.filters.status === 'failed'}>Failed</option>
-				<option value="dead" selected={data.filters.status === 'dead'}>Dead</option>
-				<option value="pending" selected={data.filters.status === 'pending'}>Pending</option>
+				<option value="all" selected={data.filters.status === 'all'}>{m.admin_notifications_filter_all_statuses()}</option>
+				<option value="sent" selected={data.filters.status === 'sent'}>{m.admin_notifications_filter_status_sent()}</option>
+				<option value="failed" selected={data.filters.status === 'failed'}>{m.admin_notifications_filter_status_failed()}</option>
+				<option value="dead" selected={data.filters.status === 'dead'}>{m.admin_notifications_filter_status_dead()}</option>
+				<option value="pending" selected={data.filters.status === 'pending'}>{m.admin_notifications_filter_status_pending()}</option>
 			</select>
-			<Button type="submit" variant="outline" size="sm">Filter</Button>
+			<Button type="submit" variant="outline" size="sm">{m.admin_action_filter()}</Button>
 			{#if data.filters.channel !== 'all' || data.filters.status !== 'all'}
-				<a href="/admin/notifications" class="text-primary text-fluid-xs hover:underline">Clear</a>
+				<a href="/admin/notifications" class="text-primary text-fluid-xs hover:underline">{m.admin_action_clear()}</a>
 			{/if}
 		</form>
 
@@ -256,14 +257,14 @@ function resetComposeForm() {
 				<EmptyState
 					icon="i-lucide-send"
 					title={data.filters.channel !== 'all' || data.filters.status !== 'all'
-						? 'No deliveries match these filters'
-						: 'No notifications sent yet'}
+						? m.admin_notifications_delivery_empty_filtered_title()
+						: m.admin_notifications_delivery_empty_title()}
 					description={data.filters.channel !== 'all' || data.filters.status !== 'all'
-						? 'Try different filter criteria.'
-						: 'Notifications will appear here when sent.'}
+						? m.admin_notifications_delivery_empty_filtered_desc()
+						: m.admin_notifications_delivery_empty_desc()}
 				>
 					{#if data.filters.channel !== 'all' || data.filters.status !== 'all'}
-						<a href="/admin/notifications" class="text-primary hover:underline text-fluid-sm">Clear filters</a>
+						<a href="/admin/notifications" class="text-primary hover:underline text-fluid-sm">{m.admin_notifications_clear_filters()}</a>
 					{/if}
 				</EmptyState>
 			{:else}
@@ -271,12 +272,12 @@ function resetComposeForm() {
 					<table class="delivery-table">
 						<thead>
 							<tr>
-								<th>Time</th>
-								<th>Channel</th>
-								<th>Type</th>
-								<th>Status</th>
-								<th>Attempts</th>
-								<th>Detail</th>
+								<th>{m.admin_notifications_col_time()}</th>
+								<th>{m.admin_notifications_col_channel()}</th>
+								<th>{m.admin_notifications_col_type()}</th>
+								<th>{m.admin_notifications_col_status()}</th>
+								<th>{m.admin_notifications_col_attempts()}</th>
+								<th>{m.admin_notifications_col_detail()}</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -308,7 +309,7 @@ function resetComposeForm() {
 									<td>{entry.attempts}</td>
 									<td>
 										{#if entry.errorMessage}
-											<span class="text-fluid-xs text-primary cursor-pointer">Show</span>
+											<span class="text-fluid-xs text-primary cursor-pointer">{m.admin_notifications_detail_show()}</span>
 										{:else}
 											<span class="text-muted">—</span>
 										{/if}
@@ -340,21 +341,21 @@ function resetComposeForm() {
 					<div class="pagination">
 						{#if log.page > 1}
 							<a href="/admin/notifications?channel={data.filters.channel}&status={data.filters.status}&page={log.page - 1}" class="page-link">
-								<span class="i-lucide-chevron-left h-4 w-4"></span> Prev
+								<span class="i-lucide-chevron-left h-4 w-4"></span> {m.admin_notifications_pagination_prev()}
 							</a>
 						{/if}
-						<span class="page-info">Page {log.page} of {log.totalPages}</span>
+						<span class="page-info">{m.admin_notifications_pagination_info({ page: log.page, total: log.totalPages })}</span>
 						{#if log.page < log.totalPages}
 							<a href="/admin/notifications?channel={data.filters.channel}&status={data.filters.status}&page={log.page + 1}" class="page-link">
-								Next <span class="i-lucide-chevron-right h-4 w-4"></span>
+								{m.admin_notifications_pagination_next()} <span class="i-lucide-chevron-right h-4 w-4"></span>
 							</a>
 						{/if}
 					</div>
 				{/if}
 			{/if}
 		{:catch}
-			<Alert variant="error" title="Failed to load delivery log" description="Could not fetch delivery data.">
-				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>Try again</Button>
+			<Alert variant="error" title={m.admin_notifications_load_error_title()} description={m.admin_notifications_load_error_desc()}>
+				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>{m.admin_notifications_try_again()}</Button>
 			</Alert>
 		{/await}
 	</Card>
@@ -362,13 +363,13 @@ function resetComposeForm() {
 	<!-- ═══ Section 3: Broadcast Announcements ════════════════════════════════ -->
 	<div class="section-divider"></div>
 
-	<h2 class="text-fluid-xl font-semibold">Broadcast Announcements</h2>
+	<h2 class="text-fluid-xl font-semibold">{m.admin_notifications_broadcast_heading()}</h2>
 
 	<div class="announcements-grid">
 		<!-- Compose Form -->
 		<Card>
 			{#snippet header()}
-				<h3 class="text-fluid-lg font-semibold">New Announcement</h3>
+				<h3 class="text-fluid-lg font-semibold">{m.admin_notifications_compose_heading()}</h3>
 			{/snippet}
 
 			<form
@@ -378,10 +379,10 @@ function resetComposeForm() {
 					submitting = true;
 					return async ({ result, update }) => {
 						if (result.type === 'success') {
-							toast.success('Announcement published.');
+							toast.success(m.admin_notifications_toast_published());
 							resetComposeForm();
 						} else if (result.type === 'failure') {
-							toast.error((result.data?.message as string) || 'Failed to create announcement.');
+							toast.error((result.data?.message as string) || m.admin_notifications_toast_publish_failed());
 						}
 						submitting = false;
 						return update();
@@ -390,34 +391,34 @@ function resetComposeForm() {
 			>
 				<Stack gap="4">
 					<div>
-						<label for="ann-title" class="field-label">Title</label>
+						<label for="ann-title" class="field-label">{m.admin_notifications_field_title()}</label>
 						<Input
 							id="ann-title"
 							name="title"
 							bind:value={composeTitle}
 							maxlength={120}
-							placeholder="System maintenance scheduled..."
+							placeholder={m.admin_notifications_field_title_placeholder()}
 							required
 						/>
 						<span class="char-count">{composeTitle.length} / 120</span>
 					</div>
 
 					<div>
-						<label for="ann-body" class="field-label">Body</label>
+						<label for="ann-body" class="field-label">{m.admin_notifications_field_body()}</label>
 						<Textarea
 							id="ann-body"
 							name="body"
 							bind:value={composeBody}
-							placeholder="Describe the announcement..."
+							placeholder={m.admin_notifications_field_body_placeholder()}
 							rows={3}
 							required
 						/>
-						<span class="field-hint">Displayed as plain text. No formatting.</span>
+						<span class="field-hint">{m.admin_notifications_field_body_hint()}</span>
 					</div>
 
 					<div>
-						<span class="field-label">Severity</span>
-						<div class="severity-group" role="radiogroup" aria-label="Announcement severity">
+						<span class="field-label">{m.admin_notifications_field_severity()}</span>
+						<div class="severity-group" role="radiogroup" aria-label={m.admin_notifications_field_severity_aria()}>
 							{#each ['info', 'warning', 'critical'] as sev}
 								<label class="severity-option" class:active={composeSeverity === sev} class:severity-info={sev === 'info'} class:severity-warning={sev === 'warning'} class:severity-critical={sev === 'critical'}>
 									<input type="radio" name="severity" value={sev} bind:group={composeSeverity} class="sr-only" />
@@ -428,25 +429,25 @@ function resetComposeForm() {
 					</div>
 
 					{#if composeSeverity === 'critical'}
-						<Alert variant="info" title="Non-dismissible" description="Critical announcements cannot be dismissed by users. They remain visible until you deactivate this announcement." />
+						<Alert variant="info" title={m.admin_notifications_critical_alert_title()} description={m.admin_notifications_critical_alert_desc()} />
 					{/if}
 
 					<div class="schedule-row">
 						<div>
-							<label for="ann-starts" class="field-label">Active from</label>
+							<label for="ann-starts" class="field-label">{m.admin_notifications_field_active_from()}</label>
 							<input type="datetime-local" id="ann-starts" name="starts_at" bind:value={composeStartsAt} class="schedule-input" />
 						</div>
 						<div>
-							<label for="ann-ends" class="field-label">Until</label>
+							<label for="ann-ends" class="field-label">{m.admin_notifications_field_until()}</label>
 							<input type="datetime-local" id="ann-ends" name="ends_at" bind:value={composeEndsAt} class="schedule-input" />
 						</div>
 					</div>
-					<span class="field-hint">Leave both blank for an immediately active, permanent announcement.</span>
+					<span class="field-hint">{m.admin_notifications_field_schedule_hint()}</span>
 
 					<!-- Live preview -->
 					{#if previewAnnouncement.length > 0}
 						<div>
-							<span class="detail-section-title">Preview</span>
+							<span class="detail-section-title">{m.admin_notifications_preview_label()}</span>
 							<div class="preview-container">
 								<AnnouncementBanner announcements={previewAnnouncement} />
 							</div>
@@ -457,7 +458,7 @@ function resetComposeForm() {
 						{#if submitting}
 							<Spinner size="xs" class="mr-1" />
 						{/if}
-						Publish
+						{m.admin_action_publish()}
 					</Button>
 				</Stack>
 			</form>
@@ -467,7 +468,7 @@ function resetComposeForm() {
 		<Card>
 			{#snippet header()}
 				<Cluster gap="2" align="center">
-					<h3 class="text-fluid-lg font-semibold">Active</h3>
+					<h3 class="text-fluid-lg font-semibold">{m.admin_notifications_active_heading()}</h3>
 					{#if activeAnnouncements.length > 0}
 						<Tag variant="secondary" label={String(activeAnnouncements.length)} />
 					{/if}
@@ -477,8 +478,8 @@ function resetComposeForm() {
 			{#if activeAnnouncements.length === 0}
 				<EmptyState
 					icon="i-lucide-megaphone"
-					title="No active announcements"
-					description="Create an announcement to notify all users."
+					title={m.admin_notifications_active_empty_title()}
+					description={m.admin_notifications_active_empty_desc()}
 				/>
 			{:else}
 				<Stack gap="3">
@@ -490,21 +491,21 @@ function resetComposeForm() {
 							</div>
 							<p class="announcement-body">{ann.body}</p>
 							<div class="announcement-meta">
-								<span>Published {relativeTime(ann.createdAt)}</span>
+								<span>{m.admin_notifications_published_at({ when: relativeTime(ann.createdAt) })}</span>
 								{#if ann.endsAt}
-									<span>Expires {relativeTime(ann.endsAt)}</span>
+									<span>{m.admin_notifications_expires_at({ when: relativeTime(ann.endsAt) })}</span>
 								{:else}
-									<span>No expiry</span>
+									<span>{m.admin_notifications_no_expiry()}</span>
 								{/if}
 							</div>
 							<div class="announcement-stats">
 								{#if ann.severity === 'critical'}
-									<span>Non-dismissible</span>
-									<span>{ann.acknowledgedCount} acknowledged</span>
+									<span>{m.admin_notifications_non_dismissible()}</span>
+									<span>{m.admin_notifications_acknowledged_count({ count: ann.acknowledgedCount })}</span>
 								{:else}
-									<span>{ann.dismissedCount} dismissed</span>
+									<span>{m.admin_notifications_dismissed_count({ count: ann.dismissedCount })}</span>
 								{/if}
-								<span>{ann.totalUsers - ann.dismissedCount - ann.acknowledgedCount} seeing</span>
+								<span>{m.admin_notifications_seeing_count({ count: ann.totalUsers - ann.dismissedCount - ann.acknowledgedCount })}</span>
 							</div>
 							<Button
 								variant="ghost"
@@ -513,7 +514,7 @@ function resetComposeForm() {
 									deactivatingId = ann.id;
 									confirmDeactivate = true;
 								}}
-							>Deactivate</Button>
+							>{m.admin_notifications_deactivate()}</Button>
 						</div>
 					{/each}
 				</Stack>
@@ -525,9 +526,9 @@ function resetComposeForm() {
 <!-- Deactivate confirmation -->
 <ConfirmDialog
 	bind:open={confirmDeactivate}
-	title="Deactivate announcement"
-	description="All users will stop seeing this announcement immediately."
-	confirmLabel="Deactivate"
+	title={m.admin_notifications_deactivate_dialog_title()}
+	description={m.admin_notifications_deactivate_dialog_desc()}
+	confirmLabel={m.admin_notifications_deactivate_confirm()}
 	onconfirm={() => {
 		if (!deactivatingId) return;
 		const form = document.createElement('form');

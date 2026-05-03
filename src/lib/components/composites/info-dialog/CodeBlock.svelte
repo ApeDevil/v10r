@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Button } from '$lib/components/primitives';
 import { ScrollArea } from '$lib/components/primitives/scroll-area';
+import * as m from '$lib/paraglide/messages';
 import { cn } from '$lib/utils/cn';
 
 interface Props {
@@ -51,7 +52,7 @@ async function handleCopy() {
 				{language}
 			{/if}
 		</span>
-		<Button variant="ghost" size="icon" class="copy-btn" onclick={handleCopy} aria-label="Copy code">
+		<Button variant="ghost" size="icon" class="copy-btn" onclick={handleCopy} aria-label={m.composites_codeblock_copy()}>
 			{#if copied}
 				<span class="i-lucide-check h-3.5 w-3.5 text-success" aria-hidden="true"></span>
 			{:else}

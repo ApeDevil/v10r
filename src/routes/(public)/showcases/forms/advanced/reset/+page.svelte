@@ -4,6 +4,7 @@ import { valibotClient } from 'sveltekit-superforms/adapters';
 import { Alert, Card, FormField } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Button, Checkbox, Input, Spinner, Textarea } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { feedbackSchema } from '$lib/schemas/showcase/advanced';
 import type { PageProps } from './$types';
 
@@ -27,12 +28,12 @@ const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
 <Stack gap="6">
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">Feedback with Auto-Reset</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.showcase_forms_reset_heading()}</h2>
 			<p class="text-fluid-sm text-muted">Form clears after successful submission via <code>resetForm: true</code>.</p>
 		{/snippet}
 
 		{#if $formMessage}
-			<Alert variant="success" title="Thank You">
+			<Alert variant="success" title={m.showcase_forms_reset_thank_you()}>
 				{#snippet children()}
 					<p>{$formMessage}</p>
 				{/snippet}
@@ -40,7 +41,7 @@ const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
 		{/if}
 
 		<form method="POST" use:enhance class="form-grid">
-			<FormField label="Rating" error={$errors.rating?.[0]} required>
+			<FormField label={m.showcase_forms_field_rating()} error={$errors.rating?.[0]} required>
 				{#snippet children({ fieldId, describedBy })}
 					<div class="rating-group">
 						<input
@@ -58,14 +59,14 @@ const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
 							{#if $form.rating >= 1 && $form.rating <= 5}
 								{$form.rating}/5 — {ratingLabels[$form.rating]}
 							{:else}
-								Slide to rate
+								{m.showcase_forms_reset_slide_to_rate()}
 							{/if}
 						</span>
 					</div>
 				{/snippet}
 			</FormField>
 
-			<FormField label="Comment" error={$errors.comment?.[0]} required>
+			<FormField label={m.showcase_forms_field_comment()} error={$errors.comment?.[0]} required>
 				{#snippet children({ fieldId, describedBy })}
 					<Textarea
 						id={fieldId}
@@ -79,7 +80,7 @@ const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
 				{/snippet}
 			</FormField>
 
-			<FormField label="Recommendation">
+			<FormField label={m.showcase_forms_field_recommendation()}>
 				{#snippet children(_)}
 					<Checkbox
 						name="recommend"
@@ -92,7 +93,7 @@ const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
 			<div class="form-actions">
 				<Button type="submit" disabled={$submitting}>
 					{#if $delayed}<Spinner size="sm" class="mr-2" />{/if}
-					Submit Feedback
+					{m.showcase_forms_reset_submit()}
 				</Button>
 			</div>
 		</form>

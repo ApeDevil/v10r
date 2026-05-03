@@ -1,4 +1,5 @@
 <script lang="ts">
+import * as m from '$lib/paraglide/messages';
 import Skeleton from './Skeleton.svelte';
 import SkeletonText from './SkeletonText.svelte';
 
@@ -12,7 +13,7 @@ interface Props {
 let { hasImage = true, hasTitle = true, hasDescription = true, class: className }: Props = $props();
 </script>
 
-<div class="skeleton-card {className || ''}" role="status" aria-label="Loading card">
+<div class="skeleton-card {className || ''}" role="status" aria-label={m.primitives_skeleton_card()}>
 	{#if hasImage}
 		<Skeleton height="200px" width="100%" rounded="lg" class="card-image" />
 	{/if}

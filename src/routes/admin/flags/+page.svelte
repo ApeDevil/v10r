@@ -1,9 +1,12 @@
 <script lang="ts">
 import { enhance } from '$app/forms';
 import { invalidateAll } from '$app/navigation';
+import { page } from '$app/state';
 import { Card, ConfirmDialog, EmptyState } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Button, Input, Spinner, Switch, Textarea } from '$lib/components/primitives';
+import { formatRelative } from '$lib/i18n';
+import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
 
 let { data }: PageProps = $props();
@@ -16,31 +19,20 @@ let submitting = $state('');
 let newKey = $state('');
 let newDescription = $state('');
 let newEnabled = $state(false);
-
-function relativeTime(iso: string): string {
-	const diff = Date.now() - new Date(iso).getTime();
-	const mins = Math.floor(diff / 60000);
-	if (mins < 1) return 'just now';
-	if (mins < 60) return `${mins}m ago`;
-	const hours = Math.floor(mins / 60);
-	if (hours < 24) return `${hours}h ago`;
-	const days = Math.floor(hours / 24);
-	return `${days}d ago`;
-}
 </script>
 <Stack gap="6">
 	<Card>
 		{#snippet header()}
 			<Cluster justify="between" align="center">
-				<h2 class="text-fluid-lg font-semibold">Feature Flags</h2>
+				<h2 class="text-fluid-lg font-semibold">{m.admin_flags_title()}</h2>
 				<Cluster gap="2">
 					<Button variant="outline" size="sm" onclick={() => invalidateAll()}>
 						<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
-						Refresh
+						{m.admin_action_refresh()}
 					</Button>
 					<Button size="sm" onclick={() => { showCreateDialog = true; newKey = ''; newDescription = ''; newEnabled = false; }}>
 						<span class="i-lucide-plus h-4 w-4 mr-1"></span>
-						Add Flag
+						{m.admin_flags_add()}
 					</Button>
 				</Cluster>
 			</Cluster>
@@ -49,11 +41,11 @@ function relativeTime(iso: string): string {
 		{#if data.flags.length === 0}
 			<EmptyState
 				icon="i-lucide-toggle-right"
-				title="No feature flags yet"
-				description="Create your first flag to start controlled rollouts."
+				title={m.admin_flags_empty_title()}
+				description={m.admin_flags_empty_description()}
 			>
 				<Button variant="outline" onclick={() => { showCreateDialog = true; newKey = ''; newDescription = ''; newEnabled = false; }}>
-					Create Flag
+					{m.admin_flags_empty_cta()}
 				</Button>
 			</EmptyState>
 		{:else}
@@ -69,7 +61,7 @@ function relativeTime(iso: string): string {
 									submitting = flag.key;
 									return async ({ result, update }) => {
 										if (result.type === 'success' && result.data) toast.success(result.data.message as string);
-										else if (result.type === 'failure') toast.error((result.data?.message as string) || 'Failed');
+										else if (result.type === 'failure') toast.error((result.data?.message as string) || m.admin_action_failed_generic());
 										submitting = '';
 										return update();
 									};
@@ -94,7 +86,7 @@ function relativeTime(iso: string): string {
 
 						<div class="flag-footer">
 							<span class="flag-updated" title={flag.updatedAt.toISOString()}>
-								Updated {relativeTime(flag.updatedAt.toISOString())}
+								{m.admin_flags_updated({ when: formatRelative(flag.updatedAt, page.data.locale) })}
 							</span>
 							<Button
 								variant="ghost"
@@ -115,8 +107,8 @@ function relativeTime(iso: string): string {
 {#if showCreateDialog}
 	<div class="dialog-overlay" role="presentation" onclick={() => { showCreateDialog = false; }}>
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<div class="dialog-content" role="dialog" aria-label="Create Feature Flag" tabindex="-1" onclick={(e) => e.stopPropagation()}>
-			<h3 class="dialog-title">Create Feature Flag</h3>
+		<div class="dialog-content" role="dialog" aria-label={m.admin_flags_dialog_create_title()} tabindex="-1" onclick={(e) => e.stopPropagation()}>
+			<h3 class="dialog-title">{m.admin_flags_dialog_create_title()}</h3>
 			<form
 				method="POST"
 				action="?/create"
@@ -127,7 +119,7 @@ function relativeTime(iso: string): string {
 							toast.success(result.data.message as string);
 							showCreateDialog = false;
 						} else if (result.type === 'failure') {
-							toast.error((result.data?.message as string) || 'Failed to create flag');
+							toast.error((result.data?.message as string) || m.admin_flags_dialog_create_failed());
 						}
 						submitting = '';
 						return update();
@@ -136,23 +128,23 @@ function relativeTime(iso: string): string {
 			>
 				<Stack gap="4">
 					<label class="field">
-						<span class="field-label">Key</span>
+						<span class="field-label">{m.admin_flags_field_key()}</span>
 						<Input name="key" bind:value={newKey} placeholder="feature.dark_mode" required />
 					</label>
 					<label class="field">
-						<span class="field-label">Description</span>
-						<Textarea name="description" bind:value={newDescription} placeholder="What this flag controls..." rows={2} />
+						<span class="field-label">{m.admin_flags_field_description()}</span>
+						<Textarea name="description" bind:value={newDescription} placeholder={m.admin_flags_field_description_placeholder()} rows={2} />
 					</label>
 					<Cluster gap="2" align="center">
 						<input type="hidden" name="enabled" value={newEnabled ? 'on' : ''} />
 						<Switch bind:checked={newEnabled} />
-						<span class="field-label">Enabled by default</span>
+						<span class="field-label">{m.admin_flags_field_enabled_default()}</span>
 					</Cluster>
 					<Cluster gap="2" justify="end">
-						<Button variant="outline" onclick={() => { showCreateDialog = false; }}>Cancel</Button>
+						<Button variant="outline" onclick={() => { showCreateDialog = false; }}>{m.admin_action_cancel()}</Button>
 						<Button type="submit" disabled={submitting === 'create'}>
 							{#if submitting === 'create'}<Spinner size="xs" class="mr-1" />{/if}
-							Create
+							{m.admin_flags_create_submit()}
 						</Button>
 					</Cluster>
 				</Stack>
@@ -164,9 +156,9 @@ function relativeTime(iso: string): string {
 <!-- Delete Confirmation -->
 <ConfirmDialog
 	open={showDeleteDialog}
-	title="Delete Flag"
-	description={`Permanently delete flag "${deleteKey}"? This cannot be undone.`}
-	confirmLabel="Delete"
+	title={m.admin_flags_dialog_delete_title()}
+	description={m.admin_flags_dialog_delete_description({ key: deleteKey })}
+	confirmLabel={m.admin_action_delete()}
 	destructive
 	onconfirm={() => {
 		showDeleteDialog = false;

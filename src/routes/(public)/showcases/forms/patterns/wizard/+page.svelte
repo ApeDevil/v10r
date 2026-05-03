@@ -5,6 +5,7 @@ import { valibotClient } from 'sveltekit-superforms/adapters';
 import { Alert, Card, FormField } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Checkbox, Input, Progress, Select, Spinner } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
 import { wizardSchema } from '$lib/schemas/showcase/patterns';
 import type { PageProps } from './$types';
 
@@ -70,17 +71,17 @@ function prevStep() {
 		{#snippet header()}
 			<Cluster justify="between">
 				<div>
-					<h2 class="text-fluid-lg font-semibold">Multi-Step Wizard</h2>
+					<h2 class="text-fluid-lg font-semibold">{m.showcase_forms_wizard_heading()}</h2>
 					<p class="text-fluid-sm text-muted">Per-step validation, progress indicator, combined final submit.</p>
 				</div>
-				<Badge variant="outline">Step {step}/{totalSteps}</Badge>
+				<Badge variant="outline">{m.showcase_forms_wizard_step({ step, total: totalSteps })}</Badge>
 			</Cluster>
 		{/snippet}
 
 		<Progress value={step} max={totalSteps} size="sm" class="mb-4" />
 
 		{#if $formMessage}
-			<Alert variant="success" title="Success">
+			<Alert variant="success" title={m.showcase_forms_success()}>
 				{#snippet children()}
 					<p>{$formMessage}</p>
 				{/snippet}
@@ -90,9 +91,9 @@ function prevStep() {
 		<form method="POST" use:enhance class="form-grid">
 			{#if step === 1}
 				<div class="step-1">
-					<h3 class="step-title">Personal Info</h3>
+					<h3 class="step-title">{m.showcase_forms_wizard_step_personal()}</h3>
 					<div class="step-fields">
-						<FormField label="First Name" error={$errors.firstName?.[0]} required>
+						<FormField label={m.showcase_forms_field_first_name()} error={$errors.firstName?.[0]} required>
 							{#snippet children({ fieldId, describedBy })}
 								<Input
 									id={fieldId}
@@ -105,7 +106,7 @@ function prevStep() {
 							{/snippet}
 						</FormField>
 
-						<FormField label="Last Name" error={$errors.lastName?.[0]} required>
+						<FormField label={m.showcase_forms_field_last_name()} error={$errors.lastName?.[0]} required>
 							{#snippet children({ fieldId, describedBy })}
 								<Input
 									id={fieldId}
@@ -118,7 +119,7 @@ function prevStep() {
 							{/snippet}
 						</FormField>
 
-						<FormField label="Email" error={$errors.email?.[0]} required>
+						<FormField label={m.showcase_forms_field_email()} error={$errors.email?.[0]} required>
 							{#snippet children({ fieldId, describedBy })}
 								<Input
 									id={fieldId}
@@ -135,9 +136,9 @@ function prevStep() {
 				</div>
 			{:else if step === 2}
 				<div class="step-2">
-					<h3 class="step-title">Address</h3>
+					<h3 class="step-title">{m.showcase_forms_wizard_step_address()}</h3>
 					<div class="step-fields">
-						<FormField label="Street" error={$errors.street?.[0]} required>
+						<FormField label={m.showcase_forms_field_street()} error={$errors.street?.[0]} required>
 							{#snippet children({ fieldId, describedBy })}
 								<Input
 									id={fieldId}
@@ -150,7 +151,7 @@ function prevStep() {
 							{/snippet}
 						</FormField>
 
-						<FormField label="City" error={$errors.city?.[0]} required>
+						<FormField label={m.showcase_forms_field_city()} error={$errors.city?.[0]} required>
 							{#snippet children({ fieldId, describedBy })}
 								<Input
 									id={fieldId}
@@ -163,14 +164,14 @@ function prevStep() {
 							{/snippet}
 						</FormField>
 
-						<FormField label="State" error={$errors.state?.[0]} required>
+						<FormField label={m.showcase_forms_field_state()} error={$errors.state?.[0]} required>
 							{#snippet children(_)}
 								<input type="hidden" name="state" value={$form.state} />
 								<Select options={stateOptions} bind:value={$form.state} error={!!$errors.state} />
 							{/snippet}
 						</FormField>
 
-						<FormField label="ZIP Code" error={$errors.zip?.[0]} required>
+						<FormField label={m.showcase_forms_field_zip()} error={$errors.zip?.[0]} required>
 							{#snippet children({ fieldId, describedBy })}
 								<Input
 									id={fieldId}
@@ -187,21 +188,21 @@ function prevStep() {
 				</div>
 			{:else}
 				<div class="step-3">
-					<h3 class="step-title">Plan & Terms</h3>
+					<h3 class="step-title">{m.showcase_forms_wizard_step_plan()}</h3>
 					<div class="step-fields">
-						<FormField label="Plan" error={$errors.plan?.[0]} required>
+						<FormField label={m.showcase_forms_field_plan()} error={$errors.plan?.[0]} required>
 							{#snippet children(_)}
 								<input type="hidden" name="plan" value={$form.plan} />
 								<Select options={planOptions} bind:value={$form.plan} error={!!$errors.plan} />
 							{/snippet}
 						</FormField>
 
-						<FormField label="Terms & Conditions" error={$errors.terms?.[0]} required>
+						<FormField label={m.showcase_forms_field_terms()} error={$errors.terms?.[0]} required>
 							{#snippet children(_)}
 								<input type="hidden" name="terms" value={$form.terms ? 'on' : ''} />
 								<Checkbox
 									bind:checked={$form.terms}
-									label="I accept the terms and conditions"
+									label={m.showcase_forms_wizard_terms_accept()}
 								/>
 							{/snippet}
 						</FormField>
@@ -228,17 +229,17 @@ function prevStep() {
 
 			<Cluster justify="between" class="pt-2">
 				{#if step > 1}
-					<Button type="button" variant="outline" onclick={prevStep}>Back</Button>
+					<Button type="button" variant="outline" onclick={prevStep}>{m.showcase_forms_wizard_back()}</Button>
 				{:else}
 					<div></div>
 				{/if}
 
 				{#if step < totalSteps}
-					<Button type="button" onclick={nextStep}>Next</Button>
+					<Button type="button" onclick={nextStep}>{m.showcase_forms_wizard_next()}</Button>
 				{:else}
 					<Button type="submit" disabled={$submitting}>
 						{#if $delayed}<Spinner size="sm" class="mr-2" />{/if}
-						Complete
+						{m.showcase_forms_wizard_complete()}
 					</Button>
 				{/if}
 			</Cluster>
