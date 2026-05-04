@@ -43,6 +43,7 @@
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"i18n:check-missing": "bun run scripts/i18n/check-missing.ts",
+		"perf:cold-start": "bash scripts/perf/cold-start.sh",
 		"validate": "bun run check && biome ci . && bun run test && bun run i18n:check-missing",
 		"knip": "knip"
 	},
