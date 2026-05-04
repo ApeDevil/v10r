@@ -12,4 +12,4 @@ EXPOSE 5173 24678
 
 # Install deps and start dev server
 # Dependencies installed at runtime so volume-mounted code works
-CMD ["sh", "-c", "bun install && bun --bun run dev"]
+CMD ["sh", "-c", "bun install && bun run dev"]
