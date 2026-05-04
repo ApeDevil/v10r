@@ -386,8 +386,8 @@ const devRouteGuard: Handle = async ({ event, resolve }) => {
 
 export const handle = sequence(
 	securityHeaders,
-	loadStyle,
 	stripBaseLocalePrefix,
+	loadStyle,
 	i18n,
 	authHandler,
 	sessionPopulate,
