@@ -1,5 +1,5 @@
 import { and, eq, isNull, sql } from 'drizzle-orm';
-import type { TranslationMap } from '$lib/i18n';
+import type { TranslationMap } from '$lib/i18n/content';
 import { db } from '$lib/server/db';
 import { createId } from '$lib/server/db/id';
 import { asset, domain, post, postAsset, postTag, publishedRevision, revision, tag } from '$lib/server/db/schema/blog';

@@ -9,7 +9,7 @@
  */
 import { sql } from 'drizzle-orm';
 import { check, index, integer, jsonb, pgSchema, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
-import type { TranslationMap } from '$lib/i18n';
+import type { TranslationMap } from '$lib/i18n/content';
 import { user } from '../auth/_better-auth';
 
 export const blogSchema = pgSchema('blog');

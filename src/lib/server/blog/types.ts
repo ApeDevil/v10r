@@ -1,5 +1,5 @@
 import type { InferSelectModel } from 'drizzle-orm';
-import type { TranslationMap } from '$lib/i18n';
+import type { TranslationMap } from '$lib/i18n/content';
 import type { asset, domain, post, revision, tag } from '$lib/server/db/schema/blog';
 
 export type BlogPost = InferSelectModel<typeof post>;

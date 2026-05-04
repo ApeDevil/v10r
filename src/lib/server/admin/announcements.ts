@@ -6,7 +6,7 @@ import { user } from '$lib/server/db/schema/auth/_better-auth';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-import type { TranslationMap } from '$lib/i18n';
+import type { TranslationMap } from '$lib/i18n/content';
 
 export interface ActiveAnnouncement {
 	id: string;
