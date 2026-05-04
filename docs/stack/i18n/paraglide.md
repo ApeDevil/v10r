@@ -37,6 +37,11 @@ Compiler-based internationalization for SvelteKit. Compiles message files into t
 
 ## Known limitations
 
+**Dev cold-start cost:**
+- Compile runs in Vite's `buildStart` on every dev server start
+- Cost scales linearly with `keys × locales` (~2-3 s at ~1500 keys × 3 locales)
+- Output dir is watched by chokidar separately. Without `server.watch.ignored: ['**/src/lib/paraglide/**']` in `vite.config.ts`, paraglide's own re-emits trigger spurious `(ssr) page reload` events ~5 s after ready
+
 **Language switching:**
 - Requires full page reload (use `data-sveltekit-reload` on links)
 - No runtime switching without reload

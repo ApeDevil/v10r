@@ -39,13 +39,13 @@ Never run `bun add` on the host. The workflow is:
 | Logs | `podman-compose logs -f app` |
 | Shell into container | `podman exec -it v10r sh` |
 | Rebuild image | `podman-compose build --no-cache` |
+| Measure cold-start times | `bun run perf:cold-start` |
 
 ## Ports
 
 | Port | Purpose |
 |------|---------|
-| **5173** | Vite dev server |
-| **24678** | HMR WebSocket |
+| **5173** | Vite dev server (HMR multiplexed) |
 
 ## Volume Mounts
 
@@ -53,6 +53,28 @@ Project files are bind-mounted at `/app` for hot reload. `node_modules` uses a n
 - Dependencies don't sync back to host
 - Faster I/O (no filesystem translation)
 - No conflicts with host's Node version
+
+## Cold-start expectations
+
+First `podman compose up` on a fresh container takes ~30-40 s to reach `ready in Xms` in the Vite logs. This is the established baseline, not a regression.
+
+| Cost | Approx. share |
+|------|--------------|
+| `optimizeDeps` esbuild prebundle (991 packages, polling FS) | ~50% |
+| UnoCSS source scan | ~15% |
+| SvelteKit plugin init + route discovery | ~15% |
+| Paraglide compile (1485 keys × 3 locales) | ~10% |
+| Other plugin chain (Three.js noExternal, etc.) | ~10% |
+
+After `ready`, HMR is fast. Subsequent restarts on the same container are similar — the cost is per-process, not cached.
+
+### Measuring
+
+```bash
+bun run perf:cold-start
+```
+
+Drives `podman compose down && up`, parses Vite logs, and reports `install_ms`, `vite_ready_ms`, `first_ssr_ttfb_ms`, `ssr_reload_count`. Thresholds: warn `> 15 s`, fail `> 25 s` (current baseline ~36 s is set as the working ceiling for this stack until Vite 8 / Rolldown lands).
 
 ## Running Commands Inside Container
 

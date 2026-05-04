@@ -12,7 +12,6 @@ services:
       dockerfile: Containerfile.dev
     ports:
       - "5173:5173"   # Vite dev server
-      - "24678:24678" # Vite HMR WebSocket
     volumes:
       - .:/app                       # Mount project for hot reload
       - node_modules:/app/node_modules  # Persist deps in named volume

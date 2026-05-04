@@ -40,7 +40,7 @@ All-in-one JavaScript/TypeScript runtime written in Zig, powered by JavaScriptCo
 **SvelteKit-specific:**
 - `svelte-adapter-bun` is community-maintained (not official SvelteKit adapter)
 - Known issues with CORS and form handling (ORIGIN header not passed correctly)
-- Vite dev server still runs on Node.js (only production uses Bun)
+- Vite dev server runs on Node-compat under `bun run dev` (Bun as script runner). The `bun --bun run dev` mode (Vite on Bun's runtime) is disabled due to [oven-sh/bun#23523](https://github.com/oven-sh/bun/issues/23523) — a known Vite restart hang. Production SSR runs on Bun via the deployed adapter.
 - Easy fallback: switch to `adapter-node` with single config change
 
 **Production considerations:**

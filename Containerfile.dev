@@ -7,8 +7,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 
 WORKDIR /app
 
-# Vite dev server + HMR WebSocket
-EXPOSE 5173 24678
+# Vite dev server (HMR multiplexed over the same port)
+EXPOSE 5173
 
 # Install deps and start dev server
 # Dependencies installed at runtime so volume-mounted code works
