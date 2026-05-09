@@ -163,7 +163,20 @@ function submitHiddenForm(action: string, postId: string) {
 					<tbody>
 						{#each data.posts as p}
 							<tr>
-								<td class="title-cell">{p.title ?? m.admin_posts_untitled()}</td>
+								<td class="title-cell">
+									<div class="title-stack">
+										<span>{p.title ?? m.admin_posts_untitled()}</span>
+										{#if p.sourcePath}
+											<a
+												href="/admin/content/posts/preview/{p.slug}/en"
+												class="file-managed-badge"
+												title="Authored in {p.sourcePath} — edits go through the file, not the admin UI"
+											>
+												file-managed
+											</a>
+										{/if}
+									</div>
+								</td>
 								<td><code class="slug-code">{p.slug}</code></td>
 								<td><Badge variant={statusVariant(p.status)}>{p.status}</Badge></td>
 								<td>{p.authorName ?? '—'}</td>
@@ -374,6 +387,37 @@ function submitHiddenForm(action: string, postId: string) {
 		max-width: 240px;
 		overflow: hidden;
 		text-overflow: ellipsis;
+	}
+
+	.title-stack {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		min-width: 0;
+	}
+
+	.title-stack > span {
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.file-managed-badge {
+		display: inline-flex;
+		align-self: flex-start;
+		padding: 1px 6px;
+		font-size: 0.6875rem;
+		font-family: ui-monospace, monospace;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--color-primary);
+		background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+		border-radius: var(--radius-sm);
+		text-decoration: none;
+		transition: background var(--duration-fast);
+	}
+
+	.file-managed-badge:hover {
+		background: color-mix(in srgb, var(--color-primary) 18%, transparent);
 	}
 
 	.slug-code {

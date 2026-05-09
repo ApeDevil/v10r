@@ -1,0 +1,1 @@
+- [Content layout Round 2](project_content_layout_round2.md) — final file tree for file-backed content + translation pipeline after cross-agent pollination

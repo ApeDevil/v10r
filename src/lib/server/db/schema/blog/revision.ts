@@ -25,6 +25,17 @@ export const revision = blogSchema.table(
 		renderedHtml: text('rendered_html'),
 		embedDescriptors: jsonb('embed_descriptors'),
 		contentHash: text('content_hash').notNull(),
+		/**
+		 * For non-EN revisions of file-managed posts: the EN source's contentHash at the time
+		 * this translation was authored. Drives staleness detection in `bun run content:check`.
+		 * NULL for EN revisions and for any pre-existing (admin-authored) revision.
+		 */
+		sourceContentHash: text('source_content_hash'),
+		/**
+		 * Provenance tag: 'human' | 'claude-code' | NULL.
+		 * NULL for EN and pre-existing revisions; 'claude-code' set by translation-loop authoring.
+		 */
+		translatedBy: text('translated_by'),
 		authorId: text('author_id').references(() => user.id, { onDelete: 'set null' }),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	},

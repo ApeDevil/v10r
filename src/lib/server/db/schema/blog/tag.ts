@@ -4,7 +4,7 @@
  */
 import { sql } from 'drizzle-orm';
 import { check, index, integer, jsonb, primaryKey, text, uniqueIndex } from 'drizzle-orm/pg-core';
-import type { TranslationMap } from '$lib/i18n/content';
+import type { TranslationMap } from '$lib/i18n/translate';
 import { blogSchema, post } from './post';
 
 export const tag = blogSchema.table(

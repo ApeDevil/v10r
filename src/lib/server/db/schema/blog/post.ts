@@ -9,7 +9,7 @@
  */
 import { sql } from 'drizzle-orm';
 import { check, index, integer, jsonb, pgSchema, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
-import type { TranslationMap } from '$lib/i18n/content';
+import type { TranslationMap } from '$lib/i18n/translate';
 import { user } from '../auth/_better-auth';
 
 export const blogSchema = pgSchema('blog');
@@ -50,11 +50,18 @@ export const post = blogSchema.table(
 		status: postStatusEnum('status').notNull().default('draft'),
 		publishedAt: timestamp('published_at', { withTimezone: true }),
 		deletedAt: timestamp('deleted_at', { withTimezone: true }),
+		/**
+		 * File-as-source marker. When set, this post is owned by a markdown file at this path
+		 * (e.g. `content/blog/my-slug`) and the admin UI hides content-edit affordances.
+		 * NULL = admin-managed (existing posts and ad-hoc admin-created posts).
+		 */
+		sourcePath: text('source_path'),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 	},
 	(table) => [
 		uniqueIndex('blog_post_slug_idx').on(table.slug).where(sql`deleted_at IS NULL`),
+		uniqueIndex('blog_post_source_path_idx').on(table.sourcePath).where(sql`source_path IS NOT NULL`),
 		index('blog_post_author_idx').on(table.authorId),
 		index('blog_post_status_published_idx').on(table.status, table.publishedAt.desc()),
 		index('blog_post_active_idx').on(table.createdAt).where(sql`deleted_at IS NULL`),

@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Accordion } from '$lib/components';
 import { localizeHref } from '$lib/i18n';
+import * as m from '$lib/paraglide/messages';
 import { fadeIn } from './fadeIn';
 import { type StructureItem, sections } from './structure-map';
 
@@ -32,7 +33,7 @@ function getItemHref(item: StructureItem): string | null {
 								{#if i > 0}{' '}{/if}<code>{seg.label}</code>
 							{/each}
 						</span>
-						<span class="item-desc">{item.description}</span>
+						<span class="item-desc">{item.description()}</span>
 					</a>
 				{:else}
 					<span class="item-plain">
@@ -41,7 +42,7 @@ function getItemHref(item: StructureItem): string | null {
 								{#if i > 0}{' '}{/if}<code>{seg.label}</code>
 							{/each}
 						</span>
-						<span class="item-desc">{item.description}</span>
+						<span class="item-desc">{item.description()}</span>
 					</span>
 				{/if}
 			</li>
@@ -53,7 +54,7 @@ function getItemHref(item: StructureItem): string | null {
 	{@const g = group(sectionIdx, groupValue)}
 	<div class="structure-content">
 		{#if g.intro}
-			<p>{g.intro}</p>
+			<p>{g.intro()}</p>
 		{/if}
 		{@render renderItems(g.items)}
 	</div>
@@ -96,12 +97,12 @@ function getItemHref(item: StructureItem): string | null {
 <!-- Outer snippets -->
 {#snippet intelligenceContent()}
 	<div class="structure-content">
-		<p>Specialized Claude Code agents with custom prompts, skills, and persistent memory.</p>
+		<p>{m.home_structure_intelligence_intro()}</p>
 		<Accordion
 			items={[
-				{ value: 'agents', title: 'Agents', content: agentsSnippet },
-				{ value: 'skills', title: 'Skills', content: skillsSnippet },
-				{ value: 'docs-hubs', title: 'Documentation Hubs', content: docsHubsSnippet },
+				{ value: 'agents', title: m.home_structure_agents_title(), content: agentsSnippet },
+				{ value: 'skills', title: m.home_structure_skills_title(), content: skillsSnippet },
+				{ value: 'docs-hubs', title: m.home_structure_docs_hubs_title(), content: docsHubsSnippet },
 			]}
 			type="multiple"
 			size="sm"
@@ -115,41 +116,41 @@ function getItemHref(item: StructureItem): string | null {
 	<div class="structure-content">
 		<Accordion
 			items={[
-				{ value: 'routes', title: 'Routes', content: routesSnippet },
-				{ value: 'server', title: 'Server Modules', content: serverSnippet },
-				{ value: 'components', title: 'Components', content: componentsSnippet },
-				{ value: 'claude', title: 'AI Infrastructure', content: claudeSnippet },
-				{ value: 'documentation', title: 'Documentation', content: documentationSnippet },
+				{ value: 'routes', title: m.home_structure_routes_title(), content: routesSnippet },
+				{ value: 'server', title: m.home_structure_server_title(), content: serverSnippet },
+				{ value: 'components', title: m.home_structure_components_title(), content: componentsSnippet },
+				{ value: 'claude', title: m.home_structure_claude_title(), content: claudeSnippet },
+				{ value: 'documentation', title: m.home_structure_documentation_title(), content: documentationSnippet },
 			]}
 			type="multiple"
 			size="sm"
 			variant="default"
 			class="structure-inner"
 		/>
-		<p class="structure-note">Multi-client core — domain modules serve UI form actions, AI tool calls, REST API, and background jobs through a single business-logic layer.</p>
+		<p class="structure-note">{m.home_structure_multi_client_note()}</p>
 	</div>
 {/snippet}
 
 {#snippet nragContent()}
 	<div class="structure-content">
-		<p class="nrag-lede">Retrieval-Augmented Generation where the model chooses its own depth.</p>
-		<p>Two layers: a standard chunk index below, and above it an LLM-authored wiki with typed pointers into specific chunk IDs. The model reads TLDRs first and calls a drill-down tool only when it needs the raw source.</p>
+		<p class="nrag-lede">{m.home_structure_nrag_lede()}</p>
+		<p>{m.home_structure_nrag_body()}</p>
 		{@render renderItems([
 			{
 				segments: [{ label: 'raw-RAG', href: '/showcases/ai/retrieval/rag-chat' }],
-				description: 'hybrid vector + BM25 retrieval over raw document chunks',
+				description: m.home_structure_nrag_item_raw_rag_desc,
 			},
 			{
 				segments: [{ label: 'LLM-Wiki', href: '/showcases/ai/retrieval/rag-chat?mode=llmwiki' }],
-				description: 'synthesized pages with typed pointers back to chunk IDs',
+				description: m.home_structure_nrag_item_llmwiki_desc,
 			},
 			{
 				segments: [{ label: 'drill-down', href: null }],
-				description: 'tool-call escalation when the TLDR is not enough — budget 3 per turn',
+				description: m.home_structure_nrag_item_drilldown_desc,
 			},
 			{
 				segments: [{ label: 'verify', href: null }],
-				description: 'post-hoc citation taxonomy — quote, paraphrase, drifted, uncited',
+				description: m.home_structure_nrag_item_verify_desc,
 			},
 		])}
 	</div>
@@ -157,15 +158,15 @@ function getItemHref(item: StructureItem): string | null {
 
 <section class="structure" use:fadeIn>
 	<header class="structure-header">
-		<h2 class="structure-title">INTERNAL STRUCTURE</h2>
-		<p class="structure-subtitle">Composition and organization of the living system</p>
+		<h2 class="structure-title">{m.home_structure_title()}</h2>
+		<p class="structure-subtitle">{m.home_structure_subtitle()}</p>
 	</header>
 
 	<Accordion
 		items={[
-			{ value: 'intelligence', title: 'Intelligence Layer', content: intelligenceContent },
-			{ value: 'structural', title: 'Structural Map', content: structuralContent },
-			{ value: 'nrag', title: 'nRAG: raw-RAG ∘ LLM-Wiki', content: nragContent },
+			{ value: 'intelligence', title: m.home_structure_intelligence_title(), content: intelligenceContent },
+			{ value: 'structural', title: m.home_structure_structural_title(), content: structuralContent },
+			{ value: 'nrag', title: m.home_structure_nrag_title(), content: nragContent },
 		]}
 		type="multiple"
 		size="sm"

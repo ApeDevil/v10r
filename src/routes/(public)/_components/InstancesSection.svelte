@@ -1,4 +1,5 @@
 <script lang="ts">
+import * as m from '$lib/paraglide/messages';
 import { fadeIn } from './fadeIn';
 
 const TOTAL_CAPABILITIES = 18;
@@ -16,13 +17,13 @@ const instances: Instance[] = [
 	{
 		name: 'v10r',
 		arg: 'landing-page',
-		uses: ['partial stack'],
+		uses: [m.home_instances_uses_partial_stack()],
 		count: 2,
 	},
 	{
 		name: 'v10r',
 		arg: 'full-platform',
-		uses: ['entire stack'],
+		uses: [m.home_instances_uses_entire_stack()],
 		count: TOTAL_CAPABILITIES,
 	},
 ];
@@ -39,8 +40,8 @@ const wild: Instance = {
 
 <section class="instances" use:fadeIn>
 	<header class="instances-header">
-		<h2 class="instances-title">INSTANTIATE</h2>
-		<p class="instances-subtitle">compose from the full stack or a slice of it</p>
+		<h2 class="instances-title">{m.home_instances_title()}</h2>
+		<p class="instances-subtitle">{m.home_instances_subtitle()}</p>
 	</header>
 
 	<div class="instances-row">
@@ -55,7 +56,7 @@ const wild: Instance = {
 					class="instance-meter"
 					class:instance-meter--full={instance.count === TOTAL_CAPABILITIES}
 					role="meter"
-					aria-label="{instance.count} of {TOTAL_CAPABILITIES} capabilities"
+					aria-label={m.home_instances_meter_aria({ count: instance.count, total: TOTAL_CAPABILITIES })}
 					aria-valuemin={0}
 					aria-valuemax={TOTAL_CAPABILITIES}
 					aria-valuenow={instance.count}
@@ -68,7 +69,7 @@ const wild: Instance = {
 				</div>
 
 				<div class="stack-row">
-					<span class="stack-label">uses</span>
+					<span class="stack-label">{m.home_instances_uses()}</span>
 					<span class="stack-items">
 						{#each instance.uses as tech, j}
 							{#if j > 0}<span class="stack-sep"> · </span>{/if}
@@ -81,21 +82,19 @@ const wild: Instance = {
 	</div>
 
 	<div class="spectrum" aria-hidden="true">
-		<span class="spectrum-end">minimal</span>
+		<span class="spectrum-end">{m.home_instances_spectrum_min()}</span>
 		<div class="spectrum-track">
 			<div class="spectrum-glow"></div>
 		</div>
-		<span class="spectrum-end">maximal</span>
+		<span class="spectrum-end">{m.home_instances_spectrum_max()}</span>
 	</div>
 
 	<p class="instances-description">
-		v10r is not cloned — it's instantiated. An AI agent reads the tested patterns,
-		architecture, and documentation, then emulates only the pieces the new project needs.
-		The reference stays live. The instance is purpose-built.
+		{m.home_instances_description()}
 	</p>
 
 	<div class="wild-section">
-		<h3 class="wild-label">PRACTICAL EXAMPLE</h3>
+		<h3 class="wild-label">{m.home_instances_practical_example()}</h3>
 
 		<article class="instance-card wild-card">
 			<h3 class="instance-name">
@@ -105,7 +104,7 @@ const wild: Instance = {
 			<div
 				class="instance-meter"
 				role="meter"
-				aria-label="{wild.count} of {TOTAL_CAPABILITIES} capabilities"
+				aria-label={m.home_instances_meter_aria({ count: wild.count, total: TOTAL_CAPABILITIES })}
 				aria-valuemin={0}
 				aria-valuemax={TOTAL_CAPABILITIES}
 				aria-valuenow={wild.count}
@@ -117,7 +116,7 @@ const wild: Instance = {
 			</div>
 
 			<div class="stack-row">
-				<span class="stack-label">uses</span>
+				<span class="stack-label">{m.home_instances_uses()}</span>
 				<span class="stack-items">
 					{#each wild.uses as tech, j}
 						{#if j > 0}<span class="stack-sep"> · </span>{/if}
@@ -128,7 +127,7 @@ const wild: Instance = {
 
 			{#if wild.dropped}
 				<div class="stack-row">
-					<span class="stack-label stack-label--dropped">dropped</span>
+					<span class="stack-label stack-label--dropped">{m.home_instances_dropped()}</span>
 					<span class="stack-items stack-items--dropped">
 						{#each wild.dropped as tech, j}
 							{#if j > 0}<span class="stack-sep"> · </span>{/if}
@@ -138,7 +137,7 @@ const wild: Instance = {
 				</div>
 			{/if}
 
-			<p class="wild-context">keyboard firmware documentation — static prerendered</p>
+			<p class="wild-context">{m.home_instances_wild_context()}</p>
 
 			{#if wild.href}
 				<a class="wild-link" href={wild.href} target="_blank" rel="noopener noreferrer">

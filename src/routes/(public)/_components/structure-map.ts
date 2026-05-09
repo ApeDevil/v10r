@@ -1,9 +1,14 @@
+import * as m from '$lib/paraglide/messages';
+
 type Segment = { label: string; href: string | null };
-type StructureItem = { segments: Segment[]; description: string };
+// description / intro are stored as Paraglide message-getter references
+// (not invoked here) so the resolved string follows the per-request locale
+// at render time. Calling m.x() at module scope freezes to the boot locale.
+type StructureItem = { segments: Segment[]; description: () => string };
 type StructureGroup = {
 	value: string;
 	title: string;
-	intro?: string;
+	intro?: () => string;
 	items: StructureItem[];
 	note?: string;
 };
@@ -20,17 +25,17 @@ export const sections: StructureSection[] = [
 				value: 'agents',
 				title: 'Agents',
 				items: [
-					{ segments: [{ label: 'archy', href: null }], description: 'architecture & system design' },
-					{ segments: [{ label: 'arty', href: null }], description: 'aesthetic refinement & visual polish' },
-					{ segments: [{ label: 'buny', href: null }], description: 'Bun runtime & tooling' },
-					{ segments: [{ label: 'daty', href: null }], description: 'database schemas & data modeling' },
-					{ segments: [{ label: 'docy', href: null }], description: 'documentation & technical writing' },
-					{ segments: [{ label: 'resy', href: null }], description: 'technology research & evaluation' },
-					{ segments: [{ label: 'scout', href: null }], description: 'real-world usage research' },
-					{ segments: [{ label: 'secy', href: null }], description: 'security review & threat modeling' },
-					{ segments: [{ label: 'svey', href: null }], description: 'SvelteKit application patterns' },
-					{ segments: [{ label: 'tray', href: null }], description: 'debugging & error tracing' },
-					{ segments: [{ label: 'uxy', href: null }], description: 'UI/UX design & accessibility' },
+					{ segments: [{ label: 'archy', href: null }], description: m.home_structure_agent_archy_desc },
+					{ segments: [{ label: 'arty', href: null }], description: m.home_structure_agent_arty_desc },
+					{ segments: [{ label: 'buny', href: null }], description: m.home_structure_agent_buny_desc },
+					{ segments: [{ label: 'daty', href: null }], description: m.home_structure_agent_daty_desc },
+					{ segments: [{ label: 'docy', href: null }], description: m.home_structure_agent_docy_desc },
+					{ segments: [{ label: 'resy', href: null }], description: m.home_structure_agent_resy_desc },
+					{ segments: [{ label: 'scout', href: null }], description: m.home_structure_agent_scout_desc },
+					{ segments: [{ label: 'secy', href: null }], description: m.home_structure_agent_secy_desc },
+					{ segments: [{ label: 'svey', href: null }], description: m.home_structure_agent_svey_desc },
+					{ segments: [{ label: 'tray', href: null }], description: m.home_structure_agent_tray_desc },
+					{ segments: [{ label: 'uxy', href: null }], description: m.home_structure_agent_uxy_desc },
 				],
 			},
 			{
@@ -44,7 +49,7 @@ export const sections: StructureSection[] = [
 							{ label: 'unocss', href: null },
 							{ label: 'biome', href: null },
 						],
-						description: 'core framework',
+						description: m.home_structure_skill_core_desc,
 					},
 					{
 						segments: [
@@ -53,46 +58,48 @@ export const sections: StructureSection[] = [
 							{ label: 'db-graph', href: null },
 							{ label: 'db-files', href: null },
 						],
-						description: 'data layer',
+						description: m.home_structure_skill_data_desc,
 					},
 					{
 						segments: [
 							{ label: 'better-auth', href: null },
 							{ label: 'security', href: null },
 						],
-						description: 'auth & security',
+						description: m.home_structure_skill_auth_desc,
 					},
 					{
 						segments: [
 							{ label: 'valibot-superforms', href: null },
 							{ label: 'design-system', href: null },
 						],
-						description: 'forms & design',
+						description: m.home_structure_skill_forms_desc,
 					},
 					{
 						segments: [
 							{ label: 'ai-tools', href: null },
 							{ label: '3d', href: null },
 						],
-						description: 'AI & visualization',
+						description: m.home_structure_skill_ai_desc,
 					},
 				],
 			},
 			{
 				value: 'docs-hubs',
 				title: 'Documentation Hubs',
-				intro:
-					'Each directory has a README.md navigation hub — brief intro, then a topic table linking to specific files.',
+				intro: m.home_structure_docs_hubs_intro,
 				items: [
-					{ segments: [{ label: 'docs/foundation/', href: null }], description: 'core concepts & conventions' },
+					{ segments: [{ label: 'docs/foundation/', href: null }], description: m.home_structure_doc_foundation_desc },
 					{
 						segments: [{ label: 'docs/stack/', href: '/docs/stack' }],
-						description: 'technology documentation per layer',
+						description: m.home_structure_doc_stack_desc,
 					},
-					{ segments: [{ label: 'docs/blueprint/', href: null }], description: 'architecture decisions' },
-					{ segments: [{ label: 'docs/implementation/', href: null }], description: 'build details' },
-					{ segments: [{ label: 'docs/patterns/', href: null }], description: 'reusable patterns' },
-					{ segments: [{ label: 'docs/guides/', href: null }], description: 'how-to guides' },
+					{ segments: [{ label: 'docs/blueprint/', href: null }], description: m.home_structure_doc_blueprint_desc },
+					{
+						segments: [{ label: 'docs/implementation/', href: null }],
+						description: m.home_structure_doc_implementation_desc,
+					},
+					{ segments: [{ label: 'docs/patterns/', href: null }], description: m.home_structure_doc_patterns_desc },
+					{ segments: [{ label: 'docs/guides/', href: null }], description: m.home_structure_doc_guides_desc },
 				],
 			},
 		],
@@ -105,12 +112,15 @@ export const sections: StructureSection[] = [
 				value: 'routes',
 				title: 'Routes',
 				items: [
-					{ segments: [{ label: '/app', href: '/app/dashboard' }], description: 'main application' },
-					{ segments: [{ label: '/auth', href: '/auth/login' }], description: 'authentication flows' },
-					{ segments: [{ label: '/showcases', href: '/showcases' }], description: 'feature demonstrations' },
-					{ segments: [{ label: '/docs', href: '/docs' }], description: 'documentation viewer' },
-					{ segments: [{ label: '/desk', href: '/desk' }], description: 'workspace' },
-					{ segments: [{ label: '/api', href: null }], description: 'REST endpoints' },
+					{ segments: [{ label: '/app', href: '/app/dashboard' }], description: m.home_structure_route_app_desc },
+					{ segments: [{ label: '/auth', href: '/auth/login' }], description: m.home_structure_route_auth_desc },
+					{
+						segments: [{ label: '/showcases', href: '/showcases' }],
+						description: m.home_structure_route_showcases_desc,
+					},
+					{ segments: [{ label: '/docs', href: '/docs' }], description: m.home_structure_route_docs_desc },
+					{ segments: [{ label: '/desk', href: '/desk' }], description: m.home_structure_route_desk_desc },
+					{ segments: [{ label: '/api', href: null }], description: m.home_structure_route_api_desc },
 				],
 			},
 			{
@@ -123,7 +133,7 @@ export const sections: StructureSection[] = [
 							{ label: 'graph', href: '/showcases/ai/retrieval/rag-chat?mode=graph' },
 							{ label: 'retrieval', href: '/showcases/ai/retrieval/rag-chat' },
 						],
-						description: 'intelligence',
+						description: m.home_structure_server_ai_desc,
 					},
 					{
 						segments: [
@@ -131,28 +141,28 @@ export const sections: StructureSection[] = [
 							{ label: 'cache', href: '/showcases/db/relational/connection' },
 							{ label: 'store', href: '/showcases/db/relational/connection' },
 						],
-						description: 'persistence',
+						description: m.home_structure_server_db_desc,
 					},
 					{
 						segments: [
 							{ label: 'auth', href: '/showcases/auth/session' },
 							{ label: 'notifications', href: '/showcases/auth/session' },
 						],
-						description: 'identity & messaging',
+						description: m.home_structure_server_auth_desc,
 					},
 					{
 						segments: [
 							{ label: 'api', href: null },
 							{ label: 'platform', href: null },
 						],
-						description: 'external interfaces',
+						description: m.home_structure_server_api_desc,
 					},
 					{
 						segments: [
 							{ label: 'jobs', href: '/showcases/analytics/overview' },
 							{ label: 'analytics', href: '/showcases/analytics/overview' },
 						],
-						description: 'background & telemetry',
+						description: m.home_structure_server_jobs_desc,
 					},
 				],
 			},
@@ -162,23 +172,23 @@ export const sections: StructureSection[] = [
 				items: [
 					{
 						segments: [{ label: 'primitives/', href: '/showcases/ui/components/primitives' }],
-						description: 'atomic UI elements (accordion, button, input...)',
+						description: m.home_structure_components_primitives_desc,
 					},
 					{
 						segments: [{ label: 'composites/', href: '/showcases/ui/components/composites' }],
-						description: 'assembled patterns (data-table, sidebar...)',
+						description: m.home_structure_components_composites_desc,
 					},
 					{
 						segments: [{ label: 'layout/', href: '/showcases/ui/layouts' }],
-						description: 'page structure (stack, grid, divider...)',
+						description: m.home_structure_components_layout_desc,
 					},
 					{
 						segments: [{ label: 'shell/', href: '/showcases/shell/sidebar' }],
-						description: 'app chrome (nav, footer, theme)',
+						description: m.home_structure_components_shell_desc,
 					},
 					{
 						segments: [{ label: 'viz/', href: '/showcases/viz' }],
-						description: 'charts & 3D (lazy-loaded, excluded from barrel)',
+						description: m.home_structure_components_viz_desc,
 					},
 				],
 			},
@@ -186,20 +196,32 @@ export const sections: StructureSection[] = [
 				value: 'claude',
 				title: 'AI Infrastructure',
 				items: [
-					{ segments: [{ label: 'agents/', href: null }], description: '11 specialized Claude Code agents' },
-					{ segments: [{ label: 'skills/', href: null }], description: '14 post-training knowledge modules' },
-					{ segments: [{ label: 'memory/', href: null }], description: 'persistent agent memory across sessions' },
+					{ segments: [{ label: 'agents/', href: null }], description: m.home_structure_claude_agents_desc },
+					{ segments: [{ label: 'skills/', href: null }], description: m.home_structure_claude_skills_desc },
+					{ segments: [{ label: 'memory/', href: null }], description: m.home_structure_claude_memory_desc },
 				],
 			},
 			{
 				value: 'documentation',
 				title: 'Documentation',
 				items: [
-					{ segments: [{ label: 'foundation/', href: null }], description: 'core concepts & conventions' },
-					{ segments: [{ label: 'stack/', href: '/docs/stack' }], description: 'per-technology documentation' },
-					{ segments: [{ label: 'blueprint/', href: null }], description: 'architecture decisions' },
-					{ segments: [{ label: 'implementation/', href: null }], description: 'build details' },
-					{ segments: [{ label: 'patterns/', href: null }], description: 'reusable patterns' },
+					{
+						segments: [{ label: 'foundation/', href: null }],
+						description: m.home_structure_documentation_foundation_desc,
+					},
+					{
+						segments: [{ label: 'stack/', href: '/docs/stack' }],
+						description: m.home_structure_documentation_stack_desc,
+					},
+					{
+						segments: [{ label: 'blueprint/', href: null }],
+						description: m.home_structure_documentation_blueprint_desc,
+					},
+					{
+						segments: [{ label: 'implementation/', href: null }],
+						description: m.home_structure_documentation_impl_desc,
+					},
+					{ segments: [{ label: 'patterns/', href: null }], description: m.home_structure_documentation_patterns_desc },
 				],
 			},
 		],

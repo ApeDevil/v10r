@@ -1,4 +1,8 @@
-/** Compute SHA-256 hash of markdown content. Used as RAG re-ingest skip gate. */
+/**
+ * Compute SHA-256 hash of arbitrary text content.
+ * Used as the canonical content hash for: blog revision idempotency, RAG re-ingest
+ * skip gates, and `content:push` / `content:check` drift detection.
+ */
 export async function contentHash(markdown: string): Promise<string> {
 	const encoded = new TextEncoder().encode(markdown);
 	const buffer = await crypto.subtle.digest('SHA-256', encoded);

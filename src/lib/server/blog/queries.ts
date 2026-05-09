@@ -88,6 +88,7 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 			publishedAt: post.publishedAt,
 			createdAt: post.createdAt,
 			updatedAt: post.updatedAt,
+			sourcePath: post.sourcePath,
 		})
 		.from(post)
 		.leftJoin(user, eq(post.authorId, user.id))

@@ -1,5 +1,5 @@
 import type { InferSelectModel } from 'drizzle-orm';
-import type { TranslationMap } from '$lib/i18n/content';
+import type { TranslationMap } from '$lib/i18n/translate';
 import type { asset, domain, post, revision, tag } from '$lib/server/db/schema/blog';
 
 export type BlogPost = InferSelectModel<typeof post>;
@@ -18,6 +18,8 @@ export interface PostListItem {
 	publishedAt: Date | null;
 	createdAt: Date;
 	updatedAt: Date;
+	/** When non-null, the post is owned by a markdown file at this path. Admin UI hides content edits. */
+	sourcePath: string | null;
 	/** From the latest revision */
 	title: string;
 	summary: string | null;

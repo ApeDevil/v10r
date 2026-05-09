@@ -1,5 +1,5 @@
 import { env } from '$env/dynamic/private';
-import { tc } from '$lib/i18n/content';
+import { tc } from '$lib/i18n/translate';
 import { getActiveAnnouncements } from '$lib/server/admin/announcements';
 import type { LayoutServerLoad } from './$types';
 

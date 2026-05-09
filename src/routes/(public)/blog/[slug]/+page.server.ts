@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { tc } from '$lib/i18n/content';
+import { tc } from '$lib/i18n/translate';
 import { getPublishedPostForSlug } from '$lib/server/blog';
 import type { PageServerLoad } from './$types';
 

@@ -15,7 +15,10 @@ const theme = getTheme();
 
 type ToggleMode = 'light' | 'dark';
 const themeIcons: Record<ToggleMode, string> = { light: 'i-lucide-sun', dark: 'i-lucide-moon' };
-const themeLabels: Record<ToggleMode, string> = { light: 'light', dark: 'dark' };
+const themeLabels: Record<ToggleMode, () => string> = {
+	light: () => m.home_hero_theme_light(),
+	dark: () => m.home_hero_theme_dark(),
+};
 
 const displayMode: ToggleMode = $derived(theme.resolvedMode === 'dark' ? 'dark' : 'light');
 
@@ -48,55 +51,59 @@ $effect(() => {
 const specimenName = 'Velociraptor';
 
 const zones: Array<{
-	name: string;
-	capabilities: Array<{ icon: string; label: string; desc: string }>;
+	name: () => string;
+	capabilities: Array<{ icon: string; label: () => string; desc: string }>;
 }> = [
 	{
-		name: 'RUNTIME',
+		name: () => m.home_taxonomy_zone_runtime(),
 		capabilities: [
-			{ icon: 'i-lucide-zap', label: 'Runtime', desc: 'Bun' },
-			{ icon: 'i-lucide-container', label: 'Containers', desc: 'Podman (rootless)' },
-			{ icon: 'i-lucide-rocket', label: 'Deployment', desc: 'Vercel / Netlify' },
+			{ icon: 'i-lucide-zap', label: () => m.home_taxonomy_cap_runtime_label(), desc: 'Bun' },
+			{ icon: 'i-lucide-container', label: () => m.home_taxonomy_cap_containers_label(), desc: 'Podman (rootless)' },
+			{ icon: 'i-lucide-rocket', label: () => m.home_taxonomy_cap_deployment_label(), desc: 'Vercel / Netlify' },
 		],
 	},
 	{
-		name: 'STRUCTURE',
+		name: () => m.home_taxonomy_zone_structure(),
 		capabilities: [
-			{ icon: 'i-lucide-blocks', label: 'Full-stack Framework', desc: 'SvelteKit 2' },
-			{ icon: 'i-lucide-sparkles', label: 'Reactive UI', desc: 'Svelte 5 runes' },
-			{ icon: 'i-lucide-check-check', label: 'Lint & Format', desc: 'Biome' },
+			{ icon: 'i-lucide-blocks', label: () => m.home_taxonomy_cap_framework_label(), desc: 'SvelteKit 2' },
+			{ icon: 'i-lucide-sparkles', label: () => m.home_taxonomy_cap_reactive_ui_label(), desc: 'Svelte 5 runes' },
+			{ icon: 'i-lucide-check-check', label: () => m.home_taxonomy_cap_lint_label(), desc: 'Biome' },
 		],
 	},
 	{
-		name: 'DATA',
+		name: () => m.home_taxonomy_zone_data(),
 		capabilities: [
-			{ icon: 'i-lucide-database', label: 'Relational DB', desc: 'PostgreSQL via Neon' },
-			{ icon: 'i-lucide-share-2', label: 'Graph DB', desc: 'Neo4j Aura' },
-			{ icon: 'i-lucide-layers', label: 'Type-safe ORM', desc: 'Drizzle' },
-			{ icon: 'i-lucide-cloud', label: 'Object Storage', desc: 'Cloudflare R2' },
+			{
+				icon: 'i-lucide-database',
+				label: () => m.home_taxonomy_cap_relational_db_label(),
+				desc: 'PostgreSQL via Neon',
+			},
+			{ icon: 'i-lucide-share-2', label: () => m.home_taxonomy_cap_graph_db_label(), desc: 'Neo4j Aura' },
+			{ icon: 'i-lucide-layers', label: () => m.home_taxonomy_cap_orm_label(), desc: 'Drizzle' },
+			{ icon: 'i-lucide-cloud', label: () => m.home_taxonomy_cap_storage_label(), desc: 'Cloudflare R2' },
 		],
 	},
 	{
-		name: 'INTERFACE',
+		name: () => m.home_taxonomy_zone_interface(),
 		capabilities: [
-			{ icon: 'i-lucide-paintbrush', label: 'Atomic CSS', desc: 'UnoCSS' },
-			{ icon: 'i-lucide-component', label: 'Headless UI', desc: 'Bits UI' },
-			{ icon: 'i-lucide-box', label: '3D Rendering', desc: 'Three.js + Threlte' },
+			{ icon: 'i-lucide-paintbrush', label: () => m.home_taxonomy_cap_atomic_css_label(), desc: 'UnoCSS' },
+			{ icon: 'i-lucide-component', label: () => m.home_taxonomy_cap_headless_ui_label(), desc: 'Bits UI' },
+			{ icon: 'i-lucide-box', label: () => m.home_taxonomy_cap_3d_label(), desc: 'Three.js + Threlte' },
 		],
 	},
 	{
-		name: 'BEHAVIOR',
+		name: () => m.home_taxonomy_zone_behavior(),
 		capabilities: [
-			{ icon: 'i-lucide-shield', label: 'Session Auth', desc: 'Better Auth' },
-			{ icon: 'i-lucide-file-check', label: 'Form Validation', desc: 'Superforms + Valibot' },
-			{ icon: 'i-lucide-languages', label: 'Compiled i18n', desc: 'Paraglide' },
+			{ icon: 'i-lucide-shield', label: () => m.home_taxonomy_cap_auth_label(), desc: 'Better Auth' },
+			{ icon: 'i-lucide-file-check', label: () => m.home_taxonomy_cap_forms_label(), desc: 'Superforms + Valibot' },
+			{ icon: 'i-lucide-languages', label: () => m.home_taxonomy_cap_i18n_label(), desc: 'Paraglide' },
 		],
 	},
 	{
-		name: 'INTELLIGENCE',
+		name: () => m.home_taxonomy_zone_intelligence(),
 		capabilities: [
-			{ icon: 'i-lucide-brain', label: 'LLM Integration', desc: 'Vercel AI SDK' },
-			{ icon: 'i-lucide-network', label: 'Graph RAG', desc: 'Recursive retrieval' },
+			{ icon: 'i-lucide-brain', label: () => m.home_taxonomy_cap_llm_label(), desc: 'Vercel AI SDK' },
+			{ icon: 'i-lucide-network', label: () => m.home_taxonomy_cap_graph_rag_label(), desc: 'Recursive retrieval' },
 		],
 	},
 ];
@@ -118,7 +125,7 @@ const ghostIcons = [
 <section class="hero" class:hero-revealed={revealed}>
 	<div class="hero-grid">
 		<div class="hero-identity">
-			<p class="classification">born to be fast & light</p>
+			<p class="classification">{m.home_hero_classification()}</p>
 
 			<h1 class="specimen-name" class:revealed>
 				{#each specimenName as char, i}
@@ -126,17 +133,17 @@ const ghostIcons = [
 				{/each}
 			</h1>
 
-			<p class="tagline">Instantiate Through Emulation</p>
+			<p class="tagline">{m.home_hero_tagline()}</p>
 
 			<div class="etymology-card">
 				<CornerFrame variant="bracket" size={20} strokeWidth={1} />
-				<span class="etymology-label">ETYMOLOGY</span>
+				<span class="etymology-label">{m.home_hero_etymology_label()}</span>
 				<div class="etymology-content">
 					<pre class="etymology-diagram" aria-hidden="true">v  e l o c i r a p t o   r
 │ └──── 10 letters ────┘ │
 v          10            r</pre>
-					<span class="sr-only">The letters v and r bracket 10 letters in Velociraptor, forming the abbreviation v10r.</span>
-					<p class="etymology-descriptor">Containerized Full-Stack Pattern Library</p>
+					<span class="sr-only">{m.home_hero_etymology_sr()}</span>
+					<p class="etymology-descriptor">{m.home_hero_etymology_descriptor()}</p>
 				</div>
 			</div>
 		</div>
@@ -154,18 +161,18 @@ v          10            r</pre>
 							class="roll-btn focus-ring"
 							onclick={() => style.roll()}
 							disabled={style.rolling}
-							aria-label="Randomize site style"
+							aria-label={m.home_hero_roll_aria()}
 						>
 							<span class="roll-icon i-lucide-dices"></span>
-							<span>{style.rollCount === 0 ? 'roll a new look' : 'roll again'}</span>
+							<span>{style.rollCount === 0 ? m.home_hero_roll_first() : m.home_hero_roll_again()}</span>
 						</button>
 						<button
 							class="theme-btn focus-ring"
 							onclick={cycleTheme}
-							aria-label="Theme: {themeLabels[displayMode]}"
+							aria-label={m.home_hero_theme_aria({ label: themeLabels[displayMode]() })}
 						>
 							<span class="roll-icon {themeIcons[displayMode]}"></span>
-							<span>{themeLabels[displayMode]}</span>
+							<span>{themeLabels[displayMode]()}</span>
 						</button>
 					</div>
 					<nav class="locale-pills" aria-label={m.shell_language_choose()}>
@@ -197,8 +204,8 @@ v          10            r</pre>
 
 <section class="taxonomy">
 	<header class="taxonomy-header">
-		<h2 class="taxonomy-title">CAPABILITY TAXONOMY</h2>
-		<p class="taxonomy-subtitle">A combinable technology set — lightweight and fast, documented and tested</p>
+		<h2 class="taxonomy-title">{m.home_taxonomy_title()}</h2>
+		<p class="taxonomy-subtitle">{m.home_taxonomy_subtitle()}</p>
 	</header>
 
 	<div class="taxonomy-grid">
@@ -206,7 +213,7 @@ v          10            r</pre>
 			<article class="zone-card" use:fadeIn={{ delay: i * 60, translate: 8 }}>
 				<header class="zone-header">
 					<h3 class="zone-name">
-						{zone.name}
+						{zone.name()}
 					</h3>
 				</header>
 				<ul class="zone-capabilities">
@@ -214,7 +221,7 @@ v          10            r</pre>
 						<li class="capability">
 							<span class="capability-icon {cap.icon}"></span>
 							<div>
-								<span class="capability-label">{cap.label}</span>
+								<span class="capability-label">{cap.label()}</span>
 								<span class="capability-desc">{cap.desc}</span>
 							</div>
 						</li>
@@ -247,7 +254,7 @@ v          10            r</pre>
 <section class="showcase-entry">
 	<a href={localizeHref('/showcases')} class="cta-link focus-ring">
 		<span class="cta-arrow">→</span>
-		<span>explore the showcases</span>
+		<span>{m.home_showcase_cta()}</span>
 	</a>
 
 	<div class="ghost-grid" aria-hidden="true">

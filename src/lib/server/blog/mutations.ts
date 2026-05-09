@@ -1,9 +1,9 @@
 import { and, eq, isNull, sql } from 'drizzle-orm';
-import type { TranslationMap } from '$lib/i18n/content';
+import type { TranslationMap } from '$lib/i18n/translate';
+import { contentHash } from '$lib/server/content/hash';
 import { db } from '$lib/server/db';
 import { createId } from '$lib/server/db/id';
 import { asset, domain, post, postAsset, postTag, publishedRevision, revision, tag } from '$lib/server/db/schema/blog';
-import { contentHash } from './content-hash';
 import { renderBlogPost } from './pipeline';
 import type { BlogAsset, BlogDomain, BlogPost, BlogRevision, BlogTag } from './types';
 
