@@ -142,7 +142,9 @@ $effect(() => {
 </svelte:head>
 
 <TooltipPrimitive.Provider>
-	{@render children()}
+	{#key page.data.locale}
+		{@render children()}
+	{/key}
 </TooltipPrimitive.Provider>
 
 {#if data.debugOwnerActive}

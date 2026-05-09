@@ -224,15 +224,10 @@ function getItemHref(item: StructureItem): string | null {
 		color: color-mix(in srgb, var(--color-fg) 72%, transparent);
 	}
 
-	/* Fix width jump: override Accordion.svelte's global border/margin on open content,
-	   and restrict transition to height-only (transition-all animates margin/padding shifts) */
+	/* Restrict transition to height-only (transition-all animates margin/padding shifts).
+	   Side line + 6px margin on open is the showcase reference behavior — restored. */
 	.structure :global([data-accordion-content]) {
 		transition: height var(--duration-normal) var(--ease-out) !important;
-	}
-
-	.structure :global([data-accordion-content][data-state='open']) {
-		border-left: none !important;
-		margin-left: 0 !important;
 	}
 
 	/* Content styling */

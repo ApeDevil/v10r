@@ -1,11 +1,13 @@
 <script lang="ts">
+import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import { Asterism, CornerFrame, Divider } from '$lib/components';
+import { Asterism, Divider, DropdownMenu } from '$lib/components';
 import LogoHero from '$lib/components/branding/LogoHero.svelte';
-import { locales, localizeHref } from '$lib/i18n';
+import { cookieMaxAge, cookieName, locales, localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 import { getStyle } from '$lib/state/style.svelte';
 import { getTheme } from '$lib/state/theme.svelte';
+import { setCookie } from '$lib/utils/cookies';
 import { fadeIn } from './_components/fadeIn';
 import InstancesSection from './_components/InstancesSection.svelte';
 import StructureSection from './_components/StructureSection.svelte';
@@ -41,6 +43,20 @@ function localeLabel(locale: string): string {
 			return locale;
 	}
 }
+
+async function switchLocale(locale: string) {
+	if (locale === currentLocale) return;
+	setCookie(cookieName, locale, { maxAge: cookieMaxAge });
+	await goto(localizeHref(currentHref, { locale }), { invalidateAll: true });
+}
+
+const localeItems = $derived(
+	locales.map((locale) => ({
+		label: localeLabel(locale),
+		icon: locale === currentLocale ? 'i-lucide-check' : undefined,
+		onclick: () => switchLocale(locale),
+	})),
+);
 
 let revealed = $state(false);
 
@@ -136,7 +152,6 @@ const ghostIcons = [
 			<p class="tagline">{m.home_hero_tagline()}</p>
 
 			<div class="etymology-card">
-				<CornerFrame variant="bracket" size={20} strokeWidth={1} />
 				<span class="etymology-label">{m.home_hero_etymology_label()}</span>
 				<div class="etymology-content">
 					<pre class="etymology-diagram" aria-hidden="true">v  e l o c i r a p t o   r
@@ -156,9 +171,9 @@ v          10            r</pre>
 			{#if !style.branded}
 				<div class="roll-block">
 					<p class="roll-label">{style.paletteName} · {style.typographyName}</p>
-					<div class="roll-actions">
+					<div class="split-btn" class:split-btn-disabled={style.rolling}>
 						<button
-							class="roll-btn focus-ring"
+							class="split-main focus-ring"
 							onclick={() => style.roll()}
 							disabled={style.rolling}
 							aria-label={m.home_hero_roll_aria()}
@@ -166,31 +181,28 @@ v          10            r</pre>
 							<span class="roll-icon i-lucide-dices"></span>
 							<span>{style.rollCount === 0 ? m.home_hero_roll_first() : m.home_hero_roll_again()}</span>
 						</button>
+						<span class="split-divider" aria-hidden="true"></span>
 						<button
-							class="theme-btn focus-ring"
+							class="split-aux focus-ring"
 							onclick={cycleTheme}
 							aria-label={m.home_hero_theme_aria({ label: themeLabels[displayMode]() })}
 						>
 							<span class="roll-icon {themeIcons[displayMode]}"></span>
-							<span>{themeLabels[displayMode]()}</span>
 						</button>
 					</div>
-					<nav class="locale-pills" aria-label={m.shell_language_choose()}>
-						{#each locales as locale}
-							{@const isActive = locale === currentLocale}
-							<a
-								class="locale-btn focus-ring"
-								class:locale-btn-active={isActive}
-								href={localizeHref(currentHref, { locale })}
-								lang={locale}
-								aria-current={isActive ? 'page' : undefined}
-								data-sveltekit-reload
+					<DropdownMenu items={localeItems} align="center">
+						{#snippet trigger({ props })}
+							<button
+								{...props}
+								class="lang-btn focus-ring"
+								aria-label={m.shell_language_choose()}
 							>
-								{#if isActive}<span class="roll-icon i-lucide-check"></span>{/if}
-								<span>{localeLabel(locale)}</span>
-							</a>
-						{/each}
-					</nav>
+								<span class="roll-icon i-lucide-globe"></span>
+								<span>{localeLabel(currentLocale)}</span>
+								<span class="chevron-icon i-lucide-chevron-down"></span>
+							</button>
+						{/snippet}
+					</DropdownMenu>
 				</div>
 			{/if}
 		</div>
@@ -462,44 +474,70 @@ v          10            r</pre>
 		gap: var(--spacing-3);
 	}
 
-	.roll-actions {
-		display: flex;
-		gap: var(--spacing-3);
-		flex-wrap: wrap;
-	}
-
-	.roll-btn {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--spacing-3);
-		min-height: 44px;
-		padding: var(--spacing-3) var(--spacing-5);
-		border: 1px solid var(--color-primary);
-		border-radius: var(--radius-md);
-		font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
-		font-size: var(--text-fluid-sm);
-		color: var(--color-fg);
-		background: transparent;
-		cursor: pointer;
-		transition: border-color var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out;
-	}
-
-	.roll-btn:hover {
-		background: var(--color-fg-alpha);
-	}
-
-	.roll-btn:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
 	.roll-icon {
 		width: 1.25rem;
 		height: 1.25rem;
 		flex-shrink: 0;
 	}
 
-	.theme-btn {
+	/* Split button: roll (primary) + theme toggle (aux), fused under one shared border */
+	.split-btn {
+		display: inline-flex;
+		align-items: stretch;
+		min-height: 44px;
+		border: 1px solid var(--color-primary);
+		border-radius: var(--radius-md);
+		background: transparent;
+		overflow: hidden;
+		transition: border-color var(--duration-fast) ease-out;
+	}
+
+	.split-btn-disabled {
+		opacity: 0.5;
+	}
+
+	.split-main,
+	.split-aux {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--spacing-3);
+		padding: var(--spacing-3) var(--spacing-5);
+		border: 0;
+		background: transparent;
+		font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
+		font-size: var(--text-fluid-sm);
+		color: var(--color-fg);
+		cursor: pointer;
+		transition: background-color var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
+	}
+
+	.split-aux {
+		color: var(--color-muted);
+		padding-inline: var(--spacing-4);
+	}
+
+	.split-main:hover:not(:disabled),
+	.split-aux:hover {
+		background: var(--color-fg-alpha);
+	}
+
+	.split-aux:hover {
+		color: var(--color-fg);
+	}
+
+	.split-main:disabled {
+		cursor: not-allowed;
+	}
+
+	.split-divider {
+		width: 1px;
+		background: var(--color-primary);
+		opacity: 0.5;
+		flex-shrink: 0;
+	}
+
+	/* Language dropdown trigger: outlined to match split-btn aux side */
+	.lang-btn {
 		display: inline-flex;
 		align-items: center;
 		gap: var(--spacing-3);
@@ -515,46 +553,22 @@ v          10            r</pre>
 		transition: border-color var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
 	}
 
-	.theme-btn:hover {
+	.lang-btn:hover,
+	.lang-btn[data-state='open'] {
 		border-color: var(--color-fg);
 		color: var(--color-fg);
 		background: var(--color-fg-alpha);
 	}
 
-	.locale-pills {
-		display: flex;
-		gap: var(--spacing-3);
-		flex-wrap: wrap;
-		margin-top: var(--spacing-3);
+	.chevron-icon {
+		width: 1rem;
+		height: 1rem;
+		flex-shrink: 0;
+		transition: transform var(--duration-fast) ease-out;
 	}
 
-	.locale-btn {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--spacing-3);
-		min-height: 44px;
-		padding: var(--spacing-3) var(--spacing-5);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
-		font-size: var(--text-fluid-sm);
-		color: var(--color-muted);
-		background: transparent;
-		cursor: pointer;
-		text-decoration: none;
-		transition: border-color var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
-	}
-
-	.locale-btn:hover {
-		border-color: var(--color-fg);
-		color: var(--color-fg);
-		background: var(--color-fg-alpha);
-	}
-
-	.locale-btn-active {
-		border-color: var(--color-fg);
-		color: var(--color-fg);
-		background: var(--color-fg-alpha);
+	.lang-btn[data-state='open'] .chevron-icon {
+		transform: rotate(180deg);
 	}
 
 	.roll-label {
