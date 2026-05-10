@@ -11,13 +11,14 @@ import type { Actions, PageServerLoad } from './$types';
 
 const limiter = createLimiter(FEEDBACK_RATE_LIMIT_PREFIX, FEEDBACK_RATE_LIMIT_MAX, FEEDBACK_RATE_LIMIT_WINDOW);
 
-export const load: PageServerLoad = async ({ url }) => {
+export const load: PageServerLoad = async ({ url, locals }) => {
+	const accountEmail = locals.user?.email ?? null;
 	const form = await superValidate(
 		{
 			subject: '',
 			body: '',
 			rating: null,
-			contactEmail: null,
+			contactEmail: accountEmail,
 			pageOfOrigin: url.searchParams.get('from') ?? '/',
 			nonce: crypto.randomUUID(),
 			renderedAt: Date.now(),
@@ -26,7 +27,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		valibot(feedbackSubmissionSchema),
 	);
 
-	return { title: 'Send feedback', form };
+	return { title: 'Send feedback', form, emailPrefilled: accountEmail !== null };
 };
 
 export const actions: Actions = {

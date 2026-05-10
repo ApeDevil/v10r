@@ -30,13 +30,7 @@ export const feedbackSubmissionSchema = v.object({
 	),
 	pageOfOrigin: v.optional(v.pipe(v.string(), v.trim(), v.maxLength(512)), '/'),
 	nonce: v.pipe(v.string(), v.uuid('Invalid form token')),
-	renderedAt: v.pipe(
-		v.union([v.string(), v.number()]),
-		v.transform((value) => Number(value)),
-		v.number(),
-		v.integer(),
-		v.minValue(0),
-	),
+	renderedAt: v.pipe(v.number(), v.integer(), v.minValue(0)),
 	/** Honeypot — must remain empty. Bots fill all visible fields. */
 	bookmark: v.optional(v.literal(''), ''),
 });

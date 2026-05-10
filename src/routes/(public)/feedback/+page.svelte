@@ -3,7 +3,7 @@ import { superForm } from 'sveltekit-superforms';
 import { valibotClient } from 'sveltekit-superforms/adapters';
 import { Card, FormField } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
-import { Button, Input, Select, Textarea } from '$lib/components/primitives';
+import { Accordion, Button, Input, Select, Textarea } from '$lib/components/primitives';
 import { feedbackSubmissionSchema } from '$lib/feedback/validation';
 import * as m from '$lib/paraglide/messages';
 import type { PageProps } from './$types';
@@ -22,10 +22,24 @@ const ratingOptions = $derived([
 	{ value: '4', label: '4' },
 	{ value: '5', label: m.feedback_field_rating_5() },
 ]);
+
+const emailDescription = $derived(
+	data.emailPrefilled ? m.feedback_field_email_prefilled() : m.feedback_field_email_description(),
+);
+
+const privacyItems = $derived([
+	{
+		value: 'privacy',
+		title: m.feedback_privacy_title(),
+		content: m.feedback_privacy_body(),
+	},
+]);
+
+let privacyOpen = $state('');
 </script>
 
 <svelte:head>
-	<meta name="description" content="Tell us what worked, what didn't, or what you'd like to see." />
+	<meta name="description" content="Stack critique welcome — if you'd have made different choices, say so." />
 </svelte:head>
 
 <div class="feedback-page">
@@ -36,11 +50,6 @@ const ratingOptions = $derived([
 				{m.feedback_lede()}
 			</p>
 		</header>
-
-		<aside class="privacy-notice" role="note" aria-label={m.feedback_privacy_title()}>
-			<p class="privacy-title">{m.feedback_privacy_title()}</p>
-			<p>{m.feedback_privacy_body()}</p>
-		</aside>
 
 		<Card>
 			<form method="POST" use:enhance>
@@ -65,7 +74,6 @@ const ratingOptions = $derived([
 						label={m.feedback_field_message_label()}
 						id="feedback-body"
 						required
-						description={m.feedback_field_message_description()}
 						error={$errors.body?.[0]}
 					>
 						{#snippet children({ fieldId, describedBy })}
@@ -83,7 +91,7 @@ const ratingOptions = $derived([
 						{/snippet}
 					</FormField>
 
-					<FormField label={m.feedback_field_rating_label()} id="feedback-rating" description={m.feedback_field_rating_description()}>
+					<FormField label={m.feedback_field_rating_label()} id="feedback-rating">
 						{#snippet children({ fieldId })}
 							<Select
 								name="rating"
@@ -99,7 +107,7 @@ const ratingOptions = $derived([
 					<FormField
 						label={m.feedback_field_email_label()}
 						id="feedback-email"
-						description={m.feedback_field_email_description()}
+						description={emailDescription}
 						error={$errors.contactEmail?.[0]}
 					>
 						{#snippet children({ fieldId, describedBy })}
@@ -133,6 +141,8 @@ const ratingOptions = $derived([
 							bind:value={$form.bookmark}
 						/>
 					</div>
+
+					<Accordion items={privacyItems} bind:value={privacyOpen} variant="bordered" size="sm" />
 
 					<div class="actions">
 						<Button type="submit" variant="primary" size="md" disabled={$submitting}>
@@ -169,31 +179,6 @@ const ratingOptions = $derived([
 		margin: 0;
 		font-size: var(--text-fluid-base);
 		color: var(--color-muted);
-	}
-
-	.privacy-notice {
-		padding: var(--spacing-3) var(--spacing-4);
-		border-left: 2px solid var(--color-border);
-		font-size: var(--text-fluid-xs);
-		color: var(--color-muted);
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-1);
-	}
-
-	.privacy-notice p {
-		margin: 0;
-	}
-
-	.privacy-title {
-		font-weight: 600;
-		color: var(--color-fg);
-	}
-
-	.privacy-notice a {
-		color: var(--color-fg);
-		text-decoration: underline;
-		text-underline-offset: 0.2em;
 	}
 
 	.actions {

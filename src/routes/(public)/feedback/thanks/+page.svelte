@@ -10,8 +10,8 @@ import * as m from '$lib/paraglide/messages';
 			<h1 class="thanks-title">{m.feedback_thanks_title()}</h1>
 			<p class="thanks-body">{m.feedback_thanks_body()}</p>
 			<div class="actions">
-				<Button variant="outline" size="md" href="/">{m.feedback_thanks_back_home()}</Button>
-				<Button variant="ghost" size="md" href="/feedback">{m.feedback_thanks_send_another()}</Button>
+				<Button href="/" variant="outline" size="md">{m.feedback_thanks_back_home()}</Button>
+				<Button href="/feedback" variant="ghost" size="md">{m.feedback_thanks_send_another()}</Button>
 			</div>
 		</Stack>
 	</Card>
