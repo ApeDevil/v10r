@@ -1,6 +1,7 @@
 <script lang="ts">
 import LogoFooter from '$lib/components/branding/LogoFooter.svelte';
 import { localizeHref } from '$lib/i18n';
+import * as m from '$lib/paraglide/messages';
 import { getConsent } from '$lib/state/consent.svelte';
 
 const currentYear = new Date().getFullYear();
@@ -15,10 +16,32 @@ const consent = getConsent();
 				© {currentYear} Velociraptor. Built with SvelteKit.
 			</p>
 		</div>
-		<nav class="flex gap-6 flex-wrap">
+		<nav class="flex gap-4 flex-wrap items-center justify-center md:justify-end">
 			<a href={localizeHref('/about')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">About</a>
+			<a href={localizeHref('/feedback')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">{m.footer_feedback()}</a>
 			<a href={localizeHref('/terms')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">Terms</a>
 			<button onclick={() => consent.reopenBanner()} class="text-muted text-sm cursor-pointer bg-transparent border-none p-0 transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">Cookie preferences</button>
+			<span class="hidden md:inline-block w-px h-4 bg-border" aria-hidden="true"></span>
+			<a
+				href="https://github.com/ApeDevil/v10r"
+				target="_blank"
+				rel="noopener noreferrer"
+				aria-label={m.footer_source_github_aria()}
+				class="inline-flex items-center gap-1.5 text-muted text-sm no-underline transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm"
+			>
+				<span class="i-lucide-github text-base" aria-hidden="true"></span>
+				<span>GitHub</span>
+			</a>
+			<a
+				href="https://gitlab.com/ApeDevil/v10r"
+				target="_blank"
+				rel="noopener noreferrer"
+				aria-label={m.footer_source_gitlab_aria()}
+				class="inline-flex items-center gap-1.5 text-muted text-sm no-underline transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm"
+			>
+				<span class="i-lucide-gitlab text-base" aria-hidden="true"></span>
+				<span>GitLab</span>
+			</a>
 		</nav>
 	</div>
 </footer>

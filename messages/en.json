@@ -1619,5 +1619,12 @@
 	"home_structure_nrag_item_llmwiki_desc": "synthesized pages with typed pointers back to chunk IDs",
 	"home_structure_nrag_item_drilldown_desc": "tool-call escalation when the TLDR is not enough — budget 3 per turn",
 	"home_structure_nrag_item_verify_desc": "post-hoc citation taxonomy — quote, paraphrase, drifted, uncited",
-	"home_showcase_cta": "explore the showcases"
+	"home_showcase_cta": "explore the showcases",
+	"footer_feedback": "Feedback",
+	"footer_source_github_aria": "Source on GitHub",
+	"footer_source_gitlab_aria": "Source on GitLab",
+	"home_structure_source_label": "Source:",
+	"error_5xx_feedback_text": "Something not right on our end?",
+	"error_5xx_feedback_link": "Let us know.",
+	"blog_trailer_feedback": "Something feel off? Leave a note."
 }

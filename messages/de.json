@@ -1617,5 +1617,12 @@
 	"home_structure_nrag_item_llmwiki_desc": "Synthetisierte Seiten mit typisierten Zeigern auf Chunk-IDs",
 	"home_structure_nrag_item_drilldown_desc": "Tool-Call-Eskalation, wenn das TLDR nicht ausreicht — Budget: 3 pro Runde",
 	"home_structure_nrag_item_verify_desc": "Nachträgliche Zitattaxonomie — Zitat, Paraphrase, abgedriftet, nicht belegt",
-	"home_showcase_cta": "zu den Showcases"
+	"home_showcase_cta": "zu den Showcases",
+	"footer_feedback": "Feedback",
+	"footer_source_github_aria": "Quellcode auf GitHub",
+	"footer_source_gitlab_aria": "Quellcode auf GitLab",
+	"home_structure_source_label": "Quellcode:",
+	"error_5xx_feedback_text": "Etwas stimmt auf unserer Seite nicht?",
+	"error_5xx_feedback_link": "Sag's uns.",
+	"blog_trailer_feedback": "Etwas stimmt nicht? Schreib eine Notiz."
 }

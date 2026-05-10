@@ -3,8 +3,8 @@ import { page } from '$app/state';
 import { hydrateEmbeds } from '$lib/actions/hydrate-embeds';
 import { BlogTag, Renderer } from '$lib/components/blog';
 import { PageContainer, Stack } from '$lib/components/layout';
-import { Typography } from '$lib/components/primitives';
-import { formatDate } from '$lib/i18n';
+import { Asterism, Typography } from '$lib/components/primitives';
+import { formatDate, localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
@@ -110,6 +110,10 @@ const jsonLdScript = $derived(
 			<Renderer html={post.revision.renderedHtml} />
 		</div>
 
+		<div class="post-trailer">
+			<Asterism pattern="three-dots" />
+			<a href={localizeHref('/feedback')} class="trailer-link">{m.blog_trailer_feedback()}</a>
+		</div>
 	</Stack>
 </PageContainer>
 
@@ -196,5 +200,35 @@ const jsonLdScript = $derived(
 	.sep {
 		color: var(--color-muted);
 		user-select: none;
+	}
+
+	/* Trailer — Asterism ornament + single text link. Quiet peer-critique invite at the end of authored opinion. Not an act, no divider. */
+	.post-trailer {
+		margin-top: var(--spacing-7);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--spacing-3);
+		color: var(--color-muted);
+	}
+
+	.trailer-link {
+		font-size: var(--text-fluid-sm);
+		color: var(--color-muted);
+		text-decoration: none;
+		border-bottom: 1px solid color-mix(in srgb, var(--color-muted) 30%, transparent);
+		padding-bottom: 1px;
+		transition: color var(--duration-fast) ease-out, border-color var(--duration-fast) ease-out;
+	}
+
+	.trailer-link:hover {
+		color: var(--color-primary);
+		border-bottom-color: var(--color-primary);
+	}
+
+	.trailer-link:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+		border-radius: 2px;
 	}
 </style>

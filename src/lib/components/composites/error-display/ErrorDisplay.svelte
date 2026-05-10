@@ -78,6 +78,17 @@ function copyErrorId() {
 		{/if}
 	</div>
 
+	<!-- Feedback recovery — 5xx only. 404 is navigation-recovery state, not critique. -->
+	{#if status >= 500}
+		<p class="error-feedback">
+			<span class="error-feedback-text">{m.error_5xx_feedback_text()}</span>
+			<a href={localizeHref('/feedback')} class="error-feedback-link">
+				<span class="i-lucide-message-square error-feedback-icon" aria-hidden="true"></span>
+				<span>{m.error_5xx_feedback_link()}</span>
+			</a>
+		</p>
+	{/if}
+
 	{#if children}
 		<div class="error-extra">
 			{@render children()}
@@ -178,6 +189,44 @@ function copyErrorId() {
 	.error-extra {
 		margin-top: var(--spacing-7);
 		width: 100%;
+	}
+
+	/* 5xx-only feedback recovery — structurally separated from the action group, lifted to fg so it survives the frustration moment. Not a Button; never reads as support. */
+	.error-feedback {
+		margin: var(--spacing-7) 0 0;
+		font-size: var(--text-fluid-sm);
+		color: var(--color-muted);
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		gap: var(--spacing-2);
+	}
+
+	.error-feedback-link {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--spacing-1);
+		color: var(--color-fg);
+		text-decoration: none;
+		border-bottom: 1px solid var(--color-border);
+		padding-bottom: 1px;
+		transition: color var(--duration-fast) ease-out, border-color var(--duration-fast) ease-out;
+	}
+
+	.error-feedback-link:hover {
+		color: var(--color-primary);
+		border-bottom-color: var(--color-primary);
+	}
+
+	.error-feedback-link:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+		border-radius: 2px;
+	}
+
+	.error-feedback-icon {
+		font-size: 0.875rem;
 	}
 
 	@media (max-width: 640px) {

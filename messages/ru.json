@@ -1617,5 +1617,12 @@
 	"home_structure_nrag_item_llmwiki_desc": "синтезированные страницы с типизированными указателями на chunk ID",
 	"home_structure_nrag_item_drilldown_desc": "эскалация через вызов инструмента, когда TLDR недостаточно — бюджет 3 за ход",
 	"home_structure_nrag_item_verify_desc": "постфактумная таксономия цитат — прямая цитата, парафраз, смещение, без цитаты",
-	"home_showcase_cta": "к примерам"
+	"home_showcase_cta": "к примерам",
+	"footer_feedback": "Отзыв",
+	"footer_source_github_aria": "Исходники на GitHub",
+	"footer_source_gitlab_aria": "Исходники на GitLab",
+	"home_structure_source_label": "Исходники:",
+	"error_5xx_feedback_text": "Что-то не так с нашей стороны?",
+	"error_5xx_feedback_link": "Напишите.",
+	"blog_trailer_feedback": "Что-то не так? Оставьте заметку."
 }

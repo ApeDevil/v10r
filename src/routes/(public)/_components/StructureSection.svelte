@@ -172,6 +172,13 @@ function getItemHref(item: StructureItem): string | null {
 		size="sm"
 		variant="default"
 	/>
+
+	<p class="source-row">
+		<span class="source-label">{m.home_structure_source_label()}</span>
+		<a href="https://github.com/ApeDevil/v10r" target="_blank" rel="noopener noreferrer" class="source-link">github.com/ApeDevil/v10r</a>
+		<span class="source-sep" aria-hidden="true">·</span>
+		<a href="https://gitlab.com/ApeDevil/v10r" target="_blank" rel="noopener noreferrer" class="source-link">gitlab.com/ApeDevil/v10r</a>
+	</p>
 </section>
 
 <style>
@@ -329,6 +336,52 @@ function getItemHref(item: StructureItem): string | null {
 		}
 
 		.item-link code {
+			transition: none;
+		}
+	}
+
+	/* Source row — informational, not a CTA. xs muted monospace; sits as a quiet trailer below the accordion. */
+	.source-row {
+		margin: var(--spacing-6) 0 0;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		justify-content: center;
+		gap: var(--spacing-3);
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
+		letter-spacing: 0.05em;
+	}
+
+	.source-label {
+		letter-spacing: 0.15em;
+		text-transform: uppercase;
+	}
+
+	.source-link {
+		color: var(--color-muted);
+		text-decoration: none;
+		border-bottom: 1px solid color-mix(in srgb, var(--color-muted) 30%, transparent);
+		transition: color var(--duration-fast) ease-out, border-color var(--duration-fast) ease-out;
+	}
+
+	.source-link:hover {
+		color: var(--color-fg);
+		border-bottom-color: var(--color-fg);
+	}
+
+	.source-link:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+		border-radius: 2px;
+	}
+
+	.source-sep {
+		opacity: 0.5;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.source-link {
 			transition: none;
 		}
 	}
