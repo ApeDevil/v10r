@@ -38,6 +38,13 @@ export const AI_RATE_LIMIT_PREFIX = 'ratelimit:ai:chat';
 /** Max tokens for chat responses */
 export const AI_MAX_TOKENS = 2048;
 
+/**
+ * Daily AI token budget per user (input + output).
+ * Caps cost-amplification abuse to ~$1-2/user/day on premium models.
+ * Resets at UTC day boundary.
+ */
+export const AI_DAILY_TOKEN_CAP = 100_000;
+
 // ── Retrieval ──────────────────────────────────────────────────────────────────
 
 /** Embedding model identifier */
@@ -126,8 +133,8 @@ export const CONV_RATE_LIMIT_PREFIX = 'ratelimit:ai:conversations';
 /** Username check endpoint rate limit: requests per window */
 export const USERNAME_CHECK_RATE_LIMIT_MAX = 20;
 
-/** Username check endpoint rate limit: window (ms) */
-export const USERNAME_CHECK_RATE_LIMIT_WINDOW_MS = 60_000;
+/** Username check endpoint rate limit: window duration */
+export const USERNAME_CHECK_RATE_LIMIT_WINDOW = '60 s' as const;
 
 // ── Jobs ───────────────────────────────────────────────────────────────────────
 

@@ -13,6 +13,7 @@ import {
 	type UIMessage,
 } from 'ai';
 import { getActiveProvider, getActiveProviderInfo, getFallbacksForUser, getToolProvider } from '$lib/server/ai';
+import { chargeTokens } from '$lib/server/ai/budget';
 import { MAX_TOKENS } from '$lib/server/ai/config';
 import {
 	buildPromptAssembledEvent,
@@ -109,7 +110,7 @@ interface ChatError {
 // System-prompt assembly, message windowing, and XML escape helpers live in
 // `src/lib/server/ai/context/system-prompt.ts`.
 
-/** Persist assistant message after stream finishes. */
+/** Persist assistant message after stream finishes; charge token budget. */
 export function createOnFinish(conversationId: string | undefined, userId: string) {
 	return async ({
 		text,
@@ -123,13 +124,13 @@ export function createOnFinish(conversationId: string | undefined, userId: strin
 				await saveMessages(conversationId, userId, [{ id: crypto.randomUUID(), role: 'assistant', content: text }]);
 			}
 			if (totalUsage) {
-				console.info('[ai:chat] totalUsage:', {
-					inputTokens: totalUsage.inputTokens,
-					outputTokens: totalUsage.outputTokens,
-				});
+				const inputTokens = totalUsage.inputTokens ?? 0;
+				const outputTokens = totalUsage.outputTokens ?? 0;
+				console.info('[ai:chat] totalUsage:', { inputTokens, outputTokens });
+				await chargeTokens(userId, inputTokens + outputTokens);
 			}
 		} catch (err) {
-			console.error('[ai:chat] Failed to persist assistant message:', {
+			console.error('[ai:chat] Failed to finalize stream:', {
 				conversationId,
 				error: err instanceof Error ? err.message : err,
 			});

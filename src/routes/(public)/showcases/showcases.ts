@@ -220,6 +220,19 @@ export const showcases: ShowcaseCard[] = [
 		],
 	},
 	{
+		href: '/showcases/abuse',
+		icon: 'i-lucide-shield-alert',
+		title: 'Anti-Abuse',
+		description: 'Active defenses against abuse — captcha, honeypot, rate limits, AI budget',
+		sublinks: [
+			{ label: 'Overview', href: '/showcases/abuse' },
+			{ label: 'Captcha', href: '/showcases/abuse/captcha' },
+			{ label: 'Honeypot', href: '/showcases/abuse/honeypot' },
+			{ label: 'Rate Limits', href: '/showcases/abuse/rate-limits' },
+			{ label: 'AI Budget', href: '/showcases/abuse/ai-budget' },
+		],
+	},
+	{
 		href: '/showcases/cycle',
 		icon: 'i-lucide-orbit',
 		title: 'Request Cycle',

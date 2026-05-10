@@ -1,6 +1,7 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import { authClient } from '$lib/auth-client';
+import { Altcha } from '$lib/components/composites';
 import { Button, Input, Spinner } from '$lib/components/primitives';
 import { errorMessage } from '$lib/errors';
 import * as m from '$lib/paraglide/messages';
@@ -15,10 +16,23 @@ let sendingMethod = $state<'magic-link' | 'otp' | null>(null);
 let loadingProvider = $state<string | null>(null);
 let error = $state<string | null>(null);
 
+// ALTCHA single-use payload. Re-mount after consumption via captchaKey.
+let altchaToken = $state<string | null>(null);
+let captchaKey = $state(0);
+
 let isBusy = $derived(flowState === 'sending' || !!loadingProvider);
+let canSubmit = $derived(!isBusy && !!email.trim() && !!altchaToken);
+
+function consumeCaptcha(): string | null {
+	const t = altchaToken;
+	altchaToken = null;
+	captchaKey += 1;
+	return t;
+}
 
 async function handleMagicLink() {
-	if (!email.trim()) return;
+	const token = consumeCaptcha();
+	if (!email.trim() || !token) return;
 	flowState = 'sending';
 	sendingMethod = 'magic-link';
 	error = null;
@@ -27,6 +41,7 @@ async function handleMagicLink() {
 		const result = await authClient.signIn.magicLink({
 			email: email.trim(),
 			callbackURL: data.returnTo,
+			fetchOptions: { headers: { 'x-altcha-token': token } },
 		});
 		if (result.error) {
 			error = result.error.message ?? m.auth_login_error_magic_link_failed();
@@ -43,7 +58,8 @@ async function handleMagicLink() {
 }
 
 async function handleOtp() {
-	if (!email.trim()) return;
+	const token = consumeCaptcha();
+	if (!email.trim() || !token) return;
 	flowState = 'sending';
 	sendingMethod = 'otp';
 	error = null;
@@ -52,6 +68,7 @@ async function handleOtp() {
 		const result = await authClient.emailOtp.sendVerificationOtp({
 			email: email.trim(),
 			type: 'sign-in',
+			fetchOptions: { headers: { 'x-altcha-token': token } },
 		});
 		if (result.error) {
 			error = result.error.message ?? m.auth_login_error_otp_failed();
@@ -122,12 +139,18 @@ async function handleOAuth(provider: 'github' | 'google' | 'microsoft') {
 					aria-label={m.auth_login_email_aria_label()}
 				/>
 
+				<div class="captcha-row">
+					{#key captchaKey}
+						<Altcha onverified={(payload) => (altchaToken = payload)} />
+					{/key}
+				</div>
+
 				<div class="email-actions">
 					<Button
 						variant="default"
 						size="lg"
 						class="flex-1 justify-center"
-						disabled={isBusy || !email.trim()}
+						disabled={!canSubmit}
 						onclick={handleMagicLink}
 					>
 						{#if sendingMethod === 'magic-link'}
@@ -142,7 +165,7 @@ async function handleOAuth(provider: 'github' | 'google' | 'microsoft') {
 						variant="outline"
 						size="lg"
 						class="flex-1 justify-center"
-						disabled={isBusy || !email.trim()}
+						disabled={!canSubmit}
 						onclick={handleOtp}
 					>
 						{#if sendingMethod === 'otp'}
@@ -297,6 +320,12 @@ async function handleOAuth(provider: 'github' | 'google' | 'microsoft') {
 	.email-actions {
 		display: flex;
 		gap: var(--spacing-2);
+	}
+
+	.captcha-row {
+		display: flex;
+		justify-content: center;
+		margin: var(--spacing-3) 0 var(--spacing-2) 0;
 	}
 
 	.divider {

@@ -4,6 +4,7 @@ import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { building } from '$app/environment';
 import { cookieMaxAge, locales, cookieName as PARAGLIDE_LOCALE_COOKIE } from '$lib/i18n';
 import { paraglideMiddleware } from '$lib/paraglide/server';
+import { checkEmailRateLimit, decisionResponse, logBlocked, verifyAltcha } from '$lib/server/abuse';
 import { parseConsentTier } from '$lib/server/analytics/consent';
 import { analyticsCollector } from '$lib/server/analytics/hook';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
@@ -41,9 +42,22 @@ const ALLOWED_LOCALES = new Set<string>(locales);
 const authRatelimit = createLimiter('ratelimit:auth', AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW);
 
 /**
- * 1. Security headers — applied to every response
+ * 1. Security headers + canonical client IP stamp
+ *
+ * Stamps event.locals.clientIp and x-client-ip ONCE here, before any other
+ * handler. Downstream code MUST read event.locals.clientIp (or x-client-ip
+ * which Better Auth's ipAddressHeaders is pinned to) rather than re-deriving
+ * from request headers — those are attacker-mutable until this handler runs.
  */
 const securityHeaders: Handle = async ({ event, resolve }) => {
+	if (!building) {
+		const ip = event.getClientAddress();
+		event.locals.clientIp = ip;
+		event.request.headers.set('x-client-ip', ip);
+	} else {
+		event.locals.clientIp = null;
+	}
+
 	const response = await resolve(event);
 
 	response.headers.set('X-Frame-Options', 'DENY');
@@ -261,11 +275,53 @@ const i18n: Handle = ({ event, resolve }) =>
 	});
 
 /**
+ * 3b. Auth captcha gate — verify ALTCHA token before email-sending auth routes.
+ *     Token is sent via x-altcha-token header by the client (Better Auth
+ *     fetchOptions.headers). We MUST verify here, not in form actions, because
+ *     the Better Auth client posts JSON directly to /api/auth/* and form-action
+ *     wrapping is not in the path.
+ */
+const AUTH_CAPTCHA_GATED_PATHS = new Set(['/api/auth/sign-in/magic-link', '/api/auth/email-otp/send-verification-otp']);
+
+const authCaptchaGate: Handle = async ({ event, resolve }) => {
+	if (building) return resolve(event);
+	if (event.request.method !== 'POST') return resolve(event);
+	if (!AUTH_CAPTCHA_GATED_PATHS.has(event.url.pathname)) return resolve(event);
+
+	const ctx = { route: event.url.pathname, clientIp: event.locals.clientIp };
+
+	const captchaDecision = await verifyAltcha(event.request.headers.get('x-altcha-token'));
+	if (!captchaDecision.allowed) {
+		logBlocked(captchaDecision, ctx);
+		return decisionResponse(captchaDecision);
+	}
+
+	// Read email from a clone so Better Auth can still consume the body.
+	let email: string | null = null;
+	try {
+		const body = await event.request.clone().json();
+		if (typeof body?.email === 'string') email = body.email;
+	} catch {
+		// Malformed body — Better Auth will reject; nothing to enforce here.
+	}
+
+	if (email) {
+		const emailDecision = await checkEmailRateLimit(email);
+		if (!emailDecision.allowed) {
+			logBlocked(emailDecision, ctx);
+			return decisionResponse(emailDecision);
+		}
+	}
+
+	return resolve(event);
+};
+
+/**
  * 4. Auth API handler — intercepts /api/auth/* routes
  *    Includes Upstash rate limiting on all auth endpoints
  */
 const authHandler: Handle = async ({ event, resolve }) => {
-	// During prerender there is no client — getClientAddress() throws. Skip rate-limit/IP injection.
+	// During prerender there is no client. Skip rate-limit. clientIp is null.
 	if (building) {
 		return svelteKitHandler({ event, resolve, auth, building });
 	}
@@ -273,17 +329,15 @@ const authHandler: Handle = async ({ event, resolve }) => {
 	const path = event.url.pathname;
 
 	// Rate limit all auth endpoints (sign-in, sign-out, callback, get-session)
-	if (path.startsWith('/api/auth/')) {
-		const ip = event.getClientAddress();
-		const { success, reset } = await authRatelimit.limit(ip);
+	if (path.startsWith('/api/auth/') && event.locals.clientIp) {
+		const { success, reset } = await authRatelimit.limit(event.locals.clientIp);
 
 		if (!success) {
 			return rateLimitResponse(reset, 'Too many requests. Please try again later.');
 		}
 	}
 
-	// Inject x-client-ip so Better Auth's built-in rate limiting works behind proxies
-	event.request.headers.set('x-client-ip', event.getClientAddress());
+	// x-client-ip and Better Auth's ipAddressHeaders pinning happens in securityHeaders + auth config.
 
 	return svelteKitHandler({ event, resolve, auth, building });
 };
@@ -311,7 +365,10 @@ const sessionPopulate: Handle = async ({ event, resolve }) => {
 };
 
 /**
- * 6. CSRF protection — require X-Requested-With on mutating API calls.
+ * 6. CSRF protection — defense in depth on mutating API calls.
+ *    1) Require X-Requested-With header (blocks simple form POSTs / image-loaded requests).
+ *    2) Require Origin (or Referer fallback) host to match this request's host —
+ *       blocks attacks from compromised subdomains or other origins that XHR to us.
  *    Exempt prefixes carry their own auth (Better Auth, Bearer, HMAC, beacon).
  */
 const CSRF_EXEMPT_PREFIXES = [
@@ -321,16 +378,36 @@ const CSRF_EXEMPT_PREFIXES = [
 	'/api/analytics/journey', // navigator.sendBeacon (no custom headers possible)
 ] as const;
 
+function isSameHost(headerValue: string | null, expectedHost: string): boolean {
+	if (!headerValue) return false;
+	try {
+		return new URL(headerValue).host === expectedHost;
+	} catch {
+		return false;
+	}
+}
+
 const csrfProtection: Handle = async ({ event, resolve }) => {
 	const method = event.request.method;
 	const path = event.url.pathname;
 
-	if (
-		(method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE') &&
-		path.startsWith('/api/') &&
-		!CSRF_EXEMPT_PREFIXES.some((prefix) => path.startsWith(prefix))
-	) {
+	const isMutating = method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
+	const needsCsrf =
+		isMutating && path.startsWith('/api/') && !CSRF_EXEMPT_PREFIXES.some((prefix) => path.startsWith(prefix));
+
+	if (needsCsrf) {
 		if (!event.request.headers.get('x-requested-with')) {
+			return json({ error: 'Forbidden' }, { status: 403 });
+		}
+
+		const origin = event.request.headers.get('origin');
+		const referer = event.request.headers.get('referer');
+		const expectedHost = event.url.host;
+
+		// Origin is the authoritative signal when present. Fall back to Referer for
+		// clients that omit Origin on same-origin POSTs. If both are missing, reject.
+		const ok = origin ? isSameHost(origin, expectedHost) : isSameHost(referer, expectedHost);
+		if (!ok) {
 			return json({ error: 'Forbidden' }, { status: 403 });
 		}
 	}
@@ -389,6 +466,7 @@ export const handle = sequence(
 	stripBaseLocalePrefix,
 	loadStyle,
 	i18n,
+	authCaptchaGate,
 	authHandler,
 	sessionPopulate,
 	csrfProtection,

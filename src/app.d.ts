@@ -21,6 +21,8 @@ declare global {
 			debugOwnerId: string | null;
 			/** Resolved locale for this request. URL > cookie > baseLocale, validated against ALLOWED_LOCALES. */
 			locale: import('$lib/i18n').Locale;
+			/** Canonical client IP. Stamped in securityHeaders (handler #1) from event.getClientAddress(). NULL during prerender/build. */
+			clientIp: string | null;
 		}
 		interface PageData {
 			style: import('$lib/styles/random/types').ResolvedStyle;

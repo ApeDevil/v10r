@@ -123,14 +123,14 @@ const ratingOptions = $derived([
 
 					<!-- Honeypot — visually hidden, must remain empty. -->
 					<div class="honeypot" aria-hidden="true">
-						<label for="feedback-website">Website</label>
+						<label for="feedback-bookmark">Bookmark</label>
 						<input
-							id="feedback-website"
-							name="website"
+							id="feedback-bookmark"
+							name="bookmark"
 							type="text"
 							tabindex="-1"
 							autocomplete="off"
-							bind:value={$form.website}
+							bind:value={$form.bookmark}
 						/>
 					</div>
 

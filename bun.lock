@@ -26,6 +26,8 @@
         "@upstash/redis": "^1.36.0",
         "@xyflow/svelte": "^1.0.0",
         "ai": "^6.0.0",
+        "altcha": "^3.0.8",
+        "altcha-lib": "^2.0.0",
         "better-auth": "^1.6.2",
         "bits-ui": "^2.17.3",
         "chart.js": "^4.4.0",
@@ -935,6 +937,10 @@
 
     "ai": ["ai@6.0.146", "", { "dependencies": { "@ai-sdk/gateway": "3.0.88", "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.22", "@opentelemetry/api": "1.9.0" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-70DE8k1rR0N3mXxyyfjYAx/FxRln/kQ5ym18lt1ys1eUklcPuoIXGbUBwdfCbmkt6YF3jCDZ5+OgkWieP/NGDw=="],
 
+    "altcha": ["altcha@3.0.8", "", { "dependencies": { "hash-wasm": "^4.12.0" } }, "sha512-f5q8Q+XztSAXgF7mAR8Gui75I+FfklbQVL+yGISuk9dY7Q0pZOuge3G65ihdZZUbSUDLVEJ452uAAXKPz7vFKw=="],
+
+    "altcha-lib": ["altcha-lib@2.0.3", "", { "peerDependencies": { "@fastify/cookie": "^11.0.0", "@fastify/cors": "^11.0.0", "@fastify/formbody": "^8.0.0", "@nestjs/common": "^10.0.0 || ^11.0.0", "@nestjs/core": "^10.0.0 || ^11.0.0", "@nestjs/platform-express": "^10.0.0 || ^11.0.0", "@sveltejs/kit": "^2.0.0", "cookie-parser": "^1.0.0", "cors": "^2.0.0", "express": "^4.0.0 || ^5.0.0", "fastify": "^5.0.0", "h3": "^2.0.0", "hono": "^4.0.0" }, "optionalPeers": ["@fastify/cookie", "@fastify/cors", "@fastify/formbody", "@nestjs/common", "@nestjs/core", "@nestjs/platform-express", "@sveltejs/kit", "cookie-parser", "cors", "express", "fastify", "h3", "hono"], "bin": { "altcha-lib": "bin/cli.mjs" } }, "sha512-rbBOrVcg5DiBPfn5dfhT+7J5k/Dqtj4seR5m1BB+w0QK4pZOBSS0ZpZ5PkolypmR315/SVbpXHM/QuL0kH5Seg=="],
+
     "ansi-regex": ["ansi-regex@5.0.1", "", {}, "sha512-quJQXlTSUGL2LH9SUXo8VwsY4soanhgo6LNSm84E1LBcE8s3O0wpdiRzyR9z/ZZJMlMWv37qOOb9pdJlMUEKFQ=="],
 
     "ansi-styles": ["ansi-styles@4.3.0", "", { "dependencies": { "color-convert": "^2.0.1" } }, "sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg=="],
@@ -1206,6 +1212,8 @@
     "gray-matter": ["gray-matter@4.0.3", "", { "dependencies": { "js-yaml": "^3.13.1", "kind-of": "^6.0.2", "section-matter": "^1.0.0", "strip-bom-string": "^1.0.0" } }, "sha512-5v6yZd4JK3eMI3FqqCouswVqwugaA9r4dNZB1wwcmrD02QkV5H0y7XBQW8QwQqEaZY1pM9aqORSORhJRdNK44Q=="],
 
     "gzip-size": ["gzip-size@6.0.0", "", { "dependencies": { "duplexer": "^0.1.2" } }, "sha512-ax7ZYomf6jqPTQ4+XCpUGyXKHk5WweS+e05MBO4/y3WJ5RkmPXNKvX+bx1behVILVwr6JSQvZAku021CHPXG3Q=="],
+
+    "hash-wasm": ["hash-wasm@4.12.0", "", {}, "sha512-+/2B2rYLb48I/evdOIhP+K/DD2ca2fgBjp6O+GBEnCDk2e4rpeXIK8GvIyRPjTezgmWn9gmKwkQjjx6BtqDHVQ=="],
 
     "hast-util-heading-rank": ["hast-util-heading-rank@3.0.0", "", { "dependencies": { "@types/hast": "^3.0.0" } }, "sha512-EJKb8oMUXVHcWZTDepnr+WNbfnXKFNf9duMesmr4S8SXTJBJ9M4Yok08pu9vxdJwdlGRhVumk9mEhkEvKGifwA=="],
 

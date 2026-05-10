@@ -777,7 +777,7 @@ export const auth = betterAuth({
 });
 ```
 
-**For additional protection** - see [rate-limiting.md](./rate-limiting.md) for sveltekit-rate-limiter (defense in depth) and Upstash (distributed limiting).
+**For additional protection** - see [abuse/rate-limits.md](./abuse/rate-limits.md) for per-email and per-IP limiters on magic-link and OTP send paths.
 
 
 ### Session Cleanup (Required)

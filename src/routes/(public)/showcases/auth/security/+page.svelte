@@ -98,6 +98,15 @@ let { data } = $props();
 				</div>
 			</div>
 		</Card>
+
+		<a class="see-also" href="/showcases/abuse/captcha">
+			<span class="see-also-icon i-lucide-shield-alert" aria-hidden="true"></span>
+			<span class="see-also-body">
+				<strong>See also: active anti-abuse layer</strong>
+				<span class="see-also-sub">Captcha, honeypot, per-email rate limits, AI token budget.</span>
+			</span>
+			<span class="see-also-arrow i-lucide-arrow-right" aria-hidden="true"></span>
+		</a>
 	</Stack>
 
 <style>
@@ -133,5 +142,59 @@ let { data } = $props();
 		font-family: ui-monospace, monospace;
 		font-size: var(--text-fluid-xs);
 		word-break: break-all;
+	}
+
+	.see-also {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-3);
+		padding: var(--spacing-3) var(--spacing-4);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		background: var(--color-subtle);
+		text-decoration: none;
+		color: inherit;
+		transition: border-color 150ms;
+	}
+
+	.see-also:hover {
+		border-color: var(--color-primary);
+	}
+
+	.see-also:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+	}
+
+	.see-also-icon {
+		flex-shrink: 0;
+		width: 1.25rem;
+		height: 1.25rem;
+		color: var(--color-primary);
+	}
+
+	.see-also-body {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-1);
+	}
+
+	.see-also-body strong {
+		font-size: var(--text-fluid-sm);
+		font-weight: 600;
+		color: var(--color-fg);
+	}
+
+	.see-also-sub {
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
+	}
+
+	.see-also-arrow {
+		flex-shrink: 0;
+		width: 1rem;
+		height: 1rem;
+		color: var(--color-muted);
 	}
 </style>

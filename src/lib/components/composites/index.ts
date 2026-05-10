@@ -9,6 +9,7 @@
 // `$lib/components/composites/info-dialog`.
 
 export * from './alert';
+export * from './altcha';
 export * from './back-link';
 export * from './boundary-fallback';
 export * from './card';

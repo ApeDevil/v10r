@@ -36,6 +36,17 @@ export const auth = betterAuth({
 	baseURL,
 	trustedOrigins: [baseURL],
 
+	// Pin the IP source explicitly. hooks.server.ts stamps `x-client-ip` from
+	// event.getClientAddress() (the platform-trusted source on Vercel) before
+	// any handler runs. Without this pinning, Better Auth's default reads
+	// x-forwarded-for first, which is mutable by clients on serverless origins
+	// that don't sit behind a trusted proxy on every request path.
+	advanced: {
+		ipAddress: {
+			ipAddressHeaders: ['x-client-ip'],
+		},
+	},
+
 	emailAndPassword: { enabled: false },
 
 	socialProviders: {
