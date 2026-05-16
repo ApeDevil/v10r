@@ -1,6 +1,6 @@
 <script lang="ts">
 import 'uno.css';
-import '../app.css';
+import '../../app.css';
 import '@fontsource-variable/inter';
 import '@fontsource-variable/playfair-display';
 import '@fontsource-variable/space-grotesk';

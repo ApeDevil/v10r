@@ -460,7 +460,7 @@ const debugOwnerLoader: Handle = async ({ event, resolve }) => {
  * Member and admin auth gates live in app/+layout.server.ts and admin/+layout.server.ts.
  */
 const devRouteGuard: Handle = async ({ event, resolve }) => {
-	if (!import.meta.env.DEV && event.route.id?.startsWith('/(dev)/')) {
+	if (!import.meta.env.DEV && event.route.id?.includes('/(dev)/')) {
 		error(404, 'Not Found');
 	}
 	return resolve(event);

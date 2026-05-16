@@ -1,5 +1,5 @@
 import * as m from '$lib/paraglide/messages';
-import { type ShowcaseSublink, showcases } from '../../routes/(public)/showcases/showcases';
+import { type ShowcaseSublink, showcases } from '../../routes/[[locale=locale]]/(public)/showcases/showcases';
 import { navItems } from './nav';
 import type { LabelFn } from './types';
 
