@@ -184,12 +184,17 @@ const loadStyle: Handle = async ({ event, resolve }) => {
  * because it currently matches a real SvelteKit route (separate concern).
  */
 const stripBaseLocalePrefix: Handle = ({ event, resolve }) => {
-	const { pathname, search, hash } = event.url;
+	// Read only pathname up front. Destructuring `search`/`hash` here would
+	// eagerly invoke those getters, and SvelteKit throws on `url.search`
+	// during prerendering — crashing every prerendered page before the
+	// /en/ check runs. Prerendered pages are never /en/-prefixed, so the
+	// guarded access below is never reached at build time.
+	const { pathname } = event.url;
 	if (pathname.startsWith('/en/')) {
 		const stripped = pathname.slice(3);
 		return new Response(null, {
 			status: 308,
-			headers: { Location: stripped + search + hash },
+			headers: { Location: stripped + event.url.search + event.url.hash },
 		});
 	}
 	return resolve(event);

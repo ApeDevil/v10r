@@ -14,14 +14,14 @@ podman restart v10r
 psv(podman stop v10r)
 podman-compose down
 
-# --------------------------build
-podman compose build
 
 # ----------------- Kill
 lsof -i :5173
 kill 
 podman rm -f v10r
 
+# --------------------------build
+podman exec -it v10r bun run build
 # ---------------------------------- Test
 ## test everything
 podman exec -it v10r bun run validate
