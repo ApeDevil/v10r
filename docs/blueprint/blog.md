@@ -972,8 +972,13 @@ src/routes/(shell)/blog/
     +page.svelte
   feed.xml/
     +server.ts                      # ISR: RSS/Atom feed
-  sitemap.xml/
-    +server.ts                      # Prerendered sitemap
+```
+
+Site-wide sitemap (not blog-scoped):
+
+```
+src/routes/sitemap.xml/
+  +server.ts                        # Dynamic sitemap — DB-backed, CDN-cached 1h
 ```
 
 ### Admin Content Management
@@ -1014,6 +1019,7 @@ src/routes/(desk)/
 | `/blog/[slug]` | ISR (1h) | `isr: { expiration: 3600, bypassToken }` | Content rarely changes; `publishPost()` triggers on-demand revalidation |
 | `/blog/tag/[tag]` | SSR | default | Dynamic filter |
 | `/blog/feed.xml` | ISR (1h) | same as slug | Stable, cacheable; revalidated on publish |
+| `/sitemap.xml` | Dynamic + CDN cache | `Cache-Control: s-maxage=3600` | DB-backed (published posts); cannot prerender — would freeze the post list |
 | `/admin/content` | SSR | `prerender = false` | Dynamic management UI |
 | `/desk` | SSR then CSR | default | SSR for shell; heavy JS hydration for editor |
 | `api/blog/*` | Dynamic | N/A | Mutations, never cached |
@@ -1047,7 +1053,7 @@ Admin: /admin/content — requires role === 'admin'
 
 **Per-post meta** (`/blog/[slug]/+page.svelte`):
 - `<title>`, `<meta name="description">`, Open Graph tags (`og:title`, `og:type=article`, `og:url`, `article:published_time`, `article:tag`)
-- `<link rel="canonical">` using `page.url.href` (handles locale query param)
+- `<link rel="canonical">` using `page.url.origin + page.url.pathname` (self-referential per locale — see i18n.md §Canonical)
 - JSON-LD `BlogPosting` schema via `{@html}` in `<svelte:head>` (escape `</script>` sequences)
 
 **Blog layout** (`/blog/+layout.svelte`):
