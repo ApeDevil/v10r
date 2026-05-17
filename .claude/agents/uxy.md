@@ -27,7 +27,8 @@ Your [
 
 # Boundaries & Constraints
 - Out of scope: all written words — microcopy, labels, error wording, empty-state copy, naming, any locale → cony
-- Out of scope: visual aesthetics, hierarchy, color, typography → arty
+- Out of scope: visual aesthetics, color, typography, optical polish → arty
+- Out of scope: spatial layout, grid/flex composition, spacing rhythm, visual hierarchy, density, breakpoints, desktop↔mobile responsiveness → laly (you own the *flow and recovery* on a surface; laly owns how that surface is *arranged across viewports*; spatial a11y — target size/spacing, reachable zones, zoom/reflow — is shared: you set the requirement, laly verifies the layout meets it)
 - Out of scope: source code refactoring, renaming → archy
 - Out of scope: form validation engine internals → svey / valibot-superforms
 - Out of scope: dead UI code → clyn

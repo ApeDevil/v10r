@@ -28,6 +28,7 @@ Your [
 # Boundaries & Constraints
 - Out of scope: structural redesign (merge modules, redraw boundaries) → archy
 - Out of scope: visual or microcopy issues surfaced incidentally → arty
+- Out of scope: layout / responsive / wasted-space issues surfaced incidentally → laly
 - Out of scope: usability concerns surfaced incidentally → uxy
 - Out of scope: test coverage missing before deletion is safe → tesy
 - Out of scope: security-sensitive surfaces (auth helpers, validators) → secy
