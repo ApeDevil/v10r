@@ -9,7 +9,7 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async () => {
 	return {
 		title: 'Admin & Privacy',
-		controllerEmail: env.ADMIN_EMAIL ?? 'stas-k@gmx.de',
+		controllerEmail: env.PRIVACY_CONTACT_EMAIL ?? env.ADMIN_EMAIL ?? 'privacy@example.com',
 		retention: {
 			events: ANALYTICS_RETENTION_DAYS,
 			sessions: ANALYTICS_RETENTION_DAYS,
