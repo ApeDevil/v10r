@@ -211,12 +211,12 @@ export const showcases: ShowcaseCard[] = [
 	{
 		href: '/showcases/auth',
 		icon: 'i-lucide-lock',
-		title: 'Auth',
-		description: 'Better Auth authentication flows',
+		title: 'Identity & Access',
+		description: 'Authentication, authorization, and user management — sandboxed, fixture-driven, zero live credentials',
 		sublinks: [
-			{ label: 'Connection', href: '/showcases/auth/connection' },
-			{ label: 'Session', href: '/showcases/auth/session' },
-			{ label: 'Security', href: '/showcases/auth/security' },
+			{ label: 'AuthN', href: '/showcases/auth/authn' },
+			{ label: 'AuthZ', href: '/showcases/auth/authz' },
+			{ label: 'User-Mgmt', href: '/showcases/auth/users' },
 		],
 	},
 	{
