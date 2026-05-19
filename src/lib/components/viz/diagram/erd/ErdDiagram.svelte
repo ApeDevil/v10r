@@ -11,8 +11,7 @@ interface Props {
 	class?: string;
 }
 
-let { tables, edges, highlight = [], ariaLabel = 'Entity relationship diagram', class: className }: Props =
-	$props();
+let { tables, edges, highlight = [], ariaLabel = 'Entity relationship diagram', class: className }: Props = $props();
 
 function dimmed(name: string): boolean {
 	return highlight.length > 0 && !highlight.includes(name);

@@ -212,7 +212,8 @@ export const showcases: ShowcaseCard[] = [
 		href: '/showcases/auth',
 		icon: 'i-lucide-lock',
 		title: 'Identity & Access',
-		description: 'Authentication, authorization, and user management — sandboxed, fixture-driven, zero live credentials',
+		description:
+			'Authentication, authorization, and user management — sandboxed, fixture-driven, zero live credentials',
 		sublinks: [
 			{ label: 'AuthN', href: '/showcases/auth/authn' },
 			{ label: 'AuthZ', href: '/showcases/auth/authz' },
