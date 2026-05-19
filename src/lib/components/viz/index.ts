@@ -15,6 +15,7 @@ export { default as RadarChart } from './chart/radar/RadarChart.svelte';
 export { default as SimpleChart } from './chart/simple/SimpleChart.svelte';
 export { default as Sparkline } from './chart/sparkline/Sparkline.svelte';
 export { default as Treemap } from './chart/treemap/Treemap.svelte';
+export { default as ErdDiagram } from './diagram/erd/ErdDiagram.svelte';
 export { default as FlowDiagram } from './diagram/flow/FlowDiagram.svelte';
 export { default as StateDiagram } from './diagram/state/StateDiagram.svelte';
 export { default as DagGraph } from './graph/dag/DagGraph.svelte';
