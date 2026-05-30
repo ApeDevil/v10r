@@ -1,12 +1,12 @@
 import { error } from '@sveltejs/kit';
 import { stringify } from 'yaml';
-import { requireApiAuthor } from '$lib/server/auth/guards';
+import { requireApiBlogAuthor } from '$lib/server/auth/guards';
 import { getLatestRevision, getPostById, getTagsForPost } from '$lib/server/blog';
 import type { RequestHandler } from './$types';
 
 /** Export a post as a .md file with YAML frontmatter. */
 export const GET: RequestHandler = async ({ params, locals }) => {
-	requireApiAuthor(locals);
+	requireApiBlogAuthor(locals);
 
 	const post = await getPostById(params.id);
 	if (!post) error(404, 'Post not found');

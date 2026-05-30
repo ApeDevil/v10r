@@ -6,7 +6,7 @@ import { Badge, Body, Cell, Header, HeaderCell, Row, Table, ToggleGroup } from '
 import * as m from '$lib/paraglide/messages';
 import ModeChip from '$lib/showcase/auth/ModeChip.svelte';
 
-type Role = 'guest' | 'user' | 'author' | 'admin';
+type Role = 'guest' | 'user' | 'blog-author' | 'admin';
 
 // Pure client state. Never serialized, never sent anywhere, never beside a real principal.
 // Typed as string for ToggleGroup's bindable contract; narrowed via RANK lookup.
@@ -15,17 +15,17 @@ let simulatedRole = $state('guest');
 const ROLE_ITEMS = [
 	{ value: 'guest', label: 'Guest' },
 	{ value: 'user', label: 'User' },
-	{ value: 'author', label: 'Author' },
+	{ value: 'blog-author', label: 'Blog author' },
 	{ value: 'admin', label: 'Admin' },
 ];
 
-const RANK: Record<string, number> = { guest: 0, user: 1, author: 2, admin: 3 };
+const RANK: Record<string, number> = { guest: 0, user: 1, 'blog-author': 2, admin: 3 };
 
 // Placeholder route names — deliberately NOT real app paths (no enumeration oracle).
 const ZONES: { route: string; min: Role; label: string }[] = [
 	{ route: '/area/public', min: 'guest', label: 'Anyone' },
 	{ route: '/area/dashboard', min: 'user', label: 'Signed-in' },
-	{ route: '/area/studio', min: 'author', label: 'Author+' },
+	{ route: '/area/studio', min: 'blog-author', label: 'Blog-author grant' },
 	{ route: '/area/console', min: 'admin', label: 'Admin only' },
 ];
 
@@ -48,9 +48,11 @@ export function requireAdmin(locals: App.Locals) {
   return user;
 }
 
-export function requireAuthor(locals: App.Locals) {
+export function requireBlogAuthor(locals: App.Locals) {
   const user = requireAuth(locals);
-  if (!isAdmin(user) && user.role !== 'author') {
+  // Grants array is populated per-request by the populateGrants hook
+  // from auth.grant rows where revoked_at IS NULL.
+  if (!isAdmin(user) && !locals.grants?.includes('blog-author')) {
     throw error(403, 'Forbidden');
   }
   return user;

@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/api/response';
-import { requireApiAuthor, requireAssetOwnership } from '$lib/server/auth/guards';
+import { requireApiBlogAuthor, requireAssetOwnership } from '$lib/server/auth/guards';
 import { deleteAsset, getAssetById, updateAssetMetadata } from '$lib/server/blog';
 import { getAssetFolder } from '$lib/server/blog/asset-folders';
 import { PatchAssetSchema } from '$lib/server/blog/schemas';
@@ -13,7 +13,7 @@ const limiter = createLimiter('rl:blog:assets:mutate', 30, '1 m');
 
 /** Get asset detail with download URL. */
 export const GET: RequestHandler = async ({ params, locals }) => {
-	const { user } = requireApiAuthor(locals);
+	const { user } = requireApiBlogAuthor(locals);
 
 	const asset = await getAssetById(params.id);
 	requireAssetOwnership(asset, user);
@@ -31,7 +31,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 /** Update asset metadata (alt text, dimensions). */
 export const PATCH: RequestHandler = async ({ params, request, locals }) => {
-	const { user } = requireApiAuthor(locals);
+	const { user } = requireApiBlogAuthor(locals);
 
 	const { success, reset } = await limiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);
@@ -56,7 +56,7 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 
 /** Delete asset from R2 and DB. */
 export const DELETE: RequestHandler = async ({ params, locals }) => {
-	const { user } = requireApiAuthor(locals);
+	const { user } = requireApiBlogAuthor(locals);
 
 	const { success: rlOk, reset } = await limiter.limit(user.id);
 	if (!rlOk) return rateLimitResponse(reset);

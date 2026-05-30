@@ -1,7 +1,7 @@
 <script lang="ts">
 import { page } from '$app/state';
 import { hydrateEmbeds } from '$lib/actions/hydrate-embeds';
-import { BlogTag, Renderer } from '$lib/components/blog';
+import { BlogTag, CommentsIsland, Renderer } from '$lib/components/blog';
 import { PageContainer, Stack } from '$lib/components/layout';
 import { Asterism, Typography } from '$lib/components/primitives';
 import { formatDate, localizeHref } from '$lib/i18n';
@@ -114,6 +114,14 @@ const jsonLdScript = $derived(
 			<Asterism pattern="three-dots" />
 			<a href={localizeHref('/feedback')} class="trailer-link">{m.blog_trailer_feedback()}</a>
 		</div>
+
+		<CommentsIsland
+			postId={post.id}
+			postSlug={post.slug}
+			locale={page.data.locale}
+			currentUserId={page.data.session?.user.id ?? null}
+			isSignedIn={!!page.data.session}
+		/>
 	</Stack>
 </PageContainer>
 

@@ -48,6 +48,12 @@ export const createId = {
 	workspace: () => `wsp_${shortId()}`,
 	/** Feedback submission: fbk_a8f3e1b2c4d9 */
 	feedback: () => `fbk_${shortId()}`,
+	/** Blog comment: cmt_a8f3e1b2c4d9 */
+	comment: () => `cmt_${shortId()}`,
+	/** Auth capability grant: grn_a8f3e1b2c4d9 */
+	grant: () => `grn_${shortId()}`,
+	/** Auth grant request: grq_a8f3e1b2c4d9 */
+	grantRequest: () => `grq_${shortId()}`,
 	/** Generic UUID */
 	uuid: () => crypto.randomUUID(),
 } as const;

@@ -356,6 +356,7 @@ const sessionPopulate: Handle = async ({ event, resolve }) => {
 	if (!cookies?.includes('better-auth.session_token')) {
 		event.locals.user = null;
 		event.locals.session = null;
+		event.locals.grants = [];
 		return resolve(event);
 	}
 
@@ -365,6 +366,13 @@ const sessionPopulate: Handle = async ({ event, resolve }) => {
 
 	event.locals.user = sessionData?.user ?? null;
 	event.locals.session = sessionData?.session ?? null;
+
+	if (event.locals.user) {
+		const { listActiveGrantKinds } = await import('$lib/server/auth/grants');
+		event.locals.grants = await listActiveGrantKinds(event.locals.user.id);
+	} else {
+		event.locals.grants = [];
+	}
 
 	return resolve(event);
 };

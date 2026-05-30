@@ -1,86 +1,86 @@
 <script lang="ts">
-	import { MediaQuery } from 'svelte/reactivity';
-	import { Button } from '$lib/components/primitives';
-	import type { GalleryCardCta, GalleryCardItem } from './gallery-card';
+import { MediaQuery } from 'svelte/reactivity';
+import { Button } from '$lib/components/primitives';
+import type { GalleryCardCta, GalleryCardItem } from './gallery-card';
 
-	interface Props {
-		items: GalleryCardItem[];
-		title: string;
-		text?: string;
-		syncText?: boolean;
-		autoplay?: boolean;
-		autoplayInterval?: number;
-		cta?: GalleryCardCta;
-		class?: string;
+interface Props {
+	items: GalleryCardItem[];
+	title: string;
+	text?: string;
+	syncText?: boolean;
+	autoplay?: boolean;
+	autoplayInterval?: number;
+	cta?: GalleryCardCta;
+	class?: string;
+}
+
+let {
+	items,
+	title,
+	text,
+	syncText = false,
+	autoplay = false,
+	autoplayInterval = 4000,
+	cta,
+	class: className,
+}: Props = $props();
+
+let activeIndex = $state(0);
+let paused = $state(false);
+let hovering = $state(false);
+let focusWithin = $state(false);
+let restartKey = $state(0);
+
+const reduceMotion = new MediaQuery('(prefers-reduced-motion: reduce)');
+
+const activeItem = $derived(items[activeIndex]);
+const displayTitle = $derived(syncText && activeItem?.title ? activeItem.title : title);
+const displayText = $derived(syncText && activeItem?.text != null ? activeItem.text : text);
+
+function select(i: number) {
+	activeIndex = i;
+	restartKey++;
+}
+
+function handleThumbKeydown(event: KeyboardEvent, i: number) {
+	let next = i;
+	if (event.key === 'ArrowRight') {
+		event.preventDefault();
+		next = (i + 1) % items.length;
+	} else if (event.key === 'ArrowLeft') {
+		event.preventDefault();
+		next = (i - 1 + items.length) % items.length;
+	} else if (event.key === 'Home') {
+		event.preventDefault();
+		next = 0;
+	} else if (event.key === 'End') {
+		event.preventDefault();
+		next = items.length - 1;
+	} else {
+		return;
+	}
+	select(next);
+	// Move focus to the newly active thumb
+	const strip = (event.currentTarget as HTMLElement).closest('.thumb-strip');
+	const buttons = strip?.querySelectorAll<HTMLButtonElement>('button[type="button"]');
+	buttons?.[next]?.focus();
+}
+
+$effect(() => {
+	// Track restartKey so manual selection restarts the timer
+	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+	restartKey;
+
+	if (!autoplay || paused || hovering || focusWithin || reduceMotion.current || items.length <= 1) {
+		return;
 	}
 
-	let {
-		items,
-		title,
-		text,
-		syncText = false,
-		autoplay = false,
-		autoplayInterval = 4000,
-		cta,
-		class: className,
-	}: Props = $props();
+	const id = setInterval(() => {
+		activeIndex = (activeIndex + 1) % items.length;
+	}, autoplayInterval);
 
-	let activeIndex = $state(0);
-	let paused = $state(false);
-	let hovering = $state(false);
-	let focusWithin = $state(false);
-	let restartKey = $state(0);
-
-	const reduceMotion = new MediaQuery('(prefers-reduced-motion: reduce)');
-
-	const activeItem = $derived(items[activeIndex]);
-	const displayTitle = $derived(syncText && activeItem?.title ? activeItem.title : title);
-	const displayText = $derived(syncText && activeItem?.text != null ? activeItem.text : text);
-
-	function select(i: number) {
-		activeIndex = i;
-		restartKey++;
-	}
-
-	function handleThumbKeydown(event: KeyboardEvent, i: number) {
-		let next = i;
-		if (event.key === 'ArrowRight') {
-			event.preventDefault();
-			next = (i + 1) % items.length;
-		} else if (event.key === 'ArrowLeft') {
-			event.preventDefault();
-			next = (i - 1 + items.length) % items.length;
-		} else if (event.key === 'Home') {
-			event.preventDefault();
-			next = 0;
-		} else if (event.key === 'End') {
-			event.preventDefault();
-			next = items.length - 1;
-		} else {
-			return;
-		}
-		select(next);
-		// Move focus to the newly active thumb
-		const strip = (event.currentTarget as HTMLElement).closest('.thumb-strip');
-		const buttons = strip?.querySelectorAll<HTMLButtonElement>('button[type="button"]');
-		buttons?.[next]?.focus();
-	}
-
-	$effect(() => {
-		// Track restartKey so manual selection restarts the timer
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		restartKey;
-
-		if (!autoplay || paused || hovering || focusWithin || reduceMotion.current || items.length <= 1) {
-			return;
-		}
-
-		const id = setInterval(() => {
-			activeIndex = (activeIndex + 1) % items.length;
-		}, autoplayInterval);
-
-		return () => clearInterval(id);
-	});
+	return () => clearInterval(id);
+});
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->

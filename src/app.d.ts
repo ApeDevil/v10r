@@ -23,6 +23,8 @@ declare global {
 			locale: import('$lib/i18n').Locale;
 			/** Canonical client IP. Stamped in securityHeaders (handler #1) from event.getClientAddress(). NULL during prerender/build. */
 			clientIp: string | null;
+			/** Active capability grants for the authenticated user. Empty array when signed out or no active grants. Populated by populateGrants hook. */
+			grants: import('$lib/server/auth/grants').GrantKind[];
 		}
 		interface PageData {
 			style: import('$lib/styles/random/types').ResolvedStyle;

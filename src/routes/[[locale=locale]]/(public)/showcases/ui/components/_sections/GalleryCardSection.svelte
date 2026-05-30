@@ -1,57 +1,57 @@
 <script lang="ts">
-	import { GalleryCard } from '$lib/components';
-	import type { GalleryCardItem } from '$lib/components';
-	import { DemoCard } from '../_components';
+import type { GalleryCardItem } from '$lib/components';
+import { GalleryCard } from '$lib/components';
+import { DemoCard } from '../_components';
 
-	// ── Offline SVG placeholder helpers ──────────────────────────────────────
-	// bg values are pixel data inside generated SVG images — literal colors here
-	// are unavoidable for image fixture data and are NOT component/section CSS.
-	const slide = (label: string, bg: string): string =>
-		`data:image/svg+xml,${encodeURIComponent(
-			`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'><rect width='400' height='300' fill='${bg}'/><text x='200' y='160' font-family='sans-serif' font-size='32' fill='white' text-anchor='middle'>${label}</text></svg>`
-		)}`;
-
-	// Animated SVG: bouncing circle (SMIL) — proves <img> renders animations
-	const animated: string = `data:image/svg+xml,${encodeURIComponent(
-		`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'><rect width='400' height='300' fill='#1e3a8a'/><circle cy='150' r='40' fill='#f59e0b'><animate attributeName='cx' values='60;340;60' dur='2s' repeatCount='indefinite'/></circle></svg>`
+// ── Offline SVG placeholder helpers ──────────────────────────────────────
+// bg values are pixel data inside generated SVG images — literal colors here
+// are unavoidable for image fixture data and are NOT component/section CSS.
+const slide = (label: string, bg: string): string =>
+	`data:image/svg+xml,${encodeURIComponent(
+		`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'><rect width='400' height='300' fill='${bg}'/><text x='200' y='160' font-family='sans-serif' font-size='32' fill='white' text-anchor='middle'>${label}</text></svg>`,
 	)}`;
 
-	// ── Demo A: fixed copy, 4 items ──────────────────────────────────────────
-	const itemsFixed: GalleryCardItem[] = [
-		{ src: slide('Alpine', '#2563eb'), alt: 'Alpine mountain landscape' },
-		{ src: slide('Forest', '#16a34a'), alt: 'Dense green forest' },
-		{ src: slide('Desert', '#d97706'), alt: 'Sandy desert dunes' },
-		{ src: slide('Ocean', '#0891b2'), alt: 'Deep blue ocean' },
-	];
+// Animated SVG: bouncing circle (SMIL) — proves <img> renders animations
+const animated: string = `data:image/svg+xml,${encodeURIComponent(
+	`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'><rect width='400' height='300' fill='#1e3a8a'/><circle cy='150' r='40' fill='#f59e0b'><animate attributeName='cx' values='60;340;60' dur='2s' repeatCount='indefinite'/></circle></svg>`,
+)}`;
 
-	// ── Demo B: synced copy, 3 items ─────────────────────────────────────────
-	const itemsSynced: GalleryCardItem[] = [
-		{
-			src: slide('Model A', '#7c3aed'),
-			alt: 'Product Model A in violet',
-			title: 'Model A — Violet Edition',
-			text: 'A bold choice for those who prefer striking depth. Hand-finished with a matte violet coat.',
-		},
-		{
-			src: slide('Model B', '#be185d'),
-			alt: 'Product Model B in rose',
-			title: 'Model B — Rose Edition',
-			text: 'Warm rose tones with a satin finish. Pairs beautifully with neutral accessories.',
-		},
-		{
-			src: slide('Model C', '#065f46'),
-			alt: 'Product Model C in emerald',
-			title: 'Model C — Emerald Edition',
-			text: 'Cool emerald, inspired by alpine lakes. Scratch-resistant anodised aluminium.',
-		},
-	];
+// ── Demo A: fixed copy, 4 items ──────────────────────────────────────────
+const itemsFixed: GalleryCardItem[] = [
+	{ src: slide('Alpine', '#2563eb'), alt: 'Alpine mountain landscape' },
+	{ src: slide('Forest', '#16a34a'), alt: 'Dense green forest' },
+	{ src: slide('Desert', '#d97706'), alt: 'Sandy desert dunes' },
+	{ src: slide('Ocean', '#0891b2'), alt: 'Deep blue ocean' },
+];
 
-	// ── Demo C: autoplay + animated, 3 items ─────────────────────────────────
-	const itemsAutoplay: GalleryCardItem[] = [
-		{ src: animated, alt: 'Animated yellow circle bouncing across a dark-blue background' },
-		{ src: slide('Slide 2', '#9333ea'), alt: 'Purple slide' },
-		{ src: slide('Slide 3', '#0f766e'), alt: 'Teal slide' },
-	];
+// ── Demo B: synced copy, 3 items ─────────────────────────────────────────
+const itemsSynced: GalleryCardItem[] = [
+	{
+		src: slide('Model A', '#7c3aed'),
+		alt: 'Product Model A in violet',
+		title: 'Model A — Violet Edition',
+		text: 'A bold choice for those who prefer striking depth. Hand-finished with a matte violet coat.',
+	},
+	{
+		src: slide('Model B', '#be185d'),
+		alt: 'Product Model B in rose',
+		title: 'Model B — Rose Edition',
+		text: 'Warm rose tones with a satin finish. Pairs beautifully with neutral accessories.',
+	},
+	{
+		src: slide('Model C', '#065f46'),
+		alt: 'Product Model C in emerald',
+		title: 'Model C — Emerald Edition',
+		text: 'Cool emerald, inspired by alpine lakes. Scratch-resistant anodised aluminium.',
+	},
+];
+
+// ── Demo C: autoplay + animated, 3 items ─────────────────────────────────
+const itemsAutoplay: GalleryCardItem[] = [
+	{ src: animated, alt: 'Animated yellow circle bouncing across a dark-blue background' },
+	{ src: slide('Slide 2', '#9333ea'), alt: 'Purple slide' },
+	{ src: slide('Slide 3', '#0f766e'), alt: 'Teal slide' },
+];
 </script>
 
 <section id="comp-gallery-card" class="section">

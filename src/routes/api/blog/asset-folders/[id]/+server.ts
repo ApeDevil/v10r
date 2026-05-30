@@ -2,7 +2,7 @@ import * as v from 'valibot';
 import { safeParse } from 'valibot';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
-import { requireApiAuthor } from '$lib/server/auth/guards';
+import { requireApiBlogAuthor } from '$lib/server/auth/guards';
 import { deleteAssetFolder, getAssetFolder, moveAssetFolder, renameAssetFolder } from '$lib/server/blog/asset-folders';
 import {
 	FolderCycleError,
@@ -20,14 +20,14 @@ const UpdateAssetFolderSchema = v.object({
 });
 
 export const GET: RequestHandler = async ({ params, locals }) => {
-	const { user } = requireApiAuthor(locals);
+	const { user } = requireApiBlogAuthor(locals);
 	const row = await getAssetFolder(params.id, user.id);
 	if (!row) return apiError(404, 'folder_not_found', 'Folder not found.');
 	return apiOk({ folder: row });
 };
 
 export const PATCH: RequestHandler = async ({ params, request, locals }) => {
-	const { user } = requireApiAuthor(locals);
+	const { user } = requireApiBlogAuthor(locals);
 
 	const { success, reset } = await limiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);
@@ -72,7 +72,7 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 };
 
 export const DELETE: RequestHandler = async ({ params, url, locals }) => {
-	const { user } = requireApiAuthor(locals);
+	const { user } = requireApiBlogAuthor(locals);
 
 	const { success: rlOk, reset } = await limiter.limit(user.id);
 	if (!rlOk) return rateLimitResponse(reset);

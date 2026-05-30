@@ -1,6 +1,7 @@
 import { analyticsCleanup } from './analytics-cleanup';
 import { analyticsRollup } from './analytics-rollup';
 import { discordTokenRefresh } from './discord-token-refresh';
+import { grantRequestExpiry } from './grant-request-expiry';
 import { logCleanup } from './log-cleanup';
 import { notificationCleanup } from './notification-cleanup';
 import { sessionCleanup } from './session-cleanup';
@@ -18,4 +19,5 @@ export const jobs: Record<string, Job> = {
 	'discord-token-refresh': { execute: discordTokenRefresh },
 	'analytics-cleanup': { execute: analyticsCleanup },
 	'analytics-rollup': { execute: analyticsRollup },
+	'grant-request-expiry': { execute: grantRequestExpiry },
 };

@@ -1,2 +1,2 @@
 export { default as GalleryCard } from './GalleryCard.svelte';
-export type { GalleryCardItem, GalleryCardCta } from './gallery-card';
+export type { GalleryCardCta, GalleryCardItem } from './gallery-card';

@@ -16,13 +16,20 @@ vi.mock('$env/dynamic/private', () => ({
 }));
 
 const guards = await import('./guards');
-const { requireAuth, requireApiUser, requireAdmin, requireAuthor, requireApiAuthor, guardApiUser, guardApiAuthor } =
-	guards;
+const {
+	requireAuth,
+	requireApiUser,
+	requireAdmin,
+	requireBlogAuthor,
+	requireApiBlogAuthor,
+	guardApiUser,
+	guardApiBlogAuthor,
+} = guards;
 const requirePostOwnership: typeof guards.requirePostOwnership = guards.requirePostOwnership;
 const requireAssetOwnership: typeof guards.requireAssetOwnership = guards.requireAssetOwnership;
 
-function makeLocals(user?: object, session?: object): App.Locals {
-	return { user, session } as unknown as App.Locals;
+function makeLocals(user?: object, session?: object, grants: string[] = []): App.Locals {
+	return { user, session, grants } as unknown as App.Locals;
 }
 
 describe('requireAuth', () => {
@@ -108,40 +115,40 @@ describe('requireAdmin', () => {
 	});
 });
 
-describe('requireAuthor', () => {
-	it('passes for user with author role', () => {
+describe('requireBlogAuthor', () => {
+	it('passes for user with blog-author grant', () => {
 		mockAdminEmail = 'admin@test.com';
-		const user = { id: 'u1', email: 'author@test.com', role: 'author' };
+		const user = { id: 'u1', email: 'author@test.com' };
 		const session = { id: 's1' };
-		const result = requireAuthor(makeLocals(user, session));
+		const result = requireBlogAuthor(makeLocals(user, session, ['blog-author']));
 		expect(result.user).toBe(user);
 	});
 
-	it('passes for admin regardless of role', () => {
+	it('passes for admin regardless of grants', () => {
 		mockAdminEmail = 'admin@test.com';
-		const user = { id: 'u1', email: 'admin@test.com', role: 'user' };
+		const user = { id: 'u1', email: 'admin@test.com' };
 		const session = { id: 's1' };
-		const result = requireAuthor(makeLocals(user, session));
+		const result = requireBlogAuthor(makeLocals(user, session, []));
 		expect(result.user).toBe(user);
 	});
 
-	it('throws error(403) for non-author non-admin', () => {
+	it('throws error(403) for signed-in user without grant', () => {
 		mockAdminEmail = 'admin@test.com';
-		const user = { id: 'u1', email: 'user@test.com', role: 'user' };
+		const user = { id: 'u1', email: 'user@test.com' };
 		const session = { id: 's1' };
 
-		expect(() => requireAuthor(makeLocals(user, session))).toThrow();
+		expect(() => requireBlogAuthor(makeLocals(user, session, []))).toThrow();
 		try {
-			requireAuthor(makeLocals(user, session));
+			requireBlogAuthor(makeLocals(user, session, []));
 		} catch (e: unknown) {
 			expect((e as { status: number }).status).toBe(403);
 		}
 	});
 
 	it('redirects when unauthenticated (delegates to requireAuth)', () => {
-		expect(() => requireAuthor(makeLocals())).toThrow();
+		expect(() => requireBlogAuthor(makeLocals())).toThrow();
 		try {
-			requireAuthor(makeLocals());
+			requireBlogAuthor(makeLocals());
 		} catch (e: unknown) {
 			expect((e as { status: number }).status).toBe(303);
 		}
@@ -149,47 +156,47 @@ describe('requireAuthor', () => {
 
 	it('is case-insensitive for admin email check', () => {
 		mockAdminEmail = 'Admin@Test.com';
-		const user = { id: 'u1', email: 'admin@test.com', role: 'user' };
+		const user = { id: 'u1', email: 'admin@test.com' };
 		const session = { id: 's1' };
-		const result = requireAuthor(makeLocals(user, session));
+		const result = requireBlogAuthor(makeLocals(user, session, []));
 		expect(result.user).toBe(user);
 	});
 });
 
-describe('requireApiAuthor', () => {
-	it('passes for user with author role', () => {
+describe('requireApiBlogAuthor', () => {
+	it('passes for user with blog-author grant', () => {
 		mockAdminEmail = 'admin@test.com';
-		const user = { id: 'u1', email: 'author@test.com', role: 'author' };
+		const user = { id: 'u1', email: 'author@test.com' };
 		const session = { id: 's1' };
-		const result = requireApiAuthor(makeLocals(user, session));
+		const result = requireApiBlogAuthor(makeLocals(user, session, ['blog-author']));
 		expect(result.user).toBe(user);
 	});
 
-	it('passes for admin regardless of role', () => {
+	it('passes for admin regardless of grants', () => {
 		mockAdminEmail = 'admin@test.com';
-		const user = { id: 'u1', email: 'admin@test.com', role: 'user' };
+		const user = { id: 'u1', email: 'admin@test.com' };
 		const session = { id: 's1' };
-		const result = requireApiAuthor(makeLocals(user, session));
+		const result = requireApiBlogAuthor(makeLocals(user, session, []));
 		expect(result.user).toBe(user);
 	});
 
-	it('throws apiError(403) for non-author non-admin', () => {
+	it('throws apiError(403) for signed-in user without grant', () => {
 		mockAdminEmail = 'admin@test.com';
-		const user = { id: 'u1', email: 'user@test.com', role: 'user' };
+		const user = { id: 'u1', email: 'user@test.com' };
 		const session = { id: 's1' };
 
-		expect(() => requireApiAuthor(makeLocals(user, session))).toThrow();
+		expect(() => requireApiBlogAuthor(makeLocals(user, session, []))).toThrow();
 		try {
-			requireApiAuthor(makeLocals(user, session));
+			requireApiBlogAuthor(makeLocals(user, session, []));
 		} catch (e: unknown) {
 			expect((e as { status: number }).status).toBe(403);
 		}
 	});
 
 	it('throws apiError(401) when unauthenticated', () => {
-		expect(() => requireApiAuthor(makeLocals())).toThrow();
+		expect(() => requireApiBlogAuthor(makeLocals())).toThrow();
 		try {
-			requireApiAuthor(makeLocals());
+			requireApiBlogAuthor(makeLocals());
 		} catch (e: unknown) {
 			expect((e as { status: number }).status).toBe(401);
 		}
@@ -314,39 +321,39 @@ describe('guardApiUser', () => {
 	});
 });
 
-describe('guardApiAuthor', () => {
-	it('returns user/session for author role', () => {
+describe('guardApiBlogAuthor', () => {
+	it('returns user/session for user with blog-author grant', () => {
 		mockAdminEmail = 'admin@test.com';
-		const user = { id: 'u1', email: 'author@test.com', role: 'author' };
+		const user = { id: 'u1', email: 'author@test.com' };
 		const session = { id: 's1' };
-		const result = guardApiAuthor(makeLocals(user, session));
+		const result = guardApiBlogAuthor(makeLocals(user, session, ['blog-author']));
 		expect('error' in result).toBe(false);
 		if (!('error' in result)) {
 			expect(result.user).toBe(user);
 		}
 	});
 
-	it('returns user/session for admin regardless of role', () => {
+	it('returns user/session for admin regardless of grants', () => {
 		mockAdminEmail = 'admin@test.com';
-		const user = { id: 'u1', email: 'admin@test.com', role: 'user' };
+		const user = { id: 'u1', email: 'admin@test.com' };
 		const session = { id: 's1' };
-		const result = guardApiAuthor(makeLocals(user, session));
+		const result = guardApiBlogAuthor(makeLocals(user, session, []));
 		expect('error' in result).toBe(false);
 	});
 
 	it('returns error Response(401) when unauthenticated', () => {
-		const result = guardApiAuthor(makeLocals());
+		const result = guardApiBlogAuthor(makeLocals());
 		expect('error' in result).toBe(true);
 		if ('error' in result) {
 			expect(result.error.status).toBe(401);
 		}
 	});
 
-	it('returns error Response(403) for non-author non-admin', () => {
+	it('returns error Response(403) for signed-in user without grant', () => {
 		mockAdminEmail = 'admin@test.com';
-		const user = { id: 'u1', email: 'user@test.com', role: 'user' };
+		const user = { id: 'u1', email: 'user@test.com' };
 		const session = { id: 's1' };
-		const result = guardApiAuthor(makeLocals(user, session));
+		const result = guardApiBlogAuthor(makeLocals(user, session, []));
 		expect('error' in result).toBe(true);
 		if ('error' in result) {
 			expect(result.error.status).toBe(403);

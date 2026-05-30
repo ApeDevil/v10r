@@ -2,7 +2,7 @@ import * as v from 'valibot';
 import { apiPaginated, parsePagination } from '$lib/server/api/pagination';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiCreated, apiError, apiValidationError } from '$lib/server/api/response';
-import { requireApiAuthor } from '$lib/server/auth/guards';
+import { requireApiBlogAuthor } from '$lib/server/auth/guards';
 import { listAssets } from '$lib/server/blog';
 import { RequestUploadSchema } from '$lib/server/blog/schemas';
 import {
@@ -18,7 +18,7 @@ const ratelimit = createLimiter(BLOG_WRITE_RATE_LIMIT_PREFIX, BLOG_WRITE_RATE_LI
 
 /** List all assets for the current author, with download URLs. */
 export const GET: RequestHandler = async ({ url, locals }) => {
-	const { user } = requireApiAuthor(locals);
+	const { user } = requireApiBlogAuthor(locals);
 	const pagination = parsePagination(url);
 
 	const { items: assets, total } = await listAssets(user.id, pagination.offset, pagination.pageSize);
@@ -41,7 +41,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
 /** Request a presigned upload URL (step 1 of 3-step upload). */
 export const POST: RequestHandler = async ({ request, locals }) => {
-	const { user } = requireApiAuthor(locals);
+	const { user } = requireApiBlogAuthor(locals);
 
 	const { success, reset } = await ratelimit.limit(user.id);
 	if (!success) return rateLimitResponse(reset);

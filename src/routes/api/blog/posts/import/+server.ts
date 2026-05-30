@@ -1,7 +1,7 @@
 import { parse as parseYaml } from 'yaml';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiCreated, apiError, apiOk } from '$lib/server/api/response';
-import { requireApiAuthor, requirePostOwnership } from '$lib/server/auth/guards';
+import { requireApiBlogAuthor, requirePostOwnership } from '$lib/server/auth/guards';
 import { createPost, createRevision, getPostBySlug } from '$lib/server/blog';
 import {
 	BLOG_WRITE_RATE_LIMIT_MAX,
@@ -14,7 +14,7 @@ const ratelimit = createLimiter(BLOG_WRITE_RATE_LIMIT_PREFIX, BLOG_WRITE_RATE_LI
 
 /** Import a .md file with YAML frontmatter to create/update a post. */
 export const POST: RequestHandler = async ({ request, locals }) => {
-	const { user } = requireApiAuthor(locals);
+	const { user } = requireApiBlogAuthor(locals);
 
 	const { success, reset } = await ratelimit.limit(user.id);
 	if (!success) return rateLimitResponse(reset);

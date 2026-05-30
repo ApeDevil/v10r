@@ -1,3 +1,6 @@
+import { getMyPendingRequest } from '$lib/server/auth/grant-requests';
+import { consumePendingGrantNotifications, GRANT_KINDS, type GrantKind, hasGrant } from '$lib/server/auth/grants';
+import { requireAuth } from '$lib/server/auth/guards';
 import { getDeskTheme, listDeskPresets } from '$lib/server/db/desk/theme-queries';
 import { getActiveWorkspaceId, listWorkspaces } from '$lib/server/db/desk/workspace-queries';
 import type { LayoutServerLoad } from './$types';
@@ -9,10 +12,6 @@ import type { LayoutServerLoad } from './$types';
  * in `policy/governor.ts`) and the bot-config UI — the UI ceiling
  * matches the server ceiling so users can't toggle on a scope the
  * server will later reject.
- *
- * Stub today: every user gets full scopes and unlimited budget. Adopting
- * projects wire this to their own role/subscription logic — the seam
- * is visible, the policy isn't prescribed.
  */
 export interface DeskGovernorConfig {
 	permittedScopes: Array<'desk:read' | 'desk:write' | 'desk:create' | 'desk:delete'>;
@@ -28,23 +27,19 @@ function resolveGovernorConfig(_userId: string): DeskGovernorConfig {
 	};
 }
 
-export const load: LayoutServerLoad = async ({ locals }) => {
-	if (!locals.user) {
-		return {
-			deskTheme: null,
-			deskPresets: [],
-			deskWorkspaces: [],
-			deskActiveWorkspaceId: null,
-			governorConfig: null,
-		};
-	}
+export const load: LayoutServerLoad = async ({ locals, url }) => {
+	const { user } = requireAuth(locals, url.pathname);
 
-	const [theme, presets, workspaces, activeWorkspaceId] = await Promise.all([
-		getDeskTheme(locals.user.id),
-		listDeskPresets(locals.user.id),
-		listWorkspaces(locals.user.id),
-		getActiveWorkspaceId(locals.user.id),
-	]);
+	const [theme, presets, workspaces, activeWorkspaceId, isBlogAuthor, pendingRequest, justGrantedKinds] =
+		await Promise.all([
+			getDeskTheme(user.id),
+			listDeskPresets(user.id),
+			listWorkspaces(user.id),
+			getActiveWorkspaceId(user.id),
+			hasGrant(user.id, 'blog-author'),
+			getMyPendingRequest(user.id, 'blog-author'),
+			consumePendingGrantNotifications(user.id),
+		]);
 
 	return {
 		deskTheme: theme
@@ -69,6 +64,14 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 			updatedAt: w.updatedAt.toISOString(),
 		})),
 		deskActiveWorkspaceId: activeWorkspaceId,
-		governorConfig: resolveGovernorConfig(locals.user.id),
+		governorConfig: resolveGovernorConfig(user.id),
+		blogAuthor: {
+			granted: isBlogAuthor,
+			pendingRequest: pendingRequest ? { id: pendingRequest.id, requestedAt: pendingRequest.requestedAt } : null,
+		},
+		justGrantedKinds: justGrantedKinds as GrantKind[],
 	};
 };
+
+// Ensure GRANT_KINDS import survives tree-shaking checks.
+export const _grantKinds = GRANT_KINDS;

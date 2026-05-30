@@ -41,18 +41,22 @@ export function requireAdmin(locals: App.Locals, returnTo?: string) {
 	return { user, session };
 }
 
-/** Requires admin or author role. Redirects to login if unauthenticated. */
-export function requireAuthor(locals: App.Locals) {
+function hasBlogAuthorGrant(locals: App.Locals): boolean {
+	return locals.grants?.includes('blog-author') ?? false;
+}
+
+/** Requires admin or blog-author grant. Redirects to login if unauthenticated. */
+export function requireBlogAuthor(locals: App.Locals) {
 	const { user, session } = requireAuth(locals);
-	if (!isAdmin(user) && user.role !== 'author') error(403, 'Forbidden');
+	if (!isAdmin(user) && !hasBlogAuthorGrant(locals)) error(403, 'Forbidden');
 	return { user, session };
 }
 
 /** For API routes — throws apiError(403) for consistent { error: { code, message } } shape. */
-export function requireApiAuthor(locals: App.Locals) {
+export function requireApiBlogAuthor(locals: App.Locals) {
 	const { user, session } = requireApiUser(locals);
-	if (!isAdmin(user) && user.role !== 'author') {
-		throw apiError(403, 'forbidden', 'Insufficient permissions');
+	if (!isAdmin(user) && !hasBlogAuthorGrant(locals)) {
+		throw apiError(403, 'forbidden_no_grant', 'Insufficient permissions');
 	}
 	return { user, session };
 }
@@ -95,13 +99,24 @@ export function guardApiUser(locals: App.Locals): ApiGuardResult {
 	return { user: locals.user, session: locals.session };
 }
 
-/** Like requireApiAuthor but returns apiError instead of throwing. */
-export function guardApiAuthor(locals: App.Locals): ApiGuardResult {
+/** Like requireApiBlogAuthor but returns apiError instead of throwing. */
+export function guardApiBlogAuthor(locals: App.Locals): ApiGuardResult {
 	if (!locals.user || !locals.session) {
 		return { error: apiError(401, 'unauthorized', 'Authentication required') };
 	}
-	if (!isAdmin(locals.user) && locals.user.role !== 'author') {
-		return { error: apiError(403, 'forbidden', 'Insufficient permissions') };
+	if (!isAdmin(locals.user) && !hasBlogAuthorGrant(locals)) {
+		return { error: apiError(403, 'forbidden_no_grant', 'Insufficient permissions') };
+	}
+	return { user: locals.user, session: locals.session };
+}
+
+/** Like requireAdmin but returns apiError instead of throwing. */
+export function guardApiAdmin(locals: App.Locals): ApiGuardResult {
+	if (!locals.user || !locals.session) {
+		return { error: apiError(401, 'unauthorized', 'Authentication required') };
+	}
+	if (!isAdmin(locals.user)) {
+		return { error: apiError(403, 'forbidden', 'Admin only') };
 	}
 	return { user: locals.user, session: locals.session };
 }

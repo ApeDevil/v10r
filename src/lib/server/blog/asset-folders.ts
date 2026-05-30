@@ -5,7 +5,7 @@
  *
  * Uploader vs user: `blog.asset.uploader_id` is nullable (assets survive user
  * deletion). But folder ownership is per-user, auth-scoped via the same
- * `requireApiAuthor` as the rest of the blog surface — a folder with a null
+ * `requireApiBlogAuthor` as the rest of the blog surface — a folder with a null
  * user would have nowhere to live, so the column stays NOT NULL and cascades
  * on user deletion. Orphaned assets (after uploader delete) lose their
  * `folder_id` via the asset.folder_id `SET NULL` FK.

@@ -1026,20 +1026,45 @@ src/routes/(desk)/
 
 **ISR per-route config** requires `split: true` in Vercel adapter — each route is a separate function. The desk route (long-lived SSR, no ISR) and blog post route (ISR) need different function configs.
 
-### Auth Gating
+### Auth Gating (v2 — admin-grantable blog-author)
+
+**Capability model (replaces the old role-based gate)**
+
+- Writing/publishing is gated by an explicit `blog-author` grant in `auth.grant`.
+- Admin (env-pinned via `ADMIN_USER_ID` / `ADMIN_EMAIL`) bypasses the grant check.
+- The grant is admin-granted, revocable, and audited. Default new user = read + comment only.
+- Per-request authz: `hooks.server.ts` populates `event.locals.grants: string[]` once per authenticated request via a single PK-indexed lookup. `requireApiBlogAuthor(locals)` is then a pure predicate.
+- On grant/revoke: the mutation deletes all sessions for the affected user via `db.delete(session)`. Next sign-in re-populates `grants`. Drafts remain owned by the revoked user as read-only — admin can reassign.
+
+**Routes**
 
 ```
-hooks.server.ts routeGuard          <- PRIMARY: /api/blog/* requires author|admin
-  +layout.server.ts (desk)          <- SECONDARY: defense-in-depth
-  +layout.server.ts (api/blog)      <- SECONDARY: defense-in-depth
-    +page.server.ts (admin/content) <- TERTIARY: admin-only
-
-Public: /blog/* readable by everyone
-Author: /desk, /api/blog/* — requires role === 'admin' || role === 'author'
-Admin: /admin/content — requires role === 'admin'
+Public:                /blog/*           anyone (comments hydrated client-side)
+Comment write:         /blog/[slug]/comments/+page.server.ts (form action)
+Comment REST:          /api/blog/posts/[id]/comments (GET public, POST session)
+Desk:                  /desk             signed-in (requireAuth); editor panel
+                                         further gated by blog-author grant
+                                         via AuthorGate.svelte
+Blog write APIs:       /api/blog/*       requireApiBlogAuthor (renamed from
+                                         requireApiAuthor; uses locals.grants)
+Admin grants:          /admin/access/authors    grant/revoke per user
+Admin requests queue:  /admin/access/requests   approve/deny grant requests
+Admin moderation:      /admin/content/comments  hide/unhide/remove
 ```
 
-**Prerequisite**: add `author` role to Better Auth configuration before Phase 1. The admin plugin added `role` to `auth.user`, but `author` must be a valid value.
+**Request-access self-service**
+
+Non-author users on `/desk` see an empty editor state with a "Request access" button (`AuthorGate.svelte`). The button posts to `/desk?/requestBlogAccess` which writes a row to `auth.grant_request` (status `pending`). Admin approves/denies from `/admin/access/requests`. Pending requests auto-expire after 14 days via the `grant-request-expiry` cron job.
+
+**Notification**
+
+A first-login Toast fires on the next `/desk` visit after grant. The flag lives on `auth.grant.notifiedAt` and is cleared server-side in the layout load via `consumePendingGrantNotifications`. Single-fire; no email.
+
+**Comments**
+
+Per-locale: `blog.comment` has a composite FK to `(post_id, locale) → blog.published_revision`, so comments can only exist on locales that were published. Plain text body, 1-4000 chars, no threading in v1. Idempotency via UNIQUE `(author_id, post_id, client_nonce)`. Status: `visible` (default) | `hidden` (admin) | `removed` (admin, body redacted). Author self-delete via `deleted_at`.
+
+Hidden comments are visible to their author (muted style + badge) and absent for everyone else. Slug page stays ISR — the comment island fetches via `/api/blog/posts/[id]/comments` after mount, no SSR data dependency.
 
 ### Form Actions vs API Endpoints
 

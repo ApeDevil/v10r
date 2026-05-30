@@ -4,7 +4,7 @@ import { page } from '$app/state';
 import { ChatPanel } from '$lib/components/chat';
 import type { LayoutNode } from '$lib/components/composites/dock';
 import { DockLayout } from '$lib/components/composites/dock';
-import { EditorPanel } from '$lib/components/editor';
+import { AuthorGate, EditorPanel } from '$lib/components/editor';
 import { ExplorerPanel } from '$lib/components/explorer';
 import IOLogPanel from '$lib/components/io-log/IOLogPanel.svelte';
 import { PreviewPanel } from '$lib/components/preview';
@@ -101,7 +101,11 @@ function getPanelType(panelId: string): string | undefined {
 				{#if type === 'explorer'}
 					<ExplorerPanel />
 				{:else if type === 'editor'}
-					<EditorPanel {panelId} />
+					<AuthorGate>
+						{#snippet children()}
+							<EditorPanel {panelId} />
+						{/snippet}
+					</AuthorGate>
 				{:else if type === 'preview'}
 					<PreviewPanel />
 				{:else if type === 'bot'}

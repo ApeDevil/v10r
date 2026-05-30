@@ -1,5 +1,6 @@
 export * from './asset';
 export * from './asset-folder';
+export * from './comment';
 export * from './folder-fks';
 export * from './post';
 export * from './post-folder';

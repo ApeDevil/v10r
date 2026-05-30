@@ -12,6 +12,8 @@ import {
 	chunk,
 	collection,
 	collectionDocument,
+	// blog
+	comment,
 	// ai
 	conversation,
 	conversationStep,
@@ -28,13 +30,14 @@ import {
 	file,
 	// desk
 	folder,
+	grant,
+	grantRequest,
 	markdown,
 	message,
 	notificationDeliveries,
 	notificationSettings,
 	// notifications
 	notifications,
-	// blog
 	post,
 	postAsset,
 	postTag,
@@ -302,6 +305,27 @@ export const postAssetRelations = relations(postAsset, ({ one }) => ({
 	asset: one(asset, { fields: [postAsset.assetId], references: [asset.id] }),
 }));
 
+export const commentRelations = relations(comment, ({ one }) => ({
+	post: one(post, { fields: [comment.postId], references: [post.id] }),
+	author: one(user, { fields: [comment.authorId], references: [user.id] }),
+	hider: one(user, { fields: [comment.hiddenBy], references: [user.id] }),
+}));
+
+export const grantRelations = relations(grant, ({ one }) => ({
+	user: one(user, { fields: [grant.userId], references: [user.id], relationName: 'grant_user' }),
+	grantedBy: one(user, { fields: [grant.grantedBy], references: [user.id], relationName: 'grant_granted_by' }),
+	revokedBy: one(user, { fields: [grant.revokedBy], references: [user.id], relationName: 'grant_revoked_by' }),
+}));
+
+export const grantRequestRelations = relations(grantRequest, ({ one }) => ({
+	user: one(user, { fields: [grantRequest.userId], references: [user.id], relationName: 'grant_request_user' }),
+	resolvedBy: one(user, {
+		fields: [grantRequest.resolvedBy],
+		references: [user.id],
+		relationName: 'grant_request_resolved_by',
+	}),
+}));
+
 // ── User hub (the big one) ──────────────────────────────────────────
 
 export const userRelations = relations(user, ({ one, many }) => ({
@@ -336,4 +360,8 @@ export const userRelations = relations(user, ({ one, many }) => ({
 	posts: many(post),
 	revisions: many(revision),
 	blogAssets: many(asset),
+	comments: many(comment),
+	// grants
+	grants: many(grant, { relationName: 'grant_user' }),
+	grantRequests: many(grantRequest, { relationName: 'grant_request_user' }),
 }));
