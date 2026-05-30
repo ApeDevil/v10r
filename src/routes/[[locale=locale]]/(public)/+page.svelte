@@ -75,7 +75,7 @@ const zones: Array<{
 		capabilities: [
 			{ icon: 'i-lucide-zap', label: () => m.home_taxonomy_cap_runtime_label(), desc: 'Bun' },
 			{ icon: 'i-lucide-container', label: () => m.home_taxonomy_cap_containers_label(), desc: 'Podman (rootless)' },
-			{ icon: 'i-lucide-rocket', label: () => m.home_taxonomy_cap_deployment_label(), desc: 'Vercel / Netlify' },
+			{ icon: 'i-lucide-rocket', label: () => m.home_taxonomy_cap_deployment_label(), desc: 'Container / Serverless' },
 		],
 	},
 	{
