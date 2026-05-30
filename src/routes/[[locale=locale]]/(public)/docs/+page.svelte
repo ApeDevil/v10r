@@ -2,6 +2,7 @@
 import { LinkCard } from '$lib/components';
 import { BackLink, PageHeader } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
+import * as m from '$lib/paraglide/messages';
 </script>
 <PageContainer width="wide" class="pt-7">
 	<PageHeader
@@ -28,6 +29,12 @@ import { PageContainer } from '$lib/components/layout';
 			icon="i-lucide-map"
 			title="Blueprint"
 			description="Cross-cutting patterns: auth, data, notifications, AI, deployment."
+		/>
+		<LinkCard
+			href="/docs/programming"
+			icon="i-lucide-users-round"
+			title={m.docs_card_agents_title()}
+			description={m.docs_card_agents_description()}
 		/>
 	</nav>
 

@@ -5,8 +5,6 @@ import * as m from '$lib/paraglide/messages';
 import { fadeIn } from './fadeIn';
 import { type StructureItem, sections } from './structure-map';
 
-const [intelligence, structural] = sections;
-
 function group(sectionIdx: number, groupValue: string) {
 	const found = sections[sectionIdx].groups.find((g) => g.value === groupValue);
 	if (!found) throw new Error(`Group "${groupValue}" not found in section ${sectionIdx}`);
@@ -60,17 +58,9 @@ function getItemHref(item: StructureItem): string | null {
 	</div>
 {/snippet}
 
-<!-- Intelligence Layer groups -->
+<!-- Programming with AI groups -->
 {#snippet agentsSnippet()}
 	{@render renderGroup(0, 'agents')}
-{/snippet}
-
-{#snippet skillsSnippet()}
-	{@render renderGroup(0, 'skills')}
-{/snippet}
-
-{#snippet docsHubsSnippet()}
-	{@render renderGroup(0, 'docs-hubs')}
 {/snippet}
 
 <!-- Structural Map groups -->
@@ -95,20 +85,19 @@ function getItemHref(item: StructureItem): string | null {
 {/snippet}
 
 <!-- Outer snippets -->
-{#snippet intelligenceContent()}
+{#snippet programmingWithAiContent()}
 	<div class="structure-content">
-		<p>{m.home_structure_intelligence_intro()}</p>
+		<p>{m.home_structure_programming_with_ai_intro()}</p>
 		<Accordion
-			items={[
-				{ value: 'agents', title: m.home_structure_agents_title(), content: agentsSnippet },
-				{ value: 'skills', title: m.home_structure_skills_title(), content: skillsSnippet },
-				{ value: 'docs-hubs', title: m.home_structure_docs_hubs_title(), content: docsHubsSnippet },
-			]}
+			items={[{ value: 'agents', title: m.home_structure_agents_title(), content: agentsSnippet }]}
 			type="multiple"
 			size="sm"
 			variant="default"
 			class="structure-inner"
 		/>
+		<a class="learn-more" href={localizeHref('/docs/programming')}>
+			{m.home_structure_programming_with_ai_learn_more()}
+		</a>
 	</div>
 {/snippet}
 
@@ -164,7 +153,11 @@ function getItemHref(item: StructureItem): string | null {
 
 	<Accordion
 		items={[
-			{ value: 'intelligence', title: m.home_structure_intelligence_title(), content: intelligenceContent },
+			{
+				value: 'programming-with-ai',
+				title: m.home_structure_programming_with_ai_title(),
+				content: programmingWithAiContent,
+			},
 			{ value: 'structural', title: m.home_structure_structural_title(), content: structuralContent },
 			{ value: 'nrag', title: m.home_structure_nrag_title(), content: nragContent },
 		]}
@@ -263,6 +256,43 @@ function getItemHref(item: StructureItem): string | null {
 	.structure-content code {
 		color: var(--color-primary);
 		font-size: inherit;
+	}
+
+	/* "Read the full doc →" link beneath the inner accordion. Block-level, 44px tap target. */
+	.learn-more {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		min-height: 44px;
+		margin-top: var(--spacing-4);
+		padding: var(--spacing-2) var(--spacing-3);
+		margin-inline: calc(-1 * var(--spacing-3));
+		color: var(--color-primary);
+		font-size: var(--text-fluid-sm);
+		font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
+		letter-spacing: 0.05em;
+		text-decoration: none;
+		border-radius: 2px;
+		transition: background-color 120ms ease;
+	}
+
+	.learn-more:hover {
+		background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+	}
+
+	.learn-more:active {
+		opacity: 0.7;
+	}
+
+	.learn-more:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.learn-more {
+			transition: none;
+		}
 	}
 
 	.structure-note {

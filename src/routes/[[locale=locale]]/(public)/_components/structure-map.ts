@@ -18,8 +18,8 @@ export type { Segment, StructureItem, StructureGroup, StructureSection };
 
 export const sections: StructureSection[] = [
 	{
-		value: 'intelligence',
-		title: 'Intelligence Layer',
+		value: 'programming-with-ai',
+		title: 'Programming with AI',
 		groups: [
 			{
 				value: 'agents',
@@ -36,70 +36,6 @@ export const sections: StructureSection[] = [
 					{ segments: [{ label: 'svey', href: null }], description: m.home_structure_agent_svey_desc },
 					{ segments: [{ label: 'tray', href: null }], description: m.home_structure_agent_tray_desc },
 					{ segments: [{ label: 'uxy', href: null }], description: m.home_structure_agent_uxy_desc },
-				],
-			},
-			{
-				value: 'skills',
-				title: 'Skills',
-				items: [
-					{
-						segments: [
-							{ label: 'svelte5-runes', href: null },
-							{ label: 'sveltekit', href: null },
-							{ label: 'unocss', href: null },
-							{ label: 'biome', href: null },
-						],
-						description: m.home_structure_skill_core_desc,
-					},
-					{
-						segments: [
-							{ label: 'drizzle', href: null },
-							{ label: 'db-relational', href: null },
-							{ label: 'db-graph', href: null },
-							{ label: 'db-files', href: null },
-						],
-						description: m.home_structure_skill_data_desc,
-					},
-					{
-						segments: [
-							{ label: 'better-auth', href: null },
-							{ label: 'security', href: null },
-						],
-						description: m.home_structure_skill_auth_desc,
-					},
-					{
-						segments: [
-							{ label: 'valibot-superforms', href: null },
-							{ label: 'design-system', href: null },
-						],
-						description: m.home_structure_skill_forms_desc,
-					},
-					{
-						segments: [
-							{ label: 'ai-tools', href: null },
-							{ label: '3d', href: null },
-						],
-						description: m.home_structure_skill_ai_desc,
-					},
-				],
-			},
-			{
-				value: 'docs-hubs',
-				title: 'Documentation Hubs',
-				intro: m.home_structure_docs_hubs_intro,
-				items: [
-					{ segments: [{ label: 'docs/foundation/', href: null }], description: m.home_structure_doc_foundation_desc },
-					{
-						segments: [{ label: 'docs/stack/', href: '/docs/stack' }],
-						description: m.home_structure_doc_stack_desc,
-					},
-					{ segments: [{ label: 'docs/blueprint/', href: null }], description: m.home_structure_doc_blueprint_desc },
-					{
-						segments: [{ label: 'docs/implementation/', href: null }],
-						description: m.home_structure_doc_implementation_desc,
-					},
-					{ segments: [{ label: 'docs/patterns/', href: null }], description: m.home_structure_doc_patterns_desc },
-					{ segments: [{ label: 'docs/guides/', href: null }], description: m.home_structure_doc_guides_desc },
 				],
 			},
 		],

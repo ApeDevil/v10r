@@ -31,6 +31,7 @@ import { deriveAccentTokens } from '$lib/styles/random/accent';
 import { getRadius } from '$lib/styles/random/radius-registry';
 import type { PaletteId, ResolvedStyle } from '$lib/styles/random/types';
 import { getTypography } from '$lib/styles/random/typography-registry';
+import '$lib/server/agents';
 import '$lib/server/jobs/scheduler';
 import '$lib/server/jobs/delivery-scheduler';
 
