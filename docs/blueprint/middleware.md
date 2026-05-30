@@ -11,6 +11,8 @@ SvelteKit hooks for request interception, authentication, and cross-cutting conc
 | `handleError` | Global error handler | `hooks.server.ts` |
 | `reroute` | URL rewriting | `hooks.ts` |
 
+**`handle` sequence order:** Rate Limit → CORS → CSRF → Security Headers → Auth (session + `grants` populate)
+
 ---
 
 ## Handle Hook
@@ -568,7 +570,7 @@ const securityHandle: Handle = async ({ event, resolve }) => {
   return response;
 };
 
-// 5. Authentication
+// 5. Authentication + grant population
 const authHandle: Handle = async ({ event, resolve }) => {
   const authResponse = await svelteKitHandler({ auth, event });
   if (authResponse) return authResponse;
@@ -578,6 +580,12 @@ const authHandle: Handle = async ({ event, resolve }) => {
   });
   event.locals.user = session?.user ?? null;
   event.locals.session = session?.session ?? null;
+
+  // Populate active capability grants for authenticated requests.
+  // Single PK-indexed query; result used by requireApiBlogAuthor and similar guards.
+  event.locals.grants = session?.user
+    ? await listActiveGrantKinds(session.user.id)
+    : [];
 
   return resolve(event);
 };
@@ -622,12 +630,14 @@ export const handleError: HandleServerError = async ({ error, event, status, mes
 ```typescript
 // src/app.d.ts
 import type { User, Session } from 'better-auth';
+import type { GrantKind } from '$lib/server/auth/grants';
 
 declare global {
   namespace App {
     interface Locals {
       user: User | null;
       session: Session | null;
+      grants: GrantKind[];   // active capability grants for this user; [] if unauthenticated
       locale: string;
       requestId: string;
     }

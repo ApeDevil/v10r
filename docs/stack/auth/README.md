@@ -6,4 +6,4 @@ Authentication and session management.
 
 | File | Main Topics |
 |------|-------------|
-| **[better-auth.md](./better-auth.md)** | • Better Auth choice, • Session-based auth, • Drizzle integration, • OAuth/2FA/passkeys, • DIY alternative |
+| **[better-auth.md](./better-auth.md)** | • Better Auth choice, • Session-based auth, • Drizzle integration, • OAuth/2FA/passkeys, • DIY alternative, • **`/api/auth/*` namespace gotcha** — catch-all blocks custom routes under this prefix |

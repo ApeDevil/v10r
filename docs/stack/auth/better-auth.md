@@ -53,6 +53,7 @@ Framework-agnostic authentication and authorization framework for TypeScript. Pr
 **SvelteKit-specific:**
 - `svelteKitHandler` doesn't auto-populate `event.locals.user` (manual implementation needed)
 - Cloudflare Workers requires explicit `/api/auth/[...betterauth]` route
+- **`/api/auth/*` is fully owned by `svelteKitHandler`'s catch-all.** Any custom `+server.ts` routes placed under this prefix are silently swallowed — Better Auth handles the request and returns a 404 before SvelteKit's router sees it. Custom API routes that happen to start with `/api/auth/` (e.g. grant requests) must be moved to a different prefix (e.g. `/api/grant-requests`).
 
 ## Related
 

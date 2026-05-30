@@ -1021,9 +1021,29 @@ src/
 
 ---
 
+## Endpoint Inventory (Feature Families)
+
+| Family | Endpoints | Auth |
+|--------|-----------|------|
+| **Blog posts** | `GET/POST /api/blog/posts`, `PATCH/DELETE /api/blog/posts/[id]`, `POST .../publish`, `GET/POST .../revisions`, `GET/POST .../tags`, `GET/POST .../domain`, `POST .../export`, `POST .../import` | `requireApiBlogAuthor` |
+| **Blog assets** | `GET/POST /api/blog/assets`, `PATCH/DELETE /api/blog/assets/[id]`, `POST .../confirm` | `requireApiBlogAuthor` |
+| **Blog asset folders** | `GET/POST /api/blog/asset-folders`, `PATCH/DELETE .../[id]` | `requireApiBlogAuthor` |
+| **Blog post folders** | `GET/POST /api/blog/post-folders`, `PATCH/DELETE .../[id]` | `requireApiBlogAuthor` |
+| **Blog tags** | `GET /api/blog/tags` | `requireApiBlogAuthor` |
+| **Blog domains** | `GET /api/blog/domains` | `requireApiBlogAuthor` |
+| **Blog preview** | `POST /api/blog/preview` | `requireApiBlogAuthor` |
+| **Blog comments** | `GET/POST /api/blog/posts/[id]/comments`, `PATCH/DELETE /api/blog/comments/[id]`, `POST .../hide`, `POST .../unhide`, `POST .../remove` (admin) | GET public; POST session; admin actions `guardApiAdmin` |
+| **Grant requests** | `POST/GET/DELETE /api/grant-requests` | session (own) |
+| **Admin grant requests** | `GET /api/admin/grant-requests`, `POST .../approve`, `POST .../deny` | `guardApiAdmin` |
+| **Admin user grants** | `GET /api/admin/users/[id]/grants`, `PUT/DELETE .../grants/[kind]` | `guardApiAdmin` |
+
+> **Namespace constraint:** `/api/auth/*` is owned by Better Auth's `svelteKitHandler` catch-all. Custom routes under this prefix will 404. Grant-request endpoints are at `/api/grant-requests`, not `/api/auth/grant-requests`.
+
+---
+
 ## Related
 
-- [auth.md](./auth.md) - Authentication patterns, protected endpoint implementation
+- [auth.md](./auth.md) - Authentication patterns, capability grants, protected endpoint implementation
 - [db/relational.md](./db/relational.md) - Drizzle schema used in API queries
 - [db/graph.md](./db/graph.md) - Neo4j for relationship queries
 - [pages.md](./pages.md) - `/showcase/api` route with interactive API explorer

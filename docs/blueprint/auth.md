@@ -572,6 +572,84 @@ export const userProfile = pgTable('user_profile', {
 
 ---
 
+## Capability Grants
+
+Role-based authorization (`user.role === 'author'`) was replaced by a capability-grant system. Roles no longer encode permissions; grants do.
+
+### Tables
+
+**`auth.grant`** — polymorphic, audited capabilities.
+
+| Column | Notes |
+|--------|-------|
+| `user_id` | FK → `auth.user(id)` CASCADE |
+| `kind` | Capability string. v1: `'blog-author'` |
+| `granted_by` | Admin actor ID (no FK, survives deletion) |
+| `granted_at` | When granted |
+| `revoked_at` | nullable. Partial UNIQUE: `(user_id, kind) WHERE revoked_at IS NULL` enforces at-most-one active grant per kind |
+| `revoked_by` | nullable, admin actor ID |
+| `notified_at` | nullable. Cleared when the grant notification Toast is consumed |
+
+**`auth.grant_request`** — user-initiated access requests.
+
+| Column | Notes |
+|--------|-------|
+| `user_id` | FK → `auth.user(id)` CASCADE |
+| `kind` | Same kind space as `auth.grant` |
+| `status` | `pending` \| `approved` \| `denied` \| `expired` |
+| `message` | Optional note from requester |
+| `requested_at` | |
+| `resolved_at` | nullable |
+| `resolved_by` | nullable, admin actor ID |
+
+Partial UNIQUE on `(user_id, kind) WHERE status = 'pending'` — one pending request per kind. Pending requests auto-expire after 14 days via the `grant-request-expiry` scheduled job.
+
+### Domain Modules
+
+```
+$lib/server/auth/
+  grants.ts           — grantCapability, revokeCapability, hasGrant,
+                        listActiveGrantKinds, consumePendingGrantNotifications
+  grant-requests.ts   — createGrantRequest, approveRequest, denyRequest, expireOldRequests
+```
+
+### Per-Request Populate
+
+`hooks.server.ts` `sessionPopulate` sets `event.locals.grants: GrantKind[]` on every authenticated request (single PK-indexed query). `App.Locals` has a `grants: GrantKind[]` field.
+
+On grant/revoke: the mutation deletes all sessions for the affected user. Next sign-in re-populates grants.
+
+### Guards
+
+| Guard | Check | Replaces |
+|-------|-------|---------|
+| `requireBlogAuthor(locals)` | `locals.grants?.includes('blog-author')` or admin | `requireAuthor` |
+| `requireApiBlogAuthor(locals)` | same, throws 401/403 JSON | `requireApiAuthor` |
+| `guardApiBlogAuthor(locals)` | same, returns early | `guardApiAuthor` |
+| `guardApiAdmin(locals)` | admin env check | (new) |
+
+Admin (env-pinned via `ADMIN_USER_ID` / `ADMIN_EMAIL`) always passes all capability checks.
+
+### API Endpoints
+
+```
+POST   /api/grant-requests          — create request (self-service, 1/24h rate limit)
+GET    /api/grant-requests          — check own pending request
+DELETE /api/grant-requests          — cancel own request
+
+GET    /api/admin/grant-requests          — list all pending (admin)
+POST   /api/admin/grant-requests/approve  — approve
+POST   /api/admin/grant-requests/deny     — deny
+
+GET    /api/admin/users/[id]/grants         — list active grants for user
+PUT    /api/admin/users/[id]/grants/[kind]  — grant capability
+DELETE /api/admin/users/[id]/grants/[kind]  — revoke capability
+```
+
+> **Namespace gotcha:** The `/api/auth/*` prefix is owned by Better Auth's catch-all handler (`svelteKitHandler`). Any routes you place under `/api/auth/` will 404 — Better Auth intercepts them before SvelteKit routes them. Grant-request endpoints live at `/api/grant-requests` (not `/api/auth/grant-requests`) for this reason. See [stack/auth/better-auth.md](../../stack/auth/better-auth.md) for details.
+
+---
+
 ## Route Protection
 
 ### Server-Side (Recommended)
@@ -865,7 +943,9 @@ src/
 │   │   ├── auth.ts           # Better Auth instance (magic link + OTP)
 │   │   ├── email.ts          # Auth email sender
 │   │   └── auth/
-│   │       └── guard.ts      # Route protection helper
+│   │       ├── guard.ts      # Route protection helpers
+│   │       ├── grants.ts     # Capability grant/revoke/query
+│   │       └── grant-requests.ts  # Request lifecycle
 │   └── auth-client.ts        # Client-side auth (signIn, signOut)
 ├── routes/
 │   ├── auth/
@@ -876,7 +956,7 @@ src/
 │       ├── +layout.svelte    # Client guard (fallback)
 │       └── dashboard/
 │           └── +page.server.ts
-└── hooks.server.ts           # Better Auth handler + session population
+└── hooks.server.ts           # Better Auth handler + session + grants populate
 ```
 
 ---

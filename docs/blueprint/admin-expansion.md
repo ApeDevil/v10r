@@ -22,6 +22,9 @@ Guard: `routeGuard` in `hooks.server.ts` (primary, runs on every request) + `req
 | **Users** | `/admin/users` | Browse users, ban/unban, role management, session inspector, impersonation | ✅ Core done (session inspector + impersonation deferred) |
 | **Feature Flags** | `/admin/flags` | Runtime feature toggles without redeploy (ops + permission types) | ✅ Done |
 | **Audit Log** | `/admin/audit` | Immutable record of all admin actions | ✅ Done |
+| **Access — Authors** | `/admin/access/authors` | Grant/revoke `blog-author` capability per user | ✅ Done |
+| **Access — Requests** | `/admin/access/requests` | Approve/deny pending `blog-author` grant requests | ✅ Done |
+| **Content — Comments** | `/admin/content/comments` | Hide/unhide/remove blog comments | ✅ Done |
 
 ### Tier 2 — After Tier 1 Proves Stable
 
@@ -63,6 +66,11 @@ src/routes/(shell)/admin/
   users/                     # [Manage] Better Auth admin plugin
   flags/                     # [Manage] toggle UI
   branding/                  # [Manage] EXISTS
+  access/
+    authors/                 # [Manage] grant/revoke blog-author capability
+    requests/                # [Manage] approve/deny grant requests
+  content/
+    comments/                # [Content] hide/unhide/remove blog comments
   jobs/                      # [System] EXISTS
   rag/                       # [System] document status
   cache/                     # [System] Redis key browser
@@ -79,7 +87,8 @@ With 11 pages, switched from horizontal TabNav to vertical sidebar (NNGroup: max
 
 ```
 Observe:  DB  |  Analytics  |  Audit Log
-Manage:   Users  |  Feature Flags  |  Branding
+Manage:   Users  |  Feature Flags  |  Branding  |  Access (Authors, Requests)
+Content:  Posts  |  Comments
 System:   Jobs  |  Notifications  |  AI Usage  |  RAG  |  Cache
 ```
 

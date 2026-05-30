@@ -141,6 +141,7 @@ src/lib/server/
     notification-delivery.ts
     telegram-token-cleanup.ts
     discord-token-refresh.ts
+    grant-request-expiry.ts
 
   inngest/                          ← Reactive jobs (separate, NOT inside jobs/)
     client.ts                       ← Inngest client instance
@@ -215,6 +216,13 @@ export const jobs: Record<string, Job> = {
     trigger: 'scheduled',
     description: 'Delete job execution logs older than retention period.',
     schedule: '0 4 * * 0',
+  },
+  'grant-request-expiry': {
+    execute: expireOldGrantRequests,
+    label: 'Grant Request Expiry',
+    trigger: 'scheduled',
+    description: 'Expire pending blog-author grant requests older than 14 days.',
+    schedule: '0 2 * * *',
   },
   // ...
 };

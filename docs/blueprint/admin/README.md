@@ -1,6 +1,6 @@
 # Admin
 
-Feature blueprints for admin-specific systems. See `docs/blueprint/admin-expansion.md` for the overall admin area architecture and page inventory.
+Feature blueprints for admin-specific systems. See `docs/blueprint/admin-expansion.md` for the overall admin area architecture and page inventory (includes `/admin/access/authors`, `/admin/access/requests`, `/admin/content/comments`).
 
 ## Files
 

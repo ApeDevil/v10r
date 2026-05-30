@@ -12,6 +12,8 @@ Drizzle ORM schema for relational data and Better Auth integration.
 | `session` | Auth sessions | Better Auth (auto-generated) |
 | `account` | OAuth provider links | Better Auth (auto-generated) |
 | `verification` | Magic link/OTP tokens | Better Auth (auto-generated) |
+| `auth.grant` | Active capability grants (`blog-author`, etc.) — partial UNIQUE `(user_id, kind) WHERE revoked_at IS NULL` | Custom |
+| `auth.grant_request` | User-initiated requests for a capability — partial UNIQUE `(user_id, kind) WHERE status = 'pending'`; auto-expire via cron | Custom |
 | `user_profile` | User Profile Data (public) | Custom |
 | `user_settings` | Preferences & Settings | Custom |
 | `items` | Generic entities | Custom |

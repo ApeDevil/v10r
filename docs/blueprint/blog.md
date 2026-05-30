@@ -14,9 +14,9 @@ The editor is content-type-agnostic — blog posts are the first implementation,
 
 | Question | Answer | Impact |
 |----------|--------|--------|
-| Authors | Multi-author | `author` role in Better Auth, per-user draft visibility |
+| Authors | Multi-author | `blog-author` capability grant, per-user draft visibility |
 | Reading | Public + authenticated | CDN/ISR for public readers; authenticated users see drafts, edit |
-| Comments | Not for now | Keeps schema minimal |
+| Comments | Yes (v1) | Per-locale, flat, plain text, 5-min author edit window; see Auth Gating section |
 | i18n | Yes | `locale` column on revision — translations are separate revisions |
 | Location | Real blog at `/blog/` | Top-level route, not under `/showcases/` |
 | Editor host | Desk (DockLayout panels) | Not a standalone admin route |
@@ -399,7 +399,7 @@ Drift prevention: integration tests comparing Lezer's detected node ranges to re
 
 ## Data Model
 
-### Schema: `blog` (8 Tables for v1)
+### Schema: `blog` (9 Tables for v1)
 
 All tables in `pgSchema('blog')`, following the existing pattern.
 
@@ -553,6 +553,23 @@ RESTRICT on asset deletion — don't delete assets that posts reference.
 | `post_asset.post_id` -> post | CASCADE | Asset associations die with the post |
 | `post_asset.asset_id` -> asset | RESTRICT | Cannot delete an asset still linked to posts |
 | `asset.uploader_id` -> user | SET NULL | Assets survive user deletion |
+
+#### `blog.comment` — Reader Comments (v1)
+
+| Column | Type | Constraints | Notes |
+|--------|------|-------------|-------|
+| `id` | text | PK | `cmt_` prefix |
+| `post_id` | text | NOT NULL | Part of composite FK |
+| `locale` | text | NOT NULL | Part of composite FK |
+| `author_id` | text | NOT NULL, FK -> auth.user(id) ON DELETE CASCADE | |
+| `body` | text | NOT NULL, 1-4000 chars | Plain text, no markdown |
+| `status` | enum | NOT NULL, DEFAULT 'visible' | `visible`, `hidden` (admin), `removed` (admin, body redacted) |
+| `client_nonce` | text | NOT NULL | Client-generated idempotency token |
+| `created_at` | timestamptz | NOT NULL, DEFAULT now() | |
+| `updated_at` | timestamptz | NOT NULL, DEFAULT now() | Editable within 5 min of `created_at` |
+| `deleted_at` | timestamptz | nullable | Author soft-delete |
+
+Composite FK: `(post_id, locale) → blog.published_revision(post_id, locale)` — prevents comments on unpublished locales. UNIQUE: `(author_id, post_id, client_nonce)` for idempotency. `hidden` comments are visible only to their author; `removed` comments have body redacted.
 
 ### Deferred to v2
 
@@ -890,6 +907,12 @@ $lib/server/blog/                  # Domain module (multi-client core pattern)
   render.ts                         # Unified pipeline: markdown -> {html, embeds, toc}
   ai-sync.ts                        # syncBlogGraph(), linkPostToChunks(), removeBlogFromGraph()
   types.ts                          # Blog domain types
+  comments/
+    mutations.ts                    # createComment, editComment, deleteComment,
+                                    #   hideComment, unhideComment, removeComment
+    queries.ts                      # listComments, getComment
+    schemas.ts                      # Valibot schemas for comment payloads
+    index.ts                        # Barrel
 
 $lib/server/blog/pipeline/
   extensions.ts                     # Directive handlers, wikilink config
@@ -904,6 +927,7 @@ $lib/content-syntax/               # Shared syntax definitions
 $lib/components/blog/              # Rendering
   Renderer.svelte                   # {html, embeds} -> prose + hydrated embeds
   EmbedHost.svelte                  # Mounts single embed by kind
+  CommentsIsland.svelte             # Client island: fetches + renders comments after mount
   embeds/
     registry.ts                     # kind -> dynamic import()
     CodeBlock.svelte
@@ -913,6 +937,7 @@ $lib/components/blog/              # Rendering
 
 $lib/components/editor/            # Authoring (desk panel)
   EditorPanel.svelte                # Panel wrapper (documentId, documentType, menus, publish flow)
+  AuthorGate.svelte                 # Wraps editor; shows request-access empty state when grant absent
   PublishConfirmStrip.svelte        # Inline confirm/cancel strip for publish action
   MarkdownSource.svelte             # Textarea (Phase 1) -> CM6 (Phase 2)
   SlashMenu.svelte                  # Slash command palette
@@ -967,6 +992,8 @@ src/routes/(shell)/blog/
   [slug]/
     +page.server.ts                 # ISR: load post (pre-rendered HTML from DB)
     +page.svelte                    # Post renderer + JSON-LD + OG meta
+    comments/
+      +page.server.ts               # Form action for comment submit (load redirects 303 -> parent slug)
   tag/[tag]/
     +page.server.ts                 # SSR: posts filtered by tag
     +page.svelte
@@ -984,31 +1011,65 @@ src/routes/sitemap.xml/
 ### Admin Content Management
 
 ```
-src/routes/(shell)/admin/content/
-  +page.server.ts                   # load + form actions (status changes, bulk ops)
-  +page.svelte                      # Management table: filter, bulk actions, status
+src/routes/(shell)/admin/
+  content/
+    +page.server.ts                   # load + form actions (status changes, bulk ops)
+    +page.svelte                      # Management table: filter, bulk actions, status
+    comments/
+      +page.server.ts                 # Comment moderation: hide/unhide/remove (form actions)
+      +page.svelte
+  access/
+    authors/
+      +page.server.ts                 # Grant/revoke blog-author per user
+      +page.svelte
+    requests/
+      +page.server.ts                 # Approve/deny pending grant requests
+      +page.svelte
 ```
 
 ### API
 
 ```
 src/routes/api/blog/
-  +layout.server.ts                 # Auth guard: author|admin for all blog API routes
-  +server.ts                        # POST: create post
-  [id]/
-    +server.ts                      # PATCH: update metadata (slug, tags)
-    revision/+server.ts             # POST: save new revision
-    publish/+server.ts              # POST: publish (triggers RAG + Neo4j + ISR)
-  preview/+server.ts                # POST: render markdown pipeline, return {html, embeds}
+  posts/
+    +server.ts                        # GET: list, POST: create
+    [id]/
+      +server.ts                      # PATCH: update metadata, DELETE
+      publish/+server.ts              # POST: publish (RAG + Neo4j + ISR)
+      revisions/+server.ts            # GET/POST revisions
+      tags/+server.ts                 # GET/POST tags
+      domain/+server.ts              # GET/POST domain
+      export/+server.ts              # POST: export
+      comments/+server.ts            # GET (public), POST (session, rate-limited)
+  comments/
+    [id]/+server.ts                   # PATCH (author edit, 5-min window), DELETE (author)
+    [id]/hide/+server.ts              # POST (admin)
+    [id]/unhide/+server.ts            # POST (admin)
+    [id]/remove/+server.ts            # POST (admin)
+  preview/+server.ts                  # POST: render markdown pipeline, return {html, embeds}
+  asset-folders/, assets/, tags/, domains/, post-folders/, posts/import — see api.md
+
+src/routes/api/grant-requests/
+  +server.ts                          # POST (create, 1/24h), GET (own), DELETE (cancel)
+
+src/routes/api/admin/
+  grant-requests/
+    +server.ts                        # GET (list)
+    approve/+server.ts                # POST
+    deny/+server.ts                   # POST
+  users/[id]/grants/
+    +server.ts                        # GET
+    [kind]/+server.ts                 # PUT (grant), DELETE (revoke)
 ```
 
 ### Desk (Authoring)
 
 ```
 src/routes/(desk)/
-  +layout.server.ts                 # Auth guard: author|admin
+  +layout.server.ts                 # requireAuth; exposes blogAuthor.granted, pendingRequest, justGrantedKinds
   desk/
-    +page.svelte                    # Panel registry: editor + preview + documents
+    +page.server.ts                 # Form actions: requestBlogAccess, cancelBlogAccessRequest
+    +page.svelte                    # Panel registry: editor + preview + documents; AuthorGate wraps editor
 ```
 
 ### Rendering Modes
@@ -1020,7 +1081,7 @@ src/routes/(desk)/
 | `/blog/tag/[tag]` | SSR | default | Dynamic filter |
 | `/blog/feed.xml` | ISR (1h) | same as slug | Stable, cacheable; revalidated on publish |
 | `/sitemap.xml` | Dynamic + CDN cache | `Cache-Control: s-maxage=3600` | DB-backed (published posts); cannot prerender — would freeze the post list |
-| `/admin/content` | SSR | `prerender = false` | Dynamic management UI |
+| `/admin/content`, `/admin/access/*` | SSR | `prerender = false` | Dynamic management UI |
 | `/desk` | SSR then CSR | default | SSR for shell; heavy JS hydration for editor |
 | `api/blog/*` | Dynamic | N/A | Mutations, never cached |
 
@@ -1066,6 +1127,8 @@ Per-locale: `blog.comment` has a composite FK to `(post_id, locale) → blog.pub
 
 Hidden comments are visible to their author (muted style + badge) and absent for everyone else. Slug page stays ISR — the comment island fetches via `/api/blog/posts/[id]/comments` after mount, no SSR data dependency.
 
+Comment writes are rate-limited (5/min + 30/hr per user, 20/hr per IP, 60/min per post). Grant requests are limited to 1 per 24h. See [abuse/rate-limits.md](./abuse/rate-limits.md) for the full limiter table and [auth.md](./auth.md) for the capability grant schema and API endpoints.
+
 ### Form Actions vs API Endpoints
 
 | Caller | Mechanism | Why |
@@ -1100,7 +1163,8 @@ Hidden comments are visible to their author (muted style + badge) and absent for
 | 0006 | `CREATE TABLE blog.revision` + generated `search_vector` column | FK to `blog.post` + `auth.user`. Generated column via `ALTER TABLE`. |
 | 0007 | `CREATE TABLE blog.published_revision` | FK to `blog.post` + `blog.revision` |
 | 0008 | `CREATE TABLE blog.post_tag` + `blog.post_asset` | Junction tables, FK to existing tables |
-| 0009 | `INSERT INTO rag.collection` — seed `col_blog` | Idempotent with `ON CONFLICT DO NOTHING`. Requires at least one user to exist for `user_id`. |
+| 0009 | `CREATE TABLE blog.comment` | FK to `blog.published_revision(post_id, locale)`, `auth.user` |
+| 0010 | `INSERT INTO rag.collection` — seed `col_blog` | Idempotent with `ON CONFLICT DO NOTHING`. Requires at least one user to exist for `user_id`. |
 
 ---
 
@@ -1130,8 +1194,8 @@ Approximate bundle: ~40-60KB minified + gzipped (server-side only). Public pages
 
 ### Phase 0: Prerequisites
 
-1. Add `author` role to Better Auth configuration
-2. Extend `routeGuard` in hooks to handle `/api/blog/*` with role-based access
+1. Add `auth.grant` + `auth.grant_request` tables; populate `event.locals.grants` in `sessionPopulate` hook
+2. Extend route guards to use `locals.grants.includes('blog-author')` for `/api/blog/*`
 3. Add `'blog'` value to `rag.document_source` enum (non-transactional migration 0001)
 
 ### Phase 1: Pipeline + Public Blog
