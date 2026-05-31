@@ -2,7 +2,7 @@
 
 v10r is a containerized full-stack **Pattern Library** for AI-assisted web development.
 
-It's a reference your coding agent emulates — not a template you clone. Performance-focused, lightweight, free-tier friendly.
+v10r's goal: **proven, high-performance** full-stack patterns. Rather than clone a template, your coding agent **emulates** them — adapting only what a new project needs. Lightweight and free-tier friendly.
 
 > Fast and dangerous (in a good way).
 
@@ -123,6 +123,13 @@ The `docs/` folder uses an AI-optimized navigation structure. Each directory has
 
 **Navigation rule:** Always start at [`docs/README.md`](./docs/README.md), drill down through directory READMEs to find the right file.
 
+Two cross-cutting maps sit above the foundation → stack → blueprint layers:
+
+- **[system-abstraction.md](./docs/system-abstraction.md)** — how the system runs (runtime 7-layer hierarchy, request flow, hooks).
+- **[codebase-organization.md](./docs/codebase-organization.md)** — where code lives (source tree, canonical homes, import rules).
+
+Start with these two for the whole-system view.
+
 
 ## Genesis
 
@@ -139,23 +146,4 @@ Each layer evolves from and is based on the previous:
 
 ## Project Root Structure
 
-| Path | Purpose |
-|------|---------|
-| `src/` | SvelteKit application source code |
-| `static/` | Static assets (served as-is) |
-| `docs/` | Project documentation |
-| `build/` | Production build output |
-| `.svelte-kit/` | SvelteKit generated files |
-| `Containerfile.dev` | Dev container definition (Bun + Vite) |
-| `compose.yaml` | Podman Compose config (v10r container) |
-| `.dockerignore` | Files excluded from container build |
-| `.env.example` | Environment variables template |
-| `.env` | Local environment variables (git-ignored) |
-| `package.json` | Project dependencies and scripts |
-| `bun.lock` | Bun lockfile |
-| `vite.config.ts` | Vite config (HMR for containers) |
-| `svelte.config.js` | SvelteKit config |
-| `tsconfig.json` | TypeScript config |
-| `drizzle.config.ts` | Drizzle ORM config (used by `db:push`) |
-| `CLAUDE.md` | AI agent instructions |
-| `.claude/` | Claude Code agents and skills |
+The annotated source tree — every top-level path and where new code goes — lives in **[codebase-organization.md → Top-level layout](./docs/codebase-organization.md#top-level-layout)**.

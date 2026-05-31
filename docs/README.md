@@ -1,6 +1,6 @@
 # Documentation
 
-Velociraptor documentation organized into three layers: project foundation, stack decisions, and implementation blueprints. Start with foundation to understand the vision, move to stack to see what we use, then reference blueprint for how to build.
+Velociraptor documentation organized into three layers: project foundation, stack decisions, and implementation blueprints. Start with foundation to understand the vision, move to stack to see what we use, then reference blueprint for how to build. For a cross-cutting view of how all layers fit together at runtime, see [system-abstraction.md](./system-abstraction.md). For the spatial map of the repository — where code lives and where new code goes — see [codebase-organization.md](./codebase-organization.md).
 
 ## Directory Structure
 

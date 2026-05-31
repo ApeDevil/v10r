@@ -2,10 +2,10 @@
 
 ## What is Velociraptor
 
-Documentation, test-sandbox, and reusable template in one. The project simultaneously:
+Documentation, test-sandbox, and reusable reference in one. The project simultaneously:
 - Documents the complete stack (features & patterns)
 - Serves as a test environment to validate decisions
-- Provides a skeleton for new projects
+- Provides a working model new projects emulate
 
 ## Goals
 
@@ -15,7 +15,7 @@ Documentation, test-sandbox, and reusable template in one. The project simultane
 | Clean codebase | Maintainable, well-organized, minimal complexity |
 | Flexible UI | Adaptable to different use cases and designs |
 | Cross-platform | Optimized for mobile and desktop |
-| Quick start | Fast project initialization from template |
+| Quick start | Fast initialization by emulating v10r's patterns |
 
 ## Requirements
 

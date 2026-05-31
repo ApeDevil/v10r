@@ -2,7 +2,12 @@
 
 ## Project Overview
 
-Velociraptor (v10r) is a full-stack template/test-sandbox focused on performance and lightweight deployment. The project simultaneously serves as documentation, a test environment, and a reference that new projects instantiate through emulation — an AI agent reads v10r's tested patterns and adapts only the pieces needed.
+Velociraptor (v10r) is a full-stack reference and test-sandbox.
+
+- **Purpose:** establish proven, high-performance full-stack patterns.
+- **Approach:** emulation, not cloning — an AI agent reads v10r's tested patterns and adapts only the pieces a new project needs.
+
+v10r simultaneously serves as documentation, a test environment, and a reusable reference. Full goals: `docs/foundation/PRD.md`.
 
 **No backward compatibility required.** This project is in active development with no production users. Do not add migration shims, retired-ID filters, version upgrade paths, or backward-compat hacks. Just change the code directly.
 
@@ -29,9 +34,9 @@ Velociraptor (v10r) is a full-stack template/test-sandbox focused on performance
 
 ## Architecture
 
-The project uses a self-documenting architecture where showcase pages serve as documentation, tests, and templates simultaneously. If a showcase page works, the feature is proven functional.
+The project uses a self-documenting architecture where showcase pages serve as documentation, tests, and patterns simultaneously. If a showcase page works, the feature is proven functional.
 
-The backend follows a multi-client core pattern: domain modules in `$lib/server/[domain]/` contain pure business logic with no framework imports, so the same functions serve UI form actions, AI SDK tool calls, REST API, and background jobs. Route handlers are thin adapters. See `docs/blueprint/architecture/multi-client-core.md` for the full blueprint.
+The backend follows a multi-client core / hexagonal pattern — framework-free domain modules in `$lib/server/[domain]/`, thin route adapters. See `docs/system-abstraction.md` (runtime wiring + 7-layer hierarchy), `docs/codebase-organization.md` (where each piece lives), and `docs/blueprint/architecture/multi-client-core.md` (full pattern).
 
 The AI subsystem includes a Graph RAG retrieval pipeline. See `docs/blueprint/ai/` for architecture details.
 
@@ -65,6 +70,8 @@ Solo dev, no deployment — CI is unnecessary overhead. Use `bun run validate` (
 ## Documentation
 
 See [`docs/README.md`](docs/README.md) for the full documentation index.
+
+**Architecture entry points:** for how the system runs (runtime, 7-layer hierarchy, request flow) read `docs/system-abstraction.md`; for where code lives (source tree, canonical homes, import direction) read `docs/codebase-organization.md`. Consult both before structural or cross-cutting work.
 
 ### README Structure
 
