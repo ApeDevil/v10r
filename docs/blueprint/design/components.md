@@ -585,7 +585,7 @@ Usage:
 
 ### PageHeader
 
-Per-page header for title, breadcrumbs, and actions. **Not a global header** — lives inside the main content area, used per-page as needed. See [app-shell.md](../app-shell.md#pageheader) for full documentation.
+Per-page header for title, breadcrumbs, and actions. **Not a global header** — lives inside the main content area, used per-page as needed. See [page-header.md](../app-shell/page-header.md) for full documentation.
 
 ```svelte
 <!-- src/lib/components/composites/page-header/PageHeader.svelte -->
@@ -1213,7 +1213,7 @@ Browse icons: [Iconify Icon Sets](https://icon-sets.iconify.design/)
 
 ### Shell Components
 
-Navigation components for the app shell are documented separately in [app-shell.md](./app-shell.md):
+Navigation components for the app shell are documented separately in [app-shell/](../app-shell/README.md):
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
@@ -1300,7 +1300,7 @@ src/lib/
 │   │   │   └── index.ts
 │   │   └── index.ts               # Barrel export
 │   │
-│   ├── shell/                     # App shell (see app-shell.md)
+│   ├── shell/                     # App shell (see app-shell/)
 │   │   ├── AppShell.svelte
 │   │   ├── Sidebar.svelte
 │   │   └── ...
@@ -1487,7 +1487,7 @@ UnoCSS utility: `sr-only` hides visually but keeps accessible.
 - [tokens.md](./tokens.md) - Design tokens (colors, spacing, z-index)
 - [styling.md](./styling.md) - UnoCSS configuration, fluid scales
 - [forms.md](../forms.md) - Form patterns using these components
-- [app-shell.md](../app-shell.md) - Shell components (Sidebar, NavItem, etc.)
+- [app-shell/](../app-shell/README.md) - Shell components (Sidebar, NavItem, etc.)
 - [ai/README.md](../ai/README.md) - AI Assistant implementation and provider configuration
 - [error-handling.md](../error-handling.md) - Error display with Toast
 - [pages.md](../pages.md) - `/showcase/ui` component gallery

@@ -2,7 +2,7 @@
  * Ingestion pipeline: document → chunks → embeddings → Postgres + Neo4j.
  */
 import { eq } from 'drizzle-orm';
-import { chatModel } from '$lib/server/ai';
+import { getActiveProvider } from '$lib/server/ai';
 import { db } from '$lib/server/db';
 import { chunk, document } from '$lib/server/db/schema/rag';
 import type { IngestEvent, IngestStepEvent, IngestStepId, IngestStepStatus } from '$lib/types/ingest-pipeline';
@@ -48,6 +48,8 @@ export async function ingest(doc: IngestableDocument, onEvent?: IngestEmitFn): P
 	if (!doc.content.trim()) {
 		throw new RetrievalError('ingestion', 'Document content is empty');
 	}
+
+	const chatModel = getActiveProvider()?.getInstance() ?? null;
 
 	const contentHash = await hashContent(doc.content);
 

@@ -1576,7 +1576,7 @@ src/lib/
 
 - [pages.md](./pages.md) - `/showcase/state` route demonstrating these patterns
 - [design/tokens.md](./design/tokens.md) - Sidebar dimensions, z-index values referenced in UI state
-- [app-shell.md](./app-shell.md) - Sidebar component consuming sidebar state
+- [app-shell/sidebar.md](./app-shell/sidebar.md) - Sidebar component consuming sidebar state
 - [design/styling.md](./design/styling.md) - Theme CSS variables applied by themeStore
 - [i18n.md](./i18n.md) - Locale/language state management (handled by sveltekit-i18n)
 - [ai/README.md](./ai/README.md) - AI assistant chat state with persistence

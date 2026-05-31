@@ -84,7 +84,7 @@ All external services used by Velociraptor. This separates **what technology** w
 | **Sentry** | Yes | Yes | Yes | Yes |
 | **Inngest** | Yes | Yes | Yes | Yes |
 
-All providers have Data Processing Agreements (DPAs) available. See [gdpr.md](./gdpr.md) for compliance checklist.
+All providers have Data Processing Agreements (DPAs) available. See [gdpr.md](./capabilities/gdpr.md) for compliance checklist.
 
 ---
 
@@ -490,7 +490,7 @@ Before adding a new vendor:
 3. [ ] Evaluate free tier limits
 4. [ ] Assess swappability (prefer standard protocols)
 5. [ ] Add to this document
-6. [ ] Update [gdpr.md](./gdpr.md) compliance table
+6. [ ] Update [gdpr.md](./capabilities/gdpr.md) compliance table
 7. [ ] Document in relevant capability file
 
 **Prefer vendors that:**

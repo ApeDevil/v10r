@@ -179,7 +179,7 @@ New capabilities closing native gap—but limited browser support:
 
 ## Related
 
-- [notifications.md](./notifications.md) - Push notification providers (Novu, FCM)
+- [notifications](../notifications/README.md) - Push notification providers (Novu, FCM)
 - [../ops/caching.md](../ops/caching.md) - Caching strategy
 - [../core/sveltekit.md](../core/sveltekit.md) - Service worker support
 - [../vendors.md](../vendors.md) - Hosting providers

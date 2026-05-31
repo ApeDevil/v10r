@@ -9,7 +9,7 @@ import { file, folder, markdown, spreadsheet } from '../schema/desk';
 // them on a schedule (not shipped with the template).
 // ───────────────────────────────────────────────────────────────────
 
-// ── Legacy queries (kept for backward compat) ──────────────────────
+// ── Spreadsheet queries ────────────────────────────────────────────
 
 /** Get a single spreadsheet with ownership check. */
 export async function getSpreadsheet(id: string, userId: string) {

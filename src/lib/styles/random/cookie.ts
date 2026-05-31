@@ -32,14 +32,18 @@ export function parseStyleCookie(value: string | undefined): StyleConfig | null 
 
 	try {
 		const parsed: StyleCookie = JSON.parse(value);
-		if (parsed.v !== 1 || typeof parsed.pid !== 'string' || typeof parsed.tid !== 'string') {
+		if (
+			parsed.v !== 1 ||
+			typeof parsed.pid !== 'string' ||
+			typeof parsed.tid !== 'string' ||
+			typeof parsed.rid !== 'string'
+		) {
 			return null;
 		}
 		return {
 			paletteId: parsed.pid as PaletteId,
 			typographyId: parsed.tid as TypographyId,
-			// Backward compat: missing rid defaults to R2 (current defaults)
-			radiusId: (parsed.rid ?? 'R2') as RadiusId,
+			radiusId: parsed.rid as RadiusId,
 		};
 	} catch {
 		return null;

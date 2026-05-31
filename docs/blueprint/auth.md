@@ -2,7 +2,7 @@
 
 **Passwordless** session-based authentication using Better Auth with Drizzle ORM.
 
-**Technology:** Session-based auth (library, not a service). See [stack/auth.md](../../stack/auth.md) for alternatives.
+**Technology:** Session-based auth (library, not a service). See [stack/auth/](../stack/auth/README.md) for alternatives.
 
 > **No passwords.** Users authenticate via magic link or OTP code (both sent in one email). This eliminates password-related security risks and simplifies the auth flow.
 
@@ -17,7 +17,7 @@
 | Framework | Session auth | Better Auth | TypeScript-first, batteries-included |
 | Primary auth | Magic link + OTP | Built-in plugins | No passwords to breach |
 | Adapter | ORM integration | Drizzle | Native integration, auto-schema |
-| Sessions | Database sessions | [Neon](../../stack/vendors.md#neon) | Immediate revocation, no JWT complexity |
+| Sessions | Database sessions | [Neon](../stack/vendors.md#neon) | Immediate revocation, no JWT complexity |
 | 2FA | TOTP | Built-in | Layer on top of passwordless |
 | OAuth | OAuth 2.0 | Built-in | 20+ providers supported |
 
@@ -646,7 +646,7 @@ PUT    /api/admin/users/[id]/grants/[kind]  — grant capability
 DELETE /api/admin/users/[id]/grants/[kind]  — revoke capability
 ```
 
-> **Namespace gotcha:** The `/api/auth/*` prefix is owned by Better Auth's catch-all handler (`svelteKitHandler`). Any routes you place under `/api/auth/` will 404 — Better Auth intercepts them before SvelteKit routes them. Grant-request endpoints live at `/api/grant-requests` (not `/api/auth/grant-requests`) for this reason. See [stack/auth/better-auth.md](../../stack/auth/better-auth.md) for details.
+> **Namespace gotcha:** The `/api/auth/*` prefix is owned by Better Auth's catch-all handler (`svelteKitHandler`). Any routes you place under `/api/auth/` will 404 — Better Auth intercepts them before SvelteKit routes them. Grant-request endpoints live at `/api/grant-requests` (not `/api/auth/grant-requests`) for this reason. See [stack/auth/better-auth.md](../stack/auth/better-auth.md) for details.
 
 ---
 

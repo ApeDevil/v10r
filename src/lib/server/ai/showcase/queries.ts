@@ -1,10 +1,12 @@
 import { generateText } from 'ai';
 import { classifyAIError } from '../errors';
-import { activeProviderInfo, aiConfigured, chatModel, providerRegistry } from '../index';
+import { aiConfigured, getActiveProvider, getActiveProviderInfo, providerRegistry } from '../index';
 import type { AIConnectionInfo, AIProviderStatus } from '../types';
 
 /** Verify AI provider connection with a lightweight test call */
 export async function verifyAIConnection(): Promise<AIConnectionInfo> {
+	const chatModel = getActiveProvider()?.getInstance() ?? null;
+	const activeProviderInfo = getActiveProviderInfo();
 	if (!aiConfigured || !chatModel || !activeProviderInfo) {
 		return {
 			connected: false,

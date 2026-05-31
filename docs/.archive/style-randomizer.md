@@ -1967,7 +1967,7 @@ const COOKIE_OPTIONS = {
 ## Related Documentation
 
 - [../foundation/style.md](../foundation/style.md) — Philosophy and principles
-- [state.md](./state.md) — Svelte 5 runes patterns
-- [middleware.md](./middleware.md) — Server hooks integration
+- [state.md](../blueprint/state.md) — Svelte 5 runes patterns
+- [middleware.md](../blueprint/middleware.md) — Server hooks integration
 - [../stack/ui/unocss.md](../stack/ui/unocss.md) — UnoCSS configuration
-- [app-shell/shell-state.md](./app-shell/shell-state.md) — Theme state management
+- [app-shell/shell-state.md](../blueprint/app-shell/shell-state.md) — Theme state management

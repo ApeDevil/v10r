@@ -612,7 +612,7 @@ User's authenticated home.
 
 | Tests | Technology | Provider |
 |-------|------------|----------|
-| Session | Database sessions | Better Auth + [Neon](../../stack/vendors.md#neon) |
+| Session | Database sessions | Better Auth + [Neon](../stack/vendors.md#neon) |
 | User data | `auth.api.getSession()` | Better Auth |
 | Protected content | Per-route guards | SvelteKit |
 
@@ -624,7 +624,7 @@ User configuration (preferences & settings) with form handling.
 |-------|------------|----------|
 | Form + auth | Combined patterns | Superforms + Better Auth |
 | User updates | ORM mutations | Drizzle |
-| Theme preference | Database storage | [Neon](../../stack/vendors.md#neon) |
+| Theme preference | Database storage | [Neon](../stack/vendors.md#neon) |
 
 ### /app/account
 
@@ -647,7 +647,7 @@ GDPR compliance routes.
 | Magic link | Email link auth | Better Auth |
 | OTP | 6-digit code | Better Auth |
 | OAuth | OAuth 2.0 | Better Auth (20+ providers) |
-| Session creation | Database sessions | [Neon](../../stack/vendors.md#neon) |
+| Session creation | Database sessions | [Neon](../stack/vendors.md#neon) |
 | Redirect | URL handling | SvelteKit |
 | Rate limiting | Request limiting | Better Auth built-in |
 

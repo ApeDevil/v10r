@@ -49,20 +49,3 @@ export function getFallbacksForUser(userId?: string, overrideProviderId?: string
 	const active = getActiveProvider(userId, overrideProviderId);
 	return active ? getFallbackProviders(registry, active.id) : [];
 }
-
-// ── Deprecated static exports (for showcase/admin/retrieval that lack userId) ──
-
-/** @deprecated Use getActiveProvider(userId)?.getInstance() */
-export const chatModel = getActiveProvider()?.getInstance() ?? null;
-
-/** @deprecated Use getToolProvider(userId)?.getInstance() */
-export const toolModel = getToolProvider()?.getInstance() ?? null;
-
-/** @deprecated Use getToolProvider(userId)?.id */
-export const toolProviderId = getToolProvider()?.id ?? null;
-
-/** @deprecated Use getActiveProviderInfo(userId) */
-export const activeProviderInfo = getActiveProviderInfo();
-
-/** @deprecated Use getFallbacksForUser(userId) */
-export const fallbackProviders = getFallbacksForUser();

@@ -1,4 +1,4 @@
-import { activeProviderInfo } from '$lib/server/ai';
+import { getActiveProviderInfo } from '$lib/server/ai';
 import { getProviderStatuses } from '$lib/server/ai/showcase/queries';
 import { requireAdmin } from '$lib/server/auth/guards';
 import {
@@ -29,7 +29,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		topUsers,
 		usersNearLimit,
 		providers: getProviderStatuses(),
-		activeProvider: activeProviderInfo,
+		activeProvider: getActiveProviderInfo(),
 		filters: { page, userId },
 		conversations: safeDeferPromise(getConversationsList({ userId, page }), { entries: [], total: 0, totalPages: 1 }),
 		messageVolume: safeDeferPromise(getMessageVolumeByDay(30), []),

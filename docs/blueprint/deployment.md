@@ -2,7 +2,7 @@
 
 Tri-target deployment: Vercel (Node.js), Vercel (Bun experimental), and Koyeb (Bun container).
 
-**Strategy:** Same codebase, different configurations. See [stack/deployment.md](../stack/deployment.md) for decision rationale.
+**Strategy:** Same codebase, different configurations. See [stack/ops/deployment.md](../stack/ops/deployment.md) for decision rationale.
 
 ---
 
@@ -795,7 +795,7 @@ koyeb service logs <service-name> --follow
 
 ## Related
 
-- [stack/deployment.md](../stack/deployment.md) - Decision rationale
+- [stack/ops/deployment.md](../stack/ops/deployment.md) - Decision rationale
 - [rate-limiting.md](./rate-limiting.md) - Rate limiting configuration
 - [middleware.md](./middleware.md) - Request handling
 - [error-handling.md](./error-handling.md) - Error pages and logging
