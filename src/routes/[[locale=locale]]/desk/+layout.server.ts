@@ -8,10 +8,9 @@ import type { LayoutServerLoad } from './$types';
 /**
  * Governor config shape prefetched for the desk session.
  *
- * Feeds both the pre-stream policy resolution (`resolveEffectivePolicy`
- * in `policy/governor.ts`) and the bot-config UI — the UI ceiling
- * matches the server ceiling so users can't toggle on a scope the
- * server will later reject.
+ * Feeds the bot-config UI and the desk tool scope-gating (`createDeskTools`
+ * omits tools for ungranted scopes) — the UI ceiling matches the server
+ * ceiling so users can't toggle on a scope the server will later reject.
  */
 export interface DeskGovernorConfig {
 	permittedScopes: Array<'desk:read' | 'desk:write' | 'desk:create' | 'desk:delete'>;

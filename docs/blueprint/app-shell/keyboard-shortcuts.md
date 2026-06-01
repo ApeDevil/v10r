@@ -564,7 +564,7 @@ src/lib/
 
 ## Related
 
-- [./quick-search.md](./quick-search.md) - QuickSearch modal
+- [../quick-search/](../quick-search/) - Command palette and universal search
 - [./ai-assistant.md](./ai-assistant.md) - AI Assistant modal
 - [./settings.md](./settings.md) - Enable/disable shortcuts setting
 - [./layout.md](./layout.md) - Shell integration

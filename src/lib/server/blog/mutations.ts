@@ -4,6 +4,7 @@ import { contentHash } from '$lib/server/content/hash';
 import { db } from '$lib/server/db';
 import { createId } from '$lib/server/db/id';
 import { asset, domain, post, postAsset, postTag, publishedRevision, revision, tag } from '$lib/server/db/schema/blog';
+import { localeRegconfig } from '$lib/server/search/regconfig';
 import { renderBlogPost } from './pipeline';
 import type { BlogAsset, BlogDomain, BlogPost, BlogRevision, BlogTag } from './types';
 
@@ -92,6 +93,16 @@ export async function createRevision(
 
 		const nextNumber = (maxResult?.maxNum ?? 0) + 1;
 
+		// App-populated FTS vector with the revision's per-locale regconfig
+		// (weights: title=A, summary=B, body=C). `cfg` is a server-side picklist
+		// value, never user input — safe to cast.
+		const cfg = localeRegconfig(locale);
+		const searchVector = sql`
+			setweight(to_tsvector(${cfg}::regconfig, ${data.title}), 'A')
+			|| setweight(to_tsvector(${cfg}::regconfig, ${data.summary ?? ''}), 'B')
+			|| setweight(to_tsvector(${cfg}::regconfig, ${data.markdown}), 'C')
+		`;
+
 		return tx
 			.insert(revision)
 			.values({
@@ -106,6 +117,7 @@ export async function createRevision(
 				embedDescriptors,
 				contentHash: hash,
 				authorId: data.authorId,
+				searchVector,
 			})
 			.returning();
 	});

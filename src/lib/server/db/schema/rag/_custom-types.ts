@@ -30,9 +30,12 @@ export const vector = (dimensions: number) =>
 /**
  * Postgres `tsvector` column type for full-text search.
  *
- * App code never writes this — our `search_vector` column is `GENERATED ALWAYS`
- * from `content` + `context_prefix`, so there's no `toDriver` path. Reads return
- * the raw tsvector text; queries use `@@` operators, not the column value itself.
+ * Two usage modes exist in the codebase, both write-via-SQL (never `toDriver`):
+ *  - `rag.chunk` uses a single-config `GENERATED ALWAYS` expression (immutable, allowed).
+ *  - `rag.llmwiki_page` and `blog.revision` are app-populated on insert with a
+ *    multi-field / per-locale `to_tsvector(regconfig, …)` expression, because Neon
+ *    rejects non-immutable generated expressions (SQLSTATE 42P17).
+ * Reads return the raw tsvector text; queries use `@@`, not the column value itself.
  */
 export const tsvector = customType<{ data: string; driverData: string }>({
 	dataType() {

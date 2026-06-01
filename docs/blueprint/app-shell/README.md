@@ -9,7 +9,6 @@ The app shell is the persistent UI skeleton that wraps all pages. It loads insta
 | **[layout.md](./layout.md)** | • Shell structure and component overview<br>• Breakpoints and tablet-specific patterns<br>• Focus management and skip links<br>• Breakpoint transition behavior |
 | **[sidebar.md](./sidebar.md)** | • Sidebar anatomy (header/body/footer zones)<br>• Responsive behavior (desktop rail, mobile drawer)<br>• FAB trigger for mobile<br>• User menu and dropdown |
 | **[navigation.md](./navigation.md)** | • Progressive disclosure pattern<br>• Compound nav buttons (split action/dropdown)<br>• Nav item states<br>• Example nav structure |
-| **[quick-search.md](./quick-search.md)** | • QuickSearch modal (command palette)<br>• Action safety (confirmation for destructive)<br>• Search categories (recent, pages, actions)<br>• Keyboard navigation |
 | **[ai-assistant.md](./ai-assistant.md)** | • AI chat modal<br>• Rate limiting (per-user limits)<br>• Input/output sanitization (XSS, prompt injection)<br>• Streaming and error states |
 | **[page-header.md](./page-header.md)** | • Per-page header (not global)<br>• Breadcrumbs and title<br>• XSS prevention for dynamic content<br>• Sticky option |
 | **[user-account.md](./user-account.md)** | • Profile editing (auto-save + Save button)<br>• Security (2FA, OAuth, sessions)<br>• GDPR data export (rate limited)<br>• Multi-step deletion with grace period |
@@ -45,3 +44,4 @@ The app shell is the persistent UI skeleton that wraps all pages. It loads insta
 - [../design/tokens.md](../design/tokens.md) - Sidebar dimensions, z-index values
 - [../design/components.md](../design/components.md) - Component specifications
 - [../state.md](../state.md) - Sidebar state management
+- [../quick-search/](../quick-search/) - Command palette and universal search (moved out of app-shell)

@@ -1,13 +1,16 @@
 /**
  * BLOG REVISION — Immutable content snapshots.
- * Revisions are never modified, only created. Rendered HTML is cached
- * at save time. search_vector is a GENERATED STORED column added via
- * raw SQL migration (Drizzle doesn't support generated columns).
+ * Revisions are never modified, only created. Rendered HTML is cached at save
+ * time. `search_vector` is an app-populated (NOT generated) tsvector written on
+ * insert in `createRevision()` with a per-locale `regconfig` — Neon rejects the
+ * non-immutable multi-field/per-locale expression in a generated column (42P17),
+ * so it mirrors `rag.llmwiki_page`. The GIN index below makes `@@` queries fast.
  */
 
 import { sql } from 'drizzle-orm';
 import { check, index, integer, jsonb, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
+import { tsvector } from '../rag/_custom-types';
 import { blogSchema, post } from './post';
 
 export const revision = blogSchema.table(
@@ -38,12 +41,19 @@ export const revision = blogSchema.table(
 		translatedBy: text('translated_by'),
 		authorId: text('author_id').references(() => user.id, { onDelete: 'set null' }),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+		/**
+		 * Full-text search vector over title (A) + summary (B) + markdown (C),
+		 * built with the revision's per-locale `regconfig`. App-populated on insert
+		 * (see `createRevision`); NOT a generated column (42P17 on Neon).
+		 */
+		searchVector: tsvector('search_vector'),
 	},
 	(table) => [
 		index('blog_revision_post_created_idx').on(table.postId, table.createdAt.desc()),
 		index('blog_revision_post_locale_created_idx').on(table.postId, table.locale, table.createdAt.desc()),
 		uniqueIndex('blog_revision_post_locale_number_idx').on(table.postId, table.locale, table.revisionNumber),
 		index('blog_revision_author_idx').on(table.authorId),
+		index('blog_revision_search_vector_idx').using('gin', table.searchVector),
 		check('locale_format', sql`${table.locale} ~ '^[a-z]{2}(-[A-Z]{2})?$'`),
 	],
 );

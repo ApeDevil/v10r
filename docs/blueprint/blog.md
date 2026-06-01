@@ -440,7 +440,7 @@ Indexes: `(slug)` unique, `(author_id)`, `(status, published_at DESC)`, `(create
 | `rendered_html` | text | nullable | Cached pipeline output (image URLs are stable proxy paths) |
 | `embed_descriptors` | jsonb | nullable | `EmbedDescriptor[]` cached from pipeline |
 | `content_hash` | text | NOT NULL | SHA-256 of markdown, used as re-ingest gate |
-| `search_vector` | tsvector | GENERATED STORED | Weighted: title(A), summary(B), markdown(C) |
+| `search_vector` | tsvector | nullable, app-populated | Per-locale weighted vector: title(A), summary(B), markdown(C) |
 | `author_id` | text | nullable, FK -> auth.user(id) ON DELETE SET NULL | Who made this revision. Nullable: user deletion sets null, revision stays. |
 | `created_at` | timestamptz | NOT NULL, DEFAULT now() | |
 
@@ -452,15 +452,13 @@ Indexes: `(post_id, created_at DESC)`, `(post_id, locale, created_at DESC)`, `(p
 
 **content_hash**: SHA-256 of markdown. On republish, compare with existing `rag.document.content_hash` — skip re-embedding if unchanged.
 
-**search_vector**: stored generated column (raw SQL migration — Drizzle doesn't support `GENERATED ALWAYS AS STORED`):
-```sql
-ALTER TABLE blog.revision ADD COLUMN search_vector tsvector
-  GENERATED ALWAYS AS (
-    setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
-    setweight(to_tsvector('english', coalesce(summary, '')), 'B') ||
-    setweight(to_tsvector('english', coalesce(markdown, '')), 'C')
-  ) STORED;
-```
+**search_vector**: plain `tsvector` column, app-populated in `createRevision()`. On insert, `localeRegconfig(locale)` selects the Postgres FTS configuration (`english` / `german` / `russian` / `simple`) and builds a weighted vector: title=A, summary=B, markdown=C. The GIN index (`blog_revision_search_vector_idx`) makes `@@` queries fast.
+
+A `GENERATED ALWAYS AS … STORED` column was ruled out because Neon rejects the non-immutable per-locale `to_tsvector(regconfig, …)` expression with **SQLSTATE 42P17**. Additionally, `drizzle-kit push` silently ignores expression changes to generated columns. The same pattern applies to `rag.llmwiki_page`.
+
+Setup and backfill: `bun run db:search-backfill` adds the column and index with `IF NOT EXISTS` guards and backfills any existing revisions.
+
+For the query engine, `ts_headline` usage, XSS-safe highlighting, and `localeRegconfig` details, see [`../quick-search/blog-fts.md`](../quick-search/blog-fts.md).
 
 #### `blog.published_revision` — Locale-Aware Publish Pointers
 
@@ -595,7 +593,7 @@ The original `asset://` protocol design was not implemented — proxy URLs achie
 
 ### Full-Text Search: Dual Strategy
 
-**PostgreSQL tsvector** — keyword search (the search bar): stored generated column on `blog.revision` with weighted fields (title A, summary B, markdown C) + GIN index. See revision table definition above.
+**PostgreSQL tsvector** — keyword search (the search bar): app-populated per-locale `tsvector` on `blog.revision` (`search_vector`), GIN-indexed (`blog_revision_search_vector_idx`). See revision table definition above and [`../quick-search/blog-fts.md`](../quick-search/blog-fts.md) for the query engine and highlighting details.
 
 **RAG embeddings** — semantic search (AI assistant, related posts): blog posts ingested as RAG documents via existing pipeline. Embed directives include `altText` for RAG indexing (e.g., "Chart showing revenue Q4 data").
 
@@ -1160,7 +1158,7 @@ Comment writes are rate-limited (5/min + 30/hr per user, 20/hr per IP, 60/min pe
 | 0003 | `CREATE TABLE blog.tag` | No FK dependencies |
 | 0004 | `CREATE TABLE blog.asset` | FK to `auth.user` only |
 | 0005 | `CREATE TABLE blog.post` | FK to `auth.user` + `blog.asset` |
-| 0006 | `CREATE TABLE blog.revision` + generated `search_vector` column | FK to `blog.post` + `auth.user`. Generated column via `ALTER TABLE`. |
+| 0006 | `CREATE TABLE blog.revision` + `search_vector` column + GIN index | FK to `blog.post` + `auth.user`. Column is app-populated (not generated); `bun run db:search-backfill` adds it with `IF NOT EXISTS` guards. |
 | 0007 | `CREATE TABLE blog.published_revision` | FK to `blog.post` + `blog.revision` |
 | 0008 | `CREATE TABLE blog.post_tag` + `blog.post_asset` | Junction tables, FK to existing tables |
 | 0009 | `CREATE TABLE blog.comment` | FK to `blog.published_revision(post_id, locale)`, `auth.user` |

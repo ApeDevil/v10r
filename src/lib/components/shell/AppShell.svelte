@@ -14,10 +14,12 @@ import {
 	ToastContainer,
 } from '$lib/components/shell';
 import { DESK_PANELS } from '$lib/config/desk-panels';
-import { searchPages } from '$lib/nav';
+import { localizeHref } from '$lib/i18n/runtime';
 import * as m from '$lib/paraglide/messages';
+import type { SearchLocale, SearchResult } from '$lib/search/types';
 import type { ResolvedAnnouncement } from '$lib/server/admin/announcements';
 import { getModals } from '$lib/state/modals.svelte';
+import { createSearchEngine } from '$lib/state/search.svelte';
 import { type Session, setSessionContext } from '$lib/state/session.svelte';
 import { getTheme } from '$lib/state/theme.svelte';
 
@@ -53,22 +55,52 @@ $effect(() => {
 	}
 });
 
-// Re-derive labels per render so locale switches refresh search results.
-const pageSearchItems = $derived(
-	searchPages.map((p) => ({
-		id: p.id,
-		type: 'page' as const,
-		label: p.label(),
-		icon: p.icon,
-		href: p.href,
-		hint: p.hint?.(),
-		secondary: {
-			icon: 'i-lucide-external-link',
-			label: m.shell_open_in_new_tab(),
-			action: () => window.open(p.href, '_blank'),
-		},
-	})),
-);
+// Universal search engine: instant client lane (prerendered shard) + debounced
+// server lane (full-body docs + live blog). Lazy-fetches the shard on first open.
+const search = createSearchEngine();
+let searchQuery = $state('');
+const activeLocale = $derived((page.params.locale ?? 'en') as SearchLocale);
+
+$effect(() => {
+	search.setLocale(activeLocale);
+});
+$effect(() => {
+	search.setQuery(searchQuery);
+});
+$effect(() => {
+	if (modals.quickSearchOpen) search.ensureLoaded();
+});
+
+const SURFACE_ICON: Record<string, string> = {
+	page: 'i-lucide-file-text',
+	showcase: 'i-lucide-view',
+	section: 'i-lucide-component',
+	doc: 'i-lucide-book-open',
+	blog: 'i-lucide-newspaper',
+};
+
+function toItem(r: SearchResult): CommandPaletteItem {
+	return {
+		id: r.id,
+		type: r.surface,
+		label: r.title,
+		icon: r.icon ?? SURFACE_ICON[r.surface] ?? 'i-lucide-file',
+		href: localizeHref(r.path) + (r.anchor ?? ''),
+		hint: r.breadcrumb.length > 0 ? r.breadcrumb.join(' / ') : undefined,
+		snippet: r.snippet ?? undefined,
+		highlight: r.highlight,
+		badge: r.badge,
+	};
+}
+
+// Merge both lanes, de-duping by destination (server result wins → richer snippet).
+const searchResultItems = $derived.by<CommandPaletteItem[]>(() => {
+	const byDest = new Map<string, SearchResult>();
+	const key = (r: SearchResult) => `${r.surface}:${r.path}:${r.anchor ?? ''}`;
+	for (const r of search.instant) byDest.set(key(r), r);
+	for (const r of search.async) byDest.set(key(r), r);
+	return Array.from(byDest.values()).map(toItem);
+});
 
 const panelSearchItems = $derived(
 	Object.values(DESK_PANELS).map((p) => ({
@@ -87,7 +119,7 @@ const panelSearchItems = $derived(
 );
 
 const searchItems = $derived<CommandPaletteItem[]>([
-	...pageSearchItems,
+	...searchResultItems,
 	...panelSearchItems,
 	{
 		id: 'toggle-theme',
@@ -140,8 +172,14 @@ const searchItems = $derived<CommandPaletteItem[]>([
 <!-- Toast notifications -->
 <ToastContainer />
 
-<!-- Command palette -->
-<CommandPalette bind:open={modals.quickSearchOpen} items={searchItems} />
+<!-- Command palette: universal two-lane search -->
+<CommandPalette
+	bind:open={modals.quickSearchOpen}
+	bind:query={searchQuery}
+	items={searchItems}
+	mode="search"
+	loading={search.status === 'loading'}
+/>
 
 <!-- AI assistant chatbot: dynamically imported on first open (keeps the ai/@ai-sdk/svelte graph out of the initial page payload) -->
 {#if ChatbotComponent && modals.aiAssistantOpen}

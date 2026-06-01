@@ -2,6 +2,7 @@ import { and, asc, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema/auth';
 import { asset, domain, post, postAsset, postTag, publishedRevision, revision, tag } from '$lib/server/db/schema/blog';
+import { localeRegconfig } from '$lib/server/search/regconfig';
 import type {
 	BlogAsset,
 	BlogDomain,
@@ -380,18 +381,60 @@ export async function getDomainBySlug(slug: string): Promise<BlogDomain | null> 
 	return row ?? null;
 }
 
-/** Full-text search on revisions using tsvector. */
-export async function searchPosts(query: string, limit = 20) {
+/** Headline highlight sentinels — non-printing bytes so they never collide with
+ * real content. The search layer strips them into plain text + offset ranges. */
+export const HL_START = ''; // STX
+export const HL_STOP = ''; // ETX
+
+export interface RevisionSearchHit {
+	postId: string;
+	slug: string;
+	locale: string;
+	title: string;
+	summary: string | null;
+	/** `ts_headline` excerpt with HL sentinels around matches. */
+	headline: string;
+	rank: number;
+}
+
+/**
+ * Full-text search over PUBLISHED, non-deleted revisions for a given locale.
+ *
+ * Joins `published_revision` → `revision` → `post` so only currently-published,
+ * non-soft-deleted content matches (drafts never surface). Uses the locale's
+ * `regconfig` symmetrically at index and query time.
+ */
+export async function searchPublishedRevisions(
+	query: string,
+	locale: string,
+	limit = 20,
+): Promise<RevisionSearchHit[]> {
+	const cfg = localeRegconfig(locale);
+	const tsquery = sql`websearch_to_tsquery(${cfg}::regconfig, ${query})`;
+	const headlineOpts = `StartSel=${HL_START},StopSel=${HL_STOP},MaxFragments=1,MinWords=6,MaxWords=26,ShortWord=2`;
+
 	return db
 		.select({
 			postId: revision.postId,
+			slug: post.slug,
+			locale: revision.locale,
 			title: revision.title,
 			summary: revision.summary,
-			rank: sql<number>`ts_rank(search_vector, plainto_tsquery('english', ${query}))`,
+			headline: sql<string>`ts_headline(${cfg}::regconfig, ${revision.markdown}, ${tsquery}, ${headlineOpts})`,
+			rank: sql<number>`ts_rank_cd(${revision.searchVector}, ${tsquery})`,
 		})
-		.from(revision)
-		.where(sql`search_vector @@ plainto_tsquery('english', ${query})`)
-		.orderBy(desc(sql`ts_rank(search_vector, plainto_tsquery('english', ${query}))`))
+		.from(publishedRevision)
+		.innerJoin(revision, eq(revision.id, publishedRevision.revisionId))
+		.innerJoin(post, eq(post.id, publishedRevision.postId))
+		.where(
+			and(
+				eq(publishedRevision.locale, locale),
+				eq(post.status, 'published'),
+				isNull(post.deletedAt),
+				sql`${revision.searchVector} @@ ${tsquery}`,
+			),
+		)
+		.orderBy(desc(sql`ts_rank_cd(${revision.searchVector}, ${tsquery})`))
 		.limit(limit);
 }
 

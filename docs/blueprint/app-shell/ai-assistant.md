@@ -361,7 +361,7 @@ await db.insert(aiAuditLog).values({
 
 ## Related
 
-- [./quick-search.md](./quick-search.md) - Similar modal pattern
+- [../quick-search/](../quick-search/) - Command palette (similar modal pattern)
 - [../ai/README.md](../ai/README.md) - Full AI implementation
 - [../rate-limiting.md](../rate-limiting.md) - Rate limiting patterns
 - [../error-handling.md](../error-handling.md) - Error handling patterns

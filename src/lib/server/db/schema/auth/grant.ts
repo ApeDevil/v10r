@@ -7,10 +7,10 @@
  * after grant — set by the layout load, cleared via single-fire UPDATE.
  */
 import { sql } from 'drizzle-orm';
-import { index, pgEnum, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { index, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { authSchema, user } from './_better-auth';
 
-export const grantKindEnum = pgEnum('grant_kind', ['blog-author']);
+export const grantKindEnum = authSchema.enum('grant_kind', ['blog-author']);
 
 export const grant = authSchema.table(
 	'grant',

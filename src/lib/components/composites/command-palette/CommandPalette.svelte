@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Command as CommandPrimitive, Dialog } from 'bits-ui';
 import { goto } from '$app/navigation';
+import { localizeHref } from '$lib/i18n/runtime';
 import { cn } from '$lib/utils/cn';
 import {
 	commandEmptyVariants,
@@ -16,36 +17,107 @@ import type { CommandPaletteItem } from './types';
 interface Props {
 	open: boolean;
 	items: CommandPaletteItem[];
+	/** Current query text (bindable so a parent can drive a live search engine). */
+	query?: string;
 	placeholder?: string;
+	/**
+	 * 'filter' (default): the palette filters ALL items by the query (self-contained,
+	 * e.g. the showcase demo). 'search': command items (panel/action/recent) are
+	 * filtered; search surfaces (page/showcase/section/doc/blog) arrive pre-matched.
+	 */
+	mode?: 'filter' | 'search';
+	/** Server lane in flight (search mode) — shows a loading row. */
+	loading?: boolean;
 }
 
-let { open = $bindable(false), items, placeholder = 'Search pages, panels, actions...' }: Props = $props();
+let {
+	open = $bindable(false),
+	items,
+	query = $bindable(''),
+	placeholder = 'Search pages, docs, blog, panels…',
+	mode = 'filter',
+	loading = false,
+}: Props = $props();
 
-let inputValue = $state('');
+const COMMAND_TYPES = new Set(['recent', 'panel', 'action']);
 
-// Group items by type with per-group caps when query is active
+// Group items for display. Command items are always filtered by the query;
+// search-surface items are filtered in 'filter' mode but rendered as-is in
+// 'search' mode (they were already matched by the engine).
 let grouped = $derived.by(() => {
-	const recent = items.filter((i) => i.type === 'recent');
-	const panels = items.filter((i) => i.type === 'panel');
-	const pages = items.filter((i) => i.type === 'page');
-	const actions = items.filter((i) => i.type === 'action');
+	const q = query.trim().toLowerCase();
+	const matchesText = (i: CommandPaletteItem) =>
+		!q || i.label.toLowerCase().includes(q) || (i.hint?.toLowerCase().includes(q) ?? false);
 
-	if (inputValue) {
+	const command = (type: CommandPaletteItem['type']) => items.filter((i) => i.type === type && matchesText(i));
+	const surface = (type: CommandPaletteItem['type']) => {
+		const arr = items.filter((i) => i.type === type);
+		return mode === 'search' ? arr : arr.filter(matchesText);
+	};
+
+	if (!q) {
+		// Launcher view: recents + panels + actions only.
 		return {
-			recent,
-			panels: panels.slice(0, 4),
-			pages: pages.slice(0, 8),
-			actions: actions.slice(0, 3),
+			recent: command('recent'),
+			pages: [] as CommandPaletteItem[],
+			showcase: [] as CommandPaletteItem[],
+			section: [] as CommandPaletteItem[],
+			doc: [] as CommandPaletteItem[],
+			blog: [] as CommandPaletteItem[],
+			panel: command('panel'),
+			action: command('action'),
 		};
 	}
 
-	// Hide pages when no query (too many)
-	return { recent, panels, pages: [], actions };
+	return {
+		recent: command('recent'),
+		pages: surface('page').slice(0, 6),
+		showcase: surface('showcase').slice(0, 5),
+		section: surface('section').slice(0, 5),
+		doc: surface('doc').slice(0, 5),
+		blog: surface('blog').slice(0, 5),
+		panel: command('panel').slice(0, 4),
+		action: command('action').slice(0, 3),
+	};
 });
 
-function handleSelect(item: CommandPaletteItem) {
+let groups = $derived(
+	[
+		{ key: 'recent', heading: 'Recent', items: grouped.recent },
+		{ key: 'pages', heading: 'Pages', items: grouped.pages },
+		{ key: 'showcase', heading: 'Showcases', items: grouped.showcase },
+		{ key: 'section', heading: 'Elements', items: grouped.section },
+		{ key: 'doc', heading: 'Docs', items: grouped.doc },
+		{ key: 'blog', heading: 'Blog', items: grouped.blog },
+		{ key: 'panel', heading: 'Panels', items: grouped.panel },
+		{ key: 'action', heading: 'Actions', items: grouped.action },
+	].filter((g) => g.items.length > 0),
+);
+
+let total = $derived(groups.reduce((n, g) => n + g.items.length, 0));
+let hasQuery = $derived(query.trim().length > 0);
+
+/** Split a snippet into plain + highlighted segments (no `{@html}`). */
+function segments(snippet: string, highlight?: [number, number][]) {
+	if (!highlight || highlight.length === 0) return [{ text: snippet, mark: false }];
+	const out: { text: string; mark: boolean }[] = [];
+	let pos = 0;
+	for (const [s, e] of highlight) {
+		if (s > pos) out.push({ text: snippet.slice(pos, s), mark: false });
+		out.push({ text: snippet.slice(s, e), mark: true });
+		pos = e;
+	}
+	if (pos < snippet.length) out.push({ text: snippet.slice(pos), mark: false });
+	return out;
+}
+
+function close() {
 	open = false;
-	inputValue = '';
+	query = '';
+}
+
+function handleSelect(item: CommandPaletteItem) {
+	close();
 	if (item.href) {
 		goto(item.href);
 	} else if (item.action) {
@@ -54,16 +126,20 @@ function handleSelect(item: CommandPaletteItem) {
 }
 
 function handleSecondary(item: CommandPaletteItem) {
-	open = false;
-	inputValue = '';
+	close();
 	item.secondary?.action();
 }
 
-// Reset on open
+function goToSearchPage() {
+	const q = query.trim();
+	if (!q) return;
+	close();
+	goto(localizeHref(`/search?q=${encodeURIComponent(q)}`));
+}
+
+// Reset query when the palette opens.
 $effect(() => {
-	if (open) {
-		inputValue = '';
-	}
+	if (open) query = '';
 });
 </script>
 
@@ -81,66 +157,47 @@ $effect(() => {
 						{placeholder}
 						class={cn(commandInputVariants(), 'flex-1')}
 						autofocus
-						bind:value={inputValue}
+						bind:value={query}
 					/>
+					{#if loading}
+						<span class="i-lucide-loader-circle h-4 w-4 text-muted shrink-0 animate-spin" aria-hidden="true"></span>
+					{/if}
 					<kbd class="cp-kbd rounded px-2 py-0.5 text-xs text-muted">ESC</kbd>
 				</div>
 
 				<CommandPrimitive.List class={cn(commandListVariants(), 'p-2 flex flex-col gap-2')}>
-					<CommandPrimitive.Empty class={commandEmptyVariants()}>
-						No results found.
-					</CommandPrimitive.Empty>
-
-					{#if grouped.recent.length > 0}
-						<CommandPrimitive.Group>
-							<CommandPrimitive.GroupHeading class={commandGroupHeadingVariants()}>
-								Recent
-							</CommandPrimitive.GroupHeading>
-							<CommandPrimitive.GroupItems>
-								{#each grouped.recent as item (item.id)}
-									{@render paletteItem(item)}
-								{/each}
-							</CommandPrimitive.GroupItems>
-						</CommandPrimitive.Group>
+					{#if hasQuery && total === 0 && !loading}
+						<CommandPrimitive.Empty class={commandEmptyVariants()}>
+							No results found.
+						</CommandPrimitive.Empty>
 					{/if}
 
-					{#if grouped.panels.length > 0}
+					{#each groups as group (group.key)}
 						<CommandPrimitive.Group>
 							<CommandPrimitive.GroupHeading class={commandGroupHeadingVariants()}>
-								Panels
+								{group.heading}
 							</CommandPrimitive.GroupHeading>
 							<CommandPrimitive.GroupItems>
-								{#each grouped.panels as item (item.id)}
+								{#each group.items as item (item.id)}
 									{@render paletteItem(item)}
 								{/each}
 							</CommandPrimitive.GroupItems>
 						</CommandPrimitive.Group>
+					{/each}
+
+					{#if mode === 'search' && loading && total === 0}
+						<div class="cp-status flex items-center gap-2 px-3 py-2 text-sm text-muted">
+							<span class="i-lucide-loader-circle h-4 w-4 animate-spin" aria-hidden="true"></span>
+							Searching…
+						</div>
 					{/if}
 
-					{#if grouped.pages.length > 0}
-						<CommandPrimitive.Group>
-							<CommandPrimitive.GroupHeading class={commandGroupHeadingVariants()}>
-								Pages
-							</CommandPrimitive.GroupHeading>
-							<CommandPrimitive.GroupItems>
-								{#each grouped.pages as item (item.id)}
-									{@render paletteItem(item)}
-								{/each}
-							</CommandPrimitive.GroupItems>
-						</CommandPrimitive.Group>
-					{/if}
-
-					{#if grouped.actions.length > 0}
-						<CommandPrimitive.Group>
-							<CommandPrimitive.GroupHeading class={commandGroupHeadingVariants()}>
-								Actions
-							</CommandPrimitive.GroupHeading>
-							<CommandPrimitive.GroupItems>
-								{#each grouped.actions as item (item.id)}
-									{@render paletteItem(item)}
-								{/each}
-							</CommandPrimitive.GroupItems>
-						</CommandPrimitive.Group>
+					{#if mode === 'search' && hasQuery}
+						<button class="cp-more" onclick={goToSearchPage}>
+							<span class="i-lucide-search h-4 w-4 shrink-0" aria-hidden="true"></span>
+							<span>Search everything for “{query.trim()}”</span>
+							<span class={commandShortcutVariants()}>↵</span>
+						</button>
 					{/if}
 				</CommandPrimitive.List>
 			</CommandPrimitive.Root>
@@ -155,15 +212,25 @@ $effect(() => {
 			class={cn(
 				commandItemVariants(),
 				'flex-1 min-w-0',
-				item.hint ? 'py-1.5' : 'py-2',
+				item.hint || item.snippet ? 'py-1.5' : 'py-2',
 			)}
 			onSelect={() => handleSelect(item)}
 		>
 			<span class={cn(item.icon, 'h-4 w-4 shrink-0')} ></span>
 			<span class="flex flex-col min-w-0">
-				<span>{item.label}</span>
+				<span class="flex items-center gap-2 min-w-0">
+					<span class="truncate">{item.label}</span>
+					{#if item.badge === 'en-fallback'}
+						<span class="cp-badge" aria-label="English content">EN</span>
+					{/if}
+				</span>
 				{#if item.hint}
-					<span class="cp-hint">{item.hint}</span>
+					<span class="cp-hint truncate">{item.hint}</span>
+				{/if}
+				{#if item.snippet}
+					<span class="cp-snippet">
+						{#each segments(item.snippet, item.highlight) as seg}{#if seg.mark}<mark class="cp-mark">{seg.text}</mark>{:else}{seg.text}{/if}{/each}
+					</span>
 				{/if}
 			</span>
 			{#if item.shortcut}
@@ -202,6 +269,60 @@ $effect(() => {
 		font-size: 11px;
 		color: var(--color-muted);
 		line-height: 1.2;
+	}
+
+	.cp-snippet {
+		font-size: 12px;
+		color: var(--color-muted);
+		line-height: 1.35;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	.cp-mark {
+		background: transparent;
+		color: var(--color-fg);
+		font-weight: 600;
+	}
+
+	.cp-badge {
+		flex-shrink: 0;
+		font-size: 10px;
+		font-weight: 600;
+		line-height: 1;
+		padding: 2px 4px;
+		border-radius: var(--radius-sm);
+		color: var(--color-muted);
+		background-color: color-mix(in srgb, var(--color-muted) 18%, transparent);
+	}
+
+	.cp-more {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		width: 100%;
+		padding: 0.5rem 0.75rem;
+		border-radius: var(--radius-md);
+		font-size: 0.875rem;
+		color: var(--color-muted);
+		background: transparent;
+		cursor: pointer;
+		text-align: left;
+	}
+
+	.cp-more:hover {
+		color: var(--color-fg);
+		background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+	}
+
+	.cp-more span:nth-child(2) {
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	/* Row wrapper for item + secondary button */

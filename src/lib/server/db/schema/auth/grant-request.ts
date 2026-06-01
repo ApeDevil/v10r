@@ -7,11 +7,11 @@
  * with resolvedBy = NULL as the system sentinel.
  */
 import { sql } from 'drizzle-orm';
-import { index, pgEnum, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { index, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { authSchema, user } from './_better-auth';
 import { grantKindEnum } from './grant';
 
-export const grantRequestStatusEnum = pgEnum('grant_request_status', ['pending', 'approved', 'denied']);
+export const grantRequestStatusEnum = authSchema.enum('grant_request_status', ['pending', 'approved', 'denied']);
 
 export const grantRequest = authSchema.table(
 	'grant_request',
