@@ -44,4 +44,4 @@ The app shell is the persistent UI skeleton that wraps all pages. It loads insta
 - [../design/tokens.md](../design/tokens.md) - Sidebar dimensions, z-index values
 - [../design/components.md](../design/components.md) - Component specifications
 - [../state.md](../state.md) - Sidebar state management
-- [../quick-search/](../quick-search/) - Command palette and universal search (moved out of app-shell)
+- [../quick-search/](../quick-search/) - Quick Search — universal search (moved out of app-shell)

@@ -659,261 +659,116 @@ Usage:
 
 ---
 
-### QuickSearch
+### CommandPalette
 
-Global search and navigation modal. Opens via `⌘K` or sidebar trigger.
+Universal search and command modal. Opens via `⌘K` / `Ctrl+K` or the sidebar search trigger.
 
 ```svelte
-<!-- src/lib/components/composites/quick-search/QuickSearch.svelte -->
-<script lang="ts">
-  import { Dialog } from 'bits-ui';
-  import { Input } from '$lib/components/primitives';
-  import Icon from '@iconify/svelte';
-  import { cn } from '$lib/utils/cn';
-  import { goto } from '$app/navigation';
+<!-- src/lib/components/composites/command-palette/CommandPalette.svelte -->
+```
 
-  interface QuickSearchItem {
-    id: string;
-    type: 'page' | 'action' | 'recent';
-    label: string;
-    icon: string;
-    href?: string;
-    action?: () => void;
-  }
+Built on Bits UI `Command` + `Dialog` primitives with `shouldFilter={false}` — all filtering is handled by the engine or the component's own derived state.
 
-  interface Props {
-    open: boolean;
-    items: QuickSearchItem[];
-  }
+#### Props
 
-  let { open = $bindable(false), items }: Props = $props();
+```ts
+interface Props {
+  open: boolean;       // bindable
+  items: CommandPaletteItem[];
+  query?: string;      // bindable — parent drives the search engine
+  placeholder?: string;
+  mode?: 'filter' | 'search';  // default: 'filter'
+  loading?: boolean;   // shows spinner in search mode
+}
+```
 
-  let query = $state('');
-  let selectedIndex = $state(0);
+| Prop | Default | Description |
+|------|---------|-------------|
+| `open` | `false` | Bindable. Controls dialog visibility. |
+| `items` | — | All items passed to the palette. |
+| `query` | `''` | Bindable. Current search query. |
+| `placeholder` | `'Search pages, docs, blog, panels…'` | Input placeholder text. |
+| `mode` | `'filter'` | `'filter'`: palette filters items client-side. `'search'`: search-surface items arrive pre-matched. |
+| `loading` | `false` | Shows a spinner. Used in `'search'` mode while the server lane is in flight. |
 
-  // Filter items based on query
-  let filtered = $derived(
-    query
-      ? items.filter((item) =>
-          item.label.toLowerCase().includes(query.toLowerCase())
-        )
-      : items
-  );
+#### Item Type
 
-  // Group by type
-  let grouped = $derived({
-    recent: filtered.filter((i) => i.type === 'recent'),
-    pages: filtered.filter((i) => i.type === 'page'),
-    actions: filtered.filter((i) => i.type === 'action'),
-  });
+Items use `CommandPaletteItem` from `$lib/components/composites/command-palette/types.ts`:
 
-  function handleSelect(item: QuickSearchItem) {
-    open = false;
-    query = '';
-    if (item.href) {
-      goto(item.href);
-    } else if (item.action) {
-      item.action();
-    }
-  }
+```ts
+type CommandPaletteItemType =
+  'page' | 'action' | 'recent' | 'panel' |
+  'showcase' | 'section' | 'doc' | 'blog';
 
-  function handleKeydown(e: KeyboardEvent) {
-    const total = filtered.length;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      selectedIndex = (selectedIndex + 1) % total;
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      selectedIndex = (selectedIndex - 1 + total) % total;
-    } else if (e.key === 'Enter' && filtered[selectedIndex]) {
-      e.preventDefault();
-      handleSelect(filtered[selectedIndex]);
-    }
-  }
+interface CommandPaletteItem {
+  id: string;
+  type: CommandPaletteItemType;
+  label: string;
+  icon: string;           // CSS icon class, e.g. 'i-lucide-home'
+  href?: string;
+  action?: () => void;
+  secondary?: { icon: string; label: string; action: () => void };
+  hint?: string;          // sub-label / breadcrumb
+  shortcut?: string;
+  snippet?: string;       // plain-text excerpt for search results
+  highlight?: [number, number][];  // character ranges into snippet
+  badge?: 'en-fallback' | null;
+}
+```
 
-  // Reset on open
-  $effect(() => {
-    if (open) {
-      query = '';
-      selectedIndex = 0;
-    }
-  });
-</script>
+Items are rendered internally by `CommandPalette`. There is no separate item component.
 
-<!-- Global keyboard shortcut -->
-<svelte:window
-  onkeydown={(e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-      e.preventDefault();
-      open = true;
-    }
-  }}
+#### `mode` Prop
+
+| Mode | Behavior |
+|------|----------|
+| `'filter'` (default) | Self-contained. Filters all items by query client-side. Use for demos. |
+| `'search'` | Real universal search. Command items (`panel`/`action`/`recent`) are filtered client-side; search-surface items (`page`/`showcase`/`section`/`doc`/`blog`) arrive pre-matched. |
+
+`AppShell.svelte` always uses `mode="search"`.
+
+#### Display Groups
+
+When a query is active, items are grouped in order: Recent, Pages, Showcases, Elements (section), Docs, Blog, Panels, Actions. When the query is empty, only Recents, Panels, and Actions are shown (launcher view).
+
+#### AppShell Wiring
+
+`CommandPalette` is mounted once in `AppShell.svelte`, bound to the modal store:
+
+```svelte
+<CommandPalette
+  bind:open={modals.quickSearchOpen}
+  bind:query={searchQuery}
+  items={searchItems}
+  mode="search"
+  loading={search.status === 'loading'}
 />
-
-<Dialog.Root bind:open>
-  <Dialog.Portal>
-    <Dialog.Overlay class="fixed inset-0 z-overlay bg-black/50" />
-    <Dialog.Content
-      class={cn(
-        'fixed left-1/2 top-1/4 z-modal -translate-x-1/2',
-        'w-full max-w-lg rounded-lg border border-border bg-bg shadow-xl'
-      )}
-      onkeydown={handleKeydown}
-    >
-      <div class="flex items-center gap-3 border-b border-border px-4 py-3">
-        <Icon icon="lucide:search" class="h-5 w-5 text-muted" />
-        <input
-          type="text"
-          placeholder="Search pages, actions..."
-          class="flex-1 bg-transparent text-fg placeholder:text-muted focus:outline-none"
-          bind:value={query}
-        />
-        <kbd class="rounded bg-muted/20 px-2 py-0.5 text-xs text-muted">ESC</kbd>
-      </div>
-
-      <div class="max-h-80 overflow-y-auto p-2">
-        {#if grouped.recent.length > 0}
-          <div class="mb-2">
-            <span class="px-2 text-xs font-medium text-muted">Recent</span>
-            {#each grouped.recent as item, i}
-              <button
-                class={cn(
-                  'flex w-full items-center gap-3 rounded-md px-3 py-2 text-left',
-                  filtered.indexOf(item) === selectedIndex
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-fg hover:bg-muted/10'
-                )}
-                onclick={() => handleSelect(item)}
-              >
-                <Icon icon={item.icon} class="h-4 w-4" />
-                <span>{item.label}</span>
-              </button>
-            {/each}
-          </div>
-        {/if}
-
-        {#if grouped.pages.length > 0}
-          <div class="mb-2">
-            <span class="px-2 text-xs font-medium text-muted">Pages</span>
-            {#each grouped.pages as item}
-              <button
-                class={cn(
-                  'flex w-full items-center gap-3 rounded-md px-3 py-2 text-left',
-                  filtered.indexOf(item) === selectedIndex
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-fg hover:bg-muted/10'
-                )}
-                onclick={() => handleSelect(item)}
-              >
-                <Icon icon={item.icon} class="h-4 w-4" />
-                <span>{item.label}</span>
-              </button>
-            {/each}
-          </div>
-        {/if}
-
-        {#if grouped.actions.length > 0}
-          <div>
-            <span class="px-2 text-xs font-medium text-muted">Actions</span>
-            {#each grouped.actions as item}
-              <button
-                class={cn(
-                  'flex w-full items-center gap-3 rounded-md px-3 py-2 text-left',
-                  filtered.indexOf(item) === selectedIndex
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-fg hover:bg-muted/10'
-                )}
-                onclick={() => handleSelect(item)}
-              >
-                <Icon icon={item.icon} class="h-4 w-4" />
-                <span>{item.label}</span>
-              </button>
-            {/each}
-          </div>
-        {/if}
-
-        {#if filtered.length === 0}
-          <div class="py-8 text-center text-muted">
-            No results for "{query}"
-          </div>
-        {/if}
-      </div>
-    </Dialog.Content>
-  </Dialog.Portal>
-</Dialog.Root>
 ```
 
-#### QuickSearchTrigger (Sidebar)
+The modal store field `modals.quickSearchOpen` and the `ModalId` string `'quickSearch'` are the real shipped identifiers. Open the palette programmatically with `modals.open('quickSearch')` or toggle with `modals.toggle('quickSearch')`.
 
-Fake input that opens QuickSearch. Adapts to sidebar collapsed/expanded state.
+#### Trigger
 
-```svelte
-<!-- src/lib/components/composites/quick-search/QuickSearchTrigger.svelte -->
-<script lang="ts">
-  import Icon from '@iconify/svelte';
-  import { cn } from '$lib/utils/cn';
+There is no standalone trigger component. The trigger is `SidebarTriggers.svelte` (in `shell/`), which calls `modals.open('quickSearch')` when clicked. The ⌘K / Ctrl+K global shortcut does the same.
 
-  interface Props {
-    collapsed?: boolean;
-    onclick: () => void;
-  }
+#### Exports
 
-  let { collapsed = false, onclick }: Props = $props();
-</script>
-
-{#if collapsed}
-  <!-- Rail mode: icon only -->
-  <button
-    class="flex h-10 w-10 items-center justify-center rounded-md text-muted hover:bg-muted/10 hover:text-fg"
-    {onclick}
-    aria-label="Open search"
-  >
-    <Icon icon="lucide:search" class="h-5 w-5" />
-  </button>
-{:else}
-  <!-- Expanded mode: fake input -->
-  <button
-    class={cn(
-      'flex h-9 w-full items-center gap-2 rounded-md border border-border bg-bg/50 px-3',
-      'text-muted hover:border-muted hover:text-fg',
-      'transition-colors duration-fast'
-    )}
-    {onclick}
-  >
-    <Icon icon="lucide:search" class="h-4 w-4" />
-    <span class="flex-1 text-left text-sm">Search...</span>
-    <kbd class="rounded bg-muted/20 px-1.5 py-0.5 text-xs">⌘K</kbd>
-  </button>
-{/if}
+```ts
+// src/lib/components/composites/command-palette/index.ts
+export { default as CommandPalette } from './CommandPalette.svelte';
+export type { CommandPaletteItem } from './types';
+// also exports CVA variant functions
 ```
 
-Usage in sidebar:
+The composites barrel re-exports all of these via `export * from './command-palette'`.
 
-```svelte
-<script>
-  import { QuickSearch, QuickSearchTrigger } from '$lib/components/composites';
-
-  let searchOpen = $state(false);
-
-  const searchItems = [
-    { id: '1', type: 'page', label: 'Dashboard', icon: 'lucide:layout-dashboard', href: '/app/dashboard' },
-    { id: '2', type: 'page', label: 'Projects', icon: 'lucide:folder', href: '/app/projects' },
-    { id: '3', type: 'page', label: 'Settings', icon: 'lucide:settings', href: '/app/settings' },
-    { id: '4', type: 'action', label: 'Create project', icon: 'lucide:plus', action: () => { /* open modal */ } },
-    { id: '5', type: 'action', label: 'Toggle theme', icon: 'lucide:moon', action: () => { /* toggle */ } },
-    { id: '6', type: 'action', label: 'Sign out', icon: 'lucide:log-out', action: () => { /* logout */ } },
-  ];
-</script>
-
-<QuickSearchTrigger collapsed={sidebarCollapsed} onclick={() => searchOpen = true} />
-<QuickSearch bind:open={searchOpen} items={searchItems} />
-```
+For full universal-search behavior (two-lane engine, indexing, blog FTS, `/search` page), see [`../quick-search/ui.md`](../quick-search/ui.md).
 
 ---
 
 ### Chatbot
 
-Persistent AI assistant modal. Opens via `⌘J` or sidebar trigger. Unlike QuickSearch (ephemeral), the chatbot maintains conversation history across modal close/reopen.
+Persistent AI assistant modal. Opens via `⌘J` or sidebar trigger. Unlike Quick Search (ephemeral), the chatbot maintains conversation history across modal close/reopen.
 
 See [ai/README.md](../ai/README.md) for full implementation details, provider configuration, and persistence strategies.
 
@@ -988,7 +843,7 @@ See [ai/README.md](../ai/README.md) for full implementation details, provider co
 
 #### ChatbotTrigger (Sidebar)
 
-Adapts to sidebar collapsed/expanded state, similar to QuickSearchTrigger.
+Adapts to sidebar collapsed/expanded state, similar to the Quick Search trigger.
 
 ```svelte
 <!-- src/lib/components/composites/chatbot/ChatbotTrigger.svelte -->
@@ -1029,24 +884,20 @@ Adapts to sidebar collapsed/expanded state, similar to QuickSearchTrigger.
 {/if}
 ```
 
-Usage in sidebar (alongside QuickSearch):
+Usage in sidebar (alongside the Quick Search triggers):
 
 ```svelte
 <script>
-  import { QuickSearch, QuickSearchTrigger, Chatbot, ChatbotTrigger } from '$lib/components/composites';
-
-  let searchOpen = $state(false);
+  import { Chatbot } from '$lib/components/composites';
+  import { SidebarTriggers } from '$lib/components/shell';
+  // CommandPalette and its trigger are wired in AppShell via modals.quickSearchOpen
 </script>
 
-<!-- Sidebar header -->
-<div class="sidebar-header">
-  <SidebarLogo {collapsed} />
-  <QuickSearchTrigger {collapsed} onclick={() => searchOpen = true} />
-  <ChatbotTrigger {collapsed} />
-</div>
+<!-- Sidebar header — SidebarTriggers renders both search + AI buttons -->
+<SidebarTriggers />
 
-<!-- Modals (rendered at root level) -->
-<QuickSearch bind:open={searchOpen} items={searchItems} />
+<!-- Chatbot modal (rendered at root level in AppShell) -->
+<Chatbot />
 <Chatbot />
 ```
 
@@ -1187,7 +1038,7 @@ Browse icons: [Iconify Icon Sets](https://icon-sets.iconify.design/)
 | DropdownMenu | Primitive | Required |
 | Tabs | Primitive | Required |
 | Toast/Toaster | Composite | Required |
-| QuickSearch | Composite | Required |
+| CommandPalette | Composite | Required |
 | Chatbot | Composite | Required |
 | PageHeader | Composite | Required |
 | Alert | Composite | Required |
@@ -1264,9 +1115,10 @@ src/lib/
 │   │   ├── toast/
 │   │   │   ├── Toaster.svelte
 │   │   │   └── index.ts
-│   │   ├── quick-search/
-│   │   │   ├── QuickSearch.svelte
-│   │   │   ├── QuickSearchTrigger.svelte
+│   │   ├── command-palette/
+│   │   │   ├── CommandPalette.svelte
+│   │   │   ├── command-palette.ts  # CVA variants
+│   │   │   ├── types.ts
 │   │   │   └── index.ts
 │   │   ├── chatbot/
 │   │   │   ├── Chatbot.svelte
@@ -1336,8 +1188,7 @@ export { default as Card } from './card/Card.svelte';
 export { default as FormField } from './form-field/FormField.svelte';
 export { default as ConfirmDialog } from './confirm-dialog/ConfirmDialog.svelte';
 export { default as Toaster } from './toast/Toaster.svelte';
-export { default as QuickSearch } from './quick-search/QuickSearch.svelte';
-export { default as QuickSearchTrigger } from './quick-search/QuickSearchTrigger.svelte';
+export * from './command-palette'; // CommandPalette, CommandPaletteItem
 export { default as Chatbot } from './chatbot/Chatbot.svelte';
 export { default as ChatbotTrigger } from './chatbot/ChatbotTrigger.svelte';
 export { default as PageHeader } from './page-header/PageHeader.svelte';

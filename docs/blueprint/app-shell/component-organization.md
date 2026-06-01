@@ -29,7 +29,7 @@ Rules for organizing components using the **Atomic Design** pattern: atoms → m
 |-------|-----------|-------------|----------|
 | **Atoms** | `primitives/` | Smallest building blocks. Single purpose, no composition. | Button, Input, Badge, Avatar, Icon |
 | **Molecules** | `ui/` | Atoms combined into functional units. Still generic, no business logic. | FormField, Pagination, EmptyState, Skeleton |
-| **Organisms** | `composites/` | Molecules + atoms forming distinct features. May have business logic. | QuickSearch, ProfileForm, NotificationCard |
+| **Organisms** | `composites/` | Molecules + atoms forming distinct features. May have business logic. | CommandPalette, ProfileForm, NotificationCard |
 | **Templates** | `shell/` | Page-level layout structure. Singletons that define the app skeleton. | AppShell, Sidebar, Footer |
 
 ---
@@ -61,7 +61,7 @@ src/lib/components/
 │   ├── alert/
 │   └── confirm-dialog/
 ├── composites/            # Organisms: feature-scoped components
-│   ├── quick-search/
+│   ├── command-palette/
 │   ├── chatbot/
 │   ├── page-header/
 │   ├── notifications/
@@ -101,10 +101,10 @@ src/lib/components/
 
 | Criterion | Example |
 |-----------|---------|
-| **Feature-scoped** - Belongs to a specific domain | `QuickSearch`, `ProfileForm` |
+| **Feature-scoped** - Belongs to a specific domain | `CommandPalette`, `ProfileForm` |
 | **Has business logic** - Contains feature-specific behavior | `NotificationCard`, `ChatMessage` |
 | **Multi-instance** - Can appear multiple times | `SettingsCard`, `SessionCard` |
-| **Modal/overlay** - Opens over content | `QuickSearch`, `Chatbot` |
+| **Modal/overlay** - Opens over content | `CommandPalette`, `Chatbot` |
 
 ### Use `shell/` (Templates) When:
 
@@ -130,7 +130,7 @@ src/lib/components/shell/
 ├── SidebarFab.svelte         # Mobile trigger button
 ├── SidebarLogo.svelte        # Logo in sidebar header
 ├── SidebarNav.svelte         # Navigation container
-├── SidebarTriggers.svelte    # QuickSearch + AI trigger buttons
+├── SidebarTriggers.svelte    # Quick Search + AI trigger buttons
 ├── NavItem.svelte            # Single nav item (compound)
 ├── NavDropdown.svelte        # Dropdown submenu
 ├── UserMenu.svelte           # User avatar + dropdown
@@ -203,10 +203,10 @@ Feature-scoped composed components:
 
 ```
 src/lib/components/composites/
-├── quick-search/
-│   ├── QuickSearch.svelte        # Modal + logic
-│   ├── QuickSearchTrigger.svelte # Sidebar trigger
-│   ├── QuickSearchItem.svelte    # Result item
+├── command-palette/
+│   ├── CommandPalette.svelte     # Modal + grouped result list
+│   ├── command-palette.ts        # CVA variants
+│   ├── types.ts                  # CommandPaletteItem, CommandPaletteItemType
 │   └── index.ts
 ├── chatbot/
 │   ├── Chatbot.svelte            # Modal + chat logic
@@ -251,7 +251,7 @@ src/lib/components/composites/
 
 | Pattern | Use For | Example |
 |---------|---------|---------|
-| `{Feature}.svelte` | Main component | `QuickSearch.svelte` |
+| `{Feature}.svelte` | Main component | `CommandPalette.svelte` |
 | `{Feature}Trigger.svelte` | Button/link that opens it | `ChatbotTrigger.svelte` |
 | `{Feature}Item.svelte` | List item within feature | `NotificationCard.svelte` |
 | `{Feature}Modal.svelte` | Modal variant | `SessionExpiryModal.svelte` |
@@ -271,10 +271,10 @@ export { default as Button } from './Button.svelte';
 // src/lib/components/ui/form-field/index.ts
 export { default as FormField } from './FormField.svelte';
 
-// src/lib/components/composites/quick-search/index.ts
-export { default as QuickSearch } from './QuickSearch.svelte';
-export { default as QuickSearchTrigger } from './QuickSearchTrigger.svelte';
-// Internal components not exported (QuickSearchItem is used only by QuickSearch)
+// src/lib/components/composites/command-palette/index.ts
+export { default as CommandPalette } from './CommandPalette.svelte';
+export type { CommandPaletteItem } from './types';
+// CVA variant functions also exported (commandPaletteContentVariants, etc.)
 ```
 
 ---
@@ -289,13 +289,13 @@ import { Button, Input, Avatar } from '$lib/components/primitives';
 import { FormField, Pagination, EmptyState } from '$lib/components/ui';
 
 // ✅ Good: Import organisms from composites
-import { QuickSearch, QuickSearchTrigger } from '$lib/components/composites/quick-search';
+import { CommandPalette } from '$lib/components/composites/command-palette';
 
 // ✅ Good: Import templates from shell
 import { Sidebar, UserMenu, Footer } from '$lib/components/shell';
 
 // ❌ Bad: Deep imports into component internals
-import QuickSearchItem from '$lib/components/composites/quick-search/QuickSearchItem.svelte';
+import CommandPalette from '$lib/components/composites/command-palette/CommandPalette.svelte';
 
 // ❌ Bad: Importing atom when you need molecule
 import { Input } from '$lib/components/primitives';  // Use FormField instead for forms
@@ -350,10 +350,10 @@ Don't create a directory for single components with no relationships.
 
 The shell component (`ToastContainer`) imports and renders the composite (`Toaster`).
 
-### QuickSearch Trigger
+### Quick Search Trigger
 
-**Where:** `composites/quick-search/QuickSearchTrigger.svelte`
-**Why not shell?** The trigger is logically part of the QuickSearch feature. The sidebar imports it.
+**Where:** `shell/SidebarTriggers.svelte`
+**Why shell?** The trigger is a singleton always present in the sidebar, adapting between rail (icon) and expanded (fake-input) states. It calls `modals.open('quickSearch')` directly — no separate composites file exists for it.
 
 ### User Menu
 

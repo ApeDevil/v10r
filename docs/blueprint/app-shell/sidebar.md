@@ -79,7 +79,7 @@ The sidebar is divided into three zones:
 ```
 ┌──────────────────────┐
 │  🦖 Logo             │  ← Header: Branding
-│  🔍 Search...    ⌘K  │  ← Search trigger (opens QuickSearch)
+│  🔍 Search...    ⌘K  │  ← Search trigger (opens Quick Search)
 │  💬 Ask AI...    ⌘J  │  ← AI trigger (opens AI Assistant)
 ├──────────────────────┤
 │  🏠 Dashboard        │
@@ -107,7 +107,7 @@ The sidebar is divided into three zones:
 
 ### Header Triggers
 
-The sidebar header contains triggers for both QuickSearch and AI Assistant, adapting to sidebar state:
+The sidebar header contains triggers for both Quick Search and AI Assistant, adapting to sidebar state:
 
 ```
 Rail (56px):              Expanded (240px):
@@ -118,9 +118,9 @@ Rail (56px):              Expanded (240px):
 ├────┤                    ├──────────────────────┤
 ```
 
-- **Rail mode**: Search icon button, click opens QuickSearch
+- **Rail mode**: Search icon button, click opens Quick Search
 - **Expanded mode**: Fake input (styled like Input but not editable), shows `⌘K` hint
-- **Both**: Clicking opens the QuickSearch modal
+- **Both**: Clicking opens Quick Search
 
 ---
 

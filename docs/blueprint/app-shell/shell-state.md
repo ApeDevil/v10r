@@ -302,16 +302,16 @@ export function getModals() {
 
 ```svelte
 <script lang="ts">
-  import { getModals } from '$lib/stores/modals.svelte';
+  import { getModals } from '$lib/state/modals.svelte';
 
   const modals = getModals(); // Get from context (SSR-safe)
 
   let triggerRef: HTMLButtonElement;
   let previousFocus: HTMLElement | null = null;
 
-  function openQuickSearch() {
+  function openPalette() {
     previousFocus = document.activeElement as HTMLElement;
-    modals.open('quickSearch');
+    modals.open('quickSearch'); // ModalId 'quickSearch' — real shipped identifier
   }
 
   $effect(() => {
@@ -323,7 +323,7 @@ export function getModals() {
   });
 </script>
 
-<button bind:this={triggerRef} onclick={openQuickSearch}>
+<button bind:this={triggerRef} onclick={openPalette}>
   Search
 </button>
 ```

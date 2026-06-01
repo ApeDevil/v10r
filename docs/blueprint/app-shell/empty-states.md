@@ -114,7 +114,7 @@ UI patterns for when there's no data to display. Critical for first-run experien
 />
 ```
 
-### QuickSearch (No Results)
+### Quick Search (No Results)
 
 ```svelte
 <EmptyState
@@ -125,9 +125,9 @@ UI patterns for when there's no data to display. Critical for first-run experien
 />
 ```
 
-### QuickSearch (No Recent)
+### Quick Search (No Recent)
 
-For first-time users with no recent pages:
+Placeholder for first-time users. **Not yet implemented** — "Recent" items are not persisted (no localStorage or server storage). The group renders only when `type: 'recent'` items are present in the palette's `items` prop.
 
 ```svelte
 <EmptyState

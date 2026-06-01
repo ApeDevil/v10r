@@ -10,7 +10,7 @@ Central registry for all keyboard shortcuts in the app shell. Enables discoverab
 
 | Shortcut | Action | Component |
 |----------|--------|-----------|
-| `⌘K` / `Ctrl+K` | Open QuickSearch | QuickSearch |
+| `⌘K` / `Ctrl+K` | Open Quick Search | CommandPalette |
 | `⌘J` / `Ctrl+J` | Open AI Assistant | AI Assistant |
 | `?` | Open keyboard shortcuts help | ShortcutsModal |
 | `Escape` | Close current modal/overlay | Global |
@@ -24,14 +24,14 @@ Central registry for all keyboard shortcuts in the app shell. Enables discoverab
 | `G` then `N` | Go to Notifications | Global |
 | `G` then `P` | Go to Profile | Global |
 
-### QuickSearch Shortcuts (When Open)
+### Quick Search Shortcuts (When Open)
 
 | Shortcut | Action |
 |----------|--------|
 | `↑` / `↓` | Navigate results |
 | `Enter` | Select highlighted item |
 | `Tab` | Cycle through categories |
-| `Escape` | Close QuickSearch |
+| `Escape` | Close Quick Search |
 
 ### AI Assistant Shortcuts (When Open)
 
@@ -65,7 +65,7 @@ Triggered by pressing `?` from anywhere in the app. Shows all available shortcut
 │                                                             │
 │ General                                                     │
 │ ┌─────────────────────────────────────────────────────────┐│
-│ │ ⌘K        Open QuickSearch                              ││
+│ │ ⌘K        Open Quick Search                             ││
 │ │ ⌘J        Open AI Assistant                             ││
 │ │ ?         Show this help                                ││
 │ │ Esc       Close modal/overlay                           ││
@@ -248,16 +248,15 @@ function normalizeKey(event: KeyboardEvent): string {
 ### Shell Integration
 
 ```svelte
-<!-- src/routes/(app)/+layout.svelte -->
+<!-- src/lib/components/shell/AppShell.svelte (simplified) -->
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { initKeyboardHandler, registerShortcut } from '$lib/shortcuts';
   import { ShortcutsModal } from '$lib/components/shell';
+  import { getModals } from '$lib/state/modals.svelte';
 
-  let showShortcuts = $state(false);
-  let showQuickSearch = $state(false);
-  let showAiAssistant = $state(false);
+  const modals = getModals();
 
   onMount(() => {
     const cleanup = initKeyboardHandler();
@@ -267,9 +266,9 @@ function normalizeKey(event: KeyboardEvent): string {
       id: 'quick-search',
       keys: ['meta', 'k'],
       label: '⌘K',
-      description: 'Open QuickSearch',
+      description: 'Open Quick Search',
       category: 'general',
-      action: () => { showQuickSearch = true; },
+      action: () => { modals.open('quickSearch'); },
     });
 
     registerShortcut({
@@ -278,7 +277,7 @@ function normalizeKey(event: KeyboardEvent): string {
       label: '⌘J',
       description: 'Open AI Assistant',
       category: 'general',
-      action: () => { showAiAssistant = true; },
+      action: () => { modals.open('aiAssistant'); },
     });
 
     registerShortcut({
@@ -287,8 +286,8 @@ function normalizeKey(event: KeyboardEvent): string {
       label: '?',
       description: 'Show keyboard shortcuts',
       category: 'general',
-      action: () => { showShortcuts = true; },
-      when: () => !showQuickSearch && !showAiAssistant, // Only when no modal open
+      action: () => { modals.open('shortcuts'); },
+      when: () => !modals.active, // Only when no modal open
     });
 
     registerShortcut({
@@ -313,7 +312,7 @@ function normalizeKey(event: KeyboardEvent): string {
   });
 </script>
 
-<ShortcutsModal bind:open={showShortcuts} />
+<ShortcutsModal />
 ```
 
 ### Shortcuts Modal Component
@@ -564,7 +563,7 @@ src/lib/
 
 ## Related
 
-- [../quick-search/](../quick-search/) - Command palette and universal search
+- [../quick-search/](../quick-search/) - Quick Search — universal search
 - [./ai-assistant.md](./ai-assistant.md) - AI Assistant modal
 - [./settings.md](./settings.md) - Enable/disable shortcuts setting
 - [./layout.md](./layout.md) - Shell integration

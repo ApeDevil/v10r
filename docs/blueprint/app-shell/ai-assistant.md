@@ -13,9 +13,9 @@ Persistent, conversational AI chat accessible via sidebar trigger or keyboard sh
 
 ---
 
-## Key Differences from QuickSearch
+## Key Differences from Quick Search
 
-| Aspect | QuickSearch | AI Assistant |
+| Aspect | Quick Search | AI Assistant |
 |--------|-------------|--------------|
 | **Purpose** | Navigation & actions | Conversational help |
 | **Interaction** | One-shot selection | Multi-turn conversation |
@@ -361,7 +361,7 @@ await db.insert(aiAuditLog).values({
 
 ## Related
 
-- [../quick-search/](../quick-search/) - Command palette (similar modal pattern)
+- [../quick-search/](../quick-search/) - Quick Search (similar modal pattern)
 - [../ai/README.md](../ai/README.md) - Full AI implementation
 - [../rate-limiting.md](../rate-limiting.md) - Rate limiting patterns
 - [../error-handling.md](../error-handling.md) - Error handling patterns
