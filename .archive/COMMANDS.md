@@ -1,8 +1,3 @@
-# claude
-claude --resume
-claude --chrome
-
-cd dev/velociraptor/
 
 # -------------------run
 podman-compose up
@@ -45,6 +40,10 @@ podman exec -it v10r bun run db:rag-pre
 podman exec -it v10r bun run db:rag-post
 ### neo4j rag
 podman exec -it v10r bun run db:neo4j-setup
+---
+bun run db:catalog-sync
+
+
 
 de
 

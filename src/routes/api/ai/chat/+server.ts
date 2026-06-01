@@ -41,5 +41,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		deskLayout: parsed.output.deskLayout,
 		activeWorkspace: parsed.output.activeWorkspace,
 		resumeFromProposalId: parsed.output.resumeFromProposalId,
+		// Server-derived, never client-trusted: the catalog tool needs the request locale
+		// and the user's auth ceiling to return locale-correct, scope-safe surfaces.
+		locale: locals.locale,
+		authCeiling: locals.user?.role ?? null,
 	});
 };

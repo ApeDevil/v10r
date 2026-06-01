@@ -48,7 +48,13 @@ vi.mock('$lib/server/rawrag', () => ({
 vi.mock('$lib/server/ai/tools', () => ({
 	createDeskTools: vi.fn(() => ({})),
 	stepsForScopes: vi.fn(() => 5),
-	buildRetrievalTools: vi.fn(() => ({ tools: {}, drilledChunks: new Set<string>() })),
+	buildRetrievalTools: vi.fn(() => ({ tools: {}, drilledChunks: new Set<string>(), surfacedCatalog: new Map() })),
+}));
+
+vi.mock('$lib/server/search', () => ({
+	buildSearchIndex: vi.fn(() => []),
+	formatCatalogMap: vi.fn(() => '<catalog-map></catalog-map>'),
+	searchContent: vi.fn(async () => []),
 }));
 
 vi.mock('$lib/server/llmwiki/overview', () => ({

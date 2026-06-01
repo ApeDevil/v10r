@@ -3,6 +3,7 @@ import { Chat } from '@ai-sdk/svelte';
 import { DefaultChatTransport } from 'ai';
 import { onDestroy, untrack } from 'svelte';
 import { CSRF_HEADER } from '$lib/api';
+import type { CatalogSource } from '$lib/components/chat/citation-types';
 import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
 import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
 import type { HarnessMetadata, ProposalMetadata } from '$lib/components/composites/chatbot/harness-types';
@@ -354,6 +355,8 @@ $effect(() => {
 					<ChatMessage
 						role={message.role as 'user' | 'assistant'}
 						parts={message.parts}
+						catalogSources={(message as { metadata?: { catalogSources?: CatalogSource[] } }).metadata
+							?.catalogSources}
 					/>
 					{#if message.role === 'assistant'}
 						{@const proposal = getProposalForMessage(message)}

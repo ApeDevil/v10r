@@ -111,6 +111,9 @@ src/lib/server/
   admin/        Admin operations
   agents/       AI agent orchestration (booted at startup in hooks)
   ai/           Provider registry, orchestrator, tools, errors, budget
+                ai/tools/ submodules: desk-read, desk-write, propose-plan,
+                get-rawrag-chunks, get-llmwiki-pages, resolve-ref, search-catalog
+                Catalog siblings: catalog-citations.ts (surface verifier), tool-leak-guard.ts (Groq drift guard)
   analytics/    Analytics pipeline
   api/          Adapter helpers: pagination.ts, rate-limit.ts, response.ts
   auth/         Better Auth instance + guards (auth/index.ts constructs the instance)
@@ -124,7 +127,7 @@ src/lib/server/
   docs/         Documentation serving
   errors/       ServerError hierarchy
   feedback/     Single-file domain (index.ts with CRUD inline)
-  graph/        Neo4j graph operations
+  graph/        Neo4j graph operations; catalog.ts seeds `:Resource`/`PART_OF` graph from showcase registry
   jobs/         Runner, scheduler, delivery-scheduler, registered jobs
   llmwiki/      Hybrid vector+BM25 wiki search; co-locates queries
   monitoring/   Observability helpers
@@ -133,6 +136,9 @@ src/lib/server/
   platform/     Runtime platform detection
   preferences/  User preferences
   rawrag/       Three-tier retrieval pipeline; co-locates queries
+  search/       Server search adapters (pages, docs, showcases, blog FTS), buildSearchIndex, searchContent;
+                catalog-map.ts (formatCatalogMap — path-free system-prompt hint),
+                catalog-projection.ts (deriveCatalogGraph — pure catalog → Neo4j Resource nodes)
   schemas/      Shared server Valibot: shared.ts
   store/        Desk workspace and file data
   style/        Style-related server logic

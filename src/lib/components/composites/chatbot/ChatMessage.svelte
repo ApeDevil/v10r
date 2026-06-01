@@ -1,5 +1,7 @@
 <script lang="ts">
+import CitationChip from '$lib/components/chat/CitationChip.svelte';
 import ConfirmationCard from '$lib/components/chat/ConfirmationCard.svelte';
+import type { CatalogSource } from '$lib/components/chat/citation-types';
 import { cn } from '$lib/utils/cn';
 import { renderMarkdown } from '$lib/utils/markdown';
 import ToolCallStatus from './ToolCallStatus.svelte';
@@ -28,11 +30,13 @@ interface Props {
 	parts?: MessagePart[];
 	/** Fallback content string — used when parts is unavailable */
 	content?: string;
+	/** Grounded catalog surfaces the assistant referenced — rendered as citation chips. */
+	catalogSources?: CatalogSource[];
 	/** Callback when user confirms a destructive AI action */
 	onconfirmaction?: (description: string) => void;
 }
 
-let { role, parts, content, onconfirmaction }: Props = $props();
+let { role, parts, content, catalogSources, onconfirmaction }: Props = $props();
 
 const isUser = $derived(role === 'user');
 
@@ -98,6 +102,27 @@ function getToolInvocation(part: MessagePart) {
 				{/if}
 			{/if}
 		{/each}
+
+		{#if !isUser && catalogSources?.length}
+			<div class="related-surfaces">
+				<span class="related-label">Related surfaces</span>
+				<div class="related-chips" role="list">
+					{#each catalogSources as src (src.path + (src.anchor ?? ''))}
+						<div role="listitem">
+							<CitationChip
+								surface={src.surface}
+								title={src.title}
+								path={src.path}
+								anchor={src.anchor}
+								breadcrumb={src.breadcrumb}
+								icon={src.icon}
+								badge={src.badge}
+							/>
+						</div>
+					{/each}
+				</div>
+			</div>
+		{/if}
 	</div>
 </div>
 
@@ -105,6 +130,23 @@ function getToolInvocation(part: MessagePart) {
 	.chat-avatar-assistant {
 		background-color: color-mix(in srgb, var(--color-muted) 20%, transparent);
 		color: var(--color-fg);
+	}
+
+	.related-surfaces {
+		margin-top: 0.25rem;
+	}
+	.related-label {
+		display: block;
+		margin-bottom: 0.25rem;
+		font-size: 0.6875rem;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--color-muted);
+	}
+	.related-chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.375rem;
 	}
 
 	.chat-bubble-user {

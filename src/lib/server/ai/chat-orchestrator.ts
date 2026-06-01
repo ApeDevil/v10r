@@ -12,6 +12,7 @@ import {
 	streamText,
 	type UIMessage,
 } from 'ai';
+import type { SearchLocale, SearchResult } from '$lib/search/types';
 import { getActiveProvider, getActiveProviderInfo, getFallbacksForUser, getToolProvider } from '$lib/server/ai';
 import { chargeTokens } from '$lib/server/ai/budget';
 import { MAX_TOKENS } from '$lib/server/ai/config';
@@ -44,6 +45,7 @@ import { searchLlmwiki } from '$lib/server/llmwiki/search';
 import { verifyCitations } from '$lib/server/llmwiki/verify';
 import { formatLlmwikiContext } from '$lib/server/llmwiki/wiki-format';
 import { formatContextForPrompt, retrieve } from '$lib/server/rawrag';
+import { buildSearchIndex, formatCatalogMap } from '$lib/server/search';
 import type {
 	ChunkSummary,
 	LlmwikiCitationsEvent,
@@ -51,6 +53,8 @@ import type {
 	PipelinePromptEvent,
 	PipelineStepEvent,
 } from '$lib/types/pipeline';
+import { verifyCatalogCitations } from './catalog-citations';
+import { createToolLeakGuard, stripTextualToolCall } from './tool-leak-guard';
 
 /** A legacy simple message or a full UIMessage from the AI SDK v6 client. */
 export type ChatMessage = { role: 'user' | 'assistant'; content: string } | UIMessage;
@@ -93,6 +97,10 @@ export interface ChatInput {
 	 * a 500 here would be hostile).
 	 */
 	resumeFromProposalId?: string;
+	/** Resolved request locale (server-derived from `event.locals.locale`). Used by `search_catalog`. */
+	locale?: SearchLocale;
+	/** Auth ceiling for catalog visibility (server-derived from `event.locals.user.role`). */
+	authCeiling?: string | null;
 }
 
 export interface ChatResult {
@@ -326,7 +334,10 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 		deskLayout,
 		activeWorkspace,
 		resumeFromProposalId,
+		locale,
+		authCeiling,
 	} = input;
+	const catalogLocale: SearchLocale = locale ?? 'en';
 
 	// Window conversation history to prevent context overflow in multi-turn chats.
 	// Cloned to a mutable array so resume injection can rewrite the sentinel user message.
@@ -361,13 +372,18 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 		return Response.json({ error: { code: 'ai_unavailable', message: 'No AI provider configured.' } }, { status: 503 });
 	}
 
-	// Use tool-capable provider when tools requested, fall back to chatModel without tools
-	const wantsTools = !!toolScopes?.length;
+	// Use tool-capable provider when tools requested, fall back to chatModel without tools.
+	// The llmwiki + rawrag retrieval branches attach their own tools (search_catalog, llmwiki/
+	// rawrag drill-down) even without desk scopes, so they must route to the tool-capable model
+	// too — otherwise grounding tool calls run on the chat model and silently fail to fire.
+	const wantsTools = !!toolScopes?.length || !!useLlmwiki || !!useRetrieval;
 	const toolProviderAvailable =
 		!!resolvedToolModel && !!resolvedToolProviderId && !isCooledDown(resolvedToolProviderId);
 	const hasTools = wantsTools && toolProviderAvailable;
 	const model = (hasTools ? resolvedToolModel : resolvedChatModel) ?? resolvedChatModel;
-	const deskTools = hasTools ? createDeskTools(userId, toolScopes, deskLayout) : undefined;
+	// Desk tools only for actual desk scopes — the llmwiki/rawrag branches set hasTools (to claim
+	// the tool model) but bring their own retrieval tools and pass no desk scopes.
+	const deskTools = hasTools && toolScopes?.length ? createDeskTools(userId, toolScopes, deskLayout) : undefined;
 	let baseSystemPrompt = buildSystemPrompt({ panelContext, toolScopes, deskLayout, activeWorkspace });
 	if (resumeContext) {
 		baseSystemPrompt = `${baseSystemPrompt}
@@ -421,7 +437,11 @@ The user has just approved the plan above and the listed steps were executed. Ac
 		// executed plan from `<plan-execution-result>`, not re-search for context.
 		if (useLlmwiki && lastRawMsg?.role === 'user' && userMsgText && !resumeContext) {
 			const collectionId = llmwikiCollectionId ?? null;
-			const { tools: retrievalTools, drilledChunks } = buildRetrievalTools(userId);
+			const {
+				tools: retrievalTools,
+				drilledChunks,
+				surfacedCatalog,
+			} = buildRetrievalTools(userId, catalogLocale, authCeiling ?? null);
 			const requestId = crypto.randomUUID();
 
 			const stream = createUIMessageStream({
@@ -437,10 +457,18 @@ The user has just approved the plan above and the listed steps were executed. Ac
 						citations: Array<{ chunkId: string; verification: string; tier: 'rawrag' }>;
 						driftedChunkIds: string[];
 					} | null = null;
+					// Catalog chips (surfaces the answer linked to) + surface-citation verdicts.
+					let catalogPayload: {
+						catalogSources: Array<
+							Pick<SearchResult, 'surface' | 'title' | 'path' | 'anchor' | 'breadcrumb' | 'icon' | 'badge' | 'locale'>
+						>;
+						catalogCitations: ReturnType<typeof verifyCatalogCitations>;
+					} | null = null;
 
 					const flush = () => {
 						const meta: Record<string, unknown> = { pipeline: pipelineEvents };
 						if (citationsPayload) Object.assign(meta, citationsPayload);
+						if (catalogPayload) Object.assign(meta, catalogPayload);
 						writer.write({ type: 'message-metadata', messageMetadata: meta });
 					};
 					const emit = (event: AnyLlmwikiEvent) => {
@@ -568,6 +596,19 @@ Retrieval rules:
 						console.error('[ai:chat:llmwiki] Retrieval failed, proceeding without context:', err);
 					}
 
+					// Catalog grounding — always available alongside llmwiki. The search_catalog tool
+					// is the ONLY authoritative source of project paths; a compact, path-free map orients
+					// the model so it knows the catalog exists and when to reach for it.
+					systemPrompt = `${systemPrompt}
+
+${formatCatalogMap(catalogLocale)}
+
+Project catalog rules:
+1. To find WHERE a page, component/showcase, doc, or blog post lives — or to give the user a link — call \`search_catalog\`. It returns exact canonical paths.
+2. Emit a path or link ONLY if it appears verbatim in a \`search_catalog\` result from THIS turn (or a verified llmwiki pointer). NEVER invent or guess a path.
+3. If \`search_catalog\` returns nothing for what the user asked, say it isn't in the catalog — do not fabricate a plausible URL.
+4. Use \`search_catalog\` for navigation / "what exists"; use the llmwiki pages for explaining how something works.`;
+
 					const generateStart = performance.now();
 					emit({ type: 'pipeline:step', step: 'generate', status: 'active', startedAt: generateStart });
 
@@ -581,6 +622,12 @@ Retrieval rules:
 						maxRetries: 0,
 						maxOutputTokens: MAX_TOKENS,
 						abortSignal: AbortSignal.timeout(30_000),
+						// Net for Groq/llama emitting a tool call as plain text (`<function=…>`).
+						// Suppresses the raw markup so the user never reads it; the turn degrades
+						// to empty instead of leaking syntax. See `tool-leak-guard.ts`.
+						experimental_transform: createToolLeakGuard((lead) =>
+							console.warn(`[ai:chat:llmwiki] suppressed textual tool-call leak: ${lead}…`),
+						),
 						onStepFinish: ({
 							toolCalls,
 							toolResults,
@@ -614,7 +661,11 @@ Retrieval rules:
 								});
 							}
 						},
-						onFinish: async ({ text, totalUsage }) => {
+						onFinish: async ({ text: rawText, totalUsage }) => {
+							// Mirror the stream guard: if the whole turn was a textual tool-call
+							// leak (`<function=…>`), blank it before persistence / citation
+							// verification so the leak isn't saved or counted as an answer.
+							const text = stripTextualToolCall(rawText);
 							emit({
 								type: 'pipeline:step',
 								step: 'generate',
@@ -676,6 +727,34 @@ Retrieval rules:
 									status: 'error',
 									error: err instanceof Error ? err.message : String(err),
 								});
+							}
+							// Surface-citation verification — ground the citation chips and flag any
+							// project path the model emitted that search_catalog did not surface this turn.
+							try {
+								if (surfacedCatalog.size > 0) {
+									const surfaced = Array.from(surfacedCatalog.values());
+									const surfacedPaths = new Set(surfaced.map((r) => r.path));
+									const knownPaths = new Set(buildSearchIndex(catalogLocale).map((r) => r.path));
+									const catalogCitations = verifyCatalogCitations(text, surfacedPaths, knownPaths);
+									// Chips: only the surfaces the answer actually references.
+									const cited = surfaced.filter((r) => text.includes(r.path));
+									catalogPayload = {
+										catalogSources: cited.map((r) => ({
+											surface: r.surface,
+											title: r.title,
+											path: r.path,
+											anchor: r.anchor,
+											breadcrumb: r.breadcrumb,
+											icon: r.icon,
+											badge: r.badge,
+											locale: r.locale,
+										})),
+										catalogCitations,
+									};
+									flush();
+								}
+							} catch (err) {
+								console.error('[ai:chat:catalog] Surface-citation verification failed:', err);
 							}
 							await createOnFinish(conversationId, userId)({ text, totalUsage });
 						},

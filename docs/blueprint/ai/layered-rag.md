@@ -36,10 +36,17 @@ src/lib/server/
     chunk.ts           ← chunking logic
     embed.ts           ← embedding pipeline
     ingest/            ← ingestion pipeline (contextual-prep, entity-extract)
+  search/
+    catalog-map.ts     ← formatCatalogMap(locale): path-free shape hint for system prompt
+    catalog-projection.ts ← deriveCatalogGraph(): pure catalog → Resource nodes + PART_OF edges
   ai/tools/
     get-llmwiki-pages.ts   ← expand wiki pages beyond TLDR
     get-rawrag-chunks.ts   ← drill-down to raw source chunks
-    index.ts               ← buildRetrievalTools({ userId })
+    search-catalog.ts      ← search_catalog tool: composes quick-search lanes, returns canonical paths
+    index.ts               ← buildRetrievalTools(userId, locale, authCeiling)
+  ai/
+    catalog-citations.ts   ← verifyCatalogCitations: exists/drifted/none post-hoc verifier
+    tool-leak-guard.ts     ← createToolLeakGuard stream transform + stripTextualToolCall
 ```
 
 ---
@@ -97,7 +104,54 @@ A per-turn cap (`MAX_RAWRAG_TOOL_CALLS_PER_TURN = 3`) is enforced by the orchest
 
 ---
 
-## Citation Verification
+## Catalog Grounding
+
+The `useLlmwiki` branch also injects catalog awareness so the chatbot can answer "where does X live?" questions and emit verifiable links.
+
+### `search_catalog` tool
+
+`src/lib/server/ai/tools/search-catalog.ts`. Composes the SAME in-process search API the ⌘K palette uses — no separate index, no drift.
+
+- **Static lane** (`buildSearchIndex(locale)` + `match()`): page / showcase / section / doc titles.
+- **Server lane** (`searchContent`): doc bodies + live blog Postgres FTS. Skipped for `surface=page|showcase|section`.
+- **Dedup**: server hit wins (richer snippet), keyed by `surface:path:anchor`.
+- **Returns** exact canonical paths the model may cite. Never throws — returns `{results:[], error}` on failure.
+
+Input schema:
+
+```typescript
+search_catalog({ query: string, surface?: 'page'|'showcase'|'section'|'doc'|'blog', limit?: 1–8 })
+```
+
+`surface` is a plain scalar enum (NOT nullable/array type) — Groq's constrained decoder rejects `['string','null']` union types.
+
+`locale` and `authCeiling` are server-derived from `event.locals` and captured in the closure. The model cannot forge them. `authCeiling` gates `authScope`; all records are `public` today. A `CatalogSink` side-channel records the surfaced rows for citation chips and the verifier.
+
+**Wired only into the `useLlmwiki` branch** (via `buildRetrievalTools`), not the plain/desk path.
+
+Meta: `searchCatalogToolMeta = { search_catalog: { risk: 'read', scope: 'desk:read' } }`.
+
+### `<catalog-map>` prompt injection
+
+`src/lib/server/search/catalog-map.ts`, `formatCatalogMap(locale)`. A path-free (~120 tok) shape hint injected into the system prompt: per-surface record counts + top breadcrumb group labels. Deliberately path-free — a path-bearing map would let the model answer from the (possibly stale) prompt instead of calling `search_catalog`, bypassing the verifier.
+
+### Surface-citation verifier
+
+`src/lib/server/ai/catalog-citations.ts`, `verifyCatalogCitations(answerText, surfacedPaths, knownPaths)`. Runs after the stream closes (belt-and-suspenders: `strict` schemas govern tool INPUT, not prose).
+
+| Status | Meaning |
+|--------|---------|
+| `exists` | Path was surfaced by `search_catalog` this turn — grounded |
+| `drifted` | Real catalog path recalled without surfacing — risky recall |
+| `none` | Looks like an internal route but not in the catalog — hallucination candidate |
+
+### Citation chips (UI)
+
+`src/lib/components/chat/CitationChip.svelte` + `chat/citation-types.ts`. A native `<a>` to `localizeHref(path) + anchor`, ≥44px touch target, surface badge, EN-fallback badge. The orchestrator builds `metadata.catalogSources` (only rows the answer text references); `ChatMessage.svelte` renders a "Related surfaces" chip row below the answer.
+
+---
+
+
 
 `verify.ts` runs after the stream closes. It assigns one status per chunk:
 

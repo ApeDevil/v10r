@@ -850,6 +850,26 @@ src/lib/server/
 
 ---
 
+---
+
+## Phase 3 — Catalog Resource projection (live)
+
+The showcase registry is projected into Neo4j as typed `:Resource` nodes with `PART_OF` edges. This is distinct from the `Document`/`Entity` graph described above — it seeds the project's structural catalog rather than ingested text chunks.
+
+| Module | Path | Role |
+|--------|------|------|
+| `deriveCatalogGraph` | `src/lib/server/search/catalog-projection.ts` | Pure function: showcase registry → `CatalogResourceNode[]` + `CatalogEdge[]`. No DB, no Vite imports — runs in Bun scripts and the app. |
+| `seedCatalogResources` | `src/lib/server/graph/catalog.ts` | Cypher executor injected via `CypherRunner` — idempotent MERGE by stable id + delete-not-seen reconciliation. |
+| `db:catalog-sync` | `scripts/db/catalog-sync.ts` | Standalone Bun script. Chained into `db:setup` after `db:neo4j-setup`. |
+
+Node ids are locale-bare and follow the `SearchRecord` id scheme (`${surface}:${path}${anchor ?? ''}`), so a future RAG soft-pointer (`rag.document.sourceUri`) can reference the same node.
+
+`documentSourceEnum` now includes `'catalog'` (alongside `upload`, `web`, `text`, `api`) for when catalog surfaces are ingested as `rag.document` rows.
+
+Live stats: ~172 `:Resource` nodes, ~157 `PART_OF` edges.
+
+---
+
 ## Related
 
 - [README.md](./README.md) - AI architecture overview

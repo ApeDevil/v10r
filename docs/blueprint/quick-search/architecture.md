@@ -96,6 +96,10 @@ Response: `{ data: { items: SearchResult[] } }`.
 
 Lane-A shard. Prerendered at build time. Returns `SearchRecord[]` (titles only, no bodies). Unknown locales → 404. Supported: `en`, `de`, `ru`.
 
+## AI Reuse
+
+`buildSearchIndex(locale)` and `searchContent()` are also consumed by the `search_catalog` AI tool (`src/lib/server/ai/tools/search-catalog.ts`). The tool composes both lanes in-process — same index, same merge logic, no separate embedding index. See [blueprint/ai/layered-rag.md](../ai/layered-rag.md#catalog-grounding).
+
 ## Shared Types
 
 `$lib/search/types.ts` — client-safe, imported by both the browser engine and all server adapters.

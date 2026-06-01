@@ -8,7 +8,9 @@ import { index, integer, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
 import { ragSchema } from './embedding-model';
 
-export const documentSourceEnum = ragSchema.enum('document_source', ['upload', 'web', 'text', 'api']);
+// 'catalog' = a project surface (showcase/doc/blog) projected from the quick-search
+// catalog; sourceUri carries its stable SearchRecord id for the soft-pointer linkage.
+export const documentSourceEnum = ragSchema.enum('document_source', ['upload', 'web', 'text', 'api', 'catalog']);
 
 export const documentStatusEnum = ragSchema.enum('document_status', ['pending', 'processing', 'ready', 'error']);
 

@@ -5,6 +5,7 @@ import { onMount } from 'svelte';
 import { pushState } from '$app/navigation';
 import { page } from '$app/state';
 import { CSRF_HEADER } from '$lib/api';
+import type { CatalogSource } from '$lib/components/chat/citation-types';
 import { Alert, Card, EmptyState } from '$lib/components/composites';
 import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
 import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
@@ -193,6 +194,8 @@ function submitMessage() {
 								<ChatMessage
 									role={message.role as 'user' | 'assistant'}
 									parts={message.parts}
+									catalogSources={(message as { metadata?: { catalogSources?: CatalogSource[] } }).metadata
+										?.catalogSources}
 								/>
 							{/each}
 

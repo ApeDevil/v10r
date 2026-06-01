@@ -3,6 +3,7 @@ import { Chat } from '@ai-sdk/svelte';
 import { DefaultChatTransport } from 'ai';
 import { Dialog } from 'bits-ui';
 import { apiFetch, CSRF_HEADER } from '$lib/api';
+import type { CatalogSource } from '$lib/components/chat/citation-types';
 import { cn } from '$lib/utils/cn';
 import ChatInput from './ChatInput.svelte';
 import ChatMessage from './ChatMessage.svelte';
@@ -256,6 +257,8 @@ function formatRelativeTime(dateStr: string): string {
 									<ChatMessage
 									role={message.role as 'user' | 'assistant'}
 									parts={message.parts}
+									catalogSources={(message as { metadata?: { catalogSources?: CatalogSource[] } }).metadata
+										?.catalogSources}
 								/>
 								{/each}
 

@@ -4,6 +4,7 @@
  */
 
 import type { ToolSet } from 'ai';
+import type { SearchLocale, SearchResult } from '$lib/search/types';
 import { compactToolResult } from '$lib/server/ai/loop/compact';
 import type { DeskLayoutEntry, DeskToolMeta, DeskToolScope } from './_types';
 import { createCreateTools, createDeleteTools, createToolMeta, deleteToolMeta } from './desk-create';
@@ -13,6 +14,7 @@ import { createGetLlmwikiPagesTool, llmwikiPagesToolMeta } from './get-llmwiki-p
 import { createGetRawragChunksTool, type DrilledChunkSink, rawragChunksToolMeta } from './get-rawrag-chunks';
 import { createProposePlanTool, proposePlanMeta } from './propose-plan';
 import { createResolveRefTool } from './resolve-ref';
+import { type CatalogSink, createSearchCatalogTool, searchCatalogToolMeta } from './search-catalog';
 
 export type { DeskEffect, DeskLayoutEntry, DeskToolMeta, DeskToolRisk, DeskToolScope } from './_types';
 
@@ -25,6 +27,7 @@ export const deskToolMeta: Record<string, DeskToolMeta> = {
 	...proposePlanMeta,
 	...llmwikiPagesToolMeta,
 	...rawragChunksToolMeta,
+	...searchCatalogToolMeta,
 };
 
 /** Get the risk classification for a tool name, or `undefined` if unknown. */
@@ -61,7 +64,7 @@ function wrapToolsWithCompaction(tools: ToolSet): ToolSet {
 	return wrapped as ToolSet;
 }
 
-export function createDeskTools(userId: string, scopes: DeskToolScope[], deskLayout?: DeskLayoutEntry[]): ToolSet {
+export function createDeskTools(userId: string, scopes: DeskToolScope[] = [], deskLayout?: DeskLayoutEntry[]): ToolSet {
 	const tools: ToolSet = {} as ToolSet;
 
 	// Read tools available when any desk scope is granted
@@ -112,7 +115,11 @@ export function stepsForScopes(scopes: DeskToolScope[]): number {
  *
  * Compaction wrapping is applied consistently with desk tools.
  */
-export function buildRetrievalTools(userId: string): { tools: ToolSet; drilledChunks: Set<string> } {
+export function buildRetrievalTools(
+	userId: string,
+	locale: SearchLocale,
+	authCeiling: string | null,
+): { tools: ToolSet; drilledChunks: Set<string>; surfacedCatalog: Map<string, SearchResult> } {
 	const drilledChunks = new Set<string>();
 	const sink: DrilledChunkSink = {
 		record(ids) {
@@ -120,10 +127,20 @@ export function buildRetrievalTools(userId: string): { tools: ToolSet; drilledCh
 		},
 	};
 
+	// Live, deduped view of catalog rows the model surfaced this turn — read after
+	// the stream resolves to ground citation chips + the surface-citation verifier.
+	const surfacedCatalog = new Map<string, SearchResult>();
+	const catalogSink: CatalogSink = {
+		record(rows) {
+			for (const r of rows) surfacedCatalog.set(r.id, r);
+		},
+	};
+
 	const raw: ToolSet = {
 		...createGetLlmwikiPagesTool(userId),
 		...createGetRawragChunksTool(userId, sink),
+		...createSearchCatalogTool(locale, authCeiling, catalogSink),
 	} as ToolSet;
 
-	return { tools: wrapToolsWithCompaction(raw), drilledChunks };
+	return { tools: wrapToolsWithCompaction(raw), drilledChunks, surfacedCatalog };
 }

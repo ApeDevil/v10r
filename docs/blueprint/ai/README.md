@@ -4,22 +4,37 @@ Architecture and implementation designs for the AI subsystem.
 
 ## Overview
 
-Multi-provider chat assistant with tool calling, Graph RAG retrieval, and desk integration. Uses Vercel AI SDK v6 for a unified API across providers.
+Multi-provider chat assistant with tool calling, Graph RAG retrieval, catalog grounding, and desk integration. Uses Vercel AI SDK v6 for a unified API across providers.
 
-| Provider | Capability | Model | Package |
-|----------|-----------|-------|---------|
-| Groq | Chat | llama-3.3-70b-versatile | `@ai-sdk/groq` |
-| OpenAI | Chat | gpt-4o-mini | `@ai-sdk/openai` |
-| Google Gemini | Chat + Embeddings | gemini-2.5-flash | `@ai-sdk/google` |
+### Provider registry
+
+Two separate resolvers handle different jobs:
+
+| Resolver | Purpose | Default order |
+|----------|---------|---------------|
+| `resolveActiveProvider` | Chat-only turns (no tools) | user pref → `AI_PROVIDER` env → first configured |
+| `resolveToolProvider` | Tool-calling turns | user pref → `AI_PROVIDER` env → OpenAI → Google → others |
+
+All three providers carry `supportsTools: true`, but Groq/llama probabilistically emits tool calls as plain text rather than a structured `tool_calls` field. The `tool-leak-guard.ts` transform suppresses that markup so the turn degrades to empty instead of leaking syntax. For reliable grounding, the tool provider prefers OpenAI → Google.
+
+| Provider | Model | Notes |
+|----------|-------|-------|
+| Groq | llama-3.3-70b-versatile | Default chat model; `supportsTools` but can drift |
+| OpenAI | gpt-4o-mini | Preferred tool provider |
+| Google Gemini | gemini-2.5-flash | Second-choice tool provider |
+
+Circuit breaker: 60s cooldown on rate-limited providers (`markCooldown` / `isCooledDown`).
 
 ## Key Modules
 
 | Module | Location | Purpose |
 |--------|----------|---------|
-| Provider registry | `src/lib/server/ai/providers.ts` | Multi-provider config, cooldowns, user preferences |
-| Chat orchestrator | `src/lib/server/ai/chat-orchestrator.ts` | Streaming, fallback rotation, tool calling |
+| Provider registry | `src/lib/server/ai/providers.ts` | Dual-resolver config, cooldowns, user preferences |
+| Chat orchestrator | `src/lib/server/ai/chat-orchestrator.ts` | Streaming, fallback rotation, tool calling, catalog grounding |
 | Error classification | `src/lib/server/ai/errors.ts` | Provider error → user-safe message mapping |
-| Tool definitions | `src/lib/server/ai/tools/` | Desk-read, desk-write, retrieval tools |
+| Tool definitions | `src/lib/server/ai/tools/` | Desk-read, desk-write, retrieval, catalog search |
+| Catalog citations | `src/lib/server/ai/catalog-citations.ts` | Post-hoc surface-citation verifier (exists/drifted/none) |
+| Tool leak guard | `src/lib/server/ai/tool-leak-guard.ts` | Stream transform that suppresses Groq/llama textual tool-call markup |
 | rawrag pipeline | `src/lib/server/rawrag/` | Source chunks, embeddings, hybrid/graph retrieval |
 | llmwiki layer | `src/lib/server/llmwiki/` | Wiki layer: compile, search, verify |
 
@@ -27,8 +42,9 @@ Multi-provider chat assistant with tool calling, Graph RAG retrieval, and desk i
 
 | File | Topics |
 |------|--------|
-| [layered-rag.md](./layered-rag.md) | **Primary RAG doc.** Two-layer split (llmwiki + rawrag), tables, tool contracts, read path, citation verification |
-| [graph-rag.md](./graph-rag.md) | rawrag internals: chunking, embeddings, parent-child, graph traversal, recursive retrieval |
+| [layered-rag.md](./layered-rag.md) | **Primary RAG doc.** Two-layer split (llmwiki + rawrag), catalog grounding (`search_catalog`, `<catalog-map>`, citation chips), tool contracts, read path, citation verification |
+| [provider-routing.md](./provider-routing.md) | Chat vs tool resolver split, `wantsTools` logic, Groq drift + leak guard, practical consequences |
+| [graph-rag.md](./graph-rag.md) | rawrag internals: chunking, embeddings, parent-child, graph traversal, recursive retrieval; Phase 3 catalog `:Resource` seed |
 | [desk-integration.md](./desk-integration.md) | AI tool calling for desk operations, I/O log, effect system |
 | [toon.md](./toon.md) | TOON format for token-efficient RAG context injection |
 
@@ -36,11 +52,13 @@ Multi-provider chat assistant with tool calling, Graph RAG retrieval, and desk i
 
 ```
 User → ChatPanel/Chatbot → /api/ai/chat → orchestrateChat()
-                                              ├── resolveProvider (user pref → env → first configured)
-                                              ├── streamText (with tools if desk scopes)
+                                              ├── resolveActiveProvider / resolveToolProvider
+                                              │     (wantsTools = desk scopes OR useLlmwiki OR useRetrieval)
+                                              ├── streamText (tools always attached for llmwiki/retrieval branches)
                                               ├── fallback rotation on rate limit
-                                              └── llmwiki-first RAG (overview + search + pointer hydration)
-                                                    └── rawrag drill-down (get_rawrag_chunks, on-demand only)
+                                              ├── llmwiki-first RAG (overview + search + pointer hydration)
+                                              │     ├── rawrag drill-down (get_rawrag_chunks, on-demand only)
+                                              │     └── catalog grounding (search_catalog + <catalog-map>)
+                                              │           └── citation chips (CitationChip.svelte)
+                                              └── desk tool loop (desk scopes only)
 ```
-
-Provider resolution: user preference → `AI_PROVIDER` env var → first configured. Circuit breaker with 60s cooldown on rate-limited providers.
