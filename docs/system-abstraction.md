@@ -346,7 +346,7 @@ Individual files inside a module or component folder. Private by default; public
 
 **Error classes and classifiers**: `ServerError` → `DbError` / `AIError` / `Neo4jError` / `LlmwikiError`; `classifyDbError` / `classifyAIError` / `classifyNeo4jError`; `safeDbMessage` / `safeAIMessage`.
 
-**Provider resolution** (`ai/providers.ts`): `getActiveProvider` / `getToolProvider` resolves in order: request override → user preference → env → first configured. Circuit breaker: `markCooldown` / `isCooledDown` (60-second window).
+**Provider resolution** (`ai/providers.ts`): `getActiveProvider` / `getToolProvider` resolves in order: request override → user preference → env → first configured. Circuit breaker: `markCooldown` / `isCooledDown` (60-second window), Redis-backed (`ai:cooldown:{id}`) so it is cross-instance and async.
 
 **AI tools** (`ai/tools/`): `desk-read`, `desk-write`, `propose-plan`, `get-rawrag-chunks`, `get-llmwiki-pages`, `resolve-ref`, `search-catalog`, `search-docs`. All are thin wrappers that return structured data and never throw — tools return error objects; the LLM reads them.
 

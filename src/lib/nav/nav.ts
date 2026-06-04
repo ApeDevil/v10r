@@ -25,7 +25,6 @@ export const adminNavItem: NavItem = {
 		{ href: '/admin/jobs', label: m.nav_admin_jobs },
 		{ href: '/admin/notifications', label: m.nav_admin_notifications },
 		{ href: '/admin/ai', label: m.nav_admin_ai },
-		{ href: '/admin/rag', label: m.nav_admin_rag },
 		{ href: '/admin/cache', label: m.nav_admin_cache },
 	],
 };

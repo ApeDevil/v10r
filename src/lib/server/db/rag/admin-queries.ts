@@ -161,3 +161,47 @@ export async function getCollectionsAdmin(): Promise<CollectionAdminView[]> {
 
 	return rows.map((r) => ({ ...r, documentCount: Number(r.documentCount) }));
 }
+
+export interface DocumentsBySource {
+	source: string;
+	count: number;
+}
+
+/** Document counts grouped by `documentSourceEnum` — feeds the pipeline diagram's
+ *  docs-corpus (source='docs') and catalog (source='catalog') node badges. */
+export async function getDocumentsBySource(): Promise<DocumentsBySource[]> {
+	const rows = await db
+		.select({ source: document.source, n: count() })
+		.from(document)
+		.where(isNull(document.deletedAt))
+		.groupBy(document.source);
+	return rows.map((r) => ({ source: r.source, count: Number(r.n) }));
+}
+
+export interface ChunkCoverage {
+	totalChunks: number;
+	embeddedChunks: number;
+	byLevel: Record<string, number>;
+}
+
+/** Embedding + tier coverage over `rag.chunk` — live read-time counts (no cache). */
+export async function getChunkCoverage(): Promise<ChunkCoverage> {
+	const [cov, byLevel] = await Promise.all([
+		db
+			.select({
+				total: count(),
+				embedded: sql<number>`count(*) FILTER (WHERE ${chunk.embedding} IS NOT NULL)`,
+			})
+			.from(chunk),
+		db.select({ level: chunk.level, n: count() }).from(chunk).groupBy(chunk.level),
+	]);
+
+	const byLevelRec: Record<string, number> = {};
+	for (const r of byLevel) byLevelRec[r.level] = Number(r.n);
+
+	return {
+		totalChunks: cov[0]?.total ?? 0,
+		embeddedChunks: Number(cov[0]?.embedded ?? 0),
+		byLevel: byLevelRec,
+	};
+}

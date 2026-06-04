@@ -1,7 +1,7 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { makeUser } from '$lib/server/test/fixtures';
-import { conversation, message } from '../schema/ai/conversation';
+import { conversation, conversationStep, message } from '../schema/ai/conversation';
 import { user } from '../schema/auth/_better-auth';
 
 let testClient: PGlite;
@@ -13,7 +13,8 @@ vi.mock('$lib/server/db', async () => {
 	return { db };
 });
 
-const { createConversation, deleteConversation, saveMessages, updateConversationTitle } = await import('./mutations');
+const { createConversation, deleteConversation, saveConversationStep, saveMessages, updateConversationTitle } =
+	await import('./mutations');
 const { db } = await import('$lib/server/db');
 
 const USER_A = makeUser({ id: 'user-a' });
@@ -123,6 +124,51 @@ describe('AI mutations', () => {
 
 			const [row] = await db.select().from(conversation);
 			expect(row.title).toBe('Original');
+		});
+	});
+
+	describe('saveConversationStep', () => {
+		it('persists provider / model / duration attribution (usage-by-model)', async () => {
+			const conv = await createConversation(USER_A.id);
+			await saveMessages(conv.id, USER_A.id, [{ id: 'amsg-1', role: 'assistant', content: '' }]);
+
+			await saveConversationStep({
+				conversationId: conv.id,
+				messageId: 'amsg-1',
+				stepIndex: 0,
+				stepType: 'initial',
+				inputTokens: 100,
+				outputTokens: 50,
+				providerId: 'openai',
+				modelId: 'gpt-4o-mini',
+				durationMs: 1234,
+			});
+
+			const [row] = await db.select().from(conversationStep);
+			expect(row.providerId).toBe('openai');
+			expect(row.modelId).toBe('gpt-4o-mini');
+			expect(row.durationMs).toBe(1234);
+			expect(row.inputTokens).toBe(100);
+			expect(row.outputTokens).toBe(50);
+		});
+
+		it('defaults attribution columns to null when omitted (pre-capture rows)', async () => {
+			const conv = await createConversation(USER_A.id);
+			await saveMessages(conv.id, USER_A.id, [{ id: 'amsg-2', role: 'assistant', content: '' }]);
+
+			await saveConversationStep({
+				conversationId: conv.id,
+				messageId: 'amsg-2',
+				stepIndex: 0,
+				stepType: 'initial',
+				inputTokens: 0,
+				outputTokens: 0,
+			});
+
+			const [row] = await db.select().from(conversationStep);
+			expect(row.providerId).toBeNull();
+			expect(row.modelId).toBeNull();
+			expect(row.durationMs).toBeNull();
 		});
 	});
 });

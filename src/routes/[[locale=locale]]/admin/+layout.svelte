@@ -36,12 +36,20 @@ const groups = [
 		],
 	},
 	{
+		label: 'AI',
+		items: [
+			{ label: 'Overview', href: '/admin/ai/overview', icon: 'i-lucide-gauge' },
+			{ label: 'Models', href: '/admin/ai/models', icon: 'i-lucide-cpu' },
+			{ label: 'Usage', href: '/admin/ai/usage', icon: 'i-lucide-bar-chart-2' },
+			{ label: 'nRAG', href: '/admin/ai/nrag', icon: 'i-lucide-book-marked' },
+			{ label: 'Tools', href: '/admin/ai/tools', icon: 'i-lucide-wrench' },
+		],
+	},
+	{
 		label: 'System',
 		items: [
 			{ label: 'Jobs', href: '/admin/jobs', icon: 'i-lucide-clock' },
 			{ label: 'Notifications', href: '/admin/notifications', icon: 'i-lucide-bell' },
-			{ label: 'AI Usage', href: '/admin/ai', icon: 'i-lucide-bot' },
-			{ label: 'RAG', href: '/admin/rag', icon: 'i-lucide-book-open' },
 			{ label: 'Cache', href: '/admin/cache', icon: 'i-lucide-hard-drive' },
 		],
 	},

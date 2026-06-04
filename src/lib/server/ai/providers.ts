@@ -3,6 +3,7 @@ import { createGroq } from '@ai-sdk/groq';
 import { createOpenAI } from '@ai-sdk/openai';
 import type { LanguageModel } from 'ai';
 import { env } from '$env/dynamic/private';
+import { redis } from '$lib/server/cache';
 
 export interface ProviderEntry {
 	id: string;
@@ -87,28 +88,58 @@ export function getFallbackProviders(registry: ProviderEntry[], activeId: string
 }
 
 // ── Circuit breaker — cooldown for rate-limited providers ──────────
+//
+// Stored in Redis so the breaker is shared across serverless instances — an
+// in-process Map would let every cold lambda independently re-trip a provider
+// that another instance already cooled. Falls back to an in-memory Map when
+// Redis is unavailable (dev / tests). All three accessors are async as a result.
 
-const cooldowns = new Map<string, number>();
+const COOLDOWN_PREFIX = 'ai:cooldown:';
+const cooldowns = new Map<string, number>(); // fallback store when redis is null
 
-/** Reset all cooldowns. For test cleanup only. */
+/** Reset the in-memory fallback store. For test cleanup only (no-op against Redis). */
 export function resetCooldowns(): void {
 	cooldowns.clear();
 }
 
-/** Mark a provider as rate-limited for `durationMs` (default 60s). */
-export function markCooldown(providerId: string, durationMs = 60_000): void {
-	cooldowns.set(providerId, Date.now() + durationMs);
+/** Mark a provider as rate-limited for `durationMs` (default 60s). Non-blocking. */
+export async function markCooldown(providerId: string, durationMs = 60_000): Promise<void> {
+	const resumeAt = Date.now() + durationMs;
+	if (redis) {
+		try {
+			await redis.set(`${COOLDOWN_PREFIX}${providerId}`, resumeAt, { px: durationMs });
+		} catch (err) {
+			console.error('[ai:providers] Failed to set cooldown:', err);
+		}
+		return;
+	}
+	cooldowns.set(providerId, resumeAt);
 }
 
-/** Check if a provider is currently in cooldown. Auto-clears expired entries. */
-export function isCooledDown(providerId: string): boolean {
+/** Resolve a provider's cooldown resume time (epoch ms), or null if not cooled. */
+async function cooldownResumeMs(providerId: string): Promise<number | null> {
+	if (redis) {
+		try {
+			const resumeAt = await redis.get<number>(`${COOLDOWN_PREFIX}${providerId}`);
+			if (!resumeAt || Date.now() >= resumeAt) return null;
+			return resumeAt;
+		} catch (err) {
+			console.error('[ai:providers] Failed to read cooldown:', err);
+			return null;
+		}
+	}
 	const resumeAt = cooldowns.get(providerId);
-	if (!resumeAt) return false;
+	if (!resumeAt) return null;
 	if (Date.now() >= resumeAt) {
 		cooldowns.delete(providerId);
-		return false;
+		return null;
 	}
-	return true;
+	return resumeAt;
+}
+
+/** Check if a provider is currently in cooldown. */
+export async function isCooledDown(providerId: string): Promise<boolean> {
+	return (await cooldownResumeMs(providerId)) !== null;
 }
 
 /**
@@ -159,13 +190,8 @@ export function clearUserPreference(userId: string): void {
 	userPreferences.delete(userId);
 }
 
-/** Get the cooldown resume time as ISO string, or null if not cooled down. Auto-clears expired. */
-export function getCooldownResumeAt(providerId: string): string | null {
-	const resumeAt = cooldowns.get(providerId);
-	if (!resumeAt) return null;
-	if (Date.now() >= resumeAt) {
-		cooldowns.delete(providerId);
-		return null;
-	}
-	return new Date(resumeAt).toISOString();
+/** Get the cooldown resume time as ISO string, or null if not cooled down. */
+export async function getCooldownResumeAt(providerId: string): Promise<string | null> {
+	const ms = await cooldownResumeMs(providerId);
+	return ms === null ? null : new Date(ms).toISOString();
 }

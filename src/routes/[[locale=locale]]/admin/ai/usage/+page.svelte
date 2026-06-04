@@ -24,65 +24,6 @@ function limitBadgeVariant(pct: number): 'success' | 'warning' | 'error' {
 }
 </script>
 <Stack gap="6">
-	<!-- Overview Stats -->
-	<Card>
-		{#snippet header()}
-			<Cluster justify="between">
-				<h2 class="text-fluid-lg font-semibold">AI Overview</h2>
-				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>
-					<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
-					Refresh
-				</Button>
-			</Cluster>
-		{/snippet}
-
-		<div class="stat-grid">
-			<div class="stat-card">
-				<span class="stat-label">Total Conversations</span>
-				<span class="stat-value">{data.overview.totalConversations.toLocaleString()}</span>
-			</div>
-			<div class="stat-card">
-				<span class="stat-label">Total Messages</span>
-				<span class="stat-value">{data.overview.totalMessages.toLocaleString()}</span>
-			</div>
-			<div class="stat-card">
-				<span class="stat-label">Conversations Today</span>
-				<span class="stat-value">{data.overview.conversationsToday.toLocaleString()}</span>
-			</div>
-			<div class="stat-card">
-				<span class="stat-label">Messages Today</span>
-				<span class="stat-value">{data.overview.messagesToday.toLocaleString()}</span>
-			</div>
-		</div>
-	</Card>
-
-	<!-- Provider Status -->
-	<Card>
-		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">Provider Status</h2>
-		{/snippet}
-
-		<div class="provider-list">
-			{#each data.providers as provider}
-				<div class="provider-row">
-					<Cluster gap="2" align="center">
-						<span class="health-dot health-dot--{provider.configured ? 'success' : 'secondary'}"></span>
-						<span class="provider-name">{provider.name}</span>
-						{#if data.activeProvider?.id === provider.id}
-							<Badge variant="success">Active</Badge>
-						{/if}
-					</Cluster>
-					<Cluster gap="3" align="center">
-						<code class="provider-model">{provider.model}</code>
-						<Badge variant={provider.configured ? 'success' : 'secondary'}>
-							{provider.configured ? 'Configured' : 'Not configured'}
-						</Badge>
-					</Cluster>
-				</div>
-			{/each}
-		</div>
-	</Card>
-
 	<!-- Users Near Limit -->
 	{#if data.usersNearLimit.length > 0}
 		<Card>
@@ -90,7 +31,7 @@ function limitBadgeVariant(pct: number): 'success' | 'warning' | 'error' {
 				<h2 class="text-fluid-lg font-semibold">Users Near Conversation Limit</h2>
 			{/snippet}
 
-			<div class="table-wrap">
+			<div class="table-wrap" tabindex="0" aria-label="Users near conversation limit">
 				<table class="data-table">
 					<thead>
 						<tr>
@@ -123,7 +64,13 @@ function limitBadgeVariant(pct: number): 'success' | 'warning' | 'error' {
 	<!-- Top Users -->
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">Top Users</h2>
+			<Cluster justify="between" align="center">
+				<h2 class="text-fluid-lg font-semibold">Top Users</h2>
+				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>
+					<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
+					Refresh
+				</Button>
+			</Cluster>
 		{/snippet}
 
 		{#if data.topUsers.length === 0}
@@ -133,7 +80,7 @@ function limitBadgeVariant(pct: number): 'success' | 'warning' | 'error' {
 				description="No users have started AI conversations."
 			/>
 		{:else}
-			<div class="table-wrap">
+			<div class="table-wrap" tabindex="0" aria-label="Top users by conversations">
 				<table class="data-table">
 					<thead>
 						<tr>
@@ -175,7 +122,7 @@ function limitBadgeVariant(pct: number): 'success' | 'warning' | 'error' {
 				{/snippet}
 
 				{@const maxCount = Math.max(...volume.map((d) => d.count))}
-				<div class="volume-chart">
+				<div class="volume-chart" aria-hidden="true">
 					{#each volume as day}
 						<div class="volume-bar-wrap" title="{day.date}: {day.count} messages">
 							<div
@@ -189,6 +136,19 @@ function limitBadgeVariant(pct: number): 'success' | 'warning' | 'error' {
 					<span class="chart-label">{volume[0]?.date ?? ''}</span>
 					<span class="chart-label">{volume[volume.length - 1]?.date ?? ''}</span>
 				</Cluster>
+
+				<!-- Text equivalent of the bar chart (the bars are decorative/mouse-only). -->
+				<table class="sr-only">
+					<caption>Messages per day over the last 30 days</caption>
+					<thead>
+						<tr><th>Date</th><th>Messages</th></tr>
+					</thead>
+					<tbody>
+						{#each volume as day}
+							<tr><td>{day.date}</td><td>{day.count}</td></tr>
+						{/each}
+					</tbody>
+				</table>
 			</Card>
 		{/if}
 	{:catch}
@@ -214,7 +174,7 @@ function limitBadgeVariant(pct: number): 'success' | 'warning' | 'error' {
 				<Cluster justify="between" align="center">
 					<h2 class="text-fluid-lg font-semibold">Conversations</h2>
 					{#if data.filters.userId}
-						<a href="/admin/ai" class="filter-link active">Clear filter</a>
+						<a href="/admin/ai/usage" class="filter-link active">Clear filter</a>
 					{/if}
 				</Cluster>
 			{/snippet}
@@ -226,13 +186,13 @@ function limitBadgeVariant(pct: number): 'success' | 'warning' | 'error' {
 					description={data.filters.userId ? 'This user has no AI conversations.' : 'No AI conversations have been created.'}
 				>
 					{#if data.filters.userId}
-						<a href="/admin/ai">
+						<a href="/admin/ai/usage">
 							<Button variant="outline">Clear filter</Button>
 						</a>
 					{/if}
 				</EmptyState>
 			{:else}
-				<div class="table-wrap">
+				<div class="table-wrap" tabindex="0" aria-label="Conversations">
 					<table class="data-table">
 						<thead>
 							<tr>
@@ -248,7 +208,7 @@ function limitBadgeVariant(pct: number): 'success' | 'warning' | 'error' {
 								<tr>
 									<td class="title-cell">{conv.title}</td>
 									<td>
-										<a href="/admin/ai?user={conv.userId}" class="user-link">
+										<a href="/admin/ai/usage?user={conv.userId}" class="user-link">
 											{conv.userEmail}
 										</a>
 									</td>
@@ -265,7 +225,7 @@ function limitBadgeVariant(pct: number): 'success' | 'warning' | 'error' {
 					<div class="pagination">
 						{#if data.filters.page > 1}
 							<a
-								href="/admin/ai?page={data.filters.page - 1}{data.filters.userId ? `&user=${data.filters.userId}` : ''}"
+								href="/admin/ai/usage?page={data.filters.page - 1}{data.filters.userId ? `&user=${data.filters.userId}` : ''}"
 								class="page-link"
 							>
 								<span class="i-lucide-chevron-left h-4 w-4"></span> Prev
@@ -274,7 +234,7 @@ function limitBadgeVariant(pct: number): 'success' | 'warning' | 'error' {
 						<span class="page-info">Page {data.filters.page} of {convData.totalPages}</span>
 						{#if data.filters.page < convData.totalPages}
 							<a
-								href="/admin/ai?page={data.filters.page + 1}{data.filters.userId ? `&user=${data.filters.userId}` : ''}"
+								href="/admin/ai/usage?page={data.filters.page + 1}{data.filters.userId ? `&user=${data.filters.userId}` : ''}"
 								class="page-link"
 							>
 								Next <span class="i-lucide-chevron-right h-4 w-4"></span>
@@ -295,77 +255,27 @@ function limitBadgeVariant(pct: number): 'success' | 'warning' | 'error' {
 </Stack>
 
 <style>
-	/* Stat Grid */
-	.stat-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-		gap: var(--spacing-4);
-	}
-
-	.stat-card {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-1);
-		padding: var(--spacing-4);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		background: var(--color-subtle);
-	}
-
-	.stat-label {
-		font-size: var(--text-fluid-xs);
-		color: var(--color-muted);
-	}
-
-	.stat-value {
-		font-size: var(--text-fluid-xl);
-		font-weight: 700;
-		font-family: ui-monospace, monospace;
-	}
-
-	/* Provider List */
-	.provider-list {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-2);
-	}
-
-	.provider-row {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: var(--spacing-2) var(--spacing-3);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-sm);
-	}
-
-	.provider-name {
-		font-weight: 600;
-	}
-
-	.provider-model {
-		font-size: var(--text-fluid-xs);
-		color: var(--color-muted);
-	}
-
-	/* Health Dot */
-	.health-dot {
-		width: 8px;
-		height: 8px;
-		border-radius: var(--radius-full);
-	}
-
-	.health-dot--success {
-		background: var(--color-success);
-	}
-
-	.health-dot--secondary {
-		background: var(--color-muted);
+	/* Screen-reader-only text equivalents (e.g. the volume chart data table). */
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
 	}
 
 	/* Tables */
 	.table-wrap {
 		overflow-x: auto;
+	}
+
+	.table-wrap:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
 	}
 
 	.data-table {
@@ -474,6 +384,14 @@ function limitBadgeVariant(pct: number): 'success' | 'warning' | 'error' {
 	@keyframes pulse {
 		0%, 100% { opacity: 1; }
 		50% { opacity: 0.5; }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.skeleton-chart,
+		.skeleton-table {
+			animation: none;
+			opacity: 0.6;
+		}
 	}
 
 	.error-text {

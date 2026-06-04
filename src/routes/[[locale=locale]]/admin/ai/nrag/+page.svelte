@@ -1,6 +1,7 @@
 <script lang="ts">
 import { enhance } from '$app/forms';
 import { invalidateAll } from '$app/navigation';
+import NRagPipelineDiagram from '$lib/components/admin/ai/NRagPipelineDiagram.svelte';
 import { Card, ConfirmDialog, EmptyState } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Spinner } from '$lib/components/primitives';
@@ -8,6 +9,13 @@ import { getToast } from '$lib/state/toast.svelte';
 
 let { data } = $props();
 const toast = getToast();
+
+const pipelineCounts = $derived({
+	llmwiki: data.llmwiki.totalPages,
+	rawrag: data.coverage.totalChunks,
+	docs: data.bySource.find((s) => s.source === 'docs')?.count ?? 0,
+	catalog: data.bySource.find((s) => s.source === 'catalog')?.count ?? 0,
+});
 
 let actionId = $state('');
 let showDeleteDialog = $state(false);
@@ -60,6 +68,18 @@ function submitDelete() {
 const statusFilters = ['all', 'pending', 'processing', 'ready', 'error'] as const;
 </script>
 <Stack gap="6">
+	<!-- nRAG Pipeline -->
+	<Card>
+		{#snippet header()}
+			<h2 class="text-fluid-lg font-semibold">nRAG Pipeline</h2>
+		{/snippet}
+		<NRagPipelineDiagram
+			counts={pipelineCounts}
+			compileScaffold={data.llmwiki.compileScaffold}
+			lintScaffold={data.llmwiki.lintScaffold}
+		/>
+	</Card>
+
 	<!-- Overview -->
 	<Card>
 		{#snippet header()}
@@ -110,6 +130,98 @@ const statusFilters = ['all', 'pending', 'processing', 'ready', 'error'] as cons
 				<span class="stat-value">{data.overview.totalCollections}</span>
 			</div>
 		</div>
+	</Card>
+
+	<!-- LLM-Wiki Health -->
+	<Card>
+		{#snippet header()}
+			<Cluster gap="2" align="center">
+				<span class="i-lucide-book-marked h-5 w-5"></span>
+				<h2 class="text-fluid-lg font-semibold">LLM-Wiki Health</h2>
+				{#if data.llmwiki.compileScaffold}
+					<Badge variant="secondary">compiler scaffold</Badge>
+				{/if}
+			</Cluster>
+		{/snippet}
+
+		{#if data.llmwiki.totalPages === 0 && data.llmwiki.compileScaffold}
+			<p class="scaffold-note">
+				<span class="i-lucide-info h-4 w-4"></span>
+				Compile pipeline not yet active — no wiki pages have been compiled. The llmwiki layer
+				is the chatbot's primary answer surface once compilation is wired.
+			</p>
+		{:else}
+			<div class="stat-grid">
+				<div class="stat-card">
+					<span class="stat-label">Pages</span>
+					<span class="stat-value">{data.llmwiki.totalPages}</span>
+				</div>
+				<div class="stat-card">
+					<span class="stat-label">Overview / Content</span>
+					<span class="stat-value">{data.llmwiki.overviewPages} / {data.llmwiki.contentPages}</span>
+				</div>
+				<div class="stat-card">
+					<span class="stat-label">Stale</span>
+					<span class="stat-value">{data.llmwiki.stalePages}</span>
+				</div>
+				<div class="stat-card">
+					<span class="stat-label">Links</span>
+					<span class="stat-value">{data.llmwiki.totalLinks}</span>
+				</div>
+				<div class="stat-card" class:stat-card--error={data.llmwiki.brokenLinks > 0}>
+					<span class="stat-label">Broken Links</span>
+					<span class="stat-value">{data.llmwiki.brokenLinks}</span>
+				</div>
+				<div class="stat-card">
+					<span class="stat-label">Redirects</span>
+					<span class="stat-value">{data.llmwiki.totalRedirects}</span>
+				</div>
+			</div>
+		{/if}
+
+		<div class="lint-row">
+			<span class="lint-label">Lint:</span>
+			{#if data.llmwiki.lintScaffold}
+				<span class="muted">Lint runner not yet active — issue counts are not yet meaningful.</span>
+			{:else if data.llmwiki.openLintIssues === 0}
+				<Badge variant="success">No open issues</Badge>
+			{:else}
+				{#each Object.entries(data.llmwiki.lintBySeverity) as [sev, n]}
+					<Badge variant={sev === 'error' ? 'error' : sev === 'warn' ? 'warning' : 'secondary'}>
+						{n} {sev}
+					</Badge>
+				{/each}
+			{/if}
+		</div>
+	</Card>
+
+	<!-- Knowledge Graph -->
+	<Card>
+		{#snippet header()}
+			<h2 class="text-fluid-lg font-semibold">Knowledge Graph</h2>
+		{/snippet}
+
+		{#if data.graph === null}
+			<p class="scaffold-note">
+				<span class="i-lucide-unplug h-4 w-4"></span>
+				Graph unavailable — the Neo4j (Aura) connection did not respond.
+			</p>
+		{:else}
+			<div class="stat-grid">
+				<div class="stat-card">
+					<span class="stat-label">Entity Nodes</span>
+					<span class="stat-value">{data.graph.nodes.toLocaleString()}</span>
+				</div>
+				<div class="stat-card">
+					<span class="stat-label">Relationships</span>
+					<span class="stat-value">{data.graph.edges.toLocaleString()}</span>
+				</div>
+				<div class="stat-card">
+					<span class="stat-label">Embedded Chunks</span>
+					<span class="stat-value">{data.coverage.embeddedChunks.toLocaleString()} / {data.coverage.totalChunks.toLocaleString()}</span>
+				</div>
+			</div>
+		{/if}
 	</Card>
 
 	<!-- Needs Attention -->
@@ -190,7 +302,7 @@ const statusFilters = ['all', 'pending', 'processing', 'ready', 'error'] as cons
 					<div class="filter-bar">
 						{#each statusFilters as s}
 							<a
-								href="/admin/rag?status={s}"
+								href="/admin/ai/nrag?status={s}"
 								class="filter-link"
 								class:active={data.filters.status === s}
 							>{s}</a>
@@ -206,7 +318,7 @@ const statusFilters = ['all', 'pending', 'processing', 'ready', 'error'] as cons
 					description={data.filters.status !== 'all' ? 'No documents match this filter.' : 'No RAG documents have been ingested.'}
 				>
 					{#if data.filters.status !== 'all'}
-						<a href="/admin/rag">
+						<a href="/admin/ai/nrag">
 							<Button variant="outline">Clear filter</Button>
 						</a>
 					{/if}
@@ -284,7 +396,7 @@ const statusFilters = ['all', 'pending', 'processing', 'ready', 'error'] as cons
 					<div class="pagination">
 						{#if data.filters.page > 1}
 							<a
-								href="/admin/rag?page={data.filters.page - 1}&status={data.filters.status}"
+								href="/admin/ai/nrag?page={data.filters.page - 1}&status={data.filters.status}"
 								class="page-link"
 							>
 								<span class="i-lucide-chevron-left h-4 w-4"></span> Prev
@@ -293,7 +405,7 @@ const statusFilters = ['all', 'pending', 'processing', 'ready', 'error'] as cons
 						<span class="page-info">Page {data.filters.page} of {docData.totalPages}</span>
 						{#if data.filters.page < docData.totalPages}
 							<a
-								href="/admin/rag?page={data.filters.page + 1}&status={data.filters.status}"
+								href="/admin/ai/nrag?page={data.filters.page + 1}&status={data.filters.status}"
 								class="page-link"
 							>
 								Next <span class="i-lucide-chevron-right h-4 w-4"></span>
@@ -394,6 +506,36 @@ const statusFilters = ['all', 'pending', 'processing', 'ready', 'error'] as cons
 		font-size: var(--text-fluid-lg);
 		font-weight: 700;
 		font-family: ui-monospace, monospace;
+	}
+
+	.scaffold-note {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-2);
+		margin: 0;
+		font-size: var(--text-fluid-sm);
+		color: var(--color-muted);
+	}
+
+	.lint-row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--spacing-2);
+		margin-top: var(--spacing-4);
+		padding-top: var(--spacing-3);
+		border-top: 1px solid var(--color-border);
+	}
+
+	.lint-label {
+		font-size: var(--text-fluid-sm);
+		font-weight: 600;
+		color: var(--color-muted);
+	}
+
+	.muted {
+		font-size: var(--text-fluid-sm);
+		color: var(--color-muted);
 	}
 
 	/* Error List */

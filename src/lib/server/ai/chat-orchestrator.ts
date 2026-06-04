@@ -24,6 +24,7 @@ import {
 } from '$lib/server/ai/context/system-prompt';
 import { aiErrorToStatus, classifyAIError, safeAIMessage } from '$lib/server/ai/errors';
 import { compactToolResults, DEFAULT_BUDGET, runWithCompaction } from '$lib/server/ai/loop/compact';
+import { incrProvider429 } from '$lib/server/ai/provider-usage';
 import type { ProviderEntry } from '$lib/server/ai/providers';
 import { isCooledDown, markCooldown } from '$lib/server/ai/providers';
 import { buildRetrievalTools, createDeskTools, type DeskToolScope, stepsForScopes } from '$lib/server/ai/tools';
@@ -246,7 +247,7 @@ async function resolveConversation(
 }
 
 /** Attempt streaming with fallback providers on transient errors. */
-function tryFallback(
+async function tryFallback(
 	baseSystemPrompt: string,
 	messages: ModelMessage[],
 	conversationId: string | undefined,
@@ -255,9 +256,9 @@ function tryFallback(
 	wantsTools = false,
 	deskTools?: ReturnType<typeof createDeskTools>,
 	toolScopes?: DeskToolScope[],
-): Response | null {
+): Promise<Response | null> {
 	for (const fallback of fallbacks) {
-		if (isCooledDown(fallback.id)) continue;
+		if (await isCooledDown(fallback.id)) continue;
 		// For tool requests, prefer tool-capable providers
 		if (wantsTools && !fallback.supportsTools) continue;
 		try {
@@ -292,7 +293,10 @@ function tryFallback(
 				onError: (error: unknown): string => {
 					const aiErr = classifyAIError(error);
 					console.error(`[ai:chat:fallback] Stream classify [${aiErr.kind}]:`, error);
-					if (aiErr.kind === 'rate_limit') markCooldown(fallback.id);
+					if (aiErr.kind === 'rate_limit') {
+						void markCooldown(fallback.id);
+						void incrProvider429(fallback.id);
+					}
 					return `[${aiErr.kind}] ${safeAIMessage(aiErr.kind)}`;
 				},
 			});
@@ -378,12 +382,16 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	// too — otherwise grounding tool calls run on the chat model and silently fail to fire.
 	const wantsTools = !!toolScopes?.length || !!useLlmwiki || !!useRetrieval;
 	const toolProviderAvailable =
-		!!resolvedToolModel && !!resolvedToolProviderId && !isCooledDown(resolvedToolProviderId);
+		!!resolvedToolModel && !!resolvedToolProviderId && !(await isCooledDown(resolvedToolProviderId));
 	const hasTools = wantsTools && toolProviderAvailable;
 	const model = (hasTools ? resolvedToolModel : resolvedChatModel) ?? resolvedChatModel;
 	// Desk tools only for actual desk scopes — the llmwiki/rawrag branches set hasTools (to claim
 	// the tool model) but bring their own retrieval tools and pass no desk scopes.
 	const deskTools = hasTools && toolScopes?.length ? createDeskTools(userId, toolScopes, deskLayout) : undefined;
+	// Resolved provider/model attribution for per-step telemetry (conversation_step).
+	// The tool provider drives the turn when tools are mounted; otherwise the chat provider.
+	const stepProviderId = hasTools ? resolvedToolProviderId : (activeInfo?.id ?? null);
+	const stepModelId = hasTools ? (resolvedToolProvider?.model ?? null) : (activeInfo?.model ?? null);
 	let baseSystemPrompt = buildSystemPrompt({ panelContext, toolScopes, deskLayout, activeWorkspace });
 	if (resumeContext) {
 		baseSystemPrompt = `${baseSystemPrompt}
@@ -425,7 +433,10 @@ The user has just approved the plan above and the listed steps were executed. Ac
 		// Circuit breaker for rate limits during streaming
 		if (aiErr.kind === 'rate_limit') {
 			const failedProvider = hasTools ? resolvedToolProviderId : (activeInfo?.id ?? null);
-			if (failedProvider) markCooldown(failedProvider);
+			if (failedProvider) {
+				void markCooldown(failedProvider);
+				void incrProvider429(failedProvider);
+			}
 		}
 
 		return `[${aiErr.kind}] ${safeAIMessage(aiErr.kind)}`;
@@ -612,6 +623,16 @@ Project catalog rules:
 					const generateStart = performance.now();
 					emit({ type: 'pipeline:step', step: 'generate', status: 'active', startedAt: generateStart });
 
+					// Persist steps for the chatbot path (previously desk-only). Pre-create the
+					// assistant message so conversation_step.messageId has a valid FK; backfill
+					// its content in onFinish (mirrors the desk branch).
+					const assistantMsgId = crypto.randomUUID();
+					if (conversationId) {
+						await saveMessages(conversationId, userId, [{ id: assistantMsgId, role: 'assistant', content: '' }]);
+					}
+					let stepCounter = 0;
+					let lastStepAt = generateStart;
+
 					const textResult = streamText({
 						model,
 						system: systemPrompt,
@@ -628,37 +649,62 @@ Project catalog rules:
 						experimental_transform: createToolLeakGuard((lead) =>
 							console.warn(`[ai:chat:llmwiki] suppressed textual tool-call leak: ${lead}…`),
 						),
-						onStepFinish: ({
+						onStepFinish: async ({
 							toolCalls,
 							toolResults,
+							usage,
 						}: {
 							toolCalls?: Array<{ toolName: string; args?: { ids?: string[] } }>;
 							toolResults?: Array<{ toolName: string; result?: { chunks?: unknown[] } }>;
+							usage?: { inputTokens?: number; outputTokens?: number };
 						}) => {
-							if (!toolCalls) return;
-							for (let i = 0; i < toolCalls.length; i++) {
-								const tc = toolCalls[i];
-								if (tc.toolName !== 'get_rawrag_chunks') continue;
-								const callIndex = toolCallCount as 0 | 1 | 2;
-								toolCallCount++;
-								if (toolCallCount > MAX_RAWRAG_TOOL_CALLS_PER_TURN) {
-									console.warn(
-										`[ai:chat:llmwiki] get_rawrag_chunks called ${toolCallCount} times, cap is ${MAX_RAWRAG_TOOL_CALLS_PER_TURN}`,
-									);
+							if (toolCalls) {
+								for (let i = 0; i < toolCalls.length; i++) {
+									const tc = toolCalls[i];
+									if (tc.toolName !== 'get_rawrag_chunks') continue;
+									const callIndex = toolCallCount as 0 | 1 | 2;
+									toolCallCount++;
+									if (toolCallCount > MAX_RAWRAG_TOOL_CALLS_PER_TURN) {
+										console.warn(
+											`[ai:chat:llmwiki] get_rawrag_chunks called ${toolCallCount} times, cap is ${MAX_RAWRAG_TOOL_CALLS_PER_TURN}`,
+										);
+									}
+									const idsRequested = tc.args?.ids?.length ?? 0;
+									const chunksReturned = toolResults?.[i]?.result?.chunks?.length ?? 0;
+									emit({
+										type: 'pipeline:step',
+										step: 'rawrag:drill',
+										status: 'done',
+										detail: {
+											kind: 'drill',
+											callIndex: callIndex <= 2 ? callIndex : 2,
+											idsRequested,
+											chunksReturned,
+										},
+									});
 								}
-								const idsRequested = tc.args?.ids?.length ?? 0;
-								const chunksReturned = toolResults?.[i]?.result?.chunks?.length ?? 0;
-								emit({
-									type: 'pipeline:step',
-									step: 'rawrag:drill',
-									status: 'done',
-									detail: {
-										kind: 'drill',
-										callIndex: callIndex <= 2 ? callIndex : 2,
-										idsRequested,
-										chunksReturned,
-									},
-								});
+							}
+							// Persist the step so the chatbot's usage shows up in "usage by model".
+							if (conversationId) {
+								const stepIndex = stepCounter++;
+								const nowT = performance.now();
+								const durationMs = Math.round(nowT - lastStepAt);
+								lastStepAt = nowT;
+								try {
+									await saveConversationStep({
+										conversationId,
+										messageId: assistantMsgId,
+										stepIndex,
+										stepType: stepIndex === 0 ? 'initial' : 'tool-result',
+										inputTokens: usage?.inputTokens ?? 0,
+										outputTokens: usage?.outputTokens ?? 0,
+										providerId: stepProviderId,
+										modelId: stepModelId,
+										durationMs,
+									});
+								} catch (err) {
+									console.error('[ai:chat:llmwiki] Failed to persist step:', err);
+								}
 							}
 						},
 						onFinish: async ({ text: rawText, totalUsage }) => {
@@ -744,7 +790,7 @@ Project catalog rules:
 									const cited = surfaced.filter((r) => text.includes(r.path));
 									const bySurface = new Map<string, (typeof cited)[number]>();
 									for (const r of cited) {
-										const key = `${r.path} ${r.anchor ?? ''}`;
+										const key = `${r.path}\u0000${r.anchor ?? ''}`;
 										const prev = bySurface.get(key);
 										if (!prev || (r.score ?? 0) > (prev.score ?? 0)) bySurface.set(key, r);
 									}
@@ -766,7 +812,19 @@ Project catalog rules:
 							} catch (err) {
 								console.error('[ai:chat:catalog] Surface-citation verification failed:', err);
 							}
-							await createOnFinish(conversationId, userId)({ text, totalUsage });
+							// Backfill the pre-created assistant message + refresh cached token totals
+							// (steps were persisted in onStepFinish). Keep charging the Redis budget.
+							if (conversationId) {
+								try {
+									await updateMessageContent(assistantMsgId, text);
+									await refreshConversationTokens(conversationId);
+								} catch (err) {
+									console.error('[ai:chat:llmwiki] Failed to finalize:', err);
+								}
+							}
+							if (totalUsage) {
+								await chargeTokens(userId, (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0));
+							}
 						},
 						onError: ({ error }) => {
 							console.error('[ai:chat:llmwiki] Stream error:', error);
@@ -836,6 +894,11 @@ Project catalog rules:
 						startedAt: generateStartedAt.t,
 					});
 
+					const assistantMsgId = crypto.randomUUID();
+					if (conversationId) {
+						await saveMessages(conversationId, userId, [{ id: assistantMsgId, role: 'assistant', content: '' }]);
+					}
+
 					const textResult = streamText({
 						model,
 						system: systemPrompt,
@@ -856,7 +919,29 @@ Project catalog rules:
 									outputTokens: totalUsage?.outputTokens,
 								},
 							});
-							await createOnFinish(conversationId, userId)({ text, totalUsage });
+							// Single-step turn (no tools): persist one step + backfill the message.
+							if (conversationId) {
+								try {
+									await saveConversationStep({
+										conversationId,
+										messageId: assistantMsgId,
+										stepIndex: 0,
+										stepType: 'initial',
+										inputTokens: totalUsage?.inputTokens ?? 0,
+										outputTokens: totalUsage?.outputTokens ?? 0,
+										providerId: stepProviderId,
+										modelId: stepModelId,
+										durationMs: Math.round(performance.now() - generateStartedAt.t),
+									});
+									await updateMessageContent(assistantMsgId, text);
+									await refreshConversationTokens(conversationId);
+								} catch (err) {
+									console.error('[ai:chat:retrieval] Failed to finalize:', err);
+								}
+							}
+							if (totalUsage) {
+								await chargeTokens(userId, (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0));
+							}
 						},
 						onError: ({ error }) => {
 							console.error('[ai:chat:retrieval] Stream error:', error);
@@ -877,6 +962,7 @@ Project catalog rules:
 			await saveMessages(conversationId, userId, [{ id: assistantMsgId, role: 'assistant', content: '' }]);
 		}
 		let stepCounter = 0;
+		let lastStepAt = performance.now();
 
 		/**
 		 * Harness metadata accumulator — per SVEY's gotcha, `message-metadata`
@@ -997,6 +1083,9 @@ Project catalog rules:
 						}
 					}
 
+					const deskNowT = performance.now();
+					const deskDurationMs = Math.round(deskNowT - lastStepAt);
+					lastStepAt = deskNowT;
 					try {
 						await saveConversationStep({
 							conversationId,
@@ -1006,6 +1095,9 @@ Project catalog rules:
 							inputTokens: usage?.inputTokens ?? 0,
 							outputTokens: usage?.outputTokens ?? 0,
 							toolCallIds: toolCallIds.length > 0 ? toolCallIds : undefined,
+							providerId: stepProviderId,
+							modelId: stepModelId,
+							durationMs: deskDurationMs,
 						});
 					} catch (err) {
 						console.error('[ai:chat] Failed to persist step:', err);
@@ -1052,12 +1144,15 @@ Project catalog rules:
 		// Circuit breaker: cooldown the provider that just failed with rate limit
 		if (aiErr.kind === 'rate_limit') {
 			const failedProvider = hasTools ? resolvedToolProviderId : (activeInfo?.id ?? null);
-			if (failedProvider) markCooldown(failedProvider);
+			if (failedProvider) {
+				void markCooldown(failedProvider);
+				void incrProvider429(failedProvider);
+			}
 		}
 
 		if (['unavailable', 'timeout', 'unknown', 'rate_limit'].includes(aiErr.kind)) {
 			const fallbackTools = wantsTools ? (deskTools ?? createDeskTools(userId, toolScopes, deskLayout)) : undefined;
-			const fallbackResponse = tryFallback(
+			const fallbackResponse = await tryFallback(
 				baseSystemPrompt,
 				messages,
 				conversationId,

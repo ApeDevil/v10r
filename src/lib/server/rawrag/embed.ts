@@ -1,6 +1,7 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { embed, embedMany } from 'ai';
 import { env } from '$env/dynamic/private';
+import { incrEmbeddingCalls } from '$lib/server/ai/provider-usage';
 import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL } from './config';
 import { RetrievalError } from './errors';
 
@@ -27,6 +28,9 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 	try {
 		const model = getEmbeddingModel();
 		const result = await embed({ model, value: text, providerOptions: queryEmbeddingOptions });
+		// One Gemini API call against the shared GOOGLE_GENERATIVE_AI_API_KEY quota
+		// — invisible to conversation_step, so count it for the quota board.
+		void incrEmbeddingCalls(1);
 		return result.embedding;
 	} catch (err) {
 		if (err instanceof RetrievalError) throw err;
@@ -45,6 +49,9 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
 	try {
 		const model = getEmbeddingModel();
 		const result = await embedMany({ model, values: texts, providerOptions: documentEmbeddingOptions });
+		// One batch API call against the shared Google key (ingest path). Counted
+		// as a single request — what the provider's RPD ceiling actually meters.
+		void incrEmbeddingCalls(1);
 		return result.embeddings;
 	} catch (err) {
 		if (err instanceof RetrievalError) throw err;

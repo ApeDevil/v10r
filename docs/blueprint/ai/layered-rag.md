@@ -196,7 +196,7 @@ podman exec v10r bun run db:ingest-docs
 - Idempotent: content-hash skip, soft-delete + re-insert on change, soft-delete-not-seen for removed files.
 - Tier-1 rawrag chunks only; the llmwiki tier-2 compiler over docs is deferred.
 
-> **Free-tier ceilings.** Gemini embeddings cap at ~1000/day (the script paces under ~90/min and backs off on 429). A full corpus re-ingest of all docs can exceed a single day's quota — re-run after the quota resets to finish. Chat **generation** runs on `gemini-2.5-flash` at ~20 calls/day on free tier; once exhausted, grounded chat returns a provider error until reset.
+> **Free-tier ceilings.** Gemini embeddings cap at ~1000/day (the script paces under ~90/min and backs off on 429). A full corpus re-ingest of all docs can exceed a single day's quota — re-run after the quota resets to finish. Chat **generation** runs on `gemini-2.5-flash` at ~20 calls/day on free tier; once exhausted, grounded chat returns a provider error until reset. Embeddings and chat share the same `GOOGLE_GENERATIVE_AI_API_KEY`, so they draw on one provider quota — the admin quota board counts embedding calls separately because `conversation_step` can't see them ([provider-routing.md](./provider-routing.md)).
 
 ---
 

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ProviderEntry } from './providers';
 import {
 	clearUserPreference,
@@ -11,6 +11,11 @@ import {
 	resolveToolProvider,
 	setUserPreference,
 } from './providers';
+
+// Force the in-memory cooldown fallback: deterministic + never touches the
+// app's real Redis (a test markCooldown('groq') against live Redis would cool
+// the provider for the running app and leak across test runs).
+vi.mock('$lib/server/cache', () => ({ redis: null }));
 
 // ── Mock registry ───────────────────────────────────────────────────
 
@@ -133,28 +138,28 @@ describe('resolveToolProvider', () => {
 describe('getCooldownResumeAt', () => {
 	afterEach(() => resetCooldowns());
 
-	it('returns null when not cooled down', () => {
-		expect(getCooldownResumeAt('groq')).toBeNull();
+	it('returns null when not cooled down', async () => {
+		expect(await getCooldownResumeAt('groq')).toBeNull();
 	});
 
-	it('returns ISO string when cooled down', () => {
-		markCooldown('groq', 60_000);
-		const result = getCooldownResumeAt('groq');
+	it('returns ISO string when cooled down', async () => {
+		await markCooldown('groq', 60_000);
+		const result = await getCooldownResumeAt('groq');
 		if (result === null) throw new Error('expected non-null cooldown timestamp');
 		expect(new Date(result).getTime()).toBeGreaterThan(Date.now());
 	});
 
-	it('auto-clears expired cooldowns', () => {
-		markCooldown('test-expired', 1); // 1ms — will expire immediately
+	it('auto-clears expired cooldowns', async () => {
+		await markCooldown('test-expired', 1); // 1ms — will expire immediately
 		// Wait a tick for expiry
-		const result = getCooldownResumeAt('test-expired');
+		const result = await getCooldownResumeAt('test-expired');
 		// Might or might not have expired in 0ms — just verify it doesn't throw
 		expect(result === null || typeof result === 'string').toBe(true);
 	});
 
-	it('matches isCooledDown state', () => {
-		markCooldown('groq', 60_000);
-		expect(isCooledDown('groq')).toBe(true);
-		expect(getCooldownResumeAt('groq')).not.toBeNull();
+	it('matches isCooledDown state', async () => {
+		await markCooldown('groq', 60_000);
+		expect(await isCooledDown('groq')).toBe(true);
+		expect(await getCooldownResumeAt('groq')).not.toBeNull();
 	});
 });

@@ -23,7 +23,7 @@ All three providers carry `supportsTools: true`, but Groq/llama probabilisticall
 | OpenAI | gpt-4o-mini | Preferred tool provider |
 | Google Gemini | gemini-2.5-flash | Second-choice tool provider |
 
-Circuit breaker: 60s cooldown on rate-limited providers (`markCooldown` / `isCooledDown`).
+Circuit breaker: 60s cooldown on rate-limited providers (`markCooldown` / `isCooledDown`), Redis-backed so it is cross-instance and async.
 
 ## Key Modules
 
@@ -43,7 +43,7 @@ Circuit breaker: 60s cooldown on rate-limited providers (`markCooldown` / `isCoo
 | File | Topics |
 |------|--------|
 | [layered-rag.md](./layered-rag.md) | **Primary RAG doc.** Two-layer split (llmwiki + rawrag), catalog grounding (`search_catalog`, `<catalog-map>`, citation chips), docs corpus (`search_project_docs`, system-owned ownership, `db:ingest-docs`), tool contracts, read path, citation verification |
-| [provider-routing.md](./provider-routing.md) | Chat vs tool resolver split, `wantsTools` logic, Groq drift + leak guard, practical consequences |
+| [provider-routing.md](./provider-routing.md) | Chat vs tool resolver split, `wantsTools` logic, Redis circuit breaker (cross-instance), provider quota & limits board (honest-board model, `/api/admin/ai/quota`), Groq drift + leak guard, practical consequences |
 | [graph-rag.md](./graph-rag.md) | rawrag internals: chunking, embeddings, parent-child, graph traversal, recursive retrieval; Phase 3 catalog `:Resource` seed |
 | [desk-integration.md](./desk-integration.md) | AI tool calling for desk operations, I/O log, effect system |
 | [toon.md](./toon.md) | TOON format for token-efficient RAG context injection |

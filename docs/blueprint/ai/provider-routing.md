@@ -31,7 +31,9 @@ Separately, `deskTools` is only built when there are actual desk scopes — retr
 
 ## Circuit breaker
 
-`markCooldown(providerId, durationMs = 60_000)` / `isCooledDown(providerId)` in `providers.ts`. Rate-limited providers cool down for 60 seconds. The cooldown map lives in-process and resets on restart.
+`markCooldown(providerId, durationMs = 60_000)` / `isCooledDown(providerId)` / `getCooldownResumeAt(providerId)` in `providers.ts`. Rate-limited providers cool down for 60 seconds. Tripped at the 429 stream-error sites in the orchestrator.
+
+Storage is Redis (`ai:cooldown:{id}`), so the three functions are **async** and the breaker is **cross-instance** — a cooldown set by one serverless instance is honored by all, and survives cold starts. (It was previously an in-process `Map`, per-instance, reset on restart.)
 
 Fallback rotation in `tryFallback()` skips any cooled-down provider and skips non-tool-capable providers when `wantsTools` is true.
 
@@ -61,6 +63,24 @@ Per-step state resets on `start-step` / `finish-step`, so a leak in step N never
 
 ---
 
+## Provider quota & limits (observability)
+
+Per-provider quota is **unknowable** for our key types: no usage API, the AI SDK drops `x-ratelimit-*` headers on streaming, and Gemini's free-tier daily limit is undocumented and unstable (silently cut ~250→~20 RPD in Dec 2025; the real wall is ~10 RPM, not RPD). So the admin board is a **reference + availability board**, not a precise gauge. It never shows a fake `0` or exact remaining count.
+
+Three inputs, served by `buildProviderQuota()` in `quota.ts` (single source for both the page loader and the poll endpoint):
+
+| Input | Source | Meaning |
+|-------|--------|---------|
+| Documented ceilings | `provider-limits.ts` (`PROVIDER_LIMITS`) | Hand-maintained static rpd/rpm/tpm per provider, each with `rpdConfidence`, `verifiedOn`, and `sourceUrl`. Rots — editors bump `verifiedOn` on re-check. |
+| Estimated usage | `getProviderUsageToday()` (`conversation_step` `COUNT(*)` for the UTC day) + Redis daily counters | A **lower bound**, not exact. Counters track the two quota signals `conversation_step` can't see: 429 hits and embedding calls. |
+| Live signals | Circuit-breaker cooldown state | Truthful "rate-limited now" flag. |
+
+**Embeddings share the Gemini key.** `gemini-embedding-001` (`rawrag/embed.ts`) uses the same `GOOGLE_GENERATIVE_AI_API_KEY` as Gemini chat, so it consumes the same provider quota but is invisible to `conversation_step`. Counted separately in Redis so the board reflects it.
+
+Served at `GET /api/admin/ai/quota` (admin-guarded, `no-store`, own rate-limit bucket; never makes a real generation call). Surfaced as `QuotaPanel.svelte` on the admin Models tab plus a headroom strip on Overview.
+
+---
+
 ## Practical consequences
 
 | Scenario | Provider used | Grounding reliability |
@@ -78,6 +98,7 @@ Configure at least one of `OPENAI_API_KEY` or `GOOGLE_GENERATIVE_AI_API_KEY` for
 ## Related
 
 - [layered-rag.md](./layered-rag.md) — `search_catalog` tool, catalog grounding, citation chips
-- `src/lib/server/ai/providers.ts` — resolver implementations
+- `src/lib/server/ai/providers.ts` — resolver + Redis cooldown implementations
+- `src/lib/server/ai/quota.ts`, `provider-limits.ts`, `provider-usage.ts` — quota board serializer, documented ceilings, Redis counters
 - `src/lib/server/ai/tool-leak-guard.ts` — leak guard implementation
 - `src/lib/server/ai/chat-orchestrator.ts` — `wantsTools` logic, `deskTools` guard

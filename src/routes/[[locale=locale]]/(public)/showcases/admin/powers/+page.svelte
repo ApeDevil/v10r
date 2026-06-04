@@ -97,8 +97,7 @@ const groups: Group[] = [
 				icon: 'i-lucide-bell',
 				can: 'Configure email / Telegram / Discord channels.',
 			},
-			{ label: 'AI Usage', href: '/admin/ai', icon: 'i-lucide-bot', can: 'Read token usage and per-model spend.' },
-			{ label: 'RAG', href: '/admin/rag', icon: 'i-lucide-book-open', can: 'Inspect retrieval index health.' },
+			{ label: 'AI', href: '/admin/ai', icon: 'i-lucide-bot', can: 'Models, usage, nRAG pipeline, and chatbot tools.' },
 			{
 				label: 'Cache',
 				href: '/admin/cache',

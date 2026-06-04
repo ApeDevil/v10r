@@ -7,14 +7,16 @@ import type { RequestHandler } from './$types';
 export const GET: RequestHandler = async ({ locals }) => {
 	const { user } = requireApiUser(locals);
 
-	const providers = providerRegistry.map((p) => ({
-		id: p.id,
-		name: p.name,
-		model: p.model,
-		configured: p.configured,
-		supportsTools: p.supportsTools,
-		cooldownUntil: p.configured ? getCooldownResumeAt(p.id) : null,
-	}));
+	const providers = await Promise.all(
+		providerRegistry.map(async (p) => ({
+			id: p.id,
+			name: p.name,
+			model: p.model,
+			configured: p.configured,
+			supportsTools: p.supportsTools,
+			cooldownUntil: p.configured ? await getCooldownResumeAt(p.id) : null,
+		})),
+	);
 
 	const activeInfo = getActiveProviderInfo(user.id);
 

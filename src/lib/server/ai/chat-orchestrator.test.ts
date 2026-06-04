@@ -40,6 +40,11 @@ vi.mock('$lib/server/ai/providers', () => ({
 	markCooldown: vi.fn(),
 }));
 
+vi.mock('$lib/server/ai/provider-usage', () => ({
+	incrProvider429: vi.fn(),
+	incrEmbeddingCalls: vi.fn(),
+}));
+
 vi.mock('$lib/server/rawrag', () => ({
 	retrieve: vi.fn(),
 	formatContextForPrompt: vi.fn(),

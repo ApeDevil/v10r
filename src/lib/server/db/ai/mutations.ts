@@ -1,7 +1,7 @@
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { createId } from '../id';
 import { db } from '../index';
-import { conversation, conversationStep, message, toolCall } from '../schema/ai/conversation';
+import { conversation, conversationStep, message, type RetrievalEvent, toolCall } from '../schema/ai/conversation';
 
 /** Create a new conversation */
 export async function createConversation(userId: string, title?: string) {
@@ -117,12 +117,20 @@ export async function saveConversationStep(data: {
 	inputTokens: number;
 	outputTokens: number;
 	toolCallIds?: string[];
+	providerId?: string | null;
+	modelId?: string | null;
+	durationMs?: number | null;
+	retrievalEvents?: RetrievalEvent[] | null;
 }) {
 	const id = createId.conversationStep();
 	await db.insert(conversationStep).values({
 		id,
 		...data,
 		toolCallIds: data.toolCallIds ?? null,
+		providerId: data.providerId ?? null,
+		modelId: data.modelId ?? null,
+		durationMs: data.durationMs ?? null,
+		retrievalEvents: data.retrievalEvents ?? null,
 	});
 }
 

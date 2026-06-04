@@ -1,7 +1,7 @@
 import { count, desc, eq, gte, sql } from 'drizzle-orm';
 import { ADMIN_AI_PAGE_SIZE, MAX_CONVERSATIONS_PER_USER } from '$lib/server/config';
 import { db } from '../index';
-import { conversation, message } from '../schema/ai/conversation';
+import { conversation, conversationStep, message } from '../schema/ai/conversation';
 import { user } from '../schema/auth/_better-auth';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -168,4 +168,78 @@ export async function getMessageVolumeByDay(days = 30): Promise<MessageVolumeDay
 		.orderBy(sql`date_trunc('day', ${message.createdAt})`);
 
 	return rows.map((r) => ({ date: r.date, count: Number(r.count) }));
+}
+
+export interface ModelUsageRow {
+	model: string;
+	inputTokens: number;
+	outputTokens: number;
+	steps: number;
+}
+
+/**
+ * Per-model token usage over `days`, from `conversation_step`. Pre-capture rows
+ * (and the fallback path) have a NULL model → bucketed as 'unknown'. Empty result
+ * = no steps captured yet (render an "instrumentation pending" state, never a fake 0).
+ */
+export async function getModelUsage(days = 30): Promise<ModelUsageRow[]> {
+	const since = new Date();
+	since.setDate(since.getDate() - days);
+	since.setHours(0, 0, 0, 0);
+
+	const rows = await db
+		.select({
+			model: sql<string>`COALESCE(${conversationStep.modelId}, 'unknown')`,
+			inputTokens: sql<number>`COALESCE(SUM(${conversationStep.inputTokens}), 0)`,
+			outputTokens: sql<number>`COALESCE(SUM(${conversationStep.outputTokens}), 0)`,
+			steps: count(),
+		})
+		.from(conversationStep)
+		.where(gte(conversationStep.createdAt, since))
+		.groupBy(sql`COALESCE(${conversationStep.modelId}, 'unknown')`)
+		.orderBy(desc(sql`SUM(${conversationStep.inputTokens} + ${conversationStep.outputTokens})`));
+
+	return rows.map((r) => ({
+		model: r.model,
+		inputTokens: Number(r.inputTokens),
+		outputTokens: Number(r.outputTokens),
+		steps: Number(r.steps),
+	}));
+}
+
+export interface ProviderUsageToday {
+	provider: string;
+	/** Successful AI SDK steps today ≈ provider API requests (a lower bound — see note). */
+	requests: number;
+	tokens: number;
+}
+
+/**
+ * Today's (UTC) per-provider request + token usage from `conversation_step`.
+ *
+ * `requests` counts one row per *successful* step, which is ≈ one provider API
+ * call against its RPD ceiling. It's a LOWER BOUND: 429'd/aborted calls never
+ * persist a step, and embedding calls go through a different path entirely
+ * (counted separately in Redis). Pre-capture/fallback rows have a NULL provider
+ * → bucketed as 'unknown'. Uses the `conv_step_provider_idx` index.
+ */
+export async function getProviderUsageToday(): Promise<ProviderUsageToday[]> {
+	const startOfDay = new Date();
+	startOfDay.setUTCHours(0, 0, 0, 0);
+
+	const rows = await db
+		.select({
+			provider: sql<string>`COALESCE(${conversationStep.providerId}, 'unknown')`,
+			requests: count(),
+			tokens: sql<number>`COALESCE(SUM(${conversationStep.inputTokens} + ${conversationStep.outputTokens}), 0)`,
+		})
+		.from(conversationStep)
+		.where(gte(conversationStep.createdAt, startOfDay))
+		.groupBy(sql`COALESCE(${conversationStep.providerId}, 'unknown')`);
+
+	return rows.map((r) => ({
+		provider: r.provider,
+		requests: Number(r.requests),
+		tokens: Number(r.tokens),
+	}));
 }

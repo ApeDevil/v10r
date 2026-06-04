@@ -150,11 +150,21 @@ export const conversationStep = aiSchema.table(
 		inputTokens: integer('input_tokens').notNull().default(0),
 		/** Output tokens produced in this step. */
 		outputTokens: integer('output_tokens').notNull().default(0),
+		/** Resolved provider id for this step ('groq' | 'openai' | 'google'). Null on pre-capture rows. */
+		providerId: text('provider_id'),
+		/** Resolved model id for this step (e.g. 'gpt-4o-mini'). Null on pre-capture rows. */
+		modelId: text('model_id'),
+		/** Wall-clock duration of this step in ms. Null when not measured. */
+		durationMs: integer('duration_ms'),
 		/** Retrieval pipeline events. Null when no retrieval was performed. */
 		retrievalEvents: jsonb('retrieval_events').$type<RetrievalEvent[] | null>(),
 		/** Tool call IDs invoked during this step (denormalized for fast lookup). */
 		toolCallIds: jsonb('tool_call_ids').$type<string[] | null>(),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	},
-	(table) => [index('conv_step_conv_msg_idx').on(table.conversationId, table.messageId)],
+	(table) => [
+		index('conv_step_conv_msg_idx').on(table.conversationId, table.messageId),
+		index('conv_step_model_idx').on(table.modelId, table.createdAt),
+		index('conv_step_provider_idx').on(table.providerId, table.createdAt),
+	],
 );
