@@ -40,6 +40,26 @@ let { role, parts, content, catalogSources, onconfirmaction }: Props = $props();
 
 const isUser = $derived(role === 'user');
 
+/**
+ * Dedupe citation chips by (path, anchor). Docs retrieval surfaces several
+ * CHUNKS of the same doc → identical paths; the keyed {#each} below (keyed by
+ * path+anchor) would otherwise throw each_key_duplicate, crashing the chip row
+ * AND wedging the chat loading state. The server collapses these too — this is
+ * a defensive second layer so the render can never hard-crash on shape.
+ */
+const uniqueSources = $derived.by((): CatalogSource[] => {
+	if (!catalogSources?.length) return [];
+	const seen = new Set<string>();
+	const out: CatalogSource[] = [];
+	for (const s of catalogSources) {
+		const key = `${s.path} ${s.anchor ?? ''}`;
+		if (seen.has(key)) continue;
+		seen.add(key);
+		out.push(s);
+	}
+	return out;
+});
+
 /** Resolve display parts: prefer parts array, fall back to wrapping content as a text part */
 const displayParts = $derived.by((): MessagePart[] => {
 	if (parts?.length) return parts;
@@ -103,11 +123,11 @@ function getToolInvocation(part: MessagePart) {
 			{/if}
 		{/each}
 
-		{#if !isUser && catalogSources?.length}
+		{#if !isUser && uniqueSources.length}
 			<div class="related-surfaces">
 				<span class="related-label">Related surfaces</span>
 				<div class="related-chips" role="list">
-					{#each catalogSources as src (src.path + (src.anchor ?? ''))}
+					{#each uniqueSources as src (src.path + (src.anchor ?? ''))}
 						<div role="listitem">
 							<CitationChip
 								surface={src.surface}

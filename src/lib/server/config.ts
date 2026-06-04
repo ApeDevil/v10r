@@ -65,6 +65,18 @@ export const PARAGRAPH_CHUNK_TARGET = 300;
 /** Token overlap between chunks */
 export const CHUNK_OVERLAP = 50;
 
+// ── Docs corpus (project documentation RAG) ──────────────────────────────────
+
+/**
+ * Reserved system user that owns every ingested project-documentation row. Each
+ * RAG retrieval query hard-filters `user_id`, so docs must be owned by a real,
+ * stable user id the orchestrator can substitute when querying the docs corpus.
+ */
+export const SYSTEM_DOCS_USER_ID = 'system-docs';
+
+/** Reserved llmwiki collection holding the project-documentation corpus. */
+export const PROJECT_DOCS_COLLECTION_ID = 'project-docs';
+
 /** Maximum chunks injected into prompt context */
 export const MAX_CONTEXT_CHUNKS = 5;
 

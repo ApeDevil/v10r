@@ -15,6 +15,7 @@ import { createGetRawragChunksTool, type DrilledChunkSink, rawragChunksToolMeta 
 import { createProposePlanTool, proposePlanMeta } from './propose-plan';
 import { createResolveRefTool } from './resolve-ref';
 import { type CatalogSink, createSearchCatalogTool, searchCatalogToolMeta } from './search-catalog';
+import { createSearchDocsTool, searchDocsToolMeta } from './search-docs';
 
 export type { DeskEffect, DeskLayoutEntry, DeskToolMeta, DeskToolRisk, DeskToolScope } from './_types';
 
@@ -28,6 +29,7 @@ export const deskToolMeta: Record<string, DeskToolMeta> = {
 	...llmwikiPagesToolMeta,
 	...rawragChunksToolMeta,
 	...searchCatalogToolMeta,
+	...searchDocsToolMeta,
 };
 
 /** Get the risk classification for a tool name, or `undefined` if unknown. */
@@ -140,6 +142,9 @@ export function buildRetrievalTools(
 		...createGetLlmwikiPagesTool(userId),
 		...createGetRawragChunksTool(userId, sink),
 		...createSearchCatalogTool(locale, authCeiling, catalogSink),
+		// Semantic retrieval over the project docs corpus (system-owned). Feeds the same
+		// catalog sink → docs citations render as chips and pass the surface verifier.
+		...createSearchDocsTool(locale, catalogSink),
 	} as ToolSet;
 
 	return { tools: wrapToolsWithCompaction(raw), drilledChunks, surfacedCatalog };

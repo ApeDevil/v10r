@@ -736,10 +736,20 @@ Project catalog rules:
 									const surfacedPaths = new Set(surfaced.map((r) => r.path));
 									const knownPaths = new Set(buildSearchIndex(catalogLocale).map((r) => r.path));
 									const catalogCitations = verifyCatalogCitations(text, surfacedPaths, knownPaths);
-									// Chips: only the surfaces the answer actually references.
+									// Chips: only the surfaces the answer actually references, collapsed to
+									// one chip per unique (path, anchor). Docs retrieval surfaces several
+									// CHUNKS of the same doc → identical paths; the keyed {#each} in
+									// ChatMessage (keyed by path+anchor) would throw each_key_duplicate,
+									// crashing the chip row AND wedging the loading state. Keep best score.
 									const cited = surfaced.filter((r) => text.includes(r.path));
+									const bySurface = new Map<string, (typeof cited)[number]>();
+									for (const r of cited) {
+										const key = `${r.path} ${r.anchor ?? ''}`;
+										const prev = bySurface.get(key);
+										if (!prev || (r.score ?? 0) > (prev.score ?? 0)) bySurface.set(key, r);
+									}
 									catalogPayload = {
-										catalogSources: cited.map((r) => ({
+										catalogSources: Array.from(bySurface.values()).map((r) => ({
 											surface: r.surface,
 											title: r.title,
 											path: r.path,

@@ -33,8 +33,9 @@ src/lib/server/
     lint/              ← scaffold: lint runner
   rawrag/
     index.ts           ← retrieve(), formatContextForPrompt()
-    chunk.ts           ← chunking logic
-    embed.ts           ← embedding pipeline
+    chunk.ts           ← chunking logic (delegates to markdown-split)
+    markdown-split.ts  ← splitMarkdown: heading-aware, fence-safe; dep-free (shared with Bun ingest script)
+    embed.ts           ← embedding pipeline (RETRIEVAL_QUERY for queries, RETRIEVAL_DOCUMENT for batches)
     ingest/            ← ingestion pipeline (contextual-prep, entity-extract)
   search/
     catalog-map.ts     ← formatCatalogMap(locale): path-free shape hint for system prompt
@@ -43,6 +44,7 @@ src/lib/server/
     get-llmwiki-pages.ts   ← expand wiki pages beyond TLDR
     get-rawrag-chunks.ts   ← drill-down to raw source chunks
     search-catalog.ts      ← search_catalog tool: composes quick-search lanes, returns canonical paths
+    search-docs.ts         ← search_project_docs tool: semantic retrieval over the ingested docs/ corpus
     index.ts               ← buildRetrievalTools(userId, locale, authCeiling)
   ai/
     catalog-citations.ts   ← verifyCatalogCitations: exists/drifted/none post-hoc verifier
@@ -63,7 +65,7 @@ src/lib/server/
 | `rag.llmwiki_page_redirect` | Slug renames — old slug → new slug. |
 | `rag.llmwiki_lint_issue` | Lint findings per page (broken links, stale pointers, etc.). |
 
-**rawrag tables** (`rag` schema): `rag.document` (source documents) and `rag.chunk` (pgvector 1536 + BM25 tsvector). See [graph-rag.md](./graph-rag.md) for schema detail.
+**rawrag tables** (`rag` schema): `rag.document` (source documents) and `rag.chunk` (pgvector 1536 + BM25 tsvector). See [graph-rag.md](./graph-rag.md) for schema detail. `document.source` is a `documentSourceEnum` — `'docs'` marks the project-documentation corpus (see [Docs Corpus](#docs-corpus-search_project_docs) below).
 
 ---
 
@@ -148,6 +150,53 @@ Meta: `searchCatalogToolMeta = { search_catalog: { risk: 'read', scope: 'desk:re
 ### Citation chips (UI)
 
 `src/lib/components/chat/CitationChip.svelte` + `chat/citation-types.ts`. A native `<a>` to `localizeHref(path) + anchor`, ≥44px touch target, surface badge, EN-fallback badge. The orchestrator builds `metadata.catalogSources` (only rows the answer text references); `ChatMessage.svelte` renders a "Related surfaces" chip row below the answer.
+
+---
+
+## Docs Corpus (`search_project_docs`)
+
+The project's own `docs/` markdown is a retrievable corpus. `search_catalog` answers **where** a surface lives; `search_project_docs` answers **how/why** from the doc bodies — the deep prose the catalog only indexes by title.
+
+### `search_project_docs` tool
+
+`src/lib/server/ai/tools/search-docs.ts`. Mounted by `buildRetrievalTools` alongside `search_catalog`, so it's auto-available whenever the `useLlmwiki` branch runs (always-on for the floating chatbot).
+
+```typescript
+search_project_docs({ query: string, limit?: 1–8 })
+```
+
+- Runs tier-1 `retrieve()` (semantic + lexical) over the system-owned docs corpus.
+- Resolves each chunk's parent `document.sourceUri` → the canonical `/docs/${section}/${slug}` path.
+- Feeds the **same** `CatalogSink` as `search_catalog`, so cited doc paths render as `CitationChip`s and pass the surface verifier.
+- Returns `{ results: [] }` (not an error) when the corpus is empty.
+
+Meta: `searchDocsToolMeta = { search_project_docs: { risk: 'read', scope: 'desk:read' } }`.
+
+### Ownership (system-scoped corpus)
+
+Every RAG retrieval query hard-filters `user_id`. The docs corpus is therefore owned by a reserved system user so the orchestrator can query it on any user's behalf without leaking per-user documents.
+
+| Constant (`$lib/server/config.ts`) | Value |
+|------------------------------------|-------|
+| `SYSTEM_DOCS_USER_ID` | `'system-docs'` |
+| `PROJECT_DOCS_COLLECTION_ID` | `'project-docs'` |
+
+The tool captures `SYSTEM_DOCS_USER_ID` in its closure — the model never supplies it. Ingested rows carry `document.source = 'docs'` (a value in `documentSourceEnum`) with `sourceUri` set to the canonical `/docs` path.
+
+### Ingestion (`db:ingest-docs`)
+
+`scripts/db/ingest-docs.ts`. A **manual**, standalone Bun script — **not** chained into `db:setup`. Run it after editing docs to refresh the corpus:
+
+```bash
+podman exec v10r bun run db:ingest-docs
+```
+
+- Hand-rolls its own Neon pool + Gemini embedder from `process.env` (the app's `rawrag` modules import `$lib`/`$env` and can't run under bare Bun). Reuses only the Vite-free `splitMarkdown`.
+- Enumerates `docs/**/*.md`, replicating the blocklist + canonical-path derivation from `src/lib/server/docs/manifest.ts` (Vite-only, so it can't be imported here — the two must stay in sync).
+- Idempotent: content-hash skip, soft-delete + re-insert on change, soft-delete-not-seen for removed files.
+- Tier-1 rawrag chunks only; the llmwiki tier-2 compiler over docs is deferred.
+
+> **Free-tier ceilings.** Gemini embeddings cap at ~1000/day (the script paces under ~90/min and backs off on 429). A full corpus re-ingest of all docs can exceed a single day's quota — re-run after the quota resets to finish. Chat **generation** runs on `gemini-2.5-flash` at ~20 calls/day on free tier; once exhausted, grounded chat returns a provider error until reset.
 
 ---
 

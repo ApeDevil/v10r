@@ -42,7 +42,7 @@ Circuit breaker: 60s cooldown on rate-limited providers (`markCooldown` / `isCoo
 
 | File | Topics |
 |------|--------|
-| [layered-rag.md](./layered-rag.md) | **Primary RAG doc.** Two-layer split (llmwiki + rawrag), catalog grounding (`search_catalog`, `<catalog-map>`, citation chips), tool contracts, read path, citation verification |
+| [layered-rag.md](./layered-rag.md) | **Primary RAG doc.** Two-layer split (llmwiki + rawrag), catalog grounding (`search_catalog`, `<catalog-map>`, citation chips), docs corpus (`search_project_docs`, system-owned ownership, `db:ingest-docs`), tool contracts, read path, citation verification |
 | [provider-routing.md](./provider-routing.md) | Chat vs tool resolver split, `wantsTools` logic, Groq drift + leak guard, practical consequences |
 | [graph-rag.md](./graph-rag.md) | rawrag internals: chunking, embeddings, parent-child, graph traversal, recursive retrieval; Phase 3 catalog `:Resource` seed |
 | [desk-integration.md](./desk-integration.md) | AI tool calling for desk operations, I/O log, effect system |
@@ -58,7 +58,8 @@ User → ChatPanel/Chatbot → /api/ai/chat → orchestrateChat()
                                               ├── fallback rotation on rate limit
                                               ├── llmwiki-first RAG (overview + search + pointer hydration)
                                               │     ├── rawrag drill-down (get_rawrag_chunks, on-demand only)
-                                              │     └── catalog grounding (search_catalog + <catalog-map>)
+                                              │     ├── catalog grounding (search_catalog + <catalog-map>)
+                                              │     └── docs grounding (search_project_docs over system-owned docs corpus)
                                               │           └── citation chips (CitationChip.svelte)
                                               └── desk tool loop (desk scopes only)
 ```

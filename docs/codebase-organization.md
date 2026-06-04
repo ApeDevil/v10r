@@ -112,7 +112,7 @@ src/lib/server/
   agents/       AI agent orchestration (booted at startup in hooks)
   ai/           Provider registry, orchestrator, tools, errors, budget
                 ai/tools/ submodules: desk-read, desk-write, propose-plan,
-                get-rawrag-chunks, get-llmwiki-pages, resolve-ref, search-catalog
+                get-rawrag-chunks, get-llmwiki-pages, resolve-ref, search-catalog, search-docs
                 Catalog siblings: catalog-citations.ts (surface verifier), tool-leak-guard.ts (Groq drift guard)
   analytics/    Analytics pipeline
   api/          Adapter helpers: pagination.ts, rate-limit.ts, response.ts

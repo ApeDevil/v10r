@@ -40,6 +40,7 @@
 		"db:fix-auth-enums": "bun run scripts/db/fix-auth-enum-schema.ts",
 		"db:setup": "bun run db:rag-pre && bun run db:push && bun run db:rag-post && bun run db:neo4j-setup && bun run db:catalog-sync && bun run db:seed && bun run db:search-backfill",
 		"db:seed:llmwiki": "bun run scripts/seed-llmwiki.ts",
+		"db:ingest-docs": "bun run scripts/db/ingest-docs.ts",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
 		"format": "biome format --write .",

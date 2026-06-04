@@ -12,15 +12,21 @@ function getEmbeddingModel() {
 	return createGoogleGenerativeAI({ apiKey }).embedding(EMBEDDING_MODEL);
 }
 
-const embeddingProviderOptions = {
-	google: { outputDimensionality: EMBEDDING_DIMENSIONS },
+// Gemini embeddings are task-type-aware. Queries and documents must be embedded
+// with matching RETRIEVAL_* task types or cosine similarity between a query and a
+// stored chunk degrades. Single = query, batch = documents (see callers).
+const queryEmbeddingOptions = {
+	google: { outputDimensionality: EMBEDDING_DIMENSIONS, taskType: 'RETRIEVAL_QUERY' },
+};
+const documentEmbeddingOptions = {
+	google: { outputDimensionality: EMBEDDING_DIMENSIONS, taskType: 'RETRIEVAL_DOCUMENT' },
 };
 
 /** Generate a single embedding for a query string. */
 export async function generateEmbedding(text: string): Promise<number[]> {
 	try {
 		const model = getEmbeddingModel();
-		const result = await embed({ model, value: text, providerOptions: embeddingProviderOptions });
+		const result = await embed({ model, value: text, providerOptions: queryEmbeddingOptions });
 		return result.embedding;
 	} catch (err) {
 		if (err instanceof RetrievalError) throw err;
@@ -38,7 +44,7 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
 
 	try {
 		const model = getEmbeddingModel();
-		const result = await embedMany({ model, values: texts, providerOptions: embeddingProviderOptions });
+		const result = await embedMany({ model, values: texts, providerOptions: documentEmbeddingOptions });
 		return result.embeddings;
 	} catch (err) {
 		if (err instanceof RetrievalError) throw err;

@@ -1,5 +1,7 @@
 import { safeParse } from 'valibot';
+import { decisionResponse } from '$lib/server/abuse';
 import { aiConfigured } from '$lib/server/ai';
+import { checkUserBudget } from '$lib/server/ai/budget';
 import { orchestrateChat } from '$lib/server/ai/chat-orchestrator';
 import { RATE_LIMIT_MAX, RATE_LIMIT_PREFIX, RATE_LIMIT_WINDOW } from '$lib/server/ai/config';
 import { ChatRequestSchema } from '$lib/server/ai/validation';
@@ -25,6 +27,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	const parsed = safeParse(ChatRequestSchema, body);
 	if (!parsed.success) return apiValidationError(parsed.issues);
+
+	// Per-user daily token budget — a cheap Redis read at entry that rejects once
+	// today's spend exceeds AI_DAILY_TOKEN_CAP. Load-bearing now that grounding is
+	// always-on on the floating widget (forced tool-provider routing + per-turn
+	// retrieval multiply cost). The charge side runs in the orchestrator's onFinish.
+	const budget = await checkUserBudget(user.id);
+	if (!budget.allowed) return decisionResponse(budget);
 
 	return orchestrateChat({
 		userId: user.id,

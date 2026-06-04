@@ -348,11 +348,13 @@ Individual files inside a module or component folder. Private by default; public
 
 **Provider resolution** (`ai/providers.ts`): `getActiveProvider` / `getToolProvider` resolves in order: request override → user preference → env → first configured. Circuit breaker: `markCooldown` / `isCooledDown` (60-second window).
 
-**AI tools** (`ai/tools/`): `desk-read`, `desk-write`, `propose-plan`, `get-rawrag-chunks`, `get-llmwiki-pages`, `resolve-ref`, `search-catalog`. All are thin wrappers that return structured data and never throw — tools return error objects; the LLM reads them.
+**AI tools** (`ai/tools/`): `desk-read`, `desk-write`, `propose-plan`, `get-rawrag-chunks`, `get-llmwiki-pages`, `resolve-ref`, `search-catalog`, `search-docs`. All are thin wrappers that return structured data and never throw — tools return error objects; the LLM reads them.
 
 **Catalog grounding** (`ai/catalog-citations.ts`, `ai/tool-leak-guard.ts`): post-stream surface-citation verifier and Groq/llama textual-tool-call leak guard. See [blueprint/ai/provider-routing.md](./blueprint/ai/provider-routing.md).
 
 **Catalog graph** (`search/catalog-map.ts`, `search/catalog-projection.ts`, `graph/catalog.ts`): `formatCatalogMap` injects a path-free shape hint into the system prompt; `deriveCatalogGraph` projects the showcase registry to typed `:Resource` nodes + `PART_OF` edges; `seedCatalogResources` writes them to Neo4j idempotently (run via `db:catalog-sync`, chained into `db:setup`).
+
+**Docs corpus** (`rawrag/markdown-split.ts`, `ai/tools/search-docs.ts`, `scripts/db/ingest-docs.ts`): the project's own `docs/**/*.md` is ingested into `rag.document`/`rag.chunk` (owned by `SYSTEM_DOCS_USER_ID`) so the `search_project_docs` tool can ground "how does X work" answers in the real docs. Ingestion is **manual** — `db:ingest-docs` (not chained into `db:setup`). See [blueprint/ai/layered-rag.md](./blueprint/ai/layered-rag.md#docs-corpus-search_project_docs).
 
 **CVA variant definitions** (e.g. `button.ts`): class-variance-authority variants double as DOM markers for scoped CSS selectors (UnoCSS cannot extract complex classes from `.ts` files reliably; `Button.svelte` scoped CSS does the actual styling, targeting CVA class names as `:global()` selectors).
 

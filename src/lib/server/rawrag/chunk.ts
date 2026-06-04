@@ -1,4 +1,5 @@
 import { CHUNK_OVERLAP, PARAGRAPH_CHUNK_TARGET, SECTION_CHUNK_TARGET } from './config';
+import { splitMarkdown } from './markdown-split';
 import type { RawChunk } from './types';
 
 /** Rough token count estimate: ~4 chars per token for English text */
@@ -20,33 +21,13 @@ function generateId(prefix: string): string {
 }
 
 /**
- * Split text into chunks at natural boundaries.
- * Tries to split at paragraph breaks first, then sentences.
+ * Split text into chunks at natural boundaries. Delegates to the shared
+ * heading-aware, fence-safe `splitMarkdown` (also used by the docs-ingestion
+ * script) — headings become section boundaries and code fences stay atomic,
+ * degrading to plain paragraph+size splitting for non-markdown sources.
  */
 function splitAtBoundaries(text: string, targetTokens: number, overlapTokens: number): string[] {
-	const paragraphs = text.split(/\n\n+/);
-	const chunks: string[] = [];
-	let current = '';
-
-	for (const para of paragraphs) {
-		const combined = current ? `${current}\n\n${para}` : para;
-		if (estimateTokens(combined) > targetTokens && current) {
-			chunks.push(current.trim());
-			// Add overlap from end of previous chunk
-			const words = current.split(/\s+/);
-			const overlapWords = Math.floor(overlapTokens * 1.3); // ~1.3 words per token
-			const overlap = words.slice(-overlapWords).join(' ');
-			current = overlap ? `${overlap}\n\n${para}` : para;
-		} else {
-			current = combined;
-		}
-	}
-
-	if (current.trim()) {
-		chunks.push(current.trim());
-	}
-
-	return chunks.length > 0 ? chunks : [text.trim()];
+	return splitMarkdown(text, { targetTokens, overlapTokens });
 }
 
 /**

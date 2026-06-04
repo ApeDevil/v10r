@@ -10,7 +10,16 @@ import { ragSchema } from './embedding-model';
 
 // 'catalog' = a project surface (showcase/doc/blog) projected from the quick-search
 // catalog; sourceUri carries its stable SearchRecord id for the soft-pointer linkage.
-export const documentSourceEnum = ragSchema.enum('document_source', ['upload', 'web', 'text', 'api', 'catalog']);
+// 'docs' = a project documentation file (docs/**/*.md) ingested into the RAG corpus;
+// sourceUri carries the canonical /docs path. Owned by SYSTEM_DOCS_USER_ID.
+export const documentSourceEnum = ragSchema.enum('document_source', [
+	'upload',
+	'web',
+	'text',
+	'api',
+	'catalog',
+	'docs',
+]);
 
 export const documentStatusEnum = ragSchema.enum('document_status', ['pending', 'processing', 'ready', 'error']);
 

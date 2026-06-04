@@ -129,7 +129,11 @@ function submitMessage() {
 	chat.sendMessage(
 		{ text },
 		{
-			body: conversationId ? { conversationId } : {},
+			// Always-on catalog grounding: the orchestrator's useLlmwiki branch mounts
+			// search_catalog + the <catalog-map> and emits catalogSources, which this
+			// widget already renders as CitationChips. Grounding is a property of the
+			// surface, not a user choice — so no toggle.
+			body: conversationId ? { conversationId, useLlmwiki: true } : { useLlmwiki: true },
 		},
 	);
 }

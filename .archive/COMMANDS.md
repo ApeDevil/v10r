@@ -38,6 +38,7 @@ podman exec -it v10r bun run db:push
 ### neon rag
 podman exec -it v10r bun run db:rag-pre
 podman exec -it v10r bun run db:rag-post
+podman exec v10r bun run db:ingest-docs
 ### neo4j rag
 podman exec -it v10r bun run db:neo4j-setup
 ---
