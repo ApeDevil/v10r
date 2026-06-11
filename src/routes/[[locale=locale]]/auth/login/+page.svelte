@@ -4,6 +4,7 @@ import { authClient } from '$lib/auth-client';
 import { Altcha } from '$lib/components/composites';
 import { Button, Input, Spinner } from '$lib/components/primitives';
 import { errorMessage } from '$lib/errors';
+import { localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
@@ -241,6 +242,7 @@ async function handleOAuth(provider: 'github' | 'google' | 'microsoft') {
 
 			<p class="text-xs text-muted text-center mt-6">
 				{m.auth_login_terms()}
+				<a href={localizeHref('/showcases/admin/data')} class="underline hover:text-fg">{m.auth_login_privacy_link()}</a>
 			</p>
 		{/if}
 	</div>

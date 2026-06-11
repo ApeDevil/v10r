@@ -3,6 +3,7 @@ import { enhance } from '$app/forms';
 import { Alert, Card, DiagGrid, DiagRow } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
+import { localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 
 let { data, form } = $props();
@@ -27,6 +28,18 @@ $effect(() => {
 });
 </script>
 <Stack gap="6">
+	<!-- Your Data (transparency mirror) -->
+	<Card>
+		{#snippet header()}
+			<h2 class="text-fluid-lg font-semibold">{m.app_data_link_title()}</h2>
+		{/snippet}
+		<p class="text-sm text-muted mb-4">{m.app_data_link_description()}</p>
+		<Button href={localizeHref('/app/account/data')} variant="outline">
+			<span class="i-lucide-scan-eye h-4 w-4 mr-1"></span>
+			{m.app_data_link_button()}
+		</Button>
+	</Card>
+
 	<!-- Active Sessions -->
 	<Card>
 		{#snippet header()}

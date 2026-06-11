@@ -23,7 +23,18 @@ securityHeaders → loadStyle → i18n → authHandler → sessionPopulate
 
 ## Consent gating
 
-The collector reads `event.locals.consentTier` (set by `consentLoader` from the `ANALYTICS_CONSENT_COOKIE`). Visitors with only the `necessary` tier have their `sessionFragment` and device fingerprint suppressed — no PII is recorded. Events are still written, but as unlinked rows with no visitor identity.
+The collector reads the consent tier from the `ANALYTICS_CONSENT_COOKIE` (`v10r_consent`). Two things are gated on it:
+
+**The `_v10r_sid` session cookie** writes to terminal equipment and is not strictly necessary, so under TDDDG §25 / ePrivacy Art 5(3) it requires `analytics`-tier consent:
+
+- `analytics` tier or higher → set/read `_v10r_sid` as before (httpOnly, secure, 30-min sliding window).
+- `necessary` tier or no consent → touch no cookie, actively delete a stale one from a prior grant, and derive the session id with `deriveCookielessSessionId(visitorId)` = `hash(visitorId + UTC day)` (Plausible/Fathom pattern, rotates at UTC midnight).
+
+Session counting therefore works at every tier — the cookieless id still groups one day's page views into one session without writing to the device.
+
+**The HTTP referrer** is recorded only at `analytics`+ tier; below that it is dropped. Events are always written, but without referrer or a device-persisted session at `necessary`.
+
+See [stack/capabilities/gdpr.md](../../stack/capabilities/gdpr.md#consent-gated-analytics-cookie) for the full privacy rationale.
 
 ## Daily rollup
 

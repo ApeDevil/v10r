@@ -26,8 +26,9 @@ vi.mock('$lib/server/db', async () => {
 });
 
 const { db } = await import('$lib/server/db');
-const { parseConsentTier, hasConsent, hashVisitorId } = await import('./consent');
+const { parseConsentTier, hasConsent, hashVisitorId, deriveCookielessSessionId } = await import('./consent');
 const { recordEvent, upsertSession } = await import('$lib/server/db/analytics/mutations');
+const { analyticsCollector } = await import('./hook');
 const { analyticsCleanup } = await import('$lib/server/jobs/analytics-cleanup');
 const { ANALYTICS_RETENTION_DAYS, ANALYTICS_CONSENT_COOKIE } = await import('$lib/server/config');
 const consentState = await import('$lib/state/consent.svelte');
@@ -121,6 +122,41 @@ describe('hashVisitorId', () => {
 	});
 });
 
+// ── 3b. consent.ts — deriveCookielessSessionId (no-consent fallback) ─────────
+
+describe('deriveCookielessSessionId', () => {
+	it('returns a session id in the same s_ + 16 hex format as cookie ids', async () => {
+		const sid = await deriveCookielessSessionId('v_abc123def4567890');
+		expect(sid).toMatch(/^s_[0-9a-f]{16}$/);
+	});
+
+	it('is deterministic within the same UTC day — page views group into one session', async () => {
+		const a = await deriveCookielessSessionId('v_abc123def4567890');
+		const b = await deriveCookielessSessionId('v_abc123def4567890');
+		expect(a).toBe(b);
+	});
+
+	it('differs per visitor — no cross-visitor session merging', async () => {
+		const a = await deriveCookielessSessionId('v_aaaaaaaaaaaaaaaa');
+		const b = await deriveCookielessSessionId('v_bbbbbbbbbbbbbbbb');
+		expect(a).not.toBe(b);
+	});
+
+	it('rotates at UTC midnight — same visitor, different day, different session', async () => {
+		const sid = await deriveCookielessSessionId('v_abc123def4567890');
+		vi.useFakeTimers();
+		try {
+			const tomorrow = new Date();
+			tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+			vi.setSystemTime(tomorrow);
+			const sidTomorrow = await deriveCookielessSessionId('v_abc123def4567890');
+			expect(sidTomorrow).not.toBe(sid);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+});
+
 // ── 4. hook.ts — /admin path is NOT excluded today (TDD bug proof) ───────────
 
 describe('analyticsCollector — admin path exclusion audit', () => {
@@ -148,6 +184,62 @@ describe('analyticsCollector — admin path exclusion audit', () => {
 		// If the same cookie name were used, clearing consent would kill the session
 		const SESSION_COOKIE = '_v10r_sid';
 		expect(SESSION_COOKIE).not.toBe(ANALYTICS_CONSENT_COOKIE);
+	});
+});
+
+// ── 4b. hook.ts — _v10r_sid Set-Cookie is consent-gated (TDDDG §25) ──────────
+
+describe('analyticsCollector — session cookie requires analytics consent', () => {
+	function makeEvent(consent?: string, existingSid?: string) {
+		const jar = new Map<string, string>();
+		if (consent) jar.set(ANALYTICS_CONSENT_COOKIE, consent);
+		if (existingSid) jar.set('_v10r_sid', existingSid);
+		const set = vi.fn((name: string, value: string) => jar.set(name, value));
+		const del = vi.fn((name: string) => jar.delete(name));
+		const event = {
+			url: new URL('https://example.com/blog'),
+			request: new Request('https://example.com/blog', {
+				headers: { 'user-agent': 'Mozilla/5.0 (Test) Gecko/20100101' },
+			}),
+			cookies: { get: (n: string) => jar.get(n), set, delete: del },
+			getClientAddress: () => '203.0.113.5',
+			locals: {},
+		};
+		return { event, set, del };
+	}
+
+	const resolve = async () => new Response('ok');
+
+	it('does NOT set _v10r_sid without consent — deny-by-default', async () => {
+		const { event, set } = makeEvent(undefined);
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		await analyticsCollector({ event: event as any, resolve: resolve as any });
+		expect(set).not.toHaveBeenCalled();
+	});
+
+	it('does NOT set _v10r_sid at necessary tier', async () => {
+		const { event, set } = makeEvent('necessary');
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		await analyticsCollector({ event: event as any, resolve: resolve as any });
+		expect(set).not.toHaveBeenCalled();
+	});
+
+	it('sets _v10r_sid at analytics tier', async () => {
+		const { event, set } = makeEvent('analytics');
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		await analyticsCollector({ event: event as any, resolve: resolve as any });
+		expect(set).toHaveBeenCalledWith(
+			'_v10r_sid',
+			expect.stringMatching(/^s_/),
+			expect.objectContaining({ httpOnly: true }),
+		);
+	});
+
+	it('deletes a stale _v10r_sid after consent is withdrawn', async () => {
+		const { event, del } = makeEvent('necessary', 's_stalecookie123456');
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		await analyticsCollector({ event: event as any, resolve: resolve as any });
+		expect(del).toHaveBeenCalledWith('_v10r_sid', { path: '/' });
 	});
 });
 

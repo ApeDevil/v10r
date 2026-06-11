@@ -35,6 +35,13 @@ export const userPreferences = appSchema.table('user_preferences', {
 	typographyId: text('typography_id'),
 	radiusId: text('radius_id'),
 
+	/**
+	 * When the user first saw the post-signup data-transparency page.
+	 * NULL (or row absent) = first sign-in pending → app layout redirects once
+	 * to /app/account/data?welcome=1 and consumes this marker atomically.
+	 */
+	transparencySeenAt: timestamp('transparency_seen_at', { withTimezone: true }),
+
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

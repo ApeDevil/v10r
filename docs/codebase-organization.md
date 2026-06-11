@@ -135,6 +135,9 @@ src/lib/server/
   pairing/      Pairing-code domain
   platform/     Runtime platform detection
   preferences/  User preferences
+  privacy/      GDPR aggregator: collectUserData → PersonalDataReport (Art 15/20),
+                deleteUserData (Art 17). Single source of truth for "all my data";
+                reads ONLY from db/, consumed by 5 surfaces (page, 3 api/me routes, export action)
   rawrag/       Three-tier retrieval pipeline; co-locates queries
   search/       Server search adapters (pages, docs, showcases, blog FTS), buildSearchIndex, searchContent;
                 catalog-map.ts (formatCatalogMap — path-free system-prompt hint),
@@ -259,7 +262,7 @@ src/lib/components/
   3d/              Threlte components
 
   Feature dirs/    blog/ chat/ editor/ explorer/ cycle/ spreadsheet/
-                   preview/ io-log/ docs/ admin/ branding/ ui/
+                   preview/ io-log/ docs/ admin/ branding/ ui/ transparency/
                    Depend DOWNWARD on composites/primitives/layout.
                    Never import each other.
 ```
@@ -292,7 +295,7 @@ The composites barrel at `src/lib/components/composites/index.ts` further exclud
 
 **Rule:** the default `$lib/components` barrel is the cheap surface. Anything pulling a heavy or optional dependency (viz engines, 3D, markdown sanitizer) or app-specific chrome (shell) is deep-import-only. Adding a heavy dep to a barreled component is a bundle-size regression.
 
-Directories without a barrel — `branding/`, `admin/`, `ui/`, `docs/`, `io-log/` — are deep-imported by file path.
+Directories without a barrel — `branding/`, `admin/`, `ui/`, `docs/`, `io-log/`, `transparency/` — are deep-imported by file path.
 
 **Dependency direction:** `primitives ← composites ← layout/shell ← feature dirs`. Feature dirs never import each other.
 
@@ -342,7 +345,7 @@ src/routes/
 
 ### `api/` groups (verified from file tree)
 
-`ai/` `blog/` `admin/` `desk/` `notifications/` `retrieval/` `analytics/` `cron/[job]` `webhooks/telegram` `captcha/challenge` `style/roll` `preferences` `consent` `grant-requests` `admin/grant-requests` `announcements/[id]/dismiss` `pair/disconnect` `showcases/check-username`
+`ai/` `blog/` `admin/` `desk/` `notifications/` `retrieval/` `analytics/` `me/` (data, data/export, DELETE) `cron/[job]` `webhooks/telegram` `captcha/challenge` `style/roll` `preferences` `consent` `grant-requests` `admin/grant-requests` `announcements/[id]/dismiss` `pair/disconnect` `showcases/check-username`
 
 ### Showcase taxonomy (committed pages only)
 

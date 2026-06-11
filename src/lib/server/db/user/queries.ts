@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { account, session as sessionTable, user } from '$lib/server/db/schema/auth/_better-auth';
 
@@ -22,6 +22,25 @@ export async function getUserAccounts(userId: string) {
 		.select({
 			providerId: account.providerId,
 			createdAt: account.createdAt,
+		})
+		.from(account)
+		.where(eq(account.userId, userId));
+}
+
+/**
+ * OAuth account summary for transparency/export surfaces.
+ * Tokens are projected to PRESENCE booleans at query level — the raw
+ * accessToken/refreshToken/idToken values must never leave the DB layer.
+ */
+export async function getUserOAuthSummary(userId: string) {
+	return db
+		.select({
+			provider: account.providerId,
+			scope: account.scope,
+			linkedAt: account.createdAt,
+			hasAccessToken: sql<boolean>`${account.accessToken} IS NOT NULL`,
+			hasRefreshToken: sql<boolean>`${account.refreshToken} IS NOT NULL`,
+			accessTokenExpiresAt: account.accessTokenExpiresAt,
 		})
 		.from(account)
 		.where(eq(account.userId, userId));

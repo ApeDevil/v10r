@@ -1,0 +1,1 @@
+- [Architecture review findings](project_arch_review_2026-06.md) — 2026-06-11 adherence review of multi-client-core; orchestrator tangle + missing barrels are the live structural risks

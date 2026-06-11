@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
 import { fail, redirect } from '@sveltejs/kit';
 import { localizeHref } from '$lib/i18n';
-import { deleteUser, getUserAccounts, getUserProfile, getUserSessions, revokeSession } from '$lib/server/db/user';
+import { getUserAccounts, getUserSessions, revokeSession } from '$lib/server/db/user';
+import { collectUserData, deleteUserData } from '$lib/server/privacy';
 import type { Actions, PageServerLoad } from './$types';
 
 function hashForDisplay(id: string): string {
@@ -51,27 +52,12 @@ export const actions: Actions = {
 	exportData: async ({ locals }) => {
 		if (!locals.user) redirect(303, localizeHref('/auth/login'));
 
-		const [profile, accountData, sessionData] = await Promise.all([
-			getUserProfile(locals.user.id),
-			getUserAccounts(locals.user.id),
-			getUserSessions(locals.user.id),
-		]);
+		// One canonical definition of "all my data" — same aggregator as
+		// /app/account/data and /api/me/data. Secrets and prior-session
+		// raw IPs are projected/masked inside collectUserData.
+		const report = await collectUserData(locals.user.id, { currentSessionId: locals.session?.id });
 
-		return {
-			export: JSON.stringify(
-				{
-					user: profile,
-					accounts: accountData.map((a) => ({
-						provider: a.providerId,
-						createdAt: a.createdAt,
-					})),
-					sessions: sessionData,
-					exportedAt: new Date().toISOString(),
-				},
-				null,
-				2,
-			),
-		};
+		return { export: JSON.stringify(report, null, 2) };
 	},
 
 	deleteAccount: async ({ request, locals }) => {
@@ -84,8 +70,8 @@ export const actions: Actions = {
 			return fail(400, { error: 'Type DELETE to confirm account deletion' });
 		}
 
-		// Delete user — cascades to sessions and accounts via FK
-		await deleteUser(locals.user.id);
+		// Cascade erasure via the canonical privacy module (GDPR Art 17)
+		await deleteUserData(locals.user.id);
 
 		redirect(303, localizeHref('/'));
 	},

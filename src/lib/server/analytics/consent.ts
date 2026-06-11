@@ -29,3 +29,22 @@ export async function hashVisitorId(raw: string): Promise<string> {
 		.join('');
 	return `v_${hex.slice(0, 16)}`;
 }
+
+/**
+ * Derive a cookieless session id for visitors WITHOUT analytics consent.
+ *
+ * TDDDG §25 / ePrivacy Art 5(3): a session cookie writes to terminal equipment
+ * and is not strictly necessary, so it requires prior consent. Without consent
+ * we store nothing on the device — the id is recomputed from the visitor hash
+ * + UTC day, so page views within one day still group into one session
+ * (Plausible/Fathom pattern). Rotates at UTC midnight.
+ */
+export async function deriveCookielessSessionId(visitorId: string): Promise<string> {
+	const day = new Date().toISOString().slice(0, 10);
+	const data = new TextEncoder().encode(`${visitorId}:${day}`);
+	const hash = await crypto.subtle.digest('SHA-256', data);
+	const hex = Array.from(new Uint8Array(hash))
+		.map((b) => b.toString(16).padStart(2, '0'))
+		.join('');
+	return `s_${hex.slice(0, 16)}`;
+}

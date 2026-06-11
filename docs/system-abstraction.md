@@ -118,7 +118,7 @@ The main export is a `sequence()` of twelve `Handle` middlewares that mutate the
 | 9 | `consentLoader` | `consentTier` (default `'necessary'`) | No | Before route handlers need consent tier |
 | 10 | `debugOwnerLoader` | `debugOwnerId` | No | Verifies `v10r_debug_owner` HMAC cookie; fail-closed; independent of Better Auth |
 | 11 | `devRouteGuard` | — | 404 on `(dev)` routes outside DEV | — |
-| 12 | `analyticsCollector` | — | No | Last; consumes `consentTier` + `debugOwnerId`; fire-and-forget post-resolve |
+| 12 | `analyticsCollector` | — | No | Last; consumes `consentTier` + `debugOwnerId`; fire-and-forget post-resolve. The `_v10r_sid` cookie is consent-gated (TDDDG §25 / ePrivacy Art 5(3)): set only at `analytics`+ tier; at `necessary` it deletes any stale cookie and falls back to a cookieless daily session id |
 
 The terminating error handler `handleError` mints an `errorId` (`crypto.randomUUID()`), emits one structured JSON log line, and returns `{ message, errorId }` to the client — never raw error details.
 
@@ -178,7 +178,7 @@ Route areas under `src/routes/[[locale=locale]]/` and the parallel `src/routes/a
 |-------------|-----------|-----------|---------------|------|
 | Public + Showcases | `(public)/` (blog, docs, showcases, feedback) | — | — | None; self-documenting layer |
 | Auth | `auth/` (login, verify) | `/api/auth/*` | `auth/` | ALTCHA-gated, rate-limited |
-| App (member) | `app/` (dashboard, account, notifications, settings) | `/api/preferences/*`, `/api/notifications/*`, `/api/consent` | `preferences/`, `notifications/` | `app/+layout.server.ts` |
+| App (member) | `app/` (dashboard, account, account/data, notifications, settings) | `/api/preferences/*`, `/api/notifications/*`, `/api/consent`, `/api/me/*` | `preferences/`, `notifications/`, `privacy/` | `app/+layout.server.ts` |
 | Admin | `admin/` (access, ai, analytics, audit, branding, cache, content, db, feedback, flags, jobs, notifications, rag, users — ~14 areas) | `/api/admin/*` | various | `admin/+layout.server.ts` |
 | Desk (AI workspace) | `desk/` | `/api/desk/*` (files, folders, spreadsheets, theme, workspaces) | `store/`, `branding/` | `desk/+layout.server.ts` |
 | Blog | `(public)/blog/` | `/api/blog/*` (posts, comments, tags, assets, domains, folders, feed.xml) | `blog/`, `content/` | Capability-gated authoring |
@@ -186,6 +186,7 @@ Route areas under `src/routes/[[locale=locale]]/` and the parallel `src/routes/a
 | RAG / Retrieval | — | `/api/retrieval/*` (documents, graph, ingest, search, stats) | `rawrag/`, `llmwiki/`, `graph/` | Admin-gated |
 | Notifications | — | `/api/notifications/*` (stream SSE, telegram, discord, read-all) | `notifications/` | Session-gated |
 | Analytics | — | `/api/analytics/*` (journey beacon, stream) | `analytics/` | Consent-tiered |
+| Privacy (GDPR) | `app/account/data` (transparency mirror) | `/api/me/*` (data, data/export, DELETE) | `privacy/` | Session-gated; per-endpoint rate limits (10/5/3 per min) |
 | Pairing | `pair/[code]` | `/api/pair/*` | `pairing/` | HMAC cookie; independent of Better Auth |
 | Jobs | — | `/api/cron/[job]` dispatcher | `jobs/` | Bearer token (Vercel cron) |
 | Abuse | — | — | `abuse/` | Cross-cutting; wired in hooks |
@@ -440,7 +441,7 @@ Authentication per client: session cookie for UI and REST (populated by `session
 
 ### Traced flows (wiring inventory)
 
-Eight end-to-end flows have been traced through the system:
+Nine end-to-end flows have been traced through the system:
 
 1. **Request lifecycle** — HTTP edge → hooks pipeline → route adapter → domain → DB → response
 2. **Multi-client core** (notifications) — same `getNotifications` / `markAsRead` called from UI, REST, AI tool, and job
@@ -450,6 +451,7 @@ Eight end-to-end flows have been traced through the system:
 6. **Background jobs** — `runJob()` + scheduler (`setInterval`, persistent container) vs cron dispatcher (`/api/cron/[job]`, serverless); same runner, different trigger
 7. **Visual identity** — `loadStyle` in hooks resolves cookie → brand override → custom palette DB lookup → `generateRandomStyle` fallback; Paraglide `transformPageChunk` injects palette CSS into every HTML response
 8. **Auth + session + grants + analytics** — `authHandler` (Better Auth) → `sessionPopulate` (locals.user/session/grants) → `analyticsCollector` (consent-tiered, fire-and-forget)
+9. **Personal-data access** (privacy) — `collectUserData` in `privacy/report.ts` is the one aggregator behind five adapters: the `/app/account/data` page load (streamed), the account `exportData` action, `GET /api/me/data`, `GET /api/me/data/export`, and `DELETE /api/me` (via `deleteUserData`). One definition of "all my data"; secrets projected out at the query, prior-session IPs masked. See [stack/capabilities/gdpr.md](./stack/capabilities/gdpr.md)
 
 ---
 
