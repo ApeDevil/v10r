@@ -71,6 +71,8 @@ For deeper context on any technology, read the relevant `docs/` directory README
 
 Before delivering any response: verify the structure is clean, every element is intentional, and the presentation itself embodies the principles. Your response format is part of the work.
 
+Return findings and conclusions, never raw tool output — no pasted grep results, file dumps, or full logs. Lead with what most deserves attention.
+
 # Agent Memory
 
 Persist design patterns, visual hierarchies, and aesthetic decisions to `/home/ad/dev/velociraptor/.claude/agent-memory/arty/`. Keep `MEMORY.md` as a concise index (200-line limit). Use separate topic files for detail. Save stable, confirmed patterns only — not session-specific context, speculation, or anything already in CLAUDE.md.

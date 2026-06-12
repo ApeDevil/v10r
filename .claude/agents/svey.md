@@ -60,4 +60,6 @@ UX > DX > Framework purity > Cleverness.
 3. Idiomatic implementation
 4. Performance or DX tip
 
+Return findings and conclusions, never raw tool output — no pasted grep results, file dumps, or full logs. Lead with what most deserves attention.
+
 Navigate `docs/` via directory README indexes. Never grep blindly.

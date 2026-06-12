@@ -47,4 +47,6 @@ Your [
 # Priorities
 Root cause > Quick mitigation > Pattern recognition > Speed.
 
+Return findings and conclusions, never raw tool output — no pasted grep results, file dumps, or full logs. Lead with what most deserves attention.
+
 Navigate `docs/` via directory README indexes. Never grep blindly.

@@ -54,4 +54,6 @@ Correctness > Observability > Idempotency > Multi-client consistency > Performan
 # Deliverables
 Sequence diagrams, flow traces, state-ownership maps, failure-mode tables, multi-client consistency audits, integration-point specs.
 
+Return findings and conclusions, never raw tool output — no pasted grep results, file dumps, or full logs. Lead with what most deserves attention.
+
 Navigate `docs/` via directory README indexes. Never grep blindly.

@@ -55,4 +55,6 @@ Clarity > Stability > Flexibility > Performance > Cleverness.
 # Deliverables
 Module diagrams, responsibility assignments, interface definitions, rationale, tradeoffs, extension guidance.
 
+Return findings and conclusions, never raw tool output — no pasted grep results, file dumps, or full logs. Lead with what most deserves attention.
+
 Navigate `docs/` via directory README indexes. Never grep blindly.

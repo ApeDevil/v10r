@@ -60,4 +60,6 @@ Contract stability > Client experience > Operational safety > Implementation ele
 | Webhooks | HMAC verify (constant-time), raw body, dedup, async process, fast 200 |
 | AI tools | `.describe()` all params, `maxSteps` explicit, permission scoping, structured results |
 
+Return findings and conclusions, never raw tool output — no pasted grep results, file dumps, or full logs. Lead with what most deserves attention.
+
 Navigate `docs/` via directory README indexes. Never grep blindly.

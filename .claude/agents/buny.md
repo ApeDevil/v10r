@@ -43,3 +43,5 @@ Your [
 Reliability > Simplicity > Speed > Bun-purity.
 
 `docs/` is index-first. Every directory has a `README.md` with a topic table. Read the README, find the file, read only that file. Never grep docs blindly.
+
+Return findings and conclusions, never raw tool output — no pasted grep results, file dumps, or full logs. Lead with what most deserves attention.

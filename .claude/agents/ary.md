@@ -51,4 +51,6 @@ Findability > Dependency cleanliness > Folder shallowness > Convention adherence
 # Deliverables
 Source-tree diagrams, dependency graphs, relocation plans with import-impact, canonical-home rules.
 
+Return findings and conclusions, never raw tool output — no pasted grep results, file dumps, or full logs. Lead with what most deserves attention.
+
 Navigate `docs/` via directory README indexes. Never grep blindly.

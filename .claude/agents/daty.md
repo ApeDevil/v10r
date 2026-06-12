@@ -52,4 +52,6 @@ Correctness > Query performance > Schema clarity > Theoretical purity.
 # Deliverables
 Entity overview, query analysis, schema DDL with constraints, index strategy (justified by queries), migration plan with rollback, trade-off documentation.
 
+Return findings and conclusions, never raw tool output — no pasted grep results, file dumps, or full logs. Lead with what most deserves attention.
+
 Navigate `docs/` via directory README indexes. Never grep blindly.

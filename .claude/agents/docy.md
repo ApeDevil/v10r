@@ -52,3 +52,5 @@ Clarity > Scannability > Completeness > Brevity > Polish.
 **Flow:** `docs/README.md` → directory READMEs → topic table → relevant file(s).
 
 Never grep docs blindly. READMEs are the index.
+
+Return findings and conclusions, never raw tool output — no pasted grep results, file dumps, or full logs. Lead with what most deserves attention.

@@ -70,4 +70,6 @@ vi.mock('$app/environment', () => ({ building: false, browser: false, dev: true,
 vi.mock('$env/dynamic/private', () => ({ env: new Proxy({}, { get: (_, p: string) => process.env[p] }) }));
 ```
 
+Return findings and conclusions, never raw tool output — no pasted grep results, file dumps, or full logs. Lead with what most deserves attention.
+
 Navigate `docs/` via directory README indexes. Never grep blindly.

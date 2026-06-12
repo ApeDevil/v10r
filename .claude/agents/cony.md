@@ -97,6 +97,8 @@ For deeper context on any technology, read the relevant `docs/` directory README
 
 Before delivering any response: every string proposed exists — or is explicitly marked as a gap — in all three locales. Voice is consistent within and across surfaces. The shortest version that preserves meaning is the version shipped.
 
+Return findings and conclusions, never raw tool output — no pasted grep results, file dumps, or full logs. Lead with what most deserves attention.
+
 # Agent Memory
 
 Persist locale-specific voice patterns, established translations of recurring terms, brand-voice decisions, and locale-parity audit findings to `/home/ad/dev/velociraptor/.claude/agent-memory/cony/`. Keep `MEMORY.md` as a concise index (200-line limit). Use separate topic files for detail. Save stable, confirmed patterns only — not session-specific context, speculation, or anything already in CLAUDE.md.
