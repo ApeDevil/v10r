@@ -8,3 +8,4 @@
 - [Chat grounding rollout](project_chat_grounding_rollout.md) — plan to wire catalog-links (A, near flag-flip) + docs-nRAG (B, real pipeline); desk-tool composition landmine, ingest() not idempotent/not Bun-importable
 - [Provider quota runtime](project_provider_quota_runtime.md) — quota/rate-limit design: move cooldown breaker to Redis (race-free SET), hybrid A(Redis counter)+B(conversation_step COUNT), increment at provider resolution, gauge rides health poll
 - [Signup flow has no server hook](project_signup_flow_no_server_hook.md) — auth completion = client goto (OTP) / BA server callback (OAuth); no databaseHooks, no first-signup signal; anonymous visitorId trail has no userId FK to link
+- [2FA passwordless enforcement gap](project_2fa_passwordless_enforcement_gap.md) — BA twoFactor plugin gates ONLY credential sign-in; this stack is 100% passwordless so 2FA has ZERO sign-in enforcement OOTB; enforce via app gate + watch cookieCache staleness

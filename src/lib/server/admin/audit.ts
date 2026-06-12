@@ -112,10 +112,14 @@ export async function exportAuditLogCsv(filters: AuditLogFilters = {}): Promise<
 	]);
 
 	const escapeCsv = (val: string) => {
-		if (val.includes(',') || val.includes('"') || val.includes('\n')) {
-			return `"${val.replace(/"/g, '""')}"`;
+		// Formula injection: a leading =, +, - or @ executes when the CSV is
+		// opened in a spreadsheet. Detail fields can carry user-controlled
+		// strings (e.g. passkey names), so neutralize with a leading quote.
+		const neutralized = /^[=+\-@]/.test(val) ? `'${val}` : val;
+		if (neutralized.includes(',') || neutralized.includes('"') || neutralized.includes('\n')) {
+			return `"${neutralized.replace(/"/g, '""')}"`;
 		}
-		return val;
+		return neutralized;
 	};
 
 	return [headers.join(','), ...rows.map((row) => row.map(escapeCsv).join(','))].join('\n');

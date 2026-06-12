@@ -28,14 +28,15 @@ import { db } from '$lib/server/db';
 import { getPreferences } from '$lib/server/db/preferences';
 import { conversation } from '$lib/server/db/schema/ai/conversation';
 import { customPalettes } from '$lib/server/db/schema/app/custom-palettes';
+import { user } from '$lib/server/db/schema/auth/_better-auth';
 import { comment } from '$lib/server/db/schema/blog/comment';
 import { file as deskFile } from '$lib/server/db/schema/desk/file';
 import { deskWorkspace } from '$lib/server/db/schema/desk/workspace';
 import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
 import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
-import { getUserOAuthSummary, getUserProfile, getUserSessions } from '$lib/server/db/user';
+import { getUserOAuthSummary, getUserProfile, getUserSessions, listPasskeyDtos } from '$lib/server/db/user';
 
-export const REPORT_SCHEMA_VERSION = '2026-06-11';
+export const REPORT_SCHEMA_VERSION = '2026-06-12';
 
 /** Legal basis per domain — Art 20 portability applies only to consent/contract data. */
 export type LegalBasis = 'contract' | 'consent' | 'legitimate_interest';
@@ -83,6 +84,17 @@ export interface PersonalDataReport {
 	notifications: Section<{ telegramLinked: boolean; discordLinked: boolean }>;
 	blogComments: Section<{ count: number }>;
 	palettes: Section<{ count: number }>;
+	security: Section<{
+		twoFactorEnabled: boolean;
+		passkeys: {
+			name: string | null;
+			authenticatorLabel: string | null;
+			deviceType: string;
+			backedUp: boolean;
+			createdAt: string | null;
+			lastUsedAt: string | null;
+		}[];
+	}>;
 }
 
 interface SessionEntry {
@@ -123,7 +135,7 @@ export async function collectUserData(
 	userId: string,
 	opts: { currentSessionId?: string } = {},
 ): Promise<PersonalDataReport> {
-	const [identity, sessions, oauthAccounts, preferences, ai, desk, notifications, blogComments, palettes] =
+	const [identity, sessions, oauthAccounts, preferences, ai, desk, notifications, blogComments, palettes, security] =
 		await Promise.all([
 			settle('contract', true, async () => {
 				const profile = await getUserProfile(userId);
@@ -210,6 +222,26 @@ export async function collectUserData(
 					db.select({ value: count() }).from(customPalettes).where(eq(customPalettes.createdBy, userId)),
 				),
 			})),
+			// Security credentials are not Art-20-portable (a passkey cannot be
+			// "taken elsewhere"); TOTP secret/backupCodes never appear, even
+			// encrypted — only enrollment state and passkey display metadata.
+			settle('contract', false, async () => {
+				const [profileRow, passkeys] = await Promise.all([
+					db.select({ twoFactorEnabled: user.twoFactorEnabled }).from(user).where(eq(user.id, userId)),
+					listPasskeyDtos(userId),
+				]);
+				return {
+					twoFactorEnabled: !!profileRow[0]?.twoFactorEnabled,
+					passkeys: passkeys.map((p) => ({
+						name: p.name,
+						authenticatorLabel: p.authenticatorLabel,
+						deviceType: p.deviceType,
+						backedUp: p.backedUp,
+						createdAt: p.createdAt?.toISOString() ?? null,
+						lastUsedAt: p.lastUsedAt?.toISOString() ?? null,
+					})),
+				};
+			}),
 		]);
 
 	return {
@@ -228,5 +260,6 @@ export async function collectUserData(
 		notifications,
 		blogComments,
 		palettes,
+		security,
 	};
 }

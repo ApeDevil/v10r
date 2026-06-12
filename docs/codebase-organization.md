@@ -116,7 +116,9 @@ src/lib/server/
                 Catalog siblings: catalog-citations.ts (surface verifier), tool-leak-guard.ts (Groq drift guard)
   analytics/    Analytics pipeline
   api/          Adapter helpers: pagination.ts, rate-limit.ts, response.ts
-  auth/         Better Auth instance + guards (auth/index.ts constructs the instance)
+  auth/         Better Auth instance + guards (auth/index.ts constructs the instance);
+                step-up.ts (Redis step-up freshness gate), factor-changes.ts (passkey/TOTP
+                audit+revoke+notify chokepoint) — both framework-free, never import the instance
   blog/         Posts, comments, tags, assets, feed; co-locates queries/mutations
   branding/     Custom palette resolution
   cache/        Upstash Redis wrappers
@@ -215,7 +217,7 @@ Schema namespaces follow **storage grouping**. Access directories follow **call 
 | Schema namespace | Served by `db/` access dir |
 |-----------------|---------------------------|
 | `schema/app` (user, account, brand, preferences tables) | THREE dirs: `db/user/`, `db/brand/`, `db/preferences/` |
-| `schema/auth` | NO `db/` dir — Better Auth owns the access layer |
+| `schema/auth` | Mostly Better Auth-owned; `db/user/` adds passkey read DTOs (`listPasskeyDtos`, `countPasskeys`, `touchPasskeyLastUsed`) that project secrets out |
 | `schema/blog` | NO `db/` dir — `blog/queries.ts` + `blog/mutations.ts` (co-located; see below) |
 | `schema/feedback` | NO `db/` dir — `feedback/index.ts` with inline CRUD |
 | `schema/admin` | NO `db/` dir — admin query logic lives in `admin/` domain |

@@ -55,6 +55,16 @@ When using custom PostgreSQL schemas:
 2. Every `pgEnum()` object **must be exported** — otherwise silently omits `CREATE TYPE`
 3. `drizzle.config.ts` must list all schemas in `schemaFilter` (only affects `push`/`pull`, not `generate`)
 
+## Better Auth adapter: model→table by export-const name
+
+The `drizzleAdapter` resolves a Better Auth model to its Drizzle table by the **exported const name** — `db` is built by spreading the schema, so the export *key* is the lookup key, not the SQL table name.
+
+- `export const passkey` / `export const twoFactor` (camelCase) are **mandatory** export names.
+- SQL table names are free to be snake_case (`auth.passkey`, `auth.two_factor`).
+- Field keys must match the model exactly — e.g. `credentialID` (not `credential_id`) as the property key.
+
+Get the export name wrong and the adapter writes to the wrong table or silently fails to find one. See [../auth/better-auth.md](../auth/better-auth.md) and [../../blueprint/auth.md](../../blueprint/auth.md#passkeys--step-up-totp).
+
 ## Known limitations
 
 **Type safety caveat:**

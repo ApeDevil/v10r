@@ -1,12 +1,25 @@
 import { createHash } from 'node:crypto';
 import { fail, redirect } from '@sveltejs/kit';
 import { localizeHref } from '$lib/i18n';
+import { requireStepUp } from '$lib/server/auth/step-up';
 import { getUserAccounts, getUserSessions, revokeSession } from '$lib/server/db/user';
 import { collectUserData, deleteUserData } from '$lib/server/privacy';
 import type { Actions, PageServerLoad } from './$types';
 
 function hashForDisplay(id: string): string {
 	return createHash('sha256').update(id).digest('hex').slice(0, 12);
+}
+
+/**
+ * Sensitive actions require a fresh second-factor check when the user has
+ * TOTP enrolled. Freshness lives in Redis (never the cookie cache); the
+ * client opens StepUpDialog on `stepUpRequired` and resubmits.
+ */
+async function stepUpGate(user: NonNullable<App.Locals['user']>) {
+	if (!(await requireStepUp(user))) {
+		return fail(403, { stepUpRequired: true });
+	}
+	return null;
 }
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -38,6 +51,9 @@ export const actions: Actions = {
 	revokeSession: async ({ request, locals }) => {
 		if (!locals.user) redirect(303, localizeHref('/auth/login'));
 
+		const gate = await stepUpGate(locals.user);
+		if (gate) return gate;
+
 		const formData = await request.formData();
 		const sessionId = formData.get('sessionId') as string;
 
@@ -52,6 +68,9 @@ export const actions: Actions = {
 	exportData: async ({ locals }) => {
 		if (!locals.user) redirect(303, localizeHref('/auth/login'));
 
+		const gate = await stepUpGate(locals.user);
+		if (gate) return gate;
+
 		// One canonical definition of "all my data" — same aggregator as
 		// /app/account/data and /api/me/data. Secrets and prior-session
 		// raw IPs are projected/masked inside collectUserData.
@@ -62,6 +81,9 @@ export const actions: Actions = {
 
 	deleteAccount: async ({ request, locals }) => {
 		if (!locals.user) redirect(303, localizeHref('/auth/login'));
+
+		const gate = await stepUpGate(locals.user);
+		if (gate) return gate;
 
 		const formData = await request.formData();
 		const confirmation = formData.get('confirmation');

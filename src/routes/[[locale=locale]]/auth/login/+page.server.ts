@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import { localizeHref } from '$lib/i18n';
+import { passkeysEnabled } from '$lib/server/auth';
 import type { PageServerLoad } from './$types';
 
 const DEFAULT_REDIRECT = '/app/dashboard';
@@ -26,5 +27,5 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		redirect(303, localizeHref(returnTo));
 	}
 
-	return { title: 'Log In', returnTo };
+	return { title: 'Log In', returnTo, passkeysEnabled };
 };

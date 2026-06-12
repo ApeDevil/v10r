@@ -9,7 +9,12 @@ declare global {
 		}
 		interface Locals {
 			user:
-				| (import('better-auth').User & { role?: string | null; banned?: boolean | null; banReason?: string | null })
+				| (import('better-auth').User & {
+						role?: string | null;
+						banned?: boolean | null;
+						banReason?: string | null;
+						twoFactorEnabled?: boolean | null;
+				  })
 				| null;
 			session: import('better-auth').Session | null;
 			style: import('$lib/styles/random/types').ResolvedStyle;

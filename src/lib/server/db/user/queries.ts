@@ -1,6 +1,8 @@
+import { getAuthenticatorName } from '@better-auth/passkey';
 import { eq, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { account, session as sessionTable, user } from '$lib/server/db/schema/auth/_better-auth';
+import { passkey } from '$lib/server/db/schema/auth/passkey';
 
 /** Fetch all sessions for a user. */
 export async function getUserSessions(userId: string) {
@@ -44,6 +46,43 @@ export async function getUserOAuthSummary(userId: string) {
 		})
 		.from(account)
 		.where(eq(account.userId, userId));
+}
+
+/**
+ * Passkey list for management/transparency surfaces. Credential internals
+ * (publicKey, credentialID, counter, raw aaguid) are projected out at query
+ * level — only display metadata leaves the DB layer. The authenticator label
+ * is resolved from the aaguid here so the raw value never reaches a DTO.
+ */
+export async function listPasskeyDtos(userId: string) {
+	const rows = await db
+		.select({
+			id: passkey.id,
+			name: passkey.name,
+			deviceType: passkey.deviceType,
+			backedUp: passkey.backedUp,
+			createdAt: passkey.createdAt,
+			lastUsedAt: passkey.lastUsedAt,
+			aaguid: passkey.aaguid,
+		})
+		.from(passkey)
+		.where(eq(passkey.userId, userId));
+
+	return rows.map(({ aaguid, ...row }) => ({
+		...row,
+		authenticatorLabel: getAuthenticatorName(aaguid) ?? null,
+	}));
+}
+
+/** Number of passkeys a user has registered (enrollment nudge). */
+export async function countPasskeys(userId: string): Promise<number> {
+	const rows = await db.select({ count: sql<number>`count(*)::int` }).from(passkey).where(eq(passkey.userId, userId));
+	return rows[0]?.count ?? 0;
+}
+
+/** Stamp a passkey's last successful sign-in (app-owned column). */
+export async function touchPasskeyLastUsed(credentialID: string): Promise<void> {
+	await db.update(passkey).set({ lastUsedAt: new Date() }).where(eq(passkey.credentialID, credentialID));
 }
 
 /** Fetch core user profile fields for data export. */

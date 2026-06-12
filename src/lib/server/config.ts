@@ -24,6 +24,18 @@ export const AUTH_RATE_LIMIT_MAX = 5;
 /** Auth endpoint rate limit: window duration */
 export const AUTH_RATE_LIMIT_WINDOW = '60 s';
 
+/** Issuer label shown in authenticator apps for TOTP enrollment */
+export const TWO_FACTOR_ISSUER = 'Velociraptor';
+
+/** Step-up freshness window: a TOTP/backup-code check satisfies gated actions for this long (seconds) */
+export const STEPUP_TTL = 600;
+
+/** Per-account 2FA verify rate limit: attempts per window */
+export const STEPUP_VERIFY_RATE_LIMIT_MAX = 5;
+
+/** Per-account 2FA verify rate limit: window duration */
+export const STEPUP_VERIFY_RATE_LIMIT_WINDOW = '300 s';
+
 // ── AI ─────────────────────────────────────────────────────────────────────────
 
 /** Chat endpoint rate limit: requests per window */

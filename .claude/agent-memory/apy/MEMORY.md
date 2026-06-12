@@ -7,3 +7,4 @@
 - [Admin JSON endpoint conventions](project_admin_json_endpoint_conventions.md) — canonical /api/admin/* contract: apiOk/apiError envelope, guardApiAdmin, createLimiter, no-store; reusable AI domain fns listed
 - [Provider quota contract](project_provider_quota_contract.md) — new GET /api/admin/ai/quota (not /health ext); QuotaMetric honesty flags (exact/estimated/unknown), absolute-ISO countdowns, one buildProviderQuota() serializer
 - [GDPR data surface](project_gdpr_data_surface.md) — existing account exportData/deleteAccount form actions incomplete (3 of ~12 domains); /api/me/data should unify via one collectUserData(userId) domain fn powering mirror page + REST + future AI tool
+- [2FA+passkey contract](project_2fa_passkey_contract.md) — verified plugin endpoints; mutations wrapped via better-auth hooks.after (audit chokepoint, no custom +server.ts); allowPasswordless closes disputed item; Redis for step-up freshness; per-account verify limiter

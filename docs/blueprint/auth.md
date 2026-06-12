@@ -4,7 +4,9 @@
 
 **Technology:** Session-based auth (library, not a service). See [stack/auth/](../stack/auth/README.md) for alternatives.
 
-> **No passwords.** Users authenticate via magic link or OTP code (both sent in one email). This eliminates password-related security risks and simplifies the auth flow.
+> **No passwords.** Users authenticate via magic link, OTP code (both sent in one email), OAuth, or **passkey**. This eliminates password-related security risks and simplifies the auth flow.
+
+> **Two phishing-resistant additions** landed on the `2fa` branch: **passkeys** as a first-factor sign-in credential, and **TOTP** as a step-up factor for sensitive actions only. See [Passkeys & Step-Up TOTP](#passkeys--step-up-totp).
 
 ---
 
@@ -47,8 +49,11 @@
 ## Dependencies
 
 ```json
-"better-auth": "^1.x"
+"better-auth": "1.6.17",
+"@better-auth/passkey": "1.6.17"
 ```
+
+> **Pinned exact, in lockstep.** `@better-auth/passkey` is a peer that must match `better-auth` version-for-version. `package.json` `overrides` also pins `@simplewebauthn/browser` + `@simplewebauthn/server` to `13.2.x`.
 
 > See [development-environment.md](../foundation/development-environment.md) for installation workflow.
 
@@ -733,66 +738,115 @@ export async function load(event) {
 
 ---
 
-## Two-Factor Authentication
+## Passkeys & Step-Up TOTP
 
-### Enable 2FA Plugin
+Two phishing-resistant factors, with **different jobs**:
+
+- **Passkey** — a first-factor sign-in credential. User verification (biometric/PIN) makes it MFA in one gesture. Phishing-resistant by WebAuthn design.
+- **TOTP** — a **step-up** factor only. It re-proves identity before a sensitive action. It is **never** a login challenge.
+
+### Why no TOTP-at-login
+
+Better Auth's `twoFactor` plugin gates **only credential sign-in** endpoints (`/sign-in/email|username|phone-number`). This app is passwordless — there are no credential sign-ins — so a TOTP login challenge would never fire. That is upstream design (1.6.3 broadened the gating; 1.6.4 reverted it). So passkeys carry the phishing-resistant-login role, and TOTP is repurposed as step-up.
+
+`allowPasswordless: true` is what lets credential-less users enroll TOTP at all (upstream's `shouldRequirePassword` skips the password gate when no credential account exists).
+
+> **Security ceiling, stated honestly.** Magic link and email OTP stay enabled as recovery, so **inbox control still equals account control**. Passkeys raise the floor (phishing-resistant primary path), not the ceiling.
+
+### Server config
 
 ```typescript
-// src/lib/server/auth.ts
-import { betterAuth } from 'better-auth';
-import { twoFactor } from 'better-auth/plugins';
-
-export const auth = betterAuth({
-  // ... base config
-  plugins: [
-    twoFactor({
-      issuer: 'Velociraptor',
-    }),
-  ],
-});
+// src/lib/server/auth/index.ts
+twoFactor({
+  issuer: TWO_FACTOR_ISSUER,
+  allowPasswordless: true,        // credential-less users can enroll
+  skipVerificationOnEnable: false,
+}),
+...(passkeysEnabled                // see below
+  ? [passkey({ rpID, rpName: 'Velociraptor', origin })]
+  : []),
 ```
 
-### 2FA Setup Flow
+`rpID` / `origin` derive from `BETTER_AUTH_URL` (dev → `localhost`).
 
-```svelte
-<!-- src/routes/app/settings/2fa/+page.svelte -->
-<script lang="ts">
-  import { authClient } from '$lib/auth-client';
+> **Passkeys are disabled on Vercel previews** at the plugin level — endpoints 404, not just hidden UI. `*.vercel.app` is on the Public Suffix List, so a preview URL can never satisfy the production `rpID`. The exported `passkeysEnabled` flag (`env.VERCEL_ENV !== 'preview'`) also hides the UI in page loads.
 
-  let qrCode = $state('');
-  let secret = $state('');
-  let code = $state('');
-  let enabled = $state(false);
+### The hooks chokepoint
 
-  async function generateSecret() {
-    const result = await authClient.twoFactor.generate();
-    if (result.data) {
-      qrCode = result.data.qrCode;
-      secret = result.data.secret;
-    }
-  }
+`authClient` calls hit Better Auth's plugin endpoints directly, so form actions can't carry the audit/notify/revoke duties. Two global `createAuthMiddleware` hooks in `auth/index.ts` are the single un-skippable seam:
 
-  async function enable2FA() {
-    const result = await authClient.twoFactor.enable({ code });
-    if (!result.error) {
-      enabled = true;
-    }
-  }
-</script>
+**`hooks.before`** — gates step-up-sensitive operations server-side. `/two-factor/disable` and `/two-factor/generate-backup-codes` require a fresh step-up (substitutes for the upstream password gate, which we don't have — open bug [#9248](https://github.com/better-auth/better-auth/issues/9248)).
 
-{#if !enabled}
-  <button onclick={generateSecret}>Setup 2FA</button>
+**`hooks.after`** — branches on `ctx.path` to fire factor-change side effects:
 
-  {#if qrCode}
-    <img src={qrCode} alt="2FA QR Code" />
-    <p>Secret: {secret}</p>
-    <input type="text" bind:value={code} placeholder="Enter code" />
-    <button onclick={enable2FA}>Enable 2FA</button>
-  {/if}
-{:else}
-  <p>2FA is enabled</p>
-{/if}
-```
+| Endpoint | Side effect |
+|----------|-------------|
+| `/passkey/verify-registration` | `onFactorChanged('passkey.added')` |
+| `/passkey/delete-passkey` | `'passkey.removed'` + revoke sibling sessions |
+| `/passkey/update-passkey` | `'passkey.renamed'` (audit only) |
+| `/passkey/verify-authentication` | fire-and-forget `lastUsedAt` stamp |
+| `/two-factor/enable` | `'2fa.enabled'` |
+| `/two-factor/disable` | `'2fa.disabled'` + revoke sibling sessions |
+| `/two-factor/generate-backup-codes` | `'2fa.backup_codes_regenerated'` |
+| `/two-factor/verify-totp`, `/verify-backup-code` | `stampStepUp(userId)` |
+
+> **No `/passkey/add-passkey` in 1.6.17.** Registration = `GET /passkey/generate-register-options` then `POST /passkey/verify-registration`. The client `addPasskey()` wraps both.
+
+### Step-up freshness gate
+
+`auth/step-up.ts` — framework-free, **never imports the auth instance** (cycle: `auth/index.ts` imports from here).
+
+| Function | Purpose |
+|----------|---------|
+| `stampStepUp(userId)` | Set Redis `stepup:<userId>` for `STEPUP_TTL` (600s). |
+| `isStepUpFresh(userId)` | True if the key exists. |
+| `requireStepUp(user)` | Passes for users without TOTP; else requires a fresh stamp. |
+
+The gate reads Redis, **not** the session — freshness must never ride the 300s session `cookieCache`. **Fail-closed in prod** when Redis is null (a missing key can only block); dev passes with a warning.
+
+### Factor-change side effects
+
+`auth/factor-changes.ts` — `onFactorChanged()` composes three legs:
+
+1. **Audit** — `recordAuditEvent` with dot-namespaced actions (`passkey.added/removed/renamed`, `2fa.enabled/disabled/backup_codes_regenerated`; `targetType: 'auth.user'`). **Must land.**
+2. **Sibling-session revocation** — hard-deletes the user's *other* sessions (keeps the current token; mirrors the `grants.ts` pattern). Degrades with logging.
+3. **Notification email** — `factorChangeTemplate`. Degrades with logging.
+
+A mail outage can never block a security event from being recorded.
+
+### Enrollment & management UI
+
+Route `/app/account/security` (a Card link from `/app/account`):
+
+- **Passkeys** — list / add / rename / delete, **client-call-driven + `invalidateAll`**, not Superforms. Deliberate: matches the login/verify client-call precedent (the WebAuthn ceremony is a browser API call, not a form post).
+- **TOTP enroll** — `enable()` → `totpURI` + backup codes shown **once** → QR via `POST /api/me/two-factor/qr` (server-rendered with the existing `qrSvg()`) → `verifyTotp` confirm → `getSession({ disableCookieCache: true })` → `invalidateAll`.
+
+> **`enable()` is not idempotent** — re-calling rotates the secret. The UI locks the button to prevent an accidental re-roll.
+
+A dismissable **enrollment nudge** (sessionStorage, shown when the user has 0 passkeys) lives on the dashboard. In-flow prompts vastly outperform settings-only adoption.
+
+### Step-up dialog
+
+Composite `$lib/components/composites/step-up-dialog`: TOTP-or-backup-code entry. Account-page actions (`revokeSession` / `exportData` / `deleteAccount`) return `fail(403, { stepUpRequired })` when the user is enrolled and stale → the dialog opens → the form resubmits after a fresh verification.
+
+### Login surface
+
+- Passkey sign-in button.
+- **Conditional-UI autofill**: `autocomplete="username webauthn"` + `onMount` `isConditionalMediationAvailable()` check. A user-cancel (`NotAllowedError`) is treated as a silent dismiss.
+
+### Login DTO projection
+
+`db/user/queries.ts` adds `listPasskeyDtos` (projects **out** `publicKey` / `credentialID` / `counter` / raw `aaguid`; resolves `aaguid` → a human label via `getAuthenticatorName` from `@better-auth/passkey`), `countPasskeys`, and `touchPasskeyLastUsed`.
+
+---
+
+## Step-Up Rate Limiting
+
+A **per-account** limiter (5 per 300s, Redis key `ratelimit:2fa:verify`) guards `/two-factor/verify-totp`, `/verify-backup-code`, and `/verify-otp`, keyed by `session.user.id ?? clientIp`.
+
+The session is resolved **inline in `authHandler`** because `sessionPopulate` runs *after* it and `/api/auth/*` terminates inside `authHandler` (Better Auth's catch-all never reaches `sessionPopulate`).
+
+`'/api/auth/two-factor/send-otp'` is added to `AUTH_CAPTCHA_GATED_PATHS` (it triggers an email send). See [abuse/rate-limits.md](./abuse/rate-limits.md).
 
 ---
 
@@ -940,23 +994,25 @@ export async function GET({ request }) {
 src/
 ├── lib/
 │   ├── server/
-│   │   ├── auth.ts           # Better Auth instance (magic link + OTP)
-│   │   ├── email.ts          # Auth email sender
-│   │   └── auth/
-│   │       ├── guard.ts      # Route protection helpers
-│   │       ├── grants.ts     # Capability grant/revoke/query
-│   │       └── grant-requests.ts  # Request lifecycle
-│   └── auth-client.ts        # Client-side auth (signIn, signOut)
+│   │   ├── auth/
+│   │   │   ├── index.ts          # Better Auth instance + before/after hooks (construction site)
+│   │   │   ├── guards.ts         # Route protection helpers
+│   │   │   ├── grants.ts         # Capability grant/revoke/query
+│   │   │   ├── grant-requests.ts # Request lifecycle
+│   │   │   ├── step-up.ts        # Redis step-up freshness gate (no auth import)
+│   │   │   ├── factor-changes.ts # Audit + revoke + notify chokepoint
+│   │   │   └── send-auth-email.ts # Magic-link / OTP / factor-change templates
+│   │   └── db/user/queries.ts    # listPasskeyDtos, countPasskeys, touchPasskeyLastUsed
+│   ├── components/composites/step-up-dialog/  # TOTP / backup-code re-verify
+│   └── auth-client.ts            # twoFactorClient() + passkeyClient()
 ├── routes/
-│   ├── auth/
-│   │   ├── login/+page.svelte    # Email entry
-│   │   └── verify/+page.svelte   # OTP verification
-│   └── app/                  # Protected routes
-│       ├── +layout.server.ts # Load session from event.locals
-│       ├── +layout.svelte    # Client guard (fallback)
-│       └── dashboard/
-│           └── +page.server.ts
-└── hooks.server.ts           # Better Auth handler + session + grants populate
+│   ├── [[locale]]/
+│   │   ├── auth/
+│   │   │   ├── login/+page.svelte   # Email entry + passkey button + conditional-UI
+│   │   │   └── verify/+page.svelte  # OTP verification
+│   │   └── app/account/security/    # Passkey + TOTP enrollment
+│   └── api/me/two-factor/qr/+server.ts  # Server-rendered TOTP QR (qrSvg)
+└── hooks.server.ts               # Auth handler + per-account 2FA verify limiter + session/grants populate
 ```
 
 ---
@@ -965,10 +1021,12 @@ src/
 
 ```bash
 # .env
+BETTER_AUTH_URL=http://localhost:5173   # drives passkey rpID / origin
+BETTER_AUTH_SECRET=...                   # ≥32 chars (openssl rand -base64 32)
 GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
+MICROSOFT_CLIENT_ID=your_microsoft_client_id
+MICROSOFT_CLIENT_SECRET=your_microsoft_client_secret
 VITE_BASE_URL=http://localhost:5173
 ```
 
@@ -981,8 +1039,10 @@ VITE_BASE_URL=http://localhost:5173
 | Auth framework | Better Auth |
 | Primary auth | Magic link + OTP (passwordless) |
 | Session storage | PostgreSQL via Drizzle |
-| OAuth providers | GitHub, Google (built-in) |
-| 2FA | TOTP plugin (optional layer) |
+| OAuth providers | GitHub, Microsoft (built-in) |
+| Passkey | First-factor sign-in credential (phishing-resistant) |
+| TOTP | Step-up factor for sensitive actions — never a login challenge |
+| Step-up gate | Redis `stepup:<userId>`, 600s freshness, fail-closed in prod |
 | Route protection | Per-route in `+page.server.ts` |
 | Session access | `event.locals` → page data (SSR-safe) |
 

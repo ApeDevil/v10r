@@ -1,6 +1,7 @@
 <script lang="ts">
+import type { ActionResult } from '@sveltejs/kit';
 import { enhance } from '$app/forms';
-import { Alert, Card, DiagGrid, DiagRow } from '$lib/components/composites';
+import { Alert, Card, DiagGrid, DiagRow, StepUpDialog } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
 import { localizeHref } from '$lib/i18n';
@@ -13,6 +14,26 @@ let exporting = $state(false);
 let deleting = $state(false);
 let confirmDelete = $state(false);
 let deleteConfirmText = $state('');
+
+// Step-up: sensitive actions 403 with stepUpRequired when TOTP is enrolled
+// and the freshness window has lapsed — the dialog verifies, then resubmits
+// the original form so in-flight state (e.g. the typed DELETE) survives.
+let stepUpOpen = $state(false);
+let pendingStepUpForm = $state<HTMLFormElement | null>(null);
+
+function interceptStepUp(result: ActionResult, formElement: HTMLFormElement): boolean {
+	if (result.type === 'failure' && (result.data as { stepUpRequired?: boolean } | undefined)?.stepUpRequired) {
+		pendingStepUpForm = formElement;
+		stepUpOpen = true;
+		return true;
+	}
+	return false;
+}
+
+function onStepUpVerified() {
+	pendingStepUpForm?.requestSubmit();
+	pendingStepUpForm = null;
+}
 
 // If export action returned data, trigger download
 $effect(() => {
@@ -37,6 +58,18 @@ $effect(() => {
 		<Button href={localizeHref('/app/account/data')} variant="outline">
 			<span class="i-lucide-scan-eye h-4 w-4 mr-1"></span>
 			{m.app_data_link_button()}
+		</Button>
+	</Card>
+
+	<!-- Security (passkeys + two-step verification) -->
+	<Card>
+		{#snippet header()}
+			<h2 class="text-fluid-lg font-semibold">{m.app_security_link_title()}</h2>
+		{/snippet}
+		<p class="text-sm text-muted mb-4">{m.app_security_link_description()}</p>
+		<Button href={localizeHref('/app/account/security')} variant="outline">
+			<span class="i-lucide-shield-check h-4 w-4 mr-1"></span>
+			{m.app_security_link_button()}
 		</Button>
 	</Card>
 
@@ -67,10 +100,10 @@ $effect(() => {
 						<form
 							method="POST"
 							action="?/revokeSession"
-							use:enhance={() => {
+							use:enhance={({ formElement }) => {
 								revoking = sess.id;
-								return async ({ update }) => {
-									await update();
+								return async ({ result, update }) => {
+									if (!interceptStepUp(result, formElement)) await update();
 									revoking = null;
 								};
 							}}
@@ -117,10 +150,10 @@ $effect(() => {
 		<form
 			method="POST"
 			action="?/exportData"
-			use:enhance={() => {
+			use:enhance={({ formElement }) => {
 				exporting = true;
-				return async ({ update }) => {
-					await update();
+				return async ({ result, update }) => {
+					if (!interceptStepUp(result, formElement)) await update();
 					exporting = false;
 				};
 			}}
@@ -167,10 +200,10 @@ $effect(() => {
 						<form
 							method="POST"
 							action="?/deleteAccount"
-							use:enhance={() => {
+							use:enhance={({ formElement }) => {
 								deleting = true;
-								return async ({ update }) => {
-									await update();
+								return async ({ result, update }) => {
+									if (!interceptStepUp(result, formElement)) await update();
 									deleting = false;
 								};
 							}}
@@ -192,6 +225,12 @@ $effect(() => {
 		{/if}
 	</Card>
 </Stack>
+
+<StepUpDialog
+	bind:open={stepUpOpen}
+	onverified={onStepUpVerified}
+	oncancel={() => (pendingStepUpForm = null)}
+/>
 
 <style>
 	.session-row {

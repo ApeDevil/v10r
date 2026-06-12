@@ -37,5 +37,6 @@ export * from './pagination';
 export * from './reorderable-panes';
 export * from './selection-bar';
 export * from './showcase-layout';
+export * from './step-up-dialog';
 export * from './tag-input';
 export * from './toast';

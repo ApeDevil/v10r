@@ -42,6 +42,19 @@ export function magicLinkTemplate(url: string): string {
 </html>`;
 }
 
+export function factorChangeTemplate(actionLabel: string): string {
+	return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Security change</title></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px; color: #1a1a1a;">
+  <h2 style="margin: 0 0 8px;">Security change on your account</h2>
+  <p style="color: #666; line-height: 1.5; margin: 0 0 24px;">${actionLabel}</p>
+  <p style="color: #666; line-height: 1.5; margin: 0 0 24px;">If this was you, no action is needed.</p>
+  <p style="color: #999; font-size: 13px; margin-top: 32px; line-height: 1.5;">If you did not make this change, sign in immediately and review the security settings of your account.</p>
+</body>
+</html>`;
+}
+
 export function otpTemplate(otp: string): string {
 	return `<!DOCTYPE html>
 <html>

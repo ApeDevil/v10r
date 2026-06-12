@@ -339,6 +339,8 @@ Individual files inside a module or component folder. Private by default; public
 | `requireApiUser(locals)` | `error(401)` |
 | `requireAdmin(locals)` | `error(404, 'Not Found')` — non-admins get a 404, not a 403, so the admin surface is not disclosed |
 
+**Step-up gate** (`auth/step-up.ts`): `requireStepUp` / `isStepUpFresh` / `stampStepUp` over a Redis `stepup:<userId>` key (600s). Reads Redis, never the session (freshness must not ride the cookie cache); fail-closed in prod. Never imports the auth instance — `auth/index.ts` imports *from* it via its hooks. `factor-changes.ts:onFactorChanged` is the single chokepoint for passkey/TOTP side effects (audit + sibling-revoke + email). See [blueprint/auth.md](./blueprint/auth.md#passkeys--step-up-totp).
+
 **Services** — multi-step orchestration warranting extraction: `NotificationService.send()` (DB insert → SSE push → async channel routing).
 
 **Domain functions** — the shared call site for all adapters: `getNotifications`, `markAsRead`, `retrieve` (rawrag), `searchLlmwiki`, `getCustomPaletteById`.
@@ -450,7 +452,7 @@ Nine end-to-end flows have been traced through the system:
 5. **Notification delivery** — `NotificationService.send()` → DB insert + SSE push (synchronous) + channel routing (async: Telegram / Discord / email)
 6. **Background jobs** — `runJob()` + scheduler (`setInterval`, persistent container) vs cron dispatcher (`/api/cron/[job]`, serverless); same runner, different trigger
 7. **Visual identity** — `loadStyle` in hooks resolves cookie → brand override → custom palette DB lookup → `generateRandomStyle` fallback; Paraglide `transformPageChunk` injects palette CSS into every HTML response
-8. **Auth + session + grants + analytics** — `authHandler` (Better Auth) → `sessionPopulate` (locals.user/session/grants) → `analyticsCollector` (consent-tiered, fire-and-forget)
+8. **Auth + session + grants + analytics** — `authHandler` (Better Auth) → `sessionPopulate` (locals.user/session/grants) → `analyticsCollector` (consent-tiered, fire-and-forget). Factor mutations (passkey/TOTP) route through two global Better Auth hooks in `auth/index.ts`: a `before` step-up gate and an `after` chokepoint that audits, revokes sibling sessions, emails, and stamps step-up freshness. Passkeys are a phishing-resistant first factor; TOTP is a step-up factor only (passwordless sign-ins are never challenged). See [blueprint/auth.md](./blueprint/auth.md#passkeys--step-up-totp)
 9. **Personal-data access** (privacy) — `collectUserData` in `privacy/report.ts` is the one aggregator behind five adapters: the `/app/account/data` page load (streamed), the account `exportData` action, `GET /api/me/data`, `GET /api/me/data/export`, and `DELETE /api/me` (via `deleteUserData`). One definition of "all my data"; secrets projected out at the query, prior-session IPs masked. See [stack/capabilities/gdpr.md](./stack/capabilities/gdpr.md)
 
 ---

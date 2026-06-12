@@ -1,4 +1,5 @@
 <script lang="ts">
+import { onMount } from 'svelte';
 import { goto } from '$app/navigation';
 import { authClient } from '$lib/auth-client';
 import { Altcha } from '$lib/components/composites';
@@ -103,6 +104,54 @@ async function handleOAuth(provider: 'github' | 'google' | 'microsoft') {
 		loadingProvider = null;
 	}
 }
+
+/** WebAuthn user-cancel surfaces as a NotAllowedError — a dismissal, not a failure. */
+function isCeremonyCancel(message: string | undefined): boolean {
+	return !!message && /not.?allowed|abort/i.test(message);
+}
+
+async function handlePasskey() {
+	loadingProvider = 'passkey';
+	error = null;
+
+	try {
+		const result = await authClient.signIn.passkey();
+		if (result?.error) {
+			if (!isCeremonyCancel(result.error.message)) {
+				error = result.error.message ?? m.auth_login_passkey_failed();
+			}
+		} else {
+			goto(localizeHref(data.returnTo));
+			return;
+		}
+	} catch (err) {
+		if (!isCeremonyCancel(err instanceof Error ? err.message : undefined)) {
+			error = m.auth_login_passkey_failed();
+		}
+	}
+	loadingProvider = null;
+}
+
+onMount(() => {
+	// Conditional UI: surface passkeys in the email field's autofill dropdown.
+	// The WebAuthn ceremony is browser-only, so this is the one legitimate
+	// onMount call — it is a credential ceremony, not data loading. A pending
+	// conditional request is auto-preempted by simplewebauthn's internal abort
+	// service when the explicit passkey button (or any modal ceremony) runs.
+	if (!data.passkeysEnabled || !window.PublicKeyCredential) return;
+
+	PublicKeyCredential.isConditionalMediationAvailable?.().then((available) => {
+		if (!available) return;
+		authClient.signIn
+			.passkey({ autoFill: true })
+			.then((result) => {
+				if (result && !result.error) goto(localizeHref(data.returnTo));
+			})
+			.catch(() => {
+				// Aborted/preempted conditional request — expected, ignore.
+			});
+	});
+});
 </script>
 <div class="login-page">
 	<div class="login-card">
@@ -137,6 +186,7 @@ async function handleOAuth(provider: 'github' | 'google' | 'microsoft') {
 					placeholder={m.auth_login_email_placeholder()}
 					bind:value={email}
 					disabled={isBusy}
+					autocomplete="username webauthn"
 					aria-label={m.auth_login_email_aria_label()}
 				/>
 
@@ -184,6 +234,23 @@ async function handleOAuth(provider: 'github' | 'google' | 'microsoft') {
 			</div>
 
 			<div class="login-actions">
+				{#if data.passkeysEnabled}
+					<Button
+						variant="outline"
+						size="lg"
+						class="w-full justify-center"
+						disabled={isBusy}
+						onclick={handlePasskey}
+					>
+						{#if loadingProvider === 'passkey'}
+							<Spinner size="sm" class="mr-3" />
+						{:else}
+							<span class="i-lucide-fingerprint text-xl mr-3" aria-hidden="true"></span>
+						{/if}
+						{m.auth_login_passkey()}
+					</Button>
+				{/if}
+
 				<Button
 					variant="outline"
 					size="lg"

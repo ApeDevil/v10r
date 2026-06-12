@@ -21,6 +21,9 @@ export const user = authSchema.table('user', {
 	banned: boolean('banned').default(false),
 	bannedAt: timestamp('banned_at'),
 	banReason: text('ban_reason'),
+
+	// ── twoFactor plugin column ───────────────────────────────────────
+	twoFactorEnabled: boolean('two_factor_enabled').default(false),
 });
 
 export const session = authSchema.table(

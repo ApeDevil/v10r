@@ -15,6 +15,8 @@ import {
 	AUTH_RATE_LIMIT_MAX,
 	AUTH_RATE_LIMIT_WINDOW,
 	HSTS_MAX_AGE,
+	STEPUP_VERIFY_RATE_LIMIT_MAX,
+	STEPUP_VERIFY_RATE_LIMIT_WINDOW,
 } from '$lib/server/config';
 import { logFeatureStatus } from '$lib/server/features';
 import { clearOwnerCookie, PAIRING_COOKIE, verifyOwnerCookie } from '$lib/server/pairing/cookie';
@@ -41,6 +43,23 @@ const ALLOWED_LOCALES = new Set<string>(locales);
 
 /** Upstash rate limiter for auth endpoints */
 const authRatelimit = createLimiter('ratelimit:auth', AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW);
+
+/**
+ * Per-ACCOUNT limiter for second-factor verification. The per-IP authRatelimit
+ * alone is rotation-bypassable against a 6-digit TOTP space; these paths get a
+ * second check keyed on the pending user.
+ */
+const twoFactorVerifyLimiter = createLimiter(
+	'ratelimit:2fa:verify',
+	STEPUP_VERIFY_RATE_LIMIT_MAX,
+	STEPUP_VERIFY_RATE_LIMIT_WINDOW,
+);
+
+const TWO_FACTOR_VERIFY_PATHS = new Set([
+	'/api/auth/two-factor/verify-totp',
+	'/api/auth/two-factor/verify-backup-code',
+	'/api/auth/two-factor/verify-otp',
+]);
 
 /**
  * 1. Security headers + canonical client IP stamp
@@ -287,7 +306,11 @@ const i18n: Handle = ({ event, resolve }) =>
  *     the Better Auth client posts JSON directly to /api/auth/* and form-action
  *     wrapping is not in the path.
  */
-const AUTH_CAPTCHA_GATED_PATHS = new Set(['/api/auth/sign-in/magic-link', '/api/auth/email-otp/send-verification-otp']);
+const AUTH_CAPTCHA_GATED_PATHS = new Set([
+	'/api/auth/sign-in/magic-link',
+	'/api/auth/email-otp/send-verification-otp',
+	'/api/auth/two-factor/send-otp', // sends email — same abuse surface (body has no email; ALTCHA check still applies)
+]);
 
 const authCaptchaGate: Handle = async ({ event, resolve }) => {
 	if (building) return resolve(event);
@@ -340,6 +363,19 @@ const authHandler: Handle = async ({ event, resolve }) => {
 
 		if (!success) {
 			return rateLimitResponse(reset, 'Too many requests. Please try again later.');
+		}
+	}
+
+	// Second-factor verify endpoints additionally rate-limit per ACCOUNT.
+	// sessionPopulate runs after this handler (auth requests terminate here),
+	// so the session is resolved inline for these rare paths only.
+	if (TWO_FACTOR_VERIFY_PATHS.has(path)) {
+		const sessionData = await auth.api.getSession({ headers: event.request.headers }).catch(() => null);
+		const limitKey = sessionData?.user.id ?? event.locals.clientIp ?? 'anon';
+		const { success, reset } = await twoFactorVerifyLimiter.limit(limitKey);
+
+		if (!success) {
+			return rateLimitResponse(reset, 'Too many verification attempts. Please wait before trying again.');
 		}
 	}
 
