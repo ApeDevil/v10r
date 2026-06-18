@@ -116,6 +116,31 @@ const resourceById = $derived(new Map(data.resources.map((r) => [r.id, r])));
 			</div>
 		</div>
 	</Card>
+
+	<!-- Image Metadata Reader (heartbeat — full cost/health on the Cost tab; no $ here) -->
+	<Card>
+		{#snippet header()}
+			<Cluster justify="between" align="center">
+				<h2 class="text-fluid-lg font-semibold">Image Metadata Reader</h2>
+				<a class="tab-link" href={localizeHref('/admin/ai/cost')}>Cost &rarr;</a>
+			</Cluster>
+		{/snippet}
+
+		<div class="stat-grid">
+			<div class="stat-card">
+				<span class="stat-label">Analyses (30d)</span>
+				<span class="stat-value">{data.images.analyses.toLocaleString()}</span>
+			</div>
+			<div class="stat-card">
+				<span class="stat-label">Analyses Today</span>
+				<span class="stat-value">{data.images.analysesToday.toLocaleString()}</span>
+			</div>
+			<div class="stat-card">
+				<span class="stat-label">Distinct Images</span>
+				<span class="stat-value">{data.images.distinctImages.toLocaleString()}</span>
+			</div>
+		</div>
+	</Card>
 </Stack>
 
 <style>

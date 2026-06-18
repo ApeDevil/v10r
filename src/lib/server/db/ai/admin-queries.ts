@@ -172,15 +172,21 @@ export async function getMessageVolumeByDay(days = 30): Promise<MessageVolumeDay
 
 export interface ModelUsageRow {
 	model: string;
-	inputTokens: number;
-	outputTokens: number;
+	/** Resolved provider; null on pre-capture/fallback rows. Carried so the cross-surface
+	 *  Cost tab can show it and so cost is derived per (model, provider). */
+	providerId: string | null;
+	/** Nullable so an unreported-usage group propagates null → estimateCost renders "—",
+	 *  not a false $0. In practice conversation_step tokens default 0, so these are numbers. */
+	inputTokens: number | null;
+	outputTokens: number | null;
 	steps: number;
 }
 
 /**
- * Per-model token usage over `days`, from `conversation_step`. Pre-capture rows
- * (and the fallback path) have a NULL model → bucketed as 'unknown'. Empty result
- * = no steps captured yet (render an "instrumentation pending" state, never a fake 0).
+ * Per-model token usage over `days`, from `conversation_step`, grouped by (model, provider).
+ * Pre-capture rows (and the fallback path) have a NULL model → bucketed as 'unknown'.
+ * Empty result = no steps captured yet (render an "instrumentation pending" state, never a
+ * fake 0). Consumed by the cross-surface Cost tab via buildUnifiedModelUsage.
  */
 export async function getModelUsage(days = 30): Promise<ModelUsageRow[]> {
 	const since = new Date();
@@ -190,19 +196,23 @@ export async function getModelUsage(days = 30): Promise<ModelUsageRow[]> {
 	const rows = await db
 		.select({
 			model: sql<string>`COALESCE(${conversationStep.modelId}, 'unknown')`,
-			inputTokens: sql<number>`COALESCE(SUM(${conversationStep.inputTokens}), 0)`,
-			outputTokens: sql<number>`COALESCE(SUM(${conversationStep.outputTokens}), 0)`,
+			providerId: conversationStep.providerId,
+			inputTokens: sql<number | null>`SUM(${conversationStep.inputTokens})`,
+			outputTokens: sql<number | null>`SUM(${conversationStep.outputTokens})`,
 			steps: count(),
 		})
 		.from(conversationStep)
 		.where(gte(conversationStep.createdAt, since))
-		.groupBy(sql`COALESCE(${conversationStep.modelId}, 'unknown')`)
-		.orderBy(desc(sql`SUM(${conversationStep.inputTokens} + ${conversationStep.outputTokens})`));
+		.groupBy(sql`COALESCE(${conversationStep.modelId}, 'unknown')`, conversationStep.providerId)
+		.orderBy(
+			desc(sql`SUM(COALESCE(${conversationStep.inputTokens}, 0) + COALESCE(${conversationStep.outputTokens}, 0))`),
+		);
 
 	return rows.map((r) => ({
 		model: r.model,
-		inputTokens: Number(r.inputTokens),
-		outputTokens: Number(r.outputTokens),
+		providerId: r.providerId,
+		inputTokens: r.inputTokens == null ? null : Number(r.inputTokens),
+		outputTokens: r.outputTokens == null ? null : Number(r.outputTokens),
 		steps: Number(r.steps),
 	}));
 }

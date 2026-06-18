@@ -1,5 +1,6 @@
 import { requireAdmin } from '$lib/server/auth/guards';
 import { getAIOverviewStats } from '$lib/server/db/ai/admin-queries';
+import { getImageUsageKpis } from '$lib/server/db/ai/image-metadata-queries';
 import { getRAGOverviewStats } from '$lib/server/db/rag/admin-queries';
 import type { PageServerLoad } from './$types';
 
@@ -7,8 +8,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 	requireAdmin(locals);
 
 	// Provider snapshot (`providers`, `activeProvider`) is inherited from the
-	// section layout — render the headline AI + corpus counts here.
-	const [ai, rag] = await Promise.all([getAIOverviewStats(), getRAGOverviewStats()]);
+	// section layout — render the headline AI + corpus + image-feature counts here.
+	// Image card is a HEARTBEAT only (no cost) — dollar figures live on the Cost tab,
+	// where they carry the reference-pricing caveat. A $ next to chat counts would read
+	// as "total AI spend" when it isn't.
+	const [ai, rag, images] = await Promise.all([getAIOverviewStats(), getRAGOverviewStats(), getImageUsageKpis(30)]);
 
-	return { title: 'AI Overview', ai, rag };
+	return { title: 'AI Overview', ai, rag, images };
 };

@@ -11,6 +11,7 @@ const tabs = [
 	{ href: '/admin/ai/overview', label: 'Overview' },
 	{ href: '/admin/ai/models', label: 'Models' },
 	{ href: '/admin/ai/usage', label: 'Usage' },
+	{ href: '/admin/ai/cost', label: 'Cost' },
 	{ href: '/admin/ai/nrag', label: 'nRAG' },
 	{ href: '/admin/ai/tools', label: 'Tools' },
 ];

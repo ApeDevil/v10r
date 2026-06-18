@@ -1,5 +1,6 @@
 <script lang="ts">
 import { invalidateAll } from '$app/navigation';
+import VolumeBarChart from '$lib/components/admin/ai/VolumeBarChart.svelte';
 import { Card, EmptyState } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button } from '$lib/components/primitives';
@@ -121,34 +122,7 @@ function limitBadgeVariant(pct: number): 'success' | 'warning' | 'error' {
 					<h2 class="text-fluid-lg font-semibold">Message Volume (30 days)</h2>
 				{/snippet}
 
-				{@const maxCount = Math.max(...volume.map((d) => d.count))}
-				<div class="volume-chart" aria-hidden="true">
-					{#each volume as day}
-						<div class="volume-bar-wrap" title="{day.date}: {day.count} messages">
-							<div
-								class="volume-bar"
-								style="height: {maxCount > 0 ? (day.count / maxCount) * 100 : 0}%"
-							></div>
-						</div>
-					{/each}
-				</div>
-				<Cluster justify="between">
-					<span class="chart-label">{volume[0]?.date ?? ''}</span>
-					<span class="chart-label">{volume[volume.length - 1]?.date ?? ''}</span>
-				</Cluster>
-
-				<!-- Text equivalent of the bar chart (the bars are decorative/mouse-only). -->
-				<table class="sr-only">
-					<caption>Messages per day over the last 30 days</caption>
-					<thead>
-						<tr><th>Date</th><th>Messages</th></tr>
-					</thead>
-					<tbody>
-						{#each volume as day}
-							<tr><td>{day.date}</td><td>{day.count}</td></tr>
-						{/each}
-					</tbody>
-				</table>
+				<VolumeBarChart data={volume} caption="Messages per day over the last 30 days" unit="messages" />
 			</Card>
 		{/if}
 	{:catch}
@@ -255,19 +229,6 @@ function limitBadgeVariant(pct: number): 'success' | 'warning' | 'error' {
 </Stack>
 
 <style>
-	/* Screen-reader-only text equivalents (e.g. the volume chart data table). */
-	.sr-only {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		padding: 0;
-		margin: -1px;
-		overflow: hidden;
-		clip: rect(0, 0, 0, 0);
-		white-space: nowrap;
-		border: 0;
-	}
-
 	/* Tables */
 	.table-wrap {
 		overflow-x: auto;
@@ -330,39 +291,6 @@ function limitBadgeVariant(pct: number): 'success' | 'warning' | 'error' {
 	}
 
 	.time-cell {
-		color: var(--color-muted);
-	}
-
-	/* Volume Chart */
-	.volume-chart {
-		display: flex;
-		align-items: flex-end;
-		gap: 2px;
-		height: 120px;
-		padding: var(--spacing-2) 0;
-	}
-
-	.volume-bar-wrap {
-		flex: 1;
-		height: 100%;
-		display: flex;
-		align-items: flex-end;
-	}
-
-	.volume-bar {
-		width: 100%;
-		min-height: 2px;
-		background: var(--color-primary);
-		border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-		transition: height 0.2s ease;
-	}
-
-	.volume-bar-wrap:hover .volume-bar {
-		opacity: 0.8;
-	}
-
-	.chart-label {
-		font-size: var(--text-fluid-xs);
 		color: var(--color-muted);
 	}
 

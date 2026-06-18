@@ -95,6 +95,8 @@ The cost panel shows token counts as the primary fact and a `≈ $X` dollar figu
 
 **Cost is derived, never stored.** `ai_proposal` persists token counts only; dollars are computed at read-time from the versioned price map. A future rate change re-prices historical runs correctly. The price table is server-only — it never crosses the wire.
 
+The same `estimateCost` powers the cross-surface admin **Cost** tab, which rolls this feature's per-image spend up alongside the chatbot's. See [cost-monitoring.md](./cost-monitoring.md).
+
 ### Thinking tokens are a subset of output
 
 gemini-2.5-flash runs reasoning ON. `thoughtsTokenCount` is read defensively from `result.providerMetadata.google.usageMetadata`, persisted to the nullable `reasoning_tokens` column, and shown as an indented "of which thinking" sub-line.

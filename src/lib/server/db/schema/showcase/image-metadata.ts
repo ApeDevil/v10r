@@ -143,7 +143,14 @@ export const imageAiProposal = imageSchema.table(
 		confidence: jsonb('confidence').$type<Record<MetadataFieldKey, ConfidenceTier>>().notNull(),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	},
-	(table) => [index('image_ai_proposal_image_idx').on(table.imageId, table.createdAt.desc())],
+	(table) => [
+		index('image_ai_proposal_image_idx').on(table.imageId, table.createdAt.desc()),
+		// Admin telemetry scans by time window then groups by model
+		// (WHERE created_at >= since GROUP BY model_id) — a RANGE predicate on
+		// created_at, so it must lead for an index range scan; model_id rides as
+		// the grouping companion. The image_idx above serves per-image re-run lookups.
+		index('image_ai_proposal_created_model_idx').on(table.createdAt.desc(), table.modelId),
+	],
 );
 
 // ── image.tag + image.metadata_tag — N:M keywords ───────────────────

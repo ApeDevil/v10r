@@ -163,45 +163,6 @@ const noneConfigured = $derived(data.providerDetail.every((p) => !p.configured))
 			</div>
 		</div>
 	</Card>
-	<!-- Usage by model -->
-	<Card>
-		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">Usage by Model (30 days)</h2>
-		{/snippet}
-
-		{#if data.modelUsage.length === 0}
-			<p class="note">
-				No per-model usage recorded yet. Token attribution is captured per step once the chatbot or
-				desk agent runs — this fills in after the next conversation.
-			</p>
-		{:else}
-			<div class="table-wrap" tabindex="0" aria-label="Token usage by model">
-				<table class="data-table">
-					<thead>
-						<tr>
-							<th>Model</th>
-							<th>Input</th>
-							<th>Output</th>
-							<th>Total</th>
-							<th>Steps</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each data.modelUsage as m (m.model)}
-							<tr>
-								<td><code class="mono">{m.model}</code></td>
-								<td><code class="mono">{m.inputTokens.toLocaleString()}</code></td>
-								<td><code class="mono">{m.outputTokens.toLocaleString()}</code></td>
-								<td><code class="mono">{(m.inputTokens + m.outputTokens).toLocaleString()}</code></td>
-								<td><code class="mono">{m.steps.toLocaleString()}</code></td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-			</div>
-			<p class="note">Token counts only — cost is not shown (no per-model pricing map).</p>
-		{/if}
-	</Card>
 </Stack>
 
 <style>

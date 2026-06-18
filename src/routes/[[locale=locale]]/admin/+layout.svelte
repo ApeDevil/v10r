@@ -41,6 +41,7 @@ const groups = [
 			{ label: 'Overview', href: '/admin/ai/overview', icon: 'i-lucide-gauge' },
 			{ label: 'Models', href: '/admin/ai/models', icon: 'i-lucide-cpu' },
 			{ label: 'Usage', href: '/admin/ai/usage', icon: 'i-lucide-bar-chart-2' },
+			{ label: 'Cost', href: '/admin/ai/cost', icon: 'i-lucide-receipt' },
 			{ label: 'nRAG', href: '/admin/ai/nrag', icon: 'i-lucide-book-marked' },
 			{ label: 'Tools', href: '/admin/ai/tools', icon: 'i-lucide-wrench' },
 		],

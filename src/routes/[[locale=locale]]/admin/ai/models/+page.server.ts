@@ -1,7 +1,6 @@
 import { getActiveProviderInfo, getFallbacksForUser, getToolProvider } from '$lib/server/ai';
 import { buildProviderRegistry, getCooldownResumeAt } from '$lib/server/ai/providers';
 import { requireAdmin } from '$lib/server/auth/guards';
-import { getModelUsage } from '$lib/server/db/ai/admin-queries';
 import type { PageServerLoad } from './$types';
 
 /**
@@ -9,6 +8,9 @@ import type { PageServerLoad } from './$types';
  * door: never recompute "which provider is active" in admin code). Provider config
  * + routing are static; cooldown is volatile in-memory state, shipped as an ISO
  * timestamp so the client ticks the countdown locally (no per-second polling).
+ *
+ * Per-model token usage moved to the cross-surface Cost tab (/admin/ai/cost) — this
+ * tab is provider routing/config only.
  */
 export const load: PageServerLoad = async ({ locals }) => {
 	requireAdmin(locals);
@@ -40,6 +42,5 @@ export const load: PageServerLoad = async ({ locals }) => {
 		activeProviderId: active?.id ?? null,
 		toolProviderId: tool?.id ?? null,
 		fallbackIds: fallbacks.map((f) => f.id),
-		modelUsage: await getModelUsage(30),
 	};
 };
