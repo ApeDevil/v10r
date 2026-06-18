@@ -28,11 +28,31 @@ export function createLimiter(prefix: string, max: number, window: Duration): Li
 		console.error(`[rate-limit] Redis unavailable — BLOCKING all requests for ${prefix}`);
 		return failClosed;
 	}
-	return new Ratelimit({
+	const ratelimit = new Ratelimit({
 		redis,
 		limiter: Ratelimit.slidingWindow(max, window),
 		prefix,
+		// Bound the Redis round-trip so a slow Upstash never eats the Vercel function
+		// budget. On timeout the SDK allows the request (bounded fail-open).
+		timeout: 1000,
 	});
+	// Wrap so a HARD Redis failure at runtime (e.g. ECONNREFUSED) fails CLOSED with a
+	// proper 429 instead of throwing and 500-ing — matching the boot-time fail-closed
+	// intent above. (A transient slowness still fails open via the SDK timeout.)
+	return {
+		async limit(id: string) {
+			try {
+				const { success, reset } = await ratelimit.limit(id);
+				return { success, reset };
+			} catch (err) {
+				console.error(
+					`[rate-limit] runtime Redis failure for ${prefix} — failing closed:`,
+					err instanceof Error ? err.message : err,
+				);
+				return { success: false, reset: Date.now() + 60_000 };
+			}
+		},
+	};
 }
 
 export function rateLimitResponse(reset: number, message = 'Too many requests. Please wait a moment.'): Response {

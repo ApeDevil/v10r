@@ -9,11 +9,37 @@ import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:desk:spreadsheets:update', 30, '1 m');
 
-const UpdateSchema = v.object({
-	name: v.optional(v.pipe(v.string(), v.maxLength(200))),
-	cells: v.optional(v.record(v.string(), v.any())),
-	columnMeta: v.optional(v.nullable(v.record(v.string(), v.any()))),
-});
+// Bound the JSON blob so a single authenticated PUT can't persist megabytes of
+// cells (storage abuse + read-amplification on every load).
+const MAX_CELLS = 50_000;
+const MAX_COLUMN_META = 2_000;
+const MAX_CELL_VALUE_LEN = 10_000;
+const MAX_PAYLOAD_BYTES = 2_000_000;
+
+const cellsRecord = v.pipe(
+	v.record(v.string(), v.any()),
+	v.check((r) => Object.keys(r).length <= MAX_CELLS, `Too many cells (max ${MAX_CELLS}).`),
+	v.check(
+		(r) => Object.values(r).every((val) => typeof val !== 'string' || val.length <= MAX_CELL_VALUE_LEN),
+		`A cell value exceeds the maximum length (${MAX_CELL_VALUE_LEN}).`,
+	),
+);
+
+const UpdateSchema = v.pipe(
+	v.object({
+		name: v.optional(v.pipe(v.string(), v.maxLength(200))),
+		cells: v.optional(cellsRecord),
+		columnMeta: v.optional(
+			v.nullable(
+				v.pipe(
+					v.record(v.string(), v.any()),
+					v.check((r) => Object.keys(r).length <= MAX_COLUMN_META, `Too many columns (max ${MAX_COLUMN_META}).`),
+				),
+			),
+		),
+	}),
+	v.check((obj) => JSON.stringify(obj).length <= MAX_PAYLOAD_BYTES, 'Payload too large.'),
+);
 
 /** Load a spreadsheet by ID. */
 export const GET: RequestHandler = async ({ params, locals }) => {

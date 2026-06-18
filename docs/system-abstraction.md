@@ -107,9 +107,9 @@ The main export is a `sequence()` of twelve `Handle` middlewares that mutate the
 
 | # | Handler | Writes to `event.locals` | Short-circuits? | Why this order |
 |---|---------|--------------------------|-----------------|----------------|
-| 1 | `securityHeaders` | `clientIp`; sets `x-client-ip` | No | Must be first — auth pins `ipAddressHeaders: ['x-client-ip']`; attacker-mutable headers are fixed here |
+| 1 | `securityHeaders` | `clientIp`; sets `x-client-ip` | No | Must be first — auth pins `ipAddressHeaders: ['x-client-ip']`; attacker-mutable headers are fixed here. Emits the full security-header set (see [Security Headers](#security-headers-set)) |
 | 2 | `stripBaseLocalePrefix` | — | 308 on `/en/*` paths | Canonical URL before Paraglide resolves locale |
-| 3 | `loadStyle` | `style`, `customPaletteColors`, `customPaletteAccentOffset` | No | Before i18n, which injects the palette `<style>` block |
+| 3 | `loadStyle` | `style`, `customPaletteColors`, `customPaletteAccentOffset` | No | Before i18n, which injects the palette `<style>` block. Custom-palette DB lookups go through an in-memory TTL cache |
 | 4 | `i18n` (Paraglide) | `locale` | No | Wraps `resolve` with `transformPageChunk` to fill `%lang%/%palette%/%typography%/%radius%` and inject custom-palette CSS |
 | 5 | `authCaptchaGate` | — | Decision response on captcha/rate-limit fail | Before `authHandler` — gate must run before Better Auth consumes the request body |
 | 6 | `authHandler` | — | 429 on rate-limit exceed | Better Auth `svelteKitHandler` + Upstash rate-limit on `/api/auth/*` keyed by `clientIp` |
@@ -121,6 +121,35 @@ The main export is a `sequence()` of twelve `Handle` middlewares that mutate the
 | 12 | `analyticsCollector` | — | No | Last; consumes `consentTier` + `debugOwnerId`; fire-and-forget post-resolve. The `_v10r_sid` cookie is consent-gated (TDDDG §25 / ePrivacy Art 5(3)): set only at `analytics`+ tier; at `necessary` it deletes any stale cookie and falls back to a cookieless daily session id |
 
 The terminating error handler `handleError` mints an `errorId` (`crypto.randomUUID()`), emits one structured JSON log line, and returns `{ message, errorId }` to the client — never raw error details.
+
+#### Security Headers set
+
+`securityHeaders` (handler #1) writes these on every response (wrapped in try/catch — redirect responses have immutable headers):
+
+| Header | Value | Notes |
+|--------|-------|-------|
+| `X-Frame-Options` | `DENY` | |
+| `X-Content-Type-Options` | `nosniff` | |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | |
+| `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` | |
+| `Strict-Transport-Security` | `max-age=…; includeSubDomains` | |
+| `Cross-Origin-Opener-Policy` | `same-origin-allow-popups` | Popups (OAuth) still work |
+| `Cross-Origin-Resource-Policy` | `same-site` | |
+| `X-DNS-Prefetch-Control` | `off` | |
+| `Cache-Control` | `no-store, private` | **Conditional** — only on authed responses or any `/api/` path, and only via `!response.headers.has('Cache-Control')` so an explicit per-route setter wins |
+| `Clear-Site-Data` | `"cache","cookies","storage"` | **Conditional** — only on a successful `/api/auth/sign-out` |
+
+CSP itself is configured in `svelte.config.js` (nonce/hash mode), not here.
+
+#### Extracted handler helpers
+
+Several handler predicates were lifted into framework-free modules the hook imports — behavior unchanged, now unit-testable in isolation:
+
+| Module | Exports | Used by |
+|--------|---------|---------|
+| `$lib/server/security/csrf.ts` | `needsCsrf(method, path)`, `isSameHost()`, `CSRF_EXEMPT_PREFIXES` | `csrfProtection` (handler #8) |
+| `$lib/styles/random/palette-sanitize.ts` | `VALID_TOKEN_KEYS`, `OKLCH_RE`, `safeEntries` | `loadStyle` / i18n palette CSS injection (#3–4) |
+| `$lib/server/auth/step-up.ts` | `twoFactorVerifyLimitKey()` | per-account 2FA verify limiter in `authHandler` (#6) |
 
 ### Spine B — Hexagonal Multi-Client Core
 
@@ -182,7 +211,7 @@ Route areas under `src/routes/[[locale=locale]]/` and the parallel `src/routes/a
 | Admin | `admin/` (access, ai, analytics, audit, branding, cache, content, db, feedback, flags, jobs, notifications, rag, users — ~14 areas) | `/api/admin/*` | various | `admin/+layout.server.ts` |
 | Desk (AI workspace) | `desk/` | `/api/desk/*` (files, folders, spreadsheets, theme, workspaces) | `store/`, `branding/` | `desk/+layout.server.ts` |
 | Blog | `(public)/blog/` | `/api/blog/*` (posts, comments, tags, assets, domains, folders, feed.xml) | `blog/`, `content/` | Capability-gated authoring |
-| AI Assistant | — | `/api/ai/*` (chat, chat/stream, conversations, proposals, providers) | `ai/` | Session-gated |
+| AI Assistant | — | `/api/ai/*` (chat, conversations, proposals, providers) | `ai/` | Session-gated |
 | RAG / Retrieval | — | `/api/retrieval/*` (documents, graph, ingest, search, stats) | `rawrag/`, `llmwiki/`, `graph/` | Admin-gated |
 | Notifications | — | `/api/notifications/*` (stream SSE, telegram, discord, read-all) | `notifications/` | Session-gated |
 | Analytics | — | `/api/analytics/*` (journey beacon, stream) | `analytics/` | Consent-tiered |
@@ -453,7 +482,7 @@ Nine end-to-end flows have been traced through the system:
 6. **Background jobs** — `runJob()` + scheduler (`setInterval`, persistent container) vs cron dispatcher (`/api/cron/[job]`, serverless); same runner, different trigger
 7. **Visual identity** — `loadStyle` in hooks resolves cookie → brand override → custom palette DB lookup → `generateRandomStyle` fallback; Paraglide `transformPageChunk` injects palette CSS into every HTML response
 8. **Auth + session + grants + analytics** — `authHandler` (Better Auth) → `sessionPopulate` (locals.user/session/grants) → `analyticsCollector` (consent-tiered, fire-and-forget). Factor mutations (passkey/TOTP) route through two global Better Auth hooks in `auth/index.ts`: a `before` step-up gate and an `after` chokepoint that audits, revokes sibling sessions, emails, and stamps step-up freshness. Passkeys are a phishing-resistant first factor; TOTP is a step-up factor only (passwordless sign-ins are never challenged). See [blueprint/auth.md](./blueprint/auth.md#passkeys--step-up-totp)
-9. **Personal-data access** (privacy) — `collectUserData` in `privacy/report.ts` is the one aggregator behind five adapters: the `/app/account/data` page load (streamed), the account `exportData` action, `GET /api/me/data`, `GET /api/me/data/export`, and `DELETE /api/me` (via `deleteUserData`). One definition of "all my data"; secrets projected out at the query, prior-session IPs masked. See [stack/capabilities/gdpr.md](./stack/capabilities/gdpr.md)
+9. **Personal-data access** (privacy) — `collectUserData` in `privacy/report.ts` is the one aggregator behind five adapters: the `/app/account/data` page load (streamed), the account `exportData` action, `GET /api/me/data`, `GET /api/me/data/export`, and `DELETE /api/me` (via `deleteUserData`). One definition of "all my data"; secrets projected out at the query, prior-session IPs masked. Erasure is the Postgres FK cascade plus a best-effort `deleteUserGraph` sweep (Neo4j has no FKs). See [stack/capabilities/gdpr.md](./stack/capabilities/gdpr.md)
 
 ---
 
@@ -467,7 +496,7 @@ These gaps make the blueprint-to-code mapping imperfect. They are recorded here,
 
 3. **`notification-delivery` has no serverless trigger.** It runs only via the persistent-container `delivery-scheduler` (15-second `setInterval`). It is absent from the jobs registry and has no `/api/cron/[job]` path. On Vercel (`platform.persistent === false`) external Telegram / Discord / email deliveries queue as `pending` and never drain. In-app SSE still works because it is synchronous inside `NotificationService.send()`.
 
-4. **Two divergent chat surfaces.** `/api/ai/chat` runs the full orchestrator (routing, retrieval, tools, persistence). `/api/ai/chat/stream` is a bare `streamText` with no tools, retrieval, or persistence — a parallel minimal path.
+4. **Single chat surface.** `/api/ai/chat` runs the full orchestrator (routing, retrieval, tools, persistence). The former parallel `/api/ai/chat/stream` (a bare `streamText` with no tools, retrieval, or persistence) has been removed — clients use `/api/ai/chat`.
 
 5. **Blueprint examples lag the SDK.** `multi-client-core.md` shows AI SDK v4/v5 spellings (`parameters`, `maxSteps`, `maxTokens`). The running code is v6 (`inputSchema`, `stopWhen: stepCountIs`, `maxOutputTokens`). The code is correct; the blueprint doc has not been updated.
 

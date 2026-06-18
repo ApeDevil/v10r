@@ -50,10 +50,12 @@ export async function searchGraph(
 
 	const seedIds = seeds.map((s) => s.chunkId);
 
-	// Step 2: Expand via graph traversal
+	// Step 2: Expand via graph traversal. Scope entity traversal to the same owner
+	// as the seeds (the user's own corpus) — defense-in-depth on top of the PG
+	// re-scope in fetchChunksByIds below.
 	let graphResults: Array<{ pgId: string; entityName: string; entityType: string; relType: string }> = [];
 	try {
-		graphResults = await expandViaGraph(seedIds, Math.min(maxHops, 2));
+		graphResults = await expandViaGraph(seedIds, [userId], Math.min(maxHops, 2));
 	} catch {
 		// Graph unavailable — graceful degradation to seeds only
 	}
@@ -103,11 +105,11 @@ export async function searchGraph(
 	return results.sort((a, b) => b.score - a.score).slice(0, limit);
 }
 
-/** Get entity context for visualization. */
-export async function getGraphEntities(chunkIds: string[]): Promise<RetrievedEntity[]> {
+/** Get entity context for visualization (tenant-scoped to the caller). */
+export async function getGraphEntities(chunkIds: string[], ownerIds: string[]): Promise<RetrievedEntity[]> {
 	if (chunkIds.length === 0) return [];
 	try {
-		const entities = await getEntitiesForChunks(chunkIds);
+		const entities = await getEntitiesForChunks(chunkIds, ownerIds);
 		return entities.map((e) => ({
 			elementId: e.elementId,
 			name: e.name,

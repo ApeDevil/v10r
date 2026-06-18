@@ -1,10 +1,18 @@
 /**
  * Analytics SSE stream — simulates real-time analytics events for the demo.
- * No auth required (showcase-only, synthetic data).
+ * No auth required (showcase-only, synthetic data), so it carries its own abuse
+ * controls: per-IP connect limit, a global concurrent-connection ceiling, and a
+ * hard max duration so an attacker can't pin open unbounded serverless functions.
  */
 
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { SSE_HEARTBEAT_MS } from '$lib/server/config';
 import type { RequestHandler } from './$types';
+
+const connectLimiter = createLimiter('rl:analytics:stream', 10, '1 m');
+const MAX_CONCURRENT_STREAMS = 100;
+const MAX_STREAM_DURATION_MS = 5 * 60_000;
+let activeStreams = 0;
 
 const PAGE_PATHS = [
 	'/',
@@ -31,14 +39,47 @@ function randomEvent(id: number) {
 	};
 }
 
-export const GET: RequestHandler = async () => {
+export const GET: RequestHandler = async ({ locals, getClientAddress }) => {
+	const ip = locals.clientIp ?? getClientAddress();
+	const { success, reset } = await connectLimiter.limit(ip);
+	if (!success) return rateLimitResponse(reset);
+
+	if (activeStreams >= MAX_CONCURRENT_STREAMS) {
+		return new Response('Too many concurrent streams', { status: 503, headers: { 'Retry-After': '30' } });
+	}
+
 	const encoder = new TextEncoder();
 	let heartbeatTimer: ReturnType<typeof setInterval> | undefined;
-	let eventTimer: ReturnType<typeof setInterval> | undefined;
+	let eventTimer: ReturnType<typeof setTimeout> | undefined;
+	let durationTimer: ReturnType<typeof setTimeout> | undefined;
 	let eventId = 0;
+	let released = false;
+
+	// Decrement the global counter and clear timers exactly once, whether the
+	// client disconnects (cancel) or the duration cap closes the stream.
+	function release() {
+		if (released) return;
+		released = true;
+		activeStreams = Math.max(0, activeStreams - 1);
+		if (heartbeatTimer) clearInterval(heartbeatTimer);
+		if (eventTimer) clearTimeout(eventTimer);
+		if (durationTimer) clearTimeout(durationTimer);
+	}
 
 	const stream = new ReadableStream<Uint8Array>({
 		start(controller) {
+			activeStreams++;
+
+			// Hard cap on stream lifetime — bounds serverless function time.
+			durationTimer = setTimeout(() => {
+				try {
+					controller.close();
+				} catch {
+					// already closed
+				}
+				release();
+			}, MAX_STREAM_DURATION_MS);
+
 			// Send init with simulated active sessions
 			const activeSessions = Math.floor(Math.random() * 15) + 5;
 			controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'init', activeSessions })}\n\n`));
@@ -72,13 +113,12 @@ export const GET: RequestHandler = async () => {
 				try {
 					controller.enqueue(encoder.encode(': heartbeat\n\n'));
 				} catch {
-					if (heartbeatTimer) clearInterval(heartbeatTimer);
+					release();
 				}
 			}, SSE_HEARTBEAT_MS);
 		},
 		cancel() {
-			if (heartbeatTimer) clearInterval(heartbeatTimer);
-			if (eventTimer) clearTimeout(eventTimer);
+			release();
 		},
 	});
 

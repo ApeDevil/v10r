@@ -116,6 +116,14 @@ export const imageMetadata = imageSchema.table(
 	(table) => [
 		uniqueIndex('image_metadata_image_idx').on(table.imageId),
 		index('image_metadata_status_idx').on(table.status).where(sql`deleted_at IS NULL`),
+		// GPS is both-or-neither (a half-coordinate is a corrupt location) and in-range.
+		// Makes the invalid states unrepresentable at rest, not just handler-enforced.
+		check('image_metadata_gps_pair', sql`(${table.gpsLat} IS NULL) = (${table.gpsLng} IS NULL)`),
+		check(
+			'image_metadata_gps_range',
+			sql`(${table.gpsLat} IS NULL OR (${table.gpsLat} BETWEEN -90 AND 90))
+			    AND (${table.gpsLng} IS NULL OR (${table.gpsLng} BETWEEN -180 AND 180))`,
+		),
 	],
 );
 

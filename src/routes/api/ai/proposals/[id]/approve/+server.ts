@@ -20,6 +20,7 @@
  *
  * DELETE on the same URL rejects a still-pending proposal.
  */
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiOk } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
 import {
@@ -42,6 +43,10 @@ import {
 import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
 import type { ProposalExecutionResult } from '$lib/server/db/schema/ai/proposal';
 import type { RequestHandler } from './$types';
+
+// Proposal execution runs desk mutations; cap per-user throughput. Idempotency
+// caps repeat-execution of one proposal, but not a flood of distinct proposals.
+const executeLimiter = createLimiter('rl:ai:proposal:execute', 20, '1 m');
 
 /**
  * Execute a single proposed tool call against the desk domain.
@@ -112,6 +117,9 @@ async function executeOne(
 
 export const POST: RequestHandler = async ({ params, locals }) => {
 	const { user } = requireApiUser(locals);
+
+	const { success, reset } = await executeLimiter.limit(user.id);
+	if (!success) return rateLimitResponse(reset);
 
 	try {
 		// 1. Load the proposal and verify ownership via the parent conversation.

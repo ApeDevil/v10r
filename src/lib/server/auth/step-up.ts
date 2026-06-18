@@ -20,6 +20,15 @@ import { STEPUP_TTL } from '$lib/server/config';
 
 const key = (userId: string) => `stepup:${userId}`;
 
+/**
+ * Rate-limit key for the second-factor verify endpoints. Keyed on the pending
+ * user id when resolvable — so IP rotation can't multiply the attempt budget
+ * against a known account's 6-digit TOTP space — falling back to client IP.
+ */
+export function twoFactorVerifyLimitKey(userId: string | null | undefined, clientIp: string | null): string {
+	return userId ?? clientIp ?? 'anon';
+}
+
 /** Record a successful second-factor verification for STEPUP_TTL seconds. */
 export async function stampStepUp(userId: string): Promise<void> {
 	if (!redis) {

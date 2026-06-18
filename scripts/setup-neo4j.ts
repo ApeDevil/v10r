@@ -42,12 +42,17 @@ async function cypher(statement: string): Promise<void> {
 }
 
 const STATEMENTS = [
+	// Tenancy migration: entities are per-tenant (keyed by {name, ownerId}), so the
+	// old name-only uniqueness must go — two tenants may share an entity name.
+	'DROP CONSTRAINT entity_name_unique IF EXISTS',
 	// Constraints
-	'CREATE CONSTRAINT entity_name_unique IF NOT EXISTS FOR (e:Entity) REQUIRE e.name IS UNIQUE',
+	'CREATE CONSTRAINT entity_name_owner_unique IF NOT EXISTS FOR (e:Entity) REQUIRE (e.name, e.ownerId) IS UNIQUE',
 	'CREATE CONSTRAINT chunk_pgid_unique IF NOT EXISTS FOR (c:Chunk) REQUIRE c.pgId IS UNIQUE',
 	// Indexes
 	'CREATE INDEX entity_type IF NOT EXISTS FOR (e:Entity) ON (e.type)',
+	'CREATE INDEX entity_owner IF NOT EXISTS FOR (e:Entity) ON (e.ownerId)',
 	'CREATE INDEX chunk_document IF NOT EXISTS FOR (c:Chunk) ON (c.documentId)',
+	'CREATE INDEX chunk_owner IF NOT EXISTS FOR (c:Chunk) ON (c.ownerId)',
 	'CREATE FULLTEXT INDEX entity_search IF NOT EXISTS FOR (e:Entity) ON EACH [e.name, e.description]',
 ];
 

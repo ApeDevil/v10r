@@ -51,12 +51,13 @@ export const actions: Actions = {
 		// Update preferences
 		await updatePreferences(locals.user.id, { theme, sidebarWidth, ...prefsData });
 
-		// Write theme cookie for SSR FOUC prevention
+		// Write theme cookie for SSR FOUC prevention (httpOnly:false — read client-side)
 		cookies.set('theme', theme, {
 			path: '/',
 			maxAge: 31536000,
 			sameSite: 'lax',
 			httpOnly: false,
+			secure: process.env.NODE_ENV === 'production',
 		});
 
 		// Write sidebar width cookie for SSR flash prevention
@@ -65,6 +66,7 @@ export const actions: Actions = {
 			maxAge: 31536000,
 			sameSite: 'lax',
 			httpOnly: false,
+			secure: process.env.NODE_ENV === 'production',
 		});
 
 		return message(form, 'Settings saved.');

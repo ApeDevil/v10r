@@ -75,6 +75,13 @@ EXIF (including GPS) is parsed from the original upload **before** the sharp str
 
 The opt-in surfaces in the GDPR data report: the `images` section reports `withGpsCount` (records where the user persisted location), countable because GPS lives in a typed `gps_lat`/`gps_lng` column, never only inside a blob. `REPORT_SCHEMA_VERSION` bumped to `2026-06-17`.
 
+Two DB CHECK constraints on `image.metadata` keep the GPS columns coherent at the storage layer, not just in app code:
+
+| Constraint | Rule |
+|------------|------|
+| `image_metadata_gps_pair` | GPS is both-or-neither — `gps_lat` and `gps_lng` are both set or both null. No half-coordinate rows. |
+| `image_metadata_gps_range` | `gps_lat ∈ [-90, 90]`, `gps_lng ∈ [-180, 180]`. Out-of-range coordinates are rejected by the database. |
+
 ### Vision-provider routing is load-bearing
 
 `resolveVisionProvider()` filters to `supportsVision === true` and prefers **Google > OpenAI**. Groq is hard-excluded — `llama-3.3-70b-versatile` is text-only.

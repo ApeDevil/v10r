@@ -327,7 +327,9 @@ const securityHandle: Handle = async ({ event, resolve }) => {
 };
 ```
 
-> **Note:** For production CSP, configure `csp.mode: 'auto'` in `svelte.config.js` to use nonces for SSR pages and hashes for prerendered content. The `'unsafe-inline'` fallback shown above provides no XSS protection.
+> **Live header set.** The running `securityHeaders` handler also emits `Cross-Origin-Opener-Policy: same-origin-allow-popups` (OAuth popups still work), `Cross-Origin-Resource-Policy: same-site`, and `X-DNS-Prefetch-Control: off`. It conditionally adds `Cache-Control: no-store, private` on authed-or-`/api/` responses (guarded by `!response.headers.has('Cache-Control')` so an explicit per-route setter wins) and `Clear-Site-Data` on a successful `/api/auth/sign-out`. See [system-abstraction.md](../system-abstraction.md#security-headers-set) for the full table.
+
+> **CSP** is configured in `svelte.config.js`, not in this handler. `img-src` is restricted to explicit origins (`self`, `data:`, `blob:`, R2, `basemaps.cartocdn.com`, `avatars.githubusercontent.com`, `graph.microsoft.com`) rather than a blanket `https:`. `style-src` still requires `'unsafe-inline'` — Svelte transitions inject inline styles, a known constraint. For SSR pages prefer `csp.mode: 'auto'` (nonces) over the `'unsafe-inline'` fallback shown above, which provides no XSS protection.
 
 ---
 
@@ -535,6 +537,11 @@ const corsHandle: Handle = async ({ event, resolve }) => {
 };
 
 // 3. CSRF protection for JSON APIs (SvelteKit only protects form submissions)
+// Live predicates are extracted to $lib/server/security/csrf.ts
+// (needsCsrf, isSameHost, CSRF_EXEMPT_PREFIXES) and imported by the hook.
+// The live handler checks X-Requested-With AND a same-host Origin/Referer on
+// mutating /api/* requests. Exempt prefixes: /api/auth/, /api/cron/,
+// /api/webhooks/, /api/analytics/journey.
 const csrfHandle: Handle = async ({ event, resolve }) => {
   // Only check state-changing requests with JSON content type
   if (

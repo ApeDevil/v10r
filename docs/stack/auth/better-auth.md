@@ -61,9 +61,13 @@ Framework-agnostic authentication and authorization framework for TypeScript. Pr
 **Passkeys break on shared-domain previews:**
 - `*.vercel.app` is on the Public Suffix List, so a Vercel preview URL can never satisfy the production `rpID`. The passkey plugin is **excluded entirely** on previews (`VERCEL_ENV === 'preview'`) — endpoints 404, UI hidden via an exported `passkeysEnabled` flag — rather than shipping a half-working ceremony surface.
 
-**Plugin endpoint shapes (1.6.17):**
+**Plugin endpoint shapes (1.6.19):**
 - Passkey registration is two calls — `GET /passkey/generate-register-options` then `POST /passkey/verify-registration` (no `/passkey/add-passkey` endpoint). The client `addPasskey()` wraps both.
 - `@better-auth/passkey` is a peer that must match `better-auth` version-for-version; both are pinned exact.
+- Pinned at `1.6.19` (bumped from `1.6.17`) for the upstream OTP-replay and session-cookie-splitting fixes.
+
+**Secure cookies set explicitly:**
+- `advanced.useSecureCookies = NODE_ENV === 'production'` rather than relying on Better Auth inferring it from the baseURL scheme. The scheme-inference path is fragile behind a proxy (the app sees `http` internally while serving `https`); pinning it to `NODE_ENV` is deterministic.
 
 ## Related
 

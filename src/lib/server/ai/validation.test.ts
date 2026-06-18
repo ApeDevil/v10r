@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 import { describe, expect, it } from 'vitest';
-import { ChatRequestSchema, CreateConversationSchema, StreamingRequestSchema } from './validation';
+import { ChatRequestSchema, CreateConversationSchema } from './validation';
 
 describe('ChatRequestSchema', () => {
 	it('accepts valid input', () => {
@@ -144,25 +144,6 @@ describe('ChatRequestSchema', () => {
 			deskLayout: [{ panelId: 'p1', fileId: 'f1', fileType: 'spreadsheet', label: 'Budget' }],
 		});
 		expect(result.success).toBe(true);
-	});
-});
-
-describe('StreamingRequestSchema', () => {
-	it('accepts valid prompt', () => {
-		const result = v.safeParse(StreamingRequestSchema, { prompt: 'Hello' });
-		expect(result.success).toBe(true);
-	});
-
-	it('rejects empty prompt', () => {
-		const result = v.safeParse(StreamingRequestSchema, { prompt: '' });
-		expect(result.success).toBe(false);
-	});
-
-	it('rejects prompt over 32k chars', () => {
-		const result = v.safeParse(StreamingRequestSchema, {
-			prompt: 'x'.repeat(32_001),
-		});
-		expect(result.success).toBe(false);
 	});
 });
 

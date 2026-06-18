@@ -45,9 +45,9 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 		const deleted = await deleteDocument(params.id, user.id);
 		if (!deleted) return apiError(404, 'not_found', 'Document not found.');
 
-		// Clean up graph data (non-critical)
+		// Clean up graph data (non-critical), scoped to the owner.
 		try {
-			await deleteDocumentGraph(params.id);
+			await deleteDocumentGraph(params.id, user.id);
 		} catch (graphErr) {
 			console.error(
 				'[api:retrieval:documents] Graph cleanup failed:',

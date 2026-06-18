@@ -1,9 +1,10 @@
 import { createHash } from 'node:crypto';
 import { fail, redirect } from '@sveltejs/kit';
 import { localizeHref } from '$lib/i18n';
+import { publicUser } from '$lib/server/auth/public-user';
 import { requireStepUp } from '$lib/server/auth/step-up';
 import { getUserAccounts, getUserSessions, revokeSession } from '$lib/server/db/user';
-import { collectUserData, deleteUserData } from '$lib/server/privacy';
+import { collectUserData, deleteUserData, maskIp } from '$lib/server/privacy';
 import type { Actions, PageServerLoad } from './$types';
 
 function hashForDisplay(id: string): string {
@@ -30,16 +31,21 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	return {
 		title: 'Account',
-		user: locals.user,
-		sessions: sessions.map((s) => ({
-			id: s.id,
-			displayId: hashForDisplay(s.id),
-			createdAt: s.createdAt.toISOString(),
-			expiresAt: s.expiresAt.toISOString(),
-			ipAddress: s.ipAddress,
-			userAgent: s.userAgent,
-			isCurrent: s.id === locals.session?.id,
-		})),
+		user: publicUser(locals.user),
+		sessions: sessions.map((s) => {
+			const isCurrent = s.id === locals.session?.id;
+			return {
+				id: s.id,
+				displayId: hashForDisplay(s.id),
+				createdAt: s.createdAt.toISOString(),
+				expiresAt: s.expiresAt.toISOString(),
+				// Only the viewer's current connection shows its raw IP; prior sessions
+				// are masked (matches the GDPR export — Art 15(4), third-party IPs).
+				ipAddress: s.ipAddress ? (isCurrent ? s.ipAddress : maskIp(s.ipAddress)) : null,
+				userAgent: s.userAgent,
+				isCurrent,
+			};
+		}),
 		accounts: accounts.map((a) => ({
 			provider: a.providerId,
 			linkedAt: a.createdAt?.toISOString() ?? '',

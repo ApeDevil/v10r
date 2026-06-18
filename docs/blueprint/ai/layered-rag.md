@@ -174,7 +174,7 @@ Meta: `searchDocsToolMeta = { search_project_docs: { risk: 'read', scope: 'desk:
 
 ### Ownership (system-scoped corpus)
 
-Every RAG retrieval query hard-filters `user_id`. The docs corpus is therefore owned by a reserved system user so the orchestrator can query it on any user's behalf without leaking per-user documents.
+Every RAG retrieval query hard-filters by owner. The docs corpus is therefore owned by a reserved system user so the orchestrator can query it on any user's behalf without leaking per-user documents.
 
 | Constant (`$lib/server/config.ts`) | Value |
 |------------------------------------|-------|
@@ -182,6 +182,36 @@ Every RAG retrieval query hard-filters `user_id`. The docs corpus is therefore o
 | `PROJECT_DOCS_COLLECTION_ID` | `'project-docs'` |
 
 The tool captures `SYSTEM_DOCS_USER_ID` in its closure — the model never supplies it. Ingested rows carry `document.source = 'docs'` (a value in `documentSourceEnum`) with `sourceUri` set to the canonical `/docs` path.
+
+`rag.document.userId` is **NOT NULL with `onDelete: cascade`**. System-owned docs use `SYSTEM_DOCS_USER_ID`; user documents carry the real user id. There is no null/orphan ownership state — every document belongs to exactly one owner and is erased with that owner.
+
+---
+
+## Graph Tenancy (Neo4j)
+
+The Neo4j RAG graph is **per-tenant**. A read returns only the caller's own nodes plus the shared system-docs corpus — never another user's.
+
+### Node ownership
+
+| Node | Key | Tenancy |
+|------|-----|---------|
+| `:Chunk` | id | Carries `ownerId`. |
+| `:Entity` | `{name, ownerId}` | Composite — the same entity name under two owners is two distinct nodes. (Was name-only, which merged entities across tenants.) |
+
+`scripts/setup-neo4j.ts` enforces this: the old name-only `entity_name_unique` constraint is dropped; `entity_name_owner_unique (name, ownerId)` is the composite uniqueness, with `entity_owner` and `chunk_owner` indexes for the scoped reads.
+
+### Scoped reads
+
+Every RAG graph read in `src/lib/server/graph/rag/queries.ts` is scoped `WHERE ownerId IN $ownerIds`. Callers pass `[user.id, SYSTEM_DOCS_USER_ID]` — a user sees their own corpus plus the shared system-docs corpus, nothing else. The three `/api/retrieval/graph*` endpoints are owner-scoped this way (they previously leaked cross-tenant). The chat retrieval path is user-scoped through the same filter.
+
+### Erasure (GDPR)
+
+| Function (`graph/rag/mutations.ts`) | Scope |
+|-------------------------------------|-------|
+| `deleteDocumentGraph(documentId, ownerId)` | One document's nodes, owner-scoped. |
+| `deleteUserGraph(ownerId)` | All of a user's nodes. |
+
+User deletion (`$lib/server/privacy` `deleteUserData`) sweeps the user's Neo4j nodes via `deleteUserGraph`. The Postgres CASCADE erases relational rows; Neo4j has no foreign keys, so this sweep is the graph-side erasure. See [../../stack/capabilities/gdpr.md](../../stack/capabilities/gdpr.md).
 
 ### Ingestion (`db:ingest-docs`)
 

@@ -140,6 +140,10 @@ export const auth = betterAuth({
 		ipAddress: {
 			ipAddressHeaders: ['x-client-ip'],
 		},
+		// Force the Secure cookie attribute explicitly rather than relying on
+		// baseURL-scheme inference (which silently drops Secure on a misconfigured
+		// http:// baseURL). Production is always https on Vercel.
+		useSecureCookies: env.NODE_ENV === 'production',
 	},
 
 	emailAndPassword: { enabled: false },

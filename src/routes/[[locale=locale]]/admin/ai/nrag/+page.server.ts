@@ -1,6 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
 import { requireAdmin } from '$lib/server/auth/guards';
+import { SYSTEM_DOCS_USER_ID } from '$lib/server/config';
 import { adminDeleteDocument, adminResetDocument } from '$lib/server/db/rag/admin-mutations';
 import {
 	getChunkCoverage,
@@ -16,7 +17,7 @@ import { safeDeferPromise } from '$lib/server/utils/safe-defer';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url, locals }) => {
-	requireAdmin(locals);
+	const { user } = requireAdmin(locals);
 
 	const status = url.searchParams.get('status') || 'all';
 	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
@@ -33,7 +34,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	// Postgres-backed page. Degrade to `graph: null` → "graph unavailable" panel.
 	let graph: { nodes: number; edges: number } | null = null;
 	try {
-		const g = await getRagGraphStats();
+		const g = await getRagGraphStats([user.id, SYSTEM_DOCS_USER_ID]);
 		graph = { nodes: g.nodes, edges: g.edges };
 	} catch (err) {
 		console.error('[admin:nrag] graph stats unavailable:', err);

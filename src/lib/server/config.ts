@@ -283,8 +283,6 @@ export const DESK_WRITE_RATE_LIMIT_WINDOW = '60 s' as const;
 export const FEEDBACK_RATE_LIMIT_PREFIX = 'rl:feedback:submit';
 export const FEEDBACK_RATE_LIMIT_MAX = 3;
 export const FEEDBACK_RATE_LIMIT_WINDOW = '1 h' as const;
-/** Minimum form-fill time in milliseconds — submissions faster than this are silently rejected as bot traffic. */
-export const FEEDBACK_MIN_FILL_MS = 2_000;
 
 // ── Analytics ─────────────────────────────────────────────────────────────────
 

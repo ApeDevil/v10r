@@ -1,5 +1,6 @@
 import { apiOk } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
+import { SYSTEM_DOCS_USER_ID } from '$lib/server/config';
 import { getRAGOverviewStats } from '$lib/server/db/rag/admin-queries';
 import { getRagGraphStats } from '$lib/server/graph/rag/queries';
 import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL_ID } from '$lib/server/rawrag/config';
@@ -19,11 +20,11 @@ export interface RetrievalStats {
 }
 
 export const GET: RequestHandler = async ({ locals }) => {
-	requireApiUser(locals);
+	const { user } = requireApiUser(locals);
 
 	const [pgStats, graphStats] = await Promise.all([
 		getRAGOverviewStats(),
-		getRagGraphStats().catch((err) => {
+		getRagGraphStats([user.id, SYSTEM_DOCS_USER_ID]).catch((err) => {
 			console.error('[api:retrieval:stats] Neo4j query failed:', err);
 			return { nodes: 0, edges: 0, labels: [] as string[] };
 		}),

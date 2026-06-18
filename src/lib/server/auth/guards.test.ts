@@ -1,7 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-// Mock $env/dynamic/private — ADMIN_EMAIL controlled per test
+// Mock $env/dynamic/private — ADMIN_EMAIL / ADMIN_USER_ID controlled per test
 let mockAdminEmail: string | undefined;
+let mockAdminUserId: string | undefined;
 
 vi.mock('$env/dynamic/private', () => ({
 	env: new Proxy(
@@ -9,11 +10,17 @@ vi.mock('$env/dynamic/private', () => ({
 		{
 			get: (_target, prop: string) => {
 				if (prop === 'ADMIN_EMAIL') return mockAdminEmail;
+				if (prop === 'ADMIN_USER_ID') return mockAdminUserId;
 				return process.env[prop];
 			},
 		},
 	),
 }));
+
+afterEach(() => {
+	mockAdminEmail = undefined;
+	mockAdminUserId = undefined;
+});
 
 const guards = await import('./guards');
 const {
@@ -112,6 +119,29 @@ describe('requireAdmin', () => {
 		const session = { id: 's1' };
 		const result = requireAdmin(makeLocals(user, session));
 		expect(result.user).toBe(user);
+	});
+});
+
+describe('admin gate — ADMIN_USER_ID is authoritative', () => {
+	it('grants by user id even when the email would not match', () => {
+		mockAdminUserId = 'usr_real_admin';
+		mockAdminEmail = undefined;
+		const user = { id: 'usr_real_admin', email: 'whatever@example.com' };
+		const result = requireAdmin(makeLocals(user, { id: 's1' }));
+		expect(result.user).toBe(user);
+	});
+
+	it('DENIES a re-claimed email when the id does not match (id wins over email)', () => {
+		// Attacker controls the admin email but not the immutable id.
+		mockAdminUserId = 'usr_real_admin';
+		mockAdminEmail = 'admin@test.com';
+		const attacker = { id: 'usr_attacker', email: 'admin@test.com' };
+		expect(() => requireAdmin(makeLocals(attacker, { id: 's1' }))).toThrow();
+		try {
+			requireAdmin(makeLocals(attacker, { id: 's1' }));
+		} catch (e: unknown) {
+			expect((e as { status: number }).status).toBe(404);
+		}
 	});
 });
 

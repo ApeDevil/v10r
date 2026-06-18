@@ -22,8 +22,10 @@ export function checkHoneypot(input: HoneypotInput): Decision {
 	if (input.honeypot && input.honeypot !== '') {
 		return denied('honeypot', 'Bot detected', 400);
 	}
+	// A forged/absent renderedAt yields a non-finite elapsed; treat that as a bot
+	// rather than letting it slip the speed check.
 	const elapsed = Date.now() - input.renderedAt;
-	if (Number.isFinite(elapsed) && elapsed < HONEYPOT_MIN_FILL_MS) {
+	if (!Number.isFinite(elapsed) || elapsed < HONEYPOT_MIN_FILL_MS) {
 		return denied('honeypot', 'Form submitted too quickly', 400);
 	}
 	return allowed;

@@ -41,7 +41,9 @@ export function sniffImageMime(bytes: Uint8Array): string | null {
 export async function processImage(bytes: Uint8Array): Promise<ProcessedImage> {
 	const exif = parseExif(bytes);
 
-	const out = await sharp(bytes)
+	// limitInputPixels caps decode size (~25MP) to defeat decompression bombs — well above
+	// our 1024px output budget; failOn 'truncated' rejects half-uploaded/corrupt files.
+	const out = await sharp(bytes, { limitInputPixels: 25_000_000, failOn: 'truncated' })
 		.rotate() // bake EXIF orientation into pixels, then it's gone with the rest of the metadata
 		.resize({
 			width: IMAGE_MAX_DIMENSION,

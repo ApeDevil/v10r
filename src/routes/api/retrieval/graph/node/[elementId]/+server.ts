@@ -1,13 +1,14 @@
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiOk } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
-import { API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW } from '$lib/server/config';
+import { API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW, SYSTEM_DOCS_USER_ID } from '$lib/server/config';
 import { Neo4jError } from '$lib/server/graph/errors';
 import { getEntityNeighborhood } from '$lib/server/graph/rag/queries';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:retrieval:graph:node', API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW);
 
+// Owner-scoped (Wave 2.1): a non-owned elementId yields an empty neighborhood → 404.
 export const GET: RequestHandler = async ({ params, locals }) => {
 	const { user } = requireApiUser(locals);
 
@@ -20,7 +21,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	}
 
 	try {
-		const data = await getEntityNeighborhood(elementId);
+		const data = await getEntityNeighborhood(elementId, [user.id, SYSTEM_DOCS_USER_ID]);
 		if (data.nodes.length === 0) {
 			return apiError(404, 'not_found', 'Entity not found.');
 		}

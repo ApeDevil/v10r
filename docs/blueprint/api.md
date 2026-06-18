@@ -1041,6 +1041,23 @@ src/
 
 ---
 
+## Input Bounds & Resource Caps
+
+Mutating and long-lived endpoints bound their inputs and connections at the adapter — a valid-shaped but oversized payload is a denial-of-service vector, not just a parse concern.
+
+| Endpoint | Bound |
+|----------|-------|
+| `PUT /api/desk/spreadsheets/[id]` | Caps cell count, column-meta count, per-cell string length, and total payload size. |
+| `POST /api/ai/chat` | Chat schema caps the lengths of the `toolScopes`, `retrievalTiers`, and `deskLayout` arrays. |
+| `POST /api/ai/proposals/[id]/approve` | Per-user rate-limited. |
+| `GET /api/analytics/stream` (SSE) | Per-IP connect limit + global concurrent-connection cap + max-duration self-close. A client can't hold a slot forever or open unbounded streams. |
+
+Image processing is bounded in the domain layer, not at the route: `$lib/server/imagemeta/process.ts` calls `sharp(bytes, { limitInputPixels: 25_000_000, failOn: 'truncated' })` — a decompression-bomb guard (a small file that expands to a huge bitmap is rejected) plus rejection of truncated/corrupt input.
+
+> **Removed:** `/api/ai/chat/stream` (dead — clients use `/api/ai/chat`).
+
+---
+
 ## Related
 
 - [auth.md](./auth.md) - Authentication patterns, capability grants, protected endpoint implementation

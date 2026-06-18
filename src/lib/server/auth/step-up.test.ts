@@ -56,6 +56,23 @@ describe('step-up freshness', () => {
 	});
 });
 
+describe('twoFactorVerifyLimitKey', () => {
+	it('keys on the pending user id when known (defeats IP rotation)', async () => {
+		const { twoFactorVerifyLimitKey } = await loadWith({ redis: fakeRedis(), dev: false });
+		expect(twoFactorVerifyLimitKey('usr_1', '1.2.3.4')).toBe('usr_1');
+		// Same account → same key regardless of source IP
+		expect(twoFactorVerifyLimitKey('usr_1', '9.9.9.9')).toBe('usr_1');
+		// Different accounts → different keys
+		expect(twoFactorVerifyLimitKey('usr_2', '1.2.3.4')).toBe('usr_2');
+	});
+
+	it('falls back to client IP, then a constant, when no user is resolved', async () => {
+		const { twoFactorVerifyLimitKey } = await loadWith({ redis: fakeRedis(), dev: false });
+		expect(twoFactorVerifyLimitKey(null, '1.2.3.4')).toBe('1.2.3.4');
+		expect(twoFactorVerifyLimitKey(undefined, null)).toBe('anon');
+	});
+});
+
 describe('requireStepUp', () => {
 	it('bypasses the gate for users without TOTP enrolled', async () => {
 		const redis = fakeRedis();

@@ -26,7 +26,7 @@ Five surfaces, one definition:
 - `GET /api/me/data/export`
 - `DELETE /api/me`
 
-**Import direction:** the privacy module reads ONLY from `$lib/server/db` (the import sink) — never from peer domains. This keeps the aggregator framework-free and reusable by any adapter (page, REST, future AI tool).
+**Import direction:** the read aggregator (`report.ts` `collectUserData`) reads ONLY from `$lib/server/db` (the import sink) — never from peer domains — keeping it framework-free and reusable by any adapter (page, REST, future AI tool). The erasure mutation (`mutations.ts` `deleteUserData`) additionally imports `deleteUserGraph` from `$lib/server/graph/rag` because Postgres CASCADE cannot reach Neo4j; that is the one sanctioned cross-domain reach in this module.
 
 ### Hard rules (compliance, not style)
 
@@ -40,9 +40,11 @@ These are enforced in `privacy/report.ts`, not left to callers:
 - **The `security` section is contract, never portable.** It reports `twoFactorEnabled` + passkey display metadata only — never a secret, backup code, public key, credential ID, or raw AAGUID. `REPORT_SCHEMA_VERSION` is bumped (`2026-06-17`) when section shape changes. Erasure needs no change: passkey/two-factor rows FK-cascade with `auth.user`.
 - **The `images` section reports a `withGpsCount`.** The Image Metadata Reader treats location as opt-in (see [../../blueprint/ai/image-metadata.md](../../blueprint/ai/image-metadata.md)); the aggregator can count persisted-location records because GPS lives in a typed `gps_lat`/`gps_lng` column, never only inside a blob. Stored image derivatives are EXIF-stripped, so no GPS exists outside this opt-in column.
 
-### Erasure is the FK cascade
+### Erasure is the FK cascade — plus a Neo4j sweep
 
-`deleteUserData` removes the `auth.user` row. Every user-keyed table references it `onDelete: 'cascade'` (sessions, accounts, preferences, conversations, desk, notification links, comments, palettes), so the cascade IS the full erasure. Idempotent — deleting an already-deleted user returns 204. Analytics rows are untouched: they are keyed by hashed `visitorId`, never by user id. The `feedback` table has no `userId` (anonymous by design) and is not part of the user inventory.
+`deleteUserData` removes the `auth.user` row. Every user-keyed Postgres table references it `onDelete: 'cascade'` (sessions, accounts, preferences, conversations, desk, notification links, comments, palettes, RAG documents), so the cascade IS the relational erasure. Idempotent — deleting an already-deleted user returns 204. Analytics rows are untouched: they are keyed by hashed `visitorId`, never by user id. The `feedback` table has no `userId` (anonymous by design) and is not part of the user inventory.
+
+**Neo4j has no foreign keys**, so the cascade cannot reach it. `deleteUserData` therefore also calls `deleteUserGraph(userId)` to sweep the user's per-tenant `:Chunk` and `:Entity` nodes from the RAG graph. The sweep is **best-effort** — wrapped in try/catch so an Aura outage logs and continues rather than blocking the authoritative relational erasure. See [../../blueprint/ai/layered-rag.md](../../blueprint/ai/layered-rag.md#graph-tenancy-neo4j).
 
 ## The transparency page
 

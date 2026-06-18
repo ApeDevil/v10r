@@ -112,15 +112,16 @@ export function resetCooldowns(): void {
 /** Mark a provider as rate-limited for `durationMs` (default 60s). Non-blocking. */
 export async function markCooldown(providerId: string, durationMs = 60_000): Promise<void> {
 	const resumeAt = Date.now() + durationMs;
+	// Always record the in-memory fallback first, so a Redis write failure can't
+	// silently drop the cooldown and let us keep hammering a 429ing provider.
+	cooldowns.set(providerId, resumeAt);
 	if (redis) {
 		try {
 			await redis.set(`${COOLDOWN_PREFIX}${providerId}`, resumeAt, { px: durationMs });
 		} catch (err) {
 			console.error('[ai:providers] Failed to set cooldown:', err);
 		}
-		return;
 	}
-	cooldowns.set(providerId, resumeAt);
 }
 
 /** Resolve a provider's cooldown resume time (epoch ms), or null if not cooled. */
@@ -132,7 +133,8 @@ async function cooldownResumeMs(providerId: string): Promise<number | null> {
 			return resumeAt;
 		} catch (err) {
 			console.error('[ai:providers] Failed to read cooldown:', err);
-			return null;
+			// Fall through to the in-memory fallback rather than returning "not cooled"
+			// (fail toward treating the provider as cooled to protect the upstream).
 		}
 	}
 	const resumeAt = cooldowns.get(providerId);

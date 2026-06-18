@@ -1,13 +1,14 @@
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiOk } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
-import { API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW } from '$lib/server/config';
+import { API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW, SYSTEM_DOCS_USER_ID } from '$lib/server/config';
 import { Neo4jError } from '$lib/server/graph/errors';
 import { findShortestPath } from '$lib/server/graph/rag/queries';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:retrieval:graph:path', API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW);
 
+// Owner-scoped (Wave 2.1): path endpoints must be owned by the caller at every hop.
 export const GET: RequestHandler = async ({ url, locals }) => {
 	const { user } = requireApiUser(locals);
 
@@ -28,7 +29,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	const maxHops = maxHopsParam ? Math.min(Math.max(parseInt(maxHopsParam, 10) || 4, 1), 6) : 4;
 
 	try {
-		const path = await findShortestPath(fromId, toId, maxHops);
+		const path = await findShortestPath(fromId, toId, [user.id, SYSTEM_DOCS_USER_ID], maxHops);
 		if (!path) {
 			return apiError(404, 'path_not_found', `No path found within ${maxHops} hops.`);
 		}

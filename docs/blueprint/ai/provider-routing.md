@@ -35,6 +35,11 @@ Separately, `deskTools` is only built when there are actual desk scopes — retr
 
 Storage is Redis (`ai:cooldown:{id}`), so the three functions are **async** and the breaker is **cross-instance** — a cooldown set by one serverless instance is honored by all, and survives cold starts. (It was previously an in-process `Map`, per-instance, reset on restart.)
 
+**Symmetric in-memory fallback.** Redis is the source of truth, but an in-memory map mirrors it so the breaker still works when Redis is unreachable:
+
+- `markCooldown` **always** writes the in-memory map (not only when Redis is null), so a cooldown is recorded even if the Redis write later fails.
+- `cooldownResumeMs` consults the in-memory map on a Redis **read** error — it fails toward "cooled" rather than treating an unreachable Redis as "available". A provider that just rate-limited us is not retried just because the breaker's backing store hiccupped.
+
 Fallback rotation in `tryFallback()` skips any cooled-down provider and skips non-tool-capable providers when `wantsTools` is true.
 
 ---

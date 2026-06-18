@@ -49,9 +49,11 @@
 ## Dependencies
 
 ```json
-"better-auth": "1.6.17",
-"@better-auth/passkey": "1.6.17"
+"better-auth": "1.6.19",
+"@better-auth/passkey": "1.6.19"
 ```
+
+> Bumped `1.6.17 → 1.6.19` for the upstream OTP-replay and session-cookie-splitting fixes.
 
 > **Pinned exact, in lockstep.** `@better-auth/passkey` is a peer that must match `better-auth` version-for-version. `package.json` `overrides` also pins `@simplewebauthn/browser` + `@simplewebauthn/server` to `13.2.x`.
 
@@ -316,6 +318,16 @@ export async function load({ locals }) {
 ```
 
 **Why not module-level `useSession()`?** Module-level state is shared across SSR requests, creating a security risk where User A's session could leak to User B. The `event.locals` pattern is request-scoped and SSR-safe. See [state.md](./state.md#better-auth-session-state) for details.
+
+### The `publicUser()` projector
+
+Never return raw `locals.user` from a `load`. Better Auth's user object carries fields that should not cross the server→client boundary. `publicUser()` (`$lib/server/auth/public-user.ts`) is the **canonical client-safe shape**:
+
+```typescript
+publicUser(locals.user) // → { id, email, name, image, emailVerified } | null
+```
+
+Account, dashboard, and root-layout loads project through it. A repo-wide leak-gate test forbids any `load` from returning `locals.user` directly — the projector is the only sanctioned path. One definition of "what the client may see about a user", enforced, not left to each load.
 
 ---
 
@@ -858,7 +870,7 @@ The session is resolved **inline in `authHandler`** because `sessionPopulate` ru
 |---------|--------|
 | CSRF protection | Forms only (see warning below) |
 | Session fixation | Handled |
-| Secure cookies | Default in production |
+| Secure cookies | `advanced.useSecureCookies = NODE_ENV === 'production'` (set explicitly, not inferred from the baseURL scheme) |
 | Magic link expiry | 10 minutes (configurable) |
 | Rate limiting | Requires config (see below) |
 | Session revocation | `revokeOtherSessions: true` |
@@ -999,8 +1011,9 @@ src/
 │   │   │   ├── guards.ts         # Route protection helpers
 │   │   │   ├── grants.ts         # Capability grant/revoke/query
 │   │   │   ├── grant-requests.ts # Request lifecycle
-│   │   │   ├── step-up.ts        # Redis step-up freshness gate (no auth import)
+│   │   │   ├── step-up.ts        # Redis step-up freshness gate + twoFactorVerifyLimitKey (no auth import)
 │   │   │   ├── factor-changes.ts # Audit + revoke + notify chokepoint
+│   │   │   ├── public-user.ts    # publicUser() — client-safe {id,email,name,image,emailVerified}
 │   │   │   └── send-auth-email.ts # Magic-link / OTP / factor-change templates
 │   │   └── db/user/queries.ts    # listPasskeyDtos, countPasskeys, touchPasskeyLastUsed
 │   ├── components/composites/step-up-dialog/  # TOTP / backup-code re-verify

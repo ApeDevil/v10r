@@ -5,18 +5,8 @@
 
 import { hashVisitorId, parseConsentTier } from '$lib/server/analytics/consent';
 import { ANALYTICS_CONSENT_COOKIE } from '$lib/server/config';
+import { maskIp } from '$lib/server/privacy';
 import type { PageServerLoad } from './$types';
-
-function maskIp(ip: string): string {
-	if (ip.includes(':')) {
-		// IPv6: show first 2 groups, mask the rest
-		const parts = ip.split(':');
-		return `${parts.slice(0, 2).join(':')}:xxxx:xxxx:xxxx:xxxx`;
-	}
-	// IPv4: show first 2 octets, mask last 2
-	const parts = ip.split('.');
-	return `${parts[0]}.${parts[1]}.xxx.xxx`;
-}
 
 export const load: PageServerLoad = async ({ request, cookies, getClientAddress, setHeaders }) => {
 	// Prevent caching of personal data

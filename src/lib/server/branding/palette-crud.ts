@@ -4,6 +4,20 @@ import { createId } from '$lib/server/db/id';
 import { customPalettes } from '$lib/server/db/schema/app/custom-palettes';
 import type { PaletteColors } from '$lib/styles/random/types';
 
+type CustomPaletteRow = typeof customPalettes.$inferSelect;
+
+/**
+ * In-memory TTL cache for getCustomPaletteById. The style cookie is read on EVERY
+ * request in the loadStyle hook — before any auth or rate limit — and a `CP_` value
+ * triggers this lookup. Without caching, an attacker can turn each request into a
+ * Neon round-trip via a forged cookie. Negative results are cached too (bounded) so
+ * spamming bogus ids can't amplify DB load. Palettes are effectively immutable per
+ * id; update/delete invalidate the entry.
+ */
+const PALETTE_CACHE_TTL_MS = 60_000;
+const PALETTE_CACHE_MAX = 1_000;
+const paletteByIdCache = new Map<string, { value: CustomPaletteRow | null; expiresAt: number }>();
+
 export async function createCustomPalette(data: {
 	name: string;
 	description?: string;
@@ -30,10 +44,17 @@ export async function createCustomPalette(data: {
 	return palette;
 }
 
-/** Get a custom palette by ID only (no user check — for SSR rendering) */
-export async function getCustomPaletteById(id: string) {
+/** Get a custom palette by ID only (no user check — for SSR rendering). Cached (see above). */
+export async function getCustomPaletteById(id: string): Promise<CustomPaletteRow | null> {
+	const cached = paletteByIdCache.get(id);
+	if (cached && cached.expiresAt > Date.now()) return cached.value;
+
 	const [palette] = await db.select().from(customPalettes).where(eq(customPalettes.id, id)).limit(1);
-	return palette ?? null;
+	const value = palette ?? null;
+
+	if (paletteByIdCache.size >= PALETTE_CACHE_MAX) paletteByIdCache.clear();
+	paletteByIdCache.set(id, { value, expiresAt: Date.now() + PALETTE_CACHE_TTL_MS });
+	return value;
 }
 
 export async function getCustomPalette(id: string, userId: string) {
@@ -71,6 +92,7 @@ export async function updateCustomPalette(
 		})
 		.where(and(eq(customPalettes.id, id), eq(customPalettes.createdBy, userId)))
 		.returning();
+	paletteByIdCache.delete(id);
 	return updated ?? null;
 }
 
@@ -79,5 +101,6 @@ export async function deleteCustomPalette(id: string, userId: string) {
 		.delete(customPalettes)
 		.where(and(eq(customPalettes.id, id), eq(customPalettes.createdBy, userId)))
 		.returning();
+	paletteByIdCache.delete(id);
 	return deleted ?? null;
 }

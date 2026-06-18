@@ -3,6 +3,7 @@
  */
 import { eq } from 'drizzle-orm';
 import { getActiveProvider } from '$lib/server/ai';
+import { SYSTEM_DOCS_USER_ID } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { chunk, document } from '$lib/server/db/schema/rag';
 import type { IngestEvent, IngestStepEvent, IngestStepId, IngestStepStatus } from '$lib/types/ingest-pipeline';
@@ -51,6 +52,11 @@ export async function ingest(doc: IngestableDocument, onEvent?: IngestEmitFn): P
 
 	const chatModel = getActiveProvider()?.getInstance() ?? null;
 
+	// Ownership is mandatory: user uploads carry doc.userId; system-generated
+	// corpora (docs/catalog) fall back to the reserved system owner. This id
+	// stamps both the Postgres row and every Neo4j chunk/entity for tenant scoping.
+	const ownerId = doc.userId ?? SYSTEM_DOCS_USER_ID;
+
 	const contentHash = await hashContent(doc.content);
 
 	// 1. Create document record
@@ -60,7 +66,7 @@ export async function ingest(doc: IngestableDocument, onEvent?: IngestEmitFn): P
 
 	await db.insert(document).values({
 		id: documentId,
-		userId: doc.userId ?? null,
+		userId: ownerId,
 		title: doc.title,
 		source: doc.sourceType ?? 'text',
 		sourceUri: doc.sourcePath ?? null,
@@ -183,7 +189,7 @@ export async function ingest(doc: IngestableDocument, onEvent?: IngestEmitFn): P
 		try {
 			emit(onEvent, 'graph_mirror', 'active');
 			const mirrorStart = performance.now();
-			await storeChunkStructure(documentId, parents, contextualizedChildren);
+			await storeChunkStructure(documentId, parents, contextualizedChildren, ownerId);
 			emit(onEvent, 'graph_mirror', 'done', {
 				durationMs: Math.round(performance.now() - mirrorStart),
 				detail: { parents: parents.length, children: contextualizedChildren.length },
@@ -210,7 +216,7 @@ export async function ingest(doc: IngestableDocument, onEvent?: IngestEmitFn): P
 				}
 			}
 
-			const graphResult = await storeEntitiesAndRelationships(extraction, chunkEntityMap);
+			const graphResult = await storeEntitiesAndRelationships(extraction, chunkEntityMap, ownerId);
 			entityCount = graphResult.entityCount;
 			emit(onEvent, 'entity_extract', 'done', {
 				durationMs: Math.round(performance.now() - entStart),

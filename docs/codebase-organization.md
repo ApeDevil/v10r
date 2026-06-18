@@ -117,8 +117,10 @@ src/lib/server/
   analytics/    Analytics pipeline
   api/          Adapter helpers: pagination.ts, rate-limit.ts, response.ts
   auth/         Better Auth instance + guards (auth/index.ts constructs the instance);
-                step-up.ts (Redis step-up freshness gate), factor-changes.ts (passkey/TOTP
-                audit+revoke+notify chokepoint) — both framework-free, never import the instance
+                step-up.ts (Redis step-up freshness gate + twoFactorVerifyLimitKey),
+                factor-changes.ts (passkey/TOTP audit+revoke+notify chokepoint),
+                public-user.ts (publicUser projector — client-safe user shape; leak-gate-enforced)
+                — all framework-free, never import the instance
   blog/         Posts, comments, tags, assets, feed; co-locates queries/mutations
   branding/     Custom palette resolution
   cache/        Upstash Redis wrappers
@@ -144,6 +146,8 @@ src/lib/server/
   search/       Server search adapters (pages, docs, showcases, blog FTS), buildSearchIndex, searchContent;
                 catalog-map.ts (formatCatalogMap — path-free system-prompt hint),
                 catalog-projection.ts (deriveCatalogGraph — pure catalog → Neo4j Resource nodes)
+  security/     Framework-free security predicates: csrf.ts (needsCsrf, isSameHost,
+                CSRF_EXEMPT_PREFIXES) — imported by hooks.server.ts csrfProtection
   schemas/      Shared server Valibot: shared.ts
   store/        Desk workspace and file data
   style/        Style-related server logic

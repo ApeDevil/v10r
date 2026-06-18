@@ -3,6 +3,13 @@ import { cypher } from '../index';
 import type { Neo4jNodeRecord, Neo4jRelRecord } from '../types';
 import { toKnowledgeData } from '../types';
 
+/**
+ * RAG graph reads are tenant-scoped. Every function takes `ownerIds` — typically
+ * `[user.id, SYSTEM_DOCS_USER_ID]` so a user sees their own corpus plus the shared
+ * system docs. Entities and chunks carry `ownerId` (per-tenant), so an attacker
+ * passing another tenant's elementId/pgId gets an empty result, not a leak.
+ */
+
 interface GraphChunkResult {
 	pgId: string;
 	entityName: string;
@@ -16,7 +23,11 @@ interface GraphChunkResult {
  */
 const HOP_PATTERNS: Record<number, string> = { 1: '*1..1', 2: '*1..2' };
 
-export async function expandViaGraph(seedChunkIds: string[], maxHops: number = 2): Promise<GraphChunkResult[]> {
+export async function expandViaGraph(
+	seedChunkIds: string[],
+	ownerIds: string[],
+	maxHops: number = 2,
+): Promise<GraphChunkResult[]> {
 	const hops = Math.min(maxHops, 2); // Hard cap at 2
 	const hopPattern = HOP_PATTERNS[hops];
 	if (!hopPattern) throw new Error(`Invalid hops value: ${hops}. Must be 1 or 2.`);
@@ -24,15 +35,17 @@ export async function expandViaGraph(seedChunkIds: string[], maxHops: number = 2
 	return cypher<GraphChunkResult>(
 		`UNWIND $seedChunkIds AS seedId
 		 MATCH (seed:Chunk {pgId: seedId})-[:MENTIONS]->(e:Entity)
+		 WHERE e.ownerId IN $ownerIds
 		 MATCH (e)-[:RELATED_TO${hopPattern}]->(related:Entity)
+		 WHERE related.ownerId IN $ownerIds
 		 MATCH (related)<-[:MENTIONS]-(relChunk:Chunk)
-		 WHERE NOT relChunk.pgId IN $seedChunkIds
+		 WHERE relChunk.ownerId IN $ownerIds AND NOT relChunk.pgId IN $seedChunkIds
 		 RETURN DISTINCT relChunk.pgId AS pgId,
 		        related.name AS entityName,
 		        related.type AS entityType,
 		        'RELATED_TO' AS relType
 		 LIMIT 20`,
-		{ seedChunkIds },
+		{ seedChunkIds, ownerIds },
 	);
 }
 
@@ -44,31 +57,38 @@ interface EntityInfo {
 	related: Array<{ elementId: string; name: string }>;
 }
 
-/** Get entities mentioned in specific chunks. */
-export async function getEntitiesForChunks(chunkPgIds: string[]): Promise<EntityInfo[]> {
+/** Get entities mentioned in specific chunks (tenant-scoped). */
+export async function getEntitiesForChunks(chunkPgIds: string[], ownerIds: string[]): Promise<EntityInfo[]> {
 	return cypher<EntityInfo>(
 		`UNWIND $chunkPgIds AS chunkId
 		 MATCH (c:Chunk {pgId: chunkId})-[:MENTIONS]->(e:Entity)
+		 WHERE e.ownerId IN $ownerIds
 		 OPTIONAL MATCH (e)-[:RELATED_TO]-(related:Entity)
+		 WHERE related.ownerId IN $ownerIds
 		 WITH e, collect(DISTINCT related) AS relatedNodes
 		 RETURN elementId(e) AS elementId,
 		        e.name AS name,
 		        e.type AS type,
 		        e.description AS description,
 		        [r IN relatedNodes WHERE r IS NOT NULL | {elementId: elementId(r), name: r.name}] AS related`,
-		{ chunkPgIds },
+		{ chunkPgIds, ownerIds },
 	);
 }
 
-/** Lightweight graph corpus stats for the retrieval overview. */
-export async function getRagGraphStats(): Promise<{
+/** Lightweight graph corpus stats for the retrieval overview (tenant-scoped). */
+export async function getRagGraphStats(ownerIds: string[]): Promise<{
 	nodes: number;
 	edges: number;
 	labels: string[];
 }> {
 	const [nodeCount, edgeCount] = await Promise.all([
-		cypher<{ c: number }>('MATCH (n:Entity) RETURN count(n) AS c'),
-		cypher<{ c: number }>('MATCH ()-[r:RELATED_TO]->() RETURN count(r) AS c'),
+		cypher<{ c: number }>('MATCH (n:Entity) WHERE n.ownerId IN $ownerIds RETURN count(n) AS c', { ownerIds }),
+		cypher<{ c: number }>(
+			`MATCH (e1:Entity)-[r:RELATED_TO]->(e2:Entity)
+			 WHERE e1.ownerId IN $ownerIds AND e2.ownerId IN $ownerIds
+			 RETURN count(r) AS c`,
+			{ ownerIds },
+		),
 	]);
 	return {
 		nodes: Number(nodeCount[0]?.c ?? 0),
@@ -77,13 +97,15 @@ export async function getRagGraphStats(): Promise<{
 	};
 }
 
-/** Get all RAG entities and their relationships as KnowledgeData for visualization. */
-export async function getAllRagEntities(): Promise<KnowledgeData> {
+/** Get all RAG entities and their relationships as KnowledgeData for visualization (tenant-scoped). */
+export async function getAllRagEntities(ownerIds: string[]): Promise<KnowledgeData> {
 	const [nodeRows, relRows] = await Promise.all([
-		cypher<{ n: Neo4jNodeRecord }>('MATCH (n:Entity) RETURN n'),
+		cypher<{ n: Neo4jNodeRecord }>('MATCH (n:Entity) WHERE n.ownerId IN $ownerIds RETURN n', { ownerIds }),
 		cypher<{ r: Neo4jRelRecord; startId: string; endId: string }>(
 			`MATCH (e1:Entity)-[r:RELATED_TO]->(e2:Entity)
+			 WHERE e1.ownerId IN $ownerIds AND e2.ownerId IN $ownerIds
 			 RETURN r, elementId(e1) AS startId, elementId(e2) AS endId`,
+			{ ownerIds },
 		),
 	]);
 	return toKnowledgeData(
@@ -92,23 +114,25 @@ export async function getAllRagEntities(): Promise<KnowledgeData> {
 	);
 }
 
-/** Get a single entity node and its immediate neighbors as KnowledgeData. */
-export async function getEntityNeighborhood(elementId: string): Promise<KnowledgeData> {
+/** Get a single entity node and its immediate neighbors as KnowledgeData (tenant-scoped). */
+export async function getEntityNeighborhood(elementId: string, ownerIds: string[]): Promise<KnowledgeData> {
 	const [nodeRows, relRows] = await Promise.all([
 		cypher<{ n: Neo4jNodeRecord }>(
-			`MATCH (center:Entity) WHERE elementId(center) = $id
+			`MATCH (center:Entity) WHERE elementId(center) = $id AND center.ownerId IN $ownerIds
 			 OPTIONAL MATCH (center)-[:RELATED_TO]-(neighbor:Entity)
+			 WHERE neighbor.ownerId IN $ownerIds
 			 WITH center, collect(DISTINCT neighbor) AS neighbors
 			 UNWIND (neighbors + [center]) AS n
 			 WITH n WHERE n IS NOT NULL
 			 RETURN DISTINCT n`,
-			{ id: elementId },
+			{ id: elementId, ownerIds },
 		),
 		cypher<{ r: Neo4jRelRecord; startId: string; endId: string }>(
-			`MATCH (center:Entity) WHERE elementId(center) = $id
+			`MATCH (center:Entity) WHERE elementId(center) = $id AND center.ownerId IN $ownerIds
 			 MATCH (center)-[r:RELATED_TO]-(neighbor:Entity)
+			 WHERE neighbor.ownerId IN $ownerIds
 			 RETURN r, elementId(startNode(r)) AS startId, elementId(endNode(r)) AS endId`,
-			{ id: elementId },
+			{ id: elementId, ownerIds },
 		),
 	]);
 	return toKnowledgeData(
@@ -118,35 +142,38 @@ export async function getEntityNeighborhood(elementId: string): Promise<Knowledg
 }
 
 /**
- * Find the shortest RELATED_TO path between two entities.
- * Returns the path as KnowledgeData (nodes + edges along the path)
- * so the explorer can merge any missing nodes and highlight the trail.
+ * Find the shortest RELATED_TO path between two entities (tenant-scoped).
+ * Both endpoints and every node on the path must be owned by the caller.
  * Returns null if no path exists within maxHops.
  */
 export async function findShortestPath(
 	fromId: string,
 	toId: string,
+	ownerIds: string[],
 	maxHops: number = 4,
 ): Promise<{ data: KnowledgeData; nodeIds: string[]; edgeKeys: string[] } | null> {
 	const hops = Math.max(1, Math.min(maxHops, 6));
 
 	// Pull the path's nodes/rels separately so we can use the same map shape
-	// toKnowledgeData expects (startId/endId alongside the rel record).
+	// toKnowledgeData expects (startId/endId alongside the rel record). The path
+	// pattern requires every intermediate node to be owned by the caller.
 	const [nodeRows, relRows] = await Promise.all([
 		cypher<{ n: Neo4jNodeRecord }>(
-			`MATCH (a:Entity) WHERE elementId(a) = $fromId
-			 MATCH (b:Entity) WHERE elementId(b) = $toId
+			`MATCH (a:Entity) WHERE elementId(a) = $fromId AND a.ownerId IN $ownerIds
+			 MATCH (b:Entity) WHERE elementId(b) = $toId AND b.ownerId IN $ownerIds
 			 MATCH p = shortestPath((a)-[:RELATED_TO*..${hops}]-(b))
+			 WHERE all(node IN nodes(p) WHERE node.ownerId IN $ownerIds)
 			 UNWIND nodes(p) AS n RETURN DISTINCT n`,
-			{ fromId, toId },
+			{ fromId, toId, ownerIds },
 		),
 		cypher<{ r: Neo4jRelRecord; startId: string; endId: string }>(
-			`MATCH (a:Entity) WHERE elementId(a) = $fromId
-			 MATCH (b:Entity) WHERE elementId(b) = $toId
+			`MATCH (a:Entity) WHERE elementId(a) = $fromId AND a.ownerId IN $ownerIds
+			 MATCH (b:Entity) WHERE elementId(b) = $toId AND b.ownerId IN $ownerIds
 			 MATCH p = shortestPath((a)-[:RELATED_TO*..${hops}]-(b))
+			 WHERE all(node IN nodes(p) WHERE node.ownerId IN $ownerIds)
 			 UNWIND relationships(p) AS r
 			 RETURN r, elementId(startNode(r)) AS startId, elementId(endNode(r)) AS endId`,
-			{ fromId, toId },
+			{ fromId, toId, ownerIds },
 		),
 	]);
 
@@ -159,38 +186,4 @@ export async function findShortestPath(
 	const nodeIds = nodeRows.map((row) => row.n.elementId);
 	const edgeKeys = relRows.map((row) => `${row.startId}→${row.endId}`);
 	return { data, nodeIds, edgeKeys };
-}
-
-/** Get the document graph structure for visualization. */
-export async function getDocumentGraphData(documentId: string): Promise<{
-	chunks: Array<{ pgId: string; level: string }>;
-	entities: Array<{ name: string; type: string }>;
-	mentions: Array<{ chunkPgId: string; entityName: string }>;
-	relationships: Array<{ source: string; target: string; type: string }>;
-}> {
-	const [chunks, entities, mentions, relationships] = await Promise.all([
-		cypher<{ pgId: string; level: string }>(
-			`MATCH (c:Chunk {documentId: $documentId})
-			 RETURN c.pgId AS pgId, c.level AS level`,
-			{ documentId },
-		),
-		cypher<{ name: string; type: string }>(
-			`MATCH (c:Chunk {documentId: $documentId})-[:MENTIONS]->(e:Entity)
-			 RETURN DISTINCT e.name AS name, e.type AS type`,
-			{ documentId },
-		),
-		cypher<{ chunkPgId: string; entityName: string }>(
-			`MATCH (c:Chunk {documentId: $documentId})-[:MENTIONS]->(e:Entity)
-			 RETURN c.pgId AS chunkPgId, e.name AS entityName`,
-			{ documentId },
-		),
-		cypher<{ source: string; target: string; type: string }>(
-			`MATCH (c:Chunk {documentId: $documentId})-[:MENTIONS]->(e1:Entity)
-			 MATCH (e1)-[r:RELATED_TO]->(e2:Entity)
-			 RETURN DISTINCT e1.name AS source, e2.name AS target, r.type AS type`,
-			{ documentId },
-		),
-	]);
-
-	return { chunks, entities, mentions, relationships };
 }

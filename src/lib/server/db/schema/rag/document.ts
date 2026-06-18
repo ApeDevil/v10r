@@ -27,7 +27,11 @@ export const document = ragSchema.table(
 	'document',
 	{
 		id: text('id').primaryKey(),
-		userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+		// Owner is mandatory so every document is tenant-scoped and CASCADE-erasable.
+		// System-generated corpora (docs/catalog) are owned by SYSTEM_DOCS_USER_ID.
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
 		title: text('title').notNull(),
 		source: documentSourceEnum('source').notNull(),
 		sourceUri: text('source_uri'),

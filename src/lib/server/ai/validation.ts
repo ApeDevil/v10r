@@ -67,16 +67,16 @@ export const ChatRequestSchema = v.object({
 	messages: v.pipe(v.array(ChatMessageSchema), v.minLength(1), v.maxLength(100)),
 	conversationId: v.optional(v.pipe(v.string(), v.uuid())),
 	useRetrieval: v.optional(v.boolean()),
-	retrievalTiers: v.optional(v.array(v.picklist([1, 2, 3]))),
+	retrievalTiers: v.optional(v.pipe(v.array(v.picklist([1, 2, 3])), v.maxLength(3))),
 	fusion: v.optional(v.picklist(['none', 'rrf'])),
 	/** Route this turn through the llmwiki layer (primary surface + drill-down tools). */
 	useLlmwiki: v.optional(v.boolean()),
 	llmwikiCollectionId: v.optional(v.nullable(v.string())),
 	panelContext: v.optional(v.pipe(v.array(PanelContextEntry), v.maxLength(5))),
 	/** Tool permission scopes — empty or omitted means no tools. */
-	toolScopes: v.optional(v.array(ToolScope)),
+	toolScopes: v.optional(v.pipe(v.array(ToolScope), v.maxLength(4))),
 	/** Current desk layout so AI knows what panels are open. */
-	deskLayout: v.optional(v.array(DeskLayoutEntry)),
+	deskLayout: v.optional(v.pipe(v.array(DeskLayoutEntry), v.maxLength(20))),
 	/** Active workspace name for AI context. */
 	activeWorkspace: v.optional(
 		v.object({
@@ -93,10 +93,6 @@ export const ChatRequestSchema = v.object({
 	 * Sent by the client after hitting `POST /api/ai/proposals/:id/approve`.
 	 */
 	resumeFromProposalId: v.optional(v.string()),
-});
-
-export const StreamingRequestSchema = v.object({
-	prompt: v.pipe(v.string(), v.minLength(1), v.maxLength(32_000)),
 });
 
 export const CreateConversationSchema = v.object({

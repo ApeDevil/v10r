@@ -9,6 +9,7 @@ import { parseConsentTier } from '$lib/server/analytics/consent';
 import { analyticsCollector } from '$lib/server/analytics/hook';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { auth } from '$lib/server/auth';
+import { twoFactorVerifyLimitKey } from '$lib/server/auth/step-up';
 import { getCustomPaletteById } from '$lib/server/branding/palette-crud';
 import {
 	ANALYTICS_CONSENT_COOKIE,
@@ -20,6 +21,7 @@ import {
 } from '$lib/server/config';
 import { logFeatureStatus } from '$lib/server/features';
 import { clearOwnerCookie, PAIRING_COOKIE, verifyOwnerCookie } from '$lib/server/pairing/cookie';
+import { isSameHost, needsCsrf } from '$lib/server/security/csrf';
 import { getBrandConfig } from '$lib/server/style/brand';
 import {
 	generateRandomStyle,
@@ -30,6 +32,7 @@ import {
 	serializeStyleCookie,
 } from '$lib/styles/random';
 import { deriveAccentTokens } from '$lib/styles/random/accent';
+import { safeEntries } from '$lib/styles/random/palette-sanitize';
 import { getRadius } from '$lib/styles/random/radius-registry';
 import type { PaletteId, ResolvedStyle } from '$lib/styles/random/types';
 import { getTypography } from '$lib/styles/random/typography-registry';
@@ -69,7 +72,7 @@ const TWO_FACTOR_VERIFY_PATHS = new Set([
  * which Better Auth's ipAddressHeaders is pinned to) rather than re-deriving
  * from request headers — those are attacker-mutable until this handler runs.
  */
-const securityHeaders: Handle = async ({ event, resolve }) => {
+export const securityHeaders: Handle = async ({ event, resolve }) => {
 	if (!building) {
 		const ip = event.getClientAddress();
 		event.locals.clientIp = ip;
@@ -85,39 +88,29 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
 	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 	response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 	response.headers.set('Strict-Transport-Security', `max-age=${HSTS_MAX_AGE}; includeSubDomains; preload`);
+	// Cross-origin isolation (Spectre-class). same-origin-allow-popups keeps redirect/popup
+	// OAuth flows working. COEP is intentionally NOT set (would require a CORP audit of
+	// R2 / Carto / font origins). CORP same-site blocks cross-site resource hot-linking.
+	response.headers.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+	response.headers.set('Cross-Origin-Resource-Policy', 'same-site');
+	response.headers.set('X-DNS-Prefetch-Control', 'off');
+
+	// Never cache user-specific or API responses on shared/intermediary caches.
+	// The !has() guard preserves explicit Cache-Control set by a load/endpoint
+	// (e.g. the data page's no-store, the blog-image proxy's public max-age).
+	const isApi = event.url.pathname.startsWith('/api/');
+	if ((event.locals.user || isApi) && !response.headers.has('Cache-Control')) {
+		response.headers.set('Cache-Control', 'no-store, private');
+	}
+
+	// On logout, instruct the browser to purge cached pages, cookies, and storage
+	// so a back-button after sign-out cannot reveal the prior session's data.
+	if (event.url.pathname === '/api/auth/sign-out' && response.status >= 200 && response.status < 300) {
+		response.headers.set('Clear-Site-Data', '"cache", "cookies", "storage"');
+	}
 
 	return response;
 };
-
-/** Allowlisted token keys for CSS injection (from PaletteColors interface) */
-const VALID_TOKEN_KEYS = new Set([
-	'bg',
-	'fg',
-	'body',
-	'heading',
-	'muted',
-	'border',
-	'subtle',
-	'primary',
-	'primary-hover',
-	'primary-container',
-	'on-primary-container',
-	'primary-dim',
-	'on-primary',
-	'secondary',
-	'on-secondary',
-	'accent',
-	'accent-hover',
-	'on-accent',
-	'accent-container',
-	'on-accent-container',
-	'input',
-	'input-border',
-	'surface-1',
-	'surface-2',
-	'surface-3',
-]);
-const OKLCH_RE = /^oklch\(\s*[\d.]+\s+[\d.]+\s+[\d.]+\s*\)$/;
 
 /**
  * 2. loadStyle — reads/generates style from cookie, populates event.locals.style
@@ -261,8 +254,6 @@ const i18n: Handle = ({ event, resolve }) =>
 		const cp = event.locals.customPaletteColors;
 		if (cp && paletteId) {
 			const toVar = (k: string) => (k.startsWith('surface-') ? `--${k}` : `--color-${k}`);
-			const safeEntries = (colors: Record<string, string>) =>
-				Object.entries(colors).filter(([k, v]) => VALID_TOKEN_KEYS.has(k) && OKLCH_RE.test(v));
 
 			const accentOffset = event.locals.customPaletteAccentOffset ?? 0;
 			const lightAccent = cp.light.primary ? deriveAccentTokens(cp.light.primary, accentOffset) : {};
@@ -371,7 +362,7 @@ const authHandler: Handle = async ({ event, resolve }) => {
 	// so the session is resolved inline for these rare paths only.
 	if (TWO_FACTOR_VERIFY_PATHS.has(path)) {
 		const sessionData = await auth.api.getSession({ headers: event.request.headers }).catch(() => null);
-		const limitKey = sessionData?.user.id ?? event.locals.clientIp ?? 'anon';
+		const limitKey = twoFactorVerifyLimitKey(sessionData?.user.id, event.locals.clientIp);
 		const { success, reset } = await twoFactorVerifyLimiter.limit(limitKey);
 
 		if (!success) {
@@ -415,37 +406,12 @@ const sessionPopulate: Handle = async ({ event, resolve }) => {
 };
 
 /**
- * 6. CSRF protection — defense in depth on mutating API calls.
- *    1) Require X-Requested-With header (blocks simple form POSTs / image-loaded requests).
- *    2) Require Origin (or Referer fallback) host to match this request's host —
- *       blocks attacks from compromised subdomains or other origins that XHR to us.
- *    Exempt prefixes carry their own auth (Better Auth, Bearer, HMAC, beacon).
+ * 6. CSRF protection — defense in depth on mutating API calls. Predicates
+ *    (needsCsrf / isSameHost / exempt set) live in $lib/server/security/csrf
+ *    where they are unit-tested; this handler just wires them.
  */
-const CSRF_EXEMPT_PREFIXES = [
-	'/api/auth/', // Better Auth (own CSRF)
-	'/api/cron/', // Vercel cron + Bearer token
-	'/api/webhooks/', // Third-party webhooks (HMAC signature)
-	'/api/analytics/journey', // navigator.sendBeacon (no custom headers possible)
-] as const;
-
-function isSameHost(headerValue: string | null, expectedHost: string): boolean {
-	if (!headerValue) return false;
-	try {
-		return new URL(headerValue).host === expectedHost;
-	} catch {
-		return false;
-	}
-}
-
 const csrfProtection: Handle = async ({ event, resolve }) => {
-	const method = event.request.method;
-	const path = event.url.pathname;
-
-	const isMutating = method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
-	const needsCsrf =
-		isMutating && path.startsWith('/api/') && !CSRF_EXEMPT_PREFIXES.some((prefix) => path.startsWith(prefix));
-
-	if (needsCsrf) {
+	if (needsCsrf(event.request.method, event.url.pathname)) {
 		if (!event.request.headers.get('x-requested-with')) {
 			return json({ error: 'Forbidden' }, { status: 403 });
 		}

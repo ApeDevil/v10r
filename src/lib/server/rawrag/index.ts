@@ -152,7 +152,12 @@ export async function retrieve(query: string, options: RetrievalOptions, onEvent
 	const { chunks } = fuseAndRank(allChunks, opts.maxChunks);
 
 	// Entities only populated when tier 3 (graph) ran and produced chunks
-	const entities = requestedTiers.has(3) ? await getGraphEntities(chunks.map((c) => c.chunkId)) : [];
+	const entities = requestedTiers.has(3)
+		? await getGraphEntities(
+				chunks.map((c) => c.chunkId),
+				[opts.userId],
+			)
+		: [];
 	onEvent &&
 		emit(onEvent, 'rank', 'done', {
 			durationMs: Math.round(performance.now() - rankStart),

@@ -17,12 +17,14 @@ export async function storeChunkStructure(
 	documentId: string,
 	parents: RawChunk[],
 	children: RawChunk[],
+	ownerId: string,
 ): Promise<void> {
 	// Batch all chunk nodes in one call
 	const allChunks = [...parents, ...children].map((c) => ({
 		pgId: c.id,
 		documentId,
 		level: c.level,
+		ownerId,
 	}));
 	await batchCreateChunks(allChunks);
 
@@ -61,6 +63,7 @@ export async function storeChunkStructure(
 export async function storeEntitiesAndRelationships(
 	extraction: ExtractionResult,
 	chunkEntityMap: Array<{ chunkPgId: string; entityName: string; confidence: number }>,
+	ownerId: string,
 ): Promise<{ entityCount: number; relationshipCount: number }> {
 	return storeDocumentGraph(
 		extraction.entities,
@@ -71,5 +74,6 @@ export async function storeEntitiesAndRelationships(
 			weight: r.weight,
 		})),
 		chunkEntityMap,
+		ownerId,
 	);
 }

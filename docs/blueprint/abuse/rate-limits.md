@@ -17,12 +17,16 @@ const limiter = createLimiter(prefix, max, window);
 
 Returns a `Limiter` with one method: `limit(id: string): Promise<{ success: boolean; reset: number }>`.
 
+The Upstash client is constructed with `timeout: 1000` — a slow Redis cannot stall a request indefinitely; the call is bounded at one second.
+
 **Redis-unavailable behavior:**
 
-| Environment | Redis missing |
-|-------------|---------------|
-| Dev | Passthrough — rate limiting disabled, warning logged |
-| Production | Fail-closed — all requests blocked, error logged |
+| Failure | Dev | Production |
+|---------|-----|-----------|
+| Redis missing at boot | Passthrough — rate limiting disabled, warning logged | Fail-closed — all requests blocked, error logged |
+| Redis throws at runtime (`.limit()` rejects/times out) | Passthrough | **Fail-closed — returns `success: false` (429), error logged** |
+
+`createLimiter` wraps `.limit()` so a runtime Redis throw fails CLOSED in production (429) rather than surfacing a 500. This matches the boot-time posture: when the rate limiter cannot make a decision, the safe default is to deny, not to let traffic through unmetered. Dev still passes through so local work isn't blocked by a missing Redis.
 
 `@upstash/ratelimit` `slidingWindow` algorithm is used for all limiters.
 
