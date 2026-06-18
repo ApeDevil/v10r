@@ -1,4 +1,9 @@
-import type { ConfidenceTier, ImageAnalysis, MetadataFieldKey } from '$lib/schemas/showcase/image-metadata';
+import type {
+	ConfidenceTier,
+	CostEstimate,
+	ImageAnalysis,
+	MetadataFieldKey,
+} from '$lib/schemas/showcase/image-metadata';
 
 /** EXIF/technical fields parsed from the ORIGINAL bytes, before stripping. */
 export interface ExtractedExif {
@@ -43,7 +48,11 @@ export type ExtractResult =
 			modelId: string;
 			inputTokens: number | null;
 			outputTokens: number | null;
+			/** Gemini "thinking" tokens; null when the provider doesn't report them. */
+			reasoningTokens: number | null;
 			durationMs: number;
+			/** Reference cost estimate; null when the model isn't priced. */
+			cost: CostEstimate | null;
 	  }
 	| { ok: false; reason: ExtractFailureReason; message: string };
 

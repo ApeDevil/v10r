@@ -140,6 +140,7 @@ export async function recordProposal(imageId: string, run: Extract<ExtractResult
 		modelId: run.modelId,
 		inputTokens: run.inputTokens,
 		outputTokens: run.outputTokens,
+		reasoningTokens: run.reasoningTokens,
 		durationMs: run.durationMs,
 		rawProposal: run.analysis,
 		confidence: run.analysis.confidence,

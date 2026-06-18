@@ -94,3 +94,50 @@ export function emptyImageMetadata(imageId: string): ImageMetadataInput {
 		gpsLng: null,
 	};
 }
+
+// ── 3) Cost + usage telemetry (showcase cost panel) ─────────────────
+// Token counts come straight from the provider's reported usage. The dollar figures
+// are a REFERENCE estimate at standard pay-as-you-go pricing — our Gemini key runs on
+// the FREE tier, so the real charge is $0. These are pure DTO types (no runtime), shared
+// across the server (analyze RPC, pricing.ts) and the client (cost panel) so the wire
+// shape can't drift. The dollar math lives server-side in $lib/server/ai/pricing.ts.
+
+/**
+ * Per-analysis token usage surfaced to the client. Counts are individually nullable
+ * (a provider may omit usage).
+ */
+export interface AnalyzeUsage {
+	providerId: string;
+	modelId: string;
+	inputTokens: number | null;
+	outputTokens: number | null;
+	/** Gemini "thinking" tokens (thoughtsTokenCount); null when the provider doesn't report them.
+	 *  A SUBSET of outputTokens (already counted in it), surfaced as its own line for transparency. */
+	reasoningTokens: number | null;
+	/** input + output (the billed basis). Reasoning is NOT added — it's a subset of output.
+	 *  null only when both input and output are null. */
+	totalTokens: number | null;
+	durationMs: number;
+}
+
+/** Reference cost estimate. null when the model isn't priced or no tokens were reported. */
+export interface CostEstimate {
+	/** Honesty discriminant: 'reference' = priced at standard rates, NOT a charge. */
+	kind: 'reference';
+	/** The price-table model these figures were costed against. */
+	pricedAs: string;
+	currency: 'USD';
+	inputUsd: number;
+	/** Billed output cost (includes thinking tokens, billed at the output rate). */
+	outputUsd: number;
+	/** Portion of outputUsd attributable to thinking tokens — a SUBSET, never added on top. */
+	reasoningUsd: number;
+	totalUsd: number;
+	/** totalUsd × 1000 — the human-legible "per 1,000 analyses" figure. */
+	per1000Usd: number;
+	/** Confidence in the underlying rate ('documented' for both current models). */
+	confidence: 'documented' | 'estimated' | 'unknown';
+	/** ISO date the price-table row was last hand-verified. */
+	verifiedOn: string;
+	sourceUrl: string;
+}

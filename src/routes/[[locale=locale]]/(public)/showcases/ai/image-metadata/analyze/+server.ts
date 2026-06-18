@@ -23,6 +23,12 @@ const REASON_STATUS: Record<ExtractFailureReason, number> = {
 	error: 500,
 };
 
+/** Sum the known token counts; null only when every term is null (provider reported no usage). */
+function sumKnown(...values: (number | null)[]): number | null {
+	const known = values.filter((v): v is number => v != null);
+	return known.length ? known.reduce((a, b) => a + b, 0) : null;
+}
+
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.user) {
 		// TODO(i18n)
@@ -59,6 +65,21 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			ok: true,
 			fields: { title, caption, altText, keywords, category },
 			confidence: result.analysis.confidence,
+			usage: {
+				providerId: result.providerId,
+				modelId: result.modelId,
+				inputTokens: result.inputTokens,
+				outputTokens: result.outputTokens,
+				reasoningTokens: result.reasoningTokens,
+				// Total = input + output only. Reasoning ("thinking") tokens are a SUBSET of
+				// output, not a separate bucket — empirically confirmed 2026-06-18 against
+				// gemini-2.5-flash: usage.totalTokens (1051) === input (491) + output (560),
+				// with reasoning (380) already inside output. Adding reasoning here would
+				// double-count it (see OUTPUT_TOKENS_INCLUDE_THINKING in ai/pricing.ts).
+				totalTokens: sumKnown(result.inputTokens, result.outputTokens),
+				durationMs: result.durationMs,
+			},
+			cost: result.cost,
 		});
 	}
 

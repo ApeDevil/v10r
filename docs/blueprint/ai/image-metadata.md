@@ -20,10 +20,11 @@ The manual form is the ground floor: every AI failure mode collapses to a typed 
 |-------|----------|------|
 | Domain core | `src/lib/server/imagemeta/` | Framework-free: ingest, process, extract, persist. Modeled 1:1 on `src/lib/server/cycle/`. |
 | Vision resolver | `src/lib/server/ai/providers.ts` | `supportsVision` flag + `resolveVisionProvider()`; exposed as `getVisionProvider()` from `ai/index.ts`. |
-| Canonical schema | `src/lib/schemas/showcase/image-metadata.ts` | One source, three consumers: AI-propose schema + strict save schema + helpers. |
+| Price board | `src/lib/server/ai/pricing.ts` | Hand-maintained reference rates (sibling of `provider-limits.ts`). `MODEL_PRICES` + `estimateCost()` → `CostEstimate \| null`. Server-only; never ships to the client. |
+| Canonical schema | `src/lib/schemas/showcase/image-metadata.ts` | One source, three consumers: AI-propose schema + strict save schema + helpers. Also holds the client-safe `AnalyzeUsage` / `CostEstimate` DTO types. |
 | Storage | `src/lib/server/store/showcase/image.ts` | R2 ops under the `showcase/imagemeta/` prefix. |
-| DB | `src/lib/server/db/schema/showcase/image-metadata.ts` | Dedicated `image` pgSchema: `asset` / `metadata` / `ai_proposal` / `tag` / `metadata_tag`. |
-| Route | `src/routes/[[locale=locale]]/(public)/showcases/ai/image-metadata/` | `+page.server.ts` (load + `upload`/`save` actions), `analyze/+server.ts` (RPC), `MetadataApprovalDialog.svelte`. |
+| DB | `src/lib/server/db/schema/showcase/image-metadata.ts` | Dedicated `image` pgSchema: `asset` / `metadata` / `ai_proposal` / `tag` / `metadata_tag`. `ai_proposal` stores token counts (incl. nullable `reasoning_tokens`), never dollars. |
+| Route | `src/routes/[[locale=locale]]/(public)/showcases/ai/image-metadata/` | `+page.server.ts` (load + `upload`/`save` actions), `analyze/+server.ts` (RPC — returns `fields`/`confidence` + `usage`/`cost`), `MetadataApprovalDialog.svelte`. |
 
 ### Import wall
 
@@ -52,7 +53,8 @@ upload (multipart)
        ├─ resolveVisionProvider  ← Google > OpenAI, Groq excluded
        ├─ generateText({ output: Output.object({ schema: jsonSchema(...) }) })
        ├─ re-validate result.output through canonical Valibot schema
-       └─ recordProposal (append-only run snapshot)
+       ├─ recordProposal (append-only run snapshot + token counts)
+       └─ estimateCost(modelId, tokens)  ← reference $ estimate, NOT a charge
   ↓
 taint-guarded merge  ← AI fills only fields the user hasn't touched
   ↓
@@ -84,6 +86,22 @@ This is not optional defense. The default active provider is registry index 0 (G
 | Groq | llama-3.3-70b-versatile | false (excluded) |
 | OpenAI | gpt-4o-mini | true |
 | Google Gemini | gemini-2.5-flash | true (preferred) |
+
+### Cost is a reference estimate, never a charge
+
+The cost panel shows token counts as the primary fact and a `≈ $X` dollar figure as secondary. The dollars are a **reference** at standard pay-as-you-go rates — our Gemini key is free-tier, so the real charge is `$0`. `CostEstimate.kind: 'reference'` is the machine-readable honesty bit; the UI carries an always-visible "Reference estimate · not a charge" badge plus a "You're on the free tier — this run cost $0.00" footnote (the one place `$0.00` is literally true: it states the real charge, not the estimate). Same "honest reference, not a fake gauge" stance as the [admin AI quota board](./provider-routing.md).
+
+`estimateCost(modelId, tokens)` returns `null` — never a guess — for an unpriced model or missing tokens. `pricing.ts` is keyed by **`modelId`, not `providerId`**: per-image vision-token cost differs ~25× between models on the same provider, so a per-provider rate would be wrong.
+
+**Cost is derived, never stored.** `ai_proposal` persists token counts only; dollars are computed at read-time from the versioned price map. A future rate change re-prices historical runs correctly. The price table is server-only — it never crosses the wire.
+
+### Thinking tokens are a subset of output
+
+gemini-2.5-flash runs reasoning ON. `thoughtsTokenCount` is read defensively from `result.providerMetadata.google.usageMetadata`, persisted to the nullable `reasoning_tokens` column, and shown as an indented "of which thinking" sub-line.
+
+**The SDK's `outputTokens` already includes thinking tokens.** Confirmed live 2026-06-18 against gemini-2.5-flash: `usage.totalTokens 1051 === input 491 + output 560`, with `reasoning 380` already inside output. So the displayed total is `input + output` — reasoning is **not** added (that would double-count), and cost prices output as-is. Encoded as `OUTPUT_TOKENS_INCLUDE_THINKING = true` in `pricing.ts`; flip to `false` only if a future provider reports thinking separately.
+
+The wire payload reflects this: the `analyze` RPC success shape gained `usage` (provider/model/token counts + `durationMs`, counts individually nullable) and `cost` (`CostEstimate | null`) beside `fields`/`confidence`.
 
 ### AI SDK v6 structured-output reality
 

@@ -17,9 +17,21 @@ import {
 } from '$lib/schemas/showcase/image-metadata';
 import { getVisionProvider } from '$lib/server/ai';
 import { chargeTokens, checkUserBudget } from '$lib/server/ai/budget';
+import { estimateCost } from '$lib/server/ai/pricing';
 import { AI_MAX_TOKENS } from '$lib/server/config';
 import { getImageBytes } from '$lib/server/store/showcase/image';
 import type { ExtractFailureReason, ExtractResult } from './types';
+
+/**
+ * Gemini "thinking" token count, read defensively from provider metadata. The shape is
+ * provider-specific and untyped (only @ai-sdk/google emits `thoughtsTokenCount`), so narrow
+ * rather than cast; null when the provider doesn't report it (e.g. OpenAI).
+ */
+function readThoughtsTokens(meta: unknown): number | null {
+	const google = (meta as { google?: { usageMetadata?: { thoughtsTokenCount?: unknown } } } | undefined)?.google;
+	const value = google?.usageMetadata?.thoughtsTokenCount;
+	return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
 
 const SYSTEM = `You extract metadata from a single image to pre-fill a form that a human will review and approve.
 
@@ -114,6 +126,9 @@ export async function extractImageMetadata(userId: string, storageKey: string): 
 		const analysis = parsed.output;
 		const inputTokens = result.usage?.inputTokens ?? null;
 		const outputTokens = result.usage?.outputTokens ?? null;
+		const reasoningTokens = readThoughtsTokens(result.providerMetadata);
+		// Budget charges outputTokens as-is: with thinking ON, @ai-sdk/google reports it as
+		// the billed total (already including thinking), so this reflects true spend.
 		await chargeTokens(userId, (inputTokens ?? 0) + (outputTokens ?? 0));
 
 		// A structurally-valid all-null object means the model could not read the image.
@@ -132,7 +147,9 @@ export async function extractImageMetadata(userId: string, storageKey: string): 
 			modelId: provider.model,
 			inputTokens,
 			outputTokens,
+			reasoningTokens,
 			durationMs: Math.round(performance.now() - start),
+			cost: estimateCost(provider.model, { inputTokens, outputTokens, reasoningTokens }),
 		};
 	} catch (err) {
 		const message = err instanceof Error ? err.message : 'Vision analysis failed.';

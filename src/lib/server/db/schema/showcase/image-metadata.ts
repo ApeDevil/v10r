@@ -134,6 +134,8 @@ export const imageAiProposal = imageSchema.table(
 		modelId: text('model_id').notNull(),
 		inputTokens: integer('input_tokens'),
 		outputTokens: integer('output_tokens'),
+		/** Gemini "thinking" tokens (thoughtsTokenCount). NULL = provider didn't report; billed at the output rate. */
+		reasoningTokens: integer('reasoning_tokens'),
 		durationMs: integer('duration_ms'),
 		/** The model's raw structured output (ImageAnalysis), verbatim. */
 		rawProposal: jsonb('raw_proposal').$type<ImageAnalysis>().notNull(),
