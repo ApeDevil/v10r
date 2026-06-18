@@ -7,3 +7,4 @@
 
 ## Project
 - [Transparency my-data showcase](project_transparency_my_data_showcase.md) — a reveal-gated "what we know about you" surface already exists at showcases/analytics/my-data; reuse, don't rebuild as post-signup data dump
+- [PlanCard approval precedent](project_plancard_approval_precedent.md) — v10r's existing AI propose→human-approve UI; non-modal during stream, streamReady-gated focus, aria-live, text+shape risk cues — extend for any AI-fills/human-verifies surface

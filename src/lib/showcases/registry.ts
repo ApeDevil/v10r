@@ -243,6 +243,7 @@ export const showcases: ShowcaseCard[] = [
 		description: 'AI assistant with Vercel AI SDK and Groq',
 		sublinks: [
 			{ label: 'Simple Chat', href: '/showcases/ai/chat' },
+			{ label: 'Image Metadata Reader', href: '/showcases/ai/image-metadata' },
 			{
 				label: 'Retrieval',
 				href: '/showcases/ai/retrieval',

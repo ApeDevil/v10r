@@ -4,7 +4,7 @@ Architecture and implementation designs for the AI subsystem.
 
 ## Overview
 
-Multi-provider chat assistant with tool calling, Graph RAG retrieval, catalog grounding, and desk integration. Uses Vercel AI SDK v6 for a unified API across providers.
+Multi-provider chat assistant with tool calling, Graph RAG retrieval, catalog grounding, and desk integration, plus a vision capability for image metadata extraction. Uses Vercel AI SDK v6 for a unified API across providers.
 
 ### Provider registry
 
@@ -14,14 +14,15 @@ Two separate resolvers handle different jobs:
 |----------|---------|---------------|
 | `resolveActiveProvider` | Chat-only turns (no tools) | user pref → `AI_PROVIDER` env → first configured |
 | `resolveToolProvider` | Tool-calling turns | user pref → `AI_PROVIDER` env → OpenAI → Google → others |
+| `resolveVisionProvider` | Image input (vision) | user pref → `AI_PROVIDER` env → Google → OpenAI (Groq excluded) |
 
 All three providers carry `supportsTools: true`, but Groq/llama probabilistically emits tool calls as plain text rather than a structured `tool_calls` field. The `tool-leak-guard.ts` transform suppresses that markup so the turn degrades to empty instead of leaking syntax. For reliable grounding, the tool provider prefers OpenAI → Google.
 
 | Provider | Model | Notes |
 |----------|-------|-------|
-| Groq | llama-3.3-70b-versatile | Default chat model; `supportsTools` but can drift |
-| OpenAI | gpt-4o-mini | Preferred tool provider |
-| Google Gemini | gemini-2.5-flash | Second-choice tool provider |
+| Groq | llama-3.3-70b-versatile | Default chat model; `supportsTools` but can drift; text-only (no vision) |
+| OpenAI | gpt-4o-mini | Preferred tool provider; vision-capable |
+| Google Gemini | gemini-2.5-flash | Second-choice tool provider; preferred vision provider |
 
 Circuit breaker: 60s cooldown on rate-limited providers (`markCooldown` / `isCooledDown`), Redis-backed so it is cross-instance and async.
 
@@ -29,7 +30,8 @@ Circuit breaker: 60s cooldown on rate-limited providers (`markCooldown` / `isCoo
 
 | Module | Location | Purpose |
 |--------|----------|---------|
-| Provider registry | `src/lib/server/ai/providers.ts` | Dual-resolver config, cooldowns, user preferences |
+| Provider registry | `src/lib/server/ai/providers.ts` | Resolver config (chat/tool/vision), cooldowns, user preferences |
+| Image metadata domain | `src/lib/server/imagemeta/` | Framework-free core: ingest, EXIF-strip, vision extract, persist |
 | Chat orchestrator | `src/lib/server/ai/chat-orchestrator.ts` | Streaming, fallback rotation, tool calling, catalog grounding |
 | Error classification | `src/lib/server/ai/errors.ts` | Provider error → user-safe message mapping |
 | Tool definitions | `src/lib/server/ai/tools/` | Desk-read, desk-write, retrieval, catalog search |
@@ -44,6 +46,7 @@ Circuit breaker: 60s cooldown on rate-limited providers (`markCooldown` / `isCoo
 |------|--------|
 | [layered-rag.md](./layered-rag.md) | **Primary RAG doc.** Two-layer split (llmwiki + rawrag), catalog grounding (`search_catalog`, `<catalog-map>`, citation chips), docs corpus (`search_project_docs`, system-owned ownership, `db:ingest-docs`), tool contracts, read path, citation verification |
 | [provider-routing.md](./provider-routing.md) | Chat vs tool resolver split, `wantsTools` logic, Redis circuit breaker (cross-instance), provider quota & limits board (honest-board model, `/api/admin/ai/quota`), Groq drift + leak guard, practical consequences |
+| [image-metadata.md](./image-metadata.md) | Image Metadata Reader showcase: vision resolver (`resolveVisionProvider`, Groq-excluded), `imagemeta` domain core + import wall, upload→strip→analyze→approve flow, GPS opt-in consent gate + GDPR surface, AI SDK v6 `Output.object` + Valibot re-validation, whole-form atomic approval, `image` pgSchema |
 | [graph-rag.md](./graph-rag.md) | rawrag internals: chunking, embeddings, parent-child, graph traversal, recursive retrieval; Phase 3 catalog `:Resource` seed |
 | [desk-integration.md](./desk-integration.md) | AI tool calling for desk operations, I/O log, effect system |
 | [toon.md](./toon.md) | TOON format for token-efficient RAG context injection |

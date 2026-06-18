@@ -491,6 +491,7 @@ AI integration showcase using the Vercel AI SDK. Covers basic chat through full 
 | `/retrieval/contextual` | Contextual retrieval: context-enriched chunk embedding |
 | `/retrieval/parent-child` | Parent-child chunking: small retrieval, large context |
 | `/retrieval/graph` | Graph-based retrieval: entity extraction, relationship traversal |
+| `/image-metadata` | Vision: upload an image, AI proposes metadata, human reviews + approves before save (opt-in GPS). See [ai/image-metadata.md](./ai/image-metadata.md) |
 
 ---
 

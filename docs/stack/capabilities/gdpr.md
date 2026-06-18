@@ -37,7 +37,8 @@ These are enforced in `privacy/report.ts`, not left to callers:
 - **Sections degrade independently.** A `settle()` wrapper makes one failed read render that section unavailable; it never 500s the whole report.
 - **Per-domain legal basis + Art 20 `portable` tag.** Portability applies only to consent/contract data; the report marks which sections it covers.
 - **The anonymous pre-signup analytics trail is deliberately absent.** Re-identifying a hashed `visitorId` needs a documented Art 6(4) basis that does not exist. Do not add it without one.
-- **The `security` section is contract, never portable.** It reports `twoFactorEnabled` + passkey display metadata only — never a secret, backup code, public key, credential ID, or raw AAGUID. `REPORT_SCHEMA_VERSION` is bumped (`2026-06-12`) when section shape changes. Erasure needs no change: passkey/two-factor rows FK-cascade with `auth.user`.
+- **The `security` section is contract, never portable.** It reports `twoFactorEnabled` + passkey display metadata only — never a secret, backup code, public key, credential ID, or raw AAGUID. `REPORT_SCHEMA_VERSION` is bumped (`2026-06-17`) when section shape changes. Erasure needs no change: passkey/two-factor rows FK-cascade with `auth.user`.
+- **The `images` section reports a `withGpsCount`.** The Image Metadata Reader treats location as opt-in (see [../../blueprint/ai/image-metadata.md](../../blueprint/ai/image-metadata.md)); the aggregator can count persisted-location records because GPS lives in a typed `gps_lat`/`gps_lng` column, never only inside a blob. Stored image derivatives are EXIF-stripped, so no GPS exists outside this opt-in column.
 
 ### Erasure is the FK cascade
 

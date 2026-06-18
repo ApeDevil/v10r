@@ -1058,7 +1058,20 @@ export const tagsSchema = v.object({
 </form>
 ```
 
-**Important:** `dataType: 'json'` is required for nested arrays and objects. Arrays of primitives at the top level don't require it.
+**Important:** `dataType: 'json'` is required for nested arrays and objects. A top-level array of primitives works in the default `dataType: 'form'` mode **only if each element is backed by a real DOM input named after the field** — Superforms reads it server-side via `formData.getAll('fieldName')`.
+
+A component bound only with `bind:value` that renders no named inputs (a tag-chips / `TagInput`-style component) silently posts an **empty array**: the server receives `[]` and the data is lost. Two fixes:
+
+- **Mirror each element in a hidden named input** — `<input type="hidden" name="keywords" value={item} />` per array entry. Progressive-enhancement-friendly: the array still posts with JS off.
+- **Switch to `dataType: 'json'`** — but this breaks the no-JS path (see the requirements box above).
+
+```svelte
+<!-- bind:value component + hidden-input mirror -->
+<TagInput bind:value={$form.keywords} />
+{#each $form.keywords as keyword}
+  <input type="hidden" name="keywords" value={keyword} />
+{/each}
+```
 
 ### Async Validation (Server-Side Checks)
 

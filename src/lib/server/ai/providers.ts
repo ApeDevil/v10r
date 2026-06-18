@@ -13,6 +13,8 @@ export interface ProviderEntry {
 	envVar: string;
 	/** Whether this provider reliably supports tool calling. */
 	supportsTools: boolean;
+	/** Whether this provider's model accepts image input (vision). */
+	supportsVision: boolean;
 	getInstance: () => LanguageModel | null;
 }
 
@@ -22,6 +24,7 @@ const PROVIDER_CONFIGS: {
 	model: string;
 	envVar: string;
 	supportsTools: boolean;
+	supportsVision: boolean;
 	factory: (apiKey: string) => LanguageModel;
 }[] = [
 	{
@@ -30,6 +33,7 @@ const PROVIDER_CONFIGS: {
 		model: 'llama-3.3-70b-versatile',
 		envVar: 'GROQ_API_KEY',
 		supportsTools: true, // Llama can drift in long multi-turn, but our stepCountIs(3) bounds it
+		supportsVision: false, // text-only llama-3.3 — must never receive an image part
 		factory: (apiKey) => createGroq({ apiKey })('llama-3.3-70b-versatile'),
 	},
 	{
@@ -38,6 +42,7 @@ const PROVIDER_CONFIGS: {
 		model: 'gpt-4o-mini',
 		envVar: 'OPENAI_API_KEY',
 		supportsTools: true, // Most reliable for tool calling
+		supportsVision: true, // gpt-4o-mini accepts image input
 		factory: (apiKey) => createOpenAI({ apiKey })('gpt-4o-mini'),
 	},
 	{
@@ -46,6 +51,7 @@ const PROVIDER_CONFIGS: {
 		model: 'gemini-2.5-flash',
 		envVar: 'GOOGLE_GENERATIVE_AI_API_KEY',
 		supportsTools: true, // Works but known issues with optional arrays
+		supportsVision: true, // gemini-2.5-flash is natively multimodal
 		factory: (apiKey) => createGoogleGenerativeAI({ apiKey })('gemini-2.5-flash'),
 	},
 ];
@@ -63,6 +69,7 @@ export function buildProviderRegistry(): ProviderEntry[] {
 			model: config.model,
 			envVar: config.envVar,
 			supportsTools: config.supportsTools,
+			supportsVision: config.supportsVision,
 			getInstance: () => (configured ? config.factory(apiKey) : null),
 		};
 	});
@@ -163,6 +170,34 @@ export function resolveToolProvider(registry: ProviderEntry[], preference?: stri
 		if (match) return match;
 	}
 	return toolProviders[0] ?? null;
+}
+
+/**
+ * Resolve a provider that supports vision (image input).
+ * User preference → AI_PROVIDER → Google > OpenAI. Groq is hard-excluded (text-only).
+ *
+ * This filter is load-bearing: the default active provider is registry index 0
+ * (Groq), which would silently receive a blind image and hallucinate. Image
+ * extraction MUST route through here, never through resolveActiveProvider.
+ */
+export function resolveVisionProvider(registry: ProviderEntry[], preference?: string | null): ProviderEntry | null {
+	const visionProviders = registry.filter((p) => p.configured && p.supportsVision);
+	if (preference) {
+		const match = visionProviders.find((p) => p.id === preference);
+		if (match) return match;
+	}
+	const envProvider = env.AI_PROVIDER ?? '';
+	if (envProvider) {
+		const envMatch = visionProviders.find((p) => p.id === envProvider);
+		if (envMatch) return envMatch;
+	}
+	// Gemini first: cheaper + larger context + native multimodal; gpt-4o-mini as fallback.
+	const preferred = ['google', 'openai'];
+	for (const id of preferred) {
+		const match = visionProviders.find((p) => p.id === id);
+		if (match) return match;
+	}
+	return visionProviders[0] ?? null;
 }
 
 // ── User provider preferences (in-memory, resets on server restart) ──

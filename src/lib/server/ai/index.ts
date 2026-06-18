@@ -5,6 +5,7 @@ import {
 	getUserPreference,
 	resolveActiveProvider,
 	resolveToolProvider,
+	resolveVisionProvider,
 } from './providers';
 
 const registry = buildProviderRegistry();
@@ -33,6 +34,16 @@ export function getActiveProvider(userId?: string, overrideProviderId?: string):
 export function getToolProvider(userId?: string, overrideProviderId?: string): ProviderEntry | null {
 	const pref = overrideProviderId ?? (userId ? getUserPreference(userId) : null);
 	return resolveToolProvider(registry, pref);
+}
+
+/**
+ * Get the vision-capable provider for a given user (for image analysis).
+ * Resolution: explicit override → stored preference → env → Google > OpenAI.
+ * Groq is never returned. Null when no vision provider is configured.
+ */
+export function getVisionProvider(userId?: string, overrideProviderId?: string): ProviderEntry | null {
+	const pref = overrideProviderId ?? (userId ? getUserPreference(userId) : null);
+	return resolveVisionProvider(registry, pref);
 }
 
 /** Get provider info { id, name, model } for a given user, or null. */

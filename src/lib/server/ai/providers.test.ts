@@ -9,6 +9,7 @@ import {
 	resetCooldowns,
 	resolveActiveProvider,
 	resolveToolProvider,
+	resolveVisionProvider,
 	setUserPreference,
 } from './providers';
 
@@ -26,6 +27,7 @@ function makeEntry(overrides: Partial<ProviderEntry> & { id: string }): Provider
 		model: `${overrides.id}-model`,
 		envVar: `${overrides.id.toUpperCase()}_KEY`,
 		supportsTools: true,
+		supportsVision: true,
 		getInstance: () => null,
 		...overrides,
 	};
@@ -129,6 +131,45 @@ describe('resolveToolProvider', () => {
 	it('returns null when no tool-capable provider exists', () => {
 		const noTools = makeEntry({ id: 'notool', supportsTools: false });
 		const result = resolveToolProvider([noTools]);
+		expect(result).toBeNull();
+	});
+});
+
+// ── resolveVisionProvider ──────────────────────────────────────────
+
+describe('resolveVisionProvider', () => {
+	const groqNoVision = makeEntry({ id: 'groq', supportsVision: false });
+	const visionRegistry = [groqNoVision, openai, google, unconfigured];
+
+	it('never returns a non-vision provider (Groq excluded)', () => {
+		const result = resolveVisionProvider(visionRegistry);
+		expect(result?.id).not.toBe('groq');
+		expect(result?.supportsVision).toBe(true);
+	});
+
+	it('prefers Google over OpenAI by default', () => {
+		const result = resolveVisionProvider(visionRegistry);
+		expect(result?.id).toBe('google');
+	});
+
+	it('falls back to OpenAI when Google is unconfigured', () => {
+		const googleOff = makeEntry({ id: 'google', configured: false });
+		const result = resolveVisionProvider([groqNoVision, openai, googleOff]);
+		expect(result?.id).toBe('openai');
+	});
+
+	it('respects a vision-capable user preference', () => {
+		const result = resolveVisionProvider(visionRegistry, 'openai');
+		expect(result?.id).toBe('openai');
+	});
+
+	it('ignores a preference for a non-vision provider', () => {
+		const result = resolveVisionProvider(visionRegistry, 'groq');
+		expect(result?.id).toBe('google');
+	});
+
+	it('returns null when no vision provider is configured', () => {
+		const result = resolveVisionProvider([groqNoVision]);
 		expect(result).toBeNull();
 	});
 });

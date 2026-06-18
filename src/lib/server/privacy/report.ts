@@ -23,7 +23,7 @@
  *   re-identifying the hashed visitorId requires a documented Art 6(4)
  *   basis that does not exist. Do not add it without one.
  */
-import { and, count, eq, isNull, sql } from 'drizzle-orm';
+import { and, count, eq, isNotNull, isNull, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { getPreferences } from '$lib/server/db/preferences';
 import { conversation } from '$lib/server/db/schema/ai/conversation';
@@ -34,9 +34,10 @@ import { file as deskFile } from '$lib/server/db/schema/desk/file';
 import { deskWorkspace } from '$lib/server/db/schema/desk/workspace';
 import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
 import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
+import { imageAsset, imageMetadata } from '$lib/server/db/schema/showcase/image-metadata';
 import { getUserOAuthSummary, getUserProfile, getUserSessions, listPasskeyDtos } from '$lib/server/db/user';
 
-export const REPORT_SCHEMA_VERSION = '2026-06-12';
+export const REPORT_SCHEMA_VERSION = '2026-06-17';
 
 /** Legal basis per domain — Art 20 portability applies only to consent/contract data. */
 export type LegalBasis = 'contract' | 'consent' | 'legitimate_interest';
@@ -84,6 +85,8 @@ export interface PersonalDataReport {
 	notifications: Section<{ telegramLinked: boolean; discordLinked: boolean }>;
 	blogComments: Section<{ count: number }>;
 	palettes: Section<{ count: number }>;
+	/** Image Metadata Reader. withGpsCount = records where the user opted to persist location. */
+	images: Section<{ imageCount: number; metadataCount: number; withGpsCount: number }>;
 	security: Section<{
 		twoFactorEnabled: boolean;
 		passkeys: {
@@ -135,114 +138,150 @@ export async function collectUserData(
 	userId: string,
 	opts: { currentSessionId?: string } = {},
 ): Promise<PersonalDataReport> {
-	const [identity, sessions, oauthAccounts, preferences, ai, desk, notifications, blogComments, palettes, security] =
-		await Promise.all([
-			settle('contract', true, async () => {
-				const profile = await getUserProfile(userId);
-				if (!profile) throw new Error('profile missing');
-				return {
-					id: profile.id,
-					name: profile.name,
-					email: profile.email,
-					emailVerified: profile.emailVerified,
-					image: profile.image,
-					createdAt: profile.createdAt.toISOString(),
-				};
-			}),
-			settle('contract', false, async () => {
-				const rows = await getUserSessions(userId);
-				const toEntry = (s: (typeof rows)[number], isCurrent: boolean): SessionEntry => ({
-					createdAt: s.createdAt.toISOString(),
-					expiresAt: s.expiresAt.toISOString(),
-					ipAddress: s.ipAddress ? (isCurrent ? s.ipAddress : maskIp(s.ipAddress)) : null,
-					userAgent: s.userAgent,
-					isCurrent,
-				});
-				const current = rows.find((s) => s.id === opts.currentSessionId);
-				return {
-					current: current ? toEntry(current, true) : null,
-					prior: rows.filter((s) => s.id !== opts.currentSessionId).map((s) => toEntry(s, false)),
-				};
-			}),
-			settle('contract', false, async () => {
-				const rows = await getUserOAuthSummary(userId);
-				return rows.map((a) => ({
-					provider: a.provider,
-					scope: a.scope,
-					linkedAt: a.linkedAt?.toISOString() ?? null,
-					hasAccessToken: a.hasAccessToken,
-					hasRefreshToken: a.hasRefreshToken,
-					accessTokenExpiresAt: a.accessTokenExpiresAt?.toISOString() ?? null,
-				}));
-			}),
-			settle('consent', true, async () => {
-				const row = await getPreferences(userId);
-				if (!row) return null;
-				const { userId: _omit, ...rest } = row;
-				return rest as Record<string, unknown>;
-			}),
-			settle('consent', true, async () => {
-				const [row] = await db
-					.select({
-						value: count(),
-						totalTokens: sql<number>`COALESCE(SUM(${conversation.totalInputTokens} + ${conversation.totalOutputTokens}), 0)`,
-					})
-					.from(conversation)
-					.where(eq(conversation.userId, userId));
-				return { conversationCount: row?.value ?? 0, totalTokens: row?.totalTokens ?? 0 };
-			}),
-			settle('consent', true, async () => {
-				const [workspaceCount, fileCount] = await Promise.all([
-					countWhere(() => db.select({ value: count() }).from(deskWorkspace).where(eq(deskWorkspace.userId, userId))),
-					countWhere(() =>
-						db
-							.select({ value: count() })
-							.from(deskFile)
-							.where(and(eq(deskFile.userId, userId), isNull(deskFile.deletedAt))),
-					),
-				]);
-				return { workspaceCount, fileCount };
-			}),
-			settle('consent', false, async () => {
-				const [telegram, discord] = await Promise.all([
-					countWhere(() =>
-						db.select({ value: count() }).from(userTelegramAccounts).where(eq(userTelegramAccounts.userId, userId)),
-					),
-					countWhere(() =>
-						db.select({ value: count() }).from(userDiscordAccounts).where(eq(userDiscordAccounts.userId, userId)),
-					),
-				]);
-				return { telegramLinked: telegram > 0, discordLinked: discord > 0 };
-			}),
-			settle('consent', true, async () => ({
-				count: await countWhere(() => db.select({ value: count() }).from(comment).where(eq(comment.authorId, userId))),
-			})),
-			settle('consent', true, async () => ({
-				count: await countWhere(() =>
-					db.select({ value: count() }).from(customPalettes).where(eq(customPalettes.createdBy, userId)),
+	const [
+		identity,
+		sessions,
+		oauthAccounts,
+		preferences,
+		ai,
+		desk,
+		notifications,
+		blogComments,
+		palettes,
+		images,
+		security,
+	] = await Promise.all([
+		settle('contract', true, async () => {
+			const profile = await getUserProfile(userId);
+			if (!profile) throw new Error('profile missing');
+			return {
+				id: profile.id,
+				name: profile.name,
+				email: profile.email,
+				emailVerified: profile.emailVerified,
+				image: profile.image,
+				createdAt: profile.createdAt.toISOString(),
+			};
+		}),
+		settle('contract', false, async () => {
+			const rows = await getUserSessions(userId);
+			const toEntry = (s: (typeof rows)[number], isCurrent: boolean): SessionEntry => ({
+				createdAt: s.createdAt.toISOString(),
+				expiresAt: s.expiresAt.toISOString(),
+				ipAddress: s.ipAddress ? (isCurrent ? s.ipAddress : maskIp(s.ipAddress)) : null,
+				userAgent: s.userAgent,
+				isCurrent,
+			});
+			const current = rows.find((s) => s.id === opts.currentSessionId);
+			return {
+				current: current ? toEntry(current, true) : null,
+				prior: rows.filter((s) => s.id !== opts.currentSessionId).map((s) => toEntry(s, false)),
+			};
+		}),
+		settle('contract', false, async () => {
+			const rows = await getUserOAuthSummary(userId);
+			return rows.map((a) => ({
+				provider: a.provider,
+				scope: a.scope,
+				linkedAt: a.linkedAt?.toISOString() ?? null,
+				hasAccessToken: a.hasAccessToken,
+				hasRefreshToken: a.hasRefreshToken,
+				accessTokenExpiresAt: a.accessTokenExpiresAt?.toISOString() ?? null,
+			}));
+		}),
+		settle('consent', true, async () => {
+			const row = await getPreferences(userId);
+			if (!row) return null;
+			const { userId: _omit, ...rest } = row;
+			return rest as Record<string, unknown>;
+		}),
+		settle('consent', true, async () => {
+			const [row] = await db
+				.select({
+					value: count(),
+					totalTokens: sql<number>`COALESCE(SUM(${conversation.totalInputTokens} + ${conversation.totalOutputTokens}), 0)`,
+				})
+				.from(conversation)
+				.where(eq(conversation.userId, userId));
+			return { conversationCount: row?.value ?? 0, totalTokens: row?.totalTokens ?? 0 };
+		}),
+		settle('consent', true, async () => {
+			const [workspaceCount, fileCount] = await Promise.all([
+				countWhere(() => db.select({ value: count() }).from(deskWorkspace).where(eq(deskWorkspace.userId, userId))),
+				countWhere(() =>
+					db
+						.select({ value: count() })
+						.from(deskFile)
+						.where(and(eq(deskFile.userId, userId), isNull(deskFile.deletedAt))),
 				),
-			})),
-			// Security credentials are not Art-20-portable (a passkey cannot be
-			// "taken elsewhere"); TOTP secret/backupCodes never appear, even
-			// encrypted — only enrollment state and passkey display metadata.
-			settle('contract', false, async () => {
-				const [profileRow, passkeys] = await Promise.all([
-					db.select({ twoFactorEnabled: user.twoFactorEnabled }).from(user).where(eq(user.id, userId)),
-					listPasskeyDtos(userId),
-				]);
-				return {
-					twoFactorEnabled: !!profileRow[0]?.twoFactorEnabled,
-					passkeys: passkeys.map((p) => ({
-						name: p.name,
-						authenticatorLabel: p.authenticatorLabel,
-						deviceType: p.deviceType,
-						backedUp: p.backedUp,
-						createdAt: p.createdAt?.toISOString() ?? null,
-						lastUsedAt: p.lastUsedAt?.toISOString() ?? null,
-					})),
-				};
-			}),
-		]);
+			]);
+			return { workspaceCount, fileCount };
+		}),
+		settle('consent', false, async () => {
+			const [telegram, discord] = await Promise.all([
+				countWhere(() =>
+					db.select({ value: count() }).from(userTelegramAccounts).where(eq(userTelegramAccounts.userId, userId)),
+				),
+				countWhere(() =>
+					db.select({ value: count() }).from(userDiscordAccounts).where(eq(userDiscordAccounts.userId, userId)),
+				),
+			]);
+			return { telegramLinked: telegram > 0, discordLinked: discord > 0 };
+		}),
+		settle('consent', true, async () => ({
+			count: await countWhere(() => db.select({ value: count() }).from(comment).where(eq(comment.authorId, userId))),
+		})),
+		settle('consent', true, async () => ({
+			count: await countWhere(() =>
+				db.select({ value: count() }).from(customPalettes).where(eq(customPalettes.createdBy, userId)),
+			),
+		})),
+		// Image Metadata Reader. GPS lives in a typed column (never only inside a
+		// blob), so location persistence is countable here — the canonical home the
+		// aggregator must query. withGpsCount reflects records where the user opted in.
+		settle('consent', true, async () => {
+			const [imageCount, metadataCount, withGpsCount] = await Promise.all([
+				countWhere(() => db.select({ value: count() }).from(imageAsset).where(eq(imageAsset.userId, userId))),
+				countWhere(() =>
+					db
+						.select({ value: count() })
+						.from(imageMetadata)
+						.innerJoin(imageAsset, eq(imageMetadata.imageId, imageAsset.id))
+						.where(and(eq(imageAsset.userId, userId), isNull(imageMetadata.deletedAt))),
+				),
+				countWhere(() =>
+					db
+						.select({ value: count() })
+						.from(imageMetadata)
+						.innerJoin(imageAsset, eq(imageMetadata.imageId, imageAsset.id))
+						.where(
+							and(eq(imageAsset.userId, userId), isNull(imageMetadata.deletedAt), isNotNull(imageMetadata.gpsLat)),
+						),
+				),
+			]);
+			return { imageCount, metadataCount, withGpsCount };
+		}),
+		// Security credentials are not Art-20-portable (a passkey cannot be
+		// "taken elsewhere"); TOTP secret/backupCodes never appear, even
+		// encrypted — only enrollment state and passkey display metadata.
+		settle('contract', false, async () => {
+			const [profileRow, passkeys] = await Promise.all([
+				db.select({ twoFactorEnabled: user.twoFactorEnabled }).from(user).where(eq(user.id, userId)),
+				listPasskeyDtos(userId),
+			]);
+			return {
+				twoFactorEnabled: !!profileRow[0]?.twoFactorEnabled,
+				passkeys: passkeys.map((p) => ({
+					name: p.name,
+					authenticatorLabel: p.authenticatorLabel,
+					deviceType: p.deviceType,
+					backedUp: p.backedUp,
+					createdAt: p.createdAt?.toISOString() ?? null,
+					lastUsedAt: p.lastUsedAt?.toISOString() ?? null,
+				})),
+			};
+		}),
+	]);
 
 	return {
 		meta: {
@@ -260,6 +299,7 @@ export async function collectUserData(
 		notifications,
 		blogComments,
 		palettes,
+		images,
 		security,
 	};
 }

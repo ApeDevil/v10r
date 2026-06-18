@@ -13,6 +13,7 @@ export default defineConfig({
 	schemaFilter: [
 		'admin',
 		'showcase',
+		'image',
 		'auth',
 		'ai',
 		'rag',

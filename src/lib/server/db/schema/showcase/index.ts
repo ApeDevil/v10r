@@ -2,6 +2,7 @@ export * from './audit-log';
 export * from './collection-shelf';
 export * from './cycle-run';
 export * from './document-vault';
+export * from './image-metadata';
 export * from './network-registry';
 export * from './range-booking';
 export * from './temporal-record';
