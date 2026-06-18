@@ -1,7 +1,7 @@
 /**
  * Comment read paths — list with cursor pagination + cross-locale counts.
  */
-import { and, count, desc, eq, isNull, lt, or, sql } from 'drizzle-orm';
+import { and, count, desc, eq, isNull, lt, or, type SQL, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
 import { comment } from '$lib/server/db/schema/blog/comment';
@@ -65,12 +65,16 @@ export async function listComments(params: ListParams): Promise<ListResult> {
 	const { postId, locale, cursor, viewerId, includeHidden } = params;
 	const limit = Math.min(params.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
 
-	const conds = [eq(comment.postId, postId), eq(comment.locale, locale), isNull(comment.deletedAt)];
+	const conds: (SQL | undefined)[] = [
+		eq(comment.postId, postId),
+		eq(comment.locale, locale),
+		isNull(comment.deletedAt),
+	];
 
 	if (!includeHidden) {
 		if (viewerId) {
 			// visible OR (own AND any status)
-			conds.push(or(eq(comment.status, 'visible'), eq(comment.authorId, viewerId))!);
+			conds.push(or(eq(comment.status, 'visible'), eq(comment.authorId, viewerId)));
 		} else {
 			conds.push(eq(comment.status, 'visible'));
 		}
@@ -84,7 +88,7 @@ export async function listComments(params: ListParams): Promise<ListResult> {
 				or(
 					lt(comment.createdAt, decoded.createdAt),
 					and(eq(comment.createdAt, decoded.createdAt), lt(comment.id, decoded.id)),
-				)!,
+				),
 			);
 		}
 	}

@@ -41,7 +41,7 @@ export async function createGrantRequest(params: CreateRequestParams): Promise<{
 	const { userId, kind, message } = params;
 
 	try {
-		const inserted = await db
+		const [inserted] = await db
 			.insert(grantRequest)
 			.values({
 				id: createId.grantRequest(),
@@ -52,7 +52,7 @@ export async function createGrantRequest(params: CreateRequestParams): Promise<{
 			})
 			.returning({ id: grantRequest.id });
 
-		return { id: inserted[0]!.id };
+		return { id: inserted.id };
 	} catch (err) {
 		if (isPgUniqueViolation(err, 'auth_grant_request_pending_uniq')) {
 			throw new GrantRequestPendingError();
