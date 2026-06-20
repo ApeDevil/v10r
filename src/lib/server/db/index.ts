@@ -9,7 +9,7 @@ import * as relations from './schema/relations';
 // Same approach used in drizzle.config.ts.
 neonConfig.poolQueryViaFetch = true;
 
-const pool = new Pool({ connectionString: env.DATABASE_URL });
+const pool = new Pool({ connectionString: env.NEON_DATABASE_URL_PROD });
 
 export const db = drizzle(pool, { schema: { ...schema, ...relations } });
 

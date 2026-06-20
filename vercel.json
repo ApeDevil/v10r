@@ -15,6 +15,14 @@
 		{
 			"path": "/api/cron/analytics-rollup",
 			"schedule": "30 2 * * *"
+		},
+		{
+			"path": "/api/cron/dbops-refresh",
+			"schedule": "0 4 * * *"
+		},
+		{
+			"path": "/api/cron/dbops-reaper",
+			"schedule": "*/15 * * * *"
 		}
 	]
 }

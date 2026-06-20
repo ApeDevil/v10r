@@ -22,10 +22,11 @@ export default defineConfig({
 		'analytics',
 		'app',
 		'blog',
+		'dbops',
 		'desk',
 		'feedback',
 	],
 	dbCredentials: {
-		url: process.env.DATABASE_URL ?? '',
+		url: process.env.NEON_DATABASE_URL_PROD ?? '',
 	},
 });

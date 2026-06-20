@@ -14,9 +14,9 @@ import { drizzle } from 'drizzle-orm/neon-serverless';
 
 neonConfig.poolQueryViaFetch = true;
 
-const url = process.env.DATABASE_URL;
+const url = process.env.NEON_DATABASE_URL_PROD;
 if (!url) {
-	console.error('DATABASE_URL not set');
+	console.error('NEON_DATABASE_URL_PROD not set');
 	process.exit(1);
 }
 

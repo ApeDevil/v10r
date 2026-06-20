@@ -54,6 +54,8 @@ export const createId = {
 	grant: () => `grn_${shortId()}`,
 	/** Auth grant request: grq_a8f3e1b2c4d9 */
 	grantRequest: () => `grq_${shortId()}`,
+	/** DB ops run (branch refresh): dbr_a8f3e1b2c4d9 */
+	dbRun: () => `dbr_${shortId()}`,
 	/** Generic UUID */
 	uuid: () => crypto.randomUUID(),
 } as const;

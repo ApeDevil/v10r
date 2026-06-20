@@ -414,7 +414,7 @@ vi.mock('$app/environment', () => ({
 # Fake values for $env/static/private — only needed when tests import
 # modules that read these at module load time. Pure logic tests
 # (rank.ts, chunk.ts, errors/) don't need any of these.
-DATABASE_URL=postgresql://test:test@localhost/test
+NEON_DATABASE_URL_PROD=postgresql://test:test@localhost/test
 BETTER_AUTH_SECRET=a-test-secret-that-is-at-least-32-chars
 BETTER_AUTH_URL=http://localhost:5173
 GITHUB_CLIENT_ID=test
@@ -426,7 +426,7 @@ NEO4J_USERNAME=neo4j
 NEO4J_PASSWORD=test
 ```
 
-**Why this is needed:** `$lib/server/auth/index.ts` throws at module load if `BETTER_AUTH_SECRET` is shorter than 32 characters. `$lib/server/db/index.ts` reads `DATABASE_URL` at module load. The `sveltekit()` plugin reads `.env.test` automatically for `$env/static/private` values. These are never used for real connections — PGlite replaces the DB, and auth is mocked.
+**Why this is needed:** `$lib/server/auth/index.ts` throws at module load if `BETTER_AUTH_SECRET` is shorter than 32 characters. `$lib/server/db/index.ts` reads `NEON_DATABASE_URL_PROD` at module load. The `sveltekit()` plugin reads `.env.test` automatically for `$env/static/private` values. These are never used for real connections — PGlite replaces the DB, and auth is mocked.
 
 ### package.json scripts
 

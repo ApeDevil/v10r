@@ -26,10 +26,10 @@ import { drizzle } from 'drizzle-orm/neon-serverless';
 
 neonConfig.poolQueryViaFetch = true;
 
-const DATABASE_URL = process.env.DATABASE_URL;
+const NEON_DATABASE_URL_PROD = process.env.NEON_DATABASE_URL_PROD;
 const GEMINI_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-if (!DATABASE_URL) {
-	console.error('DATABASE_URL not set');
+if (!NEON_DATABASE_URL_PROD) {
+	console.error('NEON_DATABASE_URL_PROD not set');
 	process.exit(1);
 }
 if (!GEMINI_KEY) {
@@ -37,7 +37,7 @@ if (!GEMINI_KEY) {
 	process.exit(1);
 }
 
-const pool = new Pool({ connectionString: DATABASE_URL });
+const pool = new Pool({ connectionString: NEON_DATABASE_URL_PROD });
 const db = drizzle(pool);
 const embedModel = createGoogleGenerativeAI({ apiKey: GEMINI_KEY }).embedding('gemini-embedding-001');
 const EMBEDDING_OPTS = { google: { outputDimensionality: 1536 } };

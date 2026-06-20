@@ -283,7 +283,7 @@ src/lib/server/db/
 
 ```typescript
 neonConfig.poolQueryViaFetch = true; // Bun WebSocket workaround
-const pool = new Pool({ connectionString: env.DATABASE_URL });
+const pool = new Pool({ connectionString: env.NEON_DATABASE_URL_PROD });
 export const db = drizzle(pool, { schema: { ...schema, ...relations } });
 ```
 

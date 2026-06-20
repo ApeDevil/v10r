@@ -1,53 +1,8 @@
-import { requireAdmin } from '$lib/server/auth/guards';
-import type { ProviderResult } from '$lib/server/monitoring';
-import { fetchNeo4jMetrics } from '$lib/server/monitoring/neo4j';
-import { fetchNeonMetrics } from '$lib/server/monitoring/neon';
-import { fetchR2Metrics } from '$lib/server/monitoring/r2';
-import { fetchUpstashMetrics } from '$lib/server/monitoring/upstash';
-import type { Actions, PageServerLoad } from './$types';
+import { redirect } from '@sveltejs/kit';
+import { localizeHref } from '$lib/i18n';
+import type { PageServerLoad } from './$types';
 
-function settledToResult<T>(result: PromiseSettledResult<ProviderResult<T>>): ProviderResult<T> {
-	if (result.status === 'fulfilled') return result.value;
-	return {
-		status: 'unavailable',
-		data: null,
-		error: result.reason instanceof Error ? result.reason.message : 'Unknown error',
-		measuredAt: new Date().toISOString(),
-		latencyMs: 0,
-	};
-}
-
-export const load: PageServerLoad = async ({ depends, locals }) => {
-	requireAdmin(locals);
-	depends('admin:db');
-
-	const [upstashResult, r2Result] = await Promise.allSettled([fetchUpstashMetrics(), fetchR2Metrics()]);
-
-	return {
-		title: 'DB Observation',
-		neon: fetchNeonMetrics(),
-		neo4j: fetchNeo4jMetrics(),
-		upstash: settledToResult(upstashResult),
-		r2: settledToResult(r2Result),
-	};
-};
-
-export const actions: Actions = {
-	retest: async ({ locals }) => {
-		requireAdmin(locals);
-
-		const [neon, neo4j, upstash, r2] = await Promise.allSettled([
-			fetchNeonMetrics(),
-			fetchNeo4jMetrics(),
-			fetchUpstashMetrics(),
-			fetchR2Metrics(),
-		]);
-
-		return {
-			neon: settledToResult(neon),
-			neo4j: settledToResult(neo4j),
-			upstash: settledToResult(upstash),
-			r2: settledToResult(r2),
-		};
-	},
+/** Bare /admin/db lands on the Observe tab. Auth handled by +layout.server.ts. */
+export const load: PageServerLoad = () => {
+	redirect(307, localizeHref('/admin/db/observe'));
 };

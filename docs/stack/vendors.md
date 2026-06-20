@@ -211,7 +211,7 @@ We use a **multi-provider architecture** with Vercel AI SDK, selecting the best 
 - Autoscaling to zero
 - Instant point-in-time recovery
 
-**Migration:** Standard `pg_dump`/`pg_restore`. Change `DATABASE_URL`.
+**Migration:** Standard `pg_dump`/`pg_restore`. Change `NEON_DATABASE_URL_PROD`.
 
 ---
 
@@ -465,7 +465,7 @@ See [../blueprint/db/README.md](../blueprint/db/README.md) for container setup.
 | `GROQ_API_KEY` | Groq | Chat + Audio API key |
 | `MISTRAL_API_KEY` | Mistral | Embeddings API key |
 | `TOGETHER_API_KEY` | Together AI | Image generation API key |
-| `DATABASE_URL` | Neon | Postgres connection |
+| `NEON_DATABASE_URL_PROD` | Neon | Postgres connection (app's own var, not the ecosystem-standard `DATABASE_URL`) |
 | `NEO4J_URI` | Neo4j Aura | Graph connection |
 | `NEO4J_USERNAME` | Neo4j Aura | Graph auth |
 | `NEO4J_PASSWORD` | Neo4j Aura | Graph auth |

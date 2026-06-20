@@ -6,7 +6,7 @@ Database and storage layer.
 
 | File | Main Topics |
 |------|-------------|
-| **[postgres.md](./postgres.md)** | • PostgreSQL choice, • Neon provider, • Data responsibilities |
+| **[postgres.md](./postgres.md)** | • PostgreSQL choice, • Neon provider, • Data responsibilities, • Branching (two-plane access: data vs control), • Reset dev from prod |
 | **[neo4j.md](./neo4j.md)** | • Graph database, • Cypher queries, • When to use graphs, • Polyglot freshness |
 | **[drizzle.md](./drizzle.md)** | • ORM choice, • Type inference, • Migrations, • Schema patterns |
 | **[r2.md](./r2.md)** | • Object storage, • S3 compatibility, • Zero egress, • Store layer architecture, • Presigned URLs, • Byte-range requests, • Upload validation, • Seed data |

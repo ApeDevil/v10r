@@ -158,7 +158,7 @@ function recordHistory(ms: number) {
 			<Alert variant="error" title="Connection Error">
 				{#snippet children()}
 					<code class="diag-mono">{data.error}</code>
-					<p>Check that <code>DATABASE_URL</code> is set in <code>.env</code> and points to a valid Neon database with <code>?sslmode=require</code>.</p>
+					<p>Check that <code>NEON_DATABASE_URL_PROD</code> is set in <code>.env</code> and points to a valid Neon database with <code>?sslmode=require</code>.</p>
 				{/snippet}
 			</Alert>
 		{/if}

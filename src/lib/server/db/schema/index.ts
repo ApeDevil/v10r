@@ -4,6 +4,7 @@ export * from './analytics';
 export * from './app';
 export * from './auth';
 export * from './blog';
+export * from './dbops';
 export * from './desk';
 export * from './feedback';
 export * from './jobs';

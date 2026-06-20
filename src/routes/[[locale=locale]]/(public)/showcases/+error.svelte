@@ -3,7 +3,7 @@ import { page } from '$app/state';
 import { ErrorDisplay } from '$lib/components/composites';
 
 const HINT_MAP: [string, string][] = [
-	['/showcases/db/relational', 'Check your Neon DATABASE_URL in .env — is the connection string valid?'],
+	['/showcases/db/relational', 'Check your NEON_DATABASE_URL_PROD in .env — is the connection string valid?'],
 	['/showcases/db/graph', 'Check NEO4J_URI, NEO4J_USERNAME, and NEO4J_PASSWORD in .env.'],
 	['/showcases/db/storage', 'Check R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, and R2_SECRET_ACCESS_KEY in .env.'],
 	['/showcases/3d', 'WebGL is required. Check that your browser supports it and graphics drivers are up to date.'],

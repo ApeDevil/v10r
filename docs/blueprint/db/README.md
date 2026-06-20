@@ -120,7 +120,7 @@ All databases are cloud-hosted — no local containers needed:
 
 ```bash
 # PostgreSQL (Neon)
-DATABASE_URL="postgresql://..."
+NEON_DATABASE_URL_PROD="postgresql://..."
 
 # Neo4j (Aura)
 NEO4J_URI="neo4j+s://..."

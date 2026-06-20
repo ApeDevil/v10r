@@ -503,7 +503,7 @@ import { neon } from '@neondatabase/serverless';
 import * as schema from './schema';
 import * as relations from './relations';
 
-const sql = neon(process.env.DATABASE_URL!);
+const sql = neon(process.env.NEON_DATABASE_URL_PROD!);
 
 export const db = drizzle(sql, {
   schema: { ...schema, ...relations }
@@ -547,7 +547,7 @@ export default defineConfig({
   out: './drizzle',
   dialect: 'postgresql',
   dbCredentials: {
-    url: process.env.DATABASE_URL!
+    url: process.env.NEON_DATABASE_URL_PROD!
   }
 });
 ```

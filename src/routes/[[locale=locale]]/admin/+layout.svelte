@@ -14,7 +14,7 @@ const groups = [
 	{
 		label: 'Observe',
 		items: [
-			{ label: 'DB Observation', href: '/admin/db', icon: 'i-lucide-database' },
+			{ label: 'Database', href: '/admin/db', icon: 'i-lucide-database' },
 			{ label: 'Analytics', href: '/admin/analytics', icon: 'i-lucide-bar-chart-2' },
 			{ label: 'Audit Log', href: '/admin/audit', icon: 'i-lucide-shield-check' },
 		],

@@ -64,6 +64,7 @@ Implementation designs and feature specifications. How to build features using t
 | File | Main Topics |
 |------|-------------|
 | **[data/drizzle-workflow.md](./data/drizzle-workflow.md)** | • Dev→prod schema workflow: `push` for development, `generate`+`migrate` for production<br>• Transitioning from push to migrations (fresh DB vs existing DB baseline)<br>• Production gotchas: no migration locking, Bun CLI issues, enum pitfalls, rollback gaps |
+| **[data/neon-branch-refresh.md](./data/neon-branch-refresh.md)** | • Reset dev Neon branch from prod (`/admin/db`: Observe/Mirror/Runs tabs)<br>• Two access planes: data plane (DSN, SQL) vs control plane (Management API, `NEON_API_KEY`, reset-from-parent)<br>• Endpoint id (`ep-…`) ≠ branch id (`br-…`); ids not derivable from DSN<br>• `$lib/server/neon/` (sole key holder, no connection strings in payloads) + `$lib/server/dbops/` (orchestrator)<br>• Lazy-advance-on-poll executor, `dbops.run` ledger, partial-unique concurrency lock + lease/reaper recovery<br>• API `/api/admin/db/ops` (start 202 / replay 200, poll advances, cancel); `{data}`/`{error}` envelope<br>• Jobs `dbops-refresh` (gated by `DBOPS_AUTO_REFRESH_ENABLED`, daily) + `dbops-reaper` (`*/15`, needs Vercel Pro)<br>• Setup: env vars + `db:push` (PTY trick); ledger lives on app DB, not the reset branch<br>• Constraints: prod→dev only, GDPR (real prod data copied to dev), no anonymization in v1, free-tier limits |
 
 ## Deployment
 

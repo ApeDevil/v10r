@@ -104,9 +104,15 @@ Set in Vercel dashboard → Settings → Environment Variables:
 
 | Variable | Required | Notes |
 |----------|----------|-------|
-| `DATABASE_URL` | Yes | Neon connection string |
+| `NEON_DATABASE_URL_PROD` | Yes | Neon connection string. Neon's Vercel integration auto-injects `DATABASE_URL` — if you use it, set `NEON_DATABASE_URL_PROD` manually or reconfigure the integration's target var |
+| `NEON_DATABASE_URL_DEV` | No | Optional labeled spare for the dev branch; not read by the app |
 | `RATE_LIMIT_SECRET` | Yes | 32+ char secret |
 | `CRON_SECRET` | Yes | Bearer token for cron endpoints |
+| `NEON_API_KEY` | If using branch refresh | Neon Management API key — see [data/neon-branch-refresh.md](./data/neon-branch-refresh.md) |
+| `NEON_PROJECT_ID` | If using branch refresh | Neon project id |
+| `NEON_DEV_BRANCH_ID` | If using branch refresh | `br-…` of the dev branch |
+| `NEON_PARENT_BRANCH_ID` | No | Defaults to the dev branch's `parent_id` |
+| `DBOPS_AUTO_REFRESH_ENABLED` | No | `"true"` enables the scheduled dev-branch reset. Default off. |
 | `R2_ENDPOINT` | If using R2 | Cloudflare R2 endpoint |
 | `R2_ACCESS_KEY_ID` | If using R2 | R2 credentials |
 | `R2_SECRET_ACCESS_KEY` | If using R2 | R2 credentials |
@@ -344,7 +350,7 @@ Set in Koyeb dashboard → Service → Settings → Environment:
 
 | Variable | Required | Notes |
 |----------|----------|-------|
-| `DATABASE_URL` | Yes | Neon connection string |
+| `NEON_DATABASE_URL_PROD` | Yes | Neon connection string |
 | `RATE_LIMIT_SECRET` | Yes | 32+ char secret |
 | `ORIGIN` | Yes | `https://your-app.koyeb.app` |
 | `R2_ENDPOINT` | If using R2 | Cloudflare R2 endpoint |
@@ -386,7 +392,7 @@ podman build -t velociraptor .
 
 # Run container
 podman run -p 3000:3000 \
-  -e DATABASE_URL="postgresql://..." \
+  -e NEON_DATABASE_URL_PROD="postgresql://..." \
   -e ORIGIN="http://localhost:3000" \
   velociraptor
 
@@ -453,6 +459,8 @@ export const jobs: Record<string, Job> = {
 ```
 
 Container mode runs all registered jobs on the same interval (`JOB_INTERVAL_MS`, default 3 hours). Vercel crons can have independent schedules.
+
+> Sub-daily crons need Vercel Pro — Hobby allows daily only. The `dbops-reaper` job (`*/15`) is one such case; see [data/neon-branch-refresh.md](./data/neon-branch-refresh.md).
 
 ### HTTP endpoint
 
@@ -735,7 +743,7 @@ koyeb service logs <service-name> --follow
 
 | Variable | Vercel | Koyeb | Required |
 |----------|--------|-------|----------|
-| `DATABASE_URL` | Dashboard | Dashboard | Yes |
+| `NEON_DATABASE_URL_PROD` | Dashboard | Dashboard | Yes |
 | `ORIGIN` | Auto | Manual | Yes (Koyeb) |
 | `RATE_LIMIT_SECRET` | Dashboard | Dashboard | Yes |
 | `CRON_SECRET` | Dashboard | Dashboard | If using crons |

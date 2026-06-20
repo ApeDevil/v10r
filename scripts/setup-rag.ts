@@ -20,13 +20,13 @@ import { drizzle } from 'drizzle-orm/neon-serverless';
 // Bun's ws implementation mishandles WebSocket upgrade (HTTP 101).
 neonConfig.poolQueryViaFetch = true;
 
-const DATABASE_URL = process.env.DATABASE_URL;
-if (!DATABASE_URL) {
-	console.error('DATABASE_URL is not set');
+const NEON_DATABASE_URL_PROD = process.env.NEON_DATABASE_URL_PROD;
+if (!NEON_DATABASE_URL_PROD) {
+	console.error('NEON_DATABASE_URL_PROD is not set');
 	process.exit(1);
 }
 
-const pool = new Pool({ connectionString: DATABASE_URL });
+const pool = new Pool({ connectionString: NEON_DATABASE_URL_PROD });
 const db = drizzle(pool);
 
 const phase = process.argv[2];

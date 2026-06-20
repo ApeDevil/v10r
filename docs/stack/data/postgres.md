@@ -54,9 +54,11 @@ Pooled (PgBouncer) disables: `SET`, `PREPARE`, `LISTEN`/`NOTIFY`, session adviso
 **What this project uses:**
 
 - **App runtime:** `neon()` HTTP driver + `drizzle-orm/neon-http` — one fetch per query, no connection pool needed, ideal for Vercel serverless
-- **drizzle-kit CLI:** reads `DATABASE_URL`, requires a direct (non-pooled) endpoint for migrations
+- **drizzle-kit CLI:** reads `NEON_DATABASE_URL_PROD`, requires a direct (non-pooled) endpoint for migrations
 
-A single direct `DATABASE_URL` covers both. The HTTP driver is already stateless — pooling adds nothing. drizzle-kit requires direct to run schema operations.
+A single direct `NEON_DATABASE_URL_PROD` covers both. The HTTP driver is already stateless — pooling adds nothing. drizzle-kit requires direct to run schema operations.
+
+`NEON_DATABASE_URL_PROD` is this project's own variable name (not the ecosystem-standard `DATABASE_URL`) holding the Neon connection string. An optional `NEON_DATABASE_URL_DEV` labels a spare for the dev branch; it is not read by the app.
 
 ## Known limitations
 
@@ -77,9 +79,25 @@ A single direct `DATABASE_URL` covers both. The HTTP driver is already stateless
 
 See [vendors.md](../vendors.md#neon) for exact limits and paid tier features.
 
+## Branching
+
+Neon branches are copy-on-write clones of a parent branch — schema and data, provisioned in seconds. This project runs a `dev` branch off `production` for safe iteration.
+
+Branches are reached through **two independent planes**:
+
+| Plane | Endpoint | Auth | Used for |
+|-------|----------|------|----------|
+| Data | `postgresql://…@ep-….neon.tech/db` | role password | SQL — the app and `db:push` |
+| Control | `https://console.neon.tech/api/v2` (Management API) | Bearer `NEON_API_KEY` | create / **reset-from-parent** / list branches |
+
+**Resetting a branch to its parent has no SQL equivalent** — it exists only on the control plane. The DSN host is the endpoint id (`ep-…`), not the branch id (`br-…`) the API needs; neither the branch nor project id can be derived from the DSN.
+
+The app ships an admin tool to reset `dev` from `production` on demand or on a schedule, with a live monitor at `/admin/db`. See [blueprint/data/neon-branch-refresh.md](../../blueprint/data/neon-branch-refresh.md).
+
 ## Related
 
 - [drizzle.md](./drizzle.md) - ORM
+- [../../blueprint/data/neon-branch-refresh.md](../../blueprint/data/neon-branch-refresh.md) - Reset dev branch from prod
 - [neo4j.md](./neo4j.md) - Graph data
 - [r2.md](./r2.md) - File storage
 - [../auth/better-auth.md](../auth/better-auth.md) - Session storage

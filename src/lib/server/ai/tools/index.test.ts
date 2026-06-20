@@ -6,7 +6,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 
-// Mock the DB connection so modules can import without DATABASE_URL
+// Mock the DB connection so modules can import without NEON_DATABASE_URL_PROD
 vi.mock('$lib/server/db', () => ({ db: {} }));
 vi.mock('$lib/server/db/desk/queries', () => ({
 	listFiles: vi.fn(),

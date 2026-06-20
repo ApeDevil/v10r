@@ -1,5 +1,7 @@
 import { analyticsCleanup } from './analytics-cleanup';
 import { analyticsRollup } from './analytics-rollup';
+import { dbopsReaper } from './dbops-reaper';
+import { dbopsRefresh } from './dbops-refresh';
 import { discordTokenRefresh } from './discord-token-refresh';
 import { grantRequestExpiry } from './grant-request-expiry';
 import { logCleanup } from './log-cleanup';
@@ -20,4 +22,6 @@ export const jobs: Record<string, Job> = {
 	'analytics-cleanup': { execute: analyticsCleanup },
 	'analytics-rollup': { execute: analyticsRollup },
 	'grant-request-expiry': { execute: grantRequestExpiry },
+	'dbops-refresh': { execute: dbopsRefresh },
+	'dbops-reaper': { execute: dbopsReaper },
 };
