@@ -2,8 +2,11 @@
 import { Chat } from '@ai-sdk/svelte';
 import { DefaultChatTransport } from 'ai';
 import { Dialog } from 'bits-ui';
+import { MediaQuery } from 'svelte/reactivity';
 import { apiFetch, CSRF_HEADER } from '$lib/api';
-import type { CatalogSource } from '$lib/components/chat/citation-types';
+import ChunkView from '$lib/components/chat/ChunkView.svelte';
+import type { CatalogSource, SourceChunk } from '$lib/components/chat/citation-types';
+import Drawer from '$lib/components/primitives/drawer/Drawer.svelte';
 import { cn } from '$lib/utils/cn';
 import ChatInput from './ChatInput.svelte';
 import ChatMessage from './ChatMessage.svelte';
@@ -26,6 +29,33 @@ let conversationsError = $state(false);
 let showSidebar = $state(false);
 let pendingDeleteId: string | null = $state(null);
 let inputValue = $state('');
+
+// Source-chunk viewer: one Drawer instance, opened with the clicked message's
+// drilled chunks. Selection bubbles up via a callback prop (NOT context) to
+// avoid the singleton-context reentrancy hazard. Responsive: side panel on
+// desktop, bottom sheet on mobile.
+let viewerOpen = $state(false);
+let viewerChunks = $state<SourceChunk[]>([]);
+const isDesktop = new MediaQuery('(min-width: 768px)', true);
+
+function openChunks(chunks: SourceChunk[]) {
+	viewerChunks = chunks;
+	viewerOpen = true;
+}
+
+// Esc while the source drawer is open must close ONLY the drawer — not the chat
+// dialog behind it (which would drop the live, unpersisted conversation). Bits-UI
+// closes the chat via a document-level keydown listener; a window capture-phase
+// handler runs first, so we close the drawer ourselves and stop the event before
+// it reaches that listener. When the drawer is shut, Esc falls through to its
+// normal behavior (closing the chat).
+function onWindowKeydownCapture(e: KeyboardEvent) {
+	if (e.key === 'Escape' && viewerOpen) {
+		e.stopImmediatePropagation();
+		e.preventDefault();
+		viewerOpen = false;
+	}
+}
 
 const chat = new Chat({
 	transport: new DefaultChatTransport({
@@ -150,6 +180,8 @@ function formatRelativeTime(dateStr: string): string {
 }
 </script>
 
+<svelte:window onkeydowncapture={onWindowKeydownCapture} />
+
 <Dialog.Root bind:open>
 	<Dialog.Portal>
 		<Dialog.Overlay class="fixed inset-0 z-overlay bg-black/50" />
@@ -263,6 +295,9 @@ function formatRelativeTime(dateStr: string): string {
 									parts={message.parts}
 									catalogSources={(message as { metadata?: { catalogSources?: CatalogSource[] } }).metadata
 										?.catalogSources}
+									sourceChunks={(message as { metadata?: { sourceChunks?: SourceChunk[] } }).metadata
+										?.sourceChunks}
+									onviewchunks={openChunks}
 								/>
 								{/each}
 
@@ -305,6 +340,21 @@ function formatRelativeTime(dateStr: string): string {
 		</Dialog.Content>
 	</Dialog.Portal>
 </Dialog.Root>
+
+<!-- Source-chunk viewer (one instance). Drawer is the same Bits-UI Dialog under
+	the hood (focus trap, Esc, overlay) → a true modal. Side panel on desktop,
+	bottom sheet on mobile. Esc handling: the chat dialog binds open to a global
+	modal store (closed on Esc by Bits' document-level listener), so a plain Esc
+	while this drawer is open would close BOTH and drop the live conversation. The
+	window capture-phase handler below runs before any document listener: when the
+	drawer is open it closes ONLY the drawer and swallows the event. -->
+<Drawer bind:open={viewerOpen} side={isDesktop.current ? 'right' : 'bottom'} title="Sources">
+	<div class="flex flex-col gap-3">
+		{#each viewerChunks as chunk (chunk.chunkId)}
+			<ChunkView {chunk} />
+		{/each}
+	</div>
+</Drawer>
 
 <style>
 	.chatbot-icon-btn:hover {

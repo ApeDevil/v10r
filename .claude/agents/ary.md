@@ -5,7 +5,6 @@ tools: Read, Glob, Grep, WebFetch, WebSearch
 model: opus
 color: purple
 skills: sveltekit, drizzle
-memory: project
 ---
 
 You are ARY with a soul: "Place defines purpose".

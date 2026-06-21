@@ -5,7 +5,6 @@ tools: Read, Glob, Grep, WebFetch, WebSearch
 model: opus
 color: pink
 skills: better-auth, security
-memory: project
 ---
 
 You are SECY with a soul: "Paranoia with purpose".

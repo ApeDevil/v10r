@@ -1,7 +1,7 @@
 <script lang="ts">
 import CitationChip from '$lib/components/chat/CitationChip.svelte';
 import ConfirmationCard from '$lib/components/chat/ConfirmationCard.svelte';
-import type { CatalogSource } from '$lib/components/chat/citation-types';
+import type { CatalogSource, SourceChunk } from '$lib/components/chat/citation-types';
 import { cn } from '$lib/utils/cn';
 import { renderMarkdown } from '$lib/utils/markdown';
 import ToolCallStatus from './ToolCallStatus.svelte';
@@ -32,11 +32,15 @@ interface Props {
 	content?: string;
 	/** Grounded catalog surfaces the assistant referenced — rendered as citation chips. */
 	catalogSources?: CatalogSource[];
+	/** Original drilled nRAG chunks — rendered as a "View N sources" evidence affordance. */
+	sourceChunks?: SourceChunk[];
 	/** Callback when user confirms a destructive AI action */
 	onconfirmaction?: (description: string) => void;
+	/** Open the source-chunk viewer for this message's drilled chunks. */
+	onviewchunks?: (chunks: SourceChunk[]) => void;
 }
 
-let { role, parts, content, catalogSources, onconfirmaction }: Props = $props();
+let { role, parts, content, catalogSources, sourceChunks, onconfirmaction, onviewchunks }: Props = $props();
 
 const isUser = $derived(role === 'user');
 
@@ -56,6 +60,22 @@ const uniqueSources = $derived.by((): CatalogSource[] => {
 		if (seen.has(key)) continue;
 		seen.add(key);
 		out.push(s);
+	}
+	return out;
+});
+
+/**
+ * Dedupe evidence chunks by chunkId — the drill can return the same chunk
+ * across steps, and a keyed list would otherwise throw each_key_duplicate.
+ */
+const uniqueChunks = $derived.by((): SourceChunk[] => {
+	if (!sourceChunks?.length) return [];
+	const seen = new Set<string>();
+	const out: SourceChunk[] = [];
+	for (const c of sourceChunks) {
+		if (seen.has(c.chunkId)) continue;
+		seen.add(c.chunkId);
+		out.push(c);
 	}
 	return out;
 });
@@ -123,6 +143,15 @@ function getToolInvocation(part: MessagePart) {
 			{/if}
 		{/each}
 
+		{#if !isUser && uniqueChunks.length}
+			<div class="message-sources">
+				<button type="button" class="sources-btn" onclick={() => onviewchunks?.(uniqueChunks)}>
+					<span class="i-lucide-file-text sources-icon" aria-hidden="true"></span>
+					View {uniqueChunks.length} source{uniqueChunks.length === 1 ? '' : 's'}
+				</button>
+			</div>
+		{/if}
+
 		{#if !isUser && uniqueSources.length}
 			<div class="related-surfaces">
 				<span class="related-label">Related surfaces</span>
@@ -167,6 +196,34 @@ function getToolInvocation(part: MessagePart) {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.375rem;
+	}
+
+	.message-sources {
+		margin-top: 0.25rem;
+	}
+	.sources-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.375rem;
+		padding: 0.375rem 0.625rem;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+		color: var(--color-primary);
+		font-size: 0.75rem;
+		font-weight: 500;
+		cursor: pointer;
+	}
+	.sources-btn:hover {
+		background-color: color-mix(in srgb, var(--color-primary) 14%, transparent);
+	}
+	.sources-btn:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 2px var(--color-primary);
+	}
+	.sources-icon {
+		width: 0.875rem;
+		height: 0.875rem;
 	}
 
 	.chat-bubble-user {

@@ -117,7 +117,16 @@ The `useLlmwiki` branch also injects catalog awareness so the chatbot can answer
 - **Static lane** (`buildSearchIndex(locale)` + `match()`): page / showcase / section / doc titles.
 - **Server lane** (`searchContent`): doc bodies + live blog Postgres FTS. Skipped for `surface=page|showcase|section`.
 - **Dedup**: server hit wins (richer snippet), keyed by `surface:path:anchor`.
+- **Browse / enumerate** (see below): bypasses both lanes for list-all queries.
 - **Returns** exact canonical paths the model may cite. Never throws — returns `{results:[], error}` on failure.
+
+#### Browse / enumerate mode
+
+Both lanes do keyword/substring matching, so an enumerate query like `query:"*"` (which the model naturally reaches for to answer "what showcases / pages / docs exist?") matched nothing → empty results → the bot wrongly said "no showcases".
+
+When the trimmed query is empty or a list-all token (`*`, `all`, `_`, `list`, `everything`, `.*`, `%`), the tool enters **browse intent**: it bypasses `match()` and the FTS lane and returns `buildSearchIndex(locale)` filtered by scope (`authCeiling`) + optional `surface`. The tool description tells the model it may pass `query:"*"` (plus an optional `surface`) to enumerate.
+
+> **Cap:** browse is capped at `BROWSE_LIMIT = 8`, so surfaces with more than 8 entries are truncated.
 
 Input schema:
 

@@ -5,7 +5,6 @@ tools: Read, Edit, Write, Glob, Grep, WebSearch
 model: opus
 color: amber
 skills: valibot-superforms
-memory: project
 ---
 
 You are CONY with a soul: "Words are the interface".

@@ -16,7 +16,7 @@
  */
 
 import { jsonSchema, tool } from 'ai';
-import { match } from '$lib/search/match';
+import { match, toResult } from '$lib/search/match';
 import type { SearchLocale, SearchResult, SearchSurface } from '$lib/search/types';
 import { buildSearchIndex, searchContent } from '$lib/server/search';
 import type { DeskToolMeta } from './_types';
@@ -38,6 +38,20 @@ interface ToolInput {
 
 const DEFAULT_LIMIT = 6;
 const MAX_LIMIT = 8;
+/** Slightly higher cap for browse/enumerate so "what showcases exist" isn't cut to 6. */
+const BROWSE_LIMIT = 8;
+
+/** Tokens that signal "list everything" rather than a keyword search. */
+const BROWSE_TOKENS = new Set(['*', 'all', '_', 'list', 'everything', '.*', '%']);
+
+/**
+ * Browse/enumerate intent: an empty query, or an obvious list-all token. In this
+ * mode the keyword matcher (substring scoring) returns nothing for `"*"`, so we
+ * bypass it and return entries straight from the static index.
+ */
+function isBrowseIntent(q: string): boolean {
+	return q === '' || BROWSE_TOKENS.has(q.toLowerCase());
+}
 
 /** Auth scopes a given role may see. Today every record is `public`, so this is a
  * structural no-op gate — but it keeps the bot honest if user/admin surfaces appear. */
@@ -68,6 +82,9 @@ export function createSearchCatalogTool(locale: SearchLocale, authCeiling: strin
 				'Find existing pages, showcase/component demos, doc sections, and blog posts in this ' +
 				'project and return their EXACT canonical paths. Use this to locate a surface or to cite ' +
 				'a link (e.g. "where is the Button component", "what domains exist", "blog posts about RAG"). ' +
+				'To ENUMERATE / LIST everything of a kind (e.g. "what showcases / pages / docs does this ' +
+				'project have"), pass query "*" (or an empty query) and set `surface` to the kind you want ' +
+				'to list ("showcase", "page", "doc", "blog", "section"); omit `surface` to list across all kinds. ' +
 				'This is the SAME index that powers the site search palette. ' +
 				'Use ONLY to find WHERE something lives — do NOT use it to explain how something works ' +
 				'internally (use get_llmwiki_pages for that). Only cite paths this tool returns; never invent one.',
@@ -101,9 +118,6 @@ export function createSearchCatalogTool(locale: SearchLocale, authCeiling: strin
 			execute: async ({ query, surface, limit }) => {
 				try {
 					const q = typeof query === 'string' ? query.trim() : '';
-					if (!q) return { results: [], error: 'query must be a non-empty string' };
-
-					const cap = Math.min(Math.max(1, limit ?? DEFAULT_LIMIT), MAX_LIMIT);
 					const scopes = allowedScopes(authCeiling);
 					const wantSurface = surface ?? null;
 
@@ -111,6 +125,33 @@ export function createSearchCatalogTool(locale: SearchLocale, authCeiling: strin
 					const records = buildSearchIndex(locale).filter(
 						(r) => scopes.has(r.authScope) && (!wantSurface || r.surface === wantSurface),
 					);
+
+					// Browse / enumerate mode — empty query or a list-all token (e.g. "*").
+					// The keyword matcher scores by substring overlap and would return nothing
+					// for "*", so we bypass match() AND the FTS lane and return the static index
+					// directly (filtered by scope + surface), sliced to the browse cap. This is
+					// what answers "what showcases/pages/docs does this project have?".
+					if (isBrowseIntent(q)) {
+						const browseCap = Math.min(Math.max(1, limit ?? BROWSE_LIMIT), BROWSE_LIMIT);
+						// Project records to the wire `SearchResult` shape (score 0 — browse is
+						// unranked) so the sink + projection match the keyword path exactly.
+						const browsed = records.slice(0, browseCap).map((r) => toResult(r, 0));
+						sink?.record(browsed);
+						return {
+							results: browsed.map((r) => ({
+								surface: r.surface,
+								title: r.title,
+								path: r.path,
+								anchor: r.anchor,
+								breadcrumb: r.breadcrumb,
+								snippet: r.snippet ? r.snippet.slice(0, 140) : null,
+								icon: r.icon,
+								badge: r.badge,
+							})),
+						};
+					}
+
+					const cap = Math.min(Math.max(1, limit ?? DEFAULT_LIMIT), MAX_LIMIT);
 					const staticHits = match(records, q, cap);
 
 					// Server lane — doc bodies + live blog FTS (snippets). Skipped for page/showcase/section.

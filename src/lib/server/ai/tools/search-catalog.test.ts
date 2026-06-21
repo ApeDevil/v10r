@@ -138,10 +138,22 @@ describe('search_catalog tool', () => {
 		expect(out.error).toBeTruthy();
 	});
 
-	it('returns empty for a blank query without hitting the lanes', async () => {
-		mocks.buildSearchIndex.mockReturnValue([]);
+	it('browses the static index for a blank query, bypassing the FTS server lane', async () => {
+		mocks.buildSearchIndex.mockReturnValue([rec({ surface: 'showcase', path: '/showcases/button', title: 'Button' })]);
 		const out = await exec(createSearchCatalogTool('en', 'public'), { query: '   ' });
-		expect(out.results).toEqual([]);
-		expect(mocks.buildSearchIndex).not.toHaveBeenCalled();
+		expect(out.results.map((r) => r.path)).toEqual(['/showcases/button']);
+		expect(mocks.searchContent).not.toHaveBeenCalled();
+	});
+
+	it('enumerates a surface for a wildcard query (browse mode), filtering by surface', async () => {
+		mocks.buildSearchIndex.mockReturnValue([
+			rec({ surface: 'showcase', path: '/showcases/button', title: 'Button' }),
+			rec({ surface: 'showcase', path: '/showcases/switch', title: 'Switch' }),
+			rec({ surface: 'doc', path: '/docs/x', title: 'Doc X' }),
+		]);
+		const out = await exec(createSearchCatalogTool('en', 'public'), { query: '*', surface: 'showcase' });
+		expect(out.results.map((r) => r.path)).toEqual(['/showcases/button', '/showcases/switch']);
+		expect(out.results.every((r) => r.surface === 'showcase')).toBe(true);
+		expect(mocks.searchContent).not.toHaveBeenCalled();
 	});
 });

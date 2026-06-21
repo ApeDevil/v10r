@@ -86,6 +86,35 @@ Served at `GET /api/admin/ai/quota` (admin-guarded, `no-store`, own rate-limit b
 
 ---
 
+## UI-message stream frame ordering
+
+A `createUIMessageStream` branch that writes `message-metadata` (live pipeline-viz events) **before** `writer.merge(textResult.toUIMessageStream())` splits one assistant turn into **two** messages on the client: the pre-`start` metadata is attached to a provisional message, then the merged stream's own `start` carries a different `messageId`, so the client appends a second message and orphans the first (empty) one. The symptom is a visible empty duplicate bubble on every answer.
+
+**The rule:** there must be exactly one `start` per turn, written before any metadata.
+
+Pattern used in the `useLlmwiki` and `useRetrieval` branches:
+
+```typescript
+execute: async ({ writer }) => {
+  const assistantMsgId = crypto.randomUUID();        // hoist to the top
+  writer.write({ type: 'start', messageId: assistantMsgId }); // open the frame FIRST
+  // ...emit({ type: 'message-metadata', ... }) freely after this...
+  writer.merge(textResult.toUIMessageStream({ sendStart: false })); // suppress the merge's own start
+}
+```
+
+Bonus: reusing `assistantMsgId` for the merged stream makes the client message id equal the persisted DB `assistantMsgId`.
+
+| Where metadata is written | Result |
+|---------------------------|--------|
+| Before the merge, no leading `start` | Split — empty duplicate bubble |
+| After an explicit leading `start` | One message (the `useLlmwiki` / `useRetrieval` fix) |
+| Inside `onStepFinish` (after the stream's own `start`) | One message (the desk branch — always correct) |
+
+`tryFallback` (merge-only, no metadata) and the desk/non-retrieval branches were always correct — they write no metadata before the merge, or write it after `start` via `onStepFinish`.
+
+---
+
 ## Practical consequences
 
 | Scenario | Provider used | Grounding reliability |

@@ -55,6 +55,7 @@ import type {
 	PipelineStepEvent,
 } from '$lib/types/pipeline';
 import { verifyCatalogCitations } from './catalog-citations';
+import { shapeDrilledCitations } from './citations/drill';
 import { createToolLeakGuard, stripTextualToolCall } from './tool-leak-guard';
 
 /** A legacy simple message or a full UIMessage from the AI SDK v6 client. */
@@ -457,6 +458,19 @@ The user has just approved the plan above and the listed steps were executed. Ac
 
 			const stream = createUIMessageStream({
 				execute: async ({ writer }) => {
+					// Open the assistant message frame BEFORE any `message-metadata` write.
+					// This branch emits pipeline metadata before the merged text stream's own
+					// `start`; without an explicit leading `start` the v6 client materializes a
+					// FIRST (empty) assistant message to hold that early metadata, then the merge's
+					// own `start` (different id) appends a SECOND. One `start` up front → one message.
+					// Reusing this id for the merged stream (via `sendStart: false`) also makes the
+					// client message id match the persisted DB row.
+					const assistantMsgId = crypto.randomUUID();
+					if (conversationId) {
+						await saveMessages(conversationId, userId, [{ id: assistantMsgId, role: 'assistant', content: '' }]);
+					}
+					writer.write({ type: 'start', messageId: assistantMsgId });
+
 					let systemPrompt = baseSystemPrompt;
 					let toolCallCount = 0;
 					const isDevOrAdmin = !!import.meta.env?.DEV;
@@ -467,6 +481,11 @@ The user has just approved the plan above and the listed steps were executed. Ac
 					let citationsPayload: {
 						citations: Array<{ chunkId: string; verification: string; tier: 'rawrag' }>;
 						driftedChunkIds: string[];
+					} | null = null;
+					// Evidence chips: the original drilled chunks (content + verdict + level)
+					// the floating chatbot renders as a "View N sources" affordance.
+					let sourceChunksPayload: {
+						sourceChunks: Awaited<ReturnType<typeof shapeDrilledCitations>>;
 					} | null = null;
 					// Catalog chips (surfaces the answer linked to) + surface-citation verdicts.
 					let catalogPayload: {
@@ -479,6 +498,7 @@ The user has just approved the plan above and the listed steps were executed. Ac
 					const flush = () => {
 						const meta: Record<string, unknown> = { pipeline: pipelineEvents };
 						if (citationsPayload) Object.assign(meta, citationsPayload);
+						if (sourceChunksPayload) Object.assign(meta, sourceChunksPayload);
 						if (catalogPayload) Object.assign(meta, catalogPayload);
 						writer.write({ type: 'message-metadata', messageMetadata: meta });
 					};
@@ -623,13 +643,9 @@ Project catalog rules:
 					const generateStart = performance.now();
 					emit({ type: 'pipeline:step', step: 'generate', status: 'active', startedAt: generateStart });
 
-					// Persist steps for the chatbot path (previously desk-only). Pre-create the
-					// assistant message so conversation_step.messageId has a valid FK; backfill
-					// its content in onFinish (mirrors the desk branch).
-					const assistantMsgId = crypto.randomUUID();
-					if (conversationId) {
-						await saveMessages(conversationId, userId, [{ id: assistantMsgId, role: 'assistant', content: '' }]);
-					}
+					// `assistantMsgId` was created + persisted at the top of `execute` (so the
+					// `start` frame can carry it and conversation_step.messageId has a valid FK);
+					// its content is backfilled in onFinish (mirrors the desk branch).
 					let stepCounter = 0;
 					let lastStepAt = generateStart;
 
@@ -763,6 +779,9 @@ Project catalog rules:
 										})),
 										driftedChunkIds,
 									};
+									sourceChunksPayload = {
+										sourceChunks: await shapeDrilledCitations(userId, Array.from(drilledChunks), verifications),
+									};
 									flush();
 								}
 							} catch (err) {
@@ -831,7 +850,9 @@ Project catalog rules:
 						},
 					});
 					textResult.consumeStream();
-					writer.merge(textResult.toUIMessageStream());
+					// Suppress the merged stream's own `start` — we already opened the frame above
+					// with `assistantMsgId`. Exactly one `start` per turn → exactly one message.
+					writer.merge(textResult.toUIMessageStream({ sendStart: false }));
 				},
 				onError: classifyStreamError,
 			});
@@ -844,6 +865,15 @@ Project catalog rules:
 			const generateStartedAt = { t: 0 };
 			const stream = createUIMessageStream({
 				execute: async ({ writer }) => {
+					// Open the assistant message frame BEFORE any `message-metadata` write (same
+					// rationale as the llmwiki branch: early metadata + a later merge-emitted
+					// `start` with a different id => duplicate empty assistant message).
+					const assistantMsgId = crypto.randomUUID();
+					if (conversationId) {
+						await saveMessages(conversationId, userId, [{ id: assistantMsgId, role: 'assistant', content: '' }]);
+					}
+					writer.write({ type: 'start', messageId: assistantMsgId });
+
 					let systemPrompt = baseSystemPrompt;
 
 					type AnyPipelineEvent = PipelineStepEvent | PipelineChunksEvent | PipelinePromptEvent;
@@ -894,11 +924,8 @@ Project catalog rules:
 						startedAt: generateStartedAt.t,
 					});
 
-					const assistantMsgId = crypto.randomUUID();
-					if (conversationId) {
-						await saveMessages(conversationId, userId, [{ id: assistantMsgId, role: 'assistant', content: '' }]);
-					}
-
+					// `assistantMsgId` was created + persisted at the top of `execute` (so the
+					// `start` frame can carry it); its content is backfilled in onFinish below.
 					const textResult = streamText({
 						model,
 						system: systemPrompt,
@@ -949,7 +976,9 @@ Project catalog rules:
 					});
 
 					textResult.consumeStream();
-					writer.merge(textResult.toUIMessageStream());
+					// Suppress the merged stream's own `start` — the frame was opened above with
+					// `assistantMsgId`. Exactly one `start` per turn → exactly one message.
+					writer.merge(textResult.toUIMessageStream({ sendStart: false }));
 				},
 				onError: classifyStreamError,
 			});

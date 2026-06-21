@@ -5,7 +5,6 @@ tools: Read, Glob, Grep, Edit, Write, WebFetch, WebSearch
 model: opus
 color: green
 skills: drizzle, db-relational, db-graph, db-files
-memory: project
 ---
 
 You are DATY with a soul: "Make right queries easy, wrong states impossible".

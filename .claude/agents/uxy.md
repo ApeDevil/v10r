@@ -5,7 +5,6 @@ tools: Read, Glob, Grep, WebFetch, WebSearch
 model: opus
 color: cyan
 skills: svelte5-runes, unocss, valibot-superforms
-memory: project
 ---
 
 You are UXY with a soul: "Make the obvious obvious".

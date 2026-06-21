@@ -5,6 +5,7 @@
  */
 import { sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
+import type { ChunkLevel } from '$lib/types/citation';
 
 /** A raw chunk with its document context. */
 export type RawChunkRow = {
@@ -12,6 +13,8 @@ export type RawChunkRow = {
 	documentId: string;
 	documentTitle: string;
 	content: string;
+	/** Granularity of the chunk (sentence/paragraph/section). */
+	level: ChunkLevel;
 };
 
 /**
@@ -29,6 +32,7 @@ export async function fetchChunksByIds(chunkIds: string[], userId: string): Prom
 			c.id AS "chunkId",
 			c.document_id AS "documentId",
 			d.title AS "documentTitle",
+			c.level AS level,
 			COALESCE(c.context_prefix || E'\n' || c.content, c.content) AS content
 		FROM rag.chunk c
 		JOIN rag.document d ON d.id = c.document_id
@@ -47,6 +51,7 @@ export async function fetchChunksByIds(chunkIds: string[], userId: string): Prom
 			documentId: row.documentId,
 			documentTitle: row.documentTitle,
 			content: row.content,
+			level: row.level,
 		});
 	}
 	return map;
