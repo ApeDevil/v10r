@@ -260,7 +260,7 @@ const canGoNext = $derived(loop || currentSlide < slides.length - 1);
 
 	/* UnoCSS can't apply opacity modifiers to CSS custom property colors */
 	.carousel-autoplay-btn {
-		background-color: color-mix(in srgb, var(--color-surface-3) 80%, transparent);
+		background-color: color-mix(in srgb, var(--surface-3) 80%, transparent);
 		color: color-mix(in srgb, var(--color-fg) 70%, transparent);
 	}
 </style>

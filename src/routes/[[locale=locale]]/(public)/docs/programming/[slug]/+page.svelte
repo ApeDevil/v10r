@@ -124,7 +124,7 @@ let { data } = $props();
 		align-items: center;
 		gap: var(--spacing-3);
 		padding: var(--spacing-4);
-		background-color: var(--color-surface-1);
+		background-color: var(--surface-1);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
 		text-decoration: none;

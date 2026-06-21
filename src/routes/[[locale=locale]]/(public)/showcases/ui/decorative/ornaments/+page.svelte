@@ -669,7 +669,7 @@ const ringCounts = [2, 3, 4, 5, 6, 7, 8] as const;
 	}
 
 	.wave-section-top {
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 		padding: var(--spacing-6);
 		display: flex;
 		align-items: center;

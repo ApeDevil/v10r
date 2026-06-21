@@ -484,7 +484,7 @@ A +page.server.ts file can also export actions for progressive form handling. Ac
 		padding: var(--spacing-1);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 		width: fit-content;
 	}
 
@@ -556,7 +556,7 @@ A +page.server.ts file can also export actions for progressive form handling. Ac
 		padding: var(--spacing-3);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 	}
 
 	.step-idx {
@@ -630,7 +630,7 @@ A +page.server.ts file can also export actions for progressive form handling. Ac
 		margin-top: 6px;
 		border-radius: 50%;
 		background: var(--color-border);
-		border: 2px solid var(--color-surface-1);
+		border: 2px solid var(--surface-1);
 		z-index: 1;
 	}
 

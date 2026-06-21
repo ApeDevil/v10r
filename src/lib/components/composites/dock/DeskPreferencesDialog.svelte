@@ -204,7 +204,7 @@ function typeColor(panelType: string): string {
 		padding: 0.5rem 0.75rem;
 		cursor: pointer;
 		list-style: none;
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 		user-select: none;
 		font-size: var(--text-fluid-sm);
 	}

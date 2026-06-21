@@ -75,7 +75,7 @@ const funnelStats = $derived(
 	.detail-panel {
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);
-		background-color: color-mix(in srgb, var(--color-surface-2) 90%, transparent);
+		background-color: color-mix(in srgb, var(--surface-2) 90%, transparent);
 		animation: panel-enter 200ms ease-out;
 	}
 

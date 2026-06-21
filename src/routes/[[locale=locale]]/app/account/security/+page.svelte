@@ -489,7 +489,7 @@ function formatDate(iso: string | null): string {
 		padding: var(--spacing-4);
 		border: 1px dashed var(--color-border);
 		border-radius: var(--radius-md);
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 		margin-bottom: var(--spacing-4);
 	}
 

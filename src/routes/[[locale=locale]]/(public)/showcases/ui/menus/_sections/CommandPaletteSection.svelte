@@ -3,6 +3,7 @@ import { Button } from '$lib/components';
 import { Command, CommandPalette } from '$lib/components/composites';
 import type { CommandGroup } from '$lib/components/composites/command/types';
 import type { CommandPaletteItem } from '$lib/components/composites/command-palette/types';
+import { Kbd } from '$lib/components/primitives';
 import { DemoCard } from '../../components/_components';
 
 let paletteOpen = $state(false);
@@ -68,7 +69,7 @@ const inlineGroups: CommandGroup[] = [
 			<Button variant="outline" onclick={() => (paletteOpen = true)}>
 				<span class="i-lucide-search h-4 w-4" ></span>
 				Open Command Palette
-				<kbd class="shortcut-hint">Ctrl+K</kbd>
+				<Kbd class="ml-2" keys="Ctrl+K" size="sm" />
 			</Button>
 		</DemoCard>
 
@@ -114,15 +115,6 @@ const inlineGroups: CommandGroup[] = [
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-6);
-	}
-
-	.shortcut-hint {
-		margin-left: var(--spacing-2);
-		padding: 0.125rem 0.375rem;
-		border-radius: var(--radius-sm);
-		font-size: var(--text-fluid-xs);
-		background: color-mix(in srgb, var(--color-muted) 20%, transparent);
-		color: var(--color-muted);
 	}
 
 	.inline-command-wrapper {

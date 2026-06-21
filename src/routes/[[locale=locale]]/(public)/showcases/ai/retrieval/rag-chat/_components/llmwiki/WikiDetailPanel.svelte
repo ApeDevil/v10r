@@ -153,7 +153,7 @@ const citations = $derived(trace.citations);
 		padding: var(--spacing-2);
 		border-left: 3px solid var(--color-border);
 		border-radius: var(--radius-sm);
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 		font-size: 11px;
 	}
 

@@ -41,7 +41,7 @@ const transforms: Record<string, string> = {
 		white-space: nowrap;
 		padding: 4px 8px;
 		border-radius: var(--radius-md);
-		background-color: var(--color-surface-3);
+		background-color: var(--surface-3);
 		border: 1px solid var(--color-border);
 		box-shadow: 0 2px 8px color-mix(in srgb, var(--color-fg) 8%, transparent);
 		display: flex;

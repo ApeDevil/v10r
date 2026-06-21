@@ -95,7 +95,7 @@ function statusClass(step: PipelineStepState): string {
 		width: 10px;
 		height: 10px;
 		border-radius: 50%;
-		background: var(--color-surface-2, var(--color-surface-1));
+		background: var(--surface-2, var(--surface-1));
 		border: 2px solid var(--color-border);
 	}
 

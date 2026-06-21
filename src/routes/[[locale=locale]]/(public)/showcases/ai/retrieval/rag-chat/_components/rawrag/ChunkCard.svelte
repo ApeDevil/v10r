@@ -46,7 +46,7 @@ const sourceColors: Record<ChunkSummary['source'], string> = {
 		padding: var(--spacing-2);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-sm);
-		background: color-mix(in srgb, var(--color-surface-2) 60%, transparent);
+		background: color-mix(in srgb, var(--surface-2) 60%, transparent);
 		cursor: pointer;
 		text-align: left;
 		font-family: inherit;

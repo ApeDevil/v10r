@@ -301,6 +301,6 @@ const verticalPanes: PaneDefinition[] = [
 	}
 
 	.panel-surface-1 {
-		background: var(--color-surface-1, var(--surface-1));
+		background: var(--surface-1, var(--surface-1));
 	}
 </style>

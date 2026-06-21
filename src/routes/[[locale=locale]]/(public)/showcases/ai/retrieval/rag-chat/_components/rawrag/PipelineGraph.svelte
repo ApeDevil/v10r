@@ -378,7 +378,7 @@ function zoomOut() {
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
-		background: color-mix(in srgb, var(--color-surface-2) 85%, transparent);
+		background: color-mix(in srgb, var(--surface-2) 85%, transparent);
 		backdrop-filter: blur(8px);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);

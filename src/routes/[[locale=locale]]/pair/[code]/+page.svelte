@@ -62,7 +62,7 @@ const msg = $derived(data.failure ? messages[data.failure] : null);
 		padding: var(--spacing-8) var(--spacing-6);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
-		background: var(--color-surface-2);
+		background: var(--surface-2);
 		text-align: center;
 	}
 	.icon {

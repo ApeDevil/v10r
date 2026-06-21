@@ -158,7 +158,7 @@ const properties = $derived(node.properties ? Object.entries(node.properties).fi
 		flex-direction: column;
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 		overflow: hidden;
 		max-height: 100%;
 	}

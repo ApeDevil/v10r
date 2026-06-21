@@ -104,7 +104,7 @@ function stepColor(id: string): string {
 		min-height: 80px;
 		padding: var(--spacing-3) var(--spacing-4);
 		border-top: 1px solid var(--color-border);
-		background: color-mix(in srgb, var(--color-surface-2) 60%, transparent);
+		background: color-mix(in srgb, var(--surface-2) 60%, transparent);
 	}
 
 	.rail-left {
@@ -241,7 +241,7 @@ function stepColor(id: string): string {
 		padding: var(--spacing-1) var(--spacing-3);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-sm);
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 		color: var(--color-fg);
 		font-size: 11px;
 		font-weight: 500;
@@ -250,7 +250,7 @@ function stepColor(id: string): string {
 	}
 
 	.expand-btn:hover:not(:disabled) {
-		background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface-1));
+		background: color-mix(in srgb, var(--color-primary) 8%, var(--surface-1));
 		border-color: var(--color-primary);
 	}
 

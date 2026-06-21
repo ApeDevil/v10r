@@ -7,6 +7,7 @@
 import { Dialog as DialogPrimitive } from 'bits-ui';
 import type { Snippet } from 'svelte';
 import { Card } from '$lib/components/composites';
+import { Kbd } from '$lib/components/primitives';
 
 interface Props {
 	title: string;
@@ -57,7 +58,7 @@ let expanded = $state(false);
 				<div class="flex-1"></div>
 				<DialogPrimitive.Close class="close-btn" aria-label="Close">
 					<span class="i-lucide-x h-4 w-4" aria-hidden="true"></span>
-					<kbd class="esc-hint">Esc</kbd>
+					<Kbd keys="Esc" size="sm" />
 				</DialogPrimitive.Close>
 			</header>
 			<div class="viz-dialog-body">
@@ -119,7 +120,7 @@ let expanded = $state(false);
 		gap: 0.75rem;
 		padding: 0.875rem 1.25rem;
 		border-bottom: 1px solid var(--color-border);
-		background: var(--color-surface-2);
+		background: var(--surface-2);
 		flex-shrink: 0;
 	}
 
@@ -157,16 +158,6 @@ let expanded = $state(false);
 	:global(.close-btn:focus-visible) {
 		outline: none;
 		box-shadow: 0 0 0 2px var(--color-primary);
-	}
-
-	.esc-hint {
-		font-family: var(--font-mono, monospace);
-		font-size: 0.6875rem;
-		padding: 0.0625rem 0.3125rem;
-		border-radius: 0.25rem;
-		background: var(--color-surface-3);
-		color: var(--color-muted);
-		border: 1px solid var(--color-border);
 	}
 
 	@media (max-width: 640px) {

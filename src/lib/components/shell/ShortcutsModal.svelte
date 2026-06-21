@@ -1,4 +1,5 @@
 <script lang="ts">
+import { Kbd } from '$lib/components/primitives';
 import { formatShortcut, getShortcutsByCategory } from '$lib/shortcuts';
 import { getModals } from '$lib/state/modals.svelte';
 import { cn } from '$lib/utils/cn';
@@ -73,7 +74,7 @@ function handleKeydown(e: KeyboardEvent) {
 								<div class="flex items-center justify-between gap-4 p-2 rounded-sm transition-bg duration-normal hover:bg-fg-alpha motion-reduce:transition-none">
 									<dt class="flex-1 m-0 font-normal text-fg">{shortcut.description}</dt>
 									<dd class="m-0">
-										<kbd class="inline-block px-2 py-1 font-mono text-sm bg-border border border-muted rounded-sm shadow-sm text-fg whitespace-nowrap">{formatShortcut(shortcut.keys)}</kbd>
+										<Kbd keys={formatShortcut(shortcut.keys)} size="md" />
 									</dd>
 								</div>
 							{/each}
@@ -89,7 +90,7 @@ function handleKeydown(e: KeyboardEvent) {
 								<div class="flex items-center justify-between gap-4 p-2 rounded-sm transition-bg duration-normal hover:bg-fg-alpha motion-reduce:transition-none">
 									<dt class="flex-1 m-0 font-normal text-fg">{shortcut.description}</dt>
 									<dd class="m-0">
-										<kbd class="inline-block px-2 py-1 font-mono text-sm bg-border border border-muted rounded-sm shadow-sm text-fg whitespace-nowrap">{formatShortcut(shortcut.keys)}</kbd>
+										<Kbd keys={formatShortcut(shortcut.keys)} size="md" />
 									</dd>
 								</div>
 							{/each}
@@ -105,7 +106,7 @@ function handleKeydown(e: KeyboardEvent) {
 								<div class="flex items-center justify-between gap-4 p-2 rounded-sm transition-bg duration-normal hover:bg-fg-alpha motion-reduce:transition-none">
 									<dt class="flex-1 m-0 font-normal text-fg">{shortcut.description}</dt>
 									<dd class="m-0">
-										<kbd class="inline-block px-2 py-1 font-mono text-sm bg-border border border-muted rounded-sm shadow-sm text-fg whitespace-nowrap">{formatShortcut(shortcut.keys)}</kbd>
+										<Kbd keys={formatShortcut(shortcut.keys)} size="md" />
 									</dd>
 								</div>
 							{/each}

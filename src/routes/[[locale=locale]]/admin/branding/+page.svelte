@@ -468,7 +468,7 @@ const editModeItems = $derived([
 		padding: 1rem;
 		border: 2px solid var(--color-border);
 		border-radius: var(--radius-lg);
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 		text-align: left;
 		cursor: pointer;
 	}
@@ -491,7 +491,7 @@ const editModeItems = $derived([
 		padding: 0.625rem 0.75rem;
 		border-radius: var(--radius-md);
 		border: 2px solid var(--color-border);
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 		cursor: pointer;
 	}
 

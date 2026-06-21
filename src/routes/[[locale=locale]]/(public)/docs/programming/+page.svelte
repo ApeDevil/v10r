@@ -102,7 +102,7 @@ const BUCKET_LABEL: Record<string, () => string> = {
 		gap: var(--spacing-3);
 		min-height: 4.5rem;
 		padding: var(--spacing-5) var(--spacing-4);
-		background-color: var(--color-surface-1);
+		background-color: var(--surface-1);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
 		text-decoration: none;

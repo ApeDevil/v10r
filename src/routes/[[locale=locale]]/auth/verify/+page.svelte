@@ -195,7 +195,7 @@ async function handleResend() {
 	.verify-card {
 		width: 100%;
 		max-width: 400px;
-		background: var(--color-surface-2);
+		background: var(--surface-2);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-xl);
 		padding: var(--spacing-8);

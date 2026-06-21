@@ -224,7 +224,7 @@ onMount(() => {
 		padding: var(--spacing-4);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);
-		background: var(--color-surface-2);
+		background: var(--surface-2);
 	}
 	.feed-header {
 		display: flex;
@@ -255,14 +255,14 @@ onMount(() => {
 		padding: var(--spacing-1) var(--spacing-3);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 		font: inherit;
 		font-size: var(--text-fluid-xs);
 		color: var(--color-fg);
 		cursor: pointer;
 	}
 	.pair-button:hover {
-		background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface-1));
+		background: color-mix(in srgb, var(--color-primary) 8%, var(--surface-1));
 	}
 	.connection {
 		display: inline-flex;
@@ -322,7 +322,7 @@ onMount(() => {
 		padding: var(--spacing-1) var(--spacing-2);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-sm);
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 		font: inherit;
 		font-size: var(--text-fluid-xs);
 		color: var(--color-fg);

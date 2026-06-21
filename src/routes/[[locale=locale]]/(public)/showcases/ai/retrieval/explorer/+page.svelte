@@ -435,7 +435,7 @@ function handleKeydown(e: KeyboardEvent) {
 		padding: var(--spacing-3) var(--spacing-4);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
-		background-color: var(--color-surface-1);
+		background-color: var(--surface-1);
 		color: var(--color-fg);
 		font-size: var(--text-fluid-sm);
 		outline: none;
@@ -476,7 +476,7 @@ function handleKeydown(e: KeyboardEvent) {
 		margin-bottom: var(--spacing-4);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 		flex-wrap: wrap;
 		font-size: var(--text-fluid-sm);
 	}
@@ -580,7 +580,7 @@ function handleKeydown(e: KeyboardEvent) {
 		word-break: break-word;
 		font-size: var(--text-fluid-xs);
 		color: var(--color-fg);
-		background-color: var(--color-surface-2);
+		background-color: var(--surface-2);
 		padding: var(--spacing-3);
 		border-radius: var(--radius-sm);
 		margin: 0;

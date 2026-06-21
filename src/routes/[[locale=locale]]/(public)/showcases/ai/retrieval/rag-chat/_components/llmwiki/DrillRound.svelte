@@ -50,7 +50,7 @@ const detail = $derived(step.detail?.kind === 'drill' ? (step.detail as DrillDet
 	.drill-round {
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-sm);
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 	}
 
 	.head {
@@ -104,7 +104,7 @@ const detail = $derived(step.detail?.kind === 'drill' ? (step.detail as DrillDet
 		padding: var(--spacing-2);
 		border-radius: var(--radius-sm);
 		border-left: 3px solid var(--color-border);
-		background: var(--color-surface-2, var(--color-surface-1));
+		background: var(--surface-2, var(--surface-1));
 	}
 
 	.chunk-row[data-status='quote'] {

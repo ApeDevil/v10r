@@ -33,7 +33,7 @@ let { page, status = 'none' }: Props = $props();
 		border: 1px solid var(--color-border);
 		border-left-width: 3px;
 		border-radius: var(--radius-sm);
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 	}
 
 	.page-card[data-status='quote'] {

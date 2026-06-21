@@ -99,7 +99,7 @@ const hasChunks = $derived(chunks.length > 0);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);
 		padding: var(--spacing-3);
-		background-color: color-mix(in srgb, var(--color-surface-2) 80%, transparent);
+		background-color: color-mix(in srgb, var(--surface-2) 80%, transparent);
 		animation: detail-enter 250ms ease-out;
 	}
 

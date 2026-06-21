@@ -84,7 +84,7 @@ onMount(load);
 		padding: var(--spacing-4);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 		font-size: 12px;
 	}
 

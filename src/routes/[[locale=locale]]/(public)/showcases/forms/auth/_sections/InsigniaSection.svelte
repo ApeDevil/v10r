@@ -137,7 +137,7 @@ const mockUser = {
 		gap: var(--spacing-4);
 		width: 100%;
 		padding: var(--spacing-4);
-		background: var(--color-surface-2);
+		background: var(--surface-2);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
 	}

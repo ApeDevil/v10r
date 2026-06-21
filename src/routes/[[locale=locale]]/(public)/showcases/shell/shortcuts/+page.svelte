@@ -1,4 +1,5 @@
 <script lang="ts">
+import { Kbd } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
 import { formatShortcut, getShortcutsByCategory } from '$lib/shortcuts';
 
@@ -7,7 +8,7 @@ const shortcuts = $derived(getShortcutsByCategory());
 <section class="demo-section">
 	<h2>{m.showcase_shell_shortcuts_section()}</h2>
 	<p>
-		Press <kbd>?</kbd> to view all keyboard shortcuts.
+		Press <Kbd keys="?" size="sm" /> to view all keyboard shortcuts.
 	</p>
 
 	<div class="shortcuts-demo">
@@ -18,7 +19,7 @@ const shortcuts = $derived(getShortcutsByCategory());
 					{#each shortcuts.global as shortcut}
 						<div class="shortcut-item">
 							<span>{shortcut.description}</span>
-							<kbd>{formatShortcut(shortcut.keys)}</kbd>
+							<Kbd keys={formatShortcut(shortcut.keys)} size="md" />
 						</div>
 					{/each}
 				</div>
@@ -32,7 +33,7 @@ const shortcuts = $derived(getShortcutsByCategory());
 					{#each shortcuts.navigation as shortcut}
 						<div class="shortcut-item">
 							<span>{shortcut.description}</span>
-							<kbd>{formatShortcut(shortcut.keys)}</kbd>
+							<Kbd keys={formatShortcut(shortcut.keys)} size="md" />
 						</div>
 					{/each}
 				</div>
@@ -65,18 +66,6 @@ const shortcuts = $derived(getShortcutsByCategory());
 	p {
 		color: var(--color-muted);
 		margin-bottom: var(--spacing-4);
-	}
-
-	kbd {
-		display: inline-block;
-		padding: var(--spacing-1) var(--spacing-2);
-		font-size: var(--text-fluid-xs);
-		font-family: ui-monospace, monospace;
-		background: var(--color-bg);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-sm);
-		font-weight: 600;
-		box-shadow: var(--shadow-sm);
 	}
 
 	.shortcuts-demo {

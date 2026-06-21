@@ -104,7 +104,7 @@ function select(mode: RagMode) {
 		padding: var(--spacing-1);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 	}
 
 	.mode-pill {

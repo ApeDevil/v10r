@@ -232,7 +232,7 @@ function close() {
 		padding: var(--spacing-1) var(--spacing-2);
 		margin-top: var(--spacing-1);
 		border-radius: var(--radius-sm);
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 		font-family: ui-monospace, monospace;
 		font-size: var(--text-fluid-xs);
 		color: var(--color-fg);

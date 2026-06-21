@@ -257,7 +257,7 @@ function handleChange(token: string, value: string) {
 		padding: 0.625rem 0.75rem;
 		cursor: pointer;
 		list-style: none;
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 		user-select: none;
 	}
 

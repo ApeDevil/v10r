@@ -250,7 +250,7 @@ function resetCounterfactual() {
 		padding: var(--spacing-3);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-sm);
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 		font-family: ui-monospace, monospace;
 		font-size: 11px;
 		line-height: 1.5;

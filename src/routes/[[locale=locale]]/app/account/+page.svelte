@@ -256,7 +256,7 @@ $effect(() => {
 		padding: var(--spacing-2) var(--spacing-3);
 		border: 1px solid var(--color-error-fg);
 		border-radius: var(--radius-sm);
-		background-color: var(--color-surface-1);
+		background-color: var(--surface-1);
 		color: var(--color-fg);
 		font-size: var(--text-fluid-sm);
 		width: 100%;

@@ -203,7 +203,7 @@ function handleKeyDown(e: KeyboardEvent, id: string) {
 
 <style>
 	.tab-bar {
-		background: var(--color-surface-1, var(--surface-1));
+		background: var(--surface-1, var(--surface-1));
 	}
 
 	.tab-bar [data-tab-id] {
@@ -227,7 +227,7 @@ function handleKeyDown(e: KeyboardEvent, id: string) {
 	}
 
 	:global(.tab-ghost) {
-		background: var(--color-surface-1, var(--surface-1));
+		background: var(--surface-1, var(--surface-1));
 		border: 1px solid var(--color-border);
 		border-radius: 4px;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);

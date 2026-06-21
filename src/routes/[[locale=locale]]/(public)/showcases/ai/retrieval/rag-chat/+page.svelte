@@ -306,7 +306,7 @@ function submitMessage() {
 		padding: var(--spacing-2) var(--spacing-3);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-sm);
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 		color: var(--color-fg);
 		font-size: 12px;
 		cursor: pointer;
@@ -315,7 +315,7 @@ function submitMessage() {
 
 	.demo-chip:hover {
 		border-color: var(--color-primary);
-		background: color-mix(in srgb, var(--color-primary) 6%, var(--color-surface-1));
+		background: color-mix(in srgb, var(--color-primary) 6%, var(--surface-1));
 	}
 
 	.chip-query {

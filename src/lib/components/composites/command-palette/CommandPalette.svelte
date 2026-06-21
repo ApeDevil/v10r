@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Command as CommandPrimitive, Dialog } from 'bits-ui';
 import { goto } from '$app/navigation';
+import { Kbd } from '$lib/components/primitives';
 import { localizeHref } from '$lib/i18n/runtime';
 import { cn } from '$lib/utils/cn';
 import {
@@ -162,7 +163,7 @@ $effect(() => {
 					{#if loading}
 						<span class="i-lucide-loader-circle h-4 w-4 text-muted shrink-0 animate-spin" aria-hidden="true"></span>
 					{/if}
-					<kbd class="cp-kbd rounded px-2 py-0.5 text-xs text-muted">ESC</kbd>
+					<Kbd keys="Esc" size="sm" />
 				</div>
 
 				<CommandPrimitive.List class={cn(commandListVariants(), 'p-2 flex flex-col gap-2')}>
@@ -258,11 +259,6 @@ $effect(() => {
 		background-color: var(--color-input);
 		border-radius: var(--radius-md) var(--radius-md) 0 0;
 		border: 1px solid var(--color-input-border);
-	}
-
-	.cp-kbd {
-		background-color: color-mix(in srgb, var(--color-muted) 20%, transparent);
-		border: 1px solid color-mix(in srgb, var(--color-muted) 30%, transparent);
 	}
 
 	.cp-hint {

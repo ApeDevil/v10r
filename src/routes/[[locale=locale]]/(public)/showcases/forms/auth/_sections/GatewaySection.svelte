@@ -238,7 +238,7 @@ function reset() {
 		padding: var(--spacing-8);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-xl);
-		background: var(--color-surface-2);
+		background: var(--surface-2);
 	}
 
 	.gateway-inner {

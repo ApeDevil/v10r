@@ -52,7 +52,7 @@ async function disconnect() {
 		align-items: center;
 		gap: var(--spacing-3);
 		padding: var(--spacing-3) var(--spacing-4);
-		background: var(--color-surface-3);
+		background: var(--surface-3);
 		border-top: 1px solid var(--color-border);
 		box-shadow: 0 -4px 12px color-mix(in srgb, var(--color-fg) 8%, transparent);
 		font-size: var(--text-fluid-sm);

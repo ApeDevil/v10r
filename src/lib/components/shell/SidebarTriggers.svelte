@@ -5,6 +5,7 @@
  * Icons stay mounted across expand/collapse to prevent DOM swap jank.
  */
 
+import { Kbd } from '$lib/components/primitives';
 import { getModals } from '$lib/state/modals.svelte';
 import { getSidebar } from '$lib/state/sidebar.svelte';
 import { cn } from '$lib/utils/cn';
@@ -42,10 +43,9 @@ const cmdKey = 'Ctrl+';
 		<span class="i-lucide-search text-icon-md shrink-0" ></span>
 		{#if isExpanded}
 			<span class="trigger-placeholder flex-1 opacity-0 motion-reduce:opacity-100">Search...</span>
-			<kbd
-				class="trigger-kbd inline-flex items-center justify-center min-w-[1.5rem] h-[1.25rem] px-1 bg-border border border-muted rounded-sm text-xs font-semibold text-fg font-mono opacity-0 motion-reduce:opacity-100"
-				>{cmdKey}K</kbd
-			>
+			<span class="trigger-kbd opacity-0 motion-reduce:opacity-100">
+				<Kbd keys="{cmdKey}K" size="sm" />
+			</span>
 		{/if}
 	</button>
 
@@ -66,10 +66,9 @@ const cmdKey = 'Ctrl+';
 		<span class="i-lucide-bot text-icon-md shrink-0" ></span>
 		{#if isExpanded}
 			<span class="trigger-placeholder flex-1 opacity-0 motion-reduce:opacity-100">Ask AI...</span>
-			<kbd
-				class="trigger-kbd inline-flex items-center justify-center min-w-[1.5rem] h-[1.25rem] px-1 bg-border border border-muted rounded-sm text-xs font-semibold text-fg font-mono opacity-0 motion-reduce:opacity-100"
-				>{cmdKey}J</kbd
-			>
+			<span class="trigger-kbd opacity-0 motion-reduce:opacity-100">
+				<Kbd keys="{cmdKey}J" size="sm" />
+			</span>
 		{/if}
 	</button>
 </div>

@@ -110,7 +110,7 @@ const pct = $derived(
 	.detail-panel {
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);
-		background: var(--color-surface-1);
+		background: var(--surface-1);
 		overflow: hidden;
 		animation: slide-in 0.2s ease-out;
 	}

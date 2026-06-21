@@ -56,7 +56,7 @@ const filtered = $derived(() => {
 	.notification-center {
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
-		background-color: var(--color-surface-1);
+		background-color: var(--surface-1);
 		overflow: hidden;
 	}
 

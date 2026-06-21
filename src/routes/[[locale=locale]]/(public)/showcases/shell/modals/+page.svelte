@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Button } from '$lib/components/primitives';
+import { Button, Kbd } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
 import { getModals } from '$lib/state/modals.svelte';
 
@@ -11,8 +11,8 @@ const modals = getModals();
 		Try the keyboard shortcuts or click the triggers in the sidebar:
 	</p>
 	<ul>
-		<li><kbd>Ctrl+K</kbd> - Quick Search</li>
-		<li><kbd>Ctrl+J</kbd> - AI Assistant</li>
+		<li><Kbd keys="Ctrl+K" size="sm" /> - Quick Search</li>
+		<li><Kbd keys="Ctrl+J" size="sm" /> - AI Assistant</li>
 	</ul>
 
 	<div class="button-group">
@@ -84,15 +84,4 @@ const modals = getModals();
 		margin: 0;
 	}
 
-	kbd {
-		display: inline-block;
-		padding: var(--spacing-1) var(--spacing-2);
-		font-size: var(--text-fluid-xs);
-		font-family: ui-monospace, monospace;
-		background: var(--color-bg);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-sm);
-		font-weight: 600;
-		box-shadow: var(--shadow-sm);
-	}
 </style>
