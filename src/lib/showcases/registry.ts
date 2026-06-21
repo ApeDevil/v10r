@@ -240,7 +240,7 @@ export const showcases: ShowcaseCard[] = [
 		href: '/showcases/ai',
 		icon: 'i-lucide-bot',
 		title: 'AI',
-		description: 'AI assistant with Vercel AI SDK and Groq',
+		description: 'Vely — chatbot built on the Vercel AI SDK and Groq',
 		sublinks: [
 			{ label: 'Simple Chat', href: '/showcases/ai/chat' },
 			{ label: 'Image Metadata Reader', href: '/showcases/ai/image-metadata' },

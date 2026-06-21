@@ -12,7 +12,7 @@ const modals = getModals();
 	</p>
 	<ul>
 		<li><Kbd keys="Ctrl+K" size="sm" /> - Quick Search</li>
-		<li><Kbd keys="Ctrl+J" size="sm" /> - AI Assistant</li>
+		<li><Kbd keys="Ctrl+J" size="sm" /> - Vely</li>
 	</ul>
 
 	<div class="button-group">

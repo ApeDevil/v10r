@@ -84,7 +84,7 @@ function submitMessage() {
 								{#if chat.error.message?.includes('429')}
 									You've reached the rate limit. Please wait a moment.
 								{:else if chat.error.message?.includes('401') || chat.error.message?.includes('Sign in')}
-									Sign in to use the AI assistant.
+									Sign in to chat with Vely.
 								{:else if chat.error.message?.includes('503')}
 									The AI service is temporarily unavailable.
 								{:else}

@@ -194,7 +194,10 @@ function formatRelativeTime(dateStr: string): string {
 		>
 			<!-- Header -->
 			<div class="flex items-center justify-between border-b border-border px-4 py-3">
-				<div class="flex items-center gap-2">
+				<Dialog.Title class="text-fluid-base text-fg">
+					<span class="font-semibold">Vely</span> <span class="font-light text-muted">chatbot</span>
+				</Dialog.Title>
+				<div class="flex items-center gap-1">
 					<button
 						type="button"
 						class="chatbot-icon-btn flex h-8 w-8 items-center justify-center rounded-md text-muted hover:text-fg"
@@ -203,9 +206,6 @@ function formatRelativeTime(dateStr: string): string {
 					>
 						<span class="i-lucide-history h-4 w-4"></span>
 					</button>
-					<Dialog.Title class="text-fluid-base font-semibold text-fg">AI Assistant</Dialog.Title>
-				</div>
-				<div class="flex items-center gap-1">
 					<button
 						type="button"
 						class="chatbot-icon-btn flex h-8 w-8 items-center justify-center rounded-md text-muted hover:text-fg"
@@ -223,7 +223,7 @@ function formatRelativeTime(dateStr: string): string {
 				</div>
 			</div>
 			<Dialog.Description class="sr-only">
-				Chat with the AI assistant. Your conversation history is saved automatically.
+				Chat with Vely, the AI assistant. Your conversation history is saved automatically.
 			</Dialog.Description>
 
 			<div class="flex flex-1 overflow-hidden">
@@ -324,7 +324,7 @@ function formatRelativeTime(dateStr: string): string {
 							{#if chat.error.message?.includes('429')}
 								You've reached the rate limit. Please wait a moment.
 							{:else if chat.error.message?.includes('401') || chat.error.message?.includes('Sign in')}
-								Sign in to use the AI assistant.
+								Sign in to chat with Vely.
 							{:else if chat.error.message?.includes('503')}
 								The AI service is temporarily unavailable.
 							{:else}

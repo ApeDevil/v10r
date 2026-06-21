@@ -1,6 +1,6 @@
 <script lang="ts">
 /**
- * Quick access triggers for command palette + AI Assistant.
+ * Quick access triggers for command palette + Vely (AI assistant).
  * Persistent buttons that transition between rail (icon-only) and expanded (fake input) modes.
  * Icons stay mounted across expand/collapse to prevent DOM swap jank.
  */
@@ -60,12 +60,12 @@ const cmdKey = 'Ctrl+';
 				: 'justify-center border-transparent bg-transparent rounded-full opacity-60 hover:opacity-100 hover:bg-fg-alpha hover:text-fg rail-item'
 		)}
 		onclick={() => modals.open('aiAssistant')}
-		aria-label={isExpanded ? 'AI Assistant' : 'AI Assistant (Ctrl+J)'}
-		title={isExpanded ? undefined : 'AI Assistant (Ctrl+J)'}
+		aria-label={isExpanded ? 'Ask Vely' : 'Ask Vely (Ctrl+J)'}
+		title={isExpanded ? undefined : 'Ask Vely (Ctrl+J)'}
 	>
 		<span class="i-lucide-bot text-icon-md shrink-0" ></span>
 		{#if isExpanded}
-			<span class="trigger-placeholder flex-1 opacity-0 motion-reduce:opacity-100">Ask AI...</span>
+			<span class="trigger-placeholder flex-1 opacity-0 motion-reduce:opacity-100">Ask Vely...</span>
 			<span class="trigger-kbd opacity-0 motion-reduce:opacity-100">
 				<Kbd keys="{cmdKey}J" size="sm" />
 			</span>
