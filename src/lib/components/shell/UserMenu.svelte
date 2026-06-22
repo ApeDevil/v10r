@@ -6,7 +6,7 @@
  */
 
 import { DropdownMenu } from 'bits-ui';
-import { goto } from '$app/navigation';
+import { goto, invalidateAll } from '$app/navigation';
 import { page } from '$app/state';
 import { authClient } from '$lib/auth-client';
 import { locales, localizeHref } from '$lib/i18n';
@@ -55,6 +55,9 @@ function setTheme(mode: 'light' | 'dark' | 'system') {
 
 async function handleSignOut() {
 	await authClient.signOut();
+	// Refresh the shared root-layout `session` (reused across the client-side
+	// nav) so the shell drops back to the logged-out state without a reload.
+	await invalidateAll();
 	goto(localizeHref('/'));
 }
 </script>

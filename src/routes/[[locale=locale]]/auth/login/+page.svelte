@@ -1,6 +1,6 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import { goto } from '$app/navigation';
+import { goto, invalidateAll } from '$app/navigation';
 import { authClient } from '$lib/auth-client';
 import { Altcha } from '$lib/components/composites';
 import { Button, Input, Spinner } from '$lib/components/primitives';
@@ -121,6 +121,9 @@ async function handlePasskey() {
 				error = result.error.message ?? m.auth_login_passkey_failed();
 			}
 		} else {
+			// Refresh the shared root-layout `session` (it is reused across a
+			// client-side nav, so the shell would otherwise stay logged-out).
+			await invalidateAll();
 			goto(localizeHref(data.returnTo));
 			return;
 		}
@@ -144,8 +147,11 @@ onMount(() => {
 		if (!available) return;
 		authClient.signIn
 			.passkey({ autoFill: true })
-			.then((result) => {
-				if (result && !result.error) goto(localizeHref(data.returnTo));
+			.then(async (result) => {
+				if (result && !result.error) {
+					await invalidateAll();
+					goto(localizeHref(data.returnTo));
+				}
 			})
 			.catch(() => {
 				// Aborted/preempted conditional request — expected, ignore.
@@ -157,7 +163,6 @@ onMount(() => {
 	<div class="login-card">
 		<div class="login-header">
 			<h1 class="text-2xl font-bold text-fg">{m.auth_login_title()}</h1>
-			<p class="text-sm text-muted">{m.auth_login_subtitle()}</p>
 		</div>
 
 		{#if error}
@@ -313,11 +318,17 @@ onMount(() => {
 				</div>
 			{/if}
 
-			<p class="text-xs text-muted text-center mt-6">
-				{m.auth_login_terms()}
+			<p class="text-xs text-center mt-6">
 				<a href={localizeHref('/showcases/admin/data')} class="text-fg underline transition-colors duration-fast hover:text-primary focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{m.auth_login_privacy_link()}</a>
 			</p>
 		{/if}
+
+		<div class="login-footer">
+			<Button href={localizeHref('/')} variant="ghost" size="sm">
+				<span class="i-lucide-arrow-left text-base mr-2" aria-hidden="true"></span>
+				{m.auth_login_back_home()}
+			</Button>
+		</div>
 	</div>
 </div>
 
@@ -424,5 +435,11 @@ onMount(() => {
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-3);
+	}
+
+	.login-footer {
+		display: flex;
+		justify-content: center;
+		margin-top: var(--spacing-6);
 	}
 </style>

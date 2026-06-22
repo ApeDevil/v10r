@@ -195,7 +195,7 @@ export const auth = betterAuth({
 			sendVerificationOTP: async ({ email, otp, type }: { email: string; otp: string; type: string }) => {
 				await sendAuthEmail({
 					to: email,
-					subject: type === 'sign-in' ? 'Your sign-in code' : 'Your verification code',
+					subject: type === 'sign-in' ? 'v10r log-in code' : 'Your verification code',
 					html: otpTemplate(otp),
 				});
 			},

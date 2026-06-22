@@ -1,5 +1,5 @@
 <script lang="ts">
-import { goto } from '$app/navigation';
+import { goto, invalidateAll } from '$app/navigation';
 import { authClient } from '$lib/auth-client';
 import { Button, Spinner } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
@@ -70,6 +70,9 @@ async function handleVerify() {
 			error = result.error.message ?? m.auth_verify_error_invalid();
 			verifying = false;
 		} else {
+			// Refresh the shared root-layout `session` so the shell reflects
+			// the authenticated user without a full reload.
+			await invalidateAll();
 			goto(data.returnTo);
 		}
 	} catch {

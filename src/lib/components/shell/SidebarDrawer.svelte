@@ -1,5 +1,5 @@
 <script lang="ts">
-import { getSession } from '$lib/state/session.svelte';
+import { page } from '$app/state';
 import { getSidebar } from '$lib/state/sidebar.svelte';
 import { cn } from '$lib/utils/cn';
 import { trapFocus } from '$lib/utils/focus-trap';
@@ -18,7 +18,9 @@ interface Props {
 let { isAdmin = false, class: className }: Props = $props();
 
 const sidebar = getSidebar();
-const session = getSession();
+// Identity from reactive page data, not the frozen session-state context — see
+// SidebarRail for the full rationale (context `user` never updates post-mount).
+const user = $derived(page.data.session?.user ?? null);
 
 let drawerRef: HTMLElement | undefined = $state();
 let overlayRef: HTMLElement | undefined = $state();
@@ -85,7 +87,7 @@ function handleOverlayClick() {
 
 		<SidebarTriggers forceExpanded />
 
-		{#if !session.user}
+		{#if !user}
 			<ThemeToggle forceExpanded />
 		{/if}
 
@@ -93,7 +95,7 @@ function handleOverlayClick() {
 
 		<div class="p-2 border-t border-border">
 			<DiceRollButton forceExpanded />
-			<UserMenu user={session.user ? { name: session.user.name ?? '', email: session.user.email } : null} forceExpanded />
+			<UserMenu user={user ? { name: user.name ?? '', email: user.email } : null} forceExpanded />
 		</div>
 	</aside>
 {/if}

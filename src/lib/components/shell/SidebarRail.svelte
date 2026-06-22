@@ -1,6 +1,6 @@
 <script lang="ts">
 import { MediaQuery } from 'svelte/reactivity';
-import { getSession } from '$lib/state/session.svelte';
+import { page } from '$app/state';
 import { getSidebar } from '$lib/state/sidebar.svelte';
 import { cn } from '$lib/utils/cn';
 import DiceRollButton from './DiceRollButton.svelte';
@@ -18,7 +18,11 @@ interface Props {
 let { isAdmin = false, class: className }: Props = $props();
 
 const sidebar = getSidebar();
-const session = getSession();
+// Identity comes from reactive page data (root layout `session`), not the
+// imperative session-state context — that context's `user` is captured once at
+// mount and never updates, so after a client-side login it would stay stale
+// until a full reload. page.data updates on every invalidation/navigation.
+const user = $derived(page.data.session?.user ?? null);
 
 // Detect if device supports hover
 const hasHover = new MediaQuery('(hover: hover)');
@@ -78,12 +82,12 @@ $effect(() => {
 	<SidebarNav {isAdmin} />
 
 	<div class="p-2 border-t border-border">
-		{#if !session.user}
+		{#if !user}
 			<ThemeToggle class="!px-0" />
 		{/if}
 		<DiceRollButton class="!px-0" />
 		<UserMenu
-			user={session.user ? { name: session.user.name ?? '', email: session.user.email } : null}
+			user={user ? { name: user.name ?? '', email: user.email } : null}
 			forceExpanded={sidebar.expanded}
 		/>
 	</div>
