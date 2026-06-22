@@ -69,6 +69,7 @@ export const navItems: NavItem[] = [
 			{ href: '/showcases/db', label: m.nav_showcase_db },
 			{ href: '/showcases/auth', label: m.nav_showcase_auth },
 			{ href: '/showcases/ai', label: m.nav_showcase_ai },
+			{ href: '/showcases/toolkits', label: m.nav_showcase_toolkits },
 			{ href: '/showcases/i18n', label: m.nav_showcase_i18n },
 		],
 	},

@@ -160,6 +160,7 @@ The new `image` pgSchema **must** be added to `drizzle.config.ts`'s `schemaFilte
 
 ## Related
 
+- [image-kit.md](./image-kit.md) — the no-persistence toolkit sibling that bundles this reader's metadata extraction with an AI cropper and embedder; reuses `imagemeta`'s image processing by import.
 - `src/lib/server/imagemeta/` — domain core (extract, process, handlers, types)
 - `src/lib/schemas/showcase/image-metadata.ts` — canonical propose + save schemas
 - [provider-routing.md](./provider-routing.md) — the dual chat/tool resolvers this vision resolver sits beside

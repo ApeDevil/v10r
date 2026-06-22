@@ -88,6 +88,8 @@ No documentation drift. No stale examples. The template validates itself.
 │   │       ├── /contextual          # Contextual retrieval
 │   │       ├── /parent-child        # Parent-child chunking
 │   │       └── /graph               # Graph-based retrieval
+│   ├── /toolkits                    # Bundled multi-step tools
+│   │   └── /image-kit               # Metadata + AI cropper + embedder (no persistence)
 │   ├── /auth                        # Authentication showcase
 │   │   ├── /connection              # Provider health check
 │   │   ├── /security                # Security features demo
@@ -492,6 +494,26 @@ AI integration showcase using the Vercel AI SDK. Covers basic chat through full 
 | `/retrieval/parent-child` | Parent-child chunking: small retrieval, large context |
 | `/retrieval/graph` | Graph-based retrieval: entity extraction, relationship traversal |
 | `/image-metadata` | Vision: upload an image, AI proposes metadata, human reviews + approves before save (opt-in GPS). See [ai/image-metadata.md](./ai/image-metadata.md) |
+
+---
+
+### /showcases/toolkits
+
+Bundled, multi-step tools: upload once, run an AI pipeline, adjust the results, then approve. **Nothing is saved.** The first toolkit is Image Kit.
+
+| Tests | Stack |
+|-------|-------|
+| Merged vision call | Vercel AI SDK v6 `generateText` + `Output.object` |
+| Server-authoritative geometry | Pure `snapToAspect` (model gives a hint, server derives pixels) |
+| Image processing | sharp (crop derivatives + `attention` saliency baseline) |
+| Embeddings | `gemini-embedding-001` (text) / `gemini-embedding-2-preview` (image) |
+| Ephemeral storage | Cloudflare R2 (`showcase/imagekit/` prefix, TTL-expirable) |
+
+**Sub-pages:**
+
+| Route | Purpose |
+|-------|---------|
+| `/image-kit` | One upload → Run → adjust → Approve over three tools: AI metadata reader, AI frame-cropper (1:1 / 16:9 / 9:16), image embedder with cosine-similarity viz. Auth-gated, persists nothing. See [ai/image-kit.md](./ai/image-kit.md) |
 
 ---
 

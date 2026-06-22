@@ -132,6 +132,11 @@ src/lib/server/
   errors/       ServerError hierarchy
   feedback/     Single-file domain (index.ts with CRUD inline)
   graph/        Neo4j graph operations; catalog.ts seeds `:Resource`/`PART_OF` graph from showcase registry
+  imagekit/     Image Kit toolkit showcase core (framework-free, NO DB): ingest, merged
+                vision call, snapToAspect geometry, sharp crop, embeddings. Reuses
+                imagemeta image-processing + rawrag embeddings by import; persists nothing
+  imagemeta/    Image Metadata Reader core (framework-free): ingest, EXIF-strip, vision
+                extract, persist to the `image` pgSchema
   jobs/         Runner, scheduler, delivery-scheduler, registered jobs
   llmwiki/      Hybrid vector+BM25 wiki search; co-locates queries
   monitoring/   Observability helpers
@@ -149,7 +154,9 @@ src/lib/server/
   security/     Framework-free security predicates: csrf.ts (needsCsrf, isSameHost,
                 CSRF_EXEMPT_PREFIXES) — imported by hooks.server.ts csrfProtection
   schemas/      Shared server Valibot: shared.ts
-  store/        Desk workspace and file data
+  store/        Desk workspace and file data; store/showcase/{image,imagekit}.ts hold
+                R2 ops for the two image showcases (separate prefixes — imagekit/ is
+                TTL-expirable ephemeral, image/ persists)
   style/        Style-related server logic
   test/         Test infrastructure: db.ts, fixtures.ts, vitest.setup.ts
   utils/        safe-defer.ts
@@ -365,7 +372,8 @@ src/routes/
 | `viz` | 6 | Charts, diagrams, graphs, maps, plots + index |
 | `admin` | 6 | Cookies, data, powers, retention, rights + index |
 | `abuse` | 5 | AI-budget, captcha, honeypot, rate-limits + index |
-| `ai` | 5 | Chat, retrieval (index, explorer, ingest, rag-chat) |
+| `ai` | 5 | Chat, retrieval (index, explorer, ingest, rag-chat), image-metadata reader |
+| `toolkits` | 1 | Image Kit — upload→Run→adjust→Approve over metadata + AI cropper + embedder; persists nothing (see [blueprint/ai/image-kit.md](./blueprint/ai/image-kit.md)) |
 | `3d` | 3 | Index, animated-scene, static-scene (+ layout-reset `[model]/`) |
 | `auth` | 3 | (under `showcases/auth/`) |
 | `cycle` | 3 | AI, API, form |

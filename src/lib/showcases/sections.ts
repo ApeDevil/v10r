@@ -108,4 +108,24 @@ export const showcaseSections: ShowcaseSection[] = [
 	{ pageHref: '/showcases/viz/maps', anchorId: 'basic-map', title: 'Basic Map' },
 	{ pageHref: '/showcases/viz/maps', anchorId: 'markers-popups', title: 'Map Markers & Popups' },
 	{ pageHref: '/showcases/viz/maps', anchorId: 'choropleth', title: 'Choropleth Map' },
+
+	// Toolkits / Image Kit
+	{
+		pageHref: '/showcases/toolkits/image-kit',
+		anchorId: 'kit-metadata',
+		title: 'Metadata Reader',
+		keywords: ['image', 'ai', 'caption', 'alt text', 'keywords'],
+	},
+	{
+		pageHref: '/showcases/toolkits/image-kit',
+		anchorId: 'kit-crop',
+		title: 'Frame Cropper',
+		keywords: ['crop', 'aspect ratio', '16:9', '9:16', 'square', 'saliency'],
+	},
+	{
+		pageHref: '/showcases/toolkits/image-kit',
+		anchorId: 'kit-embed',
+		title: 'Image Embedder',
+		keywords: ['embedding', 'vector', 'rag', 'cosine', 'heatmap'],
+	},
 ];

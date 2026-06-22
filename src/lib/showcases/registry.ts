@@ -257,6 +257,14 @@ export const showcases: ShowcaseCard[] = [
 		],
 	},
 	{
+		href: '/showcases/toolkits',
+		icon: 'i-lucide-wrench',
+		title: 'Toolkits',
+		description:
+			'Bundled, multi-step tools — upload once, run an AI pipeline, adjust the results, then approve. Nothing is saved.',
+		sublinks: [{ label: 'Image Kit', href: '/showcases/toolkits/image-kit' }],
+	},
+	{
 		href: '/showcases/analytics',
 		icon: 'i-lucide-activity',
 		title: 'Analytics',
