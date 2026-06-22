@@ -9,4 +9,4 @@
  * Pages set their own per-page name via `page.data.title` from a load function;
  * the layout renders `${title} - ${BRAND_NAME}`, falling back to `BRAND_NAME` alone.
  */
-export const BRAND_NAME = 'V10r';
+export const BRAND_NAME = 'v10r';

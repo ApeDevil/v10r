@@ -199,30 +199,30 @@ onMount(() => {
 				<div class="email-actions">
 					<Button
 						variant="default"
-						size="lg"
-						class="flex-1 justify-center"
+						size="md"
+						class="flex-1 min-w-0 justify-center whitespace-nowrap"
 						disabled={!canSubmit}
 						onclick={handleMagicLink}
 					>
 						{#if sendingMethod === 'magic-link'}
 							<Spinner size="sm" class="mr-2" />
 						{:else}
-							<span class="i-lucide-link text-lg mr-2" aria-hidden="true"></span>
+							<span class="i-lucide-link text-base mr-2" aria-hidden="true"></span>
 						{/if}
 						{m.auth_login_magic_link()}
 					</Button>
 
 					<Button
 						variant="outline"
-						size="lg"
-						class="flex-1 justify-center"
+						size="md"
+						class="flex-1 min-w-0 justify-center whitespace-nowrap"
 						disabled={!canSubmit}
 						onclick={handleOtp}
 					>
 						{#if sendingMethod === 'otp'}
 							<Spinner size="sm" class="mr-2" />
 						{:else}
-							<span class="i-lucide-hash text-lg mr-2" aria-hidden="true"></span>
+							<span class="i-lucide-hash text-base mr-2" aria-hidden="true"></span>
 						{/if}
 						{m.auth_login_send_code()}
 					</Button>
@@ -234,23 +234,6 @@ onMount(() => {
 			</div>
 
 			<div class="login-actions">
-				{#if data.passkeysEnabled}
-					<Button
-						variant="outline"
-						size="lg"
-						class="w-full justify-center"
-						disabled={isBusy}
-						onclick={handlePasskey}
-					>
-						{#if loadingProvider === 'passkey'}
-							<Spinner size="sm" class="mr-3" />
-						{:else}
-							<span class="i-lucide-fingerprint text-xl mr-3" aria-hidden="true"></span>
-						{/if}
-						{m.auth_login_passkey()}
-					</Button>
-				{/if}
-
 				<Button
 					variant="outline"
 					size="lg"
@@ -307,9 +290,32 @@ onMount(() => {
 				</Button>
 			</div>
 
+			{#if data.passkeysEnabled}
+				<div class="divider">
+					<span>{m.auth_login_or()}</span>
+				</div>
+
+				<div class="login-actions">
+					<Button
+						variant="outline"
+						size="lg"
+						class="w-full justify-center"
+						disabled={isBusy}
+						onclick={handlePasskey}
+					>
+						{#if loadingProvider === 'passkey'}
+							<Spinner size="sm" class="mr-3" />
+						{:else}
+							<span class="i-lucide-fingerprint text-xl mr-3" aria-hidden="true"></span>
+						{/if}
+						{m.auth_login_passkey()}
+					</Button>
+				</div>
+			{/if}
+
 			<p class="text-xs text-muted text-center mt-6">
 				{m.auth_login_terms()}
-				<a href={localizeHref('/showcases/admin/data')} class="underline hover:text-fg">{m.auth_login_privacy_link()}</a>
+				<a href={localizeHref('/showcases/admin/data')} class="text-fg underline transition-colors duration-fast hover:text-primary focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{m.auth_login_privacy_link()}</a>
 			</p>
 		{/if}
 	</div>
