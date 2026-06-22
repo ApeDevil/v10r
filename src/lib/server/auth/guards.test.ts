@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-// Mock $env/dynamic/private — ADMIN_EMAIL / ADMIN_USER_ID controlled per test
-let mockAdminEmail: string | undefined;
+// Mock $env/dynamic/private — ADMIN_USER_ID controlled per test
 let mockAdminUserId: string | undefined;
 
 vi.mock('$env/dynamic/private', () => ({
@@ -9,7 +8,6 @@ vi.mock('$env/dynamic/private', () => ({
 		{},
 		{
 			get: (_target, prop: string) => {
-				if (prop === 'ADMIN_EMAIL') return mockAdminEmail;
 				if (prop === 'ADMIN_USER_ID') return mockAdminUserId;
 				return process.env[prop];
 			},
@@ -18,7 +16,6 @@ vi.mock('$env/dynamic/private', () => ({
 }));
 
 afterEach(() => {
-	mockAdminEmail = undefined;
 	mockAdminUserId = undefined;
 });
 
@@ -34,6 +31,8 @@ const {
 } = guards;
 const requirePostOwnership: typeof guards.requirePostOwnership = guards.requirePostOwnership;
 const requireAssetOwnership: typeof guards.requireAssetOwnership = guards.requireAssetOwnership;
+
+const ADMIN_ID = 'usr_admin';
 
 function makeLocals(user?: object, session?: object, grants: string[] = []): App.Locals {
 	return { user, session, grants } as unknown as App.Locals;
@@ -79,16 +78,16 @@ describe('requireApiUser', () => {
 });
 
 describe('requireAdmin', () => {
-	it('passes when email matches ADMIN_EMAIL', () => {
-		mockAdminEmail = 'admin@test.com';
-		const user = { id: 'u1', email: 'admin@test.com' };
+	it('passes when the user id is in ADMIN_USER_ID', () => {
+		mockAdminUserId = ADMIN_ID;
+		const user = { id: ADMIN_ID, email: 'admin@test.com' };
 		const session = { id: 's1' };
 		const result = requireAdmin(makeLocals(user, session));
 		expect(result.user).toBe(user);
 	});
 
 	it('throws error(404) for non-admin (hides route existence)', () => {
-		mockAdminEmail = 'admin@test.com';
+		mockAdminUserId = ADMIN_ID;
 		const user = { id: 'u1', email: 'other@test.com' };
 		const session = { id: 's1' };
 
@@ -100,8 +99,8 @@ describe('requireAdmin', () => {
 		}
 	});
 
-	it('throws error(404) when ADMIN_EMAIL is not set', () => {
-		mockAdminEmail = undefined;
+	it('throws error(404) when ADMIN_USER_ID is not set', () => {
+		mockAdminUserId = undefined;
 		const user = { id: 'u1', email: 'any@test.com' };
 		const session = { id: 's1' };
 
@@ -112,42 +111,75 @@ describe('requireAdmin', () => {
 			expect((e as { status: number }).status).toBe(404);
 		}
 	});
-
-	it('is case-insensitive for email comparison', () => {
-		mockAdminEmail = 'Admin@Test.com';
-		const user = { id: 'u1', email: 'admin@test.com' };
-		const session = { id: 's1' };
-		const result = requireAdmin(makeLocals(user, session));
-		expect(result.user).toBe(user);
-	});
 });
 
-describe('admin gate — ADMIN_USER_ID is authoritative', () => {
-	it('grants by user id even when the email would not match', () => {
-		mockAdminUserId = 'usr_real_admin';
-		mockAdminEmail = undefined;
-		const user = { id: 'usr_real_admin', email: 'whatever@example.com' };
-		const result = requireAdmin(makeLocals(user, { id: 's1' }));
-		expect(result.user).toBe(user);
-	});
-
-	it('DENIES a re-claimed email when the id does not match (id wins over email)', () => {
-		// Attacker controls the admin email but not the immutable id.
-		mockAdminUserId = 'usr_real_admin';
-		mockAdminEmail = 'admin@test.com';
-		const attacker = { id: 'usr_attacker', email: 'admin@test.com' };
-		expect(() => requireAdmin(makeLocals(attacker, { id: 's1' }))).toThrow();
+describe('admin gate — ADMIN_USER_ID comma-separated list', () => {
+	const session = { id: 's1' };
+	function expectDenied(user: object) {
+		expect(() => requireAdmin(makeLocals(user, session))).toThrow();
 		try {
-			requireAdmin(makeLocals(attacker, { id: 's1' }));
+			requireAdmin(makeLocals(user, session));
 		} catch (e: unknown) {
 			expect((e as { status: number }).status).toBe(404);
 		}
+	}
+
+	it('grants when the id is one of several entries', () => {
+		mockAdminUserId = 'usr_one,usr_two,usr_three';
+		const user = { id: 'usr_two', email: 'whatever@example.com' };
+		expect(requireAdmin(makeLocals(user, session)).user).toBe(user);
+	});
+
+	it('denies when the id matches no entry', () => {
+		mockAdminUserId = 'usr_one,usr_two';
+		expectDenied({ id: 'usr_nope', email: 'whatever@example.com' });
+	});
+
+	it('tolerates surrounding whitespace around entries', () => {
+		mockAdminUserId = '  usr_one , usr_two  ';
+		const user = { id: 'usr_two', email: 'x@y.com' };
+		expect(requireAdmin(makeLocals(user, session)).user).toBe(user);
+	});
+
+	it('ignores empty entries from stray commas', () => {
+		mockAdminUserId = 'usr_one,,usr_two,';
+		const user = { id: 'usr_one', email: 'x@y.com' };
+		expect(requireAdmin(makeLocals(user, session)).user).toBe(user);
+	});
+
+	it('grants no one when the list is only commas/whitespace', () => {
+		mockAdminUserId = ' , , ';
+		expectDenied({ id: 'usr_one', email: 'x@y.com' });
+	});
+
+	it('matches ids case-sensitively (a differently-cased id is denied)', () => {
+		mockAdminUserId = 'usrAbC123';
+		expectDenied({ id: 'usrabc123', email: 'x@y.com' });
+	});
+
+	it('admin cannot be transferred by re-claiming an email (id is the only key)', () => {
+		// Attacker holds a plausible admin email but a different immutable id.
+		mockAdminUserId = 'usr_real_admin';
+		expectDenied({ id: 'usr_attacker', email: 'admin@test.com' });
+	});
+});
+
+describe('isAdmin (exported helper)', () => {
+	it('returns false for a null or undefined user', () => {
+		mockAdminUserId = 'usr_one';
+		expect(guards.isAdmin(null)).toBe(false);
+		expect(guards.isAdmin(undefined)).toBe(false);
+	});
+
+	it('grants a matching user through the exported helper', () => {
+		mockAdminUserId = 'usr_one,usr_two';
+		expect(guards.isAdmin({ id: 'usr_two' })).toBe(true);
 	});
 });
 
 describe('requireBlogAuthor', () => {
 	it('passes for user with blog-author grant', () => {
-		mockAdminEmail = 'admin@test.com';
+		mockAdminUserId = ADMIN_ID;
 		const user = { id: 'u1', email: 'author@test.com' };
 		const session = { id: 's1' };
 		const result = requireBlogAuthor(makeLocals(user, session, ['blog-author']));
@@ -155,15 +187,15 @@ describe('requireBlogAuthor', () => {
 	});
 
 	it('passes for admin regardless of grants', () => {
-		mockAdminEmail = 'admin@test.com';
-		const user = { id: 'u1', email: 'admin@test.com' };
+		mockAdminUserId = ADMIN_ID;
+		const user = { id: ADMIN_ID, email: 'admin@test.com' };
 		const session = { id: 's1' };
 		const result = requireBlogAuthor(makeLocals(user, session, []));
 		expect(result.user).toBe(user);
 	});
 
 	it('throws error(403) for signed-in user without grant', () => {
-		mockAdminEmail = 'admin@test.com';
+		mockAdminUserId = ADMIN_ID;
 		const user = { id: 'u1', email: 'user@test.com' };
 		const session = { id: 's1' };
 
@@ -183,19 +215,11 @@ describe('requireBlogAuthor', () => {
 			expect((e as { status: number }).status).toBe(303);
 		}
 	});
-
-	it('is case-insensitive for admin email check', () => {
-		mockAdminEmail = 'Admin@Test.com';
-		const user = { id: 'u1', email: 'admin@test.com' };
-		const session = { id: 's1' };
-		const result = requireBlogAuthor(makeLocals(user, session, []));
-		expect(result.user).toBe(user);
-	});
 });
 
 describe('requireApiBlogAuthor', () => {
 	it('passes for user with blog-author grant', () => {
-		mockAdminEmail = 'admin@test.com';
+		mockAdminUserId = ADMIN_ID;
 		const user = { id: 'u1', email: 'author@test.com' };
 		const session = { id: 's1' };
 		const result = requireApiBlogAuthor(makeLocals(user, session, ['blog-author']));
@@ -203,15 +227,15 @@ describe('requireApiBlogAuthor', () => {
 	});
 
 	it('passes for admin regardless of grants', () => {
-		mockAdminEmail = 'admin@test.com';
-		const user = { id: 'u1', email: 'admin@test.com' };
+		mockAdminUserId = ADMIN_ID;
+		const user = { id: ADMIN_ID, email: 'admin@test.com' };
 		const session = { id: 's1' };
 		const result = requireApiBlogAuthor(makeLocals(user, session, []));
 		expect(result.user).toBe(user);
 	});
 
 	it('throws apiError(403) for signed-in user without grant', () => {
-		mockAdminEmail = 'admin@test.com';
+		mockAdminUserId = ADMIN_ID;
 		const user = { id: 'u1', email: 'user@test.com' };
 		const session = { id: 's1' };
 
@@ -241,9 +265,9 @@ describe('requirePostOwnership', () => {
 	});
 
 	it('passes for admin even if not owner', () => {
-		mockAdminEmail = 'admin@test.com';
+		mockAdminUserId = ADMIN_ID;
 		const post = { authorId: 'other' };
-		const user = { id: 'u1', email: 'admin@test.com' };
+		const user = { id: ADMIN_ID, email: 'admin@test.com' };
 		expect(() => requirePostOwnership(post, user)).not.toThrow();
 	});
 
@@ -258,7 +282,7 @@ describe('requirePostOwnership', () => {
 	});
 
 	it('throws apiError(403) when user is not owner and not admin', () => {
-		mockAdminEmail = 'admin@test.com';
+		mockAdminUserId = ADMIN_ID;
 		const post = { authorId: 'other' };
 		const user = { id: 'u1', email: 'user@test.com' };
 
@@ -268,13 +292,6 @@ describe('requirePostOwnership', () => {
 		} catch (e: unknown) {
 			expect((e as { status: number }).status).toBe(403);
 		}
-	});
-
-	it('admin check is case-insensitive', () => {
-		mockAdminEmail = 'Admin@Test.com';
-		const post = { authorId: 'other' };
-		const user = { id: 'u1', email: 'admin@test.com' };
-		expect(() => requirePostOwnership(post, user)).not.toThrow();
 	});
 });
 
@@ -286,9 +303,9 @@ describe('requireAssetOwnership', () => {
 	});
 
 	it('passes for admin even if not owner', () => {
-		mockAdminEmail = 'admin@test.com';
+		mockAdminUserId = ADMIN_ID;
 		const asset = { uploaderId: 'other' };
-		const user = { id: 'u1', email: 'admin@test.com' };
+		const user = { id: ADMIN_ID, email: 'admin@test.com' };
 		expect(() => requireAssetOwnership(asset, user)).not.toThrow();
 	});
 
@@ -303,7 +320,7 @@ describe('requireAssetOwnership', () => {
 	});
 
 	it('throws apiError(403) when user is not owner and not admin', () => {
-		mockAdminEmail = 'admin@test.com';
+		mockAdminUserId = ADMIN_ID;
 		const asset = { uploaderId: 'other' };
 		const user = { id: 'u1', email: 'user@test.com' };
 
@@ -316,7 +333,6 @@ describe('requireAssetOwnership', () => {
 	});
 
 	it('handles asset with null uploaderId', () => {
-		mockAdminEmail = undefined;
 		const asset = { uploaderId: null };
 		const user = { id: 'u1', email: 'user@test.com' };
 
@@ -353,7 +369,7 @@ describe('guardApiUser', () => {
 
 describe('guardApiBlogAuthor', () => {
 	it('returns user/session for user with blog-author grant', () => {
-		mockAdminEmail = 'admin@test.com';
+		mockAdminUserId = ADMIN_ID;
 		const user = { id: 'u1', email: 'author@test.com' };
 		const session = { id: 's1' };
 		const result = guardApiBlogAuthor(makeLocals(user, session, ['blog-author']));
@@ -364,8 +380,8 @@ describe('guardApiBlogAuthor', () => {
 	});
 
 	it('returns user/session for admin regardless of grants', () => {
-		mockAdminEmail = 'admin@test.com';
-		const user = { id: 'u1', email: 'admin@test.com' };
+		mockAdminUserId = ADMIN_ID;
+		const user = { id: ADMIN_ID, email: 'admin@test.com' };
 		const session = { id: 's1' };
 		const result = guardApiBlogAuthor(makeLocals(user, session, []));
 		expect('error' in result).toBe(false);
@@ -380,7 +396,7 @@ describe('guardApiBlogAuthor', () => {
 	});
 
 	it('returns error Response(403) for signed-in user without grant', () => {
-		mockAdminEmail = 'admin@test.com';
+		mockAdminUserId = ADMIN_ID;
 		const user = { id: 'u1', email: 'user@test.com' };
 		const session = { id: 's1' };
 		const result = guardApiBlogAuthor(makeLocals(user, session, []));

@@ -1090,7 +1090,7 @@ src/routes/(desk)/
 **Capability model (replaces the old role-based gate)**
 
 - Writing/publishing is gated by an explicit `blog-author` grant in `auth.grant`.
-- Admin (env-pinned via `ADMIN_USER_ID` / `ADMIN_EMAIL`) bypasses the grant check.
+- Admin (env-pinned via `ADMIN_USER_ID`, a comma-separated list of admin user ids) bypasses the grant check.
 - The grant is admin-granted, revocable, and audited. Default new user = read + comment only.
 - Per-request authz: `hooks.server.ts` populates `event.locals.grants: string[]` once per authenticated request via a single PK-indexed lookup. `requireApiBlogAuthor(locals)` is then a pure predicate.
 - On grant/revoke: the mutation deletes all sessions for the affected user via `db.delete(session)`. Next sign-in re-populates `grants`. Drafts remain owned by the revoked user as read-only — admin can reassign.

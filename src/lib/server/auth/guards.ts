@@ -6,17 +6,27 @@ import { apiError } from '$lib/server/api/response';
 /**
  * Admin gate.
  *
- * `ADMIN_USER_ID` is the authoritative check (immutable, can't be transferred
- * by re-claiming an email). `ADMIN_EMAIL` is the bootstrap fallback for fresh
- * installs that don't yet know their user id; once you have signed in, copy
- * the row's id into ADMIN_USER_ID and unset ADMIN_EMAIL for hardened security.
+ * `ADMIN_USER_ID` is a comma-separated list of admin user ids (one per admin).
+ * IDs are immutable, so admin can't be transferred by re-claiming an email.
+ * Bootstrap a fresh install by signing in once (any OAuth method creates the
+ * user row), then copy that row's id (auth."user".id) into ADMIN_USER_ID.
+ *
+ * Exported so the root layout drives admin-nav visibility from the same source
+ * of truth as the route guards — no divergent second check.
  */
-function isAdmin(user: { id: string; email: string }): boolean {
-	const adminUserId = env.ADMIN_USER_ID;
-	if (adminUserId) return user.id === adminUserId;
-	const adminEmail = env.ADMIN_EMAIL;
-	if (adminEmail) return user.email.toLowerCase() === adminEmail.toLowerCase();
-	return false;
+function splitEnvList(raw: string | undefined): string[] {
+	return (
+		raw
+			?.split(',')
+			.map((s) => s.trim())
+			.filter(Boolean) ?? []
+	);
+}
+
+export function isAdmin(user: { id: string } | null | undefined): boolean {
+	if (!user) return false;
+	// IDs are case-sensitive opaque tokens — compare exactly (trim only).
+	return splitEnvList(env.ADMIN_USER_ID).includes(user.id);
 }
 
 export function requireAuth(locals: App.Locals, returnTo?: string) {

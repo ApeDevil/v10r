@@ -1,6 +1,6 @@
-import { env } from '$env/dynamic/private';
 import { tc } from '$lib/i18n/translate';
 import { getActiveAnnouncements } from '$lib/server/admin/announcements';
+import { isAdmin } from '$lib/server/auth/guards';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ cookies, locals, depends }) => {
@@ -44,7 +44,8 @@ export const load: LayoutServerLoad = async ({ cookies, locals, depends }) => {
 		themeMode,
 		sidebarWidth,
 		style: locals.style,
-		isAdmin: !!locals.user && !!env.ADMIN_EMAIL && locals.user.email.toLowerCase() === env.ADMIN_EMAIL.toLowerCase(),
+		// Single source of truth with the route guards — admin-nav visibility honors ADMIN_USER_ID.
+		isAdmin: isAdmin(locals.user),
 		announcements,
 		debugOwnerActive: locals.debugOwnerId != null,
 		/** Resolved request locale; consumed by formatters via page.data.locale to avoid SSR/CSR drift. */

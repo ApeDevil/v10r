@@ -66,6 +66,10 @@ The AI subsystem includes a Graph RAG retrieval pipeline. See `docs/blueprint/ai
 
 Solo dev, no deployment — CI is unnecessary overhead. Use `bun run validate` (check + biome + test) locally when needed. Revisit when deploying or collaborating.
 
+### E2E via Chrome Extension
+
+For autonomous end-to-end testing through the Chrome extension (`mcp__claude-in-chrome__*`), log in via **Google OAuth**. The browser is already signed into the `lynxware.shop@gmail.com` test account, so the "Sign in with Google" button completes the full-page redirect without any password entry (auth is passwordless — there is no email/password path). That account is also an admin (`ADMIN_USER_ID`), so it reaches `/admin`.
+
 
 ## Documentation
 

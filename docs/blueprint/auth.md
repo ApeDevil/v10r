@@ -645,7 +645,7 @@ On grant/revoke: the mutation deletes all sessions for the affected user. Next s
 | `guardApiBlogAuthor(locals)` | same, returns early | `guardApiAuthor` |
 | `guardApiAdmin(locals)` | admin env check | (new) |
 
-Admin (env-pinned via `ADMIN_USER_ID` / `ADMIN_EMAIL`) always passes all capability checks.
+Admin (env-pinned via `ADMIN_USER_ID`, a comma-separated list of admin user ids — multiple admins) always passes all capability checks.
 
 ### API Endpoints
 

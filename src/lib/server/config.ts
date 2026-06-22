@@ -306,8 +306,10 @@ export const ANALYTICS_CONSENT_MAX_AGE = 15_552_000;
 
 // ── Admin ──────────────────────────────────────────────────────────────────────
 
-// ADMIN_EMAIL is read from $env/dynamic/private at usage sites to avoid
-// top-level env access during build. See src/lib/server/auth/guards.ts.
+// ADMIN_USER_ID gates admin access — a comma-separated list of admin user ids
+// (one per admin; immutable, so admin can't be transferred by re-claiming an
+// email). Read from $env/dynamic/private at usage sites to avoid top-level env
+// access during build. See src/lib/server/auth/guards.ts (isAdmin).
 
 /** Audit log entries per page */
 export const ADMIN_AUDIT_PAGE_SIZE = 50;

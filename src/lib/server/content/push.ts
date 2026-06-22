@@ -62,15 +62,17 @@ export async function listContentSlugs(domain: 'blog' = 'blog'): Promise<string[
 	return slugs.sort();
 }
 
-/** Locate the system author (by ADMIN_EMAIL env var) used as the revision author for file-pushed content. */
+/** Locate the system author (the primary admin = first ADMIN_USER_ID) used as the revision author for file-pushed content. */
 export async function getSystemAuthor(db: Database): Promise<string> {
-	const adminEmail = process.env.ADMIN_EMAIL;
-	if (!adminEmail) {
-		throw new Error('ADMIN_EMAIL not set in environment — cannot determine push author');
+	const adminUserId = process.env.ADMIN_USER_ID?.split(',')
+		.map((s) => s.trim())
+		.find(Boolean);
+	if (!adminUserId) {
+		throw new Error('ADMIN_USER_ID not set in environment — cannot determine push author');
 	}
-	const [row] = await db.select({ id: user.id }).from(user).where(eq(user.email, adminEmail.toLowerCase())).limit(1);
+	const [row] = await db.select({ id: user.id }).from(user).where(eq(user.id, adminUserId)).limit(1);
 	if (!row) {
-		throw new Error(`No user found with email ${adminEmail} — sign in once to create the user record`);
+		throw new Error(`No user found with id ${adminUserId} — sign in once to create the user record`);
 	}
 	return row.id;
 }

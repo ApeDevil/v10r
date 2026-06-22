@@ -111,8 +111,8 @@ const groups: Group[] = [
 const guarantees = [
 	{
 		icon: 'i-lucide-key',
-		title: 'Single-admin gate',
-		body: 'The admin surface is gated by a single environment variable, ADMIN_EMAIL. There is no is_admin database column and no role table — nothing to escalate, nothing to drift.',
+		title: 'Env-pinned admin gate',
+		body: 'The admin surface is gated by one environment variable, ADMIN_USER_ID — a list of admin user ids. There is no is_admin database column and no role table — nothing to escalate, nothing to drift.',
 	},
 	{
 		icon: 'i-lucide-eye-off',
