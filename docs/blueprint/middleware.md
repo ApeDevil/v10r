@@ -329,7 +329,7 @@ const securityHandle: Handle = async ({ event, resolve }) => {
 
 > **Live header set.** The running `securityHeaders` handler also emits `Cross-Origin-Opener-Policy: same-origin-allow-popups` (OAuth popups still work), `Cross-Origin-Resource-Policy: same-site`, and `X-DNS-Prefetch-Control: off`. It conditionally adds `Cache-Control: no-store, private` on authed-or-`/api/` responses (guarded by `!response.headers.has('Cache-Control')` so an explicit per-route setter wins) and `Clear-Site-Data` on a successful `/api/auth/sign-out`. See [system-abstraction.md](../system-abstraction.md#security-headers-set) for the full table.
 
-> **CSP** is configured in `svelte.config.js`, not in this handler. `img-src` is restricted to explicit origins (`self`, `data:`, `blob:`, R2, `basemaps.cartocdn.com`, `avatars.githubusercontent.com`, `graph.microsoft.com`) rather than a blanket `https:`. `style-src` still requires `'unsafe-inline'` — Svelte transitions inject inline styles, a known constraint. For SSR pages prefer `csp.mode: 'auto'` (nonces) over the `'unsafe-inline'` fallback shown above, which provides no XSS protection.
+> **CSP** is configured in `svelte.config.js`, not in this handler. `img-src` is restricted to explicit origins (`self`, `data:`, `blob:`, R2, `basemaps.cartocdn.com`, `avatars.githubusercontent.com`) rather than a blanket `https:`. `style-src` still requires `'unsafe-inline'` — Svelte transitions inject inline styles, a known constraint. For SSR pages prefer `csp.mode: 'auto'` (nonces) over the `'unsafe-inline'` fallback shown above, which provides no XSS protection.
 
 ---
 

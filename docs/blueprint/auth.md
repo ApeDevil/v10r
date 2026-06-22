@@ -1038,8 +1038,8 @@ BETTER_AUTH_URL=http://localhost:5173   # drives passkey rpID / origin
 BETTER_AUTH_SECRET=...                   # ≥32 chars (openssl rand -base64 32)
 GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
-MICROSOFT_CLIENT_ID=your_microsoft_client_id
-MICROSOFT_CLIENT_SECRET=your_microsoft_client_secret
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
 VITE_BASE_URL=http://localhost:5173
 ```
 
@@ -1052,7 +1052,7 @@ VITE_BASE_URL=http://localhost:5173
 | Auth framework | Better Auth |
 | Primary auth | Magic link + OTP (passwordless) |
 | Session storage | PostgreSQL via Drizzle |
-| OAuth providers | GitHub, Microsoft (built-in) |
+| OAuth providers | GitHub, Google (built-in) |
 | Passkey | First-factor sign-in credential (phishing-resistant) |
 | TOTP | Step-up factor for sensitive actions — never a login challenge |
 | Step-up gate | Redis `stepup:<userId>`, 600s freshness, fail-closed in prod |

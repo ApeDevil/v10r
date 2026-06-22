@@ -33,8 +33,8 @@ if (!env.BETTER_AUTH_SECRET || env.BETTER_AUTH_SECRET.length < 32) {
 const baseURL = requireEnv('BETTER_AUTH_URL');
 const githubClientId = requireEnv('GITHUB_CLIENT_ID');
 const githubClientSecret = requireEnv('GITHUB_CLIENT_SECRET');
-const microsoftClientId = requireEnv('MICROSOFT_CLIENT_ID');
-const microsoftClientSecret = requireEnv('MICROSOFT_CLIENT_SECRET');
+const googleClientId = requireEnv('GOOGLE_CLIENT_ID');
+const googleClientSecret = requireEnv('GOOGLE_CLIENT_SECRET');
 
 /**
  * Passkeys are disabled on Vercel preview deployments at the plugin level
@@ -153,14 +153,9 @@ export const auth = betterAuth({
 			clientId: githubClientId,
 			clientSecret: githubClientSecret,
 		},
-		// google: {
-		// 	clientId: env.GOOGLE_CLIENT_ID!,
-		// 	clientSecret: env.GOOGLE_CLIENT_SECRET!,
-		// },
-		microsoft: {
-			clientId: microsoftClientId,
-			clientSecret: microsoftClientSecret,
-			tenantId: 'common',
+		google: {
+			clientId: googleClientId,
+			clientSecret: googleClientSecret,
 		},
 	},
 

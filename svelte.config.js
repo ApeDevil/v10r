@@ -21,7 +21,6 @@ const config = {
 					'https://*.r2.cloudflarestorage.com',
 					'https://basemaps.cartocdn.com',
 					'https://avatars.githubusercontent.com',
-					'https://graph.microsoft.com',
 				],
 				'connect-src': ['self', 'blob:', 'https://basemaps.cartocdn.com', 'https://*.r2.cloudflarestorage.com'],
 				'worker-src': ['self', 'blob:'],
