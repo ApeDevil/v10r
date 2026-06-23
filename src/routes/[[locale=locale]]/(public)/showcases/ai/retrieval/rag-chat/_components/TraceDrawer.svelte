@@ -27,7 +27,7 @@ async function runCounterfactual() {
 	counterfactualText = '';
 	counterfactualError = null;
 	try {
-		const res = await fetch('/api/ai/chat', {
+		const res = await fetch('/api/ai/showcase/rag', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json', ...CSRF_HEADER },
 			body: JSON.stringify({

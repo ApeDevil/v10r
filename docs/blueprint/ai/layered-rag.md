@@ -3,6 +3,22 @@
 Two-layer retrieval: `llmwiki` is the primary answer surface; `rawrag` is the audit and drill-down trail.
 
 > rawrag internals (chunking, embeddings, parent-child, graph traversal): see [graph-rag.md](./graph-rag.md).
+> Surface naming (chatbot vs. deskbot) and the one-kernel/two-profile model: see [surfaces.md](./surfaces.md).
+
+---
+
+## One kernel, two profiles
+
+The `rawrag/retrieve()` kernel (embed → tiers → RRF fusion → drill, with the single `user_id` tenant-isolation filter) is **shared mechanism**. Two surfaces exercise it as distinct profiles over distinct corpora — the kernel is never forked (a duplicated `user_id` filter would be a cross-tenant-leak risk), so the corpus boundary is purely `document.userId`.
+
+| | chatbot profile | deskbot profile |
+|---|---|---|
+| Corpus | `SYSTEM_DOCS_USER_ID` docs/catalog + per-user llmwiki — curated, graph-seeded | The user's own desk files — private, mutable (`source = 'desk'`) |
+| Tiers | 1–3 (graph tier valuable — catalog is Neo4j-seeded) | 1–2 (no graph — desk files aren't seeded) |
+| Entry | llmwiki + `search_catalog`/`search_project_docs` + relevance-gated system-docs prefetch + on-demand drill | `desk_search_knowledge` (`desk:ask`, read-only) |
+| Grounding | Post-stream citation verification, citation chips | Reference context; no citation chips; read-only |
+
+The deskbot profile lives in `src/lib/server/ai/deskbot-rag.ts` (`retrieveDeskDocs`, `syncDeskFileToRag`); the chatbot profile is the read path below plus the relevance-gated prefetch. See [Deskbot Corpus](#deskbot-corpus-source--desk).
 
 ---
 
@@ -65,7 +81,7 @@ src/lib/server/
 | `rag.llmwiki_page_redirect` | Slug renames — old slug → new slug. |
 | `rag.llmwiki_lint_issue` | Lint findings per page (broken links, stale pointers, etc.). |
 
-**rawrag tables** (`rag` schema): `rag.document` (source documents) and `rag.chunk` (pgvector 1536 + BM25 tsvector). See [graph-rag.md](./graph-rag.md) for schema detail. `document.source` is a `documentSourceEnum` — `'docs'` marks the project-documentation corpus (see [Docs Corpus](#docs-corpus-search_project_docs) below).
+**rawrag tables** (`rag` schema): `rag.document` (source documents) and `rag.chunk` (pgvector 1536 + BM25 tsvector). See [graph-rag.md](./graph-rag.md) for schema detail. `document.source` is a `documentSourceEnum` — `'docs'` marks the system-owned project-documentation corpus (see [Docs Corpus](#docs-corpus-search_project_docs) below); `'desk'` marks a user's own desk file in the deskbot corpus (see [Deskbot Corpus](#deskbot-corpus-source--desk)).
 
 ---
 
@@ -97,6 +113,7 @@ A per-turn cap (`MAX_RAWRAG_TOOL_CALLS_PER_TURN = 3`) is enforced by the orchest
 
 ## Read Path (Chat Hot Path)
 
+0. **System-docs prefetch (relevance-gated)** — on the chatbot surface, `shouldGroundFromSystemDocs(text)` (`chat-orchestrator.ts`) skips trivial turns (greetings, acks, `< 12` chars), else fires a parallel tier-1 `retrieve()` over `SYSTEM_DOCS_USER_ID` and injects the hits under `<retrieval-context>`. This closes the "fresh user with an empty llmwiki gets zero project knowledge" gap without taxing chit-chat. Distinct from the on-demand `search_project_docs` tool below.
 1. **Overview** — `llmwiki/overview.ts` loads the top-level `kind='overview'` page (~500 tok) into the system prompt on every request.
 2. **Wiki search** — `llmwiki/search.ts` runs hybrid vector (TLDR + title + tags) + BM25 (body) → top-N `LlmwikiHit[]`.
 3. **Pointer hydration** — `llmwiki/queries.ts:hydratePointers` runs a single JOIN, caps pointers per page at `POINTER_CAP=5`, ordered by `weight DESC, chunkId ASC`.
@@ -193,6 +210,30 @@ Every RAG retrieval query hard-filters by owner. The docs corpus is therefore ow
 The tool captures `SYSTEM_DOCS_USER_ID` in its closure — the model never supplies it. Ingested rows carry `document.source = 'docs'` (a value in `documentSourceEnum`) with `sourceUri` set to the canonical `/docs` path.
 
 `rag.document.userId` is **NOT NULL with `onDelete: cascade`**. System-owned docs use `SYSTEM_DOCS_USER_ID`; user documents carry the real user id. There is no null/orphan ownership state — every document belongs to exactly one owner and is erased with that owner.
+
+---
+
+## Deskbot Corpus (`source = 'desk'`)
+
+The deskbot grounds in the user's **own** desk files (markdown + spreadsheets opted into AI context) — private, mutable, owned by the real user, the mirror image of the system-owned docs corpus.
+
+### `desk_search_knowledge` tool
+
+`src/lib/server/ai/tools/desk-ask.ts`. The deskbot's read-only nRAG grounding tool, gated by the `desk:ask` scope.
+
+```typescript
+desk_search_knowledge({ query: string })
+```
+
+- Runs `retrieveDeskDocs` (`deskbot-rag.ts`) — `retrieve()` over tiers 1–2, hard-filtered to the caller's `userId` (no graph tier; desk files aren't Neo4j-seeded).
+- Read-only: emits no `DeskEffect`, never mutates, returns the top 5 chunks as reference context (no citation chips).
+- `desk:ask` is **excluded** from `hasMutatingScope` / `stepsForScopes` / the plan gate — it never triggers plan-before-execute.
+
+### Ingestion & freshness
+
+`syncDeskFileToRag(userId, fileId, type)` (`deskbot-rag.ts`) (re)ingests one file: deletes any prior copy by `sourceUri` (`desk_file_<id>`), then `ingest({ sourceType: 'desk', userId })`. Empty files are dropped, not ingested.
+
+Freshness is **poll-based, off the hot path** — the `desk-rawrag-sync` job (`jobs/desk-rawrag-sync.ts`) compares `desk.file.updatedAt` to the ingested doc's `updatedAt`, (re)ingests new/changed files, and prunes orphans (origin file deleted or AI-context turned off). Editing a file never pays a per-save embedding round-trip.
 
 ---
 

@@ -28,6 +28,13 @@ export interface ProposedStep {
 	tool: string;
 	risk: 'read' | 'create' | 'write' | 'destructive';
 	rationale: string;
+	/**
+	 * The exact arguments the listed tool will run with on approval (e.g.
+	 * `{ file_id: 'fil_…' }`). The approve-route replay calls
+	 * `executeDeskToolCall(tool, args)` with this object verbatim — an empty
+	 * `args` makes the approved plan un-executable, so this is required.
+	 */
+	args: Record<string, unknown>;
 }
 
 export const proposePlanMeta: Record<string, DeskToolMeta> = {
@@ -75,8 +82,18 @@ export function createProposePlanTool() {
 									type: 'string',
 									description: 'Why this step is necessary for the goal.',
 								},
+								args: {
+									type: 'object',
+									description:
+										'The exact arguments object the tool will be called with, e.g. ' +
+										'{ "file_id": "fil_abc" } for desk_delete_file, or ' +
+										'{ "file_id": "fil_abc", "name": "Q3 notes" } for desk_rename_file. ' +
+										'Use REAL ids resolved from desk_list_files or the open panels — never ' +
+										'invent ids or leave this empty, or the approved plan cannot be executed.',
+									additionalProperties: true,
+								},
 							},
-							required: ['action', 'tool', 'risk', 'rationale'],
+							required: ['action', 'tool', 'risk', 'rationale', 'args'],
 						},
 					},
 					estimated_writes: {
@@ -97,8 +114,9 @@ export function createProposePlanTool() {
 				// part, and closes the stream so the UI can render a PlanCard.
 				//
 				// This execute is a thin placeholder so AI SDK's loop machinery
-				// doesn't complain about a missing executor. The actual work
-				// happens in `loop/orchestrate.ts` via the intercept path.
+				// doesn't complain about a missing executor. The actual interception
+				// is inline in the deskbot branch of `chat-orchestrator.ts` (it scans
+				// step results for `desk_propose_plan` and creates the agent_proposal).
 				return {
 					status: 'awaiting_approval',
 					goal: input.goal,

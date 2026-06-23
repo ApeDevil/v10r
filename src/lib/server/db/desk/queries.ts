@@ -199,3 +199,20 @@ export async function getAiContextFiles(userId: string) {
 		.from(file)
 		.where(and(eq(file.userId, userId), eq(file.aiContext, true), isNull(file.deletedAt)));
 }
+
+/**
+ * Global: every ai_context file across all users (with owner + freshness), for the
+ * deskbot nRAG sync job to reconcile against the rawrag corpus. Skips soft-deleted.
+ */
+export async function listAiContextFilesForSync() {
+	return db
+		.select({
+			id: file.id,
+			userId: file.userId,
+			type: file.type,
+			name: file.name,
+			updatedAt: file.updatedAt,
+		})
+		.from(file)
+		.where(and(eq(file.aiContext, true), isNull(file.deletedAt)));
+}

@@ -12,10 +12,10 @@
 import { jsonSchema, tool } from 'ai';
 import { MAX_RAWRAG_TOOL_IDS } from '$lib/server/llmwiki/config';
 import { fetchChunksByIds } from '$lib/server/rawrag/queries';
-import type { DeskToolMeta } from './_types';
+import type { ToolMeta } from './_types';
 
-export const rawragChunksToolMeta: Record<string, DeskToolMeta> = {
-	get_rawrag_chunks: { risk: 'read', scope: 'desk:read' },
+export const rawragChunksToolMeta: Record<string, ToolMeta> = {
+	get_rawrag_chunks: { risk: 'read' },
 };
 
 interface ToolInput {

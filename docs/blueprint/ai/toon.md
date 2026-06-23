@@ -125,7 +125,8 @@ const safe = encode(user, {
 TOON is ideal for formatting retrieved documents before sending to the LLM.
 
 ```typescript
-// src/routes/api/ai/chat/+server.ts
+// Illustrative — context formatting runs in the orchestrator, reached via the
+// per-surface routes (e.g. src/routes/api/ai/chatbot/+server.ts).
 import { encode } from '@toon-format/toon';
 import { streamText } from 'ai';
 import { providers } from '$lib/server/ai/providers';

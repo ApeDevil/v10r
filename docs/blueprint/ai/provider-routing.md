@@ -2,6 +2,8 @@
 
 How the orchestrator selects a provider per turn — and why it matters for tool reliability.
 
+> Entry edges are the three per-surface routes (`/api/ai/chatbot` · `/api/ai/deskbot` · `/api/ai/showcase/rag`) behind the shared `guardAiRequest`; all reach the one `orchestrateChat`. The surface picks the *tool set*, but provider selection below is surface-agnostic — `wantsTools` is what flips chat-only vs. tool-capable. See [surfaces.md](./surfaces.md).
+
 ---
 
 ## Two resolvers

@@ -59,7 +59,7 @@ function onWindowKeydownCapture(e: KeyboardEvent) {
 
 const chat = new Chat({
 	transport: new DefaultChatTransport({
-		api: '/api/ai/chat',
+		api: '/api/ai/chatbot',
 		headers: CSRF_HEADER,
 		fetch: async (url, init) => {
 			const response = await fetch(url, init);

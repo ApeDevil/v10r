@@ -53,8 +53,8 @@ export const load: PageServerLoad = async () => {
 			max: AI_RATE_LIMIT_MAX,
 			window: AI_RATE_LIMIT_WINDOW,
 			keyedOn: 'IP',
-			surface: '/api/ai/chat',
-			scope: 'Per-IP rate limit on chat completions (in addition to per-user daily token cap)',
+			surface: '/api/ai/{chatbot,deskbot}',
+			scope: 'Per-user rate limit on chat completions (in addition to per-user daily token cap)',
 		},
 		{
 			prefix: FEEDBACK_RATE_LIMIT_PREFIX,

@@ -3,14 +3,16 @@ import { createId } from '../id';
 import { db } from '../index';
 import { conversation, conversationStep, message, type RetrievalEvent, toolCall } from '../schema/ai/conversation';
 
-/** Create a new conversation */
-export async function createConversation(userId: string, title?: string) {
+/** Create a new conversation. `surface` is stamped once here from the orchestrator's
+ *  resolved surface (chatbot/deskbot); omitted for the non-persisted rag-demo. */
+export async function createConversation(userId: string, title?: string, surface?: 'chatbot' | 'deskbot') {
 	const [row] = await db
 		.insert(conversation)
 		.values({
 			id: crypto.randomUUID(),
 			userId,
 			title: title ?? 'New conversation',
+			surface: surface ?? null,
 		})
 		.returning();
 	return row;
@@ -121,6 +123,8 @@ export async function saveConversationStep(data: {
 	modelId?: string | null;
 	durationMs?: number | null;
 	retrievalEvents?: RetrievalEvent[] | null;
+	/** Denormalized surface for per-surface usage analytics (chatbot/deskbot). */
+	surface?: 'chatbot' | 'deskbot' | null;
 }) {
 	const id = createId.conversationStep();
 	await db.insert(conversationStep).values({
@@ -131,6 +135,7 @@ export async function saveConversationStep(data: {
 		modelId: data.modelId ?? null,
 		durationMs: data.durationMs ?? null,
 		retrievalEvents: data.retrievalEvents ?? null,
+		surface: data.surface ?? null,
 	});
 }
 

@@ -5,7 +5,8 @@ export interface ToolRow {
 	name: string;
 	branch: 'retrieval' | 'desk';
 	risk: 'read' | 'create' | 'write' | 'destructive';
-	scope: string;
+	/** Desk tools carry their gating scope; chatbot (retrieval) tools are scopeless → null. */
+	scope: string | null;
 	scopeLabel: string;
 	stepBudget: number;
 	note: string;

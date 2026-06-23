@@ -41,7 +41,7 @@ export interface IngestableDocument {
 	title: string;
 	content: string;
 	sourcePath?: string;
-	sourceType?: 'upload' | 'web' | 'text' | 'api' | 'docs';
+	sourceType?: 'upload' | 'web' | 'text' | 'api' | 'docs' | 'desk';
 	userId?: string;
 }
 

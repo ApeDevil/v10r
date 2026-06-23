@@ -3,7 +3,7 @@ import { buildPermissionsBlock, COMPLETION_BLOCK, PLANNING_BLOCK } from './confi
 
 describe('buildPermissionsBlock', () => {
 	it('marks all scopes as enabled when all provided', () => {
-		const result = buildPermissionsBlock(['desk:read', 'desk:write', 'desk:create', 'desk:delete']);
+		const result = buildPermissionsBlock(['desk:read', 'desk:write', 'desk:create', 'desk:delete', 'desk:ask']);
 		expect(result).toContain('[enabled]');
 		expect(result).not.toContain('[disabled]');
 	});
@@ -34,12 +34,13 @@ describe('buildPermissionsBlock', () => {
 		expect(result).toMatch(/\n<\/permissions>$/);
 	});
 
-	it('always lists all 4 scopes', () => {
+	it('always lists all 5 scopes', () => {
 		const result = buildPermissionsBlock([]);
 		expect(result).toContain('read:');
 		expect(result).toContain('write:');
 		expect(result).toContain('create:');
 		expect(result).toContain('delete:');
+		expect(result).toContain('ask:');
 	});
 
 	it('write scope description includes markdown', () => {

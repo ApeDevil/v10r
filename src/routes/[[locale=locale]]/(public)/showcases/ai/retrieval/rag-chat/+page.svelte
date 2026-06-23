@@ -73,7 +73,7 @@ const llmwikiTrace = createLlmwikiTrace();
 
 const chat = new Chat({
 	transport: new DefaultChatTransport({
-		api: '/api/ai/chat',
+		api: '/api/ai/showcase/rag',
 		headers: CSRF_HEADER,
 		body: {
 			get useRetrieval() {

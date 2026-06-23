@@ -53,7 +53,7 @@ const PanelContextEntry = v.object({
 	tokenEstimate: v.optional(v.number()),
 });
 
-const ToolScope = v.picklist(['desk:read', 'desk:write', 'desk:create', 'desk:delete']);
+const ToolScope = v.picklist(['desk:read', 'desk:write', 'desk:create', 'desk:delete', 'desk:ask']);
 
 const DeskLayoutEntry = v.object({
 	panelId: v.string(),
@@ -74,7 +74,7 @@ export const ChatRequestSchema = v.object({
 	llmwikiCollectionId: v.optional(v.nullable(v.string())),
 	panelContext: v.optional(v.pipe(v.array(PanelContextEntry), v.maxLength(5))),
 	/** Tool permission scopes — empty or omitted means no tools. */
-	toolScopes: v.optional(v.pipe(v.array(ToolScope), v.maxLength(4))),
+	toolScopes: v.optional(v.pipe(v.array(ToolScope), v.maxLength(5))),
 	/** Current desk layout so AI knows what panels are open. */
 	deskLayout: v.optional(v.pipe(v.array(DeskLayoutEntry), v.maxLength(20))),
 	/** Active workspace name for AI context. */

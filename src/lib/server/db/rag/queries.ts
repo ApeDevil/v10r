@@ -26,6 +26,27 @@ export async function listDocuments(userId: string, offset = 0, limit = 50) {
 	return { items, total: countResult?.total ?? 0 };
 }
 
+/**
+ * Find a user's active document by its `sourceUri` back-pointer (e.g. `desk_file_<id>`).
+ * Used by the deskbot nRAG sync to locate the rawrag copy of a desk file for re-ingest.
+ */
+export async function getDocumentBySourcePath(sourceUri: string, userId: string) {
+	const [row] = await db
+		.select({ id: document.id, updatedAt: document.updatedAt, contentHash: document.contentHash })
+		.from(document)
+		.where(and(eq(document.sourceUri, sourceUri), eq(document.userId, userId), isNull(document.deletedAt)))
+		.limit(1);
+	return row ?? null;
+}
+
+/** List all active `source = 'desk'` documents (the deskbot corpus) for sync reconciliation. */
+export async function listDeskRagDocs() {
+	return db
+		.select({ id: document.id, userId: document.userId, sourceUri: document.sourceUri })
+		.from(document)
+		.where(and(eq(document.source, 'desk'), isNull(document.deletedAt)));
+}
+
 /** Get a single document with ownership check. */
 export async function getDocument(id: string, userId: string) {
 	const [doc] = await db

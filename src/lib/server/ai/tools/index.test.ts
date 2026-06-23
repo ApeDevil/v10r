@@ -23,7 +23,8 @@ vi.mock('$lib/server/db/desk/mutations', () => ({
 	deleteFile: vi.fn(),
 }));
 
-const { createDeskTools, stepsForScopes } = await import('./index');
+const { createDeskTools, stepsForScopes, deskbotToolMeta } = await import('./index');
+const { DESK_EXECUTABLE_TOOLS } = await import('./desk-execute');
 
 const USER_ID = 'usr_test_scope_gating';
 
@@ -77,6 +78,21 @@ describe('createDeskTools scope gating', () => {
 		expect(keys).not.toContain('desk_create_spreadsheet');
 	});
 
+	it('returns read + ask (nRAG) tool for ["desk:ask"], without mounting the plan tool', () => {
+		const tools = createDeskTools(USER_ID, ['desk:ask']);
+		const keys = Object.keys(tools);
+		expect(keys).toContain('desk_search_knowledge');
+		// desk:ask is read-only — it must NOT pull in the plan-before-execute primitive.
+		expect(keys).not.toContain('desk_propose_plan');
+		expect(keys).not.toContain('desk_update_cells');
+		expect(keys).not.toContain('desk_delete_file');
+	});
+
+	it('does not include desk_search_knowledge without desk:ask scope', () => {
+		const tools = createDeskTools(USER_ID, ['desk:write']);
+		expect(Object.keys(tools)).not.toContain('desk_search_knowledge');
+	});
+
 	it('returns all tools for all scopes', () => {
 		const tools = createDeskTools(USER_ID, ['desk:read', 'desk:write', 'desk:create', 'desk:delete']);
 		const keys = Object.keys(tools);
@@ -122,6 +138,31 @@ describe('createDeskTools scope gating', () => {
 	});
 });
 
+describe('one-door: desk-execute drift guard', () => {
+	// Mutating deskbot tools (risk !== 'read'); excludes desk_propose_plan (read) and
+	// resolve_ref (not in the meta registry — compaction infra, never replayed).
+	const mutatingDeskTools = Object.entries(deskbotToolMeta)
+		.filter(([, meta]) => meta.risk !== 'read')
+		.map(([name]) => name);
+
+	it('every mutating deskbot tool has a replay executor case', () => {
+		for (const name of mutatingDeskTools) {
+			expect(
+				DESK_EXECUTABLE_TOOLS as readonly string[],
+				`${name} is a mutating desk tool but missing from DESK_EXECUTABLE_TOOLS — proposal replay would silently fail`,
+			).toContain(name);
+		}
+	});
+
+	it('every executor tool is a known mutating deskbot tool (no orphan cases)', () => {
+		for (const name of DESK_EXECUTABLE_TOOLS) {
+			const meta = deskbotToolMeta[name];
+			expect(meta, `${name} is in DESK_EXECUTABLE_TOOLS but not in deskbotToolMeta`).toBeDefined();
+			expect(meta.risk, `${name} executor maps to a non-mutating tool`).not.toBe('read');
+		}
+	});
+});
+
 describe('stepsForScopes', () => {
 	it('returns 3 for read-only scopes', () => {
 		expect(stepsForScopes(['desk:read'])).toBe(3);
@@ -135,5 +176,10 @@ describe('stepsForScopes', () => {
 
 	it('returns 3 for empty scopes', () => {
 		expect(stepsForScopes([])).toBe(3);
+	});
+
+	it('returns 3 for desk:ask (read-only nRAG grounding, not a mutation)', () => {
+		expect(stepsForScopes(['desk:ask'])).toBe(3);
+		expect(stepsForScopes(['desk:read', 'desk:ask'])).toBe(3);
 	});
 });

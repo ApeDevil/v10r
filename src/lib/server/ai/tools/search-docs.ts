@@ -23,11 +23,11 @@ import { SYSTEM_DOCS_USER_ID } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { document } from '$lib/server/db/schema/rag';
 import { retrieve } from '$lib/server/rawrag';
-import type { DeskToolMeta } from './_types';
+import type { ToolMeta } from './_types';
 import type { CatalogSink } from './search-catalog';
 
-export const searchDocsToolMeta: Record<string, DeskToolMeta> = {
-	search_project_docs: { risk: 'read', scope: 'desk:read' },
+export const searchDocsToolMeta: Record<string, ToolMeta> = {
+	search_project_docs: { risk: 'read' },
 };
 
 interface ToolInput {

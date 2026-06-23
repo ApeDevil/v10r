@@ -12,6 +12,8 @@ import { ragSchema } from './embedding-model';
 // catalog; sourceUri carries its stable SearchRecord id for the soft-pointer linkage.
 // 'docs' = a project documentation file (docs/**/*.md) ingested into the RAG corpus;
 // sourceUri carries the canonical /docs path. Owned by SYSTEM_DOCS_USER_ID.
+// 'desk' = a user's own desk file (markdown/spreadsheet) opted into AI context; sourceUri
+// carries `desk_file_<id>`. Owned by the REAL user — the deskbot nRAG corpus.
 export const documentSourceEnum = ragSchema.enum('document_source', [
 	'upload',
 	'web',
@@ -19,6 +21,7 @@ export const documentSourceEnum = ragSchema.enum('document_source', [
 	'api',
 	'catalog',
 	'docs',
+	'desk',
 ]);
 
 export const documentStatusEnum = ragSchema.enum('document_status', ['pending', 'processing', 'ready', 'error']);

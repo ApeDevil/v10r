@@ -13,9 +13,10 @@ We use the term as a diagnostic. Asking "does v10r have all the harness primitiv
 | Primitive | Owning slice | File |
 |---|---|---|
 | Tool dispatch & schema-level scope filtering | `ai/tools` | `tools/index.ts` — `createDeskTools(userId, scopes, layout)` |
-| Tool metadata (`risk`, `scope`) | `ai/tools` | `tools/_types.ts` — `DeskToolRisk`, `DeskToolMeta` |
+| Tool metadata (surface-split) | `ai/tools` | `tools/_types.ts` — surface-neutral `ToolRisk`/`ToolMeta` (chatbot retrieval, no scope) + `DeskToolMeta` (adds `scope`); collections `chatbotToolMeta` / `deskbotToolMeta` / `allToolMeta` in `tools/index.ts` |
+| Desk-mutation SSOT (one-door rule) | `ai/tools` | `tools/desk-execute.ts` — `executeDeskToolCall`: both the in-loop tool path and the proposal-approval replay route through it; `index.test.ts` drift-guards the replay map against the live tool set |
 | Step loop & provider fallback | `ai` | `chat-orchestrator.ts` — `streamText` + `stopWhen` + `tryFallback` (provider fallback & cooldown) |
-| Per-request scope step caps | `ai/tools` | `tools/index.ts` — `stepsForScopes` |
+| Per-request scope step caps | `ai/tools` | `tools/index.ts` — `stepsForScopes` (read-only incl. `desk:ask` = 3, mutation = 5) |
 | Context compaction (fixes AI SDK #9631) | `ai/loop` | `loop/compact.ts` — `compactToolResults` + `resolve_ref` tool |
 | System prompt assembly | `ai/context` | `context/system-prompt.ts` — `buildSystemPrompt`, cache-stable prefix ordering |
 | Retrieval integration | `ai` | `chat-orchestrator.ts` — llmwiki + rawrag pipeline events |
@@ -44,10 +45,12 @@ We use the term as a diagnostic. Asking "does v10r have all the harness primitiv
 A `desk_propose_plan` tool exists, but plan-first is **not** the default posture. It's a latency tax on one-shot interactions, so it only kicks in when all three conditions hold:
 
 1. Destructive-intent heuristic fires on the user message.
-2. ≥2 tools with `risk: 'destructive'` are registered for this request.
-3. ≥2 distinct target entities are inferred from panel context.
+2. ≥2 structural (create/delete) capabilities are granted for this request.
+3. ≥2 distinct target entities are inferred from panel/layout context.
 
-Predicate lives in `policy/governor.ts` as `shouldRequirePlan(request, toolset)`. Single destructive actions keep the existing two-phase `confirmed: boolean` pattern on individual tools (see `desk_delete_file`).
+Predicate lives in `policy/governor.ts` as `shouldRequirePlan({ destructiveIntent, destructiveToolCount, targetEntityCount })`. It is **wired into the deskbot turn** (`chat-orchestrator.ts`): when it fires, the `<planning>` block injects and `desk_propose_plan` becomes reachable. (It was previously dead code — registered but never called — so the gate was unreachable.) Single destructive actions keep the existing two-phase `confirmed: boolean` pattern on individual tools (see `desk_delete_file`).
+
+The execute path closes the loop. Each `desk_propose_plan` step carries its exact `args`, persisted on the proposal payload; on approval the approve-route replays them step-by-step through `executeDeskToolCall` (the one-door SSOT), short-circuiting on first failure with the partial result kept (no rollback). The resume turn that follows is **read-only** — its desk scopes are filtered to `desk:read`/`desk:ask` so it can only acknowledge, never re-mutate or diverge: approval binds execution.
 
 ## Risk tiers — UI mapping
 

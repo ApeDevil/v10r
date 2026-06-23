@@ -85,7 +85,7 @@ function classifyErrorMessage(msg: string): { kind: string | null; detail: strin
 const chat = new Chat({
 	...(cached?.messages?.length ? { messages: cached.messages as Chat['messages'] } : {}),
 	transport: new DefaultChatTransport({
-		api: '/api/ai/chat',
+		api: '/api/ai/deskbot',
 		headers: CSRF_HEADER,
 		fetch: async (url, init) => {
 			const response = await fetch(url, init);

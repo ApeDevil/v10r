@@ -24,10 +24,12 @@ import {
 } from '$lib/server/ai/context/system-prompt';
 import { aiErrorToStatus, classifyAIError, safeAIMessage } from '$lib/server/ai/errors';
 import { compactToolResults, DEFAULT_BUDGET, runWithCompaction } from '$lib/server/ai/loop/compact';
+import { shouldRequirePlan } from '$lib/server/ai/policy';
 import { incrProvider429 } from '$lib/server/ai/provider-usage';
 import type { ProviderEntry } from '$lib/server/ai/providers';
 import { isCooledDown, markCooldown } from '$lib/server/ai/providers';
 import { buildRetrievalTools, createDeskTools, type DeskToolScope, stepsForScopes } from '$lib/server/ai/tools';
+import { SYSTEM_DOCS_USER_ID } from '$lib/server/config';
 import { checkConversationLimit } from '$lib/server/db/ai/limits';
 import {
 	createConversation,
@@ -61,8 +63,22 @@ import { createToolLeakGuard, stripTextualToolCall } from './tool-leak-guard';
 /** A legacy simple message or a full UIMessage from the AI SDK v6 client. */
 export type ChatMessage = { role: 'user' | 'assistant'; content: string } | UIMessage;
 
+/**
+ * Which AI surface a turn belongs to — the explicit dispatch discriminant.
+ * - `chatbot`  — the v10r expert: read-only, grounded, citation-faithful Q&A.
+ * - `deskbot`  — the in-desk operator: agentic, mutating, plan-gated UI parity.
+ * - `rag-demo` — the showcase retrieval pipeline demo (not a product surface).
+ */
+export type TurnSurface = 'chatbot' | 'deskbot' | 'rag-demo';
+
 export interface ChatInput {
 	userId: string;
+	/**
+	 * Explicit surface discriminant. Set by the per-surface routes (Phase 3); when
+	 * absent it is derived from the legacy `useLlmwiki`/`useRetrieval` flags so existing
+	 * clients keep working. Resolved to a concrete {@link TurnSurface} in the orchestrator.
+	 */
+	surface?: TurnSurface;
 	providerId?: string;
 	messages: ChatMessage[];
 	conversationId?: string;
@@ -231,6 +247,7 @@ async function resolveConversation(
 	userId: string,
 	existingConvId: string | undefined,
 	messages: ChatInput['messages'],
+	surface?: 'chatbot' | 'deskbot',
 ): Promise<{ conversationId: string } | ChatError> {
 	if (existingConvId) {
 		const conv = await getConversation(existingConvId, userId);
@@ -243,7 +260,7 @@ async function resolveConversation(
 
 	const firstUserMsg = messages.find((m) => m.role === 'user');
 	const title = firstUserMsg ? getMessageText(firstUserMsg).slice(0, 80) : 'New conversation';
-	const conv = await createConversation(userId, title);
+	const conv = await createConversation(userId, title, surface);
 	return { conversationId: conv.id };
 }
 
@@ -319,6 +336,23 @@ async function tryFallback(
  *
  * Returns a Response (either streaming or error JSON).
  */
+/**
+ * Relevance gate for the chatbot's system-docs prefetch (user choice: relevance-gated,
+ * not always-on). The chatbot is always about v10r, so we prefetch the system-owned docs
+ * corpus by default — but skip trivial turns (greetings, acks, very short messages) so an
+ * embedding+retrieval round-trip isn't paid when there's no real question to ground. This
+ * closes the "fresh user with an empty llmwiki gets zero project knowledge" gap without a
+ * per-turn cost on chit-chat.
+ */
+function shouldGroundFromSystemDocs(text: string): boolean {
+	const t = text.trim();
+	if (t.length < 12) return false;
+	if (/^(hi|hey|hello|yo|thanks|thank you|ty|ok|okay|k|yes|no|sure|cool|nice|great|lol|hm+)\b[\s!.?]*$/i.test(t)) {
+		return false;
+	}
+	return true;
+}
+
 export async function orchestrateChat(input: ChatInput): Promise<Response> {
 	return runWithCompaction(DEFAULT_BUDGET, () => orchestrateChatInner(input));
 }
@@ -388,12 +422,71 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	const model = (hasTools ? resolvedToolModel : resolvedChatModel) ?? resolvedChatModel;
 	// Desk tools only for actual desk scopes — the llmwiki/rawrag branches set hasTools (to claim
 	// the tool model) but bring their own retrieval tools and pass no desk scopes.
-	const deskTools = hasTools && toolScopes?.length ? createDeskTools(userId, toolScopes, deskLayout) : undefined;
+	// On a resume-from-proposal turn the approved plan has ALREADY executed via the
+	// deterministic approve-route replay — this turn's only job is to acknowledge it.
+	// Strip mutating scopes so the model physically cannot re-run or diverge from the
+	// approved plan: approval binds execution. Read tools stay so it can still verify.
+	const effectiveToolScopes =
+		resumeContext && toolScopes ? toolScopes.filter((s) => s === 'desk:read' || s === 'desk:ask') : toolScopes;
+	const deskTools =
+		hasTools && effectiveToolScopes?.length ? createDeskTools(userId, effectiveToolScopes, deskLayout) : undefined;
 	// Resolved provider/model attribution for per-step telemetry (conversation_step).
 	// The tool provider drives the turn when tools are mounted; otherwise the chat provider.
 	const stepProviderId = hasTools ? resolvedToolProviderId : (activeInfo?.id ?? null);
 	const stepModelId = hasTools ? (resolvedToolProvider?.model ?? null) : (activeInfo?.model ?? null);
-	let baseSystemPrompt = buildSystemPrompt({ panelContext, toolScopes, deskLayout, activeWorkspace });
+	// --- Plan-before-execute gate (policy/governor.ts) ---
+	// Pre-turn estimate of whether this is a destructive, multi-capability, multi-target
+	// desk turn that must produce a plan first. Wiring this is what makes the `<planning>`
+	// block inject and `desk_propose_plan` reachable — the governor was dead code before
+	// (never called), so the model was never instructed to plan. Heuristic is deliberately
+	// conservative and tunable; it activates more as the deskbot grows structural tools.
+	// Chatbot turns have no mutating scopes, so requirePlan is always false for them.
+	const grantedScopes = toolScopes ?? [];
+	const lastRawMsg = windowedMessages[windowedMessages.length - 1];
+	const userMsgText = lastRawMsg?.role === 'user' ? getMessageText(lastRawMsg) : '';
+
+	// --- Explicit surface discriminant ---
+	// One named dispatch decision (replaces implicit branch-guard truthiness). `input.surface`
+	// (set by the Phase-3 per-surface routes) wins; otherwise it derives from the legacy
+	// `useLlmwiki`/`useRetrieval` flags. The retrieval surfaces additionally require a fresh
+	// user turn — resume turns degrade to the plain deskbot streaming path. Computed BEFORE
+	// conversation resolution so it can be stamped on the conversation at creation.
+	const isFreshUserTurn = lastRawMsg?.role === 'user' && !!userMsgText && !resumeContext;
+	let surface: TurnSurface = 'deskbot';
+	if (isFreshUserTurn) {
+		const requested = input.surface ?? (useLlmwiki ? 'chatbot' : useRetrieval ? 'rag-demo' : 'deskbot');
+		if (requested === 'chatbot' || requested === 'rag-demo') surface = requested;
+	}
+	// rag-demo is a showcase, not a persisted product surface — its conversations carry no
+	// surface stamp (daty: ai_surface is a closed two-member enum).
+	const stampSurface: 'chatbot' | 'deskbot' | undefined = surface === 'rag-demo' ? undefined : surface;
+
+	// --- Plan-before-execute gate (policy/governor.ts) ---
+	// Pre-turn estimate of whether this is a destructive, multi-capability, multi-target
+	// desk turn that must produce a plan first. Wiring this is what makes the `<planning>`
+	// block inject and `desk_propose_plan` reachable — the governor was dead code before
+	// (never called). Heuristic is deliberately conservative and tunable; it activates more
+	// as the deskbot grows structural tools. Chatbot turns have no mutating scopes → false.
+	// "Structural" capabilities (create/delete files) are the destructive surface; in-place
+	// content writes (desk:write) are not counted as structurally destructive.
+	const structuralCapabilityCount = grantedScopes.filter((s) => s === 'desk:create' || s === 'desk:delete').length;
+	// Distinct desk entities visible to the turn — a proxy for "how many targets".
+	const targetEntityCount = new Set([
+		...(panelContext ?? []).map((p) => p.label),
+		...(deskLayout ?? []).map((p) => p.fileId ?? p.label),
+	]).size;
+	const hasMutatingScopeGranted = grantedScopes.some(
+		(s) => s === 'desk:write' || s === 'desk:create' || s === 'desk:delete',
+	);
+	const requirePlan = shouldRequirePlan({
+		destructiveIntent:
+			hasMutatingScopeGranted &&
+			/\b(delete|remove|clear|wipe|purge|erase|drop|reset|bulk|all|every|each|multiple)\b/i.test(userMsgText),
+		destructiveToolCount: structuralCapabilityCount,
+		targetEntityCount,
+	});
+
+	let baseSystemPrompt = buildSystemPrompt({ panelContext, toolScopes, deskLayout, activeWorkspace, requirePlan });
 	if (resumeContext) {
 		baseSystemPrompt = `${baseSystemPrompt}
 
@@ -404,8 +497,9 @@ ${resumeContext.summary}
 The user has just approved the plan above and the listed steps were executed. Acknowledge what was done in your reply and continue the conversation. Do NOT call \`desk_propose_plan\` again for the same goal.`;
 	}
 
-	// Resolve conversation (pass raw messages for title extraction)
-	const convResult = await resolveConversation(userId, existingConvId, windowedMessages);
+	// Resolve conversation (pass raw messages for title extraction; stamp the surface on
+	// any newly-created conversation).
+	const convResult = await resolveConversation(userId, existingConvId, windowedMessages, stampSurface);
 	if ('type' in convResult) {
 		const err = convResult as ChatError;
 		return Response.json(
@@ -416,8 +510,6 @@ The user has just approved the plan above and the listed steps were executed. Ac
 	const { conversationId } = convResult;
 
 	// Save user message
-	const lastRawMsg = windowedMessages[windowedMessages.length - 1];
-	const userMsgText = lastRawMsg?.role === 'user' ? getMessageText(lastRawMsg) : '';
 	if (conversationId && lastRawMsg?.role === 'user' && userMsgText) {
 		await saveMessages(conversationId, userId, [{ id: crypto.randomUUID(), role: 'user', content: userMsgText }]);
 	}
@@ -444,10 +536,10 @@ The user has just approved the plan above and the listed steps were executed. Ac
 	}
 
 	try {
-		// llmwiki path — primary answer surface; exposes drill-down tools for rawrag.
+		// chatbot (llmwiki) path — primary answer surface; exposes drill-down tools for rawrag.
 		// Resume turns skip retrieval branches: the model just needs to acknowledge the
 		// executed plan from `<plan-execution-result>`, not re-search for context.
-		if (useLlmwiki && lastRawMsg?.role === 'user' && userMsgText && !resumeContext) {
+		if (surface === 'chatbot') {
 			const collectionId = llmwikiCollectionId ?? null;
 			const {
 				tools: retrievalTools,
@@ -514,9 +606,16 @@ The user has just approved the plan above and the listed steps were executed. Ac
 						const searchStart = performance.now();
 						emit({ type: 'pipeline:step', step: 'llmwiki:search', status: 'active', startedAt: searchStart });
 
-						const [overviewResult, hitsResult] = await Promise.allSettled([
+						// Relevance-gated system-docs grounding runs in PARALLEL with llmwiki. llmwiki is
+						// per-user (empty for a fresh user); the system-owned docs corpus is always there,
+						// so this is what guarantees the "v10r expert" answers even with no personal wiki.
+						const groundDocs = shouldGroundFromSystemDocs(userMsgText);
+						const [overviewResult, hitsResult, docsResult] = await Promise.allSettled([
 							loadOverview(userId, collectionId),
 							searchLlmwiki(userMsgText, { userId, collectionId }),
+							groundDocs
+								? retrieve(userMsgText, { userId: SYSTEM_DOCS_USER_ID, tiers: [1], maxChunks: 4 })
+								: Promise.resolve(null),
 						]);
 
 						const overviewMs = Math.round(performance.now() - overviewStart);
@@ -623,6 +722,21 @@ Retrieval rules:
 								error: hitsResult.reason instanceof Error ? hitsResult.reason.message : String(hitsResult.reason),
 							});
 						}
+
+						// System-docs grounding (relevance-gated, parallel above). Injected regardless of
+						// whether llmwiki had hits — this is the coverage net for users with an empty wiki.
+						if (docsResult.status === 'fulfilled' && docsResult.value && docsResult.value.chunks.length > 0) {
+							const docsBlock = formatContextForPrompt(docsResult.value);
+							if (docsBlock) {
+								systemPrompt = `${systemPrompt}
+
+<retrieval-context>
+${docsBlock}
+</retrieval-context>
+
+The <retrieval-context> above is retrieved from the project's OWN documentation — treat it as authoritative for how and why v10r is built. When you cite a /docs path or link, surface it via \`search_catalog\` (never invent paths).`;
+							}
+						}
 					} catch (err) {
 						console.error('[ai:chat:llmwiki] Retrieval failed, proceeding without context:', err);
 					}
@@ -712,6 +826,7 @@ Project catalog rules:
 										messageId: assistantMsgId,
 										stepIndex,
 										stepType: stepIndex === 0 ? 'initial' : 'tool-result',
+										surface: stampSurface,
 										inputTokens: usage?.inputTokens ?? 0,
 										outputTokens: usage?.outputTokens ?? 0,
 										providerId: stepProviderId,
@@ -859,8 +974,8 @@ Project catalog rules:
 			return createUIMessageStreamResponse({ stream, headers: responseHeaders });
 		}
 
-		// Retrieval path — uses createUIMessageStream for custom pipeline events
-		if (useRetrieval && lastRawMsg?.role === 'user' && userMsgText && !resumeContext) {
+		// rag-demo (showcase retrieval) path — uses createUIMessageStream for custom pipeline events
+		if (surface === 'rag-demo') {
 			const requestId = crypto.randomUUID();
 			const generateStartedAt = { t: 0 };
 			const stream = createUIMessageStream({
@@ -954,6 +1069,7 @@ Project catalog rules:
 										messageId: assistantMsgId,
 										stepIndex: 0,
 										stepType: 'initial',
+										surface: stampSurface,
 										inputTokens: totalUsage?.inputTokens ?? 0,
 										outputTokens: totalUsage?.outputTokens ?? 0,
 										providerId: stepProviderId,
@@ -985,7 +1101,9 @@ Project catalog rules:
 			return createUIMessageStreamResponse({ stream, headers: responseHeaders });
 		}
 
-		// Non-retrieval path — wrapped in createUIMessageStream for classified error handling
+		// deskbot (non-retrieval) path — the surface === 'deskbot' fallthrough. Also handles
+		// resume turns and any non-fresh turn. Wrapped in createUIMessageStream for classified
+		// error handling.
 		const assistantMsgId = crypto.randomUUID();
 		if (conversationId) {
 			await saveMessages(conversationId, userId, [{ id: assistantMsgId, role: 'assistant', content: '' }]);
@@ -1022,6 +1140,13 @@ Project catalog rules:
 					maxRetries: 0,
 					maxOutputTokens: MAX_TOKENS,
 					abortSignal: AbortSignal.timeout(30_000),
+					// Net for Groq/llama emitting a tool call as plain text (`<function=…>`).
+					// The desk branch routes to the SAME tool-capable provider as the chatbot
+					// branch (which already guards at the llmwiki stream), so without this a
+					// Groq-routed desk turn leaks raw tool-call markup into the UI.
+					experimental_transform: createToolLeakGuard((lead) =>
+						console.warn(`[ai:chat:desk] suppressed textual tool-call leak: ${lead}…`),
+					),
 				};
 				if (deskTools) {
 					streamOpts.tools = deskTools;
@@ -1073,7 +1198,13 @@ Project catalog rules:
 									try {
 										const input = (tr.input ?? {}) as {
 											goal: string;
-											steps: Array<{ action: string; tool: string; risk: string; rationale: string }>;
+											steps: Array<{
+												action: string;
+												tool: string;
+												risk: string;
+												rationale: string;
+												args?: Record<string, unknown>;
+											}>;
 											estimated_writes: number;
 											rollback: string;
 										};
@@ -1083,7 +1214,9 @@ Project catalog rules:
 											riskTier: input.steps.some((s) => s.risk === 'destructive') ? 'high' : 'medium',
 											payload: input.steps.map((s) => ({
 												toolName: s.tool,
-												args: {},
+												// Carry the model's per-step args so the approve-route replay can
+												// actually execute the approved plan (empty args → "File not found").
+												args: s.args ?? {},
 												rationale: s.rationale,
 											})),
 											rationale: input.goal,
@@ -1121,6 +1254,7 @@ Project catalog rules:
 							messageId: assistantMsgId,
 							stepIndex: currentStep,
 							stepType: currentStep === 0 ? 'initial' : 'tool-result',
+							surface: stampSurface,
 							inputTokens: usage?.inputTokens ?? 0,
 							outputTokens: usage?.outputTokens ?? 0,
 							toolCallIds: toolCallIds.length > 0 ? toolCallIds : undefined,
@@ -1180,14 +1314,23 @@ Project catalog rules:
 		}
 
 		if (['unavailable', 'timeout', 'unknown', 'rate_limit'].includes(aiErr.kind)) {
-			const fallbackTools = wantsTools ? (deskTools ?? createDeskTools(userId, toolScopes, deskLayout)) : undefined;
+			// Per-surface fallback. Only a genuine DESK turn (real desk scopes) may mount desk
+			// tools. A failed CHATBOT turn (useLlmwiki, no scopes) previously re-derived
+			// createDeskTools with undefined scopes — mounting an empty/wrong toolset and
+			// contaminating the surface. It now falls back tool-less on any provider (ungrounded
+			// but honest); the full grounded-fallback contract lands with the Phase-1 per-surface
+			// pipeline extraction, where each surface owns its own fallback closure.
+			const isDeskTurn = !!toolScopes?.length;
+			const fallbackTools = isDeskTurn
+				? (deskTools ?? createDeskTools(userId, effectiveToolScopes ?? toolScopes, deskLayout))
+				: undefined;
 			const fallbackResponse = await tryFallback(
 				baseSystemPrompt,
 				messages,
 				conversationId,
 				userId,
 				resolvedFallbacks,
-				wantsTools,
+				isDeskTurn,
 				fallbackTools,
 				toolScopes,
 			);

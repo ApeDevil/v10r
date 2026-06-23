@@ -147,7 +147,8 @@ See [../ai/README.md](../ai/README.md) for full implementation details, provider
 Limiters are built with `createLimiter` from `$lib/server/api/rate-limit.ts` and keyed on the user ID. Layer one limiter per window. See [abuse/rate-limits.md](../abuse/rate-limits.md) for the factory contract and limiter catalog.
 
 ```typescript
-// src/routes/api/ai/chat/+server.ts
+// Illustrative — the live rate-limit preamble is shared across the per-surface AI
+// routes via guardAiRequest ($lib/server/ai/guard.ts). Sketch shown inline here.
 import { json } from '@sveltejs/kit';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 
@@ -185,7 +186,7 @@ export const POST: RequestHandler = async (event) => {
   async function sendMessage(content: string) {
     if (rateLimited) return;
 
-    const res = await fetch('/api/ai/chat', {
+    const res = await fetch('/api/ai/chatbot', {
       method: 'POST',
       body: JSON.stringify({ message: content }),
     });

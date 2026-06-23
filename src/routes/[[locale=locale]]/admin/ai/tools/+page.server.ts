@@ -1,15 +1,13 @@
-import { deskToolMeta } from '$lib/server/ai/tools';
+import { allToolMeta, chatbotToolMeta, type DeskToolMeta } from '$lib/server/ai/tools';
 import { requireAdmin } from '$lib/server/auth/guards';
 import type { PageServerLoad } from './$types';
 
 /**
- * Tool topology — derived at load time from the SAME `deskToolMeta` registry the
- * orchestrator imports (single source of truth; the table can't drift from the
- * real tool set). Retrieval tools share `scope: 'desk:read'` as a registry artifact,
- * so BRANCH is computed separately from scope.
+ * Tool topology — derived at load time from the SAME per-surface tool-meta registries
+ * the orchestrator imports (single source of truth; the table can't drift from the real
+ * tool set). BRANCH is membership in `chatbotToolMeta` (retrieval) vs `deskbotToolMeta`
+ * (desk); only desk tools carry a `scope`.
  */
-
-const RETRIEVAL_TOOLS = new Set(['get_llmwiki_pages', 'get_rawrag_chunks', 'search_catalog', 'search_project_docs']);
 
 const NOTES: Record<string, string> = {
 	get_llmwiki_pages: 'Expand wiki pages beyond the TLDR.',
@@ -35,15 +33,16 @@ const RISK_ORDER: Record<string, number> = { read: 0, create: 1, write: 2, destr
 export const load: PageServerLoad = async ({ locals }) => {
 	requireAdmin(locals);
 
-	const tools = Object.entries(deskToolMeta).map(([name, meta]) => {
-		const branch: 'retrieval' | 'desk' = RETRIEVAL_TOOLS.has(name) ? 'retrieval' : 'desk';
-		const mutating = meta.scope !== 'desk:read';
+	const tools = Object.entries(allToolMeta).map(([name, meta]) => {
+		const branch: 'retrieval' | 'desk' = name in chatbotToolMeta ? 'retrieval' : 'desk';
+		const scope = (meta as Partial<DeskToolMeta>).scope;
+		const mutating = branch === 'desk' && scope !== 'desk:read';
 		return {
 			name,
 			branch,
 			risk: meta.risk,
-			scope: meta.scope,
-			scopeLabel: branch === 'retrieval' ? 'always-on' : meta.scope,
+			scope: scope ?? null,
+			scopeLabel: branch === 'retrieval' ? 'always-on' : (scope ?? ''),
 			stepBudget: branch === 'retrieval' ? 3 : mutating ? 5 : 3,
 			note: NOTES[name] ?? '',
 		};

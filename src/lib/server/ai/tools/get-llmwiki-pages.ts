@@ -9,10 +9,10 @@
 import { jsonSchema, tool } from 'ai';
 import { MAX_LLMWIKI_TOOL_IDS } from '$lib/server/llmwiki/config';
 import { fetchPagesByIds } from '$lib/server/llmwiki/queries';
-import type { DeskToolMeta } from './_types';
+import type { ToolMeta } from './_types';
 
-export const llmwikiPagesToolMeta: Record<string, DeskToolMeta> = {
-	get_llmwiki_pages: { risk: 'read', scope: 'desk:read' },
+export const llmwikiPagesToolMeta: Record<string, ToolMeta> = {
+	get_llmwiki_pages: { risk: 'read' },
 };
 
 interface ToolInput {

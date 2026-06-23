@@ -20,6 +20,8 @@
  *
  * DELETE on the same URL rejects a still-pending proposal.
  */
+
+import { executeDeskToolCall } from '$lib/server/ai/tools/desk-execute';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiOk } from '$lib/server/api/response';
 import { requireApiUser } from '$lib/server/auth/guards';
@@ -32,14 +34,6 @@ import {
 	rejectProposal,
 } from '$lib/server/db/ai/proposals';
 import { getConversation } from '$lib/server/db/ai/queries';
-import {
-	createMarkdownFile,
-	createSpreadsheetFile,
-	deleteFile,
-	renameFile,
-	updateMarkdownByFileId,
-	updateSpreadsheetByFileId,
-} from '$lib/server/db/desk/mutations';
 import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
 import type { ProposalExecutionResult } from '$lib/server/db/schema/ai/proposal';
 import type { RequestHandler } from './$types';
@@ -47,73 +41,6 @@ import type { RequestHandler } from './$types';
 // Proposal execution runs desk mutations; cap per-user throughput. Idempotency
 // caps repeat-execution of one proposal, but not a flood of distinct proposals.
 const executeLimiter = createLimiter('rl:ai:proposal:execute', 20, '1 m');
-
-/**
- * Execute a single proposed tool call against the desk domain.
- * Mirrors the mapping in `src/lib/server/ai/tools/desk-*.ts` — they
- * share the same domain modules per the multi-client core rule.
- */
-async function executeOne(
-	userId: string,
-	toolName: string,
-	args: Record<string, unknown>,
-): Promise<{ ok: true; output: unknown } | { ok: false; output: unknown; errorMessage: string }> {
-	try {
-		switch (toolName) {
-			case 'desk_update_cells': {
-				const fileId = args.file_id as string;
-				const updates = args.updates as { cell: string; value: string | number | null }[];
-				// Fetch the existing sheet to merge. Lookup via file id.
-				const { getSpreadsheetByFileId } = await import('$lib/server/db/desk/queries');
-				const sheet = await getSpreadsheetByFileId(fileId, userId);
-				if (!sheet) return { ok: false, output: null, errorMessage: 'Spreadsheet not found.' };
-				const existingCells = (sheet.spreadsheet.cells ?? {}) as Record<string, unknown>;
-				const mergedCells = { ...existingCells };
-				for (const { cell, value } of updates) {
-					if (value === null) delete mergedCells[cell];
-					else mergedCells[cell] = { v: value };
-				}
-				const result = await updateSpreadsheetByFileId(fileId, userId, { cells: mergedCells });
-				if (!result) return { ok: false, output: null, errorMessage: 'Failed to update cells.' };
-				return { ok: true, output: { updated: true, fileId, cellsChanged: updates.length } };
-			}
-			case 'desk_rename_file': {
-				const result = await renameFile(args.file_id as string, userId, args.name as string);
-				if (!result) return { ok: false, output: null, errorMessage: 'File not found.' };
-				return { ok: true, output: { renamed: true, fileId: result.id, name: result.name } };
-			}
-			case 'desk_update_markdown': {
-				const result = await updateMarkdownByFileId(args.file_id as string, userId, args.content as string);
-				if (!result) return { ok: false, output: null, errorMessage: 'Markdown file not found.' };
-				return { ok: true, output: { updated: true, fileId: result.id } };
-			}
-			case 'desk_create_spreadsheet': {
-				const cells = (args.cells as { cell: string; value: string | number | null }[]) ?? [];
-				const cellMap: Record<string, unknown> = {};
-				for (const { cell, value } of cells) cellMap[cell] = { v: value };
-				const result = await createSpreadsheetFile(userId, args.name as string, cellMap);
-				return { ok: true, output: { created: true, fileId: result.file.id, name: result.file.name } };
-			}
-			case 'desk_create_markdown': {
-				const result = await createMarkdownFile(userId, args.name as string, args.content as string);
-				return { ok: true, output: { created: true, fileId: result.file.id, name: result.file.name } };
-			}
-			case 'desk_delete_file': {
-				const result = await deleteFile(args.file_id as string, userId);
-				if (!result) return { ok: false, output: null, errorMessage: 'File not found.' };
-				return { ok: true, output: { deleted: true, fileId: result.id, name: result.name } };
-			}
-			default:
-				return { ok: false, output: null, errorMessage: `Unknown tool "${toolName}" in proposal payload.` };
-		}
-	} catch (err) {
-		return {
-			ok: false,
-			output: null,
-			errorMessage: err instanceof Error ? err.message : 'Tool execution failed.',
-		};
-	}
-}
 
 export const POST: RequestHandler = async ({ params, locals }) => {
 	const { user } = requireApiUser(locals);
@@ -178,7 +105,7 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 		// 5. Run the payload, collect results, transition executed / failed.
 		const results: ProposalExecutionResult['results'] = [];
 		for (const step of proposal.payload) {
-			const outcome = await executeOne(user.id, step.toolName, step.args);
+			const outcome = await executeDeskToolCall(user.id, step.toolName, step.args);
 			if (outcome.ok) {
 				results.push({ toolName: step.toolName, ok: true, output: outcome.output });
 			} else {
@@ -189,11 +116,14 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 					errorMessage: outcome.errorMessage,
 				});
 				// Short-circuit on first failure — the plan is a sequence, not a batch.
-				await markFailed(proposal.id, outcome.errorMessage);
+				// Persist the partial results (earlier steps already mutated — there is no
+				// rollback) so the proposal's audit trail isn't lost to a bare message.
+				const partialResult: ProposalExecutionResult = { toolCallIds: [], results };
+				await markFailed(proposal.id, outcome.errorMessage, partialResult);
 				return apiOk({
 					id: proposal.id,
 					status: 'failed',
-					executionResult: { toolCallIds: [], results },
+					executionResult: partialResult,
 					failureMessage: outcome.errorMessage,
 				});
 			}

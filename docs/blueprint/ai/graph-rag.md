@@ -490,7 +490,8 @@ async function extractQueryEntities(query: string): Promise<string[]> {
 ### 5. RAG Endpoint with Graph Context
 
 ```typescript
-// src/routes/api/ai/chat/+server.ts
+// Illustrative — the live orchestrator lives in $lib/server/ai/chat-orchestrator.ts,
+// reached via the per-surface routes (e.g. src/routes/api/ai/chatbot/+server.ts).
 import { json } from '@sveltejs/kit';
 import { streamText, convertToModelMessages, type UIMessage } from 'ai';
 import { encode } from '@toon-format/toon';

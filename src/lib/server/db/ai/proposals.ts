@@ -117,13 +117,18 @@ export async function markExecuted(id: string, result: ProposalExecutionResult) 
 	return row ?? null;
 }
 
-/** Transition `executing → failed`. */
-export async function markFailed(id: string, message: string) {
+/**
+ * Transition `executing → failed`. Persists any partial execution result so the
+ * audit trail reflects which steps actually ran before the failure (the approve
+ * route executes sequentially with no rollback — earlier mutations stick).
+ */
+export async function markFailed(id: string, message: string, partialResult?: ProposalExecutionResult) {
 	const [row] = await db
 		.update(agentProposal)
 		.set({
 			status: 'failed',
 			failureMessage: message,
+			executionResult: partialResult ?? null,
 			updatedAt: new Date(),
 		})
 		.where(and(eq(agentProposal.id, id), eq(agentProposal.status, 'executing')))

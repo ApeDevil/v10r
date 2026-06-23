@@ -305,7 +305,8 @@ export function createTools(userId: string) {
 Wire into the chat endpoint:
 
 ```typescript
-// src/routes/api/ai/chat/+server.ts (addition)
+// Illustrative — tools are wired in $lib/server/ai/chat-orchestrator.ts, reached
+// via the per-surface routes (src/routes/api/ai/{chatbot,deskbot}/+server.ts).
 import { createTools } from '$lib/server/ai/tools';
 
 const result = streamText({
@@ -359,12 +360,14 @@ Jobs register in `src/lib/server/jobs/index.ts`. They're triggered two ways: `sc
 | External API (future) | API key header | `requireApiKey(request)` | `error(401)` |
 | Background job | None — trusted context | none | N/A |
 
-The AI tool pattern is important: authentication happens once, at the `POST /api/ai/chat` endpoint. `requireApiUser` runs there. The tool factory receives the verified `user.id` as a closure argument. No tool ever calls `requireApiUser` itself.
+The AI tool pattern is important: authentication happens once, at the AI route's shared entry guard (`guardAiRequest`, used by `/api/ai/chatbot`, `/api/ai/deskbot`, `/api/ai/showcase/rag`). `requireApiUser` runs there. The tool factory receives the verified `user.id` as a closure argument. No tool ever calls `requireApiUser` itself.
 
 ```typescript
-// src/routes/api/ai/chat/+server.ts
+// src/routes/api/ai/chatbot/+server.ts (the guard preamble is shared across all three AI routes)
 export const POST: RequestHandler = async ({ request, locals }) => {
-  const { user } = requireApiUser(locals);  // auth happens here, once
+  const guard = await guardAiRequest(locals);  // auth happens here, once
+  if (guard.response) return guard.response;
+  const user = guard.user;
 
   // ...
 

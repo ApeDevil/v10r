@@ -19,10 +19,10 @@ import { jsonSchema, tool } from 'ai';
 import { match, toResult } from '$lib/search/match';
 import type { SearchLocale, SearchResult, SearchSurface } from '$lib/search/types';
 import { buildSearchIndex, searchContent } from '$lib/server/search';
-import type { DeskToolMeta } from './_types';
+import type { ToolMeta } from './_types';
 
-export const searchCatalogToolMeta: Record<string, DeskToolMeta> = {
-	search_catalog: { risk: 'read', scope: 'desk:read' },
+export const searchCatalogToolMeta: Record<string, ToolMeta> = {
+	search_catalog: { risk: 'read' },
 };
 
 /** Side-channel that captures the full `SearchResult` rows surfaced this turn. */

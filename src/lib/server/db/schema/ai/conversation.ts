@@ -20,6 +20,9 @@ export const toolCallStatusEnum = aiSchema.enum('tool_call_status', ['pending', 
 
 export const stepTypeEnum = aiSchema.enum('step_type', ['initial', 'tool-result', 'continue']);
 
+/** Which AI surface a conversation belongs to. See `docs/blueprint/ai/surfaces.md`. */
+export const aiSurfaceEnum = aiSchema.enum('ai_surface', ['chatbot', 'deskbot']);
+
 // ── JSONB Types ─────────────────────────────────────────────────────
 
 /** Structured context entry attached to a message. */
@@ -48,6 +51,12 @@ export const conversation = aiSchema.table(
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
 		title: text('title').notNull().default('New conversation'),
+		/**
+		 * Which AI surface owns this conversation (chatbot = expert Q&A, deskbot = in-desk
+		 * operator). Stamped once at creation from the orchestrator's resolved `surface`.
+		 * Null on rows created before this dimension existed.
+		 */
+		surface: aiSurfaceEnum('surface'),
 		/** Cached total input tokens across all steps. Recalculated on each turn. */
 		totalInputTokens: integer('total_input_tokens').notNull().default(0),
 		/** Cached total output tokens across all steps. Recalculated on each turn. */
@@ -146,6 +155,9 @@ export const conversationStep = aiSchema.table(
 		stepIndex: integer('step_index').notNull(),
 		/** AI SDK step type. */
 		stepType: stepTypeEnum('step_type').notNull(),
+		/** Denormalized surface (from the parent conversation) so per-surface usage is a
+		 *  plain GROUP BY with no join. Null on rows predating the surface dimension. */
+		surface: aiSurfaceEnum('surface'),
 		/** Input tokens consumed in this step. */
 		inputTokens: integer('input_tokens').notNull().default(0),
 		/** Output tokens produced in this step. */
@@ -166,5 +178,6 @@ export const conversationStep = aiSchema.table(
 		index('conv_step_conv_msg_idx').on(table.conversationId, table.messageId),
 		index('conv_step_model_idx').on(table.modelId, table.createdAt),
 		index('conv_step_provider_idx').on(table.providerId, table.createdAt),
+		index('conv_step_surface_idx').on(table.surface, table.createdAt),
 	],
 );

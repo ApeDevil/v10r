@@ -491,11 +491,11 @@ These gaps make the blueprint-to-code mapping imperfect. They are recorded here,
 
 1. **No notification AI tool implemented.** `multi-client-core.md` uses `createNotificationTools` / `markNotificationRead` as its flagship example. `ai/tools/` currently holds desk, llmwiki, rawrag, propose-plan, and resolve-ref tools. Multi-client reuse for notifications is real for UI, REST, and jobs — not yet for AI.
 
-2. **`checkUserBudget` is dead code.** `chargeTokens` records daily AI spend to Redis in `onFinish`, but the entry-gate `checkUserBudget` in `ai/budget.ts` is called nowhere. The daily token cap is recorded but never enforced.
+2. **Daily token budget is enforced.** `chargeTokens` records daily AI spend to Redis in `onFinish`; the entry-gate `checkUserBudget` (`ai/budget.ts`) now runs in the shared `guardAiRequest` (`ai/guard.ts`) before `orchestrateChat`, rejecting once the day's spend exceeds the cap. (It was previously called nowhere — recorded but unenforced.)
 
 3. **`notification-delivery` has no serverless trigger.** It runs only via the persistent-container `delivery-scheduler` (15-second `setInterval`). It is absent from the jobs registry and has no `/api/cron/[job]` path. On Vercel (`platform.persistent === false`) external Telegram / Discord / email deliveries queue as `pending` and never drain. In-app SSE still works because it is synchronous inside `NotificationService.send()`.
 
-4. **Single chat surface.** `/api/ai/chat` runs the full orchestrator (routing, retrieval, tools, persistence). The former parallel `/api/ai/chat/stream` (a bare `streamText` with no tools, retrieval, or persistence) has been removed — clients use `/api/ai/chat`.
+4. **Per-surface chat routes, one orchestrator.** Three thin routes — `/api/ai/chatbot`, `/api/ai/deskbot`, `/api/ai/showcase/rag` — set an explicit `surface` and share one entry guard (`guardAiRequest`), then call the single `orchestrateChat` (routing, retrieval, tools, persistence). They replace the former single `/api/ai/chat`; the bare `/api/ai/chat/stream` is also gone. See [blueprint/ai/surfaces.md](./blueprint/ai/surfaces.md).
 
 5. **Blueprint examples lag the SDK.** `multi-client-core.md` shows AI SDK v4/v5 spellings (`parameters`, `maxSteps`, `maxTokens`). The running code is v6 (`inputSchema`, `stopWhen: stepCountIs`, `maxOutputTokens`). The code is correct; the blueprint doc has not been updated.
 

@@ -13,7 +13,7 @@ let { data } = $props();
 let inputValue = $state('');
 
 const chat = new Chat({
-	transport: new DefaultChatTransport({ api: '/api/ai/chat', headers: CSRF_HEADER }) as Chat['transport'],
+	transport: new DefaultChatTransport({ api: '/api/ai/deskbot', headers: CSRF_HEADER }) as Chat['transport'],
 });
 
 const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');

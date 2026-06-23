@@ -6,7 +6,8 @@
 import type { ToolSet } from 'ai';
 import type { SearchLocale, SearchResult } from '$lib/search/types';
 import { compactToolResult } from '$lib/server/ai/loop/compact';
-import type { DeskLayoutEntry, DeskToolMeta, DeskToolScope } from './_types';
+import type { DeskLayoutEntry, DeskToolMeta, DeskToolScope, ToolMeta, ToolRisk } from './_types';
+import { askToolMeta, createAskTools } from './desk-ask';
 import { createCreateTools, createDeleteTools, createToolMeta, deleteToolMeta } from './desk-create';
 import { createReadTools, readToolMeta } from './desk-read';
 import { createWriteTools, writeToolMeta } from './desk-write';
@@ -17,24 +18,32 @@ import { createResolveRefTool } from './resolve-ref';
 import { type CatalogSink, createSearchCatalogTool, searchCatalogToolMeta } from './search-catalog';
 import { createSearchDocsTool, searchDocsToolMeta } from './search-docs';
 
-export type { DeskEffect, DeskLayoutEntry, DeskToolMeta, DeskToolRisk, DeskToolScope } from './_types';
+export type { DeskEffect, DeskLayoutEntry, DeskToolMeta, DeskToolScope, ToolMeta, ToolRisk } from './_types';
 
-/** Unified metadata lookup — covers every desk tool across all scopes. */
-export const deskToolMeta: Record<string, DeskToolMeta> = {
-	...readToolMeta,
-	...writeToolMeta,
-	...createToolMeta,
-	...deleteToolMeta,
-	...proposePlanMeta,
+/** Chatbot (retrieval) tool metadata — read-only, NO scope field. */
+export const chatbotToolMeta: Record<string, ToolMeta> = {
 	...llmwikiPagesToolMeta,
 	...rawragChunksToolMeta,
 	...searchCatalogToolMeta,
 	...searchDocsToolMeta,
 };
 
+/** Deskbot tool metadata — risk + the desk scope that gates each tool. */
+export const deskbotToolMeta: Record<string, DeskToolMeta> = {
+	...readToolMeta,
+	...writeToolMeta,
+	...createToolMeta,
+	...deleteToolMeta,
+	...askToolMeta,
+	...proposePlanMeta,
+};
+
+/** Union of both surfaces — for admin/telemetry that needs every tool regardless of surface. */
+export const allToolMeta: Record<string, ToolMeta> = { ...chatbotToolMeta, ...deskbotToolMeta };
+
 /** Get the risk classification for a tool name, or `undefined` if unknown. */
-export function getToolRisk(toolName: string): DeskToolMeta['risk'] | undefined {
-	return deskToolMeta[toolName]?.risk;
+export function getToolRisk(toolName: string): ToolRisk | undefined {
+	return allToolMeta[toolName]?.risk;
 }
 
 /**
@@ -66,6 +75,14 @@ function wrapToolsWithCompaction(tools: ToolSet): ToolSet {
 	return wrapped as ToolSet;
 }
 
+/** Read-only desk scopes — neither gates the plan loop nor counts toward the mutation step budget. */
+const READONLY_SCOPES: ReadonlySet<DeskToolScope> = new Set(['desk:read', 'desk:ask']);
+
+/** True when any granted scope can mutate desk state (write/create/delete). */
+function hasMutatingScope(scopes: DeskToolScope[]): boolean {
+	return scopes.some((s) => !READONLY_SCOPES.has(s));
+}
+
 export function createDeskTools(userId: string, scopes: DeskToolScope[] = [], deskLayout?: DeskLayoutEntry[]): ToolSet {
 	const tools: ToolSet = {} as ToolSet;
 
@@ -86,11 +103,15 @@ export function createDeskTools(userId: string, scopes: DeskToolScope[] = [], de
 		Object.assign(tools, createDeleteTools(userId));
 	}
 
+	// desk:ask — read-only nRAG grounding over the user's own files (deskbot nRAG profile).
+	if (scopes.includes('desk:ask')) {
+		Object.assign(tools, createAskTools(userId));
+	}
+
 	// Register the plan-before-execute primitive whenever a mutating scope is
 	// enabled. The governor's `shouldRequirePlan` predicate decides whether to
 	// actually *instruct* the model to use it via the `<planning>` prompt block.
-	const hasMutatingScope = scopes.some((s) => s !== 'desk:read');
-	if (hasMutatingScope) {
+	if (hasMutatingScope(scopes)) {
 		Object.assign(tools, createProposePlanTool());
 	}
 
@@ -103,9 +124,9 @@ export function createDeskTools(userId: string, scopes: DeskToolScope[] = [], de
 	return wrapToolsWithCompaction(tools);
 }
 
-/** Determine step limit based on tool scopes. Read-only = 3, mutation = 5. */
+/** Determine step limit based on tool scopes. Read-only (incl. desk:ask) = 3, mutation = 5. */
 export function stepsForScopes(scopes: DeskToolScope[]): number {
-	return scopes.some((s) => s !== 'desk:read') ? 5 : 3;
+	return hasMutatingScope(scopes) ? 5 : 3;
 }
 
 /**
@@ -145,6 +166,10 @@ export function buildRetrievalTools(
 		// Semantic retrieval over the project docs corpus (system-owned). Feeds the same
 		// catalog sink → docs citations render as chips and pass the surface verifier.
 		...createSearchDocsTool(locale, catalogSink),
+		// Compaction escape hatch (AI SDK #9631). Both harnesses apply
+		// wrapToolsWithCompaction below, so a compacted get_rawrag_chunks result yields a
+		// ref the model can only pull back via resolve_ref — it MUST be registered here too.
+		...createResolveRefTool(),
 	} as ToolSet;
 
 	return { tools: wrapToolsWithCompaction(raw), drilledChunks, surfacedCatalog };
