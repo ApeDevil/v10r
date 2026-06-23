@@ -69,16 +69,23 @@
 > - `magicLink` — generates a clickable URL with 32-char token
 > - `emailOTP` — generates an independent 6-digit code
 >
-> We use BOTH plugins together and send both in the same email.
+> They are **independent plugins**. Each sends its own email: the magic-link email and the OTP email are separate sends.
+
+> **Rate limiting is not configured here.** Better Auth's built-in `rateLimit` is unused. Auth paths are limited by an Upstash limiter in `hooks.server.ts` (`createLimiter('ratelimit:auth', ...)`). See [Rate Limiting](#rate-limiting).
 
 ```typescript
-// src/lib/server/auth.ts
+// src/lib/server/auth/index.ts
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { magicLink } from 'better-auth/plugins/magic-link';
 import { emailOTP } from 'better-auth/plugins/email-otp';
 import { db } from './db';
-import { sendAuthEmail } from './email';
+import { sendAuthEmail } from './send-auth-email';
+import {
+  SESSION_EXPIRES_IN,
+  MAGIC_LINK_EXPIRES_IN,
+  EMAIL_OTP_EXPIRES_IN,
+} from './config';
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: 'pg' }),
@@ -88,51 +95,23 @@ export const auth = betterAuth({
     enabled: false,
   },
 
-  // Rate limiting (emailOTP plugin doesn't accept rateLimit directly)
-  // See: https://github.com/better-auth/better-auth/issues/3848
-  rateLimit: {
-    enabled: true,
-    window: 60,
-    max: 10,
-    customRules: {
-      '/sign-in/magic-link': { window: 300, max: 5 },  // 5 per 5 min
-      '/sign-in/email-otp': { window: 300, max: 5 },   // 5 per 5 min
-      '/email-otp/verify-email': { window: 60, max: 5 }, // 5 per min (verification)
-    },
-  },
-
   plugins: [
-    // Magic Link plugin - for clickable email links
+    // Magic Link plugin - sends the clickable email link
     magicLink({
       sendMagicLink: async ({ email, url }) => {
-        // Generate OTP via the emailOTP plugin
-        // The OTP is stored separately with its own expiration
-        const otpResult = await auth.api.sendVerificationOtp({
-          body: { email, type: 'sign-in' },
-        });
-
-        // Send email with BOTH magic link AND OTP code
-        await sendAuthEmail({
-          to: email,
-          subject: 'Sign in to Velociraptor',
-          magicLinkUrl: url,
-          otpCode: otpResult.otp!, // Only available if sendVerificationOTP returns it
-        });
+        await sendAuthEmail({ to: email, magicLinkUrl: url });
       },
-      storeToken: 'hashed', // CRITICAL: Hash tokens before storage
-      expiresIn: 600, // 10 minutes
+      expiresIn: MAGIC_LINK_EXPIRES_IN, // 300s (5 minutes)
     }),
 
-    // Email OTP plugin - for 6-digit codes
+    // Email OTP plugin - sends the 6-digit code in its own email
     emailOTP({
       otpLength: 6,
-      expiresIn: 600, // 10 minutes (same as magic link)
+      expiresIn: EMAIL_OTP_EXPIRES_IN, // 300s (5 minutes)
       allowedAttempts: 3, // Lock out after 3 failed attempts per code
-      sendVerificationOTP: async ({ email, otp, type }) => {
-        // Email is sent from magicLink.sendMagicLink above
-        // This callback is for standalone OTP (we don't use it directly)
-        // Return the OTP so sendMagicLink can include it
-        return { otp };
+      sendVerificationOnSignUp: true,
+      sendVerificationOTP: async ({ email, otp }) => {
+        await sendAuthEmail({ to: email, otpCode: otp });
       },
     }),
   ],
@@ -149,7 +128,7 @@ export const auth = betterAuth({
   },
 
   session: {
-    expiresIn: 60 * 60 * 24 * 30, // 30 days
+    expiresIn: SESSION_EXPIRES_IN, // 60*60*24*7 — 7 days
     updateAge: 60 * 60 * 24, // Update session every 24 hours
     cookieCache: {
       enabled: true,
@@ -162,10 +141,9 @@ export type Auth = typeof auth;
 ```
 
 > **Security notes:**
-> - `storeToken: 'hashed'` — Magic link tokens are hashed before storage (database breach doesn't expose active links)
 > - `allowedAttempts: 3` — OTP codes are invalidated after 3 failed attempts (per-code lockout)
-> - `customRules` — Rate limiting per endpoint prevents brute force
 > - Magic link and OTP are **cryptographically independent** — compromising one doesn't reveal the other
+> - Expiries live in `config.ts`: `MAGIC_LINK_EXPIRES_IN` / `EMAIL_OTP_EXPIRES_IN` (300s each), `SESSION_EXPIRES_IN` (7 days)
 
 ### Auth Email Template
 
@@ -207,7 +185,7 @@ export async function sendAuthEmail({ to, subject, magicLinkUrl, otpCode }: Auth
         </div>
 
         <p style="margin-top: 24px; font-size: 14px; color: #999;">
-          This link and code expire in 10 minutes.
+          This link expires in 5 minutes.
           If you didn't request this, you can safely ignore this email.
         </p>
       </div>
@@ -228,15 +206,13 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { auth } from '$lib/server/auth';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { building } from '$app/environment';
-import { authLimiter } from '$lib/server/rate-limit';
+import { authLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 
 // Rate limiting (BEFORE auth - block brute force early)
 const rateLimitHandle = async ({ event, resolve }) => {
   if (event.url.pathname.startsWith('/api/auth')) {
-    const status = await authLimiter.check(event);
-    if (status.limited) {
-      return new Response('Too Many Requests', { status: 429 });
-    }
+    const { success, reset } = await authLimiter.limit(event.getClientAddress());
+    if (!success) return rateLimitResponse(reset);
   }
   return resolve(event);
 };
@@ -269,14 +245,23 @@ export const handle = sequence(rateLimitHandle, authHandle, sessionHandle);
 ```typescript
 // src/lib/auth-client.ts
 import { createAuthClient } from 'better-auth/svelte';
-import { magicLinkClient } from 'better-auth/client/plugins';
-import { emailOTPClient } from 'better-auth/client/plugins';
+import {
+  adminClient,
+  magicLinkClient,
+  emailOTPClient,
+  twoFactorClient,
+  passkeyClient,
+} from 'better-auth/client/plugins';
 
 export const authClient = createAuthClient({
-  baseURL: import.meta.env.VITE_BASE_URL,
+  // SSR-safe: no window during server render
+  baseURL: typeof window !== 'undefined' ? window.location.origin : '',
   plugins: [
-    magicLinkClient(),  // For magic link sign-in
-    emailOTPClient(),   // For OTP verification
+    adminClient(),
+    magicLinkClient(),
+    emailOTPClient(),
+    twoFactorClient(),
+    passkeyClient(),
   ],
 });
 
@@ -353,7 +338,7 @@ bunx drizzle-kit migrate
 ### Extending the Schema
 
 ```typescript
-// src/lib/server/db/schema/auth.ts
+// src/lib/server/db/schema/auth/_better-auth.ts
 import { pgTable, text, timestamp, boolean } from 'drizzle-orm/pg-core';
 
 // Better Auth's user table (reference only - generated by CLI)
@@ -802,7 +787,7 @@ twoFactor({
 | `/two-factor/generate-backup-codes` | `'2fa.backup_codes_regenerated'` |
 | `/two-factor/verify-totp`, `/verify-backup-code` | `stampStepUp(userId)` |
 
-> **No `/passkey/add-passkey` in 1.6.17.** Registration = `GET /passkey/generate-register-options` then `POST /passkey/verify-registration`. The client `addPasskey()` wraps both.
+> **No `/passkey/add-passkey` in 1.6.19.** Registration = `GET /passkey/generate-register-options` then `POST /passkey/verify-registration`. The client `addPasskey()` wraps both.
 
 ### Step-up freshness gate
 
@@ -871,9 +856,9 @@ The session is resolved **inline in `authHandler`** because `sessionPopulate` ru
 | CSRF protection | Forms only (see warning below) |
 | Session fixation | Handled |
 | Secure cookies | `advanced.useSecureCookies = NODE_ENV === 'production'` (set explicitly, not inferred from the baseURL scheme) |
-| Magic link expiry | 10 minutes (configurable) |
-| Rate limiting | Requires config (see below) |
-| Session revocation | `revokeOtherSessions: true` |
+| Magic link expiry | 5 minutes (`MAGIC_LINK_EXPIRES_IN`) |
+| Rate limiting | Upstash limiter in hooks (see below) |
+| Session revocation | Manual sibling-session purge (see below) |
 
 > **CSRF Warning**: SvelteKit's built-in CSRF protection only covers form submissions (`application/x-www-form-urlencoded`, `multipart/form-data`, `text/plain`). **JSON API endpoints are NOT protected.** For any `+server.ts` endpoints that accept `application/json` and mutate data, you must implement one of:
 >
@@ -891,37 +876,34 @@ The session is resolved **inline in `authHandler`** because `sessionPopulate` ru
 
 ### Rate Limiting
 
-> **Important**: Better Auth's rate limiting requires specific configuration to work in SvelteKit. Issues #2153, #2112, #1891 documented problems that are now resolved with proper setup.
+Better Auth's built-in `rateLimit` is **not used**. Auth paths are limited by an Upstash limiter wired in `hooks.server.ts`.
 
-**Requirements for Better Auth rate limiting:**
-1. Explicitly set `enabled: true`
-2. Forward client IP in hooks (SvelteKit doesn't expose it automatically)
-3. Use database/Redis storage in production (in-memory fails in serverless)
-4. Only applies to client-initiated requests (not server-side calls)
+- `authRatelimit = createLimiter('ratelimit:auth', AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW)` — 5 per 60s (`createLimiter` from `$lib/server/api/rate-limit`).
+- The hook calls `authRatelimit.limit(event.locals.clientIp)` on `/api/auth/*` before Better Auth runs.
+- `event.locals.clientIp` is stamped once in `securityHeaders` from `event.getClientAddress()` — downstream code reads it, never the attacker-mutable forwarded-for chain.
+- Better Auth's `advanced.ipAddress.ipAddressHeaders` is pinned to `['x-client-ip']`, so any IP Better Auth records comes from that single trusted stamp.
 
 ```typescript
-// src/hooks.server.ts - Forward client IP
-const authHandle = async ({ event, resolve }) => {
-  // Required: Better Auth needs client IP for rate limiting
-  event.request.headers.set('x-client-ip', event.getClientAddress());
+// src/hooks.server.ts
+const authRatelimit = createLimiter('ratelimit:auth', AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW);
 
-  const authResponse = await svelteKitHandler({ auth, event });
-  if (authResponse) return authResponse;
-  // ...
+const authHandler: Handle = async ({ event, resolve }) => {
+  if (event.url.pathname.startsWith('/api/auth/') && event.locals.clientIp) {
+    const { success, reset } = await authRatelimit.limit(event.locals.clientIp);
+    if (!success) return rateLimitResponse(reset);
+  }
+  return svelteKitHandler({ event, resolve, auth, building });
 };
-
-// src/lib/server/auth.ts
-export const auth = betterAuth({
-  rateLimit: {
-    enabled: true, // Required: must be explicit
-    window: 60,
-    max: 10,
-    storage: 'database', // For production: use 'database' or Redis
-  },
-});
 ```
 
 **For additional protection** - see [abuse/rate-limits.md](./abuse/rate-limits.md) for per-email and per-IP limiters on magic-link and OTP send paths.
+
+### Session Revocation
+
+There is no `revokeOtherSessions` config flag. Sibling-session revocation is manual:
+
+- The `revokeSiblings` leg of `onFactorChanged` (`auth/factor-changes.ts`) hard-deletes the user's *other* sessions on a factor change (keeps the current token).
+- The grant mutation path purges all sessions for the affected user so grants re-populate on next sign-in.
 
 
 ### Session Cleanup (Required)
@@ -1040,7 +1022,6 @@ GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
-VITE_BASE_URL=http://localhost:5173
 ```
 
 ---

@@ -568,61 +568,47 @@ export const OPTIONS: RequestHandler = async () => {
 
 ### Standard Response Wrapper
 
+`$lib/server/api/response.ts` exports the envelope helpers. Success is `{ data }`; error is `{ error: { code, message, fields? } }`.
+
 ```typescript
 // src/lib/server/api/response.ts
-import { json } from '@sveltejs/kit';
-
-interface ApiResponse<T> {
-  data: T;
-  meta?: Record<string, unknown>;
-}
-
-interface PaginatedResponse<T> extends ApiResponse<T[]> {
-  meta: {
-    total: number;
-    limit: number;
-    offset: number;
-    hasMore: boolean;
-  };
-}
-
-export function apiResponse<T>(data: T, meta?: Record<string, unknown>) {
-  return json({ data, meta });
-}
-
-export function paginatedResponse<T>(
-  data: T[],
-  total: number,
-  limit: number,
-  offset: number
-) {
-  return json({
-    data,
-    meta: {
-      total,
-      limit,
-      offset,
-      hasMore: offset + data.length < total,
-    },
-  });
-}
+export function apiOk<T>(data: T, status = 200);      // { data } → 200
+export function apiCreated<T>(data: T);                // { data } → 201
+export function apiNoContent();                        // empty body → 204
+export function apiError(status, code, message, fields?); // { error: { code, message, fields? } }
+export function apiValidationError(issues);            // Valibot issues → 400 validation_failed
 ```
+
+> **Rule:** Never use SvelteKit `error()` in `+server.ts` — it produces a `{ message }` shape. Always use these helpers for a consistent contract.
 
 ### Usage
 
 ```typescript
-import { paginatedResponse } from '$lib/server/api/response';
+import { apiOk, apiError } from '$lib/server/api/response';
 
 export const GET: RequestHandler = async ({ url }) => {
-  const limit = Number(url.searchParams.get('limit')) || 20;
-  const offset = Number(url.searchParams.get('offset')) || 0;
+  const item = await getItem(url.searchParams.get('id'));
+  if (!item) return apiError(404, 'not_found', 'Item not found.');
+  return apiOk(item);
+};
+```
 
-  const [results, [{ count }]] = await Promise.all([
-    db.select().from(items).limit(limit).offset(offset),
-    db.select({ count: sql`count(*)` }).from(items),
-  ]);
+### Pagination
 
-  return paginatedResponse(results, Number(count), limit, offset);
+`$lib/server/api/pagination.ts` provides both styles. Offset-based: `parsePagination(url)` + `apiPaginated(items, total, params)` → `{ data: { items, pagination: { page, pageSize, total, totalPages } } }`. Cursor-based: `parseLimit`/`parseCursor`/`encodeCursor`/`decodeCursor` + `paginatedResponse(items, limit, cursorFn)` → `{ items, has_more, cursor? }`.
+
+```typescript
+import { parseLimit, parseCursor, paginatedResponse } from '$lib/server/api/pagination';
+import { apiOk } from '$lib/server/api/response';
+
+export const GET: RequestHandler = async ({ url }) => {
+  const limit = parseLimit(url);
+  const cursor = parseCursor(url);
+
+  // Fetch limit + 1 to detect another page.
+  const rows = await queryItems(cursor, limit + 1);
+
+  return apiOk(paginatedResponse(rows, limit, (item) => ({ id: item.id })));
 };
 ```
 
@@ -720,29 +706,17 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 ## Rate Limiting
 
-```typescript
-// src/lib/server/api/ratelimit.ts
-import { RateLimiter } from 'sveltekit-rate-limiter/server';
-
-export const apiLimiter = new RateLimiter({
-  IP: [100, '15m'],      // 100 requests per 15 minutes per IP
-  IPUA: [200, '15m'],    // 200 per IP + User Agent combo
-});
-
-export const strictLimiter = new RateLimiter({
-  IP: [10, '1m'],        // 10 requests per minute
-});
-```
+Limiters are built with the `createLimiter` factory (sliding window over `@upstash/ratelimit`, backed by Upstash Redis) in `$lib/server/api/rate-limit.ts`. See [abuse/rate-limits.md](./abuse/rate-limits.md) for the full limiter catalog.
 
 ```typescript
 // src/routes/api/items/+server.ts
-import { error } from '@sveltejs/kit';
-import { apiLimiter } from '$lib/server/api/ratelimit';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+
+const limiter = createLimiter('rl:items', 30, '1 m');
 
 export const POST: RequestHandler = async (event) => {
-  if (await apiLimiter.isLimited(event)) {
-    error(429, { message: 'Too many requests' });
-  }
+  const { success, reset } = await limiter.limit(event.getClientAddress());
+  if (!success) return rateLimitResponse(reset);
 
   // ...
 };
@@ -1016,7 +990,7 @@ src/
 | Errors | `error()` with status codes 4xx/5xx |
 | Auth | Check `locals.user` from hooks |
 | CORS | `hooks.server.ts` + OPTIONS handler |
-| Rate limiting | `sveltekit-rate-limiter` |
+| Rate limiting | `createLimiter` factory (Upstash sliding window) |
 | Documentation | JSDoc + OpenAPI generator |
 
 ---
@@ -1063,7 +1037,7 @@ Image processing is bounded in the domain layer, not at the route: `$lib/server/
 - [auth.md](./auth.md) - Authentication patterns, capability grants, protected endpoint implementation
 - [db/relational.md](./db/relational.md) - Drizzle schema used in API queries
 - [db/graph.md](./db/graph.md) - Neo4j for relationship queries
-- [pages.md](./pages.md) - `/showcase/api` route with interactive API explorer
+- [pages.md](./pages.md) - `/showcases/cycle/api` route with interactive API explorer
 
 ---
 

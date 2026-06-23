@@ -1,15 +1,6 @@
 # Discord Notifications
 
-## What is it?
-
-Discord Bot integration for sending DM notifications to users. Requires OAuth2 for user linking (more complex than Telegram).
-
-## What is it for?
-
-- Real-time alerts for Discord-active users
-- Gaming/community-focused applications
-- Social notifications (mentions, activity)
-- Team notifications (via webhooks to channels)
+Discord Bot integration for DM notifications. User linking requires OAuth2 (more complex than Telegram).
 
 ## Critical: Webhooks Cannot DM
 
@@ -81,14 +72,14 @@ User clicks "Connect Discord"
 
 | Table | Columns |
 |-------|---------|
-| `user_discord_accounts` | user_id, discord_user_id, discord_username, access_token, refresh_token, token_expires_at, linked_at, is_active |
+| `user_discord_accounts` | user_id, discord_user_id, discord_username, access_token, refresh_token, token_expires_at, linked_at, is_active, token_refresh_failed_at, tokens_refreshed_at, unlinked_at |
 
 ## Token Management
 
 | Token | Lifetime | Action |
 |-------|----------|--------|
 | Access token | ~7 days | Use for API calls |
-| Refresh token | ~30 days | Exchange for new access token |
+| Refresh token | Undocumented | Exchange for new access token |
 
 **Important:** Implement token refresh before expiry. If refresh fails, mark connection as inactive.
 

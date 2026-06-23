@@ -1,30 +1,10 @@
 # Email Notifications (Resend)
 
-## What is it?
+Transactional email via the Resend REST API. The provider (`providers/email.ts`) calls `https://api.resend.com/emails` with a raw `fetch()` and builds an inline-styled HTML string in `buildHtml()` — no `resend` SDK, no React Email.
 
-Transactional email API with excellent developer experience. Sends emails via REST API or SMTP.
+## Why was it chosen?
 
-## What is it for?
-
-- Password resets, email verification
-- Order confirmations, receipts
-- Notification emails (mentions, comments)
-- Marketing emails (newsletters, promotions)
-
-## Why Resend?
-
-| Provider | Free Tier | DX | Deliverability |
-|----------|-----------|----|--------------  |
-| **Resend** | 100/day (3K/mo) | Excellent | Good |
-| SendGrid | 100/day | Complex | Excellent |
-| Postmark | 100/mo | Good | Best |
-| AWS SES | 62K/mo (from EC2) | Low-level | Good |
-
-**Resend advantages:**
-- Simple REST API, great TypeScript SDK
-- React Email for JSX templates
-- Good deliverability out of the box
-- Generous free tier for development
+- Simple REST API and a generous free tier for development.
 
 See [../vendors.md](../vendors.md#resend) for pricing details.
 
@@ -47,17 +27,15 @@ Resend dashboard provides exact records after domain verification.
 | Variable | Purpose |
 |----------|---------|
 | `RESEND_API_KEY` | API authentication |
-| `RESEND_FROM_EMAIL` | Sender address |
-| `RESEND_REPLY_TO` | Reply-to address |
+| `RESEND_FROM_EMAIL` | Sender address (falls back to `notifications@example.com` when unset) |
+
+The send body sets no `reply_to` field; there is no reply-to env var.
 
 ## Email Templates
 
-| Approach | When to use |
-|----------|-------------|
-| **React Email** | Reusable components, complex layouts |
-| **Plain HTML** | Simple emails, minimal dependencies |
+The implemented path builds an inline-styled HTML string in `buildHtml()` (`providers/email.ts`) and posts it to the Resend API. There is no template engine.
 
-React Email allows JSX-based templates with component reuse and inline styles.
+React Email (JSX templates with component reuse) is an option if richer templating is ever needed, but it is not a dependency today.
 
 ## Deliverability Best Practices
 
@@ -75,8 +53,8 @@ React Email allows JSX-based templates with component reuse and inline styles.
 | Limitation | Workaround |
 |------------|------------|
 | 100 emails/day on free tier | Upgrade for production |
-| No built-in templates | Use React Email |
-| No email scheduling | Use background job (Inngest) |
+| No built-in templates | Inline HTML string (`buildHtml()`) |
+| No email scheduling | Use the in-process delivery worker |
 | Limited analytics | Use Resend dashboard or upgrade |
 
 ## Rate Limits

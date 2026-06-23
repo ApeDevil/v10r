@@ -52,6 +52,7 @@ Circuit breaker: 60s cooldown on rate-limited providers (`markCooldown` / `isCoo
 | [graph-rag.md](./graph-rag.md) | rawrag internals: chunking, embeddings, parent-child, graph traversal, recursive retrieval; Phase 3 catalog `:Resource` seed |
 | [desk-integration.md](./desk-integration.md) | AI tool calling for desk operations, I/O log, effect system |
 | [toon.md](./toon.md) | TOON format for token-efficient RAG context injection |
+| [harness-lens.md](./harness-lens.md) | "Harness" as an audit *lens* (not a module) over the bot's post-dispatch machinery — tool execution, safety gating, context compaction, state persistence, observability; primitive-ownership map across `ai/loop`, `ai/context`, `ai/policy`, `ai/tools` |
 
 ## Architecture
 

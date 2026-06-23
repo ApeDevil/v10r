@@ -9,7 +9,8 @@ SvelteKit hooks for request interception, authentication, and cross-cutting conc
 | `handle` | Intercept every request | `hooks.server.ts` |
 | `handleFetch` | Intercept server-side fetches | `hooks.server.ts` |
 | `handleError` | Global error handler | `hooks.server.ts` |
-| `reroute` | URL rewriting | `hooks.ts` |
+
+This project does not use a `reroute` hook — locale routing lives in the route tree (`[[locale=locale]]` catch-all); see [i18n.md](./i18n.md).
 
 **`handle` sequence order:** Rate Limit → CORS → CSRF → Security Headers → Auth (session + `grants` populate)
 
@@ -137,22 +138,24 @@ Response
 
 Better Auth provides a SvelteKit handler.
 
-> **Critical for Vercel:** Configure `ipAddressHeaders` so Better Auth can identify client IPs behind Vercel's proxy. Without this, rate limiting and IP-based security features are broken.
+> **Pin the IP source.** `ipAddressHeaders` is pinned to a single trusted header so Better Auth never reads the attacker-mutable `x-forwarded-for` chain.
 
 ```typescript
-// src/lib/server/auth.ts
+// src/lib/server/auth/index.ts
 import { betterAuth } from 'better-auth';
 
 export const auth = betterAuth({
   // ... other config
   advanced: {
     ipAddress: {
-      // Vercel provides validated IP headers
-      ipAddressHeaders: ['x-vercel-forwarded-for', 'x-forwarded-for', 'x-real-ip'],
+      // Single trusted source — stamped once in securityHeaders
+      ipAddressHeaders: ['x-client-ip'],
     },
   },
 });
 ```
+
+`x-client-ip` is stamped once in the `securityHeaders` handler from `event.getClientAddress()` (the platform-trusted source) before any handler runs. Better Auth reads only that stamp, not the forwarded-for chain a client can spoof.
 
 ### Hook Integration
 
@@ -194,60 +197,29 @@ export const handle = sequence(rateLimitHandle, authHandle);
 
 ## Rate Limiting
 
-Using `sveltekit-rate-limiter`:
+Limiters are built by the `createLimiter` factory over `@upstash/ratelimit` (sliding window) backed by Upstash Redis. There is no global hook limiter and no cookie secret — the hook applies per-route limiters and fails closed in production. See [abuse/rate-limits.md](./abuse/rate-limits.md) for the factory and the full limiter table; do not redefine limiters here.
 
-```typescript
-// src/lib/server/rate-limit.ts
-import { RateLimiter } from 'sveltekit-rate-limiter/server';
-import { RATE_LIMIT_SECRET } from '$env/static/private';
-
-// Global rate limiter (100 requests/minute)
-export const globalLimiter = new RateLimiter({
-  IP: [100, 'm'],        // 100 requests per minute per IP
-  IPUA: [50, 'm'],       // 50 requests per minute per IP+UserAgent
-  cookie: {
-    name: 'rl_id',
-    secret: RATE_LIMIT_SECRET,
-    rate: [200, 'm'],    // 200 requests per minute per cookie
-    preflight: true,
-  },
-});
-
-// Strict limiter for auth endpoints (brute force protection)
-export const authLimiter = new RateLimiter({
-  IP: [5, 'm'],          // 5 attempts per minute per IP
-  IPUA: [3, 'm'],        // 3 attempts per minute per IP+UserAgent
-});
-```
+The `authHandler` hook rate-limits every `/api/auth/*` request by client IP, then applies a second per-account limiter on the two-factor verify paths:
 
 ```typescript
 // src/hooks.server.ts
-import { globalLimiter, authLimiter } from '$lib/server/rate-limit';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 
-const rateLimitHandle: Handle = async ({ event, resolve }) => {
-  // Skip rate limiting for static assets
-  if (event.url.pathname.startsWith('/_app')) {
-    return resolve(event);
+const authRatelimit = createLimiter('ratelimit:auth', AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW);
+
+const authHandler: Handle = async ({ event, resolve }) => {
+  const path = event.url.pathname;
+
+  if (path.startsWith('/api/auth/') && event.locals.clientIp) {
+    const { success, reset } = await authRatelimit.limit(event.locals.clientIp);
+    if (!success) return rateLimitResponse(reset);
   }
 
-  // Use stricter limiter for auth endpoints
-  const limiter = event.url.pathname.startsWith('/api/auth')
-    ? authLimiter
-    : globalLimiter;
-
-  const status = await limiter.check(event);
-  if (status.limited) {
-    return new Response('Too Many Requests', {
-      status: 429,
-      headers: {
-        'Retry-After': String(status.retryAfter)
-      }
-    });
-  }
-
-  return resolve(event);
+  return svelteKitHandler({ event, resolve, auth, building });
 };
 ```
+
+`event.locals.clientIp` is stamped once in the first handler (`securityHeaders`) before any other handler reads it; downstream code reads it rather than re-deriving from attacker-mutable request headers. The per-email and captcha gates run in a separate `authCaptchaGate` handler — see [abuse/rate-limits.md](./abuse/rate-limits.md).
 
 ---
 
@@ -400,30 +372,6 @@ See [error-handling.md](./error-handling.md) for comprehensive error handling pa
 
 ---
 
-## Reroute Hook
-
-URL rewriting before routing:
-
-```typescript
-// src/hooks.ts (not hooks.server.ts!)
-import type { Reroute } from '@sveltejs/kit';
-
-export const reroute: Reroute = ({ url }) => {
-  // Rewrite /blog/old-slug to /blog/new-slug
-  if (url.pathname === '/blog/old-slug') {
-    return '/blog/new-slug';
-  }
-
-  // Locale stripping (handled by i18n usually)
-  const match = url.pathname.match(/^\/(en|de|fr)(\/.*)?$/);
-  if (match) {
-    return match[2] || '/';
-  }
-};
-```
-
----
-
 ## Scheduler Bootstrap
 
 The in-process job scheduler starts via a bare import at the top of `hooks.server.ts`:
@@ -457,45 +405,19 @@ Complete `hooks.server.ts` with all patterns:
 import { sequence } from '@sveltejs/kit/hooks';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { auth } from '$lib/server/auth';
-import { globalLimiter, authLimiter } from '$lib/server/rate-limit';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { ALLOWED_ORIGINS } from '$env/static/private';
 import type { Handle, HandleFetch, HandleServerError } from '@sveltejs/kit';
 import '$lib/server/jobs/scheduler'; // starts in-process scheduler (container only, no-op on Vercel)
 
 const allowedOrigins = new Set(ALLOWED_ORIGINS?.split(',') ?? []);
+const authRatelimit = createLimiter('ratelimit:auth', AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW);
 
-// 1. Rate limiting (OPTIONS passes through to CORS handler)
+// 1. Rate limiting — per-route Upstash limiter, keyed on the stamped client IP.
 const rateLimitHandle: Handle = async ({ event, resolve }) => {
-  // Skip static assets
-  if (event.url.pathname.startsWith('/_app')) {
-    return resolve(event);
-  }
-
-  // Let OPTIONS pass through - CORS handler will process it
-  // (Don't return early here, or CORS headers won't be added!)
-  if (event.request.method === 'OPTIONS') {
-    return resolve(event);
-  }
-
-  // Stricter limits for auth endpoints (brute force protection)
-  if (event.url.pathname.startsWith('/api/auth')) {
-    const status = await authLimiter.check(event);
-    if (status.limited) {
-      return new Response('Too Many Requests', {
-        status: 429,
-        headers: { 'Retry-After': String(status.retryAfter) },
-      });
-    }
-    return resolve(event);
-  }
-
-  // Global rate limit for all other routes
-  const status = await globalLimiter.check(event);
-  if (status.limited) {
-    return new Response('Too Many Requests', {
-      status: 429,
-      headers: { 'Retry-After': String(status.retryAfter) },
-    });
+  if (event.url.pathname.startsWith('/api/auth/') && event.locals.clientIp) {
+    const { success, reset } = await authRatelimit.limit(event.locals.clientIp);
+    if (!success) return rateLimitResponse(reset);
   }
   return resolve(event);
 };
@@ -665,7 +587,7 @@ export {};
 
 ## Related
 
-- [rate-limiting.md](./rate-limiting.md) - Rate limiting patterns (sveltekit-rate-limiter, Upstash)
+- [abuse/rate-limits.md](./abuse/rate-limits.md) - Rate limiting patterns (Upstash sliding window)
 - [error-handling.md](./error-handling.md) - Error handling patterns
 - [auth.md](./auth.md) - Authentication implementation
 - [api.md](./api.md) - API route patterns

@@ -1,63 +1,20 @@
 # Deployment
 
-## What is it?
+Multi-target deployment proving runtime portability via SvelteKit's adapter system. Today only the Vercel serverless target is wired; the container target is a planned portability goal.
 
-Multi-target deployment strategy proving runtime portability. Same codebase deploys to Vercel (serverless) and container platforms. SvelteKit's adapter system enables platform-agnostic builds.
+## Targets and adapters
 
-## What is it for?
+| Target | Runtime | Platform | Adapter | Status |
+|--------|---------|----------|---------|--------|
+| Serverless | Node.js | Vercel | `adapter-vercel` | Live |
+| Container | Bun | Koyeb | `svelte-adapter-bun` (fallback `adapter-node`) | Planned |
 
-- Zero-config serverless deployment (Vercel)
-- Container-based deployment (Koyeb, Railway)
-- Testing runtime portability across platforms
-- Preview deployments per PR
-
-## Why was it chosen?
-
-| Target | Runtime | Platform | Use Case |
-|--------|---------|----------|----------|
-| Serverless | Node.js | Vercel | Zero-config, preview deploys |
-| Serverless | Bun | Vercel | Experimental (28% faster) |
-| Container | Bun | Koyeb | Native Bun, no cold starts |
-
-**Vercel advantages:**
-- Automatic framework detection
-- Git-based deployment with PR previews
-- Built-in edge caching, image optimization
-- Fluid compute: 99.37% of requests have zero cold starts
-
-**Container advantages:**
-- Persistent runtime (no cold starts)
-- Full Node.js/Bun API access
-- Railway: 3-4x faster than Vercel in benchmarks
-- True free tier (Koyeb: no credit card)
-
-**Adapter selection:**
-| Adapter | Target |
-|---------|--------|
-| `adapter-vercel` | Vercel (Node.js or Bun) |
-| `svelte-adapter-bun` | Bun containers |
-| `adapter-node` | Node.js containers |
+`svelte.config.js` hardcodes `adapter-vercel` (`runtime: 'nodejs22.x'`). The container adapters (`svelte-adapter-bun`, `adapter-node`) are not installed and there is no `Dockerfile` or `DEPLOY_TARGET` switch yet. Swapping adapters needs no application code changes — that portability is the point.
 
 ## Known limitations
 
-**Vercel cold starts:**
-- 2-3 seconds for heavy setups (GraphQL + Prisma)
-- Each cold start requires new database connections
-- Mitigated by Fluid compute (Pro/Enterprise)
-
-**Vercel lock-in:**
-- Proprietary features (image optimization, ISR) create migration friction
-- SvelteKit adapter system provides better portability than Next.js
-- Can swap adapters without changing application code
-
-**Bun on Vercel:**
-- SvelteKit not officially listed (Next.js, Express, Hono, Nitro only)
-- May break without warning
-- Test thoroughly before production
-
-**Container platforms:**
-- Container sleep on free tiers causes cold starts
-- Requires Dockerfile knowledge
+- **Bun on Vercel:** SvelteKit isn't officially listed (Next.js, Express, Hono, Nitro only) — may break without warning.
+- **Vercel lock-in:** proprietary features (image optimization, ISR) create migration friction; the adapter system contains it.
 
 See [vendors.md](../vendors.md#vercel) for pricing, free tier limits, and platform alternatives.
 

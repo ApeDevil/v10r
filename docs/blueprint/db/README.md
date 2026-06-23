@@ -124,14 +124,15 @@ NEON_DATABASE_URL_PROD="postgresql://..."
 
 # Neo4j (Aura)
 NEO4J_URI="neo4j+s://..."
-NEO4J_USER="neo4j"
+NEO4J_USERNAME="neo4j"
 NEO4J_PASSWORD="..."
+NEO4J_DATABASE="neo4j"   # optional, defaults to 'neo4j'
 
 # R2 (Cloudflare)
-R2_ENDPOINT="https://..."
+R2_ACCOUNT_ID="..."      # endpoint computed: https://{id}.r2.cloudflarestorage.com
 R2_ACCESS_KEY_ID="..."
 R2_SECRET_ACCESS_KEY="..."
-R2_BUCKET="velociraptor"
+R2_BUCKET_NAME="..."
 
 # Redis (Upstash)
 UPSTASH_REDIS_REST_URL="https://..."

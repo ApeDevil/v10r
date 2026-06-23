@@ -28,7 +28,7 @@ import { neonConfig, Pool } from '@neondatabase/serverless';
 import { embedMany } from 'ai';
 import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import { parse as parseYaml } from 'yaml';
+import { deriveTitle, isBlocked, parseFrontmatter, slugify } from '../../src/lib/server/docs/doc-filter';
 import { splitMarkdown } from '../../src/lib/server/rawrag/markdown-split';
 
 neonConfig.poolQueryViaFetch = true;
@@ -68,53 +68,22 @@ const shortId = (prefix: string) =>
 const vecLiteral = (v: number[]) => `[${v.join(',')}]`;
 const estimateTokens = (t: string) => Math.ceil(t.length / 4);
 
-// ── Blocklist + path derivation — replicated from src/lib/server/docs/manifest.ts ──
-// (Drift risk: keep aligned, or factor into a shared Vite-free module — see plan.)
+// Canonical filtering + markdown helpers are shared with the /docs manifest via
+// src/lib/server/docs/doc-filter.ts (single source of truth — no more hand-sync).
 const DOCS_ROOT = fileURLToPath(new URL('../../docs', import.meta.url));
-const BLOCKLIST = new Set([
-	'docs/blueprint/blog.md',
-	'docs/blueprint/style-randomizer.md',
-	'docs/blueprint/style-randomizer-v2.md',
-	'docs/blueprint/style-randomizer-implementation-plan.md',
-	'docs/blueprint/color-differentiation-plan.md',
-	'docs/blueprint/visual-identity-architecture.md',
-	'docs/blueprint/admin-expansion.md',
-	'docs/stack/vendors.md',
+
+// Docs that render for humans at /docs but must NOT enter the chatbot corpus —
+// planned-but-unbuilt designs the assistant would otherwise assert as live code.
+const RAG_ONLY_BLOCK = new Set<string>([
+	'docs/blueprint/progressive-revelation.md',
+	'docs/foundation/progressive-revelation.md',
+	// Aspirational format: @toon-format/toon is not a dependency and nothing imports it.
+	// The doc's encode()-based examples would be asserted as live code by the assistant.
+	'docs/blueprint/ai/toon.md',
+	// Superseded v4-era design record; the desk+AI feature shipped on AI SDK v6 with a
+	// different surface. Kept for /docs rationale, held from RAG to avoid stale-contract answers.
+	'docs/blueprint/ai/desk-integration.md',
 ]);
-const BLOCKED_PREFIXES = ['docs/guides/', 'docs/blueprint/desk/', 'docs/blueprint/design/'];
-
-function isBlocked(sourcePath: string): boolean {
-	if (BLOCKLIST.has(sourcePath)) return true;
-	if (sourcePath.endsWith('/README.md')) return true;
-	return BLOCKED_PREFIXES.some((p) => sourcePath.startsWith(p));
-}
-
-function slugify(s: string): string {
-	return s
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-|-$/g, '');
-}
-
-function parseFrontmatter(raw: string): { frontmatter: Record<string, unknown>; body: string } {
-	if (!raw.startsWith('---\n')) return { frontmatter: {}, body: raw };
-	const end = raw.indexOf('\n---', 4);
-	if (end === -1) return { frontmatter: {}, body: raw };
-	try {
-		const fm = (parseYaml(raw.slice(4, end)) as Record<string, unknown> | null) ?? {};
-		return { frontmatter: fm, body: raw.slice(end + 4).replace(/^\n/, '') };
-	} catch {
-		return { frontmatter: {}, body: raw };
-	}
-}
-
-function deriveTitle(body: string): string | null {
-	for (const line of body.split('\n')) {
-		const m = /^#\s+(.+)$/.exec(line.trim());
-		if (m) return m[1].trim();
-	}
-	return null;
-}
 
 interface DocFile {
 	sourcePath: string; // docs/…/x.md
@@ -140,7 +109,7 @@ function listMarkdown(dir: string): string[] {
 
 function buildDocFile(absPath: string): DocFile | null {
 	const sourcePath = `docs/${relative(DOCS_ROOT, absPath).split('\\').join('/')}`;
-	if (isBlocked(sourcePath)) return null;
+	if (isBlocked(sourcePath, RAG_ONLY_BLOCK)) return null;
 
 	const parts = sourcePath.split('/');
 	const sectionDir = parts[1];

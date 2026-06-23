@@ -39,12 +39,12 @@ The Upstash client is constructed with `timeout: 1000` — a slow Redis cannot s
 | Per-email | sha256(normalized email) | 5 | 1 hour | `rl:abuse:email` | `authCaptchaGate` hook |
 | Per-IP challenge | client IP | 30 | 60 s | `rl:captcha:challenge` | `GET /api/captcha/challenge` |
 | Feedback (per-IP) | client IP | 3 | 1 hour | `rl:feedback:submit` | feedback form action |
-| Comment write (per-user) | user ID | 5 | 1 min | `rl:comment:user` | `POST /api/blog/posts/[id]/comments` |
-| Comment write (per-user hourly) | user ID | 30 | 1 hour | `rl:comment:user:hr` | same |
-| Comment write (per-IP) | client IP | 20 | 1 hour | `rl:comment:ip` | same |
-| Comment write (per-post) | post ID | 60 | 1 min | `rl:comment:post` | same |
-| Grant request (per-user) | user ID | 1 | 24 hours | `rl:grant-request:user` | `POST /api/grant-requests` |
-| Admin grant actions | admin user ID | 30 | 1 min | `rl:admin:grants` | `/api/admin/grant-requests/*`, `/api/admin/users/[id]/grants/*` |
+| Comment write (per-user) | user ID | 5 | 1 min | `ratelimit:comment:user` | `POST /api/blog/posts/[id]/comments` |
+| Comment write (per-user hourly) | user ID | 30 | 1 hour | `ratelimit:comment:user:hour` | same |
+| Comment write (per-IP) | client IP | 20 | 1 hour | `ratelimit:comment:ip` | same |
+| Comment write (per-post) | post ID | 60 | 1 min | `ratelimit:comment:post` | same |
+| Grant request (per-user) | user ID | 1 | 24 hours | `ratelimit:grant-request:user` | `POST /api/grant-requests` |
+| Admin grant actions | admin user ID | 30 | 1 min | `ratelimit:admin-grant` | `/api/admin/grant-requests/*`, `/api/admin/users/[id]/grants/*` |
 
 ---
 
@@ -77,6 +77,7 @@ The `authCaptchaGate` hook handler runs both captcha verification and per-email 
 
 - `POST /api/auth/sign-in/magic-link`
 - `POST /api/auth/email-otp/send-verification-otp`
+- `POST /api/auth/two-factor/send-otp` — body carries no email, so only the ALTCHA check applies here
 
 Order: captcha first, per-email second. Either denial short-circuits the request.
 

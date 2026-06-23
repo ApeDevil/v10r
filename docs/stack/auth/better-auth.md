@@ -1,37 +1,11 @@
 # Better Auth
 
-## What is it?
-
-Framework-agnostic authentication and authorization framework for TypeScript. Provides session-based auth with database-backed sessions (or optional stateless cookies). MIT licensed, fully open source—data stays in your database.
-
-## What is it for?
-
-- Full-featured authentication (OAuth, email/password, magic links)
-- Session management (database or stateless cookie-based)
-- Two-factor authentication, passkeys, WebAuthn
-- Multi-tenant applications with organizations/teams
-- Enterprise SSO and custom identity providers
+Session-based auth, database-backed via the native Drizzle adapter. This app is **passwordless** — OAuth (Google) + magic link + OTP, with passkeys for phishing-resistant login and TOTP as step-up only. See the `better-auth` skill and [blueprint/auth.md](../../blueprint/auth.md).
 
 ## Why was it chosen?
 
-| Aspect | Better Auth | Auth.js | Lucia |
-|--------|-------------|---------|-------|
-| Status | Active development | Maintenance mode | Deprecated |
-| Drizzle | Native adapter | Plugin | Manual |
-| 2FA/Passkeys | Built-in | Manual/plugin | Manual |
-| Setup time | Minutes | Minutes | Hours |
-| TypeScript | Full autocomplete | Manual augmentation | Full |
-
-**Key advantages:**
-- Auth.js team joined Better Auth; new projects recommended to use Better Auth
-- Lucia deprecated early 2025 ("not working" per creator)
-- Native Drizzle adapter with auto-schema generation
-- Built-in: 2FA (TOTP), passkeys, email verification, password reset
-- 20+ OAuth providers out of the box
-- Session cookie caching reduces DB hits
-- No vendor lock-in, data ownership
-
-**Project stats:** 24.5k GitHub stars, 696 contributors, 9.9k dependents
+- Native Drizzle adapter with auto-schema generation.
+- Built-in passkeys and TOTP — both load-bearing for this app's auth model.
 
 ## Known limitations
 

@@ -9,25 +9,15 @@ See [../../foundation/user-data.md](../../foundation/user-data.md) for terminolo
 
 ## Route Structure
 
+`/app/settings` is currently a single page:
+
 ```
 /app/settings/
 ├── +page.svelte             # Settings hub with cards
-├── +page.server.ts          # Load current preferences
-├── appearance/
-│   ├── +page.svelte         # Theme, display options
-│   └── +page.server.ts
-├── language/
-│   ├── +page.svelte         # Locale, timezone, date format
-│   └── +page.server.ts
-├── privacy/
-│   ├── +page.svelte         # Profile visibility, activity
-│   └── +page.server.ts
-└── accessibility/
-    ├── +page.svelte         # Motion, contrast, keyboard
-    └── +page.server.ts
+└── +page.server.ts          # Load + save preferences
 ```
 
-**Note:** Start with single page, split into sub-routes when settings exceed ~10 options.
+**Future split (not yet built):** Break into `appearance/`, `language/`, `privacy/`, and `accessibility/` sub-routes when settings exceed ~10 options.
 
 ---
 
@@ -132,8 +122,9 @@ Theme changes apply **immediately** with localStorage + async DB persist.
     document.cookie = `theme=${value};path=/;max-age=31536000;SameSite=Lax;Secure`;
 
     // Persist to DB (async, fire-and-forget)
-    fetch('/api/user/preferences', {
-      method: 'PATCH',
+    fetch('/api/preferences', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ theme: value }),
     });
   }
@@ -410,18 +401,24 @@ export const load = async ({ locals, cookies }) => {
 
 ## Sidebar Integration
 
+`/app/settings` is a single page, so it wires up as a plain `NavItem` with no submenu:
+
 ```svelte
-<NavItem href="/app/settings" icon={Settings} hasChildren>
-  Settings
-  {#snippet children()}
-    <NavDropdown>
-      <NavLink href="/app/settings/appearance">Appearance</NavLink>
-      <NavLink href="/app/settings/language">Language</NavLink>
-      <NavLink href="/app/settings/privacy">Privacy</NavLink>
-      <NavLink href="/app/settings/accessibility">Accessibility</NavLink>
-    </NavDropdown>
-  {/snippet}
-</NavItem>
+<NavItem href="/app/settings" icon="i-lucide-settings" label={m.nav_settings} />
+```
+
+If the sub-route split lands, pass a `children` array and `NavItem` renders the submenu through `NavFlyout`/`NavAccordion`:
+
+```svelte
+<NavItem
+  href="/app/settings"
+  icon="i-lucide-settings"
+  label={m.nav_settings}
+  children={[
+    { href: '/app/settings/appearance', label: m.nav_settings_appearance },
+    { href: '/app/settings/language', label: m.nav_settings_language },
+  ]}
+/>
 ```
 
 ---

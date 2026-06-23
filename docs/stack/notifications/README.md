@@ -25,25 +25,31 @@ Multi-channel notification system with user-controlled routing. Users connect th
 
 ## User Settings Model
 
-Users control notifications through a **Channel × Type Matrix** (notification channels are **Settings** per [../../foundation/user-data.md](../../foundation/user-data.md)):
+Users control notifications through a **Channel × Type Matrix** (notification channels are **Settings** per [../../foundation/user-data.md](../../foundation/user-data.md)). Email has a per-type toggle for all 6 types; Telegram and Discord only cover `mention`, `comment`, `system`, `security`:
 
-|                | Email | Telegram | Discord |
-|----------------|:-----:|:--------:|:-------:|
-| **Security**   |  ✓*   |    ✓     |    -    |
-| **Social**     |   ✓   |    -     |    ✓    |
-| **Marketing**  |   ✓   |    -     |    -    |
-| **Updates**    |   ✓   |    ✓     |    ✓    |
+|              | Email | Telegram | Discord |
+|--------------|:-----:|:--------:|:-------:|
+| **mention**  |   ✓   |    ✓     |    ✓    |
+| **comment**  |   ✓   |    ✓     |    ✓    |
+| **system**   |   ✓   |    ✓     |    ✓    |
+| **security** |  ✓*   |    ✓     |    ✓    |
+| **success**  |   ✓   |    -     |    -    |
+| **follow**   |   ✓   |    -     |    -    |
 
 *\*Required - cannot be disabled*
 
 ### Notification Types
 
-| Type | Examples | Default Channels |
-|------|----------|------------------|
-| **Security** | Password reset, 2FA, suspicious login | Email (required) |
-| **Social** | Mentions, follows, comments | Email |
-| **Marketing** | Newsletter, promotions | Email (opt-in) |
-| **Updates** | Feature announcements, system status | Email |
+The `notificationTypeEnum` has 6 values:
+
+| Type | Examples |
+|------|----------|
+| **mention** | Someone @mentions you |
+| **comment** | Replies and comments |
+| **system** | System status, announcements |
+| **success** | Completed actions, confirmations |
+| **security** | Logins, security events (email required) |
+| **follow** | New follower |
 
 ## Channel Connection Flow
 
@@ -82,7 +88,7 @@ Users control notifications through a **Channel × Type Matrix** (notification c
 | Complexity | Simpler for 3-4 channels |
 | Stack alignment | Matches our serverless-first approach |
 
-**Decision**: Custom routing with Inngest for async delivery. See [../../blueprint/notifications/](../../blueprint/notifications/) for implementation.
+**Decision**: Custom routing with an in-process `setInterval` delivery worker on the persistent container (`jobs/delivery-scheduler.ts` + `jobs/notification-delivery.ts`), plus the `/api/cron/[job]` sweep route on serverless. Inngest is design-intent only — not a dependency. See [../../blueprint/notifications/](../../blueprint/notifications/) for implementation.
 
 ### Why Email is Primary?
 

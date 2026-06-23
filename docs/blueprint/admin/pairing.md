@@ -55,10 +55,10 @@ Value format: `${adminUserId}.${expiresAtMs}.${hmacHex}`
 ## Hook chain position
 
 ```
-... → csrfProtection → consentLoader → debugOwnerLoader → routeGuard → analyticsCollector
+... → csrfProtection → consentLoader → debugOwnerLoader → devRouteGuard → analyticsCollector
 ```
 
-`debugOwnerLoader` runs after `consentLoader` (consent tier is available) and before `routeGuard` (admin pages also get a populated `debugOwnerId`). `analyticsCollector` reads `event.locals.debugOwnerId` and passes it to `recordEvent()` / `upsertSession()`.
+`debugOwnerLoader` runs after `consentLoader` (consent tier is available) and before `devRouteGuard` (admin pages also get a populated `debugOwnerId`). `analyticsCollector` reads `event.locals.debugOwnerId` and passes it to `recordEvent()` / `upsertSession()`.
 
 ## Cleanup
 
@@ -81,7 +81,7 @@ The 2h session cap is a privacy guardrail: admin re-pairs if longer coverage is 
 | Admin revokes pairing | `revokePairing()` marks code consumed, untags all sessions for that admin |
 | Phone self-disconnects | `DELETE /api/pair/disconnect` clears `v10r_debug_owner` cookie; future requests fail HMAC |
 | Forged cookie | HMAC-SHA256 + constant-time compare; missing/wrong `PAIRING_SECRET` fails closed |
-| Admin sees other users' events | Live feed filters on `debug_owner_id = adminUserId` — only the paired phone's events |
+| Admin sees other users' events | By default the live feed shows all recent site traffic and tags paired rows (`isPaired`). The phone-attribution guarantee is the `debug_owner_id` stamping, not a feed restriction. Selecting the `paired` filter restricts the feed to `debug_owner_id = adminUserId`. |
 
 ## Required environment variable
 

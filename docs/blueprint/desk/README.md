@@ -30,6 +30,7 @@ Current channels:
 | `files:select` | `{ type: 'post' \| 'asset' \| 'spreadsheet', id, data } \| null` | Explorer (on item select/deselect) |
 | `spreadsheet:open` | `{ fileId, name }` | Explorer (on spreadsheet open) |
 | `files:insert-image` | `{ assetId, fileName, altText, downloadUrl, _nonce }` | Explorer (image insert into editor) |
+| `ai:open_panel`, `ai:refresh_file`, `ai:highlight`, `ai:notify`, `ai:scroll_to` | AI-driven desk actions | AI tool calls (open/refresh/highlight/notify/scroll a panel) |
 
 ### Explorer Panel
 
@@ -39,11 +40,11 @@ The Explorer (`ExplorerPanel.svelte`) is the unified file browser for all desk c
 blog/                    # Blog posts (draft/published/archived)
 assets/
   images/                # Uploaded images (R2-backed)
-data/                    # Desk folders + spreadsheet files
+data/                    # Desk folders + spreadsheet and markdown files
   [user folders]/        # Nested desk.folder hierarchy
 ```
 
-The Explorer fetches from four sources in parallel: `/api/blog/posts`, `/api/blog/assets`, `/api/desk/files`, `/api/desk/folders`. Panel commands menu (File) offers: New Post, New Spreadsheet, Import Markdown, Upload Image, Refresh.
+The Explorer fetches from six sources in parallel: `/api/blog/posts`, `/api/blog/post-folders`, `/api/blog/assets`, `/api/blog/asset-folders`, `/api/desk/files`, `/api/desk/folders`. Panel commands menu (File) offers: New Post, New Spreadsheet, Import Markdown, Upload Image, Refresh.
 
 #### Architecture
 
@@ -54,7 +55,7 @@ Every API item (post, asset, folder, file) is normalized into a unified **Explor
 | Field | Description |
 |-------|-------------|
 | `id`, `parentId` | Flat tree addressing |
-| `source` | `blog-post`, `blog-asset`, `desk-file`, `desk-folder` |
+| `source` | `desk-file`, `desk-folder`, `blog-post`, `blog-folder`, `blog-asset`, `asset-folder`, `virtual` |
 | `label`, `icon`, `isFolder` | Display |
 | `capabilities` | `Set<NodeCapability>` — drives context menu |
 | `aiContext`, `sortKey`, `badge`, `subtitle` | Optional metadata |
@@ -63,9 +64,9 @@ Every API item (post, asset, folder, file) is normalized into a unified **Explor
 
 | Adapter | Input | Capabilities |
 |---------|-------|--------------|
-| `blog-posts.ts` | `PostListItem[]` | open, open-new-panel, rename, ai-context, export-markdown, delete |
+| `blog-posts.ts` | `PostListItem[]` | open, open-new-panel, rename, move, ai-context, export-markdown, delete |
 | `blog-assets.ts` | `AssetListItem[]` | open, open-new-panel, rename, insert-into-document, copy-url, delete |
-| `desk-files.ts` | `FileListItem[]` + `FolderListItem[]` | files: open, open-new-panel, rename, duplicate, move, ai-context, delete; folders: rename, move, delete, new-folder, new-spreadsheet |
+| `desk-files.ts` | `FileListItem[]` + `FolderListItem[]` | spreadsheet files: open, open-new-panel, rename, duplicate, move, ai-context, delete; markdown files: same minus duplicate; folders: rename, move, delete, new-folder, new-spreadsheet |
 
 Virtual root nodes (`blog/`, `assets/`, `images/`, `data/`) are created by the adapters.
 

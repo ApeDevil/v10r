@@ -70,14 +70,17 @@ Managing authentication state within the app shell: session expiry, re-authentic
 
 ## Implementation
 
+> **Endpoints below are illustrative.** The shipped pieces are the components `shell/session/{SessionMonitor,SessionWarningBanner,SessionExpiryModal}.svelte` and the `getSession()` context store. The re-auth routes (`/api/auth/extend-session`, `/api/auth/send-reauth-code`, `/api/auth/reauthenticate`) are not yet built — treat them as a reference contract.
+
 ### Session Monitor
 
 ```svelte
-<!-- src/lib/components/shell/SessionMonitor.svelte -->
+<!-- src/lib/components/shell/session/SessionMonitor.svelte -->
 <script lang="ts">
   import { page } from '$app/state';
   import { invalidateAll } from '$app/navigation';
-  import { SessionExpiryModal, SessionWarningBanner } from './session';
+  import SessionExpiryModal from './SessionExpiryModal.svelte';
+  import SessionWarningBanner from './SessionWarningBanner.svelte';
 
   let { session } = $props();
 
@@ -490,13 +493,15 @@ The key advantage of the modal approach: unsaved form data is preserved.
 ```svelte
 <script lang="ts">
   import { superForm } from 'sveltekit-superforms';
-  import { sessionExpired } from '$lib/stores/session.svelte';
+  import { getSession } from '$lib/state/session.svelte';
+
+  const session = getSession();
 
   const { enhance, submitting } = superForm(data.form, {
     onError({ result }) {
       // Check if error is due to session expiry
       if (result.status === 401) {
-        sessionExpired.set(true);
+        session.markExpired();
         // Form data is preserved in the form element
         // User re-authenticates via modal
         // Then can retry submit
@@ -534,11 +539,14 @@ if (response.status === 401) {
 ### Re-authentication Rate Limiting
 
 ```typescript
-// Apply strict rate limiting to re-auth endpoint
-const reauthLimiter = new RateLimiter({
-  IP: [5, '15m'],    // 5 attempts per 15 minutes
-  IPUA: [3, '15m'],  // 3 attempts per IP+UA
-});
+// Strict limiter on the re-auth endpoint — see ../abuse/rate-limits.md
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+
+const reauthLimiter = createLimiter('rl:auth:reauth', 5, '15 m');
+
+// in the re-auth form action / endpoint:
+const { success, reset } = await reauthLimiter.limit(event.getClientAddress());
+if (!success) return rateLimitResponse(reset);
 ```
 
 ### Sensitive Action Re-authentication

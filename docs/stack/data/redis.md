@@ -1,38 +1,11 @@
 # Redis (Upstash)
 
-## What is it?
-
-Redis is an in-memory key-value store. It holds data in RAM, making reads and writes orders of magnitude faster than disk-based databases. Upstash is the managed provider — it exposes Redis over HTTP REST instead of a persistent TCP connection. The client is ~15KB and requires no connection pooling.
-
-## What is it for?
-
-- Rate limiting (sliding window counters per user/IP)
-- Session data (short-lived, fast-access tokens)
-- Feature flags (per-user or global toggles)
-- Leaderboards (sorted sets with automatic ranking)
-- Pub/sub messaging (real-time event broadcasting)
-- Caching hot queries (pre-computed results for expensive reads)
-- Atomic counters (view counts, download tallies)
-
-**Rule of thumb:** Use Redis when data is ephemeral, needs sub-10ms access, or its disappearance is acceptable.
+In-memory key-value store, hosted on **Upstash** over HTTP REST (no persistent TCP, no connection pool). Backs rate limiting, the circuit breaker, and ephemeral counters.
 
 ## Why was it chosen?
 
-| Approach | Serverless-safe | Sub-10ms | Rate limiting | Free tier |
-|---|---|---|---|---|
-| In-memory `Map` | No (resets per request) | Yes | No | N/A |
-| PostgreSQL UNLOGGED | Yes | No (~5–20ms) | Manual | Yes |
-| Vercel KV | Yes | Yes | No | 30K cmd/month |
-| ioredis (TCP) | No (persistent conn required) | Yes | Manual | Varies |
-| **Upstash (HTTP)** | **Yes** | **Yes** | **Built-in** | **500K cmd/month** |
-
-**Key advantages:**
-
-- HTTP-only transport — works in serverless functions and edge runtimes with no connection state
-- Auto-pipelining batches multiple commands into a single HTTP request automatically
-- Sliding window rate limiting built into the SDK (`@upstash/ratelimit`)
-- Full Redis command compatibility — not a subset or emulation
-- Free tier: 500K commands/month, 256MB storage
+- HTTP-only transport works in serverless and edge runtimes with no connection state — TCP clients (`ioredis`) can't.
+- Sliding-window rate limiting ships in the SDK (`@upstash/ratelimit`).
 
 See [vendors.md](../vendors.md) for pricing details and provider alternatives.
 

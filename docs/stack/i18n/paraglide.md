@@ -9,7 +9,7 @@ Compiler-based internationalization for SvelteKit. Compiles message files into t
 - Compile-time translation compilation (messages → typed functions)
 - Type-safe message keys with autocomplete
 - Per-page tree-shaking (unused messages eliminated)
-- URL-based locale routing via `reroute` hook
+- URL-based locale routing via a `[[locale=locale]]` optional catch-all route (no `reroute` hook)
 - Zero hydration mismatch (locale resolved before render)
 
 ## Why was it chosen?
@@ -21,7 +21,7 @@ Compiler-based internationalization for SvelteKit. Compiles message files into t
 | Tree-shaking | Per-page | No (all together) | Yes |
 | Hydration | No mismatch | Risk of mismatch | No mismatch |
 | SvelteKit support | Official (`npx sv add`) | Community | Community |
-| Routing | `reroute` hook (no params) | `[[lang]]` param | Custom |
+| Routing | `[[locale=locale]]` catch-all (no reroute hook) | `[[lang]]` param | Custom |
 | Maintenance | Active (Inlang team) | "Due for reworking" | Abandoned (creator passed) |
 
 **Key advantages:**

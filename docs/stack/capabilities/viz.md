@@ -1,18 +1,8 @@
 # Data Visualization
 
-## What is it?
+Chart, plot, graph, diagram, and map components for the viz showcase. Each category uses a different underlying library, chosen for what that visualization type needs.
 
-A collection of chart, plot, graph, diagram, and map components for rendering data in the browser. Each section of the viz showcase uses a different underlying library — chosen based on what the visualization type needs.
-
-## What is it for?
-
-- **Charts** — time-series, comparisons, distributions, part-to-whole (bar, line, area, pie, radar, bubble, sparkline, gauge, treemap)
-- **Plots** — scatter and heatmap for dense, continuous, or matrix data
-- **Graphs** — network topology, org hierarchies, dependency graphs, Sankey flows, knowledge graphs
-- **Diagrams** — interactive flow diagrams and state machines
-- **Maps** — geospatial data with markers, popups, and GeoJSON layers
-
-## Why was it chosen?
+## Libraries
 
 Each library solves a different visualization problem.
 
@@ -41,7 +31,7 @@ Each library solves a different visualization problem.
 
 ## How it works
 
-Each visualization category lives under `src/routes/showcases/viz/`:
+Each visualization category lives under `src/routes/[[locale=locale]]/(public)/showcases/viz/`:
 
 ```
 /showcases/viz/
@@ -91,4 +81,4 @@ The `theme-bridge` utility (`$lib/components/viz/_shared/theme-bridge`) reads CS
 
 - [3d-web.md](./3d-web.md) — WebGL-based 3D rendering (Three.js, Threlte)
 - [../core/sveltekit.md](../core/sveltekit.md) — SSR/CSR configuration, `browser` guard
-- [Showcase: /showcases/viz](../../../../src/routes/showcases/viz/+page.svelte) — hub page
+- [Showcase: /showcases/viz](/showcases/viz) — hub page

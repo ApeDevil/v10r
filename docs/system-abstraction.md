@@ -132,7 +132,7 @@ The terminating error handler `handleError` mints an `errorId` (`crypto.randomUU
 | `X-Content-Type-Options` | `nosniff` | |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` | |
 | `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` | |
-| `Strict-Transport-Security` | `max-age=…; includeSubDomains` | |
+| `Strict-Transport-Security` | `max-age=…; includeSubDomains; preload` | |
 | `Cross-Origin-Opener-Policy` | `same-origin-allow-popups` | Popups (OAuth) still work |
 | `Cross-Origin-Resource-Policy` | `same-site` | |
 | `X-DNS-Prefetch-Control` | `off` | |
@@ -159,12 +159,12 @@ All business logic lives in `$lib/server/[domain]/`. Thin **adapters** wrap it f
 ┌──────────────────────────────────────────────────────────────┐
 │                          ADAPTERS                            │
 │                                                              │
-│  +page.server.ts   +server.ts   AI tools   jobs/  inngest/  │
-│  (form actions,    (REST API,   (tool       (cron, (reactive │
-│   load fns)         SSE)        wrappers)   sched.) events)  │
-└──────┬───────────────┬───────────┬──────────┬────────┬───────┘
-       │               │           │          │        │
-       ▼               ▼           ▼          ▼        ▼
+│  +page.server.ts   +server.ts   AI tools       jobs/         │
+│  (form actions,    (REST API,   (tool           (cron,       │
+│   load fns)         SSE)        wrappers)        sched.)      │
+└──────┬───────────────┬───────────┬──────────────┬───────────┘
+       │               │           │              │
+       ▼               ▼           ▼              ▼
 ┌──────────────────────────────────────────────────────────────┐
 │                      DOMAIN MODULES                          │
 │                 $lib/server/[domain]/                         │
@@ -287,7 +287,7 @@ const pool = new Pool({ connectionString: env.NEON_DATABASE_URL_PROD });
 export const db = drizzle(pool, { schema: { ...schema, ...relations } });
 ```
 
-**Push-only workflow**: only `db:push` is used; no migrations directory exists. All `pgSchema()` and `pgEnum()` objects must be exported through `schema/index.ts` AND listed in `drizzle.config.ts` `schemaFilter` (12 namespaces: admin, showcase, auth, ai, rag, jobs, notifications, analytics, app, blog, desk, feedback) or `db:push` silently omits them.
+**Push-only workflow**: only `db:push` is used; no migrations directory exists. All `pgSchema()` and `pgEnum()` objects must be exported through `schema/index.ts` AND listed in `drizzle.config.ts` `schemaFilter` (14 namespaces: admin, showcase, image, auth, ai, rag, jobs, notifications, analytics, app, blog, dbops, desk, feedback) or `db:push` silently omits them.
 
 ### Client-side modules
 
@@ -466,9 +466,8 @@ Data flows down. Responses bubble up the same chain. The `event.locals` bus is t
 | REST API | `+server.ts` GET / POST | `markAsRead()` | PostgreSQL |
 | AI tool | tool `execute` callback | `getNotifications()` | PostgreSQL |
 | Background job | `runJob()` → job function | Direct DB call | PostgreSQL |
-| Reactive workflow | Inngest `step.run()` | `NotificationService.send()` | PostgreSQL |
 
-Authentication per client: session cookie for UI and REST (populated by `sessionPopulate` in hooks); closure capture of `userId` for AI tools (auth happens once at the chat endpoint, `user.id` flows into `createTools(user.id)`); none for background jobs (trusted server context); Inngest signing key for reactive workflows.
+Authentication per client: session cookie for UI and REST (populated by `sessionPopulate` in hooks); closure capture of `userId` for AI tools (auth happens once at the chat endpoint, `user.id` flows into `createTools(user.id)`); none for background jobs (trusted server context).
 
 ### Traced flows (wiring inventory)
 

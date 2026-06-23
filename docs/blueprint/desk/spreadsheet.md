@@ -9,23 +9,39 @@ Single Table Inheritance (STI) pattern: `desk.file` is the base, `desk.spreadshe
 ```sql
 -- desk.file — unified registry
 CREATE TABLE desk.file (
-  id          TEXT PRIMARY KEY,         -- fil_{12 hex}
-  user_id     TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
-  type        desk.file_type NOT NULL,  -- enum: 'spreadsheet' (extensible)
-  name        TEXT NOT NULL DEFAULT 'Untitled',
+  id                   TEXT PRIMARY KEY,         -- fil_{12 hex}
+  user_id              TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+  folder_id            TEXT REFERENCES desk.folder(id) ON DELETE SET NULL,
+  type                 desk.file_type NOT NULL,  -- enum: 'spreadsheet' | 'markdown'
+  name                 TEXT NOT NULL DEFAULT 'Untitled',
+  ai_context           BOOLEAN NOT NULL DEFAULT false,
+  origin_tool_call_id  TEXT,                     -- set when created by an AI tool call
+  deleted_at           TIMESTAMPTZ,              -- soft delete
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at           TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- desk.spreadsheet — detail table; file_id is part of the definition (push-only schema, no migrations)
+CREATE TABLE desk.spreadsheet (
+  id          TEXT PRIMARY KEY,
+  file_id     TEXT NOT NULL REFERENCES desk.file(id) ON DELETE CASCADE,
+  user_id     TEXT NOT NULL,
+  name        TEXT NOT NULL,
+  cells       JSONB NOT NULL,
+  column_meta JSONB,
+  deleted_at  TIMESTAMPTZ,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
--- desk.spreadsheet — adds file_id FK alongside existing columns
-ALTER TABLE desk.spreadsheet ADD COLUMN file_id TEXT REFERENCES desk.file(id) ON DELETE CASCADE;
 ```
 
-Indexes: `(user_id, type)` for filtered listing, `(user_id, updated_at)` for recent-first sorting.
+Indexes on `desk.file`: `(user_id, type)` for filtered listing, `(user_id, updated_at)` for recent-first sorting, `(user_id, folder_id)`, and `(ai_context)` — all partial `WHERE deleted_at IS NULL` — plus `(origin_tool_call_id)`.
 
 ### Why STI, not a polymorphic join
 
 Each file type has different detail columns (spreadsheets have `cells` JSONB; future diagrams might have `svg` TEXT). A single `desk.file` table with a `type` enum keeps Explorer queries simple (`SELECT * FROM desk.file WHERE user_id = ? ORDER BY updated_at DESC`) while detail tables hold type-specific data. Adding a new file type = new enum value + new detail table + new API branch.
+
+**Markdown is the concrete second STI instance.** `type = 'markdown'` files store their body in the `desk.markdown` detail table (`createMarkdownFile` / `updateMarkdownByFileId` / `getMarkdownByFileId`). The desk-files adapter renders them with `i-lucide-file-text` and a reduced capability set (no duplicate).
 
 ## REST API
 
@@ -49,6 +65,10 @@ Creates both `desk.file` and `desk.spreadsheet` rows in sequence. Returns `{ fil
 
 Fetch file + detail data. For spreadsheets, joins `desk.spreadsheet` by `file_id`. Returns `{ file, spreadsheet }`.
 
+### `POST /api/desk/files/:id`
+
+Duplicate a file. Calls `duplicateSpreadsheetFile()` to copy the file + detail rows. Returns the new file with status 201.
+
 ### `PUT /api/desk/files/:id`
 
 Update file name and/or type-specific data. Accepts any combination:
@@ -62,7 +82,7 @@ Update file name and/or type-specific data. Accepts any combination:
 
 ### `DELETE /api/desk/files/:id`
 
-Deletes the file row. `ON DELETE CASCADE` on `spreadsheet.file_id` handles cleanup.
+Soft-deletes the file: `deleteFile()` sets `deleted_at` on the `desk.file` row and its matching detail row (spreadsheet or markdown) inside a transaction, then returns 204. The row is not hard-deleted, so `ON DELETE CASCADE` never fires. `restoreFile()` reverses it by clearing `deleted_at`. CASCADE on `spreadsheet.file_id` is only a backstop for hard deletion (e.g. user removal), not this endpoint.
 
 ## SpreadsheetPanel: Dual-Mode
 
@@ -102,20 +122,21 @@ The Explorer's `data/` section shows desk folders and spreadsheet files. Folders
 ```
 $lib/server/db/schema/desk/
   schema.ts                          # deskSchema = pgSchema('desk')
-  file.ts                            # desk.file table + file_type enum
+  file.ts                            # desk.file table + file_type enum ('spreadsheet' | 'markdown')
   folder.ts                          # desk.folder table
-  spreadsheet.ts                     # desk.spreadsheet (added fileId FK)
+  spreadsheet.ts                     # desk.spreadsheet detail table (file_id FK NOT NULL)
+  markdown.ts                        # desk.markdown detail table (file_id FK NOT NULL)
   index.ts                           # Re-exports all desk schema objects
 
 $lib/server/db/desk/
-  queries.ts                         # listFiles, getFile, getSpreadsheetByFileId, listFolders, getFolder, countFolderContents
-  mutations.ts                       # createSpreadsheetFile, renameFile, deleteFile, updateSpreadsheetByFileId, folder mutations, moveFile, duplicateSpreadsheetFile, toggleFileAiContext
+  queries.ts                         # listFiles, getFile, getSpreadsheetByFileId, getMarkdownByFileId, getAiContextFiles, listFolders, getFolder, countFolderContents
+  mutations.ts                       # createSpreadsheetFile, createMarkdownFile, renameFile, deleteFile, restoreFile, updateSpreadsheetByFileId, updateMarkdownByFileId, folder mutations, moveFile, duplicateSpreadsheetFile, toggleFileAiContext
 
-src/routes/(shell)/api/desk/files/
+src/routes/api/desk/files/
   +server.ts                         # GET (list) + POST (create)
-  [id]/+server.ts                    # GET + PUT + DELETE
+  [id]/+server.ts                    # GET + POST (duplicate) + PUT + DELETE
 
-src/routes/(shell)/api/desk/folders/
+src/routes/api/desk/folders/
   +server.ts                         # GET (list) + POST (create)
   [id]/+server.ts                    # GET + PUT + DELETE
 

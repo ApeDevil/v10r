@@ -199,7 +199,7 @@ Don't use for:
 
 Components adapt to their container, not the viewport.
 
-Built into `preset-mini` and `preset-uno` - no extra preset needed.
+Built into `presetUno` - no extra preset needed. Custom container sizes come from the `containers` token (see `tokens.ts`).
 
 ### Setup
 
@@ -276,6 +276,8 @@ The tokens define:
 
 ### UnoCSS Integration
 
+Colors are objects with `DEFAULT` plus variant keys (`hover`, `light`, `container`, etc.). Abridged — see [tokens.md](./tokens.md) for the full set (accent, secondary, on-*, info, surfaces):
+
 ```ts
 // uno.config.ts
 export default defineConfig({
@@ -285,13 +287,13 @@ export default defineConfig({
       fg: 'var(--color-fg)',
       muted: 'var(--color-muted)',
       border: 'var(--color-border)',
-      primary: {
-        DEFAULT: 'var(--color-primary)',
-        hover: 'var(--color-primary-hover)',
-      },
-      success: 'var(--color-success)',
-      warning: 'var(--color-warning)',
-      error: 'var(--color-error)',
+      primary: { DEFAULT: 'var(--color-primary)', hover: 'var(--color-primary-hover)' },
+      accent: { DEFAULT: 'var(--color-accent)', hover: 'var(--color-accent-hover)' },
+      secondary: { DEFAULT: 'var(--color-secondary)' },
+      success: { DEFAULT: 'var(--color-success)', light: 'var(--color-success-light)' },
+      warning: { DEFAULT: 'var(--color-warning)', light: 'var(--color-warning-light)' },
+      error: { DEFAULT: 'var(--color-error)', light: 'var(--color-error-light)' },
+      surface: { 1: 'var(--surface-1)', 2: 'var(--surface-2)', 3: 'var(--surface-3)' },
     }
   }
 })
@@ -376,7 +378,7 @@ src/
 │   │       ├── Section.svelte
 │   │       └── Container.svelte
 │   └── styles/
-│       └── tokens.css        # Design tokens (if separate)
+│       └── tokens.ts         # Design tokens (non-color values + color refs)
 └── uno.config.ts             # UnoCSS configuration
 ```
 
@@ -426,7 +428,7 @@ This approach gives smooth scaling, component portability, and minimal CSS.
 
 - [README.md](./README.md) - Design philosophy and visual identity
 - [tokens.md](./tokens.md) - Single source of truth for all design values
-- [pages.md](../pages.md) - Routes using these styling patterns, especially `/showcase/theme` and `/showcase/ui`
+- [pages.md](../pages.md) - Routes using these styling patterns, especially `/showcases/ui`
 - [state.md](../state.md) - Theme state management with `$state` and localStorage
 
 ---
@@ -434,7 +436,7 @@ This approach gives smooth scaling, component portability, and minimal CSS.
 ## Sources
 
 - [UnoCSS Theme Config](https://unocss.dev/config/theme)
-- [UnoCSS Mini Preset (dark mode, container queries)](https://unocss.dev/presets/mini)
+- [UnoCSS Wind/Uno Preset (dark mode, container queries)](https://unocss.dev/presets/uno)
 - [Smashing Magazine - Modern Fluid Typography](https://www.smashingmagazine.com/2022/01/modern-fluid-typography-css-clamp/)
 - [Fluid Type Scale Calculator](https://www.fluid-type-scale.com/)
 - [CSS Container Queries - MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Containment/Container_queries)

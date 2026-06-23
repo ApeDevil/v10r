@@ -106,7 +106,8 @@ Set in Vercel dashboard → Settings → Environment Variables:
 |----------|----------|-------|
 | `NEON_DATABASE_URL_PROD` | Yes | Neon connection string. Neon's Vercel integration auto-injects `DATABASE_URL` — if you use it, set `NEON_DATABASE_URL_PROD` manually or reconfigure the integration's target var |
 | `NEON_DATABASE_URL_DEV` | No | Optional labeled spare for the dev branch; not read by the app |
-| `RATE_LIMIT_SECRET` | Yes | 32+ char secret |
+| `UPSTASH_REDIS_REST_URL` | Yes | Upstash Redis REST URL — enables rate limiting. Without it the limiter passes through in dev and fails closed in prod |
+| `UPSTASH_REDIS_REST_TOKEN` | Yes | Upstash Redis REST token (paired with the URL above) |
 | `CRON_SECRET` | Yes | Bearer token for cron endpoints |
 | `NEON_API_KEY` | If using branch refresh | Neon Management API key — see [data/neon-branch-refresh.md](./data/neon-branch-refresh.md) |
 | `NEON_PROJECT_ID` | If using branch refresh | Neon project id |
@@ -257,7 +258,7 @@ WORKDIR /app
 FROM base AS deps
 
 # Copy package files
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 
 # Install all dependencies (including devDependencies for build)
 RUN bun install --frozen-lockfile
@@ -283,7 +284,7 @@ RUN bun run build
 # ============================================
 FROM base AS prod-deps
 
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile --production
 
 # ============================================
@@ -351,7 +352,8 @@ Set in Koyeb dashboard → Service → Settings → Environment:
 | Variable | Required | Notes |
 |----------|----------|-------|
 | `NEON_DATABASE_URL_PROD` | Yes | Neon connection string |
-| `RATE_LIMIT_SECRET` | Yes | 32+ char secret |
+| `UPSTASH_REDIS_REST_URL` | Yes | Upstash Redis REST URL — enables rate limiting. Without it the limiter passes through in dev and fails closed in prod |
+| `UPSTASH_REDIS_REST_TOKEN` | Yes | Upstash Redis REST token (paired with the URL above) |
 | `ORIGIN` | Yes | `https://your-app.koyeb.app` |
 | `R2_ENDPOINT` | If using R2 | Cloudflare R2 endpoint |
 | `R2_ACCESS_KEY_ID` | If using R2 | R2 credentials |
@@ -412,7 +414,7 @@ Recurring background work runs differently per platform. The same job registry s
 | Vercel | HTTP cron via `vercel.json` | `GET /api/cron/[job]` |
 | Container | `setInterval` in `hooks.server.ts` | Direct function call |
 
-**Platform detection** — `src/lib/server/platform/index.ts` reads `$env/dynamic/private`. If `VERCEL` is set, `platform.persistent = false` and the scheduler is a no-op. If `CONTAINER=1`, `platform.persistent = true` and the scheduler starts.
+**Platform detection** — `src/lib/server/platform/index.ts` reads `$env/dynamic/private`. If `VERCEL` is set, `platform.persistent = false` and the scheduler is a no-op. `FLY_APP_NAME` and `RAILWAY_ENVIRONMENT` map to persistent platforms (`fly`, `railway`). Otherwise it falls through to the default `{ id: 'container', persistent: true }` and the scheduler starts — persistence is the default, not driven by `CONTAINER`.
 
 **Job registry** — `src/lib/server/jobs/index.ts` maps slugs to `execute()` functions. Both trigger paths call the same registry.
 
@@ -460,7 +462,7 @@ export const jobs: Record<string, Job> = {
 
 Container mode runs all registered jobs on the same interval (`JOB_INTERVAL_MS`, default 3 hours). Vercel crons can have independent schedules.
 
-> Sub-daily crons need Vercel Pro — Hobby allows daily only. The `dbops-reaper` job (`*/15`) is one such case; see [data/neon-branch-refresh.md](./data/neon-branch-refresh.md).
+> Sub-daily crons need Vercel Pro — Hobby allows daily only. Every cron in `vercel.json` is daily or weekly to stay within Hobby; the `dbops-reaper` job runs at `0 5 * * *`. See [data/neon-branch-refresh.md](./data/neon-branch-refresh.md).
 
 ### HTTP endpoint
 
@@ -492,13 +494,15 @@ Returns `401` if the token is missing or wrong. Returns `404` if the job slug is
 | Variable | Platform | Notes |
 |----------|----------|-------|
 | `CRON_SECRET` | Both | Bearer token for HTTP cron endpoint. Generate with `openssl rand -base64 32` |
-| `CONTAINER` | Container | Set to `1` in `compose.yaml`. Tells platform detector this is a persistent process |
+| `CONTAINER` | Container | Set to `1` in `compose.yaml`. Marker only — platform detection does not read it; persistence comes from the default fall-through when no `VERCEL`/`FLY_APP_NAME`/`RAILWAY_ENVIRONMENT` is set |
 | `JOB_INTERVAL_MS` | Container | Interval in ms. Omit to use the 3-hour default |
 | `VERCEL` | Vercel | Set automatically by Vercel. Disables in-process scheduler |
 
 ---
 
 ## CI/CD Pipeline
+
+> Reference only — this project intentionally has no CI (solo dev; validate locally with `bun run validate`, see CLAUDE.md "No CI Pipeline"). No `.gitlab-ci.yml` or `.github/workflows/` exists in the repo. The pipelines below are templates for a future multi-target setup, not active config.
 
 ### GitLab CI (All Targets)
 
@@ -650,6 +654,8 @@ koyeb service exec <service> -- bun run db:push
 
 ## Health Checks
 
+> Illustrative — `/api/health` is not yet built. There is no `src/routes/api/health/` route today; the live platform/quota health surface is the admin monitoring layer (`src/lib/server/monitoring/*`). To use the Koyeb health check below, create the route first; until then `/api/health` 404s.
+
 ### Koyeb Health Check
 
 Configure in Koyeb dashboard → Service → Health checks:
@@ -745,7 +751,8 @@ koyeb service logs <service-name> --follow
 |----------|--------|-------|----------|
 | `NEON_DATABASE_URL_PROD` | Dashboard | Dashboard | Yes |
 | `ORIGIN` | Auto | Manual | Yes (Koyeb) |
-| `RATE_LIMIT_SECRET` | Dashboard | Dashboard | Yes |
+| `UPSTASH_REDIS_REST_URL` | Dashboard | Dashboard | Yes (rate limiting) |
+| `UPSTASH_REDIS_REST_TOKEN` | Dashboard | Dashboard | Yes (rate limiting) |
 | `CRON_SECRET` | Dashboard | Dashboard | If using crons |
 | `CONTAINER` | Not used | `compose.yaml` | Container only |
 | `JOB_INTERVAL_MS` | Not used | Dashboard | Container only, optional |
@@ -766,16 +773,12 @@ koyeb service logs <service-name> --follow
 ├── vercel.json             # Vercel configuration (crons, regions)
 ├── compose.yaml            # Local dev (sets CONTAINER=1)
 ├── svelte.config.js        # Adapter selection
-├── .gitlab-ci.yml          # GitLab CI/CD
-├── .github/
-│   └── workflows/
-│       └── deploy.yml      # GitHub Actions
 └── src/
     ├── hooks.server.ts     # Imports scheduler (bare import activates it)
     ├── lib/server/
     │   ├── platform/
     │   │   ├── types.ts    # PlatformId, PlatformInfo
-    │   │   └── index.ts    # Platform detection (VERCEL vs CONTAINER)
+    │   │   └── index.ts    # Platform detection (VERCEL / FLY / RAILWAY, else container default)
     │   └── jobs/
     │       ├── index.ts    # Job registry (slug → execute fn)
     │       ├── scheduler.ts# In-process scheduler (containers only)
@@ -804,6 +807,6 @@ koyeb service logs <service-name> --follow
 ## Related
 
 - [stack/ops/deployment.md](../stack/ops/deployment.md) - Decision rationale
-- [rate-limiting.md](./rate-limiting.md) - Rate limiting configuration
+- [abuse/rate-limits.md](./abuse/rate-limits.md) - Rate limiting configuration
 - [middleware.md](./middleware.md) - Request handling
 - [error-handling.md](./error-handling.md) - Error pages and logging

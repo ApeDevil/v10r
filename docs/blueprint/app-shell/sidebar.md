@@ -26,8 +26,8 @@ Collapsed (Rail):          Expanded (Hover):
 ```
 
 Dimensions from [../design/tokens.md](../design/tokens.md#sidebar):
-- **Rail width:** `--sidebar-rail-width` = 56px (icons only)
-- **Expanded width:** `--sidebar-expanded-width` = 240px (icons + labels)
+- **Rail width:** `--sidebar-rail-width` — 56px is the SSR default; at runtime it is derived from the expanded width by `railWidth()`/`itemSize()`/`iconSize()` in `state/sidebar.svelte.ts` and set on `documentElement`.
+- **Expanded width:** `--sidebar-expanded-width` — user-configurable 160–320px (default 240px).
 - **Trigger:** Hover or click to pin open
 - **Position:** Left side (LTR reading flow)
 

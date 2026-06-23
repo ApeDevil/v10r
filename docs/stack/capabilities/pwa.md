@@ -51,7 +51,7 @@ A set of web capabilities that make your app installable, offline-capable, and n
 - Zero-config with sensible defaults
 - Workbox integration built-in
 
-**SvelteKit built-in** (`src/service-worker.js`):
+**SvelteKit built-in** (would live at `src/service-worker.js` — not currently present):
 - `$service-worker` module provides `build`, `files`, `version`
 - More control, lighter weight
 - Requires manual caching logic

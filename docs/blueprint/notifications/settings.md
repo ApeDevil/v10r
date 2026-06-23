@@ -9,27 +9,16 @@ Frontend architecture for channel connections and notification settings manageme
 ## Route Structure
 
 ```
-/app/settings/notifications/
+/app/notifications/settings/
 ├── +page.svelte                  # Main: connections + preferences
-├── +page.server.ts               # Load + form actions
-├── telegram/
-│   └── callback/
-│       ├── +page.svelte          # "Connecting..." loading state
-│       └── +page.server.ts       # Webhook already handles, this is fallback
+├── +page.server.ts               # Load + default action (save preferences)
 └── discord/
     └── callback/
         ├── +page.svelte          # "Connecting..." loading state
         └── +page.server.ts       # Exchange code, store tokens, redirect
 ```
 
-### Why `/app/settings/notifications`?
-
-| Alternative | Rejected Because |
-|-------------|------------------|
-| `/app/notifications/preferences` | "Notifications" = inbox, "Settings" = configuration |
-| `/app/account/notifications` | Account is profile/security, not integrations |
-
-**User mental model:** "I go to Settings to configure how things work."
+There is no `telegram/callback` route — Telegram links via the bot webhook plus polling of `/api/notifications/telegram/status`.
 
 ---
 
@@ -164,26 +153,20 @@ Frontend architecture for channel connections and notification settings manageme
 | **Required** | ✓* (locked) | Cannot click, shows "Required" tooltip |
 | **Not supported** | — (dash) | Channel doesn't support this type |
 
+### Notification Types
+
+There are 6 notification types: `mention`, `comment`, `system`, `success`, `security`, `follow`. Email has a per-type toggle for all 6. Telegram and Discord only have toggles for `mention`, `comment`, `system`, `security` (no `success`/`follow` columns), per `notification-settings.ts`.
+
 ### Form Schema
 
 ```
 notification_settings:
-  mention:
-    email: boolean
-    telegram: boolean
-    discord: boolean
-  comment:
-    email: boolean
-    telegram: boolean
-    discord: boolean
-  security:
-    email: true  # Forced, cannot be false
-    telegram: boolean
-    discord: boolean
-  system:
-    email: boolean
-    telegram: boolean
-    discord: boolean
+  # Email: all 6 types
+  email:    mention, comment, system, success, security, follow
+  # Telegram / Discord: 4 types only
+  telegram: mention, comment, system, security
+  discord:  mention, comment, system, security
+  # security email is forced true (cannot be disabled)
 ```
 
 ---
@@ -225,12 +208,15 @@ Poll `/api/notifications/telegram/status` every 3 seconds until connected or can
 
 ## Form Actions
 
+The page server defines a single `default` action that saves the settings matrix. Connect and disconnect are not page form actions — they go through the `/api/notifications/*` endpoints.
+
 | Action | Purpose |
 |--------|---------|
-| `connectTelegram` | Generate token, return deep link |
-| `disconnectTelegram` | Set `is_active = false` |
-| `disconnectDiscord` | Revoke token, set `is_active = false` |
-| `updateSettings` | Save settings matrix |
+| `default` | Save settings matrix |
+
+**Connection endpoints (not form actions):**
+- Telegram connect: `POST /api/notifications/telegram/connect`
+- Discord connect: `GET /api/notifications/discord/authorize` (redirect)
 
 ---
 
@@ -337,11 +323,12 @@ Use `window.location.href` instead of `window.open()` for Discord OAuth:
 
 ```
 src/lib/components/composites/notifications/
-├── ChannelCard.svelte          # Single channel connection card
-├── PreferencesMatrix.svelte    # Type × Channel grid
-├── PreferencesCard.svelte      # Mobile stacked version
-├── ConnectionStatus.svelte     # Polling indicator
-└── FrequencySelector.svelte    # Email digest options
+├── NotificationBadge.svelte    # Unread count badge
+├── NotificationCard.svelte     # Single notification row
+├── NotificationCenter.svelte   # Inbox panel
+├── NotificationFilters.svelte  # Filter controls
+├── NotificationPreview.svelte  # Preview/render
+└── index.ts                    # Re-exports
 ```
 
 ---

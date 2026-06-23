@@ -101,7 +101,7 @@ Industry research suggests notification platforms like Novu are recommended for 
 | **In-app notifications** | [../app-shell/notifications.md](../app-shell/notifications.md) - Extends existing system |
 | **Background jobs** | Container: existing job runner (`setInterval`). Vercel: Inngest or cron. See [routing.md](./routing.md). |
 | **Auth** | [../auth.md](../auth.md) - Discord OAuth uses same patterns |
-| **Rate limiting** | [../rate-limiting.md](../rate-limiting.md) - Per-provider limits |
+| **Rate limiting** | [../abuse/rate-limits.md](../abuse/rate-limits.md) - Per-provider limits |
 | **Error handling** | [../error-handling.md](../error-handling.md) - Delivery failure patterns |
 
 ## Related Stack Docs

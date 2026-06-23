@@ -48,32 +48,32 @@ Level 0: Nav Item (top-level page)
 
 ## Example Nav Structure
 
+`NavItem` takes a `children` array of `{ href, label }` entries. It renders the submenu through `NavFlyout` (hover-triggered portal, the default) or `NavAccordion` (inline expand, used in the mobile drawer when `useFlyout={false}`).
+
 ```svelte
 <!-- Sidebar nav structure -->
 <nav>
-  <NavItem href="/dashboard" icon={Home}>
-    Dashboard
-  </NavItem>
+  <NavItem href="/dashboard" icon="i-lucide-home" label={m.nav_dashboard} />
 
-  <NavItem href="/projects" icon={Folder} hasChildren>
-    Projects
-    {#snippet children()}
-      <NavDropdown>
-        <NavLink href="/projects/active">Active</NavLink>
-        <NavLink href="/projects/archived">Archived</NavLink>
-      </NavDropdown>
-    {/snippet}
-  </NavItem>
+  <NavItem
+    href="/projects"
+    icon="i-lucide-folder"
+    label={m.nav_projects}
+    children={[
+      { href: '/projects/active', label: m.nav_projects_active },
+      { href: '/projects/archived', label: m.nav_projects_archived },
+    ]}
+  />
 
-  <NavItem href="/settings" icon={Settings} hasChildren>
-    Settings
-    {#snippet children()}
-      <NavDropdown>
-        <NavLink href="/settings#profile">Profile</NavLink>
-        <NavLink href="/settings#billing">Billing</NavLink>
-        <NavLink href="/settings#team">Team</NavLink>
-      </NavDropdown>
-    {/snippet}
-  </NavItem>
+  <NavItem
+    href="/settings"
+    icon="i-lucide-settings"
+    label={m.nav_settings}
+    useFlyout={false}
+    children={[
+      { href: '/settings#profile', label: m.nav_settings_profile },
+      { href: '/settings#billing', label: m.nav_settings_billing },
+    ]}
+  />
 </nav>
 ```

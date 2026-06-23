@@ -29,7 +29,8 @@ src/lib/components/
 │   ├── SidebarLogo.svelte    # Logo/branding (top)
 │   ├── SidebarNav.svelte     # Navigation container (middle)
 │   ├── NavItem.svelte        # Compound nav button
-│   ├── NavDropdown.svelte    # Dropdown menu
+│   ├── NavFlyout.svelte      # Hover flyout submenu
+│   ├── NavAccordion.svelte   # Inline accordion submenu
 │   ├── UserMenu.svelte       # User avatar + dropdown (bottom)
 │   └── Footer.svelte         # Page footer component
 ```
@@ -225,7 +226,9 @@ What happens when viewport resizes across breakpoints:
 ```svelte
 <script lang="ts">
   import { MediaQuery } from 'svelte/reactivity';
-  import { sidebar } from '$lib/stores/sidebar.svelte';
+  import { getSidebar } from '$lib/state/sidebar.svelte';
+
+  const sidebar = getSidebar();
 
   const isMobile = new MediaQuery('(max-width: 767px)');
   const isDesktop = new MediaQuery('(min-width: 1025px)');

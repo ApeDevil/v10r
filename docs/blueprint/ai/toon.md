@@ -2,6 +2,8 @@
 
 Compact serialization format optimized for LLM input. Reduces tokens by 30-60% compared to JSON.
 
+> **Status: aspirational — not yet adopted.** `@toon-format/toon` is **not** a project dependency (not in `package.json`, not installed). No code imports `encode` / `decode`. The live prompt encoding is a hand-rolled "TOON-ish" layout in `src/lib/server/llmwiki/wiki-format.ts` (`formatHitsForPrompt` / `formatLlmwikiContext`) with no external TOON library — the header comment notes the library "can be swapped later once `@toon-format/toon` is pinned." The `encode()`-based examples below illustrate the format, not the codebase as it stands today.
+
 ---
 
 ## Overview
@@ -43,11 +45,13 @@ users[2]{id,name,role}:
 
 ## Dependencies
 
+`@toon-format/toon` is **not pinned and not installed**. If adopted, it would be added as:
+
 ```json
 "@toon-format/toon": "^0.x"
 ```
 
-> See [development-environment.md](../../foundation/development-environment.md) for installation workflow.
+Until then, prompt encoding stays hand-rolled in `wiki-format.ts`. See [development-environment.md](../../foundation/development-environment.md) for the installation workflow.
 
 ---
 

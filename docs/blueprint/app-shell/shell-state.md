@@ -53,7 +53,7 @@ Orchestration of state across app shell components: sidebar, modals, theme, noti
 > **SSR Safety:** Never export state at module level. Module-level state is shared across all SSR requests in Node.js. Always use factory functions + context.
 
 ```typescript
-// src/lib/stores/sidebar.svelte.ts
+// src/lib/state/sidebar.svelte.ts
 import { browser } from '$app/environment';
 import { getContext, setContext } from 'svelte';
 
@@ -117,7 +117,7 @@ export function getSidebar() {
 
 ```svelte
 <script lang="ts">
-  import { getSidebar } from '$lib/stores/sidebar.svelte';
+  import { getSidebar } from '$lib/state/sidebar.svelte';
   import { MediaQuery } from 'svelte/reactivity';
 
   const sidebar = getSidebar(); // Get from context (SSR-safe)
@@ -141,7 +141,7 @@ export function getSidebar() {
 > **SSR Safety:** Theme uses context pattern to avoid module-level state sharing across requests.
 
 ```typescript
-// src/lib/stores/theme.svelte.ts
+// src/lib/state/theme.svelte.ts
 import { browser } from '$app/environment';
 import { getContext, setContext } from 'svelte';
 
@@ -198,19 +198,16 @@ export function createThemeState(initial: { mode: ThemeMode; accent: AccentColor
       state.mode = mode;
       // Persist to cookie (for SSR)
       document.cookie = `theme=${mode};path=/;max-age=31536000;SameSite=Lax`;
-      // Persist to DB (async)
-      fetch('/api/user/preferences', {
-        method: 'PATCH',
+      // Persist to DB (async, fire-and-forget)
+      fetch('/api/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ theme: mode }),
       });
     },
 
     setAccent(accent: AccentColor) {
       state.accent = accent;
-      fetch('/api/user/preferences', {
-        method: 'PATCH',
-        body: JSON.stringify({ accentColor: accent }),
-      });
     },
   };
 }
@@ -252,7 +249,7 @@ Only one modal can be open at a time. Opening one closes others.
 > **SSR Safety:** Modals are client-only state but still use context pattern for consistency and testability.
 
 ```typescript
-// src/lib/stores/modals.svelte.ts
+// src/lib/state/modals.svelte.ts
 import { getContext, setContext } from 'svelte';
 
 type ModalId = 'quickSearch' | 'aiAssistant' | 'shortcuts' | 'sessionExpiry' | null;
@@ -332,67 +329,45 @@ export function getModals() {
 
 ## Notification Badge State
 
-### Polling Pattern
+> **SSR Safety:** Notifications use the context pattern to avoid module-level state sharing.
 
-> **SSR Safety:** Notifications use context pattern to avoid module-level state sharing.
+The store is a minimal unread-count holder. It carries no polling and no fetch — real-time delivery lives in the `SidebarNotifications` consumer (SSE via `/api/notifications/stream`). The store just exposes the count and the mutations consumers call on incoming events.
 
 ```typescript
-// src/lib/stores/notifications.svelte.ts
-import { browser } from '$app/environment';
+// src/lib/state/notifications.svelte.ts
 import { getContext, setContext } from 'svelte';
 
-const NOTIFICATIONS_CTX = Symbol('notifications');
+const NOTIFICATION_CTX = Symbol('notifications');
 
-export function createNotificationState(initialCount: number) {
+export function createNotificationState(initialCount = 0) {
   let unreadCount = $state(initialCount);
-  let lastFetched = $state(Date.now());
-
-  // Poll every 30 seconds
-  $effect(() => {
-    if (!browser) return;
-
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch('/api/notifications/unread-count');
-        const { count } = await res.json();
-        unreadCount = count;
-        lastFetched = Date.now();
-      } catch (error) {
-        console.error('Failed to fetch notification count');
-      }
-    }, 30_000);
-
-    return () => clearInterval(interval);
-  });
 
   return {
-    get count() { return unreadCount; },
-    get lastFetched() { return lastFetched; },
-
-    // Optimistic update when marking as read
-    decrement() {
-      unreadCount = Math.max(0, unreadCount - 1);
+    get unreadCount() {
+      return unreadCount;
     },
-
-    // Force refresh
-    async refresh() {
-      const res = await fetch('/api/notifications/unread-count');
-      const { count } = await res.json();
+    setCount(count: number) {
       unreadCount = count;
-      lastFetched = Date.now();
+    },
+    increment() {
+      unreadCount++;
+    },
+    decrementBy(n: number) {
+      unreadCount = Math.max(0, unreadCount - n);
     },
   };
 }
 
-// Context helpers for SSR-safe access
-export function setNotificationsContext(initialCount: number) {
-  const notifications = createNotificationState(initialCount);
-  setContext(NOTIFICATIONS_CTX, notifications);
-  return notifications;
+// Call in the app layout.
+export function setNotificationContext(initialCount = 0) {
+  const state = createNotificationState(initialCount);
+  setContext(NOTIFICATION_CTX, state);
+  return state;
 }
 
+// Call in child components.
 export function getNotifications() {
-  return getContext<ReturnType<typeof createNotificationState>>(NOTIFICATIONS_CTX);
+  return getContext<ReturnType<typeof createNotificationState>>(NOTIFICATION_CTX);
 }
 ```
 
@@ -437,10 +412,10 @@ Shell initialization happens in a specific order to prevent flashes and ensure d
 <!-- src/routes/(app)/+layout.svelte -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { setSidebarContext } from '$lib/stores/sidebar.svelte';
-  import { setThemeContext } from '$lib/stores/theme.svelte';
-  import { setModalsContext } from '$lib/stores/modals.svelte';
-  import { setNotificationsContext } from '$lib/stores/notifications.svelte';
+  import { setSidebarContext } from '$lib/state/sidebar.svelte';
+  import { setThemeContext } from '$lib/state/theme.svelte';
+  import { setModalsContext } from '$lib/state/modals.svelte';
+  import { setNotificationContext } from '$lib/state/notifications.svelte';
   import { initKeyboardHandler } from '$lib/shortcuts';
 
   let { data, children } = $props();
@@ -458,8 +433,8 @@ Shell initialization happens in a specific order to prevent flashes and ensure d
   // 3. Modals (ephemeral client state)
   const modals = setModalsContext();
 
-  // 4. Notifications (start polling)
-  const notifications = setNotificationsContext(data.unreadCount ?? 0);
+  // 4. Notifications (unread-count holder; SSE lives in SidebarNotifications)
+  const notifications = setNotificationContext(data.unreadCount ?? 0);
 
   // 5. Keyboard shortcuts (register handlers)
   onMount(() => {
@@ -499,7 +474,7 @@ const notifications = getNotifications(); // Get from context
 $effect(() => {
   if (!browser) return;
 
-  const handler = () => notifications.decrement();
+  const handler = () => notifications.decrementBy(1);
   window.addEventListener('notification:read', handler);
   return () => window.removeEventListener('notification:read', handler);
 });
@@ -545,10 +520,10 @@ Add a debug panel in development:
 <!-- src/lib/components/dev/StateDebugger.svelte -->
 <script lang="ts">
   import { dev } from '$app/environment';
-  import { getSidebar } from '$lib/stores/sidebar.svelte';
-  import { getTheme } from '$lib/stores/theme.svelte';
-  import { getModals } from '$lib/stores/modals.svelte';
-  import { getNotifications } from '$lib/stores/notifications.svelte';
+  import { getSidebar } from '$lib/state/sidebar.svelte';
+  import { getTheme } from '$lib/state/theme.svelte';
+  import { getModals } from '$lib/state/modals.svelte';
+  import { getNotifications } from '$lib/state/notifications.svelte';
 
   // Get all state from context (SSR-safe)
   const sidebar = getSidebar();
@@ -581,7 +556,7 @@ Add a debug panel in development:
             active: modals.active,
           },
           notifications: {
-            count: notifications.count,
+            count: notifications.unreadCount,
           },
         }, null, 2)}</pre>
       </div>
@@ -595,7 +570,7 @@ Add a debug panel in development:
 ## Component Location
 
 ```
-src/lib/stores/
+src/lib/state/
 ├── sidebar.svelte.ts      # Sidebar expanded/pinned/mobile state
 ├── theme.svelte.ts        # Theme mode and accent
 ├── modals.svelte.ts       # Active modal tracking

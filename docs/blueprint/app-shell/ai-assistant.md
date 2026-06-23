@@ -144,32 +144,25 @@ See [../ai/README.md](../ai/README.md) for full implementation details, provider
 
 ### Implementation
 
+Limiters are built with `createLimiter` from `$lib/server/api/rate-limit.ts` and keyed on the user ID. Layer one limiter per window. See [abuse/rate-limits.md](../abuse/rate-limits.md) for the factory contract and limiter catalog.
+
 ```typescript
 // src/routes/api/ai/chat/+server.ts
-import { RateLimiter } from 'sveltekit-rate-limiter/server';
+import { json } from '@sveltejs/kit';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 
-const limiter = new RateLimiter({
-  IP: [10, 'm'],      // 10 per minute per IP (fallback)
-  IPUA: [60, 'h'],    // 60 per hour per IP+UA
-  cookie: {
-    name: 'ai_rl',
-    secret: AI_RATE_LIMIT_SECRET,
-    rate: [200, 'd'], // 200 per day per cookie
-    preflight: true,
-  },
-});
+// Sliding-window limiters, keyed on user ID
+const perMinute = createLimiter('rl:ai:chat:min', 10, '1 m');
+const perHour = createLimiter('rl:ai:chat:hr', 60, '1 h');
+const perDay = createLimiter('rl:ai:chat:day', 200, '24 h');
 
 export const POST: RequestHandler = async (event) => {
-  // Check rate limit first
-  const { limited, retryAfter } = await limiter.check(event);
-  if (limited) {
-    return json(
-      { error: 'Rate limited', retryAfter },
-      {
-        status: 429,
-        headers: { 'Retry-After': String(retryAfter) }
-      }
-    );
+  const userId = event.locals.user?.id ?? event.getClientAddress();
+
+  // Check tightest window first
+  for (const limiter of [perMinute, perHour, perDay]) {
+    const { success, reset } = await limiter.limit(userId);
+    if (!success) return rateLimitResponse(reset);
   }
 
   // Validate input length
@@ -198,9 +191,10 @@ export const POST: RequestHandler = async (event) => {
     });
 
     if (res.status === 429) {
-      const data = await res.json();
+      // `rateLimitResponse` carries the delay in the `Retry-After` header
+      // (the JSON body is `{ error: { code, message } }`).
       rateLimited = true;
-      retryAfter = data.retryAfter;
+      retryAfter = Number(res.headers.get('Retry-After') ?? 0);
 
       // Auto-reset after cooldown
       setTimeout(() => {
@@ -363,5 +357,5 @@ await db.insert(aiAuditLog).values({
 
 - [../quick-search/](../quick-search/) - Quick Search (similar modal pattern)
 - [../ai/README.md](../ai/README.md) - Full AI implementation
-- [../rate-limiting.md](../rate-limiting.md) - Rate limiting patterns
+- [../abuse/rate-limits.md](../abuse/rate-limits.md) - Rate limiting patterns
 - [../error-handling.md](../error-handling.md) - Error handling patterns

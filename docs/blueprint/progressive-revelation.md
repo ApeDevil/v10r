@@ -1,5 +1,7 @@
 # Progressive Revelation (ProgRev) Blueprint
 
+> **Status: planned — not yet built.** This document describes an *intended* design, not current code. The schema tables, the components (`ProgRevGate`, `ProgressIndicator`, `AchievementToast`), and the `recordAction()` helper described below do **not** exist in `src/` yet. It is kept as a design-of-record to emulate, and is excluded from the chatbot corpus so the assistant does not assert it as live.
+
 Implementation blueprint for the Progressive Revelation system. ProgRev progressively reveals content and features as users demonstrate readiness, reducing cognitive overload while guiding them through the application.
 
 **Foundation:** See [../foundation/progressive-revelation.md](../foundation/progressive-revelation.md) for philosophy and anti-goals.

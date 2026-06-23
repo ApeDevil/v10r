@@ -60,84 +60,80 @@ Ephemeral feedback messages that appear in response to user actions. Distinct fr
 
 ### Toast Store
 
+SSR-safe context factory. The root layout creates the instance once with `setToastContext()`; child components read it with `getToast()`.
+
 ```typescript
-// src/lib/stores/toast.svelte.ts
-import { SvelteMap } from 'svelte/reactivity';
+// src/lib/state/toast.svelte.ts
+import { getContext, setContext } from 'svelte';
 
-export type ToastType = 'success' | 'error' | 'warning' | 'info';
+type ToastType = 'success' | 'error' | 'warning' | 'info';
 
-export interface Toast {
+interface Toast {
   id: string;
   type: ToastType;
-  title: string;
-  description?: string;
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
+  message: string;
   duration: number; // 0 = manual dismiss only
 }
 
-const toasts = new SvelteMap<string, Toast>();
+const TOAST_CTX = Symbol('toast');
 
-const defaultDurations: Record<ToastType, number> = {
-  success: 4000,
-  error: 0,      // Errors require manual dismiss
-  warning: 6000,
-  info: 4000,
-};
+export function createToastState() {
+  let toasts = $state<Toast[]>([]);
 
-export function toast(options: Omit<Toast, 'id' | 'duration'> & { duration?: number }) {
-  const id = crypto.randomUUID();
-  const duration = options.duration ?? defaultDurations[options.type];
+  function add(type: ToastType, message: string, duration = 5000) {
+    const id = crypto.randomUUID();
+    toasts.push({ id, type, message, duration });
 
-  const newToast: Toast = { ...options, id, duration };
-  toasts.set(id, newToast);
-
-  if (duration > 0) {
-    setTimeout(() => dismiss(id), duration);
+    if (duration > 0) {
+      setTimeout(() => remove(id), duration);
+    }
   }
 
-  return id;
+  function remove(id: string) {
+    toasts = toasts.filter((t) => t.id !== id);
+  }
+
+  return {
+    get items() {
+      return toasts;
+    },
+    success: (msg: string, duration?: number) => add('success', msg, duration),
+    error: (msg: string, duration?: number) => add('error', msg, duration),
+    warning: (msg: string, duration?: number) => add('warning', msg, duration),
+    info: (msg: string, duration?: number) => add('info', msg, duration),
+    remove,
+  };
 }
 
-// Convenience methods
-toast.success = (title: string, description?: string) =>
-  toast({ type: 'success', title, description });
-
-toast.error = (title: string, description?: string) =>
-  toast({ type: 'error', title, description });
-
-toast.warning = (title: string, description?: string) =>
-  toast({ type: 'warning', title, description });
-
-toast.info = (title: string, description?: string) =>
-  toast({ type: 'info', title, description });
-
-export function dismiss(id: string) {
-  toasts.delete(id);
+// Call in root layout.
+export function setToastContext() {
+  const toast = createToastState();
+  setContext(TOAST_CTX, toast);
+  return toast;
 }
 
-export function dismissAll() {
-  toasts.clear();
-}
-
-export function getToasts() {
-  return toasts;
+// Call in child components.
+export function getToast() {
+  return getContext<ReturnType<typeof createToastState>>(TOAST_CTX);
 }
 ```
+
+The API is `{ items, success, error, warning, info, remove }`. Each toast carries a single `message` string — there is no `title`/`description`/`action` model.
 
 ### Toast Container
 
 ```svelte
-<!-- src/lib/components/shell/ToastContainer.svelte -->
+<!-- src/lib/components/composites/toast/ToastContainer.svelte -->
 <script lang="ts">
-  import { getToasts, dismiss, type Toast } from '$lib/stores/toast.svelte';
+  import { getToast } from '$lib/state/toast.svelte';
   import { fly } from 'svelte/transition';
 
-  const toasts = getToasts();
+  const toast = getToast();
 
-  const icons: Record<Toast['type'], string> = {
+  // Limit visible toasts to 5
+  const visibleToasts = $derived(toast.items.slice(0, 5));
+
+  const icons: Record<string, string> = {
     success: 'i-lucide-check-circle',
     error: 'i-lucide-x-circle',
     warning: 'i-lucide-alert-triangle',
@@ -146,34 +142,23 @@ export function getToasts() {
 </script>
 
 <div
-  class="fixed top-4 right-4 z-toast flex flex-col gap-2 pointer-events-none"
+  class="toast-region"
+  role="region"
   aria-live="polite"
   aria-label="Notifications"
 >
-  {#each [...toasts.values()] as toast (toast.id)}
+  {#each visibleToasts as t (t.id)}
     <div
-      class="toast toast-{toast.type} pointer-events-auto"
-      role="alert"
-      transition:fly={{ x: 100, duration: 200 }}
+      class="toast toast-{t.type}"
+      role="status"
+      aria-atomic="true"
+      transition:fly={{ x: 300, duration: 250 }}
     >
-      <span class={icons[toast.type]} aria-hidden="true" />
-      <div class="toast-content">
-        <p class="toast-title">{toast.title}</p>
-        {#if toast.description}
-          <p class="toast-description">{toast.description}</p>
-        {/if}
-      </div>
-      {#if toast.action}
-        <button
-          class="toast-action"
-          onclick={toast.action.onClick}
-        >
-          {toast.action.label}
-        </button>
-      {/if}
+      <span class={icons[t.type]} aria-hidden="true" />
+      <div class="toast-message">{t.message}</div>
       <button
-        class="toast-dismiss"
-        onclick={() => dismiss(toast.id)}
+        class="toast-close"
+        onclick={() => toast.remove(t.id)}
         aria-label="Dismiss"
       >
         <span class="i-lucide-x" />
@@ -185,14 +170,17 @@ export function getToasts() {
 
 ### Shell Integration
 
-Add ToastContainer to the root layout:
+Create the context once in the root layout and render the container. `ToastContainer` is re-exported through `shell/index.ts`.
 
 ```svelte
-<!-- src/routes/(app)/+layout.svelte -->
+<!-- src/routes/[[locale=locale]]/+layout.svelte -->
 <script lang="ts">
+  import { setToastContext } from '$lib/state/toast.svelte';
   import { ToastContainer } from '$lib/components/shell';
 
   let { children } = $props();
+
+  setToastContext();
 </script>
 
 <div class="app-shell">
@@ -208,62 +196,36 @@ Add ToastContainer to the root layout:
 
 ## Usage Examples
 
+Read the context with `getToast()`, then call `success`/`error`/`warning`/`info` with a message string and optional duration.
+
 ### Form Submission
 
 ```svelte
 <script lang="ts">
-  import { toast } from '$lib/stores/toast.svelte';
+  import { getToast } from '$lib/state/toast.svelte';
   import { superForm } from 'sveltekit-superforms';
+
+  const toast = getToast();
 
   const { enhance } = superForm(data.form, {
     onResult({ result }) {
       if (result.type === 'success') {
         toast.success('Settings saved');
       } else if (result.type === 'failure') {
-        toast.error('Failed to save settings', result.data?.message);
+        toast.error('Failed to save settings');
       }
     },
   });
 </script>
 ```
 
-### Delete with Undo
+### Error with Manual Dismiss
 
 ```svelte
 <script lang="ts">
-  import { toast, dismiss } from '$lib/stores/toast.svelte';
+  import { getToast } from '$lib/state/toast.svelte';
 
-  async function deleteItem(id: string) {
-    // Optimistic delete
-    items = items.filter(item => item.id !== id);
-
-    const toastId = toast({
-      type: 'info',
-      title: 'Item deleted',
-      duration: 5000,
-      action: {
-        label: 'Undo',
-        onClick: async () => {
-          await restoreItem(id);
-          dismiss(toastId);
-          toast.success('Item restored');
-        },
-      },
-    });
-
-    // Actually delete after toast expires
-    setTimeout(async () => {
-      await permanentlyDeleteItem(id);
-    }, 5000);
-  }
-</script>
-```
-
-### API Error with Retry
-
-```svelte
-<script lang="ts">
-  import { toast } from '$lib/stores/toast.svelte';
+  const toast = getToast();
 
   async function fetchData() {
     try {
@@ -271,15 +233,8 @@ Add ToastContainer to the root layout:
       if (!res.ok) throw new Error('Failed to fetch');
       return await res.json();
     } catch (error) {
-      toast({
-        type: 'error',
-        title: 'Failed to load data',
-        description: 'Check your connection and try again.',
-        action: {
-          label: 'Retry',
-          onClick: () => fetchData(),
-        },
-      });
+      // duration 0 = stays until manually dismissed
+      toast.error('Failed to load data. Check your connection and try again.', 0);
     }
   }
 </script>
@@ -289,7 +244,9 @@ Add ToastContainer to the root layout:
 
 ```svelte
 <script lang="ts">
-  import { toast } from '$lib/stores/toast.svelte';
+  import { getToast } from '$lib/state/toast.svelte';
+
+  const toast = getToast();
 
   async function copyToClipboard(text: string) {
     await navigator.clipboard.writeText(text);
@@ -304,32 +261,10 @@ Add ToastContainer to the root layout:
 
 | Scenario | Behavior |
 |----------|----------|
-| Multiple toasts | Stack vertically, newest on top |
-| Max visible | 5 toasts, older ones auto-dismiss |
-| Same message repeated | Don't duplicate, extend existing timer |
-| Page navigation | Persist toasts (they're in root layout) |
-
-```typescript
-// Prevent duplicate toasts
-const activeMessages = new Set<string>();
-
-export function toast(options: ToastOptions) {
-  const key = `${options.type}:${options.title}`;
-
-  if (activeMessages.has(key)) {
-    // Extend existing toast instead of creating new one
-    return;
-  }
-
-  activeMessages.add(key);
-  const id = createToast(options);
-
-  // Cleanup when dismissed
-  setTimeout(() => activeMessages.delete(key), options.duration || 10000);
-
-  return id;
-}
-```
+| Multiple toasts | Stack vertically, newest at the bottom of the array |
+| Max visible | 5 (`ToastContainer` slices `toast.items` to the first 5) |
+| Auto-dismiss | Each toast removes itself after its `duration` (default 5000ms; 0 = manual only) |
+| Page navigation | Persist toasts (the context lives in the root layout) |
 
 ---
 
@@ -422,11 +357,14 @@ export function toast(options: ToastOptions) {
 
 ```
 src/lib/
-├── stores/
-│   └── toast.svelte.ts          # Toast state + functions
+├── state/
+│   └── toast.svelte.ts                       # Toast context factory
 └── components/
-    └── shell/
-        └── ToastContainer.svelte # Toast renderer
+    └── composites/
+        └── toast/
+            ├── ToastContainer.svelte         # Toast renderer (re-exported via shell/index.ts)
+            ├── Toaster.svelte                # Alternate display variant
+            └── index.ts
 ```
 
 ---

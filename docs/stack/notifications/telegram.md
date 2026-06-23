@@ -1,30 +1,6 @@
 # Telegram Notifications
 
-## What is it?
-
-Telegram Bot API integration for sending notifications directly to users' Telegram accounts. Users connect their Telegram via deep linking.
-
-## What is it for?
-
-- Real-time alerts (security, mentions)
-- Mobile notifications without browser/PWA
-- Users who prefer Telegram over email
-- Time-sensitive notifications
-
-## Why Telegram?
-
-| Channel | Delivery Speed | User Reach | Setup Complexity |
-|---------|---------------|------------|------------------|
-| Email | Minutes | Universal | Low |
-| **Telegram** | Instant | Telegram users | Medium |
-| Discord | Instant | Discord users | High (OAuth2) |
-| SMS | Instant | Universal | High (cost, regulations) |
-
-**Telegram advantages:**
-- Instant delivery, high open rates
-- No OAuth2 needed (deep linking)
-- Free (no per-message cost)
-- Rich formatting (Markdown, buttons)
+Telegram Bot API integration for instant notifications. Users connect via deep linking — no OAuth2, no per-message cost (simpler than Discord).
 
 ## Bot Setup
 

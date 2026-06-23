@@ -74,7 +74,7 @@ Combine vector similarity with graph traversal for best results:
 │  User Question                                                       │
 │       ↓                                                              │
 │  ┌─────────────┐     ┌─────────────┐                                │
-│  │   Mistral   │     │   Groq      │                                │
+│  │   Gemini    │     │   Groq      │                                │
 │  │  Embedding  │     │   NER       │  (Entity extraction)           │
 │  └──────┬──────┘     └──────┬──────┘                                │
 │         ↓                   ↓                                        │
@@ -109,6 +109,12 @@ Combine vector similarity with graph traversal for best results:
 ---
 
 ## Implementation
+
+> **Illustrative only — not the shipped code.** The snippets below (Implementation, Entity Linking, Community Detection, LangChain.js Integration) are a reference design, not the live pipeline. Concrete deltas from reality:
+> - The live API surface is `generateText` + `Output.object(jsonSchema(...))` (AI SDK v6) — `generateObject` is deprecated. Provider resolution is `getActiveProvider` / `getVisionProvider` from `ai/index.ts`, not a `providers.chat` / `providers.embeddings` object.
+> - Embeddings are Google Gemini `gemini-embedding-001` (see `config.ts`), not `mistral-embed`. The system prompt is `SYSTEM_PROMPT` from `config.ts`, not `aiConfig.systemPrompt` / `aiConfig.models.chat`.
+> - `@toon-format/toon`, `nanoid`, and `@langchain/*` are **not** dependencies. LangChain.js is not used.
+> - Live graph queries live in `graph/rag/queries.ts` — tenant-scoped `:Chunk` / `:Entity` nodes keyed by `ownerId`, not the `:Document` / `:Entity {name}` model shown here. See the Tenancy note below the Performance section and [layered-rag.md](./layered-rag.md#graph-tenancy-neo4j).
 
 ### 1. Knowledge Graph Construction
 
@@ -866,7 +872,7 @@ The showcase registry is projected into Neo4j as typed `:Resource` nodes with `P
 
 Node ids are locale-bare and follow the `SearchRecord` id scheme (`${surface}:${path}${anchor ?? ''}`), so a future RAG soft-pointer (`rag.document.sourceUri`) can reference the same node.
 
-`documentSourceEnum` now includes `'catalog'` (alongside `upload`, `web`, `text`, `api`) for when catalog surfaces are ingested as `rag.document` rows.
+`documentSourceEnum` values are `upload`, `web`, `text`, `api`, `catalog`, `docs`. `catalog` marks catalog surfaces ingested as `rag.document` rows; `docs` marks the ingested `docs/**/*.md` corpus (owned by `SYSTEM_DOCS_USER_ID`).
 
 Live stats: ~172 `:Resource` nodes, ~157 `PART_OF` edges.
 

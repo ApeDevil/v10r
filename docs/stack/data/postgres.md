@@ -1,32 +1,11 @@
 # PostgreSQL
 
-## What is it?
-
-Open-source object-relational database management system. ACID-compliant with extensibility features. Supports JSON, full-text search, and rich extension ecosystem. Current versions: 14-18 (18 in preview).
-
-**Neon:** Serverless PostgreSQL platform that separates compute and storage. Compute runs on Kubernetes, storage uses custom Pageserver backed by S3. Enables independent scaling and scale-to-zero.
-
-## What is it for?
-
-- Web applications requiring relational data with ACID guarantees
-- Development/staging with database branching (instant schema + data duplication)
-- Serverless applications with variable workloads
-- Applications needing JSONB, full-text search, extensions
+The relational store, hosted on **Neon** (serverless Postgres: compute/storage split, scale-to-zero, copy-on-write branching). See the `db-relational` skill for query patterns.
 
 ## Why was it chosen?
 
-| Aspect | PostgreSQL | MySQL | SQLite |
-|--------|------------|-------|--------|
-| JSON | Native JSONB | JSON type | JSON functions |
-| Full-text search | Built-in | Plugin | Extension |
-| Concurrent writes | MVCC | Locks | Single-writer |
-| Extensions | Rich ecosystem | Limited | Limited |
-
-**Neon advantages:**
-- Scale-to-zero: idle databases cost nothing
-- Instant provisioning (seconds, not minutes)
-- Database branching for testing/staging
-- Pay only for active compute time
+- Neon branching gives instant copy-on-write `dev` clones off `production` (see [Branching](#branching)).
+- Scale-to-zero — idle databases cost nothing on the free tier.
 
 See [vendors.md](../vendors.md#neon) for pricing, free tier limits, and provider alternatives.
 
@@ -53,29 +32,17 @@ Pooled (PgBouncer) disables: `SET`, `PREPARE`, `LISTEN`/`NOTIFY`, session adviso
 
 **What this project uses:**
 
-- **App runtime:** `neon()` HTTP driver + `drizzle-orm/neon-http` — one fetch per query, no connection pool needed, ideal for Vercel serverless
+- **App runtime:** `drizzle-orm/neon-serverless` with `Pool` from `@neondatabase/serverless`, plus `neonConfig.poolQueryViaFetch = true` so Pool queries travel over HTTP fetch instead of WebSocket. This is the same Bun WebSocket-101 workaround used in `drizzle.config.ts`.
 - **drizzle-kit CLI:** reads `NEON_DATABASE_URL_PROD`, requires a direct (non-pooled) endpoint for migrations
 
-A single direct `NEON_DATABASE_URL_PROD` covers both. The HTTP driver is already stateless — pooling adds nothing. drizzle-kit requires direct to run schema operations.
+A single direct `NEON_DATABASE_URL_PROD` covers both. drizzle-kit requires direct to run schema operations.
 
 `NEON_DATABASE_URL_PROD` is this project's own variable name (not the ecosystem-standard `DATABASE_URL`) holding the Neon connection string. An optional `NEON_DATABASE_URL_DEV` labels a spare for the dev branch; it is not read by the app.
 
 ## Known limitations
 
-**Cold starts:**
-- Activating from idle: 500ms to few seconds
-- PgBouncer pooler mitigates (sub-100ms for subsequent queries)
-- Applications may timeout during reactivation
-
-**Connection limits:**
-- Max connections: 112 (0.25 CU) to 4,000 (9+ CU)
-- Transaction-mode pooling disables: prepared statements (SQL-level), LISTEN/NOTIFY, SET statements, session advisory locks
-
-**Free tier constraints:**
-- Compute suspends when monthly CU-hours exhausted
-- Limited storage per project
-- Short restore history and metrics retention
-- Community support only (no SLA)
+- **Cold starts:** activating from idle takes 500ms–few seconds; requests may time out during reactivation.
+- **Free tier:** compute suspends when monthly CU-hours are exhausted.
 
 See [vendors.md](../vendors.md#neon) for exact limits and paid tier features.
 

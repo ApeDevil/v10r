@@ -1,59 +1,27 @@
 # API & Services
 
-## What is it?
+API patterns and service integrations — SvelteKit-native REST + server actions, plus an in-app analytics collector, console-based error handling, Resend email, and a custom cron-driven job runner. See the `api-design` skill for contract patterns.
 
-API patterns and external service integrations for the application. Combines SvelteKit's native capabilities with specialized providers for AI, email, analytics, and background jobs.
+## Stack
 
-## What is it for?
+| Concern | Technology | Provider |
+|---------|------------|----------|
+| API style | REST + server actions | SvelteKit (framework-native) |
+| Analytics | In-app collector | `$lib/server/analytics/` + `/api/analytics/*` (server-side, consent-gated) |
+| Errors | `handleError` hook | Console-only (`src/hooks.server.ts`); no external provider wired |
+| Email | SMTP/API | Resend |
 
-- REST APIs and server actions (SvelteKit native)
-- API documentation (OpenAPI/Scalar)
-- Background job processing
-- Email, analytics, error tracking
+**Background jobs** — use when a task takes 5+ seconds, needs cron, or needs retries:
 
-## Why was it chosen?
-
-| Service | Technology | Provider | Why |
-|---------|------------|----------|-----|
-| API Style | REST + Server Actions | SvelteKit | Framework-native |
-| API Docs | OpenAPI | Scalar | Modern UI, spec-driven |
-| Analytics | Web Analytics | Vercel | Cookieless, zero config |
-| Errors | Sentry SDK | Sentry | 5K errors/mo free |
-| Email | SMTP/API | Resend | 100 emails/day free |
-
-**Background jobs:**
-| Complexity | Technology | Use Case |
+| Complexity | Technology | Use case |
 |------------|------------|----------|
-| Default | Server Actions | Fast, no deps |
-| Async | QStash | Fire-and-forget (500 msg/day free) |
-| Complex | Inngest | Multi-step, retries, cron (25K runs/mo) |
-
-**Use jobs when:** Task takes 5+ seconds, needs cron, or needs retries.
+| Default | Server actions | Fast, no deps |
+| Scheduled / async | Custom job runner | `$lib/server/jobs` (`runJob`) via Vercel-cron `/api/cron/[job]` |
 
 ## Known limitations
 
-**Server actions:**
-- Max execution time varies by platform (10s Vercel free, 60s Pro)
-- No native retry mechanism
-- No scheduling
-
-**External services:**
-- Each adds a vendor dependency
-- Free tiers have limits
-- Must handle failures gracefully
-
-**API documentation:**
-- Requires manual schema maintenance
-- OpenAPI spec can drift from implementation
-
-**Free tier limits:**
-| Service | Limit |
-|---------|-------|
-| Analytics | Included with Vercel |
-| Sentry | 5K errors/mo |
-| Resend | 100 emails/day |
-| QStash | 500 msg/day |
-| Inngest | 25K runs/mo |
+- **Server actions:** platform-bound max execution (10s Vercel free, 60s Pro); no native retry or scheduling.
+- **Errors:** no external error provider (Sentry, etc.) wired — `handleError` only logs structured JSON to the console.
 
 ## Related
 

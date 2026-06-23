@@ -1,5 +1,7 @@
 # Progressive Revelation (ProgRev)
 
+> **Status: planned.** This describes the design *philosophy* for an intended feature that is **not yet built**. Kept as a design-of-record to emulate; excluded from the chatbot corpus so the assistant does not assert it as live.
+
 A foundational UX pattern that progressively reveals content and features as users demonstrate readiness, reducing cognitive overload while guiding them through the application.
 
 ---

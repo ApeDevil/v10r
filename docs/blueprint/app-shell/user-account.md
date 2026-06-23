@@ -6,22 +6,17 @@ User account management for identity, security, and GDPR compliance. High-stakes
 
 ```
 /app/account/
-├── +layout.svelte           # Tabbed navigation wrapper
-├── +layout.server.ts        # Load user profile data once
-├── +page.svelte             # Profile editing (default tab)
+├── +page.svelte             # Account overview (default)
 ├── +page.server.ts          # Profile form actions
-├── security/
-│   ├── +page.svelte         # OAuth connections, sessions, 2FA
-│   └── +page.server.ts      # Security form actions
 ├── data/
 │   ├── +page.svelte         # GDPR data hub
-│   ├── +page.server.ts      # Prepare data view
-│   └── export/
-│       └── +server.ts       # GET handler returns JSON download
-└── delete/
-    ├── +page.svelte         # Deletion confirmation flow
-    └── +page.server.ts      # Delete action with grace period
+│   └── +page.server.ts      # Prepare data view
+└── security/
+    ├── +page.svelte         # OAuth connections, sessions, deletion
+    └── +page.server.ts      # Security form actions
 ```
+
+The data-export download is served by `/api/me/data/export/+server.ts` (GET → JSON), not a route under `/app/account`.
 
 ## Tabbed Layout
 
@@ -264,24 +259,16 @@ await auth.api.revokeOtherSessions({
 
 ### Data Export Endpoint
 
-**Rate Limited:** Data export is computationally expensive. Limit to prevent abuse.
+**Rate Limited:** Data export is computationally expensive. A per-IP limiter built with `createLimiter` from `$lib/server/api/rate-limit.ts` caps exports. See [abuse/rate-limits.md](../abuse/rate-limits.md) for the factory contract and limiter catalog.
 
 ```typescript
-// /app/account/data/export/+server.ts
-import { json, error } from '@sveltejs/kit';
-import { RateLimiter } from 'sveltekit-rate-limiter/server';
+// /api/me/data/export/+server.ts
+import { error } from '@sveltejs/kit';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import type { RequestHandler } from './$types';
 
-// Strict rate limiting: 3 exports per day per user
-const exportLimiter = new RateLimiter({
-  IP: [3, 'd'],        // 3 per day per IP
-  cookie: {
-    name: 'export_rl',
-    secret: EXPORT_RATE_LIMIT_SECRET,
-    rate: [3, 'd'],    // 3 per day per cookie
-    preflight: true,
-  },
-});
+// Sliding-window: 3 exports per day, keyed on client IP
+const exportLimiter = createLimiter('rl:account:export', 3, '24 h');
 
 export const GET: RequestHandler = async (event) => {
   const { locals } = event;
@@ -290,13 +277,9 @@ export const GET: RequestHandler = async (event) => {
     throw error(401, 'Unauthorized');
   }
 
-  // Check rate limit
-  const { limited, retryAfter } = await exportLimiter.check(event);
-  if (limited) {
-    throw error(429, {
-      message: 'Export limit reached. Try again tomorrow.',
-      retryAfter,
-    });
+  const { success, reset } = await exportLimiter.limit(event.getClientAddress());
+  if (!success) {
+    return rateLimitResponse(reset, 'Export limit reached. Try again tomorrow.');
   }
 
   // Log export for audit trail
@@ -379,7 +362,7 @@ export const POST: RequestHandler = async ({ locals }) => {
 
 ### Step 2: Confirmation Page
 
-**Route:** `/app/account/data/delete`
+**Route:** `/app/account/security` (deletion is handled within the security page; there is no standalone `delete/` route)
 
 ```
 ┌────────────────────────────────────────────────────┐
@@ -478,17 +461,18 @@ export const userProfile = pgTable('user_profile', {
 ## Sidebar Integration
 
 ```svelte
-<NavItem href="/app/account" icon={User} hasChildren>
-  Account
-  {#snippet children()}
-    <NavDropdown>
-      <NavLink href="/app/account">Profile</NavLink>
-      <NavLink href="/app/account/security">Security</NavLink>
-      <NavLink href="/app/account/data">Your Data</NavLink>
-    </NavDropdown>
-  {/snippet}
-</NavItem>
+<NavItem
+  href="/app/account"
+  icon="i-lucide-user"
+  label={m.nav_account}
+  children={[
+    { href: '/app/account/security', label: m.nav_account_security },
+    { href: '/app/account/data', label: m.nav_account_data },
+  ]}
+/>
 ```
+
+`NavItem` renders the `children` submenu through `NavFlyout` (hover) or `NavAccordion` (mobile drawer, `useFlyout={false}`).
 
 ---
 

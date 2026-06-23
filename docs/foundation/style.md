@@ -358,4 +358,4 @@ Before shipping a new typography set:
 - [architecture.md](./architecture.md) — Styling layer and state management
 - [user-data.md](./user-data.md) — Style preferences as user configuration
 - [progressive-revelation.md](./progressive-revelation.md) — FTUX integration
-- [../.archive/style-randomizer.md](../.archive/style-randomizer.md) — Original implementation blueprint (superseded; the feature now lives in `src/lib/styles/random/`)
+- Style randomizer — the feature lives in `src/lib/styles/random/` (original planning blueprint removed; see git history)

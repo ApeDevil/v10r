@@ -120,6 +120,7 @@ Captcha verification runs in the `authCaptchaGate` hook handler before Better Au
 
 - `POST /api/auth/sign-in/magic-link`
 - `POST /api/auth/email-otp/send-verification-otp`
+- `POST /api/auth/two-factor/send-otp`
 
 The solved payload is expected in the `x-altcha-token` request header. The Better Auth client must attach it when calling `signIn.magicLink()` or `signIn.emailOtp.sendOtp()`.
 

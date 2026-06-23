@@ -22,9 +22,9 @@ Backend architecture for multi-channel notification delivery.
 │     - Check settings matrix for each channel                                │
 │     - Skip disconnected/inactive channels                                   │
 │  4. Create delivery records in outbox                                       │
-│  5. Trigger delivery:                                                        │
-│     - Container: notify in-process worker (immediate pickup)                │
-│     - Vercel: emit Inngest event "notification/queued"                      │
+│  5. routeExternal (fire-and-forget) writes outbox records:                  │
+│     - Container: in-process worker polls and delivers                       │
+│     - Vercel: /api/cron/[job] sweep delivers pending records                │
 │                                                                              │
 │  Output: { notificationId, queuedChannels[] }                               │
 │                                                                              │
@@ -130,8 +130,8 @@ Container runtime:
 
 Vercel serverless:
 ┌─────────────┐     ┌─────────────────────┐     ┌──────────────────┐
-│  Sync       │────▶│ notification_       │────▶│  Inngest /       │
-│  Handler    │     │ deliveries (outbox) │     │  Vercel Cron     │
+│  Sync       │────▶│ notification_       │────▶│  /api/cron/[job] │
+│  Handler    │     │ deliveries (outbox) │     │  sweep           │
 └─────────────┘     └─────────────────────┘     └──────────────────┘
 ```
 
@@ -153,36 +153,27 @@ The outbox table is the contract. **Who processes it** depends on the runtime.
 
 ### Container: In-Process Worker (Primary)
 
-The existing job runner at `src/lib/server/jobs/scheduler.ts` already supports `setInterval`-based background jobs. Add a `notification-delivery` job:
+The delivery worker runs on its own `setInterval` in `src/lib/server/jobs/delivery-scheduler.ts` (separate from the 3-hourly `scheduler.ts`). It is gated on `platform.persistent` and ticks at `DEFAULT_DELIVERY_INTERVAL_MS` (15s). The worker logic lives in `src/lib/server/jobs/notification-delivery.ts`:
 
 | Aspect | Detail |
 |--------|--------|
-| **Trigger** | `setInterval` (every 10-30 seconds, configurable) |
-| **Processing** | SELECT pending deliveries, process in batches of 50 |
+| **Trigger** | `setInterval` (15s, `DEFAULT_DELIVERY_INTERVAL_MS`) |
+| **Processing** | SELECT pending deliveries, process in batches |
 | **Retry** | Built into worker loop — failed records stay pending, attempts incremented |
 | **Advantage** | Zero external dependencies, immediate pickup, full control |
 
-### Vercel: Inngest (Fallback)
+`service.ts` calls `routeExternal` directly (fire-and-forget) after the outbox write — there is no runtime branch and no event emit.
 
-When deployed on serverless, Inngest provides step-level durability:
+### Vercel: Cron Sweep (Serverless)
 
-| Aspect | Detail |
-|--------|--------|
-| **Trigger** | `inngest.send({ name: 'notification/queued' })` after outbox write |
-| **Processing** | Each channel is a separate step (parallel fan-out) |
-| **Retry** | Per-step retry with exponential backoff (max 3) |
-| **Advantage** | Survives function timeouts, per-step retry prevents double-sends |
-| **Free tier** | 50K executions/month |
-
-### Vercel: Cron Sweep (Safety Net)
-
-Regardless of runtime, a periodic cron job sweeps for any outbox records stuck in `pending` state (belt-and-suspenders):
+On serverless (no persistent process), the generic cron route sweeps for any outbox records stuck in `pending` state:
 
 | Setting | Value |
 |---------|-------|
-| **Schedule** | Every 60 seconds |
-| **Endpoint** | `/api/cron/notification-delivery` |
+| **Endpoint** | `/api/cron/[job]` (generic cron dispatcher) |
 | **Purpose** | Catch leaked records, process retries |
+
+> **Inngest is design-intent only.** It is not a dependency and is never imported. Async delivery uses the in-process worker (container) plus the `/api/cron/[job]` sweep (serverless).
 
 ### Retry Configuration
 
@@ -211,8 +202,8 @@ Regardless of runtime, a periodic cron job sweeps for any outbox records stuck i
 
 When a channel fails permanently:
 
-1. Set `is_active = false` in channel table
-2. Store error message in `last_error` column
+1. Set `is_active = false` on the account row (`user_telegram_accounts` / `user_discord_accounts`)
+2. Error detail is recorded per-delivery in `notification_deliveries.error_code` / `error_message` — the account row stores no error string
 3. Send notification via other channels: "Your {channel} is disconnected"
 4. Surface in settings UI with "Reconnect" button
 
@@ -226,7 +217,7 @@ When a channel fails permanently:
 |--------|---------|
 | `notification_id` | Parent notification |
 | `channel` | email, telegram, discord |
-| `status` | pending, processing, sent, failed, skipped |
+| `status` | pending, processing, sent, failed, skipped, retrying, dead |
 | `attempts` | Retry count |
 | `provider_message_id` | External reference |
 | `error_code` | Provider error code |
@@ -236,13 +227,15 @@ When a channel fails permanently:
 
 ### Retention Policy
 
+> **Not implemented.** No job prunes `notification_deliveries` by status. The per-status table below is aspirational.
+
 | Status | Retention |
 |--------|-----------|
 | `sent` | 7 days |
 | `failed` | 30 days |
 | `skipped` | 7 days |
 
-Clean up via scheduled job (daily) — runs as `setInterval` in container, Vercel cron on serverless.
+The existing `jobs/notification-cleanup.ts` only touches the `notifications` table: it archives at `NOTIFICATION_ARCHIVE_DAYS` (30) and hard-deletes at `NOTIFICATION_DELETE_DAYS` (90).
 
 ---
 
@@ -251,36 +244,29 @@ Clean up via scheduled job (daily) — runs as `setInterval` in container, Verce
 ```
 src/lib/server/notifications/
 ├── index.ts                # Re-exports public API
-├── service.ts              # NotificationService.send() — single entry point
+├── service.ts              # NotificationService.send() — single entry point (NotificationType inline union)
 ├── router.ts               # Preference resolution, channel selection
-├── queries.ts              # DB queries (getUnread, markRead, etc.)
-├── types.ts                # NotificationType, DeliveryResult, etc.
-├── stream.ts               # SSE: notifyUser() + connection registry (container only)
-├── providers/
-│   ├── index.ts            # Provider registry (getProvider by channel)
-│   ├── types.ts            # Provider interface
-│   ├── email.ts            # Resend provider
-│   ├── telegram.ts         # Raw fetch() to Bot API
-│   └── discord.ts          # Discord REST provider
 ├── outbox.ts               # Delivery record management
-└── inngest/                # Only used on Vercel deployments
-    ├── client.ts           # Inngest client setup
-    └── functions/
-        └── deliver.ts      # notification/queued handler
+├── stream.ts               # SSE: notifyUser() + connection registry (container only)
+├── crypto.ts               # AES-GCM token encryption (ENCRYPTION_KEY)
+├── health.ts               # Channel health stats
+├── render-message.ts       # Notification → channel message body
+├── telegram.ts             # Telegram link/verification helpers
+└── providers/
+    ├── index.ts            # Provider registry (getProvider by channel)
+    ├── types.ts            # Provider interface
+    ├── email.ts            # Resend provider
+    ├── telegram.ts         # Raw fetch() to Bot API
+    └── discord.ts          # Discord REST provider
 ```
+
+DB read/write helpers live under `$lib/server/db/notifications/{queries,mutations,admin-queries}.ts`.
+
+The delivery worker is `$lib/server/jobs/notification-delivery.ts`, driven by `$lib/server/jobs/delivery-scheduler.ts`. There is no Inngest function — Inngest is not wired.
 
 ### Runtime Detection
 
-```typescript
-// Use the same pattern as existing job scheduler
-const IS_SERVERLESS = !!process.env.VERCEL;
-
-// In service.ts, after outbox write:
-if (IS_SERVERLESS && inngest) {
-  await inngest.send({ name: 'notification/queued', data: { notificationId } });
-}
-// On container, the in-process worker picks up pending records automatically
-```
+`service.ts` does not branch on runtime. After the outbox write it calls `routeExternal` directly (fire-and-forget). The persistent container's `delivery-scheduler.ts` worker (gated on `platform.persistent`) picks up pending records on its own interval; on serverless the `/api/cron/[job]` route sweeps them. No `inngest.send` call exists.
 
 ---
 

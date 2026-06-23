@@ -24,7 +24,7 @@ No documentation drift. No stale examples. The template validates itself.
 ├── /showcases                       # Living demos
 │   ├── +page.svelte                 # Landing with recommended path
 │   ├── /shell                       # App shell features
-│   │   ├── /theme                   # Design tokens, dark/light mode
+│   │   ├── /style                   # Design tokens, dark/light mode
 │   │   ├── /sidebar                 # Sidebar navigation
 │   │   ├── /modals                  # Modal dialogs
 │   │   ├── /toasts                  # Toast notifications
@@ -41,11 +41,14 @@ No documentation drift. No stale examples. The template validates itself.
 │   │   ├── /typography              # Headings, body, lead
 │   │   ├── /layouts                 # Stack, cluster, grid
 │   │   ├── /tokens                  # Colors, spacing, shadows
-│   │   └── /panes
-│   │       ├── /panels              # Dock system (tabs, splits, activity bar)
+│   │   ├── /menus                   # Dropdown, context, menubar
+│   │   ├── /tables                  # Data tables
+│   │   ├── /workbench               # Dock workspace (tabs, activity bar)
+│   │   └── /splits
 │   │       ├── /resizable           # PaneForge resize primitives
 │   │       └── /reorderable         # Drag-to-reorder panes
 │   ├── /forms                       # Form patterns
+│   │   ├── /auth                    # Auth-style form patterns
 │   │   ├── /basics
 │   │   │   ├── /contact             # Simple contact form
 │   │   │   └── /settings            # Settings form
@@ -61,39 +64,67 @@ No documentation drift. No stale examples. The template validates itself.
 │   │       ├── /dependent           # Dependent field logic
 │   │       ├── /dynamic             # Dynamic field lists
 │   │       └── /wizard              # Multi-step wizard
+│   ├── /cycle                       # End-to-end create/read/update/delete cycle
+│   │   ├── /api                     # CRUD via API
+│   │   ├── /form                    # CRUD via forms
+│   │   └── /ai                      # CRUD via AI tool calls
 │   ├── /db                          # Database showcases
 │   │   ├── /relational              # PostgreSQL (Neon)
-│   │   │   ├── /connection          # Health check + latency
 │   │   │   ├── /types               # Full type system demo
-│   │   │   └── /mutability          # CRUD, versioning, soft delete
+│   │   │   ├── /mutability          # CRUD, versioning, soft delete
+│   │   │   └── /connection          # Health check + latency
 │   │   ├── /graph                   # Graph database (Neo4j Aura)
-│   │   │   ├── /connection          # Health check + stats
 │   │   │   ├── /model               # Labels, relationships, graph viz
-│   │   │   └── /traversal           # Path finding, recommendations
+│   │   │   ├── /traversal           # Path finding, recommendations
+│   │   │   └── /connection          # Health check + stats
 │   │   ├── /storage                 # Object storage (Cloudflare R2)
-│   │   │   ├── /connection          # Bucket health + stats
 │   │   │   ├── /objects             # List, inspect, presigned downloads
-│   │   │   └── /transfer            # Presigned upload, byte-range reads
+│   │   │   ├── /transfer            # Presigned upload, byte-range reads
+│   │   │   └── /connection          # Bucket health + stats
 │   │   └── /cache                   # Cache layer (Redis/Upstash)
-│   │       ├── /connection          # Cache health check
+│   │       ├── /patterns            # Caching strategies
 │   │       ├── /ephemeral           # Short-lived keys, TTL
-│   │       └── /patterns            # Caching strategies
+│   │       └── /connection          # Cache health check
 │   ├── /ai                          # AI integration
-│   │   ├── /connection              # Provider health + config
-│   │   ├── /chat                    # Basic chat interface
-│   │   ├── /streaming               # Streaming text responses
+│   │   ├── /chat                    # Basic streaming chat interface
+│   │   ├── /image-metadata          # Vision: AI proposes metadata, human approves
+│   │   │   └── /analyze             # Run a single image analysis
 │   │   └── /retrieval               # RAG pipeline
-│   │       ├── /ingest              # Document ingestion
-│   │       ├── /chat                # RAG-augmented chat
-│   │       ├── /contextual          # Contextual retrieval
-│   │       ├── /parent-child        # Parent-child chunking
-│   │       └── /graph               # Graph-based retrieval
+│   │       ├── /rag-chat            # RAG-augmented chat
+│   │       ├── /explorer            # Inspect chunks, embeddings, scores
+│   │       └── /ingest              # Document ingestion
 │   ├── /toolkits                    # Bundled multi-step tools
 │   │   └── /image-kit               # Metadata + AI cropper + embedder (no persistence)
+│   │       ├── /vision              # AI metadata reader
+│   │       ├── /embed               # Image/text embedder
+│   │       ├── /crop                # AI frame-cropper
+│   │       └── /discard             # Clear and reset the session
 │   ├── /auth                        # Authentication showcase
-│   │   ├── /connection              # Provider health check
-│   │   ├── /security                # Security features demo
-│   │   └── /session                 # Session inspection
+│   │   ├── /authn                   # Authentication: sign-in, sessions
+│   │   ├── /authz                   # Authorization: roles, route guards
+│   │   └── /users                   # User management
+│   ├── /admin                       # Admin and data-governance demos
+│   │   ├── /powers                  # Admin capabilities, role gating
+│   │   ├── /cookies                 # Cookie inventory and consent
+│   │   ├── /data                    # Stored-data inventory
+│   │   ├── /retention               # Retention policies
+│   │   └── /rights                  # GDPR rights (access, export, erase)
+│   ├── /analytics                   # Privacy-aware analytics
+│   │   ├── /overview                # Metrics summary
+│   │   ├── /live                    # Real-time activity
+│   │   ├── /funnels                 # Conversion funnels
+│   │   ├── /journeys                # User journey paths
+│   │   ├── /my-data                 # Per-user data view
+│   │   └── /privacy                 # Privacy controls, opt-out
+│   ├── /abuse                       # Abuse prevention
+│   │   ├── /rate-limits             # Rate limiting
+│   │   ├── /captcha                 # CAPTCHA challenge
+│   │   ├── /honeypot                # Honeypot field trap
+│   │   └── /ai-budget               # AI spend caps
+│   ├── /notifications               # Notification delivery
+│   │   ├── /send                    # Send a notification
+│   │   ├── /channels                # Channel configuration
+│   │   └── /pipeline                # Delivery pipeline
 │   ├── /i18n                        # Internationalization
 │   ├── /jobs                        # Background jobs
 │   ├── /viz                         # Data visualization
@@ -102,9 +133,12 @@ No documentation drift. No stale examples. The template validates itself.
 │   │   ├── /graphs                  # Graph/network viz
 │   │   ├── /diagrams                # Diagram types
 │   │   └── /maps                    # Map visualizations
-│   └── /3d                          # 3D experiences (Threlte + Three.js)
+│   └── /3d                          # 3D experiences (Threlte 8)
 │       ├── /static-scene            # Static 3D scene
-│       └── /animated-scene          # Animated 3D scene
+│       ├── /animated-scene          # Animated 3D scene (useTask)
+│       ├── /customize               # Configure a model
+│       │   └── /[model]             # Per-model customizer
+│       └── /[model]                 # Per-model viewer
 │
 ├── /app                             # Protected area
 │   ├── /dashboard                   # User home
@@ -116,8 +150,10 @@ No documentation drift. No stale examples. The template validates itself.
 │   └── /verify                      # OTP code entry
 │
 └── /docs                            # Static documentation
-    ├── /stack                       # Technology decisions
-    └── /architecture                # Codebase structure
+    ├── /blueprint                   # System patterns ([...slug])
+    ├── /foundation                  # Project goals ([slug])
+    ├── /programming                 # Language/runtime notes ([slug])
+    └── /stack                       # Technology decisions ([slug])
 ```
 
 ---
@@ -133,7 +169,7 @@ Every route group should have an `+error.svelte` file for graceful error handlin
 | `/+error.svelte` | Root fallback | Generic error, "Go home" link |
 | `/app/+error.svelte` | Authenticated area | Maintains app shell, "Back to dashboard" |
 | `/auth/+error.svelte` | Auth flows | Clean layout, "Try again" link |
-| `/showcase/+error.svelte` | Showcase area | Shows error within showcase layout |
+| `/showcases/+error.svelte` | Showcase area | Shows error within showcase layout |
 
 ### Error Boundary File Structure
 
@@ -246,19 +282,20 @@ The showcase landing page provides first-time visitors with a clear entry point 
 
 | Order | Category | Page | Focus |
 |-------|----------|------|-------|
-| 1 | Fundamentals | Shell | Theme, sidebar, modals, toasts |
+| 1 | Fundamentals | Shell | Style tokens, sidebar, modals, toasts |
 | 2 | Fundamentals | UI | Component library, accessibility |
 | 3 | Fundamentals | Forms | Validation, progressive enhancement |
 | 4 | Core | DB: PostgreSQL | Types, mutability patterns, Neon connection |
 | 5 | Core | DB: Neo4j | Graph modeling, traversal, recommendations |
 | 6 | Core | DB: Storage | R2 objects, presigned URLs, byte-range requests |
 | 7 | Core | DB: Cache | Redis patterns, TTL, cache strategies |
-| 8 | Core | Auth | Authentication flows, session inspection |
-| 9 | Advanced | AI | Chat, streaming, RAG pipeline |
-| 10 | Advanced | i18n | Translations, locale routing |
-| 11 | Advanced | Viz | Charts, plots, graphs, diagrams, maps |
-| 12 | Specialized | 3D | Threlte scenes, Three.js |
-| 13 | Specialized | Jobs | Background job patterns |
+| 8 | Core | Cycle | End-to-end CRUD via API, form, and AI |
+| 9 | Core | Auth | Authn, authz, user management |
+| 10 | Advanced | AI | Chat, image metadata, RAG retrieval |
+| 11 | Advanced | i18n | Translations, locale routing |
+| 12 | Advanced | Viz | Charts, plots, graphs, diagrams, maps |
+| 13 | Specialized | 3D | Threlte 8 scenes |
+| 14 | Specialized | Jobs | Background job patterns |
 
 ---
 
@@ -280,7 +317,7 @@ App shell features: theming, navigation, overlays, and session.
 
 | Route | Purpose |
 |-------|---------|
-| `/theme` | Color palette, design tokens, dark/light toggle, CSS variables |
+| `/style` | Color palette, design tokens, dark/light toggle, CSS variables |
 | `/sidebar` | Sidebar navigation patterns, collapsible groups, active states |
 | `/modals` | Dialog, drawer, popover, alert dialog |
 | `/toasts` | Success, error, info toasts with queue management |
@@ -313,9 +350,11 @@ Component gallery covering every UI primitive and composite.
 | `/typography` | Headings, body copy, lead text, prose |
 | `/layouts` | Stack, cluster, grid, sidebar, center layouts |
 | `/tokens` | Color swatches, spacing scale, shadow scale |
-| `/panes/panels` | Dock system with tabs, splits, activity bar |
-| `/panes/resizable` | PaneForge resize primitives |
-| `/panes/reorderable` | Drag-to-reorder panes |
+| `/menus` | Dropdown, context, and menubar menus |
+| `/tables` | Data tables: sorting, selection, density |
+| `/workbench` | Dock workspace with tabs and activity bar |
+| `/splits/resizable` | PaneForge resize primitives |
+| `/splits/reorderable` | Drag-to-reorder panes |
 
 ---
 
@@ -335,6 +374,7 @@ Form handling with validation and progressive enhancement.
 
 | Route | Purpose |
 |-------|---------|
+| `/auth` | Auth-style form patterns (sign-in fields, validation) |
 | `/basics/contact` | Simple contact form, text inputs, submit |
 | `/basics/settings` | Settings form with toggles and selects |
 | `/validation/realtime` | Live client-side validation as user types |
@@ -371,6 +411,26 @@ export const actions = {
 
 ---
 
+### /showcases/cycle
+
+End-to-end create/read/update/delete cycle, demonstrated three ways over the same entity.
+
+| Tests | Stack |
+|-------|-------|
+| API CRUD | SvelteKit endpoints, JSON contract |
+| Form CRUD | Superforms + Valibot + form actions |
+| AI CRUD | AI SDK tool calls drive the same mutations |
+
+**Sub-pages:**
+
+| Route | Purpose |
+|-------|---------|
+| `/api` | Create, read, update, delete through API endpoints |
+| `/form` | The same cycle through progressively-enhanced forms |
+| `/ai` | The same cycle driven by AI tool calls |
+
+---
+
 ### /showcases/db/relational
 
 PostgreSQL showcase using Neon serverless. Three sub-pages under the DB hub.
@@ -387,9 +447,9 @@ PostgreSQL showcase using Neon serverless. Three sub-pages under the DB hub.
 
 | Route | Purpose |
 |-------|---------|
-| `/connection` | Neon health check, connection latency, pool stats |
 | `/types` | Full Postgres type system: JSON, arrays, enums, UUID, timestamps |
 | `/mutability` | CRUD operations, soft delete, versioning, audit trail |
+| `/connection` | Neon health check, connection latency, pool stats |
 
 ---
 
@@ -407,9 +467,9 @@ Graph database showcase using Neo4j Aura.
 
 | Route | Purpose |
 |-------|---------|
-| `/connection` | Aura health check, driver stats |
 | `/model` | Labels, relationship types, full graph visualization |
 | `/traversal` | Path finding, shortest path, recommendations |
+| `/connection` | Aura health check, driver stats |
 
 ---
 
@@ -428,9 +488,9 @@ Object storage showcase (Cloudflare R2). Three sub-pages under the DB hub.
 
 | Route | Purpose |
 |-------|---------|
-| `/connection` | R2 health check, bucket stats, object count, reseed action |
 | `/objects` | List objects, inspect metadata, generate presigned download URLs |
 | `/transfer` | Presigned upload flow, byte-range requests with hex dump |
+| `/connection` | R2 health check, bucket stats, object count, reseed action |
 
 **Upload flow:**
 ```
@@ -464,36 +524,32 @@ Cache layer showcase. Three sub-pages covering connection, ephemeral keys, and c
 
 | Route | Purpose |
 |-------|---------|
-| `/connection` | Cache provider health check, latency, key count |
-| `/ephemeral` | Short-lived keys, TTL demonstration, expiry inspection |
 | `/patterns` | Cache-aside, write-through, invalidation strategies |
+| `/ephemeral` | Short-lived keys, TTL demonstration, expiry inspection |
+| `/connection` | Cache provider health check, latency, key count |
 
 ---
 
 ### /showcases/ai
 
-AI integration showcase using the Vercel AI SDK. Covers basic chat through full RAG pipelines.
+AI integration showcase using the Vercel AI SDK. Covers streaming chat, vision-driven metadata, and the RAG retrieval pipeline.
 
 | Tests | Stack |
 |-------|-------|
-| Provider connection | Vercel AI SDK |
-| Chat interface | Streaming text, message history |
-| Streaming | Server-sent events, partial rendering |
+| Streaming chat | Vercel AI SDK, message history |
+| Vision | Image input, structured `Output.object` |
 | RAG pipeline | Embeddings, vector search, retrieval |
 
 **Sub-pages:**
 
 | Route | Purpose |
 |-------|---------|
-| `/connection` | AI provider health check, model list, token counts |
-| `/chat` | Basic chat interface with message history |
-| `/streaming` | Streaming text responses, token-by-token rendering |
-| `/retrieval/ingest` | Document ingestion: chunking, embedding, indexing |
-| `/retrieval/chat` | RAG-augmented chat with source attribution and pipeline visualization (modes: retrieve / llmwiki, selectable from UI) |
-| `/retrieval/contextual` | Contextual retrieval: context-enriched chunk embedding |
-| `/retrieval/parent-child` | Parent-child chunking: small retrieval, large context |
-| `/retrieval/graph` | Graph-based retrieval: entity extraction, relationship traversal |
+| `/chat` | Streaming chat interface with message history |
 | `/image-metadata` | Vision: upload an image, AI proposes metadata, human reviews + approves before save (opt-in GPS). See [ai/image-metadata.md](./ai/image-metadata.md) |
+| `/image-metadata/analyze` | Run a single image analysis |
+| `/retrieval/rag-chat` | RAG-augmented chat with source attribution and pipeline visualization (modes: retrieve / llmwiki, selectable from UI) |
+| `/retrieval/explorer` | Inspect retrieved chunks, embeddings, and relevance scores |
+| `/retrieval/ingest` | Document ingestion: chunking, embedding, indexing |
 
 ---
 
@@ -514,26 +570,115 @@ Bundled, multi-step tools: upload once, run an AI pipeline, adjust the results, 
 | Route | Purpose |
 |-------|---------|
 | `/image-kit` | One upload → Run → adjust → Approve over three tools: AI metadata reader, AI frame-cropper (1:1 / 16:9 / 9:16), image embedder with cosine-similarity viz. Auth-gated, persists nothing. See [ai/image-kit.md](./ai/image-kit.md) |
+| `/image-kit/vision` | AI metadata reader step |
+| `/image-kit/embed` | Image/text embedder with cosine-similarity viz |
+| `/image-kit/crop` | AI frame-cropper (1:1 / 16:9 / 9:16) |
+| `/image-kit/discard` | Clear the session and reset all tools |
 
 ---
 
 ### /showcases/auth
 
-Authentication showcase using Better Auth. Demonstrates connection health, security features, and session state.
+Authentication showcase using Better Auth. Demonstrates authentication, authorization, and user management.
 
 | Tests | Stack |
 |-------|-------|
-| Provider health | Better Auth |
-| Security features | Rate limiting, CSRF, session rotation |
-| Session inspection | Better Auth session API |
+| Authentication | Better Auth sessions, sign-in/out |
+| Authorization | Roles, admin gating, route guards |
+| User management | User listing and admin actions |
 
 **Sub-pages:**
 
 | Route | Purpose |
 |-------|---------|
-| `/connection` | Auth provider health check, adapter status |
-| `/security` | Rate limiting, CSRF protection, brute-force defense |
-| `/session` | Live session data, token inspection, sign-out |
+| `/authn` | Sign-in flow, live session data, token inspection, sign-out |
+| `/authz` | Roles, admin gating, per-route guards, access denial |
+| `/users` | User listing and management |
+
+---
+
+### /showcases/admin
+
+Admin and data-governance demos: privileged capabilities and the data-protection surface.
+
+| Tests | Stack |
+|-------|-------|
+| Role gating | `ADMIN_USER_ID` gate, `isAdmin` |
+| Data governance | Cookie/data inventory, retention, GDPR rights |
+
+**Sub-pages:**
+
+| Route | Purpose |
+|-------|---------|
+| `/powers` | Admin capabilities and role gating |
+| `/cookies` | Cookie inventory and consent state |
+| `/data` | Inventory of data stored about a user |
+| `/retention` | Retention policies and schedules |
+| `/rights` | GDPR rights: access, export, erase |
+
+---
+
+### /showcases/analytics
+
+Privacy-aware analytics: metrics with per-user transparency and opt-out.
+
+| Tests | Stack |
+|-------|-------|
+| Aggregate metrics | Server-side aggregation |
+| Real-time activity | Live event stream |
+| Privacy controls | Per-user view, opt-out |
+
+**Sub-pages:**
+
+| Route | Purpose |
+|-------|---------|
+| `/overview` | Headline metrics summary |
+| `/live` | Real-time activity feed |
+| `/funnels` | Conversion funnel analysis |
+| `/journeys` | User journey paths |
+| `/my-data` | Per-user view of collected analytics |
+| `/privacy` | Privacy controls and opt-out |
+
+---
+
+### /showcases/abuse
+
+Abuse prevention: rate limiting, bot defenses, and AI spend caps.
+
+| Tests | Stack |
+|-------|-------|
+| Rate limiting | Redis counters, sliding window |
+| Bot defense | CAPTCHA, honeypot field |
+| Cost control | AI budget caps |
+
+**Sub-pages:**
+
+| Route | Purpose |
+|-------|---------|
+| `/rate-limits` | Request rate limiting and throttling |
+| `/captcha` | CAPTCHA challenge flow |
+| `/honeypot` | Hidden honeypot field bot trap |
+| `/ai-budget` | AI spend caps and budget enforcement |
+
+---
+
+### /showcases/notifications
+
+Notification delivery: send, channel routing, and the delivery pipeline.
+
+| Tests | Stack |
+|-------|-------|
+| Send | Notification dispatch |
+| Channels | Channel configuration and routing |
+| Pipeline | Multi-stage delivery |
+
+**Sub-pages:**
+
+| Route | Purpose |
+|-------|---------|
+| `/send` | Send a notification |
+| `/channels` | Channel configuration |
+| `/pipeline` | Delivery pipeline stages |
 
 ---
 
@@ -595,20 +740,24 @@ Data visualization hub. Five sub-pages covering the full range of chart and diag
 
 ### /showcases/3d
 
-3D experiences with Threlte and Three.js.
+3D experiences with Threlte 8. No vanilla Three.js render loop and no physics engine.
 
 | Tests | Stack |
 |-------|-------|
-| 3D scene setup | Threlte (Svelte + Three.js) |
-| Static geometry | Three.js meshes, materials, lighting |
-| Animations | Three.js animation loop, Threlte `useFrame` |
+| 3D scene setup | Threlte 8 (declarative Three.js) |
+| Static geometry | Meshes, materials, lighting |
+| Animations | Threlte `useTask` per-frame updates |
+| Model loading | GLTF, interaction |
 
 **Sub-pages:**
 
 | Route | Purpose |
 |-------|---------|
 | `/static-scene` | Static geometry, lighting, camera controls |
-| `/animated-scene` | Animated objects, physics, interaction |
+| `/animated-scene` | Per-frame animation via `useTask`, interaction |
+| `/customize` | Configure a model |
+| `/customize/[model]` | Per-model customizer |
+| `/[model]` | Per-model viewer |
 
 ---
 
@@ -655,9 +804,9 @@ GDPR compliance routes.
 
 | Route | Purpose |
 |-------|---------|
-| `/app/account` | View stored data |
-| `/app/account/export` | Download JSON |
-| `/app/account/delete` | Delete account |
+| `/app/account` | Account overview |
+| `/app/account/data` | View stored data; data export served by `/api/me/data/export` |
+| `/app/account/security` | Sessions, passkeys, account deletion |
 
 ---
 
@@ -714,7 +863,7 @@ src/routes/
 │   ├── +page.svelte                  # Showcase landing
 │   ├── +error.svelte                 # Showcase error boundary
 │   ├── shell/                        # App shell features
-│   │   ├── theme/+page.svelte
+│   │   ├── style/+page.svelte
 │   │   ├── sidebar/+page.svelte
 │   │   ├── modals/+page.svelte
 │   │   ├── toasts/+page.svelte
@@ -731,11 +880,14 @@ src/routes/
 │   │   ├── typography/+page.svelte
 │   │   ├── layouts/+page.svelte
 │   │   ├── tokens/+page.svelte
-│   │   └── panes/
-│   │       ├── panels/+page.svelte
+│   │   ├── menus/+page.svelte
+│   │   ├── tables/+page.svelte
+│   │   ├── workbench/+page.svelte
+│   │   └── splits/
 │   │       ├── resizable/+page.svelte
 │   │       └── reorderable/+page.svelte
 │   ├── forms/
+│   │   ├── auth/+page.svelte
 │   │   ├── basics/
 │   │   │   ├── contact/+page.svelte
 │   │   │   └── settings/+page.svelte
@@ -751,37 +903,70 @@ src/routes/
 │   │       ├── dependent/+page.svelte
 │   │       ├── dynamic/+page.svelte
 │   │       └── wizard/+page.svelte
+│   ├── cycle/
+│   │   ├── api/+page.svelte
+│   │   ├── form/+page.svelte
+│   │   └── ai/+page.svelte
 │   ├── db/                           # Database showcases
 │   │   ├── relational/
-│   │   │   ├── connection/+page.svelte
 │   │   │   ├── types/+page.svelte
-│   │   │   └── mutability/+page.svelte
+│   │   │   ├── mutability/+page.svelte
+│   │   │   └── connection/+page.svelte
 │   │   ├── graph/
-│   │   │   ├── connection/+page.svelte
 │   │   │   ├── model/+page.svelte
-│   │   │   └── traversal/+page.svelte
+│   │   │   ├── traversal/+page.svelte
+│   │   │   └── connection/+page.svelte
 │   │   ├── storage/
-│   │   │   ├── connection/+page.svelte
 │   │   │   ├── objects/+page.svelte
-│   │   │   └── transfer/+page.svelte
+│   │   │   ├── transfer/+page.svelte
+│   │   │   └── connection/+page.svelte
 │   │   └── cache/
-│   │       ├── connection/+page.svelte
+│   │       ├── patterns/+page.svelte
 │   │       ├── ephemeral/+page.svelte
-│   │       └── patterns/+page.svelte
+│   │       └── connection/+page.svelte
 │   ├── ai/
-│   │   ├── connection/+page.svelte
 │   │   ├── chat/+page.svelte
-│   │   ├── streaming/+page.svelte
+│   │   ├── image-metadata/
+│   │   │   ├── +page.svelte
+│   │   │   └── analyze/+page.svelte
 │   │   └── retrieval/
-│   │       ├── ingest/+page.svelte
-│   │       ├── chat/+page.svelte
-│   │       ├── contextual/+page.svelte
-│   │       ├── parent-child/+page.svelte
-│   │       └── graph/+page.svelte
+│   │       ├── +page.svelte
+│   │       ├── rag-chat/+page.svelte
+│   │       ├── explorer/+page.svelte
+│   │       └── ingest/+page.svelte
+│   ├── toolkits/
+│   │   └── image-kit/
+│   │       ├── +page.svelte
+│   │       ├── vision/+page.svelte
+│   │       ├── embed/+page.svelte
+│   │       ├── crop/+page.svelte
+│   │       └── discard/+page.svelte
 │   ├── auth/
-│   │   ├── connection/+page.svelte
-│   │   ├── security/+page.svelte
-│   │   └── session/+page.svelte
+│   │   ├── authn/+page.svelte
+│   │   ├── authz/+page.svelte
+│   │   └── users/+page.svelte
+│   ├── admin/
+│   │   ├── powers/+page.svelte
+│   │   ├── cookies/+page.svelte
+│   │   ├── data/+page.svelte
+│   │   ├── retention/+page.svelte
+│   │   └── rights/+page.svelte
+│   ├── analytics/
+│   │   ├── overview/+page.svelte
+│   │   ├── live/+page.svelte
+│   │   ├── funnels/+page.svelte
+│   │   ├── journeys/+page.svelte
+│   │   ├── my-data/+page.svelte
+│   │   └── privacy/+page.svelte
+│   ├── abuse/
+│   │   ├── rate-limits/+page.svelte
+│   │   ├── captcha/+page.svelte
+│   │   ├── honeypot/+page.svelte
+│   │   └── ai-budget/+page.svelte
+│   ├── notifications/
+│   │   ├── send/+page.svelte
+│   │   ├── channels/+page.svelte
+│   │   └── pipeline/+page.svelte
 │   ├── i18n/+page.svelte
 │   ├── jobs/+page.svelte
 │   ├── viz/
@@ -794,7 +979,11 @@ src/routes/
 │   └── 3d/
 │       ├── +page.svelte
 │       ├── static-scene/+page.svelte
-│       └── animated-scene/+page.svelte
+│       ├── animated-scene/+page.svelte
+│       ├── customize/
+│       │   ├── +page.svelte
+│       │   └── [model]/+page.svelte
+│       └── [model]/+page.svelte
 │
 ├── app/
 │   ├── +layout.server.ts             # Auth guard
@@ -802,16 +991,18 @@ src/routes/
 │   ├── settings/+page.svelte
 │   └── account/
 │       ├── +page.svelte
-│       ├── export/+server.ts
-│       └── delete/+page.svelte
+│       ├── data/+page.svelte         # View stored data
+│       └── security/+page.svelte     # Sessions, passkeys, deletion
 │
 ├── auth/
 │   ├── login/+page.svelte
 │   └── verify/+page.svelte
 │
 └── docs/
-    ├── +layout.ts                    # prerender = true
-    └── [slug]/+page.svelte           # Markdown renderer
+    ├── blueprint/[...slug]/+page.svelte    # Markdown renderer (+page.server.ts)
+    ├── foundation/[slug]/+page.svelte
+    ├── programming/[slug]/+page.svelte
+    └── stack/[slug]/+page.svelte
 ```
 
 ---
@@ -827,7 +1018,7 @@ src/routes/
 │ Showcase           │
 ├────────────────────┤
 │ Shell              │
-│   └ Theme          │
+│   └ Style          │
 │   └ Sidebar        │
 │   └ Modals         │
 │   └ Toasts         │
@@ -840,12 +1031,20 @@ src/routes/
 │   └ Typography     │
 │   └ Layouts        │
 │   └ Tokens         │
-│   └ Panes          │
+│   └ Menus          │
+│   └ Tables         │
+│   └ Workbench      │
+│   └ Splits         │
 │ Forms              │
+│   └ Auth           │
 │   └ Basics         │
 │   └ Validation     │
 │   └ Advanced       │
 │   └ Patterns       │
+│ Cycle              │
+│   └ API            │
+│   └ Form           │
+│   └ AI             │
 │ DB                 │
 │   └ Relational     │
 │   └ Graph          │
@@ -853,9 +1052,23 @@ src/routes/
 │   └ Cache          │
 │ AI                 │
 │   └ Chat           │
-│   └ Streaming      │
+│   └ Image Metadata │
 │   └ Retrieval      │
+│ Toolkits           │
+│   └ Image Kit      │
 │ Auth               │
+│   └ Authn          │
+│   └ Authz          │
+│   └ Users          │
+│ Admin              │
+│   └ Powers         │
+│   └ Cookies        │
+│   └ Data           │
+│   └ Retention      │
+│   └ Rights         │
+│ Analytics          │
+│ Abuse              │
+│ Notifications      │
 │ i18n               │
 │ Jobs               │
 │ Viz                │
@@ -869,7 +1082,7 @@ src/routes/
 
 | Area | Routes | Primary Tests |
 |------|--------|---------------|
-| Showcase | 50+ pages | All stack features |
+| Showcase | 90+ pages | All stack features |
 | Protected | 4 pages | Sessions, GDPR |
 | Auth | 2 pages | Sessions, forms |
 | Docs | Dynamic | Prerendering, markdown |

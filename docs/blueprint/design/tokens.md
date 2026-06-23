@@ -74,11 +74,51 @@ export const fontSize = {
 } as const;
 
 // ═══════════════════════════════════════════════════════════════
-// FLUID SPACING
+// ICON SIZES
 // ═══════════════════════════════════════════════════════════════
 
-/** Fluid spacing for margins, padding, gaps */
-export const spacing = {
+/** Icon sizes — use text-icon-* classes (merged into fontSize in uno.config). */
+export const iconSize = {
+  'icon-sm': '1rem',    // 16px - Inline text, small buttons, dense UI
+  'icon-md': '1.25rem', // 20px - Form inputs, triggers, medium buttons
+  'icon-lg': '1.5rem',  // 24px - Navigation, standard buttons (most common)
+  'icon-xl': '2rem',    // 32px - Section headers, decorative
+} as const;
+
+// ═══════════════════════════════════════════════════════════════
+// FONT FAMILY
+// ═══════════════════════════════════════════════════════════════
+
+/** Font family tokens (CSS variable refs, set by data-typography attribute) */
+export const fontFamily = {
+  heading: 'var(--font-heading, system-ui, sans-serif)',
+  body: 'var(--font-body, system-ui, sans-serif)',
+  mono: 'var(--font-mono, ui-monospace, monospace)',
+} as const;
+
+// ═══════════════════════════════════════════════════════════════
+// FIXED & FLUID SPACING
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Fixed spacing scale (keys 0-8). These REPLACE UnoCSS defaults — values
+ * differ from Tailwind (e.g. 1=2px, 7=32px, 8=48px). Use for component
+ * padding, gaps, margins.
+ */
+export const fixedSpacing = {
+  '0': '0',
+  '1': '0.125rem', // 2px  - Hairline
+  '2': '0.25rem',  // 4px  - Tight
+  '3': '0.5rem',   // 8px  - Input padding, dense lists
+  '4': '0.75rem',  // 12px - Button horizontal padding
+  '5': '1rem',     // 16px - Default padding, form gaps
+  '6': '1.5rem',   // 24px - Comfortable card padding
+  '7': '2rem',     // 32px - Section spacing
+  '8': '3rem',     // 48px - Large sections
+} as const;
+
+/** Fluid spacing for page-level layout (scales with viewport) */
+export const fluidSpacing = {
   'fluid-1': 'clamp(0.25rem, 0.2rem + 0.25vw, 0.5rem)',   // Tight
   'fluid-2': 'clamp(0.5rem, 0.4rem + 0.5vw, 1rem)',       // Small
   'fluid-3': 'clamp(0.75rem, 0.5rem + 1vw, 1.5rem)',      // Medium
@@ -88,6 +128,9 @@ export const spacing = {
   'fluid-7': 'clamp(3rem, 2rem + 4vw, 6rem)',             // Section
   'fluid-8': 'clamp(4rem, 3rem + 5vw, 8rem)',             // Hero
 } as const;
+
+/** Combined spacing (fixed + fluid) for UnoCSS theme */
+export const spacing = { ...fixedSpacing, ...fluidSpacing } as const;
 
 // ═══════════════════════════════════════════════════════════════
 // COLORS
@@ -107,13 +150,31 @@ export const spacing = {
 export const colors = {
   bg: 'var(--color-bg)',
   fg: 'var(--color-fg)',
+  body: 'var(--color-body)',
+  heading: 'var(--color-heading)',
   muted: 'var(--color-muted)',
   border: 'var(--color-border)',
   subtle: 'var(--color-subtle)',
   primary: {
     DEFAULT: 'var(--color-primary)',
     hover: 'var(--color-primary-hover)',
-    light: 'var(--color-primary-light)',
+    container: 'var(--color-primary-container)',
+    dim: 'var(--color-primary-dim)',
+  },
+  'on-primary': {
+    DEFAULT: 'var(--color-on-primary)',
+    container: 'var(--color-on-primary-container)',
+  },
+  secondary: { DEFAULT: 'var(--color-secondary)' },
+  'on-secondary': 'var(--color-on-secondary)',
+  accent: {
+    DEFAULT: 'var(--color-accent)',
+    hover: 'var(--color-accent-hover)',
+    container: 'var(--color-accent-container)',
+  },
+  'on-accent': {
+    DEFAULT: 'var(--color-on-accent)',
+    container: 'var(--color-on-accent-container)',
   },
   success: {
     DEFAULT: 'var(--color-success)',
@@ -129,8 +190,22 @@ export const colors = {
     light: 'var(--color-error-light)',
     border: 'var(--color-error-border)',
   },
+  info: {
+    DEFAULT: 'var(--color-info)',
+    light: 'var(--color-info-light)',
+  },
   input: {
+    DEFAULT: 'var(--color-input)',
     border: 'var(--color-input-border)',
+  },
+  // Semi-transparent variants (derived via color-mix in app.css)
+  bgAlpha: 'var(--color-bg-alpha)',
+  fgAlpha: 'var(--color-fg-alpha)',
+  // Elevation surfaces (higher number = higher elevation)
+  surface: {
+    1: 'var(--surface-1)', // Raised - cards, panels
+    2: 'var(--surface-2)', // Overlay - dropdowns, popovers
+    3: 'var(--surface-3)', // Modal - highest elevation
   },
 } as const;
 
@@ -195,12 +270,13 @@ export const easing = {
 // RADII & SHADOWS
 // ═══════════════════════════════════════════════════════════════
 
+/** Border radius tokens (CSS variable refs, set by data-radius attribute) */
 export const borderRadius = {
-  sm: '0.25rem',
-  md: '0.375rem',
-  lg: '0.5rem',
-  xl: '0.75rem',
-  full: '9999px',
+  sm: 'var(--radius-sm)',
+  md: 'var(--radius-md)',
+  lg: 'var(--radius-lg)',
+  xl: 'var(--radius-xl)',
+  full: 'var(--radius-full)',
 } as const;
 
 export const boxShadow = {
@@ -217,43 +293,50 @@ export const boxShadow = {
 
 ```typescript
 // uno.config.ts
-import { defineConfig, presetUno } from 'unocss';
+import transformerDirectives from '@unocss/transformer-directives';
+import { defineConfig, presetIcons, presetUno } from 'unocss';
 import {
-  breakpoints,
-  containers,
-  fontSize,
-  spacing,
-  colors,
-  zIndex,
-  duration,
+  borderRadius, breakpoints, colors, containers,
+  fontFamily, fontSize, iconSize, spacing, zIndex,
 } from './src/lib/styles/tokens';
 
 export default defineConfig({
-  presets: [presetUno()],
+  presets: [
+    presetUno(),
+    presetIcons({ collections: { lucide: /* lazy import */ }, scale: 1.2 }),
+  ],
+  transformers: [transformerDirectives()],
 
   theme: {
     breakpoints,
     containers,
-    fontSize,
+    fontSize: { ...fontSize, ...iconSize }, // icon-* sizes become text-icon-* utilities
     spacing,
+    fontFamily,
     colors,
+    borderRadius,
     zIndex,
     // Duration requires custom rule or CSS variables
   },
 
   // Custom rules for duration utilities
   rules: [
-    ['duration-instant', { 'transition-duration': 'var(--duration-instant, 0ms)' }],
     ['duration-fast', { 'transition-duration': 'var(--duration-fast, 150ms)' }],
-    ['duration-normal', { 'transition-duration': 'var(--duration-normal, 250ms)' }],
-    ['duration-slow', { 'transition-duration': 'var(--duration-slow, 400ms)' }],
-    ['duration-slower', { 'transition-duration': 'var(--duration-slower, 600ms)' }],
+    // ...instant / normal / slow / slower
   ],
 
-  // Safelist commonly used dynamic classes
+  // Decorative background utilities
+  shortcuts: {
+    'bg-dots': 'bg-[radial-gradient(...)] bg-[length:20px_20px]',
+    'bg-grid': 'bg-[linear-gradient(...)] bg-[length:30px_30px]',
+  },
+
+  // Safelist commonly used dynamic classes (text-*, spacing, and i-lucide-* icons)
   safelist: [
     ...Object.keys(fontSize).map(k => `text-${k}`),
+    ...Object.keys(iconSize).map(k => `text-${k}`),
     ...Object.keys(spacing).flatMap(k => [`p-${k}`, `m-${k}`, `gap-${k}`]),
+    // plus the full list of dynamically-rendered i-lucide-* icon classes
   ],
 });
 ```
@@ -262,22 +345,22 @@ export default defineConfig({
 
 ## CSS Custom Properties
 
-Global CSS variables defined in `app.css`, using values from tokens:
+Global CSS variables defined in `app.css`. All colors are **OKLCH**, not hex. Values below are illustrative — see `app.css` for the full set (accent, secondary, info, surfaces, chart series, etc.):
 
 ```css
 /* src/app.css */
 
 :root {
-  /* Colors - Light mode */
-  --color-bg: #ffffff;
-  --color-fg: #111827;
-  --color-muted: #6b7280;
-  --color-border: #e5e7eb;
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-success: #16a34a;
-  --color-warning: #f59e0b;
-  --color-error: #dc2626;
+  /* Colors - Light mode (OKLCH: lightness chroma hue) */
+  --color-bg: oklch(0.88 0.015 240);
+  --color-fg: oklch(0.35 0.06 210);
+  --color-muted: oklch(0.45 0.02 260);
+  --color-border: oklch(1 0 0);
+  --color-primary: oklch(0.42 0.27 290);
+  --color-primary-hover: oklch(0.52 0.16 60); /* warm gold, not a blue */
+  --color-success: oklch(0.55 0.16 150);
+  --color-warning: oklch(0.6 0.16 70);
+  --color-error: oklch(0.53 0.21 25);
 
   /* Layout */
   --sidebar-rail-width: 56px;
@@ -295,15 +378,15 @@ Global CSS variables defined in `app.css`, using values from tokens:
 
 /* Dark mode */
 .dark {
-  --color-bg: #111827;
-  --color-fg: #f3f4f6;
-  --color-muted: #9ca3af;
-  --color-border: #374151;
-  --color-primary: #60a5fa;
-  --color-primary-hover: #93c5fd;
-  --color-success: #22c55e;
-  --color-warning: #fbbf24;
-  --color-error: #f87171;
+  --color-bg: oklch(0.17 0.01 250);
+  --color-fg: oklch(0.78 0.1 175);
+  --color-muted: oklch(0.78 0.015 240);
+  --color-border: oklch(0.32 0.015 250);
+  --color-primary: oklch(0.58 0.24 290);
+  --color-primary-hover: oklch(0.93 0.1 95);
+  --color-success: oklch(0.62 0.17 150);
+  --color-warning: oklch(0.8 0.15 85);
+  --color-error: oklch(0.6 0.2 25);
 }
 
 /* Respect reduced motion preference */

@@ -1,6 +1,8 @@
 # AI Testing Infrastructure
 
-The project has no test infrastructure yet. This document defines what to build, why, and how.
+> **Status: built.** The Vitest + PGlite harness described here exists and works (`vitest.config.ts`, the `createTestDb()` helper in `src/lib/server/test/db.ts`, hundreds of `*.test.ts` files, in-process PGlite Postgres). Schema setup uses `pushSchema` from `drizzle-kit/api` — no migration files, no `drizzle/` directory, no schema-gen step. One piece remains **not built**: the root `AGENTS.md` file (and any CI). Treat that as plan; everything else reflects current code.
+
+This document describes the testing approach — what exists, why, and how.
 
 The target is an AI agent testing loop: implement → run tests → parse output → fix failures → repeat. Claude Code does this natively. The infrastructure's job is to give the agent clear, structured feedback so that loop terminates quickly.
 
@@ -75,7 +77,7 @@ src/
       errors/
         index.ts
         index.test.ts              ← unit test
-      retrieval/
+      rawrag/
         rank.ts
         rank.test.ts               ← unit test (pure logic, highest value)
         chunk.ts
@@ -88,9 +90,8 @@ src/
         service.ts
         service.test.ts            ← integration test (PGlite)
       test/                        ← shared test utilities (not a test runner target)
-        db.ts                      ← PGlite setup + migrate from Drizzle migrations
+        db.ts                      ← PGlite setup + schema push (drizzle-kit/api)
         fixtures.ts                ← test data factories
-        helpers.ts                 ← common assertions
     components/
       primitives/
         button/
@@ -106,57 +107,74 @@ src/
 
 PGlite runs WASM Postgres in-process inside the `v10r` container. No external DB, no network, no shared state. Each test file gets its own database instance — parallel-safe by default. PGlite installs as an npm devDependency into the named `node_modules` volume — no host installation needed. Target version: **0.3.14+** (PostgreSQL 17.4 based).
 
-**Schema sync via `migrate`:** Use the documented `migrate` function from `drizzle-orm/pglite/migrator` with generated SQL migration files. This is the stable, officially supported path. Migration files are generated transiently by `bun run db:test-schema` (which runs `drizzle-kit generate`) into `drizzle/`. The `drizzle/` folder is gitignored — the project uses a push-only workflow for the live Neon database (`drizzle-kit push`), so migration files exist only as a test artifact.
+**Schema sync via `pushSchema`:** The harness calls `pushSchema(schema, db)` from `drizzle-kit/api`. This compiles the live TypeScript schema into DDL in-process — no migration files, no `drizzle/` directory, no codegen step. It matches the project's push-only workflow (`drizzle-kit push` against the live Neon DB), so test and production schemas come from the same source with nothing to regenerate.
 
-**Why not `pushSchema`:** The `pushSchema` function from `drizzle-kit/api` is undocumented and has two confirmed bugs that affect this project directly:
-- **Interactive prompt bug** ([drizzle-orm#4531](https://github.com/drizzle-team/drizzle-orm/issues/4531)) — hangs waiting for user input when adding unique constraints or renaming columns. Manifests as a silent test timeout, not a clear error.
-- **`pgSchema` handling** ([drizzle-orm#1181](https://github.com/drizzle-team/drizzle-orm/issues/1181), [drizzle-orm#4796](https://github.com/drizzle-team/drizzle-orm/issues/4796)) — zero confirmed examples working with non-`public` schemas. This project uses 6 custom schemas with 12 schema-scoped enums and 9 cross-schema foreign keys — the maximum risk surface.
+`pushSchema` returns `{ statementsToExecute }`. The harness executes those statements manually rather than calling the bundled `apply` helper — `apply` fails on this project's unqualified enum references. The execution order matters:
 
-**Dev workflow stays unchanged:** The project uses `drizzle-kit push` exclusively for the live Neon database. Migration files are generated separately for the test harness via `bun run db:test-schema`. The `drizzle/` folder is gitignored — it exists transiently for test runs only. After schema changes, regenerate with `db:test-schema` before running tests.
+1. Run every `CREATE SCHEMA` statement first.
+2. Set `search_path` so unqualified enum references resolve.
+3. Run the remaining DDL.
+
+This project defines 14 custom PostgreSQL schemas (`admin`, `ai`, `analytics`, `app`, `auth`, `blog`, `dbops`, `desk`, `feedback`, `image`, `jobs`, `notifications`, `rag`, `showcase`) plus `public`, with schema-scoped enums and cross-schema foreign keys. The schema-first + `search_path` ordering is what makes those resolve under PGlite, which starts with only `public`. The `search_path` set in `createTestDb()` lists 11 of the 14 — it omits `dbops`, `feedback`, and `image` (a known gap; those three define enums too).
+
+**Rejected: `migrate` with generated files.** The `migrate` function from `drizzle-orm/pglite/migrator` needs SQL migration files. The project is push-only — there is no `drizzle/` directory and no `drizzle-kit generate` step. Adding one solely for tests would split the schema source and create drift between the test schema and the live DB. `pushSchema` reads the same TypeScript schema the app uses, so no sync step exists to forget.
 
 **Driver difference:** Production uses `drizzle-orm/neon-serverless`. Tests use `drizzle-orm/pglite`. Same query API, different connection. Swap via `vi.mock`.
 
-**pgvector:** PGlite supports pgvector via `@electric-sql/pglite/vector`. Must be loaded explicitly via the `extensions` option — without it, any column using `vector(1536)` fails with "type vector does not exist." The `CREATE EXTENSION` must run before migrations that reference the `vector` type.
+**pgvector:** PGlite supports pgvector via `@electric-sql/pglite/vector`. Must be loaded explicitly via the `extensions` option — without it, any column using `vector(1536)` fails with "type vector does not exist." The `CREATE EXTENSION` must run before any DDL that references the `vector` type.
 
-**Custom schemas:** This project uses 6 non-default PostgreSQL schemas (`auth`, `showcase`, `rag`, `ai`, `jobs`, `notifications`). PGlite starts with only `public`. The `migrate` function handles these correctly because generated migration files contain explicit `CREATE SCHEMA IF NOT EXISTS` statements with proper ordering.
+**Custom schemas:** PGlite starts with only `public`. `pushSchema` emits `CREATE SCHEMA` statements for every custom schema; the harness runs them first (before any table DDL), then sets `search_path` across them (currently 11 of the 14 — `dbops`, `feedback`, `image` omitted) so unqualified enum references resolve.
 
-**Cross-schema foreign keys:** Almost every schema references `auth.user.id` (9 cross-schema FKs total). The `auth` schema must always be created first. Migration files encode this ordering automatically. Schemas cannot be loaded in isolation — load them incrementally:
+**Cross-schema foreign keys:** Almost every schema references `auth.user.id`. PGlite tolerates forward references within a single `exec` batch, but the `auth` schema and its tables must exist before dependent tables are created — `pushSchema` orders the returned statements so they do. Schemas cannot be loaded in true isolation; when bootstrapping new test coverage, expand incrementally:
 
-| Phase | Schemas | Tables | Why |
-|-------|---------|--------|-----|
-| First | `jobs` | 1 | Standalone, zero FKs — validates the PGlite + migration pipeline |
-| Then | `auth` + `notifications` | 10 | Cross-schema FKs, real business queries |
-| Then | `auth` + `ai` | 6 | Another cross-schema domain |
-| Last | `auth` + `rag` | 7 | Adds pgvector, custom types, post-migration SQL |
+| Phase | Schemas | Why |
+|-------|---------|-----|
+| First | `jobs` | Standalone, zero cross-schema FKs — validates the PGlite + `pushSchema` pipeline |
+| Then | `auth` + `notifications` | Cross-schema FKs, real business queries |
+| Then | `auth` + `ai` | Another cross-schema domain |
+| Last | `auth` + `rag` | Adds pgvector, custom types, post-push SQL |
 
-**Out-of-schema DDL:** `src/lib/server/db/rag/setup.ts` contains raw SQL for a generated tsvector column (`search_vector`), an HNSW index (`chunk_embedding_hnsw_idx`), a GIN index on `search_vector`, and a seed row in `embedding_model`. These live outside Drizzle schema definitions and are **not handled by any schema sync mechanism**. They require separate `client.exec(sql)` after migrations — only when testing RAG-specific queries.
+**Out-of-schema DDL:** `src/lib/server/db/rag/setup.ts` contains raw SQL for a generated tsvector column (`search_vector`), an HNSW index (`chunk_embedding_hnsw_idx`), a GIN index on `search_vector`, and a seed row in `embedding_model`. These live outside Drizzle schema definitions and are **not emitted by `pushSchema`**. They require a separate `client.exec(sql)` after the push — only when testing RAG-specific queries.
 
 **Index support:** PGlite supports GiST (for range types), GIN (for tsvector/jsonb), and B-tree indexes natively — no extensions needed. HNSW indexes (pgvector) are theoretically supported but unverified in WASM at scale — functional correctness is expected, not performance parity with native Postgres.
 
-**Snapshot/restore (future optimization):** PGlite's `dumpDataDir`/`loadDataDir` API can cut test init time from ~4.8s to ~1.3s by creating the schema once and restoring per suite instead of re-running migrations. The API is documented and stable, but the pattern is experimental at scale. Consider this if the test suite grows slow.
+**Snapshot/restore (future optimization):** PGlite's `dumpDataDir`/`loadDataDir` API can cut test init time by creating the schema once and restoring per suite instead of re-running the push. The API is documented and stable, but the pattern is experimental at scale. Consider this if the test suite grows slow.
+
+The real helper lives at `src/lib/server/test/db.ts`:
 
 ```typescript
 // src/lib/server/test/db.ts
 import { PGlite } from '@electric-sql/pglite';
 import { vector } from '@electric-sql/pglite/vector';
+import { pushSchema } from 'drizzle-kit/api';
 import { drizzle } from 'drizzle-orm/pglite';
-import { migrate } from 'drizzle-orm/pglite/migrator';
 import * as schema from '$lib/server/db/schema';
 
 export async function createTestDb() {
   const client = new PGlite({ extensions: { vector } });
   await client.exec('CREATE EXTENSION IF NOT EXISTS vector');
-
   const db = drizzle(client, { schema });
 
-  // Apply migrations from generated SQL files — documented, stable API
-  await migrate(db, { migrationsFolder: './drizzle' });
+  // Get DDL from drizzle-kit push. Don't call apply — it fails on unqualified enums.
+  const { statementsToExecute } = await pushSchema(schema, db as any);
+
+  // Create schemas first, then set search_path, then run the rest.
+  const schemaStmts = statementsToExecute.filter((s) => s.startsWith('CREATE SCHEMA'));
+  const otherStmts = statementsToExecute.filter((s) => !s.startsWith('CREATE SCHEMA'));
+
+  for (const stmt of schemaStmts) await client.exec(stmt);
+
+  await client.exec(
+    'SET search_path TO public, admin, ai, analytics, app, auth, blog, desk, jobs, notifications, rag, showcase',
+  );
+
+  for (const stmt of otherStmts) await client.exec(stmt);
 
   return { db, client };
 }
 ```
 
-**Fallback if `migrate` hits issues:** Use `drizzle-kit export` (newly documented) to output DDL SQL, capture to a `schema.sql` file, and `client.exec(sql)` directly. This eliminates all dependency on internal APIs.
+The `db as any` cast is needed because PGlite's `db` type doesn't match `pushSchema`'s strict `PgDatabase` generic. Setting `search_path` before the table DDL is the load-bearing step — without it, the schema-scoped enums in unqualified column definitions fail to resolve.
 
 **Inject into tests via `vi.mock`:**
 
@@ -215,30 +233,35 @@ Factories produce valid test objects with sensible defaults. Override only what 
 
 ```typescript
 // src/lib/server/test/fixtures.ts
-import type { User } from '$lib/server/db/schema';
+import type { InferInsertModel } from 'drizzle-orm';
+import type { user } from '$lib/server/db/schema/auth/_better-auth';
+import type { notifications } from '$lib/server/db/schema/notifications/notifications';
 
-export function makeUser(overrides?: Partial<User>): User {
+type UserInsert = InferInsertModel<typeof user>;
+type NotificationInsert = InferInsertModel<typeof notifications>;
+
+export function makeUser(overrides?: Partial<UserInsert>): UserInsert {
+  const id = overrides?.id ?? crypto.randomUUID();
   return {
-    id: crypto.randomUUID(),
-    email: `test-${crypto.randomUUID()}@example.com`,
-    name: 'Test User',
+    id,
+    name: `Test User ${id.slice(0, 6)}`,
+    email: `${id.slice(0, 8)}@test.local`,
+    emailVerified: false,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
   };
 }
 
-export function makeNotification(overrides?: Partial<Notification>): Notification {
+export function makeNotification(overrides?: Partial<NotificationInsert>): NotificationInsert {
   return {
     id: crypto.randomUUID(),
-    userId: crypto.randomUUID(),
+    userId: 'must-be-set',
     type: 'system',
-    title: 'Test notification',
-    body: null,
+    messageKey: 'notif_system',
+    messageParams: {},
     isRead: false,
     createdAt: new Date(),
-    readAt: null,
-    archivedAt: null,
     ...overrides,
   };
 }
@@ -357,18 +380,19 @@ import { sveltekit } from '@sveltejs/kit/vite';
 export default defineConfig({
   plugins: [sveltekit()],
   test: {
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'src/**/*.svelte.test.ts'],
     environment: 'node',
     globals: true,
     testTimeout: 15_000,
     setupFiles: ['src/lib/server/test/vitest.setup.ts'],
+    passWithNoTests: true,
   },
 });
 ```
 
 The `sveltekit()` plugin resolves all SvelteKit virtual modules — `$lib/*`, `$env/*`, `$app/*`. Without it, every server-side test fails on import.
 
-**`testTimeout: 15_000`:** PGlite WASM startup + migration apply can take 3–5 seconds per test file. The default 5000ms timeout causes false failures. Set higher globally, keep individual tests fast.
+**`testTimeout: 15_000`:** PGlite WASM startup + schema push can take 3–5 seconds per test file. The default 5000ms timeout causes false failures. Set higher globally, keep individual tests fast.
 
 **`setupFiles`:** Runs once per worker (per test file). Used for global mocking.
 
@@ -390,8 +414,14 @@ globalThis.__v10r_delivery_scheduler = 'test';
 // no SvelteKit adapter calls server.init(). Redirect to process.env
 // so that values from .env.test are available.
 vi.mock('$env/dynamic/private', () => ({
-  env: process.env,
+  env: new Proxy({}, { get: (_target, prop: string) => process.env[prop] }),
 }));
+
+// $env/static/private — same redirect, for modules that read it at load time
+vi.mock(
+  '$env/static/private',
+  () => new Proxy({}, { get: (_target, prop: string) => process.env[prop] }),
+);
 
 // $app/environment — needed if any import chain touches schedulers or SSR guards
 vi.mock('$app/environment', () => ({
@@ -435,15 +465,14 @@ NEO4J_PASSWORD=test
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:test-schema": "bunx drizzle-kit generate",
-    "validate": "bun run check && bun biome check . && bun run test"
+    "validate": "bun run check && biome ci . && bun run test && bun run i18n:check-missing && bun run content:check"
   }
 }
 ```
 
 `validate` is the quality gate command. From the host: `podman exec v10r bun run validate`.
 
-`db:test-schema` generates migration SQL files in `drizzle/` from the TypeScript schema definitions. The `drizzle/` folder is gitignored — these files exist only as a test artifact for PGlite's `migrate` function. Run after schema changes to keep test migrations in sync. The live Neon database is managed exclusively via `drizzle-kit push`.
+There is no schema-gen step. `createTestDb()` builds the schema in-process via `pushSchema`, reading the same TypeScript schema the app uses. The live Neon database is managed via `drizzle-kit push` (`db:push`); tests need nothing regenerated after a schema change.
 
 ---
 
@@ -455,7 +484,7 @@ NEO4J_PASSWORD=test
 2. Create `vitest.config.ts` with `sveltekit()` plugin, `testTimeout`, and `setupFiles`
 3. Create `src/lib/server/test/vitest.setup.ts` — global mocks and scheduler sentinels
 4. Create `.env.test` with fake values for `$env/static/private` modules
-5. Add test scripts to `package.json` (`test`, `test:watch`, `db:test-schema`)
+5. Add test scripts to `package.json` (`test`, `test:watch`)
 6. Restart container so deps install: `podman compose down && podman compose up -d`
 7. Ensure `.svelte-kit/` types exist — the `sveltekit()` plugin needs them. The dev server creates them automatically on startup (`svelte-kit sync`). If running tests before the dev server has started, run `podman exec v10r bun run check` first (which triggers `svelte-kit sync`).
 
@@ -513,18 +542,16 @@ Goal: verify the full pipeline works end-to-end. Claude Code (host) runs `podman
 
 1. Add `@electric-sql/pglite` to `devDependencies` in `package.json` (`drizzle-orm` and `drizzle-kit` are already dependencies)
 2. Restart container: `podman compose down && podman compose up -d`
-3. Generate migration files: `podman exec v10r bun run db:test-schema`
-4. Verify migration files exist in `drizzle/` and contain `CREATE SCHEMA IF NOT EXISTS` for all 6 schemas
-5. Create `src/lib/server/test/db.ts` — PGlite setup with `migrate`
-6. Create `src/lib/server/test/fixtures.ts` — data factories
-7. **Validate incrementally** — start with the `jobs` schema (1 table, zero FKs) to prove the pipeline, then `auth` + `notifications` (10 tables, cross-schema FKs) for real business logic
-8. Write first DB test for notification queries
+3. Create `src/lib/server/test/db.ts` — PGlite setup with `pushSchema` (create schemas first, set `search_path`, run the rest)
+4. Create `src/lib/server/test/fixtures.ts` — data factories
+5. **Validate incrementally** — start with the `jobs` schema (standalone, zero cross-schema FKs) to prove the pipeline, then `auth` + `notifications` for real business logic
+6. Write first DB test for notification queries
 
-**Decision tree if `migrate` fails:**
+**If `pushSchema` fails:**
 
-- **Step A**: Check migration file contents — do they include `CREATE SCHEMA IF NOT EXISTS` for each custom schema? If not, add `CREATE SCHEMA` statements to `createTestDb()` before `migrate()`.
-- **Step B**: If migration files reference types that PGlite doesn't support, use `drizzle-kit export` to capture DDL SQL and `client.exec(sql)` directly.
-- **Step C**: As last resort, try `pushSchema` from `drizzle-kit/api` with `createRequire` workaround. Pin `drizzle-kit` to the exact working version.
+- **Enums don't resolve:** confirm `search_path` is set across all custom schemas *before* the table DDL runs, and that `CREATE SCHEMA` statements run first. This is the ordering in `createTestDb()`.
+- **It hangs or errors on `apply`:** don't call the bundled `apply` helper — execute the returned `statementsToExecute` yourself, as the harness does.
+- **Unsupported types under PGlite:** load the needed extension via the `extensions` option (e.g. `vector`) before running DDL that references the type.
 
 ```typescript
 // src/lib/server/db/notifications/queries.test.ts
@@ -573,12 +600,12 @@ Priority order based on codebase analysis (highest value first):
 **Orchestration layer:**
 
 5. `$lib/server/notifications/service.ts` — `NotificationService.send()` coordinates DB insert, SSE push, and external routing. Requires mocking SSE and router in addition to the DB.
-6. `$lib/server/rawrag/index.ts` — 176 lines of pure orchestration over embedding, three retrieval tiers, and ranking. Highly testable with mocked tier functions, no DB needed.
+6. `$lib/server/rawrag/index.ts` — 261 lines of pure orchestration over embedding, three retrieval tiers, and ranking. Highly testable with mocked tier functions, no DB needed.
 
 **Auth and security:**
 
 7. `$lib/server/auth/guards.ts` — `requireAuth`, `requireApiUser`, `requireAdmin`. Takes `App.Locals` as a plain argument — mock the object, assert redirect/error behavior.
-8. `hooks.server.ts` — security middleware (headers, CSRF, auth, rate limiting). **Isolate as a separate concern:** it has side-effect imports (schedulers), Redis connection, and feature logging that must be fully mocked. Mock `auth.api.getSession`, `@upstash/ratelimit`, construct `RequestEvent` objects. 176 lines of critical security logic.
+8. `hooks.server.ts` — security middleware (headers, CSRF, auth, rate limiting). **Isolate as a separate concern:** it has side-effect imports (schedulers), Redis connection, and feature logging that must be fully mocked. Mock `auth.api.getSession`, `@upstash/ratelimit`, construct `RequestEvent` objects. 515 lines of critical security logic.
 
 **Load functions:**
 
@@ -646,7 +673,7 @@ The container must be running (`podman compose up -d`).
 
 **DB isolation:** Use PGlite for any test touching the database.
 Mock the DB module with `vi.mock('$lib/server/db', ...)` — see `src/lib/server/test/db.ts`.
-Schema is applied via `migrate` from `drizzle-orm/pglite/migrator` using generated migration files.
+Schema is built in-process via `pushSchema` from `drizzle-kit/api`. No migration files, no schema-gen step.
 
 **Neo4j:** Mock `cypher()` for all unit and integration tests.
 Only use Test Aura if the test cannot be written any other way.
@@ -654,13 +681,13 @@ Only use Test Aura if the test cannot be written any other way.
 **Factories:** Use `src/lib/server/test/fixtures.ts` for test data.
 Override only what the test cares about.
 
-**Schema changes:** After modifying schema files in `src/lib/server/db/schema/`,
-regenerate test migrations: `podman exec v10r bun run db:test-schema`.
+**Schema changes:** None needed for tests. `createTestDb()` reads the live schema via `pushSchema`,
+so test schemas track `src/lib/server/db/schema/` automatically — no regeneration step.
 
 ## Boundaries
 
 - **Never** run commands on the host — always `podman exec v10r`
-- **Never** modify migration files in `drizzle/` by hand — they are generated from schema definitions
+- **Never** add migration files or a `drizzle/` directory for tests — the project is push-only; the harness builds schema in-process via `pushSchema`
 - **Never** commit `.env` or `.env.local` (`.env.test` is safe to commit — it contains only fake values)
 - **Never** delete or skip a failing test — fix the code or fix the test
 - **Never** use `bun test` as the test runner — use `vitest` only
@@ -677,14 +704,14 @@ regenerate test migrations: `podman exec v10r bun run db:test-schema`.
 | `vi.stubEnv()` does not affect `$env` modules | Env var mocking broken | Mock `$env/dynamic/private` in `vitest.setup.ts` ([sveltejs/kit#9564](https://github.com/sveltejs/kit/issues/9564)) |
 | `$lib/server/auth` throws if `BETTER_AUTH_SECRET` < 32 chars | Module load crash in tests | `.env.test` with a 32+ char fake secret |
 | Job schedulers start on import of `hooks.server.ts` | Real `setInterval` loops in tests | `globalThis.__v10r_scheduler = 'test'` sentinel in setup file |
-| RAG setup SQL lives outside Drizzle schema | Migrations don't create tsvector, HNSW, GIN | Separate `client.exec(sql)` post-migration for RAG tests only |
-| `drizzle-kit` v1 beta breaking changes | Migration generation may change | Pin `drizzle-kit` to exact working version |
+| RAG setup SQL lives outside Drizzle schema | `pushSchema` doesn't create tsvector, HNSW, GIN | Separate `client.exec(sql)` after the push, for RAG tests only |
+| `pushSchema` `apply` helper fails on unqualified enums | Schema setup throws | Execute the returned `statementsToExecute` manually; don't call `apply` |
+| Schema-scoped enums fail to resolve under PGlite | `type ... does not exist` during table DDL | `CREATE SCHEMA` statements first, then `SET search_path` across all custom schemas, then the rest |
 | Stop hook `exit 2` ignored in plugin hooks | Hook doesn't block agent | Use JSON output `{"decision": "block"}` with exit 0 ([claude-code#10412](https://github.com/anthropics/claude-code/issues/10412)) |
 | Stop hook infinite loop | Agent never terminates | Check `stop_hook_active` field in hook input ([claude-code#10205](https://github.com/anthropics/claude-code/issues/10205)) |
 | POSIX `sh` lacks `pipefail` | Pipe to `tail` masks exit codes | Use `bash -c` with `set -o pipefail` |
-| PGlite WASM startup + migrations ~200ms–3s | Default 5s test timeout too short | Set `testTimeout: 15_000` in vitest config |
+| PGlite WASM startup + schema push ~200ms–3s | Default 5s test timeout too short | Set `testTimeout: 15_000` in vitest config |
 | Named `node_modules` volume persists across recreations | Stale packages after removal | Use `podman compose down -v` for clean installs |
-| Better Auth CLI generates `pgTable` not `pgSchema` | Wrong schema namespace in generated migrations | Manual patch needed ([better-auth#6606](https://github.com/better-auth/better-auth/issues/6606)) |
 | Bun test cannot resolve SvelteKit virtual modules | Tests fail on import | Use Vitest only ([oven-sh/bun#5541](https://github.com/oven-sh/bun/issues/5541), [oven-sh/bun#10712](https://github.com/oven-sh/bun/issues/10712)) |
 | PGlite + Bun test: WASM out-of-bounds errors | PGlite crashes under Bun test runner | Use Vitest + Node ([oven-sh/bun#15032](https://github.com/oven-sh/bun/issues/15032)) |
 | Vitest `workspace` field deprecated | Warning in Vitest 3.2+ | Use `projects` field instead |
@@ -693,7 +720,7 @@ regenerate test migrations: `podman exec v10r bun run db:test-schema`.
 
 | Approach | Why rejected |
 |----------|-------------|
-| `pushSchema` from `drizzle-kit/api` | Undocumented; interactive prompt bug ([#4531](https://github.com/drizzle-team/drizzle-orm/issues/4531)) hangs in CI; `pgSchema` support unverified ([#1181](https://github.com/drizzle-team/drizzle-orm/issues/1181), [#4796](https://github.com/drizzle-team/drizzle-orm/issues/4796)). 6 custom schemas + 12 enums + 9 cross-schema FKs = maximum risk surface |
+| `migrate` from `drizzle-orm/pglite/migrator` with generated files | Needs a `drizzle/` directory and a `drizzle-kit generate` step. The project is push-only — adding generated files solely for tests splits the schema source and invites drift. `pushSchema` reads the same TypeScript schema the app uses |
 | Dependency injection for DB swap | 30+ function signatures change, all call sites affected, zero production benefit. Architecture explicitly chose module imports over DI |
 | Testcontainers (real Postgres in Docker) | Container-startup latency per test run, adds Docker daemon dependency inside Podman container. PGlite is faster and sufficient |
 | pg-mem | TypeScript reimplementation of Postgres, not real Postgres. No timezone support, approximate numerics, no Drizzle adapter |
@@ -710,8 +737,7 @@ regenerate test migrations: `podman exec v10r bun run db:test-schema`.
 |--------|-----------|
 | [Svelte Testing](https://svelte.dev/docs/svelte/testing) | Official Vitest + `@sveltejs/kit/vite` setup |
 | [Drizzle + PGlite connect](https://orm.drizzle.team/docs/connect-pglite) | Official Drizzle/PGlite connection docs |
-| [Drizzle migrate docs](https://orm.drizzle.team/docs/drizzle-kit-migrate) | `migrate` function — stable API |
-| [Drizzle-kit export docs](https://orm.drizzle.team/docs/drizzle-kit-export) | DDL SQL export — documented fallback |
+| [Drizzle migrate docs](https://orm.drizzle.team/docs/drizzle-kit-migrate) | `migrate` function — the generated-files path this project rejected (push-only) |
 | [PGlite API](https://pglite.dev/docs/api) | `dumpDataDir`, `loadDataDir`, `exec`, `query`, `close` |
 | [PGlite Extensions](https://pglite.dev/extensions/) | pgvector, btree_gist, pg_trgm extension loading |
 | [PGlite ORM support](https://pglite.dev/docs/orm-support) | Drizzle listed as officially supported |
@@ -725,7 +751,7 @@ regenerate test migrations: `podman exec v10r bun run db:test-schema`.
 | Source | Relevance |
 |--------|-----------|
 | [PGlite + Drizzle tutorial](https://dev.to/benjamindaniel/how-to-test-your-nodejs-postgres-app-using-drizzle-pglite-4fb3) | PGlite test setup with Drizzle ORM (team serving 2.1M users) |
-| [rphlmr/drizzle-vitest-pg](https://github.com/rphlmr/drizzle-vitest-pg) | Reference implementation: Drizzle + PGlite + Vitest (uses `migrate`, not `pushSchema`) |
+| [rphlmr/drizzle-vitest-pg](https://github.com/rphlmr/drizzle-vitest-pg) | Reference implementation: Drizzle + PGlite + Vitest |
 | [1300 tests in 25s benchmark](https://www.dennisokeeffe.com/blog/2025-06-09-isolating-postgresql-tests-with-pglite) | PGlite performance at scale |
 | [PGlite snapshot pattern](https://nikolamilovic.com/posts/fun-sane-node-tdd-postgres-pglite-drizzle-vitest/) | Snapshot/restore for faster tests (experimental) |
 | [sveltest.dev](https://sveltest.dev/docs/getting-started) | vitest-browser-svelte patterns reference |
@@ -736,11 +762,9 @@ regenerate test migrations: `podman exec v10r bun run db:test-schema`.
 |--------|-----------|
 | [sveltejs/kit#9564](https://github.com/sveltejs/kit/issues/9564) | `vi.stubEnv` vs `$env` modules — still open |
 | [sveltejs/kit#8180](https://github.com/sveltejs/kit/issues/8180) | `$env/dynamic/private` in Vitest — resolved |
-| [drizzle-orm#4531](https://github.com/drizzle-team/drizzle-orm/issues/4531) | `pushSchema` interactive prompt bug |
-| [drizzle-orm#1181](https://github.com/drizzle-team/drizzle-orm/issues/1181) | `pgSchema` push silent failure |
-| [drizzle-orm#4796](https://github.com/drizzle-team/drizzle-orm/issues/4796) | `push` generates DROP SCHEMA for custom schemas |
+| [drizzle-orm#4531](https://github.com/drizzle-team/drizzle-orm/issues/4531) | `pushSchema` `apply` prompt behavior — avoided by executing `statementsToExecute` manually |
+| [drizzle-orm#1181](https://github.com/drizzle-team/drizzle-orm/issues/1181) | `pgSchema` push edge cases with custom schemas |
 | [drizzle-orm#4205](https://github.com/drizzle-team/drizzle-orm/issues/4205) | `pushSchema` community usage and gotchas |
-| [drizzle-orm#2532](https://github.com/drizzle-team/drizzle-orm/discussions/2532) | PGlite with `migrate` function — confirmed working |
 | [oven-sh/bun#5541](https://github.com/oven-sh/bun/issues/5541) | Bun test cannot resolve `$app/environment` |
 | [oven-sh/bun#10712](https://github.com/oven-sh/bun/issues/10712) | Bun test cannot handle `$env/dynamic/*` |
 | [oven-sh/bun#15032](https://github.com/oven-sh/bun/issues/15032) | Bun bundler + PGlite WASM errors |

@@ -40,7 +40,7 @@ UI patterns for when there's no data to display. Critical for first-run experien
 ## Component
 
 ```svelte
-<!-- src/lib/components/ui/EmptyState.svelte -->
+<!-- src/lib/components/composites/empty-state/EmptyState.svelte -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
 
@@ -521,16 +521,9 @@ For larger empty states (like dashboard first-run), consider illustrations:
 ## Component Location
 
 ```
-src/lib/components/ui/
-└── EmptyState.svelte
-
-src/lib/components/composites/
-├── dashboard/
-│   └── WelcomeOnboarding.svelte
-├── notifications/
-│   └── NotificationsEmpty.svelte
-└── search/
-    └── SearchNoResults.svelte
+src/lib/components/composites/empty-state/
+├── EmptyState.svelte
+└── index.ts
 ```
 
 ---

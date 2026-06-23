@@ -86,9 +86,9 @@ Stores Discord credentials with OAuth tokens.
 - Partial index on `token_expires_at` WHERE `is_active = true AND token_refresh_failed_at IS NULL` - for refresh job
 
 **Token encryption:**
-- AES-256-GCM with unique 96-bit nonce per encryption
-- Envelope encryption with KMS-backed KEK
-- Storage format: `nonce:ciphertext:tag` (Base64)
+- AES-256-GCM (Web Crypto) with unique 96-bit nonce per encryption
+- Key is a 64-char hex `ENCRYPTION_KEY` env var (raw 32-byte key, no KMS/KEK)
+- Storage format: `nonce:ciphertext` (Base64) — the GCM auth tag is appended to the ciphertext by Web Crypto, so there is no separate `:tag` segment
 
 ---
 
@@ -122,7 +122,7 @@ Audit log for external channel deliveries.
 | `id` | text | PK | `ndl_xxxxx` |
 | `notification_id` | text | FK → notifications, NOT NULL | Parent notification |
 | `channel` | enum | NOT NULL | telegram, discord, email |
-| `status` | enum | NOT NULL, DEFAULT pending | pending, processing, sent, failed, skipped |
+| `status` | enum | NOT NULL, DEFAULT pending | pending, processing, sent, failed, skipped, retrying, dead |
 | `provider_message_id` | text | | External reference for correlation |
 | `error_code` | text | | Provider-specific error code |
 | `error_message` | text | | Human-readable error |
@@ -138,7 +138,9 @@ CREATE TYPE delivery_status AS ENUM (
   'processing',  -- Currently sending
   'sent',        -- Provider accepted
   'failed',      -- Provider rejected (after retries)
-  'skipped'      -- Channel inactive, user setting off
+  'skipped',     -- Channel inactive, user setting off
+  'retrying',    -- Failed, scheduled for another attempt
+  'dead'         -- Exhausted retries, abandoned
 );
 
 CREATE TYPE notification_channel AS ENUM (
@@ -152,6 +154,8 @@ CREATE TYPE notification_channel AS ENUM (
 - `notification_id` - lookup deliveries for a notification
 - Partial index on `(status, created_at)` WHERE `status = 'failed'` - for retry job
 - Partial index on `(status, created_at)` WHERE `status = 'pending'` - for processing
+- Partial index WHERE `status = 'dead'` - for the admin dashboard (`getDeadDeliveries`)
+- `(channel, created_at)` index - channel health stats (`getChannelHealthStats`)
 
 **Retention:**
 - `sent` records: 7 days
@@ -168,17 +172,19 @@ Extend existing table with per-channel toggles. Notification channel configurati
 
 | New Column | Type | Default | Purpose |
 |------------|------|---------|---------|
-| `telegram_mention` | boolean | true | Mentions via Telegram |
+| `telegram_mention` | boolean | false | Mentions via Telegram |
 | `telegram_comment` | boolean | false | Comments via Telegram |
+| `telegram_system` | boolean | false | System via Telegram |
 | `telegram_security` | boolean | true | Security via Telegram |
-| `telegram_system` | boolean | true | System via Telegram |
-| `discord_mention` | boolean | true | Mentions via Discord |
+| `discord_mention` | boolean | false | Mentions via Discord |
 | `discord_comment` | boolean | false | Comments via Discord |
+| `discord_system` | boolean | false | System via Discord |
 | `discord_security` | boolean | true | Security via Discord |
-| `discord_system` | boolean | true | System via Discord |
+
+Email covers all 6 notification types (`mention`, `comment`, `system`, `success`, `security`, `follow`); Telegram and Discord cover only the 4 above.
 
 **Why columns, not junction table?**
-- Fixed set of channels (3) and types (4) = 12 columns
+- Fixed channel/type matrix, stored as flat columns
 - Single row per user, no joins needed
 - Simpler queries: `SELECT telegram_mention FROM notification_settings WHERE user_id = ?`
 - Adding a new type = add columns (migration)
@@ -304,21 +310,21 @@ WHERE used_at IS NULL;
 
 ```sql
 ALTER TABLE notification_settings
-ADD COLUMN telegram_mention BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN telegram_mention BOOLEAN NOT NULL DEFAULT false,
 ADD COLUMN telegram_comment BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN telegram_system BOOLEAN NOT NULL DEFAULT false,
 ADD COLUMN telegram_security BOOLEAN NOT NULL DEFAULT true,
-ADD COLUMN telegram_system BOOLEAN NOT NULL DEFAULT true,
-ADD COLUMN discord_mention BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN discord_mention BOOLEAN NOT NULL DEFAULT false,
 ADD COLUMN discord_comment BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN discord_security BOOLEAN NOT NULL DEFAULT true,
-ADD COLUMN discord_system BOOLEAN NOT NULL DEFAULT true;
+ADD COLUMN discord_system BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN discord_security BOOLEAN NOT NULL DEFAULT true;
 ```
 
 ### Migration 4: Delivery Tracking
 
 ```sql
 CREATE TYPE delivery_status AS ENUM (
-  'pending', 'processing', 'sent', 'failed', 'skipped'
+  'pending', 'processing', 'sent', 'failed', 'skipped', 'retrying', 'dead'
 );
 
 CREATE TYPE notification_channel AS ENUM (
@@ -349,6 +355,13 @@ WHERE status = 'failed';
 CREATE INDEX notification_deliveries_pending_idx
 ON notification_deliveries (status, created_at)
 WHERE status = 'pending';
+
+CREATE INDEX notification_deliveries_dead_idx
+ON notification_deliveries (status, created_at)
+WHERE status = 'dead';
+
+CREATE INDEX notification_deliveries_channel_recent_idx
+ON notification_deliveries (channel, created_at);
 ```
 
 ---

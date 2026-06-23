@@ -1,66 +1,17 @@
 # 3D Web
 
-## What is it?
-
-WebGL-based 3D rendering for interactive visualizations and immersive experiences. Uses Three.js as the rendering engine with optional Svelte wrappers.
-
-## What is it for?
-
-- Product configurators and 3D viewers
-- Data visualization (3D charts, graphs)
-- Interactive scenes and experiences
-- Blender-exported asset rendering
+WebGL 3D rendering via Threlte 8 (`@threlte/core`, `@threlte/extras`) over Three.js. See the `3d` skill for scene/GLTF/physics patterns.
 
 ## Why was it chosen?
 
-| Option | Bundle Size | Svelte Integration | Recommendation |
-|--------|-------------|-------------------|----------------|
-| **Three.js** | ~150KB gzipped | Manual | Production choice |
-| Threlte | +50KB wrapper | Native components | Experimental |
-| Babylon.js | ~300KB | None | Too heavy |
-
-**Three.js advantages:**
-- Industry standard, massive ecosystem
-- Works with Bun runtime (no native dependencies)
-- Mature tree-shaking with granular imports
-- glTF/GLB support (ISO standard format)
-
-**Threlte consideration:**
-- Svelte-native `<T.Mesh>` component syntax
-- Broken with Svelte 5 runes mode (`@threlte/extras` incompatible as of Jan 2025)
-- Recommend vanilla Three.js until Threlte stabilizes
-
-**Bun runtime compatibility:**
-- Three.js: fully compatible
-- Asset processing: Bun-native file ops 2-4x faster than Node.js
-- Bundler: use Vite (Bun bundler has tree-shaking issues with Three.js)
+- **Threlte 8 is the single, required approach** — declarative scenes with Svelte 5 reactivity. Vanilla Three.js is not used (see [3d-integration.md](../../blueprint/3d/3d-integration.md)).
+- Three.js underneath is Bun-compatible (no native deps), with glTF/GLB support and granular tree-shakeable imports. `three` is imported directly only for `AnimationMixer`, `AnimationClip`, and types.
 
 ## Known limitations
 
-**SSR incompatibility:**
-- WebGL requires browser APIs (`window`, `canvas`, `document`)
-- Must disable SSR on 3D pages (`export const ssr = false`)
-- Dynamic imports required (no top-level `import * as THREE`)
-
-**Bundle size:**
-- Three.js is difficult to tree-shake correctly
-- Full library ~600KB, typical app ~150-250KB gzipped
-- Requires granular imports, not namespace imports
-
-**Memory management:**
-- WebGL contexts don't auto-cleanup on component unmount
-- Must manually dispose geometries, materials, textures
-- Context loss handling required for reliability
-
-**Development experience:**
-- HMR limited for WebGL initialization changes (requires full reload)
-- Large textures in mounted volumes slow container HMR
-- Increase container memory to 2GB for 3D development
-
-**Threlte status:**
-- `@threlte/extras` incompatible with Svelte 5 runes mode
-- GitHub issue #1411 (January 2025)
-- Use vanilla Three.js for production
+- **SSR:** WebGL needs browser APIs — disable SSR and prerender once at `showcases/3d/+layout.ts` (`ssr = false`, `prerender = false`) for the whole subtree. With SSR off, top-level static imports of `three`, `@threlte/core`, and `@threlte/extras` are safe; code-splitting comes from keeping scene imports in the route, not from dynamic-importing THREE.
+- **Memory:** in general Three.js, WebGL contexts don't auto-cleanup on unmount and you dispose geometries, materials, and textures by hand. Here, Threlte owns the renderer lifecycle and GPU-resource disposal; the app only manages the `AnimationMixer` lifecycle in a `$effect`. See the `3d` skill for the underlying Three.js details.
+- **Container HMR:** large mounted textures slow HMR; bump container memory to 2GB for 3D work.
 
 ## Related
 

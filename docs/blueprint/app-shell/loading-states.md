@@ -73,7 +73,7 @@ The shell structure loads instantly. Content areas show skeletons until data arr
 ### Skeleton Primitives
 
 ```svelte
-<!-- src/lib/components/ui/skeleton/Skeleton.svelte -->
+<!-- src/lib/components/primitives/skeleton/Skeleton.svelte -->
 <script lang="ts">
   let { class: className = '', ...props } = $props();
 </script>
@@ -185,7 +185,7 @@ Shows during client-side navigation. Positioned at top of viewport.
 ```svelte
 <!-- src/routes/(app)/dashboard/+page.svelte -->
 <script lang="ts">
-  import { SkeletonCard } from '$lib/components/ui/skeleton';
+  import { SkeletonCard } from '$lib/components/primitives/skeleton';
 
   let { data } = $props();
 </script>
@@ -269,7 +269,7 @@ export const load = async ({ locals }) => {
 ## Button Loading States
 
 ```svelte
-<!-- src/lib/components/ui/button/Button.svelte -->
+<!-- src/lib/components/primitives/button/Button.svelte -->
 <script lang="ts">
   let {
     loading = false,
@@ -459,7 +459,7 @@ When loading fails, show actionable error state:
 
 ```
 src/lib/components/
-├── ui/
+├── primitives/
 │   └── skeleton/
 │       ├── Skeleton.svelte
 │       ├── SkeletonText.svelte

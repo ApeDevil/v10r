@@ -39,6 +39,8 @@ Choose based on consistency requirements and complexity tolerance:
 
 ---
 
+> **Neo4j call style.** The snippets below use a generic `getSession()`/`session.run()` driver style for illustration. The shipped graph client has no driver or session — it exposes `cypher(statement, parameters?)` over the HTTP Query API (`$lib/server/graph/index.ts`). Substitute `cypher()` when applying these patterns. The referenced `files` / `outbox` tables and `$lib/server/storage` are also illustrative, not shipped.
+
 ## Pattern 1: Read-Time Validation
 
 Check reference validity when reading. Simplest approach, handles stale refs gracefully.

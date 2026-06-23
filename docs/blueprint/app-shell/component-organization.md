@@ -8,8 +8,8 @@ Rules for organizing components using the **Atomic Design** pattern: atoms → m
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  ATOMS           MOLECULES        ORGANISMS        TEMPLATES    │
-│  primitives/     ui/              composites/      shell/       │
+│  ATOMS           MOLECULES + ORGANISMS            TEMPLATES     │
+│  primitives/     composites/                      shell/        │
 │                                                                 │
 │  ┌───┐           ┌─────────┐      ┌───────────┐   ┌──────────┐ │
 │  │ ○ │  Button   │ ○ Label │      │ Form      │   │ AppShell │ │
@@ -27,9 +27,9 @@ Rules for organizing components using the **Atomic Design** pattern: atoms → m
 
 | Level | Directory | Description | Examples |
 |-------|-----------|-------------|----------|
-| **Atoms** | `primitives/` | Smallest building blocks. Single purpose, no composition. | Button, Input, Badge, Avatar, Icon |
-| **Molecules** | `ui/` | Atoms combined into functional units. Still generic, no business logic. | FormField, Pagination, EmptyState, Skeleton |
-| **Organisms** | `composites/` | Molecules + atoms forming distinct features. May have business logic. | CommandPalette, ProfileForm, NotificationCard |
+| **Atoms** | `primitives/` | Smallest building blocks. Single purpose, no composition. | Button, Input, Badge, Avatar, Skeleton |
+| **Molecules + Organisms** | `composites/` | Atoms combined into functional units, up to feature-scoped components with business logic. | FormField, Pagination, EmptyState, CommandPalette, ProfileForm |
+| **Standalone widgets** | `ui/` | A few widgets that don't fit the primitive/composite split. | ContrastBadge, OklchColorInput |
 | **Templates** | `shell/` | Page-level layout structure. Singletons that define the app skeleton. | AppShell, Sidebar, Footer |
 
 ---
@@ -51,16 +51,18 @@ src/lib/components/
 │   ├── tabs/
 │   ├── tooltip/
 │   ├── popover/
+│   ├── skeleton/
 │   └── table/
-├── ui/                    # Molecules: composed generic patterns
+├── ui/                    # Small home for a few standalone widgets
+│   ├── ContrastBadge.svelte
+│   └── OklchColorInput.svelte
+├── composites/            # Molecules + organisms: composed components
 │   ├── form-field/
 │   ├── pagination/
-│   ├── skeleton/
 │   ├── empty-state/
 │   ├── card/
 │   ├── alert/
-│   └── confirm-dialog/
-├── composites/            # Organisms: feature-scoped components
+│   ├── confirm-dialog/
 │   ├── command-palette/
 │   ├── chatbot/
 │   ├── page-header/
@@ -88,22 +90,14 @@ src/lib/components/
 | **No composition** - Doesn't combine other components | `Select`, `Tooltip` |
 | **Framework wrapper** - Wraps Bits UI or native elements | `Dialog`, `Drawer`, `Tabs` |
 
-### Use `ui/` (Molecules) When:
+### Use `composites/` (Molecules + Organisms) When:
 
 | Criterion | Example |
 |-----------|---------|
 | **Composed of atoms** - Combines 2+ primitives into a unit | `FormField` (Label + Input + Error) |
-| **Generic pattern** - Reusable across many features | `Pagination`, `EmptyState` |
-| **No business logic** - Pure UI composition | `Skeleton`, `Card` |
-| **Layout helper** - Arranges content in a specific way | `Alert`, `ConfirmDialog` |
-
-### Use `composites/` (Organisms) When:
-
-| Criterion | Example |
-|-----------|---------|
+| **Generic pattern** - Reusable across many features | `Pagination`, `EmptyState`, `Card` |
 | **Feature-scoped** - Belongs to a specific domain | `CommandPalette`, `ProfileForm` |
 | **Has business logic** - Contains feature-specific behavior | `NotificationCard`, `ChatMessage` |
-| **Multi-instance** - Can appear multiple times | `SettingsCard`, `SessionCard` |
 | **Modal/overlay** - Opens over content | `CommandPalette`, `Chatbot` |
 
 ### Use `shell/` (Templates) When:
@@ -132,17 +126,20 @@ src/lib/components/shell/
 ├── SidebarNav.svelte         # Navigation container
 ├── SidebarTriggers.svelte    # Quick Search + AI trigger buttons
 ├── NavItem.svelte            # Single nav item (compound)
-├── NavDropdown.svelte        # Dropdown submenu
+├── NavLink.svelte            # Single nav link
+├── NavFlyout.svelte          # Desktop hover flyout submenu
+├── NavAccordion.svelte       # Expand/collapse submenu
 ├── UserMenu.svelte           # User avatar + dropdown
 ├── Footer.svelte             # App footer
-├── ToastContainer.svelte     # Toast notifications renderer
 ├── NavigationProgress.svelte # Page load progress bar
 ├── ShortcutsModal.svelte     # Keyboard shortcuts help
-├── SessionMonitor.svelte     # Session expiry detection
 └── session/
+    ├── SessionMonitor.svelte         # Session expiry detection
     ├── SessionWarningBanner.svelte
     └── SessionExpiryModal.svelte
 ```
+
+`ToastContainer` is re-exported through `shell/index.ts` but lives in `composites/toast/`.
 
 **Key characteristic:** Instantiated once in the root layout.
 
@@ -167,33 +164,29 @@ src/lib/components/primitives/
 ├── tooltip/Tooltip.svelte    # Hover hints
 ├── popover/Popover.svelte    # Click popovers
 ├── table/Table.svelte        # Data tables
-└── combobox/Combobox.svelte  # Searchable select
+├── combobox/Combobox.svelte  # Searchable select
+└── skeleton/
+    ├── Skeleton.svelte       # Loading placeholder
+    ├── SkeletonText.svelte   # Text placeholder
+    ├── SkeletonCard.svelte   # Card placeholder
+    └── SkeletonAvatar.svelte # Avatar placeholder
 ```
 
 **Key characteristic:** Cannot be broken down further. Wrap Bits UI primitives.
 
 ---
 
-## UI Components (Molecules)
+## UI Components
 
-Composed generic patterns:
+A small home for a few standalone widgets that don't fit the primitive/composite split:
 
 ```
 src/lib/components/ui/
-├── form-field/FormField.svelte   # Label + Input + Error
-├── pagination/Pagination.svelte  # Page navigation
-├── skeleton/
-│   ├── Skeleton.svelte           # Loading placeholder
-│   ├── SkeletonText.svelte       # Text placeholder
-│   ├── SkeletonCard.svelte       # Card placeholder
-│   └── SkeletonAvatar.svelte     # Avatar placeholder
-├── empty-state/EmptyState.svelte # No content state
-├── card/Card.svelte              # Content container
-├── alert/Alert.svelte            # Feedback message
-└── confirm-dialog/ConfirmDialog.svelte  # Action confirmation
+├── ContrastBadge.svelte    # WCAG contrast indicator
+└── OklchColorInput.svelte  # OKLCH color picker input
 ```
 
-**Key characteristic:** Combines atoms into reusable units. No business logic.
+The composed molecule layer (form-field, pagination, empty-state, card, alert, confirm-dialog) lives under `composites/`, and the skeleton placeholders live under `primitives/skeleton/`.
 
 ---
 
@@ -203,6 +196,12 @@ Feature-scoped composed components:
 
 ```
 src/lib/components/composites/
+├── form-field/FormField.svelte   # Label + Input + Error
+├── pagination/Pagination.svelte  # Page navigation
+├── empty-state/EmptyState.svelte # No content state
+├── card/Card.svelte              # Content container
+├── alert/Alert.svelte            # Feedback message
+├── confirm-dialog/ConfirmDialog.svelte  # Action confirmation
 ├── command-palette/
 │   ├── CommandPalette.svelte     # Modal + grouped result list
 │   ├── command-palette.ts        # CVA variants
@@ -210,9 +209,10 @@ src/lib/components/composites/
 │   └── index.ts
 ├── chatbot/
 │   ├── Chatbot.svelte            # Modal + chat logic
-│   ├── ChatbotTrigger.svelte     # Sidebar trigger
 │   ├── ChatMessage.svelte        # Message bubble
 │   ├── ChatInput.svelte          # Input + send
+│   ├── PlanCard.svelte           # Plan/proposal card
+│   ├── ToolCallStatus.svelte     # Tool-call status row
 │   └── index.ts
 ├── page-header/
 │   ├── PageHeader.svelte
@@ -252,7 +252,7 @@ src/lib/components/composites/
 | Pattern | Use For | Example |
 |---------|---------|---------|
 | `{Feature}.svelte` | Main component | `CommandPalette.svelte` |
-| `{Feature}Trigger.svelte` | Button/link that opens it | `ChatbotTrigger.svelte` |
+| `{Feature}Triggers.svelte` | Button/link that opens it | `SidebarTriggers.svelte` |
 | `{Feature}Item.svelte` | List item within feature | `NotificationCard.svelte` |
 | `{Feature}Modal.svelte` | Modal variant | `SessionExpiryModal.svelte` |
 | `{Feature}Form.svelte` | Form variant | `ProfileForm.svelte` |
@@ -268,7 +268,7 @@ Each directory exports its public API:
 // src/lib/components/primitives/button/index.ts
 export { default as Button } from './Button.svelte';
 
-// src/lib/components/ui/form-field/index.ts
+// src/lib/components/composites/form-field/index.ts
 export { default as FormField } from './FormField.svelte';
 
 // src/lib/components/composites/command-palette/index.ts
@@ -285,10 +285,8 @@ export type { CommandPaletteItem } from './types';
 // ✅ Good: Import atoms from primitives
 import { Button, Input, Avatar } from '$lib/components/primitives';
 
-// ✅ Good: Import molecules from ui
-import { FormField, Pagination, EmptyState } from '$lib/components/ui';
-
-// ✅ Good: Import organisms from composites
+// ✅ Good: Import molecules and organisms from composites
+import { FormField, Pagination, EmptyState } from '$lib/components/composites';
 import { CommandPalette } from '$lib/components/composites/command-palette';
 
 // ✅ Good: Import templates from shell
@@ -308,15 +306,15 @@ import { Input } from '$lib/components/primitives';  // Use FormField instead fo
 Components can be promoted up the hierarchy as they mature:
 
 ```
-primitives/ → ui/ → composites/
-   (atom)    (molecule)  (organism)
+primitives/ → composites/
+   (atom)    (molecule → organism)
 
-Example: A generic Card starts as a molecule in ui/
-         If it gains feature-specific logic, it becomes an organism
-         and moves to composites/
+Example: A generic Card starts as a molecule in composites/
+         If it gains feature-specific logic, it stays in composites/
+         and grows into an organism
 ```
 
-**Never demote:** Once a component has business logic, don't move it back to `ui/` or `primitives/`.
+**Never demote:** Once a component has business logic, don't move it back to `primitives/`.
 
 ---
 
@@ -326,11 +324,9 @@ Example: A generic Card starts as a molecule in ui/
 - Wrapping a new Bits UI component
 - Creating a new indivisible element
 
-### New ui component (molecule):
-- Combining 2+ atoms into a reusable pattern
-- No feature-specific logic
-
-### New composite directory (organism):
+### New composite directory (molecule or organism):
+- Combining 2+ atoms into a reusable pattern, or
+- A feature-scoped component, when:
 1. **3+ related components** - Group them together
 2. **Shared internal state** - Components share context or stores
 3. **Clear feature boundary** - Components belong to a distinct domain
@@ -345,10 +341,10 @@ Don't create a directory for single components with no relationships.
 
 | Component | Location | Role |
 |-----------|----------|------|
-| `ToastContainer.svelte` | `shell/` | Singleton renderer in root layout |
-| `Toaster.svelte` | `composites/toast/` | Display logic and animations |
+| `ToastContainer.svelte` | `composites/toast/` | Singleton renderer in root layout |
+| `Toaster.svelte` | `composites/toast/` | Alternate display variant |
 
-The shell component (`ToastContainer`) imports and renders the composite (`Toaster`).
+Both live in `composites/toast/`. `shell/index.ts` re-exports `ToastContainer` so the root layout can import it from `$lib/components/shell` — there is no `shell/ToastContainer.svelte` file.
 
 ### Quick Search Trigger
 

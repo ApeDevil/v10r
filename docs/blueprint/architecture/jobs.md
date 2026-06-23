@@ -1,6 +1,6 @@
 # Backend Jobs Architecture
 
-Background work in the application falls into three categories distinguished by **trigger mechanism**, not code structure. The execution, logging, and monitoring are identical — what varies is how and why a job starts.
+Background work in the application falls into two categories distinguished by **trigger mechanism**, not code structure. The execution, logging, and monitoring are identical — what varies is how and why a job starts.
 
 ---
 
@@ -9,12 +9,9 @@ Background work in the application falls into three categories distinguished by 
 | Term | Definition | Input | Example |
 |------|-----------|-------|---------|
 | **Scheduled job** | Runs on a fixed cadence | None | `session-cleanup`, `log-cleanup` |
-| **Reactive job** | Triggered by a system event | Event payload | Welcome email on signup, graph indexing on upload |
-| **Manual job** | Triggered by an admin | Optional parameters | Re-index documents, force token refresh |
+| **Manual job** | Triggered by an admin | None | Force token refresh, re-run a cleanup |
 
-"Reactive" over "event-driven" — less overloaded (avoids confusion with DOM events, event sourcing, message queues).
-
-All three are "jobs." The trigger varies. The job does not.
+Both are "jobs." The trigger varies. The job does not.
 
 ---
 
@@ -25,25 +22,24 @@ All three are "jobs." The trigger varies. The job does not.
                          │       JOB REGISTRY           │
                          │   $lib/server/jobs/index.ts  │
                          │                              │
-                         │  slug, label, schedule,      │
-                         │  trigger type, execute fn    │
+                         │  slug → { execute fn }       │
                          └──────────────┬───────────────┘
                                         │
-              ┌─────────────────────────┼──────────────────────────┐
-              │                         │                          │
-    ┌─────────▼──────────┐   ┌─────────▼──────────┐    ┌─────────▼──────────┐
-    │   SCHEDULED         │   │   REACTIVE          │    │   MANUAL            │
-    │                     │   │                     │    │                     │
-    │  Platform adapter:  │   │  Inngest serve:     │    │  Admin form action: │
-    │  • Vercel Cron      │   │  /api/inngest       │    │  /app/admin/jobs    │
-    │  • setInterval      │   │                     │    │                     │
-    │  • External HTTP    │   │  inngest.send()     │    │  requireAdmin()     │
-    │                     │   │  → step.run()       │    │  → runJob()         │
-    └─────────┬───────────┘   └─────────┬───────────┘    └─────────┬───────────┘
-              │                         │                          │
-              ▼                         ▼                          ▼
+              ┌─────────────────────────┴──────────────────────────┐
+              │                                                     │
+    ┌─────────▼──────────┐                            ┌─────────────▼───────┐
+    │   SCHEDULED         │                            │   MANUAL            │
+    │                     │                            │                     │
+    │  Platform adapter:  │                            │  Admin form action: │
+    │  • Vercel Cron      │                            │  /admin/jobs        │
+    │  • setInterval      │                            │                     │
+    │  • External HTTP    │                            │  requireAdmin()     │
+    │                     │                            │  → runJob()         │
+    └─────────┬───────────┘                            └─────────┬───────────┘
+              │                                                  │
+              ▼                                                  ▼
     ┌─────────────────────────────────────────────────────────────────────────┐
-    │                         runJob() / logJobExecution()                    │
+    │                         runJob()                                        │
     │                    Execution wrapper + job_execution table              │
     └──────────────────────────────────┬──────────────────────────────────────┘
                                        │
@@ -55,24 +51,23 @@ All three are "jobs." The trigger varies. The job does not.
     └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-This extends the multi-client core pattern from `multi-client-core.md`. Reactive jobs via Inngest become the **5th adapter type** alongside form actions, REST API, AI tools, and scheduled jobs.
+This extends the multi-client core pattern from `multi-client-core.md` — scheduled and manual triggers are adapters alongside form actions, REST API, and AI tools.
 
 ---
 
 ## Vendor-Agnostic Scheduling
 
-**Principle: the job registry owns the schedule. Platform config just reads it.**
+**Principle: the registry owns the job. The platform owns the schedule.**
 
-Schedules are defined in TypeScript alongside the job they describe, not in platform-specific config files. This means switching hosting platforms requires zero job code changes.
+The registry maps a slug to an `execute` function — nothing more. Cadence lives in platform config (`vercel.json` crons on Vercel, a flat interval on persistent platforms). Switching hosting platforms requires zero job code changes; only the schedule source moves.
 
 ### How It Works
 
 ```
-Job Registry (source of truth)
-  schedule: '0 3 * * *'
+Job Registry (slug → execute fn)
          │
-         ├── Vercel adapter:     vercel.json crons (derived or manually synced)
-         ├── Persistent adapter: croner library parses schedule, fires at correct time
+         ├── Vercel adapter:     vercel.json crons → GET /api/cron/[job]
+         ├── Persistent adapter: setInterval runs every job on a flat cadence
          └── External adapter:   any HTTP cron service calls /api/cron/[job]
 ```
 
@@ -80,35 +75,43 @@ Job Registry (source of truth)
 
 **Strategy A: Vercel Cron (serverless platforms)**
 
-Vercel sends an HTTP GET to `/api/cron/[job]` on the schedule defined in `vercel.json`. The endpoint validates the bearer token, looks up the job, and calls `runJob()`.
-
-`vercel.json` must be kept in sync with the registry. The registry is authoritative — if they disagree, the registry is correct.
+Vercel sends an HTTP GET to `/api/cron/[job]` on the schedule defined in `vercel.json`. The endpoint validates the bearer token, looks up the job, and calls `runJob()`. Schedules live in `vercel.json` only — the registry has no `schedule` field to read.
 
 ```json
 {
   "crons": [
     { "path": "/api/cron/session-cleanup", "schedule": "0 3 * * *" },
-    { "path": "/api/cron/log-cleanup", "schedule": "0 4 * * 0" }
+    { "path": "/api/cron/log-cleanup", "schedule": "0 4 * * 0" },
+    { "path": "/api/cron/analytics-cleanup", "schedule": "0 2 * * *" },
+    { "path": "/api/cron/analytics-rollup", "schedule": "30 2 * * *" },
+    { "path": "/api/cron/dbops-refresh", "schedule": "0 4 * * *" },
+    { "path": "/api/cron/dbops-reaper", "schedule": "0 5 * * *" }
   ]
 }
 ```
 
 **Strategy B: Persistent scheduler (containers, VPS, Fly, Railway)**
 
-A cron parser reads the `schedule` field from the registry and fires jobs at the correct times. No `vercel.json` needed. No HTTP round-trip — jobs execute in-process.
+`scheduler.ts` runs **every** job on a single flat interval — there is no per-job cron parsing. No `vercel.json` needed. No HTTP round-trip — jobs execute in-process.
 
 ```typescript
 // scheduler.ts — persistent platforms only
-import { Cron } from 'croner';
-
-for (const [slug, job] of Object.entries(jobs)) {
-  if (job.schedule) {
-    new Cron(job.schedule, () => runJob(slug, 'scheduler'));
+function runAll() {
+  for (const slug of Object.keys(jobs)) {
+    runJob(slug, 'scheduler');
   }
+}
+
+if (!building && platform.persistent && !globalThis.__v10r_scheduler) {
+  setTimeout(runAll, JOB_STARTUP_DELAY_MS);
+  const timer = setInterval(runAll, DEFAULT_JOB_INTERVAL_MS); // 3h default
+  timer.unref();
+  globalThis.__v10r_scheduler = timer;
+  process.on('SIGTERM', () => clearInterval(timer));
 }
 ```
 
-This replaces the current flat-interval `setInterval` approach with actual cron expression parsing. The platform detection (`platform.persistent`) gates activation — on Vercel, this code never runs.
+The platform detection (`platform.persistent`) gates activation — on Vercel, this code never runs. `timer.unref()` keeps the interval from blocking process exit; the `SIGTERM` handler clears it on shutdown.
 
 **Strategy C: External HTTP cron (any platform)**
 
@@ -130,10 +133,9 @@ The `/api/cron/[job]` endpoint is already platform-agnostic. Any HTTP client tha
 ```
 src/lib/server/
   jobs/                             ← Scheduled + Manual jobs
-    index.ts                        ← Registry with enriched metadata
+    index.ts                        ← Registry: slug → { execute }
     runner.ts                       ← runJob(slug, trigger) — execute + log
-    log.ts                          ← logJobExecution() — shared logging utility
-    scheduler.ts                    ← Cron-aware scheduler for persistent platforms
+    scheduler.ts                    ← Flat-interval scheduler for persistent platforms
     delivery-scheduler.ts           ← Fast-interval notification delivery
     session-cleanup.ts
     log-cleanup.ts
@@ -141,94 +143,49 @@ src/lib/server/
     notification-delivery.ts
     telegram-token-cleanup.ts
     discord-token-refresh.ts
+    analytics-cleanup.ts
+    analytics-rollup.ts
     grant-request-expiry.ts
-
-  inngest/                          ← Reactive jobs (separate, NOT inside jobs/)
-    client.ts                       ← Inngest client instance
-    functions/                      ← One file per reactive job
-      index.ts                      ← Barrel export
-    index.ts                        ← Exports client + function list
+    dbops-refresh.ts
+    dbops-reaper.ts
 
 src/routes/
   api/
     cron/[job]/+server.ts           ← Vercel cron + external HTTP trigger
-    inngest/+server.ts              ← Inngest serve endpoint
-  app/
+  [[locale=locale]]/
     admin/jobs/                     ← Admin UI for job management
       +page.server.ts               ← List + trigger (form actions)
       +page.svelte
-      [slug]/
-        +page.server.ts             ← Per-job execution history
-        +page.svelte
 ```
-
-### Why Inngest Lives Outside `jobs/`
-
-Inngest functions have a fundamentally different contract:
-
-| | Scheduled/Manual | Reactive (Inngest) |
-|--|-----------------|-------------------|
-| Contract | `() => Promise<number>` | `({ event, step }) => Promise<void>` |
-| Execution | Synchronous invocation | HTTP callback-based durable execution |
-| Retries | Handled by runner | Per-step, managed by Inngest |
-| Input | None or optional params | Typed event payload |
-| Registration | `jobs` registry | Inngest `serve()` function array |
-
-Forcing both into one registry would require a painful union type that benefits nobody. They share the `job_execution` table for unified monitoring — that is the right seam.
 
 ---
 
 ## Job Registry
 
-The registry is the single source of truth for all scheduled and manual jobs.
+The registry is the single source of truth for all scheduled and manual jobs. Each entry maps a slug to an `execute` function returning a result count — no metadata. Cadence lives in `vercel.json`, not here.
 
 ```typescript
 // src/lib/server/jobs/index.ts
 
 export interface Job {
-  /** The work to perform. Returns a result count. */
-  execute: (payload?: unknown) => Promise<number>;
-
-  /** Human-readable name for the admin UI */
-  label: string;
-
-  /** How this job is typically triggered */
-  trigger: 'scheduled' | 'manual';
-
-  /** One-sentence description */
-  description: string;
-
-  /** Cron expression (scheduled jobs only). UTC timezone. */
-  schedule?: string;
+  execute: () => Promise<number>;
 }
 
 export const jobs: Record<string, Job> = {
-  'session-cleanup': {
-    execute: sessionCleanup,
-    label: 'Session Cleanup',
-    trigger: 'scheduled',
-    description: 'Remove expired auth sessions.',
-    schedule: '0 3 * * *',
-  },
-  'log-cleanup': {
-    execute: logCleanup,
-    label: 'Log Cleanup',
-    trigger: 'scheduled',
-    description: 'Delete job execution logs older than retention period.',
-    schedule: '0 4 * * 0',
-  },
-  'grant-request-expiry': {
-    execute: expireOldGrantRequests,
-    label: 'Grant Request Expiry',
-    trigger: 'scheduled',
-    description: 'Expire pending blog-author grant requests older than 14 days.',
-    schedule: '0 2 * * *',
-  },
-  // ...
+  'session-cleanup': { execute: sessionCleanup },
+  'log-cleanup': { execute: logCleanup },
+  'notification-cleanup': { execute: notificationCleanup },
+  'telegram-token-cleanup': { execute: telegramTokenCleanup },
+  'discord-token-refresh': { execute: discordTokenRefresh },
+  'analytics-cleanup': { execute: analyticsCleanup },
+  'analytics-rollup': { execute: analyticsRollup },
+  'grant-request-expiry': { execute: grantRequestExpiry },
+  'dbops-refresh': { execute: dbopsRefresh },
+  'dbops-reaper': { execute: dbopsReaper },
 };
 ```
 
-The `schedule` field uses standard cron syntax (minute, hour, day-of-month, month, day-of-week). All schedules are UTC. The same expression is used by the persistent scheduler (via cron parser) and must match `vercel.json` on Vercel.
+The slug is the only identifier — it keys the registry, the `vercel.json` cron path, and the `job_slug` column in `job_execution`. Which slugs run on a cron, and when, is defined entirely in `vercel.json`.
 
 ---
 
@@ -236,121 +193,24 @@ The `schedule` field uses standard cron syntax (minute, hour, day-of-month, mont
 
 ### The Runner
 
-`runJob(slug, trigger)` wraps any job execution with timing, error capture, and logging. It serves scheduled, manual, and (optionally) Inngest jobs.
+`runJob(slug, trigger)` wraps any job execution with timing, error capture, and logging. It serves scheduled and manual triggers. It returns a `JobResult` object — `{ slug, status, durationMs, resultCount, errorMessage }` — not a bare count.
+
+Logging is inlined in `runJob()` (`runner.ts`): a fire-and-forget `db.insert(jobExecution)` whose failure never masks the job outcome. This is the only logging path — there is no separate logging utility.
 
 The runner writes to `jobs.job_execution` — an immutable event log:
 
 ```
 jobs.job_execution
-├── job_slug        text        ← registry slug or Inngest function ID
+├── id              integer     ← generated identity PK
+├── job_slug        text        ← registry slug
 ├── status          enum        ← 'success' | 'failure'
-├── trigger         enum        ← 'cron' | 'scheduler' | 'manual' | 'inngest'
+├── trigger         enum        ← 'cron' | 'scheduler' | 'manual'
 ├── started_at      timestamptz
 ├── finished_at     timestamptz
 ├── duration_ms     integer
 ├── result_count    integer?    ← job-specific metric (rows deleted, emails sent)
 └── error_message   text?       ← sanitized error on failure
 ```
-
-### Shared Logging for Inngest
-
-Inngest functions don't go through `runJob()` (different execution model), but they write to the same `job_execution` table via an extracted `logJobExecution()` utility:
-
-```typescript
-// src/lib/server/jobs/log.ts
-export async function logJobExecution(params: {
-  slug: string;
-  trigger: TriggerType;
-  startedAt: Date;
-  finishedAt: Date;
-  durationMs: number;
-  resultCount: number | null;
-  status: 'success' | 'failure';
-  errorMessage: string | null;
-}): Promise<void> {
-  db.insert(jobExecution)
-    .values(params)
-    .catch((err) => console.error(`[job-log] Failed to log ${params.slug}:`, err));
-}
-```
-
-This gives the admin UI a single view of all background work — scheduled, reactive, and manual — regardless of trigger mechanism.
-
----
-
-## Reactive Jobs (Inngest)
-
-### Why Inngest
-
-For the Vercel + SvelteKit stack, Inngest is the recommended choice for reactive jobs:
-
-- Official SvelteKit serve handler (`inngest/sveltekit`)
-- Step-based durable execution — each `step.run()` is a separate Vercel function invocation, sidestepping timeout limits
-- Built-in retries per step (not per function)
-- Dashboard with run history, step traces, and event payloads
-- Free tier: 100K function runs/month
-
-### How It Works
-
-```
-User signs up
-  → route handler calls inngest.send({ name: 'user/signup', data: { userId } })
-    → Inngest cloud receives event
-      → Inngest calls back POST /api/inngest with the function to execute
-        → step.run('send-welcome', () => sendWelcomeEmail(...))
-          → step completes, result persisted by Inngest
-        → step.run('create-defaults', () => createDefaultUserData(...))
-          → each step is a separate Vercel function invocation
-```
-
-### Integration Pattern
-
-```typescript
-// src/routes/api/inngest/+server.ts
-import { serve } from 'inngest/sveltekit';
-import { inngest } from '$lib/server/inngest/client';
-import { functions } from '$lib/server/inngest/functions';
-
-const handler = serve({ client: inngest, functions });
-
-export const GET = handler.GET;
-export const POST = handler.POST;
-export const PUT = handler.PUT;
-```
-
-Inngest functions follow the multi-client core pattern — thin adapters calling domain functions:
-
-```typescript
-// src/lib/server/inngest/functions/user-welcome.ts
-import { inngest } from '../client';
-import { NotificationService } from '$lib/server/notifications';
-
-export const userWelcome = inngest.createFunction(
-  { id: 'user-welcome', retries: 3 },
-  { event: 'user/signup' },
-  async ({ event, step }) => {
-    await step.run('send-welcome', async () => {
-      await NotificationService.send({
-        userId: event.data.userId,
-        actorId: 'system:welcome',
-        type: 'system',
-        title: 'Welcome!',
-      });
-    });
-  }
-);
-```
-
-Domain modules never import from `$lib/server/inngest/`. Events flow outward from adapter boundaries.
-
-### Hooks Integration
-
-The Inngest endpoint needs two accommodations in `hooks.server.ts`:
-
-1. **CSRF exclusion** — Inngest callbacks carry `x-inngest-signature`, not `x-requested-with`. Add `/api/inngest/` to the CSRF path exclusion list.
-2. **Session populate** — Inngest callbacks have no session cookie. `sessionPopulate` sets `locals.user = null`, which is correct. No change needed.
-
-Inngest's `serve()` handler verifies the signing key internally — no manual signature verification required.
 
 ---
 
@@ -360,26 +220,38 @@ Manual jobs use the same `runJob()` path as scheduled jobs. The difference is th
 
 ### Route Pattern
 
-Use SvelteKit form actions at `/app/admin/jobs/`, not REST API endpoints. The `/app/*` route guard handles authentication. The action adds an explicit `requireAdmin()` check.
+The admin job UI lives at `/admin/jobs` (`src/routes/[[locale=locale]]/admin/jobs/`) and uses SvelteKit form actions, not REST API endpoints. Both `load` and the `trigger` action call `requireAdmin(locals)`. After running the job, the action records an audit event so manual triggers are attributable.
 
 ```typescript
-// src/routes/app/admin/jobs/+page.server.ts
+// src/routes/[[locale=locale]]/admin/jobs/+page.server.ts
 export const load: PageServerLoad = async ({ locals }) => {
   requireAdmin(locals);
-  // List jobs from registry + recent executions from DB
+  // List registered job slugs + per-job stats + paginated execution history
 };
 
 export const actions: Actions = {
-  trigger: async ({ request, locals }) => {
-    requireAdmin(locals);
-    const slug = (await request.formData()).get('slug') as string;
+  trigger: async (event) => {
+    requireAdmin(event.locals);
+    const slug = (await event.request.formData()).get('slug');
+    if (typeof slug !== 'string' || !jobs[slug]) return fail(400, { message: `Unknown job: ${slug}` });
+
     const result = await runJob(slug, 'manual');
-    return { result };
+
+    const ctx = getAuditContext(event);
+    await recordAuditEvent({
+      ...ctx,
+      action: 'job.trigger',
+      targetType: 'job',
+      targetId: slug,
+      detail: { status: result.status, durationMs: result.durationMs, resultCount: result.resultCount },
+    });
+
+    return result.status === 'failure'
+      ? fail(500, { message: result.errorMessage })
+      : { success: true };
   },
 };
 ```
-
-For jobs that exceed the Vercel function timeout (>300s on Pro), the admin action enqueues to Inngest instead of running synchronously.
 
 ---
 
@@ -390,7 +262,7 @@ For jobs that exceed the Vercel function timeout (>300s on Pro), the admin actio
 | Constraint | Value | Impact |
 |-----------|-------|--------|
 | Max function duration | 300s (Pro), 800s (Pro + Fluid Compute) | Jobs must complete within this window |
-| Cron minimum frequency | 1/minute (Pro), 1/day (Hobby) | Use Inngest for sub-minute reactive work |
+| Cron minimum frequency | 1/minute (Pro), 1/day (Hobby) | Sub-minute cadence not available |
 | Cron delivery | At-least-once | Jobs must be idempotent |
 | Cron retries | None | Runner logs failures; external alerting required |
 | Cron environment | Production only | No cron in preview deployments |
@@ -421,7 +293,6 @@ For jobs that exceed the Vercel function timeout (>300s on Pro), the admin actio
 | Vercel Cron | `CRON_SECRET` bearer token (timing-safe) | In cron endpoint |
 | External HTTP cron | Same bearer token | In cron endpoint |
 | Persistent scheduler | None — in-process, trusted | Platform detection gates activation |
-| Inngest callback | Inngest signing key (verified by SDK) | In `serve()` handler |
 | Admin manual | Session cookie + `requireAdmin()` | In form action |
 
 ### Hardening Checklist
@@ -458,20 +329,17 @@ Rules:
 
 ---
 
-## Database Schema Changes
+## Trigger Type
 
-The `job_trigger` enum needs an additional value for Inngest:
-
-```sql
--- Add 'inngest' to the job_trigger enum
-ALTER TYPE jobs.job_trigger ADD VALUE 'inngest';
-```
-
-The `TriggerType` in `runner.ts` extends accordingly:
+The `job_trigger` enum and the `TriggerType` in `runner.ts` are exactly three values:
 
 ```typescript
-export type TriggerType = 'cron' | 'scheduler' | 'manual' | 'inngest';
+export type TriggerType = 'cron' | 'scheduler' | 'manual';
 ```
+
+- `cron` — Vercel cron or external HTTP cron hit `/api/cron/[job]`.
+- `scheduler` — the in-process `setInterval` scheduler on persistent platforms.
+- `manual` — an admin triggers the job from `/admin/jobs`.
 
 ---
 
@@ -482,8 +350,7 @@ export type TriggerType = 'cron' | 'scheduler' | 'manual' | 'inngest';
 | Tool | Role | Why |
 |------|------|-----|
 | **Vercel Cron** | Scheduled job trigger (serverless) | Zero cost, zero infra, already working |
-| **croner** | Schedule parsing (persistent platforms) | ~3KB, zero deps, replaces flat setInterval |
-| **Inngest** | Reactive job orchestration | Official SvelteKit support, step-based durable execution, free tier |
+| **`setInterval`** | Scheduler (persistent platforms) | Flat interval over all jobs, zero deps |
 | **`runJob()` + form actions** | Manual job trigger | Existing pattern, admin UI with progressive enhancement |
 
 ### Rejected
@@ -491,15 +358,14 @@ export type TriggerType = 'cron' | 'scheduler' | 'manual' | 'inngest';
 | Tool | Why Not |
 |------|---------|
 | **BullMQ** | Requires persistent Redis connection. Incompatible with serverless. |
-| **pg-boss** | Neon PgBouncer breaks LISTEN/NOTIFY and advisory locks silently. Worker is just cron polling (up to 60s delay). More operational work than Inngest for same result. |
+| **pg-boss** | Neon PgBouncer breaks LISTEN/NOTIFY and advisory locks silently. Worker is just cron polling (up to 60s delay). |
 | **graphile-worker** | Memory leaks reported with Bun. Not officially supported on Bun. |
-| **Trigger.dev v3** | CLI requires Node.js (friction in Bun-first project). Experimental Bun runtime has broken OpenTelemetry. Better suited for compute-intensive work if needed later. |
+| **Trigger.dev v3** | CLI requires Node.js (friction in Bun-first project). Experimental Bun runtime has broken OpenTelemetry. |
 
 ### Known Tradeoffs
 
-- **Inngest is a managed service dependency.** If Inngest has an outage, reactive jobs pause. Acceptable for non-critical workflows. October 2025 incident (multi-day partial outage) is documented precedent.
-- **Two registries** (jobs/ and inngest/) means two places to check. Mitigated by the unified `job_execution` table and the admin UI reading from both.
-- **`vercel.json` must be synced manually** with registry schedules. A build-time validation script can catch drift.
+- **The persistent scheduler runs every job on one flat interval** — there is no per-job cron parsing off-Vercel. Adopt a cron library (e.g. `croner`) only if persistent deployment needs distinct per-job schedules.
+- **`vercel.json` is the only schedule source on Vercel** and is maintained by hand. The registry holds no schedule, so the two cannot drift on cadence — only on which slugs exist.
 
 ---
 
@@ -509,9 +375,6 @@ export type TriggerType = 'cron' | 'scheduler' | 'manual' | 'inngest';
 |--------|-----------|
 | [Vercel Cron Jobs](https://vercel.com/docs/cron-jobs) | Cron configuration, at-least-once delivery, production-only |
 | [Vercel `waitUntil`](https://vercel.com/docs/functions/functions-api-reference/vercel-functions-package#waituntil) | Fire-and-forget semantics, timeout behavior |
-| [Inngest SvelteKit](https://www.inngest.com/docs/learn/serving-inngest-functions) | Official serve handler, function registration |
-| [Inngest Durable Execution](https://www.inngest.com/docs/learn/how-functions-are-executed) | Step memoization, HTTP re-invocation model |
-| [Inngest October 2025 Incident](https://www.inngest.com/blog/2025-10-24-october-incident-report) | Production reliability precedent |
 | [pg-boss Serverless Pattern](https://github.com/timgit/pg-boss/discussions/403) | Maintainer-recommended `supervise: false` for serverless |
 | [SvelteKit `init` Hook Gotcha](https://github.com/sveltejs/kit/issues/13347) | Runs on every cold start on Vercel, not truly once |
 | [multi-client-core.md](./multi-client-core.md) | The adapter/domain pattern this document extends |

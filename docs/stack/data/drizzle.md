@@ -1,35 +1,12 @@
 # Drizzle
 
-## What is it?
-
-Headless TypeScript ORM—a library and collection of complementary opt-in tools. SQL-first query builder with zero runtime dependencies. "If you know SQL, you know Drizzle."
-
-## What is it for?
-
-- Serverless/edge environments where cold start and bundle size matter
-- SQL-first development with direct query control
-- Type-safe database access with TypeScript inference
-- Projects requiring minimal dependencies
+ORM for the Postgres layer. See the `drizzle` skill for query/schema syntax.
 
 ## Why was it chosen?
 
-| Aspect | Drizzle | Prisma | Kysely |
-|--------|---------|--------|--------|
-| Bundle size | ~7.4 KB | 15+ MB | ~2 MB |
-| Code generation | None | Required | None |
-| Serverless/Edge | Perfect | Too heavy | Good |
-| Philosophy | SQL-in-TypeScript | ORM abstraction | Query builder |
-
-**Key advantages:**
-- Zero dependencies, tree-shakeable
-- Mirrors SQL syntax closely (minimal abstraction)
-- Always outputs exactly 1 SQL query (serverless connection efficiency)
-- Type inference from TypeScript schemas (no codegen step)
-- Native Neon and Better Auth support
-
-**SQL-like queries:**
-- Full control over generated SQL
-- Relational queries with `with` clause
+- Always emits exactly 1 SQL query per call — matters on Neon's serverless driver routed over HTTP fetch (`poolQueryViaFetch`).
+- Zero-dependency, tree-shakeable — fits Vercel serverless cold starts.
+- Native Neon and Better Auth adapters.
 
 ## Connection
 
@@ -67,18 +44,9 @@ Get the export name wrong and the adapter writes to the wrong table or silently 
 
 ## Known limitations
 
-**Type safety caveat:**
-- Only query results have type information — you can write invalid queries
-- Requires more manual attention than Prisma's full type safety
-
-**Type-checking performance:**
-- As schemas grow, TypeScript compilation slows
-- Drizzle requires 5,000+ type instantiations vs Prisma's few hundred
-
-**Feature gaps:**
-- Relational Queries API doesn't support mutations
-- Smaller ecosystem than Prisma
-- Steeper learning curve for developers without SQL expertise
+- Only query *results* are typed — invalid queries still compile.
+- Type-checking slows as the schema grows (5,000+ type instantiations).
+- Relational Queries API has no mutations.
 
 ## Related
 

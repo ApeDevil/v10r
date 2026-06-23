@@ -14,30 +14,19 @@ We use the term as a diagnostic. Asking "does v10r have all the harness primitiv
 |---|---|---|
 | Tool dispatch & schema-level scope filtering | `ai/tools` | `tools/index.ts` — `createDeskTools(userId, scopes, layout)` |
 | Tool metadata (`risk`, `scope`) | `ai/tools` | `tools/_types.ts` — `DeskToolRisk`, `DeskToolMeta` |
-| Step loop control | `ai/loop` | `loop/orchestrate.ts` — `streamText` + `stopWhen` + `stepsForScopes` |
-| Provider fallback & cooldown | `ai/loop` | `loop/fallback.ts` — `tryFallback` |
+| Step loop & provider fallback | `ai` | `chat-orchestrator.ts` — `streamText` + `stopWhen` + `tryFallback` (provider fallback & cooldown) |
+| Per-request scope step caps | `ai/tools` | `tools/index.ts` — `stepsForScopes` |
 | Context compaction (fixes AI SDK #9631) | `ai/loop` | `loop/compact.ts` — `compactToolResults` + `resolve_ref` tool |
 | System prompt assembly | `ai/context` | `context/system-prompt.ts` — `buildSystemPrompt`, cache-stable prefix ordering |
 | Retrieval integration | `ai` | `chat-orchestrator.ts` — llmwiki + rawrag pipeline events |
 | Conversation windowing | `ai/context` | `context/system-prompt.ts` — `windowMessages` |
-| Policy resolution (client floor ∩ server ceiling) | `ai/policy` | `policy/governor.ts` — `resolveEffectivePolicy` |
-| Per-execute governor wrap (arg-dependent risk) | `ai/policy` | `policy/governor.ts` — `withGovernor` |
-| Sensor sidecar (latency, source, governor decision) | `ai/policy` | `policy/sensor.ts` — `withSensor`, `AsyncLocalStorage` context |
-| Structured policy errors (three-surface) | `ai/policy` | `policy/errors.ts` — `PolicyError` |
+| Plan-gating predicate | `ai/policy` | `policy/governor.ts` — `shouldRequirePlan` |
 | Proposal state machine | `db/ai` + `ai/policy` | `db/schema/ai/proposal.ts`, `db/ai/proposals.ts` |
 | Audit log (scaffolded stub) | `db/ai` | `db/schema/ai/audit-log.ts` |
 
-## Wrap order
-
-```
-withGovernor(withSensor(execute))
-```
-
-Governor is outermost. Blocked calls never reach the sensor — blocked calls are a **policy** audit concern, not a sensor trace concern. Sensor traces only cover executions that actually ran, which is what makes latency stats meaningful.
-
 ## What ships as load-bearing vs. scaffold
 
-**Load-bearing** (exercised on every request): tool dispatch, step loop, provider fallback, compaction, system-prompt assembly, governor, sensor, proposals table, `agent_proposals` row writes.
+**Load-bearing** (exercised on every request): tool dispatch, step loop, provider fallback, compaction, system-prompt assembly, proposals table, `agent_proposals` row writes.
 
 **Scaffolded stub** (seam visible, one write site, no query UI): `agent_audit_log` — retention policy is a product decision v10r should not make for adopters.
 
@@ -73,9 +62,8 @@ Predicate lives in `policy/governor.ts` as `shouldRequirePlan(request, toolset)`
 ## Reading order for the curious
 
 1. `tools/_types.ts` — the risk vocabulary
-2. `tools/index.ts` — schema-level scope filtering (load-bearing seam)
-3. `loop/orchestrate.ts` — the step loop
+2. `tools/index.ts` — schema-level scope filtering + `stepsForScopes` (load-bearing seam)
+3. `chat-orchestrator.ts` — the step loop + `tryFallback`
 4. `loop/compact.ts` — the #9631 workaround
-5. `policy/governor.ts` — the policy layer
-6. `policy/sensor.ts` — the sidecar
-7. `db/schema/ai/proposal.ts` — the proposal state machine
+5. `policy/governor.ts` — the plan-gating predicate (`shouldRequirePlan`)
+6. `db/schema/ai/proposal.ts` — the proposal state machine

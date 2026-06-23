@@ -1,54 +1,18 @@
 # Bun
 
-## What is it?
-
-All-in-one JavaScript/TypeScript runtime written in Zig, powered by JavaScriptCore. Ships as a single executable containing runtime, package manager, bundler, and test runner. Drop-in replacement for Node.js.
-
-## What is it for?
-
-- High-performance APIs and HTTP servers
-- Serverless functions requiring fast cold starts
-- TypeScript services with native .ts execution (no transpile step)
-- Development tooling (faster package installation, testing)
+The runtime — single executable bundling runtime, package manager, bundler, and test runner; native TypeScript, no transpile step. Lives inside the v10r container, never on the host. See the `buny` agent and CLAUDE.md "Local Development" for the container-first rule.
 
 ## Why was it chosen?
 
-| Aspect | Bun | Node.js |
-|--------|-----|---------|
-| HTTP throughput | ~52k req/sec | ~13k req/sec |
-| Package install | 10-30x faster | Baseline |
-| Cold start | 4x faster | Baseline |
-| TypeScript | Native | Requires transpile |
-| Bundler | Built-in | External tool |
-
-**Key advantages:**
-- Fastest JavaScript runtime available
-- Native TypeScript without build step
-- Built-in tooling reduces dependency count
-- High Node.js compatibility for easy migration
-
-**Note:** For database-bound workloads, performance difference is negligible (~5%). Runtime choice matters most for compute-heavy or I/O-heavy operations.
+- Native `.ts` execution and a built-in test runner — fewer dev dependencies inside the container.
 
 ## Known limitations
 
-**Node.js API gaps:**
-- `node:http2` server not implemented (client only)
-- `node:cluster` limited (workers cannot pass handles)
-- `node:inspector`, `node:repl`, `node:sqlite` missing
-- Partial: `worker_threads`, `vm`, `crypto`, `child_process`
+**SvelteKit dev gotcha (load-bearing):**
+- Vite dev server runs Node-compat under `bun run dev` (Bun as script runner). The `bun --bun run dev` mode (Vite on Bun's runtime) is **disabled** — [oven-sh/bun#23523](https://github.com/oven-sh/bun/issues/23523), a known Vite restart hang. Production SSR runs on the Node.js 22 Vercel runtime (`adapter-vercel`, `runtime: 'nodejs22.x'`); Bun runs the build and the local dev container. A Bun production target (adapter-bun / Vercel `bunVersion`) is blueprint-only, not wired.
+- `svelte-adapter-bun` is community-maintained; ORIGIN header isn't passed correctly (breaks form CSRF). Fallback: `adapter-node` via a single config change.
 
-**SvelteKit-specific:**
-- `svelte-adapter-bun` is community-maintained (not official SvelteKit adapter)
-- Known issues with CORS and form handling (ORIGIN header not passed correctly)
-- Vite dev server runs on Node-compat under `bun run dev` (Bun as script runner). The `bun --bun run dev` mode (Vite on Bun's runtime) is disabled due to [oven-sh/bun#23523](https://github.com/oven-sh/bun/issues/23523) — a known Vite restart hang. Production SSR runs on Bun via the deployed adapter.
-- Easy fallback: switch to `adapter-node` with single config change
-
-**Production considerations:**
-- Third-party observability tools have limited support
-- Packages relying on Node internals may fail
-- Enterprise adoption remains cautious vs Node.js maturity
-
-**Mitigation:** Anthropic acquired Bun (December 2024), providing long-term sustainability. Bun remains MIT-licensed and open-source.
+**Node.js API gaps:** `node:http2` server, `node:cluster`, `node:inspector`, `node:repl`, `node:sqlite` missing or partial. Packages relying on Node internals may fail.
 
 ## Related
 

@@ -1,6 +1,6 @@
 # Admin
 
-Feature blueprints for admin-specific systems. The overall admin area architecture and page inventory (vertical sidebar, canonical data-table pattern, guard pattern; pages include `/admin/access/authors`, `/admin/access/requests`, `/admin/content/comments`) is reflected directly in the implemented routes under `src/routes/[[locale=locale]]/admin/`. (Historical planning notes: `docs/.archive/admin-expansion.md`.)
+Feature blueprints for admin-specific systems. The overall admin area architecture and page inventory (vertical sidebar, canonical data-table pattern, guard pattern; pages include `/admin/access/authors`, `/admin/access/requests`, `/admin/content/comments`) is reflected directly in the implemented routes under `src/routes/[[locale=locale]]/admin/`.
 
 ## Files
 

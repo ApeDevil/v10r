@@ -1,47 +1,20 @@
 # Hosting
 
-## What is it?
+The project runs the same app on multiple providers for comparison and failover.
 
-Domain and multi-platform hosting configuration. Strategy for running the same application on multiple providers for comparison and redundancy.
+## Multi-provider strategy
 
-## What is it for?
+| Subdomain | Platform | Adapter | Purpose |
+|-----------|----------|---------|---------|
+| `www.v10r.dev` | Vercel | `adapter-vercel` | Primary production |
+| `koyeb.v10r.dev` | Koyeb | `adapter-node` | Comparison/failover, native Bun |
 
-- Domain management and DNS configuration
-- A/B testing between hosting providers
-- Failover and redundancy options
-- Performance benchmarking across platforms
-
-## Why was it chosen?
-
-**Multi-provider strategy:**
-| Subdomain | Platform | Purpose |
-|-----------|----------|---------|
-| `v10r.io` | Vercel | Primary production |
-| `koyeb.v10r.io` | Koyeb | Comparison/failover |
-
-**Domain:** `v10r.io` or `v10r.tech` (numeronym: v + 10 letters + r = velociraptor) — TBD which to use as primary
-
-**Platform configuration:**
-| Platform | Adapter | Features |
-|----------|---------|----------|
-| Vercel | `adapter-vercel` | Edge functions, auto preview |
-| Koyeb | `adapter-node` | Native Bun, container control |
+**Domain:** `www.v10r.dev` (numeronym: v + 10 letters + r = velociraptor) — baked into `sitemap.xml`/`robots.txt`.
 
 ## Known limitations
 
-**DNS propagation:**
-- Can take up to 48 hours globally
-- Test with multiple DNS resolvers
-
-**Multi-provider complexity:**
-- Environment variables must be synced manually
-- Database connections should handle both origins
-- Session cookies need compatible domain settings
-
-**Platform differences:**
-- Edge function behavior varies
-- Cold start characteristics differ
-- Logging and monitoring require separate configuration
+- Environment variables must be synced across providers manually.
+- Session cookies need compatible domain settings across both origins.
 
 ## Related
 

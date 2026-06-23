@@ -1,8 +1,8 @@
 # 3D Web Integration
 
-Implementation blueprints for adding 3D experiences to the SvelteKit application using Three.js and Blender-exported assets.
+Implementation blueprints for adding 3D experiences to the SvelteKit application using Threlte 8 (Svelte's Three.js renderer) and Blender-exported glTF assets.
 
 | File | Topics |
 |------|--------|
-| [3d-integration.md](3d-integration.md) | Technology options (Threlte vs vanilla Three.js), route structure, SSR/CSR strategy, Svelte 5 runes with WebGL, load functions, GLTF loading, performance optimization, progressive enhancement, anti-patterns, implementation checklist |
-| [3d-quick-reference.md](3d-quick-reference.md) | Copy-paste patterns, page setup, basic scenes (vanilla and Threlte), reactive controls, model loading, WebGL detection, common mistakes, route structure template |
+| [3d-integration.md](3d-integration.md) | Threlte 8 scene pattern, route structure (`/showcases/3d/`), SSR/prerender-off strategy, Svelte 5 runes with WebGL, model registry + code-splitting, GLTF loading, `<svelte:boundary>` fallback, anti-patterns, implementation checklist |
+| [3d-quick-reference.md](3d-quick-reference.md) | Copy-paste Threlte templates, page setup, `<Canvas>` + `<T>` scenes, `useTask` animation, reactive controls, `useGltf` model loading, `<svelte:boundary>` fallback, route structure template |

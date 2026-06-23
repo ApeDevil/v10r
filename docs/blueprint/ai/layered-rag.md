@@ -27,7 +27,7 @@ src/lib/server/
     overview.ts        ← load the top-level 'overview' page (~500 tok)
     search.ts          ← hybrid vector+BM25 → LlmwikiHit[]
     queries.ts         ← hydratePointers (JOIN chunks, cap at POINTER_CAP=5)
-    wiki-format.ts     ← TOON-encode hits + pointers into system prompt
+    wiki-format.ts     ← format hits + pointers in a compact TOON-ish layout (no external TOON dep)
     verify.ts          ← citation verification (onFinish)
     compile/           ← scaffold: page compilation jobs
     lint/              ← scaffold: lint runner
@@ -100,7 +100,7 @@ A per-turn cap (`MAX_RAWRAG_TOOL_CALLS_PER_TURN = 3`) is enforced by the orchest
 1. **Overview** — `llmwiki/overview.ts` loads the top-level `kind='overview'` page (~500 tok) into the system prompt on every request.
 2. **Wiki search** — `llmwiki/search.ts` runs hybrid vector (TLDR + title + tags) + BM25 (body) → top-N `LlmwikiHit[]`.
 3. **Pointer hydration** — `llmwiki/queries.ts:hydratePointers` runs a single JOIN, caps pointers per page at `POINTER_CAP=5`, ordered by `weight DESC, chunkId ASC`.
-4. **Prompt encoding** — `llmwiki/wiki-format.ts` TOON-encodes hits + pointers into a `<llmwiki-hits>` block in the system prompt. See [toon.md](./toon.md).
+4. **Prompt encoding** — `llmwiki/wiki-format.ts` (`formatLlmwikiContext`) formats hits + pointers in a compact TOON-ish layout (no external TOON dependency) into a `<llmwiki-hits>` block in the system prompt. See [toon.md](./toon.md).
 5. **Stream** — `streamText` runs with `get_llmwiki_pages` and `get_rawrag_chunks` in the tool set. The model answers from TLDRs by default; calls `get_rawrag_chunks` only for exact wording, quotes, or claim verification.
 6. **Citation verification** — `onFinish` calls `llmwiki/verify.ts`, which compares drilled chunk IDs against current `chunk.contentHash` and emits an SSE `citations` frame.
 
@@ -231,7 +231,7 @@ podman exec v10r bun run db:ingest-docs
 ```
 
 - Hand-rolls its own Neon pool + Gemini embedder from `process.env` (the app's `rawrag` modules import `$lib`/`$env` and can't run under bare Bun). Reuses only the Vite-free `splitMarkdown`.
-- Enumerates `docs/**/*.md`, replicating the blocklist + canonical-path derivation from `src/lib/server/docs/manifest.ts` (Vite-only, so it can't be imported here — the two must stay in sync).
+- Enumerates `docs/**/*.md`, importing the blocklist + canonical-path derivation (`isBlocked`, `parseFrontmatter`, `slugify`, `deriveTitle`) from the Vite-free SSOT `src/lib/server/docs/doc-filter.ts` — the same module the `/docs` manifest imports, so there is no manual sync. Only `RAG_ONLY_BLOCK` (docs rendered in `/docs` but withheld from the chatbot) is ingest-local.
 - Idempotent: content-hash skip, soft-delete + re-insert on change, soft-delete-not-seen for removed files.
 - Tier-1 rawrag chunks only; the llmwiki tier-2 compiler over docs is deferred.
 

@@ -135,44 +135,27 @@ Catch unexpected errors globally:
 ```typescript
 // src/hooks.server.ts
 import type { HandleServerError } from '@sveltejs/kit';
-import * as Sentry from '@sentry/sveltekit';
 
-export const handleError: HandleServerError = async ({
-  error,
-  event,
-  status,
-  message
-}) => {
-  const errorId = crypto.randomUUID();
-
-  // Log structured error
-  console.error({
-    errorId,
-    status,
-    message,
-    path: event.url.pathname,
-    method: event.request.method,
-    userId: event.locals.user?.id,
-    timestamp: new Date().toISOString(),
-    error: error instanceof Error ? {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    } : error
-  });
-
-  // Report to Sentry (production)
-  if (import.meta.env.PROD) {
-    Sentry.captureException(error, {
-      extra: { errorId, path: event.url.pathname }
-    });
+export const handleError: HandleServerError = ({ error, event, status, message }) => {
+  // 404s from unknown routes — no errorId needed
+  if (status === 404 && event.route.id === null) {
+    return { message: 'Page not found' };
   }
 
-  // Return safe error to client
-  return {
-    message: status === 500 ? 'Internal Server Error' : message,
-    errorId
-  };
+  const errorId = crypto.randomUUID();
+
+  console.error(
+    JSON.stringify({
+      errorId,
+      status,
+      path: event.url.pathname,
+      route: event.route.id,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    }),
+  );
+
+  return { message, errorId };
 };
 ```
 

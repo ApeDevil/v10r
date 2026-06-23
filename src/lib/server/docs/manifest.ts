@@ -1,53 +1,11 @@
-import { parse as parseYaml } from 'yaml';
 import { type DocEntry, type DocSection, type DocsManifest, STACK_LAYER_ORDER } from '$lib/docs/types';
+import { deriveTitle, isBlocked, parseFrontmatter, slugify } from './doc-filter';
 
 const rawModules = import.meta.glob('/docs/**/*.md', {
 	query: '?raw',
 	import: 'default',
 	eager: true,
 }) as Record<string, string>;
-
-const BLOCKLIST = new Set([
-	'docs/blueprint/blog.md',
-	'docs/blueprint/style-randomizer.md',
-	'docs/blueprint/style-randomizer-v2.md',
-	'docs/blueprint/style-randomizer-implementation-plan.md',
-	'docs/blueprint/color-differentiation-plan.md',
-	'docs/blueprint/visual-identity-architecture.md',
-	'docs/blueprint/admin-expansion.md',
-	'docs/stack/vendors.md',
-]);
-
-const BLOCKED_PREFIXES = ['docs/guides/', 'docs/blueprint/desk/', 'docs/blueprint/design/'];
-
-interface ParsedFile {
-	frontmatter: Record<string, unknown>;
-	body: string;
-}
-
-function parseFrontmatter(raw: string): ParsedFile {
-	if (!raw.startsWith('---\n')) {
-		return { frontmatter: {}, body: raw };
-	}
-	const end = raw.indexOf('\n---', 4);
-	if (end === -1) return { frontmatter: {}, body: raw };
-	const yamlBlock = raw.slice(4, end);
-	const body = raw.slice(end + 4).replace(/^\n/, '');
-	try {
-		const fm = parseYaml(yamlBlock) as Record<string, unknown> | null;
-		return { frontmatter: fm ?? {}, body };
-	} catch {
-		return { frontmatter: {}, body: raw };
-	}
-}
-
-function deriveTitle(body: string): string | null {
-	for (const line of body.split('\n')) {
-		const m = /^#\s+(.+)$/.exec(line.trim());
-		if (m) return m[1].trim();
-	}
-	return null;
-}
 
 function deriveDescription(body: string): string {
 	const lines = body.split('\n');
@@ -88,20 +46,6 @@ function deriveDescription(body: string): string {
 	const lastSpace = slice.lastIndexOf(' ');
 	const cut = lastSpace > 120 ? slice.slice(0, lastSpace) : slice;
 	return `${cut.replace(/[,;:—–-]\s*$/, '')}…`;
-}
-
-function slugify(s: string): string {
-	return s
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-|-$/g, '');
-}
-
-function isBlocked(sourcePath: string): boolean {
-	if (BLOCKLIST.has(sourcePath)) return true;
-	if (sourcePath.endsWith('/README.md')) return true;
-	for (const p of BLOCKED_PREFIXES) if (sourcePath.startsWith(p)) return true;
-	return false;
 }
 
 function buildEntry(absPath: string, raw: string): DocEntry | null {

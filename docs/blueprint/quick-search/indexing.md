@@ -21,6 +21,8 @@ All adapters live in `$lib/server/search/adapters/` and produce `SearchRecord[]`
 
 Source: the nav registry (`$lib/nav`). Paraglide labels — genuinely localized, no fallback badge.
 
+Also injects two public pages absent from the nav registry: `/auth/login` (Log in) and `/showcases/jobs` (Jobs). The index covers these public routes even though nav omits them.
+
 **Filters out** `/app/*` and `/admin/*` paths: anonymous search never reveals protected route existence. Also excludes hub-only redirect paths listed in `_redirects.ts`.
 
 ### `showcases.ts`

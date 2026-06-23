@@ -1,7 +1,5 @@
 # Blog System Blueprint
 
-> Synthesized from 24 agent consultations (archy, svey, uxy, daty, resy, scout — 2 rounds with cross-pollination, review taskforce with cross-pollination). Branch: `feature/admin-expansion`.
-
 ## Vision
 
 A multipurpose markdown editor that lives in the **desk** (DockLayout), with **blog posts as the first content type**. Custom syntax via `remark-directive`, wikilinks for cross-references, rendered through a unified pipeline. DB-backed with immutable revisions, multi-author, i18n, public + authenticated reading.
@@ -42,7 +40,7 @@ This is **important** content inside the directive.
 :::
 ```
 
-For cross-references between posts: `[[wikilinks]]` via `@flowershow/remark-wiki-link` (Obsidian-compatible). Monitor: Dec 2025 release (v3.3.1) shows active maintenance, but 20 downloads/week means small bug-finding surface. Fallback: `landakram/remark-wiki-link` (500+ stars, 9.5k downloads/week).
+Cross-references between posts via `[[wikilinks]]` are **deferred — not yet implemented**. No wiki-link plugin is installed (`@flowershow/remark-wiki-link` is not a dependency) and the current pipeline includes none. `renderBlogPost(markdown, _permalinks?)` accepts a `permalinks` arg, but it is unused. When built, candidates are `@flowershow/remark-wiki-link` (Obsidian-compatible) or `landakram/remark-wiki-link`.
 
 **Content portability note**: `::directive` and `:::container` syntax is project-specific, not standard CommonMark. Content exported to other systems will not render these correctly. Document this in the author guide.
 
@@ -66,18 +64,20 @@ Markdown (DB text column)
   |
   v
 unified()
-  .use(remarkParse)                     // markdown -> mdast
-  .use(remarkGfm)                       // tables, strikethrough, task lists
-  .use(remarkFrontmatter, ['yaml'])     // parse ---yaml--- blocks
-  .use(remarkExtractFrontmatter)        // surface frontmatter to vfile.data
-  .use(remarkDirective)                 // ::embed[...]{...} syntax
-  .use(remarkDirectiveHandlers)         // CUSTOM: visit directives, extract embed descriptors
-  .use(remarkWikiLink, { permalinks })  // [[slug]] cross-references
-  .use(remarkRehype)                    // mdast -> hast
-  .use(rehypeSlug)                      // heading IDs
-  .use(rehypeShikiFromHighlighter, h)   // reuse existing Shiki singleton via @shikijs/rehype/core
-  .use(rehypeSanitize, schema)          // server-side hast sanitization (replaces DOMPurify)
-  .use(rehypeStringify)                 // hast -> HTML string
+  .use(remarkParse)                       // markdown -> mdast
+  .use(remarkGfm)                         // tables, strikethrough, task lists
+  .use(remarkFrontmatter, ['yaml'])       // parse ---yaml--- blocks
+  .use(remarkExtractFrontmatter)          // surface frontmatter to vfile.data
+  .use(remarkDirective)                   // ::embed[...]{...} syntax
+  .use(remarkDirectiveHandlers)           // CUSTOM: visit directives, extract embed descriptors
+  .use(remarkRehype)                      // mdast -> hast
+  .use(rehypeSlug)                        // heading IDs
+  .use(rehypeToc)                         // CUSTOM: collect heading TOC entries
+  .use(rehypeShikiFromHighlighter, h)     // reuse existing Shiki singleton via @shikijs/rehype/core
+  .use(rehypeRewriteR2)                   // rewrite R2 asset URLs to stable proxy paths
+  .use(rehypeSanitize, blogSanitizeSchema)// server-side hast sanitization
+  .use(rehypeSanitizeStyles)              // CUSTOM: scrub disallowed inline styles
+  .use(rehypeStringify)                   // hast -> HTML string
   |
   v
 Output: { html: string, embeds: EmbedDescriptor[], toc: TocEntry[] }
@@ -141,7 +141,7 @@ The desk already has a **DockLayout** with a binary split tree (resizable, persi
 Benefits:
 - **Side-by-side everything** — edit markdown in one pane, preview in another, chat with AI about the content in a third, browse assets in a fourth
 - **Multipurpose from day one** — the editor panel renders any markdown document. Blog posts first, then notes, docs, announcements
-- **No new route for editing** — the desk is already a full-page immersive route in the `(desk)` layout group
+- **No new route for editing** — the desk is already a full-page immersive route at `[[locale=locale]]/desk/`
 - **Existing infrastructure** — `notes` panel is already in the registry, just needs real content
 
 ### Default Editor Layout
@@ -458,7 +458,7 @@ A `GENERATED ALWAYS AS … STORED` column was ruled out because Neon rejects the
 
 Setup and backfill: `bun run db:search-backfill` adds the column and index with `IF NOT EXISTS` guards and backfills any existing revisions.
 
-For the query engine, `ts_headline` usage, XSS-safe highlighting, and `localeRegconfig` details, see [`../quick-search/blog-fts.md`](../quick-search/blog-fts.md).
+For the query engine, `ts_headline` usage, XSS-safe highlighting, and `localeRegconfig` details, see [`./quick-search/blog-fts.md`](./quick-search/blog-fts.md).
 
 #### `blog.published_revision` — Locale-Aware Publish Pointers
 
@@ -551,6 +551,8 @@ RESTRICT on asset deletion — don't delete assets that posts reference.
 | `post_asset.post_id` -> post | CASCADE | Asset associations die with the post |
 | `post_asset.asset_id` -> asset | RESTRICT | Cannot delete an asset still linked to posts |
 | `asset.uploader_id` -> user | SET NULL | Assets survive user deletion |
+| `comment.author_id` -> user | RESTRICT | Don't orphan comments; reassign before user deletion |
+| `comment.hidden_by` -> user | SET NULL | Moderation record survives admin deletion |
 
 #### `blog.comment` — Reader Comments (v1)
 
@@ -559,12 +561,15 @@ RESTRICT on asset deletion — don't delete assets that posts reference.
 | `id` | text | PK | `cmt_` prefix |
 | `post_id` | text | NOT NULL | Part of composite FK |
 | `locale` | text | NOT NULL | Part of composite FK |
-| `author_id` | text | NOT NULL, FK -> auth.user(id) ON DELETE CASCADE | |
+| `author_id` | text | NOT NULL, FK -> auth.user(id) ON DELETE RESTRICT | |
 | `body` | text | NOT NULL, 1-4000 chars | Plain text, no markdown |
 | `status` | enum | NOT NULL, DEFAULT 'visible' | `visible`, `hidden` (admin), `removed` (admin, body redacted) |
 | `client_nonce` | text | NOT NULL | Client-generated idempotency token |
+| `hidden_at` | timestamptz | nullable | Set when an admin hides the comment |
+| `hidden_by` | text | nullable, FK -> auth.user(id) ON DELETE SET NULL | Admin who hid it |
+| `hidden_reason` | text | nullable | Moderation note |
 | `created_at` | timestamptz | NOT NULL, DEFAULT now() | |
-| `updated_at` | timestamptz | NOT NULL, DEFAULT now() | Editable within 5 min of `created_at` |
+| `edited_at` | timestamptz | nullable | Set on author edit; editable within 5 min of `created_at` (`EDIT_WINDOW_MS`, app-enforced) |
 | `deleted_at` | timestamptz | nullable | Author soft-delete |
 
 Composite FK: `(post_id, locale) → blog.published_revision(post_id, locale)` — prevents comments on unpublished locales. UNIQUE: `(author_id, post_id, client_nonce)` for idempotency. `hidden` comments are visible only to their author; `removed` comments have body redacted.
@@ -593,7 +598,7 @@ The original `asset://` protocol design was not implemented — proxy URLs achie
 
 ### Full-Text Search: Dual Strategy
 
-**PostgreSQL tsvector** — keyword search (the search bar): app-populated per-locale `tsvector` on `blog.revision` (`search_vector`), GIN-indexed (`blog_revision_search_vector_idx`). See revision table definition above and [`../quick-search/blog-fts.md`](../quick-search/blog-fts.md) for the query engine and highlighting details.
+**PostgreSQL tsvector** — keyword search (the search bar): app-populated per-locale `tsvector` on `blog.revision` (`search_vector`), GIN-indexed (`blog_revision_search_vector_idx`). See revision table definition above and [`./quick-search/blog-fts.md`](./quick-search/blog-fts.md) for the query engine and highlighting details.
 
 **RAG embeddings** — semantic search (AI assistant, related posts): blog posts ingested as RAG documents via existing pipeline. Embed directives include `altText` for RAG indexing (e.g., "Chart showing revenue Q4 data").
 
@@ -897,13 +902,16 @@ Blog posts auto-join a `"blog"` collection (`col_blog`) in `rag.collection` on p
 
 ## Module Structure
 
+Items marked **(planned)** are part of the blueprint target but not yet built; everything else reflects the current tree.
+
 ```
 $lib/server/blog/                  # Domain module (multi-client core pattern)
   index.ts                          # Public API: getPosts, getPost, createPost, updatePost,
                                     #   publishPost, unpublishPost
   queries.ts                        # Drizzle queries (blog schema)
-  render.ts                         # Unified pipeline: markdown -> {html, embeds, toc}
-  ai-sync.ts                        # syncBlogGraph(), linkPostToChunks(), removeBlogFromGraph()
+  pipeline.ts                       # Unified pipeline: renderBlogPost(markdown, _permalinks?)
+  rehype-rewrite-r2.ts              # Rewrite R2 asset URLs to stable proxy paths
+  sanitize-schema.ts                # blogSanitizeSchema for rehype-sanitize
   types.ts                          # Blog domain types
   comments/
     mutations.ts                    # createComment, editComment, deleteComment,
@@ -912,39 +920,35 @@ $lib/server/blog/                  # Domain module (multi-client core pattern)
     schemas.ts                      # Valibot schemas for comment payloads
     index.ts                        # Barrel
 
-$lib/server/blog/pipeline/
-  extensions.ts                     # Directive handlers, wikilink config
-  highlight.ts                      # @shikijs/rehype/core integration
-  sanitize.ts                       # rehype-sanitize schema
-
 $lib/content-syntax/               # Shared syntax definitions
   index.ts                          # Canonical directive specs
   remark-adapter.ts                 # Specs -> remark-directive handlers
-  codemirror-adapter.ts             # Specs -> CM6 decorations (Phase 3)
+  codemirror-adapter.ts             # (planned) Specs -> CM6 decorations (Phase 3)
 
 $lib/components/blog/              # Rendering
   Renderer.svelte                   # {html, embeds} -> prose + hydrated embeds
-  EmbedHost.svelte                  # Mounts single embed by kind
   CommentsIsland.svelte             # Client island: fetches + renders comments after mount
+  BlogTag.svelte                    # Tag chip
+  PostCard.svelte                   # Index/list card
+  PostList.svelte                   # Paginated post list
   embeds/
     registry.ts                     # kind -> dynamic import()
-    CodeBlock.svelte
-    Callout.svelte
-    ChartEmbed.svelte
-    ...
+    SceneEmbed.svelte               # 3D scene embed host
+    EmbedSceneContent.svelte        # Scene contents
+    resolve-scene.ts                # Scene descriptor resolution
 
 $lib/components/editor/            # Authoring (desk panel)
   EditorPanel.svelte                # Panel wrapper (documentId, documentType, menus, publish flow)
   AuthorGate.svelte                 # Wraps editor; shows request-access empty state when grant absent
   PublishConfirmStrip.svelte        # Inline confirm/cancel strip for publish action
   MarkdownSource.svelte             # Textarea (Phase 1) -> CM6 (Phase 2)
-  SlashMenu.svelte                  # Slash command palette
   MetadataDrawer.svelte             # Title, slug, tags, status, locale, revision history
   types.ts                          # EditorDocument interface
+  SlashMenu.svelte                  # (planned) Slash command palette
 
 $lib/components/preview/           # Multipurpose preview (desk panel)
   PreviewPanel.svelte               # Subscribes to editor:content, delegates to renderer
-  renderers.ts                      # type -> dynamic import() registry
+  renderers.ts                      # (planned) type -> dynamic import() registry
 
 $lib/components/composites/dock/
   desk-bus.svelte.ts                # Typed cross-panel pub/sub (DeskEvents)
@@ -952,6 +956,8 @@ $lib/components/composites/dock/
 
 $lib/config/desk-panels.ts         # Add 'editor' + 'preview' + 'documents' panel types
 ```
+
+`syncBlogGraph()`, `linkPostToChunks()`, `removeBlogFromGraph()` (the Phase 3 AI graph sync) are **planned** — there is no `ai-sync.ts` yet.
 
 ### EditorDocument Interface
 
@@ -984,7 +990,7 @@ Blog posts are the first implementation. The domain module (`$lib/server/blog/`)
 ### Public Blog
 
 ```
-src/routes/(shell)/blog/
+src/routes/[[locale=locale]]/(public)/blog/
   +page.server.ts                   # SSR: paginated post list (stream sidebar)
   +page.svelte                      # Blog index
   [slug]/
@@ -994,6 +1000,9 @@ src/routes/(shell)/blog/
       +page.server.ts               # Form action for comment submit (load redirects 303 -> parent slug)
   tag/[tag]/
     +page.server.ts                 # SSR: posts filtered by tag
+    +page.svelte
+  domain/[domain]/
+    +page.server.ts                 # SSR: posts filtered by subject area (domain)
     +page.svelte
   feed.xml/
     +server.ts                      # ISR: RSS/Atom feed
@@ -1009,7 +1018,7 @@ src/routes/sitemap.xml/
 ### Admin Content Management
 
 ```
-src/routes/(shell)/admin/
+src/routes/[[locale=locale]]/admin/
   content/
     +page.server.ts                   # load + form actions (status changes, bulk ops)
     +page.svelte                      # Management table: filter, bulk actions, status
@@ -1063,11 +1072,10 @@ src/routes/api/admin/
 ### Desk (Authoring)
 
 ```
-src/routes/(desk)/
+src/routes/[[locale=locale]]/desk/
   +layout.server.ts                 # requireAuth; exposes blogAuthor.granted, pendingRequest, justGrantedKinds
-  desk/
-    +page.server.ts                 # Form actions: requestBlogAccess, cancelBlogAccessRequest
-    +page.svelte                    # Panel registry: editor + preview + documents; AuthorGate wraps editor
+  +page.server.ts                   # Form actions: requestBlogAccess, cancelBlogAccessRequest
+  +page.svelte                      # Panel registry: editor + preview + documents; AuthorGate wraps editor
 ```
 
 ### Rendering Modes
@@ -1077,6 +1085,7 @@ src/routes/(desk)/
 | `/blog/` (index) | SSR | default | Dynamic, paginated |
 | `/blog/[slug]` | ISR (1h) | `isr: { expiration: 3600, bypassToken }` | Content rarely changes; `publishPost()` triggers on-demand revalidation |
 | `/blog/tag/[tag]` | SSR | default | Dynamic filter |
+| `/blog/domain/[domain]` | SSR | default | Dynamic filter (subject area) |
 | `/blog/feed.xml` | ISR (1h) | same as slug | Stable, cacheable; revalidated on publish |
 | `/sitemap.xml` | Dynamic + CDN cache | `Cache-Control: s-maxage=3600` | DB-backed (published posts); cannot prerender — would freeze the post list |
 | `/admin/content`, `/admin/access/*` | SSR | `prerender = false` | Dynamic management UI |

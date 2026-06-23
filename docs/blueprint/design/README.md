@@ -152,13 +152,23 @@ What's intentionally FIXED (for coherence):
 ### Quick Theme Override
 
 ```css
-/* app.css - Brand customization */
+/* app.css - Brand customization (colors are OKLCH) */
 :root {
   /* Change these to rebrand */
-  --color-primary: #your-brand-color;
-  --color-primary-hover: #your-hover-color;
-  --radius-default: 0.5rem; /* or 0 for sharp, 9999px for pills */
-  --font-sans: 'Your Font', system-ui;
+  --color-primary: oklch(0.42 0.27 290);
+  --color-primary-hover: oklch(0.52 0.16 60);
+
+  /* Roundness — the radius scale (set by data-radius, override here to pin) */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-full: 9999px;
+
+  /* Fonts — the three families (also set by data-typography) */
+  --font-heading: 'Your Heading Font', system-ui;
+  --font-body: 'Your Body Font', system-ui;
+  --font-mono: 'Your Mono Font', ui-monospace;
 }
 ```
 
@@ -342,17 +352,21 @@ Name colors by purpose, not appearance:
 --color-bg: #f8fafc;
 ```
 
-### Minimal Palette
+### Disciplined Palette
 
-Resist adding colors. Every new color needs justification:
+Resist adding colors. Every new color needs justification. The shipped system:
 
-| Category | Count | Purpose |
-|----------|-------|---------|
-| **Neutral** | 1 scale | Backgrounds, text, borders |
-| **Primary** | 1 color + hover | Brand, primary actions |
-| **Feedback** | 3 colors | Success, warning, error |
+| Category | Members | Purpose |
+|----------|---------|---------|
+| **Neutral** | bg, fg, body, heading, muted, border, subtle | Backgrounds, text, borders |
+| **Primary** | primary (+ hover, container, dim), on-primary | Brand, primary actions |
+| **Secondary** | secondary, on-secondary | Supporting surfaces |
+| **Accent** | accent (+ hover, container), on-accent | Analogous highlight |
+| **Feedback** | success, warning, error, info (each with light variants) | Status |
+| **Surfaces** | surface-1/2/3 | Elevation (raised → overlay → modal) |
+| **Charts** | chart-1…chart-8 | Data series |
 
-That's it. If you need more, question why.
+Each color family carries on-* foreground pairs for contrast. Dark mode swaps the lot via `.dark`.
 
 ---
 

@@ -64,15 +64,17 @@ Per-page header inside the main content area. **Not a global header** — each p
 
   interface Props {
     title: string;
+    description?: string;
     breadcrumbs?: Breadcrumb[];
-    actions?: Snippet;
+    sticky?: boolean;
     class?: string;
+    children?: Snippet;
   }
 
-  let { title, breadcrumbs, actions, class: className }: Props = $props();
+  let { title, description, breadcrumbs, sticky = false, class: className, children }: Props = $props();
 </script>
 
-<header class={cn('mb-6', className)}>
+<header class={cn('page-header', sticky && 'sticky', className)}>
   {#if breadcrumbs?.length}
     <nav class="mb-2 text-sm text-muted" aria-label="Breadcrumb">
       <ol class="flex items-center gap-1">
@@ -93,11 +95,16 @@ Per-page header inside the main content area. **Not a global header** — each p
   {/if}
 
   <div class="flex items-center justify-between gap-4">
-    <h1 class="text-2xl font-semibold text-fg">{title}</h1>
+    <div>
+      <h1 class="text-2xl font-semibold text-fg">{title}</h1>
+      {#if description}
+        <p class="text-muted">{description}</p>
+      {/if}
+    </div>
 
-    {#if actions}
+    {#if children}
       <div class="flex items-center gap-2">
-        {@render actions()}
+        {@render children()}
       </div>
     {/if}
   </div>
@@ -124,14 +131,13 @@ Per-page header inside the main content area. **Not a global header** — each p
     { label: data.project.name }
   ]}
 >
-  {#snippet actions()}
-    <Button intent="secondary">Edit</Button>
-    <DropdownMenu>
-      <DropdownItem>Duplicate</DropdownItem>
-      <DropdownItem>Archive</DropdownItem>
-      <DropdownItem destructive>Delete</DropdownItem>
-    </DropdownMenu>
-  {/snippet}
+  <!-- Actions render through the default children snippet -->
+  <Button intent="secondary">Edit</Button>
+  <DropdownMenu>
+    <DropdownItem>Duplicate</DropdownItem>
+    <DropdownItem>Archive</DropdownItem>
+    <DropdownItem destructive>Delete</DropdownItem>
+  </DropdownMenu>
 </PageHeader>
 
 <!-- Page content below -->
@@ -141,10 +147,10 @@ Per-page header inside the main content area. **Not a global header** — each p
 
 ## Sticky Option
 
-For long pages, PageHeader can stick to top on scroll:
+For long pages, pass the `sticky` prop. PageHeader applies its own `position: sticky` styling:
 
 ```svelte
-<PageHeader title="Dashboard" class="sticky top-0 bg-bg z-10" />
+<PageHeader title="Dashboard" sticky />
 ```
 
 ---

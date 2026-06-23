@@ -20,7 +20,7 @@ The first and most consequential decision for any new file is **adapter vs. doma
 | Server Valibot schema | `src/lib/server/schemas/shared.ts` | Shared server-side shapes. |
 | Client Valibot schema | `src/lib/schemas/[area]/` | Foldered to mirror route areas: `admin/ app/ blog/ showcase/`. |
 | Svelte component | `src/lib/components/[layer]/[name]/[Name].svelte` | PascalCase file; kebab-case folder. Check component layers before writing raw HTML. |
-| App-wide reactive state | `src/lib/state/[concern].svelte.ts` | `.svelte.ts` extension mandatory. Single-word concern name. |
+| App-wide reactive state | `src/lib/state/[concern].svelte.ts` | `.svelte.ts` extension mandatory. Concern name, single-word by default (hyphenate when needed). |
 | Component-local reactive state | Co-located next to the component | Named `[component].state.svelte.ts` (preferred) or `[component]-state.svelte.ts`. |
 | CVA variant definitions | `src/lib/components/[layer]/[name]/[name].ts` | Kebab-case `.ts`. Scoped CSS in the `.svelte` handles actual styling (UnoCSS extraction limitation). |
 | Design tokens (build-time) | `src/lib/styles/tokens.ts` | Read by `uno.config.ts`. Replaces UnoCSS defaults — spacing values differ from Tailwind. |
@@ -45,7 +45,7 @@ velociraptor/
   svelte.config.js      SvelteKit adapter (Vercel, nodejs22.x)
   vite.config.ts        UnoCSS + Paraglide + SvelteKit plugins; ssr.noExternal: three (Threlte SSR)
   uno.config.ts         UnoCSS — reads tokens.ts; replaces default spacing
-  drizzle.config.ts     db:push config; lists 12 schema namespaces
+  drizzle.config.ts     db:push config; lists 14 schema namespaces
   vitest.config.ts      Test runner
   knip.config.ts        Dead-code/unused-export detection
   biome.json            Linter + formatter
@@ -103,7 +103,7 @@ src/
 
 `$lib/server/` is server-only **by path**. SvelteKit refuses to bundle it client-side. No runtime guard needed — the path is the boundary. Never import `$lib/server/*` from a `.svelte` file or a universal `+page.ts`.
 
-### ~31 domain folders
+### ~33 domain folders
 
 ```
 src/lib/server/
@@ -127,6 +127,7 @@ src/lib/server/
   content/      Markdown content serving
   cycle/        Cycle domain
   db/           Drizzle client + schema + query/mutation files (see db section)
+  dbops/        DB refresh/mirror orchestrator: dbops.run ledger, lazy-advance executor
   desk/         AI workspace
   docs/         Documentation serving
   errors/       ServerError hierarchy
@@ -140,6 +141,7 @@ src/lib/server/
   jobs/         Runner, scheduler, delivery-scheduler, registered jobs
   llmwiki/      Hybrid vector+BM25 wiki search; co-locates queries
   monitoring/   Observability helpers
+  neon/         Neon control-plane API client; sole NEON_API_KEY holder
   notifications/ Send, stream SSE, route, outbox, channel providers
   pairing/      Pairing-code domain
   platform/     Runtime platform detection
@@ -213,9 +215,9 @@ src/lib/server/db/
   showcase/                  Showcase-specific access helpers
 ```
 
-### Schema namespaces (12)
+### Schema namespaces (14)
 
-`admin`, `ai`, `analytics`, `app`, `auth`, `blog`, `desk`, `feedback`, `jobs`, `notifications`, `rag`, `showcase`
+`admin`, `ai`, `analytics`, `app`, `auth`, `blog`, `dbops`, `desk`, `feedback`, `image`, `jobs`, `notifications`, `rag`, `showcase`
 
 ### Access directories under `db/`
 
@@ -388,7 +390,7 @@ src/routes/
 - **Route/domain folders:** lowercase single-word (`rawrag`, `llmwiki`) or kebab-case (`grant-requests`, `asset-folders`).
 - **Server `.ts` files:** kebab-case (`chat-orchestrator.ts`, `render-message.ts`).
 - **Component files:** PascalCase `.svelte` (`AppShell.svelte`); their containing folder is kebab-case (`app-shell/`).
-- **Runes state files:** `.svelte.ts` extension is mandatory. App-wide stores live in `src/lib/state/[concern].svelte.ts` — single-word concern names (verified 8: `consent`, `modals`, `notifications`, `session`, `sidebar`, `style`, `theme`, `toast`). Component-local runes files co-locate next to the component, named by concern (`dock/desk-bus.svelte.ts`).
+- **Runes state files:** `.svelte.ts` extension is mandatory. App-wide stores live in `src/lib/state/[concern].svelte.ts` — concern names, single-word by default with hyphenation when needed (verified 10: `consent`, `modals`, `notifications`, `run-monitor`, `search`, `session`, `sidebar`, `style`, `theme`, `toast`). Component-local runes files co-locate next to the component, named by concern (`dock/desk-bus.svelte.ts`).
 - **State file wart:** two spellings coexist for component-local state files — `.state.svelte.ts` (`dock/dock.state.svelte.ts`, `spreadsheet/spreadsheet.state.svelte.ts`) and `-state.svelte.ts` (`explorer/explorer-state.svelte.ts`, `cycle/cycle-state.svelte.ts`). New files should use `.state.svelte.ts`.
 - **Barrels:** always `index.ts`.
 - **Internal/special files:** leading underscore (`_better-auth.ts`, `_seed-domain.ts`).

@@ -1,371 +1,181 @@
-# 3D Integration Quick Reference
+# 3D Quick Reference
 
-Essential patterns for adding 3D to SvelteKit. Copy-paste starting points.
+Copy-paste starting points for Threlte 8 in v10r. Threlte only — no vanilla Three.js. For the architecture and project decisions, read `docs/blueprint/3d/3d-integration.md`; for Three.js / Threlte fundamentals, use the `3d` skill.
 
-## Page Setup (REQUIRED)
+## Dependencies
 
-Every 3D page needs:
+```jsonc
+// package.json — then rebuild/restart the container
+"@threlte/core": "^8.3.1",
+"@threlte/extras": "^9.0.0",
+"three": "^0.183.2"
+```
+
+## Page Setup
+
+Disable SSR and prerender once at the `3d/` layout — WebGL needs `window`, and the Three.js bundle is browser-only:
 
 ```typescript
-// +page.ts
-export const ssr = false;        // REQUIRED: No server rendering
-export const prerender = false;  // REQUIRED: Dynamic content
+// showcases/3d/+layout.ts
+export const ssr = false;
+export const prerender = false;
 ```
 
-## Basic Vanilla Three.js Scene
+A leaf that breaks out of the layout (`[model]/+page@.svelte`) repeats these flags in its own `+page.ts`.
 
-```svelte
-<!-- /showcase/3d/basic-scene/+page.svelte -->
-<script lang="ts">
-  import { browser } from '$app/environment';
-  import { onMount } from 'svelte';
-  import type * as THREE from 'three';
+## Canvas + Scene
 
-  let container = $state<HTMLDivElement>();
-  let scene: THREE.Scene;
-  let camera: THREE.PerspectiveCamera;
-  let renderer: THREE.WebGLRenderer;
-  let cube: THREE.Mesh;
-
-  onMount(async () => {
-    if (!browser || !container) return;
-
-    // Dynamic import (never at top level!)
-    const THREE = await import('three');
-
-    // Scene setup
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    container.appendChild(renderer.domElement);
-
-    // Add cube
-    const geometry = new THREE.BoxGeometry();
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
-
-    camera.position.z = 5;
-
-    // Animation loop
-    let frameId: number;
-    const animate = () => {
-      frameId = requestAnimationFrame(animate);
-      cube.rotation.x += 0.01;
-      cube.rotation.y += 0.01;
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    // REQUIRED: Cleanup
-    return () => {
-      cancelAnimationFrame(frameId);
-      geometry.dispose();
-      material.dispose();
-      renderer.dispose();
-    };
-  });
-</script>
-
-{#if browser}
-  <div bind:this={container} class="scene"></div>
-{:else}
-  <div class="loading">Loading 3D scene...</div>
-{/if}
-
-<style>
-  .scene { width: 100%; height: 100vh; }
-  .loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-  }
-</style>
-```
-
-## Basic Threlte Scene
-
-```bash
-# Add to package.json, restart container
-{
-  "dependencies": {
-    "@threlte/core": "^8.3.1",
-    "@threlte/extras": "^9.0.0",
-    "three": "^0.170.0"
-  }
-}
-```
+Page hosts `<Canvas>` and wraps it in `<svelte:boundary>` for the WebGL fallback. Scene contents live in a child component for code-splitting.
 
 ```svelte
 <!-- +page.svelte -->
 <script lang="ts">
-  import { Canvas } from '@threlte/core';
-  import Scene from './Scene.svelte';
+import { Canvas } from '@threlte/core';
+import { BoundaryFallback } from '$lib/components/composites';
+import Scene from './Scene.svelte';
 </script>
 
-<Canvas>
-  <Scene />
-</Canvas>
+<svelte:boundary>
+  <div class="container">
+    <Canvas>
+      <Scene />
+    </Canvas>
+  </div>
+
+  {#snippet failed(error, reset)}
+    <BoundaryFallback
+      title="3D scene unavailable"
+      description="WebGL is required. Check browser support or graphics drivers."
+      minHeight="100vh"
+      {reset}
+    />
+  {/snippet}
+</svelte:boundary>
 
 <style>
-  :global(canvas) { display: block; }
+  .container { width: 100%; height: 100vh; }
 </style>
 ```
+
+## Scene Contents
+
+Scene is `<T>` proxy components — camera, lights, meshes. No `new THREE.Scene()`, no renderer, no render loop; Threlte owns the renderer lifecycle.
 
 ```svelte
 <!-- Scene.svelte -->
 <script lang="ts">
-  import { T } from '@threlte/core';
-  import { OrbitControls } from '@threlte/extras';
-  import { useFrame } from '@threlte/core';
-
-  let rotation = $state(0);
-
-  useFrame((state, delta) => {
-    rotation += delta;
-  });
+import { T } from '@threlte/core';
+import { OrbitControls } from '@threlte/extras';
 </script>
 
-<T.PerspectiveCamera makeDefault position={[0, 0, 5]} />
-<T.DirectionalLight position={[5, 10, 5]} />
+<T.PerspectiveCamera makeDefault position={[3, 3, 3]}>
+  <OrbitControls />
+</T.PerspectiveCamera>
+<T.DirectionalLight position={[10, 10, 10]} intensity={1} />
 <T.AmbientLight intensity={0.5} />
+
+<T.Mesh>
+  <T.BoxGeometry />
+  <T.MeshStandardMaterial color="hotpink" />
+</T.Mesh>
+```
+
+## Animation: useTask
+
+Per-frame work uses **`useTask`** from `@threlte/core` (Threlte 8 — not `useFrame`, that's Threlte 7). Drive reactive props with `$state`:
+
+```svelte
+<script lang="ts">
+import { T, useTask } from '@threlte/core';
+
+let rotation = $state(0);
+useTask((delta) => {
+  rotation += delta;
+});
+</script>
 
 <T.Mesh rotation.y={rotation}>
   <T.BoxGeometry />
   <T.MeshStandardMaterial color="hotpink" />
 </T.Mesh>
-
-<OrbitControls />
 ```
 
-## Reactive Controls Pattern
+## Reactive Props
+
+Props from `$props()` flow straight into `<T>` attributes — no manual `needsUpdate`. Use `$effect` only for imperative objects Threlte doesn't proxy (e.g. an `AnimationMixer`):
 
 ```svelte
 <script lang="ts">
-  import type * as THREE from 'three';
-
-  // Reactive state
-  let color = $state('#ff0000');
-  let wireframe = $state(false);
-
-  let material: THREE.MeshStandardMaterial;
-
-  // React to changes
-  $effect(() => {
-    if (!material) return;
-    material.color.set(color);
-    material.wireframe = wireframe;
-    material.needsUpdate = true;
-  });
+let { color = '#ff0000', wireframe = false } = $props();
 </script>
 
-<div class="controls">
-  <label>
-    Color: <input type="color" bind:value={color} />
-  </label>
-  <label>
-    <input type="checkbox" bind:checked={wireframe} />
-    Wireframe
-  </label>
-</div>
+<T.Mesh>
+  <T.BoxGeometry />
+  <T.MeshStandardMaterial {color} {wireframe} />
+</T.Mesh>
 ```
 
-## GLTF Model Loading
+## GLTF Loading
+
+Load with `useGltf` (returns a store — read `$gltf`) or the `<GLTF>` component. Guard the render until it resolves:
 
 ```svelte
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { T, useTask } from '@threlte/core';
+import { useGltf } from '@threlte/extras';
+import { AnimationMixer } from 'three';
 
-  let { data } = $props();
-  let progress = $state(0);
-  let error = $state<string>();
+let { defaultAnimation }: { defaultAnimation?: string } = $props();
 
-  onMount(async () => {
-    const THREE = await import('three');
-    const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
+// svelte-ignore state_referenced_locally
+const gltf = useGltf('/models/Fox.glb');
+let mixer: AnimationMixer | undefined;
 
-    const loader = new GLTFLoader();
+$effect(() => {
+  const data = $gltf;
+  if (!data || !defaultAnimation) return;
+  mixer = new AnimationMixer(data.scene);
+  const clip = data.animations.find((c) => c.name === defaultAnimation);
+  if (clip) mixer.clipAction(clip).play();
+});
 
-    loader.load(
-      data.model.url,
-      (gltf: GLTF) => {
-        scene.add(gltf.scene);
-        progress = 100;
-      },
-      (xhr) => {
-        progress = (xhr.loaded / xhr.total) * 100;
-      },
-      (err) => {
-        error = 'Failed to load model';
-      }
-    );
-  });
+useTask((delta) => mixer?.update(delta));
 </script>
 
-{#if error}
-  <div class="error">{error}</div>
-{:else if progress < 100}
-  <div>Loading... {progress.toFixed(0)}%</div>
+{#if $gltf}
+  <T is={$gltf.scene} />
 {/if}
 ```
 
-## WebGL Detection
+GLB models ship from `static/models/` and serve at `/models/*.glb`. The `<GLTF url="..." />` component is the no-animation shortcut.
 
-```svelte
-<script lang="ts">
-  import { browser } from '$app/environment';
-  import { onMount } from 'svelte';
+## Route Structure
 
-  let hasWebGL = $state<boolean>();
-
-  function detectWebGL(): boolean {
-    if (!browser) return false;
-    try {
-      const canvas = document.createElement('canvas');
-      return !!(window.WebGLRenderingContext &&
-        (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
-    } catch {
-      return false;
-    }
-  }
-
-  onMount(() => {
-    hasWebGL = detectWebGL();
-  });
-</script>
-
-{#if hasWebGL === false}
-  <div class="fallback">
-    <h2>WebGL Not Supported</h2>
-    <img src={data.thumbnail} alt="Preview" />
-  </div>
-{:else if hasWebGL === true}
-  <!-- 3D scene here -->
-{/if}
-```
-
-## Performance Checklist
-
-- [ ] Disable SSR: `export const ssr = false`
-- [ ] Dynamic import Three.js
-- [ ] Dispose geometry/materials on unmount
-- [ ] Use `renderer.dispose()` + `forceContextLoss()`
-- [ ] Cancel animation frame in cleanup
-- [ ] Lazy load 3D pages (don't import in root layout)
-- [ ] Compress models (Draco for GLTF)
-- [ ] Show loading progress for large assets
-- [ ] Detect device capabilities (mobile vs desktop)
-- [ ] Provide static fallback images
-
-## Common Mistakes
-
-### ❌ Top-Level Import
-```svelte
-<!-- WRONG -->
-<script lang="ts">
-  import * as THREE from 'three'; // Breaks SSR!
-</script>
-```
-
-### ✅ Dynamic Import
-```svelte
-<!-- RIGHT -->
-<script lang="ts">
-  import { onMount } from 'svelte';
-  onMount(async () => {
-    const THREE = await import('three');
-  });
-</script>
-```
-
-### ❌ Missing Cleanup
-```svelte
-<!-- WRONG -->
-<script lang="ts">
-  onMount(() => {
-    const renderer = new THREE.WebGLRenderer();
-    // No cleanup!
-  });
-</script>
-```
-
-### ✅ Proper Cleanup
-```svelte
-<!-- RIGHT -->
-<script lang="ts">
-  onMount(() => {
-    const renderer = new THREE.WebGLRenderer();
-    return () => {
-      renderer.dispose();
-      renderer.forceContextLoss();
-    };
-  });
-</script>
-```
-
-### ❌ Animation in $effect
-```svelte
-<!-- WRONG -->
-<script lang="ts">
-  $effect(() => {
-    const animate = () => {
-      requestAnimationFrame(animate); // Never stops!
-    };
-    animate();
-  });
-</script>
-```
-
-### ✅ Animation in onMount
-```svelte
-<!-- RIGHT -->
-<script lang="ts">
-  onMount(() => {
-    let frameId: number;
-    const animate = () => {
-      frameId = requestAnimationFrame(animate);
-      // ... render
-    };
-    animate();
-    return () => cancelAnimationFrame(frameId);
-  });
-</script>
-```
-
-## Route Structure Template
+3D showcases live under the public locale group (routes are `/showcases/3d/...`, plural):
 
 ```
-src/routes/showcase/3d/
-├── +layout.svelte          # Dark theme, controls overlay
-├── +page.svelte            # Landing page
-├── +page.ts                # export const ssr = false
-├── basic-scene/
-│   ├── +page.svelte        # Vanilla Three.js
-│   └── +page.ts
-├── gltf-viewer/
-│   ├── +page.svelte        # Model loading
-│   ├── +page.server.ts     # Model metadata
-│   └── +page.ts
-└── interactive/
-    ├── +page.svelte        # Raycasting, clicks
-    └── +page.ts
+src/routes/[[locale=locale]]/(public)/showcases/3d/
+├── +layout.ts              # ssr=false, prerender=false (whole subtree)
+├── +page.svelte            # scene gallery
+├── static-scene/           # GLTF helmet, OrbitControls
+├── animated-scene/
+│   ├── +page.svelte        # Canvas + boundary
+│   └── Scene.svelte        # split for code-splitting
+├── customize/[model]/      # GLTF customizer
+└── [model]/                # config-driven viewer
 ```
 
-## Next Steps
+## Gotchas
 
-1. Read full guide: `/docs/blueprint/3d-integration.md`
-2. Create basic scene
-3. Add OrbitControls
-4. Load GLTF model
-5. Add reactive controls
-6. Optimize performance
-7. Test WebGL fallback
+- **`useTask`, not `useFrame`** — Threlte 8 renamed the per-frame hook.
+- **`useGltf` is a store** — read `$gltf`, never render scene contents before it resolves.
+- **`makeDefault` type error** — `T.PerspectiveCamera makeDefault` needs `@ts-ignore` until tsgo supports the conditional type.
+- **`state_referenced_locally`** — calling `useGltf(prop)` at script top reads a prop during init; silence with `// svelte-ignore state_referenced_locally`.
+- **Keep 3D imports per route** — don't pull Three.js into a shared `+layout`; that defeats code-splitting.
 
 ## References
 
-- **Full Guide**: `/docs/blueprint/3d-integration.md`
-- **Threlte Docs**: https://threlte.xyz/docs
-- **Three.js Docs**: https://threejs.org/docs
+- `docs/blueprint/3d/3d-integration.md` — architecture, components, config registry
+- `3d` skill — Three.js + Threlte fundamentals, physics, WebGPU
+- `/showcases/3d` — live scenes (also the test spec)
+- Threlte: https://threlte.xyz/docs

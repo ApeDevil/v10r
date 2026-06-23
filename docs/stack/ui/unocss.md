@@ -1,40 +1,11 @@
 # UnoCSS
 
-## What is it?
-
-Instant on-demand atomic CSS engine. Unlike traditional CSS frameworks, UnoCSS has no core utilities—all functionality is provided through presets. It generates only the classes actually used in code.
-
-## What is it for?
-
-- Building fully customized design systems without framework constraints
-- Atomic CSS generation on-demand (no unused CSS shipped)
-- Projects requiring maximum extensibility and performance
-- Multi-context deployment: Vite, SvelteKit, Nuxt, Astro, CDN runtime
+On-demand atomic CSS engine — the styling layer, paired with Bits UI. Config lives in `uno.config.ts`; design tokens in `src/app.css`. See the `unocss` skill for utility syntax and the project's extraction gotchas.
 
 ## Why was it chosen?
 
-| Aspect | UnoCSS | Tailwind CSS |
-|--------|--------|--------------|
-| Generation | On-demand | Full scan + purge |
-| Architecture | Isomorphic engine | PostCSS plugin |
-| Bundle size | ~65% of Tailwind | Baseline |
-| Core utilities | None (all via presets) | Monolithic |
-| Speed | Up to 200x faster (benchmarks) | Fast |
-
-**Key advantages:**
-- No AST parsing, no PostCSS dependency—cheap string concatenation
-- Full Tailwind compatibility via `preset-wind`
-- Unique features: attributify mode, pure CSS icons, variant groups
-- Svelte Scoped mode: inject styles directly into Svelte components
-- ~6kb min+brotli, zero dependencies
-
-**Preset ecosystem:**
-| Preset | Purpose |
-|--------|---------|
-| `preset-wind` | Tailwind-compatible utilities |
-| `preset-icons` | Any Iconify icon as CSS class |
-| `preset-mini` | Minimal essential utilities |
-| `preset-typography` | Prose styling |
+- Tailwind-compatible utilities via `preset-wind`, plus pure-CSS icons via `preset-icons` (see [Icons](#icons)).
+- Note: custom spacing in `tokens.ts` **replaces** UnoCSS defaults — keys 1-8 differ from Tailwind. Use arbitrary values for precise sizing.
 
 ## Accessibility Requirements
 
@@ -108,21 +79,8 @@ See [styling.md](../../blueprint/design/styling.md#container-queries) for detail
 
 ## Known limitations
 
-**Ecosystem:**
-- Smaller community than Tailwind (200K+ vs Tailwind's larger base)
-- Cannot use Tailwind CSS plugins—must use UnoCSS presets
-- No pre-built components (unlike Tailwind UI)
-- Creator notes it's "still in early stage"
-
-**Configuration:**
-- No built-in preflight CSS reset (intentional, must configure manually)
-- More initial setup than Tailwind's "works out of the box" experience
-- Different mental model: preset-based vs monolithic framework
-
-**SvelteKit-specific:**
-- Requires Vite plugin setup + SvelteKit hooks
-- Two integration modes to choose from (Scoped vs preprocessor)
-- More configuration required than Tailwind's simpler setup
+- **Cannot extract complex classes from `.ts` files** — opacity modifiers (`/10`) on CSS-variable colors break in all file types; CVA variant classes need scoped-CSS fallbacks (`color-mix()`). See the `unocss` skill and Button/Input components for the pattern.
+- No Tailwind plugins (presets only); no built-in preflight reset.
 
 ## Related
 
