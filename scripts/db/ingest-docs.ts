@@ -258,16 +258,18 @@ async function main() {
 	}
 
 	// Delete-not-seen reconcile: soft-delete active docs whose file is gone.
-	const removed = seen.length
-		? await db.execute(sql`
-			UPDATE rag.document SET deleted_at = now()
-			WHERE source = 'docs' AND deleted_at IS NULL AND source_uri <> ALL(${seen})
-		`)
-		: { rowCount: 0 };
+	// Diffed in JS against the already-loaded active set, then soft-deleted by id
+	// (single-value params — a JS array interpolated into a `sql` template spreads
+	// into `($1,…,$n)`, a row expr that breaks `<> ALL(...)`, which needs a real array).
+	const seenSet = new Set(seen);
+	const stale = existing.rows.filter((r) => !seenSet.has(r.sourceUri));
+	for (const r of stale) {
+		await db.execute(sql`UPDATE rag.document SET deleted_at = now() WHERE id = ${r.id}`);
+	}
 
 	console.log(
 		`[ingest-docs] Done. ${inserted} new, ${updated} updated, ${skipped} unchanged, ` +
-			`${removed.rowCount ?? 0} removed; ${chunks} chunks embedded.`,
+			`${stale.length} removed; ${chunks} chunks embedded.`,
 	);
 	await pool.end();
 }
