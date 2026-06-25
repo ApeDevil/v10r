@@ -9,14 +9,23 @@
  * Design (mirrors scripts/seed-llmwiki.ts + scripts/db/catalog-sync.ts):
  *   - Hand-rolls its OWN Neon pool + Gemini embedder from process.env — the app's
  *     rawrag `ingest()` / `embed.ts` import `$lib`/`$env` and cannot run under Bun.
- *   - Reuses ONLY the Vite-free `splitMarkdown` (relative import) for heading-aware
- *     chunking. Replicates the docs blocklist + canonical-path derivation from
- *     `src/lib/server/docs/manifest.ts` (which is Vite-only via import.meta.glob).
+ *   - Reuses the Vite-free `planChunks` (the SAME hierarchical section/paragraph
+ *     chunker the app `ingest()` uses) + `doc-filter` (relative imports). Replicates
+ *     the canonical-path derivation from `src/lib/server/docs/manifest.ts` (Vite-only).
  *   - All rows owned by the reserved SYSTEM_DOCS_USER_ID / PROJECT_DOCS_COLLECTION
  *     (every retrieval query hard-filters user_id). Idempotent: content-hash skip,
  *     soft-delete + re-insert on change, delete-not-seen reconcile for removed files.
+ *     Pass --force (or INGEST_FORCE=1) to re-chunk docs after a chunking-LOGIC change (the
+ *     per-file content hash only detects content edits). --force is RESUME-SAFE: it skips
+ *     docs already in the hierarchical layout, so a conversion interrupted by the free-tier
+ *     daily embed cap (1000 embed requests/day) finishes over multiple runs rather than
+ *     restarting from the top. To re-chunk an already-hierarchical corpus, clear it first.
  *
- * Tier-1 (rawrag chunks) only — the llmwiki tier-2 compiler is deferred.
+ * Produces hierarchical parent(section)+child(paragraph) chunks so retrieval tier-1
+ * (hybrid vector+BM25) AND tier-2 (parent-child) both work for the docs corpus, with
+ * deterministic heading-breadcrumb context prefixes (per-chunk LLM contextual-prep is
+ * deferred — it can't fit the chat-gen quota). The llmwiki page compiler and the
+ * tier-3 entity graph are still deferred for docs.
  */
 
 import { createHash } from 'node:crypto';
@@ -29,22 +38,31 @@ import { embedMany } from 'ai';
 import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { deriveTitle, isBlocked, parseFrontmatter, slugify } from '../../src/lib/server/docs/doc-filter';
-import { splitMarkdown } from '../../src/lib/server/rawrag/markdown-split';
+import { buildOverviewBody } from '../../src/lib/server/docs/overview-body';
+import {
+	CHUNK_OVERLAP,
+	EMBEDDING_DIMENSIONS,
+	EMBEDDING_MODEL,
+	EMBEDDING_MODEL_ID,
+	PARAGRAPH_CHUNK_TARGET,
+	SECTION_CHUNK_TARGET,
+} from '../../src/lib/server/rag-shared/embed-config';
+import { planChunks } from '../../src/lib/server/rawrag/plan';
 
 neonConfig.poolQueryViaFetch = true;
 
-// Keep in sync with src/lib/server/config.ts (constants can't be imported here —
-// config.ts sits behind the $lib alias the Bun runtime doesn't resolve).
+// Embedding model + chunk-sizing constants come from the Vite-free embed-config leaf
+// (imported above) — the single source of truth shared with the app. Only docs-corpus
+// identity + the batch/rate-limit knobs are local to this script.
 const SYSTEM_DOCS_USER_ID = 'system-docs';
 const PROJECT_DOCS_COLLECTION_ID = 'project-docs';
-const EMBEDDING_MODEL = 'gemini-embedding-001';
-const EMBEDDING_MODEL_ID = 'google-gemini-embedding-001';
-const EMBEDDING_DIMENSIONS = 1536;
-const PARAGRAPH_CHUNK_TARGET = 300;
-const CHUNK_OVERLAP = 50;
 const EMBED_BATCH = 32;
 // Gemini free-tier embeddings cap at 100 requests/minute — pace safely under it.
 const MAX_EMBED_PER_MIN = 90;
+// Re-chunk + re-embed docs even when their file hash is unchanged. Needed after a
+// chunking-LOGIC change (the per-file hash only detects CONTENT edits, not code changes).
+// Resume-safe: skips docs already converted to the hierarchical layout (see main()).
+const FORCE = process.argv.includes('--force') || process.env.INGEST_FORCE === '1';
 
 const NEON_DATABASE_URL_PROD = process.env.NEON_DATABASE_URL_PROD;
 const GEMINI_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
@@ -66,7 +84,6 @@ const sha256 = (s: string) => createHash('sha256').update(s).digest('hex');
 const shortId = (prefix: string) =>
 	`${prefix}_${createHash('sha256').update(`${prefix}${Math.random()}${performance.now()}`).digest('hex').slice(0, 16)}`;
 const vecLiteral = (v: number[]) => `[${v.join(',')}]`;
-const estimateTokens = (t: string) => Math.ceil(t.length / 4);
 
 // Canonical filtering + markdown helpers are shared with the /docs manifest via
 // src/lib/server/docs/doc-filter.ts (single source of truth — no more hand-sync).
@@ -83,6 +100,14 @@ const RAG_ONLY_BLOCK = new Set<string>([
 	// Superseded v4-era design record; the desk+AI feature shipped on AI SDK v6 with a
 	// different surface. Kept for /docs rationale, held from RAG to avoid stale-contract answers.
 	'docs/blueprint/ai/desk-integration.md',
+	// Planning blueprint: documents the RAG/nRAG "showcase-everything" design, most of which is
+	// DESIGNED-not-built (llmwiki compile, step-back, reranker, eval, :DEPENDS_ON). If ingested the
+	// chatbot would assert these unbuilt features as live. Renders at /docs for humans; held from RAG.
+	'docs/blueprint/ai/knowledge-base.md',
+	// Companion roadmap to knowledge-base.md: the detailed reranker / step-back / llmwiki-compile
+	// specs. Entirely DESIGNED-not-built (no retrieval source code exists for any of it yet). Same
+	// hazard as the blueprint — held from RAG so the chatbot can't assert these specs as shipped.
+	'docs/blueprint/ai/rag-roadmap.md',
 ]);
 
 interface DocFile {
@@ -186,34 +211,116 @@ async function embedAll(texts: string[]): Promise<number[][]> {
 	return out;
 }
 
-/** Insert one document + its embedded chunks. Returns chunk count. */
+/** Deepest ATX heading text in a chunk, or '' if it contains none. */
+function deepestHeading(text: string): string {
+	let last = '';
+	for (const m of text.matchAll(/^#{1,6}\s+(.+?)\s*#*\s*$/gm)) last = m[1].trim();
+	return last;
+}
+
+/** Insert one document as hierarchical parent(section)+child(paragraph) chunks. Returns total count. */
 async function insertDoc(doc: DocFile): Promise<number> {
-	const chunkTexts = splitMarkdown(doc.body, { targetTokens: PARAGRAPH_CHUNK_TARGET, overlapTokens: CHUNK_OVERLAP });
-	const embeddings = await embedAll(chunkTexts.map((t) => `${doc.title}\n\n${t}`));
+	const { parents, children } = await planChunks(doc.body, {
+		sectionTarget: SECTION_CHUNK_TARGET,
+		paragraphTarget: PARAGRAPH_CHUNK_TARGET,
+		overlap: CHUNK_OVERLAP,
+	});
+
+	// Deterministic context prefix = "<title> › <nearest heading>" — no LLM (per-chunk
+	// contextual-prep can't fit the chat-gen quota). Carry the last seen heading forward
+	// so continuation paragraphs inherit their section's heading.
+	let currentHeading = '';
+	const childPrefix = children.map((c) => {
+		const h = deepestHeading(c.content);
+		if (h) currentHeading = h;
+		return currentHeading ? `${doc.title} › ${currentHeading}` : doc.title;
+	});
+
+	// Embed CHILDREN only — parents are context containers, left unembedded so tier-1
+	// never surfaces a whole section (mirrors the app ingest()).
+	const embeddings = await embedAll(children.map((c, i) => `${childPrefix[i]}\n${c.content}`));
 
 	const docId = shortId('doc_docs');
-	const totalTokens = chunkTexts.reduce((s, t) => s + estimateTokens(t), 0);
+	const totalChunks = parents.length + children.length;
+	const totalTokens = parents.reduce((s, p) => s + p.tokenCount, 0) + children.reduce((s, c) => s + c.tokenCount, 0);
 	await db.execute(sql`
 		INSERT INTO rag.document (id, user_id, title, source, source_uri, status, total_chunks, total_tokens, content_hash)
 		VALUES (${docId}, ${SYSTEM_DOCS_USER_ID}, ${doc.title}, 'docs', ${doc.docsPath}, 'ready',
-			${chunkTexts.length}, ${totalTokens}, ${doc.rawHash})
+			${totalChunks}, ${totalTokens}, ${doc.rawHash})
 	`);
 
-	for (let i = 0; i < chunkTexts.length; i++) {
+	// Parents: section-level context containers — no embedding, no prefix. They surface
+	// only via a child's tier-2 parent-fetch, never directly in tier-1.
+	for (const p of parents) {
 		await db.execute(sql`
 			INSERT INTO rag.chunk (
-				id, document_id, level, position, content, context_prefix, token_count, content_hash,
+				id, document_id, parent_id, level, position, content, context_prefix, token_count, content_hash,
 				embedding_model_id, embedding
 			)
 			VALUES (
-				${shortId('chk_docs')}, ${docId}, 'paragraph', ${i}, ${chunkTexts[i]}, ${doc.title},
-				${estimateTokens(chunkTexts[i])}, ${sha256(chunkTexts[i])}, ${EMBEDDING_MODEL_ID},
-				${vecLiteral(embeddings[i])}::vector
+				${p.id}, ${docId}, NULL, 'section', ${p.position}, ${p.content}, NULL,
+				${p.tokenCount}, ${p.contentHash}, NULL, NULL
 			)
 			ON CONFLICT DO NOTHING
 		`);
 	}
-	return chunkTexts.length;
+
+	// Children: paragraph-level, embedded, linked to their section parent.
+	for (let i = 0; i < children.length; i++) {
+		const c = children[i];
+		await db.execute(sql`
+			INSERT INTO rag.chunk (
+				id, document_id, parent_id, level, position, content, context_prefix, token_count, content_hash,
+				embedding_model_id, embedding
+			)
+			VALUES (
+				${c.id}, ${docId}, ${c.parentId ?? null}, 'paragraph', ${c.position}, ${c.content}, ${childPrefix[i]},
+				${c.tokenCount}, ${c.contentHash}, ${EMBEDDING_MODEL_ID}, ${vecLiteral(embeddings[i])}::vector
+			)
+			ON CONFLICT DO NOTHING
+		`);
+	}
+
+	return totalChunks;
+}
+
+const SYSTEM_OVERVIEW_ID = 'lwp_docs_overview';
+const OVERVIEW_TITLE = 'Velociraptor (v10r) — Documentation Map';
+const OVERVIEW_TLDR =
+	'High-level map of v10r, a full-stack reference & test-sandbox. Lists the documentation corpus by section (foundation, blueprint, stack) so broad questions can find the right area, then drill into a specific doc.';
+const OVERVIEW_TAGS = ['overview', 'v10r', 'docs'];
+
+/**
+ * Write the system-owned overview page — the high-level anchor the chatbot injects for
+ * broad questions ("what is v10r", "how do I use it"). Deterministic body (no LLM), one
+ * embedding. Idempotent: the partial unique index keys on (collection_id) WHERE
+ * kind='overview', so any prior overview for this collection is replaced first.
+ */
+async function writeSystemOverview(files: DocFile[]): Promise<void> {
+	const body = buildOverviewBody(files);
+	const [embedding] = await embedAll([`${OVERVIEW_TITLE}\n${OVERVIEW_TLDR}\n${OVERVIEW_TAGS.join(' ')}`]);
+
+	await db.execute(sql`
+		DELETE FROM rag.llmwiki_page WHERE kind = 'overview' AND collection_id = ${PROJECT_DOCS_COLLECTION_ID}
+	`);
+	await db.execute(sql`
+		INSERT INTO rag.llmwiki_page (
+			id, user_id, collection_id, slug, kind, title, tldr, tldr_hash, body, tags,
+			frontmatter, embedding, search_vector, source_hash, source_count,
+			compiled_at, compiled_by_model, stale
+		)
+		VALUES (
+			${SYSTEM_OVERVIEW_ID}, ${SYSTEM_DOCS_USER_ID}, ${PROJECT_DOCS_COLLECTION_ID}, 'overview', 'overview',
+			${OVERVIEW_TITLE}, ${OVERVIEW_TLDR}, ${sha256(OVERVIEW_TLDR)}, ${body},
+			${`{${OVERVIEW_TAGS.join(',')}}`}::text[], '{}'::jsonb,
+			${vecLiteral(embedding)}::vector,
+			to_tsvector('english',
+				${OVERVIEW_TITLE} || ' ' || ${OVERVIEW_TLDR} || ' ' || ${body} || ' ' || ${OVERVIEW_TAGS.join(' ')}
+			),
+			${sha256(body)}, ${files.length}, now(), 'ingest-docs', false
+		)
+	`);
+	console.log(`[ingest-docs] system overview page written (${files.length} docs mapped).`);
 }
 
 async function main() {
@@ -232,6 +339,17 @@ async function main() {
 	`);
 	const activeByPath = new Map(existing.rows.map((r) => [r.sourceUri, r]));
 
+	// Docs whose ACTIVE version is already in the hierarchical (section + paragraph) layout.
+	// In --force mode we skip these, so a re-ingest interrupted by the daily embed cap
+	// (1000 embed requests/day on the free tier) RESUMES on the next run instead of redoing
+	// converted docs from the top — otherwise a >1000-chunk corpus could never finish.
+	const hierarchical = await db.execute<{ sourceUri: string }>(sql`
+		SELECT DISTINCT d.source_uri AS "sourceUri"
+		FROM rag.document d JOIN rag.chunk c ON c.document_id = d.id
+		WHERE d.source = 'docs' AND d.deleted_at IS NULL AND c.level = 'section'
+	`);
+	const hierarchicalPaths = new Set(hierarchical.rows.map((r) => r.sourceUri));
+
 	let inserted = 0;
 	let updated = 0;
 	let skipped = 0;
@@ -241,7 +359,13 @@ async function main() {
 	for (const doc of files) {
 		seen.push(doc.docsPath);
 		const prior = activeByPath.get(doc.docsPath);
-		if (prior && prior.contentHash === doc.rawHash) {
+		if (!FORCE && prior && prior.contentHash === doc.rawHash) {
+			skipped++;
+			continue;
+		}
+		// Resume-safe force: don't redo docs already converted to the hierarchical layout,
+		// so a conversion interrupted by the daily embed cap finishes across multiple runs.
+		if (FORCE && prior && hierarchicalPaths.has(doc.docsPath)) {
 			skipped++;
 			continue;
 		}
@@ -266,6 +390,8 @@ async function main() {
 	for (const r of stale) {
 		await db.execute(sql`UPDATE rag.document SET deleted_at = now() WHERE id = ${r.id}`);
 	}
+
+	await writeSystemOverview(files);
 
 	console.log(
 		`[ingest-docs] Done. ${inserted} new, ${updated} updated, ${skipped} unchanged, ` +

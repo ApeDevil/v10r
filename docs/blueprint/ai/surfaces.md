@@ -13,7 +13,7 @@ The AI subsystem serves **two product surfaces** (plus one showcase demo) throug
 | **Harness** | `buildRetrievalTools()` → `chatbotToolMeta` | `createDeskTools()` → `deskbotToolMeta` |
 | **Tools** | `search_catalog`, `search_project_docs`, `get_llmwiki_pages`, `get_rawrag_chunks`, `resolve_ref` | `desk_*` read/write/create/delete, `desk_propose_plan`, `resolve_ref` |
 | **System prompt** | `SYSTEM_PROMPT` (plain) | `DESK_SYSTEM_PROMPT` (XML-tagged) + permissions + desk-context |
-| **Corpus (nRAG)** | System-owned (`source IN docs,catalog`, `SYSTEM_DOCS_USER_ID`) + per-user llmwiki — curated, graph-seeded, static | The user's **own** desk files — per-user, mutable, not graph-seeded, private |
+| **Corpus (nRAG)** | System-owned (`source IN docs,catalog`, `SYSTEM_DOCS_USER_ID`) + per-user llmwiki — curated, static (catalog slice graph-seeded; docs-corpus graph tier dormant) | The user's **own** desk files — per-user, mutable, not graph-seeded, private |
 | **Invariants** | Never emits a `DeskEffect`; never creates a proposal | All mutations route through `db/desk`; destructive batches gate through `shouldRequirePlan` |
 
 A third value, `rag-demo`, drives the showcase retrieval-pipeline demo. It is **not a product surface** and must not dilute the chatbot.
@@ -55,13 +55,15 @@ Two tests guard distinct properties of the door. `index.test.ts` drift-guards to
 
 ## nRAG: one shared kernel, two profiles, two corpora
 
+**"nRAG"** is an informal umbrella term for the whole retrieval subsystem — not a code identifier (no `nRAG` symbol exists; the entry point is `rawrag/retrieve()`). The subsystem spans both the `rawrag` engine and the `llmwiki` pointer layer — curated TLDR-with-chunk-pointers over the immutable rawrag chunks — so a definition naming only the engine is incomplete.
+
 The retrieval **engine** (`rawrag/retrieve()` — embed → tiers → RRF fusion → drill, with the single `user_id` tenant-isolation filter) is **shared mechanism**. The two surfaces exercise it as distinct **profiles**:
 
 | | chatbot profile | deskbot profile |
 |---|---|---|
 | Corpus | `SYSTEM_DOCS_USER_ID` (docs/catalog) + per-user llmwiki | The user's own desk files |
-| Tiers | 1–3 (graph tier is valuable — catalog is Neo4j-seeded) | 1–2 (no graph — desk files aren't graph-seeded) |
-| Grounding | Relevance-gated system-docs prefetch + llmwiki + on-demand drill; post-stream citation verification | `desk:ask` read-only tool (`desk_search_knowledge`); no citation chips. Read-only: excluded from `hasMutatingScope`/`stepsForScopes`/the plan gate — it never triggers plan-before-execute (only the turn's mutating tools do) |
+| Tiers | Designed 1–3 (graph tier valuable — catalog is Neo4j-seeded); **live: the floating widget requests tier-1 only** — tiers 2–3 unexercised by the chatbot today | 1–2 (no graph — desk files aren't graph-seeded) |
+| Grounding | Injected `<project-overview>` system-overview anchor + relevance-gated system-docs prefetch + llmwiki + on-demand drill; post-stream citation verification | `desk:ask` read-only tool (`desk_search_knowledge`); no citation chips. Read-only: excluded from `hasMutatingScope`/`stepsForScopes`/the plan gate — it never triggers plan-before-execute (only the turn's mutating tools do) |
 | Freshness | Static curated corpus | Mutable — `aiContext` opt-in; reconciled off the hot path by the `desk-rawrag-sync` job (polls `updatedAt`), not on each save |
 
 The kernel is never forked (a duplicated `user_id` filter would be a cross-tenant-leak risk); the corpus boundary is purely `document.userId`.
@@ -69,5 +71,7 @@ The kernel is never forked (a duplicated `user_id` filter would be a cross-tenan
 ## Status
 
 **Live:** the naming + dispatch discriminant; the **per-surface route split** (`/api/ai/chatbot` · `/api/ai/deskbot` · `/api/ai/showcase/rag`) behind the shared `guardAiRequest`; the harness split (zero overlap); the one-door rule (plan payload carries per-step `args`, replayed verbatim; resume turns mount read-only desk tools — approval binds execution); the `surface` analytics column (`ai_surface` enum on `ai.conversation` + `conversation_step`, stamped at creation, `conv_step_surface_idx`); the chatbot nRAG profile (relevance-gated system-docs prefetch); and the **deskbot nRAG profile** — `desk:ask` read-only grounding tool (`desk_search_knowledge`) over the user's own `aiContext` desk files, ingested via the shared kernel (`source = 'desk'`) and kept fresh by the `desk-rawrag-sync` job (polls `desk.file.updatedAt`).
+
+**Browser-verified 2026-06-25:** the chatbot's Phase-C foundation grounding is live — an injected `<project-overview>` system-overview anchor (`loadOverview([SYSTEM_DOCS_USER_ID], PROJECT_DOCS_COLLECTION_ID)`) plus **tier-1-only** retrieval. The anchor is the load-bearing fix for the original broad-question bug: "how do I use v10r?" now answers correctly with real `/docs/...` citations (5/5 functional probes green). Hierarchical docs chunking landed too, but is groundwork for future tier-2 surfaces — it does not change chatbot answers today, and the corpus conversion is partial (36/93 docs, quota-gated). See [knowledge-base.md](./knowledge-base.md#wired-vs-scaffold-the-honest-map).
 
 **Planned:** the physical `_shared`/`chatbot`/`deskbot` directory layout — all three surfaces still dispatch from one `chat-orchestrator.ts`. Also planned: per-surface Valibot request schemas (both routes share `ChatRequestSchema` today) and a declarative `ToolDescriptor` manifest backed by a DB `ai_tool` registry.

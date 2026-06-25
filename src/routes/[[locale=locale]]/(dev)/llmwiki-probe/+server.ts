@@ -23,7 +23,7 @@ export const GET: RequestHandler = async ({ url }) => {
 
 	const start = performance.now();
 	const [overview, hits] = await Promise.all([
-		loadOverview(userId, null),
+		loadOverview([userId], null),
 		searchLlmwiki(query, { userId, collectionId: null, limit: 4 }),
 	]);
 

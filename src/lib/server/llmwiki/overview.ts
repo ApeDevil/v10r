@@ -13,9 +13,9 @@ import type { LlmwikiPage } from './types';
 
 const CHARS_PER_TOKEN = 4;
 
-/** Load the overview page for a user/collection, truncated to budget. */
-export async function loadOverview(userId: string, collectionId: string | null): Promise<LlmwikiPage | null> {
-	const page = await getOverviewRow(userId, collectionId);
+/** Load the overview page for an owner-set / collection, truncated to budget. */
+export async function loadOverview(ownerIds: string[], collectionId: string | null): Promise<LlmwikiPage | null> {
+	const page = await getOverviewRow(ownerIds, collectionId);
 	if (!page) return null;
 
 	const maxChars = OVERVIEW_MAX_TOKENS * CHARS_PER_TOKEN;

@@ -13,8 +13,8 @@ The `rawrag/retrieve()` kernel (embed → tiers → RRF fusion → drill, with t
 
 | | chatbot profile | deskbot profile |
 |---|---|---|
-| Corpus | `SYSTEM_DOCS_USER_ID` docs/catalog + per-user llmwiki — curated, graph-seeded | The user's own desk files — private, mutable (`source = 'desk'`) |
-| Tiers | 1–3 (graph tier valuable — catalog is Neo4j-seeded) | 1–2 (no graph — desk files aren't seeded) |
+| Corpus | `SYSTEM_DOCS_USER_ID` docs/catalog + per-user llmwiki — curated (catalog slice graph-seeded; docs-corpus graph tier dormant) | The user's own desk files — private, mutable (`source = 'desk'`) |
+| Tiers | **Live: tier-1 only** (the floating widget requests `tiers:[1]`). Tiers 2–3 are designed but unexercised by the chatbot — tier-2 became *eligible* for converted docs after the 2026-06-25 ingest-door change, but the widget doesn't request it; tier-3/graph is dormant for the docs corpus | 1–2 (no graph — desk files aren't seeded) |
 | Entry | llmwiki + `search_catalog`/`search_project_docs` + relevance-gated system-docs prefetch + on-demand drill | `desk_search_knowledge` (`desk:ask`, read-only) |
 | Grounding | Post-stream citation verification, citation chips | Reference context; no citation chips; read-only |
 
@@ -274,7 +274,7 @@ podman exec v10r bun run db:ingest-docs
 - Hand-rolls its own Neon pool + Gemini embedder from `process.env` (the app's `rawrag` modules import `$lib`/`$env` and can't run under bare Bun). Reuses only the Vite-free `splitMarkdown`.
 - Enumerates `docs/**/*.md`, importing the blocklist + canonical-path derivation (`isBlocked`, `parseFrontmatter`, `slugify`, `deriveTitle`) from the Vite-free SSOT `src/lib/server/docs/doc-filter.ts` — the same module the `/docs` manifest imports, so there is no manual sync. Only `RAG_ONLY_BLOCK` (docs rendered in `/docs` but withheld from the chatbot) is ingest-local.
 - Idempotent: content-hash skip, soft-delete + re-insert on change, soft-delete-not-seen for removed files.
-- Tier-1 rawrag chunks only; the llmwiki tier-2 compiler over docs is deferred.
+- As of 2026-06-25 it writes hierarchical chunks (section-parents + paragraph-children) via the shared `planChunks()`, making the docs corpus tier-2-*eligible* — partial today (36/93 docs converted, multi-day quota-gated). The chatbot still reads **tier-1 only**. Separately, the llmwiki tier-2 *compiler* (auto-generated wiki pages) remains deferred — a different thing from the parent-child chunks.
 
 > **Free-tier ceilings.** Gemini embeddings cap at ~1000/day (the script paces under ~90/min and backs off on 429). A full corpus re-ingest of all docs can exceed a single day's quota — re-run after the quota resets to finish. Chat **generation** runs on `gemini-2.5-flash` at ~20 calls/day on free tier; once exhausted, grounded chat returns a provider error until reset. Embeddings and chat share the same `GOOGLE_GENERATIVE_AI_API_KEY`, so they draw on one provider quota — the admin quota board counts embedding calls separately because `conversation_step` can't see them ([provider-routing.md](./provider-routing.md)).
 

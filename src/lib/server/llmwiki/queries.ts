@@ -194,8 +194,13 @@ export async function findRedirect(oldSlug: string, collectionId: string | null)
 	return rows[0]?.newPageId ?? null;
 }
 
-/** Load the always-in-context overview page for a collection (or global). */
-export async function getOverview(userId: string, collectionId: string | null): Promise<LlmwikiPage | null> {
+/**
+ * Load the always-in-context overview page for a collection (or global). `ownerIds`
+ * mirrors the graph-RAG read pattern — pass `[user.id]` for a user's own overview, or
+ * `[SYSTEM_DOCS_USER_ID]` for the system project map. Scoping by owner-set, not a single
+ * user, is what lets the chatbot surface the system overview a logged-in user doesn't own.
+ */
+export async function getOverview(ownerIds: string[], collectionId: string | null): Promise<LlmwikiPage | null> {
 	const rows = await db
 		.select({
 			id: llmwikiPage.id,
@@ -211,7 +216,7 @@ export async function getOverview(userId: string, collectionId: string | null): 
 		.from(llmwikiPage)
 		.where(
 			and(
-				eq(llmwikiPage.userId, userId),
+				inArray(llmwikiPage.userId, ownerIds),
 				eq(llmwikiPage.kind, 'overview'),
 				isNull(llmwikiPage.deletedAt),
 				collectionId === null ? isNull(llmwikiPage.collectionId) : eq(llmwikiPage.collectionId, collectionId),

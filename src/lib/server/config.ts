@@ -59,23 +59,20 @@ export const AI_DAILY_TOKEN_CAP = 100_000;
 
 // ── Retrieval ──────────────────────────────────────────────────────────────────
 
-/** Embedding model identifier */
-export const EMBEDDING_MODEL = 'gemini-embedding-001';
-
-/** Embedding vector dimensions */
-export const EMBEDDING_DIMENSIONS = 1536;
-
-/** Embedding model row ID */
-export const EMBEDDING_MODEL_ID = 'google-gemini-embedding-001';
-
-/** Section-level chunk target (approximate tokens) */
-export const SECTION_CHUNK_TARGET = 1000;
-
-/** Paragraph-level chunk target (approximate tokens) */
-export const PARAGRAPH_CHUNK_TARGET = 300;
-
-/** Token overlap between chunks */
-export const CHUNK_OVERLAP = 50;
+/**
+ * Embedding model identity + chunk sizing live in the Vite-free `rag-shared/embed-config`
+ * leaf so the standalone Bun ingestion scripts can import the SAME constants by relative
+ * path (they can't resolve the `$lib` alias). Re-exported here so app import sites are
+ * unchanged — this is the one source of truth; never re-declare these values.
+ */
+export {
+	CHUNK_OVERLAP,
+	EMBEDDING_DIMENSIONS,
+	EMBEDDING_MODEL,
+	EMBEDDING_MODEL_ID,
+	PARAGRAPH_CHUNK_TARGET,
+	SECTION_CHUNK_TARGET,
+} from './rag-shared/embed-config';
 
 // ── Docs corpus (project documentation RAG) ──────────────────────────────────
 

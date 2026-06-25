@@ -29,7 +29,7 @@ import { incrProvider429 } from '$lib/server/ai/provider-usage';
 import type { ProviderEntry } from '$lib/server/ai/providers';
 import { isCooledDown, markCooldown } from '$lib/server/ai/providers';
 import { buildRetrievalTools, createDeskTools, type DeskToolScope, stepsForScopes } from '$lib/server/ai/tools';
-import { SYSTEM_DOCS_USER_ID } from '$lib/server/config';
+import { PROJECT_DOCS_COLLECTION_ID, SYSTEM_DOCS_USER_ID } from '$lib/server/config';
 import { checkConversationLimit } from '$lib/server/db/ai/limits';
 import {
 	createConversation,
@@ -610,12 +610,14 @@ The user has just approved the plan above and the listed steps were executed. Ac
 						// per-user (empty for a fresh user); the system-owned docs corpus is always there,
 						// so this is what guarantees the "v10r expert" answers even with no personal wiki.
 						const groundDocs = shouldGroundFromSystemDocs(userMsgText);
-						const [overviewResult, hitsResult, docsResult] = await Promise.allSettled([
-							loadOverview(userId, collectionId),
+						const [overviewResult, hitsResult, docsResult, sysOverviewResult] = await Promise.allSettled([
+							loadOverview([userId], collectionId),
 							searchLlmwiki(userMsgText, { userId, collectionId }),
 							groundDocs
 								? retrieve(userMsgText, { userId: SYSTEM_DOCS_USER_ID, tiers: [1], maxChunks: 4 })
 								: Promise.resolve(null),
+							// System-owned project map — grounds broad questions even with an empty personal wiki.
+							loadOverview([SYSTEM_DOCS_USER_ID], PROJECT_DOCS_COLLECTION_ID),
 						]);
 
 						const overviewMs = Math.round(performance.now() - overviewStart);
@@ -723,6 +725,21 @@ Retrieval rules:
 							});
 						}
 
+						// System-docs overview anchor — the canonical high-level "what is v10r" map, owned by
+						// the system corpus (not the user), so it grounds broad questions even when the user's
+						// personal wiki is empty. Always injected when present.
+						if (sysOverviewResult.status === 'fulfilled' && sysOverviewResult.value) {
+							systemPrompt = `${systemPrompt}
+
+<project-overview>
+${sysOverviewResult.value.title}
+
+${sysOverviewResult.value.body}
+</project-overview>
+
+The <project-overview> above is the canonical high-level map of v10r (a full-stack reference & test-sandbox). Use it to orient broad questions like "what is v10r" or "how do I use it"; ground specifics from the retrieval context and catalog below.`;
+						}
+
 						// System-docs grounding (relevance-gated, parallel above). Injected regardless of
 						// whether llmwiki had hits — this is the coverage net for users with an empty wiki.
 						if (docsResult.status === 'fulfilled' && docsResult.value && docsResult.value.chunks.length > 0) {
@@ -736,6 +753,16 @@ ${docsBlock}
 
 The <retrieval-context> above is retrieved from the project's OWN documentation — treat it as authoritative for how and why v10r is built. When you cite a /docs path or link, surface it via \`search_catalog\` (never invent paths).`;
 							}
+						} else if (docsResult.status === 'rejected') {
+							// The system-docs retrieve() (incl. the query embed) failed — surface it so an
+							// ungrounded turn is OBSERVABLE, not silently empty. Most likely an embedding 429
+							// that survived retry. Without this branch the failure vanished into allSettled.
+							emit({
+								type: 'pipeline:step',
+								step: 'embed',
+								status: 'error',
+								error: docsResult.reason instanceof Error ? docsResult.reason.message : String(docsResult.reason),
+							});
 						}
 					} catch (err) {
 						console.error('[ai:chat:llmwiki] Retrieval failed, proceeding without context:', err);
