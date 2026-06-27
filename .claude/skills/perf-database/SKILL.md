@@ -15,7 +15,7 @@ Neon serverless Postgres (HTTP driver) + Neo4j Aura (HTTP cypher) + Drizzle + pg
 - [Levers (stack-specific)](#levers-stack-specific)
 - [Gotchas that bite](#gotchas-that-bite)
 - [Already in v10r](#already-in-v10r)
-- [Known gaps — pending task force](#known-gaps--pending-task-force)
+- [Resolved (2026-06-27)](#resolved-2026-06-27)
 - [Out of scope](#out-of-scope)
 - [Measure](#measure)
 - [References](#references)
@@ -50,13 +50,13 @@ Neon serverless Postgres (HTTP driver) + Neo4j Aura (HTTP cypher) + Drizzle + pg
 
 `poolQueryViaFetch`; well-indexed schema (composite + partial, e.g. `blog_post_status_published_idx`, soft-delete unique); batched chunk fetch via `sql.join()` (no N+1); HTTP cypher; Drizzle relational where it fits, raw SQL for vector search.
 
-## Known gaps — pending task force
+## Resolved (2026-06-27)
 
-> Logged for a later fix taskforce — the `rawrag` perf debt.
+> The `rawrag` perf debt logged here is now fixed in-tree. Kept as a record of what changed.
 
-1. **pgvector double-distance + JOIN filter** — vector queries compute `embedding <=> $vec` **twice** (SELECT + ORDER BY) and filter by user via a JOIN to `rag.document` → seq-scan risk at ~50k+ chunks. Fix: CTE-alias the distance once + denormalize `user_id` onto the chunk table.
-2. **Tier-3 `GRAPH_TIMEOUT_MS = 30_000`** on user-facing RAG — a stalled Aura holds the whole pipeline 30s before falling back. Fix: 3–5s timeout for user paths; reserve 30s for background/admin.
-3. **`getGraphEntities()` fires a serial Neo4j call even when tier-3 produced 0 chunks.** Fix: short-circuit on empty tier-3 results.
+1. **pgvector double-distance + JOIN filter — DONE.** `rag.chunk` carries a denormalized `user_id text NOT NULL` (`chunk_user_idx`), copied from `document.userId` at ingest. Tier queries now filter `c.user_id = $userId` **directly on the chunk row** inside a CTE that computes `embedding <=> $vec` **once**; `rag.document` is JOINed only **after** the `LIMIT`, just to fetch the title (`tiers/contextual.ts`, `parent-child.ts`, `graph.ts`, `rawrag/queries.ts`). `hnsw.iterative_scan = 'relaxed_order'` is set at role level (`db/rag/setup.ts`). EXPLAIN ANALYZE re-measure: ~1010 ms seqscan → **19 ms** (system-docs owner, 3329 chunks) / **0.1 ms** (small user) — the HNSW index is usable again.
+2. **Tier-3 timeout on user paths — DONE.** New `USER_GRAPH_TIMEOUT_MS = 3000` (`config.ts`) is passed to the graph-tier expansion on user-facing reads (`tiers/graph.ts`); `GRAPH_TIMEOUT_MS = 30_000` is reserved for background/admin. (Tier-3 is catalog/demo only — the chatbot is tier-1 — so this was a P2.)
+3. **`getGraphEntities()` serial call — DONE.** It now short-circuits when no graph/tier-3 chunks survived fusion (`rawrag/index.ts`), instead of firing a Neo4j round-trip for zero payoff.
 
 ## Out of scope
 

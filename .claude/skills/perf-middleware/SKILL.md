@@ -15,7 +15,7 @@ The per-request pipeline: `hooks.server.ts` `handle` + `sequence()`, session res
 - [Levers (stack-specific)](#levers-stack-specific)
 - [Gotchas that bite](#gotchas-that-bite)
 - [Already in v10r](#already-in-v10r)
-- [Known gaps — pending task force](#known-gaps--pending-task-force)
+- [Resolved (2026-06-27)](#resolved-2026-06-27)
 - [Out of scope](#out-of-scope)
 - [Measure](#measure)
 - [References](#references)
@@ -42,7 +42,7 @@ The per-request pipeline: `hooks.server.ts` `handle` + `sequence()`, session res
 ## Gotchas that bite
 
 - **Unconditional `getSession()`** on every route (incl. public/health/favicon) = a DB hit per request. Gate it on route.
-- **Better Auth cookie cache** only avoids the DB for the first `maxAge` window; the expired-JWE bug logs users out (#10021), and revocation lags by `maxAge`. Redis **secondary storage** sidesteps both.
+- **Better Auth cookie cache is ON** (`maxAge=300`) — `getSession()` is DB-free for the 5-min window, so it is **not** the per-authed cost. Its trade-offs are accepted, not bugs to route around: revocation lags by up to `maxAge`, and the expired-JWE logout (#10021) is a known upstream edge. The real per-authed DB hit was the `listActiveGrantKinds` query — now path-gated (see Resolved).
 - **favicon/asset paths matching dynamic routes** cause parameter pollution + wasted DB queries (kit#3748).
 - **`sequence()` is serial by design** — independent async handlers each add their latency. A `parallel()` (`Promise.all`) wrapper collapses truly-independent ones; keep `sequence()` only where order matters (rate-limit must reject before session).
 
@@ -50,12 +50,12 @@ The per-request pipeline: `hooks.server.ts` `handle` + `sequence()`, session res
 
 Cookie-token fast-path short-circuit; module-scope limiters with ephemeral cache; hoisted `transformPageChunk`; `no-store, private` on auth/`/api`; `building` guards; two-limiter (per-IP then per-account) 2FA sequence (deliberate security, not a perf bug).
 
-## Known gaps — pending task force
+## Resolved (2026-06-27)
 
-> Logged for a later fix taskforce. Documented here so the knowledge is co-located with the domain.
+> The per-request DB debt logged here is now fixed in-tree. Kept as a record of what changed.
 
-1. **Better Auth cookie cache is OFF** → a Postgres round-trip on **every authenticated request**. Fix candidate: Upstash **secondary storage** for sessions (Redis is already in the stack) — ~1–2ms vs 5–50ms Postgres, plus instant revocation. Avoids the cookie-cache bugs entirely.
-2. **`loadStyle` runs 3rd in the chain (before auth)**, issuing up to 2 DB calls (`getBrandConfig` + `getCustomPaletteById`) on **every** request including unauth and `/api`. Fix candidate: move it after `sessionPopulate` and skip for `/api` paths.
+1. **Per-authed session round-trip — DONE / never the real cost.** Better Auth's cookie cache **is enabled** (`session.cookieCache.enabled=true, maxAge=300` in `auth/index.ts`), so `getSession()` is DB-free for 5 min — the Redis-secondary-storage "fix candidate" was moot. The actual per-authed hit was the `listActiveGrantKinds` query in `sessionPopulate`; it is now **path-gated** — grants are only queried when the path includes `/blog` or `/desk`, else `event.locals.grants = []` (admins bypass via `isAdmin`, so `[]` is safe). See `hooks.server.ts` (`sessionPopulate`).
+2. **`loadStyle` DB calls — DONE.** `getBrandConfig` is module-cached and `getCustomPaletteById` has a 60 s TTL (warm = 0 DB), and `style/brand.ts` now caches the **null** result (a `resolved` flag) so "no brand row" no longer re-queries Neon every request. `loadStyle` also early-returns on `/api/` paths and `event.isSubRequest` (`hooks.server.ts`), so it never runs for routes that don't render HTML.
 
 ## Out of scope
 

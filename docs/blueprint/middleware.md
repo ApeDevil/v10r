@@ -12,7 +12,7 @@ SvelteKit hooks for request interception, authentication, and cross-cutting conc
 
 This project does not use a `reroute` hook — locale routing lives in the route tree (`[[locale=locale]]` catch-all); see [i18n.md](./i18n.md).
 
-**`handle` sequence order:** Rate Limit → CORS → CSRF → Security Headers → Auth (session + `grants` populate)
+**`handle` sequence order** (`src/hooks.server.ts` is the SSOT): Security Headers (+ client-IP stamp) → strip `/en/` → Load Style → i18n → Auth Captcha Gate → Auth (rate-limit + Better Auth) → CSRF → Session Populate (+ path-gated `grants`) → Consent → Debug-Owner → Dev Route Guard → Analytics. Note the live order: security headers run **first** (to stamp the trusted IP), rate-limiting lives inside the auth handler, and CSRF runs **after** auth.
 
 ---
 
@@ -391,14 +391,14 @@ See [deployment.md](./deployment.md#scheduled-jobs) for the full jobs system.
 
 Complete `hooks.server.ts` with all patterns:
 
-> **Hook Order:** Rate Limit → CORS → CSRF → Security Headers → Auth. This order ensures:
-> 1. Abusive requests are blocked before consuming resources (OPTIONS exempt to allow CORS preflight)
-> 2. CORS handler processes all OPTIONS requests and adds required headers
-> 3. CSRF protection blocks cross-origin JSON API attacks (SvelteKit only protects forms)
-> 4. Security headers are applied to all responses (with immutable header protection)
-> 5. Authentication runs last (most expensive operation)
+> **Hook Order (live, per `src/hooks.server.ts`):** Security Headers (+ client-IP stamp) → strip `/en/` → Load Style → i18n → Auth Captcha Gate → Auth (rate-limit + Better Auth) → CSRF → Session Populate → Consent → Debug-Owner → Dev Route Guard → Analytics. Key points:
+> 1. Security headers run **first** — they stamp the trusted `x-client-ip` that every later handler reads instead of the attacker-mutable forwarded-for chain (response headers are added post-`resolve`).
+> 2. Style + locale populate render context; both skip `/api` and internal subrequests.
+> 3. Rate-limiting lives **inside the auth handler** — `/api/auth/*` rejects before Better Auth runs.
+> 4. CSRF runs **after** auth, on mutating `/api/*` (custom-header + same-host origin/referer check).
+> 5. Session populate reads the session into `locals` and queries `grants` only on `/blog`/`/desk` paths.
 >
-> **Critical:** Auth routes get stricter rate limits (5/min vs 100/min global)
+> **Critical:** Auth routes get stricter rate limits (5/min). The handlers below illustrate individual patterns; the live composition is mirrored at the end of this section.
 
 ```typescript
 // src/hooks.server.ts
@@ -510,22 +510,34 @@ const authHandle: Handle = async ({ event, resolve }) => {
   event.locals.user = session?.user ?? null;
   event.locals.session = session?.session ?? null;
 
-  // Populate active capability grants for authenticated requests.
-  // Single PK-indexed query; result used by requireApiBlogAuthor and similar guards.
-  event.locals.grants = session?.user
-    ? await listActiveGrantKinds(session.user.id)
-    : [];
+  // Populate active capability grants — path-gated. Grants are read only by the
+  // blog-author guards (/api/blog/* + blog pages) and the desk, so query them
+  // only on those paths; everywhere else the array stays empty (admins bypass via
+  // isAdmin, so [] is safe). This skips the Neon round-trip on every other request.
+  event.locals.grants =
+    session?.user && (event.url.pathname.includes('/blog') || event.url.pathname.includes('/desk'))
+      ? await listActiveGrantKinds(session.user.id)
+      : [];
 
   return resolve(event);
 };
 
-// Compose in order: Rate Limit → CORS → CSRF → Security → Auth
+// Live composition — mirrors src/hooks.server.ts (SSOT). The handlers above
+// illustrate individual patterns; the real app wires them in this order (security
+// headers FIRST to stamp the IP, rate-limit inside the auth handler, CSRF AFTER auth):
 export const handle = sequence(
-  rateLimitHandle,
-  corsHandle,
-  csrfHandle,
-  securityHandle,
-  authHandle
+  securityHeaders,       // client-IP stamp + response security headers
+  stripBaseLocalePrefix, // 308 /en/* → /*
+  loadStyle,             // skips /api/ and internal subrequests
+  i18n,                  // Paraglide locale + transformPageChunk
+  authCaptchaGate,       // ALTCHA on email-sending auth routes
+  authHandler,           // Upstash rate-limit + Better Auth /api/auth/*
+  csrfProtection,        // mutating /api/* origin/referer check
+  sessionPopulate,       // session → locals; path-gated grants
+  consentLoader,
+  debugOwnerLoader,
+  devRouteGuard,
+  analyticsCollector,
 );
 
 // Server-side fetch interception

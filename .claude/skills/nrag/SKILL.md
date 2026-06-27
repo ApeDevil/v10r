@@ -61,7 +61,7 @@ Every design decision here bends to a **hard daily request ceiling**. Internaliz
 | Role | v10r expert, read-only grounded Q&A | in-desk operator, mutating, plan-gated |
 | Corpus | system-owned `docs`+`catalog` (`SYSTEM_DOCS_USER_ID`) + per-user llmwiki | the user's **own** desk files |
 | Tiers today | tier-1 only | 1–2 (no graph) |
-| Tenant isolation | single `user_id` filter — the corpus boundary is purely `document.userId` | same kernel, never forked (a duplicated filter = cross-tenant leak risk) |
+| Tenant isolation | single owner filter on the denormalized `chunk.user_id` (copied from `document.userId` at ingest, indexed) — still the tenant boundary; keeping the two in sync is now part of its integrity | same kernel, never forked (a duplicated/forked filter = cross-tenant leak risk) |
 
 ---
 

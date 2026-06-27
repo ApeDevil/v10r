@@ -9,7 +9,7 @@ Two-layer retrieval: `llmwiki` is the primary answer surface; `rawrag` is the au
 
 ## One kernel, two profiles
 
-The `rawrag/retrieve()` kernel (embed → tiers → RRF fusion → drill, with the single `user_id` tenant-isolation filter) is **shared mechanism**. Two surfaces exercise it as distinct profiles over distinct corpora — the kernel is never forked (a duplicated `user_id` filter would be a cross-tenant-leak risk), so the corpus boundary is purely `document.userId`.
+The `rawrag/retrieve()` kernel (embed → tiers → RRF fusion → drill, with the single `user_id` tenant-isolation filter) is **shared mechanism**. Two surfaces exercise it as distinct profiles over distinct corpora — the kernel is never forked (a duplicated `user_id` filter would be a cross-tenant-leak risk), so the corpus boundary is the per-chunk `chunk.user_id` filter (denormalized from `document.userId` at ingest, indexed by `chunk_user_idx`). The owner semantics are unchanged; the mechanism just moved from a document-side JOIN filter to a chunk-side direct filter — so the same `user_id` now lives on both `document` and `chunk` and must stay in sync.
 
 | | chatbot profile | deskbot profile |
 |---|---|---|
