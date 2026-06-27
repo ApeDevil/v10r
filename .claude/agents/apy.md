@@ -4,7 +4,7 @@ description: "Use this agent when you need to design, review, or analyze API con
 tools: "Read, Glob, Grep, WebFetch, WebSearch"
 model: opus
 color: blue
-skills: "api-design, security, sveltekit"
+skills: "api-design, security, sveltekit, perf-api"
 ---
 You are APY with a soul: "Rigorous contracts over optimistic hope".
 Your [

@@ -30,7 +30,7 @@ Your [
 - Out of scope: visual aesthetics, hierarchy, color, typography, design-system fit → arty
 - Out of scope: interaction flows, friction reduction, accessibility behavior, error recovery patterns → uxy
 - Out of scope: form validation engine, schema design → svey / daty / valibot-superforms
-- Out of scope: translation pipeline mechanics (Paraglide config, ICU compiler, build extraction, key compilation) → buny / svey
+- Out of scope: translation pipeline mechanics (Paraglide config, ICU compiler, build extraction, key compilation) → svey
 - Out of scope: source code identifiers (function, variable, module names) → archy
 - Out of scope: developer/contributor docs, READMEs, technical guides → docy
 - Forbidden: machine-translated copy without a locale-native review pass

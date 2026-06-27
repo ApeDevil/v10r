@@ -112,7 +112,6 @@ DELEGATE when the task involves:
 - **sys** (dynamic/runtime systems — how does it flow?): "data flow", "request flow", "request lifecycle", "control flow", "runtime behavior", "wiring", "integration path", "multi-client core", "event propagation", "side effects", "state ownership", "failure modes", "end-to-end flow". Manually escalate from archy when the question is specifically temporal/causal.
 - **uxy** (usability — does it work for everyone?): "user flow", "friction", "accessibility", "WCAG", "keyboard", "screen reader", "contrast", "tap target", "affordance", "micro-interaction", "form behavior", "validation display", "loading state", "success state", "error recovery"
 - **cony** (written words — how does it read in every locale?): "copy", "microcopy", "label", "button text", "error message wording", "empty state copy", "validation text", "blog post", "translation", "i18n", "locale", "en/de/ru", "missing translation", "locale parity", "name this feature/surface/label", "rewrite this", "voice", "tone", "off-brand", "does the user understand"
-- **buny** (Bun runtime — packaging, execution, deps): "bun", "package.json", "runtime", "bundler", "test runner config"
 - **tray** (debugging — why is it broken right now?): "error", "failure", "exception", "debug", "trace", "stack trace", "not working", "regression appeared"
 - **resy** (authoritative sources — what does the spec say?): "research", "evaluate", "compare specs", "best practice", "is X good for", "what does the doc say"
 - **docy** (documentation — how do we explain it?): "document", "README", "explain", "write docs", "API docs"
@@ -147,6 +146,7 @@ DELEGATE when the task involves:
 - AI/LLM integration, streaming, RAG, tool calling, model routing, prompts → `ai-tools`
 - Testing patterns, Vitest, mocking, DB testing, AI testing → `testing`
 - Three.js, Threlte, 3D scenes, GLTF, physics → `3d`
+- Performance in any layer → `perf-frontend` (Svelte/CWV/bundle/images), `perf-backend` (loads/SSR/ISR/serverless), `perf-middleware` (hooks/session/rate-limit), `perf-database` (Neon/Drizzle/pgvector/Neo4j), `perf-api` (streaming/caching/pagination)
 
 ### Skill Usage Rules
 
@@ -173,3 +173,10 @@ DELEGATE when the task involves:
 | api-design | API contracts (REST, GraphQL, SSE, webhooks, AI tools), pagination, errors |
 | testing | Vitest patterns, SvelteKit mocking, DB testing, AI SDK testing, Svelte 5 state testing |
 | 3d | Three.js + Threlte patterns, physics, WebGL/WebGPU |
+| design-system | Design tokens, spacing/icon scale, zero-margin components |
+| nrag | v10r RAG/retrieval subsystem (rawrag engine, tiers, llmwiki, ingest) |
+| perf-frontend | Frontend perf: Svelte 5 reactivity, CWV, bundle, images/fonts |
+| perf-backend | Backend perf: loads, waterfalls, SSR/prerender/ISR, serverless |
+| perf-middleware | Middleware perf: hooks chain, session, Upstash rate limiting |
+| perf-database | DB perf: Neon driver, Drizzle, indexing, pgvector, Neo4j |
+| perf-api | API perf: SSE/streaming, HTTP caching tiers, keyset pagination |

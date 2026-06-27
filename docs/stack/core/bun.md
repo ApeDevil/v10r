@@ -1,6 +1,6 @@
 # Bun
 
-The runtime — single executable bundling runtime, package manager, bundler, and test runner; native TypeScript, no transpile step. Lives inside the v10r container, never on the host. See the `buny` agent and CLAUDE.md "Local Development" for the container-first rule.
+The runtime — single executable bundling runtime, package manager, bundler, and test runner; native TypeScript, no transpile step. Lives inside the v10r container, never on the host. See CLAUDE.md "Local Development" for the container-first rule.
 
 ## Why was it chosen?
 
