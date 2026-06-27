@@ -11,7 +11,7 @@ Central registry for all keyboard shortcuts in the app shell. Enables discoverab
 | Shortcut | Action | Component |
 |----------|--------|-----------|
 | `⌘K` / `Ctrl+K` | Open Quick Search | CommandPalette |
-| `⌘J` / `Ctrl+J` | Open AI Assistant | AI Assistant |
+| `⌘J` / `Ctrl+J` | Toggle Vely chatbot (open ↔ minimize) | Chatbot (chatbot-session) |
 | `?` | Open keyboard shortcuts help | ShortcutsModal |
 | `Escape` | Close current modal/overlay | Global |
 
@@ -33,14 +33,16 @@ Central registry for all keyboard shortcuts in the app shell. Enables discoverab
 | `Tab` | Cycle through categories |
 | `Escape` | Close Quick Search |
 
-### AI Assistant Shortcuts (When Open)
+### Vely Chatbot Shortcuts (When Open)
 
 | Shortcut | Action |
 |----------|--------|
 | `Enter` | Send message |
 | `Shift+Enter` | New line |
-| `⌘↑` / `Ctrl+↑` | Previous message (edit) |
-| `Escape` | Close AI Assistant |
+| `Escape` | Minimize Vely (parks the thread; does **not** destroy it) |
+| `⌘J` / `Ctrl+J` | Minimize (toggle) |
+
+The `×` button is the only gesture that ends a thread. Esc/minimize keep it alive — restore from the sidebar trigger or the mobile bubble.
 
 ### Form Shortcuts
 
@@ -275,9 +277,10 @@ function normalizeKey(event: KeyboardEvent): string {
       id: 'ai-assistant',
       keys: ['meta', 'j'],
       label: '⌘J',
-      description: 'Open AI Assistant',
+      description: 'Toggle Vely chatbot',
       category: 'general',
-      action: () => { modals.open('aiAssistant'); },
+      // Vely is a module singleton, not a modal — toggle = closed→open, open→minimized.
+      action: () => { chatbotSession.toggle(); },
     });
 
     registerShortcut({
@@ -564,6 +567,6 @@ src/lib/
 ## Related
 
 - [../quick-search/](../quick-search/) - Quick Search — universal search
-- [./ai-assistant.md](./ai-assistant.md) - AI Assistant modal
+- [./ai-assistant.md](./ai-assistant.md) - AI Assistant (persistent Vely chatbot)
 - [./settings.md](./settings.md) - Enable/disable shortcuts setting
 - [./layout.md](./layout.md) - Shell integration

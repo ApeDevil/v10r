@@ -1,12 +1,10 @@
 <script lang="ts">
-import { Chat } from '@ai-sdk/svelte';
-import { DefaultChatTransport } from 'ai';
-import { Dialog } from 'bits-ui';
 import { MediaQuery } from 'svelte/reactivity';
-import { apiFetch, CSRF_HEADER } from '$lib/api';
+import { apiFetch } from '$lib/api';
 import ChunkView from '$lib/components/chat/ChunkView.svelte';
 import type { CatalogSource, SourceChunk } from '$lib/components/chat/citation-types';
 import Drawer from '$lib/components/primitives/drawer/Drawer.svelte';
+import { chatbotSession } from '$lib/state/chatbot-session.svelte';
 import { cn } from '$lib/utils/cn';
 import ChatInput from './ChatInput.svelte';
 import ChatMessage from './ChatMessage.svelte';
@@ -17,86 +15,81 @@ interface Conversation {
 	updatedAt: string;
 }
 
-interface Props {
-	open: boolean;
-}
+// The live thread lives in the module singleton (survives minimize + cross-group
+// AppShell remount). This component is a pure projection of it.
+const session = chatbotSession;
 
-let { open = $bindable(false) }: Props = $props();
-
-let conversationId: string | undefined = $state();
 let conversations: Conversation[] = $state([]);
 let conversationsError = $state(false);
 let showSidebar = $state(false);
 let pendingDeleteId: string | null = $state(null);
 let inputValue = $state('');
 
-// Source-chunk viewer: one Drawer instance, opened with the clicked message's
-// drilled chunks. Selection bubbles up via a callback prop (NOT context) to
-// avoid the singleton-context reentrancy hazard. Responsive: side panel on
-// desktop, bottom sheet on mobile.
+let panelEl: HTMLElement | undefined = $state();
+let scrollContainer: HTMLDivElement | undefined = $state();
+
+// Source-chunk viewer: one Drawer instance, opened with the clicked message's drilled
+// chunks. Responsive: side panel on desktop, bottom sheet on mobile.
 let viewerOpen = $state(false);
 let viewerChunks = $state<SourceChunk[]>([]);
 const isDesktop = new MediaQuery('(min-width: 768px)', true);
+
+const isLoading = $derived(session.isStreaming);
 
 function openChunks(chunks: SourceChunk[]) {
 	viewerChunks = chunks;
 	viewerOpen = true;
 }
 
-// Esc while the source drawer is open must close ONLY the drawer — not the chat
-// dialog behind it (which would drop the live, unpersisted conversation). Bits-UI
-// closes the chat via a document-level keydown listener; a window capture-phase
-// handler runs first, so we close the drawer ourselves and stop the event before
-// it reaches that listener. When the drawer is shut, Esc falls through to its
-// normal behavior (closing the chat).
-function onWindowKeydownCapture(e: KeyboardEvent) {
-	if (e.key === 'Escape' && viewerOpen) {
-		e.stopImmediatePropagation();
-		e.preventDefault();
-		viewerOpen = false;
-	}
-}
-
-const chat = new Chat({
-	transport: new DefaultChatTransport({
-		api: '/api/ai/chatbot',
-		headers: CSRF_HEADER,
-		fetch: async (url, init) => {
-			const response = await fetch(url, init);
-			const id = response.headers.get('X-Conversation-Id');
-			if (id) conversationId = id;
-			return response;
-		},
-	}) as Chat['transport'],
-});
-
-const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
-
-let scrollContainer: HTMLDivElement | undefined = $state();
-
+// Auto-scroll to the latest message (only while visibly open).
 $effect(() => {
-	if (chat.messages.length && scrollContainer) {
+	const len = session.chat?.messages.length ?? 0;
+	if (len && scrollContainer && session.phase === 'open') {
 		requestAnimationFrame(() => {
-			if (scrollContainer) {
-				scrollContainer.scrollTop = scrollContainer.scrollHeight;
-			}
+			if (scrollContainer) scrollContainer.scrollTop = scrollContainer.scrollHeight;
 		});
 	}
 });
 
-// Load conversations when dialog opens
+// Load the history list when the panel opens.
 $effect(() => {
-	if (open) {
+	if (session.phase === 'open') loadConversations();
+});
+
+// Refresh history once a brand-new conversation gets persisted (first turn).
+$effect(() => {
+	if (session.chat?.status === 'ready' && !session.conversationId && (session.chat?.messages.length ?? 0) > 0) {
 		loadConversations();
 	}
 });
 
-// Refresh conversation list when streaming finishes (replaces setTimeout)
+// Minimize when the user follows one of Vely's links (same-tab, primary-button,
+// same-origin) so the destination page renders unobstructed. Fired synchronously
+// BEFORE navigation; we do NOT preventDefault — SvelteKit's <a> nav proceeds. Attached
+// as a real listener (not an inline handler) to keep the messages container a plain,
+// non-interactive scroll region.
+function onMessagesClick(e: MouseEvent) {
+	if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+	const a = (e.target as HTMLElement | null)?.closest('a[href]') as HTMLAnchorElement | null;
+	if (!a || a.target === '_blank' || a.origin !== location.origin) return;
+	session.minimize();
+}
+
 $effect(() => {
-	if (chat.status === 'ready' && !conversationId && chat.messages.length > 0) {
-		loadConversations();
-	}
+	const el = scrollContainer;
+	if (!el) return;
+	el.addEventListener('click', onMessagesClick);
+	return () => el.removeEventListener('click', onMessagesClick);
 });
+
+// Esc minimizes (never destroys) when focus is inside the open panel. If the sources
+// drawer is open, leave it to the drawer's own Esc handling.
+function onWindowKeydown(e: KeyboardEvent) {
+	if (e.key !== 'Escape' || viewerOpen) return;
+	if (session.phase === 'open' && panelEl?.contains(document.activeElement)) {
+		session.minimize();
+	}
+}
 
 async function loadConversations() {
 	conversationsError = false;
@@ -118,12 +111,7 @@ async function loadConversation(conv: Conversation) {
 		const res = await fetch(`/api/ai/conversations/${conv.id}`);
 		if (!res.ok) return;
 		const { data } = await res.json();
-		conversationId = conv.id;
-		chat.messages = data.messages.map((m: { id: string; role: string; content: string }) => ({
-			id: m.id,
-			role: m.role,
-			parts: [{ type: 'text' as const, text: m.content }],
-		}));
+		await session.adoptConversation(conv.id, data.messages);
 		showSidebar = false;
 	} catch {
 		// silently fail
@@ -135,9 +123,7 @@ async function deleteConversation(id: string) {
 		const res = await apiFetch(`/api/ai/conversations/${id}`, { method: 'DELETE' });
 		if (res.ok) {
 			conversations = conversations.filter((c) => c.id !== id);
-			if (conversationId === id) {
-				startNewChat();
-			}
+			if (session.conversationId === id) session.newChat();
 		}
 	} catch {
 		// silently fail
@@ -146,208 +132,191 @@ async function deleteConversation(id: string) {
 	}
 }
 
-function startNewChat() {
-	conversationId = undefined;
-	chat.messages = [];
-	inputValue = '';
-}
-
 function submitMessage() {
 	if (!inputValue.trim() || isLoading) return;
 	const text = inputValue;
 	inputValue = '';
-	chat.sendMessage(
-		{ text },
-		{
-			// Always-on catalog grounding: the orchestrator's useLlmwiki branch mounts
-			// search_catalog + the <catalog-map> and emits catalogSources, which this
-			// widget already renders as CitationChips. Grounding is a property of the
-			// surface, not a user choice — so no toggle.
-			body: conversationId ? { conversationId, useLlmwiki: true } : { useLlmwiki: true },
-		},
-	);
-}
-
-function formatRelativeTime(dateStr: string): string {
-	const diff = Date.now() - new Date(dateStr).getTime();
-	const mins = Math.floor(diff / 60000);
-	if (mins < 1) return 'just now';
-	if (mins < 60) return `${mins}m ago`;
-	const hours = Math.floor(mins / 60);
-	if (hours < 24) return `${hours}h ago`;
-	const days = Math.floor(hours / 24);
-	return `${days}d ago`;
+	session.submit(text);
 }
 </script>
 
-<svelte:window onkeydowncapture={onWindowKeydownCapture} />
+<svelte:window onkeydown={onWindowKeydown} />
 
-<Dialog.Root bind:open>
-	<Dialog.Portal>
-		<Dialog.Overlay class="fixed inset-0 z-overlay bg-black/50" />
-		<Dialog.Content
-			class={cn(
-				'fixed right-4 bottom-4 z-modal',
-				'flex h-[min(600px,80vh)] w-full max-w-md flex-col',
-				'rounded-lg border border-border bg-surface-3 shadow-xl'
-			)}
-		>
-			<!-- Header -->
-			<div class="flex items-center justify-between border-b border-border px-4 py-3">
-				<Dialog.Title class="text-fluid-base text-fg">
-					<span class="font-semibold">Vely</span> <span class="font-light text-muted">chatbot</span>
-				</Dialog.Title>
-				<div class="flex items-center gap-1">
-					<button
-						type="button"
-						class="chatbot-icon-btn flex h-8 w-8 items-center justify-center rounded-md text-muted hover:text-fg"
-						aria-label="Toggle history"
-						onclick={() => (showSidebar = !showSidebar)}
-					>
-						<span class="i-lucide-history h-4 w-4"></span>
-					</button>
-					<button
-						type="button"
-						class="chatbot-icon-btn flex h-8 w-8 items-center justify-center rounded-md text-muted hover:text-fg"
-						aria-label="New chat"
-						onclick={startNewChat}
-					>
-						<span class="i-lucide-plus h-4 w-4"></span>
-					</button>
-					<Dialog.Close
-						class="chatbot-icon-btn flex h-8 w-8 items-center justify-center rounded-md text-muted hover:text-fg"
-						aria-label="Close"
-					>
-						<span class="i-lucide-x h-4 w-4"></span>
-					</Dialog.Close>
+<aside
+	bind:this={panelEl}
+	role="complementary"
+	aria-label="Vely assistant"
+	class={cn(
+		'fixed z-panel bg-surface-3 text-fg',
+		// mobile: bottom sheet
+		'inset-x-2 bottom-0 max-h-[85svh] rounded-t-lg border border-border shadow-2xl',
+		'pb-[max(env(safe-area-inset-bottom),12px)]',
+		// desktop: full-height right-docked column (content reflows via main's md:pr)
+		'md:inset-x-auto md:top-0 md:right-0 md:bottom-0 md:h-[100dvh] md:w-[28rem]',
+		'md:max-w-[calc(100vw-var(--sidebar-rail-width))] md:rounded-none md:border-0 md:border-l md:border-border md:pb-0 md:shadow-xl',
+		// Display is mutually exclusive so `flex` can never override `hidden` (minimize).
+		session.phase === 'open' ? 'flex flex-col' : 'hidden'
+	)}
+>
+	<!-- Header -->
+	<div class="flex items-center justify-between border-b border-border px-4 py-3">
+		<p class="text-fluid-base text-fg">
+			<span class="font-semibold">Vely</span> <span class="font-light text-muted">chatbot</span>
+		</p>
+		<div class="flex items-center gap-1">
+			<button
+				type="button"
+				class="chatbot-icon-btn flex h-8 w-8 items-center justify-center rounded-md text-muted hover:text-fg"
+				aria-label="Toggle history"
+				onclick={() => (showSidebar = !showSidebar)}
+			>
+				<span class="i-lucide-history h-4 w-4"></span>
+			</button>
+			<button
+				type="button"
+				class="chatbot-icon-btn flex h-8 w-8 items-center justify-center rounded-md text-muted hover:text-fg"
+				aria-label="New chat"
+				onclick={() => session.newChat()}
+			>
+				<span class="i-lucide-plus h-4 w-4"></span>
+			</button>
+			<button
+				type="button"
+				class="chatbot-icon-btn flex h-8 w-8 items-center justify-center rounded-md text-muted hover:text-fg"
+				aria-label="Minimize"
+				onclick={() => session.minimize()}
+			>
+				<span class="i-lucide-minus h-4 w-4"></span>
+			</button>
+			<button
+				type="button"
+				class="chatbot-icon-btn flex h-8 w-8 items-center justify-center rounded-md text-muted hover:text-fg"
+				aria-label="Close"
+				onclick={() => session.close()}
+			>
+				<span class="i-lucide-x h-4 w-4"></span>
+			</button>
+		</div>
+	</div>
+
+	<div class="flex flex-1 overflow-hidden">
+		<!-- History sidebar -->
+		{#if showSidebar}
+			<div class="chatbot-sidebar flex w-48 shrink-0 flex-col border-r border-border">
+				<div class="flex-1 overflow-y-auto">
+					{#if conversationsError}
+						<p class="p-3 text-center text-fluid-xs text-muted">Could not load history.</p>
+					{:else if conversations.length === 0}
+						<p class="p-3 text-center text-fluid-xs text-muted">No conversations yet</p>
+					{:else}
+						{#each conversations as conv (conv.id)}
+							<div class="chatbot-conv-item flex items-center gap-1 px-2 py-2">
+								<button
+									type="button"
+									class={cn(
+										'flex-1 truncate text-left text-fluid-xs',
+										conv.id === session.conversationId
+											? 'font-semibold text-fg'
+											: 'text-muted hover:text-fg'
+									)}
+									onclick={() => loadConversation(conv)}
+								>
+									{conv.title}
+								</button>
+								{#if pendingDeleteId === conv.id}
+									<button
+										type="button"
+										class="shrink-0 text-fluid-xs font-medium text-error-fg"
+										onclick={() => deleteConversation(conv.id)}
+										aria-label="Confirm delete conversation"
+									>Yes</button>
+									<button
+										type="button"
+										class="shrink-0 text-fluid-xs text-muted"
+										onclick={() => (pendingDeleteId = null)}
+										aria-label="Cancel delete"
+									>No</button>
+								{:else}
+									<button
+										type="button"
+										class="chatbot-delete-btn shrink-0 text-muted hover:text-error-fg"
+										aria-label="Delete conversation"
+										onclick={() => (pendingDeleteId = conv.id)}
+									>
+										<span class="i-lucide-trash-2 h-3 w-3"></span>
+									</button>
+								{/if}
+							</div>
+						{/each}
+					{/if}
 				</div>
 			</div>
-			<Dialog.Description class="sr-only">
-				Chat with Vely, the AI assistant. Your conversation history is saved automatically.
-			</Dialog.Description>
+		{/if}
 
-			<div class="flex flex-1 overflow-hidden">
-				<!-- Sidebar -->
-				{#if showSidebar}
-					<div class="chatbot-sidebar flex w-48 shrink-0 flex-col border-r border-border">
-						<div class="flex-1 overflow-y-auto">
-							{#if conversationsError}
-								<p class="p-3 text-center text-fluid-xs text-muted">Could not load history.</p>
-							{:else if conversations.length === 0}
-								<p class="p-3 text-center text-fluid-xs text-muted">No conversations yet</p>
-							{:else}
-								{#each conversations as conv (conv.id)}
-									<div class="chatbot-conv-item flex items-center gap-1 px-2 py-2">
-										<button
-											type="button"
-											class={cn(
-												'flex-1 truncate text-left text-fluid-xs',
-												conv.id === conversationId ? 'font-semibold text-fg' : 'text-muted hover:text-fg'
-											)}
-											onclick={() => loadConversation(conv)}
-										>
-											{conv.title}
-										</button>
-										{#if pendingDeleteId === conv.id}
-											<button
-												type="button"
-												class="shrink-0 text-fluid-xs font-medium text-error-fg"
-												onclick={() => deleteConversation(conv.id)}
-												aria-label="Confirm delete conversation"
-											>Yes</button>
-											<button
-												type="button"
-												class="shrink-0 text-fluid-xs text-muted"
-												onclick={() => (pendingDeleteId = null)}
-												aria-label="Cancel delete"
-											>No</button>
-										{:else}
-											<button
-												type="button"
-												class="chatbot-delete-btn shrink-0 text-muted hover:text-error-fg"
-												aria-label="Delete conversation"
-												onclick={() => (pendingDeleteId = conv.id)}
-											>
-												<span class="i-lucide-trash-2 h-3 w-3"></span>
-											</button>
-										{/if}
-									</div>
-								{/each}
-							{/if}
-						</div>
-					</div>
-				{/if}
+		<!-- Chat area -->
+		<div class="flex flex-1 flex-col overflow-hidden">
+			<!-- Messages -->
+			<div bind:this={scrollContainer} class="flex-1 overflow-y-auto">
+				{#if session.chat && session.chat.messages.length > 0}
+					{@const messages = session.chat.messages}
+					<div class="flex flex-col gap-1 py-2">
+						{#each messages as message (message.id)}
+							<ChatMessage
+								role={message.role as 'user' | 'assistant'}
+								parts={message.parts}
+								catalogSources={(message as { metadata?: { catalogSources?: CatalogSource[] } })
+									.metadata?.catalogSources}
+								sourceChunks={(message as { metadata?: { sourceChunks?: SourceChunk[] } }).metadata
+									?.sourceChunks}
+								onviewchunks={openChunks}
+							/>
+						{/each}
 
-				<!-- Chat area -->
-				<div class="flex flex-1 flex-col overflow-hidden">
-					<!-- Messages -->
-					<div bind:this={scrollContainer} class="flex-1 overflow-y-auto">
-						{#if chat.messages.length === 0}
-							<div class="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
-								<span class="i-lucide-message-circle h-10 w-10 text-muted"></span>
-								<p class="text-fluid-sm text-muted">Ask me anything about web development.</p>
-							</div>
-						{:else}
-							<div class="flex flex-col gap-1 py-2">
-								{#each chat.messages as message (message.id)}
-									<ChatMessage
-									role={message.role as 'user' | 'assistant'}
-									parts={message.parts}
-									catalogSources={(message as { metadata?: { catalogSources?: CatalogSource[] } }).metadata
-										?.catalogSources}
-									sourceChunks={(message as { metadata?: { sourceChunks?: SourceChunk[] } }).metadata
-										?.sourceChunks}
-									onviewchunks={openChunks}
-								/>
-								{/each}
-
-								{#if isLoading && chat.messages[chat.messages.length - 1]?.role === 'user'}
-									<div class="flex items-center gap-3 px-4 py-3">
-										<div class="chatbot-avatar flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
-											<span class="i-lucide-bot h-4 w-4"></span>
-										</div>
-										<div class="chatbot-typing flex gap-1">
-											<span class="chatbot-dot"></span>
-											<span class="chatbot-dot"></span>
-											<span class="chatbot-dot"></span>
-										</div>
-									</div>
-								{/if}
+						{#if isLoading && messages[messages.length - 1]?.role === 'user'}
+							<div class="flex items-center gap-3 px-4 py-3">
+								<div class="chatbot-avatar flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+									<span class="i-lucide-bot h-4 w-4"></span>
+								</div>
+								<div class="chatbot-typing flex gap-1">
+									<span class="chatbot-dot"></span>
+									<span class="chatbot-dot"></span>
+									<span class="chatbot-dot"></span>
+								</div>
 							</div>
 						{/if}
 					</div>
-
-					<!-- Error display -->
-					{#if chat.error}
-						<div class="chatbot-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm" role="alert" aria-live="polite">
-							<span class="font-medium">Could not get a response.</span>
-							{#if chat.error.message?.includes('429')}
-								You've reached the rate limit. Please wait a moment.
-							{:else if chat.error.message?.includes('401') || chat.error.message?.includes('Sign in')}
-								Sign in to chat with Vely.
-							{:else if chat.error.message?.includes('503')}
-								The AI service is temporarily unavailable.
-							{:else}
-								Something went wrong. Try again.
-							{/if}
-						</div>
-					{/if}
-
-					<!-- Input -->
-					<ChatInput bind:value={inputValue} loading={isLoading} onsubmit={submitMessage} />
-				</div>
+				{:else}
+					<div class="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+						<span class="i-lucide-message-circle h-10 w-10 text-muted"></span>
+						<p class="text-fluid-sm text-muted">Ask me anything about web development.</p>
+					</div>
+				{/if}
 			</div>
-		</Dialog.Content>
-	</Dialog.Portal>
-</Dialog.Root>
 
-<!-- Source-chunk viewer (one instance). Drawer is the same Bits-UI Dialog under
-	the hood (focus trap, Esc, overlay) → a true modal. Side panel on desktop,
-	bottom sheet on mobile. Esc handling: the chat dialog binds open to a global
-	modal store (closed on Esc by Bits' document-level listener), so a plain Esc
-	while this drawer is open would close BOTH and drop the live conversation. The
-	window capture-phase handler below runs before any document listener: when the
-	drawer is open it closes ONLY the drawer and swallows the event. -->
+			<!-- Error display -->
+			{#if session.chat?.error}
+				{@const errMsg = session.chat.error.message ?? ''}
+				<div class="chatbot-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm" role="alert" aria-live="polite">
+					<span class="font-medium">Could not get a response.</span>
+					{#if errMsg.includes('429')}
+						You've reached the rate limit. Please wait a moment.
+					{:else if errMsg.includes('401') || errMsg.includes('Sign in')}
+						Sign in to chat with Vely.
+					{:else if errMsg.includes('503')}
+						The AI service is temporarily unavailable.
+					{:else}
+						Something went wrong. Try again.
+					{/if}
+				</div>
+			{/if}
+
+			<!-- Input -->
+			<ChatInput bind:value={inputValue} loading={isLoading} onsubmit={submitMessage} />
+		</div>
+	</div>
+</aside>
+
+<!-- Source-chunk viewer (one instance). Side panel on desktop, bottom sheet on mobile. -->
 <Drawer bind:open={viewerOpen} side={isDesktop.current ? 'right' : 'bottom'} title="Sources">
 	<div class="flex flex-col gap-3">
 		{#each viewerChunks as chunk (chunk.chunkId)}

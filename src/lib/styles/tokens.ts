@@ -210,6 +210,9 @@ export const zIndex = {
 	base: 0,
 	sidebar: 10,
 	fab: 20,
+	/** Non-modal docked surfaces (the persistent chatbot panel) — above content +
+	 * FAB, below a true modal's overlay so a real modal correctly dims it. */
+	panel: 25,
 	overlay: 30,
 	drawer: 40,
 	popover: 50,

@@ -5,7 +5,7 @@
 
 import { getContext, setContext } from 'svelte';
 
-type ModalId = 'quickSearch' | 'aiAssistant' | 'shortcuts' | 'sessionExpiry' | null;
+type ModalId = 'quickSearch' | 'shortcuts' | 'sessionExpiry' | null;
 
 const MODALS_CTX = Symbol('modals');
 
@@ -52,15 +52,6 @@ export function createModalState() {
 		},
 		set quickSearchOpen(value: boolean) {
 			activeModal = value ? 'quickSearch' : null;
-			if (!value) modalData = {};
-		},
-
-		/** Bindable getter/setter for AI Assistant dialog */
-		get aiAssistantOpen() {
-			return activeModal === 'aiAssistant';
-		},
-		set aiAssistantOpen(value: boolean) {
-			activeModal = value ? 'aiAssistant' : null;
 			if (!value) modalData = {};
 		},
 	};

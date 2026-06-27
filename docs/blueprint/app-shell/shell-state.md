@@ -24,8 +24,8 @@ Orchestration of state across app shell components: sidebar, modals, theme, noti
 │  │    Modals    │   │ Notifications│   │  Preferences │            │
 │  │              │   │              │   │              │            │
 │  │ • quickSearch│   │ • unreadCount│   │ • locale     │            │
-│  │ • aiAssistant│   │ • lastFetched│   │ • timezone   │            │
-│  │ • shortcuts  │   │              │   │ • a11y       │            │
+│  │ • shortcuts  │   │ • lastFetched│   │ • timezone   │            │
+│  │ • sessionExp.│   │              │   │ • a11y       │            │
 │  └──────────────┘   └──────────────┘   └──────────────┘            │
 │                                                                      │
 └─────────────────────────────────────────────────────────────────────┘
@@ -252,7 +252,7 @@ Only one modal can be open at a time. Opening one closes others.
 // src/lib/state/modals.svelte.ts
 import { getContext, setContext } from 'svelte';
 
-type ModalId = 'quickSearch' | 'aiAssistant' | 'shortcuts' | 'sessionExpiry' | null;
+type ModalId = 'quickSearch' | 'shortcuts' | 'sessionExpiry' | null;
 
 const MODALS_CTX = Symbol('modals');
 
@@ -324,6 +324,22 @@ export function getModals() {
   Search
 </button>
 ```
+
+---
+
+## Chatbot Session State
+
+The Vely chatbot is **not** a modal and **not** a context. Its live thread is owned by a deliberate **module singleton**, `src/lib/state/chatbot-session.svelte.ts` (`chatbotSession`), so it survives the chat panel unmounting — on minimize, on navigation, and on the cross-group `AppShell` remount. ESM module caching gives one instance per tab.
+
+| Aspect | Detail |
+|--------|--------|
+| **Why a singleton, not context/modals** | The `@ai-sdk/svelte` `Chat` + its in-flight stream must outlive the component. It is kept out of the mutually-exclusive `modals` store so a minimized chat coexists with an open quick-search instead of being evicted. |
+| **State** | `phase: 'closed' \| 'open' \| 'minimized'`, `chat` (null until first open), `conversationId`, `answerReady` (unread-reply flag) — all `$state`. |
+| **SSR safety** | Top-level holds only inert primitives; `@ai-sdk/svelte` + `ai` load via `await import()` inside `ensureChat()` behind a `browser` gate; every mutator is browser-gated. No leak, no hydration mismatch. |
+| **Teardown** | Named, not lifecycle-bound: `SessionMonitor` calls `chatbotSession.reset()` on logout/expiry (aborts the stream, clears the per-tab resume pointer). |
+| **Resume** | A per-tab `sessionStorage` pointer `{conversationId, userId}` → owner-scoped `GET /api/ai/conversations/[id]` rehydrates messages with zero model calls. |
+
+Full lifecycle and spatial spec: [../ai/persistent-chatbot.md](../ai/persistent-chatbot.md). App-shell view: [./ai-assistant.md](./ai-assistant.md).
 
 ---
 
@@ -571,11 +587,12 @@ Add a debug panel in development:
 
 ```
 src/lib/state/
-├── sidebar.svelte.ts      # Sidebar expanded/pinned/mobile state
-├── theme.svelte.ts        # Theme mode and accent
-├── modals.svelte.ts       # Active modal tracking
-├── notifications.svelte.ts # Unread count, polling
-└── index.ts               # Exports
+├── sidebar.svelte.ts            # Sidebar expanded/pinned/mobile state
+├── theme.svelte.ts              # Theme mode and accent
+├── modals.svelte.ts             # Active modal tracking (quickSearch | shortcuts | sessionExpiry)
+├── chatbot-session.svelte.ts    # Vely chatbot live thread (module singleton, NOT a context)
+├── notifications.svelte.ts      # Unread count, polling
+└── index.ts                     # Exports
 ```
 
 ---

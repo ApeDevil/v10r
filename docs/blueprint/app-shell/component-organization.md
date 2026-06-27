@@ -98,7 +98,7 @@ src/lib/components/
 | **Generic pattern** - Reusable across many features | `Pagination`, `EmptyState`, `Card` |
 | **Feature-scoped** - Belongs to a specific domain | `CommandPalette`, `ProfileForm` |
 | **Has business logic** - Contains feature-specific behavior | `NotificationCard`, `ChatMessage` |
-| **Modal/overlay** - Opens over content | `CommandPalette`, `Chatbot` |
+| **Modal/overlay** - Opens over content | `CommandPalette` |
 
 ### Use `shell/` (Templates) When:
 
@@ -124,7 +124,8 @@ src/lib/components/shell/
 ├── SidebarFab.svelte         # Mobile trigger button
 ├── SidebarLogo.svelte        # Logo in sidebar header
 ├── SidebarNav.svelte         # Navigation container
-├── SidebarTriggers.svelte    # Quick Search + AI trigger buttons
+├── SidebarTriggers.svelte    # Quick Search + Vely trigger (state-aware: open-or-restore)
+├── VelyMinimizedBubble.svelte # Mobile floating restore bubble for a minimized chat
 ├── NavItem.svelte            # Single nav item (compound)
 ├── NavLink.svelte            # Single nav link
 ├── NavFlyout.svelte          # Desktop hover flyout submenu
@@ -208,11 +209,12 @@ src/lib/components/composites/
 │   ├── types.ts                  # CommandPaletteItem, CommandPaletteItemType
 │   └── index.ts
 ├── chatbot/
-│   ├── Chatbot.svelte            # Modal + chat logic
+│   ├── Chatbot.svelte            # Non-modal docked panel; projects the chatbot-session singleton
 │   ├── ChatMessage.svelte        # Message bubble
 │   ├── ChatInput.svelte          # Input + send
 │   ├── PlanCard.svelte           # Plan/proposal card
 │   ├── ToolCallStatus.svelte     # Tool-call status row
+│   ├── harness-types.ts          # Shared chat harness types
 │   └── index.ts
 ├── page-header/
 │   ├── PageHeader.svelte

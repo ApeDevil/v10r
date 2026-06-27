@@ -14,7 +14,7 @@ The `rawrag/retrieve()` kernel (embed → tiers → RRF fusion → drill, with t
 | | chatbot profile | deskbot profile |
 |---|---|---|
 | Corpus | `SYSTEM_DOCS_USER_ID` docs/catalog + per-user llmwiki — curated (catalog slice graph-seeded; docs-corpus graph tier dormant) | The user's own desk files — private, mutable (`source = 'desk'`) |
-| Tiers | **Live: tier-1 only** (the floating widget requests `tiers:[1]`). Tiers 2–3 are designed but unexercised by the chatbot — tier-2 became *eligible* for converted docs after the 2026-06-25 ingest-door change, but the widget doesn't request it; tier-3/graph is dormant for the docs corpus | 1–2 (no graph — desk files aren't seeded) |
+| Tiers | **Live: tier-1 only** (the chatbot requests `tiers:[1]`). Tiers 2–3 are designed but unexercised by the chatbot — tier-2 became *eligible* for converted docs after the 2026-06-25 ingest-door change, but the chatbot doesn't request it; tier-3/graph is dormant for the docs corpus | 1–2 (no graph — desk files aren't seeded) |
 | Entry | llmwiki + `search_catalog`/`search_project_docs` + relevance-gated system-docs prefetch + on-demand drill | `desk_search_knowledge` (`desk:ask`, read-only) |
 | Grounding | Post-stream citation verification, citation chips | Reference context; no citation chips; read-only |
 
@@ -185,7 +185,7 @@ The project's own `docs/` markdown is a retrievable corpus. `search_catalog` ans
 
 ### `search_project_docs` tool
 
-`src/lib/server/ai/tools/search-docs.ts`. Mounted by `buildRetrievalTools` alongside `search_catalog`, so it's auto-available whenever the `useLlmwiki` branch runs (always-on for the floating chatbot).
+`src/lib/server/ai/tools/search-docs.ts`. Mounted by `buildRetrievalTools` alongside `search_catalog`, so it's auto-available whenever the `useLlmwiki` branch runs (always-on for the chatbot).
 
 ```typescript
 search_project_docs({ query: string, limit?: 1–8 })

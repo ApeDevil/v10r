@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Button, Kbd } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
+import { chatbotSession } from '$lib/state/chatbot-session.svelte';
 import { getModals } from '$lib/state/modals.svelte';
 
 const modals = getModals();
@@ -19,7 +20,7 @@ const modals = getModals();
 		<Button variant="secondary" onclick={() => modals.open('quickSearch')}>
 			{m.showcase_shell_modals_btn_search()}
 		</Button>
-		<Button variant="secondary" onclick={() => modals.open('aiAssistant')}>
+		<Button variant="secondary" onclick={() => chatbotSession.open()}>
 			{m.showcase_shell_modals_btn_ai()}
 		</Button>
 		<Button variant="secondary" onclick={() => modals.open('shortcuts')}>

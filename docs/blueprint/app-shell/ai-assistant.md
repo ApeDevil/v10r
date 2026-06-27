@@ -1,6 +1,25 @@
 # AI Assistant
 
-Persistent, conversational AI chat accessible via sidebar trigger or keyboard shortcut.
+The **Vely** chatbot: a persistent, minimizable, **non-modal** assistant docked beside the page content. The conversation survives navigation, minimize, and reload — only the `×` button ends it.
+
+This is the app-shell view. The lifecycle deep-dive (state machine, ownership, spatial spec, resume, security) lives in [../ai/persistent-chatbot.md](../ai/persistent-chatbot.md). The chatbot-vs-deskbot product contract lives in [../ai/surfaces.md](../ai/surfaces.md).
+
+---
+
+## Lifecycle
+
+Three states, owned by a **client-only module singleton** (`src/lib/state/chatbot-session.svelte.ts`, `chatbotSession`) — **not** the `modals` store. The singleton owns the live `@ai-sdk/svelte` `Chat`, so the thread outlives the panel unmounting (minimize, navigation, cross-group `AppShell` remount, locale switch).
+
+| State | Meaning |
+|-------|---------|
+| `closed` | No live thread. Entered only by the `×` button or session teardown. |
+| `open` | Non-modal, page interactive. Docks as a column (desktop) / bottom sheet (mobile). |
+| `minimized` | Thread + any in-flight stream alive, parked. Surfaced in the sidebar / mobile bubble. |
+
+- **Minimize** (never destroys): the `—` button; `Esc` (focus inside the panel); `Ctrl+J`; following one of Vely's same-tab links; another modal opening.
+- **Destroy** (`closed`): the `×` button only.
+- **Restore**: the sidebar "Resume Vely" trigger (desktop), the `VelyMinimizedBubble` (mobile), or `Ctrl+J`.
+- **Teardown**: `SessionMonitor` calls `chatbotSession.reset()` on logout/expiry (aborts the stream, clears the resume pointer).
 
 ---
 
@@ -8,28 +27,31 @@ Persistent, conversational AI chat accessible via sidebar trigger or keyboard sh
 
 | Location | Element | Behavior |
 |----------|---------|----------|
-| **Sidebar header** | Chat input (visual) | Click opens AI Assistant |
-| **Keyboard** | `⌘J` / `Ctrl+J` | Opens AI Assistant from anywhere |
+| **Sidebar trigger** | `SidebarTriggers.svelte` "Ask / Resume Vely" | Open-or-restore (`chatbotSession.open()`); state-aware label + alive/answer-ready indicator |
+| **Mobile bubble** | `VelyMinimizedBubble.svelte` (root layout, `md:hidden`) | Restores a minimized thread where the sidebar is offscreen |
+| **Keyboard** | `⌘J` / `Ctrl+J` | Toggle from anywhere: closed→open, open→minimized, minimized→open |
 
 ---
 
 ## Key Differences from Quick Search
 
-| Aspect | Quick Search | AI Assistant |
+| Aspect | Quick Search | Vely Chatbot |
 |--------|-------------|--------------|
 | **Purpose** | Navigation & actions | Conversational help |
 | **Interaction** | One-shot selection | Multi-turn conversation |
-| **State** | Ephemeral (resets on close) | Persistent (survives close) |
-| **Modal size** | `max-w-lg` | `max-w-2xl` |
-| **Backend** | None (client-side) | API endpoint + AI provider |
+| **Surface** | Modal (mutually-exclusive `modals` store) | Non-modal docked panel (module singleton) |
+| **State** | Ephemeral (resets on close) | Persistent (survives close, navigation, reload) |
+| **Backend** | None (client-side) | `POST /api/ai/chatbot` + AI provider |
 
 ---
 
-## AI Assistant Modal
+## Panel
+
+Non-modal: desktop docks as a full-height right-hand column (`<main>` reflows via `md:pr-[28rem]`, never overlaid); mobile is a bottom sheet. Header carries four buttons — history, new chat (`+`), minimize (`—`), close (`×`).
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  🤖 AI Assistant                        [🗑] [✕]   │
+│  Vely chatbot              [⟳] [＋] [－] [✕]        │
 ├─────────────────────────────────────────────────────┤
 │                                                     │
 │  ┌─────────────────────────────────────────────┐   │
@@ -54,8 +76,8 @@ Persistent, conversational AI chat accessible via sidebar trigger or keyboard sh
 
 | Key | Action |
 |-----|--------|
-| `⌘J` / `Ctrl+J` | Open AI Assistant (global) |
-| `Escape` | Close AI Assistant |
+| `⌘J` / `Ctrl+J` | Toggle Vely (global): open ↔ minimize |
+| `Escape` | Minimize (parks the thread; never destroys) |
 | `Enter` | Send message |
 | `Shift+Enter` | New line in input |
 
@@ -63,20 +85,26 @@ Persistent, conversational AI chat accessible via sidebar trigger or keyboard sh
 
 ## Component Location
 
-AI Assistant is a **composite component** (see [../design/components.md](../design/components.md#chatbot)):
+The view is a **composite component** that projects the singleton; it owns no thread state. The trigger and restore affordances live in `shell/`.
 
 ```
-src/lib/components/
-├── composites/
-│   └── chatbot/
-│       ├── Chatbot.svelte             # Modal + chat logic
-│       ├── ChatbotTrigger.svelte      # Sidebar trigger (fake input)
-│       ├── ChatMessage.svelte         # Message bubble
-│       ├── ChatInput.svelte           # Input + send button
-│       └── index.ts
+src/lib/
+├── state/
+│   └── chatbot-session.svelte.ts       # Live Chat instance + phase machine (singleton)
+└── components/
+    ├── composites/chatbot/
+    │   ├── Chatbot.svelte               # Non-modal panel; binds to chatbotSession.chat
+    │   ├── ChatMessage.svelte           # Message bubble
+    │   ├── ChatInput.svelte             # Input + send button
+    │   ├── PlanCard.svelte              # Plan/proposal card
+    │   ├── ToolCallStatus.svelte        # Tool-call status row
+    │   └── index.ts
+    └── shell/
+        ├── SidebarTriggers.svelte       # "Ask / Resume Vely" trigger (open-or-restore)
+        └── VelyMinimizedBubble.svelte   # Mobile restore bubble (root layout)
 ```
 
-See [../ai/README.md](../ai/README.md) for full implementation details, provider configuration, and persistence strategies.
+`AppShell.svelte` mounts the panel only while `chatbotSession.phase !== 'closed'` (the heavy AI graph stays out of the initial payload). See [../ai/persistent-chatbot.md](../ai/persistent-chatbot.md) for ownership and resume, and [../ai/README.md](../ai/README.md) for provider configuration.
 
 ---
 
@@ -86,7 +114,7 @@ See [../ai/README.md](../ai/README.md) for full implementation details, provider
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  🤖 AI Assistant                        [🗑] [✕]   │
+│  Vely chatbot              [⟳] [＋] [－] [✕]        │
 ├─────────────────────────────────────────────────────┤
 │                                                     │
 │  ┌─────────────────────────────────────────────┐   │
@@ -333,8 +361,8 @@ await db.insert(aiAuditLog).values({
 
 | Requirement | Implementation |
 |-------------|----------------|
-| Focus trap | Modal traps focus while open |
-| Focus return | Returns focus to trigger on close |
+| Non-modal | `role="complementary"` panel — no focus trap (the page stays interactive while open) |
+| Restore focus | On restore, focus lands on the message input |
 | Live region | New messages announced via `aria-live="polite"` |
 | Keyboard | Full keyboard navigation (see table above) |
 | Screen reader | Messages have `role="log"`, `aria-label` on input |

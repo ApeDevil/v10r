@@ -9,7 +9,7 @@ The AI subsystem serves **two product surfaces** (plus one showcase demo) throug
 | **Role** | The v10r **expert** — *why* and *how* the project is built | The in-desk **operator** — does anything a user can do via the desk UI |
 | **Mode** | Read-only, grounded, citation-faithful Q&A | Agentic, mutating, plan-gated |
 | **Route** | `POST /api/ai/chatbot` | `POST /api/ai/deskbot` |
-| **Client** | `composites/chatbot/Chatbot.svelte` (floating widget) | `chat/ChatPanel.svelte` (desk panel) |
+| **Client** | `composites/chatbot/Chatbot.svelte` — persistent, minimizable, non-modal panel; live thread owned by the `chatbot-session` singleton (see [../app-shell/ai-assistant.md](../app-shell/ai-assistant.md)) | `chat/ChatPanel.svelte` (desk panel) |
 | **Harness** | `buildRetrievalTools()` → `chatbotToolMeta` | `createDeskTools()` → `deskbotToolMeta` |
 | **Tools** | `search_catalog`, `search_project_docs`, `get_llmwiki_pages`, `get_rawrag_chunks`, `resolve_ref` | `desk_*` read/write/create/delete, `desk_propose_plan`, `resolve_ref` |
 | **System prompt** | `SYSTEM_PROMPT` (plain) | `DESK_SYSTEM_PROMPT` (XML-tagged) + permissions + desk-context |
@@ -62,7 +62,7 @@ The retrieval **engine** (`rawrag/retrieve()` — embed → tiers → RRF fusion
 | | chatbot profile | deskbot profile |
 |---|---|---|
 | Corpus | `SYSTEM_DOCS_USER_ID` (docs/catalog) + per-user llmwiki | The user's own desk files |
-| Tiers | Designed 1–3 (graph tier valuable — catalog is Neo4j-seeded); **live: the floating widget requests tier-1 only** — tiers 2–3 unexercised by the chatbot today | 1–2 (no graph — desk files aren't graph-seeded) |
+| Tiers | Designed 1–3 (graph tier valuable — catalog is Neo4j-seeded); **live: the chatbot requests tier-1 only** — tiers 2–3 unexercised by the chatbot today | 1–2 (no graph — desk files aren't graph-seeded) |
 | Grounding | Injected `<project-overview>` system-overview anchor + relevance-gated system-docs prefetch + llmwiki + on-demand drill; post-stream citation verification | `desk:ask` read-only tool (`desk_search_knowledge`); no citation chips. Read-only: excluded from `hasMutatingScope`/`stepsForScopes`/the plan gate — it never triggers plan-before-execute (only the turn's mutating tools do) |
 | Freshness | Static curated corpus | Mutable — `aiContext` opt-in; reconciled off the hot path by the `desk-rawrag-sync` job (polls `updatedAt`), not on each save |
 

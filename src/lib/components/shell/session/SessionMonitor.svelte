@@ -10,6 +10,7 @@ import { goto } from '$app/navigation';
 import { authClient } from '$lib/auth-client';
 import { localizeHref } from '$lib/i18n';
 import { getModals } from '$lib/state';
+import { chatbotSession } from '$lib/state/chatbot-session.svelte';
 import type { Session } from '$lib/state/session.svelte';
 import { setSessionContext } from '$lib/state/session.svelte';
 import SessionExpiryModal from './SessionExpiryModal.svelte';
@@ -52,9 +53,12 @@ $effect(() => {
 	}
 });
 
-// Redirect on revoked session
+// Redirect on revoked session. Also the teardown owner for the chatbot singleton:
+// drop the live Vely thread + resume pointer so a same-tab user switch can't expose
+// the previous user's in-memory conversation.
 $effect(() => {
 	if (sessionState.status === 'revoked') {
+		chatbotSession.reset();
 		goto(`${localizeHref('/auth/login')}?reason=revoked`);
 	}
 });

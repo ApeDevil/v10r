@@ -9,7 +9,7 @@ The app shell is the persistent UI skeleton that wraps all pages. It loads insta
 | **[layout.md](./layout.md)** | • Shell structure and component overview<br>• Breakpoints and tablet-specific patterns<br>• Focus management and skip links<br>• Breakpoint transition behavior |
 | **[sidebar.md](./sidebar.md)** | • Sidebar anatomy (header/body/footer zones)<br>• Responsive behavior (desktop rail, mobile drawer)<br>• FAB trigger for mobile<br>• User menu and dropdown |
 | **[navigation.md](./navigation.md)** | • Progressive disclosure pattern<br>• Compound nav buttons (split action/dropdown)<br>• Nav item states<br>• Example nav structure |
-| **[ai-assistant.md](./ai-assistant.md)** | • AI chat modal<br>• Rate limiting (per-user limits)<br>• Input/output sanitization (XSS, prompt injection)<br>• Streaming and error states |
+| **[ai-assistant.md](./ai-assistant.md)** | • Persistent, minimizable Vely chatbot (non-modal, `chatbot-session` singleton)<br>• Lifecycle (closed/open/minimized), triggers, restore<br>• Rate limiting, input/output sanitization (XSS, prompt injection)<br>• Streaming and error states |
 | **[page-header.md](./page-header.md)** | • Per-page header (not global)<br>• Breadcrumbs and title<br>• XSS prevention for dynamic content<br>• Sticky option |
 | **[user-account.md](./user-account.md)** | • Profile editing (auto-save + Save button)<br>• Security (2FA, OAuth, sessions)<br>• GDPR data export (rate limited)<br>• Multi-step deletion with grace period |
 | **[notifications.md](./notifications.md)** | • Notification center (full page)<br>• SSE security (auth, heartbeat, IDOR)<br>• Per-type preferences<br>• Real-time strategy (polling → SSE) |
@@ -18,7 +18,7 @@ The app shell is the persistent UI skeleton that wraps all pages. It loads insta
 | **[loading-states.md](./loading-states.md)** | • Skeleton screens<br>• Navigation progress bar<br>• Streaming with SvelteKit<br>• Shell initialization sequence |
 | **[session-lifecycle.md](./session-lifecycle.md)** | • Session expiry warning and modal<br>• Re-authentication flow<br>• Form state preservation<br>• Sensitive action re-auth |
 | **[keyboard-shortcuts.md](./keyboard-shortcuts.md)** | • Central shortcut registry<br>• Help modal (`?` key)<br>• Conflict resolution<br>• Platform detection (Mac/Windows) |
-| **[shell-state.md](./shell-state.md)** | • State orchestration between components<br>• Sidebar, theme, modal state<br>• Notification polling<br>• Initialization order |
+| **[shell-state.md](./shell-state.md)** | • State orchestration between components<br>• Sidebar, theme, modal state + chatbot-session singleton<br>• Notification polling<br>• Initialization order |
 | **[empty-states.md](./empty-states.md)** | • Empty state component<br>• First-run/onboarding patterns<br>• Search no results<br>• Filter cleared states |
 | **[component-organization.md](./component-organization.md)** | • Shell vs composites vs ui rules<br>• Directory structure conventions<br>• Naming patterns<br>• Import patterns |
 

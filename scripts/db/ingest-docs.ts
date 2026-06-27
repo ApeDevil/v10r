@@ -94,6 +94,11 @@ const DOCS_ROOT = fileURLToPath(new URL('../../docs', import.meta.url));
 const RAG_ONLY_BLOCK = new Set<string>([
 	'docs/blueprint/progressive-revelation.md',
 	'docs/foundation/progressive-revelation.md',
+	// Design record for the persistent/minimizable chatbot. BUILT on dev but uncommitted;
+	// the doc also describes deferred pieces (experimental_resume, citation chips on
+	// resume). Held from RAG until committed + the corpus is re-ingested, to avoid the
+	// assistant asserting the deferred pieces as shipped.
+	'docs/blueprint/ai/persistent-chatbot.md',
 	// Aspirational format: @toon-format/toon is not a dependency and nothing imports it.
 	// The doc's encode()-based examples would be asserted as live code by the assistant.
 	'docs/blueprint/ai/toon.md',

@@ -13,9 +13,11 @@ import { page } from '$app/state';
 import { initJourneyBeacon } from '$lib/analytics/journey-beacon';
 import { BRAND_NAME } from '$lib/branding';
 import PairingStrip from '$lib/components/shell/PairingStrip.svelte';
+import VelyMinimizedBubble from '$lib/components/shell/VelyMinimizedBubble.svelte';
 import { localizeHref } from '$lib/i18n';
 import { baseLocale, locales } from '$lib/paraglide/runtime';
 import { initKeyboardHandler, registerShortcut } from '$lib/shortcuts';
+import { chatbotSession } from '$lib/state/chatbot-session.svelte';
 import { setConsentContext } from '$lib/state/consent.svelte';
 import { setModalsContext } from '$lib/state/modals.svelte';
 import { setSidebarContext } from '$lib/state/sidebar.svelte';
@@ -66,7 +68,7 @@ $effect(() => {
 		keys: 'mod+j',
 		description: 'AI help',
 		category: 'global',
-		action: () => modals.toggle('aiAssistant'),
+		action: () => chatbotSession.toggle(),
 	});
 
 	const unregisterHelp = registerShortcut({
@@ -150,6 +152,10 @@ $effect(() => {
 {#if data.debugOwnerActive}
 	<PairingStrip />
 {/if}
+
+<!-- Mobile restore affordance for a minimized Vely (sidebar trigger is offscreen on
+	phones). Outside the locale {#key} so a minimized thread survives a locale switch. -->
+<VelyMinimizedBubble />
 
 <div class="sr-only" aria-live="polite" aria-atomic="true">
 	{styleState.announcement}

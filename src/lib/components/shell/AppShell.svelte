@@ -1,4 +1,5 @@
 <script lang="ts">
+import { onMount } from 'svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import type { CommandPaletteItem } from '$lib/components/composites/command-palette';
@@ -18,10 +19,12 @@ import { localizeHref } from '$lib/i18n/runtime';
 import * as m from '$lib/paraglide/messages';
 import type { SearchLocale, SearchResult } from '$lib/search/types';
 import type { ResolvedAnnouncement } from '$lib/server/admin/announcements';
+import { chatbotSession } from '$lib/state/chatbot-session.svelte';
 import { getModals } from '$lib/state/modals.svelte';
 import { createSearchEngine } from '$lib/state/search.svelte';
 import { type Session, setSessionContext } from '$lib/state/session.svelte';
 import { getTheme } from '$lib/state/theme.svelte';
+import { cn } from '$lib/utils/cn';
 
 type Props = {
 	children?: import('svelte').Snippet;
@@ -43,15 +46,29 @@ setSessionContext(session);
 const modals = getModals();
 const theme = getTheme();
 
-// Dynamic Chatbot — loads the ai / @ai-sdk/svelte / bits-ui Dialog module graph only when the user opens the assistant.
-// Prevents the heavy AI SDK bundle from being part of the initial page payload.
+// Dynamic Chatbot — loads the chatbot view graph only once the assistant is non-closed.
+// The heavy ai / @ai-sdk/svelte graph itself is pulled lazily inside the chatbot-session
+// singleton's ensureChat() (first open), keeping it out of the initial page payload.
 let ChatbotComponent: typeof import('$lib/components/composites/chatbot').Chatbot | null = $state(null);
 
 $effect(() => {
-	if (modals.aiAssistantOpen && !ChatbotComponent) {
+	if (chatbotSession.phase !== 'closed' && !ChatbotComponent) {
 		import('$lib/components/composites/chatbot').then((m) => {
 			ChatbotComponent = m.Chatbot;
 		});
+	}
+});
+
+// The chatbot is docked as a right-hand column on desktop while open; reflow main so
+// the panel never overlaps content. Mobile uses a bottom sheet (no horizontal reflow).
+const chatDocked = $derived(chatbotSession.phase === 'open');
+
+// Hand the singleton the live user id (resume pointer + cross-user guard) and, if this
+// tab had a live thread before a reload, surface the minimized indicator (AI-SDK-free).
+onMount(() => {
+	if (session?.user?.id) {
+		chatbotSession.setUser(session.user.id);
+		chatbotSession.hydratePointer();
 	}
 });
 
@@ -140,7 +157,7 @@ const searchItems = $derived<CommandPaletteItem[]>([
 		type: 'action' as const,
 		label: m.shell_ai_assistant(),
 		icon: 'i-lucide-bot',
-		action: () => modals.open('aiAssistant'),
+		action: () => chatbotSession.open(),
 	},
 ]);
 </script>
@@ -154,7 +171,15 @@ const searchItems = $derived<CommandPaletteItem[]>([
 <div class="flex min-h-screen">
 	<Sidebar {isAdmin} />
 
-	<main id="main-content" tabindex="-1" class="flex-1 min-w-0 flex flex-col overflow-x-clip md:pl-[var(--sidebar-rail-width)]">
+	<main
+		id="main-content"
+		tabindex="-1"
+		class={cn(
+			'flex-1 min-w-0 flex flex-col overflow-x-clip md:pl-[var(--sidebar-rail-width)]',
+			'transition-[padding] duration-fast motion-reduce:transition-none',
+			chatDocked && 'md:pr-[28rem]'
+		)}
+	>
 		{#if announcements.length > 0}
 			<AnnouncementBanner {announcements} />
 		{/if}
@@ -181,9 +206,10 @@ const searchItems = $derived<CommandPaletteItem[]>([
 	loading={search.status === 'loading'}
 />
 
-<!-- AI assistant chatbot: dynamically imported on first open (keeps the ai/@ai-sdk/svelte graph out of the initial page payload) -->
-{#if ChatbotComponent && modals.aiAssistantOpen}
-	<svelte:component this={ChatbotComponent} bind:open={modals.aiAssistantOpen} />
+<!-- AI assistant chatbot: persistent, minimizable, non-modal. Stays mounted while the
+	thread is alive (open|minimized); the live Chat lives in the chatbot-session singleton. -->
+{#if ChatbotComponent && chatbotSession.phase !== 'closed'}
+	<svelte:component this={ChatbotComponent} />
 {/if}
 
 <!-- Shortcuts modal -->

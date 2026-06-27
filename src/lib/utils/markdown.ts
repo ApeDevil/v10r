@@ -47,15 +47,21 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
 	allowProtocolRelative: false,
 	disallowedTagsMode: 'discard',
 	transformTags: {
-		// Force noopener+noreferrer and _blank on every <a>. Belt-and-suspenders against tabnabbing.
-		a: (_tagName, attribs) => ({
-			tagName: 'a',
-			attribs: {
-				...attribs,
-				rel: 'noopener noreferrer',
-				target: '_blank',
-			},
-		}),
+		// External links open in a new tab with noopener+noreferrer (anti-tabnabbing).
+		// Internal/relative links (e.g. Vely's own `/docs/...` references) stay in the
+		// same tab so SvelteKit client-routes them — and the chatbot can minimize as the
+		// destination page takes over. Only absolute http(s) URLs are treated as external.
+		a: (_tagName, attribs) => {
+			const href = attribs.href ?? '';
+			if (/^https?:\/\//i.test(href)) {
+				return {
+					tagName: 'a',
+					attribs: { ...attribs, rel: 'noopener noreferrer', target: '_blank' },
+				};
+			}
+			const { target: _dropTarget, ...rest } = attribs;
+			return { tagName: 'a', attribs: rest };
+		},
 	},
 };
 
