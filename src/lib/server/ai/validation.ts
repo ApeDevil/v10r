@@ -93,6 +93,15 @@ export const ChatRequestSchema = v.object({
 	 * Sent by the client after hitting `POST /api/ai/proposals/:id/approve`.
 	 */
 	resumeFromProposalId: v.optional(v.string()),
+	/**
+	 * Site-awareness (chatbot): the raw `page.route.id` of the page the user asked from
+	 * (e.g. `/[[locale=locale]]/(public)/showcases/forms`). An UNTRUSTED lookup key — the
+	 * server resolves it against the public catalog and discards it on miss; it is never
+	 * echoed into the prompt. The tight charset rejects `:` `?` `#` `%` whitespace and
+	 * `<>"'` breakout chars (it still allows the route-group `()`, `[]` and `=` that a
+	 * SvelteKit route id legitimately contains). See `docs/blueprint/ai/site-awareness.md`.
+	 */
+	pageRouteId: v.optional(v.pipe(v.string(), v.maxLength(120), v.regex(/^\/(?!\/)[A-Za-z0-9/_\-[\]().=]*$/))),
 });
 
 export const CreateConversationSchema = v.object({

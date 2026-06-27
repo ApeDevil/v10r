@@ -19,6 +19,7 @@ import { MAX_TOKENS } from '$lib/server/ai/config';
 import {
 	buildPromptAssembledEvent,
 	buildSystemPrompt,
+	formatCurrentPageBlock,
 	getMessageText,
 	windowMessages,
 } from '$lib/server/ai/context/system-prompt';
@@ -48,7 +49,7 @@ import { searchLlmwiki } from '$lib/server/llmwiki/search';
 import { verifyCitations } from '$lib/server/llmwiki/verify';
 import { formatLlmwikiContext } from '$lib/server/llmwiki/wiki-format';
 import { formatContextForPrompt, retrieve } from '$lib/server/rawrag';
-import { buildSearchIndex, formatCatalogMap } from '$lib/server/search';
+import { buildSearchIndex, formatCatalogMap, type PageContext } from '$lib/server/search';
 import type {
 	ChunkSummary,
 	LlmwikiCitationsEvent,
@@ -119,6 +120,13 @@ export interface ChatInput {
 	locale?: SearchLocale;
 	/** Auth ceiling for catalog visibility (server-derived from `event.locals.user.role`). */
 	authCeiling?: string | null;
+	/**
+	 * Site-awareness (chatbot only): the page the user is asking from, ALREADY resolved
+	 * server-side at the route boundary (`resolvePageContext`) to trusted catalog metadata.
+	 * Null when the route didn't resolve (unknown/dynamic/private). Drives the passive
+	 * `<current-page>` block + the deixis-gated retrieval seed. See `site-awareness.md`.
+	 */
+	pageContext?: PageContext | null;
 }
 
 export interface ChatResult {
@@ -353,6 +361,18 @@ function shouldGroundFromSystemDocs(text: string): boolean {
 	return true;
 }
 
+/**
+ * Site-awareness deixis gate: does this message point AT the current page ("this", "here",
+ * "how does this work", "explain this", "this feature/component/showcase")? Only then do we
+ * spend the (already-paid) retrieval embed on a page-seeded query — keeping the page out of
+ * the 90% of questions that name their own topic. Deterministic; tune the anchors freely.
+ */
+function referencesCurrentPage(text: string): boolean {
+	return /\b(this|current)\s+(page|feature|component|showcase|section|demo|example|thing)\b|how (?:does|do) (?:this|it|these)\b|what(?:'s| is| are) (?:this|these|here)\b|explain (?:this|it|the page)\b|on this page\b|\bright here\b/i.test(
+		text,
+	);
+}
+
 export async function orchestrateChat(input: ChatInput): Promise<Response> {
 	return runWithCompaction(DEFAULT_BUDGET, () => orchestrateChatInner(input));
 }
@@ -375,6 +395,7 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 		resumeFromProposalId,
 		locale,
 		authCeiling,
+		pageContext,
 	} = input;
 	const catalogLocale: SearchLocale = locale ?? 'en';
 
@@ -509,9 +530,13 @@ The user has just approved the plan above and the listed steps were executed. Ac
 	}
 	const { conversationId } = convResult;
 
-	// Save user message
+	// Save user message. Site-awareness: stamp the resolved route on the user row (chatbot turns
+	// only; pageContext is null elsewhere) for the per-bubble "asked from" tag — display metadata,
+	// never replayed into a later prompt.
 	if (conversationId && lastRawMsg?.role === 'user' && userMsgText) {
-		await saveMessages(conversationId, userId, [{ id: crypto.randomUUID(), role: 'user', content: userMsgText }]);
+		await saveMessages(conversationId, userId, [
+			{ id: crypto.randomUUID(), role: 'user', content: userMsgText, route: pageContext?.path ?? null },
+		]);
 	}
 
 	const responseHeaders: Record<string, string> = {};
@@ -565,6 +590,12 @@ The user has just approved the plan above and the listed steps were executed. Ac
 
 					let systemPrompt = baseSystemPrompt;
 					let toolCallCount = 0;
+					// Site-awareness: did the system-docs retrieval actually return page-relevant chunks?
+					// Drives the honest-abstention block when the user asks about a page we have no docs for.
+					let docsGrounded = false;
+					// Does this turn point at the current page? (Gates both the retrieval seed and the
+					// abstention.) Scoped out here so both the in-try seed and the post-try injection see it.
+					const wantsPageGrounding = !!pageContext && referencesCurrentPage(userMsgText);
 					const isDevOrAdmin = !!import.meta.env?.DEV;
 
 					type AnyLlmwikiEvent = PipelineStepEvent | PipelineChunksEvent | PipelinePromptEvent | LlmwikiCitationsEvent;
@@ -610,11 +641,21 @@ The user has just approved the plan above and the listed steps were executed. Ac
 						// per-user (empty for a fresh user); the system-owned docs corpus is always there,
 						// so this is what guarantees the "v10r expert" answers even with no personal wiki.
 						const groundDocs = shouldGroundFromSystemDocs(userMsgText);
+						// Site-awareness: when the user points AT the current page ("how does this work?"),
+						// the bare message embeds to noise — seed the system-docs query with the resolved
+						// page title/breadcrumb so it actually retrieves THIS page's docs. Server-authored
+						// text only (the embed query never carries the client string); reuses the embed
+						// `groundDocs` already pays for → zero extra quota. Gate on the RAW message
+						// (`wantsPageGrounding`, hoisted above).
+						const docsQuery =
+							wantsPageGrounding && pageContext
+								? `${pageContext.title}. ${pageContext.breadcrumb.join(' ')}. ${userMsgText}`
+								: userMsgText;
 						const [overviewResult, hitsResult, docsResult, sysOverviewResult] = await Promise.allSettled([
 							loadOverview([userId], collectionId),
 							searchLlmwiki(userMsgText, { userId, collectionId }),
 							groundDocs
-								? retrieve(userMsgText, { userId: SYSTEM_DOCS_USER_ID, tiers: [1], maxChunks: 4 })
+								? retrieve(docsQuery, { userId: SYSTEM_DOCS_USER_ID, tiers: [1], maxChunks: 4 })
 								: Promise.resolve(null),
 							// System-owned project map — grounds broad questions even with an empty personal wiki.
 							loadOverview([SYSTEM_DOCS_USER_ID], PROJECT_DOCS_COLLECTION_ID),
@@ -745,6 +786,7 @@ The <project-overview> above is the canonical high-level map of v10r (a full-sta
 						if (docsResult.status === 'fulfilled' && docsResult.value && docsResult.value.chunks.length > 0) {
 							const docsBlock = formatContextForPrompt(docsResult.value);
 							if (docsBlock) {
+								docsGrounded = true;
 								systemPrompt = `${systemPrompt}
 
 <retrieval-context>
@@ -766,6 +808,17 @@ The <retrieval-context> above is retrieved from the project's OWN documentation 
 						}
 					} catch (err) {
 						console.error('[ai:chat:llmwiki] Retrieval failed, proceeding without context:', err);
+					}
+
+					// Site-awareness: passive `<current-page>` block (always-on when the route resolved,
+					// soft by framing) so the model can bind "this"/"here" to the page. Honest abstention
+					// when the user points at a page we retrieved no docs for — server-driven, not left to
+					// the model's self-knowledge. See `docs/blueprint/ai/site-awareness.md`.
+					if (pageContext) {
+						systemPrompt = `${systemPrompt}\n\n${formatCurrentPageBlock(pageContext)}`;
+						if (wantsPageGrounding && !docsGrounded) {
+							systemPrompt = `${systemPrompt}\n\nNo page-specific documentation was retrieved for "${pageContext.title}". Do not fabricate specifics about this page; if the user is asking about it, say plainly you don't have page-specific docs for it, then offer general project knowledge or where to look.`;
+						}
 					}
 
 					// Catalog grounding — always available alongside llmwiki. The search_catalog tool

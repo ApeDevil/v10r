@@ -145,17 +145,18 @@ class ChatbotSession {
 		this.#clearPointer();
 	}
 
-	/** Send a user turn. Carries `conversationId` (continue) + always-on grounding. */
-	async submit(text: string): Promise<void> {
+	/** Send a user turn. Carries `conversationId` (continue) + always-on grounding + optional
+	 *  site-awareness `pageRouteId` (the caller reads `page.route.id` synchronously at click, so
+	 *  it's already frozen to the page the user pressed Send from — immutable for this turn). */
+	async submit(text: string, routeId?: string): Promise<void> {
 		if (!browser) return;
+		const route = routeId; // frozen by the caller; never re-read across the await below
 		const chat = await this.ensureChat();
 		if (!chat) return;
-		chat.sendMessage(
-			{ text },
-			{
-				body: this.conversationId ? { conversationId: this.conversationId, useLlmwiki: true } : { useLlmwiki: true },
-			},
-		);
+		const body: Record<string, unknown> = { useLlmwiki: true };
+		if (this.conversationId) body.conversationId = this.conversationId;
+		if (route) body.pageRouteId = route;
+		chat.sendMessage({ text }, { body });
 	}
 
 	/** Adopt an existing conversation from the history list. */

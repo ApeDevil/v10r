@@ -152,7 +152,9 @@ src/lib/server/
   rawrag/       Three-tier retrieval pipeline; co-locates queries
   search/       Server search adapters (pages, docs, showcases, blog FTS), buildSearchIndex, searchContent;
                 catalog-map.ts (formatCatalogMap — path-free system-prompt hint),
-                catalog-projection.ts (deriveCatalogGraph — pure catalog → Neo4j Resource nodes)
+                catalog-projection.ts (deriveCatalogGraph — pure catalog → Neo4j Resource nodes),
+                page-context.ts (resolvePageContext — chatbot site-awareness trust boundary;
+                route id → public-catalog page label, see blueprint/ai/site-awareness.md)
   security/     Framework-free security predicates: csrf.ts (needsCsrf, isSameHost,
                 CSRF_EXEMPT_PREFIXES) — imported by hooks.server.ts csrfProtection
   schemas/      Shared server Valibot: shared.ts

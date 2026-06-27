@@ -49,6 +49,8 @@ Three states, owned by a **client-only module singleton** (`src/lib/state/chatbo
 
 Non-modal: desktop docks as a full-height right-hand column (`<main>` reflows via `md:pr-[28rem]`, never overlaid); mobile is a bottom sheet. Header carries four buttons — history, new chat (`+`), minimize (`—`), close (`×`).
 
+On public pages a **site-awareness** disclosure chip ("Asking about <page>") sits above the input, signalling that Vely knows your current route; it is absent on private routes (`/app`, `/admin`, `/auth`). The chip shows if and only if the route is in the prompt this turn. See [../ai/site-awareness.md](../ai/site-awareness.md). *v1 built (dev, uncommitted).*
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │  Vely chatbot              [⟳] [＋] [－] [✕]        │
@@ -385,6 +387,7 @@ await db.insert(aiAuditLog).values({
 ## Related
 
 - [../quick-search/](../quick-search/) - Quick Search (similar modal pattern)
+- [../ai/site-awareness.md](../ai/site-awareness.md) - Vely's site-awareness (current public route as context) + the disclosure chip
 - [../ai/README.md](../ai/README.md) - Full AI implementation
 - [../abuse/rate-limits.md](../abuse/rate-limits.md) - Rate limiting patterns
 - [../error-handling.md](../error-handling.md) - Error handling patterns

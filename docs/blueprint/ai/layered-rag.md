@@ -114,6 +114,8 @@ A per-turn cap (`MAX_RAWRAG_TOOL_CALLS_PER_TURN = 3`) is enforced by the orchest
 ## Read Path (Chat Hot Path)
 
 0. **System-docs prefetch (relevance-gated)** — on the chatbot surface, `shouldGroundFromSystemDocs(text)` (`chat-orchestrator.ts`) skips trivial turns (greetings, acks, `< 12` chars), else fires a parallel tier-1 `retrieve()` over `SYSTEM_DOCS_USER_ID` and injects the hits under `<retrieval-context>`. This closes the "fresh user with an empty llmwiki gets zero project knowledge" gap without taxing chit-chat. Distinct from the on-demand `search_project_docs` tool below.
+
+   > **Site-awareness rides this same embed.** When the chatbot resolves the user's current public route ([site-awareness.md](./site-awareness.md)) and the turn is deictic ("how does *this* work?"), the seed reuses *this* prefetch `retrieve()` call — its query is seeded with the server-resolved page title/description instead of firing a second embed, so it costs **zero extra quota**. The resolved page also injects a passive `<current-page>` block alongside `<retrieval-context>`, and the orchestrator emits a deterministic abstention note when the page resolves but no chunks come back. *v1 built (dev, uncommitted).*
 1. **Overview** — `llmwiki/overview.ts` loads the top-level `kind='overview'` page (~500 tok) into the system prompt on every request.
 2. **Wiki search** — `llmwiki/search.ts` runs hybrid vector (TLDR + title + tags) + BM25 (body) → top-N `LlmwikiHit[]`.
 3. **Pointer hydration** — `llmwiki/queries.ts:hydratePointers` runs a single JOIN, caps pointers per page at `POINTER_CAP=5`, ordered by `weight DESC, chunkId ASC`.

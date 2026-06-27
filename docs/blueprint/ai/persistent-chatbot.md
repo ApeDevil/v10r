@@ -314,6 +314,15 @@ relying on it; add the userId-stamped pointer guard in `ensureChat` as defense i
 - **Desk `ChatPanel` convergence** onto this singleton model — separate surface,
   separate lifecycle; leave as-is.
 
+## Related
+
+- [site-awareness.md](./site-awareness.md) — Vely's **site-awareness**: the current public
+  route as a thin server-resolved page label, so deixis ("how does *this* work?") resolves to
+  the page in front of you. Adds a disclosure chip above the input (public pages only) and
+  records the resolved route on each user message (`ai.message.route` column; per-bubble
+  rendering deferred). *v1 built (dev, uncommitted).*
+- [../app-shell/ai-assistant.md](../app-shell/ai-assistant.md) — the app-shell view of this panel.
+
 ## Provenance
 
 Converged via two-round agent cross-pollination, 2026-06-27:

@@ -84,6 +84,15 @@ export const message = aiSchema.table(
 		 * Null for non-desk messages.
 		 */
 		context: jsonb('context').$type<MessageContext[] | null>(),
+		/**
+		 * Site-awareness: the resolved, allowlisted public route this turn was asked from
+		 * (e.g. `/showcases/forms`) — the chatbot's location-awareness stamp. Server-resolved
+		 * catalog key ONLY, never a raw URL/params/query/id. Stamped on the USER message when
+		 * the page resolved; null otherwise (assistant/system/tool rows, and unresolved routes).
+		 * Display metadata only — shown as a per-bubble tag, never replayed into the prompt.
+		 * See `docs/blueprint/ai/site-awareness.md`.
+		 */
+		route: text('route'),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	},
 	(table) => [index('message_conv_created_idx').on(table.conversationId, table.createdAt)],

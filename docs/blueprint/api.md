@@ -1022,7 +1022,7 @@ Mutating and long-lived endpoints bound their inputs and connections at the adap
 | Endpoint | Bound |
 |----------|-------|
 | `PUT /api/desk/spreadsheets/[id]` | Caps cell count, column-meta count, per-cell string length, and total payload size. |
-| `POST /api/ai/chatbot` · `/api/ai/deskbot` · `/api/ai/showcase/rag` | Shared `ChatRequestSchema` caps the lengths of the `toolScopes`, `retrievalTiers`, and `deskLayout` arrays. |
+| `POST /api/ai/chatbot` · `/api/ai/deskbot` · `/api/ai/showcase/rag` | Shared `ChatRequestSchema` caps the lengths of the `toolScopes`, `retrievalTiers`, and `deskLayout` arrays, and bounds the chatbot `pageRouteId` route template (120-char max + strict leading-slash regex — see [ai/site-awareness.md](./ai/site-awareness.md)). |
 | `POST /api/ai/proposals/[id]/approve` | Per-user rate-limited. |
 | `GET /api/analytics/stream` (SSE) | Per-IP connect limit + global concurrent-connection cap + max-duration self-close. A client can't hold a slot forever or open unbounded streams. |
 

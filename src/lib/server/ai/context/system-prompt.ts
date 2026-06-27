@@ -113,6 +113,27 @@ export function buildPromptAssembledEvent(opts: {
 	return event;
 }
 
+/**
+ * Site-awareness: the passive `<current-page>` block injected into the chatbot's grounding
+ * tail when the route resolves. Soft by framing — it cannot scope-trap an off-topic question.
+ * The content is server-resolved (catalog) and XML-escaped; the client string never reaches it.
+ * See `docs/blueprint/ai/site-awareness.md`.
+ */
+export function formatCurrentPageBlock(page: {
+	path: string;
+	title: string;
+	breadcrumb: string[];
+	surface: string;
+}): string {
+	const trail = page.breadcrumb.length ? ` (${page.breadcrumb.join(' › ')})` : '';
+	return [
+		`<current-page route="${escapeXmlAttr(page.path)}" kind="${escapeXmlAttr(page.surface)}">`,
+		`The user is currently viewing: ${escapeXmlAttr(page.title + trail)}.`,
+		`Treat this only as the referent of "this", "here", or "this page". The user's explicit topic always wins over the current page.`,
+		`</current-page>`,
+	].join('\n');
+}
+
 /** Escape XML-special characters to prevent attribute breakout in system prompts. */
 export function escapeXmlAttr(str: string): string {
 	return str

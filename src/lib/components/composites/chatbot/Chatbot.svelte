@@ -1,9 +1,11 @@
 <script lang="ts">
 import { MediaQuery } from 'svelte/reactivity';
+import { page } from '$app/state';
 import { apiFetch } from '$lib/api';
 import ChunkView from '$lib/components/chat/ChunkView.svelte';
 import type { CatalogSource, SourceChunk } from '$lib/components/chat/citation-types';
 import Drawer from '$lib/components/primitives/drawer/Drawer.svelte';
+import { isSiteAwareRoute, resolveRouteLabel } from '$lib/search/route-id';
 import { chatbotSession } from '$lib/state/chatbot-session.svelte';
 import { cn } from '$lib/utils/cn';
 import ChatInput from './ChatInput.svelte';
@@ -35,6 +37,11 @@ let viewerChunks = $state<SourceChunk[]>([]);
 const isDesktop = new MediaQuery('(min-width: 768px)', true);
 
 const isLoading = $derived(session.isStreaming);
+
+// Site-awareness disclosure: the human label of the page Vely is currently aware of.
+// Null on private/unknown routes → the chip hides (the honest "not reading this page" signal).
+// Live present-tense: reflects the CURRENT route, so it reads as the antecedent of "this".
+const pageLabel = $derived(resolveRouteLabel(page.route.id));
 
 function openChunks(chunks: SourceChunk[]) {
 	viewerChunks = chunks;
@@ -136,7 +143,10 @@ function submitMessage() {
 	if (!inputValue.trim() || isLoading) return;
 	const text = inputValue;
 	inputValue = '';
-	session.submit(text);
+	// Capture the route SYNCHRONOUSLY at click → frozen to the page Send was pressed from.
+	// Private/unknown routes send nothing (server membership check is the authoritative gate).
+	const routeId = page.route.id;
+	session.submit(text, isSiteAwareRoute(routeId) ? (routeId ?? undefined) : undefined);
 }
 </script>
 
@@ -307,6 +317,19 @@ function submitMessage() {
 					{:else}
 						Something went wrong. Try again.
 					{/if}
+				</div>
+			{/if}
+
+			<!-- Site-awareness disclosure chip: names the page Vely is aware of, directly above
+			     where the user types "this". Present ⟺ a route is sent this turn. Hidden on
+			     private/unknown routes. See docs/blueprint/ai/site-awareness.md. -->
+			{#if pageLabel}
+				<div
+					class="flex items-center gap-1.5 border-t border-border px-4 py-1.5 text-fluid-xs text-muted"
+					data-testid="vely-page-context"
+				>
+					<span class="i-lucide-map-pin h-3 w-3 shrink-0" aria-hidden="true"></span>
+					<span class="truncate">Asking about <span class="font-medium text-fg">{pageLabel}</span></span>
 				</div>
 			{/if}
 

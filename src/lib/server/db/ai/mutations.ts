@@ -39,11 +39,13 @@ export async function bulkDeleteConversations(ids: string[], userId: string): Pr
 
 const VALID_ROLES = new Set(['user', 'assistant', 'system', 'tool'] as const);
 
-/** Save messages in bulk (idempotent via onConflictDoNothing). Auth-scoped. */
+/** Save messages in bulk (idempotent via onConflictDoNothing). Auth-scoped.
+ *  `route` (site-awareness): the resolved public route the turn was asked from — stamped
+ *  on the user message only; null/omitted everywhere else. */
 export async function saveMessages(
 	conversationId: string,
 	userId: string,
-	messages: { id: string; role: string; content: string }[],
+	messages: { id: string; role: string; content: string; route?: string | null }[],
 ) {
 	if (messages.length === 0) return;
 
@@ -69,6 +71,7 @@ export async function saveMessages(
 					conversationId,
 					role: m.role as 'user' | 'assistant' | 'system' | 'tool',
 					content: m.content,
+					route: m.route ?? null,
 				})),
 			)
 			.onConflictDoNothing();

@@ -113,6 +113,10 @@ const RAG_ONLY_BLOCK = new Set<string>([
 	// specs. Entirely DESIGNED-not-built (no retrieval source code exists for any of it yet). Same
 	// hazard as the blueprint — held from RAG so the chatbot can't assert these specs as shipped.
 	'docs/blueprint/ai/rag-roadmap.md',
+	// Plan record for the chatbot's site-awareness (Vely knows the current public route — the
+	// chatbot half of location-awareness). DESIGNED-not-built (4-lens cross-pollination, 2026-06-27).
+	// Held from RAG so the chatbot can't assert site-awareness as a live feature. Renders at /docs.
+	'docs/blueprint/ai/site-awareness.md',
 ]);
 
 interface DocFile {
