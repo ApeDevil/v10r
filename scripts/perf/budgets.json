@@ -1,0 +1,12 @@
+{
+  "_comment": "Performance budgets for v10r. warn = investigate, fail = regression. Measured against a LOCAL PROD BUILD (vite build && vite preview), never the dev server. Sourced from the perf-* skills + the 2026-06-27 perf review.",
+  "ttfb_ms":            { "warn": 200,   "fail": 600,   "note": "first-byte per route, warm" },
+  "cold_start_ms":      { "warn": 15000, "fail": 25000, "note": "container vite-ready; see cold-start.sh" },
+  "lcp_ms":             { "warn": 2000,  "fail": 2500,  "note": "Core Web Vitals good<=2500" },
+  "inp_ms":             { "warn": 150,   "fail": 200,   "note": "Core Web Vitals good<=200" },
+  "cls":                { "warn": 0.05,  "fail": 0.1,   "note": "Core Web Vitals good<=0.1" },
+  "doc_html_kb":        { "warn": 50,    "fail": 100,   "note": "SSR document transfer; catches inline-SVG/{@html} bloat" },
+  "route_js_kb":        { "warn": 150,   "fail": 250,   "note": "per-route client JS, gzipped" },
+  "vector_query_ms":    { "warn": 50,    "fail": 200,   "note": "single HNSW retrieval; seqscan fallback blows this" },
+  "embed_calls_per_turn": { "warn": 1,   "fail": 2,     "note": "Gemini embeddings per chatbot turn (1000/day ceiling)" }
+}
