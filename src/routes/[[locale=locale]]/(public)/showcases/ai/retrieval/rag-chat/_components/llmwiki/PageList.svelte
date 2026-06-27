@@ -1,10 +1,10 @@
 <script lang="ts">
 import type { ChunkSummary } from '$lib/types/pipeline';
-import type { LlmwikiTraceState } from './llmwiki-trace.svelte';
+import type { NragTraceState } from '../trace/nrag-trace.svelte';
 import PageCard from './PageCard.svelte';
 
 interface Props {
-	trace: LlmwikiTraceState;
+	trace: NragTraceState;
 }
 
 let { trace }: Props = $props();

@@ -7,6 +7,7 @@ import {
 	convertToModelMessages,
 	createUIMessageStream,
 	createUIMessageStreamResponse,
+	type LanguageModelUsage,
 	type ModelMessage,
 	stepCountIs,
 	streamText,
@@ -50,13 +51,16 @@ import { verifyCitations } from '$lib/server/llmwiki/verify';
 import { formatLlmwikiContext } from '$lib/server/llmwiki/wiki-format';
 import { formatContextForPrompt, retrieve } from '$lib/server/rawrag';
 import { buildSearchIndex, formatCatalogMap, type PageContext } from '$lib/server/search';
-import type {
-	ChunkSummary,
-	LlmwikiCitationsEvent,
-	PipelineChunksEvent,
-	PipelinePromptEvent,
-	PipelineStepEvent,
+import {
+	type ChunkSummary,
+	LANE_OF,
+	type LlmwikiCitationsEvent,
+	PHASE_OF,
+	type PipelineChunksEvent,
+	type PipelinePromptEvent,
+	type PipelineStepEvent,
 } from '$lib/types/pipeline';
+import { streamTextIntoOpenMessage } from './_shared/streaming-turn';
 import { verifyCatalogCitations } from './catalog-citations';
 import { shapeDrilledCitations } from './citations/drill';
 import { createToolLeakGuard, stripTextualToolCall } from './tool-leak-guard';
@@ -71,6 +75,15 @@ export type ChatMessage = { role: 'user' | 'assistant'; content: string } | UIMe
  * - `rag-demo` — the showcase retrieval pipeline demo (not a product surface).
  */
 export type TurnSurface = 'chatbot' | 'deskbot' | 'rag-demo';
+
+/**
+ * A `pipeline:step` event as authored at a call site. The emit closures stamp the
+ * derived axes (`phase` via PHASE_OF, `lane` via LANE_OF), the stable `instanceKey`,
+ * and the turn `requestId`, so literals stay terse and can't drift from the registry.
+ */
+type RawStepInput = Omit<PipelineStepEvent, 'phase' | 'instanceKey' | 'requestId'> & {
+	instanceKey?: string;
+};
 
 export interface ChatInput {
 	userId: string;
@@ -127,6 +140,14 @@ export interface ChatInput {
 	 * `<current-page>` block + the deixis-gated retrieval seed. See `site-awareness.md`.
 	 */
 	pageContext?: PageContext | null;
+	/**
+	 * Ephemeral run (the rag-chat counterfactual): skip ALL persistence —
+	 * resolveConversation, the conversation-limit check, message + step rows — so a
+	 * throwaway "run without RAG" comparison doesn't create a conversation or count
+	 * against the user's limit. The token budget is STILL charged (the tokens were
+	 * really spent; skipping it would be a metered-bypass abuse vector).
+	 */
+	dryRun?: boolean;
 }
 
 export interface ChatResult {
@@ -248,6 +269,21 @@ async function resolveResumeContext(
 	}
 
 	return { summary: formatExecutionSummary(proposal.id, proposal.executionResult) };
+}
+
+/**
+ * Admin check, framework-free (mirrors `auth/guards.isAdmin` without its SvelteKit
+ * import so this domain module stays reusable). `ADMIN_USER_ID` is a comma list of ids.
+ * Gates the FULL prompt TEXT in the trace — never the token counts.
+ */
+function isAdminUser(userId: string): boolean {
+	const raw = process.env.ADMIN_USER_ID;
+	if (!raw) return false;
+	return raw
+		.split(',')
+		.map((s) => s.trim())
+		.filter(Boolean)
+		.includes(userId);
 }
 
 /** Resolve or auto-create the conversation. Returns conversationId or error. */
@@ -396,6 +432,7 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 		locale,
 		authCeiling,
 		pageContext,
+		dryRun,
 	} = input;
 	const catalogLocale: SearchLocale = locale ?? 'en';
 
@@ -519,16 +556,21 @@ The user has just approved the plan above and the listed steps were executed. Ac
 	}
 
 	// Resolve conversation (pass raw messages for title extraction; stamp the surface on
-	// any newly-created conversation).
-	const convResult = await resolveConversation(userId, existingConvId, windowedMessages, stampSurface);
-	if ('type' in convResult) {
-		const err = convResult as ChatError;
-		return Response.json(
-			{ error: { code: err.code, message: err.message } },
-			{ status: err.status, headers: { 'X-AI-Error-Kind': err.code } },
-		);
+	// any newly-created conversation). dryRun (counterfactual) skips persistence entirely:
+	// conversationId stays undefined → every `if (conversationId)` block below no-ops, and the
+	// limit check (inside resolveConversation's create path) is skipped. chargeTokens still runs.
+	let conversationId: string | undefined;
+	if (!dryRun) {
+		const convResult = await resolveConversation(userId, existingConvId, windowedMessages, stampSurface);
+		if ('type' in convResult) {
+			const err = convResult as ChatError;
+			return Response.json(
+				{ error: { code: err.code, message: err.message } },
+				{ status: err.status, headers: { 'X-AI-Error-Kind': err.code } },
+			);
+		}
+		conversationId = convResult.conversationId;
 	}
-	const { conversationId } = convResult;
 
 	// Save user message. Site-awareness: stamp the resolved route on the user row (chatbot turns
 	// only; pageContext is null elsewhere) for the per-bubble "asked from" tag — display metadata,
@@ -588,6 +630,10 @@ The user has just approved the plan above and the listed steps were executed. Ac
 					}
 					writer.write({ type: 'start', messageId: assistantMsgId });
 
+					// Turn t0 — one origin for every step's startOffsetMs (retrieve + generate share it),
+					// so the waterfall renders true parallel overlap. See nrag-observability.md.
+					const t0 = performance.now();
+
 					let systemPrompt = baseSystemPrompt;
 					let toolCallCount = 0;
 					// Site-awareness: did the system-docs retrieval actually return page-relevant chunks?
@@ -596,10 +642,16 @@ The user has just approved the plan above and the listed steps were executed. Ac
 					// Does this turn point at the current page? (Gates both the retrieval seed and the
 					// abstention.) Scoped out here so both the in-try seed and the post-try injection see it.
 					const wantsPageGrounding = !!pageContext && referencesCurrentPage(userMsgText);
-					const isDevOrAdmin = !!import.meta.env?.DEV;
+					// Gate the full prompt TEXT to dev builds OR real admins (ADMIN_USER_ID); never the
+					// token counts. Was DEV-only, so admins saw nothing in prod.
+					const isDevOrAdmin = !!import.meta.env?.DEV || isAdminUser(userId);
 
 					type AnyLlmwikiEvent = PipelineStepEvent | PipelineChunksEvent | PipelinePromptEvent | LlmwikiCitationsEvent;
 					const pipelineEvents: AnyLlmwikiEvent[] = [];
+					// Enumerable context blocks injected into the system prompt (llmwiki pages + system-docs
+					// chunks) for the Tokens-pane per-block breakdown. The honest aggregate (Context = the
+					// full injected delta) is computed at emit time, after the prompt is fully assembled.
+					const promptContextBlocks: { chunkId: string; tokens: number }[] = [];
 					// Mirror rawrag's citations extra payload so existing consumers still read it.
 					let citationsPayload: {
 						citations: Array<{ chunkId: string; verification: string; tier: 'rawrag' }>;
@@ -625,17 +677,40 @@ The user has just approved the plan above and the listed steps were executed. Ac
 						if (catalogPayload) Object.assign(meta, catalogPayload);
 						writer.write({ type: 'message-metadata', messageMetadata: meta });
 					};
-					const emit = (event: AnyLlmwikiEvent) => {
-						if (event.type === 'pipeline:step') event.requestId = requestId;
-						pipelineEvents.push(event);
+					// Step events are authored as raw literals (step/status/offset/detail); this
+					// closure stamps the derived axes (phase/lane), the stable instanceKey, and the
+					// turn requestId so every literal stays terse and can't drift from PHASE_OF/LANE_OF.
+					const emit = (event: RawStepInput | PipelineChunksEvent | PipelinePromptEvent | LlmwikiCitationsEvent) => {
+						if (event.type === 'pipeline:step') {
+							pipelineEvents.push({
+								...event,
+								phase: PHASE_OF[event.step],
+								instanceKey: event.instanceKey ?? event.step,
+								lane: event.lane ?? LANE_OF[event.step],
+								requestId,
+							});
+						} else {
+							event.requestId = requestId;
+							pipelineEvents.push(event);
+						}
 						flush();
 					};
 
 					try {
 						const overviewStart = performance.now();
-						emit({ type: 'pipeline:step', step: 'llmwiki:overview', status: 'active', startedAt: overviewStart });
+						emit({
+							type: 'pipeline:step',
+							step: 'llmwiki:overview',
+							status: 'active',
+							startOffsetMs: Math.round(overviewStart - t0),
+						});
 						const searchStart = performance.now();
-						emit({ type: 'pipeline:step', step: 'llmwiki:search', status: 'active', startedAt: searchStart });
+						emit({
+							type: 'pipeline:step',
+							step: 'llmwiki:search',
+							status: 'active',
+							startOffsetMs: Math.round(searchStart - t0),
+						});
 
 						// Relevance-gated system-docs grounding runs in PARALLEL with llmwiki. llmwiki is
 						// per-user (empty for a fresh user); the system-owned docs corpus is always there,
@@ -651,6 +726,17 @@ The user has just approved the plan above and the listed steps were executed. Ac
 							wantsPageGrounding && pageContext
 								? `${pageContext.title}. ${pageContext.breadcrumb.join(' ')}. ${userMsgText}`
 								: userMsgText;
+						// Make the otherwise-invisible parallel system-docs retrieve a coarse trace lane
+						// (one bracketed step, not the engine's sub-steps — those ids collide with llmwiki's).
+						const docsStart = performance.now();
+						if (groundDocs) {
+							emit({
+								type: 'pipeline:step',
+								step: 'system-docs',
+								status: 'active',
+								startOffsetMs: Math.round(docsStart - t0),
+							});
+						}
 						const [overviewResult, hitsResult, docsResult, sysOverviewResult] = await Promise.allSettled([
 							loadOverview([userId], collectionId),
 							searchLlmwiki(userMsgText, { userId, collectionId }),
@@ -706,7 +792,7 @@ The user has just approved the plan above and the listed steps were executed. Ac
 								source: 'llmwiki',
 								tier: 'llmwiki',
 								survived: true,
-								survivalReason: 'pointer-only',
+								dispositionReason: 'pointer-only',
 							}));
 							emit({
 								type: 'pipeline:chunks',
@@ -717,7 +803,12 @@ The user has just approved the plan above and the listed steps were executed. Ac
 
 							const overview = overviewResult.status === 'fulfilled' ? overviewResult.value : null;
 							const ctxStart = performance.now();
-							emit({ type: 'pipeline:step', step: 'llmwiki:context', status: 'active', startedAt: ctxStart });
+							emit({
+								type: 'pipeline:step',
+								step: 'llmwiki:context',
+								status: 'active',
+								startOffsetMs: Math.round(ctxStart - t0),
+							});
 							const contextBlock = formatLlmwikiContext(overview, hits);
 							const ctxMs = Math.round(performance.now() - ctxStart);
 							if (contextBlock) {
@@ -744,18 +835,9 @@ Retrieval rules:
 									chunkCount: hits.length,
 								},
 							});
-							emit(
-								buildPromptAssembledEvent({
-									userPrompt: userMsgText,
-									systemPrompt,
-									contextBlocks: hits.map((h) => ({
-										chunkId: h.slug,
-										tokens: Math.ceil(h.tldr.length / 4),
-									})),
-									totalTokens: Math.ceil(contextBlock.length / 4),
-									isDevOrAdmin,
-								}),
-							);
+							for (const h of hits) {
+								promptContextBlocks.push({ chunkId: h.slug, tokens: Math.ceil(h.tldr.length / 4) });
+							}
 						} else {
 							emit({
 								type: 'pipeline:step',
@@ -781,12 +863,46 @@ ${sysOverviewResult.value.body}
 The <project-overview> above is the canonical high-level map of v10r (a full-stack reference & test-sandbox). Use it to orient broad questions like "what is v10r" or "how do I use it"; ground specifics from the retrieval context and catalog below.`;
 						}
 
+						// System-docs lane terminal — close the coarse `system-docs` bar (gated on groundDocs;
+						// a failure here is the embedding 429 that would otherwise vanish into allSettled).
+						if (groundDocs) {
+							const docsMs = Math.round(performance.now() - docsStart);
+							if (docsResult.status === 'fulfilled') {
+								const docsChunks = docsResult.value?.chunks ?? [];
+								emit({
+									type: 'pipeline:step',
+									step: 'system-docs',
+									status: 'done',
+									durationMs: docsMs,
+									detail: {
+										kind: 'tier',
+										tierNumber: 1,
+										chunksFound: docsChunks.length,
+										topSources: docsChunks
+											.slice(0, 3)
+											.map((c) => ({ title: c.documentTitle, score: Math.round(c.score * 1000) / 1000 })),
+									},
+								});
+							} else {
+								emit({
+									type: 'pipeline:step',
+									step: 'system-docs',
+									status: 'error',
+									durationMs: docsMs,
+									error: docsResult.reason instanceof Error ? docsResult.reason.message : String(docsResult.reason),
+								});
+							}
+						}
+
 						// System-docs grounding (relevance-gated, parallel above). Injected regardless of
 						// whether llmwiki had hits — this is the coverage net for users with an empty wiki.
 						if (docsResult.status === 'fulfilled' && docsResult.value && docsResult.value.chunks.length > 0) {
 							const docsBlock = formatContextForPrompt(docsResult.value);
 							if (docsBlock) {
 								docsGrounded = true;
+								for (const c of docsResult.value.chunks) {
+									promptContextBlocks.push({ chunkId: c.chunkId, tokens: Math.ceil(c.content.length / 4) });
+								}
 								systemPrompt = `${systemPrompt}
 
 <retrieval-context>
@@ -795,16 +911,6 @@ ${docsBlock}
 
 The <retrieval-context> above is retrieved from the project's OWN documentation — treat it as authoritative for how and why v10r is built. When you cite a /docs path or link, surface it via \`search_catalog\` (never invent paths).`;
 							}
-						} else if (docsResult.status === 'rejected') {
-							// The system-docs retrieve() (incl. the query embed) failed — surface it so an
-							// ungrounded turn is OBSERVABLE, not silently empty. Most likely an embedding 429
-							// that survived retry. Without this branch the failure vanished into allSettled.
-							emit({
-								type: 'pipeline:step',
-								step: 'embed',
-								status: 'error',
-								error: docsResult.reason instanceof Error ? docsResult.reason.message : String(docsResult.reason),
-							});
 						}
 					} catch (err) {
 						console.error('[ai:chat:llmwiki] Retrieval failed, proceeding without context:', err);
@@ -834,8 +940,27 @@ Project catalog rules:
 3. If \`search_catalog\` returns nothing for what the user asked, say it isn't in the catalog — do not fabricate a plausible URL.
 4. Use \`search_catalog\` for navigation / "what exists"; use the llmwiki pages for explaining how something works.`;
 
+					// Prompt assembled — emitted AFTER every context injection (llmwiki + project-overview +
+					// system-docs + current-page + catalog) so `systemPromptTokens` reflects the FULL prompt
+					// and the injected context is attributed to "Context", not "prompt overhead". `totalTokens`
+					// is the whole injected delta (full prompt − base); `contextBlocks` enumerates what it can.
+					emit(
+						buildPromptAssembledEvent({
+							userPrompt: userMsgText,
+							systemPrompt,
+							contextBlocks: promptContextBlocks,
+							totalTokens: Math.ceil(Math.max(0, systemPrompt.length - baseSystemPrompt.length) / 4),
+							isDevOrAdmin,
+						}),
+					);
+
 					const generateStart = performance.now();
-					emit({ type: 'pipeline:step', step: 'generate', status: 'active', startedAt: generateStart });
+					emit({
+						type: 'pipeline:step',
+						step: 'generate',
+						status: 'active',
+						startOffsetMs: Math.round(generateStart - t0),
+					});
 
 					// `assistantMsgId` was created + persisted at the top of `execute` (so the
 					// `start` frame can carry it and conversation_step.messageId has a valid FK);
@@ -884,7 +1009,11 @@ Project catalog rules:
 									emit({
 										type: 'pipeline:step',
 										step: 'rawrag:drill',
+										// Unique per drill so the waterfall keys 0–3 distinct ticks (avoids each_key_duplicate).
+										instanceKey: `drill#${callIndex}`,
 										status: 'done',
+										// Point tick nested by time inside the generate bar (we don't measure per-tool latency).
+										startOffsetMs: Math.round(performance.now() - t0),
 										detail: {
 											kind: 'drill',
 											callIndex: callIndex <= 2 ? callIndex : 2,
@@ -918,136 +1047,154 @@ Project catalog rules:
 								}
 							}
 						},
-						onFinish: async ({ text: rawText, totalUsage }) => {
-							// Mirror the stream guard: if the whole turn was a textual tool-call
-							// leak (`<function=…>`), blank it before persistence / citation
-							// verification so the leak isn't saved or counted as an answer.
-							const text = stripTextualToolCall(rawText);
+						onError: ({ error }) => {
+							console.error('[ai:chat:llmwiki] Stream error:', error);
+							// Terminal for generate — without this a provider 503 / 30s abort leaves the
+							// bar stuck `active` forever. Client also has a finalizeActive() backstop, but
+							// emit here so the error reason is visible.
 							emit({
 								type: 'pipeline:step',
 								step: 'generate',
-								status: 'done',
+								status: 'error',
 								durationMs: Math.round(performance.now() - generateStart),
-								detail: {
-									kind: 'generate',
-									model: activeInfo?.id,
-									inputTokens: totalUsage?.inputTokens,
-									outputTokens: totalUsage?.outputTokens,
-								},
+								error: error instanceof Error ? error.message : String(error),
 							});
-							try {
-								if (drilledChunks.size > 0) {
-									const verifyStart = performance.now();
-									emit({ type: 'pipeline:step', step: 'llmwiki:verify', status: 'active', startedAt: verifyStart });
-									const { verifications, driftedChunkIds } = await verifyCitations({
-										userId,
-										drilledChunkIds: Array.from(drilledChunks),
-										answerText: text,
-									});
-									const verifyMs = Math.round(performance.now() - verifyStart);
-									const verdicts = Array.from(verifications.entries()).map(([chunkId, status]) => ({
-										pageSlug: '',
-										chunkId,
-										status,
-									}));
-									const summary = {
-										total: verdicts.length,
-										quote: verdicts.filter((v) => v.status === 'quote').length,
-										paraphrase: verdicts.filter((v) => v.status === 'paraphrase').length,
-										drifted: verdicts.filter((v) => v.status === 'drifted').length,
-										uncited: verdicts.filter((v) => v.status === 'uncited').length,
-									};
-									emit({
-										type: 'pipeline:step',
-										step: 'llmwiki:verify',
-										status: 'done',
-										durationMs: verifyMs,
-										detail: { kind: 'llmwiki-verify', ...summary },
-									});
-									emit({ type: 'llmwiki:citations', verdicts, summary });
-									// Preserve the existing citations metadata shape for legacy consumers.
-									citationsPayload = {
-										citations: Array.from(verifications.entries()).map(([chunkId, verification]) => ({
-											chunkId,
-											verification,
-											tier: 'rawrag' as const,
-										})),
-										driftedChunkIds,
-									};
-									sourceChunksPayload = {
-										sourceChunks: await shapeDrilledCitations(userId, Array.from(drilledChunks), verifications),
-									};
-									flush();
-								}
-							} catch (err) {
-								console.error('[ai:chat:llmwiki] Verification failed:', err);
+						},
+					});
+
+					// Post-text work runs while the assistant message is still OPEN (the streaming helper
+					// closes it with a single `finish` only after this resolves) — so the citation/catalog
+					// metadata flushed here lands on the right message instead of after the `finish` frame.
+					const afterText = async (rawText: string, totalUsage: LanguageModelUsage) => {
+						// Mirror the stream guard: if the whole turn was a textual tool-call
+						// leak (`<function=…>`), blank it before persistence / citation
+						// verification so the leak isn't saved or counted as an answer.
+						const text = stripTextualToolCall(rawText);
+						emit({
+							type: 'pipeline:step',
+							step: 'generate',
+							status: 'done',
+							durationMs: Math.round(performance.now() - generateStart),
+							detail: {
+								kind: 'generate',
+								model: activeInfo?.id,
+								inputTokens: totalUsage?.inputTokens,
+								outputTokens: totalUsage?.outputTokens,
+							},
+						});
+						try {
+							if (drilledChunks.size > 0) {
+								const verifyStart = performance.now();
 								emit({
 									type: 'pipeline:step',
 									step: 'llmwiki:verify',
-									status: 'error',
-									error: err instanceof Error ? err.message : String(err),
+									status: 'active',
+									startOffsetMs: Math.round(verifyStart - t0),
 								});
+								const { verifications, driftedChunkIds } = await verifyCitations({
+									userId,
+									drilledChunkIds: Array.from(drilledChunks),
+									answerText: text,
+								});
+								const verifyMs = Math.round(performance.now() - verifyStart);
+								const verdicts = Array.from(verifications.entries()).map(([chunkId, status]) => ({
+									pageSlug: '',
+									chunkId,
+									status,
+								}));
+								const summary = {
+									total: verdicts.length,
+									quote: verdicts.filter((v) => v.status === 'quote').length,
+									paraphrase: verdicts.filter((v) => v.status === 'paraphrase').length,
+									drifted: verdicts.filter((v) => v.status === 'drifted').length,
+									uncited: verdicts.filter((v) => v.status === 'uncited').length,
+								};
+								emit({
+									type: 'pipeline:step',
+									step: 'llmwiki:verify',
+									status: 'done',
+									durationMs: verifyMs,
+									detail: { kind: 'llmwiki-verify', ...summary },
+								});
+								emit({ type: 'llmwiki:citations', verdicts, summary });
+								// Preserve the existing citations metadata shape for legacy consumers.
+								citationsPayload = {
+									citations: Array.from(verifications.entries()).map(([chunkId, verification]) => ({
+										chunkId,
+										verification,
+										tier: 'rawrag' as const,
+									})),
+									driftedChunkIds,
+								};
+								sourceChunksPayload = {
+									sourceChunks: await shapeDrilledCitations(userId, Array.from(drilledChunks), verifications),
+								};
+								flush();
 							}
-							// Surface-citation verification — ground the citation chips and flag any
-							// project path the model emitted that search_catalog did not surface this turn.
+						} catch (err) {
+							console.error('[ai:chat:llmwiki] Verification failed:', err);
+							emit({
+								type: 'pipeline:step',
+								step: 'llmwiki:verify',
+								status: 'error',
+								error: err instanceof Error ? err.message : String(err),
+							});
+						}
+						// Surface-citation verification — ground the citation chips and flag any
+						// project path the model emitted that search_catalog did not surface this turn.
+						try {
+							if (surfacedCatalog.size > 0) {
+								const surfaced = Array.from(surfacedCatalog.values());
+								const surfacedPaths = new Set(surfaced.map((r) => r.path));
+								const knownPaths = new Set(buildSearchIndex(catalogLocale).map((r) => r.path));
+								const catalogCitations = verifyCatalogCitations(text, surfacedPaths, knownPaths);
+								// Chips: only the surfaces the answer actually references, collapsed to
+								// one chip per unique (path, anchor). Docs retrieval surfaces several
+								// CHUNKS of the same doc → identical paths; the keyed {#each} in
+								// ChatMessage (keyed by path+anchor) would throw each_key_duplicate,
+								// crashing the chip row AND wedging the loading state. Keep best score.
+								const cited = surfaced.filter((r) => text.includes(r.path));
+								const bySurface = new Map<string, (typeof cited)[number]>();
+								for (const r of cited) {
+									const key = `${r.path}\u0000${r.anchor ?? ''}`;
+									const prev = bySurface.get(key);
+									if (!prev || (r.score ?? 0) > (prev.score ?? 0)) bySurface.set(key, r);
+								}
+								catalogPayload = {
+									catalogSources: Array.from(bySurface.values()).map((r) => ({
+										surface: r.surface,
+										title: r.title,
+										path: r.path,
+										anchor: r.anchor,
+										breadcrumb: r.breadcrumb,
+										icon: r.icon,
+										badge: r.badge,
+										locale: r.locale,
+									})),
+									catalogCitations,
+								};
+								flush();
+							}
+						} catch (err) {
+							console.error('[ai:chat:catalog] Surface-citation verification failed:', err);
+						}
+						// Backfill the pre-created assistant message + refresh cached token totals
+						// (steps were persisted in onStepFinish). Keep charging the Redis budget.
+						if (conversationId) {
 							try {
-								if (surfacedCatalog.size > 0) {
-									const surfaced = Array.from(surfacedCatalog.values());
-									const surfacedPaths = new Set(surfaced.map((r) => r.path));
-									const knownPaths = new Set(buildSearchIndex(catalogLocale).map((r) => r.path));
-									const catalogCitations = verifyCatalogCitations(text, surfacedPaths, knownPaths);
-									// Chips: only the surfaces the answer actually references, collapsed to
-									// one chip per unique (path, anchor). Docs retrieval surfaces several
-									// CHUNKS of the same doc → identical paths; the keyed {#each} in
-									// ChatMessage (keyed by path+anchor) would throw each_key_duplicate,
-									// crashing the chip row AND wedging the loading state. Keep best score.
-									const cited = surfaced.filter((r) => text.includes(r.path));
-									const bySurface = new Map<string, (typeof cited)[number]>();
-									for (const r of cited) {
-										const key = `${r.path}\u0000${r.anchor ?? ''}`;
-										const prev = bySurface.get(key);
-										if (!prev || (r.score ?? 0) > (prev.score ?? 0)) bySurface.set(key, r);
-									}
-									catalogPayload = {
-										catalogSources: Array.from(bySurface.values()).map((r) => ({
-											surface: r.surface,
-											title: r.title,
-											path: r.path,
-											anchor: r.anchor,
-											breadcrumb: r.breadcrumb,
-											icon: r.icon,
-											badge: r.badge,
-											locale: r.locale,
-										})),
-										catalogCitations,
-									};
-									flush();
-								}
+								await updateMessageContent(assistantMsgId, text);
+								await refreshConversationTokens(conversationId);
 							} catch (err) {
-								console.error('[ai:chat:catalog] Surface-citation verification failed:', err);
+								console.error('[ai:chat:llmwiki] Failed to finalize:', err);
 							}
-							// Backfill the pre-created assistant message + refresh cached token totals
-							// (steps were persisted in onStepFinish). Keep charging the Redis budget.
-							if (conversationId) {
-								try {
-									await updateMessageContent(assistantMsgId, text);
-									await refreshConversationTokens(conversationId);
-								} catch (err) {
-									console.error('[ai:chat:llmwiki] Failed to finalize:', err);
-								}
-							}
-							if (totalUsage) {
-								await chargeTokens(userId, (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0));
-							}
-						},
-						onError: ({ error }) => {
-							console.error('[ai:chat:llmwiki] Stream error:', error);
-						},
-					});
-					textResult.consumeStream();
-					// Suppress the merged stream's own `start` — we already opened the frame above
-					// with `assistantMsgId`. Exactly one `start` per turn → exactly one message.
-					writer.merge(textResult.toUIMessageStream({ sendStart: false }));
+						}
+						if (totalUsage) {
+							await chargeTokens(userId, (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0));
+						}
+					};
+					// Pump text into the open message, run afterText, then close — citation/catalog/persist
+					// metadata flushes BEFORE the finish frame (fixes the empty-answer / answer⟷trace desync).
+					await streamTextIntoOpenMessage(writer, textResult, afterText);
 				},
 				onError: classifyStreamError,
 			});
@@ -1069,15 +1216,29 @@ Project catalog rules:
 					}
 					writer.write({ type: 'start', messageId: assistantMsgId });
 
+					// Turn t0 — one origin shared by retrieve() (threaded below) and generate, so the
+					// waterfall renders true parallel-tier overlap. See nrag-observability.md.
+					const t0 = performance.now();
+
 					let systemPrompt = baseSystemPrompt;
 
 					type AnyPipelineEvent = PipelineStepEvent | PipelineChunksEvent | PipelinePromptEvent;
 					const pipelineEvents: AnyPipelineEvent[] = [];
-					const emitEvent = (event: AnyPipelineEvent) => {
+					// Accepts raw step literals (from this branch) AND fully-formed events (from the
+					// rawrag engine, which already stamped phase/lane); re-deriving them is idempotent.
+					const emitEvent = (event: RawStepInput | PipelineChunksEvent | PipelinePromptEvent) => {
 						if (event.type === 'pipeline:step') {
+							pipelineEvents.push({
+								...event,
+								phase: PHASE_OF[event.step],
+								instanceKey: event.instanceKey ?? event.step,
+								lane: event.lane ?? LANE_OF[event.step],
+								requestId,
+							});
+						} else {
 							event.requestId = requestId;
+							pipelineEvents.push(event);
 						}
-						pipelineEvents.push(event);
 						writer.write({ type: 'message-metadata', messageMetadata: { pipeline: pipelineEvents } });
 					};
 
@@ -1086,6 +1247,7 @@ Project catalog rules:
 							userMsgText,
 							{ userId, maxChunks: 3, tiers: retrievalTiers ?? [1], fusion },
 							emitEvent,
+							t0,
 						);
 
 						const contextBlock = formatContextForPrompt(retrievalResult);
@@ -1104,7 +1266,7 @@ Project catalog rules:
 								systemPrompt,
 								contextBlocks,
 								totalTokens: contextBlocks.reduce((sum, b) => sum + b.tokens, 0),
-								isDevOrAdmin: !!import.meta.env?.DEV,
+								isDevOrAdmin: !!import.meta.env?.DEV || isAdminUser(userId),
 							}),
 						);
 					} catch (err) {
@@ -1116,7 +1278,7 @@ Project catalog rules:
 						type: 'pipeline:step',
 						step: 'generate',
 						status: 'active',
-						startedAt: generateStartedAt.t,
+						startOffsetMs: Math.round(generateStartedAt.t - t0),
 					});
 
 					// `assistantMsgId` was created + persisted at the top of `execute` (so the
@@ -1128,53 +1290,61 @@ Project catalog rules:
 						maxRetries: 0,
 						maxOutputTokens: MAX_TOKENS,
 						abortSignal: AbortSignal.timeout(30_000),
-						onFinish: async ({ text, totalUsage }) => {
+						onError: ({ error }) => {
+							console.error('[ai:chat:retrieval] Stream error:', error);
+							// Terminal for generate so the bar can't hang `active` on a 503 / 30s abort.
 							emitEvent({
 								type: 'pipeline:step',
 								step: 'generate',
-								status: 'done',
+								status: 'error',
 								durationMs: Math.round(performance.now() - generateStartedAt.t),
-								detail: {
-									kind: 'generate',
-									model: activeInfo?.id,
-									inputTokens: totalUsage?.inputTokens,
-									outputTokens: totalUsage?.outputTokens,
-								},
+								error: error instanceof Error ? error.message : String(error),
 							});
-							// Single-step turn (no tools): persist one step + backfill the message.
-							if (conversationId) {
-								try {
-									await saveConversationStep({
-										conversationId,
-										messageId: assistantMsgId,
-										stepIndex: 0,
-										stepType: 'initial',
-										surface: stampSurface,
-										inputTokens: totalUsage?.inputTokens ?? 0,
-										outputTokens: totalUsage?.outputTokens ?? 0,
-										providerId: stepProviderId,
-										modelId: stepModelId,
-										durationMs: Math.round(performance.now() - generateStartedAt.t),
-									});
-									await updateMessageContent(assistantMsgId, text);
-									await refreshConversationTokens(conversationId);
-								} catch (err) {
-									console.error('[ai:chat:retrieval] Failed to finalize:', err);
-								}
-							}
-							if (totalUsage) {
-								await chargeTokens(userId, (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0));
-							}
-						},
-						onError: ({ error }) => {
-							console.error('[ai:chat:retrieval] Stream error:', error);
 						},
 					});
 
-					textResult.consumeStream();
-					// Suppress the merged stream's own `start` — the frame was opened above with
-					// `assistantMsgId`. Exactly one `start` per turn → exactly one message.
-					writer.merge(textResult.toUIMessageStream({ sendStart: false }));
+					// Post-text work runs while the message is still OPEN; the helper writes the single
+					// `finish` only after it resolves, so metadata never lands after the finish frame.
+					const afterText = async (text: string, totalUsage: LanguageModelUsage) => {
+						emitEvent({
+							type: 'pipeline:step',
+							step: 'generate',
+							status: 'done',
+							durationMs: Math.round(performance.now() - generateStartedAt.t),
+							detail: {
+								kind: 'generate',
+								model: activeInfo?.id,
+								inputTokens: totalUsage?.inputTokens,
+								outputTokens: totalUsage?.outputTokens,
+							},
+						});
+						// Single-step turn (no tools): persist one step + backfill the message.
+						if (conversationId) {
+							try {
+								await saveConversationStep({
+									conversationId,
+									messageId: assistantMsgId,
+									stepIndex: 0,
+									stepType: 'initial',
+									surface: stampSurface,
+									inputTokens: totalUsage?.inputTokens ?? 0,
+									outputTokens: totalUsage?.outputTokens ?? 0,
+									providerId: stepProviderId,
+									modelId: stepModelId,
+									durationMs: Math.round(performance.now() - generateStartedAt.t),
+								});
+								await updateMessageContent(assistantMsgId, text);
+								await refreshConversationTokens(conversationId);
+							} catch (err) {
+								console.error('[ai:chat:retrieval] Failed to finalize:', err);
+							}
+						}
+						if (totalUsage) {
+							await chargeTokens(userId, (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0));
+						}
+					};
+					// Pump text into the open message, run afterText, then close with one `finish`.
+					await streamTextIntoOpenMessage(writer, textResult, afterText);
 				},
 				onError: classifyStreamError,
 			});

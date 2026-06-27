@@ -1,10 +1,10 @@
 <script lang="ts">
+import type { NragTraceState } from '../trace/nrag-trace.svelte';
 import DrillRound from './DrillRound.svelte';
-import type { LlmwikiTraceState } from './llmwiki-trace.svelte';
 import PageList from './PageList.svelte';
 
 interface Props {
-	trace: LlmwikiTraceState;
+	trace: NragTraceState;
 }
 
 let { trace }: Props = $props();
@@ -59,7 +59,7 @@ const citations = $derived(trace.citations);
 				<p class="empty">The model answered from TLDRs — no drill-down needed.</p>
 			{:else}
 				<div class="drill-stack">
-					{#each drillSteps as step (step.drillOrdinal)}
+					{#each drillSteps as step (step.instanceKey)}
 						<DrillRound {step} {trace} chunks={drilledChunks} />
 					{/each}
 				</div>

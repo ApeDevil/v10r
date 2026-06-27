@@ -104,6 +104,10 @@ export function buildPromptAssembledEvent(opts: {
 		userPrompt: opts.userPrompt,
 		contextBlocks: opts.contextBlocks,
 		totalTokens: opts.totalTokens,
+		// Ungated count (chars/4 estimate, incl. injected context) — a count is not a leak,
+		// so the token panel can show system vs context vs output regardless of role.
+		systemPromptTokens: Math.ceil(opts.systemPrompt.length / 4),
+		estimated: true,
 	};
 	if (opts.isDevOrAdmin) {
 		event.systemPrompt = opts.systemPrompt;

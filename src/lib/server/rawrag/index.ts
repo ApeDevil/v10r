@@ -1,9 +1,12 @@
-import type {
-	ChunkSummary,
-	PipelineChunksEvent,
-	PipelinePromptEvent,
-	PipelineStepEvent,
-	StepDetail,
+import {
+	type ChunkSummary,
+	LANE_OF,
+	PHASE_OF,
+	type PipelineChunksEvent,
+	type PipelinePromptEvent,
+	type PipelineStepEvent,
+	type RetrieverLane,
+	type StepDetail,
 } from '$lib/types/pipeline';
 import { EMBEDDING_DIMENSIONS, MAX_CONTEXT_CHUNKS, MAX_GRAPH_HOPS } from './config';
 import { generateEmbedding } from './embed';
@@ -25,10 +28,10 @@ type EmitFn = (event: PipelineStepEvent | PipelineChunksEvent | PipelinePromptEv
 function toSummary(
 	chunk: RankedChunk,
 	survived: boolean,
-	extras?: { rrfRank?: number; rrfContribution?: number; survivalReason?: ChunkSummary['survivalReason'] },
+	extras?: { rrfRank?: number; rrfContribution?: number; dispositionReason?: ChunkSummary['dispositionReason'] },
 ): ChunkSummary {
 	const retrieverScores: ChunkSummary['retrieverScores'] = {};
-	if (chunk.source === 'vector' || chunk.source === 'bm25') retrieverScores.vector = chunk.score;
+	if (chunk.source === 'vector' || chunk.source === 'bm25') retrieverScores[chunk.source] = chunk.score;
 	else if (chunk.tier === 2) retrieverScores.parentChild = chunk.score;
 	else if (chunk.tier === 3 || chunk.source === 'graph') retrieverScores.graph = chunk.score;
 
@@ -45,7 +48,7 @@ function toSummary(
 		retrieverScores,
 		rrfRank: extras?.rrfRank,
 		rrfContribution: extras?.rrfContribution,
-		survivalReason: extras?.survivalReason,
+		dispositionReason: extras?.dispositionReason,
 	};
 }
 
@@ -53,9 +56,17 @@ function emit(
 	fn: EmitFn,
 	step: PipelineStepEvent['step'],
 	status: PipelineStepEvent['status'],
-	extra?: { durationMs?: number; error?: string; detail?: StepDetail },
+	extra?: { startOffsetMs?: number; durationMs?: number; error?: string; detail?: StepDetail },
 ) {
-	fn({ type: 'pipeline:step', step, status, ...extra });
+	fn({
+		type: 'pipeline:step',
+		step,
+		phase: PHASE_OF[step],
+		instanceKey: step,
+		lane: LANE_OF[step],
+		status,
+		...extra,
+	});
 }
 
 /**
@@ -65,14 +76,22 @@ function emit(
  * When `onEvent` is provided, emits pipeline events at each step
  * for real-time UI feedback. When absent, runs the same flow silently.
  */
-export async function retrieve(query: string, options: RetrievalOptions, onEvent?: EmitFn): Promise<RetrievalResult> {
+export async function retrieve(
+	query: string,
+	options: RetrievalOptions,
+	onEvent?: EmitFn,
+	/** Turn t0 (orchestrator-owned). Step offsets are measured against it so the
+	 *  whole turn — retrieve + generate — shares one origin. Defaults to retrieval start. */
+	t0?: number,
+): Promise<RetrievalResult> {
 	const opts = { ...DEFAULT_OPTIONS, ...options };
 	const start = performance.now();
+	const emitOrigin = t0 ?? start;
 	const requestedTiers = new Set(opts.tiers);
 
 	// --- Embed ---
-	onEvent && emit(onEvent, 'embed', 'active');
 	const embedStart = performance.now();
+	onEvent && emit(onEvent, 'embed', 'active', { startOffsetMs: Math.round(embedStart - emitOrigin) });
 	let queryEmbedding: number[];
 	try {
 		queryEmbedding = await generateEmbedding(query);
@@ -102,8 +121,8 @@ export async function retrieve(query: string, options: RetrievalOptions, onEvent
 	// --- Run requested tiers in parallel ---
 	const tierPromises = opts.tiers.map(async (tier) => {
 		const stepId = `tier-${tier}` as const;
-		onEvent && emit(onEvent, stepId, 'active');
 		const tierStart = performance.now();
+		onEvent && emit(onEvent, stepId, 'active', { startOffsetMs: Math.round(tierStart - emitOrigin) });
 
 		try {
 			let chunks: RankedChunk[];
@@ -146,8 +165,8 @@ export async function retrieve(query: string, options: RetrievalOptions, onEvent
 	const tierResults = await Promise.all(tierPromises);
 
 	// --- Rank ---
-	onEvent && emit(onEvent, 'rank', 'active');
 	const rankStart = performance.now();
+	onEvent && emit(onEvent, 'rank', 'active', { startOffsetMs: Math.round(rankStart - emitOrigin) });
 	const allChunks = tierResults.flat();
 	const { chunks } = fuseAndRank(allChunks, opts.maxChunks);
 
@@ -170,8 +189,8 @@ export async function retrieve(query: string, options: RetrievalOptions, onEvent
 		});
 
 	// --- Context assembly ---
-	onEvent && emit(onEvent, 'context', 'active');
 	const ctxStart = performance.now();
+	onEvent && emit(onEvent, 'context', 'active', { startOffsetMs: Math.round(ctxStart - emitOrigin) });
 	const tokenEstimate = chunks.reduce((sum, c) => sum + Math.ceil(c.content.length / 4), 0);
 	onEvent &&
 		emit(onEvent, 'context', 'done', {
@@ -191,17 +210,18 @@ export async function retrieve(query: string, options: RetrievalOptions, onEvent
 			rrfRankById.set(chunks[idx].chunkId, idx + 1);
 		}
 		const multiTier = opts.tiers.length > 1;
-		const defaultReason: ChunkSummary['survivalReason'] = multiTier ? 'rrf_threshold' : 'top_k';
+		const defaultReason: ChunkSummary['dispositionReason'] = multiTier ? 'rrf_threshold' : 'top_k';
+		const dropReason: ChunkSummary['dispositionReason'] = multiTier ? 'rrf_cutoff' : 'below_top_k';
 
-		const tierChunks: Record<string, ChunkSummary[]> = {};
+		const tierChunks: Partial<Record<RetrieverLane, ChunkSummary[]>> = {};
 		for (let i = 0; i < opts.tiers.length; i++) {
 			const tier = opts.tiers[i];
 			const tierResult = tierResults[i];
-			tierChunks[`tier-${tier}`] = tierResult.map((c) =>
+			tierChunks[`tier-${tier}` as RetrieverLane] = tierResult.map((c) =>
 				toSummary(c, survivedIds.has(c.chunkId), {
 					rrfRank: rrfRankById.get(c.chunkId),
 					rrfContribution: survivedIds.has(c.chunkId) ? c.score : undefined,
-					survivalReason: survivedIds.has(c.chunkId) ? defaultReason : undefined,
+					dispositionReason: survivedIds.has(c.chunkId) ? defaultReason : dropReason,
 				}),
 			);
 		}
@@ -215,14 +235,14 @@ export async function retrieve(query: string, options: RetrievalOptions, onEvent
 					toSummary(c, true, {
 						rrfRank: rrfRankById.get(c.chunkId),
 						rrfContribution: c.score,
-						survivalReason: defaultReason,
+						dispositionReason: defaultReason,
 					}),
 				),
 			contextChunks: chunks.map((c) =>
 				toSummary(c, true, {
 					rrfRank: rrfRankById.get(c.chunkId),
 					rrfContribution: c.score,
-					survivalReason: defaultReason,
+					dispositionReason: defaultReason,
 				}),
 			),
 		});

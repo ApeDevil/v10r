@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { PipelineChunksEvent } from '$lib/types/pipeline';
+import type { PipelineChunksEvent, RetrieverLane } from '$lib/types/pipeline';
 import ChunkList from './ChunkList.svelte';
 
 interface Tab {
@@ -19,7 +19,7 @@ const tabs = $derived.by(() => {
 	const t: Tab[] = [];
 	for (const [key, chunks] of Object.entries(chunkData.tierChunks)) {
 		const tierNum = key.replace('tier-', 'T');
-		t.push({ id: key, label: tierNum, count: chunks.length });
+		t.push({ id: key, label: tierNum, count: chunks?.length ?? 0 });
 	}
 	t.push({ id: 'ranked', label: 'Ranked', count: chunkData.rankedChunks.length });
 	t.push({ id: 'context', label: 'Context', count: chunkData.contextChunks.length });
@@ -30,13 +30,13 @@ const tabs = $derived.by(() => {
 let activeTabId = $state(Object.keys(chunkData.tierChunks)[0] ?? 'ranked');
 
 const activeChunks = $derived.by(() => {
-	if (activeTabId.startsWith('tier-')) return chunkData.tierChunks[activeTabId] ?? [];
+	if (activeTabId.startsWith('tier-')) return chunkData.tierChunks[activeTabId as RetrieverLane] ?? [];
 	if (activeTabId === 'ranked') return chunkData.rankedChunks;
 	if (activeTabId === 'context') return chunkData.contextChunks;
 	return [];
 });
 
-const totalFound = $derived(Object.values(chunkData.tierChunks).reduce((sum, c) => sum + c.length, 0));
+const totalFound = $derived(Object.values(chunkData.tierChunks).reduce((sum, c) => sum + (c?.length ?? 0), 0));
 
 const funnelStats = $derived(
 	activeTabId === 'ranked' || activeTabId === 'context'

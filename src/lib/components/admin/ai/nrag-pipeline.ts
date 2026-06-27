@@ -5,44 +5,17 @@
  * keep it in sync when the orchestrator's retrieval flow changes.
  *
  * Client-safe: pure constants, no server imports.
+ *
+ * The STORE axis (`NragLayer`/`NRAG_LAYERS`) now lives in the shared
+ * `$lib/types/nrag.ts` so this admin diagram and the rag-chat observability
+ * surface consume one taxonomy. Re-exported here for existing call sites.
  */
 
-export type LayerId = 'llmwiki' | 'rawrag' | 'catalog' | 'docs';
+import type { NragLayerId } from '$lib/types/nrag';
 
-export interface NragLayer {
-	id: LayerId;
-	label: string;
-	role: string;
-	store: string;
-}
-
-/** The four stores the chatbot retrieves from. Counts are supplied live by the loader. */
-export const NRAG_LAYERS: NragLayer[] = [
-	{
-		id: 'llmwiki',
-		label: 'llmwiki',
-		role: 'Primary answer surface — LLM-compiled wiki pages',
-		store: 'rag.llmwiki_page',
-	},
-	{
-		id: 'rawrag',
-		label: 'rawrag',
-		role: 'Immutable source chunks — drill-down & ground truth',
-		store: 'rag.chunk · pgvector 1536 + BM25',
-	},
-	{
-		id: 'catalog',
-		label: 'catalog',
-		role: 'In-process ⌘K search surface — canonical paths',
-		store: 'in-memory index',
-	},
-	{
-		id: 'docs',
-		label: 'docs',
-		role: 'System-owned project-docs corpus',
-		store: "rag.document · source='docs'",
-	},
-];
+export { type NragLayer, type NragLayerId, NRAG_LAYERS } from '$lib/types/nrag';
+/** Local alias the admin diagram imports. */
+export type LayerId = NragLayerId;
 
 export interface ReadStep {
 	n: number;

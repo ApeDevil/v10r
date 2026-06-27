@@ -117,6 +117,11 @@ const RAG_ONLY_BLOCK = new Set<string>([
 	// chatbot half of location-awareness). DESIGNED-not-built (4-lens cross-pollination, 2026-06-27).
 	// Held from RAG so the chatbot can't assert site-awareness as a live feature. Renders at /docs.
 	'docs/blueprint/ai/site-awareness.md',
+	// nRAG Observability redesign for the rag-chat showcase (waterfall + unified trace + tier focus
+	// filter + Step/Timing views). DESIGNED-not-built (16-agent task force, 2026-06-27); describes a
+	// contract rewrite (startOffsetMs, phase axis, registry) and 6 unfixed bugs. Held from RAG so the
+	// chatbot can't assert the new observability surface or contract as live. Renders at /docs.
+	'docs/blueprint/ai/nrag-observability.md',
 ]);
 
 interface DocFile {

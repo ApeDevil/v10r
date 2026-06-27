@@ -1,11 +1,11 @@
 <script lang="ts">
-import type { ChunkSummary, DrillDetail, PipelineStepState } from '$lib/types/pipeline';
+import type { ChunkSummary, DrillDetail, NragTraceStep } from '$lib/types/pipeline';
+import type { NragTraceState } from '../trace/nrag-trace.svelte';
 import CitationBadge from './CitationBadge.svelte';
-import type { LlmwikiTraceState } from './llmwiki-trace.svelte';
 
 interface Props {
-	step: PipelineStepState & { drillOrdinal: number };
-	trace: LlmwikiTraceState;
+	step: NragTraceStep;
+	trace: NragTraceState;
 	chunks: ChunkSummary[];
 }
 

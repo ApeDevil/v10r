@@ -1,8 +1,8 @@
 <script lang="ts">
-import type { PipelineStepId, PipelineStepState } from '$lib/types/pipeline';
+import type { NragTraceStep, PipelineStepId } from '$lib/types/pipeline';
 
 interface Props {
-	step: PipelineStepState;
+	step: NragTraceStep;
 	x: number;
 	y: number;
 	hovered?: boolean;
@@ -16,8 +16,8 @@ const r = 14;
 
 const clickable = $derived(step.status === 'done' || step.status === 'error');
 
-/** Simplified SVG icon paths per step */
-const iconPaths: Record<PipelineStepId, string> = {
+/** Simplified SVG icon paths per rawrag DAG step. */
+const iconPaths: Partial<Record<PipelineStepId, string>> = {
 	embed: 'M-4,-4 L4,-4 L4,4 L-4,4 Z M-2,-2 L2,-2 L2,2 L-2,2 Z',
 	'tier-1': 'M0,-5 L5,3 L-5,3 Z',
 	'tier-2': 'M-4,-4 L4,-4 L4,4 L-4,4 Z',
@@ -67,7 +67,7 @@ const isStroke = $derived(step.id === 'rank');
 
 	<!-- Icon -->
 	<path
-		d={iconPaths[step.id]}
+		d={iconPaths[step.id] ?? ''}
 		class="node-icon"
 		class:icon-active={step.status === 'active' || step.status === 'done'}
 		class:icon-skipped={step.status === 'skipped'}

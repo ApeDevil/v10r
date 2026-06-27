@@ -3,18 +3,18 @@ import { SvgTooltip } from '$lib/components/viz';
 import type {
 	ContextDetail,
 	EmbedDetail,
+	NragTraceStep,
 	PipelineStepId,
-	PipelineStepState,
 	RankDetail,
 	StepDetail,
 	TierDetail,
 } from '$lib/types/pipeline';
-import { PIPELINE_STEPS } from '$lib/types/pipeline';
+import { PIPELINE_REGISTRY } from '$lib/types/pipeline';
 import PipelineEdge from './PipelineEdge.svelte';
 import PipelineNode from './PipelineNode.svelte';
 
 interface Props {
-	steps: PipelineStepState[];
+	steps: NragTraceStep[];
 	chunkCounts?: Record<string, number>;
 	onselect: (id: PipelineStepId) => void;
 }
@@ -47,8 +47,8 @@ const PAN_THRESHOLD = 3;
 const viewBox = $derived(`${panX} ${panY} ${VIEWBOX_W / zoom} ${VIEWBOX_H / zoom}`);
 const isZoomed = $derived(Math.abs(zoom - 1) > 0.01 || Math.abs(panX) > 0.5 || Math.abs(panY) > 0.5);
 
-/** Fixed positions for each step in the DAG */
-const positions: Record<PipelineStepId, { x: number; y: number }> = {
+/** Fixed positions for each rawrag DAG step (other pipeline steps never render here). */
+const positions: Partial<Record<PipelineStepId, { x: number; y: number }>> = {
 	embed: { x: 50, y: 30 },
 	'tier-1': { x: 30, y: 100 },
 	'tier-2': { x: 100, y: 100 },
@@ -70,7 +70,7 @@ const edges: [PipelineStepId, PipelineStepId][] = [
 	['context', 'generate'],
 ];
 
-function getStep(id: PipelineStepId): PipelineStepState {
+function getStep(id: PipelineStepId): NragTraceStep {
 	const step = steps.find((s) => s.id === id);
 	if (!step) throw new Error(`Pipeline step "${id}" not found`);
 	return step;
@@ -97,13 +97,14 @@ function handleEdgeHover(edge: { from: PipelineStepId; to: PipelineStepId } | nu
 
 /** Label lookup for edge tooltip */
 const stepLabels: Record<PipelineStepId, string> = Object.fromEntries(
-	PIPELINE_STEPS.map((s) => [s.id, s.label]),
+	PIPELINE_REGISTRY.map((s) => [s.id, s.label]),
 ) as Record<PipelineStepId, string>;
 
 /** Tooltip position as percentage of container, accounting for zoom/pan */
 const tooltipPos = $derived.by(() => {
 	if (hoveredStepId) {
 		const pos = positions[hoveredStepId];
+		if (!pos) return null;
 		return {
 			left: (((pos.x - panX) * zoom) / VIEWBOX_W) * 100,
 			top: (((pos.y - panY) * zoom) / VIEWBOX_H) * 100,
@@ -112,6 +113,7 @@ const tooltipPos = $derived.by(() => {
 	if (hoveredEdge) {
 		const p1 = positions[hoveredEdge.from];
 		const p2 = positions[hoveredEdge.to];
+		if (!p1 || !p2) return null;
 		return {
 			left: ((((p1.x + p2.x) / 2 - panX) * zoom) / VIEWBOX_W) * 100,
 			top: ((((p1.y + p2.y) / 2 - panY) * zoom) / VIEWBOX_H) * 100,
@@ -121,7 +123,7 @@ const tooltipPos = $derived.by(() => {
 });
 
 /** Derive tooltip text from step status + detail */
-function tooltipText(step: PipelineStepState): string {
+function tooltipText(step: NragTraceStep): string {
 	switch (step.status) {
 		case 'pending':
 			return 'Waiting\u2026';
@@ -156,6 +158,8 @@ function doneText(detail: StepDetail | undefined, ms: number | undefined): strin
 		}
 		case 'generate':
 			return `Generating response${timing}`;
+		default:
+			return `Done${timing}`;
 	}
 }
 
@@ -269,39 +273,46 @@ function zoomOut() {
 	>
 		<!-- Edges (rendered behind nodes) -->
 		{#each edges as [from, to]}
-			{@const x1 = positions[from].x}
-			{@const y1 = positions[from].y + 14}
-			{@const x2 = positions[to].x}
-			{@const y2 = positions[to].y - 14}
-			<PipelineEdge
-				{x1} {y1} {x2} {y2}
-				{from} {to}
-				status={edgeStatus(from, to)}
-				hovered={hoveredEdge?.from === from && hoveredEdge?.to === to}
-				onhover={handleEdgeHover}
-			/>
+			{@const pf = positions[from]}
+			{@const pt = positions[to]}
+			{#if pf && pt}
+				{@const x1 = pf.x}
+				{@const y1 = pf.y + 14}
+				{@const x2 = pt.x}
+				{@const y2 = pt.y - 14}
+				<PipelineEdge
+					{x1} {y1} {x2} {y2}
+					{from} {to}
+					status={edgeStatus(from, to)}
+					hovered={hoveredEdge?.from === from && hoveredEdge?.to === to}
+					onhover={handleEdgeHover}
+				/>
 
-			{#if chunkCounts[from] !== undefined && edgeStatus(from, to) === 'done'}
-				<text
-					x={(x1 + x2) / 2 + (x1 === x2 ? 8 : 0)}
-					y={(y1 + y2) / 2}
-					class="edge-count"
-					dominant-baseline="middle"
-					text-anchor={x1 === x2 ? 'start' : 'middle'}
-				>{chunkCounts[from]}</text>
+				{#if chunkCounts[from] !== undefined && edgeStatus(from, to) === 'done'}
+					<text
+						x={(x1 + x2) / 2 + (x1 === x2 ? 8 : 0)}
+						y={(y1 + y2) / 2}
+						class="edge-count"
+						dominant-baseline="middle"
+						text-anchor={x1 === x2 ? 'start' : 'middle'}
+					>{chunkCounts[from]}</text>
+				{/if}
 			{/if}
 		{/each}
 
 		<!-- Nodes -->
 		{#each steps as step}
-			<PipelineNode
-				{step}
-				x={positions[step.id].x}
-				y={positions[step.id].y}
-				hovered={hoveredStepId === step.id}
-				{onselect}
-				onhover={handleNodeHover}
-			/>
+			{@const pos = positions[step.id]}
+			{#if pos}
+				<PipelineNode
+					{step}
+					x={pos.x}
+					y={pos.y}
+					hovered={hoveredStepId === step.id}
+					{onselect}
+					onhover={handleNodeHover}
+				/>
+			{/if}
 		{/each}
 	</svg>
 

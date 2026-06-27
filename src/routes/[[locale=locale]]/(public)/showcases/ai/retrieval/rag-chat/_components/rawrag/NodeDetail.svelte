@@ -3,14 +3,14 @@ import type {
 	ChunkSummary,
 	ContextDetail,
 	EmbedDetail,
-	PipelineStepState,
+	NragTraceStep,
 	RankDetail,
 	TierDetail,
 } from '$lib/types/pipeline';
 import ChunkList from './ChunkList.svelte';
 
 interface Props {
-	step: PipelineStepState;
+	step: NragTraceStep;
 	chunks?: ChunkSummary[];
 	onclose: () => void;
 	onexpand?: () => void;

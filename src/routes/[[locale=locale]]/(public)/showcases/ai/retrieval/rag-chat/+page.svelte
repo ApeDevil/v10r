@@ -2,7 +2,6 @@
 import { Chat } from '@ai-sdk/svelte';
 import { DefaultChatTransport } from 'ai';
 import { onMount } from 'svelte';
-import { pushState } from '$app/navigation';
 import { page } from '$app/state';
 import { CSRF_HEADER } from '$lib/api';
 import type { CatalogSource } from '$lib/components/chat/citation-types';
@@ -12,64 +11,31 @@ import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
 import { Stack } from '$lib/components/layout';
 import { Typography } from '$lib/components/primitives';
 import ChatLayout from './_components/ChatLayout.svelte';
-import GraphLayout from './_components/GraphLayout.svelte';
-import { createLlmwikiTrace } from './_components/llmwiki';
-import ModeSelector, { type RagMode } from './_components/ModeSelector.svelte';
-import { createRawragTrace } from './_components/rawrag';
-import TraceDrawer from './_components/TraceDrawer.svelte';
-import TraceRail from './_components/TraceRail.svelte';
+import EngineToggle from './_components/EngineToggle.svelte';
+import NragObservability from './_components/observability/NragObservability.svelte';
+import { createNragTrace } from './_components/trace/nrag-trace.svelte';
 import { DEMO_QUERIES } from './demo-queries';
 
 let { data } = $props();
 
-const VALID_MODES: RagMode[] = ['vector', 'small-to-big', 'graph', 'fused', 'llmwiki'];
+// Capability flags — modes are now a post-hoc focus filter over one fused run, not page-states.
+let tiers = $state([1, 2, 3]);
+let fusion = $state<'none' | 'rrf'>('rrf');
+let useLlmwiki = $state(false);
+const useRetrieval = $derived(!useLlmwiki);
+const engine = $derived<'rawrag' | 'llmwiki'>(useLlmwiki ? 'llmwiki' : 'rawrag');
 
-function parseMode(value: string | null): RagMode {
-	return VALID_MODES.includes(value as RagMode) ? (value as RagMode) : 'vector';
-}
+const rawrag = createNragTrace('rawrag');
+const llmwiki = createNragTrace('llmwiki');
 
-let mode = $state<RagMode>(parseMode(page.url.searchParams.get('mode')));
+// Write-routing key for the in-flight / most-recent turn. PLAIN `let` (NOT $state) so the feed
+// effect never tracks it — flipping the engine toggle after a turn must not re-feed a stale
+// message into the wrong trace. The toggle is `disabled={isLoading}`, so this is stable for a
+// turn's whole lifetime. `engine` (derived) drives DISPLAY; `turnEngine` drives WRITES.
+let turnEngine: 'rawrag' | 'llmwiki' = 'rawrag';
 
-const isLlmwiki = $derived(mode === 'llmwiki');
-const retrievalTiers = $derived(
-	mode === 'vector' ? [1] : mode === 'small-to-big' ? [2] : mode === 'graph' ? [3] : [1, 2, 3],
-);
-const fusion = $derived<'none' | 'rrf'>(mode === 'fused' ? 'rrf' : 'none');
-
-function handleModeChange(next: RagMode) {
-	const wasLlmwiki = mode === 'llmwiki';
-	const nowLlmwiki = next === 'llmwiki';
-	mode = next;
-	const url = new URL(page.url);
-	url.searchParams.set('mode', next);
-	pushState(url, {});
-	// Reset traces on any mode change; state is per-turn, not preserved across modes.
-	if (wasLlmwiki !== nowLlmwiki) {
-		rawragTrace.reset();
-		rawragTrace.resetCursor();
-		llmwikiTrace.reset();
-		llmwikiTrace.resetCursor();
-	}
-}
-
-let drawerOpen = $state(false);
 let inputValue = $state('');
-
-const demoChips = $derived(DEMO_QUERIES[mode] ?? []);
-
-onMount(() => {
-	const seedLabel = page.url.searchParams.get('seed');
-	if (seedLabel) {
-		inputValue = `Tell me about ${seedLabel}`;
-	}
-});
-
-function useDemoChip(query: string) {
-	inputValue = query;
-}
-
-const rawragTrace = createRawragTrace();
-const llmwikiTrace = createLlmwikiTrace();
+const demoChips = $derived(useLlmwiki ? DEMO_QUERIES.llmwiki : DEMO_QUERIES.hybrid);
 
 const chat = new Chat({
 	transport: new DefaultChatTransport({
@@ -77,21 +43,30 @@ const chat = new Chat({
 		headers: CSRF_HEADER,
 		body: {
 			get useRetrieval() {
-				return !isLlmwiki;
+				return useRetrieval;
 			},
 			get retrievalTiers() {
-				return retrievalTiers;
+				return tiers;
 			},
 			get fusion() {
 				return fusion;
 			},
 			get useLlmwiki() {
-				return isLlmwiki;
+				return useLlmwiki;
 			},
 			get llmwikiCollectionId() {
 				return null;
 			},
 		},
+	}) as Chat['transport'],
+});
+
+// Counterfactual — same transport, RAG off + dryRun (skips persistence, still charges budget).
+const counterfactualChat = new Chat({
+	transport: new DefaultChatTransport({
+		api: '/api/ai/showcase/rag',
+		headers: CSRF_HEADER,
+		body: { useRetrieval: false, useLlmwiki: false, dryRun: true },
 	}) as Chat['transport'],
 });
 
@@ -111,6 +86,30 @@ const lastUserMessage = $derived.by(() => {
 	return '';
 });
 
+function setEngine(next: 'hybrid' | 'llmwiki') {
+	const nextLlmwiki = next === 'llmwiki';
+	if (nextLlmwiki === useLlmwiki) return;
+	useLlmwiki = nextLlmwiki;
+	// No trace resets: writes are turn-anchored + engine-isolated (see `turnEngine`), so flipping
+	// is a non-destructive DISPLAY switch — each trace keeps its own last turn until it re-runs.
+}
+
+function runCounterfactual() {
+	if (!lastUserMessage) return;
+	counterfactualChat.sendMessage({ text: lastUserMessage });
+}
+
+onMount(() => {
+	const seedLabel = page.url.searchParams.get('seed');
+	if (seedLabel) {
+		inputValue = `Tell me about ${seedLabel}`;
+	}
+});
+
+function useDemoChip(query: string) {
+	inputValue = query;
+}
+
 let scrollContainer: HTMLDivElement | undefined = $state();
 
 // Auto-scroll on new messages
@@ -124,38 +123,99 @@ $effect(() => {
 	}
 });
 
-// Process pipeline data from the last assistant message metadata
+// Feed the OWNING engine's trace from the last assistant message (REPLACE semantics: the full
+// event array arrives each frame). Routes by `turnEngine` (the engine that actually ran this
+// turn), never the toggle — so flipping engines can't re-feed a stale message into the wrong
+// trace. Idempotent + turn-anchored by message id inside applyAnnotations.
 $effect(() => {
 	const msgs = chat.messages;
-	if (msgs.length === 0) return;
 	const lastMsg = msgs[msgs.length - 1];
-	if (lastMsg?.role === 'assistant' && lastMsg.metadata) {
-		const meta = lastMsg.metadata as Record<string, unknown>;
-		if (Array.isArray(meta.pipeline)) {
-			const events = meta.pipeline as unknown[];
-			if (isLlmwiki) {
-				llmwikiTrace.processAnnotations(events);
-			} else {
-				rawragTrace.processAnnotations(events);
-			}
-		}
+	if (lastMsg?.role !== 'assistant') return;
+	const pipeline = (lastMsg.metadata as { pipeline?: unknown[] } | undefined)?.pipeline;
+	if (!Array.isArray(pipeline)) return;
+	(turnEngine === 'llmwiki' ? llmwiki : rawrag).applyAnnotations(lastMsg.id, pipeline);
+});
+
+// Client watchdog: flip a lingering `active` step to error when the stream settles. Routes by
+// `turnEngine` — the trace that actually ran this turn, not the (possibly flipped) toggle.
+$effect(() => {
+	const status = chat.status;
+	if (status === 'ready' || status === 'error') {
+		(turnEngine === 'llmwiki' ? llmwiki : rawrag).finalizeActive();
 	}
 });
 
 function submitMessage() {
 	if (!inputValue.trim() || isLoading) return;
-	if (isLlmwiki) {
-		llmwikiTrace.reset();
-		llmwikiTrace.resetCursor();
-	} else {
-		rawragTrace.reset();
-		rawragTrace.resetCursor();
-	}
+	// Capture the engine for this turn BEFORE sending (toggle is locked while loading), so the
+	// feed/watchdog effects route this turn's frames to the right trace regardless of later flips.
+	turnEngine = engine;
+	const active = engine === 'llmwiki' ? llmwiki : rawrag;
+	active.reset(); // instant "pending" feedback during the send → first-frame gap
 	const text = inputValue;
 	inputValue = '';
 	chat.sendMessage({ text });
 }
 </script>
+{#snippet chatBody()}
+	<div class="chat-container">
+		<div bind:this={scrollContainer} class="chat-messages">
+			{#if chat.messages.length === 0}
+				<EmptyState
+					icon="i-lucide-brain-circuit h-10 w-10"
+					title="Ask a question"
+					description="Pick a sample query below or type your own."
+					class="chat-empty"
+				>
+					<div class="demo-chips">
+						{#each demoChips as chip (chip.query)}
+							<button type="button" class="demo-chip" onclick={() => useDemoChip(chip.query)}>
+								<span class="chip-query">{chip.query}</span>
+								<span class="chip-why">{chip.why}</span>
+							</button>
+						{/each}
+					</div>
+				</EmptyState>
+			{:else}
+				{#each chat.messages as message (message.id)}
+					<ChatMessage
+						role={message.role as 'user' | 'assistant'}
+						parts={message.parts}
+						catalogSources={(message as { metadata?: { catalogSources?: CatalogSource[] } }).metadata
+							?.catalogSources}
+					/>
+				{/each}
+
+				{#if isLoading && chat.messages[chat.messages.length - 1]?.role === 'user'}
+					<div class="chat-typing flex items-center gap-3 px-4 py-3">
+						<div
+							class="chat-typing-avatar flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+						>
+							<span class="i-lucide-bot h-4 w-4"></span>
+						</div>
+						<div class="chat-typing-dots flex gap-1">
+							<span class="chat-dot"></span>
+							<span class="chat-dot"></span>
+							<span class="chat-dot"></span>
+						</div>
+					</div>
+				{/if}
+			{/if}
+		</div>
+
+		{#if chat.error}
+			<div class="chat-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm" role="alert">
+				<span class="font-medium">Error:</span>
+				{chat.error.message ?? 'Something went wrong.'}
+			</div>
+		{/if}
+
+		<div class="chat-input-row">
+			<ChatInput bind:value={inputValue} loading={isLoading} onsubmit={submitMessage} />
+		</div>
+	</div>
+{/snippet}
+
 <Stack gap="6">
 	{#if !data.configured}
 		<Alert variant="info" title="AI Not Configured">
@@ -166,94 +226,29 @@ function submitMessage() {
 			{#snippet header()}
 				<div class="chat-header">
 					<Typography variant="h5" as="h2">RAG Chat</Typography>
-					<ModeSelector value={mode} onchange={handleModeChange} />
-				</div>
-			{/snippet}
-
-			{#snippet chatBody()}
-				<div class="chat-container">
-					<div bind:this={scrollContainer} class="chat-messages">
-						{#if chat.messages.length === 0}
-							<EmptyState
-								icon="i-lucide-brain-circuit h-10 w-10"
-								title="Ask a question"
-								description="Pick a sample query below or type your own."
-								class="chat-empty"
-							>
-								<div class="demo-chips">
-									{#each demoChips as chip (chip.query)}
-										<button type="button" class="demo-chip" onclick={() => useDemoChip(chip.query)}>
-											<span class="chip-query">{chip.query}</span>
-											<span class="chip-why">{chip.why}</span>
-										</button>
-									{/each}
-								</div>
-							</EmptyState>
-						{:else}
-							{#each chat.messages as message (message.id)}
-								<ChatMessage
-									role={message.role as 'user' | 'assistant'}
-									parts={message.parts}
-									catalogSources={(message as { metadata?: { catalogSources?: CatalogSource[] } }).metadata
-										?.catalogSources}
-								/>
-							{/each}
-
-							{#if isLoading && chat.messages[chat.messages.length - 1]?.role === 'user'}
-								<div class="chat-typing flex items-center gap-3 px-4 py-3">
-									<div
-										class="chat-typing-avatar flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
-									>
-										<span class="i-lucide-bot h-4 w-4"></span>
-									</div>
-									<div class="chat-typing-dots flex gap-1">
-										<span class="chat-dot"></span>
-										<span class="chat-dot"></span>
-										<span class="chat-dot"></span>
-									</div>
-								</div>
-							{/if}
-						{/if}
-					</div>
-
-					{#if chat.error}
-						<div class="chat-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm" role="alert">
-							<span class="font-medium">Error:</span>
-							{chat.error.message ?? 'Something went wrong.'}
-						</div>
-					{/if}
-
-					<div class="chat-input-row">
-						<ChatInput bind:value={inputValue} loading={isLoading} onsubmit={submitMessage} />
-					</div>
-
-					<TraceRail
-						rawrag={rawragTrace}
-						llmwiki={llmwikiTrace}
-						{isLlmwiki}
-						onExpand={() => (drawerOpen = true)}
+					<EngineToggle
+						engine={useLlmwiki ? 'llmwiki' : 'hybrid'}
+						onchange={setEngine}
+						disabled={isLoading}
 					/>
 				</div>
 			{/snippet}
 
-			{#if mode === 'graph'}
-				<GraphLayout onNodeSelect={(label) => (inputValue = `Tell me about ${label}`)}>
-					{@render chatBody()}
-				</GraphLayout>
-			{:else}
-				<ChatLayout>
-					{@render chatBody()}
-				</ChatLayout>
-			{/if}
+			<ChatLayout>
+				{@render chatBody()}
+			</ChatLayout>
 		</Card>
 
-		<TraceDrawer
-			bind:open={drawerOpen}
-			rawrag={rawragTrace}
-			llmwiki={llmwikiTrace}
-			{isLlmwiki}
-			{lastUserMessage}
-		/>
+		<Card>
+			<NragObservability
+				{rawrag}
+				{llmwiki}
+				{engine}
+				{isLoading}
+				{lastUserMessage}
+				counterfactual={{ chat: counterfactualChat, run: runCounterfactual }}
+			/>
+		</Card>
 	{/if}
 </Stack>
 
@@ -377,5 +372,4 @@ function submitMessage() {
 			opacity: 1;
 		}
 	}
-
 </style>

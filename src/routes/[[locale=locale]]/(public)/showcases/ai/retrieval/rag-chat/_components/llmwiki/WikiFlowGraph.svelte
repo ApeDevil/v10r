@@ -1,9 +1,9 @@
 <script lang="ts">
-import type { PipelineStepState } from '$lib/types/pipeline';
-import type { LlmwikiTraceState } from './llmwiki-trace.svelte';
+import type { NragTraceStep } from '$lib/types/pipeline';
+import type { NragTraceState } from '../trace/nrag-trace.svelte';
 
 interface Props {
-	trace: LlmwikiTraceState;
+	trace: NragTraceState;
 	onselect?: (stepId: string) => void;
 }
 
@@ -11,18 +11,18 @@ let { trace, onselect }: Props = $props();
 
 const steps = $derived(trace.steps);
 
-function statusClass(step: PipelineStepState): string {
+function statusClass(step: NragTraceStep): string {
 	return `step-${step.status}`;
 }
 </script>
 
 <ol class="flow" aria-label="llmwiki retrieval steps">
-	{#each steps as step, i (i)}
+	{#each steps as step (step.instanceKey)}
 		<li class="step {statusClass(step)}">
 			<button
 				type="button"
 				class="node"
-				onclick={() => onselect?.(step.id)}
+				onclick={() => onselect?.(step.instanceKey)}
 				aria-label="{step.label}: {step.status}"
 			>
 				<span class="dot" aria-hidden="true"></span>

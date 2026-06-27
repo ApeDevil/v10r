@@ -12,7 +12,9 @@ let expanded = $state(false);
 const sourceColors: Record<ChunkSummary['source'], string> = {
 	vector: 'badge-vector',
 	bm25: 'badge-bm25',
+	parentChild: 'badge-parent',
 	graph: 'badge-graph',
+	llmwiki: 'badge-wiki',
 };
 </script>
 
@@ -84,23 +86,23 @@ const sourceColors: Record<ChunkSummary['source'], string> = {
 	}
 
 	.badge-bm25 {
-		background: color-mix(in srgb, #d97706 15%, transparent);
-		color: #d97706;
-	}
-
-	:global(.dark) .badge-bm25 {
-		background: color-mix(in srgb, #fbbf24 15%, transparent);
-		color: #fbbf24;
+		background: color-mix(in srgb, var(--chart-2) 15%, transparent);
+		color: var(--chart-2);
 	}
 
 	.badge-graph {
-		background: color-mix(in srgb, #7c3aed 15%, transparent);
-		color: #7c3aed;
+		background: color-mix(in srgb, var(--chart-7) 15%, transparent);
+		color: var(--chart-7);
 	}
 
-	:global(.dark) .badge-graph {
-		background: color-mix(in srgb, #a78bfa 15%, transparent);
-		color: #a78bfa;
+	.badge-parent {
+		background: color-mix(in srgb, var(--chart-1) 15%, transparent);
+		color: var(--chart-1);
+	}
+
+	.badge-wiki {
+		background: color-mix(in srgb, var(--chart-5) 15%, transparent);
+		color: var(--chart-5);
 	}
 
 	.chunk-title {

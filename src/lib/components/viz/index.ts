@@ -28,3 +28,5 @@ export { default as MapMarker } from './map/geo/MapMarker.svelte';
 export { default as MapPopup } from './map/geo/MapPopup.svelte';
 export { default as HeatMap } from './plot/heatmap/HeatMap.svelte';
 export { default as ScatterPlot } from './plot/scatter/ScatterPlot.svelte';
+export { default as Waterfall } from './timeline/Waterfall.svelte';
+export type { WaterfallProps, WaterfallRow, WaterfallStatus } from './timeline/types';

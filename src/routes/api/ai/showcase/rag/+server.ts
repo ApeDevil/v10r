@@ -36,5 +36,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		llmwikiCollectionId: parsed.output.llmwikiCollectionId,
 		locale: locals.locale,
 		authCeiling: locals.user?.role ?? null,
+		dryRun: parsed.output.dryRun,
 	});
 };

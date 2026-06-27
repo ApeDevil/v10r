@@ -102,6 +102,12 @@ export const ChatRequestSchema = v.object({
 	 * SvelteKit route id legitimately contains). See `docs/blueprint/ai/site-awareness.md`.
 	 */
 	pageRouteId: v.optional(v.pipe(v.string(), v.maxLength(120), v.regex(/^\/(?!\/)[A-Za-z0-9/_\-[\]().=]*$/))),
+	/**
+	 * Ephemeral run (rag-chat counterfactual) — skip ALL persistence (conversation,
+	 * messages, steps, limit check) while still charging the token budget. The orchestrator
+	 * runs the turn without a conversationId. See `docs/blueprint/ai/nrag-observability.md`.
+	 */
+	dryRun: v.optional(v.boolean()),
 });
 
 export const CreateConversationSchema = v.object({
