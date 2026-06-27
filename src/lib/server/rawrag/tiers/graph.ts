@@ -4,6 +4,7 @@
  * Graph hops capped at 2 (non-negotiable).
  */
 import { sql } from 'drizzle-orm';
+import { USER_GRAPH_TIMEOUT_MS } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { expandViaGraph, getEntitiesForChunks } from '$lib/server/graph/rag/queries';
 import { fetchChunksByIds } from '../queries';
@@ -22,11 +23,8 @@ async function getSeeds(
 			c.id AS "chunkId",
 			c.embedding <=> ${embeddingStr}::vector AS distance
 		FROM rag.chunk c
-		JOIN rag.document d ON d.id = c.document_id
-		WHERE c.embedding IS NOT NULL
-		  AND d.status = 'ready'
-		  AND d.deleted_at IS NULL
-		  AND d.user_id = ${userId}
+		WHERE c.user_id = ${userId}
+		  AND c.embedding IS NOT NULL
 		ORDER BY c.embedding <=> ${embeddingStr}::vector
 		LIMIT ${seedCount}
 	`);
@@ -55,7 +53,7 @@ export async function searchGraph(
 	// re-scope in fetchChunksByIds below.
 	let graphResults: Array<{ pgId: string; entityName: string; entityType: string; relType: string }> = [];
 	try {
-		graphResults = await expandViaGraph(seedIds, [userId], Math.min(maxHops, 2));
+		graphResults = await expandViaGraph(seedIds, [userId], Math.min(maxHops, 2), USER_GRAPH_TIMEOUT_MS);
 	} catch {
 		// Graph unavailable — graceful degradation to seeds only
 	}
@@ -109,7 +107,7 @@ export async function searchGraph(
 export async function getGraphEntities(chunkIds: string[], ownerIds: string[]): Promise<RetrievedEntity[]> {
 	if (chunkIds.length === 0) return [];
 	try {
-		const entities = await getEntitiesForChunks(chunkIds, ownerIds);
+		const entities = await getEntitiesForChunks(chunkIds, ownerIds, USER_GRAPH_TIMEOUT_MS);
 		return entities.map((e) => ({
 			elementId: e.elementId,
 			name: e.name,

@@ -9,6 +9,7 @@ import { parseConsentTier } from '$lib/server/analytics/consent';
 import { analyticsCollector } from '$lib/server/analytics/hook';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { auth } from '$lib/server/auth';
+import { listActiveGrantKinds } from '$lib/server/auth/grants';
 import { twoFactorVerifyLimitKey } from '$lib/server/auth/step-up';
 import { getCustomPaletteById } from '$lib/server/branding/palette-crud';
 import {
@@ -116,6 +117,13 @@ export const securityHeaders: Handle = async ({ event, resolve }) => {
  * 2. loadStyle — reads/generates style from cookie, populates event.locals.style
  */
 const loadStyle: Handle = async ({ event, resolve }) => {
+	// locals.style is consumed only by HTML rendering. Skip the cookie parse + brand
+	// lookup on API routes (never render HTML) and SSR subrequests (internal fetches
+	// that don't produce the app shell) — saves work on every such request.
+	if (event.url.pathname.startsWith('/api/') || event.isSubRequest) {
+		return resolve(event);
+	}
+
 	const cookieValue = event.cookies.get(STYLE_COOKIE_NAME);
 	let config = parseStyleCookie(cookieValue);
 	let resolved: ResolvedStyle | null = null;
@@ -395,9 +403,13 @@ const sessionPopulate: Handle = async ({ event, resolve }) => {
 	event.locals.user = sessionData?.user ?? null;
 	event.locals.session = sessionData?.session ?? null;
 
-	if (event.locals.user) {
-		const { listActiveGrantKinds } = await import('$lib/server/auth/grants');
-		event.locals.grants = await listActiveGrantKinds(event.locals.user.id);
+	// Grants are read ONLY by the blog-author guards (the /api/blog/* authoring API and
+	// blog pages). Skip the Neon round-trip on every other authed request — the array
+	// stays empty and the guards still deny correctly (admins bypass via isAdmin). This
+	// keeps `locals.grants` a plain array (no async cascade across ~25 guard call sites).
+	const u = event.locals.user;
+	if (u && (event.url.pathname.includes('/blog') || event.url.pathname.includes('/desk'))) {
+		event.locals.grants = await listActiveGrantKinds(u.id);
 	} else {
 		event.locals.grants = [];
 	}
@@ -484,8 +496,8 @@ export const handle = sequence(
 	i18n,
 	authCaptchaGate,
 	authHandler,
-	sessionPopulate,
 	csrfProtection,
+	sessionPopulate,
 	consentLoader,
 	debugOwnerLoader,
 	devRouteGuard,

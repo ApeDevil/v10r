@@ -29,6 +29,9 @@ function sumKnown(...values: (number | null)[]): number | null {
 	return known.length ? known.reduce((a, b) => a + b, 0) : null;
 }
 
+// Synchronous vision extraction can exceed the serverless default; give it room.
+export const config = { runtime: 'nodejs22.x', maxDuration: 60 };
+
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.user) {
 		// TODO(i18n)

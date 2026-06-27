@@ -197,8 +197,16 @@ export const HNSW_EF_CONSTRUCTION = 64;
 
 // ── Graph ──────────────────────────────────────────────────────────────────────
 
-/** Default Neo4j query timeout (ms) */
+/** Default Neo4j query timeout (ms) — for ingest/admin/background callers. */
 export const GRAPH_TIMEOUT_MS = 30_000;
+
+/**
+ * Tight Neo4j timeout (ms) for USER-FACING graph reads on the request path
+ * (retrieval tier-3 expansion + entity fetch). The 30s default is fine for ingest
+ * but would block a chat/retrieval response for half a minute on a slow Aura Free
+ * instance — cap interactive graph calls at 3s and degrade gracefully instead.
+ */
+export const USER_GRAPH_TIMEOUT_MS = 3000;
 
 // ── Security ───────────────────────────────────────────────────────────────────
 

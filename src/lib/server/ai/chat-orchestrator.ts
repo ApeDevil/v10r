@@ -47,9 +47,11 @@ import type { ProposalExecutionResult } from '$lib/server/db/schema/ai/proposal'
 import { MAX_RAWRAG_TOOL_CALLS_PER_TURN } from '$lib/server/llmwiki/config';
 import { loadOverview } from '$lib/server/llmwiki/overview';
 import { searchLlmwiki } from '$lib/server/llmwiki/search';
+import type { LlmwikiHit } from '$lib/server/llmwiki/types';
 import { verifyCitations } from '$lib/server/llmwiki/verify';
 import { formatLlmwikiContext } from '$lib/server/llmwiki/wiki-format';
 import { formatContextForPrompt, retrieve } from '$lib/server/rawrag';
+import { generateEmbedding } from '$lib/server/rawrag/embed';
 import { buildSearchIndex, formatCatalogMap, type PageContext } from '$lib/server/search';
 import {
 	type ChunkSummary,
@@ -726,6 +728,22 @@ The user has just approved the plan above and the listed steps were executed. Ac
 							wantsPageGrounding && pageContext
 								? `${pageContext.title}. ${pageContext.breadcrumb.join(' ')}. ${userMsgText}`
 								: userMsgText;
+
+						// Embed the user message at most ONCE per turn. Previously searchLlmwiki AND the
+						// system-docs retrieve each embedded it independently — two Gemini embed calls
+						// against the ~1000/day free-tier ceiling for one turn, the second often pure
+						// waste (llmwiki is empty in prod). We compute a single shared query vector and
+						// hand it to both. `shouldGroundFromSystemDocs` is a triviality gate, so on
+						// greetings/acks (`groundDocs === false`) we skip the embed AND llmwiki search
+						// entirely → 0 embeds on chit-chat. A single promise is shared so the provider
+						// call fires once; if it rejects (quota/rate 429) BOTH consumers reject, which
+						// preserves the prior graceful-degradation traces (llmwiki:search error +
+						// system-docs error). On the deixis page-grounding path `docsQuery !== userMsgText`,
+						// so retrieve embeds its own page-seeded query independently (in parallel) and does
+						// NOT reuse the shared vector — same two-embed cost as before for that rare case.
+						const sharedEmbedPromise: Promise<number[]> | null = groundDocs ? generateEmbedding(userMsgText) : null;
+						const reuseSharedForDocs = docsQuery === userMsgText;
+
 						// Make the otherwise-invisible parallel system-docs retrieve a coarse trace lane
 						// (one bracketed step, not the engine's sub-steps — those ids collide with llmwiki's).
 						const docsStart = performance.now();
@@ -737,12 +755,27 @@ The user has just approved the plan above and the listed steps were executed. Ac
 								startOffsetMs: Math.round(docsStart - t0),
 							});
 						}
+						const llmwikiCall: Promise<LlmwikiHit[]> = sharedEmbedPromise
+							? sharedEmbedPromise.then((emb) =>
+									searchLlmwiki(userMsgText, { userId, collectionId, queryEmbedding: emb }),
+								)
+							: Promise.resolve([]);
+						const docsCall: Promise<Awaited<ReturnType<typeof retrieve>> | null> = !groundDocs
+							? Promise.resolve(null)
+							: reuseSharedForDocs && sharedEmbedPromise
+								? sharedEmbedPromise.then((emb) =>
+										retrieve(docsQuery, {
+											userId: SYSTEM_DOCS_USER_ID,
+											tiers: [1],
+											maxChunks: 4,
+											queryEmbedding: emb,
+										}),
+									)
+								: retrieve(docsQuery, { userId: SYSTEM_DOCS_USER_ID, tiers: [1], maxChunks: 4 });
 						const [overviewResult, hitsResult, docsResult, sysOverviewResult] = await Promise.allSettled([
 							loadOverview([userId], collectionId),
-							searchLlmwiki(userMsgText, { userId, collectionId }),
-							groundDocs
-								? retrieve(docsQuery, { userId: SYSTEM_DOCS_USER_ID, tiers: [1], maxChunks: 4 })
-								: Promise.resolve(null),
+							llmwikiCall,
+							docsCall,
 							// System-owned project map — grounds broad questions even with an empty personal wiki.
 							loadOverview([SYSTEM_DOCS_USER_ID], PROJECT_DOCS_COLLECTION_ID),
 						]);

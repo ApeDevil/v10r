@@ -12,6 +12,10 @@ function safeEqual(a: string, b: string): boolean {
 	return timingSafeEqual(bufA, bufB);
 }
 
+// Cron jobs (esp. dbops-refresh = Neon reset + catalog graph rebuild) far exceed
+// the default. (60 = Hobby ceiling; raise to 300 on Pro for the heavy refresh job.)
+export const config = { runtime: 'nodejs22.x', maxDuration: 60 };
+
 export const GET: RequestHandler = async ({ request, params }) => {
 	const secret = env.CRON_SECRET;
 	const auth = request.headers.get('authorization');

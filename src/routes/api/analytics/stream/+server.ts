@@ -39,6 +39,10 @@ function randomEvent(id: number) {
 	};
 }
 
+// Pin to the max billable window so the stream isn't cut at the platform default.
+// (60 = Hobby ceiling; raise to 300 on Pro to honour the 5-min in-code cap.)
+export const config = { runtime: 'nodejs22.x', maxDuration: 60 };
+
 export const GET: RequestHandler = async ({ locals, getClientAddress }) => {
 	const ip = locals.clientIp ?? getClientAddress();
 	const { success, reset } = await connectLimiter.limit(ip);

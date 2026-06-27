@@ -30,21 +30,32 @@ interface BM25Row {
 async function vectorSearch(queryEmbedding: number[], limit: number, userId: string): Promise<RankedChunk[]> {
 	const embeddingStr = `[${queryEmbedding.join(',')}]`;
 
+	// HNSW-friendly shape: filter + order on the chunk row only (so the index is
+	// usable), compute the distance once via a CTE alias, then join document for
+	// the title on the LIMITed set.
 	const result = await db.execute<VectorRow>(sql`
+		WITH ranked AS (
+			SELECT
+				c.id AS chunk_id,
+				c.document_id,
+				c.context_prefix,
+				c.content,
+				c.embedding <=> ${embeddingStr}::vector AS distance
+			FROM rag.chunk c
+			WHERE c.user_id = ${userId}
+			  AND c.embedding IS NOT NULL
+			ORDER BY distance
+			LIMIT ${limit}
+		)
 		SELECT
-			c.id AS "chunkId",
-			c.document_id AS "documentId",
+			r.chunk_id AS "chunkId",
+			r.document_id AS "documentId",
 			d.title AS "documentTitle",
-			COALESCE(c.context_prefix || E'\n' || c.content, c.content) AS content,
-			c.embedding <=> ${embeddingStr}::vector AS distance
-		FROM rag.chunk c
-		JOIN rag.document d ON d.id = c.document_id
-		WHERE c.embedding IS NOT NULL
-		  AND d.status = 'ready'
-		  AND d.deleted_at IS NULL
-		  AND d.user_id = ${userId}
-		ORDER BY c.embedding <=> ${embeddingStr}::vector
-		LIMIT ${limit}
+			COALESCE(r.context_prefix || E'\n' || r.content, r.content) AS content,
+			r.distance AS distance
+		FROM ranked r
+		JOIN rag.document d ON d.id = r.document_id
+		ORDER BY r.distance
 	`);
 
 	return result.rows.map((row) => ({
@@ -61,20 +72,28 @@ async function vectorSearch(queryEmbedding: number[], limit: number, userId: str
 /** Search chunks by BM25 full-text search. */
 async function fullTextSearch(query: string, limit: number, userId: string): Promise<RankedChunk[]> {
 	const result = await db.execute<BM25Row>(sql`
+		WITH ranked AS (
+			SELECT
+				c.id AS chunk_id,
+				c.document_id,
+				c.context_prefix,
+				c.content,
+				ts_rank_cd(c.search_vector, plainto_tsquery('english', ${query})) AS rank
+			FROM rag.chunk c
+			WHERE c.user_id = ${userId}
+			  AND c.search_vector @@ plainto_tsquery('english', ${query})
+			ORDER BY rank DESC
+			LIMIT ${limit}
+		)
 		SELECT
-			c.id AS "chunkId",
-			c.document_id AS "documentId",
+			r.chunk_id AS "chunkId",
+			r.document_id AS "documentId",
 			d.title AS "documentTitle",
-			COALESCE(c.context_prefix || E'\n' || c.content, c.content) AS content,
-			ts_rank_cd(c.search_vector, plainto_tsquery('english', ${query})) AS rank
-		FROM rag.chunk c
-		JOIN rag.document d ON d.id = c.document_id
-		WHERE c.search_vector @@ plainto_tsquery('english', ${query})
-		  AND d.status = 'ready'
-		  AND d.deleted_at IS NULL
-		  AND d.user_id = ${userId}
-		ORDER BY rank DESC
-		LIMIT ${limit}
+			COALESCE(r.context_prefix || E'\n' || r.content, r.content) AS content,
+			r.rank AS rank
+		FROM ranked r
+		JOIN rag.document d ON d.id = r.document_id
+		ORDER BY r.rank DESC
 	`);
 
 	return result.rows.map((row) => ({

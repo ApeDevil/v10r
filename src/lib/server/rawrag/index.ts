@@ -90,15 +90,19 @@ export async function retrieve(
 	const requestedTiers = new Set(opts.tiers);
 
 	// --- Embed ---
+	// Reuse a caller-supplied vector when present (lets a chatbot turn embed the user
+	// message ONCE and share it with both this retrieve and the llmwiki search). The
+	// 'done' event still fires — marked `reused` — so the pipeline trace stays intact.
 	const embedStart = performance.now();
 	onEvent && emit(onEvent, 'embed', 'active', { startOffsetMs: Math.round(embedStart - emitOrigin) });
+	const reusedEmbedding = !!opts.queryEmbedding;
 	let queryEmbedding: number[];
 	try {
-		queryEmbedding = await generateEmbedding(query);
+		queryEmbedding = opts.queryEmbedding ?? (await generateEmbedding(query));
 		onEvent &&
 			emit(onEvent, 'embed', 'done', {
 				durationMs: Math.round(performance.now() - embedStart),
-				detail: { kind: 'embed', dimensions: EMBEDDING_DIMENSIONS, query },
+				detail: { kind: 'embed', dimensions: EMBEDDING_DIMENSIONS, query, reused: reusedEmbedding },
 			});
 	} catch (err) {
 		onEvent &&
@@ -170,13 +174,17 @@ export async function retrieve(
 	const allChunks = tierResults.flat();
 	const { chunks } = fuseAndRank(allChunks, opts.maxChunks);
 
-	// Entities only populated when tier 3 (graph) ran and produced chunks
-	const entities = requestedTiers.has(3)
-		? await getGraphEntities(
-				chunks.map((c) => c.chunkId),
-				[opts.userId],
-			)
-		: [];
+	// Entities only populated when tier 3 (graph) ran AND graph chunks actually survived
+	// fusion. Without the `chunks.some(...)` guard this fired a serial Neo4j round-trip on
+	// every tier-3 request even when the graph contributed nothing — a blocking call on the
+	// response path for zero payoff.
+	const entities =
+		requestedTiers.has(3) && chunks.some((c) => c.tier === 3 || c.source === 'graph')
+			? await getGraphEntities(
+					chunks.map((c) => c.chunkId),
+					[opts.userId],
+				)
+			: [];
 	onEvent &&
 		emit(onEvent, 'rank', 'done', {
 			durationMs: Math.round(performance.now() - rankStart),

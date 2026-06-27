@@ -20,6 +20,9 @@ const REASON_STATUS: Record<VisionFailureReason, number> = {
 	error: 500,
 };
 
+// Synchronous vision call can exceed the serverless default; give it room.
+export const config = { runtime: 'nodejs22.x', maxDuration: 60 };
+
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.user) {
 		return json({ ok: false, reason: 'error', message: 'Not signed in.' } satisfies VisionResponse, { status: 401 });

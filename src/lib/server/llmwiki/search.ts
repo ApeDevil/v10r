@@ -133,11 +133,18 @@ export async function searchLlmwiki(query: string, options: LlmwikiSearchOptions
 	const pointerCap = options.pointerCap ?? POINTER_CAP;
 	const overfetch = limit * LLMWIKI_OVERFETCH_MULTIPLIER;
 
+	// Reuse a caller-supplied vector when present (the chatbot embeds the user message
+	// once and shares it across llmwiki search + system-docs retrieve). Only the dense
+	// vector is reused; the BM25 path below still keys off the `query` string.
 	let queryEmbedding: number[];
-	try {
-		queryEmbedding = await generateEmbedding(query);
-	} catch (err) {
-		throw new LlmwikiError('search', 'Failed to embed query', err);
+	if (options.queryEmbedding) {
+		queryEmbedding = options.queryEmbedding;
+	} else {
+		try {
+			queryEmbedding = await generateEmbedding(query);
+		} catch (err) {
+			throw new LlmwikiError('search', 'Failed to embed query', err);
+		}
 	}
 
 	const [vec, bm25] = await Promise.all([

@@ -100,24 +100,25 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 
 	if (posts.length === 0) return { items: [], total };
 
-	// Fetch latest revision title/summary for each post
+	// Fetch the LATEST revision title/summary per post. DISTINCT ON (post_id) +
+	// ORDER BY (post_id, created_at DESC) returns exactly one row per post straight
+	// from the blog_revision_post_created_idx composite index — instead of reading
+	// every revision of every post and de-duplicating in JS (which grew unbounded
+	// with edits × locales).
 	const postIds = posts.map((p) => p.id);
 	const latestRevisions = await db
-		.select({
+		.selectDistinctOn([revision.postId], {
 			postId: revision.postId,
 			title: revision.title,
 			summary: revision.summary,
 		})
 		.from(revision)
 		.where(inArray(revision.postId, postIds))
-		.orderBy(desc(revision.createdAt));
+		.orderBy(revision.postId, desc(revision.createdAt));
 
-	// Deduplicate to get only the latest per post
 	const revisionMap = new Map<string, { title: string; summary: string | null }>();
 	for (const r of latestRevisions) {
-		if (!revisionMap.has(r.postId)) {
-			revisionMap.set(r.postId, { title: r.title, summary: r.summary });
-		}
+		revisionMap.set(r.postId, { title: r.title, summary: r.summary });
 	}
 
 	// Fetch tags for each post
@@ -476,21 +477,20 @@ export async function listPublishedPostsForFeed(limit = 20): Promise<
 	const slugToId = new Map(postRows.map((p) => [p.slug, p.id]));
 	const postIds = [...slugToId.values()];
 
+	// One row per post via DISTINCT ON + the composite index (was: read all revisions, dedup in JS).
 	const latestRevisions = await db
-		.select({
+		.selectDistinctOn([revision.postId], {
 			postId: revision.postId,
 			title: revision.title,
 			summary: revision.summary,
 		})
 		.from(revision)
 		.where(inArray(revision.postId, postIds))
-		.orderBy(desc(revision.createdAt));
+		.orderBy(revision.postId, desc(revision.createdAt));
 
 	const revisionMap = new Map<string, { title: string; summary: string | null }>();
 	for (const r of latestRevisions) {
-		if (!revisionMap.has(r.postId)) {
-			revisionMap.set(r.postId, { title: r.title, summary: r.summary });
-		}
+		revisionMap.set(r.postId, { title: r.title, summary: r.summary });
 	}
 
 	return posts.map((p) => {

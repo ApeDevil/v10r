@@ -27,7 +27,6 @@ export const sections: StructureSection[] = [
 				items: [
 					{ segments: [{ label: 'archy', href: null }], description: m.home_structure_agent_archy_desc },
 					{ segments: [{ label: 'arty', href: null }], description: m.home_structure_agent_arty_desc },
-					{ segments: [{ label: 'buny', href: null }], description: m.home_structure_agent_buny_desc },
 					{ segments: [{ label: 'daty', href: null }], description: m.home_structure_agent_daty_desc },
 					{ segments: [{ label: 'docy', href: null }], description: m.home_structure_agent_docy_desc },
 					{ segments: [{ label: 'resy', href: null }], description: m.home_structure_agent_resy_desc },

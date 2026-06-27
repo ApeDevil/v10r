@@ -37,6 +37,17 @@ async function createEmbeddingIndex() {
 	`);
 }
 
+/**
+ * Enable relaxed iterative index scans for HNSW. Without this, a filtered
+ * similarity search (e.g. WHERE user_id = $id ORDER BY embedding <=> $vec) can
+ * silently return fewer than LIMIT rows once the post-filter drops candidates
+ * out of the fixed ef_search window. Set at the role level so every (stateless)
+ * Neon HTTP connection inherits it.
+ */
+async function setIterativeScan() {
+	await db.execute(sql`ALTER ROLE CURRENT_USER SET hnsw.iterative_scan = 'relaxed_order'`);
+}
+
 /** Seed the default embedding model row. */
 async function seedEmbeddingModel() {
 	await db.execute(sql`
@@ -55,6 +66,9 @@ export async function ensureRagSchema(): Promise<void> {
 
 	console.log('[rag:setup] Creating HNSW index on embedding...');
 	await createEmbeddingIndex();
+
+	console.log('[rag:setup] Enabling HNSW relaxed iterative scan...');
+	await setIterativeScan();
 
 	console.log('[rag:setup] Seeding default embedding model...');
 	await seedEmbeddingModel();

@@ -40,9 +40,7 @@ async function probe(title: string, run: () => Promise<void>) {
 
 async function explain(label: string, query: string) {
 	console.log(`\n--- ${label} ---`);
-	const rows = (await sql.query(`EXPLAIN (ANALYZE, BUFFERS, VERBOSE) ${query}`)) as Array<
-		Record<string, string>
-	>;
+	const rows = (await sql.query(`EXPLAIN (ANALYZE, BUFFERS, VERBOSE) ${query}`)) as Array<Record<string, string>>;
 	for (const r of rows) console.log('  ' + Object.values(r)[0]);
 }
 
@@ -79,31 +77,38 @@ await probe('HNSW INDEX + iterative_scan GUC (daty P0)', async () => {
 	console.log(`hnsw.ef_search = ${Object.values(ef[0])[0]}`);
 });
 
-await probe('TIER-1 VECTOR QUERY — current JOIN form (daty P0)', async () => {
-	// Mirrors rawrag/tiers/contextual.ts: JOIN document, filter by owner, order by distance.
-	const owner = (
-		(await sql.query(
-			`SELECT user_id FROM rag.document GROUP BY user_id ORDER BY count(*) DESC LIMIT 1`,
-		)) as Array<{ user_id: string }>
-	)[0]?.user_id;
-	if (!owner) return console.log('  no documents to test against');
-	console.log(`  testing against busiest owner: ${owner}`);
-	await explain(
-		'JOIN form (current code)',
-		`SELECT c.id, c.embedding <=> '${ZERO_VEC}'::vector AS distance
-		 FROM rag.chunk c JOIN rag.document d ON d.id = c.document_id
-		 WHERE c.embedding IS NOT NULL AND d.status='ready' AND d.deleted_at IS NULL
-		   AND d.user_id = '${owner}'
-		 ORDER BY c.embedding <=> '${ZERO_VEC}'::vector LIMIT 5`,
-	);
+await probe('TIER-1 VECTOR QUERY — chunk-direct form (daty P0 fix)', async () => {
+	// Mirrors the rewritten rawrag/tiers/contextual.ts: filter chunk.user_id directly
+	// (no JOIN), so the HNSW index is usable. Want: Index Scan, not Seq Scan + Sort.
+	const owners = (await sql.query(
+		`SELECT d.user_id, count(c.id) AS n FROM rag.chunk c JOIN rag.document d ON d.id=c.document_id
+		 GROUP BY d.user_id ORDER BY n DESC`,
+	)) as Array<{ user_id: string; n: number }>;
+	const busiest = owners[0]?.user_id;
+	const smallest = owners[owners.length - 1]?.user_id;
+	for (const [label, owner] of [
+		['busiest (non-selective)', busiest],
+		['smallest (selective → tests iterative_scan)', smallest],
+	] as const) {
+		if (!owner) continue;
+		await explain(
+			`chunk-direct, owner=${label}`,
+			`SELECT c.id, c.embedding <=> '${ZERO_VEC}'::vector AS distance
+			 FROM rag.chunk c
+			 WHERE c.user_id = '${owner}' AND c.embedding IS NOT NULL
+			 ORDER BY c.embedding <=> '${ZERO_VEC}'::vector LIMIT 5`,
+		);
+	}
 });
 
 await probe('BRAND_SETTINGS default row (sys Finding 1 severity gate)', async () => {
-	const rows = (await sql.query(
-		`SELECT id, enabled FROM app.brand_settings WHERE id='default'`,
-	)) as Array<Record<string, unknown>>;
+	const rows = (await sql.query(`SELECT id, enabled FROM app.brand_settings WHERE id='default'`)) as Array<
+		Record<string, unknown>
+	>;
 	if (!rows.length) {
-		console.log('  ⚠ NO default row → getBrandConfig() null-cache bug fires a Neon SELECT on EVERY request. sys Finding 1 is LIVE P0.');
+		console.log(
+			'  ⚠ NO default row → getBrandConfig() null-cache bug fires a Neon SELECT on EVERY request. sys Finding 1 is LIVE P0.',
+		);
 	} else {
 		console.log(`  default row EXISTS (enabled=${rows[0].enabled}) → null-cache bug is latent, not live.`);
 		console.table(rows);
@@ -118,9 +123,7 @@ await probe('BLOG listPosts revision over-fetch (daty P1)', async () => {
 		             nullif((SELECT count(*) FROM blog.post),0), 1) AS revisions_per_post
 	`)) as Array<Record<string, unknown>>;
 	console.table(counts);
-	const ids = (await sql.query(
-		`SELECT id FROM blog.post ORDER BY created_at DESC LIMIT 20`,
-	)) as Array<{ id: string }>;
+	const ids = (await sql.query(`SELECT id FROM blog.post ORDER BY created_at DESC LIMIT 20`)) as Array<{ id: string }>;
 	if (ids.length) {
 		const inList = ids.map((r) => `'${r.id}'`).join(',');
 		await explain(

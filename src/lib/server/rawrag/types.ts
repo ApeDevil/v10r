@@ -34,6 +34,14 @@ export interface RetrievalOptions {
 	collectionId?: string;
 	/** Fusion strategy when multiple tiers run. 'rrf' forces fusion; 'none' skips it. */
 	fusion?: 'none' | 'rrf';
+	/**
+	 * Precomputed query embedding (RETRIEVAL_QUERY task type, EMBEDDING_DIMENSIONS dims).
+	 * When provided, the vector tiers reuse it INSTEAD of calling generateEmbedding —
+	 * lets a caller embed a query once and share the vector across retrieve() and other
+	 * consumers (e.g. a chatbot turn that also runs llmwiki search) to halve embed quota.
+	 * The keyword/BM25 path still keys off the `query` string; only the dense vector is reused.
+	 */
+	queryEmbedding?: number[];
 }
 
 /** Input for the ingestion pipeline */

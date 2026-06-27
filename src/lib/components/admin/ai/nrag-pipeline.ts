@@ -13,7 +13,7 @@
 
 import type { NragLayerId } from '$lib/types/nrag';
 
-export { type NragLayer, type NragLayerId, NRAG_LAYERS } from '$lib/types/nrag';
+export { NRAG_LAYERS, type NragLayer, type NragLayerId } from '$lib/types/nrag';
 /** Local alias the admin diagram imports. */
 export type LayerId = NragLayerId;
 

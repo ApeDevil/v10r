@@ -268,11 +268,11 @@ async function insertDoc(doc: DocFile): Promise<number> {
 	for (const p of parents) {
 		await db.execute(sql`
 			INSERT INTO rag.chunk (
-				id, document_id, parent_id, level, position, content, context_prefix, token_count, content_hash,
+				id, document_id, user_id, parent_id, level, position, content, context_prefix, token_count, content_hash,
 				embedding_model_id, embedding
 			)
 			VALUES (
-				${p.id}, ${docId}, NULL, 'section', ${p.position}, ${p.content}, NULL,
+				${p.id}, ${docId}, ${SYSTEM_DOCS_USER_ID}, NULL, 'section', ${p.position}, ${p.content}, NULL,
 				${p.tokenCount}, ${p.contentHash}, NULL, NULL
 			)
 			ON CONFLICT DO NOTHING
@@ -284,11 +284,11 @@ async function insertDoc(doc: DocFile): Promise<number> {
 		const c = children[i];
 		await db.execute(sql`
 			INSERT INTO rag.chunk (
-				id, document_id, parent_id, level, position, content, context_prefix, token_count, content_hash,
+				id, document_id, user_id, parent_id, level, position, content, context_prefix, token_count, content_hash,
 				embedding_model_id, embedding
 			)
 			VALUES (
-				${c.id}, ${docId}, ${c.parentId ?? null}, 'paragraph', ${c.position}, ${c.content}, ${childPrefix[i]},
+				${c.id}, ${docId}, ${SYSTEM_DOCS_USER_ID}, ${c.parentId ?? null}, 'paragraph', ${c.position}, ${c.content}, ${childPrefix[i]},
 				${c.tokenCount}, ${c.contentHash}, ${EMBEDDING_MODEL_ID}, ${vecLiteral(embeddings[i])}::vector
 			)
 			ON CONFLICT DO NOTHING

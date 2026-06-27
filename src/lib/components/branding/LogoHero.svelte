@@ -1,6 +1,4 @@
 <script lang="ts">
-import heroSvg from '../../../../static/logo/logo-hero.svg?raw';
-
 interface Props {
 	class?: string;
 }
@@ -8,25 +6,25 @@ interface Props {
 let { class: className }: Props = $props();
 </script>
 
-<div class="logo-hero {className ?? ''}" aria-hidden="true">
-	{@html heroSvg}
-</div>
+<!--
+  Rendered as a CSS mask (cached static asset, themeable via background-color) rather
+  than inlining ~155KB of `?raw` SVG into the homepage HTML. currentColor → background.
+-->
+<div class="logo-hero {className ?? ''}" aria-hidden="true"></div>
 
 <style>
 	.logo-hero {
-		color: var(--color-fg);
-		opacity: 0.40;
 		width: 100%;
-	}
-
-	.logo-hero :global(svg) {
-		width: 100%;
-		height: auto;
-		display: block;
+		aspect-ratio: 232.304 / 236.144;
+		background-color: var(--color-fg);
+		opacity: 0.4;
+		-webkit-mask: url(/logo/logo-hero.svg) no-repeat center / contain;
+		mask: url(/logo/logo-hero.svg) no-repeat center / contain;
 	}
 
 	@media (forced-colors: active) {
 		.logo-hero {
+			background-color: CanvasText;
 			opacity: 1;
 		}
 	}

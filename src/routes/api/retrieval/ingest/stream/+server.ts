@@ -22,6 +22,10 @@ const StreamSchema = v.object({
  * NDJSON streaming ingest — one JSON object per line, flushed as soon as it's emitted.
  * Lighter than SSE and trivial to parse on the client with a line-by-line reader.
  */
+// Ingest streams chunking + embedding work that routinely exceeds the default.
+// (60 = Hobby ceiling; raise to 300 on Pro for large documents.)
+export const config = { runtime: 'nodejs22.x', maxDuration: 60 };
+
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const { user } = requireApiUser(locals);
 

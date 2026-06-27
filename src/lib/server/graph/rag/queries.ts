@@ -27,6 +27,9 @@ export async function expandViaGraph(
 	seedChunkIds: string[],
 	ownerIds: string[],
 	maxHops: number = 2,
+	/** Per-query Neo4j timeout. Omit to inherit the 30s ingest/admin default; user-facing
+	 *  retrieval passes USER_GRAPH_TIMEOUT_MS so a slow Aura instance can't block a response. */
+	timeoutMs?: number,
 ): Promise<GraphChunkResult[]> {
 	const hops = Math.min(maxHops, 2); // Hard cap at 2
 	const hopPattern = HOP_PATTERNS[hops];
@@ -46,6 +49,7 @@ export async function expandViaGraph(
 		        'RELATED_TO' AS relType
 		 LIMIT 20`,
 		{ seedChunkIds, ownerIds },
+		timeoutMs !== undefined ? { timeoutMs } : undefined,
 	);
 }
 
@@ -58,7 +62,13 @@ interface EntityInfo {
 }
 
 /** Get entities mentioned in specific chunks (tenant-scoped). */
-export async function getEntitiesForChunks(chunkPgIds: string[], ownerIds: string[]): Promise<EntityInfo[]> {
+export async function getEntitiesForChunks(
+	chunkPgIds: string[],
+	ownerIds: string[],
+	/** Per-query Neo4j timeout. Omit to inherit the 30s default; user-facing retrieval
+	 *  passes USER_GRAPH_TIMEOUT_MS to keep the response path from blocking on Aura. */
+	timeoutMs?: number,
+): Promise<EntityInfo[]> {
 	return cypher<EntityInfo>(
 		`UNWIND $chunkPgIds AS chunkId
 		 MATCH (c:Chunk {pgId: chunkId})-[:MENTIONS]->(e:Entity)
@@ -72,6 +82,7 @@ export async function getEntitiesForChunks(chunkPgIds: string[], ownerIds: strin
 		        e.description AS description,
 		        [r IN relatedNodes WHERE r IS NOT NULL | {elementId: elementId(r), name: r.name}] AS related`,
 		{ chunkPgIds, ownerIds },
+		timeoutMs !== undefined ? { timeoutMs } : undefined,
 	);
 }
 

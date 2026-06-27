@@ -20,6 +20,14 @@ export const chunk = ragSchema.table(
 		documentId: text('document_id')
 			.notNull()
 			.references(() => document.id, { onDelete: 'cascade' }),
+		/**
+		 * Denormalized owner (copied from document.user_id at ingest). Lets vector
+		 * + full-text retrieval filter the chunk row DIRECTLY instead of JOINing to
+		 * document — which is what keeps the HNSW index usable (a join-side filter
+		 * forces a seq scan + sort). Invariant: deleted/errored docs have no chunks
+		 * (hard-deleted), so ownership is the only per-chunk gate retrieval needs.
+		 */
+		userId: text('user_id').notNull(),
 		parentId: text('parent_id').references((): AnyPgColumn => chunk.id, { onDelete: 'cascade' }),
 		level: chunkLevelEnum('level').notNull(),
 		position: integer('position').notNull(),
@@ -43,6 +51,7 @@ export const chunk = ragSchema.table(
 	},
 	(table) => [
 		index('chunk_document_idx').on(table.documentId),
+		index('chunk_user_idx').on(table.userId),
 		index('chunk_parent_idx').on(table.parentId),
 		index('chunk_doc_level_pos_idx').on(table.documentId, table.level, table.position),
 		uniqueIndex('chunk_doc_hash_level_idx').on(table.documentId, table.contentHash, table.level),

@@ -7,6 +7,13 @@ import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:notifications:stream', SSE_RATE_LIMIT_MAX, SSE_RATE_LIMIT_WINDOW);
 
+// Long-lived SSE: pin the function to its billable window and close ourselves just
+// before the platform kill, so EventSource reconnects cleanly instead of churning
+// re-auth + a DB read on every premature default-timeout cut. 60 is the Hobby
+// ceiling; on Pro raise both to 300 / 290_000.
+export const config = { runtime: 'nodejs22.x', maxDuration: 60 };
+const MAX_STREAM_DURATION_MS = 55_000;
+
 export const GET: RequestHandler = async ({ locals }) => {
 	const { user } = requireApiUser(locals);
 
@@ -15,6 +22,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 
 	const encoder = new TextEncoder();
 	let heartbeatTimer: ReturnType<typeof setInterval> | undefined;
+	let lifetimeTimer: ReturnType<typeof setTimeout> | undefined;
 	let streamController: ReadableStreamDefaultController<Uint8Array> | undefined;
 
 	const stream = new ReadableStream<Uint8Array>({
@@ -45,9 +53,21 @@ export const GET: RequestHandler = async ({ locals }) => {
 					if (heartbeatTimer) clearInterval(heartbeatTimer);
 				}
 			}, SSE_HEARTBEAT_MS);
+
+			// Hard lifetime cap — end the stream just before the platform kills the
+			// function so the client reconnects cleanly.
+			lifetimeTimer = setTimeout(() => {
+				if (heartbeatTimer) clearInterval(heartbeatTimer);
+				try {
+					controller.close();
+				} catch {
+					// already closed
+				}
+			}, MAX_STREAM_DURATION_MS);
 		},
 		cancel() {
 			if (heartbeatTimer) clearInterval(heartbeatTimer);
+			if (lifetimeTimer) clearTimeout(lifetimeTimer);
 			if (streamController) unregisterStream(user.id, streamController);
 		},
 	});

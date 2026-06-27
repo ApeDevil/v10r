@@ -24,23 +24,31 @@ async function searchChildren(queryEmbedding: number[], limit: number, userId: s
 	const embeddingStr = `[${queryEmbedding.join(',')}]`;
 
 	const result = await db.execute<ChildHit>(sql`
+		WITH ranked AS (
+			SELECT
+				c.id AS chunk_id,
+				c.parent_id,
+				c.document_id,
+				c.content,
+				c.embedding <=> ${embeddingStr}::vector AS distance
+			FROM rag.chunk c
+			WHERE c.user_id = ${userId}
+			  AND c.embedding IS NOT NULL
+			  AND c.level = 'paragraph'
+			  AND c.parent_id IS NOT NULL
+			ORDER BY distance
+			LIMIT ${limit}
+		)
 		SELECT
-			c.id AS "chunkId",
-			c.parent_id AS "parentId",
-			c.document_id AS "documentId",
+			r.chunk_id AS "chunkId",
+			r.parent_id AS "parentId",
+			r.document_id AS "documentId",
 			d.title AS "documentTitle",
-			c.content,
-			c.embedding <=> ${embeddingStr}::vector AS distance
-		FROM rag.chunk c
-		JOIN rag.document d ON d.id = c.document_id
-		WHERE c.embedding IS NOT NULL
-		  AND c.level = 'paragraph'
-		  AND c.parent_id IS NOT NULL
-		  AND d.status = 'ready'
-		  AND d.deleted_at IS NULL
-		  AND d.user_id = ${userId}
-		ORDER BY c.embedding <=> ${embeddingStr}::vector
-		LIMIT ${limit}
+			r.content,
+			r.distance AS distance
+		FROM ranked r
+		JOIN rag.document d ON d.id = r.document_id
+		ORDER BY r.distance
 	`);
 	return result.rows;
 }

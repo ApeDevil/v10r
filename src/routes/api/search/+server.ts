@@ -41,5 +41,10 @@ export const GET: RequestHandler = async (event) => {
 	const activeLocale = (locale ?? locals.locale ?? 'en') as SearchLocale;
 
 	const items = await searchContent(q, { locale: activeLocale, limit: limit ?? 8, scope: scope ?? 'all' });
+
+	// Public, anonymous, no Set-Cookie (loadStyle/analytics skip /api) → CDN-cacheable.
+	// Identical (q, locale, scope) queries are shared across users; SWR keeps the edge
+	// warm while revalidating. securityHeaders preserves an explicit Cache-Control.
+	event.setHeaders({ 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' });
 	return apiOk({ items });
 };

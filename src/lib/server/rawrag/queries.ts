@@ -20,8 +20,9 @@ export type RawChunkRow = {
 /**
  * Fetch chunk content by IDs, user-scoped.
  * Uses COALESCE(context_prefix || content, content) so callers get the
- * contextualized chunk when a prefix exists. Filters out soft-deleted docs
- * and docs owned by a different user.
+ * contextualized chunk when a prefix exists. Ownership is enforced on the chunk
+ * row itself (denormalized user_id); deleted/errored docs have no chunks, so the
+ * document is joined only for its title.
  */
 export async function fetchChunksByIds(chunkIds: string[], userId: string): Promise<Map<string, RawChunkRow>> {
 	const map = new Map<string, RawChunkRow>();
@@ -40,9 +41,7 @@ export async function fetchChunksByIds(chunkIds: string[], userId: string): Prom
 			chunkIds.map((id) => sql`${id}`),
 			sql`, `,
 		)})
-		  AND d.user_id = ${userId}
-		  AND d.deleted_at IS NULL
-		  AND d.status = 'ready'
+		  AND c.user_id = ${userId}
 	`);
 
 	for (const row of result.rows) {

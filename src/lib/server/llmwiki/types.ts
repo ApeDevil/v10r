@@ -42,6 +42,12 @@ export interface LlmwikiSearchOptions {
 	collectionId?: string | null;
 	limit?: number;
 	pointerCap?: number;
+	/**
+	 * Precomputed query embedding. When provided, search reuses it INSTEAD of calling
+	 * generateEmbedding(query) — the chatbot embeds the user message once and shares the
+	 * vector with both llmwiki search and the system-docs retrieve. BM25 still keys off `query`.
+	 */
+	queryEmbedding?: number[];
 }
 
 /**

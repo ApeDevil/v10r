@@ -10,7 +10,6 @@ const rawModules = import.meta.glob('/.claude/agents/*.md', {
 export const EXPECTED_AGENT_IDS = [
 	'archy',
 	'arty',
-	'buny',
 	'daty',
 	'docy',
 	'resy',

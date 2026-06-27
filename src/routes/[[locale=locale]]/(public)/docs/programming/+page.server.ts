@@ -2,7 +2,7 @@ import { getAgentRegistry } from '$lib/server/agents/registry';
 
 const BUCKETS = [
 	{ id: 'architecture-data', members: ['archy', 'ary', 'sys', 'daty', 'apy'] },
-	{ id: 'runtime-quality', members: ['buny', 'tray', 'clyn', 'tesy'] },
+	{ id: 'runtime-quality', members: ['tray', 'clyn', 'tesy'] },
 	{ id: 'interface-words', members: ['svey', 'uxy', 'arty', 'laly', 'cony'] },
 	{ id: 'intelligence-trust', members: ['aiy', 'secy', 'resy', 'scout', 'docy'] },
 ] as const;

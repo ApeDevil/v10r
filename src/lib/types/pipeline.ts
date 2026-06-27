@@ -82,6 +82,8 @@ export interface EmbedDetail {
 	query?: string;
 	/** Real embedding token count, when the provider reports usage. */
 	tokens?: number;
+	/** True when the caller supplied a precomputed vector (no provider call was made). */
+	reused?: boolean;
 }
 
 export interface TierDetail {

@@ -138,11 +138,11 @@ async function insertDocumentAndChunks(userId: string) {
 		const c = CHUNKS[i];
 		await db.execute(sql`
 			INSERT INTO rag.chunk (
-				id, document_id, level, position, content, token_count, content_hash,
+				id, document_id, user_id, level, position, content, token_count, content_hash,
 				embedding_model_id, embedding
 			)
 			VALUES (
-				${c.id}, ${DOC_ID}, 'paragraph', ${i}, ${c.content}, ${Math.ceil(c.content.length / 4)},
+				${c.id}, ${DOC_ID}, ${userId}, 'paragraph', ${i}, ${c.content}, ${Math.ceil(c.content.length / 4)},
 				${hash(c.content)}, 'google-gemini-embedding-001', ${vecLiteral(chunkEmbeddings[i])}::vector
 			)
 		`);

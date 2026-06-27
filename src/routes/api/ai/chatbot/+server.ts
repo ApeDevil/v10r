@@ -11,6 +11,10 @@ import { apiError, apiValidationError } from '$lib/server/api/response';
 import { resolvePageContext } from '$lib/server/search';
 import type { RequestHandler } from './$types';
 
+// Node runtime + extended duration: an LLM stream routinely outlives the Vercel
+// serverless default (~10-15s), which would silently truncate the answer mid-stream.
+export const config = { runtime: 'nodejs22.x', maxDuration: 60 };
+
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const guard = await guardAiRequest(locals);
 	if (guard.response) return guard.response;

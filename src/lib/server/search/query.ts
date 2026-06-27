@@ -55,16 +55,26 @@ export async function searchContent(query: string, ctx: SearchContext): Promise<
 	return lanes.flat();
 }
 
+const indexCache = new Map<SearchLocale, SearchRecord[]>();
+
 /**
  * Build the Lane-A static index for one locale (titles only, no bodies).
- * Pins the Paraglide locale while resolving nav labels so prerendered shards
- * carry the right language.
+ * Memoized per locale — the page/showcase/doc-title registries are static for the
+ * process lifetime, and this runs on the chatbot TTFT path (formatCatalogMap + the
+ * search tools call it 2-4× per turn), where rebuilding it each time is pure waste.
+ * Pins the Paraglide locale while resolving nav labels so cached shards carry the
+ * right language.
  */
 export function buildSearchIndex(locale: SearchLocale): SearchRecord[] {
+	const cached = indexCache.get(locale);
+	if (cached) return cached;
+
 	const original = getLocale;
 	overwriteGetLocale(() => locale);
 	try {
-		return [...pageRecords(locale), ...showcaseRecords(locale), ...docTitleRecords(locale)];
+		const records = [...pageRecords(locale), ...showcaseRecords(locale), ...docTitleRecords(locale)];
+		indexCache.set(locale, records);
+		return records;
 	} finally {
 		overwriteGetLocale(original);
 	}

@@ -116,6 +116,7 @@ export async function ingest(doc: IngestableDocument, onEvent?: IngestEmitFn): P
 		const allChunks: Array<{
 			id: string;
 			documentId: string;
+			userId: string;
 			parentId: string | null;
 			level: 'sentence' | 'paragraph' | 'section';
 			position: number;
@@ -132,6 +133,7 @@ export async function ingest(doc: IngestableDocument, onEvent?: IngestEmitFn): P
 			allChunks.push({
 				id: parent.id,
 				documentId,
+				userId: ownerId,
 				parentId: null,
 				level: parent.level,
 				position: parent.position,
@@ -150,6 +152,7 @@ export async function ingest(doc: IngestableDocument, onEvent?: IngestEmitFn): P
 			allChunks.push({
 				id: child.id,
 				documentId,
+				userId: ownerId,
 				parentId: child.parentId ?? null,
 				level: child.level,
 				position: child.position,
@@ -244,7 +247,10 @@ export async function ingest(doc: IngestableDocument, onEvent?: IngestEmitFn): P
 
 		return result;
 	} catch (err) {
-		// Mark document as errored
+		// Mark document as errored AND remove any partial chunks. Retrieval scopes
+		// purely on chunk.user_id (no document status JOIN), so an errored doc must
+		// not leave embedded chunks behind — otherwise they'd be retrievable.
+		await db.delete(chunk).where(eq(chunk.documentId, documentId));
 		await db
 			.update(document)
 			.set({
