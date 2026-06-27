@@ -205,6 +205,33 @@ The live inventory is the source tree, not this doc.
 
 ---
 
+## Showcase Catalog Coverage
+
+A working showcase proves a feature. But "proven by use" and "found in the catalog" are different guarantees: a barrel export with no catalog entry is invisible to the gallery — and to the search/chatbot index built from it — even when it runs on every page.
+
+**Rule: barrel membership ⇒ catalog entry.** Anything exported from `$lib/components` is a copyable contract and earns an entry under `/showcases/ui/*` — a `DemoCard` carrying a live demo plus a `ComponentDoc` (props + notes).
+
+### Meta-chrome exception
+
+Some composites **are** the showcase's own chrome — `NavSection`, `PageHeader`, `ShowcaseLayout`, `NavTab`. Mounting one inside a demo card re-instantiates the page's own frame: duplicate scroll observers, colliding `<nav>` landmarks, a second sticky context, or the PageHeader singleton-context hang. **Document meta-chrome by contract: keep the `ComponentDoc`, swap the live demo for a static facsimile, and point to the real instance already on the page. Never mount a second live copy.** `NavSection` is the worked example (`_sections/NavigationSection.svelte`).
+
+**Triage test:** does the component couple to **window scroll**, a **document-global lookup** (`getElementById`), a **singleton context**, or a **colliding landmark**? Yes → document by contract — unless that behavior goes dormant inside the static demo box. Only chrome that actively fights the page needs the facsimile. `PageHeader` is the contrast: it is chrome, but its scroll-coupling sleeps in a non-scrolling box and it manages its own margins, so it live-demos safely (the `chrome={false}` prop is the escape hatch for the singleton clash). No → ordinary live demo.
+
+### Audit status
+
+The composites catalog has drifted from the barrel: ~30 composites exported, only a handful rendered in the `composites/` index (others live in sibling routes like `menus/`, `tables/`, `splits/`). Reconcile catalog ↔ barrel as a follow-up, applying the triage above.
+
+| Candidate | Verdict | Status |
+|-----------|---------|--------|
+| `NavSection` | Meta-chrome (scroll, sticky context, `<nav>`) | Documented by contract ✅ |
+| `PageHeader` | Chrome, but scroll-coupling stays dormant in a static demo box | Live demo ✅ (`chrome={false}` escape hatch) |
+| `ShowcaseLayout` | Meta-chrome (nests PageHeader + NavTab) | Pending |
+| `NavTab` | Meta-chrome (sticky, landmark) | Pending |
+| `NavGrid` | Benign (`<nav>` grid wrapper) | Live demo |
+| `Dock`, `DiagGrid` | Triage pending | Pending |
+
+---
+
 ## Summary
 
 | What | How |

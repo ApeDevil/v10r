@@ -22,6 +22,9 @@ let canScrollRight = $state(false);
 let canScrollLeft = $state(false);
 let isUserClick = false;
 
+// Reduced-motion guard for JS-driven scrolling (scrollIntoView overrides CSS scroll-behavior).
+const reducedMotion = () => browser && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 // Sentinel observer: detect when nav has scrolled to its sticky position
 $effect(() => {
 	if (!browser || !sentinelEl) return;
@@ -68,7 +71,7 @@ $effect(() => {
 	if (isUserClick) return;
 
 	const chip = chipsEl.querySelector(`[data-section="${id}"]`) as HTMLElement | null;
-	chip?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+	chip?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'nearest', inline: 'center' });
 });
 
 // Track horizontal scroll overflow for fade indicators
@@ -115,7 +118,7 @@ let scrollState = $derived.by(() => {
 
 function scrollToSection(id: string) {
 	isUserClick = true;
-	document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+	document.getElementById(id)?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' });
 	// Reset after scroll settles
 	setTimeout(() => {
 		isUserClick = false;
@@ -143,7 +146,7 @@ function scrollToSection(id: string) {
 				class:active={activeSection === section.id}
 				data-section={section.id}
 				onclick={() => scrollToSection(section.id)}
-				onfocus={(e) => e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })}
+				onfocus={(e) => e.currentTarget.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'nearest', inline: 'center' })}
 				aria-current={activeSection === section.id ? 'true' : undefined}
 			>
 				{section.label}
@@ -260,6 +263,11 @@ function scrollToSection(id: string) {
 
 	.nav-chip {
 		flex-shrink: 0;
+		display: inline-flex;
+		align-items: center;
+		/* WCAG 2.5.8 (AA) target floor — non-binding at the current ~25–28px rendered
+		   height, engages only if line-height ever regresses. spacing-6 = 24px. */
+		min-height: var(--spacing-6);
 		padding: var(--spacing-1) var(--spacing-3);
 		font-size: var(--text-fluid-sm);
 		font-weight: 500;
