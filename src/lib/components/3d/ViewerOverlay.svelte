@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { Model3D } from '$lib/config/models';
+import type { PartDef } from '$lib/config/parts';
 
 interface Props {
 	model: Model3D;
@@ -8,9 +9,24 @@ interface Props {
 	action: import('svelte').Snippet;
 	/** Link to the customizer page (shown when model has customization config) */
 	customizeHref?: string;
+	/** Part registry — when present, renders an accessible part selector. */
+	parts?: PartDef[];
+	/** Currently selected part id. */
+	selectedPartId?: string | null;
+	/** Toggle a part selection (clicking the active part deselects it). */
+	onpartselect?: (id: string | null) => void;
 }
 
-let { model, currentAnimation, onanimationchange, action, customizeHref }: Props = $props();
+let {
+	model,
+	currentAnimation,
+	onanimationchange,
+	action,
+	customizeHref,
+	parts,
+	selectedPartId = null,
+	onpartselect,
+}: Props = $props();
 </script>
 
 <div class="overlay">
@@ -30,6 +46,22 @@ let { model, currentAnimation, onanimationchange, action, customizeHref }: Props
 						onclick={() => onanimationchange?.(anim)}
 					>
 						{anim}
+					</button>
+				{/each}
+			</div>
+		{/if}
+
+		{#if parts?.length}
+			<span class="divider" aria-hidden="true"></span>
+			<div class="clip-track" role="group" aria-label="Parts">
+				{#each parts as part (part.id)}
+					<button
+						class="clip-btn"
+						class:active={selectedPartId === part.id}
+						aria-pressed={selectedPartId === part.id}
+						onclick={() => onpartselect?.(selectedPartId === part.id ? null : part.id)}
+					>
+						{part.label}
 					</button>
 				{/each}
 			</div>

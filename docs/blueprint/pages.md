@@ -748,6 +748,7 @@ Data visualization hub. Five sub-pages covering the full range of chart and diag
 | Static geometry | Meshes, materials, lighting |
 | Animations | Threlte `useTask` per-frame updates |
 | Model loading | GLTF, interaction |
+| Part explorer | Click-to-inspect: emissive highlight, camera fly-to, info drawer (sofa) |
 
 **Sub-pages:**
 
@@ -757,7 +758,7 @@ Data visualization hub. Five sub-pages covering the full range of chart and diag
 | `/animated-scene` | Per-frame animation via `useTask`, interaction |
 | `/customize` | Configure a model |
 | `/customize/[model]` | Per-model customizer |
-| `/[model]` | Per-model viewer |
+| `/[model]` | Per-model viewer; `glam-velvet-sofa` adds click-to-inspect part exploration (`?part=` deep-link) |
 
 ---
 

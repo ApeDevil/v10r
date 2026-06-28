@@ -1,9 +1,12 @@
 <script lang="ts">
 import { Canvas } from '@threlte/core';
 import { Dialog as DialogPrimitive } from 'bits-ui';
+import { MediaQuery } from 'svelte/reactivity';
 import { BoundaryFallback } from '$lib/components/composites';
+import { Drawer } from '$lib/components/primitives';
 import type { Model3D } from '$lib/config/models';
 import { resolveViewportConfig } from '$lib/config/models';
+import { PART_EXPLORERS_BY_MODEL } from '$lib/config/parts';
 import ViewerOverlay from './ViewerOverlay.svelte';
 import ViewerScene from './ViewerScene.svelte';
 
@@ -22,6 +25,44 @@ let { model, open = $bindable(false), onclose, standalone = false, backHref = '/
 const config = $derived(resolveViewportConfig(model));
 const customizeHref = $derived(model.customization ? `/showcases/3d/customize/${model.id}` : undefined);
 
+// --- Part explorer (opt-in per model) -------------------------------------
+const parts = $derived(PART_EXPLORERS_BY_MODEL.get(model.id));
+let selectedPartId = $state<string | null>(null);
+const selectedPart = $derived(parts?.find((p) => p.id === selectedPartId) ?? null);
+let drawerOpen = $state(false);
+
+const isMobile = new MediaQuery('(max-width: 767px)');
+const reducedMotion = new MediaQuery('(prefers-reduced-motion: reduce)');
+
+function selectPart(id: string | null) {
+	selectedPartId = id;
+	// Deep-link only in the standalone page; the landing-grid modal uses shallow
+	// routing for its own URL, so we keep selection local there.
+	if (standalone) {
+		const url = new URL(window.location.href);
+		if (id) url.searchParams.set('part', id);
+		else url.searchParams.delete('part');
+		history.replaceState(history.state, '', url.toString());
+	}
+}
+
+// Restore selection from ?part= on first load (standalone only).
+let urlApplied = false;
+$effect(() => {
+	if (!standalone || urlApplied || !parts?.length) return;
+	urlApplied = true;
+	const fromUrl = new URLSearchParams(window.location.search).get('part');
+	if (fromUrl && parts.some((p) => p.id === fromUrl)) selectedPartId = fromUrl;
+});
+
+// Drawer visibility mirrors selection; closing the drawer deselects.
+$effect(() => {
+	drawerOpen = !!selectedPart;
+});
+$effect(() => {
+	if (!drawerOpen && selectedPartId) selectPart(null);
+});
+
 // svelte-ignore state_referenced_locally
 let currentAnimation = $state(model.animations?.defaultClip ?? '');
 
@@ -29,6 +70,7 @@ function handleOpenChange(isOpen: boolean) {
 	open = isOpen;
 	if (!isOpen) {
 		currentAnimation = model.animations?.defaultClip ?? '';
+		selectPart(null);
 		onclose?.();
 	}
 }
@@ -38,7 +80,15 @@ function handleOpenChange(isOpen: boolean) {
 	<svelte:boundary>
 		<div class="viewport" style="touch-action: none;">
 			<Canvas>
-				<ViewerScene {model} {config} {currentAnimation} />
+				<ViewerScene
+					{model}
+					{config}
+					{currentAnimation}
+					{parts}
+					{selectedPartId}
+					onpartselect={selectPart}
+					reducedMotion={reducedMotion.current}
+				/>
 			</Canvas>
 		</div>
 
@@ -61,6 +111,9 @@ function handleOpenChange(isOpen: boolean) {
 			{model}
 			{currentAnimation}
 			{customizeHref}
+			{parts}
+			{selectedPartId}
+			onpartselect={selectPart}
 			onanimationchange={(clip) => (currentAnimation = clip)}
 		>
 			{#snippet action()}
@@ -88,6 +141,9 @@ function handleOpenChange(isOpen: boolean) {
 					{model}
 					{currentAnimation}
 					{customizeHref}
+					{parts}
+					{selectedPartId}
+					onpartselect={selectPart}
 					onanimationchange={(clip) => (currentAnimation = clip)}
 				>
 					{#snippet action()}
@@ -101,6 +157,22 @@ function handleOpenChange(isOpen: boolean) {
 			</DialogPrimitive.Content>
 		</DialogPrimitive.Portal>
 	</DialogPrimitive.Root>
+{/if}
+
+{#if parts?.length}
+	<Drawer bind:open={drawerOpen} side={isMobile.current ? 'bottom' : 'right'} title={selectedPart?.label}>
+		{#if selectedPart}
+			<div class="part-info" aria-live="polite">
+				<p>{selectedPart.description}</p>
+				{#if selectedPart.customizeHint && customizeHref}
+					<a class="customize-link" href={customizeHref}>
+						<span class="i-lucide-sliders-horizontal h-4 w-4" aria-hidden="true"></span>
+						<span>Customize colours</span>
+					</a>
+				{/if}
+			</div>
+		{/if}
+	</Drawer>
 {/if}
 
 <style>
@@ -118,5 +190,28 @@ function handleOpenChange(isOpen: boolean) {
 		position: absolute;
 		inset: 0;
 		background: var(--color-bg);
+	}
+
+	.part-info {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-4);
+		color: var(--color-fg);
+		font-size: var(--text-fluid-sm);
+		line-height: 1.6;
+	}
+
+	.customize-link {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--spacing-2);
+		align-self: flex-start;
+		color: var(--color-primary);
+		text-decoration: none;
+		font-weight: 500;
+	}
+
+	.customize-link:hover {
+		text-decoration: underline;
 	}
 </style>

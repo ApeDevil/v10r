@@ -1,12 +1,7 @@
 <script lang="ts">
-import 'uno.css';
-import '../../app.css';
-import '@fontsource-variable/inter';
-import '@fontsource-variable/playfair-display';
-import '@fontsource-variable/space-grotesk';
-import '@fontsource-variable/jetbrains-mono';
-import '@fontsource-variable/fraunces';
-import '@fontsource-variable/nunito';
+// Global CSS, UnoCSS utilities, and fonts are imported in the ROOT layout
+// (src/routes/+layout.svelte) so they survive `+page@.svelte` breakouts that
+// shed this chrome layer (the full-screen 3D viewer/customizer).
 import { Tooltip as TooltipPrimitive } from 'bits-ui';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';

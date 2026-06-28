@@ -10,6 +10,7 @@ How v10r wires Threlte into SvelteKit. For Three.js / Threlte basics (scene grap
 - [Scene Pattern](#scene-pattern) - Canvas + T + useTask in this app
 - [Model Config Registry](#model-config-registry) - `$lib/config/models.ts`
 - [Components](#components) - `$lib/components/3d/`
+- [Part Explorer](#part-explorer) - opt-in click-to-inspect (sofa)
 - [Asset Pipeline](#asset-pipeline) - GLB assets in `static/models/`
 - [WebGL Fallback](#webgl-fallback) - `<svelte:boundary>`, not manual detection
 - [Gotchas](#gotchas) - Things this project actually hit
@@ -113,7 +114,7 @@ Camera, lights, controls, and render behavior for each model live in **`$lib/con
 
 **Scene snippets are NOT referenced from the config.** Pages map a model ID to its scene component at the route level. This avoids a circular dependency and preserves per-route code-splitting (a model's Three.js scene only loads on its own route).
 
-Customizer config (materials, parts, morph targets, presets) lives alongside in `$lib/config/customization.ts`.
+Customizer config (materials, parts, morph targets, presets) lives alongside in `$lib/config/customization.ts`. The click-to-inspect part-explorer registry lives in `$lib/config/parts.ts` — see [Part Explorer](#part-explorer).
 
 ## Components
 
@@ -124,10 +125,21 @@ Reusable 3D building blocks live in **`$lib/components/3d/`** (barrel: `$lib/com
 | `ViewerScene` | Config-driven scene: camera, lights, GLTF, animation mixer |
 | `SceneCard` | Thumbnail card with a mini live scene |
 | `SceneContent` | Shared scene body |
-| `ViewerDialog` / `ViewerOverlay` | Full-screen viewer modal + controls overlay |
+| `ViewerDialog` / `ViewerOverlay` | Full-screen viewer modal + controls overlay (overlay also hosts the part-selector toggle group) |
+| `PartHighlightLayer` | Emissive highlight for the [part explorer](#part-explorer) — interactive models only |
 | `customizer/` | GLTF customizer (`GltfCustomizer`, `CustomizerLayer`, material/part/accessory pickers, morph-target sliders, preset bar) |
 
 `viz/` and `3d/` are intentionally excluded from the default `$lib/components` barrel so Three.js / Chart.js don't get bundled into surfaces that don't use them. Import 3D components from `$lib/components/3d` directly.
+
+## Part Explorer
+
+Opt-in click-to-inspect for a model's logical parts (the Glam Velvet Sofa is the only one wired today). Click/tap a part → it gets an emissive highlight, the camera flies to frame it, and an info `Drawer` opens with the part's label + description (the sofa body also cross-links to the customizer). Keyboard-accessible (an `aria-pressed` toggle-button group in the overlay), deep-linkable (`?part=legs`, standalone page only), and touch-friendly (click-driven — no hover dependency).
+
+**Opt-in and gated.** Interactivity turns on only when a part registry exists for the model. `ViewerScene` enables `interactivity()` + `CameraControls` (with `fitToBox` fly-to) when `parts?.length`; otherwise it renders the byte-identical `OrbitControls` path with no picking and no parts UI. Every model except the sofa is unchanged. Add a model by adding a `PART_EXPLORERS_BY_MODEL` entry in `parts.ts` — no component edits.
+
+**Registry — `$lib/config/parts.ts`.** Pure, WebGL-free single source of truth. A `PartDef` maps a stable logical id (used for selection state and the `?part=` link) to one or more GLTF mesh-name patterns, a label, a description, and an optional `customizeHint`. Never key logic on raw artist mesh names — they drift across re-exports and split into `_0`/`_1` primitives, so matching is exact-or-`_N`-prefix tolerant. `resolvePartId` (raycast hit → part id) and `collectPartMeshes` are pure and unit-tested in `parts.test.ts`.
+
+**Highlight — `PartHighlightLayer.svelte`.** Visual-only emissive tint, applied imperatively. It clones each material on first run (so it never mutates the shared cached GLB), captures the original emissive, and restores on destroy. It **never disposes** — `useGltf` caches the GLB and the customizer route shares the same materials. Deliberately not `<Outlines>` (it reparents meshes and drops the GLTF's baked transforms) and not postprocessing (no postprocessing dep is installed). Selection wins over hover; imperative material changes call `invalidate()` for on-demand render mode.
 
 ## Asset Pipeline
 

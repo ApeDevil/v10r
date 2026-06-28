@@ -352,9 +352,11 @@ src/routes/
 | `+layout.svelte` / `+layout.server.ts` | Shared layout and layout-level load/gate |
 | `+server.ts` | REST/SSE endpoint |
 | `+error.svelte` | Error boundary |
-| `+page@.svelte` | Layout reset — used in `showcases/3d/[model]/` |
+| `+page@.svelte` | Layout reset — breaks out of the locale layout for full-screen pages (`showcases/3d/[model]/`, `customize/[model]/`). See the global-CSS note below. |
 
 **Route-local private folders** use an underscore: `_components/`, `_sections/`, `_data/`, `_shared/`. The SvelteKit router ignores them. Promote to `$lib/components/[layer]/` only when a second route needs the same component.
+
+**Global CSS belongs in the root layout, not the locale layout.** `uno.css` (UnoCSS utilities), `src/app.css` (the `:root` design tokens), and the `@fontsource-variable/*` fonts are imported once in `src/routes/+layout.svelte`. The locale layout (`[[locale=locale]]/+layout.svelte`) owns app chrome + contexts, not global styles. This split is load-bearing: a `+page@.svelte` breakout sheds the locale layer, so anything it needs globally (tokens, utility classes like `fixed`/`inset-0`, fonts) must live above it at the root. The full-screen 3D viewer/customizer rendered token-less until these imports were hoisted out of the locale layout.
 
 ### Param matchers
 
