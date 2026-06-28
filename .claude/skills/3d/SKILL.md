@@ -12,8 +12,9 @@ Threlte is the declarative Three.js framework for Svelte 5. Current versions: Th
 - [Critical Setup](#critical-setup) - SSR config (REQUIRED)
 - [Scene Basics](#scene-basics) - Canvas, camera, lighting
 - [Loading Models](#loading-models) - GLTF, useGltf, compression
-- [Interactivity](#interactivity) - Click, hover, pointer events
+- [Interactivity](#interactivity) - Click, hover, pointer events → references/interaction.md
 - [Animation](#animation) - useTask, AnimationMixer
+- [Render Modes & Display](#render-modes--display) - on-demand/always, canvas ceiling → references/rendering-display.md
 - [Physics](#physics) - Rapier integration
 - [Performance](#performance) - Draw calls, instancing
 - [Memory Management](#memory-management) - Disposal patterns
@@ -176,7 +177,15 @@ export default {
 </T.Mesh>
 ```
 
-**Performance warning:** Interactivity runs raycasting every frame while hovering. Only enable on objects that need it.
+**Picking is event-driven, not per-frame.** Raycasts fire on DOM pointer events
+(`pointermove`/`click`), *not* once per animation frame. Cost scales with the
+number of interactive objects raycast per event, so keep the interactive set small
+(or accelerate with `three-mesh-bvh`). All primary interactions should be `onclick`
+— touch has no hover.
+
+See **references/interaction.md** for the full picture: picking decision guide,
+highlight outlines, the logical-part registry, info panels, camera fly-to,
+deep-linking, accessibility, and the runtime customization/configurator model.
 
 ## Animation
 
@@ -227,6 +236,26 @@ export default {
 ```
 
 **Rule:** One `AnimationMixer` per animated object. Update every frame with delta time.
+
+## Render Modes & Display
+
+`<Canvas renderMode="...">` controls *when* frames render — choose deliberately:
+`on-demand` (default; renders on prop change / `invalidate()`), `always` (every
+frame — needed for looping animation), `manual` (`advance()` only). The prop is
+`renderMode`; `frameloop` is the R3F name and is ignored.
+
+Three display facts that bite (full detail in **references/rendering-display.md**):
+
+- **`useTask` defaults to `autoInvalidate: true`** — any task turns `on-demand`
+  into always-rendering. Pass `autoInvalidate: false` + manual `invalidate()` for
+  true on-demand alongside a task.
+- **Each `<Canvas>` is one WebGL context; browsers cap ~8–16 per tab.** A grid of
+  N live model canvases hits the wall (oldest context is silently evicted). Use one
+  global canvas + portal, or pre-rendered image thumbnails — Threlte has no
+  scissor/`<View>` component.
+- **Color/tone defaults:** Three r152+ defaults to managed sRGB (don't disable);
+  Threlte's `<Canvas>` defaults `toneMapping` to `AgXToneMapping` — don't
+  redundantly set ACES. Use `NeutralToneMapping` for product-accurate color.
 
 ## Physics
 
@@ -381,12 +410,12 @@ console.log(renderer.info.memory);
   import { Canvas } from '@threlte/core';
 </script>
 
+<!-- Threlte 8 removed `rendererParameters`. Custom renderer options go through
+     `createRenderer`. `dpr` accepts a [min, max] tuple to clamp devicePixelRatio. -->
 <Canvas
-  rendererParameters={{
-    powerPreference: 'high-performance',
-    antialias: false
-  }}
-  dpr={Math.min(window.devicePixelRatio, 2)}
+  dpr={[1, 2]}
+  createRenderer={(canvas) =>
+    new WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' })}
 >
 ```
 
@@ -431,7 +460,9 @@ Always add `noExternal: ['three']` to svelte.config.js.
 Lock three.js version to match Threlte's peer dependencies.
 
 **Interactivity slow:**
-Raycasting runs every frame. Only enable on objects that need it.
+Raycasting fires on pointer events (not per frame), but every interactive object is
+a raycast target per event. Keep the interactive set small, or accelerate with
+`three-mesh-bvh` + `raycaster.firstHitOnly`.
 
 **Memory leaks:**
 GLTF textures are `ImageBitmap`. Need both `dispose()` AND `source.data.close()`.
@@ -473,18 +504,20 @@ geometry.dispose();
 <Canvas>
 ```
 
-**Don't enable interactivity on everything:**
+**Don't make everything interactive:**
 ```svelte
-<!-- WRONG: Raycasts every mesh every frame -->
-interactivity();
-<T.Mesh onclick={...} /> <!-- on every mesh -->
+<!-- WRONG: every interactive mesh is a raycast target on each pointer event -->
+<T.Mesh onclick={...} /> <!-- on every mesh, including high-poly ones -->
 
-<!-- RIGHT: Selective interactivity -->
-<T.Mesh onclick={...} /> <!-- only on interactive meshes -->
+<!-- RIGHT: handlers only on meshes that need them; group sub-meshes under one
+     handler; accelerate high-poly targets with three-mesh-bvh -->
+<T.Group onclick={...}> <!-- one logical part = one clickable unit --></T.Group>
 ```
 
 ## References
 
+- **references/rendering-display.md** - Render modes + `autoInvalidate` trap, the many-canvases wall, IBL/tone-mapping, camera auto-fit, mobile, SPA disposal
+- **references/interaction.md** - Picking + decision guide, click-not-hover, highlight outlines, logical-part registry, info panels, fly-to, deep-link, a11y, configurator model
 - **references/loading.md** - GLTF, Draco, KTX2, texture compression
 - **references/performance.md** - Draw calls, instancing, BatchedMesh, LOD
 - **references/physics.md** - Rapier setup, colliders, forces, events

@@ -155,19 +155,18 @@ Alternative to Draco with different tradeoffs.
   import { Environment } from '@threlte/extras';
 </script>
 
-<!-- From file -->
-<Environment files="/hdri/studio.hdr" />
+<!-- Current API: `url` (the `files`/`preset` props were REMOVED). Supply your own HDRI. -->
+<Environment url="/hdri/studio.hdr" />
 
 <!-- From URL -->
-<Environment
-  files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_03_1k.hdr"
-/>
+<Environment url="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_03_1k.hdr" />
 
-<!-- Preset -->
-<Environment preset="studio" />
+<!-- Skybox + IBL together -->
+<Environment url="/hdri/studio.hdr" isBackground isEnvironment />
 ```
 
-**Available presets:** `apartment`, `city`, `dawn`, `forest`, `lobby`, `night`, `park`, `studio`, `sunset`, `warehouse`
+There are **no built-in presets** (that's an R3F/drei feature). Grab HDRIs from
+Poly Haven or similar. See **rendering-display.md** for the IBL + tone-mapping rig.
 
 ## Preloading
 

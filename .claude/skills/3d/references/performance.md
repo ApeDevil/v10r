@@ -284,10 +284,14 @@ const mergedMesh = new Mesh(merged, sharedMaterial);
 
 **Frame limiting:**
 ```svelte
-<Canvas frameloop="demand">
-  <!-- Only renders when invalidated -->
+<!-- Threlte prop is `renderMode` (not R3F's `frameloop`). on-demand is the default. -->
+<Canvas renderMode="on-demand">
+  <!-- Only renders on prop change or invalidate() -->
 </Canvas>
 ```
+
+Beware: any `useTask` with the default `autoInvalidate: true` keeps the loop
+running every frame even in `on-demand`. See **rendering-display.md**.
 
 ## Performance Checklist
 
