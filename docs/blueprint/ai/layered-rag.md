@@ -250,7 +250,7 @@ The Neo4j RAG graph is **per-tenant**. A read returns only the caller's own node
 | `:Chunk` | id | Carries `ownerId`. |
 | `:Entity` | `{name, ownerId}` | Composite — the same entity name under two owners is two distinct nodes. (Was name-only, which merged entities across tenants.) |
 
-`scripts/setup-neo4j.ts` enforces this: the old name-only `entity_name_unique` constraint is dropped; `entity_name_owner_unique (name, ownerId)` is the composite uniqueness, with `entity_owner` and `chunk_owner` indexes for the scoped reads.
+`scripts/db/setup-neo4j.ts` enforces this: the old name-only `entity_name_unique` constraint is dropped; `entity_name_owner_unique (name, ownerId)` is the composite uniqueness, with `entity_owner` and `chunk_owner` indexes for the scoped reads.
 
 ### Scoped reads
 
@@ -300,4 +300,4 @@ podman exec v10r bun run db:ingest-docs
 
 ## Compile and Lint (Scaffold)
 
-`llmwiki/compile/` and `llmwiki/lint/` exist as scaffolding. Job entry points are in `src/lib/server/jobs/`. A seed fixture is at `scripts/seed-llmwiki.ts`. Production rollout is gated on lint being scheduled and green.
+`llmwiki/compile/` and `llmwiki/lint/` exist as scaffolding. Job entry points are in `src/lib/server/jobs/`. A seed fixture is at `scripts/db/seed-llmwiki.ts`. Production rollout is gated on lint being scheduled and green.

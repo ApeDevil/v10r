@@ -437,7 +437,7 @@ Where does a new file go? Work through these in order:
 
 ### `scripts/`
 
-Subfoldered by concern when two or more scripts share it: `content/`, `db/`, `i18n/`, `perf/`. Standalone scripts sit at root: `setup-rag.ts`, `setup-neo4j.ts`, `seed-llmwiki.ts`. All are run with Bun and wired via `package.json` (`db:*`, `content:*`, `i18n:*`, `validate`). No `drizzle/` directory (push-only workflow).
+Subfoldered by concern when two or more scripts share it: `content/`, `db/`, `i18n/`, `perf/`. The only scripts at root are **tooling, not domain work**: the `vr` CLI runtime (`lib.sh`, `ship.sh`, `validate.sh`) and `tunnel-dev.sh`. Domain scripts run with Bun and are wired via `package.json` (`db:*`, `content:*`, `i18n:*`, `validate`). No `drizzle/` directory (push-only workflow).
 
 ### `docs/`
 

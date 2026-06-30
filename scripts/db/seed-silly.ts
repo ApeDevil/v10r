@@ -1,20 +1,13 @@
 /**
- * llmwiki dogfood seed.
+ * Silly-topic llmwiki seed — a "retrieval vs hallucination" canary.
  *
- * Inserts a tiny ingest-compatible fixture into rag.*:
- *   - one rag.document (user-owned)
- *   - three rag.chunk rows (embedded via google-gemini-embedding-001)
- *   - one llmwiki_page (kind='overview') per collection scope (global, null)
- *   - two llmwiki_page (kind='page') with embeddings + populated search_vector
- *   - three llmwiki_page_source rows linking pages to chunks
+ * Inserts an absurd fictional topic ("Quorblaxian Cheese Rituals of the Moon
+ * Moons") with made-up numeric constants that an LLM could not have memorised.
+ * If a chat answer quotes these specific constants, retrieval is working.
+ * If it "invents" something else, retrieval is not reaching the model.
  *
- * Idempotent: deletes the existing fixture rows (by stable ID prefix) before
- * re-inserting. Run INSIDE the v10r container — host has no node_modules:
- *
- *   podman exec -it v10r bun run scripts/seed-llmwiki.ts <userId>
- *
- * If userId is omitted, picks the first user in the `user` table. For
- * production you obviously pass an explicit one.
+ * Run inside the v10r container:
+ *   podman exec -it v10r bun run scripts/db/seed-silly.ts <userId>
  */
 
 import { createHash } from 'node:crypto';
@@ -45,55 +38,55 @@ const EMBEDDING_OPTS = { google: { outputDimensionality: 1536 } };
 const hash = (s: string) => createHash('sha256').update(s).digest('hex').slice(0, 32);
 const vecLiteral = (v: number[]) => `[${v.join(',')}]`;
 
-const DOC_ID = 'doc_seed_wiki_demo';
-const CHK_IDS = ['chk_seed_rrf', 'chk_seed_hnsw', 'chk_seed_bm25'];
-const PAGE_OVERVIEW = 'lwp_seed_overview';
-const PAGE_RETRIEVAL = 'lwp_seed_retrieval';
-const PAGE_EMBEDDINGS = 'lwp_seed_embeddings';
+const DOC_ID = 'doc_silly_quorblax';
+const CHK_IDS = ['chk_silly_constants', 'chk_silly_stewards', 'chk_silly_schedule'];
+const PAGE_OVERVIEW = 'lwp_silly_overview';
+const PAGE_RITUALS = 'lwp_silly_rituals';
+const PAGE_STEWARDS = 'lwp_silly_stewards';
 
 const CHUNKS = [
 	{
 		id: CHK_IDS[0],
 		content:
-			'Reciprocal Rank Fusion (RRF) combines multiple ranked result lists by summing 1/(k+rank) across lists for each unique item. The constant k (typically 60) dampens the influence of top ranks, making RRF robust to score distributions across heterogeneous retrievers.',
+			'The Quorblaxian Cheese Ritual was first codified in the year 3,247,291 BQE (Before the Quorblaxian Era). Its sacred rotation constant is exactly 7.42069 pi, and the wheel of Flarnish cheese must rotate precisely 13 times counter-clockwise before consumption. The cheese itself is aged in moonlit caverns on the 7th Moon Moon of Krzzt for a period of 881 fortnights.',
 	},
 	{
 		id: CHK_IDS[1],
 		content:
-			'HNSW (Hierarchical Navigable Small World) is a graph-based approximate nearest neighbor index. It builds a multi-layer proximity graph where upper layers are sparse shortcuts. Query time is logarithmic in the dataset size, and recall is tuned via the `ef` parameter at search time.',
+			'There are exactly four Cheese-Stewards of the Quorblaxian order, and no more may ever be initiated. Their names in order of precedence are: Brthllyx the Unmelted, Gvvn of the Southern Rind, Xzmoth Curdwalker, and Plorp the Lesser. Each steward carries a Whorlstaff carved from petrified whey, and each must recite the Litany of the 412 Molds at every rotation ceremony.',
 	},
 	{
 		id: CHK_IDS[2],
 		content:
-			'BM25 is the classic probabilistic ranking function in full-text search. It scores a document by summing per-term contributions that depend on term frequency, inverse document frequency, and document length normalization (with parameters k1 ≈ 1.2 and b ≈ 0.75 in most tunings).',
+			'The Quorblaxian Cheese Ritual takes place at exactly 04:88 on Bloopday, the eighth day of every Quorblaxian fortnight. The ceremony lasts 2.71828 hours and is always conducted under the combined light of the 3rd and 7th Moon Moons. Attendance is restricted to holders of the Grllp medallion. The ceremony MUST NOT be held on Splurgeday, which is considered uncheesely.',
 	},
 ];
 
 const OVERVIEW_TEXT = {
 	slug: 'overview',
-	title: 'Retrieval Primer',
-	tldr: 'A short map of the three retrieval techniques: hybrid fusion (RRF), vector ANN (HNSW), and lexical scoring (BM25).',
-	body: '# Retrieval Primer\n\nThis collection covers the three classical retrieval primitives used in the chat pipeline: RRF for fusing ranked lists, HNSW for fast approximate vector search, and BM25 for lexical ranking. Each page carries pointers to the underlying source chunk.',
-	tags: ['retrieval', 'overview'],
+	title: 'Quorblaxian Cheese Rituals — Primer',
+	tldr: 'A short map of the Quorblaxian Cheese Ritual: its sacred constants, the four Cheese-Stewards, and the schedule of the ceremony on the Moon Moons of Krzzt.',
+	body: '# Quorblaxian Cheese Rituals — Primer\n\nThis collection documents the Quorblaxian Cheese Ritual, a wholly fictional but fully specified ceremony practised on the Moon Moons of Krzzt. It covers sacred constants, the four Cheese-Stewards, and the schedule. Each page carries pointers to the underlying source chunk.',
+	tags: ['quorblax', 'cheese', 'ritual', 'moon-moons', 'overview'],
 };
 
 const PAGES = [
 	{
-		id: PAGE_RETRIEVAL,
-		slug: 'reciprocal-rank-fusion',
-		title: 'Reciprocal Rank Fusion',
-		tldr: 'RRF fuses ranked lists by summing 1/(k+rank) across retrievers. Robust to score-scale differences; k≈60.',
-		body: '# Reciprocal Rank Fusion\n\nRRF is the standard way to combine results from multiple retrievers when scores are not directly comparable. For each document, sum `1 / (k + rank_i)` over the retrievers that returned it. `k` is a smoothing constant (60 is common). RRF is robust to heterogeneous score distributions because it only uses ranks.',
-		tags: ['retrieval', 'rrf', 'fusion'],
+		id: PAGE_RITUALS,
+		slug: 'quorblax-sacred-constants',
+		title: 'Quorblaxian Sacred Constants',
+		tldr: 'Key Quorblaxian constants: ritual codified 3,247,291 BQE; rotation constant 7.42069 pi; 13 counter-clockwise rotations; 881 fortnights aged on 7th Moon Moon of Krzzt.',
+		body: '# Quorblaxian Sacred Constants\n\nThe Quorblaxian Cheese Ritual was first codified in 3,247,291 BQE. Its sacred rotation constant is exactly 7.42069 pi. The wheel of Flarnish cheese must rotate precisely 13 times counter-clockwise before consumption. The cheese is aged in moonlit caverns on the 7th Moon Moon of Krzzt for 881 fortnights.',
+		tags: ['quorblax', 'constants', 'ritual'],
 		chunkId: CHK_IDS[0],
 	},
 	{
-		id: PAGE_EMBEDDINGS,
-		slug: 'hnsw-vs-bm25',
-		title: 'HNSW vs BM25',
-		tldr: 'HNSW indexes vectors for semantic ANN; BM25 scores documents lexically. Complementary — fuse them.',
-		body: '# HNSW vs BM25\n\nHNSW is a graph-based approximate nearest neighbor index, with logarithmic query time and tunable recall via `ef`. BM25 is a TF-IDF-style lexical scoring function. They complement each other: HNSW catches paraphrase, BM25 catches exact-term matches (IDs, codes, rare terms). Combine via RRF for best results.',
-		tags: ['retrieval', 'hnsw', 'bm25'],
+		id: PAGE_STEWARDS,
+		slug: 'four-cheese-stewards',
+		title: 'The Four Cheese-Stewards',
+		tldr: 'The four Quorblaxian Cheese-Stewards, in precedence: Brthllyx the Unmelted, Gvvn of the Southern Rind, Xzmoth Curdwalker, and Plorp the Lesser. Each carries a Whorlstaff of petrified whey.',
+		body: '# The Four Cheese-Stewards\n\nThere are exactly four Cheese-Stewards of the Quorblaxian order. In precedence:\n\n1. **Brthllyx the Unmelted**\n2. **Gvvn of the Southern Rind**\n3. **Xzmoth Curdwalker**\n4. **Plorp the Lesser**\n\nEach steward carries a Whorlstaff carved from petrified whey and recites the Litany of the 412 Molds at every rotation ceremony.',
+		tags: ['quorblax', 'stewards', 'order'],
 		chunkId: CHK_IDS[1],
 	},
 ];
@@ -118,19 +111,19 @@ async function embedMany_(texts: string[]): Promise<number[][]> {
 }
 
 async function deleteExisting() {
-	console.log('[seed:llmwiki] Removing previous fixture rows...');
-	await db.execute(sql`DELETE FROM rag.llmwiki_page_source WHERE llmwiki_page_id LIKE 'lwp_seed_%'`);
-	await db.execute(sql`DELETE FROM rag.llmwiki_page WHERE id LIKE 'lwp_seed_%'`);
-	await db.execute(sql`DELETE FROM rag.chunk WHERE id LIKE 'chk_seed_%'`);
+	console.log('[seed:silly] Removing previous fixture rows...');
+	await db.execute(sql`DELETE FROM rag.llmwiki_page_source WHERE llmwiki_page_id LIKE 'lwp_silly_%'`);
+	await db.execute(sql`DELETE FROM rag.llmwiki_page WHERE id LIKE 'lwp_silly_%'`);
+	await db.execute(sql`DELETE FROM rag.chunk WHERE id LIKE 'chk_silly_%'`);
 	await db.execute(sql`DELETE FROM rag.document WHERE id = ${DOC_ID}`);
 }
 
 async function insertDocumentAndChunks(userId: string) {
-	console.log('[seed:llmwiki] Inserting document + chunks...');
+	console.log('[seed:silly] Inserting document + chunks...');
 	const docHash = hash(CHUNKS.map((c) => c.content).join('\n\n'));
 	await db.execute(sql`
 		INSERT INTO rag.document (id, user_id, title, source, status, total_chunks, total_tokens, content_hash)
-		VALUES (${DOC_ID}, ${userId}, 'Retrieval Primer Source', 'text', 'ready', ${CHUNKS.length}, 600, ${docHash})
+		VALUES (${DOC_ID}, ${userId}, 'Quorblaxian Cheese Codex (fictional)', 'text', 'ready', ${CHUNKS.length}, 700, ${docHash})
 	`);
 
 	const chunkEmbeddings = await embedMany_(CHUNKS.map((c) => c.content));
@@ -150,7 +143,7 @@ async function insertDocumentAndChunks(userId: string) {
 }
 
 async function insertLlmwikiPages(userId: string) {
-	console.log('[seed:llmwiki] Inserting overview + wiki pages...');
+	console.log('[seed:silly] Inserting overview + wiki pages...');
 
 	const overviewEmbed = await embedOne(
 		`${OVERVIEW_TEXT.title}\n${OVERVIEW_TEXT.tldr}\n${OVERVIEW_TEXT.tags.join(' ')}`,
@@ -172,6 +165,7 @@ async function insertLlmwikiPages(userId: string) {
 			),
 			${hash(OVERVIEW_TEXT.body)}, 0, now(), 'seed', false
 		)
+		ON CONFLICT DO NOTHING
 	`);
 
 	const pageEmbeds = await embedMany_(PAGES.map((p) => `${p.title}\n${p.tldr}\n${p.tags.join(' ')}`));
@@ -199,7 +193,7 @@ async function insertLlmwikiPages(userId: string) {
 }
 
 async function insertPageSources() {
-	console.log('[seed:llmwiki] Linking pages to source chunks...');
+	console.log('[seed:silly] Linking pages to source chunks...');
 	for (const p of PAGES) {
 		const chunkContent = CHUNKS.find((c) => c.id === p.chunkId)?.content ?? '';
 		await db.execute(sql`
@@ -210,32 +204,31 @@ async function insertPageSources() {
 		`);
 	}
 
-	// Extra source rows: the RRF page also cites the other two chunks at lower weight
-	// (so we can exercise pointer hydration's weight-desc ordering + cap).
-	for (let i = 1; i < CHUNKS.length; i++) {
-		const c = CHUNKS[i];
-		await db.execute(sql`
-			INSERT INTO rag.llmwiki_page_source (
-				llmwiki_page_id, chunk_id, document_id, weight, source_hash_at_compile
-			)
-			VALUES (${PAGE_RETRIEVAL}, ${c.id}, ${DOC_ID}, ${0.5 - i * 0.1}, ${hash(c.content)})
-		`);
-	}
+	// RITUALS page also cross-cites schedule chunk at lower weight so we exercise pointer ordering.
+	const scheduleChunk = CHUNKS[2];
+	await db.execute(sql`
+		INSERT INTO rag.llmwiki_page_source (
+			llmwiki_page_id, chunk_id, document_id, weight, source_hash_at_compile
+		)
+		VALUES (${PAGE_RITUALS}, ${scheduleChunk.id}, ${DOC_ID}, 0.4, ${hash(scheduleChunk.content)})
+	`);
 }
 
 async function main() {
 	const userId = await resolveUserId();
-	console.log(`[seed:llmwiki] Seeding for user ${userId}`);
+	console.log(`[seed:silly] Seeding for user ${userId}`);
 	await deleteExisting();
 	await insertDocumentAndChunks(userId);
 	await insertLlmwikiPages(userId);
 	await insertPageSources();
-	console.log(`[seed:llmwiki] Done. 1 doc, ${CHUNKS.length} chunks, ${PAGES.length + 1} wiki pages.`);
-	console.log(`[seed:llmwiki] Try a query: "how does RRF work?" with useLlmwiki=true.`);
+	console.log(`[seed:silly] Done. 1 doc, ${CHUNKS.length} chunks, ${PAGES.length + 1} wiki pages.`);
+	console.log(
+		`[seed:silly] Try: "what is the sacred rotation constant of the Quorblaxian cheese ritual?" with mode=llmwiki.`,
+	);
 	await pool.end();
 }
 
 main().catch((err) => {
-	console.error('[seed:llmwiki] Failed:', err);
+	console.error('[seed:silly] Failed:', err);
 	process.exit(1);
 });

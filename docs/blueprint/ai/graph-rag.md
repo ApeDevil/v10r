@@ -795,7 +795,7 @@ CREATE INDEX document_path IF NOT EXISTS FOR (d:Document) ON (d.path);
 CREATE FULLTEXT INDEX entity_search IF NOT EXISTS FOR (e:Entity) ON EACH [e.name, e.description];
 ```
 
-> **Tenancy note (current implementation).** The illustrative `:Entity {name}` model above is **not** how the live RAG graph is keyed. Live `:Chunk` and `:Entity` nodes are per-tenant: `:Chunk` carries `ownerId`, `:Entity` is keyed `{name, ownerId}`, and `scripts/setup-neo4j.ts` enforces `entity_name_owner_unique (name, ownerId)` (the name-only `entity_name_unique` was dropped) plus `entity_owner` / `chunk_owner` indexes. Every read is scoped `WHERE ownerId IN $ownerIds`. See [layered-rag.md](./layered-rag.md#graph-tenancy-neo4j) for the canonical model.
+> **Tenancy note (current implementation).** The illustrative `:Entity {name}` model above is **not** how the live RAG graph is keyed. Live `:Chunk` and `:Entity` nodes are per-tenant: `:Chunk` carries `ownerId`, `:Entity` is keyed `{name, ownerId}`, and `scripts/db/setup-neo4j.ts` enforces `entity_name_owner_unique (name, ownerId)` (the name-only `entity_name_unique` was dropped) plus `entity_owner` / `chunk_owner` indexes. Every read is scoped `WHERE ownerId IN $ownerIds`. See [layered-rag.md](./layered-rag.md#graph-tenancy-neo4j) for the canonical model.
 
 ---
 

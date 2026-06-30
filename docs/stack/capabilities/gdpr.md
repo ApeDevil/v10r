@@ -60,7 +60,7 @@ These are enforced in `privacy/report.ts`, not left to callers:
 
 The marker is `app.user_preferences.transparency_seen_at` (nullable timestamptz). `consumeTransparencyMarker()` claims it atomically with a single `INSERT … ON CONFLICT DO UPDATE … setWhere isNull … RETURNING` — exactly-once and prefetch-safe, so a SvelteKit prefetch racing a navigation cannot trigger the redirect twice. The gate self-excludes the target path (the page consumes the marker on a direct first visit). Every other nav pays only a cheap PK read.
 
-The marker column was added via the additive-DDL script pattern (`scripts/db/add-transparency-column.ts`), not `db:push`.
+The marker column is declared in the schema SSOT (`app/user-preferences.ts`). It was first applied to the live DB by running the additive `ALTER TABLE … ADD COLUMN IF NOT EXISTS` directly through the `neon()` driver rather than `db:push`, because drizzle-kit's interactive `nullsNotDistinct` re-prompt can't be piped — a fresh `db:push` reproduces the column from the schema either way.
 
 ## Consent-gated analytics cookie
 

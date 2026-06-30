@@ -6,7 +6,7 @@
  * is a rebuildable projection. Chained into `db:setup` after `db:neo4j-setup`.
  *
  * Reimplements a minimal `cypher` (env + HTTP Query API) — same pattern as
- * `scripts/setup-neo4j.ts` — so the script never imports `$env/dynamic/private`.
+ * `scripts/db/setup-neo4j.ts` — so the script never imports `$env/dynamic/private`.
  * Run: bun run db:catalog-sync
  */
 import { seedCatalogResources } from '../../src/lib/server/graph/catalog';

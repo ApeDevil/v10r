@@ -6,7 +6,7 @@
  *
  *   podman exec -it v10r bun run scripts/db/ingest-docs.ts
  *
- * Design (mirrors scripts/seed-llmwiki.ts + scripts/db/catalog-sync.ts):
+ * Design (mirrors scripts/db/seed-llmwiki.ts + scripts/db/catalog-sync.ts):
  *   - Hand-rolls its OWN Neon pool + Gemini embedder from process.env — the app's
  *     rawrag `ingest()` / `embed.ts` import `$lib`/`$env` and cannot run under Bun.
  *   - Reuses the Vite-free `planChunks` (the SAME hierarchical section/paragraph

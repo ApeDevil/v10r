@@ -71,7 +71,7 @@ async function main() {
 	} else if (phase === 'post') {
 		await postPush();
 	} else {
-		console.error('Usage: bun run scripts/setup-rag.ts <pre|post>');
+		console.error('Usage: bun run scripts/db/setup-rag.ts <pre|post>');
 		process.exit(1);
 	}
 	await pool.end();
