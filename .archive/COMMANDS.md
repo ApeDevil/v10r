@@ -1,4 +1,8 @@
 
+vr v
+vr s 
+vr s --dry-run
+
 # -------------------run
 podman-compose up
 podman-compose up -d

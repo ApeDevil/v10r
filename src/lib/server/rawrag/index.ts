@@ -16,7 +16,7 @@ import { getGraphEntities, searchGraph } from './tiers/graph';
 import { searchParentChild } from './tiers/parent-child';
 import type { RankedChunk, RetrievalOptions, RetrievalResult } from './types';
 
-const DEFAULT_OPTIONS: Required<Omit<RetrievalOptions, 'collectionId' | 'userId'>> = {
+const DEFAULT_OPTIONS: Required<Omit<RetrievalOptions, 'collectionId' | 'userId' | 'queryEmbedding'>> = {
 	maxChunks: MAX_CONTEXT_CHUNKS,
 	tiers: [1],
 	graphDepth: MAX_GRAPH_HOPS,

@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+#
+# vr — velociraptor solo-dev CLI. A thin dispatcher; real logic lives in scripts/.
+# Add a command by adding a case below (and a row to the menu).
+#
+set -euo pipefail
+
+# Resolve our real location (survives the ~/.local/bin symlink) → find the repo.
+SELF="$(readlink -f "${BASH_SOURCE[0]}")"
+ROOT="$(cd "$(dirname "$SELF")/.." && pwd)"
+SCRIPTS="$ROOT/scripts"
+COMPOSE=(podman compose -f "$ROOT/compose.yaml")
+
+menu() {
+	cat <<'EOF'
+vr — velociraptor solo-dev cli
+
+  ship, s           gate + promote current branch → main (Vercel deploys)
+  validate, v       run the full gate (bun run validate) in the container
+  dev               start the dev server (podman compose up, foreground)
+  up                start the v10r container in the background
+  down              stop the v10r container
+  shell, sh         open a shell inside the running v10r container
+  install           symlink `vr` into ~/.local/bin (run once, from the repo)
+  help              show this menu
+
+Run `vr ship -h` for flags (--dry-run, --keep, --yes).
+EOF
+}
+
+cmd="${1:-help}"
+[ $# -gt 0 ] && shift || true
+
+case "$cmd" in
+	ship|s)        exec bash "$SCRIPTS/ship.sh" "$@" ;;
+	validate|v)    exec bash "$SCRIPTS/validate.sh" "$@" ;;
+	dev)           exec "${COMPOSE[@]}" up "$@" ;;
+	up)            exec "${COMPOSE[@]}" up -d "$@" ;;
+	down)          exec "${COMPOSE[@]}" down "$@" ;;
+	shell|sh)      exec podman exec -it "${V10R_CONTAINER:-v10r}" bash ;;
+	install)
+		target="${HOME}/.local/bin/vr"
+		mkdir -p "${HOME}/.local/bin"
+		ln -sf "$SELF" "$target"
+		echo "Linked: $target → $SELF"
+		echo "Now 'vr <cmd>' works from anywhere (~/.local/bin is on your PATH)."
+		;;
+	help|-h|--help) menu ;;
+	*)
+		printf 'vr: unknown command %q\n\n' "$cmd" >&2
+		menu >&2
+		exit 1
+		;;
+esac
