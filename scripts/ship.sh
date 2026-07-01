@@ -13,7 +13,7 @@
 #
 set -euo pipefail
 source "$(dirname "$(readlink -f "$0")")/lib.sh"
-cd "$REPO_ROOT"
+require_repo
 
 DRY_RUN=0; KEEP_BRANCH=0; ASSUME_YES=0; MSG=""
 

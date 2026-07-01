@@ -5,25 +5,29 @@
 #
 set -euo pipefail
 
-# Resolve our real location (survives the ~/.local/bin symlink) → find the repo.
+# Resolve our real location (survives the ~/.local/bin symlink) to find the
+# toolkit's scripts. The repo we ACT on is your cwd — resolved by require_repo
+# (from lib.sh), so `vr` works in whatever repo you're standing in.
 SELF="$(readlink -f "${BASH_SOURCE[0]}")"
-ROOT="$(cd "$(dirname "$SELF")/.." && pwd)"
-SCRIPTS="$ROOT/scripts"
-COMPOSE=(podman compose -f "$ROOT/compose.yaml")
+# shellcheck source=../scripts/lib.sh
+source "$(dirname "$SELF")/../scripts/lib.sh"
+SCRIPTS="$TOOLKIT_DIR"
 
 menu() {
 	cat <<'EOF'
-vr — velociraptor solo-dev cli
+vr — solo-dev cli (acts on the git repo you're standing in)
 
-  ship, s           gate + promote current branch → main (Vercel deploys)
+  ship, s           gate + promote current branch → main (deploys on push)
   validate, v       run the full gate (bun run validate) in the container
   dev               start the dev server (podman compose up, foreground)
-  up                start the v10r container in the background
-  down              stop the v10r container
-  shell, sh         open a shell inside the running v10r container
-  install           symlink `vr` into ~/.local/bin (run once, from the repo)
+  up                start the container in the background
+  down              stop the container
+  shell, sh         open a shell inside the running container
+  install           symlink `vr` into ~/.local/bin (run once)
   help              show this menu
 
+Runs against the current repo's compose.yaml + git remote. Per-repo settings
+(container name, branches) go in a committed .vrrc; or override with V10R_* env.
 Run `vr ship -h` for flags (--dry-run, --keep, --yes).
 EOF
 }
@@ -34,10 +38,10 @@ cmd="${1:-help}"
 case "$cmd" in
 	ship|s)        exec bash "$SCRIPTS/ship.sh" "$@" ;;
 	validate|v)    exec bash "$SCRIPTS/validate.sh" "$@" ;;
-	dev)           exec "${COMPOSE[@]}" up "$@" ;;
-	up)            exec "${COMPOSE[@]}" up -d "$@" ;;
-	down)          exec "${COMPOSE[@]}" down "$@" ;;
-	shell|sh)      exec podman exec -it "${V10R_CONTAINER:-v10r}" bash ;;
+	dev)           require_repo; exec "${COMPOSE[@]}" up "$@" ;;
+	up)            require_repo; exec "${COMPOSE[@]}" up -d "$@" ;;
+	down)          require_repo; exec "${COMPOSE[@]}" down "$@" ;;
+	shell|sh)      require_repo; exec podman exec -it "$CONTAINER_NAME" bash ;;
 	install)
 		target="${HOME}/.local/bin/vr"
 		mkdir -p "${HOME}/.local/bin"

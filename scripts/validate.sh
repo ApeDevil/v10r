@@ -5,7 +5,6 @@
 #
 set -euo pipefail
 source "$(dirname "$(readlink -f "$0")")/lib.sh"
-cd "$REPO_ROOT"
 
 run_validate
 ok "Validation passed."
