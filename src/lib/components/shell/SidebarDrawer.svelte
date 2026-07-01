@@ -87,13 +87,12 @@ function handleOverlayClick() {
 
 		<SidebarTriggers forceExpanded />
 
-		{#if !user}
-			<ThemeToggle forceExpanded />
-		{/if}
-
 		<SidebarNav forceExpanded useFlyout={false} {isAdmin} />
 
 		<div class="p-2 border-t border-border">
+			{#if !user}
+				<ThemeToggle forceExpanded />
+			{/if}
 			<DiceRollButton forceExpanded />
 			<UserMenu user={user ? { name: user.name ?? '', email: user.email } : null} forceExpanded />
 		</div>
