@@ -3,7 +3,7 @@
 # ship.sh — gate + promote the current branch toward main. Vercel deploys on push.
 #
 # Branch-aware (decides what to do from where you stand):
-#   feature branch  →  squash into dev, validate, fast-forward main, push, delete branch
+#   feature branch  →  squash into dev, validate, fast-forward main, push, delete branch (local + remote)
 #   dev             →  validate dev, fast-forward main, push (no squash)
 #   main            →  refused
 #
@@ -22,13 +22,13 @@ usage() {
 vr ship — gate + promote the current branch toward main (Vercel deploys on push).
 
 Branch-aware:
-  feature branch   squash into dev, validate, fast-forward main, push, delete branch
+  feature branch   squash into dev, validate, fast-forward main, push, delete branch (local + remote)
   dev              validate dev, fast-forward main, push (no squash)
   main             refused
 
 Flags:
   -n, --dry-run    merge + gate, then roll back and push nothing
-      --keep       keep the feature branch after a successful ship
+      --keep       keep the feature branch (local + remote) after a successful ship
   -y, --yes        skip the pre-push confirmation
   [message]        squash commit message (default: the feature branch name)
 EOF
@@ -86,6 +86,13 @@ cleanup_branch() {
 	# A squash commit is not a descendant of the feature branch, so git treats the
 	# branch as "unmerged" — force-delete (-D) is the correct cleanup here.
 	run git branch -D "$feature"
+	# Solo-dev feature branches are usually local-only, but if this one was ever
+	# pushed, drop the remote copy too so it doesn't orphan. Best-effort: the ship
+	# already landed, so a failed remote delete only warns.
+	if git ls-remote --exit-code --heads "$REMOTE" "$feature" >/dev/null 2>&1; then
+		run git push "$REMOTE" --delete "$feature" \
+			|| warn "Couldn't delete '$feature' on $REMOTE — remove it by hand."
+	fi
 }
 
 full_train() {

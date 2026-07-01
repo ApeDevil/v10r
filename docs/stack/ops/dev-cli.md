@@ -73,7 +73,7 @@ Both velociraptor and densho need no `.vrrc` — same `app` service, same `dev`/
 
 | On… | Action |
 |-----|--------|
-| a feature branch | squash into `dev` → **gate** → fast-forward `main` → push both → delete the branch |
+| a feature branch | squash into `dev` → **gate** → fast-forward `main` → push both → delete the branch (local + remote) |
 | `dev` | **gate** `dev` → fast-forward `main` → push both (no squash) |
 | `main` | refused |
 
@@ -96,8 +96,8 @@ ff-able. Because the pushes are fast-forwards, not force-pushes, this also works
 `dev` + `main` atomically, and asks before the (irreversible) push.
 
 **Flags:** `--dry-run` (merge + gate, then roll back and push nothing) · `--keep` (don't
-delete the feature branch) · `--yes` (skip the confirm) · a positional arg overrides the
-squash commit message.
+delete the feature branch, local **or** remote) · `--yes` (skip the confirm) · a positional
+arg overrides the squash commit message.
 
 ## The gate
 
