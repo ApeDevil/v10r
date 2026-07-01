@@ -85,6 +85,13 @@ Because the target repo is your cwd, `vr s` from inside repo *foo* gates and pro
 *foo's* `dev → main`. There's no v10r safety rail — the directory you're in decides what
 ships, so be deliberate about it.
 
+**Linear `main` required.** Promotion is **fast-forward only** — `main` must never carry
+commits `dev` lacks. If they've diverged, `vr ship` refuses at the promote step (nothing
+pushed; `dev` still holds the gated commit) and tells you to reconcile `main` by hand. In
+practice: **never commit directly to `main`** — let `vr ship` move it, and it stays
+ff-able. Because the pushes are fast-forwards, not force-pushes, this also works against a
+**protected `main`** (which typically blocks history rewrites but allows ff pushes).
+
 **Safety:** requires a clean tree, rolls the local merge back if the gate fails, pushes
 `dev` + `main` atomically, and asks before the (irreversible) push.
 
