@@ -64,7 +64,17 @@ The AI subsystem includes a Graph RAG retrieval pipeline. See `docs/blueprint/ai
 
 ### No CI Pipeline
 
-Solo dev, no deployment — CI is unnecessary overhead. Use `bun run validate` (check + biome + test) locally when needed. Revisit when deploying or collaborating.
+Solo dev, no CI runner — an automated pipeline is unnecessary overhead. Run the gate locally with `vr validate` (or `bun run validate`: check + biome + test) when needed. Revisit when collaborating.
+
+### Dev CLI (`vr`)
+
+`vr` is the host-clean solo-dev CLI (a bash dispatcher) that acts on the git repo you're standing in. Full reference: `docs/stack/ops/dev-cli.md`. Main commands:
+
+- `vr validate` / `vr v` — run the full gate (`bun run validate`) in the repo's container
+- `vr ship` / `vr s` — gate the current branch, fast-forward `main`, push `dev` + `main` (**pushing `main` triggers the Vercel production deploy**)
+- `vr dev` / `vr up` / `vr down` / `vr shell` — container lifecycle
+
+**CRITICAL — never run a `vr` command on your own initiative.** Execute a `vr` command *only* when the user has clearly and explicitly told you to run that specific command. This is non-negotiable for `vr ship` / `vr s`, which pushes to the remote and **deploys to production** (and, lacking a TTY, needs `-y` to bypass its safety confirmation). Do not infer authorization from a task that merely "would benefit" from validating or shipping — wait for an explicit instruction.
 
 ### E2E via Chrome Extension
 
