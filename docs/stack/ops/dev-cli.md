@@ -43,22 +43,29 @@ Every repo-touching command resolves the current repo first; run outside a git r
 
 ## Per-repo config
 
-The git/ship workflow is universal, but container and branch names aren't. `vr` resolves
-them in this order (**later wins**):
+`vr` reads what it can from the repo itself, so most repos need **no config at all**:
 
-1. **Built-in defaults** — tuned for a v10r-style repo: remote `origin`, branches
-   `dev`/`main`, compose service `app`, container `v10r`.
-2. **`.vrrc`** — an optional file committed at a repo's root, loaded when `vr` enters that
-   repo. Sourced *as you*, so only keep one in repos you trust. Set what differs:
+- **Container & service** — taken from the repo's `compose.yaml`. `vr` derives the service
+  via `podman compose config --services` (preferring `app`) and finds the running
+  container through the compose project, so it never needs the container's *name*. A repo
+  whose service is `app` (the v10r/densho shape) needs nothing.
+- **Git facts** — remote and branch names aren't in `compose.yaml`, so those fall back to
+  defaults: remote `origin`, branches `dev`/`main`.
+
+Override the git facts (and, rarely, a non-`app` service) only when they differ, via
+(**later wins**):
+
+1. **`.vrrc`** — an optional file committed at a repo's root, loaded when `vr` enters it.
+   Sourced *as you*, so only keep one in repos you trust:
    ```bash
-   CONTAINER_NAME=foo-app
-   DEV_BRANCH=develop
+   DEV_BRANCH=develop      # a repo that ships from `develop`
+   COMPOSE_SERVICE=web     # only if the service isn't `app`
    ```
-3. **`V10R_*` env vars** — override per-invocation: `V10R_CONTAINER`, `V10R_DEV_BRANCH`,
-   `V10R_MAIN_BRANCH`, `V10R_REMOTE`, `V10R_COMPOSE_SERVICE`.
+2. **`V10R_*` env vars** — per-invocation: `V10R_REMOTE`, `V10R_DEV_BRANCH`,
+   `V10R_MAIN_BRANCH`, `V10R_COMPOSE_SERVICE`.
 
-velociraptor needs no `.vrrc` — its container (`v10r`), service (`app`), and branches
-(`dev`/`main`) *are* the defaults.
+Both velociraptor and densho need no `.vrrc` — same `app` service, same `dev`/`main`, same
+`origin`.
 
 ## The ship train
 
@@ -88,13 +95,16 @@ squash commit message.
 ## The gate
 
 `vr validate` — and the gate inside `vr ship` — runs `bun run validate` **inside the
-repo's container**, never on the host:
+repo's container**, never on the host. It drives the compose project rather than a
+hard-coded container name:
 
-- container **up** → `podman exec` into it (left running; it's yours)
-- container **down** → an ephemeral one-shot via `podman compose run --rm` (auto-removed)
+- project **up** → `podman compose exec` into the running service (reuses your warm
+  container)
+- project **down** → an ephemeral `podman compose run --rm` one-shot (auto-removed)
 
-It needs a `compose.yaml` at the repo root; without one `vr` stops, because the gate is
-container-only by design.
+It needs a `compose.yaml` at the repo root **and** a `validate` script in that project's
+`package.json`; without either, `vr` stops — the gate is container-only, and `bun run
+validate` is the contract every repo's gate must provide.
 
 ## Why a bash dispatcher (not `just` / `make` / aliases)
 

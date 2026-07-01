@@ -26,9 +26,9 @@ vr — solo-dev cli (acts on the git repo you're standing in)
   install           symlink `vr` into ~/.local/bin (run once)
   help              show this menu
 
-Runs against the current repo's compose.yaml + git remote. Per-repo settings
-(container name, branches) go in a committed .vrrc; or override with V10R_* env.
-Run `vr ship -h` for flags (--dry-run, --keep, --yes).
+Runs against the current repo's compose.yaml + git remote. The container and
+service are read from compose.yaml (zero config). Branch/remote overrides go in a
+committed .vrrc or V10R_* env. Run `vr ship -h` for flags (--dry-run, --keep, --yes).
 EOF
 }
 
@@ -41,7 +41,7 @@ case "$cmd" in
 	dev)           require_repo; exec "${COMPOSE[@]}" up "$@" ;;
 	up)            require_repo; exec "${COMPOSE[@]}" up -d "$@" ;;
 	down)          require_repo; exec "${COMPOSE[@]}" down "$@" ;;
-	shell|sh)      require_repo; exec podman exec -it "$CONTAINER_NAME" bash ;;
+	shell|sh)      require_repo; exec "${COMPOSE[@]}" exec "$(compose_service)" bash ;;
 	install)
 		target="${HOME}/.local/bin/vr"
 		mkdir -p "${HOME}/.local/bin"

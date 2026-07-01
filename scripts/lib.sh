@@ -2,8 +2,8 @@
 # lib.sh — shared helpers for the `vr` toolkit. Source this; don't execute it.
 #
 # Provides: TOOLKIT_DIR + require_repo (cwd-aware REPO_ROOT/COMPOSE), branch/
-# remote/container config, colored log helpers, `run` (echo-then-exec), and
-# `run_validate` (container-aware gate).
+# remote config, compose_service (auto-derived), colored log helpers, `run`
+# (echo-then-exec), and `run_validate` (container-aware gate).
 
 # Where the toolkit itself lives (survives the ~/.local/bin symlink). Used only
 # to locate sibling scripts — NOT the repo we act on.
@@ -14,14 +14,18 @@ TOOLKIT_DIR="$(cd "$(dirname "$__lib_self")" && pwd)"
 # your cwd by require_repo(), not pinned to wherever the toolkit is installed.
 REPO_ROOT=""
 COMPOSE=()
+__compose_service=""
 
 # Tunables — defaults suit a v10r-style repo. Override per-invocation with V10R_*
 # env vars, or per-repo with a committed .vrrc (loaded by require_repo). Env wins.
+# The container name and service are NOT tunables here — they're read from the
+# repo's own compose.yaml (see compose_service + run_validate), so most repos
+# need no .vrrc at all.
 REMOTE="${V10R_REMOTE:-origin}"
 DEV_BRANCH="${V10R_DEV_BRANCH:-dev}"
 MAIN_BRANCH="${V10R_MAIN_BRANCH:-main}"
-COMPOSE_SERVICE="${V10R_COMPOSE_SERVICE:-app}"
-CONTAINER_NAME="${V10R_CONTAINER:-v10r}"
+# Empty ⇒ auto-derive from compose.yaml (config --services); override to pin.
+COMPOSE_SERVICE="${V10R_COMPOSE_SERVICE:-}"
 
 # Colors — only when stdout is a TTY and NO_COLOR is unset.
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
@@ -59,22 +63,47 @@ require_repo() {
 	DEV_BRANCH="${V10R_DEV_BRANCH:-$DEV_BRANCH}"
 	MAIN_BRANCH="${V10R_MAIN_BRANCH:-$MAIN_BRANCH}"
 	COMPOSE_SERVICE="${V10R_COMPOSE_SERVICE:-$COMPOSE_SERVICE}"
-	CONTAINER_NAME="${V10R_CONTAINER:-$CONTAINER_NAME}"
 	COMPOSE=(podman compose -f "$REPO_ROOT/compose.yaml")
 }
 
+# The compose service to target. An explicit override (V10R_COMPOSE_SERVICE / a
+# .vrrc COMPOSE_SERVICE) wins; otherwise it's derived from the repo's compose.yaml
+# — prefer `app`, else the sole service. Memoized per process. This is what lets
+# most repos work with no .vrrc: the service (and, via compose, the container)
+# come from the file that already declares them.
+compose_service() {
+	[ -n "$__compose_service" ] && { printf '%s' "$__compose_service"; return 0; }
+	if [ -n "$COMPOSE_SERVICE" ]; then
+		__compose_service="$COMPOSE_SERVICE"
+	else
+		local services
+		services="$("${COMPOSE[@]}" config --services 2>/dev/null)"
+		if printf '%s\n' "$services" | grep -qx app; then
+			__compose_service=app
+		else
+			__compose_service="$(printf '%s\n' "$services" | sed '/^$/d' | head -n1)"
+		fi
+		[ -n "$__compose_service" ] \
+			|| die "Couldn't find a service in $REPO_ROOT/compose.yaml — set COMPOSE_SERVICE in .vrrc."
+	fi
+	printf '%s' "$__compose_service"
+}
+
 # Run the full gate (`bun run validate`) inside the current repo's container.
-# - Container up   → exec into it (leave it running; it's yours).
-# - Container down → ephemeral one-shot via compose (auto-removed, never started long-lived).
+# The container name is never hard-coded — we drive the repo's compose project:
+# - project up   → `compose exec` into the running service (reuse the warm container)
+# - project down → `compose run --rm` one-shot (auto-removed, never long-lived)
 run_validate() {
 	require_repo
 	command -v podman >/dev/null 2>&1 || die "podman not found on host."
 	[ -f "$REPO_ROOT/compose.yaml" ] || die "No compose.yaml in $REPO_ROOT — vr's gate runs inside a container."
-	if podman ps --format '{{.Names}}' | grep -qx "$CONTAINER_NAME"; then
-		info "Container '$CONTAINER_NAME' is up → validating inside it"
-		run podman exec "$CONTAINER_NAME" bun run validate
+	local svc; svc="$(compose_service)"
+	# Single-service repos (v10r-style): any running project container ⇒ up.
+	if [ -n "$("${COMPOSE[@]}" ps -q 2>/dev/null)" ]; then
+		info "Container up → validating via 'compose exec $svc'"
+		run "${COMPOSE[@]}" exec -T "$svc" bun run validate
 	else
-		info "Container '$CONTAINER_NAME' is down → ephemeral one-shot (auto-removed)"
-		run "${COMPOSE[@]}" run --rm -T "$COMPOSE_SERVICE" bun run validate
+		info "Container down → ephemeral one-shot (auto-removed)"
+		run "${COMPOSE[@]}" run --rm -T "$svc" bun run validate
 	fi
 }
