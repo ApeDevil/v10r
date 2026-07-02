@@ -44,17 +44,3 @@ export const userPreferences = appSchema.table('user_preferences', {
 
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
-
-export const PREFERENCE_DEFAULTS = {
-	theme: 'system',
-	displayDensity: 'comfortable',
-	sidebarWidth: 240,
-	locale: 'en',
-	timezone: 'UTC',
-	dateFormat: 'relative',
-	reduceMotion: false,
-	highContrast: false,
-	paletteId: null,
-	typographyId: null,
-	radiusId: null,
-} as const;

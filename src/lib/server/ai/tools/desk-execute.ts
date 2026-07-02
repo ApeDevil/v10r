@@ -56,7 +56,7 @@ export async function executeDeskToolCall(
 					if (value === null) delete mergedCells[cell];
 					else mergedCells[cell] = { v: value };
 				}
-				const result = await updateSpreadsheetByFileId(fileId, userId, { cells: mergedCells });
+				const result = await updateSpreadsheetByFileId(fileId, userId, { cells: mergedCells }, 'ai');
 				if (!result) return { ok: false, output: null, errorMessage: 'Failed to update cells.' };
 				return { ok: true, output: { updated: true, fileId, cellsChanged: updates.length, fileName: result.name } };
 			}
@@ -66,7 +66,7 @@ export async function executeDeskToolCall(
 				return { ok: true, output: { renamed: true, fileId: result.id, name: result.name } };
 			}
 			case 'desk_update_markdown': {
-				const result = await updateMarkdownByFileId(args.file_id as string, userId, args.content as string);
+				const result = await updateMarkdownByFileId(args.file_id as string, userId, args.content as string, 'ai');
 				if (!result) return { ok: false, output: null, errorMessage: 'Markdown file not found.' };
 				return { ok: true, output: { updated: true, fileId: result.id, fileName: result.name } };
 			}
@@ -82,7 +82,7 @@ export async function executeDeskToolCall(
 				return { ok: true, output: { created: true, fileId: result.file.id, name: result.file.name } };
 			}
 			case 'desk_delete_file': {
-				const result = await deleteFile(args.file_id as string, userId);
+				const result = await deleteFile(args.file_id as string, userId, 'ai');
 				if (!result) return { ok: false, output: null, errorMessage: 'File not found.' };
 				return { ok: true, output: { deleted: true, fileId: result.id, name: result.name } };
 			}

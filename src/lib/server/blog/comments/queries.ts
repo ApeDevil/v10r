@@ -142,11 +142,6 @@ export async function listComments(params: ListParams): Promise<ListResult> {
 	return { items, nextCursor, crossLocaleTotals };
 }
 
-export async function getCommentById(id: string) {
-	const rows = await db.select().from(comment).where(eq(comment.id, id)).limit(1);
-	return rows[0] ?? null;
-}
-
 /**
  * Admin moderation queue — paginated list filtered by status/post/search.
  */

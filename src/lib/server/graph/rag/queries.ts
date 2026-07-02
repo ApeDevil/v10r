@@ -111,11 +111,14 @@ export async function getRagGraphStats(ownerIds: string[]): Promise<{
 /** Get all RAG entities and their relationships as KnowledgeData for visualization (tenant-scoped). */
 export async function getAllRagEntities(ownerIds: string[]): Promise<KnowledgeData> {
 	const [nodeRows, relRows] = await Promise.all([
-		cypher<{ n: Neo4jNodeRecord }>('MATCH (n:Entity) WHERE n.ownerId IN $ownerIds RETURN n', { ownerIds }),
+		cypher<{ n: Neo4jNodeRecord }>('MATCH (n:Entity) WHERE n.ownerId IN $ownerIds RETURN n LIMIT 500', {
+			ownerIds,
+		}),
 		cypher<{ r: Neo4jRelRecord; startId: string; endId: string }>(
 			`MATCH (e1:Entity)-[r:RELATED_TO]->(e2:Entity)
 			 WHERE e1.ownerId IN $ownerIds AND e2.ownerId IN $ownerIds
-			 RETURN r, elementId(e1) AS startId, elementId(e2) AS endId`,
+			 RETURN r, elementId(e1) AS startId, elementId(e2) AS endId
+			 LIMIT 1000`,
 			{ ownerIds },
 		),
 	]);

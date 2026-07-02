@@ -12,6 +12,9 @@ import { embedCaptionText, embedImage, l2Norm } from '$lib/server/imagekit';
 import { buildImageKey, getImageBytes } from '$lib/server/store/showcase/imagekit';
 import type { RequestHandler } from './$types';
 
+// A multimodal image embed can outrun the ~10s serverless default; give it headroom.
+export const config = { runtime: 'nodejs22.x', maxDuration: 30 };
+
 const REASON_STATUS: Record<EmbedFailureReason, number> = {
 	no_provider: 503,
 	budget: 429,

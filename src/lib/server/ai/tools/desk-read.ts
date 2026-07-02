@@ -5,16 +5,9 @@
 import { jsonSchema, tool } from 'ai';
 import { getFile, getMarkdownByFileId, getSpreadsheetByFileId, listFiles } from '$lib/server/db/desk/queries';
 import { getFileTree, renderFileTreeWithIndex } from '$lib/server/desk/file-tree';
-import type { DeskLayoutEntry, DeskToolMeta } from './_types';
+import type { DeskLayoutEntry } from './_types';
 
-/** Metadata registry for read tools — mirrors the tool names exposed by `createReadTools`. */
-export const readToolMeta: Record<string, DeskToolMeta> = {
-	desk_list_files: { risk: 'read', scope: 'desk:read' },
-	desk_read_file: { risk: 'read', scope: 'desk:read' },
-	desk_file_tree: { risk: 'read', scope: 'desk:read' },
-	desk_search_files: { risk: 'read', scope: 'desk:read' },
-	desk_get_open_panels: { risk: 'read', scope: 'desk:read' },
-};
+// Tool metadata (name → risk/scope) lives in the declarative `TOOL_MANIFEST` in `tools/index.ts`.
 
 /** Max output size per tool call (characters). Prevents prompt injection exfiltration. */
 const MAX_TOOL_OUTPUT_CHARS = 8_000;

@@ -12,11 +12,8 @@
 import { jsonSchema, tool } from 'ai';
 import { MAX_RAWRAG_TOOL_IDS } from '$lib/server/llmwiki/config';
 import { fetchChunksByIds } from '$lib/server/rawrag/queries';
-import type { ToolMeta } from './_types';
 
-export const rawragChunksToolMeta: Record<string, ToolMeta> = {
-	get_rawrag_chunks: { risk: 'read' },
-};
+// Tool metadata (name → risk) lives in the declarative `TOOL_MANIFEST` in `tools/index.ts`.
 
 interface ToolInput {
 	ids: string[];

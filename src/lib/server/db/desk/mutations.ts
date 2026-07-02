@@ -1,7 +1,11 @@
 import { and, eq, isNull, like, sql } from 'drizzle-orm';
 import { createId } from '../id';
 import { db } from '../index';
-import { file, folder, markdown, spreadsheet } from '../schema/desk';
+import { file, fileRevision, folder, markdown, spreadsheet } from '../schema/desk';
+
+/** Who triggered a recoverable content mutation. Threaded into the pre-image snapshot. */
+export type RevisionSource = 'ai' | 'user';
+
 import {
 	collectSubtreeIds,
 	FolderCycleError,
@@ -75,7 +79,7 @@ export async function renameFile(id: string, userId: string, name: string) {
  * can still call `restoreFile` to bring it back within the retention
  * window. The actual row stays in place until a retention sweep runs.
  */
-export async function deleteFile(id: string, userId: string) {
+export async function deleteFile(id: string, userId: string, source: RevisionSource = 'user') {
 	return db.transaction(async (tx) => {
 		const now = new Date();
 		const [fileRow] = await tx
@@ -85,11 +89,45 @@ export async function deleteFile(id: string, userId: string) {
 			.returning();
 		if (!fileRow) return null;
 
-		// Soft-delete the matching detail row too so the `isNull(spreadsheet.deletedAt)`
-		// guards in joined queries exclude it as well.
+		// Snapshot the detail content as a `delete` pre-image, then soft-delete the matching
+		// detail row so the `isNull(...deletedAt)` guards in joined queries exclude it too.
+		// The revision has no FK to the file, so it outlives a later hard retention sweep.
 		if (fileRow.type === 'spreadsheet') {
+			const [current] = await tx
+				.select({ cells: spreadsheet.cells, columnMeta: spreadsheet.columnMeta })
+				.from(spreadsheet)
+				.where(eq(spreadsheet.fileId, id))
+				.limit(1);
+			if (current) {
+				await tx.insert(fileRevision).values({
+					id: createId.deskRevision(),
+					fileId: id,
+					userId,
+					fileType: 'spreadsheet',
+					cells: current.cells,
+					columnMeta: current.columnMeta ?? null,
+					source,
+					reason: 'delete',
+				});
+			}
 			await tx.update(spreadsheet).set({ deletedAt: now }).where(eq(spreadsheet.fileId, id));
 		} else if (fileRow.type === 'markdown') {
+			const [current] = await tx
+				.select({ content: markdown.content })
+				.from(markdown)
+				.where(eq(markdown.fileId, id))
+				.limit(1);
+			if (current) {
+				await tx.insert(fileRevision).values({
+					id: createId.deskRevision(),
+					fileId: id,
+					userId,
+					fileType: 'markdown',
+					content: current.content,
+					source,
+					reason: 'delete',
+				});
+			}
 			await tx.update(markdown).set({ deletedAt: now }).where(eq(markdown.fileId, id));
 		}
 		return fileRow;
@@ -346,11 +384,18 @@ export async function deleteFolder(
 	return { id: row.id, name: row.name, deletedIds };
 }
 
-/** Update spreadsheet cells by file ID. Touches file updatedAt. Skips soft-deleted. */
+/**
+ * Update spreadsheet cells by file ID. Touches file updatedAt. Skips soft-deleted.
+ *
+ * Captures a pre-image revision of the current cells/columnMeta BEFORE overwriting
+ * (only when content actually changes), so an overwrite is recoverable. `source`
+ * attributes the change ('ai' for the deskbot approve-replay, 'user' for the UI).
+ */
 export async function updateSpreadsheetByFileId(
 	fileId: string,
 	userId: string,
 	data: { name?: string; cells?: Record<string, unknown>; columnMeta?: Record<string, unknown> | null },
+	source: RevisionSource = 'user',
 ) {
 	return db.transaction(async (tx) => {
 		// Verify ownership via file table — must not be soft-deleted.
@@ -367,6 +412,25 @@ export async function updateSpreadsheetByFileId(
 		if (data.columnMeta !== undefined) sheetUpdate.columnMeta = data.columnMeta;
 
 		if (Object.keys(sheetUpdate).length > 0) {
+			// Snapshot the pre-image before overwriting content.
+			const [current] = await tx
+				.select({ cells: spreadsheet.cells, columnMeta: spreadsheet.columnMeta })
+				.from(spreadsheet)
+				.where(eq(spreadsheet.fileId, fileId))
+				.limit(1);
+			if (current) {
+				await tx.insert(fileRevision).values({
+					id: createId.deskRevision(),
+					fileId,
+					userId,
+					fileType: 'spreadsheet',
+					cells: current.cells,
+					columnMeta: current.columnMeta ?? null,
+					source,
+					reason: 'overwrite',
+				});
+			}
+
 			sheetUpdate.updatedAt = new Date();
 			await tx.update(spreadsheet).set(sheetUpdate).where(eq(spreadsheet.fileId, fileId));
 		}
@@ -403,8 +467,19 @@ export async function createMarkdownFile(
 	});
 }
 
-/** Update markdown content by file ID. Touches file updatedAt. Skips soft-deleted. */
-export async function updateMarkdownByFileId(fileId: string, userId: string, content: string) {
+/**
+ * Update markdown content by file ID. Touches file updatedAt. Skips soft-deleted.
+ *
+ * Captures a pre-image revision of the current content BEFORE overwriting so a
+ * prompt-injected or accidental overwrite is recoverable. `source` attributes
+ * the change ('ai' for the deskbot approve-replay, 'user' for the UI).
+ */
+export async function updateMarkdownByFileId(
+	fileId: string,
+	userId: string,
+	content: string,
+	source: RevisionSource = 'user',
+) {
 	return db.transaction(async (tx) => {
 		// Verify ownership via file table — must not be soft-deleted.
 		const [fileRow] = await tx
@@ -413,6 +488,24 @@ export async function updateMarkdownByFileId(fileId: string, userId: string, con
 			.where(and(eq(file.id, fileId), eq(file.userId, userId), isNull(file.deletedAt)))
 			.limit(1);
 		if (!fileRow) return null;
+
+		// Snapshot the pre-image before overwriting content.
+		const [current] = await tx
+			.select({ content: markdown.content })
+			.from(markdown)
+			.where(eq(markdown.fileId, fileId))
+			.limit(1);
+		if (current) {
+			await tx.insert(fileRevision).values({
+				id: createId.deskRevision(),
+				fileId,
+				userId,
+				fileType: 'markdown',
+				content: current.content,
+				source,
+				reason: 'overwrite',
+			});
+		}
 
 		await tx.update(markdown).set({ content, updatedAt: new Date() }).where(eq(markdown.fileId, fileId));
 

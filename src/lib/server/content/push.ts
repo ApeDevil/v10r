@@ -18,6 +18,7 @@ import type { S3Client } from '@aws-sdk/client-s3';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import type { Locale } from '$lib/i18n/runtime';
 import { isLocale } from '$lib/i18n/runtime';
+import { getSystemAuthorId } from '$lib/server/auth/admin-ids';
 import { renderBlogPost } from '$lib/server/blog/pipeline';
 import { createId } from '$lib/server/db/id';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
@@ -64,12 +65,8 @@ export async function listContentSlugs(domain: 'blog' = 'blog'): Promise<string[
 
 /** Locate the system author (the primary admin = first ADMIN_USER_ID) used as the revision author for file-pushed content. */
 export async function getSystemAuthor(db: Database): Promise<string> {
-	const adminUserId = process.env.ADMIN_USER_ID?.split(',')
-		.map((s) => s.trim())
-		.find(Boolean);
-	if (!adminUserId) {
-		throw new Error('ADMIN_USER_ID not set in environment — cannot determine push author');
-	}
+	// getSystemAuthorId() throws with a clear message when ADMIN_USER_ID is unset.
+	const adminUserId = getSystemAuthorId();
 	const [row] = await db.select({ id: user.id }).from(user).where(eq(user.id, adminUserId)).limit(1);
 	if (!row) {
 		throw new Error(`No user found with id ${adminUserId} — sign in once to create the user record`);

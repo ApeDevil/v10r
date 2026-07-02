@@ -10,12 +10,8 @@
  */
 import { jsonSchema, tool } from 'ai';
 import { retrieveDeskDocs } from '$lib/server/ai/deskbot-rag';
-import type { ToolMeta } from './_types';
 
-/** Metadata registry for the desk:ask grounding tool — read risk, gated by desk:ask. */
-export const askToolMeta: Record<string, ToolMeta & { scope: 'desk:ask' }> = {
-	desk_search_knowledge: { risk: 'read', scope: 'desk:ask' },
-};
+// Tool metadata (name → risk/scope) lives in the declarative `TOOL_MANIFEST` in `tools/index.ts`.
 
 export function createAskTools(userId: string) {
 	return {

@@ -7,7 +7,7 @@ The AI subsystem serves **two product surfaces** (plus one showcase demo) throug
 | | **chatbot** | **deskbot** |
 |---|---|---|
 | **Role** | The v10r **expert** — *why* and *how* the project is built | The in-desk **operator** — does anything a user can do via the desk UI |
-| **Mode** | Read-only, grounded, citation-faithful Q&A | Agentic, mutating, plan-gated |
+| **Mode** | Read-only, grounded, citation-faithful Q&A | Agentic, mutating, approval-gated |
 | **Route** | `POST /api/ai/chatbot` | `POST /api/ai/deskbot` |
 | **Client** | `composites/chatbot/Chatbot.svelte` — persistent, minimizable, non-modal panel; live thread owned by the `chatbot-session` singleton (see [../app-shell/ai-assistant.md](../app-shell/ai-assistant.md)) | `chat/ChatPanel.svelte` (desk panel) |
 | **Harness** | `buildRetrievalTools()` → `chatbotToolMeta` | `createDeskTools()` → `deskbotToolMeta` |
@@ -15,7 +15,7 @@ The AI subsystem serves **two product surfaces** (plus one showcase demo) throug
 | **System prompt** | `SYSTEM_PROMPT` (plain) | `DESK_SYSTEM_PROMPT` (XML-tagged) + permissions + desk-context |
 | **Corpus (nRAG)** | System-owned (`source IN docs,catalog`, `SYSTEM_DOCS_USER_ID`) + per-user llmwiki — curated, static (catalog slice graph-seeded; docs-corpus graph tier dormant) | The user's **own** desk files — per-user, mutable, not graph-seeded, private |
 | **Location-awareness** | **site-awareness** — the current public route as a thin server-resolved page label (public-catalog only); _v1 built (dev, uncommitted), see [site-awareness.md](./site-awareness.md)_ | **desk-awareness** — live desk state (`panelContext`/`deskLayout`/`activeWorkspace`): which panels & files are open; _live_ |
-| **Invariants** | Never emits a `DeskEffect`; never creates a proposal | All mutations route through `db/desk`; destructive batches gate through `shouldRequirePlan` |
+| **Invariants** | Never emits a `DeskEffect`; never creates a proposal | All mutations route through `db/desk`; write & destructive tools require human approval (proposal → approve-route), never mutating in-loop; only reversible creates run in-loop |
 
 A third value, `rag-demo`, drives the showcase retrieval-pipeline demo. It is **not a product surface** and must not dilute the chatbot.
 
@@ -50,7 +50,7 @@ A chatbot tool never carries a desk scope; a deskbot tool always does. The `/adm
 
 ## One-door rule (deskbot mutations)
 
-Every deskbot mutation has **two entry edges** — the in-loop tool `execute`, and the proposal-approval replay (`POST /api/ai/proposals/[id]/approve`). Both route through the single SSOT `executeDeskToolCall()` (`tools/desk-execute.ts`). For the replay to execute the approved plan, the persisted proposal payload carries each step's `args` (the model supplies them on `desk_propose_plan`); an empty-args payload would silently no-op (`executeDeskToolCall(tool, {})` → "File not found"), so the approval would bind nothing.
+Every deskbot mutation flows through the single SSOT `executeDeskToolCall()` (`tools/desk-execute.ts`) — the **one door**. **Write and destructive** tools never mutate in the agent loop: their `execute` validates the target and returns a `requiresApproval` sentinel, which the orchestrator turns into a pending `agent_proposal` (a PlanCard). That mutation runs **only** via the proposal-approval replay (`POST /api/ai/proposals/[id]/approve`), which records a real `approvedBy`/`approvedAt`. Reversible **creates** (soft-delete-recoverable) mutate in-loop, auto-approved. For the replay to execute the approved plan, the persisted proposal payload carries each step's `args` (the model supplies them on `desk_propose_plan`); an empty-args payload would silently no-op (`executeDeskToolCall(tool, {})` → "File not found"), so the approval would bind nothing.
 
 Two tests guard distinct properties of the door. `index.test.ts` drift-guards tool *name* coverage — it fails if a mutating deskbot tool lacks a replay case, so the replay path can never silently fall behind the live tool set. `desk-execute.test.ts` separately guards that *args* round-trip — empty args must surface "File not found" (never a fake success), and real args must reach the desk mutation verbatim.
 
@@ -82,7 +82,7 @@ The **mechanism** behind site-awareness is **page-awareness** — resolving `pag
 
 ## Status
 
-**Live:** the naming + dispatch discriminant; the **per-surface route split** (`/api/ai/chatbot` · `/api/ai/deskbot` · `/api/ai/showcase/rag`) behind the shared `guardAiRequest`; the harness split (zero overlap); the one-door rule (plan payload carries per-step `args`, replayed verbatim; resume turns mount read-only desk tools — approval binds execution); the `surface` analytics column (`ai_surface` enum on `ai.conversation` + `conversation_step`, stamped at creation, `conv_step_surface_idx`); the chatbot nRAG profile (relevance-gated system-docs prefetch); and the **deskbot nRAG profile** — `desk:ask` read-only grounding tool (`desk_search_knowledge`) over the user's own `aiContext` desk files, ingested via the shared kernel (`source = 'desk'`) and kept fresh by the `desk-rawrag-sync` job (polls `desk.file.updatedAt`).
+**Live:** the naming + dispatch discriminant; the **per-surface route split** (`/api/ai/chatbot` · `/api/ai/deskbot` · `/api/ai/showcase/rag`) behind the shared `guardAiRequest`; the harness split (zero overlap); the one-door rule (plan payload carries per-step `args`, replayed verbatim; resume turns mount read-only desk tools — approval binds execution); the **tool-layer approval gate** (every write/overwrite/delete — even single-target — returns a `requiresApproval` sentinel and mutates only through a human-approved proposal recorded with `approvedBy`/`approvedAt`; the model-minted `confirmed` self-handshake is gone; `shouldRequirePlan` widened to `mutatingScopeGranted && destructiveIntent`, now soft planning guidance; a pre-image `desk.file_revision` snapshot makes an approved overwrite/delete recoverable); the `surface` analytics column (`ai_surface` enum on `ai.conversation` + `conversation_step`, stamped at creation, `conv_step_surface_idx`); the chatbot nRAG profile (relevance-gated system-docs prefetch); and the **deskbot nRAG profile** — `desk:ask` read-only grounding tool (`desk_search_knowledge`) over the user's own `aiContext` desk files, ingested via the shared kernel (`source = 'desk'`) and kept fresh by the `desk-rawrag-sync` job (polls `desk.file.updatedAt`).
 
 **Browser-verified 2026-06-25:** the chatbot's Phase-C foundation grounding is live — an injected `<project-overview>` system-overview anchor (`loadOverview([SYSTEM_DOCS_USER_ID], PROJECT_DOCS_COLLECTION_ID)`) plus **tier-1-only** retrieval. The anchor is the load-bearing fix for the original broad-question bug: "how do I use v10r?" now answers correctly with real `/docs/...` citations (5/5 functional probes green). Hierarchical docs chunking landed too, but is groundwork for future tier-2 surfaces — it does not change chatbot answers today, and the corpus conversion is partial (36/93 docs, quota-gated). See [knowledge-base.md](./knowledge-base.md#wired-vs-scaffold-the-honest-map).
 

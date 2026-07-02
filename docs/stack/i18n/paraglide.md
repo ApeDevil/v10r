@@ -42,6 +42,11 @@ Compiler-based internationalization for SvelteKit. Compiles message files into t
 - Cost scales linearly with `keys × locales` (~2-3 s at ~1500 keys × 3 locales)
 - Output dir is watched by chokidar separately. Without `server.watch.ignored: ['**/src/lib/paraglide/**']` in `vite.config.ts`, paraglide's own re-emits trigger spurious `(ssr) page reload` events ~5 s after ready
 
+**New message key — dev restart ritual:**
+- Adding a NEW key 500s the running dev server (`<key> is not a function`): Vite's SSR module graph misses the `export *` barrel addition in `$lib/paraglide/messages`.
+- Fix: restart `vite dev` (a `podman restart` may need a `podman start` recovery), then warm the route via curl.
+- Editing an existing key's text does not trigger this — only new keys.
+
 **Language switching:**
 - Requires full page reload (use `data-sveltekit-reload` on links)
 - No runtime switching without reload

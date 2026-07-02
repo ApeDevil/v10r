@@ -176,14 +176,16 @@ export async function getFolder(id: string, userId: string) {
 
 /** Count subfolders + files inside a folder (for delete confirmation). Skips soft-deleted files. */
 export async function countFolderContents(id: string, userId: string) {
-	const [subfolders] = await db
-		.select({ count: count() })
-		.from(folder)
-		.where(and(eq(folder.parentId, id), eq(folder.userId, userId)));
-	const [files] = await db
-		.select({ count: count() })
-		.from(file)
-		.where(and(eq(file.folderId, id), eq(file.userId, userId), isNull(file.deletedAt)));
+	const [[subfolders], [files]] = await Promise.all([
+		db
+			.select({ count: count() })
+			.from(folder)
+			.where(and(eq(folder.parentId, id), eq(folder.userId, userId))),
+		db
+			.select({ count: count() })
+			.from(file)
+			.where(and(eq(file.folderId, id), eq(file.userId, userId), isNull(file.deletedAt))),
+	]);
 	return (subfolders?.count ?? 0) + (files?.count ?? 0);
 }
 

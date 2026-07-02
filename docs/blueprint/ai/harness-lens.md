@@ -14,7 +14,8 @@ We use the term as a diagnostic. Asking "does v10r have all the harness primitiv
 |---|---|---|
 | Tool dispatch & schema-level scope filtering | `ai/tools` | `tools/index.ts` — `createDeskTools(userId, scopes, layout)` |
 | Tool metadata (surface-split) | `ai/tools` | `tools/_types.ts` — surface-neutral `ToolRisk`/`ToolMeta` (chatbot retrieval, no scope) + `DeskToolMeta` (adds `scope`); collections `chatbotToolMeta` / `deskbotToolMeta` / `allToolMeta` in `tools/index.ts` |
-| Desk-mutation SSOT (one-door rule) | `ai/tools` | `tools/desk-execute.ts` — `executeDeskToolCall`: both the in-loop tool path and the proposal-approval replay route through it; `index.test.ts` drift-guards the replay map against the live tool set |
+| Desk-mutation SSOT (one-door rule) | `ai/tools` | `tools/desk-execute.ts` — `executeDeskToolCall`: the proposal-approval replay routes every desk mutation through it; `index.test.ts` drift-guards the replay map against the live tool set |
+| Approval gate (risk → proposal) | `ai/policy` + `ai/tools` | `policy/governor.ts` — `requiresApproval(risk)` (`write`/`destructive` gated); write/destructive tools return a `requiresApproval` sentinel instead of mutating |
 | Step loop & provider fallback | `ai` | `chat-orchestrator.ts` — `streamText` + `stopWhen` + `tryFallback` (provider fallback & cooldown) |
 | Per-request scope step caps | `ai/tools` | `tools/index.ts` — `stepsForScopes` (read-only incl. `desk:ask` = 3, mutation = 5) |
 | Context compaction (fixes AI SDK #9631) | `ai/loop` | `loop/compact.ts` — `compactToolResults` + `resolve_ref` tool |
@@ -40,17 +41,17 @@ We use the term as a diagnostic. Asking "does v10r have all the harness primitiv
 - **Per-tool `needsApproval: true`** — approval fatigue is reproducible; risk-tiered gates are the working pattern.
 - **A `harness/` module** — the seam is emergent across `loop/context/policy/tools`; naming it adds no value.
 
-## Plan-before-execute — narrow scope
+## Approval gate + plan-before-execute
 
-A `desk_propose_plan` tool exists, but plan-first is **not** the default posture. It's a latency tax on one-shot interactions, so it only kicks in when all three conditions hold:
+Two distinct mechanisms govern deskbot mutations.
 
-1. Destructive-intent heuristic fires on the user message.
-2. ≥2 structural (create/delete) capabilities are granted for this request.
-3. ≥2 distinct target entities are inferred from panel/layout context.
+**The hard gate is at the tool layer.** A deskbot **write or destructive** tool (`desk_update_cells`, `desk_rename_file`, `desk_update_markdown`, `desk_delete_file`) never mutates in the agent loop — its `execute` validates the target and returns a `requiresApproval` sentinel. `requiresApproval(risk)` in `policy/governor.ts` is the single rule: `write`/`destructive` gated, `read`/`create` not (creates are reversible via soft delete, so they mutate in-loop, auto-approved). The orchestrator turns the sentinel into a pending `agent_proposal` (PlanCard); the mutation runs **only** via the approve-route replay through `executeDeskToolCall` (the one-door SSOT), which records a real `approvedBy`/`approvedAt`. Even a single-target overwrite or delete is gated — the old self-serve `confirmed: boolean` two-phase handshake (which the model could satisfy itself) is gone.
 
-Predicate lives in `policy/governor.ts` as `shouldRequirePlan({ destructiveIntent, destructiveToolCount, targetEntityCount })`. It is **wired into the deskbot turn** (`chat-orchestrator.ts`): when it fires, the `<planning>` block injects and `desk_propose_plan` becomes reachable. (It was previously dead code — registered but never called — so the gate was unreachable.) Single destructive actions keep the existing two-phase `confirmed: boolean` pattern on individual tools (see `desk_delete_file`).
+**Planning is soft guidance, not the gate.** `shouldRequirePlan({ mutatingScopeGranted, destructiveIntent })` decides only whether to *instruct* the model to plan first — inject the `<planning>` block so it batches work into one `desk_propose_plan`. It was widened from the old three-condition AND (≥2 tools + ≥2 targets), which let every single-target destructive op skip planning; now any granted-mutating-scope + destructive-intent turn gets the nudge. It no longer decides whether a mutation may run — the `requiresApproval` sentinel does.
 
-The execute path closes the loop. Each `desk_propose_plan` step carries its exact `args`, persisted on the proposal payload; on approval the approve-route replays them step-by-step through `executeDeskToolCall` (the one-door SSOT), short-circuiting on first failure with the partial result kept (no rollback). The resume turn that follows is **read-only** — its desk scopes are filtered to `desk:read`/`desk:ask` so it can only acknowledge, never re-mutate or diverge: approval binds execution.
+The execute path closes the loop. Each `desk_propose_plan` step carries its exact `args`, persisted on the proposal payload; on approval the approve-route replays them step-by-step through `executeDeskToolCall`, short-circuiting on first failure with the partial result kept (no rollback). The resume turn that follows is **read-only** — its desk scopes are filtered to `desk:read`/`desk:ask` so it can only acknowledge, never re-mutate or diverge: approval binds execution.
+
+Overwrites and deletes are recoverable: `db/desk` snapshots a pre-image `desk.file_revision` before mutating (capture only — no restore UI yet).
 
 ## Risk tiers — UI mapping
 
@@ -58,9 +59,9 @@ The execute path closes the loop. Each `desk_propose_plan` step carries its exac
 |---|---|
 | `desk:read` | Silent auto; I/O log only |
 | `desk:create` | Auto with notification; bot-originated writes inherit this tier |
-| `desk:write` on user-originated files | Inline `ConfirmCard` with diff preview |
-| `desk:delete` | Inline `ConfirmCard` with target name + persistent I/O Log undo chip (soft delete backs recovery) |
-| Multi-step destructive batch | Inline `PlanCard` — one read, one motor tap, no form-like friction |
+| `desk:write` on an existing file | Pending proposal → **`PlanCard`**; approve to run (pre-image `desk.file_revision` backs recovery) |
+| `desk:delete` | Pending proposal → **`PlanCard`** with target name; soft delete + `desk.file_revision` back recovery |
+| Multi-step destructive batch | One **`PlanCard`** covering all steps — one read, one approval |
 
 ## Reading order for the curious
 
@@ -68,5 +69,5 @@ The execute path closes the loop. Each `desk_propose_plan` step carries its exac
 2. `tools/index.ts` — schema-level scope filtering + `stepsForScopes` (load-bearing seam)
 3. `chat-orchestrator.ts` — the step loop + `tryFallback`
 4. `loop/compact.ts` — the #9631 workaround
-5. `policy/governor.ts` — the plan-gating predicate (`shouldRequirePlan`)
+5. `policy/governor.ts` — the approval gate (`requiresApproval`) + plan-gating predicate (`shouldRequirePlan`)
 6. `db/schema/ai/proposal.ts` — the proposal state machine

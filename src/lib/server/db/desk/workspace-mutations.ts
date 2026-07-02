@@ -71,17 +71,6 @@ export async function deleteWorkspace(userId: string, workspaceId: string) {
 	return row ?? null;
 }
 
-/** Set the active workspace pointer (upsert). */
-export async function setActiveWorkspace(userId: string, workspaceId: string) {
-	await db
-		.insert(deskWorkspaceActive)
-		.values({ userId, workspaceId, updatedAt: new Date() })
-		.onConflictDoUpdate({
-			target: deskWorkspaceActive.userId,
-			set: { workspaceId, updatedAt: new Date() },
-		});
-}
-
 /**
  * Atomic save-outgoing + activate-incoming.
  * Used on workspace switch and as sendBeacon target on tab close.
@@ -112,17 +101,5 @@ export async function syncWorkspace(
 			});
 
 		return { saved, activeId: data.activate };
-	});
-}
-
-/** Swap sort orders of two workspaces atomically. */
-export async function reorderWorkspaces(userId: string, orderedIds: string[]) {
-	await db.transaction(async (tx) => {
-		for (let i = 0; i < orderedIds.length; i++) {
-			await tx
-				.update(deskWorkspace)
-				.set({ sortOrder: i, updatedAt: new Date() })
-				.where(and(eq(deskWorkspace.id, orderedIds[i]), eq(deskWorkspace.userId, userId)));
-		}
 	});
 }

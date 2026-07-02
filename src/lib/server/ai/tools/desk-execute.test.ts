@@ -44,7 +44,8 @@ describe('executeDeskToolCall — replay arg contract', () => {
 	it('deletes the file when given a real file_id (args reach the mutation verbatim)', async () => {
 		mockDeleteFile.mockResolvedValueOnce({ id: 'fil_abc', name: 'alpha' });
 		const out = await executeDeskToolCall(USER_ID, 'desk_delete_file', { file_id: 'fil_abc' });
-		expect(mockDeleteFile).toHaveBeenCalledWith('fil_abc', USER_ID);
+		// Replay tags the mutation as AI-originated so the pre-image revision is attributable.
+		expect(mockDeleteFile).toHaveBeenCalledWith('fil_abc', USER_ID, 'ai');
 		expect(out).toEqual({ ok: true, output: { deleted: true, fileId: 'fil_abc', name: 'alpha' } });
 	});
 
@@ -53,7 +54,7 @@ describe('executeDeskToolCall — replay arg contract', () => {
 		// executor must report failure, never pretend the delete succeeded.
 		mockDeleteFile.mockResolvedValueOnce(null);
 		const out = await executeDeskToolCall(USER_ID, 'desk_delete_file', {});
-		expect(mockDeleteFile).toHaveBeenCalledWith(undefined, USER_ID);
+		expect(mockDeleteFile).toHaveBeenCalledWith(undefined, USER_ID, 'ai');
 		expect(out).toEqual({ ok: false, output: null, errorMessage: 'File not found.' });
 	});
 

@@ -126,7 +126,7 @@ function openBanDialog(userId: string) {
 						</tr>
 					</thead>
 					<tbody>
-						{#each data.users as u}
+						{#each data.users as u (u.id)}
 							<tr>
 								<td>
 									<Cluster gap="2" align="center">

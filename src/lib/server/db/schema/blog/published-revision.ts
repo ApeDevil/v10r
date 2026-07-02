@@ -4,8 +4,9 @@
  * Publishing a new revision for a locale is an UPSERT.
  */
 import { index, primaryKey, text } from 'drizzle-orm/pg-core';
-import { blogSchema, post } from './post';
+import { post } from './post';
 import { revision } from './revision';
+import { blogSchema } from './schema';
 
 export const publishedRevision = blogSchema.table(
 	'published_revision',

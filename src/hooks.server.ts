@@ -9,6 +9,7 @@ import { parseConsentTier } from '$lib/server/analytics/consent';
 import { analyticsCollector } from '$lib/server/analytics/hook';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { auth } from '$lib/server/auth';
+import { logAdminConfig } from '$lib/server/auth/admin-ids';
 import { listActiveGrantKinds } from '$lib/server/auth/grants';
 import { twoFactorVerifyLimitKey } from '$lib/server/auth/step-up';
 import { getCustomPaletteById } from '$lib/server/branding/palette-crud';
@@ -42,6 +43,7 @@ import '$lib/server/jobs/scheduler';
 import '$lib/server/jobs/delivery-scheduler';
 
 logFeatureStatus();
+logAdminConfig();
 
 const ALLOWED_LOCALES = new Set<string>(locales);
 

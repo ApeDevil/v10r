@@ -11,7 +11,8 @@ import { sql } from 'drizzle-orm';
 import { check, index, integer, jsonb, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
 import { tsvector } from '../rag/_custom-types';
-import { blogSchema, post } from './post';
+import { post } from './post';
+import { blogSchema } from './schema';
 
 export const revision = blogSchema.table(
 	'revision',

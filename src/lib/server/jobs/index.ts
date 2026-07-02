@@ -1,8 +1,11 @@
+import { aiTelemetryRetention } from './ai-telemetry-retention';
 import { analyticsCleanup } from './analytics-cleanup';
 import { analyticsRollup } from './analytics-rollup';
+import { auditLogRetention } from './audit-log-retention';
 import { dbopsReaper } from './dbops-reaper';
 import { dbopsRefresh } from './dbops-refresh';
 import { deskRawragSync } from './desk-rawrag-sync';
+import { deskRetention } from './desk-retention';
 import { discordTokenRefresh } from './discord-token-refresh';
 import { grantRequestExpiry } from './grant-request-expiry';
 import { logCleanup } from './log-cleanup';
@@ -26,4 +29,7 @@ export const jobs: Record<string, Job> = {
 	'dbops-refresh': { execute: dbopsRefresh },
 	'dbops-reaper': { execute: dbopsReaper },
 	'desk-rawrag-sync': { execute: deskRawragSync },
+	'desk-retention': { execute: deskRetention },
+	'ai-telemetry-retention': { execute: aiTelemetryRetention },
+	'audit-log-retention': { execute: auditLogRetention },
 };

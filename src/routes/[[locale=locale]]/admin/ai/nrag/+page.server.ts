@@ -22,23 +22,22 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	const status = url.searchParams.get('status') || 'all';
 	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
 
-	const [overview, errorDocs, llmwiki, bySource, coverage] = await Promise.all([
+	// Neo4j (Aura) is a separate connection — an Aura timeout must never 500 the
+	// Postgres-backed page, so the graph stat degrades to null inside the parallel
+	// wave (its rejection is caught locally and can't fail the other five reads).
+	const [overview, errorDocs, llmwiki, bySource, coverage, graph] = await Promise.all([
 		getRAGOverviewStats(),
 		getErrorDocuments(),
 		getLlmwikiAdminStats(),
 		getDocumentsBySource(),
 		getChunkCoverage(),
+		getRagGraphStats([user.id, SYSTEM_DOCS_USER_ID])
+			.then((g) => ({ nodes: g.nodes, edges: g.edges }))
+			.catch((err) => {
+				console.error('[admin:nrag] graph stats unavailable:', err);
+				return null;
+			}),
 	]);
-
-	// Neo4j (Aura) is a separate connection — an Aura timeout must never 500 the
-	// Postgres-backed page. Degrade to `graph: null` → "graph unavailable" panel.
-	let graph: { nodes: number; edges: number } | null = null;
-	try {
-		const g = await getRagGraphStats([user.id, SYSTEM_DOCS_USER_ID]);
-		graph = { nodes: g.nodes, edges: g.edges };
-	} catch (err) {
-		console.error('[admin:nrag] graph stats unavailable:', err);
-	}
 
 	return {
 		title: 'nRAG',

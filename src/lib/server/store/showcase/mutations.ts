@@ -1,4 +1,4 @@
-import { DeleteObjectCommand, HeadObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+import { HeadObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { MAX_UPLOAD_SIZE, PRESIGNED_URL_EXPIRY } from '$lib/server/config';
 import { StoreError } from '../errors';
@@ -81,11 +81,4 @@ export async function confirmUpload(key: string): Promise<UploadResult> {
 		size: res.ContentLength ?? 0,
 		contentType: res.ContentType ?? 'unknown',
 	};
-}
-
-/** Delete a single showcase object. */
-export async function deleteShowcaseObject(key: string): Promise<void> {
-	const client = requireS3();
-	assertShowcaseKey(key);
-	await client.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
 }

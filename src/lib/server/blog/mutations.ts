@@ -3,7 +3,7 @@ import type { TranslationMap } from '$lib/i18n/translate';
 import { contentHash } from '$lib/server/content/hash';
 import { db } from '$lib/server/db';
 import { createId } from '$lib/server/db/id';
-import { asset, domain, post, postAsset, postTag, publishedRevision, revision, tag } from '$lib/server/db/schema/blog';
+import { asset, domain, post, postTag, publishedRevision, revision, tag } from '$lib/server/db/schema/blog';
 import { localeRegconfig } from '$lib/server/search/regconfig';
 import { renderBlogPost } from './pipeline';
 import type { BlogAsset, BlogDomain, BlogPost, BlogRevision, BlogTag } from './types';
@@ -294,16 +294,6 @@ export async function createAsset(data: {
 	return row;
 }
 
-/** Link an asset to a post. */
-export async function linkAssetToPost(postId: string, assetId: string): Promise<void> {
-	await db.insert(postAsset).values({ postId, assetId }).onConflictDoNothing();
-}
-
-/** Unlink an asset from a post. */
-export async function unlinkAssetFromPost(postId: string, assetId: string): Promise<void> {
-	await db.delete(postAsset).where(and(eq(postAsset.postId, postId), eq(postAsset.assetId, assetId)));
-}
-
 /** Update asset metadata (alt text, dimensions, folder placement). */
 export async function updateAssetMetadata(
 	assetId: string,
@@ -314,6 +304,12 @@ export async function updateAssetMetadata(
 }
 
 /** Delete an asset record. Fails with FK RESTRICT if still linked to posts. */
+/**
+ * Delete an asset's DB row only. **Caller owns R2 cleanup** — delete the object
+ * (`store/blog.deleteBlogObject(asset.storageKey)`) before calling this, or the object is
+ * orphaned. Kept DB-only on purpose so the blog domain doesn't depend on the store layer;
+ * the sole caller (`DELETE /api/blog/assets/[id]`) removes the object first.
+ */
 export async function deleteAsset(assetId: string): Promise<boolean> {
 	const [row] = await db.delete(asset).where(eq(asset.id, assetId)).returning({ id: asset.id });
 	return !!row;

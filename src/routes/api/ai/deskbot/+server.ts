@@ -5,7 +5,7 @@
 import { safeParse } from 'valibot';
 import { orchestrateChat } from '$lib/server/ai/chat-orchestrator';
 import { guardAiRequest } from '$lib/server/ai/guard';
-import { ChatRequestSchema } from '$lib/server/ai/validation';
+import { DeskRequestSchema } from '$lib/server/ai/validation';
 import { apiError, apiValidationError } from '$lib/server/api/response';
 import type { RequestHandler } from './$types';
 
@@ -20,7 +20,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const body = await request.json().catch(() => null);
 	if (!body) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
 
-	const parsed = safeParse(ChatRequestSchema, body);
+	const parsed = safeParse(DeskRequestSchema, body);
 	if (!parsed.success) return apiValidationError(parsed.issues);
 
 	return orchestrateChat({

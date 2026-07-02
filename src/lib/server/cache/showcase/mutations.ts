@@ -90,18 +90,6 @@ export async function popFromList(key: string, side: 'left' | 'right' = 'left'):
 
 // ─── TTL management ─────────────────────────────────────
 
-export async function setTtl(key: string, seconds: number): Promise<void> {
-	const r = requireRedis();
-	assertShowcaseKey(key);
-	await r.expire(key, seconds);
-}
-
-export async function removeTtl(key: string): Promise<void> {
-	const r = requireRedis();
-	assertShowcaseKey(key);
-	await r.persist(key);
-}
-
 /** Sliding TTL: refresh the TTL to a new value, returns the new TTL. */
 export async function slideTtl(key: string, seconds: number): Promise<number> {
 	const r = requireRedis();

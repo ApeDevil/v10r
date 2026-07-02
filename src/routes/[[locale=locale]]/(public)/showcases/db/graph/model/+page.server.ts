@@ -1,10 +1,12 @@
 import { fail } from '@sveltejs/kit';
+import { isAdmin } from '$lib/server/auth/guards';
 import { getFullGraph, getLabelsWithCounts, getRelTypesWithCounts } from '$lib/server/graph/showcase/queries';
 import { reseedGraph } from '$lib/server/graph/showcase/seed';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
 	const start = performance.now();
+	const admin = isAdmin(locals.user);
 
 	try {
 		const [labels, relTypes, graphData] = await Promise.all([
@@ -15,20 +17,26 @@ export const load: PageServerLoad = async () => {
 
 		const queryMs = Math.round((performance.now() - start) * 100) / 100;
 
-		return { title: 'Model - Graph - Showcases', labels, relTypes, graphData, queryMs };
+		return { title: 'Model - Graph - Showcases', labels, relTypes, graphData, queryMs, isAdmin: admin };
 	} catch (err) {
 		return {
 			labels: [],
 			relTypes: [],
 			graphData: { nodes: [], edges: [], entityTypes: [], relationshipTypes: [] },
 			queryMs: Math.round((performance.now() - start) * 100) / 100,
+			isAdmin: admin,
 			error: err instanceof Error ? err.message : 'Unknown database error',
 		};
 	}
 };
 
 export const actions: Actions = {
-	reseed: async () => {
+	reseed: async ({ locals }) => {
+		// DETACH DELETE + re-CREATE of the demo graph — admin-only (it mutates the shared
+		// Neo4j instance). Public visitors can view the model but not reseed it.
+		if (!isAdmin(locals.user)) {
+			return fail(403, { message: 'Reseeding is restricted to administrators.' });
+		}
 		try {
 			await reseedGraph();
 			return { success: true, message: 'Graph data reset to seed values.' };

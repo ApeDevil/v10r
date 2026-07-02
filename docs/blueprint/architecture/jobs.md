@@ -85,10 +85,20 @@ Vercel sends an HTTP GET to `/api/cron/[job]` on the schedule defined in `vercel
     { "path": "/api/cron/analytics-cleanup", "schedule": "0 2 * * *" },
     { "path": "/api/cron/analytics-rollup", "schedule": "30 2 * * *" },
     { "path": "/api/cron/dbops-refresh", "schedule": "0 4 * * *" },
-    { "path": "/api/cron/dbops-reaper", "schedule": "0 5 * * *" }
+    { "path": "/api/cron/dbops-reaper", "schedule": "0 5 * * *" },
+    { "path": "/api/cron/notification-cleanup", "schedule": "15 3 * * *" },
+    { "path": "/api/cron/telegram-token-cleanup", "schedule": "30 3 * * *" },
+    { "path": "/api/cron/grant-request-expiry", "schedule": "45 3 * * *" },
+    { "path": "/api/cron/discord-token-refresh", "schedule": "0 */6 * * *" },
+    { "path": "/api/cron/desk-rawrag-sync", "schedule": "0 */6 * * *" },
+    { "path": "/api/cron/desk-retention", "schedule": "0 6 * * 0" },
+    { "path": "/api/cron/ai-telemetry-retention", "schedule": "30 6 * * 0" },
+    { "path": "/api/cron/audit-log-retention", "schedule": "0 7 * * 0" }
   ]
 }
 ```
+
+> **Every registered job needs a `vercel.json` cron.** A slug with no entry never fires on Vercel — the registry does not imply a schedule. Earlier only 6 of 11 jobs were scheduled, so `desk-rawrag-sync`, `grant-request-expiry`, `notification-cleanup`, and the two token jobs silently never ran in production. All jobs now carry a cron.
 
 **Strategy B: Persistent scheduler (containers, VPS, Fly, Railway)**
 
@@ -148,6 +158,10 @@ src/lib/server/
     grant-request-expiry.ts
     dbops-refresh.ts
     dbops-reaper.ts
+    desk-rawrag-sync.ts
+    desk-retention.ts
+    ai-telemetry-retention.ts
+    audit-log-retention.ts
 
 src/routes/
   api/
@@ -182,10 +196,28 @@ export const jobs: Record<string, Job> = {
   'grant-request-expiry': { execute: grantRequestExpiry },
   'dbops-refresh': { execute: dbopsRefresh },
   'dbops-reaper': { execute: dbopsReaper },
+  'desk-rawrag-sync': { execute: deskRawragSync },
+  'desk-retention': { execute: deskRetention },
+  'ai-telemetry-retention': { execute: aiTelemetryRetention },
+  'audit-log-retention': { execute: auditLogRetention },
 };
 ```
 
 The slug is the only identifier — it keys the registry, the `vercel.json` cron path, and the `job_slug` column in `job_execution`. Which slugs run on a cron, and when, is defined entirely in `vercel.json`.
+
+---
+
+## Retention Jobs
+
+Three scheduled jobs enforce data-retention windows. Each hard-deletes rows past a max age; all are idempotent and safe to re-run.
+
+| Job | Trims | Window |
+|-----|-------|--------|
+| `desk-retention` | Soft-deleted desk files (cascades to spreadsheet + markdown bodies); prunes `file_revision` history | `DESK_SOFT_DELETE_RETENTION_DAYS` (30d) for files; 90d for revisions |
+| `ai-telemetry-retention` | `ai.conversation_step` rows | 180d |
+| `audit-log-retention` | `admin.audit_log` rows | 365d |
+
+`desk-retention` is the hard-delete tail of the desk soft-delete lifecycle: a file soft-deleted by a user is purged only after the retention window, then its typed body rows are cascaded.
 
 ---
 

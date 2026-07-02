@@ -5,38 +5,80 @@
 
 import type { ToolSet } from 'ai';
 import type { SearchLocale, SearchResult } from '$lib/search/types';
+import { DESK_MUTATE_MAX_STEPS, DESK_READ_MAX_STEPS } from '$lib/server/ai/config';
 import { compactToolResult } from '$lib/server/ai/loop/compact';
-import type { DeskLayoutEntry, DeskToolMeta, DeskToolScope, ToolMeta, ToolRisk } from './_types';
-import { askToolMeta, createAskTools } from './desk-ask';
-import { createCreateTools, createDeleteTools, createToolMeta, deleteToolMeta } from './desk-create';
-import { createReadTools, readToolMeta } from './desk-read';
-import { createWriteTools, writeToolMeta } from './desk-write';
-import { createGetLlmwikiPagesTool, llmwikiPagesToolMeta } from './get-llmwiki-pages';
-import { createGetRawragChunksTool, type DrilledChunkSink, rawragChunksToolMeta } from './get-rawrag-chunks';
-import { createProposePlanTool, proposePlanMeta } from './propose-plan';
+import type { DeskLayoutEntry, DeskToolMeta, DeskToolScope, ToolDescriptor, ToolMeta, ToolRisk } from './_types';
+import { createAskTools } from './desk-ask';
+import { createCreateTools, createDeleteTools } from './desk-create';
+import { createReadTools } from './desk-read';
+import { createWriteTools } from './desk-write';
+import { createGetLlmwikiPagesTool } from './get-llmwiki-pages';
+import { createGetRawragChunksTool, type DrilledChunkSink } from './get-rawrag-chunks';
+import { createProposePlanTool } from './propose-plan';
 import { createResolveRefTool } from './resolve-ref';
-import { type CatalogSink, createSearchCatalogTool, searchCatalogToolMeta } from './search-catalog';
-import { createSearchDocsTool, searchDocsToolMeta } from './search-docs';
+import { type CatalogSink, createSearchCatalogTool } from './search-catalog';
+import { createSearchDocsTool } from './search-docs';
 
-export type { DeskEffect, DeskLayoutEntry, DeskToolMeta, DeskToolScope, ToolMeta, ToolRisk } from './_types';
+export type {
+	DeskEffect,
+	DeskLayoutEntry,
+	DeskToolMeta,
+	DeskToolScope,
+	ToolDescriptor,
+	ToolMeta,
+	ToolRisk,
+} from './_types';
 
-/** Chatbot (retrieval) tool metadata — read-only, NO scope field. */
-export const chatbotToolMeta: Record<string, ToolMeta> = {
-	...llmwikiPagesToolMeta,
-	...rawragChunksToolMeta,
-	...searchCatalogToolMeta,
-	...searchDocsToolMeta,
-};
+/**
+ * The one declarative tool registry — the single source of truth for every tool's
+ * surface, risk, and (for deskbot) gating scope. The metadata maps below are DERIVED
+ * from this list, so a new tool can't drift out of sync with its meta: add one entry
+ * here and the chatbot/deskbot/union maps pick it up automatically.
+ *
+ * The tool *factories* deliberately stay in {@link buildRetrievalTools} /
+ * {@link createDeskTools} rather than living on each descriptor — their signatures are
+ * heterogeneous (per-turn sinks for retrieval, scope-gated batch assembly + deskLayout
+ * for desk), so a uniform `factory` field would force an awkward, riskier shape for no
+ * correctness gain. Instead the builders are locked to this manifest by the drift-guard
+ * test in `index.test.ts`, which asserts each builder's emitted tool set matches the
+ * manifest names for its surface. `resolve_ref` is intentionally absent — it is
+ * compaction infra (AI SDK #9631), never surfaced as a metered/replayable tool.
+ */
+export const TOOL_MANIFEST: readonly ToolDescriptor[] = [
+	// ── chatbot: read-only, grounded retrieval tools (no scope) ──
+	{ name: 'get_llmwiki_pages', surface: 'chatbot', risk: 'read' },
+	{ name: 'get_rawrag_chunks', surface: 'chatbot', risk: 'read' },
+	{ name: 'search_catalog', surface: 'chatbot', risk: 'read' },
+	{ name: 'search_project_docs', surface: 'chatbot', risk: 'read' },
+	// ── deskbot: scope-gated UI-parity tools ──
+	{ name: 'desk_list_files', surface: 'deskbot', risk: 'read', scope: 'desk:read' },
+	{ name: 'desk_read_file', surface: 'deskbot', risk: 'read', scope: 'desk:read' },
+	{ name: 'desk_file_tree', surface: 'deskbot', risk: 'read', scope: 'desk:read' },
+	{ name: 'desk_search_files', surface: 'deskbot', risk: 'read', scope: 'desk:read' },
+	{ name: 'desk_get_open_panels', surface: 'deskbot', risk: 'read', scope: 'desk:read' },
+	{ name: 'desk_update_cells', surface: 'deskbot', risk: 'write', scope: 'desk:write' },
+	{ name: 'desk_rename_file', surface: 'deskbot', risk: 'write', scope: 'desk:write' },
+	{ name: 'desk_update_markdown', surface: 'deskbot', risk: 'write', scope: 'desk:write' },
+	{ name: 'desk_create_spreadsheet', surface: 'deskbot', risk: 'create', scope: 'desk:create' },
+	{ name: 'desk_create_markdown', surface: 'deskbot', risk: 'create', scope: 'desk:create' },
+	{ name: 'desk_delete_file', surface: 'deskbot', risk: 'destructive', scope: 'desk:delete' },
+	{ name: 'desk_search_knowledge', surface: 'deskbot', risk: 'read', scope: 'desk:ask' },
+	// desk_propose_plan is a read-risk primitive gated with the base read scope; it is
+	// mounted whenever a mutating scope is present (see createDeskTools).
+	{ name: 'desk_propose_plan', surface: 'deskbot', risk: 'read', scope: 'desk:read' },
+];
 
-/** Deskbot tool metadata — risk + the desk scope that gates each tool. */
-export const deskbotToolMeta: Record<string, DeskToolMeta> = {
-	...readToolMeta,
-	...writeToolMeta,
-	...createToolMeta,
-	...deleteToolMeta,
-	...askToolMeta,
-	...proposePlanMeta,
-};
+/** Chatbot (retrieval) tool metadata — read-only, NO scope field. Derived from the manifest. */
+export const chatbotToolMeta: Record<string, ToolMeta> = Object.fromEntries(
+	TOOL_MANIFEST.filter((d) => d.surface === 'chatbot').map((d) => [d.name, { risk: d.risk }]),
+);
+
+/** Deskbot tool metadata — risk + the desk scope that gates each tool. Derived from the manifest. */
+export const deskbotToolMeta: Record<string, DeskToolMeta> = Object.fromEntries(
+	TOOL_MANIFEST.filter((d): d is Extract<ToolDescriptor, { surface: 'deskbot' }> => d.surface === 'deskbot').map(
+		(d) => [d.name, { risk: d.risk, scope: d.scope }],
+	),
+);
 
 /** Union of both surfaces — for admin/telemetry that needs every tool regardless of surface. */
 export const allToolMeta: Record<string, ToolMeta> = { ...chatbotToolMeta, ...deskbotToolMeta };
@@ -124,9 +166,9 @@ export function createDeskTools(userId: string, scopes: DeskToolScope[] = [], de
 	return wrapToolsWithCompaction(tools);
 }
 
-/** Determine step limit based on tool scopes. Read-only (incl. desk:ask) = 3, mutation = 5. */
+/** Determine step limit based on tool scopes. Read-only (incl. desk:ask) vs mutation budgets. */
 export function stepsForScopes(scopes: DeskToolScope[]): number {
-	return hasMutatingScope(scopes) ? 5 : 3;
+	return hasMutatingScope(scopes) ? DESK_MUTATE_MAX_STEPS : DESK_READ_MAX_STEPS;
 }
 
 /**

@@ -14,7 +14,9 @@ import {
 import type { Actions, PageServerLoad } from './$types';
 
 const SLUG_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
-const ICON_RE = /^i-(lucide|mdi|ph|tabler)-[a-z0-9-]+$/;
+// Only the lucide collection is registered in presetIcons (uno.config.ts), so
+// non-lucide prefixes would validate but render blank — restrict to lucide.
+const ICON_RE = /^i-lucide-[a-z0-9-]+$/;
 
 export const load: PageServerLoad = async ({ locals }) => {
 	requireAdmin(locals);

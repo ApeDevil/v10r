@@ -72,17 +72,6 @@ export function resolveColors(values: string[]): string[] {
 }
 
 /**
- * Resolve a color string that may contain CSS var() references.
- * Handles:
- *   - 'var(--chart-1)' → resolved computed value
- *   - 'color-mix(in srgb, var(--chart-1) 20%, transparent)' → computed via temp element
- *   - '#ff0000' or 'rgb(...)' → returned as-is
- */
-export function resolveColor(value: string): string {
-	return resolveColors([value])[0];
-}
-
-/**
  * Walk a ChartData object and resolve any CSS var() references in color properties.
  * Returns a new object (does not mutate the original).
  */

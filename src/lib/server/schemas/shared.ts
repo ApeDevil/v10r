@@ -1,8 +1,6 @@
 /** Shared Valibot schema fragments reused across domain modules. */
 import * as v from 'valibot';
 
-export const UuidParam = v.pipe(v.string(), v.uuid());
-
 export const SlugParam = v.pipe(
 	v.string(),
 	v.minLength(1),

@@ -8,7 +8,7 @@
  *
  * Audit: every grant/revoke writes one admin.audit_log row via recordAuditEvent.
  */
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { recordAuditEvent } from '$lib/server/admin/audit';
 import { db } from '$lib/server/db';
 import { createId } from '$lib/server/db/id';
@@ -180,9 +180,16 @@ export async function consumePendingGrantNotifications(userId: string): Promise<
 
 	if (pending.length === 0) return [];
 
-	for (const row of pending) {
-		await markGrantNotified(userId, row.kind);
-	}
+	const kinds = pending.map((r) => r.kind);
+	// Mark exactly the kinds we just read as notified in a single UPDATE instead of
+	// one round-trip per kind. Scoping to `kinds` preserves the original semantics:
+	// a grant arriving between the read and this write is not silently suppressed.
+	await db
+		.update(grant)
+		.set({ notifiedAt: new Date() })
+		.where(
+			and(eq(grant.userId, userId), inArray(grant.kind, kinds), isNull(grant.revokedAt), isNull(grant.notifiedAt)),
+		);
 
-	return pending.map((r) => r.kind);
+	return kinds;
 }

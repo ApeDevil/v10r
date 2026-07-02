@@ -23,12 +23,9 @@ import { SYSTEM_DOCS_USER_ID } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { document } from '$lib/server/db/schema/rag';
 import { retrieve } from '$lib/server/rawrag';
-import type { ToolMeta } from './_types';
 import type { CatalogSink } from './search-catalog';
 
-export const searchDocsToolMeta: Record<string, ToolMeta> = {
-	search_project_docs: { risk: 'read' },
-};
+// Tool metadata (name → risk) lives in the declarative `TOOL_MANIFEST` in `tools/index.ts`.
 
 interface ToolInput {
 	query: string;

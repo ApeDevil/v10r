@@ -1,4 +1,5 @@
 import { fail } from '@sveltejs/kit';
+import { isAdmin } from '$lib/server/auth/guards';
 import { cypher } from '$lib/server/graph';
 import { Neo4jError } from '$lib/server/graph/errors';
 import {
@@ -12,13 +13,18 @@ import type { Actions, PageServerLoad } from './$types';
 /** Block write operations in REPL */
 const WRITE_PATTERN = /\b(CREATE|MERGE|SET|DELETE|DETACH|REMOVE|DROP|CALL\s+\{)\b/i;
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
+	// The Cypher REPL runs arbitrary read queries against a Neo4j instance shared with
+	// per-user RAG data, so it can't be safely label-constrained — it's admin-only.
+	// Every other query on this page is label-scoped to the demo graph (see queries.ts).
+	const admin = isAdmin(locals.user);
 	try {
 		const nodes = await getAllNodes();
-		return { title: 'Traversal - Graph - Showcases', nodes };
+		return { title: 'Traversal - Graph - Showcases', nodes, isAdmin: admin };
 	} catch (err) {
 		return {
 			nodes: [],
+			isAdmin: admin,
 			error: err instanceof Error ? err.message : 'Unknown database error',
 		};
 	}
@@ -69,7 +75,13 @@ export const actions: Actions = {
 		}
 	},
 
-	repl: async ({ request }) => {
+	repl: async ({ request, locals }) => {
+		// Arbitrary Cypher can read any label, incl. per-user RAG :Entity/:Chunk nodes on
+		// this shared instance — admin-only, enforced server-side (not just UI-hidden).
+		if (!isAdmin(locals.user)) {
+			return fail(403, { message: 'The Cypher REPL is restricted to administrators.' });
+		}
+
 		const formData = await request.formData();
 		const query = (formData.get('query') as string)?.trim();
 		if (!query) return fail(400, { message: 'Enter a Cypher query.' });

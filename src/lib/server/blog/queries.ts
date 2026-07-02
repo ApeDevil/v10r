@@ -1,7 +1,7 @@
 import { and, asc, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema/auth';
-import { asset, domain, post, postAsset, postTag, publishedRevision, revision, tag } from '$lib/server/db/schema/blog';
+import { asset, domain, post, postTag, publishedRevision, revision, tag } from '$lib/server/db/schema/blog';
 import { localeRegconfig } from '$lib/server/search/regconfig';
 import type {
 	BlogAsset,
@@ -61,10 +61,6 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 
 	const where = and(...conditions);
 
-	// Get total count
-	const [countResult] = await db.select({ total: count() }).from(post).where(where);
-	const total = countResult?.total ?? 0;
-
 	// Sort
 	const sortColumn = {
 		created: post.createdAt,
@@ -74,68 +70,83 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 		status: post.status,
 	}[sort];
 	const orderFn = dir === 'asc' ? asc : desc;
-
-	// Fetch posts
 	const offset = (page - 1) * pageSize;
-	const posts = await db
-		.select({
-			id: post.id,
-			slug: post.slug,
-			status: post.status,
-			authorId: post.authorId,
-			authorName: user.name,
-			domainId: post.domainId,
-			folderId: post.folderId,
-			publishedAt: post.publishedAt,
-			createdAt: post.createdAt,
-			updatedAt: post.updatedAt,
-			sourcePath: post.sourcePath,
-		})
-		.from(post)
-		.leftJoin(user, eq(post.authorId, user.id))
-		.where(where)
-		.orderBy(orderFn(sortColumn))
-		.limit(pageSize)
-		.offset(offset);
+
+	// Count and first-page fetch are independent — one round-trip wave, not two.
+	const [countRows, posts] = await Promise.all([
+		db.select({ total: count() }).from(post).where(where),
+		db
+			.select({
+				id: post.id,
+				slug: post.slug,
+				status: post.status,
+				authorId: post.authorId,
+				authorName: user.name,
+				domainId: post.domainId,
+				folderId: post.folderId,
+				publishedAt: post.publishedAt,
+				createdAt: post.createdAt,
+				updatedAt: post.updatedAt,
+				sourcePath: post.sourcePath,
+			})
+			.from(post)
+			.leftJoin(user, eq(post.authorId, user.id))
+			.where(where)
+			.orderBy(orderFn(sortColumn))
+			.limit(pageSize)
+			.offset(offset),
+	]);
+	const total = countRows[0]?.total ?? 0;
 
 	if (posts.length === 0) return { items: [], total };
 
-	// Fetch the LATEST revision title/summary per post. DISTINCT ON (post_id) +
-	// ORDER BY (post_id, created_at DESC) returns exactly one row per post straight
-	// from the blog_revision_post_created_idx composite index — instead of reading
-	// every revision of every post and de-duplicating in JS (which grew unbounded
-	// with edits × locales).
+	// Revisions, tags, and domains all depend only on the fetched post IDs, not on
+	// each other — resolve them in one parallel wave instead of three serial ones.
 	const postIds = posts.map((p) => p.id);
-	const latestRevisions = await db
-		.selectDistinctOn([revision.postId], {
-			postId: revision.postId,
-			title: revision.title,
-			summary: revision.summary,
-		})
-		.from(revision)
-		.where(inArray(revision.postId, postIds))
-		.orderBy(revision.postId, desc(revision.createdAt));
+	const domainIds = [...new Set(posts.map((p) => p.domainId).filter(Boolean))] as string[];
+
+	const [latestRevisions, postTagRows, domainRows] = await Promise.all([
+		// LATEST revision title/summary per post. DISTINCT ON (post_id) + ORDER BY
+		// (post_id, created_at DESC) returns one row per post straight from the
+		// blog_revision_post_created_idx composite index — instead of reading every
+		// revision of every post and de-duplicating in JS (unbounded in edits × locales).
+		db
+			.selectDistinctOn([revision.postId], {
+				postId: revision.postId,
+				title: revision.title,
+				summary: revision.summary,
+			})
+			.from(revision)
+			.where(inArray(revision.postId, postIds))
+			.orderBy(revision.postId, desc(revision.createdAt)),
+		db
+			.select({
+				postId: postTag.postId,
+				tagId: tag.id,
+				tagSlug: tag.slug,
+				tagName: tag.name,
+				tagNameI18n: tag.nameI18n,
+				tagIcon: tag.icon,
+				tagColor: tag.color,
+				tagGlyph: tag.glyph,
+			})
+			.from(postTag)
+			.innerJoin(tag, eq(postTag.tagId, tag.id))
+			.where(inArray(postTag.postId, postIds)),
+		domainIds.length > 0
+			? db
+					.select({ id: domain.id, slug: domain.slug, name: domain.name, icon: domain.icon, color: domain.color })
+					.from(domain)
+					.where(inArray(domain.id, domainIds))
+			: Promise.resolve(
+					[] as Array<{ id: string; slug: string; name: string; icon: string | null; color: number | null }>,
+				),
+	]);
 
 	const revisionMap = new Map<string, { title: string; summary: string | null }>();
 	for (const r of latestRevisions) {
 		revisionMap.set(r.postId, { title: r.title, summary: r.summary });
 	}
-
-	// Fetch tags for each post
-	const postTagRows = await db
-		.select({
-			postId: postTag.postId,
-			tagId: tag.id,
-			tagSlug: tag.slug,
-			tagName: tag.name,
-			tagNameI18n: tag.nameI18n,
-			tagIcon: tag.icon,
-			tagColor: tag.color,
-			tagGlyph: tag.glyph,
-		})
-		.from(postTag)
-		.innerJoin(tag, eq(postTag.tagId, tag.id))
-		.where(inArray(postTag.postId, postIds));
 
 	const tagMap = new Map<string, PostListItem['tags']>();
 	for (const row of postTagRows) {
@@ -152,20 +163,12 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 		tagMap.set(row.postId, tags);
 	}
 
-	// Fetch domains for posts that have one
-	const domainIds = [...new Set(posts.map((p) => p.domainId).filter(Boolean))] as string[];
 	const domainMap = new Map<
 		string,
 		{ id: string; slug: string; name: string; icon: string | null; color: number | null }
 	>();
-	if (domainIds.length > 0) {
-		const domainRows = await db
-			.select({ id: domain.id, slug: domain.slug, name: domain.name, icon: domain.icon, color: domain.color })
-			.from(domain)
-			.where(inArray(domain.id, domainIds));
-		for (const d of domainRows) {
-			domainMap.set(d.id, d);
-		}
+	for (const d of domainRows) {
+		domainMap.set(d.id, d);
 	}
 
 	// Search filter (post-query for now; can optimize with search_vector later)
@@ -291,25 +294,6 @@ export async function getPostBySlug(slug: string) {
 		.where(and(eq(post.slug, slug), isNull(post.deletedAt)))
 		.limit(1);
 	return row ?? null;
-}
-
-/** List revisions for a post, newest first. */
-export async function getRevisions(postId: string, locale?: string) {
-	const conditions = [eq(revision.postId, postId)];
-	if (locale) conditions.push(eq(revision.locale, locale));
-
-	return db
-		.select({
-			id: revision.id,
-			revisionNumber: revision.revisionNumber,
-			title: revision.title,
-			locale: revision.locale,
-			authorId: revision.authorId,
-			createdAt: revision.createdAt,
-		})
-		.from(revision)
-		.where(and(...conditions))
-		.orderBy(desc(revision.createdAt));
 }
 
 /** Get the latest revision for a post/locale. */
@@ -550,26 +534,4 @@ export async function listAssets(
 export async function getAssetById(id: string): Promise<BlogAsset | null> {
 	const [row] = await db.select().from(asset).where(eq(asset.id, id)).limit(1);
 	return row ?? null;
-}
-
-/** Get all assets linked to a post. */
-export async function getAssetsForPost(postId: string): Promise<BlogAsset[]> {
-	return db
-		.select({
-			id: asset.id,
-			uploaderId: asset.uploaderId,
-			fileName: asset.fileName,
-			mimeType: asset.mimeType,
-			fileSize: asset.fileSize,
-			storageKey: asset.storageKey,
-			altText: asset.altText,
-			width: asset.width,
-			height: asset.height,
-			folderId: asset.folderId,
-			createdAt: asset.createdAt,
-		})
-		.from(asset)
-		.innerJoin(postAsset, eq(asset.id, postAsset.assetId))
-		.where(eq(postAsset.postId, postId))
-		.orderBy(desc(asset.createdAt));
 }

@@ -4,6 +4,14 @@ import { env } from '$env/dynamic/private';
 import { linkTelegramAccount, sendTelegramMessage } from '$lib/server/notifications/telegram';
 import type { RequestHandler } from './$types';
 
+type TelegramUpdate = {
+	message?: {
+		text?: string;
+		chat: { id: number | string };
+		from?: { username?: string | null };
+	};
+};
+
 function safeEqual(a: string, b: string): boolean {
 	const bufA = Buffer.from(a);
 	const bufB = Buffer.from(b);
@@ -28,15 +36,20 @@ export const POST: RequestHandler = async ({ request }) => {
 	}
 
 	const rawBody = await request.text().catch(() => '');
-	const body = rawBody ? JSON.parse(rawBody) : null;
+	let body: TelegramUpdate | null = null;
+	try {
+		body = rawBody ? (JSON.parse(rawBody) as TelegramUpdate) : null;
+	} catch {
+		// Malformed JSON from a secret-token holder — ack so Telegram stops retrying.
+		return json({ ok: true });
+	}
 	if (!body?.message?.text) {
 		return json({ ok: true });
 	}
 
-	const { message } = body;
-	const chatId = String(message.chat.id);
-	const text: string = message.text;
-	const username = message.from?.username ?? null;
+	const chatId = String(body.message.chat.id);
+	const text = body.message.text;
+	const username = body.message.from?.username ?? null;
 
 	// Only handle /start TOKEN command
 	if (!text.startsWith('/start ')) {

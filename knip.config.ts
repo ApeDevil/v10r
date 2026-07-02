@@ -15,7 +15,6 @@ const config: KnipConfig = {
 	// Files Knip can't trace through Svelte template imports or re-export chains
 	ignore: [
 		// Viz barrel/type files — consumed via parent index.ts re-exports into Svelte templates
-		'src/lib/components/viz/chart/index.ts',
 		'src/lib/components/viz/chart/treemap/types.ts',
 		'src/lib/components/viz/graph/dag/types.ts',
 		'src/lib/components/viz/graph/index.ts',
@@ -27,13 +26,8 @@ const config: KnipConfig = {
 		// Server modules imported via chains Knip's Svelte compiler misses
 		'src/lib/schemas/style.ts',
 		// Dormant — see docs/blueprint/analytics/activation.md
-		'src/lib/server/analytics/hook.ts',
 		'src/lib/server/analytics/index.ts',
-		'src/lib/server/api/pagination.ts',
-		'src/lib/server/api/sse.ts',
-		'src/lib/server/branding/types.ts',
 		'src/lib/server/db/analytics/graph-seed.ts',
-		'src/lib/server/db/analytics/mutations.ts',
 		'src/lib/server/db/rag/setup.ts',
 	],
 

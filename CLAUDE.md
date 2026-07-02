@@ -17,7 +17,7 @@ v10r simultaneously serves as documentation, a test environment, and a reusable 
 | Layer | Technology | Docs |
 |-------|------------|------|
 | Container | Podman | `docs/stack/core/podman.md` |
-| Runtime | Bun | `docs/stack/core/bun.md` |
+| Runtime | Bun (dev/tooling/tests/scripts) · Node 22 on Vercel (prod) | `docs/stack/core/bun.md` |
 | Framework | SvelteKit 2 + Svelte 5 | `docs/stack/core/sveltekit.md`, `docs/stack/core/svelte.md` |
 | Database | PostgreSQL (Neon) + Neo4j (Aura) | `docs/stack/data/postgres.md`, `docs/stack/data/neo4j.md` |
 | ORM | Drizzle | `docs/stack/data/drizzle.md` |

@@ -36,6 +36,8 @@ export const createId = {
 	themePreset: () => `dtp_${shortId()}`,
 	/** Desk markdown: mkd_a8f3e1b2c4d9 */
 	markdown: () => `mkd_${shortId()}`,
+	/** Desk file revision (pre-image snapshot): drv_a8f3e1b2c4d9 */
+	deskRevision: () => `drv_${shortId()}`,
 	/** AI tool call: tcl_a8f3e1b2c4d9 */
 	toolCall: () => `tcl_${shortId()}`,
 	/** AI conversation step: stp_a8f3e1b2c4d9 */

@@ -168,6 +168,18 @@ export const JOB_STARTUP_DELAY_MS = 5_000;
 /** Log retention period (days) */
 export const LOG_RETENTION_DAYS = 90;
 
+/** Hard-delete soft-deleted desk files (+ cascaded spreadsheet/markdown) this many days after deletion. */
+export const DESK_SOFT_DELETE_RETENTION_DAYS = 30;
+
+/** Prune desk file revisions (undo/version history) older than this. */
+export const DESK_REVISION_RETENTION_DAYS = 90;
+
+/** Trim ai.conversation_step usage telemetry older than this. Admin cost/usage views read it → long window. */
+export const AI_TELEMETRY_RETENTION_DAYS = 180;
+
+/** Delete admin audit-log rows older than this. Append-only growth table → bound it, but keep a long (compliance-ish) window. */
+export const AUDIT_RETENTION_DAYS = 365;
+
 // ── Storage ────────────────────────────────────────────────────────────────────
 
 /** Max file upload size (bytes, 2 MB) */
@@ -276,11 +288,6 @@ export const BLOG_PREVIEW_RATE_LIMIT_WINDOW = '60 s' as const;
 export const STYLE_ROLL_RATE_LIMIT_PREFIX = 'ratelimit:style:roll';
 export const STYLE_ROLL_RATE_LIMIT_MAX = 10;
 export const STYLE_ROLL_RATE_LIMIT_WINDOW = '60 s' as const;
-
-/** Desk write operations rate limit: requests per window */
-export const DESK_WRITE_RATE_LIMIT_PREFIX = 'ratelimit:desk:write';
-export const DESK_WRITE_RATE_LIMIT_MAX = 30;
-export const DESK_WRITE_RATE_LIMIT_WINDOW = '60 s' as const;
 
 // ── Feedback ──────────────────────────────────────────────────────────────────
 

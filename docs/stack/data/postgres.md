@@ -39,6 +39,16 @@ A single direct `NEON_DATABASE_URL_PROD` covers both. drizzle-kit requires direc
 
 `NEON_DATABASE_URL_PROD` is this project's own variable name (not the ecosystem-standard `DATABASE_URL`) holding the Neon connection string. An optional `NEON_DATABASE_URL_DEV` labels a spare for the dev branch; it is not read by the app.
 
+### Transactions under Bun (verified)
+
+`db.transaction()` (the `neon-serverless` driver with `poolQueryViaFetch = true`) was probed under the Bun dev container: both ROLLBACK and COMMIT behave correctly. So the 22 `db.transaction()` call sites are safe under Bun, not only under Node on Vercel. This closes a question the pglite unit tests can't answer — they don't exercise the real driver.
+
+Probe: `scripts/db/verify-tx-rollback.ts`
+
+```bash
+podman exec v10r bun run scripts/db/verify-tx-rollback.ts
+```
+
 ## Known limitations
 
 - **Cold starts:** activating from idle takes 500ms–few seconds; requests may time out during reactivation.

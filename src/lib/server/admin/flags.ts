@@ -1,5 +1,4 @@
 import { eq } from 'drizzle-orm';
-import { ADMIN_FLAG_CACHE_TTL_MS } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { systemConfig } from '$lib/server/db/schema/admin';
 
@@ -16,24 +15,6 @@ export function getFlagCacheSize(): number {
 }
 
 // ── Read ──────────────────────────────────────────────────────────────────────
-
-export async function getFlag(key: string): Promise<unknown | null> {
-	const cached = cache.get(key);
-	if (cached && Date.now() - cached.cachedAt < ADMIN_FLAG_CACHE_TTL_MS) {
-		return cached.value;
-	}
-
-	const result = await db.select().from(systemConfig).where(eq(systemConfig.key, key)).limit(1);
-
-	if (result.length === 0) {
-		cache.set(key, { value: null, cachedAt: Date.now() });
-		return null;
-	}
-
-	const value = result[0].value;
-	cache.set(key, { value, cachedAt: Date.now() });
-	return value;
-}
 
 export async function getAllFlags() {
 	return db.select().from(systemConfig).orderBy(systemConfig.key);

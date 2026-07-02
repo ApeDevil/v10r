@@ -3,6 +3,16 @@ import { cypher } from '../index';
 import type { Neo4jNodeRecord, Neo4jRelRecord } from '../types';
 import { toKnowledgeData } from '../types';
 
+// ─── Tenant isolation ──────────────────────────────────
+// This Neo4j instance is SHARED: alongside the public "Tech Stack" demo graph it
+// also holds per-user RAG `:Entity`/`:Chunk` nodes (owned via an `ownerId` property).
+// Aura free = one database, so the demo can't live on a separate instance. Every
+// query below is therefore constrained to the four demo labels so a public,
+// unauthenticated showcase can NEVER read another user's private graph data.
+// The arbitrary-Cypher REPL (which can't be label-constrained) is admin-gated at the
+// route. See docs/stack/data/neo4j.md.
+const DEMO_LABELS = ['Layer', 'Technology', 'Concept', 'Showcase'];
+
 // ─── Sanitization ──────────────────────────────────────
 
 /** Strip non-alphanumeric characters to prevent Cypher injection via label/type names.
@@ -26,14 +36,30 @@ interface ConnectionInfo {
 }
 
 export async function verifyConnection(): Promise<ConnectionInfo> {
+	// Node/rel/label/relType stats are scoped to the demo subgraph — the connection
+	// page describes the demo, not the co-resident tenant RAG data.
 	const [components, nodeCounts, relCounts, labels, relTypes] = await Promise.all([
 		cypher<{ name: string; versions: string[]; edition: string }>(
 			`CALL dbms.components() YIELD name, versions, edition RETURN name, versions, edition`,
 		),
-		cypher<{ count: number }>('MATCH (n) RETURN count(n) AS count'),
-		cypher<{ count: number }>('MATCH ()-[r]->() RETURN count(r) AS count'),
-		cypher<{ label: string }>('CALL db.labels() YIELD label RETURN label'),
-		cypher<{ relationshipType: string }>('CALL db.relationshipTypes() YIELD relationshipType RETURN relationshipType'),
+		cypher<{ count: number }>('MATCH (n) WHERE any(l IN labels(n) WHERE l IN $demo) RETURN count(n) AS count', {
+			demo: DEMO_LABELS,
+		}),
+		cypher<{ count: number }>(
+			`MATCH (a)-[r]->(b)
+			 WHERE any(l IN labels(a) WHERE l IN $demo) AND any(l IN labels(b) WHERE l IN $demo)
+			 RETURN count(r) AS count`,
+			{ demo: DEMO_LABELS },
+		),
+		cypher<{ label: string }>('UNWIND $demo AS label MATCH (n) WHERE label IN labels(n) RETURN DISTINCT label', {
+			demo: DEMO_LABELS,
+		}),
+		cypher<{ relationshipType: string }>(
+			`MATCH (a)-[r]->(b)
+			 WHERE any(l IN labels(a) WHERE l IN $demo) AND any(l IN labels(b) WHERE l IN $demo)
+			 RETURN DISTINCT type(r) AS relationshipType`,
+			{ demo: DEMO_LABELS },
+		),
 	]);
 
 	const comp = components[0];
@@ -58,18 +84,21 @@ interface LabelInfo {
 }
 
 export async function getLabelsWithCounts(): Promise<LabelInfo[]> {
+	// Iterate the demo labels directly instead of CALL db.labels() (which would also
+	// surface :Entity/:Chunk).
 	const [counts, samples] = await Promise.all([
 		cypher<{ label: string; count: number }>(
-			`CALL db.labels() YIELD label
+			`UNWIND $demo AS label
 			 CALL {
 			   WITH label
 			   MATCH (n) WHERE label IN labels(n)
 			   RETURN count(n) AS count
 			 }
 			 RETURN label, count`,
+			{ demo: DEMO_LABELS },
 		),
 		cypher<{ label: string; keys: string[] }>(
-			`CALL db.labels() YIELD label
+			`UNWIND $demo AS label
 			 CALL {
 			   WITH label
 			   MATCH (n) WHERE label IN labels(n)
@@ -77,6 +106,7 @@ export async function getLabelsWithCounts(): Promise<LabelInfo[]> {
 			   RETURN keys(n) AS keys
 			 }
 			 RETURN label, keys`,
+			{ demo: DEMO_LABELS },
 		),
 	]);
 
@@ -97,25 +127,20 @@ interface RelTypeInfo {
 }
 
 export async function getRelTypesWithCounts(): Promise<RelTypeInfo[]> {
+	// Derive relationship types from demo→demo edges only (not CALL db.relationshipTypes()).
 	const [counts, samples] = await Promise.all([
 		cypher<{ type: string; count: number }>(
-			`CALL db.relationshipTypes() YIELD relationshipType
-			 CALL {
-			   WITH relationshipType
-			   MATCH ()-[r]->() WHERE type(r) = relationshipType
-			   RETURN count(r) AS count
-			 }
-			 RETURN relationshipType AS type, count`,
+			`MATCH (a)-[r]->(b)
+			 WHERE any(l IN labels(a) WHERE l IN $demo) AND any(l IN labels(b) WHERE l IN $demo)
+			 RETURN type(r) AS type, count(r) AS count`,
+			{ demo: DEMO_LABELS },
 		),
 		cypher<{ type: string; startLabel: string; endLabel: string }>(
-			`CALL db.relationshipTypes() YIELD relationshipType
-			 CALL {
-			   WITH relationshipType
-			   MATCH (a)-[r]->(b) WHERE type(r) = relationshipType
-			   RETURN labels(a)[0] AS startLabel, labels(b)[0] AS endLabel
-			   LIMIT 1
-			 }
-			 RETURN relationshipType AS type, startLabel, endLabel`,
+			`MATCH (a)-[r]->(b)
+			 WHERE any(l IN labels(a) WHERE l IN $demo) AND any(l IN labels(b) WHERE l IN $demo)
+			 WITH type(r) AS type, labels(a)[0] AS startLabel, labels(b)[0] AS endLabel
+			 RETURN type, collect(startLabel)[0] AS startLabel, collect(endLabel)[0] AS endLabel`,
+			{ demo: DEMO_LABELS },
 		),
 	]);
 
@@ -131,10 +156,15 @@ export async function getRelTypesWithCounts(): Promise<RelTypeInfo[]> {
 
 export async function getFullGraph(): Promise<KnowledgeData> {
 	const [nodeRows, relRows] = await Promise.all([
-		cypher<{ n: Neo4jNodeRecord }>('MATCH (n) RETURN n'),
+		cypher<{ n: Neo4jNodeRecord }>('MATCH (n) WHERE any(l IN labels(n) WHERE l IN $demo) RETURN n LIMIT 500', {
+			demo: DEMO_LABELS,
+		}),
 		cypher<{ r: Neo4jRelRecord; startId: string; endId: string }>(
 			`MATCH (a)-[r]->(b)
-			 RETURN r, elementId(a) AS startId, elementId(b) AS endId`,
+			 WHERE any(l IN labels(a) WHERE l IN $demo) AND any(l IN labels(b) WHERE l IN $demo)
+			 RETURN r, elementId(a) AS startId, elementId(b) AS endId
+			 LIMIT 1000`,
+			{ demo: DEMO_LABELS },
 		),
 	]);
 
@@ -158,9 +188,11 @@ interface NodeSummary {
 
 export async function getAllNodes(): Promise<NodeSummary[]> {
 	return cypher<NodeSummary>(
-		`MATCH (n)
+		`MATCH (n) WHERE any(l IN labels(n) WHERE l IN $demo)
 		 RETURN elementId(n) AS elementId, labels(n)[0] AS label, n.name AS name
-		 ORDER BY labels(n)[0], n.name`,
+		 ORDER BY labels(n)[0], n.name
+		 LIMIT 500`,
+		{ demo: DEMO_LABELS },
 	);
 }
 
@@ -178,34 +210,39 @@ interface NodeWithConnections {
 }
 
 export async function getNodeWithConnections(elementId: string): Promise<NodeWithConnections | null> {
-	const [nodeRow] = await cypher<{ n: Neo4jNodeRecord }>('MATCH (n) WHERE elementId(n) = $id RETURN n', {
-		id: elementId,
-	});
+	// Central node must be a demo node — a leaked :Entity elementId returns null.
+	const [nodeRow] = await cypher<{ n: Neo4jNodeRecord }>(
+		'MATCH (n) WHERE elementId(n) = $id AND any(l IN labels(n) WHERE l IN $demo) RETURN n',
+		{ id: elementId, demo: DEMO_LABELS },
+	);
 	if (!nodeRow) return null;
 
-	const outgoing = await cypher<{
-		relType: string;
-		neighborId: string;
-		neighborName: string;
-		neighborLabel: string;
-	}>(
-		`MATCH (n)-[r]->(m) WHERE elementId(n) = $id
-		 RETURN type(r) AS relType, elementId(m) AS neighborId,
-		        m.name AS neighborName, labels(m)[0] AS neighborLabel`,
-		{ id: elementId },
-	);
-
-	const incoming = await cypher<{
-		relType: string;
-		neighborId: string;
-		neighborName: string;
-		neighborLabel: string;
-	}>(
-		`MATCH (n)<-[r]-(m) WHERE elementId(n) = $id
-		 RETURN type(r) AS relType, elementId(m) AS neighborId,
-		        m.name AS neighborName, labels(m)[0] AS neighborLabel`,
-		{ id: elementId },
-	);
+	// Neighbors are likewise constrained to demo labels (defense in depth against a
+	// hypothetical cross-subgraph relationship).
+	const [outgoing, incoming] = await Promise.all([
+		cypher<{
+			relType: string;
+			neighborId: string;
+			neighborName: string;
+			neighborLabel: string;
+		}>(
+			`MATCH (n)-[r]->(m) WHERE elementId(n) = $id AND any(l IN labels(m) WHERE l IN $demo)
+			 RETURN type(r) AS relType, elementId(m) AS neighborId,
+			        m.name AS neighborName, labels(m)[0] AS neighborLabel`,
+			{ id: elementId, demo: DEMO_LABELS },
+		),
+		cypher<{
+			relType: string;
+			neighborId: string;
+			neighborName: string;
+			neighborLabel: string;
+		}>(
+			`MATCH (n)<-[r]-(m) WHERE elementId(n) = $id AND any(l IN labels(m) WHERE l IN $demo)
+			 RETURN type(r) AS relType, elementId(m) AS neighborId,
+			        m.name AS neighborName, labels(m)[0] AS neighborLabel`,
+			{ id: elementId, demo: DEMO_LABELS },
+		),
+	]);
 
 	return {
 		elementId,
@@ -229,9 +266,11 @@ export async function findShortestPath(fromId: string, toId: string): Promise<Pa
 	const rows = await cypher<{ nodes: Neo4jNodeRecord[]; rels: Neo4jRelRecord[] }>(
 		`MATCH (a), (b)
 		 WHERE elementId(a) = $fromId AND elementId(b) = $toId
+		   AND any(l IN labels(a) WHERE l IN $demo) AND any(l IN labels(b) WHERE l IN $demo)
 		 MATCH path = shortestPath((a)-[*..10]-(b))
+		 WHERE all(x IN nodes(path) WHERE any(l IN labels(x) WHERE l IN $demo))
 		 RETURN [n IN nodes(path) | n] AS nodes, [r IN relationships(path) | r] AS rels`,
-		{ fromId, toId },
+		{ fromId, toId, demo: DEMO_LABELS },
 	);
 
 	if (rows.length === 0) return [];
@@ -262,10 +301,12 @@ interface Recommendation {
 
 export async function getRecommendations(nodeId: string): Promise<Recommendation[]> {
 	return cypher<Recommendation>(
-		`MATCH (source) WHERE elementId(source) = $nodeId
+		`MATCH (source) WHERE elementId(source) = $nodeId AND any(l IN labels(source) WHERE l IN $demo)
 		 MATCH (source)-[r1]-(intermediate)-[r2]-(recommended)
 		 WHERE recommended <> source
 		   AND NOT (source)-[]-(recommended)
+		   AND any(l IN labels(intermediate) WHERE l IN $demo)
+		   AND any(l IN labels(recommended) WHERE l IN $demo)
 		 WITH recommended, count(DISTINCT intermediate) AS score,
 		      collect(DISTINCT intermediate.name)[0] AS via
 		 RETURN elementId(recommended) AS elementId,
@@ -275,6 +316,6 @@ export async function getRecommendations(nodeId: string): Promise<Recommendation
 		        via
 		 ORDER BY score DESC
 		 LIMIT 10`,
-		{ nodeId },
+		{ nodeId, demo: DEMO_LABELS },
 	);
 }

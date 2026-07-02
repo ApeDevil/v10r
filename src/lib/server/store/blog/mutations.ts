@@ -89,6 +89,3 @@ export async function deleteBlogObject(key: string): Promise<void> {
 	assertBlogKey(key);
 	await client.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
 }
-
-/** Blog MIME allowlist (exported for client-side validation). */
-export const BLOG_ALLOWED_MIME_TYPES = ALLOWED_MIME_TYPES;

@@ -12,13 +12,14 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const item = await getFeedback(params.id);
 	if (!item) error(404, 'Not Found');
 
-	const journey = await getFeedbackJourney(item.sessionId);
-
-	// Auto-mark new submissions as read on first view.
-	if (item.status === 'new') {
-		await setFeedbackStatus(item.id, 'read');
-		item.status = 'read';
-	}
+	// The journey read and the auto-mark-read write are independent (both key off
+	// the already-loaded item) — overlap them instead of running serially.
+	const wasNew = item.status === 'new';
+	const [journey] = await Promise.all([
+		getFeedbackJourney(item.sessionId),
+		wasNew ? setFeedbackStatus(item.id, 'read') : Promise.resolve(),
+	]);
+	if (wasNew) item.status = 'read';
 
 	return { title: `${item.subject} · Feedback · Admin`, item, journey };
 };

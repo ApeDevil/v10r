@@ -14,18 +14,37 @@
  * calls are impossible by construction rather than checked at runtime.
  */
 
+import type { ToolRisk } from '$lib/server/ai/tools/_types';
+
 /** Input for the plan-gating predicate. */
 export interface PlanPredicateInput {
+	/** The turn can mutate desk state — a write/create/delete scope is granted. */
+	mutatingScopeGranted: boolean;
+	/** The user's phrasing signals a destructive / overwrite / bulk operation. */
 	destructiveIntent: boolean;
-	destructiveToolCount: number;
-	targetEntityCount: number;
 }
 
 /**
- * Decide whether a turn must produce a plan before executing.
- * Three-condition AND: destructive intent + >=2 destructive tools + >=2 targets.
- * The AND keeps one-shot interactions free of a planning latency tax.
+ * Decide whether a turn should be *instructed* to plan first (inject the
+ * `<planning>` block so the model batches its work into one `desk_propose_plan`).
+ *
+ * WIDENED: the old three-condition AND (>=2 tools + >=2 targets) let every
+ * single-target destructive op — overwrite one doc, clear one sheet, delete one
+ * file — skip planning entirely. That gate is gone. This is now soft guidance
+ * only: the *hard* gate lives at the tool layer, where destructive/overwrite
+ * tools return a `requiresApproval` sentinel instead of mutating, so the actual
+ * mutation can only happen via the server-verified proposal approve-route replay.
  */
 export function shouldRequirePlan(input: PlanPredicateInput): boolean {
-	return input.destructiveIntent && input.destructiveToolCount >= 2 && input.targetEntityCount >= 2;
+	return input.mutatingScopeGranted && input.destructiveIntent;
+}
+
+/**
+ * True when a desk tool's risk demands a human-approved proposal before it may
+ * mutate. `write` (overwrites an existing entity) and `destructive` (delete /
+ * unrecoverable) are gated; `read` and `create` (reversible via soft-delete) are
+ * not. This is the single rule the tool layer and the orchestrator agree on.
+ */
+export function requiresApproval(risk: ToolRisk): boolean {
+	return risk === 'write' || risk === 'destructive';
 }

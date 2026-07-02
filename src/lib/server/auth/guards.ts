@@ -2,31 +2,17 @@ import { error, redirect } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { localizeHref } from '$lib/i18n';
 import { apiError } from '$lib/server/api/response';
+import { parseAdminIds } from './admin-ids';
 
 /**
- * Admin gate.
- *
- * `ADMIN_USER_ID` is a comma-separated list of admin user ids (one per admin).
- * IDs are immutable, so admin can't be transferred by re-claiming an email.
- * Bootstrap a fresh install by signing in once (any OAuth method creates the
- * user row), then copy that row's id (auth."user".id) into ADMIN_USER_ID.
- *
- * Exported so the root layout drives admin-nav visibility from the same source
- * of truth as the route guards — no divergent second check.
+ * Admin gate. `ADMIN_USER_ID` semantics + parsing live in `./admin-ids` (single source of
+ * truth, shared with the framework-free AI orchestrator). Exported so the root layout drives
+ * admin-nav visibility from the same check as the route guards — no divergent second copy.
  */
-function splitEnvList(raw: string | undefined): string[] {
-	return (
-		raw
-			?.split(',')
-			.map((s) => s.trim())
-			.filter(Boolean) ?? []
-	);
-}
-
 export function isAdmin(user: { id: string } | null | undefined): boolean {
 	if (!user) return false;
-	// IDs are case-sensitive opaque tokens — compare exactly (trim only).
-	return splitEnvList(env.ADMIN_USER_ID).includes(user.id);
+	// IDs are case-sensitive opaque tokens — compare exactly (parseAdminIds trims only).
+	return parseAdminIds(env.ADMIN_USER_ID).includes(user.id);
 }
 
 export function requireAuth(locals: App.Locals, returnTo?: string) {

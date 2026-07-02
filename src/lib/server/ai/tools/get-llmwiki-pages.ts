@@ -9,11 +9,8 @@
 import { jsonSchema, tool } from 'ai';
 import { MAX_LLMWIKI_TOOL_IDS } from '$lib/server/llmwiki/config';
 import { fetchPagesByIds } from '$lib/server/llmwiki/queries';
-import type { ToolMeta } from './_types';
 
-export const llmwikiPagesToolMeta: Record<string, ToolMeta> = {
-	get_llmwiki_pages: { risk: 'read' },
-};
+// Tool metadata (name → risk) lives in the declarative `TOOL_MANIFEST` in `tools/index.ts`.
 
 interface ToolInput {
 	ids: string[];

@@ -23,6 +23,38 @@
 		{
 			"path": "/api/cron/dbops-reaper",
 			"schedule": "0 5 * * *"
+		},
+		{
+			"path": "/api/cron/notification-cleanup",
+			"schedule": "15 3 * * *"
+		},
+		{
+			"path": "/api/cron/telegram-token-cleanup",
+			"schedule": "30 3 * * *"
+		},
+		{
+			"path": "/api/cron/grant-request-expiry",
+			"schedule": "45 3 * * *"
+		},
+		{
+			"path": "/api/cron/discord-token-refresh",
+			"schedule": "0 */6 * * *"
+		},
+		{
+			"path": "/api/cron/desk-rawrag-sync",
+			"schedule": "0 */6 * * *"
+		},
+		{
+			"path": "/api/cron/desk-retention",
+			"schedule": "0 6 * * 0"
+		},
+		{
+			"path": "/api/cron/ai-telemetry-retention",
+			"schedule": "30 6 * * 0"
+		},
+		{
+			"path": "/api/cron/audit-log-retention",
+			"schedule": "0 7 * * 0"
 		}
 	]
 }

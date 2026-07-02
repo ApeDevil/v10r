@@ -5,22 +5,25 @@ import type { PageServerLoad } from './$types';
 const PAGE_SIZE = 12;
 
 export const load: PageServerLoad = async ({ params, url }) => {
-	const domainRow = await getDomainBySlug(params.domain);
+	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
+
+	// The domain lookup (for the 404 + display name) and the post list both key off
+	// params.domain independently — fetch them in parallel.
+	const [domainRow, { items, total }] = await Promise.all([
+		getDomainBySlug(params.domain),
+		listPosts({
+			status: 'published',
+			domainSlug: params.domain,
+			page,
+			pageSize: PAGE_SIZE,
+			sort: 'published',
+			dir: 'desc',
+		}),
+	]);
 
 	if (!domainRow) {
 		error(404, 'Domain not found');
 	}
-
-	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
-
-	const { items, total } = await listPosts({
-		status: 'published',
-		domainSlug: params.domain,
-		page,
-		pageSize: PAGE_SIZE,
-		sort: 'published',
-		dir: 'desc',
-	});
 
 	return {
 		title: `${domainRow.name} - Blog`,

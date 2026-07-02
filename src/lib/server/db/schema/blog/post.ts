@@ -4,15 +4,17 @@
  * Soft-deletable via deleted_at.
  *
  * BLOG DOMAIN — Subject area taxonomy (one per post).
- * Defined here (above post) to avoid circular imports — domain.ts would
- * need blogSchema from this file, and this file needs domain for the FK.
+ * Co-located here (above post) so post.domainId can reference it directly.
+ * The `blog` schema object lives in ./schema so folder/cover FKs can be wired
+ * inline without the post ↔ folder/asset import cycle re-forming.
  */
 import { sql } from 'drizzle-orm';
-import { check, index, integer, jsonb, pgSchema, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { type AnyPgColumn, check, index, integer, jsonb, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import type { TranslationMap } from '$lib/i18n/translate';
 import { user } from '../auth/_better-auth';
-
-export const blogSchema = pgSchema('blog');
+import { asset } from './asset';
+import { postFolder } from './post-folder';
+import { blogSchema } from './schema';
 
 export const domain = blogSchema.table(
 	'domain',
@@ -43,10 +45,11 @@ export const post = blogSchema.table(
 		authorId: text('author_id')
 			.notNull()
 			.references(() => user.id, { onDelete: 'restrict' }),
-		coverImageId: text('cover_image_id'),
+		/** Cover image. Deleting the asset clears the cover (SET NULL) rather than blocking. */
+		coverImageId: text('cover_image_id').references((): AnyPgColumn => asset.id, { onDelete: 'set null' }),
 		domainId: text('domain_id').references(() => domain.id, { onDelete: 'set null' }),
-		/** Parent folder (nullable = root level under virtual:blog). FK defined below to avoid circular imports. */
-		folderId: text('folder_id'),
+		/** Parent folder (nullable = root level under virtual:blog). Deleting a folder orphans posts to root (SET NULL). */
+		folderId: text('folder_id').references(() => postFolder.id, { onDelete: 'set null' }),
 		status: postStatusEnum('status').notNull().default('draft'),
 		publishedAt: timestamp('published_at', { withTimezone: true }),
 		deletedAt: timestamp('deleted_at', { withTimezone: true }),
@@ -68,5 +71,8 @@ export const post = blogSchema.table(
 		check('slug_format', sql`${table.slug} ~ '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$'`),
 		index('blog_post_domain_idx').on(table.domainId),
 		index('blog_post_author_folder_idx').on(table.authorId, table.folderId),
+		// Single-column FK indexes back the ON DELETE SET NULL scans (folder / cover-asset delete).
+		index('blog_post_folder_idx').on(table.folderId),
+		index('blog_post_cover_image_idx').on(table.coverImageId),
 	],
 );

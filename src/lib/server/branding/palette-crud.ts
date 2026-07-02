@@ -57,15 +57,6 @@ export async function getCustomPaletteById(id: string): Promise<CustomPaletteRow
 	return value;
 }
 
-export async function getCustomPalette(id: string, userId: string) {
-	const [palette] = await db
-		.select()
-		.from(customPalettes)
-		.where(and(eq(customPalettes.id, id), eq(customPalettes.createdBy, userId)))
-		.limit(1);
-	return palette ?? null;
-}
-
 export async function listCustomPalettes(userId: string) {
 	return db.select().from(customPalettes).where(eq(customPalettes.createdBy, userId)).orderBy(customPalettes.createdAt);
 }

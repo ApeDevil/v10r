@@ -375,23 +375,6 @@ export const MODELS: Model3D[] = [
 /** Map of model ID to config for O(1) lookup */
 export const MODELS_BY_ID = new Map(MODELS.map((m) => [m.id, m]));
 
-/** Get a model config by ID. Throws if not found. */
-export function getModel(id: string): Model3D {
-	const model = MODELS_BY_ID.get(id);
-	if (!model) throw new Error(`Unknown model: "${id}". Available: ${MODELS.map((m) => m.id).join(', ')}`);
-	return model;
-}
-
-/** Get all unique tags across all models */
-export function getAllTags(): string[] {
-	return [...new Set(MODELS.flatMap((m) => m.tags))].sort();
-}
-
-/** Filter models by tag */
-export function getModelsByTag(tag: string): Model3D[] {
-	return MODELS.filter((m) => m.tags.includes(tag));
-}
-
 // ---------------------------------------------------------------------------
 // Defaults — consumed by SceneCard and SceneViewport to fill gaps
 // ---------------------------------------------------------------------------

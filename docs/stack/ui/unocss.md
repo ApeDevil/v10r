@@ -77,9 +77,22 @@ Container queries enable component-scoped responsive design. Wrap with `@contain
 
 See [styling.md](../../blueprint/design/styling.md#container-queries) for detailed patterns.
 
+## Opacity modifiers on token colors
+
+Opacity modifiers on CSS-variable color tokens render at **full opacity** — `bg-muted/10` emits `background-color: var(--color-muted)` with no alpha. UnoCSS can't split a hex CSS var into RGB channels, so it drops the modifier. Broken in **both** `.svelte` and `.ts` files.
+
+**Workaround** — scoped CSS with `color-mix()`:
+
+```css
+background-color: color-mix(in srgb, var(--color-muted) 10%, transparent);
+```
+
+A gate check — `scripts/quality/no-token-opacity.ts`, wired into `bun run validate` as `quality:opacity` — fails the build on any new `<util>-<token>/<digits>` usage. The six menu components that pair a marker class with a `color-mix()` override are allowlisted in the script; grow that list only alongside a matching override.
+
 ## Known limitations
 
-- **Cannot extract complex classes from `.ts` files** — opacity modifiers (`/10`) on CSS-variable colors break in all file types; CVA variant classes need scoped-CSS fallbacks (`color-mix()`). See the `unocss` skill and Button/Input components for the pattern.
+- **Cannot extract complex classes from `.ts` files** — CVA variant classes need scoped-CSS fallbacks (`color-mix()`). See the `unocss` skill and Button/Input components for the pattern.
+- **Opacity modifiers on token colors** silently render at full opacity — see [Opacity modifiers on token colors](#opacity-modifiers-on-token-colors).
 - No Tailwind plugins (presets only); no built-in preflight reset.
 
 ## Related

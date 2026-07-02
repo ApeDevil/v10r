@@ -44,6 +44,17 @@ export interface DeskToolMeta extends ToolMeta {
 	scope: DeskToolScope;
 }
 
+/**
+ * One entry in the declarative tool registry (`TOOL_MANIFEST` in `tools/index.ts`) — the
+ * single source of truth for a tool's surface + risk (+ gating scope for deskbot). The
+ * derived meta maps (`chatbotToolMeta`/`deskbotToolMeta`/`allToolMeta`) are projected from
+ * this, so they can't drift from the manifest. Chatbot tools carry no scope; deskbot tools
+ * always do — enforced by this discriminated union.
+ */
+export type ToolDescriptor =
+	| { name: string; surface: 'chatbot'; risk: ToolRisk }
+	| { name: string; surface: 'deskbot'; risk: ToolRisk; scope: DeskToolScope };
+
 /** Desk layout entry from the client request body. */
 export interface DeskLayoutEntry {
 	panelId: string;

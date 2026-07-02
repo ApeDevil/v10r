@@ -18,8 +18,8 @@
 import { sql } from 'drizzle-orm';
 import { check, foreignKey, index, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
-import { blogSchema } from './post';
 import { publishedRevision } from './published-revision';
+import { blogSchema } from './schema';
 
 export const commentStatusEnum = blogSchema.enum('comment_status', ['visible', 'hidden', 'removed']);
 

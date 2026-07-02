@@ -30,13 +30,6 @@ export class GrantRequestPendingError extends Error {
 	}
 }
 
-export class GrantAlreadyExistsError extends Error {
-	readonly code = 'grant_already_exists' as const;
-	constructor() {
-		super('User already has an active grant for this kind');
-	}
-}
-
 export async function createGrantRequest(params: CreateRequestParams): Promise<{ id: string }> {
 	const { userId, kind, message } = params;
 

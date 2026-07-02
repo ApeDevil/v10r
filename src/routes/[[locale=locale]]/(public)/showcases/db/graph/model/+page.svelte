@@ -160,14 +160,16 @@ function handleActionResult() {
 								<Typography variant="h5" as="h2">{m.showcase_db_graph_model_card_graph()}</Typography>
 								<Typography variant="muted" as="p">Interactive visualization of all nodes and relationships. Filter by entity type or search by name.</Typography>
 							</div>
-							<Button
-								variant="outline"
-								size="sm"
-								onclick={() => (resetDialogOpen = true)}
-							>
-								<span class="i-lucide-refresh-cw h-4 w-4 mr-1" ></span>
-								{m.showcase_db_graph_model_reset()}
-							</Button>
+							{#if data.isAdmin}
+								<Button
+									variant="outline"
+									size="sm"
+									onclick={() => (resetDialogOpen = true)}
+								>
+									<span class="i-lucide-refresh-cw h-4 w-4 mr-1" ></span>
+									{m.showcase_db_graph_model_reset()}
+								</Button>
+							{/if}
 						</Cluster>
 					{/snippet}
 

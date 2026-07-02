@@ -15,8 +15,8 @@ export type SearchStatus = 'idle' | 'loading' | 'done' | 'error';
 export function createSearchEngine() {
 	let query = $state('');
 	let locale = $state<SearchLocale>('en');
-	let records = $state<SearchRecord[]>([]);
-	let asyncResults = $state<SearchResult[]>([]);
+	let records = $state.raw<SearchRecord[]>([]);
+	let asyncResults = $state.raw<SearchResult[]>([]);
 	let status = $state<SearchStatus>('idle');
 
 	let shardLocale: string | null = null;

@@ -16,7 +16,7 @@ import {
 import type { SearchLocale, SearchResult } from '$lib/search/types';
 import { getActiveProvider, getActiveProviderInfo, getFallbacksForUser, getToolProvider } from '$lib/server/ai';
 import { chargeTokens } from '$lib/server/ai/budget';
-import { MAX_TOKENS } from '$lib/server/ai/config';
+import { CHATBOT_MAX_STEPS, MAX_TOKENS } from '$lib/server/ai/config';
 import {
 	buildPromptAssembledEvent,
 	buildSystemPrompt,
@@ -30,7 +30,14 @@ import { shouldRequirePlan } from '$lib/server/ai/policy';
 import { incrProvider429 } from '$lib/server/ai/provider-usage';
 import type { ProviderEntry } from '$lib/server/ai/providers';
 import { isCooledDown, markCooldown } from '$lib/server/ai/providers';
-import { buildRetrievalTools, createDeskTools, type DeskToolScope, stepsForScopes } from '$lib/server/ai/tools';
+import {
+	buildRetrievalTools,
+	createDeskTools,
+	type DeskToolScope,
+	getToolRisk,
+	stepsForScopes,
+} from '$lib/server/ai/tools';
+import { isAdminUserId as isAdminUser } from '$lib/server/auth/admin-ids';
 import { PROJECT_DOCS_COLLECTION_ID, SYSTEM_DOCS_USER_ID } from '$lib/server/config';
 import { checkConversationLimit } from '$lib/server/db/ai/limits';
 import {
@@ -43,7 +50,7 @@ import {
 } from '$lib/server/db/ai/mutations';
 import { createProposal, getProposal } from '$lib/server/db/ai/proposals';
 import { getConversation } from '$lib/server/db/ai/queries';
-import type { ProposalExecutionResult } from '$lib/server/db/schema/ai/proposal';
+import type { ProposalExecutionResult, ProposedToolCall } from '$lib/server/db/schema/ai/proposal';
 import { MAX_RAWRAG_TOOL_CALLS_PER_TURN } from '$lib/server/llmwiki/config';
 import { loadOverview } from '$lib/server/llmwiki/overview';
 import { searchLlmwiki } from '$lib/server/llmwiki/search';
@@ -271,21 +278,6 @@ async function resolveResumeContext(
 	}
 
 	return { summary: formatExecutionSummary(proposal.id, proposal.executionResult) };
-}
-
-/**
- * Admin check, framework-free (mirrors `auth/guards.isAdmin` without its SvelteKit
- * import so this domain module stays reusable). `ADMIN_USER_ID` is a comma list of ids.
- * Gates the FULL prompt TEXT in the trace — never the token counts.
- */
-function isAdminUser(userId: string): boolean {
-	const raw = process.env.ADMIN_USER_ID;
-	if (!raw) return false;
-	return raw
-		.split(',')
-		.map((s) => s.trim())
-		.filter(Boolean)
-		.includes(userId);
 }
 
 /** Resolve or auto-create the conversation. Returns conversationId or error. */
@@ -529,21 +521,15 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	// as the deskbot grows structural tools. Chatbot turns have no mutating scopes → false.
 	// "Structural" capabilities (create/delete files) are the destructive surface; in-place
 	// content writes (desk:write) are not counted as structurally destructive.
-	const structuralCapabilityCount = grantedScopes.filter((s) => s === 'desk:create' || s === 'desk:delete').length;
-	// Distinct desk entities visible to the turn — a proxy for "how many targets".
-	const targetEntityCount = new Set([
-		...(panelContext ?? []).map((p) => p.label),
-		...(deskLayout ?? []).map((p) => p.fileId ?? p.label),
-	]).size;
 	const hasMutatingScopeGranted = grantedScopes.some(
 		(s) => s === 'desk:write' || s === 'desk:create' || s === 'desk:delete',
 	);
 	const requirePlan = shouldRequirePlan({
+		mutatingScopeGranted: hasMutatingScopeGranted,
 		destructiveIntent:
-			hasMutatingScopeGranted &&
-			/\b(delete|remove|clear|wipe|purge|erase|drop|reset|bulk|all|every|each|multiple)\b/i.test(userMsgText),
-		destructiveToolCount: structuralCapabilityCount,
-		targetEntityCount,
+			/\b(delete|remove|clear|wipe|purge|erase|drop|reset|overwrite|replace|bulk|all|every|each|multiple)\b/i.test(
+				userMsgText,
+			),
 	});
 
 	let baseSystemPrompt = buildSystemPrompt({ panelContext, toolScopes, deskLayout, activeWorkspace, requirePlan });
@@ -1007,7 +993,7 @@ Project catalog rules:
 						messages,
 						tools: retrievalTools,
 						toolChoice: 'auto',
-						stopWhen: stepCountIs(3),
+						stopWhen: stepCountIs(CHATBOT_MAX_STEPS),
 						maxRetries: 0,
 						maxOutputTokens: MAX_TOKENS,
 						abortSignal: AbortSignal.timeout(30_000),
@@ -1457,6 +1443,10 @@ Project catalog rules:
 					const currentStep = stepCounter++;
 
 					const toolCallIds: string[] = [];
+					// Single-op approval accumulator: write/destructive desk tools return a
+					// `requiresApproval` sentinel instead of mutating; collect them and flush ONE
+					// pending proposal per step (below).
+					const pendingApproval: ProposedToolCall[] = [];
 					if (toolResults) {
 						for (const tr of toolResults) {
 							try {
@@ -1470,6 +1460,18 @@ Project catalog rules:
 									errorMessage: hasError ? String((tr.output as { error: string }).error) : undefined,
 								});
 								toolCallIds.push(saved.id);
+
+								// HARD-GATE sentinel: a write/destructive desk tool refused to mutate in-loop
+								// and asked for approval. Queue it for a single-op proposal. Args come from the
+								// tool CALL input (tr.input), which — unlike the output — is never compaction-wrapped.
+								const gatedOut = tr.output as { requiresApproval?: boolean; action?: string } | undefined;
+								if (gatedOut?.requiresApproval === true) {
+									pendingApproval.push({
+										toolName: tr.toolName,
+										args: (tr.input ?? {}) as Record<string, unknown>,
+										rationale: gatedOut.action ?? tr.toolName,
+									});
+								}
 
 								// Plan-before-execute interception: if the model called
 								// `desk_propose_plan`, persist an `agent_proposal` row and
@@ -1525,6 +1527,43 @@ Project catalog rules:
 							} catch (err) {
 								console.error('[ai:chat] Failed to persist tool call:', err);
 							}
+						}
+					}
+
+					// Flush the single-op approval gate: ONE pending proposal for all write/destructive
+					// tool calls this step, reusing the SAME infra as desk_propose_plan (createProposal →
+					// PlanCard → POST /api/ai/proposals/[id]/approve). The mutation runs ONLY via that
+					// approve-route replay, which records a genuine approvedBy/approvedAt — never here.
+					// `!harnessMetadata.proposal` yields to an explicit desk_propose_plan in the same step.
+					if (pendingApproval.length > 0 && conversationId && !harnessMetadata.proposal) {
+						try {
+							const goal = pendingApproval.map((s) => s.rationale ?? s.toolName).join('; ');
+							const anyDestructive = pendingApproval.some((s) => getToolRisk(s.toolName) === 'destructive');
+							const proposal = await createProposal({
+								conversationId,
+								messageId: assistantMsgId,
+								riskTier: anyDestructive ? 'high' : 'medium',
+								payload: pendingApproval,
+								rationale: goal,
+							});
+							harnessMetadata.proposal = {
+								id: proposal.id,
+								goal,
+								steps: pendingApproval.map((s) => ({
+									action: s.rationale ?? s.toolName,
+									tool: s.toolName,
+									risk: getToolRisk(s.toolName) ?? 'write',
+									rationale: s.rationale ?? '',
+									args: s.args,
+								})),
+								estimatedWrites: pendingApproval.length,
+								rollback: 'Recoverable from desk file revision history (restore for deletes).',
+								riskTier: proposal.riskTier,
+								status: 'pending',
+							};
+							writer.write({ type: 'message-metadata', messageMetadata: { harness: harnessMetadata } });
+						} catch (err) {
+							console.error('[ai:chat] Failed to persist single-op approval proposal:', err);
 						}
 					}
 

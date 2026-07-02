@@ -29,12 +29,3 @@ export function tc(source: string, i18n: TranslationMap | null | undefined, requ
 	}
 	return '';
 }
-
-/**
- * Strict variant: returns null when no translation exists for the requested locale.
- * Useful for admin views that need to render "missing" honestly.
- */
-export function tcStrict(source: string, i18n: TranslationMap | null | undefined, requested: Locale): string | null {
-	if (requested === 'en') return source || null;
-	return i18n?.[requested] ?? null;
-}

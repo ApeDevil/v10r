@@ -9,7 +9,7 @@
  */
 import { type AnyPgColumn, index, text, timestamp, unique } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
-import { blogSchema } from './post';
+import { blogSchema } from './schema';
 
 export const assetFolder = blogSchema.table(
 	'asset_folder',

@@ -6,7 +6,7 @@ import { safeParse } from 'valibot';
 import type { SearchLocale } from '$lib/search/types';
 import { orchestrateChat } from '$lib/server/ai/chat-orchestrator';
 import { guardAiRequest } from '$lib/server/ai/guard';
-import { ChatRequestSchema } from '$lib/server/ai/validation';
+import { ChatbotRequestSchema } from '$lib/server/ai/validation';
 import { apiError, apiValidationError } from '$lib/server/api/response';
 import { resolvePageContext } from '$lib/server/search';
 import type { RequestHandler } from './$types';
@@ -22,7 +22,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const body = await request.json().catch(() => null);
 	if (!body) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
 
-	const parsed = safeParse(ChatRequestSchema, body);
+	const parsed = safeParse(ChatbotRequestSchema, body);
 	if (!parsed.success) return apiValidationError(parsed.issues);
 
 	// Site-awareness: resolve the client route id to trusted catalog metadata HERE, at the
@@ -37,7 +37,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		conversationId: parsed.output.conversationId,
 		useLlmwiki: parsed.output.useLlmwiki,
 		llmwikiCollectionId: parsed.output.llmwikiCollectionId,
-		resumeFromProposalId: parsed.output.resumeFromProposalId,
 		pageContext,
 		// Server-derived, never client-trusted: catalog tool needs request locale + auth ceiling.
 		locale: locals.locale,

@@ -9,6 +9,10 @@ import { RetrievalError, retrievalErrorToStatus } from '$lib/server/rawrag/error
 import { ingest } from '$lib/server/rawrag/ingest';
 import type { RequestHandler } from './$types';
 
+// Chunk + embed of up to 200k chars runs many sequential embedding calls; the
+// serverless default (~10s) kills it mid-ingest on Vercel. Match the /stream sibling.
+export const config = { runtime: 'nodejs22.x', maxDuration: 60 };
+
 const ratelimit = createLimiter('rl:retrieval:ingest', INGEST_RATE_LIMIT_MAX, INGEST_RATE_LIMIT_WINDOW);
 
 const IngestSchema = v.object({

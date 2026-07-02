@@ -14,7 +14,3 @@ const providers = new Map<string, NotificationProvider>([
 export function getProvider(channel: string): NotificationProvider | undefined {
 	return providers.get(channel);
 }
-
-export function registerProvider(channel: string, provider: NotificationProvider) {
-	providers.set(channel, provider);
-}

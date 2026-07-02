@@ -542,6 +542,8 @@ RESTRICT on asset deletion — don't delete assets that posts reference.
 |----|-----------|-----------|
 | `post.author_id` -> user | RESTRICT | Force explicit reassignment before user deletion |
 | `post.cover_image_id` -> asset | SET NULL | Losing cover is cosmetic, not data loss |
+| `post.folder_id` -> post_folder | SET NULL | Deleting a folder orphans posts to root, not data loss |
+| `asset.folder_id` -> asset_folder | SET NULL | Deleting a folder orphans assets to root, not data loss |
 | `revision.post_id` -> post | CASCADE | Revisions are owned by the post |
 | `revision.author_id` -> user | SET NULL | Immutable history must survive user deletion |
 | `published_revision.post_id` -> post | CASCADE | Publish pointers die with the post |

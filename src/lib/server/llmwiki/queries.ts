@@ -144,14 +144,8 @@ export async function fetchPagesByIds(
 			),
 		);
 
-	const pointers = await hydratePointers(
-		rows.map((r) => r.id),
-		userId,
-	);
-	const coverage = await computeCoverage(
-		rows.map((r) => r.id),
-		userId,
-	);
+	const ids = rows.map((r) => r.id);
+	const [pointers, coverage] = await Promise.all([hydratePointers(ids, userId), computeCoverage(ids, userId)]);
 
 	// Build lookup by BOTH id and slug, so either key format resolves.
 	const byId = new Map<string, (typeof rows)[number]>();

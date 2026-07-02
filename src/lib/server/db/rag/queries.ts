@@ -1,6 +1,6 @@
 import { and, count, desc, eq, isNull } from 'drizzle-orm';
 import { db } from '../index';
-import { collection, document } from '../schema/rag';
+import { document } from '../schema/rag';
 
 /** List documents for a user (active only, newest first). */
 export async function listDocuments(userId: string, offset = 0, limit = 50) {
@@ -64,19 +64,4 @@ export async function countDocuments(userId: string): Promise<number> {
 		.from(document)
 		.where(and(eq(document.userId, userId), isNull(document.deletedAt)));
 	return result?.total ?? 0;
-}
-
-/** List collections for a user. */
-export async function listCollections(userId: string) {
-	return db
-		.select({
-			id: collection.id,
-			name: collection.name,
-			description: collection.description,
-			createdAt: collection.createdAt,
-		})
-		.from(collection)
-		.where(and(eq(collection.userId, userId), isNull(collection.deletedAt)))
-		.orderBy(desc(collection.createdAt))
-		.limit(100);
 }

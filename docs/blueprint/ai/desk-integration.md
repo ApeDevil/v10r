@@ -8,6 +8,8 @@ Final architectural recommendation for integrating AI tool-calling into the Desk
 > - **Tool names are `desk_*`-prefixed**: `desk_create_spreadsheet`, `desk_update_cells`, `desk_rename_file`, `desk_update_markdown`, `desk_delete_file`, `desk_create_markdown` (in `tools/desk-*.ts`) — not the `listFiles` / `readFile` / `createFile` / … names proposed below.
 > - **`toolCallStatusEnum` is `['pending', 'success', 'error']`** and the `toolCall` table lives in `schema/ai/conversation.ts`, not a separate `tool-call.ts`. The proposed `['pending', 'completed', 'failed']` enum never shipped.
 > - Policy machinery is the governor / proposal layer (see [harness-lens.md](./harness-lens.md)).
+> - **Approval, not inline confirmation.** The Phase-3 inline `ConfirmCard` / `confirm` `DeskEffect` design below did **not** ship. Deskbot **write and destructive** tools (`desk_update_cells`, `desk_rename_file`, `desk_update_markdown`, `desk_delete_file`) never mutate in the agent loop — each returns a `requiresApproval` sentinel that becomes a pending `agent_proposal` (surfaced as a PlanCard); the mutation runs only via `POST /api/ai/proposals/[id]/approve` → `executeDeskToolCall`, recording a real `approvedBy`/`approvedAt`. Reversible creates still mutate in-loop, auto-approved. The old model-minted `confirmed=false → confirmed=true` self-handshake is gone, and even a single-target overwrite or delete is now gated.
+> - **Overwrite/delete recoverability.** `db/desk` captures a pre-image `desk.file_revision` snapshot before an overwrite or delete, so a fat-fingered or prompt-injected overwrite is no longer irrecoverable (capture only — no restore UI yet).
 
 ---
 

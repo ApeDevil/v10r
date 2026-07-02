@@ -1,41 +1,20 @@
 /**
  * Desk create + delete tools.
- * Create: gated by 'desk:create' scope.
- * Delete: gated by 'desk:delete' scope, two-phase confirmation via `confirmed` parameter.
+ * Create: gated by 'desk:create' scope. Creates are reversible (soft-delete) so
+ *   they mutate in-loop and are auto-approved.
+ * Delete: gated by 'desk:delete' scope. Destructive, so it does NOT delete in-loop —
+ *   it returns a `requiresApproval` sentinel and the orchestrator routes it through
+ *   the server-verified proposal flow (createProposal → PlanCard → POST /approve).
+ *   The actual delete runs only via the approve-route replay (`executeDeskToolCall`),
+ *   which records a genuine `approvedBy`/`approvedAt` — replacing the old self-serve
+ *   `confirmed=false → confirmed=true` handshake that the model could satisfy itself.
  */
 import { jsonSchema, tool } from 'ai';
-import { createMarkdownFile, createSpreadsheetFile, deleteFile } from '$lib/server/db/desk/mutations';
+import { createMarkdownFile, createSpreadsheetFile } from '$lib/server/db/desk/mutations';
 import { getFile } from '$lib/server/db/desk/queries';
-import type { DeskEffect, DeskToolMeta } from './_types';
+import type { DeskEffect } from './_types';
 
-/** Metadata registry for create tools. */
-export const createToolMeta: Record<string, DeskToolMeta> = {
-	desk_create_spreadsheet: { risk: 'create', scope: 'desk:create' },
-	desk_create_markdown: { risk: 'create', scope: 'desk:create' },
-};
-
-/** Metadata registry for delete tools. */
-export const deleteToolMeta: Record<string, DeskToolMeta> = {
-	desk_delete_file: { risk: 'destructive', scope: 'desk:delete' },
-};
-
-/**
- * Tracks which (userId, fileId) pairs have had a deletion preview (dry-run).
- * Entries expire after PREVIEW_TTL_MS to prevent stale confirmations.
- */
-const deletionPreviews = new Map<string, number>();
-const PREVIEW_TTL_MS = 60_000;
-
-function pruneExpiredPreviews(): void {
-	const now = Date.now();
-	for (const [key, ts] of deletionPreviews) {
-		if (now - ts > PREVIEW_TTL_MS) deletionPreviews.delete(key);
-	}
-}
-
-function previewKey(userId: string, fileId: string): string {
-	return `${userId}:${fileId}`;
-}
+// Tool metadata (name → risk/scope) lives in the declarative `TOOL_MANIFEST` in `tools/index.ts`.
 
 export function createCreateTools(userId: string) {
 	return {
@@ -150,56 +129,32 @@ export function createDeleteTools(userId: string) {
 	return {
 		desk_delete_file: tool({
 			description:
-				"Delete a file from the user's desk. This is destructive. " +
-				'First call with confirmed=false to preview what will be deleted. ' +
-				'Then call again with confirmed=true only after the user explicitly agrees.',
-			inputSchema: jsonSchema<{ file_id: string; confirmed: boolean }>({
+				"Delete a file from the user's desk. This is destructive and does NOT delete when you " +
+				'call it — the deletion is queued for the user to approve first. Call it once with the ' +
+				'target file id; the user then approves (or rejects) the deletion in the UI.',
+			inputSchema: jsonSchema<{ file_id: string }>({
 				type: 'object',
 				properties: {
 					file_id: { type: 'string', description: 'The file ID to delete.' },
-					confirmed: {
-						type: 'boolean',
-						description: 'Set to true only after the user has explicitly confirmed deletion.',
-					},
 				},
-				required: ['file_id', 'confirmed'],
+				required: ['file_id'],
 			}),
-			execute: async ({ file_id, confirmed }, { abortSignal: _abortSignal }) => {
+			execute: async ({ file_id }, { abortSignal: _abortSignal }) => {
 				try {
-					pruneExpiredPreviews();
 					const fileRow = await getFile(file_id, userId);
 					if (!fileRow) return { error: 'File not found or not accessible.' };
 
-					if (!confirmed) {
-						// Record the preview so a subsequent confirmed=true is allowed
-						deletionPreviews.set(previewKey(userId, file_id), Date.now());
-						return {
-							requiresConfirmation: true,
-							description: `Delete "${fileRow.name}"? This cannot be undone.`,
-							fileId: file_id,
-							fileName: fileRow.name,
-						};
-					}
-
-					// Server-side guard: reject unless a preview happened recently
-					const key = previewKey(userId, file_id);
-					const previewTs = deletionPreviews.get(key);
-					if (!previewTs || Date.now() - previewTs > PREVIEW_TTL_MS) {
-						return { error: 'Deletion preview expired or missing. Call with confirmed=false first.' };
-					}
-					deletionPreviews.delete(key); // One-time use
-
-					const result = await deleteFile(file_id, userId);
-					if (!result) return { error: 'File not found or already deleted.' };
-
-					const effects: DeskEffect[] = [
-						{ type: 'desk:refresh_explorer' },
-						{ type: 'desk:notify', message: `Deleted "${fileRow.name}"`, level: 'info' },
-					];
-
-					return { deleted: true, fileId: file_id, name: fileRow.name, effects };
+					// HARD GATE: do not delete here. Signal the orchestrator to create a
+					// pending proposal; the delete runs only via the approve-route replay
+					// after a genuine, server-recorded user approval.
+					return {
+						requiresApproval: true,
+						action: `Delete "${fileRow.name}"`,
+						fileId: file_id,
+						fileName: fileRow.name,
+					};
 				} catch {
-					return { error: 'Failed to delete file.' };
+					return { error: 'Failed to prepare deletion.' };
 				}
 			},
 		}),

@@ -23,12 +23,6 @@ export const MAX_RAWRAG_TOOL_IDS = 20;
 /** Max ids accepted by `get_llmwiki_pages` per call. */
 export const MAX_LLMWIKI_TOOL_IDS = 10;
 
-/**
- * Fraction of cited chunks that must have a hash mismatch before the
- * llmwiki page is flagged `stale` at query time.
- */
-export const STALENESS_RATIO_THRESHOLD = 0.2;
-
 /** Reciprocal Rank Fusion constant for llmwiki hybrid search. */
 export const LLMWIKI_RRF_K = 60;
 

@@ -62,16 +62,75 @@ const DeskLayoutEntry = v.object({
 	label: v.string(),
 });
 
-export const ChatRequestSchema = v.object({
+/**
+ * Fields every AI-surface request carries. Spread into each per-surface schema below so
+ * the common envelope stays defined once. All three schemas use `v.object` (NOT
+ * `v.strictObject`) so the AI SDK's transport envelope fields (`id`, `trigger`,
+ * `messageId`, …) pass through and unknown keys are dropped rather than 400'd.
+ */
+const baseEntries = {
 	providerId: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(20))),
 	messages: v.pipe(v.array(ChatMessageSchema), v.minLength(1), v.maxLength(100)),
 	conversationId: v.optional(v.pipe(v.string(), v.uuid())),
+};
+
+/**
+ * Retrieval-pipeline knobs shared by the grounded READ surfaces (chatbot + rag-demo).
+ * Deliberately excludes every desk-mutation field, so a read surface's parsed output can
+ * never carry `toolScopes`/`deskLayout`/`activeWorkspace`/`resumeFromProposalId` into the
+ * orchestrator.
+ */
+const retrievalEntries = {
 	useRetrieval: v.optional(v.boolean()),
 	retrievalTiers: v.optional(v.pipe(v.array(v.picklist([1, 2, 3])), v.maxLength(3))),
 	fusion: v.optional(v.picklist(['none', 'rrf'])),
 	/** Route this turn through the llmwiki layer (primary surface + drill-down tools). */
 	useLlmwiki: v.optional(v.boolean()),
 	llmwikiCollectionId: v.optional(v.nullable(v.string())),
+	/**
+	 * Ephemeral run (rag-chat counterfactual) — skip ALL persistence (conversation,
+	 * messages, steps, limit check) while still charging the token budget. The orchestrator
+	 * runs the turn without a conversationId. See `docs/blueprint/ai/nrag-observability.md`.
+	 */
+	dryRun: v.optional(v.boolean()),
+};
+
+/**
+ * `POST /api/ai/chatbot` — the read-only, grounded v10r-expert surface. Carries the shared
+ * envelope + retrieval knobs + site-awareness (`pageRouteId`). Accepts NO desk-mutation
+ * fields. See `docs/blueprint/ai/surfaces.md`.
+ */
+export const ChatbotRequestSchema = v.object({
+	...baseEntries,
+	...retrievalEntries,
+	/**
+	 * Site-awareness (chatbot): the raw `page.route.id` of the page the user asked from
+	 * (e.g. `/[[locale=locale]]/(public)/showcases/forms`). An UNTRUSTED lookup key — the
+	 * server resolves it against the public catalog and discards it on miss; it is never
+	 * echoed into the prompt. The tight charset rejects `:` `?` `#` `%` whitespace and
+	 * `<>"'` breakout chars (it still allows the route-group `()`, `[]` and `=` that a
+	 * SvelteKit route id legitimately contains). See `docs/blueprint/ai/site-awareness.md`.
+	 */
+	pageRouteId: v.optional(v.pipe(v.string(), v.maxLength(120), v.regex(/^\/(?!\/)[A-Za-z0-9/_\-[\]().=]*$/))),
+});
+
+/**
+ * `POST /api/ai/showcase/rag` — the retrieval-pipeline demo (not a product surface). The
+ * counterfactual/retrieval subset: shared envelope + retrieval knobs + `dryRun`. No
+ * site-awareness, no desk-mutation fields.
+ */
+export const RagDemoRequestSchema = v.object({
+	...baseEntries,
+	...retrievalEntries,
+});
+
+/**
+ * `POST /api/ai/deskbot` — the in-desk operator surface (agentic, mutating, plan-gated).
+ * Carries the shared envelope + the desk-mutation fields. Accepts NO retrieval/site
+ * fields. See `docs/blueprint/ai/surfaces.md`.
+ */
+export const DeskRequestSchema = v.object({
+	...baseEntries,
 	panelContext: v.optional(v.pipe(v.array(PanelContextEntry), v.maxLength(5))),
 	/** Tool permission scopes — empty or omitted means no tools. */
 	toolScopes: v.optional(v.pipe(v.array(ToolScope), v.maxLength(5))),
@@ -93,21 +152,6 @@ export const ChatRequestSchema = v.object({
 	 * Sent by the client after hitting `POST /api/ai/proposals/:id/approve`.
 	 */
 	resumeFromProposalId: v.optional(v.string()),
-	/**
-	 * Site-awareness (chatbot): the raw `page.route.id` of the page the user asked from
-	 * (e.g. `/[[locale=locale]]/(public)/showcases/forms`). An UNTRUSTED lookup key — the
-	 * server resolves it against the public catalog and discards it on miss; it is never
-	 * echoed into the prompt. The tight charset rejects `:` `?` `#` `%` whitespace and
-	 * `<>"'` breakout chars (it still allows the route-group `()`, `[]` and `=` that a
-	 * SvelteKit route id legitimately contains). See `docs/blueprint/ai/site-awareness.md`.
-	 */
-	pageRouteId: v.optional(v.pipe(v.string(), v.maxLength(120), v.regex(/^\/(?!\/)[A-Za-z0-9/_\-[\]().=]*$/))),
-	/**
-	 * Ephemeral run (rag-chat counterfactual) — skip ALL persistence (conversation,
-	 * messages, steps, limit check) while still charging the token budget. The orchestrator
-	 * runs the turn without a conversationId. See `docs/blueprint/ai/nrag-observability.md`.
-	 */
-	dryRun: v.optional(v.boolean()),
 });
 
 export const CreateConversationSchema = v.object({

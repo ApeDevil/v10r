@@ -6,6 +6,6 @@ Styling, components, and image optimization.
 
 | File | Main Topics |
 |------|-------------|
-| **[unocss.md](./unocss.md)** | • Atomic CSS, • Tailwind compatibility, • On-demand generation, • Icons preset |
+| **[unocss.md](./unocss.md)** | • Atomic CSS, • Tailwind compatibility, • On-demand generation, • Icons preset, • Opacity-on-token trap + `quality:opacity` guard |
 | **[bits-ui.md](./bits-ui.md)** | • Headless components, • Accessibility, • Svelte-native, • Usage patterns |
 | **[images.md](./images.md)** | • Build-time optimization, • User uploads, • Sharp processing, • CDN delivery |

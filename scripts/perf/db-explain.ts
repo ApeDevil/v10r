@@ -41,7 +41,7 @@ async function probe(title: string, run: () => Promise<void>) {
 async function explain(label: string, query: string) {
 	console.log(`\n--- ${label} ---`);
 	const rows = (await sql.query(`EXPLAIN (ANALYZE, BUFFERS, VERBOSE) ${query}`)) as Array<Record<string, string>>;
-	for (const r of rows) console.log('  ' + Object.values(r)[0]);
+	for (const r of rows) console.log(`  ${Object.values(r)[0]}`);
 }
 
 await probe('CORPUS SIZE (daty P0 scaling gate)', async () => {

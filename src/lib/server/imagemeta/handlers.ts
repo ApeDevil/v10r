@@ -9,7 +9,7 @@
  * No @sveltejs/kit / $app imports: thin route adapters call into here.
  */
 
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import type { FieldProvenance, ImageMetadataOutput } from '$lib/schemas/showcase/image-metadata';
 import { IMAGE_ALLOWED_MIME, MAX_IMAGE_UPLOAD_SIZE } from '$lib/server/config';
 import { db } from '$lib/server/db';
@@ -119,13 +119,19 @@ export async function saveImageMetadata(
 
 		// Replace the tag set wholesale — simplest correct semantics for an edit.
 		await tx.delete(imageMetadataTag).where(eq(imageMetadataTag.metadataId, metadataId));
-		for (const label of keywords) {
-			const [tag] = await tx
+		const uniqueLabels = [...new Set(keywords)];
+		if (uniqueLabels.length > 0) {
+			// Batch the tag upsert + junction insert instead of 2 round-trips per keyword.
+			// onConflictDoUpdate (label set to itself) makes RETURNING yield existing rows too.
+			const tags = await tx
 				.insert(imageTag)
-				.values({ label })
-				.onConflictDoUpdate({ target: imageTag.label, set: { label } })
+				.values(uniqueLabels.map((label) => ({ label })))
+				.onConflictDoUpdate({ target: imageTag.label, set: { label: sql`excluded.label` } })
 				.returning({ id: imageTag.id });
-			await tx.insert(imageMetadataTag).values({ metadataId, tagId: tag.id }).onConflictDoNothing();
+			await tx
+				.insert(imageMetadataTag)
+				.values(tags.map((t) => ({ metadataId, tagId: t.id })))
+				.onConflictDoNothing();
 		}
 
 		return { metadataId };

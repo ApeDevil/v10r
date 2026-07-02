@@ -4,9 +4,11 @@
  * post_asset uses RESTRICT to prevent deleting in-use assets.
  */
 import { sql } from 'drizzle-orm';
-import { check, foreignKey, index, integer, primaryKey, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { check, index, integer, primaryKey, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
-import { blogSchema, post } from './post';
+import { assetFolder } from './asset-folder';
+import { post } from './post';
+import { blogSchema } from './schema';
 
 export const asset = blogSchema.table(
 	'asset',
@@ -20,14 +22,16 @@ export const asset = blogSchema.table(
 		altText: text('alt_text'),
 		width: integer('width'),
 		height: integer('height'),
-		/** Parent folder (nullable = root under virtual:assets). FK defined in folder-fks.ts. */
-		folderId: text('folder_id'),
+		/** Parent folder (nullable = root under virtual:assets). Deleting a folder orphans assets to root (SET NULL). */
+		folderId: text('folder_id').references(() => assetFolder.id, { onDelete: 'set null' }),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	},
 	(table) => [
 		uniqueIndex('blog_asset_storage_key_idx').on(table.storageKey),
 		index('blog_asset_uploader_idx').on(table.uploaderId),
 		index('blog_asset_uploader_folder_idx').on(table.uploaderId, table.folderId),
+		// Single-column FK index backs the ON DELETE SET NULL scan on folder delete.
+		index('blog_asset_folder_idx').on(table.folderId),
 		check('file_size_positive', sql`${table.fileSize} > 0`),
 	],
 );
@@ -47,10 +51,3 @@ export const postAsset = blogSchema.table(
 		index('blog_post_asset_asset_idx').on(table.assetId),
 	],
 );
-
-/** FK from post.cover_image_id → asset.id (defined here to avoid circular import). */
-export const postCoverImageFk = foreignKey({
-	columns: [post.coverImageId],
-	foreignColumns: [asset.id],
-	name: 'blog_post_cover_image_fk',
-}).onDelete('set null');

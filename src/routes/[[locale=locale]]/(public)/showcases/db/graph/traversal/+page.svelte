@@ -26,7 +26,7 @@ const sections = $derived([
 	{ id: 'browse', label: m.showcase_db_graph_traversal_nav_browse() },
 	{ id: 'shortest-path', label: m.showcase_db_graph_traversal_nav_path() },
 	{ id: 'recommendations', label: m.showcase_db_graph_traversal_nav_recommendations() },
-	{ id: 'repl', label: m.showcase_db_graph_traversal_nav_repl() },
+	...(data.isAdmin ? [{ id: 'repl', label: m.showcase_db_graph_traversal_nav_repl() }] : []),
 	{ id: 'vs-sql', label: m.showcase_db_graph_traversal_nav_vs_sql() },
 ]);
 
@@ -282,7 +282,8 @@ function formatValue(val: unknown): string {
 				</Card>
 			</section>
 
-			<!-- CYPHER REPL -->
+			{#if data.isAdmin}
+			<!-- CYPHER REPL (arbitrary Cypher over a shared graph → admin-only) -->
 			<section id="repl">
 				<Card>
 					{#snippet header()}
@@ -347,6 +348,7 @@ function formatValue(val: unknown): string {
 					{/if}
 				</Card>
 			</section>
+			{/if}
 
 			<!-- VS SQL -->
 			<section id="vs-sql">

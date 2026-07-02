@@ -11,16 +11,25 @@
  * the payload and the client starts a fresh chat turn with a
  * `resumeFromProposalId` sentinel so the model sees the executed results.
  *
+ * This tool is the model's way to batch a MULTI-step destructive/overwrite plan
+ * into a single approval card. It is not the only path to approval: a SINGLE
+ * write/overwrite/delete tool call is hard-gated too — those tools return a
+ * `requiresApproval` sentinel instead of mutating, and the orchestrator turns
+ * that into an equivalent single-step proposal automatically. Either way the
+ * mutation runs only via `POST /api/ai/proposals/[id]/approve` after a genuine,
+ * server-recorded user approval.
+ *
  * This tool does NOT fire for:
- *  - single-step destructive actions (those use `desk_delete_file`'s
- *    own two-phase `confirmed: boolean` pattern)
  *  - read-only operations
+ *  - creating brand-new files (creates are reversible, auto-approved)
  *  - questions answerable from desk-context alone
  *
- * See `policy/governor.ts` → `shouldRequirePlan` for the predicate.
+ * See `policy/governor.ts` → `shouldRequirePlan` (planning-prompt gate) and
+ * `requiresApproval` (per-tool hard gate) for the predicates.
  */
 import { jsonSchema, tool } from 'ai';
-import type { DeskToolMeta } from './_types';
+
+// Tool metadata (name → risk/scope) lives in the declarative `TOOL_MANIFEST` in `tools/index.ts`.
 
 /** Shape of a single proposed step inside the plan payload. */
 export interface ProposedStep {
@@ -36,10 +45,6 @@ export interface ProposedStep {
 	 */
 	args: Record<string, unknown>;
 }
-
-export const proposePlanMeta: Record<string, DeskToolMeta> = {
-	desk_propose_plan: { risk: 'read', scope: 'desk:read' },
-};
 
 export function createProposePlanTool() {
 	return {

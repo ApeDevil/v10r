@@ -10,7 +10,6 @@ import type { Cookies } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 
 export const PAIRING_COOKIE = 'v10r_debug_owner';
-export const PAIRING_COOKIE_MAX_AGE = 2 * 60 * 60; // 2h, seconds
 
 export interface OwnerCookiePayload {
 	adminUserId: string;

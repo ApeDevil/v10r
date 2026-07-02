@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, ilike, lte } from 'drizzle-orm';
+import { and, count, desc, eq, gte, ilike, lt, lte, or } from 'drizzle-orm';
 import { ADMIN_AUDIT_PAGE_SIZE } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { adminAuditLog } from '$lib/server/db/schema/admin';
@@ -95,13 +95,22 @@ export async function getDistinctActions(): Promise<string[]> {
 	return result.map((r) => r.action);
 }
 
-export async function exportAuditLogCsv(filters: AuditLogFilters = {}): Promise<string> {
-	const where = buildWhereClause(filters);
+const CSV_HEADERS = ['Timestamp', 'Action', 'Actor Email', 'Target Type', 'Target ID', 'Detail', 'IP Address'];
+const CSV_EXPORT_BATCH_SIZE = 1000;
 
-	const entries = await db.select().from(adminAuditLog).where(where).orderBy(desc(adminAuditLog.occurredAt));
+function escapeCsv(val: string): string {
+	// Formula injection: a leading =, +, - or @ executes when the CSV is opened in a
+	// spreadsheet. Detail fields can carry user-controlled strings (e.g. passkey
+	// names), so neutralize with a leading quote.
+	const neutralized = /^[=+\-@]/.test(val) ? `'${val}` : val;
+	if (neutralized.includes(',') || neutralized.includes('"') || neutralized.includes('\n')) {
+		return `"${neutralized.replace(/"/g, '""')}"`;
+	}
+	return neutralized;
+}
 
-	const headers = ['Timestamp', 'Action', 'Actor Email', 'Target Type', 'Target ID', 'Detail', 'IP Address'];
-	const rows = entries.map((e) => [
+function toCsvRow(e: typeof adminAuditLog.$inferSelect): string {
+	return [
 		e.occurredAt.toISOString(),
 		e.action,
 		e.actorEmail,
@@ -109,18 +118,50 @@ export async function exportAuditLogCsv(filters: AuditLogFilters = {}): Promise<
 		e.targetId ?? '',
 		e.detail ? JSON.stringify(e.detail) : '',
 		e.ipAddress ?? '',
-	]);
+	]
+		.map(escapeCsv)
+		.join(',');
+}
 
-	const escapeCsv = (val: string) => {
-		// Formula injection: a leading =, +, - or @ executes when the CSV is
-		// opened in a spreadsheet. Detail fields can carry user-controlled
-		// strings (e.g. passkey names), so neutralize with a leading quote.
-		const neutralized = /^[=+\-@]/.test(val) ? `'${val}` : val;
-		if (neutralized.includes(',') || neutralized.includes('"') || neutralized.includes('\n')) {
-			return `"${neutralized.replace(/"/g, '""')}"`;
-		}
-		return neutralized;
-	};
+/**
+ * Stream the (filtered) audit log as CSV in keyset-paged batches. The log is an
+ * unbounded growth table, so materializing it whole risks Vercel's 4.5MB response
+ * cap and unbounded memory; this keeps resident memory to one batch. Yields the
+ * header row first, then one \n-terminated string per batch.
+ */
+export async function* streamAuditLogCsv(filters: AuditLogFilters = {}): AsyncGenerator<string> {
+	const where = buildWhereClause(filters);
+	yield `${CSV_HEADERS.join(',')}\n`;
 
-	return [headers.join(','), ...rows.map((row) => row.map(escapeCsv).join(','))].join('\n');
+	let cursor: { occurredAt: Date; id: number } | null = null;
+	for (;;) {
+		const keyset: ReturnType<typeof and> = cursor
+			? and(
+					where,
+					or(
+						lt(adminAuditLog.occurredAt, cursor.occurredAt),
+						and(eq(adminAuditLog.occurredAt, cursor.occurredAt), lt(adminAuditLog.id, cursor.id)),
+					),
+				)
+			: where;
+		const batch: (typeof adminAuditLog.$inferSelect)[] = await db
+			.select()
+			.from(adminAuditLog)
+			.where(keyset)
+			.orderBy(desc(adminAuditLog.occurredAt), desc(adminAuditLog.id))
+			.limit(CSV_EXPORT_BATCH_SIZE);
+		if (batch.length === 0) break;
+		yield `${batch.map(toCsvRow).join('\n')}\n`;
+		if (batch.length < CSV_EXPORT_BATCH_SIZE) break;
+		const last = batch[batch.length - 1];
+		if (!last) break;
+		cursor = { occurredAt: last.occurredAt, id: last.id };
+	}
+}
+
+/** Buffer the full CSV export into a string (small exports / tests). */
+export async function exportAuditLogCsv(filters: AuditLogFilters = {}): Promise<string> {
+	let out = '';
+	for await (const chunk of streamAuditLogCsv(filters)) out += chunk;
+	return out.replace(/\n$/, '');
 }

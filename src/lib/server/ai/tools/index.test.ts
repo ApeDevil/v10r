@@ -23,7 +23,9 @@ vi.mock('$lib/server/db/desk/mutations', () => ({
 	deleteFile: vi.fn(),
 }));
 
-const { createDeskTools, stepsForScopes, deskbotToolMeta } = await import('./index');
+const { buildRetrievalTools, chatbotToolMeta, createDeskTools, deskbotToolMeta, stepsForScopes } = await import(
+	'./index'
+);
 const { DESK_EXECUTABLE_TOOLS } = await import('./desk-execute');
 
 const USER_ID = 'usr_test_scope_gating';
@@ -160,6 +162,29 @@ describe('one-door: desk-execute drift guard', () => {
 			expect(meta, `${name} is in DESK_EXECUTABLE_TOOLS but not in deskbotToolMeta`).toBeDefined();
 			expect(meta.risk, `${name} executor maps to a non-mutating tool`).not.toBe('read');
 		}
+	});
+});
+
+describe('TOOL_MANIFEST drift guard (builders ⇔ derived meta)', () => {
+	// `resolve_ref` is compaction infra (AI SDK #9631), intentionally absent from the manifest
+	// and both meta maps — filter it out of the emitted sets before comparing.
+	const withoutInfra = (names: string[]) => names.filter((n) => n !== 'resolve_ref').sort();
+
+	it('createDeskTools (all scopes) emits exactly the deskbot manifest tools', () => {
+		const emitted = withoutInfra(
+			Object.keys(createDeskTools(USER_ID, ['desk:read', 'desk:write', 'desk:create', 'desk:delete', 'desk:ask'])),
+		);
+		expect(emitted).toEqual(Object.keys(deskbotToolMeta).sort());
+	});
+
+	it('buildRetrievalTools emits exactly the chatbot manifest tools', () => {
+		const { tools } = buildRetrievalTools(USER_ID, 'en', null);
+		expect(withoutInfra(Object.keys(tools))).toEqual(Object.keys(chatbotToolMeta).sort());
+	});
+
+	it('deskbot meta carries a gating scope on every tool; chatbot meta carries none', () => {
+		for (const meta of Object.values(deskbotToolMeta)) expect(meta.scope).toBeTruthy();
+		for (const meta of Object.values(chatbotToolMeta)) expect('scope' in meta).toBe(false);
 	});
 });
 

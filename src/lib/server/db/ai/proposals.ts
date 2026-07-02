@@ -10,7 +10,7 @@
  * for the same proposal collide there. Readers handle the collision by
  * reading the existing row instead of racing.
  */
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { createId } from '../id';
 import { db } from '../index';
 import { agentProposal, type ProposalExecutionResult, type ProposedToolCall } from '../schema/ai/proposal';
@@ -134,14 +134,4 @@ export async function markFailed(id: string, message: string, partialResult?: Pr
 		.where(and(eq(agentProposal.id, id), eq(agentProposal.status, 'executing')))
 		.returning();
 	return row ?? null;
-}
-
-/** Sweep pending proposals past their expiry. Idempotent — safe to run on every cron tick. */
-export async function expireStaleProposals() {
-	const rows = await db
-		.update(agentProposal)
-		.set({ status: 'expired', updatedAt: new Date() })
-		.where(and(eq(agentProposal.status, 'pending'), sql`${agentProposal.expiresAt} < now()`))
-		.returning({ id: agentProposal.id });
-	return rows.length;
 }
