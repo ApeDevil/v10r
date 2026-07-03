@@ -133,6 +133,20 @@ DELEGATE when the task involves:
 - **laly** (layout — does it work on desktop AND mobile, and waste no space?): "layout", "responsive", "mobile", "desktop", "breakpoint", "overflow", "horizontal scroll", "wasted space", "cramped", "doesn't fit", "density", "too much whitespace", "grid", "columns", "spacing rhythm", "visual hierarchy", "viewport", "dvh/svh", "safe area", "notch", "tap target spacing", "adapts", "works on my phone" (detection/report only — laly diagnoses and specifies the fix with concrete values; it never edits. Routes implementation to the user, or arty/uxy/svey)
 - **clyn** (detection only — what code is dead/duplicated/complex?): "dead code", "unused export", "unreachable", "duplication", "complexity", "code smell", "audit code", "what can be removed", "is this still used", "remove residue"
 
+### Agent Model Selection (dynamic per task)
+
+Agent model is chosen **at spawn time by task complexity**, not fixed in the agent file. All agents except `scout`/`resy` declare `model: inherit`, so absent an override they follow the session model — but you SHOULD pass an explicit per-invocation `model` on the Agent tool, sized to the task:
+
+- **haiku** — trivial/mechanical: lookups, single-file reads, boilerplate, "where is X", format/rename sweeps.
+- **sonnet** — normal work: routine implementation, focused reviews, scoped design, most delegations. **Default when unsure.**
+- **opus** — hard reasoning: cross-cutting architecture, multi-file refactors, threat modeling, subtle debugging, novel design, anything needing deep synthesis.
+- **fable** — frontier tier, above opus: the rare task where even opus-level synthesis may fall short — highest-stakes architecture verdicts, gnarly multi-system debugging, adversarial security analysis. Use sparingly; opus is the ceiling for routine "hard" work.
+
+Rules:
+1. **`scout` and `resy` are pinned to `sonnet`** in their frontmatter — never pass a `model` override for them.
+2. Judge complexity of the *actual task you're handing off*, not the agent's usual domain — a quick question to a normally-heavy agent (e.g. `secy`, `aiy`) still goes `sonnet`/`haiku`.
+3. When genuinely unsure, choose `sonnet`. Reserve `opus` for tasks that clearly need it.
+
 
 ## Skills Policy
 

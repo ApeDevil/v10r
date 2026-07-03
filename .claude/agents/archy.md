@@ -2,7 +2,7 @@
 name: archy
 description: "Use this agent when you need to design, restructure, or evaluate the architecture of a codebase. This includes planning new systems, refactoring existing code for better organization, defining module boundaries, establishing communication patterns between components, or reviewing architectural decisions. Ideal for questions about system structure, modularity, dependency management, and designing for change.\n\nExamples:\n\n<example>\nContext: User is starting a new feature that requires architectural planning.\nuser: \"I need to add a notification system to our app that supports email, SMS, and push notifications\"\nassistant: \"This is an architectural decision that will affect multiple parts of the codebase. Let me use the archy agent to design a scalable notification system.\"\n</example>\n\n<example>\nContext: Counter-example (NOT archy).\nuser: \"These three modules have unused exports we should remove.\"\nassistant: \"That's detection — route to the clyn agent.\"\n</example>"
 tools: Read, Glob, Grep, WebFetch, WebSearch
-model: opus
+model: inherit
 color: purple
 skills: drizzle, sveltekit
 ---
