@@ -9,42 +9,47 @@ Server-Sent Events and AI SDK streaming patterns for SvelteKit.
 Named events allow typed client listeners and extensible event taxonomy:
 
 ```typescript
-// src/routes/api/notifications/stream/+server.ts
+// src/routes/api/notifications/stream/+server.ts (simplified from the real endpoint)
+
+// Long-lived SSE: pin the function to its billable window and self-close just
+// before the platform kill so EventSource reconnects cleanly (60 = Hobby ceiling).
+export const config = { runtime: 'nodejs22.x', maxDuration: 60 };
+const MAX_STREAM_DURATION_MS = 55_000;
+
 export const GET: RequestHandler = async ({ locals }) => {
   const { user } = requireApiUser(locals);
+  const encoder = new TextEncoder();
+  let heartbeat: ReturnType<typeof setInterval> | undefined;
+  let lifetime: ReturnType<typeof setTimeout> | undefined;
 
-  const stream = new ReadableStream({
-    start(ctrl) {
-      const encoder = new TextEncoder();
-
-      // Send retry hint on connect
-      ctrl.enqueue(encoder.encode(`retry: 5000\n\n`));
-
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
       // Named event with ID (enables Last-Event-ID reconnection)
-      const send = (type: string, id: string, data: unknown) => {
-        ctrl.enqueue(encoder.encode(
+      const send = (type: string, id: string, data: unknown) =>
+        controller.enqueue(encoder.encode(
           `event: ${type}\nid: ${id}\ndata: ${JSON.stringify(data)}\n\n`
         ));
-      };
+
+      // Per-user connection registry with a cap (refuse the extra tab)
+      registerStream(user.id, controller);
+
+      // Initial state as a named event (client: addEventListener('init', ...))
+      send('init', 'init', { unreadCount: await getUnreadCount(user.id) });
 
       // Keepalive comment every 25s (prevents proxy timeout)
-      const ping = setInterval(() => {
-        ctrl.enqueue(encoder.encode(`:\n\n`));
+      heartbeat = setInterval(() => {
+        controller.enqueue(encoder.encode(`: heartbeat\n\n`));
       }, 25_000);
 
-      // Subscribe to notifications
-      const unsubscribe = notificationBus.subscribe(user.id, (notification) => {
-        send('notification', notification.id, notification);
-      });
-
-      // Cleanup on client disconnect
-      ctrl.signal?.addEventListener('abort', () => {
-        clearInterval(ping);
-        unsubscribe();
-      });
+      // Self-close before the serverless kill → clean client auto-reconnect
+      lifetime = setTimeout(() => controller.close(), MAX_STREAM_DURATION_MS);
     },
     cancel() {
-      // Also called on disconnect in some runtimes
+      // Client disconnect lands HERE — ReadableStreamDefaultController has NO
+      // `signal` property; cleanup in cancel() or timers/registrations leak.
+      clearInterval(heartbeat);
+      clearTimeout(lifetime);
+      unregisterStream(user.id);
     },
   });
 
@@ -115,37 +120,28 @@ Document each event type with its payload schema:
 //   Client action: close stream, redirect to login
 ```
 
-## sveltekit-sse Library
+## Production Hardening (What the Real Endpoints Do)
 
-For production SSE, prefer `sveltekit-sse` over raw `ReadableStream`. It handles keepalive, disconnect detection, and stream lifecycle issues that have caused file descriptor leaks in raw SvelteKit streams.
+`sveltekit-sse` is **not** a dependency of this project. The live streams (`/api/notifications/stream`, `/api/analytics/stream`) are raw `ReadableStream` hardened with:
 
-```bash
-bun add sveltekit-sse
-```
+- **Rate-limit the connect** (Upstash limiter via `$lib/server/api/rate-limit`) — a client reconnect loop is a request storm.
+- **Per-user connection cap** via a registry (`registerStream`/`unregisterStream` in `$lib/server/notifications`); the extra tab gets an error event, not a stream.
+- **Heartbeat comment every ~25s** to survive proxies.
+- **Self-close before `maxDuration`** (close at 55s, platform kills at 60s) so `EventSource` auto-reconnects instead of dying mid-kill.
+- **All cleanup in `cancel()`** — timers and registry entries leak on disconnect otherwise.
 
-```typescript
-import { produce } from 'sveltekit-sse';
+## Vercel AI SDK UI Message Stream (v6)
 
-export const GET: RequestHandler = () => {
-  return produce(async function start({ emit, lock }) {
-    // emit() sends named events
-    // lock() prevents concurrent reads
-    // Automatic ping keepalive (30s default)
-    // Automatic cleanup on client disconnect
-  });
-};
-```
+The AI SDK streams typed UI-message frames between `streamText()` on the server and the `Chat` class on the client over an SSE-style response. This project runs `ai@^6` — v4/v5 helpers (`toDataStreamResponse()`, `useChat()` destructuring, `maxSteps`) no longer exist.
 
-## Vercel AI SDK Data Stream Protocol
-
-The AI SDK uses a custom SSE-based protocol between `streamText()` on the server and `useChat()` on the client.
-
-### Server Pattern
+### Server Pattern — simple case
 
 ```typescript
 // src/routes/api/ai/chat/+server.ts
-import { streamText } from 'ai';
+import { stepCountIs, streamText } from 'ai';
 import { createTools } from '$lib/server/ai/tools';
+
+export const config = { runtime: 'nodejs22.x', maxDuration: 60 };
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   const { user } = requireApiUser(locals);
@@ -156,48 +152,85 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     system: SYSTEM_PROMPT,
     messages,
     tools: createTools(user.id),
-    maxSteps: 5,
-    maxTokens: 1000,
+    stopWhen: stepCountIs(5), // v6: replaces maxSteps
+    maxOutputTokens: 1000,    // v6: renamed from maxTokens
   });
 
-  // THE pattern that works — not legacy AIStream helpers
-  return result.toDataStreamResponse();
+  return result.toUIMessageStreamResponse(); // v6: replaces toDataStreamResponse()
 };
 ```
 
-### Data Stream Part Types
+### Server Pattern — orchestrated (writer + merge)
 
-| Part Type | Content |
-|-----------|---------|
-| `text-delta` | Streamed text chunk |
-| `tool-input-start/delta/finish` | Tool call arguments streaming |
-| `tool-result` | Tool execution result |
-| `reasoning-delta` | Extended thinking (Anthropic) |
+When you write your own frames (metadata, custom data parts) around the model stream, **frame order is part of the contract**. The real pattern from `$lib/server/ai/chat-orchestrator.ts`:
+
+```typescript
+import { createUIMessageStream, createUIMessageStreamResponse } from 'ai';
+
+const stream = createUIMessageStream({
+  execute: async ({ writer }) => {
+    // Open the assistant message frame BEFORE any other write. A `message-metadata`
+    // (or `data-*`) frame sent before `start` makes the v6 client materialize an
+    // EMPTY first assistant message to hold it, then the merged stream's own `start`
+    // (different id) opens a SECOND — one answer renders as two bubbles.
+    // (Real production bug in this codebase; see chat-orchestrator.ts.)
+    writer.write({ type: 'start', messageId: assistantMsgId });
+    writer.write({ type: 'message-metadata', messageMetadata: { /* ... */ } });
+
+    const result = streamText({ /* ... */ });
+    // sendStart: false — we already opened the frame; reusing our id also makes
+    // the client message id match the persisted DB row.
+    writer.merge(result.toUIMessageStream({ sendStart: false }));
+  },
+});
+
+return createUIMessageStreamResponse({ stream });
+```
+
+**Rule:** metadata before the merge without your own `start` = split message. Metadata after `start` = fine.
+
+### UI Message Stream Frame Types (v6)
+
+| Frame | Content |
+|-------|---------|
+| `start` | Opens the assistant message (carries `messageId`) — must precede all other frames |
+| `start-step` / `finish-step` | Step boundaries in multi-step (tool) turns |
+| `text-start` / `text-delta` / `text-end` | Streamed text part lifecycle |
+| `reasoning-*` | Extended thinking deltas |
+| `tool-input-start` / `tool-input-delta` / `tool-input-available` | Tool call arguments streaming |
+| `tool-output-available` | Tool execution result |
+| `message-metadata` | Message metadata, merged into the open message |
+| `data-*` | Custom typed data parts |
 | `error` | Error during generation |
-| `finish` | Final metadata (stop reason, token usage) |
+| `finish` | Closes the message (stop reason, usage) |
 
-### Client Pattern
+### Client Pattern (v6)
 
-```svelte
-<script lang="ts">
-  import { useChat } from '@ai-sdk/svelte';
+`useChat()` destructuring is v4/v5. v6 `@ai-sdk/svelte` exposes the `Chat` class (real usage: `$lib/state/chatbot-session.svelte.ts`, which also lazy-imports the SDK to keep it out of the shell bundle):
 
-  const { messages, input, handleSubmit, isLoading } = useChat({
-    api: '/api/ai/chat',
-  });
-</script>
+```typescript
+import { Chat } from '@ai-sdk/svelte';
+import { DefaultChatTransport } from 'ai';
+
+const chat = new Chat({
+  transport: new DefaultChatTransport({
+    api: '/api/ai/chatbot',
+    headers: CSRF_HEADER,
+  }),
+});
+// chat.messages (reactive), chat.status, chat.sendMessage({ text }, { body })
 ```
 
 ### AI SDK Version Note
 
-AI SDK 5 renamed `parameters` to `inputSchema` and added `outputSchema` in tool definitions, aligning with MCP. Check which version you're running.
+v5→v6 renames that make older examples fail: `toDataStreamResponse()` → `toUIMessageStreamResponse()`; `maxSteps` → `stopWhen: stepCountIs(n)`; `maxTokens` → `maxOutputTokens`; `useChat()` hook → `Chat` class. Tool `parameters` → `inputSchema`/`outputSchema` landed in v5 and still applies. This file follows the installed `ai@^6` — trust it over training data.
 
 ## Serverless Limits
 
 | Platform | Limit | SSE Impact |
 |----------|-------|------------|
-| Vercel Hobby | 10s function timeout | SSE may work with streaming (unconfirmed ceiling) |
-| Vercel Pro | 60s default, 300s configurable | Set `maxDuration` in route config |
+| Vercel Hobby | 10s default, **60s max** via `maxDuration` | Proven live: set `maxDuration: 60`, self-close at 55s, let `EventSource` reconnect |
+| Vercel Pro | 300s max | Raise `maxDuration` to 300 and the self-close to ~290s |
 | Vercel Enterprise | Up to 900s | Sufficient for most SSE |
 | Bun container (self-hosted) | No limit | Indefinite SSE connections work |
 
@@ -206,11 +239,12 @@ AI SDK 5 renamed `parameters` to `inputSchema` and added `outputSchema` in tool 
 ```typescript
 // src/routes/api/notifications/stream/+server.ts
 export const config = {
-  maxDuration: 60, // seconds
+  runtime: 'nodejs22.x',
+  maxDuration: 60, // seconds — Hobby ceiling; pair with a self-close just under it
 };
 ```
 
-**Strategy:** Container deployment is primary for indefinite SSE (notifications). Vercel gets polling fallback (`invalidate()`). AI streaming (finite, <60s) works on all Vercel plans.
+**Strategy (live in prod):** long-lived SSE runs on Vercel with the self-close + auto-reconnect cycle above — each reconnect re-auths and re-reads initial state, which is why the endpoint rate-limits connects. AI streaming (finite, <60s) fits inside a single window on all plans.
 
 ## Multi-Instance SSE
 

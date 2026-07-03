@@ -766,7 +766,9 @@ export const GET: RequestHandler = async ({ url }) => {
 
 ## GraphQL (Optional)
 
-GraphQL is **not** the primary API pattern for Velociraptor. REST endpoints with `+server.ts` are simpler and sufficient for most use cases. However, GraphQL is available as a showcase for learning and exploration.
+> Illustrative — no GraphQL endpoint exists in the codebase: no `graphql`/`graphql-yoga` dependency, no `/api/graphql` route. This section is a reference pattern for *if* a specific need ever arises; the live API surface is REST + SSE only.
+
+GraphQL is **not** the primary API pattern for Velociraptor. REST endpoints with `+server.ts` are simpler and sufficient for most use cases.
 
 ### When to Consider GraphQL
 
@@ -782,7 +784,7 @@ GraphQL is **not** the primary API pattern for Velociraptor. REST endpoints with
 
 GraphQL Yoga is lightweight (~15KB) and works well with SvelteKit.
 
-**Required:** `"graphql": "^16.x"`, `"graphql-yoga": "^5.x"` — see [development-environment.md](../foundation/development-environment.md)
+**Would require:** `"graphql": "^16.x"`, `"graphql-yoga": "^5.x"` (not installed) — see [development-environment.md](../foundation/development-environment.md)
 
 ### Schema Definition
 
@@ -875,7 +877,8 @@ import type { RequestHandler } from './$types';
 const yoga = createYoga({
   schema,
   graphqlEndpoint: '/api/graphql',
-  fetchAPI: globalThis,
+  // Yoga v5 expects the Fetch constructors as an object; `fetchAPI: globalThis` breaks
+  fetchAPI: { Response },
 });
 
 export const GET: RequestHandler = async ({ request, locals }) => {
@@ -947,7 +950,17 @@ export async function graphql<T>(
 - Server-to-server communication → REST is simpler
 - You don't have complex nested data → REST is sufficient
 
-**Velociraptor's recommendation:** Start with REST. Add GraphQL only if you have specific needs (mobile optimization, complex nested queries, or a public API for developers).
+**Velociraptor's recommendation:** Start with REST. Add GraphQL only if you have specific needs (mobile optimization, complex nested queries, or a public API for developers). If it ever ships, add `graphql-armor` (depth/cost limits, introspection off in prod) the same day — a public GraphQL endpoint without it is an unbounded-query DoS surface.
+
+---
+
+## gRPC / Typed RPC (Not Feasible Here)
+
+Native gRPC cannot be hosted on this stack: Vercel functions run on a Lambda-based runtime with no end-to-end HTTP/2 trailers, which the gRPC wire protocol requires. There is also nothing to dial — every external service (Neon, Neo4j Aura Query API, Upstash, R2, Gemini/Groq/OpenAI) speaks HTTP/JSON by deliberate serverless design, and the AI providers stream over SSE.
+
+Connect-RPC (`@connectrpc/connect-es`) is the serverless-honest alternative (unary RPC over plain HTTP POST, gRPC-Web compatible), but it has no official SvelteKit/fetch adapter (connect-es#550, open since 2023) — wiring it into `+server.ts` means an unsanctioned DIY bridge over its low-level `UniversalHandler` — and `@grpc/grpc-js` is separately broken on Bun (oven-sh/bun#21759, malformed HTTP/2 trailers). Verdict: none of it gets built here.
+
+If a typed-RPC surface is ever wanted, SvelteKit's native remote functions (`query`/`command`/`form`) are the designated path once they stabilize — zero new dependencies, types flow from TypeScript, no parallel schema to drift.
 
 ---
 

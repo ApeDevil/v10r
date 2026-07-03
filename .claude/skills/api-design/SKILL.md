@@ -62,10 +62,11 @@ Production patterns for designing, reviewing, and maintaining API contracts acro
 
 | Gotcha | What Goes Wrong | Fix |
 |--------|-----------------|-----|
-| Raw ReadableStream in SvelteKit | File descriptor leaks, streams not closing | Use `sveltekit-sse` library |
+| Cleanup outside `cancel()` | Timers/registrations leak on disconnect (controller has no `signal`) | All cleanup in `cancel()`; per-user registry + connection cap |
 | No keepalive ping | Proxies (NGINX, Cloudflare) close idle connections | Send comment `:\n\n` every 25s |
-| Vercel Hobby SSE | 10s function timeout (unclear SSE exemption) | Set `maxDuration` or use container deployment |
-| AI SDK `AIStream` helpers | Broken in recent SvelteKit versions | Use `streamText().toDataStreamResponse()` |
+| Vercel Hobby SSE | Default 10s kills the stream | `maxDuration: 60` (Hobby max) + self-close at 55s → clean `EventSource` reconnect (proven live) |
+| v4/v5 helpers (`toDataStreamResponse`) | Removed in `ai@6` — won't compile | `result.toUIMessageStreamResponse()` (v6 UI message stream) |
+| Custom frame before `start` | One answer renders as two messages (early metadata opens a ghost message) | Write `{type:'start',messageId}` first, merge with `sendStart: false` |
 | Multi-instance SSE | Events only reach one instance | PostgreSQL `LISTEN/NOTIFY` or Redis pub/sub |
 
 ### Webhooks
@@ -74,7 +75,7 @@ Production patterns for designing, reviewing, and maintaining API contracts acro
 |--------|-----------------|-----|
 | `request.json()` before sig verify | Raw bytes lost, signature mismatch | `request.text()` first, parse separately |
 | `===` for HMAC comparison | Timing attack vulnerability | `crypto.timingSafeEqual()` |
-| Slow webhook handler | Provider retries, duplicate processing | Return 200 immediately, process async |
+| Slow webhook handler | Provider retries, duplicate processing | Persist event + 200 fast; cron job runner processes (no fire-and-forget on Vercel) |
 | No idempotency check | Retried events processed multiple times | `INSERT ON CONFLICT DO NOTHING` with event_id |
 
 ### AI Tools
@@ -84,7 +85,7 @@ Production patterns for designing, reviewing, and maintaining API contracts acro
 | No `.describe()` on Zod fields | LLM guesses parameter intent, wrong values | Describe every field, include examples |
 | Throwing from `execute()` | AI turn crashes entirely | Return `{ error: "..." }`, never throw |
 | Generic param names (`data`, `input`) | LLM confused about what to pass | Domain-specific names (`search_query`, `item_id`) |
-| `maxSteps` not set | Runaway tool loops or zero tool calls | Set explicitly (`maxSteps: 5`) |
+| No stop condition set | Runaway tool loops or zero tool calls | v6: `stopWhen: stepCountIs(5)` (replaces `maxSteps`) |
 | Auth inside tool execute | Re-authenticates per tool call | Auth at endpoint, pass userId via closure |
 
 ## Surface Selection
@@ -94,11 +95,11 @@ Production patterns for designing, reviewing, and maintaining API contracts acro
 | Standard CRUD | REST `+server.ts` | Simplest, cacheable, well-understood |
 | Flexible field selection (mobile + web) | GraphQL | One query, client picks fields |
 | Real-time updates (notifications) | SSE | Server-push, auto-reconnect |
-| AI chat completion | Vercel AI SDK streaming | Data stream protocol, tool multiplexing |
+| AI chat completion | Vercel AI SDK streaming | UI message stream (v6), tool multiplexing |
 | External service callbacks | Webhook endpoint | HMAC-verified, idempotent |
 | AI agent capability | AI tool definition | Zod schema + structured result |
 | Form submissions | SvelteKit form actions | Progressive enhancement, built-in CSRF |
-| Scheduled/reactive processing | Background job / Inngest | No HTTP surface, trusted context |
+| Scheduled/reactive processing | Custom job runner (`$lib/server/jobs` via Vercel-cron `/api/cron/[job]`) | No HTTP surface, trusted context |
 
 **Default to REST.** Add other surfaces only when they solve a specific problem REST doesn't.
 
@@ -213,21 +214,21 @@ source.addEventListener('session-expired', () => { /* logout */ });
 ### Contract Requirements
 
 Every streaming endpoint must define:
-1. **Wire format** — SSE text lines or AI SDK Data Stream Protocol
+1. **Wire format** — SSE text lines or AI SDK UI Message Stream (v6)
 2. **Named event types** — Each with payload schema
 3. **Reconnection** — `retry:` hint + `Last-Event-ID` support
 4. **Auth failure during stream** — Send `event: auth-error`, then close
 5. **Terminal event** — For finite streams, send `event: done` then close
 
-### Vercel AI SDK Streaming
+### Vercel AI SDK Streaming (v6)
 
 ```typescript
-// The one pattern that works reliably
-const result = streamText({ model, messages, tools, maxSteps: 5 });
-return result.toDataStreamResponse(); // NOT legacy AIStream helpers
+// The pattern that works on ai@^6
+const result = streamText({ model, messages, tools, stopWhen: stepCountIs(5), maxOutputTokens: 1000 });
+return result.toUIMessageStreamResponse(); // NOT toDataStreamResponse() (v4/v5, removed)
 ```
 
-See **references/streaming.md** for AI SDK protocol details, serverless limits, documentation approach.
+Writing your own frames (metadata, `data-*`) around the model stream? Frame order is a contract — `start` must precede everything. See **references/streaming.md** for the v6 frame table, the writer+merge pattern, and serverless limits.
 
 ## Webhooks (Inbound)
 
@@ -251,8 +252,11 @@ export const POST: RequestHandler = async ({ request }) => {
   const isNew = await recordWebhookEvent(event.id, 'stripe', event.type);
   if (!isNew) return new Response(null, { status: 200 }); // Already processed
 
-  // 4. Return 200 IMMEDIATELY, process async
-  processWebhookAsync(event).catch(console.error);
+  // 4. Fast work: process inline, then 200. Slow work: the idempotency row
+  //    doubles as a queue entry — return 200 and let the cron job runner pick
+  //    it up. NEVER fire-and-forget a promise after responding: Vercel freezes
+  //    the function once the response is sent.
+  await processWebhook(event);
   return new Response(null, { status: 200 });
 };
 ```
@@ -263,11 +267,11 @@ export const POST: RequestHandler = async ({ request }) => {
 |--------|-------------|---------|
 | Auth | Session/API key | HMAC signature |
 | Body | `request.json()` | `request.text()` first |
-| Response | After processing | Before processing (return 200 fast) |
+| Response | After processing | Fast: after inline work / Slow: 200 after persisting, cron processes |
 | Idempotency | Optional | Required (providers retry) |
 | Error response | 4xx with details | 200 even on failure (suppress retries) |
 
-See **references/webhooks.md** for HMAC verification code, Inngest integration, database schema.
+See **references/webhooks.md** for HMAC verification code, async processing, database schema.
 
 ## AI Tool Contracts
 
@@ -449,5 +453,5 @@ createYoga({ fetchAPI: { Response } })
 ### Beyond REST
 - **references/graphql.md** — Yoga v5 setup, nullability, Relay connections, DataLoader, graphql-armor
 - **references/streaming.md** — SSE contracts, AI SDK protocol, serverless limits, documentation
-- **references/webhooks.md** — HMAC verification, idempotency schema, Inngest integration
+- **references/webhooks.md** — HMAC verification, idempotency schema, async processing
 - **references/ai-tools.md** — Schema design, permissions, result format, evolution, prompt injection

@@ -209,7 +209,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     model: chatModel,
     messages,
     tools: createTools(user.id), // userId flows into closures
-    maxSteps: 5,
+    stopWhen: stepCountIs(5), // v6: replaces maxSteps
   });
 };
 ```
@@ -270,22 +270,27 @@ Remove V1 after confirming no active conversations depend on it.
 
 | Issue | Impact | Workaround |
 |-------|--------|------------|
-| Tool called N times = `maxSteps` (#5195) | Runaway tool loop | Keep `maxSteps` low, monitor |
-| `maxSteps` default varies by version | Zero or unlimited tool calls | Always set explicitly |
+| Tool called up to the step cap every turn (#5195) | Runaway tool loop | Keep the step cap low, monitor |
+| Default stop behavior varies by version | Zero or unlimited tool calls | Always set `stopWhen` explicitly |
 | `outputSchema` not validated (#10222) | Type safety illusion | Validate results manually |
 | `AI_NoOutputGeneratedError` (#13075) | ToolLoopAgent stop condition | Pin SDK version or use manual loop |
 
-## maxSteps Configuration
+## Stop Condition (v6: `stopWhen`)
+
+`maxSteps` is v4/v5 — removed in `ai@6`. The step cap is now a stop condition:
 
 ```typescript
+import { stepCountIs, streamText } from 'ai';
+
 streamText({
   model: chatModel,
   messages,
   tools: createTools(user.id),
-  maxSteps: 5, // ALWAYS set explicitly
-  // Claude models tend to use more tool calls than GPT
-  // Start at 5, increase if legitimate use cases need more
+  stopWhen: stepCountIs(5), // ALWAYS set explicitly
+  // Start at 5, increase if legitimate use cases need more.
+  // This project scales it by granted tool scopes — see
+  // stepsForScopes() usage in $lib/server/ai/chat-orchestrator.ts.
 });
 ```
 
-**Monitor tool call counts in production.** If a tool is consistently hitting `maxSteps`, either the tool description is too broad (LLM keeps calling it) or the task genuinely needs more steps.
+**Monitor tool call counts in production.** If a turn consistently hits the step cap, either the tool description is too broad (LLM keeps calling it) or the task genuinely needs more steps.

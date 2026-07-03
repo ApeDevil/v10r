@@ -1,6 +1,6 @@
 # Webhooks (Inbound)
 
-Patterns for receiving webhooks from external services (Stripe, GitHub, Inngest, etc.) in SvelteKit.
+Patterns for receiving webhooks from external services (Stripe, GitHub, Telegram, etc.) in SvelteKit.
 
 ## The Timing Contract
 
@@ -114,11 +114,12 @@ export const POST: RequestHandler = async ({ request }) => {
     throw err;
   }
 
-  // 4. Return 200 IMMEDIATELY — process async
-  processStripeEvent(event).catch((err) => {
-    console.error('Webhook processing failed:', event.id, err);
-    // Dead-letter: mark for manual review or retry
-  });
+  // 4. Fast work: process inline, then 200. Slow work: stop here — the
+  //    idempotency row above IS the queue entry; the cron job runner
+  //    processes it (see "Deferred Processing" below). Never fire-and-forget
+  //    a promise after responding: Vercel freezes the function once the
+  //    response is sent, so detached work may silently never run.
+  await processStripeEvent(event);
 
   return new Response(null, { status: 200 });
 };
@@ -182,42 +183,15 @@ If your processing fails due to a bug (not infrastructure), provider retries wil
 
 Only return 5xx for transient infrastructure failures (DB unreachable) where a retry might succeed.
 
-## Inngest Integration
+## Deferred Processing (This Project's Pattern)
 
-For complex multi-step processing, fire an Inngest event from the webhook handler:
+There is no queue product here (no Inngest/QStash — not dependencies). Two honest options on Vercel serverless:
 
-```typescript
-// In the webhook handler, after idempotency check:
-await inngest.send({
-  name: 'stripe/payment.succeeded',
-  data: {
-    eventId: event.id,
-    orderId: event.data.object.metadata.orderId,
-  },
-});
-return new Response(null, { status: 200 });
-```
+1. **Process inline** when the work is fast (a couple of seconds). The real handler (`src/routes/api/webhooks/telegram/+server.ts`) does this: timing-safe secret check → parse → do the work → `200`. Malformed input from a verified sender still gets `200` so the provider stops retrying.
 
-```typescript
-// src/lib/server/inngest/functions/order-fulfillment.ts
-export const fulfillOrder = inngest.createFunction(
-  { id: 'fulfill-order', retries: 3 },
-  { event: 'stripe/payment.succeeded' },
-  async ({ event, step }) => {
-    const order = await step.run('fetch-order', () =>
-      getOrder(event.data.orderId)
-    );
-    await step.run('update-inventory', () =>
-      decrementInventory(order.items)
-    );
-    await step.run('send-confirmation', () =>
-      sendOrderConfirmation(order)
-    );
-  }
-);
-```
+2. **Persist, then let the job runner pick it up** for slow or multi-step work: record the event row (the idempotency insert doubles as the queue), return `200`, and process it from the custom job runner (`$lib/server/jobs`, `runJob`) triggered by Vercel cron via `/api/cron/[job]`. Retries = the next cron run re-picking unprocessed rows.
 
-Inngest handles retries, observability, and step-level failure isolation. Each `step.run()` is retried independently.
+**Don't** fire-and-forget a promise after returning the response (`processAsync().catch(...)`): Vercel freezes the function once the response is sent — the work may silently never run. Either await it inline or persist it for the cron path.
 
 ## SvelteKit Raw Body Access
 
