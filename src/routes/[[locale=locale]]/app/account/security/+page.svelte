@@ -108,6 +108,19 @@ let stepUpAction = $state<'disable' | 'regenerate' | null>(null);
 let disabling = $state(false);
 let freshBackupCodes = $state<string[] | null>(null);
 
+/**
+ * Extract the Base32 secret from an otpauth:// URI. Split + URLSearchParams
+ * instead of new URL() — WHATWG parsing of non-special schemes is inconsistent
+ * in older WebKit.
+ */
+function totpSecretFromUri(uri: string): string | null {
+	const qs = uri.split('?')[1];
+	if (!qs) return null;
+	return new URLSearchParams(qs).get('secret');
+}
+
+const totpSecret = $derived(totpFlow.step === 'confirm' ? totpSecretFromUri(totpFlow.totpURI) : null);
+
 async function fetchQr(totpURI: string): Promise<string | null> {
 	try {
 		const res = await fetch('/api/me/two-factor/qr', {
@@ -206,13 +219,17 @@ async function onStepUpVerified() {
 	}
 }
 
-async function copyCodes(codes: string[]) {
+async function copyText(text: string, successMessage: string) {
 	try {
-		await navigator.clipboard.writeText(codes.join('\n'));
-		toast.success(m.app_account_security_backup_copied());
+		await navigator.clipboard.writeText(text);
+		toast.success(successMessage);
 	} catch {
 		toast.error(m.app_account_security_backup_copy_failed());
 	}
+}
+
+function copyCodes(codes: string[]) {
+	return copyText(codes.join('\n'), m.app_account_security_backup_copied());
 }
 
 function formatDate(iso: string | null): string {
@@ -369,6 +386,20 @@ function formatDate(iso: string | null): string {
 				{/if}
 				<details class="totp-uri">
 					<summary class="text-xs text-muted">{m.app_account_security_totp_manual()}</summary>
+					{#if totpSecret}
+						<div class="totp-secret">
+							<span class="text-xs text-muted">{m.app_account_security_totp_secret_label()}</span>
+							<code class="text-xs break-all select-all">{totpSecret}</code>
+							<Button
+								size="sm"
+								variant="outline"
+								onclick={() => totpSecret && copyText(totpSecret, m.app_account_security_totp_secret_copied())}
+							>
+								<span class="i-lucide-copy h-4 w-4 mr-1"></span>
+								{m.app_account_security_totp_copy_secret()}
+							</Button>
+						</div>
+					{/if}
 					<code class="text-xs break-all">{totpFlow.totpURI}</code>
 				</details>
 
@@ -512,5 +543,13 @@ function formatDate(iso: string | null): string {
 
 	.totp-uri summary {
 		cursor: pointer;
+	}
+
+	.totp-secret {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: var(--spacing-2);
+		margin-top: var(--spacing-2);
 	}
 </style>

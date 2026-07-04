@@ -24,6 +24,17 @@ export const AUTH_RATE_LIMIT_MAX = 5;
 /** Auth endpoint rate limit: window duration */
 export const AUTH_RATE_LIMIT_WINDOW = '60 s';
 
+/**
+ * OAuth callback rate limit: requests per window (per IP). More generous than
+ * AUTH_RATE_LIMIT_MAX — a single login burns a callback GET on top of the
+ * sign-in POST, and callbacks are already protected by Better Auth's one-time
+ * OAuth state validation. This bucket is DoS hygiene, not brute-force defense.
+ */
+export const AUTH_CALLBACK_RATE_LIMIT_MAX = 10;
+
+/** OAuth callback rate limit: window duration */
+export const AUTH_CALLBACK_RATE_LIMIT_WINDOW = '60 s';
+
 /** Issuer label shown in authenticator apps for TOTP enrollment */
 export const TWO_FACTOR_ISSUER = 'Velociraptor';
 

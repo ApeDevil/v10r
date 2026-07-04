@@ -1,13 +1,13 @@
-import { error, type Handle, type HandleServerError, json } from '@sveltejs/kit';
+import { error, type Handle, type HandleServerError, json, type RequestEvent } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { building } from '$app/environment';
-import { cookieMaxAge, locales, cookieName as PARAGLIDE_LOCALE_COOKIE } from '$lib/i18n';
+import { cookieMaxAge, locales, localizeHref, cookieName as PARAGLIDE_LOCALE_COOKIE } from '$lib/i18n';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import { checkEmailRateLimit, decisionResponse, logBlocked, verifyAltcha } from '$lib/server/abuse';
 import { parseConsentTier } from '$lib/server/analytics/consent';
 import { analyticsCollector } from '$lib/server/analytics/hook';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { createLimiter, isDocumentRequest, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { auth } from '$lib/server/auth';
 import { logAdminConfig } from '$lib/server/auth/admin-ids';
 import { listActiveGrantKinds } from '$lib/server/auth/grants';
@@ -15,6 +15,8 @@ import { twoFactorVerifyLimitKey } from '$lib/server/auth/step-up';
 import { getCustomPaletteById } from '$lib/server/branding/palette-crud';
 import {
 	ANALYTICS_CONSENT_COOKIE,
+	AUTH_CALLBACK_RATE_LIMIT_MAX,
+	AUTH_CALLBACK_RATE_LIMIT_WINDOW,
 	AUTH_RATE_LIMIT_MAX,
 	AUTH_RATE_LIMIT_WINDOW,
 	HSTS_MAX_AGE,
@@ -49,6 +51,18 @@ const ALLOWED_LOCALES = new Set<string>(locales);
 
 /** Upstash rate limiter for auth endpoints */
 const authRatelimit = createLimiter('ratelimit:auth', AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW);
+
+/**
+ * Separate, more generous bucket for OAuth callbacks. A callback GET is a
+ * full-page navigation that arrives on top of the sign-in POST, so sharing the
+ * strict bucket let a handful of logins dead-end the browser on raw 429 JSON.
+ * Callbacks are protected by Better Auth's one-time state validation.
+ */
+const authCallbackRatelimit = createLimiter(
+	'ratelimit:auth-cb',
+	AUTH_CALLBACK_RATE_LIMIT_MAX,
+	AUTH_CALLBACK_RATE_LIMIT_WINDOW,
+);
 
 /**
  * Per-ACCOUNT limiter for second-factor verification. The per-IP authRatelimit
@@ -347,6 +361,19 @@ const authCaptchaGate: Handle = async ({ event, resolve }) => {
 };
 
 /**
+ * 429 for /api/auth/*: JSON for fetch clients, but a full-page navigation
+ * (OAuth callback GET, magic-link verify GET) must never render raw JSON —
+ * redirect to the localized login page with a readable error instead.
+ */
+function authRateLimited(event: RequestEvent, reset: number, message: string): Response {
+	if (isDocumentRequest(event.request.headers)) {
+		const login = localizeHref('/auth/login', { locale: event.locals.locale ?? 'en' });
+		return new Response(null, { status: 303, headers: { Location: `${login}?error=rate_limited` } });
+	}
+	return rateLimitResponse(reset, message);
+}
+
+/**
  * 4. Auth API handler — intercepts /api/auth/* routes
  *    Includes Upstash rate limiting on all auth endpoints
  */
@@ -358,12 +385,14 @@ const authHandler: Handle = async ({ event, resolve }) => {
 
 	const path = event.url.pathname;
 
-	// Rate limit all auth endpoints (sign-in, sign-out, callback, get-session)
+	// Rate limit all auth endpoints (sign-in, sign-out, get-session); OAuth
+	// callbacks get their own bucket so retried logins can't starve the flow.
 	if (path.startsWith('/api/auth/') && event.locals.clientIp) {
-		const { success, reset } = await authRatelimit.limit(event.locals.clientIp);
+		const limiter = path.startsWith('/api/auth/callback/') ? authCallbackRatelimit : authRatelimit;
+		const { success, reset } = await limiter.limit(event.locals.clientIp);
 
 		if (!success) {
-			return rateLimitResponse(reset, 'Too many requests. Please try again later.');
+			return authRateLimited(event, reset, 'Too many requests. Please try again later.');
 		}
 	}
 
@@ -376,7 +405,7 @@ const authHandler: Handle = async ({ event, resolve }) => {
 		const { success, reset } = await twoFactorVerifyLimiter.limit(limitKey);
 
 		if (!success) {
-			return rateLimitResponse(reset, 'Too many verification attempts. Please wait before trying again.');
+			return authRateLimited(event, reset, 'Too many verification attempts. Please wait before trying again.');
 		}
 	}
 

@@ -65,3 +65,31 @@ describe('createLimiter failure posture', () => {
 		expect(await limiter.limit('id')).toEqual({ success: true, reset: 123 });
 	});
 });
+
+describe('isDocumentRequest', () => {
+	async function load() {
+		return loadWith({ redis: null, dev: true });
+	}
+
+	it('detects a top-level navigation via Sec-Fetch-Dest', async () => {
+		const { isDocumentRequest } = await load();
+		expect(isDocumentRequest(new Headers({ 'sec-fetch-dest': 'document' }))).toBe(true);
+	});
+
+	it('treats Sec-Fetch-Dest as authoritative over Accept', async () => {
+		const { isDocumentRequest } = await load();
+		expect(isDocumentRequest(new Headers({ 'sec-fetch-dest': 'empty', accept: 'text/html' }))).toBe(false);
+		expect(isDocumentRequest(new Headers({ 'sec-fetch-dest': 'iframe', accept: 'text/html' }))).toBe(false);
+	});
+
+	it('falls back to Accept sniffing when Sec-Fetch-Dest is absent', async () => {
+		const { isDocumentRequest } = await load();
+		expect(isDocumentRequest(new Headers({ accept: 'text/html,application/xhtml+xml' }))).toBe(true);
+		expect(isDocumentRequest(new Headers({ accept: 'application/json' }))).toBe(false);
+	});
+
+	it('defaults to non-document with no signal headers', async () => {
+		const { isDocumentRequest } = await load();
+		expect(isDocumentRequest(new Headers())).toBe(false);
+	});
+});

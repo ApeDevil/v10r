@@ -9,6 +9,7 @@ import { Button, Input, Spinner } from '$lib/components/primitives';
 import { errorMessage } from '$lib/errors';
 import { localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
+import { clearAuthPendingMarker, setAuthPendingMarker } from '$lib/pwa/session-refresh';
 
 let { data } = $props();
 
@@ -26,7 +27,10 @@ let email = $state('');
 let flowState = $state<FlowState>('idle');
 let sendingMethod = $state<'magic-link' | 'otp' | null>(null);
 let loadingProvider = $state<string | null>(null);
-let error = $state<string | null>(null);
+// Seeded when the auth rate limiter bounced a full-page navigation (e.g. an
+// OAuth callback) here via ?error=rate_limited.
+// svelte-ignore state_referenced_locally
+let error = $state<string | null>(data.rateLimited ? m.auth_login_error_rate_limited() : null);
 
 // ALTCHA single-use payload. Re-mount after consumption via captchaKey.
 let altchaToken = $state<string | null>(null);
@@ -85,6 +89,9 @@ async function handleMagicLink() {
 			error = result.error.message ?? m.auth_login_error_magic_link_failed();
 			flowState = 'error';
 		} else {
+			// The emailed link completes in the browser, not necessarily in this
+			// window (installed PWA) — let the wake-time revalidation pick it up.
+			setAuthPendingMarker();
 			flowState = 'magic-link-sent';
 		}
 	} catch {
@@ -136,12 +143,25 @@ async function handleOAuth(provider: 'github' | 'google') {
 	loadingProvider = provider;
 	error = null;
 
+	// In an installed PWA the OAuth round trip completes in the system browser —
+	// the marker lets the wake-time revalidation refresh this window's session.
+	setAuthPendingMarker();
 	try {
-		await authClient.signIn.social({
+		const result = await authClient.signIn.social({
 			provider,
 			callbackURL: data.returnTo,
 		});
+		if (result?.error) {
+			// signIn.social reports rate limiting (429) via result.error, not throw.
+			clearAuthPendingMarker();
+			error =
+				result.error.status === 429
+					? m.auth_login_error_rate_limited()
+					: (result.error.message ?? errorMessage('INTERNAL'));
+			loadingProvider = null;
+		}
 	} catch (err) {
+		clearAuthPendingMarker();
 		error = err instanceof Error ? err.message : errorMessage('INTERNAL');
 		loadingProvider = null;
 	}

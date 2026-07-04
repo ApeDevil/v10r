@@ -12,6 +12,7 @@ import UpdatePrompt from '$lib/components/shell/UpdatePrompt.svelte';
 import VelyMinimizedBubble from '$lib/components/shell/VelyMinimizedBubble.svelte';
 import { localizeHref } from '$lib/i18n';
 import { baseLocale, locales } from '$lib/paraglide/runtime';
+import { initSessionRefresh } from '$lib/pwa/session-refresh';
 import { initKeyboardHandler, registerShortcut } from '$lib/shortcuts';
 import { chatbotSession } from '$lib/state/chatbot-session.svelte';
 import { setConsentContext } from '$lib/state/consent.svelte';
@@ -45,6 +46,12 @@ $effect(() => {
 // SPA-navigation analytics beacon (idempotent, no-op when consent < 'analytics' is rejected server-side)
 $effect(() => {
 	initJourneyBeacon();
+});
+
+// Wake-time session revalidation (idempotent): bfcache restores + logins that
+// complete outside this window (installed-PWA OAuth / magic-link).
+$effect(() => {
+	initSessionRefresh();
 });
 
 // Keyboard shortcuts

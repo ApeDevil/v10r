@@ -55,6 +55,17 @@ export function createLimiter(prefix: string, max: number, window: Duration): Li
 	};
 }
 
+/**
+ * True when the request is a top-level browser navigation — i.e. the response
+ * will be rendered as the page. Sec-Fetch-Dest is authoritative on all modern
+ * browsers; fall back to Accept sniffing for clients that omit it.
+ */
+export function isDocumentRequest(headers: Headers): boolean {
+	const dest = headers.get('sec-fetch-dest');
+	if (dest) return dest === 'document';
+	return headers.get('accept')?.includes('text/html') ?? false;
+}
+
 export function rateLimitResponse(reset: number, message = 'Too many requests. Please wait a moment.'): Response {
 	return json(
 		{ error: { code: 'rate_limited', message } },

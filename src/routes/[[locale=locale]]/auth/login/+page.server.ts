@@ -27,5 +27,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		redirect(303, localizeHref(returnTo));
 	}
 
-	return { title: 'Log In', returnTo, passkeysEnabled };
+	return {
+		title: 'Log In',
+		returnTo,
+		passkeysEnabled,
+		rateLimited: url.searchParams.get('error') === 'rate_limited',
+	};
 };
