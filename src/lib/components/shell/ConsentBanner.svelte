@@ -108,7 +108,13 @@ const visible = $derived(browser && (consent.needsBanner || consent.bannerOpen))
 		left: 0;
 		right: 0;
 		z-index: var(--z-toast);
-		background: var(--surface-2);
+		/* Inverted theme: flip against the page so the banner pops. The remapped tokens
+		   cascade into the child Button/Switch primitives, keeping them legible. Primary
+		   (icon + Accept-all) is intentionally left as the page accent. */
+		background: var(--surface-inverse);
+		--color-fg: var(--fg-inverse);
+		--color-muted: var(--muted-inverse);
+		--color-border: var(--border-inverse);
 		backdrop-filter: blur(8px);
 		-webkit-backdrop-filter: blur(8px);
 		border-top: 1px solid var(--color-border);

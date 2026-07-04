@@ -90,6 +90,12 @@
 	--surface-2: oklch(0.94 0.008 240); /* Overlay - dropdowns, popovers */
 	--surface-3: oklch(1 0 0); /* Modal - highest, pure white */
 
+	/* Inverted theme — flips a surface against the page (cookie banner). Light page → dark look. */
+	--surface-inverse: oklch(0.11 0.006 250); /* = dark --surface-2 */
+	--fg-inverse: oklch(0.78 0.1 175); /* = dark --color-fg (teal-tinted) */
+	--muted-inverse: oklch(0.78 0.015 240); /* = dark --color-muted */
+	--border-inverse: oklch(0.32 0.015 250); /* = dark --color-border */
+
 	/* Animation */
 	--duration-instant: 0ms;
 	--duration-fast: 150ms;
@@ -231,6 +237,12 @@
 	--surface-1: oklch(0.15 0.008 250); /* Raised - cards, panels */
 	--surface-2: oklch(0.11 0.006 250); /* Overlay - dropdowns, popovers */
 	--surface-3: oklch(0 0 0); /* Modal - highest, complete dark */
+
+	/* Inverted theme — dark page → light look (cookie banner) */
+	--surface-inverse: oklch(0.94 0.008 240); /* = light --surface-2 */
+	--fg-inverse: oklch(0.35 0.06 210); /* = light --color-fg */
+	--muted-inverse: oklch(0.45 0.02 260); /* = light --color-muted */
+	--border-inverse: oklch(0.85 0.01 240); /* light border, nudged off pure-white so dividers show */
 }
 
 /* ═══════════════════════════════════════════════════════════════
