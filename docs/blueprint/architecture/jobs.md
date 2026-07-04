@@ -87,11 +87,11 @@ Vercel sends an HTTP GET to `/api/cron/[job]` on the schedule defined in `vercel
     { "path": "/api/cron/dbops-refresh", "schedule": "0 4 * * *" },
     { "path": "/api/cron/dbops-reaper", "schedule": "0 5 * * *" },
     { "path": "/api/cron/notification-cleanup", "schedule": "15 3 * * *" },
-    { "path": "/api/cron/notification-delivery", "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/notification-delivery", "schedule": "0 8 * * *" },
     { "path": "/api/cron/telegram-token-cleanup", "schedule": "30 3 * * *" },
     { "path": "/api/cron/grant-request-expiry", "schedule": "45 3 * * *" },
-    { "path": "/api/cron/discord-token-refresh", "schedule": "0 */6 * * *" },
-    { "path": "/api/cron/desk-rawrag-sync", "schedule": "0 */6 * * *" },
+    { "path": "/api/cron/discord-token-refresh", "schedule": "30 4 * * *" },
+    { "path": "/api/cron/desk-rawrag-sync", "schedule": "15 5 * * *" },
     { "path": "/api/cron/desk-retention", "schedule": "0 6 * * 0" },
     { "path": "/api/cron/ai-telemetry-retention", "schedule": "30 6 * * 0" },
     { "path": "/api/cron/audit-log-retention", "schedule": "0 7 * * 0" }
@@ -100,6 +100,8 @@ Vercel sends an HTTP GET to `/api/cron/[job]` on the schedule defined in `vercel
 ```
 
 > **Every registered job needs a `vercel.json` cron.** A slug with no entry never fires on Vercel — the registry does not imply a schedule. Earlier only 6 of 11 jobs were scheduled, so `desk-rawrag-sync`, `grant-request-expiry`, `notification-cleanup`, and the two token jobs silently never ran in production. All jobs now carry a cron.
+
+> **Vercel Hobby allows daily crons only.** Any expression that would fire more than once per day (`*/5 * * * *`, `0 */6 * * *`, …) **fails the whole deployment** with "Hobby accounts are limited to daily cron jobs" — this bit us on 2026-07-04. All schedules above are therefore once-daily (Hobby also quantizes timing to ±59 min). On a Pro plan, `notification-delivery` should go back to `*/5 * * * *` and the two token/sync jobs to `0 */6 * * *`.
 
 **Strategy B: Persistent scheduler (containers, VPS, Fly, Railway)**
 

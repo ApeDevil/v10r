@@ -36,7 +36,7 @@
 		},
 		{
 			"path": "/api/cron/notification-delivery",
-			"schedule": "*/5 * * * *"
+			"schedule": "0 8 * * *"
 		},
 		{
 			"path": "/api/cron/telegram-token-cleanup",
@@ -48,11 +48,11 @@
 		},
 		{
 			"path": "/api/cron/discord-token-refresh",
-			"schedule": "0 */6 * * *"
+			"schedule": "30 4 * * *"
 		},
 		{
 			"path": "/api/cron/desk-rawrag-sync",
-			"schedule": "0 */6 * * *"
+			"schedule": "15 5 * * *"
 		},
 		{
 			"path": "/api/cron/desk-retention",

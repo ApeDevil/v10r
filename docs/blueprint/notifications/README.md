@@ -9,7 +9,7 @@ The notification system is designed for a **persistent Bun container** as the pr
 | Capability | Container (Primary) | Vercel Serverless |
 |---|---|---|
 | Real-time delivery | SSE + in-memory map | Polling + `invalidate()` |
-| Outbox processing | `setInterval` worker | Vercel cron (`/api/cron/notification-delivery`, every 5 min) |
+| Outbox processing | `setInterval` worker | Vercel cron (`/api/cron/notification-delivery`, daily — Hobby-plan cron limit) |
 | PG `LISTEN`/`NOTIFY` | Works (direct connection) | Blocked (pooled HTTP) |
 | Background workers | Native, persistent | Need external service |
 

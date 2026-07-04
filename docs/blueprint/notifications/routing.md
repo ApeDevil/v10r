@@ -183,7 +183,7 @@ On serverless (no persistent process), `notification-delivery` is a registered j
 | Setting | Value |
 |---------|-------|
 | **Endpoint** | `/api/cron/notification-delivery` (via `/api/cron/[job]`) |
-| **Cadence** | `*/5 * * * *` (every 5 minutes) |
+| **Cadence** | `0 8 * * *` (daily — Vercel Hobby rejects sub-daily crons at deploy time; restore `*/5 * * * *` on Pro) |
 | **Purpose** | Process pending deliveries, retries |
 
 > **Inngest is design-intent only.** It is not a dependency and is never imported. Async delivery uses the in-process worker (container) plus the cron sweep (serverless).
