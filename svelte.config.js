@@ -19,7 +19,12 @@ const config = {
 			mode: 'auto',
 			directives: {
 				'default-src': ['self'],
-				'script-src': ['self', 'wasm-unsafe-eval'],
+				// The sha256 entry allowlists the theme-flash inline script in app.html
+				// (a nonce can't be used: /offline is prerendered — no request, no nonce).
+				// If that script's body changes, recompute from the repo root with:
+				//   python3 -c "import re,hashlib,base64;b=re.search(r'<script[^>]*>(.*?)</script>',open('src/app.html').read(),re.S).group(1);print('sha256-'+base64.b64encode(hashlib.sha256(b.encode()).digest()).decode())"
+				// Dev never enforces CSP, so a stale hash only surfaces in production.
+				'script-src': ['self', 'wasm-unsafe-eval', 'sha256-jnC6E30ipgX/zC43NatpDdcsuGKYTxRRmogDK2qTgMY='],
 				'style-src': ['self', 'unsafe-inline'],
 				'img-src': [
 					'self',

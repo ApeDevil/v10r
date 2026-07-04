@@ -12,10 +12,13 @@
 		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 		%sveltekit.head%
-		<!-- Inline script to prevent theme flash. The nonce placeholder is required:
-		     with kit.csp active, an un-nonced inline script is BLOCKED in production
-		     (dev never enforces CSP, so the breakage is invisible locally). -->
-		<script nonce="%sveltekit.nonce%">
+		<!-- Inline script to prevent theme flash. Allowed through CSP by a sha256
+		     hash in svelte.config.js script-src. Do NOT switch this to the sveltekit
+		     nonce placeholder: /offline is prerendered, and a template containing
+		     that placeholder (ANYWHERE, even in a comment - kit does a substring
+		     check) fails the whole build. If you change ANYTHING between these
+		     script tags, recompute the hash - see the comment in svelte.config.js. -->
+		<script>
 			(() => {
 				const theme = document.cookie.match(/theme=(\w+)/)?.[1] ?? 'system';
 				const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
