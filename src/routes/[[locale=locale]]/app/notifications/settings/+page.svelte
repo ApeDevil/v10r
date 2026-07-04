@@ -90,12 +90,12 @@ async function connectTelegram() {
 			headers: { 'X-Requested-With': 'fetch' },
 		});
 		if (res.ok) {
-			const { deepLink } = await res.json();
-			telegramDeepLink = deepLink;
-			window.open(deepLink, '_blank');
+			const { data } = await res.json();
+			telegramDeepLink = data.deepLink;
+			window.open(data.deepLink, '_blank');
 		} else {
 			const { error } = await res.json();
-			toast.error(error ?? m.app_notifications_telegram_link_error());
+			toast.error(error?.message ?? m.app_notifications_telegram_link_error());
 		}
 	} catch {
 		toast.error(m.app_notifications_telegram_connect_error());

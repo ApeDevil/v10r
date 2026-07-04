@@ -44,7 +44,9 @@ export async function subscribeToPush(): Promise<'subscribed' | 'denied' | 'unsu
 	try {
 		const keyRes = await fetch('/api/notifications/push', { headers: HEADERS });
 		if (!keyRes.ok) return 'failed';
-		const { publicKey } = (await keyRes.json()) as { publicKey: string };
+		// apiOk envelope: every JSON endpoint answers { data: T }.
+		const { data } = (await keyRes.json()) as { data: { publicKey: string } };
+		const publicKey = data.publicKey;
 
 		const subscription = await registration.pushManager.subscribe({
 			userVisibleOnly: true,

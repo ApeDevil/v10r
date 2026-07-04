@@ -28,7 +28,12 @@ const config = {
 					'https://*.r2.cloudflarestorage.com',
 					'https://basemaps.cartocdn.com',
 					'https://avatars.githubusercontent.com',
+					// Google OAuth account avatars
+					'https://lh3.googleusercontent.com',
 				],
+				// Vite inlines small fonts as data: URIs; without font-src they fall
+				// back to default-src 'self' and get blocked in production.
+				'font-src': ['self', 'data:'],
 				'connect-src': ['self', 'blob:', 'https://basemaps.cartocdn.com', 'https://*.r2.cloudflarestorage.com'],
 				'worker-src': ['self', 'blob:'],
 				'object-src': ['none'],

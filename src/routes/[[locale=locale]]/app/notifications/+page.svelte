@@ -30,9 +30,9 @@ async function handleMarkAllRead() {
 		headers: { 'X-Requested-With': 'fetch' },
 	});
 	if (res.ok) {
-		const { count } = await res.json();
-		notifs.decrementBy(count);
-		toast.success(m.app_notifications_marked_read({ count }));
+		const { data } = await res.json();
+		notifs.decrementBy(data.count);
+		toast.success(m.app_notifications_marked_read({ count: data.count }));
 		await invalidate('app:notifications');
 	}
 }
