@@ -1,5 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import { MediaQuery } from 'svelte/reactivity';
+import { browser } from '$app/environment';
 import { goto, invalidateAll } from '$app/navigation';
 import { authClient } from '$lib/auth-client';
 import { Altcha } from '$lib/components/composites';
@@ -9,6 +11,14 @@ import { localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
+
+// Installed-PWA detection: display-mode covers Android/desktop installs,
+// navigator.standalone covers iOS home-screen apps. SSR falls back to browser
+// mode (the reorder is a progressive enhancement after hydration).
+const displayModeStandalone = new MediaQuery('(display-mode: standalone)', false);
+const standalone = $derived(
+	displayModeStandalone.current || (browser && (navigator as Navigator & { standalone?: boolean }).standalone === true),
+);
 
 type FlowState = 'idle' | 'sending' | 'magic-link-sent' | 'error';
 
@@ -21,6 +31,32 @@ let error = $state<string | null>(null);
 // ALTCHA single-use payload. Re-mount after consumption via captchaKey.
 let altchaToken = $state<string | null>(null);
 let captchaKey = $state(0);
+
+// Pending-OTP resume: if iOS suspends/kills the installed app while the user
+// checks mail, relaunch lands here (start_url) with the verify flow orphaned.
+// The marker (written on OTP send, cleared on verify) offers a way back.
+interface PendingOtp {
+	email: string;
+	returnTo: string;
+	sentAt: number;
+}
+const OTP_MARKER_KEY = 'v10r:pending-otp';
+const OTP_MARKER_TTL_MS = 10 * 60 * 1000;
+
+let pendingOtp = $state<PendingOtp | null>(null);
+
+function resumeOtp() {
+	if (!pendingOtp) return;
+	const params = new URLSearchParams({ email: pendingOtp.email, returnTo: pendingOtp.returnTo });
+	goto(`/auth/verify?${params.toString()}`);
+}
+
+function dismissPendingOtp() {
+	pendingOtp = null;
+	try {
+		localStorage.removeItem(OTP_MARKER_KEY);
+	} catch {}
+}
 
 let isBusy = $derived(flowState === 'sending' || !!loadingProvider);
 let canSubmit = $derived(!isBusy && !!email.trim() && !!altchaToken);
@@ -77,6 +113,12 @@ async function handleOtp() {
 			flowState = 'error';
 			sendingMethod = null;
 		} else {
+			try {
+				localStorage.setItem(
+					OTP_MARKER_KEY,
+					JSON.stringify({ email: email.trim(), returnTo: data.returnTo, sentAt: Date.now() } satisfies PendingOtp),
+				);
+			} catch {}
 			const params = new URLSearchParams({
 				email: email.trim(),
 				returnTo: data.returnTo,
@@ -136,6 +178,19 @@ async function handlePasskey() {
 }
 
 onMount(() => {
+	// Restore an interrupted OTP flow (fresh marker only).
+	try {
+		const raw = localStorage.getItem(OTP_MARKER_KEY);
+		if (raw) {
+			const parsed = JSON.parse(raw) as PendingOtp;
+			if (parsed.email && Date.now() - parsed.sentAt < OTP_MARKER_TTL_MS) {
+				pendingOtp = parsed;
+			} else {
+				localStorage.removeItem(OTP_MARKER_KEY);
+			}
+		}
+	} catch {}
+
 	// Conditional UI: surface passkeys in the email field's autofill dropdown.
 	// The WebAuthn ceremony is browser-only, so this is the one legitimate
 	// onMount call — it is a credential ceremony, not data loading. A pending
@@ -159,6 +214,25 @@ onMount(() => {
 	});
 });
 </script>
+{#snippet passkeyButton()}
+	<div class="login-actions">
+		<Button
+			variant="outline"
+			size="lg"
+			class="w-full justify-center"
+			disabled={isBusy}
+			onclick={handlePasskey}
+		>
+			{#if loadingProvider === 'passkey'}
+				<Spinner size="sm" class="mr-3" />
+			{:else}
+				<span class="i-lucide-fingerprint text-xl mr-3" aria-hidden="true"></span>
+			{/if}
+			{m.auth_login_passkey()}
+		</Button>
+	</div>
+{/snippet}
+
 <div class="login-page">
 	<div class="login-card">
 		<div class="login-header">
@@ -185,6 +259,20 @@ onMount(() => {
 				{m.auth_login_use_different_email()}
 			</Button>
 		{:else}
+			{#if pendingOtp}
+				<div class="resume-card" role="status">
+					<span class="i-lucide-mail-open text-lg" aria-hidden="true"></span>
+					<div class="resume-text">
+						<p class="font-medium">{m.auth_login_pending_code_title()}</p>
+						<p class="text-sm">{pendingOtp.email}</p>
+					</div>
+					<div class="resume-actions">
+						<Button size="sm" onclick={resumeOtp}>{m.auth_login_pending_code_continue()}</Button>
+						<Button size="sm" variant="ghost" onclick={dismissPendingOtp}>{m.auth_login_pending_code_dismiss()}</Button>
+					</div>
+				</div>
+			{/if}
+
 			<div class="email-section">
 				<Input
 					type="email"
@@ -201,11 +289,30 @@ onMount(() => {
 					{/key}
 				</div>
 
-				<div class="email-actions">
+				{#if standalone}
+					<!-- Installed app: the code flow completes in-app; the emailed magic
+						link opens in the BROWSER's separate session (iOS cookie jars),
+						so OTP is primary and the link is demoted with a caveat. -->
+					<div class="email-actions">
+						<Button
+							variant="default"
+							size="md"
+							class="flex-1 min-w-0 justify-center whitespace-nowrap"
+							disabled={!canSubmit}
+							onclick={handleOtp}
+						>
+							{#if sendingMethod === 'otp'}
+								<Spinner size="sm" class="mr-2" />
+							{:else}
+								<span class="i-lucide-hash text-base mr-2" aria-hidden="true"></span>
+							{/if}
+							{m.auth_login_send_code()}
+						</Button>
+					</div>
 					<Button
-						variant="default"
-						size="md"
-						class="flex-1 min-w-0 justify-center whitespace-nowrap"
+						variant="ghost"
+						size="sm"
+						class="w-full justify-center"
 						disabled={!canSubmit}
 						onclick={handleMagicLink}
 					>
@@ -216,23 +323,50 @@ onMount(() => {
 						{/if}
 						{m.auth_login_magic_link()}
 					</Button>
+					<p class="standalone-caveat">{m.auth_login_standalone_magic_link_caveat()}</p>
+				{:else}
+					<div class="email-actions">
+						<Button
+							variant="default"
+							size="md"
+							class="flex-1 min-w-0 justify-center whitespace-nowrap"
+							disabled={!canSubmit}
+							onclick={handleMagicLink}
+						>
+							{#if sendingMethod === 'magic-link'}
+								<Spinner size="sm" class="mr-2" />
+							{:else}
+								<span class="i-lucide-link text-base mr-2" aria-hidden="true"></span>
+							{/if}
+							{m.auth_login_magic_link()}
+						</Button>
 
-					<Button
-						variant="outline"
-						size="md"
-						class="flex-1 min-w-0 justify-center whitespace-nowrap"
-						disabled={!canSubmit}
-						onclick={handleOtp}
-					>
-						{#if sendingMethod === 'otp'}
-							<Spinner size="sm" class="mr-2" />
-						{:else}
-							<span class="i-lucide-hash text-base mr-2" aria-hidden="true"></span>
-						{/if}
-						{m.auth_login_send_code()}
-					</Button>
-				</div>
+						<Button
+							variant="outline"
+							size="md"
+							class="flex-1 min-w-0 justify-center whitespace-nowrap"
+							disabled={!canSubmit}
+							onclick={handleOtp}
+						>
+							{#if sendingMethod === 'otp'}
+								<Spinner size="sm" class="mr-2" />
+							{:else}
+								<span class="i-lucide-hash text-base mr-2" aria-hidden="true"></span>
+							{/if}
+							{m.auth_login_send_code()}
+						</Button>
+					</div>
+				{/if}
 			</div>
+
+			{#if standalone && data.passkeysEnabled}
+				<!-- Passkeys promoted above OAuth in the installed app: native Face/Touch
+					ID, no redirect dance, origin matches the prod domain. -->
+				<div class="divider">
+					<span>{m.auth_login_or()}</span>
+				</div>
+				{@render passkeyButton()}
+			{/if}
 
 			<div class="divider">
 				<span>{m.auth_login_or_continue_with()}</span>
@@ -272,27 +406,15 @@ onMount(() => {
 				</Button>
 			</div>
 
-			{#if data.passkeysEnabled}
+			{#if standalone}
+				<p class="standalone-caveat">{m.auth_login_standalone_oauth_caveat()}</p>
+			{/if}
+
+			{#if !standalone && data.passkeysEnabled}
 				<div class="divider">
 					<span>{m.auth_login_or()}</span>
 				</div>
-
-				<div class="login-actions">
-					<Button
-						variant="outline"
-						size="lg"
-						class="w-full justify-center"
-						disabled={isBusy}
-						onclick={handlePasskey}
-					>
-						{#if loadingProvider === 'passkey'}
-							<Spinner size="sm" class="mr-3" />
-						{:else}
-							<span class="i-lucide-fingerprint text-xl mr-3" aria-hidden="true"></span>
-						{/if}
-						{m.auth_login_passkey()}
-					</Button>
-				</div>
+				{@render passkeyButton()}
 			{/if}
 
 			<p class="text-xs text-center mt-6">
@@ -412,6 +534,45 @@ onMount(() => {
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-3);
+	}
+
+	.standalone-caveat {
+		margin: var(--spacing-2) 0 0;
+		text-align: center;
+		font-size: 0.75rem;
+		color: var(--color-muted);
+	}
+
+	.resume-card {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-3);
+		padding: var(--spacing-3) var(--spacing-4);
+		background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+		border: 1px solid var(--color-primary);
+		border-radius: var(--radius-md);
+		font-size: 0.875rem;
+		margin-bottom: var(--spacing-6);
+	}
+
+	.resume-card p {
+		margin: 0;
+	}
+
+	.resume-text {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.resume-text .text-sm {
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.resume-actions {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-1);
 	}
 
 	.login-footer {

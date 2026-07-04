@@ -8,9 +8,9 @@
 import { DropdownMenu } from 'bits-ui';
 import { goto, invalidateAll } from '$app/navigation';
 import { page } from '$app/state';
-import { authClient } from '$lib/auth-client';
 import { locales, localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
+import { signOutAndFlush } from '$lib/pwa/sign-out';
 import { getTheme } from '$lib/state/theme.svelte';
 import { cn } from '$lib/utils/cn';
 
@@ -54,7 +54,8 @@ function setTheme(mode: 'light' | 'dark' | 'system') {
 }
 
 async function handleSignOut() {
-	await authClient.signOut();
+	// Also flushes stale service-worker caches (PWA hygiene on shared devices).
+	await signOutAndFlush();
 	// Refresh the shared root-layout `session` (reused across the client-side
 	// nav) so the shell drops back to the logged-out state without a reload.
 	await invalidateAll();

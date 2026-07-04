@@ -20,6 +20,8 @@ export { default as DockActivityBar } from './DockActivityBar.svelte';
 export { default as DockDropOverlay } from './DockDropOverlay.svelte';
 export { default as DockLayout } from './DockLayout.svelte';
 export { default as DockLeaf } from './DockLeaf.svelte';
+export { default as DockMobileBar } from './DockMobileBar.svelte';
+export { default as DockMobileView } from './DockMobileView.svelte';
 export { default as DockNode } from './DockNode.svelte';
 export { default as DockResizeHandle } from './DockResizeHandle.svelte';
 export { default as DockTabBar } from './DockTabBar.svelte';
@@ -75,12 +77,14 @@ export { dispatchDeskEffect, type EffectActions } from './dispatch-desk-effect';
 export {
 	addPanelToLeaf,
 	collectLeaves,
+	collectPanelIds,
 	findLeafWithPanel,
 	findNode,
 	findParent,
 	generateId,
 	getDepth,
 	hasPanelType,
+	nextPanelOfType,
 	removePanelFromLeaf,
 	replaceNode,
 	resolveDropZone,

@@ -1,9 +1,11 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import { MediaQuery } from 'svelte/reactivity';
 import { browser } from '$app/environment';
 import DeskPreferencesDialog from './DeskPreferencesDialog.svelte';
 import DeskShortcuts from './DeskShortcuts.svelte';
 import DockActivityBar from './DockActivityBar.svelte';
+import DockMobileView from './DockMobileView.svelte';
 import DockNode from './DockNode.svelte';
 import { setDeskBusContext } from './desk-bus.svelte';
 import {
@@ -73,6 +75,11 @@ let {
 	panelContent,
 	class: className,
 }: Props = $props();
+
+// Mobile (<768px) renders a single-panel view with a bottom switcher instead
+// of the split tree — contexts, persistence, and state below are shared by
+// both modes (desk is ssr=false, so the SSR fallback never paints).
+const isDesktop = new MediaQuery('(min-width: 768px)', true);
 
 // svelte-ignore state_referenced_locally
 const persistKey = typeof persist === 'string' ? persist : undefined;
@@ -369,21 +376,25 @@ $effect(() => {
 <div
 	bind:this={layoutEl}
 	class="dock-layout {className ?? ''}"
-	data-bar-position={dock.activityBarPosition}
+	data-bar-position={isDesktop.current ? dock.activityBarPosition : 'mobile'}
 >
 	<DeskShortcuts />
 	<DeskPreferencesDialog />
 
-	{#if activityBarItems && activityBarItems.length > 0}
-		<DockActivityBar
-			items={activityBarItems}
-			position={dock.activityBarPosition}
-		/>
-	{/if}
+	{#if isDesktop.current}
+		{#if activityBarItems && activityBarItems.length > 0}
+			<DockActivityBar
+				items={activityBarItems}
+				position={dock.activityBarPosition}
+			/>
+		{/if}
 
-	<div class="dock-content">
-		<DockNode node={dock.root} {panelContent} />
-	</div>
+		<div class="dock-content">
+			<DockNode node={dock.root} {panelContent} />
+		</div>
+	{:else}
+		<DockMobileView items={activityBarItems ?? []} {openPanel} {panelContent} />
+	{/if}
 </div>
 
 <style>
@@ -415,6 +426,13 @@ $effect(() => {
 	}
 
 	.dock-layout[data-bar-position='bottom'] {
+		grid-template-areas: 'content' 'bar';
+		grid-template-columns: 1fr;
+		grid-template-rows: 1fr auto;
+	}
+
+	/* Mobile mode: single panel above a bottom switcher bar */
+	.dock-layout[data-bar-position='mobile'] {
 		grid-template-areas: 'content' 'bar';
 		grid-template-columns: 1fr;
 		grid-template-rows: 1fr auto;

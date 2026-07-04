@@ -7,6 +7,7 @@ import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Switch } from '$lib/components/primitives';
 import { buttonVariants } from '$lib/components/primitives/button';
 import * as m from '$lib/paraglide/messages';
+import { getCurrentPushSubscription, pushSupported, subscribeToPush, unsubscribeFromPush } from '$lib/pwa/push';
 import { getToast } from '$lib/state';
 
 let { data } = $props();
@@ -14,6 +15,55 @@ let { data } = $props();
 const toast = getToast();
 let connectingTelegram = $state(false);
 let telegramDeepLink = $state<string | null>(null);
+
+// Push is per-DEVICE (unlike telegram/discord accounts): state comes from this
+// browser's permission + subscription, not from the server load.
+let pushStatus = $state<'checking' | 'unsupported' | 'ios-needs-install' | 'denied' | 'off' | 'on'>('checking');
+let pushBusy = $state(false);
+
+$effect(() => {
+	void refreshPushStatus();
+});
+
+async function refreshPushStatus() {
+	if (!pushSupported()) {
+		// iOS exposes PushManager only inside the installed (home-screen) app —
+		// route the user to install first instead of showing a dead toggle.
+		const isIos =
+			/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+		const standalone =
+			window.matchMedia('(display-mode: standalone)').matches ||
+			(navigator as Navigator & { standalone?: boolean }).standalone === true;
+		pushStatus = isIos && !standalone ? 'ios-needs-install' : 'unsupported';
+		return;
+	}
+	if (Notification.permission === 'denied') {
+		pushStatus = 'denied';
+		return;
+	}
+	pushStatus = (await getCurrentPushSubscription()) ? 'on' : 'off';
+}
+
+async function enablePush() {
+	pushBusy = true;
+	const result = await subscribeToPush();
+	pushBusy = false;
+	if (result === 'subscribed') {
+		pushStatus = 'on';
+		toast.success(m.app_notifications_push_enabled_toast());
+	} else if (result === 'denied') {
+		pushStatus = 'denied';
+	} else {
+		toast.error(m.app_notifications_push_error());
+	}
+}
+
+async function disablePush() {
+	pushBusy = true;
+	await unsubscribeFromPush();
+	pushBusy = false;
+	pushStatus = 'off';
+}
 
 const { form, enhance, submitting, message } = superForm(data.form, {
 	onUpdated({ form }) {
@@ -147,6 +197,49 @@ async function connectTelegram() {
 							</a>
 						</div>
 					</Stack>
+				{/if}
+			</Card>
+
+			<!-- Push (per-device) -->
+			<Card>
+				{#snippet header()}
+					<Cluster gap="3">
+						<h3 class="text-fluid-base font-semibold">Push</h3>
+						{#if pushStatus === 'on'}
+							<Badge variant="success">{m.app_notifications_badge_connected()}</Badge>
+						{:else if pushStatus === 'denied'}
+							<Badge variant="warning">{m.app_notifications_badge_inactive()}</Badge>
+						{/if}
+					</Cluster>
+					<p class="text-fluid-sm text-muted mt-1">{m.app_notifications_push_description()}</p>
+				{/snippet}
+
+				{#if pushStatus === 'on'}
+					<Stack gap="3">
+						<Switch bind:checked={$form.pushMention} label={m.app_notifications_pref_mention()} size="sm" />
+						<Switch bind:checked={$form.pushComment} label={m.app_notifications_pref_comment()} size="sm" />
+						<Switch bind:checked={$form.pushSystem} label={m.app_notifications_pref_system()} size="sm" />
+						<Switch bind:checked={$form.pushSecurity} label={m.app_notifications_pref_security()} size="sm" />
+						<div>
+							<Button type="button" variant="ghost" size="sm" onclick={disablePush} disabled={pushBusy}>
+								{m.app_notifications_push_disable()}
+							</Button>
+						</div>
+					</Stack>
+				{:else if pushStatus === 'off'}
+					<Stack gap="3">
+						<div>
+							<Button type="button" variant="secondary" onclick={enablePush} disabled={pushBusy}>
+								{pushBusy ? m.app_notifications_push_enabling() : m.app_notifications_push_enable()}
+							</Button>
+						</div>
+					</Stack>
+				{:else if pushStatus === 'ios-needs-install'}
+					<p class="text-fluid-sm text-muted">{m.app_notifications_push_ios_install()}</p>
+				{:else if pushStatus === 'denied'}
+					<p class="text-fluid-sm text-muted">{m.app_notifications_push_denied()}</p>
+				{:else if pushStatus === 'unsupported'}
+					<p class="text-fluid-sm text-muted">{m.app_notifications_push_unsupported()}</p>
 				{/if}
 			</Card>
 

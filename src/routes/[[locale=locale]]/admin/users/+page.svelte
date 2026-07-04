@@ -101,7 +101,7 @@ function openBanDialog(userId: string) {
 				/>
 			{/if}
 		{:else}
-			<div class="table-wrap">
+			<div class="table-wrap" tabindex="0" aria-label={m.admin_users_title()}>
 				<table class="user-table">
 					<thead>
 						<tr>
@@ -138,16 +138,16 @@ function openBanDialog(userId: string) {
 										<span>{u.name}</span>
 									</Cluster>
 								</td>
-								<td><code class="user-email">{u.email}</code></td>
-								<td><Badge variant={u.role === 'admin' ? 'default' : 'secondary'}>{u.role}</Badge></td>
-								<td>
+								<td data-label={m.admin_users_col_email()}><code class="user-email">{u.email}</code></td>
+								<td data-label={m.admin_users_col_role()}><Badge variant={u.role === 'admin' ? 'default' : 'secondary'}>{u.role}</Badge></td>
+								<td data-label={m.admin_users_col_status()}>
 									{#if u.banned}
 										<Badge variant="error">{m.admin_users_status_banned()}</Badge>
 									{:else}
 										<Badge variant="success">{m.admin_status_active()}</Badge>
 									{/if}
 								</td>
-								<td class="time-cell" title={u.createdAt}>{relativeTime(u.createdAt)}</td>
+								<td class="time-cell" data-label={m.admin_users_col_created()} title={u.createdAt}>{relativeTime(u.createdAt)}</td>
 								<td>
 									<Cluster gap="1">
 										{#if u.banned}
@@ -305,6 +305,11 @@ function openBanDialog(userId: string) {
 		overflow-x: auto;
 	}
 
+	.table-wrap:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+	}
+
 	.user-table {
 		width: 100%;
 		border-collapse: collapse;
@@ -379,5 +384,13 @@ function openBanDialog(userId: string) {
 	.ban-reason-text {
 		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);
+	}
+
+	@media (max-width: 767px) {
+		.user-table thead { display: none; }
+		.user-table, .user-table tbody, .user-table tr, .user-table td { display: block; width: 100%; }
+		.user-table tr { border: 1px solid var(--color-border); border-radius: var(--radius-md); margin-bottom: var(--spacing-3); padding: var(--spacing-2); }
+		.user-table td { border-bottom: none; white-space: normal; display: flex; gap: var(--spacing-2); align-items: baseline; }
+		.user-table td[data-label]::before { content: attr(data-label); min-width: 96px; flex-shrink: 0; font-weight: 600; font-size: var(--text-fluid-xs); color: var(--color-muted); }
 	}
 </style>

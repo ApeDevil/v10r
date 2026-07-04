@@ -88,6 +88,18 @@ Each channel provider implements a common interface:
 - `X-RateLimit-Remaining`
 - `X-RateLimit-Reset`
 
+### Web Push Provider
+
+| Aspect | Detail |
+|--------|--------|
+| **SDK** | `web-push` npm package (VAPID) |
+| **Fan-out** | `payload.to` is the v10r user id, not an endpoint — the provider loads every `push_subscriptions` row for that user and sends one payload per device |
+| **Payload** | Declarative Web Push JSON: `{ web_push: 8030, notification: { title, body, navigate, lang } }` — no PII (title = brand name, body = a generic category line) |
+| **Failure modes** | Push service returns 404/410 for a dead endpoint |
+| **Retry strategy** | None — see [Web Push Bypasses the Outbox](#web-push-bypasses-the-outbox) below |
+
+Unlike the other three providers, Web Push never goes through the outbox — see below.
+
 ---
 
 ## Rate Limiting Strategy
@@ -166,14 +178,15 @@ The delivery worker runs on its own `setInterval` in `src/lib/server/jobs/delive
 
 ### Vercel: Cron Sweep (Serverless)
 
-On serverless (no persistent process), the generic cron route sweeps for any outbox records stuck in `pending` state:
+On serverless (no persistent process), `notification-delivery` is a registered job (`jobs/index.ts`) scheduled in `vercel.json` at `/api/cron/notification-delivery` (dispatched through the generic `/api/cron/[job]` route). This cron is what drains pending Telegram / Discord / email deliveries on Vercel — the interval scheduler never runs there.
 
 | Setting | Value |
 |---------|-------|
-| **Endpoint** | `/api/cron/[job]` (generic cron dispatcher) |
-| **Purpose** | Catch leaked records, process retries |
+| **Endpoint** | `/api/cron/notification-delivery` (via `/api/cron/[job]`) |
+| **Cadence** | `*/5 * * * *` (every 5 minutes) |
+| **Purpose** | Process pending deliveries, retries |
 
-> **Inngest is design-intent only.** It is not a dependency and is never imported. Async delivery uses the in-process worker (container) plus the `/api/cron/[job]` sweep (serverless).
+> **Inngest is design-intent only.** It is not a dependency and is never imported. Async delivery uses the in-process worker (container) plus the cron sweep (serverless).
 
 ### Retry Configuration
 
@@ -182,6 +195,12 @@ On serverless (no persistent process), the generic cron route sweeps for any out
 | `maxAttempts` | 3 | Balance reliability vs spam |
 | `backoff` | Exponential (1s, 4s, 16s) | Respect rate limits |
 | `maxDelay` | 1 hour | Don't delay too long |
+
+---
+
+## Web Push Bypasses the Outbox
+
+Push never writes a `notification_deliveries` row. `service.ts` partitions `'push'` out of the router's channel list **before** `createDeliveries` runs, then calls `sendPushNow()` directly: it renders a generic localized category line (`renderNotification('notif_push_{type}', {}, recipientLocale)`) and hands it to `WebPushProvider` fire-and-forget. No outbox row means no retry and no dead-letter state — a push send either reaches the browser's push service on the first attempt or it doesn't. See [../pwa.md](../pwa.md) for the full payload contract and subscription lifecycle.
 
 ---
 
@@ -216,7 +235,7 @@ When a channel fails permanently:
 | Column | Purpose |
 |--------|---------|
 | `notification_id` | Parent notification |
-| `channel` | email, telegram, discord |
+| `channel` | email, telegram, discord (never `push` — see [Web Push Bypasses the Outbox](#web-push-bypasses-the-outbox)) |
 | `status` | pending, processing, sent, failed, skipped, retrying, dead |
 | `attempts` | Retry count |
 | `provider_message_id` | External reference |
@@ -257,7 +276,8 @@ src/lib/server/notifications/
     ├── types.ts            # Provider interface
     ├── email.ts            # Resend provider
     ├── telegram.ts         # Raw fetch() to Bot API
-    └── discord.ts          # Discord REST provider
+    ├── discord.ts          # Discord REST provider
+    └── web-push.ts         # WebPushProvider (VAPID, per-device fan-out)
 ```
 
 DB read/write helpers live under `$lib/server/db/notifications/{queries,mutations,admin-queries}.ts`.
@@ -276,3 +296,4 @@ The delivery worker is `$lib/server/jobs/notification-delivery.ts`, driven by `$
 - [./schema.md](./schema.md) - Database tables
 - [../middleware.md](../middleware.md) - Hooks integration
 - [../../stack/notifications/](../../stack/notifications/) - Provider details
+- [../pwa.md](../pwa.md) - Web push design record (payload contract, subscription lifecycle, delivery-mode verdict)

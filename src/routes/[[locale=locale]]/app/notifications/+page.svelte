@@ -1,5 +1,6 @@
 <script lang="ts">
 import { invalidate } from '$app/navigation';
+import { page } from '$app/state';
 import { EmptyState, NotificationCenter } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Button, buttonVariants } from '$lib/components/primitives/button';
@@ -65,6 +66,7 @@ async function handleMarkAllRead() {
 			{filter}
 			onFilterChange={(f) => filter = f}
 			onMarkRead={handleMarkRead}
+			focusId={page.url.searchParams.get('n')}
 		/>
 	{/if}
 </Stack>

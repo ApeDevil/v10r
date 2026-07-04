@@ -1,4 +1,10 @@
 {
+	"headers": [
+		{
+			"source": "/service-worker.js",
+			"headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+		}
+	],
 	"crons": [
 		{
 			"path": "/api/cron/session-cleanup",
@@ -27,6 +33,10 @@
 		{
 			"path": "/api/cron/notification-cleanup",
 			"schedule": "15 3 * * *"
+		},
+		{
+			"path": "/api/cron/notification-delivery",
+			"schedule": "*/5 * * * *"
 		},
 		{
 			"path": "/api/cron/telegram-token-cleanup",

@@ -8,6 +8,13 @@ const config = {
 	kit: {
 		adapter: adapter({ runtime: 'nodejs22.x' }),
 
+		// Deploy-accurate app version: powers `updated` polling (update prompts) and
+		// the service worker's cache names. Vercel injects the commit SHA at build.
+		version: {
+			name: process.env.VERCEL_GIT_COMMIT_SHA ?? String(Date.now()),
+			pollInterval: 60_000,
+		},
+
 		csp: {
 			mode: 'auto',
 			directives: {

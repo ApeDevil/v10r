@@ -123,7 +123,7 @@ function actionVariant(action: string): 'default' | 'secondary' | 'warning' | 'e
 				/>
 			{/if}
 		{:else}
-			<div class="table-wrap">
+			<div class="table-wrap" tabindex="0" aria-label={m.admin_audit_title()}>
 				<table class="audit-table">
 					<thead>
 						<tr>
@@ -137,17 +137,17 @@ function actionVariant(action: string): 'default' | 'secondary' | 'warning' | 'e
 					<tbody>
 						{#each data.entries as entry}
 							<tr>
-								<td class="time-cell" title={entry.occurredAt}>{relativeTime(entry.occurredAt)}</td>
-								<td><Badge variant={actionVariant(entry.action)}>{entry.action}</Badge></td>
-								<td><code class="actor-email">{entry.actorEmail}</code></td>
-								<td>
+								<td class="time-cell" data-label={m.admin_audit_col_timestamp()} title={entry.occurredAt}>{relativeTime(entry.occurredAt)}</td>
+								<td data-label={m.admin_audit_col_action()}><Badge variant={actionVariant(entry.action)}>{entry.action}</Badge></td>
+								<td data-label={m.admin_audit_col_actor()}><code class="actor-email">{entry.actorEmail}</code></td>
+								<td data-label={m.admin_audit_col_target()}>
 									{#if entry.targetType}
 										<span class="target">{entry.targetType}{#if entry.targetId}:{entry.targetId}{/if}</span>
 									{:else}
 										<span class="text-muted">—</span>
 									{/if}
 								</td>
-								<td>
+								<td data-label={m.admin_audit_col_detail()}>
 									{#if entry.detail}
 										<button
 											class="detail-toggle"
@@ -231,6 +231,11 @@ function actionVariant(action: string): 'default' | 'secondary' | 'warning' | 'e
 
 	.table-wrap {
 		overflow-x: auto;
+	}
+
+	.table-wrap:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
 	}
 
 	.audit-table {
@@ -330,5 +335,18 @@ function actionVariant(action: string): 'default' | 'secondary' | 'warning' | 'e
 	.page-info {
 		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);
+	}
+
+	@media (max-width: 767px) {
+		.audit-table thead { display: none; }
+		.audit-table, .audit-table tbody, .audit-table tr, .audit-table td { display: block; width: 100%; }
+		.audit-table tr { border: 1px solid var(--color-border); border-radius: var(--radius-md); margin-bottom: var(--spacing-3); padding: var(--spacing-2); }
+		.audit-table td { border-bottom: none; white-space: normal; display: flex; gap: var(--spacing-2); align-items: baseline; }
+		.audit-table td[data-label]::before { content: attr(data-label); min-width: 96px; flex-shrink: 0; font-weight: 600; font-size: var(--text-fluid-xs); color: var(--color-muted); }
+
+		.page-link,
+		.detail-toggle {
+			padding: var(--spacing-3) var(--spacing-2);
+		}
 	}
 </style>

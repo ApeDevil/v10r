@@ -1,6 +1,6 @@
 # Multi-Channel Notifications
 
-Implementation strategy for extending the in-app notification system to external channels (Email, Telegram, Discord).
+Implementation strategy for extending the in-app notification system to external channels (Email, Telegram, Discord, Web Push).
 
 ## Design Principle: Container-First, Serverless-Compatible
 
@@ -9,7 +9,7 @@ The notification system is designed for a **persistent Bun container** as the pr
 | Capability | Container (Primary) | Vercel Serverless |
 |---|---|---|
 | Real-time delivery | SSE + in-memory map | Polling + `invalidate()` |
-| Outbox processing | `setInterval` worker | Inngest or Vercel cron |
+| Outbox processing | `setInterval` worker | Vercel cron (`/api/cron/notification-delivery`, every 5 min) |
 | PG `LISTEN`/`NOTIFY` | Works (direct connection) | Blocked (pooled HTTP) |
 | Background workers | Native, persistent | Need external service |
 
@@ -30,26 +30,27 @@ Users connect their preferred channels and control which notification types go w
 │                    Notification Router                           │
 │   1. Create in-app notification (always)                        │
 │   2. Load user settings + connected channels                    │
-│   3. Queue external deliveries via outbox                       │
+│   3. Send web push synchronously (bypasses outbox)              │
+│   4. Queue remaining external deliveries via outbox             │
 └──────────────────────────────┬──────────────────────────────────┘
                                │
-         ┌─────────────────────┼─────────────────────┐
-         ▼                     ▼                     ▼
-    ┌─────────┐          ┌──────────┐         ┌──────────┐
-    │  Email  │          │ Telegram │         │ Discord  │
-    │(Resend) │          │  (Bot)   │         │(Bot+OAuth)│
-    │ Primary │          │ Optional │         │ Optional │
-    └─────────┘          └──────────┘         └──────────┘
+         ┌───────────┬─────────┴─────────┬───────────┐
+         ▼           ▼                   ▼           ▼
+    ┌─────────┐ ┌──────────┐      ┌──────────┐ ┌──────────┐
+    │  Email  │ │ Telegram │      │ Discord  │ │ Web Push │
+    │(Resend) │ │  (Bot)   │      │(Bot+OAuth)│ │ (VAPID)  │
+    │ Outbox  │ │  Outbox  │      │  Outbox  │ │   Sync   │
+    └─────────┘ └──────────┘      └──────────┘ └──────────┘
 ```
 
 ## Contents
 
 | File | Topics |
 |------|--------|
-| **[routing.md](./routing.md)** | • Notification router architecture<br>• Provider abstraction and rate limiting<br>• Outbox pattern with runtime-adaptive processing<br>• Delivery tracking and retry logic |
-| **[channels.md](./channels.md)** | • Telegram deep link connection flow<br>• Discord OAuth2 flow and DM limitations<br>• Credential storage and token refresh<br>• Channel health monitoring |
-| **[settings.md](./settings.md)** | • Route structure (`/app/settings/notifications`)<br>• Channel × Type settings matrix UI<br>• Connection management UX<br>• Mobile considerations |
-| **[schema.md](./schema.md)** | • `user_telegram_accounts` table<br>• `user_discord_accounts` table<br>• Extended settings columns<br>• Delivery tracking tables |
+| **[routing.md](./routing.md)** | • Notification router architecture<br>• Provider abstraction and rate limiting<br>• Outbox pattern with runtime-adaptive processing<br>• Web push outbox bypass (synchronous fan-out)<br>• Delivery tracking and retry logic |
+| **[channels.md](./channels.md)** | • Telegram deep link connection flow<br>• Discord OAuth2 flow and DM limitations<br>• Web push subscriptions (VAPID, per-device)<br>• Credential storage and token refresh<br>• Channel health monitoring |
+| **[settings.md](./settings.md)** | • Route structure (`/app/settings/notifications`)<br>• Channel × Type settings matrix UI<br>• Per-device push card<br>• Connection management UX<br>• Mobile considerations |
+| **[schema.md](./schema.md)** | • `user_telegram_accounts` table<br>• `user_discord_accounts` table<br>• `push_subscriptions` table<br>• Extended settings columns<br>• Delivery tracking tables |
 
 ## Critical Decision: Discord DM Limitation
 
@@ -67,7 +68,7 @@ Users connect their preferred channels and control which notification types go w
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| **Routing approach** | Outbox + runtime-adaptive worker | Container: direct `setInterval` worker. Vercel: Inngest or cron. Same outbox table either way. |
+| **Routing approach** | Outbox + runtime-adaptive worker | Container: direct `setInterval` worker. Vercel: cron sweep. Same outbox table either way. Web push is the exception: synchronous fan-out inside `NotificationService.send()`, no outbox rows — see [routing.md](./routing.md). |
 | **Telegram delivery** | Raw `fetch()` to Bot API | Zero dependencies for outbound-only notifications. Add grammY only if bidirectional bot commands needed. |
 | **Rate limiting** | Dynamic header parsing | Discord rate limits are not hard-coded, must parse response headers |
 | **Token encryption** | AES-256-GCM + envelope | Industry standard; unique nonce per operation |
@@ -92,14 +93,16 @@ Industry research suggests notification platforms like Novu are recommended for 
 2. User linking (Telegram deep link, Discord OAuth) is DIY regardless
 3. 3 channels is on the threshold - reassess if adding SMS/WhatsApp/Slack
 
-**Migrate to Novu when:** Adding 4th channel, needing digests, or complex workflows (delays, conditions).
+Web push later became the fourth channel and still fit the custom router cheaply (one provider class + the `web-push` npm package — no platform features needed), so the decision holds.
+
+**Migrate to Novu when:** Adding SMS/WhatsApp/Slack, needing digests, or complex workflows (delays, conditions).
 
 ## Integration Points
 
 | Component | Integration |
 |-----------|------------|
 | **In-app notifications** | [../app-shell/notifications.md](../app-shell/notifications.md) - Extends existing system |
-| **Background jobs** | Container: existing job runner (`setInterval`). Vercel: Inngest or cron. See [routing.md](./routing.md). |
+| **Background jobs** | Container: existing job runner (`setInterval`). Vercel: cron (`/api/cron/notification-delivery`). See [routing.md](./routing.md). |
 | **Auth** | [../auth.md](../auth.md) - Discord OAuth uses same patterns |
 | **Rate limiting** | [../abuse/rate-limits.md](../abuse/rate-limits.md) - Per-provider limits |
 | **Error handling** | [../error-handling.md](../error-handling.md) - Delivery failure patterns |

@@ -6,54 +6,23 @@ import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
 
-let digits = $state<string[]>(Array(6).fill(''));
-let inputRefs = $state<HTMLInputElement[]>([]);
+// ONE input, styled as segments. A multi-box pattern (maxlength per box) breaks
+// iOS QuickType's code insertion — it's a text INSERTION, not a paste event, so
+// per-box maxlength truncates the autofilled 6 digits. A single input keeps
+// autocomplete="one-time-code" fully functional on every platform.
+let otp = $state('');
 let verifying = $state(false);
 let resending = $state(false);
 let error = $state<string | null>(null);
 let resendCooldown = $state(0);
 
-let otp = $derived(digits.join(''));
-let isComplete = $derived(otp.length === 6 && digits.every((d) => d !== ''));
+let isComplete = $derived(otp.length === 6);
 
-function handleInput(index: number, event: Event) {
+function handleInput(event: Event) {
 	const input = event.target as HTMLInputElement;
-	const value = input.value.replace(/\D/g, '');
-
-	if (value.length > 1) {
-		// Handle paste into single input
-		const chars = value.slice(0, 6 - index).split('');
-		for (let i = 0; i < chars.length; i++) {
-			if (index + i < 6) digits[index + i] = chars[i];
-		}
-		const nextIndex = Math.min(index + chars.length, 5);
-		inputRefs[nextIndex]?.focus();
-	} else {
-		digits[index] = value;
-		if (value && index < 5) {
-			inputRefs[index + 1]?.focus();
-		}
-	}
-}
-
-function handleKeydown(index: number, event: KeyboardEvent) {
-	if (event.key === 'Backspace' && !digits[index] && index > 0) {
-		digits[index - 1] = '';
-		inputRefs[index - 1]?.focus();
-	}
-}
-
-function handlePaste(event: ClipboardEvent) {
-	event.preventDefault();
-	const pasted = (event.clipboardData?.getData('text') ?? '').replace(/\D/g, '').slice(0, 6);
-	if (!pasted) return;
-
-	const chars = pasted.split('');
-	for (let i = 0; i < chars.length; i++) {
-		digits[i] = chars[i];
-	}
-	const focusIndex = Math.min(chars.length, 5);
-	inputRefs[focusIndex]?.focus();
+	otp = input.value.replace(/\D/g, '').slice(0, 6);
+	// Reflect sanitization back (letters/spaces from a sloppy paste vanish).
+	input.value = otp;
 }
 
 async function handleVerify() {
@@ -70,6 +39,10 @@ async function handleVerify() {
 			error = result.error.message ?? m.auth_verify_error_invalid();
 			verifying = false;
 		} else {
+			// The flow completed — drop the resume marker (see login page).
+			try {
+				localStorage.removeItem('v10r:pending-otp');
+			} catch {}
 			// Refresh the shared root-layout `session` so the shell reflects
 			// the authenticated user without a full reload.
 			await invalidateAll();
@@ -128,28 +101,24 @@ async function handleResend() {
 			</div>
 		{/if}
 
-		<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+		<p class="switch-hint">{m.auth_verify_switch_hint()}</p>
+
 		<form
 			class="otp-form"
 			onsubmit={(e) => { e.preventDefault(); handleVerify(); }}
-			onpaste={handlePaste}
 		>
 			<div class="otp-inputs">
-				{#each digits as digit, i}
-					<input
-						bind:this={inputRefs[i]}
-						type="text"
-						inputmode="numeric"
-						maxlength="2"
-						value={digit}
-						class="otp-digit"
-						autocomplete="one-time-code"
-						disabled={verifying}
-						aria-label={m.auth_verify_digit_aria_label({ index: i + 1 })}
-						oninput={(e) => handleInput(i, e)}
-						onkeydown={(e) => handleKeydown(i, e)}
-					/>
-				{/each}
+				<input
+					type="text"
+					inputmode="numeric"
+					maxlength="6"
+					value={otp}
+					class="otp-code"
+					autocomplete="one-time-code"
+					disabled={verifying}
+					aria-label={m.auth_verify_code_aria_label()}
+					oninput={handleInput}
+				/>
 			</div>
 
 			<Button
@@ -241,16 +210,28 @@ async function handleResend() {
 	.otp-inputs {
 		display: flex;
 		justify-content: center;
-		gap: var(--spacing-2);
 	}
 
-	.otp-digit {
-		width: 3rem;
+	.switch-hint {
+		margin: 0 0 var(--spacing-4);
+		text-align: center;
+		font-size: 0.8125rem;
+		color: var(--color-muted);
+	}
+
+	.otp-code {
+		width: 100%;
+		max-width: 16rem;
 		height: 3.5rem;
 		text-align: center;
-		font-size: 1.5rem;
+		font-size: 1.75rem;
 		font-weight: 600;
 		font-family: monospace;
+		/* Segment illusion: wide tracking reads as six slots without splitting
+		   the input (which would break iOS one-time-code insertion). */
+		letter-spacing: 0.45em;
+		/* Recenter: letter-spacing adds a trailing gap after the last glyph. */
+		padding-left: 0.45em;
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);
 		background: var(--color-bg);
@@ -259,12 +240,12 @@ async function handleResend() {
 		transition: border-color 0.15s;
 	}
 
-	.otp-digit:focus {
+	.otp-code:focus {
 		border-color: var(--color-primary);
 		box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 25%, transparent);
 	}
 
-	.otp-digit:disabled {
+	.otp-code:disabled {
 		opacity: 0.5;
 	}
 

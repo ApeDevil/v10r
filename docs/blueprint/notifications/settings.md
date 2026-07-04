@@ -67,6 +67,10 @@ There is no `telegram/callback` route — Telegram links via the bot webhook plu
 │ └─────────────────────────────────────────────────────────────┘ │
 │                                                                  │
 │ ┌─────────────────────────────────────────────────────────────┐ │
+│ │ Push (this device)                              [Enable]   │ │
+│ └─────────────────────────────────────────────────────────────┘ │
+│                                                                  │
+│ ┌─────────────────────────────────────────────────────────────┐ │
 │ │ Email Frequency                                             │ │
 │ │                                                             │ │
 │ │ ○ Real-time                                                 │ │
@@ -128,7 +132,7 @@ There is no `telegram/callback` route — Telegram links via the bot webhook plu
   id: 'mention',
   name: 'Mentions',
   description: 'When someone @mentions you',
-  supportedChannels: ['email', 'telegram', 'discord'],
+  supportedChannels: ['email', 'telegram', 'discord', 'push'],
   required: false
 }
 
@@ -137,7 +141,7 @@ There is no `telegram/callback` route — Telegram links via the bot webhook plu
   id: 'security',
   name: 'Security alerts',
   description: 'New device logins, security events',
-  supportedChannels: ['email', 'telegram', 'discord'],
+  supportedChannels: ['email', 'telegram', 'discord', 'push'],
   required: true,  // Cannot disable email
   requiredChannels: ['email']
 }
@@ -155,7 +159,7 @@ There is no `telegram/callback` route — Telegram links via the bot webhook plu
 
 ### Notification Types
 
-There are 6 notification types: `mention`, `comment`, `system`, `success`, `security`, `follow`. Email has a per-type toggle for all 6. Telegram and Discord only have toggles for `mention`, `comment`, `system`, `security` (no `success`/`follow` columns), per `notification-settings.ts`.
+There are 6 notification types: `mention`, `comment`, `system`, `success`, `security`, `follow`. Email has a per-type toggle for all 6. Telegram, Discord, and Push only have toggles for `mention`, `comment`, `system`, `security` (no `success`/`follow` columns), per `notification-settings.ts`.
 
 ### Form Schema
 
@@ -163,9 +167,10 @@ There are 6 notification types: `mention`, `comment`, `system`, `success`, `secu
 notification_settings:
   # Email: all 6 types
   email:    mention, comment, system, success, security, follow
-  # Telegram / Discord: 4 types only
+  # Telegram / Discord / Push: 4 types only
   telegram: mention, comment, system, security
   discord:  mention, comment, system, security
+  push:     mention, comment, system, security
   # security email is forced true (cannot be disabled)
 ```
 
@@ -203,6 +208,21 @@ Poll `/api/notifications/telegram/status` every 3 seconds until connected or can
 4. Discord redirects to `/discord/callback`
 5. Callback exchanges code, stores tokens, redirects to settings with success param
 6. Settings page shows toast: "Discord connected!"
+
+---
+
+## Push Card (Per-Device)
+
+Push doesn't fit the Channel × Type matrix above — it isn't one account-wide toggle, it's a subscription tied to *this browser on this device*. So it renders as its own card, sourced from browser state (permission + subscription), not from the page's server load:
+
+| State | Card shows |
+|-------|------------|
+| Subscribed | 4 switches (mention/comment/system/security) + "Disable on this device" |
+| Not subscribed | "Enable push" button (must be a user gesture — browsers reject permission requests from page load) |
+| Permission denied | Recovery hint: how to re-enable notifications in browser settings |
+| iOS, not installed | Install guidance — iOS only exposes `PushManager` inside the installed home-screen app, never in Safari tabs |
+
+See [../pwa.md](../pwa.md) for the subscribe/unsubscribe flow and payload contract.
 
 ---
 
@@ -339,3 +359,4 @@ src/lib/components/composites/notifications/
 - [./routing.md](./routing.md) - How preferences affect delivery
 - [../app-shell/settings.md](../app-shell/settings.md) - Settings page patterns
 - [../forms.md](../forms.md) - Form handling patterns
+- [../pwa.md](../pwa.md) - Push subscribe/unsubscribe flow, payload contract

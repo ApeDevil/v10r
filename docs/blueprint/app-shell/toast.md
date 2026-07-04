@@ -68,11 +68,17 @@ import { getContext, setContext } from 'svelte';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 
+interface ToastAction {
+  label: string;
+  onclick: () => void;
+}
+
 interface Toast {
   id: string;
   type: ToastType;
   message: string;
-  duration: number; // 0 = manual dismiss only
+  duration: number; // 0 = persistent until dismissed
+  action?: ToastAction;
 }
 
 const TOAST_CTX = Symbol('toast');
@@ -80,9 +86,9 @@ const TOAST_CTX = Symbol('toast');
 export function createToastState() {
   let toasts = $state<Toast[]>([]);
 
-  function add(type: ToastType, message: string, duration = 5000) {
+  function add(type: ToastType, message: string, duration = 5000, action?: ToastAction) {
     const id = crypto.randomUUID();
-    toasts.push({ id, type, message, duration });
+    toasts.push({ id, type, message, duration, action });
 
     if (duration > 0) {
       setTimeout(() => remove(id), duration);
@@ -101,6 +107,9 @@ export function createToastState() {
     error: (msg: string, duration?: number) => add('error', msg, duration),
     warning: (msg: string, duration?: number) => add('warning', msg, duration),
     info: (msg: string, duration?: number) => add('info', msg, duration),
+    // Full-control entry point — the only way to attach an action button.
+    show: ({ type = 'info', message, duration = 5000, action }: { type?: ToastType; message: string; duration?: number; action?: ToastAction }) =>
+      add(type, message, duration, action),
     remove,
   };
 }
@@ -118,13 +127,14 @@ export function getToast() {
 }
 ```
 
-The API is `{ items, success, error, warning, info, remove }`. Each toast carries a single `message` string — there is no `title`/`description`/`action` model.
+The API is `{ items, success, error, warning, info, show, remove }`. Each toast carries a `message` string and an optional `action` (`{ label, onclick }`, rendered as a project Button). `success`/`error`/`warning`/`info` are convenience wrappers with no action support; `show({ type?, message, duration?, action? })` is the general entry point — pass `duration: 0` to keep the toast until the user dismisses it or the action fires.
 
 ### Toast Container
 
 ```svelte
 <!-- src/lib/components/composites/toast/ToastContainer.svelte -->
 <script lang="ts">
+  import { Button } from '$lib/components/primitives';
   import { getToast } from '$lib/state/toast.svelte';
   import { fly } from 'svelte/transition';
 
@@ -156,6 +166,11 @@ The API is `{ items, success, error, warning, info, remove }`. Each toast carrie
     >
       <span class={icons[t.type]} aria-hidden="true" />
       <div class="toast-message">{t.message}</div>
+      {#if t.action}
+        <Button size="sm" variant="outline" onclick={() => { t.action?.onclick(); toast.remove(t.id); }}>
+          {t.action.label}
+        </Button>
+      {/if}
       <button
         class="toast-close"
         onclick={() => toast.remove(t.id)}
@@ -254,6 +269,27 @@ Read the context with `getToast()`, then call `success`/`error`/`warning`/`info`
   }
 </script>
 ```
+
+### Persistent Toast with Action
+
+```svelte
+<script lang="ts">
+  import { getToast } from '$lib/state/toast.svelte';
+
+  const toast = getToast();
+
+  function notifyUpdateAvailable() {
+    toast.show({
+      type: 'info',
+      message: 'A new version is available.',
+      duration: 0, // stays until dismissed or the action fires
+      action: { label: 'Reload', onclick: () => location.reload() },
+    });
+  }
+</script>
+```
+
+Consumer: `$lib/components/shell/UpdatePrompt.svelte` shows exactly this toast — once per session, 30 minutes after `updated.current` (from `$app/state`) flips true and the user hasn't navigated.
 
 ---
 
@@ -375,3 +411,4 @@ src/lib/
 - [../forms.md](../forms.md) - Superforms integration
 - [../error-handling.md](../error-handling.md) - Error feedback patterns
 - [../state.md](../state.md) - Svelte 5 state patterns
+- [../pwa.md](../pwa.md) - Update flow (`UpdatePrompt` uses the toast action slot)

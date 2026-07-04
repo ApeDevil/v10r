@@ -129,6 +129,7 @@ $effect(() => {
 		align-items: center;
 		gap: var(--spacing-2);
 		width: 100%;
+		min-height: 44px;
 		padding: var(--spacing-2) var(--spacing-3);
 		background: none;
 		border: 1px solid var(--color-border);

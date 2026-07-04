@@ -6,7 +6,9 @@ import { DELIVERY_MAX_ATTEMPTS } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
 
-type Channel = 'email' | 'telegram' | 'discord';
+// 'push' exists in the enum/union for admin/health parity, but v1 never writes
+// push outbox rows — push delivers synchronously in NotificationService.
+type Channel = 'email' | 'telegram' | 'discord' | 'push';
 
 /** Create delivery records for a notification's target channels */
 export async function createDeliveries(notificationId: string, channels: Channel[]) {

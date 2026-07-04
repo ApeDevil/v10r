@@ -71,4 +71,36 @@ describe('routeToChannels', () => {
 		const channels = await routeToChannels('user-1', 'mention');
 		expect(channels).toContain('telegram');
 	});
+
+	it('includes push when the push setting is true', async () => {
+		mockSettings.mockResolvedValue({
+			emailMention: false,
+			pushMention: true,
+			mutedUntil: null,
+		});
+
+		const channels = await routeToChannels('user-1', 'mention');
+		expect(channels).toContain('push');
+	});
+
+	it('excludes push when the push setting is false', async () => {
+		mockSettings.mockResolvedValue({
+			emailSecurity: true,
+			pushSecurity: false,
+			mutedUntil: null,
+		});
+
+		const channels = await routeToChannels('user-1', 'security');
+		expect(channels).not.toContain('push');
+	});
+
+	it('never routes push for types without a push column (success/follow)', async () => {
+		mockSettings.mockResolvedValue({
+			emailSuccess: true,
+			mutedUntil: null,
+		});
+
+		const channels = await routeToChannels('user-1', 'success');
+		expect(channels).not.toContain('push');
+	});
 });

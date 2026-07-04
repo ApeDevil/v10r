@@ -32,6 +32,8 @@ Database tables for multi-channel notification system.
             └──────────────┘                    └────────────────────┘
 ```
 
+`push_subscriptions` hangs off `user` the same way as `user_telegram_accounts`/`user_discord_accounts` (omitted above for width) — except it's N rows per user, not one.
+
 ---
 
 ## New Tables
@@ -113,6 +115,32 @@ Temporary tokens for deep link verification.
 
 ---
 
+### push_subscriptions
+
+Per-device Web Push subscriptions. Unlike Telegram/Discord, this is **N rows per user** — one per browser/device — not a one-to-one link.
+
+| Column | Type | Constraints | Purpose |
+|--------|------|-------------|---------|
+| `id` | text | PK | `pns_xxxxx` |
+| `user_id` | text | FK → user, CASCADE | Many devices per user (NOT unique) |
+| `endpoint` | text | NOT NULL, UNIQUE | Push service URL — the subscription's identity |
+| `p256dh` | text | NOT NULL | Client public key (payload encryption) |
+| `auth` | text | NOT NULL | Client auth secret (payload encryption) |
+| `user_agent` | text | | Display in settings UI |
+| `created_at` | timestamptz | NOT NULL, DEFAULT NOW() | Audit |
+| `last_used_at` | timestamptz | | Updated on successful send |
+
+**Indexes:**
+- `user_id` - fan-out lookup: all subscriptions for a user, on every push send
+- `endpoint` (unique) - one row per subscription, prevents duplicate registration
+
+**Design decisions:**
+- Capped at 10 subscriptions per user — `createPushSubscription` (`db/notifications/mutations.ts`) evicts the oldest (by `created_at`) past the cap
+- Endpoint pruned on 404/410 from the push service (`deletePushSubscriptionByEndpoint`) — dead subscriptions don't accumulate
+- Cascade-deleted with the account — no orphaned subscriptions
+
+---
+
 ### notification_deliveries
 
 Audit log for external channel deliveries.
@@ -121,7 +149,7 @@ Audit log for external channel deliveries.
 |--------|------|-------------|---------|
 | `id` | text | PK | `ndl_xxxxx` |
 | `notification_id` | text | FK → notifications, NOT NULL | Parent notification |
-| `channel` | enum | NOT NULL | telegram, discord, email |
+| `channel` | enum | NOT NULL | telegram, discord, email (never `push` — push delivers synchronously, no outbox row) |
 | `status` | enum | NOT NULL, DEFAULT pending | pending, processing, sent, failed, skipped, retrying, dead |
 | `provider_message_id` | text | | External reference for correlation |
 | `error_code` | text | | Provider-specific error code |
@@ -146,9 +174,12 @@ CREATE TYPE delivery_status AS ENUM (
 CREATE TYPE notification_channel AS ENUM (
   'email',
   'telegram',
-  'discord'
+  'discord',
+  'push'
 );
 ```
+
+`push` is a valid enum value (shared with `notification_settings` and the router), but no row in `notification_deliveries` ever carries it — push delivery is synchronous and never touches the outbox.
 
 **Indexes:**
 - `notification_id` - lookup deliveries for a notification
@@ -180,8 +211,12 @@ Extend existing table with per-channel toggles. Notification channel configurati
 | `discord_comment` | boolean | false | Comments via Discord |
 | `discord_system` | boolean | false | System via Discord |
 | `discord_security` | boolean | true | Security via Discord |
+| `push_mention` | boolean | false | Mentions via Web Push |
+| `push_comment` | boolean | false | Comments via Web Push |
+| `push_system` | boolean | false | System via Web Push |
+| `push_security` | boolean | true | Security via Web Push |
 
-Email covers all 6 notification types (`mention`, `comment`, `system`, `success`, `security`, `follow`); Telegram and Discord cover only the 4 above.
+Email covers all 6 notification types (`mention`, `comment`, `system`, `success`, `security`, `follow`); Telegram, Discord, and Push cover only the 4 above. There are deliberately no `push_success`/`push_follow` columns — this mirrors the telegram/discord precedent, and the router's `key in settings` guard means those two types simply never route to push.
 
 **Why columns, not junction table?**
 - Fixed channel/type matrix, stored as flat columns
@@ -212,6 +247,7 @@ CREATE TABLE notification_channel_settings (
 |-------|-----------|-------|
 | Get Telegram chat_id for user | Every send | `user_telegram_accounts.user_id` (unique) |
 | Get Discord credentials for user | Every send | `user_discord_accounts.user_id` (unique) |
+| Get push subscriptions for user | Every push send | `push_subscriptions.user_id` |
 | Get settings for user | Every send | `notification_settings.user_id` (PK) |
 | Validate verification token | On deep link | `telegram_verification_tokens.token` (unique) |
 
@@ -317,7 +353,11 @@ ADD COLUMN telegram_security BOOLEAN NOT NULL DEFAULT true,
 ADD COLUMN discord_mention BOOLEAN NOT NULL DEFAULT false,
 ADD COLUMN discord_comment BOOLEAN NOT NULL DEFAULT false,
 ADD COLUMN discord_system BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN discord_security BOOLEAN NOT NULL DEFAULT true;
+ADD COLUMN discord_security BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN push_mention BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN push_comment BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN push_system BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN push_security BOOLEAN NOT NULL DEFAULT true;
 ```
 
 ### Migration 4: Delivery Tracking
@@ -328,7 +368,7 @@ CREATE TYPE delivery_status AS ENUM (
 );
 
 CREATE TYPE notification_channel AS ENUM (
-  'email', 'telegram', 'discord'
+  'email', 'telegram', 'discord', 'push'
 );
 
 CREATE TABLE notification_deliveries (
@@ -364,6 +404,24 @@ CREATE INDEX notification_deliveries_channel_recent_idx
 ON notification_deliveries (channel, created_at);
 ```
 
+### Migration 5: Push Subscriptions
+
+```sql
+CREATE TABLE push_subscriptions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+  endpoint TEXT NOT NULL UNIQUE,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  user_agent TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  last_used_at TIMESTAMPTZ
+);
+
+CREATE INDEX push_subscriptions_user_id_idx
+ON push_subscriptions (user_id);
+```
+
 ---
 
 ## Related
@@ -372,3 +430,4 @@ ON notification_deliveries (channel, created_at);
 - [./channels.md](./channels.md) - Connection flows that populate tables
 - [../db/relational.md](../db/relational.md) - Full database schema
 - [../app-shell/notifications.md](../app-shell/notifications.md) - Existing notifications table
+- [../pwa.md](../pwa.md) - `push_subscriptions` lifecycle, payload contract

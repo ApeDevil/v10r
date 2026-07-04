@@ -232,6 +232,23 @@ Before sending notification:
 
 ---
 
+## Web Push Channel
+
+Unlike Telegram/Discord, there's no account-linking flow. The subscription lives in the browser and is created client-side via the Push API — no redirect, no deep link.
+
+| Aspect | Detail |
+|--------|--------|
+| **Connection** | Browser permission prompt (must be a user gesture) → `PushManager.subscribe()` → `POST /api/notifications/push` stores the subscription |
+| **Scope** | Per-device, not per-account — one row per browser/device, capped at 10/user (oldest evicted) |
+| **Env** | `VAPID_PUBLIC_KEY` (ships to the client), `VAPID_PRIVATE_KEY` (server secret), `VAPID_SUBJECT` (`mailto:` contact) — generate with `bunx web-push generate-vapid-keys` |
+| **Payload** | Declarative Web Push JSON, no PII in the payload: title = brand name, body = a generic category line |
+| **Pruning** | A 404/410 from the push service on send deletes that endpoint's subscription (`deletePushSubscriptionByEndpoint`) |
+| **Disconnection** | Sign-out unsubscribes the current device (`$lib/pwa/sign-out.ts` `signOutAndFlush()`); other devices keep receiving push |
+
+See [../pwa.md](../pwa.md) for the full design record — payload contract, iOS caveats, and the delivery-mode decision.
+
+---
+
 ## Channel Health Monitoring
 
 ### Failure Detection
@@ -301,3 +318,4 @@ Background job removes records where `is_active = false` and `unlinked_at < NOW(
 - [./schema.md](./schema.md) - Database tables for credentials
 - [./routing.md](./routing.md) - How providers use credentials
 - [../auth.md](../auth.md) - OAuth2 patterns
+- [../pwa.md](../pwa.md) - Web push design record (payload contract, subscription lifecycle)

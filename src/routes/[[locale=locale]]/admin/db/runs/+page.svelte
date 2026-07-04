@@ -59,7 +59,7 @@ function triggerVariant(t: string): 'default' | 'secondary' | 'warning' {
 			description={m.admin_dbops_runs_empty_desc()}
 		/>
 	{:else}
-		<div class="history-table-wrap">
+		<div class="history-table-wrap" tabindex="0" aria-label={m.admin_dbops_runs_heading()}>
 			<table class="history-table">
 				<thead>
 					<tr>
@@ -132,6 +132,11 @@ function triggerVariant(t: string): 'default' | 'secondary' | 'warning' {
 <style>
 	.history-table-wrap {
 		overflow-x: auto;
+	}
+
+	.history-table-wrap:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
 	}
 
 	.history-table {

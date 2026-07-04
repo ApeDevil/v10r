@@ -154,3 +154,25 @@ export function hasPanelType(root: LayoutNode, panelType: string, panels: Record
 	const leaves = collectLeaves(root);
 	return leaves.some((leaf) => leaf.tabs.some((tabId) => panels[tabId]?.type === panelType));
 }
+
+/** All open panel IDs in layout order (left→right, top→bottom). */
+export function collectPanelIds(root: LayoutNode): string[] {
+	return collectLeaves(root).flatMap((leaf) => leaf.tabs);
+}
+
+/**
+ * Next instance of a panel type after `currentId`, wrapping around.
+ * Powers the mobile bar: tapping a type with several open instances
+ * (e.g. two editors) cycles through them in layout order.
+ */
+export function nextPanelOfType(
+	root: LayoutNode,
+	panels: Record<string, PanelDefinition>,
+	panelType: string,
+	currentId: string | null,
+): string | null {
+	const ids = collectPanelIds(root).filter((id) => panels[id]?.type === panelType);
+	if (ids.length === 0) return null;
+	const currentIndex = currentId ? ids.indexOf(currentId) : -1;
+	return ids[(currentIndex + 1) % ids.length];
+}

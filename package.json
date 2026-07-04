@@ -54,6 +54,7 @@
 		"content:check": "bun run scripts/content/check.ts",
 		"quality:opacity": "bun run scripts/quality/no-token-opacity.ts",
 		"perf:cold-start": "bash scripts/perf/cold-start.sh",
+		"pwa:icons": "bun run scripts/pwa/generate-icons.ts",
 		"validate": "bun run check && biome ci . && bun run test && bun run i18n:check-missing && bun run content:check && bun run quality:opacity",
 		"knip": "knip"
 	},
@@ -77,6 +78,7 @@
 		"@threlte/core": "^8.3.1",
 		"@threlte/extras": "^9.0.0",
 		"@upstash/ratelimit": "^2.0.0",
+		"@vercel/functions": "^3.7.5",
 		"@upstash/redis": "^1.36.0",
 		"@xyflow/svelte": "^1.0.0",
 		"ai": "^6.0.0",
@@ -121,6 +123,7 @@
 		"unist-util-visit": "^5.0.0",
 		"uuid": "^14.0.0",
 		"valibot": "^1.2.0",
+		"web-push": "^3.6.7",
 		"yaml": "^2.0.0"
 	},
 	"devDependencies": {
@@ -140,6 +143,7 @@
 		"@types/qrcode": "^1.5.5",
 		"@types/sanitize-html": "^2.13.0",
 		"@types/three": "^0.183.1",
+		"@types/web-push": "^3.6.4",
 		"@types/uuid": "^11.0.0",
 		"@typescript/native-preview": "7.0.0-dev.20260412.1",
 		"@unocss/preset-icons": "^66",

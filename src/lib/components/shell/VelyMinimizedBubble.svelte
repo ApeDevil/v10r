@@ -31,7 +31,7 @@ import { cn } from '$lib/utils/cn';
 		align-items: center;
 		justify-content: center;
 		/* clear the 56px menu FAB (bottom:12 + 56 + 8px gap) + iOS home indicator */
-		bottom: calc(env(safe-area-inset-bottom, 0px) + 76px);
+		bottom: calc(var(--safe-bottom) + 76px);
 	}
 
 	@media (min-width: 768px) {

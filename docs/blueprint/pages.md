@@ -21,6 +21,9 @@ No documentation drift. No stale examples. The template validates itself.
 ```
 /                                    # Landing page
 │
+├── /offline                         # Offline fallback (prerendered, top-level)
+├── /manifest.webmanifest            # Web app manifest (+server.ts, localized)
+│
 ├── /showcases                       # Living demos
 │   ├── +page.svelte                 # Landing with recommended path
 │   ├── /shell                       # App shell features
@@ -127,6 +130,7 @@ No documentation drift. No stale examples. The template validates itself.
 │   │   └── /pipeline                # Delivery pipeline
 │   ├── /i18n                        # Internationalization
 │   ├── /jobs                        # Background jobs
+│   ├── /pwa                         # Installable app shell: manifest, SW, offline, push
 │   ├── /viz                         # Data visualization
 │   │   ├── /charts                  # Chart types
 │   │   ├── /plots                   # Plot types
@@ -296,6 +300,7 @@ The showcase landing page provides first-time visitors with a clear entry point 
 | 12 | Advanced | Viz | Charts, plots, graphs, diagrams, maps |
 | 13 | Specialized | 3D | Threlte 8 scenes |
 | 14 | Specialized | Jobs | Background job patterns |
+| 15 | Specialized | PWA | Installable shell, offline fallback, web push |
 
 ---
 
@@ -714,6 +719,19 @@ Background job patterns. Single page demonstrating job scheduling and status tra
 
 ---
 
+### /showcases/pwa
+
+Installable app shell: manifest, service worker, offline fallback, update flow, and web push. Single page — the living demo for [blueprint/pwa.md](./pwa.md).
+
+| Tests | Stack |
+|-------|-------|
+| Installability | Web app manifest, generated icons |
+| Offline fallback | Service worker precache, `/offline` |
+| Update flow | `$app/state` `updated`, toast action |
+| Web push | Subscribe/unsubscribe, VAPID |
+
+---
+
 ### /showcases/viz
 
 Data visualization hub. Five sub-pages covering the full range of chart and diagram types.
@@ -837,6 +855,17 @@ GDPR compliance routes.
 
 ---
 
+## PWA Routes
+
+Top-level — outside the locale tree, supporting the installable app shell. See [blueprint/pwa.md](./pwa.md) for the full design.
+
+| Route | Purpose |
+|-------|---------|
+| `/offline` | Prerendered, self-contained, tri-lingual fallback the service worker serves for offline navigation |
+| `/manifest.webmanifest` | `+server.ts` — dynamic manifest; `name`/`description` follow the Paraglide cookie locale |
+
+---
+
 ## Static Documentation
 
 ### /docs/*
@@ -859,6 +888,9 @@ src/routes/
 ├── +layout.svelte                    # Root layout
 ├── +layout.server.ts                 # Auth check, theme
 ├── +page.svelte                      # Landing
+│
+├── offline/+page.svelte               # Offline fallback (prerendered)
+├── manifest.webmanifest/+server.ts    # Web app manifest
 │
 ├── showcases/
 │   ├── +page.svelte                  # Showcase landing
@@ -970,6 +1002,7 @@ src/routes/
 │   │   └── pipeline/+page.svelte
 │   ├── i18n/+page.svelte
 │   ├── jobs/+page.svelte
+│   ├── pwa/+page.svelte
 │   ├── viz/
 │   │   ├── +page.svelte
 │   │   ├── charts/+page.svelte
@@ -1072,6 +1105,7 @@ src/routes/
 │ Notifications      │
 │ i18n               │
 │ Jobs               │
+│ Pwa                │
 │ Viz                │
 │ 3D                 │
 └────────────────────┘

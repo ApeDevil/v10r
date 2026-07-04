@@ -42,5 +42,12 @@ export async function routeToChannels(userId: string, type: NotificationType): P
 		channels.push('discord');
 	}
 
+	// Web push routing — same convention; types without a push column
+	// (success/follow) simply never route here
+	const pushKey = `push${type.charAt(0).toUpperCase() + type.slice(1)}` as keyof typeof settings;
+	if (pushKey in settings && settings[pushKey] === true) {
+		channels.push('push');
+	}
+
 	return channels;
 }

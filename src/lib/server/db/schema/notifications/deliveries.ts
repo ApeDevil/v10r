@@ -21,6 +21,9 @@ export const notificationChannelEnum = notificationsSchema.enum('notification_ch
 	'email',
 	'telegram',
 	'discord',
+	// Web push delivers synchronously (no outbox rows in v1 — the drain is
+	// cron-dependent on serverless); the enum value exists for admin/health parity.
+	'push',
 ]);
 
 export const notificationDeliveries = notificationsSchema.table(

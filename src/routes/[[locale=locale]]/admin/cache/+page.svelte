@@ -283,7 +283,7 @@ const prefixLabels = $derived<Record<string, string>>({
 					{/if}
 				</EmptyState>
 			{:else}
-				<div class="table-wrap">
+				<div class="table-wrap" tabindex="0" aria-label={m.admin_cache_section_key_browser()}>
 					<table class="data-table">
 						<thead>
 							<tr>
@@ -554,6 +554,11 @@ const prefixLabels = $derived<Record<string, string>>({
 	/* Tables */
 	.table-wrap {
 		overflow-x: auto;
+	}
+
+	.table-wrap:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
 	}
 
 	.data-table {

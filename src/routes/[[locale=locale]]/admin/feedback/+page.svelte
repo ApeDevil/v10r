@@ -59,55 +59,57 @@ function statusLabel(status: string): string {
 		{#if data.items.length === 0}
 			<p class="empty">{data.status ? m.admin_feedback_empty_filtered({ status: statusLabel(data.status) }) : m.admin_feedback_empty_none()}</p>
 		{:else}
-			<table class="feedback-table">
-				<thead>
-					<tr>
-						<th>{m.admin_feedback_col_received()}</th>
-						<th>{m.admin_feedback_col_subject()}</th>
-						<th>{m.admin_feedback_col_rating()}</th>
-						<th>{m.admin_feedback_col_page()}</th>
-						<th>{m.admin_feedback_col_journey()}</th>
-						<th>{m.admin_feedback_col_status()}</th>
-						<th aria-label={m.admin_feedback_col_actions()}></th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each data.items as item (item.id)}
+			<div class="table-wrap" tabindex="0" aria-label={m.admin_feedback_title()}>
+				<table class="feedback-table">
+					<thead>
 						<tr>
-							<td>
-								<a href={`/admin/feedback/${item.id}`} class="row-link">
-									{formatRelative(item.submittedAt, page.data.locale)}
-								</a>
-							</td>
-							<td>{item.subject}</td>
-							<td>{item.rating ?? '—'}</td>
-							<td><code class="page-cell">{item.pageOfOrigin}</code></td>
-							<td>
-								{#if item.sessionId}
-									<span class="i-lucide-link-2" aria-label={m.admin_feedback_journey_linked()}></span>
-								{:else}
-									<span class="muted">—</span>
-								{/if}
-							</td>
-							<td>
-								<Tag variant={statusTagVariant(item.status)} size="sm">{statusLabel(item.status)}</Tag>
-							</td>
-							<td>
-								<form method="POST" action="?/updateStatus" use:enhance class="inline-form">
-									<input type="hidden" name="id" value={item.id} />
-									{#if item.status === 'new'}
-										<Button type="submit" name="status" value="read" variant="ghost" size="sm">{m.admin_feedback_mark_read()}</Button>
-									{:else if item.status === 'read'}
-										<Button type="submit" name="status" value="archived" variant="ghost" size="sm">{m.admin_action_archive()}</Button>
-									{:else}
-										<Button type="submit" name="status" value="new" variant="ghost" size="sm">{m.admin_action_reopen()}</Button>
-									{/if}
-								</form>
-							</td>
+							<th>{m.admin_feedback_col_received()}</th>
+							<th>{m.admin_feedback_col_subject()}</th>
+							<th>{m.admin_feedback_col_rating()}</th>
+							<th>{m.admin_feedback_col_page()}</th>
+							<th>{m.admin_feedback_col_journey()}</th>
+							<th>{m.admin_feedback_col_status()}</th>
+							<th aria-label={m.admin_feedback_col_actions()}></th>
 						</tr>
-					{/each}
-				</tbody>
-			</table>
+					</thead>
+					<tbody>
+						{#each data.items as item (item.id)}
+							<tr>
+								<td>
+									<a href={`/admin/feedback/${item.id}`} class="row-link">
+										{formatRelative(item.submittedAt, page.data.locale)}
+									</a>
+								</td>
+								<td>{item.subject}</td>
+								<td>{item.rating ?? '—'}</td>
+								<td><code class="page-cell">{item.pageOfOrigin}</code></td>
+								<td>
+									{#if item.sessionId}
+										<span class="i-lucide-link-2" aria-label={m.admin_feedback_journey_linked()}></span>
+									{:else}
+										<span class="muted">—</span>
+									{/if}
+								</td>
+								<td>
+									<Tag variant={statusTagVariant(item.status)} size="sm">{statusLabel(item.status)}</Tag>
+								</td>
+								<td>
+									<form method="POST" action="?/updateStatus" use:enhance class="inline-form">
+										<input type="hidden" name="id" value={item.id} />
+										{#if item.status === 'new'}
+											<Button type="submit" name="status" value="read" variant="ghost" size="sm">{m.admin_feedback_mark_read()}</Button>
+										{:else if item.status === 'read'}
+											<Button type="submit" name="status" value="archived" variant="ghost" size="sm">{m.admin_action_archive()}</Button>
+										{:else}
+											<Button type="submit" name="status" value="new" variant="ghost" size="sm">{m.admin_action_reopen()}</Button>
+										{/if}
+									</form>
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
 		{/if}
 	</Card>
 
@@ -157,6 +159,15 @@ function statusLabel(status: string): string {
 	.filter-count {
 		font-variant-numeric: tabular-nums;
 		opacity: 0.85;
+	}
+
+	.table-wrap {
+		overflow-x: auto;
+	}
+
+	.table-wrap:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
 	}
 
 	.feedback-table {

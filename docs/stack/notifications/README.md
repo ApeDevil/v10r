@@ -5,15 +5,17 @@ Multi-channel notification system with user-controlled routing. Users connect th
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Notification Router                          │
-│          (checks user settings, routes to channels)             │
-├──────────────┬──────────────┬──────────────┬───────────────────┤
-│    Email     │   Telegram   │   Discord    │    In-App         │
-│   (Resend)   │    (Bot)     │  (Bot+OAuth) │   (Database)      │
-│   Primary    │   Optional   │   Optional   │   Always On       │
-└──────────────┴──────────────┴──────────────┴───────────────────┘
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                         Notification Router                                   │
+│               (checks user settings, routes to channels)                      │
+├──────────────┬──────────────┬──────────────┬──────────────┬──────────────────┤
+│    Email     │   Telegram   │   Discord    │   Web Push   │     In-App       │
+│   (Resend)   │    (Bot)     │  (Bot+OAuth) │   (VAPID)    │   (Database)     │
+│   Primary    │   Optional   │   Optional   │   Optional   │   Always On      │
+└──────────────┴──────────────┴──────────────┴──────────────┴──────────────────┘
 ```
+
+Web push delivers synchronously (no outbox row) — see [../../blueprint/pwa.md](../../blueprint/pwa.md).
 
 ## Contents
 
@@ -23,20 +25,24 @@ Multi-channel notification system with user-controlled routing. Users connect th
 | **[telegram.md](./telegram.md)** | Bot setup, deep linking, user connection flow |
 | **[discord.md](./discord.md)** | Bot setup, OAuth2 flow, DM notifications |
 
+**Web Push** has no separate stack doc — provider (VAPID), subscription lifecycle, and the payload contract live in [../../blueprint/pwa.md](../../blueprint/pwa.md).
+
 ## User Settings Model
 
-Users control notifications through a **Channel × Type Matrix** (notification channels are **Settings** per [../../foundation/user-data.md](../../foundation/user-data.md)). Email has a per-type toggle for all 6 types; Telegram and Discord only cover `mention`, `comment`, `system`, `security`:
+Users control notifications through a **Channel × Type Matrix** (notification channels are **Settings** per [../../foundation/user-data.md](../../foundation/user-data.md)). Email has a per-type toggle for all 6 types; Telegram, Discord, and Push only cover `mention`, `comment`, `system`, `security`:
 
-|              | Email | Telegram | Discord |
-|--------------|:-----:|:--------:|:-------:|
-| **mention**  |   ✓   |    ✓     |    ✓    |
-| **comment**  |   ✓   |    ✓     |    ✓    |
-| **system**   |   ✓   |    ✓     |    ✓    |
-| **security** |  ✓*   |    ✓     |    ✓    |
-| **success**  |   ✓   |    -     |    -    |
-| **follow**   |   ✓   |    -     |    -    |
+|              | Email | Telegram | Discord | Push |
+|--------------|:-----:|:--------:|:-------:|:----:|
+| **mention**  |   ✓   |    ✓     |    ✓    |  ✓   |
+| **comment**  |   ✓   |    ✓     |    ✓    |  ✓   |
+| **system**   |   ✓   |    ✓     |    ✓    |  ✓   |
+| **security** |  ✓*   |    ✓     |    ✓    |  ✓   |
+| **success**  |   ✓   |    -     |    -    |  -   |
+| **follow**   |   ✓   |    -     |    -    |  -   |
 
 *\*Required - cannot be disabled*
+
+Push is also per-device, not per-account — see [blueprint/notifications/settings.md](../../blueprint/notifications/settings.md#push-card-per-device).
 
 ### Notification Types
 
@@ -58,6 +64,7 @@ The `notificationTypeEnum` has 6 values:
 | **Email** | Always connected via account | None |
 | **Telegram** | Deep link (`t.me/Bot?start=token`) | Low |
 | **Discord** | OAuth2 authorization | Medium |
+| **Web Push** | Browser permission prompt + `PushManager.subscribe()` | Low |
 
 ### Telegram Flow
 1. User clicks "Connect Telegram" → generates verification token
@@ -75,6 +82,7 @@ The `notificationTypeEnum` has 6 values:
 |-------|---------|
 | `user_telegram_accounts` | Telegram chat_id per user |
 | `user_discord_accounts` | Discord user_id + OAuth tokens |
+| `push_subscriptions` | Per-device Web Push subscription (endpoint + keys), N rows per user |
 | `notification_settings` | Per-type channel toggles |
 
 ## Design Decisions

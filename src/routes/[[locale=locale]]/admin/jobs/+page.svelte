@@ -191,7 +191,7 @@ function triggerVariant(trigger: string): 'default' | 'secondary' | 'warning' {
 				{/if}
 			</EmptyState>
 		{:else}
-			<div class="history-table-wrap">
+			<div class="history-table-wrap" tabindex="0" aria-label={m.admin_jobs_history_heading()}>
 				<table class="history-table">
 					<thead>
 						<tr>
@@ -350,6 +350,11 @@ function triggerVariant(trigger: string): 'default' | 'secondary' | 'warning' {
 	/* History Table */
 	.history-table-wrap {
 		overflow-x: auto;
+	}
+
+	.history-table-wrap:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
 	}
 
 	.history-table {

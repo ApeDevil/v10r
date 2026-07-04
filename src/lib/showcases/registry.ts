@@ -301,4 +301,10 @@ export const showcases: ShowcaseCard[] = [
 			{ label: 'Channels', href: '/showcases/notifications/channels' },
 		],
 	},
+	{
+		href: '/showcases/pwa',
+		icon: 'i-lucide-smartphone',
+		title: 'PWA',
+		description: 'Installable app shell — manifest, service worker caching contract, offline fallback, update flow',
+	},
 ];

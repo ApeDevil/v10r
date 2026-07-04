@@ -102,6 +102,9 @@ const RAG_ONLY_BLOCK = new Set<string>([
 	// Aspirational format: @toon-format/toon is not a dependency and nothing imports it.
 	// The doc's encode()-based examples would be asserted as live code by the assistant.
 	'docs/blueprint/ai/toon.md',
+	// Planned-not-built fifth-client blueprint: describes an Expo app + requireApiKey
+	// guard that do not exist. Held from RAG so the assistant doesn't assert them as shipped.
+	'docs/blueprint/architecture/native-client.md',
 	// Superseded v4-era design record; the desk+AI feature shipped on AI SDK v6 with a
 	// different surface. Kept for /docs rationale, held from RAG to avoid stale-contract answers.
 	'docs/blueprint/ai/desk-integration.md',

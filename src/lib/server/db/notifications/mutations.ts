@@ -1,7 +1,8 @@
-import { and, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import { db } from '../index';
 import { notificationSettings } from '../schema/notifications/notification-settings';
 import { type NotificationParams, notifications } from '../schema/notifications/notifications';
+import { pushSubscriptions } from '../schema/notifications/push-subscriptions';
 
 interface CreateNotificationInput {
 	userId: string;
@@ -81,4 +82,58 @@ export async function updateSettings(
 		.where(eq(notificationSettings.userId, userId))
 		.returning();
 	return row;
+}
+
+/** Devices per user cap — the push send path fans out synchronously, so an
+ * unbounded N is a self-DoS. Oldest subscriptions are evicted first. */
+const PUSH_SUBSCRIPTIONS_PER_USER_MAX = 10;
+
+/** Register (or refresh) a push subscription for a device. Idempotent on endpoint. */
+export async function createPushSubscription(
+	userId: string,
+	subscription: { endpoint: string; p256dh: string; auth: string; userAgent?: string | null },
+) {
+	// Endpoint is device-unique: a re-subscribe from the same device updates keys.
+	const [row] = await db
+		.insert(pushSubscriptions)
+		.values({ id: crypto.randomUUID(), userId, ...subscription })
+		.onConflictDoUpdate({
+			target: pushSubscriptions.endpoint,
+			set: { userId, p256dh: subscription.p256dh, auth: subscription.auth, userAgent: subscription.userAgent },
+		})
+		.returning();
+
+	// Enforce the per-user cap (self-healing: 410-pruning keeps this rare).
+	const all = await db
+		.select({ id: pushSubscriptions.id })
+		.from(pushSubscriptions)
+		.where(eq(pushSubscriptions.userId, userId))
+		.orderBy(asc(pushSubscriptions.createdAt));
+	if (all.length > PUSH_SUBSCRIPTIONS_PER_USER_MAX) {
+		const excess = all.slice(0, all.length - PUSH_SUBSCRIPTIONS_PER_USER_MAX);
+		for (const sub of excess) {
+			await db.delete(pushSubscriptions).where(eq(pushSubscriptions.id, sub.id));
+		}
+	}
+
+	return row;
+}
+
+/** Remove one device's subscription (IDOR-safe: requires userId). */
+export async function deletePushSubscription(userId: string, endpoint: string) {
+	const rows = await db
+		.delete(pushSubscriptions)
+		.where(and(eq(pushSubscriptions.userId, userId), eq(pushSubscriptions.endpoint, endpoint)))
+		.returning({ id: pushSubscriptions.id });
+	return rows.length > 0;
+}
+
+/** Prune a dead endpoint (push service answered 404/410 — device unsubscribed). */
+export async function deletePushSubscriptionByEndpoint(endpoint: string) {
+	await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint));
+}
+
+/** Stamp delivery time on a subscription (fire-and-forget from the provider). */
+export async function touchPushSubscription(endpoint: string) {
+	await db.update(pushSubscriptions).set({ lastUsedAt: new Date() }).where(eq(pushSubscriptions.endpoint, endpoint));
 }

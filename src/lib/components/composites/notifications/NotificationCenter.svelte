@@ -18,15 +18,25 @@ interface Props {
 	filter: string;
 	onFilterChange: (filter: string) => void;
 	onMarkRead: (id: string) => void;
+	/** Notification to highlight + scroll to (push-tap deep link: ?n=<id>). */
+	focusId?: string | null;
 	empty?: Snippet;
 }
 
-let { notifications, filter, onFilterChange, onMarkRead, empty }: Props = $props();
+let { notifications, filter, onFilterChange, onMarkRead, focusId = null, empty }: Props = $props();
 
 const filtered = $derived(() => {
 	if (filter === 'mentions') return notifications.filter((n) => n.type === 'mention');
 	if (filter === 'system') return notifications.filter((n) => n.type === 'system' || n.type === 'security');
 	return notifications;
+});
+
+$effect(() => {
+	if (!focusId) return;
+	// Programmatic focus (not just scroll) so screen readers land on the item.
+	const el = document.getElementById(`notification-${focusId}`);
+	el?.scrollIntoView({ block: 'center' });
+	el?.focus();
 });
 </script>
 
@@ -42,11 +52,18 @@ const filtered = $derived(() => {
 	{:else}
 		<div class="notification-list" role="feed" aria-label="Notifications">
 			{#each filtered() as notification (notification.id)}
-				<NotificationCard
-					{...notification}
-					createdAt={notification.createdAt}
-					onMarkRead={onMarkRead}
-				/>
+				<div
+					id="notification-{notification.id}"
+					class="notification-focus-wrap"
+					class:focused={notification.id === focusId}
+					tabindex="-1"
+				>
+					<NotificationCard
+						{...notification}
+						createdAt={notification.createdAt}
+						onMarkRead={onMarkRead}
+					/>
+				</div>
 			{/each}
 		</div>
 	{/if}
@@ -63,6 +80,15 @@ const filtered = $derived(() => {
 	.notification-list {
 		max-height: 70vh;
 		overflow-y: auto;
+	}
+
+	.notification-focus-wrap {
+		outline: none;
+	}
+
+	.notification-focus-wrap.focused {
+		background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+		box-shadow: inset 3px 0 0 var(--color-primary);
 	}
 
 	.empty-message {

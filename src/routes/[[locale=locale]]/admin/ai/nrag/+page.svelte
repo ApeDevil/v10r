@@ -324,7 +324,7 @@ const statusFilters = ['all', 'pending', 'processing', 'ready', 'error'] as cons
 					{/if}
 				</EmptyState>
 			{:else}
-				<div class="table-wrap">
+				<div class="table-wrap" tabindex="0" aria-label="Documents">
 					<table class="data-table">
 						<thead>
 							<tr>
@@ -583,6 +583,11 @@ const statusFilters = ['all', 'pending', 'processing', 'ready', 'error'] as cons
 	/* Tables */
 	.table-wrap {
 		overflow-x: auto;
+	}
+
+	.table-wrap:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
 	}
 
 	.data-table {

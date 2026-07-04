@@ -38,6 +38,14 @@ export const notificationSettings = notificationsSchema.table('notification_sett
 	discordSystem: boolean('discord_system').notNull().default(false),
 	discordSecurity: boolean('discord_security').notNull().default(true),
 
+	// Web push toggles per notification type (success/follow intentionally absent —
+	// matches the telegram/discord 4-column precedent; the router's `key in settings`
+	// guard means those types simply never route to push)
+	pushMention: boolean('push_mention').notNull().default(false),
+	pushComment: boolean('push_comment').notNull().default(false),
+	pushSystem: boolean('push_system').notNull().default(false),
+	pushSecurity: boolean('push_security').notNull().default(true),
+
 	// Digest
 	digestFrequency: digestFrequencyEnum('digest_frequency').notNull().default('instant'),
 

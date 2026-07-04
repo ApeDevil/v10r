@@ -36,7 +36,7 @@ A set of web capabilities that make your app installable, offline-capable, and n
 | **Native** | Full device access, app store presence | Separate codebases, slow updates |
 | **Hybrid (Capacitor)** | Best of both, one codebase | Added complexity |
 
-**Recommendation:** Build PWA-first, wrap with Capacitor if app store presence needed.
+**v10r's verdict (2026 task force — see [blueprint/pwa.md](../../blueprint/pwa.md)):** pure PWA, **Capacitor rejected** for this stack — the static-bundle variant forces an SSR→SPA rewrite (kills cookies, CSRF, form actions, passkey rpID, Google OAuth via the webview ban) and the remote-URL variant is maintainer-discouraged with documented SW-update wedges. If Play Store presence is ever wanted, **TWA** wraps the existing PWA unchanged (but carries a ~annual target-SDK re-bump obligation). On iOS the installed PWA *is* the app.
 
 ### SvelteKit Implementation Options
 
@@ -45,16 +45,17 @@ A set of web capabilities that make your app installable, offline-capable, and n
 | **@vite-pwa/sveltekit** | Want zero-config Workbox integration |
 | **Built-in service worker** | Want full control, minimal deps |
 
-**@vite-pwa/sveltekit** (recommended for most):
-- Latest: v1.1.0 (Nov 2025)
-- SvelteKit 2 compatible
-- Zero-config with sensible defaults
-- Workbox integration built-in
+**@vite-pwa/sveltekit**:
+- Latest: v1.1.0 (Nov 2025); maintained but low-velocity
+- Zero-config value evaporates for SSR apps (`generateSW` precaches a build glob; SSR routes aren't in it → you end up in `injectManifest` writing a custom SW anyway)
+- Known unfixed issue: infinite reload loop on SvelteKit error pages (#65)
 
-**SvelteKit built-in** (would live at `src/service-worker.js` — not currently present):
-- `$service-worker` module provides `build`, `files`, `version`
-- More control, lighter weight
-- Requires manual caching logic
+**SvelteKit built-in — what v10r uses** (`src/service-worker.ts`, policy in `$lib/pwa/sw-policy.ts`):
+- `$service-worker` module provides `build`, `files`, `prerendered`, `version`
+- Readable, zero-dep, unit-testable caching policy — the SW file is itself the showcase
+- Accepted cost: `version` is app-global, so every deploy invalidates the whole precache (no per-file revisioning exists for SSR); the re-download is background
+
+**Installability no longer requires a service worker at all:** Chrome dropped the SW requirement (Lighthouse 11 removed the PWA category) — a valid manifest alone is installable. iOS 26's share sheet defaults the "Open as Web App" toggle to on.
 
 ### Caching Strategies
 
@@ -110,7 +111,7 @@ Minimum for installability (Chromium):
 - Permission must be user-triggered (button click)
 - No background sync (notifications only when app open)
 
-**New in 2025:** Safari 18.5 introduced Declarative Web Push—simpler, no service worker required for basic notifications.
+**Declarative Web Push** (Safari/iOS 18.4+, March 2025; absorbed into the W3C Push API Working Draft Dec 2025): a standardized JSON payload the OS renders with **no service worker code** — the SW becomes an optional transformer, and browsers that don't understand the format (Chrome/Android today) deliver the same payload as a classic `push` event. v10r sends the declarative JSON as its single payload shape (see [blueprint/pwa.md](../../blueprint/pwa.md)); field evidence is still thin, so verify on-device rather than assuming interop.
 
 ## Known limitations
 
@@ -118,12 +119,14 @@ Minimum for installability (Chromium):
 
 | Limitation | Impact |
 |------------|--------|
-| **No install prompt** | Users must manually use Share → Add to Home Screen |
+| **No install prompt** | Manual Share → Add to Home Screen (iOS 26 defaults the "Open as Web App" toggle on, softening the friction; still no `beforeinstallprompt`) |
 | **50MB cache limit** | Cache API strictly limited |
-| **2-week eviction** | Unused PWAs lose cached data |
+| **7-day storage eviction** | Applies to Safari *tabs* without recent interaction — **installed home-screen apps have their own usage counter and are exempt** (WebKit's own storage-policy statement); the old "2-week eviction kills installed PWAs" claim is outdated |
 | **No background sync** | Can't sync data when app closed |
-| **Cross-domain OAuth fails** | Auth flows break in standalone mode |
+| **Cross-domain OAuth is fragile** | Redirect flows can complete in a Safari tab instead of the standalone window; magic-link emails open in Safari's separate cookie jar — prefer in-app OTP/passkeys in standalone (see [blueprint/pwa.md](../../blueprint/pwa.md)) |
 | **Scope restrictions** | URLs outside manifest scope drop to Safari |
+
+**EU/DMA note:** Apple's Feb 2024 removal of Home Screen web apps in the EU was reversed in March 2024; PWA support has held since (claims that EU PWAs still lack standalone/push are stale SEO content).
 
 **iOS workarounds:**
 - Guide users through install with visual prompts

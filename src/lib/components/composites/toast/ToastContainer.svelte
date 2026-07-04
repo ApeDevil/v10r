@@ -6,6 +6,7 @@
  */
 
 import { fly } from 'svelte/transition';
+import { Button } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
 import { cn } from '$lib/utils/cn';
@@ -41,6 +42,18 @@ const iconClasses: Record<string, string> = {
 			>
 				<span class={cn(iconClasses[t.type], 'toast-icon')}></span>
 				<div class="toast-message">{t.message}</div>
+				{#if t.action}
+					<Button
+						size="sm"
+						variant="outline"
+						onclick={() => {
+							t.action?.onclick();
+							toast.remove(t.id);
+						}}
+					>
+						{t.action.label}
+					</Button>
+				{/if}
 				<button
 					class="toast-close"
 					onclick={() => toast.remove(t.id)}

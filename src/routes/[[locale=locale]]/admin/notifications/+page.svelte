@@ -268,7 +268,7 @@ function resetComposeForm() {
 					{/if}
 				</EmptyState>
 			{:else}
-				<div class="delivery-table-wrap">
+				<div class="delivery-table-wrap" tabindex="0" aria-label={m.admin_notifications_delivery_log_heading()}>
 					<table class="delivery-table">
 						<thead>
 							<tr>
@@ -298,16 +298,16 @@ function resetComposeForm() {
 									tabindex={entry.errorMessage ? 0 : -1}
 									role={entry.errorMessage ? 'button' : undefined}
 								>
-									<td class="time-cell">{relativeTime(entry.createdAt)}</td>
-									<td><Badge variant="secondary">{entry.channel}</Badge></td>
-									<td><code class="text-fluid-xs">{entry.notificationType}</code></td>
-									<td>
+									<td class="time-cell" data-label={m.admin_notifications_col_time()}>{relativeTime(entry.createdAt)}</td>
+									<td data-label={m.admin_notifications_col_channel()}><Badge variant="secondary">{entry.channel}</Badge></td>
+									<td data-label={m.admin_notifications_col_type()}><code class="text-fluid-xs">{entry.notificationType}</code></td>
+									<td data-label={m.admin_notifications_col_status()}>
 										<Badge variant={entry.status === 'sent' ? 'success' : entry.status === 'dead' ? 'error' : entry.status === 'failed' ? 'error' : 'secondary'}>
 											{entry.status}
 										</Badge>
 									</td>
-									<td>{entry.attempts}</td>
-									<td>
+									<td data-label={m.admin_notifications_col_attempts()}>{entry.attempts}</td>
+									<td data-label={m.admin_notifications_col_detail()}>
 										{#if entry.errorMessage}
 											<span class="text-fluid-xs text-primary cursor-pointer">{m.admin_notifications_detail_show()}</span>
 										{:else}
@@ -659,6 +659,11 @@ function resetComposeForm() {
 		overflow-x: auto;
 	}
 
+	.delivery-table-wrap:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+	}
+
 	.delivery-table {
 		width: 100%;
 		border-collapse: collapse;
@@ -734,6 +739,18 @@ function resetComposeForm() {
 
 	.page-link:hover { text-decoration: underline; }
 	.page-info { font-size: var(--text-fluid-sm); color: var(--color-muted); }
+
+	@media (max-width: 767px) {
+		.delivery-table thead { display: none; }
+		.delivery-table, .delivery-table tbody, .delivery-table tr, .delivery-table td { display: block; width: 100%; }
+		.delivery-table tr { border: 1px solid var(--color-border); border-radius: var(--radius-md); margin-bottom: var(--spacing-3); padding: var(--spacing-2); }
+		.delivery-table td { border-bottom: none; white-space: normal; display: flex; gap: var(--spacing-2); align-items: baseline; }
+		.delivery-table td[data-label]::before { content: attr(data-label); min-width: 96px; flex-shrink: 0; font-weight: 600; font-size: var(--text-fluid-xs); color: var(--color-muted); }
+
+		.page-link {
+			padding: var(--spacing-3) var(--spacing-2);
+		}
+	}
 
 	/* Section Divider */
 	.section-divider {

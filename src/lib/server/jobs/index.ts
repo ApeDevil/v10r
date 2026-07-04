@@ -10,6 +10,7 @@ import { discordTokenRefresh } from './discord-token-refresh';
 import { grantRequestExpiry } from './grant-request-expiry';
 import { logCleanup } from './log-cleanup';
 import { notificationCleanup } from './notification-cleanup';
+import { notificationDelivery } from './notification-delivery';
 import { sessionCleanup } from './session-cleanup';
 import { telegramTokenCleanup } from './telegram-token-cleanup';
 
@@ -21,6 +22,10 @@ export const jobs: Record<string, Job> = {
 	'session-cleanup': { execute: sessionCleanup },
 	'log-cleanup': { execute: logCleanup },
 	'notification-cleanup': { execute: notificationCleanup },
+	// Outbox drain: on persistent platforms the 15s interval scheduler owns this;
+	// on Vercel (platform.persistent === false) the cron entry is the ONLY driver
+	// — without it, email/telegram/discord deliveries queue as pending forever.
+	'notification-delivery': { execute: notificationDelivery },
 	'telegram-token-cleanup': { execute: telegramTokenCleanup },
 	'discord-token-refresh': { execute: discordTokenRefresh },
 	'analytics-cleanup': { execute: analyticsCleanup },

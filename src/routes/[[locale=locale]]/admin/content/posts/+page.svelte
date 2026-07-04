@@ -130,7 +130,7 @@ function submitHiddenForm(action: string, postId: string) {
 				/>
 			{/if}
 		{:else}
-			<div class="table-wrap">
+			<div class="table-wrap" tabindex="0" aria-label={m.admin_posts_title()}>
 				<table class="post-table">
 					<thead>
 						<tr>
@@ -339,6 +339,11 @@ function submitHiddenForm(action: string, postId: string) {
 
 	.table-wrap {
 		overflow-x: auto;
+	}
+
+	.table-wrap:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
 	}
 
 	.post-table {

@@ -215,3 +215,39 @@ describe('resolveDropZone', () => {
 		expect(resolveDropZone(rect, 50, 21)).toBe('center');
 	});
 });
+
+describe('nextPanelOfType', () => {
+	const panels = {
+		'editor-1': { id: 'editor-1', type: 'editor', label: 'Editor' },
+		'editor-2': { id: 'editor-2', type: 'editor', label: 'Editor' },
+		'explorer-1': { id: 'explorer-1', type: 'explorer', label: 'Explorer' },
+	};
+	const root: LayoutNode = {
+		type: 'split',
+		id: 's1',
+		direction: 'horizontal',
+		sizes: [50, 50],
+		children: [leaf('l1', ['explorer-1', 'editor-1']), leaf('l2', ['editor-2'])],
+	};
+
+	it('returns the first instance when nothing is current', async () => {
+		const { nextPanelOfType } = await import('./dock.operations');
+		expect(nextPanelOfType(root, panels, 'editor', null)).toBe('editor-1');
+	});
+
+	it('cycles to the next instance and wraps around', async () => {
+		const { nextPanelOfType } = await import('./dock.operations');
+		expect(nextPanelOfType(root, panels, 'editor', 'editor-1')).toBe('editor-2');
+		expect(nextPanelOfType(root, panels, 'editor', 'editor-2')).toBe('editor-1');
+	});
+
+	it('ignores a currentId of a different type', async () => {
+		const { nextPanelOfType } = await import('./dock.operations');
+		expect(nextPanelOfType(root, panels, 'editor', 'explorer-1')).toBe('editor-1');
+	});
+
+	it('returns null when the type has no open instances', async () => {
+		const { nextPanelOfType } = await import('./dock.operations');
+		expect(nextPanelOfType(root, panels, 'bot', null)).toBe(null);
+	});
+});
