@@ -15,6 +15,9 @@ interface Props {
 	placeholder?: string;
 	disabled?: boolean;
 	error?: boolean;
+	/** Set when the select opens inside a modal: lifts it above the modal's z
+	 * (data-modal-float wrapper rule) and bumps appearance to E4. */
+	inModal?: boolean;
 	onchange?: (value: string) => void;
 	class?: string;
 }
@@ -25,6 +28,7 @@ let {
 	placeholder = m.primitives_select_placeholder(),
 	disabled = false,
 	error = false,
+	inModal = false,
 	onchange,
 	class: className,
 }: Props = $props();
@@ -52,8 +56,11 @@ let selectedLabel = $derived(options.find((opt) => opt.value === value)?.label ?
 
 	<SelectPrimitive.Portal>
 		<SelectPrimitive.Content
-			class="z-dropdown max-h-80 w-[var(--bits-select-anchor-width)] overflow-hidden rounded-md border border-border bg-surface-2 shadow-lg"
+			data-elevation={inModal ? '4' : '2'}
+			data-modal-float={inModal ? '' : undefined}
+			class="z-dropdown max-h-[var(--bits-select-content-available-height,20rem)] w-[var(--bits-select-anchor-width)] overflow-y-auto rounded-md border"
 			sideOffset={4}
+			collisionPadding={8}
 			side="bottom"
 		>
 			<SelectPrimitive.Viewport class="p-1">

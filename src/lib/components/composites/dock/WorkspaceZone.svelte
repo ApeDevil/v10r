@@ -125,7 +125,7 @@ function getPanelSummary(ws: Workspace): string {
 					</CtxMenu.Trigger>
 
 					<CtxMenu.Portal>
-						<CtxMenu.Content class={contextMenuContentVariants()}>
+						<CtxMenu.Content data-elevation="2" class={contextMenuContentVariants()} collisionPadding={8}>
 							<CtxMenu.Group>
 								<CtxMenu.GroupHeading class="px-2 py-1.5 text-xs font-medium text-muted">
 									{ws.name}

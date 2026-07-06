@@ -1,9 +1,10 @@
 import { cva, type VariantProps } from 'class-variance-authority';
+import { floatingContentBase } from '$lib/styles/floating';
 
 export const dropdownMenuContentVariants = cva([
+	floatingContentBase(),
 	'z-dropdown min-w-[12rem]',
-	'overflow-hidden rounded-md',
-	'border border-border bg-surface-2 shadow-lg',
+	'max-h-[var(--bits-dropdown-menu-content-available-height,20rem)]',
 ]);
 
 export const dropdownMenuItemVariants = cva([

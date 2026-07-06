@@ -292,7 +292,7 @@ const descendantCount = $derived(node.isFolder ? treeState.countDescendants(node
 
 	{#if menuItems.length > 0}
 		<ContextMenuPrimitive.Portal>
-			<ContextMenuPrimitive.Content class={contextMenuContentVariants()}>
+			<ContextMenuPrimitive.Content data-elevation="2" class={contextMenuContentVariants()} collisionPadding={8}>
 				{#each menuItems as item}
 					{#if item.type === 'separator'}
 						<ContextMenuPrimitive.Separator class={contextMenuSeparatorVariants()} />

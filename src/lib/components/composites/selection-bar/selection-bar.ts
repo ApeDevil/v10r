@@ -1,9 +1,9 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 
 export const selectionBarVariants = cva([
-	'fixed bottom-7 left-1/2 -translate-x-1/2 z-overlay',
-	'flex items-center gap-3',
-	'rounded-full border border-border bg-surface-3 shadow-xl',
+	'fixed bottom-[calc(2rem+var(--safe-bottom))] left-1/2 -translate-x-1/2 z-panel',
+	'flex items-center gap-3 max-w-[calc(100vw-1rem)] flex-wrap justify-center',
+	'rounded-full border',
 	'px-5 py-2',
 ]);
 

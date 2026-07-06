@@ -1,5 +1,7 @@
 <script lang="ts">
+import { afterNavigate } from '$app/navigation';
 import { page } from '$app/state';
+import { layerStack } from '$lib/state/layer-stack.svelte';
 import { getSidebar } from '$lib/state/sidebar.svelte';
 import { cn } from '$lib/utils/cn';
 import { trapFocus } from '$lib/utils/focus-trap';
@@ -33,16 +35,36 @@ $effect(() => {
 	}
 });
 
-// Close on Escape key
+// Register as a dismissal layer while open, so Escape/overlay peel one layer at a
+// time when a menu (its own layer) is stacked on top of the drawer.
+$effect(() => {
+	if (sidebar.mobileOpen) {
+		layerStack.push('sidebar-drawer');
+		return () => layerStack.pop('sidebar-drawer');
+	}
+});
+
+// The drawer must not survive navigation (it used to stay open — and focus-trapped —
+// over the destination page).
+afterNavigate(() => {
+	if (sidebar.mobileOpen) sidebar.closeMobile();
+});
+
+// Close on Escape key — only when no layer (menu, modal) was stacked above us when
+// the keypress began (wasTop, not isTop: a covering Bits menu closes itself
+// synchronously before this window handler runs).
 function handleKeydown(e: KeyboardEvent) {
-	if (e.key === 'Escape' && sidebar.mobileOpen) {
+	if (e.key === 'Escape' && sidebar.mobileOpen && layerStack.wasTop('sidebar-drawer')) {
 		sidebar.closeMobile();
 	}
 }
 
-// Close on overlay click
+// Close on overlay click — same top-layer guard as Escape (the menu already
+// dismissed itself on this click's preceding pointerdown).
 function handleOverlayClick() {
-	sidebar.closeMobile();
+	if (layerStack.wasTop('sidebar-drawer')) {
+		sidebar.closeMobile();
+	}
 }
 </script>
 
@@ -60,7 +82,8 @@ function handleOverlayClick() {
 	<!-- Drawer -->
 	<aside
 		bind:this={drawerRef}
-		class={cn('sidebar-drawer fixed top-0 right-0 bg-surface-2 border-l border-border z-drawer flex flex-col motion-reduce:animate-none', className)}
+		data-elevation="2"
+		class={cn('sidebar-drawer fixed top-0 right-0 border-l z-drawer flex flex-col motion-reduce:animate-none', className)}
 		style:width="var(--sidebar-mobile-width)"
 		style:height="100dvh"
 		role="navigation"
@@ -94,7 +117,7 @@ function handleOverlayClick() {
 				<ThemeToggle forceExpanded />
 			{/if}
 			<DiceRollButton forceExpanded />
-			<UserMenu user={user ? { name: user.name ?? '', email: user.email } : null} forceExpanded />
+			<UserMenu user={user ? { name: user.name ?? '', email: user.email } : null} variant="drawer" forceExpanded />
 		</div>
 	</aside>
 {/if}

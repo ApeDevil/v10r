@@ -25,7 +25,7 @@ const sideClasses = {
 	right:
 		'inset-y-0 right-0 h-full w-3/4 max-w-sm data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right',
 	bottom:
-		'inset-x-0 bottom-0 h-auto max-h-[80vh] data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom',
+		'inset-x-0 bottom-0 h-auto max-h-[85svh] data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom',
 };
 </script>
 
@@ -35,8 +35,9 @@ const sideClasses = {
 			class="fixed inset-0 z-overlay bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out"
 		/>
 		<DialogPrimitive.Content
+			data-elevation="3"
 			class={cn(
-				'fixed z-modal border border-border bg-surface-2 shadow-xl',
+				'fixed z-modal border',
 				'data-[state=open]:animate-in data-[state=closed]:animate-out',
 				sideClasses[side],
 				className

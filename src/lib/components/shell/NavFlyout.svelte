@@ -9,6 +9,7 @@ import type { Snippet } from 'svelte';
 import { page } from '$app/state';
 import { deLocalizeHref, localizeHref } from '$lib/i18n';
 import type { LabelFn, NavChild } from '$lib/nav';
+import { layerStack } from '$lib/state/layer-stack.svelte';
 import { cn } from '$lib/utils/cn';
 import NavLink from './NavLink.svelte';
 
@@ -48,6 +49,14 @@ function updatePosition() {
 	const maxTop = window.innerHeight - estimatedHeight - 8;
 	if (top > maxTop) {
 		top = Math.max(8, maxTop);
+	}
+
+	// Collision: clamp to the right viewport edge (long labels widen the panel;
+	// min-width 160px is the floor used before the panel has rendered)
+	const flyoutWidth = flyoutEl?.offsetWidth ?? 160;
+	const maxLeft = window.innerWidth - flyoutWidth - 8;
+	if (left > maxLeft) {
+		left = Math.max(8, maxLeft);
 	}
 }
 
@@ -127,12 +136,21 @@ $effect(() => {
 	isOpen = false;
 });
 
+// Register as a dismissal layer while open (Escape peels one layer at a time)
+$effect(() => {
+	if (isOpen) {
+		layerStack.push('nav-flyout');
+		return () => layerStack.pop('nav-flyout');
+	}
+});
+
 // Close on Escape and keyboard nav
 function handleKeydown(e: KeyboardEvent) {
 	if (!isOpen) return;
 
 	switch (e.key) {
 		case 'Escape':
+			if (!layerStack.wasTop('nav-flyout')) break;
 			e.preventDefault();
 			isOpen = false;
 			triggerEl?.querySelector('a')?.focus();
@@ -166,9 +184,9 @@ function isActive(href: string): boolean {
 	return path === href || path.startsWith(`${href}/`);
 }
 
-// Close on click outside
+// Close on click outside — only when nothing was stacked above us at pointerdown
 function handleDocumentClick(e: MouseEvent) {
-	if (!isOpen) return;
+	if (!isOpen || !layerStack.wasTop('nav-flyout')) return;
 	const target = e.target as Node;
 	if (triggerEl?.contains(target) || flyoutEl?.contains(target)) return;
 	isOpen = false;
@@ -203,7 +221,8 @@ function portal(node: HTMLElement) {
 	<div
 		bind:this={flyoutEl}
 		use:portal
-		class="flyout-panel fixed z-dropdown bg-surface-2 border border-border rounded-md shadow-lg py-1"
+		data-elevation="2"
+		class="flyout-panel fixed z-dropdown border rounded-md py-1"
 		style:top="{top}px"
 		style:left="{left}px"
 		style:min-width="160px"

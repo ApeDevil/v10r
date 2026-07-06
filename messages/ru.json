@@ -117,6 +117,8 @@
 	"shell_language_ru": "Русский",
 	"shell_language_choose": "Выбрать язык",
 	"shell_sign_out": "Выйти",
+	"shell_sign_out_confirm_title": "Выйти?",
+	"shell_sign_out_confirm_body": "Вы выйдете из учётной записи на этом устройстве.",
 	"shell_open_in_new_tab": "Открыть в новой вкладке",
 	"shell_opens_in_desk": "Откроется в Desk",
 	"shell_open_panel_in_new_tab": "Открыть {panel} в новой вкладке",

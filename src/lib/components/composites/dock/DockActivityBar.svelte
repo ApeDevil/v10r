@@ -92,7 +92,7 @@ function handleClick(item: ActivityBarItem) {
 	</ContextMenuPrimitive.Trigger>
 
 	<ContextMenuPrimitive.Portal>
-		<ContextMenuPrimitive.Content class={contextMenuContentVariants()}>
+		<ContextMenuPrimitive.Content data-elevation="2" class={contextMenuContentVariants()} collisionPadding={8}>
 			<ContextMenuPrimitive.Group>
 				<ContextMenuPrimitive.GroupHeading class="px-2 py-1.5 text-xs font-medium text-muted">
 					{m.composites_dock_activity_bar_position()}

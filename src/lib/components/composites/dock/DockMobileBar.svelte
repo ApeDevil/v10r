@@ -76,10 +76,12 @@ const MENU_ITEM_CLASS =
 			</DropdownMenu.Trigger>
 			<DropdownMenu.Portal>
 				<DropdownMenu.Content
-					class="z-dropdown min-w-[14rem] bg-surface-2 border border-border rounded-md shadow-lg p-2"
+					data-elevation="2"
+					class="z-dropdown min-w-[14rem] max-w-[calc(100vw-1rem)] max-h-[var(--bits-dropdown-menu-content-available-height,20rem)] overflow-y-auto border rounded-md p-2"
 					side="top"
 					align="end"
 					sideOffset={8}
+					collisionPadding={8}
 				>
 					<DropdownMenu.GroupHeading class="px-3 py-1 text-xs text-muted">
 						{m.composites_dock_mobile_open_panels()}

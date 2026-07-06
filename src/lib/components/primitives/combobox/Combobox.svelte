@@ -76,11 +76,13 @@ function handleClear() {
 
 	<ComboboxPrimitive.Portal>
 		<ComboboxPrimitive.Content
-			class="z-dropdown max-h-80 w-[var(--bits-combobox-anchor-width)] overflow-hidden rounded-md border border-border bg-surface-2 shadow-lg"
+			data-elevation="2"
+			class="z-dropdown max-h-[var(--bits-combobox-content-available-height,20rem)] w-[var(--bits-combobox-anchor-width)] overflow-hidden rounded-md border"
 			sideOffset={4}
+			collisionPadding={8}
 			side="bottom"
 		>
-			<div class="max-h-80 overflow-y-auto p-1">
+			<div class="max-h-[inherit] overflow-y-auto p-1">
 				{#each options as option (option.value)}
 					{@const hidden = touchedSinceOpen && !option.label.toLowerCase().includes(inputValue.toLowerCase())}
 					<ComboboxPrimitive.Item

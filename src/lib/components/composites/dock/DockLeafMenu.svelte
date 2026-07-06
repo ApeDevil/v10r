@@ -22,8 +22,10 @@ let { menus }: Props = $props();
 
 	<DropdownMenuPrimitive.Portal>
 		<DropdownMenuPrimitive.Content
+			data-elevation="2"
 			class={dropdownMenuContentVariants()}
 			sideOffset={4}
+			collisionPadding={8}
 			align="end"
 		>
 			{#each menus as menu, mi (menu.label)}
@@ -34,8 +36,10 @@ let { menus }: Props = $props();
 					</DropdownMenuPrimitive.SubTrigger>
 
 					<DropdownMenuPrimitive.SubContent
+						data-elevation="4"
 						class={dropdownMenuContentVariants()}
 						sideOffset={2}
+						collisionPadding={8}
 					>
 						{#each menu.items as item}
 							{#if item.type === 'separator'}

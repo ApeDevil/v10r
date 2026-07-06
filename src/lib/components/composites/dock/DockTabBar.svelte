@@ -238,7 +238,7 @@ function removeGhost() {
 				</ContextMenuPrimitive.Trigger>
 
 				<ContextMenuPrimitive.Portal>
-					<ContextMenuPrimitive.Content class={contextMenuContentVariants()}>
+					<ContextMenuPrimitive.Content data-elevation="2" class={contextMenuContentVariants()} collisionPadding={8}>
 						<ContextMenuPrimitive.Item
 							class={contextMenuItemVariants()}
 							onclick={() => dock.closePanel(panelId)}

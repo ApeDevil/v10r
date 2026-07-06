@@ -3,6 +3,7 @@ import { Command as CommandPrimitive, Dialog } from 'bits-ui';
 import { goto } from '$app/navigation';
 import { Kbd } from '$lib/components/primitives';
 import { localizeHref } from '$lib/i18n/runtime';
+import { layerStack } from '$lib/state/layer-stack.svelte';
 import { cn } from '$lib/utils/cn';
 import {
 	commandEmptyVariants,
@@ -41,6 +42,15 @@ let {
 }: Props = $props();
 
 const COMMAND_TYPES = new Set(['recent', 'panel', 'action']);
+
+// Register as a dismissal layer while open — bits-ui Dialog owns its own Escape;
+// registration is for hand-rolled layers underneath (drawer) to know they're not top.
+$effect(() => {
+	if (open) {
+		layerStack.push('command-palette');
+		return () => layerStack.pop('command-palette');
+	}
+});
 
 // Group items for display. Command items are always filtered by the query;
 // search-surface items are filtered in 'filter' mode but rendered as-is in
@@ -147,7 +157,7 @@ $effect(() => {
 <Dialog.Root bind:open>
 	<Dialog.Portal>
 		<Dialog.Overlay class={commandPaletteOverlayVariants()} />
-		<Dialog.Content class={commandPaletteContentVariants()}>
+		<Dialog.Content data-elevation="3" class={commandPaletteContentVariants()}>
 			<CommandPrimitive.Root
 				class="flex flex-col"
 				shouldFilter={false}

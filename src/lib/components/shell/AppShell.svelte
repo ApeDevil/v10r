@@ -23,6 +23,7 @@ import { chatbotSession } from '$lib/state/chatbot-session.svelte';
 import { getModals } from '$lib/state/modals.svelte';
 import { createSearchEngine } from '$lib/state/search.svelte';
 import { type Session, setSessionContext } from '$lib/state/session.svelte';
+import { getSidebar } from '$lib/state/sidebar.svelte';
 import { getTheme } from '$lib/state/theme.svelte';
 import { cn } from '$lib/utils/cn';
 
@@ -44,6 +45,7 @@ let { children, session = null, isAdmin = false, immersive = false, announcement
 setSessionContext(session);
 
 const modals = getModals();
+const sidebar = getSidebar();
 const theme = getTheme();
 
 // Dynamic Chatbot — loads the chatbot view graph only once the assistant is non-closed.
@@ -171,9 +173,13 @@ const searchItems = $derived<CommandPaletteItem[]>([
 <div class="flex min-h-screen">
 	<Sidebar {isAdmin} />
 
+	<!-- inert while the mobile drawer is open: a screen reader's virtual cursor could
+	     otherwise read and activate content behind the scrim (Footer is inside main).
+	     Banners/toasts/palette are siblings above the scrim and stay interactive. -->
 	<main
 		id="main-content"
 		tabindex="-1"
+		inert={sidebar.mobileOpen}
 		class={cn(
 			'flex-1 min-w-0 flex flex-col overflow-x-clip md:pl-[var(--sidebar-rail-width)]',
 			'transition-[padding] duration-fast motion-reduce:transition-none',

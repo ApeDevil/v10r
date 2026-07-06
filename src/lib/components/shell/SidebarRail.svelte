@@ -88,6 +88,7 @@ $effect(() => {
 		<DiceRollButton class="!px-0" />
 		<UserMenu
 			user={user ? { name: user.name ?? '', email: user.email } : null}
+			variant="rail"
 			forceExpanded={sidebar.expanded}
 		/>
 	</div>

@@ -116,9 +116,11 @@ const useSectionsMode = $derived(!useDocMode && hasSections);
 			class="fixed inset-0 z-overlay bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out"
 		/>
 		<Dialog.Content
+			data-elevation="3"
 			class={cn(
 				'fixed left-1/2 top-1/2 z-modal -translate-x-1/2 -translate-y-1/2',
-				'w-full max-w-3xl rounded-lg border border-border bg-surface-3 shadow-xl',
+				'w-[calc(100vw-2rem)] max-w-3xl rounded-lg border',
+				'max-h-[calc(100dvh-2rem)]',
 				'flex flex-col',
 				'data-[state=open]:animate-in data-[state=closed]:animate-out',
 				className

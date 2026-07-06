@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Kbd } from '$lib/components/primitives';
 import { formatShortcut, getShortcutsByCategory } from '$lib/shortcuts';
+import { layerStack } from '$lib/state/layer-stack.svelte';
 import { getModals } from '$lib/state/modals.svelte';
 import { cn } from '$lib/utils/cn';
 import { trapFocus } from '$lib/utils/focus-trap';
@@ -26,18 +27,26 @@ $effect(() => {
 	}
 });
 
+// Register as a dismissal layer while open (Escape peels one layer at a time)
+$effect(() => {
+	if (modals.isOpen('shortcuts')) {
+		layerStack.push('shortcuts-modal');
+		return () => layerStack.pop('shortcuts-modal');
+	}
+});
+
 function handleClose() {
 	modals.close();
 }
 
 function handleBackdropClick(event: MouseEvent) {
-	if (event.target === event.currentTarget) {
+	if (event.target === event.currentTarget && layerStack.wasTop('shortcuts-modal')) {
 		handleClose();
 	}
 }
 
 function handleKeydown(e: KeyboardEvent) {
-	if (e.key === 'Escape' && modals.isOpen('shortcuts')) {
+	if (e.key === 'Escape' && modals.isOpen('shortcuts') && layerStack.wasTop('shortcuts-modal')) {
 		handleClose();
 	}
 }

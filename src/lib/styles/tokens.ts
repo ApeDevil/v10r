@@ -67,6 +67,11 @@ export const iconSize = {
  * Fixed spacing scale (8px base).
  * Use for component padding, gaps, margins.
  * Industry standard: Carbon, Material, Atlassian.
+ *
+ * ⚠️ This scale drives the p-N, gap-N, m-N UTILITIES and diverges from the
+ * `--spacing-N` CSS vars in app.css on keys 1–5 (scoped CSS uses n×0.25rem,
+ * e.g. p-4 = 0.75rem but var(--spacing-4) = 1rem). Both scales are load-bearing
+ * (~240 files consume the CSS vars) — documented, deliberately not merged.
  */
 export const fixedSpacing = {
 	'0': '0',
@@ -202,24 +207,45 @@ export const borderRadius = {
 } as const;
 
 // ═══════════════════════════════════════════════════════════════
+// BOX SHADOW
+// ═══════════════════════════════════════════════════════════════
+
+/** Shadow tokens (CSS variable references — values live in app.css, theme-aware in dark mode).
+ * Partial map: UnoCSS deep-merges into the preset theme, so preset keys like `2xl`/`inner` survive. */
+export const boxShadow = {
+	sm: 'var(--shadow-sm)',
+	md: 'var(--shadow-md)',
+	lg: 'var(--shadow-lg)',
+	xl: 'var(--shadow-xl)',
+	modal: 'var(--shadow-modal)',
+	'glow-primary': 'var(--shadow-glow-primary)',
+	'glow-warning': 'var(--shadow-glow-warning)',
+} as const;
+
+// ═══════════════════════════════════════════════════════════════
 // Z-INDEX
 // ═══════════════════════════════════════════════════════════════
 
-/** Z-index layers for stacking context */
+/** Z-index layers for stacking context.
+ * References only — the numeric ladder lives in app.css (SSOT); calc() consumers
+ * there require the CSS vars to stay numeric. Keys are the `z-*` utility suffixes. */
 export const zIndex = {
-	base: 0,
-	sidebar: 10,
-	fab: 20,
-	/** Non-modal docked surfaces (the persistent chatbot panel) — above content +
+	base: 'var(--z-base)',
+	sidebar: 'var(--z-sidebar)',
+	fab: 'var(--z-fab)',
+	/** Non-modal docked surfaces (chatbot dock, selection bar) — above content +
 	 * FAB, below a true modal's overlay so a real modal correctly dims it. */
-	panel: 25,
-	overlay: 30,
-	drawer: 40,
-	popover: 50,
-	dropdown: 50,
-	modal: 60,
-	toast: 70,
-	tooltip: 80,
+	panel: 'var(--z-panel)',
+	overlay: 'var(--z-overlay)',
+	drawer: 'var(--z-drawer)',
+	popover: 'var(--z-popover)',
+	dropdown: 'var(--z-dropdown)',
+	modal: 'var(--z-modal)',
+	/** Anchored floating content portalled while a modal is open (paired with data-modal-float). */
+	'modal-float': 'var(--z-modal-float)',
+	toast: 'var(--z-toast)',
+	tooltip: 'var(--z-tooltip)',
+	progress: 'var(--z-progress)',
 } as const;
 
 // ═══════════════════════════════════════════════════════════════

@@ -65,7 +65,9 @@ let displayValue = $derived(formatDate(value));
 
 		<DatePickerPrimitive.Portal>
 		<DatePickerPrimitive.Content
+			data-elevation="2"
 			sideOffset={4}
+			collisionPadding={8}
 			class={datePickerContentVariants()}
 		>
 			<DatePickerPrimitive.Calendar

@@ -32,7 +32,9 @@ let { items, trigger, align = 'start' }: Props = $props();
 
 	<ContextMenuPrimitive.Portal>
 		<ContextMenuPrimitive.Content
+			data-elevation="2"
 			class={contextMenuContentVariants()}
+			collisionPadding={8}
 		>
 			{#each items as item}
 				{#if item.separator}

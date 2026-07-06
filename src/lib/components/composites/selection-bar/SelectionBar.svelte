@@ -20,6 +20,7 @@ let { count, actions, onClear, class: className }: Props = $props();
 
 {#if count > 0}
 	<div
+		data-elevation="2"
 		class={cn(selectionBarVariants(), className)}
 		role="toolbar"
 		aria-label="{count} item{count === 1 ? '' : 's'} selected"

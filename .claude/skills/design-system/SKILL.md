@@ -32,15 +32,24 @@ src/lib/styles/tokens.ts ← References + non-colors (build-time)
 | Token Type | Source of Truth | Reason |
 |------------|-----------------|--------|
 | Colors | `app.css` | Runtime dark mode toggle |
-| Shadows | `app.css` | Theme-aware |
+| Shadows | `app.css` | Theme-aware (`tokens.ts` holds `var()` refs → `shadow-*` utilities) |
+| Z-index | `app.css` | Numeric ladder SSOT (`tokens.ts` holds `var()` refs) |
+| Elevation E1–E4 | `app.css` | Theme-aware bundles (`--eN-bg/-border/-shadow`) |
 | Spacing | `tokens.ts` | Static, build-time |
 | Typography | `tokens.ts` | Static, build-time |
 | Breakpoints | `tokens.ts` | Static, UnoCSS + JS |
 
 **Critical rule:** Never duplicate values between files.
 
+**Elevation rule:** floating surfaces declare depth with `data-elevation="1..4"`
+(a global `app.css` block supplies background, border-color, and box-shadow).
+An element carrying `data-elevation` must NOT also carry `bg-*`, `shadow-*`, or
+border-color utilities — border *width* and radius stay on the component.
+Z-index comes from `z-*` tokens and is never implied by the rung. Full ladder
+and stacking rules: `docs/blueprint/design/tokens.md`.
+
 ```typescript
-// tokens.ts - REFERENCES for colors, VALUES for non-colors
+// tokens.ts - REFERENCES for runtime tokens (colors/shadows/z), VALUES for static ones
 export const colors = {
   primary: 'var(--color-primary)',  // ← reference only
 } as const;

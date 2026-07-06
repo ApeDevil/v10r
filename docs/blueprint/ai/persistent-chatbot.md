@@ -195,7 +195,8 @@ The panel pins full-height to the right edge and **content reflows** (never over
 avoids covering sticky bottom-right CTAs):
 
 - Panel: `fixed top-0 right-0 h-[100dvh] w-[28rem] max-w-[calc(100vw-var(--sidebar-rail-width))]`,
-  `z-panel`, `border-l border-border bg-surface-3`.
+  `z-panel`, `border-l`; appearance via `data-elevation="2"` (E2 in both modes —
+  see the elevation ladder in [design/tokens.md](../design/tokens.md)).
 - Main reserves space while open: `md:pr-[28rem]` on the `<main>` content (transition
   the padding; respect `prefers-reduced-motion`).
 - The full-height column gives the header ample room for the 4th (**—**) button.
@@ -205,7 +206,10 @@ avoids covering sticky bottom-right CTAs):
 `fixed inset-x-2 bottom-0 max-h-[85svh] rounded-t-lg z-panel
 pb-[max(env(safe-area-inset-bottom),12px)]`. (`inset-x-2` fixes a real pre-existing
 −12px horizontal-overflow bug; `svh` replaces a raw `vh` that slid under the iOS URL
-bar.) Dock-as-column does not apply on mobile.
+bar.) Dock-as-column does not apply on mobile. The sheet registers as a
+`chatbot-sheet` dismissal layer in `$lib/state/layer-stack.svelte.ts`, so Escape
+peels anything stacked above it (e.g. the ⌘K palette) before minimizing; the
+desktop dock never registers.
 
 ### MINIMIZED — sidebar indicators (desktop) / bubble (mobile)
 

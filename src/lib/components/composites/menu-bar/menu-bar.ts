@@ -1,4 +1,5 @@
 import { cva, type VariantProps } from 'class-variance-authority';
+import { floatingContentBase } from '$lib/styles/floating';
 
 export const menuBarRootVariants = cva(['flex items-center gap-1', 'border-b border-border bg-surface-2', 'px-2 py-1']);
 
@@ -13,9 +14,9 @@ export const menuBarTriggerVariants = cva([
 ]);
 
 export const menuBarContentVariants = cva([
+	floatingContentBase(),
 	'z-dropdown min-w-[12rem]',
-	'overflow-hidden rounded-md',
-	'border border-border bg-surface-2 shadow-lg',
+	'max-h-[var(--bits-menubar-content-available-height,20rem)]',
 ]);
 
 export const menuBarItemVariants = cva([

@@ -1,15 +1,5 @@
 <script lang="ts">
-import {
-	breakpoints,
-	containers,
-	duration,
-	fontSize,
-	iconSize,
-	layout,
-	sidebar,
-	spacing,
-	zIndex,
-} from '$lib/styles/tokens';
+import { breakpoints, containers, duration, fontSize, iconSize, layout, sidebar, spacing } from '$lib/styles/tokens';
 import { DemoCard, TokenSwatch } from '../_components';
 
 /** Border radius tokens (display-only, reference CSS variables from app.css) */
@@ -32,18 +22,38 @@ const boxShadow = {
 	'glow-warning': 'var(--shadow-glow-warning)',
 };
 
+/** Z-index ladder (display-only — the numeric SSOT is app.css; tokens.ts holds var() references) */
+const zValues: Record<string, number> = {
+	base: 0,
+	sidebar: 10,
+	fab: 20,
+	panel: 25,
+	overlay: 30,
+	drawer: 40,
+	popover: 50,
+	dropdown: 50,
+	modal: 60,
+	'modal-float': 65,
+	toast: 70,
+	tooltip: 80,
+	progress: 100,
+};
+
 /** Maps z-index layers to their surface level based on actual component usage */
 const zSurface: Record<string, number> = {
 	base: 0,
 	sidebar: 1,
 	fab: 1,
+	panel: 2,
 	overlay: 2,
 	drawer: 2,
 	popover: 2,
 	dropdown: 2,
 	modal: 3,
+	'modal-float': 3,
 	toast: 1,
 	tooltip: 3,
+	progress: 0,
 };
 
 /**
@@ -407,7 +417,7 @@ const colorCombos = [
 		<div id="tok-z-index" class="scroll-target">
 		<DemoCard title="Z-Index Layers" description="Stacking context hierarchy — colored by surface elevation">
 			<div class="z-index-stack">
-				{#each Object.entries(zIndex) as [key, value]}
+				{#each Object.entries(zValues) as [key, value]}
 					{@const level = zSurface[key] ?? 0}
 					<div
 						class="z-index-sample"

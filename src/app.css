@@ -72,15 +72,19 @@
 	--layout-wide-width: 90rem;
 	--layout-narrow-width: 50rem;
 
-	/* Z-index layers */
+	/* Z-index layers — SSOT (tokens.ts zIndex references these vars).
+	   Values stay numeric: calc() consumers exist (grain-glow, SidebarDrawer, SessionWarningBanner).
+	   Same-z nesting (e.g. select inside popover) resolves by portal order — Bits appends in open order. */
 	--z-base: 0;
 	--z-sidebar: 10;
 	--z-fab: 20;
+	--z-panel: 25; /* non-modal docked surfaces (chatbot dock, selection bar) — below modal scrims */
 	--z-overlay: 30;
 	--z-drawer: 40;
 	--z-popover: 50;
-	--z-dropdown: 50;
+	--z-dropdown: var(--z-popover); /* alias — one ladder rung, two historical names */
 	--z-modal: 60;
+	--z-modal-float: 65; /* anchored floating content portalled while a modal is open */
 	--z-toast: 70;
 	--z-tooltip: 80;
 	--z-progress: 100;
@@ -95,6 +99,36 @@
 	--fg-inverse: oklch(0.78 0.1 175); /* = dark --color-fg (teal-tinted) */
 	--muted-inverse: oklch(0.78 0.015 240); /* = dark --color-muted */
 	--border-inverse: oklch(0.32 0.015 250); /* = dark --color-border */
+
+	/* ── Elevation appearance rungs (fill + edge + shadow bundles) ──
+	   E1 raised chrome (cards, rail) · E2 floating/docked (menus, popovers, drawer, panels)
+	   E3 true modals (dialog, palette) · E4 floating-over-floating (submenu over menu,
+	   menu over drawer, select inside dialog).
+	   Derived from --surface-N / --color-border / --color-muted, so the palette blocks
+	   need no edits. Border strengthens toward muted with each rung — the primary depth
+	   cue in dark mode, where fills converge and shadows die.
+	   Consumed via [data-elevation] below; an element carrying data-elevation must not
+	   also carry bg-, shadow-, or border-color utilities. Rung ≠ z-index: a coverer must
+	   simply sit ≥1 rung above what it covers. */
+	--e1-bg: var(--surface-1);
+	--e1-border: var(--color-border);
+	--e1-shadow: var(--shadow-sm);
+
+	--e2-bg: var(--surface-2);
+	--e2-border: color-mix(in srgb, var(--color-border) 82%, var(--color-muted) 18%);
+	--e2-shadow: var(--shadow-lg);
+
+	--e3-bg: var(--surface-3);
+	--e3-border: color-mix(in srgb, var(--color-border) 68%, var(--color-muted) 32%);
+	--e3-shadow: var(--shadow-modal);
+
+	/* E4: at the white ceiling, so tint toward muted instead (M3-style: light-mode
+	   containers darken as they rise). Direct E4-over-E3 overlap (drawer panel over
+	   user menu, select inside dialog) needs fill contrast — edge + cast shadow
+	   alone were too weak when both surfaces were pure white. */
+	--e4-bg: color-mix(in srgb, var(--surface-3) 88%, var(--color-muted) 12%);
+	--e4-border: color-mix(in srgb, var(--color-border) 55%, var(--color-muted) 45%);
+	--e4-shadow: var(--shadow-xl);
 
 	/* Animation */
 	--duration-instant: 0ms;
@@ -135,7 +169,11 @@
 	scrollbar-width: thin;
 	scrollbar-color: var(--color-border) transparent;
 
-	/* Spacing tokens */
+	/* Spacing tokens — ⚠️ scoped-CSS scale, NOT the UnoCSS utility scale.
+	   tokens.ts fixedSpacing (which drives the p-N and gap-N utilities) diverges on keys 1–5
+	   (e.g. p-4 = 0.75rem but var(--spacing-4) = 1rem). ~240 files consume these vars,
+	   so the two scales are documented rather than merged — do not assume p-N and
+	   var(--spacing-N) are the same length. */
 	--spacing-1: 0.25rem;
 	--spacing-2: 0.5rem;
 	--spacing-3: 0.75rem;
@@ -243,6 +281,17 @@
 	--fg-inverse: oklch(0.35 0.06 210); /* = light --color-fg */
 	--muted-inverse: oklch(0.45 0.02 260); /* = light --color-muted */
 	--border-inverse: oklch(0.85 0.01 240); /* light border, nudged off pure-white so dividers show */
+
+	/* Elevation rungs, dark: fills converge toward black and drop shadows are near-invisible,
+	   so depth is carried by the border ladder (inherited formulas above), a 1px top inset
+	   catch-light, and — for E3 — a heavier, softer cast. Full box-shadow stacks restated
+	   because box-shadow does not compose. */
+	--e2-shadow: var(--shadow-lg), inset 0 1px 0 0 color-mix(in srgb, var(--color-muted) 8%, transparent);
+	--e3-shadow:
+		0 16px 40px -8px rgb(0 0 0 / 0.6), inset 0 1px 0 0 color-mix(in srgb, var(--color-muted) 12%, transparent);
+	/* E4 lifts its fill toward muted — you cannot go darker than the black modal beneath it. */
+	--e4-bg: color-mix(in srgb, var(--surface-3) 84%, var(--color-muted) 16%);
+	--e4-shadow: var(--shadow-xl), inset 0 1px 0 0 color-mix(in srgb, var(--color-muted) 14%, transparent);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -841,6 +890,41 @@ body {
 /* Bits UI floating content (popovers, dropdowns, tooltips, etc.) must sit above the sidebar */
 [data-bits-floating-content-wrapper] {
 	z-index: var(--z-popover) !important;
+}
+
+/* Floating content opened while a modal is up must beat the modal (60): Bits caps the
+   wrapper at z-popover (50) above, so the WRAPPER gets lifted, not the content element.
+   Components stamp data-modal-float (via their `inModal` prop); descendant :has() keeps
+   this resilient to Bits inserting intermediate nodes. */
+[data-bits-floating-content-wrapper]:has([data-modal-float]) {
+	z-index: var(--z-modal-float) !important;
+}
+
+/* ── Elevation appearance (single source — see the --eN bundle definitions in :root) ──
+   Components declare depth with data-elevation="1..4" and carry no bg/shadow/border-color
+   utilities; border WIDTH and radius stay on the component. */
+[data-elevation="1"] {
+	background: var(--e1-bg);
+	border-color: var(--e1-border);
+	box-shadow: var(--e1-shadow);
+}
+
+[data-elevation="2"] {
+	background: var(--e2-bg);
+	border-color: var(--e2-border);
+	box-shadow: var(--e2-shadow);
+}
+
+[data-elevation="3"] {
+	background: var(--e3-bg);
+	border-color: var(--e3-border);
+	box-shadow: var(--e3-shadow);
+}
+
+[data-elevation="4"] {
+	background: var(--e4-bg);
+	border-color: var(--e4-border);
+	box-shadow: var(--e4-shadow);
 }
 
 /* Native select option styling (browser support varies) */

@@ -74,7 +74,8 @@ const iconClasses: Record<string, string> = {
 		flex-direction: column;
 		gap: var(--spacing-2);
 		pointer-events: none;
-		top: var(--spacing-4);
+		/* Clear the notch/status bar in landscape (0 in regular browsers) */
+		top: max(var(--spacing-4), env(safe-area-inset-top));
 		left: var(--spacing-4);
 		right: var(--spacing-4);
 	}

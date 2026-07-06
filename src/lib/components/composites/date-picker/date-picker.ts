@@ -34,7 +34,7 @@ export const datePickerTriggerVariants = cva(
 
 export const datePickerContentVariants = cva(
 	[
-		'z-popover rounded-md border border-border bg-surface-2 p-0 shadow-md outline-none',
+		'z-popover rounded-md border max-w-[calc(100vw-1rem)] p-0 outline-none',
 		'data-[state=open]:animate-in data-[state=closed]:animate-out',
 		'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
 		'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',

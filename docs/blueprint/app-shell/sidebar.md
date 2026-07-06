@@ -151,3 +151,19 @@ The user menu sits at the bottom of the sidebar, anchored to the viewport:
 │  🚪 Sign out           │
 └────────────────────────┘
 ```
+
+Side submenus (▸) are anchored flyouts on the **rail only** (`data-elevation="4"`,
+8px offset). In the mobile drawer the menu itself is a **static surface pinned to
+the bottom-left screen edge** (`ContentStatic`, plain fixed CSS — clear of the
+right-anchored drawer), and Theme/Language open a second static panel **stacked
+on top of it**, staggered 8px right / 12px up, with a back row as the touch
+dismissal. Elevation strata: drawer E2 → menu E3 → panel E4. The drawer, each
+open menu, and the stacked panel register in the layer-stack singleton
+(`$lib/state/layer-stack.svelte.ts`), so Escape/overlay-click peel exactly one
+layer at a time — the panel stops Bits UI's escape-defer chain with
+`escapeKeydownBehavior="close"`. See the elevation ladder in
+[design/tokens.md](../design/tokens.md).
+
+**Sign out** does not act immediately — it opens a destructive `ConfirmDialog`
+(itself registered as a `confirm-dialog` layer, so on mobile Escape peels the
+dialog before the drawer).

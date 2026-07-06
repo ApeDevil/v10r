@@ -29,7 +29,7 @@ let { menus, class: className }: Props = $props();
 			</Menubar.Trigger>
 
 			<Menubar.Portal>
-				<Menubar.Content class={menuBarContentVariants()} sideOffset={4} align="start">
+				<Menubar.Content data-elevation="2" class={menuBarContentVariants()} sideOffset={8} collisionPadding={8} align="start">
 					{#each menu.items as item}
 						{#if item.type === 'separator'}
 							<Menubar.Separator class={menuBarSeparatorVariants()} />

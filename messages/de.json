@@ -117,6 +117,8 @@
 	"shell_language_ru": "Русский",
 	"shell_language_choose": "Sprache wählen",
 	"shell_sign_out": "Abmelden",
+	"shell_sign_out_confirm_title": "Abmelden?",
+	"shell_sign_out_confirm_body": "Sie werden auf diesem Gerät von Ihrem Konto abgemeldet.",
 	"shell_open_in_new_tab": "In neuem Tab öffnen",
 	"shell_opens_in_desk": "Öffnet im Desk",
 	"shell_open_panel_in_new_tab": "{panel} in neuem Tab öffnen",

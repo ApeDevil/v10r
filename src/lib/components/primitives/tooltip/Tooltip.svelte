@@ -26,8 +26,9 @@ const isString = (val: string | Snippet): val is string => typeof val === 'strin
 		<TooltipPrimitive.Content
 			{side}
 			sideOffset={4}
+			collisionPadding={8}
 			class={cn(
-				'z-tooltip overflow-hidden rounded-md bg-surface-3 px-3 py-1.5 text-fluid-xs text-fg',
+				'z-tooltip overflow-hidden rounded-md bg-surface-3 shadow-md px-3 py-1.5 text-fluid-xs text-fg',
 				'animate-in fade-in-0 zoom-in-95',
 				'data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95',
 				'data-[side=bottom]:slide-in-from-top-2',

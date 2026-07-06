@@ -108,6 +108,11 @@ const visible = $derived(browser && (consent.needsBanner || consent.bannerOpen))
 		left: 0;
 		right: 0;
 		z-index: var(--z-toast);
+		/* Never taller than the viewport (short landscape + expanded customize panel),
+		   and the action row must clear the iOS home indicator. */
+		max-height: 100dvh;
+		overflow-y: auto;
+		padding-bottom: var(--safe-bottom);
 		/* Inverted theme: flip against the page so the banner pops. The remapped tokens
 		   cascade into the child Button/Switch primitives, keeping them legible. Primary
 		   (icon + Accept-all) is intentionally left as the page accent. */

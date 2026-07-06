@@ -4,8 +4,9 @@ export const commandPaletteOverlayVariants = cva(['fixed inset-0 z-overlay bg-bl
 
 export const commandPaletteContentVariants = cva([
 	'fixed left-1/2 top-1/4 z-modal -translate-x-1/2',
-	'w-full max-w-lg rounded-lg',
-	'border border-border bg-surface-3 shadow-xl',
+	'w-[calc(100vw-2rem)] max-w-lg rounded-lg',
+	'max-h-[calc(75dvh-1rem)] overflow-y-auto',
+	'border',
 ]);
 
 export type CommandPaletteOverlayVariants = VariantProps<typeof commandPaletteOverlayVariants>;

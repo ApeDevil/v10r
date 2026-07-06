@@ -46,8 +46,10 @@ let { items, trigger, align = 'end' }: Props = $props();
 
 	<DropdownMenuPrimitive.Portal>
 		<DropdownMenuPrimitive.Content
+			data-elevation="2"
 			class={dropdownMenuContentVariants()}
-			sideOffset={4}
+			sideOffset={8}
+			collisionPadding={8}
 			{align}
 		>
 			{#each items as item}

@@ -20,9 +20,11 @@ let { open = $bindable(false), title, description, children, class: className }:
 			class="fixed inset-0 z-overlay bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out"
 		/>
 		<DialogPrimitive.Content
+			data-elevation="3"
 			class={cn(
 				'fixed left-1/2 top-1/2 z-modal -translate-x-1/2 -translate-y-1/2',
-				'w-full max-w-md rounded-lg border border-border bg-surface-3 p-6 shadow-xl',
+				'w-[calc(100vw-2rem)] max-w-md rounded-lg border p-6',
+				'max-h-[calc(100dvh-2rem)] overflow-y-auto',
 				'data-[state=open]:animate-in data-[state=closed]:animate-out',
 				className
 			)}

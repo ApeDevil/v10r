@@ -213,18 +213,59 @@ export const colors = {
 // Z-INDEX
 // ═══════════════════════════════════════════════════════════════
 
-/** Z-index layers for stacking context */
+/** Z-index layers — numeric SSOT lives in app.css; tokens.ts holds var() references */
 export const zIndex = {
-  base: 0,
-  sidebar: 10,
-  fab: 20,
-  overlay: 30,
-  drawer: 40,
-  dropdown: 50,
-  modal: 60,
-  toast: 70,
-  tooltip: 80,
+  base: 'var(--z-base)',         // 0
+  sidebar: 'var(--z-sidebar)',   // 10
+  fab: 'var(--z-fab)',           // 20
+  panel: 'var(--z-panel)',       // 25 — non-modal docked (chatbot dock, selection bar)
+  overlay: 'var(--z-overlay)',   // 30 — ALL modal scrims
+  drawer: 'var(--z-drawer)',     // 40 — mobile sidebar drawer
+  popover: 'var(--z-popover)',   // 50 — anchored floating (dropdown = alias)
+  modal: 'var(--z-modal)',       // 60
+  'modal-float': 'var(--z-modal-float)', // 65 — floating content above an open modal
+  toast: 'var(--z-toast)',       // 70
+  tooltip: 'var(--z-tooltip)',   // 80
+  progress: 'var(--z-progress)', // 100
 } as const;
+```
+
+## Elevation Ladder (Stacked Floating UIs)
+
+Appearance rungs **E1–E4** bundle fill + border + shadow, decoupled from z-index.
+Defined in `app.css` (`--eN-bg/-border/-shadow`), consumed via the `data-elevation`
+attribute — an element carrying `data-elevation` must NOT also carry
+`bg-*`/`shadow-*`/`border-color` utilities (border WIDTH and radius stay on the
+component). Geometry (max-w/max-h/overflow/collision) comes from
+`floatingContentBase` in `$lib/styles/floating.ts` plus per-component classes.
+
+| Rung | Fill | Shadow | Used by |
+|------|------|--------|---------|
+| E1 raised | surface-1 | shadow-sm | cards, desktop rail (equivalent classes) |
+| E2 floating/docked | surface-2 | shadow-lg | menus, popovers, selects, mobile drawer, chatbot, selection bar |
+| E3 modal | surface-3 | shadow-modal | Dialog, Drawer primitive, CommandPalette, mobile-drawer user menu (over the E2 drawer) |
+| E4 float-over-float | surface-3 tinted toward muted (light 12%, dark 16% via color-mix) | shadow-xl | submenu over menu, Theme/Language panel over the drawer user menu, floats inside modals |
+
+Rules:
+- **A coverer sits ≥1 rung above what it covers** (kills the "dropdown recedes
+  into its dialog" inversion). Rung never implies z.
+- Border strengthens toward `--color-muted` per rung — the primary dark-mode
+  depth cue (fills converge to black, drop shadows die); E2–E4 add a 1px top
+  inset catch-light in dark mode.
+- Floating content opened inside a modal stamps `data-modal-float` (via the
+  `inModal` prop on Select/Popover): a `:has()` rule lifts its Bits portal
+  wrapper to `--z-modal-float` (65), above the modal's 60.
+- Tooltip is a special micro-tier (surface-3 + shadow-md, no data-elevation).
+- ConsentBanner is excluded (deliberate `surface-inverse` attention flip).
+- Dismissal order is owned by the layer-stack singleton
+  (`$lib/state/layer-stack.svelte.ts`): every dismissible layer registers on
+  open; hand-rolled Escape/outside-click handlers guard with `wasTop(id)` — the
+  top layer snapshotted at window-capture time, because Bits UI dismisses a
+  covering layer synchronously before bubble handlers run (`isTop` would lie
+  and double-close) — so one keypress peels exactly one layer. Never register
+  tooltips, toasts, the consent banner, or the desktop chatbot dock.
+
+```typescript
 
 // ═══════════════════════════════════════════════════════════════
 // LAYOUT

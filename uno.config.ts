@@ -3,6 +3,7 @@ import { defineConfig, presetIcons, presetUno } from 'unocss';
 import { ICON_OPTIONS } from './src/lib/config/icon-options.ts';
 import {
 	borderRadius,
+	boxShadow,
 	breakpoints,
 	colors,
 	containers,
@@ -52,6 +53,7 @@ export default defineConfig({
 		fontFamily,
 		colors,
 		borderRadius,
+		boxShadow,
 		zIndex,
 	},
 

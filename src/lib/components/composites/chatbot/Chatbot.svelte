@@ -7,6 +7,7 @@ import type { CatalogSource, SourceChunk } from '$lib/components/chat/citation-t
 import Drawer from '$lib/components/primitives/drawer/Drawer.svelte';
 import { isSiteAwareRoute, resolveRouteLabel } from '$lib/search/route-id';
 import { chatbotSession } from '$lib/state/chatbot-session.svelte';
+import { layerStack } from '$lib/state/layer-stack.svelte';
 import { cn } from '$lib/utils/cn';
 import ChatInput from './ChatInput.svelte';
 import ChatMessage from './ChatMessage.svelte';
@@ -89,13 +90,23 @@ $effect(() => {
 	return () => el.removeEventListener('click', onMessagesClick);
 });
 
+// The mobile bottom sheet behaves modally (covers the page) — register it as a
+// dismissal layer. The desktop dock is a persistent workspace panel and never registers.
+$effect(() => {
+	if (session.phase === 'open' && !isDesktop.current) {
+		layerStack.push('chatbot-sheet');
+		return () => layerStack.pop('chatbot-sheet');
+	}
+});
+
 // Esc minimizes (never destroys) when focus is inside the open panel. If the sources
 // drawer is open, leave it to the drawer's own Esc handling.
 function onWindowKeydown(e: KeyboardEvent) {
 	if (e.key !== 'Escape' || viewerOpen) return;
-	if (session.phase === 'open' && panelEl?.contains(document.activeElement)) {
-		session.minimize();
-	}
+	if (session.phase !== 'open' || !panelEl?.contains(document.activeElement)) return;
+	// The mobile sheet is a registered dismissal layer — yield to anything stacked above.
+	if (!isDesktop.current && !layerStack.wasTop('chatbot-sheet')) return;
+	session.minimize();
 }
 
 async function loadConversations() {
@@ -156,14 +167,15 @@ function submitMessage() {
 	bind:this={panelEl}
 	role="complementary"
 	aria-label="Vely assistant"
+	data-elevation="2"
 	class={cn(
-		'fixed z-panel bg-surface-3 text-fg',
+		'fixed z-panel text-fg',
 		// mobile: bottom sheet
-		'inset-x-2 bottom-0 max-h-[85svh] rounded-t-lg border border-border shadow-2xl',
+		'inset-x-2 bottom-0 max-h-[85svh] rounded-t-lg border',
 		'pb-[max(env(safe-area-inset-bottom),12px)]',
 		// desktop: full-height right-docked column (content reflows via main's md:pr)
 		'md:inset-x-auto md:top-0 md:right-0 md:bottom-0 md:h-[100dvh] md:w-[28rem]',
-		'md:max-w-[calc(100vw-var(--sidebar-rail-width))] md:rounded-none md:border-0 md:border-l md:border-border md:pb-0 md:shadow-xl',
+		'md:max-w-[calc(100vw-var(--sidebar-rail-width))] md:rounded-none md:border-0 md:border-l md:pb-0',
 		// Display is mutually exclusive so `flex` can never override `hidden` (minimize).
 		session.phase === 'open' ? 'flex flex-col' : 'hidden'
 	)}

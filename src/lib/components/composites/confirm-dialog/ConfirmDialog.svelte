@@ -2,6 +2,7 @@
 import { Dialog } from 'bits-ui';
 import { Button } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
+import { layerStack } from '$lib/state/layer-stack.svelte';
 import { cn } from '$lib/utils/cn';
 
 interface Props {
@@ -25,6 +26,15 @@ let {
 	onconfirm,
 	oncancel,
 }: Props = $props();
+
+// Bits Dialog handles its own Escape/overlay dismissal; registration is for
+// hand-rolled layers underneath (the mobile drawer) to know they're not top.
+$effect(() => {
+	if (open) {
+		layerStack.push('confirm-dialog');
+		return () => layerStack.pop('confirm-dialog');
+	}
+});
 </script>
 
 <Dialog.Root bind:open>
@@ -33,9 +43,11 @@ let {
 			class="fixed inset-0 z-overlay bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out"
 		/>
 		<Dialog.Content
+			data-elevation="3"
 			class={cn(
 				'fixed left-1/2 top-1/2 z-modal -translate-x-1/2 -translate-y-1/2',
-				'w-full max-w-md rounded-lg border border-border bg-surface-3 p-6 shadow-xl',
+				'w-[calc(100vw-2rem)] max-w-md rounded-lg border p-6',
+				'max-h-[calc(100dvh-2rem)] overflow-y-auto',
 				'flex flex-col gap-2',
 				'data-[state=open]:animate-in data-[state=closed]:animate-out'
 			)}
