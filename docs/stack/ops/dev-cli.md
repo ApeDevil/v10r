@@ -34,7 +34,8 @@ repo you're in.
 | `vr ship` / `vr s` | Gate + promote the current branch toward `main` (see below) |
 | `vr validate` / `vr v` | Run the full gate (`bun run validate`) in the repo's container |
 | `vr dev` | Start the dev server (`podman compose up`, foreground) |
-| `vr up` / `vr down` | Start / stop the repo's container |
+| `vr up` / `vr u` | Start the repo's container (background) |
+| `vr down` / `vr d` | Stop the repo's container |
 | `vr shell` / `vr sh` | Shell into the running container |
 | `vr install` | Symlink `vr` into `~/.local/bin` |
 
@@ -117,6 +118,8 @@ validate` is the contract every repo's gate must provide.
 
 Zero host dependencies beyond bash (matches the container-first rule), namespaced and
 self-documenting (`vr` with no args lists everything), and versioned in the repo. Grow it
-by adding a `case` branch in `bin/vr` plus a script in `scripts/`.
+by adding a `case` branch in `bin/vr` plus a script in `scripts/`. Short aliases follow the
+same convention as the commands they shorten — `s`/`v`/`sh`/`u`/`d` are just extra patterns
+on the existing `case` branch, so they're versioned and appear in `vr help` for free.
 </content>
 </invoke>

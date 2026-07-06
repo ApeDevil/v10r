@@ -20,8 +20,8 @@ vr — solo-dev cli (acts on the git repo you're standing in)
   ship, s           gate + promote current branch → main (deploys on push)
   validate, v       run the full gate (bun run validate) in the container
   dev               start the dev server (podman compose up, foreground)
-  up                start the container in the background
-  down              stop the container
+  up, u             start the container in the background
+  down, d           stop the container
   shell, sh         open a shell inside the running container
   install           symlink `vr` into ~/.local/bin (run once)
   help              show this menu
@@ -39,8 +39,8 @@ case "$cmd" in
 	ship|s)        exec bash "$SCRIPTS/ship.sh" "$@" ;;
 	validate|v)    exec bash "$SCRIPTS/validate.sh" "$@" ;;
 	dev)           require_repo; exec "${COMPOSE[@]}" up "$@" ;;
-	up)            require_repo; exec "${COMPOSE[@]}" up -d "$@" ;;
-	down)          require_repo; exec "${COMPOSE[@]}" down "$@" ;;
+	up|u)          require_repo; exec "${COMPOSE[@]}" up -d "$@" ;;
+	down|d)        require_repo; exec "${COMPOSE[@]}" down "$@" ;;
 	shell|sh)      require_repo; exec "${COMPOSE[@]}" exec "$(compose_service)" bash ;;
 	install)
 		target="${HOME}/.local/bin/vr"
