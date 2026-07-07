@@ -3,6 +3,7 @@ import { Dialog } from 'bits-ui';
 import { authClient } from '$lib/auth-client';
 import { Button, Input, Spinner } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 
 interface Props {
@@ -21,6 +22,9 @@ let {
 	title = m.composites_step_up_title(),
 	description = m.composites_step_up_description(),
 }: Props = $props();
+
+// Relative elevation — one rung above the surface this dialog was opened from.
+const s = useSurface();
 
 let code = $state('');
 let useBackupCode = $state(false);
@@ -68,7 +72,7 @@ async function verify() {
 			class="fixed inset-0 z-overlay bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out"
 		/>
 		<Dialog.Content
-			data-elevation="3"
+			{...s.attrs}
 			class={cn(
 				'fixed left-1/2 top-1/2 z-modal -translate-x-1/2 -translate-y-1/2',
 				'w-[calc(100vw-2rem)] max-w-md rounded-lg border p-6',

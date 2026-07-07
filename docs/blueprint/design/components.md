@@ -15,7 +15,7 @@ Components are organized in layers. Lower layers are dumber and more reusable; h
 | **Bits UI** | (dependency) | Headless, accessible primitives | `Dialog.Root`, `Select.Trigger` |
 | **primitives** | `primitives/` | Styled atomic components | Button, Input, Badge, Select, Switch, Table |
 | **composites** | `composites/` | Composed from primitives | Card, FormField, CommandPalette, Chatbot, Dock |
-| **layout** | `layout/` | Structural wrappers | Stack, Cluster, PageContainer |
+| **layout** | `layout/` | Structural wrappers | Stack, Cluster, PageContainer, Surface |
 | **shell** | `shell/` | App shell / navigation | AppShell, Sidebar, NavItem, UserMenu |
 | **branding** | `branding/` | Logos, palette editor | LogoHero, LogoFooter, CustomPaletteEditor |
 | **ui** | `ui/` | Specialized inputs | OklchColorInput, ContrastBadge |

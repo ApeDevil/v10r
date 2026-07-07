@@ -5,6 +5,7 @@ import {
 	contextMenuItemVariants,
 	contextMenuSeparatorVariants,
 } from '$lib/components/composites/context-menu';
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 import { getDeskSettings } from './desk-settings.svelte';
 import { collectLeaves } from './dock.operations';
@@ -16,6 +17,9 @@ import { MAX_WORKSPACES, VISIBLE_WORKSPACE_BUTTONS } from './workspace.types';
 const workspace = getWorkspaceContext();
 const deskSettings = getDeskSettings();
 const dock = getDockContext();
+
+// Relative elevation — one rung above the surface that owns the trigger.
+const s = useSurface();
 
 const isHorizontal = $derived(dock.activityBarPosition === 'top' || dock.activityBarPosition === 'bottom');
 
@@ -125,7 +129,7 @@ function getPanelSummary(ws: Workspace): string {
 					</CtxMenu.Trigger>
 
 					<CtxMenu.Portal>
-						<CtxMenu.Content data-elevation="2" class={contextMenuContentVariants()} collisionPadding={8}>
+						<CtxMenu.Content {...s.attrs} class={contextMenuContentVariants()} collisionPadding={8}>
 							<CtxMenu.Group>
 								<CtxMenu.GroupHeading class="px-2 py-1.5 text-xs font-medium text-muted">
 									{ws.name}

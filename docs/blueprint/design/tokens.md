@@ -223,47 +223,114 @@ export const zIndex = {
   drawer: 'var(--z-drawer)',     // 40 — mobile sidebar drawer
   popover: 'var(--z-popover)',   // 50 — anchored floating (dropdown = alias)
   modal: 'var(--z-modal)',       // 60
-  'modal-float': 'var(--z-modal-float)', // 65 — floating content above an open modal
   toast: 'var(--z-toast)',       // 70
   tooltip: 'var(--z-tooltip)',   // 80
   progress: 'var(--z-progress)', // 100
 } as const;
 ```
 
-## Elevation Ladder (Stacked Floating UIs)
+## Surface (Tonal) Elevation
 
-Appearance rungs **E1–E4** bundle fill + border + shadow, decoupled from z-index.
-Defined in `app.css` (`--eN-bg/-border/-shadow`), consumed via the `data-elevation`
-attribute — an element carrying `data-elevation` must NOT also carry
-`bg-*`/`shadow-*`/`border-color` utilities (border WIDTH and radius stay on the
-component). Geometry (max-w/max-h/overflow/collision) comes from
-`floatingContentBase` in `$lib/styles/floating.ts` plus per-component classes.
+Depth cue for stacked surfaces (sidebar → menu → panel → dialog): three independent CSS
+channels layered on `[data-elevation="1..4"]`, decoupled from z-index (stacking order is
+the `zIndex` table above; this section is tone only). Geometry — max-w/max-h/overflow/
+collision — comes from `floatingContentBase` in `$lib/styles/floating.ts`.
 
-| Rung | Fill | Shadow | Used by |
-|------|------|--------|---------|
-| E1 raised | surface-1 | shadow-sm | cards, desktop rail (equivalent classes) |
-| E2 floating/docked | surface-2 | shadow-lg | menus, popovers, selects, mobile drawer, chatbot, selection bar |
-| E3 modal | surface-3 | shadow-modal | Dialog, Drawer primitive, CommandPalette, mobile-drawer user menu (over the E2 drawer) |
-| E4 float-over-float | surface-3 tinted toward muted (light 12%, dark 16% via color-mix) | shadow-xl | submenu over menu, Theme/Language panel over the drawer user menu, floats inside modals |
+### The model: relative, no floors
 
-Rules:
-- **A coverer sits ≥1 rung above what it covers** (kills the "dropdown recedes
-  into its dialog" inversion). Rung never implies z.
-- Border strengthens toward `--color-muted` per rung — the primary dark-mode
-  depth cue (fills converge to black, drop shadows die); E2–E4 add a 1px top
-  inset catch-light in dark mode.
-- Floating content opened inside a modal stamps `data-modal-float` (via the
-  `inModal` prop on Select/Popover): a `:has()` rule lifts its Bits portal
-  wrapper to `--z-modal-float` (65), above the modal's 60.
-- Tooltip is a special micro-tier (surface-3 + shadow-md, no data-elevation).
-- ConsentBanner is excluded (deliberate `surface-inverse` attention flip).
-- Dismissal order is owned by the layer-stack singleton
-  (`$lib/state/layer-stack.svelte.ts`): every dismissible layer registers on
-  open; hand-rolled Escape/outside-click handlers guard with `wasTop(id)` — the
-  top layer snapshotted at window-capture time, because Bits UI dismisses a
-  covering layer synchronously before bubble handlers run (`isTop` would lie
-  and double-close) — so one keypress peels exactly one layer. Never register
-  tooltips, toasts, the consent banner, or the desktop chatbot dock.
+The app background is level 0 (`--surface-0`, no attribute). Every surface's level is its
+**parent's level + 1** — resolved once at init via Svelte context, never a hardcoded rung.
+The engine lives in `$lib/styles/elevation.ts` (pure `.ts`, no runes, SSR-safe):
+
+```typescript
+export const ELEVATION_CEILING = 4;
+
+getParentLevel(): number                  // ambient level from context, or 0 — read-only
+resolveLevel(opts, parent?): number       // opts.level ?? parent + 1
+elevationAttr(level): string | undefined  // clamp to ceiling; undefined at level ≤ 0
+useSurface(opts): { depth, display, attrs }
+```
+
+`useSurface()` is the entry point: it resolves this surface's depth (`parent + 1`, or
+`opts.level` for a rare reset root), seeds context with the depth **unclamped** so a child
+computes an honest `+1` past the ceiling, and returns `attrs = { 'data-elevation':
+String(display) }` (`display` clamped to `ELEVATION_CEILING`, omitted at level 0).
+
+Two call sites:
+- **`<Surface>`** (`$lib/components/layout/Surface.svelte`, barrel-exported) — page/layout
+  code: `<Surface as="section">…</Surface>`.
+- **`useSurface()` directly** — primitives that stamp elevation onto a Bits `.Content`
+  they don't otherwise wrap, avoiding an extra DOM node.
+
+### Why context, not a DOM/CSS counter
+
+Bits UI portals floating content (menus, dialogs, tooltips) onto `<body>`, so a portalled
+surface's DOM parent is the page, not its trigger — a CSS/DOM counter would collapse every
+portal to level 0. Svelte context follows the **component** tree, not the DOM: the level
+resolved at the trigger — a real ancestor in the render tree — survives the portal,
+because Svelte resolves context by render-tree position, not lexical scope.
+
+### The three channels
+
+| Channel | Token | Role |
+|---------|-------|------|
+| **Fill** | `--eN-bg` | Tonal background. Monotonic — lightens toward pure white at E4 in light mode, darkens toward near-black in dark mode. |
+| **Rim** | `--eN-border` | Load-bearing separator — the one channel guaranteed to step any parent/child pair apart regardless of absolute depth. Clears ≥3:1 at every covered boundary in both modes (E1 is relaxed in light, where a cast shadow also separates); the only cue that survives `forced-colors` and near-zero dark-mode fill deltas. |
+| **Glow** | `--eN-shadow` | Decorative, brand-tinted bloom — not a plain grey drop-shadow. De-tuned resting hue, resting opacity ≤18%, firewalled below the `--glow-active` interaction band (≥20% primary) so a resting surface never reads as hovered. A static box-shadow, so it survives `prefers-reduced-motion` by construction. Blur capped ≤24px. |
+
+An element carrying `data-elevation` must not also carry `bg-*`/`shadow-*`/`border-color`
+utilities — border width and radius stay on the component. (The old grain/texture fill
+channel was retired; it's not a live channel.)
+
+### Past the ceiling
+
+`ELEVATION_CEILING = 4` — tone saturates at E4 (`display` clamps), but the seeded context
+keeps counting unclamped, so a surface nested past E4 still computes an honest `parent +
+1`. Once tone can no longer distinguish rungs, z-order, physical overlap, and the rim
+carry the separation.
+
+### Consumer patterns
+
+- **Providers seed a plane without displaying one.** `SidebarRail` calls `useSurface()`
+  for the `setContext` side-effect only (keeps its own `bg-surface-1` look, ignores
+  `attrs`) → seeds level 1 for its children. Dock panels seed their plane the same way.
+- **Recursive components never call `useSurface()`.** `explorer/TreeNode.svelte` uses
+  read-only `getParentLevel() + 1` so every node's menu resolves to the same `plane + 1`;
+  calling `useSurface()` there would compound elevation with recursion depth.
+- **Nested sub-menus** (`DockLeafMenu`, `UserMenu`) compute `parent + 1` for their
+  sub-content instead of a fixed rung — this fixed an old bug where a rail submenu jumped
+  E2→E4; it's now E2→E3.
+
+### Accessibility
+
+- `forced-colors: active` — the UA strips `background-color` and `box-shadow`, so fill and
+  glow vanish; every `[data-elevation]` gets a real border instead (1px, 2px for E3/E4).
+- `prefers-contrast: more` — flattens the rim to `--color-border` and collapses the glow to
+  its first shadow layer (the soft bloom otherwise lowers perceived edge contrast).
+- `prefers-reduced-motion` — kills interaction transitions; the resting glow is unaffected,
+  since it was never animated.
+- Elevation is never the sole carrier of meaning — dialogs still announce
+  `role`/`aria-modal` and trap focus, since rung order isn't recoverable once
+  `forced-colors` flattens every border to `CanvasText`.
+
+### Status
+
+Fully migrated: every production consumer resolves its rung relatively. `ApproveDialog`
+and `MetadataApprovalDialog` were the last hardcoded stragglers and are now migrated. Zero
+hardcoded `data-elevation` literals remain outside the showcase's own teaching demos
+(`ElevationSection`, `RungStack`, `ContrastReadout` at `/showcases/ui/layouts`, which
+hardcode rungs deliberately to teach the ladder). E2E-verified via the Chrome extension
+and `vr v` green.
+
+### Dismissal order (a separate system)
+
+Rung is tone, not stacking control. Dismissal order is owned by the layer-stack singleton
+(`$lib/state/layer-stack.svelte.ts`): every dismissible layer registers on open;
+hand-rolled Escape/outside-click handlers guard with `wasTop(id)` — the top layer
+snapshotted at window-capture time, because Bits UI dismisses a covering layer
+synchronously before bubble handlers run (`isTop` would lie and double-close) — so one
+keypress peels exactly one layer. Never register tooltips, toasts, the consent banner, or
+the desktop chatbot dock.
 
 ```typescript
 

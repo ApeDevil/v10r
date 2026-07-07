@@ -4,6 +4,7 @@ import { goto } from '$app/navigation';
 import { Kbd } from '$lib/components/primitives';
 import { localizeHref } from '$lib/i18n/runtime';
 import { layerStack } from '$lib/state/layer-stack.svelte';
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 import {
 	commandEmptyVariants,
@@ -40,6 +41,9 @@ let {
 	mode = 'filter',
 	loading = false,
 }: Props = $props();
+
+// Relative elevation — one rung above the surface this palette was opened from.
+const s = useSurface();
 
 const COMMAND_TYPES = new Set(['recent', 'panel', 'action']);
 
@@ -157,7 +161,7 @@ $effect(() => {
 <Dialog.Root bind:open>
 	<Dialog.Portal>
 		<Dialog.Overlay class={commandPaletteOverlayVariants()} />
-		<Dialog.Content data-elevation="3" class={commandPaletteContentVariants()}>
+		<Dialog.Content {...s.attrs} class={commandPaletteContentVariants()}>
 			<CommandPrimitive.Root
 				class="flex flex-col"
 				shouldFilter={false}

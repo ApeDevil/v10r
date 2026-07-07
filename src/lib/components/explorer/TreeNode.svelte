@@ -6,6 +6,7 @@ import {
 	contextMenuSeparatorVariants,
 } from '$lib/components/composites/context-menu';
 import { Badge } from '$lib/components/primitives';
+import { elevationAttr, getParentLevel } from '$lib/styles/elevation';
 import {
 	buildContextMenuItems,
 	type ContextMenuCallbacks,
@@ -25,6 +26,11 @@ interface Props {
 }
 
 let { node, treeState, depth, callbacks }: Props = $props();
+
+// Relative elevation for the context menu — one rung above the explorer plane. Read-only
+// (never useSurface): TreeNode recurses on tree DEPTH, which must not compound elevation, so
+// every node's menu resolves to the same plane + 1.
+const menuLevel = getParentLevel() + 1;
 
 let renameInput = $state<HTMLInputElement | null>(null);
 let renameValue = $state('');
@@ -292,7 +298,7 @@ const descendantCount = $derived(node.isFolder ? treeState.countDescendants(node
 
 	{#if menuItems.length > 0}
 		<ContextMenuPrimitive.Portal>
-			<ContextMenuPrimitive.Content data-elevation="2" class={contextMenuContentVariants()} collisionPadding={8}>
+			<ContextMenuPrimitive.Content data-elevation={elevationAttr(menuLevel)} class={contextMenuContentVariants()} collisionPadding={8}>
 				{#each menuItems as item}
 					{#if item.type === 'separator'}
 						<ContextMenuPrimitive.Separator class={contextMenuSeparatorVariants()} />

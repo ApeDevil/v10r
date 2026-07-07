@@ -241,8 +241,6 @@ export const zIndex = {
 	popover: 'var(--z-popover)',
 	dropdown: 'var(--z-dropdown)',
 	modal: 'var(--z-modal)',
-	/** Anchored floating content portalled while a modal is open (paired with data-modal-float). */
-	'modal-float': 'var(--z-modal-float)',
 	toast: 'var(--z-toast)',
 	tooltip: 'var(--z-tooltip)',
 	progress: 'var(--z-progress)',

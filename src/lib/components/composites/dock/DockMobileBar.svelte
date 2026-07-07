@@ -10,6 +10,7 @@
  */
 import { DropdownMenu } from 'bits-ui';
 import * as m from '$lib/paraglide/messages';
+import { useSurface } from '$lib/styles/elevation';
 import type { ActivityBarItem, PanelDefinition } from './dock.types';
 
 interface Props {
@@ -35,6 +36,9 @@ let {
 	onOpenPreferences,
 	onOpenSearch,
 }: Props = $props();
+
+// Relative elevation — one rung above the surface that owns the trigger.
+const s = useSurface();
 
 const activeType = $derived(visibleId ? (panels[visibleId]?.type ?? null) : null);
 
@@ -76,7 +80,7 @@ const MENU_ITEM_CLASS =
 			</DropdownMenu.Trigger>
 			<DropdownMenu.Portal>
 				<DropdownMenu.Content
-					data-elevation="2"
+					{...s.attrs}
 					class="z-dropdown min-w-[14rem] max-w-[calc(100vw-1rem)] max-h-[var(--bits-dropdown-menu-content-available-height,20rem)] overflow-y-auto border rounded-md p-2"
 					side="top"
 					align="end"

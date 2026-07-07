@@ -2,6 +2,7 @@
 import { Dialog as DialogPrimitive } from 'bits-ui';
 import type { Snippet } from 'svelte';
 import * as m from '$lib/paraglide/messages';
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 
 interface Props {
@@ -20,6 +21,10 @@ let {
 	class: className,
 }: Props = $props();
 
+// Relative elevation — one rung above the surface this drawer was opened from (its scrim
+// carries the separation).
+const s = useSurface();
+
 const sideClasses = {
 	left: 'inset-y-0 left-0 h-full w-3/4 max-w-sm data-[state=open]:slide-in-from-left data-[state=closed]:slide-out-to-left',
 	right:
@@ -35,7 +40,7 @@ const sideClasses = {
 			class="fixed inset-0 z-overlay bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out"
 		/>
 		<DialogPrimitive.Content
-			data-elevation="3"
+			{...s.attrs}
 			class={cn(
 				'fixed z-modal border',
 				'data-[state=open]:animate-in data-[state=closed]:animate-out',

@@ -41,12 +41,20 @@ src/lib/styles/tokens.ts ← References + non-colors (build-time)
 
 **Critical rule:** Never duplicate values between files.
 
-**Elevation rule:** floating surfaces declare depth with `data-elevation="1..4"`
-(a global `app.css` block supplies background, border-color, and box-shadow).
-An element carrying `data-elevation` must NOT also carry `bg-*`, `shadow-*`, or
-border-color utilities — border *width* and radius stay on the component.
-Z-index comes from `z-*` tokens and is never implied by the rung. Full ladder
-and stacking rules: `docs/blueprint/design/tokens.md`.
+**Elevation rule:** elevation is *relative and computed, never hand-authored*.
+The app background is level 0; every surface renders one rung above its parent
+(`parent + 1`), resolved through Svelte context so nesting auto-increments
+(background → sidebar → menu → panel). A component that renders a raised/floating
+surface calls `useSurface()` from `$lib/styles/elevation` and spreads `{...s.attrs}`
+onto the element (or wraps content in the `<Surface>` layout primitive) — that stamps
+the *computed* `data-elevation="1..4"` (clamped at 4). A global `app.css` block keyed
+on `[data-elevation]` then supplies the three channels: background fill (`--eN-bg`),
+rim border-color (`--eN-border`), and glow box-shadow (`--eN-shadow`). **Never hardcode
+a literal `data-elevation="N"` in a consumer** — a guard test enforces this; only the
+elevation showcase teaches literal rungs. An element carrying `data-elevation` must NOT
+also carry `bg-*`, `shadow-*`, or border-color utilities — border *width* and radius
+stay on the component. Z-index comes from `z-*` tokens and is never implied by the rung.
+Full engine, ladder, and stacking rules: `docs/blueprint/design/tokens.md`.
 
 ```typescript
 // tokens.ts - REFERENCES for runtime tokens (colors/shadows/z), VALUES for static ones

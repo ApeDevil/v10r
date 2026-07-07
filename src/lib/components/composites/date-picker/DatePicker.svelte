@@ -1,6 +1,7 @@
 <script lang="ts">
 import type { DateValue } from '@internationalized/date';
 import { DatePicker as DatePickerPrimitive } from 'bits-ui';
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 import {
 	datePickerCalendarVariants,
@@ -22,6 +23,9 @@ interface Props {
 let { value = $bindable(), placeholder, label, disabled = false, error = false, class: className }: Props = $props();
 
 const triggerId = $derived(label ? `dp-trigger-${label.replace(/\s+/g, '-').toLowerCase()}` : undefined);
+
+// Relative elevation — one rung above the surface that owns the trigger.
+const s = useSurface();
 
 // Format the selected date for display
 function formatDate(date: DateValue | undefined): string {
@@ -65,7 +69,7 @@ let displayValue = $derived(formatDate(value));
 
 		<DatePickerPrimitive.Portal>
 		<DatePickerPrimitive.Content
-			data-elevation="2"
+			{...s.attrs}
 			sideOffset={4}
 			collisionPadding={8}
 			class={datePickerContentVariants()}

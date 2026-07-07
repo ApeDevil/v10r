@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Dialog as DialogPrimitive } from 'bits-ui';
 import type { Snippet } from 'svelte';
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 
 interface Props {
@@ -12,6 +13,10 @@ interface Props {
 }
 
 let { open = $bindable(false), title, description, children, class: className }: Props = $props();
+
+// Relative elevation: one rung above the surface this dialog was opened from (its scrim
+// carries the separation from the page, so the resolved tone need not be the extreme).
+const s = useSurface();
 </script>
 
 <DialogPrimitive.Root bind:open>
@@ -20,7 +25,7 @@ let { open = $bindable(false), title, description, children, class: className }:
 			class="fixed inset-0 z-overlay bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out"
 		/>
 		<DialogPrimitive.Content
-			data-elevation="3"
+			{...s.attrs}
 			class={cn(
 				'fixed left-1/2 top-1/2 z-modal -translate-x-1/2 -translate-y-1/2',
 				'w-[calc(100vw-2rem)] max-w-md rounded-lg border p-6',

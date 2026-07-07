@@ -71,7 +71,7 @@ src/
     components/         Layered UI (see Component Layering)
     state/              App-wide Svelte 5 runes stores (*.svelte.ts)
     schemas/            Client-importable Valibot schemas
-    styles/             tokens.ts + random/ procedural style engine
+    styles/             tokens.ts + random/ style engine + floating.ts/elevation.ts (geometry/level)
     i18n/               Runtime locale wrapper
     paraglide/          GENERATED message functions — do not edit; gitignored
     nav/                Navigation structure
@@ -268,7 +268,8 @@ src/lib/components/
                    toast, confirm-dialog, dock, chatbot, page-header,
                    empty-state, altcha, …
 
-  layout/          Stack, Cluster, PageContainer
+  layout/          Stack, Cluster, PageContainer, Surface (tonal elevation — see
+                   blueprint/design/tokens.md)
 
   shell/           App chrome — AppShell, Sidebar, Nav, UserMenu,
                    ConsentBanner. Depends on composites/primitives/layout.

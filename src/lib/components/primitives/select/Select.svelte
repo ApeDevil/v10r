@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Select as SelectPrimitive } from 'bits-ui';
 import * as m from '$lib/paraglide/messages';
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 
 interface Option {
@@ -15,9 +16,6 @@ interface Props {
 	placeholder?: string;
 	disabled?: boolean;
 	error?: boolean;
-	/** Set when the select opens inside a modal: lifts it above the modal's z
-	 * (data-modal-float wrapper rule) and bumps appearance to E4. */
-	inModal?: boolean;
 	onchange?: (value: string) => void;
 	class?: string;
 }
@@ -28,12 +26,15 @@ let {
 	placeholder = m.primitives_select_placeholder(),
 	disabled = false,
 	error = false,
-	inModal = false,
 	onchange,
 	class: className,
 }: Props = $props();
 
 let selectedLabel = $derived(options.find((opt) => opt.value === value)?.label ?? '');
+
+// Relative elevation — one rung above the surface that owns the trigger (a select inside a
+// dialog resolves higher automatically).
+const s = useSurface();
 </script>
 
 <SelectPrimitive.Root type="single" bind:value {disabled} onValueChange={(v) => onchange?.(v)}>
@@ -56,8 +57,7 @@ let selectedLabel = $derived(options.find((opt) => opt.value === value)?.label ?
 
 	<SelectPrimitive.Portal>
 		<SelectPrimitive.Content
-			data-elevation={inModal ? '4' : '2'}
-			data-modal-float={inModal ? '' : undefined}
+			{...s.attrs}
 			class="z-dropdown max-h-[var(--bits-select-content-available-height,20rem)] w-[var(--bits-select-anchor-width)] overflow-y-auto rounded-md border"
 			sideOffset={4}
 			collisionPadding={8}

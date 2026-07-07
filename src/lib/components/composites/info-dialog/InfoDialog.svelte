@@ -5,6 +5,7 @@ import { Button } from '$lib/components/primitives';
 import { ScrollArea } from '$lib/components/primitives/scroll-area';
 import { Tabs } from '$lib/components/primitives/tabs';
 import * as m from '$lib/paraglide/messages';
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 import { renderMarkdown } from '$lib/utils/markdown';
 import CodeBlock from './CodeBlock.svelte';
@@ -46,6 +47,9 @@ let {
 	open = $bindable(false),
 	noTrigger = false,
 }: Props = $props();
+
+// Relative elevation — one rung above the surface this dialog was opened from.
+const s = useSurface();
 
 const docTabs = $derived.by(() => {
 	if (!doc) return [];
@@ -116,7 +120,7 @@ const useSectionsMode = $derived(!useDocMode && hasSections);
 			class="fixed inset-0 z-overlay bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out"
 		/>
 		<Dialog.Content
-			data-elevation="3"
+			{...s.attrs}
 			class={cn(
 				'fixed left-1/2 top-1/2 z-modal -translate-x-1/2 -translate-y-1/2',
 				'w-[calc(100vw-2rem)] max-w-3xl rounded-lg border',

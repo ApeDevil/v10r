@@ -2,6 +2,7 @@
 import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
 import { contextMenuContentVariants, contextMenuItemVariants } from '$lib/components/composites/context-menu';
 import * as m from '$lib/paraglide/messages';
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 import { getDeskSettings } from './desk-settings.svelte';
 import { collectLeaves, hasPanelType } from './dock.operations';
@@ -19,6 +20,9 @@ let { items, position = 'left', class: className }: Props = $props();
 
 const dock = getDockContext();
 const deskSettings = getDeskSettings();
+
+// Relative elevation — one rung above the surface that owns the trigger.
+const s = useSurface();
 
 const isHorizontal = $derived(position === 'top' || position === 'bottom');
 
@@ -92,7 +96,7 @@ function handleClick(item: ActivityBarItem) {
 	</ContextMenuPrimitive.Trigger>
 
 	<ContextMenuPrimitive.Portal>
-		<ContextMenuPrimitive.Content data-elevation="2" class={contextMenuContentVariants()} collisionPadding={8}>
+		<ContextMenuPrimitive.Content {...s.attrs} class={contextMenuContentVariants()} collisionPadding={8}>
 			<ContextMenuPrimitive.Group>
 				<ContextMenuPrimitive.GroupHeading class="px-2 py-1.5 text-xs font-medium text-muted">
 					{m.composites_dock_activity_bar_position()}

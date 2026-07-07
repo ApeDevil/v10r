@@ -353,7 +353,7 @@ Component gallery covering every UI primitive and composite.
 | `/decorative/backgrounds` | Background pattern components |
 | `/decorative/ornaments` | Decorative shape and divider elements |
 | `/typography` | Headings, body copy, lead text, prose |
-| `/layouts` | Stack, cluster, grid, sidebar, center layouts |
+| `/layouts` | Stack, cluster, grid, sidebar, center layouts; Surface (Tonal) Elevation demo — rim/glow/fill channels, relative `parent + 1` engine (see [design/tokens.md](./design/tokens.md#surface-tonal-elevation)) |
 | `/tokens` | Color swatches, spacing scale, shadow scale |
 | `/menus` | Dropdown, context, and menubar menus |
 | `/tables` | Data tables: sorting, selection, density |

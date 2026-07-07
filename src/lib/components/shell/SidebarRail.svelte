@@ -2,6 +2,7 @@
 import { MediaQuery } from 'svelte/reactivity';
 import { page } from '$app/state';
 import { getSidebar } from '$lib/state/sidebar.svelte';
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 import DiceRollButton from './DiceRollButton.svelte';
 import SidebarLogo from './SidebarLogo.svelte';
@@ -16,6 +17,11 @@ interface Props {
 }
 
 let { isAdmin = false, class: className }: Props = $props();
+
+// The rail is the sidebar plane (level 1). It keeps its own bg-surface-1 / edge-glow look,
+// but seeds the elevation context so surfaces opened from it climb relatively — UserMenu's
+// menu resolves to E2 and its submenu to E3 (no hardcoded rungs, never skips a level).
+useSurface();
 
 const sidebar = getSidebar();
 // Identity comes from reactive page data (root layout `session`), not the

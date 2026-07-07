@@ -10,6 +10,7 @@ import { page } from '$app/state';
 import { deLocalizeHref, localizeHref } from '$lib/i18n';
 import type { LabelFn, NavChild } from '$lib/nav';
 import { layerStack } from '$lib/state/layer-stack.svelte';
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 import NavLink from './NavLink.svelte';
 
@@ -21,6 +22,10 @@ interface Props {
 }
 
 let { items, label, forceExpanded, children }: Props = $props();
+
+// Relative elevation — one rung above the sidebar plane the flyout hangs off (use:portal moves
+// the DOM node to body, but the component tree stays, so context resolves correctly).
+const s = useSurface();
 
 let isOpen = $state(false);
 let triggerEl = $state<HTMLDivElement>();
@@ -221,7 +226,7 @@ function portal(node: HTMLElement) {
 	<div
 		bind:this={flyoutEl}
 		use:portal
-		data-elevation="2"
+		{...s.attrs}
 		class="flyout-panel fixed z-dropdown border rounded-md py-1"
 		style:top="{top}px"
 		style:left="{left}px"

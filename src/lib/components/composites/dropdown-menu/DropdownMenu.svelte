@@ -2,6 +2,7 @@
 import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
 import type { Snippet } from 'svelte';
 import { goto } from '$app/navigation';
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 import { dropdownMenuContentVariants, dropdownMenuItemVariants, dropdownMenuSeparatorVariants } from './dropdown-menu';
 
@@ -35,6 +36,9 @@ interface Props {
 }
 
 let { items, trigger, align = 'end' }: Props = $props();
+
+// Relative elevation — one rung above the surface that owns the trigger.
+const s = useSurface();
 </script>
 
 <DropdownMenuPrimitive.Root>
@@ -46,7 +50,7 @@ let { items, trigger, align = 'end' }: Props = $props();
 
 	<DropdownMenuPrimitive.Portal>
 		<DropdownMenuPrimitive.Content
-			data-elevation="2"
+			{...s.attrs}
 			class={dropdownMenuContentVariants()}
 			sideOffset={8}
 			collisionPadding={8}

@@ -1,6 +1,7 @@
 <script lang="ts">
 import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
 import type { Snippet } from 'svelte';
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 import {
 	contextMenuContentVariants,
@@ -21,6 +22,9 @@ interface Props {
 }
 
 let { items, trigger, align = 'start' }: Props = $props();
+
+// Relative elevation — one rung above the surface that owns the trigger.
+const s = useSurface();
 </script>
 
 <ContextMenuPrimitive.Root>
@@ -32,7 +36,7 @@ let { items, trigger, align = 'start' }: Props = $props();
 
 	<ContextMenuPrimitive.Portal>
 		<ContextMenuPrimitive.Content
-			data-elevation="2"
+			{...s.attrs}
 			class={contextMenuContentVariants()}
 			collisionPadding={8}
 		>

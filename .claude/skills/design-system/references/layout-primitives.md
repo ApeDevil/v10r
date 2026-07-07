@@ -283,14 +283,74 @@ Centering utility.
 </Center>
 ```
 
+## Surface
+
+Tonal-elevation plane. Renders an element one rung above its parent surface (app
+background = level 0), resolved via context so nesting auto-increments — background →
+sidebar → menu → panel each climb a step without naming a number.
+
+### Implementation
+
+A thin wrapper over the `useSurface()` engine hook (`$lib/styles/elevation`):
+
+```svelte
+<!-- src/lib/components/layout/Surface.svelte -->
+<script lang="ts">
+  import type { Snippet } from 'svelte';
+  import type { HTMLAttributes } from 'svelte/elements';
+  import { type SurfaceOptions, useSurface } from '$lib/styles/elevation';
+  import { cn } from '$lib/utils/cn';
+
+  interface Props extends HTMLAttributes<HTMLElement>, SurfaceOptions {
+    as?: string; // element tag, defaults to a div
+    children: Snippet;
+  }
+
+  let { level, as = 'div', class: className, children, ...rest }: Props = $props();
+
+  // level = parent + 1; pass `level` only to pin a reset root.
+  const s = useSurface({ level });
+</script>
+
+<svelte:element this={as} class={cn(className)} {...rest} {...s.attrs}>
+  {@render children()}
+</svelte:element>
+```
+
+`{...s.attrs}` stamps the *computed* `data-elevation="1..4"`; a global `app.css` block
+keyed on `[data-elevation]` supplies the fill/rim/glow for that rung.
+
+### Usage
+
+```svelte
+<script>
+  import { Surface } from '$lib/components/layout';
+</script>
+
+<!-- Auto-increments by nesting depth — no rung named -->
+<Surface as="aside" class="p-4 rounded-md">
+  Sidebar plane (E1)
+  <Surface class="p-3 rounded-md">Card raised above it (E2)</Surface>
+</Surface>
+
+<!-- Pin a reset root when a region must re-baseline -->
+<Surface level={1}>…</Surface>
+```
+
+> **Component vs hook.** `<Surface>` renders a real DOM node. A primitive that stamps
+> elevation onto a Bits `.Content` it does not own (Dialog, Popover, Select,
+> DropdownMenu, …) instead calls the `useSurface()` hook directly and spreads
+> `{...s.attrs}` — no extra wrapper node. Never hardcode a literal `data-elevation="N"`
+> (a guard test enforces this). Full engine + ladder: `docs/blueprint/design/tokens.md`.
+
 ## Index Export
 
 ```typescript
 // src/lib/components/layout/index.ts
-export { default as Stack } from './Stack.svelte';
 export { default as Cluster } from './Cluster.svelte';
-export { default as Grid } from './Grid.svelte';
-export { default as Center } from './Center.svelte';
+export { default as PageContainer } from './PageContainer.svelte';
+export { default as Stack } from './Stack.svelte';
+export { default as Surface } from './Surface.svelte';
 ```
 
 ## Composition Patterns

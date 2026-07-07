@@ -1,4 +1,5 @@
 <script lang="ts">
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 import {
 	selectionBarActionVariants,
@@ -16,11 +17,14 @@ interface Props {
 }
 
 let { count, actions, onClear, class: className }: Props = $props();
+
+// Relative elevation — the floating selection toolbar sits one rung above the page plane.
+const s = useSurface();
 </script>
 
 {#if count > 0}
 	<div
-		data-elevation="2"
+		{...s.attrs}
 		class={cn(selectionBarVariants(), className)}
 		role="toolbar"
 		aria-label="{count} item{count === 1 ? '' : 's'} selected"

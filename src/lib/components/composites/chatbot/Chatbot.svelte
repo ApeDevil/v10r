@@ -8,6 +8,7 @@ import Drawer from '$lib/components/primitives/drawer/Drawer.svelte';
 import { isSiteAwareRoute, resolveRouteLabel } from '$lib/search/route-id';
 import { chatbotSession } from '$lib/state/chatbot-session.svelte';
 import { layerStack } from '$lib/state/layer-stack.svelte';
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 import ChatInput from './ChatInput.svelte';
 import ChatMessage from './ChatMessage.svelte';
@@ -21,6 +22,9 @@ interface Conversation {
 // The live thread lives in the module singleton (survives minimize + cross-group
 // AppShell remount). This component is a pure projection of it.
 const session = chatbotSession;
+
+// Relative elevation — the docked assistant panel sits one rung above the page plane.
+const s = useSurface();
 
 let conversations: Conversation[] = $state([]);
 let conversationsError = $state(false);
@@ -167,7 +171,7 @@ function submitMessage() {
 	bind:this={panelEl}
 	role="complementary"
 	aria-label="Vely assistant"
-	data-elevation="2"
+	{...s.attrs}
 	class={cn(
 		'fixed z-panel text-fg',
 		// mobile: bottom sheet

@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Menubar } from 'bits-ui';
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 import {
 	menuBarCheckboxItemVariants,
@@ -19,6 +20,9 @@ interface Props {
 }
 
 let { menus, class: className }: Props = $props();
+
+// Relative elevation — one rung above the surface that owns the menu bar.
+const s = useSurface();
 </script>
 
 <Menubar.Root class={cn(menuBarRootVariants(), className)}>
@@ -29,7 +33,7 @@ let { menus, class: className }: Props = $props();
 			</Menubar.Trigger>
 
 			<Menubar.Portal>
-				<Menubar.Content data-elevation="2" class={menuBarContentVariants()} sideOffset={8} collisionPadding={8} align="start">
+				<Menubar.Content {...s.attrs} class={menuBarContentVariants()} sideOffset={8} collisionPadding={8} align="start">
 					{#each menu.items as item}
 						{#if item.type === 'separator'}
 							<Menubar.Separator class={menuBarSeparatorVariants()} />

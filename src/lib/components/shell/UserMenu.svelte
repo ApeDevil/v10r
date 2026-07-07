@@ -21,6 +21,7 @@ import * as m from '$lib/paraglide/messages';
 import { signOutAndFlush } from '$lib/pwa/sign-out';
 import { layerStack } from '$lib/state/layer-stack.svelte';
 import { getTheme } from '$lib/state/theme.svelte';
+import { elevationAttr, getParentLevel } from '$lib/styles/elevation';
 import { floatingContentBase } from '$lib/styles/floating';
 import { cn } from '$lib/utils/cn';
 
@@ -40,6 +41,13 @@ interface Props {
 let { user, variant, forceExpanded = false, class: className }: Props = $props();
 
 const theme = getTheme();
+
+// Relative elevation: the menu sits one rung above its mounting plane, the stacked panel one
+// above the menu — resolved from context, never hardcoded. Rail (sidebar E1) → menu E2 → panel
+// E3; the mobile drawer plane → menu → panel. This also fixes the old rail submenu level-skip
+// (menu E2 jumped straight to submenu E4; now it is a clean E2 → E3).
+const menuLevel = getParentLevel() + 1;
+const panelLevel = menuLevel + 1;
 
 let menuOpen = $state(false);
 let signOutConfirmOpen = $state(false);
@@ -118,7 +126,7 @@ const destructiveItemClass = `${itemBase} text-error data-[highlighted]:bg-error
  * fixed CSS (the Portal target is body, so `fixed` is viewport-true). Menu and panel
  * share one surface geometry; the panel staggers 8px right / 12px up so the covered
  * menu reads as a card edge underneath. Appearance strata follow the elevation ladder:
- * drawer E2 → menu E3 → panel E4 (a coverer sits ≥1 rung above what it covers).
+ * drawer E1 → menu E2 → panel E3 (a coverer sits one rung above what it covers).
  *
  * The 6rem bottom offset MUST clear the drawer's footer trigger row: the trigger
  * opens on pointerdown (mouse), and a menu rendered under the still-pressed pointer
@@ -219,7 +227,7 @@ const subTriggerHoverGuard = variant === 'drawer' ? (e: PointerEvent) => e.preve
 					<!-- Stacked panel: Escape peels only this layer ("close" stops the
 					     defer chain), back row does the same for touch. -->
 					<DropdownMenu.SubContentStatic
-						data-elevation="4"
+						data-elevation={elevationAttr(panelLevel)}
 						escapeKeydownBehavior="close"
 						class={drawerSurfaceClass}
 						style={drawerPanelStyle}
@@ -237,7 +245,7 @@ const subTriggerHoverGuard = variant === 'drawer' ? (e: PointerEvent) => e.preve
 					</DropdownMenu.SubContentStatic>
 				{:else}
 					<DropdownMenu.SubContent
-						data-elevation="4"
+						data-elevation={elevationAttr(panelLevel)}
 						class={cn(
 							'z-dropdown min-w-[10rem] max-w-[calc(100vw-1rem)] border rounded-md p-2',
 							'animate-in slide-in-from-left-2 motion-reduce:animate-none'
@@ -268,7 +276,7 @@ const subTriggerHoverGuard = variant === 'drawer' ? (e: PointerEvent) => e.preve
 
 				{#if variant === 'drawer'}
 					<DropdownMenu.SubContentStatic
-						data-elevation="4"
+						data-elevation={elevationAttr(panelLevel)}
 						escapeKeydownBehavior="close"
 						class={drawerSurfaceClass}
 						style={drawerPanelStyle}
@@ -286,7 +294,7 @@ const subTriggerHoverGuard = variant === 'drawer' ? (e: PointerEvent) => e.preve
 					</DropdownMenu.SubContentStatic>
 				{:else}
 					<DropdownMenu.SubContent
-						data-elevation="4"
+						data-elevation={elevationAttr(panelLevel)}
 						class={cn(
 							'z-dropdown min-w-[10rem] max-w-[calc(100vw-1rem)] border rounded-md p-2',
 							'animate-in slide-in-from-left-2 motion-reduce:animate-none'
@@ -341,12 +349,16 @@ const subTriggerHoverGuard = variant === 'drawer' ? (e: PointerEvent) => e.preve
 
 			<DropdownMenu.Portal>
 				{#if variant === 'drawer'}
-					<DropdownMenu.ContentStatic data-elevation="3" class={drawerSurfaceClass} style={drawerMenuStyle}>
+					<DropdownMenu.ContentStatic
+					data-elevation={elevationAttr(menuLevel)}
+					class={drawerSurfaceClass}
+					style={drawerMenuStyle}
+				>
 						{@render menuItems()}
 					</DropdownMenu.ContentStatic>
 				{:else}
 					<DropdownMenu.Content
-						data-elevation="2"
+						data-elevation={elevationAttr(menuLevel)}
 						class={cn(
 							'z-dropdown min-w-[12rem] max-w-[min(18rem,calc(100vw-1rem))] border rounded-md p-2',
 							'max-h-[var(--bits-dropdown-menu-content-available-height,80vh)] overflow-y-auto',

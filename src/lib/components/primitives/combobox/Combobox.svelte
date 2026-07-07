@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Combobox as ComboboxPrimitive } from 'bits-ui';
 import * as m from '$lib/paraglide/messages';
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 
 interface Option {
@@ -31,6 +32,9 @@ let inputValue = $state('');
 let touchedSinceOpen = $state(false);
 
 let selectedLabel = $derived(options.find((opt) => opt.value === selected)?.label ?? '');
+
+// Relative elevation — one rung above the surface that owns the trigger.
+const s = useSurface();
 
 function handleClear() {
 	selected = undefined;
@@ -76,7 +80,7 @@ function handleClear() {
 
 	<ComboboxPrimitive.Portal>
 		<ComboboxPrimitive.Content
-			data-elevation="2"
+			{...s.attrs}
 			class="z-dropdown max-h-[var(--bits-combobox-content-available-height,20rem)] w-[var(--bits-combobox-anchor-width)] overflow-hidden rounded-md border"
 			sideOffset={4}
 			collisionPadding={8}

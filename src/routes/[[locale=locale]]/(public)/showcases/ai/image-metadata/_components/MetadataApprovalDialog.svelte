@@ -10,6 +10,7 @@
  */
 import { Dialog } from 'bits-ui';
 import { Button } from '$lib/components/primitives';
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 
 interface DiffRow {
@@ -29,6 +30,9 @@ interface Props {
 
 let { open = $bindable(), rows, includeLocation, gps, onconfirm, oncancel }: Props = $props();
 
+// Relative elevation — one rung above the plane that owns the trigger (page → E1; the scrim carries separation).
+const s = useSurface();
+
 // TODO(i18n) — placeholder for an empty cell.
 const EMPTY = '—';
 </script>
@@ -39,7 +43,7 @@ const EMPTY = '—';
 			class="fixed inset-0 z-overlay bg-black/50 motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out"
 		/>
 		<Dialog.Content
-			data-elevation="3"
+			{...s.attrs}
 			class={cn(
 				'fixed left-1/2 top-1/2 z-modal -translate-x-1/2 -translate-y-1/2',
 				'w-[calc(100vw-2rem)] max-w-xl rounded-lg border p-6',

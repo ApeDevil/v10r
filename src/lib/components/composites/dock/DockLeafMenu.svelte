@@ -6,6 +6,7 @@ import {
 	dropdownMenuSeparatorVariants,
 } from '$lib/components/composites/dropdown-menu/dropdown-menu';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
+import { elevationAttr, useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 
 interface Props {
@@ -13,6 +14,10 @@ interface Props {
 }
 
 let { menus }: Props = $props();
+
+// Relative elevation — the menu sits one rung above its trigger's plane; the sub-menu is one
+// rung above the menu (never a skip).
+const s = useSurface();
 </script>
 
 <DropdownMenuPrimitive.Root>
@@ -22,7 +27,7 @@ let { menus }: Props = $props();
 
 	<DropdownMenuPrimitive.Portal>
 		<DropdownMenuPrimitive.Content
-			data-elevation="2"
+			{...s.attrs}
 			class={dropdownMenuContentVariants()}
 			sideOffset={4}
 			collisionPadding={8}
@@ -36,7 +41,7 @@ let { menus }: Props = $props();
 					</DropdownMenuPrimitive.SubTrigger>
 
 					<DropdownMenuPrimitive.SubContent
-						data-elevation="4"
+						data-elevation={elevationAttr(s.depth + 1)}
 						class={dropdownMenuContentVariants()}
 						sideOffset={2}
 						collisionPadding={8}

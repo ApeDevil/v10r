@@ -84,12 +84,12 @@
 	--z-popover: 50;
 	--z-dropdown: var(--z-popover); /* alias — one ladder rung, two historical names */
 	--z-modal: 60;
-	--z-modal-float: 65; /* anchored floating content portalled while a modal is open */
 	--z-toast: 70;
 	--z-tooltip: 80;
 	--z-progress: 100;
 
 	/* Elevation surfaces (Light mode: higher = lighter → white) */
+	--surface-0: var(--color-bg); /* Sunken - the app background plane (E0) */
 	--surface-1: oklch(0.9 0.01 240); /* Raised - cards, panels */
 	--surface-2: oklch(0.94 0.008 240); /* Overlay - dropdowns, popovers */
 	--surface-3: oklch(1 0 0); /* Modal - highest, pure white */
@@ -100,35 +100,64 @@
 	--muted-inverse: oklch(0.78 0.015 240); /* = dark --color-muted */
 	--border-inverse: oklch(0.32 0.015 250); /* = dark --color-border */
 
-	/* ── Elevation appearance rungs (fill + edge + shadow bundles) ──
-	   E1 raised chrome (cards, rail) · E2 floating/docked (menus, popovers, drawer, panels)
-	   E3 true modals (dialog, palette) · E4 floating-over-floating (submenu over menu,
-	   menu over drawer, select inside dialog).
-	   Derived from --surface-N / --color-border / --color-muted, so the palette blocks
-	   need no edits. Border strengthens toward muted with each rung — the primary depth
-	   cue in dark mode, where fills converge and shadows die.
-	   Consumed via [data-elevation] below; an element carrying data-elevation must not
-	   also carry bg-, shadow-, or border-color utilities. Rung ≠ z-index: a coverer must
-	   simply sit ≥1 rung above what it covers. */
+	/* ── Elevation appearance: three independent channels (Surface Tonal Elevation) ──
+	   Rung semantics: E1 raised chrome (cards, rail) · E2 floating/docked (menus, popovers,
+	   drawer, panels) · E3 true modals (dialog, palette) · E4 floating-over-floating (submenu
+	   over menu, select inside dialog). E0 = the page plane (--surface-0). Levels are RESOLVED
+	   relatively at runtime ($lib/styles/elevation.ts — each surface = parent + 1) and stamped as
+	   a clamped data-elevation; the tokens below are the appearance for each resolved rung.
+
+	   (1) FILL (--eN-bg) — climbs monotonically to the tonal ceiling at E4 (pure white light /
+	       pure black dark). The rim keeps the steps countable even where adjacent fills sit close.
+	   (2) RIM (--eN-border) — the load-bearing separator. A real border stepping toward
+	       --color-muted as the rung rises; because muted is DARK in light mode and LIGHT in dark
+	       mode, one formula raises contrast against the fill in BOTH modes. Clears ≥3:1 at every
+	       covered boundary (WCAG 1.4.11, E1 relaxed in light where a cast shadow also separates)
+	       and survives forced-colors (real border, not a shadow).
+	   (3) GLOW (--eN-shadow) — decorative brand-tinted bloom that grows with the rung: a de-tuned
+	       primary hue (80% primary / 20% muted) held in a low-opacity resting band (≤18%) so it
+	       can never be mistaken for the hover/focus/active glow (--glow-active). Light carries
+	       depth with a primary-tinted DROP; dark with an emanating offset-0 bloom. Blur ≤24px so
+	       it never clips in a padded box.
+
+	   Consumed via [data-elevation] below; an element carrying data-elevation must not also carry
+	   bg-, shadow-, or border-color utilities. Rung ≠ z-index: a coverer must sit ≥1 rung above
+	   what it covers, and never skip a rung. */
+	--glow-rest-hue: color-mix(in oklab, var(--color-primary) 80%, var(--color-muted));
+
 	--e1-bg: var(--surface-1);
-	--e1-border: var(--color-border);
-	--e1-shadow: var(--shadow-sm);
+	--e1-border: color-mix(in srgb, var(--color-border) 40%, var(--color-muted) 60%);
+	--e1-shadow:
+		0 1px 3px color-mix(in oklab, var(--glow-rest-hue) 10%, transparent),
+		0 0 10px 0 color-mix(in oklab, var(--glow-rest-hue) 5%, transparent);
 
 	--e2-bg: var(--surface-2);
-	--e2-border: color-mix(in srgb, var(--color-border) 82%, var(--color-muted) 18%);
-	--e2-shadow: var(--shadow-lg);
+	--e2-border: color-mix(in srgb, var(--color-border) 22%, var(--color-muted) 78%);
+	--e2-shadow:
+		0 3px 8px -1px color-mix(in oklab, var(--glow-rest-hue) 12%, transparent),
+		0 0 15px 1px color-mix(in oklab, var(--glow-rest-hue) 7%, transparent);
 
-	--e3-bg: var(--surface-3);
-	--e3-border: color-mix(in srgb, var(--color-border) 68%, var(--color-muted) 32%);
-	--e3-shadow: var(--shadow-modal);
+	/* E3 sits one interpolated step below the ceiling so E4 can own the pure extreme. */
+	--e3-bg: color-mix(in srgb, var(--surface-2) 35%, var(--surface-3) 65%);
+	--e3-border: color-mix(in srgb, var(--color-border) 12%, var(--color-muted) 88%);
+	--e3-shadow:
+		0 6px 14px -3px color-mix(in oklab, var(--glow-rest-hue) 15%, transparent),
+		0 0 20px 2px color-mix(in oklab, var(--glow-rest-hue) 9%, transparent);
 
-	/* E4: at the white ceiling, so tint toward muted instead (M3-style: light-mode
-	   containers darken as they rise). Direct E4-over-E3 overlap (drawer panel over
-	   user menu, select inside dialog) needs fill contrast — edge + cast shadow
-	   alone were too weak when both surfaces were pure white. */
-	--e4-bg: color-mix(in srgb, var(--surface-3) 88%, var(--color-muted) 12%);
-	--e4-border: color-mix(in srgb, var(--color-border) 55%, var(--color-muted) 45%);
-	--e4-shadow: var(--shadow-xl);
+	/* E4 is the ceiling: the highest rung is the most extreme tone (pure white / pure black).
+	   Rim reaches full muted; the bloom is widest + strongest. */
+	--e4-bg: var(--surface-3);
+	--e4-border: var(--color-muted);
+	--e4-shadow:
+		0 10px 20px -5px color-mix(in oklab, var(--glow-rest-hue) 18%, transparent),
+		0 0 24px 3px color-mix(in oklab, var(--glow-rest-hue) 11%, transparent);
+
+	/* Interaction glow — full-saturation primary in a distinctly higher opacity band (≥20%),
+	   animated by the consumer. The resting bloom above never reaches this band, so an elevated
+	   surface at rest never reads as hovered / focused / active. */
+	--glow-active:
+		0 0 20px color-mix(in oklab, var(--color-primary) 30%, transparent),
+		0 0 8px color-mix(in oklab, var(--color-primary) 20%, transparent);
 
 	/* Animation */
 	--duration-instant: 0ms;
@@ -282,16 +311,26 @@
 	--muted-inverse: oklch(0.45 0.02 260); /* = light --color-muted */
 	--border-inverse: oklch(0.85 0.01 240); /* light border, nudged off pure-white so dividers show */
 
-	/* Elevation rungs, dark: fills converge toward black and drop shadows are near-invisible,
-	   so depth is carried by the border ladder (inherited formulas above), a 1px top inset
-	   catch-light, and — for E3 — a heavier, softer cast. Full box-shadow stacks restated
-	   because box-shadow does not compose. */
-	--e2-shadow: var(--shadow-lg), inset 0 1px 0 0 color-mix(in srgb, var(--color-muted) 8%, transparent);
+	/* Elevation rungs, dark: fills converge toward black, so the RIM (border ladder, inherited
+	   formulas above) is the load-bearing separator. The glow is the emanating brand bloom
+	   (--glow-rest-hue, growing per rung) — bright primary reads on near-black, so this is where
+	   the "radiant" look lives. Each rung also keeps a brightening 1px inset catch-light for
+	   top-edge definition. No outer black cast (the colored bloom now does the "floats over a
+	   scrim" job). Restated in full because box-shadow does not compose. */
+	--e1-shadow:
+		inset 0 1px 0 0 color-mix(in srgb, var(--color-muted) 6%, transparent),
+		0 0 10px 0 color-mix(in oklab, var(--glow-rest-hue) 8%, transparent);
+	--e2-shadow:
+		inset 0 1px 0 0 color-mix(in srgb, var(--color-muted) 10%, transparent),
+		0 0 15px 1px color-mix(in oklab, var(--glow-rest-hue) 11%, transparent);
 	--e3-shadow:
-		0 16px 40px -8px rgb(0 0 0 / 0.6), inset 0 1px 0 0 color-mix(in srgb, var(--color-muted) 12%, transparent);
-	/* E4 lifts its fill toward muted — you cannot go darker than the black modal beneath it. */
-	--e4-bg: color-mix(in srgb, var(--surface-3) 84%, var(--color-muted) 16%);
-	--e4-shadow: var(--shadow-xl), inset 0 1px 0 0 color-mix(in srgb, var(--color-muted) 14%, transparent);
+		inset 0 1px 0 0 color-mix(in srgb, var(--color-muted) 14%, transparent),
+		0 0 20px 2px color-mix(in oklab, var(--glow-rest-hue) 14%, transparent);
+	/* E4 = pure black (inherits --e4-bg: var(--surface-3)); darkest rung, told apart by the
+	   inset catch-light + the strongest bloom, not by tone. */
+	--e4-shadow:
+		inset 0 1px 0 0 color-mix(in srgb, var(--color-muted) 18%, transparent),
+		0 0 24px 3px color-mix(in oklab, var(--glow-rest-hue) 17%, transparent);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -814,6 +853,51 @@
 		--color-muted: oklch(0.8 0 0);
 		--color-border: oklch(1 0 0);
 	}
+	/* Flatten the rim ladder to the max-contrast border in both modes. The per-rung
+	   mix-toward-muted would otherwise INVERT here (this block sets muted brighter than
+	   border), making E1 the strongest edge — backwards. Under high contrast every rung
+	   just gets the same hard edge; z-order is carried structurally, not by tone. */
+	:root,
+	.dark {
+		--e1-border: var(--color-border);
+		--e2-border: var(--color-border);
+		--e3-border: var(--color-border);
+		--e4-border: var(--color-border);
+	}
+	/* Drop the colored offset-0 bloom (the 2nd box-shadow layer) — a soft halo lowers perceived
+	   edge contrast. Keep only the first layer: the directional drop (light) / inset catch-light
+	   (dark). The flattened rim above carries separation. */
+	:root {
+		--e1-shadow: 0 1px 3px color-mix(in oklab, var(--glow-rest-hue) 10%, transparent);
+		--e2-shadow: 0 3px 8px -1px color-mix(in oklab, var(--glow-rest-hue) 12%, transparent);
+		--e3-shadow: 0 6px 14px -3px color-mix(in oklab, var(--glow-rest-hue) 15%, transparent);
+		--e4-shadow: 0 10px 20px -5px color-mix(in oklab, var(--glow-rest-hue) 18%, transparent);
+	}
+	.dark {
+		--e1-shadow: inset 0 1px 0 0 color-mix(in srgb, var(--color-muted) 6%, transparent);
+		--e2-shadow: inset 0 1px 0 0 color-mix(in srgb, var(--color-muted) 10%, transparent);
+		--e3-shadow: inset 0 1px 0 0 color-mix(in srgb, var(--color-muted) 14%, transparent);
+		--e4-shadow: inset 0 1px 0 0 color-mix(in srgb, var(--color-muted) 18%, transparent);
+	}
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FORCED COLORS — Windows High Contrast (forced-colors: active)
+   The UA strips background-color AND box-shadow, so the tonal fill and the brand glow
+   vanish at once — only a real border survives (forced to CanvasText).
+   Give every elevated surface a real 1px border so it still reads as a bounded box, and a
+   heavier edge on modals. Rung ORDER is not recoverable here (all borders become
+   CanvasText) — which is why elevation is never the sole carrier of meaning: dialogs also
+   carry role/aria-modal, a focus trap, and DOM order.
+   ═══════════════════════════════════════════════════════════════ */
+@media (forced-colors: active) {
+	[data-elevation] {
+		border: 1px solid;
+	}
+	[data-elevation="3"],
+	[data-elevation="4"] {
+		border-width: 2px;
+	}
 }
 
 /* Base reset */
@@ -890,14 +974,6 @@ body {
 /* Bits UI floating content (popovers, dropdowns, tooltips, etc.) must sit above the sidebar */
 [data-bits-floating-content-wrapper] {
 	z-index: var(--z-popover) !important;
-}
-
-/* Floating content opened while a modal is up must beat the modal (60): Bits caps the
-   wrapper at z-popover (50) above, so the WRAPPER gets lifted, not the content element.
-   Components stamp data-modal-float (via their `inModal` prop); descendant :has() keeps
-   this resilient to Bits inserting intermediate nodes. */
-[data-bits-floating-content-wrapper]:has([data-modal-float]) {
-	z-index: var(--z-modal-float) !important;
 }
 
 /* ── Elevation appearance (single source — see the --eN bundle definitions in :root) ──

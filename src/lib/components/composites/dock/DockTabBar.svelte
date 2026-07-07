@@ -8,6 +8,7 @@ import {
 import { InfoDialog } from '$lib/components/composites/info-dialog';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import { DESK_PANEL_HELP } from '$lib/config/desk-help';
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 import DockLeafMenu from './DockLeafMenu.svelte';
 import { getDeskSettings } from './desk-settings.svelte';
@@ -25,6 +26,9 @@ let { leaf, menus = [], panelType = null, class: className }: Props = $props();
 
 const dock = getDockContext();
 const deskSettings = getDeskSettings();
+
+// Relative elevation — one rung above the surface that owns the trigger.
+const s = useSurface();
 
 let helpOpen = $state(false);
 
@@ -238,7 +242,7 @@ function removeGhost() {
 				</ContextMenuPrimitive.Trigger>
 
 				<ContextMenuPrimitive.Portal>
-					<ContextMenuPrimitive.Content data-elevation="2" class={contextMenuContentVariants()} collisionPadding={8}>
+					<ContextMenuPrimitive.Content {...s.attrs} class={contextMenuContentVariants()} collisionPadding={8}>
 						<ContextMenuPrimitive.Item
 							class={contextMenuItemVariants()}
 							onclick={() => dock.closePanel(panelId)}

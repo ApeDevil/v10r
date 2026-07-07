@@ -3,6 +3,7 @@ import { afterNavigate } from '$app/navigation';
 import { page } from '$app/state';
 import { layerStack } from '$lib/state/layer-stack.svelte';
 import { getSidebar } from '$lib/state/sidebar.svelte';
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 import { trapFocus } from '$lib/utils/focus-trap';
 import DiceRollButton from './DiceRollButton.svelte';
@@ -18,6 +19,10 @@ interface Props {
 }
 
 let { isAdmin = false, class: className }: Props = $props();
+
+// The mobile drawer is the sidebar plane on its own scrim (level 1, like the rail). Seeds the
+// elevation context so its UserMenu climbs relatively (menu E2 → panel E3).
+const s = useSurface();
 
 const sidebar = getSidebar();
 // Identity from reactive page data, not the frozen session-state context — see
@@ -82,7 +87,7 @@ function handleOverlayClick() {
 	<!-- Drawer -->
 	<aside
 		bind:this={drawerRef}
-		data-elevation="2"
+		{...s.attrs}
 		class={cn('sidebar-drawer fixed top-0 right-0 border-l z-drawer flex flex-col motion-reduce:animate-none', className)}
 		style:width="var(--sidebar-mobile-width)"
 		style:height="100dvh"

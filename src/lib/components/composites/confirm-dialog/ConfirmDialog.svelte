@@ -3,6 +3,7 @@ import { Dialog } from 'bits-ui';
 import { Button } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
 import { layerStack } from '$lib/state/layer-stack.svelte';
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 
 interface Props {
@@ -27,6 +28,10 @@ let {
 	oncancel,
 }: Props = $props();
 
+// Relative elevation — one rung above the surface this dialog was opened from (its scrim
+// carries the separation).
+const s = useSurface();
+
 // Bits Dialog handles its own Escape/overlay dismissal; registration is for
 // hand-rolled layers underneath (the mobile drawer) to know they're not top.
 $effect(() => {
@@ -43,7 +48,7 @@ $effect(() => {
 			class="fixed inset-0 z-overlay bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out"
 		/>
 		<Dialog.Content
-			data-elevation="3"
+			{...s.attrs}
 			class={cn(
 				'fixed left-1/2 top-1/2 z-modal -translate-x-1/2 -translate-y-1/2',
 				'w-[calc(100vw-2rem)] max-w-md rounded-lg border p-6',

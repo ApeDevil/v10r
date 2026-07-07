@@ -3,7 +3,9 @@ import { cva, type VariantProps } from 'class-variance-authority';
 export const switchRootVariants = cva(
 	[
 		'inline-flex shrink-0 cursor-pointer items-center rounded-full border-0',
-		'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+		// Real outline (not a box-shadow ring): survives forced-colors / Windows High
+		// Contrast, where ring-* box-shadows are stripped. Matches the app's focus convention.
+		'focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2',
 		'disabled:cursor-not-allowed disabled:opacity-50',
 		'data-[state=checked]:bg-primary',
 	],

@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Popover as PopoverPrimitive } from 'bits-ui';
 import type { Snippet } from 'svelte';
+import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 
 interface Props {
@@ -9,9 +10,6 @@ interface Props {
 	open?: boolean;
 	side?: 'top' | 'right' | 'bottom' | 'left';
 	align?: 'start' | 'center' | 'end';
-	/** Set when the popover opens inside a modal: lifts it above the modal's z
-	 * (data-modal-float wrapper rule) and bumps appearance to E4. */
-	inModal?: boolean;
 	class?: string;
 }
 
@@ -21,9 +19,11 @@ let {
 	open = $bindable(false),
 	side = 'bottom',
 	align = 'center',
-	inModal = false,
 	class: className,
 }: Props = $props();
+
+// Relative elevation — one rung above the surface that owns the trigger.
+const s = useSurface();
 </script>
 
 <PopoverPrimitive.Root bind:open>
@@ -37,8 +37,7 @@ let {
 			{align}
 			sideOffset={4}
 			collisionPadding={8}
-			data-elevation={inModal ? '4' : '2'}
-			data-modal-float={inModal ? '' : undefined}
+			{...s.attrs}
 			class={cn(
 				'z-popover w-72 max-w-[calc(100vw-1rem)] max-h-[var(--bits-popover-content-available-height,80vh)] overflow-y-auto rounded-md border p-4 text-fg outline-none',
 				'data-[state=open]:animate-in data-[state=closed]:animate-out',

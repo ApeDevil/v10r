@@ -363,7 +363,7 @@ Resist adding colors. Every new color needs justification. The shipped system:
 | **Secondary** | secondary, on-secondary | Supporting surfaces |
 | **Accent** | accent (+ hover, container), on-accent | Analogous highlight |
 | **Feedback** | success, warning, error, info (each with light variants) | Status |
-| **Surfaces** | surface-1/2/3 | Elevation (raised → overlay → modal) |
+| **Surfaces** | surface-0/1/2/3 | Elevation — level 0 is the app background; 1-4 are resolved relatively (`parent + 1`), not fixed floors. See [tokens.md](./tokens.md#surface-tonal-elevation) |
 | **Charts** | chart-1…chart-8 | Data series |
 
 Each color family carries on-* foreground pairs for contrast. Dark mode swaps the lot via `.dark`.
