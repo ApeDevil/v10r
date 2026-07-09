@@ -19,9 +19,9 @@ import { localizeHref } from '$lib/i18n';
 	{#snippet actions()}
 		{#if page.status >= 500}
 			<Button variant="default" onclick={() => location.reload()}>Try again</Button>
-			<Button variant="outline" onclick={() => goto(localizeHref('/app/dashboard'))}>Back to dashboard</Button>
+			<Button variant="outline" onclick={() => goto(localizeHref('/account/dashboard'))}>Back to dashboard</Button>
 		{:else}
-			<Button variant="default" onclick={() => goto(localizeHref('/app/dashboard'))}>Back to dashboard</Button>
+			<Button variant="default" onclick={() => goto(localizeHref('/account/dashboard'))}>Back to dashboard</Button>
 			<Button variant="outline" onclick={() => goto(localizeHref('/'))}>Go home</Button>
 		{/if}
 	{/snippet}

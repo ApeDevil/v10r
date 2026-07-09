@@ -3,7 +3,7 @@
  *
  * Turns a client-sent `page.route.id` into the server's OWN trusted description of the page,
  * keyed by catalog membership. The client string is a lookup key, discarded on miss and never
- * echoed: only `buildSearchIndex` records (public-only — the pages adapter excludes `/app` and
+ * echoed: only `buildSearchIndex` records (public-only — the pages adapter excludes `/account` and
  * `/admin`) can produce a `PageContext`. This is the positive allowlist that fails safe —
  * admin/app/auth routes simply aren't in the index. See `docs/blueprint/ai/site-awareness.md`.
  */

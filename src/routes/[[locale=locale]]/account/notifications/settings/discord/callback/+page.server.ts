@@ -14,7 +14,7 @@ export const load: PageServerLoad = async ({ url, locals, cookies }) => {
 	const errorParam = url.searchParams.get('error');
 
 	if (errorParam) {
-		redirect(303, localizeHref('/app/notifications/settings?error=discord_denied'));
+		redirect(303, localizeHref('/account/notifications/settings?error=discord_denied'));
 	}
 
 	if (!code || !state) {
@@ -100,5 +100,5 @@ export const load: PageServerLoad = async ({ url, locals, cookies }) => {
 			},
 		});
 
-	redirect(303, localizeHref('/app/notifications/settings?success=discord_connected'));
+	redirect(303, localizeHref('/account/notifications/settings?success=discord_connected'));
 };

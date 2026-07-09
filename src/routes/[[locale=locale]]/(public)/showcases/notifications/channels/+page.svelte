@@ -62,7 +62,7 @@ let { data } = $props();
 						<code>@{data.userChannels.telegram.username}</code>
 					{:else}
 						<Badge variant="secondary">Not connected</Badge>
-						<a href="/app/notifications/settings">Settings</a>
+						<a href="/account/notifications/settings">Settings</a>
 					{/if}
 				</DiagRow>
 
@@ -72,7 +72,7 @@ let { data } = $props();
 						<code>{data.userChannels.discord.username}</code>
 					{:else}
 						<Badge variant="secondary">Not connected</Badge>
-						<a href="/app/notifications/settings">Settings</a>
+						<a href="/account/notifications/settings">Settings</a>
 					{/if}
 				</DiagRow>
 			</DiagGrid>
@@ -106,7 +106,7 @@ let { data } = $props();
 			<DiagRow label="SSE Stream"><code>src/lib/server/notifications/stream.ts</code></DiagRow>
 			<DiagRow label="Providers"><code>src/lib/server/notifications/providers/</code></DiagRow>
 			<DiagRow label="Schema"><code>src/lib/server/db/schema/notifications/</code></DiagRow>
-			<DiagRow label="Settings UI"><code>src/routes/app/notifications/settings/</code></DiagRow>
+			<DiagRow label="Settings UI"><code>src/routes/account/notifications/settings/</code></DiagRow>
 		</DiagGrid>
 	</Card>
 </Stack>

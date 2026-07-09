@@ -6,7 +6,7 @@ Privacy-first, first-party analytics blueprints. Collection is a middleware conc
 
 | File | Main Topics |
 |------|-------------|
-| **[activation.md](./activation.md)** | • Collector hook position (last of 12, after route guards) and what it tracks (public GET pageviews only; `/admin` and `/app` never recorded)<br>• Writes: `analytics.events` + `analytics.sessions`, debug-pairing attribution<br>• Consent gating: `_v10r_sid` cookie at `analytics` tier vs cookieless day-rotating session id (`hash(visitorId + UTC day)`)<br>• Referrer recorded only at `analytics`+ tier<br>• Daily rollup job into `analytics.daily_page_stats` |
+| **[activation.md](./activation.md)** | • Collector hook position (last of 12, after route guards) and what it tracks (public GET pageviews only; `/admin` and `/account` never recorded)<br>• Writes: `analytics.events` + `analytics.sessions`, debug-pairing attribution<br>• Consent gating: `_v10r_sid` cookie at `analytics` tier vs cookieless day-rotating session id (`hash(visitorId + UTC day)`)<br>• Referrer recorded only at `analytics`+ tier<br>• Daily rollup job into `analytics.daily_page_stats` |
 
 ## Related
 

@@ -47,7 +47,7 @@ async function handleMarkAllRead() {
 					{m.app_notifications_mark_all_read()}
 				</Button>
 			{/if}
-			<a href="/app/notifications/settings" class={buttonVariants({ variant: 'ghost', size: 'sm' })}>
+			<a href="/account/notifications/settings" class={buttonVariants({ variant: 'ghost', size: 'sm' })}>
 				<span class="i-lucide-settings" aria-hidden="true"></span>
 				{m.app_notifications_settings()}
 			</a>

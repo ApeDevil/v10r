@@ -1,14 +1,43 @@
 <script lang="ts">
+import type { ActionResult } from '@sveltejs/kit';
 import { superForm } from 'sveltekit-superforms';
 import { valibotClient } from 'sveltekit-superforms/adapters';
-import { Alert, Card, FormField } from '$lib/components/composites';
+import { enhance as formEnhance } from '$app/forms';
+import { Alert, Card, FormField, StepUpDialog } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Avatar, Button, Input, Select, Slider, Spinner, Switch, ToggleGroup } from '$lib/components/primitives';
+import { localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 import { userSettingsSchema } from '$lib/schemas/app/settings';
 import { getSidebar } from '$lib/state/sidebar.svelte';
 
 let { data }: PageProps = $props();
+
+// ── Danger zone (delete account) ────────────────────────────────────────────
+
+let deleting = $state(false);
+let confirmDelete = $state(false);
+let deleteConfirmText = $state('');
+
+// Step-up: deleteAccount 403s with stepUpRequired when TOTP is enrolled and the
+// freshness window has lapsed — the dialog verifies, then resubmits the original
+// form so in-flight state (the typed DELETE) survives.
+let stepUpOpen = $state(false);
+let pendingStepUpForm = $state<HTMLFormElement | null>(null);
+
+function interceptStepUp(result: ActionResult, formElement: HTMLFormElement): boolean {
+	if (result.type === 'failure' && (result.data as { stepUpRequired?: boolean } | undefined)?.stepUpRequired) {
+		pendingStepUpForm = formElement;
+		stepUpOpen = true;
+		return true;
+	}
+	return false;
+}
+
+function onStepUpVerified() {
+	pendingStepUpForm?.requestSubmit();
+	pendingStepUpForm = null;
+}
 
 // svelte-ignore state_referenced_locally
 const {
@@ -314,4 +343,94 @@ async function handleAvatarRemove() {
 			</Cluster>
 		</Stack>
 	</form>
+
+	<!-- Your Data (transparency mirror: live report + JSON export live there) -->
+	<Card>
+		{#snippet header()}
+			<h2 class="text-fluid-lg font-semibold">{m.app_data_link_title()}</h2>
+		{/snippet}
+		<p class="text-sm text-muted mb-4">{m.app_data_link_description()}</p>
+		<Button href={localizeHref('/account/data')} variant="outline">
+			<span class="i-lucide-scan-eye h-4 w-4 mr-1"></span>
+			{m.app_data_link_button()}
+		</Button>
+	</Card>
+
+	<!-- Delete Account -->
+	<Card>
+		{#snippet header()}
+			<h2 class="text-fluid-lg font-semibold text-error">{m.app_account_heading_danger()}</h2>
+		{/snippet}
+
+		<p class="text-sm text-muted mb-4">
+			{m.app_account_delete_description()}
+		</p>
+
+		{#if !confirmDelete}
+			<Button variant="destructive" onclick={() => (confirmDelete = true)}>
+				<span class="i-lucide-trash-2 h-4 w-4 mr-1" ></span>
+				{m.app_account_delete_button()}
+			</Button>
+		{:else}
+			<Alert variant="error" title={m.app_account_delete_confirm_title()}>
+				{#snippet children()}
+					<p>{m.app_account_delete_confirm_body()}</p>
+					<p class="text-sm mt-2">{m.app_account_delete_confirm_instruction()}</p>
+					<Input
+						type="text"
+						bind:value={deleteConfirmText}
+						placeholder="DELETE"
+						class="delete-confirm-input"
+						autocomplete="off"
+						aria-label={m.app_account_delete_confirm_aria()}
+					/>
+					<div class="flex gap-3 mt-4">
+						<form
+							method="POST"
+							action="?/deleteAccount"
+							use:formEnhance={({ formElement }) => {
+								deleting = true;
+								return async ({ result, update }) => {
+									if (!interceptStepUp(result, formElement)) await update();
+									deleting = false;
+								};
+							}}
+						>
+							<input type="hidden" name="confirmation" value={deleteConfirmText} />
+							<Button type="submit" variant="destructive" disabled={deleting || deleteConfirmText !== 'DELETE'}>
+								{#if deleting}
+									<Spinner size="xs" class="mr-2" />
+								{/if}
+								{m.app_account_delete_confirm_submit()}
+							</Button>
+						</form>
+						<Button variant="outline" onclick={() => { confirmDelete = false; deleteConfirmText = ''; }}>
+							{m.admin_action_cancel()}
+						</Button>
+					</div>
+				{/snippet}
+			</Alert>
+		{/if}
+	</Card>
 </Stack>
+
+<StepUpDialog
+	bind:open={stepUpOpen}
+	onverified={onStepUpVerified}
+	oncancel={() => (pendingStepUpForm = null)}
+/>
+
+<style>
+	.delete-confirm-input {
+		margin-top: var(--spacing-2);
+		padding: var(--spacing-2) var(--spacing-3);
+		border: 1px solid var(--color-error-fg);
+		border-radius: var(--radius-sm);
+		background-color: var(--surface-1);
+		color: var(--color-fg);
+		font-size: var(--text-fluid-sm);
+		width: 100%;
+		max-width: 200px;
+		outline: none;
+	}
+</style>

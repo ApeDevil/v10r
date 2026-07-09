@@ -9,7 +9,7 @@ Frontend architecture for channel connections and notification settings manageme
 ## Route Structure
 
 ```
-/app/notifications/settings/
+/account/notifications/settings/
 ├── +page.svelte                  # Main: connections + preferences
 ├── +page.server.ts               # Load + default action (save preferences)
 └── discord/

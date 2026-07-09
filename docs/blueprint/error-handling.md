@@ -91,7 +91,7 @@ export async function load({ params, locals }) {
 ### Layout-Specific Error Pages
 
 ```svelte
-<!-- src/routes/app/+error.svelte -->
+<!-- src/routes/[[locale=locale]]/account/+error.svelte -->
 <script lang="ts">
   import { page } from '$app/state';
 </script>
@@ -99,7 +99,7 @@ export async function load({ params, locals }) {
 <div class="app-error">
   <h2>Something went wrong</h2>
   <p>{page.error?.message}</p>
-  <a href="/app/dashboard">Back to dashboard</a>
+  <a href="/account/dashboard">Back to dashboard</a>
 </div>
 ```
 
@@ -204,7 +204,7 @@ export const actions = {
       });
     }
 
-    redirect(303, '/app/items');
+    redirect(303, '/account/items');
   }
 };
 ```

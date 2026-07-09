@@ -192,14 +192,14 @@ sw.addEventListener('push', (event) => {
 			body: notification?.body,
 			lang: notification?.lang,
 			icon: '/icons/icon-192.png',
-			data: { navigate: notification?.navigate ?? '/app/notifications' },
+			data: { navigate: notification?.navigate ?? '/account/notifications' },
 		}),
 	);
 });
 
 sw.addEventListener('notificationclick', (event) => {
 	event.notification.close();
-	const navigate: string = event.notification.data?.navigate ?? '/app/notifications';
+	const navigate: string = event.notification.data?.navigate ?? '/account/notifications';
 	// Same-origin, path-only targets by contract (never attacker-derived URLs).
 	if (!navigate.startsWith('/')) return;
 	event.waitUntil(

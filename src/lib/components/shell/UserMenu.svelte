@@ -2,7 +2,9 @@
 /**
  * User avatar + dropdown menu.
  * Shows avatar icon in rail mode, full info when expanded.
- * Dropdown includes profile, settings, theme picker, language picker, and sign out.
+ * Dropdown includes account, theme picker, language picker, and sign out.
+ * Account is the single door to the personal area (/account: dashboard,
+ * settings, notifications, security) — no sidebar nav entry duplicates it.
  *
  * Two variants, set by the mounting context (both instances are always mounted;
  * CSS decides which shell is visible, so the prop — not a MediaQuery — discriminates):
@@ -189,18 +191,9 @@ const subTriggerHoverGuard = variant === 'drawer' ? (e: PointerEvent) => e.preve
 		{#snippet menuItems()}
 			<DropdownMenu.Item>
 				{#snippet child({ props })}
-					<a {...props} href={localizeHref('/app/account')} class={cn(itemClass, 'no-underline')}>
+					<a {...props} href={localizeHref('/account')} class={cn(itemClass, 'no-underline')}>
 						<span class="i-lucide-user text-lg" ></span>
 						<span>{m.shell_account()}</span>
-					</a>
-				{/snippet}
-			</DropdownMenu.Item>
-
-			<DropdownMenu.Item>
-				{#snippet child({ props })}
-					<a {...props} href={localizeHref('/app/settings')} class={cn(itemClass, 'no-underline')}>
-						<span class="i-lucide-settings text-lg" ></span>
-						<span>{m.shell_settings()}</span>
 					</a>
 				{/snippet}
 			</DropdownMenu.Item>

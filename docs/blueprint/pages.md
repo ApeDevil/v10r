@@ -144,10 +144,12 @@ No documentation drift. No stale examples. The template validates itself.
 │       │   └── /[model]             # Per-model customizer
 │       └── /[model]                 # Per-model viewer
 │
-├── /app                             # Protected area
+├── /account                         # Protected personal area (4 tabs)
 │   ├── /dashboard                   # User home
-│   ├── /settings                    # Preferences
-│   └── /account                     # GDPR (export, delete)
+│   ├── /settings                    # Preferences + data & danger zone
+│   ├── /notifications               # Notification center (+ /settings)
+│   ├── /security                    # Passkeys, TOTP, sessions
+│   └── /data                        # GDPR transparency mirror (export)
 │
 ├── /auth                            # Authentication
 │   ├── /login                       # Email entry + OAuth
@@ -171,7 +173,7 @@ Every route group should have an `+error.svelte` file for graceful error handlin
 | Location | Purpose | Context |
 |----------|---------|---------|
 | `/+error.svelte` | Root fallback | Generic error, "Go home" link |
-| `/app/+error.svelte` | Authenticated area | Maintains app shell, "Back to dashboard" |
+| `/account/+error.svelte` | Authenticated area | Maintains app shell, "Back to dashboard" |
 | `/auth/+error.svelte` | Auth flows | Clean layout, "Try again" link |
 | `/showcases/+error.svelte` | Showcase area | Shows error within showcase layout |
 
@@ -206,7 +208,7 @@ src/routes/
 ⚠️ **Important:** Errors in `+layout.server.ts` are caught by `+error.svelte` **above** the layout, not next to it.
 
 ```
-routes/app/
+routes/[[locale=locale]]/account/
 ├── +layout.server.ts   ← Error here
 ├── +layout.svelte
 └── +error.svelte       ← Won't catch it!
@@ -231,7 +233,7 @@ routes/
 ```
 
 ```svelte
-<!-- src/routes/app/+error.svelte (App area - keeps shell) -->
+<!-- src/routes/[[locale=locale]]/account/+error.svelte (App area - keeps shell) -->
 <script>
   import { page } from '$app/state';
 </script>
@@ -240,7 +242,7 @@ routes/
 <div class="error-content">
   <h1>Error {page.status}</h1>
   <p>{page.error?.message || 'Something went wrong'}</p>
-  <a href="/app/dashboard">Back to dashboard</a>
+  <a href="/account/dashboard">Back to dashboard</a>
 </div>
 ```
 
@@ -782,13 +784,13 @@ Data visualization hub. Five sub-pages covering the full range of chart and diag
 
 ## Protected Pages
 
-### /app/*
+### /account/*
 
-All routes under `/app` require authentication.
+All routes under `/account` require authentication.
 
 **Protection per-route** (not layout - see [auth.md](./auth.md#route-protection)):
 ```ts
-// /app/dashboard/+page.server.ts
+// /account/dashboard/+page.server.ts
 import { requireAuth } from '$lib/server/auth/guard';
 
 export async function load(event) {
@@ -797,7 +799,7 @@ export async function load(event) {
 }
 ```
 
-### /app/dashboard
+### /account/dashboard
 
 User's authenticated home.
 
@@ -807,7 +809,7 @@ User's authenticated home.
 | User data | `auth.api.getSession()` | Better Auth |
 | Protected content | Per-route guards | SvelteKit |
 
-### /app/settings
+### /account/settings
 
 User configuration (preferences & settings) with form handling.
 
@@ -817,15 +819,15 @@ User configuration (preferences & settings) with form handling.
 | User updates | ORM mutations | Drizzle |
 | Theme preference | Database storage | [Neon](../stack/vendors.md#neon) |
 
-### /app/account
+### /account
 
 GDPR compliance routes.
 
 | Route | Purpose |
 |-------|---------|
-| `/app/account` | Account overview |
-| `/app/account/data` | View stored data; data export served by `/api/me/data/export` |
-| `/app/account/security` | Sessions, passkeys, account deletion |
+| `/account` | Account overview |
+| `/account/data` | View stored data; data export served by `/api/me/data/export` |
+| `/account/security` | Sessions, passkeys, account deletion |
 
 ---
 

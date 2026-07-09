@@ -299,7 +299,7 @@ function normalizeKey(event: KeyboardEvent): string {
       label: 'G H',
       description: 'Go to Home',
       category: 'navigation',
-      action: () => goto('/app/dashboard'),
+      action: () => goto('/account/dashboard'),
     });
 
     registerShortcut({
@@ -308,7 +308,7 @@ function normalizeKey(event: KeyboardEvent): string {
       label: 'G S',
       description: 'Go to Settings',
       category: 'navigation',
-      action: () => goto('/app/settings'),
+      action: () => goto('/account/settings'),
     });
 
     return cleanup;

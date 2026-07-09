@@ -32,12 +32,12 @@ export function normalizeRouteId(routeId: string | null | undefined): string | n
 
 /**
  * Client gate (defense-in-depth; the server catalog-membership check is authoritative):
- * never attach page context for the private `/app` and `/admin` namespaces.
+ * never attach page context for the private `/account` and `/admin` namespaces.
  */
 export function isSiteAwareRoute(routeId: string | null | undefined): boolean {
 	const path = normalizeRouteId(routeId);
 	if (path === null) return false;
-	return !path.startsWith('/app') && !path.startsWith('/admin');
+	return !path.startsWith('/account') && !path.startsWith('/admin');
 }
 
 /**
@@ -48,7 +48,7 @@ export function isSiteAwareRoute(routeId: string | null | undefined): boolean {
  */
 export function resolveRouteLabel(routeId: string | null | undefined): string | null {
 	const path = normalizeRouteId(routeId);
-	if (path === null || path.startsWith('/app') || path.startsWith('/admin')) return null;
+	if (path === null || path.startsWith('/account') || path.startsWith('/admin')) return null;
 
 	for (const item of navItems) {
 		if (item.href === path) return item.label();

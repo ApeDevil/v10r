@@ -27,7 +27,7 @@ See `docs/blueprint/i18n.md` §Canonical and §Hreflang Tags for the pattern.
 ### robots.txt
 
 `src/routes/robots.txt/+server.ts` — env-aware via `VERCEL_ENV`:
-- **Production**: `Allow: /`, blocks `/api/`, `/app/`, `/de/app/`, `/ru/app/`; absolute `Sitemap:` URL.
+- **Production**: `Allow: /`, blocks `/api/`, `/account/`, `/de/account/`, `/ru/account/`; absolute `Sitemap:` URL.
 - **Preview / development**: `Disallow: /` — blocks indexing of preview deployments (Vercel only auto-noindexes `*.vercel.app`, not custom-domain previews).
 
 The old `static/robots.txt` was deleted — a static file shadows the dynamic route.

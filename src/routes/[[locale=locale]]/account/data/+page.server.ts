@@ -1,7 +1,7 @@
 /**
  * YOUR DATA — the authenticated transparency mirror (GDPR Art 15 surface).
  *
- * First page after first sign-up (app/+layout.server.ts redirects here once
+ * First page after first sign-up (account/+layout.server.ts redirects here once
  * with ?welcome=1) and permanently re-visitable afterwards.
  *
  * Instant data (no DB cost): cookies on the device, the live connection the

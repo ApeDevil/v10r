@@ -3,8 +3,10 @@ import { fail, message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import { localizeHref } from '$lib/i18n';
 import { userSettingsSchema } from '$lib/schemas/app/settings';
+import { requireStepUp } from '$lib/server/auth/step-up';
 import { getOrCreatePreferences, updatePreferences } from '$lib/server/db/preferences/mutations';
 import { updateDisplayName } from '$lib/server/db/user';
+import { deleteUserData } from '$lib/server/privacy';
 import { AVATAR_ERROR_MESSAGES, removeAvatar, uploadAvatar, validateAvatar } from '$lib/server/store/avatar';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -94,5 +96,27 @@ export const actions: Actions = {
 		if (!locals.user) redirect(303, localizeHref('/auth/login'));
 		await removeAvatar(locals.user.id, locals.user.image ?? null);
 		return { avatarUrl: null };
+	},
+
+	deleteAccount: async ({ request, locals }) => {
+		if (!locals.user) redirect(303, localizeHref('/auth/login'));
+
+		// Sensitive action: needs a fresh second-factor check when TOTP is enrolled.
+		// The client opens StepUpDialog on `stepUpRequired` and resubmits.
+		if (!(await requireStepUp(locals.user))) {
+			return fail(403, { stepUpRequired: true });
+		}
+
+		const formData = await request.formData();
+		const confirmation = formData.get('confirmation');
+
+		if (confirmation !== 'DELETE') {
+			return fail(400, { error: 'Type DELETE to confirm account deletion' });
+		}
+
+		// Cascade erasure via the canonical privacy module (GDPR Art 17)
+		await deleteUserData(locals.user.id);
+
+		redirect(303, localizeHref('/'));
 	},
 };

@@ -7,7 +7,7 @@ In-app notification system with full-page notification center, preference manage
 ## Route Structure
 
 ```
-/app/notifications/
+/account/notifications/
 ├── +page.svelte             # Notification center (inbox)
 ├── +page.server.ts          # Load notifications, mark as read
 └── settings/
@@ -22,7 +22,7 @@ In-app notification system with full-page notification center, preference manage
 **Two entry points:**
 
 1. **Sidebar bell icon** - Badge shows unread count, click navigates to center
-2. **Direct navigation** - `/app/notifications` for deep linking
+2. **Direct navigation** - `/account/notifications` for deep linking
 
 ```
 Sidebar Header:
@@ -43,7 +43,7 @@ Sidebar Header:
 
 ## Notification Center
 
-**Route:** `/app/notifications`
+**Route:** `/account/notifications`
 
 ### Wireframe
 
@@ -145,7 +145,7 @@ Sidebar Header:
 
 <PageHeader title="Notifications">
   {#snippet actions()}
-    <a href="/app/notifications/settings" class="btn-icon">
+    <a href="/account/notifications/settings" class="btn-icon">
       <span class="i-lucide-settings" />
     </a>
   {/snippet}
@@ -193,12 +193,12 @@ Sidebar Header:
 
   <Popover.Content side="right" align="start" class="w-80">
     <NotificationPreview {notifications} />
-    <a href="/app/notifications" class="view-all">View all</a>
+    <a href="/account/notifications" class="view-all">View all</a>
   </Popover.Content>
 </Popover.Root>
 
 <!-- Mobile: Direct link (no popover) -->
-<a href="/app/notifications" class="notification-trigger md:hidden">
+<a href="/account/notifications" class="notification-trigger md:hidden">
   <span class="i-lucide-bell" />
   {#if unreadCount > 0}
     <NotificationBadge count={unreadCount} />
@@ -210,7 +210,7 @@ Sidebar Header:
 
 ## Notification Settings
 
-**Route:** `/app/notifications/settings`
+**Route:** `/account/notifications/settings`
 
 ### Wireframe
 
@@ -747,7 +747,7 @@ export function getNotifications() {
 Unread count loaded in root layout — one DB query per full page load, then SSE (or polling) keeps it current:
 
 ```typescript
-// src/routes/app/+layout.server.ts
+// src/routes/[[locale=locale]]/account/+layout.server.ts
 export const load: LayoutServerLoad = async ({ locals, depends }) => {
   depends('app:notifications');
   if (!locals.user) return { unreadCount: 0 };

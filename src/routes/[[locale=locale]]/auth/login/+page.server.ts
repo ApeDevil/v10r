@@ -3,7 +3,7 @@ import { localizeHref } from '$lib/i18n';
 import { passkeysEnabled } from '$lib/server/auth';
 import type { PageServerLoad } from './$types';
 
-const DEFAULT_REDIRECT = '/app/dashboard';
+const DEFAULT_REDIRECT = '/account/dashboard';
 
 /** Validate returnTo is a safe relative path (no open redirect) */
 function sanitizeReturnTo(raw: string | null): string {

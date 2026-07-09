@@ -116,7 +116,7 @@ Per-page header inside the main content area. **Not a global header** — each p
 ## Usage
 
 ```svelte
-<!-- src/routes/app/projects/[id]/+page.svelte -->
+<!-- src/routes/[[locale=locale]]/account/projects/[id]/+page.svelte -->
 <script>
   import { PageHeader } from '$lib/components/composites';
   import { Button, DropdownMenu } from '$lib/components/primitives';

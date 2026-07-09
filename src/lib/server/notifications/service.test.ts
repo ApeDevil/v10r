@@ -131,7 +131,7 @@ describe('NotificationService', () => {
 			to: 'user-1',
 			subject: expect.any(String),
 			body: 'rendered:notif_push_mention',
-			navigate: '/app/notifications?n=notif-1',
+			navigate: '/account/notifications?n=notif-1',
 			lang: 'de',
 		});
 	});

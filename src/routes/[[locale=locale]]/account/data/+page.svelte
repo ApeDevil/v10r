@@ -44,7 +44,7 @@ function formatDate(iso: string): string {
 				{data.welcome ? m.app_data_welcome_body() : m.app_data_intro()}
 			</p>
 		</div>
-		<Button href={localizeHref('/app/dashboard')} variant={data.welcome ? 'default' : 'outline'}>
+		<Button href={localizeHref('/account/dashboard')} variant={data.welcome ? 'default' : 'outline'}>
 			{m.app_data_continue()}
 		</Button>
 	</div>
@@ -315,7 +315,7 @@ function formatDate(iso: string): string {
 					<span class="i-lucide-download h-4 w-4 mr-1"></span>
 					{m.app_data_download()}
 				</Button>
-				<Button href={localizeHref('/app/account')} variant="outline">
+				<Button href={localizeHref('/account/settings')} variant="outline">
 					{m.app_data_manage_account()}
 				</Button>
 			</div>

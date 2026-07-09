@@ -44,7 +44,7 @@ $effect(() => {
 });
 </script>
 
-<a href="/app/notifications" class="notification-trigger" aria-label="Notifications">
+<a href="/account/notifications" class="notification-trigger" aria-label="Notifications">
 	<span class="i-lucide-bell notification-icon" aria-hidden="true"></span>
 	<NotificationBadge count={notifs.unreadCount} />
 </a>

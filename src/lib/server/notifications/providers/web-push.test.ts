@@ -69,7 +69,7 @@ describe('WebPushProvider', () => {
 			to: 'user-1',
 			subject: 'v10r',
 			body: 'Someone mentioned you',
-			navigate: '/app/notifications?n=abc',
+			navigate: '/account/notifications?n=abc',
 			lang: 'de',
 		});
 
@@ -78,7 +78,7 @@ describe('WebPushProvider', () => {
 		expect(payload.notification).toEqual({
 			title: 'v10r',
 			body: 'Someone mentioned you',
-			navigate: '/app/notifications?n=abc',
+			navigate: '/account/notifications?n=abc',
 			lang: 'de',
 		});
 		// Payload contract: exactly these keys — no ids-as-secrets, no user content fields.

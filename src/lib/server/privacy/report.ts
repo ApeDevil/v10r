@@ -2,9 +2,9 @@
  * PERSONAL DATA REPORT — the single source of truth for "all data we hold
  * about this user" (GDPR Art 15 access / Art 20 portability).
  *
- * One aggregator, many consumers: the /app/account/data page load, the
- * /api/me/data + /api/me/data/export endpoints, the account exportData
- * action, and a future AI `get_my_data` tool. Surfaces must never
+ * One aggregator, many consumers: the /account/data page load, the
+ * /api/me/data + /api/me/data/export endpoints, and a future AI
+ * `get_my_data` tool. Surfaces must never
  * hand-assemble this — they call collectUserData() so the definition of
  * "all my data" cannot drift between them.
  *

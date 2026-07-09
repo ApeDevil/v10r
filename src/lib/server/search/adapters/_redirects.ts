@@ -3,7 +3,7 @@
  * search never lands a user on a bounce. Mirrors the old `nav/search-pages` set.
  */
 export const REDIRECT_HREFS = new Set([
-	'/app',
+	'/account',
 	'/showcases/shell',
 	'/showcases/ui',
 	'/showcases/forms',

@@ -198,7 +198,7 @@ export async function handle({ event, resolve }) {
 **2. Load functions: access `event.locals`**
 
 ```typescript
-// src/routes/app/+layout.server.ts
+// src/routes/[[locale=locale]]/account/+layout.server.ts
 export async function load({ locals }) {
   return {
     user: locals.user,
@@ -210,7 +210,7 @@ export async function load({ locals }) {
 **3. Components: use page data**
 
 ```svelte
-<!-- src/routes/app/+layout.svelte -->
+<!-- src/routes/[[locale=locale]]/account/+layout.svelte -->
 <script>
   import { page } from '$app/state';
 

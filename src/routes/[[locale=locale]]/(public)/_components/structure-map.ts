@@ -47,7 +47,10 @@ export const sections: StructureSection[] = [
 				value: 'routes',
 				title: 'Routes',
 				items: [
-					{ segments: [{ label: '/app', href: '/app/dashboard' }], description: m.home_structure_route_app_desc },
+					{
+						segments: [{ label: '/account', href: '/account/dashboard' }],
+						description: m.home_structure_route_account_desc,
+					},
 					{ segments: [{ label: '/auth', href: '/auth/login' }], description: m.home_structure_route_auth_desc },
 					{
 						segments: [{ label: '/showcases', href: '/showcases' }],

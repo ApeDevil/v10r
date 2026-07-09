@@ -14,11 +14,11 @@ securityHeaders → stripBaseLocalePrefix → loadStyle → i18n → authCaptcha
 
 `debugOwnerLoader` (position 10 of 12) verifies the `v10r_debug_owner` HMAC cookie and populates `event.locals.debugOwnerId`. This runs before `analyticsCollector` so the collector can attribute events to a paired admin session without requiring the phone to be logged in.
 
-`analyticsCollector` runs last — after route guards — so it only records requests that have fully resolved through auth and routing. It tracks only public, non-`/api`, non-`/admin`, non-`/app` GET pageviews (the path must contain no dot, must not be a prefetch, and must not look like a bot or extension probe). Admin and app navigations are intentionally untracked.
+`analyticsCollector` runs last — after route guards — so it only records requests that have fully resolved through auth and routing. It tracks only public, non-`/api`, non-`/admin`, non-`/account` GET pageviews (the path must contain no dot, must not be a prefetch, and must not look like a bot or extension probe). Admin and account navigations are intentionally untracked.
 
 ## What it writes
 
-- `analytics.events` — one row per tracked public pageview, with path, referrer, consent tier, and `debug_owner_id` if a debug cookie is present. Navigations under `/admin` and `/app` are never recorded.
+- `analytics.events` — one row per tracked public pageview, with path, referrer, consent tier, and `debug_owner_id` if a debug cookie is present. Navigations under `/admin` and `/account` are never recorded.
 - `analytics.sessions` — one row per visitor session; updated on each event with last-seen timestamp. Tagged with `paired_admin_user_id` and `paired_at` when the session is paired.
 
 `recordEvent` and `upsertSession` are imported from `$lib/server/db/analytics/mutations`.

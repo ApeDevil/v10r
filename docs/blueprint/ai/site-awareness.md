@@ -196,7 +196,7 @@ block it, leak); catalog membership **fails safe**.
 |------|--------|----------|
 | **(a) Freely resolvable** | Public catalog: `/showcases/**`, static `/docs/**`, public top-level (`/`, `/blog` index, `/feedback`, `/search`) | Resolve → title/description → `<current-page>` + deixis seed + full chip |
 | **(b) Template-only / coarse** | Public **dynamic**: `/blog/[slug]`, `/docs/.../[slug]`, catch-all docs | Generic label only ("a blog post"); concrete slug never sent. v1: out of scope (decision #3) |
-| **(c) Off / not sent / not resolvable** | `/admin/**`, `/app/**` (incl. `/app/account/**`, `/app/desk/**`), `/auth/**` | Not in catalog → resolves `null` by construction. Nothing injected, seeded, chipped, or stored. **No chip.** |
+| **(c) Off / not sent / not resolvable** | `/admin/**`, `/app/**` (incl. `/account/**`, `/app/desk/**`), `/auth/**` | Not in catalog → resolves `null` by construction. Nothing injected, seeded, chipped, or stored. **No chip.** |
 
 Tier (c) is enforced in **three layers**: a cheap client gate (don't attach `routeId` on
 `/admin`·`/app`·`/auth` — also powers the chip-OFF default, one source of truth), the

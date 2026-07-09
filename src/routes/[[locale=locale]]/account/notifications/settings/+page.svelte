@@ -296,7 +296,7 @@ async function connectTelegram() {
 		</Stack>
 	</form>
 
-	<BackLink href="/app/notifications" label="notifications" />
+	<BackLink href="/account/notifications" label="notifications" />
 </Stack>
 
 <style>

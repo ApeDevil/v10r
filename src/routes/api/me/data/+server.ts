@@ -1,6 +1,6 @@
 /**
  * GET /api/me/data — machine-readable personal data report (GDPR Art 15).
- * Same aggregator as the /app/account/data page and the export download —
+ * Same aggregator as the /account/data page and the export download —
  * one definition of "all my data" across every surface.
  */
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';

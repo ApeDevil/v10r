@@ -5,25 +5,29 @@ User account management for identity, security, and GDPR compliance. High-stakes
 ## Route Structure
 
 ```
-/app/account/
-├── +page.svelte             # Account overview (default)
-├── +page.server.ts          # Profile form actions
-├── data/
-│   ├── +page.svelte         # GDPR data hub
-│   └── +page.server.ts      # Prepare data view
-└── security/
-    ├── +page.svelte         # OAuth connections, sessions, deletion
-    └── +page.server.ts      # Security form actions
+/account/
+├── +layout.svelte           # PageHeader (Home / Account) + tabs
+├── +page.server.ts          # Redirect → /account/dashboard
+├── dashboard/               # Profile overview, linked accounts, passkey nudge
+├── settings/                # Preferences, avatar, data link, delete account
+├── notifications/           # Notification center (+ settings/ per channel)
+├── security/                # Passkeys, TOTP, active sessions (revoke)
+└── data/
+    ├── +page.svelte         # GDPR data hub (transparency mirror + export)
+    └── +page.server.ts      # Prepare data view
 ```
 
-The data-export download is served by `/api/me/data/export/+server.ts` (GET → JSON), not a route under `/app/account`.
+The section is reached exclusively through the user menu (user button → Account);
+there is no sidebar nav entry for it.
+
+The data-export download is served by `/api/me/data/export/+server.ts` (GET → JSON), not a route under `/account`.
 
 ## Tabbed Layout
 
 The account section uses a tabbed layout with sub-routes. Each tab has distinct server load requirements.
 
 ```svelte
-<!-- /app/account/+layout.svelte -->
+<!-- /account/+layout.svelte -->
 <script lang="ts">
   import { page } from '$app/state';
   import { PageHeader } from '$lib/components/composites';
@@ -31,9 +35,9 @@ The account section uses a tabbed layout with sub-routes. Each tab has distinct 
   let { children, data } = $props();
 
   const tabs = [
-    { href: '/app/account', label: 'Profile', exact: true },
-    { href: '/app/account/security', label: 'Security' },
-    { href: '/app/account/data', label: 'Your Data' },
+    { href: '/account', label: 'Profile', exact: true },
+    { href: '/account/security', label: 'Security' },
+    { href: '/account/data', label: 'Your Data' },
   ];
 
   const isActive = (href: string, exact = false) =>
@@ -63,7 +67,7 @@ The account section uses a tabbed layout with sub-routes. Each tab has distinct 
 
 ## Profile Page
 
-**Route:** `/app/account`
+**Route:** `/account`
 
 **Pattern:** Auto-save on blur + visible Save button for user confidence.
 
@@ -145,7 +149,7 @@ The account section uses a tabbed layout with sub-routes. Each tab has distinct 
 
 ## Security Page
 
-**Route:** `/app/account/security`
+**Route:** `/account/security`
 
 ### Wireframe
 
@@ -213,7 +217,7 @@ await auth.api.revokeOtherSessions({
 
 ## GDPR Data Page
 
-**Route:** `/app/account/data`
+**Route:** `/account/data`
 
 ### Wireframe
 
@@ -362,7 +366,7 @@ export const POST: RequestHandler = async ({ locals }) => {
 
 ### Step 2: Confirmation Page
 
-**Route:** `/app/account/security` (deletion is handled within the security page; there is no standalone `delete/` route)
+**Route:** `/account/security` (deletion is handled within the security page; there is no standalone `delete/` route)
 
 ```
 ┌────────────────────────────────────────────────────┐
@@ -405,7 +409,7 @@ await sendEmail({
   to: user.email,
   subject: 'Account deletion scheduled',
   template: 'account-deletion-scheduled',
-  data: { cancelUrl: `${BASE_URL}/app/account/cancel-deletion` }
+  data: { cancelUrl: `${BASE_URL}/account/cancel-deletion` }
 });
 
 // Cron job: Actually delete after grace period
@@ -462,12 +466,12 @@ export const userProfile = pgTable('user_profile', {
 
 ```svelte
 <NavItem
-  href="/app/account"
+  href="/account"
   icon="i-lucide-user"
   label={m.nav_account}
   children={[
-    { href: '/app/account/security', label: m.nav_account_security },
-    { href: '/app/account/data', label: m.nav_account_data },
+    { href: '/account/security', label: m.nav_account_security },
+    { href: '/account/data', label: m.nav_account_data },
   ]}
 />
 ```

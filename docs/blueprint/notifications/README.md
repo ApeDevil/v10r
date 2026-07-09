@@ -49,7 +49,7 @@ Users connect their preferred channels and control which notification types go w
 |------|--------|
 | **[routing.md](./routing.md)** | • Notification router architecture<br>• Provider abstraction and rate limiting<br>• Outbox pattern with runtime-adaptive processing<br>• Web push outbox bypass (synchronous fan-out)<br>• Delivery tracking and retry logic |
 | **[channels.md](./channels.md)** | • Telegram deep link connection flow<br>• Discord OAuth2 flow and DM limitations<br>• Web push subscriptions (VAPID, per-device)<br>• Credential storage and token refresh<br>• Channel health monitoring |
-| **[settings.md](./settings.md)** | • Route structure (`/app/settings/notifications`)<br>• Channel × Type settings matrix UI<br>• Per-device push card<br>• Connection management UX<br>• Mobile considerations |
+| **[settings.md](./settings.md)** | • Route structure (`/account/notifications/settings`)<br>• Channel × Type settings matrix UI<br>• Per-device push card<br>• Connection management UX<br>• Mobile considerations |
 | **[schema.md](./schema.md)** | • `user_telegram_accounts` table<br>• `user_discord_accounts` table<br>• `push_subscriptions` table<br>• Extended settings columns<br>• Delivery tracking tables |
 
 ## Critical Decision: Discord DM Limitation

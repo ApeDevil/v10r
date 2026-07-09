@@ -38,7 +38,7 @@ export const userPreferences = appSchema.table('user_preferences', {
 	/**
 	 * When the user first saw the post-signup data-transparency page.
 	 * NULL (or row absent) = first sign-in pending → app layout redirects once
-	 * to /app/account/data?welcome=1 and consumes this marker atomically.
+	 * to /account/data?welcome=1 and consumes this marker atomically.
 	 */
 	transparencySeenAt: timestamp('transparency_seen_at', { withTimezone: true }),
 

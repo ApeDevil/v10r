@@ -9,10 +9,10 @@ See [../../foundation/user-data.md](../../foundation/user-data.md) for terminolo
 
 ## Route Structure
 
-`/app/settings` is currently a single page:
+`/account/settings` is currently a single page:
 
 ```
-/app/settings/
+/account/settings/
 ├── +page.svelte             # Settings hub with cards
 └── +page.server.ts          # Load + save preferences
 ```
@@ -23,7 +23,7 @@ See [../../foundation/user-data.md](../../foundation/user-data.md) for terminolo
 
 ## Settings Hub
 
-**Route:** `/app/settings`
+**Route:** `/account/settings`
 
 Overview page with cards linking to sub-pages. Each card shows current value for quick scanning.
 
@@ -61,7 +61,7 @@ Overview page with cards linking to sub-pages. Each card shows current value for
 
 ## Appearance Settings
 
-**Route:** `/app/settings/appearance`
+**Route:** `/account/settings/appearance`
 
 ### Wireframe
 
@@ -176,7 +176,7 @@ export const load = async ({ cookies }) => {
 
 ## Language Settings
 
-**Route:** `/app/settings/language`
+**Route:** `/account/settings/language`
 
 ### Wireframe
 
@@ -225,7 +225,7 @@ timezone: text('timezone').notNull().default('UTC'),
 
 ## Privacy Settings
 
-**Route:** `/app/settings/privacy`
+**Route:** `/account/settings/privacy`
 
 ### Wireframe
 
@@ -257,7 +257,7 @@ timezone: text('timezone').notNull().default('UTC'),
 
 ## Accessibility Settings
 
-**Route:** `/app/settings/accessibility`
+**Route:** `/account/settings/accessibility`
 
 ### Wireframe
 
@@ -401,22 +401,22 @@ export const load = async ({ locals, cookies }) => {
 
 ## Sidebar Integration
 
-`/app/settings` is a single page, so it wires up as a plain `NavItem` with no submenu:
+`/account/settings` is a single page, so it wires up as a plain `NavItem` with no submenu:
 
 ```svelte
-<NavItem href="/app/settings" icon="i-lucide-settings" label={m.nav_settings} />
+<NavItem href="/account/settings" icon="i-lucide-settings" label={m.nav_settings} />
 ```
 
 If the sub-route split lands, pass a `children` array and `NavItem` renders the submenu through `NavFlyout`/`NavAccordion`:
 
 ```svelte
 <NavItem
-  href="/app/settings"
+  href="/account/settings"
   icon="i-lucide-settings"
   label={m.nav_settings}
   children={[
-    { href: '/app/settings/appearance', label: m.nav_settings_appearance },
-    { href: '/app/settings/language', label: m.nav_settings_language },
+    { href: '/account/settings/appearance', label: m.nav_settings_appearance },
+    { href: '/account/settings/language', label: m.nav_settings_language },
   ]}
 />
 ```
@@ -429,9 +429,9 @@ The user menu dropdown (sidebar footer) includes a quick theme toggle.
 
 ```
 ┌────────────────────────┐
-│  👤 Profile            │ → /app/account
+│  👤 Profile            │ → /account
 │  🎨 Theme: Dark    ▸   │ → Quick toggle (no navigation)
-│  ⚙️ Settings           │ → /app/settings
+│  ⚙️ Settings           │ → /account/settings
 │  ───────────────────   │
 │  🚪 Sign out           │
 └────────────────────────┘

@@ -8,7 +8,7 @@ A privacy domain (`$lib/server/privacy/`) that is the **single source of truth**
 
 | Right (GDPR Article) | Surface |
 |----------------------|---------|
-| Access — Art 15 | `/app/account/data` page + `GET /api/me/data` |
+| Access — Art 15 | `/account/data` page + `GET /api/me/data` |
 | Portability — Art 20 | `GET /api/me/data/export` (JSON download) |
 | Erasure — Art 17 | `DELETE /api/me` + account-page typed-confirmation form |
 | Consent — TDDDG §25 / ePrivacy Art 5(3) | Consent banner, consent-gated analytics cookie |
@@ -20,8 +20,7 @@ A privacy domain (`$lib/server/privacy/`) that is the **single source of truth**
 
 Five surfaces, one definition:
 
-- `/app/account/data` page load (streamed)
-- account `exportData` form action
+- `/account/data` page load (streamed)
 - `GET /api/me/data`
 - `GET /api/me/data/export`
 - `DELETE /api/me`
@@ -48,7 +47,7 @@ These are enforced in `privacy/report.ts`, not left to callers:
 
 ## The transparency page
 
-`/app/account/data` is the authenticated "Your data" mirror (Art 15). SSR-only, `Cache-Control: no-store, private`.
+`/account/data` is the authenticated "Your data" mirror (Art 15). SSR-only, `Cache-Control: no-store, private`.
 
 - **Instant data** (no DB cost): cookies on the device (security-relevant values redacted to presence-only), the live IP / User-Agent / Accept-Language the server sees right now.
 - **Streamed report**: `collectUserData` is returned as an unawaited promise; the page renders each section via `{#await}` as it resolves.
@@ -56,7 +55,7 @@ These are enforced in `privacy/report.ts`, not left to callers:
 
 ### First-signup redirect
 
-`app/+layout.server.ts` sends each user to `/app/account/data?welcome=1` exactly once, right after first sign-in.
+`app/+layout.server.ts` sends each user to `/account/data?welcome=1` exactly once, right after first sign-in.
 
 The marker is `app.user_preferences.transparency_seen_at` (nullable timestamptz). `consumeTransparencyMarker()` claims it atomically with a single `INSERT … ON CONFLICT DO UPDATE … setWhere isNull … RETURNING` — exactly-once and prefetch-safe, so a SvelteKit prefetch racing a navigation cannot trigger the redirect twice. The gate self-excludes the target path (the page consumes the marker on a direct first visit). Every other nav pays only a cheap PK read.
 

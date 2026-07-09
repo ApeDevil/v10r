@@ -128,7 +128,7 @@ export async function getNotificationById(id: string, userId: string) {
 `Date` objects serialize as `{}` in JSON. The route layer converts them. Domain modules return `Date` objects as-is.
 
 ```typescript
-// src/routes/app/notifications/+page.server.ts
+// src/routes/account/notifications/+page.server.ts
 return {
   notifications: notifications.map((n) => ({
     ...n,
@@ -173,7 +173,7 @@ import { createNotification } from '$lib/server/notifications/service'; // priva
 The load function extracts from `event.locals`, calls domain functions, serializes dates, returns data.
 
 ```typescript
-// src/routes/app/notifications/+page.server.ts
+// src/routes/account/notifications/+page.server.ts
 export const load: PageServerLoad = async ({ locals, url }) => {
   const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
   const offset = (page - 1) * NOTIFICATIONS_PAGE_SIZE;

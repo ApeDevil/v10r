@@ -279,7 +279,7 @@ export const {
 **Primary pattern:** Access session via `event.locals` (populated in hooks) and page data.
 
 ```typescript
-// src/routes/app/+layout.server.ts
+// src/routes/[[locale=locale]]/account/+layout.server.ts
 export async function load({ locals }) {
   return {
     user: locals.user,
@@ -289,7 +289,7 @@ export async function load({ locals }) {
 ```
 
 ```svelte
-<!-- src/routes/app/+layout.svelte -->
+<!-- src/routes/[[locale=locale]]/account/+layout.svelte -->
 <script>
   import { page } from '$app/state';
 
@@ -392,7 +392,7 @@ export const userProfile = pgTable('user_profile', {
 
     const result = await authClient.signIn.magicLink({
       email,
-      callbackURL: '/app/dashboard',
+      callbackURL: '/account/dashboard',
     });
 
     if (result.error) {
@@ -486,7 +486,7 @@ export const userProfile = pgTable('user_profile', {
       return;
     }
 
-    goto('/app/dashboard');
+    goto('/account/dashboard');
   }
 
   async function handleResend() {
@@ -500,7 +500,7 @@ export const userProfile = pgTable('user_profile', {
     // Request new magic link (which also triggers new OTP)
     await authClient.signIn.magicLink({
       email,
-      callbackURL: '/app/dashboard',
+      callbackURL: '/account/dashboard',
     });
   }
 
@@ -657,7 +657,7 @@ DELETE /api/admin/users/[id]/grants/[kind]  — revoke capability
 ### Server-Side (Recommended)
 
 ```typescript
-// src/routes/app/dashboard/+page.server.ts
+// src/routes/account/dashboard/+page.server.ts
 import { redirect } from '@sveltejs/kit';
 import { auth } from '$lib/server/auth';
 
@@ -697,7 +697,7 @@ export async function requireAuth(event: RequestEvent) {
 ```
 
 ```typescript
-// src/routes/app/settings/+page.server.ts
+// src/routes/account/settings/+page.server.ts
 import { requireAuth } from '$lib/server/auth/guard';
 
 export async function load(event) {
@@ -709,7 +709,7 @@ export async function load(event) {
 ### Client-Side Guard
 
 ```svelte
-<!-- src/routes/app/+layout.svelte -->
+<!-- src/routes/[[locale=locale]]/account/+layout.svelte -->
 <script lang="ts">
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
@@ -813,7 +813,7 @@ A mail outage can never block a security event from being recorded.
 
 ### Enrollment & management UI
 
-Route `/app/account/security` (a Card link from `/app/account`):
+Route `/account/security` (a Card link from `/account`):
 
 - **Passkeys** — list / add / rename / delete, **client-call-driven + `invalidateAll`**, not Superforms. Deliberate: matches the login/verify client-call precedent (the WebAuthn ceremony is a browser API call, not a form post).
 - **TOTP enroll** — `enable()` → `totpURI` + backup codes shown **once** → QR via `POST /api/me/two-factor/qr` (server-rendered with the existing `qrSvg()`) → `verifyTotp` confirm → `getSession({ disableCookieCache: true })` → `invalidateAll`.
@@ -824,7 +824,7 @@ A dismissable **enrollment nudge** (sessionStorage, shown when the user has 0 pa
 
 ### Step-up dialog
 
-Composite `$lib/components/composites/step-up-dialog`: TOTP-or-backup-code entry. Account-page actions (`revokeSession` / `exportData` / `deleteAccount`) return `fail(403, { stepUpRequired })` when the user is enrolled and stale → the dialog opens → the form resubmits after a fresh verification.
+Composite `$lib/components/composites/step-up-dialog`: TOTP-or-backup-code entry. Account-area actions (`revokeSession` on /account/security, `deleteAccount` on /account/settings) return `fail(403, { stepUpRequired })` when the user is enrolled and stale → the dialog opens → the form resubmits after a fresh verification.
 
 ### Login surface
 
@@ -1062,7 +1062,7 @@ This approach requires implementing sessions, cookies, magic link flows, and OAu
 - [db/README.md](./db/README.md) - Data layer overview
 - [db/relational.md](./db/relational.md) - Schema including Better Auth tables
 - [api.md](./api.md) - Protected API endpoints
-- [pages.md](./pages.md) - Auth routes (`/auth/*`) and protected routes (`/app/*`)
+- [pages.md](./pages.md) - Auth routes (`/auth/*`) and protected routes (`/account/*`)
 
 ---
 

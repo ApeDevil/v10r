@@ -15,7 +15,7 @@ describe('needsCsrf', () => {
 	});
 
 	it('skips non-/api paths (form actions are covered by SvelteKit checkOrigin)', () => {
-		expect(needsCsrf('POST', '/app/settings')).toBe(false);
+		expect(needsCsrf('POST', '/account/settings')).toBe(false);
 		expect(needsCsrf('POST', '/blog')).toBe(false);
 	});
 

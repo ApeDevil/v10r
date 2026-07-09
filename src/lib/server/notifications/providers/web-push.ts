@@ -55,7 +55,7 @@ export class WebPushProvider implements NotificationProvider {
 			notification: {
 				title: payload.subject,
 				body: payload.body,
-				navigate: payload.navigate ?? '/app/notifications',
+				navigate: payload.navigate ?? '/account/notifications',
 				lang: payload.lang ?? 'en',
 			},
 		});

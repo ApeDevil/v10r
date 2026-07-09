@@ -1,4 +1,6 @@
 <script lang="ts">
+import type { ActionResult } from '@sveltejs/kit';
+import { enhance } from '$app/forms';
 import { invalidateAll } from '$app/navigation';
 import { authClient } from '$lib/auth-client';
 import { Card, ConfirmDialog, DiagGrid, StepUpDialog } from '$lib/components/composites';
@@ -108,6 +110,22 @@ let stepUpAction = $state<'disable' | 'regenerate' | null>(null);
 let disabling = $state(false);
 let freshBackupCodes = $state<string[] | null>(null);
 
+// ── Active sessions ─────────────────────────────────────────────────────────
+
+let revoking = $state<string | null>(null);
+// Server actions 403 with stepUpRequired when TOTP is enrolled and the freshness
+// window has lapsed — the dialog verifies, then resubmits the original form.
+let pendingStepUpForm = $state<HTMLFormElement | null>(null);
+
+function interceptStepUp(result: ActionResult, formElement: HTMLFormElement): boolean {
+	if (result.type === 'failure' && (result.data as { stepUpRequired?: boolean } | undefined)?.stepUpRequired) {
+		pendingStepUpForm = formElement;
+		stepUpOpen = true;
+		return true;
+	}
+	return false;
+}
+
 /**
  * Extract the Base32 secret from an otpauth:// URI. Split + URLSearchParams
  * instead of new URL() — WHATWG parsing of non-special schemes is inconsistent
@@ -194,6 +212,13 @@ function requestStepUp(action: 'disable' | 'regenerate') {
 }
 
 async function onStepUpVerified() {
+	// Form-action path (session revoke): replay the intercepted submit.
+	if (pendingStepUpForm) {
+		pendingStepUpForm.requestSubmit();
+		pendingStepUpForm = null;
+		return;
+	}
+
 	const action = stepUpAction;
 	stepUpAction = null;
 
@@ -447,6 +472,55 @@ function formatDate(iso: string | null): string {
 			</div>
 		{/if}
 	</Card>
+
+	<!-- Active Sessions -->
+	<Card>
+		{#snippet header()}
+			<h2 class="text-fluid-lg font-semibold">{m.app_account_heading_sessions()}</h2>
+		{/snippet}
+
+		<DiagGrid>
+			{#each data.sessions as sess (sess.id)}
+				<div class="session-row">
+					<div class="session-info">
+						<div class="flex items-center gap-2">
+							<code class="font-mono text-fluid-xs">{sess.displayId}</code>
+							{#if sess.isCurrent}
+								<Badge variant="success">{m.app_account_session_badge_current()}</Badge>
+							{/if}
+						</div>
+						{#if sess.ipAddress}
+							<span class="text-xs text-muted">{m.app_account_session_ip({ ip: sess.ipAddress })}</span>
+						{/if}
+						<span class="text-xs text-muted">
+							{m.app_account_session_expires({ date: new Date(sess.expiresAt).toLocaleDateString() })}
+						</span>
+					</div>
+					{#if !sess.isCurrent}
+						<form
+							method="POST"
+							action="?/revokeSession"
+							use:enhance={({ formElement }) => {
+								revoking = sess.id;
+								return async ({ result, update }) => {
+									if (!interceptStepUp(result, formElement)) await update();
+									revoking = null;
+								};
+							}}
+						>
+							<input type="hidden" name="sessionId" value={sess.id} />
+							<Button type="submit" variant="outline" size="sm" disabled={revoking === sess.id}>
+								{#if revoking === sess.id}
+									<Spinner size="xs" class="mr-1" />
+								{/if}
+								{m.app_account_session_revoke()}
+							</Button>
+						</form>
+					{/if}
+				</div>
+			{/each}
+		</DiagGrid>
+	</Card>
 </Stack>
 
 <ConfirmDialog
@@ -464,9 +538,34 @@ function formatDate(iso: string | null): string {
 	}}
 />
 
-<StepUpDialog bind:open={stepUpOpen} onverified={onStepUpVerified} oncancel={() => (stepUpAction = null)} />
+<StepUpDialog
+	bind:open={stepUpOpen}
+	onverified={onStepUpVerified}
+	oncancel={() => {
+		stepUpAction = null;
+		pendingStepUpForm = null;
+	}}
+/>
 
 <style>
+	.session-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: var(--spacing-3);
+		border-radius: var(--radius-sm);
+	}
+
+	.session-row:nth-child(odd) {
+		background: var(--color-subtle);
+	}
+
+	.session-info {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-1);
+	}
+
 	.passkey-row {
 		display: flex;
 		justify-content: space-between;

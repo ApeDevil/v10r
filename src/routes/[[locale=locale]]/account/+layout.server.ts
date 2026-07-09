@@ -9,7 +9,7 @@ export const load: LayoutServerLoad = async ({ locals, url, depends }) => {
 	const { user } = requireAuth(locals, url.pathname + url.search);
 	depends('app:notifications');
 
-	const onDataPage = url.pathname.includes('/app/account/data');
+	const onDataPage = url.pathname.includes('/account/data');
 
 	// The transparency gate (a cheap PK read) and the unread-count nav badge are
 	// independent — resolve them in one parallel wave instead of two serial
@@ -22,7 +22,7 @@ export const load: LayoutServerLoad = async ({ locals, url, depends }) => {
 	if (!seenTransparency) {
 		const firstTime = await consumeTransparencyMarker(user.id);
 		if (firstTime && !onDataPage) {
-			redirect(303, localizeHref('/app/account/data?welcome=1'));
+			redirect(303, localizeHref('/account/data?welcome=1'));
 		}
 	}
 

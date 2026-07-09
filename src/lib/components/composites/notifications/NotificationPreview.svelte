@@ -22,7 +22,7 @@ let { notifications, onMarkRead }: Props = $props();
 <div class="notification-preview">
 	<div class="preview-header">
 		<span class="preview-title">Notifications</span>
-		<a href="/app/notifications" class="preview-link">View all</a>
+		<a href="/account/notifications" class="preview-link">View all</a>
 	</div>
 
 	{#if notifications.length === 0}

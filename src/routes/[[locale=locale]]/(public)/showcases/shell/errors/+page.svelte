@@ -133,9 +133,9 @@ function handleReset() {
 					<span class="i-lucide-compass mr-2 h-3.5 w-3.5" aria-hidden="true"></span>
 					{m.showcase_shell_errors_btn_root404()}
 				</Button>
-				<Button variant="secondary" size="sm" onclick={() => goto('/app/nonexistent')}>
+				<Button variant="secondary" size="sm" onclick={() => goto('/account/nonexistent')}>
 					<span class="i-lucide-layout-dashboard mr-2 h-3.5 w-3.5" aria-hidden="true"></span>
-					{m.showcase_shell_errors_btn_app404()}
+					{m.showcase_shell_errors_btn_account404()}
 				</Button>
 				<Button variant="secondary" size="sm" onclick={() => goto('/auth/nonexistent')}>
 					<span class="i-lucide-log-in mr-2 h-3.5 w-3.5" aria-hidden="true"></span>

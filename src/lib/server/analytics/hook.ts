@@ -25,7 +25,7 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 		!path.startsWith('/api/') &&
 		!path.startsWith('/_app/') &&
 		!path.startsWith('/admin') &&
-		!path.startsWith('/app') &&
+		!path.startsWith('/account') &&
 		!path.includes('.') &&
 		event.request.headers.get('sec-purpose') !== 'prefetch' &&
 		event.request.headers.get('purpose') !== 'prefetch' &&

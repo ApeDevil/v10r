@@ -2,7 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import { localizeHref } from '$lib/i18n';
 import type { PageServerLoad } from './$types';
 
-const DEFAULT_REDIRECT = '/app/dashboard';
+const DEFAULT_REDIRECT = '/account/dashboard';
 
 function sanitizeReturnTo(raw: string | null): string {
 	if (!raw) return DEFAULT_REDIRECT;

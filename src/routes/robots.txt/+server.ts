@@ -13,7 +13,7 @@ export const GET: RequestHandler = async () => {
 			'User-agent: *',
 			'Allow: /',
 			'Disallow: /api/',
-			'Disallow: /app/',
+			'Disallow: /account/',
 			'Disallow: /de/app/',
 			'Disallow: /ru/app/',
 			`Sitemap: ${SITEMAP_URL}`,

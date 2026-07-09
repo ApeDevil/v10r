@@ -79,7 +79,7 @@ async function sendPushNow(notificationId: string, userId: string, type: Notific
 		to: userId, // the push provider fans out over the user's devices itself
 		subject: BRAND_NAME,
 		body: renderNotification(`notif_push_${type}`, {}, locale),
-		navigate: `/app/notifications?n=${notificationId}`,
+		navigate: `/account/notifications?n=${notificationId}`,
 		lang: locale,
 	});
 

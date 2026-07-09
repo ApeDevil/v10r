@@ -2,7 +2,7 @@
  * Page adapter — turns the nav registry into searchable `page` records.
  *
  * Nav labels are genuinely localized (Paraglide), so these are NOT fallback
- * records. Only PUBLIC pages are indexed: `/app/*` and `/admin/*` are excluded
+ * records. Only PUBLIC pages are indexed: `/account/*` and `/admin/*` are excluded
  * so anonymous search never reveals their existence (fixes a prior leak where
  * the old `searchPages` exposed them to everyone).
  */
@@ -12,7 +12,7 @@ import type { SearchLocale, SearchRecord } from '$lib/search/types';
 import { REDIRECT_HREFS } from './_redirects';
 
 function isPublic(href: string): boolean {
-	return !href.startsWith('/app') && !href.startsWith('/admin');
+	return !href.startsWith('/account') && !href.startsWith('/admin');
 }
 
 export function pageRecords(locale: SearchLocale): SearchRecord[] {
