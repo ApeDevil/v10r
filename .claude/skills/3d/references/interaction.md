@@ -148,6 +148,14 @@ In `on-demand` mode a material property change auto-requests a render (no manual
 `invalidate()` needed for reactive prop changes; an *imperative* mutation does need
 `invalidate()`).
 
+**Gotcha — dimming via `transparent` toggle needs `needsUpdate`.** "Ghost the
+non-selected parts" (opacity ~0.2) requires `material.transparent = true` at
+runtime — but the already-compiled shader program was keyed with an `OPAQUE`
+define that pins `diffuseColor.a = 1.0`, so opacity silently does nothing on any
+mesh that has rendered a frame before the toggle. Set `material.needsUpdate =
+true` whenever you flip `transparent` (both directions). Timing can mask the bug:
+it "works" when the toggle lands before the material's first render.
+
 **Selected → inverted-hull `<Outlines>`.** The production-grade selection outline
 is `@threlte/extras`' `<Outlines>` (a port of drei's): renders the mesh a second
 time as expanded back-faces. No `EffectComposer`, works on `SkinnedMesh` /
@@ -167,6 +175,16 @@ artifacts on very concave geometry — usually invisible in practice.)
 objects in one screen-space pass, but it forces `autoRender = false` and adds a
 full composer to every frame — reserve it for desktop scenes that already run
 post-processing.
+
+**Gotcha — theme-token outline colors and `oklch`.** A fixed outline color that
+pops on a dark background washes out on a light one — derive it from a design
+token (e.g. `--color-primary`) and re-resolve on theme change (MutationObserver
+on `<html>` `class`/`data-palette`, then `material.color.set()` + `invalidate()`).
+But `THREE.Color` cannot parse `oklch()`, and the classic canvas normalization
+(`ctx.fillStyle = raw; read ctx.fillStyle`) no longer works: modern Chrome
+serializes `fillStyle` in the authored color space, returning `'oklch(...)'`
+verbatim. Reliable: fill a 1×1 canvas and read `getImageData` (always sRGB bytes
+on a default canvas) → hex. See `$lib/components/3d/css-color.ts`.
 
 ## The Logical-Part Registry
 

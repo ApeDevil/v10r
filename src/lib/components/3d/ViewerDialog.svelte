@@ -3,10 +3,10 @@ import { Canvas } from '@threlte/core';
 import { Dialog as DialogPrimitive } from 'bits-ui';
 import { MediaQuery } from 'svelte/reactivity';
 import { BoundaryFallback } from '$lib/components/composites';
-import { Drawer } from '$lib/components/primitives';
 import type { Model3D } from '$lib/config/models';
 import { resolveViewportConfig } from '$lib/config/models';
 import { PART_EXPLORERS_BY_MODEL } from '$lib/config/parts';
+import PartInfoPanel from './PartInfoPanel.svelte';
 import ViewerOverlay from './ViewerOverlay.svelte';
 import ViewerScene from './ViewerScene.svelte';
 
@@ -29,9 +29,7 @@ const customizeHref = $derived(model.customization ? `/showcases/3d/customize/${
 const parts = $derived(PART_EXPLORERS_BY_MODEL.get(model.id));
 let selectedPartId = $state<string | null>(null);
 const selectedPart = $derived(parts?.find((p) => p.id === selectedPartId) ?? null);
-let drawerOpen = $state(false);
 
-const isMobile = new MediaQuery('(max-width: 767px)');
 const reducedMotion = new MediaQuery('(prefers-reduced-motion: reduce)');
 
 function selectPart(id: string | null) {
@@ -55,13 +53,16 @@ $effect(() => {
 	if (fromUrl && parts.some((p) => p.id === fromUrl)) selectedPartId = fromUrl;
 });
 
-// Drawer visibility mirrors selection; closing the drawer deselects.
-$effect(() => {
-	drawerOpen = !!selectedPart;
-});
-$effect(() => {
-	if (!drawerOpen && selectedPartId) selectPart(null);
-});
+// Esc closes the (non-modal) part panel before anything else. Captured on window
+// so it runs ahead of bits-ui's document-level layers — but never while the photo
+// lightbox (a real modal) is mounted: that Esc belongs to the lightbox. DOM
+// presence is the reliable signal — the event target can be anywhere.
+function handleWindowKeydown(e: KeyboardEvent) {
+	if (e.key !== 'Escape' || !selectedPartId) return;
+	if (document.querySelector('[data-part-lightbox]')) return;
+	e.stopPropagation();
+	selectPart(null);
+}
 
 // svelte-ignore state_referenced_locally
 let currentAnimation = $state(model.animations?.defaultClip ?? '');
@@ -103,6 +104,14 @@ function handleOpenChange(isOpen: boolean) {
 	</svelte:boundary>
 {/snippet}
 
+{#snippet partPanel()}
+	{#if selectedPart}
+		<PartInfoPanel part={selectedPart} {customizeHref} onclose={() => selectPart(null)} />
+	{/if}
+{/snippet}
+
+<svelte:window onkeydowncapture={handleWindowKeydown} />
+
 {#if standalone}
 	<div class="viewer-standalone">
 		{@render viewerContent()}
@@ -123,6 +132,8 @@ function handleOpenChange(isOpen: boolean) {
 				</a>
 			{/snippet}
 		</ViewerOverlay>
+
+		{@render partPanel()}
 	</div>
 {:else}
 	<DialogPrimitive.Root {open} onOpenChange={handleOpenChange}>
@@ -154,25 +165,11 @@ function handleOpenChange(isOpen: boolean) {
 						</DialogPrimitive.Close>
 					{/snippet}
 				</ViewerOverlay>
+
+				{@render partPanel()}
 			</DialogPrimitive.Content>
 		</DialogPrimitive.Portal>
 	</DialogPrimitive.Root>
-{/if}
-
-{#if parts?.length}
-	<Drawer bind:open={drawerOpen} side={isMobile.current ? 'bottom' : 'right'} title={selectedPart?.label}>
-		{#if selectedPart}
-			<div class="part-info" aria-live="polite">
-				<p>{selectedPart.description}</p>
-				{#if selectedPart.customizeHint && customizeHref}
-					<a class="customize-link" href={customizeHref}>
-						<span class="i-lucide-sliders-horizontal h-4 w-4" aria-hidden="true"></span>
-						<span>Customize colours</span>
-					</a>
-				{/if}
-			</div>
-		{/if}
-	</Drawer>
 {/if}
 
 <style>
@@ -190,28 +187,5 @@ function handleOpenChange(isOpen: boolean) {
 		position: absolute;
 		inset: 0;
 		background: var(--color-bg);
-	}
-
-	.part-info {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-4);
-		color: var(--color-fg);
-		font-size: var(--text-fluid-sm);
-		line-height: 1.6;
-	}
-
-	.customize-link {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--spacing-2);
-		align-self: flex-start;
-		color: var(--color-primary);
-		text-decoration: none;
-		font-weight: 500;
-	}
-
-	.customize-link:hover {
-		text-decoration: underline;
 	}
 </style>

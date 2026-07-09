@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import type { Object3D } from 'three';
 import { describe, expect, it } from 'vitest';
 import { collectPartMeshes, type PartDef, resolvePartId, SOFA_PARTS, validateParts } from './parts';
@@ -46,6 +48,38 @@ describe('collectPartMeshes', () => {
 
 	it('returns empty when no mesh matches', () => {
 		expect(collectPartMeshes(fakeScene(['SomethingElse']), partById('body'))).toEqual([]);
+	});
+});
+
+describe('SOFA_PARTS photos', () => {
+	it('gives every part exactly 3 photos', () => {
+		for (const part of SOFA_PARTS) {
+			expect(part.photos, `part "${part.id}" photos`).toHaveLength(3);
+		}
+	});
+
+	it('points every photo at a model-scoped static asset with complete copy', () => {
+		for (const part of SOFA_PARTS) {
+			for (const photo of part.photos ?? []) {
+				expect(photo.src).toMatch(/^\/images\/parts\/glam-velvet-sofa\/[a-z0-9-]+\.(jpg|webp|png|avif)$/);
+				expect(photo.alt.trim()).not.toBe('');
+				expect(photo.caption.trim()).not.toBe('');
+				expect(photo.credit.trim()).not.toBe('');
+			}
+		}
+	});
+
+	it('never reuses a photo across parts', () => {
+		const srcs = SOFA_PARTS.flatMap((p) => p.photos ?? []).map((p) => p.src);
+		expect(new Set(srcs).size).toBe(srcs.length);
+	});
+
+	it('has a real file in static/ behind every photo src', () => {
+		for (const part of SOFA_PARTS) {
+			for (const photo of part.photos ?? []) {
+				expect(existsSync(join(process.cwd(), 'static', photo.src)), `missing asset: ${photo.src}`).toBe(true);
+			}
+		}
 	});
 });
 

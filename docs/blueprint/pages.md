@@ -766,7 +766,7 @@ Data visualization hub. Five sub-pages covering the full range of chart and diag
 | Static geometry | Meshes, materials, lighting |
 | Animations | Threlte `useTask` per-frame updates |
 | Model loading | GLTF, interaction |
-| Part explorer | Click-to-inspect: emissive highlight, camera fly-to, info drawer (sofa) |
+| Part explorer | Click-to-inspect: theme-accent outline + ghosting, camera fly-to, photo info panel + lightbox (sofa) |
 
 **Sub-pages:**
 

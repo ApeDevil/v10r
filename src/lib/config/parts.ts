@@ -13,6 +13,17 @@
 
 import type { Mesh, Object3D } from 'three';
 
+export interface PartPhoto {
+	/** Static asset path (under /images/parts/) — attribution in ATTRIBUTION.md next to the assets */
+	src: string;
+	/** Alt text for the image */
+	alt: string;
+	/** Short caption shown under the photo in the lightbox */
+	caption: string;
+	/** Author / license credit line shown in the lightbox */
+	credit: string;
+}
+
 export interface PartDef {
 	/** Stable logical id, used for selection state and the `?part=` deep-link */
 	id: string;
@@ -22,6 +33,8 @@ export interface PartDef {
 	label: string;
 	/** Short description shown in the info panel */
 	description: string;
+	/** Example photos shown as thumbnails in the part drawer (click → lightbox) */
+	photos?: PartPhoto[];
 	/** When true, the panel offers a cross-link to the material customizer */
 	customizeHint?: boolean;
 }
@@ -42,6 +55,26 @@ export const SOFA_PARTS: PartDef[] = [
 		label: 'Upholstered Body',
 		description:
 			'The velvet-upholstered seat, back, and arms — one continuous piece. Available in five fabric colours.',
+		photos: [
+			{
+				src: '/images/parts/glam-velvet-sofa/body-1.jpg',
+				alt: 'Living room with a gold velvet sectional sofa',
+				caption: 'Velvet upholstery on a full sofa body',
+				credit: 'firepile — CC BY 2.0',
+			},
+			{
+				src: '/images/parts/glam-velvet-sofa/body-2.jpg',
+				alt: 'Close-up of deep ruby velvet pile',
+				caption: 'The dense, light-catching pile that defines velvet',
+				credit: 'sure2talk — CC BY 2.0',
+			},
+			{
+				src: '/images/parts/glam-velvet-sofa/body-3.jpg',
+				alt: 'Red quilted velvet upholstery with diamond stitching',
+				caption: 'Quilted velvet — a classic upholstery treatment',
+				credit: 'BuyandCreate.com — CC BY-SA 2.0',
+			},
+		],
 		customizeHint: true,
 	},
 	{
@@ -49,12 +82,52 @@ export const SOFA_PARTS: PartDef[] = [
 		meshNamePatterns: ['GlamVelvetSofa_legs'],
 		label: 'Wood Legs',
 		description: 'Four turned solid-wood legs in a dark finish, supporting the frame.',
+		photos: [
+			{
+				src: '/images/parts/glam-velvet-sofa/legs-1.jpg',
+				alt: 'Sculpture assembled from dozens of turned wooden furniture legs',
+				caption: 'Turned legs in every profile a lathe can produce',
+				credit: 'Orin Zebest — CC BY 2.0',
+			},
+			{
+				src: '/images/parts/glam-velvet-sofa/legs-2.jpg',
+				alt: 'Craftsman shaping spinning wood on a lathe',
+				caption: 'Turning: the craft that shapes each leg',
+				credit: 'William Warby — CC BY 2.0',
+			},
+			{
+				src: '/images/parts/glam-velvet-sofa/legs-3.jpg',
+				alt: 'Dark stained wood boards with visible grain',
+				caption: 'The dark finish used on the sofa legs',
+				credit: 'webtreats — CC BY 2.0',
+			},
+		],
 	},
 	{
 		id: 'feet',
 		meshNamePatterns: ['GlamVelvetSofa_feet'],
 		label: 'Metal Feet',
 		description: 'Brass-finish caps at the base of each leg.',
+		photos: [
+			{
+				src: '/images/parts/glam-velvet-sofa/feet-1.jpg',
+				alt: 'Antique bed foot with a caster wheel at its base',
+				caption: 'Furniture feet have carried hardware for centuries',
+				credit: 'Skoklosters slott — public domain',
+			},
+			{
+				src: '/images/parts/glam-velvet-sofa/feet-2.jpg',
+				alt: 'Set of engraved antique brass hardware on a wooden table',
+				caption: 'Brass fittings — durable and decorative',
+				credit: 'denise carbonell — CC BY 2.0',
+			},
+			{
+				src: '/images/parts/glam-velvet-sofa/feet-3.jpg',
+				alt: 'Polished brass panel with vent slots',
+				caption: 'The warm sheen of a polished brass finish',
+				credit: "Jnzl's Photos — CC BY 2.0",
+			},
+		],
 	},
 ];
 
