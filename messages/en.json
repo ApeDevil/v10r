@@ -989,6 +989,13 @@
 	"showcase_jobs_col_result": "Result",
 	"showcase_jobs_col_time": "Time",
 
+	"showcase_mcp_title": "Pattern MCP",
+	"showcase_mcp_description": "The v10r pattern registry visualized — dependency graph, container architecture, and the MCP protocol that serves it to coding agents.",
+	"showcase_mcp_breadcrumb": "Pattern MCP",
+	"showcase_mcp_section_dag": "Pattern Dependency Graph",
+	"showcase_mcp_section_architecture": "Ephemeral Container Architecture",
+	"showcase_mcp_section_tools": "Tools & Protocol",
+
 	"showcase_ui_typography_tab_scale": "Type Scale",
 	"showcase_ui_typography_tab_prose": "Prose",
 

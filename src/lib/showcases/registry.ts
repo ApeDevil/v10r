@@ -291,6 +291,12 @@ export const showcases: ShowcaseCard[] = [
 		description: 'Scheduled background jobs with execution logging and monitoring',
 	},
 	{
+		href: '/showcases/mcp',
+		icon: 'i-lucide-network',
+		title: 'Pattern MCP',
+		description: 'The v10r pattern registry, its dependency graph, and the MCP server that exposes it to coding agents',
+	},
+	{
 		href: '/showcases/notifications',
 		icon: 'i-lucide-bell',
 		title: 'Notifications',

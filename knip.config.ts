@@ -10,7 +10,8 @@ const config: KnipConfig = {
 	},
 
 	// SvelteKit convention files and entry points Knip can't trace
-	entry: ['src/hooks.ts', 'src/lib/index.ts', 'scripts/*.ts'],
+	// mcp/ = standalone Pattern MCP server, spawned by MCP clients outside the app graph
+	entry: ['src/hooks.ts', 'src/lib/index.ts', 'scripts/*.ts', 'mcp/*.ts'],
 
 	// Files Knip can't trace through Svelte template imports or re-export chains
 	ignore: [

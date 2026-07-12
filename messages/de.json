@@ -987,6 +987,13 @@
 	"showcase_jobs_col_result": "Ergebnis",
 	"showcase_jobs_col_time": "Zeit",
 
+	"showcase_mcp_title": "Pattern MCP",
+	"showcase_mcp_description": "Die v10r-Pattern-Registry visualisiert — Abhängigkeitsgraph, Container-Architektur und das MCP-Protokoll, das sie Coding-Agenten bereitstellt.",
+	"showcase_mcp_breadcrumb": "Pattern MCP",
+	"showcase_mcp_section_dag": "Pattern-Abhängigkeitsgraph",
+	"showcase_mcp_section_architecture": "Ephemere Container-Architektur",
+	"showcase_mcp_section_tools": "Tools & Protokoll",
+
 	"showcase_ui_typography_tab_scale": "Schriftskala",
 	"showcase_ui_typography_tab_prose": "Fließtext",
 

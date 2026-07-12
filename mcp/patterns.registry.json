@@ -1,0 +1,413 @@
+{
+	"version": "1.0.0",
+	"note": "Curated pattern registry for the v10r Pattern MCP. Every path is repo-relative and validated by mcp/validate-registry.ts. Records point to docs and code — they do not duplicate explanations.",
+	"patterns": [
+		{
+			"id": "multi-client-core",
+			"title": "Multi-client core (hexagonal domain modules)",
+			"category": "architecture",
+			"summary": "One backend operations layer ($lib/server/[domain]/) serves four clients — human UI, AI tools, REST API, background jobs — via thin wrappers, with zero duplicated business logic.",
+			"when_to_use": "Reach for this whenever a backend capability must be reachable from more than one entry point (page action, API route, AI tool, cron job). It is the foundation nearly every other v10r pattern builds on.",
+			"capabilities": [
+				"domain modules",
+				"hexagonal architecture",
+				"backend structure",
+				"multi-client backend",
+				"service layer",
+				"business logic"
+			],
+			"keywords": ["ports and adapters", "framework-free", "queries", "mutations", "service", "adapter", "core"],
+			"depends_on": [],
+			"docs": [
+				{
+					"path": "docs/blueprint/architecture/multi-client-core.md",
+					"note": "The full pattern: canonical module shape, client wiring, error contract"
+				},
+				{ "path": "docs/system-abstraction.md", "note": "Runtime 7-layer view showing where domain modules sit" },
+				{ "path": "docs/codebase-organization.md", "note": "Where each piece lives; import direction rules" }
+			],
+			"code": [
+				{
+					"path": "src/lib/server",
+					"kind": "dir",
+					"note": "Per-domain modules; canonical shape is [domain]/queries.ts + mutations.ts (+ service.ts only when orchestration spans multiple infra calls)"
+				}
+			],
+			"tests": [],
+			"showcases": [],
+			"invariants": [
+				"Domain functions must not import from @sveltejs/kit or $app/ — binding to the request cycle breaks tool and job reuse.",
+				"AI tools RETURN structured errors — never throw.",
+				"The tool manifest is fail-closed: if a tool is not in the manifest, the AI cannot call it; AI tools get a narrower permission set than the human UI.",
+				"Tools capture userId by closure — a tool never sees an unauthenticated call."
+			],
+			"emulation_notes": [
+				"Start every new project with this shape even if only one client exists yet — the second client (AI tool or cron) always arrives.",
+				"Keep adapters thin: a +page.server.ts action or +server.ts route should validate input, call one domain function, map the result."
+			],
+			"risk": "low — structural pattern, no external services"
+		},
+		{
+			"id": "docs-nav-hubs",
+			"title": "Docs navigation hubs (README-per-directory convention)",
+			"category": "docs",
+			"summary": "An AI-optimized docs tree where every directory's README.md is a navigation hub with topic tables, so agents read index → target file, never everything.",
+			"when_to_use": "Adopt in any repo meant to be read by AI agents: it turns documentation from a pile of files into an addressable index.",
+			"capabilities": ["docs navigation", "ai-readable docs", "documentation structure", "docs index"],
+			"keywords": ["readme", "hub", "topic table", "navigation", "findability", "docs convention"],
+			"depends_on": [],
+			"docs": [
+				{ "path": "docs/README.md", "note": "Root hub — the entry point of the whole convention" },
+				{ "path": "docs/blueprint/README.md", "note": "Example directory hub with topic tables" },
+				{ "path": "docs/blueprint/ai/README.md", "note": "Second example hub (AI subsystem)" }
+			],
+			"code": [],
+			"tests": [],
+			"showcases": [],
+			"invariants": [
+				"Each documentation directory has a README.md acting as a navigation hub: a 2-3 sentence intro plus a topic table showing which file covers what.",
+				"Navigation rule: start at docs/README.md and drill down through directory READMEs — read index, then target file, never everything."
+			],
+			"emulation_notes": [
+				"This is a convention, not code — emulate by writing the hubs, not by copying files.",
+				"Keep hub intros to 2-3 sentences; the topic table is the payload."
+			],
+			"risk": "low — documentation convention only"
+		},
+		{
+			"id": "pattern-index",
+			"title": "Pattern Index (the README capability map)",
+			"category": "docs",
+			"summary": "A hand-maintained table in README.md mapping every repo pattern → the doc that explains it, the code that implements it, and the showcase page that proves it (~129 rows, 19 categories).",
+			"when_to_use": "Use as the top-level discovery surface for what a reference repo can do; it is the human-readable twin of this MCP's registry.",
+			"capabilities": ["pattern index", "capability map", "pattern discovery"],
+			"keywords": ["readme", "index", "catalog", "map", "showcase", "proof"],
+			"depends_on": ["docs-nav-hubs"],
+			"docs": [
+				{ "path": "README.md", "kind": "anchor", "note": "The Pattern Index section itself (anchor #pattern-index)" }
+			],
+			"code": [
+				{
+					"path": "src/lib/showcases/registry.ts",
+					"note": "Machine source of truth for showcase coverage — index sections mirror it"
+				},
+				{ "path": "src/lib/showcases/sections.ts", "note": "Showcase section definitions" }
+			],
+			"tests": [],
+			"showcases": [],
+			"invariants": [
+				"Coverage source of truth is src/lib/showcases/registry.ts — a new showcase area there means a new section in the index; a new sublink means a new row.",
+				"Drift points to watch: a new docs/blueprint/<area>/ dir, a new src/lib/server/<domain>/ module, or a renamed route."
+			],
+			"emulation_notes": [
+				"Each row must point to docs AND code AND (where possible) a live proof route — a row without proof is a claim, not a pattern.",
+				"Keep it hand-maintained but anchored to a machine-readable registry to bound drift."
+			],
+			"risk": "low — documentation artifact"
+		},
+		{
+			"id": "ui-component-system",
+			"title": "Component-first UI system (primitives/composites/layout, CVA, tokens)",
+			"category": "ui",
+			"summary": "A layered component system — Bits UI → primitives (styled atoms) → composites (business logic) → layout (structural wrappers) — styled entirely through CVA → UnoCSS → design-token CSS variables.",
+			"when_to_use": "Emulate when a project needs consistent UI at any scale: the layer split keeps styling decisions in one place and bans ad-hoc HTML.",
+			"capabilities": ["ui components", "design system", "design tokens", "component library", "styling architecture"],
+			"keywords": ["primitives", "composites", "layout", "cva", "unocss", "bits ui", "tokens", "component-first"],
+			"depends_on": [],
+			"docs": [
+				{ "path": "docs/blueprint/design/README.md", "note": "Design philosophy hub" },
+				{ "path": "docs/blueprint/design/components.md", "note": "Layer system and CVA variant rules" },
+				{
+					"path": "docs/blueprint/design/tokens.md",
+					"note": "Token architecture (breakpoints, fluid type/space, elevation)"
+				},
+				{ "path": "docs/blueprint/design/styling.md", "note": "Styling flow and layout primitives" }
+			],
+			"code": [
+				{ "path": "src/lib/components/primitives", "kind": "dir", "note": "~40 styled atoms wrapping Bits UI" },
+				{ "path": "src/lib/components/composites", "kind": "dir", "note": "Components with business logic" },
+				{ "path": "src/lib/components/layout", "kind": "dir", "note": "Structural wrappers (Stack, Cluster, Surface)" },
+				{ "path": "src/lib/styles/tokens.ts", "note": "Design tokens" },
+				{ "path": "uno.config.ts", "note": "UnoCSS theme wiring" }
+			],
+			"tests": [
+				{
+					"path": "src/lib/components/composites/dock/dock.operations.test.ts",
+					"note": "Example colocated component test"
+				}
+			],
+			"showcases": [
+				{ "path": "/showcases/ui/components", "kind": "route" },
+				{ "path": "/showcases/ui/layouts", "kind": "route" },
+				{ "path": "/showcases/ui/tokens", "kind": "route" }
+			],
+			"invariants": [
+				"Never use raw HTML elements when a project component exists — raw <input>/<button>/<select> bypass the design system.",
+				"Styling flows through CVA → UnoCSS utilities → token-backed CSS variables; components never hardcode colors or spacing.",
+				"Components are zero-margin; layout is gap-based on the spacing scale."
+			],
+			"emulation_notes": [
+				"Adopt the layer vocabulary first (primitive/composite/layout) — it decides where every new component goes.",
+				"Port the token file before porting any component; components without tokens re-create the ad-hoc styling problem."
+			],
+			"risk": "low — frontend only"
+		},
+		{
+			"id": "jobs-scheduler",
+			"title": "Jobs & scheduling (registry, runner, platform-owned cadence)",
+			"category": "jobs",
+			"summary": "A slug→execute job registry with a unified runner; cadence lives entirely in platform config (Vercel cron vs container setInterval), so switching hosts needs zero job-code change.",
+			"when_to_use": "Use for any recurring or background work — the registry/runner split keeps jobs testable and host-portable.",
+			"capabilities": ["background jobs", "cron", "scheduled tasks", "job registry", "recurring work"],
+			"keywords": ["scheduler", "runner", "vercel cron", "setinterval", "idempotent", "slug"],
+			"depends_on": ["multi-client-core"],
+			"docs": [
+				{ "path": "docs/blueprint/architecture/jobs.md", "note": "The full pattern including cadence ownership" }
+			],
+			"code": [
+				{ "path": "src/lib/server/jobs/index.ts", "note": "Registry: slug → execute function, nothing more" },
+				{ "path": "src/lib/server/jobs/runner.ts", "note": "runJob() unified runner" },
+				{ "path": "src/lib/server/jobs/scheduler.ts", "note": "Container-mode persistent setInterval scheduler" },
+				{ "path": "src/routes/api/cron/[job]/+server.ts", "note": "Dynamic Vercel cron entry" },
+				{ "path": "vercel.json", "note": "Where cron schedules live" }
+			],
+			"tests": [
+				{ "path": "src/lib/server/jobs/retention.test.ts" },
+				{ "path": "src/lib/server/jobs/dbops-refresh.test.ts" }
+			],
+			"showcases": [{ "path": "/showcases/jobs", "kind": "route" }],
+			"invariants": [
+				"The registry maps a slug to an execute function — nothing more; cadence lives in platform config, the registry has no schedule field.",
+				"Every registered job needs a vercel.json cron entry — a slug with no entry never fires.",
+				"Cron delivery is at-least-once — jobs must be idempotent."
+			],
+			"emulation_notes": [
+				"Jobs are a client of domain modules (multi-client core): a job body should call the same domain functions the UI calls.",
+				"Vercel Hobby tier rejects sub-daily cron schedules at deploy time — plan cadence accordingly."
+			],
+			"risk": "medium — touches deploy config and background execution"
+		},
+		{
+			"id": "ai-tool-harness",
+			"title": "AI tool manifest & harness split (tool defs, risk metadata, registry)",
+			"category": "ai",
+			"summary": "Tool definitions are thin wrappers whose risk-tier metadata and per-surface membership live in a registry, with harness concerns (agent loop, compaction, policy) factored out separately.",
+			"when_to_use": "Use as soon as an LLM gets tools: the manifest/harness split is what keeps tool permissions auditable and surfaces honest.",
+			"capabilities": [
+				"ai tools",
+				"tool calling",
+				"tool registry",
+				"tool risk metadata",
+				"agent loop",
+				"tool manifest"
+			],
+			"keywords": ["toolmeta", "risk tier", "fail-closed", "step cap", "compaction", "policy governor", "leak guard"],
+			"depends_on": ["multi-client-core"],
+			"docs": [
+				{ "path": "docs/blueprint/ai/surfaces.md", "note": "Tool calling and per-surface tool membership" },
+				{ "path": "docs/blueprint/ai/harness-lens.md", "note": "Harness audit lens: loop, policy, compaction" }
+			],
+			"code": [
+				{
+					"path": "src/lib/server/ai/tools/index.ts",
+					"note": "The manifest: chatbotToolMeta/deskbotToolMeta/allToolMeta maps + stepsForScopes"
+				},
+				{
+					"path": "src/lib/server/ai/tools/_types.ts",
+					"note": "Risk vocabulary: ToolRisk = read|create|write|destructive; ToolMeta"
+				},
+				{ "path": "src/lib/server/ai/policy/governor.ts", "note": "requiresApproval(risk) + shouldRequirePlan" },
+				{ "path": "src/lib/server/ai/tool-leak-guard.ts", "note": "Guard against tool/surface leakage" },
+				{ "path": "src/lib/server/ai/loop/compact.ts", "note": "Loop compaction (harness side)" }
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/ai/tools/index.test.ts",
+					"note": "Drift-guards the replay map against the live tool set"
+				},
+				{ "path": "src/lib/server/ai/policy/governor.test.ts" },
+				{ "path": "src/lib/server/ai/tool-leak-guard.test.ts" },
+				{ "path": "src/lib/server/ai/loop/compact.test.ts" }
+			],
+			"showcases": [],
+			"invariants": [
+				"Risk-tiered approval gates, not per-tool needsApproval flags — approval fatigue is reproducible; the tier rule is the working pattern.",
+				"executeDeskToolCall is the single door for mutating tool execution (one SSOT).",
+				"stepsForScopes caps agent steps per scope (read-only including desk:ask = 3, mutation = 5)."
+			],
+			"emulation_notes": [
+				"The manifest is not a single file: meta maps in tools/index.ts + risk vocab in tools/_types.ts + the approval rule in policy/governor.ts together form it.",
+				"Write the drift-guard test early — it is what keeps the manifest honest as tools accumulate."
+			],
+			"risk": "high — governs what an LLM is allowed to execute"
+		},
+		{
+			"id": "ai-surfaces",
+			"title": "AI surfaces (chatbot vs deskbot split over one guard)",
+			"category": "ai",
+			"summary": "Two AI surfaces over one shared guard: a read-only, citation-faithful chatbot (Vely) vs an agentic, mutating, approval-gated deskbot — with a showcase-only rag-demo value kept out of production paths.",
+			"when_to_use": "Use when one product needs both a safe answer-bot and an acting agent: splitting the surface (not forking the stack) keeps permissions and prompts honest per surface.",
+			"capabilities": ["ai chat", "chatbot", "deskbot", "ai surface split", "streaming chat", "ai assistant"],
+			"keywords": ["vely", "surface", "guard", "orchestrator", "rag-demo", "citation"],
+			"depends_on": ["ai-tool-harness"],
+			"docs": [
+				{ "path": "docs/blueprint/ai/surfaces.md", "note": "The surface split and per-surface rules" },
+				{ "path": "docs/blueprint/ai/README.md", "note": "AI subsystem hub" },
+				{ "path": "docs/blueprint/ai/desk-integration.md", "note": "How the deskbot integrates with the desk" }
+			],
+			"code": [
+				{ "path": "src/lib/server/ai/guard.ts", "note": "guardAiRequest() — the one shared gate" },
+				{ "path": "src/lib/server/ai/chat-orchestrator.ts", "note": "Chatbot orchestration" },
+				{ "path": "src/lib/server/ai/deskbot-rag.ts", "note": "Deskbot retrieval side" },
+				{ "path": "src/routes/api/ai/chatbot/+server.ts", "note": "Chatbot route adapter" },
+				{ "path": "src/routes/api/ai/deskbot/+server.ts", "note": "Deskbot route adapter" },
+				{ "path": "src/lib/components/composites/chatbot", "kind": "dir", "note": "Chatbot UI" }
+			],
+			"tests": [
+				{ "path": "src/lib/server/ai/chat-orchestrator.test.ts" },
+				{ "path": "src/lib/server/ai/tool-leak-guard.test.ts" }
+			],
+			"showcases": [
+				{
+					"path": "/showcases/ai/chat",
+					"kind": "route",
+					"note": "Chatbot showcase; deskbot is live at app route /desk (no showcase)"
+				}
+			],
+			"invariants": [
+				"The chatbot never emits a DeskEffect and never creates a proposal.",
+				"A chatbot tool never carries a desk scope; a deskbot tool always does — topology derives from manifest membership, not a scope artifact.",
+				"rag-demo is not a product surface and must not dilute the chatbot."
+			],
+			"emulation_notes": [
+				"Start with the read-only surface; add the mutating surface only with the approval gate (see deskbot-approval-gate).",
+				"Route adapters stay thin — both surfaces call the same guard then their orchestrator."
+			],
+			"risk": "high — user-facing LLM behavior and permissions"
+		},
+		{
+			"id": "deskbot-approval-gate",
+			"title": "Deskbot approval gate (proposal → approve, plan-gated mutation)",
+			"category": "ai",
+			"summary": "Write/destructive desk tools never mutate inside the agent loop; they return a requiresApproval sentinel that becomes a proposal (PlanCard), executed only via an approve-route replay that records the real approver and time.",
+			"when_to_use": "Mandatory companion to any mutating AI tool: it converts 'the model wants to write' into an auditable human decision.",
+			"capabilities": [
+				"approval gate",
+				"human in the loop",
+				"mutating ai tools",
+				"proposals",
+				"plan gating",
+				"ai safety"
+			],
+			"keywords": ["requiresApproval", "sentinel", "plancard", "approve route", "replay", "governor"],
+			"depends_on": ["ai-tool-harness", "ai-surfaces"],
+			"docs": [
+				{ "path": "docs/blueprint/ai/harness-lens.md", "note": "Where the gate sits in the harness" },
+				{ "path": "docs/blueprint/ai/desk-integration.md", "note": "Proposal lifecycle in the desk" }
+			],
+			"code": [
+				{ "path": "src/lib/server/ai/tools/propose-plan.ts", "note": "Proposal creation" },
+				{ "path": "src/lib/server/ai/tools/desk-execute.ts", "note": "executeDeskToolCall — the one door" },
+				{
+					"path": "src/lib/server/ai/policy/governor.ts",
+					"note": "requiresApproval(risk): write/destructive gated, read/create not"
+				},
+				{ "path": "src/routes/api/ai/proposals/[id]/approve/+server.ts", "note": "Approve-route replay" }
+			],
+			"tests": [
+				{ "path": "src/lib/server/ai/tools/propose-plan.test.ts" },
+				{ "path": "src/lib/server/ai/tools/desk-execute.test.ts" },
+				{ "path": "src/lib/server/ai/policy/governor.test.ts" }
+			],
+			"showcases": [],
+			"invariants": [
+				"The hard gate is at the tool layer — write/destructive tools return a requiresApproval sentinel; requiresApproval(risk) is the single rule.",
+				"Planning is soft guidance, not the gate — shouldRequirePlan only decides whether to instruct the model to plan.",
+				"Approval binds execution — the post-approval resume turn is filtered to read-only scopes so it cannot re-mutate."
+			],
+			"emulation_notes": [
+				"An earlier design (inline ConfirmCard with a model-minted confirmed=false→true handshake) was superseded and never shipped — do not emulate it; the proposal→approve flow is the proven shape.",
+				"Record who approved and when at the approve route — the audit trail is the point."
+			],
+			"risk": "high — the safety boundary for AI mutation"
+		},
+		{
+			"id": "layered-rag",
+			"title": "Layered RAG (llmwiki pointer layer over a rawrag kernel)",
+			"category": "ai",
+			"summary": "A shared rawrag retrieve() kernel (embed → tiers → RRF fusion → drill) feeds two layers: llmwiki TLDR pointer pages as the answer surface over immutable rawrag chunks as the audit trail.",
+			"when_to_use": "Use when a project needs grounded answers over a corpus: start with read-only search plus citation/provenance before adding any mutating tools.",
+			"capabilities": ["rag", "retrieval", "grounded answers", "citations", "knowledge base", "embeddings search"],
+			"keywords": ["rawrag", "llmwiki", "nrag", "rrf", "tiers", "chunks", "drill-down", "provenance", "kernel"],
+			"depends_on": ["multi-client-core"],
+			"docs": [
+				{ "path": "docs/blueprint/ai/layered-rag.md", "note": "The two-layer architecture" },
+				{ "path": "docs/blueprint/ai/knowledge-base.md", "note": "Corpus and ingest door" },
+				{ "path": "docs/blueprint/ai/graph-rag.md", "note": "Graph tier" }
+			],
+			"code": [
+				{ "path": "src/lib/server/rawrag/index.ts", "note": "retrieve() — the single shared kernel" },
+				{ "path": "src/lib/server/rawrag/plan.ts", "note": "Retrieval planning" },
+				{ "path": "src/lib/server/rawrag/tiers", "kind": "dir", "note": "Tier implementations" },
+				{ "path": "src/lib/server/llmwiki/search.ts", "note": "Pointer-layer search" },
+				{ "path": "src/lib/server/llmwiki/overview.ts", "note": "Deterministic system-overview anchor" }
+			],
+			"tests": [
+				{ "path": "src/lib/server/rawrag/index.test.ts" },
+				{ "path": "src/lib/server/rawrag/plan.test.ts" },
+				{ "path": "src/lib/server/rawrag/rank.test.ts" },
+				{ "path": "src/lib/server/llmwiki/rrf.test.ts" },
+				{ "path": "src/lib/server/llmwiki/overview.test.ts" }
+			],
+			"showcases": [{ "path": "/showcases/ai/retrieval", "kind": "route" }],
+			"invariants": [
+				"The kernel is never forked — a single user_id tenant filter at the chunk level is the corpus boundary; a duplicated filter would be a cross-tenant leak.",
+				"Retrieval tools close over userId via buildRetrievalTools({ userId }) — the model cannot forge identity.",
+				"Raw chunks are source truth; llmwiki is the compressed pointer layer — the model answers from wiki TLDRs by default and drills into raw chunks only when the user asks for exact wording or challenges a claim."
+			],
+			"emulation_notes": [
+				"'nRAG' in docs is a concept name only — the code identifier is rawrag/retrieve(); do not search for an nrag module.",
+				"Build the raw layer first; the pointer layer compiles from it and can start empty."
+			],
+			"risk": "medium — external embedding/LLM providers with quota limits"
+		},
+		{
+			"id": "retrieval-endpoints",
+			"title": "Retrieval ingest/search endpoints (one ingest door, /api/retrieval/*)",
+			"category": "ai",
+			"summary": "The RAG corpus is fed and queried through /api/retrieval/* HTTP endpoints plus a unified ingest door: the app runtime and the Bun docs-ingest script share the same pure planChunks() core.",
+			"when_to_use": "Use when the corpus must be maintainable from more than one runtime (app UI and scripts) without forking chunking logic.",
+			"capabilities": ["rag ingest", "corpus ingest", "retrieval api", "search endpoint", "document ingestion"],
+			"keywords": ["ingest door", "planchunks", "chunking", "resume-safe", "idempotent", "stream"],
+			"depends_on": ["layered-rag"],
+			"docs": [
+				{ "path": "docs/blueprint/ai/knowledge-base.md", "note": "The ingest door pattern" },
+				{ "path": "docs/blueprint/ai/nrag-observability.md", "note": "Observability over the pipeline" }
+			],
+			"code": [
+				{
+					"path": "src/routes/api/retrieval/ingest/+server.ts",
+					"note": "Ingest endpoint (namespace is /api/retrieval/*, not /api/rag/*)"
+				},
+				{ "path": "src/routes/api/retrieval/search/+server.ts", "note": "Search endpoint" },
+				{ "path": "src/lib/server/rawrag/ingest/index.ts", "note": "Runtime ingest module" },
+				{ "path": "scripts/db/ingest-docs.ts", "note": "Bun script sharing the same planChunks() door" }
+			],
+			"tests": [{ "path": "src/lib/server/rawrag/chunk.test.ts" }, { "path": "src/lib/server/rawrag/embed.test.ts" }],
+			"showcases": [
+				{ "path": "/showcases/ai/retrieval/ingest", "kind": "route" },
+				{ "path": "/showcases/ai/retrieval/explorer", "kind": "route" }
+			],
+			"invariants": [
+				"One ingest door: the standalone script reuses the app's pure planChunks() so both runtimes share one chunking implementation.",
+				"Section-parent chunks are stored with embedding = NULL so tier-1 retrieval never surfaces them.",
+				"Re-ingest is resume-safe and idempotent."
+			],
+			"emulation_notes": [
+				"Keep the chunker pure (no I/O) — that is what makes the door shareable across runtimes.",
+				"Mind embedding-provider daily quotas when re-ingesting a whole corpus."
+			],
+			"risk": "medium — writes to the corpus store; provider quotas apply"
+		}
+	]
+}

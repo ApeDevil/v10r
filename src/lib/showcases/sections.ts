@@ -128,4 +128,24 @@ export const showcaseSections: ShowcaseSection[] = [
 		title: 'Image Embedder',
 		keywords: ['embedding', 'vector', 'rag', 'cosine', 'heatmap'],
 	},
+
+	// Pattern MCP
+	{
+		pageHref: '/showcases/mcp',
+		anchorId: 'registry-dag',
+		title: 'Pattern Dependency Graph',
+		keywords: ['dag', 'depends_on', 'registry', 'patterns', 'emulate'],
+	},
+	{
+		pageHref: '/showcases/mcp',
+		anchorId: 'architecture',
+		title: 'MCP Container Architecture',
+		keywords: ['podman', 'container', 'stdio', 'sandbox', 'read-only'],
+	},
+	{
+		pageHref: '/showcases/mcp',
+		anchorId: 'tools-protocol',
+		title: 'MCP Tools & Protocol',
+		keywords: ['json-rpc', 'handshake', 'tools', 'mcp'],
+	},
 ];

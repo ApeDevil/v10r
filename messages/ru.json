@@ -987,6 +987,13 @@
 	"showcase_jobs_col_result": "Результат",
 	"showcase_jobs_col_time": "Время",
 
+	"showcase_mcp_title": "Pattern MCP",
+	"showcase_mcp_description": "Реестр паттернов v10r в наглядном виде — граф зависимостей, контейнерная архитектура и протокол MCP, открывающий их агентам.",
+	"showcase_mcp_breadcrumb": "Pattern MCP",
+	"showcase_mcp_section_dag": "Граф зависимостей паттернов",
+	"showcase_mcp_section_architecture": "Архитектура эфемерного контейнера",
+	"showcase_mcp_section_tools": "Инструменты и протокол",
+
 	"showcase_ui_typography_tab_scale": "Масштаб шрифта",
 	"showcase_ui_typography_tab_prose": "Текст",
 

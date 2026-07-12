@@ -159,6 +159,7 @@ The complete, hand-maintained map of every pattern in this repo. Each row points
 | Request-cycle visualizer (form · API · AI) | [system-abstraction.md](docs/system-abstraction.md) | [src/lib/server/cycle/](src/lib/server/cycle/) · [src/lib/components/cycle/](src/lib/components/cycle/) | `/showcases/cycle/form` · `/api` · `/ai` |
 | Deployment (Vercel primary, tri-target) | [blueprint/deployment.md](docs/blueprint/deployment.md) · [stack/ops/deployment.md](docs/stack/ops/deployment.md) | [svelte.config.js](svelte.config.js) · [vercel.json](vercel.json) | — |
 | Testing infrastructure (Vitest, PGlite isolation) | [blueprint/testing/ai-testing-infrastructure.md](docs/blueprint/testing/ai-testing-infrastructure.md) | [src/lib/server/test/](src/lib/server/test/) · [vitest.config.ts](vitest.config.ts) | — |
+| Pattern MCP (agent-queryable pattern registry) | [blueprint/architecture/pattern-mcp.md](docs/blueprint/architecture/pattern-mcp.md) | [mcp/](mcp/) | `/showcases/mcp` |
 
 ### App Shell & Navigation
 

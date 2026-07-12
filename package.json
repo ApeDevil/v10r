@@ -55,7 +55,8 @@
 		"quality:opacity": "bun run scripts/quality/no-token-opacity.ts",
 		"perf:cold-start": "bash scripts/perf/cold-start.sh",
 		"pwa:icons": "bun run scripts/pwa/generate-icons.ts",
-		"validate": "bun run check && biome ci . && bun run test && bun run i18n:check-missing && bun run content:check && bun run quality:opacity",
+		"mcp:validate": "bun run mcp/validate-registry.ts",
+		"validate": "bun run check && biome ci . && bun run test && bun run mcp:validate && bun run i18n:check-missing && bun run content:check && bun run quality:opacity",
 		"knip": "knip"
 	},
 	"dependencies": {

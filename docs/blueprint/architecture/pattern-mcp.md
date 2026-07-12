@@ -1,0 +1,75 @@
+# v10r Pattern MCP
+
+A read-only MCP (Model Context Protocol) server that exposes v10r's pattern library to coding agents. It is what makes "emulate, don't clone" (see the root [README](../../../README.md#what-v10r-is)) executable rather than aspirational: an agent building a new project queries curated pattern cards — docs, code, tests, showcase proof, invariants — instead of grepping this repo and guessing which hits are load-bearing.
+
+This doc explains *why* it's shaped the way it is. For running it, testing it, or adding a pattern, see [mcp/README.md](../../../mcp/README.md) — that's the operational reference. The code lives in [mcp/](../../../mcp/).
+
+**See it live:** [/showcases/mcp](/showcases/mcp) — registry stats, the pattern dependency graph, the container architecture, and the JSON-RPC handshake, all computed from the real registry.
+
+---
+
+## Why this exists
+
+Grep finds code. It doesn't find the tests that pin a pattern's behavior, the invariants that must survive being ported to a new project, or proof that the pattern actually works end to end. An agent pointed at a raw repo has to reconstruct all of that by reading broadly and inferring — slow, and easy to get wrong in ways that only surface later (a copied auth guard missing the invariant that made it safe, a copied job missing the retry semantics that made it correct).
+
+The Pattern MCP closes that gap. Each entry in [`mcp/patterns.registry.json`](../../../mcp/patterns.registry.json) is a curated card: what the pattern is, when to reach for it, which docs to read, which files to model code on, which tests mirror its behavior, which showcase route proves it live, and — the part grep can never give you — the invariants that must hold when you emulate it. The server is a thin, deterministic query layer over that registry; the registry is the actual product.
+
+## Design
+
+### Registry-as-product
+
+The server (`server.ts`, `protocol.ts`, `tools.ts`) is intentionally boring: JSON-RPC plumbing and five query functions over one JSON file. All the curation work — deciding what counts as a pattern, which invariants matter, which files are the canonical entry point — lives in the registry data, not in code. Adding a pattern means adding a record, not writing a handler.
+
+A drift guard (`validate-registry.ts`, wired into `bun run validate` as `mcp:validate`) keeps the registry honest: every `docs`/`code`/`tests`/`showcases` path must exist on disk, `depends_on` must form a DAG (checked via the same Kahn toposort the server uses at query time), and IDs must be unique kebab-case. A registry that references a moved or deleted file fails the gate — unlike a stale doc, it can't silently rot.
+
+The registry is also self-referential: it catalogs v10r's own documentation conventions as patterns (`docs-nav-hubs`, `pattern-index`) alongside code patterns (`multi-client-core`, `layered-rag`, `jobs-scheduler`, …). The root README's Pattern Index is described in the registry itself as "the human-readable twin of this MCP's registry" — same map, two audiences.
+
+### Curated cards over raw grep
+
+Each card bundles five things a grep hit never gives you together: **docs** (what to read first), **code** (where the canonical implementation lives), **tests** (what pins its behavior), **showcases** (where it's proven live), and **invariants** (what must hold true after emulation, not just after copying). `get_pattern` returns the whole card; `trace_capability` walks concept → docs → code → tests → proof for a free-text query; `search_patterns` ranks cards by a weighted lexical match over title/keywords/capabilities/category/summary/invariants — no embeddings, no network call, because the container has neither.
+
+### Deterministic plan assembly, not inference
+
+`recommend_emulation_plan` takes a list of desired capabilities and returns a dependency-ordered build plan — but it does no reasoning of its own. It matches capabilities to pattern records lexically, expands the selection through `depends_on` edges, and orders the result with the same Kahn toposort `validate-registry.ts` uses to check the registry for cycles. The assembly is 100% deterministic and inspectable; the agent supplies the judgment about *how* to adapt each step to the target project. Keeping the assembler dumb is deliberate — it's a query over curated facts, not a second opinion.
+
+### Ephemeral read-only container
+
+MCP clients spawn the server as a throwaway container, not a long-lived process on the host:
+
+```bash
+podman run -i --rm --network=none -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 bun /v10r/mcp/server.ts
+```
+
+`--rm` means no state survives between sessions, `--network=none` means no exfiltration path exists even if something in the tool chain were compromised, and `:ro` means the mount can't be written to no matter what the server code does. This is kernel-enforced isolation, not a promise the application layer has to keep. `security.ts` adds a second, application-level layer on top — realpath-based path containment (rejects `..` traversal and symlink escapes) and a secret-filename denylist (`.env`, `*.pem`, `*.key`, `.git/`, `node_modules/`, …) for `get_file_excerpt` — because client-supplied paths are advisory in MCP; the server is the trust boundary, not the client.
+
+### Zero-dependency protocol
+
+`server.ts` and `protocol.ts` hand-roll JSON-RPC 2.0 framing over newline-delimited stdio (MCP spec 2025-11-25) with no SDK and no validation library. This isn't a style preference: the container is a bare `oven/bun` image with no `node_modules`, so any dependency would mean either baking a custom image or an `bun install` step on every spawn. Hand-rolling the ~150 lines of framing and a hand-written structural validator (`registry.ts`) keeps the spawn command a one-liner and the cold-start instant.
+
+The `initialize` response also carries a hand-written `instructions` string (in `server.ts`) that tells the calling agent *when* to reach for this server versus plain `Read`/`Grep` — the same "emulate, don't clone" framing this doc opens with, but delivered as part of the protocol handshake instead of a doc the agent might not have read.
+
+### Client design constraints (the gotchas)
+
+A handful of the server's behaviors exist only because live E2E testing against Claude Code surfaced non-obvious client bugs and limits. They're encoded as constraints, not comments, and regression-guarded by `smoke.ts` (a spawned-subprocess test, not a mock) where possible:
+
+| Constraint | Why |
+|---|---|
+| Tool defs carry only `name`/`description`/`inputSchema` — never `outputSchema`, `title`, or `annotations` | A live Claude Code bug silently drops a server's *entire* tool list if any one tool definition carries these fields. |
+| Tool results are plain text/markdown — `structuredContent` is never returned | E2E dogfooding showed that when a result has `structuredContent`, Claude Code shows the model *only* that payload and hides the text body — `get_file_excerpt` came through as bare metadata with no code. |
+| stdout carries protocol frames only; all logging goes to stderr | Any stray `console.log` corrupts the NDJSON stream the client is parsing. |
+| The process exits on stdin EOF or SIGTERM/SIGINT | Claude Code has a known issue leaving spawned child processes orphaned otherwise — the server terminates itself rather than trusting the client to clean up. |
+| `.mcp.json`'s mount uses `${V10R_REPO:-/home/ad/dev/velociraptor}`, not `${CLAUDE_PROJECT_DIR}` | `${CLAUDE_PROJECT_DIR}` does not expand inside `.mcp.json` args — an env-var-with-default is the only working substitution. |
+| Every response stays well under Claude Code's 10k-token warning threshold | Built in by construction: bounded excerpts (`get_file_excerpt` caps at 250 lines), capped result counts, no unbounded list dumps. |
+
+These aren't arbitrary style choices — each one maps to a specific failure mode observed by spawning the real server against a real client. Treat them as invariants of the MCP transport layer itself, the same way a pattern card's `invariants` field pins behavior for the patterns it describes.
+
+## Registry record shape
+
+Each record in `patterns.registry.json` has `id`, `title`, `category`, `summary`, `when_to_use`, `capabilities[]`, `keywords[]`, `depends_on[]`, and four reference lists — `docs[]`, `code[]`, `tests[]`, `showcases[]` (each a `{ path, note?, kind? }` ref, `kind` one of `file | dir | route | anchor`) — plus `invariants[]`, `emulation_notes[]`, and `risk`. See the file itself for the full shape and current entries; this doc won't re-derive what the schema already states plainly.
+
+## Where to go next
+
+- **See it live:** [/showcases/mcp](/showcases/mcp) — interactive dependency graph, architecture diagram, and protocol walkthrough
+- **Run it, test it, register it, add a pattern:** [mcp/README.md](../../../mcp/README.md)
+- **Read the code:** [mcp/](../../../mcp/) — `server.ts` (entry/lifecycle), `protocol.ts` (framing), `registry.ts` (types/validation/toposort), `security.ts` (containment), `tools.ts` (the five tools)
+- **The pattern this MCP itself follows:** [multi-client-core.md](./multi-client-core.md) — the registry's domain-shaped data plus a thin adapter is the same shape as every other pattern in this repo
