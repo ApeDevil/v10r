@@ -53,6 +53,8 @@
 	"auth_login_error_magic_link_failed": "Couldn't send the magic link. Please try again.",
 	"auth_login_error_otp_failed": "Couldn't send the code. Please try again.",
 	"auth_login_error_rate_limited": "Too many sign-in attempts. Please wait a minute and try again.",
+	"auth_login_error_rate_limited_minutes": "Too many attempts for this email. Please try again in about {minutes} min.",
+	"auth_login_error_captcha": "Human verification failed or expired. Please try again.",
 	"auth_verify_title": "Enter verification code",
 	"auth_verify_subtitle": "We sent a 6-digit code to",
 	"auth_verify_submit": "Verify",

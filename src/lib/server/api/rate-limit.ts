@@ -5,17 +5,25 @@ import { redis } from '$lib/server/cache';
 
 export interface Limiter {
 	limit(id: string): Promise<{ success: boolean; reset: number }>;
+	/** Read the remaining quota WITHOUT consuming a slot. */
+	peek(id: string): Promise<{ remaining: number; reset: number }>;
 }
 
 const passthrough: Limiter = {
 	async limit() {
 		return { success: true, reset: 0 };
 	},
+	async peek() {
+		return { remaining: Number.POSITIVE_INFINITY, reset: 0 };
+	},
 };
 
 const failClosed: Limiter = {
 	async limit() {
 		return { success: false, reset: Date.now() + 60_000 };
+	},
+	async peek() {
+		return { remaining: 0, reset: Date.now() + 60_000 };
 	},
 };
 
@@ -50,6 +58,24 @@ export function createLimiter(prefix: string, max: number, window: Duration): Li
 					err instanceof Error ? err.message : err,
 				);
 				return { success: false, reset: Date.now() + 60_000 };
+			}
+		},
+		async peek(id: string) {
+			try {
+				// getRemaining has no SDK-level timeout (unlike limit) — bound it the
+				// same way: transient slowness fails open, hard failure fails closed.
+				const result = await Promise.race([
+					ratelimit.getRemaining(id),
+					new Promise<null>((resolve) => setTimeout(() => resolve(null), 1000)),
+				]);
+				if (result === null) return { remaining: max, reset: 0 };
+				return { remaining: result.remaining, reset: result.reset };
+			} catch (err) {
+				console.error(
+					`[rate-limit] runtime Redis failure for ${prefix} — failing closed:`,
+					err instanceof Error ? err.message : err,
+				);
+				return { remaining: 0, reset: Date.now() + 60_000 };
 			}
 		},
 	};

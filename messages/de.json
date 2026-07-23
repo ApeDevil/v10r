@@ -53,6 +53,8 @@
 	"auth_login_error_magic_link_failed": "Magischer Link konnte nicht gesendet werden. Bitte erneut versuchen.",
 	"auth_login_error_otp_failed": "Code konnte nicht gesendet werden. Bitte erneut versuchen.",
 	"auth_login_error_rate_limited": "Zu viele Anmeldeversuche. Bitte warten Sie eine Minute und versuchen Sie es erneut.",
+	"auth_login_error_rate_limited_minutes": "Zu viele Versuche für diese E-Mail-Adresse. Bitte versuchen Sie es in etwa {minutes} Min. erneut.",
+	"auth_login_error_captcha": "Die Sicherheitsprüfung ist fehlgeschlagen oder abgelaufen. Bitte erneut versuchen.",
 	"auth_verify_title": "Bestätigungscode eingeben",
 	"auth_verify_subtitle": "Wir haben einen 6-stelligen Code gesendet an",
 	"auth_verify_submit": "Bestätigen",

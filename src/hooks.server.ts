@@ -4,10 +4,17 @@ import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { building } from '$app/environment';
 import { cookieMaxAge, locales, localizeHref, cookieName as PARAGLIDE_LOCALE_COOKIE } from '$lib/i18n';
 import { paraglideMiddleware } from '$lib/paraglide/server';
-import { checkEmailRateLimit, decisionResponse, logBlocked, verifyAltcha } from '$lib/server/abuse';
+import {
+	authDecisionResponse,
+	checkEmailRateLimit,
+	denied,
+	logBlocked,
+	recordEmailSend,
+	verifyAltcha,
+} from '$lib/server/abuse';
 import { parseConsentTier } from '$lib/server/analytics/consent';
 import { analyticsCollector } from '$lib/server/analytics/hook';
-import { createLimiter, isDocumentRequest, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { createLimiter, isDocumentRequest } from '$lib/server/api/rate-limit';
 import { auth } from '$lib/server/auth';
 import { logAdminConfig } from '$lib/server/auth/admin-ids';
 import { listActiveGrantKinds } from '$lib/server/auth/grants';
@@ -337,7 +344,7 @@ const authCaptchaGate: Handle = async ({ event, resolve }) => {
 	const captchaDecision = await verifyAltcha(event.request.headers.get('x-altcha-token'));
 	if (!captchaDecision.allowed) {
 		logBlocked(captchaDecision, ctx);
-		return decisionResponse(captchaDecision);
+		return authDecisionResponse(captchaDecision);
 	}
 
 	// Read email from a clone so Better Auth can still consume the body.
@@ -353,11 +360,16 @@ const authCaptchaGate: Handle = async ({ event, resolve }) => {
 		const emailDecision = await checkEmailRateLimit(email);
 		if (!emailDecision.allowed) {
 			logBlocked(emailDecision, ctx);
-			return decisionResponse(emailDecision);
+			return authDecisionResponse(emailDecision);
 		}
 	}
 
-	return resolve(event);
+	const response = await resolve(event);
+	// Consume a per-email slot only for sends Better Auth accepted — denied and
+	// failed attempts must not eat quota, or retrying while limited would keep
+	// the sliding window full and extend the lockout indefinitely.
+	if (email && response.ok) await recordEmailSend(email);
+	return response;
 };
 
 /**
@@ -370,7 +382,7 @@ function authRateLimited(event: RequestEvent, reset: number, message: string): R
 		const login = localizeHref('/auth/login', { locale: event.locals.locale ?? 'en' });
 		return new Response(null, { status: 303, headers: { Location: `${login}?error=rate_limited` } });
 	}
-	return rateLimitResponse(reset, message);
+	return authDecisionResponse(denied('rate-limit', message, 429, Math.max(0, reset - Date.now())));
 }
 
 /**

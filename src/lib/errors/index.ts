@@ -1,2 +1,2 @@
 export { DomainError, ErrorCode, isDomainError } from './codes';
-export { errorMessage } from './render';
+export { authErrorMessage, errorMessage } from './render';

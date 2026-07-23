@@ -30,3 +30,22 @@ export function decisionResponse(d: Decision): Response {
 	}
 	return json({ error: { code: LAYER_CODE[d.layer], message: d.reason } }, { status: d.status, headers });
 }
+
+/**
+ * Denial in Better Auth's error dialect, for gates in front of /api/auth/*.
+ * The auth client SDK reads TOP-LEVEL `code`/`message` from the body — the
+ * nested apiError shape above renders as a blank message there, so every
+ * denial collapses into the UI's generic fallback copy.
+ */
+export function authDecisionResponse(d: Decision): Response {
+	if (d.allowed) throw new Error('authDecisionResponse called on allowed decision');
+	const headers: Record<string, string> = {};
+	const retryAfterSeconds = d.retryAfterMs !== undefined ? Math.ceil(d.retryAfterMs / 1000) : undefined;
+	if (retryAfterSeconds !== undefined) {
+		headers['Retry-After'] = String(retryAfterSeconds);
+	}
+	return json(
+		{ code: LAYER_CODE[d.layer], message: d.reason, ...(retryAfterSeconds !== undefined && { retryAfterSeconds }) },
+		{ status: d.status, headers },
+	);
+}

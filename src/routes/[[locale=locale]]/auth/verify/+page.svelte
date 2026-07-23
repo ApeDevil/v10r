@@ -2,6 +2,7 @@
 import { goto, invalidateAll } from '$app/navigation';
 import { authClient } from '$lib/auth-client';
 import { Button, Spinner } from '$lib/components/primitives';
+import { authErrorMessage } from '$lib/errors';
 import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
@@ -73,7 +74,7 @@ async function handleResend() {
 			type: 'sign-in',
 		});
 		if (result.error) {
-			error = result.error.message ?? m.auth_verify_error_resend_failed();
+			error = authErrorMessage(result.error, m.auth_verify_error_resend_failed);
 		} else {
 			startCooldown();
 		}

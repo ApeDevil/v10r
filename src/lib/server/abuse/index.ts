@@ -10,7 +10,7 @@ export {
 	PER_EMAIL_LIMIT_PREFIX,
 	PER_EMAIL_LIMIT_WINDOW,
 } from './config';
-export { allowed, decisionResponse, denied } from './decision';
+export { allowed, authDecisionResponse, decisionResponse, denied } from './decision';
 export { checkHoneypot, HONEYPOT_FIELD_NAME, HONEYPOT_MIN_FILL_MS } from './honeypot';
-export { checkEmailRateLimit } from './rate-limit/per-email';
+export { checkEmailRateLimit, recordEmailSend } from './rate-limit/per-email';
 export type { Decision } from './types';

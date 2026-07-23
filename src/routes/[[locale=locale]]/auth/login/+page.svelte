@@ -6,7 +6,7 @@ import { goto, invalidateAll } from '$app/navigation';
 import { authClient } from '$lib/auth-client';
 import { Altcha } from '$lib/components/composites';
 import { Button, Input, Spinner } from '$lib/components/primitives';
-import { errorMessage } from '$lib/errors';
+import { authErrorMessage, errorMessage } from '$lib/errors';
 import { localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 import { clearAuthPendingMarker, setAuthPendingMarker } from '$lib/pwa/session-refresh';
@@ -86,7 +86,7 @@ async function handleMagicLink() {
 			fetchOptions: { headers: { 'x-altcha-token': token } },
 		});
 		if (result.error) {
-			error = result.error.message ?? m.auth_login_error_magic_link_failed();
+			error = authErrorMessage(result.error, m.auth_login_error_magic_link_failed);
 			flowState = 'error';
 		} else {
 			// The emailed link completes in the browser, not necessarily in this
@@ -116,7 +116,7 @@ async function handleOtp() {
 			fetchOptions: { headers: { 'x-altcha-token': token } },
 		});
 		if (result.error) {
-			error = result.error.message ?? m.auth_login_error_otp_failed();
+			error = authErrorMessage(result.error, m.auth_login_error_otp_failed);
 			flowState = 'error';
 			sendingMethod = null;
 		} else {
@@ -154,10 +154,7 @@ async function handleOAuth(provider: 'github' | 'google') {
 		if (result?.error) {
 			// signIn.social reports rate limiting (429) via result.error, not throw.
 			clearAuthPendingMarker();
-			error =
-				result.error.status === 429
-					? m.auth_login_error_rate_limited()
-					: (result.error.message ?? errorMessage('INTERNAL'));
+			error = authErrorMessage(result.error, () => errorMessage('INTERNAL'));
 			loadingProvider = null;
 		}
 	} catch (err) {

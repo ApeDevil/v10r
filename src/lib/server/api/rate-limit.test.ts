@@ -66,6 +66,73 @@ describe('createLimiter failure posture', () => {
 	});
 });
 
+describe('createLimiter peek (read without consuming)', () => {
+	it('reports open quota in dev when Redis is unavailable', async () => {
+		const { createLimiter } = await loadWith({ redis: null, dev: true });
+		const limiter = createLimiter('rl:test', 5, '1 m');
+		expect(await limiter.peek('id')).toEqual({ remaining: Number.POSITIVE_INFINITY, reset: 0 });
+	});
+
+	it('reports exhausted quota in prod when Redis is unavailable', async () => {
+		const { createLimiter } = await loadWith({ redis: null, dev: false });
+		const limiter = createLimiter('rl:test', 5, '1 m');
+		const result = await limiter.peek('id');
+		expect(result.remaining).toBe(0);
+		expect(result.reset).toBeGreaterThan(Date.now());
+	});
+
+	it('passes through the SDK result on success', async () => {
+		class OkRatelimit {
+			static slidingWindow() {
+				return {};
+			}
+			getRemaining() {
+				return Promise.resolve({ remaining: 4, reset: 123 });
+			}
+		}
+		const { createLimiter } = await loadWith({ redis: {}, dev: false, ratelimit: OkRatelimit });
+		const limiter = createLimiter('rl:test', 5, '1 m');
+		expect(await limiter.peek('id')).toEqual({ remaining: 4, reset: 123 });
+	});
+
+	it('fails CLOSED when Redis throws at runtime', async () => {
+		class ThrowingRatelimit {
+			static slidingWindow() {
+				return {};
+			}
+			getRemaining() {
+				return Promise.reject(new Error('ECONNREFUSED'));
+			}
+		}
+		const { createLimiter } = await loadWith({ redis: {}, dev: false, ratelimit: ThrowingRatelimit });
+		const limiter = createLimiter('rl:test', 5, '1 m');
+		const result = await limiter.peek('id');
+		expect(result.remaining).toBe(0);
+		expect(result.reset).toBeGreaterThan(Date.now());
+	});
+
+	it('fails OPEN when Redis hangs past the bounded timeout', async () => {
+		vi.useFakeTimers();
+		try {
+			class HangingRatelimit {
+				static slidingWindow() {
+					return {};
+				}
+				getRemaining() {
+					return new Promise(() => {});
+				}
+			}
+			const { createLimiter } = await loadWith({ redis: {}, dev: false, ratelimit: HangingRatelimit });
+			const limiter = createLimiter('rl:test', 5, '1 m');
+			const pending = limiter.peek('id');
+			await vi.advanceTimersByTimeAsync(1000);
+			expect(await pending).toEqual({ remaining: 5, reset: 0 });
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+});
+
 describe('isDocumentRequest', () => {
 	async function load() {
 		return loadWith({ redis: null, dev: true });
