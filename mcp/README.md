@@ -57,6 +57,10 @@ Vitest/svelte-check don't sweep `mcp/` (tests use `bun:test`); Biome does — ke
 
 Add a record to `patterns.registry.json` (copy an existing one's shape), then run `validate-registry.ts` — it fails on any missing path, malformed field, or dependency cycle. Curate `invariants` and `emulation_notes` from the pattern's docs; they are the value the raw repo can't provide.
 
+## Also served over HTTP (read-only)
+
+This same curated registry is also exposed read-only at `POST /api/mcp/public` — no bearer token, same five tools, no mutation path. It's a separate hosted trust surface built on top of a shared transport, not a change to anything in this directory: the local stdio server described above is unchanged, remains read-only, and keeps running exactly as documented — ephemeral container, network-isolated, repo mounted `:ro`. There is also a separate, unrelated private admin MCP (`/api/mcp/admin`, bearer-gated, demo-state tools only) that has nothing to do with the pattern registry. Full detail: [docs/blueprint/architecture/hosted-mcp.md](../docs/blueprint/architecture/hosted-mcp.md).
+
 ## Constraints worth knowing
 
 - Tool definitions deliberately omit `outputSchema`/`title`/`annotations` — a live Claude Code bug silently drops a server's entire tool list when any tool carries them. `smoke.ts` guards this.

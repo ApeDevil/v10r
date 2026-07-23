@@ -56,7 +56,9 @@
 		"perf:cold-start": "bash scripts/perf/cold-start.sh",
 		"pwa:icons": "bun run scripts/pwa/generate-icons.ts",
 		"mcp:validate": "bun run mcp/validate-registry.ts",
-		"validate": "bun run check && biome ci . && bun run test && bun run mcp:validate && bun run i18n:check-missing && bun run content:check && bun run quality:opacity",
+		"mcp:excerpts:build": "bun run scripts/mcp/build-public-excerpts.ts",
+		"mcp:excerpts:check": "bun run scripts/mcp/build-public-excerpts.ts --check",
+		"validate": "bun run check && biome ci . && bun run test && bun run mcp:validate && bun run mcp:excerpts:check && bun run i18n:check-missing && bun run content:check && bun run quality:opacity",
 		"knip": "knip"
 	},
 	"dependencies": {
@@ -130,6 +132,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "^2.0.0",
 		"@electric-sql/pglite": "^0.3.14",
+		"@modelcontextprotocol/sdk": "^1.12.0",
 		"@iconify-json/lucide": "^1.2.0",
 		"@inlang/paraglide-js": "^2.18.0",
 		"@sveltejs/adapter-vercel": "^5.0.0",

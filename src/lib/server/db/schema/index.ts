@@ -8,6 +8,7 @@ export * from './dbops';
 export * from './desk';
 export * from './feedback';
 export * from './jobs';
+export * from './mcp';
 export * from './notifications';
 export * from './rag';
 export * from './showcase';

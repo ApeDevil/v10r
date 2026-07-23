@@ -13,6 +13,7 @@ export const CSRF_EXEMPT_PREFIXES = [
 	'/api/cron/', // Vercel cron + Bearer token
 	'/api/webhooks/', // Third-party webhooks (HMAC signature)
 	'/api/analytics/journey', // navigator.sendBeacon (no custom headers possible)
+	'/api/mcp/', // MCP over HTTP: no ambient cookie auth (admin=Bearer, public=unauth read-only), so CSRF is moot; non-browser clients can't send X-Requested-With
 ] as const;
 
 /** True when a request must pass the CSRF check (mutating /api/* outside the exempt set). */

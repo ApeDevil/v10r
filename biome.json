@@ -14,7 +14,8 @@
 			"!**/.svelte-kit",
 			"!**/node_modules",
 			"!**/src/lib/paraglide",
-			"!**/.claude/settings.local.json"
+			"!**/.claude/settings.local.json",
+			"!**/mcp/public-excerpts.snapshot.json"
 		]
 	},
 	"formatter": {

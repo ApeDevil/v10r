@@ -67,6 +67,14 @@ These aren't arbitrary style choices — each one maps to a specific failure mod
 
 Each record in `patterns.registry.json` has `id`, `title`, `category`, `summary`, `when_to_use`, `capabilities[]`, `keywords[]`, `depends_on[]`, and four reference lists — `docs[]`, `code[]`, `tests[]`, `showcases[]` (each a `{ path, note?, kind? }` ref, `kind` one of `file | dir | route | anchor`) — plus `invariants[]`, `emulation_notes[]`, and `risk`. See the file itself for the full shape and current entries; this doc won't re-derive what the schema already states plainly.
 
+## Hosted trust surfaces
+
+Everything above describes the local stdio server a client spawns as an ephemeral container. The same pattern registry is now *also* served read-only over HTTP, at `POST /api/mcp/public` — no auth, same five tools, no mutation path to dispatch.
+
+A second, unrelated surface, the private admin MCP at `POST /api/mcp/admin`, lives behind a bearer token and exposes a narrow set of demo-state tools over a small persistent domain — it shares only the transport plumbing with the public endpoint, not the registry or the trust level.
+
+Full detail — trust-surface boundaries, auth, rate limits, the persistent demo state, the protected `/admin/mcp` page, env vars, and deployment caveats — lives in [hosted-mcp.md](./hosted-mcp.md).
+
 ## Where to go next
 
 - **See it live:** [/showcases/mcp](/showcases/mcp) — interactive dependency graph, architecture diagram, and protocol walkthrough

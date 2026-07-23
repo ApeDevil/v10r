@@ -24,6 +24,10 @@ describe('needsCsrf', () => {
 		expect(needsCsrf('GET', '/api/cron/cleanup')).toBe(false);
 		expect(needsCsrf('POST', '/api/webhooks/telegram')).toBe(false);
 		expect(needsCsrf('POST', '/api/analytics/journey')).toBe(false);
+		// MCP over HTTP: admin=Bearer, public=unauthenticated read-only — no ambient cookie auth,
+		// and non-browser MCP clients can't send X-Requested-With.
+		expect(needsCsrf('POST', '/api/mcp/public')).toBe(false);
+		expect(needsCsrf('POST', '/api/mcp/admin')).toBe(false);
 	});
 
 	it('still protects non-exempt routes that merely share a parent segment', () => {
@@ -32,7 +36,13 @@ describe('needsCsrf', () => {
 	});
 
 	it('locks the exempt set — a new exempt prefix must be a deliberate change', () => {
-		expect([...CSRF_EXEMPT_PREFIXES]).toEqual(['/api/auth/', '/api/cron/', '/api/webhooks/', '/api/analytics/journey']);
+		expect([...CSRF_EXEMPT_PREFIXES]).toEqual([
+			'/api/auth/',
+			'/api/cron/',
+			'/api/webhooks/',
+			'/api/analytics/journey',
+			'/api/mcp/',
+		]);
 	});
 });
 

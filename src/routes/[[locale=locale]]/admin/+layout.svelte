@@ -52,6 +52,7 @@ const groups = [
 			{ label: 'Jobs', href: '/admin/jobs', icon: 'i-lucide-clock' },
 			{ label: 'Notifications', href: '/admin/notifications', icon: 'i-lucide-bell' },
 			{ label: 'Cache', href: '/admin/cache', icon: 'i-lucide-hard-drive' },
+			{ label: 'MCP Test', href: '/admin/mcp', icon: 'i-lucide-plug-zap' },
 		],
 	},
 ];
