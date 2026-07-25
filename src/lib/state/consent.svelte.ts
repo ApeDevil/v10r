@@ -7,7 +7,7 @@ import { getContext, setContext } from 'svelte';
 import { browser } from '$app/environment';
 import { getCookie, setCookie } from '$lib/utils/cookies';
 
-export type ConsentTier = 'necessary' | 'analytics' | 'full';
+export type ConsentTier = 'necessary' | 'analytics';
 
 const CONSENT_CTX = Symbol('consent');
 const COOKIE_NAME = 'v10r_consent';
@@ -26,10 +26,11 @@ export function createConsentState() {
 	$effect(() => {
 		if (!browser) return;
 		const raw = getCookie(COOKIE_NAME);
-		if (raw) {
-			if (raw === 'necessary' || raw === 'analytics' || raw === 'full') {
-				tier = raw;
-			}
+		// An unrecognised value (including the retired `full`) leaves tier null, so
+		// the banner reappears and the visitor is asked against the current
+		// description of the processing rather than a stale one.
+		if (raw === 'necessary' || raw === 'analytics') {
+			tier = raw;
 		}
 		resolved = true;
 	});

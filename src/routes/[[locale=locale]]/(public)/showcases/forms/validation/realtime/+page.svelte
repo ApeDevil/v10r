@@ -124,12 +124,6 @@ const passwordStrength = $derived.by(() => {
 			</div>
 		</form>
 	</Card>
-
-	<Alert variant="info" title="When to use oninput">
-		{#snippet children()}
-			<p><code>validationMethod: 'oninput'</code> is appropriate for live-feedback scenarios like password strength and character counters. For standard text fields, use the default <code>'auto'</code> (validates on blur) to avoid frustrating users with premature errors.</p>
-		{/snippet}
-	</Alert>
 </Stack>
 
 <style>

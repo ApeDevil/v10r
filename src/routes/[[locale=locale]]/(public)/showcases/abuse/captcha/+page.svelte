@@ -39,11 +39,6 @@ function reset() {
 				</Badge>
 			</div>
 		</div>
-
-		<p class="card-note">
-			ALTCHA is a self-hosted proof-of-work captcha. The browser computes a SHA-256 hash collision (cost {data.cost.toLocaleString()}),
-			and the server verifies the answer + an HMAC signature. No third-party service, no tracking.
-		</p>
 	</Card>
 
 	<Card>
@@ -102,11 +97,7 @@ function reset() {
 			</div>
 		{:else}
 			<div class="demo">
-				<p class="demo-instruction">
-					Solve the captcha below. The widget fetches a challenge from
-					<code>/api/captcha/challenge</code>, runs the proof-of-work in your browser,
-					and surfaces the signed payload that would normally accompany an auth request.
-				</p>
+				<p class="demo-instruction">Solve the captcha below.</p>
 
 				{#key widgetKey}
 					<div class="demo-widget">
@@ -125,8 +116,7 @@ function reset() {
 						</header>
 						<pre class="payload-body">{payload}</pre>
 						<p class="payload-hint">
-							This payload is single-use. The login page sends it as the <code>x-altcha-token</code> header;
-							the server verifies the HMAC, then records the nonce so the same payload can never be replayed.
+							Single-use — the login page sends this as the <code>x-altcha-token</code> header.
 						</p>
 					</div>
 				{/if}

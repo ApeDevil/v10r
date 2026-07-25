@@ -19,14 +19,20 @@
  *   shown in full — it is the requester's own connection.
  * - Each section degrades independently (settle() wrapper): one failed
  *   read renders that section unavailable, it never 500s the whole report.
- * - The anonymous pre-signup analytics trail is deliberately ABSENT:
- *   re-identifying the hashed visitorId requires a documented Art 6(4)
- *   basis that does not exist. Do not add it without one.
+ * - Analytics comes in TWO lanes and only one of them belongs here.
+ *   `analytics.user_events` IS included (`behavior` section): it is keyed by
+ *   user id, so it is plainly this user's data under Art 15.
+ *   `analytics.events` is deliberately ABSENT: it is keyed by a hashed
+ *   visitorId, and re-identifying that hash requires a documented Art 6(4)
+ *   basis that does not exist. Do not add it without one — and note that
+ *   joining the two lanes would not merely widen this report, it would move
+ *   the anonymous lane onto a different legal footing entirely.
  */
 import { and, count, eq, isNotNull, isNull, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { getPreferences } from '$lib/server/db/preferences';
 import { conversation } from '$lib/server/db/schema/ai/conversation';
+import { userEvents } from '$lib/server/db/schema/analytics';
 import { customPalettes } from '$lib/server/db/schema/app/custom-palettes';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
 import { comment } from '$lib/server/db/schema/blog/comment';
@@ -37,7 +43,7 @@ import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegr
 import { imageAsset, imageMetadata } from '$lib/server/db/schema/showcase/image-metadata';
 import { getUserOAuthSummary, getUserProfile, getUserSessions, listPasskeyDtos } from '$lib/server/db/user';
 
-export const REPORT_SCHEMA_VERSION = '2026-06-17';
+export const REPORT_SCHEMA_VERSION = '2026-07-25';
 
 /** Legal basis per domain — Art 20 portability applies only to consent/contract data. */
 export type LegalBasis = 'contract' | 'consent' | 'legitimate_interest';
@@ -87,6 +93,17 @@ export interface PersonalDataReport {
 	palettes: Section<{ count: number }>;
 	/** Image Metadata Reader. withGpsCount = records where the user opted to persist location. */
 	images: Section<{ imageCount: number; metadataCount: number; withGpsCount: number }>;
+	/**
+	 * Authenticated-lane analytics (`analytics.user_events`) — how this user has
+	 * used their own account area. NOT the anonymous visitor trail, which stays
+	 * out of this report by design.
+	 */
+	behavior: Section<{
+		eventCount: number;
+		firstSeen: string | null;
+		lastSeen: string | null;
+		topRoutes: { route: string; count: number }[];
+	}>;
 	security: Section<{
 		twoFactorEnabled: boolean;
 		passkeys: {
@@ -149,6 +166,7 @@ export async function collectUserData(
 		blogComments,
 		palettes,
 		images,
+		behavior,
 		security,
 	] = await Promise.all([
 		settle('contract', true, async () => {
@@ -261,6 +279,38 @@ export async function collectUserData(
 			]);
 			return { imageCount, metadataCount, withGpsCount };
 		}),
+		// Authenticated-lane analytics. Basis is legitimate interest (improving the
+		// product), NOT consent — the consent banner governs the anonymous visitor
+		// lane only, and that lane is deliberately not reachable from here.
+		// Portable: it is observed behavioural data about the user, and Art 20
+		// covers data "provided by" the data subject, which the EDPB reads to
+		// include observed activity.
+		settle('legitimate_interest', true, async () => {
+			const [totals, topRoutes] = await Promise.all([
+				db
+					.select({
+						eventCount: count(),
+						firstSeen: sql<string | null>`min(${userEvents.timestamp})::text`,
+						lastSeen: sql<string | null>`max(${userEvents.timestamp})::text`,
+					})
+					.from(userEvents)
+					.where(eq(userEvents.userId, userId)),
+				db
+					.select({ route: userEvents.route, count: sql<number>`count(*)::int` })
+					.from(userEvents)
+					.where(eq(userEvents.userId, userId))
+					.groupBy(userEvents.route)
+					.orderBy(sql`count(*) desc`)
+					.limit(10),
+			]);
+			const row = totals[0];
+			return {
+				eventCount: Number(row?.eventCount ?? 0),
+				firstSeen: row?.firstSeen ?? null,
+				lastSeen: row?.lastSeen ?? null,
+				topRoutes: topRoutes.map((r) => ({ route: r.route, count: Number(r.count) })),
+			};
+		}),
 		// Security credentials are not Art-20-portable (a passkey cannot be
 		// "taken elsewhere"); TOTP secret/backupCodes never appear, even
 		// encrypted — only enrollment state and passkey display metadata.
@@ -300,6 +350,7 @@ export async function collectUserData(
 		blogComments,
 		palettes,
 		images,
+		behavior,
 		security,
 	};
 }

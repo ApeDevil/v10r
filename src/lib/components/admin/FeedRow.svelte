@@ -17,9 +17,7 @@ const deviceIcon = $derived.by(() => {
 	return 'i-lucide-circle-help';
 });
 
-const tierVariant = $derived<'success' | 'secondary' | 'default'>(
-	event.consentTier === 'full' ? 'success' : event.consentTier === 'analytics' ? 'default' : 'secondary',
-);
+const tierVariant = $derived<'success' | 'secondary'>(event.consentTier === 'analytics' ? 'success' : 'secondary');
 
 const relativeTime = $derived.by(() => {
 	const ms = Date.now() - new Date(event.ts).getTime();

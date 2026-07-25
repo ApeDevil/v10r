@@ -45,7 +45,6 @@ export function pageRecords(locale: SearchLocale): SearchRecord[] {
 
 	// Public pages not in the nav registry.
 	push('/auth/login', m.nav_log_in(), 'i-lucide-key', []);
-	push('/showcases/jobs', m.nav_jobs(), 'i-lucide-clock', ['Showcases']);
 
 	return out;
 }

@@ -60,7 +60,7 @@ const cookies: CookieRow[] = [
 </script>
 <div class="cookies">
 	<header class="lede">
-		<h2>{m.showcase_admin_cookies_heading()}</h2>
+		<h2>{m.showcase_privacy_cookies_heading()}</h2>
 		<p>
 			ePrivacy Art. 5(3) and TTDSG §25 require informed consent for any cookie that isn't strictly necessary.
 			Below is the complete inventory — name, duration, purpose, and which ones we set without asking.
@@ -110,7 +110,7 @@ const cookies: CookieRow[] = [
 
 	<section class="absent">
 		<header class="section-head">
-			<h3>{m.showcase_admin_cookies_not_used()}</h3>
+			<h3>{m.showcase_privacy_cookies_not_used()}</h3>
 			<Tag variant="muted" size="sm" label="By design" />
 		</header>
 		<ul class="absent-list">

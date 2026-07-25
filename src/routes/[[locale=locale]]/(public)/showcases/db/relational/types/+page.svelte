@@ -57,7 +57,6 @@ function formatValue(val: unknown): string {
 				<Card>
 					{#snippet header()}
 						<Typography variant="h5" as="h2">{m.showcase_db_relational_types_card_numeric()}</Typography>
-						<p class="section-desc">PostgreSQL stores exact and approximate numbers. Choose based on precision — <code>numeric</code> is exact, <code>real</code>/<code>double</code> are not.</p>
 					{/snippet}
 
 					{#if data.specimens.length > 0}
@@ -100,7 +99,6 @@ function formatValue(val: unknown): string {
 				<Card>
 					{#snippet header()}
 						<Typography variant="h5" as="h2">{m.showcase_db_relational_types_card_text()}</Typography>
-						<p class="section-desc"><code>text</code> is the workhorse — no performance penalty vs <code>varchar</code>. Use <code>varchar(n)</code> only when you need a constraint. <code>char(n)</code> is space-padded and rarely useful.</p>
 					{/snippet}
 
 					{#if data.specimens.length > 0}
@@ -133,7 +131,6 @@ function formatValue(val: unknown): string {
 				<Card>
 					{#snippet header()}
 						<Typography variant="h5" as="h2">{m.showcase_db_relational_types_card_temporal()}</Typography>
-						<p class="section-desc">Always use <code>timestamptz</code> for wall-clock times. <code>timestamp</code> without timezone is rarely correct. <code>interval</code> stores durations PostgreSQL can do arithmetic with.</p>
 					{/snippet}
 
 					{#if data.temporals.length > 0}
@@ -172,7 +169,6 @@ function formatValue(val: unknown): string {
 				<Card>
 					{#snippet header()}
 						<Typography variant="h5" as="h2">{m.showcase_db_relational_types_card_boolean()}</Typography>
-						<p class="section-desc">PostgreSQL accepts many literals: <code>true</code>, <code>'yes'</code>, <code>'on'</code>, <code>'1'</code>. Always store as <code>boolean</code>, never as integer or string.</p>
 					{/snippet}
 
 					{#if data.specimens.length > 0}
@@ -195,7 +191,6 @@ function formatValue(val: unknown): string {
 				<Card>
 					{#snippet header()}
 						<Typography variant="h5" as="h2">{m.showcase_db_relational_types_card_uuid()}</Typography>
-						<p class="section-desc">128-bit universally unique identifiers. <code>gen_random_uuid()</code> generates v4 UUIDs natively (PG 13+, no extension needed). Use for external-facing IDs — keep <code>serial</code> for internal references.</p>
 					{/snippet}
 
 					{#if data.specimens.length > 0}
@@ -216,7 +211,6 @@ function formatValue(val: unknown): string {
 				<Card>
 					{#snippet header()}
 						<Typography variant="h5" as="h2">{m.showcase_db_relational_types_card_json()}</Typography>
-						<p class="section-desc">Always use <code>jsonb</code>. It's parsed binary — indexable with GIN, queryable with <code>@&gt;</code> containment and <code>-&gt;&gt;</code> path extraction. <code>json</code> stores verbatim text (preserving whitespace and duplicate keys).</p>
 					{/snippet}
 
 					{#if data.documents.length > 0}
@@ -253,7 +247,6 @@ function formatValue(val: unknown): string {
 				<Card>
 					{#snippet header()}
 						<Typography variant="h5" as="h2">{m.showcase_db_relational_types_card_arrays()}</Typography>
-						<p class="section-desc">PostgreSQL arrays are powerful for tags, labels, and ordered lists. GIN indexes enable fast <code>@&gt;</code> containment queries. Use junction tables instead when elements need foreign keys.</p>
 					{/snippet}
 
 					{#if data.collections.length > 0}
@@ -298,7 +291,6 @@ function formatValue(val: unknown): string {
 				<Card>
 					{#snippet header()}
 						<Typography variant="h5" as="h2">{m.showcase_db_relational_types_card_ranges()}</Typography>
-						<p class="section-desc">One of PostgreSQL's most underappreciated features. A single <code>tstzrange</code> replaces separate start/end columns, with native overlap (<code>&amp;&amp;</code>), containment (<code>@&gt;</code>), and adjacency (<code>-|-</code>) operators. GiST indexes make them fast.</p>
 					{/snippet}
 
 					{#if data.bookings.length > 0}
@@ -337,7 +329,6 @@ function formatValue(val: unknown): string {
 				<Card>
 					{#snippet header()}
 						<Typography variant="h5" as="h2">{m.showcase_db_relational_types_card_network()}</Typography>
-						<p class="section-desc"><code>inet</code> for host addresses, <code>cidr</code> for networks, <code>macaddr</code> for hardware. All support containment operators (<code>&lt;&lt;</code>, <code>&gt;&gt;</code>). <code>point</code> for simple 2D coordinates — use PostGIS for serious GIS work.</p>
 					{/snippet}
 
 					{#if data.networks.length > 0}
@@ -376,7 +367,6 @@ function formatValue(val: unknown): string {
 				<Card>
 					{#snippet header()}
 						<Typography variant="h5" as="h2">{m.showcase_db_relational_types_card_enums()}</Typography>
-						<p class="section-desc"><code>pgEnum</code> creates real PostgreSQL ENUM types — 4-byte storage, type-safe at DB level. Caveat: adding values requires <code>ALTER TYPE</code>, can't remove without recreation. Use for stable sets only.</p>
 					{/snippet}
 
 					{#if data.audits.length > 0}
@@ -459,13 +449,6 @@ function formatValue(val: unknown): string {
 </form>
 
 <style>
-	.section-desc {
-		margin: var(--spacing-1) 0 0;
-		color: var(--color-muted);
-		font-size: var(--text-fluid-sm);
-		line-height: 1.5;
-	}
-
 	.table-wrap {
 		overflow-x: auto;
 	}

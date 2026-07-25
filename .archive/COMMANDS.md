@@ -3,6 +3,8 @@ vr v
 vr s 
 vr s --dry-run
 
+podman kill $(podman ps -q)
+
 # -------------------run
 podman-compose up
 podman-compose up -d
@@ -50,7 +52,6 @@ bun run db:catalog-sync
 
 
 
-de
 
 podman machine info
 podman version

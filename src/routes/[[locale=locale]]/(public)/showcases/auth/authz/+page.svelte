@@ -122,9 +122,8 @@ function isAdmin(user: { id: string; email: string }): boolean {
 	<Alert variant="info" title={m.showcase_auth_authz_callout()}>
 		{#snippet children()}
 			<p>
-				Notice there is no <code>403</code> column. An unauthorized request to an admin surface
-				returns the <strong>same 404</strong> as a route that doesn't exist — so an attacker can't
-				tell admin routes apart from noise. Denied is indistinguishable from absent, by design.
+				Notice there is no <code>403</code> column — an unauthorized request to an admin surface
+				returns the <strong>same 404</strong> as a route that doesn't exist.
 			</p>
 		{/snippet}
 	</Alert>

@@ -811,6 +811,37 @@ No `drizzle/` directory — this project is push-only (see [Migrations](#migrati
 
 ---
 
+## Column Type Selection
+
+Quick decision rules for common column types, demoed live at `/showcases/db/relational/types`:
+
+| Category | Types | Rule |
+|----------|-------|------|
+| Numeric | `smallint` / `integer` / `bigint` / `numeric` / `real` / `double precision` | `numeric` for money and measurements — exact, no float rounding. `real`/`double` only for approximate scientific data. `bigint` once a counter can exceed 2 billion. |
+| Text | `text` / `varchar(n)` / `char(n)` | `text` by default — no performance penalty vs `varchar`. Use `varchar(n)` only to enforce a length constraint. Avoid `char(n)` (space-padded, rarely useful). |
+| Temporal | `timestamptz` / `timestamp` / `date` / `time` / `interval` | Always `timestamptz` for wall-clock times — `timestamp` without a zone is rarely correct. `interval` stores durations Postgres can do arithmetic with. |
+| Boolean | `boolean` | Never model as integer or string, even though Postgres accepts `'yes'`/`'on'`/`'1'` literals. |
+| Identifiers | `uuid` via `gen_random_uuid()` | Native since PG 13, no extension needed. Use for external-facing IDs; keep `serial`/`bigserial` for internal references. |
+| JSON | `jsonb` / `json` | Default to `jsonb` — binary, indexable with GIN, queryable via `@>` and `->>`. `json` only when verbatim text (whitespace, duplicate keys) must round-trip. |
+| Arrays | `text[]` / `integer[]` | Good for tags/labels with a GIN index for `@>` containment. Switch to a junction table once elements need their own foreign keys. |
+| Ranges | `tstzrange` / `daterange` / `int4range` | Replaces separate start/end columns with native overlap (`&&`), containment (`@>`), and adjacency (`-|-`) operators. Index with GiST. |
+| Network | `inet` / `cidr` / `macaddr` | `inet` for host addresses, `cidr` for network-only addresses (host bits zeroed), `macaddr` for hardware. All support `<<`/`>>` containment. |
+| Enums | `pgEnum` | Type-safe, 4-byte storage. Adding a value needs `ALTER TYPE`; removing needs a recreation — use only for stable, closed sets. |
+
+## Mutability Patterns
+
+Not every table should allow the same write operations. Five patterns, demoed live at `/showcases/db/relational/mutability`:
+
+| Pattern | Mechanism | Use when |
+|---------|-----------|----------|
+| **CRUD** | Standard insert/update/delete; `updated_at` tracks the last write. | Data has no audit or recovery requirement. |
+| **Versioned** | Every update also inserts a snapshot into a `_history` table (`version`, `change_type`, `changed_by`, `changed_at`). | You need to see what a row looked like at each edit — profiles, config, anything with review/rollback value. |
+| **Soft delete** | `deleted_at IS NULL` = active; delete sets the timestamp instead of removing the row. Restore = `deleted_at = NULL`. | The row must be recoverable, or must keep satisfying foreign keys after "deletion". |
+| **Append-only** | Insert only — no update or delete code path at all. | Audit logs, event streams: the trail must outlive edits, by design (see [auth.md](../auth.md#audit-log-no-foreign-key-by-design)). |
+| **Temporal (bitemporal)** | `valid_from` / `valid_to` track when a fact was true in the real world, separate from `recorded_at` (when it was written). Query "what was valid on date X?" with a range containment check. | The history of *real-world* truth matters, not just the history of edits — pricing tiers, org membership, addresses. |
+
+---
+
 ## Related
 
 - [../../foundation/user-data.md](../../foundation/user-data.md) - Data category definitions

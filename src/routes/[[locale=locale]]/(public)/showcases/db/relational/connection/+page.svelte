@@ -133,8 +133,6 @@ function recordHistory(ms: number) {
 				{/snippet}
 
 				<div class="explanation">
-					<p>Neon PostgreSQL scales to zero after 5 minutes of inactivity. The first query after idle includes compute wake-up time.</p>
-
 					<div class="tier-legend">
 						<div class="tier-item">
 							<Badge variant="success">Warm</Badge>

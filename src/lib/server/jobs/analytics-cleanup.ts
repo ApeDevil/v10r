@@ -1,19 +1,29 @@
 import { and, isNotNull, isNull, lt, sql } from 'drizzle-orm';
-import { ANALYTICS_RETENTION_DAYS, CONSENT_RETENTION_DAYS } from '$lib/server/config';
+import { ANALYTICS_RETENTION_DAYS, ANALYTICS_USER_RETENTION_DAYS, CONSENT_RETENTION_DAYS } from '$lib/server/config';
 import { db } from '$lib/server/db';
-import { consentEvents, events, pairingCodes, sessions } from '$lib/server/db/schema/analytics';
+import { consentEvents, events, pairingCodes, sessions, userEvents } from '$lib/server/db/schema/analytics';
 
 /**
  * Delete expired analytics rows. Per-table retention:
- *   - events + sessions:   ANALYTICS_RETENTION_DAYS (60d)
- *   - consent_events:      CONSENT_RETENTION_DAYS  (~13mo, GDPR Art. 7(1))
+ *   - events + sessions:   ANALYTICS_RETENTION_DAYS      (60d, anonymous lane)
+ *   - user_events:         ANALYTICS_USER_RETENTION_DAYS (180d, authenticated lane)
+ *   - consent_events:      CONSENT_RETENTION_DAYS        (~13mo, GDPR Art. 7(1))
  *   - pairing_codes:       1h after expiry (unconsumed) / 7d after consumption
  *   - paired_admin_user_id: cleared 2h after pairedAt (hard cap)
- * Returns the total number of deleted events.
+ *
+ * Everything lives in ONE job on purpose. Vercel Hobby rejects any cron that
+ * fires more than once a day and fails the WHOLE deployment when it sees one,
+ * so extra retention jobs would each cost a scarce daily slot. Retention is also
+ * naturally batch work — there is nothing to gain from separate schedules.
+ *
+ * Returns the number of deleted anonymous events.
  */
 export async function analyticsCleanup(): Promise<number> {
 	const eventCutoff = new Date();
 	eventCutoff.setDate(eventCutoff.getDate() - ANALYTICS_RETENTION_DAYS);
+
+	const userEventCutoff = new Date();
+	userEventCutoff.setDate(userEventCutoff.getDate() - ANALYTICS_USER_RETENTION_DAYS);
 
 	const consentCutoff = new Date();
 	consentCutoff.setDate(consentCutoff.getDate() - CONSENT_RETENTION_DAYS);
@@ -29,6 +39,9 @@ export async function analyticsCleanup(): Promise<number> {
 
 	await db.delete(events).where(lt(events.timestamp, eventCutoff));
 	await db.delete(sessions).where(lt(sessions.startedAt, eventCutoff));
+	// Authenticated lane. Ages out on its own longer window; account deletion
+	// erases it immediately via FK cascade, independently of this sweep.
+	await db.delete(userEvents).where(lt(userEvents.timestamp, userEventCutoff));
 	await db.delete(consentEvents).where(lt(consentEvents.timestamp, consentCutoff));
 
 	// Pairing codes: unconsumed past expiry (with grace) OR consumed past 7d.

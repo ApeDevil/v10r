@@ -61,15 +61,16 @@ export function deriveCatalogGraph(): CatalogGraph {
 		for (const link of links) {
 			// A sublink whose href equals its parent (e.g. "Overview") is the parent itself.
 			if (link.href === parentHref) continue;
-			const id = addShowcase(link.href, link.label, kind);
+			const id = addShowcase(link.href, link.label(), kind);
 			addEdge(id, parentId);
 			if (link.children?.length) walk(link.children, id, link.href, 'component');
 		}
 	};
 
-	// card = domain → sublink = module → child = component.
+	// card = domain → sublink = module → child = component. Labels resolve via
+	// Paraglide, which falls back to the base locale (English) under bare Bun.
 	for (const card of showcases) {
-		const domainId = addShowcase(card.href, card.title, 'domain');
+		const domainId = addShowcase(card.href, card.title(), 'domain');
 		walk(card.sublinks ?? [], domainId, card.href, 'module');
 	}
 

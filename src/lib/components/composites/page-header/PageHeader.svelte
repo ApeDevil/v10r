@@ -11,11 +11,21 @@ interface Props {
 	description?: string;
 	breadcrumbs?: Breadcrumb[];
 	sticky?: boolean;
+	/** Bindable rendered height (px) — lets sticky consumers set scroll-margin offsets. */
+	headerHeight?: number;
 	class?: string;
 	children?: import('svelte').Snippet;
 }
 
-let { title, description, breadcrumbs = [], sticky = false, class: className, children }: Props = $props();
+let {
+	title,
+	description,
+	breadcrumbs = [],
+	sticky = false,
+	headerHeight = $bindable(0),
+	class: className,
+	children,
+}: Props = $props();
 
 // Ensure last breadcrumb is current (no link)
 const processedBreadcrumbs = $derived(
@@ -28,7 +38,7 @@ const processedBreadcrumbs = $derived(
 
 <header
 	class="page-header {sticky ? 'sticky' : ''} {className || ''}"
-
+	bind:clientHeight={headerHeight}
 >
 	{#if breadcrumbs.length > 0}
 		<nav class="breadcrumbs" aria-label="Breadcrumb">

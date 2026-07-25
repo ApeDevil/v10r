@@ -6,12 +6,11 @@ import { cn } from '$lib/utils/cn';
 interface Props {
 	title: string;
 	description?: string;
-	details?: string;
 	chart: Snippet;
 	class?: string;
 }
 
-let { title, description, details, chart, class: className }: Props = $props();
+let { title, description, chart, class: className }: Props = $props();
 </script>
 
 <Card class={cn('chart-section', className)}>
@@ -24,15 +23,6 @@ let { title, description, details, chart, class: className }: Props = $props();
 
 	{#snippet children()}
 		{@render chart()}
-	{/snippet}
-
-	{#snippet footer()}
-		{#if details}
-			<details class="chart-details">
-				<summary>How this works</summary>
-				<p>{details}</p>
-			</details>
-		{/if}
 	{/snippet}
 </Card>
 
@@ -49,21 +39,5 @@ let { title, description, details, chart, class: className }: Props = $props();
 		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);
 		line-height: 1.5;
-	}
-
-	.chart-details {
-		font-size: var(--text-fluid-sm);
-		color: var(--color-muted);
-	}
-
-	.chart-details summary {
-		cursor: pointer;
-		font-weight: 500;
-		color: var(--color-fg);
-	}
-
-	.chart-details p {
-		margin: var(--spacing-3) 0 0 0;
-		line-height: 1.6;
 	}
 </style>

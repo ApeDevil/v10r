@@ -1,6 +1,6 @@
 <script lang="ts">
 import { LinkCard } from '$lib/components';
-import { BackLink, NavGrid, PageHeader } from '$lib/components/composites';
+import { BackLink, NavGrid, PageHeader, ShowcaseDocs } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
 import * as m from '$lib/paraglide/messages';
 </script>
@@ -13,7 +13,9 @@ import * as m from '$lib/paraglide/messages';
 			{ label: m.showcase_breadcrumb_showcases(), href: '/showcases' },
 			{ label: m.showcase_viz_breadcrumb() }
 		]}
-	/>
+	>
+		<ShowcaseDocs />
+	</PageHeader>
 
 	<NavGrid>
 		<LinkCard

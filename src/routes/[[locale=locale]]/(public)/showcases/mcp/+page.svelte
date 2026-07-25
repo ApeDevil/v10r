@@ -8,6 +8,7 @@ import {
 	DiagRow,
 	NavSection,
 	PageHeader,
+	ShowcaseDocs,
 } from '$lib/components/composites';
 import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
 import { DagGraph, FlowDiagram, StateDiagram } from '$lib/components/viz';
@@ -110,9 +111,11 @@ const handshakeEdges: Edge[] = [
 		breadcrumbs={[
 			{ label: m.showcase_breadcrumb_home(), href: '/' },
 			{ label: m.showcase_breadcrumb_showcases(), href: '/showcases' },
-			{ label: m.showcase_mcp_breadcrumb() }
+			{ label: m.showcase_mcp_title() }
 		]}
-	/>
+	>
+		<ShowcaseDocs />
+	</PageHeader>
 
 	<NavSection {sections} />
 
@@ -143,18 +146,16 @@ const handshakeEdges: Edge[] = [
 			{/each}
 		</div>
 		<p class="lead">
-			Every number on this page is computed from <code>mcp/patterns.registry.json</code> — the same file the MCP
-			server reads — so the page cannot drift from the registry. Design rationale lives in the
-			<a href="/docs/blueprint/architecture/pattern-mcp">blueprint doc</a>; the operational reference is
-			<code>mcp/README.md</code>.
+			Every number on this page is computed live from <code>mcp/patterns.registry.json</code> — the same file the
+			MCP server reads.
 		</p>
 
 		<!-- Pattern dependency DAG -->
 		<section id="registry-dag" class="section">
 			<h2 class="section-title">{m.showcase_mcp_section_dag()}</h2>
 			<p class="section-description">
-				The registry's <code>depends_on</code> graph. Arrows point dependency → dependent — the topological build
-				order <code>recommend_emulation_plan</code> assembles. Node colors mark DAG layers, not categories.
+				The registry's <code>depends_on</code> graph — arrows point dependency → dependent; node color marks DAG
+				layer, not category.
 			</p>
 
 			<div class="demos">
@@ -209,9 +210,7 @@ const dagData = toDagData(registry);
 		<section id="architecture" class="section">
 			<h2 class="section-title">{m.showcase_mcp_section_architecture()}</h2>
 			<p class="section-description">
-				One tool call's journey. The MCP client spawns the server as an ephemeral container with a read-only repo
-				mount and no network; stdout carries protocol frames only, and the container removes itself when the client
-				closes stdin.
+				One tool call's journey through the ephemeral, read-only server container.
 			</p>
 
 			<div class="demos">
@@ -369,10 +368,6 @@ const dagData = toDagData(registry);
 		font-size: var(--text-fluid-base);
 		color: var(--color-muted);
 		line-height: 1.6;
-	}
-
-	.lead a {
-		color: var(--color-primary);
 	}
 
 	.lead code,

@@ -96,9 +96,8 @@ const BROWSERS = [
 ] as const;
 
 const CONSENT_TIERS = [
-	{ tier: 'necessary', weight: 30 },
-	{ tier: 'analytics', weight: 50 },
-	{ tier: 'full', weight: 20 },
+	{ tier: 'necessary', weight: 35 },
+	{ tier: 'analytics', weight: 65 },
 ] as const;
 
 const JOURNEY_TEMPLATES = [

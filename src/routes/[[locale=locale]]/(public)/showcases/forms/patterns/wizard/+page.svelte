@@ -246,9 +246,9 @@ function prevStep() {
 		</form>
 	</Card>
 
-	<Alert variant="info" title="Wizard Pattern">
+	<Alert variant="info" title="Known limitation">
 		{#snippet children()}
-			<p>Each step validates only its own fields via <code>validateForm()</code>. Hidden inputs preserve values from other steps for the final submit. The browser back button navigates away (known limitation of client-side step tracking).</p>
+			<p>The browser back button navigates away — a known limitation of client-side step tracking.</p>
 		{/snippet}
 	</Alert>
 </Stack>

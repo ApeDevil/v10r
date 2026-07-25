@@ -14,6 +14,18 @@ See [vendors.md](../vendors.md#neo4j-aura) for pricing, free tier limits, and pr
 - Relationship-type limit: 65K maximum.
 - Aura free tier: one instance.
 
+## Aura free tier: auto-pause & resume
+
+A free Aura instance pauses after a period of inactivity. The first query after a pause pays a resume cost on top of normal query latency:
+
+| Tier | Latency | Meaning |
+|------|---------|---------|
+| Warm | < 200ms | Instance was already running |
+| Waking | 200ms – 2s | Instance was resuming from pause |
+| Cold start | > 2s | Instance was fully paused; full resume can take 10–30s |
+
+Live at `/showcases/db/graph/connection` — click Re-test right after a cold start to watch the same instance settle into the Warm tier.
+
 ## Shared instance, tenant isolation
 
 Aura free = **one database**, so a single instance holds two graphs at once:

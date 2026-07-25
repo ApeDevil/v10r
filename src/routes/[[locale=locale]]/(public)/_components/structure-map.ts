@@ -83,8 +83,8 @@ export const sections: StructureSection[] = [
 					},
 					{
 						segments: [
-							{ label: 'auth', href: '/showcases/auth/session' },
-							{ label: 'notifications', href: '/showcases/auth/session' },
+							{ label: 'auth', href: '/showcases/auth/authn' },
+							{ label: 'notifications', href: '/showcases/notifications/send' },
 						],
 						description: m.home_structure_server_auth_desc,
 					},

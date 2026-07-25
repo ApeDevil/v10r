@@ -632,6 +632,30 @@ On grant/revoke: the mutation deletes all sessions for the affected user. Next s
 
 Admin (env-pinned via `ADMIN_USER_ID`, a comma-separated list of admin user ids — multiple admins) always passes all capability checks.
 
+### Admin Gate: 404, Not 403
+
+`guardApiAdmin` and its page-load counterpart `requireAdmin` return a generic 404 for non-admins — never 403. A 403 confirms "this route exists, you're just not allowed"; an admin-only surface must not make that admission to an unauthenticated or under-privileged caller, so denied is made indistinguishable from absent:
+
+```typescript
+// src/lib/server/auth/guards.ts (excerpt)
+export function requireAdmin(locals: App.Locals) {
+  const user = requireAuth(locals);
+  if (!isAdmin(user)) throw error(404, 'Not Found'); // 404, NOT 403
+  return user;
+}
+```
+
+Capability guards (`requireBlogAuthor` and friends) still throw a normal 403 — the 404 disguise is reserved for the admin boundary, where even acknowledging the surface exists is the leak. See [Live showcase](/showcases/auth/authz).
+
+### Audit Log: No Foreign Key by Design
+
+`admin.audit_log` intentionally has no foreign key on `actor_id`, plus a denormalized `actor_email`:
+
+- **No FK** — the trail must outlive the actor. A normal `onDelete: 'cascade'` FK would erase an admin's audit history the moment their own account is deleted; omitting the FK keeps the log append-only in practice, not just in the code path.
+- **Denormalized `actor_email`** — the log reads without a join, so entries stay legible even after the source `auth.user` row is gone.
+
+The module also exposes no update/delete function — see [gdpr.md](../stack/capabilities/gdpr.md#what-the-admin-can-do) for the full admin-guarantees table this belongs to. See [Live showcase](/showcases/auth/users).
+
 ### API Endpoints
 
 ```

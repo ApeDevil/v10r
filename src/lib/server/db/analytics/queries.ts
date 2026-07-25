@@ -72,8 +72,10 @@ export async function getRecentEvents(opts: RecentEventsOptions): Promise<LiveEv
 
 	return rows.map((r) => {
 		const tier = r.consentTier;
-		const showDevice = tier === 'analytics' || tier === 'full';
-		const showCountry = tier === 'analytics' || tier === 'full';
+		// Device is UA-derived (terminal configuration) so it needs analytics consent.
+		// Country is connection-derived at the edge — no device access — so it is
+		// shown at every tier. See analytics/enrich.ts for the full reasoning.
+		const showDevice = tier === 'analytics';
 		return {
 			id: r.id,
 			ts: r.ts.toISOString(),
@@ -81,7 +83,7 @@ export async function getRecentEvents(opts: RecentEventsOptions): Promise<LiveEv
 			visitorFragment: r.visitorId.slice(0, 10),
 			path: r.path,
 			device: showDevice ? r.device : null,
-			country: showCountry ? r.country : null,
+			country: r.country,
 			consentTier: tier,
 			isPaired: r.debugOwnerId === opts.adminUserId,
 		};

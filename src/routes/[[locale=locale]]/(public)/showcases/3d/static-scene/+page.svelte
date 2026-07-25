@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Canvas, T } from '@threlte/core';
 import { GLTF, OrbitControls } from '@threlte/extras';
-import { BackLink, PageHeader } from '$lib/components';
+import { BackLink, PageHeader, ShowcaseDocs } from '$lib/components';
 import { BoundaryFallback } from '$lib/components/composites';
 import * as m from '$lib/paraglide/messages';
 </script>
@@ -15,7 +15,9 @@ import * as m from '$lib/paraglide/messages';
 			{ label: m.showcase_3d_breadcrumb(), href: '/showcases/3d' },
 			{ label: m.showcase_3d_static_breadcrumb() }
 		]}
-	/>
+	>
+		<ShowcaseDocs />
+	</PageHeader>
 </div>
 
 <svelte:boundary>

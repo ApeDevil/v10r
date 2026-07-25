@@ -1,6 +1,6 @@
 <script lang="ts">
 import { browser } from '$app/environment';
-import { BackLink, BoundaryFallback, NavSection, PageHeader } from '$lib/components/composites';
+import { BackLink, BoundaryFallback, NavSection, PageHeader, ShowcaseDocs } from '$lib/components/composites';
 import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
 import {
 	AreaChart,
@@ -386,7 +386,9 @@ const treemapNested: TreemapNode = {
 			{ label: m.showcase_viz_breadcrumb(), href: '/showcases/viz' },
 			{ label: m.showcase_viz_charts_breadcrumb() }
 		]}
-	/>
+	>
+		<ShowcaseDocs />
+	</PageHeader>
 
 	<NavSection {sections} />
 

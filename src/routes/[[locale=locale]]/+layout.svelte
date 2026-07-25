@@ -3,9 +3,10 @@
 // (src/routes/+layout.svelte) so they survive `+page@.svelte` breakouts that
 // shed this chrome layer (the full-screen 3D viewer/customizer).
 import { Tooltip as TooltipPrimitive } from 'bits-ui';
-import { goto } from '$app/navigation';
+import { afterNavigate, goto } from '$app/navigation';
 import { page } from '$app/state';
 import { initJourneyBeacon } from '$lib/analytics/journey-beacon';
+import { initTelemetry, setTelemetryConsent, telemetryOnNavigate } from '$lib/analytics/telemetry';
 import { BRAND_NAME } from '$lib/branding';
 import PairingStrip from '$lib/components/shell/PairingStrip.svelte';
 import UpdatePrompt from '$lib/components/shell/UpdatePrompt.svelte';
@@ -46,6 +47,20 @@ $effect(() => {
 // SPA-navigation analytics beacon (idempotent, no-op when consent < 'analytics' is rejected server-side)
 $effect(() => {
 	initJourneyBeacon();
+	// The templated route is the cardinality-bounded grouping key; page.route.id
+	// is SvelteKit's matched route, which the server templates the same way.
+	initTelemetry(() => page.route.id ?? '(unknown)');
+});
+
+// Telemetry collection follows consent reactively — a mid-session withdrawal
+// stops collection and drops anything already queued, without a reload.
+$effect(() => {
+	setTelemetryConsent(consent.tier === 'analytics');
+});
+
+// Close out the previous page's engagement window on SPA navigation.
+afterNavigate(() => {
+	telemetryOnNavigate();
 });
 
 // Wake-time session revalidation (idempotent): bfcache restores + logins that

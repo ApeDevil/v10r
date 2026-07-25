@@ -76,10 +76,4 @@ const isError = $derived(page.status >= 400);
 			</div>
 		</form>
 	</Card>
-
-	<Alert variant="info" title="Server Error Patterns">
-		{#snippet children()}
-			<p><code>setError(form, 'field', 'msg')</code> adds per-field errors. <code>message(form, 'msg', {'{'} status: 400 {'}'})</code> sets a form-level message with error status. Both are used for conditions only the server can check (database lookups, rate limits, etc.).</p>
-		{/snippet}
-	</Alert>
 </Stack>

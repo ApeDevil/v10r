@@ -116,12 +116,6 @@ function checkUsername() {
 			</div>
 		</form>
 	</Card>
-
-	<Alert variant="info" title="Async Check Pattern">
-		{#snippet children()}
-			<p>The username check uses a debounced <code>fetch</code> to <code>/api/showcases/check-username</code>, separate from Superforms validation. Try typing <strong>admin</strong>, <strong>test</strong>, <strong>user</strong>, or <strong>root</strong> to see "Taken".</p>
-		{/snippet}
-	</Alert>
 </Stack>
 
 <style>

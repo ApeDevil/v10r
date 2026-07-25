@@ -24,10 +24,7 @@ let { data } = $props();
 		</div>
 
 		<p class="card-note">
-			Naive bots fill every form field they see. The hidden <code>{data.field}</code> field is invisible to humans
-			(screen readers included), so any non-empty value is a high-confidence signal of automation. Field names like
-			<code>website</code>, <code>url</code>, and <code>homepage</code> appear in solver blocklists, so we use an
-			innocuous name that does not pattern-match. Rotate the constant if a particular form starts seeing zero blocks.
+			A non-empty value in this invisible field is a high-confidence bot signal.
 		</p>
 	</Card>
 
@@ -48,9 +45,7 @@ let { data } = $props();
 		</div>
 
 		<p class="card-note">
-			Bots submit forms in milliseconds; humans take seconds to read, type, and click. Submissions faster than
-			the minimum are silently rejected as bot traffic — same response shape as a successful submit, so probing
-			doesn't surface the threshold.
+			Submissions faster than the minimum are silently rejected — same response shape as a successful submit.
 		</p>
 	</Card>
 
@@ -69,8 +64,7 @@ let { data } = $props();
 		</ul>
 
 		<p class="card-note">
-			Auth flows use ALTCHA instead — the honeypot is reserved for unauthenticated form posts where adding a
-			captcha widget would add too much friction.
+			Auth flows use ALTCHA instead — honeypot covers unauthenticated form posts.
 		</p>
 	</Card>
 </Stack>

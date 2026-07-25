@@ -427,10 +427,6 @@ fetch(url, &#123;
   body: file,
 &#125;);</code></pre>
 					</div>
-
-					<div class="mime-note">
-						<p>This prevents XSS attacks where an attacker could upload an HTML file disguised as an image. The signature ensures the Content-Type cannot be changed after the URL is generated.</p>
-					</div>
 				</div>
 			</Card>
 		</section>
@@ -711,14 +707,6 @@ fetch(url, &#123;
 		font-size: var(--text-fluid-xs);
 		line-height: 1.6;
 		white-space: pre;
-	}
-
-	.mime-note p {
-		margin: 0;
-		color: var(--color-muted);
-		font-size: var(--text-fluid-sm);
-		line-height: 1.6;
-		font-style: italic;
 	}
 
 	@media (max-width: 640px) {

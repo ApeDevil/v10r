@@ -28,7 +28,6 @@ const config: KnipConfig = {
 		'src/lib/schemas/style.ts',
 		// Dormant — see docs/blueprint/analytics/activation.md
 		'src/lib/server/analytics/index.ts',
-		'src/lib/server/db/analytics/graph-seed.ts',
 		'src/lib/server/db/rag/setup.ts',
 	],
 

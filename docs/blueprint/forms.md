@@ -186,6 +186,29 @@ Pass existing data as the **first** parameter to `superValidate()` to pre-popula
 const form = await superValidate(existingUser, valibot(userSchema));
 ```
 
+Gate the save button on `$tainted` so it stays disabled until a field actually changes from its pre-populated value:
+
+```typescript
+const { form, tainted } = superForm(data.form, { validators: valibotClient(userSchema) });
+```
+
+```svelte
+<Button type="submit" disabled={!$tainted}>Save</Button>
+```
+
+### Reset After Submit
+
+Set `resetForm: true` to clear the form back to its initial values after a successful response — the right default for feedback forms, surveys, or anything the user might submit again:
+
+```typescript
+const { form, enhance, message } = superForm(data.form, {
+  validators: valibotClient(schema),
+  resetForm: true,
+});
+```
+
+A success message set via `message()` still persists through the reset, so a confirmation can stay visible after the fields clear.
+
 ### Multi-Step Wizard
 
 Validate the current step before advancing. Compose per-step schemas, then merge for the final submit via `entries` spread:
@@ -237,6 +260,23 @@ const { enhance, submit } = superForm(data.form, {
 ```
 
 Use the project [`ConfirmDialog`](./design/components.md) composite — not a raw modal.
+
+### Server-Only Validation Errors
+
+For conditions only the server can check — a duplicate email, an expired invite code — use `setError()` for a per-field error and `message()` for a form-level one, both from the action:
+
+```typescript
+import { message, setError, superValidate } from 'sveltekit-superforms';
+
+if (await emailTaken(form.data.email)) {
+  return setError(form, 'email', 'This email is already registered.');
+}
+if (codeExpired) {
+  return message(form, 'This invite code has expired.', { status: 400 });
+}
+```
+
+These run alongside — not instead of — the synchronous Valibot schema: the schema catches shape errors before submit; `setError`/`message` catch what needs a database lookup.
 
 ### File Upload
 

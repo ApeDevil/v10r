@@ -175,8 +175,8 @@ const ERD_TABLES = [
 			</div>
 		{/snippet}
 		<p class="text-sm text-muted mb-3">
-			<code>admin.audit_log</code> has no FK on <code>actor_id</code> (the trail must outlive the
-			actor) and a denormalized <code>actor_email</code> so it reads without a join.
+			<code>admin.audit_log</code> has no FK on <code>actor_id</code>, plus a denormalized
+			<code>actor_email</code>.
 		</p>
 		<Table>
 			<Header>
@@ -211,7 +211,6 @@ const ERD_TABLES = [
 		<p class="text-sm text-muted mb-3">
 			Custom user data lives in <code>app.user_preferences</code> (PK <em>is</em> the FK → strict
 			1:1, cascade) — never by editing the Better-Auth-generated <code>auth.user</code>.
-			<code>verification</code> and <code>audit_log</code> have no FK on purpose.
 		</p>
 		<ErdDiagram tables={ERD_TABLES} edges={authFixture.edges} ariaLabel="Auth data model" />
 	</Card>

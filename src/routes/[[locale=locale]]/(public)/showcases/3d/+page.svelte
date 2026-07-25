@@ -2,7 +2,7 @@
 import { pushState } from '$app/navigation';
 import { page } from '$app/state';
 import { SceneCard, ViewerDialog } from '$lib/components/3d';
-import { BackLink, NavGrid, PageHeader } from '$lib/components/composites';
+import { BackLink, NavGrid, PageHeader, ShowcaseDocs } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
 import { MODELS, MODELS_BY_ID } from '$lib/config/models';
 import * as m from '$lib/paraglide/messages';
@@ -29,9 +29,11 @@ function closeViewer() {
 		breadcrumbs={[
 			{ label: m.showcase_breadcrumb_home(), href: '/' },
 			{ label: m.showcase_breadcrumb_showcases(), href: '/showcases' },
-			{ label: m.showcase_3d_breadcrumb() }
+			{ label: m.showcase_3d_title() }
 		]}
-	/>
+	>
+		<ShowcaseDocs />
+	</PageHeader>
 
 	<NavGrid>
 		{#each MODELS as model (model.id)}

@@ -114,10 +114,4 @@ const roleOptions = [
 			</div>
 		</form>
 	</Card>
-
-	<Alert variant="info" title="Edit Pattern">
-		{#snippet children()}
-			<p>The form is pre-populated via <code>superValidate(existingData, valibot(schema))</code> on the server. <code>$tainted</code> tracks whether any field has changed from its initial value, enabling the Save button only when there are actual changes.</p>
-		{/snippet}
-	</Alert>
 </Stack>

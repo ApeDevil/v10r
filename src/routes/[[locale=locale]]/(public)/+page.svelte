@@ -5,6 +5,7 @@ import { Asterism, Divider, DropdownMenu } from '$lib/components';
 import LogoHero from '$lib/components/branding/LogoHero.svelte';
 import { cookieMaxAge, cookieName, locales, localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
+import { showcases } from '$lib/showcases/registry';
 import { getStyle } from '$lib/state/style.svelte';
 import { getTheme } from '$lib/state/theme.svelte';
 import { setCookie } from '$lib/utils/cookies';
@@ -122,19 +123,6 @@ const zones: Array<{
 			{ icon: 'i-lucide-network', label: () => m.home_taxonomy_cap_graph_rag_label(), desc: 'Recursive retrieval' },
 		],
 	},
-];
-
-const ghostIcons = [
-	'i-lucide-cpu',
-	'i-lucide-palette',
-	'i-lucide-lock',
-	'i-lucide-globe',
-	'i-lucide-terminal',
-	'i-lucide-database',
-	'i-lucide-zap',
-	'i-lucide-layers',
-	'i-lucide-eye',
-	'i-lucide-sparkles',
 ];
 </script>
 <!-- ACT I: Hero -->
@@ -269,11 +257,18 @@ v          10            r</pre>
 		<span>{m.home_showcase_cta()}</span>
 	</a>
 
-	<div class="ghost-grid" aria-hidden="true">
-		{#each ghostIcons as icon}
-			<span class="ghost-icon {icon}"></span>
-		{/each}
-	</div>
+	<nav class="chip-cloud-nav" aria-label={m.home_showcase_map_aria()}>
+		<ul class="chip-cloud">
+			{#each showcases as card}
+				<li>
+					<a href={localizeHref(card.href)} class="showcase-chip focus-ring">
+						<span class="chip-icon {card.icon}" aria-hidden="true"></span>
+						<span>{card.title()}</span>
+					</a>
+				</li>
+			{/each}
+		</ul>
+	</nav>
 </section>
 
 <style>
@@ -793,21 +788,53 @@ v          10            r</pre>
 		}
 	}
 
-	/* Ghost grid */
-	.ghost-grid {
-		display: grid;
-		grid-template-columns: repeat(10, 1fr);
-		gap: var(--spacing-6);
+	/* Chip cloud — every showcase, one hop from the finale. Chip anatomy mirrors
+	   the hero's .split-btn/.lang-btn pill vocabulary so the page bookends. */
+	.chip-cloud-nav {
 		width: 100%;
-		max-width: 40rem;
-		pointer-events: none;
+		display: flex;
+		justify-content: center;
 	}
 
-	.ghost-icon {
-		width: 2rem;
-		height: 2rem;
-		opacity: 0.08;
-		justify-self: center;
+	.chip-cloud {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: var(--spacing-4);
+		max-width: 64rem;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	.showcase-chip {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--spacing-3);
+		min-height: 44px;
+		padding: var(--spacing-3) var(--spacing-5);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		font-size: var(--text-fluid-sm);
+		color: var(--color-fg);
+		text-decoration: none;
+		white-space: normal;
+		max-width: 16rem;
+		overflow-wrap: break-word;
+		hyphens: auto;
+		transition: border-color var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out;
+	}
+
+	.showcase-chip:hover,
+	.showcase-chip:focus-visible {
+		border-color: var(--color-primary);
+		background: var(--color-fg-alpha);
+	}
+
+	.chip-icon {
+		width: 1.25rem;
+		height: 1.25rem;
+		flex-shrink: 0;
 	}
 
 </style>

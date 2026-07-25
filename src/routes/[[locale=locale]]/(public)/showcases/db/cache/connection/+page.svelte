@@ -126,8 +126,6 @@ function recordHistory(ms: number) {
 				{/snippet}
 
 				<div class="explanation">
-					<p>Upstash Redis is always-on via HTTP — no cold starts, no TCP connection overhead. Latency reflects network round-trip to the Upstash region.</p>
-
 					<div class="tier-legend">
 						<Cluster gap="3">
 							<Badge variant="success">Fast</Badge>

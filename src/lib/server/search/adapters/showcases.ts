@@ -2,8 +2,10 @@
  * Showcase adapter — turns the showcase card tree + curated in-page sections
  * into `showcase` and `section` records.
  *
- * Showcase labels are English-only, so for de/ru these are `localeFallback`
- * records (rendered with an "EN" badge). Sections deep-link to `#anchor`.
+ * Card/sublink labels are Paraglide message functions, resolved here per index
+ * shard (the `buildSearchIndex` locale pin), so page records are genuinely
+ * localized. The curated section titles in `sections.ts` are still English-only
+ * → those records keep `localeFallback` (rendered with an "EN" badge).
  */
 
 import type { SearchLocale, SearchRecord } from '$lib/search/types';
@@ -16,7 +18,7 @@ function cardTitleFor(pageHref: string): string {
 	let bestLen = -1;
 	for (const card of showcases) {
 		if (pageHref.startsWith(card.href) && card.href.length > bestLen) {
-			best = card.title;
+			best = card.title();
 			bestLen = card.href.length;
 		}
 	}
@@ -35,7 +37,7 @@ export function showcaseRecords(locale: SearchLocale): SearchRecord[] {
 			id: `showcase:${locale}:${href}`,
 			surface: 'showcase',
 			locale,
-			localeFallback: fallback,
+			localeFallback: false,
 			title,
 			path: href,
 			anchor: null,
@@ -47,14 +49,14 @@ export function showcaseRecords(locale: SearchLocale): SearchRecord[] {
 
 	const walk = (subs: ShowcaseSublink[], icon: string, trail: string[]) => {
 		for (const sub of subs) {
-			pushPage(sub.href, sub.label, icon, trail);
-			if (sub.children) walk(sub.children, icon, [...trail, sub.label]);
+			pushPage(sub.href, sub.label(), icon, trail);
+			if (sub.children) walk(sub.children, icon, [...trail, sub.label()]);
 		}
 	};
 
 	for (const card of showcases) {
-		pushPage(card.href, card.title, card.icon, ['Showcases']);
-		if (card.sublinks) walk(card.sublinks, card.icon, [card.title]);
+		pushPage(card.href, card.title(), card.icon, ['Showcases']);
+		if (card.sublinks) walk(card.sublinks, card.icon, [card.title()]);
 	}
 
 	// In-page sections (deep-linkable showcase "elements").

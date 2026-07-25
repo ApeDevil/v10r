@@ -36,6 +36,7 @@ export * from './page-header';
 export * from './pagination';
 export * from './reorderable-panes';
 export * from './selection-bar';
+export * from './showcase-docs';
 export * from './showcase-layout';
 export * from './step-up-dialog';
 export * from './tag-input';

@@ -1,9 +1,9 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
-import { NavTab, PageHeader } from '$lib/components/composites';
+import { NavTab, PageHeader, ShowcaseDocs } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
 import { getTheme } from '$lib/state/theme.svelte';
-import { getShowcaseTabs } from '../showcases';
+import { getShowcaseCard, getShowcaseTabs, showcaseBreadcrumbs } from '../showcases';
 
 let { children }: { children: Snippet } = $props();
 const theme = getTheme();
@@ -12,21 +12,20 @@ function toggleTheme() {
 	theme.setMode(theme.isDark ? 'light' : 'dark');
 }
 
+const card = getShowcaseCard('/showcases/ui');
 const tabs = getShowcaseTabs('/showcases/ui');
 </script>
 
 <PageContainer class="py-7">
 	<PageHeader
-		title="UI Showcase"
-		description="Explore all UI components, design tokens, and patterns used in Velociraptor."
-		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'UI' }
-		]}
-	/>
+		title={card.title()}
+		description={card.description()}
+		breadcrumbs={showcaseBreadcrumbs(card)}
+	>
+		<ShowcaseDocs />
+	</PageHeader>
 
-	<NavTab {tabs} ariaLabel="UI sections" />
+	<NavTab {tabs} ariaLabel={(card.ariaLabel ?? card.title)()} />
 
 	<div class="pt-6">
 		{@render children()}

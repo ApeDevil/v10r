@@ -435,7 +435,7 @@ onMount(() => {
 			{/if}
 
 			<p class="text-xs text-center mt-6">
-				<a href={localizeHref('/showcases/admin/data')} class="text-fg underline transition-colors duration-fast hover:text-primary focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{m.auth_login_privacy_link()}</a>
+				<a href={localizeHref('/showcases/privacy/data')} class="text-fg underline transition-colors duration-fast hover:text-primary focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{m.auth_login_privacy_link()}</a>
 			</p>
 		{/if}
 

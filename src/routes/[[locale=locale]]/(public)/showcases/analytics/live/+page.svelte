@@ -121,7 +121,6 @@ const eventTypeIcon: Record<string, string> = {
 	<ChartSection
 		title="Live Event Feed"
 		description="Real-time analytics events as they occur (simulated for demo)"
-		details="Events are streamed via Server-Sent Events (SSE) from /api/analytics/stream. In production, this would show actual pageviews and interactions. For the demo, synthetic events are generated at random intervals."
 	>
 		{#snippet chart()}
 			{#if events.length === 0}

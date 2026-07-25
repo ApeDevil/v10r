@@ -1,26 +1,15 @@
 <script lang="ts">
-import { Alert } from '$lib/components/composites';
-import { SankeyDiagram } from '$lib/components/viz/graph/sankey';
-import type { SankeyData } from '$lib/components/viz/graph/sankey/types';
+import { Alert, EmptyState } from '$lib/components/composites';
 import ChartSection from '../_components/ChartSection.svelte';
+import QueryTime from '../_components/QueryTime.svelte';
 
 let { data } = $props();
 
-function buildSankeyData(paths: { source: string; target: string; count: number }[]): SankeyData {
-	const nodeSet = new Set<string>();
-	for (const p of paths) {
-		nodeSet.add(p.source);
-		nodeSet.add(p.target);
-	}
-	return {
-		nodes: [...nodeSet].map((id) => ({ id, label: id === '/' ? 'Home' : id })),
-		edges: paths.map((p) => ({
-			source: p.source,
-			target: p.target,
-			value: p.count,
-		})),
-	};
-}
+// Bar width is relative to the busiest transition, so the column reads as a
+// ranking rather than as an absolute volume claim.
+const maxTransition = $derived(Math.max(1, ...data.transitions.map((t) => t.count)));
+const maxEntry = $derived(Math.max(1, ...data.entryPages.map((p) => p.count)));
+const maxExit = $derived(Math.max(1, ...data.exitPages.map((p) => p.count)));
 
 function formatDate(d: Date): string {
 	return d.toLocaleDateString('en-US', {
@@ -36,95 +25,87 @@ function formatDate(d: Date): string {
 	{#if data.error}
 		<Alert variant="error" title="Database Error">
 			<p>{data.error}</p>
-			<p class="mt-2 text-fluid-sm text-muted">Try reseeding the analytics data to create the required tables and data.</p>
 		</Alert>
 	{/if}
 
-	<!-- Sankey diagram (streamed from Neo4j) -->
 	<ChartSection
-		title="User Flows"
-		description="Page-to-page transitions showing how visitors navigate through the site"
-		details="Graph data comes from Neo4j. Each link represents the number of sessions that went from one page to another. Thicker links = more traffic."
+		title="Page Transitions"
+		description="Which page follows which, ranked by how often the move happens"
 	>
 		{#snippet chart()}
-			{#await data.graph}
-				<div class="skeleton-sankey" aria-label="Loading user flow diagram">
-					<div class="skeleton-bar" style="width: 80%"></div>
-					<div class="skeleton-bar" style="width: 60%"></div>
-					<div class="skeleton-bar" style="width: 45%"></div>
-					<div class="skeleton-bar" style="width: 30%"></div>
-					<div class="skeleton-bar" style="width: 20%"></div>
+			{#if data.transitions.length > 0}
+				<div class="transition-list">
+					{#each data.transitions as t (`${t.source}→${t.target}`)}
+						<div class="transition-row">
+							<div class="transition-pair">
+								<code class="page-path">{t.source}</code>
+								<span class="arrow" aria-hidden="true">→</span>
+								<code class="page-path">{t.target}</code>
+							</div>
+							<div class="transition-bar-track" aria-hidden="true">
+								<div class="transition-bar" style="width: {(t.count / maxTransition) * 100}%"></div>
+							</div>
+							<span class="page-count">{t.count}</span>
+						</div>
+					{/each}
 				</div>
-			{:then graphData}
-				{#if graphData && graphData[0].length > 0}
-					{@const sankeyData = buildSankeyData(graphData[0])}
-					<SankeyDiagram data={sankeyData} ariaLabel="User navigation flow between pages" />
-				{:else}
-					<Alert variant="info" title="No graph data">
-						<p>Neo4j graph data is not available. Seed the analytics data and run the graph sync to populate journey data.</p>
-					</Alert>
-				{/if}
-			{:catch}
-				<Alert variant="error" title="Graph Query Failed">
-					<p>Could not load journey data from Neo4j. The graph database may be unavailable.</p>
-				</Alert>
-			{/await}
+				<p class="method-note">
+					Counted with a window function over consecutive pageviews in the same session. Reloads are
+					excluded — they are not navigations. Aggregate paths merge visitors with very different
+					intentions, so read this as “what moves are common”, not “why people move”.
+				</p>
+			{:else}
+				<EmptyState
+					icon="i-lucide-route"
+					title="No transitions yet"
+					description="A transition needs two pageviews in one session. Browse a few pages and they will appear here."
+				/>
+			{/if}
 		{/snippet}
 	</ChartSection>
 
-	<!-- Entry/Exit pages (streamed) -->
-	{#await data.graph}
-		<div class="entry-exit-grid">
-			<div class="skeleton-section" aria-label="Loading entry pages">
-				<div class="skeleton-bar" style="width: 40%"></div>
-				<div class="skeleton-bar" style="width: 70%"></div>
-				<div class="skeleton-bar" style="width: 55%"></div>
-				<div class="skeleton-bar" style="width: 45%"></div>
-			</div>
-			<div class="skeleton-section" aria-label="Loading exit pages">
-				<div class="skeleton-bar" style="width: 60%"></div>
-				<div class="skeleton-bar" style="width: 50%"></div>
-				<div class="skeleton-bar" style="width: 75%"></div>
-				<div class="skeleton-bar" style="width: 40%"></div>
-			</div>
-		</div>
-	{:then graphData}
-		{#if graphData}
-			<div class="entry-exit-grid">
-				{#if graphData[1].length > 0}
-					<ChartSection title="Entry Pages" description="Where visitors land first">
-						{#snippet chart()}
-							<div class="page-list">
-								{#each graphData[1] as page}
-									<div class="page-row">
-										<code class="page-path">{page.path}</code>
-										<span class="page-count">{page.count}</span>
-									</div>
-								{/each}
+	<div class="entry-exit-grid">
+		<ChartSection title="Entry Pages" description="Where visitors land first">
+			{#snippet chart()}
+				{#if data.entryPages.length > 0}
+					<div class="page-list">
+						{#each data.entryPages as page (page.path)}
+							<div class="page-row">
+								<code class="page-path">{page.path}</code>
+								<div class="transition-bar-track" aria-hidden="true">
+									<div class="transition-bar" style="width: {(page.count / maxEntry) * 100}%"></div>
+								</div>
+								<span class="page-count">{page.count}</span>
 							</div>
-						{/snippet}
-					</ChartSection>
+						{/each}
+					</div>
+				{:else}
+					<EmptyState icon="i-lucide-log-in" title="No sessions yet" />
 				{/if}
+			{/snippet}
+		</ChartSection>
 
-				{#if graphData[2].length > 0}
-					<ChartSection title="Exit Pages" description="Where visitors leave">
-						{#snippet chart()}
-							<div class="page-list">
-								{#each graphData[2] as page}
-									<div class="page-row">
-										<code class="page-path">{page.path}</code>
-										<span class="page-count">{page.count}</span>
-									</div>
-								{/each}
+		<ChartSection title="Exit Pages" description="Where visitors leave">
+			{#snippet chart()}
+				{#if data.exitPages.length > 0}
+					<div class="page-list">
+						{#each data.exitPages as page (page.path)}
+							<div class="page-row">
+								<code class="page-path">{page.path}</code>
+								<div class="transition-bar-track" aria-hidden="true">
+									<div class="transition-bar" style="width: {(page.count / maxExit) * 100}%"></div>
+								</div>
+								<span class="page-count">{page.count}</span>
 							</div>
-						{/snippet}
-					</ChartSection>
+						{/each}
+					</div>
+				{:else}
+					<EmptyState icon="i-lucide-log-out" title="No sessions yet" />
 				{/if}
-			</div>
-		{/if}
-	{/await}
+			{/snippet}
+		</ChartSection>
+	</div>
 
-	<!-- Recent sessions table -->
 	<ChartSection
 		title="Recent Sessions"
 		description="Last 20 visitor sessions with page counts and duration"
@@ -144,7 +125,7 @@ function formatDate(d: Date): string {
 						</tr>
 					</thead>
 					<tbody>
-						{#each data.sessions as session}
+						{#each data.sessions as session (session.id)}
 							<tr>
 								<td><code class="session-id">{session.id.slice(0, 12)}</code></td>
 								<td class="numeric">{session.pageCount}</td>
@@ -160,6 +141,8 @@ function formatDate(d: Date): string {
 			</div>
 		{/snippet}
 	</ChartSection>
+
+	<QueryTime ms={data.queryMs} />
 </div>
 
 <style>
@@ -167,35 +150,6 @@ function formatDate(d: Date): string {
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-6);
-	}
-
-	.skeleton-sankey {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-3);
-		padding: var(--spacing-6);
-		min-height: 200px;
-	}
-
-	.skeleton-bar {
-		height: 24px;
-		border-radius: var(--radius-md);
-		background: var(--color-subtle);
-		animation: pulse 1.5s ease-in-out infinite;
-	}
-
-	.skeleton-section {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-3);
-		padding: var(--spacing-5) var(--spacing-6);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-lg);
-	}
-
-	@keyframes pulse {
-		0%, 100% { opacity: 1; }
-		50% { opacity: 0.5; }
 	}
 
 	.entry-exit-grid {
@@ -210,24 +164,54 @@ function formatDate(d: Date): string {
 		}
 	}
 
+	.transition-list,
 	.page-list {
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-2);
 	}
 
+	.transition-row,
 	.page-row {
-		display: flex;
-		justify-content: space-between;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 6rem auto;
 		align-items: center;
+		gap: var(--spacing-3);
 		padding: var(--spacing-2) var(--spacing-3);
 		border-radius: var(--radius-md);
 		background: var(--color-subtle);
 	}
 
+	.transition-pair {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-2);
+		min-width: 0;
+		overflow-x: auto;
+	}
+
+	.arrow {
+		color: var(--color-muted);
+		flex-shrink: 0;
+	}
+
+	.transition-bar-track {
+		height: 6px;
+		border-radius: var(--radius-full);
+		background: var(--color-border);
+		overflow: hidden;
+	}
+
+	.transition-bar {
+		height: 100%;
+		border-radius: var(--radius-full);
+		background: var(--color-primary);
+	}
+
 	.page-path {
 		font-size: var(--text-fluid-sm);
 		color: var(--color-fg);
+		white-space: nowrap;
 	}
 
 	.page-count {
@@ -235,6 +219,12 @@ function formatDate(d: Date): string {
 		font-weight: 600;
 		color: var(--color-muted);
 		font-variant-numeric: tabular-nums;
+	}
+
+	.method-note {
+		margin-top: var(--spacing-4);
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
 	}
 
 	.sessions-table-wrapper {

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Card, EmptyState, PageHeader } from '$lib/components/composites';
+import { Card, EmptyState, PageHeader, ShowcaseDocs } from '$lib/components/composites';
 import { PageContainer, Stack } from '$lib/components/layout';
 import { Badge } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
@@ -24,9 +24,11 @@ function relativeTime(iso: string): string {
 		breadcrumbs={[
 			{ label: m.showcase_breadcrumb_home(), href: '/' },
 			{ label: m.showcase_breadcrumb_showcases(), href: '/showcases' },
-			{ label: m.showcase_jobs_breadcrumb() }
+			{ label: m.showcase_jobs_title() }
 		]}
-	/>
+	>
+		<ShowcaseDocs />
+	</PageHeader>
 
 	<Stack gap="6">
 		<!-- How it works -->
@@ -51,7 +53,6 @@ function relativeTime(iso: string): string {
 						<span class="diag-value">Admin dashboard at <code class="diag-mono">/admin/jobs</code></span>
 					</div>
 				</div>
-				<p>Every execution is logged to PostgreSQL with status, duration, trigger type, and result count. The <code>runJob()</code> wrapper handles timing and fire-and-forget logging — if the DB insert fails, the job result is still returned.</p>
 			</div>
 		</Card>
 

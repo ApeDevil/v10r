@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { Edge, Node } from '@xyflow/svelte';
-import { BackLink, NavSection, PageHeader } from '$lib/components/composites';
+import { BackLink, NavSection, PageHeader, ShowcaseDocs } from '$lib/components/composites';
 import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
 import { FlowDiagram, StateDiagram } from '$lib/components/viz';
 import * as m from '$lib/paraglide/messages';
@@ -84,7 +84,9 @@ const cicdEdges: Edge[] = [
 			{ label: m.showcase_viz_breadcrumb(), href: '/showcases/viz' },
 			{ label: m.showcase_viz_diagrams_breadcrumb() }
 		]}
-	/>
+	>
+		<ShowcaseDocs />
+	</PageHeader>
 
 	<NavSection {sections} />
 

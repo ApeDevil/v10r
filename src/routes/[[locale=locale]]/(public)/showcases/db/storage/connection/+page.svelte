@@ -136,8 +136,6 @@ function recordHistory(ms: number) {
 				{/snippet}
 
 				<div class="explanation">
-					<p>R2 is always-on — there are no cold starts like Neon (PostgreSQL) or Aura (Neo4j). Buckets are instantly available 24/7.</p>
-
 					<div class="tier-legend">
 						<Cluster gap="3">
 							<Badge variant="success">Fast</Badge>

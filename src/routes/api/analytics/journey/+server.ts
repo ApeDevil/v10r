@@ -3,16 +3,25 @@
  * from `navigator.sendBeacon` on `pagehide` (and `fetch keepalive` fallback).
  *
  * - No CSRF token (sendBeacon cannot set headers); Origin check instead.
- * - Consent-gated: requires `event.locals.consentTier === 'analytics' | 'full'`.
+ * - Consent-gated: requires at least `analytics` consent.
  * - Idempotent on `event_id` (UUID v4 from the client).
+ * - Path-filtered through the SHARED collection policy, so client-side
+ *   navigations obey exactly the same exclusions as server navigations. The
+ *   beacon is initialised in the root layout and therefore fires on every
+ *   route — without this filter, authenticated surfaces leak into the
+ *   anonymous lane.
  *
- * Always responds 204 No Content (or an error status with no body) — beacon
- * callers ignore the response anyway, and silent responses prevent state echo.
+ * Advances session state (`page_count`, `exit_path`, `ended_at`) as well as
+ * recording events: without it a visitor's session is frozen at whatever the
+ * first server-rendered page load wrote, which silently breaks bounce rate,
+ * session duration, exit pages, and the active-session count.
  */
-import { json } from '@sveltejs/kit';
 import * as v from 'valibot';
-import { hashVisitorId } from '$lib/server/analytics/consent';
-import { recordEvent } from '$lib/server/db/analytics/mutations';
+import { isBot, isExcludedPath } from '$lib/server/analytics/collect-policy';
+import { hasConsent, hashVisitorId } from '$lib/server/analytics/consent';
+import { apiError, apiNoContent } from '$lib/server/api/response';
+import { ANALYTICS_SESSION_COOKIE } from '$lib/server/config';
+import { recordEvent, upsertSession } from '$lib/server/db/analytics/mutations';
 import type { RequestHandler } from './$types';
 
 const JourneyEvent = v.object({
@@ -30,38 +39,45 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 	// Origin check — same-origin only.
 	const origin = request.headers.get('origin');
 	if (origin && origin !== url.origin) {
-		return new Response(null, { status: 403 });
+		return apiError(403, 'forbidden', 'Cross-origin beacon rejected');
 	}
 
-	// Consent gate — silent reject if no analytics consent.
-	if (locals.consentTier !== 'analytics' && locals.consentTier !== 'full') {
-		return new Response(null, { status: 204 });
+	// Consent gate — silent accept-and-drop if consent is below `analytics`.
+	if (!hasConsent(locals.consentTier, 'analytics')) {
+		return apiNoContent();
 	}
 
-	const sessionId = cookies.get('_v10r_sid');
+	const ua = request.headers.get('user-agent') ?? '';
+	if (isBot(ua)) return apiNoContent();
+
+	const sessionId = cookies.get(ANALYTICS_SESSION_COOKIE);
 	if (!sessionId) {
 		// Tracking session expired or never started — ignore.
-		return new Response(null, { status: 204 });
+		return apiNoContent();
 	}
 
 	let body: unknown;
 	try {
 		body = await request.json();
 	} catch {
-		return json({ error: 'INVALID_PAYLOAD' }, { status: 400 });
+		return apiError(400, 'invalid_payload', 'Body is not valid JSON');
 	}
 
 	const parsed = v.safeParse(JourneyBatch, body);
 	if (!parsed.success) {
-		return json({ error: 'INVALID_PAYLOAD' }, { status: 400 });
+		return apiError(400, 'invalid_payload', 'Journey batch failed validation');
 	}
 
+	// Drop excluded paths BEFORE counting, so they inflate neither the event log
+	// nor the session's page count.
+	const tracked = parsed.output.events.filter((evt) => !isExcludedPath(evt.path));
+	if (tracked.length === 0) return apiNoContent();
+
 	const ip = getClientAddress();
-	const ua = request.headers.get('user-agent') ?? '';
 	const visitorId = await hashVisitorId(`${ip}:${ua}`);
 
 	// Strip referrer to origin only (no query strings — reset tokens etc. live there).
-	const events = parsed.output.events.map((evt) => {
+	const events = tracked.map((evt) => {
 		let referrer: string | undefined;
 		if (evt.referrer) {
 			try {
@@ -82,8 +98,18 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 		};
 	});
 
-	// Fire-and-forget per event — idempotent on eventId.
+	// Idempotent on eventId, so a re-delivered beacon is a no-op.
 	await Promise.all(events.map((evt) => recordEvent(evt).catch(() => {})));
 
-	return new Response(null, { status: 204 });
+	// Queue order is navigation order: first entry, last exit.
+	await upsertSession({
+		id: sessionId,
+		visitorId,
+		entryPath: events[0].path,
+		exitPath: events[events.length - 1].path,
+		pageIncrement: events.length,
+		consentTier: locals.consentTier,
+	}).catch(() => {});
+
+	return apiNoContent();
 };

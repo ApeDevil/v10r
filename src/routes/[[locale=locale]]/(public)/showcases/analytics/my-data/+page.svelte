@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Button } from '$lib/components/primitives/button';
+import * as m from '$lib/paraglide/messages';
 import { getConsent } from '$lib/state/consent.svelte';
 import { getToast } from '$lib/state/toast.svelte';
 
@@ -21,6 +22,8 @@ function handleDelete() {
 }
 
 const activeTier = $derived(consent.tier ?? data.consentTier);
+/** Whether the analytics-tier rows are currently being collected for this visitor. */
+const on = $derived(activeTier === 'analytics');
 </script>
 
 <div class="my-data-layout">
@@ -65,64 +68,86 @@ const activeTier = $derived(consent.tier ?? data.consentTier);
 							<code>{data.necessary.sessionCookie}</code>
 						</div>
 					</li>
+					<li class="data-item collected">
+						<span class="i-lucide-check text-icon-xs" aria-hidden="true"></span>
+						<div>
+							<strong>Country</strong>
+							<code>{data.necessary.country}</code>
+							<span class="text-muted">
+								Resolved from your connection at the edge, not read from your device — which is why it
+								needs no consent.
+							</span>
+						</div>
+					</li>
 				</ul>
 			</div>
 
 			<!-- Analytics tier -->
-			<div class="tier-card" class:active={activeTier === 'analytics' || activeTier === 'full'}>
+			<div class="tier-card" class:active={on}>
 				<div class="tier-header">
 					<h3>Analytics</h3>
 					<span class="tier-badge opt-in">Off by default</span>
 				</div>
 				<ul class="data-list">
-					<li class="data-item" class:collected={activeTier === 'analytics' || activeTier === 'full'}>
-						<span class={activeTier === 'analytics' || activeTier === 'full' ? 'i-lucide-check text-icon-xs' : 'i-lucide-minus text-icon-xs'} aria-hidden="true"></span>
+					<li class="data-item" class:collected={on}>
+						<span class={on ? 'i-lucide-check text-icon-xs' : 'i-lucide-minus text-icon-xs'} aria-hidden="true"></span>
 						<div>
 							<strong>Referrer</strong>
 							<code>{data.analytics.referrer ?? 'none'}</code>
 						</div>
 					</li>
-					<li class="data-item" class:collected={activeTier === 'analytics' || activeTier === 'full'}>
-						<span class={activeTier === 'analytics' || activeTier === 'full' ? 'i-lucide-check text-icon-xs' : 'i-lucide-minus text-icon-xs'} aria-hidden="true"></span>
+					<li class="data-item" class:collected={on}>
+						<span class={on ? 'i-lucide-check text-icon-xs' : 'i-lucide-minus text-icon-xs'} aria-hidden="true"></span>
 						<div>
 							<strong>Language</strong>
 							<code>{data.analytics.acceptLanguage || 'not sent'}</code>
 						</div>
 					</li>
-					<li class="data-item" class:collected={activeTier === 'analytics' || activeTier === 'full'}>
-						<span class={activeTier === 'analytics' || activeTier === 'full' ? 'i-lucide-check text-icon-xs' : 'i-lucide-minus text-icon-xs'} aria-hidden="true"></span>
+					<li class="data-item" class:collected={on}>
+						<span class={on ? 'i-lucide-check text-icon-xs' : 'i-lucide-minus text-icon-xs'} aria-hidden="true"></span>
+						<div>
+							<strong>Device and browser</strong>
+							<code>{data.analytics.device} · {data.analytics.browser}</code>
+							<span class="text-muted">Derived from the User-Agent below — kept deliberately coarse, never a version number.</span>
+						</div>
+					</li>
+					<li class="data-item" class:collected={on}>
+						<span class={on ? 'i-lucide-check text-icon-xs' : 'i-lucide-minus text-icon-xs'} aria-hidden="true"></span>
+						<div>
+							<strong>Navigation between pages</strong>
+							<span class="text-muted">Which page follows which, within one session.</span>
+						</div>
+					</li>
+					<li class="data-item" class:collected={on}>
+						<span class={on ? 'i-lucide-check text-icon-xs' : 'i-lucide-minus text-icon-xs'} aria-hidden="true"></span>
 						<div>
 							<strong>User-Agent</strong>
 							<code class="ua-code">{data.analytics.userAgent || 'not sent'}</code>
 						</div>
 					</li>
 				</ul>
+				<p class="tier-note">{data.rawIpNote}</p>
 			</div>
+		</div>
 
-			<!-- Full tier -->
-			<div class="tier-card" class:active={activeTier === 'full'}>
-				<div class="tier-header">
-					<h3>Full</h3>
-					<span class="tier-badge opt-in">Off by default</span>
-				</div>
-				<ul class="data-list">
-					<li class="data-item" class:collected={activeTier === 'full'}>
-						<span class={activeTier === 'full' ? 'i-lucide-check text-icon-xs' : 'i-lucide-minus text-icon-xs'} aria-hidden="true"></span>
-						<div>
-							<strong>Custom events</strong>
-							<span class="text-muted">Button clicks, scroll depth, timing</span>
-						</div>
-					</li>
-					<li class="data-item" class:collected={activeTier === 'full'}>
-						<span class={activeTier === 'full' ? 'i-lucide-check text-icon-xs' : 'i-lucide-minus text-icon-xs'} aria-hidden="true"></span>
-						<div>
-							<strong>Behavioral tracking</strong>
-							<span class="text-muted">Session replays, heatmaps</span>
-						</div>
-					</li>
-				</ul>
-				<p class="tier-note">{data.full.rawIpNote}</p>
-			</div>
+		<div class="never-panel">
+			<h3 class="never-title">
+				<span class="i-lucide-shield-x text-icon-sm" aria-hidden="true"></span>
+				What is never collected, at any tier
+			</h3>
+			<ul class="never-list">
+				<li>Session recordings or replays of your screen</li>
+				<li>Heatmaps, mouse tracks, or keystrokes</li>
+				<li>Anything you type into a form</li>
+				<li>Your raw IP address, in any table</li>
+				<li>Fingerprinting signals — screen size, timezone, canvas, installed fonts</li>
+				<li>Any identifier shared with another site, or with a third party</li>
+			</ul>
+			<p class="never-note">
+				The visitor hash is built from your IP and User-Agent alone. Adding any further signal
+				would make it a fingerprint, so nothing further is added — that is a design constraint,
+				not a current setting.
+			</p>
 		</div>
 
 		<!-- Hashing demo -->
@@ -172,9 +197,48 @@ const activeTier = $derived(consent.tier ?? data.consentTier);
 			</Button>
 		</div>
 	{/if}
+
+	<aside class="cross-link">
+		<span class="i-lucide-arrow-right" aria-hidden="true"></span>
+		<p>
+			{m.showcase_analytics_privacy_seealso()}
+			<a href="/showcases/privacy">{m.showcase_privacy_title()}</a>
+		</p>
+	</aside>
 </div>
 
 <style>
+	.cross-link {
+		display: flex;
+		gap: var(--spacing-3);
+		align-items: flex-start;
+		padding: var(--spacing-4) var(--spacing-5);
+		border-radius: var(--radius-lg);
+		background: var(--color-subtle);
+		border: 1px solid var(--color-border);
+	}
+
+	.cross-link span {
+		flex-shrink: 0;
+		width: 1.125rem;
+		height: 1.125rem;
+		margin-top: 0.15rem;
+		color: var(--color-primary);
+	}
+
+	.cross-link p {
+		margin: 0;
+		font-size: var(--text-fluid-sm);
+		color: var(--color-fg);
+		line-height: 1.6;
+	}
+
+	.cross-link a {
+		color: var(--color-primary);
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+	}
+
 	.my-data-layout {
 		display: flex;
 		flex-direction: column;
@@ -300,6 +364,42 @@ const activeTier = $derived(consent.tier ?? data.consentTier);
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+
+	.never-panel {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-3);
+		margin-top: var(--spacing-6);
+		padding: var(--spacing-5) var(--spacing-6);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-lg);
+		background: var(--color-subtle);
+	}
+
+	.never-title {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-2);
+		margin: 0;
+		font-size: var(--text-fluid-base);
+		color: var(--color-fg);
+	}
+
+	.never-list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-2);
+		margin: 0;
+		padding-left: var(--spacing-5);
+		font-size: var(--text-fluid-sm);
+		color: var(--color-fg);
+	}
+
+	.never-note {
+		margin: 0;
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
 	}
 
 	.tier-note {

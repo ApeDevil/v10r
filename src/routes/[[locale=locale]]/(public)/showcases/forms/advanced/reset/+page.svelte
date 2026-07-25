@@ -98,12 +98,6 @@ const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
 			</div>
 		</form>
 	</Card>
-
-	<Alert variant="info" title="Reset Pattern">
-		{#snippet children()}
-			<p><code>resetForm: true</code> clears all fields back to their initial values after a successful server response. The success message persists via <code>$message</code>. Great for feedback forms, surveys, or any form where the user might want to submit again.</p>
-		{/snippet}
-	</Alert>
 </Stack>
 
 <style>

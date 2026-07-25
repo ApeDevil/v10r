@@ -10,6 +10,6 @@ export interface LiveEvent {
 	path: string;
 	device: string | null;
 	country: string | null;
-	consentTier: 'necessary' | 'analytics' | 'full';
+	consentTier: 'necessary' | 'analytics';
 	isPaired: boolean;
 }

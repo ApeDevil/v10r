@@ -4,9 +4,12 @@
  * 2. Prior-session IPs are masked; the current session stays raw.
  * 3. Sections degrade independently — a report is produced even when empty.
  * 4. consumeTransparencyMarker fires exactly once per user (atomic).
+ * 5. The two analytics lanes: the user lane is reported and cascade-erased;
+ *    the anonymous visitor lane is neither.
  */
 import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { userEvents } from '$lib/server/db/schema/analytics';
 import { account, session, user } from '$lib/server/db/schema/auth/_better-auth';
 
 let testClient: PGlite;
@@ -154,6 +157,38 @@ describe('collectUserData — report shape', () => {
 		const report = await collectUserData(USER_ID, { currentSessionId: CURRENT_SESSION });
 		expect(JSON.stringify(report)).not.toContain('visitorId');
 	});
+
+	it('includes the authenticated behaviour lane, keyed by user id', async () => {
+		await seedUser();
+		await db.insert(userEvents).values({
+			userId: USER_ID,
+			surface: 'account',
+			eventType: 'pageview',
+			route: '/account/settings',
+			path: '/account/settings',
+		});
+
+		const report = await collectUserData(USER_ID, { currentSessionId: CURRENT_SESSION });
+		expect(report.behavior.available).toBe(true);
+		expect(report.behavior.data?.eventCount).toBe(1);
+		expect(report.behavior.data?.topRoutes[0]?.route).toBe('/account/settings');
+		// Legitimate interest, not consent: the banner governs the anonymous lane.
+		expect(report.behavior.basis).toBe('legitimate_interest');
+	});
+
+	it('does not report another user’s events', async () => {
+		await seedUser();
+		await db.insert(userEvents).values({
+			userId: USER_ID,
+			surface: 'account',
+			eventType: 'pageview',
+			route: '/account/data',
+			path: '/account/data',
+		});
+
+		const report = await collectUserData('usr_someone_else');
+		expect(report.behavior.data?.eventCount).toBe(0);
+	});
 });
 
 // ── deleteUserData ────────────────────────────────────────────────────────────
@@ -169,6 +204,24 @@ describe('deleteUserData', () => {
 
 		// second call is a no-op, not an error
 		await expect(deleteUserData(USER_ID)).resolves.toBeUndefined();
+	});
+
+	it('cascade-deletes the authenticated behaviour lane', async () => {
+		// This is why user_events.user_id must stay onDelete:'cascade'. Weakening it
+		// to 'set null' would silently leave behavioural rows behind after an Art 17
+		// erasure, with no code change to make the failure visible.
+		await seedUser();
+		await db.insert(userEvents).values({
+			userId: USER_ID,
+			surface: 'account',
+			eventType: 'pageview',
+			route: '/account/settings',
+			path: '/account/settings',
+		});
+		expect(await db.select().from(userEvents)).toHaveLength(1);
+
+		await deleteUserData(USER_ID);
+		expect(await db.select().from(userEvents)).toHaveLength(0);
 	});
 });
 

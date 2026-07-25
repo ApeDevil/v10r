@@ -35,11 +35,6 @@ const barVariant = data.percentUsed < 50 ? 'success' : data.percentUsed < 90 ? '
 				<span class="diag-value">input + output tokens (recorded in <code>onFinish</code>)</span>
 			</div>
 		</div>
-
-		<p class="card-note">
-			Caps cost-amplification abuse. With premium models running roughly $1–2 per 100k tokens, the worst case
-			is bounded to a known dollar figure per user per day — even if every credential leaks at once.
-		</p>
 	</Card>
 
 	<Card>
@@ -50,10 +45,7 @@ const barVariant = data.percentUsed < 50 ? 'success' : data.percentUsed < 90 ? '
 		{#if !data.signedIn}
 			<div class="signin-prompt">
 				<span class="i-lucide-log-in" aria-hidden="true"></span>
-				<p>
-					Sign in to see your daily usage. The budget is keyed on user ID, so anonymous traffic gets no quota
-					at all on AI surfaces.
-				</p>
+				<p>Sign in to see your daily usage.</p>
 			</div>
 		{:else}
 			<div class="usage">
@@ -77,33 +69,6 @@ const barVariant = data.percentUsed < 50 ? 'success' : data.percentUsed < 90 ? '
 				</div>
 			</div>
 		{/if}
-	</Card>
-
-	<Card>
-		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">{m.showcase_abuse_budget_card_pattern()}</h2>
-		{/snippet}
-
-		<ol class="pattern-list">
-			<li>
-				<strong>Check on entry.</strong> Before the chat handler streams a response, it reads the day-keyed
-				Redis counter for the user and rejects with 429 if the cap is already reached.
-			</li>
-			<li>
-				<strong>Charge in <code>onFinish</code>.</strong> Once the AI SDK signals the stream is done with
-				usage data, the handler increments the counter by <code>inputTokens + outputTokens</code>.
-			</li>
-			<li>
-				<strong>TTL on every write.</strong> Each charge sets a 25h TTL so today's bucket auto-expires after
-				the next reset.
-			</li>
-		</ol>
-
-		<p class="card-note">
-			This is check-then-charge, not pre-charge-then-reconcile. A burst of N parallel requests can each pass the
-			gate before any has charged, so the daily total can overshoot by up to <code>N × AI_MAX_TOKENS</code>
-			before the cap engages. Worst-case overshoot is well under a dollar per user — acceptable for v1.
-		</p>
 	</Card>
 </Stack>
 
@@ -233,44 +198,5 @@ const barVariant = data.percentUsed < 50 ? 'success' : data.percentUsed < 90 ? '
 
 	.bar-fill[data-variant='error'] {
 		background: var(--color-error);
-	}
-
-	.pattern-list {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-3);
-		margin: 0;
-		padding-left: var(--spacing-5);
-		font-size: var(--text-fluid-sm);
-		line-height: 1.55;
-		color: var(--color-fg);
-	}
-
-	.pattern-list strong {
-		color: var(--color-fg);
-		font-weight: 600;
-	}
-
-	.pattern-list code {
-		font-family: ui-monospace, monospace;
-		font-size: 0.92em;
-		padding: 0.05em 0.3em;
-		border-radius: var(--radius-sm);
-		background: var(--color-subtle);
-	}
-
-	.card-note {
-		margin: var(--spacing-3) 0 0 0;
-		font-size: var(--text-fluid-sm);
-		color: var(--color-muted);
-		line-height: 1.55;
-	}
-
-	.card-note code {
-		font-family: ui-monospace, monospace;
-		font-size: 0.92em;
-		padding: 0.05em 0.3em;
-		border-radius: var(--radius-sm);
-		background: var(--color-subtle);
 	}
 </style>

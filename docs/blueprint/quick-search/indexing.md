@@ -29,7 +29,7 @@ Also injects two public pages absent from the nav registry: `/auth/login` (Log i
 
 Source: showcase card tree (`$lib/showcases/registry`) + curated in-page sections (`$lib/showcases/sections`).
 
-English-only. For `de`/`ru` users: `localeFallback: true`, rendered with an "EN" badge and a small rank penalty.
+Card and sublink titles are Paraglide message functions resolved per index shard — genuinely localized, `localeFallback: false`. Only the curated in-page section titles remain English-only: `localeFallback: true` for `de`/`ru`, rendered with an "EN" badge and a small rank penalty.
 
 Sections produce `surface: 'section'` records with `anchor: '#anchorId'` for deep linking. Keywords come from curated `section.keywords` arrays.
 
@@ -49,7 +49,7 @@ A `Set<string>` of hub-only hrefs that only redirect to a child page. Excluded f
 
 ## Locale Model
 
-Docs and showcase content is English-only today. Non-EN users see these results with:
+Docs and curated in-page sections are English-only today. Non-EN users see these results with:
 - `localeFallback: true` on the `SearchRecord`
 - `badge: 'en-fallback'` on the `SearchResult`
 - An "EN" badge rendered next to the title in the palette and `/search` page
@@ -59,7 +59,7 @@ Paths in the shard are **locale-bare** (e.g., `/docs/stack/svelte`). `localizeHr
 
 The architecture is locale-parameterized: when native `de`/`ru` markdown is authored later, only the adapter needs a `locale` dimension. The search engine, shard endpoint, and client code are unchanged.
 
-Page records (`pages.ts`) are not locale-fallbacks because nav labels are genuinely localized via Paraglide — the German user sees German page names.
+Page (`pages.ts`) and showcase (`showcases.ts`) records are not locale-fallbacks — nav labels and showcase card/sublink titles are both genuinely localized via Paraglide, so the German user sees German page and card names. Only section (`sections.ts`) and doc records fall back to English.
 
 ## `buildSearchIndex(locale)`
 

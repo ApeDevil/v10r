@@ -1,7 +1,7 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import { BackLink, PageHeader } from '$lib/components/composites';
+import { BackLink, PageHeader, ShowcaseDocs } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
 import { ErrorCode, errorMessage } from '$lib/errors';
 import {
@@ -71,14 +71,16 @@ const dbContent = {
 {#key currentLocale}
 <PageContainer class="py-7">
 	<PageHeader
-		title={m.showcase_title()}
-		description={m.showcase_description()}
+		title={m.showcase_i18n_title()}
+		description={m.showcase_i18n_description()}
 		breadcrumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'Showcases', href: '/showcases' },
-			{ label: 'i18n' }
+			{ label: m.showcase_breadcrumb_home(), href: '/' },
+			{ label: m.showcase_breadcrumb_showcases(), href: '/showcases' },
+			{ label: m.showcase_i18n_title() }
 		]}
-	/>
+	>
+		<ShowcaseDocs />
+	</PageHeader>
 
 	<!-- Language Switcher -->
 	<section class="demo-section">
@@ -152,7 +154,7 @@ const dbContent = {
 	<!-- Date & Number Formatting -->
 	<section class="demo-section">
 		<h2>{m.section_formatting()}</h2>
-		<p>Formatting uses the browser's <code>Intl</code> API, decoupled from the translation locale. A German user in Switzerland gets German text but Swiss number formatting.</p>
+		<p>Formatting uses the browser's <code>Intl</code> API, decoupled from the translation locale.</p>
 
 		<div class="message-demos">
 			<div class="demo-item">
@@ -201,22 +203,12 @@ const dbContent = {
 				<span class="demo-value">{tc(dbContent.description, dbContent.descriptionI18n, currentLocale)}</span>
 			</div>
 		</div>
-
-		<div class="code-note">
-			<h3>Database Schema Pattern</h3>
-			<pre><code>// EN canonical column + JSONB i18n sibling per non-base locale
-name: text('name').notNull(),
-nameI18n: jsonb('name_i18n')
-  .$type&lt;Partial&lt;Record&lt;'de'|'ru', string&gt;&gt;&gt;()
-  .notNull().default(sql`'&#123;&#125;'::jsonb`),
-// Render: tc(row.name, row.nameI18n, locale)</code></pre>
-		</div>
 	</section>
 
 	<!-- Error Codes → Localized Messages -->
 	<section class="demo-section">
 		<h2>Error Codes</h2>
-		<p>Domain code throws stable error <em>codes</em>; adapters resolve them to localized strings via <code>errorMessage(code)</code>. Switching locale re-renders without re-submitting.</p>
+		<p>Domain error <em>codes</em> resolve to localized strings via <code>errorMessage(code)</code>.</p>
 
 		<div class="message-demos">
 			<div class="demo-item">
@@ -242,18 +234,6 @@ nameI18n: jsonb('name_i18n')
 	<section class="demo-section">
 		<h2>{m.section_type_safety()}</h2>
 		<p>{m.type_safety_desc()}</p>
-
-		<div class="code-note">
-			<h3>Compile-time Guarantees</h3>
-			<pre><code>// ✅ Type-safe with autocomplete
-m.greeting(&#123; name: 'Alice' &#125;);
-
-// ❌ Compile error — missing parameter
-m.greeting();
-
-// ❌ Compile error — unknown message key
-m.unknownKey();</code></pre>
-		</div>
 	</section>
 
 	<BackLink href="/showcases" label="Showcases" />
@@ -264,13 +244,6 @@ m.unknownKey();</code></pre>
 	h2 {
 		font-size: var(--text-fluid-xl);
 		margin-bottom: var(--spacing-4);
-		color: var(--color-fg);
-	}
-
-	h3 {
-		font-size: var(--text-fluid-lg);
-		margin-top: var(--spacing-4);
-		margin-bottom: var(--spacing-2);
 		color: var(--color-fg);
 	}
 
@@ -380,37 +353,6 @@ m.unknownKey();</code></pre>
 	.demo-value {
 		font-weight: 600;
 		text-align: right;
-	}
-
-	/* Code notes */
-	.code-note {
-		margin-top: var(--spacing-4);
-		padding: var(--spacing-4);
-		background: var(--color-subtle);
-		border-left: 3px solid var(--color-primary);
-		border-radius: var(--radius-sm);
-	}
-
-	.code-note h3 {
-		margin: 0 0 var(--spacing-3) 0;
-		font-size: var(--text-fluid-sm);
-		font-weight: 600;
-		color: var(--color-primary);
-	}
-
-	.code-note pre {
-		margin: 0;
-		overflow-x: auto;
-	}
-
-	.code-note code {
-		display: block;
-		padding: var(--spacing-3);
-		background: var(--color-bg);
-		border-radius: var(--radius-sm);
-		font-size: var(--text-fluid-xs);
-		line-height: 1.6;
-		white-space: pre;
 	}
 
 	@media (max-width: 640px) {

@@ -106,12 +106,12 @@ No documentation drift. No stale examples. The template validates itself.
 │   │   ├── /authn                   # Authentication: sign-in, sessions
 │   │   ├── /authz                   # Authorization: roles, route guards
 │   │   └── /users                   # User management
-│   ├── /admin                       # Admin and data-governance demos
-│   │   ├── /powers                  # Admin capabilities, role gating
-│   │   ├── /cookies                 # Cookie inventory and consent
+│   ├── /admin                       # Operator transparency (single page)
+│   ├── /privacy                     # Data-protection surface
 │   │   ├── /data                    # Stored-data inventory
 │   │   ├── /retention               # Retention policies
-│   │   └── /rights                  # GDPR rights (access, export, erase)
+│   │   ├── /rights                  # GDPR rights (access, export, erase)
+│   │   └── /cookies                 # Cookie inventory and consent
 │   ├── /analytics                   # Privacy-aware analytics
 │   │   ├── /overview                # Metrics summary
 │   │   ├── /live                    # Real-time activity
@@ -271,38 +271,22 @@ Use `<svelte:boundary>` for component rendering errors:
 
 ### /showcases (Landing Page)
 
-The showcase landing page provides first-time visitors with a clear entry point and recommended learning path.
-
-**Purpose:**
-- Prevent decision paralysis (10+ demos can overwhelm)
-- Guide new users through fundamentals first
-- Show progress/completion status
+Entry point into all 19 showcase cards, grouped into five domain sections derived from each card's `domain` field (`groupByDomain()` in the registry).
 
 **Page content:**
-- Brief intro to the showcase concept
-- Recommended path with categorization
-- Visual cards for each section
-- Optional: visited/completed indicators
+- Sticky `PageHeader` (title + description), height bound for anchor scroll-margin
+- Jump-nav linking to each domain section's anchor
+- One `<section>` per domain, cards rendered as `LinkCard`s (icon, title, description, sublinks) in a `NavGrid`
 
-**Recommended Learning Path:**
+**Domains (registry order):**
 
-| Order | Category | Page | Focus |
-|-------|----------|------|-------|
-| 1 | Fundamentals | Shell | Style tokens, sidebar, modals, toasts |
-| 2 | Fundamentals | UI | Component library, accessibility |
-| 3 | Fundamentals | Forms | Validation, progressive enhancement |
-| 4 | Core | DB: PostgreSQL | Types, mutability patterns, Neon connection |
-| 5 | Core | DB: Neo4j | Graph modeling, traversal, recommendations |
-| 6 | Core | DB: Storage | R2 objects, presigned URLs, byte-range requests |
-| 7 | Core | DB: Cache | Redis patterns, TTL, cache strategies |
-| 8 | Core | Cycle | End-to-end CRUD via API, form, and AI |
-| 9 | Core | Auth | Authn, authz, user management |
-| 10 | Advanced | AI | Chat, image metadata, RAG retrieval |
-| 11 | Advanced | i18n | Translations, locale routing |
-| 12 | Advanced | Viz | Charts, plots, graphs, diagrams, maps |
-| 13 | Specialized | 3D | Threlte 8 scenes |
-| 14 | Specialized | Jobs | Background job patterns |
-| 15 | Specialized | PWA | Installable shell, offline fallback, web push |
+| Domain | Cards |
+|--------|-------|
+| Frontend | Shell, UI, Forms, Viz, 3D, i18n, PWA |
+| Backend | Cycle, Jobs, Notifications |
+| Data | DB, Analytics |
+| AI | AI, Toolkits, MCP |
+| Security & Privacy | Auth, Abuse, Privacy, Admin |
 
 ---
 
@@ -606,18 +590,26 @@ Authentication showcase using Better Auth. Demonstrates authentication, authoriz
 
 ### /showcases/admin
 
-Admin and data-governance demos: privileged capabilities and the data-protection surface.
+Operator transparency: what the single admin can see and do, and the code-enforced guarantees that limit it. Single page, no sub-routes.
 
 | Tests | Stack |
 |-------|-------|
-| Role gating | `ADMIN_USER_ID` gate, `isAdmin` |
+| Role gating | `ADMIN_USER_ID` gate, `isAdmin`, 404-not-403, append-only audit |
+
+---
+
+### /showcases/privacy
+
+The data-protection surface: controller, lawful basis, retention, and your rights.
+
+| Tests | Stack |
+|-------|-------|
 | Data governance | Cookie/data inventory, retention, GDPR rights |
 
 **Sub-pages:**
 
 | Route | Purpose |
-|-------|---------|
-| `/powers` | Admin capabilities and role gating |
+|-------|-------|
 | `/cookies` | Cookie inventory and consent state |
 | `/data` | Inventory of data stored about a user |
 | `/retention` | Retention policies and schedules |
@@ -980,12 +972,12 @@ src/routes/
 │   │   ├── authn/+page.svelte
 │   │   ├── authz/+page.svelte
 │   │   └── users/+page.svelte
-│   ├── admin/
-│   │   ├── powers/+page.svelte
-│   │   ├── cookies/+page.svelte
+│   ├── admin/+page.svelte
+│   ├── privacy/
 │   │   ├── data/+page.svelte
 │   │   ├── retention/+page.svelte
-│   │   └── rights/+page.svelte
+│   │   ├── rights/+page.svelte
+│   │   └── cookies/+page.svelte
 │   ├── analytics/
 │   │   ├── overview/+page.svelte
 │   │   ├── live/+page.svelte
@@ -1097,11 +1089,11 @@ src/routes/
 │   └ Authz          │
 │   └ Users          │
 │ Admin              │
-│   └ Powers         │
-│   └ Cookies        │
+│ Privacy            │
 │   └ Data           │
 │   └ Retention      │
 │   └ Rights         │
+│   └ Cookies        │
 │ Analytics          │
 │ Abuse              │
 │ Notifications      │

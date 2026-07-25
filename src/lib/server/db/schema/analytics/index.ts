@@ -3,3 +3,4 @@ export * from './consent-events';
 export * from './events';
 export * from './pairing-codes';
 export * from './sessions';
+export * from './user-events';

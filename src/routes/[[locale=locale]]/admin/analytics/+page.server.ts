@@ -3,9 +3,12 @@ import { requireAdmin } from '$lib/server/auth/guards';
 import { db } from '$lib/server/db';
 import {
 	getConsentSplit,
+	getFrictionSignals,
 	getOverviewMetrics,
 	getTopPages,
 	getTrafficTrend,
+	getUserLaneStats,
+	getWebVitals,
 } from '$lib/server/db/analytics/aggregations';
 import { getActiveSessionCount, getPairedSessionCount, getRecentEvents } from '$lib/server/db/analytics/queries';
 import { jobExecution } from '$lib/server/db/schema/jobs';
@@ -69,5 +72,8 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		// Deferred: chart + table data (streams in)
 		trend: safeDeferPromise(getTrafficTrend(days), []),
 		topPages: safeDeferPromise(getTopPages(days, 10), []),
+		vitals: safeDeferPromise(getWebVitals(days), []),
+		friction: safeDeferPromise(getFrictionSignals(days, 12), []),
+		userLane: safeDeferPromise(getUserLaneStats(days), { activeUsers: 0, events: 0, topRoutes: [] }),
 	};
 };

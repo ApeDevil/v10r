@@ -2,6 +2,7 @@
 import type { ChartData } from 'chart.js';
 import { Alert } from '$lib/components/composites';
 import { PieChart } from '$lib/components/viz/chart/pie';
+import * as m from '$lib/paraglide/messages';
 import ChartSection from '../_components/ChartSection.svelte';
 import MetricCard from '../_components/MetricCard.svelte';
 
@@ -60,7 +61,6 @@ function daysOld(ts: string | null): number {
 		<ChartSection
 			title="Consent Distribution"
 			description="How visitors have configured their consent preferences"
-			details="Three tiers: 'necessary' (no analytics tracking, only session management), 'analytics' (page views, device info, country), 'full' (all data including behavioral tracking). Device and country fields are NULL for 'necessary' tier visitors."
 		>
 			{#snippet chart()}
 				<div class="consent-chart-layout">
@@ -171,40 +171,47 @@ function daysOld(ts: string | null): number {
 		{/snippet}
 	</ChartSection>
 
-	<!-- How this works -->
-	<details class="how-section">
-		<summary>How privacy-first analytics works</summary>
-		<div class="how-content">
-			<h4>Consent Tiers</h4>
-			<p>The system implements three consent tiers, each collecting progressively more data:</p>
-			<ul>
-				<li><strong>Necessary</strong> — Session management only. No device, country, or behavioral data.</li>
-				<li><strong>Analytics</strong> — Page views, device type, browser, and country. Enables aggregate dashboards.</li>
-				<li><strong>Full</strong> — All analytics data plus behavioral tracking (custom events, timing).</li>
-			</ul>
-
-			<h4>Data Flow</h4>
-			<ol>
-				<li>Server hook captures request → hashes IP + User-Agent into visitor ID</li>
-				<li>Consent tier determines which fields are populated vs NULL</li>
-				<li>Raw events stored with full timestamp for {data.retentionDays} days</li>
-				<li>Daily rollup job aggregates into <code>daily_page_stats</code> (no individual data)</li>
-				<li>Cleanup job deletes raw events past retention window</li>
-			</ol>
-
-			<h4>GDPR Compliance Path</h4>
-			<p>For production use with real data, this architecture satisfies:</p>
-			<ul>
-				<li>Article 5(1)(c) — Data minimization via consent tiers</li>
-				<li>Article 5(1)(e) — Storage limitation via automated retention</li>
-				<li>Article 25 — Privacy by design via server-side collection and hashing</li>
-				<li>Article 17 — Right to erasure via visitor ID lookup and deletion</li>
-			</ul>
-		</div>
-	</details>
+	<aside class="cross-link">
+		<span class="i-lucide-arrow-right" aria-hidden="true"></span>
+		<p>
+			{m.showcase_analytics_privacy_seealso()}
+			<a href="/showcases/privacy">{m.showcase_privacy_title()}</a>
+		</p>
+	</aside>
 </div>
 
 <style>
+	.cross-link {
+		display: flex;
+		gap: var(--spacing-3);
+		align-items: flex-start;
+		padding: var(--spacing-4) var(--spacing-5);
+		border-radius: var(--radius-lg);
+		background: var(--color-subtle);
+		border: 1px solid var(--color-border);
+	}
+
+	.cross-link span {
+		flex-shrink: 0;
+		width: 1.125rem;
+		height: 1.125rem;
+		margin-top: 0.15rem;
+		color: var(--color-primary);
+	}
+
+	.cross-link p {
+		margin: 0;
+		font-size: var(--text-fluid-sm);
+		color: var(--color-fg);
+		line-height: 1.6;
+	}
+
+	.cross-link a {
+		color: var(--color-primary);
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+	}
+
 	.privacy-layout {
 		display: flex;
 		flex-direction: column;
@@ -350,48 +357,4 @@ function daysOld(ts: string | null): number {
 		color: var(--color-muted);
 	}
 
-	.how-section {
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-lg);
-		overflow: hidden;
-	}
-
-	.how-section summary {
-		padding: var(--spacing-4) var(--spacing-6);
-		font-weight: 600;
-		font-size: var(--text-fluid-base);
-		color: var(--color-fg);
-		cursor: pointer;
-		background: var(--color-subtle);
-	}
-
-	.how-content {
-		padding: var(--spacing-6);
-		font-size: var(--text-fluid-sm);
-		line-height: 1.7;
-		color: var(--color-fg);
-	}
-
-	.how-content h4 {
-		margin: var(--spacing-5) 0 var(--spacing-2) 0;
-		font-size: var(--text-fluid-base);
-	}
-
-	.how-content h4:first-child {
-		margin-top: 0;
-	}
-
-	.how-content p {
-		margin: 0 0 var(--spacing-3) 0;
-	}
-
-	.how-content ul,
-	.how-content ol {
-		margin: 0 0 var(--spacing-3) 0;
-		padding-left: var(--spacing-6);
-	}
-
-	.how-content li {
-		margin-bottom: var(--spacing-1);
-	}
 </style>

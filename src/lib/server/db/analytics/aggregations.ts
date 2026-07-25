@@ -9,13 +9,18 @@ import type {
 	ConsentSplit,
 	CountrySplit,
 	DeviceSplit,
+	FrictionSignal,
 	FunnelStep,
 	OverviewMetrics,
+	PageCount,
 	TopPage,
 	TrafficTrendPoint,
+	TransitionRow,
+	UserLaneStats,
+	VitalSummary,
 } from '$lib/server/analytics/types';
 import { db } from '$lib/server/db';
-import { dailyPageStats, events, sessions } from '$lib/server/db/schema/analytics';
+import { dailyPageStats, events, sessions, userEvents } from '$lib/server/db/schema/analytics';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 
@@ -187,6 +192,199 @@ export async function getFunnelSteps(days: number, steps: { label: string; path:
 	}
 
 	return results;
+}
+
+// ── Navigation paths ─────────────────────────────────────────────────────────
+
+/**
+ * Top page-to-page transitions, computed in Postgres with a window function.
+ *
+ * Replaces the retired Neo4j `FOLLOWED_BY` graph. The Sankey it used to feed is
+ * gone deliberately: aggregate path diagrams merge visitors with opposite
+ * experiences into one indistinguishable ribbon, so they look explanatory
+ * without being able to answer "who, and why". A ranked transition table says
+ * the same thing without implying more than the data supports.
+ *
+ * Self-transitions (a reload, or a beacon replay that slipped past the event-id
+ * unique index) are excluded — they are not navigations.
+ */
+export async function getTopTransitions(days: number, limit = 20): Promise<TransitionRow[]> {
+	const cutoff = new Date(Date.now() - days * 86400000);
+
+	const rows = await db.execute<{ source: string; target: string; count: number }>(sql`
+		SELECT source, target, count(*)::int AS count
+		FROM (
+			SELECT
+				path AS source,
+				LEAD(path) OVER (PARTITION BY session_id ORDER BY timestamp, id) AS target
+			FROM analytics.events
+			WHERE event_type = 'pageview' AND timestamp >= ${cutoff}
+		) transitions
+		WHERE target IS NOT NULL AND target <> source
+		GROUP BY source, target
+		ORDER BY count DESC
+		LIMIT ${limit}
+	`);
+
+	return (rows as unknown as TransitionRow[]).map((r) => ({
+		source: r.source,
+		target: r.target,
+		count: Number(r.count),
+	}));
+}
+
+/** Where sessions began. Reads `sessions.entry_path` directly — no graph needed. */
+export async function getEntryPages(days: number, limit = 10): Promise<PageCount[]> {
+	const cutoff = new Date(Date.now() - days * 86400000);
+
+	return db
+		.select({ path: sessions.entryPath, count: sql<number>`count(*)::int` })
+		.from(sessions)
+		.where(gte(sessions.startedAt, cutoff))
+		.groupBy(sessions.entryPath)
+		.orderBy(desc(sql`count(*)`))
+		.limit(limit);
+}
+
+/** Where sessions ended. Only meaningful now that the SPA beacon advances `exit_path`. */
+export async function getExitPages(days: number, limit = 10): Promise<PageCount[]> {
+	const cutoff = new Date(Date.now() - days * 86400000);
+
+	return db
+		.select({
+			path: sql<string>`coalesce(${sessions.exitPath}, ${sessions.entryPath})`,
+			count: sql<number>`count(*)::int`,
+		})
+		.from(sessions)
+		.where(gte(sessions.startedAt, cutoff))
+		.groupBy(sql`coalesce(${sessions.exitPath}, ${sessions.entryPath})`)
+		.orderBy(desc(sql`count(*)`))
+		.limit(limit);
+}
+
+// ── Web Vitals ───────────────────────────────────────────────────────────────
+
+/**
+ * Web Vitals at the 75th percentile, with the element most often blamed.
+ *
+ * p75 rather than the mean, deliberately: Google scores CWV at p75, and the mean
+ * hides precisely the long tail of slow interactions that users actually notice.
+ * `worstTarget` comes from the attribution build — it is what turns "INP is
+ * 400ms" into "this button is 400ms", which is the difference between a number
+ * and something you can act on.
+ */
+export async function getWebVitals(days: number): Promise<VitalSummary[]> {
+	const cutoff = new Date(Date.now() - days * 86400000);
+
+	const rows = await db.execute<{ metric: string; p75: number; samples: number; worst_target: string | null }>(sql`
+		WITH samples AS (
+			SELECT
+				metadata->>'metric' AS metric,
+				(metadata->>'value')::numeric AS value,
+				metadata->>'target' AS target
+			FROM analytics.events
+			WHERE event_type = 'timing'
+			  AND timestamp >= ${cutoff}
+			  AND metadata->>'metric' IS NOT NULL
+			  AND metadata->>'value' ~ '^[0-9]+(\\.[0-9]+)?$'
+		),
+		blame AS (
+			SELECT DISTINCT ON (metric) metric, target
+			FROM samples
+			WHERE target IS NOT NULL
+			GROUP BY metric, target
+			ORDER BY metric, count(*) DESC
+		)
+		SELECT
+			s.metric,
+			percentile_cont(0.75) WITHIN GROUP (ORDER BY s.value) AS p75,
+			count(*)::int AS samples,
+			b.target AS worst_target
+		FROM samples s
+		LEFT JOIN blame b ON b.metric = s.metric
+		GROUP BY s.metric, b.target
+		ORDER BY s.metric
+	`);
+
+	return (rows as unknown as { metric: string; p75: number; samples: number; worst_target: string | null }[]).map(
+		(r) => ({
+			metric: r.metric,
+			p75: Math.round(Number(r.p75) * 1000) / 1000,
+			samples: Number(r.samples),
+			worstTarget: r.worst_target,
+		}),
+	);
+}
+
+// ── Friction signals ─────────────────────────────────────────────────────────
+
+/**
+ * Rage and dead clicks, grouped by what was clicked and where.
+ *
+ * These are the signals session replay is normally used to hunt for. Collected
+ * in aggregate they answer the same question — where do people get stuck — with
+ * none of the recording, consent-sampling bias, or PII-leak exposure.
+ */
+export async function getFrictionSignals(days: number, limit = 20): Promise<FrictionSignal[]> {
+	const cutoff = new Date(Date.now() - days * 86400000);
+
+	const rows = await db.execute<{ event: string; target: string; route: string; count: number }>(sql`
+		SELECT
+			metadata->>'event' AS event,
+			metadata->>'target' AS target,
+			coalesce(route, path) AS route,
+			count(*)::int AS count
+		FROM analytics.events
+		WHERE event_type = 'action'
+		  AND timestamp >= ${cutoff}
+		  AND metadata->>'event' IN ('rage_click', 'dead_click')
+		  AND metadata->>'target' IS NOT NULL
+		GROUP BY 1, 2, 3
+		ORDER BY count DESC
+		LIMIT ${limit}
+	`);
+
+	return (rows as unknown as FrictionSignal[]).map((r) => ({
+		event: r.event,
+		target: r.target,
+		route: r.route,
+		count: Number(r.count),
+	}));
+}
+
+// ── Authenticated lane ───────────────────────────────────────────────────────
+
+/**
+ * Usage of the authenticated area. Reads `analytics.user_events` — the lane the
+ * consent banner does not govern, because for a logged-in user the ePrivacy gate
+ * does not engage (TDDDG §25(2) Nr.2).
+ */
+export async function getUserLaneStats(days: number): Promise<UserLaneStats> {
+	const cutoff = new Date(Date.now() - days * 86400000);
+
+	const [totals, topRoutes] = await Promise.all([
+		db
+			.select({
+				activeUsers: sql<number>`count(distinct ${userEvents.userId})::int`,
+				events: sql<number>`count(*)::int`,
+			})
+			.from(userEvents)
+			.where(gte(userEvents.timestamp, cutoff)),
+		db
+			.select({ route: userEvents.route, count: sql<number>`count(*)::int` })
+			.from(userEvents)
+			.where(gte(userEvents.timestamp, cutoff))
+			.groupBy(userEvents.route)
+			.orderBy(desc(sql`count(*)`))
+			.limit(10),
+	]);
+
+	const row = totals[0];
+	return {
+		activeUsers: Number(row?.activeUsers ?? 0),
+		events: Number(row?.events ?? 0),
+		topRoutes: topRoutes.map((r) => ({ route: r.route, count: Number(r.count) })),
+	};
 }
 
 // ── Data age stats (for privacy page) ────────────────────────────────────────

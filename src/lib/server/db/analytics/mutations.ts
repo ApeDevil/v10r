@@ -13,9 +13,11 @@ export async function recordEvent(event: {
 	visitorId: string;
 	eventType: 'pageview' | 'action' | 'error' | 'timing';
 	path: string;
+	/** Templated route — the bounded key aggregates group by. */
+	route?: string;
 	referrer?: string;
-	metadata?: Record<string, unknown>;
-	consentTier?: 'necessary' | 'analytics' | 'full';
+	metadata?: Record<string, string | number | boolean>;
+	consentTier?: 'necessary' | 'analytics';
 	debugOwnerId?: string | null;
 	occurredAt?: Date;
 }) {
@@ -25,6 +27,7 @@ export async function recordEvent(event: {
 		visitorId: event.visitorId,
 		eventType: event.eventType,
 		path: event.path,
+		route: event.route ?? null,
 		referrer: event.referrer ?? null,
 		metadata: event.metadata ?? null,
 		consentTier: event.consentTier ?? 'necessary',
@@ -38,19 +41,28 @@ export async function recordEvent(event: {
 	}
 }
 
-/** Create or update a session record */
+/**
+ * Create or update a session record.
+ *
+ * `pageIncrement` exists because the SPA beacon delivers a whole batch of
+ * navigations in one request: incrementing by 1 per call would undercount, and
+ * calling this once per event would cost one round trip per navigation.
+ */
 export async function upsertSession(session: {
 	id: string;
 	visitorId: string;
 	entryPath: string;
 	exitPath?: string;
 	pageCount?: number;
+	/** Pages to add to an existing session's count. Defaults to 1. */
+	pageIncrement?: number;
 	device?: string;
 	browser?: string;
 	country?: string;
-	consentTier?: 'necessary' | 'analytics' | 'full';
+	consentTier?: 'necessary' | 'analytics';
 	pairedAdminUserId?: string | null;
 }) {
+	const increment = session.pageIncrement ?? 1;
 	await db
 		.insert(sessions)
 		.values({
@@ -58,7 +70,7 @@ export async function upsertSession(session: {
 			visitorId: session.visitorId,
 			entryPath: session.entryPath,
 			exitPath: session.exitPath ?? session.entryPath,
-			pageCount: session.pageCount ?? 1,
+			pageCount: session.pageCount ?? increment,
 			device: session.device ?? null,
 			browser: session.browser ?? null,
 			country: session.country ?? null,
@@ -70,8 +82,17 @@ export async function upsertSession(session: {
 			target: sessions.id,
 			set: {
 				exitPath: session.exitPath ?? session.entryPath,
-				pageCount: sql<number>`${sessions.pageCount} + 1`,
+				pageCount: sql<number>`${sessions.pageCount} + ${increment}`,
 				endedAt: new Date(),
+				// Backfill only. These are stable for the life of a session, but they
+				// can become KNOWN mid-session — device/browser are gated on analytics
+				// consent, so a visitor who accepts partway through has a session row
+				// that started without them. Spreading conditionally means a later
+				// write can fill a gap but a consent withdrawal never wipes what was
+				// lawfully collected earlier.
+				...(session.country ? { country: session.country } : {}),
+				...(session.device ? { device: session.device } : {}),
+				...(session.browser ? { browser: session.browser } : {}),
 			},
 		});
 }

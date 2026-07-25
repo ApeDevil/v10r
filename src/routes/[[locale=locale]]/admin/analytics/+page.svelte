@@ -14,9 +14,7 @@ let pairedActive = $state(data.pairedActive);
 // Consent rate as percentage
 const totalSessions = $derived(data.consentSplit.reduce((sum, s) => sum + Number(s.count), 0));
 const consentedSessions = $derived(
-	data.consentSplit
-		.filter((s) => s.tier === 'analytics' || s.tier === 'full')
-		.reduce((sum, s) => sum + Number(s.count), 0),
+	data.consentSplit.filter((s) => s.tier === 'analytics').reduce((sum, s) => sum + Number(s.count), 0),
 );
 const consentRate = $derived(totalSessions > 0 ? Math.round((consentedSessions / totalSessions) * 100) : 0);
 
@@ -245,6 +243,103 @@ const ranges = [
 	</div>
 
 	<!-- Live Activity Feed -->
+	<!-- Web Vitals: p75, with the element most often to blame -->
+	<Card>
+		{#snippet header()}
+			<h2 class="text-fluid-lg font-semibold">{m.admin_analytics_vitals_title()}</h2>
+		{/snippet}
+		{#await data.vitals}
+			<Skeleton variant="rectangular" height="120px" />
+		{:then vitals}
+			{#if vitals.length === 0}
+				<p class="text-muted text-fluid-sm">{m.admin_analytics_vitals_empty()}</p>
+			{:else}
+				<div class="vitals-grid">
+					{#each vitals as v (v.metric)}
+						<div class="vital-card">
+							<span class="stat-label">{v.metric}</span>
+							<span class="stat-value">{v.metric === 'CLS' ? v.p75 : `${Math.round(v.p75)}ms`}</span>
+							<span class="vital-meta">{m.admin_analytics_vitals_samples({ count: v.samples })}</span>
+							{#if v.worstTarget}
+								<span class="vital-meta">
+									{m.admin_analytics_vitals_blame()}: <code>{v.worstTarget}</code>
+								</span>
+							{/if}
+						</div>
+					{/each}
+				</div>
+			{/if}
+		{:catch}
+			<p class="text-muted text-fluid-sm">{m.admin_analytics_vitals_empty()}</p>
+		{/await}
+	</Card>
+
+	<div class="bottom-grid">
+		<!-- Friction: rage + dead clicks -->
+		<Card>
+			{#snippet header()}
+				<Stack gap="1">
+					<h2 class="text-fluid-lg font-semibold">{m.admin_analytics_friction_title()}</h2>
+					<p class="text-muted text-fluid-xs">{m.admin_analytics_friction_description()}</p>
+				</Stack>
+			{/snippet}
+			{#await data.friction}
+				<Skeleton variant="rectangular" height="160px" />
+			{:then friction}
+				{#if friction.length === 0}
+					<p class="text-muted text-fluid-sm">{m.admin_analytics_friction_empty()}</p>
+				{:else}
+					<div class="friction-list">
+						{#each friction as f (`${f.event}${f.target}${f.route}`)}
+							<div class="friction-row">
+								<Tag variant={f.event === 'rage_click' ? 'error' : 'warning'} label={f.event} />
+								<code class="friction-target">{f.target}</code>
+								<code class="friction-route">{f.route}</code>
+								<span class="friction-count">{f.count}</span>
+							</div>
+						{/each}
+					</div>
+				{/if}
+			{:catch}
+				<p class="text-muted text-fluid-sm">{m.admin_analytics_friction_empty()}</p>
+			{/await}
+		</Card>
+
+		<!-- Authenticated lane -->
+		<Card>
+			{#snippet header()}
+				<Stack gap="1">
+					<h2 class="text-fluid-lg font-semibold">{m.admin_analytics_userlane_title()}</h2>
+					<p class="text-muted text-fluid-xs">{m.admin_analytics_userlane_description()}</p>
+				</Stack>
+			{/snippet}
+			{#await data.userLane}
+				<Skeleton variant="rectangular" height="160px" />
+			{:then lane}
+				<Stack gap="4">
+					<DiagGrid>
+						<DiagRow label={m.admin_analytics_userlane_active()}>{formatNumber(lane.activeUsers)}</DiagRow>
+						<DiagRow label={m.admin_analytics_userlane_events()}>{formatNumber(lane.events)}</DiagRow>
+					</DiagGrid>
+					{#if lane.topRoutes.length === 0}
+						<p class="text-muted text-fluid-sm">{m.admin_analytics_userlane_empty()}</p>
+					{:else}
+						<div class="friction-list">
+							{#each lane.topRoutes as r (r.route)}
+								<div class="lane-row">
+									<code class="friction-route">{r.route}</code>
+									<span class="friction-count">{r.count}</span>
+								</div>
+							{/each}
+						</div>
+					{/if}
+				</Stack>
+			{:catch}
+				<p class="text-muted text-fluid-sm">{m.admin_analytics_userlane_empty()}</p>
+			{/await}
+		</Card>
+	</div>
+
 	<LiveFeed initialEvents={data.recentEvents} bind:pairedActive />
 </Stack>
 
@@ -395,5 +490,74 @@ const ranges = [
 		font-variant-numeric: tabular-nums;
 		color: var(--color-muted);
 		flex-shrink: 0;
+	}
+
+	.vitals-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+		gap: var(--spacing-4);
+	}
+
+	.vital-card {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-1);
+		padding: var(--spacing-4);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-lg);
+		min-width: 0;
+	}
+
+	.vital-meta {
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.friction-list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-2);
+	}
+
+	.friction-row {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1.4fr) minmax(0, 1fr) auto;
+		align-items: center;
+		gap: var(--spacing-3);
+		padding: var(--spacing-2) var(--spacing-3);
+		border-radius: var(--radius-md);
+		background: var(--color-subtle);
+	}
+
+	.lane-row {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: center;
+		gap: var(--spacing-3);
+		padding: var(--spacing-2) var(--spacing-3);
+		border-radius: var(--radius-md);
+		background: var(--color-subtle);
+	}
+
+	.friction-target,
+	.friction-route {
+		font-size: var(--text-fluid-xs);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.friction-route {
+		color: var(--color-muted);
+	}
+
+	.friction-count {
+		font-size: var(--text-fluid-sm);
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+		color: var(--color-muted);
 	}
 </style>

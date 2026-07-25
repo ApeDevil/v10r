@@ -104,7 +104,7 @@ See [../../stack/data/redis.md](../../stack/data/redis.md) for implementation de
 
 | File | Contents |
 |------|----------|
-| [relational.md](./relational.md) | Drizzle schema, Better Auth tables, migrations |
+| [relational.md](./relational.md) | Drizzle schema, Better Auth tables, migrations, column type selection, mutability patterns |
 | [graph.md](./graph.md) | Neo4j connection, Cypher queries, graph model |
 | [polyglot-freshness.md](./polyglot-freshness.md) | Cross-database reference integrity, orphan cleanup |
 ## Local Development

@@ -318,11 +318,31 @@ export const CONSENT_RETENTION_DAYS = 395;
 /** Aggregate rollup retention period (days) */
 export const ANALYTICS_AGGREGATE_RETENTION_DAYS = 365;
 
+/**
+ * Authenticated-lane event retention (days).
+ *
+ * Longer than the anonymous lane's 60 days because the purpose differs: this
+ * lane answers "how do our users actually use their account over time", which
+ * needs enough history to see retention and seasonality. It is bounded all the
+ * same — the rows are identified personal data, and Art 5(1)(e) does not stop
+ * applying because the basis is legitimate interest. Erasure is separate and
+ * immediate: deleting the account cascades these rows away regardless of age.
+ */
+export const ANALYTICS_USER_RETENTION_DAYS = 180;
+
 /** Session inactivity timeout (ms, 30 min) */
 export const ANALYTICS_SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 
 /** Consent cookie name */
 export const ANALYTICS_CONSENT_COOKIE = 'v10r_consent';
+
+/**
+ * Analytics session cookie name. Only ever set at `analytics` consent or above —
+ * it writes to terminal equipment and is not strictly necessary (TDDDG §25 /
+ * ePrivacy Art 5(3)). Read by both the collector hook and the SPA beacon
+ * endpoint, which is why it lives here rather than as a literal in either.
+ */
+export const ANALYTICS_SESSION_COOKIE = '_v10r_sid';
 
 /** Consent cookie max-age (seconds, 6 months) */
 export const ANALYTICS_CONSENT_MAX_AGE = 15_552_000;

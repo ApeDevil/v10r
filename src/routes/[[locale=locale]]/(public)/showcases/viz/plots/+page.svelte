@@ -1,6 +1,6 @@
 <script lang="ts">
 import { browser } from '$app/environment';
-import { BackLink, NavSection, PageHeader } from '$lib/components/composites';
+import { BackLink, NavSection, PageHeader, ShowcaseDocs } from '$lib/components/composites';
 import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
 import { HeatMap, ScatterPlot } from '$lib/components/viz';
 import { getVizPalette } from '$lib/components/viz/_shared/theme-bridge';
@@ -119,7 +119,9 @@ const serverData: HeatMapData = {
 			{ label: m.showcase_viz_breadcrumb(), href: '/showcases/viz' },
 			{ label: m.showcase_viz_plots_breadcrumb() },
 		]}
-	/>
+	>
+		<ShowcaseDocs />
+	</PageHeader>
 
 	<NavSection {sections} />
 

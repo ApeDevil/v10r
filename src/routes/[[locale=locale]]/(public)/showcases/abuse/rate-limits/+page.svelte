@@ -39,9 +39,7 @@ let { data } = $props();
 		</div>
 
 		<p class="card-note">
-			All limiters use Upstash Redis sliding-window via <code>@upstash/ratelimit</code>. When Redis is
-			unavailable in production they <em>fail closed</em> (block all requests for that prefix); in dev they fall
-			through with a warning so local development isn't blocked.
+			Redis-unavailable behavior differs by environment: <em>fail closed</em> in production, fall through in dev.
 		</p>
 	</Card>
 </Stack>

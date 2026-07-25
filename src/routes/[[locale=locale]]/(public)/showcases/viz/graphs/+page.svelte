@@ -1,5 +1,5 @@
 <script lang="ts">
-import { BackLink, BoundaryFallback, NavSection, PageHeader } from '$lib/components/composites';
+import { BackLink, BoundaryFallback, NavSection, PageHeader, ShowcaseDocs } from '$lib/components/composites';
 import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
 import { DagGraph, KnowledgeGraph, NetworkGraph, SankeyDiagram, TreeGraph } from '$lib/components/viz';
 import type { DagData, KnowledgeData, NetworkData, SankeyData, TreeData } from '$lib/components/viz/graph';
@@ -432,7 +432,9 @@ function flattenTree(
 			{ label: m.showcase_viz_breadcrumb(), href: '/showcases/viz' },
 			{ label: m.showcase_viz_graphs_breadcrumb() }
 		]}
-	/>
+	>
+		<ShowcaseDocs />
+	</PageHeader>
 
 	<NavSection {sections} />
 

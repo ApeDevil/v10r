@@ -99,12 +99,6 @@ function handleCancel() {
 		}}
 		oncancel={handleCancel}
 	/>
-
-	<Alert variant="info" title="Confirm Pattern">
-		{#snippet children()}
-			<p>The confirmation dialog is separate from the form. The user types DELETE in the input (validated by schema), then clicks the button which opens a dialog. Only after confirming the dialog does the form actually submit.</p>
-		{/snippet}
-	</Alert>
 </Stack>
 
 <style>

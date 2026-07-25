@@ -137,8 +137,6 @@ function recordHistory(ms: number) {
 				{/snippet}
 
 				<div class="explanation">
-					<p>Neo4j Aura free instances auto-pause after inactivity. The first query after pause includes instance resume time (10-30 seconds).</p>
-
 					<div class="tier-legend">
 						<div class="tier-item">
 							<Badge variant="success">Warm</Badge>

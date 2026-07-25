@@ -1,105 +1,33 @@
 import { baseLocale, locales } from '$lib/paraglide/runtime';
 import { listPublishedPostsForFeed } from '$lib/server/blog';
+import { REDIRECT_HREFS } from '$lib/server/search/adapters/_redirects';
+import { showcases } from '$lib/showcases/registry';
 import type { RequestHandler } from './$types';
 
 const PROD_ORIGIN = 'https://www.v10r.dev';
 
-/** Static public pages that belong in the sitemap. */
-const STATIC_PATHS = [
-	'/',
-	'/blog',
-	'/docs',
-	'/docs/blueprint',
-	'/docs/foundation',
-	'/docs/stack',
-	'/feedback',
-	'/showcases',
-	'/showcases/3d',
-	'/showcases/3d/animated-scene',
-	'/showcases/3d/static-scene',
-	'/showcases/abuse',
-	'/showcases/abuse/ai-budget',
-	'/showcases/abuse/captcha',
-	'/showcases/abuse/honeypot',
-	'/showcases/abuse/rate-limits',
-	'/showcases/admin',
-	'/showcases/admin/cookies',
-	'/showcases/admin/data',
-	'/showcases/admin/powers',
-	'/showcases/admin/retention',
-	'/showcases/admin/rights',
-	'/showcases/ai/chat',
-	'/showcases/ai/retrieval',
-	'/showcases/ai/retrieval/explorer',
-	'/showcases/ai/retrieval/ingest',
-	'/showcases/ai/retrieval/rag-chat',
-	'/showcases/analytics/funnels',
-	'/showcases/analytics/journeys',
-	'/showcases/analytics/live',
-	'/showcases/analytics/my-data',
-	'/showcases/analytics/overview',
-	'/showcases/analytics/privacy',
-	'/showcases/auth/connection',
-	'/showcases/auth/security',
-	'/showcases/auth/session',
-	'/showcases/cycle/ai',
-	'/showcases/cycle/api',
-	'/showcases/cycle/form',
-	'/showcases/db/cache/connection',
-	'/showcases/db/cache/ephemeral',
-	'/showcases/db/cache/patterns',
-	'/showcases/db/graph/connection',
-	'/showcases/db/graph/model',
-	'/showcases/db/graph/traversal',
-	'/showcases/db/relational/connection',
-	'/showcases/db/relational/mutability',
-	'/showcases/db/relational/types',
-	'/showcases/db/storage/connection',
-	'/showcases/db/storage/objects',
-	'/showcases/db/storage/transfer',
-	'/showcases/forms/advanced/confirm',
-	'/showcases/forms/advanced/edit',
-	'/showcases/forms/advanced/reset',
-	'/showcases/forms/auth',
-	'/showcases/forms/basics/contact',
-	'/showcases/forms/basics/settings',
-	'/showcases/forms/patterns/dependent',
-	'/showcases/forms/patterns/dynamic',
-	'/showcases/forms/patterns/wizard',
-	'/showcases/forms/validation/async',
-	'/showcases/forms/validation/realtime',
-	'/showcases/forms/validation/server',
-	'/showcases/i18n',
-	'/showcases/jobs',
-	'/showcases/notifications/channels',
-	'/showcases/notifications/pipeline',
-	'/showcases/notifications/send',
-	'/showcases/shell/errors',
-	'/showcases/shell/modals',
-	'/showcases/shell/session',
-	'/showcases/shell/shortcuts',
-	'/showcases/shell/sidebar',
-	'/showcases/shell/style',
-	'/showcases/shell/toasts',
-	'/showcases/ui/components/composites',
-	'/showcases/ui/components/primitives',
-	'/showcases/ui/decorative/backgrounds',
-	'/showcases/ui/decorative/ornaments',
-	'/showcases/ui/layouts',
-	'/showcases/ui/menus',
-	'/showcases/ui/splits/reorderable',
-	'/showcases/ui/splits/resizable',
-	'/showcases/ui/tables',
-	'/showcases/ui/tokens',
-	'/showcases/ui/typography',
-	'/showcases/ui/workbench',
-	'/showcases/viz',
-	'/showcases/viz/charts',
-	'/showcases/viz/diagrams',
-	'/showcases/viz/graphs',
-	'/showcases/viz/maps',
-	'/showcases/viz/plots',
-];
+/** Non-showcase static public pages. */
+const BASE_PATHS = ['/', '/blog', '/docs', '/docs/blueprint', '/docs/foundation', '/docs/stack', '/feedback'];
+
+/**
+ * Showcase paths derived from the registry (single source of truth) — every
+ * card, sublink, and nested child, minus hub hrefs that only 303-redirect.
+ * The Set dedupes "Overview" sublinks that repeat their card's href.
+ */
+function showcasePaths(): string[] {
+	const out = new Set<string>(['/showcases']);
+	for (const card of showcases) {
+		out.add(card.href);
+		for (const sub of card.sublinks ?? []) {
+			out.add(sub.href);
+			for (const child of sub.children ?? []) out.add(child.href);
+		}
+	}
+	for (const href of REDIRECT_HREFS) out.delete(href);
+	return [...out].sort();
+}
+
+const STATIC_PATHS = [...BASE_PATHS, ...showcasePaths()];
 
 function escapeXml(s: string): string {
 	return s

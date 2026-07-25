@@ -1,7 +1,7 @@
 <script lang="ts">
 import type { Component } from 'svelte';
 import { onMount } from 'svelte';
-import { BackLink, BoundaryFallback, NavSection, PageHeader } from '$lib/components/composites';
+import { BackLink, BoundaryFallback, NavSection, PageHeader, ShowcaseDocs } from '$lib/components/composites';
 import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
 import { GeoMap, MapMarker, MapPopup } from '$lib/components/viz';
 import { getVizPalette } from '$lib/components/viz/_shared/theme-bridge';
@@ -69,7 +69,9 @@ const choroplethRegions = [
 			{ label: m.showcase_viz_breadcrumb(), href: '/showcases/viz' },
 			{ label: m.showcase_viz_maps_breadcrumb() }
 		]}
-	/>
+	>
+		<ShowcaseDocs />
+	</PageHeader>
 
 	<NavSection {sections} />
 

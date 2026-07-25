@@ -18,8 +18,8 @@ import { parse as parseYaml } from 'yaml';
  */
 export const BLOCKLIST = new Set<string>(['docs/blueprint/blog.md', 'docs/stack/vendors.md']);
 
-/** Path prefixes excluded everywhere (process notes, design specs, guides). */
-export const BLOCKED_PREFIXES = ['docs/guides/', 'docs/blueprint/desk/', 'docs/blueprint/design/'];
+/** Path prefixes excluded everywhere (process notes, guides). */
+export const BLOCKED_PREFIXES = ['docs/guides/', 'docs/blueprint/desk/'];
 
 export interface ParsedFile {
 	frontmatter: Record<string, unknown>;

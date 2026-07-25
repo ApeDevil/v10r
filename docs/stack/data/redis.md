@@ -29,6 +29,18 @@ See [vendors.md](../vendors.md) for pricing details and provider alternatives.
 **Latency from region mismatch:**
 - Upstash routes requests to the nearest replica. If your function region and Redis region differ, expect 500ms+ latency. Co-locate regions.
 
+## Connection latency tiers
+
+Upstash is always-on over HTTP — no cold starts, no connection warmup. Round-trip time reflects only network distance to the Upstash region:
+
+| Tier | Latency | Meaning |
+|------|---------|---------|
+| Fast | < 50ms | Upstash region matches the deployment region |
+| Normal | 50–200ms | Cross-region or moderate network distance |
+| Degraded | > 200ms | Region mismatch (see above) or network issues |
+
+Live at `/showcases/db/cache/connection`.
+
 ## Related
 
 - [postgres.md](./postgres.md) - Relational data, ACID transactions

@@ -155,7 +155,6 @@ const countryData: ChartData<'bar'> = $derived({
 	<ChartSection
 		title="Traffic Trend"
 		description="Pageviews and unique visitors over time"
-		details="Data is aggregated daily from raw pageview events. Each data point represents one day's totals."
 	>
 		{#snippet chart()}
 			<AreaChart data={trendChartData} ariaLabel="Traffic trend over {data.days} days" />

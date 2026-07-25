@@ -90,17 +90,16 @@ function jobOverdue(ts: string | Date | null, hoursThreshold: number): boolean {
 </script>
 <div class="retention">
 	<header class="lede">
-		<h2>{m.showcase_admin_retention_heading()}</h2>
+		<h2>{m.showcase_privacy_retention_heading()}</h2>
 		<p>
-			GDPR Art. 5(1)(e) says personal data must be kept "no longer than is necessary." Below is the live
-			retention table, sourced from <code>src/lib/server/config.ts</code>, and the timestamps of the cron
-			jobs that enforce it. If the schedule slips, this page is the proof.
+			GDPR Art. 5(1)(e) requires data be kept no longer than necessary — this page shows the live retention
+			windows and cron status that enforce it.
 		</p>
 	</header>
 
 	<section class="table-section">
 		<header class="section-head">
-			<h3>{m.showcase_admin_retention_section_table()}</h3>
+			<h3>{m.showcase_privacy_retention_section_table()}</h3>
 			<Tag variant="muted" size="sm" label="Live values" />
 		</header>
 
@@ -108,10 +107,10 @@ function jobOverdue(ts: string | Date | null, hoursThreshold: number): boolean {
 			<table class="retention-table">
 				<thead>
 					<tr>
-						<th>{m.showcase_admin_retention_col_table()}</th>
-						<th>{m.showcase_admin_retention_col_window()}</th>
-						<th>{m.showcase_admin_retention_col_policy()}</th>
-						<th>{m.showcase_admin_retention_col_rationale()}</th>
+						<th>{m.showcase_privacy_retention_col_table()}</th>
+						<th>{m.showcase_privacy_retention_col_window()}</th>
+						<th>{m.showcase_privacy_retention_col_policy()}</th>
+						<th>{m.showcase_privacy_retention_col_rationale()}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -135,7 +134,7 @@ function jobOverdue(ts: string | Date | null, hoursThreshold: number): boolean {
 
 	<section class="cron-section">
 		<header class="section-head">
-			<h3>{m.showcase_admin_retention_section_cron()}</h3>
+			<h3>{m.showcase_privacy_retention_section_cron()}</h3>
 			<Tag variant="muted" size="sm" label="Live" />
 		</header>
 
@@ -220,30 +219,6 @@ function jobOverdue(ts: string | Date | null, hoursThreshold: number): boolean {
 			</div>
 		{/await}
 	</section>
-
-	<section class="explainer">
-		<h3>{m.showcase_admin_retention_section_lifecycle()}</h3>
-		<ol class="death-flow">
-			<li>
-				<strong>Daily at 02:00 UTC</strong> Vercel Cron pings <code>/api/cron/analytics-cleanup</code> with a Bearer token.
-			</li>
-			<li>
-				The job computes today's cutoffs from <code>ANALYTICS_RETENTION_DAYS</code> and <code>CONSENT_RETENTION_DAYS</code>.
-			</li>
-			<li>
-				A single <code>DELETE</code> per table removes everything older than the cutoff. No soft delete, no archival
-				bucket — the row is gone.
-			</li>
-			<li>
-				The run is recorded in <code>jobs.job_executions</code> with rows-deleted, status, duration. That table is
-				what this page reads.
-			</li>
-			<li>
-				If the schedule slips beyond 26 hours, the badges above flip to "overdue" and the
-				<a href="/admin/analytics">/admin/analytics</a> tile flags it too.
-			</li>
-		</ol>
-	</section>
 </div>
 
 <style>
@@ -268,8 +243,7 @@ function jobOverdue(ts: string | Date | null, hoursThreshold: number): boolean {
 		line-height: 1.6;
 	}
 
-	.lede code,
-	.explainer code {
+	.lede code {
 		font-family: ui-monospace, monospace;
 		font-size: 0.92em;
 		padding: 0.1em 0.35em;
@@ -459,32 +433,4 @@ function jobOverdue(ts: string | Date | null, hoursThreshold: number): boolean {
 		color: var(--color-muted);
 	}
 
-	.explainer h3 {
-		margin: 0 0 var(--spacing-3) 0;
-		font-size: var(--text-fluid-lg);
-		font-weight: 600;
-		color: var(--color-fg);
-	}
-
-	.death-flow {
-		margin: 0;
-		padding-left: var(--spacing-5);
-		font-size: var(--text-fluid-sm);
-		color: var(--color-fg);
-		line-height: 1.7;
-	}
-
-	.death-flow li + li {
-		margin-top: var(--spacing-2);
-	}
-
-	.death-flow strong {
-		color: var(--color-fg);
-	}
-
-	.death-flow a {
-		color: var(--color-primary);
-		text-decoration: underline;
-		text-underline-offset: 0.2em;
-	}
 </style>

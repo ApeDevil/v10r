@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Canvas } from '@threlte/core';
-import { BackLink, PageHeader } from '$lib/components';
+import { BackLink, PageHeader, ShowcaseDocs } from '$lib/components';
 import { BoundaryFallback } from '$lib/components/composites';
 import * as m from '$lib/paraglide/messages';
 import Scene from './Scene.svelte';
@@ -18,7 +18,9 @@ const animationNames = ['Survey', 'Walk', 'Run'];
 			{ label: m.showcase_3d_breadcrumb(), href: '/showcases/3d' },
 			{ label: m.showcase_3d_animated_breadcrumb() }
 		]}
-	/>
+	>
+		<ShowcaseDocs />
+	</PageHeader>
 </div>
 
 <div class="controls">

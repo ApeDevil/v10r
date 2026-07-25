@@ -25,7 +25,6 @@ const activeTier = $derived(consent?.tier ?? data.consentTier);
 const tiers: { id: ConsentTier; label: () => string }[] = [
 	{ id: 'necessary', label: () => m.app_data_tier_necessary() },
 	{ id: 'analytics', label: () => m.app_data_tier_analytics() },
-	{ id: 'full', label: () => m.app_data_tier_full() },
 ];
 
 function formatDate(iso: string): string {

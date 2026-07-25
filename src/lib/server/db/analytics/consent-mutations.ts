@@ -7,8 +7,8 @@ import { consentEvents } from '$lib/server/db/schema/analytics';
 export async function recordConsentEvent(event: {
 	visitorId: string;
 	action: 'grant' | 'change' | 'withdraw';
-	tierBefore: 'necessary' | 'analytics' | 'full' | null;
-	tierAfter: 'necessary' | 'analytics' | 'full';
+	tierBefore: 'necessary' | 'analytics' | null;
+	tierAfter: 'necessary' | 'analytics';
 	uaHash?: string;
 }) {
 	await db.insert(consentEvents).values({

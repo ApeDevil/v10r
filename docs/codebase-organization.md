@@ -377,7 +377,8 @@ src/routes/
 | `shell` | 7 | Errors, modals, session, shortcuts, sidebar, style, toasts |
 | `analytics` | 6 | Funnels, journeys, live, my-data, overview, privacy |
 | `viz` | 6 | Charts, diagrams, graphs, maps, plots + index |
-| `admin` | 6 | Cookies, data, powers, retention, rights + index |
+| `admin` | 1 | Single page — operator transparency (former "Admin Powers" content folded in) |
+| `privacy` | 5 | Cookies, data, retention, rights + index |
 | `abuse` | 5 | AI-budget, captcha, honeypot, rate-limits + index |
 | `ai` | 5 | Chat, retrieval (index, explorer, ingest, rag-chat), image-metadata reader |
 | `toolkits` | 1 | Image Kit — upload→Run→adjust→Approve over metadata + AI cropper + embedder; persists nothing (see [blueprint/ai/image-kit.md](./blueprint/ai/image-kit.md)) |

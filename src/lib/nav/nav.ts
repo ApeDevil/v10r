@@ -1,4 +1,5 @@
 import * as m from '$lib/paraglide/messages';
+import { showcases } from '$lib/showcases/registry';
 import type { NavItem } from './types';
 
 /**
@@ -49,18 +50,8 @@ export const navItems: NavItem[] = [
 		href: '/showcases',
 		label: m.nav_showcases,
 		icon: 'i-lucide-view',
-		children: [
-			{ href: '/showcases/shell', label: m.nav_showcase_shell },
-			{ href: '/showcases/ui', label: m.nav_showcase_ui },
-			{ href: '/showcases/forms', label: m.nav_showcase_forms },
-			{ href: '/showcases/viz', label: m.nav_showcase_viz },
-			{ href: '/showcases/3d', label: m.nav_showcase_3d },
-			{ href: '/showcases/db', label: m.nav_showcase_db },
-			{ href: '/showcases/auth', label: m.nav_showcase_auth },
-			{ href: '/showcases/ai', label: m.nav_showcase_ai },
-			{ href: '/showcases/toolkits', label: m.nav_showcase_toolkits },
-			{ href: '/showcases/i18n', label: m.nav_showcase_i18n },
-		],
+		// Derived from the showcase registry so the dropdown can never drift from the hub.
+		children: showcases.map((card) => ({ href: card.href, label: card.title })),
 	},
 	{
 		href: '/docs',

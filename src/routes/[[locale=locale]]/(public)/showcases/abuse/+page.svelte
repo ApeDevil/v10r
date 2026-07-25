@@ -13,7 +13,7 @@ const defenses = [
 		href: '/showcases/abuse/captcha',
 		icon: 'i-lucide-shield-check',
 		titleKey: m.showcase_abuse_overview_card_captcha,
-		body: 'Proof-of-work captcha (ALTCHA) on auth flows. Single-use payload via Upstash replay store.',
+		body: 'Proof-of-work captcha (ALTCHA) on auth flows.',
 		status: data.captcha.configured ? 'success' : 'error',
 		statusLabel: data.captcha.configured ? 'Configured' : 'Missing HMAC key',
 	},
@@ -21,7 +21,7 @@ const defenses = [
 		href: '/showcases/abuse/honeypot',
 		icon: 'i-lucide-flower',
 		titleKey: m.showcase_abuse_overview_card_honeypot,
-		body: `Hidden field "${data.honeypot.field}" + ${data.honeypot.minFillMs}ms minimum fill time. Currently on the feedback form.`,
+		body: `Hidden field "${data.honeypot.field}" on the feedback form (${data.honeypot.minFillMs}ms minimum fill time).`,
 		status: 'success',
 		statusLabel: 'Active',
 	},
@@ -29,7 +29,7 @@ const defenses = [
 		href: '/showcases/abuse/rate-limits',
 		icon: 'i-lucide-gauge',
 		titleKey: m.showcase_abuse_overview_card_rate,
-		body: `Per-IP and per-email Upstash limiters across auth, feedback, AI, and the captcha endpoint. Per-email: ${data.perEmail.max}/${data.perEmail.window}.`,
+		body: `Per-IP and per-email limits. Per-email: ${data.perEmail.max}/${data.perEmail.window}.`,
 		status: 'success',
 		statusLabel: 'Active',
 	},
@@ -37,7 +37,7 @@ const defenses = [
 		href: '/showcases/abuse/ai-budget',
 		icon: 'i-lucide-coins',
 		titleKey: m.showcase_abuse_overview_card_budget,
-		body: `Daily token cap of ${data.aiBudget.dailyCap.toLocaleString()} per user. Caps cost-amplification abuse.`,
+		body: `Daily token cap of ${data.aiBudget.dailyCap.toLocaleString()} per user.`,
 		status: 'success',
 		statusLabel: 'Active',
 	},
@@ -54,18 +54,6 @@ const defenses = [
 			<div class="diag-row">
 				<span class="diag-label">BOT_DETECTION_MODE</span>
 				<Badge variant={modeVariant}>{data.mode}</Badge>
-			</div>
-			<div class="diag-row">
-				<span class="diag-label">Description</span>
-				<span class="diag-value">
-					{#if data.mode === 'live'}
-						Checks enforced — denials short-circuit the request.
-					{:else if data.mode === 'dry_run'}
-						Checks computed and audited but never deny (calibration mode).
-					{:else}
-						Checks skipped entirely. Emergency-only — do not run in production.
-					{/if}
-				</span>
 			</div>
 		</div>
 	</Card>
@@ -109,11 +97,6 @@ const defenses = [
 		font-weight: 500;
 		color: var(--color-muted);
 		font-size: var(--text-fluid-sm);
-	}
-
-	.diag-value {
-		font-size: var(--text-fluid-sm);
-		text-align: right;
 	}
 
 	.defense-grid {

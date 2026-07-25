@@ -165,9 +165,8 @@ const freshVerification = fixtureVerifications.find((v) => v._lifecycle === 'fre
 			</div>
 		{/snippet}
 		<p class="text-sm text-muted mb-3">
-			The exact <code>sequence(...)</code> order from <code>hooks.server.ts</code>. Auth-relevant
-			handlers are highlighted. <code>authHandler</code> runs Better Auth but deliberately does
-			<em>not</em> populate <code>locals</code> — <code>sessionPopulate</code> does, two steps later.
+			The exact <code>sequence(...)</code> order from <code>hooks.server.ts</code>, auth-relevant
+			handlers highlighted.
 		</p>
 		<ol class="handlers">
 			{#each HANDLERS as h, i (h.name)}
@@ -179,13 +178,6 @@ const freshVerification = fixtureVerifications.find((v) => v._lifecycle === 'fre
 				</li>
 			{/each}
 		</ol>
-		<details class="how">
-			<summary>{m.showcase_auth_howto()}</summary>
-			<p>
-				This is recorded, not live: with no <code>+page.server.ts</code> the showcase can't
-				introspect its own request. The order is transcribed verbatim from the real handler chain.
-			</p>
-		</details>
 	</Card>
 </Stack>
 

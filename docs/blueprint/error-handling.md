@@ -491,19 +491,45 @@ export async function apiFetch<T>(
 
 ---
 
-## Error Boundaries (Future)
+## Component Error Boundaries
 
-Svelte 5 introduces error boundaries with `<svelte:boundary>`:
+`<svelte:boundary>` is the innermost of three error-handling layers, stopping one component subtree from taking down the whole page.
+
+### Where They Sit
+
+Boundaries wrap isolated, failure-prone subtrees — 3D scenes (WebGL), viz widgets, embeds, chat panels — anywhere a runtime error is plausible and the rest of the page should keep working. See [3d/3d-integration.md](./3d/3d-integration.md#webgl-fallback) for a concrete example.
+
+### What They Catch
+
+A boundary catches errors thrown **during rendering**: the initial render and template updates/effects inside its subtree. It does **not** catch errors from event handlers, `setTimeout`, or other async work outside the render cycle — those still need their own try/catch. By default, boundaries have no effect during SSR; a render error there still fails the render as a whole.
+
+### Fallback UI
 
 ```svelte
 <svelte:boundary onerror={(e) => console.error(e)}>
-  <ComponentThatMightError />
+  <FailureProneComponent />
 
-  {#snippet failed(error)}
-    <p>Error: {error.message}</p>
+  {#snippet failed(error, reset)}
+    <BoundaryFallback
+      title="Component crashed"
+      description="The component threw an error. Click retry to restore it."
+      reset={() => { reset(); /* app-specific cleanup, if any */ }}
+    />
   {/snippet}
 </svelte:boundary>
 ```
+
+`reset()` (passed into the `failed` snippet) discards the errored subtree and remounts it. `BoundaryFallback` (`$lib/components/composites`) is the shared fallback presentation — icon, title, optional description, retry button — so every boundary looks the same regardless of what failed.
+
+### Composing With the Other Layers
+
+| Layer | Scope | Recovery |
+|-------|-------|----------|
+| `<svelte:boundary>` | One component subtree, render-time errors | `reset()` remounts just that subtree |
+| `+error.svelte` | A route segment — load/render errors that escape every boundary | Contextual action per route (see [Error Pages](#error-pages)) |
+| `error.html` | SvelteKit itself fails, before any Svelte error page can render | Static HTML, no client JS |
+
+A boundary only stops errors inside its own subtree — nothing above it. Anything that escapes (or any error during SSR) still propagates to the nearest `+error.svelte`; a failure in SvelteKit's own rendering pipeline falls through to `error.html` as the last resort.
 
 ---
 
@@ -658,6 +684,7 @@ describe('Item page', () => {
 
 | Layer | Pattern |
 |-------|---------|
+| Component render | `<svelte:boundary>` + `BoundaryFallback` |
 | Load functions | `error(status, { message })` |
 | Form actions | `fail(status, { form, message })` |
 | API routes | `error()` or `json({ error }, { status })` |
@@ -673,3 +700,4 @@ describe('Item page', () => {
 - [api.md](./api.md) - API validation and error responses
 - [auth.md](./auth.md) - Authentication error handling
 - [ai/README.md](./ai/README.md) - AI assistant implementation
+- [3d/3d-integration.md](./3d/3d-integration.md) - `<svelte:boundary>` WebGL fallback example

@@ -7,7 +7,7 @@
  */
 import { onMount } from 'svelte';
 import { MediaQuery } from 'svelte/reactivity';
-import { Card, PageHeader } from '$lib/components/composites';
+import { Card, PageHeader, ShowcaseDocs } from '$lib/components/composites';
 import { PageContainer, Stack } from '$lib/components/layout';
 import { Badge, Button } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
@@ -44,9 +44,11 @@ onMount(() => {
 		breadcrumbs={[
 			{ label: m.showcase_breadcrumb_home(), href: '/' },
 			{ label: m.showcase_breadcrumb_showcases(), href: '/showcases' },
-			{ label: m.showcase_pwa_breadcrumb() }
+			{ label: m.showcase_pwa_title() }
 		]}
-	/>
+	>
+		<ShowcaseDocs />
+	</PageHeader>
 
 	<Stack gap="6">
 		<!-- Live install state -->
@@ -73,15 +75,9 @@ onMount(() => {
 					</div>
 				{:else if !installed}
 					<p>
-						On iOS: Share → <strong>Add to Home Screen</strong>. Installability comes from the manifest alone —
-						Chrome dropped its service-worker requirement, and iOS 26 defaults the "Open as Web App" toggle to on.
+						On iOS: Share → <strong>Add to Home Screen</strong>.
 					</p>
 				{/if}
-				<p>
-					The manifest is a dynamic endpoint (<code>/manifest.webmanifest</code>) so its name and description localize
-					via the Paraglide cookie — the <code>&lt;link&gt;</code> carries <code>crossorigin="use-credentials"</code>,
-					without which manifest fetches omit cookies entirely.
-				</p>
 			</div>
 		</Card>
 
@@ -94,8 +90,7 @@ onMount(() => {
 			<div class="explanation">
 				<p>
 					"Offline-capable" is scoped honestly: an installable shell with instant repeat loads and a branded
-					<code>/offline</code> fallback — <em>not</em> offline CRUD. Every HTML response here is personalized
-					(per-user palette injection), so pages are never cached; nothing user-specific can ever enter a cache.
+					<code>/offline</code> fallback — <em>not</em> offline CRUD.
 				</p>
 				<div class="diag-grid">
 					<div class="diag-row">
@@ -119,11 +114,6 @@ onMount(() => {
 						<span class="diag-value">Clear-Site-Data header + explicit worker cache flush</span>
 					</div>
 				</div>
-				<p>
-					The rules live in a pure module (<code>$lib/pwa/sw-policy.ts</code>) with unit tests asserting
-					<code>/admin</code>, <code>/api</code>, and query-stringed URLs are refused — the caching policy is
-					testable, not just commented.
-				</p>
 			</div>
 		</Card>
 
@@ -135,8 +125,7 @@ onMount(() => {
 
 			<div class="explanation">
 				<p>
-					No automatic <code>skipWaiting()</code> — swapping workers mid-session is how deploys break running tabs.
-					Instead:
+					No automatic <code>skipWaiting()</code> — updates roll out in two tiers:
 				</p>
 				<div class="diag-grid">
 					<div class="diag-row">
@@ -156,11 +145,6 @@ onMount(() => {
 						<span class="diag-value">a flag in the worker evacuates all installed clients on the next deploy</span>
 					</div>
 				</div>
-				<p>
-					Cache names key on the deploy's commit SHA (<code>kit.version.name</code>). The accepted cost of the
-					built-in <code>$service-worker</code> approach: each deploy re-downloads the precache in the background —
-					the old worker keeps serving its own consistent cache until the swap.
-				</p>
 			</div>
 		</Card>
 	</Stack>

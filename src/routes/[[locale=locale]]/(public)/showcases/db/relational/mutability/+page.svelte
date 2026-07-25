@@ -135,7 +135,7 @@ let appendSeverity = $state('info');
 						<Cluster justify="between" align="start" gap="4">
 							<div>
 								<Typography variant="h5" as="h2">{m.showcase_db_relational_mutability_card_mutable()}</Typography>
-								<p class="section-desc">Rows are created, read, updated, and deleted. <code>updated_at</code> tracks last modification. Try creating, editing, and deleting rows below.</p>
+								<p class="section-desc">Try creating, editing, and deleting rows below.</p>
 							</div>
 							<Button variant="primary" size="sm" onclick={() => showCreateForm = !showCreateForm}>
 								<span class="i-lucide-plus h-4 w-4 mr-1" ></span>
@@ -236,7 +236,7 @@ let appendSeverity = $state('info');
 				<Card>
 					{#snippet header()}
 						<Typography variant="h5" as="h2">{m.showcase_db_relational_mutability_card_versioned()}</Typography>
-						<p class="section-desc">Every update inserts a snapshot into the history table. Edit a specimen below and watch the history grow.</p>
+						<p class="section-desc">Edit a specimen below and watch the history grow.</p>
 					{/snippet}
 
 					{#if data.mutableRows.length > 0}
@@ -326,7 +326,7 @@ let appendSeverity = $state('info');
 				<Card>
 					{#snippet header()}
 						<Typography variant="h5" as="h2">{m.showcase_db_relational_mutability_card_soft_delete()}</Typography>
-						<p class="section-desc"><code>deleted_at IS NULL</code> = active. Non-NULL = soft-deleted (recoverable). Click delete to move a document right. Click restore to move it back.</p>
+						<p class="section-desc">Click delete to move a document right, restore to move it back.</p>
 					{/snippet}
 
 					<div class="soft-delete-groups">
@@ -400,7 +400,6 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 				<Card>
 					{#snippet header()}
 						<Typography variant="h5" as="h2">{m.showcase_db_relational_mutability_card_append_only()}</Typography>
-						<p class="section-desc">Records are inserted and never modified. There is no Edit button. There is no Delete button. This is intentional.</p>
 					{/snippet}
 
 					{#if data.appendLog.length > 0}
@@ -479,7 +478,7 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 				<Card>
 					{#snippet header()}
 						<Typography variant="h5" as="h2">{m.showcase_db_relational_mutability_card_temporal()}</Typography>
-						<p class="section-desc"><code>valid_from</code> / <code>valid_to</code> track when a fact is true in the real world. Use the date picker to query "what was valid on date X?"</p>
+						<p class="section-desc">Use the date picker to query "what was valid on date X?"</p>
 					{/snippet}
 
 					{#if data.temporalRows.length > 0}

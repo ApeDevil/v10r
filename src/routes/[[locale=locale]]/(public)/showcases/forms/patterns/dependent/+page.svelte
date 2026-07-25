@@ -115,10 +115,4 @@ function onStateChange() {
 			</div>
 		</form>
 	</Card>
-
-	<Alert variant="info" title="Cascading Pattern">
-		{#snippet children()}
-			<p>Options for State and City are filtered using <code>$derived</code>. When a parent changes, the <code>onchange</code> callback resets child values to empty string. This avoids <code>$effect</code> anti-patterns and works safely with pre-populated forms.</p>
-		{/snippet}
-	</Alert>
 </Stack>

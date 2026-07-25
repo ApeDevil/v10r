@@ -31,7 +31,7 @@ const categories: DataCategory[] = [
 				field: 'visitor_id',
 				type: 'sha256(ip + user-agent)',
 				example: 'v_a3f29c81d6e4b5f0',
-				note: 'Hashed at request time. Raw IP is never written to the database.',
+				note: 'Raw IP is never written to the database.',
 			},
 			{ field: 'path', type: 'string', example: '/showcases', note: 'Pathname only. Query strings are dropped.' },
 			{ field: 'timestamp', type: 'timestamptz', example: '2026-05-01 14:21:08+00' },
@@ -132,11 +132,10 @@ const categories: DataCategory[] = [
 </script>
 <div class="data-page">
 	<header class="lede">
-		<h2>{m.showcase_admin_data_heading()}</h2>
+		<h2>{m.showcase_privacy_data_heading()}</h2>
 		<p>
 			Four categories. The first applies to every visitor; the others only kick in when you explicitly opt in,
-			send feedback, or sign in. Every field below is sourced from the actual database schema in
-			<code>src/lib/server/db/schema/</code>.
+			send feedback, or sign in.
 		</p>
 	</header>
 
@@ -169,9 +168,9 @@ const categories: DataCategory[] = [
 				<table class="field-table">
 					<thead>
 						<tr>
-							<th>{m.showcase_admin_data_col_field()}</th>
-							<th>{m.showcase_admin_data_col_type()}</th>
-							<th>{m.showcase_admin_data_col_example()}</th>
+							<th>{m.showcase_privacy_data_col_field()}</th>
+							<th>{m.showcase_privacy_data_col_type()}</th>
+							<th>{m.showcase_privacy_data_col_example()}</th>
 						</tr>
 					</thead>
 					<tbody>

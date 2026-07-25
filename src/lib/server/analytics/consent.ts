@@ -3,12 +3,20 @@
  * Fields are masked based on the visitor's consent level.
  */
 
-const CONSENT_LEVELS = { necessary: 0, analytics: 1, full: 2 } as const;
+const CONSENT_LEVELS = { necessary: 0, analytics: 1 } as const;
 export type ConsentTier = keyof typeof CONSENT_LEVELS;
 
-/** Parse a raw cookie value into a valid ConsentTier (defaults to 'necessary') */
+/**
+ * Parse a raw cookie value into a valid ConsentTier (defaults to 'necessary').
+ *
+ * Anything unrecognised denies by default, so a typo or a tampered cookie can
+ * never escalate. The retired `full` value is deliberately NOT special-cased:
+ * it falls through to `necessary`, which means a visitor holding an old cookie
+ * is asked again rather than being silently credited with consent they gave to
+ * a different, now-nonexistent description of the processing.
+ */
 export function parseConsentTier(raw: string | undefined): ConsentTier {
-	if (raw === 'necessary' || raw === 'analytics' || raw === 'full') return raw;
+	if (raw === 'necessary' || raw === 'analytics') return raw;
 	return 'necessary';
 }
 

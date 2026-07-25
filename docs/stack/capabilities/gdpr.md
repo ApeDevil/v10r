@@ -35,7 +35,7 @@ These are enforced in `privacy/report.ts`, not left to callers:
 - **Prior-session IPs are masked** to 2 octets (v4) / 2 groups (v6). A shared device means a historical IP can be a third party's data (Art 15(4)). The **current** session is shown raw — it is the requester's own connection.
 - **Sections degrade independently.** A `settle()` wrapper makes one failed read render that section unavailable; it never 500s the whole report.
 - **Per-domain legal basis + Art 20 `portable` tag.** Portability applies only to consent/contract data; the report marks which sections it covers.
-- **The anonymous pre-signup analytics trail is deliberately absent.** Re-identifying a hashed `visitorId` needs a documented Art 6(4) basis that does not exist. Do not add it without one.
+- **Analytics comes in two lanes, and only one belongs in the report.** The authenticated lane (`analytics.user_events`, keyed by user id) IS included as the `behavior` section — plainly this user's data under Art 15, reported on a legitimate-interest basis and marked portable. The anonymous lane (`analytics.events`, keyed by hashed `visitorId`) is deliberately absent: re-identifying that hash needs a documented Art 6(4) basis that does not exist. Do not add it without one — and note that joining the two lanes would not merely widen this report, it would move the anonymous lane onto a different legal footing entirely. See [blueprint/analytics/two-lane-model.md](../../blueprint/analytics/two-lane-model.md).
 - **The `security` section is contract, never portable.** It reports `twoFactorEnabled` + passkey display metadata only — never a secret, backup code, public key, credential ID, or raw AAGUID. `REPORT_SCHEMA_VERSION` is bumped (`2026-06-17`) when section shape changes. Erasure needs no change: passkey/two-factor rows FK-cascade with `auth.user`.
 - **The `images` section reports a `withGpsCount`.** The Image Metadata Reader treats location as opt-in (see [../../blueprint/ai/image-metadata.md](../../blueprint/ai/image-metadata.md)); the aggregator can count persisted-location records because GPS lives in a typed `gps_lat`/`gps_lng` column, never only inside a blob. Stored image derivatives are EXIF-stripped, so no GPS exists outside this opt-in column.
 
@@ -60,6 +60,30 @@ These are enforced in `privacy/report.ts`, not left to callers:
 The marker is `app.user_preferences.transparency_seen_at` (nullable timestamptz). `consumeTransparencyMarker()` claims it atomically with a single `INSERT … ON CONFLICT DO UPDATE … setWhere isNull … RETURNING` — exactly-once and prefetch-safe, so a SvelteKit prefetch racing a navigation cannot trigger the redirect twice. The gate self-excludes the target path (the page consumes the marker on a direct first visit). Every other nav pays only a cheap PK read.
 
 The marker column is declared in the schema SSOT (`app/user-preferences.ts`). It was first applied to the live DB by running the additive `ALTER TABLE … ADD COLUMN IF NOT EXISTS` directly through the `neon()` driver rather than `db:push`, because drizzle-kit's interactive `nullsNotDistinct` re-prompt can't be piped — a fresh `db:push` reproduces the column from the schema either way.
+
+## What the admin can do
+
+Transparency runs both ways: data subjects get the rights above; this section discloses what the person holding `/admin/*` — a single environment-pinned role, not a role hierarchy — can and cannot do with the data.
+
+### Scope
+
+Admin-only surfaces (non-admins 404, see guarantees) group into four buckets: **Observe** (DB/analytics dashboards — aggregate only, no raw IPs; the audit log; feedback triage), **Manage** (ban users, toggle feature flags, edit branding), **Content** (CRUD posts/tags), **System** (inspect/re-run jobs, configure notification channels, AI usage, flush cache). None of these read secrets.
+
+### Guarantees (code-enforced, not policy)
+
+| Guarantee | Mechanism |
+|-----------|-----------|
+| Nothing to escalate | `ADMIN_USER_ID` (comma-separated user ids) is the only gate — no `is_admin` column, no role table |
+| 404, not 403 | `requireAdmin` / `guardApiAdmin` return a generic 404 for non-admins; admin routes don't disclose their own existence |
+| Append-only audit | Every admin write calls `recordAuditEvent` into `admin.audit_log`; that module exposes no update/delete path, and the row has no FK on `actorId` so the entry survives the actor's own account deletion |
+| No write without consent | Cron jobs that mutate user-facing data run behind a Bearer token known only to Vercel Cron, never exposed in any UI |
+
+### Technically prevented vs. process-prevented
+
+Some limits are enforced in code; others depend on process outside the app:
+
+- **Technically prevented** — reading a raw IP (never persisted, see the transparency-page masking rules above), reading a password (Argon2id is one-way), erasing the audit log (no UPDATE/DELETE code path), joining an analytics journey for a user who rejected consent (no `session_id` to join at `necessary` tier)
+- **Process-prevented** — self-promotion to admin. The gate is an env var, not a database row: granting admin needs Vercel project access and a redeploy, which is an operational control, not a code one
 
 ## Consent-gated analytics cookie
 

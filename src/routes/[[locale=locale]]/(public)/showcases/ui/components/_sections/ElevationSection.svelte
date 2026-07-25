@@ -91,12 +91,8 @@ const vision = $derived(visionSel as 'none' | 'grayscale' | 'blur' | 'forced');
 <section id="elevation" class="section elevation-showcase">
 	<h2 class="section-title">Surface Elevation</h2>
 	<p class="section-description">
-		Tonal depth built from three independent channels on <code>[data-elevation]</code> —
-		a load-bearing <strong>rim</strong>, a decorative brand-tinted <strong>glow</strong>, and the
-		tonal <strong>fill</strong>. The demo maps five named surfaces onto the rungs: Background (E0)
-		▸ Sidebar (E1) ▸ Card (E2) ▸ Dialog (E3) ▸ Tooltip (E4). One rule holds throughout — a layer
-		sits <strong>exactly one rung</strong> above what it covers and never skips a level — and the
-		last card shows real <code>&lt;Surface&gt;</code> components enforcing it automatically.
+		Three tonal channels — <strong>rim</strong>, <strong>glow</strong>, <strong>fill</strong> — mapped
+		onto five named surfaces from Background (E0) to Tooltip (E4).
 	</p>
 
 	<div class="demos">
@@ -260,11 +256,8 @@ const vision = $derived(visionSel as 'none' | 'grayscale' | 'blur' | 'forced');
 					{@render relBand(1)}
 				</div>
 				<p class="rel-note">
-					The outer plane declares no level. Every nested <code>&lt;Surface&gt;</code> calls
-					<code>useSurface()</code>, reads its parent's level from context and stamps
-					<code>data-elevation = parent + 1</code> — the badge on each band is its real
-					<code>attr(data-elevation)</code>. Delete a layer and the rest renumber themselves; there is
-					no hardcoded rung to get wrong. This is the same engine the sidebar, menus and dialogs use.
+					The badge on each band is its real <code>attr(data-elevation)</code>. Delete a layer and
+					the rest renumber themselves — no hardcoded rung to get wrong.
 				</p>
 			</div>
 		</DemoCard>
@@ -276,13 +269,7 @@ const vision = $derived(visionSel as 'none' | 'grayscale' | 'blur' | 'forced');
 	bind:open={dialogOpen}
 	title="A real dialog"
 	description="A genuine modal: role=dialog, aria-modal, a focus trap and focus return. Its elevation is resolved relatively by useSurface() — opened from the page plane it lands at E1, and the scrim carries the separation."
->
-	<p class="dialog-body">
-		Elevation is never the sole carrier of meaning. Under forced-colors the tonal fill and the
-		brand glow both vanish and only the rim survives — which is why a modal also announces its
-		role and traps focus.
-	</p>
-</Dialog>
+></Dialog>
 
 <style>
 	/* ── Section shell (mirrors LayoutSection's idiom) ── */
@@ -374,8 +361,7 @@ const vision = $derived(visionSel as 'none' | 'grayscale' | 'blur' | 'forced');
 		flex-direction: column;
 		gap: var(--spacing-2);
 	}
-	.aside-note,
-	.dialog-body {
+	.aside-note {
 		margin: 0;
 		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);

@@ -1,26 +1,14 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
 import { ShowcaseLayout } from '$lib/components/composites';
-import * as m from '$lib/paraglide/messages';
-import { getShowcaseTabs } from '../showcases';
+import { getShowcaseCard } from '../showcases';
 
 let { children }: { children: Snippet } = $props();
 
-const tabs = getShowcaseTabs('/showcases/forms');
+const card = getShowcaseCard('/showcases/forms');
 </script>
 
-<ShowcaseLayout
-	title={m.showcase_forms_title()}
-	description={m.showcase_forms_description()}
-	breadcrumbs={[
-		{ label: m.showcase_breadcrumb_home(), href: '/' },
-		{ label: m.showcase_breadcrumb_showcases(), href: '/showcases' },
-		{ label: m.showcase_forms_breadcrumb() }
-	]}
-	{tabs}
-	ariaLabel="Form sections"
-	wrapperClass="forms-showcase"
->
+<ShowcaseLayout {card} wrapperClass="forms-showcase">
 	{@render children()}
 </ShowcaseLayout>
 

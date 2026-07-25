@@ -83,24 +83,9 @@ function handleReset() {
 	<section class="demo-section">
 		<h2>{m.showcase_shell_errors_section_routes()}</h2>
 		<p>
-			SvelteKit errors that escape component boundaries are caught by <code>+error.svelte</code>
-			pages. The system has three layers:
+			Errors that escape a boundary are caught by route-level <code>+error.svelte</code> pages, then
+			<code>error.html</code> as the last resort.
 		</p>
-
-		<div class="architecture">
-			<div class="layer">
-				<code class="layer-label">1. svelte:boundary</code>
-				<span class="layer-desc">Component-level &mdash; catches errors within a single component tree</span>
-			</div>
-			<div class="layer">
-				<code class="layer-label">2. +error.svelte</code>
-				<span class="layer-desc">Route-level &mdash; catches load/render errors for a route segment</span>
-			</div>
-			<div class="layer">
-				<code class="layer-label">3. error.html</code>
-				<span class="layer-desc">App-level &mdash; last resort when SvelteKit itself fails</span>
-			</div>
-		</div>
 
 		<h3>{m.showcase_shell_errors_section_boundaries()}</h3>
 		<p>
@@ -216,34 +201,6 @@ function handleReset() {
 		gap: var(--spacing-4);
 	}
 
-	.architecture {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-3);
-		margin-bottom: var(--spacing-5);
-	}
-
-	.layer {
-		display: flex;
-		align-items: baseline;
-		gap: var(--spacing-3);
-		padding: var(--spacing-3);
-		border-radius: var(--radius-md);
-		background: var(--color-subtle);
-	}
-
-	.layer-label {
-		flex-shrink: 0;
-		font-weight: 600;
-		background: none;
-		padding: 0;
-	}
-
-	.layer-desc {
-		font-size: var(--text-fluid-xs);
-		color: var(--color-muted);
-	}
-
 	h3 {
 		font-size: var(--text-fluid-lg);
 		margin-bottom: var(--spacing-3);
@@ -299,7 +256,6 @@ function handleReset() {
 	}
 
 	@media (max-width: 640px) {
-		.layer,
 		.boundary-entry {
 			flex-direction: column;
 			gap: var(--spacing-1);

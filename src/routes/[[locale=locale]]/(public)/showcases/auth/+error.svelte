@@ -15,7 +15,7 @@ $effect(() => {
 </script>
 
 <svelte:head>
-	<title>{page.status} — {m.showcase_auth_layout_title()}</title>
+	<title>{page.status} — {m.showcase_auth_title()}</title>
 </svelte:head>
 
 <ErrorDisplay

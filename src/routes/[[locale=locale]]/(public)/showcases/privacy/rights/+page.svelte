@@ -58,7 +58,7 @@ const rights: Right[] = [
 		article: 'Art. 21',
 		title: 'Right to object',
 		icon: 'i-lucide-shield-alert',
-		what: 'Object to processing based on legitimate interests — for example, the pre-consent traffic counter described in /showcases/admin/data.',
+		what: 'Object to processing based on legitimate interests — for example, the pre-consent traffic counter described in /showcases/privacy/data.',
 		how: 'Open the cookie banner and click "Reject all", or email the controller for a global opt-out.',
 		expect: 'Pre-consent collection stops on the next request; existing rows expire normally per the retention table.',
 	},
@@ -82,7 +82,7 @@ const rights: Right[] = [
 </script>
 <div class="rights">
 	<header class="lede">
-		<h2>{m.showcase_admin_rights_heading()}</h2>
+		<h2>{m.showcase_privacy_rights_heading()}</h2>
 		<p>
 			These are not user requests we hope you'll never make — they're features the GDPR builds in for you,
 			and we honour them in plain text. The contact for every right below is

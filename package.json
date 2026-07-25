@@ -127,6 +127,7 @@
 		"uuid": "^14.0.0",
 		"valibot": "^1.2.0",
 		"web-push": "^3.6.7",
+		"web-vitals": "^5.1.0",
 		"yaml": "^2.0.0"
 	},
 	"devDependencies": {

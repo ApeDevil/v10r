@@ -2,13 +2,13 @@
 import { browser } from '$app/environment';
 import { Button } from '$lib/components/primitives/button';
 import { Switch } from '$lib/components/primitives/switch';
+import * as m from '$lib/paraglide/messages';
 import { type ConsentTier, getConsent } from '$lib/state/consent.svelte';
 
 const consent = getConsent();
 
 let showCustomize = $state(false);
 let analyticsOn = $state(false);
-let fullOn = $state(false);
 
 function accept(tier: ConsentTier) {
 	consent.setTier(tier);
@@ -18,8 +18,7 @@ function accept(tier: ConsentTier) {
 }
 
 function saveCustom() {
-	const tier: ConsentTier = fullOn ? 'full' : analyticsOn ? 'analytics' : 'necessary';
-	accept(tier);
+	accept(analyticsOn ? 'analytics' : 'necessary');
 }
 
 /** Fire-and-forget POST to record consent event server-side */
@@ -42,25 +41,25 @@ const visible = $derived(browser && (consent.needsBanner || consent.bannerOpen))
 	<div
 		class="consent-banner"
 		role="dialog"
-		aria-label="Cookie preferences"
+		aria-label={m.consent_banner_aria()}
 		aria-modal="false"
 	>
 		<div class="consent-inner">
 			<div class="consent-body">
 				<span class="consent-icon i-lucide-cookie" aria-hidden="true"></span>
 				<div class="consent-text">
-					<p class="consent-headline">We use cookies</p>
-					<p class="consent-blurb">
-						Some help us understand how the site is used. You choose which ones we set.
-					</p>
+					<p class="consent-headline">{m.consent_banner_headline()}</p>
+					<p class="consent-blurb">{m.consent_banner_blurb()}</p>
 				</div>
 
+				<!-- Reject is the same size, weight and prominence as accept. EDPB
+				     Guidelines 05/2020: withdrawing must be as easy as granting. -->
 				<div class="consent-actions">
 					<Button variant="outline" size="md" onclick={() => accept('necessary')}>
-						Reject all
+						{m.consent_banner_reject()}
 					</Button>
-					<Button variant="primary" size="md" onclick={() => accept('full')}>
-						Accept all
+					<Button variant="primary" size="md" onclick={() => accept('analytics')}>
+						{m.consent_banner_accept()}
 					</Button>
 				</div>
 			</div>
@@ -72,28 +71,24 @@ const visible = $derived(browser && (consent.needsBanner || consent.bannerOpen))
 					aria-expanded={showCustomize}
 					onclick={() => (showCustomize = !showCustomize)}
 				>
-					{showCustomize ? 'Hide options' : 'Customize'}
+					{showCustomize ? m.consent_banner_hide_options() : m.consent_banner_customize()}
 				</button>
 				<span class="meta-sep" aria-hidden="true">·</span>
-				<a class="meta-link" href="/showcases/admin/cookies">Learn more</a>
+				<a class="meta-link" href="/showcases/privacy/cookies">{m.consent_banner_learn_more()}</a>
 			</div>
 
 			{#if showCustomize}
 				<div class="customize-panel">
 					<div class="customize-row">
-						<Switch disabled checked={true} label="Necessary" size="sm" />
-						<span class="customize-desc">Required for the site to work. Cannot be turned off.</span>
+						<Switch disabled checked={true} label={m.consent_tier_necessary()} size="sm" />
+						<span class="customize-desc">{m.consent_tier_necessary_desc()}</span>
 					</div>
 					<div class="customize-row">
-						<Switch bind:checked={analyticsOn} label="Analytics" size="sm" />
-						<span class="customize-desc">Page views, device type, country.</span>
-					</div>
-					<div class="customize-row">
-						<Switch bind:checked={fullOn} label="Full" size="sm" />
-						<span class="customize-desc">Adds journey tracking and custom events.</span>
+						<Switch bind:checked={analyticsOn} label={m.consent_tier_analytics()} size="sm" />
+						<span class="customize-desc">{m.consent_tier_analytics_desc()}</span>
 					</div>
 					<Button variant="outline" size="sm" onclick={saveCustom}>
-						Save preferences
+						{m.consent_banner_save()}
 					</Button>
 				</div>
 			{/if}

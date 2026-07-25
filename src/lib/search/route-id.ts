@@ -58,11 +58,11 @@ export function resolveRouteLabel(routeId: string | null | undefined): string | 
 	}
 
 	for (const card of showcases) {
-		if (card.href === path) return card.title;
+		if (card.href === path) return card.title();
 		for (const sub of card.sublinks ?? []) {
-			if (sub.href === path) return sub.label;
+			if (sub.href === path) return sub.label();
 			for (const child of sub.children ?? []) {
-				if (child.href === path) return child.label;
+				if (child.href === path) return child.label();
 			}
 		}
 	}

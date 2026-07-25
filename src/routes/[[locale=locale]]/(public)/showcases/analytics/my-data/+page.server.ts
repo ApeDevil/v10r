@@ -4,7 +4,8 @@
  */
 
 import { hashVisitorId, parseConsentTier } from '$lib/server/analytics/consent';
-import { ANALYTICS_CONSENT_COOKIE } from '$lib/server/config';
+import { classifyUserAgent, geoFromHeaders } from '$lib/server/analytics/enrich';
+import { ANALYTICS_CONSENT_COOKIE, ANALYTICS_SESSION_COOKIE } from '$lib/server/config';
 import { maskIp } from '$lib/server/privacy';
 import type { PageServerLoad } from './$types';
 
@@ -18,23 +19,25 @@ export const load: PageServerLoad = async ({ request, cookies, getClientAddress,
 	const referrer = request.headers.get('referer') ?? '';
 	const visitorId = await hashVisitorId(`${ip}:${ua}`);
 	const consentTier = parseConsentTier(cookies.get(ANALYTICS_CONSENT_COOKIE));
+	const { device, browser } = classifyUserAgent(ua);
 
 	return {
 		consentTier,
 		necessary: {
 			visitorId,
 			path: '/showcases/analytics/my-data',
-			sessionCookie: cookies.get('_v10r_sid') ? 'present' : 'not set',
+			sessionCookie: cookies.get(ANALYTICS_SESSION_COOKIE) ? 'present' : 'not set',
+			country: geoFromHeaders(request.headers) ?? 'not resolved',
 		},
 		analytics: {
 			referrer: referrer || null,
 			acceptLanguage,
 			maskedIp: maskIp(ip),
 			userAgent: ua,
+			device,
+			browser,
 		},
-		full: {
-			rawIpNote: 'Raw IP is never stored — only the hash above',
-		},
+		rawIpNote: 'Raw IP is never stored — only the hash above',
 		hashing: {
 			maskedIp: maskIp(ip),
 			uaTruncated: ua.length > 50 ? `${ua.slice(0, 50)}...` : ua,

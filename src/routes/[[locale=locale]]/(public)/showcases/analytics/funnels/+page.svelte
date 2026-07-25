@@ -42,7 +42,6 @@ const overallConversion = $derived(
 		<ChartSection
 			title="Landing &rarr; Signup Funnel"
 			description="Tracks visitors from landing page through docs and pricing to signup"
-			details="Each step counts distinct sessions that visited that page. Drop-off percentages show how many visitors left between steps. Data comes from raw pageview events with session-level deduplication."
 		>
 			{#snippet chart()}
 				<FunnelChart steps={data.funnel} />

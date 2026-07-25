@@ -11,6 +11,8 @@ type Instance = {
 	dropped?: string[];
 	count: number;
 	href?: string;
+	linkLabel?: string;
+	context?: () => string;
 };
 
 const instances: Instance[] = [
@@ -28,14 +30,27 @@ const instances: Instance[] = [
 	},
 ];
 
-const wild: Instance = {
-	name: 'v10r',
-	arg: 'lynx',
-	uses: ['SvelteKit', 'UnoCSS', 'Bits UI', 'markdown pipeline'],
-	dropped: ['auth', 'databases', 'API', 'i18n', 'AI', '3D'],
-	count: 5,
-	href: 'https://v4.lynxware.org/',
-};
+const wildInstances: Instance[] = [
+	{
+		name: 'v10r',
+		arg: 'lynx',
+		uses: ['SvelteKit', 'UnoCSS', 'Bits UI', 'markdown pipeline'],
+		dropped: ['auth', 'databases', 'API', 'i18n', 'AI', '3D'],
+		count: 5,
+		href: 'https://v4.lynxware.org/',
+		linkLabel: 'v4.lynxware.org',
+		context: m.home_instances_lynx_context,
+	},
+	{
+		name: 'v10r',
+		arg: 'densho',
+		uses: [m.home_instances_uses_entire_stack()],
+		count: TOTAL_CAPABILITIES,
+		href: 'https://www.densho.media/',
+		linkLabel: 'densho.media',
+		context: m.home_instances_densho_context,
+	},
+];
 </script>
 
 <section class="instances" use:fadeIn>
@@ -96,56 +111,64 @@ const wild: Instance = {
 	<div class="wild-section">
 		<h3 class="wild-label">{m.home_instances_practical_example()}</h3>
 
-		<article class="instance-card wild-card">
-			<h3 class="instance-name">
-				<span class="instance-fn">{wild.name}</span><span class="instance-paren">(</span><span class="instance-arg">{wild.arg}</span><span class="instance-paren">)</span>
-			</h3>
+		<div class="instances-row">
+			{#each wildInstances as instance}
+				<article class="instance-card" class:instance-card--full={instance.count === TOTAL_CAPABILITIES}>
+					<h3 class="instance-name">
+						<span class="instance-fn">{instance.name}</span><span class="instance-paren">(</span><span class="instance-arg">{instance.arg}</span><span class="instance-paren">)</span>
+					</h3>
 
-			<div
-				class="instance-meter"
-				role="meter"
-				aria-label={m.home_instances_meter_aria({ count: wild.count, total: TOTAL_CAPABILITIES })}
-				aria-valuemin={0}
-				aria-valuemax={TOTAL_CAPABILITIES}
-				aria-valuenow={wild.count}
-			>
-				<div
-					class="instance-meter-fill"
-					style="width: {(wild.count / TOTAL_CAPABILITIES) * 100}%"
-				></div>
-			</div>
+					<div
+						class="instance-meter"
+						class:instance-meter--full={instance.count === TOTAL_CAPABILITIES}
+						role="meter"
+						aria-label={m.home_instances_meter_aria({ count: instance.count, total: TOTAL_CAPABILITIES })}
+						aria-valuemin={0}
+						aria-valuemax={TOTAL_CAPABILITIES}
+						aria-valuenow={instance.count}
+					>
+						<div
+							class="instance-meter-fill"
+							class:instance-meter-fill--full={instance.count === TOTAL_CAPABILITIES}
+							style="width: {(instance.count / TOTAL_CAPABILITIES) * 100}%"
+						></div>
+					</div>
 
-			<div class="stack-row">
-				<span class="stack-label">{m.home_instances_uses()}</span>
-				<span class="stack-items">
-					{#each wild.uses as tech, j}
-						{#if j > 0}<span class="stack-sep"> · </span>{/if}
-						<span class="stack-item">{tech}</span>
-					{/each}
-				</span>
-			</div>
+					<div class="stack-row">
+						<span class="stack-label">{m.home_instances_uses()}</span>
+						<span class="stack-items">
+							{#each instance.uses as tech, j}
+								{#if j > 0}<span class="stack-sep"> · </span>{/if}
+								<span class="stack-item">{tech}</span>
+							{/each}
+						</span>
+					</div>
 
-			{#if wild.dropped}
-				<div class="stack-row">
-					<span class="stack-label stack-label--dropped">{m.home_instances_dropped()}</span>
-					<span class="stack-items stack-items--dropped">
-						{#each wild.dropped as tech, j}
-							{#if j > 0}<span class="stack-sep"> · </span>{/if}
-							<span class="stack-item">{tech}</span>
-						{/each}
-					</span>
-				</div>
-			{/if}
+					{#if instance.dropped}
+						<div class="stack-row">
+							<span class="stack-label stack-label--dropped">{m.home_instances_dropped()}</span>
+							<span class="stack-items stack-items--dropped">
+								{#each instance.dropped as tech, j}
+									{#if j > 0}<span class="stack-sep"> · </span>{/if}
+									<span class="stack-item">{tech}</span>
+								{/each}
+							</span>
+						</div>
+					{/if}
 
-			<p class="wild-context">{m.home_instances_wild_context()}</p>
+					{#if instance.context}
+						<p class="wild-context">{instance.context()}</p>
+					{/if}
 
-			{#if wild.href}
-				<a class="wild-link" href={wild.href} target="_blank" rel="noopener noreferrer">
-					<span class="wild-link-icon i-lucide-external-link"></span>
-					<span>v4.lynxware.org</span>
-				</a>
-			{/if}
-		</article>
+					{#if instance.href}
+						<a class="wild-link" href={instance.href} target="_blank" rel="noopener noreferrer">
+							<span class="wild-link-icon i-lucide-external-link"></span>
+							<span>{instance.linkLabel}</span>
+						</a>
+					{/if}
+				</article>
+			{/each}
+		</div>
 	</div>
 </section>
 
@@ -277,11 +300,6 @@ const wild: Instance = {
 		color: var(--color-muted);
 		margin: 0;
 		text-align: center;
-	}
-
-	.wild-card {
-		max-width: 28rem;
-		margin: 0 auto;
 	}
 
 	.wild-context {

@@ -79,10 +79,4 @@ const {
 			</div>
 		</form>
 	</Card>
-
-	<Alert variant="warning" title="dataType: 'json'">
-		{#snippet children()}
-			<p>Dynamic arrays require <code>dataType: 'json'</code> which sends data as JSON instead of FormData. This breaks progressive enhancement (the form won't work without JavaScript).</p>
-		{/snippet}
-	</Alert>
 </Stack>
