@@ -11,6 +11,8 @@
 	"section_formatting": "Date & Number Formatting",
 	"section_switcher": "Language Switcher",
 	"section_type_safety": "Type Safety",
+	"section_content_translation": "Content Translation (Database)",
+	"section_error_codes": "Error Codes",
 	"type_safety_desc": "Message keys are compile-time checked — a missing key or wrong parameter fails the build, not the runtime.",
 	"formatted_date": "Formatted date",
 	"formatted_number": "Formatted number",

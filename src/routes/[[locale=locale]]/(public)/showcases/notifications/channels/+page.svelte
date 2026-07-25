@@ -1,14 +1,22 @@
 <script lang="ts">
-import { Card, DiagGrid, DiagRow } from '$lib/components/composites';
+import { Card, DiagGrid, DiagRow, NavSection } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Badge } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
+const sections = $derived([
+	{ id: 'channels-providers', label: m.showcase_notifications_channels_card_providers() },
+	{ id: 'channels-user', label: m.showcase_notifications_channels_card_user() },
+	{ id: 'channels-system', label: m.showcase_notifications_channels_card_system() },
+	{ id: 'channels-files', label: m.showcase_notifications_channels_card_files() },
+]);
 </script>
+<NavSection {sections} />
+
 <Stack gap="6">
 	<!-- Provider Config -->
-	<Card>
+	<Card id="channels-providers">
 		{#snippet header()}
 			<h2 class="text-fluid-lg font-semibold">{m.showcase_notifications_channels_card_providers()}</h2>
 		{/snippet}
@@ -42,7 +50,7 @@ let { data } = $props();
 
 	<!-- User Channels -->
 	{#if data.userChannels}
-		<Card>
+		<Card id="channels-user">
 			{#snippet header()}
 				<h2 class="text-fluid-lg font-semibold">{m.showcase_notifications_channels_card_user()}</h2>
 			{/snippet}
@@ -80,7 +88,7 @@ let { data } = $props();
 	{/if}
 
 	<!-- System Config -->
-	<Card>
+	<Card id="channels-system">
 		{#snippet header()}
 			<h2 class="text-fluid-lg font-semibold">{m.showcase_notifications_channels_card_system()}</h2>
 		{/snippet}
@@ -94,7 +102,7 @@ let { data } = $props();
 	</Card>
 
 	<!-- Key Files -->
-	<Card>
+	<Card id="channels-files">
 		{#snippet header()}
 			<h2 class="text-fluid-lg font-semibold">{m.showcase_notifications_channels_card_files()}</h2>
 		{/snippet}

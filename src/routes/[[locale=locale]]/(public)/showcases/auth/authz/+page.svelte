@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Alert, Card } from '$lib/components/composites';
+import { Alert, Card, NavSection } from '$lib/components/composites';
 import CodeBlock from '$lib/components/composites/info-dialog/CodeBlock.svelte';
 import { Stack } from '$lib/components/layout';
 import { Badge, Body, Cell, Header, HeaderCell, Row, Table, ToggleGroup } from '$lib/components/primitives';
@@ -61,13 +61,20 @@ export function requireBlogAuthor(locals: App.Locals) {
 function isAdmin(user: { id: string; email: string }): boolean {
   /* admin identity check elided */
 }`;
+const sections = $derived([
+	{ id: 'authz-sim', label: m.showcase_auth_authz_sim_card() },
+	{ id: 'authz-matrix', label: m.showcase_auth_authz_matrix_card() },
+	{ id: 'authz-guards', label: m.showcase_auth_authz_guards_card() },
+]);
 </script>
+
+<NavSection {sections} />
 
 <Stack gap="6">
 	<p class="intro">{m.showcase_auth_authz_intro()}</p>
 
 	<!-- Role simulator -->
-	<Card>
+	<Card id="authz-sim">
 		{#snippet header()}
 			<div class="card-head">
 				<h2 class="text-fluid-lg font-semibold">{m.showcase_auth_authz_sim_card()}</h2>
@@ -84,7 +91,7 @@ function isAdmin(user: { id: string; email: string }): boolean {
 	</Card>
 
 	<!-- Decision matrix -->
-	<Card>
+	<Card id="authz-matrix">
 		{#snippet header()}
 			<div class="card-head">
 				<h2 class="text-fluid-lg font-semibold">{m.showcase_auth_authz_matrix_card()}</h2>
@@ -129,7 +136,7 @@ function isAdmin(user: { id: string; email: string }): boolean {
 	</Alert>
 
 	<!-- Recorded guard source -->
-	<Card>
+	<Card id="authz-guards">
 		{#snippet header()}
 			<div class="card-head">
 				<h2 class="text-fluid-lg font-semibold">{m.showcase_auth_authz_guards_card()}</h2>

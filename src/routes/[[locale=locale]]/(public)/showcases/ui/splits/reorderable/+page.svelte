@@ -1,7 +1,17 @@
 <script lang="ts">
 import { Card, ReorderablePaneLayout } from '$lib/components';
+import { NavSection } from '$lib/components/composites';
 import type { PaneDefinition } from '$lib/components/composites/reorderable-panes';
 import * as m from '$lib/paraglide/messages';
+
+const sections = $derived([
+	{ id: 'splits-reorderable-basic', label: m.showcase_ui_reorderable_section_basic() },
+	{ id: 'splits-reorderable-collapsible', label: m.showcase_ui_reorderable_section_collapsible() },
+	{ id: 'splits-reorderable-persistent', label: m.showcase_ui_reorderable_section_persistent() },
+	{ id: 'splits-reorderable-vertical', label: m.showcase_ui_reorderable_section_vertical() },
+	{ id: 'splits-reorderable-props', label: m.showcase_ui_reorderable_section_props() },
+	{ id: 'splits-reorderable-a11y', label: m.showcase_ui_reorderable_section_a11y() },
+]);
 
 const basicPanes: PaneDefinition[] = [
 	{ id: 'nav', label: 'Navigation', defaultSize: 20, minSize: 15, maxSize: 30 },
@@ -34,9 +44,11 @@ const verticalPanes: PaneDefinition[] = [
 	{ id: 'terminal', label: 'Terminal', defaultSize: 40, minSize: 20 },
 ];
 </script>
+<NavSection {sections} />
+
 <main class="content">
 	<!-- Basic Reorderable -->
-	<section>
+	<section id="splits-reorderable-basic">
 		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_reorderable_section_basic()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			Three panes with a tab bar above. Drag the grip icon to reorder tabs, or use Arrow keys
@@ -77,7 +89,7 @@ const verticalPanes: PaneDefinition[] = [
 	</section>
 
 	<!-- Reorderable + Collapsible -->
-	<section>
+	<section id="splits-reorderable-collapsible">
 		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_reorderable_section_collapsible()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			Side panes can be collapsed by dragging past the minimum size. Reorder still works after
@@ -113,7 +125,7 @@ const verticalPanes: PaneDefinition[] = [
 	</section>
 
 	<!-- Persistent Reorderable -->
-	<section>
+	<section id="splits-reorderable-persistent">
 		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_reorderable_section_persistent()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			Both pane order and sizes are saved to localStorage. Reorder and resize, then refresh the
@@ -151,7 +163,7 @@ const verticalPanes: PaneDefinition[] = [
 	</section>
 
 	<!-- Vertical Direction -->
-	<section>
+	<section id="splits-reorderable-vertical">
 		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_reorderable_section_vertical()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			Side list for vertical direction. Grip icons and Arrow Up/Down for keyboard reorder.
@@ -183,7 +195,7 @@ const verticalPanes: PaneDefinition[] = [
 	</section>
 
 	<!-- Props Reference -->
-	<section>
+	<section id="splits-reorderable-props">
 		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_reorderable_section_props()}</h2>
 
 		<div class="grid grid-cols-1 lg:grid-cols-2 gap-fluid-4">
@@ -245,7 +257,7 @@ const verticalPanes: PaneDefinition[] = [
 	</section>
 
 	<!-- Accessibility -->
-	<section>
+	<section id="splits-reorderable-a11y">
 		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_reorderable_section_a11y()}</h2>
 
 		<Card>
@@ -289,6 +301,10 @@ const verticalPanes: PaneDefinition[] = [
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-fluid-6);
+	}
+
+	.content > section {
+		scroll-margin-top: 5rem;
 	}
 
 	.panel-content {

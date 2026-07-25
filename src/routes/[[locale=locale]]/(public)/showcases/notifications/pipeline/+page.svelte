@@ -1,6 +1,6 @@
 <script lang="ts">
 import { enhance } from '$app/forms';
-import { Card, DiagGrid, DiagRow, EmptyState } from '$lib/components/composites';
+import { Card, DiagGrid, DiagRow, EmptyState, NavSection } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Spinner } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
@@ -81,10 +81,16 @@ function channelStatus(deliveries: { channel: string; status: string }[], channe
 	const d = deliveries.find((d) => d.channel === channel);
 	return d?.status ?? null;
 }
+const sections = $derived([
+	{ id: 'pipeline-sse', label: m.showcase_notifications_pipeline_card_sse() },
+	{ id: 'pipeline-deliveries', label: m.showcase_notifications_pipeline_card_deliveries() },
+]);
 </script>
+<NavSection {sections} />
+
 <Stack gap="6">
 	<!-- SSE Live -->
-	<Card>
+	<Card id="pipeline-sse">
 		{#snippet header()}
 			<h2 class="text-fluid-lg font-semibold">{m.showcase_notifications_pipeline_card_sse()}</h2>
 		{/snippet}
@@ -116,7 +122,7 @@ function channelStatus(deliveries: { channel: string; status: string }[], channe
 	</Card>
 
 	<!-- Recent Deliveries -->
-	<Card>
+	<Card id="pipeline-deliveries">
 		{#snippet header()}
 			<Cluster justify="between">
 				<h2 class="text-fluid-lg font-semibold">{m.showcase_notifications_pipeline_card_deliveries()}</h2>

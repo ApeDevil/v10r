@@ -1,5 +1,6 @@
 <script lang="ts">
 import { browser } from '$app/environment';
+import { createScrollSpy } from './scrollspy.svelte';
 
 interface Section {
 	id: string;
@@ -16,11 +17,12 @@ let { sections, ariaLabel = 'Section navigation' }: Props = $props();
 let sentinelEl: HTMLElement | undefined = $state();
 let chipsEl: HTMLElement | undefined = $state();
 let isStuck = $state(false);
-// svelte-ignore state_referenced_locally
-let activeSection = $state(sections[0]?.id ?? '');
 let canScrollRight = $state(false);
 let canScrollLeft = $state(false);
 let isUserClick = false;
+
+const spy = createScrollSpy(() => sections.map((s) => s.id));
+const activeSection = $derived(spy.current);
 
 // Reduced-motion guard for JS-driven scrolling (scrollIntoView overrides CSS scroll-behavior).
 const reducedMotion = () => browser && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -37,29 +39,6 @@ $effect(() => {
 	);
 
 	observer.observe(sentinelEl);
-	return () => observer.disconnect();
-});
-
-// Section observer: track which section is currently visible
-$effect(() => {
-	if (!browser) return;
-
-	const observer = new IntersectionObserver(
-		(entries) => {
-			for (const entry of entries) {
-				if (entry.isIntersecting) {
-					activeSection = entry.target.id;
-				}
-			}
-		},
-		{ rootMargin: '-100px 0px -66% 0px', threshold: 0 },
-	);
-
-	for (const section of sections) {
-		const el = document.getElementById(section.id);
-		if (el) observer.observe(el);
-	}
-
 	return () => observer.disconnect();
 });
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Card } from '$lib/components/composites';
+import { Card, NavSection } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Badge } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
@@ -13,10 +13,16 @@ function formatHours(ms: number): string {
 }
 
 const barVariant = data.percentUsed < 50 ? 'success' : data.percentUsed < 90 ? 'warning' : 'error';
+const sections = $derived([
+	{ id: 'budget-cap', label: m.showcase_abuse_budget_card_cap() },
+	{ id: 'budget-usage', label: m.showcase_abuse_budget_card_usage() },
+]);
 </script>
 
+<NavSection {sections} />
+
 <Stack gap="6">
-	<Card>
+	<Card id="budget-cap">
 		{#snippet header()}
 			<h2 class="text-fluid-lg font-semibold">{m.showcase_abuse_budget_card_cap()}</h2>
 		{/snippet}
@@ -37,7 +43,7 @@ const barVariant = data.percentUsed < 50 ? 'success' : data.percentUsed < 90 ? '
 		</div>
 	</Card>
 
-	<Card>
+	<Card id="budget-usage">
 		{#snippet header()}
 			<h2 class="text-fluid-lg font-semibold">{m.showcase_abuse_budget_card_usage()}</h2>
 		{/snippet}

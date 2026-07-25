@@ -11,6 +11,8 @@
 	"section_formatting": "Datums- & Zahlenformatierung",
 	"section_switcher": "Sprachwahl",
 	"section_type_safety": "Typsicherheit",
+	"section_content_translation": "Inhaltsübersetzung (Datenbank)",
+	"section_error_codes": "Fehlercodes",
 	"type_safety_desc": "Nachrichtenschlüssel werden zur Kompilierzeit geprüft — ein fehlender Schlüssel oder falscher Parameter führt zu einem Build-Fehler, nicht zu einem Laufzeitfehler.",
 	"formatted_date": "Formatiertes Datum",
 	"formatted_number": "Formatierte Zahl",

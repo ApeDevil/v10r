@@ -1,4 +1,5 @@
 <script lang="ts">
+import { NavSection } from '$lib/components/composites';
 import { Tag } from '$lib/components/primitives/tag';
 import * as m from '$lib/paraglide/messages';
 
@@ -57,6 +58,11 @@ const subPages = [
 		body: 'The full inventory: name, category, duration, purpose.',
 	},
 ];
+const sections = $derived([
+	{ id: 'privacy-controller', label: m.showcase_privacy_section_controller() },
+	{ id: 'privacy-principles', label: m.showcase_privacy_section_principles() },
+	{ id: 'privacy-subpages', label: m.showcase_privacy_section_subpages() },
+]);
 </script>
 
 <svelte:head>
@@ -65,6 +71,8 @@ const subPages = [
 		content="How v10r.dev handles your data: controller, lawful basis, retention, your rights."
 	/>
 </svelte:head>
+
+<NavSection {sections} />
 
 <div class="overview">
 	<section class="hero">
@@ -76,7 +84,7 @@ const subPages = [
 		</p>
 	</section>
 
-	<section class="controller">
+	<section class="controller" id="privacy-controller">
 		<header class="section-head">
 			<h3 class="section-title">{m.showcase_privacy_section_controller()}</h3>
 			<Tag variant="muted" size="sm" label="GDPR Art. 13(1)(a)" />
@@ -106,7 +114,7 @@ const subPages = [
 		</dl>
 	</section>
 
-	<section class="principles">
+	<section class="principles" id="privacy-principles">
 		<header class="section-head">
 			<h3 class="section-title">{m.showcase_privacy_section_principles()}</h3>
 			<Tag variant="muted" size="sm" label="GDPR Art. 5" />
@@ -124,7 +132,7 @@ const subPages = [
 		</div>
 	</section>
 
-	<section class="subpages">
+	<section class="subpages" id="privacy-subpages">
 		<header class="section-head">
 			<h3 class="section-title">{m.showcase_privacy_section_subpages()}</h3>
 		</header>
@@ -155,6 +163,11 @@ const subPages = [
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-7);
+	}
+
+	/* Anchor jumps must clear the sticky NavSection chip bar. */
+	.overview > section {
+		scroll-margin-top: 5rem;
 	}
 
 	.hero {

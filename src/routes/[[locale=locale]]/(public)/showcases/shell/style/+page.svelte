@@ -1,4 +1,5 @@
 <script lang="ts">
+import { NavSection } from '$lib/components/composites';
 import { Button } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
 import { getStyle } from '$lib/state/style.svelte';
@@ -32,9 +33,17 @@ const brandRadiusName = $derived(
 );
 
 const totalCombinations = PALETTE_REGISTRY.length * TYPOGRAPHY_REGISTRY.length * RADIUS_REGISTRY.length;
+
+const sections = $derived([
+	{ id: 'shell-style-theme', label: m.showcase_shell_style_section_theme() },
+	{ id: 'shell-style-randomizer', label: m.showcase_shell_style_section_randomizer() },
+	{ id: 'shell-style-identity', label: m.showcase_shell_style_section_identity() },
+]);
 </script>
+<NavSection {sections} />
+
 <!-- Section 1: Theme -->
-<section class="demo-section">
+<section class="demo-section" id="shell-style-theme">
 	<h2>{m.showcase_shell_style_section_theme()}</h2>
 	<p>Dark or light — your eyes decide.</p>
 
@@ -57,7 +66,7 @@ const totalCombinations = PALETTE_REGISTRY.length * TYPOGRAPHY_REGISTRY.length *
 </section>
 
 <!-- Section 2: Style Randomizer -->
-<section class="demo-section">
+<section class="demo-section" id="shell-style-randomizer">
 	<h2>{m.showcase_shell_style_section_randomizer()}</h2>
 	<p>
 		{PALETTE_REGISTRY.length} palettes &times; {TYPOGRAPHY_REGISTRY.length} typography sets &times;
@@ -127,7 +136,7 @@ const totalCombinations = PALETTE_REGISTRY.length * TYPOGRAPHY_REGISTRY.length *
 </section>
 
 <!-- Section 3: Visual Identity -->
-<section class="demo-section">
+<section class="demo-section" id="shell-style-identity">
 	<h2>{m.showcase_shell_style_section_identity()}</h2>
 	<p>Lock your brand — all visitors see the same design.</p>
 
@@ -191,6 +200,7 @@ const totalCombinations = PALETTE_REGISTRY.length * TYPOGRAPHY_REGISTRY.length *
 
 <style>
 	.demo-section {
+		scroll-margin-top: 5rem;
 		margin-bottom: var(--spacing-8);
 		padding: var(--spacing-6);
 		border: 1px solid var(--color-border);

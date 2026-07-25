@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Altcha, Card } from '$lib/components/composites';
+import { Altcha, Card, NavSection } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Badge } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
@@ -19,10 +19,18 @@ function reset() {
 	payload = null;
 	widgetKey += 1;
 }
+const sections = $derived([
+	{ id: 'captcha-mode', label: m.showcase_abuse_captcha_card_mode() },
+	{ id: 'captcha-config', label: m.showcase_abuse_captcha_card_config() },
+	{ id: 'captcha-demo', label: m.showcase_abuse_captcha_card_demo() },
+	{ id: 'captcha-surfaces', label: m.showcase_abuse_captcha_card_surfaces() },
+]);
 </script>
 
+<NavSection {sections} />
+
 <Stack gap="6">
-	<Card>
+	<Card id="captcha-mode">
 		{#snippet header()}
 			<h2 class="text-fluid-lg font-semibold">{m.showcase_abuse_captcha_card_mode()}</h2>
 		{/snippet}
@@ -41,7 +49,7 @@ function reset() {
 		</div>
 	</Card>
 
-	<Card>
+	<Card id="captcha-config">
 		{#snippet header()}
 			<h2 class="text-fluid-lg font-semibold">{m.showcase_abuse_captcha_card_config()}</h2>
 		{/snippet}
@@ -80,7 +88,7 @@ function reset() {
 		</div>
 	</Card>
 
-	<Card>
+	<Card id="captcha-demo">
 		{#snippet header()}
 			<h2 class="text-fluid-lg font-semibold">{m.showcase_abuse_captcha_card_demo()}</h2>
 		{/snippet}
@@ -124,7 +132,7 @@ function reset() {
 		{/if}
 	</Card>
 
-	<Card>
+	<Card id="captcha-surfaces">
 		{#snippet header()}
 			<h2 class="text-fluid-lg font-semibold">{m.showcase_abuse_captcha_card_surfaces()}</h2>
 		{/snippet}

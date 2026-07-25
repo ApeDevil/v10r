@@ -33,6 +33,8 @@ let { html, class: className }: Props = $props();
 		line-height: 1.3;
 		margin-top: 2em;
 		margin-bottom: 0.5em;
+		/* TOC anchor jumps must clear the sticky chip bar the docs leaf renders on mobile. */
+		scroll-margin-top: 5rem;
 	}
 
 	.blog-prose :global(h1) { font-size: 2em; }

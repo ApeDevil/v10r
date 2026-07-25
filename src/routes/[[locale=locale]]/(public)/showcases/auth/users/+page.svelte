@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Card } from '$lib/components/composites';
+import { Card, NavSection } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Badge, Body, Button, Cell, Header, HeaderCell, Row, Select, Table } from '$lib/components/primitives';
 import { ErdDiagram } from '$lib/components/viz';
@@ -80,6 +80,11 @@ const ERD_TABLES = [
 		],
 	},
 ];
+const sections = $derived([
+	{ id: 'users-table', label: m.showcase_auth_users_table_card() },
+	{ id: 'users-audit', label: m.showcase_auth_users_audit_card() },
+	{ id: 'users-erd', label: m.showcase_auth_users_erd_card() },
+]);
 </script>
 
 {#if impersonatedUser}
@@ -90,11 +95,13 @@ const ERD_TABLES = [
 	</div>
 {/if}
 
+<NavSection {sections} />
+
 <Stack gap="6">
 	<p class="intro">{m.showcase_auth_users_intro()}</p>
 
 	<!-- User table -->
-	<Card>
+	<Card id="users-table">
 		{#snippet header()}
 			<div class="card-head">
 				<h2 class="text-fluid-lg font-semibold">{m.showcase_auth_users_table_card()}</h2>
@@ -167,7 +174,7 @@ const ERD_TABLES = [
 	</Card>
 
 	<!-- Audit log -->
-	<Card>
+	<Card id="users-audit">
 		{#snippet header()}
 			<div class="card-head">
 				<h2 class="text-fluid-lg font-semibold">{m.showcase_auth_users_audit_card()}</h2>
@@ -201,7 +208,7 @@ const ERD_TABLES = [
 	</Card>
 
 	<!-- ERD + cascade -->
-	<Card>
+	<Card id="users-erd">
 		{#snippet header()}
 			<div class="card-head">
 				<h2 class="text-fluid-lg font-semibold">{m.showcase_auth_users_erd_card()}</h2>

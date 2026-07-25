@@ -1,4 +1,5 @@
 <script lang="ts">
+import { NavSection } from '$lib/components/composites';
 import { Tag } from '$lib/components/primitives/tag';
 import * as m from '$lib/paraglide/messages';
 
@@ -130,7 +131,13 @@ const guarantees = [
 		body: 'Cron jobs that mutate user data run behind a Bearer token known only to Vercel Cron — never exposed in any UI.',
 	},
 ];
+const sections = $derived([
+	{ id: 'admin-guarantees', label: m.showcase_admin_powers_section_guarantees() },
+	{ id: 'admin-capabilities', label: m.showcase_admin_powers_section_capabilities() },
+]);
 </script>
+<NavSection {sections} />
+
 <div class="powers">
 	<header class="lede">
 		<h2>{m.showcase_admin_powers_heading()}</h2>
@@ -139,7 +146,7 @@ const guarantees = [
 		</p>
 	</header>
 
-	<section class="guarantees">
+	<section class="guarantees" id="admin-guarantees">
 		<header class="section-head">
 			<h3>{m.showcase_admin_powers_section_guarantees()}</h3>
 			<Tag variant="muted" size="sm" label="Code-enforced" />
@@ -157,7 +164,7 @@ const guarantees = [
 		</div>
 	</section>
 
-	<section class="capabilities">
+	<section class="capabilities" id="admin-capabilities">
 		<header class="section-head">
 			<h3>{m.showcase_admin_powers_section_capabilities()}</h3>
 			<Tag variant="muted" size="sm" label="admin-only — non-admins 404" />
@@ -192,6 +199,11 @@ const guarantees = [
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-7);
+	}
+
+	/* Anchor jumps must clear the sticky NavSection chip bar. */
+	.powers > section {
+		scroll-margin-top: 5rem;
 	}
 
 	.lede h2 {

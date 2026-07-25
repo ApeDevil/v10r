@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Card, EmptyState, PageHeader, ShowcaseDocs } from '$lib/components/composites';
+import { Card, EmptyState, NavSection, PageHeader, ShowcaseDocs } from '$lib/components/composites';
 import { PageContainer, Stack } from '$lib/components/layout';
 import { Badge } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
@@ -16,6 +16,12 @@ function relativeTime(iso: string): string {
 	const days = Math.floor(hours / 24);
 	return `${days}d ago`;
 }
+const sections = $derived([
+	{ id: 'jobs-how', label: m.showcase_jobs_section_how() },
+	{ id: 'jobs-registered', label: m.showcase_jobs_section_registered() },
+	{ id: 'jobs-recent', label: m.showcase_jobs_section_recent() },
+	{ id: 'jobs-files', label: m.showcase_jobs_section_files() },
+]);
 </script>
 <PageContainer class="py-7">
 	<PageHeader
@@ -30,9 +36,11 @@ function relativeTime(iso: string): string {
 		<ShowcaseDocs />
 	</PageHeader>
 
+	<NavSection {sections} />
+
 	<Stack gap="6">
 		<!-- How it works -->
-		<Card>
+		<Card id="jobs-how">
 			{#snippet header()}
 				<h2 class="text-fluid-lg font-semibold">{m.showcase_jobs_section_how()}</h2>
 			{/snippet}
@@ -57,7 +65,7 @@ function relativeTime(iso: string): string {
 		</Card>
 
 		<!-- Registered Jobs -->
-		<Card>
+		<Card id="jobs-registered">
 			{#snippet header()}
 				<h2 class="text-fluid-lg font-semibold">{m.showcase_jobs_section_registered()}</h2>
 			{/snippet}
@@ -75,7 +83,7 @@ function relativeTime(iso: string): string {
 		</Card>
 
 		<!-- Recent Executions -->
-		<Card>
+		<Card id="jobs-recent">
 			{#snippet header()}
 				<h2 class="text-fluid-lg font-semibold">{m.showcase_jobs_section_recent()}</h2>
 			{/snippet}
@@ -123,7 +131,7 @@ function relativeTime(iso: string): string {
 		</Card>
 
 		<!-- Architecture -->
-		<Card>
+		<Card id="jobs-files">
 			{#snippet header()}
 				<h2 class="text-fluid-lg font-semibold">{m.showcase_jobs_section_files()}</h2>
 			{/snippet}

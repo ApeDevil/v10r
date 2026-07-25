@@ -1,18 +1,16 @@
 <script lang="ts">
 import { LinkCard } from '$lib/components';
-import { BackLink, NavGrid, PageHeader } from '$lib/components/composites';
+import { BackLink, NavGrid, NavSection, PageHeader } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
 import * as m from '$lib/paraglide/messages';
 import { groupByDomain } from './showcases';
 
 const domainGroups = groupByDomain();
 
-let headerHeight = $state(0);
+const sections = $derived(domainGroups.map((g) => ({ id: g.domain.id, label: g.domain.label() })));
 </script>
 <PageContainer width="wide" class="pt-7">
 	<PageHeader
-		sticky
-		bind:headerHeight
 		title={m.showcase_index_title()}
 		description={m.showcase_index_description()}
 		breadcrumbs={[
@@ -21,16 +19,12 @@ let headerHeight = $state(0);
 		]}
 	/>
 
-	<nav class="jump-nav" aria-label={m.showcase_index_jumpnav_aria()}>
-		{#each domainGroups as group}
-			<a class="jump-link focus-ring" href="#{group.domain.id}">{group.domain.label()}</a>
-		{/each}
-	</nav>
+	<NavSection {sections} ariaLabel={m.showcase_index_jumpnav_aria()} />
 
-	<div class="domains" style:--sticky-offset="{headerHeight}px">
+	<div class="domains">
 		{#each domainGroups as group}
-			<section class="domain-section">
-				<h2 class="domain-title" id={group.domain.id}>{group.domain.label()}</h2>
+			<section class="domain-section" id={group.domain.id}>
+				<h2 class="domain-title">{group.domain.label()}</h2>
 				<div class="domain-grid" style:--n={group.cards.length}>
 					<NavGrid>
 						{#each group.cards as card}
@@ -52,25 +46,6 @@ let headerHeight = $state(0);
 </PageContainer>
 
 <style>
-	.jump-nav {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--spacing-3) var(--spacing-5);
-	}
-
-	.jump-link {
-		font-size: var(--text-fluid-sm);
-		color: var(--color-muted);
-		text-decoration: none;
-		transition: color var(--duration-fast) ease-out;
-	}
-
-	.jump-link:hover {
-		color: var(--color-primary);
-		text-decoration: underline;
-		text-underline-offset: 0.2em;
-	}
-
 	.domains {
 		display: flex;
 		flex-direction: column;
@@ -78,13 +53,16 @@ let headerHeight = $state(0);
 		padding-block: var(--spacing-6);
 	}
 
+	/* Anchor jumps must clear the sticky NavSection chip bar. */
+	.domain-section {
+		scroll-margin-top: 5rem;
+	}
+
 	.domain-title {
 		font-size: var(--text-fluid-lg);
 		font-weight: 600;
 		color: var(--color-fg);
 		margin: 0 0 var(--spacing-4);
-		/* Anchor jumps must clear the sticky PageHeader (measured height + breathing room). */
-		scroll-margin-top: calc(var(--sticky-offset, 10rem) + var(--spacing-4));
 	}
 
 	/* Cap small groups so 1fr tracks don't balloon cards past the flat-grid width

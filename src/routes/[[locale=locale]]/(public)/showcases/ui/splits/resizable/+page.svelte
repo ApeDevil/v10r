@@ -1,11 +1,23 @@
 <script lang="ts">
 import { Card } from '$lib/components';
+import { NavSection } from '$lib/components/composites';
 import { Pane, PaneGroup, PaneResizer } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
+
+const sections = $derived([
+	{ id: 'splits-resizable-horizontal', label: m.showcase_ui_resizable_section_horizontal() },
+	{ id: 'splits-resizable-vertical', label: m.showcase_ui_resizable_section_vertical() },
+	{ id: 'splits-resizable-three-pane', label: m.showcase_ui_resizable_section_three_pane() },
+	{ id: 'splits-resizable-persistent', label: m.showcase_ui_resizable_section_persistent() },
+	{ id: 'splits-resizable-collapsible', label: m.showcase_ui_resizable_section_collapsible() },
+	{ id: 'splits-resizable-minimal', label: m.showcase_ui_resizable_section_minimal() },
+]);
 </script>
+<NavSection {sections} />
+
 <main class="content">
 	<!-- Basic Horizontal Example -->
-	<section>
+	<section id="splits-resizable-horizontal">
 		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_resizable_section_horizontal()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			Two panes side-by-side with a draggable divider. Includes visual grip indicator.
@@ -44,7 +56,7 @@ import * as m from '$lib/paraglide/messages';
 	</section>
 
 	<!-- Vertical Layout Example -->
-	<section>
+	<section id="splits-resizable-vertical">
 		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_resizable_section_vertical()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			Stacked panes with a horizontal divider. Cursor changes to row-resize for vertical splits.
@@ -80,7 +92,7 @@ import * as m from '$lib/paraglide/messages';
 	</section>
 
 	<!-- Three Panel Example -->
-	<section>
+	<section id="splits-resizable-three-pane">
 		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_resizable_section_three_pane()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			Multiple panes with independent resize handles. Common pattern for navigation, content, and
@@ -129,7 +141,7 @@ import * as m from '$lib/paraglide/messages';
 	</section>
 
 	<!-- Persistent Layout -->
-	<section>
+	<section id="splits-resizable-persistent">
 		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_resizable_section_persistent()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			Layout is saved to localStorage via <code class="bg-subtle px-1 rounded">autoSaveId</code>. Resize the panes, then refresh the page to see them restored.
@@ -159,7 +171,7 @@ import * as m from '$lib/paraglide/messages';
 	</section>
 
 	<!-- Collapsible Pane -->
-	<section>
+	<section id="splits-resizable-collapsible">
 		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_resizable_section_collapsible()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			The sidebar can be collapsed by dragging past the minimum size threshold.
@@ -191,7 +203,7 @@ import * as m from '$lib/paraglide/messages';
 	</section>
 
 	<!-- Without Handle Indicator -->
-	<section>
+	<section id="splits-resizable-minimal">
 		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_resizable_section_minimal()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			Simple divider without the grip indicator. Cleaner look when visual affordance isn't needed.
@@ -231,5 +243,9 @@ import * as m from '$lib/paraglide/messages';
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-fluid-6);
+	}
+
+	.content > section {
+		scroll-margin-top: 5rem;
 	}
 </style>

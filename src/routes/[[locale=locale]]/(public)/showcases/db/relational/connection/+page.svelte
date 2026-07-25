@@ -1,6 +1,6 @@
 <script lang="ts">
 import { enhance } from '$app/forms';
-import { Alert, Card } from '$lib/components/composites';
+import { Alert, Card, NavSection } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Spinner } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
@@ -25,10 +25,17 @@ function recordHistory(ms: number) {
 	const variant = ms < 100 ? ('success' as const) : ms < 1000 ? ('warning' as const) : ('error' as const);
 	history = [...history.slice(-4), { ms, tier, variant }];
 }
+const sections = $derived([
+	{ id: 'rel-conn-status', label: m.showcase_db_relational_connection_card_status() },
+	{ id: 'rel-conn-db-info', label: m.showcase_db_relational_connection_card_db_info() },
+	{ id: 'rel-conn-latency', label: m.showcase_db_relational_connection_card_latency() },
+]);
 </script>
+<NavSection {sections} />
+
 <Stack gap="6">
 		<!-- Status -->
-		<Card>
+		<Card id="rel-conn-status">
 			{#snippet header()}
 				<Cluster justify="between">
 					<h2 class="text-fluid-lg font-semibold">{m.showcase_db_relational_connection_card_status()}</h2>
@@ -93,7 +100,7 @@ function recordHistory(ms: number) {
 
 		{#if data.connected}
 			<!-- Database Info -->
-			<Card>
+			<Card id="rel-conn-db-info">
 				{#snippet header()}
 					<h2 class="text-fluid-lg font-semibold">{m.showcase_db_relational_connection_card_db_info()}</h2>
 				{/snippet}
@@ -127,7 +134,7 @@ function recordHistory(ms: number) {
 			</Card>
 
 			<!-- Latency Explanation -->
-			<Card>
+			<Card id="rel-conn-latency">
 				{#snippet header()}
 					<h2 class="text-fluid-lg font-semibold">{m.showcase_db_relational_connection_card_latency()}</h2>
 				{/snippet}

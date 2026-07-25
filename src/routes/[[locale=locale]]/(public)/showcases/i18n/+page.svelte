@@ -1,7 +1,7 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import { BackLink, PageHeader, ShowcaseDocs } from '$lib/components/composites';
+import { BackLink, NavSection, PageHeader, ShowcaseDocs } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
 import { ErrorCode, errorMessage } from '$lib/errors';
 import {
@@ -67,6 +67,16 @@ const dbContent = {
 		ru: 'Это содержимое хранится в базе данных в формате JSON.',
 	} as const,
 };
+
+const sections = $derived([
+	{ id: 'i18n-switcher', label: m.section_switcher() },
+	{ id: 'i18n-messages', label: m.section_messages() },
+	{ id: 'i18n-pluralization', label: m.section_pluralization() },
+	{ id: 'i18n-formatting', label: m.section_formatting() },
+	{ id: 'i18n-content-translation', label: m.section_content_translation() },
+	{ id: 'i18n-error-codes', label: m.section_error_codes() },
+	{ id: 'i18n-type-safety', label: m.section_type_safety() },
+]);
 </script>
 {#key currentLocale}
 <PageContainer class="py-7">
@@ -82,8 +92,10 @@ const dbContent = {
 		<ShowcaseDocs />
 	</PageHeader>
 
+	<NavSection {sections} />
+
 	<!-- Language Switcher -->
-	<section class="demo-section">
+	<section class="demo-section" id="i18n-switcher">
 		<h2>{m.section_switcher()}</h2>
 		<p>{m.locale_strategy()}</p>
 
@@ -117,7 +129,7 @@ const dbContent = {
 	</section>
 
 	<!-- Translated Messages -->
-	<section class="demo-section">
+	<section class="demo-section" id="i18n-messages">
 		<h2>{m.section_messages()}</h2>
 
 		<div class="message-demos">
@@ -137,7 +149,7 @@ const dbContent = {
 	</section>
 
 	<!-- Pluralization -->
-	<section class="demo-section">
+	<section class="demo-section" id="i18n-pluralization">
 		<h2>{m.section_pluralization()}</h2>
 		<p>ICU MessageFormat handles pluralization rules per language.</p>
 
@@ -152,7 +164,7 @@ const dbContent = {
 	</section>
 
 	<!-- Date & Number Formatting -->
-	<section class="demo-section">
+	<section class="demo-section" id="i18n-formatting">
 		<h2>{m.section_formatting()}</h2>
 		<p>Formatting uses the browser's <code>Intl</code> API, decoupled from the translation locale.</p>
 
@@ -189,8 +201,8 @@ const dbContent = {
 	</section>
 
 	<!-- Database Content Translation -->
-	<section class="demo-section">
-		<h2>Content Translation (Database)</h2>
+	<section class="demo-section" id="i18n-content-translation">
+		<h2>{m.section_content_translation()}</h2>
 		<p>The <code>tc()</code> helper translates JSON fields from the database, falling back through: current locale → English → first available.</p>
 
 		<div class="message-demos">
@@ -206,8 +218,8 @@ const dbContent = {
 	</section>
 
 	<!-- Error Codes → Localized Messages -->
-	<section class="demo-section">
-		<h2>Error Codes</h2>
+	<section class="demo-section" id="i18n-error-codes">
+		<h2>{m.section_error_codes()}</h2>
 		<p>Domain error <em>codes</em> resolve to localized strings via <code>errorMessage(code)</code>.</p>
 
 		<div class="message-demos">
@@ -231,7 +243,7 @@ const dbContent = {
 	</section>
 
 	<!-- Type Safety -->
-	<section class="demo-section">
+	<section class="demo-section" id="i18n-type-safety">
 		<h2>{m.section_type_safety()}</h2>
 		<p>{m.type_safety_desc()}</p>
 	</section>
@@ -248,6 +260,7 @@ const dbContent = {
 	}
 
 	.demo-section {
+		scroll-margin-top: 5rem;
 		margin-bottom: var(--spacing-8);
 		padding: var(--spacing-6);
 		border: 1px solid var(--color-border);

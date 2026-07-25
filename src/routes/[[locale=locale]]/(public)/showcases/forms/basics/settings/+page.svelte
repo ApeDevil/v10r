@@ -1,7 +1,7 @@
 <script lang="ts">
 import { superForm } from 'sveltekit-superforms';
 import { valibotClient } from 'sveltekit-superforms/adapters';
-import { Alert, Card, FormField } from '$lib/components/composites';
+import { Alert, Card, FormField, NavSection } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Button, Checkbox, Input, Select, Spinner, Switch } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
@@ -38,7 +38,14 @@ const languageOptions = [
 	{ value: 'de', label: 'German' },
 	{ value: 'ja', label: 'Japanese' },
 ];
+const sections = $derived([
+	{ id: 'settings-profile', label: m.showcase_forms_settings_heading_profile() },
+	{ id: 'settings-preferences', label: m.showcase_forms_settings_heading_preferences() },
+	{ id: 'settings-notifications', label: m.showcase_forms_settings_heading_notifications() },
+]);
 </script>
+<NavSection {sections} />
+
 <Stack gap="6">
 	{#if $formMessage}
 		<Alert variant="success" title={m.showcase_forms_settings_saved()}>
@@ -50,7 +57,7 @@ const languageOptions = [
 
 	<form method="POST" use:enhance>
 		<Stack gap="6">
-			<Card>
+			<Card id="settings-profile">
 				{#snippet header()}
 					<h2 class="text-fluid-lg font-semibold">{m.showcase_forms_settings_heading_profile()}</h2>
 				{/snippet}
@@ -96,7 +103,7 @@ const languageOptions = [
 				</div>
 			</Card>
 
-			<Card>
+			<Card id="settings-preferences">
 				{#snippet header()}
 					<h2 class="text-fluid-lg font-semibold">{m.showcase_forms_settings_heading_preferences()}</h2>
 				{/snippet}
@@ -125,7 +132,7 @@ const languageOptions = [
 				</div>
 			</Card>
 
-			<Card>
+			<Card id="settings-notifications">
 				{#snippet header()}
 					<h2 class="text-fluid-lg font-semibold">{m.showcase_forms_settings_heading_notifications()}</h2>
 				{/snippet}

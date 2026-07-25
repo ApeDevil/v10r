@@ -1,6 +1,6 @@
 <script lang="ts">
 import { enhance } from '$app/forms';
-import { Card, FormField } from '$lib/components/composites';
+import { Card, FormField, NavSection } from '$lib/components/composites';
 import { NotificationCard } from '$lib/components/composites/notifications';
 import { Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Select, Spinner, Textarea } from '$lib/components/primitives';
@@ -40,10 +40,16 @@ function flashCustomSent() {
 		sentCustom = false;
 	}, 2000);
 }
+const sections = $derived([
+	{ id: 'send-quick', label: m.showcase_notifications_send_card_quick() },
+	{ id: 'send-custom', label: m.showcase_notifications_send_card_custom() },
+]);
 </script>
+<NavSection {sections} />
+
 <Stack gap="6">
 	<!-- Quick Fire -->
-	<Card>
+	<Card id="send-quick">
 		{#snippet header()}
 			<div>
 				<h2 class="text-fluid-lg font-semibold">{m.showcase_notifications_send_card_quick()}</h2>
@@ -84,7 +90,7 @@ function flashCustomSent() {
 	</Card>
 
 	<!-- Custom Send -->
-	<Card>
+	<Card id="send-custom">
 		{#snippet header()}
 			<div>
 				<h2 class="text-fluid-lg font-semibold">{m.showcase_notifications_send_card_custom()}</h2>

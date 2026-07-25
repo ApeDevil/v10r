@@ -95,9 +95,16 @@ const activityBarItems: ActivityBarItem[] = [
 	{ panelType: 'output', icon: 'i-lucide-scroll-text', label: 'Output' },
 	{ panelType: 'preview', icon: 'i-lucide-eye', label: 'Preview' },
 ];
+
+const sections = $derived([
+	{ id: 'workbench-dock', label: m.showcase_ui_workbench_section_dock() },
+	{ id: 'workbench-features', label: m.showcase_ui_workbench_section_features() },
+]);
 </script>
+<NavSection {sections} />
+
 <main class="content">
-	<section>
+	<section id="workbench-dock">
 		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_workbench_section_dock()}</h2>
 		<p class="text-fluid-base text-muted mb-fluid-4">
 			Drag tabs between panels to rearrange. Drop on edges to split, center to add as tab. Close tabs with the X button. Use the activity bar to toggle panel visibility.
@@ -149,7 +156,7 @@ const activityBarItems: ActivityBarItem[] = [
 		</Card>
 	</section>
 
-	<section>
+	<section id="workbench-features">
 		<h2 class="text-fluid-2xl font-bold mb-fluid-3">{m.showcase_ui_workbench_section_features()}</h2>
 
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-fluid-4">
@@ -201,6 +208,10 @@ const activityBarItems: ActivityBarItem[] = [
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-fluid-6);
+	}
+
+	.content > section {
+		scroll-margin-top: 5rem;
 	}
 
 	.dock-container {

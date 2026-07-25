@@ -1,13 +1,20 @@
 <script lang="ts">
-import { Card } from '$lib/components/composites';
+import { Card, NavSection } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
+const sections = $derived([
+	{ id: 'honeypot-field', label: m.showcase_abuse_honeypot_card_field() },
+	{ id: 'honeypot-timing', label: m.showcase_abuse_honeypot_card_timing() },
+	{ id: 'honeypot-surfaces', label: m.showcase_abuse_honeypot_card_surfaces() },
+]);
 </script>
 
+<NavSection {sections} />
+
 <Stack gap="6">
-	<Card>
+	<Card id="honeypot-field">
 		{#snippet header()}
 			<h2 class="text-fluid-lg font-semibold">{m.showcase_abuse_honeypot_card_field()}</h2>
 		{/snippet}
@@ -28,7 +35,7 @@ let { data } = $props();
 		</p>
 	</Card>
 
-	<Card>
+	<Card id="honeypot-timing">
 		{#snippet header()}
 			<h2 class="text-fluid-lg font-semibold">{m.showcase_abuse_honeypot_card_timing()}</h2>
 		{/snippet}
@@ -49,7 +56,7 @@ let { data } = $props();
 		</p>
 	</Card>
 
-	<Card>
+	<Card id="honeypot-surfaces">
 		{#snippet header()}
 			<h2 class="text-fluid-lg font-semibold">{m.showcase_abuse_honeypot_card_surfaces()}</h2>
 		{/snippet}

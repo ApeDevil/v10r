@@ -1,8 +1,14 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
-import { BoundaryFallback } from '$lib/components/composites';
+import { BoundaryFallback, NavSection } from '$lib/components/composites';
 import { Button } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
+
+const sections = $derived([
+	{ id: 'shell-errors-boundary', label: m.showcase_shell_errors_section_boundary() },
+	{ id: 'shell-errors-variants', label: m.showcase_shell_errors_section_variants() },
+	{ id: 'shell-errors-routes', label: m.showcase_shell_errors_section_routes() },
+]);
 
 let crashKey = $state(0);
 let crashed = $state(false);
@@ -16,9 +22,11 @@ function handleReset() {
 	crashKey++;
 }
 </script>
+<NavSection {sections} />
+
 <div class="sections">
 	<!-- Section 1: Live Component Boundary -->
-	<section class="demo-section">
+	<section class="demo-section" id="shell-errors-boundary">
 		<h2>{m.showcase_shell_errors_section_boundary()}</h2>
 		<p>
 			Svelte's <code>&lt;svelte:boundary&gt;</code> catches runtime errors within a component tree
@@ -53,7 +61,7 @@ function handleReset() {
 	</section>
 
 	<!-- Section 2: BoundaryFallback Variants -->
-	<section class="demo-section">
+	<section class="demo-section" id="shell-errors-variants">
 		<h2>{m.showcase_shell_errors_section_variants()}</h2>
 		<p>
 			The <code>BoundaryFallback</code> component accepts custom titles, descriptions, and
@@ -80,7 +88,7 @@ function handleReset() {
 	</section>
 
 	<!-- Section 3: Route Error Pages -->
-	<section class="demo-section">
+	<section class="demo-section" id="shell-errors-routes">
 		<h2>{m.showcase_shell_errors_section_routes()}</h2>
 		<p>
 			Errors that escape a boundary are caught by route-level <code>+error.svelte</code> pages, then
@@ -143,6 +151,7 @@ function handleReset() {
 	}
 
 	.demo-section {
+		scroll-margin-top: 5rem;
 		padding: var(--spacing-6);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);

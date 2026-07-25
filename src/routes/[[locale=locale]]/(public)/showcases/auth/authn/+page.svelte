@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Card } from '$lib/components/composites';
+import { Card, NavSection } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
@@ -54,13 +54,20 @@ const HANDLERS: { name: string; role: string; auth?: boolean }[] = [
 ];
 
 const freshVerification = fixtureVerifications.find((v) => v._lifecycle === 'fresh');
+const sections = $derived([
+	{ id: 'authn-signin', label: m.showcase_auth_authn_signin_card() },
+	{ id: 'authn-flow', label: m.showcase_auth_authn_flow_card() },
+	{ id: 'authn-middleware', label: m.showcase_auth_authn_middleware_card() },
+]);
 </script>
+
+<NavSection {sections} />
 
 <Stack gap="6">
 	<p class="intro">{m.showcase_auth_authn_intro()}</p>
 
 	<!-- Sandbox sign-in -->
-	<Card>
+	<Card id="authn-signin">
 		{#snippet header()}
 			<div class="card-head">
 				<h2 class="text-fluid-lg font-semibold">{m.showcase_auth_authn_signin_card()}</h2>
@@ -135,7 +142,7 @@ const freshVerification = fixtureVerifications.find((v) => v._lifecycle === 'fre
 	</Card>
 
 	<!-- Recorded flow -->
-	<Card>
+	<Card id="authn-flow">
 		{#snippet header()}
 			<div class="card-head">
 				<h2 class="text-fluid-lg font-semibold">{m.showcase_auth_authn_flow_card()}</h2>
@@ -157,7 +164,7 @@ const freshVerification = fixtureVerifications.find((v) => v._lifecycle === 'fre
 	</Card>
 
 	<!-- Recorded middleware order -->
-	<Card>
+	<Card id="authn-middleware">
 		{#snippet header()}
 			<div class="card-head">
 				<h2 class="text-fluid-lg font-semibold">{m.showcase_auth_authn_middleware_card()}</h2>

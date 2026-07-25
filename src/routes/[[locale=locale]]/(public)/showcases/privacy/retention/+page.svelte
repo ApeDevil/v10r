@@ -1,4 +1,5 @@
 <script lang="ts">
+import { NavSection } from '$lib/components/composites';
 import { Tag } from '$lib/components/primitives/tag';
 import * as m from '$lib/paraglide/messages';
 
@@ -87,7 +88,13 @@ function jobOverdue(ts: string | Date | null, hoursThreshold: number): boolean {
 	const date = typeof ts === 'string' ? new Date(ts) : ts;
 	return Date.now() - date.getTime() > hoursThreshold * 3_600_000;
 }
+const sections = $derived([
+	{ id: 'retention-table', label: m.showcase_privacy_retention_section_table() },
+	{ id: 'retention-cron', label: m.showcase_privacy_retention_section_cron() },
+]);
 </script>
+<NavSection {sections} />
+
 <div class="retention">
 	<header class="lede">
 		<h2>{m.showcase_privacy_retention_heading()}</h2>
@@ -97,7 +104,7 @@ function jobOverdue(ts: string | Date | null, hoursThreshold: number): boolean {
 		</p>
 	</header>
 
-	<section class="table-section">
+	<section class="table-section" id="retention-table">
 		<header class="section-head">
 			<h3>{m.showcase_privacy_retention_section_table()}</h3>
 			<Tag variant="muted" size="sm" label="Live values" />
@@ -132,7 +139,7 @@ function jobOverdue(ts: string | Date | null, hoursThreshold: number): boolean {
 		</div>
 	</section>
 
-	<section class="cron-section">
+	<section class="cron-section" id="retention-cron">
 		<header class="section-head">
 			<h3>{m.showcase_privacy_retention_section_cron()}</h3>
 			<Tag variant="muted" size="sm" label="Live" />
@@ -226,6 +233,11 @@ function jobOverdue(ts: string | Date | null, hoursThreshold: number): boolean {
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-7);
+	}
+
+	/* Anchor jumps must clear the sticky NavSection chip bar. */
+	.retention > section {
+		scroll-margin-top: 5rem;
 	}
 
 	.lede h2 {

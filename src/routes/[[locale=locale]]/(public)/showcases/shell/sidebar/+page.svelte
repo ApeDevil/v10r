@@ -1,11 +1,20 @@
 <script lang="ts">
+import { NavSection } from '$lib/components/composites';
 import { Button } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
 import { getSidebar } from '$lib/state/sidebar.svelte';
 
 const sidebar = getSidebar();
+
+const sections = $derived([
+	{ id: 'shell-sidebar-state', label: m.showcase_shell_sidebar_section_state() },
+	{ id: 'shell-sidebar-breakpoints', label: m.showcase_shell_sidebar_section_breakpoints() },
+	{ id: 'shell-sidebar-navigation', label: m.showcase_shell_sidebar_section_navigation() },
+]);
 </script>
-<section class="demo-section">
+<NavSection {sections} />
+
+<section class="demo-section" id="shell-sidebar-state">
 	<h2>{m.showcase_shell_sidebar_section_state()}</h2>
 	<dl class="state-list">
 		<dt>Expanded:</dt>
@@ -25,7 +34,7 @@ const sidebar = getSidebar();
 	</div>
 </section>
 
-<section class="demo-section">
+<section class="demo-section" id="shell-sidebar-breakpoints">
 	<h2>{m.showcase_shell_sidebar_section_breakpoints()}</h2>
 	<p>Resize the browser window to see the sidebar behavior change:</p>
 	<ul>
@@ -35,7 +44,7 @@ const sidebar = getSidebar();
 	</ul>
 </section>
 
-<section class="demo-section">
+<section class="demo-section" id="shell-sidebar-navigation">
 	<h2>{m.showcase_shell_sidebar_section_navigation()}</h2>
 	<p>
 		The sidebar includes enhanced navigation with dropdowns and user menu:
@@ -63,6 +72,7 @@ const sidebar = getSidebar();
 
 <style>
 	.demo-section {
+		scroll-margin-top: 5rem;
 		margin-bottom: var(--spacing-8);
 		padding: var(--spacing-6);
 		border: 1px solid var(--color-border);

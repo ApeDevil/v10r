@@ -7,7 +7,7 @@
  */
 import { onMount } from 'svelte';
 import { MediaQuery } from 'svelte/reactivity';
-import { Card, PageHeader, ShowcaseDocs } from '$lib/components/composites';
+import { Card, NavSection, PageHeader, ShowcaseDocs } from '$lib/components/composites';
 import { PageContainer, Stack } from '$lib/components/layout';
 import { Badge, Button } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
@@ -35,6 +35,11 @@ onMount(() => {
 	window.addEventListener('beforeinstallprompt', onBeforeInstall);
 	return () => window.removeEventListener('beforeinstallprompt', onBeforeInstall);
 });
+const sections = $derived([
+	{ id: 'pwa-install', label: m.showcase_pwa_section_install() },
+	{ id: 'pwa-policy', label: m.showcase_pwa_section_policy() },
+	{ id: 'pwa-update', label: m.showcase_pwa_section_update() },
+]);
 </script>
 
 <PageContainer class="py-7">
@@ -50,9 +55,11 @@ onMount(() => {
 		<ShowcaseDocs />
 	</PageHeader>
 
+	<NavSection {sections} />
+
 	<Stack gap="6">
 		<!-- Live install state -->
-		<Card>
+		<Card id="pwa-install">
 			{#snippet header()}
 				<h2 class="text-fluid-lg font-semibold">{m.showcase_pwa_section_install()}</h2>
 			{/snippet}
@@ -82,7 +89,7 @@ onMount(() => {
 		</Card>
 
 		<!-- Caching contract -->
-		<Card>
+		<Card id="pwa-policy">
 			{#snippet header()}
 				<h2 class="text-fluid-lg font-semibold">{m.showcase_pwa_section_policy()}</h2>
 			{/snippet}
@@ -118,7 +125,7 @@ onMount(() => {
 		</Card>
 
 		<!-- Updates -->
-		<Card>
+		<Card id="pwa-update">
 			{#snippet header()}
 				<h2 class="text-fluid-lg font-semibold">{m.showcase_pwa_section_update()}</h2>
 			{/snippet}
