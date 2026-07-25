@@ -1974,5 +1974,17 @@
 	"admin_analytics_userlane_description": "Nutzung durch angemeldete Personen. Eigene Datenspur, eigene Rechtsgrundlage — nicht vom Cookie-Banner erfasst.",
 	"admin_analytics_userlane_active": "Aktive Nutzer",
 	"admin_analytics_userlane_events": "Ereignisse",
-	"admin_analytics_userlane_empty": "In diesem Zeitraum keine Kontoaktivität."
+	"admin_analytics_userlane_empty": "In diesem Zeitraum keine Kontoaktivität.",
+	"admin_analytics_audience_title": "Publikum",
+	"admin_analytics_audience_description": "Eindeutige Besucher nach Herkunft und Client. Pro Person gezählt, nicht pro Sitzung.",
+	"admin_analytics_audience_empty": "In diesem Zeitraum keine Besucher.",
+	"admin_analytics_audience_countries": "Länder",
+	"admin_analytics_audience_devices": "Geräte",
+	"admin_analytics_audience_browsers": "Browser",
+	"admin_analytics_audience_visitors": "{count} Besucher",
+	"admin_analytics_audience_sessions_per": "{rate} Sitzungen pro Person",
+	"admin_analytics_audience_unknown": "Unbekannt",
+	"admin_analytics_audience_coverage_geo": "Land für {known} von {total} Besuchern ermittelt — am Edge aus der Verbindung gelesen und daher auf jeder Zustimmungsstufe verfügbar.",
+	"admin_analytics_audience_coverage_client": "Gerät und Browser für {known} von {total} Besuchern bekannt. Beides stammt aus dem User-Agent, der nur auf der Zustimmungsstufe „Analyse“ ausgelesen wird — dies ist also eine Aufschlüsselung der zustimmenden Besucher, nicht aller.",
+	"admin_analytics_audience_more": "und {count} weitere"
 }

@@ -1,15 +1,59 @@
 <script lang="ts">
 import type { ChartData } from 'chart.js';
 import { invalidateAll } from '$app/navigation';
+import { page } from '$app/state';
 import LiveFeed from '$lib/components/admin/LiveFeed.svelte';
 import { Alert, Card, DiagGrid, DiagRow, EmptyState } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Button, Skeleton, Tag } from '$lib/components/primitives';
 import LineChart from '$lib/components/viz/chart/line/LineChart.svelte';
+import { getFormattingLocale } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
+import { baseLocale, extractLocaleFromUrl } from '$lib/paraglide/runtime';
 
 let { data }: PageProps = $props();
 let pairedActive = $state(data.pairedActive);
+
+/** Shapes come from the deferred loader, so no server type crosses into the client. */
+type AudienceRow = Awaited<typeof data.audience>['countries'][number];
+
+const UNKNOWN_COUNTRY = 'ZZ';
+const UNKNOWN_CLIENT = 'unknown';
+/** Rows shown per dimension before collapsing into an "and N more" line. */
+const AUDIENCE_ROWS = 8;
+
+const formattingLocale = $derived(getFormattingLocale(extractLocaleFromUrl(page.url.href) ?? baseLocale));
+
+const regionNames = $derived.by(() => {
+	try {
+		return new Intl.DisplayNames([formattingLocale], { type: 'region' });
+	} catch {
+		return null;
+	}
+});
+
+/**
+ * "DE" → "Germany" in the admin's own language. Falls back to the raw code,
+ * which is still readable — `Intl.DisplayNames.of` throws on malformed input.
+ */
+function countryLabel(code: string): string {
+	if (code === UNKNOWN_COUNTRY) return m.admin_analytics_audience_unknown();
+	try {
+		return regionNames?.of(code) ?? code;
+	} catch {
+		return code;
+	}
+}
+
+/** Regional-indicator pair. Degrades to the bare letters where flags aren't drawn. */
+function countryFlag(code: string): string {
+	if (code === UNKNOWN_COUNTRY || !/^[A-Z]{2}$/.test(code)) return '';
+	return String.fromCodePoint(...[...code].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
+}
+
+function clientLabel(key: string): string {
+	return key === UNKNOWN_CLIENT ? m.admin_analytics_audience_unknown() : key;
+}
 
 // Consent rate as percentage
 const totalSessions = $derived(data.consentSplit.reduce((sum, s) => sum + Number(s.count), 0));
@@ -242,6 +286,47 @@ const ranges = [
 		</Card>
 	</div>
 
+	<!-- Audience: distinct visitors by origin and client -->
+	<Card>
+		{#snippet header()}
+			<Stack gap="1">
+				<h2 class="text-fluid-lg font-semibold">{m.admin_analytics_audience_title()}</h2>
+				<p class="text-muted text-fluid-xs">{m.admin_analytics_audience_description()}</p>
+			</Stack>
+		{/snippet}
+		{#await data.audience}
+			<Skeleton variant="rectangular" height="220px" />
+		{:then audience}
+			{#if audience.totalVisitors === 0}
+				<p class="text-muted text-fluid-sm">{m.admin_analytics_audience_empty()}</p>
+			{:else}
+				<Stack gap="5">
+					<div class="audience-grid">
+						{@render dimension(m.admin_analytics_audience_countries(), audience.countries, audience.totalVisitors, true)}
+						{@render dimension(m.admin_analytics_audience_devices(), audience.devices, audience.totalVisitors, false)}
+						{@render dimension(m.admin_analytics_audience_browsers(), audience.browsers, audience.totalVisitors, false)}
+					</div>
+					<Stack gap="1">
+						<p class="text-muted text-fluid-xs">
+							{m.admin_analytics_audience_coverage_geo({
+								known: formatNumber(audience.locatedVisitors),
+								total: formatNumber(audience.totalVisitors),
+							})}
+						</p>
+						<p class="text-muted text-fluid-xs">
+							{m.admin_analytics_audience_coverage_client({
+								known: formatNumber(audience.classifiedVisitors),
+								total: formatNumber(audience.totalVisitors),
+							})}
+						</p>
+					</Stack>
+				</Stack>
+			{/if}
+		{:catch}
+			<p class="text-muted text-fluid-sm">{m.admin_analytics_audience_empty()}</p>
+		{/await}
+	</Card>
+
 	<!-- Live Activity Feed -->
 	<!-- Web Vitals: p75, with the element most often to blame -->
 	<Card>
@@ -343,6 +428,32 @@ const ranges = [
 	<LiveFeed initialEvents={data.recentEvents} bind:pairedActive />
 </Stack>
 
+{#snippet dimension(title: string, rows: AudienceRow[], total: number, geo: boolean)}
+	<div class="audience-col">
+		<h3 class="audience-col-title">{title}</h3>
+		{#each rows.slice(0, AUDIENCE_ROWS) as row (row.key)}
+			{@const pct = total > 0 ? Math.round((row.visitors / total) * 100) : 0}
+			{@const perVisitor = (row.sessions / row.visitors).toFixed(1)}
+			<div class="audience-row">
+				<span class="audience-label" title={m.admin_analytics_audience_sessions_per({ rate: perVisitor })}>
+					{#if geo}<span class="audience-flag" aria-hidden="true">{countryFlag(row.key)}</span>{/if}
+					{geo ? countryLabel(row.key) : clientLabel(row.key)}
+				</span>
+				<span class="audience-count">{formatNumber(row.visitors)}</span>
+				<span class="audience-pct">{pct}%</span>
+				<span class="audience-track" aria-hidden="true">
+					<span class="audience-fill" style:width="{pct}%"></span>
+				</span>
+			</div>
+		{/each}
+		{#if rows.length > AUDIENCE_ROWS}
+			<p class="text-muted text-fluid-xs audience-more">
+				{m.admin_analytics_audience_more({ count: rows.length - AUDIENCE_ROWS })}
+			</p>
+		{/if}
+	</div>
+{/snippet}
+
 <style>
 	/* Stat cards grid */
 	.stat-grid {
@@ -438,6 +549,79 @@ const ranges = [
 		.bottom-grid {
 			grid-template-columns: 1fr;
 		}
+	}
+
+	/* Audience breakdown */
+	.audience-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+		gap: var(--spacing-6);
+	}
+
+	.audience-col {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-2);
+		min-width: 0;
+	}
+
+	.audience-col-title {
+		font-size: var(--text-fluid-xs);
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--color-muted);
+	}
+
+	/* Label | count | pct on one line, the bar spanning underneath. */
+	.audience-row {
+		display: grid;
+		grid-template-columns: 1fr auto auto;
+		align-items: baseline;
+		gap: var(--spacing-2);
+		font-size: var(--text-fluid-sm);
+	}
+
+	.audience-label {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		min-width: 0;
+	}
+
+	.audience-flag {
+		margin-right: var(--spacing-1);
+	}
+
+	.audience-count {
+		font-variant-numeric: tabular-nums;
+		font-weight: 600;
+	}
+
+	.audience-pct {
+		font-variant-numeric: tabular-nums;
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
+		min-width: 2.5rem;
+		text-align: right;
+	}
+
+	.audience-track {
+		grid-column: 1 / -1;
+		height: 3px;
+		border-radius: var(--radius-sm);
+		background: var(--color-subtle);
+		overflow: hidden;
+	}
+
+	.audience-fill {
+		display: block;
+		height: 100%;
+		background: var(--chart-1);
+	}
+
+	.audience-more {
+		margin-top: var(--spacing-1);
 	}
 
 	/* Top pages */

@@ -2,6 +2,7 @@ import { desc, eq } from 'drizzle-orm';
 import { requireAdmin } from '$lib/server/auth/guards';
 import { db } from '$lib/server/db';
 import {
+	getAudienceBreakdown,
 	getConsentSplit,
 	getFrictionSignals,
 	getOverviewMetrics,
@@ -72,6 +73,14 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		// Deferred: chart + table data (streams in)
 		trend: safeDeferPromise(getTrafficTrend(days), []),
 		topPages: safeDeferPromise(getTopPages(days, 10), []),
+		audience: safeDeferPromise(getAudienceBreakdown(days), {
+			countries: [],
+			devices: [],
+			browsers: [],
+			totalVisitors: 0,
+			locatedVisitors: 0,
+			classifiedVisitors: 0,
+		}),
 		vitals: safeDeferPromise(getWebVitals(days), []),
 		friction: safeDeferPromise(getFrictionSignals(days, 12), []),
 		userLane: safeDeferPromise(getUserLaneStats(days), { activeUsers: 0, events: 0, topRoutes: [] }),

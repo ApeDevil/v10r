@@ -5,10 +5,9 @@
 
 import { and, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 import type {
-	BrowserSplit,
+	AudienceBreakdown,
+	AudienceSplit,
 	ConsentSplit,
-	CountrySplit,
-	DeviceSplit,
 	FrictionSignal,
 	FunnelStep,
 	OverviewMetrics,
@@ -19,6 +18,7 @@ import type {
 	UserLaneStats,
 	VitalSummary,
 } from '$lib/server/analytics/types';
+import { UNKNOWN_CLIENT, UNKNOWN_COUNTRY } from '$lib/server/analytics/types';
 import { db } from '$lib/server/db';
 import { dailyPageStats, events, sessions, userEvents } from '$lib/server/db/schema/analytics';
 
@@ -34,25 +34,57 @@ function dateRange(days: number) {
 	return { from: daysAgo(days), to: daysAgo(0) };
 }
 
+/**
+ * Unwrap a `db.execute()` result into plain rows.
+ *
+ * The two drivers this codebase runs on disagree about the shape: the
+ * `neon-serverless` pool used in production returns a pg `QueryResult`
+ * (`{ rows, rowCount }`), while `pglite` — and the HTTP driver — hand back a
+ * bare array. Casting straight to an array therefore type-checks and then
+ * throws at runtime on whichever driver you did not test against, which is
+ * exactly how a panel ends up permanently empty behind a `safeDeferPromise`
+ * fallback instead of loudly failing.
+ */
+function rowsOf<T>(result: unknown): T[] {
+	if (Array.isArray(result)) return result as T[];
+	const rows = (result as { rows?: unknown })?.rows;
+	return Array.isArray(rows) ? (rows as T[]) : [];
+}
+
 // ── Overview metrics ─────────────────────────────────────────────────────────
 
+/**
+ * Headline metrics for a date range.
+ *
+ * `uniqueVisitors` is counted from `sessions`, NOT summed out of the rollup.
+ * `daily_page_stats.unique_visitors` is distinct-per-(date, path), so summing it
+ * over a range multiplies each person by the number of pages they viewed on each
+ * day they visited — a visitor who read three pages on two days scored six. Only
+ * a distinct count over the whole window answers "how many people", and it has
+ * to agree with `getAudienceBreakdown`, which is derived the same way.
+ */
 export async function getOverviewMetrics(days: number): Promise<OverviewMetrics> {
 	const { from, to } = dateRange(days);
 
-	const result = await db
-		.select({
-			totalPageviews: sql<number>`coalesce(sum(${dailyPageStats.pageviews}), 0)`,
-			uniqueVisitors: sql<number>`coalesce(sum(${dailyPageStats.uniqueVisitors}), 0)`,
-			avgDuration: sql<number>`coalesce(avg(${dailyPageStats.avgDurationMs}), 0)`,
-			avgBounce: sql<number>`coalesce(avg(${dailyPageStats.bounceRate}), 0)`,
-		})
-		.from(dailyPageStats)
-		.where(and(gte(dailyPageStats.date, from), lte(dailyPageStats.date, to)));
+	const [rollup, visitors] = await Promise.all([
+		db
+			.select({
+				totalPageviews: sql<number>`coalesce(sum(${dailyPageStats.pageviews}), 0)`,
+				avgDuration: sql<number>`coalesce(avg(${dailyPageStats.avgDurationMs}), 0)`,
+				avgBounce: sql<number>`coalesce(avg(${dailyPageStats.bounceRate}), 0)`,
+			})
+			.from(dailyPageStats)
+			.where(and(gte(dailyPageStats.date, from), lte(dailyPageStats.date, to))),
+		db
+			.select({ uniqueVisitors: sql<number>`count(distinct ${sessions.visitorId})::int` })
+			.from(sessions)
+			.where(gte(sessions.startedAt, sql`${from}::date`)),
+	]);
 
-	const row = result[0];
+	const row = rollup[0];
 	return {
 		totalPageviews: Number(row?.totalPageviews ?? 0),
-		uniqueVisitors: Number(row?.uniqueVisitors ?? 0),
+		uniqueVisitors: Number(visitors[0]?.uniqueVisitors ?? 0),
 		avgSessionDuration: Math.round(Number(row?.avgDuration ?? 0)),
 		bounceRate: Math.round(Number(row?.avgBounce ?? 0)),
 	};
@@ -95,51 +127,89 @@ export async function getTopPages(days: number, limit = 10): Promise<TopPage[]> 
 		.limit(limit);
 }
 
-// ── Device / Browser / Country splits ────────────────────────────────────────
+// ── Audience breakdown: who the visitors are ─────────────────────────────────
 
-export async function getDeviceSplit(days: number): Promise<DeviceSplit[]> {
-	const cutoff = new Date(Date.now() - days * 86400000);
+/**
+ * Distinct visitors broken down by country, device class, and browser family.
+ *
+ * Counted per *visitor*, not per session. A session-level `GROUP BY country`
+ * answers "where did the traffic come from"; this answers "where are the people
+ * from", and the two differ by however many times each person came back.
+ *
+ * One `sessions` scan serves all three dimensions. The `visitor_dims` CTE folds
+ * every visitor to a single row first, so a visitor with six sessions
+ * contributes 1 to `visitors` and 6 to `sessions` — and, critically, cannot be
+ * counted under two different countries. `max()` skips NULLs in Postgres, which
+ * is what resolves the one case where a visitor's rows genuinely disagree: the
+ * same person browsing before and after granting analytics consent has NULL
+ * device on the earlier sessions and a real value on the later ones. Taking the
+ * non-NULL value classifies them once, rather than splitting them across a real
+ * bucket and `unknown`.
+ *
+ * No LIMIT: the dimensions are closed by construction — 2-letter country codes,
+ * and the coarse device/browser families `classifyUserAgent` emits. There is no
+ * user-controlled input here that could grow the row count.
+ */
+export async function getAudienceBreakdown(days: number): Promise<AudienceBreakdown> {
+	// Same day boundary as getOverviewMetrics, so `totalVisitors` equals the
+	// headline unique-visitor count instead of missing it by a partial day.
+	const { from } = dateRange(days);
 
-	return db
-		.select({
-			device: sql<string>`coalesce(${sessions.device}, 'unknown')`,
-			count: sql<number>`count(*)`,
-		})
-		.from(sessions)
-		.where(gte(sessions.startedAt, cutoff))
-		.groupBy(sessions.device)
-		.orderBy(desc(sql`count(*)`))
-		.limit(50);
-}
+	const rows = await db.execute<{
+		dimension: string;
+		key: string;
+		visitors: number;
+		sessions: number;
+	}>(sql`
+		WITH visitor_dims AS (
+			SELECT
+				visitor_id,
+				max(country) AS country,
+				max(device)  AS device,
+				max(browser) AS browser,
+				count(*)     AS session_count
+			FROM analytics.sessions
+			WHERE started_at >= ${from}::date
+			GROUP BY visitor_id
+		)
+		SELECT 'country' AS dimension, coalesce(country, ${UNKNOWN_COUNTRY}) AS key,
+		       count(*)::int AS visitors, sum(session_count)::int AS sessions
+		FROM visitor_dims GROUP BY 1, 2
+		UNION ALL
+		SELECT 'device', coalesce(device, ${UNKNOWN_CLIENT}),
+		       count(*)::int, sum(session_count)::int
+		FROM visitor_dims GROUP BY 1, 2
+		UNION ALL
+		SELECT 'browser', coalesce(browser, ${UNKNOWN_CLIENT}),
+		       count(*)::int, sum(session_count)::int
+		FROM visitor_dims GROUP BY 1, 2
+		ORDER BY visitors DESC
+	`);
 
-export async function getBrowserSplit(days: number): Promise<BrowserSplit[]> {
-	const cutoff = new Date(Date.now() - days * 86400000);
+	const all = rowsOf<{ dimension: string; key: string; visitors: number; sessions: number }>(rows);
 
-	return db
-		.select({
-			browser: sql<string>`coalesce(${sessions.browser}, 'unknown')`,
-			count: sql<number>`count(*)`,
-		})
-		.from(sessions)
-		.where(gte(sessions.startedAt, cutoff))
-		.groupBy(sessions.browser)
-		.orderBy(desc(sql`count(*)`))
-		.limit(50);
-}
+	const pick = (dimension: string): AudienceSplit[] =>
+		all
+			.filter((r) => r.dimension === dimension)
+			.map((r) => ({ key: r.key, visitors: Number(r.visitors), sessions: Number(r.sessions) }))
+			.sort((a, b) => b.visitors - a.visitors);
 
-export async function getCountrySplit(days: number): Promise<CountrySplit[]> {
-	const cutoff = new Date(Date.now() - days * 86400000);
+	const countries = pick('country');
+	const devices = pick('device');
+	const browsers = pick('browser');
 
-	return db
-		.select({
-			country: sql<string>`coalesce(${sessions.country}, '??')`,
-			count: sql<number>`count(*)`,
-		})
-		.from(sessions)
-		.where(gte(sessions.startedAt, cutoff))
-		.groupBy(sessions.country)
-		.orderBy(desc(sql`count(*)`))
-		.limit(50);
+	const sum = (rowsIn: AudienceSplit[]) => rowsIn.reduce((acc, r) => acc + r.visitors, 0);
+	const known = (rowsIn: AudienceSplit[], sentinel: string) =>
+		rowsIn.filter((r) => r.key !== sentinel).reduce((acc, r) => acc + r.visitors, 0);
+
+	return {
+		countries,
+		devices,
+		browsers,
+		totalVisitors: sum(countries),
+		locatedVisitors: known(countries, UNKNOWN_COUNTRY),
+		classifiedVisitors: known(devices, UNKNOWN_CLIENT),
+	};
 }
 
 // ── Consent distribution ─────────────────────────────────────────────────────
@@ -306,14 +376,12 @@ export async function getWebVitals(days: number): Promise<VitalSummary[]> {
 		ORDER BY s.metric
 	`);
 
-	return (rows as unknown as { metric: string; p75: number; samples: number; worst_target: string | null }[]).map(
-		(r) => ({
-			metric: r.metric,
-			p75: Math.round(Number(r.p75) * 1000) / 1000,
-			samples: Number(r.samples),
-			worstTarget: r.worst_target,
-		}),
-	);
+	return rowsOf<{ metric: string; p75: number; samples: number; worst_target: string | null }>(rows).map((r) => ({
+		metric: r.metric,
+		p75: Math.round(Number(r.p75) * 1000) / 1000,
+		samples: Number(r.samples),
+		worstTarget: r.worst_target,
+	}));
 }
 
 // ── Friction signals ─────────────────────────────────────────────────────────
@@ -344,7 +412,7 @@ export async function getFrictionSignals(days: number, limit = 20): Promise<Fric
 		LIMIT ${limit}
 	`);
 
-	return (rows as unknown as FrictionSignal[]).map((r) => ({
+	return rowsOf<FrictionSignal>(rows).map((r) => ({
 		event: r.event,
 		target: r.target,
 		route: r.route,

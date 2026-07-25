@@ -19,19 +19,50 @@ export interface TopPage {
 	bounceRate: number | null;
 }
 
-export interface DeviceSplit {
-	device: string;
-	count: number;
+/** Sentinel keys for rows where the dimension could not be resolved. */
+export const UNKNOWN_COUNTRY = 'ZZ';
+export const UNKNOWN_CLIENT = 'unknown';
+
+/**
+ * One row of an audience breakdown — a dimension value and how many distinct
+ * visitors carry it.
+ *
+ * `visitors` counts distinct `visitor_id`, which is the honest "how many people"
+ * number. `sessions` is kept alongside because `sessions / visitors` is the
+ * return rate, and a country with many sessions per visitor is a different
+ * finding from one with many visitors making a single visit each.
+ */
+export interface AudienceSplit {
+	/** ISO-3166-1 alpha-2 country, device class, or browser family. */
+	key: string;
+	visitors: number;
+	sessions: number;
 }
 
-export interface BrowserSplit {
-	browser: string;
-	count: number;
-}
-
-export interface CountrySplit {
-	country: string;
-	count: number;
+/**
+ * Who the visitors are and where they came from, over one date range.
+ *
+ * Every visitor appears exactly once in each of the three arrays, so each array
+ * sums to `totalVisitors` and a row's share is `visitors / totalVisitors`.
+ *
+ * The two coverage counts are not decoration — they are what stops the reader
+ * drawing a false conclusion. `country` is resolved at the edge from the
+ * connection and is therefore populated at every consent tier, while
+ * `device`/`browser` are derived from the User-Agent (terminal configuration)
+ * and exist only for visitors at the `analytics` tier. A device chart is
+ * therefore a chart of *consenting* visitors, and saying so is the difference
+ * between a breakdown and a misleading one.
+ */
+export interface AudienceBreakdown {
+	countries: AudienceSplit[];
+	devices: AudienceSplit[];
+	browsers: AudienceSplit[];
+	/** Distinct visitors in range — the denominator for every row above. */
+	totalVisitors: number;
+	/** Visitors with a resolved country. Near-total; low only off-Vercel. */
+	locatedVisitors: number;
+	/** Visitors with a known device/browser. Bounded by the consent rate. */
+	classifiedVisitors: number;
 }
 
 export interface ConsentSplit {

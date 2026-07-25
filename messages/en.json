@@ -1976,5 +1976,17 @@
 	"admin_analytics_userlane_description": "Signed-in usage. Separate lane, separate legal basis — not governed by the consent banner.",
 	"admin_analytics_userlane_active": "Active users",
 	"admin_analytics_userlane_events": "Events",
-	"admin_analytics_userlane_empty": "No account activity in this period."
+	"admin_analytics_userlane_empty": "No account activity in this period.",
+	"admin_analytics_audience_title": "Audience",
+	"admin_analytics_audience_description": "Unique visitors by origin and client. Counted per person, not per session.",
+	"admin_analytics_audience_empty": "No visitors in this period.",
+	"admin_analytics_audience_countries": "Countries",
+	"admin_analytics_audience_devices": "Devices",
+	"admin_analytics_audience_browsers": "Browsers",
+	"admin_analytics_audience_visitors": "{count} visitors",
+	"admin_analytics_audience_sessions_per": "{rate} sessions each",
+	"admin_analytics_audience_unknown": "Unknown",
+	"admin_analytics_audience_coverage_geo": "Country resolved for {known} of {total} visitors — read at the edge from the connection, so it is available at every consent tier.",
+	"admin_analytics_audience_coverage_client": "Device and browser known for {known} of {total} visitors. These come from the User-Agent, which is only read at the analytics consent tier — so this is a breakdown of consenting visitors, not of everyone.",
+	"admin_analytics_audience_more": "and {count} more"
 }

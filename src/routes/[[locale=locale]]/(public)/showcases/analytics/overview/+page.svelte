@@ -78,10 +78,10 @@ const topPagesData: ChartData<'bar'> = $derived({
 
 // Device pie chart
 const deviceData: ChartData<'pie'> = $derived({
-	labels: data.devices.map((d) => d.device),
+	labels: data.devices.map((d) => d.key),
 	datasets: [
 		{
-			data: data.devices.map((d) => Number(d.count)),
+			data: data.devices.map((d) => Number(d.visitors)),
 			backgroundColor: ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)'],
 		},
 	],
@@ -89,10 +89,10 @@ const deviceData: ChartData<'pie'> = $derived({
 
 // Browser pie chart
 const browserData: ChartData<'pie'> = $derived({
-	labels: data.browsers.map((b) => b.browser),
+	labels: data.browsers.map((b) => b.key),
 	datasets: [
 		{
-			data: data.browsers.map((b) => Number(b.count)),
+			data: data.browsers.map((b) => Number(b.visitors)),
 			backgroundColor: ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)'],
 		},
 	],
@@ -101,11 +101,11 @@ const browserData: ChartData<'pie'> = $derived({
 // Country bar chart
 const topCountries = $derived(data.countries.slice(0, 10));
 const countryData: ChartData<'bar'> = $derived({
-	labels: topCountries.map((c) => c.country),
+	labels: topCountries.map((c) => c.key),
 	datasets: [
 		{
-			label: 'Sessions',
-			data: topCountries.map((c) => Number(c.count)),
+			label: 'Visitors',
+			data: topCountries.map((c) => Number(c.visitors)),
 			backgroundColor: 'var(--chart-3)',
 		},
 	],
@@ -181,37 +181,37 @@ const countryData: ChartData<'bar'> = $derived({
 	{/if}
 
 	{#if data.devices.length > 0}
-		<ChartSection title="Devices" description="Session distribution by device type">
+		<ChartSection title="Devices" description="Unique visitors by device type">
 			{#snippet chart()}
 				<PieChart data={deviceData} doughnut ariaLabel="Device distribution" aspect="square" />
 			{/snippet}
 		</ChartSection>
 	{:else}
-		<ChartSection title="Devices" description="Session distribution by device type">
+		<ChartSection title="Devices" description="Unique visitors by device type">
 			{#snippet chart()}<p class="empty-chart">No data in this range.</p>{/snippet}
 		</ChartSection>
 	{/if}
 
 	{#if data.browsers.length > 0}
-		<ChartSection title="Browsers" description="Session distribution by browser">
+		<ChartSection title="Browsers" description="Unique visitors by browser">
 			{#snippet chart()}
 				<PieChart data={browserData} doughnut ariaLabel="Browser distribution" aspect="square" />
 			{/snippet}
 		</ChartSection>
 	{:else}
-		<ChartSection title="Browsers" description="Session distribution by browser">
+		<ChartSection title="Browsers" description="Unique visitors by browser">
 			{#snippet chart()}<p class="empty-chart">No data in this range.</p>{/snippet}
 		</ChartSection>
 	{/if}
 
 	{#if data.countries.length > 0}
-		<ChartSection title="Countries" description="Top 10 countries by session count">
+		<ChartSection title="Countries" description="Top 10 countries by unique visitors">
 			{#snippet chart()}
 				<BarChart data={countryData} horizontal ariaLabel="Country distribution" />
 			{/snippet}
 		</ChartSection>
 	{:else}
-		<ChartSection title="Countries" description="Top 10 countries by session count">
+		<ChartSection title="Countries" description="Top 10 countries by unique visitors">
 			{#snippet chart()}<p class="empty-chart">No data in this range.</p>{/snippet}
 		</ChartSection>
 	{/if}

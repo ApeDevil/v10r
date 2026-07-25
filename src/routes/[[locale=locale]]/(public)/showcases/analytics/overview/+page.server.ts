@@ -1,9 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import {
-	getBrowserSplit,
-	getCountrySplit,
-	getDeviceSplit,
+	getAudienceBreakdown,
 	getOverviewMetrics,
 	getTopPages,
 	getTrafficTrend,
@@ -17,13 +15,11 @@ export const load: PageServerLoad = async ({ url }) => {
 	const start = performance.now();
 
 	try {
-		const [metrics, trend, topPages, devices, browsers, countries] = await Promise.all([
+		const [metrics, trend, topPages, audience] = await Promise.all([
 			getOverviewMetrics(days),
 			getTrafficTrend(days),
 			getTopPages(days),
-			getDeviceSplit(days),
-			getBrowserSplit(days),
-			getCountrySplit(days),
+			getAudienceBreakdown(days),
 		]);
 
 		const queryMs = Math.round((performance.now() - start) * 100) / 100;
@@ -32,9 +28,9 @@ export const load: PageServerLoad = async ({ url }) => {
 			metrics,
 			trend,
 			topPages,
-			devices,
-			browsers,
-			countries,
+			devices: audience.devices,
+			browsers: audience.browsers,
+			countries: audience.countries,
 			days,
 			queryMs,
 		};

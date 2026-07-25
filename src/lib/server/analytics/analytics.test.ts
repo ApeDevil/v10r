@@ -33,6 +33,7 @@ const { isBot, isExcludedPath, isPrefetch } = await import('./collect-policy');
 const { classifyUserAgent, geoFromHeaders } = await import('./enrich');
 const { isKnownEvent, sanitizeProperties, templateRoute } = await import('./event-schema');
 const { recordEvent, upsertSession } = await import('$lib/server/db/analytics/mutations');
+const { getAudienceBreakdown } = await import('$lib/server/db/analytics/aggregations');
 const { analyticsCollector } = await import('./hook');
 const { analyticsCleanup } = await import('$lib/server/jobs/analytics-cleanup');
 const { ANALYTICS_RETENTION_DAYS, ANALYTICS_CONSENT_COOKIE, ANALYTICS_SESSION_COOKIE } = await import(
@@ -776,5 +777,114 @@ describe('recordEvent — DB error swallowed silently by hook', () => {
 		expect(errorSpy).toHaveBeenCalledWith('[analytics] Failed to track pageview:', expect.anything());
 
 		errorSpy.mockRestore();
+	});
+});
+
+// ── 8. aggregations.ts — audience breakdown counts people, not sessions ──────
+
+describe('getAudienceBreakdown', () => {
+	beforeEach(async () => {
+		await db.delete(events);
+		await db.delete(sessions);
+	});
+
+	/** Distinct visitor hashes, each with `n` sessions carrying the given dimensions. */
+	async function seedVisitor(
+		visitorId: string,
+		sessionCount: number,
+		dims: { country?: string | null; device?: string | null; browser?: string | null },
+	) {
+		for (let i = 0; i < sessionCount; i++) {
+			await db.insert(sessions).values({
+				id: `${visitorId}-s${i}`,
+				visitorId,
+				entryPath: '/',
+				country: dims.country ?? null,
+				device: dims.device ?? null,
+				browser: dims.browser ?? null,
+			});
+		}
+	}
+
+	it('counts each visitor once regardless of how many sessions they had', async () => {
+		// The whole point of the breakdown: six sessions from one person in Germany
+		// is one German visitor, not six. A session-level GROUP BY gets this wrong.
+		await seedVisitor('v_aaaaaaaaaaaaaaa1', 6, { country: 'DE', device: 'desktop', browser: 'firefox' });
+		await seedVisitor('v_aaaaaaaaaaaaaaa2', 1, { country: 'DE', device: 'desktop', browser: 'firefox' });
+
+		const result = await getAudienceBreakdown(30);
+
+		expect(result.totalVisitors).toBe(2);
+		const de = result.countries.find((c) => c.key === 'DE');
+		expect(de?.visitors).toBe(2);
+		expect(de?.sessions).toBe(7);
+	});
+
+	it('classifies a visitor who consented mid-history under their real device, not unknown', async () => {
+		// device/browser are NULL until the analytics tier is granted. The same
+		// person therefore has NULL rows and real rows. max() skips NULLs so they
+		// land in one bucket instead of being split across 'mobile' and 'unknown'.
+		await db.insert(sessions).values({
+			id: 'mixed-1',
+			visitorId: 'v_bbbbbbbbbbbbbbb1',
+			entryPath: '/',
+			country: 'FR',
+			device: null,
+			browser: null,
+		});
+		await db.insert(sessions).values({
+			id: 'mixed-2',
+			visitorId: 'v_bbbbbbbbbbbbbbb1',
+			entryPath: '/',
+			country: 'FR',
+			device: 'mobile',
+			browser: 'safari',
+		});
+
+		const result = await getAudienceBreakdown(30);
+
+		expect(result.totalVisitors).toBe(1);
+		expect(result.devices).toEqual([{ key: 'mobile', visitors: 1, sessions: 2 }]);
+		expect(result.classifiedVisitors).toBe(1);
+	});
+
+	it('buckets missing dimensions under the sentinels and reports coverage', async () => {
+		await seedVisitor('v_ccccccccccccccc1', 1, { country: 'US', device: 'desktop', browser: 'chrome' });
+		// No consent: country resolves at the edge, device/browser do not.
+		await seedVisitor('v_ccccccccccccccc2', 1, { country: 'US', device: null, browser: null });
+		// Off-Vercel / unplaceable address: no country either.
+		await seedVisitor('v_ccccccccccccccc3', 1, { country: null, device: null, browser: null });
+
+		const result = await getAudienceBreakdown(30);
+
+		expect(result.totalVisitors).toBe(3);
+		expect(result.locatedVisitors).toBe(2);
+		expect(result.classifiedVisitors).toBe(1);
+		expect(result.countries.find((c) => c.key === 'ZZ')?.visitors).toBe(1);
+		expect(result.devices.find((d) => d.key === 'unknown')?.visitors).toBe(2);
+	});
+
+	it('makes every dimension sum to totalVisitors, so shares are honest percentages', async () => {
+		// Each array is a partition of the same visitor set. If any dimension could
+		// double-count, a "37% on mobile" claim in the dashboard would be fiction.
+		await seedVisitor('v_ddddddddddddddd1', 2, { country: 'DE', device: 'desktop', browser: 'chrome' });
+		await seedVisitor('v_ddddddddddddddd2', 3, { country: 'AT', device: 'mobile', browser: 'safari' });
+		await seedVisitor('v_ddddddddddddddd3', 1, { country: null, device: null, browser: null });
+
+		const result = await getAudienceBreakdown(30);
+		const sum = (rows: { visitors: number }[]) => rows.reduce((a, r) => a + r.visitors, 0);
+
+		expect(sum(result.countries)).toBe(result.totalVisitors);
+		expect(sum(result.devices)).toBe(result.totalVisitors);
+		expect(sum(result.browsers)).toBe(result.totalVisitors);
+		expect(result.totalVisitors).toBe(3);
+	});
+
+	it('returns zeroed totals rather than throwing when there is no traffic', async () => {
+		const result = await getAudienceBreakdown(30);
+
+		expect(result.totalVisitors).toBe(0);
+		expect(result.countries).toEqual([]);
+		expect(result.locatedVisitors).toBe(0);
 	});
 });

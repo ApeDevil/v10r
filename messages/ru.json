@@ -1974,5 +1974,17 @@
 	"admin_analytics_userlane_description": "Активность авторизованных пользователей. Отдельный поток данных и отдельное правовое основание — баннер согласия его не охватывает.",
 	"admin_analytics_userlane_active": "Активные пользователи",
 	"admin_analytics_userlane_events": "События",
-	"admin_analytics_userlane_empty": "За этот период активности в кабинете не было."
+	"admin_analytics_userlane_empty": "За этот период активности в кабинете не было.",
+	"admin_analytics_audience_title": "Аудитория",
+	"admin_analytics_audience_description": "Уникальные посетители по происхождению и клиенту. Считаются по людям, а не по сессиям.",
+	"admin_analytics_audience_empty": "За этот период посетителей не было.",
+	"admin_analytics_audience_countries": "Страны",
+	"admin_analytics_audience_devices": "Устройства",
+	"admin_analytics_audience_browsers": "Браузеры",
+	"admin_analytics_audience_visitors": "Посетителей: {count}",
+	"admin_analytics_audience_sessions_per": "по {rate} сессий",
+	"admin_analytics_audience_unknown": "Неизвестно",
+	"admin_analytics_audience_coverage_geo": "Страна определена для {known} из {total} посетителей — считывается на границе сети из соединения, поэтому доступна на любом уровне согласия.",
+	"admin_analytics_audience_coverage_client": "Устройство и браузер известны для {known} из {total} посетителей. Они берутся из User-Agent, который читается только на уровне согласия «аналитика», — то есть это разбивка согласившихся посетителей, а не всех.",
+	"admin_analytics_audience_more": "и ещё {count}"
 }
