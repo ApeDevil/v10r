@@ -24,7 +24,6 @@ const toast = getToast();
 const isExpanded = $derived(forceExpanded || sidebar.expanded);
 </script>
 
-{#if !style.branded}
 <div class={cn('flex flex-col gap-1 px-2', className)}>
 	<button
 		type="button"
@@ -49,4 +48,3 @@ const isExpanded = $derived(forceExpanded || sidebar.expanded);
 		{/if}
 	</button>
 </div>
-{/if}

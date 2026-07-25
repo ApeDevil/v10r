@@ -67,7 +67,7 @@ Transparency runs both ways: data subjects get the rights above; this section di
 
 ### Scope
 
-Admin-only surfaces (non-admins 404, see guarantees) group into four buckets: **Observe** (DB/analytics dashboards — aggregate only, no raw IPs; the audit log; feedback triage), **Manage** (ban users, toggle feature flags, edit branding), **Content** (CRUD posts/tags), **System** (inspect/re-run jobs, configure notification channels, AI usage, flush cache). None of these read secrets.
+Admin-only surfaces (non-admins 404, see guarantees) group into four buckets: **Observe** (DB/analytics dashboards — aggregate only, no raw IPs; the audit log; feedback triage), **Manage** (ban users, toggle feature flags), **Content** (CRUD posts/tags), **System** (inspect/re-run jobs, configure notification channels, AI usage, flush cache). None of these read secrets.
 
 ### Guarantees (code-enforced, not policy)
 

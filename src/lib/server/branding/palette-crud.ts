@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, count, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { createId } from '$lib/server/db/id';
 import { customPalettes } from '$lib/server/db/schema/app/custom-palettes';
@@ -55,6 +55,12 @@ export async function getCustomPaletteById(id: string): Promise<CustomPaletteRow
 	if (paletteByIdCache.size >= PALETTE_CACHE_MAX) paletteByIdCache.clear();
 	paletteByIdCache.set(id, { value, expiresAt: Date.now() + PALETTE_CACHE_TTL_MS });
 	return value;
+}
+
+/** Row count for a user — backs the per-user creation cap. */
+export async function countCustomPalettes(userId: string): Promise<number> {
+	const [row] = await db.select({ value: count() }).from(customPalettes).where(eq(customPalettes.createdBy, userId));
+	return row?.value ?? 0;
 }
 
 export async function listCustomPalettes(userId: string) {

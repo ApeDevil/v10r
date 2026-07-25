@@ -1,22 +1,24 @@
-import { getBrandConfig } from '$lib/server/style/brand';
+import { listCustomPalettes } from '$lib/server/branding/palette-crud';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async () => {
-	let brand: { paletteId: string; typographyId: string; radiusId: string; enabled: boolean } | null = null;
+export const load: PageServerLoad = async ({ locals }) => {
+	// /showcases/** is fully public — the only hooks-level guard is devRouteGuard.
+	// NEVER call requireAuth/requireAdmin here: requireAdmin calls requireAuth
+	// first, which redirects anonymous visitors to /auth/login and would turn this
+	// showcase into a login wall. Branch on locals.user instead.
+	const rows = locals.user ? await listCustomPalettes(locals.user.id) : [];
 
-	try {
-		const config = await getBrandConfig();
-		if (config) {
-			brand = {
-				paletteId: config.style.paletteId,
-				typographyId: config.style.typographyId,
-				radiusId: config.style.radiusId,
-				enabled: config.enabled,
-			};
-		}
-	} catch {
-		// DB unreachable — brand status unknown
-	}
-
-	return { title: 'Style - Shell - Showcases', brand };
+	return {
+		title: 'Style - Shell - Showcases',
+		// The visitor's own palettes, colors included so the workshop can open one
+		// without a round-trip. Ownership columns are projected out.
+		customPalettes: rows.map((p) => ({
+			id: p.id,
+			name: p.name,
+			description: p.description,
+			basePaletteId: p.basePaletteId,
+			lightColors: p.lightColors,
+			darkColors: p.darkColors,
+		})),
+	};
 };

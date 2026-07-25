@@ -22,7 +22,6 @@ export const adminNavItem: NavItem = {
 		{ href: '/admin/audit', label: m.nav_admin_audit },
 		{ href: '/admin/users', label: m.nav_admin_users },
 		{ href: '/admin/flags', label: m.nav_admin_flags },
-		{ href: '/admin/branding', label: m.nav_admin_branding },
 		{ href: '/admin/jobs', label: m.nav_admin_jobs },
 		{ href: '/admin/notifications', label: m.nav_admin_notifications },
 		{ href: '/admin/ai', label: m.nav_admin_ai },

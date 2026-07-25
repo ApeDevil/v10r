@@ -5,13 +5,28 @@
 
 import { getContext, setContext } from 'svelte';
 import { browser } from '$app/environment';
+import { apiFetch } from '$lib/api';
 import type { ResolvedStyle } from '$lib/styles/random/types';
 
 const STYLE_CTX = Symbol('style');
 
+/**
+ * A single dimension of a pick, with the display name the caller already has.
+ *
+ * Names are passed in rather than looked up here so this module never imports
+ * PALETTE_REGISTRY — it is instantiated by the root layout on every page, and
+ * the registry drags in ~500 lines of color data plus contrast validation at
+ * import time. The picker that calls this already has the registry loaded.
+ */
+export type StylePick =
+	| { paletteId: string; paletteName: string }
+	| { typographyId: string; typographyName: string }
+	| { radiusId: string; radiusName: string };
+
 export function createStyleState(initial: ResolvedStyle) {
 	let current = $state<ResolvedStyle>({ ...initial });
 	let rolling = $state(false);
+	let picking = $state(false);
 	let rollCount = $state(0);
 	let announcement = $state('');
 
@@ -42,11 +57,11 @@ export function createStyleState(initial: ResolvedStyle) {
 		get radiusName() {
 			return current.radiusName;
 		},
-		get branded() {
-			return current.branded ?? false;
-		},
 		get rolling() {
 			return rolling;
+		},
+		get picking() {
+			return picking;
 		},
 		get rollCount() {
 			return rollCount;
@@ -62,7 +77,7 @@ export function createStyleState(initial: ResolvedStyle) {
 
 		/** Roll a new random style via API */
 		async roll(toast?: { info: (msg: string, duration?: number) => void }) {
-			if (rolling || current.branded) return;
+			if (rolling) return;
 			rolling = true;
 
 			try {
@@ -99,6 +114,48 @@ export function createStyleState(initial: ResolvedStyle) {
 				toast?.info(`${data.style.paletteName} · ${data.style.typographyName}`, 4000);
 			} finally {
 				rolling = false;
+			}
+		},
+
+		/**
+		 * Apply one specific choice, leaving the other two dimensions alone.
+		 *
+		 * Applied optimistically so the page repaints on click rather than after a
+		 * round-trip, then reconciled with the server (which is authoritative — it
+		 * resolves custom palette names we can't). On failure the previous style is
+		 * restored: leaving the visual changed while the cookie did not would look
+		 * fine until the next reload silently snapped it back.
+		 */
+		async pick(patch: StylePick, toast?: { info: (msg: string, duration?: number) => void }) {
+			if (picking) return;
+			const previous = { ...current };
+			// The $effect below is the ONLY writer of the <html> data-* attributes;
+			// mutating `current` is how a pick reaches the DOM. Cast because a custom
+			// palette id (`CP_…`) is valid at runtime but outside the PaletteId union.
+			current = { ...current, ...patch } as ResolvedStyle;
+			picking = true;
+
+			try {
+				const res = await apiFetch('/api/style/pick', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(patch),
+				});
+
+				if (!res.ok) {
+					current = previous;
+					toast?.info('Could not save that pick', 4000);
+					return;
+				}
+
+				const { data } = await res.json();
+				current = { ...data.style };
+				announcement = `Style changed to ${data.style.paletteName} palette with ${data.style.typographyName} typography`;
+			} catch {
+				current = previous;
+				toast?.info('Could not save that pick', 4000);
+			} finally {
+				picking = false;
 			}
 		},
 	};

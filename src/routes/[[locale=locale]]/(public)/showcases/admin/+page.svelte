@@ -59,12 +59,6 @@ const groups: Group[] = [
 				icon: 'i-lucide-toggle-right',
 				can: 'Toggle features for rollout / kill-switch.',
 			},
-			{
-				label: 'Branding',
-				href: '/admin/branding',
-				icon: 'i-lucide-palette',
-				can: 'Update site name and theme tokens.',
-			},
 		],
 	},
 	{

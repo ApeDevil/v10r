@@ -223,7 +223,7 @@ src/lib/server/db/
 
 ### Access directories under `db/`
 
-`ai/`, `analytics/`, `brand/`, `desk/`, `jobs/` (test only — see notes), `notifications/`, `preferences/`, `rag/`, `showcase/`, `user/`
+`ai/`, `analytics/`, `desk/`, `jobs/` (test only — see notes), `notifications/`, `preferences/`, `rag/`, `showcase/`, `user/`
 
 ### The asymmetry — by design
 
@@ -231,7 +231,7 @@ Schema namespaces follow **storage grouping**. Access directories follow **call 
 
 | Schema namespace | Served by `db/` access dir |
 |-----------------|---------------------------|
-| `schema/app` (user, account, brand, preferences tables) | THREE dirs: `db/user/`, `db/brand/`, `db/preferences/` |
+| `schema/app` (user, account, custom-palette, preferences tables) | TWO dirs: `db/user/`, `db/preferences/` |
 | `schema/auth` | Mostly Better Auth-owned; `db/user/` adds passkey read DTOs (`listPasskeyDtos`, `countPasskeys`, `touchPasskeyLastUsed`) that project secrets out |
 | `schema/blog` | NO `db/` dir — `blog/queries.ts` + `blog/mutations.ts` (co-located; see below) |
 | `schema/feedback` | NO `db/` dir — `feedback/index.ts` with inline CRUD |
@@ -241,7 +241,7 @@ Schema namespaces follow **storage grouping**. Access directories follow **call 
 
 Postgres reads and writes live in a `queries.ts` / `mutations.ts` pair — but in **two different locations** depending on the domain:
 
-**Dominant pattern — `db/[domain]/`**: incidental CRUD that is not the domain's core logic. Verified dirs: `db/ai/`, `db/analytics/`, `db/brand/`, `db/desk/`, `db/notifications/`, `db/preferences/`, `db/rag/`, `db/showcase/`, `db/user/`.
+**Dominant pattern — `db/[domain]/`**: incidental CRUD that is not the domain's core logic. Verified dirs: `db/ai/`, `db/analytics/`, `db/desk/`, `db/notifications/`, `db/preferences/`, `db/rag/`, `db/showcase/`, `db/user/`.
 
 **Named exceptions — co-located in `[domain]/`**: domains where the queries ARE the domain logic and cannot be cleanly separated. Verified: `blog/queries.ts` + `blog/mutations.ts` (post rendering, revision management), `rawrag/queries.ts` (retrieval ranking), `llmwiki/queries.ts` (hybrid search).
 
@@ -490,7 +490,7 @@ These gaps are recorded, not concealed.
 
 1. **Reads/writes duality is real.** The location of queries is not a single rule — it is a dominant pattern (`db/[domain]/`) with named exceptions (`blog/`, `rawrag/`, `llmwiki/` co-locate). A contributor who blindly follows the dominant pattern will put a retrieval-ranking query in the wrong place.
 
-2. **Schema/access asymmetry is design, not mess.** Schema namespaces group by storage; access dirs group by call sites. The `schema/app` namespace is deliberately split across `db/user/`, `db/brand/`, `db/preferences/`. `schema/auth`, `schema/blog`, `schema/feedback`, and `schema/admin` have no `db/` access dir because their access is handled by Better Auth, co-located domain logic, or inline CRUD.
+2. **Schema/access asymmetry is design, not mess.** Schema namespaces group by storage; access dirs group by call sites. The `schema/app` namespace is deliberately split across `db/user/` and `db/preferences/` (custom palettes are accessed from `server/branding/`). `schema/auth`, `schema/blog`, `schema/feedback`, and `schema/admin` have no `db/` access dir because their access is handled by Better Auth, co-located domain logic, or inline CRUD.
 
 3. **`db/jobs/` holds only a test.** `src/lib/server/db/jobs/jobs.test.ts` exists, but there are no `queries.ts` or `mutations.ts` files there. Job query logic lives in the `jobs/` domain module.
 

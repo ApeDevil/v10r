@@ -1,125 +1,56 @@
 # Visual Identity Architecture
 
-> **Note:** the feature shipped — the admin branding page lives at `/admin/branding`. The active brand is the `brand_settings` singleton (`enabled` flag), resolved server-side per request via `getBrandConfig()` (`src/lib/server/style/brand.ts`); admin-created palettes live in `custom_palettes` (`src/lib/server/branding/palette-crud.ts`, `CustomPaletteEditor.svelte`). There is no brand cookie — the brand is a cached DB read, not a cookie.
+> How v10r resolves a visitor's palette, typography and border-radius — and why there is deliberately **no** site-wide brand lock.
 
-> Final architecture for the admin-configurable "visual identity" system that allows an admin to lock a site-wide palette, typography, and border-radius — overriding the style randomizer for all visitors.
+An earlier design shipped an admin "visual identity" lock: a `brand_settings` singleton that overrode every visitor's style. It was removed. v10r's whole point is that the interface is not stiff, and a switch that pins all visitors to one palette contradicts that. What remains is per-visitor: a randomizer, a manual picker, and optional custom palettes.
 
 ## Decision Summary
 
 | Tension | Decision | Rationale |
 |---------|----------|-----------|
-| Cookie vs DB vs Edge Config | **Cached DB singleton** | `getBrandConfig()` reads `brand_settings` once per warm instance, then serves from memory — zero DB queries per page load |
-| Generic `site_config` vs dedicated table | **Dedicated `brand_settings` singleton** | Only two concrete use cases exist (randomizer + visual identity), a generic config table is speculative |
-| Build-time CSS vs runtime injection | **Neither -- reuse `data-palette` attribute cascade** | The CSS already exists in `app.css`, the pipeline already works, adding a new mechanism is unnecessary |
-| Admin UI location | **`admin/branding/`** | Admin-level config is not user settings; separate route enables admin gating |
-| Randomizer coexistence | **`data-palette` priority: enabled brand > user cookie > randomizer** | CSS cascade stays identical; only the source of the attribute value changes |
+| Site-wide brand vs per-visitor style | **Per-visitor only** | No lock, no singleton, no override. Every visitor owns their own look |
+| Where a visitor's choice lives | **`v10r_style` cookie**, mirrored to `app.user_preferences` for signed-in users | Non-httpOnly so the blocking script can apply it before first paint |
+| Build-time CSS vs runtime injection | **Neither — reuse the `data-palette` attribute cascade** | The CSS already lives in `app.css`; only the attribute value changes |
+| Random vs manual | **Both, side by side** | `POST /api/style/roll` rolls all three at once; `POST /api/style/pick` sets one dimension at a time |
+| Custom palette persistence | **Client-side for everyone, DB for signed-in users** | Crafting needs no account; saving does |
+| UI location | **`/showcases/shell/style`** | Public, and the showcase *is* the feature test |
 
 ---
 
-## 1. What Already Exists (and why most proposals overcomplicate this)
+## 1. Resolution cascade
 
-The codebase already has a complete theme delivery pipeline:
+`loadStyle` in `src/hooks.server.ts` runs early in the handle chain — notably **before** `sessionPopulate`, so it structurally cannot know who the user is. It resolves in this order:
 
-```
-Cookie (v10r_style)
-  --> hooks.server.ts (loadStyle hook reads cookie, populates event.locals.style)
-  --> i18n hook (transformPageChunk replaces %palette%, %typography%, %radius% in app.html)
-  --> app.html (<html data-palette="P3" data-typography="T2" data-radius="R1">)
-  --> app.css ([data-palette="P3"] { --color-bg: ...; })
-  --> app.html inline <script> (reads cookie client-side to prevent FOUC on navigation)
-```
+1. **`v10r_style` cookie** — `{pid, tid, rid, v:1}`, parsed by `parseStyleCookie`.
+2. **Custom palette lookup** — only when `pid` starts with `CP_`. `getCustomPaletteById()` reads the row and stamps `locals.customPaletteColors`.
+3. **Randomizer fallback** — no cookie, or one that no longer resolves → `generateRandomStyle()`, written back so the next visit is stable.
 
-This pipeline handles 8 palettes, 5 typography sets, and 3 radius presets with zero DB queries per page load. The visual identity feature should **extend this pipeline**, not replace it.
+The resolved style lands on `locals.style` and is stamped onto `<html>` as `data-palette` / `data-typography` / `data-radius` via `transformPageChunk`.
 
----
+### Why `getCustomPaletteById` has no ownership check
 
-## 2. Architecture: Brand Priority Chain
+Because it cannot. `loadStyle` runs before auth is populated, so at that point there is no user to compare against. A `CP_` id is therefore globally readable by anyone who puts it in their own cookie.
 
-The core insight is that "visual identity" is just a different source for the same `data-palette`/`data-typography`/`data-radius` attributes. The question is: which source wins?
+This is accepted, and the mitigation is placed where it can actually work: **ownership is enforced at the write and pick boundaries**, never at render. See §3.
 
-### Priority (highest to lowest):
-
-1. **Enabled brand settings** (`brand_settings.enabled = true`) -- if set, always wins
-2. **User's locked style cookie** (`v10r_style` with `lck: true`) -- user chose to keep a style
-3. **Randomizer** -- generates a new style
-
-### Where brand settings come from:
-
-- Admin saves theme in admin UI --> form action upserts the `brand_settings` singleton and calls `invalidateBrandCache()`
-- On every page load, the style hook calls `getBrandConfig()`, which serves the cached `brand_settings` row (0ms warm, one DB read on cold start)
-- When `enabled` is true, the brand palette/typography/radius override the randomizer for all visitors
-
-### Why not Edge Config / Vercel KV?
-
-The research agent correctly identified that DB-per-request is bad. But the solution is not to add a new infrastructure dependency -- it is the in-memory cache. `getBrandConfig()` reads the DB once per warm instance, then serves every request from memory at zero network cost.
-
-The DB stores the admin's intent. The in-memory cache delivers it to every request. Admin saves once, then `invalidateBrandCache()` forces a fresh read.
-
-### How do new visitors get the brand?
-
-The style hook calls `getBrandConfig()`. If a brand is enabled, every visitor receives the brand palette/typography/radius — no per-visitor cookie or DB write required.
-
-```
-Page load:
-  1. style hook: getBrandConfig() (cache hit, or one cold-start DB read)
-  2. Check: is brand_settings.enabled true?
-     YES --> use brand palette/typo/radius
-     NO  --> fall through to user style cookie / randomizer
-  3. All subsequent requests on a warm instance: cache-driven, zero DB queries
-```
+The function is also TTL-cached (60s, 1000-entry cap, negative results included). The style cookie is read on *every* request before any auth or rate limit, so an uncached `CP_` path would let a forged cookie turn each request into a Neon round-trip.
 
 ---
 
-## 3. Database Schema
+## 2. Custom palettes
 
-Two tables in the `app` schema. No revision history (YAGNI -- git tracks the code, and for a template project, admin theme changes are infrequent).
-
-### `brand_settings` (singleton)
-
-The active visual identity. One row, `id = 'default'`.
-
-```
-src/lib/server/db/schema/app/brand-settings.ts
-```
-
-```typescript
-import { boolean, text, timestamp } from 'drizzle-orm/pg-core';
-import { appSchema } from './user-preferences';
-
-export const brandSettings = appSchema.table('brand_settings', {
-  id: text('id').primaryKey().default('default'),                // Single-row pattern
-  paletteId: text('palette_id').notNull().default('P1'),         // e.g. 'P1', 'P3'
-  typographyId: text('typography_id').notNull().default('T1'),   // e.g. 'T1', 'T4'
-  radiusId: text('radius_id').notNull().default('R2'),           // e.g. 'R1', 'R2'
-  enabled: boolean('enabled').notNull().default(false),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-});
-```
-
-**Why single-row with `id = 'default'`**: No multi-tenant, no versioning needed. `UPSERT` on `'default'` is atomic and simple. If multi-tenant is ever needed, `id` becomes `tenantId`.
-
-**Why three string columns, not JSONB**: Flat, fixed-shape data is simpler to validate, query, and type. JSONB would add parsing overhead for no benefit.
-
-**Why `enabled`**: A positive boolean reads better in queries (`WHERE enabled = true`). Default `false` means saving a theme does not immediately affect the site.
-
-### `custom_palettes`
-
-Backs admin-created palettes derived from a preset. Per-user, not a singleton.
+`app.custom_palettes` — per-user rows, derived from a preset.
 
 ```
 src/lib/server/db/schema/app/custom-palettes.ts
 ```
 
 ```typescript
-import { index, integer, jsonb, text, timestamp } from 'drizzle-orm/pg-core';
-import { user } from '../auth/_better-auth';
-import { appSchema } from './user-preferences';
-
 export const customPalettes = appSchema.table('custom_palettes', {
   id: text('id').primaryKey(),                                   // CP_{nanoid(12)}
   name: text('name').notNull(),
   description: text('description').notNull().default(''),
-  basePaletteId: text('base_palette_id').notNull(),             // P0-P7 source preset
+  basePaletteId: text('base_palette_id').notNull(),              // P0-P7 source preset
   lightColors: jsonb('light_colors').notNull().$type<Record<string, string>>(),
   darkColors: jsonb('dark_colors').notNull().$type<Record<string, string>>(),
   accentOffset: integer('accent_offset').notNull().default(0),
@@ -129,191 +60,67 @@ export const customPalettes = appSchema.table('custom_palettes', {
 });
 ```
 
----
+CRUD lives in `src/lib/server/branding/palette-crud.ts`. Every mutation carries an `AND created_by = :userId` predicate, so a mismatched id simply affects no rows and returns `null` — which is how the endpoints collapse "doesn't exist" and "isn't yours" into a single 404.
 
-## 4. Module Structure
+`countCustomPalettes()` backs `MAX_CUSTOM_PALETTES_PER_USER`. Creation used to be admin-only and so carried no ceiling; open to every account it needs one.
 
-```
-src/lib/server/style/brand.ts          -- getBrandConfig(), invalidateBrandCache()
-src/lib/server/branding/palette-crud.ts -- custom palette CRUD
-src/lib/server/db/brand/queries.ts     -- getBrandSettings() / upsert
-```
+### SSR-only CSS injection — the constraint that shapes the UI
 
-### `style/brand.ts`
+A custom palette has no rule in `app.css`. Its CSS is a `<style>` block built in the `i18n` handle and injected at `</head>` on a **full document render only**. Client-side navigation and `invalidateAll()` do not re-run `transformPageChunk`.
 
-Reads the `brand_settings` singleton through `getBrandSettings()` and caches it in memory.
+Consequence: setting `data-palette="CP_…"` from the client finds no matching rule, and every `--color-*` falls back to the `:root` defaults — the page *loses* its palette instead of gaining one. Applying a custom palette therefore triggers a full reload; the cookie is already written by then, so SSR renders it correctly in both light and dark. The live preview inside the editor sidesteps this entirely by writing inline custom properties on `<html>` (see `styles/random/token-vars.ts`), which outrank every `[data-palette]` rule.
 
-```typescript
-import { getBrandSettings } from '$lib/server/db/brand/queries';
-
-let cached: { style: StyleConfig; enabled: boolean } | null = null;
-
-/** Get brand config from cache (0ms) or DB (cold start). */
-export async function getBrandConfig() {
-  if (cached) return cached;
-  const row = await getBrandSettings();
-  if (!row) return null;
-  cached = {
-    style: { paletteId: row.paletteId, typographyId: row.typographyId, radiusId: row.radiusId },
-    enabled: row.enabled,
-  };
-  return cached;
-}
-
-/** Invalidate cache — call after admin saves brand settings. */
-export function invalidateBrandCache() {
-  cached = null;
-}
-```
-
-The cache is unreliable on serverless cold starts (a new instance has an empty cache), but for warm instances it eliminates redundant queries. On a cold start `getBrandConfig()` reads the DB once, caches the row, and serves every subsequent request from memory. `invalidateBrandCache()` is called after an admin save so the next read picks up the change.
-
-### `branding/palette-crud.ts`
-
-CRUD for the `custom_palettes` table. Exports `createCustomPalette`, `getCustomPaletteById`, `getCustomPalette`, `listCustomPalettes`, `updateCustomPalette`, and `deleteCustomPalette`.
+`tokenToCssVar()` is shared between that preview and the SSR injector on purpose — two copies that merely agree today is how a preview silently stops matching what the server renders.
 
 ---
 
-## 5. Hooks Integration
+## 3. API surface
 
-The style hook in `hooks.server.ts` calls `getBrandConfig()` before consulting the user's cookie. An enabled brand always wins; otherwise the existing cookie / randomizer path runs:
+| Endpoint | Auth | Notes |
+|---|---|---|
+| `POST /api/style/roll` | none | Randomizes all three dimensions, excluding the current values. 10/60s per IP |
+| `POST /api/style/pick` | none for presets | Sets any subset of `{paletteId, typographyId, radiusId}`, merged onto the current cookie. 60/60s, keyed per user when signed in |
+| `POST /api/style/palettes` | session | Create. Quota-checked |
+| `PATCH\|DELETE /api/style/palettes/[id]` | session | Ownership enforced in the SQL predicate |
 
-```typescript
-const loadStyle: Handle = async ({ event, resolve }) => {
-  // 1. Enabled brand wins for everyone (cache hit, or one cold-start DB read)
-  const brand = await getBrandConfig();
-  if (brand?.enabled) {
-    event.locals.style = resolveStyle(brand.style)!;
-    return resolve(event);
-  }
+**A `CP_` pick requires a session and ownership** (401 / 404). Rendering someone else's palette via a hand-edited cookie is already possible and cannot be prevented (§1) — but `pick` echoes the palette *name*, which is user-authored text. Leaving it open would build a `CP_id → name` oracle that the cookie path never exposed. Gating it also keeps the endpoint's anonymous surface entirely DB-free, the same property that makes `roll` safe.
 
-  // 2. User's existing style cookie
-  const config = parseStyleCookie(event.cookies.get(STYLE_COOKIE_NAME));
-  let resolved = config ? resolveStyle(config) : null;
-
-  // 3. No valid cookie -- generate random style (existing behavior)
-  if (!resolved) {
-    const random = generateRandomStyle();
-    resolved = resolveStyle(random)!;
-    event.cookies.set(STYLE_COOKIE_NAME, serializeStyleCookie(random), STYLE_COOKIE_OPTIONS);
-  }
-
-  event.locals.style = resolved;
-  return resolve(event);
-};
-```
-
-The brand has no per-visitor cookie. The server resolves the brand on every request from the in-memory cache, and the `transformPageChunk` hook writes the resolved `data-palette`/`data-typography`/`data-radius` attributes into `app.html`. The existing FOUC inline script only reads the user's `v10r_style` cookie — when a brand is enabled the attributes are already server-rendered, so there is no flash to prevent.
+Both mutating endpoints sit under `/api/` and are not CSRF-exempt, so clients must call them through `apiFetch` (which sets `X-Requested-With`).
 
 ---
 
-## 6. Admin UI
+## 4. Client state
 
-### Route: `[[locale=locale]]/admin/branding/`
+`src/lib/state/style.svelte.ts` holds the resolved style in a context-scoped rune. Its single `$effect` is the **only** writer of the three `<html>` `data-*` attributes — everything else mutates state and lets that effect react.
 
-**Why not user settings**: Settings is per-user (theme, density, locale, avatar). Branding is site-wide admin config. Mixing them conflates user preferences with admin authority.
-
-**Why `admin/branding/` not `admin/design/`**: "Branding" is more precise. "Design" implies the design system itself, which is not what the admin is editing. They are choosing a brand palette.
-
-```
-src/routes/[[locale=locale]]/admin/branding/
-  +page.server.ts    -- load current brand settings, form actions (save, enable, disable)
-  +page.svelte       -- admin branding UI
-```
-
-The `[[locale=locale]]` catch-all param is the project-wide i18n routing pattern; admin gating lives in the route guards, not a separate route group.
-
-### Form Actions
-
-```typescript
-// +page.server.ts
-export const actions: Actions = {
-  save: async ({ request, locals }) => {
-    // Validate admin role
-    // Parse form: paletteId, typographyId, radiusId, enabled (boolean)
-    // Upsert brand_settings singleton
-    // Call invalidateBrandCache() so the next request reads the new row
-  },
-};
-```
-
-### Admin UI Components (per UX agent recommendations)
-
-Three sections, each using existing palette/typography/radius registries:
-
-1. **Color Palette** -- grid of 8 palette swatches (P0-P7), click to select
-2. **Typography** -- 5 typography preset cards (T1-T5), click to select
-3. **Border Radius** -- 3 radius preset cards (R1-R3), click to select
-4. **Publish toggle** -- switch to activate/deactivate visual identity
-5. **Live preview** -- client-side `style.setProperty` via `$effect` (changes `data-palette` attribute on `<html>` in real-time, reverts on cancel)
-
-**No custom color picker in v1.** The UX agent's "brand color picker with auto-derivation" is a good idea but requires a color generation library (`culori`), WCAG validation UI, and a 9th dynamic palette slot. That is a v2 feature. For v1, the admin picks from the existing 8 palettes. This means:
-- Zero new CSS generation
-- Zero new color tokens
-- Reuses the exact same `[data-palette="P3"]` rules already in `app.css`
-- The entire feature is routing existing pieces differently, not building new ones
+- `roll(toast?)` — random, all three.
+- `pick(patch, toast?)` — one dimension. Applied optimistically so the page repaints on click, then reconciled with the server response (authoritative — it resolves custom palette names). **Reverts on failure**: leaving the visual changed while the cookie was not would look fine until the next reload silently snapped it back.
 
 ---
 
-## 7. Propagation to All Visitors
-
-Because the brand is resolved server-side on every request, there is no per-visitor propagation lag. When the admin enables a brand and `invalidateBrandCache()` runs, the next request on each warm instance reads the new `brand_settings` row and serves it to everyone — an enabled brand outranks any existing `v10r_style` cookie. Disabling the brand reverses this on the next request: visitors fall through to their cookie or the randomizer.
-
-The only delay is per-instance cache warmth: a warm instance that has not yet been invalidated serves the previous value until its next read. `invalidateBrandCache()` clears the local cache; cold instances read fresh.
-
----
-
-## 8. Randomizer Coexistence
-
-The randomizer continues to work exactly as it does today. The visual identity is simply a higher-priority source for the same data:
+## 5. File map
 
 ```
-Priority cascade (resolved server-side each request):
-  brand_settings.enabled = true      --> use brand palette/typo/radius
-  v10r_style cookie present and valid --> use user's randomizer selection
-  neither                             --> randomize, set v10r_style
-```
-
-When the admin disables the brand (`enabled = false`), the next request falls through to the cookie / randomizer path for everyone. No cookie cleanup is needed because the brand never set a cookie.
-
----
-
-## 9. File Map
-
-```
-FILES:
-  src/lib/server/db/schema/app/brand-settings.ts             -- brand_settings singleton table
-  src/lib/server/db/schema/app/custom-palettes.ts            -- custom_palettes table
-  src/lib/server/style/brand.ts                              -- getBrandConfig() / invalidateBrandCache()
-  src/lib/server/branding/palette-crud.ts                    -- custom palette CRUD
-  src/lib/server/db/brand/queries.ts                         -- getBrandSettings() / upsert
-  src/routes/[[locale=locale]]/admin/branding/+page.server.ts -- Load + form actions
-  src/routes/[[locale=locale]]/admin/branding/+page.svelte    -- Admin branding UI
-  src/hooks.server.ts                                         -- Style hook reads getBrandConfig() first
+src/hooks.server.ts                              -- loadStyle + CSS injection
+src/lib/state/style.svelte.ts                    -- client state, sole data-* writer
+src/lib/styles/random/cookie.ts                  -- v10r_style serialization
+src/lib/styles/random/generator.ts               -- generateRandomStyle, resolveStyle
+src/lib/styles/random/merge.ts                   -- mergeStyleConfig (pure, tested)
+src/lib/styles/random/token-vars.ts              -- token -> CSS var, live preview
+src/lib/styles/random/palette-sanitize.ts        -- injection allowlist
+src/lib/server/branding/palette-crud.ts          -- custom palette CRUD + TTL cache
+src/lib/server/style/persist.ts                  -- user_preferences mirror
+src/lib/components/branding/StylePicker.svelte   -- the public picker
+src/lib/components/branding/CustomPaletteWorkshop.svelte
+src/lib/components/branding/CustomPaletteEditor.svelte
+src/routes/api/style/{roll,pick,palettes}/       -- endpoints
+src/routes/[[locale=locale]]/(public)/showcases/shell/style/
 ```
 
 ---
 
-## 10. Known Tradeoffs
+## 6. Known tradeoffs
 
-| Tradeoff | Accepted Because |
-|----------|-----------------|
-| No custom color picker -- admin picks from 8 existing palettes | Avoids color generation complexity; 8 palettes cover a wide range; custom colors are a v2 feature with two concrete use cases before building |
-| Cache warmth can briefly serve a stale brand | `invalidateBrandCache()` clears the local cache on save; a not-yet-invalidated warm instance serves the previous value until its next read; acceptable for a template project |
-| In-memory cache is empty on serverless cold starts | `getBrandConfig()` reads the DB once per cold start, then serves from memory; the cache is opportunistic, not required for correctness |
-| No revision history for theme changes | Git tracks code changes; admin theme is a single row updated infrequently; revision table is speculative |
-| No Edge Config integration | Adds infrastructure dependency for a template project; the cached DB singleton has zero per-request latency; Edge Config is appropriate for SaaS scale, not here |
-
----
-
-## 11. Future Extension Path
-
-When the feature earns more complexity:
-
-1. **Custom color picker** (v2): Add a P99 "Custom" palette slot. Admin picks a brand hue. Use `culori` to derive all 22 tokens in OKLCH. Generate a `[data-palette="P99"]` CSS block at save time (stored in DB as JSONB, injected via `transformPageChunk` as an inline `<style>`). The existing pipeline accommodates this -- `transformPageChunk` already runs, just add a new placeholder.
-
-2. **Cross-instance invalidation** (v2): Add a short cache TTL or a Redis pub/sub signal so warm instances pick up a brand change without waiting for their next cold read. Today `invalidateBrandCache()` only clears the instance that handled the save.
-
-3. **Multi-tenant** (v3): Change `brand_settings.id` from `'default'` to a tenant identifier. Add tenant resolution to hooks. Everything else stays the same.
-
-4. **Custom fonts** (v2): The scout agent correctly flagged font loading as a harder FOUC problem. Custom font URLs would need `<link rel="preload">` injection via `transformPageChunk`. This is a separate feature with its own architecture concerns.
+- **Applying a custom palette costs a reload.** The alternative is extracting the `<style>` block builder into an isomorphic module used by both the hook and the client. Worth doing if custom palettes get heavier use; not worth a second implementation.
+- **`saveStyleToDb` writes are never read back.** `loadStyleFromDb` exists but has no call sites: `loadStyle` runs before `sessionPopulate`, so the hook has no user id to load by. The DB copy is a backup, not a restore path — do not describe it as "your account remembers your style" until that ordering changes.
+- **Custom palette ids are guessable-in-principle.** 48 bits of entropy makes enumeration impractical, and the payload is a palette, but this is a deliberate accept rather than an oversight.

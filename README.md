@@ -271,7 +271,7 @@ The complete, hand-maintained map of every pattern in this repo. Each row points
 | Consent & cookies | [stack/capabilities/gdpr.md](docs/stack/capabilities/gdpr.md) | [src/lib/state/consent.svelte.ts](src/lib/state/consent.svelte.ts) · [ConsentBanner.svelte](src/lib/components/shell/ConsentBanner.svelte) | `/showcases/privacy/cookies` |
 | Data retention policy & purge jobs | [blueprint/architecture/jobs.md](docs/blueprint/architecture/jobs.md) | [src/lib/server/jobs/](src/lib/server/jobs/) | `/showcases/privacy/retention` |
 | Cross-device debug pairing (QR + HMAC cookie) | [blueprint/admin/pairing.md](docs/blueprint/admin/pairing.md) | [src/lib/server/pairing/](src/lib/server/pairing/) | — (`/pair/[code]`) |
-| Site branding lock (custom palette) | [blueprint/visual-identity-architecture.md](docs/blueprint/visual-identity-architecture.md) | [src/lib/server/branding/](src/lib/server/branding/) · [src/lib/components/branding/](src/lib/components/branding/) | — (`/admin/branding`) |
+| Style picking + custom palettes | [blueprint/visual-identity-architecture.md](docs/blueprint/visual-identity-architecture.md) | [src/lib/server/branding/](src/lib/server/branding/) · [src/lib/components/branding/](src/lib/components/branding/) | `/showcases/shell/style` |
 | Audit log, announcements, feature flags | [blueprint/admin/README.md](docs/blueprint/admin/README.md) | [src/lib/server/admin/](src/lib/server/admin/) | — (`/admin`) |
 | Feedback capture | [blueprint/abuse/honeypot.md](docs/blueprint/abuse/honeypot.md) | [src/lib/server/feedback/](src/lib/server/feedback/) | — (`/feedback`) |
 

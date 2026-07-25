@@ -10,7 +10,6 @@ import {
 	STYLE_ROLL_RATE_LIMIT_PREFIX,
 	STYLE_ROLL_RATE_LIMIT_WINDOW,
 } from '$lib/server/config';
-import { getBrandConfig } from '$lib/server/style/brand';
 import { saveStyleToDb } from '$lib/server/style/persist';
 import {
 	generateRandomStyle,
@@ -37,12 +36,6 @@ export const POST: RequestHandler = async ({ cookies, locals, getClientAddress }
 
 	// Read current style to exclude from re-roll
 	const current = parseStyleCookie(cookies.get(STYLE_COOKIE_NAME));
-
-	// Reject if visual identity is locked
-	const brand = await getBrandConfig();
-	if (brand?.enabled) {
-		return apiError(409, 'brand_locked', 'Visual identity is locked.');
-	}
 
 	const excludePaletteIds: PaletteId[] = current ? [current.paletteId] : [];
 	const excludeTypographyIds: TypographyId[] = current ? [current.typographyId] : [];

@@ -33,7 +33,6 @@ import {
 import { logFeatureStatus } from '$lib/server/features';
 import { clearOwnerCookie, PAIRING_COOKIE, verifyOwnerCookie } from '$lib/server/pairing/cookie';
 import { isSameHost, needsCsrf } from '$lib/server/security/csrf';
-import { getBrandConfig } from '$lib/server/style/brand';
 import {
 	generateRandomStyle,
 	parseStyleCookie,
@@ -45,6 +44,7 @@ import {
 import { deriveAccentTokens } from '$lib/styles/random/accent';
 import { safeEntries } from '$lib/styles/random/palette-sanitize';
 import { getRadius } from '$lib/styles/random/radius-registry';
+import { tokenToCssVar } from '$lib/styles/random/token-vars';
 import type { PaletteId, ResolvedStyle } from '$lib/styles/random/types';
 import { getTypography } from '$lib/styles/random/typography-registry';
 import '$lib/server/agents';
@@ -140,9 +140,9 @@ export const securityHeaders: Handle = async ({ event, resolve }) => {
  * 2. loadStyle — reads/generates style from cookie, populates event.locals.style
  */
 const loadStyle: Handle = async ({ event, resolve }) => {
-	// locals.style is consumed only by HTML rendering. Skip the cookie parse + brand
-	// lookup on API routes (never render HTML) and SSR subrequests (internal fetches
-	// that don't produce the app shell) — saves work on every such request.
+	// locals.style is consumed only by HTML rendering. Skip the cookie parse + custom
+	// palette lookup on API routes (never render HTML) and SSR subrequests (internal
+	// fetches that don't produce the app shell) — saves work on every such request.
 	if (event.url.pathname.startsWith('/api/') || event.isSubRequest) {
 		return resolve(event);
 	}
@@ -150,18 +150,6 @@ const loadStyle: Handle = async ({ event, resolve }) => {
 	const cookieValue = event.cookies.get(STYLE_COOKIE_NAME);
 	let config = parseStyleCookie(cookieValue);
 	let resolved: ResolvedStyle | null = null;
-
-	// Brand override — always checked, even with valid cookie (0ms cached)
-	let brand: Awaited<ReturnType<typeof getBrandConfig>> = null;
-	try {
-		brand = await getBrandConfig();
-	} catch {
-		// DB unreachable — fall through to cookie/random style
-	}
-
-	if (brand?.enabled) {
-		config = { ...brand.style };
-	}
 
 	// Resolve: CP_ path (async DB lookup) vs registry path (sync)
 	if (config?.paletteId?.startsWith('CP_')) {
@@ -178,7 +166,6 @@ const loadStyle: Handle = async ({ event, resolve }) => {
 						paletteName: cp.name,
 						typographyName: typography.name,
 						radiusName: radius.name,
-						...(brand?.enabled ? { branded: true } : {}),
 					};
 					event.locals.customPaletteColors = {
 						light: cp.lightColors as Record<string, string>,
@@ -192,9 +179,6 @@ const loadStyle: Handle = async ({ event, resolve }) => {
 		}
 	} else if (config) {
 		resolved = resolveStyle(config);
-		if (brand?.enabled && resolved) {
-			resolved = { ...resolved, branded: true };
-		}
 	}
 
 	// Fallback: no valid resolution → random
@@ -284,8 +268,6 @@ const i18n: Handle = ({ event, resolve }) =>
 		let customPaletteStyle = '';
 		const cp = event.locals.customPaletteColors;
 		if (cp && paletteId) {
-			const toVar = (k: string) => (k.startsWith('surface-') ? `--${k}` : `--color-${k}`);
-
 			const accentOffset = event.locals.customPaletteAccentOffset ?? 0;
 			const lightAccent = cp.light.primary ? deriveAccentTokens(cp.light.primary, accentOffset) : {};
 			const darkAccent = cp.dark.primary ? deriveAccentTokens(cp.dark.primary, accentOffset) : {};
@@ -297,10 +279,10 @@ const i18n: Handle = ({ event, resolve }) =>
 				...safeEntries(cp.light),
 				...Object.entries(lightAccent).filter(([k]) => !lightExplicit.has(k)),
 			]
-				.map(([k, v]) => `${toVar(k)}:${v}`)
+				.map(([k, v]) => `${tokenToCssVar(k)}:${v}`)
 				.join(';');
 			const darkVars = [...safeEntries(cp.dark), ...Object.entries(darkAccent).filter(([k]) => !darkExplicit.has(k))]
-				.map(([k, v]) => `${toVar(k)}:${v}`)
+				.map(([k, v]) => `${tokenToCssVar(k)}:${v}`)
 				.join(';');
 			const safePid = paletteId.replace(/[^a-zA-Z0-9_-]/g, '');
 			customPaletteStyle = `<style>[data-palette="${safePid}"]{${lightVars}}.dark[data-palette="${safePid}"]{${darkVars}}</style>`;

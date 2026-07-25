@@ -24,7 +24,6 @@ const groups = [
 		items: [
 			{ label: 'Users', href: '/admin/users', icon: 'i-lucide-users' },
 			{ label: 'Feature Flags', href: '/admin/flags', icon: 'i-lucide-toggle-right' },
-			{ label: 'Branding', href: '/admin/branding', icon: 'i-lucide-palette' },
 		],
 	},
 	{

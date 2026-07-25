@@ -208,7 +208,7 @@ Route areas under `src/routes/[[locale=locale]]/` and the parallel `src/routes/a
 | Public + Showcases | `(public)/` (blog, docs, showcases, feedback) | — | — | None; self-documenting layer |
 | Auth | `auth/` (login, verify) | `/api/auth/*` | `auth/` | ALTCHA-gated, rate-limited |
 | App (member) | `app/` (dashboard, account, account/data, notifications, settings) | `/api/preferences/*`, `/api/notifications/*`, `/api/consent`, `/api/me/*` | `preferences/`, `notifications/`, `privacy/` | `app/+layout.server.ts` |
-| Admin | `admin/` (access, ai, analytics, audit, branding, cache, content, db, feedback, flags, jobs, notifications, rag, users — ~14 areas) | `/api/admin/*` | various | `admin/+layout.server.ts` |
+| Admin | `admin/` (access, ai, analytics, audit, cache, content, db, feedback, flags, jobs, notifications, rag, users — ~13 areas) | `/api/admin/*` | various | `admin/+layout.server.ts` |
 | Desk (AI workspace) | `desk/` | `/api/desk/*` (files, folders, spreadsheets, theme, workspaces) | `store/`, `branding/` | `desk/+layout.server.ts` |
 | Blog | `(public)/blog/` | `/api/blog/*` (posts, comments, tags, assets, domains, folders, feed.xml) | `blog/`, `content/` | Capability-gated authoring |
 | AI Assistant | — | `/api/ai/*` (chat, conversations, proposals, providers) | `ai/` | Session-gated |
@@ -219,7 +219,7 @@ Route areas under `src/routes/[[locale=locale]]/` and the parallel `src/routes/a
 | Pairing | `pair/[code]` | `/api/pair/*` | `pairing/` | HMAC cookie; independent of Better Auth |
 | Jobs | — | `/api/cron/[job]` dispatcher | `jobs/` | Bearer token (Vercel cron) |
 | Abuse | — | — | `abuse/` | Cross-cutting; wired in hooks |
-| Visual identity | — | `/api/style/*`, `/api/desk/theme` | `branding/`, `styles/random/` | — |
+| Visual identity | `(public)/showcases/shell/style` | `/api/style/*`, `/api/desk/theme` | `branding/`, `styles/random/` | Picking public; palette CRUD session-gated |
 
 **Self-documenting showcases**: pages under `(public)/showcases/` serve simultaneously as documentation, feature tests, and copy templates. If the showcase works, the feature is proven. This is the repo's primary test strategy for UI patterns.
 
@@ -479,7 +479,7 @@ Nine end-to-end flows have been traced through the system:
 4. **RAG retrieval** — `retrieve` in `rawrag/index.ts` fans out across `tiers/` (tier-1 `searchContextual` = pgvector + BM25 fused via reciprocal-rank fusion, tier-2 `searchParentChild`, tier-3 `searchGraph` — Postgres seeds → Neo4j expand → Postgres hydrate)
 5. **Notification delivery** — `NotificationService.send()` → DB insert + SSE push + web push (both synchronous) + channel routing (async via outbox: Telegram / Discord / email)
 6. **Background jobs** — `runJob()` + scheduler (`setInterval`, persistent container) vs cron dispatcher (`/api/cron/[job]`, serverless); same runner, different trigger
-7. **Visual identity** — `loadStyle` in hooks resolves cookie → brand override → custom palette DB lookup → `generateRandomStyle` fallback; Paraglide `transformPageChunk` injects palette CSS into every HTML response
+7. **Visual identity** — `loadStyle` in hooks resolves cookie → custom palette DB lookup (`CP_` ids only) → `generateRandomStyle` fallback; Paraglide `transformPageChunk` injects palette CSS into every HTML response. There is no site-wide brand override: every visitor's style is their own
 8. **Auth + session + grants + analytics** — `authHandler` (Better Auth) → `sessionPopulate` (locals.user/session/grants) → `analyticsCollector` (consent-tiered, fire-and-forget). Factor mutations (passkey/TOTP) route through two global Better Auth hooks in `auth/index.ts`: a `before` step-up gate and an `after` chokepoint that audits, revokes sibling sessions, emails, and stamps step-up freshness. Passkeys are a phishing-resistant first factor; TOTP is a step-up factor only (passwordless sign-ins are never challenged). See [blueprint/auth.md](./blueprint/auth.md#passkeys--step-up-totp)
 9. **Personal-data access** (privacy) — `collectUserData` in `privacy/report.ts` is the one aggregator behind four adapters: the `/account/data` page load (streamed), `GET /api/me/data`, `GET /api/me/data/export`, and `DELETE /api/me` (via `deleteUserData`). One definition of "all my data"; secrets projected out at the query, prior-session IPs masked. Erasure is the Postgres FK cascade plus a best-effort `deleteUserGraph` sweep (Neo4j has no FKs). See [stack/capabilities/gdpr.md](./stack/capabilities/gdpr.md)
 

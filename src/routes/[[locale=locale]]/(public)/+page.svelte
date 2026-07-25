@@ -156,43 +156,41 @@ v          10            r</pre>
 				<LogoHero />
 			</div>
 
-			{#if !style.branded}
-				<div class="roll-block">
-					<p class="roll-label">{style.paletteName} · {style.typographyName}</p>
-					<div class="split-btn" class:split-btn-disabled={style.rolling}>
-						<button
-							class="split-main focus-ring"
-							onclick={() => style.roll()}
-							disabled={style.rolling}
-							aria-label={m.home_hero_roll_aria()}
-						>
-							<span class="roll-icon i-lucide-dices"></span>
-							<span>{style.rollCount === 0 ? m.home_hero_roll_first() : m.home_hero_roll_again()}</span>
-						</button>
-						<span class="split-divider" aria-hidden="true"></span>
-						<button
-							class="split-aux focus-ring"
-							onclick={cycleTheme}
-							aria-label={m.home_hero_theme_aria({ label: themeLabels[displayMode]() })}
-						>
-							<span class="roll-icon {themeIcons[displayMode]}"></span>
-						</button>
-					</div>
-					<DropdownMenu items={localeItems} align="center">
-						{#snippet trigger({ props })}
-							<button
-								{...props}
-								class="lang-btn focus-ring"
-								aria-label={m.shell_language_choose()}
-							>
-								<span class="roll-icon i-lucide-globe"></span>
-								<span>{localeLabel(currentLocale)}</span>
-								<span class="chevron-icon i-lucide-chevron-down"></span>
-							</button>
-						{/snippet}
-					</DropdownMenu>
+			<div class="roll-block">
+				<p class="roll-label">{style.paletteName} · {style.typographyName}</p>
+				<div class="split-btn" class:split-btn-disabled={style.rolling}>
+					<button
+						class="split-main focus-ring"
+						onclick={() => style.roll()}
+						disabled={style.rolling}
+						aria-label={m.home_hero_roll_aria()}
+					>
+						<span class="roll-icon i-lucide-dices"></span>
+						<span>{style.rollCount === 0 ? m.home_hero_roll_first() : m.home_hero_roll_again()}</span>
+					</button>
+					<span class="split-divider" aria-hidden="true"></span>
+					<button
+						class="split-aux focus-ring"
+						onclick={cycleTheme}
+						aria-label={m.home_hero_theme_aria({ label: themeLabels[displayMode]() })}
+					>
+						<span class="roll-icon {themeIcons[displayMode]}"></span>
+					</button>
 				</div>
-			{/if}
+				<DropdownMenu items={localeItems} align="center">
+					{#snippet trigger({ props })}
+						<button
+							{...props}
+							class="lang-btn focus-ring"
+							aria-label={m.shell_language_choose()}
+						>
+							<span class="roll-icon i-lucide-globe"></span>
+							<span>{localeLabel(currentLocale)}</span>
+							<span class="chevron-icon i-lucide-chevron-down"></span>
+						</button>
+					{/snippet}
+				</DropdownMenu>
+			</div>
 		</div>
 	</div>
 </section>

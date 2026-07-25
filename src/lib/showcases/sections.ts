@@ -166,9 +166,14 @@ export const showcaseSections: ShowcaseSection[] = [
 		pageHref: '/showcases/shell/style',
 		anchorId: 'shell-style-randomizer',
 		title: 'Style Randomizer',
-		keywords: ['palette', 'typography', 'radius'],
+		keywords: ['dice', 'roll', 'shuffle'],
 	},
-	{ pageHref: '/showcases/shell/style', anchorId: 'shell-style-identity', title: 'Visual Identity' },
+	{
+		pageHref: '/showcases/shell/style',
+		anchorId: 'shell-style-picker',
+		title: 'Pick Your Style',
+		keywords: ['palette', 'typography', 'radius', 'shape', 'custom palette'],
+	},
 
 	// UI / Layouts
 	{ pageHref: '/showcases/ui/layouts', anchorId: 'layout', title: 'Layout Primitives' },
