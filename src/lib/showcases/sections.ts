@@ -246,6 +246,32 @@ export const showcaseSections: ShowcaseSection[] = [
 	{ pageHref: '/showcases/jobs', anchorId: 'jobs-recent', title: 'Recent Job Runs' },
 	{ pageHref: '/showcases/jobs', anchorId: 'jobs-files', title: 'Job Files' },
 
+	// Workers
+	{
+		pageHref: '/showcases/workers',
+		anchorId: 'workers-meanings',
+		title: 'Two Meanings of Worker',
+		keywords: ['web worker', 'queue worker', 'service worker', 'terminology'],
+	},
+	{
+		pageHref: '/showcases/workers',
+		anchorId: 'workers-thread',
+		title: 'Web Worker Thread Offload',
+		keywords: ['web worker', 'offscreencanvas', 'transferable', 'main thread', 'jank'],
+	},
+	{
+		pageHref: '/showcases/workers',
+		anchorId: 'workers-queue',
+		title: 'Queue Worker',
+		keywords: ['skip locked', 'claim', 'outbox', 'backoff', 'dead letter', 'lease'],
+	},
+	{
+		pageHref: '/showcases/workers',
+		anchorId: 'workers-not-jobs',
+		title: 'Workers vs Jobs',
+		keywords: ['job', 'trigger', 'queue', 'cron'],
+	},
+
 	// Notifications
 	{ pageHref: '/showcases/notifications/channels', anchorId: 'channels-providers', title: 'Channel Providers' },
 	{ pageHref: '/showcases/notifications/channels', anchorId: 'channels-user', title: 'User Channel Preferences' },

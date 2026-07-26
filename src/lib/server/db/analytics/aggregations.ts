@@ -20,6 +20,7 @@ import type {
 } from '$lib/server/analytics/types';
 import { UNKNOWN_CLIENT, UNKNOWN_COUNTRY } from '$lib/server/analytics/types';
 import { db } from '$lib/server/db';
+import { rowsOf } from '$lib/server/db/rows';
 import { dailyPageStats, events, sessions, userEvents } from '$lib/server/db/schema/analytics';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
@@ -32,23 +33,6 @@ function daysAgo(n: number): string {
 
 function dateRange(days: number) {
 	return { from: daysAgo(days), to: daysAgo(0) };
-}
-
-/**
- * Unwrap a `db.execute()` result into plain rows.
- *
- * The two drivers this codebase runs on disagree about the shape: the
- * `neon-serverless` pool used in production returns a pg `QueryResult`
- * (`{ rows, rowCount }`), while `pglite` — and the HTTP driver — hand back a
- * bare array. Casting straight to an array therefore type-checks and then
- * throws at runtime on whichever driver you did not test against, which is
- * exactly how a panel ends up permanently empty behind a `safeDeferPromise`
- * fallback instead of loudly failing.
- */
-function rowsOf<T>(result: unknown): T[] {
-	if (Array.isArray(result)) return result as T[];
-	const rows = (result as { rows?: unknown })?.rows;
-	return Array.isArray(rows) ? (rows as T[]) : [];
 }
 
 // ── Overview metrics ─────────────────────────────────────────────────────────

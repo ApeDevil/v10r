@@ -154,10 +154,15 @@ Audit log for external channel deliveries.
 | `provider_message_id` | text | | External reference for correlation |
 | `error_code` | text | | Provider-specific error code |
 | `error_message` | text | | Human-readable error |
-| `attempts` | integer | NOT NULL, DEFAULT 0 | Retry count |
-| `attempted_at` | timestamptz | | Last attempt timestamp |
+| `attempts` | integer | NOT NULL, DEFAULT 0 | Attempt count — also the claim's **fence token** |
+| `next_attempt_at` | timestamptz | NOT NULL, DEFAULT NOW() | Earliest time this row may be claimed; carries the retry backoff |
+| `attempted_at` | timestamptz | | Claim timestamp **and** lease start |
 | `sent_at` | timestamptz | | Successful send timestamp |
 | `created_at` | timestamptz | NOT NULL, DEFAULT NOW() | Queue time |
+
+`next_attempt_at` is NOT NULL on purpose: nullable would force a COALESCE into both the claim's `WHERE` and its `ORDER BY`, and btree ASC sorts NULLs last — never-attempted rows would queue behind every retry.
+
+There is no separate `claimed_at` / `lock_expires_at` / `worker_id`. `attempted_at` is the claim stamp, the lease length is a constant (`DELIVERY_CLAIM_LEASE_MS`), and `attempts` is the fence. See [architecture/workers.md](../architecture/workers.md).
 
 **Enums:**
 ```sql
@@ -165,10 +170,10 @@ CREATE TYPE delivery_status AS ENUM (
   'pending',     -- Queued for send
   'processing',  -- Currently sending
   'sent',        -- Provider accepted
-  'failed',      -- Provider rejected (after retries)
-  'skipped',     -- Channel inactive, user setting off
-  'retrying',    -- Failed, scheduled for another attempt
-  'dead'         -- Exhausted retries, abandoned
+  'failed',      -- Provider says it will never work (403, bad address) — retry is pointless
+  'skipped',     -- UNUSED: never written by any code path
+  'retrying',    -- UNUSED: a retry is 'pending' with a future next_attempt_at
+  'dead'         -- Retryable fault outlived the budget — surfaces in the admin panel
 );
 
 CREATE TYPE notification_channel AS ENUM (
@@ -181,10 +186,13 @@ CREATE TYPE notification_channel AS ENUM (
 
 `push` is a valid enum value (shared with `notification_settings` and the router), but no row in `notification_deliveries` ever carries it — push delivery is synchronous and never touches the outbox.
 
+`skipped` and `retrying` stay in the enum only because removing a Postgres enum value requires recreating the type. A row being retried is `pending` with `attempts > 0` and a future `next_attempt_at` — derive the label at read time rather than adding DDL.
+
 **Indexes:**
 - `notification_id` - lookup deliveries for a notification
-- Partial index on `(status, created_at)` WHERE `status = 'failed'` - for retry job
-- Partial index on `(status, created_at)` WHERE `status = 'pending'` - for processing
+- `delivery_pending_idx` on `(next_attempt_at, created_at)` WHERE `status = 'pending'` - the claim's exact WHERE + ORDER BY
+- `delivery_processing_idx` on `(attempted_at)` WHERE `status = 'processing'` - the stale-claim reaper
+- Partial index on `(created_at)` WHERE `status = 'failed'` - failure review
 - Partial index WHERE `status = 'dead'` - for the admin dashboard (`getDeadDeliveries`)
 - `(channel, created_at)` index - channel health stats (`getChannelHealthStats`)
 
@@ -280,10 +288,15 @@ CREATE INDEX notification_deliveries_failed_idx
 ON notification_deliveries (status, created_at)
 WHERE status = 'failed';
 
--- Only pending deliveries
+-- Only pending deliveries — ordered by due-time, which is what the claim scans
 CREATE INDEX notification_deliveries_pending_idx
-ON notification_deliveries (status, created_at)
+ON notification_deliveries (next_attempt_at, created_at)
 WHERE status = 'pending';
+
+-- Claimed-but-unreported rows, for the stale-claim reaper
+CREATE INDEX notification_deliveries_processing_idx
+ON notification_deliveries (attempted_at)
+WHERE status = 'processing';
 ```
 
 ---
@@ -380,6 +393,7 @@ CREATE TABLE notification_deliveries (
   error_code TEXT,
   error_message TEXT,
   attempts INTEGER NOT NULL DEFAULT 0,
+  next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   attempted_at TIMESTAMPTZ,
   sent_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -393,8 +407,12 @@ ON notification_deliveries (status, created_at)
 WHERE status = 'failed';
 
 CREATE INDEX notification_deliveries_pending_idx
-ON notification_deliveries (status, created_at)
+ON notification_deliveries (next_attempt_at, created_at)
 WHERE status = 'pending';
+
+CREATE INDEX notification_deliveries_processing_idx
+ON notification_deliveries (attempted_at)
+WHERE status = 'processing';
 
 CREATE INDEX notification_deliveries_dead_idx
 ON notification_deliveries (status, created_at)

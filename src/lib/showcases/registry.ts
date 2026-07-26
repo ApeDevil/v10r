@@ -369,6 +369,14 @@ export const showcases: ShowcaseCard[] = [
 		docs: [{ href: '/docs/blueprint/architecture/jobs', label: 'Jobs' }],
 	},
 	{
+		href: '/showcases/workers',
+		icon: 'i-lucide-cpu',
+		title: m.showcase_workers_title,
+		description: m.showcase_workers_description,
+		domain: 'backend',
+		docs: [{ href: '/docs/blueprint/architecture/workers', label: 'Workers' }],
+	},
+	{
 		href: '/showcases/notifications',
 		icon: 'i-lucide-bell',
 		title: m.showcase_notifications_title,

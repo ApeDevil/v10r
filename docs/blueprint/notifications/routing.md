@@ -170,9 +170,12 @@ The delivery worker runs on its own `setInterval` in `src/lib/server/jobs/delive
 | Aspect | Detail |
 |--------|--------|
 | **Trigger** | `setInterval` (15s, `DEFAULT_DELIVERY_INTERVAL_MS`) |
-| **Processing** | SELECT pending deliveries, process in batches |
-| **Retry** | Built into worker loop — failed records stay pending, attempts incremented |
+| **Processing** | Atomic claim (`FOR UPDATE SKIP LOCKED`) of `DELIVERY_BATCH_SIZE` due rows |
+| **Retry** | Exponential backoff via `next_attempt_at`; dead-lettered when the budget is spent |
+| **Recovery** | Stale claims reclaimed after `DELIVERY_CLAIM_LEASE_MS` at the top of each drain |
 | **Advantage** | Zero external dependencies, immediate pickup, full control |
+
+The claim, the fence token, and the reaper are specified in [architecture/workers.md](../architecture/workers.md) — this table is only the routing view of them.
 
 `service.ts` calls `routeExternal` directly (fire-and-forget) after the outbox write — there is no runtime branch and no event emit.
 
@@ -190,11 +193,17 @@ On serverless (no persistent process), `notification-delivery` is a registered j
 
 ### Retry Configuration
 
+Policy lives in `$lib/server/notifications/backoff.ts` (pure) with constants in `$lib/server/config.ts`. The delay is applied against the **database** clock, so a skewed app server cannot shift the queue.
+
 | Setting | Value | Rationale |
 |---------|-------|-----------|
-| `maxAttempts` | 3 | Balance reliability vs spam |
-| `backoff` | Exponential (1s, 4s, 16s) | Respect rate limits |
-| `maxDelay` | 1 hour | Don't delay too long |
+| `DELIVERY_MAX_ATTEMPTS` | 5 | With real backoff, 3 covers only ~2.5 min of provider downtime |
+| `DELIVERY_RETRY_BASE_MS` | 30s | Must exceed the 15s tick, or it is not a backoff |
+| `DELIVERY_RETRY_FACTOR` | 4 | Curve: 30s → 2m → 8m → 32m (~42 min total window) |
+| `DELIVERY_RETRY_MAX_MS` | 1 hour | Don't delay too long |
+| `DELIVERY_RETRY_JITTER` | ±15% | Stop a recovered provider being hit by a herd |
+
+Terminal states are split deliberately: **`failed`** means the provider says this will never work (403, bad address, no recipient) so a Retry button is pointless; **`dead`** means a retryable fault outlived the budget and a human should look. Only `dead` and `failed` rows are eligible for the admin retry action.
 
 ---
 

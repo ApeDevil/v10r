@@ -16,6 +16,13 @@ export default defineConfig({
 	ssr: {
 		noExternal: ['three'], // Required for Three.js/Threlte SSR compatibility
 	},
+	worker: {
+		// Vite defaults worker bundles to 'iife', which cannot carry `import`
+		// statements. Web Workers spawned as ES modules — `new Worker(url, { type:
+		// 'module' })` — therefore work in dev (native ESM, no bundling) and break
+		// only in the production build. See src/lib/workers/.
+		format: 'es',
+	},
 	server: {
 		host: '0.0.0.0',
 		port: 5173,

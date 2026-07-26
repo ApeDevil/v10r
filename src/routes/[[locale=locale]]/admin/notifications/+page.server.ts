@@ -1,5 +1,5 @@
 import { fail } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
 import { createAnnouncement, deactivateAnnouncement, getAllAnnouncementsAdmin } from '$lib/server/admin/announcements';
 import { requireAdmin } from '$lib/server/auth/guards';
@@ -121,10 +121,28 @@ export const actions: Actions = {
 
 		if (!deliveryId) return fail(400, { message: 'Delivery ID required' });
 
-		await db
+		// Terminal states only: never yank a row out from under a live worker
+		// ('processing'), never double-queue one that is already scheduled ('pending').
+		// 'failed' is retryable here alongside 'dead' so an operator can override a
+		// mis-classified non-retryable error — that is the point of a manual button.
+		// attempts: 0 deliberately grants a fresh budget, and next_attempt_at: now()
+		// makes the row claimable on the next tick instead of inheriting a stale backoff.
+		const [row] = await db
 			.update(notificationDeliveries)
-			.set({ status: 'pending', errorCode: null, errorMessage: null, attempts: 0 })
-			.where(eq(notificationDeliveries.id, deliveryId));
+			.set({
+				status: 'pending',
+				errorCode: null,
+				errorMessage: null,
+				attempts: 0,
+				attemptedAt: null,
+				nextAttemptAt: new Date(),
+			})
+			.where(and(eq(notificationDeliveries.id, deliveryId), inArray(notificationDeliveries.status, ['dead', 'failed'])))
+			.returning({ id: notificationDeliveries.id, channel: notificationDeliveries.channel });
+
+		if (!row) {
+			return fail(409, { message: 'Delivery is not in a retryable state (already queued or in flight).' });
+		}
 
 		const ctx = getAuditContext(event);
 		await recordAuditEvent({
@@ -132,6 +150,7 @@ export const actions: Actions = {
 			action: 'notification.delivery.retry',
 			targetType: 'delivery',
 			targetId: deliveryId,
+			detail: { channel: row.channel },
 		});
 
 		return { success: true, message: 'Delivery queued for retry.' };
