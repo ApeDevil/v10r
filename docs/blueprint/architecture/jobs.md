@@ -13,6 +13,8 @@ Background work in the application falls into two categories distinguished by **
 
 Both are "jobs." The trigger varies. The job does not.
 
+A **worker** is the other half of that distinction and is not covered here: a job is pushed work handed a trigger, a worker is a resident consumer that pulls from a source. `notification-delivery` is registered as a job *and* runs a claim-based queue worker inside itself — see [workers.md](./workers.md).
+
 ---
 
 ## Architecture Diagram
@@ -397,6 +399,8 @@ export type TriggerType = 'cron' | 'scheduler' | 'manual';
 | **pg-boss** | Neon PgBouncer breaks LISTEN/NOTIFY and advisory locks silently. Worker is just cron polling (up to 60s delay). |
 | **graphile-worker** | Memory leaks reported with Bun. Not officially supported on Bun. |
 | **Trigger.dev v3** | CLI requires Node.js (friction in Bun-first project). Experimental Bun runtime has broken OpenTelemetry. |
+
+These stay rejected. The one place that genuinely needed queue semantics — the notification outbox — got them from Postgres directly: `FOR UPDATE SKIP LOCKED` is **transaction**-scoped, so it survives the same PgBouncer that silently breaks pg-boss's session-scoped advisory locks. See [workers.md](./workers.md).
 
 ### Known Tradeoffs
 

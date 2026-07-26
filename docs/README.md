@@ -32,7 +32,7 @@ Every `blueprint/` subdirectory, one line each. Flat blueprint files (api.md, au
 | [ai/](./blueprint/ai/) | AI assistant, layered RAG (llmwiki + rawrag), provider routing, TOON format |
 | [analytics/](./blueprint/analytics/) | Two-lane model (anonymous vs authenticated), consent gating, LIA + DPIA screening, client telemetry, rollups |
 | [app-shell/](./blueprint/app-shell/) | Layout, sidebar, navigation, toasts, session lifecycle, settings |
-| [architecture/](./blueprint/architecture/) | Multi-client core (hexagonal), background jobs, native-client seam |
+| [architecture/](./blueprint/architecture/) | Multi-client core (hexagonal), background jobs, workers (Web Worker + claim-based queue worker), native-client seam |
 | [data/](./blueprint/data/) | Drizzle schema workflow, Neon dev-branch refresh from prod |
 | [db/](./blueprint/db/) | Relational + graph database patterns, polyglot freshness |
 | [design/](./blueprint/design/) | Design tokens, tonal elevation, styling techniques, component layer system |

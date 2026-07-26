@@ -227,7 +227,7 @@ Route areas under `src/routes/[[locale=locale]]/` and the parallel `src/routes/a
 
 ## Layer 4 — Modules
 
-`src/lib/server/[domain]/` holds ~31 server-side domain modules. `src/lib/[client-domain]/` holds client-side state, styles, i18n, schemas, and config. The public surface of every module is its `index.ts` **barrel export** — external callers import from the barrel only, never from internal files.
+`src/lib/server/[domain]/` holds ~40 server-side domain modules. `src/lib/[client-domain]/` holds client-side state, styles, i18n, schemas, and config. The public surface of every module is its `index.ts` **barrel export** — external callers import from the barrel only, never from internal files.
 
 ### Server-side domains (selected by file count)
 
@@ -298,6 +298,9 @@ export const db = drizzle(pool, { schema: { ...schema, ...relations } });
 | `i18n/` | Runtime locale wrapper |
 | `paraglide/` | Generated message functions — do not edit |
 | `schemas/` | Valibot schemas, foldered to mirror routes |
+| `showcases/` | Showcase registry + sections — the catalog hubs, nav, and search read |
+| `pwa/` | Service-worker policy (pure) + push / session-refresh clients |
+| `workers/` | Web Worker payloads — pure compute, browser-API half, `postMessage` shell |
 | `nav/`, `shortcuts/`, `config/` | App navigation, keyboard shortcuts, app config |
 
 ### Import direction
@@ -477,7 +480,7 @@ Nine end-to-end flows have been traced through the system:
 2. **Multi-client core** (notifications) — same `getNotifications` / `markAsRead` called from UI, REST, AI tool, and job
 3. **AI chat + tool-calling** — `orchestrateChat` in `ai/chat-orchestrator.ts`; provider resolution → `streamText` → tool loop → persistence
 4. **RAG retrieval** — `retrieve` in `rawrag/index.ts` fans out across `tiers/` (tier-1 `searchContextual` = pgvector + BM25 fused via reciprocal-rank fusion, tier-2 `searchParentChild`, tier-3 `searchGraph` — Postgres seeds → Neo4j expand → Postgres hydrate)
-5. **Notification delivery** — `NotificationService.send()` → DB insert + SSE push + web push (both synchronous) + channel routing (async via outbox: Telegram / Discord / email)
+5. **Notification delivery** — `NotificationService.send()` → DB insert + SSE push + web push (both synchronous) + channel routing (async via outbox: Telegram / Discord / email). The outbox drain is a claim-based queue worker: rows are taken with an atomic `FOR UPDATE SKIP LOCKED` claim, terminal writes are fenced on `attempts`, and a lapsed lease is reclaimed inside the same drain. See [blueprint/architecture/workers.md](./blueprint/architecture/workers.md)
 6. **Background jobs** — `runJob()` + scheduler (`setInterval`, persistent container) vs cron dispatcher (`/api/cron/[job]`, serverless); same runner, different trigger
 7. **Visual identity** — `loadStyle` in hooks resolves cookie → custom palette DB lookup (`CP_` ids only) → `generateRandomStyle` fallback; Paraglide `transformPageChunk` injects palette CSS into every HTML response. There is no site-wide brand override: every visitor's style is their own
 8. **Auth + session + grants + analytics** — `authHandler` (Better Auth) → `sessionPopulate` (locals.user/session/grants) → `analyticsCollector` (consent-tiered, fire-and-forget). Factor mutations (passkey/TOTP) route through two global Better Auth hooks in `auth/index.ts`: a `before` step-up gate and an `after` chokepoint that audits, revokes sibling sessions, emails, and stamps step-up freshness. Passkeys are a phishing-resistant first factor; TOTP is a step-up factor only (passwordless sign-ins are never challenged). See [blueprint/auth.md](./blueprint/auth.md#passkeys--step-up-totp)

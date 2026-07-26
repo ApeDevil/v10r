@@ -47,7 +47,7 @@ Users connect their preferred channels and control which notification types go w
 
 | File | Topics |
 |------|--------|
-| **[routing.md](./routing.md)** | • Notification router architecture<br>• Provider abstraction and rate limiting<br>• Outbox pattern with runtime-adaptive processing<br>• Web push outbox bypass (synchronous fan-out)<br>• Delivery tracking and retry logic |
+| **[routing.md](./routing.md)** | • Notification router architecture<br>• Provider abstraction and rate limiting<br>• Outbox pattern with runtime-adaptive processing<br>• Web push outbox bypass (synchronous fan-out)<br>• Delivery lifecycle: atomic claim, exponential backoff, the `failed` vs `dead` split, stale-claim reclaim (mechanics in [architecture/workers.md](../architecture/workers.md)) |
 | **[channels.md](./channels.md)** | • Telegram deep link connection flow<br>• Discord OAuth2 flow and DM limitations<br>• Web push subscriptions (VAPID, per-device)<br>• Credential storage and token refresh<br>• Channel health monitoring |
 | **[settings.md](./settings.md)** | • Route structure (`/account/notifications/settings`)<br>• Channel × Type settings matrix UI<br>• Per-device push card<br>• Connection management UX<br>• Mobile considerations |
 | **[schema.md](./schema.md)** | • `user_telegram_accounts` table<br>• `user_discord_accounts` table<br>• `push_subscriptions` table<br>• Extended settings columns<br>• Delivery tracking tables |

@@ -34,7 +34,7 @@ The first and most consequential decision for any new file is **adapter vs. doma
 
 ```
 velociraptor/
-  src/                  Application source (470 .svelte, 897 .ts, 1 .css)
+  src/                  Application source (515 .svelte, 1137 .ts, 1 .css)
   docs/                 Documentation (README-indexed, 3-layer structure)
   scripts/              Bun scripts wired via package.json
   static/               Verbatim public assets including GLB models
@@ -80,12 +80,20 @@ src/
     analytics/          Client tracking
     config/             App configuration
     content-syntax/     Syntax highlighting helpers
+    docs/               Docs-viewer client types
     errors/             Client-side error types
     feedback/           Client feedback helpers
-    showcase/           Showcase-specific client helpers
+    pwa/                Service-worker POLICY (sw-policy.ts, pure) + push/session-refresh
+                        clients. The impure shell is src/service-worker.ts
+    search/             Client search matching + route-id helpers
+    showcase/           Per-showcase client helpers (auth/, mcp/)
+    showcases/          Showcase REGISTRY + sections (registry.ts, sections.ts) — the
+                        catalog every hub, nav, and search lane reads
     types/              Shared TypeScript types
     utils/              Utility functions (fonts/, spreadsheet/)
-    3d/                 Three.js / Threlte client helpers
+    workers/            Web Worker payloads: palette.ts (pure, node-tested),
+                        image-analysis.ts (browser APIs), *.worker.ts (postMessage shell
+                        only). Same pure-core/impure-shell split as pwa/
     auth-client.ts      Better Auth client instance
     api.ts              CSRF-safe fetch wrapper (adds X-Requested-With header)
     branding.ts         Client-side branding utilities
@@ -103,7 +111,7 @@ src/
 
 `$lib/server/` is server-only **by path**. SvelteKit refuses to bundle it client-side. No runtime guard needed — the path is the boundary. Never import `$lib/server/*` from a `.svelte` file or a universal `+page.ts`.
 
-### ~33 domain folders
+### ~40 domain folders
 
 ```
 src/lib/server/
@@ -140,6 +148,8 @@ src/lib/server/
                 extract, persist to the `image` pgSchema
   jobs/         Runner, scheduler, delivery-scheduler, registered jobs
   llmwiki/      Hybrid vector+BM25 wiki search; co-locates queries
+  mcp/          Hosted MCP: shared JSON-RPC transport + Bearer auth, patterns/ registry
+                and excerpts. Serves /api/mcp/public (read-only) and /api/mcp/admin
   monitoring/   Observability helpers
   neon/         Neon control-plane API client; sole NEON_API_KEY holder
   notifications/ Send, stream SSE, route, outbox, channel providers
@@ -149,6 +159,9 @@ src/lib/server/
   privacy/      GDPR aggregator: collectUserData → PersonalDataReport (Art 15/20),
                 deleteUserData (Art 17). Single source of truth for "all my data";
                 reads ONLY from db/, consumed by 5 surfaces (page, 3 api/me routes, export action)
+  rag-shared/   embed-config.ts — embedding model + chunk sizing, deliberately Vite-free
+                so standalone Bun ingest scripts can import it by RELATIVE path (no $lib
+                alias there). Re-exported from config.ts; never re-declare these values
   rawrag/       Three-tier retrieval pipeline; co-locates queries
   search/       Server search adapters (pages, docs, showcases, blog FTS), buildSearchIndex, searchContent;
                 catalog-map.ts (formatCatalogMap — path-free system-prompt hint),
@@ -328,7 +341,7 @@ src/routes/
       blog/
       docs/                   Public docs site (mirrors foundation/stack/blueprint)
       feedback/
-      showcases/              86 +page.svelte files; self-documenting feature tests
+      showcases/              91 +page.svelte files; self-documenting feature tests
     (dev)/                    Route group — 404'd in prod by devRouteGuard hook
       llmwiki-probe/
     admin/                    Admin area; gated by admin/+layout.server.ts
