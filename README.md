@@ -1,55 +1,50 @@
 # Velociraptor (v10r)
 
-v10r is a containerized full-stack **Pattern Library** for AI-assisted web development.
-
-v10r's goal: **proven, high-performance** full-stack patterns. Rather than clone a template, your coding agent **emulates** them — adapting only what a new project needs. Lightweight and free-tier friendly.
-
-> Fast and dangerous (in a good way).
+v10r is a containerized full-stack **Pattern Library**: proven, high-performance, free-tier-friendly patterns to **emulate** — adapting only what a new project needs — rather than clone. It runs live at **[www.v10r.dev](https://www.v10r.dev/)**.
 
 
 ## What v10r is
 
 | v10r IS | v10r IS NOT |
 |---|---|
-| A pattern library for AI agents to read | A template repo to clone |
+| A pattern library to read | A template repo to clone |
 | A living reference implementation | A boilerplate starter (`create-app`, `degit`) |
-| A working model your agent emulates | A framework or library to import |
+| A working model to emulate | A framework or library to import |
 
-Instances don't clone files. An AI agent reads v10r's tested patterns and adapts only the pieces a new project needs. Static scaffolds give you files. v10r gives you a working model to build from.
+Working instances:
 
-The naming follows function-call syntax: `v10r(x)` — v10r is the function, x is the argument.
+- `v10r(lynx)` = [v4.lynxware.org](https://v4.lynxware.org/)
+- `v10r(densho)` = [densho.media](https://www.densho.media/)
 
-### Spectrum
 
-| Instance | Capabilities used |
-|---|---|
-| `v10r(landing-page)` | SvelteKit, UnoCSS — 2 of 18 |
-| `v10r(lynx)` | SvelteKit, UnoCSS, Bits UI, markdown pipeline — 5 of 18 |
-| `v10r(full-platform)` | Everything — 18 of 18 |
+## How to use
 
-**`v10r(lynx)`** is [v4.lynxware.org](https://v4.lynxware.org/) — a keyboard firmware documentation site. Static prerendered. Dropped: auth, databases, API, i18n, AI, 3D.
+Identify the capabilities your project needs, emulate only the relevant patterns. The [Pattern Index](#pattern-index) below maps every pattern to its docs, code, and proof.
 
-### Creating a new instance
+**The live site** — [www.v10r.dev](https://www.v10r.dev/): every pattern proven on a working showcase page.
 
-Point your coding agent at v10r, identify the capabilities the project needs, and let it emulate only the relevant patterns. The [Pattern Index](#pattern-index) below maps every capability to its documentation and code.
+**The code** — clone or browse: `https://gitlab.com/ApeDevil/v10r` · `https://github.com/ApeDevil/v10r`
 
-**Local** — place the repos side by side:
+**The Pattern MCP** — curated pattern cards instead of raw files: the invariants that must hold, notes on what to adapt, dependency-ordered emulation plans. Hosted, nothing to clone:
 
-```
-dev/
-├── velociraptor/      ← reference
-├── your-project/      ← instance
+```bash
+claude mcp add --transport http v10r https://www.v10r.dev/api/mcp/public
 ```
 
-**Remote** — point your agent to the hosted repo:
+Or offline against your own checkout — an ephemeral, network-isolated container with the repo mounted read-only:
 
-- `https://gitlab.com/ApeDevil/v10r`
-- `https://github.com/ApeDevil/v10r`
+```bash
+claude mcp add --scope user --transport stdio v10r-patterns -- \
+  podman run -i --rm --network=none -v /path/to/velociraptor:/v10r:ro \
+  docker.io/oven/bun:1.3.12 bun /v10r/mcp/server.ts
+```
+
+Five tools: `search_patterns` (find candidates) → `get_pattern` (full card) → `recommend_emulation_plan` (build order) → `get_file_excerpt` (bounded read); `trace_capability` walks one concept from docs to code to test to proof. Details: [mcp/README.md](./mcp/README.md).
 
 
 ## Getting Started
 
-These commands spin up v10r locally so you can explore the patterns. To build a new project *from* v10r, see [What v10r is](#what-v10r-is).
+These commands spin up v10r locally so you can explore the patterns — everything runs in the container, the host stays clean. To build *from* v10r, see [How to use](#how-to-use).
 
 ```bash
 cp .env.example .env                  # fill in DATABASE_URL
@@ -57,21 +52,7 @@ podman compose up -d                  # start container
 podman exec v10r bun run db:setup     # bootstrap DB (extensions → push → RAG → Neo4j)
 ```
 
-### Local Development
-
-Clean host system + portable setup
-
-```
-┌───────────────────────────────────────────┐
-│  Host Machine                             │
-│  ┌───────────────────────────────────┐    │
-│  │  Podman Container (v10r)          │    │
-│  │  ┌───────────────────────────┐    │    │
-│  │  │  Bun + SvelteKit          │    │    │
-│  │  └───────────────────────────┘    │    │
-│  └───────────────────────────────────┘    │
-└───────────────────────────────────────────┘
-```
+Once running, every showcase page is simultaneously documentation and test: if it works, the pattern is proven functional.
 
 
 ## Core Stack
@@ -88,49 +69,12 @@ Podman                  Container (runs everything)
 See [docs/stack/README.md](./docs/stack/README.md) for complete technology decisions. For everything the stack can do, see the [Pattern Index](#pattern-index).
 
 
-## Self-Documenting Architecture
-
-**The app documents itself by being itself.**
-
-Every showcase page serves two purposes simultaneously:
-
-| Role | What It Does |
-|------|--------------|
-| **Documentation** | Explains how the feature works |
-| **Test** | Proves the feature works |
-
-If a showcase page works, the feature is proven functional.
-
-
 ## Documentation Map
 
-The `docs/` folder uses an AI-optimized navigation structure: each directory has a README.md that acts as a **navigation hub** with topic tables showing which file covers what. AI agents find the right file faster, retrieval stays precise, and token usage stays low (read index → read target file, never everything).
-
-**Navigation rule:** start at [`docs/README.md`](./docs/README.md), drill down through directory READMEs to find the right file.
-
-Two cross-cutting maps sit above the layers — start with these for the whole-system view:
+Start at [`docs/README.md`](./docs/README.md) — every docs directory is a navigation hub; drill down through the READMEs to find the right file. Two cross-cutting maps sit above the layers:
 
 - **[system-abstraction.md](./docs/system-abstraction.md)** — how the system runs (runtime 7-layer hierarchy, request flow, hooks).
-- **[codebase-organization.md](./docs/codebase-organization.md)** — where code lives (source tree, canonical homes, import rules). The annotated source tree is at [Top-level layout](./docs/codebase-organization.md#top-level-layout).
-
-The layers themselves evolve from each other:
-
-```
-  Foundation (why/constraints) → Stack (what/choices) → Blueprint (how/implementation)
-```
-
-1. **[foundation/](./docs/foundation/)** — Source of truth (goals, requirements)
-2. **[stack/](./docs/stack/)** — Technology decisions based on PRD
-3. **[blueprint/](./docs/blueprint/)** — Implementation specs & strategy based on stack
-
-
-## Why "Velociraptor"?
-
-The requirements of the stack are performance and lightweight — and 'Velociraptor' represents those perfectly.
-
-- **Veloci-** → "Velocity" → Speed (Bun is fast, Svelte is fast, containers are lightweight)
-- **-raptor** → The dinosaur → Cool factor + a bit dangerous/experimental (it's a test project)
-- The actual dinosaur name means **"swift thief"** in Latin (velox = swift, raptor = robber/thief)
+- **[codebase-organization.md](./docs/codebase-organization.md)** — where code lives (source tree, canonical homes, import rules).
 
 
 ## Pattern Index
@@ -159,7 +103,8 @@ The complete, hand-maintained map of every pattern in this repo. Each row points
 | Request-cycle visualizer (form · API · AI) | [system-abstraction.md](docs/system-abstraction.md) | [src/lib/server/cycle/](src/lib/server/cycle/) · [src/lib/components/cycle/](src/lib/components/cycle/) | `/showcases/cycle/form` · `/api` · `/ai` |
 | Deployment (Vercel primary, tri-target) | [blueprint/deployment.md](docs/blueprint/deployment.md) · [stack/ops/deployment.md](docs/stack/ops/deployment.md) | [svelte.config.js](svelte.config.js) · [vercel.json](vercel.json) | — |
 | Testing infrastructure (Vitest, PGlite isolation) | [blueprint/testing/ai-testing-infrastructure.md](docs/blueprint/testing/ai-testing-infrastructure.md) | [src/lib/server/test/](src/lib/server/test/) · [vitest.config.ts](vitest.config.ts) | — |
-| Pattern MCP (agent-queryable pattern registry) | [blueprint/architecture/pattern-mcp.md](docs/blueprint/architecture/pattern-mcp.md) | [mcp/](mcp/) | `/showcases/mcp` |
+| Pattern MCP (agent-queryable pattern registry, local stdio) | [blueprint/architecture/pattern-mcp.md](docs/blueprint/architecture/pattern-mcp.md) | [mcp/](mcp/) | `/showcases/mcp` |
+| Hosted MCP (two trust surfaces: public read-only · bearer admin) | [blueprint/architecture/hosted-mcp.md](docs/blueprint/architecture/hosted-mcp.md) | [src/lib/server/mcp/](src/lib/server/mcp/) · [src/routes/api/mcp/](src/routes/api/mcp/) | — (`POST /api/mcp/public`, `/admin/mcp`) |
 
 ### App Shell & Navigation
 
@@ -370,6 +315,3 @@ The complete, hand-maintained map of every pattern in this repo. Each row points
 | Markdown editor (CodeMirror, slash commands) | [blueprint/blog.md](docs/blueprint/blog.md) | [src/lib/components/editor/](src/lib/components/editor/) | — |
 | Prerendered docs site | [blueprint/pages.md](docs/blueprint/pages.md) | [src/lib/server/docs/](src/lib/server/docs/) | — (`/docs`) |
 
-### Maintaining this index
-
-This index is hand-maintained. Its coverage source of truth is [src/lib/showcases/registry.ts](src/lib/showcases/registry.ts) — a new showcase area there means a new `###` section here; a new sublink means a new row. Other drift points: a new `docs/blueprint/<area>/` directory (new Docs links + a row in [blueprint/README.md](docs/blueprint/README.md)), a new `src/lib/server/<domain>/` module (new Code cell), a renamed route (Showcase cells).
