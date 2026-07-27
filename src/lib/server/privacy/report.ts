@@ -86,12 +86,46 @@ export interface PersonalDataReport {
 		}[]
 	>;
 	preferences: Section<Record<string, unknown> | null>;
+	/**
+	 * Counts only, and therefore `portable: false`. Conversation transcripts and
+	 * desk file contents are bulk user data that belongs in a dedicated export,
+	 * not inline in this summary — claiming Art-20 portability for a tally would
+	 * be a false claim about what the user actually received.
+	 */
 	ai: Section<{ conversationCount: number; totalTokens: number }>;
+	/** Counts only — see the note on `ai`. */
 	desk: Section<{ workspaceCount: number; fileCount: number }>;
 	notifications: Section<{ telegramLinked: boolean; discordLinked: boolean }>;
-	blogComments: Section<{ count: number }>;
-	palettes: Section<{ count: number }>;
-	/** Image Metadata Reader. withGpsCount = records where the user opted to persist location. */
+	/** Full comment bodies — small, user-authored, genuinely portable. */
+	blogComments: Section<{
+		count: number;
+		items: Array<{
+			postId: string;
+			locale: string;
+			body: string;
+			status: string;
+			createdAt: Date;
+			editedAt: Date | null;
+		}>;
+	}>;
+	/** Full palette definitions — the user's own design work. */
+	palettes: Section<{
+		count: number;
+		items: Array<{
+			id: string;
+			name: string;
+			description: string;
+			basePaletteId: string;
+			lightColors: Record<string, string>;
+			darkColors: Record<string, string>;
+			accentOffset: number;
+			createdAt: Date;
+		}>;
+	}>;
+	/**
+	 * Image Metadata Reader. withGpsCount = records where the user opted to
+	 * persist location. Counts only — see the note on `ai`.
+	 */
 	images: Section<{ imageCount: number; metadataCount: number; withGpsCount: number }>;
 	/**
 	 * Authenticated-lane analytics (`analytics.user_events`) — how this user has
@@ -213,7 +247,8 @@ export async function collectUserData(
 			const { userId: _omit, ...rest } = row;
 			return rest as Record<string, unknown>;
 		}),
-		settle('consent', true, async () => {
+		// portable: false — a count is not the data. See the `ai` field comment.
+		settle('consent', false, async () => {
 			const [row] = await db
 				.select({
 					value: count(),
@@ -223,7 +258,7 @@ export async function collectUserData(
 				.where(eq(conversation.userId, userId));
 			return { conversationCount: row?.value ?? 0, totalTokens: row?.totalTokens ?? 0 };
 		}),
-		settle('consent', true, async () => {
+		settle('consent', false, async () => {
 			const [workspaceCount, fileCount] = await Promise.all([
 				countWhere(() => db.select({ value: count() }).from(deskWorkspace).where(eq(deskWorkspace.userId, userId))),
 				countWhere(() =>
@@ -246,18 +281,46 @@ export async function collectUserData(
 			]);
 			return { telegramLinked: telegram > 0, discordLinked: discord > 0 };
 		}),
-		settle('consent', true, async () => ({
-			count: await countWhere(() => db.select({ value: count() }).from(comment).where(eq(comment.authorId, userId))),
-		})),
-		settle('consent', true, async () => ({
-			count: await countWhere(() =>
-				db.select({ value: count() }).from(customPalettes).where(eq(customPalettes.createdBy, userId)),
-			),
-		})),
+		// Comments and palettes return the ACTUAL content, not a tally: Art 20
+		// portability means the user receives their data, and a count is not data.
+		// Both are small and unambiguously user-authored, so they travel in full.
+		settle('consent', true, async () => {
+			const items = await db
+				.select({
+					postId: comment.postId,
+					locale: comment.locale,
+					body: comment.body,
+					status: comment.status,
+					createdAt: comment.createdAt,
+					editedAt: comment.editedAt,
+				})
+				.from(comment)
+				.where(eq(comment.authorId, userId))
+				.orderBy(comment.createdAt);
+			return { count: items.length, items };
+		}),
+		settle('consent', true, async () => {
+			const items = await db
+				.select({
+					id: customPalettes.id,
+					name: customPalettes.name,
+					description: customPalettes.description,
+					basePaletteId: customPalettes.basePaletteId,
+					lightColors: customPalettes.lightColors,
+					darkColors: customPalettes.darkColors,
+					accentOffset: customPalettes.accentOffset,
+					createdAt: customPalettes.createdAt,
+				})
+				.from(customPalettes)
+				.where(eq(customPalettes.createdBy, userId))
+				.orderBy(customPalettes.createdAt);
+			return { count: items.length, items };
+		}),
 		// Image Metadata Reader. GPS lives in a typed column (never only inside a
 		// blob), so location persistence is countable here — the canonical home the
 		// aggregator must query. withGpsCount reflects records where the user opted in.
-		settle('consent', true, async () => {
+		// portable: false — counts only; the images themselves are not in this report.
+		settle('consent', false, async () => {
 			const [imageCount, metadataCount, withGpsCount] = await Promise.all([
 				countWhere(() => db.select({ value: count() }).from(imageAsset).where(eq(imageAsset.userId, userId))),
 				countWhere(() =>

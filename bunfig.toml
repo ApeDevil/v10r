@@ -1,0 +1,12 @@
+[install]
+# Supply-chain cooldown: refuse to resolve a version published less than 24h ago.
+#
+# The 2025 npm worm incidents (chalk/debug, Shai-Hulud) were caught and taken
+# down within hours — a cooldown converts "we installed it first" into "someone
+# else found it first". pnpm 11 made a 1-day cooldown the default; Bun supports
+# it but does not enable it.
+#
+# KNOWN LIMIT: enforcement happens at *resolution* only. Versions already pinned
+# in bun.lock install without a cooldown check, so this protects new adds and
+# range bumps, not a plain reinstall. Pair it with `bun run audit` in the gate.
+minimumReleaseAge = 86400

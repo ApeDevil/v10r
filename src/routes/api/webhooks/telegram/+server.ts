@@ -1,8 +1,14 @@
 import { timingSafeEqual } from 'node:crypto';
 import { json } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
+import { normalizeIpKey } from '$lib/server/abuse';
+import { createLimiter } from '$lib/server/api/rate-limit';
 import { linkTelegramAccount, sendTelegramMessage } from '$lib/server/notifications/telegram';
 import type { RequestHandler } from './$types';
+
+// Telegram delivers updates one at a time per chat; 120/min is far above real
+// traffic and far below what a guessing loop needs.
+const limiter = createLimiter('rl:webhook:telegram', 120, '1 m');
 
 type TelegramUpdate = {
 	message?: {
@@ -19,7 +25,13 @@ function safeEqual(a: string, b: string): boolean {
 	return timingSafeEqual(bufA, bufB);
 }
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
+	// Limit BEFORE the secret compare, matching /api/mcp/admin and the cron
+	// route: a shared secret with nothing in front of it is an unbounded
+	// guessing surface. Telegram's real delivery rate sits far under this.
+	const { success } = await limiter.limit(normalizeIpKey(locals.clientIp) ?? 'anon');
+	if (!success) return json({ ok: false }, { status: 429 });
+
 	const botToken = env.TELEGRAM_BOT_TOKEN;
 	if (!botToken) {
 		return json({ ok: false }, { status: 503 });

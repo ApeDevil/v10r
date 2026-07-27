@@ -1,11 +1,12 @@
 import { redirect } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { apiError } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ locals, cookies }) => {
-	requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
 
 	const clientId = env.DISCORD_CLIENT_ID;
 	const redirectUri = env.DISCORD_REDIRECT_URI;

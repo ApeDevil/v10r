@@ -121,7 +121,8 @@ export const actions: Actions = {
 		const postId = getPostId(formData);
 
 		try {
-			await updatePostMetadata(postId, { status: 'archived' });
+			// null owner: admin-gated action, and no folderId is written here.
+			await updatePostMetadata(postId, { status: 'archived' }, null);
 
 			const ctx = getAuditContext(event);
 			await recordAuditEvent({

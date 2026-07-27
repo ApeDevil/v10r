@@ -23,6 +23,11 @@ export interface CreateProposalInput {
 	riskTier?: 'low' | 'medium' | 'high';
 	payload: ProposedToolCall[];
 	rationale?: string;
+	/**
+	 * Scopes in force when the plan was proposed. Frozen here so approval cannot
+	 * be replayed under a wider grant than the user reviewed.
+	 */
+	grantedScopes?: string[];
 	/** Override the default 15-minute expiry. */
 	expiresInMs?: number;
 }
@@ -39,6 +44,7 @@ export async function createProposal(input: CreateProposalInput) {
 			status: 'pending',
 			riskTier: input.riskTier ?? 'medium',
 			payload: input.payload,
+			grantedScopes: input.grantedScopes ?? [],
 			rationale: input.rationale ?? '',
 			expiresAt: new Date(now + (input.expiresInMs ?? DEFAULT_EXPIRY_MS)),
 		})

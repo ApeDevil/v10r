@@ -4,7 +4,7 @@ import { CreateConversationSchema } from '$lib/server/ai/validation';
 import { parsePagination } from '$lib/server/api/pagination';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiCreated, apiError } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 import { CONV_RATE_LIMIT_MAX, CONV_RATE_LIMIT_PREFIX, CONV_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import { checkConversationLimit } from '$lib/server/db/ai/limits';
 import { createConversation } from '$lib/server/db/ai/mutations';
@@ -16,7 +16,9 @@ import type { RequestHandler } from './$types';
 const ratelimit = createLimiter(CONV_RATE_LIMIT_PREFIX, CONV_RATE_LIMIT_MAX, CONV_RATE_LIMIT_WINDOW);
 
 export const GET: RequestHandler = async ({ url, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await ratelimit.limit(user.id);
 	if (!success) return rateLimitResponse(reset);
@@ -48,7 +50,9 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 };
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await ratelimit.limit(user.id);
 	if (!success) return rateLimitResponse(reset);

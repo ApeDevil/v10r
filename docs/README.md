@@ -39,6 +39,7 @@ Every `blueprint/` subdirectory, one line each. Flat blueprint files (api.md, au
 | [desk/](./blueprint/desk/) | Desk workspace infrastructure, spreadsheet panel |
 | [notifications/](./blueprint/notifications/) | External channel delivery — routing, Telegram/Discord/email, settings, schema |
 | [quick-search/](./blueprint/quick-search/) | Two-lane search, command palette, blog FTS |
+| [security/](./blueprint/security/) | Control topology, the two admin planes, threat model, static-scan gate tests |
 | [testing/](./blueprint/testing/) | Vitest + Claude Chrome extension testing infrastructure |
 
 ## Stack Areas

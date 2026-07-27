@@ -2,7 +2,7 @@
 name: resy
 description: "Use this agent when you need to research technical topics, evaluate technologies, find authoritative answers to implementation questions, or verify claims about tools and approaches. This agent excels at distinguishing fact from opinion and providing evidence-based recommendations.\n\nExamples:\n\n<example>\nContext: User needs to understand an implementation approach.\nuser: \"What's the recommended way to handle JWT token refresh?\"\nassistant: \"This requires finding authoritative information. Let me use the resy agent to investigate.\"\n</example>\n\n<example>\nContext: Counter-example (NOT resy).\nuser: \"What problems do teams actually hit with Drizzle migrations in production?\"\nassistant: \"That's practitioner experience — route to the scout agent.\"\n</example>"
 tools: "Read, Glob, Grep, WebFetch, WebSearch, TodoWrite"
-model: sonnet
+model: inherit
 maxTurns: 40
 color: yellow
 ---

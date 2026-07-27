@@ -7,6 +7,7 @@ import { file, fileRevision, folder, markdown, spreadsheet } from '../schema/des
 export type RevisionSource = 'ai' | 'user';
 
 import {
+	assertOwnedDestination,
 	collectSubtreeIds,
 	FolderCycleError,
 	FolderNameConflictError,
@@ -47,6 +48,7 @@ export async function createSpreadsheetFile(
 	originToolCallId: string | null = null,
 ) {
 	return db.transaction(async (tx) => {
+		await assertOwnedDestination(tx, folder, folderId, userId);
 		const fileId = createId.file();
 		const [fileRow] = await tx
 			.insert(file)
@@ -161,6 +163,10 @@ export async function restoreFile(id: string, userId: string) {
 
 /** Move a file to a folder (or root if folderId is null). Skips soft-deleted. */
 export async function moveFile(id: string, userId: string, folderId: string | null) {
+	// The WHERE clause proves the FILE is the caller's; it says nothing about the
+	// destination folder. Without this the file could be parented into another
+	// user's tree.
+	await assertOwnedDestination(db, folder, folderId, userId);
 	const [row] = await db
 		.update(file)
 		.set({ folderId, updatedAt: new Date() })
@@ -254,6 +260,7 @@ export async function duplicateSpreadsheetFile(id: string, userId: string) {
  * @throws FolderNameConflictError when `(userId, parentId, name)` collides.
  */
 export async function createFolder(userId: string, name = 'New Folder', parentId: string | null = null) {
+	await assertOwnedDestination(db, folder, parentId, userId);
 	try {
 		const [row] = await db.insert(folder).values({ id: createId.folder(), userId, parentId, name }).returning();
 		return row;
@@ -305,6 +312,11 @@ export async function moveFolder(id: string, userId: string, parentId: string | 
 		.where(and(eq(folder.id, id), eq(folder.userId, userId)))
 		.limit(1);
 	if (!target) throw new FolderNotFoundError(id);
+
+	// The destination must be the caller's too. isCycleMove alone does NOT cover
+	// this: its seed filters on user_id, so a foreign parentId simply yields an
+	// empty walk, reports "no cycle", and the move proceeds.
+	await assertOwnedDestination(db, folder, parentId, userId);
 
 	// Cycle detection: walk ancestors of new parent, ensure `id` is not among them.
 	if (parentId && (await isCycleMove(db, folder, id, parentId, userId))) {
@@ -454,6 +466,7 @@ export async function createMarkdownFile(
 	originToolCallId: string | null = null,
 ) {
 	return db.transaction(async (tx) => {
+		await assertOwnedDestination(tx, folder, folderId, userId);
 		const fileId = createId.file();
 		const [fileRow] = await tx
 			.insert(file)

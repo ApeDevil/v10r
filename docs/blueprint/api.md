@@ -1012,13 +1012,13 @@ src/
 
 | Family | Endpoints | Auth |
 |--------|-----------|------|
-| **Blog posts** | `GET/POST /api/blog/posts`, `PATCH/DELETE /api/blog/posts/[id]`, `POST .../publish`, `GET/POST .../revisions`, `GET/POST .../tags`, `GET/POST .../domain`, `POST .../export`, `POST .../import` | `requireApiBlogAuthor` |
-| **Blog assets** | `GET/POST /api/blog/assets`, `PATCH/DELETE /api/blog/assets/[id]`, `POST .../confirm` | `requireApiBlogAuthor` |
-| **Blog asset folders** | `GET/POST /api/blog/asset-folders`, `PATCH/DELETE .../[id]` | `requireApiBlogAuthor` |
-| **Blog post folders** | `GET/POST /api/blog/post-folders`, `PATCH/DELETE .../[id]` | `requireApiBlogAuthor` |
-| **Blog tags** | `GET /api/blog/tags` | `requireApiBlogAuthor` |
-| **Blog domains** | `GET /api/blog/domains` | `requireApiBlogAuthor` |
-| **Blog preview** | `POST /api/blog/preview` | `requireApiBlogAuthor` |
+| **Blog posts** | `GET/POST /api/blog/posts`, `PATCH/DELETE /api/blog/posts/[id]`, `POST .../publish`, `GET/POST .../revisions`, `GET/POST .../tags`, `GET/POST .../domain`, `POST .../export`, `POST .../import` | `guardApiBlogAuthor` |
+| **Blog assets** | `GET/POST /api/blog/assets`, `PATCH/DELETE /api/blog/assets/[id]`, `POST .../confirm` | `guardApiBlogAuthor` |
+| **Blog asset folders** | `GET/POST /api/blog/asset-folders`, `PATCH/DELETE .../[id]` | `guardApiBlogAuthor` |
+| **Blog post folders** | `GET/POST /api/blog/post-folders`, `PATCH/DELETE .../[id]` | `guardApiBlogAuthor` |
+| **Blog tags** | `GET /api/blog/tags` | `guardApiBlogAuthor` |
+| **Blog domains** | `GET /api/blog/domains` | `guardApiBlogAuthor` |
+| **Blog preview** | `POST /api/blog/preview` | `guardApiBlogAuthor` |
 | **Blog comments** | `GET/POST /api/blog/posts/[id]/comments`, `PATCH/DELETE /api/blog/comments/[id]`, `POST .../hide`, `POST .../unhide`, `POST .../remove` (admin) | GET public; POST session; admin actions `guardApiAdmin` |
 | **Grant requests** | `POST/GET/DELETE /api/grant-requests` | session (own) |
 | **Admin grant requests** | `GET /api/admin/grant-requests`, `POST .../approve`, `POST .../deny` | `guardApiAdmin` |

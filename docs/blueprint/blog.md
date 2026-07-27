@@ -1103,7 +1103,7 @@ src/routes/[[locale=locale]]/desk/
 - Writing/publishing is gated by an explicit `blog-author` grant in `auth.grant`.
 - Admin (env-pinned via `ADMIN_USER_ID`, a comma-separated list of admin user ids) bypasses the grant check.
 - The grant is admin-granted, revocable, and audited. Default new user = read + comment only.
-- Per-request authz: `hooks.server.ts` populates `event.locals.grants: string[]` once per authenticated request via a single PK-indexed lookup. `requireApiBlogAuthor(locals)` is then a pure predicate.
+- Per-request authz: `hooks.server.ts` populates `event.locals.grants: string[]` once per authenticated request via a single PK-indexed lookup. `guardApiBlogAuthor(locals)` is then a pure predicate.
 - On grant/revoke: the mutation deletes all sessions for the affected user via `db.delete(session)`. Next sign-in re-populates `grants`. Drafts remain owned by the revoked user as read-only — admin can reassign.
 
 **Routes**
@@ -1115,7 +1115,7 @@ Comment REST:          /api/blog/posts/[id]/comments (GET public, POST session)
 Desk:                  /desk             signed-in (requireAuth); editor panel
                                          further gated by blog-author grant
                                          via AuthorGate.svelte
-Blog write APIs:       /api/blog/*       requireApiBlogAuthor (renamed from
+Blog write APIs:       /api/blog/*       guardApiBlogAuthor (renamed from
                                          requireApiAuthor; uses locals.grants)
 Admin grants:          /admin/access/authors    grant/revoke per user
 Admin requests queue:  /admin/access/requests   approve/deny grant requests

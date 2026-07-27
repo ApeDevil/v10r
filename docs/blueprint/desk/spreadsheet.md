@@ -45,7 +45,7 @@ Each file type has different detail columns (spreadsheets have `cells` JSONB; fu
 
 ## REST API
 
-All endpoints require authentication (`requireApiUser`). File IDs use the `fil_` prefix.
+All endpoints require authentication (`guardApiUser`). File IDs use the `fil_` prefix.
 
 ### `GET /api/desk/files?type=spreadsheet`
 

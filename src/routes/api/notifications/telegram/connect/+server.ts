@@ -1,7 +1,7 @@
 import { env } from '$env/dynamic/private';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiOk } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 import { db } from '$lib/server/db';
 import { telegramVerificationTokens } from '$lib/server/db/schema/notifications/telegram';
 import type { RequestHandler } from './$types';
@@ -9,7 +9,9 @@ import type { RequestHandler } from './$types';
 const limiter = createLimiter('rl:notifications:telegram', 10, '1 m');
 
 export const POST: RequestHandler = async ({ locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await limiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);

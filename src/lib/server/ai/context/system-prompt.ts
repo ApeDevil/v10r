@@ -149,6 +149,16 @@ export function escapeXmlAttr(str: string): string {
 }
 
 /**
+ * Escape for an XML TEXT NODE — only the three characters that can end an
+ * element early. Quotes and apostrophes are left alone on purpose: they cannot
+ * cause a breakout outside an attribute, and rewriting every apostrophe in a
+ * user's prose or code to `&apos;` degrades what the model actually reads.
+ */
+export function escapeXmlText(str: string): string {
+	return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/**
  * Build the system prompt from `SystemPromptInput`.
  *
  * When `toolScopes` is empty (pure retrieval chat with no desk access),
@@ -189,7 +199,11 @@ export function buildSystemPrompt(input: SystemPromptInput): string {
 			.map((pc) => {
 				const statusAttr = pc.status ? ` status="${escapeXmlAttr(pc.status)}"` : '';
 				const levelAttr = pc.contentLevel ? ` level="${escapeXmlAttr(pc.contentLevel)}"` : '';
-				return `<panel type="${escapeXmlAttr(pc.panelType)}" label="${escapeXmlAttr(pc.label)}"${statusAttr}${levelAttr}>\n${pc.content}\n</panel>`;
+				// Content is escaped like every sibling value. Unescaped, a desk file
+				// containing `</panel></desk-context>` closes the block early and the
+				// rest of that file reads as prompt rather than data — to a model
+				// holding desk:write / desk:delete tools.
+				return `<panel type="${escapeXmlAttr(pc.panelType)}" label="${escapeXmlAttr(pc.label)}"${statusAttr}${levelAttr}>\n${escapeXmlText(pc.content)}\n</panel>`;
 			})
 			.join('\n');
 		prompt += `\n\n<desk-context>\n${deskBlock}\n</desk-context>`;

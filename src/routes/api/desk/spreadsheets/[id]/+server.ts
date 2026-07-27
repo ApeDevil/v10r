@@ -2,7 +2,7 @@ import * as v from 'valibot';
 import { safeParse } from 'valibot';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 import { updateSpreadsheet } from '$lib/server/db/desk/mutations';
 import { getSpreadsheet } from '$lib/server/db/desk/queries';
 import type { RequestHandler } from './$types';
@@ -43,7 +43,9 @@ const UpdateSchema = v.pipe(
 
 /** Load a spreadsheet by ID. */
 export const GET: RequestHandler = async ({ params, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 	const row = await getSpreadsheet(params.id, user.id);
 	if (!row) return apiError(404, 'not_found', 'Spreadsheet not found.');
 	return apiOk({ spreadsheet: row });
@@ -51,7 +53,9 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 /** Save/update a spreadsheet. */
 export const PUT: RequestHandler = async ({ params, request, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await limiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);

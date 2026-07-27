@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiOk } from '$lib/server/api/response';
-import { requireApiBlogAuthor, requirePostOwnership } from '$lib/server/auth/guards';
+import { guardApiBlogAuthor, guardPostOwnership } from '$lib/server/auth/guards';
 import { getLatestRevision, getPostById, publishRevision } from '$lib/server/blog';
 import { PublishSchema } from '$lib/server/blog/schemas';
 import type { RequestHandler } from './$types';
@@ -10,13 +10,15 @@ const limiter = createLimiter('rl:blog:publish', 10, '1 m');
 
 /** Publish the latest revision for a post. */
 export const POST: RequestHandler = async ({ params, request, locals }) => {
-	const { user } = requireApiBlogAuthor(locals);
+	const guard = guardApiBlogAuthor(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await limiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);
 
-	const post = await getPostById(params.id);
-	requirePostOwnership(post, user);
+	const owned = guardPostOwnership(await getPostById(params.id), user);
+	if ('error' in owned) return owned.error;
 
 	const body = await request.json().catch(() => ({}));
 	const parsed = v.safeParse(PublishSchema, body);

@@ -2,7 +2,7 @@ import * as v from 'valibot';
 import { safeParse } from 'valibot';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 import { SEARCH_RATE_LIMIT_MAX, SEARCH_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import { retrieve } from '$lib/server/rawrag';
 import { RetrievalError, retrievalErrorToStatus } from '$lib/server/rawrag/errors';
@@ -18,7 +18,9 @@ const SearchSchema = v.object({
 });
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await ratelimit.limit(user.id);
 	if (!success) return rateLimitResponse(reset);

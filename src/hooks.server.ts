@@ -1,4 +1,4 @@
-import { error, type Handle, type HandleServerError, json, type RequestEvent } from '@sveltejs/kit';
+import { error, type Handle, type HandleServerError, type RequestEvent } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { building } from '$app/environment';
@@ -9,15 +9,18 @@ import {
 	checkEmailRateLimit,
 	denied,
 	logBlocked,
+	normalizeIpKey,
 	recordEmailSend,
 	verifyAltcha,
 } from '$lib/server/abuse';
 import { parseConsentTier } from '$lib/server/analytics/consent';
 import { analyticsCollector } from '$lib/server/analytics/hook';
 import { createLimiter, isDocumentRequest } from '$lib/server/api/rate-limit';
+import { apiError } from '$lib/server/api/response';
 import { auth } from '$lib/server/auth';
 import { logAdminConfig } from '$lib/server/auth/admin-ids';
 import { listActiveGrantKinds } from '$lib/server/auth/grants';
+import { isSessionRevoked } from '$lib/server/auth/revocation';
 import { twoFactorVerifyLimitKey } from '$lib/server/auth/step-up';
 import { getCustomPaletteById } from '$lib/server/branding/palette-crud';
 import {
@@ -33,6 +36,7 @@ import {
 import { logFeatureStatus } from '$lib/server/features';
 import { clearOwnerCookie, PAIRING_COOKIE, verifyOwnerCookie } from '$lib/server/pairing/cookie';
 import { isSameHost, needsCsrf } from '$lib/server/security/csrf';
+import { sanitizeInternalPath } from '$lib/server/security/safe-path';
 import {
 	generateRandomStyle,
 	parseStyleCookie,
@@ -80,6 +84,10 @@ const twoFactorVerifyLimiter = createLimiter(
 	'ratelimit:2fa:verify',
 	STEPUP_VERIFY_RATE_LIMIT_MAX,
 	STEPUP_VERIFY_RATE_LIMIT_WINDOW,
+	// Fail CLOSED on Upstash slowness. A 6-digit TOTP is a 10^6 keyspace: an
+	// unenforced window here is worth far more to an attacker than the cost of
+	// briefly refusing second-factor verification during a Redis blip.
+	'closed',
 );
 
 const TWO_FACTOR_VERIFY_PATHS = new Set([
@@ -219,11 +227,17 @@ const stripBaseLocalePrefix: Handle = ({ event, resolve }) => {
 	// guarded access below is never reached at build time.
 	const { pathname } = event.url;
 	if (pathname.startsWith('/en/')) {
-		const stripped = pathname.slice(3);
-		return new Response(null, {
-			status: 308,
-			headers: { Location: stripped + event.url.search + event.url.hash },
-		});
+		// `slice(3)` alone is an open redirect: /en//evil.com yields the
+		// protocol-relative //evil.com, which this handler would then emit as a
+		// 308 — permanent, browser-cached, and upstream of every auth, CSRF and
+		// rate-limit handler in the chain. Validate before building Location.
+		const safe = sanitizeInternalPath(pathname.slice(3) + event.url.search);
+		if (safe) {
+			return new Response(null, { status: 308, headers: { Location: safe } });
+		}
+		// Attacker-shaped path: decline to redirect rather than invent a target.
+		// A 308 to a manufactured fallback would durably bind that nonsense path
+		// to the fallback in caches and crawlers. Falling through 404s instead.
 	}
 	return resolve(event);
 };
@@ -351,8 +365,40 @@ const authCaptchaGate: Handle = async ({ event, resolve }) => {
 	// failed attempts must not eat quota, or retrying while limited would keep
 	// the sliding window full and extend the lockout indefinitely.
 	if (email && response.ok) await recordEmailSend(email);
+
+	// Make the outcome uniform across "we won't do this" failures.
+	//
+	// The quota rule above is correct and stays — counting failed probes would
+	// re-introduce the lockout DoS it exists to prevent. But it does mean a probe
+	// for a non-existent address is CHEAP, so the thing that must not differ is
+	// the observable response. A 4xx here encodes a refusal, and "refused"
+	// includes "no such account" — which an unauthenticated caller does not get
+	// to learn.
+	//
+	// Two statuses pass through deliberately:
+	//  - 429, which is about the CALLER's rate, not the target's existence, and
+	//    which the client needs in order to back off.
+	//  - 5xx, which means the send genuinely broke. Masking that would tell the
+	//    user "check your email" during a provider outage and hide the failure.
+	if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+		return authAmbiguousResponse();
+	}
 	return response;
 };
+
+/**
+ * The single response every refused email-send returns, so "no such account"
+ * and "address rejected" are indistinguishable from a successful send.
+ *
+ * Mirrors the success body Better Auth returns for these endpoints, so a client
+ * cannot separate the two by shape either.
+ */
+function authAmbiguousResponse(): Response {
+	return new Response(JSON.stringify({ status: true }), {
+		status: 200,
+		headers: { 'Content-Type': 'application/json' },
+	});
+}
 
 /**
  * 429 for /api/auth/*: JSON for fetch clients, but a full-page navigation
@@ -383,7 +429,9 @@ const authHandler: Handle = async ({ event, resolve }) => {
 	// callbacks get their own bucket so retried logins can't starve the flow.
 	if (path.startsWith('/api/auth/') && event.locals.clientIp) {
 		const limiter = path.startsWith('/api/auth/callback/') ? authCallbackRatelimit : authRatelimit;
-		const { success, reset } = await limiter.limit(event.locals.clientIp);
+		// Bucket on the normalized key, never the raw address: an IPv6 client
+		// rotating inside its own /64 would otherwise get 2^64 free buckets.
+		const { success, reset } = await limiter.limit(normalizeIpKey(event.locals.clientIp) ?? event.locals.clientIp);
 
 		if (!success) {
 			return authRateLimited(event, reset, 'Too many requests. Please try again later.');
@@ -395,7 +443,9 @@ const authHandler: Handle = async ({ event, resolve }) => {
 	// so the session is resolved inline for these rare paths only.
 	if (TWO_FACTOR_VERIFY_PATHS.has(path)) {
 		const sessionData = await auth.api.getSession({ headers: event.request.headers }).catch(() => null);
-		const limitKey = twoFactorVerifyLimitKey(sessionData?.user.id, event.locals.clientIp);
+		// Normalize the IP fallback too: without a resolvable session this bucket
+		// is the only thing standing between a rotating client and a 6-digit TOTP.
+		const limitKey = twoFactorVerifyLimitKey(sessionData?.user.id, normalizeIpKey(event.locals.clientIp));
 		const { success, reset } = await twoFactorVerifyLimiter.limit(limitKey);
 
 		if (!success) {
@@ -428,6 +478,21 @@ const sessionPopulate: Handle = async ({ event, resolve }) => {
 	event.locals.user = sessionData?.user ?? null;
 	event.locals.session = sessionData?.session ?? null;
 
+	// Ban + revocation are checked here, not left to the session lookup, because
+	// `cookieCache` answers getSession() from a signed cookie without touching
+	// Postgres for up to SESSION_COOKIE_MAX_AGE. Deleting session rows — what a
+	// ban and `revokeSiblings` both do — would otherwise not bite for 5 minutes.
+	// `banned` is read first: it is already on the user object, so the common
+	// case costs nothing and short-circuits before the Redis round-trip.
+	const su = event.locals.user;
+	const ss = event.locals.session;
+	if (su && ss && (su.banned || (await isSessionRevoked(su.id, ss.createdAt, ss.token)))) {
+		event.locals.user = null;
+		event.locals.session = null;
+		event.locals.grants = [];
+		return resolve(event);
+	}
+
 	// Grants are read ONLY by the blog-author guards (the /api/blog/* authoring API and
 	// blog pages). Skip the Neon round-trip on every other authed request — the array
 	// stays empty and the guards still deny correctly (admins bypass via isAdmin). This
@@ -450,7 +515,10 @@ const sessionPopulate: Handle = async ({ event, resolve }) => {
 const csrfProtection: Handle = async ({ event, resolve }) => {
 	if (needsCsrf(event.request.method, event.url.pathname)) {
 		if (!event.request.headers.get('x-requested-with')) {
-			return json({ error: 'Forbidden' }, { status: 403 });
+			// `{ error: { code, message } }` like every other door — this used to
+			// return a bare string, so a client parsing `body.error.code` crashed on
+			// the one path most likely to fire during integration.
+			return apiError(403, 'csrf_failed', 'Request rejected.');
 		}
 
 		const origin = event.request.headers.get('origin');
@@ -461,7 +529,10 @@ const csrfProtection: Handle = async ({ event, resolve }) => {
 		// clients that omit Origin on same-origin POSTs. If both are missing, reject.
 		const ok = origin ? isSameHost(origin, expectedHost) : isSameHost(referer, expectedHost);
 		if (!ok) {
-			return json({ error: 'Forbidden' }, { status: 403 });
+			// `{ error: { code, message } }` like every other door — this used to
+			// return a bare string, so a client parsing `body.error.code` crashed on
+			// the one path most likely to fire during integration.
+			return apiError(403, 'csrf_failed', 'Request rejected.');
 		}
 	}
 

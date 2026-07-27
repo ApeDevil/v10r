@@ -8,6 +8,7 @@ import { orchestrateChat } from '$lib/server/ai/chat-orchestrator';
 import { guardAiRequest } from '$lib/server/ai/guard';
 import { ChatbotRequestSchema } from '$lib/server/ai/validation';
 import { apiError, apiValidationError } from '$lib/server/api/response';
+import { isAdmin } from '$lib/server/auth/guards';
 import { resolvePageContext } from '$lib/server/search';
 import type { RequestHandler } from './$types';
 
@@ -40,6 +41,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		pageContext,
 		// Server-derived, never client-trusted: catalog tool needs request locale + auth ceiling.
 		locale: locals.locale,
-		authCeiling: locals.user?.role ?? null,
+		// Derived from the env admin list, never a DB column — `user.role` used to
+		// feed this, which quietly made catalog visibility a second privilege plane.
+		authCeiling: isAdmin(locals.user) ? 'admin' : locals.user ? 'user' : null,
 	});
 };

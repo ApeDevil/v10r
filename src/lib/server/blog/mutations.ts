@@ -3,7 +3,18 @@ import type { TranslationMap } from '$lib/i18n/translate';
 import { contentHash } from '$lib/server/content/hash';
 import { db } from '$lib/server/db';
 import { createId } from '$lib/server/db/id';
-import { asset, domain, post, postTag, publishedRevision, revision, tag } from '$lib/server/db/schema/blog';
+import {
+	asset,
+	assetFolder,
+	domain,
+	post,
+	postFolder,
+	postTag,
+	publishedRevision,
+	revision,
+	tag,
+} from '$lib/server/db/schema/blog';
+import { assertOwnedDestination } from '$lib/server/db/shared/folder-tree';
 import { localeRegconfig } from '$lib/server/search/regconfig';
 import { renderBlogPost } from './pipeline';
 import type { BlogAsset, BlogDomain, BlogPost, BlogRevision, BlogTag } from './types';
@@ -23,7 +34,14 @@ export async function createPost(authorId: string, data: { slug: string }): Prom
 	return row;
 }
 
-/** Update post metadata (not content — content lives in revisions). */
+/**
+ * Update post metadata (not content — content lives in revisions).
+ *
+ * `ownerId` is required rather than optional: `folderId` is a caller-supplied
+ * FK, and without an ownership check on the DESTINATION a post could be filed
+ * into another user's folder tree. Pass the acting user's id, or `null` for a
+ * trusted admin/system caller that has already established authority.
+ */
 export async function updatePostMetadata(
 	postId: string,
 	data: {
@@ -33,7 +51,11 @@ export async function updatePostMetadata(
 		publishedAt?: Date | null;
 		folderId?: string | null;
 	},
+	ownerId: string | null,
 ): Promise<BlogPost | null> {
+	if (ownerId && data.folderId !== undefined) {
+		await assertOwnedDestination(db, postFolder, data.folderId, ownerId);
+	}
 	const [row] = await db
 		.update(post)
 		.set({ ...data, updatedAt: new Date() })
@@ -294,11 +316,21 @@ export async function createAsset(data: {
 	return row;
 }
 
-/** Update asset metadata (alt text, dimensions, folder placement). */
+/**
+ * Update asset metadata (alt text, dimensions, folder placement).
+ *
+ * `ownerId` is required for the same reason as `updatePostMetadata`: `folderId`
+ * is caller-supplied and must be proven to belong to the acting user before it
+ * is written. `null` means a trusted admin/system caller.
+ */
 export async function updateAssetMetadata(
 	assetId: string,
 	data: { altText?: string; width?: number; height?: number; fileName?: string; folderId?: string | null },
+	ownerId: string | null,
 ): Promise<BlogAsset | null> {
+	if (ownerId && data.folderId !== undefined) {
+		await assertOwnedDestination(db, assetFolder, data.folderId, ownerId);
+	}
 	const [row] = await db.update(asset).set(data).where(eq(asset.id, assetId)).returning();
 	return row ?? null;
 }

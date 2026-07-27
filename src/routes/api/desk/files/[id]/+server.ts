@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiCreated, apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 import {
 	deleteFile,
 	duplicateSpreadsheetFile,
@@ -42,7 +42,9 @@ const UpdateFileSchema = v.object({
 
 /** Get a file with its detail data. */
 export const GET: RequestHandler = async ({ params, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 	const fileRow = await getFile(params.id, user.id);
 	if (!fileRow) return apiError(404, 'not_found', 'Not found.');
 
@@ -57,7 +59,9 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 /** Update a file (rename, move, toggle AI context) and/or its detail data. */
 export const PUT: RequestHandler = async ({ params, request, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await limiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);
@@ -108,7 +112,9 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 
 /** Duplicate a file. */
 export const POST: RequestHandler = async ({ params, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success: rlOk, reset } = await limiter.limit(user.id);
 	if (!rlOk) return rateLimitResponse(reset);
@@ -119,7 +125,9 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 
 /** Delete a file (cascades to detail table). */
 export const DELETE: RequestHandler = async ({ params, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success: rlDel, reset: rlReset } = await limiter.limit(user.id);
 	if (!rlDel) return rateLimitResponse(rlReset);

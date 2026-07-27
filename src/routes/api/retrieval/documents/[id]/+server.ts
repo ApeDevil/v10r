@@ -1,6 +1,6 @@
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiNoContent, apiOk } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 import {
 	API_READ_RATE_LIMIT_MAX,
 	API_READ_RATE_LIMIT_WINDOW,
@@ -20,7 +20,9 @@ const deleteLimiter = createLimiter(
 );
 
 export const GET: RequestHandler = async ({ params, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await readLimiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);
@@ -36,7 +38,9 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 };
 
 export const DELETE: RequestHandler = async ({ params, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await deleteLimiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);

@@ -2,7 +2,8 @@ import { passkey } from '@better-auth/passkey';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api';
-import { admin, emailOTP, magicLink, twoFactor } from 'better-auth/plugins';
+import { emailOTP, magicLink, twoFactor } from 'better-auth/plugins';
+import { eq } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
 import {
 	EMAIL_OTP_EXPIRES_IN,
@@ -15,7 +16,8 @@ import {
 } from '$lib/server/config';
 // Use relative import — Better Auth CLI breaks on $lib aliases (Issue #2252)
 import { db } from '../db';
-import { touchPasskeyLastUsed } from '../db/user/queries';
+import { user as userTable } from '../db/schema/auth/_better-auth';
+import { countPasskeys, touchPasskeyLastUsed } from '../db/user/queries';
 import { type FactorChangeAction, onFactorChanged } from './factor-changes';
 import { magicLinkTemplate, otpTemplate, sendAuthEmail } from './send-auth-email';
 import { isStepUpFresh, stampStepUp } from './step-up';
@@ -57,13 +59,37 @@ const baseUrlParsed = new URL(baseURL);
  * sign-in methods (by upstream design); TOTP here is exclusively a step-up
  * factor for sensitive actions, stamped on successful verification.
  */
+/**
+ * Paths that need a freshly proven factor, not merely a valid session.
+ *
+ * Passkey registration belongs here because a passkey is a full SIGN-IN method
+ * in this app, not just a second factor: minting one from a stolen session
+ * cookie converts temporary session theft into durable account access that
+ * survives signing out everywhere. (It is notified and audited — see
+ * factor-changes.ts — so the victim is not blind, but detection is not the
+ * same as prevention.)
+ */
+const STEP_UP_REQUIRED_PATHS = new Set([
+	'/two-factor/disable',
+	'/two-factor/generate-backup-codes',
+	'/passkey/verify-registration',
+]);
+
 const beforeHook = createAuthMiddleware(async (ctx) => {
 	// Disabling TOTP / rotating backup codes must be proven by a live factor,
 	// not just a session (upstream gates these on a password we don't have).
-	if (ctx.path === '/two-factor/disable' || ctx.path === '/two-factor/generate-backup-codes') {
+	if (STEP_UP_REQUIRED_PATHS.has(ctx.path)) {
 		const session = ctx.context.session ?? (await getSessionFromCtx(ctx));
 		const user = session?.user as { id: string; twoFactorEnabled?: boolean | null } | undefined;
-		if (user?.twoFactorEnabled && !(await isStepUpFresh(user.id))) {
+		if (!user) return;
+
+		// Step-up can only be demanded of someone who HAS a factor to prove.
+		// Requiring it to enrol a first passkey would lock every factorless user
+		// out of ever gaining one; requiring it for the second onwards is what
+		// stops a stolen session cookie from quietly minting durable access.
+		const hasFactor = user.twoFactorEnabled === true || (await countPasskeys(user.id)) > 0;
+
+		if (hasFactor && !(await isStepUpFresh(user.id))) {
 			throw new APIError('FORBIDDEN', { message: 'step_up_required', code: 'STEP_UP_REQUIRED' });
 		}
 	}
@@ -148,6 +174,44 @@ export const auth = betterAuth({
 
 	emailAndPassword: { enabled: false },
 
+	/**
+	 * `banned` / `banReason` were surfaced on the session user by the admin
+	 * plugin; with that plugin gone they exist in Postgres but are invisible to
+	 * Better Auth unless declared here. `input: false` keeps them server-owned —
+	 * a client must never be able to set its own ban state at sign-up.
+	 */
+	user: {
+		additionalFields: {
+			banned: { type: 'boolean', required: false, input: false },
+			banReason: { type: 'string', required: false, input: false },
+		},
+	},
+
+	databaseHooks: {
+		session: {
+			create: {
+				/**
+				 * Refusing at session CREATION is the other half of the ban.
+				 * `sessionPopulate` rejects a banned user's existing sessions, but
+				 * nothing stopped them signing in again and minting a fresh one —
+				 * with the admin plugin removed, no upstream code enforces this.
+				 * One DB read per sign-in, which is rare.
+				 */
+				before: async (session) => {
+					const [row] = await db
+						.select({ banned: userTable.banned })
+						.from(userTable)
+						.where(eq(userTable.id, session.userId))
+						.limit(1);
+					if (row?.banned) {
+						throw new APIError('FORBIDDEN', { message: 'account_banned', code: 'ACCOUNT_BANNED' });
+					}
+					return { data: session };
+				},
+			},
+		},
+	},
+
 	socialProviders: {
 		github: {
 			clientId: githubClientId,
@@ -174,6 +238,21 @@ export const auth = betterAuth({
 		after: afterHook,
 	},
 
+	/**
+	 * The Better Auth `admin()` plugin is deliberately NOT enabled.
+	 *
+	 * It authorizes on the `user.role` DB column, which would put a second
+	 * privilege plane next to this app's `ADMIN_USER_ID` env list — and mounts
+	 * ~16 endpoints under /api/auth/admin/* including `impersonate-user`, which
+	 * mints a real session as another user. Because `svelteKitHandler` answers
+	 * /api/auth/* without calling resolve(), that plane also sits outside the
+	 * csrfProtection / sessionPopulate / devRouteGuard handlers entirely.
+	 *
+	 * The env-list design exists precisely so that database write access cannot
+	 * confer admin. Enabling this plugin would hand that property back. Ban and
+	 * unban are implemented directly against the schema instead — see
+	 * routes/[[locale=locale]]/admin/users/+page.server.ts.
+	 */
 	plugins: [
 		magicLink({
 			sendMagicLink: async ({ email, url }: { email: string; url: string }) => {
@@ -185,7 +264,6 @@ export const auth = betterAuth({
 			},
 			expiresIn: MAGIC_LINK_EXPIRES_IN,
 		}),
-		admin(),
 		emailOTP({
 			sendVerificationOTP: async ({ email, otp, type }: { email: string; otp: string; type: string }) => {
 				await sendAuthEmail({

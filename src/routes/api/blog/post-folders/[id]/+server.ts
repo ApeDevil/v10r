@@ -2,7 +2,7 @@ import * as v from 'valibot';
 import { safeParse } from 'valibot';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
-import { requireApiBlogAuthor } from '$lib/server/auth/guards';
+import { guardApiBlogAuthor } from '$lib/server/auth/guards';
 import { deletePostFolder, getPostFolder, movePostFolder, renamePostFolder } from '$lib/server/blog/post-folders';
 import {
 	FolderCycleError,
@@ -20,7 +20,9 @@ const UpdatePostFolderSchema = v.object({
 });
 
 export const GET: RequestHandler = async ({ params, locals }) => {
-	const { user } = requireApiBlogAuthor(locals);
+	const guard = guardApiBlogAuthor(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 	const row = await getPostFolder(params.id, user.id);
 	if (!row) return apiError(404, 'folder_not_found', 'Folder not found.');
 	return apiOk({ folder: row });
@@ -28,7 +30,9 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 /** Rename and/or move a blog post folder. */
 export const PATCH: RequestHandler = async ({ params, request, locals }) => {
-	const { user } = requireApiBlogAuthor(locals);
+	const guard = guardApiBlogAuthor(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await limiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);
@@ -74,7 +78,9 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 
 /** Delete a blog post folder. Pass `?recursive=true` to cascade. */
 export const DELETE: RequestHandler = async ({ params, url, locals }) => {
-	const { user } = requireApiBlogAuthor(locals);
+	const guard = guardApiBlogAuthor(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success: rlOk, reset } = await limiter.limit(user.id);
 	if (!rlOk) return rateLimitResponse(reset);

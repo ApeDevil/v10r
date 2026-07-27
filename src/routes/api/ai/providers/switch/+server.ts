@@ -3,7 +3,7 @@ import { getActiveProviderInfo, providerRegistry } from '$lib/server/ai';
 import { clearUserPreference, setUserPreference } from '$lib/server/ai/providers';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:ai:providers:switch', 60, '1 m');
@@ -13,7 +13,9 @@ const SwitchSchema = v.object({
 });
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await limiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);

@@ -16,8 +16,11 @@ export const user = authSchema.table('user', {
 	createdAt: timestamp('created_at').notNull().defaultNow(),
 	updatedAt: timestamp('updated_at').notNull().defaultNow(),
 
-	// ── Admin plugin columns ──────────────────────────────────────────
-	role: text('role').notNull().default('user'),
+	// ── Ban state ─────────────────────────────────────────────────────
+	// App-owned, written directly by the admin users page. There is NO `role`
+	// column: authorization is the ADMIN_USER_ID env list (auth/admin-ids.ts),
+	// and the whole point of that design is that database write access cannot
+	// confer admin. A role column re-opens exactly that door.
 	banned: boolean('banned').default(false),
 	bannedAt: timestamp('banned_at'),
 	banReason: text('ban_reason'),
@@ -40,8 +43,10 @@ export const session = authSchema.table(
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
 
-		// ── Admin plugin columns ──────────────────────────────────────
-		impersonatedBy: text('impersonated_by'),
+		// NOTE: no `impersonatedBy`. It belonged to the Better Auth admin()
+		// plugin, which is deliberately not enabled (see server/auth/index.ts).
+		// Nothing in this app ever read it, so an impersonated session would have
+		// been indistinguishable from a real one to every guard.
 	},
 	(table) => [index('session_user_id_idx').on(table.userId), index('session_expires_at_idx').on(table.expiresAt)],
 );

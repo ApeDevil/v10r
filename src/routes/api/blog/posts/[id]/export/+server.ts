@@ -1,15 +1,20 @@
-import { error } from '@sveltejs/kit';
 import { stringify } from 'yaml';
-import { requireApiBlogAuthor } from '$lib/server/auth/guards';
+import { guardApiBlogAuthor, guardPostOwnership } from '$lib/server/auth/guards';
 import { getLatestRevision, getPostById, getTagsForPost } from '$lib/server/blog';
 import type { RequestHandler } from './$types';
 
 /** Export a post as a .md file with YAML frontmatter. */
 export const GET: RequestHandler = async ({ params, locals }) => {
-	requireApiBlogAuthor(locals);
+	const guard = guardApiBlogAuthor(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
-	const post = await getPostById(params.id);
-	if (!post) error(404, 'Post not found');
+	// Ownership, not just authorship rights: the blog-author grant says you may
+	// write posts, not that you may read out anyone else's. Every sibling post
+	// route checks this; export did not, so it exported any post by id.
+	const owned = guardPostOwnership(await getPostById(params.id), user);
+	if ('error' in owned) return owned.error;
+	const { post } = owned;
 
 	const revision = await getLatestRevision(params.id);
 	const tags = await getTagsForPost(params.id);

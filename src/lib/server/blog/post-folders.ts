@@ -9,6 +9,7 @@ import { db } from '$lib/server/db';
 import { createId } from '$lib/server/db/id';
 import { post, postFolder } from '$lib/server/db/schema/blog';
 import {
+	assertOwnedDestination,
 	collectSubtreeIds,
 	FolderCycleError,
 	FolderNameConflictError,
@@ -57,6 +58,7 @@ export async function listPostFolders(userId: string) {
 
 /** Create a new post folder. @throws FolderNameConflictError on sibling collision. */
 export async function createPostFolder(userId: string, name = 'New Folder', parentId: string | null = null) {
+	await assertOwnedDestination(db, postFolder, parentId, userId);
 	try {
 		const [row] = await db.insert(postFolder).values({ id: createId.postFolder(), userId, parentId, name }).returning();
 		return row;
@@ -104,6 +106,10 @@ export async function movePostFolder(id: string, userId: string, parentId: strin
 		.where(and(eq(postFolder.id, id), eq(postFolder.userId, userId)))
 		.limit(1);
 	if (!target) throw new FolderNotFoundError(id);
+
+	// Destination ownership — isCycleMove's user-scoped seed silently reports
+	// "no cycle" for a foreign parent rather than rejecting it.
+	await assertOwnedDestination(db, postFolder, parentId, userId);
 
 	if (parentId && (await isCycleMove(db, postFolder, id, parentId, userId))) {
 		throw new FolderCycleError(id, parentId);

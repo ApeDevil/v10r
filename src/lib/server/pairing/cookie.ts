@@ -3,8 +3,18 @@
  * specific admin user for live-feed attribution. Independent of Better Auth
  * sessions — the phone is NOT logged in.
  *
- * Format: base64url(`${userId}.${expMs}.${hex(hmac)}`)
+ * Format: `${userId}.${expMs}.${hex(hmac)}`
  *   where hmac = HMAC-SHA256(PAIRING_SECRET, `${userId}.${expMs}`)
+ *
+ * NOT base64url-wrapped, despite what this docblock claimed for a long time —
+ * the value is the dotted string exactly as written above. Worth stating
+ * plainly because it means the admin's user id travels in cleartext to anyone
+ * who can read the cookie.
+ *
+ * There is deliberately no revocation list. The cookie grants analytics
+ * ATTRIBUTION only — `locals.debugOwnerId` never feeds an authz decision — so a
+ * per-request Redis lookup to revoke a short-lived, admin-only debug marker
+ * would cost every request for very little. Expiry is the control; keep it short.
  */
 import type { Cookies } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';

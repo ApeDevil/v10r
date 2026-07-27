@@ -68,6 +68,15 @@ export const agentProposal = aiSchema.table(
 		riskTier: proposalRiskTierEnum('risk_tier').notNull().default('medium'),
 		/** Proposed tool calls, in execution order. */
 		payload: jsonb('payload').notNull().$type<ProposedToolCall[]>(),
+		/**
+		 * Scopes granted at the moment the plan was proposed.
+		 *
+		 * Approval happens in a separate request, so replaying with whatever the
+		 * client sends at approve time would let the grant be widened after the
+		 * user reviewed the plan. Freezing it here binds the approval to the
+		 * permissions the plan was actually shown under.
+		 */
+		grantedScopes: jsonb('granted_scopes').notNull().default([]).$type<string[]>(),
 		/** Model's explanation of the plan — shown in the PlanCard UI. */
 		rationale: text('rationale').notNull().default(''),
 		/** Who approved the proposal, if approved. */

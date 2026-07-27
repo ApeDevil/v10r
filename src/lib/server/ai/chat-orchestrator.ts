@@ -140,7 +140,7 @@ export interface ChatInput {
 	resumeFromProposalId?: string;
 	/** Resolved request locale (server-derived from `event.locals.locale`). Used by `search_catalog`. */
 	locale?: SearchLocale;
-	/** Auth ceiling for catalog visibility (server-derived from `event.locals.user.role`). */
+	/** Auth ceiling for catalog visibility (server-derived via `isAdmin()` — never a DB column). */
 	authCeiling?: string | null;
 	/**
 	 * Site-awareness (chatbot only): the page the user is asking from, ALREADY resolved
@@ -1496,6 +1496,9 @@ Project catalog rules:
 										const proposal = await createProposal({
 											conversationId,
 											messageId: assistantMsgId,
+											// Freeze the grant the plan was proposed under. The approve route
+											// replays these, never scopes sent with the approval request.
+											grantedScopes,
 											riskTier: input.steps.some((s) => s.risk === 'destructive') ? 'high' : 'medium',
 											payload: input.steps.map((s) => ({
 												toolName: s.tool,
@@ -1542,6 +1545,8 @@ Project catalog rules:
 							const proposal = await createProposal({
 								conversationId,
 								messageId: assistantMsgId,
+								// Freeze the grant the plan was proposed under — see above.
+								grantedScopes,
 								riskTier: anyDestructive ? 'high' : 'medium',
 								payload: pendingApproval,
 								rationale: goal,

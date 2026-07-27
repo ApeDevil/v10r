@@ -3,7 +3,7 @@ import { safeParse } from 'valibot';
 import { apiPaginated, parsePagination } from '$lib/server/api/pagination';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiCreated, apiError, apiValidationError } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 import { createSpreadsheetFile } from '$lib/server/db/desk/mutations';
 import { listFiles } from '$lib/server/db/desk/queries';
 import type { RequestHandler } from './$types';
@@ -20,7 +20,9 @@ const CreateFileSchema = v.variant('type', [
 
 /** List user's files, optionally filtered by ?type= */
 export const GET: RequestHandler = async ({ url, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 	const type = url.searchParams.get('type') ?? undefined;
 	const pagination = parsePagination(url);
 	const { items, total } = await listFiles(user.id, type, pagination.offset, pagination.pageSize);
@@ -29,7 +31,9 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
 /** Create a new file. */
 export const POST: RequestHandler = async ({ request, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await limiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);

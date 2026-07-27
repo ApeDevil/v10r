@@ -2,7 +2,7 @@ import * as v from 'valibot';
 import { safeParse } from 'valibot';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/api/response';
-import { requireApiBlogAuthor } from '$lib/server/auth/guards';
+import { guardApiBlogAuthor } from '$lib/server/auth/guards';
 import { createPostFolder, listPostFolders } from '$lib/server/blog/post-folders';
 import { FolderNameConflictError } from '$lib/server/db/shared/folder-tree';
 import type { RequestHandler } from './$types';
@@ -16,14 +16,18 @@ const CreatePostFolderSchema = v.object({
 
 /** List all blog post folders for the current author (flat, unpaginated, ≤500). */
 export const GET: RequestHandler = async ({ locals }) => {
-	const { user } = requireApiBlogAuthor(locals);
+	const guard = guardApiBlogAuthor(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 	const { items, overflow } = await listPostFolders(user.id);
 	return apiOk({ folders: items, overflow });
 };
 
 /** Create a new blog post folder. */
 export const POST: RequestHandler = async ({ request, locals }) => {
-	const { user } = requireApiBlogAuthor(locals);
+	const guard = guardApiBlogAuthor(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await limiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);

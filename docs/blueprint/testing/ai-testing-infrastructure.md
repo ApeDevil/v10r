@@ -604,7 +604,7 @@ Priority order based on codebase analysis (highest value first):
 
 **Auth and security:**
 
-7. `$lib/server/auth/guards.ts` — `requireAuth`, `requireApiUser`, `requireAdmin`. Takes `App.Locals` as a plain argument — mock the object, assert redirect/error behavior.
+7. `$lib/server/auth/guards.ts` — `requireAuth`, `requireAdmin` (throwing, pages) and `guardApiUser` (returning, endpoints). Takes `App.Locals` as a plain argument — mock the object, assert redirect/error behavior.
 8. `hooks.server.ts` — security middleware (headers, CSRF, auth, rate limiting). **Isolate as a separate concern:** it has side-effect imports (schedulers), Redis connection, and feature logging that must be fully mocked. Mock `auth.api.getSession`, `@upstash/ratelimit`, construct `RequestEvent` objects. 515 lines of critical security logic.
 
 **Load functions:**

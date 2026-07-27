@@ -2,7 +2,7 @@ import * as v from 'valibot';
 import { env } from '$env/dynamic/private';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiOk } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 import { createPushSubscription, deletePushSubscription } from '$lib/server/db/notifications/mutations';
 import type { RequestHandler } from './$types';
 
@@ -22,7 +22,8 @@ const unsubscribeSchema = v.object({
 
 /** Public VAPID key for the client's pushManager.subscribe(). */
 export const GET: RequestHandler = async ({ locals }) => {
-	requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
 
 	const publicKey = env.VAPID_PUBLIC_KEY;
 	if (!publicKey) return apiError(503, 'unavailable', 'Push not configured');
@@ -32,7 +33,9 @@ export const GET: RequestHandler = async ({ locals }) => {
 
 /** Register this device's push subscription (session-authenticated). */
 export const POST: RequestHandler = async ({ request, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await limiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);
@@ -52,7 +55,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 /** Remove this device's subscription (sign-out hygiene / toggle off). */
 export const DELETE: RequestHandler = async ({ request, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await limiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);

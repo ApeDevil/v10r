@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import * as v from 'valibot';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
-import { requireApiBlogAuthor, requirePostOwnership } from '$lib/server/auth/guards';
+import { guardApiBlogAuthor, guardPostOwnership } from '$lib/server/auth/guards';
 import { getLatestRevision, getPostById, getTagsForPost, updatePostMetadata } from '$lib/server/blog';
 import { getPostFolder } from '$lib/server/blog/post-folders';
 import { db } from '$lib/server/db';
@@ -19,10 +19,13 @@ const PatchPostSchema = v.object({
 
 /** Get post + latest revision for editing. */
 export const GET: RequestHandler = async ({ params, locals }) => {
-	const { user } = requireApiBlogAuthor(locals);
+	const guard = guardApiBlogAuthor(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
-	const post = await getPostById(params.id);
-	requirePostOwnership(post, user);
+	const owned = guardPostOwnership(await getPostById(params.id), user);
+	if ('error' in owned) return owned.error;
+	const { post } = owned;
 
 	const [latestRevision, tags] = await Promise.all([getLatestRevision(params.id), getTagsForPost(params.id)]);
 
@@ -41,13 +44,15 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 /** Update post metadata (e.g., rename slug). */
 export const PATCH: RequestHandler = async ({ params, request, locals }) => {
-	const { user } = requireApiBlogAuthor(locals);
+	const guard = guardApiBlogAuthor(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await limiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);
 
-	const post = await getPostById(params.id);
-	requirePostOwnership(post, user);
+	const owned = guardPostOwnership(await getPostById(params.id), user);
+	if ('error' in owned) return owned.error;
 
 	const body = await request.json().catch(() => null);
 	if (!body) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
@@ -63,7 +68,7 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 	}
 
 	try {
-		const updated = await updatePostMetadata(params.id, parsed.output);
+		const updated = await updatePostMetadata(params.id, parsed.output, user.id);
 		if (!updated) return apiError(404, 'not_found', 'Post not found.');
 		return apiOk({ post: updated });
 	} catch (e: unknown) {

@@ -1,6 +1,6 @@
 export { verifyAltcha } from './altcha';
 export { logBlocked } from './audit';
-export { getClientIp } from './client-ip';
+export { getClientIp, normalizeIpKey } from './client-ip';
 export type { BotDetectionMode } from './config';
 export {
 	ALTCHA_CHALLENGE_EXPIRY_MS,

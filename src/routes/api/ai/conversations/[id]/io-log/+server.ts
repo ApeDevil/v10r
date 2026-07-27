@@ -1,10 +1,12 @@
 import { apiOk } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 import { getConversationIOLog } from '$lib/server/db/ai/io-log-queries';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ params, locals, url }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const rawLimit = Number(url.searchParams.get('limit') ?? 100);
 	const rawOffset = Number(url.searchParams.get('offset') ?? 0);

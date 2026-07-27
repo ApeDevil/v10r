@@ -5,7 +5,7 @@
  *
  * Uploader vs user: `blog.asset.uploader_id` is nullable (assets survive user
  * deletion). But folder ownership is per-user, auth-scoped via the same
- * `requireApiBlogAuthor` as the rest of the blog surface — a folder with a null
+ * `guardApiBlogAuthor` as the rest of the blog surface — a folder with a null
  * user would have nowhere to live, so the column stays NOT NULL and cascades
  * on user deletion. Orphaned assets (after uploader delete) lose their
  * `folder_id` via the asset.folder_id `SET NULL` FK.
@@ -15,6 +15,7 @@ import { db } from '$lib/server/db';
 import { createId } from '$lib/server/db/id';
 import { asset, assetFolder } from '$lib/server/db/schema/blog';
 import {
+	assertOwnedDestination,
 	collectSubtreeIds,
 	FolderCycleError,
 	FolderNameConflictError,
@@ -57,6 +58,7 @@ export async function listAssetFolders(userId: string) {
 }
 
 export async function createAssetFolder(userId: string, name = 'New Folder', parentId: string | null = null) {
+	await assertOwnedDestination(db, assetFolder, parentId, userId);
 	try {
 		const [row] = await db
 			.insert(assetFolder)
@@ -98,6 +100,10 @@ export async function moveAssetFolder(id: string, userId: string, parentId: stri
 		.where(and(eq(assetFolder.id, id), eq(assetFolder.userId, userId)))
 		.limit(1);
 	if (!target) throw new FolderNotFoundError(id);
+
+	// Destination ownership — isCycleMove's user-scoped seed silently reports
+	// "no cycle" for a foreign parent rather than rejecting it.
+	await assertOwnedDestination(db, assetFolder, parentId, userId);
 
 	if (parentId && (await isCycleMove(db, assetFolder, id, parentId, userId))) {
 		throw new FolderCycleError(id, parentId);

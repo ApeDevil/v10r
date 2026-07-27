@@ -21,10 +21,11 @@
  * DELETE on the same URL rejects a still-pending proposal.
  */
 
+import type { DeskToolScope } from '$lib/server/ai/tools/_types';
 import { executeDeskToolCall } from '$lib/server/ai/tools/desk-execute';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiOk } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 import {
 	approveProposal,
 	getProposal,
@@ -43,7 +44,9 @@ import type { RequestHandler } from './$types';
 const executeLimiter = createLimiter('rl:ai:proposal:execute', 20, '1 m');
 
 export const POST: RequestHandler = async ({ params, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await executeLimiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);
@@ -105,7 +108,18 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 		// 5. Run the payload, collect results, transition executed / failed.
 		const results: ProposalExecutionResult['results'] = [];
 		for (const step of proposal.payload) {
-			const outcome = await executeDeskToolCall(user.id, step.toolName, step.args);
+			// Replay under the scopes frozen when the plan was PROPOSED, never
+			// anything supplied on this request — approval must not be able to
+			// widen the grant the user reviewed.
+			const outcome = await executeDeskToolCall(
+				{
+					userId: user.id,
+					scopes: (proposal.grantedScopes ?? []) as DeskToolScope[],
+					actor: 'proposal-replay',
+				},
+				step.toolName,
+				step.args,
+			);
 			if (outcome.ok) {
 				results.push({ toolName: step.toolName, ok: true, output: outcome.output });
 			} else {
@@ -146,7 +160,9 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 
 /** DELETE /api/ai/proposals/[id]/approve — reject a pending proposal. */
 export const DELETE: RequestHandler = async ({ params, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	try {
 		const proposal = await getProposal(params.id);

@@ -1,19 +1,12 @@
 import { redirect } from '@sveltejs/kit';
 import { localizeHref } from '$lib/i18n';
+import { sanitizeInternalPath } from '$lib/server/security/safe-path';
 import type { PageServerLoad } from './$types';
 
 const DEFAULT_REDIRECT = '/account/dashboard';
 
 function sanitizeReturnTo(raw: string | null): string {
-	if (!raw) return DEFAULT_REDIRECT;
-	if (!raw.startsWith('/') || raw.startsWith('//')) return DEFAULT_REDIRECT;
-	try {
-		const parsed = new URL(raw, 'http://localhost');
-		if (parsed.origin !== 'http://localhost') return DEFAULT_REDIRECT;
-		return parsed.pathname + parsed.search;
-	} catch {
-		return DEFAULT_REDIRECT;
-	}
+	return sanitizeInternalPath(raw) ?? DEFAULT_REDIRECT;
 }
 
 export const load: PageServerLoad = async ({ locals, url }) => {

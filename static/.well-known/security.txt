@@ -1,0 +1,11 @@
+# Velociraptor (v10r) — security contact
+# https://www.rfc-editor.org/rfc/rfc9116
+
+Contact: mailto:stas-k@gmx.de
+Preferred-Languages: en, de
+Canonical: https://www.v10r.dev/.well-known/security.txt
+Policy: https://gitlab.com/ApeDevil/v10r/-/blob/main/SECURITY.md
+
+# Expires must be a future date, and this file is worthless once stale.
+# Bump it when you review the contact address.
+Expires: 2027-07-27T00:00:00.000Z

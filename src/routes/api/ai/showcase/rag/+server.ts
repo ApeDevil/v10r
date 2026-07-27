@@ -10,6 +10,7 @@ import { orchestrateChat } from '$lib/server/ai/chat-orchestrator';
 import { guardAiRequest } from '$lib/server/ai/guard';
 import { RagDemoRequestSchema } from '$lib/server/ai/validation';
 import { apiError, apiValidationError } from '$lib/server/api/response';
+import { isAdmin } from '$lib/server/auth/guards';
 import type { RequestHandler } from './$types';
 
 // Node runtime + extended duration: an LLM stream routinely outlives the Vercel
@@ -39,7 +40,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		useLlmwiki: parsed.output.useLlmwiki,
 		llmwikiCollectionId: parsed.output.llmwikiCollectionId,
 		locale: locals.locale,
-		authCeiling: locals.user?.role ?? null,
+		// Derived from the env admin list, never a DB column — `user.role` used to
+		// feed this, which quietly made catalog visibility a second privilege plane.
+		authCeiling: isAdmin(locals.user) ? 'admin' : locals.user ? 'user' : null,
 		dryRun: parsed.output.dryRun,
 	});
 };

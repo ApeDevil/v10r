@@ -368,7 +368,7 @@ Individual files inside a module or component folder. Private by default; public
 | Function | Failure |
 |----------|---------|
 | `requireAuth(locals)` | `redirect(303, '/auth/login')` |
-| `requireApiUser(locals)` | `error(401)` |
+| `guardApiUser(locals)` | returns `apiError(401)` (never throws — a thrown Response becomes a 500) |
 | `requireAdmin(locals)` | `error(404, 'Not Found')` — non-admins get a 404, not a 403, so the admin surface is not disclosed |
 
 **Step-up gate** (`auth/step-up.ts`): `requireStepUp` / `isStepUpFresh` / `stampStepUp` over a Redis `stepup:<userId>` key (600s). Reads Redis, never the session (freshness must not ride the cookie cache); fail-closed in prod. Never imports the auth instance — `auth/index.ts` imports *from* it via its hooks. `factor-changes.ts:onFactorChanged` is the single chokepoint for passkey/TOTP side effects (audit + sibling-revoke + email). See [blueprint/auth.md](./blueprint/auth.md#passkeys--step-up-totp).

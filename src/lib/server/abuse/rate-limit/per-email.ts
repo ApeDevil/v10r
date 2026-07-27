@@ -15,7 +15,10 @@ import type { Decision } from '../types';
  * The hash is one-way and identifier-only; we never store the raw email in
  * Redis. Window: 5 sends per email per hour.
  */
-const limiter = createLimiter(PER_EMAIL_LIMIT_PREFIX, PER_EMAIL_LIMIT_MAX, PER_EMAIL_LIMIT_WINDOW);
+// Fail CLOSED on Upstash slowness: this bucket is the only thing standing
+// between a botnet and someone else's inbox, and the blast radius of not
+// enforcing it lands on a third party who never used this site.
+const limiter = createLimiter(PER_EMAIL_LIMIT_PREFIX, PER_EMAIL_LIMIT_MAX, PER_EMAIL_LIMIT_WINDOW, 'closed');
 
 function hashEmail(email: string): string {
 	return createHash('sha256').update(email.trim().toLowerCase()).digest('hex');

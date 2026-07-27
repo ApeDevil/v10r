@@ -1,13 +1,15 @@
 import { dismissAnnouncement, getAnnouncementById } from '$lib/server/admin/announcements';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiNoContent } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:announcements:dismiss', 60, '1 m');
 
 export const POST: RequestHandler = async ({ params, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await limiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);

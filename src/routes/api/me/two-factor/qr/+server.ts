@@ -8,7 +8,7 @@
 import * as v from 'valibot';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiOk, apiValidationError } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 import { qrSvg } from '$lib/server/pairing/qr';
 import type { RequestHandler } from './$types';
 
@@ -19,7 +19,9 @@ const BodySchema = v.object({
 });
 
 export const POST: RequestHandler = async ({ locals, request, setHeaders }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await ratelimit.limit(user.id);
 	if (!success) return rateLimitResponse(reset);

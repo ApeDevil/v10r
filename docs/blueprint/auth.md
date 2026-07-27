@@ -246,7 +246,6 @@ export const handle = sequence(rateLimitHandle, authHandle, sessionHandle);
 // src/lib/auth-client.ts
 import { createAuthClient } from 'better-auth/svelte';
 import {
-  adminClient,
   magicLinkClient,
   emailOTPClient,
   twoFactorClient,
@@ -256,8 +255,9 @@ import {
 export const authClient = createAuthClient({
   // SSR-safe: no window during server render
   baseURL: typeof window !== 'undefined' ? window.location.origin : '',
+  // No adminClient(): the server-side admin() plugin is deliberately not enabled.
+  // Admin authority is the ADMIN_USER_ID env list — see blueprint/security/topology.md.
   plugins: [
-    adminClient(),
     magicLinkClient(),
     emailOTPClient(),
     twoFactorClient(),
@@ -626,7 +626,7 @@ On grant/revoke: the mutation deletes all sessions for the affected user. Next s
 | Guard | Check | Replaces |
 |-------|-------|---------|
 | `requireBlogAuthor(locals)` | `locals.grants?.includes('blog-author')` or admin | `requireAuthor` |
-| `requireApiBlogAuthor(locals)` | same, throws 401/403 JSON | `requireApiAuthor` |
+| `guardApiBlogAuthor(locals)` | same, **returns** 401/403 JSON | `requireApiAuthor` |
 | `guardApiBlogAuthor(locals)` | same, returns early | `guardApiAuthor` |
 | `guardApiAdmin(locals)` | admin env check | (new) |
 

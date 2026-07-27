@@ -6,14 +6,16 @@
  * proposal status is the idempotent recovery path.
  */
 import { apiError, apiOk } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 import { getProposal } from '$lib/server/db/ai/proposals';
 import { getConversation } from '$lib/server/db/ai/queries';
 import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	try {
 		const proposal = await getProposal(params.id);

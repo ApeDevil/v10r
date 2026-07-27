@@ -8,9 +8,9 @@ declare global {
 			errorId?: string;
 		}
 		interface Locals {
+			// No `role`: admin is the ADMIN_USER_ID env list, never a DB column.
 			user:
 				| (import('better-auth').User & {
-						role?: string | null;
 						banned?: boolean | null;
 						banReason?: string | null;
 						twoFactorEnabled?: boolean | null;

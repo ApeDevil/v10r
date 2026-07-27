@@ -1,7 +1,7 @@
 import { and, asc, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema/auth';
-import { asset, domain, post, postTag, publishedRevision, revision, tag } from '$lib/server/db/schema/blog';
+import { asset, domain, post, postAsset, postTag, publishedRevision, revision, tag } from '$lib/server/db/schema/blog';
 import { localeRegconfig } from '$lib/server/search/regconfig';
 import type {
 	BlogAsset,
@@ -530,8 +530,51 @@ export async function listAssets(
 	return { items, total: countResult?.total ?? 0 };
 }
 
-/** Get a single asset by ID. */
+/**
+ * Get a single asset by ID — NO access filtering.
+ *
+ * Authoring use only: every caller must already have proven authority, e.g. via
+ * `guardAssetOwnership`. For anything reachable without a session use
+ * `getPublicAssetById`.
+ */
 export async function getAssetById(id: string): Promise<BlogAsset | null> {
 	const [row] = await db.select().from(asset).where(eq(asset.id, id)).limit(1);
 	return row ?? null;
+}
+
+/**
+ * Get an asset only if it is attached to a published, non-deleted post.
+ *
+ * `blog.asset` has no `published` flag of its own, so reachability has to be
+ * derived through the `post_asset` link. Without this, the public image proxy
+ * presigned ANY asset by id — including images belonging to unpublished drafts
+ * and to other authors — to anonymous callers.
+ */
+export async function getPublicAssetById(id: string): Promise<BlogAsset | null> {
+	const [row] = await db
+		.select({ asset })
+		.from(asset)
+		.innerJoin(postAsset, eq(postAsset.assetId, asset.id))
+		.innerJoin(post, eq(post.id, postAsset.postId))
+		.where(and(eq(asset.id, id), eq(post.status, 'published'), isNull(post.deletedAt)))
+		.limit(1);
+	return row?.asset ?? null;
+}
+
+/**
+ * Same reachability rule as `getPublicAssetById`, keyed on the R2 storage key.
+ *
+ * Backs the legacy media proxy, which previously presigned any `blog/`-prefixed
+ * key with no database lookup whatsoever — it could not tell a real asset from
+ * an arbitrary guessed key, published or not.
+ */
+export async function getPublicAssetByStorageKey(storageKey: string): Promise<BlogAsset | null> {
+	const [row] = await db
+		.select({ asset })
+		.from(asset)
+		.innerJoin(postAsset, eq(postAsset.assetId, asset.id))
+		.innerJoin(post, eq(post.id, postAsset.postId))
+		.where(and(eq(asset.storageKey, storageKey), eq(post.status, 'published'), isNull(post.deletedAt)))
+		.limit(1);
+	return row?.asset ?? null;
 }

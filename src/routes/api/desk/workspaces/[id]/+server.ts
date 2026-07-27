@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 import type { WorkspaceLayoutJson } from '$lib/server/db/schema/desk/workspace';
 import { deleteWorkspace, updateWorkspace } from '$lib/server/desk';
 import { UpdateWorkspaceSchema } from '$lib/server/desk/schemas';
@@ -11,7 +11,9 @@ const limiter = createLimiter('rl:desk:workspaces:mutate', 30, '1 m');
 
 /** Partial update: name, layout, and/or sortOrder. */
 export const PATCH: RequestHandler = async ({ locals, request, params }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await limiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);
@@ -38,7 +40,9 @@ export const PATCH: RequestHandler = async ({ locals, request, params }) => {
 
 /** Delete a workspace permanently. */
 export const DELETE: RequestHandler = async ({ locals, params }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success: rlOk, reset } = await limiter.limit(user.id);
 	if (!rlOk) return rateLimitResponse(reset);

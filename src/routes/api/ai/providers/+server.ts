@@ -1,11 +1,13 @@
 import { getActiveProviderInfo, providerRegistry } from '$lib/server/ai';
 import { getCooldownResumeAt, getUserPreference } from '$lib/server/ai/providers';
 import { apiOk } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const providers = await Promise.all(
 		providerRegistry.map(async (p) => ({

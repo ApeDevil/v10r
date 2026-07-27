@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/api/response';
-import { requireApiBlogAuthor, requireAssetOwnership } from '$lib/server/auth/guards';
+import { guardApiBlogAuthor, guardAssetOwnership } from '$lib/server/auth/guards';
 import { deleteAsset, getAssetById, updateAssetMetadata } from '$lib/server/blog';
 import { getAssetFolder } from '$lib/server/blog/asset-folders';
 import { PatchAssetSchema } from '$lib/server/blog/schemas';
@@ -13,10 +13,13 @@ const limiter = createLimiter('rl:blog:assets:mutate', 30, '1 m');
 
 /** Get asset detail with download URL. */
 export const GET: RequestHandler = async ({ params, locals }) => {
-	const { user } = requireApiBlogAuthor(locals);
+	const guard = guardApiBlogAuthor(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
-	const asset = await getAssetById(params.id);
-	requireAssetOwnership(asset, user);
+	const owned = guardAssetOwnership(await getAssetById(params.id), user);
+	if ('error' in owned) return owned.error;
+	const { asset } = owned;
 
 	let downloadUrl: string | null = null;
 	try {
@@ -31,13 +34,15 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 /** Update asset metadata (alt text, dimensions). */
 export const PATCH: RequestHandler = async ({ params, request, locals }) => {
-	const { user } = requireApiBlogAuthor(locals);
+	const guard = guardApiBlogAuthor(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await limiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);
 
-	const asset = await getAssetById(params.id);
-	requireAssetOwnership(asset, user);
+	const owned = guardAssetOwnership(await getAssetById(params.id), user);
+	if ('error' in owned) return owned.error;
 
 	const body = await request.json().catch(() => null);
 	if (!body) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
@@ -50,19 +55,22 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 		if (!folder) return apiError(404, 'folder_not_found', 'Target folder not found.');
 	}
 
-	const updated = await updateAssetMetadata(params.id, parsed.output);
+	const updated = await updateAssetMetadata(params.id, parsed.output, user.id);
 	return apiOk({ asset: updated });
 };
 
 /** Delete asset from R2 and DB. */
 export const DELETE: RequestHandler = async ({ params, locals }) => {
-	const { user } = requireApiBlogAuthor(locals);
+	const guard = guardApiBlogAuthor(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success: rlOk, reset } = await limiter.limit(user.id);
 	if (!rlOk) return rateLimitResponse(reset);
 
-	const asset = await getAssetById(params.id);
-	requireAssetOwnership(asset, user);
+	const owned = guardAssetOwnership(await getAssetById(params.id), user);
+	if ('error' in owned) return owned.error;
+	const { asset } = owned;
 
 	// Delete from R2 first
 	try {

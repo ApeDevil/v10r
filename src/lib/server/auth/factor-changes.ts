@@ -15,6 +15,7 @@ import { and, eq, ne } from 'drizzle-orm';
 import { recordAuditEvent } from '$lib/server/admin/audit';
 import { db } from '$lib/server/db';
 import { session } from '$lib/server/db/schema';
+import { stampRevocation } from './revocation';
 import { factorChangeTemplate, sendAuthEmail } from './send-auth-email';
 
 export type FactorChangeAction =
@@ -66,6 +67,12 @@ export async function onFactorChanged(params: FactorChangeParams): Promise<void>
 						? and(eq(session.userId, userId), ne(session.token, currentSessionToken))
 						: eq(session.userId, userId),
 				);
+			// Deleting the rows is not enough on its own: `session.cookieCache`
+			// answers getSession() from a signed cookie for up to 5 minutes, so a
+			// revoked device stays authenticated across exactly the window this
+			// call exists to close. The epoch is what makes it immediate; the
+			// current token is spared so the acting device survives, as before.
+			await stampRevocation(userId, currentSessionToken);
 		} catch (err) {
 			console.error('[factor-changes] sibling session revocation failed:', err);
 		}

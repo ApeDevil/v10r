@@ -2,7 +2,7 @@
 name: scout
 description: "Use this agent when you need to research how technologies are actually used in practice rather than how documentation says they should be used. Ideal for evaluating new libraries, frameworks, or patterns before adoption. Triggers include: 'how do people actually use X', 'what problems do teams hit with Y', 'real-world examples of Z', 'is this library production-ready', 'what are the gotchas with', 'find implementations of', 'what does the community say about'.\n\nExamples:\n\n<example>\nContext: User is considering adopting a new database driver for their project.\nuser: \"I'm thinking of using libsql for our SvelteKit app. Is it production-ready?\"\nassistant: \"I'll use the scout agent to research real-world libsql implementations and community experiences.\"\n</example>\n\n<example>\nContext: Counter-example (NOT scout).\nuser: \"What does the HTTP spec say about PATCH idempotency?\"\nassistant: \"That's an authoritative source question — route to the resy agent.\"\n</example>"
 tools: Read, Glob, Grep, WebFetch, WebSearch, TodoWrite
-model: sonnet
+model: inherit
 maxTurns: 40
 color: yellow
 ---

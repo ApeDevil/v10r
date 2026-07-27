@@ -1,7 +1,7 @@
 import { parse as parseYaml } from 'yaml';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiCreated, apiError, apiOk } from '$lib/server/api/response';
-import { requireApiBlogAuthor, requirePostOwnership } from '$lib/server/auth/guards';
+import { guardApiBlogAuthor, guardPostOwnership } from '$lib/server/auth/guards';
 import { createPost, createRevision, getPostBySlug } from '$lib/server/blog';
 import {
 	BLOG_WRITE_RATE_LIMIT_MAX,
@@ -14,7 +14,9 @@ const ratelimit = createLimiter(BLOG_WRITE_RATE_LIMIT_PREFIX, BLOG_WRITE_RATE_LI
 
 /** Import a .md file with YAML frontmatter to create/update a post. */
 export const POST: RequestHandler = async ({ request, locals }) => {
-	const { user } = requireApiBlogAuthor(locals);
+	const guard = guardApiBlogAuthor(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await ratelimit.limit(user.id);
 	if (!success) return rateLimitResponse(reset);
@@ -55,7 +57,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const existingPost = await getPostBySlug(slug);
 
 	if (existingPost) {
-		requirePostOwnership(existingPost, user);
+		// Ownership only — `existingPost` is already narrowed by the `if`, so the
+		// returned value is discarded rather than re-bound.
+		const owned = guardPostOwnership(existingPost, user);
+		if ('error' in owned) return owned.error;
 		// Create new revision on existing post
 		const revision = await createRevision(existingPost.id, {
 			title,

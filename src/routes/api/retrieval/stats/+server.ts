@@ -1,5 +1,5 @@
 import { apiOk } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 import { SYSTEM_DOCS_USER_ID } from '$lib/server/config';
 import { getRAGOverviewStats } from '$lib/server/db/rag/admin-queries';
 import { getRagGraphStats } from '$lib/server/graph/rag/queries';
@@ -20,7 +20,9 @@ export interface RetrievalStats {
 }
 
 export const GET: RequestHandler = async ({ locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const [pgStats, graphStats] = await Promise.all([
 		getRAGOverviewStats(),

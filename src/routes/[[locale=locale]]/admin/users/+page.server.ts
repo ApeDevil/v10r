@@ -1,11 +1,11 @@
 import { fail } from '@sveltejs/kit';
 import { and, asc, count, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
-import { auth } from '$lib/server/auth';
 import { requireAdmin } from '$lib/server/auth/guards';
+import { clearRevocation, stampRevocation } from '$lib/server/auth/revocation';
 import { ADMIN_USERS_PAGE_SIZE } from '$lib/server/config';
 import { db } from '$lib/server/db';
-import { user } from '$lib/server/db/schema/auth';
+import { session as sessionTable, user } from '$lib/server/db/schema/auth';
 import type { Actions, PageServerLoad } from './$types';
 
 const SORTABLE_COLUMNS = ['email', 'name', 'createdAt'] as const;
@@ -49,7 +49,6 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 				email: user.email,
 				emailVerified: user.emailVerified,
 				image: user.image,
-				role: user.role,
 				banned: user.banned,
 				banReason: user.banReason,
 				createdAt: user.createdAt,
@@ -90,8 +89,23 @@ export const actions: Actions = {
 			return fail(400, { message: 'User ID required' });
 		}
 
+		if (userId === event.locals.user?.id) {
+			return fail(400, { message: 'You cannot ban your own account.' });
+		}
+
 		try {
-			await auth.api.banUser({ body: { userId, banReason: banReason || undefined }, headers: event.request.headers });
+			// Direct write, not auth.api.banUser: the admin() plugin that provided
+			// that endpoint is deliberately not enabled (see auth/index.ts).
+			await db
+				.update(user)
+				.set({ banned: true, bannedAt: new Date(), banReason: banReason || null })
+				.where(eq(user.id, userId));
+
+			// Drop live sessions, then stamp the revocation epoch — the row delete
+			// alone would not bite for up to SESSION_COOKIE_MAX_AGE, so a banned
+			// user would keep browsing for 5 minutes. No token is spared here.
+			await db.delete(sessionTable).where(eq(sessionTable.userId, userId));
+			await stampRevocation(userId);
 
 			const ctx = getAuditContext(event);
 			await recordAuditEvent({
@@ -104,7 +118,8 @@ export const actions: Actions = {
 
 			return { success: true, message: 'User banned.' };
 		} catch (e) {
-			return fail(500, { message: e instanceof Error ? e.message : 'Failed to ban user.' });
+			console.error('[admin:users] ban failed:', e);
+			return fail(500, { message: 'Failed to ban user.' });
 		}
 	},
 
@@ -118,7 +133,10 @@ export const actions: Actions = {
 		}
 
 		try {
-			await auth.api.unbanUser({ body: { userId }, headers: event.request.headers });
+			await db.update(user).set({ banned: false, bannedAt: null, banReason: null }).where(eq(user.id, userId));
+
+			// Clear the epoch so the user can mint a fresh session immediately.
+			await clearRevocation(userId);
 
 			const ctx = getAuditContext(event);
 			await recordAuditEvent({
@@ -130,38 +148,8 @@ export const actions: Actions = {
 
 			return { success: true, message: 'User unbanned.' };
 		} catch (e) {
-			return fail(500, { message: e instanceof Error ? e.message : 'Failed to unban user.' });
-		}
-	},
-
-	setRole: async (event) => {
-		requireAdmin(event.locals);
-		const formData = await event.request.formData();
-		const userId = formData.get('userId');
-		const role = formData.get('role');
-
-		if (typeof userId !== 'string' || !userId) {
-			return fail(400, { message: 'User ID required' });
-		}
-		if (typeof role !== 'string' || !['user', 'admin'].includes(role)) {
-			return fail(400, { message: 'Invalid role' });
-		}
-
-		try {
-			await auth.api.setRole({ body: { userId, role: role as 'user' | 'admin' }, headers: event.request.headers });
-
-			const ctx = getAuditContext(event);
-			await recordAuditEvent({
-				...ctx,
-				action: 'user.set_role',
-				targetType: 'user',
-				targetId: userId,
-				detail: { role },
-			});
-
-			return { success: true, message: `Role set to ${role}.` };
-		} catch (e) {
-			return fail(500, { message: e instanceof Error ? e.message : 'Failed to set role.' });
+			console.error('[admin:users] unban failed:', e);
+			return fail(500, { message: 'Failed to unban user.' });
 		}
 	},
 };

@@ -2,7 +2,7 @@ import * as v from 'valibot';
 import { safeParse } from 'valibot';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiValidationError } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 import { INGEST_RATE_LIMIT_MAX, INGEST_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import { checkDocumentLimit } from '$lib/server/db/rag/limits';
 import { RetrievalError } from '$lib/server/rawrag/errors';
@@ -27,7 +27,9 @@ const StreamSchema = v.object({
 export const config = { runtime: 'nodejs22.x', maxDuration: 60 };
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await ratelimit.limit(user.id);
 	if (!success) return rateLimitResponse(reset);

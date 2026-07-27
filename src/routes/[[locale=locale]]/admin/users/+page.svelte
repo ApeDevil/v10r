@@ -115,7 +115,6 @@ function openBanDialog(userId: string) {
 									{m.admin_users_col_email()} <span class="{sortIcon('email')} sort-icon"></span>
 								</a>
 							</th>
-							<th>{m.admin_users_col_role()}</th>
 							<th>{m.admin_users_col_status()}</th>
 							<th>
 								<a href={sortHref('createdAt')} class="sort-header">
@@ -139,7 +138,6 @@ function openBanDialog(userId: string) {
 									</Cluster>
 								</td>
 								<td data-label={m.admin_users_col_email()}><code class="user-email">{u.email}</code></td>
-								<td data-label={m.admin_users_col_role()}><Badge variant={u.role === 'admin' ? 'default' : 'secondary'}>{u.role}</Badge></td>
 								<td data-label={m.admin_users_col_status()}>
 									{#if u.banned}
 										<Badge variant="error">{m.admin_users_status_banned()}</Badge>
@@ -174,48 +172,6 @@ function openBanDialog(userId: string) {
 											<Button variant="outline" size="sm" onclick={() => openBanDialog(u.id)}>
 												{m.admin_users_action_ban()}
 											</Button>
-										{/if}
-
-										{#if u.role !== 'admin'}
-											<form
-												method="POST"
-												action="?/setRole"
-												use:enhance={() => {
-													submitting = u.id + ':role';
-													return async ({ result, update }) => {
-														if (result.type === 'success' && result.data) toast.success(result.data.message as string);
-														else if (result.type === 'failure') toast.error((result.data?.message as string) || 'Failed');
-														submitting = '';
-														return update();
-													};
-												}}
-											>
-												<input type="hidden" name="userId" value={u.id} />
-												<input type="hidden" name="role" value="admin" />
-												<Button type="submit" variant="ghost" size="sm" disabled={submitting === u.id + ':role'}>
-													{m.admin_users_action_promote()}
-												</Button>
-											</form>
-										{:else}
-											<form
-												method="POST"
-												action="?/setRole"
-												use:enhance={() => {
-													submitting = u.id + ':role';
-													return async ({ result, update }) => {
-														if (result.type === 'success' && result.data) toast.success(result.data.message as string);
-														else if (result.type === 'failure') toast.error((result.data?.message as string) || 'Failed');
-														submitting = '';
-														return update();
-													};
-												}}
-											>
-												<input type="hidden" name="userId" value={u.id} />
-												<input type="hidden" name="role" value="user" />
-												<Button type="submit" variant="ghost" size="sm" disabled={submitting === u.id + ':role'}>
-													{m.admin_users_action_demote()}
-												</Button>
-											</form>
 										{/if}
 									</Cluster>
 								</td>

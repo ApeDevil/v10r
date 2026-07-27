@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/api/response';
-import { requireApiBlogAuthor } from '$lib/server/auth/guards';
+import { guardApiBlogAuthor } from '$lib/server/auth/guards';
 import { createPost, isSlugTaken, listPosts } from '$lib/server/blog';
 import { CreatePostSchema } from '$lib/server/blog/schemas';
 import {
@@ -15,7 +15,9 @@ const ratelimit = createLimiter(BLOG_WRITE_RATE_LIMIT_PREFIX, BLOG_WRITE_RATE_LI
 
 /** List posts for current author (all statuses). */
 export const GET: RequestHandler = async ({ url, locals }) => {
-	const { user } = requireApiBlogAuthor(locals);
+	const guard = guardApiBlogAuthor(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
 	const status = url.searchParams.get('status') as 'draft' | 'published' | 'archived' | undefined;
@@ -35,7 +37,9 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
 /** Create a new draft post. */
 export const POST: RequestHandler = async ({ request, locals }) => {
-	const { user } = requireApiBlogAuthor(locals);
+	const guard = guardApiBlogAuthor(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await ratelimit.limit(user.id);
 	if (!success) return rateLimitResponse(reset);

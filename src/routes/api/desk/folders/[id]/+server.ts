@@ -2,7 +2,7 @@ import * as v from 'valibot';
 import { safeParse } from 'valibot';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 import {
 	FolderCycleError,
 	FolderNameConflictError,
@@ -23,7 +23,9 @@ const UpdateFolderSchema = v.object({
 
 /** Get a single folder. */
 export const GET: RequestHandler = async ({ params, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 	const row = await getFolder(params.id, user.id);
 	if (!row) return apiError(404, 'folder_not_found', 'Folder not found.');
 	return apiOk({ folder: row });
@@ -31,7 +33,9 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 /** Update folder (rename and/or move). */
 export const PUT: RequestHandler = async ({ params, request, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await limiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);
@@ -85,7 +89,9 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
  * after explicit user confirmation in the UI.
  */
 export const DELETE: RequestHandler = async ({ params, url, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success: rlOk, reset } = await limiter.limit(user.id);
 	if (!rlOk) return rateLimitResponse(reset);

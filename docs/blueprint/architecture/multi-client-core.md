@@ -68,7 +68,7 @@ src/lib/server/
     queries.ts                 ← reads
     mutations.ts               ← writes
   auth/
-    guards.ts                  ← requireAuth(), requireApiUser(), requireAdmin()
+    guards.ts                  ← requireAuth()/requireAdmin() (pages), guardApi*() (endpoints)
     index.ts                   ← Better Auth instance
   rawrag/
     index.ts                   ← retrieve(), formatContextForPrompt()
@@ -144,13 +144,17 @@ return {
 
 ```typescript
 // src/lib/server/auth/guards.ts — route-facing, fine here
-export function requireApiUser(locals: App.Locals) {
+export function requireAuth(locals: App.Locals, returnTo?: string) {
   if (!locals.user || !locals.session) {
-    error(401, 'Authentication required'); // SvelteKit error() — adapter layer
+    const target = returnTo ? `/auth/login?returnTo=${encodeURIComponent(returnTo)}` : '/auth/login';
+    redirect(303, localizeHref(target)); // SvelteKit redirect() — adapter layer
   }
   return { user: locals.user, session: locals.session };
 }
 ```
+
+Note that this throwing style is for **page loads only**. `+server.ts` uses a
+returning family instead — see the REST section below for why.
 
 **4. Domain modules call down, not across.**
 
@@ -204,7 +208,9 @@ Form actions call domain mutations directly, return `fail()` on error, return da
 ```typescript
 // src/routes/api/notifications/[id]/read/+server.ts
 export const POST: RequestHandler = async ({ params, locals }) => {
-  const { user } = requireApiUser(locals);  // 401 on fail, not redirect
+  const guard = guardApiUser(locals);       // RETURNS the 401, never throws it
+  if ('error' in guard) return guard.error;
+  const { user } = guard;
 
   try {
     const found = await markAsRead(params.id, user.id);
@@ -355,12 +361,14 @@ Jobs register in `src/lib/server/jobs/index.ts`. They're triggered two ways: `sc
 | Client | Mechanism | Guard | Failure behavior |
 |--------|-----------|-------|-----------------|
 | Human UI page | Session cookie → Better Auth | `requireAuth(locals)` | `redirect(303, '/auth/login')` |
-| REST API endpoint | Session cookie → Better Auth | `requireApiUser(locals)` | `error(401)` |
+| REST API endpoint | Session cookie → Better Auth | `guardApiUser(locals)` | returns `apiError(401)` — see note below |
 | AI tool | Inherited from chat endpoint | closure capture of `userId` | N/A — tool never sees unauthenticated call |
 | External API (future) | API key header | `requireApiKey(request)` | `error(401)` |
 | Background job | None — trusted context | none | N/A |
 
-The AI tool pattern is important: authentication happens once, at the AI route's shared entry guard (`guardAiRequest`, used by `/api/ai/chatbot`, `/api/ai/deskbot`, `/api/ai/showcase/rag`). `requireApiUser` runs there. The tool factory receives the verified `user.id` as a closure argument. No tool ever calls `requireApiUser` itself.
+**Why endpoint guards return instead of throw.** SvelteKit unwraps only `HttpError` and `Redirect`; a thrown bare `Response` falls through to the fatal-error path and becomes a **500**. An earlier `requireApi*` family did exactly that, so unauthenticated callers got 500 instead of 401/403 across most of the API. Page guards (`requireAuth`, `requireAdmin`) still throw, because Kit's own `redirect()`/`error()` are unwrapped correctly. `guard-contract.gate.test.ts` pins the split shut.
+
+The AI tool pattern is important: authentication happens once, at the AI route's shared entry guard (`guardAiRequest`, used by `/api/ai/chatbot`, `/api/ai/deskbot`, `/api/ai/showcase/rag`). The tool factory receives the verified `user.id` as a closure argument. No tool ever re-checks authentication itself.
 
 ```typescript
 // src/routes/api/ai/chatbot/+server.ts (the guard preamble is shared across all three AI routes)

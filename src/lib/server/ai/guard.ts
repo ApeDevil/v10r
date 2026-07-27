@@ -12,14 +12,19 @@ import { checkUserBudget } from '$lib/server/ai/budget';
 import { RATE_LIMIT_MAX, RATE_LIMIT_PREFIX, RATE_LIMIT_WINDOW } from '$lib/server/ai/config';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 
 const ratelimit = createLimiter(RATE_LIMIT_PREFIX, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
 
 type GuardResult = { user: { id: string }; response?: never } | { user?: never; response: Response };
 
 export async function guardAiRequest(locals: App.Locals): Promise<GuardResult> {
-	const { user } = requireApiUser(locals);
+	// Map guardApiUser's `{ error }` into this function's own `{ response }`
+	// shape. The exported contract is unchanged, so the three callers are
+	// untouched; only the status changes 500 → 401 for anonymous callers.
+	const auth = guardApiUser(locals);
+	if ('error' in auth) return { response: auth.error };
+	const { user } = auth;
 
 	if (!aiConfigured) {
 		return {

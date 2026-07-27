@@ -607,4 +607,71 @@ describe('desk mutations', () => {
 			expect(result).toBeNull();
 		});
 	});
+	// ── Destination ownership ────────────────────────────────────────
+	//
+	// The existing per-function tests prove the SOURCE row is the caller's, but
+	// every one of them passes `null` as the destination — so a foreign
+	// folderId/parentId went unexercised and was written unchecked. That let a
+	// user file their own rows into another user's tree, which then became
+	// reachable by that user's own cascade delete.
+
+	describe('destination ownership', () => {
+		it("refuses to move a file into another user's folder", async () => {
+			const foreign = makeFolder({ userId: USER_B.id });
+			await db.insert(folder).values(foreign);
+			const f = makeFile({ userId: USER_A.id });
+			await db.insert(file).values(f);
+
+			await expect(moveFile(f.id, USER_A.id, foreign.id)).rejects.toThrow();
+
+			const [row] = await db.select().from(file).where(eq(file.id, f.id));
+			expect(row.folderId).toBeNull();
+		});
+
+		it("refuses to create a folder under another user's folder", async () => {
+			const foreign = makeFolder({ userId: USER_B.id });
+			await db.insert(folder).values(foreign);
+
+			await expect(createFolder(USER_A.id, 'Nested', foreign.id)).rejects.toThrow();
+		});
+
+		it("refuses to move a folder under another user's folder", async () => {
+			const foreign = makeFolder({ userId: USER_B.id });
+			const mine = makeFolder({ userId: USER_A.id });
+			await db.insert(folder).values([foreign, mine]);
+
+			await expect(moveFolder(mine.id, USER_A.id, foreign.id)).rejects.toThrow();
+
+			const [row] = await db.select().from(folder).where(eq(folder.id, mine.id));
+			expect(row.parentId).toBeNull();
+		});
+
+		it("refuses to create a file under another user's folder", async () => {
+			const foreign = makeFolder({ userId: USER_B.id });
+			await db.insert(folder).values(foreign);
+
+			await expect(createSpreadsheetFile(USER_A.id, 'Sheet', {}, foreign.id)).rejects.toThrow();
+			await expect(createMarkdownFile(USER_A.id, 'Doc', '', foreign.id)).rejects.toThrow();
+		});
+
+		it("still allows the caller's own folder as a destination", async () => {
+			const mine = makeFolder({ userId: USER_A.id });
+			await db.insert(folder).values(mine);
+			const f = makeFile({ userId: USER_A.id });
+			await db.insert(file).values(f);
+
+			const moved = await moveFile(f.id, USER_A.id, mine.id);
+			expect(moved?.folderId).toBe(mine.id);
+		});
+
+		it('still allows null (root) as a destination', async () => {
+			const mine = makeFolder({ userId: USER_A.id });
+			await db.insert(folder).values(mine);
+			const f = makeFile({ userId: USER_A.id, folderId: mine.id });
+			await db.insert(file).values(f);
+
+			const moved = await moveFile(f.id, USER_A.id, null);
+			expect(moved?.folderId).toBeNull();
+		});
+	});
 });

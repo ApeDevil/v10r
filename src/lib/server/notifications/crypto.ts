@@ -4,6 +4,32 @@
  */
 import { env } from '$env/dynamic/private';
 
+/** Obvious non-secrets that must never reach production as a real key. */
+const DUMMY_KEY_PATTERNS = [/^0+$/, /^(?:de)?adbeef/i, /^64-char/i, /^changeme/i, /^replace/i];
+
+/**
+ * Fail at boot, not at first use.
+ *
+ * `getKey()` only throws when something is actually encrypted, so a misconfigured
+ * deployment looked healthy until the first Discord link — and a placeholder key
+ * would have "worked" indefinitely while providing no confidentiality at all.
+ * Mirrors abuse/config.ts's assertProductionConfig().
+ */
+function assertProductionConfig(): void {
+	if (process.env.NODE_ENV !== 'production') return;
+	const key = env.ENCRYPTION_KEY;
+	if (!key || key.length !== 64) {
+		throw new Error('ENCRYPTION_KEY must be a 64-character hex string (32 bytes) in production.');
+	}
+	if (!/^[0-9a-f]{64}$/i.test(key)) {
+		throw new Error('ENCRYPTION_KEY must be hex. Generate with: openssl rand -hex 32');
+	}
+	if (DUMMY_KEY_PATTERNS.some((rx) => rx.test(key))) {
+		throw new Error('ENCRYPTION_KEY looks like a placeholder. Generate with: openssl rand -hex 32');
+	}
+}
+assertProductionConfig();
+
 function getKey(): Promise<CryptoKey> {
 	const keyHex = env.ENCRYPTION_KEY;
 	if (!keyHex || keyHex.length !== 64) {

@@ -2,7 +2,7 @@ import * as v from 'valibot';
 import { safeParse } from 'valibot';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/api/response';
-import { requireApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/auth/guards';
 import { FolderNameConflictError } from '$lib/server/db/desk/errors';
 import { createFolder } from '$lib/server/db/desk/mutations';
 import { listFolders } from '$lib/server/db/desk/queries';
@@ -22,14 +22,18 @@ const CreateFolderSchema = v.object({
  * at `FOLDER_LIST_CAP`; if exceeded, `overflow: true` signals the overflow.
  */
 export const GET: RequestHandler = async ({ locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 	const { items, overflow } = await listFolders(user.id);
 	return apiOk({ folders: items, overflow });
 };
 
 /** Create a new folder. */
 export const POST: RequestHandler = async ({ request, locals }) => {
-	const { user } = requireApiUser(locals);
+	const guard = guardApiUser(locals);
+	if ('error' in guard) return guard.error;
+	const { user } = guard;
 
 	const { success, reset } = await limiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);
