@@ -1,5 +1,9 @@
 import { sql } from 'drizzle-orm';
 import { beforeAll, describe, expect, it } from 'vitest';
+// The REAL classifier, not a fixture. It imports only `node:crypto`, so pulling it into a DB test
+// costs nothing — and it is the only way to prove the writer and the CHECKs agree. See the
+// "producer satisfies the constraints" test at the bottom of this file.
+import { classifyTraffic } from '$lib/server/mcp/telemetry/self-traffic';
 import { createTestDb } from '$lib/server/test/db';
 import { mcpCallLog } from './call-log';
 
@@ -149,6 +153,52 @@ describe('mcp.call_log schema', () => {
 
 		it('mcp_call_observed — a row always stands for at least one occurrence', async () => {
 			await expect(db.insert(mcpCallLog).values(validRow({ observedCount: 0 }))).rejects.toThrow();
+		});
+	});
+
+	/**
+	 * The constraints above prove the table REJECTS bad rows. Nothing proved the writer never
+	 * produces one — and that gap is not hypothetical.
+	 *
+	 * On 2026-07-28 every admin-surface row was rejected in production for ~an hour. Both halves
+	 * were individually tested and individually correct: `mcp_call_admin_not_external` asserted
+	 * that admin traffic is never external, and `classifyTraffic` happily returned `external` for
+	 * an admin call because the operator's MCP client sends no `X-V10r-Self` header. Two true
+	 * statements of one invariant that contradicted each other, with no test spanning them. The
+	 * writer fails open by design, so the only symptom was an empty dashboard.
+	 *
+	 * A constraint is a claim about what the PRODUCER guarantees. Test it against the producer.
+	 */
+	describe('the producer satisfies the constraints', () => {
+		it('accepts the classifier’s own output for an unauthenticated-header admin call', async () => {
+			const traffic = classifyTraffic({
+				// A real MCP client: not curl, not a bot, and carrying no self-traffic header —
+				// precisely the shape that used to yield `external`.
+				headers: new Headers({ 'user-agent': 'claude-code/2.1.89 (cli)' }),
+				surface: 'admin',
+				vercelEnv: 'production',
+				selfSecret: undefined,
+			});
+
+			// The exact row shape production emitted, reconstructed from the failing INSERT.
+			await expect(
+				db.insert(mcpCallLog).values(
+					validRow({
+						surface: 'admin',
+						traffic,
+						stage: 'protocol',
+						outcome: 'ok',
+						method: 'ping',
+						toolName: null,
+						dispatchMs: null,
+						clientFamily: 'other',
+						clientKey: 'm_87b7fac09a4d95cf7bb0c88ea1c63db9',
+						requestedProtocolVersion: '2025-11-25',
+						totalMs: 176,
+						gateMs: 176,
+					}),
+				),
+			).resolves.toBeDefined();
 		});
 	});
 });

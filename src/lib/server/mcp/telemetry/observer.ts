@@ -73,6 +73,7 @@ export function buildCallLogRow(
 	const userAgent = context.headers.get('user-agent');
 	const traffic = classifyTraffic({
 		headers: context.headers,
+		surface: context.surface,
 		vercelEnv: env.VERCEL_ENV,
 		selfSecret: env.MCP_SELF_TRAFFIC_TOKEN,
 	});
@@ -173,6 +174,7 @@ export function recordMcpGateRejection(context: McpObserverContext, reason: McpG
 				surface: context.surface,
 				traffic: classifyTraffic({
 					headers: context.headers,
+					surface: context.surface,
 					vercelEnv: env.VERCEL_ENV,
 					selfSecret: env.MCP_SELF_TRAFFIC_TOKEN,
 				}),

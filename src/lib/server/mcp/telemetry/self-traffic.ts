@@ -55,6 +55,13 @@ function matchesSelfSecret(presented: string | null, secret: string | undefined)
 
 export interface TrafficInput {
 	headers: Headers;
+	/**
+	 * Which endpoint was called. Load-bearing, not decorative: the admin surface is
+	 * bearer-authenticated, so it has no anonymous caller and `external` is not a value it can
+	 * legitimately take. The database enforces that as `mcp_call_admin_not_external`, and this
+	 * parameter is what makes the classifier incapable of violating it.
+	 */
+	surface: 'public' | 'admin';
 	/** `VERCEL_ENV`. Anything other than 'production' shares the prod database. */
 	vercelEnv: string | undefined;
 	/** The self-traffic secret, if configured. */
@@ -65,11 +72,21 @@ export interface TrafficInput {
  * Precedence is deliberate: `preview` outranks `self`, because a preview deployment is not
  * production traffic even when the operator is the one driving it, and the KPI strip must not be
  * able to count it either way.
+ *
+ * The admin fallback sits LAST so the two more specific answers still win: a preview deployment is
+ * still `preview`, and an operator driving the admin endpoint from curl is still `test`. It catches
+ * only the case that would otherwise be `external`.
  */
-export function classifyTraffic({ headers, vercelEnv, selfSecret }: TrafficInput): McpTraffic {
+export function classifyTraffic({ headers, surface, vercelEnv, selfSecret }: TrafficInput): McpTraffic {
 	if (vercelEnv !== undefined && vercelEnv !== 'production') return 'preview';
 	if (matchesSelfSecret(headers.get(SELF_TRAFFIC_HEADER), selfSecret)) return 'self';
 	if (SYNTHETIC_UA_RE.test(headers.get('user-agent') ?? '')) return 'test';
+	// Reaching the admin surface at all costs MCP_ADMIN_TOKEN, so the caller is the operator
+	// whether or not they bothered to send the self header. Labelling that `external` would both
+	// inflate the adoption KPI and violate the table's CHECK — which is exactly what happened in
+	// production on 2026-07-28: every admin row was silently rejected because the operator's MCP
+	// client does not send X-V10r-Self, and the writer fails open by design.
+	if (surface === 'admin') return 'self';
 	return 'external';
 }
 

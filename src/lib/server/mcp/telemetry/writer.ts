@@ -31,6 +31,41 @@ const TIMED_OUT = Symbol('mcp-telemetry-timeout');
 export type McpCallLogRow = typeof mcpCallLog.$inferInsert;
 
 /**
+ * Describe a failed insert in terms that identify the fault without reprinting the row.
+ *
+ * The naive `sanitizeError(cause)` is worse than it looks. It reads `err.message`, and Drizzle
+ * formats that as `Failed query: <sql>\nparams: <bound values>` — so it prints the whole row while
+ * omitting the one field that names the fault, which lives on the pg driver error one level down
+ * in `cause`. On a public no-match row those params include the consumer's own query text, so the
+ * scrubber's purpose is defeated at the same time as the diagnosis is lost.
+ *
+ * SQLSTATE plus the constraint name carry no row data and are sufficient on their own: a rejected
+ * CHECK names itself. This is not hypothetical tidying — on 2026-07-28 every admin row was rejected
+ * for an hour by `mcp_call_admin_not_external` and the log said only "Failed query: insert into
+ * mcp.call_log ...", naming neither the constraint nor the reason.
+ *
+ * `detail`, `where` and `internalQuery` are deliberately NOT read: those are the pg fields that
+ * carry offending row values and SQL text.
+ */
+function describeWriteFailure(cause: unknown): string {
+	// Walk the cause chain (Drizzle wraps the driver error). Bounded so a cyclic chain cannot spin.
+	let err: unknown = cause;
+	for (let depth = 0; err != null && depth < 5; depth++) {
+		const candidate = err as { code?: unknown; constraint?: unknown; table?: unknown; cause?: unknown };
+		if (typeof candidate.code === 'string') {
+			const parts = [`sqlstate=${candidate.code}`];
+			if (typeof candidate.constraint === 'string') parts.push(`constraint=${candidate.constraint}`);
+			if (typeof candidate.table === 'string') parts.push(`table=${candidate.table}`);
+			return parts.join(' ');
+		}
+		err = candidate.cause;
+	}
+	// No SQLSTATE — a connection or timeout failure rather than a rejected row. Keep the statement
+	// for context but cut Drizzle's `params:` tail, which is the row itself.
+	return sanitizeError(cause).split('\nparams:')[0];
+}
+
+/**
  * Insert one row, bounded by a deadline, never throwing.
  *
  * Returns whether the row was written, which the caller may log but must not act on: telemetry is
@@ -49,10 +84,9 @@ export async function writeCallLog(row: McpCallLogRow): Promise<boolean> {
 		}
 		return true;
 	} catch (cause) {
-		// sanitizeError reads only `err.message`, discarding the enumerable-property surface a pg
-		// DatabaseError would otherwise print — which on a constraint violation includes the
-		// offending row values, i.e. the consumer's own query text.
-		console.error('[mcp-telemetry] write failed:', sanitizeError(cause));
+		// SQLSTATE + constraint name, never the row. See describeWriteFailure for why the obvious
+		// `sanitizeError(cause)` both leaks the parameters and hides the reason.
+		console.error('[mcp-telemetry] write failed:', describeWriteFailure(cause));
 		return false;
 	}
 }

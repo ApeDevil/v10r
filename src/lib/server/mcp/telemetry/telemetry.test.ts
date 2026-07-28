@@ -178,21 +178,32 @@ describe('classifyTraffic', () => {
 	it('ranks a preview deployment above every other signal', () => {
 		// Preview deploys share the PRODUCTION database, so they must never count as external even
 		// when the operator drives them.
-		expect(classifyTraffic({ headers: new Headers(), vercelEnv: 'preview', selfSecret: secret })).toBe('preview');
+		expect(
+			classifyTraffic({ headers: new Headers(), surface: 'public', vercelEnv: 'preview', selfSecret: secret }),
+		).toBe('preview');
 	});
 
 	it('recognises the operator by a constant-time secret, not by a guessable header', () => {
 		const withSecret = new Headers({ 'x-v10r-self': secret });
-		expect(classifyTraffic({ headers: withSecret, vercelEnv: 'production', selfSecret: secret })).toBe('self');
+		expect(
+			classifyTraffic({ headers: withSecret, surface: 'public', vercelEnv: 'production', selfSecret: secret }),
+		).toBe('self');
 		// Knowing the header's NAME is not enough.
 		const wrong = new Headers({ 'x-v10r-self': 'guess' });
-		expect(classifyTraffic({ headers: wrong, vercelEnv: 'production', selfSecret: secret })).toBe('external');
+		expect(classifyTraffic({ headers: wrong, surface: 'public', vercelEnv: 'production', selfSecret: secret })).toBe(
+			'external',
+		);
 	});
 
 	it('marks tooling as synthetic so it cannot inflate adoption', () => {
 		for (const ua of ['curl/8.4.0', 'python-requests/2.31', 'vitest', 'Uptime-Monitor/1.0']) {
 			expect(
-				classifyTraffic({ headers: new Headers({ 'user-agent': ua }), vercelEnv: 'production', selfSecret: secret }),
+				classifyTraffic({
+					headers: new Headers({ 'user-agent': ua }),
+					surface: 'public',
+					vercelEnv: 'production',
+					selfSecret: secret,
+				}),
 				ua,
 			).toBe('test');
 		}
@@ -202,10 +213,44 @@ describe('classifyTraffic', () => {
 		expect(
 			classifyTraffic({
 				headers: new Headers({ 'user-agent': 'claude-code/2.1.89 (cli)' }),
+				surface: 'public',
 				vercelEnv: 'production',
 				selfSecret: secret,
 			}),
 		).toBe('external');
+	});
+
+	/**
+	 * The admin surface costs a bearer token to reach, so it has no anonymous caller. Returning
+	 * `external` here is not merely a mislabel — it violates `mcp_call_admin_not_external` and the
+	 * row is rejected. That is the 2026-07-28 production defect: EVERY admin row was dropped,
+	 * silently, because the writer fails open and the operator's client sends no self header.
+	 */
+	it('never calls the admin surface external, even with no self header', () => {
+		const client = new Headers({ 'user-agent': 'claude-code/2.1.89 (cli)' });
+		// Same request, same (absent) header — only the surface differs.
+		expect(
+			classifyTraffic({ headers: client, surface: 'public', vercelEnv: 'production', selfSecret: undefined }),
+		).toBe('external');
+		expect(classifyTraffic({ headers: client, surface: 'admin', vercelEnv: 'production', selfSecret: undefined })).toBe(
+			'self',
+		);
+	});
+
+	it('keeps the more specific answers ahead of the admin fallback', () => {
+		// A preview deploy is still preview, and curl is still synthetic — the admin rule only
+		// catches what would otherwise have been `external`.
+		expect(
+			classifyTraffic({ headers: new Headers(), surface: 'admin', vercelEnv: 'preview', selfSecret: secret }),
+		).toBe('preview');
+		expect(
+			classifyTraffic({
+				headers: new Headers({ 'user-agent': 'curl/8.4.0' }),
+				surface: 'admin',
+				vercelEnv: 'production',
+				selfSecret: secret,
+			}),
+		).toBe('test');
 	});
 });
 
