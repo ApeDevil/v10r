@@ -7,6 +7,10 @@ result in a **high risk**" to data subjects. This document records the screening
 reasoning, and — importantly — the design choices that were made *in order to* stay below the
 threshold. It is not a DPIA; it is the evidence that one is not currently owed.
 
+**Scope: the two web-analytics lanes only.** MCP usage telemetry (`mcp.call_log`, see
+[architecture/hosted-mcp.md](../architecture/hosted-mcp.md)) is a separate subsystem this
+screening does not cover.
+
 ## Art 35(3) — the mandatory triggers
 
 | Trigger | Applies? | Reasoning |

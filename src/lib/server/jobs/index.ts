@@ -9,6 +9,7 @@ import { deskRetention } from './desk-retention';
 import { discordTokenRefresh } from './discord-token-refresh';
 import { grantRequestExpiry } from './grant-request-expiry';
 import { logCleanup } from './log-cleanup';
+import { mcpTelemetryRetention } from './mcp-telemetry-retention';
 import { notificationCleanup } from './notification-cleanup';
 import { notificationDelivery } from './notification-delivery';
 import { sessionCleanup } from './session-cleanup';
@@ -36,5 +37,6 @@ export const jobs: Record<string, Job> = {
 	'desk-rawrag-sync': { execute: deskRawragSync },
 	'desk-retention': { execute: deskRetention },
 	'ai-telemetry-retention': { execute: aiTelemetryRetention },
+	'mcp-telemetry-retention': { execute: mcpTelemetryRetention },
 	'audit-log-retention': { execute: auditLogRetention },
 };

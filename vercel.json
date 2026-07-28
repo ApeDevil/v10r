@@ -65,6 +65,10 @@
 		{
 			"path": "/api/cron/audit-log-retention",
 			"schedule": "0 7 * * 0"
+		},
+		{
+			"path": "/api/cron/mcp-telemetry-retention",
+			"schedule": "30 7 * * 0"
 		}
 	]
 }

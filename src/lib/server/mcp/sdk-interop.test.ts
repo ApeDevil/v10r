@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { mcpMethodNotAllowed, respondToMcpPost } from './http';
 import { publicPatternRegistry } from './patterns/registry';
 import type { McpServerIdentity } from './transport';
+import { noopMcpObserver } from './types';
 
 /**
  * Protocol-level interoperability proof using the REAL @modelcontextprotocol/sdk client driving
@@ -42,7 +43,7 @@ beforeAll(async () => {
 			headers,
 			body: body.length > 0 ? body : undefined,
 		});
-		const response = await respondToMcpPost(request, publicPatternRegistry, IDENTITY);
+		const response = await respondToMcpPost(request, publicPatternRegistry, IDENTITY, noopMcpObserver);
 		const outHeaders: Record<string, string> = {};
 		response.headers.forEach((val, key) => {
 			outHeaders[key] = val;
@@ -96,6 +97,23 @@ describe('MCP SDK interoperability (real client over HTTP)', () => {
 		try {
 			const result = await client.callTool({ name: 'set_mcp_page_message', arguments: { message: 'x' } });
 			expect(result.isError).toBe(true);
+		} finally {
+			await transport.close();
+		}
+	});
+
+	it('does not leak the internal diag field to a real MCP client', async () => {
+		// The strongest of the three strip pins: it runs the production path end to end, and would
+		// also catch the SDK rejecting an unrecognised field in the result schema.
+		const { client, transport } = await connectClient();
+		try {
+			const result = await client.callTool({
+				name: 'search_patterns',
+				arguments: { query: 'stripe subscription webhooks' },
+			});
+			expect(result.isError).toBe(true);
+			expect(result).not.toHaveProperty('diag');
+			expect(JSON.stringify(result)).not.toMatch(/diag/);
 		} finally {
 			await transport.close();
 		}

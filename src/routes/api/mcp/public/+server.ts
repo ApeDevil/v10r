@@ -10,8 +10,17 @@ import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { mcpMethodNotAllowed, respondToMcpPost } from '$lib/server/mcp/http';
 import { PUBLIC_MCP_INSTRUCTIONS, publicPatternRegistry } from '$lib/server/mcp/patterns/registry';
 import { publicBuildInfo } from '$lib/server/mcp/server-info';
+import { createMcpObserver } from '$lib/server/mcp/telemetry/observer';
 import type { McpServerIdentity } from '$lib/server/mcp/transport';
 import type { RequestHandler } from './$types';
+
+/**
+ * Stated rather than inherited. Deferred telemetry shares this budget with the request that
+ * spawned it — Vercel cancels `waitUntil` promises when the function times out — so the number
+ * being written down is the point. Sharing a budget you have written down is engineering; sharing
+ * one you inherited is luck.
+ */
+export const config = { runtime: 'nodejs22.x', maxDuration: 10 };
 
 const limiter = createLimiter('mcp-public', 60, '1 m');
 
@@ -30,7 +39,32 @@ function identity(): McpServerIdentity {
 export const GET: RequestHandler = () => mcpMethodNotAllowed();
 
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
-	const { success, reset } = await limiter.limit(`ip:${getClientAddress()}`);
+	// `gate_ms` is the Upstash round trip, and it is on the path of EVERY request. Kept apart from
+	// dispatch timing because public tool execution is pure CPU over a static registry — pool the
+	// two and you conclude "the MCP is slow" when the rate limiter is the entire cost. It also
+	// doubles as a security signal: > 1000ms means the limiter FAIL-OPENED and the limit was not
+	// enforced for this request.
+	const gateStartedAt = performance.now();
+	const ip = getClientAddress();
+	const { success, reset } = await limiter.limit(`ip:${ip}`);
+	const gateMs = Math.round(performance.now() - gateStartedAt);
+
+	// A rate-limited request writes NOTHING. The limiter exists to make refusal cheap; writing a row
+	// on refusal would invert it into an amplifier, converting a flood into an equal number of
+	// database inserts. Rejection volume is a counter's job, not a log's.
 	if (!success) return rateLimitResponse(reset);
-	return respondToMcpPost(request, publicPatternRegistry, identity());
+
+	// Built INSIDE the handler, never at module scope: it closes over this request's gate timing and
+	// headers, so a shared instance would be cross-request contamination on a warm instance.
+	const observer = createMcpObserver({
+		surface: 'public',
+		ip,
+		headers: request.headers,
+		gateMs,
+		registryVersion: publicBuildInfo().patternRegistry,
+		knownTool: (name) => publicPatternRegistry.tools.some((tool) => tool.name === name),
+		body: undefined,
+	});
+
+	return respondToMcpPost(request, publicPatternRegistry, identity(), observer);
 };

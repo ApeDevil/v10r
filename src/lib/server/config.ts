@@ -191,6 +191,23 @@ export const AI_TELEMETRY_RETENTION_DAYS = 180;
 /** Delete admin audit-log rows older than this. Append-only growth table → bound it, but keep a long (compliance-ish) window. */
 export const AUDIT_RETENTION_DAYS = 365;
 
+/**
+ * Null out the caller-supplied columns of `mcp.call_log` after this many days.
+ *
+ * Minimise by COLUMN before minimising by row: the dimensional signal (tool, outcome, latency,
+ * registry version) is not personal data and is what makes "did the miss rate drop after v1.3?"
+ * answerable, whereas the retained query text may describe a third party's project and the trace id
+ * only ever serves an incident lookup nobody will file after a month.
+ */
+export const MCP_QUERY_TEXT_RETENTION_DAYS = 30;
+
+/**
+ * Delete `mcp.call_log` rows older than this. Longer than the text window because by then a row
+ * carries no free text and no identifier of any kind, and "did last quarter's gaps get fixed"
+ * needs a quarter.
+ */
+export const MCP_TELEMETRY_RETENTION_DAYS = 90;
+
 // ── Storage ────────────────────────────────────────────────────────────────────
 
 /** Max file upload size (bytes, 2 MB) */

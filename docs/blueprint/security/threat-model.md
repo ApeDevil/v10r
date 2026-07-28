@@ -14,7 +14,8 @@ looked at and deliberately accepted.
    one user's.
 4. **The LLM budget and the email-sending capability** — spendable, and abusing
    the latter damages domain reputation, which is not recoverable by a rollback.
-5. **Analytics/PII store**, **R2 objects**, **MCP demo state**.
+5. **Analytics/PII store**, **R2 objects**, **MCP demo state**, **`mcp.call_log`**
+   (a second, separately-sensitive MCP asset: retained caller-supplied query text).
 
 ## Adversaries
 
@@ -25,7 +26,7 @@ looked at and deliberately accepted.
 | A document the user ingested | Prompt injection, with persistence: it fires on every later retrieval |
 | A compromised npm dependency | Everything. This is why `bun audit` and the `minimumReleaseAge` install cooldown exist |
 | A stolen session cookie | Everything that user has, and — until step-up was added to passkey registration — durable access that survived signing out |
-| A leaked environment variable | `PAIRING_SECRET`, `MCP_ADMIN_TOKEN`, `CRON_SECRET`, the Neon URL |
+| A leaked environment variable | `PAIRING_SECRET`, `MCP_ADMIN_TOKEN`, `MCP_TELEMETRY_SALT`, `CRON_SECRET`, the Neon URL |
 
 ## Trust boundaries
 
@@ -41,6 +42,12 @@ looked at and deliberately accepted.
   cannot cross to another user.
 - **Tenancy in queries.** Every `[id]` route pushes `user.id` into the WHERE
   clause, so "not yours" and "doesn't exist" are indistinguishable.
+- **Caller-supplied `query_text` reaches the admin usage dashboard.** Retained
+  no-match MCP queries originate from an unauthenticated public endpoint and
+  render to an operator, often mid coding-agent session. Two controls: text
+  stays hidden until ≥3 distinct callers have asked it (k-anonymity and
+  anti-poisoning), and it renders in text position only — never into `href`,
+  `style`, or `data-*`.
 
 ## Deliberately accepted
 

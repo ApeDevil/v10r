@@ -149,7 +149,10 @@ src/lib/server/
   jobs/         Runner, scheduler, delivery-scheduler, registered jobs
   llmwiki/      Hybrid vector+BM25 wiki search; co-locates queries
   mcp/          Hosted MCP: shared JSON-RPC transport + Bearer auth, patterns/ registry
-                and excerpts. Serves /api/mcp/public (read-only) and /api/mcp/admin
+                and excerpts, telemetry/ (mcp.call_log writer). Serves /api/mcp/public
+                (read-only) and /api/mcp/admin. telemetry/writer.ts is the only module
+                in mcp/ that imports $lib/server/db — http.ts/transport.ts/types.ts stay
+                DB-free (zero-mock protocol tests); enforced by http.boundary.gate.test.ts
   monitoring/   Observability helpers
   neon/         Neon control-plane API client; sole NEON_API_KEY holder
   notifications/ Send, stream SSE, route, outbox, channel providers

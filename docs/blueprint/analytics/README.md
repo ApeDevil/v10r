@@ -2,6 +2,8 @@
 
 Privacy-first, first-party analytics blueprints. Collection is a middleware concern — the collector runs as the final stage of the 12-stage hook chain in `src/hooks.server.ts` — and the subsystem is split into two lanes that share no identifier: an anonymous visitor lane and an authenticated user lane.
 
+This directory — including the LIA and DPIA screening below — covers only that *web analytics* subsystem. The hosted MCP endpoints carry separate usage telemetry with its own IP+UA-derived key and its own retained free text, documented in [architecture/hosted-mcp.md](../architecture/hosted-mcp.md); it is **not** in scope of either assessment here.
+
 ## Contents
 
 | File | Main Topics |
@@ -15,4 +17,5 @@ Privacy-first, first-party analytics blueprints. Collection is a middleware conc
 
 - [stack/capabilities/gdpr.md](../../stack/capabilities/gdpr.md) — data-subject rights and the privacy aggregator
 - [architecture/jobs.md](../architecture/jobs.md) — `analytics-rollup` / `analytics-cleanup` jobs
+- [architecture/hosted-mcp.md](../architecture/hosted-mcp.md) — MCP usage telemetry (`mcp.call_log`); a separate subsystem, out of scope of this directory's LIA/DPIA screening
 - Server domain: `src/lib/server/analytics/` · client: `src/lib/analytics/` · dashboards: `/showcases/analytics/*` and `/admin/analytics`

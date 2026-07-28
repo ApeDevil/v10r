@@ -96,7 +96,8 @@ Vercel sends an HTTP GET to `/api/cron/[job]` on the schedule defined in `vercel
     { "path": "/api/cron/desk-rawrag-sync", "schedule": "15 5 * * *" },
     { "path": "/api/cron/desk-retention", "schedule": "0 6 * * 0" },
     { "path": "/api/cron/ai-telemetry-retention", "schedule": "30 6 * * 0" },
-    { "path": "/api/cron/audit-log-retention", "schedule": "0 7 * * 0" }
+    { "path": "/api/cron/audit-log-retention", "schedule": "0 7 * * 0" },
+    { "path": "/api/cron/mcp-telemetry-retention", "schedule": "30 7 * * 0" }
   ]
 }
 ```
@@ -167,6 +168,7 @@ src/lib/server/
     desk-retention.ts
     ai-telemetry-retention.ts
     audit-log-retention.ts
+    mcp-telemetry-retention.ts
 
 src/routes/
   api/
@@ -206,6 +208,7 @@ export const jobs: Record<string, Job> = {
   'desk-retention': { execute: deskRetention },
   'ai-telemetry-retention': { execute: aiTelemetryRetention },
   'audit-log-retention': { execute: auditLogRetention },
+  'mcp-telemetry-retention': { execute: mcpTelemetryRetention },
 };
 ```
 
@@ -215,15 +218,18 @@ The slug is the only identifier — it keys the registry, the `vercel.json` cron
 
 ## Retention Jobs
 
-Three scheduled jobs enforce data-retention windows. Each hard-deletes rows past a max age; all are idempotent and safe to re-run.
+Four scheduled jobs enforce data-retention windows. Most hard-delete rows past a max age; `mcp-telemetry-retention` is two-pass — an earlier scrub, then a later delete. All four filter on absolute age (`started_at`/`created_at` `< now() - interval`), so Vercel's ±59-minute cron jitter never matters and a missed week is fully repaired by the next run — on this weekly cadence every nominal window is really a **nominal-to-nominal+7d** range. All are idempotent and safe to re-run.
 
 | Job | Trims | Window |
 |-----|-------|--------|
 | `desk-retention` | Soft-deleted desk files (cascades to spreadsheet + markdown bodies); prunes `file_revision` history | `DESK_SOFT_DELETE_RETENTION_DAYS` (30d) for files; 90d for revisions |
 | `ai-telemetry-retention` | `ai.conversation_step` rows | 180d |
 | `audit-log-retention` | `admin.audit_log` rows | 365d |
+| `mcp-telemetry-retention` | `mcp.call_log`: pass 1 nulls `query_text` + `trace_id`; pass 2 deletes the row | 30d (scrub) / 90d (delete), effectively 30–37d / 90–97d |
 
 `desk-retention` is the hard-delete tail of the desk soft-delete lifecycle: a file soft-deleted by a user is purged only after the retention window, then its typed body rows are cascaded.
+
+`mcp-telemetry-retention` scrubs before it deletes, so a row crossing both thresholds in the same run is never deleted with its identifying columns still attached — the two passes are order-independent by construction. What each column holds and why is in [hosted-mcp.md](./hosted-mcp.md), section E.
 
 ---
 

@@ -8,6 +8,12 @@ vi.mock('$lib/server/api/rate-limit', () => ({
 // tools/list and auth-failure paths never dispatch, so the DB is never touched.
 vi.mock('$lib/server/db', () => ({ db: {} }));
 vi.mock('$lib/server/admin/audit', () => ({ recordAuditEvent: vi.fn(), queryAuditLog: vi.fn() }));
+// Mock the telemetry seam so assertions are about the wiring, not about a database write.
+const telemetry = vi.hoisted(() => ({ observed: [] as unknown[], gateRejections: [] as string[][] }));
+vi.mock('$lib/server/mcp/telemetry/observer', () => ({
+	createMcpObserver: () => ({ observe: (o: unknown) => telemetry.observed.push(o) }),
+	recordMcpGateRejection: (_ctx: unknown, reason: string) => telemetry.gateRejections.push([reason]),
+}));
 
 const { GET, POST } = await import('./+server');
 
@@ -88,5 +94,46 @@ describe('admin endpoint with a valid credential', () => {
 		const res = await rpc('tools/call', `Bearer ${TOKEN}`, { name: 'get_pattern', arguments: { id: 'x' } });
 		const body = await res.json();
 		expect(body.result.isError).toBe(true);
+	});
+});
+
+describe('telemetry wiring', () => {
+	beforeEach(() => {
+		telemetry.observed.length = 0;
+		telemetry.gateRejections.length = 0;
+	});
+
+	it('records a failed credential as a gate rejection, not as a tool error', async () => {
+		// No off-the-shelf MCP client can negotiate a static bearer, so a 401 here is a misconfigured
+		// operator or a scanner — a security counter, never a recoverable client error.
+		const res = await rpc('tools/list', 'Bearer wrong-token');
+		expect(res.status).toBe(401);
+		expect(telemetry.gateRejections).toEqual([['unauthorized']]);
+		expect(telemetry.observed).toHaveLength(0);
+	});
+
+	it('distinguishes an unconfigured server from a rejected credential', async () => {
+		delete process.env.MCP_ADMIN_TOKEN;
+		const res = await rpc('tools/list', `Bearer ${TOKEN}`);
+		expect(res.status).toBe(503);
+		expect(telemetry.gateRejections).toEqual([['unconfigured']]);
+	});
+
+	it('writes nothing at all when rate-limited', async () => {
+		limiterState.success = false;
+		try {
+			const res = await rpc('tools/list', `Bearer ${TOKEN}`);
+			expect(res.status).toBe(429);
+			expect(telemetry.observed).toHaveLength(0);
+			expect(telemetry.gateRejections).toHaveLength(0);
+		} finally {
+			limiterState.success = true;
+		}
+	});
+
+	it('records exactly one observation for an authorised request', async () => {
+		await rpc('tools/list', `Bearer ${TOKEN}`);
+		expect(telemetry.observed).toHaveLength(1);
+		expect(telemetry.gateRejections).toHaveLength(0);
 	});
 });

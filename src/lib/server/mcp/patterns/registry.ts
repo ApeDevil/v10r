@@ -133,6 +133,19 @@ function noMatchHelp(what: string): string {
 	return `No pattern matched ${what}. Available categories: ${categories}. Example capability tags: "${sample}". Try broader terms, or list everything with search_patterns query "pattern".`;
 }
 
+/**
+ * A genuine no-match: the query ran and the registry had nothing for it. This is THE improvement
+ * signal — it names a capability a consumer wanted that we do not cover.
+ *
+ * Setting the diag here rather than at each call site means a future no-match branch physically
+ * cannot forget it. Note that not every caller of `noMatchHelp` is a no-match: an unknown category
+ * filter reuses the same help text but never ran a query, so it stays `invalid_args` and is
+ * deliberately NOT routed through here — otherwise a typo'd filter would pollute the gaps report.
+ */
+function noMatchResult(what: string): ToolResult {
+	return errorResult(noMatchHelp(what), 'empty');
+}
+
 function patternCard(pattern: PatternRecord): string {
 	return [
 		`# ${pattern.title} (\`${pattern.id}\`)`,
@@ -158,14 +171,19 @@ function patternCard(pattern: PatternRecord): string {
 function searchPatterns(args: Record<string, unknown>): ToolResult {
 	const query = typeof args.query === 'string' ? args.query : '';
 	if (query.trim().length === 0) {
-		return errorResult('search_patterns needs a non-empty "query" string, e.g. {"query": "background jobs"}.');
+		return errorResult(
+			'search_patterns needs a non-empty "query" string, e.g. {"query": "background jobs"}.',
+			'invalid_args',
+		);
 	}
 	const limit = typeof args.limit === 'number' ? Math.min(Math.max(1, Math.floor(args.limit)), 20) : 5;
 	const category = typeof args.category === 'string' ? args.category.toLowerCase() : null;
 	const pool = category ? PATTERNS.filter((pattern) => pattern.category === category) : PATTERNS;
-	if (category && pool.length === 0) return errorResult(noMatchHelp(`category "${category}"`));
+	// NOT a no-match: an unrecognised category filter means the query never ran, so this is a client
+	// bug. Classifying it `empty` would fill the capability-gaps report with typo'd filter names.
+	if (category && pool.length === 0) return errorResult(noMatchHelp(`category "${category}"`), 'invalid_args');
 	const scored = scorePatterns(query, pool).slice(0, limit);
-	if (scored.length === 0) return errorResult(noMatchHelp(`query "${query}"`));
+	if (scored.length === 0) return noMatchResult(`query "${query}"`);
 	const lines = scored.map(
 		(hit, index) =>
 			`${index + 1}. **${hit.pattern.title}** (\`${hit.pattern.id}\`, ${hit.pattern.category})\n   ${hit.pattern.summary}\n   _matched: ${hit.matchedTerms.join(', ') || 'title'} in ${hit.matchedFields.join(', ')}_`,
@@ -179,7 +197,11 @@ function getPattern(args: Record<string, unknown>): ToolResult {
 	const id = typeof args.id === 'string' ? args.id : '';
 	const pattern = buildById().get(id);
 	if (!pattern) {
-		return errorResult(`No pattern with id "${id}". Valid ids: ${PATTERNS.map((entry) => entry.id).join(', ')}.`);
+		// A real-shaped id we do not have is a REGISTRY GAP, not a malformed request.
+		return errorResult(
+			`No pattern with id "${id}". Valid ids: ${PATTERNS.map((entry) => entry.id).join(', ')}.`,
+			'not_found',
+		);
 	}
 	return textResult(patternCard(pattern));
 }
@@ -189,16 +211,21 @@ function getFileExcerpt(args: Record<string, unknown>): ToolResult {
 	const startLine = typeof args.start_line === 'number' ? args.start_line : 1;
 	const lineCount = typeof args.line_count === 'number' ? args.line_count : DEFAULT_LINES;
 	const excerpt = readAllowlistedExcerpt(path, startLine, lineCount);
-	return excerpt.ok ? textResult(excerpt.text) : errorResult(excerpt.text);
+	// The discriminated union carries the reason across; there is deliberately no `??` fallback,
+	// because a default here is how a new failure branch would silently get the wrong reason.
+	return excerpt.ok ? textResult(excerpt.text) : errorResult(excerpt.text, excerpt.diag);
 }
 
 function traceCapability(args: Record<string, unknown>): ToolResult {
 	const capability = typeof args.capability === 'string' ? args.capability : '';
 	if (capability.trim().length === 0) {
-		return errorResult('trace_capability needs a non-empty "capability" string, e.g. {"capability": "approval gate"}.');
+		return errorResult(
+			'trace_capability needs a non-empty "capability" string, e.g. {"capability": "approval gate"}.',
+			'invalid_args',
+		);
 	}
 	const scored = scorePatterns(capability).slice(0, 3);
-	if (scored.length === 0) return errorResult(noMatchHelp(`capability "${capability}"`));
+	if (scored.length === 0) return noMatchResult(`capability "${capability}"`);
 	const sections = scored.map((hit) => {
 		const pattern = hit.pattern;
 		return [
@@ -223,6 +250,7 @@ function recommendPlan(args: Record<string, unknown>): ToolResult {
 	if (capabilities.length === 0) {
 		return errorResult(
 			'recommend_emulation_plan needs "capabilities": a non-empty array of strings, e.g. ["layered RAG", "background jobs"].',
+			'invalid_args',
 		);
 	}
 	const includeDeps = args.include_dependencies !== false;
@@ -240,7 +268,7 @@ function recommendPlan(args: Record<string, unknown>): ToolResult {
 			satisfies.set(hit.pattern.id, [...(satisfies.get(hit.pattern.id) ?? []), capability]);
 		}
 	}
-	if (satisfies.size === 0) return errorResult(noMatchHelp(`capabilities [${capabilities.join(', ')}]`));
+	if (satisfies.size === 0) return noMatchResult(`capabilities [${capabilities.join(', ')}]`);
 	const selected = new Set(satisfies.keys());
 	if (includeDeps) {
 		const queue = [...selected];
@@ -298,7 +326,10 @@ export const publicPatternRegistry: ToolRegistry = {
 	dispatch(name, args) {
 		const handler = HANDLERS[name];
 		if (!handler) {
-			return errorResult(`Unknown tool "${name}". Available: ${PATTERN_TOOLS.map((tool) => tool.name).join(', ')}.`);
+			return errorResult(
+				`Unknown tool "${name}". Available: ${PATTERN_TOOLS.map((tool) => tool.name).join(', ')}.`,
+				'unknown_tool',
+			);
 		}
 		return handler(isRecord(args) ? args : {});
 	},

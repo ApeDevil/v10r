@@ -14,7 +14,8 @@ let { data }: { data: PageData } = $props();
 		{#snippet header()}
 			<Cluster justify="between" align="center">
 				<div>
-					<h1 class="text-fluid-lg font-semibold">{m.admin_mcp_title()}</h1>
+					<!-- h2: the section layout owns the single h1 ("MCP"), as in every other admin section. -->
+					<h2 class="text-fluid-lg font-semibold">{m.admin_mcp_title()}</h2>
 					<p class="text-fluid-sm text-muted">{m.admin_mcp_description()}</p>
 				</div>
 				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>

@@ -89,21 +89,49 @@ compose_service() {
 	printf '%s' "$__compose_service"
 }
 
+# True when at least one of this project's containers is actually RUNNING.
+#
+# `compose ps -q` lists project containers in ANY state, so a *stopped* container is
+# still listed. Testing only that the list is non-empty therefore reports "up" for a
+# project whose container exited, and the `exec` that follows fails with
+# "can only create exec sessions on running containers: container state improper".
+# Stopped and removed are different states and only one of them used to be handled.
+#
+# podman-compose rejects a service argument to `ps -q` (it is a usage error, not an
+# empty result), so the state filter cannot live at the compose layer — ask podman
+# about each id instead. A line that is not a container id simply inspects to empty
+# and is skipped, which also absorbs any provider chatter that reaches stdout.
+project_running() {
+	local ids id
+	ids="$("${COMPOSE[@]}" ps -q 2>/dev/null)" || return 1
+	[ -n "$ids" ] || return 1
+	while IFS= read -r id; do
+		[ -n "$id" ] || continue
+		[ "$(podman inspect --format '{{.State.Running}}' "$id" 2>/dev/null)" = "true" ] && return 0
+	done <<<"$ids"
+	return 1
+}
+
 # Run the full gate (`bun run validate`) inside the current repo's container.
 # The container name is never hard-coded — we drive the repo's compose project:
-# - project up   → `compose exec` into the running service (reuse the warm container)
-# - project down → `compose run --rm` one-shot (auto-removed, never long-lived)
+# - project running → `compose exec` into the service (reuse the warm container)
+# - anything else   → `compose run --rm` one-shot (auto-removed, never long-lived)
+#
+# The one-shot deliberately does NOT start the project first. It needs no cleanup,
+# so the gate cannot leave a container behind on a path that exits early — and every
+# ship path does (rollback on gate failure, abort at the push confirmation, --dry-run).
+# It also cannot stop a container you were already using: a `vr s` in one terminal
+# never touches the dev server in another.
 run_validate() {
 	require_repo
 	command -v podman >/dev/null 2>&1 || die "podman not found on host."
 	[ -f "$REPO_ROOT/compose.yaml" ] || die "No compose.yaml in $REPO_ROOT — vr's gate runs inside a container."
 	local svc; svc="$(compose_service)"
-	# Single-service repos (v10r-style): any running project container ⇒ up.
-	if [ -n "$("${COMPOSE[@]}" ps -q 2>/dev/null)" ]; then
+	if project_running; then
 		info "Container up → validating via 'compose exec $svc'"
 		run "${COMPOSE[@]}" exec -T "$svc" bun run validate
 	else
-		info "Container down → ephemeral one-shot (auto-removed)"
+		info "Container not running → ephemeral one-shot (auto-removed)"
 		run "${COMPOSE[@]}" run --rm -T "$svc" bun run validate
 	fi
 }

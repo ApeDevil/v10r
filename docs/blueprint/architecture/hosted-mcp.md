@@ -53,6 +53,36 @@ Localized route at `src/routes/[[locale=locale]]/admin/mcp/`, protected by the e
 - A **"MCP Test"** nav item was added under the System group in the admin sidebar.
 - If `mcp.demo_state` isn't provisioned yet, the page degrades to an "unavailable" notice instead of erroring.
 
+The section now carries two tabs (`Demo` at `/admin/mcp`, `Usage` at `/admin/mcp/usage`) via `+layout.svelte`. The Demo tab's active check is an **exact** match rather than the usual `startsWith`, because `/admin/mcp` is a prefix of `/admin/mcp/usage` and would otherwise light up both tabs and emit two `aria-current="page"`. The demo view deliberately stays at the section root rather than redirecting to a child: `/admin/mcp` is named in four strings that ship to clients on the admin MCP wire (three tool descriptions plus `ADMIN_MCP_INSTRUCTIONS`).
+
+## E. Usage telemetry — `mcp.call_log`
+
+Every request reaching an `/api/mcp/*` route produces **exactly one row**, written at a single terminating edge after the outcome is decided. The question it exists to answer is not "how much traffic" but *"in what specific way is this MCP failing its consumers?"* — so the headline output is the set of queries that matched nothing, each naming a capability a consumer wanted and the pattern registry does not have.
+
+**Seam.** `respondToMcpPost` takes a required `McpCallObserver` port (`src/lib/server/mcp/types.ts`). `observe()` returns `void`, so there is nothing to await and telemetry cannot add latency to, or fail, a response. A registry-level decorator was rejected: a seam *below* the method cannot *see* the method, which would lose `initialize`, `tools/list`, unknown-method probes and unknown-tool rejections. `http.ts` is the only frame holding both the request and response envelopes.
+
+**Import boundary.** `http.ts`, `transport.ts` and `types.ts` must never acquire an edge to `$lib/server/db`, `$lib/server/api/*`, Redis or `@vercel/functions` — `http.test.ts` and `sdk-interop.test.ts` deliberately have zero mocks and drive the real path, and `$lib/server/db` constructs a Neon pool at module load. Enforced by `http.boundary.gate.test.ts`, not by convention. `telemetry/writer.ts` is the only module in the tree that imports the database.
+
+**Why tool failures are classifiable.** `errorResult()` takes a **required** `ToolDiag` (a closed union). The transport builds two `isError` results itself — unknown-tool and tool-threw — and those deliberately carry *no* diag. That absence is the discriminator: `isError && diag === undefined` ⟹ the transport produced it. The inference is total *only* because the parameter is required. A handler that ever returns `isError` without one lands in `outcome = 'tool_error'`, which is not an outcome but a **coverage meter**: non-zero means an uninstrumented `errorResult` call site exists. `diag` is stripped by `toWire()` before serialization and is pinned absent from the wire by three tests, the strongest of which runs through the real MCP SDK client.
+
+**What is deliberately absent.**
+
+| Not recorded | Why |
+|---|---|
+| Raw IP, or any unkeyed derivative | `client_key` is `HMAC-SHA256(MCP_TELEMETRY_SALT, ip:ua:UTC-date)`. A bare digest over the IPv4 space plus real UA strings inverts on a laptop — that is obfuscation, not pseudonymisation. NULL on gate rows and NULL when the salt is unset (fail open on the *column*, never the row). |
+| `Mcp-Session-Id` | Never minted or read. The dominant client does not echo it, caches a stale id across restarts, and the next revision removes the mechanism. Minting one would make every deploy a hard break for connected clients. Pinned by a gate test. |
+| `baggage` / `tracestate` | Designed to carry arbitrary application key/value pairs (`userId=alice` is the canonical example) — recording them would import a third party's identifiers. Only the 32-hex `traceparent` trace-id is kept. |
+| A funnel key | `trace_id` is per-agent-*turn*, not per-consumer. Its index deliberately omits `started_at` so it can serve a point lookup and **cannot** serve a time-bucketed `GROUP BY` — refusing to build the index that makes the wrong query fast. |
+| `outcome = 'timeout'` | **Structurally unrecordable.** `waitUntil` promises are cancelled when the function times out, so the rows lost are exactly the rows describing timed-out requests. Do not read a clean latency histogram as proof there are none — that answer is in the platform logs. |
+
+**Counting rules.** Arrivals are `SUM(observed_count)`, never `count(*)` (sampled rows carry their multiplier). Every KPI filters `traffic = 'external'`: preview deployments share the production database, and the operator's own tooling hits the same endpoint, so an unfiltered count reports dogfooding as adoption. `count(DISTINCT client_key)` is **forgeable upward** — a caller varying its User-Agent mints unlimited keys — so it is never labelled "number of consumers".
+
+**Retained query text** is written only on the no-match path (a database CHECK, not a convention), scrubbed for secret shapes at write time, capped at 200 characters by the database, nulled at 30 days, and displayed only once **≥3 distinct callers** have asked it. That threshold does double duty: k-anonymity over text that may describe someone else's project, and the anti-poisoning control without which the highest-value panel is "attacker-supplied text ranked by attacker-controlled frequency".
+
+**Rate-limited requests write nothing.** The limiter exists to make refusal cheap; a row per refusal would invert it into an amplifier, turning a flood into an equal number of inserts. A daily write budget bounds the worst case, because the limiter is a *rate* cap and not a *volume* cap.
+
+Retention: `jobs/mcp-telemetry-retention.ts`, weekly. Both passes use absolute-age predicates, so cron jitter is irrelevant and a missed week self-repairs — do not "optimise" either into a since-last-run window. On a weekly cadence the effective windows are **30–37** and **90–97** days; document the upper bound, not the nominal.
+
 ## Security posture
 
 Both endpoints live under `/api/mcp/`, which is **CSRF-exempt** (`src/lib/server/security/csrf.ts`) — like `/api/webhooks/` and `/api/cron/`, they carry their own auth model (bearer for admin, unauthenticated read-only for public) and take no ambient cookie credential, so cookie-CSRF is moot; a non-browser MCP client also can't send the `X-Requested-With` header the global check requires.

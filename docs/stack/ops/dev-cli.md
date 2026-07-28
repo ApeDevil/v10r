@@ -106,9 +106,22 @@ arg overrides the squash commit message.
 repo's container**, never on the host. It drives the compose project rather than a
 hard-coded container name:
 
-- project **up** → `podman compose exec` into the running service (reuses your warm
+- a **running** container → `podman compose exec` into the service (reuses your warm
   container)
-- project **down** → an ephemeral `podman compose run --rm` one-shot (auto-removed)
+- **anything else** → an ephemeral `podman compose run --rm` one-shot (auto-removed)
+
+"Anything else" covers *stopped* as well as *removed*, and the distinction is load-bearing:
+`compose ps -q` lists a project's containers in **any** state, so a stopped container is
+still listed. Testing only that the list is non-empty reports "up" for a project that
+exited, and the `exec` then fails with `container state improper`. `run_validate` therefore
+asks podman for each id's actual state (`project_running` in `scripts/lib.sh`) rather than
+filtering at the compose layer — podman-compose rejects a service argument to `ps -q`.
+
+The one-shot deliberately does **not** start the project first. It needs no cleanup, so no
+early-exit path can leave a container behind — and every ship path exits early somewhere
+(gate failure rollback, aborting at the push confirmation, `--dry-run`). It also can't stop
+a container you were already using: `vr ship` in one terminal never disturbs `vr dev` in
+another.
 
 It needs a `compose.yaml` at the repo root **and** a `validate` script in that project's
 `package.json`; without either, `vr` stops — the gate is container-only, and `bun run

@@ -28,7 +28,7 @@ export async function createTestDb() {
 
 	// Add all custom schemas to search_path so unqualified enum references resolve
 	await client.exec(
-		'SET search_path TO public, admin, ai, analytics, app, auth, blog, desk, jobs, notifications, rag, showcase',
+		'SET search_path TO public, admin, ai, analytics, app, auth, blog, desk, jobs, mcp, notifications, rag, showcase',
 	);
 
 	for (const stmt of otherStmts) {

@@ -1,8 +1,23 @@
 import { describe, expect, it, vi } from 'vitest';
 
+const limiterState = vi.hoisted(() => ({ success: true }));
 vi.mock('$lib/server/api/rate-limit', () => ({
-	createLimiter: () => ({ limit: async () => ({ success: true, reset: 0 }) }),
+	createLimiter: () => ({ limit: async () => ({ success: limiterState.success, reset: 0 }) }),
 	rateLimitResponse: () => new Response('{}', { status: 429 }),
+}));
+
+/**
+ * Mock the telemetry SEAM, not the database.
+ *
+ * Because `vi.mock` is hoisted above the dynamic import below, this keeps `$lib/server/db` out of
+ * this file's module graph ENTIRELY — the route no longer reaches the module that constructs a Neon
+ * pool at load. Mocking `$lib/server/db` instead would work, but it would let the DB edge into the
+ * graph and then neutralise it, which is strictly weaker.
+ */
+const telemetry = vi.hoisted(() => ({ observed: [] as unknown[], gateRejections: [] as unknown[] }));
+vi.mock('$lib/server/mcp/telemetry/observer', () => ({
+	createMcpObserver: () => ({ observe: (o: unknown) => telemetry.observed.push(o) }),
+	recordMcpGateRejection: (...args: unknown[]) => telemetry.gateRejections.push(args),
 }));
 
 const { GET, POST } = await import('./+server');
@@ -94,5 +109,32 @@ describe('POST /api/mcp/public', () => {
 			'mcp-protocol-version': '2025-06-18',
 		});
 		expect(res.status).toBe(200);
+	});
+});
+
+describe('telemetry wiring', () => {
+	it('records exactly one observation for a served request', async () => {
+		telemetry.observed.length = 0;
+		telemetry.gateRejections.length = 0;
+		await rpc('ping');
+		expect(telemetry.observed).toHaveLength(1);
+		expect(telemetry.gateRejections).toHaveLength(0);
+	});
+
+	it('writes NOTHING when the request is rate-limited', async () => {
+		// The limiter exists to make refusal cheap. Writing a row on refusal would invert it into an
+		// amplifier: a flood would become an equal number of database inserts, so the control meant to
+		// shed load would itself become the load. Counting refusals is a counter's job, not a log's.
+		telemetry.observed.length = 0;
+		telemetry.gateRejections.length = 0;
+		limiterState.success = false;
+		try {
+			const res = await rpc('ping');
+			expect(res.status).toBe(429);
+			expect(telemetry.observed).toHaveLength(0);
+			expect(telemetry.gateRejections).toHaveLength(0);
+		} finally {
+			limiterState.success = true;
+		}
 	});
 });

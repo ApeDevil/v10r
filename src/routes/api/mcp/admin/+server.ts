@@ -11,11 +11,20 @@
 import { json } from '@sveltejs/kit';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { type BearerCheck, verifyAdminMcpBearer } from '$lib/server/mcp/auth';
-import { ADMIN_MCP_ACTOR, ADMIN_MCP_INSTRUCTIONS, createAdminStateRegistry } from '$lib/server/mcp/demo/tools';
+import {
+	ADMIN_MCP_ACTOR,
+	ADMIN_MCP_INSTRUCTIONS,
+	ADMIN_STATE_TOOLS,
+	createAdminStateRegistry,
+} from '$lib/server/mcp/demo/tools';
 import { mcpMethodNotAllowed, respondToMcpPost } from '$lib/server/mcp/http';
 import { buildInfo } from '$lib/server/mcp/server-info';
+import { createMcpObserver, recordMcpGateRejection } from '$lib/server/mcp/telemetry/observer';
 import type { McpServerIdentity } from '$lib/server/mcp/transport';
 import type { RequestHandler } from './$types';
+
+/** See the public endpoint: the shared `waitUntil` budget is stated, not inherited. */
+export const config = { runtime: 'nodejs22.x', maxDuration: 10 };
 
 const limiter = createLimiter('mcp-admin', 120, '1 m');
 
@@ -37,13 +46,37 @@ function identity(): McpServerIdentity {
 export const GET: RequestHandler = () => mcpMethodNotAllowed();
 
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
+	const gateStartedAt = performance.now();
+	const ip = getClientAddress();
+
 	// Rate-limit BEFORE auth so failed-credential attempts are throttled too.
-	const { success, reset } = await limiter.limit(`ip:${getClientAddress()}`);
+	const { success, reset } = await limiter.limit(`ip:${ip}`);
+	// As on the public surface: a refused request writes nothing, so the limiter cannot be turned
+	// into a write amplifier.
 	if (!success) return rateLimitResponse(reset);
 
 	const check = verifyAdminMcpBearer(request);
-	if (!check.ok) return authFailure(check);
+	const gateMs = Math.round(performance.now() - gateStartedAt);
 
-	const registry = createAdminStateRegistry({ ...ADMIN_MCP_ACTOR, ip: getClientAddress() });
-	return respondToMcpPost(request, registry, identity());
+	const telemetryContext = {
+		surface: 'admin' as const,
+		ip,
+		headers: request.headers,
+		gateMs,
+		registryVersion: buildInfo().patternRegistry,
+		knownTool: (name: string) => ADMIN_STATE_TOOLS.some((tool) => tool.name === name),
+		body: undefined,
+	};
+
+	if (!check.ok) {
+		// A 401 here is a misconfigured operator or a scanner — never a recoverable client, since no
+		// off-the-shelf MCP client can negotiate a static bearer. It belongs beside the rate-limit
+		// counters as a security signal, not beside tool errors. 503 means the token is not
+		// configured at all, which is an operator problem rather than a caller one.
+		recordMcpGateRejection(telemetryContext, check.status === 503 ? 'unconfigured' : 'unauthorized');
+		return authFailure(check);
+	}
+
+	const registry = createAdminStateRegistry({ ...ADMIN_MCP_ACTOR, ip });
+	return respondToMcpPost(request, registry, identity(), createMcpObserver(telemetryContext));
 };

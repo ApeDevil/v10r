@@ -15,11 +15,14 @@ import {
 	AUDIT_RETENTION_DAYS,
 	DESK_REVISION_RETENTION_DAYS,
 	DESK_SOFT_DELETE_RETENTION_DAYS,
+	MCP_QUERY_TEXT_RETENTION_DAYS,
+	MCP_TELEMETRY_RETENTION_DAYS,
 } from '$lib/server/config';
 import { adminAuditLog } from '$lib/server/db/schema/admin';
 import { conversation, conversationStep, message } from '$lib/server/db/schema/ai/conversation';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
 import { file, fileRevision } from '$lib/server/db/schema/desk';
+import { mcpCallLog } from '$lib/server/db/schema/mcp/call-log';
 
 let testClient: PGlite;
 
@@ -34,6 +37,7 @@ const { db } = await import('$lib/server/db');
 const { deskRetention } = await import('./desk-retention');
 const { aiTelemetryRetention } = await import('./ai-telemetry-retention');
 const { auditLogRetention } = await import('./audit-log-retention');
+const { mcpTelemetryRetention } = await import('./mcp-telemetry-retention');
 
 afterAll(async () => {
 	await testClient?.close();
@@ -49,6 +53,7 @@ function daysAgo(n: number): Date {
 
 beforeEach(async () => {
 	await db.delete(adminAuditLog);
+	await db.delete(mcpCallLog);
 	await db.delete(user); // cascades desk file + file_revision + conversation → message → step
 	await db.insert(user).values({ id: USER_ID, name: 'Retention Tester', email: 'retention@example.com' });
 });
@@ -191,5 +196,86 @@ describe('auditLogRetention — age-caps admin.audit_log', () => {
 		expect(deleted).toBe(1);
 		const actions = (await db.select({ action: adminAuditLog.action }).from(adminAuditLog)).map((r) => r.action);
 		expect(actions).toEqual(['flag.toggle']);
+	});
+});
+
+// ── mcp-telemetry-retention: two speeds, column before row ───────────────────
+
+describe('mcpTelemetryRetention — minimises by column before minimising by row', () => {
+	/** A tool row that still carries both caller-supplied values. */
+	function callRow(startedAt: Date) {
+		return {
+			surface: 'public' as const,
+			traffic: 'external' as const,
+			stage: 'tool' as const,
+			outcome: 'empty' as const,
+			method: 'tools/call' as const,
+			toolName: 'search_patterns',
+			queryText: 'kubernetes operator',
+			traceId: '0af7651916cd43dd8448eb211c80319c',
+			clientFamily: 'claude-code',
+			registryVersion: '1.0.0',
+			totalMs: 10,
+			gateMs: 8,
+			dispatchMs: 1,
+			startedAt,
+		};
+	}
+
+	it('nulls caller-supplied text at the short window while KEEPING the dimensional signal', async () => {
+		await db.insert(mcpCallLog).values(callRow(daysAgo(MCP_QUERY_TEXT_RETENTION_DAYS + 1)));
+
+		await mcpTelemetryRetention();
+
+		const [row] = await db.select().from(mcpCallLog);
+		// The two columns that could describe a third party are gone...
+		expect(row.queryText).toBeNull();
+		expect(row.traceId).toBeNull();
+		// ...while everything that makes "did the miss rate drop after v1.3?" answerable survives.
+		expect(row.outcome).toBe('empty');
+		expect(row.toolName).toBe('search_patterns');
+		expect(row.registryVersion).toBe('1.0.0');
+		expect(row.gateMs).toBe(8);
+	});
+
+	it('leaves a row inside the short window completely untouched', async () => {
+		await db.insert(mcpCallLog).values(callRow(daysAgo(MCP_QUERY_TEXT_RETENTION_DAYS - 1)));
+		await mcpTelemetryRetention();
+		const [row] = await db.select().from(mcpCallLog);
+		expect(row.queryText).toBe('kubernetes operator');
+		expect(row.traceId).not.toBeNull();
+	});
+
+	it('deletes the row itself at the long window', async () => {
+		await db
+			.insert(mcpCallLog)
+			.values([callRow(daysAgo(MCP_TELEMETRY_RETENTION_DAYS + 1)), callRow(daysAgo(MCP_TELEMETRY_RETENTION_DAYS - 1))]);
+
+		await mcpTelemetryRetention();
+
+		const rows = await db.select().from(mcpCallLog);
+		expect(rows).toHaveLength(1);
+	});
+
+	it('is idempotent, so cron jitter and a missed week cannot corrupt it', async () => {
+		// Both passes use absolute-age predicates rather than a since-last-run window. That is the
+		// property that makes Vercel's ±59min jitter irrelevant and a skipped week self-repairing —
+		// and it is only observable by running the job twice.
+		await db
+			.insert(mcpCallLog)
+			.values([
+				callRow(daysAgo(MCP_QUERY_TEXT_RETENTION_DAYS + 1)),
+				callRow(daysAgo(MCP_TELEMETRY_RETENTION_DAYS + 1)),
+			]);
+
+		const first = await mcpTelemetryRetention();
+		const after = await db.select().from(mcpCallLog);
+		const second = await mcpTelemetryRetention();
+
+		expect(first).toBeGreaterThan(0);
+		// Nothing left to do, and crucially nothing re-scrubbed: the second pass reports zero rather
+		// than rewriting the already-clean range.
+		expect(second).toBe(0);
+		expect(await db.select().from(mcpCallLog)).toHaveLength(after.length);
 	});
 });

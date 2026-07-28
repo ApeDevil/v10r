@@ -10,6 +10,7 @@
  * handed a different registry.
  */
 
+import { sanitizeError } from '$lib/server/monitoring';
 import { negotiateProtocolVersion } from './server-info';
 import { type JsonRpcId, type JsonRpcRequest, type JsonRpcResponse, RPC, type ToolRegistry } from './types';
 
@@ -54,6 +55,8 @@ async function handleToolsCall(params: unknown, id: JsonRpcId, registry: ToolReg
 	// Hard allowlist: the transport refuses any name not in THIS registry. A private tool
 	// name submitted to a public registry lands here and is rejected — never dispatched.
 	if (!registry.tools.some((tool) => tool.name === name)) {
+		// Deliberately carries NO `diag` — see ToolDiag. The recorder distinguishes transport-built
+		// errors from handler-built ones precisely by that absence, so do not "complete" this literal.
 		return ok(id, {
 			content: [{ type: 'text', text: `Unknown tool "${name}". This endpoint does not expose it.` }],
 			isError: true,
@@ -66,7 +69,11 @@ async function handleToolsCall(params: unknown, id: JsonRpcId, registry: ToolReg
 		// Error hygiene: never return the raw exception string (it can carry SQL text, internal
 		// paths, or deployment details). Log the detail server-side; hand the caller a bounded,
 		// generic tool error that names only the tool they invoked.
-		console.error(`[mcp] tool '${name}' threw:`, cause);
+		// sanitizeError reads only `err.message`, discarding the enumerable-property surface that
+		// `util.inspect` would otherwise print at depth 2 — which on the admin path can include
+		// a pg DatabaseError's `internalQuery`/`where` (SQL text) and `detail` (offending row values).
+		console.error(`[mcp] tool '${name}' threw:`, sanitizeError(cause));
+		// Also deliberately carries no `diag` — the transport built this, not a handler.
 		return ok(id, {
 			content: [{ type: 'text', text: `The "${name}" tool failed to complete. The error was logged server-side.` }],
 			isError: true,
