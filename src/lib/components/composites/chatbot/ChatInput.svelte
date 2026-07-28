@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Button } from '$lib/components/primitives/button';
+import * as m from '$lib/paraglide/messages';
 
 interface Props {
 	value: string;
@@ -37,6 +38,17 @@ $effect(() => {
 });
 </script>
 
+<!--
+	The AI Act Art. 50(1) disclosure lives HERE, on the shared input, rather than
+	in each chat surface. Three surfaces render a chat — the Vely dock
+	(Chatbot.svelte), /showcases/ai/chat and /showcases/ai/retrieval/rag-chat —
+	and the two showcase pages build their own UI from these primitives, so a
+	disclosure added to Chatbot.svelte alone would silently miss both. Anchoring
+	it to the input means any future chat surface inherits it by construction.
+
+	Identification leads the sentence ("AI assistant — …") so the legally
+	load-bearing fact is first, not buried behind the caveat.
+-->
 <div class="chat-input-container flex items-end gap-2 border-t border-border p-3">
 	{#if onopensettings}
 		<Button
@@ -79,7 +91,23 @@ $effect(() => {
 	</Button>
 </div>
 
+<p class="ai-disclosure">{m.ai_disclosure_input_hint()}</p>
+
 <style>
+	/* Persistent AI Act Art. 50(1) disclosure. Small, but deliberately not
+	   `--color-muted`: the obligation is to inform "clearly", and the Commission's
+	   Art. 50 Guidelines (20 Jul 2026) single out low-contrast micro-copy as
+	   failing it. This sits one step above muted so it stays legible without
+	   competing with the input. Never set `aria-hidden` on it. */
+	.ai-disclosure {
+		margin: 0;
+		padding: 0 var(--spacing-3) var(--spacing-2);
+		font-size: var(--text-fluid-xs);
+		line-height: 1.5;
+		text-align: center;
+		color: color-mix(in srgb, var(--color-fg) 62%, transparent);
+	}
+
 	.chat-textarea {
 		background-color: color-mix(in srgb, var(--color-muted) 8%, transparent);
 	}

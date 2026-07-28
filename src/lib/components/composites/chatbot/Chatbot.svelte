@@ -5,6 +5,7 @@ import { apiFetch } from '$lib/api';
 import ChunkView from '$lib/components/chat/ChunkView.svelte';
 import type { CatalogSource, SourceChunk } from '$lib/components/chat/citation-types';
 import Drawer from '$lib/components/primitives/drawer/Drawer.svelte';
+import * as m from '$lib/paraglide/messages';
 import { isSiteAwareRoute, resolveRouteLabel } from '$lib/search/route-id';
 import { chatbotSession } from '$lib/state/chatbot-session.svelte';
 import { layerStack } from '$lib/state/layer-stack.svelte';
@@ -184,10 +185,16 @@ function submitMessage() {
 		session.phase === 'open' ? 'flex flex-col' : 'hidden'
 	)}
 >
-	<!-- Header -->
+	<!-- Header.
+	     The "AI assistant" wording is the PERSISTENT half of the AI Act Art. 50(1)
+	     disclosure — it stays visible for resumed conversations, where the empty
+	     state below never renders. Real text, not a badge image, because Art. 50(5)
+	     requires the disclosure to meet accessibility requirements. Do not shorten
+	     it to a bot icon: the Commission's Art. 50 Guidelines (20 Jul 2026) name
+	     fleeting or purely visual indicators as insufficient. -->
 	<div class="flex items-center justify-between border-b border-border px-4 py-3">
 		<p class="text-fluid-base text-fg">
-			<span class="font-semibold">Vely</span> <span class="font-light text-muted">chatbot</span>
+			<span class="font-semibold">Vely</span> <span class="font-light text-muted">{m.ai_disclosure_badge()}</span>
 		</p>
 		<div class="flex items-center gap-1">
 			<button
@@ -315,6 +322,14 @@ function submitMessage() {
 					<div class="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
 						<span class="i-lucide-message-circle h-10 w-10 text-muted"></span>
 						<p class="text-fluid-sm text-muted">Ask me anything about web development.</p>
+						<!-- AI Act Art. 50(1) first-interaction disclosure. Deliberately NOT
+						     text-muted micro-copy: the obligation is to inform "clearly and
+						     distinguishably", and the Commission Guidelines call out tiny,
+						     low-contrast text as failing that. Keep it text-fg and boxed. -->
+						<div class="mt-1 max-w-xs rounded-md border border-border px-3 py-2 text-left">
+							<p class="text-fluid-sm text-fg">{m.ai_disclosure_notice()}</p>
+							<p class="mt-1 text-fluid-xs text-muted">{m.ai_disclosure_no_personal_data()}</p>
+						</div>
 					</div>
 				{/if}
 			</div>

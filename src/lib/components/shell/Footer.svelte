@@ -17,9 +17,11 @@ const consent = getConsent();
 			</p>
 		</div>
 		<nav class="flex gap-4 flex-wrap items-center justify-center md:justify-end">
-			<a href={localizeHref('/about')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">About</a>
 			<a href={localizeHref('/feedback')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">{m.footer_feedback()}</a>
-			<a href={localizeHref('/terms')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">Terms</a>
+			<!-- Label stays "Impressum" in every locale: § 5 DDG requires the page be
+			     *leicht erkennbar*, and German case law has been unkind to creative
+			     labels. "Impressum" and "Kontakt" are the safe ones. -->
+			<a href={localizeHref('/impressum')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">Impressum</a>
 			<button onclick={() => consent.reopenBanner()} class="text-muted text-sm cursor-pointer bg-transparent border-none p-0 transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">Cookie preferences</button>
 			<span class="hidden md:inline-block w-px h-4 bg-border" aria-hidden="true"></span>
 			<a
