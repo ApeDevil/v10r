@@ -29,8 +29,10 @@ import { guardApiUser } from '$lib/server/auth/guards';
 import {
 	approveProposal,
 	getProposal,
+	getProposalWithExpiry,
 	markExecuted,
 	markExecuting,
+	markExpiredIfPending,
 	markFailed,
 	rejectProposal,
 } from '$lib/server/db/ai/proposals';
@@ -42,6 +44,30 @@ import type { RequestHandler } from './$types';
 // Proposal execution runs desk mutations; cap per-user throughput. Idempotency
 // caps repeat-execution of one proposal, but not a flood of distinct proposals.
 const executeLimiter = createLimiter('rl:ai:proposal:execute', 20, '1 m');
+
+/**
+ * Turn a refused `pending → approved` into an honest error code.
+ *
+ * `approveProposal` returns null for two different reasons — the status moved on
+ * under us, or the 15-minute consent window closed — and the zero-row result
+ * cannot distinguish them. Ask the database which it was. Callers have already
+ * been denied at this point; this only picks the wording.
+ */
+async function explainRefusedApproval(id: string) {
+	const row = await getProposalWithExpiry(id);
+	if (!row) return apiError(404, 'not_found', 'Proposal not found.');
+	if (row.proposal.status === 'pending' && row.isExpired) {
+		// Self-heal so the next read reports `expired` instead of a pending row
+		// that can never be approved. Best-effort: the refusal above already holds.
+		await markExpiredIfPending(id);
+		return apiError(
+			409,
+			'proposal_expired',
+			'This proposal expired before it was approved. Ask again to get a fresh one.',
+		);
+	}
+	return apiError(409, 'proposal_state_changed', 'Proposal state changed — reload.');
+}
 
 export const POST: RequestHandler = async ({ params, locals }) => {
 	const guard = guardApiUser(locals);
@@ -81,26 +107,32 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 			return apiError(409, `proposal_${proposal.status}`, `Proposal is ${proposal.status} and cannot be executed.`);
 		}
 
-		// 3. Transition pending → approved (no-op if already approved).
+		// 3. Transition pending → approved (no-op if already approved). The
+		//    expiry bound lives in that statement's predicate, not here — a
+		//    check on the row we read at step 1 would be a TOCTOU window.
 		if (proposal.status === 'pending') {
 			const approved = await approveProposal(proposal.id, user.id);
-			if (!approved) return apiError(409, 'proposal_state_changed', 'Proposal state changed — reload.');
+			if (!approved) return await explainRefusedApproval(proposal.id);
 		}
 
 		// 4. Transition approved → executing. Partial unique index protects
 		//    us from concurrent executors.
 		const claimed = await markExecuting(proposal.id);
 		if (!claimed) {
-			// Someone else claimed it between our `approveProposal` and here.
-			// Re-read and return the current state.
-			const fresh = await getProposal(proposal.id);
-			if (fresh?.status === 'executed') {
+			// Someone else claimed it between our `approveProposal` and here —
+			// or the window closed between approval and execution, which is why
+			// `markExecuting` carries the expiry bound too. Re-read and report.
+			const fresh = await getProposalWithExpiry(proposal.id);
+			if (fresh?.proposal.status === 'executed') {
 				return apiOk({
-					id: fresh.id,
+					id: fresh.proposal.id,
 					status: 'executed',
-					executionResult: fresh.executionResult,
-					executedAt: fresh.executedAt,
+					executionResult: fresh.proposal.executionResult,
+					executedAt: fresh.proposal.executedAt,
 				});
+			}
+			if (fresh?.proposal.status === 'approved' && fresh.isExpired) {
+				return apiError(409, 'proposal_expired', 'This proposal expired before it ran. Ask again to get a fresh one.');
 			}
 			return apiError(409, 'proposal_in_flight', 'Proposal is already executing.');
 		}

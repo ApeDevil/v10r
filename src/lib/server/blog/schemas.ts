@@ -37,11 +37,19 @@ export const RequestUploadSchema = v.object({
 	fileSize: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(50_000_000)),
 });
 
+/**
+ * Confirmation carries only what the server cannot determine for itself.
+ *
+ * `mimeType` and `fileSize` are deliberately absent: they describe the object
+ * that landed in R2, and the server reads them back from `HeadObject` rather
+ * than believing the uploader. `fileName` likewise is the name declared at
+ * issuance. Dimensions and alt text stay caller-supplied — verifying them would
+ * mean decoding the image here, and a wrong value is a display bug rather than
+ * an integrity one.
+ */
 export const ConfirmUploadSchema = v.object({
 	key: v.pipe(v.string(), v.regex(/^blog\/[0-9a-f-]{36}\.\w{1,10}$/)),
 	fileName: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
-	mimeType: v.pipe(v.string(), v.regex(/^[\w-]+\/[\w.+-]+$/)),
-	fileSize: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(50_000_000)),
 	width: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
 	height: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
 	altText: v.optional(v.pipe(v.string(), v.maxLength(1000))),

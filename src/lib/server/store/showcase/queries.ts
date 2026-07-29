@@ -1,13 +1,27 @@
 import { GetObjectCommand, HeadBucketCommand, HeadObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { PRESIGNED_URL_EXPIRY } from '$lib/server/config';
 import { StoreError } from '../errors';
 import { BUCKET, s3 } from '../index';
 import type { BucketStats, ObjectDetail, ObjectInfo, PresignedUrlResult, RangeResult } from '../types';
-import { SHOWCASE_PREFIX } from './guards';
+import { assertShowcaseKey, isPublicShowcaseKey, SHOWCASE_PREFIX } from './guards';
 
 function requireS3() {
 	if (!s3) throw new StoreError('credentials', 'R2 storage is not configured');
 	return s3;
+}
+
+/** Shortest TTL worth signing; the ceiling is PRESIGNED_URL_EXPIRY. */
+const MIN_PRESIGN_TTL = 60;
+
+/**
+ * Bound a caller-supplied TTL. The demo page lets a visitor pick an expiry, and
+ * SigV4 would otherwise happily sign a 7-day URL for anything it is handed.
+ */
+function clampPresignTtl(expiresIn: number): number {
+	const requested = Math.floor(expiresIn);
+	if (!Number.isFinite(requested) || requested <= 0) return PRESIGNED_URL_EXPIRY;
+	return Math.min(Math.max(requested, MIN_PRESIGN_TTL), PRESIGNED_URL_EXPIRY);
 }
 
 // ─── Connection page ────────────────────────────────────
@@ -49,6 +63,10 @@ async function getBucketStats(): Promise<BucketStats> {
 		);
 
 		for (const obj of res.Contents ?? []) {
+			// Private per-user namespaces share this prefix for lifecycle-rule
+			// reasons only; they are not showcase material and must not be
+			// counted, listed, or made addressable through the public demo.
+			if (!isPublicShowcaseKey(obj.Key ?? '')) continue;
 			objectCount++;
 			totalSize += obj.Size ?? 0;
 		}
@@ -76,6 +94,9 @@ export async function listShowcaseObjects(): Promise<ObjectInfo[]> {
 		);
 
 		for (const obj of res.Contents ?? []) {
+			// See getBucketStats: the listing is what turns a read primitive into
+			// an enumeration oracle, because these keys embed a user id.
+			if (!isPublicShowcaseKey(obj.Key ?? '')) continue;
 			objects.push({
 				key: obj.Key ?? '',
 				size: obj.Size ?? 0,
@@ -91,6 +112,7 @@ export async function listShowcaseObjects(): Promise<ObjectInfo[]> {
 }
 
 export async function getObjectDetail(key: string): Promise<ObjectDetail> {
+	assertShowcaseKey(key);
 	const client = requireS3();
 	const res = await client.send(new HeadObjectCommand({ Bucket: BUCKET, Key: key }));
 
@@ -107,26 +129,41 @@ export async function getObjectDetail(key: string): Promise<ObjectDetail> {
 }
 
 export async function generateDownloadUrl(key: string, expiresIn: number): Promise<PresignedUrlResult> {
+	assertShowcaseKey(key);
 	const client = requireS3();
+	const ttl = clampPresignTtl(expiresIn);
 	const command = new GetObjectCommand({ Bucket: BUCKET, Key: key });
-	const url = await getSignedUrl(client, command, { expiresIn });
+	const url = await getSignedUrl(client, command, { expiresIn: ttl });
 
+	// Report the TTL actually signed, not the one asked for.
 	return {
 		url,
-		expiresIn,
-		expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString(),
+		expiresIn: ttl,
+		expiresAt: new Date(Date.now() + ttl * 1000).toISOString(),
 	};
 }
 
 // ─── Transfer page ──────────────────────────────────────
 
+/** Max bytes one range read may return — a hex-dump window, not a download. */
+const MAX_RANGE_BYTES = 1024;
+
 export async function getObjectRange(key: string, start: number, end: number): Promise<RangeResult> {
+	assertShowcaseKey(key);
 	const client = requireS3();
+
+	// Bounded here rather than only in the route: an unbounded (or negative)
+	// window turns a 1 KiB inspector into an arbitrary-length reader, and the
+	// route is one caller among N.
+	const from = Math.max(0, Math.floor(start) || 0);
+	const to = Math.min(Math.floor(end) || 0, from + MAX_RANGE_BYTES - 1);
+	if (to < from) throw new StoreError('forbidden', 'Range end must not precede range start.');
+
 	const res = await client.send(
 		new GetObjectCommand({
 			Bucket: BUCKET,
 			Key: key,
-			Range: `bytes=${start}-${end}`,
+			Range: `bytes=${from}-${to}`,
 		}),
 	);
 
@@ -135,7 +172,7 @@ export async function getObjectRange(key: string, start: number, end: number): P
 
 	return {
 		data: body,
-		contentRange: res.ContentRange ?? `bytes ${start}-${end}/*`,
+		contentRange: res.ContentRange ?? `bytes ${from}-${to}/*`,
 		contentLength: res.ContentLength ?? body.length,
 	};
 }

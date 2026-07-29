@@ -10,10 +10,24 @@
  * for the same proposal collide there. Readers handle the collision by
  * reading the existing row instead of racing.
  */
-import { and, eq } from 'drizzle-orm';
+import { and, eq, gt, sql } from 'drizzle-orm';
 import { createId } from '../id';
 import { db } from '../index';
 import { agentProposal, type ProposalExecutionResult, type ProposedToolCall } from '../schema/ai/proposal';
+
+/**
+ * The time bound on consent, as a SQL predicate.
+ *
+ * Deliberately `now()` — Postgres's clock — and not a JS `new Date()` bound
+ * param. `status` is evaluated by the database, so the expiry that grants or
+ * denies authority alongside it must be read from the same clock; a serverless
+ * function's `Date.now()` is a second, skewable opinion. (`createdAt` /
+ * `updatedAt` on this table are already `.defaultNow()`, so `expiresAt` was the
+ * odd column out.) Note this is an architectural argument, not a tested one:
+ * the PGlite test DB runs in-process and shares the host clock, so no test here
+ * can tell the two apart. The shape test in `proposals.test.ts` pins the intent.
+ */
+const notExpired = () => gt(agentProposal.expiresAt, sql`now()`);
 
 const DEFAULT_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes — stale proposals auto-expire
 
@@ -58,7 +72,57 @@ export async function getProposal(id: string) {
 	return row ?? null;
 }
 
-/** Transition `pending → approved`. Returns the updated row, or null if the transition was illegal. */
+/**
+ * Read a proposal back with the database's own verdict on whether it has expired.
+ *
+ * Diagnostic ONLY. A failed conditional UPDATE returns zero rows without saying
+ * which conjunct failed — status moved on, or the clock ran out — and the caller
+ * needs to tell those apart to pick an error code. It grants no authority: the
+ * real decision was already made atomically by the UPDATE predicate, so the fact
+ * that this SELECT can observe a state that has since moved on again only ever
+ * changes which message the client reads, never whether anything executed.
+ *
+ * `isExpired` is computed in SQL for the same reason `notExpired` is: reading
+ * `expiresAt` back into JS and comparing it there would reintroduce the app
+ * clock the predicate just took care to avoid.
+ */
+export async function getProposalWithExpiry(id: string) {
+	const [row] = await db
+		.select({ proposal: agentProposal, isExpired: sql<boolean>`${agentProposal.expiresAt} <= now()` })
+		.from(agentProposal)
+		.where(eq(agentProposal.id, id))
+		.limit(1);
+	return row ?? null;
+}
+
+/**
+ * Flip an expired `pending` row to `expired` so the state machine self-heals at
+ * the moment someone actually touches it, rather than waiting on a sweep.
+ *
+ * Races harmlessly: it gates on `status = 'pending'` like every other transition
+ * here, so Postgres serialises the row write and a concurrent approve/reject
+ * simply matches zero rows. Hygiene only — `approveProposal` and `markExecuting`
+ * already refuse expired rows on their own, so correctness never depends on this
+ * running.
+ */
+export async function markExpiredIfPending(id: string) {
+	const [row] = await db
+		.update(agentProposal)
+		.set({ status: 'expired', updatedAt: new Date() })
+		.where(and(eq(agentProposal.id, id), eq(agentProposal.status, 'pending'), sql`${agentProposal.expiresAt} <= now()`))
+		.returning();
+	return row ?? null;
+}
+
+/**
+ * Transition `pending → approved`. Returns the updated row, or null if the
+ * transition was illegal — either the status moved on, or the proposal expired.
+ *
+ * The expiry check lives in this predicate rather than in the calling route on
+ * purpose: a read-then-act check in the route is a TOCTOU window, and it leaves
+ * this function callable without a time bound from anywhere else. The statement
+ * that grants authority is the statement that must enforce every condition on it.
+ */
 export async function approveProposal(id: string, approvedByUserId: string) {
 	const [row] = await db
 		.update(agentProposal)
@@ -68,7 +132,7 @@ export async function approveProposal(id: string, approvedByUserId: string) {
 			approvedAt: new Date(),
 			updatedAt: new Date(),
 		})
-		.where(and(eq(agentProposal.id, id), eq(agentProposal.status, 'pending')))
+		.where(and(eq(agentProposal.id, id), eq(agentProposal.status, 'pending'), notExpired()))
 		.returning();
 	return row ?? null;
 }
@@ -97,12 +161,16 @@ export async function rejectProposal(id: string, reason?: string) {
  *
  * Returns the updated row on success, or `null` if the transition was
  * illegal (e.g. proposal already executing, rejected, or expired).
+ *
+ * Carries the same expiry bound as `approveProposal`, and needs to: these are
+ * two separate statements, so a proposal approved one minute before expiry and
+ * executed twenty minutes later would otherwise run unbounded.
  */
 export async function markExecuting(id: string) {
 	const [row] = await db
 		.update(agentProposal)
 		.set({ status: 'executing', updatedAt: new Date() })
-		.where(and(eq(agentProposal.id, id), eq(agentProposal.status, 'approved')))
+		.where(and(eq(agentProposal.id, id), eq(agentProposal.status, 'approved'), notExpired()))
 		.returning();
 	return row ?? null;
 }

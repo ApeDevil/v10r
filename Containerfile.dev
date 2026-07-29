@@ -11,5 +11,13 @@ WORKDIR /app
 EXPOSE 5173
 
 # Install deps and start dev server
-# Dependencies installed at runtime so volume-mounted code works
-CMD ["sh", "-c", "bun install && bun run dev"]
+# Dependencies installed at runtime so volume-mounted code works.
+#
+# --frozen-lockfile: install exactly what bun.lock resolves and nothing else. A
+# plain `bun install` lets the resolver re-resolve caret ranges whenever the
+# manifest and the lockfile disagree, which means the container can quietly run
+# different dependency versions than the ones reviewed and committed. With this
+# flag that disagreement is a startup error instead — which is the point: a
+# lockfile drift is a real problem and should be visible, not absorbed.
+# If startup fails here, the fix is to reconcile bun.lock, not to drop the flag.
+CMD ["sh", "-c", "bun install --frozen-lockfile && bun run dev"]

@@ -6,6 +6,7 @@
  * tool name submitted here is rejected by the transport's allowlist. IP-rate-limited.
  * GET → 405 (SSE is not supported); all interaction is POST.
  */
+import { normalizeIpKey } from '$lib/server/abuse';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { mcpMethodNotAllowed, respondToMcpPost } from '$lib/server/mcp/http';
 import { PUBLIC_MCP_INSTRUCTIONS, publicPatternRegistry } from '$lib/server/mcp/patterns/registry';
@@ -46,7 +47,11 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
 	// enforced for this request.
 	const gateStartedAt = performance.now();
 	const ip = getClientAddress();
-	const { success, reset } = await limiter.limit(`ip:${ip}`);
+	// Bucket by /64, not by address: an IPv6 client that rotates within its own
+	// allocation would otherwise get a fresh bucket per request and the limiter
+	// becomes decorative. `ip` itself stays raw below — telemetry wants the
+	// address that actually connected, not the bucket it was counted in.
+	const { success, reset } = await limiter.limit(`ip:${normalizeIpKey(ip) ?? ip}`);
 	const gateMs = Math.round(performance.now() - gateStartedAt);
 
 	// A rate-limited request writes NOTHING. The limiter exists to make refusal cheap; writing a row

@@ -70,8 +70,10 @@ export async function generateUploadUrl(
  * Returns metadata about the uploaded object.
  */
 export async function confirmUpload(key: string): Promise<UploadResult> {
-	const client = requireS3();
+	// Guard before requireS3(): an unconfigured bucket must not be what decides
+	// whether the namespace check runs. See store/blog/queries.ts:15-16.
 	assertShowcaseKey(key);
+	const client = requireS3();
 
 	const res = await client.send(new HeadObjectCommand({ Bucket: BUCKET, Key: key }));
 

@@ -57,11 +57,11 @@ export class ExplorerUploads {
 				const confirmRes = await apiFetch('/api/blog/assets/confirm', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
+					// No mimeType/fileSize: the server reads both back from the stored
+					// object, so sending them here is a claim it would ignore.
 					body: JSON.stringify({
 						key: upload.key,
 						fileName: file.name,
-						mimeType: file.type,
-						fileSize: file.size,
 						width,
 						height,
 					}),
