@@ -1,4 +1,5 @@
 import { redirect } from '@sveltejs/kit';
+import { ipLimitKey } from '$lib/server/abuse';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError } from '$lib/server/api/response';
 import { getPublicAssetByStorageKey } from '$lib/server/blog';
@@ -21,7 +22,7 @@ const limiter = createLimiter('rl:blog:media', 60, '1 m');
  * distinguish a real published asset from a draft's or a guessed key.
  */
 export const GET: RequestHandler = async ({ params, setHeaders, locals }) => {
-	const { success, reset } = await limiter.limit(locals.clientIp ?? 'anon');
+	const { success, reset } = await limiter.limit(ipLimitKey(locals.clientIp));
 	if (!success) return rateLimitResponse(reset);
 
 	const key = params.path;

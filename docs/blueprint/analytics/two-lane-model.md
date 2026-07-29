@@ -9,8 +9,8 @@ the load-bearing design decision in the whole subsystem.
 ANONYMOUS LANE                        AUTHENTICATED LANE
 analytics.events                      analytics.user_events
 analytics.sessions
-  visitor_id = SHA256(ip:ua)            user_id → auth.user (CASCADE)
-  rotates daily                         stable, identified
+  visitor_id = HMAC(key, ip:ua)         user_id → auth.user (CASCADE)
+  keyed; key is rotatable               stable, identified
   no FK, no user reference              no visitor_id column, ever
   basis: Art 6(1)(f) + LIA              basis: Art 6(1)(b) + 6(1)(f)
   ePrivacy: contested (see below)       ePrivacy: does not engage
@@ -30,9 +30,11 @@ anonymous. Concretely, it would:
 - invalidate the necessity and balancing analysis in
   [legitimate-interest.md](./legitimate-interest.md), which is argued on the premise that the
   lane's subjects are unidentified;
-- turn daily-rotating pseudonyms into a durable profile, which is precisely the
+- turn a short-lived pseudonym into a durable profile, which is precisely the
   characteristic that separates "counting visits" from "tracking people" in reasonable
-  expectations.
+  expectations. The visitor hash is bounded by the 60-day retention window and by a
+  rotatable key, not by daily rotation — daily rotation would make "unique visitors this
+  month" unanswerable, which is the question the lane exists to answer.
 
 Adding a join key between these tables is therefore **not a refactor — it is a change of
 legal position**. `privacy/report.ts` says so in prose; `user-events.ts` enforces it in

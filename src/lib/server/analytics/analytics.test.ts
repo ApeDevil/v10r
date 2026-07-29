@@ -27,8 +27,26 @@ vi.mock('$lib/server/db', async () => {
 	return { db };
 });
 
+/**
+ * The hook defers its writes through `waitUntil`, which off-Vercel degrades to
+ * plain fire-and-forget — so `await analyticsCollector(...)` returns before the
+ * INSERT lands and any assertion on rows would race. Capture the deferred work
+ * instead of sleeping on it, so the write-gate tests below are deterministic.
+ */
+const deferredWork = vi.hoisted(() => [] as Promise<unknown>[]);
+vi.mock('@vercel/functions', () => ({
+	waitUntil: (promise: Promise<unknown>) => {
+		deferredWork.push(promise);
+	},
+}));
+
+async function flushDeferred(): Promise<void> {
+	await Promise.allSettled(deferredWork.splice(0));
+}
+
 const { db } = await import('$lib/server/db');
 const { parseConsentTier, hasConsent, hashVisitorId, deriveCookielessSessionId } = await import('./consent');
+const { deriveVisitorId, deriveUaHash } = await import('./visitor');
 const { isBot, isExcludedPath, isPrefetch } = await import('./collect-policy');
 const { classifyUserAgent, geoFromHeaders } = await import('./enrich');
 const { isKnownEvent, sanitizeProperties, templateRoute } = await import('./event-schema');
@@ -100,31 +118,90 @@ describe('hasConsent', () => {
 // ── 3. consent.ts — hashVisitorId: IP never in output ────────────────────────
 
 describe('hashVisitorId', () => {
-	it('returns a string prefixed with v_ and 16 hex chars', async () => {
-		const h = await hashVisitorId('1.2.3.4:Mozilla/5.0');
-		expect(h).toMatch(/^v_[0-9a-f]{16}$/);
+	const SALT = 'test-analytics-visitor-salt';
+
+	it('returns a string prefixed with v1_ and 32 hex chars', async () => {
+		const h = await hashVisitorId('1.2.3.4:Mozilla/5.0', SALT);
+		expect(h).toMatch(/^v1_[0-9a-f]{32}$/);
 	});
 
-	it('is deterministic — same input produces same hash', async () => {
+	it('is deterministic — same input and salt produce same hash', async () => {
 		const input = '5.6.7.8:Chrome/120';
-		const a = await hashVisitorId(input);
-		const b = await hashVisitorId(input);
-		expect(a).toBe(b);
+		expect(await hashVisitorId(input, SALT)).toBe(await hashVisitorId(input, SALT));
 	});
 
 	it('different inputs produce different hashes — no trivial collision', async () => {
-		const a = await hashVisitorId('1.1.1.1:Chrome');
-		const b = await hashVisitorId('1.1.1.2:Chrome');
+		const a = await hashVisitorId('1.1.1.1:Chrome', SALT);
+		const b = await hashVisitorId('1.1.1.2:Chrome', SALT);
 		expect(a).not.toBe(b);
 	});
 
 	it('raw IP address is not present verbatim in the output — IP never reaches DB', async () => {
 		const ip = '203.0.113.42';
-		const hash = await hashVisitorId(`${ip}:SomeUA`);
-		// The full raw IP string must not appear verbatim in the output
+		const hash = await hashVisitorId(`${ip}:SomeUA`, SALT);
 		expect(hash).not.toContain(ip);
-		// The output must be in hashed form (v_ + 16 hex chars)
-		expect(hash).toMatch(/^v_[0-9a-f]{16}$/);
+		expect(hash).toMatch(/^v1_[0-9a-f]{32}$/);
+	});
+
+	/**
+	 * The property that matters: without the key, an attacker holding a database
+	 * dump cannot sweep the IPv4 space against a small set of real UA strings and
+	 * recover (IP, UA) pairs. An unkeyed digest — what this was — inverts on a
+	 * laptop, which is the finding this construction closes.
+	 */
+	it('is KEYED — a different salt yields a different id for the same visitor', async () => {
+		const input = '203.0.113.7:Mozilla/5.0';
+		expect(await hashVisitorId(input, 'salt-a')).not.toBe(await hashVisitorId(input, 'salt-b'));
+	});
+
+	it('is not reproducible as a bare SHA-256 of the input', async () => {
+		// Pins the construction itself: if someone reverts to crypto.subtle.digest
+		// the output would match this and the test fails.
+		const input = '198.51.100.9:UA';
+		const bare = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
+		const bareHex = Array.from(new Uint8Array(bare))
+			.map((b) => b.toString(16).padStart(2, '0'))
+			.join('');
+		const keyed = await hashVisitorId(input, SALT);
+		expect(keyed).not.toBe(`v1_${bareHex.slice(0, 32)}`);
+		expect(keyed.slice(3)).not.toBe(bareHex.slice(0, 32));
+	});
+
+	it('does not rotate on its own — cross-day unique counts stay meaningful', async () => {
+		// Deliberately unlike mcp/telemetry/client-key.ts, which folds the UTC day
+		// into its input. Here that would multiply the distinct-visitor count over
+		// a 90-day range by the number of days. Salt rotation is the control
+		// instead, at or above the 60-day retention window.
+		const input = '203.0.113.11:Chrome';
+		const today = await hashVisitorId(input, SALT);
+		vi.useFakeTimers();
+		try {
+			const later = new Date();
+			later.setUTCDate(later.getUTCDate() + 1);
+			vi.setSystemTime(later);
+			expect(await hashVisitorId(input, SALT)).toBe(today);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+});
+
+describe('deriveVisitorId — the salt every lane actually uses', () => {
+	it('produces the keyed construction without the caller supplying a salt', async () => {
+		expect(await deriveVisitorId('203.0.113.4', 'Mozilla/5.0')).toMatch(/^v1_[0-9a-f]{32}$/);
+	});
+
+	it('agrees across lanes for the same visitor', async () => {
+		// The four write paths and the visitor-facing GDPR page must all land on
+		// the same id; two of them previously differed in how they sourced the IP.
+		const a = await deriveVisitorId('203.0.113.4', 'Mozilla/5.0');
+		const b = await deriveVisitorId('203.0.113.4', 'Mozilla/5.0');
+		expect(a).toBe(b);
+	});
+
+	it('separates the UA-only consent-audit hash from the visitor id', async () => {
+		const ua = 'Mozilla/5.0';
+		expect(await deriveUaHash(ua)).not.toBe(await deriveVisitorId('203.0.113.4', ua));
 	});
 });
 
@@ -459,6 +536,70 @@ describe('analyticsCollector — session cookie requires analytics consent', () 
 	});
 });
 
+// ── 4b. hook.ts — a miss must not buy a database write ───────────────────────
+
+/**
+ * `isExcludedPath` filters by prefix and by "contains a dot", so before this
+ * gate every unmatched URL — every scanner probe, every typo — bought an INSERT
+ * plus an UPSERT keyed on a path the caller chose.
+ */
+describe('analyticsCollector — misses write nothing', () => {
+	function makeEvent(routeId: string | null) {
+		const jar = new Map<string, string>([[ANALYTICS_CONSENT_COOKIE, 'analytics']]);
+		return {
+			url: new URL('https://example.com/blog'),
+			request: new Request('https://example.com/blog', {
+				headers: { 'user-agent': 'Mozilla/5.0 (Test) Gecko/20100101' },
+			}),
+			cookies: { get: (n: string) => jar.get(n), set: vi.fn(), delete: vi.fn() },
+			getClientAddress: () => '203.0.113.5',
+			route: { id: routeId },
+			locals: {},
+		};
+	}
+
+	const served = async () => new Response('ok');
+	const missed = async () => new Response('gone', { status: 404 });
+
+	beforeEach(async () => {
+		// DRAIN, do not discard. `waitUntil` receives a promise that is already
+		// running, so `deferredWork.length = 0` only drops our handle on it — the
+		// INSERT is still in flight and lands whenever PGlite gets to it. The
+		// describe block above leaves four of them queued, and they arrived
+		// mid-test here, so a block that had written exactly one row saw five.
+		await flushDeferred();
+		await db.delete(events);
+		await db.delete(sessions);
+	});
+
+	it('writes nothing when SvelteKit matched no route (scanner probe)', async () => {
+		const event = makeEvent(null);
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		await analyticsCollector({ event: event as any, resolve: missed as any });
+		await flushDeferred();
+		expect(await db.select().from(events)).toHaveLength(0);
+	});
+
+	it('writes nothing when a route matched but the load rejected it', async () => {
+		// The case a route-id check alone misses: /blog/[slug] for a dead slug
+		// matches a route, so the path looks legitimate and is the more useful one
+		// to spam.
+		const event = makeEvent('/[[locale=locale]]/(public)/blog/[slug]');
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		await analyticsCollector({ event: event as any, resolve: missed as any });
+		await flushDeferred();
+		expect(await db.select().from(events)).toHaveLength(0);
+	});
+
+	it('still writes for a served page', async () => {
+		const event = makeEvent('/[[locale=locale]]/(public)/blog');
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		await analyticsCollector({ event: event as any, resolve: served as any });
+		await flushDeferred();
+		expect(await db.select().from(events)).toHaveLength(1);
+	});
+});
+
 // ── 5. mutations.ts — recordEvent ────────────────────────────────────────────
 
 describe('recordEvent', () => {
@@ -494,6 +635,72 @@ describe('recordEvent', () => {
 
 		const rows = await db.select().from(events);
 		expect(rows[0].consentTier).toBe('necessary');
+	});
+
+	/**
+	 * The `Referer` header carries the FULL previous URL, and the URLs people
+	 * arrive from include magic-link, email-OTP, password-reset and OAuth
+	 * callbacks. Storing it whole put live credentials in a table with 60-day
+	 * retention that renders into the admin live-events panel.
+	 *
+	 * Asserted at the write chokepoint rather than in the hook on purpose: three
+	 * lanes write this column, and the one that had the rule was not the one that
+	 * needed it.
+	 */
+	describe('referrer is reduced to an origin before storage', () => {
+		async function storedReferrer(referrer: string): Promise<string | null> {
+			await db.delete(events);
+			await recordEvent({
+				sessionId: 'sess-ref',
+				visitorId: 'v_abc123def4567890',
+				eventType: 'pageview',
+				path: '/landing',
+				referrer,
+			});
+			const rows = await db.select().from(events);
+			return rows[0].referrer;
+		}
+
+		it('strips a magic-link token out of the query string', async () => {
+			const stored = await storedReferrer('https://v10r.example/api/auth/magic-link/verify?token=SECRET-TOKEN-123');
+			expect(stored).toBe('https://v10r.example');
+			expect(stored).not.toContain('SECRET-TOKEN-123');
+			expect(stored).not.toContain('token');
+		});
+
+		it('strips an OAuth authorization code', async () => {
+			const stored = await storedReferrer('https://v10r.example/api/auth/callback/google?code=4/0AX4XfWh&state=xyz');
+			expect(stored).toBe('https://v10r.example');
+			expect(stored).not.toContain('code=');
+		});
+
+		it('keeps the fragment out too, since it never reaches the origin', async () => {
+			expect(await storedReferrer('https://ref.example/page#access_token=abc')).toBe('https://ref.example');
+		});
+
+		it('preserves scheme, host and a non-default port — the analytics value is kept', async () => {
+			expect(await storedReferrer('https://news.example:8443/some/article')).toBe('https://news.example:8443');
+		});
+
+		it('drops an unparseable referrer rather than storing it raw', async () => {
+			// A value we cannot reduce to an origin is exactly the one we cannot
+			// vouch for; storing it raw would reopen the hole for malformed input.
+			expect(await storedReferrer('not a url ?token=SECRET')).toBeNull();
+		});
+	});
+
+	it('truncates an oversized path instead of failing the insert', async () => {
+		// events.path carries a btree index and Postgres refuses an entry over
+		// ~2704 bytes, so an unbounded path did not store badly — it threw, inside
+		// a waitUntil whose .catch swallowed it.
+		await recordEvent({
+			sessionId: 'sess-long',
+			visitorId: 'v_abc123def4567890',
+			eventType: 'pageview',
+			path: `/${'a'.repeat(5000)}`,
+		});
+		const rows = await db.select().from(events);
+		expect(rows[0].path.length).toBe(512);
 	});
 
 	it('visitorId stored as hash not raw IP', async () => {

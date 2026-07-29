@@ -42,14 +42,22 @@ export const RequestUploadSchema = v.object({
  *
  * `mimeType` and `fileSize` are deliberately absent: they describe the object
  * that landed in R2, and the server reads them back from `HeadObject` rather
- * than believing the uploader. `fileName` likewise is the name declared at
- * issuance. Dimensions and alt text stay caller-supplied — verifying them would
- * mean decoding the image here, and a wrong value is a display bug rather than
- * an integrity one.
+ * than believing the uploader. `fileName` is likewise absent — it is the name
+ * declared at issuance, and it now genuinely comes from the signed ticket
+ * rather than being re-supplied here, which is what that claim used to assert
+ * without enforcing. Dimensions and alt text stay caller-supplied: verifying
+ * them would mean decoding the image, and a wrong value is a display bug rather
+ * than an integrity one.
  */
 export const ConfirmUploadSchema = v.object({
 	key: v.pipe(v.string(), v.regex(/^blog\/[0-9a-f-]{36}\.\w{1,10}$/)),
-	fileName: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
+	/**
+	 * The signed ticket handed back at issuance. It binds the key to the user it
+	 * was issued to, so one blog author can no longer confirm another's key —
+	 * which mattered because `storage_key` is globally unique and first-write
+	 * wins, making the theft permanent.
+	 */
+	ticket: v.pipe(v.string(), v.minLength(1), v.maxLength(2048)),
 	width: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
 	height: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
 	altText: v.optional(v.pipe(v.string(), v.maxLength(1000))),

@@ -1,13 +1,33 @@
 import type { Handle } from '@sveltejs/kit';
 import { waitUntil } from '@vercel/functions';
 import { building } from '$app/environment';
+import { normalizeIpKey } from '$lib/server/abuse';
+import { createLimiter } from '$lib/server/api/rate-limit';
 import { ANALYTICS_CONSENT_COOKIE, ANALYTICS_SESSION_COOKIE, ANALYTICS_SESSION_TIMEOUT_MS } from '$lib/server/config';
 import { recordEvent, upsertSession } from '$lib/server/db/analytics/mutations';
 import { recordUserEvent } from '$lib/server/db/analytics/user-mutations';
 import { isBot, isExcludedPath, isPrefetch, isUserLanePath } from './collect-policy';
-import { type ConsentTier, deriveCookielessSessionId, hasConsent, hashVisitorId, parseConsentTier } from './consent';
+import { type ConsentTier, deriveCookielessSessionId, hasConsent, parseConsentTier } from './consent';
 import { classifyUserAgent, geoFromHeaders } from './enrich';
 import { templateRoute } from './event-schema';
+import { deriveVisitorId } from './visitor';
+
+/**
+ * Per-IP ceiling on anonymous pageview writes.
+ *
+ * Sized well above real browsing (a fast reader on a shared NAT is nowhere near
+ * 120 pageviews a minute) and far below what a script can produce. Bucketed by
+ * /64 at the call site — an IPv6 client rotating inside its own allocation would
+ * otherwise get a fresh bucket per request and this would be decorative.
+ *
+ * The asymmetry this fixes: the LOWER-volume `api/analytics/journey/collect`
+ * beacon has had a limiter all along, while the higher-volume entry point into
+ * the same two tables had none.
+ */
+const pageviewLimiter = createLimiter('rl:analytics:pageview', 120, '1 m', { onError: 'open' });
+
+/** Matches the bound enforced at the write chokepoint (db/analytics/mutations.ts). */
+const MAX_TRACKED_PATH_CHARS = 512;
 
 interface PendingTrack {
 	ip: string;
@@ -30,6 +50,11 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 		!building &&
 		event.request.method === 'GET' &&
 		!isExcludedPath(path) &&
+		// No real route is this long. Dropping here as well as truncating at the
+		// write chokepoint is deliberate: the chokepoint keeps the invariant true
+		// for every future caller, this keeps an absurd URL from being carried
+		// through the request at all.
+		path.length <= MAX_TRACKED_PATH_CHARS &&
 		!isPrefetch(event.request.headers) &&
 		!isBot(event.request.headers.get('user-agent') ?? '');
 
@@ -98,7 +123,21 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 
 	const response = await resolve(event);
 
-	if (userLane) {
+	// A miss writes nothing. `isExcludedPath` is a prefix/dot filter, so before
+	// this every unmatched URL — every scanner probe, every typo — bought an
+	// INSERT plus an UPSERT keyed on an attacker-chosen path.
+	//
+	// Both conditions are needed and they catch different misses. A null route id
+	// means SvelteKit matched no route at all (`/wp-admin`). A 4xx with a route id
+	// means a route matched but the load rejected it (`/blog/[slug]` for a slug
+	// that does not exist) — invisible to the route-id check, and the more
+	// interesting of the two to spam, since the path looks legitimate.
+	const matchedRoute = event.route?.id != null;
+	const served = response.status < 400;
+
+	// Same miss gate as the anonymous lane below. A signed-in user hitting a dead
+	// URL under /account is still a miss, and it still costs a write.
+	if (userLane && matchedRoute && served) {
 		const route = templateRoute(event.route?.id ?? null);
 		waitUntil(
 			recordUserEvent({
@@ -113,7 +152,7 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 		);
 	}
 
-	if (pending) {
+	if (pending && matchedRoute && served) {
 		const { ip, ua, consentTier, referrer, country, device, browser, sessionId: preSessionId } = pending;
 		const debugOwnerId = event.locals.debugOwnerId ?? null;
 		// Resolved after resolve(): event.route.id is only populated once SvelteKit
@@ -130,7 +169,26 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 		// DB failure can never surface as an unhandled rejection.
 		waitUntil(
 			(async () => {
-				const visitorId = await hashVisitorId(`${ip}:${ua}`);
+				// Rate limit INSIDE the deferred block, never in front of resolve().
+				//
+				// The two writes below are already off the response path, so the only
+				// thing a limiter can protect here is the database — and the only thing
+				// it can cost is analytics rows. Putting the Upstash round trip ahead of
+				// resolve() would move a third network dependency onto TTFB to protect
+				// work that is not on TTFB. Here, a Redis outage degrades collection and
+				// cannot touch page rendering.
+				//
+				// onError: 'open' for the same reason, and it is load-bearing rather than
+				// defensive. createLimiter returns the fail-closed singleton at MODULE
+				// LOAD when Upstash is unconfigured in production — so with the default
+				// policy a missing UPSTASH_* would silently drop 100% of analytics
+				// forever, announced by one console.error at boot, inside a block whose
+				// .catch swallows everything. Failing closed here protects nothing and
+				// deletes the feature.
+				const { success } = await pageviewLimiter.limit(`ip:${normalizeIpKey(ip) ?? ip}`);
+				if (!success) return;
+
+				const visitorId = await deriveVisitorId(ip, ua);
 				const sessionId = preSessionId ?? (await deriveCookielessSessionId(visitorId));
 				await Promise.all([
 					recordEvent({

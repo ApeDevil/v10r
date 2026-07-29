@@ -24,21 +24,21 @@ function requireS3() {
 export const IMAGEKIT_PREFIX = 'showcase/imagekit/';
 
 /** Ensure a key is within the imagekit namespace. */
-export function assertImageKey(key: string): void {
+export function assertImagekitKey(key: string): void {
 	if (!key.startsWith(IMAGEKIT_PREFIX)) {
 		throw new StoreError('forbidden', `Key must start with "${IMAGEKIT_PREFIX}": ${key}`);
 	}
 }
 
 /** Build a per-user object key for an ephemeral image derivative. */
-export function buildImageKey(userId: string, imageId: string, ext: string): string {
+export function buildImagekitKey(userId: string, imageId: string, ext: string): string {
 	return `${IMAGEKIT_PREFIX}${userId}/${imageId}.${ext}`;
 }
 
 /** Store an already-processed (resized, EXIF-stripped) image derivative. */
-export async function putImageDerivative(key: string, bytes: Uint8Array, contentType: string): Promise<void> {
+export async function putImagekitDerivative(key: string, bytes: Uint8Array, contentType: string): Promise<void> {
+	assertImagekitKey(key);
 	const client = requireS3();
-	assertImageKey(key);
 	try {
 		await client.send(new PutObjectCommand({ Bucket: BUCKET, Key: key, Body: bytes, ContentType: contentType }));
 	} catch (err) {
@@ -47,9 +47,9 @@ export async function putImageDerivative(key: string, bytes: Uint8Array, content
 }
 
 /** Read an image's bytes back (e.g. to hand to a vision model or to crop). */
-export async function getImageBytes(key: string): Promise<Uint8Array> {
+export async function getImagekitBytes(key: string): Promise<Uint8Array> {
+	assertImagekitKey(key);
 	const client = requireS3();
-	assertImageKey(key);
 	try {
 		const res = await client.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
 		const bytes = await res.Body?.transformToByteArray();
@@ -61,9 +61,9 @@ export async function getImageBytes(key: string): Promise<Uint8Array> {
 }
 
 /** Short-lived presigned GET URL for displaying the image in the browser. */
-export async function getImageReadUrl(key: string, expiresIn = PRESIGNED_URL_EXPIRY): Promise<string> {
+export async function getImagekitReadUrl(key: string, expiresIn = PRESIGNED_URL_EXPIRY): Promise<string> {
+	assertImagekitKey(key);
 	const client = requireS3();
-	assertImageKey(key);
 	try {
 		return await getSignedUrl(client, new GetObjectCommand({ Bucket: BUCKET, Key: key }), { expiresIn });
 	} catch (err) {
@@ -72,9 +72,9 @@ export async function getImageReadUrl(key: string, expiresIn = PRESIGNED_URL_EXP
 }
 
 /** Delete a stored ephemeral image derivative (fired on Approve/discard). */
-export async function deleteImageObject(key: string): Promise<void> {
+export async function deleteImagekitObject(key: string): Promise<void> {
+	assertImagekitKey(key);
 	const client = requireS3();
-	assertImageKey(key);
 	try {
 		await client.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
 	} catch (err) {

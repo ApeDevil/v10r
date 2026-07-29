@@ -120,21 +120,41 @@ export async function getTtlSnapshot(key: string): Promise<TtlSnapshot> {
 	};
 }
 
-export async function checkRateLimit(identifier: string, limit = 10, windowSeconds = 10): Promise<RateLimitResult> {
+/** Sliding window this demo runs against. Fixed, not caller-chosen — see below. */
+export const DEMO_RATE_LIMIT = 10;
+export const DEMO_RATE_WINDOW_SECONDS = 10;
+
+/**
+ * The rate-limit demo, keyed by the caller's own IP.
+ *
+ * Previously this took the bucket key, the limit AND the window from the form
+ * body of an anonymous public page. That is a rate limiter you can ask to let
+ * you through: pick a fresh identifier and the bucket is empty, or pass
+ * `limit=999999` and it never fills. It also wrote to Upstash under the SDK's
+ * default keyspace, because no `prefix` was set, and an unbounded caller-chosen
+ * identifier is unbounded key cardinality in a shared Redis.
+ *
+ * The demo is just as legible with a fixed window and a real key — arguably
+ * more so, since "your requests are counted against YOUR bucket" is the actual
+ * lesson. `SHOWCASE_PREFIX` namespaces the keys so this can never collide with
+ * a production limiter.
+ */
+export async function checkRateLimit(ipKey: string): Promise<RateLimitResult> {
 	const r = requireRedis();
 	const ratelimit = new Ratelimit({
 		redis: r,
-		limiter: Ratelimit.slidingWindow(limit, `${windowSeconds} s`),
+		limiter: Ratelimit.slidingWindow(DEMO_RATE_LIMIT, `${DEMO_RATE_WINDOW_SECONDS} s`),
+		prefix: `${SHOWCASE_PREFIX}ratelimit`,
 		ephemeralCache,
 	});
 
-	const result = await ratelimit.limit(identifier);
+	const result = await ratelimit.limit(ipKey);
 
 	return {
 		allowed: result.success,
 		remaining: result.remaining,
 		limit: result.limit,
 		resetAt: new Date(result.reset).toISOString(),
-		windowSeconds,
+		windowSeconds: DEMO_RATE_WINDOW_SECONDS,
 	};
 }

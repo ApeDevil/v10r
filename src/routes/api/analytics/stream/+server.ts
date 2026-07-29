@@ -5,6 +5,7 @@
  * hard max duration so an attacker can't pin open unbounded serverless functions.
  */
 
+import { ipLimitKey } from '$lib/server/abuse';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { SSE_HEARTBEAT_MS } from '$lib/server/config';
 import type { RequestHandler } from './$types';
@@ -44,8 +45,7 @@ function randomEvent(id: number) {
 export const config = { runtime: 'nodejs22.x', maxDuration: 60 };
 
 export const GET: RequestHandler = async ({ locals, getClientAddress }) => {
-	const ip = locals.clientIp ?? getClientAddress();
-	const { success, reset } = await connectLimiter.limit(ip);
+	const { success, reset } = await connectLimiter.limit(ipLimitKey(locals.clientIp ?? getClientAddress()));
 	if (!success) return rateLimitResponse(reset);
 
 	if (activeStreams >= MAX_CONCURRENT_STREAMS) {

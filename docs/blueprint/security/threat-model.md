@@ -94,11 +94,20 @@ With reasons, so they are not re-proposed:
 
 ## Known gaps
 
-- **OAuth access/refresh tokens are stored in plaintext** in `auth.account`,
-  while Discord tokens get AES-256-GCM. Encrypting them naively would break
-  Better Auth's own refresh path, which reads those columns directly. v10r never
-  reads them itself, so the likely correct fix is to stop persisting them —
-  which needs confirming against the Better Auth source first.
+- ~~**OAuth access/refresh tokens are stored in plaintext** in `auth.account`~~
+  — **closed.** The reasoning here was right about the hazard and wrong about
+  the remedy: encrypting the columns by hand would indeed have broken Better
+  Auth's refresh path, but the framework has a supported flag for exactly this,
+  `account.encryptOAuthTokens`, so neither hand-rolled ciphertext nor dropping
+  persistence was necessary. Enabled in `auth/index.ts`. Rows written before it
+  stay plaintext; nothing reads them, and the next sign-in overwrites them.
+
+  Still open, and smaller: **provider tokens are not revoked on account
+  deletion.** The `auth.account` row only cascades away via its user FK, so a
+  deleted user's GitHub/Google refresh token stays valid at the provider until
+  it expires. That needs an outbound call on the erasure path, with a failure
+  there not blocking the erasure itself — a separate change from this one, and
+  much less pressing now that the at-rest exposure is closed.
 - **The GDPR export returns counts, not content**, for desk files, AI
   conversations, and images. Those sections are now marked `portable: false`
   rather than overclaiming; comments and palettes return full content.

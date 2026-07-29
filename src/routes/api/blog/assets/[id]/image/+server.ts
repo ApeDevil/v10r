@@ -1,4 +1,5 @@
 import { redirect } from '@sveltejs/kit';
+import { ipLimitKey } from '$lib/server/abuse';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError } from '$lib/server/api/response';
 import { getPublicAssetById } from '$lib/server/blog';
@@ -22,7 +23,7 @@ const limiter = createLimiter('rl:blog:asset-image', 60, '1 m');
  * but the presigned URL is valid for 1 hour.
  */
 export const GET: RequestHandler = async ({ params, setHeaders, locals }) => {
-	const { success, reset } = await limiter.limit(locals.clientIp ?? 'anon');
+	const { success, reset } = await limiter.limit(ipLimitKey(locals.clientIp));
 	if (!success) return rateLimitResponse(reset);
 
 	const asset = await getPublicAssetById(params.id);

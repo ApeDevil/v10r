@@ -7,6 +7,10 @@
  *  - `securityHeaders` must stay first: it stamps `locals.clientIp` from
  *    `getClientAddress()`, and every limiter downstream keys off that. Move it
  *    and the IP becomes attacker-influenced.
+ *  - `bodySizeFloor` must stay ABOVE `authHandler`. `svelteKitHandler` answers
+ *    `/api/auth/*` without calling `resolve`, so anything below it never sees
+ *    that plane — placing the floor lower would leave sign-up and sign-in bodies
+ *    unbounded, which is the one pre-auth surface most worth bounding.
  *  - `stripBaseLocalePrefix` runs before any auth, so it is the one handler that
  *    can emit a redirect to an unauthenticated caller — which is precisely how
  *    the `/en//evil.com` open redirect was reachable.
@@ -37,6 +41,7 @@ function chainOrder(): string[] {
 
 const EXPECTED = [
 	'securityHeaders',
+	'bodySizeFloor',
 	'stripBaseLocalePrefix',
 	'loadStyle',
 	'i18n',

@@ -8,7 +8,12 @@
 	"headers": [
 		{
 			"source": "/service-worker.js",
-			"headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+			"headers": [
+				{
+					"key": "Cache-Control",
+					"value": "no-cache"
+				}
+			]
 		}
 	],
 	"crons": [
@@ -75,6 +80,10 @@
 		{
 			"path": "/api/cron/mcp-telemetry-retention",
 			"schedule": "30 7 * * 0"
+		},
+		{
+			"path": "/api/cron/blog-orphan-reaper",
+			"schedule": "45 5 * * *"
 		}
 	]
 }

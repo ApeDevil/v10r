@@ -8,6 +8,7 @@ import {
 	type RetrieverLane,
 	type StepDetail,
 } from '$lib/types/pipeline';
+import { escapeXmlText } from '$lib/utils/xml';
 import { EMBEDDING_DIMENSIONS, MAX_CONTEXT_CHUNKS, MAX_GRAPH_HOPS } from './config';
 import { generateEmbedding } from './embed';
 import { fuseAndRank } from './rank';
@@ -270,7 +271,23 @@ const CREDENTIAL_RE = /(?:sk-|ghp_|gho_|glpat-|AKIA|Bearer\s)\S+/gi;
 /** Max characters for RAG context injection (~4K tokens). */
 const MAX_CONTEXT_CHARS = 16_000;
 
-/** Format retrieved chunks for injection into an LLM system prompt. */
+/**
+ * Format retrieved chunks for injection into an LLM system prompt.
+ *
+ * Content is XML-escaped, because the caller wraps this in a tagged block and
+ * the chunks are NOT ours. `/api/retrieval/ingest` accepts up to 200 000
+ * characters of arbitrary text per document, so an ingested file containing
+ * `</retrieval-context>` would close the block early and everything after it
+ * would read as prompt rather than as data — to a model that is about to answer
+ * on the strength of it.
+ *
+ * `<desk-context>` has escaped for exactly this reason for a while; this block
+ * carries the same class of content and did not.
+ *
+ * Escaping stops the delimiter breakout. It does NOT stop instructions embedded
+ * in prose — that is what the "data, not instructions" framing in the system
+ * prompt is for, and neither measure substitutes for the other.
+ */
 export function formatContextForPrompt(result: RetrievalResult, maxChars = MAX_CONTEXT_CHARS): string {
 	if (result.chunks.length === 0) return '';
 
@@ -279,7 +296,7 @@ export function formatContextForPrompt(result: RetrievalResult, maxChars = MAX_C
 
 	for (let i = 0; i < result.chunks.length; i++) {
 		const c = result.chunks[i];
-		const part = `[${i + 1}] ${c.documentTitle}\n${c.content}`;
+		const part = `[${i + 1}] ${escapeXmlText(c.documentTitle)}\n${escapeXmlText(c.content)}`;
 		if (totalLen + part.length > maxChars) break;
 		parts.push(part);
 		totalLen += part.length;

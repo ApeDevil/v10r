@@ -14,7 +14,7 @@ import type { FieldProvenance, ImageMetadataOutput } from '$lib/schemas/showcase
 import { IMAGE_ALLOWED_MIME, MAX_IMAGE_UPLOAD_SIZE } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { imageAiProposal, imageAsset, imageMetadata, imageMetadataTag, imageTag } from '$lib/server/db/schema';
-import { buildImageKey, deleteImageObject, putImageDerivative } from '$lib/server/store/showcase/image';
+import { buildImagemetaKey, deleteImagemetaObject, putImagemetaDerivative } from '$lib/server/store/showcase/image';
 import { ImageMetaError } from './errors';
 import { processImage, sniffImageMime } from './process';
 import type { ExtractResult, IngestResult } from './types';
@@ -49,9 +49,9 @@ export async function ingestImage(userId: string, file: File): Promise<IngestRes
 
 	const processed = await processImage(bytes);
 	const imageId = crypto.randomUUID();
-	const key = buildImageKey(userId, imageId, processed.ext);
+	const key = buildImagemetaKey(userId, imageId, processed.ext);
 
-	await putImageDerivative(key, processed.derivative, processed.contentType);
+	await putImagemetaDerivative(key, processed.derivative, processed.contentType);
 	try {
 		await db.insert(imageAsset).values({
 			id: imageId,
@@ -64,7 +64,7 @@ export async function ingestImage(userId: string, file: File): Promise<IngestRes
 		});
 	} catch (err) {
 		// Roll back the orphaned object so a failed insert leaves no dangling bytes.
-		await deleteImageObject(key).catch(() => {});
+		await deleteImagemetaObject(key).catch(() => {});
 		throw err;
 	}
 

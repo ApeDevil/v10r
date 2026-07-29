@@ -1,4 +1,4 @@
-import { getClientIp } from '$lib/server/abuse';
+import { getClientIp, ipLimitKey } from '$lib/server/abuse';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiOk } from '$lib/server/api/response';
 import { USERNAME_CHECK_RATE_LIMIT_MAX, USERNAME_CHECK_RATE_LIMIT_WINDOW } from '$lib/server/config';
@@ -9,11 +9,8 @@ const TAKEN_USERNAMES = ['admin', 'test', 'user', 'root', 'moderator', 'system']
 const limiter = createLimiter('rl:username:check', USERNAME_CHECK_RATE_LIMIT_MAX, USERNAME_CHECK_RATE_LIMIT_WINDOW);
 
 export const GET: RequestHandler = async (event) => {
-	const ip = getClientIp(event);
-	if (ip) {
-		const { success, reset } = await limiter.limit(ip);
-		if (!success) return rateLimitResponse(reset);
-	}
+	const { success, reset } = await limiter.limit(ipLimitKey(getClientIp(event)));
+	if (!success) return rateLimitResponse(reset);
 
 	const username = event.url.searchParams.get('u')?.toLowerCase() ?? '';
 

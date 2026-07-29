@@ -25,7 +25,6 @@ const PROTOCOL_FILES = ['http.ts', 'transport.ts', 'types.ts'];
 
 const FORBIDDEN: Array<{ label: string; re: RegExp }> = [
 	{ label: '$lib/server/db (constructs a Neon pool at module load)', re: /\$lib\/server\/db\b/ },
-	{ label: '$lib/server/api/* (pulls Upstash + $app/environment)', re: /\$lib\/server\/api\// },
 	{ label: '@vercel/functions (platform edge — belongs in the route adapter)', re: /@vercel\/functions/ },
 	{ label: '@upstash/* (Redis client)', re: /@upstash\// },
 	{ label: '$lib/server/cache (Redis client)', re: /\$lib\/server\/cache\b/ },
@@ -33,6 +32,44 @@ const FORBIDDEN: Array<{ label: string; re: RegExp }> = [
 
 function readProtocolFile(name: string): string {
 	return readFileSync(join(process.cwd(), 'src', 'lib', 'server', 'mcp', name), 'utf8');
+}
+
+/**
+ * `$lib/server/api/*` used to be banned as a whole directory. The reason given
+ * was "pulls Upstash + $app/environment" — but that is a property of
+ * `rate-limit.ts`, not of the directory, and a directory-shaped rule states the
+ * wrong invariant. `api/body.ts` (bounded request readers) has no such edge and
+ * the protocol layer has a real need for it.
+ *
+ * So the rule is now: an `$lib/server/api/*` import is allowed only if the
+ * imported module — and everything it reaches inside that directory — is itself
+ * free of the forbidden edges. VERIFIED, not trusted: if `api/body.ts` ever
+ * acquires a Redis import, this test fails here, naming the boundary, instead of
+ * surfacing as an unrelated Neon connection error inside a protocol test.
+ *
+ * This also narrows the "does not walk the graph" limit noted above — for this
+ * one directory, it now does.
+ */
+const API_DIR = join(process.cwd(), 'src', 'lib', 'server', 'api');
+
+function apiModulesReachableFrom(source: string, seen = new Set<string>()): string[] {
+	const direct = [...source.matchAll(/from '\$lib\/server\/api\/([\w-]+)'/g)].map((match) => match[1]);
+	const out: string[] = [];
+	for (const name of direct) {
+		if (seen.has(name)) continue;
+		seen.add(name);
+		out.push(name);
+		const nested = readFileSync(join(API_DIR, `${name}.ts`), 'utf8');
+		// Relative siblings inside the same directory count as reachable too.
+		const relatives = [...nested.matchAll(/from '\.\/([\w-]+)'/g)].map((match) => match[1]);
+		for (const relative of relatives) {
+			if (seen.has(relative)) continue;
+			seen.add(relative);
+			out.push(relative);
+		}
+		out.push(...apiModulesReachableFrom(nested, seen));
+	}
+	return out;
 }
 
 describe('MCP protocol layer import boundary', () => {
@@ -53,6 +90,33 @@ describe('MCP protocol layer import boundary', () => {
 			}
 		});
 	}
+
+	it('only reaches $lib/server/api modules that are themselves edge-free', () => {
+		const reached = new Set<string>();
+		for (const name of PROTOCOL_FILES) {
+			for (const module of apiModulesReachableFrom(readProtocolFile(name))) reached.add(module);
+		}
+		// Sentinel: if the import is ever removed this set empties, and every
+		// assertion below would pass by having nothing to check.
+		expect([...reached].sort()).toEqual(['body', 'response']);
+
+		for (const module of reached) {
+			const src = readFileSync(join(API_DIR, `${module}.ts`), 'utf8');
+			for (const { label, re } of FORBIDDEN) {
+				expect(re.test(src), `$lib/server/api/${module}.ts imports ${label}`).toBe(false);
+			}
+		}
+	});
+
+	it('still refuses the rate limiter, which is the module the old blanket ban was really about', () => {
+		for (const name of PROTOCOL_FILES) {
+			expect(/\$lib\/server\/api\/rate-limit/.test(readProtocolFile(name)), `${name} imports the rate limiter`).toBe(
+				false,
+			);
+		}
+		// And the reason, asserted rather than asserted-about: it does carry the edge.
+		expect(/\$lib\/server\/cache\b/.test(readFileSync(join(API_DIR, 'rate-limit.ts'), 'utf8'))).toBe(true);
+	});
 
 	it('keeps types.ts free of ALL imports (it is the zero-import leaf)', () => {
 		// Everything else in the MCP tree may import types.ts, so an import here is the one edge that

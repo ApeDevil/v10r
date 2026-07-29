@@ -48,7 +48,7 @@ whether a less intrusive route reaches the same purpose.
 
 | Element | Necessary? | Reasoning |
 |---|---|---|
-| Rotating visitor hash | Yes | Without any grouping key, pageviews cannot be distinguished from reloads and "unique visitors" is unanswerable. The hash rotates daily and is the *least* identifying option that still answers it. |
+| Keyed visitor hash | Yes | Without any grouping key, pageviews cannot be distinguished from reloads and "unique visitors" is unanswerable. It is `HMAC-SHA256(server key, ip + user-agent)` — keyed, so it cannot be reversed by sweeping the address space, which an unkeyed digest can be. It does **not** rotate daily: "unique visitors over 30 days" is a question the hash exists to answer, and a daily-rotating input would inflate that count by the number of days. The key is rotatable instead, at or above the 60-day retention window, so at most one boundary can fall inside any reporting range. |
 | Path + templated route | Yes | The measurement itself. |
 | Country (from connection) | Yes | Answers "who is this site for", and is coarse by construction — country level only, never city or coordinates. |
 | Referrer | Yes | Answers "how do people find this", unanswerable any other way. |
@@ -93,7 +93,9 @@ and ad targeting — none of which happen here.
 
 | Safeguard | Where |
 |---|---|
-| Daily-rotating identifier | `analytics/consent.ts` `deriveCookielessSessionId` |
+| Keyed, non-reversible visitor identifier | `analytics/consent.ts` `hashVisitorId`, keyed via `analytics/visitor.ts` |
+| Daily-rotating session identifier | `analytics/consent.ts` `deriveCookielessSessionId` |
+| Referrer reduced to an origin before storage | `db/analytics/mutations.ts` — the write chokepoint, so every lane inherits it |
 | No raw IP persisted anywhere | `analytics/hook.ts` — hashed before write |
 | Authenticated surfaces excluded from this lane | `analytics/collect-policy.ts` |
 | No join key to the identified lane | schema-level; see `user-events.ts` docblock |
@@ -116,6 +118,9 @@ intrusive alternative was considered and rejected.
 Re-run this assessment before any of the following. Each would change a limb:
 
 - Adding any signal to the visitor hash (Limb 2 and Limb 3 both change).
+- Rotating the visitor-hash key faster than the retention window, or not at all for longer than one.
+- Widening the stored referrer beyond an origin. The full URL of a page a visitor arrives from can
+  contain a magic-link, password-reset or OAuth token in its query string.
 - Introducing any cross-session or cross-site identifier.
 - Extending raw-event retention beyond 60 days.
 - Introducing any per-individual decision, ranking, or personalisation from this lane.

@@ -1,4 +1,4 @@
-import { BOT_DETECTION_MODE, getClientIp } from '$lib/server/abuse';
+import { BOT_DETECTION_MODE, getClientIp, ipLimitKey } from '$lib/server/abuse';
 import { altchaChallengeHandler } from '$lib/server/abuse/altcha';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError } from '$lib/server/api/response';
@@ -19,11 +19,8 @@ export const GET: RequestHandler = async (event) => {
 		return apiError(503, 'service_disabled', 'Captcha is disabled');
 	}
 
-	const ip = getClientIp(event);
-	if (ip) {
-		const { success, reset } = await challengeLimiter.limit(ip);
-		if (!success) return rateLimitResponse(reset);
-	}
+	const { success, reset } = await challengeLimiter.limit(ipLimitKey(getClientIp(event)));
+	if (!success) return rateLimitResponse(reset);
 
 	return altchaChallengeHandler();
 };

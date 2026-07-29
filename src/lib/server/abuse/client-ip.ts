@@ -28,6 +28,26 @@ export function getClientIp(event: RequestEvent): string | null {
  * Deliberately NOT applied to `locals.clientIp`: audit records and abuse logs
  * want the address that actually connected. This is only ever a bucket key.
  */
+/**
+ * The bucket key an IP-keyed limiter should actually use.
+ *
+ * Two things every call site was getting wrong on its own:
+ *
+ *  1. Passing the raw address, which makes the limiter decorative against an
+ *     IPv6 client (see `normalizeIpKey`).
+ *  2. Skipping the limiter entirely when the address is unknown — several
+ *     routes wrapped the call in `if (ip)`, so "no IP" meant "no limit", which
+ *     is the wrong way round. An unknown origin is the one you least want to
+ *     serve without a bound. They now share a single `anon` bucket: coarse, and
+ *     coarse is correct, because we cannot tell those callers apart.
+ *
+ * The `ip:` prefix keeps the namespace distinct from user-id buckets on the
+ * routes that key by either.
+ */
+export function ipLimitKey(ip: string | null | undefined): string {
+	return `ip:${normalizeIpKey(ip) ?? 'anon'}`;
+}
+
 export function normalizeIpKey(ip: string | null | undefined): string | null {
 	if (!ip) return null;
 

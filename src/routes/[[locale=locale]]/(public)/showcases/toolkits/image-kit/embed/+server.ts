@@ -9,7 +9,7 @@ import { json } from '@sveltejs/kit';
 import { type EmbedFailureReason, type EmbedResponse, isImageId } from '$lib/schemas/showcase/image-kit';
 import { checkUserBudget } from '$lib/server/ai/budget';
 import { embedCaptionText, embedImage, l2Norm } from '$lib/server/imagekit';
-import { buildImageKey, getImageBytes } from '$lib/server/store/showcase/imagekit';
+import { buildImagekitKey, getImagekitBytes } from '$lib/server/store/showcase/imagekit';
 import type { RequestHandler } from './$types';
 
 // A multimodal image embed can outrun the ~10s serverless default; give it headroom.
@@ -50,7 +50,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
 		const run =
 			multimodal === true
-				? await embedImage(await getImageBytes(buildImageKey(locals.user.id, imageId, 'webp')), 'image/webp')
+				? await embedImage(await getImagekitBytes(buildImagekitKey(locals.user.id, imageId, 'webp')), 'image/webp')
 				: await embedFromSource(source);
 
 		const res: EmbedResponse = {

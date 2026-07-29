@@ -9,6 +9,30 @@ import { buildById, PATTERNS, type PatternRecord, REGISTRY_ORDER, type RegRef } 
 import { DEFAULT_LINES, MAX_LINES, readAllowlistedExcerpt } from './excerpts';
 import { scorePatterns, topoSort } from './search';
 
+/**
+ * Argument bounds for the PUBLIC, unauthenticated registry.
+ *
+ * These appear in `inputSchema` so the contract is honest, but the schema is
+ * advertised — nothing in the transport validates against it, and every handler
+ * below does its own permissive coercion. The enforcement that matters is
+ * therefore in the handlers, and the schema entries exist so a well-behaved
+ * client self-limits rather than discovering the bound as an error.
+ *
+ * `MAX_CAPABILITIES` is the one that is load-bearing rather than tidy:
+ * `recommendPlan` runs `scorePatterns` over the whole registry once per entry,
+ * so an unbounded array is a CPU amplifier reachable without credentials. The
+ * body budget does not cover it — 256 KB of one-character strings is still tens
+ * of thousands of entries.
+ */
+const MAX_ARG_CHARS = 512;
+const MAX_CAPABILITIES = 20;
+
+/** Reject rather than truncate: a silently shortened query returns confidently wrong results. */
+function boundedString(value: unknown, max = MAX_ARG_CHARS): string | null {
+	if (typeof value !== 'string') return null;
+	return value.length > max ? null : value;
+}
+
 export const PATTERN_TOOLS: ToolDef[] = [
 	{
 		name: 'search_patterns',
@@ -20,12 +44,14 @@ export const PATTERN_TOOLS: ToolDef[] = [
 			properties: {
 				query: {
 					type: 'string',
+					maxLength: MAX_ARG_CHARS,
 					description:
 						'Natural-language or keyword query describing the capability you are looking for — e.g. "background jobs", "approval gate for AI tools", "grounded answers over a corpus".',
 				},
 				limit: { type: 'integer', minimum: 1, maximum: 20, default: 5, description: 'Max results (1-20). Default 5.' },
 				category: {
 					type: 'string',
+					maxLength: MAX_ARG_CHARS,
 					description: 'Optional exact category filter: architecture, ai, ui, docs, or jobs.',
 				},
 			},
@@ -42,6 +68,7 @@ export const PATTERN_TOOLS: ToolDef[] = [
 			properties: {
 				id: {
 					type: 'string',
+					maxLength: MAX_ARG_CHARS,
 					description: 'Exact pattern id from search_patterns results, e.g. "layered-rag" or "multi-client-core".',
 				},
 			},
@@ -58,6 +85,7 @@ export const PATTERN_TOOLS: ToolDef[] = [
 			properties: {
 				path: {
 					type: 'string',
+					maxLength: MAX_ARG_CHARS,
 					description:
 						'Repo-relative path from a pattern card, e.g. "src/lib/server/ai/tools/index.ts". Only registry-referenced files are readable; anything else is rejected.',
 				},
@@ -83,6 +111,7 @@ export const PATTERN_TOOLS: ToolDef[] = [
 			properties: {
 				capability: {
 					type: 'string',
+					maxLength: MAX_ARG_CHARS,
 					description:
 						'The capability or concept to trace — e.g. "deskbot approval gate", "rag ingest", "design tokens".',
 				},
@@ -100,10 +129,10 @@ export const PATTERN_TOOLS: ToolDef[] = [
 			properties: {
 				capabilities: {
 					type: 'array',
-					items: { type: 'string' },
+					items: { type: 'string', maxLength: MAX_ARG_CHARS },
 					minItems: 1,
-					description:
-						'Capabilities the target project needs — e.g. ["layered RAG", "background jobs", "design system"].',
+					maxItems: MAX_CAPABILITIES,
+					description: `Capabilities the target project needs (1-${MAX_CAPABILITIES}) — e.g. ["layered RAG", "background jobs", "design system"].`,
 				},
 				include_dependencies: {
 					type: 'boolean',
@@ -169,14 +198,19 @@ function patternCard(pattern: PatternRecord): string {
 }
 
 function searchPatterns(args: Record<string, unknown>): ToolResult {
-	const query = typeof args.query === 'string' ? args.query : '';
+	const query = boundedString(args.query) ?? '';
 	if (query.trim().length === 0) {
 		return errorResult(
-			'search_patterns needs a non-empty "query" string, e.g. {"query": "background jobs"}.',
+			`search_patterns needs a non-empty "query" string of at most ${MAX_ARG_CHARS} characters, e.g. {"query": "background jobs"}.`,
 			'invalid_args',
 		);
 	}
 	const limit = typeof args.limit === 'number' ? Math.min(Math.max(1, Math.floor(args.limit)), 20) : 5;
+	// Absent is "no filter"; present-but-unbounded is a client bug, not a wider
+	// search — dropping it silently would quietly return MORE than was asked for.
+	if (args.category !== undefined && boundedString(args.category) === null) {
+		return errorResult(`"category" must be a string of at most ${MAX_ARG_CHARS} characters.`, 'invalid_args');
+	}
 	const category = typeof args.category === 'string' ? args.category.toLowerCase() : null;
 	const pool = category ? PATTERNS.filter((pattern) => pattern.category === category) : PATTERNS;
 	// NOT a no-match: an unrecognised category filter means the query never ran, so this is a client
@@ -194,7 +228,12 @@ function searchPatterns(args: Record<string, unknown>): ToolResult {
 }
 
 function getPattern(args: Record<string, unknown>): ToolResult {
-	const id = typeof args.id === 'string' ? args.id : '';
+	// Bounded before use: the not-found branch echoes the id back into the error
+	// text and into the telemetry row, so an unbounded id is a reflection channel.
+	const id = boundedString(args.id);
+	if (id === null) {
+		return errorResult(`"id" must be a string of at most ${MAX_ARG_CHARS} characters.`, 'invalid_args');
+	}
 	const pattern = buildById().get(id);
 	if (!pattern) {
 		// A real-shaped id we do not have is a REGISTRY GAP, not a malformed request.
@@ -207,7 +246,10 @@ function getPattern(args: Record<string, unknown>): ToolResult {
 }
 
 function getFileExcerpt(args: Record<string, unknown>): ToolResult {
-	const path = typeof args.path === 'string' ? args.path : '';
+	const path = boundedString(args.path);
+	if (path === null) {
+		return errorResult(`"path" must be a string of at most ${MAX_ARG_CHARS} characters.`, 'invalid_args');
+	}
 	const startLine = typeof args.start_line === 'number' ? args.start_line : 1;
 	const lineCount = typeof args.line_count === 'number' ? args.line_count : DEFAULT_LINES;
 	const excerpt = readAllowlistedExcerpt(path, startLine, lineCount);
@@ -217,10 +259,10 @@ function getFileExcerpt(args: Record<string, unknown>): ToolResult {
 }
 
 function traceCapability(args: Record<string, unknown>): ToolResult {
-	const capability = typeof args.capability === 'string' ? args.capability : '';
+	const capability = boundedString(args.capability) ?? '';
 	if (capability.trim().length === 0) {
 		return errorResult(
-			'trace_capability needs a non-empty "capability" string, e.g. {"capability": "approval gate"}.',
+			`trace_capability needs a non-empty "capability" string of at most ${MAX_ARG_CHARS} characters, e.g. {"capability": "approval gate"}.`,
 			'invalid_args',
 		);
 	}
@@ -244,12 +286,25 @@ function traceCapability(args: Record<string, unknown>): ToolResult {
 }
 
 function recommendPlan(args: Record<string, unknown>): ToolResult {
+	// The array bound is the real control on this tool: the loop below runs
+	// scorePatterns over the whole registry once per entry, so length is CPU
+	// spend on an unauthenticated endpoint. Refuse the call rather than truncate
+	// — a plan silently built from the first 20 of 5000 capabilities looks
+	// complete and is not.
+	if (Array.isArray(args.capabilities) && args.capabilities.length > MAX_CAPABILITIES) {
+		return errorResult(
+			`"capabilities" accepts at most ${MAX_CAPABILITIES} entries; got ${args.capabilities.length}. Split the request.`,
+			'invalid_args',
+		);
+	}
 	const capabilities = Array.isArray(args.capabilities)
-		? args.capabilities.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+		? args.capabilities.filter(
+				(item): item is string => typeof item === 'string' && item.trim().length > 0 && item.length <= MAX_ARG_CHARS,
+			)
 		: [];
 	if (capabilities.length === 0) {
 		return errorResult(
-			'recommend_emulation_plan needs "capabilities": a non-empty array of strings, e.g. ["layered RAG", "background jobs"].',
+			`recommend_emulation_plan needs "capabilities": a non-empty array of 1-${MAX_CAPABILITIES} strings, each at most ${MAX_ARG_CHARS} characters, e.g. ["layered RAG", "background jobs"].`,
 			'invalid_args',
 		);
 	}

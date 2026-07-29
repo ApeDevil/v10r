@@ -8,7 +8,7 @@
  */
 import { IMAGE_ALLOWED_MIME, MAX_IMAGE_UPLOAD_SIZE } from '$lib/server/config';
 import { ImageMetaError, processImage, sniffImageMime } from '$lib/server/imagemeta';
-import { buildImageKey, putImageDerivative } from '$lib/server/store/showcase/imagekit';
+import { buildImagekitKey, putImagekitDerivative } from '$lib/server/store/showcase/imagekit';
 import type { EphemeralUpload } from './types';
 
 export async function ingestEphemeralImage(userId: string, file: File): Promise<EphemeralUpload> {
@@ -30,9 +30,9 @@ export async function ingestEphemeralImage(userId: string, file: File): Promise<
 
 	const processed = await processImage(bytes);
 	const imageId = crypto.randomUUID();
-	const key = buildImageKey(userId, imageId, processed.ext);
+	const key = buildImagekitKey(userId, imageId, processed.ext);
 
-	await putImageDerivative(key, processed.derivative, processed.contentType);
+	await putImagekitDerivative(key, processed.derivative, processed.contentType);
 
 	return {
 		imageId,

@@ -17,8 +17,12 @@
  * session duration, exit pages, and the active-session count.
  */
 import * as v from 'valibot';
+import { normalizeIpKey } from '$lib/server/abuse';
 import { isBot, isExcludedPath } from '$lib/server/analytics/collect-policy';
-import { hasConsent, hashVisitorId } from '$lib/server/analytics/consent';
+import { hasConsent } from '$lib/server/analytics/consent';
+import { deriveVisitorId } from '$lib/server/analytics/visitor';
+import { MAX_BEACON_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/api/body';
+import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiNoContent } from '$lib/server/api/response';
 import { ANALYTICS_SESSION_COOKIE } from '$lib/server/config';
 import { recordEvent, upsertSession } from '$lib/server/db/analytics/mutations';
@@ -35,6 +39,13 @@ const JourneyBatch = v.object({
 	events: v.pipe(v.array(JourneyEvent), v.minLength(1), v.maxLength(20)),
 });
 
+/**
+ * The batch beacon had NO limiter, while its own sibling `collect` endpoint has
+ * had one all along — and this one performs the heavier work of the two: an
+ * INSERT per event plus a session UPSERT, up to 20 events per request.
+ */
+const limiter = createLimiter('rl:analytics:journey', 30, '1 m', { onError: 'open' });
+
 export const POST: RequestHandler = async ({ request, cookies, getClientAddress, locals, url }) => {
 	// Origin check — same-origin only.
 	const origin = request.headers.get('origin');
@@ -50,18 +61,26 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 	const ua = request.headers.get('user-agent') ?? '';
 	if (isBot(ua)) return apiNoContent();
 
+	// `locals.clientIp` is the canonical address, stamped once by securityHeaders
+	// before any handler runs; raw header-derived values are attacker-mutable
+	// until then. Identical to getClientAddress() today — this keeps it that way.
+	const ip = locals.clientIp ?? getClientAddress();
+	const { success, reset } = await limiter.limit(`ip:${normalizeIpKey(ip) ?? ip}`);
+	if (!success) return rateLimitResponse(reset);
+
 	const sessionId = cookies.get(ANALYTICS_SESSION_COOKIE);
 	if (!sessionId) {
 		// Tracking session expired or never started — ignore.
 		return apiNoContent();
 	}
 
-	let body: unknown;
-	try {
-		body = await request.json();
-	} catch {
+	// Unauthenticated beacon: bound the read rather than parsing whatever arrives.
+	const read = await readJsonBounded(request, MAX_BEACON_BODY_BYTES);
+	if (!read.ok) {
+		if (read.reason === 'too_large') return payloadTooLargeResponse(MAX_BEACON_BODY_BYTES);
 		return apiError(400, 'invalid_payload', 'Body is not valid JSON');
 	}
+	const body: unknown = read.value;
 
 	const parsed = v.safeParse(JourneyBatch, body);
 	if (!parsed.success) {
@@ -73,8 +92,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 	const tracked = parsed.output.events.filter((evt) => !isExcludedPath(evt.path));
 	if (tracked.length === 0) return apiNoContent();
 
-	const ip = getClientAddress();
-	const visitorId = await hashVisitorId(`${ip}:${ua}`);
+	const visitorId = await deriveVisitorId(ip, ua);
 
 	// Strip referrer to origin only (no query strings — reset tokens etc. live there).
 	const events = tracked.map((evt) => {

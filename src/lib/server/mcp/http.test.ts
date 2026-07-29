@@ -74,11 +74,31 @@ describe('isAllowedOrigin', () => {
 		expect(isAllowedOrigin(req({ origin: 'http://trusted.example' }))).toBe(false);
 	});
 
-	it('matches any scheme for an explicit bare-host allowlist entry', () => {
+	it('normalizes a bare-host allowlist entry to https rather than accepting any scheme', () => {
+		// A bare host used to match every scheme, so one config line silently
+		// admitted the plaintext origin too. The operator's intent is kept; the
+		// downgrade is not. Writing `http://bare.example` explicitly still works.
 		process.env.MCP_ALLOWED_ORIGINS = 'bare.example';
 		expect(isAllowedOrigin(req({ origin: 'https://bare.example' }))).toBe(true);
-		expect(isAllowedOrigin(req({ origin: 'http://bare.example' }))).toBe(true);
+		expect(isAllowedOrigin(req({ origin: 'http://bare.example' }))).toBe(false);
 		expect(isAllowedOrigin(req({ origin: 'https://other.example' }))).toBe(false);
+	});
+
+	it('still allows an explicitly plaintext entry, which local MCP clients need', () => {
+		process.env.MCP_ALLOWED_ORIGINS = 'http://127.0.0.1:6274';
+		expect(isAllowedOrigin(req({ origin: 'http://127.0.0.1:6274' }))).toBe(true);
+		expect(isAllowedOrigin(req({ origin: 'http://127.0.0.1:9999' }))).toBe(false);
+	});
+
+	it('ignores an unparseable allowlist entry instead of throwing', () => {
+		process.env.MCP_ALLOWED_ORIGINS = ' , ://nonsense, https://good.example';
+		expect(isAllowedOrigin(req({ origin: 'https://good.example' }))).toBe(true);
+		expect(isAllowedOrigin(req({ origin: 'https://bad.example' }))).toBe(false);
+	});
+
+	it('never matches on host alone when a port differs', () => {
+		process.env.MCP_ALLOWED_ORIGINS = 'https://app.example';
+		expect(isAllowedOrigin(req({ origin: 'https://app.example:8443' }))).toBe(false);
 	});
 });
 
@@ -144,12 +164,46 @@ describe('respondToMcpPost', () => {
 		const body = await res.json();
 		expect(body).not.toHaveProperty('jsonrpc');
 		expect(typeof body.error.code).not.toBe('number');
+		// Spelled out because -32022 (UnsupportedProtocolVersion) is the specific
+		// value someone "aligning to the spec" would reach for, and the whole
+		// reserved band behaves the same way at a modern client.
+		expect(body.error.code).not.toBe(-32022);
+		if (typeof body.error.code === 'number') {
+			expect(body.error.code).not.toBeGreaterThanOrEqual(-32099);
+		}
 	});
 
 	it('returns a 400 parse error on malformed JSON', async () => {
 		const res = await respondToMcpPost(req({}, 'not json'), registry, identity, noopMcpObserver);
 		expect(res.status).toBe(400);
 		expect((await res.json()).error.code).toBe(-32700);
+	});
+
+	it('rejects an oversized envelope with 413, not 400', async () => {
+		// 413 deliberately: the forward-compatibility branch above is keyed to the
+		// 400 STATUS, so a body-budget refusal must not land in it. A 400 here
+		// would put a non-JSON-RPC body in front of a modern client at exactly the
+		// moment it is deciding whether this server is modern.
+		const huge = JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'ping', params: { pad: 'x'.repeat(300_000) } });
+		const res = await respondToMcpPost(req({}, huge), registry, identity, noopMcpObserver);
+		expect(res.status).toBe(413);
+		const body = await res.json();
+		expect(body.error.code).toBe('payload_too_large');
+		expect(body).not.toHaveProperty('jsonrpc');
+	});
+
+	it('emits exactly one observation for an oversized envelope', async () => {
+		// "One helper, seven exits" — a new exit that forgets to emit breaks the
+		// one-observation-per-POST invariant the telemetry depends on.
+		const seen: Array<{ status: number; stage: string }> = [];
+		const observer: McpCallObserver = {
+			observe: (obs) => {
+				seen.push({ status: obs.status, stage: obs.stage });
+			},
+		};
+		const huge = JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'ping', params: { pad: 'x'.repeat(300_000) } });
+		await respondToMcpPost(req({}, huge), registry, identity, observer);
+		expect(seen).toEqual([{ status: 413, stage: 'envelope' }]);
 	});
 
 	it('acknowledges a notification with 202', async () => {

@@ -17,24 +17,24 @@ function requireS3() {
 	return s3;
 }
 
-export const IMAGE_PREFIX = 'showcase/imagemeta/';
+export const IMAGEMETA_PREFIX = 'showcase/imagemeta/';
 
 /** Ensure a key is within the imagemeta namespace. */
-export function assertImageKey(key: string): void {
-	if (!key.startsWith(IMAGE_PREFIX)) {
-		throw new StoreError('forbidden', `Key must start with "${IMAGE_PREFIX}": ${key}`);
+export function assertImagemetaKey(key: string): void {
+	if (!key.startsWith(IMAGEMETA_PREFIX)) {
+		throw new StoreError('forbidden', `Key must start with "${IMAGEMETA_PREFIX}": ${key}`);
 	}
 }
 
 /** Build a per-user object key for an image derivative. */
-export function buildImageKey(userId: string, imageId: string, ext: string): string {
-	return `${IMAGE_PREFIX}${userId}/${imageId}.${ext}`;
+export function buildImagemetaKey(userId: string, imageId: string, ext: string): string {
+	return `${IMAGEMETA_PREFIX}${userId}/${imageId}.${ext}`;
 }
 
 /** Store an already-processed (resized, EXIF-stripped) image derivative. */
-export async function putImageDerivative(key: string, bytes: Uint8Array, contentType: string): Promise<void> {
+export async function putImagemetaDerivative(key: string, bytes: Uint8Array, contentType: string): Promise<void> {
+	assertImagemetaKey(key);
 	const client = requireS3();
-	assertImageKey(key);
 	try {
 		await client.send(new PutObjectCommand({ Bucket: BUCKET, Key: key, Body: bytes, ContentType: contentType }));
 	} catch (err) {
@@ -43,9 +43,9 @@ export async function putImageDerivative(key: string, bytes: Uint8Array, content
 }
 
 /** Read an image's bytes back (e.g. to hand to a vision model). */
-export async function getImageBytes(key: string): Promise<Uint8Array> {
+export async function getImagemetaBytes(key: string): Promise<Uint8Array> {
+	assertImagemetaKey(key);
 	const client = requireS3();
-	assertImageKey(key);
 	try {
 		const res = await client.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
 		const bytes = await res.Body?.transformToByteArray();
@@ -57,9 +57,9 @@ export async function getImageBytes(key: string): Promise<Uint8Array> {
 }
 
 /** Short-lived presigned GET URL for displaying the image in the browser. */
-export async function getImageReadUrl(key: string, expiresIn = PRESIGNED_URL_EXPIRY): Promise<string> {
+export async function getImagemetaReadUrl(key: string, expiresIn = PRESIGNED_URL_EXPIRY): Promise<string> {
+	assertImagemetaKey(key);
 	const client = requireS3();
-	assertImageKey(key);
 	try {
 		return await getSignedUrl(client, new GetObjectCommand({ Bucket: BUCKET, Key: key }), { expiresIn });
 	} catch (err) {
@@ -68,9 +68,9 @@ export async function getImageReadUrl(key: string, expiresIn = PRESIGNED_URL_EXP
 }
 
 /** Delete a stored image derivative. */
-export async function deleteImageObject(key: string): Promise<void> {
+export async function deleteImagemetaObject(key: string): Promise<void> {
+	assertImagemetaKey(key);
 	const client = requireS3();
-	assertImageKey(key);
 	try {
 		await client.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
 	} catch (err) {

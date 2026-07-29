@@ -5,6 +5,7 @@
  */
 import * as v from 'valibot';
 import type { SearchLocale } from '$lib/search/types';
+import { ipLimitKey } from '$lib/server/abuse';
 import { getClientIp } from '$lib/server/abuse/client-ip';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiOk, apiValidationError } from '$lib/server/api/response';
@@ -23,11 +24,8 @@ const QuerySchema = v.object({
 export const GET: RequestHandler = async (event) => {
 	const { url, locals } = event;
 
-	const ip = getClientIp(event);
-	if (ip) {
-		const { success, reset } = await limiter.limit(ip);
-		if (!success) return rateLimitResponse(reset);
-	}
+	const { success, reset } = await limiter.limit(ipLimitKey(getClientIp(event)));
+	if (!success) return rateLimitResponse(reset);
 
 	const parsed = v.safeParse(QuerySchema, {
 		q: url.searchParams.get('q') ?? '',

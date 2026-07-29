@@ -97,7 +97,8 @@ Vercel sends an HTTP GET to `/api/cron/[job]` on the schedule defined in `vercel
     { "path": "/api/cron/desk-retention", "schedule": "0 6 * * 0" },
     { "path": "/api/cron/ai-telemetry-retention", "schedule": "30 6 * * 0" },
     { "path": "/api/cron/audit-log-retention", "schedule": "0 7 * * 0" },
-    { "path": "/api/cron/mcp-telemetry-retention", "schedule": "30 7 * * 0" }
+    { "path": "/api/cron/mcp-telemetry-retention", "schedule": "30 7 * * 0" },
+    { "path": "/api/cron/blog-orphan-reaper", "schedule": "45 5 * * *" }
   ]
 }
 ```
@@ -169,6 +170,7 @@ src/lib/server/
     ai-telemetry-retention.ts
     audit-log-retention.ts
     mcp-telemetry-retention.ts
+    blog-orphan-reaper.ts
 
 src/routes/
   api/
@@ -209,6 +211,7 @@ export const jobs: Record<string, Job> = {
   'ai-telemetry-retention': { execute: aiTelemetryRetention },
   'audit-log-retention': { execute: auditLogRetention },
   'mcp-telemetry-retention': { execute: mcpTelemetryRetention },
+  'blog-orphan-reaper': { execute: blogOrphanReaper },
 };
 ```
 
@@ -230,6 +233,28 @@ Four scheduled jobs enforce data-retention windows. Most hard-delete rows past a
 `desk-retention` is the hard-delete tail of the desk soft-delete lifecycle: a file soft-deleted by a user is purged only after the retention window, then its typed body rows are cascaded.
 
 `mcp-telemetry-retention` scrubs before it deletes, so a row crossing both thresholds in the same run is never deleted with its identifying columns still attached — the two passes are order-independent by construction. What each column holds and why is in [hosted-mcp.md](./hosted-mcp.md), section E.
+
+### `blog-orphan-reaper`
+
+Not a retention job — a **reachability** one, and the only job whose input is object storage rather
+than a table.
+
+A presigned PUT succeeds on its own: the object exists in R2 the moment the browser finishes,
+whether or not the client ever calls confirm. Nothing referenced those objects. `listAssets` reads
+the database, so an unconfirmed upload is invisible in the UI, while `checkBlogObjectLimit` runs
+only at *issuance* — so the bucket cap it enforces was being consumed by objects nobody could see
+or delete. An authenticated author could fill the bucket by requesting presigns and never
+confirming, with no error anywhere; the only symptom would be legitimate uploads starting to fail
+the object limit.
+
+It deletes objects under `blog/` that no `blog_asset` row references AND that are older than the
+confirmation ticket's own lifetime plus an hour of grace. That cutoff is the safety property: an
+upload still legitimately in flight can never be reaped out from under its own confirm. Clock skew
+between the job and the issuing request is absorbed by the grace, not by luck.
+
+The reference set is deliberately unfiltered — draft, published, folder-less, detached from every
+post. If a row names the key, the object stays. The job deletes what is *not* in that set, so
+"returns too much" is the only safe direction for it to be wrong in.
 
 ---
 

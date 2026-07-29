@@ -1,4 +1,5 @@
 import { fail } from '@sveltejs/kit';
+import { ipLimitKey } from '$lib/server/abuse';
 import { classifyCacheError } from '$lib/server/cache/errors';
 import { setString, slideTtl } from '$lib/server/cache/showcase/mutations';
 import { checkRateLimit, getTtlSnapshot, listShowcaseEntries } from '$lib/server/cache/showcase/queries';
@@ -73,14 +74,16 @@ export const actions: Actions = {
 		}
 	},
 
-	rateCheck: async ({ request, getClientAddress }) => {
-		const formData = await request.formData();
-		const identifier = (formData.get('identifier') as string) || getClientAddress();
-		const limit = parseInt(formData.get('limit') as string, 10) || 10;
-		const window = parseInt(formData.get('window') as string, 10) || 10;
-
+	/**
+	 * The bucket key, the limit and the window all used to come from this form
+	 * body on an anonymous public page — a rate limiter the caller could ask to
+	 * let them through, and unbounded Redis key cardinality besides. All three
+	 * are now server-decided; the demo still shows a real window filling up,
+	 * against the caller's own /64.
+	 */
+	rateCheck: async ({ locals, getClientAddress }) => {
 		try {
-			const result = await checkRateLimit(identifier, limit, window);
+			const result = await checkRateLimit(ipLimitKey(locals.clientIp ?? getClientAddress()));
 			return { success: true, rateLimit: result };
 		} catch (err) {
 			return fail(500, { message: err instanceof Error ? err.message : 'Rate limit check failed.' });

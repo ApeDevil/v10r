@@ -12,7 +12,7 @@ import {
 } from '$lib/schemas/showcase/image-metadata';
 import { getVisionProvider } from '$lib/server/ai';
 import { ImageMetaError, ingestImage, saveImageMetadata } from '$lib/server/imagemeta';
-import { getImageReadUrl } from '$lib/server/store/showcase/image';
+import { getImagemetaReadUrl } from '$lib/server/store/showcase/image';
 import type { Actions, PageServerLoad } from './$types';
 
 /**
@@ -75,7 +75,7 @@ export const actions: Actions = {
 
 		try {
 			const result = await ingestImage(locals.user.id, file);
-			const previewUrl = await getImageReadUrl(result.storageKey);
+			const previewUrl = await getImagemetaReadUrl(result.storageKey);
 
 			return {
 				uploaded: {

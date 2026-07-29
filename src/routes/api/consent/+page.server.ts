@@ -5,7 +5,8 @@
  */
 
 import { fail } from '@sveltejs/kit';
-import { hashVisitorId, parseConsentTier } from '$lib/server/analytics/consent';
+import { parseConsentTier } from '$lib/server/analytics/consent';
+import { deriveUaHash, deriveVisitorId } from '$lib/server/analytics/visitor';
 import { ANALYTICS_CONSENT_COOKIE, ANALYTICS_CONSENT_MAX_AGE } from '$lib/server/config';
 import { recordConsentEvent } from '$lib/server/db/analytics/consent-mutations';
 import type { Actions } from './$types';
@@ -35,8 +36,8 @@ export const actions: Actions = {
 		// Record consent event in audit trail (fire-and-forget)
 		const ip = getClientAddress();
 		const ua = request.headers.get('user-agent') ?? '';
-		const visitorId = await hashVisitorId(`${ip}:${ua}`);
-		const uaHash = await hashVisitorId(ua);
+		const visitorId = await deriveVisitorId(ip, ua);
+		const uaHash = await deriveUaHash(ua);
 
 		recordConsentEvent({
 			visitorId,
@@ -60,8 +61,8 @@ export const actions: Actions = {
 		if (previousTier) {
 			const ip = getClientAddress();
 			const ua = request.headers.get('user-agent') ?? '';
-			const visitorId = await hashVisitorId(`${ip}:${ua}`);
-			const uaHash = await hashVisitorId(ua);
+			const visitorId = await deriveVisitorId(ip, ua);
+			const uaHash = await deriveUaHash(ua);
 
 			recordConsentEvent({
 				visitorId,

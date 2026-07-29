@@ -96,7 +96,7 @@ const useSectionsMode = $derived(!useDocMode && hasSections);
 {#snippet notesContent()}
 	{#if doc?.notes}
 		<div class="info-notes">
-			{@html renderMarkdown(doc.notes)}
+			{@html renderMarkdown(doc.notes, { untrusted: false })}
 		</div>
 	{/if}
 {/snippet}

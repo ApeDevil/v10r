@@ -12,6 +12,7 @@
 
 import * as v from 'valibot';
 import { StylePickSchema } from '$lib/schemas/style';
+import { ipLimitKey } from '$lib/server/abuse';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
 import { getCustomPaletteById } from '$lib/server/branding/palette-crud';
@@ -39,7 +40,7 @@ const limiter = createLimiter(STYLE_PICK_RATE_LIMIT_PREFIX, STYLE_PICK_RATE_LIMI
 export const POST: RequestHandler = async ({ request, cookies, locals, getClientAddress }) => {
 	// Key per user when we have one so a shared NAT can't lock out a room of
 	// guests. Fall back to the canonical stamped IP, never a raw header read.
-	const key = locals.user?.id ?? locals.clientIp ?? getClientAddress();
+	const key = locals.user?.id ? `user:${locals.user.id}` : ipLimitKey(locals.clientIp ?? getClientAddress());
 	const { success, reset } = await limiter.limit(key);
 	if (!success) return rateLimitResponse(reset);
 

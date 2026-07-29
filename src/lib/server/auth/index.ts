@@ -175,6 +175,31 @@ export const auth = betterAuth({
 	emailAndPassword: { enabled: false },
 
 	/**
+	 * OAuth provider tokens are encrypted at rest.
+	 *
+	 * `auth.account` holds `access_token`, `refresh_token` and `id_token` as
+	 * plain text columns. A read-only database leak — a connection string, a Neon
+	 * branch, a logical backup — therefore exposed live GitHub and Google
+	 * credentials alongside the account linkage, usable until they expire.
+	 *
+	 * This is Better Auth's own supported flag rather than a hand-rolled column
+	 * transform, which matters: ad-hoc ciphertext the framework cannot read would
+	 * break its refresh path the first time anything needed it, and would do so
+	 * long after the change, in a code path nobody was looking at.
+	 *
+	 * v10r never consumes these tokens — the providers are used for identity
+	 * only, and `getUserOAuthSummary` projects them to presence booleans at query
+	 * level so they cannot leave the database layer. That is why the egress side
+	 * was already clean and only storage remained.
+	 *
+	 * Rows written before this was enabled stay plaintext; nothing reads them, and
+	 * they are overwritten on the account holder's next sign-in.
+	 */
+	account: {
+		encryptOAuthTokens: true,
+	},
+
+	/**
 	 * `banned` / `banReason` were surfaced on the session user by the admin
 	 * plugin; with that plugin gone they exist in Postgres but are invisible to
 	 * Better Auth unless declared here. `input: false` keeps them server-owned —
@@ -212,6 +237,16 @@ export const auth = betterAuth({
 		},
 	},
 
+	/**
+	 * Scopes are deliberately NOT declared.
+	 *
+	 * Both providers fall back to their identity-only defaults — `user:email` for
+	 * GitHub, `openid email profile` for Google — which is already the minimum
+	 * this app needs, since it consumes no provider API. Re-stating them here
+	 * would add a way to get sign-in wrong (OAuth is the only way in; there is no
+	 * password path) without removing a single permission. If a provider API is
+	 * ever called, that is the moment to pin the scope list explicitly.
+	 */
 	socialProviders: {
 		github: {
 			clientId: githubClientId,

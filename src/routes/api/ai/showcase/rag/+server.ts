@@ -9,6 +9,7 @@ import { safeParse } from 'valibot';
 import { orchestrateChat } from '$lib/server/ai/chat-orchestrator';
 import { guardAiRequest } from '$lib/server/ai/guard';
 import { RagDemoRequestSchema } from '$lib/server/ai/validation';
+import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/api/body';
 import { apiError, apiValidationError } from '$lib/server/api/response';
 import { isAdmin } from '$lib/server/auth/guards';
 import type { RequestHandler } from './$types';
@@ -21,8 +22,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const guard = await guardAiRequest(locals);
 	if (guard.response) return guard.response;
 
-	const body = await request.json().catch(() => null);
-	if (!body) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
+	const read = await readJsonBounded(request, MAX_AI_BODY_BYTES);
+	if (!read.ok) {
+		if (read.reason === 'too_large') return payloadTooLargeResponse(MAX_AI_BODY_BYTES);
+		return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
+	}
+	const body = read.value;
 
 	const parsed = safeParse(RagDemoRequestSchema, body);
 	if (!parsed.success) return apiValidationError(parsed.issues);

@@ -12,12 +12,13 @@ import { describe, expect, it } from 'vitest';
 import { ConfirmUploadSchema, RequestUploadSchema } from './schemas';
 
 const KEY = 'blog/3f1a2b4c-5d6e-7f80-9012-3456789abcde.png';
+const TICKET = 'eyJwIjoidjEwcjpibG9nLXVwbG9hZC10aWNrZXQ6djEifQ.c2lnbmF0dXJl';
 
 describe('ConfirmUploadSchema', () => {
 	it('accepts a confirmation that declares only what the server cannot verify', () => {
 		const result = safeParse(ConfirmUploadSchema, {
 			key: KEY,
-			fileName: 'diagram.png',
+			ticket: TICKET,
 			width: 800,
 			height: 600,
 			altText: 'A diagram',
@@ -25,18 +26,31 @@ describe('ConfirmUploadSchema', () => {
 		expect(result.success).toBe(true);
 	});
 
-	it('does not carry a caller-declared fileSize or mimeType through to the output', () => {
+	it('does not carry a caller-declared fileSize, mimeType or fileName through to the output', () => {
 		const result = safeParse(ConfirmUploadSchema, {
 			key: KEY,
-			fileName: 'diagram.png',
+			ticket: TICKET,
+			fileName: 'attacker-chosen.png',
 			fileSize: 1,
 			mimeType: 'image/png',
 		});
 		expect(result.success).toBe(true);
-		// The fields are stripped rather than rejected, so an older client keeps
-		// working — but nothing downstream can read the values it sent.
+		// Stripped rather than rejected, so an older client keeps working — but
+		// nothing downstream can read the values it sent. fileName joined the list
+		// once it started coming from the signed ticket: the docblock claimed it
+		// was "the name declared at issuance" while re-reading it from the body.
 		expect(result.output).not.toHaveProperty('fileSize');
 		expect(result.output).not.toHaveProperty('mimeType');
+		expect(result.output).not.toHaveProperty('fileName');
+	});
+
+	it('requires the issuance ticket', () => {
+		// Without it, any blog author could confirm any well-formed key — including
+		// one another author had uploaded but not yet confirmed. storage_key is
+		// globally unique and first write wins, so that theft was permanent.
+		expect(safeParse(ConfirmUploadSchema, { key: KEY }).success).toBe(false);
+		expect(safeParse(ConfirmUploadSchema, { key: KEY, ticket: '' }).success).toBe(false);
+		expect(safeParse(ConfirmUploadSchema, { key: KEY, ticket: TICKET }).success).toBe(true);
 	});
 
 	it('still pins the key to the blog namespace', () => {
@@ -46,13 +60,12 @@ describe('ConfirmUploadSchema', () => {
 			'blog/../secret.png',
 			'blog/not-a-uuid.png',
 		]) {
-			expect(safeParse(ConfirmUploadSchema, { key, fileName: 'x.png' }).success).toBe(false);
+			expect(safeParse(ConfirmUploadSchema, { key, ticket: TICKET }).success).toBe(false);
 		}
 	});
 
-	it('requires a key and a file name', () => {
-		expect(safeParse(ConfirmUploadSchema, { fileName: 'x.png' }).success).toBe(false);
-		expect(safeParse(ConfirmUploadSchema, { key: KEY }).success).toBe(false);
+	it('requires a key', () => {
+		expect(safeParse(ConfirmUploadSchema, { ticket: TICKET }).success).toBe(false);
 	});
 });
 

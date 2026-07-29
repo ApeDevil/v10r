@@ -12,7 +12,8 @@
  *  - `MCP-Protocol-Version`, when present, must be a supported version (else 400). ⚠ The SHAPE of
  *    that 400's body is load-bearing for forward compatibility — see the guard in
  *    `respondToMcpPost` before changing it.
- *  - The JSON body is parsed and envelope-validated by the transport before any dispatch.
+ *  - The JSON body is read under a byte budget, then envelope-validated by the transport before
+ *    any dispatch.
  *
  * RULE for any future 400 added to this endpoint: use the plain `{ error: { code: '…' } }` shape,
  * NOT a JSON-RPC error envelope. Newer-protocol clients branch on exactly that distinction to
@@ -21,6 +22,7 @@
  */
 import { json } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
+import { MAX_MCP_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/api/body';
 // Dependency-free by construction (monitoring/index.ts has zero imports), so this does not pull a
 // DB or platform edge into the module graph the zero-mock protocol tests rely on.
 import { sanitizeError } from '$lib/server/monitoring';
@@ -42,11 +44,30 @@ export function mcpMethodNotAllowed(): Response {
  *  - the Origin's FULL origin (scheme + host + port) equals this request's origin. Comparing the
  *    full origin — not just the host — means a cross-scheme same-host request is rejected: an
  *    `http://` Origin can never pass for an `https://` request URL (that is not same-origin), or
- *  - the Origin is explicitly listed in MCP_ALLOWED_ORIGINS. An allowlist entry may be a full
- *    origin (scheme-pinned, e.g. `https://app.example`) or a bare host (e.g. `app.example`, which
- *    matches ANY scheme for that host). The bare-host / any-scheme behavior is intentional and
- *    applies ONLY to explicit allowlist entries, never to the implicit same-origin check.
+ *  - the Origin is explicitly listed in MCP_ALLOWED_ORIGINS, which is compared as a FULL origin.
+ *
+ * A bare-host entry (`app.example`) used to match any scheme, which meant one config line silently
+ * admitted `http://app.example` as well. Bare hosts are now normalized to `https://` rather than
+ * accepted loosely — the operator's intent is preserved, the downgrade is not. `http://localhost`
+ * and `http://127.0.0.1` remain expressible by writing the scheme out, which is what a local MCP
+ * client actually needs.
  */
+function allowedOrigins(): string[] {
+	return (env.MCP_ALLOWED_ORIGINS ?? '')
+		.split(',')
+		.map((entry) => entry.trim())
+		.filter((entry) => entry.length > 0)
+		.map((entry) => {
+			try {
+				// A bare host has no scheme, so URL() rejects it; prefix and retry.
+				return new URL(entry.includes('://') ? entry : `https://${entry}`).origin;
+			} catch {
+				return null;
+			}
+		})
+		.filter((entry): entry is string => entry !== null);
+}
+
 export function isAllowedOrigin(request: Request): boolean {
 	const originHeader = request.headers.get('origin');
 	if (originHeader === null) return true; // non-browser MCP clients legitimately omit Origin
@@ -64,12 +85,8 @@ export function isAllowedOrigin(request: Request): boolean {
 	}
 	// Implicit same-origin: full origin (scheme + host + port), never host-only.
 	if (selfOrigin !== null && origin.origin === selfOrigin) return true;
-	const allowed = (env.MCP_ALLOWED_ORIGINS ?? '')
-		.split(',')
-		.map((entry) => entry.trim())
-		.filter((entry) => entry.length > 0);
-	// Explicit allowlist only: full origin (scheme-pinned) OR bare host (any scheme).
-	return allowed.includes(origin.origin) || allowed.includes(origin.host);
+	// Explicit allowlist: full origin only. Never host-only.
+	return allowedOrigins().includes(origin.origin);
 }
 
 /** The `MCP-Protocol-Version` header, when present, must be a version we support. */
@@ -164,8 +181,8 @@ export async function respondToMcpPost(
 	observer: McpCallObserver,
 ): Promise<Response> {
 	const startedAt = performance.now();
-	// One helper, six exits — so "exactly one observation per POST" is a property of the shape
-	// rather than a discipline six return statements have to remember independently.
+	// One helper, seven exits — so "exactly one observation per POST" is a property of the shape
+	// rather than a discipline seven return statements have to remember independently.
 	const emit = (partial: Partial<McpCallObservation> & Pick<McpCallObservation, 'stage' | 'status'>) => {
 		observer.observe({
 			method: null,
@@ -226,13 +243,30 @@ export async function respondToMcpPost(
 		);
 	}
 
-	let parsed: unknown;
-	try {
-		parsed = await request.json();
-	} catch {
+	/**
+	 * Bounded read, because this endpoint is unauthenticated and a JSON-RPC envelope has no
+	 * legitimate reason to be large. Note this REPLACES the parse rather than preceding it:
+	 * measuring the stream consumes it, so a size check followed by `request.json()` would throw
+	 * on the second read.
+	 *
+	 * Oversize is a **413**, deliberately not a 400. The landmine above governs what a *400* body
+	 * looks like, because that is the status modern-first clients inspect to decide whether to
+	 * fall back to `initialize`. A 413 never enters that branch, so the plain
+	 * `{ error: { code, message } }` shape here — the same shape as the 403 two exits up — carries
+	 * no forward-compatibility risk.
+	 */
+	const body = await readJsonBounded(request, MAX_MCP_BODY_BYTES);
+	if (!body.ok) {
+		if (body.reason === 'too_large') {
+			emit({ stage: 'envelope', status: 413 });
+			return payloadTooLargeResponse(MAX_MCP_BODY_BYTES);
+		}
+		// Unchanged from the pre-budget behaviour, byte for byte: -32700 is outside the reserved
+		// -32020..-32099 band, so it is the one JSON-RPC 400 this file is allowed to emit.
 		emit({ stage: 'envelope', status: 400, rpcErrorCode: RPC.PARSE });
 		return json({ jsonrpc: '2.0', id: null, error: { code: RPC.PARSE, message: 'Parse error' } }, { status: 400 });
 	}
+	const parsed: unknown = body.value;
 
 	try {
 		const response = await handleMcpMessage(parsed, registry, identity);

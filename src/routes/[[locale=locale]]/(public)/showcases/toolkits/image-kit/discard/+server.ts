@@ -7,7 +7,7 @@
  */
 import { json } from '@sveltejs/kit';
 import { isImageId } from '$lib/schemas/showcase/image-kit';
-import { buildImageKey, deleteImageObject } from '$lib/server/store/showcase/imagekit';
+import { buildImagekitKey, deleteImagekitObject } from '$lib/server/store/showcase/imagekit';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
@@ -22,7 +22,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!isImageId(imageId)) return json({ ok: false }, { status: 400 });
 
 	try {
-		await deleteImageObject(buildImageKey(locals.user.id, imageId, 'webp'));
+		await deleteImagekitObject(buildImagekitKey(locals.user.id, imageId, 'webp'));
 	} catch {
 		// Swallow — the R2 lifecycle TTL reclaims anything we miss.
 	}

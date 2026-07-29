@@ -9,7 +9,7 @@
 import { json } from '@sveltejs/kit';
 import { type CropDerivativeResponse, type CropRatio, isCropRatio, isImageId } from '$lib/schemas/showcase/image-kit';
 import { generateAttentionCrop, generateCropDerivative, imageDimensions, toDataUrl } from '$lib/server/imagekit';
-import { buildImageKey, getImageBytes } from '$lib/server/store/showcase/imagekit';
+import { buildImagekitKey, getImagekitBytes } from '$lib/server/store/showcase/imagekit';
 import type { RequestHandler } from './$types';
 
 interface RectInput {
@@ -58,10 +58,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		);
 	}
 
-	const key = buildImageKey(locals.user.id, imageId, 'webp');
+	const key = buildImagekitKey(locals.user.id, imageId, 'webp');
 	let bytes: Uint8Array;
 	try {
-		bytes = await getImageBytes(key);
+		bytes = await getImagekitBytes(key);
 	} catch {
 		return json(
 			{

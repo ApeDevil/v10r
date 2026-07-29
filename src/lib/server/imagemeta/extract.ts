@@ -19,7 +19,7 @@ import { getVisionProvider } from '$lib/server/ai';
 import { chargeTokens, checkUserBudget } from '$lib/server/ai/budget';
 import { estimateCost } from '$lib/server/ai/pricing';
 import { AI_MAX_TOKENS } from '$lib/server/config';
-import { getImageBytes } from '$lib/server/store/showcase/image';
+import { getImagemetaBytes } from '$lib/server/store/showcase/image';
 import type { ExtractFailureReason, ExtractResult } from './types';
 
 /**
@@ -89,7 +89,7 @@ export async function extractImageMetadata(userId: string, storageKey: string): 
 
 	let bytes: Uint8Array;
 	try {
-		bytes = await getImageBytes(storageKey);
+		bytes = await getImagemetaBytes(storageKey);
 	} catch (err) {
 		return { ok: false, reason: 'error', message: err instanceof Error ? err.message : 'Could not read the image.' };
 	}

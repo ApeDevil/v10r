@@ -41,6 +41,29 @@ const failClosed: Limiter = {
  */
 export type TimeoutPolicy = 'open' | 'closed';
 
+/**
+ * What a limiter does when Upstash is UNAVAILABLE — unreachable at runtime, or
+ * unconfigured at module load.
+ *
+ * Distinct from `onTimeout`, and the distinction is the whole point. Refusing
+ * to serve is the right answer when the limiter guards something that breaks if
+ * it runs unbounded. It is the wrong answer when the limiter guards work that
+ * is *already* best-effort and off the response path: there, fail-closed does
+ * not protect anything, it just deletes the feature — permanently and quietly,
+ * because the boot-time branch below logs once at module load and then every
+ * subsequent call returns the same denial with nobody watching.
+ *
+ * Default stays 'closed' so every existing call site keeps its behaviour.
+ */
+export type FailurePolicy = 'open' | 'closed';
+
+export interface LimiterOptions {
+	/** Applied when Upstash is slow but reachable. Default 'open'. */
+	onTimeout?: TimeoutPolicy;
+	/** Applied when Upstash is unconfigured or unreachable. Default 'closed'. */
+	onError?: FailurePolicy;
+}
+
 /** Deadline the policy is applied at. */
 const TIMEOUT_DECISION_MS = 1000;
 /** Outer net, above the decision deadline, so a hung call still unwinds. */
@@ -50,11 +73,19 @@ export function createLimiter(
 	prefix: string,
 	max: number,
 	window: Duration,
-	onTimeout: TimeoutPolicy = 'open',
+	options: TimeoutPolicy | LimiterOptions = {},
 ): Limiter {
+	// The string form is the original signature, kept because it reads well at
+	// the one site that opts into 'closed'.
+	const { onTimeout = 'open', onError = 'closed' } = typeof options === 'string' ? { onTimeout: options } : options;
+
 	if (!redis) {
 		if (dev) {
 			console.warn(`[rate-limit] Redis unavailable — rate limiting DISABLED for ${prefix}`);
+			return passthrough;
+		}
+		if (onError === 'open') {
+			console.error(`[rate-limit] Redis unavailable — NOT enforcing ${prefix} (onError=open).`);
 			return passthrough;
 		}
 		console.error(`[rate-limit] Redis unavailable — BLOCKING all requests for ${prefix}`);
@@ -96,10 +127,10 @@ export function createLimiter(
 				return { success: raced.success, reset: raced.reset };
 			} catch (err) {
 				console.error(
-					`[rate-limit] runtime Redis failure for ${prefix} — failing closed:`,
+					`[rate-limit] runtime Redis failure for ${prefix} — failing ${onError}:`,
 					err instanceof Error ? err.message : err,
 				);
-				return { success: false, reset: Date.now() + 60_000 };
+				return onError === 'closed' ? { success: false, reset: Date.now() + 60_000 } : { success: true, reset: 0 };
 			}
 		},
 		async peek(id: string) {
@@ -119,10 +150,10 @@ export function createLimiter(
 				return { remaining: result.remaining, reset: result.reset };
 			} catch (err) {
 				console.error(
-					`[rate-limit] runtime Redis failure for ${prefix} — failing closed:`,
+					`[rate-limit] runtime Redis failure for ${prefix} — failing ${onError}:`,
 					err instanceof Error ? err.message : err,
 				);
-				return { remaining: 0, reset: Date.now() + 60_000 };
+				return onError === 'closed' ? { remaining: 0, reset: Date.now() + 60_000 } : { remaining: max, reset: 0 };
 			}
 		},
 	};

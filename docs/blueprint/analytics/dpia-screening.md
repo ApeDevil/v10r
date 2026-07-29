@@ -30,7 +30,7 @@ indicator that a DPIA is needed.
 |---|---|---|---|
 | 1 | Evaluation or scoring | No | Nothing is scored, ranked, or predicted. |
 | 2 | Automated decision-making with legal/significant effect | No | No decisions. Art 22 boundary is explicit and enforced. |
-| 3 | Systematic monitoring | **Partly** | Behaviour on our own site is observed systematically. Mitigated: the identifier rotates daily, so nothing accumulates into a profile; and observation stops entirely on objection. |
+| 3 | Systematic monitoring | **Partly** | Behaviour on our own site is observed systematically. Mitigated: the identifier is keyed rather than a bare digest, so it cannot be reversed to (IP, UA) from a database copy; it carries no cross-site or third-party key, so nothing accumulates beyond this one site; every row is deleted at 60 days; and observation stops entirely on objection. Note the identifier does NOT rotate daily — see the necessity analysis in legitimate-interest.md. |
 | 4 | Sensitive data / highly personal data | No | None collected. |
 | 5 | Data processed on a large scale | No | A single small site. Not large scale on WP248's volume, geography, duration, or subject-count factors. |
 | 6 | Matching or combining datasets | No | **This is what the two-lane wall prevents.** The anonymous and authenticated lanes share no key and cannot be joined. |

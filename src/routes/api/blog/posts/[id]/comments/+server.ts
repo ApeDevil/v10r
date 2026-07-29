@@ -1,4 +1,5 @@
 import * as v from 'valibot';
+import { ipLimitKey } from '$lib/server/abuse';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/api/response';
 import { guardApiUser } from '$lib/server/auth/guards';
@@ -46,7 +47,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 	const [perUser, perHour, perIp, perPost] = await Promise.all([
 		userRateLimit.limit(user.id),
 		userHourLimit.limit(user.id),
-		locals.clientIp ? ipRateLimit.limit(locals.clientIp) : Promise.resolve({ success: true, reset: 0 }),
+		ipRateLimit.limit(ipLimitKey(locals.clientIp)),
 		postRateLimit.limit(params.id),
 	]);
 	if (!perUser.success) return rateLimitResponse(perUser.reset);

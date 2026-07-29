@@ -1,4 +1,5 @@
 import * as v from 'valibot';
+import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/api/body';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
 import { guardApiUser } from '$lib/server/auth/guards';
@@ -22,8 +23,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const { success, reset } = await ratelimit.limit(user.id);
 	if (!success) return rateLimitResponse(reset);
 
-	const body = await request.json().catch(() => null);
-	if (!body) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
+	const read = await readJsonBounded(request, MAX_AI_BODY_BYTES);
+	if (!read.ok) {
+		if (read.reason === 'too_large') return payloadTooLargeResponse(MAX_AI_BODY_BYTES);
+		return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
+	}
+	const body = read.value;
 
 	const parsed = v.safeParse(BulkDeleteSchema, body);
 	if (!parsed.success) return apiValidationError(parsed.issues);

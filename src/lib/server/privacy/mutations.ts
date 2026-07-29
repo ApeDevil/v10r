@@ -31,7 +31,7 @@ import { imageAsset } from '$lib/server/db/schema/showcase/image-metadata';
 import { deleteUser } from '$lib/server/db/user';
 import { deleteUserGraph } from '$lib/server/graph/rag/mutations';
 import { BUCKET, s3 } from '$lib/server/store';
-import { deleteImageObject } from '$lib/server/store/showcase/image';
+import { deleteImagemetaObject } from '$lib/server/store/showcase/image';
 
 /**
  * Delete the user's R2 objects.
@@ -55,7 +55,7 @@ async function sweepUserObjects(userId: string): Promise<void> {
 
 		for (const { storageKey } of rows) {
 			try {
-				await deleteImageObject(storageKey);
+				await deleteImagemetaObject(storageKey);
 			} catch (err) {
 				console.error('[privacy] R2 image delete failed:', storageKey, err instanceof Error ? err.message : err);
 			}

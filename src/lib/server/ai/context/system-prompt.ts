@@ -22,6 +22,7 @@ import {
 } from '$lib/server/ai/config';
 import type { DeskToolScope } from '$lib/server/ai/tools/_types';
 import type { PipelinePromptEvent } from '$lib/types/pipeline';
+import { escapeXmlAttr, escapeXmlText } from '$lib/utils/xml';
 
 /** A legacy simple message or a full UIMessage from the AI SDK v6 client. */
 export type ChatMessage = { role: 'user' | 'assistant'; content: string } | UIMessage;
@@ -138,25 +139,9 @@ export function formatCurrentPageBlock(page: {
 	].join('\n');
 }
 
-/** Escape XML-special characters to prevent attribute breakout in system prompts. */
-export function escapeXmlAttr(str: string): string {
-	return str
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;')
-		.replace(/'/g, '&apos;');
-}
-
-/**
- * Escape for an XML TEXT NODE — only the three characters that can end an
- * element early. Quotes and apostrophes are left alone on purpose: they cannot
- * cause a breakout outside an attribute, and rewriting every apostrophe in a
- * user's prose or code to `&apos;` degrades what the model actually reads.
- */
-export function escapeXmlText(str: string): string {
-	return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
+// Re-exported so existing imports (and their tests) keep working; the
+// implementations moved to $lib/utils/xml so the retrieval layer can share them.
+export { escapeXmlAttr, escapeXmlText };
 
 /**
  * Build the system prompt from `SystemPromptInput`.

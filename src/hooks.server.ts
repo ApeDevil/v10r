@@ -15,6 +15,7 @@ import {
 } from '$lib/server/abuse';
 import { parseConsentTier } from '$lib/server/analytics/consent';
 import { analyticsCollector } from '$lib/server/analytics/hook';
+import { MAX_REQUEST_BYTES, payloadTooLargeResponse } from '$lib/server/api/body';
 import { createLimiter, isDocumentRequest } from '$lib/server/api/rate-limit';
 import { apiError } from '$lib/server/api/response';
 import { auth } from '$lib/server/auth';
@@ -142,6 +143,37 @@ export const securityHeaders: Handle = async ({ event, resolve }) => {
 	}
 
 	return response;
+};
+
+/**
+ * Request-body floor
+ *
+ * Refuses a mutating request that DECLARES more than MAX_REQUEST_BYTES, before
+ * anything downstream reads the body.
+ *
+ * This is advisory, and saying so is the point. `Content-Length` is absent
+ * under chunked transfer encoding and optional in HTTP/2, so a one-line client
+ * change walks past it. Its value is that it is free, it covers every route
+ * including the 60-odd form actions no per-route control will ever reach, and
+ * it replaces Vercel's opaque platform 413 with our own error shape. The
+ * enforceable control is `readJsonBounded`/`readTextBounded` at the endpoints
+ * that actually matter; this must never become the reason one of them skips it.
+ *
+ * Position is load-bearing on both sides. It sits after `securityHeaders`,
+ * which stamps headers on the way back out, so a 413 still leaves with them.
+ * It sits before `authHandler`, because Better Auth's `svelteKitHandler`
+ * terminates and consumes the body for `/api/auth/*` — below it, sign-up
+ * payloads would stay unbounded.
+ */
+const bodySizeFloor: Handle = async ({ event, resolve }) => {
+	const method = event.request.method;
+	if (method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE') {
+		const declared = Number(event.request.headers.get('content-length'));
+		if (Number.isFinite(declared) && declared > MAX_REQUEST_BYTES) {
+			return payloadTooLargeResponse(MAX_REQUEST_BYTES);
+		}
+	}
+	return resolve(event);
 };
 
 /**
@@ -587,6 +619,7 @@ const devRouteGuard: Handle = async ({ event, resolve }) => {
 
 export const handle = sequence(
 	securityHeaders,
+	bodySizeFloor,
 	stripBaseLocalePrefix,
 	loadStyle,
 	i18n,

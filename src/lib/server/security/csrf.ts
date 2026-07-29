@@ -16,10 +16,34 @@ export const CSRF_EXEMPT_PREFIXES = [
 	'/api/mcp/', // MCP over HTTP: no ambient cookie auth (admin=Bearer, public=unauth read-only), so CSRF is moot; non-browser clients can't send X-Requested-With
 ] as const;
 
+/**
+ * Does `path` fall under an exempt entry?
+ *
+ * Matched as "the entry itself, or anything below it" rather than as a raw
+ * string prefix. `/api/analytics/journey` has no trailing slash — it must
+ * exempt itself and `/api/analytics/journey/collect`, but a bare
+ * `startsWith` would also have exempted a future `/api/analytics/journeys` or
+ * `/api/analytics/journey-admin`. No such route exists today, which is what
+ * made it a trap rather than a bug: the entry that silently widens is the one
+ * added later, by someone who never reads this file.
+ *
+ * Entries written WITH a trailing slash keep their existing meaning exactly,
+ * since the segment boundary is already part of the string.
+ */
+function isExempt(path: string): boolean {
+	return CSRF_EXEMPT_PREFIXES.some(
+		(prefix) =>
+			path === prefix ||
+			path.startsWith(prefix.endsWith('/') ? prefix : `${prefix}/`) ||
+			// A trailing-slash entry should still exempt the bare collection path.
+			(prefix.endsWith('/') && path === prefix.slice(0, -1)),
+	);
+}
+
 /** True when a request must pass the CSRF check (mutating /api/* outside the exempt set). */
 export function needsCsrf(method: string, path: string): boolean {
 	const isMutating = method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
-	return isMutating && path.startsWith('/api/') && !CSRF_EXEMPT_PREFIXES.some((prefix) => path.startsWith(prefix));
+	return isMutating && path.startsWith('/api/') && !isExempt(path);
 }
 
 /** True when the URL in `headerValue` has the same host as `expectedHost`. */

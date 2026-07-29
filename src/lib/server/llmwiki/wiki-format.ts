@@ -21,10 +21,20 @@
  *   </llmwiki-hits>
  */
 
+import { escapeXmlText } from '$lib/utils/xml';
 import type { LlmwikiHit, LlmwikiPage } from './types';
 
+/**
+ * Collapse to one line AND escape.
+ *
+ * The name promised escaping and only did whitespace collapsing, which is a
+ * different thing entirely: a wiki title or TLDR containing
+ * `</llmwiki-hits>` would close the block early and the rest would read as
+ * prompt rather than as data. Titles and TLDRs are derived from ingested
+ * content, so they are not ours to trust.
+ */
 function escapeOneLine(s: string, max = 200): string {
-	const collapsed = s.replace(/\s+/g, ' ').trim();
+	const collapsed = escapeXmlText(s.replace(/\s+/g, ' ').trim());
 	return collapsed.length > max ? `${collapsed.slice(0, max - 1)}…` : collapsed;
 }
 

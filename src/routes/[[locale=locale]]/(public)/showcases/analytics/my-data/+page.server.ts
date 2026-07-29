@@ -3,8 +3,9 @@
  * Each data point is grouped by the consent tier that would enable it.
  */
 
-import { hashVisitorId, parseConsentTier } from '$lib/server/analytics/consent';
+import { parseConsentTier } from '$lib/server/analytics/consent';
 import { classifyUserAgent, geoFromHeaders } from '$lib/server/analytics/enrich';
+import { deriveVisitorId } from '$lib/server/analytics/visitor';
 import { ANALYTICS_CONSENT_COOKIE, ANALYTICS_SESSION_COOKIE } from '$lib/server/config';
 import { maskIp } from '$lib/server/privacy';
 import type { PageServerLoad } from './$types';
@@ -17,7 +18,7 @@ export const load: PageServerLoad = async ({ request, cookies, getClientAddress,
 	const ua = request.headers.get('user-agent') ?? '';
 	const acceptLanguage = request.headers.get('accept-language') ?? '';
 	const referrer = request.headers.get('referer') ?? '';
-	const visitorId = await hashVisitorId(`${ip}:${ua}`);
+	const visitorId = await deriveVisitorId(ip, ua);
 	const consentTier = parseConsentTier(cookies.get(ANALYTICS_CONSENT_COOKIE));
 	const { device, browser } = classifyUserAgent(ua);
 

@@ -64,6 +64,74 @@ describe('createLimiter failure posture', () => {
 		const limiter = createLimiter('rl:test', 5, '1 m');
 		expect(await limiter.limit('id')).toEqual({ success: true, reset: 123 });
 	});
+
+	it('still accepts the bare TimeoutPolicy string form', async () => {
+		const { createLimiter } = await loadWith({ redis: null, dev: false });
+		const limiter = createLimiter('rl:test', 5, '1 m', 'closed');
+		expect((await limiter.limit('id')).success).toBe(false);
+	});
+});
+
+/**
+ * `onError` governs UNAVAILABLE, not SLOW. The distinction matters most at the
+ * boot branch: a missing UPSTASH_* in prod returns the fail-closed singleton
+ * before any per-call wrapper runs, so a limiter guarding deferred best-effort
+ * work would deny 100% of it, permanently, after one log line at module load.
+ */
+describe('createLimiter onError policy', () => {
+	it('defaults to closed, so existing call sites are unchanged', async () => {
+		const { createLimiter } = await loadWith({ redis: null, dev: false });
+		expect((await createLimiter('rl:test', 5, '1 m', {}).limit('id')).success).toBe(false);
+	});
+
+	it('passes through at BOOT when Redis is unconfigured and onError is open', async () => {
+		// The branch that actually fires in production misconfiguration. Patching
+		// only the runtime catch would leave this returning failClosed forever.
+		const { createLimiter } = await loadWith({ redis: null, dev: false });
+		const limiter = createLimiter('rl:test', 5, '1 m', { onError: 'open' });
+		expect(await limiter.limit('id')).toEqual({ success: true, reset: 0 });
+		expect(await limiter.peek('id')).toEqual({ remaining: Number.POSITIVE_INFINITY, reset: 0 });
+	});
+
+	it('passes through at RUNTIME when Redis throws and onError is open', async () => {
+		class ThrowingRatelimit {
+			static slidingWindow() {
+				return {};
+			}
+			limit() {
+				return Promise.reject(new Error('ECONNREFUSED'));
+			}
+			getRemaining() {
+				return Promise.reject(new Error('ECONNREFUSED'));
+			}
+		}
+		const { createLimiter } = await loadWith({ redis: {}, dev: false, ratelimit: ThrowingRatelimit });
+		const limiter = createLimiter('rl:test', 5, '1 m', { onError: 'open' });
+		expect(await limiter.limit('id')).toEqual({ success: true, reset: 0 });
+		expect(await limiter.peek('id')).toEqual({ remaining: 5, reset: 0 });
+	});
+
+	it('keeps onError and onTimeout independent', async () => {
+		vi.useFakeTimers();
+		try {
+			class HangingRatelimit {
+				static slidingWindow() {
+					return {};
+				}
+				limit() {
+					return new Promise(() => {});
+				}
+			}
+			const { createLimiter } = await loadWith({ redis: {}, dev: false, ratelimit: HangingRatelimit });
+			// Unavailable → allow; slow → deny. Neither policy implies the other.
+			const limiter = createLimiter('rl:test', 5, '1 m', { onError: 'open', onTimeout: 'closed' });
+			const pending = limiter.limit('id');
+			await vi.advanceTimersByTimeAsync(1000);
+			expect((await pending).success).toBe(false);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
 });
 
 describe('createLimiter peek (read without consuming)', () => {

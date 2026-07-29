@@ -35,6 +35,26 @@ describe('needsCsrf', () => {
 		expect(needsCsrf('POST', '/api/analytics/stream')).toBe(true);
 	});
 
+	it('exempts a child of a slashless entry', () => {
+		expect(needsCsrf('POST', '/api/analytics/journey/collect')).toBe(false);
+	});
+
+	it('does NOT exempt a route whose path merely BEGINS with a slashless entry', () => {
+		// The trap the missing trailing slash left behind. None of these exist
+		// today — which is the point: the entry that silently widens the exempt
+		// set is the one added later by someone who never opens this file.
+		expect(needsCsrf('POST', '/api/analytics/journeys')).toBe(true);
+		expect(needsCsrf('POST', '/api/analytics/journey-admin')).toBe(true);
+		expect(needsCsrf('POST', '/api/analytics/journeyexport')).toBe(true);
+	});
+
+	it('keeps trailing-slash entries matching exactly as before', () => {
+		expect(needsCsrf('POST', '/api/mcp/public')).toBe(false);
+		expect(needsCsrf('POST', '/api/mcp')).toBe(false);
+		expect(needsCsrf('POST', '/api/mcpx')).toBe(true);
+		expect(needsCsrf('POST', '/api/authx/steal')).toBe(true);
+	});
+
 	it('locks the exempt set — a new exempt prefix must be a deliberate change', () => {
 		expect([...CSRF_EXEMPT_PREFIXES]).toEqual([
 			'/api/auth/',

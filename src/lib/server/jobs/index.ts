@@ -2,6 +2,7 @@ import { aiTelemetryRetention } from './ai-telemetry-retention';
 import { analyticsCleanup } from './analytics-cleanup';
 import { analyticsRollup } from './analytics-rollup';
 import { auditLogRetention } from './audit-log-retention';
+import { blogOrphanReaper } from './blog-orphan-reaper';
 import { dbopsReaper } from './dbops-reaper';
 import { dbopsRefresh } from './dbops-refresh';
 import { deskRawragSync } from './desk-rawrag-sync';
@@ -39,4 +40,5 @@ export const jobs: Record<string, Job> = {
 	'ai-telemetry-retention': { execute: aiTelemetryRetention },
 	'mcp-telemetry-retention': { execute: mcpTelemetryRetention },
 	'audit-log-retention': { execute: auditLogRetention },
+	'blog-orphan-reaper': { execute: blogOrphanReaper },
 };

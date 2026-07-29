@@ -3,7 +3,7 @@ import { superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import { feedbackSubmissionSchema } from '$lib/feedback/validation';
 import { localizeHref } from '$lib/i18n';
-import { checkHoneypot, getClientIp } from '$lib/server/abuse';
+import { checkHoneypot, getClientIp, ipLimitKey } from '$lib/server/abuse';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { FEEDBACK_RATE_LIMIT_MAX, FEEDBACK_RATE_LIMIT_PREFIX, FEEDBACK_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import { submitFeedback } from '$lib/server/feedback';
@@ -45,7 +45,7 @@ export const actions: Actions = {
 
 		const ip = getClientIp(event);
 		if (ip) {
-			const { success, reset } = await limiter.limit(ip);
+			const { success, reset } = await limiter.limit(ipLimitKey(ip));
 			if (!success) {
 				return rateLimitResponse(reset, 'Too many submissions. Please try again later.');
 			}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeIpKey } from './client-ip';
+import { ipLimitKey, normalizeIpKey } from './client-ip';
 
 describe('normalizeIpKey', () => {
 	it('keys IPv4 per address', () => {
@@ -54,5 +54,44 @@ describe('normalizeIpKey', () => {
 			const once = normalizeIpKey(ip);
 			expect(normalizeIpKey(once)).toBe(once);
 		}
+	});
+});
+
+describe('ipLimitKey', () => {
+	it('buckets IPv6 by /64, not by address', () => {
+		// The whole point: a client rotating inside its own allocation must not
+		// get a fresh bucket per request.
+		const a = ipLimitKey('2001:db8:0:1:aaaa::1');
+		const b = ipLimitKey('2001:db8:0:1:bbbb::2');
+		expect(a).toBe(b);
+	});
+
+	it('keeps distinct /64s apart', () => {
+		expect(ipLimitKey('2001:db8:0:1::1')).not.toBe(ipLimitKey('2001:db8:0:2::1'));
+	});
+
+	it('passes IPv4 through whole', () => {
+		expect(ipLimitKey('203.0.113.9')).toBe('ip:203.0.113.9');
+	});
+
+	it('gives an unknown address a real bucket instead of no limit at all', () => {
+		// Several routes previously wrapped the limiter in `if (ip)`, so a missing
+		// address meant unlimited requests — exactly backwards. Coarse is correct
+		// here: we cannot tell those callers apart.
+		expect(ipLimitKey(null)).toBe('ip:anon');
+		expect(ipLimitKey(undefined)).toBe('ip:anon');
+		expect(ipLimitKey('')).toBe('ip:anon');
+		expect(ipLimitKey('   ')).toBe('ip:anon');
+	});
+
+	it('namespaces away from user-id buckets', () => {
+		// style/pick keys by user id when signed in and by IP otherwise; without a
+		// prefix the two kinds of key share one keyspace.
+		expect(ipLimitKey('203.0.113.9').startsWith('ip:')).toBe(true);
+	});
+
+	it('is idempotent — re-keying its own output does not change the bucket', () => {
+		const once = ipLimitKey('2001:DB8:0:1::1');
+		expect(ipLimitKey('2001:db8:0:1:0:0:0:1')).toBe(once);
 	});
 });

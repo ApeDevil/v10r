@@ -1,4 +1,5 @@
 import { parse as parseYaml } from 'yaml';
+import { payloadTooLargeResponse, readTextBounded } from '$lib/server/api/body';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiCreated, apiError, apiOk } from '$lib/server/api/response';
 import { guardApiBlogAuthor, guardPostOwnership } from '$lib/server/auth/guards';
@@ -12,6 +13,14 @@ import type { RequestHandler } from './$types';
 
 const ratelimit = createLimiter(BLOG_WRITE_RATE_LIMIT_PREFIX, BLOG_WRITE_RATE_LIMIT_MAX, BLOG_WRITE_RATE_LIMIT_WINDOW);
 
+/**
+ * A markdown post with frontmatter. Generous for prose, and far below the point
+ * where the two `[\s\S]*?` frontmatter scans below become interesting — an
+ * unbounded body reaching a backtracking regex is the amplifier here, not the
+ * storage.
+ */
+const MAX_IMPORT_BYTES = 512 * 1024;
+
 /** Import a .md file with YAML frontmatter to create/update a post. */
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const guard = guardApiBlogAuthor(locals);
@@ -21,7 +30,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const { success, reset } = await ratelimit.limit(user.id);
 	if (!success) return rateLimitResponse(reset);
 
-	const text = await request.text();
+	const body = await readTextBounded(request, MAX_IMPORT_BYTES);
+	if (!body.ok) return payloadTooLargeResponse(MAX_IMPORT_BYTES);
+	const text = body.value;
 	if (!text.trim()) return apiError(400, 'empty_file', 'Empty file');
 
 	// Parse frontmatter

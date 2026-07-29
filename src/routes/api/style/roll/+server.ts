@@ -3,6 +3,7 @@
  * Sets cookie and fire-and-forget DB persistence for auth users.
  */
 
+import { ipLimitKey } from '$lib/server/abuse';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiOk } from '$lib/server/api/response';
 import {
@@ -27,8 +28,7 @@ const limiter = createLimiter(STYLE_ROLL_RATE_LIMIT_PREFIX, STYLE_ROLL_RATE_LIMI
 export const POST: RequestHandler = async ({ cookies, locals, getClientAddress }) => {
 	// Key on the canonical stamped IP (locals.clientIp), not a raw header read, to
 	// avoid a rate-limit bypass vector. Fallback to getClientAddress() only if unset.
-	const ip = locals.clientIp ?? getClientAddress();
-	const { success, reset } = await limiter.limit(ip);
+	const { success, reset } = await limiter.limit(ipLimitKey(locals.clientIp ?? getClientAddress()));
 
 	if (!success) {
 		return rateLimitResponse(reset);

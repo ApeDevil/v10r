@@ -29,9 +29,9 @@ const categories: DataCategory[] = [
 		rows: [
 			{
 				field: 'visitor_id',
-				type: 'sha256(ip + user-agent)',
-				example: 'v_a3f29c81d6e4b5f0',
-				note: 'Raw IP is never written to the database.',
+				type: 'hmac-sha256(server key, ip + user-agent)',
+				example: 'v1_a3f29c81d6e4b5f08c1d7e2b4a690f35',
+				note: 'Raw IP is never written to the database. Keyed, so the value cannot be reversed by guessing addresses.',
 			},
 			{ field: 'path', type: 'string', example: '/showcases', note: 'Pathname only. Query strings are dropped.' },
 			{ field: 'timestamp', type: 'timestamptz', example: '2026-05-01 14:21:08+00' },
@@ -41,16 +41,10 @@ const categories: DataCategory[] = [
 				example: 'DE',
 				note: 'From CDN edge headers; never the city or region.',
 			},
-			{
-				field: 'referrer',
-				type: 'origin only',
-				example: 'https://google.com',
-				note: 'Stripped to scheme + host. No path, no query.',
-			},
 		],
 		notes: [
 			'Pre-consent traffic exists so the site can count visits and detect abuse — that is the legitimate interest.',
-			'Device, browser, and full referrer fields are NULL until you give analytics consent.',
+			'Device, browser, and referrer fields are NULL until you give analytics consent.',
 			'Bot and prefetch requests are filtered out before any row is written.',
 		],
 	},
@@ -65,10 +59,10 @@ const categories: DataCategory[] = [
 			{ field: 'device', type: 'enum', example: 'desktop / mobile / tablet' },
 			{ field: 'browser', type: 'string', example: 'Chrome 130' },
 			{
-				field: 'referrer (full)',
-				type: 'string',
-				example: 'https://news.ycombinator.com/item?id=...',
-				note: 'The full URL replaces the origin-only version.',
+				field: 'referrer',
+				type: 'origin only',
+				example: 'https://news.ycombinator.com',
+				note: 'Still scheme + host only. Consent does not widen this — a full referring URL can carry a sign-in token in its query string.',
 			},
 			{
 				field: 'session_id',

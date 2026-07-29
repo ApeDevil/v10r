@@ -210,9 +210,12 @@ function handleResult(successMsg?: string) {
 								return handleResult();
 							}}
 						>
-							<input type="hidden" name="identifier" value="showcase-demo" />
-							<input type="hidden" name="limit" value="10" />
-							<input type="hidden" name="window" value="10" />
+							<!--
+								The bucket key, limit and window used to be posted from here. They are
+								server-decided now: a limiter whose parameters the caller picks is not one,
+								and the shared "showcase-demo" key meant every visitor filled the same
+								window. Each caller now gets their own bucket, keyed by /64.
+							-->
 							<Button type="submit" variant="outline" size="sm" disabled={rateLoading}>
 								{#if rateLoading}<Spinner size="xs" class="mr-1" />{/if}
 								<span class="i-lucide-send h-4 w-4 mr-1" ></span>

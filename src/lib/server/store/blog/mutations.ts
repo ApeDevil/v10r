@@ -1,6 +1,8 @@
 import { DeleteObjectCommand, HeadObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { MAX_BLOG_3D_UPLOAD_SIZE, MAX_BLOG_UPLOAD_SIZE, PRESIGNED_URL_EXPIRY } from '$lib/server/config';
+import { SUBKEY_PURPOSES } from '$lib/server/security/subkey';
+import { signTicket, verifyTicket } from '$lib/server/security/ticket';
 import { StoreError } from '../errors';
 import { BUCKET, s3 } from '../index';
 import type { PresignedUrlResult, UploadResult } from '../types';
@@ -17,11 +19,57 @@ const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'
  * Generate a presigned PUT URL for direct browser upload.
  * Content-Type is locked into the signature — the client must send the same type.
  */
+/**
+ * How long a confirmation ticket stays valid.
+ *
+ * Deliberately LONGER than PRESIGNED_URL_EXPIRY. The presigned URL only has to
+ * survive long enough to start the PUT; the ticket has to survive the whole
+ * upload plus the confirm round trip. Matching the two would mean a slow but
+ * entirely valid 4-minute upload finishing at 5:10 could never be confirmed,
+ * leaving an object in the bucket with no row that will ever reference it.
+ */
+export const UPLOAD_TICKET_TTL_MS = 15 * 60 * 1000;
+
+export interface UploadTicketClaims extends Record<string, string | number> {
+	key: string;
+	userId: string;
+	fileName: string;
+	mimeType: string;
+	maxBytes: number;
+}
+
+/**
+ * Verify a confirmation ticket against the session presenting it.
+ *
+ * Returns the claims fixed at issuance, so confirm can enforce the size limit
+ * that actually applied — which it cannot otherwise know, because the limit
+ * depends on the MIME type chosen at issuance.
+ */
+export function verifyUploadTicket(ticket: string, key: string, userId: string): UploadTicketClaims {
+	const check = verifyTicket<UploadTicketClaims>(SUBKEY_PURPOSES.blogUploadTicket, ticket);
+	if (!check.ok) {
+		throw new StoreError(
+			'forbidden',
+			check.reason === 'expired'
+				? 'This upload ticket has expired. Request a new upload URL and try again.'
+				: 'Invalid upload ticket.',
+		);
+	}
+	// The two facts worth binding: it was issued for THIS object, to THIS caller.
+	// Without the second, any blog author could confirm another author's key and
+	// — because storage_key is globally unique and first-write-wins — keep it.
+	if (check.fields.key !== key || check.fields.userId !== userId) {
+		throw new StoreError('forbidden', 'This upload ticket was not issued for this object.');
+	}
+	return check.fields;
+}
+
 export async function generateBlogUploadUrl(
+	userId: string,
 	fileName: string,
 	mimeType: string,
 	fileSize: number,
-): Promise<PresignedUrlResult & { key: string }> {
+): Promise<PresignedUrlResult & { key: string; ticket: string }> {
 	const client = requireS3();
 
 	if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
@@ -58,9 +106,27 @@ export async function generateBlogUploadUrl(
 
 	const url = await getSignedUrl(client, command, { expiresIn: PRESIGNED_URL_EXPIRY });
 
+	/**
+	 * Bind the issuance to the caller. Nothing else does: the key is a bare UUID
+	 * in a namespace shared by every blog author, and no record of "who was this
+	 * issued to" existed anywhere.
+	 *
+	 * A ticket rather than a table, because this needs no DDL and nothing to
+	 * clean up. `maxBytes` rides along because the limit depends on the MIME type
+	 * chosen HERE, and confirm has no other way to learn which one applied — a
+	 * presigned PUT cannot enforce Content-Length at all, so the size check has
+	 * to happen at confirmation against the limit that was in force at issuance.
+	 */
+	const ticket = signTicket(
+		SUBKEY_PURPOSES.blogUploadTicket,
+		{ key, userId, fileName, mimeType, maxBytes: maxSize } satisfies UploadTicketClaims,
+		Date.now() + UPLOAD_TICKET_TTL_MS,
+	);
+
 	return {
 		url,
 		key,
+		ticket,
 		expiresIn: PRESIGNED_URL_EXPIRY,
 		expiresAt: new Date(Date.now() + PRESIGNED_URL_EXPIRY * 1000).toISOString(),
 	};
@@ -70,8 +136,8 @@ export async function generateBlogUploadUrl(
  * Confirm an upload by verifying the object exists via HeadObject.
  */
 export async function confirmBlogUpload(key: string): Promise<UploadResult> {
-	const client = requireS3();
 	assertBlogKey(key);
+	const client = requireS3();
 
 	const res = await client.send(new HeadObjectCommand({ Bucket: BUCKET, Key: key }));
 
@@ -85,7 +151,7 @@ export async function confirmBlogUpload(key: string): Promise<UploadResult> {
 
 /** Delete a single blog object from R2. */
 export async function deleteBlogObject(key: string): Promise<void> {
-	const client = requireS3();
 	assertBlogKey(key);
+	const client = requireS3();
 	await client.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
 }

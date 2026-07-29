@@ -57,7 +57,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!parsed.success) return apiValidationError(parsed.issues);
 
 	try {
-		const result = await generateBlogUploadUrl(parsed.output.fileName, parsed.output.mimeType, parsed.output.fileSize);
+		const result = await generateBlogUploadUrl(
+			user.id,
+			parsed.output.fileName,
+			parsed.output.mimeType,
+			parsed.output.fileSize,
+		);
 		return apiCreated({ upload: result });
 	} catch (err) {
 		const storeErr = classifyS3Error(err);

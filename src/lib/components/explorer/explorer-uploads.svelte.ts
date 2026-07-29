@@ -34,7 +34,9 @@ export class ExplorerUploads {
 					const data = await urlRes.json().catch(() => ({}));
 					throw new Error((data as { message?: string }).message || 'Failed to get upload URL');
 				}
-				const { upload } = (await urlRes.json()) as { upload: { url: string; key: string } };
+				const { upload } = (await urlRes.json()) as {
+					upload: { url: string; key: string; ticket: string };
+				};
 
 				const putRes = await fetch(upload.url, {
 					method: 'PUT',
@@ -57,11 +59,12 @@ export class ExplorerUploads {
 				const confirmRes = await apiFetch('/api/blog/assets/confirm', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					// No mimeType/fileSize: the server reads both back from the stored
-					// object, so sending them here is a claim it would ignore.
+					// No mimeType/fileSize/fileName: the server reads the first two back
+					// from the stored object and the third from the signed ticket, so
+					// sending them here would be a claim it ignores.
 					body: JSON.stringify({
 						key: upload.key,
-						fileName: file.name,
+						ticket: upload.ticket,
 						width,
 						height,
 					}),

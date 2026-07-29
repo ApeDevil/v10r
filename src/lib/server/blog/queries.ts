@@ -562,6 +562,19 @@ export async function getPublicAssetById(id: string): Promise<BlogAsset | null> 
 }
 
 /**
+ * Every storage key the database still references.
+ *
+ * Deliberately unfiltered — draft, published, folder-less, orphaned-from-posts:
+ * if a row names the key, the object is not garbage. The reaper that consumes
+ * this deletes what is NOT in the result, so anything this misses is deleted,
+ * which makes "return too much" the only safe direction to be wrong in.
+ */
+export async function listAllAssetStorageKeys(): Promise<string[]> {
+	const rows = await db.select({ storageKey: asset.storageKey }).from(asset);
+	return rows.map((row) => row.storageKey);
+}
+
+/**
  * Same reachability rule as `getPublicAssetById`, keyed on the R2 storage key.
  *
  * Backs the legacy media proxy, which previously presigned any `blog/`-prefixed

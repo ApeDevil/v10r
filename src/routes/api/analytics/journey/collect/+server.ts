@@ -16,9 +16,12 @@
  * bounded no matter what ends up calling this.
  */
 import * as v from 'valibot';
+import { ipLimitKey } from '$lib/server/abuse';
 import { isBot, isExcludedPath } from '$lib/server/analytics/collect-policy';
-import { hasConsent, hashVisitorId } from '$lib/server/analytics/consent';
+import { hasConsent } from '$lib/server/analytics/consent';
 import { type EventName, isKnownEvent, sanitizeProperties } from '$lib/server/analytics/event-schema';
+import { deriveVisitorId } from '$lib/server/analytics/visitor';
+import { MAX_BEACON_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/api/body';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiNoContent } from '$lib/server/api/response';
 import { ANALYTICS_SESSION_COOKIE } from '$lib/server/config';
@@ -71,25 +74,26 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 	if (isBot(ua)) return apiNoContent();
 
 	const ip = locals.clientIp ?? getClientAddress();
-	const { success, reset } = await limiter.limit(ip);
+	const { success, reset } = await limiter.limit(ipLimitKey(ip));
 	if (!success) return rateLimitResponse(reset);
 
 	const sessionId = cookies.get(ANALYTICS_SESSION_COOKIE);
 	if (!sessionId) return apiNoContent();
 
-	let body: unknown;
-	try {
-		body = await request.json();
-	} catch {
+	// Unauthenticated beacon: bound the read rather than parsing whatever arrives.
+	const read = await readJsonBounded(request, MAX_BEACON_BODY_BYTES);
+	if (!read.ok) {
+		if (read.reason === 'too_large') return payloadTooLargeResponse(MAX_BEACON_BODY_BYTES);
 		return apiError(400, 'invalid_payload', 'Body is not valid JSON');
 	}
+	const body: unknown = read.value;
 
 	const parsed = v.safeParse(CollectBatch, body);
 	if (!parsed.success) {
 		return apiError(400, 'invalid_payload', 'Collect batch failed validation');
 	}
 
-	const visitorId = await hashVisitorId(`${ip}:${ua}`);
+	const visitorId = await deriveVisitorId(ip, ua);
 
 	const rows = parsed.output.events
 		.filter((evt) => !isExcludedPath(evt.path))
