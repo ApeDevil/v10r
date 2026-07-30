@@ -93,6 +93,7 @@ export const DAG_SHORT_LABELS: Record<string, string> = {
 	'deskbot-approval-gate': 'Approval Gate',
 	'layered-rag': 'Layered RAG',
 	'retrieval-endpoints': 'Retrieval',
+	'agent-experience': 'Agent AX',
 };
 
 /**

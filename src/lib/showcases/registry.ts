@@ -562,6 +562,14 @@ export const showcases: ShowcaseCard[] = [
 			{ href: '/docs/blueprint/architecture/hosted-mcp', label: 'Hosted MCP' },
 		],
 	},
+	{
+		href: '/showcases/ax',
+		icon: 'i-lucide-bot',
+		title: m.showcase_ax_title,
+		description: m.showcase_ax_description,
+		domain: 'ai',
+		docs: [{ href: '/docs/blueprint/architecture/agent-experience', label: 'Agent Experience' }],
+	},
 	// ── security ──────────────────────────────────────────────────────────
 	{
 		href: '/showcases/auth',

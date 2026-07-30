@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const recordAuditEvent = vi.fn(async (_input: unknown) => {});
 const sendAuthEmail = vi.fn(async (_params: unknown) => {});
 const deleteWhere = vi.fn(async (_condition: unknown) => []);
+const redisSet = vi.fn(async (..._args: unknown[]) => 'OK');
 
 vi.mock('$lib/server/admin/audit', () => ({ recordAuditEvent: (input: unknown) => recordAuditEvent(input) }));
 vi.mock('$lib/server/db', () => ({
@@ -20,6 +21,16 @@ vi.mock('$lib/server/db', () => ({
 vi.mock('./send-auth-email', () => ({
 	sendAuthEmail: (params: unknown) => sendAuthEmail(params),
 	factorChangeTemplate: (label: string) => `<html>${label}</html>`,
+}));
+// Without this, the revokeSiblings path falls through stampRevocation() to the
+// REAL Upstash client — an unbounded network call that hangs the test whenever
+// Upstash is reachable but stalling (same stub shape as revocation.test.ts).
+vi.mock('$lib/server/cache', () => ({
+	redis: {
+		get: vi.fn(async () => null),
+		set: (...args: unknown[]) => redisSet(...args),
+		del: vi.fn(async () => 1),
+	},
 }));
 
 const { onFactorChanged } = await import('./factor-changes');
@@ -54,6 +65,7 @@ describe('onFactorChanged', () => {
 	it('revokes sibling sessions only when asked', async () => {
 		await onFactorChanged({ ...BASE, action: 'passkey.added' });
 		expect(deleteWhere).not.toHaveBeenCalled();
+		expect(redisSet).not.toHaveBeenCalled();
 
 		await onFactorChanged({
 			...BASE,
@@ -62,6 +74,7 @@ describe('onFactorChanged', () => {
 			currentSessionToken: 'tok_current',
 		});
 		expect(deleteWhere).toHaveBeenCalledOnce();
+		expect(redisSet).toHaveBeenCalledOnce();
 	});
 
 	it('sends a notification email for notify-worthy actions only', async () => {

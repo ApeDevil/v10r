@@ -17,6 +17,8 @@ v10r's consumption model *is* agent-mediated — the PRD's thesis is that an AI 
 
 Repo-level agent instructions live in `AGENTS.md` (the cross-tool convention) and `CLAUDE.md` (Claude Code specifically); both point here rather than duplicating this content.
 
+Live proof: [/showcases/ax](/showcases/ax) exercises every surface with real requests from the browser — the negotiation redirect, `/llms.txt`, a `## Next actions` error, the protocol-version 400, and an interactive `validate_snippet` loop.
+
 ## Nothing is hand-maintained
 
 Every artifact derives from an existing single source of truth, because a parallel corpus that needs manual sync is the documented failure mode of this whole genre (Astro removed its llms.txt over exactly that):

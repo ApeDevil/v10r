@@ -408,6 +408,69 @@
 				"Mind embedding-provider daily quotas when re-ingesting a whole corpus."
 			],
 			"risk": "medium — writes to the corpus store; provider quotas apply"
+		},
+		{
+			"id": "agent-experience",
+			"title": "Agent Experience (AX) surfaces",
+			"category": "architecture",
+			"summary": "Four derived surfaces make the repo consumable by coding agents: a root AGENTS.md contract, raw-markdown doc variants with Accept negotiation, an /llms.txt URL map with in-band prior corrections, and MCP tool errors that carry machine-actionable recovery steps.",
+			"when_to_use": "Adopt when a repo's primary consumers are AI agents: it turns passive docs into addressable, self-correcting surfaces without any hand-maintained duplicate content.",
+			"capabilities": [
+				"agent experience",
+				"llms.txt",
+				"markdown content negotiation",
+				"agent onboarding",
+				"self-correcting errors",
+				"snippet validation"
+			],
+			"keywords": [
+				"AGENTS.md",
+				"llms-txt",
+				"accept header",
+				"next actions",
+				"autofixer",
+				"machine-readable docs",
+				"ax"
+			],
+			"depends_on": ["docs-nav-hubs"],
+			"docs": [
+				{
+					"path": "docs/blueprint/architecture/agent-experience.md",
+					"note": "The full AX layer: surfaces, derivation map, negotiation contract"
+				},
+				{
+					"path": "docs/blueprint/architecture/hosted-mcp.md",
+					"note": "The hosted MCP surface the Next-actions convention lives on"
+				}
+			],
+			"code": [
+				{ "path": "AGENTS.md", "note": "Universal agent contract at the repo root" },
+				{
+					"path": "src/lib/server/docs/markdown-hook.ts",
+					"note": "The .md layer + Accept: text/markdown negotiation (303 + Vary + no-store)"
+				},
+				{ "path": "src/lib/server/docs/llms-txt.ts", "note": "/llms.txt built per request from the docs manifest" },
+				{
+					"path": "src/lib/server/mcp/snippet/engine.ts",
+					"note": "validate_snippet rule engine (findings are a success; input never echoed)"
+				}
+			],
+			"tests": [
+				{ "path": "src/lib/server/docs/llms-txt.test.ts" },
+				{ "path": "src/lib/server/mcp/next-actions.gate.test.ts" }
+			],
+			"showcases": [{ "path": "/showcases/ax", "kind": "route" }],
+			"invariants": [
+				"Every surface is derived — llms.txt from the docs manifest, .md bodies from the published registry, tool cards from shared JSON; none is hand-maintained.",
+				"Every registry-produced MCP error carries a required diag code AND a Next-actions recovery trailer — a new error branch without them is a compile error.",
+				"Content negotiation is 303 + Vary: Accept + no-store; each cacheable artifact lives at exactly one URL.",
+				"Tool results are text-only and never echo caller input beyond the bounded id reflection."
+			],
+			"emulation_notes": [
+				"Start with AGENTS.md and llms.txt — the standards that won adoption — and advertise them in-page/headers; an unadvertised llms.txt is dead weight.",
+				"Make recovery hints structural (a required parameter on the error constructor), not a style guideline reviewers must remember."
+			],
+			"risk": "low — read-only derived surfaces; no new state"
 		}
 	]
 }

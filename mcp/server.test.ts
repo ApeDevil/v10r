@@ -49,9 +49,9 @@ describe('protocol', () => {
 });
 
 describe('registry', () => {
-	test('loads 10 valid patterns with unique ids', () => {
-		expect(registry.patterns.length).toBe(10);
-		expect(new Set(registry.patterns.map((p) => p.id)).size).toBe(10);
+	test('loads 11 valid patterns with unique ids', () => {
+		expect(registry.patterns.length).toBe(11);
+		expect(new Set(registry.patterns.map((p) => p.id)).size).toBe(11);
 	});
 
 	test('topoSort puts dependencies first, deterministically', () => {

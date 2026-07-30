@@ -55,7 +55,7 @@ const archNodes: Node[] = [
 	{ id: 'spawn', type: 'flow', position: { x: 250, y: 100 }, data: { label: 'podman run -i --rm' } },
 	{ id: 'container', type: 'flow', position: { x: 250, y: 200 }, data: { label: 'Ephemeral bun container' } },
 	{ id: 'server', type: 'flow', position: { x: 250, y: 300 }, data: { label: 'server.ts stdio JSON-RPC loop' } },
-	{ id: 'tools', type: 'flow', position: { x: 250, y: 400 }, data: { label: '5 read-only tools' } },
+	{ id: 'tools', type: 'flow', position: { x: 250, y: 400 }, data: { label: '6 read-only tools' } },
 	{ id: 'registry', type: 'flow', position: { x: 80, y: 500 }, data: { label: 'patterns.registry.json' } },
 	{ id: 'files', type: 'flow', position: { x: 420, y: 500 }, data: { label: 'Repo file excerpts' } },
 	{

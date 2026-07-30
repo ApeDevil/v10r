@@ -332,4 +332,27 @@ export const showcaseSections: ShowcaseSection[] = [
 	{ pageHref: '/showcases/privacy', anchorId: 'privacy-subpages', title: 'Privacy Detail Pages' },
 	{ pageHref: '/showcases/privacy/retention', anchorId: 'retention-table', title: 'Per-table Retention' },
 	{ pageHref: '/showcases/privacy/retention', anchorId: 'retention-cron', title: 'Retention Cron Status' },
+
+	// Agent Experience
+	{ pageHref: '/showcases/ax', anchorId: 'ax-surfaces', title: 'Four Agent Surfaces', keywords: ['agents.md', 'ax'] },
+	{
+		pageHref: '/showcases/ax',
+		anchorId: 'ax-markdown',
+		title: 'Markdown Content Negotiation',
+		keywords: ['accept header', '303', 'text/markdown'],
+	},
+	{ pageHref: '/showcases/ax', anchorId: 'ax-llms', title: 'llms.txt', keywords: ['llmstxt', 'url map'] },
+	{
+		pageHref: '/showcases/ax',
+		anchorId: 'ax-errors',
+		title: 'Self-Correcting Errors',
+		keywords: ['next actions', 'recovery'],
+	},
+	{
+		pageHref: '/showcases/ax',
+		anchorId: 'ax-validate',
+		title: 'validate_snippet Loop',
+		keywords: ['autofixer', 'conventions'],
+	},
+	{ pageHref: '/showcases/ax', anchorId: 'ax-agents', title: 'AGENTS.md', keywords: ['agent contract'] },
 ];
