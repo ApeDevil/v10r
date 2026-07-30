@@ -22,6 +22,7 @@ vi.mock('$lib/server/admin/audit', () => ({ recordAuditEvent: vi.fn(), queryAudi
 const { handleMcpMessage } = await import('./transport');
 const { publicPatternRegistry } = await import('./patterns/registry');
 const { readAllowlistedExcerpt } = await import('./patterns/excerpts');
+const { MAX_NEXT_ACTIONS, NEXT_ACTIONS_HEADING } = await import('./types');
 
 const IDENTITY = { name: 'test', version: '0.0.1', instructions: 'test server' };
 
@@ -104,19 +105,66 @@ describe('excerpt failures forward a reason rather than defaulting to one', () =
 	});
 });
 
+describe('every registry error hands the caller a next step', () => {
+	// One fixture per distinct error path in the public registry. The block is TEXT
+	// by convention (both surfaces are text-only), with a fixed grep-able heading.
+	const ERROR_CALLS: ReadonlyArray<readonly [string, Record<string, unknown>]> = [
+		['search_patterns', { query: '   ' }],
+		['search_patterns', { query: 'stripe subscription webhooks' }],
+		['search_patterns', { query: 'rag', category: 'no-such-category' }],
+		['get_pattern', { id: 'no-such-pattern-id' }],
+		['get_file_excerpt', { path: 'src/lib/server/auth/guards.ts' }],
+		['get_file_excerpt', { path: '/etc/passwd' }],
+		['trace_capability', { capability: '' }],
+		['trace_capability', { capability: 'kubernetes operator' }],
+		['recommend_emulation_plan', { capabilities: [] }],
+		['recommend_emulation_plan', { capabilities: ['blockchain wallet'] }],
+		['no_such_tool', {}],
+	];
+
+	it('emits the block, names only tools of THIS surface, and stays bounded', async () => {
+		const publicNames = new Set(publicPatternRegistry.tools.map((tool) => tool.name));
+		for (const [tool, args] of ERROR_CALLS) {
+			const result = await callTool(tool, args);
+			const label = `${tool} ${JSON.stringify(args)}`;
+			expect(result.isError, label).toBe(true);
+			const text = result.content[0].text;
+			expect(text, label).toContain(NEXT_ACTIONS_HEADING);
+			const block = text.slice(text.indexOf(NEXT_ACTIONS_HEADING));
+			const steps = block.split('\n').filter((line) => /^\d+\. /.test(line));
+			expect(steps.length, label).toBeGreaterThanOrEqual(1);
+			expect(steps.length, label).toBeLessThanOrEqual(MAX_NEXT_ACTIONS);
+			for (const step of steps) {
+				const named = step.match(/`([a-z_]+)`/)?.[1];
+				expect(named && publicNames.has(named), `${label}: '${named}' must be a public tool`).toBe(true);
+			}
+			expect(block.length, label).toBeLessThan(600);
+			// The internal channel's name must never leak into the wire text.
+			expect(text, label).not.toMatch(/diag/);
+		}
+	});
+
+	it('never appends the block to a success', async () => {
+		const result = await callTool('search_patterns', { query: 'rag' });
+		expect(result.isError).toBeUndefined();
+		expect(result.content[0].text).not.toContain(NEXT_ACTIONS_HEADING);
+	});
+});
+
 describe('transport-built errors stay bare — this absence IS the discriminator', () => {
-	it('emits no diag for an unknown tool name', async () => {
+	it('emits no diag and no next block for an unknown tool name', async () => {
 		const response = await handleMcpMessage(
 			{ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'not_in_this_registry' } },
 			publicPatternRegistry,
 			IDENTITY,
 		);
-		const result = (response as { result: { isError?: boolean; diag?: string } }).result;
+		const result = (response as { result: { isError?: boolean; diag?: string; content: [{ text: string }] } }).result;
 		expect(result.isError).toBe(true);
 		expect(result.diag).toBeUndefined();
+		expect(result.content[0].text).not.toContain(NEXT_ACTIONS_HEADING);
 	});
 
-	it('emits no diag when a tool throws', async () => {
+	it('emits no diag and no next block when a tool throws', async () => {
 		const throwingRegistry = {
 			tools: [{ name: 'boom', description: 'boom', inputSchema: { type: 'object' } }],
 			dispatch: () => {
@@ -128,8 +176,9 @@ describe('transport-built errors stay bare — this absence IS the discriminator
 			throwingRegistry,
 			IDENTITY,
 		);
-		const result = (response as { result: { isError?: boolean; diag?: string } }).result;
+		const result = (response as { result: { isError?: boolean; diag?: string; content: [{ text: string }] } }).result;
 		expect(result.isError).toBe(true);
 		expect(result.diag).toBeUndefined();
+		expect(result.content[0].text).not.toContain(NEXT_ACTIONS_HEADING);
 	});
 });

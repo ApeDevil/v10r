@@ -12,7 +12,7 @@
  * generator already excludes binary/oversize files, so only vetted text reaches this reader.
  */
 import snapshotJson from '../../../../../mcp/public-excerpts.snapshot.json';
-import type { ToolDiag } from '../types';
+import type { NextAction, ToolDiag } from '../types';
 import { EXCERPT_ALLOWLIST, isAllowlisted } from './allowlist';
 
 export { EXCERPT_ALLOWLIST, isAllowlisted };
@@ -33,22 +33,30 @@ const SNAPSHOT_FILES: Record<string, string> = SNAPSHOT.files ?? {};
 export const SNAPSHOT_PATHS: ReadonlySet<string> = new Set(Object.keys(SNAPSHOT_FILES));
 
 /**
- * A DISCRIMINATED union, not `{ ok: boolean }`, so the compiler forces a `diag` on every failure
- * branch. The alternative — an optional field with a `??` fallback at the one call site that
- * bridges to `errorResult` — would let a newly-added failure path silently inherit the wrong
- * reason, which is exactly the drift this channel exists to prevent.
+ * A DISCRIMINATED union, not `{ ok: boolean }`, so the compiler forces a `diag` — and a `next`
+ * recovery step — on every failure branch. The alternative — optional fields with `??` fallbacks
+ * at the one call site that bridges to `errorResult` — would let a newly-added failure path
+ * silently inherit the wrong reason, which is exactly the drift this channel exists to prevent.
  */
-export type ExcerptResult = { ok: true; text: string } | { ok: false; text: string; diag: ToolDiag };
+export type ExcerptResult =
+	| { ok: true; text: string }
+	| { ok: false; text: string; diag: ToolDiag; next: readonly NextAction[] };
 
 export function readAllowlistedExcerpt(path: string, startLine = 1, lineCount = DEFAULT_LINES): ExcerptResult {
 	if (typeof path !== 'string' || path.trim().length === 0) {
-		return { ok: false, text: 'path must be a non-empty repo-relative string.', diag: 'invalid_args' };
+		return {
+			ok: false,
+			text: 'path must be a non-empty repo-relative string.',
+			diag: 'invalid_args',
+			next: [{ tool: 'get_pattern', why: 'pattern cards list the repo-relative paths this tool can read.' }],
+		};
 	}
 	if (path.startsWith('/')) {
 		return {
 			ok: false,
 			text: `absolute paths are rejected — pass a repo-relative path (got '${path}').`,
 			diag: 'invalid_args',
+			next: [{ tool: 'get_pattern', why: 'pattern cards list the repo-relative paths this tool can read.' }],
 		};
 	}
 	if (!isAllowlisted(path)) {
@@ -56,6 +64,10 @@ export function readAllowlistedExcerpt(path: string, startLine = 1, lineCount = 
 			ok: false,
 			text: `'${path}' is not an allowlisted file. The hosted endpoint only excerpts files referenced by the pattern registry — use a path from get_pattern / trace_capability output.`,
 			diag: 'not_found',
+			next: [
+				{ tool: 'trace_capability', why: 'trace the capability to find which registry files cover it.' },
+				{ tool: 'get_pattern', why: 'the full card lists every readable code entry point.' },
+			],
 		};
 	}
 	const content = SNAPSHOT_FILES[path];
@@ -67,6 +79,9 @@ export function readAllowlistedExcerpt(path: string, startLine = 1, lineCount = 
 			ok: false,
 			text: `'${path}' is allowlisted but not present in the deployment snapshot — regenerate it with mcp:excerpts:build.`,
 			diag: 'snapshot_miss',
+			next: [
+				{ tool: 'search_patterns', why: 'other patterns cover adjacent code while this snapshot entry is stale.' },
+			],
 		};
 	}
 	const lines = content.split('\n');
@@ -77,6 +92,7 @@ export function readAllowlistedExcerpt(path: string, startLine = 1, lineCount = 
 			ok: false,
 			text: `start_line ${from} is beyond EOF — '${path}' has ${total} lines.`,
 			diag: 'invalid_args',
+			next: [{ tool: 'get_file_excerpt', args: { start_line: 1 }, why: 'retry from line 1 with the same path.' }],
 		};
 	}
 	const count = Math.min(Math.max(1, Math.floor(lineCount)), MAX_LINES);

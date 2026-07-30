@@ -1,9 +1,9 @@
 /**
- * Hand-curated projections of the MCP server's five tool definitions
+ * Hand-curated projections of the MCP server's six tool definitions
  * (mcp/tools.ts TOOLS) and its handshake sequence (mcp/smoke.ts) for the
  * Pattern MCP showcase. Mirrored as literals because mcp/*.ts is Bun-typed and
  * outside the app's TS program; tool-cards.drift.test.ts pins the tool names
- * against the source so a sixth tool can't land silently.
+ * against the source so a new tool can't land silently.
  */
 export interface ToolCard {
 	name: string;
@@ -58,6 +58,16 @@ export const TOOL_CARDS: ToolCard[] = [
 			{ name: 'include_dependencies', detail: 'expand prerequisites via depends_on, default true' },
 		],
 	},
+	{
+		name: 'validate_snippet',
+		icon: 'i-lucide-badge-check',
+		summary:
+			'Check a Svelte/TS snippet against v10r conventions (runes, component-first, tokens, Valibot) — loop until clean.',
+		params: [
+			{ name: 'snippet', detail: 'code to validate, at most 20000 chars (required)' },
+			{ name: 'language', detail: "'svelte' or 'ts', default 'svelte'" },
+		],
+	},
 ];
 
 export interface HandshakeStep {
@@ -81,7 +91,7 @@ export const HANDSHAKE_STEPS: HandshakeStep[] = [
 	{
 		method: 'tools/list',
 		kind: 'request',
-		purpose: 'Returns the five tool definitions — name, description, and inputSchema only.',
+		purpose: 'Returns the six tool definitions — name, description, and inputSchema only.',
 	},
 	{
 		method: 'tools/call',

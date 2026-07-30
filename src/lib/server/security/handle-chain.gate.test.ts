@@ -43,6 +43,7 @@ const EXPECTED = [
 	'securityHeaders',
 	'bodySizeFloor',
 	'stripBaseLocalePrefix',
+	'docsMarkdown',
 	'loadStyle',
 	'i18n',
 	'authCaptchaGate',
@@ -68,5 +69,14 @@ describe('handle chain', () => {
 		const order = chainOrder();
 		expect(order.indexOf('sessionPopulate')).toBeLessThan(order.indexOf('devRouteGuard'));
 		expect(order.indexOf('sessionPopulate')).toBeLessThan(order.indexOf('analyticsCollector'));
+	});
+
+	// A Set-Cookie from i18n (PARAGLIDE_LOCALE) or loadStyle (style cookie) on a
+	// markdown response would silently void `s-maxage` on every shared cache — no
+	// test failure, just a cost. The .md layer must short-circuit above both.
+	it('serves markdown above the cookie-writing handlers', () => {
+		const order = chainOrder();
+		expect(order.indexOf('docsMarkdown')).toBeLessThan(order.indexOf('loadStyle'));
+		expect(order.indexOf('docsMarkdown')).toBeLessThan(order.indexOf('i18n'));
 	});
 });

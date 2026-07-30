@@ -124,6 +124,8 @@ const PUBLIC_SURFACES: Record<string, string> = {
 		'Dev-only probe: devRouteGuard 404s any /(dev)/ route outside import.meta.env.DEV, so it does not exist in production. It reads an arbitrary userId from the query string and must never be given a production route.',
 	'[[locale=locale]]/(public)/blog/feed.xml/+server.ts':
 		'Public RSS feed. Reads listPublishedPostsForFeed, so drafts are unreachable by construction.',
+	'llms.txt/+server.ts':
+		'Agent-facing URL map built from the published docs manifest only — blocked and draft docs are unreachable because it never touches the raw glob. Same published-only resolution as the sitemap.',
 	'manifest.webmanifest/+server.ts': 'Static PWA manifest. No data access; locale read from the request cookie.',
 	'robots.txt/+server.ts': 'Static, environment-aware robots policy. No data access.',
 	'sitemap.xml/+server.ts': 'Public URL index over published content only, same resolution as the feed.',

@@ -1,10 +1,13 @@
 /**
- * The PUBLIC read-only tool registry: the five Pattern tools, exposed by `/api/mcp/public`.
+ * The PUBLIC read-only tool registry: the six Pattern tools, exposed by `/api/mcp/public`.
  * Structurally read-only — there is no mutation tool here to dispatch. Handlers are pure
  * functions over the statically-imported registry, except get_file_excerpt which reads
- * allowlisted files through the hosted-safe reader.
+ * allowlisted files through the hosted-safe reader and validate_snippet which runs the
+ * shared rule engine over caller-supplied text.
  */
-import { errorResult, type ToolDef, type ToolRegistry, type ToolResult, textResult } from '../types';
+import { renderReport, validateSnippet } from '../snippet/engine';
+import { MAX_SNIPPET_CHARS } from '../snippet/rules';
+import { errorResult, type NextAction, type ToolDef, type ToolRegistry, type ToolResult, textResult } from '../types';
 import { buildById, PATTERNS, type PatternRecord, REGISTRY_ORDER, type RegRef } from './data';
 import { DEFAULT_LINES, MAX_LINES, readAllowlistedExcerpt } from './excerpts';
 import { scorePatterns, topoSort } from './search';
@@ -143,6 +146,29 @@ export const PATTERN_TOOLS: ToolDef[] = [
 			required: ['capabilities'],
 		},
 	},
+	{
+		name: 'validate_snippet',
+		description:
+			'Validate a Svelte or TypeScript snippet against v10r conventions (Svelte 5 runes, component-first, design tokens, Valibot). Returns line-numbered findings with fixes — findings are a successful validation, not an error. Call in a loop: submit, apply the fixes, resubmit until it reports clean.',
+		inputSchema: {
+			type: 'object',
+			additionalProperties: false,
+			properties: {
+				snippet: {
+					type: 'string',
+					maxLength: MAX_SNIPPET_CHARS,
+					description: `The code to validate (at most ${MAX_SNIPPET_CHARS} characters — larger snippets are refused, never truncated).`,
+				},
+				language: {
+					type: 'string',
+					enum: ['svelte', 'ts'],
+					default: 'svelte',
+					description: "Snippet language. Default 'svelte'.",
+				},
+			},
+			required: ['snippet'],
+		},
+	},
 ];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -162,6 +188,13 @@ function noMatchHelp(what: string): string {
 	return `No pattern matched ${what}. Available categories: ${categories}. Example capability tags: "${sample}". Try broader terms, or list everything with search_patterns query "pattern".`;
 }
 
+/** The universal fallback step: `{query: "pattern"}` matches every record, so it lists the library. */
+const LIST_EVERYTHING: NextAction = {
+	tool: 'search_patterns',
+	args: { query: 'pattern' },
+	why: 'lists every pattern in the library.',
+};
+
 /**
  * A genuine no-match: the query ran and the registry had nothing for it. This is THE improvement
  * signal — it names a capability a consumer wanted that we do not cover.
@@ -172,7 +205,10 @@ function noMatchHelp(what: string): string {
  * deliberately NOT routed through here — otherwise a typo'd filter would pollute the gaps report.
  */
 function noMatchResult(what: string): ToolResult {
-	return errorResult(noMatchHelp(what), 'empty');
+	return errorResult(noMatchHelp(what), 'empty', [
+		LIST_EVERYTHING,
+		{ tool: 'trace_capability', args: { capability: 'rag' }, why: 'traces one capability end to end as a model.' },
+	]);
 }
 
 function patternCard(pattern: PatternRecord): string {
@@ -203,19 +239,24 @@ function searchPatterns(args: Record<string, unknown>): ToolResult {
 		return errorResult(
 			`search_patterns needs a non-empty "query" string of at most ${MAX_ARG_CHARS} characters, e.g. {"query": "background jobs"}.`,
 			'invalid_args',
+			[{ tool: 'search_patterns', args: { query: 'background jobs' }, why: 'a well-formed example call.' }],
 		);
 	}
 	const limit = typeof args.limit === 'number' ? Math.min(Math.max(1, Math.floor(args.limit)), 20) : 5;
 	// Absent is "no filter"; present-but-unbounded is a client bug, not a wider
 	// search — dropping it silently would quietly return MORE than was asked for.
 	if (args.category !== undefined && boundedString(args.category) === null) {
-		return errorResult(`"category" must be a string of at most ${MAX_ARG_CHARS} characters.`, 'invalid_args');
+		return errorResult(`"category" must be a string of at most ${MAX_ARG_CHARS} characters.`, 'invalid_args', [
+			LIST_EVERYTHING,
+		]);
 	}
 	const category = typeof args.category === 'string' ? args.category.toLowerCase() : null;
 	const pool = category ? PATTERNS.filter((pattern) => pattern.category === category) : PATTERNS;
 	// NOT a no-match: an unrecognised category filter means the query never ran, so this is a client
 	// bug. Classifying it `empty` would fill the capability-gaps report with typo'd filter names.
-	if (category && pool.length === 0) return errorResult(noMatchHelp(`category "${category}"`), 'invalid_args');
+	if (category && pool.length === 0) {
+		return errorResult(noMatchHelp(`category "${category}"`), 'invalid_args', [LIST_EVERYTHING]);
+	}
 	const scored = scorePatterns(query, pool).slice(0, limit);
 	if (scored.length === 0) return noMatchResult(`query "${query}"`);
 	const lines = scored.map(
@@ -232,7 +273,9 @@ function getPattern(args: Record<string, unknown>): ToolResult {
 	// text and into the telemetry row, so an unbounded id is a reflection channel.
 	const id = boundedString(args.id);
 	if (id === null) {
-		return errorResult(`"id" must be a string of at most ${MAX_ARG_CHARS} characters.`, 'invalid_args');
+		return errorResult(`"id" must be a string of at most ${MAX_ARG_CHARS} characters.`, 'invalid_args', [
+			LIST_EVERYTHING,
+		]);
 	}
 	const pattern = buildById().get(id);
 	if (!pattern) {
@@ -240,6 +283,10 @@ function getPattern(args: Record<string, unknown>): ToolResult {
 		return errorResult(
 			`No pattern with id "${id}". Valid ids: ${PATTERNS.map((entry) => entry.id).join(', ')}.`,
 			'not_found',
+			[
+				{ tool: 'get_pattern', args: { id: PATTERNS[0].id }, why: 'a valid id from the list above.' },
+				{ tool: 'search_patterns', args: { query: 'pattern' }, why: 'find the right id by capability.' },
+			],
 		);
 	}
 	return textResult(patternCard(pattern));
@@ -248,14 +295,16 @@ function getPattern(args: Record<string, unknown>): ToolResult {
 function getFileExcerpt(args: Record<string, unknown>): ToolResult {
 	const path = boundedString(args.path);
 	if (path === null) {
-		return errorResult(`"path" must be a string of at most ${MAX_ARG_CHARS} characters.`, 'invalid_args');
+		return errorResult(`"path" must be a string of at most ${MAX_ARG_CHARS} characters.`, 'invalid_args', [
+			{ tool: 'get_pattern', why: 'pattern cards list the repo-relative paths this tool can read.' },
+		]);
 	}
 	const startLine = typeof args.start_line === 'number' ? args.start_line : 1;
 	const lineCount = typeof args.line_count === 'number' ? args.line_count : DEFAULT_LINES;
 	const excerpt = readAllowlistedExcerpt(path, startLine, lineCount);
 	// The discriminated union carries the reason across; there is deliberately no `??` fallback,
 	// because a default here is how a new failure branch would silently get the wrong reason.
-	return excerpt.ok ? textResult(excerpt.text) : errorResult(excerpt.text, excerpt.diag);
+	return excerpt.ok ? textResult(excerpt.text) : errorResult(excerpt.text, excerpt.diag, excerpt.next);
 }
 
 function traceCapability(args: Record<string, unknown>): ToolResult {
@@ -264,6 +313,7 @@ function traceCapability(args: Record<string, unknown>): ToolResult {
 		return errorResult(
 			`trace_capability needs a non-empty "capability" string of at most ${MAX_ARG_CHARS} characters, e.g. {"capability": "approval gate"}.`,
 			'invalid_args',
+			[{ tool: 'trace_capability', args: { capability: 'approval gate' }, why: 'a well-formed example call.' }],
 		);
 	}
 	const scored = scorePatterns(capability).slice(0, 3);
@@ -295,6 +345,13 @@ function recommendPlan(args: Record<string, unknown>): ToolResult {
 		return errorResult(
 			`"capabilities" accepts at most ${MAX_CAPABILITIES} entries; got ${args.capabilities.length}. Split the request.`,
 			'invalid_args',
+			[
+				{
+					tool: 'recommend_emulation_plan',
+					args: { capabilities: ['layered RAG', 'background jobs'] },
+					why: 'retry with the first batch of at most 20 capabilities.',
+				},
+			],
 		);
 	}
 	const capabilities = Array.isArray(args.capabilities)
@@ -306,6 +363,13 @@ function recommendPlan(args: Record<string, unknown>): ToolResult {
 		return errorResult(
 			`recommend_emulation_plan needs "capabilities": a non-empty array of 1-${MAX_CAPABILITIES} strings, each at most ${MAX_ARG_CHARS} characters, e.g. ["layered RAG", "background jobs"].`,
 			'invalid_args',
+			[
+				{
+					tool: 'recommend_emulation_plan',
+					args: { capabilities: ['layered RAG', 'background jobs'] },
+					why: 'a well-formed example call.',
+				},
+			],
 		);
 	}
 	const includeDeps = args.include_dependencies !== false;
@@ -367,12 +431,32 @@ function recommendPlan(args: Record<string, unknown>): ToolResult {
 	);
 }
 
+function validateSnippetTool(args: Record<string, unknown>): ToolResult {
+	// Its own bound, not MAX_ARG_CHARS: a snippet is legitimately larger than any other
+	// argument on this surface, and the bound is stated in the schema. Refuse rather than
+	// truncate — a partially validated snippet reads as clean and is not.
+	const snippet = typeof args.snippet === 'string' && args.snippet.length <= MAX_SNIPPET_CHARS ? args.snippet : null;
+	if (snippet === null || snippet.trim().length === 0) {
+		return errorResult(
+			`"snippet" must be a non-empty string of at most ${MAX_SNIPPET_CHARS} characters. Refused rather than truncated — a partially validated snippet reads as clean.`,
+			'invalid_args',
+			[{ tool: 'validate_snippet', args: { language: 'svelte' }, why: 'resubmit with the snippet argument set.' }],
+		);
+	}
+	const language = args.language === 'ts' ? 'ts' : 'svelte';
+	// Findings are a SUCCESS, not an error: this is a completed validation, an isError
+	// would make agent loops treat the normal case as a failure, and it would mint
+	// mcp.call_log rows that corrupt the capability-gaps meter.
+	return textResult(renderReport(validateSnippet(snippet, language)));
+}
+
 const HANDLERS: Record<string, (args: Record<string, unknown>) => ToolResult> = {
 	search_patterns: searchPatterns,
 	get_pattern: getPattern,
 	get_file_excerpt: getFileExcerpt,
 	trace_capability: traceCapability,
 	recommend_emulation_plan: recommendPlan,
+	validate_snippet: validateSnippetTool,
 };
 
 /** The public read-only Pattern MCP registry. */
@@ -384,6 +468,7 @@ export const publicPatternRegistry: ToolRegistry = {
 			return errorResult(
 				`Unknown tool "${name}". Available: ${PATTERN_TOOLS.map((tool) => tool.name).join(', ')}.`,
 				'unknown_tool',
+				[LIST_EVERYTHING],
 			);
 		}
 		return handler(isRecord(args) ? args : {});
@@ -391,4 +476,4 @@ export const publicPatternRegistry: ToolRegistry = {
 };
 
 export const PUBLIC_MCP_INSTRUCTIONS =
-	'Hosted, read-only mirror of the v10r pattern library. search_patterns / trace_capability to find the canonical pattern, get_pattern for its full card with invariants, get_file_excerpt to read allowlisted reference files, recommend_emulation_plan for a dependency-ordered build plan. Read-only: no state is mutated.';
+	'Hosted, read-only mirror of the v10r pattern library. search_patterns / trace_capability to find the canonical pattern, get_pattern for its full card with invariants, get_file_excerpt to read allowlisted reference files, recommend_emulation_plan for a dependency-ordered build plan, validate_snippet to check code you wrote against v10r conventions (loop on it until clean). Read-only: no state is mutated.';

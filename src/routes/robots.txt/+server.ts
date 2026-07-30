@@ -64,6 +64,12 @@ export const GET: RequestHandler = async () => {
 			'Disallow: /de/impressum',
 			'Disallow: /ru/impressum',
 			'',
+			// A comment, not an invented directive — no `Llms-Txt:` directive is
+			// registered anywhere, and unknown directives are ignored anyway. The
+			// real advertisement is the `Link: </llms.txt>; rel="llms-txt"` header
+			// on every /docs response; this line is for humans reading robots.txt.
+			'# Agent-facing URL map (llmstxt.org): https://www.v10r.dev/llms.txt',
+			'',
 			`Sitemap: ${SITEMAP_URL}`,
 			'',
 		].join('\n');

@@ -40,7 +40,7 @@ Layer                    Canonical Home
 
 The seven layers collapse into two physical spines:
 
-- **Composition root** — `src/hooks.server.ts` wires together Layers 1–3: it boots background modules, runs a 12-stage `sequence()` of `Handle` middleware, and hands a fully populated `event.locals` to every route adapter.
+- **Composition root** — `src/hooks.server.ts` wires together Layers 1–3: it boots background modules, runs a 14-stage `sequence()` of `Handle` middleware, and hands a fully populated `event.locals` to every route adapter.
 - **Hexagonal core** — `src/lib/server/[domain]/` houses Layers 4–6: framework-free domain modules that any adapter (UI, REST, AI tool, job) can call without modification.
 
 ---
@@ -103,22 +103,24 @@ import '$lib/server/jobs/scheduler'
 import '$lib/server/jobs/delivery-scheduler'
 ```
 
-The main export is a `sequence()` of twelve `Handle` middlewares that mutate the shared `event.locals` bus in order. Each handler writes named fields and, in some cases, short-circuits the chain with a response before downstream handlers run.
+The main export is a `sequence()` of fourteen `Handle` middlewares that mutate the shared `event.locals` bus in order. Each handler writes named fields and, in some cases, short-circuits the chain with a response before downstream handlers run.
 
 | # | Handler | Writes to `event.locals` | Short-circuits? | Why this order |
 |---|---------|--------------------------|-----------------|----------------|
 | 1 | `securityHeaders` | `clientIp`; sets `x-client-ip` | No | Must be first — auth pins `ipAddressHeaders: ['x-client-ip']`; attacker-mutable headers are fixed here. Emits the full security-header set (see [Security Headers](#security-headers-set)) |
-| 2 | `stripBaseLocalePrefix` | — | 308 on `/en/*` paths | Canonical URL before Paraglide resolves locale |
-| 3 | `loadStyle` | `style`, `customPaletteColors`, `customPaletteAccentOffset` | No | Before i18n, which injects the palette `<style>` block. Custom-palette DB lookups go through an in-memory TTL cache |
-| 4 | `i18n` (Paraglide) | `locale` | No | Wraps `resolve` with `transformPageChunk` to fill `%lang%/%palette%/%typography%/%radius%` and inject custom-palette CSS |
-| 5 | `authCaptchaGate` | — | Decision response on captcha/rate-limit fail | Before `authHandler` — gate must run before Better Auth consumes the request body |
-| 6 | `authHandler` | — | 429 on rate-limit exceed | Better Auth `svelteKitHandler` + Upstash rate-limit on `/api/auth/*` keyed by `clientIp` |
-| 7 | `sessionPopulate` | `user`, `session`, `grants` | No | Must run AFTER `authHandler` (Better Auth #2188: `svelteKitHandler` does not populate locals). Fast-path skips DB if session cookie absent |
-| 8 | `csrfProtection` | — | 403 on mutating `/api/*` without `X-Requested-With` or mismatched origin | Exempt: `/api/auth/`, `/api/cron/`, `/api/webhooks/`, `/api/analytics/journey` |
-| 9 | `consentLoader` | `consentTier` (default `'necessary'`) | No | Before route handlers need consent tier |
-| 10 | `debugOwnerLoader` | `debugOwnerId` | No | Verifies `v10r_debug_owner` HMAC cookie; fail-closed; independent of Better Auth |
-| 11 | `devRouteGuard` | — | 404 on `(dev)` routes outside DEV | — |
-| 12 | `analyticsCollector` | — | No | Last; consumes `consentTier` + `debugOwnerId`; fire-and-forget post-resolve. The `_v10r_sid` cookie is consent-gated (TDDDG §25 / ePrivacy Art 5(3)): set only at `analytics`+ tier; at `necessary` it deletes any stale cookie and falls back to a cookieless daily session id |
+| 2 | `bodySizeFloor` | — | 413 when a mutating request declares > `MAX_REQUEST_BYTES` | Advisory floor before `authHandler` consumes `/api/auth/*` bodies; the enforceable bound is `readJsonBounded` at the endpoints |
+| 3 | `stripBaseLocalePrefix` | — | 308 on `/en/*` paths | Canonical URL before Paraglide resolves locale |
+| 4 | `docsMarkdown` | — | 200 markdown on `/docs/**.md`, 303 on negotiated clean URLs, 308 on locale-prefixed `.md` | The agent-facing `.md` layer. Above `loadStyle`/`i18n` so no Set-Cookie ever lands on a cacheable markdown response, and short-circuited responses skip analytics |
+| 5 | `loadStyle` | `style`, `customPaletteColors`, `customPaletteAccentOffset` | No | Before i18n, which injects the palette `<style>` block. Custom-palette DB lookups go through an in-memory TTL cache |
+| 6 | `i18n` (Paraglide) | `locale` | No | Wraps `resolve` with `transformPageChunk` to fill `%lang%/%palette%/%typography%/%radius%` and inject custom-palette CSS |
+| 7 | `authCaptchaGate` | — | Decision response on captcha/rate-limit fail | Before `authHandler` — gate must run before Better Auth consumes the request body |
+| 8 | `authHandler` | — | 429 on rate-limit exceed | Better Auth `svelteKitHandler` + Upstash rate-limit on `/api/auth/*` keyed by `clientIp` |
+| 9 | `csrfProtection` | — | 403 on mutating `/api/*` without `X-Requested-With` or mismatched origin | Exempt: `/api/auth/`, `/api/cron/`, `/api/webhooks/`, `/api/analytics/journey`, `/api/mcp/` |
+| 10 | `sessionPopulate` | `user`, `session`, `grants` | No | Must run AFTER `authHandler` (Better Auth #2188: `svelteKitHandler` does not populate locals). Fast-path skips DB if session cookie absent |
+| 11 | `consentLoader` | `consentTier` (default `'necessary'`) | No | Before route handlers need consent tier |
+| 12 | `debugOwnerLoader` | `debugOwnerId` | No | Verifies `v10r_debug_owner` HMAC cookie; fail-closed; independent of Better Auth |
+| 13 | `devRouteGuard` | — | 404 on `(dev)` routes outside DEV | — |
+| 14 | `analyticsCollector` | — | No | Last; consumes `consentTier` + `debugOwnerId`; fire-and-forget post-resolve. The `_v10r_sid` cookie is consent-gated (TDDDG §25 / ePrivacy Art 5(3)): set only at `analytics`+ tier; at `necessary` it deletes any stale cookie and falls back to a cookieless daily session id |
 
 The terminating error handler `handleError` mints an `errorId` (`crypto.randomUUID()`), emits one structured JSON log line, and returns `{ message, errorId }` to the client — never raw error details.
 
@@ -425,7 +427,7 @@ HTTP edge
   │
   ▼
 hooks.server.ts  sequence()  ──────────────────────────────────────────┐
-  │  (12 stages, mutate event.locals)                                  │
+  │  (14 stages, mutate event.locals)                                  │
   │  [securityHeaders → stripBaseLocalePrefix → loadStyle → i18n →     │
   │   authCaptchaGate → authHandler → sessionPopulate →                │
   │   csrfProtection → consentLoader → debugOwnerLoader →              │

@@ -1,11 +1,12 @@
 /**
- * The five read-only tools of the v10r Pattern MCP: definitions (name/description/inputSchema
+ * The six read-only tools of the v10r Pattern MCP: definitions (name/description/inputSchema
  * only — no outputSchema/title/annotations, which trigger a Claude Code bug that silently drops
  * the whole server's tool list) and their handlers over the pattern registry.
  */
 import type { PatternRecord, Registry, RegRef } from './registry.ts';
 import { buildById, topoSort } from './registry.ts';
 import { DEFAULT_LINES, MAX_LINES, readExcerpt } from './security.ts';
+import { validateSnippetStdio } from './snippet.ts';
 
 export interface ToolDef {
 	name: string;
@@ -131,6 +132,29 @@ export const TOOLS: ToolDef[] = [
 			required: ['capabilities'],
 		},
 	},
+	{
+		name: 'validate_snippet',
+		description:
+			'Validate a Svelte or TypeScript snippet against v10r conventions (Svelte 5 runes, component-first, design tokens, Valibot). Returns line-numbered findings with fixes — findings are a successful validation, not an error. Call in a loop: submit, apply the fixes, resubmit until it reports clean.',
+		inputSchema: {
+			type: 'object',
+			additionalProperties: false,
+			properties: {
+				snippet: {
+					type: 'string',
+					description:
+						'The code to validate (at most 20000 characters — larger snippets are refused, never truncated).',
+				},
+				language: {
+					type: 'string',
+					enum: ['svelte', 'ts'],
+					default: 'svelte',
+					description: "Snippet language. Default 'svelte'.",
+				},
+			},
+			required: ['snippet'],
+		},
+	},
 ];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -146,9 +170,37 @@ function text(body: string): ToolResult {
 	return { content: [{ type: 'text', text: body }] };
 }
 
-function fail(body: string): ToolResult {
-	return { content: [{ type: 'text', text: body }], isError: true };
+/**
+ * Zero-dep mirror of the hosted Next-actions convention (src/lib/server/mcp/types.ts —
+ * never imported from here; mcp/ stays standalone). The heading literal is pinned to the
+ * hosted one by next-actions.gate.test.ts. `args` values are ALWAYS literals we wrote,
+ * never caller text.
+ */
+export const NEXT_ACTIONS_HEADING = '## Next actions';
+
+interface NextAction {
+	tool: string;
+	args?: Record<string, unknown>;
+	why: string;
 }
+
+/** `actions` is required for the same reason the hosted `errorResult` requires it: a new
+ *  error branch that strands the caller must be a missing-argument error, not a review miss. */
+function fail(body: string, actions: readonly NextAction[]): ToolResult {
+	const lines = actions.slice(0, 3).map((action, index) => {
+		const args = action.args ? ` ${JSON.stringify(action.args)}` : '';
+		return `${index + 1}. \`${action.tool}\`${args} — ${action.why}`;
+	});
+	const body2 = actions.length === 0 ? body : `${body}\n\n${NEXT_ACTIONS_HEADING}\n${lines.join('\n')}`;
+	return { content: [{ type: 'text', text: body2 }], isError: true };
+}
+
+/** The universal fallback step: `{query: "pattern"}` matches every record, so it lists the library. */
+const LIST_EVERYTHING: NextAction = {
+	tool: 'search_patterns',
+	args: { query: 'pattern' },
+	why: 'lists every pattern in the library.',
+};
 
 export function tokenize(input: string): string[] {
 	return input
@@ -247,17 +299,22 @@ function patternCard(pattern: PatternRecord): string {
 function searchPatterns(args: Record<string, unknown>, registry: Registry): ToolResult {
 	const query = typeof args.query === 'string' ? args.query : '';
 	if (query.trim().length === 0) {
-		return fail('search_patterns needs a non-empty "query" string, e.g. {"query": "background jobs"}.');
+		return fail('search_patterns needs a non-empty "query" string, e.g. {"query": "background jobs"}.', [
+			{ tool: 'search_patterns', args: { query: 'background jobs' }, why: 'a well-formed example call.' },
+		]);
 	}
 	const limit = typeof args.limit === 'number' ? Math.min(Math.max(1, Math.floor(args.limit)), 20) : 5;
 	const category = typeof args.category === 'string' ? args.category.toLowerCase() : null;
 	const pool = category ? registry.patterns.filter((pattern) => pattern.category === category) : registry.patterns;
 	if (category && pool.length === 0) {
-		return fail(noMatchHelp(registry, `category "${category}"`));
+		return fail(noMatchHelp(registry, `category "${category}"`), [LIST_EVERYTHING]);
 	}
 	const scored = scorePatterns(query, pool).slice(0, limit);
 	if (scored.length === 0) {
-		return fail(noMatchHelp(registry, `query "${query}"`));
+		return fail(noMatchHelp(registry, `query "${query}"`), [
+			LIST_EVERYTHING,
+			{ tool: 'trace_capability', args: { capability: 'rag' }, why: 'traces one capability end to end as a model.' },
+		]);
 	}
 	const lines = scored.map(
 		(hit, index) =>
@@ -274,7 +331,14 @@ function getPattern(args: Record<string, unknown>, registry: Registry): ToolResu
 	const pattern = byId.get(id);
 	if (!pattern) {
 		const ids = registry.patterns.map((entry) => entry.id).join(', ');
-		return fail(`No pattern with id "${id}". Valid ids: ${ids}.`);
+		return fail(`No pattern with id "${id}". Valid ids: ${ids}.`, [
+			{
+				tool: 'get_pattern',
+				args: { id: registry.patterns[0]?.id ?? 'multi-client-core' },
+				why: 'a valid id from the list above.',
+			},
+			{ tool: 'search_patterns', args: { query: 'pattern' }, why: 'find the right id by capability.' },
+		]);
 	}
 	return text(patternCard(pattern));
 }
@@ -287,10 +351,14 @@ function getFileExcerpt(args: Record<string, unknown>, root?: string): ToolResul
 	try {
 		excerpt = root ? readExcerpt(path, startLine, lineCount, root) : readExcerpt(path, startLine, lineCount);
 	} catch (cause) {
-		return fail(`could not read '${path}': ${String(cause)}`);
+		return fail(`could not read '${path}': ${String(cause)}`, [
+			{ tool: 'get_pattern', why: 'pattern cards list the repo-relative paths this tool can read.' },
+		]);
 	}
 	if (!excerpt.ok) {
-		return fail(excerpt.text);
+		return fail(excerpt.text, [
+			{ tool: 'get_pattern', why: 'pattern cards list the repo-relative paths this tool can read.' },
+		]);
 	}
 	return text(excerpt.text);
 }
@@ -298,11 +366,13 @@ function getFileExcerpt(args: Record<string, unknown>, root?: string): ToolResul
 function traceCapability(args: Record<string, unknown>, registry: Registry): ToolResult {
 	const capability = typeof args.capability === 'string' ? args.capability : '';
 	if (capability.trim().length === 0) {
-		return fail('trace_capability needs a non-empty "capability" string, e.g. {"capability": "approval gate"}.');
+		return fail('trace_capability needs a non-empty "capability" string, e.g. {"capability": "approval gate"}.', [
+			{ tool: 'trace_capability', args: { capability: 'approval gate' }, why: 'a well-formed example call.' },
+		]);
 	}
 	const scored = scorePatterns(capability, registry.patterns).slice(0, 3);
 	if (scored.length === 0) {
-		return fail(noMatchHelp(registry, `capability "${capability}"`));
+		return fail(noMatchHelp(registry, `capability "${capability}"`), [LIST_EVERYTHING]);
 	}
 	const sections = scored.map((hit) => {
 		const pattern = hit.pattern;
@@ -328,6 +398,13 @@ function recommendPlan(args: Record<string, unknown>, registry: Registry): ToolR
 	if (capabilities.length === 0) {
 		return fail(
 			'recommend_emulation_plan needs "capabilities": a non-empty array of strings, e.g. ["layered RAG", "background jobs"].',
+			[
+				{
+					tool: 'recommend_emulation_plan',
+					args: { capabilities: ['layered RAG', 'background jobs'] },
+					why: 'a well-formed example call.',
+				},
+			],
 		);
 	}
 	const includeDeps = args.include_dependencies !== false;
@@ -347,7 +424,7 @@ function recommendPlan(args: Record<string, unknown>, registry: Registry): ToolR
 		}
 	}
 	if (satisfies.size === 0) {
-		return fail(noMatchHelp(registry, `capabilities [${capabilities.join(', ')}]`));
+		return fail(noMatchHelp(registry, `capabilities [${capabilities.join(', ')}]`), [LIST_EVERYTHING]);
 	}
 	const selected = new Set(satisfies.keys());
 	if (includeDeps) {
@@ -399,15 +476,32 @@ function recommendPlan(args: Record<string, unknown>, registry: Registry): ToolR
 export function handleToolCall(name: string, args: unknown, ctx: ToolContext): ToolResult {
 	const known = TOOLS.some((tool) => tool.name === name);
 	if (!known) {
-		return fail(`Unknown tool "${name}". Available: ${TOOLS.map((tool) => tool.name).join(', ')}.`);
+		return fail(`Unknown tool "${name}". Available: ${TOOLS.map((tool) => tool.name).join(', ')}.`, [LIST_EVERYTHING]);
 	}
 	const params = isRecord(args) ? args : {};
 	if (name === 'get_file_excerpt') {
 		return getFileExcerpt(params, ctx.root);
 	}
+	if (name === 'validate_snippet') {
+		// Findings are a SUCCESS (a completed validation); only malformed arguments or a
+		// broken rule file are errors.
+		const outcome = ctx.root ? validateSnippetStdio(params, ctx.root) : validateSnippetStdio(params);
+		return outcome.ok
+			? text(outcome.text)
+			: fail(outcome.text, [
+					{ tool: 'validate_snippet', args: { language: 'svelte' }, why: 'resubmit with the snippet argument set.' },
+				]);
+	}
 	if (!ctx.registry) {
 		return fail(
 			`The pattern registry failed to load: ${ctx.loadError ?? 'unknown error'}. Fix mcp/patterns.registry.json and restart.`,
+			[
+				{
+					tool: 'get_file_excerpt',
+					args: { path: 'mcp/patterns.registry.json' },
+					why: 'still works without the registry — read the file to see what is malformed.',
+				},
+			],
 		);
 	}
 	switch (name) {
@@ -420,6 +514,6 @@ export function handleToolCall(name: string, args: unknown, ctx: ToolContext): T
 		case 'recommend_emulation_plan':
 			return recommendPlan(params, ctx.registry);
 		default:
-			return fail(`Tool "${name}" is defined but has no handler — this is a server bug.`);
+			return fail(`Tool "${name}" is defined but has no handler — this is a server bug.`, [LIST_EVERYTHING]);
 	}
 }

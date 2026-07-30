@@ -19,7 +19,7 @@ podman run -i --rm --network=none -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 b
 | `protocol.ts` | JSON-RPC framing and line buffering |
 | `registry.ts` | Types, structural validation, topological sort |
 | `security.ts` | Path containment (realpath prefix check) + secret denylist + bounded excerpts |
-| `tools.ts` | The five tools |
+| `tools.ts` | The six tools |
 | `validate-registry.ts` | Drift guard: every referenced path must exist; DAG check. Wired into `bun run validate` as `mcp:validate` |
 | `server.test.ts` / `smoke.ts` | `bun:test` units / spawned-subprocess handshake test |
 
@@ -59,7 +59,7 @@ Add a record to `patterns.registry.json` (copy an existing one's shape), then ru
 
 ## Also served over HTTP (read-only)
 
-This same curated registry is also exposed read-only at `POST /api/mcp/public` — no bearer token, same five tools, no mutation path. It's a separate hosted trust surface built on top of a shared transport, not a change to anything in this directory: the local stdio server described above is unchanged, remains read-only, and keeps running exactly as documented — ephemeral container, network-isolated, repo mounted `:ro`. There is also a separate, unrelated private admin MCP (`/api/mcp/admin`, bearer-gated, demo-state tools only) that has nothing to do with the pattern registry. Full detail: [docs/blueprint/architecture/hosted-mcp.md](../docs/blueprint/architecture/hosted-mcp.md).
+This same curated registry is also exposed read-only at `POST /api/mcp/public` — no bearer token, same six tools, no mutation path. It's a separate hosted trust surface built on top of a shared transport, not a change to anything in this directory: the local stdio server described above is unchanged, remains read-only, and keeps running exactly as documented — ephemeral container, network-isolated, repo mounted `:ro`. There is also a separate, unrelated private admin MCP (`/api/mcp/admin`, bearer-gated, demo-state tools only) that has nothing to do with the pattern registry. Full detail: [docs/blueprint/architecture/hosted-mcp.md](../docs/blueprint/architecture/hosted-mcp.md).
 
 ## Constraints worth knowing
 

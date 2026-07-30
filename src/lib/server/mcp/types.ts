@@ -141,6 +141,43 @@ export function textResult(body: string): ToolResult {
 }
 
 /**
+ * A concrete next step handed to the caller on every registry-produced error (the
+ * "self-reflective API" pattern: agents recover measurably better from a named next
+ * call than from prose alone).
+ *
+ * `args` values are ALWAYS literals the registry wrote — never caller text. The
+ * existing bounded-echo discipline (get_pattern's id reflection) is the ceiling;
+ * this block must add no echo surface of its own.
+ */
+export interface NextAction {
+	tool: string;
+	args?: Record<string, string | number | boolean | readonly string[]>;
+	why: string;
+}
+
+export const NEXT_ACTIONS_HEADING = '## Next actions';
+export const MAX_NEXT_ACTIONS = 3;
+
+/**
+ * Renders the trailer as TEXT inside the body. Not a structured result field: both
+ * surfaces are text-only by hard-won convention (structuredContent makes Claude Code
+ * hide the text body entirely), and a markdown block with a fixed heading is exactly
+ * as machine-parsable while staying visible.
+ *
+ * Never throws — a throw inside a handler would surface as a diag-less transport
+ * error and corrupt the `tool_error` meter. An empty array returns the body
+ * unchanged; the gate test, not this function, forbids the empty case.
+ */
+export function withNextActions(body: string, actions: readonly NextAction[]): string {
+	if (actions.length === 0) return body;
+	const lines = actions.slice(0, MAX_NEXT_ACTIONS).map((action, index) => {
+		const args = action.args ? ` ${JSON.stringify(action.args)}` : '';
+		return `${index + 1}. \`${action.tool}\`${args} — ${action.why}`;
+	});
+	return `${body}\n\n${NEXT_ACTIONS_HEADING}\n${lines.join('\n')}`;
+}
+
+/**
  * `diag` is REQUIRED, and that is load-bearing rather than pedantic.
  *
  * The transport builds two `isError` results as inline literals that never come through here
@@ -148,7 +185,10 @@ export function textResult(body: string): ToolResult {
  * recorder can infer `isError && diag === undefined ⟹ the transport produced this` — a TOTAL
  * inference, and total only because this parameter is required. Make it optional and that branch
  * becomes a guess, which in turn breaks `tool_error`, the meter that reports uninstrumented sites.
+ *
+ * `next` is required for the same reason: a new error branch that strands the caller
+ * without a recovery step must be a compile error, not a review miss.
  */
-export function errorResult(body: string, diag: ToolDiag): ToolResult {
-	return { content: [{ type: 'text', text: body }], isError: true, diag };
+export function errorResult(body: string, diag: ToolDiag, next: readonly NextAction[]): ToolResult {
+	return { content: [{ type: 'text', text: withNextActions(body, next) }], isError: true, diag };
 }

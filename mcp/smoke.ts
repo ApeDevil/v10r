@@ -83,6 +83,15 @@ const requests: string[] = [
 		method: 'tools/call',
 		params: { name: 'get_pattern', arguments: { id: 'does-not-exist' } },
 	}),
+	JSON.stringify({
+		jsonrpc: '2.0',
+		id: 11,
+		method: 'tools/call',
+		params: {
+			name: 'validate_snippet',
+			arguments: { language: 'svelte', snippet: '<script>\nexport let value;\n</script>\n<button>go</button>' },
+		},
+	}),
 ];
 
 const child = Bun.spawn(['bun', join(import.meta.dir, 'server.ts')], {
@@ -107,7 +116,7 @@ for (const line of raw.split('\n').filter((entry) => entry.trim().length > 0)) {
 }
 
 check('child exits 0 on stdin EOF', exitCode === 0, `exit ${exitCode}`);
-check('exactly 10 responses (notification got none)', replies.size === 10, `${replies.size}`);
+check('exactly 11 responses (notification got none)', replies.size === 11, `${replies.size}`);
 
 const init = replies.get(1)?.result;
 check('initialize: serverInfo.name', init?.serverInfo?.name === 'v10r-patterns');
@@ -115,7 +124,7 @@ check('initialize: protocolVersion echoed', init?.protocolVersion === '2025-11-2
 check('initialize: non-empty instructions', (init?.instructions?.length ?? 0) > 100);
 
 const tools = replies.get(2)?.result?.tools ?? [];
-check('tools/list: exactly 5 tools', tools.length === 5, `${tools.length}`);
+check('tools/list: exactly 6 tools', tools.length === 6, `${tools.length}`);
 const FORBIDDEN = ['outputSchema', 'title', 'annotations'];
 for (const tool of tools) {
 	const bad = FORBIDDEN.filter((key) => key in tool);
@@ -151,7 +160,22 @@ for (const id of [8, 9, 10]) {
 		`negative #${id}: isError with message`,
 		result?.isError === true && (result?.content?.[0]?.text.length ?? 0) > 0,
 	);
+	check(
+		`negative #${id}: hands the caller a next step`,
+		replies.get(id)?.result?.content?.[0]?.text.includes('## Next actions') === true,
+	);
 }
+
+// validate_snippet: findings are a SUCCESS (no isError), and the dirty fixture must
+// trip both the Svelte-4 prop rule and the component-first rule.
+const snippetReport = replies.get(11)?.result;
+check('validate_snippet: findings without isError', snippetReport?.isError !== true);
+check(
+	'validate_snippet: flags export let and raw button',
+	(snippetReport?.content?.[0]?.text.includes('svelte4-export-let') ?? false) &&
+		(snippetReport?.content?.[0]?.text.includes('raw-element') ?? false),
+	snippetReport?.content?.[0]?.text.slice(0, 120),
+);
 
 console.error(failures === 0 ? 'SMOKE OK' : `SMOKE FAILED: ${failures} assertion(s)`);
 process.exit(failures === 0 ? 0 : 1);

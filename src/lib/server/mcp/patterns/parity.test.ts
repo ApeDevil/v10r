@@ -14,11 +14,11 @@ describe('hosted ↔ stdio pattern-tool parity', () => {
 	const stdioToolNames = new Set([...stdioSource.matchAll(/name:\s*'([a-z_]+)'/g)].map((m) => m[1]));
 	const hostedToolNames = PATTERN_TOOLS.map((t) => t.name);
 
-	it('exposes the same five tool names in both runtimes', () => {
+	it('exposes the same six tool names in both runtimes', () => {
 		expect([...stdioToolNames].sort()).toEqual([...hostedToolNames].sort());
 	});
 
-	it('has exactly five public pattern tools', () => {
-		expect(hostedToolNames).toHaveLength(5);
+	it('has exactly six public pattern tools', () => {
+		expect(hostedToolNames).toHaveLength(6);
 	});
 });

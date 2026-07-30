@@ -5,7 +5,15 @@
  * so the business rules are shared with the admin page and never duplicated in a route handler.
  */
 import { buildInfo } from '../server-info';
-import { errorResult, type ToolDef, type ToolDiag, type ToolRegistry, type ToolResult, textResult } from '../types';
+import {
+	errorResult,
+	type NextAction,
+	type ToolDef,
+	type ToolDiag,
+	type ToolRegistry,
+	type ToolResult,
+	textResult,
+} from '../types';
 import { DEMO_COLORS } from './constants';
 import {
 	type DemoActor,
@@ -93,8 +101,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 /**
  * The demo service already reports WHY it refused, out-of-band, via `code`. Mapping that onto the
- * telemetry vocabulary keeps one source of truth instead of re-deriving the reason from the
- * human-readable message.
+ * telemetry vocabulary AND a recovery step keeps one source of truth instead of re-deriving the
+ * reason from the human-readable message.
  *
  * `conflict` is deliberately not folded into `invalid_args`: losing an optimistic-concurrency race
  * on a singleton row is neither a client bug nor a crash, and on a surface with one authorised
@@ -102,18 +110,33 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  *
  * The `never` arm makes a newly-added service code a compile error rather than a silent default.
  */
-function diagFor(code: 'invalid_message' | 'invalid_color' | 'conflict'): ToolDiag {
+function adviceFor(code: 'invalid_message' | 'invalid_color' | 'conflict'): {
+	diag: ToolDiag;
+	next: readonly NextAction[];
+} {
 	switch (code) {
 		case 'invalid_message':
 		case 'invalid_color':
-			return 'invalid_args';
+			return {
+				diag: 'invalid_args',
+				next: [{ tool: 'get_mcp_page_state', why: 'shows the current values and the accepted shape.' }],
+			};
 		case 'conflict':
-			return 'conflict';
+			return {
+				diag: 'conflict',
+				next: [{ tool: 'get_mcp_page_state', why: 'read the winning version, then retry the write once.' }],
+			};
 		default: {
 			const exhaustive: never = code;
 			return exhaustive;
 		}
 	}
+}
+
+/** Bridge a refused service result to an error result carrying both the diag and the recovery step. */
+function serviceError(message: string, code: 'invalid_message' | 'invalid_color' | 'conflict'): ToolResult {
+	const advice = adviceFor(code);
+	return errorResult(message, advice.diag, advice.next);
 }
 
 function stateBlock(state: DemoStateView): string {
@@ -174,17 +197,17 @@ export function createAdminStateRegistry(actor: DemoActor = ADMIN_MCP_ACTOR): To
 				return textResult(renderState(await getDemoState()));
 			case 'set_mcp_page_message': {
 				const result = await setDemoMessage(args.message, actor);
-				return result.ok ? textResult(renderMutation(result)) : errorResult(result.message, diagFor(result.code));
+				return result.ok ? textResult(renderMutation(result)) : serviceError(result.message, result.code);
 			}
 			case 'set_mcp_page_color': {
 				const result = await setDemoColor(args.color, actor);
-				return result.ok ? textResult(renderMutation(result)) : errorResult(result.message, diagFor(result.code));
+				return result.ok ? textResult(renderMutation(result)) : serviceError(result.message, result.code);
 			}
 			case 'reset_mcp_page_state': {
 				const result = await resetDemoState(actor);
 				return result.ok
 					? textResult(renderMutation({ ok: true, field: 'reset', before: result.before, after: result.after }))
-					: errorResult(result.message, diagFor(result.code));
+					: serviceError(result.message, result.code);
 			}
 			case 'get_mcp_page_history': {
 				const limit = typeof args.limit === 'number' ? args.limit : 10;
@@ -194,6 +217,7 @@ export function createAdminStateRegistry(actor: DemoActor = ADMIN_MCP_ACTOR): To
 				return errorResult(
 					`Unknown tool "${name}". Available: ${ADMIN_STATE_TOOLS.map((tool) => tool.name).join(', ')}.`,
 					'unknown_tool',
+					[{ tool: 'get_mcp_page_state', why: 'the read entry point for this surface.' }],
 				);
 		}
 	}

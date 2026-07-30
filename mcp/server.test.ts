@@ -188,6 +188,6 @@ describe('dispatch', () => {
 	test('ping and tools/list respond', () => {
 		expect(JSON.parse(dispatchLine('{"jsonrpc":"2.0","id":1,"method":"ping"}') ?? '{}').result).toEqual({});
 		const list = JSON.parse(dispatchLine('{"jsonrpc":"2.0","id":2,"method":"tools/list"}') ?? '{}');
-		expect(list.result.tools.length).toBe(5);
+		expect(list.result.tools.length).toBe(6);
 	});
 });

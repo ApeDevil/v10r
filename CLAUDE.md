@@ -164,6 +164,7 @@ Rules:
 - Biome linting and formatting → `biome`
 - Security patterns, CSRF, injection, headers → `security`
 - API contracts (REST, GraphQL, SSE, webhooks, AI tools), pagination, errors → `api-design`
+- v10r's own agent-facing surfaces — MCP tools (either runtime), Next-actions errors, validate_snippet, the .md docs layer, /llms.txt, AGENTS.md → `ax`
 - AI/LLM integration, streaming, RAG, tool calling, model routing, prompts → `ai-tools`
 - Testing patterns, Vitest, mocking, DB testing, AI testing → `testing`
 - Three.js, Threlte, 3D scenes, GLTF, physics → `3d`
@@ -192,6 +193,7 @@ Rules:
 | security | Security patterns, CSRF, injection, headers, rate limiting |
 | ai-tools | Vercel AI SDK v6, streaming, RAG, tool orchestration, model routing, prompt engineering |
 | api-design | API contracts (REST, GraphQL, SSE, webhooks, AI tools), pagination, errors |
+| ax | v10r agent-facing surfaces: MCP tool contracts (hosted+stdio), Next-actions, validate_snippet, .md docs layer, /llms.txt |
 | testing | Vitest patterns, SvelteKit mocking, DB testing, AI SDK testing, Svelte 5 state testing |
 | 3d | Three.js + Threlte patterns, physics, WebGL/WebGPU |
 | design-system | Design tokens, spacing/icon scale, zero-margin components |

@@ -34,6 +34,9 @@ import {
 	STEPUP_VERIFY_RATE_LIMIT_MAX,
 	STEPUP_VERIFY_RATE_LIMIT_WINDOW,
 } from '$lib/server/config';
+// 2c in the chain — the agent-facing `.md` layer over /docs. Lives in its own
+// module so its tests never import this file's heavy graph (schedulers, auth).
+import { docsMarkdown } from '$lib/server/docs/markdown-hook';
 import { logFeatureStatus } from '$lib/server/features';
 import { clearOwnerCookie, PAIRING_COOKIE, verifyOwnerCookie } from '$lib/server/pairing/cookie';
 import { isSameHost, needsCsrf } from '$lib/server/security/csrf';
@@ -621,6 +624,7 @@ export const handle = sequence(
 	securityHeaders,
 	bodySizeFloor,
 	stripBaseLocalePrefix,
+	docsMarkdown,
 	loadStyle,
 	i18n,
 	authCaptchaGate,

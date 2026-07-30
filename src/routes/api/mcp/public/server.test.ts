@@ -55,11 +55,18 @@ describe('POST /api/mcp/public', () => {
 		expect(body.result._meta).not.toHaveProperty('environment');
 	});
 
-	it('tools/list returns exactly the five pattern tools', async () => {
+	it('tools/list returns exactly the six pattern tools', async () => {
 		const res = await rpc('tools/list');
 		const body = await res.json();
 		expect(body.result.tools.map((t: { name: string }) => t.name).sort()).toEqual(
-			['get_file_excerpt', 'get_pattern', 'recommend_emulation_plan', 'search_patterns', 'trace_capability'].sort(),
+			[
+				'get_file_excerpt',
+				'get_pattern',
+				'recommend_emulation_plan',
+				'search_patterns',
+				'trace_capability',
+				'validate_snippet',
+			].sort(),
 		);
 	});
 

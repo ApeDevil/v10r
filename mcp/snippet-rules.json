@@ -1,0 +1,223 @@
+{
+	"version": "1.0.0",
+	"note": "Convention rules for the validate_snippet tool. Read by BOTH src/lib/server/mcp/snippet/rules.ts (hosted, static import) and mcp/snippet.ts (stdio, readFileSync) — the same shared-JSON pattern as patterns.registry.json; never import one runtime's engine into the other. Rules run per line; skipIf markers are checked against the matched line. {{COLOR_TOKENS}} is expanded at load time from src/app.css (--color-* names, longest first). The fixtures are the behavioral parity guard: the hosted engine test replays every one, and the stdio smoke run replays them against the live server.",
+	"maxSnippetChars": 20000,
+	"maxFindings": 50,
+	"rules": [
+		{
+			"id": "raw-element",
+			"severity": "error",
+			"languages": ["svelte"],
+			"pattern": "<(?:button|input|select|textarea)\\b",
+			"flags": "",
+			"skipIf": ["type=\"hidden\"", "type='hidden'", "type=\"checkbox\"", "type='checkbox'"],
+			"message": "Raw <button>/<input>/<select>/<textarea> bypasses the design system.",
+			"fix": "Use the project primitive from $lib/components (Button, Input, Select, Textarea). Documented exceptions: hidden inputs, checkboxes in table rows, numeric-value selects, specialized interactive regions.",
+			"docs": "/docs/blueprint/design/components.md"
+		},
+		{
+			"id": "hardcoded-color",
+			"severity": "error",
+			"languages": ["svelte", "ts"],
+			"pattern": "#[0-9a-fA-F]{3,8}\\b|\\brgba?\\(|\\bhsla?\\(|\\boklch\\(",
+			"flags": "",
+			"skipIf": ["var(--", "href="],
+			"message": "Hardcoded color value — all colors come from the CSS custom-property tokens in app.css.",
+			"fix": "Use a design token (var(--color-*) in CSS, or the matching UnoCSS utility class).",
+			"docs": "/docs/blueprint/design/tokens.md"
+		},
+		{
+			"id": "named-color",
+			"severity": "warn",
+			"languages": ["svelte", "ts"],
+			"pattern": ":\\s*['\"]?(?:red|blue|green|white|black|grey|gray|orange|purple|pink|yellow)['\"]?\\s*(?:[;,}!]|$)",
+			"flags": "",
+			"skipIf": ["var(--"],
+			"message": "Named CSS color — all colors come from the design tokens in app.css.",
+			"fix": "Use a design token (var(--color-*) in CSS, or the matching UnoCSS utility class).",
+			"docs": "/docs/blueprint/design/tokens.md"
+		},
+		{
+			"id": "token-opacity",
+			"severity": "error",
+			"languages": ["svelte", "ts"],
+			"pattern": "(?<![a-z0-9-])(?:bg|text|border|ring-offset|ring|outline|divide|fill|stroke|from|via|to|shadow|accent|caret|decoration|placeholder)-(?:{{COLOR_TOKENS}})/\\d{1,3}",
+			"flags": "",
+			"skipIf": [],
+			"message": "Opacity modifier on a CSS-variable color token — UnoCSS cannot decompose the variable, so this renders at FULL opacity.",
+			"fix": "Use scoped CSS instead: color-mix(in srgb, var(--color-x) NN%, transparent).",
+			"docs": "/docs/stack/unocss.md"
+		},
+		{
+			"id": "svelte4-export-let",
+			"severity": "error",
+			"languages": ["svelte"],
+			"pattern": "(?:^|[>;{])\\s*export\\s+let\\s",
+			"flags": "",
+			"skipIf": [],
+			"message": "Svelte 4 prop declaration — this project is Svelte 5 runes only.",
+			"fix": "Declare props with $props(): let { name = fallback } = $props();",
+			"docs": "/docs/stack/svelte.md"
+		},
+		{
+			"id": "svelte4-reactive",
+			"severity": "error",
+			"languages": ["svelte"],
+			"pattern": "(?:^|[>;{])\\s*\\$:\\s",
+			"flags": "",
+			"skipIf": [],
+			"message": "Svelte 4 reactive statement — this project is Svelte 5 runes only.",
+			"fix": "Use $derived for derived values or $effect for side effects.",
+			"docs": "/docs/stack/svelte.md"
+		},
+		{
+			"id": "svelte4-store-import",
+			"severity": "error",
+			"languages": ["svelte", "ts"],
+			"pattern": "from\\s+['\"]svelte\\/store['\"]",
+			"flags": "",
+			"skipIf": [],
+			"message": "svelte/store import — new code uses Svelte 5 runes, not stores.",
+			"fix": "Use $state (shared via a .svelte.ts module when cross-component) instead of writable/readable stores.",
+			"docs": "/docs/stack/svelte.md"
+		},
+		{
+			"id": "svelte4-on-directive",
+			"severity": "warn",
+			"languages": ["svelte"],
+			"pattern": "\\bon:(?:click|change|input|submit|keydown|keyup|focus|blur)=",
+			"flags": "",
+			"skipIf": [],
+			"message": "Svelte 4 event directive — Svelte 5 uses plain event attributes.",
+			"fix": "Replace on:click={...} with onclick={...} (same for other events).",
+			"docs": "/docs/stack/svelte.md"
+		},
+		{
+			"id": "zod-import",
+			"severity": "error",
+			"languages": ["svelte", "ts"],
+			"pattern": "from\\s+['\"]zod['\"]",
+			"flags": "",
+			"skipIf": [],
+			"message": "Zod import — validation in this project is Valibot v1 (+ Superforms for forms).",
+			"fix": "Use valibot: import * as v from 'valibot'; schemas compose with v.object/v.string/etc.",
+			"docs": "/docs/stack/valibot.md"
+		},
+		{
+			"id": "state-prop-name",
+			"severity": "warn",
+			"languages": ["svelte"],
+			"pattern": "\\{[^{}]*\\bstate\\b[^{}]*\\}[^=]*=\\s*\\$props\\(",
+			"flags": "",
+			"skipIf": [],
+			"message": "A prop named `state` collides with the $state rune (store_invalid_shape at runtime).",
+			"fix": "Rename the prop — e.g. `status`, `phase`, or a domain-specific name.",
+			"docs": "/docs/stack/svelte.md"
+		}
+	],
+	"fixtures": [
+		{
+			"name": "raw button flagged",
+			"language": "svelte",
+			"snippet": "<button onclick={save}>Save</button>",
+			"expect": ["raw-element"]
+		},
+		{
+			"name": "hidden input allowed",
+			"language": "svelte",
+			"snippet": "<input type=\"hidden\" name=\"id\" value={id} />",
+			"expect": []
+		},
+		{
+			"name": "table checkbox allowed",
+			"language": "svelte",
+			"snippet": "<input type=\"checkbox\" checked={row.selected} />",
+			"expect": []
+		},
+		{
+			"name": "raw textarea flagged",
+			"language": "svelte",
+			"snippet": "<textarea rows=\"4\"></textarea>",
+			"expect": ["raw-element"]
+		},
+		{
+			"name": "hex color flagged",
+			"language": "svelte",
+			"snippet": "<div style=\"color: #ff0000\">x</div>",
+			"expect": ["hardcoded-color"]
+		},
+		{
+			"name": "oklch color flagged",
+			"language": "ts",
+			"snippet": "const accent = 'oklch(0.6 0.2 30)';",
+			"expect": ["hardcoded-color"]
+		},
+		{
+			"name": "named color flagged",
+			"language": "svelte",
+			"snippet": "<style>\n.x { color: red; }\n</style>",
+			"expect": ["named-color"]
+		},
+		{
+			"name": "token variable allowed",
+			"language": "svelte",
+			"snippet": "<style>\n.x { color: var(--color-primary); }\n</style>",
+			"expect": []
+		},
+		{
+			"name": "anchor hash is not a color",
+			"language": "svelte",
+			"snippet": "<a href=\"#abc123\">jump</a>",
+			"expect": []
+		},
+		{
+			"name": "token opacity flagged",
+			"language": "svelte",
+			"snippet": "<div class=\"bg-primary/10\">x</div>",
+			"expect": ["token-opacity"]
+		},
+		{
+			"name": "plain token class allowed",
+			"language": "svelte",
+			"snippet": "<div class=\"bg-primary\">x</div>",
+			"expect": []
+		},
+		{
+			"name": "export let flagged",
+			"language": "svelte",
+			"snippet": "<script>\nexport let value;\n</script>",
+			"expect": ["svelte4-export-let"]
+		},
+		{
+			"name": "reactive statement flagged",
+			"language": "svelte",
+			"snippet": "<script>\n$: doubled = value * 2;\n</script>",
+			"expect": ["svelte4-reactive"]
+		},
+		{
+			"name": "store import flagged",
+			"language": "ts",
+			"snippet": "import { writable } from 'svelte/store';",
+			"expect": ["svelte4-store-import"]
+		},
+		{
+			"name": "event directive flagged",
+			"language": "svelte",
+			"snippet": "<div role=\"button\" tabindex=\"0\" on:click={open}>x</div>",
+			"expect": ["svelte4-on-directive"]
+		},
+		{ "name": "zod import flagged", "language": "ts", "snippet": "import { z } from 'zod';", "expect": ["zod-import"] },
+		{
+			"name": "state prop name flagged",
+			"language": "svelte",
+			"snippet": "<script lang=\"ts\">\nlet { state } = $props();\n</script>",
+			"expect": ["state-prop-name"]
+		},
+		{
+			"name": "runes-clean component passes",
+			"language": "svelte",
+			"snippet": "<script lang=\"ts\">\nimport { Button } from '$lib/components';\nlet { open = false } = $props();\nlet count = $state(0);\nconst doubled = $derived(count * 2);\n</script>\n<div class=\"bg-primary\">{doubled}</div>\n<Button onclick={() => count++}>Add</Button>",
+			"expect": []
+		}
+	]
+}

@@ -21,6 +21,7 @@ const PATTERN_TOOL_NAMES = [
 	'get_file_excerpt',
 	'trace_capability',
 	'recommend_emulation_plan',
+	'validate_snippet',
 ];
 const ADMIN_TOOL_NAMES = [
 	'get_mcp_page_state',
@@ -90,7 +91,7 @@ describe('protocol basics', () => {
 	});
 });
 
-describe('public registry exposes only the five read-only Pattern tools', () => {
+describe('public registry exposes only the six read-only Pattern tools', () => {
 	it('tools/list returns exactly the pattern tools', async () => {
 		const res = await call('tools/list');
 		const names = (res as { result: { tools: { name: string }[] } }).result.tools.map((t) => t.name);

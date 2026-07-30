@@ -68,12 +68,19 @@ async function connectClient() {
 }
 
 describe('MCP SDK interoperability (real client over HTTP)', () => {
-	it('initializes and lists exactly the five read-only pattern tools', async () => {
+	it('initializes and lists exactly the six read-only pattern tools', async () => {
 		const { client, transport } = await connectClient();
 		try {
 			const { tools } = await client.listTools();
 			expect(tools.map((t) => t.name).sort()).toEqual(
-				['get_file_excerpt', 'get_pattern', 'recommend_emulation_plan', 'search_patterns', 'trace_capability'].sort(),
+				[
+					'get_file_excerpt',
+					'get_pattern',
+					'recommend_emulation_plan',
+					'search_patterns',
+					'trace_capability',
+					'validate_snippet',
+				].sort(),
 			);
 		} finally {
 			await transport.close();

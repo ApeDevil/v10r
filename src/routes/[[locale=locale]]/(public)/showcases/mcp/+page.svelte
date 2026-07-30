@@ -99,7 +99,7 @@ const handshakeEdges: Edge[] = [
 	{ id: 'h-start', source: 'start', target: 'initialize', type: 'smoothstep', label: 'spawn' },
 	{ id: 'h-init', source: 'initialize', target: 'initialized', type: 'smoothstep', label: 'version + instructions' },
 	{ id: 'h-list', source: 'initialized', target: 'tools-list', type: 'smoothstep', label: 'no reply' },
-	{ id: 'h-call', source: 'tools-list', target: 'tools-call', type: 'smoothstep', label: '5 tool defs' },
+	{ id: 'h-call', source: 'tools-list', target: 'tools-call', type: 'smoothstep', label: '6 tool defs' },
 	{ id: 'h-end', source: 'tools-call', target: 'end', type: 'smoothstep', label: 'stdin EOF, exit 0', animated: true },
 ];
 </script>
@@ -243,7 +243,7 @@ const dagData = toDagData(registry);
 		<section id="tools-protocol" class="section">
 			<h2 class="section-title">{m.showcase_mcp_section_tools()}</h2>
 			<p class="section-description">
-				The five read-only tools the server advertises, and the JSON-RPC handshake every session starts with.
+				The six read-only tools the server advertises, and the JSON-RPC handshake every session starts with.
 			</p>
 
 			<div class="tool-grid">

@@ -34,6 +34,7 @@ const spy = createScrollSpy(() => navToc.map((t) => t.id));
 
 <svelte:head>
 	<meta name="description" content={entry.description} />
+	<link rel="alternate" type="text/markdown" href="/docs/{entry.section}/{entry.slug}.md" />
 </svelte:head>
 
 <PageContainer width="wide">

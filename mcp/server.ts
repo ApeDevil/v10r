@@ -23,7 +23,8 @@ const INSTRUCTIONS =
 	'route that proves it. Reach for it before building any feature that resembles something v10r already does — ' +
 	'auth-adjacent backends, AI tools and surfaces, RAG, design systems, background jobs. Call search_patterns or ' +
 	'trace_capability to find the canonical pattern, get_pattern for its full card with invariants, get_file_excerpt ' +
-	'to read the exact reference code, and recommend_emulation_plan for a dependency-ordered build plan. It complements ' +
+	'to read the exact reference code, recommend_emulation_plan for a dependency-ordered build plan, and validate_snippet ' +
+	'to check code you wrote against v10r conventions (loop on it until clean). It complements ' +
 	'Read and Grep rather than replacing them: use it to discover the blessed pattern and its invariants, then explore freely.';
 
 const loaded = loadRegistry();

@@ -18,7 +18,7 @@ The Pattern MCP closes that gap. Each entry in [`mcp/patterns.registry.json`](..
 
 ### Registry-as-product
 
-The server (`server.ts`, `protocol.ts`, `tools.ts`) is intentionally boring: JSON-RPC plumbing and five query functions over one JSON file. All the curation work — deciding what counts as a pattern, which invariants matter, which files are the canonical entry point — lives in the registry data, not in code. Adding a pattern means adding a record, not writing a handler.
+The server (`server.ts`, `protocol.ts`, `tools.ts`) is intentionally boring: JSON-RPC plumbing and six query functions over two JSON files (the pattern registry and the snippet rules). All the curation work — deciding what counts as a pattern, which invariants matter, which files are the canonical entry point — lives in the registry data, not in code. Adding a pattern means adding a record, not writing a handler.
 
 A drift guard (`validate-registry.ts`, wired into `bun run validate` as `mcp:validate`) keeps the registry honest: every `docs`/`code`/`tests`/`showcases` path must exist on disk, `depends_on` must form a DAG (checked via the same Kahn toposort the server uses at query time), and IDs must be unique kebab-case. A registry that references a moved or deleted file fails the gate — unlike a stale doc, it can't silently rot.
 
@@ -69,7 +69,7 @@ Each record in `patterns.registry.json` has `id`, `title`, `category`, `summary`
 
 ## Hosted trust surfaces
 
-Everything above describes the local stdio server a client spawns as an ephemeral container. The same pattern registry is now *also* served read-only over HTTP, at `POST /api/mcp/public` — no auth, same five tools, no mutation path to dispatch.
+Everything above describes the local stdio server a client spawns as an ephemeral container. The same pattern registry is now *also* served read-only over HTTP, at `POST /api/mcp/public` — no auth, same six tools, no mutation path to dispatch.
 
 A second, unrelated surface, the private admin MCP at `POST /api/mcp/admin`, lives behind a bearer token and exposes a narrow set of demo-state tools over a small persistent domain — it shares only the transport plumbing with the public endpoint, not the registry or the trust level.
 
@@ -79,5 +79,5 @@ Full detail — trust-surface boundaries, auth, rate limits, the persistent demo
 
 - **See it live:** [/showcases/mcp](/showcases/mcp) — interactive dependency graph, architecture diagram, and protocol walkthrough
 - **Run it, test it, register it, add a pattern:** [mcp/README.md](../../../mcp/README.md)
-- **Read the code:** [mcp/](../../../mcp/) — `server.ts` (entry/lifecycle), `protocol.ts` (framing), `registry.ts` (types/validation/toposort), `security.ts` (containment), `tools.ts` (the five tools)
+- **Read the code:** [mcp/](../../../mcp/) — `server.ts` (entry/lifecycle), `protocol.ts` (framing), `registry.ts` (types/validation/toposort), `security.ts` (containment), `tools.ts` (the six tools), `snippet.ts` (validate_snippet engine)
 - **The pattern this MCP itself follows:** [multi-client-core.md](./multi-client-core.md) — the registry's domain-shaped data plus a thin adapter is the same shape as every other pattern in this repo

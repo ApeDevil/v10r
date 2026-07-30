@@ -2,7 +2,7 @@
  * Hosted PUBLIC read-only Pattern MCP — `/api/mcp/public` (MCP Streamable HTTP).
  *
  * No authentication. Structurally read-only: it is handed `publicPatternRegistry`, which
- * contains only the five Pattern tools — there is no mutation tool to dispatch, and a private
+ * contains only the six Pattern tools — there is no mutation tool to dispatch, and a private
  * tool name submitted here is rejected by the transport's allowlist. IP-rate-limited.
  * GET → 405 (SSE is not supported); all interaction is POST.
  */
