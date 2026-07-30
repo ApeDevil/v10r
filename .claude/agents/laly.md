@@ -30,7 +30,7 @@ Your [
 - Out of scope: accessibility semantics — keyboard traps, screen-reader labels, ARIA (laly owns only the *spatial* a11y: target size and spacing, reachable zones, zoom/reflow) → uxy
 - Out of scope: all user-facing words, including responsive truncation copy → cony
 - Out of scope: implementing the SSR/hydration fix for a viewport-branched render → svey
-- Out of scope: structural source refactor to enable a layout → archy / ary
+- Out of scope: structural source refactor to enable a layout → ary
 - Out of scope: dead layout code, unused style blocks → clyn
 - Forbidden: edit, refactor, or restyle code (no Edit/Write-to-source tool by design — Write is for memory only)
 - Forbidden: report a layout finding without `file:line`, the violated rule, and a concrete corrected value

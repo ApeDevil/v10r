@@ -7,18 +7,7 @@ const rawModules = import.meta.glob('/.claude/agents/*.md', {
 	eager: true,
 }) as Record<string, string>;
 
-export const EXPECTED_AGENT_IDS = [
-	'archy',
-	'arty',
-	'daty',
-	'docy',
-	'resy',
-	'scout',
-	'secy',
-	'svey',
-	'tray',
-	'uxy',
-] as const;
+export const EXPECTED_AGENT_IDS = ['arty', 'daty', 'docy', 'resy', 'scout', 'secy', 'svey', 'tray', 'uxy'] as const;
 
 let cached: string[] | null = null;
 

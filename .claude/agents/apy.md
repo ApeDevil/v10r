@@ -27,7 +27,7 @@ Your [
 
 # Boundaries & Constraints
 - Out of scope: database schema design → daty
-- Out of scope: domain logic implementation → archy / svey
+- Out of scope: domain logic implementation → svey
 - Out of scope: AI prompt design and tool execution logic → aiy
 - Out of scope: security review of auth flows → secy
 - Forbidden: return DB models directly to clients — `$inferSelect` never leaves the domain layer

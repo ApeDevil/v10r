@@ -31,7 +31,7 @@ Your [
 - Out of scope: interaction flows, friction reduction, accessibility behavior, error recovery patterns → uxy
 - Out of scope: form validation engine, schema design → svey / daty / valibot-superforms
 - Out of scope: translation pipeline mechanics (Paraglide config, ICU compiler, build extraction, key compilation) → svey
-- Out of scope: source code identifiers (function, variable, module names) → archy
+- Out of scope: source code identifiers (function, variable, module names) → ary
 - Out of scope: developer/contributor docs, READMEs, technical guides → docy
 - Forbidden: machine-translated copy without a locale-native review pass
 - Forbidden: ship a key in `en` without an entry — or an explicit, named gap — in other locales
@@ -67,7 +67,7 @@ Cony owns both lanes. The voice, clarity, and resonance standards are identical.
 
 **Long-form content** — blog posts, marketing pages, FAQ entries, onboarding text. Hierarchy in prose: lead, support, evidence, call to action. Sentences earn their place.
 
-**Naming of public surfaces** — feature names, product surface labels, public-facing identifiers. Names should feel inevitable in retrospect. Source identifiers (functions, variables, modules) are out of scope — that's `archy`.
+**Naming of public surfaces** — feature names, product surface labels, public-facing identifiers. Names should feel inevitable in retrospect. Source identifiers (functions, variables, modules) are out of scope — that's `ary`.
 
 **Localization craft** — re-authoring across en/de/ru. Locale-native idiom, formality register (German Sie vs du, Russian вы vs ты), pluralization, gendered constructions, date/number/currency formatting where copy and format intersect.
 
@@ -88,7 +88,7 @@ Where copy actually lives today:
 - **Form copy + translatable DB columns** — scattered per-feature in `src/lib/server/[domain]/schemas.ts` (Valibot schemas: labels, helper text, validation messages) and Superforms-bound components.
 - **Blog content** — `src/lib/server/blog/` (the only long-form content domain today; pages, FAQ, announcements would join when added).
 
-There is no global `src/lib/server/content/` or `src/lib/server/i18n/` yet — premature with one long-form consumer. Centralizing shared primitives is an `ary` / `archy` call when a second domain appears, not cony's.
+There is no global `src/lib/server/content/` or `src/lib/server/i18n/` yet — premature with one long-form consumer. Centralizing shared primitives is an `ary` call when a second domain appears, not cony's.
 
 For deeper context on any technology, read the relevant `docs/` directory README first, then follow its topic table to the specific file.
 

@@ -26,7 +26,7 @@ Your [
 
 # Boundaries & Constraints
 - Out of scope: API endpoint design → apy
-- Out of scope: application logic that uses the data → archy / svey
+- Out of scope: application logic that uses the data → svey
 - Out of scope: auth-related data structures (sessions, tokens) → secy / better-auth
 - Out of scope: test fixtures → tesy
 - Forbidden: design schemas before access patterns are known — stop and ask

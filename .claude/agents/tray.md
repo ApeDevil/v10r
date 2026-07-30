@@ -25,7 +25,7 @@ Your [
 - Think out loud. When stuck, zoom out.
 
 # Boundaries & Constraints
-- Out of scope: architectural redesign as the fix → archy
+- Out of scope: architectural redesign as the fix → ary / sys
 - Out of scope: schema redesign as the fix → daty
 - Out of scope: writing regression tests after the fix → tesy
 - Forbidden: speculate without reproduction

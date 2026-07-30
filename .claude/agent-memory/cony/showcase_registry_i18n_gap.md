@@ -25,4 +25,4 @@ Two separate string pools need converting, and they should collapse into ONE aut
 
 Rough new/converted key count: ~190–210 keys × 3 locales ≈ 570–630 string entries. This is a real localization pass, not a quick fix — recommend batching per-section (one showcase fully done in all 3 locales, ship, repeat), never per-field across all cards (partial per-field translation — title translated, description left English — reads as more broken than no translation at all, and violates the project's locale-parity-non-negotiable rule).
 
-Ownership: registry.ts's data shape (string literal vs `() => string` field vs slug+resolver) is svey/archy's call, not cony's — cony's job is to confirm the gap exists, flag severity, and hand over the authored copy once the mechanism is chosen.
+Ownership: registry.ts's data shape (string literal vs `() => string` field vs slug+resolver) is svey/ary's call, not cony's — cony's job is to confirm the gap exists, flag severity, and hand over the authored copy once the mechanism is chosen.

@@ -14,7 +14,7 @@ The redesign collapses all of that into **one always-visible "nRAG Observability
 
 The four rawrag modes were just different `retrievalTiers`/`fusion` flags on **one `retrieve()` call**. Always running fused (`tiers:[1,2,3], fusion:'rrf'`) costs **zero extra generate quota** — tiers run in parallel (`Promise.all`, `rawrag/index.ts:102-146`), embedding is paid once, and there is one generate call per turn either way (only DB/Neo4j load increases). "What did the Entity Graph tier contribute?" becomes a **client-side filter** over the already-captured `tierChunks` — no re-run, no quota spent. The only turn-spending experiment is the counterfactual ("run without RAG").
 
-`llmwiki` is **not** a tier — it is a separate, mutually-exclusive orchestrator branch (`chat-orchestrator.ts:567` vs `:1058`, one `surface`/`streamText` per turn). It stays an **engine toggle** ("Hybrid tiers ⟷ LLM Wiki"). Running *both* engines into one generate (a true single-run) is a deliberately **deferred Phase 4** (needs prompt fusion + tool-surface unification + an aiy/archy call). The observability unifies the **view and the vocabulary** now; it does not pretend both engines ran when only one did.
+`llmwiki` is **not** a tier — it is a separate, mutually-exclusive orchestrator branch (`chat-orchestrator.ts:567` vs `:1058`, one `surface`/`streamText` per turn). It stays an **engine toggle** ("Hybrid tiers ⟷ LLM Wiki"). Running *both* engines into one generate (a true single-run) is a deliberately **deferred Phase 4** (needs prompt fusion + tool-surface unification + an aiy/sys call). The observability unifies the **view and the vocabulary** now; it does not pretend both engines ran when only one did.
 
 The gamified "unlock fused" gate is **removed** (obsolete once fused is the default).
 
@@ -93,7 +93,7 @@ Bars are `<button>` with a roving tabindex (one group tab-stop, arrows between, 
 - **P1 — Contract + instrumentation.** Rewrite `pipeline.ts` (3 axes, `startOffsetMs`, registry, token honesty); SYS's server change-list (turn-`t0`, `generate:error`, system-docs lane, `requestId`, `dryRun`); fix the 6 bugs.
 - **P2 — Components.** Generic `Waterfall` primitive; `createNragTrace`; `NragObservability` shell + Timing/Paths/Tokens panes + cross-panel selection; delete drawer/rail/ModeSelector.
 - **P3 — Teaching polish.** Step↔Timing toggle, tier focus filter, layer legend, counterfactual-as-action, re-curated demo chips (→ cony), full a11y pass.
-- **P4 — Deferred.** True single-run (both engines → one generate); aiy/archy.
+- **P4 — Deferred.** True single-run (both engines → one generate); aiy/sys.
 
 ## Deferred / open
 

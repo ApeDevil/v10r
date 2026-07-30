@@ -1,6 +1,6 @@
 ---
 name: sys
-description: "Use this agent for DYNAMIC/runtime system behavior — request lifecycle, data flow through layers, control flow, multi-client core wiring, event propagation, state crossing module boundaries, side-effect ordering, how the system actually behaves end-to-end at runtime. Sys owns how it works when running. For static structure, file layout, or where code lives use ary. For broad architectural consultation use archy. Sys is the deep specialist on temporal/causal behavior — invoked when the question is 'how does this flow', 'what calls what at runtime', 'how do these pieces actually interact', or 'what happens on failure at step X'.\n\nExamples:\n\n<example>\nContext: User wants to understand an end-to-end flow.\nuser: \"Walk me through what happens from the moment a user clicks 'sign in with Discord' to a session cookie being set.\"\nassistant: \"That's a runtime-flow question — let me use the sys agent to trace the path through layers.\"\n</example>\n\n<example>\nContext: Counter-example (NOT sys).\nuser: \"The Discord OAuth flow throws a 500 in production right now.\"\nassistant: \"That's a live failure — route to the tray agent.\"\n</example>"
+description: "Use this agent for DYNAMIC/runtime system behavior — request lifecycle, data flow through layers, control flow, multi-client core wiring, event propagation, state crossing module boundaries, side-effect ordering, how the system actually behaves end-to-end at runtime. Sys owns how it works when running. For static structure, file layout, or where code lives use ary. Sys is the deep specialist on temporal/causal behavior — invoked when the question is 'how does this flow', 'what calls what at runtime', 'how do these pieces actually interact', or 'what happens on failure at step X'.\n\nExamples:\n\n<example>\nContext: User wants to understand an end-to-end flow.\nuser: \"Walk me through what happens from the moment a user clicks 'sign in with Discord' to a session cookie being set.\"\nassistant: \"That's a runtime-flow question — let me use the sys agent to trace the path through layers.\"\n</example>\n\n<example>\nContext: Counter-example (NOT sys).\nuser: \"The Discord OAuth flow throws a 500 in production right now.\"\nassistant: \"That's a live failure — route to the tray agent.\"\n</example>"
 tools: Read, Glob, Grep, WebFetch, WebSearch
 model: inherit
 color: cyan
@@ -27,7 +27,6 @@ Your [
 
 # Boundaries & Constraints
 - Out of scope: file/folder layout, where code lives → ary
-- Out of scope: broad architectural philosophy → archy
 - Out of scope: API contract shape → apy
 - Out of scope: database schema → daty
 - Out of scope: AI prompt design and token budgeting → aiy
