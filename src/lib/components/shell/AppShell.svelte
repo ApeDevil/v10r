@@ -65,13 +65,23 @@ $effect(() => {
 // the panel never overlaps content. Mobile uses a bottom sheet (no horizontal reflow).
 const chatDocked = $derived(chatbotSession.phase === 'open');
 
-// Hand the singleton the live user id (resume pointer + cross-user guard) and, if this
-// tab had a live thread before a reload, surface the minimized indicator (AI-SDK-free).
+// Hand the singleton the live user id (resume pointer + cross-user guard + sign-in
+// gate). Reactive, not onMount-only: client-side logout (signOutAndFlush →
+// invalidateAll → goto) updates the session prop WITHOUT remounting this shell, and
+// the gate must flip to 'auth_required' right then.
+$effect(() => {
+	chatbotSession.setUser(session?.user?.id);
+});
+
+// If this tab had a live thread before a reload, surface the minimized indicator
+// (AI-SDK-free; signed-in only — an anonymous visitor must not adopt a stale pointer).
+// Then honor a one-shot reopen intent from the sign-in round-trip: reopen Vely even if
+// auth was abandoned — the panel just shows the gate again, which is honest continuity.
 onMount(() => {
 	if (session?.user?.id) {
-		chatbotSession.setUser(session.user.id);
 		chatbotSession.hydratePointer();
 	}
+	if (chatbotSession.consumeReopenIntent()) void chatbotSession.open();
 });
 
 // Universal search engine: instant client lane (prerendered shard) + debounced

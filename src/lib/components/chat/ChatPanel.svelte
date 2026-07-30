@@ -23,6 +23,7 @@ import {
 } from '$lib/components/composites/dock';
 import { dispatchDeskEffect as dispatchEffect } from '$lib/components/composites/dock/dispatch-desk-effect';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
+import * as m from '$lib/paraglide/messages';
 import type { DeskEffect } from '$lib/server/ai/tools/_types';
 import BotManagerDialog from './BotManagerDialog.svelte';
 import { chatStateCache } from './chat-state-cache';
@@ -51,6 +52,10 @@ const ERROR_MESSAGES: Record<string, string> = {
 	unavailable: 'AI service is temporarily unavailable.',
 	context_length: 'Message too long. Try a shorter message.',
 	authentication: 'AI authentication failed. Check provider config.',
+	// Visitor-session 401 — DISTINCT from 'authentication' (provider API-key failure).
+	// Set by the transport on response.status, never by the body heuristic, whose
+	// 'authentication' substring match would misroute "Authentication required".
+	unauthorized: m.errors_auth_session_expired(),
 	model: 'AI model unavailable. Try again later.',
 	limit_exceeded: 'Conversation limit reached. Free up space in Storage.',
 };
@@ -89,6 +94,17 @@ const chat = new Chat({
 		headers: CSRF_HEADER,
 		fetch: async (url, init) => {
 			const response = await fetch(url, init);
+			// Session-expiry 401s come from the auth guard, BEFORE the orchestrator —
+			// they never carry X-AI-Error-Kind, so classify on status here.
+			if (response.status === 401) {
+				lastErrorKind = 'unauthorized';
+				appendIOLog({
+					source: 'effect',
+					level: 'error',
+					label: `AI error: ${ERROR_MESSAGES.unauthorized}`,
+					detail: 'unauthorized',
+				});
+			}
 			const id = response.headers.get('X-Conversation-Id');
 			if (id) conversationId = id;
 			const errorKind = response.headers.get('X-AI-Error-Kind');

@@ -4,7 +4,9 @@ import { page } from '$app/state';
 import { apiFetch } from '$lib/api';
 import ChunkView from '$lib/components/chat/ChunkView.svelte';
 import type { CatalogSource, SourceChunk } from '$lib/components/chat/citation-types';
+import { Button } from '$lib/components/primitives/button';
 import Drawer from '$lib/components/primitives/drawer/Drawer.svelte';
+import { localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 import { isSiteAwareRoute, resolveRouteLabel } from '$lib/search/route-id';
 import { chatbotSession } from '$lib/state/chatbot-session.svelte';
@@ -48,6 +50,16 @@ const isLoading = $derived(session.isStreaming);
 // Null on private/unknown routes → the chip hides (the honest "not reading this page" signal).
 // Live present-tense: reflects the CURRENT route, so it reads as the antecedent of "this".
 const pageLabel = $derived(resolveRouteLabel(page.route.id));
+
+// Sign-in gate — sourced from the singleton (set pre-emptively by AppShell's setUser
+// and reactively by the transport on a live 401), NEVER from getSession(): the context
+// copy in this subtree is frozen at mount and no auth transition updates it here.
+const gated = $derived(session.gate === 'auth_required');
+// Query appended AFTER localizeHref (SessionMonitor's shape); the login server load
+// sanitizes returnTo and re-localizes it idempotently.
+const loginHref = $derived(
+	`${localizeHref('/auth/login')}?returnTo=${encodeURIComponent(page.url.pathname + page.url.search)}`,
+);
 
 function openChunks(chunks: SourceChunk[]) {
 	viewerChunks = chunks;
@@ -156,7 +168,7 @@ async function deleteConversation(id: string) {
 }
 
 function submitMessage() {
-	if (!inputValue.trim() || isLoading) return;
+	if (gated || !inputValue.trim() || isLoading) return;
 	const text = inputValue;
 	inputValue = '';
 	// Capture the route SYNCHRONOUSLY at click → frozen to the page Send was pressed from.
@@ -318,10 +330,33 @@ function submitMessage() {
 							</div>
 						{/if}
 					</div>
+				{:else if gated}
+					<!-- Pre-emptive sign-in gate: the discovery surface stays open, the failing
+					     request never fires. Lock icon (not message-circle) so the state reads
+					     "action needed", not "no messages yet". -->
+					<div class="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+						<span class="i-lucide-lock h-10 w-10 text-muted"></span>
+						<p class="text-fluid-sm text-fg">{m.ai_chat_signin_gate()}</p>
+						<Button
+							variant="primary"
+							size="lg"
+							class="w-full max-w-xs justify-center"
+							href={loginHref}
+							onclick={() => session.markReopenIntent()}
+						>
+							{m.ai_chat_signin_action()}
+						</Button>
+						<!-- AI Act Art. 50(1) first-interaction disclosure — kept in the gated
+						     state too; the obligation doesn't wait for sign-in. -->
+						<div class="mt-1 max-w-xs rounded-md border border-border px-3 py-2 text-left">
+							<p class="text-fluid-sm text-fg">{m.ai_disclosure_notice()}</p>
+							<p class="mt-1 text-fluid-xs text-muted">{m.ai_disclosure_no_personal_data()}</p>
+						</div>
+					</div>
 				{:else}
 					<div class="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
 						<span class="i-lucide-message-circle h-10 w-10 text-muted"></span>
-						<p class="text-fluid-sm text-muted">Ask me anything about web development.</p>
+						<p class="text-fluid-sm text-muted">{m.ai_chat_empty_prompt()}</p>
 						<!-- AI Act Art. 50(1) first-interaction disclosure. Deliberately NOT
 						     text-muted micro-copy: the obligation is to inform "clearly and
 						     distinguishably", and the Commission Guidelines call out tiny,
@@ -334,38 +369,72 @@ function submitMessage() {
 				{/if}
 			</div>
 
-			<!-- Error display -->
-			{#if session.chat?.error}
+			<!-- Sign-in / error display. Gate precedence: a live 401 sets BOTH the gate and
+			     chat.error, so the auth branch must win. With no messages the empty-state
+			     gate already carries the CTA; this alert covers only a thread that lost its
+			     session mid-conversation (anon users can never have messages). -->
+			{#if gated}
+				{#if (session.chat?.messages.length ?? 0) > 0}
+					<div class="chatbot-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm" role="alert" aria-live="polite">
+						<span class="font-medium">{m.errors_auth_session_expired()}</span>
+						<a class="underline" href={loginHref} onclick={() => session.markReopenIntent()}>
+							{m.ai_chat_signin_action()}
+						</a>
+					</div>
+				{/if}
+			{:else if session.chat?.error}
 				{@const errMsg = session.chat.error.message ?? ''}
+				<!-- Wire bodies carry error CODES, not status digits (rate_limited /
+				     ai_unavailable); digits kept OR'd for mid-stream provider errors. -->
 				<div class="chatbot-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm" role="alert" aria-live="polite">
-					<span class="font-medium">Could not get a response.</span>
-					{#if errMsg.includes('429')}
-						You've reached the rate limit. Please wait a moment.
-					{:else if errMsg.includes('401') || errMsg.includes('Sign in')}
-						Sign in to chat with Vely.
-					{:else if errMsg.includes('503')}
-						The AI service is temporarily unavailable.
+					<span class="font-medium">{m.ai_chat_error_heading()}</span>
+					{#if errMsg.includes('rate_limited') || errMsg.includes('429')}
+						{m.ai_chat_error_rate_limited()}
+					{:else if errMsg.includes('ai_unavailable') || errMsg.includes('503')}
+						{m.ai_chat_error_unavailable()}
 					{:else}
-						Something went wrong. Try again.
+						{m.ai_chat_error_generic()}
 					{/if}
 				</div>
 			{/if}
 
-			<!-- Site-awareness disclosure chip: names the page Vely is aware of, directly above
+			<!-- Gated: the chip slot carries a real, focusable sign-in link — it doubles as
+			     the aria-describedby target for the disabled input below. The site-awareness
+			     chip is suppressed while gated ("Asking about X" implies live context that
+			     doesn't exist when nothing can be sent). -->
+			{#if gated}
+				<div class="flex items-center gap-1.5 border-t border-border px-4 py-1.5 text-fluid-xs">
+					<span class="i-lucide-lock h-3 w-3 shrink-0 text-muted" aria-hidden="true"></span>
+					<a
+						id="vely-signin-hint"
+						href={loginHref}
+						onclick={() => session.markReopenIntent()}
+						class="py-1 text-fg underline"
+					>
+						{m.ai_chat_signin_hint()}
+					</a>
+				</div>
+				<!-- Site-awareness disclosure chip: names the page Vely is aware of, directly above
 			     where the user types "this". Present ⟺ a route is sent this turn. Hidden on
 			     private/unknown routes. See docs/blueprint/ai/site-awareness.md. -->
-			{#if pageLabel}
+			{:else if pageLabel}
 				<div
 					class="flex items-center gap-1.5 border-t border-border px-4 py-1.5 text-fluid-xs text-muted"
 					data-testid="vely-page-context"
 				>
 					<span class="i-lucide-map-pin h-3 w-3 shrink-0" aria-hidden="true"></span>
-					<span class="truncate">Asking about <span class="font-medium text-fg">{pageLabel}</span></span>
+					<span class="truncate">{m.ai_chat_page_context({ pageLabel })}</span>
 				</div>
 			{/if}
 
 			<!-- Input -->
-			<ChatInput bind:value={inputValue} loading={isLoading} onsubmit={submitMessage} />
+			<ChatInput
+				bind:value={inputValue}
+				loading={isLoading}
+				signedOut={gated}
+				signedOutHintId="vely-signin-hint"
+				onsubmit={submitMessage}
+			/>
 		</div>
 	</div>
 </aside>

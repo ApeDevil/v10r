@@ -34,6 +34,11 @@ type ChatMessages = Chat['messages'];
 /** Per-tab resume pointer; userId-stamped to defend a reused tab against a user switch. */
 const STORAGE_KEY = 'v10r:vely';
 
+/** One-shot "reopen Vely after the login round-trip" intent. TTL-guarded so an
+ * abandoned sign-in doesn't silently reopen the panel on an unrelated later visit. */
+const REOPEN_KEY = 'v10r:vely-reopen';
+const REOPEN_TTL_MS = 10 * 60 * 1000;
+
 interface StoredMessage {
 	id: string;
 	role: string;
@@ -57,6 +62,11 @@ class ChatbotSession {
 	conversationId = $state<string | undefined>(undefined);
 	/** A turn finished while the panel was NOT open → light the sidebar indicator. */
 	answerReady = $state(false);
+	/** Sign-in gate: 'auth_required' when the visitor is known not signed in — set
+	 * pre-emptively by `setUser()` and reactively by the transport on a live 401.
+	 * Never derived from `chat.error.message`: the SDK stores the raw response body
+	 * text there, which carries no status. */
+	gate = $state<'ok' | 'auth_required'>('ok');
 
 	#userId: string | undefined;
 	#loadingChat = false;
@@ -71,6 +81,10 @@ class ChatbotSession {
 	/** AppShell hands us the live session user id (for the resume pointer + guard). */
 	setUser(id: string | undefined): void {
 		this.#userId = id;
+		this.gate = id ? 'ok' : 'auth_required';
+		// Login can return via client-side goto (passkey/OTP), so the live instance —
+		// and a stale 401 error on it — can survive sign-in; drop it with the gate.
+		if (id) this.chat?.clearError();
 	}
 
 	/** Lazily construct the live `Chat` (client-only, idempotent). Pulls the heavy
@@ -88,6 +102,9 @@ class ChatbotSession {
 					headers: CSRF_HEADER,
 					fetch: async (url, init) => {
 						const response = await fetch(url, init);
+						// Typed auth signal: the only place the real status exists — by the
+						// time the SDK surfaces the failure, only the body text remains.
+						if (response.status === 401) this.gate = 'auth_required';
 						const id = response.headers.get('X-Conversation-Id');
 						if (id) {
 							this.conversationId = id;
@@ -187,6 +204,9 @@ class ChatbotSession {
 	reset(): void {
 		this.phase = 'closed';
 		this.answerReady = false;
+		// Recompute, never hardcode 'ok': the panel's × button also lands here, and an
+		// anonymous visitor who closes and reopens must land back on the gate.
+		this.gate = this.#userId ? 'ok' : 'auth_required';
 		this.conversationId = undefined;
 		this.chat?.stop?.();
 		this.chat = null;
@@ -227,6 +247,31 @@ class ChatbotSession {
 				prev = status;
 			});
 		});
+	}
+
+	/** Remember that the user left for /auth/login mid-visit (gate CTA click or forced
+	 * logout with a live panel) so AppShell reopens Vely when they come back. */
+	markReopenIntent(): void {
+		if (!browser) return;
+		try {
+			sessionStorage.setItem(REOPEN_KEY, JSON.stringify({ ts: Date.now() }));
+		} catch {
+			// sessionStorage unavailable — the panel just won't auto-reopen
+		}
+	}
+
+	/** Read-and-clear the reopen intent. True iff present and younger than the TTL. */
+	consumeReopenIntent(): boolean {
+		if (!browser) return false;
+		try {
+			const raw = sessionStorage.getItem(REOPEN_KEY);
+			if (!raw) return false;
+			sessionStorage.removeItem(REOPEN_KEY);
+			const { ts } = JSON.parse(raw) as { ts?: number };
+			return typeof ts === 'number' && Date.now() - ts < REOPEN_TTL_MS;
+		} catch {
+			return false;
+		}
 	}
 
 	#persistPointer(): void {

@@ -58,6 +58,9 @@ $effect(() => {
 // the previous user's in-memory conversation.
 $effect(() => {
 	if (sessionState.status === 'revoked') {
+		// A live panel torn down by forced logout should come back after re-login —
+		// same one-shot intent flag the gate's own sign-in CTA writes.
+		if (chatbotSession.phase !== 'closed') chatbotSession.markReopenIntent();
 		chatbotSession.reset();
 		goto(`${localizeHref('/auth/login')}?reason=revoked`);
 	}

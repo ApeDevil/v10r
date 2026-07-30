@@ -9,7 +9,9 @@ import { Alert, Card, EmptyState } from '$lib/components/composites';
 import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
 import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
 import { Stack } from '$lib/components/layout';
-import { Typography } from '$lib/components/primitives';
+import { Button, Typography } from '$lib/components/primitives';
+import { localizeHref } from '$lib/i18n';
+import * as m from '$lib/paraglide/messages';
 import ChatLayout from './_components/ChatLayout.svelte';
 import EngineToggle from './_components/EngineToggle.svelte';
 import NragObservability from './_components/observability/NragObservability.svelte';
@@ -37,10 +39,21 @@ let turnEngine: 'rawrag' | 'llmwiki' = 'rawrag';
 let inputValue = $state('');
 const demoChips = $derived(useLlmwiki ? DEMO_QUERIES.llmwiki : DEMO_QUERIES.hybrid);
 
+// Typed auth signal, shared by both Chat instances — a mid-session 401 never reaches
+// chat.error with its status, only the raw body text.
+let authRequired = $state(false);
+
+const detect401 = async (url: RequestInfo | URL, init?: RequestInit) => {
+	const response = await fetch(url, init);
+	if (response.status === 401) authRequired = true;
+	return response;
+};
+
 const chat = new Chat({
 	transport: new DefaultChatTransport({
 		api: '/api/ai/showcase/rag',
 		headers: CSRF_HEADER,
+		fetch: detect401,
 		body: {
 			get useRetrieval() {
 				return useRetrieval;
@@ -66,17 +79,22 @@ const counterfactualChat = new Chat({
 	transport: new DefaultChatTransport({
 		api: '/api/ai/showcase/rag',
 		headers: CSRF_HEADER,
+		fetch: detect401,
 		body: { useRetrieval: false, useLlmwiki: false, dryRun: true },
 	}) as Chat['transport'],
 });
 
 const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
+const gated = $derived(!data.signedIn || authRequired);
+const loginHref = $derived(
+	`${localizeHref('/auth/login')}?returnTo=${encodeURIComponent(page.url.pathname + page.url.search)}`,
+);
 
 const lastUserMessage = $derived.by(() => {
 	for (let i = chat.messages.length - 1; i >= 0; i--) {
-		const m = chat.messages[i];
-		if (m.role === 'user') {
-			const text = m.parts
+		const msg = chat.messages[i];
+		if (msg.role === 'user') {
+			const text = msg.parts
 				.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
 				.map((p) => p.text)
 				.join('\n');
@@ -95,7 +113,7 @@ function setEngine(next: 'hybrid' | 'llmwiki') {
 }
 
 function runCounterfactual() {
-	if (!lastUserMessage) return;
+	if (gated || !lastUserMessage) return;
 	counterfactualChat.sendMessage({ text: lastUserMessage });
 }
 
@@ -146,7 +164,7 @@ $effect(() => {
 });
 
 function submitMessage() {
-	if (!inputValue.trim() || isLoading) return;
+	if (gated || !inputValue.trim() || isLoading) return;
 	// Capture the engine for this turn BEFORE sending (toggle is locked while loading), so the
 	// feed/watchdog effects route this turn's frames to the right trace regardless of later flips.
 	turnEngine = engine;
@@ -161,21 +179,29 @@ function submitMessage() {
 	<div class="chat-container">
 		<div bind:this={scrollContainer} class="chat-messages">
 			{#if chat.messages.length === 0}
-				<EmptyState
-					icon="i-lucide-brain-circuit h-10 w-10"
-					title="Ask a question"
-					description="Pick a sample query below or type your own."
-					class="chat-empty"
-				>
-					<div class="demo-chips">
-						{#each demoChips as chip (chip.query)}
-							<button type="button" class="demo-chip" onclick={() => useDemoChip(chip.query)}>
-								<span class="chip-query">{chip.query}</span>
-								<span class="chip-why">{chip.why}</span>
-							</button>
-						{/each}
-					</div>
-				</EmptyState>
+				{#if gated}
+					<EmptyState icon="i-lucide-lock h-10 w-10" title={m.ai_chat_signin_gate()} class="chat-empty">
+						<Button variant="primary" size="lg" class="justify-center" href={loginHref}>
+							{m.ai_chat_signin_action()}
+						</Button>
+					</EmptyState>
+				{:else}
+					<EmptyState
+						icon="i-lucide-brain-circuit h-10 w-10"
+						title="Ask a question"
+						description="Pick a sample query below or type your own."
+						class="chat-empty"
+					>
+						<div class="demo-chips">
+							{#each demoChips as chip (chip.query)}
+								<button type="button" class="demo-chip" onclick={() => useDemoChip(chip.query)}>
+									<span class="chip-query">{chip.query}</span>
+									<span class="chip-why">{chip.why}</span>
+								</button>
+							{/each}
+						</div>
+					</EmptyState>
+				{/if}
 			{:else}
 				{#each chat.messages as message (message.id)}
 					<ChatMessage
@@ -203,15 +229,40 @@ function submitMessage() {
 			{/if}
 		</div>
 
-		{#if chat.error}
-			<div class="chat-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm" role="alert">
-				<span class="font-medium">Error:</span>
-				{chat.error.message ?? 'Something went wrong.'}
+		<!-- Gate precedence: a live 401 sets both `authRequired` and chat.error — the
+		     auth branch must win. The old block leaked the raw JSON body to the user. -->
+		{#if gated}
+			{#if chat.messages.length > 0}
+				<div class="chat-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm" role="alert" aria-live="polite">
+					<span class="font-medium">{m.errors_auth_session_expired()}</span>
+					<a class="underline" href={loginHref}>{m.ai_chat_signin_action()}</a>
+				</div>
+			{/if}
+			<p id="rag-chat-signin-hint" class="chat-signin-hint text-fluid-xs">
+				<a class="text-fg underline" href={loginHref}>{m.ai_chat_signin_hint()}</a>
+			</p>
+		{:else if chat.error}
+			{@const errMsg = chat.error.message ?? ''}
+			<div class="chat-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm" role="alert" aria-live="polite">
+				<span class="font-medium">{m.ai_chat_error_heading()}</span>
+				{#if errMsg.includes('rate_limited') || errMsg.includes('429')}
+					{m.ai_chat_error_rate_limited()}
+				{:else if errMsg.includes('ai_unavailable') || errMsg.includes('503')}
+					{m.ai_chat_error_unavailable()}
+				{:else}
+					{m.ai_chat_error_generic()}
+				{/if}
 			</div>
 		{/if}
 
 		<div class="chat-input-row">
-			<ChatInput bind:value={inputValue} loading={isLoading} onsubmit={submitMessage} />
+			<ChatInput
+				bind:value={inputValue}
+				loading={isLoading}
+				signedOut={gated}
+				signedOutHintId="rag-chat-signin-hint"
+				onsubmit={submitMessage}
+			/>
 		</div>
 	</div>
 {/snippet}
@@ -326,6 +377,12 @@ function submitMessage() {
 		background-color: color-mix(in srgb, var(--color-error-fg) 10%, transparent);
 		border: 1px solid color-mix(in srgb, var(--color-error-fg) 20%, transparent);
 		color: var(--color-error-fg);
+	}
+
+	.chat-signin-hint {
+		margin: 0;
+		padding: var(--spacing-2) var(--spacing-3);
+		text-align: center;
 	}
 
 	.chat-input-row {

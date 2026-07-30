@@ -5,19 +5,32 @@ import * as m from '$lib/paraglide/messages';
 interface Props {
 	value: string;
 	loading?: boolean;
+	/** Sign-in gate: locks the input WITHOUT the loading spinner (a gated input must
+	 * not look permanently busy). Pair with `signedOutHintId` for screen readers. */
+	signedOut?: boolean;
+	/** Id of the visible "sign in to send" text the disabled controls point at. */
+	signedOutHintId?: string;
 	contextCount?: number;
 	onsubmit: () => void;
 	onopensettings?: () => void;
 }
 
-let { value = $bindable(''), loading = false, contextCount = 0, onsubmit, onopensettings }: Props = $props();
+let {
+	value = $bindable(''),
+	loading = false,
+	signedOut = false,
+	signedOutHintId,
+	contextCount = 0,
+	onsubmit,
+	onopensettings,
+}: Props = $props();
 
 let textarea: HTMLTextAreaElement | undefined = $state();
 
 function handleKeydown(e: KeyboardEvent) {
 	if (e.key === 'Enter' && !e.shiftKey) {
 		e.preventDefault();
-		if (value.trim() && !loading) {
+		if (value.trim() && !loading && !signedOut) {
 			onsubmit();
 		}
 	}
@@ -71,7 +84,8 @@ $effect(() => {
 		oninput={autoResize}
 		onkeydown={handleKeydown}
 		placeholder="Type a message..."
-		disabled={loading}
+		disabled={loading || signedOut}
+		aria-describedby={signedOut ? signedOutHintId : undefined}
 		rows={1}
 		class="chat-textarea flex-1 resize-none rounded-md border border-border px-3 py-2 text-fluid-base text-fg placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary"
 	></textarea>
@@ -79,7 +93,8 @@ $effect(() => {
 		variant="primary"
 		size="icon"
 		onclick={onsubmit}
-		disabled={loading || !value.trim()}
+		disabled={loading || signedOut || !value.trim()}
+		aria-describedby={signedOut ? signedOutHintId : undefined}
 		class="shrink-0"
 		aria-label="Send message"
 	>
