@@ -1,12 +1,12 @@
 import type { Handle } from '@sveltejs/kit';
 import { waitUntil } from '@vercel/functions';
 import { building } from '$app/environment';
+import { isBot, isExcludedPath, isPrefetch, isUserLanePath } from '$lib/analytics/collect-policy';
 import { normalizeIpKey } from '$lib/server/abuse';
 import { createLimiter } from '$lib/server/api/rate-limit';
 import { ANALYTICS_CONSENT_COOKIE, ANALYTICS_SESSION_COOKIE, ANALYTICS_SESSION_TIMEOUT_MS } from '$lib/server/config';
 import { recordEvent, upsertSession } from '$lib/server/db/analytics/mutations';
 import { recordUserEvent } from '$lib/server/db/analytics/user-mutations';
-import { isBot, isExcludedPath, isPrefetch, isUserLanePath } from './collect-policy';
 import { type ConsentTier, deriveCookielessSessionId, hasConsent, parseConsentTier } from './consent';
 import { classifyUserAgent, geoFromHeaders } from './enrich';
 import { templateRoute } from './event-schema';

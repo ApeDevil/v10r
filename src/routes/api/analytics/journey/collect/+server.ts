@@ -16,8 +16,8 @@
  * bounded no matter what ends up calling this.
  */
 import * as v from 'valibot';
+import { isBot, isExcludedPath } from '$lib/analytics/collect-policy';
 import { ipLimitKey } from '$lib/server/abuse';
-import { isBot, isExcludedPath } from '$lib/server/analytics/collect-policy';
 import { hasConsent } from '$lib/server/analytics/consent';
 import { type EventName, isKnownEvent, sanitizeProperties } from '$lib/server/analytics/event-schema';
 import { deriveVisitorId } from '$lib/server/analytics/visitor';

@@ -3,8 +3,9 @@
  *
  * Surfaces:
  * 1. consent.ts — parseConsentTier, hasConsent, hashVisitorId contracts
- * 2. collect-policy.ts — the shared admission rules for the anonymous lane
- *    (authenticated-surface exclusion, bot detection, prefetch/prerender)
+ * 2. $lib/analytics/collect-policy.ts — the shared admission rules for the
+ *    anonymous lane, shared with the browser collectors (authenticated-surface
+ *    exclusion incl. locale prefixes, bot detection, prefetch/prerender)
  * 3. hook.ts — session cookie is consent-gated (TDDDG §25), IP never written
  * 4. mutations.ts — upsertSession entryPath preservation + batch increment
  * 5. analytics-cleanup.ts — retention window is a pinned compliance commitment
@@ -47,7 +48,9 @@ async function flushDeferred(): Promise<void> {
 const { db } = await import('$lib/server/db');
 const { parseConsentTier, hasConsent, hashVisitorId, deriveCookielessSessionId } = await import('./consent');
 const { deriveVisitorId, deriveUaHash } = await import('./visitor');
-const { isBot, isExcludedPath, isPrefetch } = await import('./collect-policy');
+const { isBot, isExcludedPath, isPrefetch, isUserLanePath, stripLocalePrefix, LOCALE_SEGMENTS } = await import(
+	'$lib/analytics/collect-policy'
+);
 const { classifyUserAgent, geoFromHeaders } = await import('./enrich');
 const { isKnownEvent, sanitizeProperties, templateRoute } = await import('./event-schema');
 const { recordEvent, upsertSession } = await import('$lib/server/db/analytics/mutations');
@@ -250,6 +253,14 @@ describe('isExcludedPath', () => {
 		'/account/data',
 		'/desk',
 		'/desk/workspace',
+		// Locale-prefixed variants are the SAME surfaces. These were admitted into
+		// the anonymous lane until the prefix strip landed — a German-locale visit
+		// to /account matched neither the exclusion list nor the user-lane list,
+		// so it fell through into the lane it is specifically barred from.
+		'/de/admin',
+		'/de/account/data',
+		'/ru/desk',
+		'/en/account',
 	])('excludes the authenticated surface %s', (path) => {
 		// Authenticated surfaces must never reach the anonymous lane: its legal
 		// basis is assessed on the premise that its subjects are anonymous.
@@ -272,6 +283,40 @@ describe('isExcludedPath', () => {
 		'/de/blog',
 	])('admits the public page %s', (path) => {
 		expect(isExcludedPath(path)).toBe(false);
+	});
+});
+
+describe('stripLocalePrefix', () => {
+	it('stays in sync with the Paraglide locale list', async () => {
+		// The prefix list is duplicated so domain code does not import the i18n
+		// runtime. Adding a locale to project.inlang without adding it here would
+		// silently reopen the authenticated-surface hole for that locale only.
+		const { locales } = await import('$lib/paraglide/runtime');
+		expect([...LOCALE_SEGMENTS].sort()).toEqual([...locales].sort());
+	});
+
+	it.each([
+		['/de/blog', '/blog'],
+		['/ru/account/data', '/account/data'],
+		['/de', '/'],
+		['/blog', '/blog'],
+		// Not a locale segment — a real page whose slug happens to be two chars.
+		['/de-DE/blog', '/de-DE/blog'],
+		['/design', '/design'],
+	])('maps %s to %s', (path, expected) => {
+		expect(stripLocalePrefix(path)).toBe(expected);
+	});
+});
+
+describe('isUserLanePath', () => {
+	it.each(['/account', '/account/security', '/de/account', '/ru/account/data'])('claims %s', (path) => {
+		// A path is eligible for exactly one lane. /account is refused by the
+		// anonymous lane above and claimed here, in every locale.
+		expect(isUserLanePath(path)).toBe(true);
+	});
+
+	it.each(['/admin', '/desk', '/blog', '/de/blog'])('refuses %s', (path) => {
+		expect(isUserLanePath(path)).toBe(false);
 	});
 });
 

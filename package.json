@@ -82,6 +82,7 @@
 		"@threlte/core": "^8.3.1",
 		"@threlte/extras": "^9.0.0",
 		"@upstash/ratelimit": "^2.0.0",
+		"@vercel/analytics": "^2.0.1",
 		"@vercel/functions": "^3.7.5",
 		"@upstash/redis": "^1.36.0",
 		"@xyflow/svelte": "^1.0.0",

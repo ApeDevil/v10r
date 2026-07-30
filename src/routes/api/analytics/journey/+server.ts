@@ -17,8 +17,8 @@
  * session duration, exit pages, and the active-session count.
  */
 import * as v from 'valibot';
+import { isBot, isExcludedPath } from '$lib/analytics/collect-policy';
 import { normalizeIpKey } from '$lib/server/abuse';
-import { isBot, isExcludedPath } from '$lib/server/analytics/collect-policy';
 import { hasConsent } from '$lib/server/analytics/consent';
 import { deriveVisitorId } from '$lib/server/analytics/visitor';
 import { MAX_BEACON_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/api/body';

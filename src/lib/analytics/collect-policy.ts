@@ -1,16 +1,51 @@
 /**
- * COLLECTION POLICY — the single source of truth for which requests enter the
- * ANONYMOUS analytics lane (`analytics.events` + `analytics.sessions`).
+ * COLLECTION POLICY — the single source of truth for which requests may be
+ * recorded as anonymous pageviews, in ANY lane.
  *
- * Two entry points write into that lane and MUST agree:
- *   1. `analytics/hook.ts`              — full page loads (server navigation)
+ * Three collectors write anonymous pageviews and MUST agree:
+ *   1. `$lib/server/analytics/hook.ts`  — full page loads (server navigation)
  *   2. `/api/analytics/journey`         — client-side navigations (SPA beacon)
+ *   3. `$lib/analytics/vercel.ts`       — Vercel Web Analytics `beforeSend`
  *
- * They previously disagreed: the hook excluded `/admin` and `/account`, the
- * beacon endpoint filtered nothing, and the beacon is initialised in the ROOT
- * layout — so every client-side navigation into an authenticated surface was
- * written into the anonymous lane anyway. Both now import from here.
+ * (1) and (2) previously disagreed: the hook excluded `/admin` and `/account`,
+ * the beacon endpoint filtered nothing, and the beacon is initialised in the
+ * ROOT layout — so every client-side navigation into an authenticated surface
+ * was written into the anonymous lane anyway.
+ *
+ * This module lives OUTSIDE `$lib/server` because collector (3) runs in the
+ * browser and `$lib/server` is unimportable from client code. Everything here
+ * is a pure function over strings and `Headers`, so there is nothing
+ * server-only about it.
  */
+
+/**
+ * Locale segments Paraglide may prefix onto any path (`/de/account`).
+ *
+ * Duplicated from `$lib/paraglide/runtime`'s `locales` deliberately: this
+ * module is imported by framework-free domain code, which does not reach into
+ * the i18n runtime (see the `event.locals.locale` handoff in `hooks.server.ts`).
+ * `analytics.test.ts` asserts the two lists stay in sync, so drift fails the
+ * gate rather than silently reopening the hole this closes.
+ */
+export const LOCALE_SEGMENTS = ['en', 'de', 'ru'] as const;
+
+/**
+ * Strip a leading locale segment so path rules can be written once, unprefixed.
+ *
+ * Without this every rule below is locale-blind: `/account` was excluded from
+ * the anonymous lane but `/de/account` was not, so a German-locale visit to an
+ * authenticated surface fell through BOTH lanes' prefix checks and landed in
+ * the anonymous one — precisely the outcome `EXCLUDED_PREFIXES` exists to
+ * prevent. `/en/…` is redirected away by the `stripBaseLocalePrefix` hook, but
+ * it is handled here too so this function is correct on its own.
+ */
+export function stripLocalePrefix(path: string): string {
+	for (const locale of LOCALE_SEGMENTS) {
+		if (path === `/${locale}`) return '/';
+		if (path.startsWith(`/${locale}/`)) return path.slice(1 + locale.length);
+	}
+	return path;
+}
 
 /**
  * Route prefixes never recorded in the anonymous lane.
@@ -34,8 +69,9 @@ const BOT_UA_RE =
  * `sitemap.xml`) rather than a page — never a pageview.
  */
 export function isExcludedPath(path: string): boolean {
-	if (EXCLUDED_PREFIXES.some((prefix) => path.startsWith(prefix))) return true;
-	return path.includes('.');
+	const unprefixed = stripLocalePrefix(path);
+	if (EXCLUDED_PREFIXES.some((prefix) => unprefixed.startsWith(prefix))) return true;
+	return unprefixed.includes('.');
 }
 
 /**
@@ -55,7 +91,8 @@ const USER_LANE_PREFIXES = ['/account'] as const;
  * collection claims it, but only when a session is actually present.
  */
 export function isUserLanePath(path: string): boolean {
-	return USER_LANE_PREFIXES.some((prefix) => path.startsWith(prefix));
+	const unprefixed = stripLocalePrefix(path);
+	return USER_LANE_PREFIXES.some((prefix) => unprefixed.startsWith(prefix));
 }
 
 /** True when the User-Agent looks like a crawler, preview bot, or headless probe. */

@@ -7,6 +7,7 @@ import { afterNavigate, goto } from '$app/navigation';
 import { page } from '$app/state';
 import { initJourneyBeacon } from '$lib/analytics/journey-beacon';
 import { initTelemetry, setTelemetryConsent, telemetryOnNavigate } from '$lib/analytics/telemetry';
+import { setVercelAnalyticsConsent } from '$lib/analytics/vercel';
 import { BRAND_NAME } from '$lib/branding';
 import PairingStrip from '$lib/components/shell/PairingStrip.svelte';
 import UpdatePrompt from '$lib/components/shell/UpdatePrompt.svelte';
@@ -52,10 +53,15 @@ $effect(() => {
 	initTelemetry(() => page.route.id ?? '(unknown)');
 });
 
-// Telemetry collection follows consent reactively — a mid-session withdrawal
+// Analytics collection follows consent reactively — a mid-session withdrawal
 // stops collection and drops anything already queued, without a reload.
+// One boolean drives BOTH the first-party lane and Vercel Web Analytics, so the
+// two can never disagree about what the visitor agreed to. Vercel's script is
+// injected on first grant and never before it.
 $effect(() => {
-	setTelemetryConsent(consent.tier === 'analytics');
+	const analyticsConsent = consent.tier === 'analytics';
+	setTelemetryConsent(analyticsConsent);
+	setVercelAnalyticsConsent(analyticsConsent);
 });
 
 // Close out the previous page's engagement window on SPA navigation.
