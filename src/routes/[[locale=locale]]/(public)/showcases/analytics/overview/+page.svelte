@@ -6,7 +6,9 @@ import { Button } from '$lib/components/primitives';
 import { AreaChart } from '$lib/components/viz/chart/area';
 import { BarChart } from '$lib/components/viz/chart/bar';
 import { PieChart } from '$lib/components/viz/chart/pie';
+import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
+import { formatDuration } from '$lib/utils/format-duration';
 import ChartSection from '../_components/ChartSection.svelte';
 import DateRangePresets from '../_components/DateRangePresets.svelte';
 import MetricCard from '../_components/MetricCard.svelte';
@@ -16,16 +18,6 @@ let { data } = $props();
 const toast = getToast();
 let resetDialogOpen = $state(false);
 let reseedForm = $state<HTMLFormElement | null>(null);
-
-// Format duration from ms to human readable
-function formatDuration(ms: number): string {
-	if (ms < 1000) return `${ms}ms`;
-	const seconds = Math.floor(ms / 1000);
-	if (seconds < 60) return `${seconds}s`;
-	const minutes = Math.floor(seconds / 60);
-	const remaining = seconds % 60;
-	return `${minutes}m ${remaining}s`;
-}
 
 // Sparkline data from trend
 const pageviewSparkline = $derived(data.trend.map((t) => Number(t.pageviews)));
@@ -50,13 +42,13 @@ const trendChartData: ChartData<'line'> = $derived({
 	labels: data.trend.map((t) => t.date.slice(5)),
 	datasets: [
 		{
-			label: 'Pageviews',
+			label: m.showcase_analytics_shared_label_pageviews(),
 			data: data.trend.map((t) => Number(t.pageviews)),
 			borderColor: 'var(--chart-1)',
 			backgroundColor: 'color-mix(in srgb, var(--chart-1) 20%, transparent)',
 		},
 		{
-			label: 'Unique Visitors',
+			label: m.showcase_analytics_shared_label_visitors_unique(),
 			data: data.trend.map((t) => Number(t.uniqueVisitors)),
 			borderColor: 'var(--chart-2)',
 			backgroundColor: 'color-mix(in srgb, var(--chart-2) 20%, transparent)',
@@ -69,7 +61,7 @@ const topPagesData: ChartData<'bar'> = $derived({
 	labels: data.topPages.map((p) => p.path),
 	datasets: [
 		{
-			label: 'Pageviews',
+			label: m.showcase_analytics_shared_label_pageviews(),
 			data: data.topPages.map((p) => Number(p.pageviews)),
 			backgroundColor: 'var(--chart-1)',
 		},
@@ -104,7 +96,7 @@ const countryData: ChartData<'bar'> = $derived({
 	labels: topCountries.map((c) => c.key),
 	datasets: [
 		{
-			label: 'Visitors',
+			label: m.showcase_analytics_shared_label_visitors(),
 			data: topCountries.map((c) => Number(c.visitors)),
 			backgroundColor: 'var(--chart-3)',
 		},
@@ -113,9 +105,9 @@ const countryData: ChartData<'bar'> = $derived({
 </script>
 
 {#if data.error}
-	<Alert variant="error" title="Database Error">
+	<Alert variant="error" title={m.showcase_analytics_shared_error_title()}>
 		<code>{data.error}</code>
-		<p class="text-fluid-sm mt-3">Try reseeding the analytics data to create the required tables and data.</p>
+		<p class="text-fluid-sm mt-3">{m.showcase_analytics_overview_error_hint()}</p>
 	</Alert>
 {/if}
 
@@ -129,23 +121,23 @@ const countryData: ChartData<'bar'> = $derived({
 <!-- Metric cards -->
 <div class="metrics-grid">
 	<MetricCard
-		title="Total Pageviews"
+		title={m.showcase_analytics_overview_metric_pageviews()}
 		value={data.metrics.totalPageviews.toLocaleString()}
 		delta={pageviewDelta}
 		sparklineData={pageviewSparkline}
 	/>
 	<MetricCard
-		title="Unique Visitors"
+		title={m.showcase_analytics_overview_metric_visitors()}
 		value={data.metrics.uniqueVisitors.toLocaleString()}
 		delta={visitorDelta}
 		sparklineData={visitorSparkline}
 	/>
 	<MetricCard
-		title="Avg Duration"
+		title={m.showcase_analytics_overview_metric_duration()}
 		value={formatDuration(data.metrics.avgSessionDuration)}
 	/>
 	<MetricCard
-		title="Bounce Rate"
+		title={m.showcase_analytics_overview_metric_bounce()}
 		value="{data.metrics.bounceRate}%"
 	/>
 </div>
@@ -153,66 +145,66 @@ const countryData: ChartData<'bar'> = $derived({
 <!-- Traffic trend -->
 {#if data.trend.length > 0}
 	<ChartSection
-		title="Traffic Trend"
-		description="Pageviews and unique visitors over time"
+		title={m.showcase_analytics_overview_chart_trend()}
+		description={m.showcase_analytics_overview_desc_trend()}
 	>
 		{#snippet chart()}
-			<AreaChart data={trendChartData} ariaLabel="Traffic trend over {data.days} days" />
+			<AreaChart data={trendChartData} ariaLabel={m.showcase_analytics_overview_aria_trend({ days: String(data.days) })} />
 		{/snippet}
 	</ChartSection>
 {:else}
-	<ChartSection title="Traffic Trend" description="Pageviews and unique visitors over time">
-		{#snippet chart()}<p class="empty-chart">No data in this range.</p>{/snippet}
+	<ChartSection title={m.showcase_analytics_overview_chart_trend()} description={m.showcase_analytics_overview_desc_trend()}>
+		{#snippet chart()}<p class="empty-chart">{m.showcase_analytics_shared_empty_range()}</p>{/snippet}
 	</ChartSection>
 {/if}
 
 <!-- Top pages + breakdowns -->
 <div class="charts-grid">
 	{#if data.topPages.length > 0}
-		<ChartSection title="Top Pages" description="Most visited pages by pageview count">
+		<ChartSection title={m.showcase_analytics_overview_chart_pages()} description={m.showcase_analytics_overview_desc_pages()}>
 			{#snippet chart()}
-				<BarChart data={topPagesData} horizontal ariaLabel="Top pages by pageviews" />
+				<BarChart data={topPagesData} horizontal ariaLabel={m.showcase_analytics_overview_aria_pages()} />
 			{/snippet}
 		</ChartSection>
 	{:else}
-		<ChartSection title="Top Pages" description="Most visited pages by pageview count">
-			{#snippet chart()}<p class="empty-chart">No data in this range.</p>{/snippet}
+		<ChartSection title={m.showcase_analytics_overview_chart_pages()} description={m.showcase_analytics_overview_desc_pages()}>
+			{#snippet chart()}<p class="empty-chart">{m.showcase_analytics_shared_empty_range()}</p>{/snippet}
 		</ChartSection>
 	{/if}
 
 	{#if data.devices.length > 0}
-		<ChartSection title="Devices" description="Unique visitors by device type">
+		<ChartSection title={m.showcase_analytics_overview_chart_devices()} description={m.showcase_analytics_overview_desc_devices()}>
 			{#snippet chart()}
-				<PieChart data={deviceData} doughnut ariaLabel="Device distribution" aspect="square" />
+				<PieChart data={deviceData} doughnut ariaLabel={m.showcase_analytics_overview_aria_devices()} aspect="square" />
 			{/snippet}
 		</ChartSection>
 	{:else}
-		<ChartSection title="Devices" description="Unique visitors by device type">
-			{#snippet chart()}<p class="empty-chart">No data in this range.</p>{/snippet}
+		<ChartSection title={m.showcase_analytics_overview_chart_devices()} description={m.showcase_analytics_overview_desc_devices()}>
+			{#snippet chart()}<p class="empty-chart">{m.showcase_analytics_shared_empty_range()}</p>{/snippet}
 		</ChartSection>
 	{/if}
 
 	{#if data.browsers.length > 0}
-		<ChartSection title="Browsers" description="Unique visitors by browser">
+		<ChartSection title={m.showcase_analytics_overview_chart_browsers()} description={m.showcase_analytics_overview_desc_browsers()}>
 			{#snippet chart()}
-				<PieChart data={browserData} doughnut ariaLabel="Browser distribution" aspect="square" />
+				<PieChart data={browserData} doughnut ariaLabel={m.showcase_analytics_overview_aria_browsers()} aspect="square" />
 			{/snippet}
 		</ChartSection>
 	{:else}
-		<ChartSection title="Browsers" description="Unique visitors by browser">
-			{#snippet chart()}<p class="empty-chart">No data in this range.</p>{/snippet}
+		<ChartSection title={m.showcase_analytics_overview_chart_browsers()} description={m.showcase_analytics_overview_desc_browsers()}>
+			{#snippet chart()}<p class="empty-chart">{m.showcase_analytics_shared_empty_range()}</p>{/snippet}
 		</ChartSection>
 	{/if}
 
 	{#if data.countries.length > 0}
-		<ChartSection title="Countries" description="Top 10 countries by unique visitors">
+		<ChartSection title={m.showcase_analytics_overview_chart_countries()} description={m.showcase_analytics_overview_desc_countries()}>
 			{#snippet chart()}
-				<BarChart data={countryData} horizontal ariaLabel="Country distribution" />
+				<BarChart data={countryData} horizontal ariaLabel={m.showcase_analytics_overview_aria_countries()} />
 			{/snippet}
 		</ChartSection>
 	{:else}
-		<ChartSection title="Countries" description="Top 10 countries by unique visitors">
-			{#snippet chart()}<p class="empty-chart">No data in this range.</p>{/snippet}
+		<ChartSection title={m.showcase_analytics_overview_chart_countries()} description={m.showcase_analytics_overview_desc_countries()}>
+			{#snippet chart()}<p class="empty-chart">{m.showcase_analytics_shared_empty_range()}</p>{/snippet}
 		</ChartSection>
 	{/if}
 </div>
@@ -221,14 +213,14 @@ const countryData: ChartData<'bar'> = $derived({
 <div class="reseed-section">
 	<Button variant="outline" onclick={() => (resetDialogOpen = true)}>
 		<span class="i-lucide-refresh-cw text-icon-sm" aria-hidden="true"></span>
-		Reset to Seed Data
+		{m.showcase_analytics_overview_btn_reset()}
 	</Button>
 </div>
 
 <ConfirmDialog
 	bind:open={resetDialogOpen}
-	title="Reset Analytics Data"
-	description="This will truncate all analytics tables and re-insert synthetic seed data. This action cannot be undone."
+	title={m.showcase_analytics_overview_dialog_title()}
+	description={m.showcase_analytics_overview_dialog_desc()}
 	onconfirm={() => reseedForm?.requestSubmit()}
 	oncancel={() => (resetDialogOpen = false)}
 />
@@ -241,9 +233,9 @@ const countryData: ChartData<'bar'> = $derived({
 	use:enhance={() => {
 		return async ({ result, update }) => {
 			if (result.type === 'success') {
-				toast.success('Analytics data reset to seed values.');
+				toast.success(m.showcase_analytics_overview_toast_reset_success());
 			} else {
-				toast.error('Failed to reset analytics data.');
+				toast.error(m.showcase_analytics_overview_toast_reset_error());
 			}
 			return update();
 		};

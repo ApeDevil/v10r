@@ -159,18 +159,6 @@ export async function listGrantsForUser(userId: string) {
 	return db.select().from(grant).where(eq(grant.userId, userId)).orderBy(grant.grantedAt);
 }
 
-/**
- * Mark a grant's notification as delivered. Called by the desk layout
- * after rendering the "you have access" Toast on the first /desk visit
- * after grant. Single-fire — subsequent calls are no-ops.
- */
-export async function markGrantNotified(userId: string, kind: GrantKind): Promise<void> {
-	await db
-		.update(grant)
-		.set({ notifiedAt: new Date() })
-		.where(and(eq(grant.userId, userId), eq(grant.kind, kind), isNull(grant.revokedAt), isNull(grant.notifiedAt)));
-}
-
 /** Read the pending notification (if any) and clear it in one operation. */
 export async function consumePendingGrantNotifications(userId: string): Promise<GrantKind[]> {
 	const pending = await db

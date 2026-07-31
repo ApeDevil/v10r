@@ -28,7 +28,7 @@ export const POST: RequestHandler = async (event) => {
 	const parsed = v.safeParse(startOperationSchema, body ?? {});
 	if (!parsed.success) return apiValidationError(parsed.issues);
 
-	const ctx = getAuditContext(event);
+	const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 	try {
 		const { run, replayed } = await startOperation({
 			kind: parsed.output.kind,

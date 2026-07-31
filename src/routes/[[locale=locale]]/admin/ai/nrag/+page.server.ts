@@ -68,7 +68,7 @@ export const actions: Actions = {
 		const doc = await adminDeleteDocument(documentId);
 		if (!doc) return fail(404, { message: 'Document not found' });
 
-		const ctx = getAuditContext(event);
+		const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 		await recordAuditEvent({
 			...ctx,
 			action: 'rag.document.delete',
@@ -90,7 +90,7 @@ export const actions: Actions = {
 		const doc = await adminResetDocument(documentId);
 		if (!doc) return fail(404, { message: 'Document not found' });
 
-		const ctx = getAuditContext(event);
+		const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 		await recordAuditEvent({
 			...ctx,
 			action: 'rag.document.reset',

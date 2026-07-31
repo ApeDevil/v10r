@@ -2,9 +2,8 @@
 import { Alert, Card, NavSection } from '$lib/components/composites';
 import CodeBlock from '$lib/components/composites/info-dialog/CodeBlock.svelte';
 import { Stack } from '$lib/components/layout';
-import { Badge, Body, Cell, Header, HeaderCell, Row, Table, ToggleGroup } from '$lib/components/primitives';
+import { Badge, Body, Cell, Header, HeaderCell, ModeChip, Row, Table, ToggleGroup } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
-import ModeChip from '$lib/showcase/auth/ModeChip.svelte';
 
 type Role = 'guest' | 'user' | 'blog-author' | 'admin';
 

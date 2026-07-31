@@ -1,4 +1,5 @@
 import * as v from 'valibot';
+import { sanitizeFeedbackSource } from './source';
 
 export const feedbackSubmissionSchema = v.object({
 	subject: v.pipe(
@@ -28,7 +29,16 @@ export const feedbackSubmissionSchema = v.object({
 			v.union([v.null(), v.pipe(v.string(), v.email('Enter a valid email or leave blank'))]),
 		),
 	),
-	pageOfOrigin: v.optional(v.pipe(v.string(), v.trim(), v.maxLength(512)), '/'),
+	/** Sanitized, never rejected — a crafted value degrades to '' (no source).
+	 * Wrapped so the transform's parameter is exactly `string` (the pipe's
+	 * output type); passing the wider-typed function directly fails to infer. */
+	pageOfOrigin: v.optional(
+		v.pipe(
+			v.string(),
+			v.transform((value: string) => sanitizeFeedbackSource(value)),
+		),
+		'',
+	),
 	nonce: v.pipe(v.string(), v.uuid('Invalid form token')),
 	renderedAt: v.pipe(v.number(), v.integer(), v.minValue(0)),
 	/** Honeypot — must remain empty. Bots fill all visible fields. */

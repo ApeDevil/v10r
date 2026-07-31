@@ -4,12 +4,16 @@ import { hydrateEmbeds } from '$lib/actions/hydrate-embeds';
 import { BlogTag, CommentsIsland, Renderer } from '$lib/components/blog';
 import { PageContainer, Stack } from '$lib/components/layout';
 import { Asterism, Typography } from '$lib/components/primitives';
-import { formatDate, localizeHref } from '$lib/i18n';
+import { deLocalizeHref, formatDate, localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
 
 const post = $derived(data.post);
+
+// Same ?from= contract as FeedbackBand: the admin feedback view shows which
+// post the critique came from.
+const feedbackHref = $derived(localizeHref(`/feedback?from=${encodeURIComponent(deLocalizeHref(page.url.pathname))}`));
 
 const jsonLd = $derived({
 	'@context': 'https://schema.org',
@@ -112,7 +116,7 @@ const jsonLdScript = $derived(
 
 		<div class="post-trailer">
 			<Asterism pattern="three-dots" />
-			<a href={localizeHref('/feedback')} class="trailer-link">{m.blog_trailer_feedback()}</a>
+			<a href={feedbackHref} class="trailer-link">{m.blog_trailer_feedback()}</a>
 		</div>
 
 		<CommentsIsland

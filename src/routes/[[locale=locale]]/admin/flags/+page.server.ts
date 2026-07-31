@@ -22,7 +22,7 @@ export const actions: Actions = {
 			return fail(400, { message: 'Flag key required' });
 		}
 
-		const ctx = getAuditContext(event);
+		const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 
 		await setFlag(key, enabled, { updatedBy: ctx.actorId });
 		await recordAuditEvent({
@@ -55,7 +55,7 @@ export const actions: Actions = {
 			return fail(400, { message: 'Invalid input' });
 		}
 
-		const ctx = getAuditContext(event);
+		const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 
 		await setFlag(data.key, data.enabled ?? false, {
 			description: data.description,
@@ -81,7 +81,7 @@ export const actions: Actions = {
 			return fail(400, { message: 'Flag key required' });
 		}
 
-		const ctx = getAuditContext(event);
+		const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 
 		await deleteFlag(key);
 		await recordAuditEvent({

@@ -10,6 +10,7 @@ import LineChart from '$lib/components/viz/chart/line/LineChart.svelte';
 import { getFormattingLocale } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 import { baseLocale, extractLocaleFromUrl } from '$lib/paraglide/runtime';
+import { formatDuration } from '$lib/utils/format-duration';
 
 let { data }: PageProps = $props();
 let pairedActive = $state(data.pairedActive);
@@ -81,14 +82,6 @@ function formatRelativeAge(ms: number | null): string {
 	if (hours < 48) return `${hours}h ago`;
 	const days = Math.round(hours / 24);
 	return `${days}d ago`;
-}
-
-function formatDuration(ms: number): string {
-	if (ms < 1000) return `${ms}ms`;
-	const s = Math.round(ms / 1000);
-	if (s < 60) return `${s}s`;
-	const mins = Math.floor(s / 60);
-	return `${mins}m ${s % 60}s`;
 }
 
 function buildChartData(trend: typeof data.trend extends Promise<infer T> ? T : never): ChartData<'line'> {

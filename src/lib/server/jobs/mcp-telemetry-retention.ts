@@ -1,4 +1,4 @@
-import { and, isNotNull, lt, or, sql } from 'drizzle-orm';
+import { and, isNotNull, lt, or } from 'drizzle-orm';
 import { MCP_QUERY_TEXT_RETENTION_DAYS, MCP_TELEMETRY_RETENTION_DAYS } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { mcpCallLog } from '$lib/server/db/schema/mcp/call-log';
@@ -54,13 +54,4 @@ export async function mcpTelemetryRetention(): Promise<number> {
 		.returning({ id: mcpCallLog.id });
 
 	return scrubbed.length + deleted.length;
-}
-
-/** Rows currently holding caller-supplied text — surfaced for the admin jobs view. */
-export async function countRetainedQueryText(): Promise<number> {
-	const [row] = await db
-		.select({ n: sql<number>`count(*)::int` })
-		.from(mcpCallLog)
-		.where(isNotNull(mcpCallLog.queryText));
-	return Number(row?.n ?? 0);
 }

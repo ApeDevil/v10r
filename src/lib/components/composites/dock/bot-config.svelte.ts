@@ -37,8 +37,6 @@ let optInScopes = $state(new Set<Exclude<DeskToolScope, 'desk:read' | 'desk:crea
  */
 const effectiveScopes = $derived<DeskToolScope[]>(['desk:read', 'desk:create', ...[...optInScopes]]);
 
-const hasWriteCapabilities = $derived(optInScopes.has('desk:write') || optInScopes.has('desk:delete'));
-
 // ── Public API ───────────────────────────────────────────────────────
 
 /** Get enabled scopes as an array for request serialization. */
@@ -58,11 +56,6 @@ export function isScopeEnabled(scope: DeskToolScope): boolean {
 	return optInScopes.has(scope);
 }
 
-/** Check if any write/delete capabilities are enabled. */
-export function hasWriteAccess(): boolean {
-	return hasWriteCapabilities;
-}
-
 /**
  * Enable a user-toggleable scope. Read and create are always-on and
  * calling `enableScope('desk:read')` is a no-op.
@@ -80,14 +73,4 @@ export function disableScope(scope: DeskToolScope): void {
 	const next = new Set(optInScopes);
 	next.delete(scope);
 	optInScopes = next;
-}
-
-/** Toggle a user-toggleable scope on/off. */
-export function toggleScope(scope: DeskToolScope): void {
-	if (scope === 'desk:read' || scope === 'desk:create') return;
-	if (optInScopes.has(scope)) {
-		disableScope(scope);
-	} else {
-		enableScope(scope);
-	}
 }

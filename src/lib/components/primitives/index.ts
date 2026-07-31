@@ -33,6 +33,7 @@ export { default as Dialog } from './dialog/Dialog.svelte';
 export { default as Drawer } from './drawer/Drawer.svelte';
 export { default as Input } from './input/Input.svelte';
 export { Kbd } from './kbd';
+export { default as ModeChip } from './ModeChip.svelte';
 export { Pane, PaneGroup, PaneResizer } from './pane';
 export { Popover } from './popover';
 export { Progress } from './progress';

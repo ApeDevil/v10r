@@ -77,9 +77,9 @@ export async function renameFile(id: string, userId: string, name: string) {
  *
  * Sets `deleted_at` on the file row and on the matching detail row
  * (spreadsheet or markdown). Readers filter `deleted_at IS NULL` so the
- * file disappears from every list, tree, and AI tool. An I/O Log chip
- * can still call `restoreFile` to bring it back within the retention
- * window. The actual row stays in place until a retention sweep runs.
+ * file disappears from every list, tree, and AI tool. There is no restore
+ * path — the row stays in place until the `deskRetention` job hard-deletes
+ * it after `DESK_SOFT_DELETE_RETENTION_DAYS`.
  */
 export async function deleteFile(id: string, userId: string, source: RevisionSource = 'user') {
 	return db.transaction(async (tx) => {
@@ -131,31 +131,6 @@ export async function deleteFile(id: string, userId: string, source: RevisionSou
 				});
 			}
 			await tx.update(markdown).set({ deletedAt: now }).where(eq(markdown.fileId, id));
-		}
-		return fileRow;
-	});
-}
-
-/**
- * Restore a soft-deleted file (undo delete).
- *
- * Mirror of `deleteFile` — clears `deleted_at` on the file and the
- * matching detail row. Returns `null` if no soft-deleted file matches.
- */
-export async function restoreFile(id: string, userId: string) {
-	return db.transaction(async (tx) => {
-		const now = new Date();
-		const [fileRow] = await tx
-			.update(file)
-			.set({ deletedAt: null, updatedAt: now })
-			.where(and(eq(file.id, id), eq(file.userId, userId), sql`${file.deletedAt} IS NOT NULL`))
-			.returning();
-		if (!fileRow) return null;
-
-		if (fileRow.type === 'spreadsheet') {
-			await tx.update(spreadsheet).set({ deletedAt: null }).where(eq(spreadsheet.fileId, id));
-		} else if (fileRow.type === 'markdown') {
-			await tx.update(markdown).set({ deletedAt: null }).where(eq(markdown.fileId, id));
 		}
 		return fileRow;
 	});

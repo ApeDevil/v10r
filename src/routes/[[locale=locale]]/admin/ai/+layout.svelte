@@ -4,17 +4,14 @@ import { afterNavigate } from '$app/navigation';
 import { page } from '$app/state';
 import { Typography } from '$lib/components/primitives';
 import { deLocalizeHref, localizeHref } from '$lib/i18n';
+import { adminAiTabs } from '$lib/nav/admin';
+import * as m from '$lib/paraglide/messages';
 
 let { children }: { children: Snippet } = $props();
 
-const tabs = [
-	{ href: '/admin/ai/overview', label: 'Overview' },
-	{ href: '/admin/ai/models', label: 'Models' },
-	{ href: '/admin/ai/usage', label: 'Usage' },
-	{ href: '/admin/ai/cost', label: 'Cost' },
-	{ href: '/admin/ai/nrag', label: 'nRAG' },
-	{ href: '/admin/ai/tools', label: 'Tools' },
-];
+// Derived from the admin nav registry — the sidebar's AI group and this tab
+// strip can no longer drift apart.
+const tabs = adminAiTabs;
 
 const isActive = (href: string) => deLocalizeHref(page.url.pathname).startsWith(href);
 const activeTab = $derived(tabs.find((t) => isActive(t.href)));
@@ -30,14 +27,14 @@ afterNavigate(({ type }) => {
 
 <section class="ai-section">
 	<header class="ai-header">
-		<Typography variant="h1">AI</Typography>
-		<nav class="ai-tabs" aria-label="AI section">
+		<Typography variant="h1">{m.admin_nav_group_ai()}</Typography>
+		<nav class="ai-tabs" aria-label={m.admin_nav_group_ai()}>
 			{#each tabs as t (t.href)}
 				<a
 					href={localizeHref(t.href)}
 					class:active={isActive(t.href)}
 					aria-current={isActive(t.href) ? 'page' : undefined}
-				>{t.label}</a>
+				>{t.label()}</a>
 			{/each}
 		</nav>
 	</header>
@@ -46,7 +43,7 @@ afterNavigate(({ type }) => {
 		class="ai-content"
 		tabindex="-1"
 		bind:this={contentEl}
-		aria-label={activeTab ? `${activeTab.label} panel` : 'AI panel'}
+		aria-label={m.admin_nav_panel_aria({ name: (activeTab ?? tabs[0]).label() })}
 	>
 		{@render children()}
 	</div>

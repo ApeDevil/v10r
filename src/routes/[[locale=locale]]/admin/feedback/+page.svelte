@@ -82,7 +82,7 @@ function statusLabel(status: string): string {
 								</td>
 								<td>{item.subject}</td>
 								<td>{item.rating ?? '—'}</td>
-								<td><code class="page-cell">{item.pageOfOrigin}</code></td>
+								<td><code class="page-cell">{item.pageOfOrigin || '—'}</code></td>
 								<td>
 									{#if item.sessionId}
 										<span class="i-lucide-link-2" aria-label={m.admin_feedback_journey_linked()}></span>

@@ -11,7 +11,7 @@
  * to the client). Render side treats it as plain text.
  */
 
-import type { LlmwikiCitationVerification } from '$lib/server/llmwiki/types';
+import type { LlmwikiCitationVerification } from '$lib/server/llmwiki';
 import { fetchChunksByIds } from '$lib/server/rawrag/queries';
 import type { ChunkVerdict, SourceChunk } from '$lib/types/citation';
 

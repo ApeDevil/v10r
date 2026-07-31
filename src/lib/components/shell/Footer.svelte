@@ -13,11 +13,11 @@ const consent = getConsent();
 		<div class="flex items-center gap-3">
 			<LogoFooter />
 			<p class="text-muted text-sm m-0">
-				© {currentYear} Velociraptor. Built with SvelteKit.
+				{m.footer_copyright({ year: String(currentYear) })}
 			</p>
 		</div>
 		<nav class="flex gap-4 flex-wrap items-center justify-center md:justify-end">
-			<a href={localizeHref('/feedback')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">{m.footer_feedback()}</a>
+			<a href={localizeHref('/credits')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">{m.footer_credits()}</a>
 			<!-- Label stays "Impressum" in every locale: § 5 DDG requires the page be
 			     *leicht erkennbar*, and German case law has been unkind to creative
 			     labels. "Impressum" and "Kontakt" are the safe ones. -->

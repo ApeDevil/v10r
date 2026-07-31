@@ -47,7 +47,7 @@ export const actions: Actions = {
 		try {
 			const tag = await createTag(name, slug, { icon, color, glyph });
 
-			const ctx = getAuditContext(event);
+			const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 			await recordAuditEvent({
 				...ctx,
 				action: 'blog.tag.create',
@@ -94,7 +94,7 @@ export const actions: Actions = {
 			const updated = await updateTag(tagId, { name, slug, icon, color, glyph, nameI18n });
 			if (!updated) return fail(404, { message: 'Tag not found.' });
 
-			const ctx = getAuditContext(event);
+			const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 			await recordAuditEvent({
 				...ctx,
 				action: 'blog.tag.update',
@@ -123,7 +123,7 @@ export const actions: Actions = {
 			const deleted = await deleteTag(tagId);
 			if (!deleted) return fail(404, { message: 'Tag not found.' });
 
-			const ctx = getAuditContext(event);
+			const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 			await recordAuditEvent({
 				...ctx,
 				action: 'blog.tag.delete',
@@ -160,7 +160,7 @@ export const actions: Actions = {
 		try {
 			const domain = await createDomain(name, slug, { icon, color, description });
 
-			const ctx = getAuditContext(event);
+			const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 			await recordAuditEvent({
 				...ctx,
 				action: 'blog.domain.create',
@@ -202,7 +202,7 @@ export const actions: Actions = {
 			const updated = await updateDomain(domainId, { name, slug, icon, color, description });
 			if (!updated) return fail(404, { message: 'Domain not found.' });
 
-			const ctx = getAuditContext(event);
+			const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 			await recordAuditEvent({
 				...ctx,
 				action: 'blog.domain.update',
@@ -231,7 +231,7 @@ export const actions: Actions = {
 			const deleted = await deleteDomain(domainId);
 			if (!deleted) return fail(404, { message: 'Domain not found.' });
 
-			const ctx = getAuditContext(event);
+			const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 			await recordAuditEvent({
 				...ctx,
 				action: 'blog.domain.delete',

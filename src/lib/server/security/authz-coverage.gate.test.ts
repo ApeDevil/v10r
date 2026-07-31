@@ -134,6 +134,10 @@ const PUBLIC_SURFACES: Record<string, string> = {
 	'api/consent/+page.server.ts':
 		'Records a consent grant or withdrawal for an anonymous visitor. Requiring a session would be incoherent — the point is that the subject is not identified — and it writes only a keyed visitor hash.',
 
+	// ── Pairing claim ─────────────────────────────────────────────────────────
+	'[[locale=locale]]/pair/[code]/+page.server.ts':
+		'Phone-side claim of a single-use admin pairing code — the phone has no session by definition, so the code itself is the credential (8^6 keyspace, 10-min TTL, 5-attempt cap, atomic claim). The POST action is IP-rate-limited before any DB round-trip; the load is read-only format validation.',
+
 	// ── Public feedback ───────────────────────────────────────────────────────
 	'[[locale=locale]]/(public)/feedback/+page.server.ts':
 		'Anonymous feedback submission — requiring a session would defeat the purpose. Rate-limited per /64, and it writes only to the feedback table. It reads locals.user solely to prefill the contact email for signed-in visitors, which is not a check.',

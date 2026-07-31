@@ -122,5 +122,5 @@ src/routes/[[locale=locale]]/(public)/showcases/shell/style/
 ## 6. Known tradeoffs
 
 - **Applying a custom palette costs a reload.** The alternative is extracting the `<style>` block builder into an isomorphic module used by both the hook and the client. Worth doing if custom palettes get heavier use; not worth a second implementation.
-- **`saveStyleToDb` writes are never read back.** `loadStyleFromDb` exists but has no call sites: `loadStyle` runs before `sessionPopulate`, so the hook has no user id to load by. The DB copy is a backup, not a restore path — do not describe it as "your account remembers your style" until that ordering changes.
+- **`saveStyleToDb` writes are never read back.** `loadStyleFromDb` was removed (dead code — it had no call sites): `loadStyle` runs before `sessionPopulate`, so the hook has no user id to load by. The DB copy is a backup, not a restore path — do not describe it as "your account remembers your style" unless a read path is added.
 - **Custom palette ids are guessable-in-principle.** 48 bits of entropy makes enumeration impractical, and the payload is a palette, but this is a deliberate accept rather than an oversight.

@@ -44,7 +44,3 @@ export function clearIOLog(): void {
 export function getIOLogEntries(): IOLogEntry[] {
 	return entries;
 }
-
-export function getIOLogCount(): number {
-	return entries.length;
-}

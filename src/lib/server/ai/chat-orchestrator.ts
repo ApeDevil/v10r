@@ -7,6 +7,7 @@ import {
 	convertToModelMessages,
 	createUIMessageStream,
 	createUIMessageStreamResponse,
+	type LanguageModel,
 	type LanguageModelUsage,
 	type ModelMessage,
 	stepCountIs,
@@ -50,13 +51,16 @@ import {
 } from '$lib/server/db/ai/mutations';
 import { createProposal, getProposal } from '$lib/server/db/ai/proposals';
 import { getConversation } from '$lib/server/db/ai/queries';
+import { DbError, safeDbMessage } from '$lib/server/db/errors';
 import type { ProposalExecutionResult, ProposedToolCall } from '$lib/server/db/schema/ai/proposal';
-import { MAX_RAWRAG_TOOL_CALLS_PER_TURN } from '$lib/server/llmwiki/config';
-import { loadOverview } from '$lib/server/llmwiki/overview';
-import { searchLlmwiki } from '$lib/server/llmwiki/search';
-import type { LlmwikiHit } from '$lib/server/llmwiki/types';
-import { verifyCitations } from '$lib/server/llmwiki/verify';
-import { formatLlmwikiContext } from '$lib/server/llmwiki/wiki-format';
+import {
+	formatLlmwikiContext,
+	type LlmwikiHit,
+	loadOverview,
+	MAX_RAWRAG_TOOL_CALLS_PER_TURN,
+	searchLlmwiki,
+	verifyCitations,
+} from '$lib/server/llmwiki';
 import { formatContextForPrompt, retrieve } from '$lib/server/rawrag';
 import { generateEmbedding } from '$lib/server/rawrag/embed';
 import { buildSearchIndex, formatCatalogMap, type PageContext } from '$lib/server/search';
@@ -69,7 +73,12 @@ import {
 	type PipelinePromptEvent,
 	type PipelineStepEvent,
 } from '$lib/types/pipeline';
-import { streamTextIntoOpenMessage } from './_shared/streaming-turn';
+import {
+	type AttemptFailure,
+	type PumpableTextResult,
+	streamTextIntoOpenMessage,
+	type TurnAttempt,
+} from './_shared/streaming-turn';
 import { verifyCatalogCitations } from './catalog-citations';
 import { shapeDrilledCitations } from './citations/drill';
 import { createToolLeakGuard, stripTextualToolCall } from './tool-leak-guard';
@@ -403,6 +412,61 @@ function referencesCurrentPage(text: string): boolean {
 	);
 }
 
+/**
+ * Honest tool degrade — pick a tool-capable provider that can actually serve THIS turn.
+ *
+ * The previous check looked only at the resolved tool provider: one cooled provider silently
+ * dropped every retrieval/desk tool for the turn even though another configured, tool-capable
+ * provider sat idle. Scan in preference order (resolved tool provider first, then the configured
+ * fallbacks) and take the first that is configured, tool-capable, not cooled, and instantiable.
+ *
+ * Returns null ONLY when every tool-capable provider is cooled — the one case where the turn
+ * genuinely has to run tool-less (and must then say so rather than pretend it searched).
+ */
+async function resolveAvailableToolProvider(
+	preferred: ProviderEntry | null,
+	fallbacks: ProviderEntry[],
+): Promise<{ provider: ProviderEntry; model: LanguageModel } | null> {
+	const ordered: ProviderEntry[] = [];
+	if (preferred) ordered.push(preferred);
+	for (const f of fallbacks) {
+		if (f.supportsTools && !ordered.some((p) => p.id === f.id)) ordered.push(f);
+	}
+	for (const entry of ordered) {
+		if (!entry.configured || !entry.supportsTools) continue;
+		if (await isCooledDown(entry.id)) continue;
+		const instance = entry.getInstance();
+		if (instance) return { provider: entry, model: instance };
+	}
+	return null;
+}
+
+/**
+ * Build the current-turn attempt chain for a streaming branch: the primary provider first, then
+ * every configured fallback that can serve this turn. `run()` stays lazy per entry — `streamText`
+ * fires on call and `AbortSignal.timeout()` is single-use, so each attempt must mint its own call.
+ */
+function buildTurnAttempts(
+	primary: { providerId: string | null; modelId: string | null; model: LanguageModel },
+	fallbacks: ProviderEntry[],
+	makeStream: (model: LanguageModel) => PumpableTextResult,
+	requireTools: boolean,
+): TurnAttempt[] {
+	const attempts: TurnAttempt[] = [
+		{ providerId: primary.providerId, modelId: primary.modelId, run: () => makeStream(primary.model) },
+	];
+	for (const f of fallbacks) {
+		if (requireTools && !f.supportsTools) continue;
+		// `getFallbacksForUser` only excludes the active CHAT provider, so on a tool-routed turn the
+		// primary can appear here — never re-attempt the provider that just failed.
+		if (attempts.some((a) => a.providerId === f.id)) continue;
+		const instance = f.getInstance();
+		if (!instance) continue;
+		attempts.push({ providerId: f.id, modelId: f.model, run: () => makeStream(instance) });
+	}
+	return attempts;
+}
+
 export async function orchestrateChat(input: ChatInput): Promise<Response> {
 	return runWithCompaction(DEFAULT_BUDGET, () => orchestrateChatInner(input));
 }
@@ -455,8 +519,6 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	const activeInfo = getActiveProviderInfo(userId, providerId);
 	const resolvedChatModel = activeProvider?.getInstance() ?? null;
 	const resolvedToolProvider = getToolProvider(userId, providerId);
-	const resolvedToolModel = resolvedToolProvider?.getInstance() ?? null;
-	const resolvedToolProviderId = resolvedToolProvider?.id ?? null;
 	const resolvedFallbacks = getFallbacksForUser(userId, providerId);
 
 	if (!resolvedChatModel) {
@@ -468,10 +530,11 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	// rawrag drill-down) even without desk scopes, so they must route to the tool-capable model
 	// too — otherwise grounding tool calls run on the chat model and silently fail to fire.
 	const wantsTools = !!toolScopes?.length || !!useLlmwiki || !!useRetrieval;
-	const toolProviderAvailable =
-		!!resolvedToolModel && !!resolvedToolProviderId && !(await isCooledDown(resolvedToolProviderId));
-	const hasTools = wantsTools && toolProviderAvailable;
-	const model = (hasTools ? resolvedToolModel : resolvedChatModel) ?? resolvedChatModel;
+	const availableToolProvider = wantsTools
+		? await resolveAvailableToolProvider(resolvedToolProvider, resolvedFallbacks)
+		: null;
+	const hasTools = wantsTools && !!availableToolProvider;
+	const model = availableToolProvider?.model ?? resolvedChatModel;
 	// Desk tools only for actual desk scopes — the llmwiki/rawrag branches set hasTools (to claim
 	// the tool model) but bring their own retrieval tools and pass no desk scopes.
 	// On a resume-from-proposal turn the approved plan has ALREADY executed via the
@@ -482,10 +545,12 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 		resumeContext && toolScopes ? toolScopes.filter((s) => s === 'desk:read' || s === 'desk:ask') : toolScopes;
 	const deskTools =
 		hasTools && effectiveToolScopes?.length ? createDeskTools(userId, effectiveToolScopes, deskLayout) : undefined;
-	// Resolved provider/model attribution for per-step telemetry (conversation_step).
-	// The tool provider drives the turn when tools are mounted; otherwise the chat provider.
-	const stepProviderId = hasTools ? resolvedToolProviderId : (activeInfo?.id ?? null);
-	const stepModelId = hasTools ? (resolvedToolProvider?.model ?? null) : (activeInfo?.model ?? null);
+	// Resolved provider/model attribution for per-step telemetry (conversation_step) and for the
+	// stream-error circuit breaker. MUTABLE: the chatbot/rag-demo branches rotate providers mid-turn
+	// (see `streamTextIntoOpenMessage`), and every reader below must attribute the failure/step to
+	// the provider that is actually running, not the one the turn started on.
+	let currentProviderId = hasTools ? (availableToolProvider?.provider.id ?? null) : (activeInfo?.id ?? null);
+	let currentModelId = hasTools ? (availableToolProvider?.provider.model ?? null) : (activeInfo?.model ?? null);
 	// --- Plan-before-execute gate (policy/governor.ts) ---
 	// Pre-turn estimate of whether this is a destructive, multi-capability, multi-target
 	// desk turn that must produce a plan first. Wiring this is what makes the `<planning>`
@@ -578,9 +643,12 @@ The user has just approved the plan above and the listed steps were executed. Ac
 		const aiErr = classifyAIError(error);
 		console.error(`[ai:chat] Stream error [${aiErr.kind}]:`, error);
 
-		// Circuit breaker for rate limits during streaming
+		// Circuit breaker for rate limits during streaming. This is the FINAL-failure path: the
+		// streaming helper only rethrows once no eligible provider is left, and it cools the
+		// providers it rotated away from itself — so reading the mutable `currentProviderId` here
+		// cools the provider that actually died last, with no double count.
 		if (aiErr.kind === 'rate_limit') {
-			const failedProvider = hasTools ? resolvedToolProviderId : (activeInfo?.id ?? null);
+			const failedProvider = currentProviderId;
 			if (failedProvider) {
 				void markCooldown(failedProvider);
 				void incrProvider429(failedProvider);
@@ -959,6 +1027,16 @@ Project catalog rules:
 3. If \`search_catalog\` returns nothing for what the user asked, say it isn't in the catalog — do not fabricate a plausible URL.
 4. Use \`search_catalog\` for navigation / "what exists"; use the llmwiki pages for explaining how something works.`;
 
+					// Honest tool degrade. Reached only when EVERY tool-capable provider is cooled, so the
+					// retrieval tools referenced above are physically absent this turn. Without this the
+					// prompt still orders the model to "call search_catalog", and it happily narrates
+					// searches it never ran. Appended before the prompt-assembled event so it is counted.
+					if (!hasTools) {
+						systemPrompt = `${systemPrompt}
+
+NOTE: retrieval tools are unavailable this turn due to provider limits. Do not claim to have searched; answer from the provided context only and say plainly when you cannot verify something.`;
+					}
+
 					// Prompt assembled — emitted AFTER every context injection (llmwiki + project-overview +
 					// system-docs + current-page + catalog) so `systemPromptTokens` reflects the FULL prompt
 					// and the injected context is attributed to "Context", not "prompt overhead". `totalTokens`
@@ -987,99 +1065,108 @@ Project catalog rules:
 					let stepCounter = 0;
 					let lastStepAt = generateStart;
 
-					const textResult = streamText({
-						model,
-						system: systemPrompt,
-						messages,
-						tools: retrievalTools,
-						toolChoice: 'auto',
-						stopWhen: stepCountIs(CHATBOT_MAX_STEPS),
-						maxRetries: 0,
-						maxOutputTokens: MAX_TOKENS,
-						abortSignal: AbortSignal.timeout(30_000),
-						// Net for Groq/llama emitting a tool call as plain text (`<function=…>`).
-						// Suppresses the raw markup so the user never reads it; the turn degrades
-						// to empty instead of leaking syntax. See `tool-leak-guard.ts`.
-						experimental_transform: createToolLeakGuard((lead) =>
-							console.warn(`[ai:chat:llmwiki] suppressed textual tool-call leak: ${lead}…`),
-						),
-						onStepFinish: async ({
-							toolCalls,
-							toolResults,
-							usage,
-						}: {
-							toolCalls?: Array<{ toolName: string; args?: { ids?: string[] } }>;
-							toolResults?: Array<{ toolName: string; result?: { chunks?: unknown[] } }>;
-							usage?: { inputTokens?: number; outputTokens?: number };
-						}) => {
-							if (toolCalls) {
-								for (let i = 0; i < toolCalls.length; i++) {
-									const tc = toolCalls[i];
-									if (tc.toolName !== 'get_rawrag_chunks') continue;
-									const callIndex = toolCallCount as 0 | 1 | 2;
-									toolCallCount++;
-									if (toolCallCount > MAX_RAWRAG_TOOL_CALLS_PER_TURN) {
-										console.warn(
-											`[ai:chat:llmwiki] get_rawrag_chunks called ${toolCallCount} times, cap is ${MAX_RAWRAG_TOOL_CALLS_PER_TURN}`,
-										);
+					// Tools are SPREAD, not passed unconditionally: when every tool-capable provider is
+					// cooled (`hasTools === false`) the turn must run genuinely tool-less. Mounting
+					// tools on a cooled-out turn is what produced "I searched the catalog…" answers
+					// with zero tool calls behind them. Paired with the honest-degrade NOTE above.
+					const toolOpts = hasTools
+						? { tools: retrievalTools, toolChoice: 'auto' as const, stopWhen: stepCountIs(CHATBOT_MAX_STEPS) }
+						: {};
+
+					// A fresh `streamText` per attempt — the call fires on invocation and
+					// `AbortSignal.timeout()` is single-use, so a fallback cannot reuse the primary's.
+					const makeStream = (attemptModel: LanguageModel) =>
+						streamText({
+							model: attemptModel,
+							system: systemPrompt,
+							messages,
+							...toolOpts,
+							maxRetries: 0,
+							maxOutputTokens: MAX_TOKENS,
+							abortSignal: AbortSignal.timeout(30_000),
+							// Net for Groq/llama emitting a tool call as plain text (`<function=…>`).
+							// Suppresses the raw markup so the user never reads it; the turn degrades
+							// to empty instead of leaking syntax. See `tool-leak-guard.ts`.
+							experimental_transform: createToolLeakGuard((lead) =>
+								console.warn(`[ai:chat:llmwiki] suppressed textual tool-call leak: ${lead}…`),
+							),
+							onStepFinish: async ({
+								toolCalls,
+								toolResults,
+								usage,
+							}: {
+								toolCalls?: Array<{ toolName: string; args?: { ids?: string[] } }>;
+								toolResults?: Array<{ toolName: string; result?: { chunks?: unknown[] } }>;
+								usage?: { inputTokens?: number; outputTokens?: number };
+							}) => {
+								if (toolCalls) {
+									for (let i = 0; i < toolCalls.length; i++) {
+										const tc = toolCalls[i];
+										if (tc.toolName !== 'get_rawrag_chunks') continue;
+										const callIndex = toolCallCount as 0 | 1 | 2;
+										toolCallCount++;
+										if (toolCallCount > MAX_RAWRAG_TOOL_CALLS_PER_TURN) {
+											console.warn(
+												`[ai:chat:llmwiki] get_rawrag_chunks called ${toolCallCount} times, cap is ${MAX_RAWRAG_TOOL_CALLS_PER_TURN}`,
+											);
+										}
+										const idsRequested = tc.args?.ids?.length ?? 0;
+										const chunksReturned = toolResults?.[i]?.result?.chunks?.length ?? 0;
+										emit({
+											type: 'pipeline:step',
+											step: 'rawrag:drill',
+											// Unique per drill so the waterfall keys 0–3 distinct ticks (avoids each_key_duplicate).
+											instanceKey: `drill#${callIndex}`,
+											status: 'done',
+											// Point tick nested by time inside the generate bar (we don't measure per-tool latency).
+											startOffsetMs: Math.round(performance.now() - t0),
+											detail: {
+												kind: 'drill',
+												callIndex: callIndex <= 2 ? callIndex : 2,
+												idsRequested,
+												chunksReturned,
+											},
+										});
 									}
-									const idsRequested = tc.args?.ids?.length ?? 0;
-									const chunksReturned = toolResults?.[i]?.result?.chunks?.length ?? 0;
-									emit({
-										type: 'pipeline:step',
-										step: 'rawrag:drill',
-										// Unique per drill so the waterfall keys 0–3 distinct ticks (avoids each_key_duplicate).
-										instanceKey: `drill#${callIndex}`,
-										status: 'done',
-										// Point tick nested by time inside the generate bar (we don't measure per-tool latency).
-										startOffsetMs: Math.round(performance.now() - t0),
-										detail: {
-											kind: 'drill',
-											callIndex: callIndex <= 2 ? callIndex : 2,
-											idsRequested,
-											chunksReturned,
-										},
-									});
 								}
-							}
-							// Persist the step so the chatbot's usage shows up in "usage by model".
-							if (conversationId) {
-								const stepIndex = stepCounter++;
-								const nowT = performance.now();
-								const durationMs = Math.round(nowT - lastStepAt);
-								lastStepAt = nowT;
-								try {
-									await saveConversationStep({
-										conversationId,
-										messageId: assistantMsgId,
-										stepIndex,
-										stepType: stepIndex === 0 ? 'initial' : 'tool-result',
-										surface: stampSurface,
-										inputTokens: usage?.inputTokens ?? 0,
-										outputTokens: usage?.outputTokens ?? 0,
-										providerId: stepProviderId,
-										modelId: stepModelId,
-										durationMs,
-									});
-								} catch (err) {
-									console.error('[ai:chat:llmwiki] Failed to persist step:', err);
+								// Persist the step so the chatbot's usage shows up in "usage by model".
+								if (conversationId) {
+									const stepIndex = stepCounter++;
+									const nowT = performance.now();
+									const durationMs = Math.round(nowT - lastStepAt);
+									lastStepAt = nowT;
+									try {
+										await saveConversationStep({
+											conversationId,
+											messageId: assistantMsgId,
+											stepIndex,
+											stepType: stepIndex === 0 ? 'initial' : 'tool-result',
+											surface: stampSurface,
+											inputTokens: usage?.inputTokens ?? 0,
+											outputTokens: usage?.outputTokens ?? 0,
+											providerId: currentProviderId,
+											modelId: currentModelId,
+											durationMs,
+										});
+									} catch (err) {
+										console.error('[ai:chat:llmwiki] Failed to persist step:', err);
+									}
 								}
-							}
-						},
-						onError: ({ error }) => {
-							console.error('[ai:chat:llmwiki] Stream error:', error);
-							// Terminal for generate — without this a provider 503 / 30s abort leaves the
-							// bar stuck `active` forever. Client also has a finalizeActive() backstop, but
-							// emit here so the error reason is visible.
-							emit({
-								type: 'pipeline:step',
-								step: 'generate',
-								status: 'error',
-								durationMs: Math.round(performance.now() - generateStart),
-								error: error instanceof Error ? error.message : String(error),
-							});
-						},
-					});
+							},
+							onError: ({ error }) => {
+								console.error('[ai:chat:llmwiki] Stream error:', error);
+								// Terminal for generate — without this a provider 503 / 30s abort leaves the
+								// bar stuck `active` forever. Client also has a finalizeActive() backstop, but
+								// emit here so the error reason is visible.
+								emit({
+									type: 'pipeline:step',
+									step: 'generate',
+									status: 'error',
+									durationMs: Math.round(performance.now() - generateStart),
+									error: error instanceof Error ? error.message : String(error),
+								});
+							},
+						});
 
 					// Post-text work runs while the assistant message is still OPEN (the streaming helper
 					// closes it with a single `finish` only after this resolves) — so the citation/catalog
@@ -1211,9 +1298,48 @@ Project catalog rules:
 							await chargeTokens(userId, (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0));
 						}
 					};
+					// Current-turn provider rotation: primary first, then every configured fallback that
+					// can still serve this turn. `requireTools` keeps a tool-mounted turn off a
+					// tool-incapable provider (which would silently answer without ever searching).
+					const attempts = buildTurnAttempts(
+						{ providerId: currentProviderId, modelId: currentModelId, model },
+						resolvedFallbacks,
+						makeStream,
+						hasTools,
+					);
+
 					// Pump text into the open message, run afterText, then close — citation/catalog/persist
 					// metadata flushes BEFORE the finish frame (fixes the empty-answer / answer⟷trace desync).
-					await streamTextIntoOpenMessage(writer, textResult, afterText);
+					await streamTextIntoOpenMessage(writer, attempts, afterText, {
+						isSkipped: (id) => (id ? isCooledDown(id) : Promise.resolve(false)),
+						onAttemptStart: (attempt) => {
+							// Re-point step telemetry at the provider actually running this attempt.
+							currentProviderId = attempt.providerId;
+							currentModelId = attempt.modelId;
+						},
+						onAttemptFailure: async ({ providerId: failedId, error, willRetry }: AttemptFailure) => {
+							const aiErr = classifyAIError(error);
+							console.error(
+								`[ai:chat:llmwiki] attempt failed provider=${failedId ?? 'unknown'} kind=${aiErr.kind} willRetry=${willRetry}:`,
+								error,
+							);
+							// Retry-path cooldown only. A FINAL failure rethrows into classifyStreamError,
+							// which owns the cooldown for it — cooling here too would double-count the 429.
+							if (!willRetry) return;
+							if (aiErr.kind === 'rate_limit' && failedId) {
+								void markCooldown(failedId);
+								void incrProvider429(failedId);
+							}
+							// streamText's own onError already painted the generate bar `error`; re-open it
+							// so the waterfall shows the turn recovering onto the next provider.
+							emit({
+								type: 'pipeline:step',
+								step: 'generate',
+								status: 'active',
+								startOffsetMs: Math.round(generateStart - t0),
+							});
+						},
+					});
 				},
 				onError: classifyStreamError,
 			});
@@ -1311,25 +1437,28 @@ Project catalog rules:
 
 					// `assistantMsgId` was created + persisted at the top of `execute` (so the
 					// `start` frame can carry it); its content is backfilled in onFinish below.
-					const textResult = streamText({
-						model,
-						system: systemPrompt,
-						messages,
-						maxRetries: 0,
-						maxOutputTokens: MAX_TOKENS,
-						abortSignal: AbortSignal.timeout(30_000),
-						onError: ({ error }) => {
-							console.error('[ai:chat:retrieval] Stream error:', error);
-							// Terminal for generate so the bar can't hang `active` on a 503 / 30s abort.
-							emitEvent({
-								type: 'pipeline:step',
-								step: 'generate',
-								status: 'error',
-								durationMs: Math.round(performance.now() - generateStartedAt.t),
-								error: error instanceof Error ? error.message : String(error),
-							});
-						},
-					});
+					// A fresh `streamText` per attempt — the call fires immediately and
+					// `AbortSignal.timeout()` is single-use, so a fallback cannot reuse the primary's.
+					const makeStream = (attemptModel: LanguageModel) =>
+						streamText({
+							model: attemptModel,
+							system: systemPrompt,
+							messages,
+							maxRetries: 0,
+							maxOutputTokens: MAX_TOKENS,
+							abortSignal: AbortSignal.timeout(30_000),
+							onError: ({ error }) => {
+								console.error('[ai:chat:retrieval] Stream error:', error);
+								// Terminal for generate so the bar can't hang `active` on a 503 / 30s abort.
+								emitEvent({
+									type: 'pipeline:step',
+									step: 'generate',
+									status: 'error',
+									durationMs: Math.round(performance.now() - generateStartedAt.t),
+									error: error instanceof Error ? error.message : String(error),
+								});
+							},
+						});
 
 					// Post-text work runs while the message is still OPEN; the helper writes the single
 					// `finish` only after it resolves, so metadata never lands after the finish frame.
@@ -1357,8 +1486,8 @@ Project catalog rules:
 									surface: stampSurface,
 									inputTokens: totalUsage?.inputTokens ?? 0,
 									outputTokens: totalUsage?.outputTokens ?? 0,
-									providerId: stepProviderId,
-									modelId: stepModelId,
+									providerId: currentProviderId,
+									modelId: currentModelId,
 									durationMs: Math.round(performance.now() - generateStartedAt.t),
 								});
 								await updateMessageContent(assistantMsgId, text);
@@ -1371,8 +1500,43 @@ Project catalog rules:
 							await chargeTokens(userId, (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0));
 						}
 					};
+					// Current-turn provider rotation. No tool filter — this branch never mounts tools,
+					// so any configured provider can serve it.
+					const attempts = buildTurnAttempts(
+						{ providerId: currentProviderId, modelId: currentModelId, model },
+						resolvedFallbacks,
+						makeStream,
+						false,
+					);
+
 					// Pump text into the open message, run afterText, then close with one `finish`.
-					await streamTextIntoOpenMessage(writer, textResult, afterText);
+					await streamTextIntoOpenMessage(writer, attempts, afterText, {
+						isSkipped: (id) => (id ? isCooledDown(id) : Promise.resolve(false)),
+						onAttemptStart: (attempt) => {
+							currentProviderId = attempt.providerId;
+							currentModelId = attempt.modelId;
+						},
+						onAttemptFailure: async ({ providerId: failedId, error, willRetry }: AttemptFailure) => {
+							const aiErr = classifyAIError(error);
+							console.error(
+								`[ai:chat:retrieval] attempt failed provider=${failedId ?? 'unknown'} kind=${aiErr.kind} willRetry=${willRetry}:`,
+								error,
+							);
+							// Retry-path cooldown only — the final failure is cooled by classifyStreamError.
+							if (!willRetry) return;
+							if (aiErr.kind === 'rate_limit' && failedId) {
+								void markCooldown(failedId);
+								void incrProvider429(failedId);
+							}
+							// Re-open the generate bar that streamText's own onError just painted `error`.
+							emitEvent({
+								type: 'pipeline:step',
+								step: 'generate',
+								status: 'active',
+								startOffsetMs: Math.round(generateStartedAt.t - t0),
+							});
+						},
+					});
 				},
 				onError: classifyStreamError,
 			});
@@ -1594,8 +1758,8 @@ Project catalog rules:
 							inputTokens: usage?.inputTokens ?? 0,
 							outputTokens: usage?.outputTokens ?? 0,
 							toolCallIds: toolCallIds.length > 0 ? toolCallIds : undefined,
-							providerId: stepProviderId,
-							modelId: stepModelId,
+							providerId: currentProviderId,
+							modelId: currentModelId,
 							durationMs: deskDurationMs,
 						});
 					} catch (err) {
@@ -1638,18 +1802,33 @@ Project catalog rules:
 		});
 		return createUIMessageStreamResponse({ stream, headers: responseHeaders });
 	} catch (err) {
+		// Error hygiene: a DB failure is NOT an AI failure. `classifyAIError`'s substring rules
+		// ('rate' → rate_limit, 'token' → context_length) cheerfully mislabel Postgres messages,
+		// which then cooled a perfectly healthy provider and burned a fallback turn on an outage
+		// no model can fix. Surface it honestly instead — no cooldown, no fallback.
+		if (err instanceof DbError) {
+			console.error('[ai:chat] DB failure surfaced through orchestrator:', err);
+			return Response.json(
+				{ error: { code: err.kind, message: safeDbMessage(err.kind) } },
+				{ status: err.toStatus(), headers: { 'X-Error-Source': 'db' } },
+			);
+		}
+
 		const aiErr = classifyAIError(err);
 
 		// Circuit breaker: cooldown the provider that just failed with rate limit
 		if (aiErr.kind === 'rate_limit') {
-			const failedProvider = hasTools ? resolvedToolProviderId : (activeInfo?.id ?? null);
+			const failedProvider = currentProviderId;
 			if (failedProvider) {
 				void markCooldown(failedProvider);
 				void incrProvider429(failedProvider);
 			}
 		}
 
-		if (['unavailable', 'timeout', 'unknown', 'rate_limit'].includes(aiErr.kind)) {
+		// `unknown` is deliberately NOT in this allowlist: it is `classifyAIError`'s catch-all, so
+		// falling back on it spent a second provider's quota re-running deterministic bugs (bad
+		// tool schema, serialization failure) that every provider fails identically.
+		if (['unavailable', 'timeout', 'rate_limit'].includes(aiErr.kind)) {
 			// Per-surface fallback. Only a genuine DESK turn (real desk scopes) may mount desk
 			// tools. A failed CHATBOT turn (useLlmwiki, no scopes) previously re-derived
 			// createDeskTools with undefined scopes — mounting an empty/wrong toolset and

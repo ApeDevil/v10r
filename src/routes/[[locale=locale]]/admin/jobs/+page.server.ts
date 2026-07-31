@@ -86,7 +86,7 @@ export const actions: Actions = {
 
 		const result = await runJob(slug, 'manual');
 
-		const ctx = getAuditContext(event);
+		const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 		await recordAuditEvent({
 			...ctx,
 			action: 'job.trigger',

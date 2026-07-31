@@ -9,11 +9,6 @@ import type { LiveEvent } from '$lib/types/analytics-live';
 
 export type { LiveEvent } from '$lib/types/analytics-live';
 
-/** Get all events for a specific session, ordered by timestamp */
-export async function getSessionEvents(sessionId: string) {
-	return db.select().from(events).where(eq(events.sessionId, sessionId)).orderBy(events.timestamp).limit(1000);
-}
-
 /** Get a session timeline: sessions ordered by start time with optional date range */
 export async function getSessionTimeline(opts: { from?: Date; to?: Date; limit?: number }) {
 	const conditions = [];

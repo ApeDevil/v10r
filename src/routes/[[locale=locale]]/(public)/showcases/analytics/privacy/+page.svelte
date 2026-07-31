@@ -1,12 +1,17 @@
 <script lang="ts">
 import type { ChartData } from 'chart.js';
+import { page } from '$app/state';
 import { Alert } from '$lib/components/composites';
 import { PieChart } from '$lib/components/viz/chart/pie';
+import { getFormattingLocale } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
+import { baseLocale, extractLocaleFromUrl } from '$lib/paraglide/runtime';
 import ChartSection from '../_components/ChartSection.svelte';
 import MetricCard from '../_components/MetricCard.svelte';
 
 let { data } = $props();
+
+const formattingLocale = $derived(getFormattingLocale(extractLocaleFromUrl(page.url.href) ?? baseLocale));
 
 const consentChartData: ChartData<'pie'> = $derived({
 	labels: data.consent.map((c) => c.tier.charAt(0).toUpperCase() + c.tier.slice(1)),
@@ -22,7 +27,7 @@ const totalSessions = $derived(data.consent.reduce((sum, c) => sum + Number(c.co
 
 function formatDate(ts: string | null): string {
 	if (!ts) return '—';
-	return new Date(ts).toLocaleDateString('en-US', {
+	return new Date(ts).toLocaleDateString(formattingLocale, {
 		year: 'numeric',
 		month: 'short',
 		day: 'numeric',
@@ -36,7 +41,7 @@ function daysOld(ts: string | null): number {
 </script>
 
 {#if data.error}
-	<Alert variant="error" title="Database Error">
+	<Alert variant="error" title={m.showcase_analytics_shared_error_title()}>
 		<code>{data.error}</code>
 	</Alert>
 {/if}
@@ -44,14 +49,14 @@ function daysOld(ts: string | null): number {
 <div class="privacy-layout">
 	<!-- Compliance status cards -->
 	<div class="compliance-grid">
-		<MetricCard title="Total Events" value={Number(data.dataAge.totalEvents).toLocaleString()} />
-		<MetricCard title="Total Sessions" value={Number(data.dataAge.totalSessions).toLocaleString()} />
+		<MetricCard title={m.showcase_analytics_privacy_metric_events()} value={Number(data.dataAge.totalEvents).toLocaleString()} />
+		<MetricCard title={m.showcase_analytics_privacy_metric_sessions()} value={Number(data.dataAge.totalSessions).toLocaleString()} />
 		<MetricCard
-			title="Data Age"
+			title={m.showcase_analytics_privacy_metric_age()}
 			value="{daysOld(data.dataAge.oldestEvent)}d"
 		/>
 		<MetricCard
-			title="Retention Limit"
+			title={m.showcase_analytics_privacy_metric_retention()}
 			value="{data.retentionDays}d"
 		/>
 	</div>
@@ -59,13 +64,13 @@ function daysOld(ts: string | null): number {
 	<!-- Consent distribution -->
 	{#if data.consent.length > 0}
 		<ChartSection
-			title="Consent Distribution"
-			description="How visitors have configured their consent preferences"
+			title={m.showcase_analytics_privacy_chart_consent()}
+			description={m.showcase_analytics_privacy_desc_consent()}
 		>
 			{#snippet chart()}
 				<div class="consent-chart-layout">
 					<div class="consent-chart">
-						<PieChart data={consentChartData} ariaLabel="Consent tier distribution" aspect="square" />
+						<PieChart data={consentChartData} ariaLabel={m.showcase_analytics_privacy_aria_consent()} aspect="square" />
 					</div>
 					<div class="consent-breakdown">
 						{#each data.consent as tier}
@@ -86,39 +91,39 @@ function daysOld(ts: string | null): number {
 
 	<!-- Data retention -->
 	<ChartSection
-		title="Data Retention Policy"
-		description="How long analytics data is stored before automatic deletion"
+		title={m.showcase_analytics_privacy_chart_retention()}
+		description={m.showcase_analytics_privacy_desc_retention()}
 	>
 		{#snippet chart()}
 			<div class="retention-info">
 				<div class="retention-row">
 					<div class="retention-label">
 						<span class="i-lucide-database text-icon-sm" aria-hidden="true"></span>
-						Raw Events
+						{m.showcase_analytics_privacy_retention_row_events()}
 					</div>
 					<div class="retention-detail">
 						<strong>{data.retentionDays} days</strong>
-						<span class="retention-note">Individual pageviews, actions, and timing events</span>
+						<span class="retention-note">{m.showcase_analytics_privacy_retention_note_events()}</span>
 					</div>
 				</div>
 				<div class="retention-row">
 					<div class="retention-label">
 						<span class="i-lucide-bar-chart text-icon-sm" aria-hidden="true"></span>
-						Aggregates
+						{m.showcase_analytics_privacy_retention_row_aggregates()}
 					</div>
 					<div class="retention-detail">
 						<strong>{data.aggregateRetentionDays} days</strong>
-						<span class="retention-note">Daily rollups — no individual visitor data</span>
+						<span class="retention-note">{m.showcase_analytics_privacy_retention_note_aggregates()}</span>
 					</div>
 				</div>
 				<div class="retention-row">
 					<div class="retention-label">
 						<span class="i-lucide-user text-icon-sm" aria-hidden="true"></span>
-						Visitor IDs
+						{m.showcase_analytics_privacy_retention_row_visitor_ids()}
 					</div>
 					<div class="retention-detail">
-						<strong>SHA-256 hashed</strong>
-						<span class="retention-note">IP addresses are never stored in raw form</span>
+						<strong>{m.showcase_analytics_privacy_retention_value_hashed()}</strong>
+						<span class="retention-note">{m.showcase_analytics_privacy_retention_note_ids()}</span>
 					</div>
 				</div>
 			</div>
@@ -127,44 +132,44 @@ function daysOld(ts: string | null): number {
 
 	<!-- Anonymization verification -->
 	<ChartSection
-		title="Anonymization Verification"
-		description="Live proof that privacy measures are active"
+		title={m.showcase_analytics_privacy_chart_verification()}
+		description={m.showcase_analytics_privacy_desc_verification()}
 	>
 		{#snippet chart()}
 			<div class="verification-grid">
 				<div class="verification-item pass">
 					<span class="i-lucide-check-circle text-icon-sm" aria-hidden="true"></span>
 					<div>
-						<strong>Visitor ID Hashing</strong>
-						<p>All visitor IDs are SHA-256 hashed before storage. Format: <code>v_[hex]</code></p>
+						<strong>{m.showcase_analytics_privacy_verify_item_hashing_title()}</strong>
+						<p>{m.showcase_analytics_privacy_verify_hashing_desc()} <code>v_[hex]</code></p>
 					</div>
 				</div>
 				<div class="verification-item pass">
 					<span class="i-lucide-check-circle text-icon-sm" aria-hidden="true"></span>
 					<div>
-						<strong>Consent-Gated Fields</strong>
-						<p>Device and country fields are NULL for 'necessary' consent tier visitors</p>
+						<strong>{m.showcase_analytics_privacy_verify_item_consent_title()}</strong>
+						<p>{m.showcase_analytics_privacy_verify_consent_desc()}</p>
 					</div>
 				</div>
 				<div class="verification-item pass">
 					<span class="i-lucide-check-circle text-icon-sm" aria-hidden="true"></span>
 					<div>
-						<strong>No Raw IP Storage</strong>
-						<p>No column in the schema stores raw IP addresses</p>
+						<strong>{m.showcase_analytics_privacy_verify_item_noip_title()}</strong>
+						<p>{m.showcase_analytics_privacy_verify_noip_desc()}</p>
 					</div>
 				</div>
 				<div class="verification-item pass">
 					<span class="i-lucide-check-circle text-icon-sm" aria-hidden="true"></span>
 					<div>
-						<strong>Server-Side Only</strong>
-						<p>No client-side tracking scripts — all collection happens server-side</p>
+						<strong>{m.showcase_analytics_privacy_verify_item_serverside_title()}</strong>
+						<p>{m.showcase_analytics_privacy_verify_serverside_desc()}</p>
 					</div>
 				</div>
 				<div class="verification-item pass">
 					<span class="i-lucide-check-circle text-icon-sm" aria-hidden="true"></span>
 					<div>
-						<strong>Synthetic Seed Data</strong>
-						<p>Demo uses deterministic faker seed (42) — zero real user data</p>
+						<strong>{m.showcase_analytics_privacy_verify_item_seed_title()}</strong>
+						<p>{m.showcase_analytics_privacy_verify_seed_desc()}</p>
 					</div>
 				</div>
 			</div>

@@ -30,6 +30,8 @@ declare global {
 			clientIp: string | null;
 			/** Active capability grants for the authenticated user. Empty array when signed out or no active grants. Populated by populateGrants hook. */
 			grants: import('$lib/server/auth/grants').GrantKind[];
+			/** True when session/grant resolution failed (e.g. Neon outage) and the request was degraded to anonymous. Read by an optional future banner; never gates logic. */
+			authDegraded?: boolean;
 		}
 		interface PageData {
 			style: import('$lib/styles/random/types').ResolvedStyle;

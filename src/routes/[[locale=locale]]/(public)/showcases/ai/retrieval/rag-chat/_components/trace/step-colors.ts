@@ -26,7 +26,3 @@ export const PHASE_GLOSS: Record<NragPhase, string> = {
 	generate: 'Stream the model answer',
 	verify: 'Check each citation against sources',
 };
-
-export function colorForPhase(phase: NragPhase): string {
-	return PHASE_COLORS[phase];
-}

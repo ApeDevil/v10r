@@ -8,11 +8,13 @@
  * 404s in production.
  */
 import { json } from '@sveltejs/kit';
-import { loadOverview } from '$lib/server/llmwiki/overview';
-import { fetchPagesByIds } from '$lib/server/llmwiki/queries';
-import { searchLlmwiki } from '$lib/server/llmwiki/search';
-import { verifyCitations } from '$lib/server/llmwiki/verify';
-import { formatLlmwikiContext } from '$lib/server/llmwiki/wiki-format';
+import {
+	fetchPagesByIds,
+	formatLlmwikiContext,
+	loadOverview,
+	searchLlmwiki,
+	verifyCitations,
+} from '$lib/server/llmwiki';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ url }) => {

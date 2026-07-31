@@ -56,7 +56,3 @@ export class DomainError extends Error {
 		this.meta = meta;
 	}
 }
-
-export function isDomainError(value: unknown): value is DomainError {
-	return value instanceof DomainError;
-}

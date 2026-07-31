@@ -1,8 +1,9 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
 import { goto } from '$app/navigation';
+import { page } from '$app/state';
 import { Button } from '$lib/components/primitives';
-import { localizeHref } from '$lib/i18n';
+import { deLocalizeHref, localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 
 interface Props {
@@ -33,6 +34,17 @@ const heading = $derived.by(() => {
 const showMessage = $derived(message && !message.includes('\n') && message.length < 200);
 
 let copied = $state(false);
+
+// Carry the failing page + errorId into the report: a default-consent visitor
+// has no analytics session, so this query string is the only context /admin
+// gets. `sanitizeFeedbackSource` re-validates `from` server-side.
+const feedbackHref = $derived(
+	localizeHref(
+		`/feedback?from=${encodeURIComponent(deLocalizeHref(page.url.pathname))}${
+			errorId ? `&err=${encodeURIComponent(errorId)}` : ''
+		}`,
+	),
+);
 
 function copyErrorId() {
 	if (errorId) {
@@ -82,7 +94,7 @@ function copyErrorId() {
 	{#if status >= 500}
 		<p class="error-feedback">
 			<span class="error-feedback-text">{m.error_5xx_feedback_text()}</span>
-			<a href={localizeHref('/feedback')} class="error-feedback-link">
+			<a href={feedbackHref} class="error-feedback-link">
 				<span class="i-lucide-message-square error-feedback-icon" aria-hidden="true"></span>
 				<span>{m.error_5xx_feedback_link()}</span>
 			</a>

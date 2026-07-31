@@ -8,9 +8,8 @@ import { ADMIN_DELIVERY_PAGE_SIZE } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
 import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
-import { notifications } from '$lib/server/db/schema/notifications/notifications';
+import { type NotificationParams, notifications } from '$lib/server/db/schema/notifications/notifications';
 import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
-import { renderNotification } from '$lib/server/notifications/render-message';
 
 // Per-user error codes excluded from channel health calculation
 const PER_USER_ERROR_CODES = ['50007', '403'];
@@ -72,8 +71,9 @@ export interface DeliveryLogEntry {
 	id: string;
 	channel: string;
 	status: string;
-	/** Pre-rendered notification title in the admin viewer's locale. */
-	notificationTitle: string;
+	/** Raw i18n key + params — rendering into a locale-specific title is the caller's job. */
+	messageKey: string;
+	messageParams: NotificationParams;
 	notificationType: string;
 	errorCode: string | null;
 	errorMessage: string | null;
@@ -83,7 +83,7 @@ export interface DeliveryLogEntry {
 	createdAt: Date;
 }
 
-export async function getDeliveryLog(filters: DeliveryLogFilters = {}, locale = 'en') {
+export async function getDeliveryLog(filters: DeliveryLogFilters = {}) {
 	const page = Math.max(1, filters.page ?? 1);
 	const offset = (page - 1) * ADMIN_DELIVERY_PAGE_SIZE;
 
@@ -131,7 +131,8 @@ export async function getDeliveryLog(filters: DeliveryLogFilters = {}, locale = 
 		id: r.id,
 		channel: r.channel,
 		status: r.status,
-		notificationTitle: renderNotification(r.messageKey, r.messageParams, locale),
+		messageKey: r.messageKey,
+		messageParams: r.messageParams,
 		notificationType: r.notificationType,
 		errorCode: r.errorCode,
 		errorMessage: r.errorMessage,
@@ -153,7 +154,19 @@ export async function getDeliveryLog(filters: DeliveryLogFilters = {}, locale = 
 
 // ── Dead Deliveries (Needs Attention) ────────────────────────────────────────
 
-export async function getDeadDeliveries(locale = 'en') {
+export interface DeadDeliveryEntry {
+	id: string;
+	channel: string;
+	/** Raw i18n key + params — rendering into a locale-specific title is the caller's job. */
+	messageKey: string;
+	messageParams: NotificationParams;
+	errorCode: string | null;
+	errorMessage: string | null;
+	attempts: number;
+	createdAt: Date;
+}
+
+export async function getDeadDeliveries(): Promise<DeadDeliveryEntry[]> {
 	const rows = await db
 		.select({
 			id: notificationDeliveries.id,
@@ -174,7 +187,8 @@ export async function getDeadDeliveries(locale = 'en') {
 	return rows.map((r) => ({
 		id: r.id,
 		channel: r.channel,
-		notificationTitle: renderNotification(r.messageKey, r.messageParams, locale),
+		messageKey: r.messageKey,
+		messageParams: r.messageParams,
 		errorCode: r.errorCode,
 		errorMessage: r.errorMessage,
 		attempts: r.attempts,

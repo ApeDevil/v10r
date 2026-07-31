@@ -12,7 +12,7 @@
  * Chunks the model did NOT expand remain `verification: 'none'`.
  */
 
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { chunk as chunkTable, document, llmwikiPageSource } from '$lib/server/db/schema/rag';
 import type { LlmwikiCitationVerification } from './types';
@@ -100,23 +100,4 @@ export async function verifyCitations(input: VerifyInput): Promise<VerifyResult>
 	}
 
 	return { verifications, driftedChunkIds };
-}
-
-/** Utility: mark wiki pages stale when their cited chunks drift (used by lint too). */
-export async function markPagesStaleForChunks(chunkIds: string[]): Promise<number> {
-	if (chunkIds.length === 0) return 0;
-	const res = await db.execute(sql`
-		UPDATE rag.llmwiki_page
-		SET stale = true, updated_at = now()
-		WHERE id IN (
-			SELECT DISTINCT llmwiki_page_id
-			FROM rag.llmwiki_page_source
-			WHERE chunk_id IN (${sql.join(
-				chunkIds.map((id) => sql`${id}`),
-				sql`, `,
-			)})
-		)
-		  AND stale = false
-	`);
-	return (res as { rowCount?: number })?.rowCount ?? 0;
 }

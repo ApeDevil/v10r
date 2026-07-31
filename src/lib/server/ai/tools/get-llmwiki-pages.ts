@@ -7,8 +7,7 @@
  */
 
 import { jsonSchema, tool } from 'ai';
-import { MAX_LLMWIKI_TOOL_IDS } from '$lib/server/llmwiki/config';
-import { fetchPagesByIds } from '$lib/server/llmwiki/queries';
+import { fetchPagesByIds, MAX_LLMWIKI_TOOL_IDS } from '$lib/server/llmwiki';
 
 // Tool metadata (name → risk) lives in the declarative `TOOL_MANIFEST` in `tools/index.ts`.
 

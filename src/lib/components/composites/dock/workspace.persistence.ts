@@ -40,11 +40,6 @@ export function loadWorkspaceStore(storageKey = DEFAULT_KEY): WorkspacesPersiste
 	}
 }
 
-export function clearWorkspaceStore(storageKey = DEFAULT_KEY): void {
-	if (!browser) return;
-	localStorage.removeItem(storageKey);
-}
-
 /**
  * Build workspace list from server-provided data (DB rows).
  */

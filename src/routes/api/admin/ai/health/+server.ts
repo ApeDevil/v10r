@@ -1,10 +1,10 @@
 /**
  * Admin AI health poll — volatile provider + circuit-breaker state.
  *
- * Pure in-memory / config reads only. MUST NOT call verifyAIConnection() — that
- * makes a real generateText() call and would burn the gemini free-tier quota
- * (~20 req/day) and 503 the live chat surfaces. Ships `cooldownUntil` as an ISO
- * string so the client ticks the countdown locally (no per-second polling).
+ * Pure in-memory / config reads only. MUST NOT make a real model call to verify
+ * connectivity — that would burn the gemini free-tier quota (~20 req/day) and
+ * 503 the live chat surfaces. Ships `cooldownUntil` as an ISO string so the
+ * client ticks the countdown locally (no per-second polling).
  */
 import { getActiveProviderInfo, getToolProvider } from '$lib/server/ai';
 import { buildProviderRegistry, getCooldownResumeAt } from '$lib/server/ai/providers';

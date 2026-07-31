@@ -6,7 +6,7 @@ import { userSettingsSchema } from '$lib/schemas/app/settings';
 import { requireStepUp } from '$lib/server/auth/step-up';
 import { getOrCreatePreferences, updatePreferences } from '$lib/server/db/preferences/mutations';
 import { updateDisplayName } from '$lib/server/db/user';
-import { deleteUserData } from '$lib/server/privacy';
+import { deleteUserData, SoleAdminBlockedError } from '$lib/server/privacy';
 import { AVATAR_ERROR_MESSAGES, removeAvatar, uploadAvatar, validateAvatar } from '$lib/server/store/avatar';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -115,7 +115,13 @@ export const actions: Actions = {
 		}
 
 		// Cascade erasure via the canonical privacy module (GDPR Art 17)
-		await deleteUserData(locals.user.id);
+		try {
+			await deleteUserData(locals.user.id);
+		} catch (err) {
+			// Refusal, not failure — the account is intact and the message says how to unblock it.
+			if (err instanceof SoleAdminBlockedError) return fail(409, { error: err.message });
+			throw err;
+		}
 
 		redirect(303, localizeHref('/'));
 	},

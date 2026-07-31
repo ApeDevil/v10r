@@ -1,12 +1,15 @@
 /**
  * Same-origin path validation — the single implementation behind every
- * server-side redirect target in the app.
+ * redirect target and stored internal path in the app. Framework-free and
+ * universally importable (client code uses it too — see `$lib/feedback/source`),
+ * which is why it lives in `$lib/utils`, not `$lib/server`.
  *
- * Three call sites feed user-influenced strings into a `Location` header or a
+ * Server call sites feed user-influenced strings into a `Location` header or a
  * `redirect()`: the `?returnTo=` param on the login and verify pages, and the
  * `/en/` prefix-stripping hook. Each previously carried its own copy of this
  * logic (login and verify were byte-identical duplicates; the hook had none,
- * which is how the open redirect got in).
+ * which is how the open redirect got in; the feedback source field carried a
+ * fourth, weaker copy that missed the backslash case).
  *
  * What has to be rejected, and why plain "starts with /" is not enough:
  *  - `//evil.com`   — protocol-relative; the browser reads it as a foreign origin.

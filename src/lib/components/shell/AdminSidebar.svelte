@@ -1,17 +1,8 @@
 <script lang="ts">
 import { page } from '$app/state';
 import { deLocalizeHref, localizeHref } from '$lib/i18n';
-
-interface AdminNavItem {
-	label: string;
-	href: string;
-	icon: string;
-}
-
-interface AdminNavGroup {
-	label: string;
-	items: AdminNavItem[];
-}
+import type { AdminNavGroup } from '$lib/nav/admin';
+import * as m from '$lib/paraglide/messages';
 
 interface Props {
 	groups: AdminNavGroup[];
@@ -25,13 +16,13 @@ function isActive(href: string): boolean {
 }
 </script>
 
-<nav class="admin-sidebar {className ?? ''}" aria-label="Admin navigation">
+<nav class="admin-sidebar {className ?? ''}" aria-label={m.admin_nav_aria()}>
 	{#each groups as group, gi}
 		{#if gi > 0}
 			<div class="group-divider" aria-hidden="true"></div>
 		{/if}
 		<div class="group">
-			<span class="group-label">{group.label}</span>
+			<span class="group-label">{group.label()}</span>
 			<ul>
 				{#each group.items as item}
 					<li>
@@ -42,7 +33,7 @@ function isActive(href: string): boolean {
 							aria-current={isActive(item.href) ? 'page' : undefined}
 						>
 							<span class="{item.icon} nav-icon" aria-hidden="true"></span>
-							<span class="nav-label">{item.label}</span>
+							<span class="nav-label">{item.label()}</span>
 						</a>
 					</li>
 				{/each}

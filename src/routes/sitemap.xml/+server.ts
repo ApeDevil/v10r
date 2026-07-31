@@ -7,7 +7,16 @@ import type { RequestHandler } from './$types';
 const PROD_ORIGIN = 'https://www.v10r.dev';
 
 /** Non-showcase static public pages. */
-const BASE_PATHS = ['/', '/blog', '/docs', '/docs/blueprint', '/docs/foundation', '/docs/stack', '/feedback'];
+const BASE_PATHS = [
+	'/',
+	'/blog',
+	'/credits',
+	'/docs',
+	'/docs/blueprint',
+	'/docs/foundation',
+	'/docs/stack',
+	'/feedback',
+];
 
 /**
  * Showcase paths derived from the registry (single source of truth) — every

@@ -116,7 +116,7 @@ The main export is a `sequence()` of fourteen `Handle` middlewares that mutate t
 | 7 | `authCaptchaGate` | — | Decision response on captcha/rate-limit fail | Before `authHandler` — gate must run before Better Auth consumes the request body |
 | 8 | `authHandler` | — | 429 on rate-limit exceed | Better Auth `svelteKitHandler` + Upstash rate-limit on `/api/auth/*` keyed by `clientIp` |
 | 9 | `csrfProtection` | — | 403 on mutating `/api/*` without `X-Requested-With` or mismatched origin | Exempt: `/api/auth/`, `/api/cron/`, `/api/webhooks/`, `/api/analytics/journey`, `/api/mcp/` |
-| 10 | `sessionPopulate` | `user`, `session`, `grants` | No | Must run AFTER `authHandler` (Better Auth #2188: `svelteKitHandler` does not populate locals). Fast-path skips DB if session cookie absent |
+| 10 | `sessionPopulate` | `user`, `session`, `grants`, `authDegraded?` | No | Must run AFTER `authHandler` (Better Auth #2188: `svelteKitHandler` does not populate locals). Fast-path skips DB if session cookie absent. A DB failure degrades the request to anonymous (`authDegraded: true`) instead of 500ing every session-carrying page |
 | 11 | `consentLoader` | `consentTier` (default `'necessary'`) | No | Before route handlers need consent tier |
 | 12 | `debugOwnerLoader` | `debugOwnerId` | No | Verifies `v10r_debug_owner` HMAC cookie; fail-closed; independent of Better Auth |
 | 13 | `devRouteGuard` | — | 404 on `(dev)` routes outside DEV | — |
@@ -149,9 +149,9 @@ Several handler predicates were lifted into framework-free modules the hook impo
 
 | Module | Exports | Used by |
 |--------|---------|---------|
-| `$lib/server/security/csrf.ts` | `needsCsrf(method, path)`, `isSameHost()`, `CSRF_EXEMPT_PREFIXES` | `csrfProtection` (handler #8) |
+| `$lib/server/security/csrf.ts` | `needsCsrf(method, path)`, `isSameHost()`, `CSRF_EXEMPT_PREFIXES` | `csrfProtection` (handler #9) |
 | `$lib/styles/random/palette-sanitize.ts` | `VALID_TOKEN_KEYS`, `OKLCH_RE`, `safeEntries` | `loadStyle` / i18n palette CSS injection (#3–4) |
-| `$lib/server/auth/step-up.ts` | `twoFactorVerifyLimitKey()` | per-account 2FA verify limiter in `authHandler` (#6) |
+| `$lib/server/auth/step-up.ts` | `twoFactorVerifyLimitKey()` | per-account 2FA verify limiter in `authHandler` (#8) |
 
 ### Spine B — Hexagonal Multi-Client Core
 
@@ -428,10 +428,11 @@ HTTP edge
   ▼
 hooks.server.ts  sequence()  ──────────────────────────────────────────┐
   │  (14 stages, mutate event.locals)                                  │
-  │  [securityHeaders → stripBaseLocalePrefix → loadStyle → i18n →     │
-  │   authCaptchaGate → authHandler → sessionPopulate →                │
-  │   csrfProtection → consentLoader → debugOwnerLoader →              │
-  │   devRouteGuard → analyticsCollector]                              │
+  │  [securityHeaders → bodySizeFloor → stripBaseLocalePrefix →        │
+  │   docsMarkdown → loadStyle → i18n → authCaptchaGate →              │
+  │   authHandler → csrfProtection → sessionPopulate →                 │
+  │   consentLoader → debugOwnerLoader → devRouteGuard →               │
+  │   analyticsCollector]                                              │
   │                                                                    │
   ▼                                                                    │
 Route adapter  (event.locals fully populated)                          │

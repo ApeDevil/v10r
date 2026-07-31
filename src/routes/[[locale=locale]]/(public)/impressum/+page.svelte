@@ -63,8 +63,7 @@ const CONTACT_EMAIL = 'stas-k@gmx.de';
 			<section>
 				<h2>Kontakt</h2>
 				<p>
-					E-Mail: <a href="mailto:{CONTACT_EMAIL}">{CONTACT_EMAIL}</a><br />
-					Kontaktformular: <a href="/feedback">/feedback</a>
+					E-Mail: <a href="mailto:{CONTACT_EMAIL}">{CONTACT_EMAIL}</a>
 				</p>
 			</section>
 

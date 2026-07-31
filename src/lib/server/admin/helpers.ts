@@ -1,12 +1,15 @@
-import type { RequestEvent } from '@sveltejs/kit';
+/** Minimal shape `getAuditContext` needs off `event.locals.user` — framework-free by design. */
+export interface AuditableUser {
+	id: string;
+	email: string;
+}
 
-/** Extract audit context from an authenticated admin request. Call only after requireAdmin(). */
-export function getAuditContext(event: RequestEvent) {
-	const user = event.locals.user;
+/** Build audit context from an authenticated admin request's user + client IP. Call only after requireAdmin(). */
+export function getAuditContext(user: AuditableUser | null | undefined, clientIp: string) {
 	if (!user) throw new Error('User required for audit context');
 	return {
 		actorId: user.id,
 		actorEmail: user.email,
-		ipAddress: event.getClientAddress(),
+		ipAddress: clientIp,
 	};
 }

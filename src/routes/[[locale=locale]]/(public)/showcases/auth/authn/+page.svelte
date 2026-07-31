@@ -1,10 +1,9 @@
 <script lang="ts">
 import { Card, NavSection } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
-import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
+import { Badge, Button, Input, ModeChip, Spinner } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
 import { fixtureVerifications } from '$lib/showcase/auth/fixture';
-import ModeChip from '$lib/showcase/auth/ModeChip.svelte';
 
 // Sandbox sign-in — pure client state, NO network, NO authClient.
 let email = $state('');

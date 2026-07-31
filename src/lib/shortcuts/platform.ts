@@ -3,13 +3,6 @@
  */
 
 /**
- * Get the modifier key label.
- */
-export function getModifierKey(): 'Ctrl' {
-	return 'Ctrl';
-}
-
-/**
  * Format shortcut string for display.
  * Converts 'mod+k' → 'Ctrl+K'.
  * Converts 'g h' → 'G then H' for sequences.

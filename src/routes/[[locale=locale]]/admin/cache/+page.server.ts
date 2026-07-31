@@ -55,7 +55,7 @@ export const actions: Actions = {
 		const deleted = await adminDeleteKey(key);
 		if (!deleted) return fail(404, { message: 'Key not found' });
 
-		const ctx = getAuditContext(event);
+		const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 		await recordAuditEvent({
 			...ctx,
 			action: 'cache.key.delete',
@@ -77,7 +77,7 @@ export const actions: Actions = {
 
 		const count = await adminFlushByPrefix(prefix);
 
-		const ctx = getAuditContext(event);
+		const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 		await recordAuditEvent({
 			...ctx,
 			action: 'cache.flush',
@@ -94,7 +94,7 @@ export const actions: Actions = {
 
 		adminInvalidateInProcessCaches();
 
-		const ctx = getAuditContext(event);
+		const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 		await recordAuditEvent({
 			...ctx,
 			action: 'cache.invalidate_in_process',

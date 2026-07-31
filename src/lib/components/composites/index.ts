@@ -23,6 +23,7 @@ export * from './dock';
 export * from './dropdown-menu';
 export * from './empty-state';
 export * from './error-display';
+export * from './feedback-band';
 export * from './form-field';
 export * from './gallery-card';
 export * from './link-card';

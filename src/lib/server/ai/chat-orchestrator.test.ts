@@ -86,6 +86,17 @@ vi.mock('$lib/server/ai/errors', () => ({
 	classifyAIError: vi.fn(() => ({ kind: 'unknown', message: 'Unknown error' })),
 	aiErrorToStatus: vi.fn(() => 500),
 	safeAIMessage: vi.fn((kind: string) => `Error: ${kind}`),
+	// `_shared/streaming-turn` (imported transitively) constructs this for the
+	// "every provider cooled" path — the mock must expose it or the import throws.
+	AIError: class AIError extends Error {
+		constructor(
+			public readonly kind: string,
+			message: string,
+			public readonly code?: string,
+		) {
+			super(message);
+		}
+	},
 }));
 
 vi.mock('ai', () => ({
@@ -127,12 +138,15 @@ const mutations = await import('$lib/server/db/ai/mutations');
 const queries = await import('$lib/server/db/ai/queries');
 const limits = await import('$lib/server/db/ai/limits');
 const providers = await import('$lib/server/ai');
+const providerRegistry = await import('$lib/server/ai/providers');
+const { DbError } = await import('$lib/server/db/errors');
 
 const saveMessages = mutations.saveMessages as ReturnType<typeof vi.fn>;
 const createConversation = mutations.createConversation as ReturnType<typeof vi.fn>;
 const getConversation = queries.getConversation as ReturnType<typeof vi.fn>;
 const checkConversationLimit = limits.checkConversationLimit as ReturnType<typeof vi.fn>;
 const getActiveProvider = providers.getActiveProvider as ReturnType<typeof vi.fn>;
+const markCooldown = providerRegistry.markCooldown as ReturnType<typeof vi.fn>;
 
 // ── 1. getMessageText ───────────────────────────────────────────────────────
 
@@ -508,5 +522,35 @@ describe('orchestrateChat', () => {
 		expect(response.status).toBe(403);
 		const body = await response.json();
 		expect(body.error.code).toBe('limit_exceeded');
+	});
+
+	// Error hygiene: a DB outage inside the orchestrator used to be laundered through
+	// `classifyAIError` (whose substring rules read 'rate'/'token' out of Postgres messages),
+	// cooling a healthy provider and burning a fallback turn on something no model can fix.
+	it('surfaces a DbError as a DB envelope — no AI classification, no cooldown', async () => {
+		getActiveProvider.mockReturnValue({ getInstance: () => ({}) } as never);
+		markCooldown.mockReset();
+		const dbErr = new DbError('connection', 'fetch failed: Neon endpoint is disabled', 'NETWORK');
+		// 1st call = the user message (before the try); 2nd = the assistant row inside the try.
+		saveMessages
+			.mockReset()
+			.mockResolvedValueOnce(undefined as never)
+			.mockRejectedValueOnce(dbErr as never);
+
+		const response = await orchestrateChat(baseInput);
+
+		expect(response.status).toBe(dbErr.toStatus());
+		expect(response.status).toBe(503);
+		expect(response.headers.get('X-Error-Source')).toBe('db');
+		// The AI error lane must not claim this failure.
+		expect(response.headers.get('X-AI-Error-Kind')).toBeNull();
+
+		const body = await response.json();
+		expect(body.error.code).toBe('connection');
+		// User-safe text only — never the raw driver message.
+		expect(body.error.message).toBe('Database connection failed. Please try again later.');
+		expect(body.error.message).not.toContain('Neon');
+
+		expect(markCooldown).not.toHaveBeenCalled();
 	});
 });

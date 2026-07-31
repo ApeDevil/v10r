@@ -1,7 +1,7 @@
 <script lang="ts">
 import { superForm } from 'sveltekit-superforms';
 import { valibotClient } from 'sveltekit-superforms/adapters';
-import { Card, FormField } from '$lib/components/composites';
+import { Alert, Card, FormField } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Accordion, Button, Input, Select, Textarea } from '$lib/components/primitives';
 import { feedbackSubmissionSchema } from '$lib/feedback/validation';
@@ -10,9 +10,24 @@ import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
 
-const { form, errors, enhance, submitting } = superForm(data.form, {
+const {
+	form,
+	errors,
+	enhance,
+	submitting,
+	message: formMessage,
+} = superForm(data.form, {
 	validators: valibotClient(feedbackSubmissionSchema),
 });
+
+// Server actions send stable codes, not copy — i18n stays client-side.
+const formError = $derived(
+	$formMessage === 'rate_limited'
+		? m.feedback_error_rate_limited()
+		: $formMessage === 'rejected'
+			? m.feedback_error_rejected()
+			: null,
+);
 
 const ratingOptions = $derived([
 	{ value: '', label: m.feedback_field_rating_none() },
@@ -124,6 +139,18 @@ let privacyOpen = $state('');
 						{/snippet}
 					</FormField>
 
+					{#if $form.pageOfOrigin}
+						<FormField
+							label={m.feedback_field_source_label()}
+							id="feedback-source"
+							description={m.feedback_field_source_description()}
+						>
+							{#snippet children({ fieldId })}
+								<code id={fieldId} class="source-chip">{$form.pageOfOrigin}</code>
+							{/snippet}
+						</FormField>
+					{/if}
+
 					<!-- Hidden technical fields -->
 					<input type="hidden" name="nonce" value={$form.nonce} />
 					<input type="hidden" name="renderedAt" value={$form.renderedAt} />
@@ -143,6 +170,10 @@ let privacyOpen = $state('');
 					</div>
 
 					<Accordion items={privacyItems} bind:value={privacyOpen} variant="bordered" size="sm" />
+
+					{#if formError}
+						<Alert variant="error" title={formError} description={m.feedback_error_retry()} />
+					{/if}
 
 					<div class="actions">
 						<Button type="submit" variant="primary" size="md" disabled={$submitting}>
@@ -184,6 +215,18 @@ let privacyOpen = $state('');
 	.actions {
 		display: flex;
 		justify-content: flex-end;
+	}
+
+	.source-chip {
+		display: inline-block;
+		padding: var(--spacing-2) var(--spacing-3);
+		border-radius: var(--radius-sm);
+		border: 1px solid var(--color-border);
+		background: var(--color-subtle);
+		font-family: var(--font-mono);
+		font-size: var(--text-fluid-xs);
+		color: var(--color-fg);
+		word-break: break-all;
 	}
 
 	/* Honeypot — keep accessible but invisible to humans + autofill blockers */

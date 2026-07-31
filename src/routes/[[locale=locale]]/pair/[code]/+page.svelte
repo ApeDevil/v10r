@@ -1,5 +1,10 @@
 <script lang="ts">
-let { data }: PageProps = $props();
+import { enhance } from '$app/forms';
+import { Button } from '$lib/components/primitives';
+import * as m from '$lib/paraglide/messages';
+import type { ActionData, PageData } from './$types';
+
+let { data, form }: { data: PageData; form: ActionData } = $props();
 
 const messages = {
 	invalid: {
@@ -18,9 +23,15 @@ const messages = {
 		title: 'Too many attempts on this code',
 		body: 'For security, this code is now disabled. Ask the admin to generate a new one.',
 	},
+	rate_limited: {
+		title: 'Too many attempts',
+		body: 'Please wait a minute, then scan the code again.',
+	},
 } as const;
 
-const msg = $derived(data.failure ? messages[data.failure] : null);
+// Action failures win over load failures — the load only checks the shape.
+const failure = $derived(form?.failure ?? ('failure' in data ? data.failure : null));
+const msg = $derived(failure ? messages[failure] : null);
 </script>
 
 <svelte:head>
@@ -36,11 +47,16 @@ const msg = $derived(data.failure ? messages[data.failure] : null);
 			<a href="/" class="link">Return to homepage</a>
 		</section>
 	{:else}
-		<!-- Should never render — server redirects on success. Meta-refresh fallback. -->
-		<noscript>
-			<meta http-equiv="refresh" content="0; url=/" />
-		</noscript>
-		<p>Pairing… <a href="/">Continue →</a></p>
+		<!-- Deliberate one-tap confirm: the claim consumes a single-use code, so it
+		     must not run on the GET a QR scan / link preview triggers. -->
+		<section class="card">
+			<span class="i-lucide-smartphone icon" aria-hidden="true"></span>
+			<h1 class="title">{m.pair_confirm_title()}</h1>
+			<p class="body">{m.pair_confirm_body()}</p>
+			<form method="POST" action="?/claim" use:enhance>
+				<Button type="submit" variant="primary" size="md">{m.pair_confirm_cta()}</Button>
+			</form>
+		</section>
 	{/if}
 </main>
 

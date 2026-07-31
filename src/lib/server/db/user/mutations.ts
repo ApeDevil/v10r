@@ -13,8 +13,3 @@ export async function revokeSession(sessionId: string, userId: string, currentSe
 		.delete(sessionTable)
 		.where(and(eq(sessionTable.id, sessionId), eq(sessionTable.userId, userId), ne(sessionTable.id, currentSessionId)));
 }
-
-/** Delete a user record — cascades to sessions and accounts via FK. */
-export async function deleteUser(userId: string) {
-	await db.delete(user).where(eq(user.id, userId));
-}

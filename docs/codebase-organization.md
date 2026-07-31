@@ -80,6 +80,7 @@ src/
     analytics/          Client tracking
     config/             App configuration
     content-syntax/     Syntax highlighting helpers
+    credits/            /credits colophon registry (LabelFn i18n, mirrors showcases/registry.ts pattern)
     docs/               Docs-viewer client types
     errors/             Client-side error types
     feedback/           Client feedback helpers
@@ -128,7 +129,9 @@ src/lib/server/
                 step-up.ts (Redis step-up freshness gate + twoFactorVerifyLimitKey),
                 factor-changes.ts (passkey/TOTP audit+revoke+notify chokepoint),
                 public-user.ts (publicUser projector — client-safe user shape; leak-gate-enforced)
-                — all framework-free, never import the instance
+                — framework-free, never import the instance, EXCEPT step-up.ts and
+                revocation.ts each import the `dev` flag from `$app/environment`
+                (see Import-direction rule #2's named exceptions)
   blog/         Posts, comments, tags, assets, feed; co-locates queries/mutations
   branding/     Custom palette resolution
   cache/        Upstash Redis wrappers
@@ -426,7 +429,10 @@ src/routes/
 A checklist for any new file:
 
 1. **`$lib/server/` is server-only by path.** Never import it from a `.svelte` file or a universal `+page.ts`. No runtime guard needed.
-2. **No framework imports inside domain modules.** No `@sveltejs/kit` or `$app/*` inside `$lib/server/[domain]/`. Framework coupling belongs in adapter files only: route `+*.server.ts`, `hooks.server.ts`, `auth/guards.ts`, `api/` helpers.
+2. **No framework imports inside domain modules.** No `@sveltejs/kit` or `$app/*` inside `$lib/server/[domain]/`. Framework coupling belongs in adapter files only: route `+*.server.ts`, `hooks.server.ts`, `auth/guards.ts`, `api/` helpers. **Named exceptions:**
+   1. `dev`/`building` flags from `$app/environment` — a read-only build/runtime flag, not a framework coupling — in six modules: `auth/step-up.ts`, `auth/revocation.ts`, `ai/budget.ts`, `agents/index.ts`, `jobs/scheduler.ts`, `jobs/delivery-scheduler.ts`.
+   2. `Handle`-typed hook modules: `docs/markdown-hook.ts`, `analytics/hook.ts`. Both export a `Handle` composed into `hooks.server.ts`'s `sequence()` — they are adapter code that happens to live inside a domain folder for cohesion with the rest of that domain, not domain logic that leaked a framework import.
+   3. `hooks.server.ts` / `auth/guards.ts` / `api/` helpers — already listed above as adapter files.
 3. **Cross-domain access is barrel-only.** Import `$lib/server/blog`, never `$lib/server/blog/pipeline`. Domains call down, not across.
 4. **`db/` is the sink.** It imports no sibling domains. Everything flows toward it. Domains may import `$lib/server/db` and reach `db/schema/[namespace]` for table objects (downward = allowed).
 5. **The import graph is a DAG.** No cycles. Relations are centralized in one file for exactly this reason.

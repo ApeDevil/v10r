@@ -1,18 +1,10 @@
-export {
-	disableScope,
-	enableScope,
-	getEnabledScopes,
-	hasWriteAccess,
-	isScopeEnabled,
-	toggleScope,
-} from './bot-config.svelte';
+export { disableScope, enableScope, getEnabledScopes, isScopeEnabled } from './bot-config.svelte';
 export {
 	type ConversationSummary,
 	deleteConversations,
 	deleteSingleConversation,
 	fetchConversationStorage,
 	getStorageState,
-	resetStorageState,
 	type StorageMeta,
 } from './conversation-storage.svelte';
 export { default as DeskShortcuts } from './DeskShortcuts.svelte';
@@ -40,10 +32,8 @@ export {
 	type ContextChip,
 	type ContextStatus,
 	dismissContext,
-	getActiveContexts,
 	getContextChips,
 	getTokenEstimate,
-	hasContext,
 	markResponseReceived,
 	type PanelContext,
 	type PanelStatus,
@@ -53,7 +43,6 @@ export {
 	type SerializedContext,
 	serializeForRequest,
 	setContextFocus,
-	togglePin,
 	unpinContext,
 	updatePanelContext,
 } from './desk-context.svelte';
@@ -90,7 +79,7 @@ export {
 	resolveDropZone,
 	splitLeaf,
 } from './dock.operations';
-export { clearDockState, loadDockState, saveDockState } from './dock.persistence';
+export { loadDockState, saveDockState } from './dock.persistence';
 export { createDockState, type DockState, getDockContext, setDockContext } from './dock.state.svelte';
 export type {
 	ActivityBarItem,
@@ -104,24 +93,9 @@ export type {
 	PanelDefinition,
 	SplitNode,
 } from './dock.types';
-export {
-	appendIOLog,
-	clearIOLog,
-	getIOLogCount,
-	getIOLogEntries,
-	type IOLogEntry,
-	type IOLogSource,
-} from './io-log.svelte';
-export { LAYOUT_PRESETS, type LayoutPreset } from './layout-presets';
+export { appendIOLog, clearIOLog, getIOLogEntries, type IOLogEntry, type IOLogSource } from './io-log.svelte';
 export { default as PanelEmptyState } from './PanelEmptyState.svelte';
-export {
-	getActiveMenus,
-	getFocusedPanelId,
-	hasPanelMenus,
-	type PanelMenus,
-	registerPanelMenus,
-	setFocusedPanel,
-} from './panel-menus.svelte';
+export { getActiveMenus, type PanelMenus, registerPanelMenus, setFocusedPanel } from './panel-menus.svelte';
 export {
 	fetchProviders,
 	getActiveProviderId,
@@ -129,12 +103,7 @@ export {
 	type ProviderInfo,
 	switchProvider,
 } from './provider-preference.svelte';
-export {
-	buildWorkspacesFromServer,
-	clearWorkspaceStore,
-	loadWorkspaceStore,
-	saveWorkspaceStore,
-} from './workspace.persistence';
+export { buildWorkspacesFromServer, loadWorkspaceStore, saveWorkspaceStore } from './workspace.persistence';
 export {
 	createWorkspaceState,
 	getWorkspaceContext,

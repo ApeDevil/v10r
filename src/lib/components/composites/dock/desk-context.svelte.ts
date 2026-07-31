@@ -183,15 +183,6 @@ export function restoreContext(panelId: string): void {
 	dismissedIds = next;
 }
 
-/** Toggle pin state for a panel */
-export function togglePin(panelId: string): void {
-	if (pinnedIds.has(panelId)) {
-		unpinContext(panelId);
-	} else {
-		pinContext(panelId);
-	}
-}
-
 /** Record when the last AI response was received (resets staleness) */
 export function markResponseReceived(): void {
 	lastResponseAt = Date.now();
@@ -228,11 +219,6 @@ export function getContextChips(): ContextChip[] {
 	return contextChips;
 }
 
-/** Get only active contexts (implicit + pinned) — for AI request assembly */
-export function getActiveContexts(): PanelContext[] {
-	return activeContexts;
-}
-
 /** Get total estimated tokens across active contexts */
 export function getTokenEstimate(): number {
 	return tokenEstimate;
@@ -241,10 +227,4 @@ export function getTokenEstimate(): number {
 /** Serialize active contexts for the API request body with budget awareness */
 export function serializeForRequest(): SerializedContext[] {
 	return budgetAwareSerialize(activeContexts, focusedPanelId, CONTEXT_TOKEN_BUDGET);
-}
-
-/** Check if any context is registered */
-export function hasContext(): boolean {
-	void registryVersion;
-	return registry.size > 0;
 }

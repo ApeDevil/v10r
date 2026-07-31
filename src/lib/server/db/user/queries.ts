@@ -18,17 +18,6 @@ export async function getUserSessions(userId: string) {
 		.where(eq(sessionTable.userId, userId));
 }
 
-/** Fetch all linked OAuth accounts for a user. */
-export async function getUserAccounts(userId: string) {
-	return db
-		.select({
-			providerId: account.providerId,
-			createdAt: account.createdAt,
-		})
-		.from(account)
-		.where(eq(account.userId, userId));
-}
-
 /**
  * OAuth account summary for transparency/export surfaces.
  * Tokens are projected to PRESENCE booleans at query level — the raw

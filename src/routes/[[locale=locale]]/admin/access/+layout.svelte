@@ -1,23 +1,29 @@
 <script lang="ts">
+import type { Snippet } from 'svelte';
 import { page } from '$app/state';
 import { Typography } from '$lib/components/primitives';
+import { deLocalizeHref, localizeHref } from '$lib/i18n';
+import * as m from '$lib/paraglide/messages';
+import type { LayoutData } from './$types';
 
-let { children, data } = $props();
+let { children, data }: { children: Snippet; data: LayoutData } = $props();
 
-const tabs = [
-	{ href: '/admin/access/authors', label: 'Authors' },
-	{ href: '/admin/access/requests', label: `Requests (${data.pendingRequestsCount})` },
-];
+const tabs = $derived([
+	{ href: '/admin/access/authors', label: m.admin_nav_authors() },
+	{ href: '/admin/access/requests', label: `${m.admin_nav_requests()} (${data.pendingRequestsCount})` },
+]);
 
-const isActive = (href: string) => page.url.pathname.startsWith(href);
+// deLocalize before matching, localize before rendering — raw pathname
+// comparison broke this tab strip under /de and /ru.
+const isActive = (href: string) => deLocalizeHref(page.url.pathname).startsWith(href);
 </script>
 
 <div class="access">
 	<header>
-		<Typography variant="h1">Access</Typography>
+		<Typography variant="h1">{m.admin_nav_group_access()}</Typography>
 		<nav>
 			{#each tabs as t (t.href)}
-				<a href={t.href} class:active={isActive(t.href)}>{t.label}</a>
+				<a href={localizeHref(t.href)} class:active={isActive(t.href)}>{t.label}</a>
 			{/each}
 		</nav>
 	</header>

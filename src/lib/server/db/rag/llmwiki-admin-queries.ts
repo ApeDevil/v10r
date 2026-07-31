@@ -9,8 +9,7 @@
  */
 
 import { count, isNull, sql } from 'drizzle-orm';
-import { COMPILE_SCAFFOLD } from '$lib/server/llmwiki/compile';
-import { LINT_SCAFFOLD } from '$lib/server/llmwiki/lint';
+import { COMPILE_SCAFFOLD, LINT_SCAFFOLD } from '$lib/server/llmwiki';
 import { db } from '../index';
 import { llmwikiLintIssue, llmwikiPage, llmwikiPageLink, llmwikiPageRedirect } from '../schema/rag';
 

@@ -1,11 +1,21 @@
 <script lang="ts">
 import { Card, NavSection } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
-import { Badge, Body, Button, Cell, Header, HeaderCell, Row, Select, Table } from '$lib/components/primitives';
+import {
+	Badge,
+	Body,
+	Button,
+	Cell,
+	Header,
+	HeaderCell,
+	ModeChip,
+	Row,
+	Select,
+	Table,
+} from '$lib/components/primitives';
 import { ErdDiagram } from '$lib/components/viz';
 import * as m from '$lib/paraglide/messages';
 import { authFixture } from '$lib/showcase/auth/fixture';
-import ModeChip from '$lib/showcase/auth/ModeChip.svelte';
 
 // Working copy of fixture users — all mutations are local $state, reset on navigation.
 let users = $state(

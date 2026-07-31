@@ -40,7 +40,6 @@ import { docsMarkdown } from '$lib/server/docs/markdown-hook';
 import { logFeatureStatus } from '$lib/server/features';
 import { clearOwnerCookie, PAIRING_COOKIE, verifyOwnerCookie } from '$lib/server/pairing/cookie';
 import { isSameHost, needsCsrf } from '$lib/server/security/csrf';
-import { sanitizeInternalPath } from '$lib/server/security/safe-path';
 import {
 	generateRandomStyle,
 	parseStyleCookie,
@@ -55,6 +54,7 @@ import { getRadius } from '$lib/styles/random/radius-registry';
 import { tokenToCssVar } from '$lib/styles/random/token-vars';
 import type { PaletteId, ResolvedStyle } from '$lib/styles/random/types';
 import { getTypography } from '$lib/styles/random/typography-registry';
+import { sanitizeInternalPath } from '$lib/utils/safe-path';
 import '$lib/server/agents';
 import '$lib/server/jobs/scheduler';
 import '$lib/server/jobs/delivery-scheduler';
@@ -119,30 +119,38 @@ export const securityHeaders: Handle = async ({ event, resolve }) => {
 
 	const response = await resolve(event);
 
-	response.headers.set('X-Frame-Options', 'DENY');
-	response.headers.set('X-Content-Type-Options', 'nosniff');
-	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-	response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-	response.headers.set('Strict-Transport-Security', `max-age=${HSTS_MAX_AGE}; includeSubDomains; preload`);
-	// Cross-origin isolation (Spectre-class). same-origin-allow-popups keeps redirect/popup
-	// OAuth flows working. COEP is intentionally NOT set (would require a CORP audit of
-	// R2 / Carto / font origins). CORP same-site blocks cross-site resource hot-linking.
-	response.headers.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
-	response.headers.set('Cross-Origin-Resource-Policy', 'same-site');
-	response.headers.set('X-DNS-Prefetch-Control', 'off');
+	// Guarded: a `Response.redirect()` anywhere downstream has IMMUTABLE headers
+	// and would turn every request into a 500 here. None exists today, but the
+	// first one added must degrade to "no extra headers on that redirect", not
+	// take down the whole chain. (docs/system-abstraction.md documents this.)
+	try {
+		response.headers.set('X-Frame-Options', 'DENY');
+		response.headers.set('X-Content-Type-Options', 'nosniff');
+		response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+		response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+		response.headers.set('Strict-Transport-Security', `max-age=${HSTS_MAX_AGE}; includeSubDomains; preload`);
+		// Cross-origin isolation (Spectre-class). same-origin-allow-popups keeps redirect/popup
+		// OAuth flows working. COEP is intentionally NOT set (would require a CORP audit of
+		// R2 / Carto / font origins). CORP same-site blocks cross-site resource hot-linking.
+		response.headers.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+		response.headers.set('Cross-Origin-Resource-Policy', 'same-site');
+		response.headers.set('X-DNS-Prefetch-Control', 'off');
 
-	// Never cache user-specific or API responses on shared/intermediary caches.
-	// The !has() guard preserves explicit Cache-Control set by a load/endpoint
-	// (e.g. the data page's no-store, the blog-image proxy's public max-age).
-	const isApi = event.url.pathname.startsWith('/api/');
-	if ((event.locals.user || isApi) && !response.headers.has('Cache-Control')) {
-		response.headers.set('Cache-Control', 'no-store, private');
-	}
+		// Never cache user-specific or API responses on shared/intermediary caches.
+		// The !has() guard preserves explicit Cache-Control set by a load/endpoint
+		// (e.g. the data page's no-store, the blog-image proxy's public max-age).
+		const isApi = event.url.pathname.startsWith('/api/');
+		if ((event.locals.user || isApi) && !response.headers.has('Cache-Control')) {
+			response.headers.set('Cache-Control', 'no-store, private');
+		}
 
-	// On logout, instruct the browser to purge cached pages, cookies, and storage
-	// so a back-button after sign-out cannot reveal the prior session's data.
-	if (event.url.pathname === '/api/auth/sign-out' && response.status >= 200 && response.status < 300) {
-		response.headers.set('Clear-Site-Data', '"cache", "cookies", "storage"');
+		// On logout, instruct the browser to purge cached pages, cookies, and storage
+		// so a back-button after sign-out cannot reveal the prior session's data.
+		if (event.url.pathname === '/api/auth/sign-out' && response.status >= 200 && response.status < 300) {
+			response.headers.set('Clear-Site-Data', '"cache", "cookies", "storage"');
+		}
+	} catch (err) {
+		console.error('[securityHeaders] immutable response headers — skipped:', err instanceof Error ? err.message : err);
 	}
 
 	return response;
@@ -506,9 +514,22 @@ const sessionPopulate: Handle = async ({ event, resolve }) => {
 		return resolve(event);
 	}
 
-	const sessionData = await auth.api.getSession({
-		headers: event.request.headers,
-	});
+	// A Neon outage must not 500 every page that carries a session cookie while
+	// anonymous visitors browse fine. Degrade this request to anonymous instead:
+	// privileges only ever drop, never widen. (Same .catch precedent as the 2FA
+	// path in authHandler.)
+	const sessionData = await auth.api
+		.getSession({
+			headers: event.request.headers,
+		})
+		.catch((err) => {
+			console.error(
+				'[auth] getSession failed — degrading request to anonymous:',
+				err instanceof Error ? err.message : err,
+			);
+			event.locals.authDegraded = true;
+			return null;
+		});
 
 	event.locals.user = sessionData?.user ?? null;
 	event.locals.session = sessionData?.session ?? null;
@@ -534,7 +555,11 @@ const sessionPopulate: Handle = async ({ event, resolve }) => {
 	// keeps `locals.grants` a plain array (no async cascade across ~25 guard call sites).
 	const u = event.locals.user;
 	if (u && (event.url.pathname.includes('/blog') || event.url.pathname.includes('/desk'))) {
-		event.locals.grants = await listActiveGrantKinds(u.id);
+		event.locals.grants = await listActiveGrantKinds(u.id).catch((err) => {
+			console.error('[auth] grant lookup failed — treating as no grants:', err instanceof Error ? err.message : err);
+			event.locals.authDegraded = true;
+			return [];
+		});
 	} else {
 		event.locals.grants = [];
 	}

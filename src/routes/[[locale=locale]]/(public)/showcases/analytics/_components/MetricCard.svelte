@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Sparkline } from '$lib/components/viz/chart/sparkline';
+import * as m from '$lib/paraglide/messages';
 import { cn } from '$lib/utils/cn';
 
 interface Props {
@@ -15,19 +16,21 @@ let { title, value, delta, sparklineData, class: className }: Props = $props();
 const deltaLabel = $derived(
 	delta != null
 		? delta > 0
-			? `Up ${Math.abs(delta)}%`
+			? m.showcase_analytics_shared_delta_up({ pct: String(Math.abs(delta)) })
 			: delta < 0
-				? `Down ${Math.abs(delta)}%`
-				: 'No change'
+				? m.showcase_analytics_shared_delta_down({ pct: String(Math.abs(delta)) })
+				: m.showcase_analytics_shared_delta_none()
 		: undefined,
+);
+
+const cardAriaLabel = $derived(
+	deltaLabel != null
+		? m.showcase_analytics_shared_aria_with_delta({ title, value: String(value), delta: deltaLabel })
+		: m.showcase_analytics_shared_aria_basic({ title, value: String(value) }),
 );
 </script>
 
-<div
-	class={cn('metric-card', className)}
-	role="group"
-	aria-label="{title}: {value}{deltaLabel ? `, ${deltaLabel}, vs previous period` : ''}"
->
+<div class={cn('metric-card', className)} role="group" aria-label={cardAriaLabel}>
 	<span class="metric-label">{title}</span>
 	<span class="metric-value">{value}</span>
 
@@ -42,12 +45,12 @@ const deltaLabel = $derived(
 					<span class="i-lucide-minus text-icon-sm" aria-hidden="true"></span>
 				{/if}
 				{Math.abs(delta)}%
-				<span class="delta-context">vs prev.</span>
+				<span class="delta-context">{m.showcase_analytics_shared_delta_vs_prev()}</span>
 			</span>
 		{/if}
 
 		{#if sparklineData && sparklineData.length > 1}
-			<Sparkline data={sparklineData} type="area" width={80} height={24} ariaLabel="{title} trend" />
+			<Sparkline data={sparklineData} type="area" width={80} height={24} ariaLabel={m.showcase_analytics_shared_aria_trend({ title })} />
 		{/if}
 	</div>
 </div>

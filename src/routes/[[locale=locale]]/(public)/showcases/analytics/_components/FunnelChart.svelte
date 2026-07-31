@@ -1,4 +1,5 @@
 <script lang="ts">
+import * as m from '$lib/paraglide/messages';
 import type { FunnelStep } from '$lib/server/analytics/types';
 import { cn } from '$lib/utils/cn';
 
@@ -12,7 +13,9 @@ let { steps, class: className }: Props = $props();
 const maxCount = $derived(steps[0]?.count ?? 1);
 
 const funnelAriaLabel = $derived(
-	`Conversion funnel: ${steps.map((s) => `${s.label} ${s.count.toLocaleString()} (${s.rate}%)`).join(', ')}`,
+	m.showcase_analytics_shared_aria_funnel({
+		steps: steps.map((s) => `${s.label} ${s.count.toLocaleString()} (${s.rate}%)`).join(', '),
+	}),
 );
 </script>
 

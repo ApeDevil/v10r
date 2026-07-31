@@ -109,9 +109,6 @@ export const RRF_K = 60;
 /** Over-fetch multiplier for pre-fusion retrieval */
 export const OVERFETCH_MULTIPLIER = 3;
 
-/** Maximum documents per user */
-export const MAX_DOCUMENTS_PER_USER = 100;
-
 /** Maximum total chunks across all documents */
 export const MAX_TOTAL_CHUNKS = 10_000;
 
@@ -134,9 +131,6 @@ export const SEARCH_RATE_LIMIT_WINDOW = '1m';
 
 /** Max rows per showcase table */
 export const MAX_SHOWCASE_ROWS = 50;
-
-/** Max Redis keys in showcase namespace */
-export const MAX_SHOWCASE_KEYS = 50;
 
 /** Max S3 objects in showcase namespace */
 export const MAX_SHOWCASE_OBJECTS = 20;
@@ -433,9 +427,6 @@ export const ADMIN_AUDIT_PAGE_SIZE = 50;
 
 /** Users per page in admin user management */
 export const ADMIN_USERS_PAGE_SIZE = 25;
-
-/** Feature flag in-process cache TTL (ms) */
-export const ADMIN_FLAG_CACHE_TTL_MS = 30_000;
 
 /** Announcement in-process cache TTL (ms) */
 export const ADMIN_ANNOUNCEMENT_CACHE_TTL_MS = 30_000;

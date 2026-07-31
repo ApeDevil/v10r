@@ -12,6 +12,7 @@
  */
 import { type SQL, sql } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
+import { rowsOf } from '$lib/server/db/rows';
 
 // ── Typed errors ──────────────────────────────────────────────────
 
@@ -124,7 +125,7 @@ export async function isCycleMove(
 		)
 		SELECT EXISTS(SELECT 1 FROM ancestors WHERE id = ${folderId}) AS is_cycle
 	`);
-	return (result as { rows?: { is_cycle: boolean }[] }).rows?.[0]?.is_cycle === true;
+	return rowsOf<{ is_cycle: boolean }>(result)[0]?.is_cycle === true;
 }
 
 /**
@@ -152,7 +153,7 @@ export async function collectSubtreeIds(
 		)
 		SELECT id FROM subtree
 	`);
-	return (result as { rows?: { id: string }[] }).rows?.map((r) => r.id) ?? [];
+	return rowsOf<{ id: string }>(result).map((r) => r.id);
 }
 
 /**
@@ -181,7 +182,7 @@ export async function assertOwnedDestination(
 	const result = await dbExec.execute(sql`
 		SELECT 1 AS ok FROM ${table} WHERE id = ${destId} AND user_id = ${userId} LIMIT 1
 	`);
-	const found = (result as { rows?: unknown[] }).rows?.length;
+	const found = rowsOf(result).length;
 	// Same error as a genuinely missing folder: "not yours" and "doesn't exist"
 	// must be indistinguishable, or the failure becomes an existence oracle for
 	// other users' folder ids.

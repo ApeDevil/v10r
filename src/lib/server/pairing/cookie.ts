@@ -16,10 +16,29 @@
  * per-request Redis lookup to revoke a short-lived, admin-only debug marker
  * would cost every request for very little. Expiry is the control; keep it short.
  */
-import type { Cookies } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 
 export const PAIRING_COOKIE = 'v10r_debug_owner';
+
+/**
+ * Minimal structural stand-in for SvelteKit's `Cookies` — only the methods this
+ * module actually calls (`set`/`delete`). Framework-free by design: a real
+ * `Cookies` instance satisfies this structurally, so callers pass it unchanged.
+ */
+export interface CookieJar {
+	set(
+		name: string,
+		value: string,
+		opts: {
+			path: string;
+			httpOnly?: boolean;
+			secure?: boolean;
+			sameSite?: 'lax' | 'strict' | 'none';
+			maxAge?: number;
+		},
+	): void;
+	delete(name: string, opts: { path: string }): void;
+}
 
 export interface OwnerCookiePayload {
 	adminUserId: string;
@@ -86,7 +105,7 @@ export async function verifyOwnerCookie(raw: string): Promise<OwnerCookiePayload
 	return { adminUserId, expiresAt };
 }
 
-export function setOwnerCookie(cookies: Cookies, value: string, expiresAt: number): void {
+export function setOwnerCookie(cookies: CookieJar, value: string, expiresAt: number): void {
 	const maxAge = Math.max(1, Math.floor((expiresAt - Date.now()) / 1000));
 	cookies.set(PAIRING_COOKIE, value, {
 		path: '/',
@@ -97,6 +116,6 @@ export function setOwnerCookie(cookies: Cookies, value: string, expiresAt: numbe
 	});
 }
 
-export function clearOwnerCookie(cookies: Cookies): void {
+export function clearOwnerCookie(cookies: CookieJar): void {
 	cookies.delete(PAIRING_COOKIE, { path: '/' });
 }

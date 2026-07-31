@@ -18,12 +18,12 @@ const META = {
 	recorded: { label: 'Recorded', icon: 'i-lucide-circle-play', cls: 'mc-recorded' },
 } as const;
 
-const m = $derived(META[mode]);
+const meta = $derived(META[mode]);
 </script>
 
-<span class="mode-chip {m.cls} {className ?? ''}" role="status" aria-label="{m.label} demo">
-	<span class="{m.icon} mc-icon" aria-hidden="true"></span>
-	<span>{m.label}</span>
+<span class="mode-chip {meta.cls} {className ?? ''}" role="status" aria-label="{meta.label} demo">
+	<span class="{meta.icon} mc-icon" aria-hidden="true"></span>
+	<span>{meta.label}</span>
 </span>
 
 <style>

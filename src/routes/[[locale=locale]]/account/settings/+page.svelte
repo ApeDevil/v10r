@@ -18,6 +18,12 @@ let { data }: PageProps = $props();
 let deleting = $state(false);
 let confirmDelete = $state(false);
 let deleteConfirmText = $state('');
+/**
+ * Server-supplied refusal text from the deleteAccount action (e.g. the 409 raised when the
+ * last configured admin still owns posts/grants). Rendered verbatim like `avatarError` —
+ * the operator-facing wording lives server-side, so there is no message key for it.
+ */
+let deleteError = $state<string | null>(null);
 
 // Step-up: deleteAccount 403s with stepUpRequired when TOTP is enrolled and the
 // freshness window has lapsed — the dialog verifies, then resubmits the original
@@ -390,7 +396,11 @@ async function handleAvatarRemove() {
 							action="?/deleteAccount"
 							use:formEnhance={({ formElement }) => {
 								deleting = true;
+								deleteError = null;
 								return async ({ result, update }) => {
+									if (result.type === 'failure') {
+										deleteError = (result.data as { error?: string } | undefined)?.error ?? null;
+									}
 									if (!interceptStepUp(result, formElement)) await update();
 									deleting = false;
 								};
@@ -408,6 +418,9 @@ async function handleAvatarRemove() {
 							{m.admin_action_cancel()}
 						</Button>
 					</div>
+					{#if deleteError}
+						<p class="text-fluid-xs text-error mt-3" role="alert">{deleteError}</p>
+					{/if}
 				{/snippet}
 			</Alert>
 		{/if}

@@ -107,7 +107,7 @@ export const actions: Actions = {
 			await db.delete(sessionTable).where(eq(sessionTable.userId, userId));
 			await stampRevocation(userId);
 
-			const ctx = getAuditContext(event);
+			const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 			await recordAuditEvent({
 				...ctx,
 				action: 'user.ban',
@@ -138,7 +138,7 @@ export const actions: Actions = {
 			// Clear the epoch so the user can mint a fresh session immediately.
 			await clearRevocation(userId);
 
-			const ctx = getAuditContext(event);
+			const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 			await recordAuditEvent({
 				...ctx,
 				action: 'user.unban',

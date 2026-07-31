@@ -11,7 +11,7 @@ export const POST: RequestHandler = async (event) => {
 	const run = await cancelRun(event.params.id);
 	if (!run) return apiError(404, 'not_found', 'Run not found');
 
-	const ctx = getAuditContext(event);
+	const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 	await recordAuditEvent({ ...ctx, action: 'dbops.cancel', targetType: 'dbops_run', targetId: run.id });
 	return apiOk(run);
 };

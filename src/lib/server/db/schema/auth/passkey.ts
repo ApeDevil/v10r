@@ -28,7 +28,9 @@ export const passkey = authSchema.table(
 		transports: text('transports'),
 		aaguid: text('aaguid'),
 		createdAt: timestamp('created_at').defaultNow(),
-		lastUsedAt: timestamp('last_used_at'),
+		// withTimezone: app-owned column (unlike createdAt, whose shape the plugin
+		// adapter dictates) — keep it consistent with every other custom timestamp.
+		lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
 	},
 	(table) => [
 		index('auth_passkey_user_idx').on(table.userId),

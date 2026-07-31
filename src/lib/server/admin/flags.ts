@@ -1,6 +1,15 @@
 import { eq } from 'drizzle-orm';
+import * as v from 'valibot';
 import { db } from '$lib/server/db';
 import { systemConfig } from '$lib/server/db/schema/admin';
+
+/**
+ * Every current flag is a boolean; `system_config.value` is unvalidated JSONB,
+ * so this schema at the write boundary is the only shape guarantee. When
+ * non-boolean flags land (percentage rollouts), grow this into a per-key
+ * schema map instead of widening it silently.
+ */
+const flagValueSchema = v.boolean('Flag values must be booleans');
 
 // ── In-Process Cache ──────────────────────────────────────────────────────────
 
@@ -27,6 +36,7 @@ export async function setFlag(
 	value: unknown,
 	options?: { description?: string; updatedBy?: string },
 ): Promise<void> {
+	v.parse(flagValueSchema, value);
 	await db
 		.insert(systemConfig)
 		.values({

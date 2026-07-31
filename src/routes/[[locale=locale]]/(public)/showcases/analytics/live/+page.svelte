@@ -1,6 +1,10 @@
 <script lang="ts">
+import { page } from '$app/state';
 import { Alert } from '$lib/components/composites';
 import { Sparkline } from '$lib/components/viz/chart/sparkline';
+import { getFormattingLocale } from '$lib/i18n';
+import * as m from '$lib/paraglide/messages';
+import { baseLocale, extractLocaleFromUrl } from '$lib/paraglide/runtime';
 import ChartSection from '../_components/ChartSection.svelte';
 import MetricCard from '../_components/MetricCard.svelte';
 
@@ -15,6 +19,8 @@ interface LiveEvent {
 let events = $state<LiveEvent[]>([]);
 let activeSessions = $state(0);
 let connectionStatus = $state<'connecting' | 'connected' | 'disconnected'>('connecting');
+
+const formattingLocale = $derived(getFormattingLocale(extractLocaleFromUrl(page.url.href) ?? baseLocale));
 
 // Rolling count of events per minute (last 10 minutes)
 let minuteBuckets = $state<number[]>(new Array(10).fill(0));
@@ -72,7 +78,7 @@ $effect(() => {
 });
 
 function formatTime(ts: string): string {
-	return new Date(ts).toLocaleTimeString('en-US', {
+	return new Date(ts).toLocaleTimeString(formattingLocale, {
 		hour: '2-digit',
 		minute: '2-digit',
 		second: '2-digit',
@@ -92,45 +98,45 @@ const eventTypeIcon: Record<string, string> = {
 	<div class="connection-status" class:connecting={connectionStatus === 'connecting'} class:connected={connectionStatus === 'connected'} class:disconnected={connectionStatus === 'disconnected'} aria-live="polite" role="status">
 		<span class="status-dot"></span>
 		{#if connectionStatus === 'connecting'}
-			Connecting to event stream...
+			{m.showcase_analytics_live_status_connecting()}
 		{:else if connectionStatus === 'connected'}
-			Live — receiving events
+			{m.showcase_analytics_live_status_connected()}
 		{:else}
-			Disconnected — events may be stale
+			{m.showcase_analytics_live_status_disconnected()}
 		{/if}
 	</div>
 
 	<!-- Live metrics -->
 	<div class="live-metrics">
 		<MetricCard
-			title="Active Sessions"
+			title={m.showcase_analytics_live_metric_sessions()}
 			value={activeSessions}
 		/>
 		<MetricCard
-			title="Events (last 10m)"
+			title={m.showcase_analytics_live_metric_events10m()}
 			value={eventsPerMinute.reduce((a, b) => a + b, 0)}
 			sparklineData={eventsPerMinute}
 		/>
 		<MetricCard
-			title="Events in Feed"
+			title={m.showcase_analytics_live_metric_feed()}
 			value={events.length}
 		/>
 	</div>
 
 	<!-- Live event feed -->
 	<ChartSection
-		title="Live Event Feed"
-		description="Real-time analytics events as they occur (simulated for demo)"
+		title={m.showcase_analytics_live_chart_feed()}
+		description={m.showcase_analytics_live_desc_feed()}
 	>
 		{#snippet chart()}
 			{#if events.length === 0}
 				<div class="empty-feed">
 					<span class="i-lucide-radio text-icon-lg" aria-hidden="true"></span>
-					<p>Waiting for events...</p>
-					<p class="text-fluid-xs">Simulated events will appear here shortly.</p>
+					<p>{m.showcase_analytics_live_empty_title()}</p>
+					<p class="text-fluid-xs">{m.showcase_analytics_live_empty_desc()}</p>
 				</div>
 			{:else}
-				<div class="event-feed" role="log" aria-live="polite" aria-label="Live analytics events">
+				<div class="event-feed" role="log" aria-live="polite" aria-label={m.showcase_analytics_live_aria_feed()}>
 					{#each events as event (event.id)}
 						<div class="event-row">
 							<span class={eventTypeIcon[event.type] ?? 'i-lucide-circle'} aria-hidden="true"></span>

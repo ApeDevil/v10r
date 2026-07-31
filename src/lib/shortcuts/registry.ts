@@ -32,13 +32,6 @@ export function registerShortcut(shortcut: Shortcut): () => void {
 }
 
 /**
- * Get all registered shortcuts.
- */
-export function getShortcuts(): Shortcut[] {
-	return Array.from(shortcuts.values());
-}
-
-/**
  * Get shortcuts grouped by category.
  */
 export function getShortcutsByCategory(): Record<ShortcutCategory, Shortcut[]> {

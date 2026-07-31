@@ -82,7 +82,7 @@ Update file name and/or type-specific data. Accepts any combination:
 
 ### `DELETE /api/desk/files/:id`
 
-Soft-deletes the file: `deleteFile()` sets `deleted_at` on the `desk.file` row and its matching detail row (spreadsheet or markdown) inside a transaction, then returns 204. The row is not hard-deleted, so `ON DELETE CASCADE` never fires. `restoreFile()` reverses it by clearing `deleted_at`. CASCADE on `spreadsheet.file_id` is only a backstop for hard deletion (e.g. user removal), not this endpoint.
+Soft-deletes the file: `deleteFile()` sets `deleted_at` on the `desk.file` row and its matching detail row (spreadsheet or markdown) inside a transaction, then returns 204. The row is not hard-deleted, so `ON DELETE CASCADE` never fires. There is no restore endpoint — the row stays soft-deleted until the `deskRetention` job (`$lib/server/jobs/desk-retention.ts`) hard-deletes it after `DESK_SOFT_DELETE_RETENTION_DAYS`. CASCADE on `spreadsheet.file_id` is only a backstop for hard deletion (e.g. user removal), not this endpoint.
 
 ## SpreadsheetPanel: Dual-Mode
 
@@ -130,7 +130,7 @@ $lib/server/db/schema/desk/
 
 $lib/server/db/desk/
   queries.ts                         # listFiles, getFile, getSpreadsheetByFileId, getMarkdownByFileId, getAiContextFiles, listFolders, getFolder, countFolderContents
-  mutations.ts                       # createSpreadsheetFile, createMarkdownFile, renameFile, deleteFile, restoreFile, updateSpreadsheetByFileId, updateMarkdownByFileId, folder mutations, moveFile, duplicateSpreadsheetFile, toggleFileAiContext
+  mutations.ts                       # createSpreadsheetFile, createMarkdownFile, renameFile, deleteFile, updateSpreadsheetByFileId, updateMarkdownByFileId, folder mutations, moveFile, duplicateSpreadsheetFile, toggleFileAiContext
 
 src/routes/api/desk/files/
   +server.ts                         # GET (list) + POST (create)

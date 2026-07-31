@@ -5,6 +5,8 @@ import { createAnnouncement, deactivateAnnouncement, getAllAnnouncementsAdmin } 
 import { requireAdmin } from '$lib/server/auth/guards';
 import { db } from '$lib/server/db';
 import {
+	type DeadDeliveryEntry,
+	type DeliveryLogEntry,
 	getChannelHealthStats,
 	getConnectedAccountsCounts,
 	getDeadDeliveries,
@@ -12,8 +14,23 @@ import {
 } from '$lib/server/db/notifications/admin-queries';
 import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
 import { probeChannels } from '$lib/server/notifications/health';
+import { renderNotification } from '$lib/server/notifications/render-message';
 import { safeDeferPromise } from '$lib/server/utils/safe-defer';
 import type { Actions, PageServerLoad } from './$types';
+
+/**
+ * `getDeliveryLog`/`getDeadDeliveries` return raw `messageKey`/`messageParams` —
+ * the db layer stays framework/i18n-agnostic. Rendering into a locale-specific
+ * title is the route adapter's job (this is the "move it to the caller"
+ * resolution for the db→notifications sideways import).
+ */
+function withRenderedTitle<T extends { messageKey: string; messageParams: Record<string, string | number> }>(
+	row: T,
+	locale: string,
+): Omit<T, 'messageKey' | 'messageParams'> & { notificationTitle: string } {
+	const { messageKey, messageParams, ...rest } = row;
+	return { ...rest, notificationTitle: renderNotification(messageKey, messageParams, locale) };
+}
 
 export const load: PageServerLoad = async ({ url, locals }) => {
 	requireAdmin(locals);
@@ -23,12 +40,14 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
 
 	// Eager: fast aggregate queries
-	const [healthStats, deadEntries, announcements, connectedAccounts] = await Promise.all([
+	const [healthStats, deadEntriesRaw, announcements, connectedAccounts] = await Promise.all([
 		getChannelHealthStats(),
-		getDeadDeliveries(locals.locale),
+		getDeadDeliveries(),
 		getAllAnnouncementsAdmin(),
 		getConnectedAccountsCounts(),
 	]);
+	const deadEntries: (Omit<DeadDeliveryEntry, 'messageKey' | 'messageParams'> & { notificationTitle: string })[] =
+		deadEntriesRaw.map((e) => withRenderedTitle(e, locals.locale));
 
 	return {
 		title: 'Notifications - Admin',
@@ -40,12 +59,18 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		// Deferred: live probes (external API, may be slow)
 		liveProbes: safeDeferPromise(probeChannels(), { discord: null, telegram: null }),
 		// Deferred: paginated delivery log
-		deliveryLog: safeDeferPromise(getDeliveryLog({ channel, status, page }, locals.locale), {
-			entries: [],
-			total: 0,
-			page: 1,
-			totalPages: 1,
-		}),
+		deliveryLog: safeDeferPromise(
+			getDeliveryLog({ channel, status, page }).then((result) => ({
+				...result,
+				entries: result.entries.map((e: DeliveryLogEntry) => withRenderedTitle(e, locals.locale)),
+			})),
+			{
+				entries: [],
+				total: 0,
+				page: 1,
+				totalPages: 1,
+			},
+		),
 	};
 };
 
@@ -67,7 +92,7 @@ export const actions: Actions = {
 		}
 		if (title.length > 120) return fail(400, { message: 'Title must be 120 characters or fewer' });
 
-		const ctx = getAuditContext(event);
+		const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 		const announcement = await createAnnouncement({
 			title: title.trim(),
 			body: body.trim(),
@@ -95,7 +120,7 @@ export const actions: Actions = {
 
 		if (!id) return fail(400, { message: 'Announcement ID required' });
 
-		const ctx = getAuditContext(event);
+		const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 		await deactivateAnnouncement(id);
 
 		await recordAuditEvent({
@@ -144,7 +169,7 @@ export const actions: Actions = {
 			return fail(409, { message: 'Delivery is not in a retryable state (already queued or in flight).' });
 		}
 
-		const ctx = getAuditContext(event);
+		const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 		await recordAuditEvent({
 			...ctx,
 			action: 'notification.delivery.retry',

@@ -34,7 +34,7 @@ function statusLabel(status: string): string {
 			<p class="detail-meta">
 				<span>{formatRelative(data.item.submittedAt, page.data.locale)}</span>
 				<span aria-hidden="true">·</span>
-				<code>{data.item.pageOfOrigin}</code>
+				<code>{data.item.pageOfOrigin || '—'}</code>
 				{#if data.item.rating != null}
 					<span aria-hidden="true">·</span>
 					<span>{m.admin_feedback_rating_label({ rating: data.item.rating })}</span>

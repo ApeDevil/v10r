@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
+import { rowCountOf } from '$lib/server/db/rows';
 
 /**
  * Compute daily page stats from raw events for yesterday.
@@ -85,7 +86,11 @@ export async function analyticsRollup(): Promise<number> {
 			pageviews = EXCLUDED.pageviews,
 			avg_duration_ms = EXCLUDED.avg_duration_ms,
 			bounce_rate = EXCLUDED.bounce_rate
+		RETURNING 1
 	`);
 
-	return (result as { rowCount?: number })?.rowCount ?? 0;
+	// RETURNING + rowCountOf, not a raw `.rowCount` read: that property exists
+	// only on the pg QueryResult shape and is undefined on pglite, so the old
+	// form silently reported 0 under test. See $lib/server/db/rows.
+	return rowCountOf(result);
 }

@@ -137,10 +137,3 @@ export async function deleteConversations(ids: string[]): Promise<boolean> {
 		state.deleting = next;
 	}
 }
-
-/** Reset storage state (e.g., for re-fetch after dialog reopen). */
-export function resetStorageState(): void {
-	state.conversations = [];
-	state.meta = null;
-	state.error = null;
-}

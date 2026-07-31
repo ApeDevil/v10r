@@ -1,10 +1,11 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { superValidate } from 'sveltekit-superforms';
+import { message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
+import { sanitizeFeedbackSource } from '$lib/feedback/source';
 import { feedbackSubmissionSchema } from '$lib/feedback/validation';
 import { localizeHref } from '$lib/i18n';
 import { checkHoneypot, getClientIp, ipLimitKey } from '$lib/server/abuse';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { createLimiter } from '$lib/server/api/rate-limit';
 import { FEEDBACK_RATE_LIMIT_MAX, FEEDBACK_RATE_LIMIT_PREFIX, FEEDBACK_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import { submitFeedback } from '$lib/server/feedback';
 import type { Actions, PageServerLoad } from './$types';
@@ -13,13 +14,17 @@ const limiter = createLimiter(FEEDBACK_RATE_LIMIT_PREFIX, FEEDBACK_RATE_LIMIT_MA
 
 export const load: PageServerLoad = async ({ url, locals }) => {
 	const accountEmail = locals.user?.email ?? null;
+	// 5xx pages link here with ?err=<errorId>; prefilling it ties the report to
+	// the handleError log line without any consent/session dependency.
+	const rawErr = url.searchParams.get('err');
+	const errorId = rawErr && /^[\w-]{1,64}$/.test(rawErr) ? rawErr : null;
 	const form = await superValidate(
 		{
 			subject: '',
-			body: '',
+			body: errorId ? `Error ID: ${errorId}\n\n` : '',
 			rating: null,
 			contactEmail: accountEmail,
-			pageOfOrigin: url.searchParams.get('from') ?? '/',
+			pageOfOrigin: sanitizeFeedbackSource(url.searchParams.get('from')),
 			nonce: crypto.randomUUID(),
 			renderedAt: Date.now(),
 			bookmark: '',
@@ -40,15 +45,18 @@ export const actions: Actions = {
 
 		const honeypot = checkHoneypot({ honeypot: form.data.bookmark, renderedAt: form.data.renderedAt });
 		if (!honeypot.allowed) {
-			return fail(400, { form });
+			// Deliberately generic: doesn't teach a bot which check fired. A human
+			// tripped by the speed floor keeps their typed content and can resubmit.
+			return message(form, 'rejected', { status: 400 });
 		}
 
-		const ip = getClientIp(event);
-		if (ip) {
-			const { success, reset } = await limiter.limit(ipLimitKey(ip));
-			if (!success) {
-				return rateLimitResponse(reset, 'Too many submissions. Please try again later.');
-			}
+		// No `if (ip)` gate: a null IP falls into ipLimitKey's shared `anon` bucket
+		// instead of bypassing the limiter entirely.
+		const { success } = await limiter.limit(ipLimitKey(getClientIp(event)));
+		if (!success) {
+			// A form action must return fail()/message() — a raw Response is not
+			// devalue-serializable and turns the denial into a 500.
+			return message(form, 'rate_limited', { status: 429 });
 		}
 
 		// Link to journey if user has consented to analytics

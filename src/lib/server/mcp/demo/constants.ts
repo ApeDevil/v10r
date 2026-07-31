@@ -17,10 +17,6 @@ export const MAX_MESSAGE_LENGTH = 500;
 export const DEMO_COLORS = ['blue', 'red', 'green', 'yellow', 'orange', 'purple'] as const;
 export type DemoColor = (typeof DEMO_COLORS)[number];
 
-export function isDemoColor(value: unknown): value is DemoColor {
-	return typeof value === 'string' && (DEMO_COLORS as readonly string[]).includes(value);
-}
-
 /** Seed values for a freshly provisioned singleton. Mirrors the DB column defaults. */
 export const INITIAL_DEMO_STATE = {
 	message: 'Hello, Velociraptor.',

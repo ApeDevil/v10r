@@ -1,49 +1,5 @@
-import { generateText } from 'ai';
-import { classifyAIError } from '../errors';
-import { aiConfigured, getActiveProvider, getActiveProviderInfo, providerRegistry } from '../index';
-import type { AIConnectionInfo, AIProviderStatus } from '../types';
-
-/** Verify AI provider connection with a lightweight test call */
-export async function verifyAIConnection(): Promise<AIConnectionInfo> {
-	const chatModel = getActiveProvider()?.getInstance() ?? null;
-	const activeProviderInfo = getActiveProviderInfo();
-	if (!aiConfigured || !chatModel || !activeProviderInfo) {
-		return {
-			connected: false,
-			provider: 'none',
-			model: 'none',
-			latencyMs: null,
-			error: 'No AI provider is configured',
-		};
-	}
-
-	const start = performance.now();
-
-	try {
-		await generateText({
-			model: chatModel,
-			prompt: 'Reply with "ok".',
-			maxOutputTokens: 5,
-		});
-
-		return {
-			connected: true,
-			provider: activeProviderInfo.id,
-			model: activeProviderInfo.model,
-			latencyMs: Math.round(performance.now() - start),
-			error: null,
-		};
-	} catch (err) {
-		const aiErr = classifyAIError(err);
-		return {
-			connected: false,
-			provider: activeProviderInfo.id,
-			model: activeProviderInfo.model,
-			latencyMs: Math.round(performance.now() - start),
-			error: aiErr.message,
-		};
-	}
-}
+import { providerRegistry } from '../index';
+import type { AIProviderStatus } from '../types';
 
 /** Get status of all configured AI providers */
 export function getProviderStatuses(): AIProviderStatus[] {

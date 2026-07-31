@@ -5,13 +5,11 @@ import type { file } from '$lib/server/db/schema/desk/file';
 import type { folder } from '$lib/server/db/schema/desk/folder';
 import type { markdown } from '$lib/server/db/schema/desk/markdown';
 import type { spreadsheet } from '$lib/server/db/schema/desk/spreadsheet';
-import type { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
 import type { notifications } from '$lib/server/db/schema/notifications/notifications';
 
 type UserInsert = InferInsertModel<typeof user>;
 type NotificationInsert = InferInsertModel<typeof notifications>;
 type ConversationInsert = InferInsertModel<typeof conversation>;
-type DeliveryInsert = InferInsertModel<typeof notificationDeliveries>;
 type FileInsert = InferInsertModel<typeof file>;
 type FolderInsert = InferInsertModel<typeof folder>;
 type SpreadsheetInsert = InferInsertModel<typeof spreadsheet>;
@@ -50,18 +48,6 @@ export function makeConversation(overrides?: Partial<ConversationInsert>): Conve
 		title: 'Test conversation',
 		createdAt: new Date(),
 		updatedAt: new Date(),
-		...overrides,
-	};
-}
-
-export function makeDelivery(overrides?: Partial<DeliveryInsert>): DeliveryInsert {
-	return {
-		id: crypto.randomUUID(),
-		notificationId: 'must-be-set',
-		channel: 'email',
-		status: 'pending',
-		attempts: 0,
-		createdAt: new Date(),
 		...overrides,
 	};
 }

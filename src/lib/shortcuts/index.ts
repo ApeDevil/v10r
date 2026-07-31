@@ -4,11 +4,6 @@
  */
 
 export { initKeyboardHandler } from './handler';
-export { formatShortcut, getModifierKey } from './platform';
+export { formatShortcut } from './platform';
 export type { Shortcut, ShortcutCategory } from './registry';
-export {
-	findShortcutByKeys,
-	getShortcuts,
-	getShortcutsByCategory,
-	registerShortcut,
-} from './registry';
+export { findShortcutByKeys, getShortcutsByCategory, registerShortcut } from './registry';

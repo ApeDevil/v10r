@@ -10,7 +10,7 @@
  */
 
 import { jsonSchema, tool } from 'ai';
-import { MAX_RAWRAG_TOOL_IDS } from '$lib/server/llmwiki/config';
+import { MAX_RAWRAG_TOOL_IDS } from '$lib/server/llmwiki';
 import { fetchChunksByIds } from '$lib/server/rawrag/queries';
 
 // Tool metadata (name → risk) lives in the declarative `TOOL_MANIFEST` in `tools/index.ts`.

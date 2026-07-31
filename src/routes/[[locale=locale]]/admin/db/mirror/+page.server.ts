@@ -35,7 +35,7 @@ export const actions: Actions = {
 		const form = await superValidate(event.request, valibot(startOperationSchema));
 		if (!form.valid) return fail(400, { form });
 
-		const ctx = getAuditContext(event);
+		const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 		try {
 			const { run } = await startOperation({
 				kind: form.data.kind,

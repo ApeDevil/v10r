@@ -56,11 +56,6 @@ export function setFocusedPanel(panelId: string | null): void {
 	focusedPanelId = panelId;
 }
 
-/** Get the currently focused panel ID */
-export function getFocusedPanelId(): string | null {
-	return focusedPanelId;
-}
-
 /** Reactive (module-level derived): the menus for the currently focused panel */
 const activeMenus = $derived.by((): PanelMenus => {
 	// Read version to establish reactive dependency on registry changes
@@ -72,9 +67,4 @@ const activeMenus = $derived.by((): PanelMenus => {
 /** Get the active menus — must be called inside a reactive context ($derived, $effect, template) */
 export function getActiveMenus(): PanelMenus {
 	return activeMenus;
-}
-
-/** Check if a given panel has registered menus */
-export function hasPanelMenus(panelId: string): boolean {
-	return registry.has(panelId);
 }

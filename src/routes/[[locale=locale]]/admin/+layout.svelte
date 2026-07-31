@@ -4,57 +4,14 @@ import { page } from '$app/state';
 import { PageContainer } from '$lib/components/layout';
 import { AdminSidebar, AppShell } from '$lib/components/shell';
 import { deLocalizeHref } from '$lib/i18n';
+import { adminNavGroups } from '$lib/nav/admin';
 import type { LayoutData } from './$types';
 
 let { children, data }: { children: Snippet; data: LayoutData } = $props();
 
 let mobileNavOpen = $state(false);
 
-const groups = [
-	{
-		label: 'Observe',
-		items: [
-			{ label: 'Database', href: '/admin/db', icon: 'i-lucide-database' },
-			{ label: 'Analytics', href: '/admin/analytics', icon: 'i-lucide-bar-chart-2' },
-			{ label: 'Audit Log', href: '/admin/audit', icon: 'i-lucide-shield-check' },
-		],
-	},
-	{
-		label: 'Manage',
-		items: [
-			{ label: 'Users', href: '/admin/users', icon: 'i-lucide-users' },
-			{ label: 'Feature Flags', href: '/admin/flags', icon: 'i-lucide-toggle-right' },
-		],
-	},
-	{
-		label: 'Content',
-		items: [
-			{ label: 'Posts', href: '/admin/content/posts', icon: 'i-lucide-file-text' },
-			{ label: 'Tags', href: '/admin/content/tags', icon: 'i-lucide-tag' },
-			{ label: 'Feedback', href: '/admin/feedback', icon: 'i-lucide-message-square' },
-		],
-	},
-	{
-		label: 'AI',
-		items: [
-			{ label: 'Overview', href: '/admin/ai/overview', icon: 'i-lucide-gauge' },
-			{ label: 'Models', href: '/admin/ai/models', icon: 'i-lucide-cpu' },
-			{ label: 'Usage', href: '/admin/ai/usage', icon: 'i-lucide-bar-chart-2' },
-			{ label: 'Cost', href: '/admin/ai/cost', icon: 'i-lucide-receipt' },
-			{ label: 'nRAG', href: '/admin/ai/nrag', icon: 'i-lucide-book-marked' },
-			{ label: 'Tools', href: '/admin/ai/tools', icon: 'i-lucide-wrench' },
-		],
-	},
-	{
-		label: 'System',
-		items: [
-			{ label: 'Jobs', href: '/admin/jobs', icon: 'i-lucide-clock' },
-			{ label: 'Notifications', href: '/admin/notifications', icon: 'i-lucide-bell' },
-			{ label: 'Cache', href: '/admin/cache', icon: 'i-lucide-hard-drive' },
-			{ label: 'MCP Test', href: '/admin/mcp', icon: 'i-lucide-plug-zap' },
-		],
-	},
-];
+const groups = adminNavGroups;
 
 const allItems = groups.flatMap((g) => g.items);
 
@@ -86,7 +43,7 @@ $effect(() => {
 			aria-controls="admin-mobile-menu"
 		>
 			<span class="{currentPage.icon} mobile-trigger-icon" aria-hidden="true"></span>
-			<span>{currentPage.label}</span>
+			<span>{currentPage.label()}</span>
 			<span class="i-lucide-chevron-down mobile-chevron" class:open={mobileNavOpen} aria-hidden="true"></span>
 		</button>
 

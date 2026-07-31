@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Alert } from '$lib/components/composites';
+import * as m from '$lib/paraglide/messages';
 import ChartSection from '../_components/ChartSection.svelte';
 import DateRangePresets from '../_components/DateRangePresets.svelte';
 import FunnelChart from '../_components/FunnelChart.svelte';
@@ -13,7 +14,7 @@ const overallConversion = $derived(
 </script>
 
 {#if data.error}
-	<Alert variant="error" title="Database Error">
+	<Alert variant="error" title={m.showcase_analytics_shared_error_title()}>
 		<code>{data.error}</code>
 	</Alert>
 {/if}
@@ -30,18 +31,18 @@ const overallConversion = $derived(
 
 	{#if data.funnel.length > 0}
 		<div class="conversion-banner">
-			<span class="conversion-label">Overall Conversion</span>
+			<span class="conversion-label">{m.showcase_analytics_funnels_conversion_label()}</span>
 			<span class="conversion-value">{overallConversion}%</span>
 			<span class="conversion-detail">
-				{data.funnel[0].count.toLocaleString()} visitors
+				{m.showcase_analytics_funnels_conversion_visitors({ count: data.funnel[0].count.toLocaleString() })}
 				&rarr;
-				{data.funnel[data.funnel.length - 1].count.toLocaleString()} signups
+				{m.showcase_analytics_funnels_conversion_signups({ count: data.funnel[data.funnel.length - 1].count.toLocaleString() })}
 			</span>
 		</div>
 
 		<ChartSection
-			title="Landing &rarr; Signup Funnel"
-			description="Tracks visitors from landing page through docs and pricing to signup"
+			title={m.showcase_analytics_funnels_chart_funnel()}
+			description={m.showcase_analytics_funnels_desc_funnel()}
 		>
 			{#snippet chart()}
 				<FunnelChart steps={data.funnel} />
@@ -49,16 +50,16 @@ const overallConversion = $derived(
 		</ChartSection>
 
 		<!-- Step details table -->
-		<ChartSection title="Step Breakdown" description="Detailed metrics for each funnel step">
+		<ChartSection title={m.showcase_analytics_funnels_chart_breakdown()} description={m.showcase_analytics_funnels_desc_breakdown()}>
 			{#snippet chart()}
-				<table class="funnel-table" aria-label="Funnel step breakdown">
+				<table class="funnel-table" aria-label={m.showcase_analytics_funnels_aria_table()}>
 					<thead>
 						<tr>
-							<th scope="col">Step</th>
-							<th scope="col">Path</th>
-							<th scope="col" class="numeric">Sessions</th>
-							<th scope="col" class="numeric">Rate</th>
-							<th scope="col" class="numeric">Drop-off</th>
+							<th scope="col">{m.showcase_analytics_funnels_col_step()}</th>
+							<th scope="col">{m.showcase_analytics_funnels_col_path()}</th>
+							<th scope="col" class="numeric">{m.showcase_analytics_funnels_col_sessions()}</th>
+							<th scope="col" class="numeric">{m.showcase_analytics_funnels_col_rate()}</th>
+							<th scope="col" class="numeric">{m.showcase_analytics_funnels_col_dropoff()}</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -85,8 +86,8 @@ const overallConversion = $derived(
 			{/snippet}
 		</ChartSection>
 	{:else if !data.error}
-		<Alert variant="info" title="No funnel data">
-			<p>No funnel data found for the selected range. Try reseeding the analytics data from the Overview page.</p>
+		<Alert variant="info" title={m.showcase_analytics_funnels_alert_title()}>
+			<p>{m.showcase_analytics_funnels_alert_desc()}</p>
 		</Alert>
 	{/if}
 </div>

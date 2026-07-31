@@ -76,7 +76,7 @@ export const actions: Actions = {
 
 			await publishRevision(postId, 'en', rev.id);
 
-			const ctx = getAuditContext(event);
+			const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 			await recordAuditEvent({
 				...ctx,
 				action: 'blog.post.publish',
@@ -100,7 +100,7 @@ export const actions: Actions = {
 		try {
 			await unpublishPost(postId);
 
-			const ctx = getAuditContext(event);
+			const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 			await recordAuditEvent({
 				...ctx,
 				action: 'blog.post.unpublish',
@@ -124,7 +124,7 @@ export const actions: Actions = {
 			// null owner: admin-gated action, and no folderId is written here.
 			await updatePostMetadata(postId, { status: 'archived' }, null);
 
-			const ctx = getAuditContext(event);
+			const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 			await recordAuditEvent({
 				...ctx,
 				action: 'blog.post.archive',
@@ -147,7 +147,7 @@ export const actions: Actions = {
 		try {
 			await softDeletePost(postId);
 
-			const ctx = getAuditContext(event);
+			const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 			await recordAuditEvent({
 				...ctx,
 				action: 'blog.post.delete',

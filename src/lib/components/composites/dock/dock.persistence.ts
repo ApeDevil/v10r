@@ -45,12 +45,6 @@ export function loadDockState(storageKey = DEFAULT_KEY): DockLayoutState | null 
 	}
 }
 
-/** Clear persisted state */
-export function clearDockState(storageKey = DEFAULT_KEY): void {
-	if (!browser) return;
-	localStorage.removeItem(storageKey);
-}
-
 /** Validate layout node structure */
 function isValidNode(node: unknown): node is LayoutNode {
 	if (!node || typeof node !== 'object') return false;

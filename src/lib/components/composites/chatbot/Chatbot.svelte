@@ -76,9 +76,11 @@ $effect(() => {
 	}
 });
 
-// Load the history list when the panel opens.
+// Load the history list when the panel opens. Gated: the sign-in gate's
+// contract is that the failing request never fires — an anonymous visitor
+// opening the panel must not emit a known-401 to /api/ai/conversations.
 $effect(() => {
-	if (session.phase === 'open') loadConversations();
+	if (session.phase === 'open' && !gated) loadConversations();
 });
 
 // Refresh history once a brand-new conversation gets persisted (first turn).

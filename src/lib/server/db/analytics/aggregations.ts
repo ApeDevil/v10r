@@ -18,8 +18,8 @@ import type {
 	UserLaneStats,
 	VitalSummary,
 } from '$lib/server/analytics/types';
-import { UNKNOWN_CLIENT, UNKNOWN_COUNTRY } from '$lib/server/analytics/types';
 import { db } from '$lib/server/db';
+import { UNKNOWN_CLIENT, UNKNOWN_COUNTRY } from '$lib/server/db/analytics/constants';
 import { rowsOf } from '$lib/server/db/rows';
 import { dailyPageStats, events, sessions, userEvents } from '$lib/server/db/schema/analytics';
 

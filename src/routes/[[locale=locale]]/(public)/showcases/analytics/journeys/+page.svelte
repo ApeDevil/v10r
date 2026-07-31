@@ -1,5 +1,9 @@
 <script lang="ts">
+import { page } from '$app/state';
 import { Alert, EmptyState } from '$lib/components/composites';
+import { getFormattingLocale } from '$lib/i18n';
+import * as m from '$lib/paraglide/messages';
+import { baseLocale, extractLocaleFromUrl } from '$lib/paraglide/runtime';
 import ChartSection from '../_components/ChartSection.svelte';
 import QueryTime from '../_components/QueryTime.svelte';
 
@@ -11,8 +15,10 @@ const maxTransition = $derived(Math.max(1, ...data.transitions.map((t) => t.coun
 const maxEntry = $derived(Math.max(1, ...data.entryPages.map((p) => p.count)));
 const maxExit = $derived(Math.max(1, ...data.exitPages.map((p) => p.count)));
 
+const formattingLocale = $derived(getFormattingLocale(extractLocaleFromUrl(page.url.href) ?? baseLocale));
+
 function formatDate(d: Date): string {
-	return d.toLocaleDateString('en-US', {
+	return d.toLocaleDateString(formattingLocale, {
 		month: 'short',
 		day: 'numeric',
 		hour: '2-digit',
@@ -23,14 +29,14 @@ function formatDate(d: Date): string {
 
 <div class="journeys-layout">
 	{#if data.error}
-		<Alert variant="error" title="Database Error">
+		<Alert variant="error" title={m.showcase_analytics_shared_error_title()}>
 			<p>{data.error}</p>
 		</Alert>
 	{/if}
 
 	<ChartSection
-		title="Page Transitions"
-		description="Which page follows which, ranked by how often the move happens"
+		title={m.showcase_analytics_journeys_chart_flows()}
+		description={m.showcase_analytics_journeys_desc_transitions()}
 	>
 		{#snippet chart()}
 			{#if data.transitions.length > 0}
@@ -50,78 +56,76 @@ function formatDate(d: Date): string {
 					{/each}
 				</div>
 				<p class="method-note">
-					Counted with a window function over consecutive pageviews in the same session. Reloads are
-					excluded — they are not navigations. Aggregate paths merge visitors with very different
-					intentions, so read this as “what moves are common”, not “why people move”.
+					{m.showcase_analytics_journeys_method_note()}
 				</p>
 			{:else}
 				<EmptyState
 					icon="i-lucide-route"
-					title="No transitions yet"
-					description="A transition needs two pageviews in one session. Browse a few pages and they will appear here."
+					title={m.showcase_analytics_journeys_empty_transitions_title()}
+					description={m.showcase_analytics_journeys_empty_transitions_desc()}
 				/>
 			{/if}
 		{/snippet}
 	</ChartSection>
 
 	<div class="entry-exit-grid">
-		<ChartSection title="Entry Pages" description="Where visitors land first">
+		<ChartSection title={m.showcase_analytics_journeys_chart_entry()} description={m.showcase_analytics_journeys_desc_entry()}>
 			{#snippet chart()}
 				{#if data.entryPages.length > 0}
 					<div class="page-list">
-						{#each data.entryPages as page (page.path)}
+						{#each data.entryPages as entryPage (entryPage.path)}
 							<div class="page-row">
-								<code class="page-path">{page.path}</code>
+								<code class="page-path">{entryPage.path}</code>
 								<div class="transition-bar-track" aria-hidden="true">
-									<div class="transition-bar" style="width: {(page.count / maxEntry) * 100}%"></div>
+									<div class="transition-bar" style="width: {(entryPage.count / maxEntry) * 100}%"></div>
 								</div>
-								<span class="page-count">{page.count}</span>
+								<span class="page-count">{entryPage.count}</span>
 							</div>
 						{/each}
 					</div>
 				{:else}
-					<EmptyState icon="i-lucide-log-in" title="No sessions yet" />
+					<EmptyState icon="i-lucide-log-in" title={m.showcase_analytics_journeys_empty_sessions_title()} />
 				{/if}
 			{/snippet}
 		</ChartSection>
 
-		<ChartSection title="Exit Pages" description="Where visitors leave">
+		<ChartSection title={m.showcase_analytics_journeys_chart_exit()} description={m.showcase_analytics_journeys_desc_exit()}>
 			{#snippet chart()}
 				{#if data.exitPages.length > 0}
 					<div class="page-list">
-						{#each data.exitPages as page (page.path)}
+						{#each data.exitPages as exitPage (exitPage.path)}
 							<div class="page-row">
-								<code class="page-path">{page.path}</code>
+								<code class="page-path">{exitPage.path}</code>
 								<div class="transition-bar-track" aria-hidden="true">
-									<div class="transition-bar" style="width: {(page.count / maxExit) * 100}%"></div>
+									<div class="transition-bar" style="width: {(exitPage.count / maxExit) * 100}%"></div>
 								</div>
-								<span class="page-count">{page.count}</span>
+								<span class="page-count">{exitPage.count}</span>
 							</div>
 						{/each}
 					</div>
 				{:else}
-					<EmptyState icon="i-lucide-log-out" title="No sessions yet" />
+					<EmptyState icon="i-lucide-log-out" title={m.showcase_analytics_journeys_empty_sessions_title()} />
 				{/if}
 			{/snippet}
 		</ChartSection>
 	</div>
 
 	<ChartSection
-		title="Recent Sessions"
-		description="Last 20 visitor sessions with page counts and duration"
+		title={m.showcase_analytics_journeys_chart_sessions()}
+		description={m.showcase_analytics_journeys_desc_sessions()}
 	>
 		{#snippet chart()}
 			<div class="sessions-table-wrapper">
-				<table class="sessions-table" aria-label="Recent sessions">
+				<table class="sessions-table" aria-label={m.showcase_analytics_journeys_aria_sessions_table()}>
 					<thead>
 						<tr>
-							<th scope="col">Session</th>
-							<th scope="col">Pages</th>
-							<th scope="col">Entry</th>
-							<th scope="col">Exit</th>
-							<th scope="col">Device</th>
-							<th scope="col">Country</th>
-							<th scope="col">Started</th>
+							<th scope="col">{m.showcase_analytics_journeys_col_session()}</th>
+							<th scope="col">{m.showcase_analytics_journeys_col_pages()}</th>
+							<th scope="col">{m.showcase_analytics_journeys_col_entry()}</th>
+							<th scope="col">{m.showcase_analytics_journeys_col_exit()}</th>
+							<th scope="col">{m.showcase_analytics_journeys_col_device()}</th>
+							<th scope="col">{m.showcase_analytics_journeys_col_country()}</th>
+							<th scope="col">{m.showcase_analytics_journeys_col_started()}</th>
 						</tr>
 					</thead>
 					<tbody>

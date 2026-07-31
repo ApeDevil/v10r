@@ -151,7 +151,3 @@ export const fontPairings: FontPairing[] = [
 		description: 'Sturdy serif headings with humanist sans body. Warm, readable long-form.',
 	},
 ];
-
-export function findPairing(name: string): FontPairing | undefined {
-	return fontPairings.find((p) => p.name === name);
-}
