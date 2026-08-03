@@ -163,6 +163,23 @@ const ranges = [
 		{/if}
 	</p>
 
+	<!--
+		Rollup freshness. Traffic volume is counted from raw events and is always
+		current; engaged time and bounce rate come from the nightly rollup and are
+		only as fresh as its last run. Saying so is the whole point — this page
+		presented four-day-old numbers as current because nothing declared their age.
+	-->
+	<p class="consent-caveat">
+		<span class="i-lucide-layers caveat-icon" aria-hidden="true"></span>
+		{m.admin_analytics_rollup_last()}
+		{data.rollupLatestDate
+			? m.admin_analytics_rollup_through({ date: data.rollupLatestDate })
+			: m.admin_analytics_rollup_never()}
+		{#if data.rollupStale}
+			<Tag variant="warning" label={m.admin_analytics_rollup_stale()} />
+		{/if}
+	</p>
+
 	<!-- Range selector -->
 	<Card>
 		{#snippet header()}

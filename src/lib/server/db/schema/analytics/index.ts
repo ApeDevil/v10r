@@ -1,4 +1,5 @@
 export * from './aggregates';
+export * from './bot-hits';
 export * from './consent-events';
 export * from './events';
 export * from './pairing-codes';

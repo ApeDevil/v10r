@@ -48,9 +48,8 @@ async function flushDeferred(): Promise<void> {
 const { db } = await import('$lib/server/db');
 const { parseConsentTier, hasConsent, hashVisitorId, deriveCookielessSessionId } = await import('./consent');
 const { deriveVisitorId, deriveUaHash } = await import('./visitor');
-const { isBot, isExcludedPath, isPrefetch, isUserLanePath, stripLocalePrefix, LOCALE_SEGMENTS } = await import(
-	'$lib/analytics/collect-policy'
-);
+const { isBot, isBrowserNavigation, isExcludedPath, isPrefetch, isUserLanePath, stripLocalePrefix, LOCALE_SEGMENTS } =
+	await import('$lib/analytics/collect-policy');
 const { classifyUserAgent, geoFromHeaders } = await import('./enrich');
 const { isKnownEvent, sanitizeProperties, templateRoute } = await import('./event-schema');
 const { recordEvent, upsertSession } = await import('$lib/server/db/analytics/mutations');
@@ -329,10 +328,81 @@ describe('isBot', () => {
 		expect(isBot(ua)).toBe(true);
 	});
 
+	it.each([
+		// HTTP client libraries — a pageview from one of these is never a person.
+		'curl/8.5.0',
+		'python-requests/2.31.0',
+		'Go-http-client/2.0',
+		'okhttp/4.12.0',
+		'axios/1.6.7',
+		// AI agents that do not carry a generic bot/crawler/spider token.
+		'Mozilla/5.0 (compatible) anthropic-ai',
+		'Mozilla/5.0 ChatGPT-User/1.0',
+		'meta-externalagent/1.1',
+		// Scanners and measurement.
+		'Mozilla/5.0 zgrab/0.x',
+		'Expanse, a Palo Alto Networks company',
+	])('flags the non-declaring caller %s', (ua) => {
+		expect(isBot(ua)).toBe(true);
+	});
+
 	it('admits an ordinary browser UA', () => {
 		expect(isBot('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120 Safari/537.36')).toBe(
 			false,
 		);
+	});
+});
+
+describe('isBrowserNavigation', () => {
+	it('admits a modern top-level navigation', () => {
+		expect(isBrowserNavigation(new Headers({ 'sec-fetch-mode': 'navigate', 'sec-fetch-dest': 'document' }))).toBe(true);
+	});
+
+	it('admits navigate with no dest — mode alone is enough', () => {
+		expect(isBrowserNavigation(new Headers({ 'sec-fetch-mode': 'navigate' }))).toBe(true);
+	});
+
+	it.each(['cors', 'no-cors', 'same-origin', 'websocket'])('refuses Sec-Fetch-Mode: %s', (mode) => {
+		// Not a page load. Beacons and API calls must never count as pageviews.
+		expect(isBrowserNavigation(new Headers({ 'sec-fetch-mode': mode }))).toBe(false);
+	});
+
+	it('refuses a navigation for a subresource dest', () => {
+		expect(isBrowserNavigation(new Headers({ 'sec-fetch-mode': 'navigate', 'sec-fetch-dest': 'image' }))).toBe(false);
+	});
+
+	it('admits a legacy browser via the Accept + Accept-Language fallback', () => {
+		// Pre-2020 engines send no Sec-Fetch-* at all. Absence is not evidence of a
+		// bot, so the weaker pair a browser still always sends is checked instead.
+		expect(
+			isBrowserNavigation(
+				new Headers({ accept: 'text/html,application/xhtml+xml,*/*;q=0.8', 'accept-language': 'de-DE,de;q=0.9' }),
+			),
+		).toBe(true);
+	});
+
+	it.each([
+		// curl's defaults: wildcard Accept, no language.
+		[{ accept: '*/*' }],
+		// Asks for HTML but sends no language — the shape scripted clients produce.
+		[{ accept: 'text/html' }],
+		// Language but no HTML in Accept.
+		[{ 'accept-language': 'en-US' }],
+		// Nothing at all.
+		[{}],
+	])('refuses the header-poor request %j', (headers) => {
+		expect(isBrowserNavigation(new Headers(headers as Record<string, string>))).toBe(false);
+	});
+
+	it('refuses a spoofed browser UA that carries no browser headers', () => {
+		// THE case the blocklist cannot catch and this function exists for: a real
+		// Chrome User-Agent string sent by something that is not Chrome.
+		const headers = new Headers({
+			'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36',
+			accept: '*/*',
+		});
+		expect(isBot(headers.get('user-agent') ?? '')).toBe(false);
+		expect(isBrowserNavigation(headers)).toBe(false);
 	});
 });
 
@@ -524,6 +594,21 @@ describe('classifyUserAgent', () => {
 
 // ── 4b. hook.ts — _v10r_sid Set-Cookie is consent-gated (TDDDG §25) ──────────
 
+/**
+ * The header shape a real browser sends on a top-level navigation.
+ *
+ * Every hook fixture must carry it: the collector now requires
+ * `isBrowserNavigation`, so a stub with only a User-Agent is refused before any
+ * consent logic runs — and would make these tests pass for the wrong reason.
+ */
+const BROWSER_NAV_HEADERS = {
+	'user-agent': 'Mozilla/5.0 (Test) Gecko/20100101',
+	accept: 'text/html,application/xhtml+xml',
+	'accept-language': 'en-US,en;q=0.9',
+	'sec-fetch-mode': 'navigate',
+	'sec-fetch-dest': 'document',
+};
+
 describe('analyticsCollector — session cookie requires analytics consent', () => {
 	function makeEvent(consent?: string, existingSid?: string) {
 		const jar = new Map<string, string>();
@@ -533,9 +618,7 @@ describe('analyticsCollector — session cookie requires analytics consent', () 
 		const del = vi.fn((name: string) => jar.delete(name));
 		const event = {
 			url: new URL('https://example.com/blog'),
-			request: new Request('https://example.com/blog', {
-				headers: { 'user-agent': 'Mozilla/5.0 (Test) Gecko/20100101' },
-			}),
+			request: new Request('https://example.com/blog', { headers: BROWSER_NAV_HEADERS }),
 			cookies: { get: (n: string) => jar.get(n), set, delete: del },
 			getClientAddress: () => '203.0.113.5',
 			// SvelteKit populates this once the request is matched to a route; the
@@ -593,9 +676,7 @@ describe('analyticsCollector — misses write nothing', () => {
 		const jar = new Map<string, string>([[ANALYTICS_CONSENT_COOKIE, 'analytics']]);
 		return {
 			url: new URL('https://example.com/blog'),
-			request: new Request('https://example.com/blog', {
-				headers: { 'user-agent': 'Mozilla/5.0 (Test) Gecko/20100101' },
-			}),
+			request: new Request('https://example.com/blog', { headers: BROWSER_NAV_HEADERS }),
 			cookies: { get: (n: string) => jar.get(n), set: vi.fn(), delete: vi.fn() },
 			getClientAddress: () => '203.0.113.5',
 			route: { id: routeId },

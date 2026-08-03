@@ -3,6 +3,7 @@ import { analyticsCleanup } from './analytics-cleanup';
 import { analyticsRollup } from './analytics-rollup';
 import { auditLogRetention } from './audit-log-retention';
 import { blogOrphanReaper } from './blog-orphan-reaper';
+import { botRangesRefresh } from './bot-ranges-refresh';
 import { dbopsReaper } from './dbops-reaper';
 import { dbopsRefresh } from './dbops-refresh';
 import { deskRawragSync } from './desk-rawrag-sync';
@@ -32,6 +33,10 @@ export const jobs: Record<string, Job> = {
 	'discord-token-refresh': { execute: discordTokenRefresh },
 	'analytics-cleanup': { execute: analyticsCleanup },
 	'analytics-rollup': { execute: analyticsRollup },
+	// Refreshes the published crawler prefixes behind `bot_hits.verification`. If
+	// this stops running, verification degrades to `unchecked` — never to a false
+	// `spoofed` — because the job replaces per source and only on a good fetch.
+	'bot-ranges-refresh': { execute: botRangesRefresh },
 	'grant-request-expiry': { execute: grantRequestExpiry },
 	'dbops-refresh': { execute: dbopsRefresh },
 	'dbops-reaper': { execute: dbopsReaper },

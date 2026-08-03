@@ -59,8 +59,99 @@ export function stripLocalePrefix(path: string): string {
  */
 const EXCLUDED_PREFIXES = ['/api/', '/_app/', '/admin', '/account', '/desk'] as const;
 
-const BOT_UA_RE =
-	/bot|crawler|spider|slurp|baiduspider|facebookexternalhit|whatsapp|twitterbot|linkedinbot|googlebot|bingbot|yandexbot|duckduckbot|applebot|prerender|headless|lighthouse/i;
+/**
+ * User-Agent substrings that mark a non-human caller.
+ *
+ * Grouped by what they are rather than alphabetically, because the groups are
+ * maintained at different times and for different reasons. Note that the generic
+ * `bot` / `crawler` / `spider` tokens in the first group already sweep up a large
+ * share of named crawlers (`gptbot`, `claudebot`, `semrushbot`, `bytespider`, …)
+ * — the later groups exist for the callers that declare themselves honestly but
+ * do NOT contain any of those tokens, which is most HTTP libraries and scanners.
+ *
+ * This list is necessary but nowhere near sufficient on its own: it only catches
+ * callers that tell the truth. Everything sending a copied browser UA is caught —
+ * if at all — by `isBrowserNavigation` below, which is the load-bearing filter.
+ */
+const BOT_UA_PATTERNS = [
+	// Generic self-declarations. Broad on purpose — these carry most of the work.
+	'bot',
+	'crawler',
+	'spider',
+	'slurp',
+	'prerender',
+	'headless',
+	'lighthouse',
+	// Named search / social / preview fetchers without a generic token.
+	'facebookexternalhit',
+	'whatsapp',
+	'applebot',
+	'embedly',
+	'quora link preview',
+	'skypeuripreview',
+	'pinterest',
+	'tumblr',
+	'mastodon',
+	// AI / LLM training and retrieval agents that do not say "bot".
+	'anthropic-ai',
+	'claude-web',
+	'claude-user',
+	'chatgpt-user',
+	'oai-searchbot',
+	'google-extended',
+	'meta-externalagent',
+	'meta-externalfetcher',
+	'cohere-ai',
+	'omgili',
+	'webzio',
+	'scrapy',
+	// HTTP client libraries. A page view from one of these is never a person.
+	'curl',
+	'wget',
+	'httpie',
+	'postman',
+	'insomnia',
+	'python-requests',
+	'python-httpx',
+	'aiohttp',
+	'go-http-client',
+	'java/',
+	'okhttp',
+	'node-fetch',
+	'axios',
+	'undici',
+	'libwww',
+	'lwp::',
+	'apache-httpclient',
+	'guzzle',
+	'restsharp',
+	// Security scanners and internet-wide measurement. High volume, zero signal.
+	'zgrab',
+	'masscan',
+	'nuclei',
+	'sqlmap',
+	'nikto',
+	'wpscan',
+	'acunetix',
+	'gobuster',
+	'feroxbuster',
+	'censys',
+	'expanse',
+	'internetmeasurement',
+	'netsystemsresearch',
+	'paloaltonetworks',
+	'l9explore',
+	// Uptime and synthetic monitors.
+	'pingdom',
+	'statuscake',
+	'newrelic',
+	'datadog',
+	'checkly',
+	'site24x7',
+] as const;
+
+/** No `g` flag — `.test()` on a global regex is stateful and alternates results. */
+const BOT_UA_RE = new RegExp(BOT_UA_PATTERNS.map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'i');
 
 /**
  * True when the path must not be recorded in the anonymous lane.
@@ -101,6 +192,53 @@ export function isBot(userAgent: string): boolean {
 }
 
 /**
+ * Paths whose whole purpose is to be read by software.
+ *
+ * This is the measurement that justifies the bot lane existing: whether the
+ * agent-facing surfaces are actually consumed. `.md` covers the docs layer served
+ * through Accept negotiation, which is the one an AI agent reaches for when it
+ * wants the page without the chrome.
+ */
+export function isAgentSurface(path: string): boolean {
+	const unprefixed = stripLocalePrefix(path);
+	if (unprefixed === '/llms.txt' || unprefixed === '/robots.txt' || unprefixed === '/sitemap.xml') return true;
+	return unprefixed.endsWith('.md');
+}
+
+/**
+ * Document-ish extensions the bot lane records. Anything else with a dot is an
+ * asset — an image, a font, a stylesheet — and a crawler fetching one says
+ * nothing a page fetch has not already said.
+ */
+const BOT_TRACKED_EXTENSIONS = ['.txt', '.md', '.xml', '.json'] as const;
+
+/**
+ * True when a non-human request to this path is worth a row.
+ *
+ * DELIBERATELY NOT `isExcludedPath`. That function refuses any path containing a
+ * dot, because for the human lane a dot means a static asset. Applying it here
+ * would discard `/robots.txt` and `/llms.txt` — precisely the two fetches with
+ * the most signal in the entire lane.
+ *
+ * It also admits `/admin` and `/account`, which the human lane bars. Those
+ * exclusions exist to keep identified people out of an anonymous lane; a crawler
+ * probing `/admin` is not a person, and it is exactly the row a security panel
+ * wants. Only genuinely uninteresting machine traffic is dropped.
+ */
+export function isBotTrackablePath(path: string): boolean {
+	const unprefixed = stripLocalePrefix(path);
+	if (unprefixed.startsWith('/api/') || unprefixed.startsWith('/_app/')) return false;
+
+	const lastDot = unprefixed.lastIndexOf('.');
+	const lastSlash = unprefixed.lastIndexOf('/');
+	if (lastDot > lastSlash) {
+		const ext = unprefixed.slice(lastDot).toLowerCase();
+		return (BOT_TRACKED_EXTENSIONS as readonly string[]).includes(ext);
+	}
+	return true;
+}
+
+/**
  * True when the request is a speculative fetch the user never actually saw.
  *
  * `Sec-Purpose` is `prefetch` for a prefetch and `prefetch;prerender` for a
@@ -114,4 +252,62 @@ export function isPrefetch(headers: Headers): boolean {
 	if (secPurpose?.includes('prefetch')) return true;
 	if (headers.get('purpose') === 'prefetch') return true;
 	return headers.get('x-sveltekit-prefetch') !== null;
+}
+
+/**
+ * True when the request looks like a real browser loading a page.
+ *
+ * ## Why a POSITIVE test, and why it matters more than the blocklist
+ *
+ * `isBot` can only catch callers that declare themselves. Everything that copies
+ * a browser User-Agent — which is most scanners and a growing share of scrapers —
+ * walks straight past it. That is not a hypothetical: on 2026-07-30 this lane
+ * recorded 114 "unique visitors", 99 of whom viewed exactly one page and none of
+ * whom ran any client-side JavaScript, against 3 in Vercel's beacon-based lane.
+ * The gap was almost entirely UA-spoofing crawlers, and no amount of blocklist
+ * maintenance would have closed it.
+ *
+ * So this asks the opposite question — does the request carry the header shape a
+ * browser *cannot avoid* sending — and admits only requests that do.
+ *
+ * ## The two acceptance paths
+ *
+ * `Sec-Fetch-*` is a Fetch Metadata header set by the browser itself and
+ * forbidden to page JavaScript, so it cannot be spoofed from within a page. Every
+ * current engine sends it on a top-level navigation (Chrome 76+, Firefox 90+,
+ * Safari 16.4+), while HTTP libraries send nothing at all. When the header is
+ * present it is therefore authoritative: `navigate` + `document` is a page load
+ * and anything else is a subresource or an API call, neither of which is a
+ * pageview.
+ *
+ * When it is absent we cannot conclude "bot" — a pre-2020 browser omits it too —
+ * so the fallback checks the weaker pair a browser still always sends: an
+ * `Accept` that asks for HTML, plus an `Accept-Language`. `curl`, Go's default
+ * client and `python-requests` send `Accept: * / *` and no language at all, so
+ * they fail it; a genuinely old browser passes.
+ *
+ * ## Deliberate scope
+ *
+ * NAVIGATIONS ONLY. Do not call this from the beacon endpoints: `sendBeacon` and
+ * `fetch` produce `Sec-Fetch-Mode: cors`/`no-cors` with
+ * `Sec-Fetch-Dest: empty`, so every legitimate beacon would fail it. Those routes
+ * are already gated by consent, an Origin check and a session cookie.
+ *
+ * Accepts a small under-count as the price of a large over-count: a privacy
+ * extension that strips these headers loses its owner from the lane. That trade
+ * is correct here — the number is meant to answer "how many people", and a
+ * missing visitor is a smaller lie than a hundred fictional ones.
+ */
+export function isBrowserNavigation(headers: Headers): boolean {
+	const mode = headers.get('sec-fetch-mode');
+	if (mode !== null) {
+		if (mode !== 'navigate') return false;
+		// Dest is sent alongside mode by every engine that sends mode at all; treat a
+		// missing value as acceptable rather than inventing a reason to drop.
+		const dest = headers.get('sec-fetch-dest');
+		return dest === null || dest === 'document';
+	}
+
+	if (!(headers.get('accept') ?? '').includes('text/html')) return false;
+	return (headers.get('accept-language') ?? '').length > 0;
 }

@@ -19,6 +19,7 @@ export const adminNavItem: NavItem = {
 	children: [
 		{ href: '/admin/db', label: m.nav_admin_db },
 		{ href: '/admin/analytics', label: m.nav_admin_analytics },
+		{ href: '/admin/analytics/bots', label: m.nav_admin_bots },
 		{ href: '/admin/audit', label: m.nav_admin_audit },
 		{ href: '/admin/users', label: m.nav_admin_users },
 		{ href: '/admin/flags', label: m.nav_admin_flags },

@@ -86,6 +86,7 @@ Vercel sends an HTTP GET to `/api/cron/[job]` on the schedule defined in `vercel
     { "path": "/api/cron/log-cleanup", "schedule": "0 4 * * 0" },
     { "path": "/api/cron/analytics-cleanup", "schedule": "0 2 * * *" },
     { "path": "/api/cron/analytics-rollup", "schedule": "30 2 * * *" },
+    { "path": "/api/cron/bot-ranges-refresh", "schedule": "45 4 * * *" },
     { "path": "/api/cron/dbops-refresh", "schedule": "0 4 * * *" },
     { "path": "/api/cron/dbops-reaper", "schedule": "0 5 * * *" },
     { "path": "/api/cron/notification-cleanup", "schedule": "15 3 * * *" },
@@ -162,6 +163,7 @@ src/lib/server/
     discord-token-refresh.ts
     analytics-cleanup.ts
     analytics-rollup.ts
+    bot-ranges-refresh.ts
     grant-request-expiry.ts
     dbops-refresh.ts
     dbops-reaper.ts
@@ -203,6 +205,7 @@ export const jobs: Record<string, Job> = {
   'discord-token-refresh': { execute: discordTokenRefresh },
   'analytics-cleanup': { execute: analyticsCleanup },
   'analytics-rollup': { execute: analyticsRollup },
+  'bot-ranges-refresh': { execute: botRangesRefresh },
   'grant-request-expiry': { execute: grantRequestExpiry },
   'dbops-refresh': { execute: dbopsRefresh },
   'dbops-reaper': { execute: dbopsReaper },
@@ -229,6 +232,7 @@ Four scheduled jobs enforce data-retention windows. Most hard-delete rows past a
 | `ai-telemetry-retention` | `ai.conversation_step` rows | 180d |
 | `audit-log-retention` | `admin.audit_log` rows | 365d |
 | `mcp-telemetry-retention` | `mcp.call_log`: pass 1 nulls `query_text` + `trace_id`; pass 2 deletes the row | 30d (scrub) / 90d (delete), effectively 30–37d / 90–97d |
+| `analytics-cleanup` | also trims `analytics.bot_hits` (bot lane) | `BOT_HIT_RETENTION_DAYS` (180d) — longer than the human lane because the table holds no identifier at all |
 
 `desk-retention` is the hard-delete tail of the desk soft-delete lifecycle: a file soft-deleted by a user is purged only after the retention window, then its typed body rows are cascaded.
 

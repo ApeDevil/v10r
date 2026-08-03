@@ -383,6 +383,18 @@ export const ANALYTICS_RETENTION_DAYS = 60;
 /** Consent record retention (days, ~13 months for GDPR Art. 7(1) demonstrability) */
 export const CONSENT_RETENTION_DAYS = 395;
 
+/**
+ * Bot lane retention (days).
+ *
+ * Longer than the human lane on purpose: `analytics.bot_hits` contains no
+ * identifier of any kind — no IP, no hash, no session — so no data-minimisation
+ * duty pulls the window down, while the questions it answers (crawl cadence, did
+ * AI agents start reading /llms.txt after a change) are only legible over months.
+ * Bounded regardless, because an append-only table fed by anything that points
+ * itself at the site grows without limit.
+ */
+export const BOT_HIT_RETENTION_DAYS = 180;
+
 /** Aggregate rollup retention period (days) */
 export const ANALYTICS_AGGREGATE_RETENTION_DAYS = 365;
 

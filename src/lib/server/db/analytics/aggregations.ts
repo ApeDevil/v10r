@@ -50,45 +50,95 @@ function dateRange(days: number) {
 export async function getOverviewMetrics(days: number): Promise<OverviewMetrics> {
 	const { from, to } = dateRange(days);
 
-	const [rollup, visitors] = await Promise.all([
+	const [rollup, live] = await Promise.all([
+		// Engagement-derived metrics ONLY. Both need the client's visibility-aware
+		// clock joined per (session, path), which is exactly the work the rollup
+		// exists to precompute — so these two, and only these two, are allowed to be
+		// as stale as the last rollup run.
 		db
 			.select({
-				totalPageviews: sql<number>`coalesce(sum(${dailyPageStats.pageviews}), 0)`,
 				avgDuration: sql<number>`coalesce(avg(${dailyPageStats.avgDurationMs}), 0)`,
 				avgBounce: sql<number>`coalesce(avg(${dailyPageStats.bounceRate}), 0)`,
 			})
 			.from(dailyPageStats)
 			.where(and(gte(dailyPageStats.date, from), lte(dailyPageStats.date, to))),
+		// Volume counted from RAW events, not from the rollup.
+		//
+		// Reading pageviews out of `daily_page_stats` made the headline number a
+		// function of when the rollup last ran rather than of traffic: between
+		// 2026-07-31 and 2026-08-03 the job did not run at all and the dashboard
+		// reported the same total for four days while events kept arriving. The
+		// counts here are cheap (one indexed range scan over a 90-day maximum) and
+		// they cannot silently freeze.
 		db
-			.select({ uniqueVisitors: sql<number>`count(distinct ${sessions.visitorId})::int` })
-			.from(sessions)
-			.where(gte(sessions.startedAt, sql`${from}::date`)),
+			.select({
+				totalPageviews: sql<number>`count(*) FILTER (WHERE ${events.eventType} = 'pageview')::int`,
+				uniqueVisitors: sql<number>`count(distinct ${events.visitorId}) FILTER (WHERE ${events.eventType} = 'pageview')::int`,
+			})
+			.from(events)
+			.where(gte(events.timestamp, sql`${from}::date`)),
 	]);
 
 	const row = rollup[0];
 	return {
-		totalPageviews: Number(row?.totalPageviews ?? 0),
-		uniqueVisitors: Number(visitors[0]?.uniqueVisitors ?? 0),
+		totalPageviews: Number(live[0]?.totalPageviews ?? 0),
+		uniqueVisitors: Number(live[0]?.uniqueVisitors ?? 0),
 		avgSessionDuration: Math.round(Number(row?.avgDuration ?? 0)),
 		bounceRate: Math.round(Number(row?.avgBounce ?? 0)),
 	};
 }
 
+/**
+ * How current the rollup is — `max(date)` in `daily_page_stats`, or null if empty.
+ *
+ * Exists because the failure that motivated it was SILENT: the rollup job stopped
+ * running on 2026-07-31 and every panel fed by it kept rendering its last value
+ * with no indication the data had stopped moving. A dashboard that cannot say how
+ * old it is will present stale numbers as current indefinitely.
+ */
+export async function getRollupFreshness(): Promise<string | null> {
+	const rows = await db.select({ latest: sql<string | null>`max(${dailyPageStats.date})::text` }).from(dailyPageStats);
+	return rows[0]?.latest ?? null;
+}
+
 // ── Traffic trend ────────────────────────────────────────────────────────────
 
+/**
+ * Pageviews and unique visitors per day.
+ *
+ * ## Why this does not read the rollup
+ *
+ * It used to be `sum(daily_page_stats.unique_visitors) GROUP BY date`, and that
+ * is unsound for the same reason `getOverviewMetrics` documents: the rollup's
+ * `unique_visitors` is distinct-per-(date, path), so summing it over a day
+ * multiplies every person by the number of distinct pages they viewed. On
+ * 2026-07-30 that turned 114 real visitors into a plotted 177 across 106 paths —
+ * and because the headline metric was already counted correctly, the KPI and the
+ * chart directly above it disagreed by 55%.
+ *
+ * A per-day distinct count cannot be assembled from a per-path rollup at all; the
+ * only correct source is the raw events. Reading them here also decouples the
+ * chart from the rollup job, so a missed cron run leaves a gap in the engagement
+ * metrics rather than silently flat-lining traffic.
+ */
 export async function getTrafficTrend(days: number): Promise<TrafficTrendPoint[]> {
-	const { from, to } = dateRange(days);
+	const { from } = dateRange(days);
+
+	// Bound to UTC explicitly: `date` in the rollup is a UTC calendar date, and an
+	// unqualified ::date cast would bucket by the server's zone instead, quietly
+	// shifting every point by up to a day relative to every other panel.
+	const day = sql`(${events.timestamp} AT TIME ZONE 'UTC')::date`;
 
 	return db
 		.select({
-			date: dailyPageStats.date,
-			pageviews: sql<number>`sum(${dailyPageStats.pageviews})`,
-			uniqueVisitors: sql<number>`sum(${dailyPageStats.uniqueVisitors})`,
+			date: sql<string>`${day}::text`,
+			pageviews: sql<number>`count(*)::int`,
+			uniqueVisitors: sql<number>`count(distinct ${events.visitorId})::int`,
 		})
-		.from(dailyPageStats)
-		.where(and(gte(dailyPageStats.date, from), lte(dailyPageStats.date, to)))
-		.groupBy(dailyPageStats.date)
-		.orderBy(dailyPageStats.date);
+		.from(events)
+		.where(and(gte(events.timestamp, sql`${from}::date`), eq(events.eventType, 'pageview')))
+		.groupBy(day)
+		.orderBy(day);
 }
 
 // ── Top pages ────────────────────────────────────────────────────────────────

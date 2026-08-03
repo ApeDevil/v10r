@@ -6,6 +6,7 @@ import {
 	getConsentSplit,
 	getFrictionSignals,
 	getOverviewMetrics,
+	getRollupFreshness,
 	getTopPages,
 	getTrafficTrend,
 	getUserLaneStats,
@@ -49,16 +50,34 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	const days = Number(range);
 
 	// Eager: headline stats + consent breakdown + cleanup status + live-feed seed
-	const [overview, consentSplit, lastCleanup, recentEvents, activeSessions, pairedSessions, pairedActive] =
-		await Promise.all([
-			getOverviewMetrics(days),
-			getConsentSplit(days),
-			getLastCleanupStatus(),
-			getRecentEvents({ adminUserId: user.id, sinceId: 0, filter: 'all', limit: 50 }),
-			getActiveSessionCount(),
-			getPairedSessionCount(user.id),
-			hasActivePairedSession(user.id),
-		]);
+	const [
+		overview,
+		consentSplit,
+		lastCleanup,
+		rollupLatestDate,
+		recentEvents,
+		activeSessions,
+		pairedSessions,
+		pairedActive,
+	] = await Promise.all([
+		getOverviewMetrics(days),
+		getConsentSplit(days),
+		getLastCleanupStatus(),
+		getRollupFreshness(),
+		getRecentEvents({ adminUserId: user.id, sinceId: 0, filter: 'all', limit: 50 }),
+		getActiveSessionCount(),
+		getPairedSessionCount(user.id),
+		hasActivePairedSession(user.id),
+	]);
+
+	// Engagement metrics (avg duration, bounce rate) and the top-pages table come
+	// from the rollup; traffic volume no longer does. Yesterday is the newest day
+	// the job can ever have computed, so anything older than that means runs are
+	// being missed — which went unnoticed for four days in production because
+	// nothing on this page said how old the numbers were.
+	const yesterday = new Date();
+	yesterday.setDate(yesterday.getDate() - 1);
+	const rollupStale = rollupLatestDate === null || rollupLatestDate < yesterday.toISOString().slice(0, 10);
 
 	return {
 		title: 'Analytics',
@@ -66,6 +85,8 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		overview,
 		consentSplit,
 		lastCleanup,
+		rollupLatestDate,
+		rollupStale,
 		recentEvents,
 		activeSessions,
 		pairedSessions,

@@ -30,10 +30,31 @@ import { rowCountOf } from '$lib/server/db/rows';
 /** Seconds of engaged time a single-page session needs in order not to be a bounce. */
 const ENGAGED_BOUNCE_THRESHOLD_SEC = 10;
 
-export async function analyticsRollup(): Promise<number> {
-	const yesterday = new Date();
-	yesterday.setDate(yesterday.getDate() - 1);
-	const dateStr = yesterday.toISOString().slice(0, 10);
+/**
+ * Compute the rollup for ONE day. Defaults to yesterday, which is what the cron
+ * entry wants; pass a `YYYY-MM-DD` string to recompute any other day.
+ *
+ * The parameter exists because cron delivery is best-effort — Vercel documents
+ * that a scheduled run can be skipped entirely — and this job only ever computes
+ * a single day, so a skipped run leaves a permanent hole that the next run does
+ * NOT fill. Without a way to name the day, repairing that hole meant editing the
+ * job. `ON CONFLICT DO UPDATE` already makes it idempotent, so re-running a day
+ * that exists simply recomputes it.
+ */
+export async function analyticsRollup(day?: string): Promise<number> {
+	let dateStr: string;
+	if (day === undefined) {
+		const yesterday = new Date();
+		yesterday.setDate(yesterday.getDate() - 1);
+		dateStr = yesterday.toISOString().slice(0, 10);
+	} else {
+		// Shape-checked up front. Drizzle binds this as a parameter rather than
+		// splicing it, so the concern is not injection — it is that a malformed value
+		// reaches Postgres as a failed ::date cast deep inside a CTE, where the error
+		// names neither this job nor the argument that caused it.
+		if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error(`analyticsRollup: invalid day '${day}'`);
+		dateStr = day;
+	}
 
 	const result = await db.execute(sql`
 		WITH day_events AS (

@@ -34,6 +34,10 @@
 			"schedule": "30 2 * * *"
 		},
 		{
+			"path": "/api/cron/bot-ranges-refresh",
+			"schedule": "45 4 * * *"
+		},
+		{
 			"path": "/api/cron/dbops-refresh",
 			"schedule": "0 4 * * *"
 		},

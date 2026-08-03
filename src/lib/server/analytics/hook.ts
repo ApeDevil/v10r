@@ -1,12 +1,22 @@
 import type { Handle } from '@sveltejs/kit';
 import { waitUntil } from '@vercel/functions';
 import { building } from '$app/environment';
-import { isBot, isExcludedPath, isPrefetch, isUserLanePath } from '$lib/analytics/collect-policy';
+import {
+	isAgentSurface,
+	isBot,
+	isBotTrackablePath,
+	isBrowserNavigation,
+	isExcludedPath,
+	isPrefetch,
+	isUserLanePath,
+} from '$lib/analytics/collect-policy';
 import { normalizeIpKey } from '$lib/server/abuse';
 import { createLimiter } from '$lib/server/api/rate-limit';
 import { ANALYTICS_CONSENT_COOKIE, ANALYTICS_SESSION_COOKIE, ANALYTICS_SESSION_TIMEOUT_MS } from '$lib/server/config';
+import { recordBotHit } from '$lib/server/db/analytics/bot-mutations';
 import { recordEvent, upsertSession } from '$lib/server/db/analytics/mutations';
 import { recordUserEvent } from '$lib/server/db/analytics/user-mutations';
+import { classifyBot } from './bot-classify';
 import { type ConsentTier, deriveCookielessSessionId, hasConsent, parseConsentTier } from './consent';
 import { classifyUserAgent, geoFromHeaders } from './enrich';
 import { templateRoute } from './event-schema';
@@ -56,7 +66,12 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 		// through the request at all.
 		path.length <= MAX_TRACKED_PATH_CHARS &&
 		!isPrefetch(event.request.headers) &&
-		!isBot(event.request.headers.get('user-agent') ?? '');
+		!isBot(event.request.headers.get('user-agent') ?? '') &&
+		// The load-bearing filter. `isBot` only catches callers that declare
+		// themselves; this admits only requests carrying the header shape a browser
+		// cannot avoid sending. See isBrowserNavigation for why it is a positive
+		// test and what it deliberately gives up.
+		isBrowserNavigation(event.request.headers);
 
 	// PRE-resolve: only the cookie write (which must reach the outgoing headers) and
 	// cheap reads. clientIp + consentTier are reused from locals (stamped by
@@ -104,6 +119,27 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 		pending = { ip, ua, consentTier, referrer, country, device, browser, sessionId };
 	}
 
+	// ── The bot lane ─────────────────────────────────────────────────────────
+	//
+	// The complement of the human lane, and the reason it exists: everything
+	// `shouldTrack` refuses for being non-human used to be discarded, which meant
+	// the only traffic that reads /llms.txt and the .md docs layer produced no
+	// evidence at all. Vercel Web Analytics cannot fill that gap — its beacon needs
+	// JavaScript and crawlers run none.
+	//
+	// Decided pre-resolve from headers alone; nothing here touches the database or
+	// the response path. Note this lane has its OWN path policy: it must admit
+	// dotted paths (`/robots.txt`) and authenticated prefixes (a scanner probing
+	// `/admin`) that the anonymous human lane bars for reasons that do not apply to
+	// software. See isBotTrackablePath.
+	const botUa = event.request.headers.get('user-agent') ?? '';
+	const botLane =
+		!building &&
+		event.request.method === 'GET' &&
+		!isPrefetch(event.request.headers) &&
+		(isBot(botUa) || !isBrowserNavigation(event.request.headers)) &&
+		isBotTrackablePath(path);
+
 	// The authenticated lane. Eligibility is decided before resolve (cheap reads
 	// only); the write happens after, like the anonymous lane.
 	//
@@ -148,6 +184,29 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 				path,
 			}).catch((err) => {
 				console.error('[analytics] Failed to track user event:', err);
+			}),
+		);
+	}
+
+	// Recorded on EVERY status, unlike the human lanes. A 404 here is not waste —
+	// a scanner probing `/wp-admin` is the row the security panel is for, and a
+	// crawler 404ing on a page it expected is a sitemap problem worth seeing.
+	if (botLane) {
+		const identity = classifyBot(botUa);
+		const route = templateRoute(event.route?.id ?? null);
+		const agentSurface = isAgentSurface(path);
+		waitUntil(
+			recordBotHit({
+				identity,
+				// Used transiently for the published-range containment test and never
+				// stored. Raw, not `normalizeIpKey`: that returns a /64 for IPv6.
+				ip: event.locals.clientIp ?? event.getClientAddress(),
+				route,
+				path,
+				agentSurface,
+				status: response.status,
+			}).catch((err) => {
+				console.error('[analytics] Failed to track bot hit:', err);
 			}),
 		);
 	}
