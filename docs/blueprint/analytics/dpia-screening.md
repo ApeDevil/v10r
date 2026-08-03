@@ -9,7 +9,9 @@ threshold. It is not a DPIA; it is the evidence that one is not currently owed.
 
 **Scope: the two web-analytics lanes only.** MCP usage telemetry (`mcp.call_log`, see
 [architecture/hosted-mcp.md](../architecture/hosted-mcp.md)) is a separate subsystem this
-screening does not cover.
+screening does not cover. Its private lane (`surface='private'`, full question/answer capture)
+records only the operator's own bearer-authenticated calls — first-party data with no data
+subject other than the operator, so it does not change this screening's scope.
 
 ## Art 35(3) — the mandatory triggers
 

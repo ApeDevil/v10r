@@ -28,13 +28,31 @@ import { env } from '$env/dynamic/private';
 import type { McpCallObservation, McpCallObserver } from '../types';
 import { deriveClientKey } from './client-key';
 import { inferOutcome, type McpGateReason, normalizeMethod } from './outcome';
-import { normalizeQueryText } from './scrub';
+import { normalizeQueryText, normalizeResponseText } from './scrub';
 import { classifyClientFamily, classifyTraffic } from './self-traffic';
 import { resolveTraceId } from './traceparent';
 import { type McpCallLogRow, writeCallLog } from './writer';
 
 /** Mirrors the database CHECK. The DB is the floor; this is the polite path. */
 const MAX_QUERY_TEXT = 200;
+
+/** Mirrors `mcp_call_response_len`. The transport hands over at most 20k; this is the policy cap. */
+const MAX_RESPONSE_TEXT = 4000;
+
+/** Self-declared project label on the private surface. A LABEL, never an identity or auth input. */
+const WORKSPACE_HEADER = 'x-v10r-workspace';
+const WORKSPACE_RE = /^[a-z0-9][a-z0-9-]{0,31}$/;
+
+/**
+ * An invalid value is DROPPED, never coerced to a sentinel — a sentinel would be caller-controlled
+ * text entering a grouping dimension.
+ */
+function readWorkspace(headers: Headers): string | null {
+	const raw = headers.get(WORKSPACE_HEADER);
+	if (raw === null) return null;
+	const value = raw.trim().toLowerCase();
+	return WORKSPACE_RE.test(value) ? value : null;
+}
 
 /** Ceiling on rows per UTC day, ~1000x the expected steady state. See writer.ts for why. */
 const DAILY_WRITE_BUDGET = 50_000;
@@ -46,7 +64,7 @@ function cap(value: string | null, max: number): string | null {
 }
 
 export interface McpObserverContext {
-	surface: 'public' | 'admin';
+	surface: 'public' | 'admin' | 'private';
 	/** Client address from the platform, never a client-supplied header. */
 	ip: string | null;
 	headers: Headers;
@@ -78,12 +96,23 @@ export function buildCallLogRow(
 		selfSecret: env.MCP_SELF_TRAFFIC_TOKEN,
 	});
 
-	// The database CHECK allows query text only on the no-match path; honour that here rather than
-	// discovering it as a constraint violation. This narrowness IS the data-minimisation argument.
+	const isPrivate = context.surface === 'private';
+
+	// The public surface keeps a query ONLY when it matched nothing (that narrowness IS the
+	// data-minimisation argument for third-party callers); the private surface keeps it on every
+	// outcome, because there the pair (question, answer) IS the artefact and the caller is the
+	// operator. `extractQuery` STAYS CLOSED — query / capability / capabilities and nothing else.
+	// Widening it to `snippet`, `path` or `id` would defeat observer.snippet.test.ts and the
+	// tool-argument minimisation it pins. Do not add a key to "make the private lane richer".
 	const queryText =
-		outcome === 'empty' && context.surface === 'public'
+		isPrivate || (outcome === 'empty' && context.surface === 'public')
 			? normalizeQueryText(extractQuery(observation.args), MAX_QUERY_TEXT)
 			: null;
+
+	// The answer, private lane only, and only for a request that actually reached a tool —
+	// mirrors `mcp_call_response_scope` so the CHECK never fires in production.
+	const responseText =
+		isPrivate && stage === 'tool' ? normalizeResponseText(observation.responseText, MAX_RESPONSE_TEXT) : null;
 
 	// No caller identifier on rejection rows: a per-reason counter answers everything a rejection
 	// needs, and those rows sit on the path an attacker controls the volume of.
@@ -101,6 +130,8 @@ export function buildCallLogRow(
 		toolName: observation.method === 'tools/call' ? (cap(observation.toolName, 64) ?? '(unknown)') : null,
 		subject: null,
 		queryText,
+		responseText,
+		workspace: isPrivate ? readWorkspace(context.headers) : null,
 		requestedProtocolVersion: cap(observation.requestedProtocolVersion, 32),
 		servedProtocolVersion: cap(observation.servedProtocolVersion, 32),
 		// Mere presence of the RC-era headers is a free era detector, and costs current-era clients
@@ -184,6 +215,11 @@ export function recordMcpGateRejection(context: McpObserverContext, reason: McpG
 				toolName: null,
 				subject: null,
 				queryText: null,
+				// A rejection row stays dimension-free, matching the "no caller identifier on
+				// rejection rows" doctrine — the CHECK would permit a workspace here; the doctrine
+				// is the reason not to.
+				responseText: null,
+				workspace: null,
 				requestedProtocolVersion: cap(context.headers.get('mcp-protocol-version'), 32),
 				servedProtocolVersion: null,
 				rcHeaders: context.headers.get('mcp-method') !== null,

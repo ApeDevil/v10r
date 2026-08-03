@@ -56,12 +56,13 @@ function matchesSelfSecret(presented: string | null, secret: string | undefined)
 export interface TrafficInput {
 	headers: Headers;
 	/**
-	 * Which endpoint was called. Load-bearing, not decorative: the admin surface is
-	 * bearer-authenticated, so it has no anonymous caller and `external` is not a value it can
-	 * legitimately take. The database enforces that as `mcp_call_admin_not_external`, and this
-	 * parameter is what makes the classifier incapable of violating it.
+	 * Which endpoint was called. Load-bearing, not decorative: the admin and private surfaces are
+	 * bearer-authenticated, so they have no anonymous caller and `external` is not a value either
+	 * can legitimately take. The database enforces that as `mcp_call_admin_not_external` /
+	 * `mcp_call_private_not_external`, and this parameter is what makes the classifier incapable
+	 * of violating them.
 	 */
-	surface: 'public' | 'admin';
+	surface: 'public' | 'admin' | 'private';
 	/** `VERCEL_ENV`. Anything other than 'production' shares the prod database. */
 	vercelEnv: string | undefined;
 	/** The self-traffic secret, if configured. */
@@ -81,12 +82,15 @@ export function classifyTraffic({ headers, surface, vercelEnv, selfSecret }: Tra
 	if (vercelEnv !== undefined && vercelEnv !== 'production') return 'preview';
 	if (matchesSelfSecret(headers.get(SELF_TRAFFIC_HEADER), selfSecret)) return 'self';
 	if (SYNTHETIC_UA_RE.test(headers.get('user-agent') ?? '')) return 'test';
-	// Reaching the admin surface at all costs MCP_ADMIN_TOKEN, so the caller is the operator
-	// whether or not they bothered to send the self header. Labelling that `external` would both
-	// inflate the adoption KPI and violate the table's CHECK — which is exactly what happened in
-	// production on 2026-07-28: every admin row was silently rejected because the operator's MCP
-	// client does not send X-V10r-Self, and the writer fails open by design.
-	if (surface === 'admin') return 'self';
+	// Reaching the admin or private surface at all costs the respective bearer token, so the
+	// caller is the operator whether or not they bothered to send the self header. Labelling that
+	// `external` would both inflate the adoption KPI and violate the table's CHECKs — which is
+	// exactly what happened in production on 2026-07-28: every admin row was silently rejected
+	// because the operator's MCP client does not send X-V10r-Self, and the writer fails open by
+	// design. NOTE the precedence above still applies: an operator curl against either surface
+	// classifies `test`, and a preview deployment classifies `preview` — both legal, only
+	// `external` is forbidden, so lane queries filter on `surface`, never `traffic`.
+	if (surface === 'admin' || surface === 'private') return 'self';
 	return 'external';
 }
 

@@ -1,4 +1,4 @@
-import { and, isNotNull, lt, or } from 'drizzle-orm';
+import { and, isNotNull, lt, ne, or } from 'drizzle-orm';
 import { MCP_QUERY_TEXT_RETENTION_DAYS, MCP_TELEMETRY_RETENTION_DAYS } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { mcpCallLog } from '$lib/server/db/schema/mcp/call-log';
@@ -16,6 +16,12 @@ import { mcpCallLog } from '$lib/server/db/schema/mcp/call-log';
  * else's project, and a trace id serves only an incident lookup that nobody will file after a month.
  * Once the first pass has run, a surviving row carries no free text and no identifier at all, which
  * is what makes the longer row window unremarkable rather than something to argue about.
+ *
+ * EXEMPTION: pass 1 skips `surface = 'private'`. That lane is bearer-gated to one holder — the
+ * operator — and its query/response text IS the analysis corpus, containing no third-party data by
+ * construction. Private rows are minimised by ROW at 90 days instead of by COLUMN at 30, which
+ * also means a private row keeps its trace_id for the full 90 days. That is a widening, and it is
+ * intentional.
  *
  * ## A property to protect, not an accident
  *
@@ -38,11 +44,18 @@ export async function mcpTelemetryRetention(): Promise<number> {
 
 	// Pass 1 — column-level minimisation. Restricted to rows that still hold something, so a
 	// re-run over an already-clean window updates nothing rather than rewriting the whole range.
+	// `response_text` needs no clause of its own: it is structurally NULL on every non-private row
+	// (mcp_call_response_scope), so this pass has nothing to null. Do not "complete" it.
 	const scrubbed = await db
 		.update(mcpCallLog)
 		.set({ queryText: null, traceId: null })
 		.where(
-			and(lt(mcpCallLog.startedAt, textCutoff), or(isNotNull(mcpCallLog.queryText), isNotNull(mcpCallLog.traceId))),
+			and(
+				lt(mcpCallLog.startedAt, textCutoff),
+				// The private lane's exemption — see the header. Its rows die whole at pass 2.
+				ne(mcpCallLog.surface, 'private'),
+				or(isNotNull(mcpCallLog.queryText), isNotNull(mcpCallLog.traceId)),
+			),
 		)
 		.returning({ id: mcpCallLog.id });
 

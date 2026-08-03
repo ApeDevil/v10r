@@ -6,10 +6,16 @@ import {
 	getClientBreakdown,
 	getHealthSummary,
 	getLatency,
+	getPrivateCalls,
+	getPrivateGaps,
+	getPrivateRequeries,
+	getPrivateSummary,
+	getPrivateToolMix,
 	getStageVolume,
 	getToolBreakdown,
 	getUnsupportedVersionRequests,
 	type McpWindow,
+	RESPONSE_PREVIEW_CHARS,
 	telemetryReachable,
 	windowStart,
 } from '$lib/server/mcp/telemetry/queries';
@@ -38,11 +44,13 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	}
 
 	// Cheap grouped aggregates over an indexed window — awaited so the page has real content at TTFB.
-	const [health, tools, stages, latency] = await Promise.all([
+	const [health, tools, stages, latency, privateSummary, privateToolMix] = await Promise.all([
 		getHealthSummary(since),
 		getToolBreakdown(since),
 		getStageVolume(since),
 		getLatency(since),
+		getPrivateSummary(since),
+		getPrivateToolMix(since),
 	]);
 
 	return {
@@ -50,15 +58,22 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		window,
 		unavailable: false as const,
 		minDistinctClients: GAP_MIN_DISTINCT_CLIENTS,
+		responsePreviewChars: RESPONSE_PREVIEW_CHARS,
 		health,
 		tools,
 		stages,
 		latency,
+		privateSummary,
+		privateToolMix,
 		// Deferred: these scan the raw log rather than a grouped index range, and the gaps query is
 		// the one that touches retained third-party text — worth keeping off the critical path.
 		gaps: safeDeferPromise(getCapabilityGaps(since), []),
 		suppressedGaps: safeDeferPromise(countSuppressedGaps(since), 0),
 		clients: safeDeferPromise(getClientBreakdown(since), []),
 		unsupportedVersions: safeDeferPromise(getUnsupportedVersionRequests(since), []),
+		// The private lane's list panels — bounded previews, still raw-log scans, so deferred too.
+		privateCalls: safeDeferPromise(getPrivateCalls(since), []),
+		privateGaps: safeDeferPromise(getPrivateGaps(since), []),
+		privateRequeries: safeDeferPromise(getPrivateRequeries(since), []),
 	};
 };

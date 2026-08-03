@@ -1,20 +1,21 @@
-# Hosted MCP: two trust surfaces over one domain
+# Hosted MCP: three trust surfaces over one domain
 
-The local stdio Pattern MCP (see [pattern-mcp.md](./pattern-mcp.md)) runs as an ephemeral container a coding agent spawns itself. This doc covers the **hosted** counterpart: the same pattern registry, plus a separate demo-state domain, both served over HTTP by the running v10r app — each behind its own trust boundary.
+The local stdio Pattern MCP (see [pattern-mcp.md](./pattern-mcp.md)) runs as an ephemeral container a coding agent spawns itself. This doc covers the **hosted** counterpart: the same pattern registry (on two endpoints with different telemetry policies), plus a separate demo-state domain, all served over HTTP by the running v10r app — each behind its own trust boundary.
 
 For running/testing the *local* server or adding a pattern record, see [mcp/README.md](../../../mcp/README.md). That doc stays local-server-only; this one is HTTP-only.
 
 ## Trust surfaces
 
-Three surfaces sit over the same domain, with explicit, non-overlapping boundaries:
+Four surfaces sit over the same domain, with explicit, non-overlapping boundaries:
 
 ```
-public endpoint (/api/mcp/public) -> public read-only tool registry     -> curated pattern data
-admin  endpoint (/api/mcp/admin)  -> bearer auth -> private tool registry -> demo-state service
-admin  page     (/admin/mcp)      -> Better Auth requireAdmin             -> demo-state service
+public  endpoint (/api/mcp/public)  -> public read-only tool registry       -> curated pattern data
+private endpoint (/api/mcp/private) -> bearer auth -> SAME pattern registry -> curated pattern data + full self-telemetry
+admin   endpoint (/api/mcp/admin)   -> bearer auth -> private tool registry -> demo-state service
+admin   page     (/admin/mcp)       -> Better Auth requireAdmin             -> demo-state service
 ```
 
-The public and admin endpoints share one transport (`src/lib/server/mcp/transport.ts`) but are handed **separate** tool registries. The transport dispatches only tool names present in the registry it's given — a private tool name POSTed to the public endpoint is rejected as an `isError` result, never dispatched. Hiding a tool from `tools/list` alone would not be enough; this is a hard dispatch allowlist, enforced in one place for both endpoints.
+All three endpoints share one transport (`src/lib/server/mcp/transport.ts`) but are handed their tool registries explicitly — public and private the same read-only `publicPatternRegistry`, admin its own demo-state registry. The transport dispatches only tool names present in the registry it's given — a demo-state tool name POSTed to the public or private endpoint is rejected as an `isError` result, never dispatched. Hiding a tool from `tools/list` alone would not be enough; this is a hard dispatch allowlist, enforced in one place for all endpoints.
 
 ## A. Hosted public MCP — `POST /api/mcp/public`
 
@@ -36,6 +37,31 @@ Requires `Authorization: Bearer <MCP_ADMIN_TOKEN>`.
 - **Tools:** exactly five, narrowly allowlisted — `get_mcp_page_state`, `set_mcp_page_message`, `set_mcp_page_color`, `reset_mcp_page_state`, `get_mcp_page_history`. No generic SQL, filesystem, shell, fetch, or arbitrary-key tool exists here. `get_mcp_page_history` returns both the before and after snapshot of each recorded change.
 - Every write is validated and versioned, and is audited on a **best-effort** basis (an audit-write failure is logged but does not roll back the accepted change — do not treat audit persistence as guaranteed). Successful writes return before/after values, attributed to a machine identity `admin-mcp`.
 - **Rate limit:** 120 requests/min per IP (applied before the bearer check).
+
+## B2. Hosted private pattern MCP — `POST /api/mcp/private`
+
+Requires `Authorization: Bearer <MCP_PRIVATE_TOKEN>` — a **separate realm** from the admin token: neither credential opens the other surface (`verifyPrivateMcpBearer` vs `verifyAdminMcpBearer`, both thin wrappers over one constant-time verifier).
+
+Same six pattern tools, same registry object, same instructions as the public endpoint — the *only* differences are the bearer gate and the telemetry policy it unlocks. The surface exists so the operator's own private projects (e.g. densho) can consume the pattern registry over HTTPS while their usage is recorded in full in `mcp.call_log` with `surface = 'private'`:
+
+- **`query_text` on every outcome**, not just the no-match path — on this lane the (question, answer) pair is the analysis artefact.
+- **`response_text`** — the tool's answer, scrubbed for secret shapes, whitespace *not* collapsed (it is markdown), capped at 4000 chars by a database CHECK, and structurally impossible on any other surface (`mcp_call_response_scope`).
+- **`workspace`** — a self-declared project label from the `X-V10r-Workspace` header, validated to `[a-z0-9][a-z0-9-]{0,31}` and dropped (never coerced) when invalid. A label, not an identity.
+- **`traffic` is never `'external'`** (`mcp_call_private_not_external`, mirroring the admin CHECK) — so every external KPI excludes the lane with the same one filter it already has. Note curl against this surface still classifies `test` and preview deployments `preview`; lane queries filter on `surface`, never `traffic`.
+- **Retention pass 1 (30d text-nulling) skips private rows** — they are minimised by row at 90 days instead. No third-party data can enter the lane: the questions are the operator's own, the answers are v10r's own registry text.
+
+Rate limit: 120 requests/min per IP, applied **before** the bearer check. GET → unauthenticated 405 with no tool metadata. Full build info (commit SHA + env) in the identity, like admin — the surface is authenticated. The results are read on `/admin/mcp/usage` (the "Private lane" cards: recent calls with answer previews, an **unthresholded** gap list — one caller, so the ≥3-distinct-callers rule would suppress everything and protects nobody — tool mix, and a ≤30s repeat-ask probe).
+
+Consumer registration (Claude Code, from another project):
+
+```bash
+claude mcp add --transport http --scope local v10r-patterns \
+  https://www.v10r.dev/api/mcp/private \
+  --header "Authorization: Bearer $V10R_MCP_PRIVATE_TOKEN" \
+  --header "X-V10r-Workspace: <project-label>"
+```
+
+`--scope local` keeps the token in `~/.claude.json`, out of any committed `.mcp.json`.
 
 ## C. Persistent demo state
 
@@ -77,7 +103,7 @@ Every request reaching an `/api/mcp/*` route produces **exactly one row**, writt
 
 **Counting rules.** Arrivals are `SUM(observed_count)`, never `count(*)` (sampled rows carry their multiplier). Every KPI filters `traffic = 'external'`: preview deployments share the production database, and the operator's own tooling hits the same endpoint, so an unfiltered count reports dogfooding as adoption. `count(DISTINCT client_key)` is **forgeable upward** — a caller varying its User-Agent mints unlimited keys — so it is never labelled "number of consumers".
 
-**Retained query text** is written only on the no-match path (a database CHECK, not a convention), scrubbed for secret shapes at write time, capped at 200 characters by the database, nulled at 30 days, and displayed only once **≥3 distinct callers** have asked it. That threshold does double duty: k-anonymity over text that may describe someone else's project, and the anti-poisoning control without which the highest-value panel is "attacker-supplied text ranked by attacker-controlled frequency".
+**Retained query text** is written only on the no-match path (a database CHECK, not a convention), scrubbed for secret shapes at write time, capped at 200 characters by the database, nulled at 30 days, and displayed only once **≥3 distinct callers** have asked it. That threshold does double duty: k-anonymity over text that may describe someone else's project, and the anti-poisoning control without which the highest-value panel is "attacker-supplied text ranked by attacker-controlled frequency". **The private lane (§B2) diverges on every point of this paragraph, deliberately** — query text on every outcome, an answer column, no pass-1 nulling, no display threshold — because it is bearer-gated to exactly one caller: the operator, whose own text needs neither anonymity from themselves nor protection from their own poisoning.
 
 **Rate-limited requests write nothing.** The limiter exists to make refusal cheap; a row per refusal would invert it into an amplifier, turning a flood into an equal number of inserts. A daily write budget bounds the worst case, because the limiter is a *rate* cap and not a *volume* cap.
 
@@ -87,7 +113,7 @@ Retention: `jobs/mcp-telemetry-retention.ts`, weekly. Both passes use absolute-a
 
 Both endpoints live under `/api/mcp/`, which is **CSRF-exempt** (`src/lib/server/security/csrf.ts`) — like `/api/webhooks/` and `/api/cron/`, they carry their own auth model (bearer for admin, unauthenticated read-only for public) and take no ambient cookie credential, so cookie-CSRF is moot; a non-browser MCP client also can't send the `X-Requested-With` header the global check requires.
 
-- **Admin brute-force resistance:** the admin endpoint runs the IP rate limiter *before* the bearer check, and GET is an unauthenticated 405, so failed-credential attempts are throttled and there is no unthrottled guessing path. Pair that with a high-entropy `MCP_ADMIN_TOKEN` (below).
+- **Bearer brute-force resistance:** both bearer endpoints (admin, private) run the IP rate limiter *before* the bearer check, and GET is an unauthenticated 405, so failed-credential attempts are throttled and there is no unthrottled guessing path. Pair that with high-entropy `MCP_ADMIN_TOKEN` / `MCP_PRIVATE_TOKEN` (below). The realms are isolated: each verifier reads only its own env var, and a valid token for one surface is a plain 401 on the other.
 - **Constant-time token compare over fixed-length digests:** both the candidate and configured token are reduced to a SHA-256 digest before `timingSafeEqual`, so there is no length branch to leak; the token/digest are never logged or echoed.
 - **DNS-rebinding protection:** the `Origin` header is validated on every POST. A request with no Origin (a non-browser MCP client) is allowed; an **exact same-origin** browser request (scheme + host + port) is allowed — a cross-scheme same-host request is rejected (an `http://` Origin never passes for an `https://` deployment); anything else is rejected with 403 unless explicitly listed in `MCP_ALLOWED_ORIGINS`. The bare-host / any-scheme match applies only to explicit allowlist entries, never to the implicit same-origin check.
 - **Envelope + protocol validation:** malformed JSON-RPC (`jsonrpc` ≠ `"2.0"`, non-scalar `id`) never dispatches a tool; an unsupported `MCP-Protocol-Version` header is a 400.
@@ -100,6 +126,7 @@ Both endpoints live under `/api/mcp/`, which is **CSRF-exempt** (`src/lib/server
 | Variable | Purpose |
 |---|---|
 | `MCP_ADMIN_TOKEN` | Bearer credential for `/api/mcp/admin`. Set in the server environment (local `.env` / Vercel project env) — never committed. Must be a high-entropy random secret (≥ 32 bytes / 256-bit, e.g. `openssl rand -base64 32`). Unset → the admin endpoint returns 503. |
+| `MCP_PRIVATE_TOKEN` | Bearer credential for `/api/mcp/private` — a separate realm from the admin token, same entropy requirement, same 503-when-unset behaviour. Held only by the operator's own projects; it is the switch that turns full self-telemetry on. |
 | `MCP_ALLOWED_ORIGINS` (optional) | Comma-separated extra origins allowed to POST (beyond same-origin and no-Origin clients). Only needed for a trusted cross-origin browser client. An entry may be a full origin (`https://app.example`, scheme-pinned) or a bare host (`app.example`, which matches any scheme for that host). |
 | `VERCEL_GIT_COMMIT_SHA`, `VERCEL_ENV` | Auto-provided by Vercel; surfaced in the **authenticated** admin build metadata so an operator can identify the exact deployed commit. |
 
@@ -146,6 +173,13 @@ curl -sX POST localhost:5173/api/mcp/admin \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"set_mcp_page_color","arguments":{"color":"red"}}}'
 
 # admin without a token returns 401
+
+# private — needs MCP_PRIVATE_TOKEN; the workspace header labels the row
+curl -sX POST localhost:5173/api/mcp/private \
+  -H "authorization: Bearer $MCP_PRIVATE_TOKEN" \
+  -H 'x-v10r-workspace: densho' \
+  -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"search_patterns","arguments":{"query":"background jobs"}}}'
 ```
 
 `mcp.demo_state` must exist for live reads/writes: `bun run db:push` provisions the `mcp` schema/table. That command mutates the shared Neon DB and was **not** run as part of this change — running it is an operator step.

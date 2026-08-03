@@ -1,6 +1,9 @@
 /**
- * Bearer authentication for the private admin MCP endpoint. The credential is a machine
- * secret configured via the `MCP_ADMIN_TOKEN` server environment variable — never committed.
+ * Bearer authentication for the authenticated MCP surfaces. Two realms share one verifier:
+ *  - admin   (`/api/mcp/admin`)   — credential in `MCP_ADMIN_TOKEN`
+ *  - private (`/api/mcp/private`) — credential in `MCP_PRIVATE_TOKEN`
+ * Each realm reads its own env var and only that var — a valid admin token never opens the
+ * private surface or vice versa. The credentials are machine secrets, never committed.
  *
  * Failure modes are explicit and never fall back to public behavior:
  *  - token unset on the server  → 503 (misconfiguration, not the caller's fault)
@@ -31,24 +34,36 @@ export function extractBearer(header: string | null): string | null {
 	return match ? match[1].trim() : null;
 }
 
-/** Recommended minimum length for the admin token (≈256-bit base64). */
+/** Recommended minimum length for a surface token (≈256-bit base64). */
 const MIN_TOKEN_LENGTH = 32;
-let warnedWeakToken = false;
+/** Keyed by env var name — a single boolean would swallow whichever realm warns second. */
+const warnedWeakTokens = new Set<string>();
 
-export function verifyAdminMcpBearer(request: Request): BearerCheck {
-	const configured = env.MCP_ADMIN_TOKEN;
+interface McpBearerRealm {
+	/** The configured secret — read from `$env/dynamic/private` by the per-realm wrapper. */
+	configured: string | undefined;
+	/** Env var NAME, for the 503 message and the weak-token warning only. Never the value. */
+	envName: string;
+	/** Error-code prefix: `mcp_admin` | `mcp_private`. */
+	codePrefix: string;
+	/** Human name of the surface for the 503 message. */
+	surfaceLabel: string;
+}
+
+export function verifyMcpBearer(request: Request, realm: McpBearerRealm): BearerCheck {
+	const { configured, envName, codePrefix, surfaceLabel } = realm;
 	if (!configured) {
 		return {
 			ok: false,
 			status: 503,
-			code: 'mcp_admin_unconfigured',
-			message: 'Admin MCP is not configured on this server (MCP_ADMIN_TOKEN is unset).',
+			code: `${codePrefix}_unconfigured`,
+			message: `${surfaceLabel} is not configured on this server (${envName} is unset).`,
 		};
 	}
-	if (!warnedWeakToken && configured.length < MIN_TOKEN_LENGTH) {
-		warnedWeakToken = true;
+	if (!warnedWeakTokens.has(envName) && configured.length < MIN_TOKEN_LENGTH) {
+		warnedWeakTokens.add(envName);
 		console.warn(
-			`[mcp] MCP_ADMIN_TOKEN is shorter than ${MIN_TOKEN_LENGTH} chars — use a high-entropy secret (e.g. \`openssl rand -base64 32\`).`,
+			`[mcp] ${envName} is shorter than ${MIN_TOKEN_LENGTH} chars — use a high-entropy secret (e.g. \`openssl rand -base64 32\`).`,
 		);
 	}
 	const token = extractBearer(request.headers.get('authorization'));
@@ -56,9 +71,27 @@ export function verifyAdminMcpBearer(request: Request): BearerCheck {
 		return {
 			ok: false,
 			status: 401,
-			code: 'mcp_admin_unauthorized',
+			code: `${codePrefix}_unauthorized`,
 			message: 'Missing or invalid bearer credentials.',
 		};
 	}
 	return { ok: true };
+}
+
+export function verifyAdminMcpBearer(request: Request): BearerCheck {
+	return verifyMcpBearer(request, {
+		configured: env.MCP_ADMIN_TOKEN,
+		envName: 'MCP_ADMIN_TOKEN',
+		codePrefix: 'mcp_admin',
+		surfaceLabel: 'Admin MCP',
+	});
+}
+
+export function verifyPrivateMcpBearer(request: Request): BearerCheck {
+	return verifyMcpBearer(request, {
+		configured: env.MCP_PRIVATE_TOKEN,
+		envName: 'MCP_PRIVATE_TOKEN',
+		codePrefix: 'mcp_private',
+		surfaceLabel: 'Private MCP',
+	});
 }

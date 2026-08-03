@@ -57,3 +57,24 @@ export function normalizeQueryText(raw: unknown, maxLength: number): string | nu
 	const scrubbed = scrubSecrets(collapsed);
 	return scrubbed.length > maxLength ? scrubbed.slice(0, maxLength) : scrubbed;
 }
+
+/**
+ * Normalise a TOOL ANSWER for storage (the private lane's `response_text`): scrub, then truncate —
+ * deliberately WITHOUT the whitespace collapse `normalizeQueryText` applies.
+ *
+ * A query is one line of prose; an answer is markdown with fenced code blocks, and collapsing
+ * `\s+` to a single space destroys exactly the structure the column exists to preserve.
+ * Scrub-before-truncate is kept for the same reason as there: truncating first can leave the
+ * leading half of a key in the column.
+ *
+ * Known over-redaction: the long-base64-run rule can eat a legitimate base64-ish literal inside a
+ * registry code example. That is cosmetic and strictly the safe direction — do not debug a
+ * `[redacted]` inside an answer preview as a bug.
+ */
+export function normalizeResponseText(raw: unknown, maxLength: number): string | null {
+	if (typeof raw !== 'string') return null;
+	const trimmed = raw.trim();
+	if (trimmed.length === 0) return null;
+	const scrubbed = scrubSecrets(trimmed);
+	return scrubbed.length > maxLength ? scrubbed.slice(0, maxLength) : scrubbed;
+}

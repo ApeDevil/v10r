@@ -28,6 +28,7 @@ describe('needsCsrf', () => {
 		// and non-browser MCP clients can't send X-Requested-With.
 		expect(needsCsrf('POST', '/api/mcp/public')).toBe(false);
 		expect(needsCsrf('POST', '/api/mcp/admin')).toBe(false);
+		expect(needsCsrf('POST', '/api/mcp/private')).toBe(false);
 	});
 
 	it('still protects non-exempt routes that merely share a parent segment', () => {

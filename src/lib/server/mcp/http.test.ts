@@ -294,6 +294,44 @@ describe('respondToMcpPost', () => {
 		expect(seen[0].handleMs).toBeGreaterThanOrEqual(0);
 	});
 
+	it('hands the observer the tool answer text on a tools/call, and only there', async () => {
+		const seen: Parameters<McpCallObserver['observe']>[0][] = [];
+		const answerRegistry: ToolRegistry = {
+			tools: [{ name: 'noop', description: 'noop', inputSchema: { type: 'object' } }],
+			dispatch: () => ({ content: [{ type: 'text', text: '# Answer\n\n```ts\ncode\n```' }] }),
+		};
+		const observer: McpCallObserver = { observe: (o) => seen.push(o) };
+
+		const callReq = req({}, JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'noop' } }));
+		await respondToMcpPost(callReq, answerRegistry, identity, observer);
+		expect(seen[0].responseText).toBe('# Answer\n\n```ts\ncode\n```');
+
+		// tools/list and initialize results are protocol metadata, not answers.
+		seen.length = 0;
+		await respondToMcpPost(
+			req({}, JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' })),
+			answerRegistry,
+			identity,
+			observer,
+		);
+		expect(seen[0].responseText).toBeNull();
+
+		seen.length = 0;
+		await respondToMcpPost(req({}, 'not json'), answerRegistry, identity, observer);
+		expect(seen[0].responseText).toBeNull();
+	});
+
+	it('truncates an oversized tool answer at capture so the deferred closure stays bounded', async () => {
+		const seen: Parameters<McpCallObserver['observe']>[0][] = [];
+		const bigRegistry: ToolRegistry = {
+			tools: [{ name: 'noop', description: 'noop', inputSchema: { type: 'object' } }],
+			dispatch: () => ({ content: [{ type: 'text', text: 'a'.repeat(30_000) }] }),
+		};
+		const callReq = req({}, JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'noop' } }));
+		await respondToMcpPost(callReq, bigRegistry, identity, { observe: (o) => seen.push(o) });
+		expect(seen[0].responseText).toHaveLength(20_000);
+	});
+
 	it('captures clientInfo from initialize, which the transport itself discards', async () => {
 		const seen: Parameters<McpCallObserver['observe']>[0][] = [];
 		const initReq = req(

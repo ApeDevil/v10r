@@ -15,7 +15,9 @@ looked at and deliberately accepted.
 4. **The LLM budget and the email-sending capability** — spendable, and abusing
    the latter damages domain reputation, which is not recoverable by a rollback.
 5. **Analytics/PII store**, **R2 objects**, **MCP demo state**, **`mcp.call_log`**
-   (a second, separately-sensitive MCP asset: retained caller-supplied query text).
+   (a second, separately-sensitive MCP asset: retained caller-supplied query text,
+   plus the private lane's `response_text`/`workspace` — operator-authored questions
+   and v10r's own registry answers, bearer-gated, no third-party data by construction).
 
 ## Adversaries
 
@@ -26,7 +28,7 @@ looked at and deliberately accepted.
 | A document the user ingested | Prompt injection, with persistence: it fires on every later retrieval |
 | A compromised npm dependency | Everything. This is why `bun audit` and the `minimumReleaseAge` install cooldown exist |
 | A stolen session cookie | Everything that user has, and — until step-up was added to passkey registration — durable access that survived signing out |
-| A leaked environment variable | `PAIRING_SECRET`, `MCP_ADMIN_TOKEN`, `MCP_TELEMETRY_SALT`, `CRON_SECRET`, the Neon URL |
+| A leaked environment variable | `PAIRING_SECRET`, `MCP_ADMIN_TOKEN`, `MCP_PRIVATE_TOKEN`, `MCP_TELEMETRY_SALT`, `CRON_SECRET`, the Neon URL |
 
 ## Trust boundaries
 
@@ -47,7 +49,10 @@ looked at and deliberately accepted.
   render to an operator, often mid coding-agent session. Two controls: text
   stays hidden until ≥3 distinct callers have asked it (k-anonymity and
   anti-poisoning), and it renders in text position only — never into `href`,
-  `style`, or `data-*`.
+  `style`, or `data-*`. The private lane's text (`query_text` on every outcome,
+  `response_text` previews) renders on the same page WITHOUT the threshold —
+  acceptable because writing it requires `MCP_PRIVATE_TOKEN`: the author is the
+  operator reading it. It keeps the text-position-only rendering rule.
 
 ## Deliberately accepted
 

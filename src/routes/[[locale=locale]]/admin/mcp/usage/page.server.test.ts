@@ -9,6 +9,7 @@ const telemetry = vi.hoisted(() => ({
 }));
 vi.mock('$lib/server/mcp/telemetry/queries', () => ({
 	GAP_MIN_DISTINCT_CLIENTS: 3,
+	RESPONSE_PREVIEW_CHARS: 400,
 	windowStart: (w: string) => {
 		telemetry.calls.push(`window:${w}`);
 		return new Date(0);
@@ -30,6 +31,18 @@ vi.mock('$lib/server/mcp/telemetry/queries', () => ({
 	countSuppressedGaps: async () => 0,
 	getClientBreakdown: async () => [],
 	getUnsupportedVersionRequests: async () => [],
+	getPrivateSummary: async () => ({
+		calls: 0,
+		toolCalls: 0,
+		withResponse: 0,
+		withWorkspace: 0,
+		clientKeyed: 0,
+		distinctWorkspaces: 0,
+	}),
+	getPrivateToolMix: async () => [],
+	getPrivateCalls: async () => [],
+	getPrivateGaps: async () => [],
+	getPrivateRequeries: async () => [],
 }));
 
 const { load } = await import('./+page.server');
@@ -67,6 +80,26 @@ describe('/admin/mcp/usage load', () => {
 		expect(data.unavailable).toBe(false);
 		expect(data.health).toBeDefined();
 		expect(data.title).toBe('MCP Usage');
+	});
+
+	it('carries the private lane alongside the external panels', async () => {
+		const data = await loadData(event());
+		expect(data.privateSummary).toBeDefined();
+		expect(data.privateToolMix).toEqual([]);
+		// The list panels are deferred promises, present whenever the page is reachable.
+		expect(data.privateCalls).toBeDefined();
+		expect(data.privateGaps).toBeDefined();
+		expect(data.privateRequeries).toBeDefined();
+	});
+
+	it('omits the private lane when telemetry is unreachable, like everything else', async () => {
+		telemetry.reachable = false;
+		try {
+			const data = await loadData(event());
+			expect(data.privateSummary).toBeUndefined();
+		} finally {
+			telemetry.reachable = true;
+		}
 	});
 
 	it('accepts only the bounded set of time windows', async () => {

@@ -57,7 +57,7 @@ const GUARD_PATTERNS: Array<{ scheme: string; re: RegExp }> = [
 	{ scheme: 'ai', re: /\bguardAiRequest\b/ },
 	{ scheme: 'ownership', re: /\bguardPostOwnership\b|\bguardAssetOwnership\b/ },
 	{ scheme: 'page-guard', re: /\brequireAdmin\b|\brequireAuth\b/ },
-	{ scheme: 'bearer', re: /\bverifyAdminMcpBearer\b|\bCRON_SECRET\b/ },
+	{ scheme: 'bearer', re: /\bverify(Admin|Private)McpBearer\b|\bCRON_SECRET\b/ },
 	{ scheme: 'hmac', re: /TELEGRAM_WEBHOOK_SECRET/ },
 	{ scheme: 'cookie-actor', re: /\bverifyOwnerCookie\b|\bclearOwnerCookie\b/ },
 	/**
@@ -105,6 +105,8 @@ const PUBLIC_ENDPOINTS: Record<string, string> = {
 		"Randomises the caller's own style cookie. Rate-limited; DB persistence is best-effort for signed-in users only.",
 	'mcp/admin/+server.ts':
 		'GET only. Streamable HTTP makes the SSE channel optional and this one is unconditionally 405 — no auth, no tool metadata, no body — so bearer guessing has no path outside the rate-limited POST. The POST is bearer-guarded.',
+	'mcp/private/+server.ts':
+		'GET only. Same 405-without-body contract as mcp/admin: no auth, no tool metadata, so bearer guessing has no path outside the rate-limited POST, which is guarded by MCP_PRIVATE_TOKEN.',
 	'blog/posts/[id]/comments/+server.ts':
 		"GET only; the POST is session-guarded. Lists non-deleted, status='visible' comments, and reads locals.user?.id solely to surface the caller's own pending ones. It does not verify the post is published, so visible comments on a draft are readable by post id — narrow, but real.",
 };

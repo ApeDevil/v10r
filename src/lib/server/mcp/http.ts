@@ -112,6 +112,14 @@ function asString(value: unknown): string | null {
 }
 
 /**
+ * Ceiling on the answer text handed to the observer. The tools already bound their own output
+ * (get_file_excerpt caps at 250 lines), so this is not the primary control — it is the guard
+ * that stops a FUTURE unbounded tool from parking a large string in a `waitUntil` closure. The
+ * persisted ceiling is much lower and lives in the observer, where the policy belongs.
+ */
+const MAX_OBSERVED_RESPONSE_CHARS = 20_000;
+
+/**
  * Read the request/response pair the transport just completed. Pure, and the ONLY place that knows
  * both halves — which is precisely why this seam sits here rather than inside the transport (too
  * late to see the envelope) or around `registry.dispatch` (too low to see the method at all).
@@ -133,6 +141,12 @@ function describeExchange(
 	const result = asRecord(response.result);
 	const clientInfo = method === 'initialize' ? asRecord(params?.clientInfo) : null;
 	const tools = result && Array.isArray(result.tools) ? result.tools : null;
+	// The tool's answer — first text block of a tools/call result. Read here (before `toWire`
+	// runs, though `toWire` is non-mutating so the order could not matter anyway) because this is
+	// the only frame that holds the full response. Never populated for tools/list or initialize:
+	// their results are protocol metadata, not answers.
+	const firstBlock = isToolCall && result && Array.isArray(result.content) ? asRecord(result.content[0]) : null;
+	const answer = asString(firstBlock?.text);
 
 	return {
 		stage: isToolCall ? 'tool' : 'protocol',
@@ -147,6 +161,7 @@ function describeExchange(
 		clientVersion: asString(clientInfo?.version),
 		servedProtocolVersion: method === 'initialize' ? asString(result?.protocolVersion) : null,
 		toolCount: tools ? tools.length : null,
+		responseText: answer === null ? null : answer.slice(0, MAX_OBSERVED_RESPONSE_CHARS),
 	};
 }
 
@@ -196,6 +211,7 @@ export async function respondToMcpPost(
 			servedProtocolVersion: null,
 			toolCount: null,
 			args: undefined,
+			responseText: null,
 			handleMs: Math.round(performance.now() - startedAt),
 			...partial,
 		});

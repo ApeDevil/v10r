@@ -32,9 +32,19 @@ vi.mock('$lib/server/db', () => ({
 	),
 }));
 
-const { getCapabilityGaps, countSuppressedGaps, getHealthSummary, getToolBreakdown, telemetryReachable } = await import(
-	'./queries'
-);
+const {
+	getCapabilityGaps,
+	countSuppressedGaps,
+	getClientBreakdown,
+	getHealthSummary,
+	getPrivateCalls,
+	getPrivateGaps,
+	getPrivateRequeries,
+	getPrivateSummary,
+	getPrivateToolMix,
+	getToolBreakdown,
+	telemetryReachable,
+} = await import('./queries');
 
 let db: Db;
 const SINCE = new Date(Date.now() - 60 * 60 * 1000);
@@ -150,6 +160,132 @@ describe('tool breakdown', () => {
 		await freshDb.insert(mcpCallLog).values({ ...gapRow('m_1', 'x'), observedCount: 5 });
 		const [row] = await getToolBreakdown(SINCE);
 		expect(Number(row.calls)).toBe(5);
+		holder.db = db;
+	});
+});
+
+describe('the private lane', () => {
+	/** A private tool row — bearer-gated surface, so traffic is never 'external'. */
+	function privateRow(over: Partial<typeof mcpCallLog.$inferInsert> = {}): typeof mcpCallLog.$inferInsert {
+		return {
+			surface: 'private',
+			traffic: 'self',
+			stage: 'tool',
+			outcome: 'ok',
+			method: 'tools/call',
+			toolName: 'search_patterns',
+			queryText: 'background jobs',
+			responseText: '# Match\n\nUse the jobs pattern.',
+			workspace: 'densho',
+			clientFamily: 'claude-code',
+			clientKey: 'm_operator',
+			registryVersion: '1.0.0',
+			totalMs: 10,
+			gateMs: 8,
+			dispatchMs: 1,
+			startedAt: new Date(),
+			...over,
+		};
+	}
+
+	it('surfaces a gap asked ONCE by ONE caller — the exact inverse of the public threshold', async () => {
+		const { db: freshDb } = await createTestDb();
+		holder.db = freshDb;
+		await freshDb.insert(mcpCallLog).values(privateRow({ outcome: 'empty', queryText: 'quantum scheduler' }));
+
+		const gaps = await getPrivateGaps(SINCE);
+		expect(gaps).toHaveLength(1);
+		expect(gaps[0].queryText).toBe('quantum scheduler');
+		// ...while the public panel, correctly, still shows nothing: not external, and n=1.
+		expect(await getCapabilityGaps(SINCE)).toHaveLength(0);
+		holder.db = db;
+	});
+
+	it('lists recent calls with the bounded answer preview and workspace, newest first', async () => {
+		const { db: freshDb } = await createTestDb();
+		holder.db = freshDb;
+		const now = Date.now();
+		await freshDb.insert(mcpCallLog).values([
+			privateRow({ startedAt: new Date(now - 60_000), queryText: 'older question' }),
+			privateRow({
+				startedAt: new Date(now - 1_000),
+				queryText: 'newer question',
+				responseText: 'x'.repeat(900),
+			}),
+			// A public row that must not appear in the private list.
+			{ ...gapRow('m_ext', 'public question'), startedAt: new Date(now - 500) },
+		]);
+
+		const calls = await getPrivateCalls(SINCE);
+		expect(calls).toHaveLength(2);
+		expect(calls[0].queryText).toBe('newer question');
+		expect(calls[0].workspace).toBe('densho');
+		// The page payload carries the preview, never the full column.
+		expect(calls[0].responsePreview).toHaveLength(400);
+		expect(Number(calls[0].responseChars)).toBe(900);
+		holder.db = db;
+	});
+
+	it('finds a repeat ask within 30s, not one 60s apart, and nothing without a client key', async () => {
+		const { db: freshDb } = await createTestDb();
+		holder.db = freshDb;
+		const now = Date.now();
+		await freshDb.insert(mcpCallLog).values([
+			privateRow({ startedAt: new Date(now - 70_000), queryText: 'first ask' }),
+			// 10s after a previous same-tool call → a repeat.
+			privateRow({ startedAt: new Date(now - 60_000), queryText: 'repeat ask' }),
+			// 60s gap back to the previous one → not a repeat.
+			privateRow({ startedAt: new Date(now), queryText: 'patient ask' }),
+		]);
+
+		const requeries = await getPrivateRequeries(SINCE);
+		expect(requeries).toHaveLength(1);
+		expect(requeries[0].queryText).toBe('repeat ask');
+
+		// With the salt unset every client_key is null and the probe has nothing to join on.
+		const { db: unkeyedDb } = await createTestDb();
+		holder.db = unkeyedDb;
+		await unkeyedDb
+			.insert(mcpCallLog)
+			.values([
+				privateRow({ clientKey: null, startedAt: new Date(now - 10_000) }),
+				privateRow({ clientKey: null, startedAt: new Date(now - 5_000) }),
+			]);
+		expect(await getPrivateRequeries(SINCE)).toHaveLength(0);
+		holder.db = db;
+	});
+
+	it('tool mix counts with SUM(observed_count) and reports answer coverage', async () => {
+		const { db: freshDb } = await createTestDb();
+		holder.db = freshDb;
+		await freshDb.insert(mcpCallLog).values([privateRow({ observedCount: 5 }), privateRow({ responseText: null })]);
+		const [mix] = await getPrivateToolMix(SINCE);
+		expect(Number(mix.calls)).toBe(6);
+		expect(Number(mix.withResponse)).toBe(1);
+		holder.db = db;
+	});
+
+	it('summary counts the lane and its salt coverage', async () => {
+		const { db: freshDb } = await createTestDb();
+		holder.db = freshDb;
+		await freshDb.insert(mcpCallLog).values([privateRow(), privateRow({ clientKey: null, workspace: null })]);
+		const summary = await getPrivateSummary(SINCE);
+		expect(summary.calls).toBe(2);
+		expect(summary.toolCalls).toBe(2);
+		expect(summary.withResponse).toBe(2);
+		expect(summary.withWorkspace).toBe(1);
+		expect(summary.clientKeyed).toBe(1);
+		expect(summary.distinctWorkspaces).toBe(1);
+		holder.db = db;
+	});
+
+	it('never leaks a private row into the external panels', async () => {
+		const { db: freshDb } = await createTestDb();
+		holder.db = freshDb;
+		await freshDb.insert(mcpCallLog).values(privateRow({ outcome: 'empty', queryText: 'private only' }));
+		expect(await getToolBreakdown(SINCE)).toHaveLength(0);
+		expect(await getClientBreakdown(SINCE)).toHaveLength(0);
+		expect(await getCapabilityGaps(SINCE)).toHaveLength(0);
 		holder.db = db;
 	});
 });

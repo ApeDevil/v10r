@@ -62,12 +62,24 @@
  * ## Retention (jobs/mcp-telemetry-retention.ts, weekly)
  *
  *   1. 30d — UPDATE ... SET query_text = NULL, trace_id = NULL   (minimise by COLUMN)
- *   2. 90d — DELETE rows                                          (then by ROW)
+ *            SKIPS surface='private' — see "The private lane" below.
+ *   2. 90d — DELETE rows                                          (then by ROW; includes private)
  *
  * Both are absolute-age predicates, so they are idempotent and self-healing: Vercel's +-59min
  * cron jitter is irrelevant and a missed week is fully repaired by the next run. Do NOT
  * "optimise" either into a since-last-run window — that destroys the property. On a weekly
  * cadence the EFFECTIVE windows are 30-37d and 90-97d; document the upper bound, not the nominal.
+ *
+ * ## The private lane (surface='private')
+ *
+ * `/api/mcp/private` is bearer-gated to exactly ONE holder: the operator. Its rows may keep more
+ * than the public surface's, and that widening is principled, not an oversight: the questions are
+ * the operator's own prompts, and the answers (`response_text`) are v10r's OWN registry text
+ * echoed back — no third-party data can enter either column. Hence: `query_text` on EVERY
+ * outcome (not just 'empty'), a `response_text` column that exists nowhere else, a `workspace`
+ * label, and the pass-1 retention exemption (minimised by ROW at 90d instead of by COLUMN at
+ * 30d). Private rows are `traffic <> 'external'` by construction, so every external KPI excludes
+ * them with the same one filter it already has.
  *
  * Every CHECK here lives in the drizzle definition on purpose: this is a `db:push`-only repo, so a
  * constraint added by hand to Neon is invisible to drizzle and gets dropped by the next push.
@@ -85,8 +97,13 @@ import { mcpSchema } from './demo-state';
 /**
  * Which hosted endpoint served the request. The local stdio server runs `--network=none` on the
  * consumer's machine and structurally cannot report, so it is not a value here.
+ *
+ * `private` is deliberately NOT named `self` — `self` already exists on `mcp_traffic` (the
+ * attribution dimension) and a same-named value on two enums in one row is a foot-gun for anyone
+ * reading a query. It is also not `local`: that value exists in Neon history only, from a
+ * discarded branch, and the reconcile script removed it.
  */
-export const mcpSurfaceEnum = mcpSchema.enum('mcp_surface', ['public', 'admin']);
+export const mcpSurfaceEnum = mcpSchema.enum('mcp_surface', ['public', 'admin', 'private']);
 
 /**
  * Whether this row counts as real external traffic.
@@ -221,20 +238,42 @@ export const mcpCallLog = mcpSchema.table(
 		subject: text('subject'),
 
 		/**
-		 * The raw caller query string — the ONLY unbounded-cardinality value in this table, and it
-		 * is written ONLY on the no-match path (enforced by `mcp_call_query_scope`). A query that
-		 * MATCHED tells you nothing the outcome does not; a query that matched NOTHING is the
-		 * product signal. That narrowness is the whole necessity argument, and it also collapses
-		 * retained text to the miss rate.
+		 * The raw caller query string — an unbounded-cardinality value, so its scope is enforced by
+		 * `mcp_call_query_scope`: on the PUBLIC surface it is written ONLY on the no-match path
+		 * (a query that MATCHED tells you nothing the outcome does not; one that matched NOTHING is
+		 * the product signal — that narrowness is the necessity argument for third-party callers);
+		 * on the PRIVATE surface it is written on every outcome, because there the (question,
+		 * answer) pair IS the artefact and the caller is the operator.
 		 *
 		 * The 200-char CHECK is a LOAD-BEARING PRIVACY CONTROL, not hygiene: a recorder bug cannot
 		 * dump a consumer's multi-KB proprietary payload into an internet-facing table. Enforced by
-		 * the DATABASE, not by a caller's discipline. Nulled at 30 days.
+		 * the DATABASE, not by a caller's discipline. Nulled at 30 days (public/admin; private is
+		 * exempt — see header).
 		 *
-		 * Displayed only above a >=3-distinct-client threshold — simultaneously k-anonymity over
-		 * third-party text and the anti-poisoning control for the capability-gaps panel.
+		 * Public rows are displayed only above a >=3-distinct-client threshold — simultaneously
+		 * k-anonymity over third-party text and the anti-poisoning control for the capability-gaps
+		 * panel. Private rows are unthresholded: there is no third party and no untrusted author.
 		 */
 		queryText: text('query_text'),
+
+		/**
+		 * The tool's ANSWER, verbatim. Written ONLY on the private surface and ONLY at stage='tool'
+		 * (`mcp_call_response_scope`). This is the one column whose content is v10r's OWN registry
+		 * text echoed back — not caller data — which is the necessity argument for keeping it at
+		 * all. Scrubbed for secret shapes and capped at 4000 chars by the database. Whitespace is
+		 * NOT collapsed: this is markdown with fenced code blocks, and collapsing destroys exactly
+		 * the artefact the column exists to preserve.
+		 */
+		responseText: text('response_text'),
+
+		/**
+		 * Which of the operator's own projects made the call — from the `X-V10r-Workspace` request
+		 * header, format-validated to `[a-z0-9][a-z0-9-]{0,31}` and DROPPED (never coerced to a
+		 * sentinel) when it does not match. Private surface only. Not an identity: the surface is
+		 * already bearer-gated to one holder, so this is a self-declared LABEL, never an auth
+		 * input.
+		 */
+		workspace: text('workspace'),
 
 		/**
 		 * What the caller ASKED for vs what this server ANSWERED with. Two columns, not one,
@@ -350,11 +389,19 @@ export const mcpCallLog = mcpSchema.table(
 		// structurally cannot enter the index the tool dashboards ride.
 		index('mcp_call_tool_idx').on(table.toolName, table.startedAt.desc()).where(sql`${table.toolName} IS NOT NULL`),
 
-		// THE MONEY QUERY: "which queries returned nothing, most frequent first". Because
-		// query_text is written only on the no-match path, this predicate is exactly the miss set —
-		// a few rows a day, not the whole table. Without this index the one query whose input is
-		// unbounded text degrades to a seq scan, and it degrades worst of all of them.
+		// THE MONEY QUERY: "which queries returned nothing, most frequent first". Public rows enter
+		// only on the no-match path; PRIVATE rows carry query_text on every outcome and enter too —
+		// still bounded by single-operator volume, so the index stays small. The predicate must NOT
+		// be narrowed to the public miss set: that would need an enum comparison (permanent push
+		// diff, see above). Without this index the one query whose input is unbounded text degrades
+		// to a seq scan, and it degrades worst of all of them.
 		index('mcp_call_miss_idx').on(table.startedAt.desc()).where(sql`${table.queryText} IS NOT NULL`),
+
+		// The private lane's per-project slice: "what did densho ask this week". Populated only on
+		// private rows (workspace is NULL everywhere else by CHECK), so it is as small as the lane.
+		index('mcp_call_workspace_idx')
+			.on(table.workspace, table.startedAt.desc())
+			.where(sql`${table.workspace} IS NOT NULL`),
 
 		// "Which patterns are fetched but never traced / which excerpt paths are requested."
 		index('mcp_call_subject_idx').on(table.subject, table.startedAt.desc()).where(sql`${table.subject} IS NOT NULL`),
@@ -389,12 +436,36 @@ export const mcpCallLog = mcpSchema.table(
 			 OR (${table.toolName} IS NOT NULL AND ${table.method} = 'tools/call')`,
 		),
 
-		// Raw caller text exists ONLY on the no-match path. This puts the data-minimisation
-		// necessity argument in the database instead of in a recorder's discipline.
-		check('mcp_call_query_scope', sql`${table.queryText} IS NULL OR ${table.outcome} = 'empty'`),
+		// Raw caller text exists ONLY on the no-match path — except on the private lane, where the
+		// caller is the operator and the question is kept on every outcome. This puts the
+		// data-minimisation necessity argument in the database instead of in a recorder's
+		// discipline.
+		check(
+			'mcp_call_query_scope',
+			sql`${table.queryText} IS NULL OR ${table.outcome} = 'empty' OR ${table.surface} = 'private'`,
+		),
 
 		// LOAD-BEARING PRIVACY CONTROL — truncation enforced by the database.
 		check('mcp_call_query_len', sql`${table.queryText} IS NULL OR char_length(${table.queryText}) <= 200`),
+
+		// The answer text is the private lane's raison d'être and exists nowhere else: it can only
+		// describe a request that actually reached a tool.
+		check(
+			'mcp_call_response_scope',
+			sql`${table.responseText} IS NULL OR (${table.surface} = 'private' AND ${table.stage} = 'tool')`,
+		),
+
+		// Same database-enforced ceiling discipline as query_len, sized for a markdown answer.
+		check('mcp_call_response_len', sql`${table.responseText} IS NULL OR char_length(${table.responseText}) <= 4000`),
+
+		// The workspace label only means anything on the bearer-gated lane.
+		check('mcp_call_workspace_scope', sql`${table.workspace} IS NULL OR ${table.surface} = 'private'`),
+
+		// The recorder validates-or-drops; this is the database-side floor under a recorder bug.
+		check(
+			'mcp_call_workspace_format',
+			sql`${table.workspace} IS NULL OR ${table.workspace} ~ '^[a-z0-9][a-z0-9-]{0,31}$'`,
+		),
 
 		// The admin surface's only free text is the demo message, already recorded in
 		// admin.audit_log with before/after detail. Storing it twice is pure risk and no signal.
@@ -404,6 +475,10 @@ export const mcpCallLog = mcpSchema.table(
 		// can never inflate an external-traffic KPI. Permits 'self' and 'preview'; forbids only the
 		// value that would lie.
 		check('mcp_call_admin_not_external', sql`${table.surface} <> 'admin' OR ${table.traffic} <> 'external'`),
+
+		// Same argument, same shape: reaching the private surface costs MCP_PRIVATE_TOKEN, so the
+		// caller is the operator and 'external' would be a lie.
+		check('mcp_call_private_not_external', sql`${table.surface} <> 'private' OR ${table.traffic} <> 'external'`),
 
 		// No caller identifier on rejection rows: a per-reason counter answers everything a
 		// rejection needs, and these rows sit on the path an attacker controls the volume of.
@@ -442,6 +517,7 @@ export const mcpCallLog = mcpSchema.table(
 			 AND (${table.clientName} IS NULL OR char_length(${table.clientName}) <= 64)
 			 AND (${table.clientVersion} IS NULL OR char_length(${table.clientVersion}) <= 32)
 			 AND (${table.clientKey} IS NULL OR char_length(${table.clientKey}) <= 72)
+			 AND (${table.workspace} IS NULL OR char_length(${table.workspace}) <= 32)
 			 AND char_length(${table.registryVersion}) <= 32`,
 		),
 	],

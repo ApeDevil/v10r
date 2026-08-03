@@ -119,6 +119,13 @@ export interface McpCallObservation {
 	toolCount: number | null;
 	/** Raw arguments. Redaction is the observer's job — never the transport's. */
 	args: unknown;
+	/**
+	 * The tool's answer text (`result.content[0].text`) for a tools/call, else null. CARRIED
+	 * here, never persisted here: whether any surface is allowed to keep it is the observer's
+	 * decision, which is exactly why this field says nothing about surfaces. Bounded at capture
+	 * (http.ts) so a deferred closure cannot retain an unbounded string.
+	 */
+	responseText: string | null;
 	/** Time inside `respondToMcpPost`, i.e. dispatch plus envelope validation. */
 	handleMs: number;
 }

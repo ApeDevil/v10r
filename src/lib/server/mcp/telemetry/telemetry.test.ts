@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { McpCallObservation } from '../types';
 import { inferOutcome, normalizeMethod } from './outcome';
-import { normalizeQueryText, scrubSecrets } from './scrub';
+import { normalizeQueryText, normalizeResponseText, scrubSecrets } from './scrub';
 import { classifyClientFamily, classifyTraffic } from './self-traffic';
 import { parseTraceparent, resolveTraceId } from './traceparent';
 
@@ -22,6 +22,7 @@ function observation(over: Partial<McpCallObservation> = {}): McpCallObservation
 		servedProtocolVersion: null,
 		toolCount: null,
 		args: undefined,
+		responseText: null,
 		handleMs: 1,
 		...over,
 	};
@@ -129,6 +130,25 @@ describe('normalizeQueryText', () => {
 		// column. Scrubbing first replaces the whole run.
 		const out = normalizeQueryText(`lookup ${'A1b2C3d4'.repeat(30)}`, 200);
 		expect(out).toBe('lookup [redacted]');
+	});
+});
+
+describe('normalizeResponseText', () => {
+	it('preserves markdown structure — the whole reason it is not normalizeQueryText', () => {
+		const answer = '# Pattern\n\n```ts\nconst x = 1;\nconst y = 2;\n```\n\n- one\n- two';
+		expect(normalizeResponseText(answer, 4000)).toBe(answer);
+	});
+
+	it('scrubs before truncating, so a long secret cannot survive by being cut short', () => {
+		const out = normalizeResponseText(`key: ${'A1b2C3d4'.repeat(30)}`, 4000);
+		expect(out).toBe('key: [redacted]');
+	});
+
+	it('truncates prose at the cap and rejects blank or non-string input', () => {
+		expect(normalizeResponseText('background jobs \n'.repeat(300), 4000)).toHaveLength(4000);
+		expect(normalizeResponseText('   ', 4000)).toBeNull();
+		expect(normalizeResponseText(42, 4000)).toBeNull();
+		expect(normalizeResponseText(null, 4000)).toBeNull();
 	});
 });
 
@@ -251,6 +271,27 @@ describe('classifyTraffic', () => {
 				selfSecret: secret,
 			}),
 		).toBe('test');
+	});
+
+	/** Same bearer-gate argument as admin: `external` would violate mcp_call_private_not_external. */
+	it('never calls the private surface external, and keeps the specific answers ahead of it', () => {
+		const client = new Headers({ 'user-agent': 'claude-code/2.1.89 (cli)' });
+		expect(
+			classifyTraffic({ headers: client, surface: 'private', vercelEnv: 'production', selfSecret: undefined }),
+		).toBe('self');
+		// A curl against the private surface is still synthetic, and a preview deploy still preview —
+		// both satisfy the CHECK; only `external` is forbidden. Lane queries filter on surface.
+		expect(
+			classifyTraffic({
+				headers: new Headers({ 'user-agent': 'curl/8.4.0' }),
+				surface: 'private',
+				vercelEnv: 'production',
+				selfSecret: undefined,
+			}),
+		).toBe('test');
+		expect(
+			classifyTraffic({ headers: new Headers(), surface: 'private', vercelEnv: 'preview', selfSecret: secret }),
+		).toBe('preview');
 	});
 });
 

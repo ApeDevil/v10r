@@ -278,4 +278,56 @@ describe('mcpTelemetryRetention — minimises by column before minimising by row
 		expect(second).toBe(0);
 		expect(await db.select().from(mcpCallLog)).toHaveLength(after.length);
 	});
+
+	/** A private-lane row — the surface whose text is exempt from pass 1. */
+	function privateRow(startedAt: Date) {
+		return {
+			...callRow(startedAt),
+			surface: 'private' as const,
+			traffic: 'self' as const,
+			outcome: 'ok' as const,
+			responseText: '# Answer',
+			workspace: 'densho',
+		};
+	}
+
+	it('EXEMPTS private rows from pass 1 — their text is the analysis corpus', async () => {
+		await db
+			.insert(mcpCallLog)
+			.values([
+				privateRow(daysAgo(MCP_QUERY_TEXT_RETENTION_DAYS + 1)),
+				callRow(daysAgo(MCP_QUERY_TEXT_RETENTION_DAYS + 1)),
+			]);
+
+		await mcpTelemetryRetention();
+
+		const rows = await db.select().from(mcpCallLog);
+		const privateRowAfter = rows.find((r) => r.surface === 'private');
+		const publicRowAfter = rows.find((r) => r.surface === 'public');
+		// Private keeps everything (including trace_id — a documented, intentional widening)...
+		expect(privateRowAfter?.queryText).toBe('kubernetes operator');
+		expect(privateRowAfter?.responseText).toBe('# Answer');
+		expect(privateRowAfter?.traceId).not.toBeNull();
+		// ...while the public row alongside it is still nulled — the regression guard on the `ne`.
+		expect(publicRowAfter?.queryText).toBeNull();
+		expect(publicRowAfter?.traceId).toBeNull();
+	});
+
+	it('still deletes private rows whole at the long window', async () => {
+		await db
+			.insert(mcpCallLog)
+			.values([
+				privateRow(daysAgo(MCP_TELEMETRY_RETENTION_DAYS + 1)),
+				privateRow(daysAgo(MCP_TELEMETRY_RETENTION_DAYS - 1)),
+			]);
+		await mcpTelemetryRetention();
+		const rows = await db.select().from(mcpCallLog);
+		expect(rows).toHaveLength(1);
+	});
+
+	it('stays idempotent with an old private row present — it is skipped, not re-counted', async () => {
+		await db.insert(mcpCallLog).values(privateRow(daysAgo(MCP_QUERY_TEXT_RETENTION_DAYS + 1)));
+		expect(await mcpTelemetryRetention()).toBe(0);
+		expect(await mcpTelemetryRetention()).toBe(0);
+	});
 });

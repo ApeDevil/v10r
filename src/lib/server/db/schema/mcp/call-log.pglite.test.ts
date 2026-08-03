@@ -108,6 +108,12 @@ describe('mcp.call_log schema', () => {
 			await expect(
 				db.insert(mcpCallLog).values(validRow({ outcome: 'empty', queryText: 'background image jobs' })),
 			).resolves.toBeDefined();
+			// The private lane keeps the question on EVERY outcome — the loosening is surface-scoped.
+			await expect(
+				db
+					.insert(mcpCallLog)
+					.values(validRow({ surface: 'private', traffic: 'self', outcome: 'ok', queryText: 'kept on success' })),
+			).resolves.toBeDefined();
 		});
 
 		it('mcp_call_query_len — the database truncates, not the caller', async () => {
@@ -118,6 +124,54 @@ describe('mcp.call_log schema', () => {
 
 		it('mcp_call_admin_not_external — admin traffic can never inflate an external KPI', async () => {
 			await expect(db.insert(mcpCallLog).values(validRow({ surface: 'admin', traffic: 'external' }))).rejects.toThrow();
+		});
+
+		it('mcp_call_private_not_external — same bearer-gate argument as admin', async () => {
+			await expect(
+				db.insert(mcpCallLog).values(validRow({ surface: 'private', traffic: 'external' })),
+			).rejects.toThrow();
+		});
+
+		it('mcp_call_response_scope — the answer exists only on a private tool row', async () => {
+			// Public can never keep an answer.
+			await expect(db.insert(mcpCallLog).values(validRow({ responseText: 'leaked answer' }))).rejects.toThrow();
+			// Even private cannot keep one on a protocol-stage row.
+			await expect(
+				db.insert(mcpCallLog).values(
+					validRow({
+						surface: 'private',
+						traffic: 'self',
+						stage: 'protocol',
+						outcome: 'ok',
+						method: 'tools/list',
+						toolName: null,
+						dispatchMs: null,
+						responseText: 'leaked answer',
+					}),
+				),
+			).rejects.toThrow();
+			// The one legal shape.
+			await expect(
+				db
+					.insert(mcpCallLog)
+					.values(validRow({ surface: 'private', traffic: 'self', responseText: '# Answer\n\nwith newlines kept' })),
+			).resolves.toBeDefined();
+		});
+
+		it('mcp_call_response_len — the database enforces the 4000-char ceiling', async () => {
+			await expect(
+				db.insert(mcpCallLog).values(validRow({ surface: 'private', traffic: 'self', responseText: 'x'.repeat(4001) })),
+			).rejects.toThrow();
+		});
+
+		it('mcp_call_workspace_scope + _format — the label is private-only and shape-bounded', async () => {
+			await expect(db.insert(mcpCallLog).values(validRow({ workspace: 'densho' }))).rejects.toThrow();
+			await expect(
+				db.insert(mcpCallLog).values(validRow({ surface: 'private', traffic: 'self', workspace: 'Not Valid' })),
+			).rejects.toThrow();
+			await expect(
+				db.insert(mcpCallLog).values(validRow({ surface: 'private', traffic: 'self', workspace: 'densho' })),
+			).resolves.toBeDefined();
 		});
 
 		it('mcp_call_key_scope — rejection rows carry no caller identifier', async () => {

@@ -14,7 +14,7 @@ The **project-specific** companion to `api-design` (generic contract practice) a
 | `AGENTS.md` (repo root) | itself | universal contract for non-Claude agents; deliberately has **no stack table** (anti-drift — stack lives in /docs); Claude Code reads CLAUDE.md, which supersedes it |
 | `/docs/**.md` + negotiation | `src/lib/server/docs/markdown-{urls,hook}.ts` | every published doc served as raw markdown at URL + `.md` |
 | `/llms.txt` | `src/lib/server/docs/llms-txt.ts` + `src/routes/llms.txt/+server.ts` | `buildLlmsTxt(getManifest())` per request — **never hand-edit link sections**; to change content, change the docs/manifest |
-| MCP × 2 runtimes | hosted `src/lib/server/mcp/` (HTTP, Vercel) · stdio `mcp/` (zero-dep podman) | 6 tools each, name-parity pinned |
+| MCP × 2 runtimes | hosted `src/lib/server/mcp/` (HTTP, Vercel: `/api/mcp/public` + bearer-gated `/api/mcp/private`, same 6 pattern tools; separate `/api/mcp/admin` demo registry) · stdio `mcp/` (zero-dep podman) | 6 tools each, name-parity pinned; `private` = full self-telemetry (query+answer per call, `MCP_PRIVATE_TOKEN` realm) |
 
 ## 1. The governing rule: two runtimes, one JSON seam
 
@@ -69,8 +69,9 @@ Run `bun run test src/lib/server/mcp src/lib/showcase/mcp` (in the container) BE
 
 - Editing any file captured in `public-excerpts.snapshot.json` → run `bun run mcp:excerpts:build` (AFTER biome formatting), or `mcp:excerpts:check` fails the gate. 65 files captured.
 - Stdio smoke: `podman run --rm -v "$PWD":/v10r:ro docker.io/oven/bun:1.3.12 bun /v10r/mcp/smoke.ts`. `DEFAULT_ROOT=/v10r`; inside the dev container the repo is at `/app`, so set `V10R_ROOT=/app`.
-- `MCP_TELEMETRY_SALT` / `MCP_SELF_TRAFFIC_TOKEN` unset ⇒ both **fail open silently** (unkeyed hash / no self-traffic tagging).
-- `/api/mcp/` MUST stay CSRF-exempt (or every non-browser client 403s); rate-limit sits BEFORE auth on the admin surface.
+- `MCP_TELEMETRY_SALT` / `MCP_SELF_TRAFFIC_TOKEN` unset ⇒ both **fail open silently** (unkeyed hash / no self-traffic tagging). `MCP_PRIVATE_TOKEN` unset fails CLOSED (503 on `/api/mcp/private`).
+- `/api/mcp/` MUST stay CSRF-exempt (or every non-browser client 403s); rate-limit sits BEFORE auth on both bearer surfaces (admin, private).
+- Private-lane telemetry: `query_text` on EVERY outcome + `response_text` (4000-cap, whitespace kept) + `workspace` header label, `surface='private'`, `traffic` never `'external'` — lane queries filter on `surface`, never `traffic`. `extractQuery` stays a closed allowlist even here.
 
 ## 7. Scope boundaries (route elsewhere)
 

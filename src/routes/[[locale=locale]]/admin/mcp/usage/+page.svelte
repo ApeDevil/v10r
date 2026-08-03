@@ -126,6 +126,193 @@ const totalCalls = $derived(data.unavailable ? 0 : data.health.external + data.h
 			{/snippet}
 		</Card>
 
+		<!-- PRIVATE LANE — rendered only once the operator has actually used /api/mcp/private, so an
+		     operator who never enables the surface sees zero change to this page. Every query here
+		     filters on surface='private', never on traffic: private rows are non-external by
+		     construction and must never mix into the adoption panels above. -->
+		{#if data.privateSummary.calls > 0}
+			<Card>
+				{#snippet header()}
+					<div>
+						<h3 class="text-fluid-md font-semibold">Private lane</h3>
+						<p class="text-fluid-xs text-muted">
+							Rows from /api/mcp/private — bearer-gated, so every row here is you. Never counted as
+							external adoption.
+						</p>
+					</div>
+				{/snippet}
+				<Stack gap="3">
+					<Cluster gap="4">
+						<div class="stat">
+							<span class="stat-value">{data.privateSummary.calls}</span>
+							<span class="stat-label">Calls</span>
+						</div>
+						<div class="stat">
+							<span class="stat-value">{data.privateSummary.toolCalls}</span>
+							<span class="stat-label">Tool calls</span>
+						</div>
+						<div class="stat muted">
+							<span class="stat-value">{data.privateSummary.distinctWorkspaces}</span>
+							<span class="stat-label">Workspaces</span>
+						</div>
+						<div class="stat muted">
+							<span class="stat-value">{data.privateSummary.withResponse} of {data.privateSummary.toolCalls}</span>
+							<span class="stat-label">Answers captured</span>
+						</div>
+					</Cluster>
+
+					{#await data.privateCalls}
+						<div class="skeleton-table"></div>
+					{:then calls}
+						{#if calls.length > 0}
+							<div class="table-wrap" tabindex="0" aria-label="Recent private calls">
+								<table class="data-table">
+									<thead>
+										<tr><th>When</th><th>Workspace</th><th>Tool</th><th>Question</th><th>Outcome</th><th>Total</th><th>Answer</th></tr>
+									</thead>
+									<tbody>
+										{#each calls as row, i (i)}
+											<tr>
+												<td class="text-muted">{new Date(row.startedAt).toLocaleString()}</td>
+												<td>
+													{#if row.workspace}<Badge variant="outline">{row.workspace}</Badge>{:else}—{/if}
+												</td>
+												<td><code>{row.toolName}</code></td>
+												<td class="query-cell">{row.queryText ?? '—'}</td>
+												<td><code>{row.outcome}</code></td>
+												<td>{ms(row.totalMs)}</td>
+												<td>
+													{#if row.responsePreview}
+														<details>
+															<summary
+																>{row.responseChars} chars{(row.responseChars ?? 0) > data.responsePreviewChars
+																	? `, showing first ${data.responsePreviewChars}`
+																	: ''}</summary
+															>
+															<pre class="response-preview">{row.responsePreview}</pre>
+														</details>
+													{:else}
+														—
+													{/if}
+												</td>
+											</tr>
+										{/each}
+									</tbody>
+								</table>
+							</div>
+						{/if}
+					{:catch}
+						<p class="text-fluid-sm text-muted">Could not load recent private calls.</p>
+					{/await}
+				</Stack>
+				{#snippet footer()}
+					{#if data.privateSummary.clientKeyed === 0}
+						<!-- Not "no repeats": with the salt unset every private row has a null client_key and
+						     the repeat-ask probe below has nothing to join on. Say so instead of looking empty. -->
+						<Badge variant="warning">
+							Repeat-ask detection needs MCP_TELEMETRY_SALT — client_key is null on every private row
+							in this window
+						</Badge>
+					{:else}
+						{#await data.privateRequeries then requeries}
+							{#if requeries.length > 0}
+								<div class="table-wrap" tabindex="0" aria-label="Repeat asks within 30 seconds">
+									<table class="data-table">
+										<thead>
+											<tr><th>Repeat ask (≤30 s)</th><th>Tool</th><th>Question</th><th>Outcome</th></tr>
+										</thead>
+										<tbody>
+											{#each requeries as row, i (i)}
+												<tr>
+													<td class="text-muted">{new Date(row.startedAt).toLocaleString()}</td>
+													<td><code>{row.toolName}</code></td>
+													<td class="query-cell">{row.queryText ?? '—'}</td>
+													<td><code>{row.outcome}</code></td>
+												</tr>
+											{/each}
+										</tbody>
+									</table>
+								</div>
+								<p class="text-fluid-xs text-muted">
+									Same tool re-asked by the same caller within 30 seconds — the cheap signal that the
+									first answer did not help.
+								</p>
+							{:else}
+								<p class="text-fluid-xs text-muted">No repeat asks within 30 seconds in this window.</p>
+							{/if}
+						{/await}
+					{/if}
+				{/snippet}
+			</Card>
+
+			<Card>
+				{#snippet header()}
+					<div>
+						<h3 class="text-fluid-md font-semibold">Unanswered questions (private)</h3>
+						<p class="text-fluid-xs text-muted">
+							Your own queries that matched nothing, verbatim. No distinct-caller threshold applies
+							here — that threshold protects third-party text and blocks poisoning, and on a
+							bearer-gated lane with one caller neither hazard exists.
+						</p>
+					</div>
+				{/snippet}
+				{#await data.privateGaps}
+					<div class="skeleton-table"></div>
+				{:then gaps}
+					{#if gaps.length === 0}
+						<EmptyState
+							icon="i-lucide-search-x"
+							title="No private gaps in this window"
+							description="Every question you asked matched something in the registry."
+						/>
+					{:else}
+						<div class="table-wrap" tabindex="0" aria-label="Unanswered private questions">
+							<table class="data-table">
+								<thead>
+									<tr><th>Query</th><th>Via</th><th>Times asked</th><th>Last asked</th></tr>
+								</thead>
+								<tbody>
+									{#each gaps as gap (`${gap.queryText}-${gap.toolName}`)}
+										<tr>
+											<td class="query-cell">{gap.queryText}</td>
+											<td><Badge variant="outline">{gap.toolName ?? '—'}</Badge></td>
+											<td>{gap.calls}</td>
+											<td class="text-muted">{gap.lastSeen ? new Date(gap.lastSeen).toLocaleString() : '—'}</td>
+										</tr>
+									{/each}
+								</tbody>
+							</table>
+						</div>
+					{/if}
+				{:catch}
+					<p class="text-fluid-sm text-muted">Could not load private gaps.</p>
+				{/await}
+				{#snippet footer()}
+					{#if data.privateToolMix.length > 0}
+						<div class="table-wrap" tabindex="0" aria-label="Private tool mix">
+							<table class="data-table">
+								<thead>
+									<tr><th>Tool</th><th>Calls</th><th>No match</th><th>Bad args</th><th>Not found</th><th>Answers kept</th></tr>
+								</thead>
+								<tbody>
+									{#each data.privateToolMix as tool (tool.toolName)}
+										<tr>
+											<td><code>{tool.toolName}</code></td>
+											<td>{tool.calls}</td>
+											<td>{rate(tool.empty, tool.calls)}</td>
+											<td>{rate(tool.invalidArgs, tool.calls)}</td>
+											<td>{rate(tool.notFound, tool.calls)}</td>
+											<td>{tool.withResponse}</td>
+										</tr>
+									{/each}
+								</tbody>
+							</table>
+						</div>
+					{/if}
+				{/snippet}
+			</Card>
+		{/if}
+
 		<!-- CARD 2 — tool quality. Only meaningful once something has failed. -->
 		{#if data.tools.some((t) => t.empty + t.invalidArgs + t.notFound + t.threw + t.uninstrumented > 0)}
 			<Card>
@@ -339,6 +526,21 @@ const totalCalls = $derived(data.unavailable ? 0 : data.health.external + data.h
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+/* The answer preview keeps its markdown structure — deliberately NOT .query-cell, whose
+   white-space: nowrap would destroy exactly the newlines this column preserves. */
+.response-preview {
+	font-family: ui-monospace, monospace;
+	font-size: var(--text-fluid-xs);
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	max-width: 40rem;
+	max-height: 20rem;
+	overflow: auto;
+	margin-top: var(--spacing-2);
+	padding: var(--spacing-2);
+	background: var(--color-subtle);
+	border-radius: var(--radius-sm);
 }
 .stat {
 	display: flex;

@@ -217,6 +217,153 @@ export async function getUnsupportedVersionRequests(since: Date) {
 		.orderBy(desc(sql`sum(${mcpCallLog.observedCount})`));
 }
 
+/**
+ * ── The private lane ─────────────────────────────────────────────────────────────────────────
+ *
+ * These queries filter on `surface`, NEVER on `traffic`. Private rows are non-external by
+ * construction (`classifyTraffic` + `mcp_call_private_not_external`), so `externalOnly` would
+ * return the empty set here — and depending on how the call was made a private row's traffic can
+ * legitimately be 'self', 'test' (curl UA) or 'preview'. This is a separate lane, not a slice of
+ * the KPI corpus: the external panels above and these must never share a filter.
+ */
+const privateOnly = (since: Date) => and(eq(mcpCallLog.surface, 'private'), gte(mcpCallLog.startedAt, since));
+
+/** Bounded so the deferred page payload cannot carry 50 × 4000 chars of answer text. */
+export const RESPONSE_PREVIEW_CHARS = 400;
+
+/**
+ * One-row overview of the operator's own usage. `clientKeyed` is what lets the repeat-ask card
+ * say "salt unset" instead of rendering an empty table that looks like "no repeats".
+ */
+export async function getPrivateSummary(since: Date) {
+	const [row] = await db
+		.select({
+			calls: sql<number>`coalesce(sum(${mcpCallLog.observedCount}), 0)::int`,
+			toolCalls: sql<number>`coalesce(sum(${mcpCallLog.observedCount}) FILTER (WHERE ${mcpCallLog.stage} = 'tool'), 0)::int`,
+			withResponse: sql<number>`count(*) FILTER (WHERE ${mcpCallLog.responseText} IS NOT NULL)::int`,
+			withWorkspace: sql<number>`count(*) FILTER (WHERE ${mcpCallLog.workspace} IS NOT NULL)::int`,
+			clientKeyed: sql<number>`count(*) FILTER (WHERE ${mcpCallLog.clientKey} IS NOT NULL)::int`,
+			distinctWorkspaces: countDistinct(mcpCallLog.workspace),
+		})
+		.from(mcpCallLog)
+		.where(privateOnly(since));
+	return {
+		calls: Number(row?.calls ?? 0),
+		toolCalls: Number(row?.toolCalls ?? 0),
+		withResponse: Number(row?.withResponse ?? 0),
+		withWorkspace: Number(row?.withWorkspace ?? 0),
+		clientKeyed: Number(row?.clientKeyed ?? 0),
+		distinctWorkspaces: Number(row?.distinctWorkspaces ?? 0),
+	};
+}
+
+/**
+ * The operator's recent calls, question and answer side by side. Selecting a bounded `left()`
+ * preview rather than the full column is deliberate: the full 4000-char answers stay in the
+ * database, the page payload carries at most `RESPONSE_PREVIEW_CHARS` per row.
+ */
+export async function getPrivateCalls(since: Date, limit = 50) {
+	return db
+		.select({
+			startedAt: mcpCallLog.startedAt,
+			toolName: mcpCallLog.toolName,
+			outcome: mcpCallLog.outcome,
+			queryText: mcpCallLog.queryText,
+			workspace: mcpCallLog.workspace,
+			totalMs: mcpCallLog.totalMs,
+			dispatchMs: mcpCallLog.dispatchMs,
+			responsePreview: sql<string | null>`left(${mcpCallLog.responseText}, ${RESPONSE_PREVIEW_CHARS})`,
+			responseChars: sql<number | null>`char_length(${mcpCallLog.responseText})`,
+		})
+		.from(mcpCallLog)
+		.where(and(privateOnly(since), isNotNull(mcpCallLog.toolName)))
+		.orderBy(desc(mcpCallLog.startedAt))
+		.limit(limit);
+}
+
+/**
+ * Questions the registry could not answer — the operator's own, verbatim.
+ *
+ * The `>= GAP_MIN_DISTINCT_CLIENTS` threshold is deliberately ABSENT here, and its absence is as
+ * principled as its presence upstream. That threshold does two jobs: k-anonymity over text
+ * describing a THIRD PARTY's project, and anti-poisoning against an attacker-controlled loop. On
+ * a bearer-gated lane with exactly one authorised caller neither hazard exists — there is no
+ * third party, and the only person who can poison the list is the operator reading it. Applying
+ * it here would suppress ~100% of rows and render a permanently empty panel indistinguishable
+ * from "no gaps".
+ */
+export async function getPrivateGaps(since: Date, limit = 20) {
+	return db
+		.select({
+			queryText: mcpCallLog.queryText,
+			toolName: mcpCallLog.toolName,
+			calls: sql<number>`sum(${mcpCallLog.observedCount})::int`,
+			lastSeen: max(mcpCallLog.startedAt),
+			registryVersion: max(mcpCallLog.registryVersion),
+		})
+		.from(mcpCallLog)
+		.where(and(privateOnly(since), eq(mcpCallLog.outcome, 'empty'), isNotNull(mcpCallLog.queryText)))
+		.groupBy(mcpCallLog.queryText, mcpCallLog.toolName)
+		.orderBy(desc(sql`sum(${mcpCallLog.observedCount})`), desc(max(mcpCallLog.startedAt)))
+		.limit(limit);
+}
+
+/** Per-tool mix of the operator's own calls, plus how many carried a captured answer. */
+export async function getPrivateToolMix(since: Date) {
+	return db
+		.select({
+			toolName: mcpCallLog.toolName,
+			calls: sql<number>`sum(${mcpCallLog.observedCount})::int`,
+			empty: sql<number>`sum(${mcpCallLog.observedCount}) FILTER (WHERE ${mcpCallLog.outcome} = 'empty')::int`,
+			invalidArgs: sql<number>`sum(${mcpCallLog.observedCount}) FILTER (WHERE ${mcpCallLog.outcome} = 'invalid_args')::int`,
+			notFound: sql<number>`sum(${mcpCallLog.observedCount}) FILTER (WHERE ${mcpCallLog.outcome} = 'not_found')::int`,
+			withResponse: sql<number>`count(*) FILTER (WHERE ${mcpCallLog.responseText} IS NOT NULL)::int`,
+		})
+		.from(mcpCallLog)
+		.where(and(privateOnly(since), isNotNull(mcpCallLog.toolName)))
+		.groupBy(mcpCallLog.toolName)
+		.orderBy(desc(sql`sum(${mcpCallLog.observedCount})`));
+}
+
+/**
+ * The cheap "answer judged useless" probe: the same tool re-asked by the same caller within 30
+ * seconds usually means the first answer did not help.
+ *
+ * drizzle-orm 0.45 has no `.windows()`. A correlated EXISTS says the same thing, stays inside
+ * the query builder (so the `{rows}`-vs-array driver hazard at the top of this file cannot
+ * bite), and needs no subquery plumbing. `prev` is the inner alias; the qualified column
+ * references resolve to the OUTER row. Returns nothing when `client_key` is null (salt unset) —
+ * the page renders that as an explicit badge, not an empty table.
+ */
+export async function getPrivateRequeries(since: Date, limit = 20) {
+	return db
+		.select({
+			startedAt: mcpCallLog.startedAt,
+			toolName: mcpCallLog.toolName,
+			outcome: mcpCallLog.outcome,
+			queryText: mcpCallLog.queryText,
+			totalMs: mcpCallLog.totalMs,
+		})
+		.from(mcpCallLog)
+		.where(
+			and(
+				privateOnly(since),
+				isNotNull(mcpCallLog.toolName),
+				isNotNull(mcpCallLog.clientKey),
+				sql`EXISTS (
+					SELECT 1 FROM ${mcpCallLog} prev
+					WHERE prev.client_key = ${mcpCallLog.clientKey}
+					  AND prev.tool_name = ${mcpCallLog.toolName}
+					  AND prev.id <> ${mcpCallLog.id}
+					  AND prev.started_at < ${mcpCallLog.startedAt}
+					  AND prev.started_at > ${mcpCallLog.startedAt} - interval '30 seconds'
+				)`,
+			),
+		)
+		.orderBy(desc(mcpCallLog.startedAt))
+		.limit(limit);
+}
+
 /** Does the table exist and is it readable? Distinguishes "not provisioned" from "no traffic". */
 export async function telemetryReachable(): Promise<boolean> {
 	try {

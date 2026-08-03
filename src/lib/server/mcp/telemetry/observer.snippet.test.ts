@@ -33,6 +33,7 @@ function observation(over: Partial<McpCallObservation> = {}): McpCallObservation
 		servedProtocolVersion: null,
 		toolCount: null,
 		args: undefined,
+		responseText: null,
 		handleMs: 1,
 		...over,
 	};
@@ -70,6 +71,23 @@ describe('buildCallLogRow never records a submitted snippet', () => {
 			CONTEXT,
 			new Date('2026-07-30T00:00:00Z'),
 		);
+		expect(row.queryText).toBeNull();
+		expect(JSON.stringify(row)).not.toContain('SECRET_MARKER');
+	});
+
+	/**
+	 * The private lane removed the outcome==='empty' gate for query capture — so on that surface
+	 * the ONLY remaining barrier between a submitted snippet and the row is the closed
+	 * `extractQuery` allowlist. This case proves the allowlist alone holds. If it ever fails,
+	 * someone widened extractQuery — revert that, do not "fix" this test.
+	 */
+	it('drops the snippet on the PRIVATE surface too, where query capture has no outcome gate', () => {
+		const row = buildCallLogRow(
+			observation({ isError: true, diag: 'empty', args: { snippet: 'SECRET_MARKER_do_not_persist' } }),
+			{ ...CONTEXT, surface: 'private' as const },
+			new Date('2026-07-30T00:00:00Z'),
+		);
+		expect(row.surface).toBe('private');
 		expect(row.queryText).toBeNull();
 		expect(JSON.stringify(row)).not.toContain('SECRET_MARKER');
 	});
