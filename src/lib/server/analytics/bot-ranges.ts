@@ -102,6 +102,43 @@ export function isPlausibleIpAddress(ip: string): boolean {
 	return octets.every((o) => /^\d{1,3}$/.test(o) && Number(o) <= 255);
 }
 
+/**
+ * Reduce a client address to the exact form the `<<= cidr` test needs, or null.
+ *
+ * ## The IPv4-mapped IPv6 trap
+ *
+ * Postgres treats `::ffff:1.2.3.4` as a member of the IPv6 family, and `<<=`
+ * returns FALSE when the two operands are different families — silently, with no
+ * error. Verified against Neon on 2026-08-03:
+ *
+ *   '132.196.86.42'::inet       <<= '132.196.86.0/24'::cidr  → true
+ *   '::ffff:132.196.86.42'::inet <<= '132.196.86.0/24'::cidr  → FALSE
+ *
+ * Every operator publishes plain IPv4 prefixes. So an unwrapped mapped address
+ * matches nothing, and the CASE in `recordBotHit` falls through to `spoofed` —
+ * reporting a legitimate GPTBot as an impersonator. A verification column whose
+ * failure mode is inventing attacks is worse than no verification column, so the
+ * unwrapping happens here, before the value can reach the comparison.
+ *
+ * Also strips a zone id and brackets, which arrive from proxy and Host-style
+ * sources. Returns null when nothing usable survives, which the caller renders as
+ * `unchecked` — never as a verdict about the caller.
+ */
+export function normalizeIpForVerification(ip: string | null | undefined): string | null {
+	if (!ip) return null;
+
+	let addr = ip.trim().toLowerCase().split('%')[0] ?? '';
+	if (addr.startsWith('[')) {
+		const close = addr.indexOf(']');
+		if (close > 0) addr = addr.slice(1, close);
+	}
+
+	const mapped = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/.exec(addr);
+	if (mapped?.[1]) addr = mapped[1];
+
+	return isPlausibleIpAddress(addr) ? addr : null;
+}
+
 /** Pull every prefix out of one feed document, ignoring entries we cannot use. */
 export function parsePrefixes(payload: unknown): string[] {
 	if (typeof payload !== 'object' || payload === null) return [];

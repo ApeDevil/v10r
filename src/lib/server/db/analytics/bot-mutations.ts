@@ -13,7 +13,7 @@
 
 import { type SQL, sql } from 'drizzle-orm';
 import type { BotIdentity } from '$lib/server/analytics/bot-classify';
-import { isPlausibleIpAddress } from '$lib/server/analytics/bot-ranges';
+import { normalizeIpForVerification } from '$lib/server/analytics/bot-ranges';
 import { db } from '$lib/server/db';
 
 /** Matches the CHECK on `bot_hits.path`. Truncating here keeps the write from failing. */
@@ -44,10 +44,16 @@ export async function recordBotHit({ identity, ip, route, path, agentSurface, st
 	//    not, which is an operational gap rather than a verdict about the caller.
 	//  - feed present but empty     → `unchecked`, decided in SQL below, because
 	//    "the refresh job has never run" must never read as impersonation.
+	// Normalised, not merely validated: an IPv4-mapped IPv6 address (`::ffff:1.2.3.4`)
+	// is a DIFFERENT address family to Postgres, so `<<=` returns false against every
+	// published IPv4 prefix and the CASE below would report a genuine crawler as
+	// `spoofed`. See normalizeIpForVerification.
+	const comparableIp = normalizeIpForVerification(ip);
+
 	let verification: SQL;
 	if (identity.rangeSource === null) {
 		verification = sql`'unpublished'::analytics.bot_verification`;
-	} else if (ip === null || !isPlausibleIpAddress(ip)) {
+	} else if (comparableIp === null) {
 		verification = sql`'unchecked'::analytics.bot_verification`;
 	} else {
 		const source = sql`${identity.rangeSource}::analytics.bot_range_source`;
@@ -57,7 +63,7 @@ export async function recordBotHit({ identity, ip, route, path, agentSurface, st
 				WHEN EXISTS (
 					SELECT 1 FROM analytics.bot_ip_ranges
 					WHERE source = ${source}
-					  AND ${ip}::inet <<= prefix::cidr
+					  AND ${comparableIp}::inet <<= prefix::cidr
 				) THEN 'verified'::analytics.bot_verification
 				ELSE 'spoofed'::analytics.bot_verification
 			END`;
