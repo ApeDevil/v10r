@@ -7,11 +7,17 @@ import * as m from '$lib/paraglide/messages';
 <PageContainer width="wide" class="pt-7">
 	<PageHeader
 		title="Documentation"
-		description="Reference docs for how Velociraptor is built — stack decisions, architecture patterns, and the principles behind them."
+		description="Reference docs for how Velociraptor is built — the pattern library, stack decisions, and the principles behind them."
 		breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Docs' }]}
 	/>
 
 	<nav class="docs-nav">
+		<LinkCard
+			href="/docs/pattern-library"
+			icon="i-lucide-library"
+			title="Pattern Library"
+			description="The product in one page: every proven pattern with its purpose, the code that implements it, and the showcase that proves it."
+		/>
 		<LinkCard
 			href="/docs/foundation"
 			icon="i-lucide-compass"

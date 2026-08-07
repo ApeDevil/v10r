@@ -19,6 +19,7 @@ const SECTION_LABEL: Record<string, string> = {
 	foundation: 'Foundation',
 	blueprint: 'Blueprint',
 	stack: 'Stack',
+	'pattern-library': 'Pattern Library',
 };
 
 /** Strip frontmatter + common markdown syntax down to searchable plain text. */
@@ -51,7 +52,7 @@ function buildCorpus(): SearchRecord[] {
 	const manifest = getManifest();
 	const out: SearchRecord[] = [];
 
-	for (const section of ['foundation', 'blueprint', 'stack'] as const) {
+	for (const section of ['foundation', 'blueprint', 'stack', 'pattern-library'] as const) {
 		for (const entry of manifest[section]) {
 			const raw = getRawMarkdown(entry.sourcePath) ?? '';
 			const sub = entry.layer ?? entry.group;

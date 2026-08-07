@@ -1976,6 +1976,8 @@
 	"home_structure_nrag_item_verify_desc": "Nachträgliche Zitattaxonomie — Zitat, Paraphrase, abgedriftet, nicht belegt",
 	"home_showcase_cta": "zu den Showcases",
 	"home_showcase_map_aria": "Alle Showcases",
+	"home_showcase_patterns_cta": "zur Pattern-Bibliothek",
+	"home_showcase_patterns_desc": "der Katalog hinter diesen Demos — jedes bewährte Pattern mit dem Code, der es implementiert, und dem Showcase, der es beweist",
 	"footer_source_github_aria": "Quellcode auf GitHub",
 	"footer_source_gitlab_aria": "Quellcode auf GitLab",
 	"footer_copyright": "© {year} Velociraptor.",

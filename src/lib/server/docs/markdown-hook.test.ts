@@ -3,13 +3,14 @@ import { getManifest } from './manifest';
 import { docsMarkdown } from './markdown-hook';
 import { markdownHrefFor } from './markdown-urls';
 
-/** Drive the Handle directly — the hook only reads request.method, url.pathname
- *  and request.headers, so a two-field event stub is the honest surface. */
-async function run(path: string, init: RequestInit & { resolveWith?: Response } = {}) {
+/** Drive the Handle directly — the hook only reads request.method, url.pathname,
+ *  request.headers, and isDataRequest, so a three-field event stub is the honest
+ *  surface. */
+async function run(path: string, init: RequestInit & { resolveWith?: Response; isDataRequest?: boolean } = {}) {
 	const url = new URL(`https://www.v10r.dev${path}`);
 	const resolveWith = init.resolveWith ?? new Response('<html></html>', { headers: { 'Content-Type': 'text/html' } });
 	const resolve = vi.fn(async () => resolveWith);
-	const event = { request: new Request(url, init), url } as never;
+	const event = { request: new Request(url, init), url, isDataRequest: init.isDataRequest ?? false } as never;
 	const response = await docsMarkdown({ event, resolve } as never);
 	return { response, resolve };
 }
@@ -33,6 +34,25 @@ describe('docsMarkdown', () => {
 		const { response } = await run('/docs/system-abstraction.md');
 		expect(response.status).toBe(200);
 		expect(await response.text()).toContain('# System Abstraction');
+		// Two variants live at the .md URL (agent markdown vs browser fall-through);
+		// without Vary a shared cache would serve the markdown 200 to browsers too.
+		expect(response.headers.get('Vary')).toBe('Sec-Fetch-Dest');
+	});
+
+	it('passes browser document navigations through to routing', async () => {
+		// The docs +layout.server.ts then 303s the `.md` suffix away, so a human
+		// typing the .md URL lands on the rendered page, never on plain text.
+		const { resolve } = await run('/docs/system-abstraction.md', {
+			headers: { 'sec-fetch-dest': 'document' },
+		});
+		expect(resolve).toHaveBeenCalledOnce();
+	});
+
+	it('passes SvelteKit data requests through instead of feeding markdown to the client router', async () => {
+		// isDataRequest = the client router navigating to a .md link; a markdown
+		// body here crashes its JSON.parse and the click silently does nothing.
+		const { resolve } = await run('/docs/system-abstraction.md', { isDataRequest: true });
+		expect(resolve).toHaveBeenCalledOnce();
 	});
 
 	it('404s blocked docs without ever resolving downstream', async () => {

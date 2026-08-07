@@ -20,6 +20,7 @@ export interface RegRef {
 
 export interface RegistryPattern {
 	id: string;
+	tier: 'deep' | 'light';
 	title: string;
 	category: string;
 	summary: string;
@@ -39,18 +40,23 @@ export interface RegistryPattern {
 export interface Registry {
 	version: string;
 	note?: string;
+	groups: Array<{ id: string; title: string }>;
+	categories: Array<{ id: string; title: string; group: string }>;
 	patterns: RegistryPattern[];
 }
 
 /** Slim per-pattern projection for the page's dependency table. */
 export interface PatternRow {
 	id: string;
+	tier: 'deep' | 'light';
 	category: string;
 	depends_on: string[];
 }
 
 export interface RegistryStats {
 	patternCount: number;
+	deepCount: number;
+	lightCount: number;
 	categoryCount: number;
 	edgeCount: number;
 	invariantCount: number;
@@ -68,8 +74,11 @@ export function computeStats(reg: Registry): RegistryStats {
 			categories.push({ name: pattern.category, count: 1 });
 		}
 	}
+	const deepCount = reg.patterns.filter((p) => p.tier === 'deep').length;
 	return {
 		patternCount: reg.patterns.length,
+		deepCount,
+		lightCount: reg.patterns.length - deepCount,
 		categoryCount: categories.length,
 		edgeCount: reg.patterns.reduce((sum, p) => sum + p.depends_on.length, 0),
 		invariantCount: reg.patterns.reduce((sum, p) => sum + p.invariants.length, 0),
@@ -79,8 +88,9 @@ export function computeStats(reg: Registry): RegistryStats {
 
 /**
  * DagGraph nodes are fixed 80×28px rects with non-wrapping SVG text — registry
- * titles overflow badly, so every pattern needs a hand-picked short label.
- * registry-viz.test.ts pins this map against the live registry ids.
+ * titles overflow badly, so every DEEP pattern needs a hand-picked short label.
+ * registry-viz.test.ts pins this map against the live registry's deep-tier ids;
+ * light index rows are not graphed (see toDagData) and need no label here.
  */
 export const DAG_SHORT_LABELS: Record<string, string> = {
 	'multi-client-core': 'Multi-Client',
@@ -97,14 +107,21 @@ export const DAG_SHORT_LABELS: Record<string, string> = {
 };
 
 /**
- * Faithful 1:1 projection of the registry. Every pattern becomes a node even
- * with zero edges (DagGraph won't draw those — the page's data table covers
- * them; don't fabricate edges). Edge direction is dependency → dependent,
- * i.e. the topological build order recommend_emulation_plan uses.
+ * Faithful projection of the DEEP-tier subgraph. The DAG is about emulation
+ * order — a deep-card concept — and the ~125 edge-less light index rows would
+ * drown the graph in "not drawn" nodes, so only deep records (and edges whose
+ * both endpoints are deep) are projected. A deep node with zero edges still
+ * becomes a node (DagGraph won't draw it — the page's data table covers it;
+ * don't fabricate edges). Edge direction is dependency → dependent, i.e. the
+ * topological build order recommend_emulation_plan uses.
  */
 export function toDagData(reg: Registry, shortLabels: Record<string, string> = DAG_SHORT_LABELS): DagData {
+	const deep = reg.patterns.filter((p) => p.tier === 'deep');
+	const deepIds = new Set(deep.map((p) => p.id));
 	return {
-		nodes: reg.patterns.map((p) => ({ id: p.id, label: shortLabels[p.id] ?? p.title, group: p.category })),
-		edges: reg.patterns.flatMap((p) => p.depends_on.map((dep) => ({ source: dep, target: p.id }))),
+		nodes: deep.map((p) => ({ id: p.id, label: shortLabels[p.id] ?? p.title, group: p.category })),
+		edges: deep.flatMap((p) =>
+			p.depends_on.filter((dep) => deepIds.has(dep)).map((dep) => ({ source: dep, target: p.id })),
+		),
 	};
 }

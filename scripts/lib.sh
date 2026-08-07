@@ -3,7 +3,8 @@
 #
 # Provides: TOOLKIT_DIR + require_repo (cwd-aware REPO_ROOT/COMPOSE), branch/
 # remote config, compose_service (auto-derived), colored log helpers, `run`
-# (echo-then-exec), and `run_validate` (container-aware gate).
+# (echo-then-exec), `container_run` (compose-aware in-container runner), and
+# `run_validate` (the gate, a thin wrapper over container_run).
 
 # Where the toolkit itself lives (survives the ~/.local/bin symlink). Used only
 # to locate sibling scripts — NOT the repo we act on.
@@ -19,7 +20,7 @@ __compose_service=""
 # Tunables — defaults suit a v10r-style repo. Override per-invocation with V10R_*
 # env vars, or per-repo with a committed .vrrc (loaded by require_repo). Env wins.
 # The container name and service are NOT tunables here — they're read from the
-# repo's own compose.yaml (see compose_service + run_validate), so most repos
+# repo's own compose.yaml (see compose_service + container_run), so most repos
 # need no .vrrc at all.
 REMOTE="${V10R_REMOTE:-origin}"
 DEV_BRANCH="${V10R_DEV_BRANCH:-dev}"
@@ -112,26 +113,34 @@ project_running() {
 	return 1
 }
 
-# Run the full gate (`bun run validate`) inside the current repo's container.
-# The container name is never hard-coded — we drive the repo's compose project:
+# Run a command inside the current repo's container. The container name is never
+# hard-coded — we drive the repo's compose project:
 # - project running → `compose exec` into the service (reuse the warm container)
 # - anything else   → `compose run --rm` one-shot (auto-removed, never long-lived)
+# Leading `-e KEY=VAL` pairs become container env vars (exec and run both take -e).
 #
 # The one-shot deliberately does NOT start the project first. It needs no cleanup,
-# so the gate cannot leave a container behind on a path that exits early — and every
+# so a caller cannot leave a container behind on a path that exits early — and every
 # ship path does (rollback on gate failure, abort at the push confirmation, --dry-run).
 # It also cannot stop a container you were already using: a `vr s` in one terminal
 # never touches the dev server in another.
-run_validate() {
+container_run() {
 	require_repo
 	command -v podman >/dev/null 2>&1 || die "podman not found on host."
-	[ -f "$REPO_ROOT/compose.yaml" ] || die "No compose.yaml in $REPO_ROOT — vr's gate runs inside a container."
+	[ -f "$REPO_ROOT/compose.yaml" ] || die "No compose.yaml in $REPO_ROOT — vr runs commands inside a container."
+	local env_flags=()
+	while [ $# -gt 1 ] && [ "$1" = "-e" ]; do
+		env_flags+=(-e "$2"); shift 2
+	done
 	local svc; svc="$(compose_service)"
 	if project_running; then
-		info "Container up → validating via 'compose exec $svc'"
-		run "${COMPOSE[@]}" exec -T "$svc" bun run validate
+		info "Container up → running via 'compose exec $svc'"
+		run "${COMPOSE[@]}" exec -T "${env_flags[@]}" "$svc" "$@"
 	else
 		info "Container not running → ephemeral one-shot (auto-removed)"
-		run "${COMPOSE[@]}" run --rm -T "$svc" bun run validate
+		run "${COMPOSE[@]}" run --rm -T "${env_flags[@]}" "$svc" "$@"
 	fi
 }
+
+# Run the full gate (`bun run validate`) inside the current repo's container.
+run_validate() { container_run bun run validate; }

@@ -84,7 +84,7 @@ describe('showcase → docs mapping gate', () => {
 	const manifest = getManifest();
 
 	const validDocUrls = new Set<string>();
-	for (const section of ['foundation', 'blueprint', 'stack'] as const) {
+	for (const section of ['foundation', 'blueprint', 'stack', 'pattern-library'] as const) {
 		for (const entry of manifest[section]) {
 			validDocUrls.add(`/docs/${section}/${entry.slug}`);
 		}

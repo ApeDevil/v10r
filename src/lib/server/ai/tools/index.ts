@@ -18,6 +18,7 @@ import { createProposePlanTool } from './propose-plan';
 import { createResolveRefTool } from './resolve-ref';
 import { type CatalogSink, createSearchCatalogTool } from './search-catalog';
 import { createSearchDocsTool } from './search-docs';
+import { createSearchPatternLibraryTool } from './search-pattern-library';
 
 export type {
 	DeskEffect,
@@ -50,6 +51,7 @@ export const TOOL_MANIFEST: readonly ToolDescriptor[] = [
 	{ name: 'get_rawrag_chunks', surface: 'chatbot', risk: 'read' },
 	{ name: 'search_catalog', surface: 'chatbot', risk: 'read' },
 	{ name: 'search_project_docs', surface: 'chatbot', risk: 'read' },
+	{ name: 'search_pattern_library', surface: 'chatbot', risk: 'read' },
 	// ── deskbot: scope-gated UI-parity tools ──
 	{ name: 'desk_list_files', surface: 'deskbot', risk: 'read', scope: 'desk:read' },
 	{ name: 'desk_read_file', surface: 'deskbot', risk: 'read', scope: 'desk:read' },
@@ -208,6 +210,9 @@ export function buildRetrievalTools(
 		// Semantic retrieval over the project docs corpus (system-owned). Feeds the same
 		// catalog sink → docs citations render as chips and pass the surface verifier.
 		...createSearchDocsTool(locale, catalogSink),
+		// The canonical pattern registry (same data both MCP runtimes serve). Feeds the
+		// same sink → /docs/pattern-library/<id> citations render as chips too.
+		...createSearchPatternLibraryTool(locale, catalogSink),
 		// Compaction escape hatch (AI SDK #9631). Both harnesses apply
 		// wrapToolsWithCompaction below, so a compacted get_rawrag_chunks result yields a
 		// ref the model can only pull back via resolve_ref — it MUST be registered here too.

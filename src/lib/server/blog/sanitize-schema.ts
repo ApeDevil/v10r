@@ -70,6 +70,11 @@ export const rehypeSanitizeStyles: Plugin<[], HastRoot> = () => {
 
 export const blogSanitizeSchema: Schema = {
 	...defaultSchema,
+	// defaultSchema rewrites `id` (and name/aria refs) to `user-content-<id>` — GitHub's
+	// DOM-clobbering guard for anonymous UGC. Everything rendered here is repo-, admin-,
+	// or agent-authored, and the docs "On this page" TOC captures heading ids BEFORE
+	// sanitize runs, so ids must survive verbatim or every `#anchor` link dangles.
+	clobber: [],
 	attributes: {
 		...defaultSchema.attributes,
 		div: mergeArrays(defaultSchema.attributes?.div as string[] | undefined, [
@@ -84,8 +89,6 @@ export const blogSanitizeSchema: Schema = {
 		span: mergeArrays(defaultSchema.attributes?.span as string[] | undefined, ['className']),
 		pre: mergeArrays(defaultSchema.attributes?.pre as string[] | undefined, ['className', 'style', 'tabIndex']),
 		code: mergeArrays(defaultSchema.attributes?.code as string[] | undefined, ['className', 'style']),
-		// Allow id on all elements (heading IDs from rehype-slug)
-		'*': mergeArrays(defaultSchema.attributes?.['*'] as string[] | undefined, ['id']),
 	},
 	tagNames: mergeArrays(defaultSchema.tagNames ?? undefined, ['section', 'figure', 'figcaption']),
 };

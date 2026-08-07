@@ -1023,9 +1023,10 @@ ${formatCatalogMap(catalogLocale)}
 
 Project catalog rules:
 1. To find WHERE a page, component/showcase, doc, or blog post lives — or to give the user a link — call \`search_catalog\`. It returns exact canonical paths.
-2. Emit a path or link ONLY if it appears verbatim in a \`search_catalog\` result from THIS turn (or a verified llmwiki pointer). NEVER invent or guess a path.
+2. Emit a path or link ONLY if it appears verbatim in a catalog or pattern tool result from THIS turn (or a verified llmwiki pointer). NEVER invent or guess a path.
 3. If \`search_catalog\` returns nothing for what the user asked, say it isn't in the catalog — do not fabricate a plausible URL.
-4. Use \`search_catalog\` for navigation / "what exists"; use the llmwiki pages for explaining how something works.`;
+4. Use \`search_catalog\` for navigation / "what exists"; use the llmwiki pages for explaining how something works.
+5. To find which v10r PATTERN covers a capability (and the invariants to preserve when emulating it), call \`search_pattern_library\`; cite its \`/docs/pattern-library/<id>\` page.`;
 
 					// Honest tool degrade. Reached only when EVERY tool-capable provider is cooled, so the
 					// retrieval tools referenced above are physically absent this turn. Without this the

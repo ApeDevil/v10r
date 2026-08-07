@@ -3,6 +3,8 @@ vr v
 vr s 
 vr s --dry-run
 
+vr ref (refresh nRAG & MCP)
+
 podman kill $(podman ps -q)
 
 # -------------------run

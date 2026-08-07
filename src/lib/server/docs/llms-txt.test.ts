@@ -19,6 +19,7 @@ describe('buildLlmsTxt', () => {
 		for (const heading of [
 			'## Instructions for LLM agents',
 			'## Architecture entry points',
+			'## Pattern Library',
 			'## Foundation',
 			'## Blueprint',
 			'## Stack',
@@ -29,6 +30,8 @@ describe('buildLlmsTxt', () => {
 		for (const doc of ROOT_DOCS) {
 			expect(text).toContain(`[${doc.title}](${PROD_ORIGIN}/docs/${doc.slug}.md)`);
 		}
+		// The pattern library is the product — it leads the section list.
+		expect(text.indexOf('## Pattern Library')).toBeLessThan(text.indexOf('## Foundation'));
 	});
 
 	it('every link line is well-formed', () => {
@@ -56,7 +59,9 @@ describe('buildLlmsTxt', () => {
 		for (const blocked of [...BLOCKLIST, ...BLOCKED_PREFIXES]) {
 			expect(text).not.toContain(blocked);
 		}
-		expect(text).not.toContain('README.md');
+		// Pattern summaries may MENTION README.md as prose (docs-nav-hubs and
+		// pattern-index are ABOUT that convention) — but no URL may link to one.
+		expect(text).not.toMatch(/\(https:\/\/[^)]*README\.md\)/i);
 	});
 
 	it('is deterministic', () => {

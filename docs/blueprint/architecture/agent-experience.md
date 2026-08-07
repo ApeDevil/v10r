@@ -29,18 +29,22 @@ Every artifact derives from an existing single source of truth, because a parall
 | `/llms.txt` | `buildLlmsTxt(getManifest())` — it cannot drift from the docs, and its test round-trips every emitted URL through the `.md` resolver |
 | `validate_snippet` rules | `mcp/snippet-rules.json` (shared by both MCP runtimes) + the `--color-*` names extracted from `src/app.css` at load time |
 | Agent pages (`/docs/programming/*.md`) | the agents registry body — never the raw files, whose frontmatter carries tool grants the HTML page has never published |
+| README Pattern Index (the marker-delimited region) | `mcp/patterns.registry.json` via `scripts/patterns/build-derived.ts` (`patterns:build`; staleness gated by `patterns:check`) |
+| `docs/pattern-library/*.md` (one page per pattern in its own docs section, → `/docs`, RAG, `/llms.txt`) | the same registry + generator — pointer pages only, never copied prose |
+| `/docs/pattern-library` (the section's catalog index: every pattern + purpose) | the same registry, projected live by `$lib/server/patterns/catalog.ts` — no build step |
 
 ## The negotiation contract
 
-Cache safety decided the shape, not convenience. The two cacheable artifacts each live at exactly one URL with no `Vary`; only the negotiated redirect varies by request header, and it is uncacheable:
+Cache safety decided the shape, not convenience. HTML at the clean URL is `Vary`-free; the `.md` URL serves its cacheable markdown to agents only and varies on `Sec-Fetch-Dest`; every negotiated redirect is uncacheable:
 
 | Request | Response | Cache-Control | Vary |
 |---------|----------|---------------|------|
-| `GET /docs/x.md` | 200 markdown | `public, max-age=0, s-maxage=3600` | — |
+| `GET /docs/x.md` (agent) | 200 markdown | `public, max-age=0, s-maxage=3600` | `Sec-Fetch-Dest` |
+| `GET /docs/x.md` with `sec-fetch-dest: document` (human) | falls through to routing → 303 → `/docs/x` | (redirect, uncached) | — |
 | `GET /docs/x` with `Accept: text/markdown` | 303 → `/docs/x.md` | `no-store` | `Accept` |
 | `GET /docs/x` (browser) | 200 HTML + `Link: </docs/x.md>; rel="alternate"` | as before | — |
 
-A 308 keyed off a request header without `Vary` would let a shared cache serve the redirect to browsers — that is why the negotiated response is 303 and `no-store`. Wildcards never negotiate (curl's default `Accept` gets HTML), and `sec-fetch-dest: document` never negotiates regardless of the header. The hook (`docsMarkdown`, stage 4 in `src/hooks.server.ts`) sits above `loadStyle` and `i18n` so no `Set-Cookie` can void `s-maxage` — pinned by an ordering assertion in `handle-chain.gate.test.ts`.
+A 308 keyed off a request header without `Vary` would let a shared cache serve the redirect to browsers — that is why the negotiated response is 303 and `no-store`. Wildcards never negotiate (curl's default `Accept` gets HTML), and `sec-fetch-dest: document` never negotiates regardless of the header — a browser navigating to a `.md` URL instead falls through the hook into SvelteKit routing, where the docs layout (`docs/+layout.server.ts`) 303s the suffix away to the rendered page. SvelteKit data requests (`__data.json`, client-router navigations) fall through the same way: serving markdown to them would crash the router's JSON parser. The hook (`docsMarkdown`, stage 4 in `src/hooks.server.ts`) sits above `loadStyle` and `i18n` so no `Set-Cookie` can void `s-maxage` — pinned by an ordering assertion in `handle-chain.gate.test.ts`.
 
 Discovery is layered so an agent finds the map from any entry point: every `/docs` response carries `Link: </llms.txt>; rel="llms-txt"`, doc HTML heads carry `<link rel="alternate" type="text/markdown">`, robots.txt names `/llms.txt`, and `AGENTS.md` lists all four surfaces.
 

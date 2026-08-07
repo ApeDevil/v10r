@@ -45,7 +45,7 @@ export type MarkdownTarget =
 	| { kind: 'root'; sourcePath: string; doc: RootDoc }
 	| { kind: 'agent'; id: string };
 
-const SECTIONS: readonly DocSection[] = ['foundation', 'blueprint', 'stack'];
+const SECTIONS: readonly DocSection[] = ['foundation', 'blueprint', 'stack', 'pattern-library'];
 
 const MD_PATH_RE = /^\/docs\/[A-Za-z0-9/._-]+\.md$/;
 

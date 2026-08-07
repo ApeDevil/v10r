@@ -34,7 +34,11 @@ export const NRAG_READ_PATH: ReadStep[] = [
 		label: 'Drill (on demand)',
 		detail: 'get_rawrag_chunks fetches exact source — verbatim-id rule, max 3 / turn.',
 	},
-	{ n: 6, label: 'Ground', detail: 'search_catalog + search_project_docs surface canonical paths → CatalogSink.' },
+	{
+		n: 6,
+		label: 'Ground',
+		detail: 'search_catalog + search_project_docs + search_pattern_library surface canonical paths → CatalogSink.',
+	},
 	{ n: 7, label: 'Verify', detail: 'verifyCitations tags each chunk quote / paraphrase / drifted / uncited.' },
 ];
 

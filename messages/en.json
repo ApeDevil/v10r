@@ -1976,6 +1976,8 @@
 	"home_structure_nrag_item_verify_desc": "post-hoc citation taxonomy — quote, paraphrase, drifted, uncited",
 	"home_showcase_cta": "explore the showcases",
 	"home_showcase_map_aria": "All showcases",
+	"home_showcase_patterns_cta": "browse the pattern library",
+	"home_showcase_patterns_desc": "the catalog behind these demos — every proven pattern with the code that implements it and the showcase that proves it",
 	"footer_source_github_aria": "Source on GitHub",
 	"footer_source_gitlab_aria": "Source on GitLab",
 	"footer_copyright": "© {year} Velociraptor.",

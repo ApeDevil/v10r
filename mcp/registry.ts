@@ -6,7 +6,11 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-export type RefKind = 'file' | 'dir' | 'route' | 'anchor';
+export type RefKind = 'file' | 'dir' | 'route' | 'approute' | 'anchor';
+
+/** `deep` = full emulation card (invariants + emulation notes required);
+ *  `light` = index row (pointers only — both depth fields must stay empty). */
+export type PatternTier = 'deep' | 'light';
 
 export interface RegRef {
 	path: string;
@@ -14,8 +18,22 @@ export interface RegRef {
 	kind?: RefKind;
 }
 
+/** Meta-group for the generated Pattern Index TOC (Foundations, Data, …). */
+export interface RegGroup {
+	id: string;
+	title: string;
+}
+
+/** Category = one generated Pattern Index section; order here IS section order. */
+export interface RegCategory {
+	id: string;
+	title: string;
+	group: string;
+}
+
 export interface PatternRecord {
 	id: string;
+	tier: PatternTier;
 	title: string;
 	category: string;
 	summary: string;
@@ -35,12 +53,15 @@ export interface PatternRecord {
 export interface Registry {
 	version: string;
 	note?: string;
+	groups: RegGroup[];
+	categories: RegCategory[];
 	patterns: PatternRecord[];
 }
 
 export const REGISTRY_FILENAME = 'patterns.registry.json';
 
-const REF_KINDS: readonly string[] = ['file', 'dir', 'route', 'anchor'];
+const REF_KINDS: readonly string[] = ['file', 'dir', 'route', 'approute', 'anchor'];
+const TIERS: readonly string[] = ['deep', 'light'];
 const ID_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const STRING_LIST_FIELDS = ['capabilities', 'keywords', 'depends_on', 'invariants', 'emulation_notes'] as const;
 const REF_LIST_FIELDS = ['docs', 'code', 'tests', 'showcases'] as const;
@@ -84,6 +105,9 @@ function validatePattern(value: unknown, index: number, errors: string[]): void 
 	if (typeof value.id === 'string' && !ID_PATTERN.test(value.id)) {
 		errors.push(`${where}.id: '${value.id}' is not kebab-case`);
 	}
+	if (typeof value.tier !== 'string' || !TIERS.includes(value.tier)) {
+		errors.push(`${where}.tier: must be one of ${TIERS.join('|')}`);
+	}
 	for (const field of STRING_LIST_FIELDS) {
 		if (!isStringArray(value[field])) {
 			errors.push(`${where}.${field}: must be an array of strings`);
@@ -99,6 +123,69 @@ function validatePattern(value: unknown, index: number, errors: string[]): void 
 			validateRef(ref, `${where}.${field}[${refIndex}]`, errors);
 		});
 	}
+	// Per-tier contract: "deep" is a promise (full emulation card), "light" a pointer
+	// row. Enforced structurally so a violating registry never loads anywhere.
+	if (value.tier === 'deep') {
+		for (const field of ['invariants', 'emulation_notes', 'capabilities', 'keywords', 'docs'] as const) {
+			if (Array.isArray(value[field]) && value[field].length === 0) {
+				errors.push(`${where}.${field}: deep records must have at least one entry`);
+			}
+		}
+	}
+	if (value.tier === 'light') {
+		for (const field of ['invariants', 'emulation_notes'] as const) {
+			if (Array.isArray(value[field]) && value[field].length > 0) {
+				errors.push(`${where}.${field}: light records must keep this empty — promote to tier "deep" instead`);
+			}
+		}
+		if (Array.isArray(value.docs) && value.docs.length === 0) {
+			errors.push(`${where}.docs: light records still need at least one docs ref`);
+		}
+	}
+}
+
+/** Validate the root `groups`/`categories` blocks; returns the valid category ids. */
+function validateTaxonomy(data: Record<string, unknown>, errors: string[]): Set<string> {
+	const groupIds = new Set<string>();
+	if (!Array.isArray(data.groups) || data.groups.length === 0) {
+		errors.push('groups: must be a non-empty array');
+	} else {
+		data.groups.forEach((group, index) => {
+			if (!isRecord(group) || typeof group.id !== 'string' || !ID_PATTERN.test(group.id)) {
+				errors.push(`groups[${index}].id: must be kebab-case`);
+				return;
+			}
+			if (typeof group.title !== 'string' || group.title.length === 0) {
+				errors.push(`groups[${index}].title: must be a non-empty string`);
+			}
+			if (groupIds.has(group.id)) {
+				errors.push(`groups[${index}]: duplicate group id '${group.id}'`);
+			}
+			groupIds.add(group.id);
+		});
+	}
+	const categoryIds = new Set<string>();
+	if (!Array.isArray(data.categories) || data.categories.length === 0) {
+		errors.push('categories: must be a non-empty array');
+	} else {
+		data.categories.forEach((category, index) => {
+			if (!isRecord(category) || typeof category.id !== 'string' || !ID_PATTERN.test(category.id)) {
+				errors.push(`categories[${index}].id: must be kebab-case`);
+				return;
+			}
+			if (typeof category.title !== 'string' || category.title.length === 0) {
+				errors.push(`categories[${index}].title: must be a non-empty string`);
+			}
+			if (typeof category.group !== 'string' || !groupIds.has(category.group)) {
+				errors.push(`categories[${index}].group: '${String(category.group)}' is not a declared group id`);
+			}
+			if (categoryIds.has(category.id)) {
+				errors.push(`categories[${index}]: duplicate category id '${category.id}'`);
+			}
+			categoryIds.add(category.id);
+		});
+	}
+	return categoryIds;
 }
 
 /** Structurally validate parsed JSON. Returns the typed registry only when there are zero errors. */
@@ -110,6 +197,7 @@ export function parseRegistry(data: unknown): { registry: Registry | null; error
 	if (typeof data.version !== 'string') {
 		errors.push('version: must be a string');
 	}
+	const categoryIds = validateTaxonomy(data, errors);
 	if (!Array.isArray(data.patterns) || data.patterns.length === 0) {
 		errors.push('patterns: must be a non-empty array');
 		return { registry: null, errors };
@@ -135,6 +223,9 @@ export function parseRegistry(data: unknown): { registry: Registry | null; error
 			if (!seen.has(dep)) {
 				errors.push(`${pattern.id}: depends_on '${dep}' does not exist`);
 			}
+		}
+		if (!categoryIds.has(pattern.category)) {
+			errors.push(`${pattern.id}: category '${pattern.category}' is not a declared category id`);
 		}
 	}
 	return errors.length > 0 ? { registry: null, errors } : { registry, errors };

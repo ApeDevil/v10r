@@ -156,7 +156,12 @@ function buildDocFile(absPath: string): DocFile | null {
 	const parts = sourcePath.split('/');
 	const sectionDir = parts[1];
 	const section =
-		sectionDir === 'foundation' || sectionDir === 'blueprint' || sectionDir === 'stack' ? sectionDir : null;
+		sectionDir === 'foundation' ||
+		sectionDir === 'blueprint' ||
+		sectionDir === 'stack' ||
+		sectionDir === 'pattern-library'
+			? sectionDir
+			: null;
 	if (!section) return null;
 
 	const raw = readFileSync(absPath, 'utf8');

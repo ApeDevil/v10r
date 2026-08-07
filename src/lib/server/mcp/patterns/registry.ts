@@ -8,7 +8,7 @@
 import { renderReport, validateSnippet } from '../snippet/engine';
 import { MAX_SNIPPET_CHARS } from '../snippet/rules';
 import { errorResult, type NextAction, type ToolDef, type ToolRegistry, type ToolResult, textResult } from '../types';
-import { buildById, PATTERNS, type PatternRecord, REGISTRY_ORDER, type RegRef } from './data';
+import { buildById, DEEP_PATTERNS, PATTERNS, type PatternRecord, REGISTRY_ORDER, type RegRef } from './data';
 import { DEFAULT_LINES, MAX_LINES, readAllowlistedExcerpt } from './excerpts';
 import { scorePatterns, topoSort } from './search';
 
@@ -55,7 +55,7 @@ export const PATTERN_TOOLS: ToolDef[] = [
 				category: {
 					type: 'string',
 					maxLength: MAX_ARG_CHARS,
-					description: 'Optional exact category filter: architecture, ai, ui, docs, or jobs.',
+					description: 'Optional exact category filter — use a category value from any search result.',
 				},
 			},
 			required: ['query'],
@@ -212,16 +212,34 @@ function noMatchResult(what: string): ToolResult {
 }
 
 function patternCard(pattern: PatternRecord): string {
-	return [
+	const header = [
 		`# ${pattern.title} (\`${pattern.id}\`)`,
 		'',
-		`**Category:** ${pattern.category} · **Risk:** ${pattern.risk}`,
+		`**Category:** ${pattern.category} · **Tier:** ${pattern.tier} · **Risk:** ${pattern.risk}`,
 		pattern.depends_on.length > 0 ? `**Depends on:** ${pattern.depends_on.join(', ')}` : '',
 		'',
 		pattern.summary,
 		'',
 		`**When to use:** ${pattern.when_to_use}`,
 		'',
+	];
+	if (pattern.tier === 'light') {
+		// Index row: pointers only — render just the non-empty ref sections and say
+		// where the depth lives instead of printing empty invariant headings.
+		return [
+			...header,
+			`## Docs to read\n${refLines(pattern.docs)}`,
+			pattern.code.length > 0 ? `## Code entry points\n${refLines(pattern.code)}` : '',
+			pattern.tests.length > 0 ? `## Tests that pin it\n${refLines(pattern.tests)}` : '',
+			pattern.showcases.length > 0 ? `## Showcase proof\n${refLines(pattern.showcases)}` : '',
+			'',
+			'_Index record — the docs above are the canonical explanation; deep-tier cards carry invariants and emulation notes._',
+		]
+			.filter((section) => section.length > 0)
+			.join('\n');
+	}
+	return [
+		...header,
 		`## Docs to read\n${refLines(pattern.docs)}`,
 		`## Code entry points\n${refLines(pattern.code)}`,
 		`## Tests that pin it\n${refLines(pattern.tests)}`,
@@ -261,7 +279,7 @@ function searchPatterns(args: Record<string, unknown>): ToolResult {
 	if (scored.length === 0) return noMatchResult(`query "${query}"`);
 	const lines = scored.map(
 		(hit, index) =>
-			`${index + 1}. **${hit.pattern.title}** (\`${hit.pattern.id}\`, ${hit.pattern.category})\n   ${hit.pattern.summary}\n   _matched: ${hit.matchedTerms.join(', ') || 'title'} in ${hit.matchedFields.join(', ')}_`,
+			`${index + 1}. **${hit.pattern.title}** (\`${hit.pattern.id}\`, ${hit.pattern.category}, ${hit.pattern.tier})\n   ${hit.pattern.summary}\n   _matched: ${hit.matchedTerms.join(', ') || 'title'} in ${hit.matchedFields.join(', ')}_`,
 	);
 	return textResult(
 		`Found ${scored.length} pattern(s) for "${query}":\n\n${lines.join('\n')}\n\nNext: call get_pattern with an id for the full card.`,
@@ -280,8 +298,12 @@ function getPattern(args: Record<string, unknown>): ToolResult {
 	const pattern = buildById().get(id);
 	if (!pattern) {
 		// A real-shaped id we do not have is a REGISTRY GAP, not a malformed request.
+		// 136 ids would be ~3 KB of error text — cap the reflection, point at search.
+		const more = PATTERNS.length > 20 ? `, … (${PATTERNS.length} total — search_patterns finds the rest)` : '';
 		return errorResult(
-			`No pattern with id "${id}". Valid ids: ${PATTERNS.map((entry) => entry.id).join(', ')}.`,
+			`No pattern with id "${id}". Valid ids: ${PATTERNS.slice(0, 20)
+				.map((entry) => entry.id)
+				.join(', ')}${more}.`,
 			'not_found',
 			[
 				{ tool: 'get_pattern', args: { id: PATTERNS[0].id }, why: 'a valid id from the list above.' },
@@ -327,8 +349,12 @@ function traceCapability(args: Record<string, unknown>): ToolResult {
 			`**Code:**\n${refLines(pattern.code)}`,
 			`**Tests:**\n${refLines(pattern.tests)}`,
 			`**Proof:**\n${refLines(pattern.showcases)}`,
-			`**Invariants:**\n${pattern.invariants.map((rule) => `- ${rule}`).join('\n')}`,
-		].join('\n');
+			pattern.invariants.length > 0
+				? `**Invariants:**\n${pattern.invariants.map((rule) => `- ${rule}`).join('\n')}`
+				: '',
+		]
+			.filter((line) => line.length > 0)
+			.join('\n');
 	});
 	return textResult(
 		`Trace for "${capability}" (${scored.length} matching pattern(s), concept → docs → code → tests → proof):\n\n${sections.join('\n\n')}`,
@@ -374,20 +400,37 @@ function recommendPlan(args: Record<string, unknown>): ToolResult {
 	}
 	const includeDeps = args.include_dependencies !== false;
 	const byId = buildById();
+	// Plan steps come from DEEP records only — a step without invariants is noise.
+	// Capabilities that only match light index rows are reported in a trailer so
+	// the gap is visible (and a promotion candidate) instead of silently dropped.
+	const lightPatterns = PATTERNS.filter((pattern) => pattern.tier === 'light');
 	const satisfies = new Map<string, string[]>();
+	const lightOnly: string[] = [];
 	const unmatched: string[] = [];
 	for (const capability of capabilities) {
-		const scored = scorePatterns(capability);
+		const scored = scorePatterns(capability, DEEP_PATTERNS);
 		const best = scored.filter((hit) => hit.score >= (scored[0]?.score ?? 0) / 2).slice(0, 2);
 		if (best.length === 0) {
-			unmatched.push(capability);
+			const lightHits = scorePatterns(capability, lightPatterns).slice(0, 2);
+			if (lightHits.length > 0) {
+				lightOnly.push(`"${capability}" → ${lightHits.map((hit) => `\`${hit.pattern.id}\``).join(', ')}`);
+			} else {
+				unmatched.push(capability);
+			}
 			continue;
 		}
 		for (const hit of best) {
 			satisfies.set(hit.pattern.id, [...(satisfies.get(hit.pattern.id) ?? []), capability]);
 		}
 	}
-	if (satisfies.size === 0) return noMatchResult(`capabilities [${capabilities.join(', ')}]`);
+	if (satisfies.size === 0 && lightOnly.length === 0) {
+		return noMatchResult(`capabilities [${capabilities.join(', ')}]`);
+	}
+	if (satisfies.size === 0) {
+		return textResult(
+			`No deep pattern card matches these capabilities yet, but the index knows them.\n\n## Related index entries (no deep card yet)\n${lightOnly.map((line) => `- ${line}`).join('\n')}\n\nCall get_pattern on an id above for its docs/code pointers.`,
+		);
+	}
 	const selected = new Set(satisfies.keys());
 	if (includeDeps) {
 		const queue = [...selected];
@@ -421,6 +464,7 @@ function recommendPlan(args: Record<string, unknown>): ToolResult {
 	});
 	const notes = [
 		'Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.',
+		lightOnly.length > 0 ? `Related index entries (no deep card yet): ${lightOnly.join('; ')}.` : '',
 		unmatched.length > 0
 			? `Unmatched capabilities (no registry entry yet — cover manually or search with different terms): ${unmatched.join(', ')}.`
 			: '',

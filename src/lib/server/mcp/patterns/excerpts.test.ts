@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { deriveExcerptAllowlist } from './allowlist';
+import { deriveExcerptAllowlist, isFileRef } from './allowlist';
+import { PATTERNS } from './data';
 import { EXCERPT_ALLOWLIST, isAllowlisted, readAllowlistedExcerpt, SNAPSHOT_PATHS } from './excerpts';
 
 describe('EXCERPT_ALLOWLIST', () => {
@@ -13,6 +14,31 @@ describe('EXCERPT_ALLOWLIST', () => {
 
 	it('matches the pure derivation from the registry (no drift within the bundle)', () => {
 		expect([...EXCERPT_ALLOWLIST].sort()).toEqual(deriveExcerptAllowlist());
+	});
+
+	it('derives from DEEP-tier records only — light index refs never grow the snapshot', () => {
+		const deepFilePaths = new Set(
+			PATTERNS.filter((p) => p.tier === 'deep')
+				.flatMap((p) => [...p.docs, ...p.code, ...p.tests, ...p.showcases])
+				.filter((ref) => isFileRef(ref))
+				.map((ref) => ref.path),
+		);
+		for (const path of EXCERPT_ALLOWLIST) {
+			expect(deepFilePaths.has(path), `${path} is not referenced by any deep record`).toBe(true);
+		}
+		// And a light-only docs ref is NOT allowlisted (falls to the not_found branch).
+		const lightOnly = PATTERNS.filter((p) => p.tier === 'light')
+			.flatMap((p) => p.docs)
+			.filter((ref) => isFileRef(ref))
+			.map((ref) => ref.path)
+			.find((path) => !deepFilePaths.has(path));
+		expect(lightOnly).toBeTruthy();
+		if (lightOnly) {
+			expect(isAllowlisted(lightOnly)).toBe(false);
+			const result = readAllowlistedExcerpt(lightOnly);
+			expect(result.ok).toBe(false);
+			expect(result.text).toMatch(/deep-tier|not an allowlisted file/);
+		}
 	});
 });
 

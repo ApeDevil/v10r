@@ -13,8 +13,11 @@ const BASE_PATHS = [
 	'/credits',
 	'/docs',
 	'/docs/blueprint',
+	'/docs/codebase-organization',
 	'/docs/foundation',
+	'/docs/pattern-library',
 	'/docs/stack',
+	'/docs/system-abstraction',
 	'/feedback',
 ];
 

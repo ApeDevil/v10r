@@ -267,6 +267,14 @@ v          10            r</pre>
 			{/each}
 		</ul>
 	</nav>
+
+	<div class="pattern-library-entry">
+		<a href={localizeHref('/docs/pattern-library')} class="cta-link pattern-cta focus-ring">
+			<span class="cta-arrow">→</span>
+			<span>{m.home_showcase_patterns_cta()}</span>
+		</a>
+		<p class="pattern-library-desc">{m.home_showcase_patterns_desc()}</p>
+	</div>
 </section>
 
 <style>
@@ -833,6 +841,26 @@ v          10            r</pre>
 		width: 1.25rem;
 		height: 1.25rem;
 		flex-shrink: 0;
+	}
+
+	/* Pattern library — the catalog behind the demos, one step below the cloud. */
+	.pattern-library-entry {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--spacing-3);
+		text-align: center;
+	}
+
+	.pattern-cta {
+		font-size: var(--text-fluid-xl);
+	}
+
+	.pattern-library-desc {
+		margin: 0;
+		max-width: 34rem;
+		font-size: var(--text-fluid-sm);
+		color: var(--color-muted);
 	}
 
 </style>

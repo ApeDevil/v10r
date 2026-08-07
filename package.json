@@ -58,8 +58,11 @@
 		"mcp:validate": "bun run mcp/validate-registry.ts",
 		"mcp:excerpts:build": "bun run scripts/mcp/build-public-excerpts.ts",
 		"mcp:excerpts:check": "bun run scripts/mcp/build-public-excerpts.ts --check",
+		"patterns:build": "bun run scripts/patterns/build-derived.ts",
+		"patterns:check": "bun run scripts/patterns/build-derived.ts --check",
 		"audit": "bun audit --audit-level=high",
-		"validate": "bun run check && biome ci . && bun run test && bun run mcp:validate && bun run mcp:excerpts:check && bun run i18n:check-missing && bun run content:check && bun run quality:opacity",
+		"validate": "bun run check && biome ci . && bun run test && bun run mcp:validate && bun run patterns:check && bun run mcp:excerpts:check && bun run i18n:check-missing && bun run content:check && bun run quality:opacity",
+		"refresh": "bun run mcp:validate && bun run patterns:build && bun run mcp:excerpts:build && bun run db:ingest-docs",
 		"knip": "knip"
 	},
 	"dependencies": {

@@ -77,6 +77,9 @@ export function buildLlmsTxt(manifest: DocsManifest, origin: string = PROD_ORIGI
 		'',
 		...ROOT_DOCS.map((d) => linkLine(origin, `/docs/${d.slug}.md`, d.title, d.description)),
 		'',
+		// The pattern library leads: it is the product — one generated page per
+		// registry record, grouped by category (frontmatter-stamped by the generator).
+		...groupedSection(origin, 'Pattern Library', manifest['pattern-library'], (e) => e.group ?? 'general'),
 		'## Foundation',
 		'',
 		...manifest.foundation.map((e) => linkLine(origin, markdownHrefFor(e), e.title, e.description)),

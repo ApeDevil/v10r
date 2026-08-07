@@ -71,6 +71,7 @@ Solo dev, no CI runner — an automated pipeline is unnecessary overhead. Run th
 `vr` is the host-clean solo-dev CLI (a bash dispatcher) that acts on the git repo you're standing in. Full reference: `docs/stack/ops/dev-cli.md`. Main commands:
 
 - `vr validate` / `vr v` — run the full gate (`bun run validate`) in the repo's container
+- `vr refresh` / `vr ref` — refresh derived pattern-library surfaces (registry check → generated index/pages → excerpt snapshot → RAG ingest) in the container
 - `vr ship` / `vr s` — gate the current branch, fast-forward `main`, push `dev` + `main` (**pushing `main` triggers the Vercel production deploy**)
 - `vr dev` / `vr up` / `vr down` / `vr shell` — container lifecycle
 

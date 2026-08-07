@@ -33,6 +33,7 @@ repo you're in.
 |---------|------|
 | `vr ship` / `vr s` | Gate + promote the current branch toward `main` (see below) |
 | `vr validate` / `vr v` | Run the full gate (`bun run validate`) in the repo's container |
+| `vr refresh` / `vr ref` | Refresh derived pattern-library surfaces (`bun run refresh`) in the container |
 | `vr dev` | Start the dev server (`podman compose up`, foreground) |
 | `vr up` / `vr u` | Start the repo's container (background) |
 | `vr down` / `vr d` | Stop the repo's container |
@@ -113,8 +114,9 @@ hard-coded container name:
 "Anything else" covers *stopped* as well as *removed*, and the distinction is load-bearing:
 `compose ps -q` lists a project's containers in **any** state, so a stopped container is
 still listed. Testing only that the list is non-empty reports "up" for a project that
-exited, and the `exec` then fails with `container state improper`. `run_validate` therefore
-asks podman for each id's actual state (`project_running` in `scripts/lib.sh`) rather than
+exited, and the `exec` then fails with `container state improper`. `container_run` (in
+`scripts/lib.sh` — the one in-container runner the gate and the refresh chain both ride)
+therefore asks podman for each id's actual state (`project_running`) rather than
 filtering at the compose layer — podman-compose rejects a service argument to `ps -q`.
 
 The one-shot deliberately does **not** start the project first. It needs no cleanup, so no
@@ -127,12 +129,47 @@ It needs a `compose.yaml` at the repo root **and** a `validate` script in that p
 `package.json`; without either, `vr` stops — the gate is container-only, and `bun run
 validate` is the contract every repo's gate must provide.
 
+## The refresh chain
+
+`vr refresh` (alias `ref`) re-syncs every derived surface of the pattern library after a
+pattern/doc edit. It runs `bun run refresh` in the container via the same `container_run`
+mechanics as the gate (warm `exec` or ephemeral one-shot); in v10r that script chains
+
+```
+mcp:validate  →  patterns:build  →  mcp:excerpts:build  →  db:ingest-docs
+```
+
+The ordering is deliberate: fail fast on the cheap registry validation, regenerate the
+pattern-library surfaces (README Pattern Index region + the `docs/pattern-library/`
+section pages) so the ingest sees them, build the deterministic local excerpt snapshot next,
+and leave the slow, quota-bound Neon/Gemini RAG ingest last. The ingest is content-hash
+idempotent — only changed docs re-embed, so casual re-runs cost a handful of embed
+calls — and interruption-safe: a Ctrl-C (or the daily embed-cap running out) mid-ingest
+just resumes on the next run. `--force` / `-f` sets `INGEST_FORCE=1` for a full
+re-chunk after a chunking-**logic** change; that one burns real embed quota, so it
+stays an explicit flag.
+
+One refresh, two freshness horizons — and the script says which you got:
+
+- **Neon RAG corpus** — globally fresh the moment ingest finishes (one shared DB; dev
+  and prod chatbots both read it).
+- **The committed artifacts** — `README.md` (generated index region),
+  `docs/pattern-library/`, and `mcp/public-excerpts.snapshot.json`; the hosted MCP
+  and `/showcases/mcp` only pick up registry/snapshot changes on the next `vr ship`.
+  After the chain, `refresh.sh` checks their git status on the host and nudges you to
+  commit if anything changed. (The gate's `patterns:check` + `mcp:excerpts:check` block
+  shipping stale surfaces regardless.)
+
+Like the gate, refresh is contract-based so `vr` stays generic: `bun run refresh` is the
+contract, and each repo defines what refreshing means. A repo without the script stops
+in-container with bun's `Script not found "refresh"`.
+
 ## Why a bash dispatcher (not `just` / `make` / aliases)
 
 Zero host dependencies beyond bash (matches the container-first rule), namespaced and
 self-documenting (`vr` with no args lists everything), and versioned in the repo. Grow it
 by adding a `case` branch in `bin/vr` plus a script in `scripts/`. Short aliases follow the
-same convention as the commands they shorten — `s`/`v`/`sh`/`u`/`d` are just extra patterns
-on the existing `case` branch, so they're versioned and appear in `vr help` for free.
+same convention as the commands they shorten — `s`/`v`/`ref`/`sh`/`u`/`d` are just extra
+patterns on the existing `case` branch, so they're versioned and appear in `vr help` for free.
 </content>
 </invoke>

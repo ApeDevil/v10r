@@ -49,9 +49,21 @@ describe('protocol', () => {
 });
 
 describe('registry', () => {
-	test('loads 11 valid patterns with unique ids', () => {
-		expect(registry.patterns.length).toBe(11);
-		expect(new Set(registry.patterns.map((p) => p.id)).size).toBe(11);
+	test('loads the full two-tier registry with unique ids and honest tiers', () => {
+		// Contract, not a count: the registry grows a record per pattern; pinning a
+		// number here would make every legitimate addition a test edit.
+		expect(registry.patterns.length).toBeGreaterThan(100);
+		expect(new Set(registry.patterns.map((p) => p.id)).size).toBe(registry.patterns.length);
+		for (const p of registry.patterns) {
+			expect(['deep', 'light']).toContain(p.tier);
+			if (p.tier === 'deep') {
+				expect(p.invariants.length, p.id).toBeGreaterThan(0);
+				expect(p.emulation_notes.length, p.id).toBeGreaterThan(0);
+			} else {
+				expect(p.invariants, p.id).toEqual([]);
+				expect(p.emulation_notes, p.id).toEqual([]);
+			}
+		}
 	});
 
 	test('topoSort puts dependencies first, deterministically', () => {

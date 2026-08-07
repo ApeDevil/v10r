@@ -15,6 +15,7 @@ Two maps sit above the three layers. Start here for the whole-system view.
 
 | Directory | Purpose | Key Files |
 |-----------|---------|-----------|
+| **[pattern-library/](./pattern-library/)** | The product: one generated page per pattern record (never hand-edit; `bun run patterns:build`) | • Catalog at `/docs/pattern-library`, per-pattern pages at `/docs/pattern-library/<id>`<br>• Generated from `mcp/patterns.registry.json` |
 | **[foundation/](./foundation/)** | Core project vision, principles, and architecture | • [PRD.md](./foundation/PRD.md) - project concept and goals<br>• [principles.md](./foundation/principles.md) - decision constraints that drive stack choices<br>• [architecture.md](./foundation/architecture.md) - framework-agnostic architecture principles |
 | **[stack/](./stack/)** | Technology decisions and vendor choices | • [core/](./stack/core/) - runtime, framework, database<br>• [auth/](./stack/auth/) - authentication<br>• [ui/](./stack/ui/) - styling, components<br>• [capabilities/](./stack/capabilities/) - API, AI/LLM, SEO, notifications, GDPR<br>• [vendors.md](./stack/vendors.md) - provider matrix and cost analysis |
 | **[blueprint/](./blueprint/)** | Implementation designs and feature specifications | See [Blueprint Areas](#blueprint-areas) below — every subdirectory, one hop away |
@@ -63,4 +64,4 @@ Every `stack/` subdirectory, one line each. The per-technology file map lives in
 
 ---
 
-The complete pattern-to-code map lives in the root [README's Pattern Index](../README.md#pattern-index).
+The complete pattern-to-code map lives in the root [README's Pattern Index](../README.md#pattern-index); its in-app form is the [pattern-library/](./pattern-library/) docs section — the catalog at `/docs/pattern-library`, one page per pattern at `/docs/pattern-library/<id>`. Both are generated from `mcp/patterns.registry.json`.

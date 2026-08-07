@@ -4,7 +4,7 @@
  * (`excerpts.ts`) and by the build-time snapshot generator (`scripts/mcp/build-public-excerpts.ts`)
  * — one source of truth, so the snapshot and the runtime gate can never disagree.
  */
-import { PATTERNS, type RegRef } from './data';
+import { DEEP_PATTERNS, type RegRef } from './data';
 
 /** Files this size or larger are never snapshotted/served. */
 export const MAX_FILE_BYTES = 2 * 1024 * 1024;
@@ -28,10 +28,19 @@ export function isFileRef(ref: RegRef): boolean {
 	return !ref.path.endsWith('/') && last.includes('.');
 }
 
-/** Sorted, deduplicated list of registry-referenced, non-secret file paths. */
+/**
+ * Sorted, deduplicated list of registry-referenced, non-secret file paths.
+ *
+ * DEEP tier only. Measured before the two-tier split: including the 125 light
+ * index rows would pull ~93 docs files (1.28 MB) + ~57 code files (0.38 MB)
+ * into the committed snapshot — 73 files / 784 KB → ~220 files / ~2.5 MB inlined
+ * into the Vercel function bundle, with every docs edit dirtying the snapshot.
+ * Light-record docs stay agent-reachable as raw markdown via the public `.md`
+ * layer (`/docs/<path>.md`) at zero bundle cost.
+ */
 export function deriveExcerptAllowlist(): string[] {
 	const allow = new Set<string>();
-	for (const pattern of PATTERNS) {
+	for (const pattern of DEEP_PATTERNS) {
 		for (const ref of [...pattern.docs, ...pattern.code, ...pattern.tests, ...pattern.showcases]) {
 			if (!isFileRef(ref)) continue;
 			if (SECRET_DENY.some((rx) => rx.test(ref.path))) continue;

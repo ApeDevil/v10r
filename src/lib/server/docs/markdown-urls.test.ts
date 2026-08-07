@@ -7,7 +7,7 @@ import { markdownBodyFor, markdownHrefFor, ROOT_DOCS, resolveMarkdownRequest, to
 describe('resolveMarkdownRequest', () => {
 	it('round-trips a published entry from every section, including slashed blueprint slugs', () => {
 		const manifest = getManifest();
-		for (const section of ['foundation', 'blueprint', 'stack'] as const) {
+		for (const section of ['foundation', 'blueprint', 'stack', 'pattern-library'] as const) {
 			const entry = manifest[section][0];
 			expect(entry).toBeDefined();
 			const target = resolveMarkdownRequest(markdownHrefFor(entry));

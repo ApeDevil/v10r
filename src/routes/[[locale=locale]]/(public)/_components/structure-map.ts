@@ -158,7 +158,10 @@ export const sections: StructureSection[] = [
 						segments: [{ label: 'implementation/', href: null }],
 						description: m.home_structure_documentation_impl_desc,
 					},
-					{ segments: [{ label: 'patterns/', href: null }], description: m.home_structure_documentation_patterns_desc },
+					{
+						segments: [{ label: 'pattern-library/', href: '/docs/pattern-library' }],
+						description: m.home_structure_documentation_patterns_desc,
+					},
 				],
 			},
 		],

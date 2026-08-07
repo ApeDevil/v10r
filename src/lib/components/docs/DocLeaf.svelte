@@ -11,16 +11,24 @@ interface Breadcrumb {
 }
 
 interface Props {
-	entry: DocEntry;
+	// Root docs (ROOT_DOCS) have no manifest entry — they pass title/description
+	// only, plus an explicit markdownHref, since their .md URL has no section.
+	entry: Pick<DocEntry, 'title' | 'description'> & Partial<Pick<DocEntry, 'section' | 'slug'>>;
 	html: string;
 	toc: TocEntry[];
 	breadcrumbs: Breadcrumb[];
 	backHref: string;
 	backLabel: string;
 	sourceUrl?: string | null;
+	/** Overrides the `/docs/<section>/<slug>.md` default alternate link. */
+	markdownHref?: string;
 }
 
-let { entry, html, toc, breadcrumbs, backHref, backLabel, sourceUrl }: Props = $props();
+let { entry, html, toc, breadcrumbs, backHref, backLabel, sourceUrl, markdownHref }: Props = $props();
+
+const mdHref = $derived(
+	markdownHref ?? (entry.section && entry.slug ? `/docs/${entry.section}/${entry.slug}.md` : null),
+);
 
 const navToc = $derived(toc.filter((t) => t.depth === 2 || t.depth === 3));
 
@@ -30,11 +38,28 @@ const chipSections = $derived(toc.filter((t) => t.depth === 2).map((t) => ({ id:
 // The desktop aside highlights the heading currently in view. It tracks every entry
 // it renders (h2 + h3), unlike the chip bar.
 const spy = createScrollSpy(() => navToc.map((t) => t.id));
+
+// Long TOCs scroll inside the sticky aside, so the active item can drift out of
+// its visible window — nudge only the aside's own scrollTop (scrollIntoView would
+// also yank the page, fighting the scroll the user is mid-way through).
+let tocEl = $state<HTMLElement>();
+
+$effect(() => {
+	if (!spy.current || !tocEl) return;
+	const active = tocEl.querySelector<HTMLElement>('li.active');
+	if (!active) return;
+	const top = active.offsetTop;
+	const bottom = top + active.offsetHeight;
+	if (top < tocEl.scrollTop) tocEl.scrollTop = top;
+	else if (bottom > tocEl.scrollTop + tocEl.clientHeight) tocEl.scrollTop = bottom - tocEl.clientHeight;
+});
 </script>
 
 <svelte:head>
 	<meta name="description" content={entry.description} />
-	<link rel="alternate" type="text/markdown" href="/docs/{entry.section}/{entry.slug}.md" />
+	{#if mdHref}
+		<link rel="alternate" type="text/markdown" href={mdHref} />
+	{/if}
 </svelte:head>
 
 <PageContainer width="wide">
@@ -54,7 +79,7 @@ const spy = createScrollSpy(() => navToc.map((t) => t.id));
 		<Renderer {html} />
 
 		{#if navToc.length > 0}
-			<aside class="toc-desktop" aria-label="On this page">
+			<aside class="toc-desktop" aria-label="On this page" bind:this={tocEl}>
 				<p class="toc-label">On this page</p>
 				<ul>
 					{#each navToc as item}
@@ -106,6 +131,9 @@ const spy = createScrollSpy(() => navToc.map((t) => t.id));
 		color: var(--color-muted);
 		text-decoration: none;
 		transition: color var(--duration-fast);
+		/* Path-bearing headings ("… (src/lib/components/index.ts)") have no break
+		   points and would force a horizontal scrollbar in the 14rem column. */
+		overflow-wrap: anywhere;
 	}
 	.toc-desktop a:hover {
 		color: var(--color-primary);
@@ -134,6 +162,13 @@ const spy = createScrollSpy(() => navToc.map((t) => t.id));
 			position: sticky;
 			top: var(--spacing-6);
 			font-size: var(--text-sm);
+			/* Long TOCs (system-abstraction has ~30 entries) must scroll inside the
+			   sticky box, not bleed past the viewport; contain keeps a wheel at the
+			   list's end from yanking the page. */
+			max-height: calc(100dvh - 2 * var(--spacing-6));
+			overflow-y: auto;
+			overflow-x: hidden;
+			overscroll-behavior: contain;
 		}
 		.toc-desktop .toc-label {
 			font-size: var(--text-xs);

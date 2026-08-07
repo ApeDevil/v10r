@@ -1,4 +1,4 @@
-export type DocSection = 'foundation' | 'blueprint' | 'stack';
+export type DocSection = 'foundation' | 'blueprint' | 'stack' | 'pattern-library';
 
 export interface DocEntry {
 	section: DocSection;
@@ -16,6 +16,7 @@ export interface DocsManifest {
 	foundation: DocEntry[];
 	blueprint: DocEntry[];
 	stack: DocEntry[];
+	'pattern-library': DocEntry[];
 }
 
 export const STACK_LAYER_ORDER = [

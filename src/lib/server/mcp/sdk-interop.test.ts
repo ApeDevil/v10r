@@ -116,7 +116,7 @@ describe('MCP SDK interoperability (real client over HTTP)', () => {
 		try {
 			const result = await client.callTool({
 				name: 'search_patterns',
-				arguments: { query: 'stripe subscription webhooks' },
+				arguments: { query: 'stripe billing webhooks' },
 			});
 			expect(result.isError).toBe(true);
 			expect(result).not.toHaveProperty('diag');

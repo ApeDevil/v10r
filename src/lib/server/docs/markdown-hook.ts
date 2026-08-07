@@ -17,11 +17,16 @@ import { markdownBodyFor, resolveMarkdownRequest, toMarkdownPath } from './markd
  * responses out of analyticsCollector. securityHeaders still stamps its set on
  * the way out. Pinned by handle-chain.gate.test.ts.
  *
- * Negotiation semantics (cache-safety, not convenience): the two cacheable
- * artifacts — HTML at the clean URL, markdown at the `.md` URL — each live at
- * exactly one URL with no Vary. Only the negotiated redirect varies by request
- * header, so it is 303 + `Vary: Accept` + `no-store`: nothing a shared cache
- * could poison. A 308 here would durably bind the clean URL to the redirect.
+ * Negotiation semantics (cache-safety, not convenience): HTML at the clean URL
+ * is Vary-free. The `.md` URL serves its cacheable markdown only to agents —
+ * a browser document navigation (`sec-fetch-dest: document`) and a SvelteKit
+ * data request (client-router navigation; the /__data.json suffix is stripped
+ * before hooks run, so serving markdown here would crash the router's
+ * JSON.parse) both fall through to routing, where the docs layout 303s the
+ * `.md` suffix away to the rendered page. The markdown 200/404 therefore carry
+ * `Vary: Sec-Fetch-Dest`, and every negotiated redirect is 303 + Vary +
+ * `no-store`: nothing a shared cache could poison. A 308 anywhere here would
+ * durably bind a URL to one variant.
  */
 const MARKDOWN_CACHE_CONTROL = 'public, max-age=0, s-maxage=3600';
 const LLMS_TXT_LINK = '</llms.txt>; rel="llms-txt"';
@@ -42,6 +47,12 @@ export const docsMarkdown: Handle = async ({ event, resolve }) => {
 	if (!pathname.startsWith('/docs/')) return resolve(event);
 
 	if (pathname.endsWith('.md')) {
+		// Raw markdown is for agents only. Humans (document navigations) and the
+		// client router (data requests) go through routing instead, where the docs
+		// layout redirects the `.md` suffix away to the rendered page.
+		if (event.isDataRequest || event.request.headers.get('sec-fetch-dest') === 'document') {
+			return resolve(event);
+		}
 		const target = resolveMarkdownRequest(pathname);
 		const body = target ? markdownBodyFor(target) : null;
 		if (body === null) {
@@ -50,6 +61,7 @@ export const docsMarkdown: Handle = async ({ event, resolve }) => {
 				headers: {
 					'Content-Type': 'text/plain; charset=utf-8',
 					'Cache-Control': 'public, max-age=0, s-maxage=60',
+					Vary: 'Sec-Fetch-Dest',
 				},
 			});
 		}
@@ -58,6 +70,7 @@ export const docsMarkdown: Handle = async ({ event, resolve }) => {
 				'Content-Type': 'text/markdown; charset=utf-8',
 				'Cache-Control': MARKDOWN_CACHE_CONTROL,
 				Link: `<${pathname.slice(0, -3)}>; rel="canonical", ${LLMS_TXT_LINK}`,
+				Vary: 'Sec-Fetch-Dest',
 			},
 		});
 	}

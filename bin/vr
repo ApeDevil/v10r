@@ -19,6 +19,7 @@ vr — solo-dev cli (acts on the git repo you're standing in)
 
   ship, s           gate + promote current branch → main (deploys on push)
   validate, v       run the full gate (bun run validate) in the container
+  refresh, ref      refresh derived surfaces (bun run refresh) in the container
   dev               start the dev server (podman compose up, foreground)
   up, u             start the container in the background
   down, d           stop the container
@@ -28,7 +29,7 @@ vr — solo-dev cli (acts on the git repo you're standing in)
 
 Runs against the current repo's compose.yaml + git remote. The container and
 service are read from compose.yaml (zero config). Branch/remote overrides go in a
-committed .vrrc or V10R_* env. Run `vr ship -h` for flags (--dry-run, --keep, --yes).
+committed .vrrc or V10R_* env. Run `vr ship -h` or `vr ref -h` for flags.
 EOF
 }
 
@@ -38,6 +39,7 @@ cmd="${1:-help}"
 case "$cmd" in
 	ship|s)        exec bash "$SCRIPTS/ship.sh" "$@" ;;
 	validate|v)    exec bash "$SCRIPTS/validate.sh" "$@" ;;
+	refresh|ref)   exec bash "$SCRIPTS/refresh.sh" "$@" ;;
 	dev)           require_repo; exec "${COMPOSE[@]}" up "$@" ;;
 	up|u)          require_repo; exec "${COMPOSE[@]}" up -d "$@" ;;
 	down|d)        require_repo; exec "${COMPOSE[@]}" down "$@" ;;

@@ -13,7 +13,10 @@
  */
 import registryJson from '../../../../../mcp/patterns.registry.json';
 
-export type RefKind = 'file' | 'dir' | 'route' | 'anchor';
+export type RefKind = 'file' | 'dir' | 'route' | 'approute' | 'anchor';
+
+/** `deep` = full emulation card (invariants + emulation notes); `light` = index row (pointers only). */
+export type PatternTier = 'deep' | 'light';
 
 export interface RegRef {
 	path: string;
@@ -21,8 +24,22 @@ export interface RegRef {
 	kind?: RefKind;
 }
 
+/** Meta-group for the generated Pattern Index TOC (Foundations, Data, …). */
+export interface RegGroup {
+	id: string;
+	title: string;
+}
+
+/** Category = one generated Pattern Index section; registry order IS section order. */
+export interface RegCategory {
+	id: string;
+	title: string;
+	group: string;
+}
+
 export interface PatternRecord {
 	id: string;
+	tier: PatternTier;
 	title: string;
 	category: string;
 	summary: string;
@@ -42,6 +59,8 @@ export interface PatternRecord {
 export interface Registry {
 	version: string;
 	note?: string;
+	groups: RegGroup[];
+	categories: RegCategory[];
 	patterns: PatternRecord[];
 }
 
@@ -49,8 +68,29 @@ export const REGISTRY = registryJson as unknown as Registry;
 
 export const PATTERNS: PatternRecord[] = REGISTRY.patterns;
 
+export const GROUPS: RegGroup[] = REGISTRY.groups;
+
+export const CATEGORIES: RegCategory[] = REGISTRY.categories;
+
+/** Deep tier only — the records that carry invariants/emulation notes (excerpt allowlist, DAG, plans). */
+export const DEEP_PATTERNS: PatternRecord[] = PATTERNS.filter((pattern) => pattern.tier === 'deep');
+
 export function buildById(): Map<string, PatternRecord> {
 	return new Map(PATTERNS.map((pattern) => [pattern.id, pattern]));
+}
+
+/** Patterns grouped by category id, preserving registry order within each. */
+export function byCategory(): Map<string, PatternRecord[]> {
+	const map = new Map<string, PatternRecord[]>();
+	for (const pattern of PATTERNS) {
+		const bucket = map.get(pattern.category);
+		if (bucket) {
+			bucket.push(pattern);
+		} else {
+			map.set(pattern.category, [pattern]);
+		}
+	}
+	return map;
 }
 
 /** Registry declaration order — the deterministic tie-breaker for scoring and topo-sort. */

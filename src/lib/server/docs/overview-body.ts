@@ -59,7 +59,7 @@ export function buildOverviewBody(files: OverviewDocFile[]): string {
 		if (arr) arr.push(f);
 		else bySection.set(section, [f]);
 	}
-	const order = ['foundation', 'blueprint', 'stack'];
+	const order = ['foundation', 'blueprint', 'stack', 'pattern-library'];
 	const sections = [...bySection.keys()].sort(
 		(a, b) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99) || a.localeCompare(b),
 	);

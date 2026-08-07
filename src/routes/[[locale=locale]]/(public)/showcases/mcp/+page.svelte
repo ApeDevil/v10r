@@ -128,6 +128,14 @@ const handshakeEdges: Edge[] = [
 				<span class="stat-label">Patterns</span>
 			</div>
 			<div class="stat-card">
+				<span class="stat-value">{stats.deepCount}</span>
+				<span class="stat-label">Deep cards</span>
+			</div>
+			<div class="stat-card">
+				<span class="stat-value">{stats.lightCount}</span>
+				<span class="stat-label">Index rows</span>
+			</div>
+			<div class="stat-card">
 				<span class="stat-value">{stats.categoryCount}</span>
 				<span class="stat-label">Categories</span>
 			</div>
@@ -171,6 +179,7 @@ const handshakeEdges: Edge[] = [
 							<Header>
 								<Row hoverable={false}>
 									<HeaderCell>Pattern</HeaderCell>
+									<HeaderCell>Tier</HeaderCell>
 									<HeaderCell>Category</HeaderCell>
 									<HeaderCell>Depends On</HeaderCell>
 									<HeaderCell>Depended By</HeaderCell>
@@ -180,6 +189,7 @@ const handshakeEdges: Edge[] = [
 								{#each data.patterns as pattern}
 									<Row>
 										<Cell><code>{pattern.id}</code></Cell>
+										<Cell>{pattern.tier}</Cell>
 										<Cell>{pattern.category}</Cell>
 										<Cell>{pattern.depends_on.join(', ') || '—'}</Cell>
 										<Cell>{dependedBy(pattern.id)}</Cell>
@@ -190,17 +200,18 @@ const handshakeEdges: Edge[] = [
 					{/snippet}
 					{#snippet code()}
 						<pre><code>{`// $lib/showcase/mcp/registry-viz.ts — fed by a build-time JSON import
-const dagData = toDagData(registry);
-// nodes: patterns.map((p) => ({ id: p.id, label: SHORT_LABELS[p.id], group: p.category }))
-// edges: patterns.flatMap((p) => p.depends_on.map((dep) => ({ source: dep, target: p.id })))
+const dagData = toDagData(registry); // deep-tier subgraph only
+// nodes: deep.map((p) => ({ id: p.id, label: SHORT_LABELS[p.id], group: p.category }))
+// edges: deep.flatMap((p) => p.depends_on.map((dep) => ({ source: dep, target: p.id })))
 
 <DagGraph data={dagData} ariaLabel="Pattern dependency graph" />`}</code></pre>
 					{/snippet}
 				</DemoCard>
 				{#if undrawn.length > 0}
 					<p class="dag-caption">
-						{undrawn.length} of {stats.patternCount} patterns ({undrawn.map((n) => n.id).join(', ')}) have no
-						dependency edges and are not drawn above — the Data tab lists every pattern.
+						{undrawn.length} of {stats.deepCount} deep patterns ({undrawn.map((n) => n.id).join(', ')}) have no
+						dependency edges and are not drawn above. The {stats.lightCount} light index rows are not graphed —
+						the Data tab lists every pattern of both tiers.
 					</p>
 				{/if}
 			</div>

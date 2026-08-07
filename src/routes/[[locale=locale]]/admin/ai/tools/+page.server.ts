@@ -14,6 +14,7 @@ const NOTES: Record<string, string> = {
 	get_rawrag_chunks: 'Drill to raw source chunks — verbatim-id rule, max 3/turn.',
 	search_catalog: 'Search the ⌘K catalog → canonical paths (CitationChip).',
 	search_project_docs: 'Semantic search over the system-owned docs corpus.',
+	search_pattern_library: 'Search the canonical pattern registry → /docs/pattern-library pages.',
 	desk_list_files: 'List files in the desk workspace.',
 	desk_read_file: 'Read a desk file.',
 	desk_file_tree: 'Desk file tree.',

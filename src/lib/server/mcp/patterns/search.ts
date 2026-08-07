@@ -65,7 +65,13 @@ export function scorePatterns(query: string, patterns: PatternRecord[] = PATTERN
 			results.push({ pattern, score, matchedTerms: [...matchedTerms], matchedFields: [...matchedFields] });
 		}
 	}
-	return results.sort((a, b) => b.score - a.score || a.pattern.id.localeCompare(b.pattern.id));
+	// Tier breaks exact score ties only (deep before light) — a deep card that
+	// LOSES to its own index row on score is a curation defect to fix in the data.
+	const tierRank = (p: PatternRecord) => (p.tier === 'deep' ? 0 : 1);
+	return results.sort(
+		(a, b) =>
+			b.score - a.score || tierRank(a.pattern) - tierRank(b.pattern) || a.pattern.id.localeCompare(b.pattern.id),
+	);
 }
 
 /**

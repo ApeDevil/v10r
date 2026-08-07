@@ -273,6 +273,9 @@ User deletion (`$lib/server/privacy` `deleteUserData`) sweeps the user's Neo4j n
 podman exec v10r bun run db:ingest-docs
 ```
 
+(Or `vr ref`, which chains this after the MCP registry/excerpt-snapshot steps — see
+[dev-cli.md](../../stack/ops/dev-cli.md).)
+
 - Hand-rolls its own Neon pool + Gemini embedder from `process.env` (the app's `rawrag` modules import `$lib`/`$env` and can't run under bare Bun). Reuses only the Vite-free `splitMarkdown`.
 - Enumerates `docs/**/*.md`, importing the blocklist + canonical-path derivation (`isBlocked`, `parseFrontmatter`, `slugify`, `deriveTitle`) from the Vite-free SSOT `src/lib/server/docs/doc-filter.ts` — the same module the `/docs` manifest imports, so there is no manual sync. Only `RAG_ONLY_BLOCK` (docs rendered in `/docs` but withheld from the chatbot) is ingest-local.
 - Idempotent: content-hash skip, soft-delete + re-insert on change, soft-delete-not-seen for removed files.

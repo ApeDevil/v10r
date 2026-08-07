@@ -20,9 +20,23 @@ The Pattern MCP closes that gap. Each entry in [`mcp/patterns.registry.json`](..
 
 The server (`server.ts`, `protocol.ts`, `tools.ts`) is intentionally boring: JSON-RPC plumbing and six query functions over two JSON files (the pattern registry and the snippet rules). All the curation work — deciding what counts as a pattern, which invariants matter, which files are the canonical entry point — lives in the registry data, not in code. Adding a pattern means adding a record, not writing a handler.
 
-A drift guard (`validate-registry.ts`, wired into `bun run validate` as `mcp:validate`) keeps the registry honest: every `docs`/`code`/`tests`/`showcases` path must exist on disk, `depends_on` must form a DAG (checked via the same Kahn toposort the server uses at query time), and IDs must be unique kebab-case. A registry that references a moved or deleted file fails the gate — unlike a stale doc, it can't silently rot.
+A drift guard (`validate-registry.ts`, wired into `bun run validate` as `mcp:validate`) keeps the registry honest: every `docs`/`code`/`tests` path must exist on disk, `showcases` refs of `kind: "route"` must be members of `src/lib/showcases/registry.ts` (not merely directories on disk), `depends_on` must form a DAG (checked via the same Kahn toposort the server uses at query time), IDs must be unique kebab-case, and each tier's contract holds (deep records must carry invariants/emulation notes; light records must not). A registry that references a moved or deleted file fails the gate — unlike a stale doc, it can't silently rot.
 
-The registry is also self-referential: it catalogs v10r's own documentation conventions as patterns (`docs-nav-hubs`, `pattern-index`) alongside code patterns (`multi-client-core`, `layered-rag`, `jobs-scheduler`, …). The root README's Pattern Index is described in the registry itself as "the human-readable twin of this MCP's registry" — same map, two audiences.
+The registry is also self-referential: it catalogs v10r's own documentation conventions as patterns (`docs-nav-hubs`, `pattern-index`) alongside code patterns (`multi-client-core`, `layered-rag`, `jobs-scheduler`, …). The root README's Pattern Index is not a twin that could drift — it is **generated from this registry** (see "Derived surfaces" below).
+
+### Two tiers, one record set
+
+Since v2.0.0 the registry is the complete record of the pattern library, not a curated subset: **deep** records are full emulation cards (invariants and emulation notes required — the contract `mcp:validate` enforces), while **light** records are index rows carrying pointers to docs, code, and proof. Search covers both tiers (deep wins exact score ties); `recommend_emulation_plan` builds steps from deep records only and reports light-only matches as "related index entries" so the gap is visible. Promoting a pattern means filling in its depth fields and flipping `tier` — a reviewable edit, not a new file.
+
+### Derived surfaces
+
+Every human- and agent-facing form of the pattern library is generated from this one file (regenerate with `bun run patterns:build`, gate-checked by `patterns:check`; `vr ref` runs the whole refresh chain):
+
+- the root **README Pattern Index** — the marker-delimited region is rendered from the registry's `groups`/`categories` blocks and rows; never hand-edit it
+- **`docs/pattern-library/<id>.md`** — one pointer page per record in the library's own top-level docs section, served at `/docs/pattern-library/<id>`, ingested into the RAG corpus, and listed first in `/llms.txt`
+- **`/docs/pattern-library`** — the section's catalog index (every pattern + purpose, grouped by category), a live route over the same registry import (`$lib/server/patterns/catalog.ts`), so it is current without a build step
+- both **MCP runtimes** (stdio + hosted) and the **`/showcases/mcp`** visualization
+- Vely's **`search_pattern_library`** chatbot tool — the same static registry import the hosted MCP uses
 
 ### Curated cards over raw grep
 
@@ -65,7 +79,7 @@ These aren't arbitrary style choices — each one maps to a specific failure mod
 
 ## Registry record shape
 
-Each record in `patterns.registry.json` has `id`, `title`, `category`, `summary`, `when_to_use`, `capabilities[]`, `keywords[]`, `depends_on[]`, and four reference lists — `docs[]`, `code[]`, `tests[]`, `showcases[]` (each a `{ path, note?, kind? }` ref, `kind` one of `file | dir | route | anchor`) — plus `invariants[]`, `emulation_notes[]`, and `risk`. See the file itself for the full shape and current entries; this doc won't re-derive what the schema already states plainly.
+Each record in `patterns.registry.json` has `id`, `tier` (`deep | light`), `title`, `category` (an id from the root `categories[]` block, which — with `groups[]` — also drives the generated index's sections and order), `summary`, `when_to_use`, `capabilities[]`, `keywords[]`, `depends_on[]`, and four reference lists — `docs[]`, `code[]`, `tests[]`, `showcases[]` (each a `{ path, note?, kind? }` ref, `kind` one of `file | dir | route | approute | anchor`; `route` = a showcase-registry href, `approute` = a live app route with no showcase) — plus `invariants[]`, `emulation_notes[]`, and `risk`. Deep records must have non-empty `invariants`/`emulation_notes`/`capabilities`/`keywords`/`docs`; light records must keep the two depth fields empty. See the file itself for current entries; this doc won't re-derive what the schema already states plainly.
 
 ## Hosted trust surfaces
 

@@ -1976,6 +1976,8 @@
 	"home_structure_nrag_item_verify_desc": "постфактумная таксономия цитат — прямая цитата, парафраз, смещение, без цитаты",
 	"home_showcase_cta": "к примерам",
 	"home_showcase_map_aria": "Все витрины",
+	"home_showcase_patterns_cta": "к библиотеке паттернов",
+	"home_showcase_patterns_desc": "каталог за этими демо — каждый проверенный паттерн с кодом, который его реализует, и шоукейсом, который его доказывает",
 	"footer_source_github_aria": "Исходники на GitHub",
 	"footer_source_gitlab_aria": "Исходники на GitLab",
 	"footer_copyright": "© {year} Velociraptor.",

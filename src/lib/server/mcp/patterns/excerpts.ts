@@ -62,7 +62,7 @@ export function readAllowlistedExcerpt(path: string, startLine = 1, lineCount = 
 	if (!isAllowlisted(path)) {
 		return {
 			ok: false,
-			text: `'${path}' is not an allowlisted file. The hosted endpoint only excerpts files referenced by the pattern registry — use a path from get_pattern / trace_capability output.`,
+			text: `'${path}' is not an allowlisted file. The hosted endpoint only excerpts files referenced by deep-tier pattern records — use a path from get_pattern / trace_capability output. Docs referenced by light index records are readable as raw markdown at https://www.v10r.dev/<docs-path-without-.md>.md.`,
 			diag: 'not_found',
 			next: [
 				{ tool: 'trace_capability', why: 'trace the capability to find which registry files cover it.' },

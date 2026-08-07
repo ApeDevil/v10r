@@ -36,9 +36,10 @@ describe('tool diag — every registry error is classified', () => {
 		// Deliberately realistic "capability we do not cover" queries rather than gibberish. Note
 		// that scoring prefix-matches at half weight (search.ts), so a query containing registry
 		// meta-vocabulary — the literal word "capability", say — scores a weak hit and is NOT a
-		// no-match. Fixtures here must be domain terms that appear nowhere in the registry.
+		// no-match. Fixtures here must be domain terms that appear nowhere in the registry
+		// ("subscription" burned a previous fixture by prefix-matching "subscriptions").
 		for (const [tool, args] of [
-			['search_patterns', { query: 'stripe subscription webhooks' }],
+			['search_patterns', { query: 'stripe billing webhooks' }],
 			['trace_capability', { capability: 'kubernetes operator' }],
 			['recommend_emulation_plan', { capabilities: ['blockchain wallet'] }],
 		] as const) {
@@ -110,7 +111,7 @@ describe('every registry error hands the caller a next step', () => {
 	// by convention (both surfaces are text-only), with a fixed grep-able heading.
 	const ERROR_CALLS: ReadonlyArray<readonly [string, Record<string, unknown>]> = [
 		['search_patterns', { query: '   ' }],
-		['search_patterns', { query: 'stripe subscription webhooks' }],
+		['search_patterns', { query: 'stripe billing webhooks' }],
 		['search_patterns', { query: 'rag', category: 'no-such-category' }],
 		['get_pattern', { id: 'no-such-pattern-id' }],
 		['get_file_excerpt', { path: 'src/lib/server/auth/guards.ts' }],
