@@ -143,7 +143,7 @@ const zones: Array<{
 				<span class="etymology-label">{m.home_hero_etymology_label()}</span>
 				<div class="etymology-content">
 					<pre class="etymology-diagram" aria-hidden="true">v  e l o c i r a p t o   r
-│ └──── 10 letters ────┘ │
+| +---- 10 letters ----+ |
 v          10            r</pre>
 					<span class="sr-only">{m.home_hero_etymology_sr()}</span>
 					<p class="etymology-descriptor">{m.home_hero_etymology_descriptor()}</p>
@@ -607,11 +607,17 @@ v          10            r</pre>
 	}
 
 	.etymology-diagram {
+		/* Font stack comes from the shared mono rule above. Keep the diagram
+		   ASCII-only: no loaded JetBrains Mono subset covers the U+2500 box
+		   -drawing block, so those glyphs fall back to a system font whose
+		   advance width differs and the column grid drifts apart. */
 		font-size: clamp(0.5rem, 2.5vw, 0.875rem);
 		color: var(--color-muted);
 		margin: 0;
 		white-space: pre;
 		line-height: 1.4;
+		max-width: 100%;
+		overflow-x: auto;
 	}
 
 	.etymology-descriptor {
