@@ -1,7 +1,7 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import { Asterism, Divider, DropdownMenu } from '$lib/components';
+import { Divider, DropdownMenu } from '$lib/components';
 import LogoHero from '$lib/components/branding/LogoHero.svelte';
 import { cookieMaxAge, cookieName, locales, localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
@@ -237,8 +237,8 @@ v          10            r</pre>
 <InstancesSection />
 
 <!-- ACT IV: Showcase Entry -->
-<div class="asterism-wrap">
-	<Asterism pattern="three-dots" />
+<div class="divider-wrap">
+	<Divider motif="crosshair" width="content" />
 </div>
 
 <section class="showcase-entry">
@@ -627,8 +627,7 @@ v          10            r</pre>
 	}
 
 	/* ─── DIVIDERS ─── */
-	.divider-wrap,
-	.asterism-wrap {
+	.divider-wrap {
 		padding: var(--spacing-8) var(--spacing-fluid-3);
 		display: flex;
 		justify-content: center;
