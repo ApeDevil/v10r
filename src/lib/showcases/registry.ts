@@ -17,7 +17,10 @@ import type { LabelFn } from '../nav/types';
 import * as m from '../paraglide/messages.js';
 
 /** A doc link surfaced by the `ShowcaseDocs` composite (see `resolve-docs.ts`).
- *  Labels stay plain strings — docs are English-only and the docs gate pins them. */
+ *  Every button reads "Documentation" (`showcase_docs_button`); `label` names the
+ *  target doc and is the *disambiguator* — hover tooltip plus accessible name —
+ *  which only shows when a node registers more than one link. Labels stay plain
+ *  strings: docs are English-only and the docs gate pins them. */
 export interface ShowcaseDocLink {
 	href: string;
 	label?: string;

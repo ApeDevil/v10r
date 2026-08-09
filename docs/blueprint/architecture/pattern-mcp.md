@@ -72,7 +72,6 @@ A handful of the server's behaviors exist only because live E2E testing against 
 | Tool results are plain text/markdown — `structuredContent` is never returned | E2E dogfooding showed that when a result has `structuredContent`, Claude Code shows the model *only* that payload and hides the text body — `get_file_excerpt` came through as bare metadata with no code. |
 | stdout carries protocol frames only; all logging goes to stderr | Any stray `console.log` corrupts the NDJSON stream the client is parsing. |
 | The process exits on stdin EOF or SIGTERM/SIGINT | Claude Code has a known issue leaving spawned child processes orphaned otherwise — the server terminates itself rather than trusting the client to clean up. |
-| `.mcp.json`'s mount uses `${V10R_REPO:-/home/ad/dev/velociraptor}`, not `${CLAUDE_PROJECT_DIR}` | `${CLAUDE_PROJECT_DIR}` does not expand inside `.mcp.json` args — an env-var-with-default is the only working substitution. |
 | Every response stays well under Claude Code's 10k-token warning threshold | Built in by construction: bounded excerpts (`get_file_excerpt` caps at 250 lines), capped result counts, no unbounded list dumps. |
 
 These aren't arbitrary style choices — each one maps to a specific failure mode observed by spawning the real server against a real client. Treat them as invariants of the MCP transport layer itself, the same way a pattern card's `invariants` field pins behavior for the patterns it describes.

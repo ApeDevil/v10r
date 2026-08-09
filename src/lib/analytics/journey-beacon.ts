@@ -65,7 +65,7 @@ export function initJourneyBeacon(): void {
 
 	afterNavigate(({ to, from }) => {
 		if (!to) return;
-		enqueue(to.url.pathname, from?.url.origin ?? (document.referrer ? new URL(document.referrer).origin : null));
+		enqueue(to.url.pathname, from?.url?.origin ?? (document.referrer ? new URL(document.referrer).origin : null));
 	});
 
 	// Back/forward cache restore. `afterNavigate` does NOT fire when the browser

@@ -30,18 +30,19 @@ podman run -i --rm --network=none -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 b
 3. `get_file_excerpt` — bounded line-numbered read of referenced repo files (max 250 lines; secrets denied)
 4. `trace_capability` — concept → docs → code → tests → showcase trail
 5. `recommend_emulation_plan` — deterministic, dependency-ordered plan assembly (no inference)
+6. `validate_snippet` — checks a Svelte/TS snippet against v10r conventions (runes, component-first, tokens, Valibot); returns line-numbered findings with fixes — call it in a loop until clean
 
 ## Registration
 
-Project scope: `.mcp.json` at the repo root (committed; approve once when prompted). Its mount arg is `${V10R_REPO:-/home/ad/dev/velociraptor}` — `${CLAUDE_PROJECT_DIR}` does not expand inside `.mcp.json` args, so cloning this repo elsewhere means exporting `V10R_REPO` to your own path before the client spawns the server.
-
-User scope, to query v10r patterns from *other* projects:
+There is deliberately no committed project-scope `.mcp.json`. Inside this repo the tools are redundant — Read and Grep reach the same files — so the server is registered at **user scope**, where it earns its keep: querying v10r patterns from *other* projects. Substitute your own clone path for the mount:
 
 ```bash
 claude mcp add --scope user --transport stdio v10r-patterns -- \
   podman run -i --rm --network=none -v /home/ad/dev/velociraptor:/v10r:ro \
   docker.io/oven/bun:1.3.12 bun /v10r/mcp/server.ts
 ```
+
+No clone at all? The same six tools are served over HTTP at `POST https://www.v10r.dev/api/mcp/public` — no podman, no mount, no setup.
 
 ## Testing
 

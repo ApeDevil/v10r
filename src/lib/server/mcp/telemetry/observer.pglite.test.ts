@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mcpCallLog } from '$lib/server/db/schema/mcp/call-log';
 import { createTestDb } from '$lib/server/test/db';
 import type { McpCallObservation } from '../types';
@@ -13,13 +13,28 @@ import type { McpCallObservation } from '../types';
  * inserted through the REAL schema.
  *
  * `$lib/server/db` is mocked only to stop the import graph constructing a Neon pool — the
- * inserts below go to a fresh PGlite database from `createTestDb()`.
+ * inserts below go to a PGlite database from `createTestDb()`, emptied between tests.
  */
 vi.mock('$lib/server/db', () => ({ db: {} }));
 vi.mock('@vercel/functions', () => ({ waitUntil: vi.fn() }));
 vi.mock('$env/dynamic/private', () => ({ env: {} }));
 
 const { buildCallLogRow } = await import('./observer');
+
+type Db = Awaited<ReturnType<typeof createTestDb>>['db'];
+type Client = Awaited<ReturnType<typeof createTestDb>>['client'];
+
+let db: Db;
+let client: Client;
+
+beforeAll(async () => {
+	({ db, client } = await createTestDb());
+});
+
+/** Emptying the table isolates these inserts as well as a fresh database would, ~1000x cheaper. */
+beforeEach(async () => {
+	await client.exec('DELETE FROM mcp.call_log');
+});
 
 const NOW = new Date('2026-08-03T00:00:00Z');
 
@@ -57,7 +72,6 @@ const context = {
 
 describe('the private producer satisfies the constraints', () => {
 	it('a successful private call — query, answer and workspace all kept — inserts cleanly', async () => {
-		const { db } = await createTestDb();
 		const row = buildCallLogRow(observation(), context, NOW);
 		// The salt is unset in this test env, so clientKey is null — the fail-open column, not row.
 		expect(row.clientKey).toBeNull();
@@ -72,7 +86,6 @@ describe('the private producer satisfies the constraints', () => {
 	});
 
 	it('a private miss and a protocol row insert cleanly too', async () => {
-		const { db } = await createTestDb();
 		const miss = buildCallLogRow(observation({ isError: true, diag: 'empty' }), context, NOW);
 		await expect(db.insert(mcpCallLog).values(miss)).resolves.toBeDefined();
 
@@ -85,7 +98,6 @@ describe('the private producer satisfies the constraints', () => {
 	});
 
 	it('an oversized answer is capped by the builder BEFORE the CHECK would fire', async () => {
-		const { db } = await createTestDb();
 		const row = buildCallLogRow(observation({ responseText: `prose ${'word '.repeat(2000)}` }), context, NOW);
 		expect(row.responseText).toHaveLength(4000);
 		await expect(db.insert(mcpCallLog).values(row)).resolves.toBeDefined();

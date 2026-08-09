@@ -1,206 +1,151 @@
 # CLAUDE.md
 
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 ## Project Overview
 
-Velociraptor (v10r) is a full-stack reference and test-sandbox.
+Velociraptor (v10r) is a full-stack **pattern library** — proven, high-performance SvelteKit patterns that an AI agent reads and adapts to a new project. Emulation, not cloning. It is simultaneously documentation, a test environment, and a reusable reference. Full goals: `docs/foundation/PRD.md`.
 
-- **Purpose:** establish proven, high-performance full-stack patterns.
-- **Approach:** emulation, not cloning — an AI agent reads v10r's tested patterns and adapts only the pieces a new project needs.
+Showcase pages under `(public)/showcases/` are the primary test strategy for UI patterns: each page is documentation, feature test, and copy template at once. If the showcase works, the pattern is proven.
 
-v10r simultaneously serves as documentation, a test environment, and a reusable reference. Full goals: `docs/foundation/PRD.md`.
+**No backward compatibility.** Active development, no production users. Never add migration shims, retired-ID filters, version upgrade paths, or deprecation layers — change the code directly.
 
-**No backward compatibility required.** This project is in active development with no production users. Do not add migration shims, retired-ID filters, version upgrade paths, or backward-compat hacks. Just change the code directly.
+## Commands
 
+**Everything runs inside the `v10r` Podman container.** The host has only Podman — no `node_modules`, no runtime, no package manager. Never run `bun install` (or any package manager) on the host. Databases are remote (Neon, Neo4j Aura, Upstash), not containerized.
 
-## Stack
+```bash
+podman compose up -d                     # start container (name: v10r, port 5173)
+podman exec v10r <command>               # run anything inside it
+podman exec -it v10r bash                # shell in
+```
 
-| Layer | Technology | Docs |
-|-------|------------|------|
-| Container | Podman | `docs/stack/core/podman.md` |
-| Runtime | Bun (dev/tooling/tests/scripts) · Node 22 on Vercel (prod) | `docs/stack/core/bun.md` |
-| Framework | SvelteKit 2 + Svelte 5 | `docs/stack/core/sveltekit.md`, `docs/stack/core/svelte.md` |
-| Database | PostgreSQL (Neon) + Neo4j (Aura) | `docs/stack/data/postgres.md`, `docs/stack/data/neo4j.md` |
-| ORM | Drizzle | `docs/stack/data/drizzle.md` |
-| Auth | Better Auth (session-based) | `docs/stack/auth/better-auth.md` |
-| Styling | UnoCSS + Bits UI | `docs/stack/ui/unocss.md`, `docs/stack/ui/bits-ui.md` |
-| Validation | Valibot + Superforms | `docs/stack/forms/valibot.md`, `docs/stack/forms/superforms.md` |
-| Code Quality | Biome | `docs/stack/quality/biome.md` |
-| Hosting | Vercel | `docs/stack/ops/deployment.md` |
-| Storage | Cloudflare R2 | `docs/stack/data/r2.md` |
-| i18n | Paraglide JS | `docs/stack/i18n/paraglide.md` |
-| AI | Vercel AI SDK | `docs/stack/ai/ai-sdk.md` |
-| 3D | Three.js + Threlte | `docs/stack/capabilities/3d-web.md` |
+### The gate
 
+There is no CI pipeline (solo dev). `bun run validate` is the authority — typecheck + biome + tests + registry/i18n/content/quality checks:
+
+```bash
+podman exec v10r bun run validate
+```
+
+### Individual checks
+
+```bash
+podman exec v10r bun run check            # paraglide compile + svelte-kit sync + svelte-check-rs
+podman exec v10r bun run test             # vitest run
+podman exec v10r bun run lint             # biome check .
+podman exec v10r bun run lint:fix         # biome check --write .
+podman exec v10r bun run knip             # unused exports / dead code
+```
+
+### Running a single test
+
+```bash
+podman exec v10r bunx vitest run src/lib/server/mcp/server.test.ts   # one file
+podman exec v10r bunx vitest run -t "rejects unauthenticated"        # by test name
+podman exec v10r bunx vitest run src/lib/server/rag                  # by path prefix
+```
+
+Tests are co-located as `*.test.ts` (no `__tests__/` dir). Vitest runs in the **node** environment — `$effect` never fires, so Svelte 5 effects cannot be unit-tested here; test the state half and verify effects in the browser.
+
+### Database
+
+Postgres connection env var is `NEON_DATABASE_URL_PROD` (not `DATABASE_URL`).
+
+```bash
+podman exec v10r bun run db:push          # sync schema (PUSH-ONLY — no migrations dir)
+podman exec v10r bun run db:setup         # full bootstrap: rag-pre → push → rag-post → neo4j → catalog-sync → seed → search-backfill
+podman exec v10r bun run db:studio        # drizzle studio
+podman exec v10r bun run db:ingest-docs   # ingest docs/**/*.md into the RAG corpus (manual, NOT in db:setup)
+```
+
+`drizzle-kit push` is interactive and re-prompts on TTY; it cannot be cleanly piped.
+
+### Derived surfaces
+
+Pattern-library pages, MCP excerpts, and the RAG index are **generated**. Never hand-edit `docs/pattern-library/`; rebuild instead:
+
+```bash
+podman exec v10r bun run refresh          # mcp:validate → patterns:build → mcp:excerpts:build → db:ingest-docs
+```
+
+### The `vr` CLI
+
+`vr` is the host-side solo-dev dispatcher (`bin/vr`, logic in `scripts/`). Commands: `validate`/`v`, `refresh`/`ref`, `ship`/`s`, `dev`, `up`, `down`, `shell`. Reference: `docs/stack/ops/dev-cli.md`.
+
+**CRITICAL — never run a `vr` command on your own initiative.** Run one *only* when the user explicitly names that specific command. This is non-negotiable for `vr ship`, which fast-forwards `main` and pushes — **pushing `main` deploys to production**. Do not infer authorization from a task that merely "would benefit" from validating or shipping. Prefer the `podman exec v10r` forms above for your own verification.
 
 ## Architecture
 
-The project uses a self-documenting architecture where showcase pages serve as documentation, tests, and patterns simultaneously. If a showcase page works, the feature is proven functional.
+### Two spines
 
-The backend follows a multi-client core / hexagonal pattern — framework-free domain modules in `$lib/server/[domain]/`, thin route adapters. See `docs/system-abstraction.md` (runtime wiring + 7-layer hierarchy), `docs/codebase-organization.md` (where each piece lives), and `docs/blueprint/architecture/multi-client-core.md` (full pattern).
+The whole system hangs off two structures. Read `docs/system-abstraction.md` (how it runs) and `docs/codebase-organization.md` (where code lives) before any structural or cross-cutting work.
 
-The AI subsystem includes a Graph RAG retrieval pipeline. See `docs/blueprint/ai/` for architecture details.
+**Composition root** — `src/hooks.server.ts` boots background modules via three module-load side effects (`agents`, `jobs/scheduler`, `jobs/delivery-scheduler`), then runs a `sequence()` of 14 `Handle` middlewares that populate a shared `event.locals` bus:
 
-### Component-First Rule
+```
+securityHeaders → bodySizeFloor → stripBaseLocalePrefix → docsMarkdown → loadStyle
+→ i18n → authCaptchaGate → authHandler → csrfProtection → sessionPopulate
+→ consentLoader → debugOwnerLoader → devRouteGuard → analyticsCollector
+```
 
-**Never use raw HTML elements when a project component exists.** The project has a layered component system in `$lib/components/` — primitives (Button, Input, Textarea, Select, Checkbox, Switch, etc.), composites (LinkCard, etc.), layout, shell, branding, ui, and viz — that enforce consistent styling via design tokens. Always check for an existing component at any layer before reaching for a raw HTML element. Using raw `<input>`, `<button>`, `<select>`, or `<textarea>` bypasses the design system and creates visual inconsistency. Exceptions: `<input type="hidden">` (form data), `<input type="checkbox">` inside table rows (native indeterminate support), `<select>` binding numeric values (Select component only supports strings), and custom interactive regions (palette cards, sort headers) that need specialized styling.
+Order is load-bearing: `securityHeaders` must be first (auth pins `ipAddressHeaders: ['x-client-ip']`); `authCaptchaGate` must precede `authHandler` (which consumes the request body); `sessionPopulate` must follow `authHandler` (Better Auth's `svelteKitHandler` does not populate locals).
 
-## Local Development
+**Hexagonal multi-client core** — all business logic lives in framework-free `$lib/server/[domain]/` modules (~40 of them). Thin adapters wrap them per client type: `+page.server.ts` (form actions/loads), `+server.ts` (REST/SSE), `ai/tools/` (AI tool `execute`), `jobs/` (cron/scheduler). The same domain function serves all four.
 
-**Container-first architecture** - the host machine stays clean.
+### The four invariants
 
-| Host Machine | v10r Container |
-|--------------|----------------|
-| Only Podman installed | Bun, SvelteKit, all dependencies |
-| No node_modules | node_modules lives here |
-| No runtime installed | Runtime executes here |
-| Source code (mounted) | Source code (via volume) |
+Violating these breaks cross-client reuse:
 
-### Key Principles
+1. **No framework imports in domain modules.** No `@sveltejs/kit` or `$app/*` inside `$lib/server/[domain]/`. Narrow exceptions: the `dev`/`building` flags from `$app/environment` in six modules (`auth/step-up.ts`, `auth/revocation.ts`, `ai/budget.ts`, `agents/index.ts`, `jobs/scheduler.ts`, `jobs/delivery-scheduler.ts`), and two `Handle`-typed hook modules (`docs/markdown-hook.ts`, `analytics/hook.ts`).
+2. **Date serialization happens in the adapter.** Domains return `Date` objects; the route or tool converts to ISO strings.
+3. **`redirect` / `error` / `fail` / `message` only in adapters.** Domains return `null`, not `error(404)`. AI tools return `{ error: 'safe message' }` — they never throw.
+4. **Domains call down, not across.** Cross-domain access goes through the other domain's `index.ts` barrel only — never into its internals.
 
-1. **Never install on host** - No `bun install` or any package manager commands on the host machine
-2. **Container has everything** - All tools, dependencies, and runtime are inside the v10r container
-3. **Databases are remote** - PostgreSQL (Neon) and Neo4j (Aura) are cloud-hosted, not containerized locally
-4. **Dependencies via package.json** - Add dependencies to `package.json`, then rebuild/restart container
+### Import direction
 
-### No CI Pipeline
+- `$lib/server/` is server-only **by path** — SvelteKit refuses to bundle it client-side. No runtime guard needed. Never import it from a `.svelte` file or a universal `+page.ts`.
+- `db/` is the sink: it imports no sibling domains. Everything flows toward it.
+- The import graph is a DAG. Drizzle relations are centralized in `db/schema/relations.ts` for exactly this reason.
 
-Solo dev, no CI runner — an automated pipeline is unnecessary overhead. Run the gate locally with `vr validate` (or `bun run validate`: check + biome + test) when needed. Revisit when collaborating.
+### Database layout
 
-### Dev CLI (`vr`)
+`src/lib/server/db/` holds two parallel trees: `schema/[namespace]/` (table definitions, grouped by *storage*) and `db/[domain]/{queries,mutations}.ts` (data access, grouped by *call site*). They are deliberately not 1:1.
 
-`vr` is the host-clean solo-dev CLI (a bash dispatcher) that acts on the git repo you're standing in. Full reference: `docs/stack/ops/dev-cli.md`. Main commands:
+Reads/writes split into `queries.ts` (no side effects) / `mutations.ts` (explicit intent), in one of two locations:
 
-- `vr validate` / `vr v` — run the full gate (`bun run validate`) in the repo's container
-- `vr refresh` / `vr ref` — refresh derived pattern-library surfaces (registry check → generated index/pages → excerpt snapshot → RAG ingest) in the container
-- `vr ship` / `vr s` — gate the current branch, fast-forward `main`, push `dev` + `main` (**pushing `main` triggers the Vercel production deploy**)
-- `vr dev` / `vr up` / `vr down` / `vr shell` — container lifecycle
+- **Dominant:** `db/[domain]/` — for incidental CRUD.
+- **Named exceptions:** co-located in `[domain]/` when the query *is* the domain logic — `blog/`, `rawrag/`, `llmwiki/`.
 
-**CRITICAL — never run a `vr` command on your own initiative.** Execute a `vr` command *only* when the user has clearly and explicitly told you to run that specific command. This is non-negotiable for `vr ship` / `vr s`, which pushes to the remote and **deploys to production** (and, lacking a TTY, needs `-y` to bypass its safety confirmation). Do not infer authorization from a task that merely "would benefit" from validating or shipping — wait for an explicit instruction.
+**Push-only workflow.** No `drizzle/` migrations directory exists. Every `pgSchema()` and `pgEnum()` must be exported through `schema/index.ts` *and* listed in `drizzle.config.ts` `schemaFilter`, or `db:push` silently omits it.
 
-### E2E via Chrome Extension
+### Components
 
-For autonomous end-to-end testing through the Chrome extension (`mcp__claude-in-chrome__*`), log in via **Google OAuth**. The browser is already signed into the `lynxware.shop@gmail.com` test account, so the "Sign in with Google" button completes the full-page redirect without any password entry (auth is passwordless — there is no email/password path). That account is also an admin (`ADMIN_USER_ID`), so it reaches `/admin`.
+Layer order (leaf → root): `primitives/` (wrap Bits UI) ← `composites/` ← `layout/` + `shell/` ← feature dirs (`blog/`, `chat/`, `editor/`, `viz/`, `3d/`, …). Feature dirs depend downward and **never import each other**.
 
+**The barrel is a bundle-size boundary.** `$lib/components/index.ts` re-exports only `composites`, `layout`, `primitives`. Deliberately excluded and deep-import-only: `viz/` and `3d/` (Chart.js/Three.js), `shell/` (app-specific chrome), and `composites/chatbot` + `composites/info-dialog` (markdown sanitizer). Adding a heavy dependency to a barreled component is a bundle-size regression.
+
+**Component-First Rule — never use a raw HTML element when a project component exists.** Raw `<button>`, `<input>`, `<select>`, `<textarea>` bypass the design system. Exceptions: `<input type="hidden">`, `<input type="checkbox">` inside table rows (native indeterminate), `<select>` binding numeric values (the Select component is string-only), and custom interactive regions needing specialized styling.
+
+### Styling
+
+- `src/app.css` — runtime CSS custom properties. **All color tokens live here**; never hardcode a color.
+- `src/lib/styles/tokens.ts` — build-time tokens read by `uno.config.ts`. Custom spacing **replaces** the UnoCSS/Tailwind default scale, so keys do not mean what they mean in Tailwind.
+- CVA files (`[name].ts`) define variants as DOM markers only; scoped CSS in the `.svelte` does the actual styling (UnoCSS cannot reliably extract complex classes from `.ts`).
+
+Global CSS (`uno.css`, `app.css`, fonts) is imported once in the **root** `src/routes/+layout.svelte`, not the locale layout — a `+page@.svelte` layout reset sheds the locale layer and would otherwise render token-less.
+
+### Routes
+
+`src/routes/[[locale=locale]]/` is the localized tree (`(public)/`, `(dev)/`, `admin/`, `app/`, `auth/`, `desk/`, `pair/`); `src/routes/api/` is the parallel un-localized REST/SSE tree. Auth gates live in `+layout.server.ts` files, not route groups. Route-local private folders use a leading underscore (`_components/`, `_sections/`) — promote to `$lib/components/[layer]/` only when a second route needs them.
+
+### Conventions
+
+- Server `.ts`: kebab-case. Components: PascalCase `.svelte` in a kebab-case folder. Barrels: always `index.ts`.
+- Svelte 5 runes only — no Svelte 4 stores. Reactive state files **must** use the `.svelte.ts` extension: app-wide in `src/lib/state/[concern].svelte.ts`, component-local co-located as `[component].state.svelte.ts`.
+- Never name a prop `state` — it collides with the `$state` rune (`store_invalid_shape`).
+- `src/lib/paraglide/` is generated and gitignored — never edit. Translation source of truth is `messages/*.json` (en/de/ru). Adding a new i18n key requires a dev-server restart; the running Vite process 500s on the unknown key until then.
 
 ## Documentation
 
-See [`docs/README.md`](docs/README.md) for the full documentation index.
-
-**Architecture entry points:** for how the system runs (runtime, 7-layer hierarchy, request flow) read `docs/system-abstraction.md`; for where code lives (source tree, canonical homes, import direction) read `docs/codebase-organization.md`. Consult both before structural or cross-cutting work.
-
-### README Structure
-
-Each documentation directory has a README.md that serves as a **navigation hub**:
-
-1. **Brief intro** (2-3 sentences) - directory purpose only
-2. **Topic table** - each file with its main topics as bullet points
-
-This ensures findability - scanning a README reveals which file covers any topic.
-
-### Finding Documentation
-
-**MUST DO:** When searching for documentation on any topic:
-
-1. **First** - Read the relevant directory's README.md
-2. **Then** - Use the topic table to identify which file(s) cover your topic
-3. **Finally** - Read the specific file(s)
-
-Never grep blindly through docs. The READMEs are the index.
-
-
-## Agent Delegation Policy
-
-**IMPORTANT:** This project uses specialized agents for domain-specific work. You MUST delegate tasks to the appropriate agent rather than handling them directly. Agents provide deeper expertise and keep the main context clean.
-
-### Delegation Triggers
-
-DELEGATE when the task involves:
-- **daty** (data model — what does data look like at rest?): "schema", "table", "migration", "entity", "relationship", "database design", "data model"
-- **svey** (SvelteKit — routes, loads, render strategy): "+page", "+layout", "+server", "load function", "SSR", "prerender", "SvelteKit"
-- **secy** (security — what is the threat?): "security", "auth", "vulnerability", "threat", "OWASP", "injection", "XSS"
-- **ary** (static architecture — where does code live?): "architecture", "structure", "refactor", "module", "boundary", "design pattern", "file layout", "folder structure", "module location", "where should X live", "import graph", "dependency direction", "circular dependency", "canonical home", "source tree organization". Default for architecture questions that are spatial/structural; temporal/causal ones go to **sys**.
-- **sys** (dynamic/runtime systems — how does it flow?): "data flow", "request flow", "request lifecycle", "control flow", "runtime behavior", "wiring", "integration path", "multi-client core", "event propagation", "side effects", "state ownership", "failure modes", "end-to-end flow". Default for architecture questions that are temporal/causal; spatial/structural ones go to **ary**.
-- **uxy** (usability — does it work for everyone?): "user flow", "friction", "accessibility", "WCAG", "keyboard", "screen reader", "contrast", "tap target", "affordance", "micro-interaction", "form behavior", "validation display", "loading state", "success state", "error recovery"
-- **cony** (written words — how does it read in every locale?): "copy", "microcopy", "label", "button text", "error message wording", "empty state copy", "validation text", "blog post", "translation", "i18n", "locale", "en/de/ru", "missing translation", "locale parity", "name this feature/surface/label", "rewrite this", "voice", "tone", "off-brand", "does the user understand"
-- **tray** (debugging — why is it broken right now?): "error", "failure", "exception", "debug", "trace", "stack trace", "not working", "regression appeared"
-- **resy** (authoritative sources — what does the spec say?): "research", "evaluate", "compare specs", "best practice", "is X good for", "what does the doc say"
-- **docy** (documentation — how do we explain it?): "document", "README", "explain", "write docs", "API docs"
-- **apy** (API contracts — what is the interface?): "api", "endpoint", "+server.ts", "REST", "GraphQL", "SSE", "streaming", "webhook", "AI tool schema", "response format", "pagination", "versioning", "OpenAPI", "error response", "idempotency", "HMAC", "DataLoader"
-- **aiy** (AI/LLM integration — how do we use the model?): "AI", "LLM", "streamText", "Chat class", "useChat", "tool calling", "RAG", "retrieval", "embedding", "prompt engineering", "system prompt", "model routing", "token budget", "AI SDK", "streaming chat", "agent loop", "stopWhen", "maxSteps", "prompt caching", "prompt injection"
-- **tesy** (test design — how do we expose hidden issues?): "test", "coverage", "regression test", "spec", "assertion", "mock", "fixture", "flaky", "test design", "probe"
-- **scout** (community practice — how do teams actually use this?): "how do people actually use", "what problems do teams hit", "is this production-ready", "find implementations", "real-world examples"- **laly** (layout — does it work on desktop AND mobile, and waste no space?): "layout", "responsive", "mobile", "desktop", "breakpoint", "overflow", "horizontal scroll", "wasted space", "cramped", "doesn't fit", "density", "too much whitespace", "grid", "columns", "spacing rhythm", "visual hierarchy", "viewport", "dvh/svh", "safe area", "notch", "tap target spacing", "adapts", "works on my phone" (detection/report only — laly diagnoses and specifies the fix with concrete values; it never edits. Routes implementation to the user, or uxy/svey)
-- **clyn** (detection only — what code is dead/duplicated/complex?): "dead code", "unused export", "unreachable", "duplication", "complexity", "code smell", "audit code", "what can be removed", "is this still used", "remove residue"
-
-### Agent Model Selection (dynamic per task)
-
-Agent model is chosen **at spawn time by task complexity**, not fixed in the agent file. All agents except `scout`/`resy` declare `model: inherit`, so absent an override they follow the session model — but you SHOULD pass an explicit per-invocation `model` on the Agent tool, sized to the task:
-
-- **haiku** — trivial/mechanical: lookups, single-file reads, boilerplate, "where is X", format/rename sweeps.
-- **sonnet** — normal work: routine implementation, focused reviews, scoped design, most delegations. **Default when unsure.**
-- **opus** — hard reasoning: cross-cutting architecture, multi-file refactors, threat modeling, subtle debugging, novel design, anything needing deep synthesis.
-- **fable** — frontier tier, above opus: the rare task where even opus-level synthesis may fall short — highest-stakes architecture verdicts, gnarly multi-system debugging, adversarial security analysis. Use sparingly; opus is the ceiling for routine "hard" work.
-
-Rules:
-1. **`scout` and `resy` are pinned to `sonnet`** in their frontmatter — never pass a `model` override for them.
-2. Judge complexity of the *actual task you're handing off*, not the agent's usual domain — a quick question to a normally-heavy agent (e.g. `secy`, `aiy`) still goes `sonnet`/`haiku`.
-3. When genuinely unsure, choose `sonnet`. Reserve `opus` for tasks that clearly need it.
-
-
-## Skills Policy
-
-**Skills provide post-training knowledge** for technologies, patterns, and best practices that may be newer than your training cutoff or commonly misunderstood.
-
-### When to Use Skills
-
-**Proactively invoke skills** when working with:
-- Svelte 5 runes (`$state`, `$derived`, `$effect`, `$props`) → `svelte5-runes`
-- SvelteKit routes, load functions, rendering → `sveltekit`
-- Forms with Valibot + Superforms → `valibot-superforms`
-- Drizzle ORM schemas and queries → `drizzle`
-- Neon PostgreSQL serverless patterns → `db-relational`
-- Neo4j graph database patterns → `db-graph`
-- Cloudflare R2 file storage → `db-files`
-- Better Auth setup and patterns → `better-auth`
-- UnoCSS styling and configuration → `unocss`
-- Biome linting and formatting → `biome`
-- Security patterns, CSRF, injection, headers → `security`
-- API contracts (REST, GraphQL, SSE, webhooks, AI tools), pagination, errors → `api-design`
-- v10r's own agent-facing surfaces — MCP tools (either runtime), Next-actions errors, validate_snippet, the .md docs layer, /llms.txt, AGENTS.md → `ax`
-- AI/LLM integration, streaming, RAG, tool calling, model routing, prompts → `ai-tools`
-- Testing patterns, Vitest, mocking, DB testing, AI testing → `testing`
-- Three.js, Threlte, 3D scenes, GLTF, physics → `3d`
-- Performance in any layer → `perf-frontend` (Svelte/CWV/bundle/images), `perf-backend` (loads/SSR/ISR/serverless), `perf-middleware` (hooks/session/rate-limit), `perf-database` (Neon/Drizzle/pgvector/Neo4j), `perf-api` (streaming/caching/pagination)
-
-### Skill Usage Rules
-
-1. **Check skills before implementing** - If the task involves stack technologies, invoke the relevant skill first
-2. **Skills override training** - When skill content conflicts with your training, trust the skill
-3. **Agents have skills too** - Delegated agents auto-load relevant skills (configured in their frontmatter)
-
-### Available Skills
-
-| Skill | Domain |
-|-------|--------|
-| svelte5-runes | Svelte 5 reactivity patterns |
-| sveltekit | SvelteKit 2 routing and data loading |
-| valibot-superforms | Form validation with Valibot v1 + Superforms |
-| drizzle | Drizzle ORM schemas, queries, migrations |
-| db-relational | Neon PostgreSQL serverless patterns |
-| db-graph | Neo4j Aura graph database patterns |
-| db-files | Cloudflare R2 file storage patterns |
-| better-auth | Better Auth session-based authentication |
-| unocss | UnoCSS atomic CSS with Bits UI |
-| biome | Biome linter and formatter configuration |
-| security | Security patterns, CSRF, injection, headers, rate limiting |
-| ai-tools | Vercel AI SDK v6, streaming, RAG, tool orchestration, model routing, prompt engineering |
-| api-design | API contracts (REST, GraphQL, SSE, webhooks, AI tools), pagination, errors |
-| ax | v10r agent-facing surfaces: MCP tool contracts (hosted+stdio), Next-actions, validate_snippet, .md docs layer, /llms.txt |
-| testing | Vitest patterns, SvelteKit mocking, DB testing, AI SDK testing, Svelte 5 state testing |
-| 3d | Three.js + Threlte patterns, physics, WebGL/WebGPU |
-| design-system | Design tokens, spacing/icon scale, zero-margin components |
-| nrag | v10r RAG/retrieval subsystem (rawrag engine, tiers, llmwiki, ingest) |
-| perf-frontend | Frontend perf: Svelte 5 reactivity, CWV, bundle, images/fonts |
-| perf-backend | Backend perf: loads, waterfalls, SSR/prerender/ISR, serverless |
-| perf-middleware | Middleware perf: hooks chain, session, Upstash rate limiting |
-| perf-database | DB perf: Neon driver, Drizzle, indexing, pgvector, Neo4j |
-| perf-api | API perf: SSE/streaming, HTTP caching tiers, keyset pagination |
+Every docs directory has a `README.md` navigation hub with a topic table. **Read the directory README first, use its table to pick the file, then read the file. Never grep blindly through `docs/`.** Entry points: `docs/README.md`, then `docs/system-abstraction.md` and `docs/codebase-organization.md`.

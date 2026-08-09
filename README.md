@@ -39,7 +39,7 @@ claude mcp add --scope user --transport stdio v10r-patterns -- \
   docker.io/oven/bun:1.3.12 bun /v10r/mcp/server.ts
 ```
 
-Five tools: `search_patterns` (find candidates) → `get_pattern` (full card) → `recommend_emulation_plan` (build order) → `get_file_excerpt` (bounded read); `trace_capability` walks one concept from docs to code to test to proof. Details: [mcp/README.md](./mcp/README.md).
+Six tools: `search_patterns` (find candidates) → `get_pattern` (full card) → `recommend_emulation_plan` (build order) → `get_file_excerpt` (bounded read); `trace_capability` walks one concept from docs to code to test to proof, and `validate_snippet` checks the code you wrote back against v10r conventions. Details: [mcp/README.md](./mcp/README.md).
 
 
 ## Getting Started

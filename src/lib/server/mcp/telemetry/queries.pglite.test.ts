@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mcpCallLog } from '$lib/server/db/schema/mcp/call-log';
 import { createTestDb } from '$lib/server/test/db';
 
@@ -16,6 +16,7 @@ import { createTestDb } from '$lib/server/test/db';
  *     it silently reports the operator's dogfooding as third-party adoption.
  */
 type Db = Awaited<ReturnType<typeof createTestDb>>['db'];
+type Client = Awaited<ReturnType<typeof createTestDb>>['client'];
 
 const holder = vi.hoisted(() => ({ db: null as unknown }));
 vi.mock('$lib/server/db', () => ({
@@ -47,6 +48,7 @@ const {
 } = await import('./queries');
 
 let db: Db;
+let client: Client;
 const SINCE = new Date(Date.now() - 60 * 60 * 1000);
 
 /** A tool-stage row; caller and query text vary per test. */
@@ -70,8 +72,17 @@ function gapRow(clientKey: string, queryText: string) {
 }
 
 beforeAll(async () => {
-	({ db } = await createTestDb());
+	({ db, client } = await createTestDb());
 	holder.db = db;
+});
+
+/**
+ * Every test here reads through the same `mcp.call_log`, so emptying the table gives the same
+ * isolation a fresh database would — at ~1ms instead of the ~1.2s (much more under a loaded pool)
+ * of booting PGlite and re-pushing all 437 schema statements.
+ */
+beforeEach(async () => {
+	await client.exec('DELETE FROM mcp.call_log');
 });
 
 describe('capability gaps — the headline panel', () => {
@@ -124,9 +135,7 @@ describe('capability gaps — the headline panel', () => {
 
 describe('health summary', () => {
 	it('splits external from self-traffic instead of blending them', async () => {
-		const { db: freshDb } = await createTestDb();
-		holder.db = freshDb;
-		await freshDb.insert(mcpCallLog).values([
+		await db.insert(mcpCallLog).values([
 			{ ...gapRow('m_1', 'a'), traffic: 'external' as const },
 			{ ...gapRow('m_2', 'b'), traffic: 'self' as const },
 			{ ...gapRow('m_3', 'c'), traffic: 'preview' as const },
@@ -136,31 +145,24 @@ describe('health summary', () => {
 		expect(summary.external).toBe(1);
 		// Both `self` and `preview` are the operator's own noise — neither may count as adoption.
 		expect(summary.selfTraffic).toBe(2);
-		holder.db = db;
 	});
 
 	it('counts fail-open windows rather than averaging them away', async () => {
-		const { db: freshDb } = await createTestDb();
-		holder.db = freshDb;
-		await freshDb.insert(mcpCallLog).values([
+		await db.insert(mcpCallLog).values([
 			{ ...gapRow('m_1', 'a'), gateMs: 5 },
 			// gate_ms > 1000 means the limiter fail-opened: the rate limit was NOT enforced.
 			{ ...gapRow('m_2', 'b'), gateMs: 1500, totalMs: 1500 },
 		]);
 		expect((await getHealthSummary(SINCE)).failOpen).toBe(1);
-		holder.db = db;
 	});
 });
 
 describe('tool breakdown', () => {
 	it('counts arrivals with SUM(observed_count), not count(*)', async () => {
-		const { db: freshDb } = await createTestDb();
-		holder.db = freshDb;
 		// One row standing for five sampled occurrences.
-		await freshDb.insert(mcpCallLog).values({ ...gapRow('m_1', 'x'), observedCount: 5 });
+		await db.insert(mcpCallLog).values({ ...gapRow('m_1', 'x'), observedCount: 5 });
 		const [row] = await getToolBreakdown(SINCE);
 		expect(Number(row.calls)).toBe(5);
-		holder.db = db;
 	});
 });
 
@@ -189,23 +191,18 @@ describe('the private lane', () => {
 	}
 
 	it('surfaces a gap asked ONCE by ONE caller — the exact inverse of the public threshold', async () => {
-		const { db: freshDb } = await createTestDb();
-		holder.db = freshDb;
-		await freshDb.insert(mcpCallLog).values(privateRow({ outcome: 'empty', queryText: 'quantum scheduler' }));
+		await db.insert(mcpCallLog).values(privateRow({ outcome: 'empty', queryText: 'quantum scheduler' }));
 
 		const gaps = await getPrivateGaps(SINCE);
 		expect(gaps).toHaveLength(1);
 		expect(gaps[0].queryText).toBe('quantum scheduler');
 		// ...while the public panel, correctly, still shows nothing: not external, and n=1.
 		expect(await getCapabilityGaps(SINCE)).toHaveLength(0);
-		holder.db = db;
 	});
 
 	it('lists recent calls with the bounded answer preview and workspace, newest first', async () => {
-		const { db: freshDb } = await createTestDb();
-		holder.db = freshDb;
 		const now = Date.now();
-		await freshDb.insert(mcpCallLog).values([
+		await db.insert(mcpCallLog).values([
 			privateRow({ startedAt: new Date(now - 60_000), queryText: 'older question' }),
 			privateRow({
 				startedAt: new Date(now - 1_000),
@@ -223,14 +220,11 @@ describe('the private lane', () => {
 		// The page payload carries the preview, never the full column.
 		expect(calls[0].responsePreview).toHaveLength(400);
 		expect(Number(calls[0].responseChars)).toBe(900);
-		holder.db = db;
 	});
 
 	it('finds a repeat ask within 30s, not one 60s apart, and nothing without a client key', async () => {
-		const { db: freshDb } = await createTestDb();
-		holder.db = freshDb;
 		const now = Date.now();
-		await freshDb.insert(mcpCallLog).values([
+		await db.insert(mcpCallLog).values([
 			privateRow({ startedAt: new Date(now - 70_000), queryText: 'first ask' }),
 			// 10s after a previous same-tool call → a repeat.
 			privateRow({ startedAt: new Date(now - 60_000), queryText: 'repeat ask' }),
@@ -243,32 +237,26 @@ describe('the private lane', () => {
 		expect(requeries[0].queryText).toBe('repeat ask');
 
 		// With the salt unset every client_key is null and the probe has nothing to join on.
-		const { db: unkeyedDb } = await createTestDb();
-		holder.db = unkeyedDb;
-		await unkeyedDb
+		// Clear the keyed rows above so the assertion below can only be satisfied by the null keys.
+		await client.exec('DELETE FROM mcp.call_log');
+		await db
 			.insert(mcpCallLog)
 			.values([
 				privateRow({ clientKey: null, startedAt: new Date(now - 10_000) }),
 				privateRow({ clientKey: null, startedAt: new Date(now - 5_000) }),
 			]);
 		expect(await getPrivateRequeries(SINCE)).toHaveLength(0);
-		holder.db = db;
 	});
 
 	it('tool mix counts with SUM(observed_count) and reports answer coverage', async () => {
-		const { db: freshDb } = await createTestDb();
-		holder.db = freshDb;
-		await freshDb.insert(mcpCallLog).values([privateRow({ observedCount: 5 }), privateRow({ responseText: null })]);
+		await db.insert(mcpCallLog).values([privateRow({ observedCount: 5 }), privateRow({ responseText: null })]);
 		const [mix] = await getPrivateToolMix(SINCE);
 		expect(Number(mix.calls)).toBe(6);
 		expect(Number(mix.withResponse)).toBe(1);
-		holder.db = db;
 	});
 
 	it('summary counts the lane and its salt coverage', async () => {
-		const { db: freshDb } = await createTestDb();
-		holder.db = freshDb;
-		await freshDb.insert(mcpCallLog).values([privateRow(), privateRow({ clientKey: null, workspace: null })]);
+		await db.insert(mcpCallLog).values([privateRow(), privateRow({ clientKey: null, workspace: null })]);
 		const summary = await getPrivateSummary(SINCE);
 		expect(summary.calls).toBe(2);
 		expect(summary.toolCalls).toBe(2);
@@ -276,17 +264,13 @@ describe('the private lane', () => {
 		expect(summary.withWorkspace).toBe(1);
 		expect(summary.clientKeyed).toBe(1);
 		expect(summary.distinctWorkspaces).toBe(1);
-		holder.db = db;
 	});
 
 	it('never leaks a private row into the external panels', async () => {
-		const { db: freshDb } = await createTestDb();
-		holder.db = freshDb;
-		await freshDb.insert(mcpCallLog).values(privateRow({ outcome: 'empty', queryText: 'private only' }));
+		await db.insert(mcpCallLog).values(privateRow({ outcome: 'empty', queryText: 'private only' }));
 		expect(await getToolBreakdown(SINCE)).toHaveLength(0);
 		expect(await getClientBreakdown(SINCE)).toHaveLength(0);
 		expect(await getCapabilityGaps(SINCE)).toHaveLength(0);
-		holder.db = db;
 	});
 });
 

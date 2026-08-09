@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Card } from '$lib/components';
+import { Card, NavSection } from '$lib/components';
 import type { ActivityBarItem, LayoutNode, PanelDefinition } from '$lib/components/composites/dock';
 import { DockLayout } from '$lib/components/composites/dock';
 import * as m from '$lib/paraglide/messages';

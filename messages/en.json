@@ -984,7 +984,7 @@
 	"showcase_index_jumpnav_aria": "Jump to domain",
 	"showcase_breadcrumb_home": "Home",
 	"showcase_breadcrumb_showcases": "Showcases",
-	"showcase_docs_button": "Docs",
+	"showcase_docs_button": "Documentation",
 	"showcase_docs_aria": "Documentation for this showcase",
 	"showcase_3d_title": "3D",
 	"showcase_3d_description": "Three.js + Threlte 3D demonstrations with GLTF models, animations, and interactive controls.",

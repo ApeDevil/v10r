@@ -57,7 +57,7 @@ and `docs/codebase-organization.md` (where code lives).
   (JSON-RPC 2.0 over HTTP): pattern search, curated pattern cards, file
   excerpts, emulation plans, and a loopable `validate_snippet` checker.
 - `mcp/server.ts` — the same tools as a local stdio MCP server, spawned as an
-  ephemeral Podman container (`.mcp.json` has the invocation).
+  ephemeral Podman container (`mcp/README.md` has the invocation).
 
 ## For Claude Code
 
