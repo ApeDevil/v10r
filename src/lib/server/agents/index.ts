@@ -24,7 +24,7 @@ export function getAgentIds(): string[] {
 	const missing = EXPECTED_AGENT_IDS.filter((id) => !present.has(id));
 	if (missing.length > 0) {
 		throw new Error(
-			`[agents] drift detected — structure-map references agents that are missing from .claude/agents/: ${missing.join(', ')}`,
+			`[agents] drift detected — EXPECTED_AGENT_IDS lists agents that are missing from .claude/agents/: ${missing.join(', ')}`,
 		);
 	}
 

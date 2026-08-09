@@ -11,7 +11,6 @@ import { getTheme } from '$lib/state/theme.svelte';
 import { setCookie } from '$lib/utils/cookies';
 import { fadeIn } from './_components/fadeIn';
 import InstancesSection from './_components/InstancesSection.svelte';
-import StructureSection from './_components/StructureSection.svelte';
 
 const style = getStyle();
 const theme = getTheme();
@@ -237,14 +236,7 @@ v          10            r</pre>
 
 <InstancesSection />
 
-<!-- ACT IV: Internal Structure -->
-<div class="divider-wrap">
-	<Divider motif="crosshair" width="content" />
-</div>
-
-<StructureSection />
-
-<!-- ACT V: Showcase Entry -->
+<!-- ACT IV: Showcase Entry -->
 <div class="asterism-wrap">
 	<Asterism pattern="three-dots" />
 </div>
