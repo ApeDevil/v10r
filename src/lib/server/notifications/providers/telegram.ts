@@ -2,14 +2,6 @@ import { env } from '$env/dynamic/private';
 import type { DeliveryPayload, DeliveryResult, NotificationProvider } from './types';
 
 export class TelegramProvider implements NotificationProvider {
-	getProviderName() {
-		return 'telegram';
-	}
-
-	async validateConnection(): Promise<boolean> {
-		return !!env.TELEGRAM_BOT_TOKEN;
-	}
-
 	async send(payload: DeliveryPayload): Promise<DeliveryResult> {
 		const botToken = env.TELEGRAM_BOT_TOKEN;
 		if (!botToken) {

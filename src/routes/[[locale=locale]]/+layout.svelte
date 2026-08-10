@@ -124,7 +124,7 @@ $effect(() => {
 		keys: 'g s',
 		description: 'Navigate settings',
 		category: 'navigation',
-		action: () => goto(localizeHref('/settings')),
+		action: () => goto(localizeHref('/account/settings')),
 	});
 
 	const unregisterDocs = registerShortcut({

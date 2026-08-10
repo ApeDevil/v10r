@@ -213,6 +213,31 @@ Push never writes a `notification_deliveries` row. `service.ts` partitions `'pus
 
 ---
 
+## Quiet Hours and Digest
+
+Both are decided at **enqueue** time in `routeExternal`, not at claim time. That is the load-bearing choice: putting either in the claim SQL would couple two user-preference features to the queue's hot path and to every test that exercises it. Deciding at enqueue also means push is covered by the same check, and push never touches the outbox at all.
+
+### Quiet hours — drop, not defer
+
+`quietStart` / `quietEnd` are nullable `HH:MM` text with **no** `quietHoursEnabled` flag, so **null = disabled** is the only convention available. The timezone lives on a different schema (`app.user_preferences.timezone`, IANA, default `'UTC'`); `routeExternal` reads that row once for both the locale push needs and the timezone quiet hours needs, so the feature costs no extra query.
+
+`isQuietNow` (`quiet-hours.ts`) is pure and **fails closed** — anything unparseable disables quiet hours rather than silently swallowing notifications — and it handles the wrap-around window (`22:00 → 08:00`), which is the common configuration and the one a naive `start <= t && t <= end` gets wrong.
+
+Inside the window, external channels are **dropped, not deferred**. The in-app notification and its live SSE frame have already been delivered, so the user still sees everything the moment they look; only the interrupting channels are suppressed. Deferring would have meant queueing against a cron that fires once daily on Hobby anyway.
+
+### Digest — a second producer, the same outbox
+
+`digestFrequency` has four values and all four are now real: `instant` (enqueue immediately), `never` (a permanent global mute, checked beside `mutedUntil`), and `daily` / `weekly`, which **suppress** the instant enqueue so the `notification-digest` job can build the deliveries instead.
+
+- **Idempotency, not a lock.** `claimDigestRecipients` stamps `last_digest_at` in the same `UPDATE … FROM (SELECT … FOR UPDATE)` that selects due users, so a second cron fire in the same window matches zero rows. Same shape as `claimDeliveries`, and one statement for the same reason (`db.transaction()` takes the WebSocket path Bun mishandles).
+- **The carrier row.** `notification_deliveries.notification_id` is `NOT NULL`, but a digest summarizes N notifications rather than being one. `createDigestCarrier` writes a **pre-archived** notification holding the subject (`notif_digest_subject` + `{count}`); `archived_at` is set so it never appears in the inbox or the unread count. The body rides on the new nullable `notification_deliveries.body_override`.
+- **Per-channel bodies.** Telegram and Discord hard-cap message length — exceeding it is a *rejected* send, not a truncated one — so `renderDigest` takes a budget and the digest renders once per channel. Overflow is reported in the body (`… +N more`), never silently dropped.
+- **Honest limit.** Hobby crons are daily-only, so `weekly` is a code-level gate (a 7-day window) inside the same daily job, and with ±59min jitter on both the digest job (`0 7`) and the delivery drain (`0 8`), a digest lands **0–24h** after generation.
+
+**Security alerts bypass all of it** — quiet hours, digest suppression, and the global mute. Previously `mutedUntil` was checked *before* the security force-send, so a global mute suppressed security alerts while an explicit `emailSecurity: false` did not; the two mutes disagreed about the one category that matters most. Resolved in favour of always-deliver.
+
+---
+
 ## Error Handling
 
 ### Error Classification

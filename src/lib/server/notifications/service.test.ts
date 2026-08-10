@@ -1,13 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockCreateNotification = vi.fn();
-const mockNotifyUser = vi.fn();
-const mockRouteToChannels = vi.fn();
+// `notifyUser` is async now (it may be a Redis PUBLISH) and is awaited inside
+// waitUntil — a bare vi.fn() returning undefined would throw on `.catch`.
+const mockNotifyUser = vi.fn().mockResolvedValue(undefined);
+// `routeExternal` now loads the settings row ONCE and passes it to the pure
+// `channelsForSettings`, so the seam moved: the test controls the channel list
+// through this mock and the quiet-hours window through `mockSettings`.
+const mockChannelsForSettings = vi.fn();
 const mockCreateDeliveries = vi.fn();
 const mockProviderSend = vi.fn();
 
+/** The settings row `getOrCreateSettings` returns. Quiet hours off by default. */
+let mockSettings: Record<string, unknown> = { quietStart: null, quietEnd: null };
+
 vi.mock('$lib/server/db/notifications/mutations', () => ({
 	createNotification: mockCreateNotification,
+	getOrCreateSettings: vi.fn(async () => mockSettings),
 }));
 
 vi.mock('./stream', () => ({
@@ -15,7 +24,7 @@ vi.mock('./stream', () => ({
 }));
 
 vi.mock('./router', () => ({
-	routeToChannels: mockRouteToChannels,
+	channelsForSettings: mockChannelsForSettings,
 }));
 
 vi.mock('./outbox', () => ({
@@ -35,7 +44,9 @@ vi.mock('$lib/server/db', () => ({
 		select: vi.fn(() => ({
 			from: vi.fn(() => ({
 				where: vi.fn(() => ({
-					limit: vi.fn(() => [{ email: 'test@example.com', locale: 'de' }]),
+					// One shape for every select: the user row (email) and the
+					// preferences row (locale + timeZone) are both read here.
+					limit: vi.fn(() => [{ email: 'test@example.com', locale: 'de', timeZone: 'UTC' }]),
 				})),
 			})),
 		})),
@@ -54,7 +65,7 @@ vi.mock('$lib/server/db/schema/auth/_better-auth', () => ({
 }));
 
 vi.mock('$lib/server/db/schema/app/user-preferences', () => ({
-	userPreferences: { userId: 'userId', locale: 'locale' },
+	userPreferences: { userId: 'userId', locale: 'locale', timezone: 'timezone' },
 }));
 
 const { NotificationService } = await import('./service');
@@ -82,8 +93,9 @@ describe('NotificationService', () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockSettings = { quietStart: null, quietEnd: null };
 		mockCreateNotification.mockResolvedValue(fakeNotification);
-		mockRouteToChannels.mockResolvedValue([]);
+		mockChannelsForSettings.mockReturnValue([]);
 		mockCreateDeliveries.mockResolvedValue([]);
 		mockProviderSend.mockResolvedValue({ success: true });
 	});
@@ -111,7 +123,9 @@ describe('NotificationService', () => {
 	});
 
 	it('external routing failure does not throw', async () => {
-		mockRouteToChannels.mockRejectedValue(new Error('routing boom'));
+		mockChannelsForSettings.mockImplementation(() => {
+			throw new Error('routing boom');
+		});
 
 		// send() itself should not throw — routing is async/caught
 		const result = await NotificationService.send(input);
@@ -119,7 +133,7 @@ describe('NotificationService', () => {
 	});
 
 	it('partitions push OUT of the outbox and sends it synchronously', async () => {
-		mockRouteToChannels.mockResolvedValue(['email', 'push']);
+		mockChannelsForSettings.mockReturnValue(['email', 'push']);
 
 		await NotificationService.send(input);
 		await flush();
@@ -137,12 +151,60 @@ describe('NotificationService', () => {
 	});
 
 	it('push-only routing skips the outbox entirely', async () => {
-		mockRouteToChannels.mockResolvedValue(['push']);
+		mockChannelsForSettings.mockReturnValue(['push']);
 
 		await NotificationService.send(input);
 		await flush();
 
 		expect(mockCreateDeliveries).not.toHaveBeenCalled();
 		expect(mockProviderSend).toHaveBeenCalled();
+	});
+
+	describe('quiet hours', () => {
+		// The db mock returns a fixed row for every select, so `timezone` resolves
+		// to the string 'UTC' below via the shared fixture.
+		it('suppresses BOTH the outbox and push inside the window', async () => {
+			mockChannelsForSettings.mockReturnValue(['email', 'push']);
+			mockSettings = { quietStart: '00:00', quietEnd: '23:59' };
+
+			await NotificationService.send(input);
+			await flush();
+
+			// Push bypasses the outbox entirely, so a check placed in the outbox
+			// path alone would leave the 3am lock-screen buzz — the whole point.
+			expect(mockCreateDeliveries).not.toHaveBeenCalled();
+			expect(mockProviderSend).not.toHaveBeenCalled();
+		});
+
+		it('still delivers the in-app notification and its live frame', async () => {
+			mockChannelsForSettings.mockReturnValue(['email']);
+			mockSettings = { quietStart: '00:00', quietEnd: '23:59' };
+
+			await NotificationService.send(input);
+			await flush();
+
+			expect(mockNotifyUser).toHaveBeenCalled();
+			expect(mockCreateDeliveries).not.toHaveBeenCalled();
+		});
+
+		it('security alerts are exempt', async () => {
+			mockChannelsForSettings.mockReturnValue(['email']);
+			mockSettings = { quietStart: '00:00', quietEnd: '23:59' };
+
+			await NotificationService.send({ ...input, type: 'security' });
+			await flush();
+
+			expect(mockCreateDeliveries).toHaveBeenCalledWith('notif-1', ['email']);
+		});
+
+		it('delivers normally outside the window', async () => {
+			mockChannelsForSettings.mockReturnValue(['email']);
+			mockSettings = { quietStart: null, quietEnd: null };
+
+			await NotificationService.send(input);
+			await flush();
+
+			expect(mockCreateDeliveries).toHaveBeenCalledWith('notif-1', ['email']);
+		});
 	});
 });

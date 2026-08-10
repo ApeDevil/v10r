@@ -18,20 +18,6 @@ import {
 	suggestNextName,
 } from '../shared/folder-tree';
 
-/** Update a spreadsheet (ownership enforced via WHERE). Returns null if not found/not owned or soft-deleted. */
-export async function updateSpreadsheet(
-	id: string,
-	userId: string,
-	data: { name?: string; cells?: Record<string, unknown>; columnMeta?: Record<string, unknown> | null },
-) {
-	const [row] = await db
-		.update(spreadsheet)
-		.set({ ...data, updatedAt: new Date() })
-		.where(and(eq(spreadsheet.id, id), eq(spreadsheet.userId, userId), isNull(spreadsheet.deletedAt)))
-		.returning();
-	return row ?? null;
-}
-
 // ── File registry mutations ────────────────────────────────────────
 
 /**

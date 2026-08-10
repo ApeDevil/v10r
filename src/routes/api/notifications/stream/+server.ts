@@ -2,7 +2,7 @@ import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { guardApiUser } from '$lib/server/auth/guards';
 import { SSE_HEARTBEAT_MS, SSE_RATE_LIMIT_MAX, SSE_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import { getUnreadCount } from '$lib/server/db/notifications/queries';
-import { registerStream, unregisterStream } from '$lib/server/notifications';
+import { encodeEvent, registerStream, subscribeUser, unregisterStream } from '$lib/server/notifications';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:notifications:stream', SSE_RATE_LIMIT_MAX, SSE_RATE_LIMIT_WINDOW);
@@ -26,6 +26,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 	let heartbeatTimer: ReturnType<typeof setInterval> | undefined;
 	let lifetimeTimer: ReturnType<typeof setTimeout> | undefined;
 	let streamController: ReadableStreamDefaultController<Uint8Array> | undefined;
+	let unsubscribe: (() => void) | null = null;
 	let released = false;
 
 	// Drop the registry slot and clear timers exactly once, whether the client
@@ -38,6 +39,10 @@ export const GET: RequestHandler = async ({ locals }) => {
 		released = true;
 		if (heartbeatTimer) clearInterval(heartbeatTimer);
 		if (lifetimeTimer) clearTimeout(lifetimeTimer);
+		if (unsubscribe) {
+			unsubscribe();
+			unsubscribe = null;
+		}
 		if (streamController) {
 			unregisterStream(user.id, streamController);
 			streamController = undefined;
@@ -55,6 +60,19 @@ export const GET: RequestHandler = async ({ locals }) => {
 				return;
 			}
 			streamController = controller;
+
+			// On serverless the emitting instance is not this one — subscribe to the
+			// user's pub/sub channel so its publishes land here. Returns null (and
+			// costs nothing) on a persistent host, where the in-memory registry above
+			// is already sufficient. Torn down by release(), the single exit path.
+			unsubscribe = subscribeUser(user.id, (data) => {
+				try {
+					controller.enqueue(encodeEvent(data));
+				} catch {
+					// Stream closed under us — surrender the slot.
+					release();
+				}
+			});
 
 			// Send initial unread count (named event so client addEventListener('init', ...) fires)
 			try {

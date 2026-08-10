@@ -65,7 +65,7 @@ velociraptor/
 ```
 src/
   app.css               One CSS file: runtime custom properties for all color tokens
-  hooks.server.ts       Composition root: 12-stage middleware sequence
+  hooks.server.ts       Composition root: 14-stage middleware sequence
   params/               SvelteKit param matchers (locale, slug, id, model)
   lib/
     components/         Layered UI (see Component Layering)
@@ -184,7 +184,6 @@ src/lib/server/
   test/         Test infrastructure: db.ts, fixtures.ts, vitest.setup.ts
   utils/        safe-defer.ts
   config.ts     Server-wide configuration
-  features.ts   Feature flags
   shiki.ts      Syntax highlighting instance
 ```
 
@@ -209,7 +208,7 @@ A typical `$lib/server/[domain]/` looks like:
 
 - Tiny domains collapse to a single `index.ts` with CRUD inline (e.g. `feedback/`).
 - Some `index.ts` files are construction sites, not re-exports: `auth/index.ts` builds the Better Auth instance; `ai/index.ts` exposes provider resolvers.
-- Scaled domains add variant files by prefix rather than more folders: `db/ai/` has `queries.ts`, `mutations.ts`, `admin-queries.ts`, `io-log-queries.ts`, `proposals.ts`, `limits.ts`.
+- Scaled domains add variant files by prefix rather than more folders: `db/ai/` has `queries.ts`, `mutations.ts`, `admin-queries.ts`, `image-metadata-queries.ts`, `proposals.ts`, `limits.ts`.
 
 ---
 
@@ -418,7 +417,7 @@ src/routes/
 - **Runes state files:** `.svelte.ts` extension is mandatory. App-wide stores live in `src/lib/state/[concern].svelte.ts` — concern names, single-word by default with hyphenation when needed (verified 11: `chatbot-session`, `consent`, `modals`, `notifications`, `run-monitor`, `search`, `session`, `sidebar`, `style`, `theme`, `toast`). One of these — `chatbot-session` — is a deliberate **module singleton** (not a context factory): it owns the live Vely `Chat` so it survives the chat panel unmounting. See [blueprint/ai/persistent-chatbot.md](./blueprint/ai/persistent-chatbot.md). Component-local runes files co-locate next to the component, named by concern (`dock/desk-bus.svelte.ts`).
 - **State file wart:** two spellings coexist for component-local state files — `.state.svelte.ts` (`dock/dock.state.svelte.ts`, `spreadsheet/spreadsheet.state.svelte.ts`) and `-state.svelte.ts` (`explorer/explorer-state.svelte.ts`, `cycle/cycle-state.svelte.ts`). New files should use `.state.svelte.ts`.
 - **Barrels:** always `index.ts`.
-- **Internal/special files:** leading underscore (`_better-auth.ts`, `_seed-domain.ts`).
+- **Internal/special files:** leading underscore (`_better-auth.ts`, `_custom-types.ts`).
 - **Tests:** co-located as `*.test.ts`. No `__tests__/` directory or top-level test dir.
 - **SvelteKit special files:** `+`-prefixed vocabulary (fixed by framework).
 

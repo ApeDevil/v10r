@@ -11,17 +11,6 @@ export const PaletteIdSchema = v.picklist(PALETTE_IDS);
 export const TypographyIdSchema = v.picklist(TYPOGRAPHY_IDS);
 export const RadiusIdSchema = v.picklist(RADIUS_IDS);
 
-export const StyleCookieSchema = v.object({
-	pid: PaletteIdSchema,
-	tid: TypographyIdSchema,
-	rid: RadiusIdSchema,
-	v: v.literal(1),
-});
-
-export const RollRequestSchema = v.object({
-	highContrast: v.optional(v.boolean(), false),
-});
-
 /**
  * Custom palette id shape — mirrors createId.palette() (`CP_` + 12 hex chars).
  * Checking the shape here bounds the input before any DB lookup, so a forged

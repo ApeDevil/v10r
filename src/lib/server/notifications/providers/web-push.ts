@@ -21,14 +21,6 @@ const DECLARATIVE_WEB_PUSH_VERSION = 8030;
  * category text; the real content loads behind session auth after the tap.
  */
 export class WebPushProvider implements NotificationProvider {
-	getProviderName() {
-		return 'web-push';
-	}
-
-	async validateConnection(): Promise<boolean> {
-		return !!(env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY && env.VAPID_SUBJECT);
-	}
-
 	async send(payload: DeliveryPayload): Promise<DeliveryResult> {
 		const { VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT } = env;
 		if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY || !VAPID_SUBJECT) {

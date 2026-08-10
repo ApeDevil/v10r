@@ -17,7 +17,6 @@ vi.mock('$lib/server/llmwiki/queries', () => ({
 	fetchPagesByIds: (...args: unknown[]) => fetchPagesByIds(...args),
 	hydratePointers: vi.fn(async () => new Map()),
 	computeCoverage: vi.fn(async () => new Map()),
-	findRedirect: vi.fn(async () => null),
 	getOverview: vi.fn(async () => null),
 }));
 

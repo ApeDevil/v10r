@@ -2,12 +2,11 @@
  * Comment write paths — single domain function per operation, called from
  * both the sub-route form action and the REST endpoint.
  */
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { recordAuditEvent } from '$lib/server/admin/audit';
 import { db } from '$lib/server/db';
 import { createId } from '$lib/server/db/id';
 import { comment } from '$lib/server/db/schema/blog/comment';
-import { post } from '$lib/server/db/schema/blog/post';
 import { publishedRevision } from '$lib/server/db/schema/blog/published-revision';
 import type { CreateCommentInput, EditCommentInput } from './schemas';
 
@@ -233,14 +232,4 @@ export async function removeComment(params: ModerateParams): Promise<void> {
 		detail: reason ? { reason } : undefined,
 		ipAddress: ipAddress ?? undefined,
 	});
-}
-
-/** Resolve a post by slug for the form action — returns id or null. */
-export async function getPostIdBySlug(slug: string): Promise<string | null> {
-	const rows = await db
-		.select({ id: post.id })
-		.from(post)
-		.where(and(eq(post.slug, slug), sql`${post.deletedAt} IS NULL`))
-		.limit(1);
-	return rows[0]?.id ?? null;
 }

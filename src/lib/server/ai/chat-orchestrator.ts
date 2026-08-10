@@ -168,11 +168,6 @@ export interface ChatInput {
 	dryRun?: boolean;
 }
 
-export interface ChatResult {
-	type: 'stream' | 'data-stream' | 'error';
-	conversationId?: string;
-}
-
 interface ChatError {
 	type: 'error';
 	status: number;

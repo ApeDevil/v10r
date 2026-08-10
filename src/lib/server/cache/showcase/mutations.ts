@@ -19,12 +19,6 @@ export async function setString(key: string, value: string, ttl?: number): Promi
 	}
 }
 
-export async function deleteKey(key: string): Promise<void> {
-	const r = requireRedis();
-	assertShowcaseKey(key);
-	await r.del(key);
-}
-
 // ─── Counters ───────────────────────────────────────────
 
 export async function incrementCounter(key: string, amount = 1): Promise<number> {

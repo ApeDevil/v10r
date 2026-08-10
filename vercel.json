@@ -50,6 +50,10 @@
 			"schedule": "15 3 * * *"
 		},
 		{
+			"path": "/api/cron/notification-digest",
+			"schedule": "0 7 * * *"
+		},
+		{
 			"path": "/api/cron/notification-delivery",
 			"schedule": "0 8 * * *"
 		},

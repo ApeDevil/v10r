@@ -20,7 +20,6 @@ export { default as SidebarFab } from './SidebarFab.svelte';
 export { default as SidebarLogo } from './SidebarLogo.svelte';
 export { default as SidebarNav } from './SidebarNav.svelte';
 // Notifications
-export { default as SidebarNotifications } from './SidebarNotifications.svelte';
 export { default as SidebarRail } from './SidebarRail.svelte';
 export { default as SidebarTriggers } from './SidebarTriggers.svelte';
 export { default as SessionExpiryModal } from './session/SessionExpiryModal.svelte';

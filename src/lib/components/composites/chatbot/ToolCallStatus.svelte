@@ -1,11 +1,12 @@
 <script lang="ts">
 interface Props {
 	toolName: string;
-	state: 'call' | 'partial-call' | 'result';
+	/** Not named `state` — that collides with the `$state` rune. */
+	phase: 'call' | 'partial-call' | 'result';
 	output?: unknown;
 }
 
-let { toolName, state, output }: Props = $props();
+let { toolName, phase, output }: Props = $props();
 
 const TOOL_LABELS: Record<string, string> = {
 	desk_list_files: 'Listing files',
@@ -19,11 +20,11 @@ const TOOL_LABELS: Record<string, string> = {
 };
 
 const label = $derived(TOOL_LABELS[toolName] ?? toolName);
-const hasError = $derived(state === 'result' && output != null && typeof output === 'object' && 'error' in output);
+const hasError = $derived(phase === 'result' && output != null && typeof output === 'object' && 'error' in output);
 </script>
 
 <div class="tool-status">
-	{#if state === 'call' || state === 'partial-call'}
+	{#if phase === 'call' || phase === 'partial-call'}
 		<span class="i-lucide-loader-2 tool-icon tool-spin"></span>
 		<span class="tool-label">{label}...</span>
 	{:else if hasError}

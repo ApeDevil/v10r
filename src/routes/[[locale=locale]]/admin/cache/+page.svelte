@@ -229,13 +229,6 @@ const prefixLabels = $derived<Record<string, string>>({
 
 		<div class="in-process-grid">
 			<div class="in-process-card">
-				<span class="in-process-label">{m.admin_cache_inprocess_feature_flags()}</span>
-				<Cluster gap="2" align="center">
-					<code class="in-process-value">{data.inProcessStatus.flagsCacheSize}</code>
-					<span class="in-process-unit">{m.admin_cache_entries_unit()}</span>
-				</Cluster>
-			</div>
-			<div class="in-process-card">
 				<span class="in-process-label">{m.admin_cache_inprocess_announcements()}</span>
 				<Cluster gap="2" align="center">
 					<code class="in-process-value">{data.inProcessStatus.announcementsCacheSize}</code>

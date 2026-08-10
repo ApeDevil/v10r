@@ -27,7 +27,6 @@ const markers = [
 // --- Section 3: Choropleth (dynamic imports) ---
 const STATES_GEOJSON = 'https://maplibre.org/maplibre-gl-js/docs/assets/us_states.geojson';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic imports with varied prop types
 type AnyComponent = Component<Record<string, unknown>, Record<string, unknown>, string>;
 let GeoJSONSource: AnyComponent | undefined = $state();
 let FillLayer: AnyComponent | undefined = $state();

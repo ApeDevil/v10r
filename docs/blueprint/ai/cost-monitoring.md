@@ -49,7 +49,12 @@ Each row's `cost` comes from `estimateCost(modelId, tokens)` in [`pricing.ts`](.
 
 ### Partial coverage shows "—", never a fake $0
 
-Not every model is priced — the Groq `llama-3.3-70b-versatile` chat model and the `unknown` bucket have no entry. `estimateCost` returns `null` for them, and the row renders **"—"**, never `$0`.
+All three chat/vision models the app can invoke are priced (`gemini-2.5-flash`, `gpt-4o-mini`, `llama-3.3-70b-versatile`). Two things remain permanently unpriced, and both are structural rather than a missing table row:
+
+- **The `unknown` bucket** — `admin-queries.ts` COALESCEs a NULL `model_id` to the literal `'unknown'`, which can never be a price-table key.
+- **Embeddings** (`gemini-embedding-001`) — these produce **no rows in either usage table**, so `buildUnifiedModelUsage` never sees them. Pricing them needs a new telemetry source, not a `MODEL_PRICES` entry; and `ModelPrice` has no embedding-shaped field (`outputPerMillion` is meaningless for an embedding call).
+
+`estimateCost` returns `null` for anything unpriced, and the row renders **"—"**, never `$0`.
 
 The summary carries `costCoverage: 'full' | 'partial' | 'none'` and `pricedRowCount`. The totals row sums cost over **priced rows only**, and a caption states the coverage: *"Cost summed over N of M priced rows — unpriced models show '—', rates as of {asOf}."* A grand total that silently drops unpriced models can't masquerade as complete.
 

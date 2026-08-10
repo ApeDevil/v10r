@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Stack } from '$lib/components/layout';
-import { Badge, Button, Drawer, Input } from '$lib/components/primitives';
+import { Badge, Drawer, Input } from '$lib/components/primitives';
 
 interface Props {
 	open: boolean;

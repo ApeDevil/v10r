@@ -11,7 +11,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [**Multi-client core (hexagonal domain modules)**](./multi-client-core.md)
 - [Runtime layers & request flow (7-layer view)](./architecture-runtime-layers.md)
 - [Codebase map ("where does X live")](./architecture-codebase-map.md)
-- [Middleware / 12-stage hook chain (CSRF, headers, guards)](./architecture-middleware.md)
+- [Middleware / 14-stage hook chain (CSRF, headers, guards)](./architecture-middleware.md)
 - [REST API patterns (pagination, envelopes, rate limits)](./architecture-rest-api.md)
 - [Error handling (expected/unexpected/form/API)](./architecture-error-handling.md)
 - [State management (Svelte 5 runes)](./architecture-state-management.md)
@@ -148,7 +148,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 
 ### Analytics
 
-- [Pageview collector hook (last of 12 middleware stages)](./analytics-pageview-hook.md)
+- [Pageview collector hook (last of 14 middleware stages)](./analytics-pageview-hook.md)
 - [Consent-gated sessions (cookieless day-rotating id)](./analytics-consent-sessions.md)
 - [User journeys (client beacon)](./analytics-journeys.md)
 - [Funnels](./analytics-funnels.md)

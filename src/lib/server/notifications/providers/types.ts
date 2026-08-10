@@ -4,7 +4,6 @@ export interface DeliveryPayload {
 	to: string;
 	subject: string;
 	body: string;
-	htmlBody?: string;
 	/** Web push only: same-origin, path-only click target. */
 	navigate?: string;
 	/** Web push only: recipient locale for the OS notification. */
@@ -21,6 +20,4 @@ export interface DeliveryResult {
 
 export interface NotificationProvider {
 	send(payload: DeliveryPayload): Promise<DeliveryResult>;
-	validateConnection(): Promise<boolean>;
-	getProviderName(): string;
 }

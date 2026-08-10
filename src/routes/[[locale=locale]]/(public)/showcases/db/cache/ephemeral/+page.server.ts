@@ -39,19 +39,6 @@ export const actions: Actions = {
 		}
 	},
 
-	checkTtl: async ({ request }) => {
-		const formData = await request.formData();
-		const key = formData.get('key') as string;
-		if (!key) return fail(400, { message: 'No key specified.' });
-
-		try {
-			const snapshot = await getTtlSnapshot(key);
-			return { success: true, snapshot };
-		} catch (err) {
-			return fail(500, { message: err instanceof Error ? err.message : 'TTL check failed.' });
-		}
-	},
-
 	refreshTtl: async ({ request }) => {
 		const formData = await request.formData();
 		const key = formData.get('key') as string;

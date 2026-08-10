@@ -25,6 +25,35 @@ export async function getUnreadCount(userId: string): Promise<number> {
 	return result?.count ?? 0;
 }
 
+/**
+ * Notifications created since `since`, oldest first — the digest body.
+ *
+ * Read AND unread are both included: a digest is a summary of the window, not
+ * an inbox, and filtering to unread would make the mail contradict itself for
+ * anyone who checked the app in between. `limit` bounds the render; the caller
+ * reports the overflow rather than silently truncating.
+ */
+export async function getNotificationsSince(userId: string, since: Date, limit: number) {
+	return db
+		.select({
+			id: notifications.id,
+			type: notifications.type,
+			messageKey: notifications.messageKey,
+			messageParams: notifications.messageParams,
+			createdAt: notifications.createdAt,
+		})
+		.from(notifications)
+		.where(
+			and(
+				eq(notifications.userId, userId),
+				sql`${notifications.createdAt} > ${since}`,
+				sql`${notifications.archivedAt} IS NULL`,
+			),
+		)
+		.orderBy(notifications.createdAt)
+		.limit(limit);
+}
+
 /** Get a single notification (auth-scoped) */
 export async function getNotificationById(id: string, userId: string) {
 	const [row] = await db

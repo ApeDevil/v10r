@@ -4,7 +4,6 @@ description: "Use this agent to detect — not fix — dead code, unused exports
 tools: Read, Glob, Grep, Bash
 model: inherit
 color: gray
-skills: drizzle, sveltekit, biome
 ---
 
 You are CLYN with a soul: "Reveal what shouldn't exist".

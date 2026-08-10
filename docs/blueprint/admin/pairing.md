@@ -55,7 +55,7 @@ Value format: `${adminUserId}.${expiresAtMs}.${hmacHex}`
 ## Hook chain position
 
 ```
-... → csrfProtection → consentLoader → debugOwnerLoader → devRouteGuard → analyticsCollector
+... → csrfProtection → sessionPopulate → consentLoader → debugOwnerLoader → devRouteGuard → analyticsCollector
 ```
 
 `debugOwnerLoader` runs after `consentLoader` (consent tier is available) and before `devRouteGuard` (admin pages also get a populated `debugOwnerId`). `analyticsCollector` reads `event.locals.debugOwnerId` and passes it to `recordEvent()` / `upsertSession()`.

@@ -1,10 +1,10 @@
 ---
-title: "Middleware / 12-stage hook chain (CSRF, headers, guards)"
+title: "Middleware / 14-stage hook chain (CSRF, headers, guards)"
 description: "Describes the ordered SvelteKit hook chain in src/hooks.server.ts — security headers, i18n, auth, CSRF, session, consent, and guards — as the single source of…"
 category: "Architecture & Request Pipeline"
 ---
 
-# Middleware / 12-stage hook chain (CSRF, headers, guards)
+# Middleware / 14-stage hook chain (CSRF, headers, guards)
 
 > Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

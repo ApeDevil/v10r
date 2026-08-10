@@ -27,10 +27,9 @@ const dock = getDockContext();
 
 // ── Persistence ─────────────────────────────────────────────────
 
-/** File-mode: panelId is "spreadsheet-fil_xxx" → extract fileId. Legacy: null. */
+/** File-mode: panelId is "spreadsheet-fil_xxx" → extract fileId. */
 const fileId = $derived(panelId.startsWith('spreadsheet-fil_') ? panelId.replace('spreadsheet-', '') : null);
 
-let spreadsheetId: string | null = $state(null);
 let saveStatus = $state<'idle' | 'saving' | 'saved' | 'error'>('idle');
 let loaded = $state(false);
 
@@ -106,14 +105,13 @@ $effect(() => {
 	const dirty = sheet.dirty;
 	const fId = fileId;
 	if (!loaded || dirty === 0) return;
-	// Need either a fileId (file-mode) or spreadsheetId (legacy) to save
-	if (!fId && !spreadsheetId) return;
+	if (!fId) return;
 
 	clearTimeout(saveTimer);
 	saveTimer = setTimeout(async () => {
 		saveStatus = 'saving';
 		try {
-			const url = fId ? `/api/desk/files/${fId}` : `/api/desk/spreadsheets/${spreadsheetId}`;
+			const url = `/api/desk/files/${fId}`;
 			const res = await apiFetch(url, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
@@ -211,7 +209,7 @@ $effect(() => {
 <div class="sheet-panel">
 	{#if !loaded}
 		<!-- loading -->
-	{:else if !fileId && !spreadsheetId}
+	{:else if !fileId}
 		<PanelEmptyState
 			icon="i-lucide-sheet"
 			heading="No spreadsheet open"

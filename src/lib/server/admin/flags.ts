@@ -11,18 +11,6 @@ import { systemConfig } from '$lib/server/db/schema/admin';
  */
 const flagValueSchema = v.boolean('Flag values must be booleans');
 
-// ── In-Process Cache ──────────────────────────────────────────────────────────
-
-const cache = new Map<string, { value: unknown; cachedAt: number }>();
-
-export function invalidateFlagCache(): void {
-	cache.clear();
-}
-
-export function getFlagCacheSize(): number {
-	return cache.size;
-}
-
 // ── Read ──────────────────────────────────────────────────────────────────────
 
 export async function getAllFlags() {
@@ -55,11 +43,8 @@ export async function setFlag(
 				updatedAt: new Date(),
 			},
 		});
-
-	cache.delete(key);
 }
 
 export async function deleteFlag(key: string): Promise<void> {
 	await db.delete(systemConfig).where(eq(systemConfig.key, key));
-	cache.delete(key);
 }

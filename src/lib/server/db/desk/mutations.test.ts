@@ -1,7 +1,7 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { makeFile, makeFolder, makeSpreadsheet, makeUser } from '$lib/server/test/fixtures';
+import { makeFile, makeFolder, makeUser } from '$lib/server/test/fixtures';
 import { user } from '../schema/auth/_better-auth';
 import { file } from '../schema/desk/file';
 import { folder } from '../schema/desk/folder';
@@ -18,7 +18,6 @@ vi.mock('$lib/server/db', async () => {
 });
 
 const {
-	updateSpreadsheet,
 	createSpreadsheetFile,
 	renameFile,
 	deleteFile,
@@ -53,41 +52,6 @@ describe('desk mutations', () => {
 		await db.delete(spreadsheet);
 		await db.delete(file);
 		await db.delete(folder);
-	});
-
-	// ── updateSpreadsheet ────────────────────────────────────────────
-
-	describe('updateSpreadsheet', () => {
-		it('updates spreadsheet fields and returns the updated row', async () => {
-			const f = makeFile({ userId: USER_A.id });
-			const s = makeSpreadsheet({ fileId: f.id, userId: USER_A.id, name: 'Old' });
-			await db.insert(file).values(f);
-			await db.insert(spreadsheet).values(s);
-
-			const result = await updateSpreadsheet(s.id, USER_A.id, {
-				name: 'New',
-				cells: { B2: { v: 42 } },
-			});
-
-			expect(result).not.toBeNull();
-			expect(result?.name).toBe('New');
-			expect(result?.cells).toEqual({ B2: { v: 42 } });
-		});
-
-		it('returns null when spreadsheet belongs to different user', async () => {
-			const f = makeFile({ userId: USER_A.id });
-			const s = makeSpreadsheet({ fileId: f.id, userId: USER_A.id });
-			await db.insert(file).values(f);
-			await db.insert(spreadsheet).values(s);
-
-			const result = await updateSpreadsheet(s.id, USER_B.id, { name: 'Hijacked' });
-			expect(result).toBeNull();
-		});
-
-		it('returns null when spreadsheet does not exist', async () => {
-			const result = await updateSpreadsheet('nonexistent', USER_A.id, { name: 'Ghost' });
-			expect(result).toBeNull();
-		});
 	});
 
 	// ── createSpreadsheetFile ────────────────────────────────────────

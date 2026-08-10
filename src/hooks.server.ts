@@ -37,7 +37,6 @@ import {
 // 2c in the chain — the agent-facing `.md` layer over /docs. Lives in its own
 // module so its tests never import this file's heavy graph (schedulers, auth).
 import { docsMarkdown } from '$lib/server/docs/markdown-hook';
-import { logFeatureStatus } from '$lib/server/features';
 import { clearOwnerCookie, PAIRING_COOKIE, verifyOwnerCookie } from '$lib/server/pairing/cookie';
 import { isSameHost, needsCsrf } from '$lib/server/security/csrf';
 import {
@@ -59,7 +58,6 @@ import '$lib/server/agents';
 import '$lib/server/jobs/scheduler';
 import '$lib/server/jobs/delivery-scheduler';
 
-logFeatureStatus();
 logAdminConfig();
 
 const ALLOWED_LOCALES = new Set<string>(locales);

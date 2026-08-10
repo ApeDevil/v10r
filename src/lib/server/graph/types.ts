@@ -1,19 +1,5 @@
 import type { KnowledgeData, KnowledgeEdge, KnowledgeNode } from '$lib/types/knowledge';
 
-// ─── Relationship types ─────────────────────────────────
-
-export const RELATIONSHIP_TYPES = [
-	'DEPENDS_ON',
-	'BELONGS_TO',
-	'IMPLEMENTS',
-	'INTEGRATES_WITH',
-	'REPLACES',
-	'DEMONSTRATES',
-	'REQUIRES',
-] as const;
-
-export type RelationshipType = (typeof RELATIONSHIP_TYPES)[number];
-
 // ─── Neo4j HTTP response shapes ─────────────────────────
 
 export interface Neo4jNodeRecord {

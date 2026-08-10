@@ -129,7 +129,7 @@ function getToolInvocation(part: MessagePart) {
 				{#if invocation}
 					<ToolCallStatus
 						toolName={invocation.toolName}
-						state={invocation.state}
+						phase={invocation.state}
 						output={invocation.output}
 					/>
 					{#if invocation.state === 'result' && invocation.output && typeof invocation.output === 'object' && 'requiresConfirmation' in invocation.output}

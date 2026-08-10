@@ -17,7 +17,6 @@ export * from './command';
 export * from './command-palette';
 export * from './confirm-dialog';
 export * from './context-menu';
-export * from './date-picker';
 export * from './diag-grid';
 export * from './dock';
 export * from './dropdown-menu';

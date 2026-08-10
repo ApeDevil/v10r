@@ -11,7 +11,6 @@ export {
 	parseContentFile,
 	serializeContentFile,
 } from './frontmatter';
-export { loadGlossary, parseGlossary } from './glossary';
 export { contentHash } from './hash';
 export {
 	findOrphanedSourcePaths,

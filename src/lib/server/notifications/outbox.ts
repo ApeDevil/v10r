@@ -32,6 +32,8 @@ export interface ClaimedDelivery {
 	userId: string;
 	messageKey: string;
 	messageParams: NotificationParams;
+	/** Pre-rendered body (digests). Null → render `messageKey` as usual. */
+	bodyOverride: string | null;
 }
 
 /** Reference to a claim, sufficient to guard a terminal write. */
@@ -104,7 +106,8 @@ export async function claimDeliveries(batchSize: number): Promise<ClaimedDeliver
 			d.attempts        AS "attempts",
 			n.user_id         AS "userId",
 			n.message_key     AS "messageKey",
-			n.message_params  AS "messageParams"
+			n.message_params  AS "messageParams",
+			d.body_override   AS "bodyOverride"
 	`);
 
 	// The double quotes on every alias above are load-bearing: unquoted `AS
@@ -118,6 +121,7 @@ export async function claimDeliveries(batchSize: number): Promise<ClaimedDeliver
 		userId: string;
 		messageKey: string;
 		messageParams: NotificationParams | null;
+		bodyOverride: string | null;
 	}>(result).map((r) => ({
 		id: r.id,
 		notificationId: r.notificationId,
@@ -128,7 +132,23 @@ export async function claimDeliveries(batchSize: number): Promise<ClaimedDeliver
 		userId: r.userId,
 		messageKey: r.messageKey,
 		messageParams: r.messageParams ?? {},
+		bodyOverride: r.bodyOverride ?? null,
 	}));
+}
+
+/**
+ * Create one delivery carrying a pre-rendered body (a digest).
+ *
+ * Separate from `createDeliveries` because the body differs per channel — the
+ * length budgets are an order of magnitude apart — so these cannot be batched
+ * into one multi-channel insert.
+ */
+export async function createDigestDelivery(notificationId: string, channel: Channel, body: string) {
+	const [row] = await db
+		.insert(notificationDeliveries)
+		.values({ id: crypto.randomUUID(), notificationId, channel, bodyOverride: body })
+		.returning();
+	return row;
 }
 
 /**

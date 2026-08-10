@@ -22,18 +22,6 @@ export function findNode(root: LayoutNode, id: string): LayoutNode | null {
 }
 
 /** Find the parent split of a node by ID */
-export function findParent(root: LayoutNode, targetId: string): { parent: SplitNode; index: 0 | 1 } | null {
-	if (root.type === 'leaf') return null;
-	for (const i of [0, 1] as const) {
-		if (root.children[i].id === targetId) {
-			return { parent: root, index: i };
-		}
-		const found = findParent(root.children[i], targetId);
-		if (found) return found;
-	}
-	return null;
-}
-
 /** Find the leaf containing a panel ID */
 export function findLeafWithPanel(root: LayoutNode, panelId: string): LeafNode | null {
 	if (root.type === 'leaf') {

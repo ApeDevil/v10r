@@ -527,7 +527,9 @@ const authHandle: Handle = async ({ event, resolve }) => {
 // headers FIRST to stamp the IP, rate-limit inside the auth handler, CSRF AFTER auth):
 export const handle = sequence(
   securityHeaders,       // client-IP stamp + response security headers
+  bodySizeFloor,         // 413 on oversized bodies before anything reads them
   stripBaseLocalePrefix, // 308 /en/* → /*
+  docsMarkdown,          // agent-facing .md layer over /docs
   loadStyle,             // skips /api/ and internal subrequests
   i18n,                  // Paraglide locale + transformPageChunk
   authCaptchaGate,       // ALTCHA on email-sending auth routes

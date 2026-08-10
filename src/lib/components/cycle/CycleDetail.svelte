@@ -4,16 +4,15 @@
 -->
 <script lang="ts">
 import { Button } from '$lib/components/primitives';
-import type { CycleStageState, CycleTrace } from './types';
+import type { CycleStageState } from './types';
 
 interface Props {
 	stage: CycleStageState;
-	trace: CycleTrace;
 	totalDurationMs: number;
 	onclose: () => void;
 }
 
-let { stage, trace: _trace, totalDurationMs, onclose }: Props = $props();
+let { stage, totalDurationMs, onclose }: Props = $props();
 
 let activeTab = $state<'code' | 'timing' | 'payload'>('code');
 

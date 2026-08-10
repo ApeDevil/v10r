@@ -1,8 +1,7 @@
 /**
  * Error code registry — single source of truth for stable wire codes.
  *
- * Domain code throws `DomainError` with a code; adapters surface
- * `{ code, message, fields? }` where `message` is Paraglide-resolved.
+ * Adapters surface `{ code, message }` where `message` is Paraglide-resolved.
  * Renaming a code is a breaking change for non-browser clients.
  */
 
@@ -37,22 +36,3 @@ export const ErrorCode = {
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
-
-/**
- * Domain-layer error. Carries a stable code and optional per-field codes for
- * form validation. Pure — does not import from `$lib/paraglide/*`. Adapters
- * catch and resolve via `errorMessage(code)` from `./render`.
- */
-export class DomainError extends Error {
-	readonly code: ErrorCode;
-	readonly fields?: Record<string, ErrorCode[]>;
-	readonly meta?: Record<string, unknown>;
-
-	constructor(code: ErrorCode, fields?: Record<string, ErrorCode[]>, meta?: Record<string, unknown>) {
-		super(code);
-		this.name = 'DomainError';
-		this.code = code;
-		this.fields = fields;
-		this.meta = meta;
-	}
-}

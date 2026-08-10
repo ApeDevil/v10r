@@ -51,32 +51,6 @@ export function loadDeskSettings(storageKey = DEFAULT_KEY): DeskTheme | null {
 		if (!state.workspace || typeof state.workspace !== 'object') return null;
 		if (!state.typeStyles || typeof state.typeStyles !== 'object') return null;
 
-		// v1 → v2 migration: rename activityBarBg→shellBg, panelBorder→shellBorder
-		if (state.version === 1) {
-			const ws = state.workspace;
-			if (ws.activityBarBg) {
-				ws.shellBg = ws.activityBarBg;
-				delete ws.activityBarBg;
-			}
-			if (ws.panelBorder) {
-				ws.shellBorder = ws.panelBorder;
-				delete ws.panelBorder;
-			}
-			state.version = 2;
-			for (const preset of state.presets ?? []) {
-				if (preset.builtIn) continue;
-				const pws = preset.workspace;
-				if (pws?.activityBarBg) {
-					pws.shellBg = pws.activityBarBg;
-					delete pws.activityBarBg;
-				}
-				if (pws?.panelBorder) {
-					pws.shellBorder = pws.panelBorder;
-					delete pws.panelBorder;
-				}
-			}
-		}
-
 		if (state.version !== CURRENT_VERSION) return null;
 
 		// Ensure built-in presets are always present

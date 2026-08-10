@@ -8,7 +8,7 @@ Two maps sit above the three layers. Start here for the whole-system view.
 
 | File | Purpose |
 |------|---------|
-| **[system-abstraction.md](./system-abstraction.md)** | How the system runs — 7-layer runtime hierarchy, request flow, the 12-stage hooks pipeline |
+| **[system-abstraction.md](./system-abstraction.md)** | How the system runs — 7-layer runtime hierarchy, request flow, the 14-stage hooks pipeline |
 | **[codebase-organization.md](./codebase-organization.md)** | Where code lives — annotated source tree, canonical homes, import rules |
 
 ## Directory Structure

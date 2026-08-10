@@ -234,7 +234,7 @@
 		{
 			"id": "architecture-middleware",
 			"tier": "light",
-			"title": "Middleware / 12-stage hook chain (CSRF, headers, guards)",
+			"title": "Middleware / 14-stage hook chain (CSRF, headers, guards)",
 			"category": "architecture",
 			"summary": "Describes the ordered SvelteKit hook chain in src/hooks.server.ts — security headers, i18n, auth, CSRF, session, consent, and guards — as the single source of truth for request interception.",
 			"when_to_use": "Reach for it when adding or reordering cross-cutting request handling such as auth, CSRF, or security headers.",
@@ -3800,9 +3800,9 @@
 		{
 			"id": "analytics-pageview-hook",
 			"tier": "light",
-			"title": "Pageview collector hook (last of 12 middleware stages)",
+			"title": "Pageview collector hook (last of 14 middleware stages)",
 			"category": "analytics",
-			"summary": "A hooks.server.ts middleware stage that runs last in the 12-stage sequence and records public GET pageviews into separate anonymous and authenticated lanes only after auth and routing have resolved.",
+			"summary": "A hooks.server.ts middleware stage that runs last in the 14-stage sequence and records public GET pageviews into separate anonymous and authenticated lanes only after auth and routing have resolved.",
 			"when_to_use": "Reach for it when first-party pageview logging needs to sit directly in the request hook chain instead of a third-party analytics script.",
 			"capabilities": ["pageview tracking", "middleware hook"],
 			"keywords": ["hooks.server.ts", "sequence", "waituntil", "pageview"],

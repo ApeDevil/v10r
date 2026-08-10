@@ -15,17 +15,6 @@ export interface Workspace {
 	updatedAt: string; // ISO 8601
 }
 
-/** Lightweight shape for list rendering (no layout blob) */
-export interface WorkspaceListItem {
-	id: string;
-	name: string;
-	sortOrder: number;
-	panelCount: number;
-}
-
-/** Display mode for workspace switcher in the activity bar */
-export type WorkspaceSwitcherMode = 'numbers' | 'select' | 'auto';
-
 /** Max workspaces per user — matches Ctrl+Alt+1-9 shortcuts */
 export const MAX_WORKSPACES = 9;
 

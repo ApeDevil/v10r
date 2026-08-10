@@ -68,8 +68,6 @@ export const REGISTRY = registryJson as unknown as Registry;
 
 export const PATTERNS: PatternRecord[] = REGISTRY.patterns;
 
-export const GROUPS: RegGroup[] = REGISTRY.groups;
-
 export const CATEGORIES: RegCategory[] = REGISTRY.categories;
 
 /** Deep tier only — the records that carry invariants/emulation notes (excerpt allowlist, DAG, plans). */
@@ -77,20 +75,6 @@ export const DEEP_PATTERNS: PatternRecord[] = PATTERNS.filter((pattern) => patte
 
 export function buildById(): Map<string, PatternRecord> {
 	return new Map(PATTERNS.map((pattern) => [pattern.id, pattern]));
-}
-
-/** Patterns grouped by category id, preserving registry order within each. */
-export function byCategory(): Map<string, PatternRecord[]> {
-	const map = new Map<string, PatternRecord[]>();
-	for (const pattern of PATTERNS) {
-		const bucket = map.get(pattern.category);
-		if (bucket) {
-			bucket.push(pattern);
-		} else {
-			map.set(pattern.category, [pattern]);
-		}
-	}
-	return map;
 }
 
 /** Registry declaration order — the deterministic tie-breaker for scoring and topo-sort. */

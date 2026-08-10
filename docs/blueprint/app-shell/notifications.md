@@ -2,7 +2,7 @@
 
 In-app notification system with full-page notification center, preference management, and real-time updates.
 
-**Runtime model:** Container-first. SSE with in-memory connection map is the primary real-time strategy (persistent Bun process). Polling via `invalidate()` is the serverless fallback.
+**Runtime model:** SSE either way, with the *transport* chosen by platform capability. On a persistent host an in-memory connection map is sufficient. On serverless each instance has its own module scope, so events travel over Redis pub/sub and every stream subscribes on connect. (There is no polling fallback — an earlier version of this document described one that was never built.)
 
 ## Route Structure
 
@@ -260,12 +260,14 @@ Sidebar Header:
 
 ### Runtime-Adaptive Approach
 
-| Runtime | Strategy | Latency | Mechanism |
+| Runtime | Transport | Latency | Mechanism |
 |---|---|---|---|
-| **Container (primary)** | SSE + in-memory connection map | ~instant | `notifyUser()` pushes to open streams |
-| **Vercel serverless** | Polling + `invalidate()` | ~30s average | SvelteKit dependency invalidation |
+| **Container (primary)** | SSE + in-memory connection map | ~instant | `notifyUser()` enqueues onto open streams |
+| **Vercel serverless** | SSE + Redis pub/sub | ~instant | `notifyUser()` PUBLISHes; each stream SUBSCRIBEs on connect |
 
-The container runtime is the primary target. SSE works naturally in a persistent Bun process — in-memory state survives across requests, connections stay open indefinitely. On Vercel serverless, the same codebase falls back to polling.
+SSE works naturally in a persistent Bun process — in-memory state survives across requests and connections stay open indefinitely. On Vercel that assumption breaks: the instance that creates a notification is almost never the instance parked on the client's `EventSource`, so a memory-only enqueue reaches nobody. `stream.ts` therefore selects on `platform.persistent`, and on the pub/sub path the emitter does **not** also enqueue locally — the local stream is itself a subscriber, so one publish is one delivery.
+
+**Limits worth knowing.** Redis pub/sub is fire-and-forget with no replay: anything published while a client is between reconnects is lost. The route re-sends an `init` frame with the authoritative unread count on every connect, so the badge self-heals within one reconnect (≤55s), but per-item replay via `id:` / `Last-Event-ID` is not built. `SSE_MAX_PER_USER` is also a per-instance cap on serverless — the effective global control is the Redis-backed connect rate limiter, not that constant.
 
 ### Container: SSE with In-Memory Connection Map
 

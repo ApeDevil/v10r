@@ -6,14 +6,6 @@ import { decrypt, encrypt } from '../crypto';
 import type { DeliveryPayload, DeliveryResult, NotificationProvider } from './types';
 
 export class DiscordProvider implements NotificationProvider {
-	getProviderName() {
-		return 'discord';
-	}
-
-	async validateConnection(): Promise<boolean> {
-		return !!env.DISCORD_BOT_TOKEN;
-	}
-
 	async send(payload: DeliveryPayload): Promise<DeliveryResult> {
 		const botToken = env.DISCORD_BOT_TOKEN;
 		if (!botToken) {

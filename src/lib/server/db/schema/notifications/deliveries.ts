@@ -34,6 +34,16 @@ export const notificationDeliveries = notificationsSchema.table(
 			.notNull()
 			.references(() => notifications.id, { onDelete: 'cascade' }),
 		channel: notificationChannelEnum('channel').notNull(),
+		/**
+		 * Pre-rendered body, overriding the render of the joined notification.
+		 *
+		 * Null for every ordinary delivery — the worker renders `message_key` in the
+		 * recipient's locale, which is the right thing when a delivery IS one
+		 * notification. A digest is not: it is N notifications collapsed into one
+		 * message, and the per-channel length budgets differ, so the text is built
+		 * once at digest time and carried here. The subject still renders normally.
+		 */
+		bodyOverride: text('body_override'),
 		status: deliveryStatusEnum('status').notNull().default('pending'),
 		providerMessageId: text('provider_message_id'),
 		errorCode: text('error_code'),

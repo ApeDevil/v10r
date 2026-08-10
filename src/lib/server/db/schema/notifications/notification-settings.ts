@@ -48,6 +48,13 @@ export const notificationSettings = notificationsSchema.table('notification_sett
 
 	// Digest
 	digestFrequency: digestFrequencyEnum('digest_frequency').notNull().default('instant'),
+	/**
+	 * When the last digest was sent. Doubles as the aggregation lower bound and
+	 * as the idempotency fence: the digest job CLAIMS due users with a single
+	 * conditional UPDATE on this column, so a double cron fire is a no-op.
+	 * Null = never sent; the first run then looks back one interval.
+	 */
+	lastDigestAt: timestamp('last_digest_at', { withTimezone: true }),
 
 	// Quiet hours (HH:MM format, null = disabled)
 	quietStart: text('quiet_start'),

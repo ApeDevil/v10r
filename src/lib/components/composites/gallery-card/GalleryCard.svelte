@@ -68,7 +68,6 @@ function handleThumbKeydown(event: KeyboardEvent, i: number) {
 
 $effect(() => {
 	// Track restartKey so manual selection restarts the timer
-	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 	restartKey;
 
 	if (!autoplay || paused || hovering || focusWithin || reduceMotion.current || items.length <= 1) {

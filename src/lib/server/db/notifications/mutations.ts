@@ -1,5 +1,6 @@
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import { db } from '../index';
+import { rowsOf } from '../rows';
 import { notificationSettings } from '../schema/notifications/notification-settings';
 import { type NotificationParams, notifications } from '../schema/notifications/notifications';
 import { pushSubscriptions } from '../schema/notifications/push-subscriptions';
@@ -69,6 +70,79 @@ export async function getOrCreateSettings(userId: string) {
 	}
 
 	return created;
+}
+
+/**
+ * The notification row a digest's deliveries hang off.
+ *
+ * `notification_deliveries.notification_id` is NOT NULL with an ON DELETE
+ * CASCADE FK, so a delivery cannot exist without one — and a digest summarizes
+ * N notifications rather than being one. This row carries the SUBJECT
+ * (`notif_digest_subject` + `{count}`); the body rides on the delivery's
+ * `body_override`.
+ *
+ * Created pre-archived on purpose: `archived_at` is set, so it never appears in
+ * the in-app inbox or the unread count (both filter on it). It exists to satisfy
+ * the FK and to give the worker a subject to render in the recipient's locale —
+ * duplicating the digest back into the inbox it summarizes would be noise.
+ */
+export async function createDigestCarrier(userId: string, count: number) {
+	const now = new Date();
+	const [row] = await db
+		.insert(notifications)
+		.values({
+			id: crypto.randomUUID(),
+			userId,
+			type: 'system',
+			messageKey: 'notif_digest_subject',
+			messageParams: { count } as NotificationParams,
+			archivedAt: now,
+		})
+		.returning();
+	return row;
+}
+
+/**
+ * Atomically claim the users whose digest is due, stamping `last_digest_at` in
+ * the same statement that selects them.
+ *
+ * IDEMPOTENCY, NOT A LOCK. The `last_digest_at < cutoff OR IS NULL` predicate
+ * is the fence: a second cron fire within the same window matches zero rows and
+ * sends nothing. This is the same shape as `claimDeliveries` in the outbox, and
+ * for the same reason it is ONE statement — `db.transaction()` takes the
+ * WebSocket path that Bun mishandles.
+ *
+ * Returns the claimed rows with the PREVIOUS `last_digest_at`, which is the
+ * aggregation lower bound. Null there means "never sent" and the caller falls
+ * back to one interval.
+ */
+export async function claimDigestRecipients(
+	frequency: 'daily' | 'weekly',
+	cutoff: Date,
+): Promise<{ userId: string; previousDigestAt: Date | null }[]> {
+	// `RETURNING` yields the NEW row, so the previous timestamp has to be
+	// captured in a sub-select before the SET overwrites it. `FOR UPDATE` keeps
+	// two concurrent runs from claiming the same user — same shape as
+	// `claimDeliveries`, minus SKIP LOCKED (a contended row here should wait and
+	// then see the fence, not be silently skipped).
+	const rows = await db.execute<{ user_id: string; previous_digest_at: Date | null }>(sql`
+		UPDATE notifications.notification_settings AS s
+		SET last_digest_at = now()
+		FROM (
+			SELECT user_id, last_digest_at
+			FROM notifications.notification_settings
+			WHERE digest_frequency = ${frequency}
+			  AND (last_digest_at IS NULL OR last_digest_at < ${cutoff})
+			FOR UPDATE
+		) AS prev
+		WHERE s.user_id = prev.user_id
+		RETURNING s.user_id, prev.last_digest_at AS previous_digest_at
+	`);
+	// The two drivers disagree on the result shape — `rowsOf` is the shim.
+	return rowsOf<{ user_id: string; previous_digest_at: Date | string | null }>(rows).map((r) => ({
+		userId: r.user_id,
+		previousDigestAt: r.previous_digest_at ? new Date(r.previous_digest_at) : null,
+	}));
 }
 
 /** Update notification settings for a user */

@@ -132,7 +132,9 @@ async function deliverOne(claim: ClaimedDelivery, locale: string): Promise<void>
 	}
 
 	const rendered = renderNotification(claim.messageKey, claim.messageParams, locale);
-	const payload: DeliveryPayload = { to: recipient, subject: rendered, body: rendered };
+	// A digest carries its body pre-rendered (N notifications, per-channel length
+	// budget). The subject still renders from the message key either way.
+	const payload: DeliveryPayload = { to: recipient, subject: rendered, body: claim.bodyOverride ?? rendered };
 
 	const result = await provider.send(payload);
 

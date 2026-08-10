@@ -167,8 +167,6 @@ async function save() {
 
 			<CustomPaletteEditor
 				palette={editMode === 'light' ? lightColors : darkColors}
-				otherMode={editMode === 'light' ? darkColors : lightColors}
-				mode={editMode}
 				onchange={(token) => {
 					dirty = true;
 					if (token === 'primary') showCascade = true;

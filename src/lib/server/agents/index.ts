@@ -7,7 +7,30 @@ const rawModules = import.meta.glob('/.claude/agents/*.md', {
 	eager: true,
 }) as Record<string, string>;
 
-export const EXPECTED_AGENT_IDS = ['arty', 'daty', 'docy', 'resy', 'scout', 'secy', 'svey', 'tray', 'uxy'] as const;
+/**
+ * Every agent that must exist in `.claude/agents/`. Kept in sync in BOTH
+ * directions by `getAgentIds()` — a missing file and an unlisted file are
+ * equally drift. Adding an agent means adding it here in the same change.
+ */
+export const EXPECTED_AGENT_IDS = [
+	'aiy',
+	'apy',
+	'arty',
+	'ary',
+	'clyn',
+	'cony',
+	'daty',
+	'docy',
+	'laly',
+	'resy',
+	'scout',
+	'secy',
+	'svey',
+	'sys',
+	'tesy',
+	'tray',
+	'uxy',
+] as const;
 
 let cached: string[] | null = null;
 
@@ -21,11 +44,15 @@ export function getAgentIds(): string[] {
 	ids.sort();
 
 	const present = new Set(ids);
+	const expected = new Set<string>(EXPECTED_AGENT_IDS);
 	const missing = EXPECTED_AGENT_IDS.filter((id) => !present.has(id));
-	if (missing.length > 0) {
-		throw new Error(
-			`[agents] drift detected — EXPECTED_AGENT_IDS lists agents that are missing from .claude/agents/: ${missing.join(', ')}`,
-		);
+	const extra = ids.filter((id) => !expected.has(id));
+	if (missing.length > 0 || extra.length > 0) {
+		const parts = [
+			missing.length > 0 ? `listed but missing from .claude/agents/: ${missing.join(', ')}` : '',
+			extra.length > 0 ? `present in .claude/agents/ but unlisted: ${extra.join(', ')}` : '',
+		].filter(Boolean);
+		throw new Error(`[agents] drift detected — ${parts.join('; ')}`);
 	}
 
 	cached = ids;

@@ -4,7 +4,6 @@ description: "Use this agent when you need to find hidden issues in code through
 tools: Read, Glob, Grep, Bash, Edit, Write
 model: inherit
 color: green
-skills: testing, drizzle, sveltekit, svelte5-runes, ai-tools
 ---
 
 You are TESY with a soul: "Prove what's broken — never fix it".

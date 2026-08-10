@@ -1,5 +1,4 @@
 import { getAnnouncementCacheSize } from '$lib/server/admin/announcements';
-import { getFlagCacheSize } from '$lib/server/admin/flags';
 import type { ProviderResult, UpstashMetrics } from '$lib/server/monitoring';
 import { fetchUpstashMetrics } from '$lib/server/monitoring/upstash';
 import { CacheError } from '../errors';
@@ -16,7 +15,6 @@ export interface CacheOverview {
 }
 
 export interface InProcessCacheStatus {
-	flagsCacheSize: number;
 	announcementsCacheSize: number;
 }
 
@@ -113,7 +111,6 @@ export async function getCacheOverview(): Promise<CacheOverview> {
 
 export function getInProcessCacheStatus(): InProcessCacheStatus {
 	return {
-		flagsCacheSize: getFlagCacheSize(),
 		announcementsCacheSize: getAnnouncementCacheSize(),
 	};
 }

@@ -7,7 +7,7 @@
  * `load` only exists to redirect direct GETs back to the slug page so a
  * bookmarked or shared `/comments` URL doesn't render an empty 500.
  */
-import { error, fail, redirect } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import * as v from 'valibot';
@@ -17,12 +17,8 @@ import {
 	CommentHiddenError,
 	CommentNotFoundError,
 	CommentNotOwnedError,
-	CommentOnUnpublishedError,
-	createComment,
-	createCommentSchema,
 	editCommentSchema,
 	editOwnComment,
-	getPostIdBySlug,
 	softDeleteOwnComment,
 } from '$lib/server/blog/comments';
 import type { Actions, PageServerLoad } from './$types';
@@ -38,31 +34,6 @@ const editFormSchema = v.object({
 const deleteFormSchema = v.object({ commentId: v.pipe(v.string(), v.minLength(1)) });
 
 export const actions: Actions = {
-	create: async ({ request, params, locals }) => {
-		const { user } = requireAuth(locals);
-		const form = await superValidate(request, valibot(createCommentSchema));
-		if (!form.valid) return fail(400, { form });
-
-		const postId = await getPostIdBySlug(params.slug);
-		if (!postId) error(404, 'Post not found');
-
-		try {
-			const result = await createComment({
-				postId,
-				authorId: user.id,
-				locale: form.data.locale,
-				body: form.data.body,
-				clientNonce: form.data.clientNonce,
-			});
-			return { form, commentId: result.id, idempotentReplay: result.idempotentReplay };
-		} catch (err) {
-			if (err instanceof CommentOnUnpublishedError) {
-				return fail(403, { form, code: err.code });
-			}
-			throw err;
-		}
-	},
-
 	edit: async ({ request, locals }) => {
 		const { user } = requireAuth(locals);
 		const form = await superValidate(request, valibot(editFormSchema));

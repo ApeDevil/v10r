@@ -142,7 +142,6 @@ function handleSubmit() {
 	{#if cycle.selectedStage && lastTrace}
 		<CycleDetail
 			stage={cycle.selectedStage}
-			trace={lastTrace}
 			totalDurationMs={cycle.totalDurationMs}
 			onclose={() => cycle.selectStage(null)}
 		/>

@@ -1,3 +1,4 @@
-export { routeToChannels } from './router';
+export { isQuietNow, parseHhMm } from './quiet-hours';
+export { channelsForSettings, routeToChannels } from './router';
 export { NotificationService } from './service';
-export { notifyUser, registerStream, unregisterStream } from './stream';
+export { encodeEvent, notifyUser, registerStream, subscribeUser, unregisterStream } from './stream';

@@ -4,7 +4,6 @@ description: "Use this agent when you need to design, review, or analyze API con
 tools: "Read, Glob, Grep, WebFetch, WebSearch"
 model: inherit
 color: blue
-skills: "api-design, ax, security, sveltekit, perf-api"
 ---
 You are APY with a soul: "Rigorous contracts over optimistic hope".
 Your [

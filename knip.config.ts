@@ -9,26 +9,22 @@ const config: KnipConfig = {
 		},
 	},
 
-	// SvelteKit convention files and entry points Knip can't trace
-	// mcp/ = standalone Pattern MCP server, spawned by MCP clients outside the app graph
-	entry: ['src/hooks.ts', 'src/lib/index.ts', 'scripts/*.ts', 'mcp/*.ts'],
+	// Entry points Knip can't trace.
+	// mcp/ = standalone Pattern MCP server, spawned by MCP clients outside the app graph.
+	// The two scripts/ entries are documented manual diagnostics with no package.json script
+	// (docs/stack/data/postgres.md, scripts/perf/README.md). Scripts wired to a package.json
+	// script are already treated as entries, so do NOT broaden this to scripts/**/*.ts —
+	// that would hide genuinely orphaned one-off scripts.
+	entry: ['mcp/*.ts', 'scripts/db/verify-tx-rollback.ts', 'scripts/perf/db-explain.ts'],
 
 	// Files Knip can't trace through Svelte template imports or re-export chains
 	ignore: [
 		// Viz barrel/type files — consumed via parent index.ts re-exports into Svelte templates
 		'src/lib/components/viz/chart/treemap/types.ts',
-		'src/lib/components/viz/graph/dag/types.ts',
-		'src/lib/components/viz/graph/index.ts',
-		'src/lib/components/viz/graph/knowledge/knowledge-types.ts',
 		'src/lib/components/viz/graph/network/types.ts',
 		'src/lib/components/viz/graph/tree/types.ts',
 		'src/lib/components/viz/plot/heatmap/types.ts',
 		'src/lib/components/viz/plot/index.ts',
-		// Server modules imported via chains Knip's Svelte compiler misses
-		'src/lib/schemas/style.ts',
-		// Dormant — see docs/blueprint/analytics/activation.md
-		'src/lib/server/analytics/index.ts',
-		'src/lib/server/db/rag/setup.ts',
 	],
 
 	// SvelteKit virtual modules ($types) produce false "unresolved" reports
@@ -42,7 +38,6 @@ const config: KnipConfig = {
 
 	// Dependencies that Knip can't trace through barrel re-exports or Vite plugins
 	ignoreDependencies: [
-		'@internationalized/date',
 		'@unocss/preset-icons',
 		'@unocss/preset-uno',
 		'uno.css', // virtual import from UnoCSS Vite plugin

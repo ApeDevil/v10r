@@ -103,4 +103,61 @@ describe('routeToChannels', () => {
 		const channels = await routeToChannels('user-1', 'success');
 		expect(channels).not.toContain('push');
 	});
+
+	describe('digestFrequency: never', () => {
+		it('suppresses every external channel', async () => {
+			mockSettings.mockResolvedValue({
+				emailMention: true,
+				pushMention: true,
+				mutedUntil: null,
+				digestFrequency: 'never',
+			});
+
+			expect(await routeToChannels('user-1', 'mention')).toEqual([]);
+		});
+
+		it('does not suppress security', async () => {
+			mockSettings.mockResolvedValue({
+				emailSecurity: true,
+				mutedUntil: null,
+				digestFrequency: 'never',
+			});
+
+			expect(await routeToChannels('user-1', 'security')).toContain('email');
+		});
+
+		it('any other value routes normally', async () => {
+			mockSettings.mockResolvedValue({
+				emailMention: true,
+				mutedUntil: null,
+				digestFrequency: 'instant',
+			});
+
+			expect(await routeToChannels('user-1', 'mention')).toContain('email');
+		});
+	});
+
+	describe('mutedUntil vs security', () => {
+		// Before this change `mutedUntil` was checked BEFORE the security
+		// force-send, so a global mute suppressed security alerts while an
+		// explicit `emailSecurity: false` did not. The two mutes disagreed about
+		// the one category that matters most; security now always wins.
+		it('an active global mute does NOT suppress a security alert', async () => {
+			mockSettings.mockResolvedValue({
+				emailSecurity: false,
+				mutedUntil: new Date(Date.now() + 60_000),
+			});
+
+			expect(await routeToChannels('user-1', 'security')).toContain('email');
+		});
+
+		it('an active global mute still suppresses everything else', async () => {
+			mockSettings.mockResolvedValue({
+				emailMention: true,
+				mutedUntil: new Date(Date.now() + 60_000),
+			});
+
+			expect(await routeToChannels('user-1', 'mention')).toEqual([]);
+		});
+	});
 });

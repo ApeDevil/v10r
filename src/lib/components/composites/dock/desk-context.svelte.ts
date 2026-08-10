@@ -157,12 +157,6 @@ export function pinContext(panelId: string): void {
 }
 
 /** Unpin a panel's context */
-export function unpinContext(panelId: string): void {
-	const next = new Set(pinnedIds);
-	next.delete(panelId);
-	pinnedIds = next;
-}
-
 /** Dismiss a panel's context — removes it from active inclusion entirely */
 export function dismissContext(panelId: string): void {
 	// Remove from pinned

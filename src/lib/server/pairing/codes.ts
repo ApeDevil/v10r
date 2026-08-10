@@ -19,10 +19,6 @@ export function generateCode(): string {
 	return out;
 }
 
-export function formatCodeForDisplay(code: string): string {
-	return `${code.slice(0, 3)} ${code.slice(3)}`;
-}
-
 export interface CreatedPairing {
 	code: string;
 	expiresAt: Date;

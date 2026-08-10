@@ -7,12 +7,13 @@
 **Full sequence:**
 
 ```
-securityHeaders → stripBaseLocalePrefix → loadStyle → i18n → authCaptchaGate
-→ authHandler → sessionPopulate → csrfProtection → consentLoader
-→ debugOwnerLoader → devRouteGuard → analyticsCollector
+securityHeaders → bodySizeFloor → stripBaseLocalePrefix → docsMarkdown
+→ loadStyle → i18n → authCaptchaGate → authHandler → csrfProtection
+→ sessionPopulate → consentLoader → debugOwnerLoader → devRouteGuard
+→ analyticsCollector
 ```
 
-`debugOwnerLoader` (position 10 of 12) verifies the `v10r_debug_owner` HMAC cookie and populates `event.locals.debugOwnerId`, so the collector can attribute events to a paired admin session without the phone being logged in.
+`debugOwnerLoader` (position 12 of 14) verifies the `v10r_debug_owner` HMAC cookie and populates `event.locals.debugOwnerId`, so the collector can attribute events to a paired admin session without the phone being logged in.
 
 `analyticsCollector` runs last — after route guards — so it only records requests that fully resolved through auth and routing.
 
@@ -35,7 +36,7 @@ Deferred writes are wrapped in `waitUntil()` from `@vercel/functions`. This is l
 
 ## Consent gating
 
-The collector reads the tier from `ANALYTICS_CONSENT_COOKIE` (`v10r_consent`). There are **two tiers**, `necessary` and `analytics` — a former `full` tier was removed because nothing gated on it while the banner promised it granted more (see `scripts/db/collapse-consent-tier.ts`).
+The collector reads the tier from `ANALYTICS_CONSENT_COOKIE` (`v10r_consent`). There are **two tiers**, `necessary` and `analytics` — a former `full` tier was removed because nothing gated on it while the banner promised it granted more.
 
 **The `_v10r_sid` session cookie** writes to terminal equipment and is not strictly necessary, so under TDDDG §25 / ePrivacy Art 5(3) it needs `analytics` consent:
 

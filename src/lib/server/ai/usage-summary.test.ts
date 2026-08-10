@@ -43,8 +43,9 @@ describe('buildUnifiedModelUsage', () => {
 	});
 
 	it('reports partial coverage and sums cost over priced rows only', () => {
-		// llama is not in MODEL_PRICES → unpriced; gemini is priced.
-		const { summary } = buildUnifiedModelUsage([chat({ model: 'llama-3.3-70b-versatile' }), chat()], []);
+		// The `unknown` bucket (admin-queries COALESCEs a NULL model_id to it) can
+		// never be a price-table key → permanently unpriced; gemini is priced.
+		const { summary } = buildUnifiedModelUsage([chat({ model: 'unknown' }), chat()], []);
 		expect(summary.totalRowCount).toBe(2);
 		expect(summary.pricedRowCount).toBe(1);
 		expect(summary.costCoverage).toBe('partial');

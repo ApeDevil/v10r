@@ -22,7 +22,6 @@ export const REDIRECT_HREFS = new Set([
 	'/showcases/db/graph',
 	'/showcases/db/storage',
 	'/showcases/db/cache',
-	'/showcases/ai/retrieval',
 	'/showcases/ui/components',
 	'/showcases/ui/splits',
 	'/showcases/ui/decorative',

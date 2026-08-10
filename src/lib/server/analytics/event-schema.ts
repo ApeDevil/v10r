@@ -62,12 +62,6 @@ export const EVENT_SPECS = {
 			maxScroll: { kind: 'int', min: 0, max: 100 },
 		},
 	},
-	outbound_click: {
-		description: 'A click on a link leaving the site. Stores the destination host only, never the full URL.',
-		properties: {
-			host: { kind: 'string', maxLength: 120 },
-		},
-	},
 } as const satisfies Record<string, EventSpec>;
 
 export type EventName = keyof typeof EVENT_SPECS;

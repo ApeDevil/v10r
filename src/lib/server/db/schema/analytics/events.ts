@@ -14,8 +14,7 @@ export const eventTypeEnum = analyticsSchema.enum('event_type', ['pageview', 'ac
  * Two tiers, not three. `necessary` collects aggregate pageviews, connection-
  * derived geo and coarse timing with no device access; `analytics` adds the
  * session cookie, referrer, UA-derived device/browser, and behavioural events.
- * A former `full` tier was removed because nothing gated on it — see
- * scripts/db/collapse-consent-tier.ts.
+ * A former `full` tier was removed because nothing gated on it.
  */
 export const consentTierEnum = analyticsSchema.enum('consent_tier', ['necessary', 'analytics']);
 

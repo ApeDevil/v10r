@@ -7,7 +7,7 @@
 
 import { and, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import { llmwikiPage, llmwikiPageRedirect } from '$lib/server/db/schema/rag';
+import { llmwikiPage } from '$lib/server/db/schema/rag';
 import { POINTER_CAP } from './config';
 import type { LlmwikiPage, LlmwikiPointer } from './types';
 
@@ -172,20 +172,6 @@ export async function fetchPagesByIds(
 		});
 	}
 	return result;
-}
-
-/** Resolve a slug rename — returns the canonical page id or null. */
-export async function findRedirect(oldSlug: string, collectionId: string | null): Promise<string | null> {
-	const rows = await db
-		.select({ newPageId: llmwikiPageRedirect.newPageId })
-		.from(llmwikiPageRedirect)
-		.where(
-			collectionId === null
-				? and(eq(llmwikiPageRedirect.oldSlug, oldSlug), isNull(llmwikiPageRedirect.collectionId))
-				: and(eq(llmwikiPageRedirect.oldSlug, oldSlug), eq(llmwikiPageRedirect.collectionId, collectionId)),
-		)
-		.limit(1);
-	return rows[0]?.newPageId ?? null;
 }
 
 /**

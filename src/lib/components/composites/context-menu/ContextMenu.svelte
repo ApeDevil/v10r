@@ -18,10 +18,9 @@ interface TriggerProps {
 interface Props {
 	items: ContextMenuItem[];
 	trigger: Snippet<[TriggerProps]>;
-	align?: 'start' | 'center' | 'end';
 }
 
-let { items, trigger, align = 'start' }: Props = $props();
+let { items, trigger }: Props = $props();
 
 // Relative elevation — one rung above the surface that owns the trigger.
 const s = useSurface();

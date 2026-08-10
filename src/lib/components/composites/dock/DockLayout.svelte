@@ -2,6 +2,7 @@
 import type { Snippet } from 'svelte';
 import { MediaQuery } from 'svelte/reactivity';
 import { browser } from '$app/environment';
+import { apiFetch } from '$lib/api';
 import DeskPreferencesDialog from './DeskPreferencesDialog.svelte';
 import DeskShortcuts from './DeskShortcuts.svelte';
 import DockActivityBar from './DockActivityBar.svelte';
@@ -127,11 +128,13 @@ const initialTheme: DeskTheme = hasServerData
 	? buildThemeFromServer(serverTheme, serverPresets)
 	: ((browser ? loadDeskSettings() : null) ?? DEFAULT_THEME);
 
-// DB sync callbacks (no-op when not authenticated / no server data)
+// DB sync callbacks (no-op when not authenticated / no server data).
+// Every call goes through `apiFetch` — `/api/desk/` is not CSRF-exempt, so a
+// bare `fetch` is rejected with 403 `csrf_failed` before it ever reaches a route.
 async function saveThemeToApi(theme: DeskTheme) {
 	try {
-		await fetch('/api/desk/theme', {
-			method: 'PUT',
+		await apiFetch('/api/desk/theme', {
+			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				workspace: theme.workspace,
@@ -154,23 +157,23 @@ const deskSettings = setDeskSettingsContext(initialTheme, {
 	},
 	onCreatePreset: async (name, workspace, typeStyles) => {
 		try {
-			const res = await fetch('/api/desk/theme', {
+			const res = await apiFetch('/api/desk/theme', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ action: 'create-preset', name, workspace, typeStyles }),
 			});
 			const data = await res.json();
-			return data.preset?.id ?? null;
+			// `apiOk` wraps every payload in `{ data }` — see api/response.ts.
+			return data.data?.preset?.id ?? null;
 		} catch {
 			return null;
 		}
 	},
 	onDeletePreset: async (presetId) => {
 		try {
-			const res = await fetch('/api/desk/theme', {
+			// Item route, no body: the repo has no body-carrying DELETE anywhere.
+			const res = await apiFetch(`/api/desk/theme/presets/${encodeURIComponent(presetId)}`, {
 				method: 'DELETE',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ id: presetId }),
 			});
 			return res.ok;
 		} catch {
@@ -197,7 +200,7 @@ const workspace = setWorkspaceContext(initialWorkspaces, initialActiveWorkspaceI
 	onSync: (data) => {
 		if (!authenticated) return;
 		try {
-			fetch('/api/desk/workspaces/sync', {
+			apiFetch('/api/desk/workspaces/sync', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(data),
@@ -209,7 +212,7 @@ const workspace = setWorkspaceContext(initialWorkspaces, initialActiveWorkspaceI
 	onCreate: async (data) => {
 		if (!authenticated) return null;
 		try {
-			const res = await fetch('/api/desk/workspaces', {
+			const res = await apiFetch('/api/desk/workspaces', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(data),
@@ -223,7 +226,7 @@ const workspace = setWorkspaceContext(initialWorkspaces, initialActiveWorkspaceI
 	onUpdate: async (id, data) => {
 		if (!authenticated) return;
 		try {
-			await fetch(`/api/desk/workspaces/${id}`, {
+			await apiFetch(`/api/desk/workspaces/${id}`, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(data),
@@ -235,7 +238,7 @@ const workspace = setWorkspaceContext(initialWorkspaces, initialActiveWorkspaceI
 	onDelete: async (id) => {
 		if (!authenticated) return;
 		try {
-			await fetch(`/api/desk/workspaces/${id}`, { method: 'DELETE' });
+			await apiFetch(`/api/desk/workspaces/${id}`, { method: 'DELETE' });
 		} catch {
 			/* silent */
 		}
@@ -274,17 +277,32 @@ if (browser) {
 	});
 }
 
-// Save current workspace layout on tab close via sendBeacon
+// Save current workspace layout on tab close.
+//
+// `fetch(keepalive)` rather than `navigator.sendBeacon`: beacon cannot set
+// headers, so it can never satisfy the `x-requested-with` CSRF check that
+// guards `/api/desk/`. `keepalive` survives unload AND carries headers — the
+// same transport `analytics/transport.ts` falls back to. Note both draw on the
+// SAME ~64 KiB per-origin keepalive quota; a layout tree is a few KB.
+//
+// `pagehide` rather than `beforeunload`: merely registering `beforeunload`
+// disables bfcache in Chrome/Safari and is unreliable on mobile — see
+// analytics/journey-beacon.ts.
 if (browser) {
-	function handleBeforeUnload() {
+	function handlePageHide() {
 		if (!authenticated || !workspace.activeId) return;
 		const layout = workspace.captureLayout();
 		const body = JSON.stringify({ save: { id: workspace.activeId, layout }, activate: workspace.activeId });
-		navigator.sendBeacon('/api/desk/workspaces/sync', new Blob([body], { type: 'application/json' }));
+		apiFetch('/api/desk/workspaces/sync', {
+			method: 'POST',
+			keepalive: true,
+			headers: { 'Content-Type': 'application/json' },
+			body,
+		}).catch(() => {});
 	}
 	$effect(() => {
-		window.addEventListener('beforeunload', handleBeforeUnload);
-		return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+		window.addEventListener('pagehide', handlePageHide);
+		return () => window.removeEventListener('pagehide', handlePageHide);
 	});
 }
 
@@ -307,7 +325,7 @@ if (browser && authenticated && !hasServerData) {
 			.filter((p) => !p.builtIn && !builtInIds.has(p.id))
 			.map((p) => ({ name: p.name, workspace: p.workspace, typeStyles: p.typeStyles }));
 
-		fetch('/api/desk/theme', {
+		apiFetch('/api/desk/theme', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
@@ -321,7 +339,10 @@ if (browser && authenticated && !hasServerData) {
 			.then((res) => {
 				if (res.ok)
 					res.json().then((d) => {
-						if (d.migrated) clearDeskSettings();
+						// `apiOk` wraps in `{ data }` — reading `d.migrated` was always
+						// undefined, so the local cache was never cleared and the
+						// migration re-fired on every desk load.
+						if (d.data?.migrated) clearDeskSettings();
 					});
 			})
 			.catch(() => {});

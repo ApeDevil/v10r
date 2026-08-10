@@ -14,6 +14,7 @@ import { logCleanup } from './log-cleanup';
 import { mcpTelemetryRetention } from './mcp-telemetry-retention';
 import { notificationCleanup } from './notification-cleanup';
 import { notificationDelivery } from './notification-delivery';
+import { notificationDigest } from './notification-digest';
 import { sessionCleanup } from './session-cleanup';
 import { telegramTokenCleanup } from './telegram-token-cleanup';
 
@@ -29,6 +30,10 @@ export const jobs: Record<string, Job> = {
 	// on Vercel (platform.persistent === false) the cron entry is the ONLY driver
 	// — without it, email/telegram/discord deliveries queue as pending forever.
 	'notification-delivery': { execute: notificationDelivery },
+	// Builds deliveries for digest subscribers, whose instant enqueue is
+	// suppressed in routeExternal. Runs at 07:00 so its rows are drained by the
+	// 08:00 delivery cron the same morning.
+	'notification-digest': { execute: notificationDigest },
 	'telegram-token-cleanup': { execute: telegramTokenCleanup },
 	'discord-token-refresh': { execute: discordTokenRefresh },
 	'analytics-cleanup': { execute: analyticsCleanup },

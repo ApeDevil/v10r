@@ -5,12 +5,10 @@ import type { PaletteColors } from '$lib/styles/random/types';
 
 interface Props {
 	palette: PaletteColors;
-	otherMode: PaletteColors;
-	mode: 'light' | 'dark';
 	onchange?: (token: string, value: string) => void;
 }
 
-let { palette, otherMode, mode, onchange }: Props = $props();
+let { palette, onchange }: Props = $props();
 
 function handleChange(token: string, value: string) {
 	onchange?.(token, value);

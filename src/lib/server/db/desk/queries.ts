@@ -9,39 +9,6 @@ import { file, folder, markdown, spreadsheet } from '../schema/desk';
 // them on a schedule (not shipped with the template).
 // ───────────────────────────────────────────────────────────────────
 
-// ── Spreadsheet queries ────────────────────────────────────────────
-
-/** Get a single spreadsheet with ownership check. */
-export async function getSpreadsheet(id: string, userId: string) {
-	const [row] = await db
-		.select()
-		.from(spreadsheet)
-		.where(and(eq(spreadsheet.id, id), eq(spreadsheet.userId, userId), isNull(spreadsheet.deletedAt)))
-		.limit(1);
-	return row ?? null;
-}
-
-/** List user's spreadsheets, newest first. */
-export async function listSpreadsheets(userId: string, offset = 0, limit = 50) {
-	const where = and(eq(spreadsheet.userId, userId), isNull(spreadsheet.deletedAt));
-	const [items, [countResult]] = await Promise.all([
-		db
-			.select({
-				id: spreadsheet.id,
-				name: spreadsheet.name,
-				createdAt: spreadsheet.createdAt,
-				updatedAt: spreadsheet.updatedAt,
-			})
-			.from(spreadsheet)
-			.where(where)
-			.orderBy(desc(spreadsheet.updatedAt))
-			.offset(offset)
-			.limit(limit),
-		db.select({ total: count() }).from(spreadsheet).where(where),
-	]);
-	return { items, total: countResult?.total ?? 0 };
-}
-
 // ── File registry queries ──────────────────────────────────────────
 
 /** List all files for a user, optionally filtered by type. Newest first. Excludes soft-deleted rows. */

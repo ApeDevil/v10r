@@ -19,8 +19,6 @@ vi.mock('$lib/server/db', async () => {
 const {
 	getFile,
 	listFiles,
-	getSpreadsheet,
-	listSpreadsheets,
 	getFolder,
 	listFolders,
 	countFolderContents,
@@ -138,73 +136,6 @@ describe('desk queries', () => {
 			const result = await listFiles(USER_A.id);
 			expect(result.items).toHaveLength(1);
 			expect(result.total).toBe(1);
-		});
-	});
-
-	// ── getSpreadsheet ───────────────────────────────────────────────
-
-	describe('getSpreadsheet', () => {
-		it('returns spreadsheet with correct ownership', async () => {
-			const f = makeFile({ userId: USER_A.id });
-			const s = makeSpreadsheet({ fileId: f.id, userId: USER_A.id, name: 'My Sheet' });
-			await db.insert(file).values(f);
-			await db.insert(spreadsheet).values(s);
-
-			const result = await getSpreadsheet(s.id, USER_A.id);
-			expect(result).not.toBeNull();
-			expect(result?.id).toBe(s.id);
-			expect(result?.name).toBe('My Sheet');
-		});
-
-		it('returns null when spreadsheet does not exist', async () => {
-			const result = await getSpreadsheet('nonexistent', USER_A.id);
-			expect(result).toBeNull();
-		});
-
-		it('returns null when spreadsheet belongs to different user', async () => {
-			const f = makeFile({ userId: USER_A.id });
-			const s = makeSpreadsheet({ fileId: f.id, userId: USER_A.id });
-			await db.insert(file).values(f);
-			await db.insert(spreadsheet).values(s);
-
-			const result = await getSpreadsheet(s.id, USER_B.id);
-			expect(result).toBeNull();
-		});
-	});
-
-	// ── listSpreadsheets ─────────────────────────────────────────────
-
-	describe('listSpreadsheets', () => {
-		it('returns empty list when user has no spreadsheets', async () => {
-			const result = await listSpreadsheets(USER_A.id);
-			expect(result.items).toHaveLength(0);
-			expect(result.total).toBe(0);
-		});
-
-		it('returns all spreadsheets for a user with total count', async () => {
-			const f1 = makeFile({ userId: USER_A.id });
-			const f2 = makeFile({ userId: USER_A.id });
-			await db.insert(file).values([f1, f2]);
-			await db
-				.insert(spreadsheet)
-				.values([
-					makeSpreadsheet({ fileId: f1.id, userId: USER_A.id, name: 'Sheet 1' }),
-					makeSpreadsheet({ fileId: f2.id, userId: USER_A.id, name: 'Sheet 2' }),
-				]);
-
-			const result = await listSpreadsheets(USER_A.id);
-			expect(result.items).toHaveLength(2);
-			expect(result.total).toBe(2);
-		});
-
-		it('respects pagination', async () => {
-			const files = [makeFile({ userId: USER_A.id }), makeFile({ userId: USER_A.id }), makeFile({ userId: USER_A.id })];
-			await db.insert(file).values(files);
-			await db.insert(spreadsheet).values(files.map((f) => makeSpreadsheet({ fileId: f.id, userId: USER_A.id })));
-
-			const page1 = await listSpreadsheets(USER_A.id, 0, 2);
-			expect(page1.items).toHaveLength(2);
-			expect(page1.total).toBe(3);
 		});
 	});
 

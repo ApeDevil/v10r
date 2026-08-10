@@ -1,5 +1,4 @@
 import { invalidateAnnouncementCache } from '$lib/server/admin/announcements';
-import { invalidateFlagCache } from '$lib/server/admin/flags';
 import { CacheError } from '../errors';
 import { redis } from '../index';
 
@@ -24,8 +23,7 @@ export async function adminFlushByPrefix(prefix: string): Promise<number> {
 	return result;
 }
 
-/** Invalidate all in-process caches (flags + announcements). */
+/** Invalidate all in-process caches. */
 export function adminInvalidateInProcessCaches(): void {
-	invalidateFlagCache();
 	invalidateAnnouncementCache();
 }

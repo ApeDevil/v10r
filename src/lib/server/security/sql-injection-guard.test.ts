@@ -17,7 +17,6 @@ const SRC_DIR = join(process.cwd(), 'src');
 // Files whose sql.raw/identifier usage has been reviewed as constant/safe.
 const ALLOWLIST = new Set([
 	'lib/server/db/analytics/seed.ts', // generated seed data, no request input
-	'lib/server/db/rag/setup.ts', // HNSW index params from config constants
 ]);
 
 const RAW_SQL_RE = /sql\.(raw|identifier)\(/;

@@ -43,7 +43,6 @@ export {
 	type SerializedContext,
 	serializeForRequest,
 	setContextFocus,
-	unpinContext,
 	updatePanelContext,
 } from './desk-context.svelte';
 export {
@@ -69,7 +68,6 @@ export {
 	collectPanelIds,
 	findLeafWithPanel,
 	findNode,
-	findParent,
 	generateId,
 	getDepth,
 	hasPanelType,
@@ -110,5 +108,5 @@ export {
 	setWorkspaceContext,
 	type WorkspaceState,
 } from './workspace.state.svelte';
-export type { Workspace, WorkspaceListItem, WorkspaceSwitcherMode } from './workspace.types';
+export type { Workspace } from './workspace.types';
 export { MAX_WORKSPACES, VISIBLE_WORKSPACE_BUTTONS } from './workspace.types';

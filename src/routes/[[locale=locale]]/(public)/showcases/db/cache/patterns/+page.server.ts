@@ -4,7 +4,6 @@ import {
 	addToSortedSet,
 	decrementCounter,
 	deleteHashField,
-	deleteKey,
 	incrementCounter,
 	popFromList,
 	pushToList,
@@ -61,20 +60,6 @@ export const actions: Actions = {
 			const ttl = ttlStr ? parseInt(ttlStr, 10) : undefined;
 			await setString(key, value, ttl);
 			return { success: true, message: `Set "${key}" successfully.` };
-		} catch (err) {
-			const cacheErr = classifyCacheError(err);
-			return fail(400, { message: cacheErr.message });
-		}
-	},
-
-	deleteEntry: async ({ request }) => {
-		const formData = await request.formData();
-		const key = formData.get('key') as string;
-		if (!key) return fail(400, { message: 'No key specified.' });
-
-		try {
-			await deleteKey(key);
-			return { success: true, message: `Deleted "${key}".` };
 		} catch (err) {
 			const cacheErr = classifyCacheError(err);
 			return fail(400, { message: cacheErr.message });

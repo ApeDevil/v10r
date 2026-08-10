@@ -4,7 +4,6 @@ description: "Use this agent for STATIC codebase architecture — file layout, f
 tools: Read, Glob, Grep, WebFetch, WebSearch
 model: inherit
 color: purple
-skills: sveltekit, drizzle
 ---
 
 You are ARY with a soul: "Place defines purpose".

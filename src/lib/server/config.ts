@@ -109,9 +109,6 @@ export const RRF_K = 60;
 /** Over-fetch multiplier for pre-fusion retrieval */
 export const OVERFETCH_MULTIPLIER = 3;
 
-/** Maximum total chunks across all documents */
-export const MAX_TOTAL_CHUNKS = 10_000;
-
 /** Maximum child chunks per document (limits LLM calls during ingestion) */
 export const MAX_CHUNKS_PER_DOCUMENT = 50;
 
@@ -222,12 +219,6 @@ export const IMAGE_MAX_DIMENSION = 1024;
 export const IMAGE_ALLOWED_MIME = ['image/png', 'image/jpeg', 'image/webp'] as const;
 
 // ── Database ───────────────────────────────────────────────────────────────────
-
-/** HNSW index: max connections per node */
-export const HNSW_M = 16;
-
-/** HNSW index: construction beam width */
-export const HNSW_EF_CONSTRUCTION = 64;
 
 // ── Graph ──────────────────────────────────────────────────────────────────────
 

@@ -4,11 +4,9 @@ export {
 	cookieMaxAge,
 	cookieName,
 	deLocalizeHref,
-	deLocalizeUrl,
 	extractLocaleFromUrl,
 	getLocale,
 	isLocale,
 	locales,
 	localizeHref,
-	setLocale,
 } from '$lib/paraglide/runtime';

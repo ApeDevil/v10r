@@ -8,9 +8,9 @@
  * `ShowcaseLayout` / `NavTab` / `PageHeader`.
  */
 import * as m from '$lib/paraglide/messages';
-import { groupByDomain, type ShowcaseCard, type ShowcaseSublink, showcases } from '$lib/showcases/registry';
+import { groupByDomain, type ShowcaseCard, showcases } from '$lib/showcases/registry';
 
-export { groupByDomain, type ShowcaseCard, type ShowcaseSublink, showcases };
+export { groupByDomain };
 
 /** The card owning `basePath`. Throws on unknown paths — fail loud at dev/SSR time. */
 export function getShowcaseCard(basePath: string): ShowcaseCard {

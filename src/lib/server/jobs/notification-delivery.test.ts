@@ -33,8 +33,6 @@ vi.mock('$lib/server/notifications/providers', () => ({
 						if (sendImpl) return sendImpl();
 						return nextResult;
 					},
-					validateConnection: async () => true,
-					getProviderName: () => `fake-${channel}`,
 				}
 			: undefined,
 }));
