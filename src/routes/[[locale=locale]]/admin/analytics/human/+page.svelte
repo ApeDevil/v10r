@@ -115,6 +115,58 @@ const ranges = [
 ];
 </script>
 <Stack gap="6">
+	<!-- Traffic trend. Carries the range selector, which governs every card on
+	     the page — hence its position at the top. -->
+	<Card>
+		{#snippet header()}
+			<Cluster justify="between" align="center">
+				<h2 class="text-fluid-lg font-semibold">{m.admin_analytics_traffic_trend()}</h2>
+				<div class="filter-bar">
+					{#each ranges as r}
+						<a
+							href="/admin/analytics/human?range={r.value}"
+							class="filter-link"
+							class:active={data.range === r.value}
+						>{r.label}</a>
+					{/each}
+				</div>
+			</Cluster>
+		{/snippet}
+
+		{#await data.trend}
+			<div class="chart-skeleton">
+				<Skeleton variant="rectangular" height="300px" />
+			</div>
+		{:then trend}
+			{#if trend.length === 0}
+				<EmptyState
+					icon="i-lucide-bar-chart-2"
+					title={m.admin_analytics_trend_empty_title()}
+					description={m.admin_analytics_trend_empty_description()}
+				>
+					{#if data.range !== '90'}
+						<a href="/admin/analytics/human?range=90" class="text-primary hover:underline text-fluid-sm">
+							{m.admin_analytics_trend_try_90_days()}
+						</a>
+					{/if}
+				</EmptyState>
+			{:else}
+				<LineChart
+					data={buildChartData(trend)}
+					ariaLabel={m.admin_analytics_trend_aria_label({ range: data.range })}
+				/>
+			{/if}
+		{:catch}
+			<Alert
+				variant="error"
+				title={m.admin_analytics_trend_error_title()}
+				description={m.admin_analytics_trend_error_description()}
+			>
+				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>{m.composites_error_display_try_again()}</Button>
+			</Alert>
+		{/await}
+	</Card>
+
 	<!-- Headline Stats -->
 	<div class="stat-grid">
 		<div class="stat-card">
@@ -273,57 +325,6 @@ const ranges = [
 			<Tag variant="warning" label={m.admin_analytics_rollup_stale()} />
 		{/if}
 	</p>
-
-	<!-- Range selector -->
-	<Card>
-		{#snippet header()}
-			<Cluster justify="between" align="center">
-				<h2 class="text-fluid-lg font-semibold">{m.admin_analytics_traffic_trend()}</h2>
-				<div class="filter-bar">
-					{#each ranges as r}
-						<a
-							href="/admin/analytics/human?range={r.value}"
-							class="filter-link"
-							class:active={data.range === r.value}
-						>{r.label}</a>
-					{/each}
-				</div>
-			</Cluster>
-		{/snippet}
-
-		{#await data.trend}
-			<div class="chart-skeleton">
-				<Skeleton variant="rectangular" height="300px" />
-			</div>
-		{:then trend}
-			{#if trend.length === 0}
-				<EmptyState
-					icon="i-lucide-bar-chart-2"
-					title={m.admin_analytics_trend_empty_title()}
-					description={m.admin_analytics_trend_empty_description()}
-				>
-					{#if data.range !== '90'}
-						<a href="/admin/analytics/human?range=90" class="text-primary hover:underline text-fluid-sm">
-							{m.admin_analytics_trend_try_90_days()}
-						</a>
-					{/if}
-				</EmptyState>
-			{:else}
-				<LineChart
-					data={buildChartData(trend)}
-					ariaLabel={m.admin_analytics_trend_aria_label({ range: data.range })}
-				/>
-			{/if}
-		{:catch}
-			<Alert
-				variant="error"
-				title={m.admin_analytics_trend_error_title()}
-				description={m.admin_analytics_trend_error_description()}
-			>
-				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>{m.composites_error_display_try_again()}</Button>
-			</Alert>
-		{/await}
-	</Card>
 
 	<!-- Bottom two-column: Top Pages + Consent Breakdown -->
 	<div class="bottom-grid">
