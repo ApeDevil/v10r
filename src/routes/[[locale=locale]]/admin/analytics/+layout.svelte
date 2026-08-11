@@ -52,10 +52,9 @@ afterNavigate(({ type }) => {
 <style>
 	.analytics-header {
 		display: flex;
-		flex-wrap: wrap;
+		flex-direction: column;
+		align-items: flex-start;
 		gap: var(--spacing-3);
-		justify-content: space-between;
-		align-items: center;
 		margin-bottom: var(--spacing-5);
 	}
 

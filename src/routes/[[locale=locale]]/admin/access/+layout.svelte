@@ -36,8 +36,9 @@ const isActive = (href: string) => deLocalizeHref(page.url.pathname).startsWith(
 	}
 	header {
 		display: flex;
-		justify-content: space-between;
-		align-items: center;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: var(--spacing-3);
 		margin-bottom: var(--spacing-5);
 	}
 	nav {
