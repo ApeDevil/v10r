@@ -57,7 +57,7 @@ function verdict(row: (typeof data.families)[number]): {
 <Stack gap="6">
 	<Cluster justify="between" align="center">
 		<div>
-			<h1 class="text-fluid-2xl font-semibold">{m.admin_bots_title()}</h1>
+			<h2 class="text-fluid-lg font-semibold">{m.admin_bots_title()}</h2>
 			<p class="text-fluid-sm text-muted">{m.admin_bots_subtitle()}</p>
 		</div>
 		<div class="filter-bar">

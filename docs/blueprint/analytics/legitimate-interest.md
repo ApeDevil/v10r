@@ -34,7 +34,7 @@ interface is slow, and where visitors get stuck.
 
 Is the interest **real** (not speculative), **present** (not hypothetical), and **lawful**?
 
-- Real and present: the data feeds live surfaces (`/admin/analytics`, the analytics showcase
+- Real and present: the data feeds live surfaces (`/admin/analytics`, `/admin/vitals`, the analytics showcase
   pages) that inform actual decisions about what to build and fix.
 - Lawful: *KNLTB* confirmed that a purely commercial interest can qualify. Operating and
   improving one's own website is well within that.

@@ -282,7 +282,7 @@ const ranges = [
 				<div class="filter-bar">
 					{#each ranges as r}
 						<a
-							href="/admin/analytics?range={r.value}"
+							href="/admin/analytics/human?range={r.value}"
 							class="filter-link"
 							class:active={data.range === r.value}
 						>{r.label}</a>
@@ -303,7 +303,7 @@ const ranges = [
 					description={m.admin_analytics_trend_empty_description()}
 				>
 					{#if data.range !== '90'}
-						<a href="/admin/analytics?range=90" class="text-primary hover:underline text-fluid-sm">
+						<a href="/admin/analytics/human?range=90" class="text-primary hover:underline text-fluid-sm">
 							{m.admin_analytics_trend_try_90_days()}
 						</a>
 					{/if}
@@ -431,38 +431,6 @@ const ranges = [
 		{/await}
 	</Card>
 
-	<!-- Live Activity Feed -->
-	<!-- Web Vitals: p75, with the element most often to blame -->
-	<Card>
-		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">{m.admin_analytics_vitals_title()}</h2>
-		{/snippet}
-		{#await data.vitals}
-			<Skeleton variant="rectangular" height="120px" />
-		{:then vitals}
-			{#if vitals.length === 0}
-				<p class="text-muted text-fluid-sm">{m.admin_analytics_vitals_empty()}</p>
-			{:else}
-				<div class="vitals-grid">
-					{#each vitals as v (v.metric)}
-						<div class="vital-card">
-							<span class="stat-label">{v.metric}</span>
-							<span class="stat-value">{v.metric === 'CLS' ? v.p75 : `${Math.round(v.p75)}ms`}</span>
-							<span class="vital-meta">{m.admin_analytics_vitals_samples({ count: v.samples })}</span>
-							{#if v.worstTarget}
-								<span class="vital-meta">
-									{m.admin_analytics_vitals_blame()}: <code>{v.worstTarget}</code>
-								</span>
-							{/if}
-						</div>
-					{/each}
-				</div>
-			{/if}
-		{:catch}
-			<p class="text-muted text-fluid-sm">{m.admin_analytics_vitals_empty()}</p>
-		{/await}
-	</Card>
-
 	<div class="bottom-grid">
 		<!-- Friction: rage + dead clicks -->
 		<Card>
@@ -529,6 +497,7 @@ const ranges = [
 		</Card>
 	</div>
 
+	<!-- Live Activity Feed -->
 	<LiveFeed initialEvents={data.recentEvents} bind:pairedActive />
 </Stack>
 
@@ -848,30 +817,6 @@ const ranges = [
 	.comp-categories code {
 		font-size: var(--text-fluid-xs);
 		font-family: ui-monospace, monospace;
-	}
-
-	.vitals-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-		gap: var(--spacing-4);
-	}
-
-	.vital-card {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-1);
-		padding: var(--spacing-4);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-lg);
-		min-width: 0;
-	}
-
-	.vital-meta {
-		font-size: var(--text-fluid-xs);
-		color: var(--color-muted);
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
 	}
 
 	.friction-list {

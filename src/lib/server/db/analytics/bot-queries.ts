@@ -130,22 +130,6 @@ export async function getBotMisses(days: number, limit = 20) {
 	return rows.map((r) => ({ path: r.path ?? '—', status: r.status, family: r.family, hits: Number(r.hits) }));
 }
 
-/** Daily volume, split human-adjacent vs machine, for the trend chart. */
-export async function getBotTrend(days: number) {
-	const day = sql`(${botHits.timestamp} AT TIME ZONE 'UTC')::date`;
-	const rows = await db
-		.select({
-			date: sql<string>`${day}::text`,
-			hits: sql<number>`count(*)::int`,
-			ai: sql<number>`count(*) FILTER (WHERE ${botHits.category} IN ('ai_training','ai_search','ai_agent'))::int`,
-		})
-		.from(botHits)
-		.where(gte(botHits.timestamp, cutoff(days)))
-		.groupBy(day)
-		.orderBy(day);
-	return rows.map((r) => ({ date: r.date, hits: Number(r.hits), ai: Number(r.ai) }));
-}
-
 /**
  * Freshness of the verification data itself.
  *

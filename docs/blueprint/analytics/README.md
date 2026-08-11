@@ -18,4 +18,4 @@ This directory — including the LIA and DPIA screening below — covers only th
 - [stack/capabilities/gdpr.md](../../stack/capabilities/gdpr.md) — data-subject rights and the privacy aggregator
 - [architecture/jobs.md](../architecture/jobs.md) — `analytics-rollup` / `analytics-cleanup` jobs
 - [architecture/hosted-mcp.md](../architecture/hosted-mcp.md) — MCP usage telemetry (`mcp.call_log`); a separate subsystem, out of scope of this directory's LIA/DPIA screening
-- Server domain: `src/lib/server/analytics/` · client: `src/lib/analytics/` · dashboards: `/showcases/analytics/*` and `/admin/analytics`
+- Server domain: `src/lib/server/analytics/` · client: `src/lib/analytics/` · dashboards: `/showcases/analytics/*`, `/admin/analytics` (Human / Bots & AI tabs), and `/admin/vitals` (Web Vitals)

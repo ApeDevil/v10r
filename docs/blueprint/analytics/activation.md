@@ -84,7 +84,7 @@ Allowed events: `rage_click`, `dead_click`, `scroll_depth`, `form_abandon`, `eng
 
 `src/lib/analytics/telemetry.ts`, ingesting at `/api/analytics/journey/collect`:
 
-- **Web Vitals with the attribution build** — LCP, INP, CLS, TTFB, FCP, each reporting the element responsible. A bare INP number says something is slow; attribution says which button. Dynamically imported, so the larger attribution bundle never sits on the critical path.
+- **Web Vitals with the attribution build** — LCP, INP, CLS, TTFB, FCP, each reporting the element responsible. A bare INP number says something is slow; attribution says which button. Dynamically imported, so the larger attribution bundle never sits on the critical path. Surfaced at `/admin/vitals`.
 - **Engaged time** via `visibilitychange`, not wall clock — a hidden tab contributes nothing.
 - **Rage and dead clicks** — the aggregate signals session replay is normally used to hunt for, obtainable without recording anyone's screen.
 - **Scroll depth**, bucketed to quartiles.
