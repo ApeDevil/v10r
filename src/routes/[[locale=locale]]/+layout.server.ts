@@ -1,3 +1,4 @@
+import { building } from '$app/environment';
 import { tc } from '$lib/i18n/translate';
 import { getActiveAnnouncements } from '$lib/server/admin/announcements';
 import { issueConfirmToken } from '$lib/server/analytics/confirm-token';
@@ -46,9 +47,15 @@ export const load: LayoutServerLoad = async ({ cookies, locals, depends, request
 	// rerun on SPA navigation, which is exactly the contract: one token, one
 	// ping. The hash is otherwise kept off the TTFB path in the pageview hook —
 	// one HMAC here beside the announcements query is noise, not a regression.
-	const analyticsConfirmToken = issueConfirmToken(
-		await deriveVisitorId(locals.clientIp ?? getClientAddress(), request.headers.get('user-agent') ?? ''),
-	);
+	// Null while prerendering: there is no client address at build time
+	// (getClientAddress throws and fails the build), and prerendered pages are
+	// served statically — no collection hook runs for them, so there is no
+	// session a baked token could confirm. initConfirmPing(null) is a no-op.
+	const analyticsConfirmToken = building
+		? null
+		: issueConfirmToken(
+				await deriveVisitorId(locals.clientIp ?? getClientAddress(), request.headers.get('user-agent') ?? ''),
+			);
 
 	return {
 		session,
