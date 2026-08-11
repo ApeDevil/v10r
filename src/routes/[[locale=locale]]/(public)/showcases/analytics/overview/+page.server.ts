@@ -1,4 +1,6 @@
 import { fail } from '@sveltejs/kit';
+import { dev } from '$app/environment';
+import { isAdmin } from '$lib/server/auth/guards';
 import { db } from '$lib/server/db';
 import {
 	getAudienceBreakdown,
@@ -36,7 +38,14 @@ export const load: PageServerLoad = async ({ url }) => {
 		};
 	} catch (err) {
 		return {
-			metrics: { totalPageviews: 0, uniqueVisitors: 0, avgSessionDuration: 0, bounceRate: 0 },
+			metrics: {
+				totalPageviews: 0,
+				uniqueVisitors: 0,
+				avgSessionDuration: 0,
+				bounceRate: 0,
+				unconfirmedPageviews: 0,
+				unconfirmedVisitors: 0,
+			},
 			trend: [],
 			topPages: [],
 			devices: [],
@@ -49,7 +58,13 @@ export const load: PageServerLoad = async ({ url }) => {
 };
 
 export const actions: Actions = {
-	reseed: async () => {
+	reseed: async ({ locals }) => {
+		// reseedAnalytics TRUNCATEs three production analytics tables. In dev that
+		// is the point of the demo button; in production only an admin may pull
+		// that trigger.
+		if (!dev && !isAdmin(locals.user)) {
+			return fail(403, { message: 'Reseeding is restricted to admins in production.' });
+		}
 		try {
 			await reseedAnalytics(db);
 			return { success: true, message: 'Analytics data reset to seed values.' };

@@ -69,7 +69,9 @@ const BOT_FAMILIES: ReadonlyArray<{
 	{ match: 'amazonbot', family: 'amazonbot', category: 'ai_training', source: null },
 	{ match: 'meta-externalagent', family: 'meta-external', category: 'ai_training', source: null },
 	{ match: 'meta-externalfetcher', family: 'meta-external', category: 'ai_agent', source: null },
-	{ match: 'google-extended', family: 'google-extended', category: 'ai_training', source: 'google' },
+	// No 'google-extended' entry: Google documents it as a robots.txt-only
+	// control token that never appears in a User-Agent — Gemini training rides
+	// the ordinary Googlebot UA and is controlled, not identified, by that token.
 	{ match: 'cohere-ai', family: 'cohere-ai', category: 'ai_training', source: null },
 	{ match: 'diffbot', family: 'diffbot', category: 'ai_training', source: null },
 	{ match: 'youbot', family: 'youbot', category: 'ai_search', source: null },

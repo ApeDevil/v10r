@@ -1,9 +1,11 @@
 import { tc } from '$lib/i18n/translate';
 import { getActiveAnnouncements } from '$lib/server/admin/announcements';
+import { issueConfirmToken } from '$lib/server/analytics/confirm-token';
+import { deriveVisitorId } from '$lib/server/analytics/visitor';
 import { isAdmin } from '$lib/server/auth/guards';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ cookies, locals, depends }) => {
+export const load: LayoutServerLoad = async ({ cookies, locals, depends, request, getClientAddress }) => {
 	depends('app:announcements');
 	const session =
 		locals.session && locals.user
@@ -39,6 +41,15 @@ export const load: LayoutServerLoad = async ({ cookies, locals, depends }) => {
 		createdAt: a.createdAt,
 	}));
 
+	// One confirm token per document load, HMAC-bound to this connection's
+	// visitor hash (see analytics/confirm-token.ts). Layout server loads do not
+	// rerun on SPA navigation, which is exactly the contract: one token, one
+	// ping. The hash is otherwise kept off the TTFB path in the pageview hook —
+	// one HMAC here beside the announcements query is noise, not a regression.
+	const analyticsConfirmToken = issueConfirmToken(
+		await deriveVisitorId(locals.clientIp ?? getClientAddress(), request.headers.get('user-agent') ?? ''),
+	);
+
 	return {
 		session,
 		themeMode,
@@ -48,6 +59,7 @@ export const load: LayoutServerLoad = async ({ cookies, locals, depends }) => {
 		isAdmin: isAdmin(locals.user),
 		announcements,
 		debugOwnerActive: locals.debugOwnerId != null,
+		analyticsConfirmToken,
 		/** Resolved request locale; consumed by formatters via page.data.locale to avoid SSR/CSR drift. */
 		locale: locals.locale,
 	};

@@ -18,10 +18,17 @@ export interface TrafficTrendPoint {
 	uniqueVisitors: number;
 }
 
+/**
+ * No `uniqueVisitors` here on purpose: this table is fed by summing the
+ * per-day rollup, and summing `daily_page_stats.unique_visitors` across days
+ * multiplies every returning visitor by the number of days they came back —
+ * the exact documented error `getOverviewMetrics` and `getTrafficTrend` were
+ * cured of. A per-path distinct count over a range needs the raw events; until
+ * a panel actually needs one, the honest move is not to show the number.
+ */
 export interface TopPage {
 	path: string;
 	pageviews: number;
-	uniqueVisitors: number;
 	avgDurationMs: number | null;
 	bounceRate: number | null;
 }
@@ -80,11 +87,46 @@ export interface FunnelStep {
 	rate: number;
 }
 
+/**
+ * Headline numbers are CONFIRMED-only: sessions the client-side confirm ping
+ * (or any beacon batch) corroborated. Unconfirmed traffic — browser-shaped
+ * requests that never ran JS, which is where spoofed-header crawlers land — is
+ * carried alongside, never merged: one production week measured 588 of 612
+ * "visitors" as unconfirmed.
+ */
 export interface OverviewMetrics {
+	/** Pageviews from confirmed sessions. */
 	totalPageviews: number;
+	/** Distinct visitors with at least one confirmed session in range. */
 	uniqueVisitors: number;
 	avgSessionDuration: number;
 	bounceRate: number;
+	/** Pageviews from sessions never corroborated by client-side JS. */
+	unconfirmedPageviews: number;
+	/** Distinct visitors with only unconfirmed sessions in range. */
+	unconfirmedVisitors: number;
+}
+
+/**
+ * The three honestly-labelled buckets the composition panel renders. Bots are
+ * counted in HITS (bot_hits carries no visitor identity by design), so the
+ * bucket is not on the same axis as the two visitor counts — the panel copy
+ * must say so rather than implying a like-for-like comparison.
+ */
+export interface TrafficComposition {
+	confirmed: { pageviews: number; visitors: number };
+	unconfirmed: {
+		pageviews: number;
+		visitors: number;
+		/** Distinct unconfirmed visitors ranked by connection origin. */
+		byIpClass: { datacenter: number; icloudRelay: number; unclassified: number };
+	};
+	bots: {
+		hits: number;
+		/** ai_agent category — a human reading through an AI, split out on purpose. */
+		aiMediatedHits: number;
+		byCategory: { category: string; hits: number }[];
+	};
 }
 
 /** One page-to-page navigation, aggregated across sessions. */

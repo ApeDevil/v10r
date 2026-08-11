@@ -67,6 +67,11 @@ Re-run this screening before adding any item from the list above, before any mat
 in traffic scale, and whenever [legitimate-interest.md](./legitimate-interest.md) is re-run —
 the two documents share their factual basis and should not drift apart.
 
+Screened 2026-08 for the confirmation split (`human_confirmed_at`, consent-free constant-payload
+ping) and the connection-class signal (`ip_class`, address compared inside the INSERT and never
+stored): neither adds an identifier, widens retention, or introduces per-individual effects, so
+the conclusion is unchanged. Both are itemised in the LIA's necessity table.
+
 ## Related
 
 - [legitimate-interest.md](./legitimate-interest.md) — Art 6(1)(f) assessment

@@ -17,6 +17,8 @@
  * session duration, exit pages, and the active-session count.
  */
 import * as v from 'valibot';
+import { dev } from '$app/environment';
+import { env } from '$env/dynamic/private';
 import { isBot, isExcludedPath } from '$lib/analytics/collect-policy';
 import { normalizeIpKey } from '$lib/server/abuse';
 import { hasConsent } from '$lib/server/analytics/consent';
@@ -33,6 +35,12 @@ const JourneyEvent = v.object({
 	path: v.pipe(v.string(), v.maxLength(512), v.regex(/^\/[^?#]*$/, 'path must be a pathname')),
 	referrer: v.nullish(v.pipe(v.string(), v.maxLength(512))),
 	occurredAt: v.pipe(v.string(), v.isoTimestamp()),
+	/**
+	 * Optional so pre-field clients keep validating (v.object strips unknowns
+	 * anyway). 'enter' events are dropped below: the initial load is the server
+	 * hook's row, and counting it here again was the double-count bug.
+	 */
+	navigationType: v.optional(v.picklist(['enter', 'spa'])),
 });
 
 const JourneyBatch = v.object({
@@ -47,6 +55,12 @@ const JourneyBatch = v.object({
 const limiter = createLimiter('rl:analytics:journey', 30, '1 m', { onError: 'open' });
 
 export const POST: RequestHandler = async ({ request, cookies, getClientAddress, locals, url }) => {
+	// Same dev gate as the server hook: one database for every environment, so
+	// an ungated dev server writes localhost navigation into production.
+	if (dev && env.ANALYTICS_DEV_TRACKING !== 'true') {
+		return apiNoContent();
+	}
+
 	// Origin check — same-origin only.
 	const origin = request.headers.get('origin');
 	if (origin && origin !== url.origin) {
@@ -88,8 +102,11 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 	}
 
 	// Drop excluded paths BEFORE counting, so they inflate neither the event log
-	// nor the session's page count.
-	const tracked = parsed.output.events.filter((evt) => !isExcludedPath(evt.path));
+	// nor the session's page count. 'enter' events are refused for a different
+	// reason: that page load is already the server hook's row (see the beacon's
+	// module doc) — this filter is the server half of the dedup, so a stale
+	// cached client cannot reintroduce it.
+	const tracked = parsed.output.events.filter((evt) => !isExcludedPath(evt.path) && evt.navigationType !== 'enter');
 	if (tracked.length === 0) return apiNoContent();
 
 	const visitorId = await deriveVisitorId(ip, ua);
@@ -112,6 +129,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 			path: evt.path,
 			referrer,
 			consentTier: locals.consentTier,
+			debugOwnerId: locals.debugOwnerId ?? null,
 			occurredAt: new Date(evt.occurredAt),
 		};
 	});
@@ -119,7 +137,9 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 	// Idempotent on eventId, so a re-delivered beacon is a no-op.
 	await Promise.all(events.map((evt) => recordEvent(evt).catch(() => {})));
 
-	// Queue order is navigation order: first entry, last exit.
+	// Queue order is navigation order: first entry, last exit. The batch itself
+	// is JS corroboration, so it also confirms the session — redundancy for a
+	// lost confirm ping (blocked, or dropped at unload).
 	await upsertSession({
 		id: sessionId,
 		visitorId,
@@ -127,6 +147,9 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 		exitPath: events[events.length - 1].path,
 		pageIncrement: events.length,
 		consentTier: locals.consentTier,
+		debugOwnerId: locals.debugOwnerId ?? null,
+		humanConfirmedAt: new Date(),
+		clientIp: ip,
 	}).catch(() => {});
 
 	return apiNoContent();

@@ -38,6 +38,7 @@ describe('needsCsrf', () => {
 
 	it('exempts a child of a slashless entry', () => {
 		expect(needsCsrf('POST', '/api/analytics/journey/collect')).toBe(false);
+		expect(needsCsrf('POST', '/api/analytics/journey/confirm')).toBe(false);
 	});
 
 	it('does NOT exempt a route whose path merely BEGINS with a slashless entry', () => {

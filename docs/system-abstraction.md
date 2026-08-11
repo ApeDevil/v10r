@@ -120,7 +120,7 @@ The main export is a `sequence()` of fourteen `Handle` middlewares that mutate t
 | 11 | `consentLoader` | `consentTier` (default `'necessary'`) | No | Before route handlers need consent tier |
 | 12 | `debugOwnerLoader` | `debugOwnerId` | No | Verifies `v10r_debug_owner` HMAC cookie; fail-closed; independent of Better Auth |
 | 13 | `devRouteGuard` | — | 404 on `(dev)` routes outside DEV | — |
-| 14 | `analyticsCollector` | — | No | Last; consumes `consentTier` + `debugOwnerId`; fire-and-forget post-resolve. The `_v10r_sid` cookie is consent-gated (TDDDG §25 / ePrivacy Art 5(3)): set only at `analytics`+ tier; at `necessary` it deletes any stale cookie and falls back to a cookieless daily session id |
+| 14 | `analyticsCollector` | — | No | Last; consumes `consentTier` + `debugOwnerId`; fire-and-forget post-resolve. Muted in dev unless `ANALYTICS_DEV_TRACKING=true` (one shared DB across environments). The `_v10r_sid` cookie is consent-gated (TDDDG §25 / ePrivacy Art 5(3)): set only at `analytics`+ tier; at `necessary` it deletes any stale cookie and falls back to a cookieless daily session id. Sessions carry `human_confirmed_at` (set by the consent-free confirm ping at `/api/analytics/journey/confirm` and by beacon batches) — dashboards headline confirmed sessions only |
 
 The terminating error handler `handleError` mints an `errorId` (`crypto.randomUUID()`), emits one structured JSON log line, and returns `{ message, errorId }` to the client — never raw error details.
 

@@ -1,6 +1,7 @@
 import type { Handle } from '@sveltejs/kit';
 import { waitUntil } from '@vercel/functions';
-import { building } from '$app/environment';
+import { building, dev } from '$app/environment';
+import { env } from '$env/dynamic/private';
 import {
 	isAgentSurface,
 	isBot,
@@ -56,8 +57,15 @@ interface PendingTrack {
 
 export const analyticsCollector: Handle = async ({ event, resolve }) => {
 	const path = event.url.pathname;
+	// There is ONE database for every environment (NEON_DATABASE_URL_PROD, by
+	// construction — see db/index.ts), so an ungated dev server writes localhost
+	// browsing into production analytics. All three lanes refuse in dev unless
+	// the override is set, which exists solely for working on the analytics
+	// showcase itself. Read per-request, not at module load, so tests can flip it.
+	const devMuted = dev && env.ANALYTICS_DEV_TRACKING !== 'true';
 	const shouldTrack =
 		!building &&
+		!devMuted &&
 		event.request.method === 'GET' &&
 		!isExcludedPath(path) &&
 		// No real route is this long. Dropping here as well as truncating at the
@@ -67,10 +75,10 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 		path.length <= MAX_TRACKED_PATH_CHARS &&
 		!isPrefetch(event.request.headers) &&
 		!isBot(event.request.headers.get('user-agent') ?? '') &&
-		// The load-bearing filter. `isBot` only catches callers that declare
-		// themselves; this admits only requests carrying the header shape a browser
-		// cannot avoid sending. See isBrowserNavigation for why it is a positive
-		// test and what it deliberately gives up.
+		// A prefilter, not a bot defense: it removes subresources, prefetches and
+		// naive HTTP clients, while header-copying crawlers pass it freely (see
+		// isBrowserNavigation). What it admits is only ever the UNCONFIRMED lane —
+		// the trustworthy count is sessions the confirm ping corroborated.
 		isBrowserNavigation(event.request.headers);
 
 	// PRE-resolve: only the cookie write (which must reach the outgoing headers) and
@@ -135,6 +143,7 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 	const botUa = event.request.headers.get('user-agent') ?? '';
 	const botLane =
 		!building &&
+		!devMuted &&
 		event.request.method === 'GET' &&
 		!isPrefetch(event.request.headers) &&
 		(isBot(botUa) || !isBrowserNavigation(event.request.headers)) &&
@@ -149,6 +158,7 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 	// under Art 13, not consented to under Art 6(1)(a).
 	const userLane =
 		!building &&
+		!devMuted &&
 		event.request.method === 'GET' &&
 		isUserLanePath(path) &&
 		!path.includes('.') &&
@@ -270,6 +280,8 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 						browser,
 						consentTier,
 						pairedAdminUserId: debugOwnerId,
+						debugOwnerId,
+						clientIp: ip,
 					}),
 				]);
 			})().catch((err) => {

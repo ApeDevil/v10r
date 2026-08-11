@@ -26,6 +26,7 @@ import { env } from '$env/dynamic/private';
 
 export const SUBKEY_PURPOSES = {
 	analyticsVisitor: 'v10r:analytics-visitor:v1',
+	analyticsConfirm: 'v10r:analytics-confirm:v1',
 	blogUploadTicket: 'v10r:blog-upload-ticket:v1',
 } as const;
 
@@ -34,6 +35,7 @@ export type SubkeyPurpose = (typeof SUBKEY_PURPOSES)[keyof typeof SUBKEY_PURPOSE
 /** Optional per-purpose override, for rotating one key without the root. */
 const OVERRIDE_VAR: Record<SubkeyPurpose, string> = {
 	[SUBKEY_PURPOSES.analyticsVisitor]: 'ANALYTICS_VISITOR_SALT',
+	[SUBKEY_PURPOSES.analyticsConfirm]: 'ANALYTICS_CONFIRM_SECRET',
 	[SUBKEY_PURPOSES.blogUploadTicket]: 'BLOG_UPLOAD_TICKET_SECRET',
 };
 

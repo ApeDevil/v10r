@@ -1,9 +1,12 @@
-# The two-lane analytics model
+# The lane model (anonymous · authenticated · bot)
 
 ## Status: active
 
-Analytics is split into two lanes that share no identifier and no join key. The separation is
-the load-bearing design decision in the whole subsystem.
+Analytics is split into lanes that share no identifier and no join key. The separation is
+the load-bearing design decision in the whole subsystem. A third lane — `bot_hits`, for
+declared crawlers — carries **no identifier of any kind** and therefore sits outside the
+identifier wall entirely; it is documented in the schema (`bot-hits.ts`) and on the admin
+bots page.
 
 ```
 ANONYMOUS LANE                        AUTHENTICATED LANE
@@ -19,6 +22,15 @@ analytics.sessions
   public routes only                    /account/* only
   NOT in collectUserData                IS in collectUserData, section `behavior`
 ```
+
+Within the anonymous lane, sessions carry a **confirmation split**
+(`human_confirmed_at`): a session only counts toward the headline "confirmed
+visitors" once client-side JavaScript corroborated it — the consent-free confirm
+ping, a journey batch, or a telemetry batch. Everything else is reported as
+"unconfirmed", which is where UA-spoofing crawler traffic lands (measured: 588 of
+612 "visitors" in one production week). `ip_class` ranks that unconfirmed bucket
+by connection origin (datacenter / iCloud-Relay / unknown) and must never become
+an exclusion predicate — its false positives are VPN and Private Relay users.
 
 ## Why the wall exists
 
@@ -68,8 +80,10 @@ actively deleted, and session grouping falls back to `hash(visitorId + UTC day)`
 Plausible/Fathom pattern, which stores nothing on the device.
 
 **The visitor hash itself is contested, and we do not claim otherwise.** No primary source —
-EDPB, CNIL, DSK, or a court — resolves this exact pattern: no cookie, no added entropy, daily
-rotation, aggregate-only output. Two credible readings exist:
+EDPB, CNIL, DSK, or a court — resolves this exact pattern: no cookie, no added entropy, a
+rotatable key with 60-day retention (the *session* id rotates daily; the visitor hash does
+not — see [legitimate-interest.md](./legitimate-interest.md)), aggregate-only output. Two
+credible readings exist:
 
 - *Narrow:* IP and User-Agent are unavoidable HTTP transport metadata. Nothing additional is
   read from or written to the device, so Art 5(3) does not engage and it is purely an Art 6
@@ -80,8 +94,8 @@ rotation, aggregate-only output. Two credible readings exist:
   of access however it arrives.
 
 We hold the narrow reading, with the mitigations that make it strongest: no added entropy,
-daily rotation, aggregate-only output, short retention, and a documented LIA. **This is a
-risk-managed position, not legal certainty.** Note also that Germany has no CNIL-style
+a daily-rotating cookieless session id, aggregate-only output, short retention, a rotatable
+key, and a documented LIA. **This is a risk-managed position, not legal certainty.** Note also that Germany has no CNIL-style
 administrative exemption for consent-free audience measurement; the DSK/BfDI consent-management-service
 regime is a mechanism for *capturing* consent, not for dispensing with it.
 
@@ -89,6 +103,14 @@ regime is a mechanism for *capturing* consent, not for dispensing with it.
 timezone, canvas, fonts, `hardwareConcurrency` — each would convert an arguably-out-of-scope
 technique into one that is confirmed in scope under Guidelines 2/2023, and would collapse the
 narrow reading we rely on.
+
+**The confirm ping** (`/api/analytics/journey/confirm`) is designed to stay on the safe side
+of the same line: its payload is a constant server-issued token, it reads nothing from the
+device (no cookie, no storage, no `navigator` probing — the DSK's "einfaches Zählpixel"
+shape, OH Digitale Dienste ¶88), and it must never grow a payload field — anything added
+re-opens the §25 question. **`ip_class`** is a transient comparison, not stored data about
+the device: the connection address is checked once against published ranges inside the
+session INSERT and never written, the same lifetime contract as bot verification.
 
 ## Why the authenticated lane needs no consent tier
 

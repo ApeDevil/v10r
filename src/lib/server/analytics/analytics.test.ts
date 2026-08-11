@@ -14,7 +14,7 @@
  */
 
 import type { PGlite } from '@electric-sql/pglite';
-import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { consentEvents, events, sessions } from '$lib/server/db/schema/analytics';
 
 // ── DB setup (PGlite) ─────────────────────────────────────────────────────────
@@ -45,6 +45,12 @@ async function flushDeferred(): Promise<void> {
 	await Promise.allSettled(deferredWork.splice(0));
 }
 
+// vitest mocks $app/environment with dev:true, and the collectors are muted in
+// dev unless this override is set (they share one database with production).
+// Opt the whole suite in; the dev-gate describe block below flips it off
+// per-test to assert the refusal itself.
+process.env.ANALYTICS_DEV_TRACKING = 'true';
+
 const { db } = await import('$lib/server/db');
 const { parseConsentTier, hasConsent, hashVisitorId, deriveCookielessSessionId } = await import('./consent');
 const { deriveVisitorId, deriveUaHash } = await import('./visitor');
@@ -62,6 +68,7 @@ const { ANALYTICS_RETENTION_DAYS, ANALYTICS_CONSENT_COOKIE, ANALYTICS_SESSION_CO
 const consentState = await import('$lib/state/consent.svelte');
 
 afterAll(async () => {
+	delete process.env.ANALYTICS_DEV_TRACKING;
 	await testClient?.close();
 });
 
@@ -726,6 +733,295 @@ describe('analyticsCollector — misses write nothing', () => {
 	});
 });
 
+// ── 4b. hook.ts + beacon endpoints — dev is muted without the override ────────
+
+/**
+ * There is exactly one database across environments (NEON_DATABASE_URL_PROD by
+ * construction), so before this gate a dev server wrote localhost browsing into
+ * production analytics. vitest runs with dev:true, which is what makes the
+ * refusal assertable here at all.
+ */
+describe('dev gate — collectors refuse in dev without ANALYTICS_DEV_TRACKING', () => {
+	beforeEach(async () => {
+		delete process.env.ANALYTICS_DEV_TRACKING;
+		await flushDeferred();
+		await db.delete(events);
+		await db.delete(sessions);
+	});
+
+	afterEach(() => {
+		process.env.ANALYTICS_DEV_TRACKING = 'true';
+	});
+
+	it('hook writes nothing and touches no cookie', async () => {
+		const jar = new Map<string, string>([[ANALYTICS_CONSENT_COOKIE, 'analytics']]);
+		const set = vi.fn();
+		const event = {
+			url: new URL('https://example.com/blog'),
+			request: new Request('https://example.com/blog', { headers: BROWSER_NAV_HEADERS }),
+			cookies: { get: (n: string) => jar.get(n), set, delete: vi.fn() },
+			getClientAddress: () => '203.0.113.5',
+			route: { id: '/[[locale=locale]]/(public)/blog' },
+			locals: {},
+		};
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		await analyticsCollector({ event: event as any, resolve: (async () => new Response('ok')) as any });
+		await flushDeferred();
+		expect(await db.select().from(events)).toHaveLength(0);
+		expect(set).not.toHaveBeenCalled();
+	});
+
+	it('journey beacon endpoint answers 204 before reading anything', async () => {
+		const { POST } = await import('../../../routes/api/analytics/journey/+server');
+		const event = {
+			request: new Request('https://example.com/api/analytics/journey', { method: 'POST' }),
+		};
+		// biome-ignore lint/suspicious/noExplicitAny: gate returns before the rest of the event is touched
+		const response = await POST(event as any);
+		expect(response.status).toBe(204);
+		expect(await db.select().from(events)).toHaveLength(0);
+	});
+});
+
+// ── 4c. journey endpoint — 'enter' events are never pageview rows ────────────
+
+/**
+ * The server half of the double-count fix. The initial hydration firing is the
+ * server hook's row; a client (current, or a stale cached bundle predating the
+ * skip) must not be able to add a second one through the beacon.
+ */
+describe('journey endpoint — navigationType filter', () => {
+	function makeJourneyEvent(batch: unknown) {
+		const jar = new Map<string, string>([['_v10r_sid', 's_journeytest12345']]);
+		return {
+			url: new URL('https://example.com/api/analytics/journey'),
+			request: new Request('https://example.com/api/analytics/journey', {
+				method: 'POST',
+				body: JSON.stringify(batch),
+				headers: { 'content-type': 'application/json', 'user-agent': 'Mozilla/5.0 (Test) Gecko/20100101' },
+			}),
+			cookies: { get: (n: string) => jar.get(n) },
+			getClientAddress: () => '203.0.113.5',
+			locals: { consentTier: 'analytics', clientIp: '203.0.113.5' },
+		};
+	}
+
+	const spaEvent = (path: string, navigationType?: 'enter' | 'spa') => ({
+		eventId: crypto.randomUUID(),
+		path,
+		referrer: null,
+		occurredAt: new Date().toISOString(),
+		...(navigationType ? { navigationType } : {}),
+	});
+
+	beforeEach(async () => {
+		await flushDeferred();
+		await db.delete(events);
+		await db.delete(sessions);
+	});
+
+	it("drops 'enter' events and keeps 'spa' events from the same batch", async () => {
+		const { POST } = await import('../../../routes/api/analytics/journey/+server');
+		const batch = { events: [spaEvent('/blog', 'enter'), spaEvent('/docs', 'spa')] };
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		const response = await POST(makeJourneyEvent(batch) as any);
+		expect(response.status).toBe(204);
+		const rows = await db.select().from(events);
+		expect(rows).toHaveLength(1);
+		expect(rows[0].path).toBe('/docs');
+		// the session page count must not include the dropped enter event
+		const sessionRows = await db.select().from(sessions);
+		expect(sessionRows[0].pageCount).toBe(1);
+	});
+
+	it('an all-enter batch writes nothing at all', async () => {
+		const { POST } = await import('../../../routes/api/analytics/journey/+server');
+		const batch = { events: [spaEvent('/blog', 'enter')] };
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		const response = await POST(makeJourneyEvent(batch) as any);
+		expect(response.status).toBe(204);
+		expect(await db.select().from(events)).toHaveLength(0);
+		expect(await db.select().from(sessions)).toHaveLength(0);
+	});
+
+	it('a field-less event (pre-field client) still records — optional means optional', async () => {
+		const { POST } = await import('../../../routes/api/analytics/journey/+server');
+		const batch = { events: [spaEvent('/blog')] };
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		await POST(makeJourneyEvent(batch) as any);
+		expect(await db.select().from(events)).toHaveLength(1);
+	});
+});
+
+// ── 4d. confirm endpoint — corroboration at every tier ───────────────────────
+
+describe('confirm endpoint — sessions get human_confirmed_at at every tier', () => {
+	const UA = 'Mozilla/5.0 (Test) Gecko/20100101';
+	const IP = '203.0.113.5';
+
+	function makeConfirmEvent(body: unknown, opts: { tier?: 'necessary' | 'analytics'; sid?: string; ua?: string } = {}) {
+		const jar = new Map<string, string>();
+		if (opts.sid) jar.set('_v10r_sid', opts.sid);
+		return {
+			url: new URL('https://example.com/api/analytics/journey/confirm'),
+			request: new Request('https://example.com/api/analytics/journey/confirm', {
+				method: 'POST',
+				body: JSON.stringify(body),
+				headers: { 'content-type': 'application/json', 'user-agent': opts.ua ?? UA },
+			}),
+			cookies: { get: (n: string) => jar.get(n), set: vi.fn(), delete: vi.fn() },
+			getClientAddress: () => IP,
+			locals: { consentTier: opts.tier ?? 'necessary', clientIp: IP },
+		};
+	}
+
+	beforeEach(async () => {
+		await flushDeferred();
+		await db.delete(events);
+		await db.delete(sessions);
+	});
+
+	it('confirms the COOKIELESS session at necessary tier — no cookie required, none set', async () => {
+		const { POST } = await import('../../../routes/api/analytics/journey/confirm/+server');
+		const { issueConfirmToken } = await import('./confirm-token');
+
+		const visitorId = await deriveVisitorId(IP, UA);
+		const sessionId = await deriveCookielessSessionId(visitorId);
+		await upsertSession({ id: sessionId, visitorId, entryPath: '/blog' });
+
+		const event = makeConfirmEvent({ token: issueConfirmToken(visitorId) });
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		const response = await POST(event as any);
+		expect(response.status).toBe(204);
+		expect(event.cookies.set).not.toHaveBeenCalled();
+
+		const rows = await db.select().from(sessions);
+		expect(rows[0].humanConfirmedAt).not.toBeNull();
+	});
+
+	it('confirms the cookie session at analytics tier', async () => {
+		const { POST } = await import('../../../routes/api/analytics/journey/confirm/+server');
+		const { issueConfirmToken } = await import('./confirm-token');
+
+		const visitorId = await deriveVisitorId(IP, UA);
+		await upsertSession({ id: 's_cookie1234567890', visitorId, entryPath: '/blog', consentTier: 'analytics' });
+
+		const event = makeConfirmEvent(
+			{ token: issueConfirmToken(visitorId) },
+			{ tier: 'analytics', sid: 's_cookie1234567890' },
+		);
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		await POST(event as any);
+
+		const rows = await db.select().from(sessions);
+		expect(rows[0].humanConfirmedAt).not.toBeNull();
+	});
+
+	it('a bad token is a silent 204 and writes nothing — never an oracle', async () => {
+		const { POST } = await import('../../../routes/api/analytics/journey/confirm/+server');
+
+		const visitorId = await deriveVisitorId(IP, UA);
+		const sessionId = await deriveCookielessSessionId(visitorId);
+		await upsertSession({ id: sessionId, visitorId, entryPath: '/blog' });
+
+		const event = makeConfirmEvent({ token: `${Date.now()}.${'0'.repeat(64)}` });
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		const response = await POST(event as any);
+		expect(response.status).toBe(204);
+
+		const rows = await db.select().from(sessions);
+		expect(rows[0].humanConfirmedAt).toBeNull();
+	});
+
+	it("a token issued to a DIFFERENT visitor doesn't confirm — the binding is the defense", async () => {
+		const { POST } = await import('../../../routes/api/analytics/journey/confirm/+server');
+		const { issueConfirmToken } = await import('./confirm-token');
+
+		const visitorId = await deriveVisitorId(IP, UA);
+		const sessionId = await deriveCookielessSessionId(visitorId);
+		await upsertSession({ id: sessionId, visitorId, entryPath: '/blog' });
+
+		const farmed = issueConfirmToken(await deriveVisitorId('198.51.100.7', 'SomeOtherBrowser/1.0'));
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		await POST(makeConfirmEvent({ token: farmed }) as any);
+
+		const rows = await db.select().from(sessions);
+		expect(rows[0].humanConfirmedAt).toBeNull();
+	});
+
+	it('a declared bot cannot confirm itself', async () => {
+		const { POST } = await import('../../../routes/api/analytics/journey/confirm/+server');
+		const { issueConfirmToken } = await import('./confirm-token');
+
+		const botUa = 'Mozilla/5.0 (compatible; Googlebot/2.1)';
+		const visitorId = await deriveVisitorId(IP, botUa);
+		const sessionId = await deriveCookielessSessionId(visitorId);
+		await upsertSession({ id: sessionId, visitorId, entryPath: '/blog' });
+
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		await POST(makeConfirmEvent({ token: issueConfirmToken(visitorId) }, { ua: botUa }) as any);
+
+		const rows = await db.select().from(sessions);
+		expect(rows[0].humanConfirmedAt).toBeNull();
+	});
+
+	it('journey batches confirm as redundancy — first confirmation timestamp wins', async () => {
+		const { POST } = await import('../../../routes/api/analytics/journey/+server');
+		const jar = new Map<string, string>([['_v10r_sid', 's_redundant123456']]);
+		const event = {
+			url: new URL('https://example.com/api/analytics/journey'),
+			request: new Request('https://example.com/api/analytics/journey', {
+				method: 'POST',
+				body: JSON.stringify({
+					events: [
+						{
+							eventId: crypto.randomUUID(),
+							path: '/docs',
+							referrer: null,
+							occurredAt: new Date().toISOString(),
+							navigationType: 'spa',
+						},
+					],
+				}),
+				headers: { 'content-type': 'application/json', 'user-agent': UA },
+			}),
+			cookies: { get: (n: string) => jar.get(n) },
+			getClientAddress: () => IP,
+			locals: { consentTier: 'analytics', clientIp: IP },
+		};
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		await POST(event as any);
+
+		const rows = await db.select().from(sessions);
+		expect(rows[0].humanConfirmedAt).not.toBeNull();
+		const first = rows[0].humanConfirmedAt;
+
+		// a second batch must not advance the confirmation timestamp
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		await POST({
+			...event,
+			request: new Request('https://example.com/api/analytics/journey', {
+				method: 'POST',
+				body: JSON.stringify({
+					events: [
+						{
+							eventId: crypto.randomUUID(),
+							path: '/blog',
+							referrer: null,
+							occurredAt: new Date().toISOString(),
+							navigationType: 'spa',
+						},
+					],
+				}),
+				headers: { 'content-type': 'application/json', 'user-agent': UA },
+			}),
+		} as any);
+
+		const after = await db.select().from(sessions);
+		expect(after[0].humanConfirmedAt?.getTime()).toBe(first?.getTime());
+	});
+});
+
 // ── 5. mutations.ts — recordEvent ────────────────────────────────────────────
 
 describe('recordEvent', () => {
@@ -928,6 +1224,26 @@ describe('upsertSession', () => {
 		expect(rows[0].pageCount).toBe(2);
 	});
 
+	it('stamps debugOwnerId permanently — a later untagged upsert never clears it', async () => {
+		// Unlike paired_admin_user_id (reaped 2h after pairing), this tag is what
+		// aggregates exclude on for the whole retention window. A follow-up write
+		// from the same session WITHOUT the tag (e.g. after the pairing cookie
+		// expired) must not launder the session back into the audience.
+		const { user } = await import('$lib/server/db/schema');
+		await db.insert(user).values({ id: 'admin-dbg', name: 'Admin', email: 'dbg@example.com' }).onConflictDoNothing();
+
+		await upsertSession({
+			id: 'sess-dbg',
+			visitorId: 'v_11223344556677ff',
+			entryPath: '/home',
+			debugOwnerId: 'admin-dbg',
+		});
+		await upsertSession({ id: 'sess-dbg', visitorId: 'v_11223344556677ff', entryPath: '/home', exitPath: '/blog' });
+
+		const rows = await db.select().from(sessions);
+		expect(rows[0].debugOwnerId).toBe('admin-dbg');
+	});
+
 	it('backfills device/browser when they become known mid-session, and never wipes them', async () => {
 		// A visitor who lands at `necessary` tier has no device/browser (UA parsing
 		// is gated on analytics consent). If they then accept, the columns must fill.
@@ -1013,29 +1329,58 @@ describe('analyticsCleanup — functional behaviour', () => {
 		expect(remaining[0].path).toBe('/new');
 	});
 
-	it('consent_events are NOT touched by cleanup today — infinite retention (design gap)', async () => {
-		/**
-		 * Documents current state: analyticsCleanup never deletes consent_events.
-		 * After the fix (13-month window), this test must be updated to assert
-		 * that rows older than 13mo ARE deleted and rows within 13mo survive.
-		 */
-		const oldDate = new Date();
-		oldDate.setDate(oldDate.getDate() - (ANALYTICS_RETENTION_DAYS + 5));
+	it('consent_events age out at the ~13-month Art 7(1) window — and no sooner', async () => {
+		// The consent audit trail outlives the events lane on purpose (evidence of
+		// the grant must survive as long as claims about it can arise), but it is
+		// NOT infinite: CONSENT_RETENTION_DAYS is enforced by the same sweep.
+		const { CONSENT_RETENTION_DAYS } = await import('$lib/server/config');
+		const beyondWindow = new Date();
+		beyondWindow.setDate(beyondWindow.getDate() - (CONSENT_RETENTION_DAYS + 5));
+		// Older than the events lane, comfortably inside the consent window.
+		const insideWindow = new Date();
+		insideWindow.setDate(insideWindow.getDate() - (ANALYTICS_RETENTION_DAYS + 5));
 
-		await db.insert(consentEvents).values({
-			visitorId: 'v_cccccccccccc0001',
-			action: 'grant',
-			tierBefore: null,
-			tierAfter: 'analytics',
-			timestamp: oldDate,
-		});
+		await db.insert(consentEvents).values([
+			{
+				visitorId: 'v_cccccccccccc0001',
+				action: 'grant',
+				tierBefore: null,
+				tierAfter: 'analytics',
+				timestamp: beyondWindow,
+			},
+			{
+				visitorId: 'v_cccccccccccc0002',
+				action: 'withdraw',
+				tierBefore: 'analytics',
+				tierAfter: 'necessary',
+				timestamp: insideWindow,
+			},
+		]);
 
 		await analyticsCleanup();
 
 		const remaining = await db.select().from(consentEvents);
-		// Cleanup does NOT touch consent_events — row survives
 		expect(remaining).toHaveLength(1);
-		// FINDING: consent_events currently have infinite retention.
+		expect(remaining[0].visitorId).toBe('v_cccccccccccc0002');
+	});
+
+	it('sweeps daily_page_stats past the aggregate window — the promise the privacy page makes', async () => {
+		const { ANALYTICS_AGGREGATE_RETENTION_DAYS } = await import('$lib/server/config');
+		const { dailyPageStats } = await import('$lib/server/db/schema/analytics');
+
+		const stale = new Date();
+		stale.setDate(stale.getDate() - (ANALYTICS_AGGREGATE_RETENTION_DAYS + 5));
+
+		await db.insert(dailyPageStats).values([
+			{ date: stale.toISOString().slice(0, 10), path: '/old', pageviews: 5, uniqueVisitors: 2 },
+			{ date: new Date().toISOString().slice(0, 10), path: '/new', pageviews: 3, uniqueVisitors: 1 },
+		]);
+
+		await analyticsCleanup();
+
+		const remaining = await db.select().from(dailyPageStats);
+		expect(remaining).toHaveLength(1);
+		expect(remaining[0].path).toBe('/new');
 	});
 });
 
@@ -1115,13 +1460,78 @@ describe('recordEvent — DB error swallowed silently by hook', () => {
 
 // ── 8. aggregations.ts — audience breakdown counts people, not sessions ──────
 
+describe('aggregations — debug-owned traffic is not audience', () => {
+	beforeEach(async () => {
+		await flushDeferred();
+		await db.delete(events);
+		await db.delete(sessions);
+	});
+
+	it('getOverviewMetrics excludes events carrying debug_owner_id', async () => {
+		const { user } = await import('$lib/server/db/schema');
+		const { getOverviewMetrics } = await import('$lib/server/db/analytics/aggregations');
+		await db.insert(user).values({ id: 'admin-agg', name: 'Admin', email: 'agg@example.com' }).onConflictDoNothing();
+
+		await upsertSession({ id: 's_pub', visitorId: 'v_public01', entryPath: '/blog', humanConfirmedAt: new Date() });
+		await upsertSession({ id: 's_dbg', visitorId: 'v_owner01', entryPath: '/blog', humanConfirmedAt: new Date() });
+		await recordEvent({ sessionId: 's_pub', visitorId: 'v_public01', eventType: 'pageview', path: '/blog' });
+		await recordEvent({
+			sessionId: 's_dbg',
+			visitorId: 'v_owner01',
+			eventType: 'pageview',
+			path: '/blog',
+			debugOwnerId: 'admin-agg',
+		});
+
+		const metrics = await getOverviewMetrics(7);
+		expect(metrics.totalPageviews).toBe(1);
+		expect(metrics.uniqueVisitors).toBe(1);
+	});
+
+	it('getOverviewMetrics splits confirmed from unconfirmed instead of merging them', async () => {
+		const { getOverviewMetrics } = await import('$lib/server/db/analytics/aggregations');
+
+		await upsertSession({ id: 's_conf', visitorId: 'v_human01', entryPath: '/blog', humanConfirmedAt: new Date() });
+		// The spoofed-header crawler shape: browser-looking request, no JS ever ran.
+		await upsertSession({ id: 's_unconf', visitorId: 'v_spoof01', entryPath: '/blog' });
+		await recordEvent({ sessionId: 's_conf', visitorId: 'v_human01', eventType: 'pageview', path: '/blog' });
+		await recordEvent({ sessionId: 's_unconf', visitorId: 'v_spoof01', eventType: 'pageview', path: '/blog' });
+		await recordEvent({ sessionId: 's_unconf', visitorId: 'v_spoof01', eventType: 'pageview', path: '/docs' });
+
+		const metrics = await getOverviewMetrics(7);
+		expect(metrics.totalPageviews).toBe(1);
+		expect(metrics.uniqueVisitors).toBe(1);
+		expect(metrics.unconfirmedPageviews).toBe(2);
+		expect(metrics.unconfirmedVisitors).toBe(1);
+	});
+
+	it('getTrafficComposition returns the three buckets with the ip_class ranking', async () => {
+		const { getTrafficComposition } = await import('$lib/server/db/analytics/aggregations');
+		const { datacenterIpRanges } = await import('$lib/server/db/schema/analytics');
+
+		await db.insert(datacenterIpRanges).values([{ source: 'aws', prefix: '3.0.0.0/9' }]);
+		await upsertSession({ id: 's_c1', visitorId: 'v_h1', entryPath: '/', humanConfirmedAt: new Date() });
+		await upsertSession({ id: 's_u1', visitorId: 'v_b1', entryPath: '/', clientIp: '3.5.1.2' });
+		await upsertSession({ id: 's_u2', visitorId: 'v_b2', entryPath: '/', clientIp: '84.150.1.2' });
+		await recordEvent({ sessionId: 's_c1', visitorId: 'v_h1', eventType: 'pageview', path: '/' });
+		await recordEvent({ sessionId: 's_u1', visitorId: 'v_b1', eventType: 'pageview', path: '/' });
+		await recordEvent({ sessionId: 's_u2', visitorId: 'v_b2', eventType: 'pageview', path: '/' });
+
+		const composition = await getTrafficComposition(7);
+		expect(composition.confirmed).toEqual({ pageviews: 1, visitors: 1 });
+		expect(composition.unconfirmed.pageviews).toBe(2);
+		expect(composition.unconfirmed.visitors).toBe(2);
+		expect(composition.unconfirmed.byIpClass).toEqual({ datacenter: 1, icloudRelay: 0, unclassified: 1 });
+	});
+});
+
 describe('getAudienceBreakdown', () => {
 	beforeEach(async () => {
 		await db.delete(events);
 		await db.delete(sessions);
 	});
 
-	/** Distinct visitor hashes, each with `n` sessions carrying the given dimensions. */
+	/** Distinct visitor hashes, each with `n` CONFIRMED sessions carrying the given dimensions. */
 	async function seedVisitor(
 		visitorId: string,
 		sessionCount: number,
@@ -1135,6 +1545,7 @@ describe('getAudienceBreakdown', () => {
 				country: dims.country ?? null,
 				device: dims.device ?? null,
 				browser: dims.browser ?? null,
+				humanConfirmedAt: new Date(),
 			});
 		}
 	}
@@ -1153,6 +1564,21 @@ describe('getAudienceBreakdown', () => {
 		expect(de?.sessions).toBe(7);
 	});
 
+	it('an unconfirmed session is not audience — the crawler wave stays out of the pies', async () => {
+		await seedVisitor('v_aaaaaaaaaaaaaaa1', 1, { country: 'DE', device: 'desktop', browser: 'firefox' });
+		// A crawler session: browser-shaped, country resolved at the edge, no JS.
+		await db.insert(sessions).values({
+			id: 'crawler-1',
+			visitorId: 'v_crawler0000001',
+			entryPath: '/',
+			country: 'SG',
+		});
+
+		const result = await getAudienceBreakdown(30);
+		expect(result.totalVisitors).toBe(1);
+		expect(result.countries.find((c) => c.key === 'SG')).toBeUndefined();
+	});
+
 	it('classifies a visitor who consented mid-history under their real device, not unknown', async () => {
 		// device/browser are NULL until the analytics tier is granted. The same
 		// person therefore has NULL rows and real rows. max() skips NULLs so they
@@ -1164,6 +1590,7 @@ describe('getAudienceBreakdown', () => {
 			country: 'FR',
 			device: null,
 			browser: null,
+			humanConfirmedAt: new Date(),
 		});
 		await db.insert(sessions).values({
 			id: 'mixed-2',
@@ -1172,6 +1599,7 @@ describe('getAudienceBreakdown', () => {
 			country: 'FR',
 			device: 'mobile',
 			browser: 'safari',
+			humanConfirmedAt: new Date(),
 		});
 
 		const result = await getAudienceBreakdown(30);

@@ -96,6 +96,8 @@ const PUBLIC_ENDPOINTS: Record<string, string> = {
 	'showcases/check-username/+server.ts': 'Fixed word list, no database access.',
 	'analytics/journey/+server.ts': 'sendBeacon ingest; cannot set headers. Origin-checked, consent-gated, rate-limited.',
 	'analytics/journey/collect/+server.ts': 'Same beacon contract as its parent, plus an allowlist and a limiter.',
+	'analytics/journey/confirm/+server.ts':
+		'Consent-free human-confirmation ping (sendBeacon; cannot set headers). Constant payload, no identifier read or written client-side; Origin-checked, HMAC-nonce-validated, rate-limited; only ever sets human_confirmed_at on an existing session.',
 	'analytics/stream/+server.ts': 'Synthetic demo data only; connection-capped.',
 	'blog/assets/[id]/image/+server.ts': 'Public image proxy. Resolves only assets attached to published posts.',
 	'blog/media/[...path]/+server.ts': 'Legacy key proxy. Same published-only resolution as the by-id proxy.',
@@ -178,7 +180,7 @@ const PUBLIC_SURFACES: Record<string, string> = {
 
 	// ── Showcase: analytics ───────────────────────────────────────────────────
 	'[[locale=locale]]/(public)/showcases/analytics/overview/+page.server.ts':
-		'Reads aggregate analytics counters that are public by design. No per-visitor rows and no writes.',
+		'Reads aggregate analytics counters that are public by design. The one mutating action, reseed, TRUNCATEs the analytics tables and rejects non-admins inline with isAdmin(locals.user) outside dev.',
 
 	// ── Showcase: cache ───────────────────────────────────────────────────────
 	'[[locale=locale]]/(public)/showcases/db/cache/connection/+page.server.ts':

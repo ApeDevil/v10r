@@ -98,7 +98,9 @@ const BOT_UA_PATTERNS = [
 	'claude-user',
 	'chatgpt-user',
 	'oai-searchbot',
-	'google-extended',
+	// NOT 'google-extended': that is a robots.txt-only control token — Google
+	// documents it never appears in a User-Agent string, so matching it here is
+	// dead weight that reads as coverage.
 	'meta-externalagent',
 	'meta-externalfetcher',
 	'cohere-ai',
@@ -255,48 +257,44 @@ export function isPrefetch(headers: Headers): boolean {
 }
 
 /**
- * True when the request looks like a real browser loading a page.
+ * True when the request carries the header shape of a browser loading a page.
  *
- * ## Why a POSITIVE test, and why it matters more than the blocklist
+ * ## What this is — and emphatically is not
  *
- * `isBot` can only catch callers that declare themselves. Everything that copies
- * a browser User-Agent — which is most scanners and a growing share of scrapers —
- * walks straight past it. That is not a hypothetical: on 2026-07-30 this lane
- * recorded 114 "unique visitors", 99 of whom viewed exactly one page and none of
- * whom ran any client-side JavaScript, against 3 in Vercel's beacon-based lane.
- * The gap was almost entirely UA-spoofing crawlers, and no amount of blocklist
- * maintenance would have closed it.
+ * A PREFILTER that removes subresources, API calls, prefetches, and the naive
+ * HTTP clients that send `Accept: * / *` with no language. It is NOT a bot
+ * defense, and it must never be described as load-bearing for the visitor
+ * count: `curl-impersonate` ships `Sec-Fetch-Mode: navigate` +
+ * `Sec-Fetch-Dest: document` alongside a full Chrome header profile BY
+ * DEFAULT, and the W3C Fetch Metadata spec only guarantees these headers
+ * against in-page JavaScript forgery — it says nothing about arbitrary HTTP
+ * clients. Production data confirmed it: one week of 2026-08 recorded 588
+ * "visitors" that passed this test and never executed a line of JavaScript.
  *
- * So this asks the opposite question — does the request carry the header shape a
- * browser *cannot avoid* sending — and admits only requests that do.
+ * The counting line that actually holds is CORROBORATION — a session only
+ * counts as a confirmed visitor once the client-side confirm ping has fired
+ * (`sessions.human_confirmed_at`). Everything this function admits lands in
+ * the unconfirmed bucket until then.
  *
  * ## The two acceptance paths
  *
- * `Sec-Fetch-*` is a Fetch Metadata header set by the browser itself and
- * forbidden to page JavaScript, so it cannot be spoofed from within a page. Every
- * current engine sends it on a top-level navigation (Chrome 76+, Firefox 90+,
- * Safari 16.4+), while HTTP libraries send nothing at all. When the header is
- * present it is therefore authoritative: `navigate` + `document` is a page load
- * and anything else is a subresource or an API call, neither of which is a
- * pageview.
+ * When `Sec-Fetch-*` is present, `navigate` + `document` distinguishes a page
+ * load from a subresource or API call — that request-shape question is what
+ * Fetch Metadata is actually authoritative for. When absent (pre-2020
+ * browsers), the fallback checks the weaker pair a browser still always sends:
+ * an `Accept` that asks for HTML plus an `Accept-Language`.
  *
- * When it is absent we cannot conclude "bot" — a pre-2020 browser omits it too —
- * so the fallback checks the weaker pair a browser still always sends: an
- * `Accept` that asks for HTML, plus an `Accept-Language`. `curl`, Go's default
- * client and `python-requests` send `Accept: * / *` and no language at all, so
- * they fail it; a genuinely old browser passes.
+ * Known false negatives, accepted: iOS Safari < 16.2 sends no Sec-Fetch
+ * headers (caught by the fallback), and some WebViews present odd shapes. A
+ * missing visitor is a smaller lie than a hundred fictional ones — and the
+ * confirmed/unconfirmed split now bounds the damage in both directions.
  *
  * ## Deliberate scope
  *
- * NAVIGATIONS ONLY. Do not call this from the beacon endpoints: `sendBeacon` and
- * `fetch` produce `Sec-Fetch-Mode: cors`/`no-cors` with
- * `Sec-Fetch-Dest: empty`, so every legitimate beacon would fail it. Those routes
- * are already gated by consent, an Origin check and a session cookie.
- *
- * Accepts a small under-count as the price of a large over-count: a privacy
- * extension that strips these headers loses its owner from the lane. That trade
- * is correct here — the number is meant to answer "how many people", and a
- * missing visitor is a smaller lie than a hundred fictional ones.
+ * NAVIGATIONS ONLY. Do not call this from the beacon endpoints: `sendBeacon`
+ * and `fetch` produce `Sec-Fetch-Mode: cors`/`no-cors` with
+ * `Sec-Fetch-Dest: empty`, so every legitimate beacon would fail it. Those
+ * routes are already gated by consent, an Origin check and a session cookie.
  */
 export function isBrowserNavigation(headers: Headers): boolean {
 	const mode = headers.get('sec-fetch-mode');

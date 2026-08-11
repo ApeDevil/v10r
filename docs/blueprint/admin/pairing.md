@@ -29,7 +29,9 @@ Admin tests the public site on a real phone without a second login. The phone's 
 
 **`analytics.events`** — `debug_owner_id text` nullable column, with partial index `(debug_owner_id, id) WHERE debug_owner_id IS NOT NULL`.
 
-**`analytics.sessions`** — `paired_admin_user_id text` nullable, `paired_at timestamptz` nullable. Pairing tag is cleared by the cleanup job after 2h.
+**`analytics.sessions`** — `paired_admin_user_id text` nullable, `paired_at timestamptz` nullable. Pairing tag is cleared by the cleanup job after 2h. A separate `debug_owner_id` column on sessions is the PERMANENT attribution copy: stamped on write, never cleared, and it is what every aggregate excludes on — the 2h cap bounds live streaming, not the exclusion of the operator's own traffic from the numbers.
+
+**Consent boundary (since 2026-08):** the phone-side claim no longer mints `_v10r_sid` unconditionally. With analytics consent it uses/mints the cookie session as before; without it, it tags the cookieless daily session id instead — no terminal storage is written below the consent tier. Caveat: the cookieless id rotates at UTC midnight, so a pairing spanning midnight stops tagging the phone's new session for the remainder of the cap.
 
 ## Code design
 

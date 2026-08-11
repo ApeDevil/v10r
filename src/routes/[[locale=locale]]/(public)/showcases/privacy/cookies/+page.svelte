@@ -25,7 +25,7 @@ const cookies: CookieRow[] = [
 		categoryVariant: 'success',
 		duration: `${data.consentCookieDays} days (~6 months)`,
 		purpose:
-			"Stores your cookie-banner choice (necessary / analytics / full) so we don't re-prompt you on every page. Without this cookie, the banner cannot remember your decision — that is why it qualifies as strictly necessary under ePrivacy Art. 5(3).",
+			"Stores your cookie-banner choice (necessary / analytics) so we don't re-prompt you on every page. Without this cookie, the banner cannot remember your decision — that is why it qualifies as strictly necessary under ePrivacy Art. 5(3).",
 		setBy: 'Server, on consent decision',
 		httpOnly: false,
 		secure: true,
@@ -64,7 +64,9 @@ const cookies: CookieRow[] = [
 		<p>
 			ePrivacy Art. 5(3) and TTDSG §25 require informed consent for any cookie that isn't strictly necessary.
 			Below is the complete inventory — name, duration, purpose, and which ones we set without asking.
-			There are no third-party cookies.
+			There are no third-party cookies. One third-party <em>script</em> exists: Vercel Web Analytics, injected
+			only after analytics consent — it sets no cookies and writes nothing to localStorage, but it does send
+			page URLs and coarse geo to Vercel Inc. (our hosting processor, Art. 28 / EU SCCs).
 		</p>
 	</header>
 
@@ -114,7 +116,7 @@ const cookies: CookieRow[] = [
 			<Tag variant="muted" size="sm" label="By design" />
 		</header>
 		<ul class="absent-list">
-			<li><span class="i-lucide-x text-icon-sm" aria-hidden="true"></span> No Google Analytics, Plausible, Posthog, or any third-party analytics script.</li>
+			<li><span class="i-lucide-x text-icon-sm" aria-hidden="true"></span> No Google Analytics, Plausible, or Posthog. The one third-party measurement — Vercel Web Analytics — loads only after you grant analytics consent, never by default.</li>
 			<li><span class="i-lucide-x text-icon-sm" aria-hidden="true"></span> No advertising cookies, no retargeting pixels, no Facebook / LinkedIn / Twitter beacons.</li>
 			<li><span class="i-lucide-x text-icon-sm" aria-hidden="true"></span> No cross-site tracking. SameSite=Lax on every cookie we do set.</li>
 			<li><span class="i-lucide-x text-icon-sm" aria-hidden="true"></span> No browser fingerprinting (we don't read canvas, audio, fonts, or screen geometry).</li>

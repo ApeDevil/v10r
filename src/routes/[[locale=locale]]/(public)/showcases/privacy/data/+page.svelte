@@ -41,11 +41,22 @@ const categories: DataCategory[] = [
 				example: 'DE',
 				note: 'From CDN edge headers; never the city or region.',
 			},
+			{
+				field: 'confirmation ping',
+				type: 'constant payload',
+				note: 'One consent-free POST proving the page ran JavaScript — it reads nothing from your device and carries no identifier you could be recognised by. It only marks the visit as made by a real browser rather than a crawler.',
+			},
+			{
+				field: 'ip_class',
+				type: 'enum (datacenter / icloud_relay / unknown)',
+				note: 'Your connection IP is checked once against published cloud and iCloud-Relay ranges at write time; only the class is stored, never the address. Used to rank crawler-shaped traffic, never to exclude anyone.',
+			},
 		],
 		notes: [
 			'Pre-consent traffic exists so the site can count visits and detect abuse — that is the legitimate interest.',
 			'Device, browser, and referrer fields are NULL until you give analytics consent.',
 			'Bot and prefetch requests are filtered out before any row is written.',
+			'Recipient: Vercel Inc. hosts the site (Art. 28 processor, EU SCCs), so every request technically passes through its infrastructure. Vercel Web Analytics — a separate, third-party measurement — is only loaded after analytics consent.',
 		],
 	},
 	{
@@ -73,7 +84,12 @@ const categories: DataCategory[] = [
 			{
 				field: 'journey events',
 				type: 'page transitions',
-				note: 'Sent via sendBeacon on tab close. Deduplicated by event_id.',
+				note: 'Client-side navigations, batched and sent via sendBeacon during the visit and on tab close. Deduplicated by event_id; the initial page load is never double-counted.',
+			},
+			{
+				field: 'Vercel Web Analytics',
+				type: 'third-party script',
+				note: 'Injected only after analytics consent. Sends page URLs and coarse geo to Vercel Inc.; its visitor hash is discarded after 24 hours and it sets no cookies.',
 			},
 		],
 		notes: [

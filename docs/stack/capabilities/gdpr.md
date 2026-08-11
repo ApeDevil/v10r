@@ -82,7 +82,7 @@ Admin-only surfaces (non-admins 404, see guarantees) group into four buckets: **
 
 Some limits are enforced in code; others depend on process outside the app:
 
-- **Technically prevented** — reading a raw IP (never persisted, see the transparency-page masking rules above), reading a password (Argon2id is one-way), erasing the audit log (no UPDATE/DELETE code path), joining an analytics journey for a user who rejected consent (no `session_id` to join at `necessary` tier)
+- **Technically prevented** — reading a raw IP (never persisted, see the transparency-page masking rules above), reading a password (Argon2id is one-way), erasing the audit log (no UPDATE/DELETE code path), reconstructing a multi-day journey for a visitor who rejected consent (the cookieless session id rotates at UTC midnight and page-to-page journey beacons require the consented cookie — a `necessary`-tier visitor groups within one day only)
 - **Process-prevented** — self-promotion to admin. The gate is an env var, not a database row: granting admin needs Vercel project access and a redeploy, which is an operational control, not a code one
 
 ## Consent-gated analytics cookie
@@ -95,6 +95,8 @@ The `_v10r_sid` analytics session cookie writes to terminal equipment and is not
 - At `necessary` tier (or no consent) → touch no cookie, actively delete a stale one from a prior grant, and derive the session id with `deriveCookielessSessionId(visitorId)` = `hash(visitorId + UTC day)` (Plausible/Fathom pattern, rotates at UTC midnight).
 
 Session counting still works without writing to the device — page views within one UTC day group into one session.
+
+The **confirmation ping** (`/api/analytics/journey/confirm`) is deliberately outside this gate: its payload is a constant server-issued token and it reads nothing from terminal equipment (no cookie, no storage, no `navigator` probing), which is the DSK's approved counting-pixel shape (OH Digitale Dienste ¶88). It exists so a consent-declining human can still be told apart from a crawler; it must never grow a payload field.
 
 ## Stack advantages
 

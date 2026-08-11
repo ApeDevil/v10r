@@ -16,6 +16,8 @@
  * bounded no matter what ends up calling this.
  */
 import * as v from 'valibot';
+import { dev } from '$app/environment';
+import { env } from '$env/dynamic/private';
 import { isBot, isExcludedPath } from '$lib/analytics/collect-policy';
 import { ipLimitKey } from '$lib/server/abuse';
 import { hasConsent } from '$lib/server/analytics/consent';
@@ -25,7 +27,7 @@ import { MAX_BEACON_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from 
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiNoContent } from '$lib/server/api/response';
 import { ANALYTICS_SESSION_COOKIE } from '$lib/server/config';
-import { recordEvent } from '$lib/server/db/analytics/mutations';
+import { confirmSession, recordEvent } from '$lib/server/db/analytics/mutations';
 import type { RequestHandler } from './$types';
 
 /** Web Vitals metrics we accept. Anything else is not a metric we chart. */
@@ -61,6 +63,12 @@ interface CollectRow {
 }
 
 export const POST: RequestHandler = async ({ request, cookies, getClientAddress, locals, url }) => {
+	// Same dev gate as the server hook: one database for every environment, so
+	// an ungated dev server writes localhost telemetry into production.
+	if (dev && env.ANALYTICS_DEV_TRACKING !== 'true') {
+		return apiNoContent();
+	}
+
 	const origin = request.headers.get('origin');
 	if (origin && origin !== url.origin) {
 		return apiError(403, 'forbidden', 'Cross-origin beacon rejected');
@@ -134,6 +142,10 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 
 	if (rows.length === 0) return apiNoContent();
 
+	// A telemetry batch is JS corroboration too — redundancy for a lost confirm
+	// ping. Fire-and-forget beside the inserts; idempotent on the session row.
+	confirmSession(sessionId).catch(() => {});
+
 	await Promise.all(
 		rows.map((row) =>
 			recordEvent({
@@ -145,6 +157,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 				route: row.route,
 				metadata: row.metadata,
 				consentTier: locals.consentTier,
+				debugOwnerId: locals.debugOwnerId ?? null,
 				occurredAt: new Date(row.occurredAt),
 			}).catch(() => {}),
 		),

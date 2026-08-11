@@ -418,6 +418,14 @@ export const ANALYTICS_SESSION_COOKIE = '_v10r_sid';
 /** Consent cookie max-age (seconds, 6 months) */
 export const ANALYTICS_CONSENT_MAX_AGE = 15_552_000;
 
+/**
+ * Lifetime of the human-confirmation token (ms, 10 min). One token is minted
+ * per document load and the ping fires ~1.5s in, so the window only has to
+ * survive a slow connection plus clock drift — a long TTL just widens the
+ * replay window of a stateless token for no benefit.
+ */
+export const ANALYTICS_CONFIRM_TOKEN_TTL_MS = 10 * 60 * 1000;
+
 // ── Admin ──────────────────────────────────────────────────────────────────────
 
 // ADMIN_USER_ID gates admin access — a comma-separated list of admin user ids

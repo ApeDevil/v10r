@@ -56,6 +56,8 @@ whether a less intrusive route reaches the same purpose.
 | Engaged time, scroll depth | Yes | Distinguishes read from bounced. Wall-clock time cannot — a forgotten tab looks identical to careful reading. |
 | Rage / dead clicks, form-field abandonment | Yes | The "where do people get stuck" question. These are the aggregate signals that make **session replay unnecessary**, which is the less-intrusive-alternative argument in its strongest form. |
 | Web Vitals + attribution | Yes | A bare metric identifies a problem; attribution identifies the element responsible. Without it the data cannot be acted on, so collecting it without attribution would fail this limb. |
+| Confirmation flag (`human_confirmed_at`) | Yes | Without it, header-copying crawlers are indistinguishable from people and the visitor count is fiction (measured: 96% of one week's "visitors" never ran JavaScript). The signal is one consent-free constant-payload ping that reads nothing from the device — the least data that can answer "did a browser actually render this". |
+| Connection class (`ip_class`) | Yes | Ranks the unconfirmed remainder (datacenter vs relay vs unknown) so the operator can judge the crawler share without storing addresses. The IP is compared against published ranges inside the INSERT and never written; only the three-valued class survives. Never used to exclude — its false positives are VPN and Private Relay users. |
 
 **Rejected as unnecessary** — considered and deliberately not collected:
 
@@ -68,9 +70,13 @@ whether a less intrusive route reaches the same purpose.
   `hardwareConcurrency`. Would marginally improve visitor counting at a disproportionate cost
   to identifiability. Also see the ePrivacy consequence in the two-lane doc: adding entropy
   moves the technique into the confirmed scope of EDPB Guidelines 2/2023.
-- **Raw IP storage.** Never stored in any table. The hash is computed and the input discarded.
-- **Cross-site or third-party identifiers.** No data leaves the first party. There is no
-  vendor, no pixel, no tag manager.
+- **Raw IP storage.** Never stored in any table. The hash is computed and the input discarded;
+  the ip-class comparison likewise discards the address inside the same statement.
+- **Cross-site or third-party identifiers.** No identifier of ours leaves the first party.
+  There is no pixel and no tag manager. The one third-party measurement — Vercel Web
+  Analytics — is injected only after Art 6(1)(a) consent, generates its own 24h-discarded
+  hash, and receives no identifier from this lane; Vercel Inc. additionally processes all
+  traffic as the hosting provider (Art 28, EU SCCs), which the privacy pages disclose.
 
 ## Limb 3 — Balancing test
 
@@ -84,8 +90,10 @@ and ad targeting — none of which happen here.
 **Impact on the data subject:** low, and bounded by design.
 
 - No decision is ever made about an individual. Output is aggregate.
-- No profile is built: the identifier rotates every UTC day, so nothing accumulates across
-  days even in principle.
+- No profile is built: the *session* identifier rotates every UTC day, and the visitor hash —
+  which does persist across days, deliberately, to answer "unique visitors this month" — is
+  bounded by the 60-day retention window, a rotatable key, and the no-added-entropy rule
+  (see Limb 2, first row). What accumulates is a count, never a behavioural profile.
 - No cross-site tracking, no data sharing, no sale.
 - Raw events are deleted after **60 days**; aggregates carry no identifier at all.
 
@@ -102,6 +110,9 @@ and ad targeting — none of which happen here.
 | Closed allowlist on event names and properties | `analytics/event-schema.ts` |
 | 60-day deletion, pinned by test | `jobs/analytics-cleanup.ts`, `analytics.test.ts` |
 | Bot and prefetch traffic excluded | `analytics/collect-policy.ts` |
+| Confirm ping reads nothing from the device (constant payload, HMAC-bound token) | `analytics/confirm-ping.ts`, `analytics/confirm-token.ts` |
+| IP compared for classification, never stored | `db/analytics/mutations.ts` `upsertSession` — inside the INSERT |
+| Operator's own tagged traffic excluded from all aggregates | `db/analytics/aggregations.ts`, `jobs/analytics-rollup.ts` |
 
 **Right to object (Art 21).** Rejecting the analytics tier in the consent banner stops the
 cookie, the referrer, device/browser parsing, and all behavioural events. The banner is
@@ -127,6 +138,8 @@ Re-run this assessment before any of the following. Each would change a limb:
 - Sharing analytics data with any third party.
 - Adding session replay, heatmaps, or form-content capture — each was rejected at Limb 2, so
   reintroducing one reopens the whole assessment.
+- Adding ANY field to the confirm ping's payload, or letting `ip_class` feed an exclusion
+  predicate rather than a ranking — either changes what §25/Limb 3 were assessed on.
 
 ## Related
 

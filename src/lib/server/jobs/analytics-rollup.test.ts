@@ -39,10 +39,25 @@ beforeEach(async () => {
 	await db.delete(sessions);
 
 	await db.insert(sessions).values([
-		// Single-page, no engagement → bounce.
-		{ id: 's_bounce', visitorId: 'v1', pageCount: 1, entryPath: '/a', startedAt: yesterdayAt(9) },
+		// Single-page, no engagement → bounce. Confirmed: the headline columns
+		// count confirmed sessions only.
+		{
+			id: 's_bounce',
+			visitorId: 'v1',
+			pageCount: 1,
+			entryPath: '/a',
+			startedAt: yesterdayAt(9),
+			humanConfirmedAt: yesterdayAt(9),
+		},
 		// Multi-page, engaged → not a bounce.
-		{ id: 's_engaged', visitorId: 'v2', pageCount: 2, entryPath: '/a', startedAt: yesterdayAt(10) },
+		{
+			id: 's_engaged',
+			visitorId: 'v2',
+			pageCount: 2,
+			entryPath: '/a',
+			startedAt: yesterdayAt(10),
+			humanConfirmedAt: yesterdayAt(10),
+		},
 	]);
 
 	await db.insert(events).values([
@@ -90,5 +105,53 @@ describe('analyticsRollup', () => {
 		const pathA = rows.find((r) => r.path === '/a');
 		// Two sessions touched /a; only s_bounce (single page, no engagement) bounces.
 		expect(pathA?.bounceRate).toBe(50);
+	});
+
+	it('splits unconfirmed traffic into its own column — a crawler-only path still gets a row', async () => {
+		await db.insert(sessions).values([
+			// Never corroborated by client JS — the spoofed-header crawler shape.
+			{ id: 's_crawler', visitorId: 'v_crawler', pageCount: 1, entryPath: '/c', startedAt: yesterdayAt(12) },
+		]);
+		await db.insert(events).values([
+			{ sessionId: 's_crawler', visitorId: 'v_crawler', eventType: 'pageview', path: '/c', timestamp: yesterdayAt(12) },
+			{ sessionId: 's_crawler', visitorId: 'v_crawler', eventType: 'pageview', path: '/a', timestamp: yesterdayAt(12) },
+		]);
+
+		await analyticsRollup();
+		const rows = await db.select().from(dailyPageStats);
+		const byPath = new Map(rows.map((r) => [r.path, r]));
+
+		// /c saw only the crawler: zeroed headline columns, its own count carried.
+		const c = byPath.get('/c');
+		expect(c?.pageviews).toBe(0);
+		expect(c?.uniqueVisitors).toBe(0);
+		expect(c?.unconfirmedPageviews).toBe(1);
+
+		// /a keeps its confirmed numbers untouched by the crawler's visit there.
+		const a = byPath.get('/a');
+		expect(a?.pageviews).toBe(2);
+		expect(a?.uniqueVisitors).toBe(2);
+		expect(a?.unconfirmedPageviews).toBe(1);
+		expect(a?.bounceRate).toBe(50);
+	});
+
+	it('excludes debug-owned events entirely', async () => {
+		const { user } = await import('$lib/server/db/schema');
+		await db.insert(user).values({ id: 'admin-ro', name: 'A', email: 'ro@example.com' }).onConflictDoNothing();
+		await db.insert(events).values([
+			{
+				sessionId: 's_engaged',
+				visitorId: 'v2',
+				eventType: 'pageview',
+				path: '/a',
+				debugOwnerId: 'admin-ro',
+				timestamp: yesterdayAt(12),
+			},
+		]);
+
+		await analyticsRollup();
+		const rows = await db.select().from(dailyPageStats);
+		const pathA = rows.find((r) => r.path === '/a');
+		expect(pathA?.pageviews).toBe(2); // unchanged — the tagged event never reached the CTE
 	});
 });

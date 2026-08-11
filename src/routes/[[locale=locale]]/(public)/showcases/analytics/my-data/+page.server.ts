@@ -10,11 +10,13 @@ import { ANALYTICS_CONSENT_COOKIE, ANALYTICS_SESSION_COOKIE } from '$lib/server/
 import { maskIp } from '$lib/server/privacy';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ request, cookies, getClientAddress, setHeaders }) => {
+export const load: PageServerLoad = async ({ request, cookies, getClientAddress, locals, setHeaders }) => {
 	// Prevent caching of personal data
 	setHeaders({ 'Cache-Control': 'no-store, private' });
 
-	const ip = getClientAddress();
+	// Same address resolution as every collector (hook, beacons): if these ever
+	// diverge, the hash shown to the visitor is not the hash stored about them.
+	const ip = locals.clientIp ?? getClientAddress();
 	const ua = request.headers.get('user-agent') ?? '';
 	const acceptLanguage = request.headers.get('accept-language') ?? '';
 	const referrer = request.headers.get('referer') ?? '';

@@ -2,7 +2,8 @@
  * Analytics write operations — event recording and session management.
  */
 
-import { sql } from 'drizzle-orm';
+import { and, eq, isNull, type SQL, sql } from 'drizzle-orm';
+import { normalizeIpForVerification } from '$lib/server/analytics/bot-ranges';
 import { db } from '$lib/server/db';
 import { events, sessions } from '$lib/server/db/schema/analytics';
 
@@ -105,8 +106,49 @@ export async function upsertSession(session: {
 	country?: string;
 	consentTier?: 'necessary' | 'analytics';
 	pairedAdminUserId?: string | null;
+	/**
+	 * Permanent debug attribution, unlike `pairedAdminUserId` (which the cleanup
+	 * reaper NULLs after the 2h streaming cap). Backfill-only below, never
+	 * cleared — aggregates exclude on this column for the whole retention window.
+	 */
+	debugOwnerId?: string | null;
+	/**
+	 * JS corroboration carried by a beacon write (the batch itself proves the
+	 * client ran). COALESCE'd below: the FIRST confirmation timestamp wins, a
+	 * later batch never advances it.
+	 */
+	humanConfirmedAt?: Date;
+	/**
+	 * Used ONLY for the ip_class containment test below — compared against the
+	 * published ranges inside the INSERT and never stored, the same lifetime
+	 * contract as `recordBotHit`. Omit it and ip_class stays untouched.
+	 */
+	clientIp?: string | null;
 }) {
 	const increment = session.pageIncrement ?? 1;
+
+	// Connection-origin class, computed in the same statement as the write (the
+	// bot-mutations pattern: the verdict is computed where the data is, one
+	// round trip). Relay is checked FIRST — Apple's egress ranges ride
+	// commercial cloud space, so datacenter-first would misclassify every
+	// Private Relay user. An empty range table yields NULL ("never classified"),
+	// not 'unknown' — absence of the feed is not a finding about the visitor.
+	const comparableIp = normalizeIpForVerification(session.clientIp);
+	const ipClassExpr: SQL | null =
+		comparableIp === null
+			? null
+			: sql`CASE
+					WHEN NOT EXISTS (SELECT 1 FROM analytics.datacenter_ip_ranges) THEN NULL
+					WHEN EXISTS (
+						SELECT 1 FROM analytics.datacenter_ip_ranges
+						WHERE source = 'icloud_relay' AND ${comparableIp}::inet <<= prefix::cidr
+					) THEN 'icloud_relay'::analytics.ip_class
+					WHEN EXISTS (
+						SELECT 1 FROM analytics.datacenter_ip_ranges
+						WHERE source <> 'icloud_relay' AND ${comparableIp}::inet <<= prefix::cidr
+					) THEN 'datacenter'::analytics.ip_class
+					ELSE 'unknown'::analytics.ip_class
+				END`;
 	await db
 		.insert(sessions)
 		.values({
@@ -121,6 +163,9 @@ export async function upsertSession(session: {
 			consentTier: session.consentTier ?? 'necessary',
 			pairedAdminUserId: session.pairedAdminUserId ?? null,
 			pairedAt: session.pairedAdminUserId ? new Date() : null,
+			debugOwnerId: session.debugOwnerId ?? null,
+			humanConfirmedAt: session.humanConfirmedAt ?? null,
+			...(ipClassExpr ? { ipClass: ipClassExpr } : {}),
 		})
 		.onConflictDoUpdate({
 			target: sessions.id,
@@ -137,6 +182,27 @@ export async function upsertSession(session: {
 				...(session.country ? { country: session.country } : {}),
 				...(session.device ? { device: session.device } : {}),
 				...(session.browser ? { browser: session.browser } : {}),
+				...(session.debugOwnerId ? { debugOwnerId: session.debugOwnerId } : {}),
+				...(session.humanConfirmedAt
+					? { humanConfirmedAt: sql`COALESCE(${sessions.humanConfirmedAt}, ${session.humanConfirmedAt})` }
+					: {}),
+				// Backfill-only, like the rest: the first classification wins, and an
+				// update without an IP never wipes one.
+				...(ipClassExpr ? { ipClass: sql`COALESCE(${sessions.ipClass}, EXCLUDED.ip_class)` } : {}),
 			},
 		});
+}
+
+/**
+ * Mark a session JS-corroborated. UPDATE, not upsert, on purpose: the confirm
+ * ping's payload is constant (no entry path exists to seed a row with), so a
+ * ping that races ahead of the hook's deferred session write is a conservative
+ * no-op — the session stays unconfirmed rather than half-created. Idempotent:
+ * the first confirmation timestamp wins.
+ */
+export async function confirmSession(sessionId: string): Promise<void> {
+	await db
+		.update(sessions)
+		.set({ humanConfirmedAt: new Date() })
+		.where(and(eq(sessions.id, sessionId), isNull(sessions.humanConfirmedAt)));
 }

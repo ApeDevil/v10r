@@ -17,6 +17,8 @@ securityHeaders → bodySizeFloor → stripBaseLocalePrefix → docsMarkdown
 
 `analyticsCollector` runs last — after route guards — so it only records requests that fully resolved through auth and routing.
 
+**Dev gate.** All collectors (the hook and the three beacon endpoints) refuse while `dev` is true unless `ANALYTICS_DEV_TRACKING=true` is set, and the job scheduler is likewise muted without `JOBS_DEV_ENABLED=true`. There is ONE database for every environment (`NEON_DATABASE_URL_PROD`, by construction), so before this gate a dev server wrote localhost browsing into production analytics — measured at over 100 beacon pageviews on a single dev-work day.
+
 ## What it writes
 
 The collector feeds **two lanes**; see [two-lane-model.md](./two-lane-model.md) for why they are separate and must stay that way.
@@ -24,7 +26,16 @@ The collector feeds **two lanes**; see [two-lane-model.md](./two-lane-model.md) 
 **Anonymous lane** — public GET pageviews only:
 
 - `analytics.events` — one row per pageview, with path, templated `route`, referrer, consent tier, and `debug_owner_id` when a debug cookie is present.
-- `analytics.sessions` — one row per session, updated on each event.
+- `analytics.sessions` — one row per session, updated on each event. Carries the counting model's two classification columns: `human_confirmed_at` (set once when client-side JS corroborates the session — see "Confirmation" below) and `ip_class` (connection origin, computed once by containment against `analytics.datacenter_ip_ranges`; the IP is compared and never stored). `debug_owner_id` on sessions is the PERMANENT copy of debug attribution — unlike `paired_admin_user_id`, which the cleanup reaper clears 2h after pairing — and every aggregate excludes on it.
+
+## Confirmation — the counting line
+
+`isBrowserNavigation` is a prefilter, not a bot defense: header-copying crawlers pass it freely (`curl-impersonate` ships the accepted header shape by default; one production week recorded 588 of 612 "visitors" with zero JavaScript execution). The number that holds is corroboration:
+
+- The root layout issues a per-document-load token (`analytics/confirm-token.ts`, HMAC-bound to the visitor hash, 10-min TTL).
+- `confirm-ping.ts` POSTs it once to `/api/analytics/journey/confirm` at min(1.5s, first interaction) — early on purpose; unload-time beacons lose ≥9%. The ping is consent-free by construction: constant payload, nothing read from the device.
+- The endpoint verifies the token, resolves the same session id the hook used at the caller's tier (consented cookie, else the cookieless daily id), and sets `human_confirmed_at`. Journey and telemetry batches confirm redundantly.
+- Dashboards headline CONFIRMED sessions; unconfirmed traffic is reported alongside (never merged, never deleted), ranked by `ip_class`. The initial `enter` navigation is no longer enqueued by the SPA beacon — that page load is the server hook's row, and both client and server now enforce it (the double count this fixed produced 72 duplicate pairs in one week).
 
 **Authenticated lane** — `/account/*` only, and only when a session exists:
 
@@ -111,6 +122,8 @@ One job, `analyticsCleanup()`, covers everything — Vercel Hobby rejects sub-da
 | `events`, `sessions` | 60 days |
 | `user_events` | 180 days (or immediately, via FK cascade on account deletion) |
 | `consent_events` | ~13 months (Art 7(1) demonstrability) |
+| `bot_hits` | 180 days |
+| `daily_page_stats` | 365 days (`ANALYTICS_AGGREGATE_RETENTION_DAYS` — enforced since 2026-08; the constant existed unenforced before) |
 | `pairing_codes` | 1h after expiry / 7d after consumption |
 
 ## Live feed

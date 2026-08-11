@@ -148,8 +148,9 @@ function diurnalTimestamp(baseDate: Date): Date {
 	return d;
 }
 
+/** Seed-shaped stand-in for the real keyed hash — same `v1_` + 32-hex format. */
 function hashVisitorId(seed: number): string {
-	return `v_${seed.toString(16).padStart(12, '0')}`;
+	return `v1_${seed.toString(16).padStart(32, '0')}`;
 }
 
 function formatTimestamp(d: Date): string {
@@ -166,7 +167,8 @@ export async function reseedAnalytics(database: Database) {
 		TRUNCATE
 			analytics.daily_page_stats,
 			analytics.events,
-			analytics.sessions
+			analytics.sessions,
+			analytics.bot_hits
 		RESTART IDENTITY CASCADE
 	`);
 
@@ -207,8 +209,15 @@ export async function reseedAnalytics(database: Database) {
 		const browserVal = hasAnalyticsConsent ? `'${browser.name}'` : 'NULL';
 		const countryVal = hasAnalyticsConsent ? `'${country.code}'` : 'NULL';
 
+		// Confirmation mirrors production shape: consented sessions almost always
+		// confirm (their beacons double as corroboration); necessary-tier sessions
+		// confirm via the consent-free ping, minus blocker/no-JS loss — and the
+		// unconfirmed remainder is what the composition panel's crawler bucket shows.
+		const isConfirmed = hasAnalyticsConsent ? randInt(0, 99) < 90 : randInt(0, 99) < 40;
+		const confirmedVal = isConfirmed ? `'${formatTimestamp(sessionStart)}'` : 'NULL';
+
 		sessionRows.push(
-			`('${sessionId}', '${visitorId}', '${formatTimestamp(sessionStart)}', '${formatTimestamp(sessionEnd)}', ${pages.length}, '${entryPath}', '${exitPath}', ${deviceVal}, ${browserVal}, ${countryVal}, '${consent.tier}')`,
+			`('${sessionId}', '${visitorId}', '${formatTimestamp(sessionStart)}', '${formatTimestamp(sessionEnd)}', ${pages.length}, '${entryPath}', '${exitPath}', ${deviceVal}, ${browserVal}, ${countryVal}, '${consent.tier}', ${confirmedVal})`,
 		);
 
 		let eventTime = new Date(sessionStart);
@@ -253,7 +262,7 @@ export async function reseedAnalytics(database: Database) {
 		await database.execute(
 			sql.raw(`
 			INSERT INTO analytics.sessions
-				(id, visitor_id, started_at, ended_at, page_count, entry_path, exit_path, device, browser, country, consent_tier)
+				(id, visitor_id, started_at, ended_at, page_count, entry_path, exit_path, device, browser, country, consent_tier, human_confirmed_at)
 			VALUES
 				${batch.join(',\n\t\t\t\t')}
 		`),
@@ -274,18 +283,23 @@ export async function reseedAnalytics(database: Database) {
 		);
 	}
 
-	// Compute daily page stats from events
+	// Compute daily page stats from events. Headline columns count CONFIRMED
+	// sessions only, matching the real rollup's semantics (aggregates.ts doc);
+	// the duration/bounce formulas here remain the seed's own simplified ones.
 	await database.execute(sql`
 		INSERT INTO analytics.daily_page_stats
-			(date, path, unique_visitors, pageviews, avg_duration_ms, bounce_rate)
+			(date, path, unique_visitors, pageviews, unconfirmed_pageviews, avg_duration_ms, bounce_rate)
 		SELECT
-			to_char(e.timestamp, 'YYYY-MM-DD') AS date,
+			-- ::date, not to_char: the target column is a DATE, and text does not
+			-- assignment-cast into it — the to_char version threw 42804 on insert.
+			e.timestamp::date AS date,
 			e.path,
-			COUNT(DISTINCT e.visitor_id) AS unique_visitors,
-			COUNT(*) AS pageviews,
+			COUNT(DISTINCT e.visitor_id) FILTER (WHERE s.human_confirmed_at IS NOT NULL) AS unique_visitors,
+			COUNT(*) FILTER (WHERE s.human_confirmed_at IS NOT NULL) AS pageviews,
+			COUNT(*) FILTER (WHERE s.human_confirmed_at IS NULL) AS unconfirmed_pageviews,
 			COALESCE(
 				AVG(
-					CASE WHEN s.page_count > 1
+					CASE WHEN s.page_count > 1 AND s.human_confirmed_at IS NOT NULL
 						THEN EXTRACT(EPOCH FROM (s.ended_at - s.started_at))::integer * 1000 / s.page_count
 						ELSE NULL
 					END
@@ -293,13 +307,61 @@ export async function reseedAnalytics(database: Database) {
 				0
 			) AS avg_duration_ms,
 			CASE
-				WHEN COUNT(*) = 0 THEN 0
-				ELSE (COUNT(*) FILTER (WHERE s.page_count = 1) * 100 / COUNT(*))
+				WHEN COUNT(*) FILTER (WHERE s.human_confirmed_at IS NOT NULL) = 0 THEN 0
+				ELSE (
+					COUNT(*) FILTER (WHERE s.page_count = 1 AND s.human_confirmed_at IS NOT NULL) * 100
+					/ COUNT(*) FILTER (WHERE s.human_confirmed_at IS NOT NULL)
+				)
 			END AS bounce_rate
 		FROM analytics.events e
 		JOIN analytics.sessions s ON s.id = e.session_id
 		WHERE e.event_type = 'pageview'
-		GROUP BY to_char(e.timestamp, 'YYYY-MM-DD'), e.path
+		GROUP BY e.timestamp::date, e.path
 		ORDER BY date, path
 	`);
+
+	// A small bot lane so the composition panel and the bots page have something
+	// to show after a reseed — previously they rendered zeros against a freshly
+	// seeded human lane, which read as "no crawlers exist".
+	const botRows: string[] = [];
+	const BOT_SEED: Array<{
+		family: string;
+		category: string;
+		verification: string;
+		weight: number;
+	}> = [
+		{ family: 'claudebot', category: 'ai_training', verification: 'verified', weight: 30 },
+		{ family: 'gptbot', category: 'ai_training', verification: 'verified', weight: 15 },
+		{ family: 'chatgpt-user', category: 'ai_agent', verification: 'verified', weight: 5 },
+		{ family: 'googlebot', category: 'search', verification: 'verified', weight: 10 },
+		{ family: 'semrush', category: 'seo', verification: 'unpublished', weight: 15 },
+		{ family: 'other', category: 'unclassified', verification: 'unpublished', weight: 25 },
+	];
+	for (let i = 0; i < 150; i++) {
+		const bot = weightedPick(BOT_SEED);
+		const dayOffset = randInt(0, DAYS_BACK - 1);
+		const hitDate = new Date(startDate);
+		hitDate.setDate(hitDate.getDate() + dayOffset);
+		const hitTime = diurnalTimestamp(hitDate);
+
+		// Respect bot_hit_path_scope: path only for agent surfaces and misses.
+		const roll = randInt(0, 99);
+		const isAgentSurface = roll < 20;
+		const isMiss = !isAgentSurface && roll < 30;
+		const status = isMiss ? 404 : 200;
+		const pathVal = isAgentSurface ? "'/llms.txt'" : isMiss ? "'/wp-admin'" : 'NULL';
+		const routeVal = isAgentSurface || isMiss ? 'NULL' : "'/blog'";
+
+		botRows.push(
+			`('${bot.family}', '${bot.category}', '${bot.verification}', ${routeVal}, ${pathVal}, ${isAgentSurface}, ${status}, '${formatTimestamp(hitTime)}')`,
+		);
+	}
+	await database.execute(
+		sql.raw(`
+		INSERT INTO analytics.bot_hits
+			(family, category, verification, route, path, agent_surface, status, timestamp)
+		VALUES
+			${botRows.join(',\n\t\t\t')}
+	`),
+	);
 }

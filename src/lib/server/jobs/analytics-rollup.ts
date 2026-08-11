@@ -62,6 +62,10 @@ export async function analyticsRollup(day?: string): Promise<number> {
 			FROM analytics.events
 			WHERE timestamp >= ${dateStr}::date
 			  AND timestamp < (${dateStr}::date + interval '1 day')
+			  -- The operator's own tagged traffic never reaches the rollup. The
+			  -- event-side tag is immutable, unlike the session-side pairing column
+			  -- the cleanup reaper clears after 2h.
+			  AND debug_owner_id IS NULL
 		),
 		-- Engaged seconds per (session, path), from the client's visibility-aware clock.
 		engagement AS (
@@ -76,35 +80,49 @@ export async function analyticsRollup(day?: string): Promise<number> {
 			GROUP BY session_id, path
 		),
 		pageviews AS (
-			SELECT session_id, visitor_id, path
-			FROM day_events
-			WHERE event_type = 'pageview'
+			SELECT
+				d.session_id,
+				d.visitor_id,
+				d.path,
+				s.human_confirmed_at IS NOT NULL AS confirmed,
+				s.page_count
+			FROM day_events d
+			JOIN analytics.sessions s ON s.id = d.session_id
+			WHERE d.event_type = 'pageview'
+			  AND s.debug_owner_id IS NULL
 		)
+		-- unique_visitors / pageviews / duration / bounce are CONFIRMED-only (the
+		-- headline lane); unconfirmed_pageviews carries the rest. A path with only
+		-- unconfirmed traffic still gets a row — "which pages attract crawlers" is
+		-- itself a signal. See the schema doc in aggregates.ts.
 		INSERT INTO analytics.daily_page_stats
-			(date, path, unique_visitors, pageviews, avg_duration_ms, bounce_rate)
+			(date, path, unique_visitors, pageviews, unconfirmed_pageviews, avg_duration_ms, bounce_rate)
 		SELECT
 			${dateStr} AS date,
 			p.path,
-			COUNT(DISTINCT p.visitor_id) AS unique_visitors,
-			COUNT(*) AS pageviews,
+			COUNT(DISTINCT p.visitor_id) FILTER (WHERE p.confirmed) AS unique_visitors,
+			COUNT(*) FILTER (WHERE p.confirmed) AS pageviews,
+			COUNT(*) FILTER (WHERE NOT p.confirmed) AS unconfirmed_pageviews,
 			-- Engaged milliseconds, averaged over the sessions that reported any.
-			COALESCE(AVG(e.engaged_sec) * 1000, 0)::integer AS avg_duration_ms,
+			-- Confirmed-only by construction: engagement events imply client JS.
+			COALESCE(AVG(e.engaged_sec) FILTER (WHERE p.confirmed) * 1000, 0)::integer AS avg_duration_ms,
 			CASE
-				WHEN COUNT(DISTINCT p.session_id) = 0 THEN 0
+				WHEN COUNT(DISTINCT p.session_id) FILTER (WHERE p.confirmed) = 0 THEN 0
 				ELSE (
 					COUNT(DISTINCT p.session_id) FILTER (
-						WHERE s.page_count = 1
+						WHERE p.confirmed
+						  AND p.page_count = 1
 						  AND COALESCE(e.engaged_sec, 0) < ${ENGAGED_BOUNCE_THRESHOLD_SEC}
-					) * 100 / COUNT(DISTINCT p.session_id)
+					) * 100 / COUNT(DISTINCT p.session_id) FILTER (WHERE p.confirmed)
 				)
 			END AS bounce_rate
 		FROM pageviews p
-		JOIN analytics.sessions s ON s.id = p.session_id
 		LEFT JOIN engagement e ON e.session_id = p.session_id AND e.path = p.path
 		GROUP BY p.path
 		ON CONFLICT (date, path) DO UPDATE SET
 			unique_visitors = EXCLUDED.unique_visitors,
 			pageviews = EXCLUDED.pageviews,
+			unconfirmed_pageviews = EXCLUDED.unconfirmed_pageviews,
 			avg_duration_ms = EXCLUDED.avg_duration_ms,
 			bounce_rate = EXCLUDED.bounce_rate
 		RETURNING 1

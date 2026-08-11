@@ -5,6 +5,7 @@
 import { Tooltip as TooltipPrimitive } from 'bits-ui';
 import { afterNavigate, goto } from '$app/navigation';
 import { page } from '$app/state';
+import { initConfirmPing } from '$lib/analytics/confirm-ping';
 import { initJourneyBeacon } from '$lib/analytics/journey-beacon';
 import { initTelemetry, setTelemetryConsent, telemetryOnNavigate } from '$lib/analytics/telemetry';
 import { setVercelAnalyticsConsent } from '$lib/analytics/vercel';
@@ -51,6 +52,10 @@ $effect(() => {
 	// The templated route is the cardinality-bounded grouping key; page.route.id
 	// is SvelteKit's matched route, which the server templates the same way.
 	initTelemetry(() => page.route.id ?? '(unknown)');
+	// Consent-free by construction (constant payload, nothing read from the
+	// device — see confirm-ping.ts). Deliberately NOT inside the consent effect
+	// below: consent.tier is still null at mount, and this must not wait on it.
+	initConfirmPing(data.analyticsConfirmToken);
 });
 
 // Analytics collection follows consent reactively — a mid-session withdrawal

@@ -142,6 +142,100 @@ const ranges = [
 		</div>
 	</div>
 
+	<!-- Traffic composition: three separately-counted buckets -->
+	<Card>
+		{#snippet header()}
+			<Stack gap="1">
+				<h2 class="text-fluid-lg font-semibold">{m.admin_analytics_composition_title()}</h2>
+				<p class="text-muted text-fluid-xs">{m.admin_analytics_composition_description()}</p>
+			</Stack>
+		{/snippet}
+
+		{#await data.composition}
+			<div class="flex flex-col gap-2">
+				{#each Array(3) as _}
+					<Skeleton variant="text" height="2rem" />
+				{/each}
+			</div>
+		{:then comp}
+			{@const totalShaped = comp.confirmed.visitors + comp.unconfirmed.visitors}
+			{@const confirmedShare = totalShaped > 0 ? Math.round((comp.confirmed.visitors / totalShaped) * 100) : 0}
+			{@const unconfirmedShare = totalShaped > 0 ? 100 - confirmedShare : 0}
+			<div class="composition">
+				<div class="comp-row">
+					<div class="comp-head">
+						<span class="comp-name">{m.admin_analytics_composition_confirmed()}</span>
+						<span class="comp-count">
+							{formatNumber(comp.confirmed.visitors)}
+							<span class="text-muted">
+								· {formatNumber(comp.confirmed.pageviews)} {m.admin_analytics_composition_pv()} · {confirmedShare}%
+							</span>
+						</span>
+					</div>
+					<div class="comp-track"><div class="comp-bar comp-bar-confirmed" style="width: {confirmedShare}%"></div></div>
+					<p class="comp-def">{m.admin_analytics_composition_confirmed_def()}</p>
+				</div>
+
+				<div class="comp-row">
+					<div class="comp-head">
+						<span class="comp-name">{m.admin_analytics_composition_unconfirmed()}</span>
+						<span class="comp-count">
+							{formatNumber(comp.unconfirmed.visitors)}
+							<span class="text-muted">
+								· {formatNumber(comp.unconfirmed.pageviews)} {m.admin_analytics_composition_pv()} · {unconfirmedShare}%
+							</span>
+						</span>
+					</div>
+					<div class="comp-track"><div class="comp-bar comp-bar-unconfirmed" style="width: {unconfirmedShare}%"></div></div>
+					<p class="comp-def">{m.admin_analytics_composition_unconfirmed_def()}</p>
+					{#if comp.unconfirmed.visitors > 0}
+						<ul class="comp-sub">
+							<li>{formatNumber(comp.unconfirmed.byIpClass.datacenter)} {m.admin_analytics_composition_ipclass_datacenter()}</li>
+							<li>{formatNumber(comp.unconfirmed.byIpClass.icloudRelay)} {m.admin_analytics_composition_ipclass_relay()}</li>
+							<li>{formatNumber(comp.unconfirmed.byIpClass.unclassified)} {m.admin_analytics_composition_ipclass_unclassified()}</li>
+						</ul>
+					{/if}
+				</div>
+
+				<div class="comp-row">
+					<div class="comp-head">
+						<span class="comp-name">{m.admin_analytics_composition_bots()}</span>
+						<span class="comp-count">
+							{formatNumber(comp.bots.hits)}
+							<span class="text-muted">{m.admin_analytics_composition_hits()}</span>
+						</span>
+					</div>
+					<p class="comp-def">{m.admin_analytics_composition_bots_def()}</p>
+					{#if comp.bots.byCategory.length > 0}
+						<ul class="comp-sub">
+							<li>{formatNumber(comp.bots.aiMediatedHits)} {m.admin_analytics_composition_ai_mediated()}</li>
+							<li class="comp-categories">
+								<span class="text-muted">{m.admin_analytics_composition_declared_purpose()}:</span>
+								{#each comp.bots.byCategory as cat, i}
+									<code>{cat.category}</code> {formatNumber(cat.hits)}{i < comp.bots.byCategory.length - 1 ? ' · ' : ''}
+								{/each}
+							</li>
+						</ul>
+					{/if}
+				</div>
+			</div>
+
+			<p class="consent-caveat">
+				<span class="i-lucide-scale caveat-icon" aria-hidden="true"></span>
+				{m.admin_analytics_composition_unconfirmed_ratio({ share: unconfirmedShare })}
+				{m.admin_analytics_composition_vercel_note()}
+			</p>
+		{:catch}
+			<Alert
+				variant="error"
+				title={m.admin_analytics_composition_error_title()}
+				description={m.admin_analytics_composition_error_description()}
+			>
+				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>{m.composites_error_display_try_again()}</Button>
+			</Alert>
+		{/await}
+	</Card>
+
 	<!-- Consent caveat -->
 	{#if totalSessions > 0}
 		<p class="consent-caveat">
@@ -684,6 +778,76 @@ const ranges = [
 		font-variant-numeric: tabular-nums;
 		color: var(--color-muted);
 		flex-shrink: 0;
+	}
+
+	.composition {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-5);
+	}
+
+	.comp-row {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-1);
+	}
+
+	.comp-head {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		gap: var(--spacing-3);
+	}
+
+	.comp-name {
+		font-size: var(--text-fluid-sm);
+		font-weight: 600;
+	}
+
+	.comp-count {
+		font-size: var(--text-fluid-sm);
+		font-variant-numeric: tabular-nums;
+		flex-shrink: 0;
+	}
+
+	.comp-track {
+		height: 0.375rem;
+		border-radius: var(--radius-sm);
+		background: color-mix(in srgb, var(--color-border) 50%, transparent);
+		overflow: hidden;
+	}
+
+	.comp-bar {
+		height: 100%;
+		border-radius: var(--radius-sm);
+	}
+
+	.comp-bar-confirmed {
+		background: var(--chart-1);
+	}
+
+	.comp-bar-unconfirmed {
+		background: color-mix(in srgb, var(--color-muted) 55%, transparent);
+	}
+
+	.comp-def {
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
+	}
+
+	.comp-sub {
+		margin: 0;
+		padding-left: var(--spacing-4);
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-1);
+		font-size: var(--text-fluid-xs);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.comp-categories code {
+		font-size: var(--text-fluid-xs);
+		font-family: ui-monospace, monospace;
 	}
 
 	.vitals-grid {

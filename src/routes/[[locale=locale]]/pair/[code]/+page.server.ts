@@ -10,15 +10,25 @@
  * Flow (POST ?/claim):
  *   1. IP rate limit — before any DB round-trip (the per-code attempt counter
  *      constrains nothing against a keyspace sweep).
- *   2. Read or mint a session id (sets _v10r_sid if absent).
+ *   2. Resolve the session id the collector would use for this phone — the
+ *      consented cookie session when analytics consent exists (minting the
+ *      cookie if absent), the cookieless daily id otherwise. Minting the
+ *      cookie regardless of tier was a §25 bypass: this route wrote terminal
+ *      storage the consent gate in the hook deliberately withholds.
  *   3. Claim the code → tag session with admin id, set debug-owner cookie.
  *   4. Redirect to / on success; render failure copy otherwise.
+ *
+ * Cookieless caveat: the daily id rotates at UTC midnight, so a pairing that
+ * spans it stops tagging the phone's NEW session for the remainder of the 2h
+ * cap. Accepted — the alternative is exactly the consent bypass this removes.
  */
 import { fail, redirect } from '@sveltejs/kit';
 import { localizeHref } from '$lib/i18n';
 import { getClientIp, ipLimitKey } from '$lib/server/abuse';
+import { deriveCookielessSessionId, hasConsent } from '$lib/server/analytics/consent';
+import { deriveVisitorId } from '$lib/server/analytics/visitor';
 import { createLimiter } from '$lib/server/api/rate-limit';
-import { ANALYTICS_SESSION_TIMEOUT_MS } from '$lib/server/config';
+import { ANALYTICS_SESSION_COOKIE, ANALYTICS_SESSION_TIMEOUT_MS } from '$lib/server/config';
 import { claimPairingCode, PAIRED_SESSION_TTL_MS, setOwnerCookie, signOwnerCookie } from '$lib/server/pairing';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -35,7 +45,7 @@ export const load: PageServerLoad = async ({ params }) => {
 
 export const actions: Actions = {
 	claim: async (event) => {
-		const { params, cookies } = event;
+		const { params, cookies, locals, request } = event;
 
 		const { success } = await claimLimiter.limit(ipLimitKey(getClientIp(event)));
 		if (!success) {
@@ -46,18 +56,26 @@ export const actions: Actions = {
 			return fail(400, { failure: 'invalid' as const });
 		}
 
-		// Ensure the phone has a session id — mint if absent so the visitor row
-		// produced by analyticsCollector on subsequent navigations is the one we tag.
-		let sessionId = cookies.get('_v10r_sid');
-		if (!sessionId) {
-			sessionId = `s_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
-			cookies.set('_v10r_sid', sessionId, {
-				path: '/',
-				httpOnly: true,
-				secure: true,
-				sameSite: 'lax',
-				maxAge: ANALYTICS_SESSION_TIMEOUT_MS / 1000,
-			});
+		// Resolve the session id analyticsCollector will use for this phone's
+		// subsequent navigations, WITHOUT widening what consent allows: cookie
+		// session only at the analytics tier, the derived cookieless id otherwise.
+		let sessionId: string;
+		if (hasConsent(locals.consentTier, 'analytics')) {
+			const existing = cookies.get(ANALYTICS_SESSION_COOKIE);
+			sessionId = existing ?? `s_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
+			if (!existing) {
+				cookies.set(ANALYTICS_SESSION_COOKIE, sessionId, {
+					path: '/',
+					httpOnly: true,
+					secure: true,
+					sameSite: 'lax',
+					maxAge: ANALYTICS_SESSION_TIMEOUT_MS / 1000,
+				});
+			}
+		} else {
+			const ip = locals.clientIp ?? event.getClientAddress();
+			const ua = request.headers.get('user-agent') ?? '';
+			sessionId = await deriveCookielessSessionId(await deriveVisitorId(ip, ua));
 		}
 
 		const result = await claimPairingCode(params.code, sessionId);

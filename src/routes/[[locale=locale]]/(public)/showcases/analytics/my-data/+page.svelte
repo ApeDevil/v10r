@@ -76,6 +76,15 @@ const on = $derived(activeTier === 'analytics');
 							</span>
 						</div>
 					</li>
+					<li class="data-item collected">
+						<span class="i-lucide-check text-icon-xs" aria-hidden="true"></span>
+						<div>
+							<strong>{m.showcase_analytics_mydata_item_confirm()}</strong>
+							<span class="text-muted">
+								{m.showcase_analytics_mydata_note_confirm()}
+							</span>
+						</div>
+					</li>
 				</ul>
 			</div>
 

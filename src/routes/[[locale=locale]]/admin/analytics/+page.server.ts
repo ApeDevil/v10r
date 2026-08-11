@@ -8,6 +8,7 @@ import {
 	getOverviewMetrics,
 	getRollupFreshness,
 	getTopPages,
+	getTrafficComposition,
 	getTrafficTrend,
 	getUserLaneStats,
 	getWebVitals,
@@ -92,6 +93,11 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		pairedSessions,
 		pairedActive,
 		// Deferred: chart + table data (streams in)
+		composition: safeDeferPromise(getTrafficComposition(days), {
+			confirmed: { pageviews: 0, visitors: 0 },
+			unconfirmed: { pageviews: 0, visitors: 0, byIpClass: { datacenter: 0, icloudRelay: 0, unclassified: 0 } },
+			bots: { hits: 0, aiMediatedHits: 0, byCategory: [] },
+		}),
 		trend: safeDeferPromise(getTrafficTrend(days), []),
 		topPages: safeDeferPromise(getTopPages(days, 10), []),
 		audience: safeDeferPromise(getAudienceBreakdown(days), {
