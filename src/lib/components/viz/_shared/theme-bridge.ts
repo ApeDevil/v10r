@@ -131,6 +131,23 @@ export function resolveDatasetColors<T extends { datasets: unknown[] }>(chartDat
 	return { ...chartData, datasets: newDatasets } as T;
 }
 
+/**
+ * Resolve ANY CSS color (oklch, hex, rgb, color-mix) to sRGB [r,g,b] by letting the
+ * browser paint it onto a 1×1 probe canvas and reading the pixel back. The design
+ * tokens are authored as oklch(), which a naive hex parser silently turns into black —
+ * so never parse the color string yourself.
+ */
+export function cssColorToRgb(color: string, fallback: string): [number, number, number] {
+	if (typeof document === 'undefined') return [128, 128, 128];
+	const probe = document.createElement('canvas').getContext('2d');
+	if (!probe) return [128, 128, 128];
+	probe.fillStyle = '#000';
+	probe.fillStyle = (color || '').trim() || fallback;
+	probe.fillRect(0, 0, 1, 1);
+	const d = probe.getImageData(0, 0, 1, 1).data;
+	return [d[0], d[1], d[2]];
+}
+
 /** Get chart infrastructure colors */
 export function getChartInfraColors() {
 	return {

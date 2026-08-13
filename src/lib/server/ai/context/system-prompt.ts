@@ -143,36 +143,56 @@ export function formatCurrentPageBlock(page: {
 // implementations moved to $lib/utils/xml so the retrieval layer can share them.
 export { escapeXmlAttr, escapeXmlText };
 
+/** Identity of one block in the assembled base system prompt. */
+export type SystemPromptBlockId =
+	| 'role'
+	| 'completion'
+	| 'planning'
+	| 'permissions'
+	| 'workspace'
+	| 'desk-context'
+	| 'desk-layout';
+
+/** One block of the base system prompt — id + the text it contributes. */
+export interface SystemPromptBlock {
+	id: SystemPromptBlockId;
+	text: string;
+}
+
 /**
- * Build the system prompt from `SystemPromptInput`.
+ * Build the system prompt from `SystemPromptInput`, as an ordered block list.
  *
  * When `toolScopes` is empty (pure retrieval chat with no desk access),
  * every desk-related block is skipped — the single biggest token win
  * in the prompt assembly path.
+ *
+ * The block list is the single source of truth: `buildSystemPrompt` joins it,
+ * and the context-probe endpoint reports it (ids + sizes) — so the probe's
+ * prompt outline structurally cannot drift from what a real turn assembles.
  */
-export function buildSystemPrompt(input: SystemPromptInput): string {
+export function buildSystemPromptBlocks(input: SystemPromptInput): SystemPromptBlock[] {
 	const { panelContext, toolScopes, deskLayout, activeWorkspace, requirePlan } = input;
 	const hasTools = !!toolScopes?.length;
 
 	// Cache-stable prefix: role + instructions + completion guidance (+ planning when required).
-	let prompt = hasTools ? DESK_SYSTEM_PROMPT : SYSTEM_PROMPT;
+	const blocks: SystemPromptBlock[] = [{ id: 'role', text: hasTools ? DESK_SYSTEM_PROMPT : SYSTEM_PROMPT }];
 	if (hasTools) {
-		prompt += `\n\n${COMPLETION_BLOCK}`;
+		blocks.push({ id: 'completion', text: COMPLETION_BLOCK });
 		if (requirePlan) {
-			prompt += `\n\n${PLANNING_BLOCK}`;
+			blocks.push({ id: 'planning', text: PLANNING_BLOCK });
 		}
 	}
 
 	// Pure retrieval chat with no desk tools — no desk blocks at all.
-	if (!hasTools) return prompt;
+	if (!hasTools) return blocks;
 
 	// Variable tail — per-user / per-request.
 	if (toolScopes) {
-		prompt += `\n\n${buildPermissionsBlock(toolScopes)}`;
+		blocks.push({ id: 'permissions', text: buildPermissionsBlock(toolScopes) });
 	}
 
 	if (activeWorkspace) {
-		prompt += `\n\nThe user is in workspace "${escapeXmlAttr(activeWorkspace.name)}".`;
+		blocks.push({ id: 'workspace', text: `The user is in workspace "${escapeXmlAttr(activeWorkspace.name)}".` });
 	}
 
 	if (panelContext?.length) {
@@ -191,7 +211,7 @@ export function buildSystemPrompt(input: SystemPromptInput): string {
 				return `<panel type="${escapeXmlAttr(pc.panelType)}" label="${escapeXmlAttr(pc.label)}"${statusAttr}${levelAttr}>\n${escapeXmlText(pc.content)}\n</panel>`;
 			})
 			.join('\n');
-		prompt += `\n\n<desk-context>\n${deskBlock}\n</desk-context>`;
+		blocks.push({ id: 'desk-context', text: `<desk-context>\n${deskBlock}\n</desk-context>` });
 	}
 
 	// Compressed desk layout — `{ id, type, title }` only, no positions/sizes/styles.
@@ -203,8 +223,15 @@ export function buildSystemPrompt(input: SystemPromptInput): string {
 				return `- ${escapeXmlAttr(p.label)} (${typePart})${idPart}`;
 			})
 			.join('\n');
-		prompt += `\n\n<desk-layout>\n${layoutBlock}\n</desk-layout>`;
+		blocks.push({ id: 'desk-layout', text: `<desk-layout>\n${layoutBlock}\n</desk-layout>` });
 	}
 
-	return prompt;
+	return blocks;
+}
+
+/** Build the system prompt string — the joined block list. */
+export function buildSystemPrompt(input: SystemPromptInput): string {
+	return buildSystemPromptBlocks(input)
+		.map((b) => b.text)
+		.join('\n\n');
 }

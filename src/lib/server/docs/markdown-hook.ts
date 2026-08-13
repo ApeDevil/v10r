@@ -1,6 +1,5 @@
 import type { Handle } from '@sveltejs/kit';
 import { prefersMarkdown } from './accept';
-import { markdownBodyFor, resolveMarkdownRequest, toMarkdownPath } from './markdown-urls';
 
 /**
  * docsMarkdown — the agent-facing `.md` layer over /docs.
@@ -45,6 +44,15 @@ export const docsMarkdown: Handle = async ({ event, resolve }) => {
 	}
 
 	if (!pathname.startsWith('/docs/')) return resolve(event);
+
+	// Imported here, not at module scope, deliberately. `markdown-urls` pulls the
+	// docs manifest, whose `import.meta.glob('/docs/**/*.md', { eager: true })`
+	// inlines the WHOLE corpus (~0.5 MB of string literals). As a static import
+	// that landed in the boot graph of every serverless cold start — including `/`,
+	// `/feedback` and every /api route, none of which can ever read a doc. Docs
+	// routes need the corpus anyway (their page load renders from it), so gating it
+	// behind this prefix check costs them nothing and takes it off every other path.
+	const { markdownBodyFor, resolveMarkdownRequest, toMarkdownPath } = await import('./markdown-urls');
 
 	if (pathname.endsWith('.md')) {
 		// Raw markdown is for agents only. Humans (document navigations) and the

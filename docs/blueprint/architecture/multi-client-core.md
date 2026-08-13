@@ -368,7 +368,7 @@ Jobs register in `src/lib/server/jobs/index.ts`. They're triggered two ways: `sc
 
 **Why endpoint guards return instead of throw.** SvelteKit unwraps only `HttpError` and `Redirect`; a thrown bare `Response` falls through to the fatal-error path and becomes a **500**. An earlier `requireApi*` family did exactly that, so unauthenticated callers got 500 instead of 401/403 across most of the API. Page guards (`requireAuth`, `requireAdmin`) still throw, because Kit's own `redirect()`/`error()` are unwrapped correctly. `guard-contract.gate.test.ts` pins the split shut.
 
-The AI tool pattern is important: authentication happens once, at the AI route's shared entry guard (`guardAiRequest`, used by `/api/ai/chatbot`, `/api/ai/deskbot`, `/api/ai/showcase/rag`). The tool factory receives the verified `user.id` as a closure argument. No tool ever re-checks authentication itself.
+The AI tool pattern is important: authentication happens once, at the AI route's shared entry guard (`guardAiRequest`, used by `/api/ai/chatbot`, `/api/ai/deskbot`, `/api/ai/images/[id]/analyze`). The tool factory receives the verified `user.id` as a closure argument. No tool ever re-checks authentication itself.
 
 ```typescript
 // src/routes/api/ai/chatbot/+server.ts (the guard preamble is shared across all three AI routes)

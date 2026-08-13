@@ -53,11 +53,11 @@ $effect(() => {
 
 <!--
 	The AI Act Art. 50(1) disclosure lives HERE, on the shared input, rather than
-	in each chat surface. Three surfaces render a chat — the Vely dock
-	(Chatbot.svelte), /showcases/ai/chat and /showcases/ai/retrieval/rag-chat —
-	and the two showcase pages build their own UI from these primitives, so a
-	disclosure added to Chatbot.svelte alone would silently miss both. Anchoring
-	it to the input means any future chat surface inherits it by construction.
+	in each chat surface. Two surfaces render a chat — the Vely dock
+	(Chatbot.svelte) and the desk panel (ChatPanel.svelte) — and both build their
+	UI from these primitives, so a disclosure added to Chatbot.svelte alone would
+	silently miss the other. Anchoring it to the input means any future chat
+	surface inherits it by construction.
 
 	Identification leads the sentence ("AI assistant — …") so the legally
 	load-bearing fact is first, not buried behind the caveat.

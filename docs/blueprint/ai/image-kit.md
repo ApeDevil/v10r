@@ -151,7 +151,7 @@ The terminal is honest: nothing is saved, so instead of a fake "Saved!" it shows
 
 ### Greenfield-additive — the reader is untouched
 
-Image Kit is entirely new code. The `/showcases/ai/image-metadata` reader, its `image` pgSchema, its `imagemeta/` persistence, and all admin/GDPR consumers are unchanged. Image Kit reuses framework-free pieces by import only; it deletes nothing.
+Image Kit is entirely new code. The `/showcases/toolkits/image-metadata` reader, its `image` pgSchema, its `imagemeta/` persistence, and all admin/GDPR consumers are unchanged. Image Kit reuses framework-free pieces by import only; it deletes nothing.
 
 ---
 

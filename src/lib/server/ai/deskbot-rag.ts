@@ -63,9 +63,19 @@ export async function syncDeskFileToRag(
 }
 
 /**
+ * Production cutoff for `desk_search_knowledge` — exported so the context probe
+ * reports (and marks) the real chosen-set boundary instead of a hardcoded copy.
+ */
+export const DESK_SEARCH_MAX_CHUNKS = 5;
+
+/**
  * The deskbot retrieval profile — semantic search over the user's OWN desk corpus.
  * Tiers 1–2 only; the `user_id` hard-filter in the shared kernel is the tenant boundary.
  */
-export async function retrieveDeskDocs(userId: string, query: string, maxChunks = 5): Promise<RetrievalResult> {
+export async function retrieveDeskDocs(
+	userId: string,
+	query: string,
+	maxChunks = DESK_SEARCH_MAX_CHUNKS,
+): Promise<RetrievalResult> {
 	return retrieve(query, { userId, tiers: [1, 2], maxChunks });
 }

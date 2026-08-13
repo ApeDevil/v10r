@@ -487,6 +487,7 @@ describe('createOnFinish', () => {
 describe('orchestrateChat', () => {
 	const baseInput = {
 		userId: 'user-1',
+		surface: 'deskbot' as const,
 		messages: [{ role: 'user' as const, content: 'Hello' }],
 	};
 

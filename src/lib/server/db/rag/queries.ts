@@ -1,4 +1,4 @@
-import { and, count, desc, eq, isNull } from 'drizzle-orm';
+import { and, count, desc, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../index';
 import { document } from '../schema/rag';
 
@@ -64,4 +64,30 @@ export async function countDocuments(userId: string): Promise<number> {
 		.from(document)
 		.where(and(eq(document.userId, userId), isNull(document.deletedAt)));
 	return result?.total ?? 0;
+}
+
+/**
+ * Searchable corpus size for one owner, optionally narrowed to one source kind —
+ * the context-probe's "available" side. Counts only `ready` documents (those
+ * whose chunks are embedded and therefore retrievable).
+ */
+export async function countCorpus(
+	userId: string,
+	source?: 'upload' | 'web' | 'text' | 'api' | 'catalog' | 'docs' | 'desk',
+): Promise<{ documents: number; chunks: number }> {
+	const [row] = await db
+		.select({
+			documents: count(),
+			chunks: sql<number>`coalesce(sum(${document.totalChunks}), 0)::int`,
+		})
+		.from(document)
+		.where(
+			and(
+				eq(document.userId, userId),
+				eq(document.status, 'ready'),
+				isNull(document.deletedAt),
+				source ? eq(document.source, source) : undefined,
+			),
+		);
+	return { documents: row?.documents ?? 0, chunks: row?.chunks ?? 0 };
 }

@@ -36,7 +36,8 @@ Two AI surfaces over one shared guard: a read-only, citation-faithful chatbot (V
 
 ## Proof
 
-- [`Chatbot showcase; deskbot is live at app route /desk (no showcase) /showcases/ai/chat`](/showcases/ai/chat)
+- [`Chatbot architecture page; the sibling deskbot page mirrors its anchor set /showcases/ai/chatbot`](/showcases/ai/chatbot)
+- [`Deskbot architecture page; the live deskbot runs at app route /desk /showcases/ai/deskbot`](/showcases/ai/deskbot)
 
 ## Invariants
 

@@ -26,7 +26,7 @@ A vision-capable LLM proposes title, caption, alt text, keywords, and category f
 
 ## Proof
 
-- [`/showcases/ai/image-metadata`](/showcases/ai/image-metadata)
+- [`/showcases/toolkits/image-metadata`](/showcases/toolkits/image-metadata)
 
 ---
 

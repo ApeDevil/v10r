@@ -3191,9 +3191,14 @@
 			],
 			"showcases": [
 				{
-					"path": "/showcases/ai/chat",
+					"path": "/showcases/ai/chatbot",
 					"kind": "route",
-					"note": "Chatbot showcase; deskbot is live at app route /desk (no showcase)"
+					"note": "Chatbot architecture page; the sibling deskbot page mirrors its anchor set"
+				},
+				{
+					"path": "/showcases/ai/deskbot",
+					"kind": "route",
+					"note": "Deskbot architecture page; the live deskbot runs at app route /desk"
 				}
 			],
 			"invariants": [
@@ -3341,7 +3346,7 @@
 			],
 			"showcases": [
 				{
-					"path": "/showcases/ai/retrieval",
+					"path": "/showcases/ai/chatbot",
 					"kind": "route"
 				}
 			],
@@ -3404,12 +3409,9 @@
 			],
 			"showcases": [
 				{
-					"path": "/showcases/ai/retrieval/ingest",
-					"kind": "route"
-				},
-				{
-					"path": "/showcases/ai/retrieval/explorer",
-					"kind": "route"
+					"path": "/showcases/ai/chatbot",
+					"kind": "route",
+					"note": "Retrieval now lives as the #nrag section of the surface pages; the ingest/explorer showcases were retired"
 				}
 			],
 			"invariants": [
@@ -3453,7 +3455,7 @@
 			"tests": [],
 			"showcases": [
 				{
-					"path": "/showcases/ai/chat",
+					"path": "/showcases/ai/chatbot",
 					"kind": "route"
 				}
 			],
@@ -3567,7 +3569,7 @@
 			"tests": [],
 			"showcases": [
 				{
-					"path": "/showcases/ai/retrieval/rag-chat",
+					"path": "/showcases/ai/chatbot",
 					"kind": "route"
 				}
 			],
@@ -3598,7 +3600,7 @@
 			"tests": [],
 			"showcases": [
 				{
-					"path": "/showcases/ai/retrieval/explorer",
+					"path": "/showcases/ai/chatbot",
 					"kind": "route"
 				}
 			],
@@ -3630,7 +3632,7 @@
 			"tests": [],
 			"showcases": [
 				{
-					"path": "/showcases/ai/image-metadata",
+					"path": "/showcases/toolkits/image-metadata",
 					"kind": "route"
 				}
 			],

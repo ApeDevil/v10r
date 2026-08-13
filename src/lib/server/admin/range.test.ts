@@ -3,12 +3,12 @@ import { ANALYTICS_RANGES, parseAnalyticsRange } from './helpers';
 
 describe('parseAnalyticsRange', () => {
 	it.each(ANALYTICS_RANGES)('accepts %s', (range) => {
-		const parsed = parseAnalyticsRange(new URL(`https://x.test/admin/vitals?range=${range}`));
+		const parsed = parseAnalyticsRange(new URL(`https://x.test/admin/perf?range=${range}`));
 		expect(parsed).toEqual({ range, days: Number(range) });
 	});
 
 	it('falls back to 30 when the param is missing', () => {
-		expect(parseAnalyticsRange(new URL('https://x.test/admin/vitals'))).toEqual({ range: '30', days: 30 });
+		expect(parseAnalyticsRange(new URL('https://x.test/admin/perf'))).toEqual({ range: '30', days: 30 });
 	});
 
 	it('falls back to 30 on values outside the allowlist rather than erroring', () => {

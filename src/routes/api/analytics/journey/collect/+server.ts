@@ -21,13 +21,13 @@ import { env } from '$env/dynamic/private';
 import { isBot, isExcludedPath } from '$lib/analytics/collect-policy';
 import { ipLimitKey } from '$lib/server/abuse';
 import { hasConsent } from '$lib/server/analytics/consent';
-import { type EventName, isKnownEvent, sanitizeProperties } from '$lib/server/analytics/event-schema';
+import { type EventName, isKnownEvent, sanitizeProperties, templateRoute } from '$lib/server/analytics/event-schema';
 import { deriveVisitorId } from '$lib/server/analytics/visitor';
 import { MAX_BEACON_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/api/body';
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiNoContent } from '$lib/server/api/response';
 import { ANALYTICS_SESSION_COOKIE } from '$lib/server/config';
-import { confirmSession, recordEvent } from '$lib/server/db/analytics/mutations';
+import { confirmSession, recordEvents } from '$lib/server/db/analytics/mutations';
 import type { RequestHandler } from './$types';
 
 /** Web Vitals metrics we accept. Anything else is not a metric we chart. */
@@ -143,25 +143,38 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 	if (rows.length === 0) return apiNoContent();
 
 	// A telemetry batch is JS corroboration too — redundancy for a lost confirm
-	// ping. Fire-and-forget beside the inserts; idempotent on the session row.
-	confirmSession(sessionId).catch(() => {});
-
-	await Promise.all(
-		rows.map((row) =>
-			recordEvent({
+	// ping. Awaited alongside the batch insert rather than fired bare: on Vercel an
+	// un-awaited promise is killable the instant the 204 is returned, which silently
+	// undercounted confirmed visitors on this lane. Its sibling endpoint
+	// (journey/confirm) always awaited; this one now matches.
+	//
+	// One batched INSERT instead of one per event — with poolQueryViaFetch each
+	// statement is its own HTTPS request to Neon, so a 50-event batch was 50 round
+	// trips from a single invocation.
+	await Promise.all([
+		confirmSession(sessionId).catch(() => {}),
+		recordEvents(
+			rows.map((row) => ({
 				eventId: row.eventId,
 				sessionId,
 				visitorId,
 				eventType: row.eventType,
 				path: row.path,
-				route: row.route,
+				// Templated here, not stored verbatim. The client sends SvelteKit's raw
+				// `page.route.id` (`/[[locale=locale]]/(public)/docs/[...slug]`) while the
+				// server hook stores `templateRoute()` output (`/docs/[...slug]`) — same
+				// column, two formats, so every per-route aggregate was silently split
+				// across two keys. Measured at 738 client-verbatim rows against 1005
+				// templated ones. `templateRoute` is idempotent, so applying it here is
+				// safe whichever format arrives.
+				route: templateRoute(row.route),
 				metadata: row.metadata,
 				consentTier: locals.consentTier,
 				debugOwnerId: locals.debugOwnerId ?? null,
 				occurredAt: new Date(row.occurredAt),
-			}).catch(() => {}),
-		),
-	);
+			})),
+		).catch(() => {}),
+	]);
 
 	return apiNoContent();
 };

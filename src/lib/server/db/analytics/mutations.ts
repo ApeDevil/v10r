@@ -51,8 +51,7 @@ function toOrigin(referrer: string | undefined): string | undefined {
 	}
 }
 
-/** Record a single analytics event. If `eventId` is supplied, insert is idempotent on it. */
-export async function recordEvent(event: {
+export interface RecordEventInput {
 	eventId?: string;
 	sessionId: string;
 	visitorId: string;
@@ -65,8 +64,11 @@ export async function recordEvent(event: {
 	consentTier?: 'necessary' | 'analytics';
 	debugOwnerId?: string | null;
 	occurredAt?: Date;
-}) {
-	const insert = db.insert(events).values({
+}
+
+/** Shared row shape so the batch path can never drift from the single-event path. */
+function toEventRow(event: RecordEventInput) {
+	return {
 		eventId: event.eventId ?? null,
 		sessionId: event.sessionId,
 		visitorId: event.visitorId,
@@ -78,12 +80,44 @@ export async function recordEvent(event: {
 		consentTier: event.consentTier ?? 'necessary',
 		debugOwnerId: event.debugOwnerId ?? null,
 		...(event.occurredAt ? { timestamp: event.occurredAt } : {}),
-	});
+	};
+}
+
+/** Record a single analytics event. If `eventId` is supplied, insert is idempotent on it. */
+export async function recordEvent(event: RecordEventInput) {
+	const insert = db.insert(events).values(toEventRow(event));
 	if (event.eventId) {
 		await insert.onConflictDoNothing({ target: events.eventId });
 	} else {
 		await insert;
 	}
+}
+
+/**
+ * Record a whole batch in ONE statement.
+ *
+ * The SPA beacon delivers up to 50 events per request. Inserting them one-by-one
+ * cost 50 round trips, not 50 cheap statements: `neonConfig.poolQueryViaFetch`
+ * (see db/index.ts) routes every query over its own HTTPS request, so a batch of
+ * 50 opened 50 connections to Neon from a single serverless invocation and paid
+ * full request latency on each. `Promise.all` made them concurrent, not fewer.
+ *
+ * `onConflictDoNothing` is evaluated per row by Postgres, so re-delivered beacons
+ * stay idempotent exactly as they were per-event. Rows without an `eventId` go in
+ * a separate statement because the conflict target only applies to the others.
+ */
+export async function recordEvents(batch: RecordEventInput[]) {
+	if (batch.length === 0) return;
+
+	const identified = batch.filter((e) => e.eventId);
+	const anonymous = batch.filter((e) => !e.eventId);
+
+	await Promise.all([
+		identified.length > 0
+			? db.insert(events).values(identified.map(toEventRow)).onConflictDoNothing({ target: events.eventId })
+			: null,
+		anonymous.length > 0 ? db.insert(events).values(anonymous.map(toEventRow)) : null,
+	]);
 }
 
 /**

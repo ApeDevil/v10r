@@ -12,7 +12,12 @@ import type { RequestHandler } from './$types';
 
 const connectLimiter = createLimiter('rl:analytics:stream', 10, '1 m');
 const MAX_CONCURRENT_STREAMS = 100;
-const MAX_STREAM_DURATION_MS = 5 * 60_000;
+// Must stay UNDER the function's maxDuration (60) so the stream closes itself
+// gracefully. At the previous 300_000 the in-code close never fired: Vercel killed
+// the function at 60s, the client saw `onerror` instead of a clean end, and
+// reconnected after a 3s gap — every minute, per open tab. Matches the
+// notifications stream, which already used 55_000 for this reason.
+const MAX_STREAM_DURATION_MS = 55_000;
 let activeStreams = 0;
 
 const PAGE_PATHS = [

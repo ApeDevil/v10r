@@ -18,7 +18,7 @@
  * double-counting.
  */
 
-import { browser } from '$app/environment';
+import { browser, dev } from '$app/environment';
 import { afterNavigate } from '$app/navigation';
 import { refireConfirm } from './confirm-ping';
 
@@ -72,7 +72,9 @@ function flush(): void {
 }
 
 export function initJourneyBeacon(): void {
-	if (!browser || initialized) return;
+	// Gated on `dev` for the same reason as `initTelemetry`: the dev server writes
+	// to the production database, so local navigation was inflating real traffic.
+	if (!browser || dev || initialized) return;
 	initialized = true;
 
 	afterNavigate(({ to, from, type }) => {

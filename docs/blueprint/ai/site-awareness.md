@@ -281,8 +281,8 @@ A full telemetry dump leaks at most "user was on the Forms showcase" — public-
 granularity, zero ids. Never store the client `routeId` verbatim, the concrete pathname,
 `page.params`, query, hash, or the title/description text. Keep the route key out of every
 `console.*`. Note: the chatbot's system-docs `retrieve()` passes no `onEvent`, so the
-embed query is **not** emitted to the client on that path (the rag-demo path emits it, but
-already contains the user's raw message today — public page-title text adds no exposure).
+embed query is **not** emitted to the client on that path (the retired rag-demo path used to
+emit it, but it already contained the user's raw message — public page-title text adds no exposure).
 
 ## Deliberately out of scope (v1)
 

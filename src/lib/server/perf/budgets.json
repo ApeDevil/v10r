@@ -1,0 +1,54 @@
+{
+	"_comment": "Performance budgets for v10r — the SINGLE source of truth, read by both the app (src/lib/server/perf/budgets.ts) and the shell probes in scripts/perf/ (via jq). TWO kinds of threshold live here and they do different jobs. `budgets` are TARGETS: where we want to be, scored on /admin/perf, never build-failing — several are red today and that is the honest state. `ceilings` are the RATCHET: the measured value at the time it was accepted, asserted by snapshot.gate.test.ts, and they only ever move DOWN. A target you cannot meet today still tells the truth; a ratchet stops today's number becoming tomorrow's floor. Ceilings carry ~3% headroom over the measured value on purpose: set exactly at the measurement, adding one showcase page tripped the gate, and a gate that fails on ordinary work is a gate that gets muted. The headroom absorbs a feature; it does not absorb a heavy dependency, which is what this is for. Lab measurements require a production build (NODE_ENV=production) — a dev-mode build inflates client JS ~9%. Field measurements come from real-user telemetry, prod lane only.",
+	"budgets": {
+		"ttfb_ms": { "warn": 200, "fail": 600, "kind": "lab", "note": "first-byte per route, warm local preview" },
+		"cold_start_ms": { "warn": 15000, "fail": 25000, "kind": "lab", "note": "container vite-ready; see cold-start.sh" },
+		"doc_html_kb": {
+			"warn": 50,
+			"fail": 100,
+			"kind": "lab",
+			"note": "SSR document transfer, gzipped; catches inline-SVG/{@html} bloat"
+		},
+		"route_js_kb": {
+			"warn": 150,
+			"fail": 250,
+			"kind": "lab",
+			"note": "heaviest single route, client JS gzipped, baseline included"
+		},
+		"baseline_js_kb": {
+			"warn": 80,
+			"fail": 120,
+			"kind": "lab",
+			"note": "client JS every route loads regardless of page"
+		},
+		"vector_query_ms": {
+			"warn": 50,
+			"fail": 200,
+			"kind": "lab",
+			"note": "single HNSW retrieval; seqscan fallback blows this"
+		},
+		"embed_calls_per_turn": {
+			"warn": 1,
+			"fail": 2,
+			"kind": "lab",
+			"note": "Gemini embeddings per chatbot turn (1000/day ceiling)"
+		},
+		"field_lcp_ms": {
+			"warn": 2500,
+			"fail": 4000,
+			"kind": "field",
+			"note": "p75 LCP. Google bands: good<=2500, poor>4000"
+		},
+		"field_inp_ms": { "warn": 200, "fail": 500, "kind": "field", "note": "p75 INP. good<=200, poor>500" },
+		"field_cls": { "warn": 0.1, "fail": 0.25, "kind": "field", "note": "p75 CLS. good<=0.1, poor>0.25" },
+		"field_fcp_ms": { "warn": 1800, "fail": 3000, "kind": "field", "note": "p75 FCP. good<=1800, poor>3000" },
+		"field_ttfb_ms": { "warn": 800, "fail": 1800, "kind": "field", "note": "p75 TTFB. good<=800, poor>1800" }
+	},
+	"ceilings": {
+		"route_js_kb": 630,
+		"baseline_js_kb": 82,
+		"median_route_js_kb": 372,
+		"total_client_js_kb": 2200,
+		"doc_html_kb": 5
+	}
+}

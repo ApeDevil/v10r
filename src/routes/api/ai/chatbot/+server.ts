@@ -41,8 +41,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		providerId: parsed.output.providerId,
 		messages: parsed.output.messages as Parameters<typeof orchestrateChat>[0]['messages'],
 		conversationId: parsed.output.conversationId,
-		useLlmwiki: parsed.output.useLlmwiki,
-		llmwikiCollectionId: parsed.output.llmwikiCollectionId,
 		pageContext,
 		// Server-derived, never client-trusted: catalog tool needs request locale + auth ceiling.
 		locale: locals.locale,

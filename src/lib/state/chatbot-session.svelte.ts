@@ -162,15 +162,16 @@ class ChatbotSession {
 		this.#clearPointer();
 	}
 
-	/** Send a user turn. Carries `conversationId` (continue) + always-on grounding + optional
-	 *  site-awareness `pageRouteId` (the caller reads `page.route.id` synchronously at click, so
-	 *  it's already frozen to the page the user pressed Send from — immutable for this turn). */
+	/** Send a user turn. Carries `conversationId` (continue) + optional site-awareness
+	 *  `pageRouteId` (the caller reads `page.route.id` synchronously at click, so it's
+	 *  already frozen to the page the user pressed Send from — immutable for this turn).
+	 *  Grounding is implied by the route: `/api/ai/chatbot` sets `surface: 'chatbot'`. */
 	async submit(text: string, routeId?: string): Promise<void> {
 		if (!browser) return;
 		const route = routeId; // frozen by the caller; never re-read across the await below
 		const chat = await this.ensureChat();
 		if (!chat) return;
-		const body: Record<string, unknown> = { useLlmwiki: true };
+		const body: Record<string, unknown> = {};
 		if (this.conversationId) body.conversationId = this.conversationId;
 		if (route) body.pageRouteId = route;
 		chat.sendMessage({ text }, { body });

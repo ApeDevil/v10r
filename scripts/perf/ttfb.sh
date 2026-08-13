@@ -6,12 +6,23 @@
 #   BASE=http://localhost:4173 bash scripts/perf/ttfb.sh
 # Or point at the live deployment: BASE=https://<prod> bash scripts/perf/ttfb.sh
 #
-# Budgets: scripts/perf/budgets.json (ttfb_ms). Exit 1 if any route exceeds fail.
+# Budgets: src/lib/server/perf/budgets.json (ttfb_ms). Exit 1 if any route exceeds fail.
+# Read from the SSOT rather than hardcoded here — the two drifted before, and a
+# probe scoring against thresholds nobody else uses is worse than no probe.
 
 set -uo pipefail
 BASE="${BASE:-http://localhost:4173}"
-WARN_MS=200
-FAIL_MS=600
+BUDGETS="$(dirname "$0")/../../src/lib/server/perf/budgets.json"
+
+read_budget() { # $1 = warn|fail; falls back if jq or the file is unavailable
+	if command -v jq >/dev/null 2>&1 && [ -f "$BUDGETS" ]; then
+		jq -r ".budgets.ttfb_ms.$1" "$BUDGETS" 2>/dev/null && return
+	fi
+	[ "$1" = "warn" ] && echo 200 || echo 600
+}
+
+WARN_MS=$(read_budget warn)
+FAIL_MS=$(read_budget fail)
 RUNS="${RUNS:-3}"   # take the best of N to approximate warm
 
 ROUTES=(

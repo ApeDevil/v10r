@@ -487,6 +487,20 @@ export const showcases: ShowcaseCard[] = [
 			},
 		],
 	},
+	{
+		href: '/showcases/observability',
+		icon: 'i-lucide-gauge',
+		title: m.showcase_observability_title,
+		description: m.showcase_observability_description,
+		ariaLabel: m.showcase_observability_aria,
+		domain: 'data',
+		docs: [{ href: '/docs/stack/performance', label: 'Performance measurement' }],
+		sublinks: [
+			{ label: m.showcase_observability_tab_overview, href: '/showcases/observability/overview' },
+			{ label: m.showcase_observability_tab_honesty, href: '/showcases/observability/honesty' },
+			{ label: m.showcase_observability_tab_budgets, href: '/showcases/observability/budgets' },
+		],
+	},
 	// ── ai ────────────────────────────────────────────────────────────────
 	{
 		href: '/showcases/ai',
@@ -495,51 +509,22 @@ export const showcases: ShowcaseCard[] = [
 		description: m.showcase_ai_description,
 		ariaLabel: m.showcase_ai_aria,
 		domain: 'ai',
-		docs: [{ href: '/docs/blueprint/ai/layered-rag', label: 'Layered RAG' }],
+		docs: [{ href: '/docs/blueprint/ai/surfaces', label: 'AI Surfaces' }],
 		sublinks: [
 			{
-				label: m.showcase_ai_tab_chat,
-				href: '/showcases/ai/chat',
-				docs: [
-					{ href: '/docs/blueprint/ai/surfaces', label: 'AI Surfaces' },
-					{ href: '/docs/stack/ai-sdk', label: 'AI SDK' },
-				],
-			},
-			{
-				label: m.showcase_ai_tab_image_metadata,
-				href: '/showcases/ai/image-metadata',
-				docs: [{ href: '/docs/blueprint/ai/image-metadata', label: 'Image Metadata' }],
-			},
-			{
-				label: m.showcase_ai_tab_retrieval,
-				href: '/showcases/ai/retrieval',
-				children: [
-					{ label: m.showcase_ai_tab_retrieval_overview, href: '/showcases/ai/retrieval' },
-					{
-						label: m.showcase_ai_tab_retrieval_ingest,
-						href: '/showcases/ai/retrieval/ingest',
-						docs: [{ href: '/docs/blueprint/ai/knowledge-base', label: 'Knowledge Base' }],
-					},
-					{
-						label: m.showcase_ai_tab_retrieval_rag_chat,
-						href: '/showcases/ai/retrieval/rag-chat',
-						docs: [
-							{ href: '/docs/blueprint/ai/layered-rag', label: 'Layered RAG' },
-							{ href: '/docs/blueprint/ai/nrag-observability', label: 'nRAG Observability' },
-						],
-					},
-					{
-						label: m.showcase_ai_tab_retrieval_explorer,
-						href: '/showcases/ai/retrieval/explorer',
-						docs: [
-							{ href: '/docs/blueprint/ai/knowledge-base', label: 'Knowledge Base' },
-							{ href: '/docs/blueprint/ai/graph-rag', label: 'Graph RAG' },
-						],
-					},
-				],
+				label: m.showcase_ai_tab_chatbot,
+				href: '/showcases/ai/chatbot',
 				docs: [
 					{ href: '/docs/blueprint/ai/layered-rag', label: 'Layered RAG' },
-					{ href: '/docs/blueprint/ai/knowledge-base', label: 'Knowledge Base' },
+					{ href: '/docs/blueprint/ai/nrag-observability', label: 'nRAG Observability' },
+				],
+			},
+			{
+				label: m.showcase_ai_tab_deskbot,
+				href: '/showcases/ai/deskbot',
+				docs: [
+					{ href: '/docs/blueprint/ai/harness-lens', label: 'Harness Lens' },
+					{ href: '/docs/blueprint/ai/desk-integration', label: 'Desk Integration' },
 				],
 			},
 		],
@@ -552,7 +537,14 @@ export const showcases: ShowcaseCard[] = [
 		ariaLabel: m.showcase_toolkits_aria,
 		domain: 'ai',
 		docs: [{ href: '/docs/blueprint/ai/image-kit', label: 'Image Kit' }],
-		sublinks: [{ label: m.showcase_toolkits_tab_image_kit, href: '/showcases/toolkits/image-kit' }],
+		sublinks: [
+			{ label: m.showcase_toolkits_tab_image_kit, href: '/showcases/toolkits/image-kit' },
+			{
+				label: m.showcase_toolkits_tab_image_metadata,
+				href: '/showcases/toolkits/image-metadata',
+				docs: [{ href: '/docs/blueprint/ai/image-metadata', label: 'Image Metadata' }],
+			},
+		],
 	},
 	{
 		href: '/showcases/mcp',

@@ -8,10 +8,15 @@
  */
 
 export { COMPILE_SCAFFOLD } from './compile';
-export { MAX_LLMWIKI_TOOL_IDS, MAX_RAWRAG_TOOL_CALLS_PER_TURN, MAX_RAWRAG_TOOL_IDS } from './config';
+export {
+	LLMWIKI_SEARCH_LIMIT,
+	MAX_LLMWIKI_TOOL_IDS,
+	MAX_RAWRAG_TOOL_CALLS_PER_TURN,
+	MAX_RAWRAG_TOOL_IDS,
+} from './config';
 export { LINT_SCAFFOLD } from './lint';
 export { loadOverview } from './overview';
-export { fetchPagesByIds } from './queries';
+export { countPages, fetchPagesByIds } from './queries';
 export { searchLlmwiki } from './search';
 export type * from './types';
 export { verifyCitations } from './verify';

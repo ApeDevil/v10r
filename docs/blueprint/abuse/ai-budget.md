@@ -79,7 +79,7 @@ The token budget does not read `BOT_DETECTION_MODE` — it is always enforced wh
 
 ## Where Enforced
 
-- **Shared AI entry guard** (`src/lib/server/ai/guard.ts`, `guardAiRequest`): `checkUserBudget` runs in the auth → `aiConfigured` → rate-limit → budget preamble shared by all three AI routes (`/api/ai/chatbot`, `/api/ai/deskbot`, `/api/ai/showcase/rag`), before `orchestrateChat`. On denial, returns `decisionResponse(budget)` (429).
+- **Shared AI entry guard** (`src/lib/server/ai/guard.ts`, `guardAiRequest`): `checkUserBudget` runs in the auth → `aiConfigured` → rate-limit → budget preamble shared by the AI routes (`/api/ai/chatbot`, `/api/ai/deskbot`, `/api/ai/images/[id]/analyze`), before the AI work starts. On denial, returns `decisionResponse(budget)` (429).
 - **Chat orchestrator** (`$lib/server/ai/chat-orchestrator.ts`): `chargeTokens(userId, inputTokens + outputTokens)` in `streamText.onFinish`.
 
 The gate sits in the entry guard because the chatbot grounds every turn (forced tool-provider routing + per-turn retrieval), so the cost floor per request is higher — the budget is checked before any model work begins, and the single guard keeps the rejection identical across every AI route.

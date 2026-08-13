@@ -1,6 +1,6 @@
 /**
  * nRAG pipeline topology — a hand-authored mirror of the chatbot read path in
- * `src/lib/server/ai/chat-orchestrator.ts` (the `useLlmwiki` branch). It depicts
+ * `src/lib/server/ai/chat-orchestrator.ts` (the `chatbot` surface branch). It depicts
  * CONTROL FLOW, not a data structure, so it can't be derived from the registry —
  * keep it in sync when the orchestrator's retrieval flow changes.
  *

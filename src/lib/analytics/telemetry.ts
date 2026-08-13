@@ -37,7 +37,7 @@
  * buffered events delivered afterwards.
  */
 
-import { browser } from '$app/environment';
+import { browser, dev } from '$app/environment';
 import { beacon } from './transport';
 
 const ENDPOINT = '/api/analytics/journey/collect';
@@ -266,7 +266,15 @@ function onRejection(evt: PromiseRejectionEvent): void {
 // ── Init ─────────────────────────────────────────────────────────────────────
 
 export function initTelemetry(getRoute: () => string): void {
-	if (!browser || initialized) return;
+	// `dev` is a hard gate, not a preference. The dev server points at the ONE
+	// production database, so without this every local page load posted Web Vitals
+	// into `analytics.events` alongside real users. Measured 2026-08-12: 36 of 53
+	// LCP samples and 29 of 63 CLS samples over 30 days were dev-server rows,
+	// identifiable because Vite dev emits `s-XXXXXXXXXXXX` Svelte scope classes
+	// while the prod build emits `svelte-XXXXXX`. They carried LCP values up to
+	// 1,798,024 ms (a backgrounded dev tab finalizing LCP on refocus), which
+	// dragged the p75 and made the vitals board actively misleading.
+	if (!browser || dev || initialized) return;
 	initialized = true;
 	routeOf = getRoute;
 

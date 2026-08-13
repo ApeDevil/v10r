@@ -1,6 +1,6 @@
 # AI Surfaces: chatbot & deskbot
 
-The AI subsystem serves **two product surfaces** (plus one showcase demo) through **one endpoint and one orchestrator**. They are told apart by an explicit `surface` discriminant — not by implicit request-flag truthiness.
+The AI subsystem serves **two product surfaces** through **one orchestrator**. They are told apart by an explicit `surface` discriminant — not by implicit request-flag truthiness.
 
 ## The two surfaces
 
@@ -11,30 +11,28 @@ The AI subsystem serves **two product surfaces** (plus one showcase demo) throug
 | **Route** | `POST /api/ai/chatbot` | `POST /api/ai/deskbot` |
 | **Client** | `composites/chatbot/Chatbot.svelte` — persistent, minimizable, non-modal panel; live thread owned by the `chatbot-session` singleton (see [../app-shell/ai-assistant.md](../app-shell/ai-assistant.md)) | `chat/ChatPanel.svelte` (desk panel) |
 | **Harness** | `buildRetrievalTools()` → `chatbotToolMeta` | `createDeskTools()` → `deskbotToolMeta` |
-| **Tools** | `search_catalog`, `search_project_docs`, `get_llmwiki_pages`, `get_rawrag_chunks`, `resolve_ref` | `desk_*` read/write/create/delete, `desk_propose_plan`, `resolve_ref` |
+| **Tools** | `search_catalog`, `search_project_docs`, `search_pattern_library`, `get_llmwiki_pages`, `get_rawrag_chunks` (5) | `desk_*` read/write/create/delete, `desk_search_knowledge`, `desk_propose_plan` (13) — zero overlap with the chatbot set. (`resolve_ref` mounts on both harnesses but is compaction infra, deliberately outside `TOOL_MANIFEST`.) |
 | **System prompt** | `SYSTEM_PROMPT` (plain) | `DESK_SYSTEM_PROMPT` (XML-tagged) + permissions + desk-context |
 | **Corpus (nRAG)** | System-owned (`source IN docs,catalog`, `SYSTEM_DOCS_USER_ID`) + per-user llmwiki — curated, static (catalog slice graph-seeded; docs-corpus graph tier dormant) | The user's **own** desk files — per-user, mutable, not graph-seeded, private |
 | **Location-awareness** | **site-awareness** — the current public route as a thin server-resolved page label (public-catalog only); _v1 built (dev, uncommitted), see [site-awareness.md](./site-awareness.md)_ | **desk-awareness** — live desk state (`panelContext`/`deskLayout`/`activeWorkspace`): which panels & files are open; _live_ |
 | **Invariants** | Never emits a `DeskEffect`; never creates a proposal | All mutations route through `db/desk`; write & destructive tools require human approval (proposal → approve-route), never mutating in-loop; only reversible creates run in-loop |
 
-A third value, `rag-demo`, drives the showcase retrieval-pipeline demo. It is **not a product surface** and must not dilute the chatbot.
+(A third `rag-demo` value once drove the showcase retrieval-pipeline demo; it was retired 2026-08 when the architecture pages at `/showcases/ai/chatbot` + `/showcases/ai/deskbot` absorbed the retrieval pedagogy — `TurnSurface` is a closed two-member union again.)
 
 ## Dispatch — the `surface` discriminant
 
-`ChatInput.surface: TurnSurface` (`'chatbot' | 'deskbot' | 'rag-demo'`) is the single named dispatch decision in `chat-orchestrator.ts`. The three per-surface routes set it explicitly:
+`ChatInput.surface: TurnSurface` (`'chatbot' | 'deskbot'`) is the single named dispatch decision in `chat-orchestrator.ts`. The two per-surface routes set it explicitly — it is a **required** field, never derived from request flags (the legacy `useLlmwiki`/`useRetrieval` derivation was removed with the rag-demo surface):
 
 | Route | Surface |
 |---|---|
 | `POST /api/ai/chatbot` | `orchestrateChat({ surface: 'chatbot' })` |
 | `POST /api/ai/deskbot` | `orchestrateChat({ surface: 'deskbot' })` |
-| `POST /api/ai/showcase/rag` | derived (the rag-chat showcase toggles `useLlmwiki` vs. raw retrieval) |
 
-All three share one entry guard, `guardAiRequest()` (`guard.ts`), which dedups auth → `aiConfigured` → rate-limit → daily-budget so the routes stay thin and the rate-limit key can't drift across copies. When `surface` is absent it is derived from the legacy `useLlmwiki`/`useRetrieval` flags (so the bare showcase clients keep working). The retrieval surfaces additionally require a *fresh user turn* — resume turns degrade to the plain deskbot streaming path, where the desk tools are filtered to **read-only** (`desk:read`/`desk:ask`): the approved plan has already run via the deterministic approve-route replay, so the acknowledgement turn physically cannot re-mutate. Approval binds execution.
+Both share one entry guard, `guardAiRequest()` (`guard.ts`), which dedups auth → `aiConfigured` → rate-limit → daily-budget so the routes stay thin and the rate-limit key can't drift across copies. The chatbot surface additionally requires a *fresh user turn* — resume turns degrade to the plain deskbot streaming path, where the desk tools are filtered to **read-only** (`desk:read`/`desk:ask`): the approved plan has already run via the deterministic approve-route replay, so the acknowledgement turn physically cannot re-mutate. Approval binds execution.
 
 ```
 orchestrateChatInner → resolve surface →
   surface === 'chatbot'  → llmwiki-first grounded turn (+ relevance-gated system-docs prefetch)
-  surface === 'rag-demo' → showcase retrieval demo
   surface === 'deskbot'  → agentic desk tool loop (default; also handles resume turns, which mount read-only desk tools only)
 ```
 
@@ -69,6 +67,12 @@ The retrieval **engine** (`rawrag/retrieve()` — embed → tiers → RRF fusion
 
 The kernel is never forked (a duplicated `user_id` filter would be a cross-tenant-leak risk); the corpus boundary is purely `document.userId`.
 
+## Context assembly — one door, plus an x-ray
+
+Everything that decides what enters the **chatbot's** system prompt — the triviality gate (`shouldGroundFromSystemDocs`), the deixis gate (`referencesCurrentPage`), the single shared query embedding, the parallel llmwiki/system-docs retrieval, and the block-by-block injection (llmwiki context → `<project-overview>` → `<retrieval-context>` → `<current-page>` → catalog map) — lives in one module: `assembleChatbotContext` in `src/lib/server/ai/context-assembly.ts`. The **deskbot's** base-prompt half is the ordered block list from `buildSystemPromptBlocks` (`context/system-prompt.ts`) plus the plan governor (`hasDestructiveIntent`/`shouldRequirePlan`, `policy/governor.ts`).
+
+`POST /api/ai/context-probe` exposes that same pre-generation half as a read-only report — it powers the "Context orchestration" (`#probe`) section on `/showcases/ai/chatbot` and `/showcases/ai/deskbot`. Given `{ surface, query, pageRouteId?, toolScopes? }` it runs the SAME assembly code with a widened candidate pool and returns: gate verdicts, per-lane corpus inventory, ranked candidates with the production cutoff marked (chosen vs available-but-passed-over), and a prompt-block outline tagged static vs per-request (ids + token estimates, never bodies). It **never calls the LLM** — worst case one embedding; trivial queries, empty corpora, and missing scopes spend nothing — and it sits behind `guardAiRequest` like every other AI endpoint. Because the orchestrator and the probe share one door, the showcase structurally cannot drift from production.
+
 ## Location-awareness — two profiles
 
 Each surface knows **where the user currently is**, so deixis ("this", "here") resolves to their actual location. This is **location-awareness** — one idea, two surface-specific profiles:
@@ -82,8 +86,8 @@ The **mechanism** behind site-awareness is **page-awareness** — resolving `pag
 
 ## Status
 
-**Live:** the naming + dispatch discriminant; the **per-surface route split** (`/api/ai/chatbot` · `/api/ai/deskbot` · `/api/ai/showcase/rag`) behind the shared `guardAiRequest`; the harness split (zero overlap); the one-door rule (plan payload carries per-step `args`, replayed verbatim; resume turns mount read-only desk tools — approval binds execution); the **tool-layer approval gate** (every write/overwrite/delete — even single-target — returns a `requiresApproval` sentinel and mutates only through a human-approved proposal recorded with `approvedBy`/`approvedAt`; the model-minted `confirmed` self-handshake is gone; `shouldRequirePlan` widened to `mutatingScopeGranted && destructiveIntent`, now soft planning guidance; a pre-image `desk.file_revision` snapshot makes an approved overwrite/delete recoverable); the `surface` analytics column (`ai_surface` enum on `ai.conversation` + `conversation_step`, stamped at creation, `conv_step_surface_idx`); the chatbot nRAG profile (relevance-gated system-docs prefetch); and the **deskbot nRAG profile** — `desk:ask` read-only grounding tool (`desk_search_knowledge`) over the user's own `aiContext` desk files, ingested via the shared kernel (`source = 'desk'`) and kept fresh by the `desk-rawrag-sync` job (polls `desk.file.updatedAt`).
+**Live:** the naming + dispatch discriminant; the **per-surface route split** (`/api/ai/chatbot` · `/api/ai/deskbot`) behind the shared `guardAiRequest`; the harness split (zero overlap); the one-door rule (plan payload carries per-step `args`, replayed verbatim; resume turns mount read-only desk tools — approval binds execution); the **tool-layer approval gate** (every write/overwrite/delete — even single-target — returns a `requiresApproval` sentinel and mutates only through a human-approved proposal recorded with `approvedBy`/`approvedAt`; the model-minted `confirmed` self-handshake is gone; `shouldRequirePlan` widened to `mutatingScopeGranted && destructiveIntent`, now soft planning guidance; a pre-image `desk.file_revision` snapshot makes an approved overwrite/delete recoverable); the `surface` analytics column (`ai_surface` enum on `ai.conversation` + `conversation_step`, stamped at creation, `conv_step_surface_idx`); the chatbot nRAG profile (relevance-gated system-docs prefetch); and the **deskbot nRAG profile** — `desk:ask` read-only grounding tool (`desk_search_knowledge`) over the user's own `aiContext` desk files, ingested via the shared kernel (`source = 'desk'`) and kept fresh by the `desk-rawrag-sync` job (polls `desk.file.updatedAt`).
 
 **Browser-verified 2026-06-25:** the chatbot's Phase-C foundation grounding is live — an injected `<project-overview>` system-overview anchor (`loadOverview([SYSTEM_DOCS_USER_ID], PROJECT_DOCS_COLLECTION_ID)`) plus **tier-1-only** retrieval. The anchor is the load-bearing fix for the original broad-question bug: "how do I use v10r?" now answers correctly with real `/docs/...` citations (5/5 functional probes green). Hierarchical docs chunking landed too, but is groundwork for future tier-2 surfaces — it does not change chatbot answers today, and the corpus conversion is partial (36/93 docs, quota-gated). See [knowledge-base.md](./knowledge-base.md#wired-vs-scaffold-the-honest-map).
 
-**Planned:** the physical `_shared`/`chatbot`/`deskbot` directory layout — all three surfaces still dispatch from one `chat-orchestrator.ts`. Also planned: per-surface Valibot request schemas (both routes share `ChatRequestSchema` today) and a declarative `ToolDescriptor` manifest backed by a DB `ai_tool` registry. And **site-awareness** — the chatbot's [location-awareness](#location-awareness--two-profiles) profile ([site-awareness.md](./site-awareness.md), **v1 built + browser-verified live, dev/uncommitted**); its sibling **desk-awareness** already ships as the deskbot's `panelContext`/`deskLayout` injection.
+**Planned:** the physical `_shared`/`chatbot`/`deskbot` directory layout — both surfaces still dispatch from one `chat-orchestrator.ts` (the chatbot's context-assembly half is already extracted to `context-assembly.ts`). Also planned: a DB `ai_tool` registry behind the declarative `TOOL_MANIFEST`. **Site-awareness** — the chatbot's [location-awareness](#location-awareness--two-profiles) profile ([site-awareness.md](./site-awareness.md)) — is built and live; its sibling **desk-awareness** ships as the deskbot's `panelContext`/`deskLayout` injection.

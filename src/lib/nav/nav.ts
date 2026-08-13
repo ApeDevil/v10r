@@ -19,7 +19,7 @@ export const adminNavItem: NavItem = {
 	children: [
 		{ href: '/admin/db', label: m.nav_admin_db },
 		{ href: '/admin/analytics', label: m.nav_admin_analytics },
-		{ href: '/admin/vitals', label: m.nav_admin_vitals },
+		{ href: '/admin/perf', label: m.nav_admin_perf },
 		{ href: '/admin/audit', label: m.nav_admin_audit },
 		{ href: '/admin/users', label: m.nav_admin_users },
 		{ href: '/admin/flags', label: m.nav_admin_flags },

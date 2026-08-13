@@ -1,6 +1,6 @@
 # Image Metadata Reader
 
-A vision model proposes metadata for an uploaded image; the human reviews and approves before anything persists. Lands as a server-backed showcase at `/showcases/ai/image-metadata`.
+A vision model proposes metadata for an uploaded image; the human reviews and approves before anything persists. Lands as a server-backed showcase at `/showcases/toolkits/image-metadata` (moved 2026-08 from `/showcases/ai/image-metadata`; a 308 stub covers the old URL until 2026-11).
 
 > The showcase page is the UI documentation. This doc covers the architecture, the runtime flow, and the decisions the page can't show.
 
@@ -24,7 +24,7 @@ The manual form is the ground floor: every AI failure mode collapses to a typed 
 | Canonical schema | `src/lib/schemas/showcase/image-metadata.ts` | One source, three consumers: AI-propose schema + strict save schema + helpers. Also holds the client-safe `AnalyzeUsage` / `CostEstimate` DTO types. |
 | Storage | `src/lib/server/store/showcase/image.ts` | R2 ops under the `showcase/imagemeta/` prefix. |
 | DB | `src/lib/server/db/schema/showcase/image-metadata.ts` | Dedicated `image` pgSchema: `asset` / `metadata` / `ai_proposal` / `tag` / `metadata_tag`. `ai_proposal` stores token counts (incl. nullable `reasoning_tokens`), never dollars. |
-| Route | `src/routes/[[locale=locale]]/(public)/showcases/ai/image-metadata/` | `+page.server.ts` (load + `upload`/`save` actions), `analyze/+server.ts` (RPC — returns `fields`/`confidence` + `usage`/`cost`), `MetadataApprovalDialog.svelte`. |
+| Route | `src/routes/[[locale=locale]]/(public)/showcases/toolkits/image-metadata/` | `+page.server.ts` (load + `upload`/`save` actions), `MetadataApprovalDialog.svelte`. Analysis endpoint: `src/routes/api/ai/images/[id]/analyze/+server.ts` (behind `guardAiRequest`, `{ data }/{ error }` envelope, redis idempotency claim). |
 
 ### Import wall
 
@@ -63,7 +63,7 @@ review & approve dialog  ← diff table + GPS consent gate
 save action → saveImageMetadata (atomic upsert + tag replace)
 ```
 
-The `analyze` endpoint returns a route-local `{ ok, fields, confidence }` RPC shape (not the repo-wide `{ data } / { error }` envelope) because its sole consumer is the sibling `+page.svelte`, which branches on `ok` and merges field-by-field. Failure reasons map to HTTP status: `no_provider`→503, `budget`→429, `model_refused`→422, `timeout`→504, `error`→500.
+The analyze endpoint lives at `POST /api/ai/images/[id]/analyze` (promoted 2026-08 from a route-local showcase RPC, which had bypassed the shared AI guard). It sits behind `guardAiRequest` (auth → configured → rate-limit → daily budget), returns the repo-wide `{ data } / { error: { code, message } }` envelope, and takes a short redis idempotency claim per `(user, image)` so a duplicate request cannot double-spend vision budget. Failure codes map to HTTP status: `no_provider`→503, `budget`→429, `model_refused`→422, `timeout`→504, `extract_failed`→500.
 
 ---
 
@@ -136,11 +136,7 @@ Upload routes through the server `upload` action specifically so EXIF can be str
 
 Three client-side traps this page hit. All verified in-browser.
 
-**Relative fetch resolves against the parent path.** The page is `/showcases/ai/image-metadata` (no trailing slash), so `fetch('./analyze')` resolved to `/showcases/ai/analyze` → 404; the sibling `analyze/+server.ts` never ran. Build the URL from the live pathname instead — locale-prefix-safe and rename-safe:
-
-```ts
-fetch(`${location.pathname.replace(/\/$/, '')}/analyze`)
-```
+**Relative fetch resolves against the parent path.** (Historical — the analyze endpoint now lives at `POST /api/ai/images/[id]/analyze` in the un-localized API tree, called via `apiFetch` which carries the CSRF header a bare `fetch` to `/api/` lacks, so no pathname-building is needed.) When the endpoint was a route-local sibling, `fetch('./analyze')` from the no-trailing-slash page resolved against the PARENT (`/showcases/…/analyze` → 404); the workaround was building from `location.pathname`. Keep this in mind for any future route-local RPC.
 
 **A `$effect` reading `$form.x` subscribes to the whole store.** The keyword effect read `$form.keywords`, so it re-ran on *every* field edit (title, caption, …) and spuriously marked keywords as human-edited — routing AI-proposed keywords into a "conflict" instead of applying them. Key the effect off a memoized derived of just that field:
 

@@ -108,7 +108,7 @@ const categories: DataCategory[] = [
 			{ field: 'body', type: 'string (10–4000)', example: '…' },
 			{ field: 'rating', type: 'smallint 1–5 (optional)' },
 			{ field: 'contact_email', type: 'email (optional)', note: 'Only if you provide one for follow-up.' },
-			{ field: 'page_of_origin', type: 'string', example: '/showcases/ai/chat' },
+			{ field: 'page_of_origin', type: 'string', example: '/showcases/ai/chatbot' },
 			{
 				field: 'session_id',
 				type: 'string (nullable)',

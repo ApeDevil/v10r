@@ -28,7 +28,7 @@ The chat-orchestrator module streams multi-provider LLM responses through Vely, 
 
 ## Proof
 
-- [`/showcases/ai/chat`](/showcases/ai/chat)
+- [`/showcases/ai/chatbot`](/showcases/ai/chatbot)
 
 ---
 

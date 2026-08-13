@@ -7,7 +7,8 @@ import type { ToolSet } from 'ai';
 import type { SearchLocale, SearchResult } from '$lib/search/types';
 import { DESK_MUTATE_MAX_STEPS, DESK_READ_MAX_STEPS } from '$lib/server/ai/config';
 import { compactToolResult } from '$lib/server/ai/loop/compact';
-import type { DeskLayoutEntry, DeskToolMeta, DeskToolScope, ToolDescriptor, ToolMeta, ToolRisk } from './_types';
+import { TOOL_MANIFEST, type ToolDescriptor } from '$lib/types/ai-tools';
+import type { DeskLayoutEntry, DeskToolMeta, DeskToolScope, ToolMeta, ToolRisk } from './_types';
 import { createAskTools } from './desk-ask';
 import { createCreateTools, createDeleteTools } from './desk-create';
 import { createReadTools } from './desk-read';
@@ -20,6 +21,10 @@ import { type CatalogSink, createSearchCatalogTool } from './search-catalog';
 import { createSearchDocsTool } from './search-docs';
 import { createSearchPatternLibraryTool } from './search-pattern-library';
 
+// The declarative tool registry now lives in the client-safe `$lib/types/ai-tools.ts`
+// (the showcase topology renders from the same source). Re-exported here so server-side
+// consumers keep one import site; the meta maps below are still derived from it.
+export { TOOL_MANIFEST } from '$lib/types/ai-tools';
 export type {
 	DeskEffect,
 	DeskLayoutEntry,
@@ -29,46 +34,6 @@ export type {
 	ToolMeta,
 	ToolRisk,
 } from './_types';
-
-/**
- * The one declarative tool registry — the single source of truth for every tool's
- * surface, risk, and (for deskbot) gating scope. The metadata maps below are DERIVED
- * from this list, so a new tool can't drift out of sync with its meta: add one entry
- * here and the chatbot/deskbot/union maps pick it up automatically.
- *
- * The tool *factories* deliberately stay in {@link buildRetrievalTools} /
- * {@link createDeskTools} rather than living on each descriptor — their signatures are
- * heterogeneous (per-turn sinks for retrieval, scope-gated batch assembly + deskLayout
- * for desk), so a uniform `factory` field would force an awkward, riskier shape for no
- * correctness gain. Instead the builders are locked to this manifest by the drift-guard
- * test in `index.test.ts`, which asserts each builder's emitted tool set matches the
- * manifest names for its surface. `resolve_ref` is intentionally absent — it is
- * compaction infra (AI SDK #9631), never surfaced as a metered/replayable tool.
- */
-export const TOOL_MANIFEST: readonly ToolDescriptor[] = [
-	// ── chatbot: read-only, grounded retrieval tools (no scope) ──
-	{ name: 'get_llmwiki_pages', surface: 'chatbot', risk: 'read' },
-	{ name: 'get_rawrag_chunks', surface: 'chatbot', risk: 'read' },
-	{ name: 'search_catalog', surface: 'chatbot', risk: 'read' },
-	{ name: 'search_project_docs', surface: 'chatbot', risk: 'read' },
-	{ name: 'search_pattern_library', surface: 'chatbot', risk: 'read' },
-	// ── deskbot: scope-gated UI-parity tools ──
-	{ name: 'desk_list_files', surface: 'deskbot', risk: 'read', scope: 'desk:read' },
-	{ name: 'desk_read_file', surface: 'deskbot', risk: 'read', scope: 'desk:read' },
-	{ name: 'desk_file_tree', surface: 'deskbot', risk: 'read', scope: 'desk:read' },
-	{ name: 'desk_search_files', surface: 'deskbot', risk: 'read', scope: 'desk:read' },
-	{ name: 'desk_get_open_panels', surface: 'deskbot', risk: 'read', scope: 'desk:read' },
-	{ name: 'desk_update_cells', surface: 'deskbot', risk: 'write', scope: 'desk:write' },
-	{ name: 'desk_rename_file', surface: 'deskbot', risk: 'write', scope: 'desk:write' },
-	{ name: 'desk_update_markdown', surface: 'deskbot', risk: 'write', scope: 'desk:write' },
-	{ name: 'desk_create_spreadsheet', surface: 'deskbot', risk: 'create', scope: 'desk:create' },
-	{ name: 'desk_create_markdown', surface: 'deskbot', risk: 'create', scope: 'desk:create' },
-	{ name: 'desk_delete_file', surface: 'deskbot', risk: 'destructive', scope: 'desk:delete' },
-	{ name: 'desk_search_knowledge', surface: 'deskbot', risk: 'read', scope: 'desk:ask' },
-	// desk_propose_plan is a read-risk primitive gated with the base read scope; it is
-	// mounted whenever a mutating scope is present (see createDeskTools).
-	{ name: 'desk_propose_plan', surface: 'deskbot', risk: 'read', scope: 'desk:read' },
-];
 
 /** Chatbot (retrieval) tool metadata — read-only, NO scope field. Derived from the manifest. */
 export const chatbotToolMeta: Record<string, ToolMeta> = Object.fromEntries(

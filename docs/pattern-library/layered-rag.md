@@ -38,7 +38,7 @@ A shared rawrag retrieve() kernel (embed → tiers → RRF fusion → drill) fee
 
 ## Proof
 
-- [`/showcases/ai/retrieval`](/showcases/ai/retrieval)
+- [`/showcases/ai/chatbot`](/showcases/ai/chatbot)
 
 ## Invariants
 

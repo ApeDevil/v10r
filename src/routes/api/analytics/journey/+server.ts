@@ -27,7 +27,7 @@ import { MAX_BEACON_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from 
 import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
 import { apiError, apiNoContent } from '$lib/server/api/response';
 import { ANALYTICS_SESSION_COOKIE } from '$lib/server/config';
-import { recordEvent, upsertSession } from '$lib/server/db/analytics/mutations';
+import { recordEvents, upsertSession } from '$lib/server/db/analytics/mutations';
 import type { RequestHandler } from './$types';
 
 const JourneyEvent = v.object({
@@ -134,8 +134,10 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 		};
 	});
 
-	// Idempotent on eventId, so a re-delivered beacon is a no-op.
-	await Promise.all(events.map((evt) => recordEvent(evt).catch(() => {})));
+	// Idempotent on eventId, so a re-delivered beacon is a no-op. One statement for
+	// the whole batch: with poolQueryViaFetch each insert was its own HTTPS round
+	// trip to Neon, so a 20-navigation batch cost 20 of them.
+	await recordEvents(events).catch(() => {});
 
 	// Queue order is navigation order: first entry, last exit. The batch itself
 	// is JS corroboration, so it also confirms the session — redundancy for a

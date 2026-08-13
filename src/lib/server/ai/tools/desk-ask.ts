@@ -29,7 +29,7 @@ export function createAskTools(userId: string) {
 			}),
 			execute: async ({ query }) => {
 				try {
-					const result = await retrieveDeskDocs(userId, query, 5);
+					const result = await retrieveDeskDocs(userId, query);
 					if (result.chunks.length === 0) {
 						return { chunks: [], note: 'No matching content in the user’s AI-context desk files.' };
 					}

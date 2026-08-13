@@ -75,53 +75,37 @@ const baseEntries = {
 };
 
 /**
- * Retrieval-pipeline knobs shared by the grounded READ surfaces (chatbot + rag-demo).
- * Deliberately excludes every desk-mutation field, so a read surface's parsed output can
- * never carry `toolScopes`/`deskLayout`/`activeWorkspace`/`resumeFromProposalId` into the
- * orchestrator.
+ * Site-awareness lookup key: the raw `page.route.id` of the page the user asked from
+ * (e.g. `/[[locale=locale]]/(public)/showcases/forms`). An UNTRUSTED lookup key — the
+ * server resolves it against the public catalog and discards it on miss; it is never
+ * echoed into the prompt. The tight charset rejects `:` `?` `#` `%` whitespace and
+ * `<>"'` breakout chars (it still allows the route-group `()`, `[]` and `=` that a
+ * SvelteKit route id legitimately contains). See `docs/blueprint/ai/site-awareness.md`.
  */
-const retrievalEntries = {
-	useRetrieval: v.optional(v.boolean()),
-	retrievalTiers: v.optional(v.pipe(v.array(v.picklist([1, 2, 3])), v.maxLength(3))),
-	fusion: v.optional(v.picklist(['none', 'rrf'])),
-	/** Route this turn through the llmwiki layer (primary surface + drill-down tools). */
-	useLlmwiki: v.optional(v.boolean()),
-	llmwikiCollectionId: v.optional(v.nullable(v.string())),
-	/**
-	 * Ephemeral run (rag-chat counterfactual) — skip ALL persistence (conversation,
-	 * messages, steps, limit check) while still charging the token budget. The orchestrator
-	 * runs the turn without a conversationId. See `docs/blueprint/ai/nrag-observability.md`.
-	 */
-	dryRun: v.optional(v.boolean()),
-};
+const PageRouteId = v.optional(v.pipe(v.string(), v.maxLength(120), v.regex(/^\/(?!\/)[A-Za-z0-9/_\-[\]().=]*$/)));
 
 /**
  * `POST /api/ai/chatbot` — the read-only, grounded v10r-expert surface. Carries the shared
- * envelope + retrieval knobs + site-awareness (`pageRouteId`). Accepts NO desk-mutation
- * fields. See `docs/blueprint/ai/surfaces.md`.
+ * envelope + site-awareness (`pageRouteId`). Accepts NO desk-mutation fields — a chatbot
+ * request's parsed output can never carry `toolScopes`/`deskLayout`/`activeWorkspace`/
+ * `resumeFromProposalId` into the orchestrator. See `docs/blueprint/ai/surfaces.md`.
  */
 export const ChatbotRequestSchema = v.object({
 	...baseEntries,
-	...retrievalEntries,
-	/**
-	 * Site-awareness (chatbot): the raw `page.route.id` of the page the user asked from
-	 * (e.g. `/[[locale=locale]]/(public)/showcases/forms`). An UNTRUSTED lookup key — the
-	 * server resolves it against the public catalog and discards it on miss; it is never
-	 * echoed into the prompt. The tight charset rejects `:` `?` `#` `%` whitespace and
-	 * `<>"'` breakout chars (it still allows the route-group `()`, `[]` and `=` that a
-	 * SvelteKit route id legitimately contains). See `docs/blueprint/ai/site-awareness.md`.
-	 */
-	pageRouteId: v.optional(v.pipe(v.string(), v.maxLength(120), v.regex(/^\/(?!\/)[A-Za-z0-9/_\-[\]().=]*$/))),
+	pageRouteId: PageRouteId,
 });
 
 /**
- * `POST /api/ai/showcase/rag` — the retrieval-pipeline demo (not a product surface). The
- * counterfactual/retrieval subset: shared envelope + retrieval knobs + `dryRun`. No
- * site-awareness, no desk-mutation fields.
+ * `POST /api/ai/context-probe` — the showcase context x-ray (`/showcases/ai/*#probe`).
+ * Runs the SAME gates + retrieval + prompt assembly as a real turn (shared modules)
+ * but never calls the LLM. `toolScopes` only shapes the deskbot report (which tools
+ * mount, whether the plan governor fires) — the probe cannot execute anything.
  */
-export const RagDemoRequestSchema = v.object({
-	...baseEntries,
-	...retrievalEntries,
+export const ContextProbeRequestSchema = v.object({
+	surface: v.picklist(['chatbot', 'deskbot']),
+	query: v.pipe(v.string(), v.minLength(1), v.maxLength(2000)),
+	pageRouteId: PageRouteId,
+	toolScopes: v.optional(v.pipe(v.array(ToolScope), v.maxLength(5))),
 });
 
 /**

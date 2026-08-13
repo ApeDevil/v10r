@@ -36,7 +36,7 @@ export const adminNavGroups: AdminNavGroup[] = [
 		items: [
 			{ label: m.admin_nav_database, href: '/admin/db', icon: 'i-lucide-database' },
 			{ label: m.admin_nav_analytics, href: '/admin/analytics', icon: 'i-lucide-bar-chart-2' },
-			{ label: m.admin_nav_vitals, href: '/admin/vitals', icon: 'i-lucide-heart-pulse' },
+			{ label: m.admin_nav_perf, href: '/admin/perf', icon: 'i-lucide-gauge' },
 			{ label: m.admin_nav_audit, href: '/admin/audit', icon: 'i-lucide-shield-check' },
 		],
 	},

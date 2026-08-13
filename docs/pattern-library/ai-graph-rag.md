@@ -27,7 +27,7 @@ Vector-similarity chunk retrieval is combined with Neo4j knowledge-graph travers
 
 ## Proof
 
-- [`/showcases/ai/retrieval/rag-chat`](/showcases/ai/retrieval/rag-chat)
+- [`/showcases/ai/chatbot`](/showcases/ai/chatbot)
 
 ---
 

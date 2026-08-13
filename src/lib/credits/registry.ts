@@ -359,7 +359,7 @@ export const credits: CreditEntry[] = [
 		url: 'https://ai-sdk.dev',
 		license: 'Apache-2.0',
 		docs: '/docs/stack/ai-sdk',
-		showcase: '/showcases/ai/chat',
+		showcase: '/showcases/ai/chatbot',
 		source: { kind: 'npm', pkg: 'ai' },
 	},
 	{
@@ -368,7 +368,7 @@ export const credits: CreditEntry[] = [
 		group: 'ai',
 		role: m.credits_role_gemini,
 		url: 'https://ai.google.dev',
-		showcase: '/showcases/ai/retrieval',
+		showcase: '/showcases/ai/chatbot',
 		source: { kind: 'service' },
 	},
 	{
@@ -377,7 +377,7 @@ export const credits: CreditEntry[] = [
 		group: 'ai',
 		role: m.credits_role_groq,
 		url: 'https://groq.com',
-		showcase: '/showcases/ai/chat',
+		showcase: '/showcases/ai/chatbot',
 		source: { kind: 'service' },
 	},
 

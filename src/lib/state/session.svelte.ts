@@ -4,6 +4,7 @@
  */
 
 import { getContext, setContext } from 'svelte';
+import { browser } from '$app/environment';
 
 const SESSION_CTX = Symbol('session');
 
@@ -41,6 +42,14 @@ export function createSessionState(initialSession: Session | null) {
 
 	function startTimer() {
 		if (!state.expiresAt) return;
+		// Never on the server. This state is constructed during SSR too, and a
+		// server-side setInterval has no unmount to clear it — every authenticated
+		// render leaked a 1s timer for the life of the process.
+		if (!browser) return;
+		// Idempotent: `refresh()` calls this again on every session update, which
+		// previously stacked a second interval on top of the live one (and a third,
+		// and so on) because the old handle was overwritten without being cleared.
+		stopTimer();
 
 		intervalId = setInterval(() => {
 			if (!state.expiresAt) {

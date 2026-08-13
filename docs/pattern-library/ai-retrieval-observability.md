@@ -26,7 +26,7 @@ A waterfall/step-timeline view exposes the concurrent-tier timing, provenance pa
 
 ## Proof
 
-- [`/showcases/ai/retrieval/explorer`](/showcases/ai/retrieval/explorer)
+- [`/showcases/ai/chatbot`](/showcases/ai/chatbot)
 
 ---
 

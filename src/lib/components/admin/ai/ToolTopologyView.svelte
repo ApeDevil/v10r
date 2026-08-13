@@ -28,9 +28,10 @@ const riskMeta: Record<ToolRow['risk'], { icon: string; variant: 'secondary' | '
 
 <div class="topology">
 	<p class="caption">
-		A single chat turn runs <strong>one</strong> branch: the <code>useLlmwiki</code> /
-		<code>useRetrieval</code> grounding path returns before desk tools mount, so retrieval tools and
-		desk tools never execute in the same turn. Desk tools are gated by the scopes granted to the turn.
+		A single chat turn runs <strong>one</strong> branch, selected by the <code>surface</code>
+		discriminant (<code>chatbot</code> | <code>deskbot</code>): the chatbot's grounded-retrieval path
+		returns before desk tools mount, so retrieval tools and desk tools never execute in the same turn.
+		Desk tools are gated by the scopes granted to the turn.
 	</p>
 
 	{#snippet riskBadge(risk: ToolRow['risk'])}
@@ -44,7 +45,7 @@ const riskMeta: Record<ToolRow['risk'], { icon: string; variant: 'secondary' | '
 		<h3 class="group-title">
 			<span class="i-lucide-search h-4 w-4" aria-hidden="true"></span>
 			Retrieval tools
-			<span class="group-sub">always-on in the <code>useLlmwiki</code> / <code>useRetrieval</code> branch · step budget 3</span>
+			<span class="group-sub">always-on for the <code>chatbot</code> surface · step budget 3</span>
 		</h3>
 		<div class="table-wrap" tabindex="0" aria-label="Retrieval tools">
 			<table class="data-table">

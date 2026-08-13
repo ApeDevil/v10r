@@ -47,6 +47,22 @@ export const PHASE_OF: Record<PipelineStepId, NragPhase> = {
 	'system-docs': 'retrieve',
 };
 
+/**
+ * Shared per-PHASE color map for nRAG trace views (waterfall bars, legend, step list).
+ * Phase is the temporal axis the waterfall lays out by — coloring by phase keeps the
+ * legend a true color key. Design tokens only (chart hues are theme-aware + distinct).
+ * Third member of the phase-axis family beside PHASE_OF/LANE_OF, same exhaustive-Record
+ * discipline. Human copy for phases (the old PHASE_GLOSS) lives in the i18n label layer.
+ */
+export const PHASE_COLORS: Record<NragPhase, string> = {
+	embed: 'var(--color-primary)',
+	retrieve: 'var(--chart-3)',
+	fuse: 'var(--chart-7)',
+	assemble: 'var(--chart-1)',
+	generate: 'var(--chart-4)',
+	verify: 'var(--chart-5)',
+};
+
 /** LANE axis — which retriever produced a step's/chunk's results (tierChunks keys). */
 export type RetrieverLane = 'tier-1' | 'tier-2' | 'tier-3' | 'llmwiki';
 

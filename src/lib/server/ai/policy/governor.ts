@@ -25,6 +25,17 @@ export interface PlanPredicateInput {
 }
 
 /**
+ * Destructive-intent phrasing heuristic — the second input to `shouldRequirePlan`.
+ * Shared by the chat orchestrator (real turns) and the context-probe endpoint
+ * (the showcase x-ray), so what the probe reports is the production predicate.
+ */
+export function hasDestructiveIntent(text: string): boolean {
+	return /\b(delete|remove|clear|wipe|purge|erase|drop|reset|overwrite|replace|bulk|all|every|each|multiple)\b/i.test(
+		text,
+	);
+}
+
+/**
  * Decide whether a turn should be *instructed* to plan first (inject the
  * `<planning>` block so the model batches its work into one `desk_propose_plan`).
  *

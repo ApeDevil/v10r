@@ -9,14 +9,34 @@ import type { LiveEvent } from '$lib/types/analytics-live';
 
 export type { LiveEvent } from '$lib/types/analytics-live';
 
-/** Get a session timeline: sessions ordered by start time with optional date range */
+/**
+ * Get a session timeline: sessions ordered by start time with optional date range.
+ *
+ * Explicitly projected, not `select()`. This feeds the PUBLIC
+ * /showcases/analytics/journeys page, and a bare select shipped every column to
+ * the browser in the serialized page payload — including `visitor_id` (the keyed
+ * visitor hash) and `paired_admin_user_id` / `debug_owner_id`, which are real
+ * `auth.user` ids. The shape below is what the journey visualisation actually
+ * renders; identity columns are deliberately absent, so adding a CDN cache to
+ * that page cannot expose one visitor's rows to another.
+ */
 export async function getSessionTimeline(opts: { from?: Date; to?: Date; limit?: number }) {
 	const conditions = [];
 	if (opts.from) conditions.push(gte(sessions.startedAt, opts.from));
 	if (opts.to) conditions.push(lte(sessions.startedAt, opts.to));
 
 	return db
-		.select()
+		.select({
+			id: sessions.id,
+			startedAt: sessions.startedAt,
+			endedAt: sessions.endedAt,
+			pageCount: sessions.pageCount,
+			entryPath: sessions.entryPath,
+			exitPath: sessions.exitPath,
+			device: sessions.device,
+			browser: sessions.browser,
+			country: sessions.country,
+		})
 		.from(sessions)
 		.where(conditions.length > 0 ? and(...conditions) : undefined)
 		.orderBy(desc(sessions.startedAt))

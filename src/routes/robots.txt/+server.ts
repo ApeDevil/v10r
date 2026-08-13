@@ -81,6 +81,10 @@ export const GET: RequestHandler = async () => {
 	return new Response(body, {
 		headers: {
 			'Content-Type': 'text/plain',
+			// Content is frozen per environment and this is bot-hit by definition, so
+			// every fetch was needlessly invoking the function. Matches the other agent
+			// surfaces (/llms.txt, /sitemap.xml, /docs/**.md), which already do this.
+			'Cache-Control': 'public, max-age=0, s-maxage=3600',
 		},
 	});
 };

@@ -5,7 +5,7 @@
  * document. Nothing here should mutate.
  */
 
-import { and, eq, inArray, isNull, or, sql } from 'drizzle-orm';
+import { and, count, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { llmwikiPage } from '$lib/server/db/schema/rag';
 import { POINTER_CAP } from './config';
@@ -180,6 +180,26 @@ export async function fetchPagesByIds(
  * `[SYSTEM_DOCS_USER_ID]` for the system project map. Scoping by owner-set, not a single
  * user, is what lets the chatbot surface the system overview a logged-in user doesn't own.
  */
+/**
+ * Count active wiki pages visible to an owner set (context-probe inventory).
+ * `kind = 'page'` only — the overview anchor is loaded separately and isn't
+ * part of the searchable pool.
+ */
+export async function countPages(ownerIds: string[], collectionId: string | null): Promise<number> {
+	const [row] = await db
+		.select({ total: count() })
+		.from(llmwikiPage)
+		.where(
+			and(
+				inArray(llmwikiPage.userId, ownerIds),
+				eq(llmwikiPage.kind, 'page'),
+				isNull(llmwikiPage.deletedAt),
+				collectionId === null ? isNull(llmwikiPage.collectionId) : eq(llmwikiPage.collectionId, collectionId),
+			),
+		);
+	return row?.total ?? 0;
+}
+
 export async function getOverview(ownerIds: string[], collectionId: string | null): Promise<LlmwikiPage | null> {
 	const rows = await db
 		.select({

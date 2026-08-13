@@ -1,4 +1,3 @@
-import { building } from '$app/environment';
 import { parseAgentId } from './parse';
 
 const rawModules = import.meta.glob('/.claude/agents/*.md', {
@@ -30,6 +29,7 @@ export const EXPECTED_AGENT_IDS = [
 	'tesy',
 	'tray',
 	'uxy',
+	'visy',
 ] as const;
 
 let cached: string[] | null = null;
@@ -59,6 +59,7 @@ export function getAgentIds(): string[] {
 	return cached;
 }
 
-if (!building) {
-	getAgentIds();
-}
+// No boot-time drift assertion. `getAgentIds()` throws on drift and is called by
+// `index.test.ts`, so the invariant is enforced by the gate — where a build-time
+// invariant belongs. Running it at module scope made every serverless cold start
+// parse all 17 inlined agent prompts to re-prove something the test already proves.

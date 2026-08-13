@@ -38,6 +38,7 @@ import {
 // module so its tests never import this file's heavy graph (schedulers, auth).
 import { docsMarkdown } from '$lib/server/docs/markdown-hook';
 import { clearOwnerCookie, PAIRING_COOKIE, verifyOwnerCookie } from '$lib/server/pairing/cookie';
+import { platform } from '$lib/server/platform';
 import { isSameHost, needsCsrf } from '$lib/server/security/csrf';
 import {
 	generateRandomStyle,
@@ -54,9 +55,17 @@ import { tokenToCssVar } from '$lib/styles/random/token-vars';
 import type { PaletteId, ResolvedStyle } from '$lib/styles/random/types';
 import { getTypography } from '$lib/styles/random/typography-registry';
 import { sanitizeInternalPath } from '$lib/utils/safe-path';
-import '$lib/server/agents';
-import '$lib/server/jobs/scheduler';
-import '$lib/server/jobs/delivery-scheduler';
+
+// Both schedulers are `setInterval` loops that only ever arm on a persistent
+// platform — on Vercel `platform.persistent` is false and they do nothing. Left
+// as static imports they still dragged their whole transitive graph
+// (@aws-sdk/client-s3, web-push, the AI SDK and all three @ai-sdk providers)
+// into Lambda init for EVERY page render. Behind a gated dynamic import Rollup
+// splits them into their own chunk, so serverless cold starts never load them.
+if (platform.persistent) {
+	await import('$lib/server/jobs/scheduler');
+	await import('$lib/server/jobs/delivery-scheduler');
+}
 
 logAdminConfig();
 
@@ -536,31 +545,41 @@ const sessionPopulate: Handle = async ({ event, resolve }) => {
 	// `cookieCache` answers getSession() from a signed cookie without touching
 	// Postgres for up to SESSION_COOKIE_MAX_AGE. Deleting session rows — what a
 	// ban and `revokeSiblings` both do — would otherwise not bite for 5 minutes.
-	// `banned` is read first: it is already on the user object, so the common
-	// case costs nothing and short-circuits before the Redis round-trip.
+	// `banned` short-circuits only for BANNED users — `false || await …` still awaits.
+	// (An earlier comment here claimed the common case skipped Redis; it never did.)
+	// So every authenticated request paid an Upstash round trip, and the grant lookup
+	// was then awaited serially after it despite being completely independent. Both
+	// now run concurrently, and a banned user still costs no Redis call at all.
 	const su = event.locals.user;
 	const ss = event.locals.session;
-	if (su && ss && (su.banned || (await isSessionRevoked(su.id, ss.createdAt, ss.token)))) {
+	const needsGrants = !!su && (event.url.pathname.includes('/blog') || event.url.pathname.includes('/desk'));
+
+	const [revoked, grants] = await Promise.all([
+		su && ss ? (su.banned ? Promise.resolve(true) : isSessionRevoked(su.id, ss.createdAt, ss.token)) : false,
+		// Grants are read ONLY by the blog-author guards (the /api/blog/* authoring API
+		// and blog pages). Skipped elsewhere — the array stays empty and the guards
+		// still deny correctly (admins bypass via isAdmin). Keeping it a plain array
+		// avoids an async cascade across ~25 guard call sites.
+		needsGrants && su
+			? listActiveGrantKinds(su.id).catch((err) => {
+					console.error(
+						'[auth] grant lookup failed — treating as no grants:',
+						err instanceof Error ? err.message : err,
+					);
+					event.locals.authDegraded = true;
+					return [] as Awaited<ReturnType<typeof listActiveGrantKinds>>;
+				})
+			: Promise.resolve([] as Awaited<ReturnType<typeof listActiveGrantKinds>>),
+	]);
+
+	if (revoked) {
 		event.locals.user = null;
 		event.locals.session = null;
 		event.locals.grants = [];
 		return resolve(event);
 	}
 
-	// Grants are read ONLY by the blog-author guards (the /api/blog/* authoring API and
-	// blog pages). Skip the Neon round-trip on every other authed request — the array
-	// stays empty and the guards still deny correctly (admins bypass via isAdmin). This
-	// keeps `locals.grants` a plain array (no async cascade across ~25 guard call sites).
-	const u = event.locals.user;
-	if (u && (event.url.pathname.includes('/blog') || event.url.pathname.includes('/desk'))) {
-		event.locals.grants = await listActiveGrantKinds(u.id).catch((err) => {
-			console.error('[auth] grant lookup failed — treating as no grants:', err instanceof Error ? err.message : err);
-			event.locals.authDegraded = true;
-			return [];
-		});
-	} else {
-		event.locals.grants = [];
-	}
+	event.locals.grants = grants;
 
 	return resolve(event);
 };

@@ -523,24 +523,22 @@ Cache layer showcase. Three sub-pages covering connection, ephemeral keys, and c
 
 ### /showcases/ai
 
-AI integration showcase using the Vercel AI SDK. Covers streaming chat, vision-driven metadata, and the RAG retrieval pipeline.
+Architecture x-ray of the two AI surfaces (see [ai/surfaces.md](./ai/surfaces.md)). Two sibling pages with an identical 8-anchor skeleton (`#spine #guard #prompt #nrag #tools #verify|#approval #stream #awareness`), driven by recorded trace fixtures — fully readable signed-out, zero `+page.server.ts` (leak-gate enforced).
 
 | Tests | Stack |
 |-------|-------|
-| Streaming chat | Vercel AI SDK, message history |
-| Vision | Image input, structured `Output.object` |
-| RAG pipeline | Embeddings, vector search, retrieval |
+| Recorded trace playback | Pure `reduceTurn` reducer, seekable scrubber |
+| Manifest-derived tool matrix | `TOOL_MANIFEST` (`$lib/types/ai-tools.ts`), drift tests |
+| Interactive approval halt | Real `PlanCard` at the deskbot fixture's one-door stop |
 
 **Sub-pages:**
 
 | Route | Purpose |
 |-------|---------|
-| `/chat` | Streaming chat interface with message history |
-| `/image-metadata` | Vision: upload an image, AI proposes metadata, human reviews + approves before save (opt-in GPS). See [ai/image-metadata.md](./ai/image-metadata.md) |
-| `/image-metadata/analyze` | Run a single image analysis |
-| `/retrieval/rag-chat` | RAG-augmented chat with source attribution and pipeline visualization (modes: retrieve / llmwiki, selectable from UI) |
-| `/retrieval/explorer` | Inspect retrieved chunks, embeddings, and relevance scores |
-| `/retrieval/ingest` | Document ingestion: chunking, embedding, indexing |
+| `/chatbot` | The v10r-expert surface layer by layer: guard chain, prompt tape, retrieval profile (tier-1 live, tiers 2–3 dormant), read-only tool set, citation verification |
+| `/deskbot` | The in-desk operator layer by layer: scoped desk tools, proposal state machine, approval replay as a second stack, desk-awareness |
+
+Retired 2026-08 (308 stubs until 2026-11): `/chat`, `/retrieval`, `/retrieval/rag-chat`, `/retrieval/explorer`, `/retrieval/ingest` (retrieval pedagogy lives in each page's `#nrag` section); `/image-metadata` moved to `/showcases/toolkits/image-metadata`.
 
 ---
 
@@ -565,6 +563,7 @@ Bundled, multi-step tools: upload once, run an AI pipeline, adjust the results, 
 | `/image-kit/embed` | Image/text embedder with cosine-similarity viz |
 | `/image-kit/crop` | AI frame-cropper (1:1 / 16:9 / 9:16) |
 | `/image-kit/discard` | Clear the session and reset all tools |
+| `/image-metadata` | Vision: upload an image, AI proposes metadata, human reviews + approves before save (opt-in GPS). Analysis runs via `POST /api/ai/images/[id]/analyze` (behind `guardAiRequest`). See [ai/image-metadata.md](./ai/image-metadata.md) |
 
 ---
 
