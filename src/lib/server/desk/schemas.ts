@@ -53,6 +53,9 @@ const DockLayoutStateSchema = v.object({
 	root: v.record(v.string(), v.unknown()), // opaque recursive tree
 	panels: v.record(v.string(), v.unknown()),
 	activityBarPosition: v.optional(v.picklist(['left', 'right', 'top', 'bottom'])),
+	// Must mirror DockLayoutState (dock.types.ts) — v.object strips unknown keys
+	// silently, so a field missing here is silently dropped from the DB lane.
+	focusedLeafId: v.optional(v.string()),
 });
 
 export const CreateWorkspaceSchema = v.object({

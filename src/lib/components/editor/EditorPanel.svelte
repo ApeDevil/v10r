@@ -5,8 +5,8 @@ import {
 	findLeafWithPanel,
 	getDeskBus,
 	getDockContext,
+	getPanelMenus,
 	registerPanelContext,
-	registerPanelMenus,
 	updatePanelContext,
 } from '$lib/components/composites/dock';
 import PanelEmptyState from '$lib/components/composites/dock/PanelEmptyState.svelte';
@@ -25,6 +25,7 @@ let { panelId }: Props = $props();
 
 const bus = getDeskBus();
 const dock = getDockContext();
+const panelMenus = getPanelMenus();
 
 // Extract documentId from panelId (e.g. "editor-pst_abc123" → "pst_abc123")
 const documentId = $derived(panelId.startsWith('editor-') ? panelId.slice(7) : '');
@@ -376,7 +377,7 @@ const editorMenus = $derived<MenuBarMenu[]>([
 
 // svelte-ignore state_referenced_locally
 $effect(() => {
-	return registerPanelMenus(panelId, { menuBar: editorMenus });
+	return panelMenus.register(panelId, { menuBar: editorMenus });
 });
 
 // ── AI Context registration ─────────────────────────────────────
@@ -548,5 +549,31 @@ onDestroy(() => {
 
 	.dismiss-btn:hover {
 		background: color-mix(in srgb, var(--color-error) 10%, transparent);
+	}
+
+	/* Mobile: full-bleed desk panel adaptations */
+	@media (max-width: 767px) {
+		/* 16px floor — below that iOS Safari auto-zooms on focus */
+		.editor-panel :global(.source-textarea) {
+			font-size: 16px;
+			padding: 16px 10px;
+		}
+
+		.editor-error {
+			flex-wrap: wrap;
+		}
+
+		.dismiss-btn {
+			width: 44px;
+			height: 44px;
+		}
+
+		.editor-panel :global(.publish-strip) {
+			flex-wrap: wrap;
+		}
+
+		.editor-panel :global(.publish-strip button) {
+			min-height: 44px;
+		}
 	}
 </style>

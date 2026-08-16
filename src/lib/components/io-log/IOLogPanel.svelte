@@ -1,5 +1,5 @@
 <script lang="ts">
-import { registerPanelMenus } from '$lib/components/composites/dock';
+import { getPanelMenus } from '$lib/components/composites/dock';
 import { clearIOLog, getIOLogEntries, type IOLogEntry } from '$lib/components/composites/dock/io-log.svelte';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 
@@ -8,6 +8,8 @@ interface Props {
 }
 
 let { panelId }: Props = $props();
+
+const panelMenus = getPanelMenus();
 
 const entries = $derived(getIOLogEntries());
 
@@ -72,7 +74,7 @@ const logMenus = $derived<MenuBarMenu[]>([
 
 // svelte-ignore state_referenced_locally
 $effect(() => {
-	return registerPanelMenus(panelId, { menuBar: logMenus });
+	return panelMenus.register(panelId, { menuBar: logMenus });
 });
 </script>
 
@@ -200,5 +202,29 @@ $effect(() => {
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+
+	/* Mobile: two-row entries — row 1 = time + badge + tool (muted meta),
+	   row 2 = full label, wrapping instead of truncating */
+	@media (max-width: 767px) {
+		.io-log-entry {
+			flex-wrap: wrap;
+			row-gap: 1px;
+			padding: 4px 8px;
+		}
+
+		.io-log-tool {
+			color: var(--color-muted);
+			font-weight: 400;
+		}
+
+		.io-log-label {
+			flex-basis: 100%;
+			color: var(--color-fg);
+			overflow: visible;
+			text-overflow: clip;
+			white-space: normal;
+			overflow-wrap: anywhere;
+		}
 	}
 </style>

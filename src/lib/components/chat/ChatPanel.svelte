@@ -10,15 +10,15 @@ import type { HarnessMetadata, ProposalMetadata } from '$lib/components/composit
 import PlanCard from '$lib/components/composites/chatbot/PlanCard.svelte';
 import {
 	appendIOLog,
-	findLeafWithPanel,
+	focusPanel,
 	getActiveProviderId,
 	getContextChips,
 	getDeskBus,
 	getDockContext,
 	getEnabledScopes,
+	getPanelMenus,
 	getWorkspaceContext,
 	markResponseReceived,
-	registerPanelMenus,
 	serializeForRequest,
 } from '$lib/components/composites/dock';
 import { dispatchDeskEffect as dispatchEffect } from '$lib/components/composites/dock/dispatch-desk-effect';
@@ -44,6 +44,7 @@ let managerInitialTab = $state<string | undefined>();
 
 const bus = getDeskBus();
 const dock = getDockContext();
+const panelMenus = getPanelMenus();
 const wsState = getWorkspaceContext();
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -205,15 +206,23 @@ $effect(() => {
 
 /** Extracted to dispatch-desk-effect.ts for testability */
 const effectActions = {
-	findLeafWithPanel,
-	activateTab: dock.activateTab,
+	focusPanel: (panelId: string) => focusPanel(dock, panelId),
 	addPanel: dock.addPanel,
 	updatePanel: dock.updatePanel,
 	publish: bus.publish,
 };
 
 function dispatchDeskEffect(effect: DeskEffect) {
-	dispatchEffect(effect, effectActions, dock.root);
+	const applied = dispatchEffect(effect, effectActions);
+	if (!applied) {
+		// A desk effect that did nothing must never look like one that worked.
+		appendIOLog({
+			source: 'tool-result',
+			toolName: effect?.type ?? 'desk-effect',
+			label: `Effect ${effect?.type ?? '(unknown)'} not applied — target missing`,
+			level: 'error',
+		});
+	}
 }
 
 // ── Scroll ──────────────────────────────────────────────────────
@@ -353,7 +362,7 @@ const chatMenus = $derived<MenuBarMenu[]>([
 
 // svelte-ignore state_referenced_locally
 $effect(() => {
-	return registerPanelMenus(panelId, { menuBar: chatMenus });
+	return panelMenus.register(panelId, { menuBar: chatMenus });
 });
 </script>
 

@@ -67,7 +67,7 @@ const s = useSurface();
 							{:else}
 								<DropdownMenuPrimitive.Item
 									disabled={item.disabled}
-									class={dropdownMenuItemVariants()}
+									class={cn(dropdownMenuItemVariants(), item.destructive && 'dock-menu-item-destructive')}
 									onclick={() => item.onSelect?.()}
 								>
 									{#if item.icon}
@@ -92,12 +92,14 @@ const s = useSurface();
 </DropdownMenuPrimitive.Root>
 
 <style>
+	/* 24px hit target (WCAG 2.5.8 AA floor) — the glyph stays small, the
+	   padding carries the target so the tab bar's visual density holds. */
 	:global(.dock-leaf-menu-trigger) {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 16px;
-		height: 16px;
+		width: 24px;
+		height: 24px;
 		border-radius: var(--radius-sm);
 		color: var(--color-muted);
 		background: transparent;
@@ -105,6 +107,15 @@ const s = useSurface();
 		cursor: pointer;
 		opacity: 0.6;
 		font-size: 12px;
+	}
+
+	:global(.dock-menu-item-destructive) {
+		color: var(--color-error);
+	}
+
+	:global(.dock-menu-item-destructive [class^='i-']),
+	:global(.dock-menu-item-destructive [class*=' i-']) {
+		color: var(--color-error);
 	}
 
 	:global(.dock-leaf-menu-trigger:hover) {

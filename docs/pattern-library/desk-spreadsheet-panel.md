@@ -1,7 +1,7 @@
 ---
 title: "Spreadsheet panel (file type, dual-mode)"
 description: "A spreadsheet file type managed through the desk's unified file registry, editable in a dual-mode (grid/panel) UI."
-category: "Content, Blog & Desk"
+category: "Desk Workspace"
 ---
 
 # Spreadsheet panel (file type, dual-mode)
@@ -10,7 +10,7 @@ category: "Content, Blog & Desk"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Content, Blog & Desk · **Tier:** light · **Risk:** medium — persists spreadsheet data via desk file registry
+**Category:** Desk Workspace · **Tier:** light · **Risk:** medium — persists spreadsheet data via desk file registry
 
 A spreadsheet file type managed through the desk's unified file registry, editable in a dual-mode (grid/panel) UI.
 
@@ -24,6 +24,10 @@ A spreadsheet file type managed through the desk's unified file registry, editab
 
 - `src/lib/components/spreadsheet/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/spreadsheet) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/spreadsheet))
 
+## Depends on
+
+- [Desk workspace (dock layout, focus architecture, mobile projection)](/docs/pattern-library/desk-workspace)
+
 ---
 
-_Machine-readable record: `content-spreadsheet-panel` in `mcp/patterns.registry.json`._
+_Machine-readable record: `desk-spreadsheet-panel` in `mcp/patterns.registry.json`._

@@ -134,6 +134,8 @@ Svelte 5 `$state` incompatibility (#296), no async plugin support (#274), only 7
 
 ## Editor: Desk Integration
 
+> **Design record.** This section is the original integration design. The "Documents" panel described below evolved into the unified Explorer; the current desk structure — focus architecture, mobile chrome, Explorer, DeskBus — is documented in [desk/README.md](./desk/README.md).
+
 ### Why the desk, not a standalone route
 
 The desk already has a **DockLayout** with a binary split tree (resizable, persistent, drag-and-drop tabs), a panel registry, and an activity bar. The editor fits as a new panel type — not a separate page.

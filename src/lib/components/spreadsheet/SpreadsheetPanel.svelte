@@ -4,8 +4,8 @@ import { apiFetch } from '$lib/api';
 import {
 	getDeskBus,
 	getDockContext,
+	getPanelMenus,
 	registerPanelContext,
-	registerPanelMenus,
 	updatePanelContext,
 } from '$lib/components/composites/dock';
 import PanelEmptyState from '$lib/components/composites/dock/PanelEmptyState.svelte';
@@ -24,6 +24,7 @@ let { panelId }: Props = $props();
 
 const sheet = createSpreadsheetState();
 const dock = getDockContext();
+const panelMenus = getPanelMenus();
 
 // ── Persistence ─────────────────────────────────────────────────
 
@@ -202,7 +203,7 @@ const spreadsheetMenus = $derived<MenuBarMenu[]>([
 
 // svelte-ignore state_referenced_locally
 $effect(() => {
-	return registerPanelMenus(panelId, { menuBar: spreadsheetMenus });
+	return panelMenus.register(panelId, { menuBar: spreadsheetMenus });
 });
 </script>
 

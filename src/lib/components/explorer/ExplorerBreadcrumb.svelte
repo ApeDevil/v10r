@@ -79,4 +79,24 @@ let visible = $derived(path.length >= 1 && selected !== null);
 		flex-shrink: 0;
 		color: var(--color-muted);
 	}
+
+	/* Touch: deep paths scroll sideways instead of truncating away. */
+	@media (max-width: 767px) {
+		.breadcrumb {
+			overflow-x: auto;
+			scrollbar-width: none;
+			padding: 6px 10px;
+		}
+
+		.breadcrumb::-webkit-scrollbar {
+			display: none;
+		}
+
+		.crumb {
+			flex-shrink: 0;
+			max-width: none;
+			padding: 4px 6px;
+			font-size: 12px;
+		}
+	}
 </style>

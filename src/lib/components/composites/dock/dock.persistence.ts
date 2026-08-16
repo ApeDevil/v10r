@@ -15,10 +15,11 @@ export function saveDockState(
 	panels: Record<string, PanelDefinition>,
 	storageKey = DEFAULT_KEY,
 	activityBarPosition?: ActivityBarPosition,
+	focusedLeafId?: string,
 ): void {
 	if (!browser) return;
 	try {
-		const state: DockLayoutState = { version: CURRENT_VERSION, root, panels, activityBarPosition };
+		const state: DockLayoutState = { version: CURRENT_VERSION, root, panels, activityBarPosition, focusedLeafId };
 		localStorage.setItem(storageKey, JSON.stringify(state));
 	} catch {
 		// Silently fail (e.g., storage full)

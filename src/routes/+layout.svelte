@@ -13,8 +13,13 @@ import '@fontsource-variable/space-grotesk';
 import '@fontsource-variable/jetbrains-mono';
 import '@fontsource-variable/fraunces';
 import '@fontsource-variable/nunito';
+import { visualViewportWatcher } from '$lib/state/visual-viewport.svelte';
 
 let { children } = $props();
+
+// One keyboard watcher per tab — publishes --keyboard-inset + data-keyboard
+// on <html>; floating corner controls consume it via .fab-keyboard-hide.
+$effect(() => visualViewportWatcher.attach());
 </script>
 
 {@render children()}

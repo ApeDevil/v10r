@@ -1,12 +1,18 @@
 <script lang="ts">
-import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
+import { ContextMenu as ContextMenuPrimitive, DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
 import {
 	contextMenuContentVariants,
 	contextMenuItemVariants,
 	contextMenuSeparatorVariants,
 } from '$lib/components/composites/context-menu';
+import {
+	dropdownMenuContentVariants,
+	dropdownMenuItemVariants,
+	dropdownMenuSeparatorVariants,
+} from '$lib/components/composites/dropdown-menu/dropdown-menu';
 import { Badge } from '$lib/components/primitives';
 import { elevationAttr, getParentLevel } from '$lib/styles/elevation';
+import { cn } from '$lib/utils/cn';
 import {
 	buildContextMenuItems,
 	type ContextMenuCallbacks,
@@ -190,51 +196,96 @@ const paddingLeft = $derived(8 + depth * 16);
 const descendantCount = $derived(node.isFolder ? treeState.countDescendants(node.id) : 0);
 </script>
 
+<!-- Touch overflow menu — the permanent alternative to hover actions and
+     right-click: same capability-driven items, 44px target, coarse-pointer only. -->
+{#snippet kebabMenu()}
+	{#if menuItems.length > 0}
+		<DropdownMenuPrimitive.Root>
+			<DropdownMenuPrimitive.Trigger
+				class="tree-kebab"
+				aria-label="Actions for {node.label}"
+				onclick={(e: MouseEvent) => e.stopPropagation()}
+			>
+				<span class="i-lucide-ellipsis-vertical" aria-hidden="true"></span>
+			</DropdownMenuPrimitive.Trigger>
+			<DropdownMenuPrimitive.Portal>
+				<DropdownMenuPrimitive.Content
+					data-elevation={elevationAttr(menuLevel)}
+					class={dropdownMenuContentVariants()}
+					sideOffset={4}
+					collisionPadding={8}
+					align="end"
+				>
+					{#each menuItems as item}
+						{#if item.type === 'separator'}
+							<DropdownMenuPrimitive.Separator class={dropdownMenuSeparatorVariants()} />
+						{:else}
+							<DropdownMenuPrimitive.Item
+								class={cn(dropdownMenuItemVariants(), item.destructive && 'tree-item-destructive')}
+								onclick={() => handleMenuAction(item.action)}
+							>
+								<span class="{item.icon} ctx-icon"></span>
+								{item.label}
+							</DropdownMenuPrimitive.Item>
+						{/if}
+					{/each}
+				</DropdownMenuPrimitive.Content>
+			</DropdownMenuPrimitive.Portal>
+		</DropdownMenuPrimitive.Root>
+	{/if}
+{/snippet}
+
 <ContextMenuPrimitive.Root>
 	<ContextMenuPrimitive.Trigger class="tree-ctx-trigger">
 		{#snippet child({ props })}
 			{#if node.isFolder}
-				<button
+				<div
 					{...props}
 					class="tree-folder"
 					class:drag-over={dragOver}
 					class:tree-focused={isFocused}
 					class:tree-selected={isSelected}
-					style="padding-left: {paddingLeft}px"
 					role="treeitem"
 					aria-expanded={isExpanded}
 					aria-selected={isSelected}
+					tabindex={-1}
 					draggable={node.capabilities.has('move') ? 'true' : undefined}
 					ondragstart={handleDragStart}
 					ondragend={handleDragEnd}
 					ondragover={handleDragOver}
 					ondragleave={handleDragLeave}
 					ondrop={handleDrop}
-					onclick={() => {
-						treeState.selectedId = node.id;
-						treeState.toggleExpanded(node.id);
-					}}
 				>
-					<span class="tree-toggle">{isExpanded ? '▾' : '▸'}</span>
-					<span class="{node.icon} tree-icon" style:color={node.iconColor}></span>
-					{#if isRenaming}
-						<input
-							bind:this={renameInput}
-							bind:value={renameValue}
-							class="rename-input"
-							onblur={commitRename}
-							onkeydown={handleRenameKeydown}
-							onclick={(e) => e.stopPropagation()}
-						/>
-					{:else}
-						<span class="tree-label">{node.label}</span>
-					{/if}
-					{#if children.length > 0}
-						<span class="tree-count">{children.length}</span>
-					{:else if node.childCount != null && node.childCount >= 0}
-						<span class="tree-count">{node.childCount}</span>
-					{/if}
-				</button>
+					<button
+						class="tree-folder-btn"
+						style="padding-left: {paddingLeft}px"
+						onclick={() => {
+							treeState.selectedId = node.id;
+							treeState.toggleExpanded(node.id);
+						}}
+					>
+						<span class="tree-toggle">{isExpanded ? '▾' : '▸'}</span>
+						<span class="{node.icon} tree-icon" style:color={node.iconColor}></span>
+						{#if isRenaming}
+							<input
+								bind:this={renameInput}
+								bind:value={renameValue}
+								class="rename-input"
+								onblur={commitRename}
+								onkeydown={handleRenameKeydown}
+								onclick={(e) => e.stopPropagation()}
+							/>
+						{:else}
+							<span class="tree-label">{node.label}</span>
+						{/if}
+						{#if children.length > 0}
+							<span class="tree-count">{children.length}</span>
+						{:else if node.childCount != null && node.childCount >= 0}
+							<span class="tree-count">{node.childCount}</span>
+						{/if}
+					</button>
+					{@render kebabMenu()}
+				</div>
 			{:else}
 				<div
 					{...props}
@@ -291,6 +342,7 @@ const descendantCount = $derived(node.isFolder ? treeState.countDescendants(node
 							<span class={isAiPinned ? 'i-lucide-pin-off' : 'i-lucide-pin'}></span>
 						</button>
 					{/if}
+					{@render kebabMenu()}
 				</div>
 			{/if}
 		{/snippet}
@@ -304,7 +356,7 @@ const descendantCount = $derived(node.isFolder ? treeState.countDescendants(node
 						<ContextMenuPrimitive.Separator class={contextMenuSeparatorVariants()} />
 					{:else}
 						<ContextMenuPrimitive.Item
-							class={contextMenuItemVariants()}
+							class={cn(contextMenuItemVariants(), item.destructive && 'tree-item-destructive')}
 							onclick={() => handleMenuAction(item.action)}
 						>
 							<span class="{item.icon} ctx-icon"></span>
@@ -351,8 +403,15 @@ const descendantCount = $derived(node.isFolder ? treeState.countDescendants(node
 	.tree-folder {
 		display: flex;
 		align-items: center;
-		gap: 4px;
 		width: 100%;
+	}
+
+	.tree-folder-btn {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		flex: 1;
+		min-width: 0;
 		padding: 4px 8px;
 		border: none;
 		background: transparent;
@@ -414,7 +473,8 @@ const descendantCount = $derived(node.isFolder ? treeState.countDescendants(node
 		display: flex;
 		align-items: center;
 		gap: 4px;
-		width: 100%;
+		flex: 1;
+		min-width: 0;
 		padding: 3px 8px 3px 0;
 		border: none;
 		background: transparent;
@@ -489,6 +549,61 @@ const descendantCount = $derived(node.isFolder ? treeState.countDescendants(node
 	.tree-action.ai-pinned {
 		display: flex;
 		color: var(--color-primary);
+	}
+
+	/* Touch overflow trigger — hidden wherever hover + right-click exist. */
+	:global(.tree-kebab) {
+		display: none;
+		align-items: center;
+		justify-content: center;
+		width: 44px;
+		align-self: stretch;
+		flex-shrink: 0;
+		border: none;
+		background: transparent;
+		color: var(--color-muted);
+		font-size: 15px;
+		cursor: pointer;
+	}
+
+	:global(.tree-item-destructive) {
+		color: var(--color-error);
+	}
+
+	:global(.tree-item-destructive [class^='i-']),
+	:global(.tree-item-destructive [class*=' i-']) {
+		color: var(--color-error);
+	}
+
+	/* Touch layer: rows grow to 44px targets, the kebab becomes the permanent
+	   action door (hover reveals and right-click don't exist here), and inline
+	   inputs hit 16px so iOS doesn't zoom the focused field. */
+	@media (pointer: coarse), (max-width: 767px) {
+		:global(.tree-kebab) {
+			display: flex;
+		}
+
+		.tree-folder-btn,
+		.tree-file-btn {
+			min-height: 44px;
+		}
+
+		.tree-action {
+			display: none;
+		}
+
+		/* Pinned state stays visible as an indicator/quick-unpin, clear of the kebab. */
+		.tree-action.ai-pinned {
+			display: flex;
+			right: 46px;
+			width: 28px;
+			height: 28px;
+		}
+
+		.rename-input {
+			font-size: 16px;
+			padding: 4px 6px;
+		}
 	}
 
 	.tree-empty {

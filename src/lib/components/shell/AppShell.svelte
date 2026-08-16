@@ -180,7 +180,9 @@ const searchItems = $derived<CommandPaletteItem[]>([
 <!-- Skip link for accessibility -->
 <a href="#main-content" class="absolute -top-full left-0 py-2 px-4 bg-primary text-white z-modal no-underline focus:top-0">{m.shell_skip_to_main()}</a>
 
-<div class="flex min-h-screen">
+<!-- 100svh, not 100vh/min-h-screen: vh is the LARGE viewport, so with mobile
+	browser chrome expanded the bottom of a 100vh box sits below the fold. -->
+<div class="flex min-h-[100svh]">
 	<Sidebar {isAdmin} />
 
 	<!-- inert while the mobile drawer is open: a screen reader's virtual cursor could

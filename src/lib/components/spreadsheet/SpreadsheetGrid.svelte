@@ -1,4 +1,5 @@
 <script lang="ts">
+import { MediaQuery } from 'svelte/reactivity';
 import type { SpreadsheetState } from './spreadsheet.state.svelte';
 
 interface Props {
@@ -6,6 +7,10 @@ interface Props {
 }
 
 let { sheet }: Props = $props();
+
+// Coarse pointers have no reliable dblclick — a second tap on the selected
+// cell enters edit mode instead.
+const coarsePointer = new MediaQuery('(pointer: coarse)', false);
 
 let editInput: HTMLInputElement | undefined = $state();
 
@@ -17,6 +22,10 @@ $effect(() => {
 });
 
 function handleCellClick(col: number, row: number, event: MouseEvent) {
+	if (coarsePointer.current && !event.shiftKey && !sheet.editing && sheet.isActiveCell(col, row)) {
+		sheet.startEditing();
+		return;
+	}
 	sheet.select(col, row, event.shiftKey);
 }
 
@@ -233,5 +242,24 @@ function formatDisplay(value: import('$lib/utils/spreadsheet').CellValue): strin
 		font-family: monospace;
 		font-size: 12px;
 		z-index: 2;
+	}
+
+	/* Touch: 44px rows / 96px columns for real tap targets (headers stay
+	   sticky), 16px edit input so iOS doesn't zoom. Panning stays native —
+	   selection is tap-driven, nothing captures pointer moves. */
+	@media (max-width: 767px) {
+		.sheet-grid th:not(.sheet-row-header),
+		.sheet-grid td:not(.sheet-row-header) {
+			width: 96px;
+			min-width: 96px;
+		}
+
+		.sheet-grid tbody td {
+			height: 44px;
+		}
+
+		.sheet-edit-input {
+			font-size: 16px;
+		}
 	}
 </style>

@@ -1,7 +1,7 @@
 ---
 title: "Markdown pipeline & custom syntax (directives, wikilinks)"
 description: "A remark/rehype-based markdown rendering pipeline extended with custom directive syntax for embeds; wikilink cross-references are designed for but not yet…"
-category: "Content, Blog & Desk"
+category: "Content & Blog"
 ---
 
 # Markdown pipeline & custom syntax (directives, wikilinks)
@@ -10,7 +10,7 @@ category: "Content, Blog & Desk"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Content, Blog & Desk · **Tier:** light · **Risk:** low — parsing/rendering pipeline, no db writes
+**Category:** Content & Blog · **Tier:** light · **Risk:** low — parsing/rendering pipeline, no db writes
 
 A remark/rehype-based markdown rendering pipeline extended with custom directive syntax for embeds; wikilink cross-references are designed for but not yet implemented.
 

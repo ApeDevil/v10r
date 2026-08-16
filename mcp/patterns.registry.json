@@ -121,7 +121,12 @@
 		},
 		{
 			"id": "content",
-			"title": "Content, Blog & Desk",
+			"title": "Content & Blog",
+			"group": "features"
+		},
+		{
+			"id": "desk",
+			"title": "Desk Workspace",
 			"group": "features"
 		}
 	],
@@ -1377,38 +1382,6 @@
 			"invariants": [],
 			"emulation_notes": [],
 			"risk": "low — frontend only"
-		},
-		{
-			"id": "ui-workbench",
-			"tier": "light",
-			"title": "Workbench / dock layout",
-			"category": "ui",
-			"summary": "A binary split-tree dock layout (DockLayout) powering the /desk workspace with resizable panes, drag-and-drop tabs, and a panel-type registry.",
-			"when_to_use": "Use when building an IDE-like or immersive multi-panel workspace where panels can be arranged, tabbed, and dragged.",
-			"capabilities": ["dock layout", "panel registry"],
-			"keywords": ["workbench", "dock", "panels", "drag-and-drop"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/desk/README.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/components/composites/dock",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/showcases/ui/workbench",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — frontend only, client-side layout state"
 		},
 		{
 			"id": "ui-typography",
@@ -4827,69 +4800,6 @@
 			"risk": "low — parsing/rendering pipeline, no db writes"
 		},
 		{
-			"id": "content-desk-workspace",
-			"tier": "light",
-			"title": "Desk workspace (panels, DeskBus, file registry)",
-			"category": "content",
-			"summary": "A full-page DockLayout workspace with resizable panel panes, drag-and-drop tabs, a panel-type registry, and a typed pub/sub DeskBus for cross-panel communication.",
-			"when_to_use": "Use when building a multi-panel authoring workspace where different content types (editor, spreadsheet, explorer) need to coexist and communicate.",
-			"capabilities": ["dock layout panels", "cross-panel pub/sub", "panel registry"],
-			"keywords": ["desk", "docklayout", "deskbus", "explorer"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/desk/README.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/server/desk",
-					"kind": "dir"
-				},
-				{
-					"path": "src/lib/components/explorer",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/desk",
-					"kind": "approute"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "medium — persists file registry, cross-panel state"
-		},
-		{
-			"id": "content-spreadsheet-panel",
-			"tier": "light",
-			"title": "Spreadsheet panel (file type, dual-mode)",
-			"category": "content",
-			"summary": "A spreadsheet file type managed through the desk's unified file registry, editable in a dual-mode (grid/panel) UI.",
-			"when_to_use": "Use when a desk-based workspace needs to support tabular/spreadsheet data alongside markdown documents.",
-			"capabilities": ["spreadsheet grid", "dual-mode panel"],
-			"keywords": ["spreadsheet", "desk", "file registry", "sti"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/desk/spreadsheet.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/components/spreadsheet",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "medium — persists spreadsheet data via desk file registry"
-		},
-		{
 			"id": "content-markdown-editor",
 			"tier": "light",
 			"title": "Markdown editor (CodeMirror, slash commands)",
@@ -4947,6 +4857,312 @@
 			"invariants": [],
 			"emulation_notes": [],
 			"risk": "low — prerendered, no runtime db dependency"
+		},
+		{
+			"id": "desk-workspace",
+			"tier": "deep",
+			"title": "Desk workspace (dock layout, focus architecture, mobile projection)",
+			"category": "desk",
+			"summary": "A full-page multi-panel workspace on a binary split-tree dock: resizable panes, drag-and-drop tabs, a panel-type registry, typed cross-panel pub/sub (DeskBus), one persisted desktop tree with total focus derivation, and a mobile chrome that is a projection over the same state — never a second layout.",
+			"when_to_use": "Use for IDE-like authoring surfaces where several content types (editor, explorer, spreadsheet, AI bot) must coexist, communicate, and stay AI-drivable — and where the same workspace must work on phones without forking its state model.",
+			"capabilities": [
+				"dock layout panels",
+				"workspace persistence",
+				"panel focus model",
+				"cross-panel pub/sub",
+				"mobile workspace projection",
+				"panel registry"
+			],
+			"keywords": [
+				"desk",
+				"dock",
+				"workbench",
+				"split tree",
+				"docklayout",
+				"deskbus",
+				"focus",
+				"panels",
+				"drag-and-drop"
+			],
+			"depends_on": ["multi-client-core"],
+			"docs": [
+				{
+					"path": "docs/blueprint/desk/README.md",
+					"note": "The hub: focus architecture, desk effect contract, mobile chrome, Explorer, DeskBus channels"
+				},
+				{
+					"path": "docs/blueprint/desk/spreadsheet.md",
+					"note": "How a new file-backed panel type joins the workspace"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/components/composites/dock",
+					"kind": "dir",
+					"note": "The whole composite: DockLayout, leaves, tab bars, mobile chrome, state modules"
+				},
+				{
+					"path": "src/lib/components/composites/dock/dock.state.svelte.ts",
+					"note": "Split-tree state: total focus derivation (focusedLeafId → first non-empty leaf fallback), focusSeq counter"
+				},
+				{
+					"path": "src/lib/components/composites/dock/dock.operations.ts",
+					"note": "Pure tree math (split/remove/move) — kept side-effect-free and unit-tested as such"
+				},
+				{
+					"path": "src/lib/components/composites/dock/panel-actions.ts",
+					"note": "focusPanel() — the single focus writer every activation path goes through (tabs, drawer rows, AI effects, deep links)"
+				},
+				{
+					"path": "src/lib/components/composites/dock/desk-bus.svelte.ts",
+					"note": "Typed pub/sub channels between panels (context-scoped factory, not module state)"
+				},
+				{
+					"path": "src/lib/server/desk",
+					"kind": "dir",
+					"note": "File registry domain module + DockLayoutState valibot schemas"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/components/composites/dock/dock.operations.test.ts",
+					"note": "Tree-op purity"
+				},
+				{
+					"path": "src/lib/components/composites/dock/dock.state.focus.svelte.test.ts",
+					"note": "Total focus derivation, fallback, focusSeq"
+				},
+				{
+					"path": "src/lib/server/desk/schemas.parity.test.ts",
+					"note": "Gates DockLayoutState ↔ valibot schema key parity"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/desk",
+					"kind": "approute"
+				},
+				{
+					"path": "/showcases/ui/workbench",
+					"kind": "route",
+					"note": "The same DockLayout embedded in a Card with mobileChrome=\"bar\" — proves the composite is not /desk-specific"
+				}
+			],
+			"invariants": [
+				"The persisted DockLayoutState is always the desktop tree; mobile is a projection over it — mobile paths may focus, open, or close panels, never split or resize.",
+				"Exactly one focused panel per dock instance on every surface. Menus, AI page context, and the mobile visible panel all derive from it; every activation path writes through focusPanel().",
+				"Every DockLayoutState field must exist in DockLayoutStateSchema in the same commit — valibot strips unknown keys silently, so a missed field diverges the DB lane without an error.",
+				"No module-level $state for per-dock-instance concerns (panel menus, mobile surfaces) — context-scope them so two dock instances on one page cannot cross-talk. Singleton-ness follows the resource: per-tab resources like the visual viewport may be module singletons.",
+				"Desktop panel kebab and mobile commands sheet render the same composePanelMenus() array — a difference between them is a bug.",
+				"A desk effect that surfaces a panel leaves it visible without further interaction — overlay auto-close (focusSeq) is part of the effect, not a courtesy."
+			],
+			"emulation_notes": [
+				"Build the tree math as pure functions over a plain node type first (dock.operations.ts) and test it in isolation; wire reactivity in a separate .svelte.ts state class.",
+				"Vitest's node environment compiles Svelte in SERVER mode: factory-scoped $derived evaluates once and freezes. Any derived state you want to unit-test must be a plain function reading $state sources.",
+				"Make focus total, not optional: the stored focusedLeafId if it still resolves, else the first non-empty leaf. Consumers never handle a 'nothing focused' state while panels exist.",
+				"Bump a monotonic focusSeq on every focus write, repeats included — overlays close by watching it, which makes 'AI focused the already-visible panel' still dismiss the drawer.",
+				"Keep closed panels in the panels registry (only the tree entry is removed) — that is what makes close-undo a cheap re-attach instead of a state reconstruction."
+			],
+			"risk": "medium — persists workspace layout locally and via the file registry; no cross-user surface"
+		},
+		{
+			"id": "desk-spreadsheet-panel",
+			"tier": "light",
+			"title": "Spreadsheet panel (file type, dual-mode)",
+			"category": "desk",
+			"summary": "A spreadsheet file type managed through the desk's unified file registry, editable in a dual-mode (grid/panel) UI.",
+			"when_to_use": "Use when a desk-based workspace needs to support tabular/spreadsheet data alongside markdown documents.",
+			"capabilities": ["spreadsheet grid", "dual-mode panel"],
+			"keywords": ["spreadsheet", "desk", "file registry", "sti"],
+			"depends_on": ["desk-workspace"],
+			"docs": [
+				{
+					"path": "docs/blueprint/desk/spreadsheet.md"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/components/spreadsheet",
+					"kind": "dir"
+				}
+			],
+			"tests": [],
+			"showcases": [],
+			"invariants": [],
+			"emulation_notes": [],
+			"risk": "medium — persists spreadsheet data via desk file registry"
+		},
+		{
+			"id": "desk-mobile-chrome",
+			"tier": "light",
+			"title": "Desk mobile chrome (tab strip + pill + drawers)",
+			"category": "desk",
+			"summary": "Phone chrome for the dock workspace: a scrollable top tab strip of open panel instances, a bottom-right controls pill (commands sheet + panels drawer) sitting left of the app FAB via slot tokens, and a soft-keyboard watcher that hides floating chrome while typing.",
+			"when_to_use": "Use when a desktop multi-panel workspace must work on phones without forking its layout state — the chrome only focuses, opens, and closes panels on the persisted desktop tree.",
+			"capabilities": ["mobile workspace chrome", "bottom sheet menus", "soft keyboard handling"],
+			"keywords": ["mobile", "tab strip", "drawer", "bottom sheet", "fab", "keyboard inset", "visualviewport"],
+			"depends_on": ["desk-workspace"],
+			"docs": [
+				{
+					"path": "docs/blueprint/desk/README.md",
+					"note": "§ Mobile Chrome — control mapping, menu parity, keyboard hiding"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/components/composites/dock/DockMobileTabs.svelte",
+					"note": "Open-instance tab strip; taps go through focusPanel"
+				},
+				{
+					"path": "src/lib/components/composites/dock/dock-mobile.state.svelte.ts",
+					"note": "Context-scoped surface discriminator ('panels' | 'commands' | null) + focusSeq auto-close"
+				},
+				{
+					"path": "src/lib/state/visual-viewport.svelte.ts",
+					"note": "rAF-coalesced visualViewport watcher with hysteresis → --keyboard-inset + data-keyboard on <html>"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/state/visual-viewport.svelte.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/desk",
+					"kind": "approute"
+				}
+			],
+			"invariants": [],
+			"emulation_notes": [],
+			"risk": "low — frontend chrome over existing workspace state"
+		},
+		{
+			"id": "desk-panel-menus",
+			"tier": "light",
+			"title": "Composed panel menus (one array, desktop kebab + mobile sheet)",
+			"category": "desk",
+			"summary": "A context-scoped registry where each panel instance registers its command menus, composed with a dock-supplied Panel floor menu and View menu into one array that the desktop kebab and the mobile commands sheet both render.",
+			"when_to_use": "Use when per-panel commands must appear identically on multiple surfaces (desktop menus, mobile sheets, shortcut handlers) without each surface maintaining its own copy.",
+			"capabilities": ["per-panel command menus", "menu composition"],
+			"keywords": ["menus", "kebab", "commands", "registry", "context-scoped", "parity"],
+			"depends_on": ["desk-workspace"],
+			"docs": [
+				{
+					"path": "docs/blueprint/desk/README.md",
+					"note": "§ Focus Architecture (registries are followers) + § Mobile Chrome (menu parity rule)"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/components/composites/dock/panel-menus.svelte.ts",
+					"note": "Context-scoped registry keyed by panel instance id — never module-level"
+				},
+				{
+					"path": "src/lib/components/composites/dock/compose-menus.ts",
+					"note": "composePanelMenus(): registered menus → Panel floor menu → View menu; drops empty registered menus"
+				},
+				{
+					"path": "src/lib/components/composites/dock/view-menu.ts",
+					"note": "buildViewMenu({ structural }) — mobile strips split commands"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/components/composites/dock/compose-menus.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/desk",
+					"kind": "approute"
+				}
+			],
+			"invariants": [],
+			"emulation_notes": [],
+			"risk": "low — client-side menu state"
+		},
+		{
+			"id": "desk-ai-effects",
+			"tier": "light",
+			"title": "AI desk effects (tool results drive the workspace)",
+			"category": "desk",
+			"summary": "AI tool results dispatch typed desk effects (open/focus/refresh/highlight/notify/scroll) through an EffectActions facade; the dispatcher returns applied/failed per effect and failures surface in the I/O Log panel instead of being swallowed.",
+			"when_to_use": "Use when an AI assistant should manipulate a live UI workspace: effects go through the same single-writer actions as user input, so AI behavior stays consistent with direct manipulation.",
+			"capabilities": ["ai-driven ui effects", "tool result dispatch"],
+			"keywords": ["deskbot", "effects", "dispatch", "io log", "notify", "highlight"],
+			"depends_on": ["desk-workspace", "ai-deskbot"],
+			"docs": [
+				{
+					"path": "docs/blueprint/desk/README.md",
+					"note": "§ Desk Effect Contract + DeskBus ai:* channels"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/components/composites/dock/dispatch-desk-effect.ts",
+					"note": "Effect dispatcher over the EffectActions facade; boolean result per effect"
+				},
+				{
+					"path": "src/lib/components/composites/dock/io-log.svelte.ts",
+					"note": "I/O Log state — where failed effects surface"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/components/composites/dock/dispatch-desk-effect.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/desk",
+					"kind": "approute"
+				}
+			],
+			"invariants": [],
+			"emulation_notes": [],
+			"risk": "low — effects are client-side; mutations sit behind the deskbot approval gate"
+		},
+		{
+			"id": "desk-explorer",
+			"tier": "light",
+			"title": "Explorer panel (unified file tree over N sources)",
+			"category": "desk",
+			"summary": "One recursive tree over heterogeneous content APIs: adapters normalize every source into an ExplorerNode with a capability set, and the context menu, touch kebab, drag-and-drop, and inline rename/delete are all driven by capabilities — not per-type branching.",
+			"when_to_use": "Use when a file-browser UI must merge several backends (posts, assets, files) and every row action should be declaratively controlled per item type.",
+			"capabilities": ["unified file tree", "capability-driven menus", "adapter normalization"],
+			"keywords": ["explorer", "tree", "adapters", "capabilities", "context menu", "drag-and-drop", "kebab"],
+			"depends_on": ["desk-workspace"],
+			"docs": [
+				{
+					"path": "docs/blueprint/desk/README.md",
+					"note": "§ Explorer Panel — ExplorerNode, adapters, capability-driven menu"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/components/explorer",
+					"kind": "dir"
+				},
+				{
+					"path": "src/lib/components/explorer/node.ts",
+					"note": "ExplorerNode + NodeCapability — the unifying interface"
+				},
+				{
+					"path": "src/lib/components/explorer/context-menu-items.ts",
+					"note": "Capability-driven menu builder shared by right-click menu and touch kebab"
+				}
+			],
+			"tests": [],
+			"showcases": [
+				{
+					"path": "/desk",
+					"kind": "approute"
+				}
+			],
+			"invariants": [],
+			"emulation_notes": [],
+			"risk": "medium — mutates posts, assets, and files through their APIs"
 		}
 	]
 }

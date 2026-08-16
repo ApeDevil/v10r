@@ -27,5 +27,16 @@ function formatNum(n: number): string {
 		color: var(--color-muted);
 		border-top: 1px solid var(--color-border);
 		background: var(--surface-1);
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+
+	.sheet-status-bar::-webkit-scrollbar {
+		display: none;
+	}
+
+	.sheet-status-bar span {
+		flex-shrink: 0;
+		white-space: nowrap;
 	}
 </style>

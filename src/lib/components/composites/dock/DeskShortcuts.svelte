@@ -1,56 +1,31 @@
 <script lang="ts">
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import { getDeskSettings } from './desk-settings.svelte';
-import { collectLeaves, hasPanelType } from './dock.operations';
 import { getDockContext } from './dock.state.svelte';
-import { getActiveMenus } from './panel-menus.svelte';
-
+import { closeCurrent, splitFocused, togglePanelType } from './panel-actions';
+import { getPanelMenus } from './panel-menus.svelte';
+import { buildViewMenu } from './view-menu';
 import { getWorkspaceContext } from './workspace.state.svelte';
 
 const dock = getDockContext();
 const deskSettings = getDeskSettings();
 const workspace = getWorkspaceContext();
 
-// Build View menu for shortcut matching
-const viewMenu = $derived<MenuBarMenu>({
-	label: 'View',
-	items: [
-		{ label: 'Toggle Explorer', shortcut: 'Ctrl+Shift+E', onSelect: () => togglePanelType('explorer') },
-		{ label: 'Toggle Preview', shortcut: 'Ctrl+Shift+P', onSelect: () => togglePanelType('preview') },
-		{ type: 'separator' },
-		{ label: 'Close Active Panel', shortcut: 'Ctrl+W', onSelect: closeFocusedPanel },
-	],
-});
-
-const menus = $derived<MenuBarMenu[]>([...getActiveMenus().menuBar, viewMenu]);
-
-// ── Actions ──────────────────────────────────────────────────────
-
-function togglePanelType(panelType: string) {
-	if (hasPanelType(dock.root, panelType, dock.panels)) {
-		const leaves = collectLeaves(dock.root);
-		for (const leaf of leaves) {
-			for (const tabId of leaf.tabs) {
-				if (dock.panels[tabId]?.type === panelType) {
-					dock.closePanel(tabId);
-				}
-			}
-		}
-	} else {
-		dock.addPanel({
-			id: `${panelType}-${Date.now()}`,
-			type: panelType,
-			label: panelType.charAt(0).toUpperCase() + panelType.slice(1),
-			icon: panelType === 'explorer' ? 'i-lucide-folder-tree' : 'i-lucide-eye',
-			closable: true,
-		});
-	}
-}
-
-function closeFocusedPanel() {
-	const panelId = dock.focusedPanelId;
-	if (panelId) dock.closePanel(panelId);
-}
+// The same composed menus the kebab renders — shortcut matching and the
+// visible menu can no longer drift (one buildViewMenu factory, one registry).
+const panelMenus = getPanelMenus();
+const viewMenu = $derived<MenuBarMenu>(
+	buildViewMenu({
+		structural: true,
+		actions: {
+			togglePanelType: (panelType) => togglePanelType(dock, panelType),
+			splitFocused: (zone) => splitFocused(dock, zone),
+			closeFocusedPanel: () => closeCurrent(dock),
+			openPreferences: () => deskSettings.openDialog(),
+		},
+	}),
+);
+const menus = $derived<MenuBarMenu[]>([...panelMenus.active.menuBar, viewMenu]);
 
 // ── Keyboard shortcuts ───────────────────────────────────────────
 
@@ -87,32 +62,9 @@ function handleKeyDown(e: KeyboardEvent) {
 		}
 	}
 
-	// Global shortcuts (always active)
-	if (e.shiftKey) {
-		switch (e.key.toUpperCase()) {
-			case 'E':
-				e.preventDefault();
-				togglePanelType('explorer');
-				return;
-			case 'P':
-				e.preventDefault();
-				togglePanelType('preview');
-				return;
-			case ',':
-				e.preventDefault();
-				deskSettings.openDialog();
-				return;
-		}
-	}
-
-	switch (e.key.toLowerCase()) {
-		case 'w':
-			e.preventDefault();
-			closeFocusedPanel();
-			return;
-	}
-
-	// Panel-specific shortcuts: search active menus for matching shortcut
+	// Menu-declared shortcuts (View menu + panel-registered menus) — the menus
+	// array is the single truth, so a shortcut can never point at a command the
+	// kebab no longer shows.
 	const shortcut = normalizeShortcut(e);
 	for (const menu of menus) {
 		for (const item of menu.items) {

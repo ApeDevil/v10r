@@ -8,6 +8,7 @@
  * does not own it.
  */
 import { getContext, setContext } from 'svelte';
+import { collectLeaves } from './dock.operations';
 import type { DockState } from './dock.state.svelte';
 import type { DockLayoutState, LayoutNode, PanelDefinition } from './dock.types';
 import type { Workspace } from './workspace.types';
@@ -51,6 +52,7 @@ export function createWorkspaceState(
 			root: $state.snapshot(dock.root) as LayoutNode,
 			panels: $state.snapshot(dock.panels) as Record<string, PanelDefinition>,
 			activityBarPosition: dock.activityBarPosition,
+			focusedLeafId: dock.focusedLeafId ?? undefined,
 		};
 	}
 
@@ -84,6 +86,11 @@ export function createWorkspaceState(
 		if (target.layout.activityBarPosition) {
 			dock.setActivityBarPosition(target.layout.activityBarPosition);
 		}
+		// Restore the incoming workspace's focus explicitly — the previous
+		// workspace's leaf id is stale against the new tree (the total getter
+		// would paper over it, but intent beats fallback).
+		const incomingFocus = target.layout.focusedLeafId ?? collectLeaves(target.layout.root)[0]?.id;
+		if (incomingFocus) dock.setFocusedLeaf(incomingFocus);
 
 		const _previousActiveId = activeId;
 		activeId = id;

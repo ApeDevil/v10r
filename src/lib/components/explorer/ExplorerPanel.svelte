@@ -2,7 +2,7 @@
 import { onMount, untrack } from 'svelte';
 import { apiFetch } from '$lib/api';
 import type { PanelDefinition } from '$lib/components/composites/dock';
-import { getDeskBus, getDockContext, registerPanelMenus } from '$lib/components/composites/dock';
+import { getDeskBus, getDockContext, getPanelMenus } from '$lib/components/composites/dock';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import { Button, Spinner } from '$lib/components/primitives';
 import { dataRootNode } from './adapters';
@@ -28,8 +28,16 @@ import MoveToDialog from './MoveToDialog.svelte';
 import type { ExplorerNode } from './node';
 import type { AssetListItem, FileListItem, PostListItem } from './types';
 
+interface Props {
+	/** Panel instance id — menu/AI-context registrations key on it. */
+	panelId: string;
+}
+
+let { panelId }: Props = $props();
+
 const dock = getDockContext();
 const bus = getDeskBus();
+const panelMenus = getPanelMenus();
 
 let selectedAsset = $state<AssetListItem | null>(null);
 
@@ -370,19 +378,19 @@ const explorerMenus = $derived<MenuBarMenu[]>([
 ]);
 
 $effect(() => {
-	return registerPanelMenus('explorer', { menuBar: explorerMenus });
+	return panelMenus.register(panelId, { menuBar: explorerMenus });
 });
 
 // ── AI Context registration ─────────────────────────────────────
 
 // Register unconditionally on mount (like SpreadsheetPanel)
 // svelte-ignore state_referenced_locally
-$effect(() => untrack(() => registerExplorerAiContext(explorerState)));
+$effect(() => untrack(() => registerExplorerAiContext(explorerState, panelId)));
 
 // Update context when nodes change
 $effect(() => {
 	void explorerState.nodes;
-	if (!data.loading) updateExplorerAiContext(explorerState);
+	if (!data.loading) updateExplorerAiContext(explorerState, panelId);
 });
 
 onMount(() => {
@@ -642,5 +650,18 @@ $effect(() => {
 		clip: rect(0, 0, 0, 0);
 		white-space: nowrap;
 		border-width: 0;
+	}
+
+	/* Touch: 16px input defeats iOS focus zoom; the error dismiss gets a real target. */
+	@media (max-width: 767px) {
+		.slug-input {
+			font-size: 16px;
+			padding: 8px 10px;
+		}
+
+		.dismiss-btn {
+			width: 44px;
+			height: 44px;
+		}
 	}
 </style>

@@ -29,20 +29,11 @@ export function makeRegistry(...panels: PanelContext[]): Map<string, PanelContex
 	return new Map(panels.map((p) => [p.panelId, p]));
 }
 
-/** Create a mock EffectActions object with vi.fn() stubs. */
-export function makeMockActions(
-	vi: { fn: () => Mock },
-	leafOverride?: { id: string; panelId: string } | null,
-): EffectActions {
+/** Create a mock EffectActions object with vi.fn() stubs.
+ *  `panelInTree` controls what focusPanel reports: true = target exists. */
+export function makeMockActions(vi: { fn: () => Mock }, panelInTree = false): EffectActions {
 	return {
-		findLeafWithPanel: vi
-			.fn()
-			.mockReturnValue(
-				leafOverride
-					? { type: 'leaf', id: leafOverride.id, tabs: [leafOverride.panelId], activeTab: leafOverride.panelId }
-					: null,
-			),
-		activateTab: vi.fn(),
+		focusPanel: vi.fn().mockReturnValue(panelInTree),
 		addPanel: vi.fn(),
 		updatePanel: vi.fn(),
 		publish: vi.fn(),

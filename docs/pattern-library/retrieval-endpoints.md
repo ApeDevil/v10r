@@ -33,7 +33,7 @@ The RAG corpus is fed and queried through /api/retrieval/* HTTP endpoints plus a
 
 ## Proof
 
-- [`Retrieval now lives as the #nrag section of the surface pages; the ingest/explorer showcases were retired /showcases/ai/chatbot`](/showcases/ai/chatbot)
+- [`/showcases/ai/chatbot`](/showcases/ai/chatbot) — Retrieval now lives as the #nrag section of the surface pages; the ingest/explorer showcases were retired
 
 ## Invariants
 

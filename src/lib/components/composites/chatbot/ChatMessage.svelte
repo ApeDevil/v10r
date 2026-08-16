@@ -96,7 +96,7 @@ function getToolInvocation(part: MessagePart) {
 }
 </script>
 
-<div class={cn('flex gap-3 px-4 py-3', isUser ? 'flex-row-reverse' : 'flex-row')}>
+<div class={cn('chat-message flex gap-3 px-4 py-3', isUser ? 'flex-row-reverse' : 'flex-row')}>
 	<div
 		class={cn(
 			'flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
@@ -106,7 +106,7 @@ function getToolInvocation(part: MessagePart) {
 		<span class={cn(isUser ? 'i-lucide-user' : 'i-lucide-bot', 'h-4 w-4')}></span>
 	</div>
 
-	<div class="flex max-w-[80%] flex-col gap-1">
+	<div class="chat-message-body flex max-w-[80%] flex-col gap-1">
 		{#each displayParts as part}
 			{#if part.type === 'text'}
 				{@const text = getTextContent(part)}
@@ -179,6 +179,20 @@ function getToolInvocation(part: MessagePart) {
 	.chat-avatar-assistant {
 		background-color: color-mix(in srgb, var(--color-muted) 20%, transparent);
 		color: var(--color-fg);
+	}
+
+	/* Narrow viewports: bubbles reclaim the width the desktop 80% cap wastes.
+	   div.chat-message outweighs the px/py utilities; the descendant selector
+	   outweighs max-w-[80%]. */
+	@media (max-width: 767px) {
+		div.chat-message {
+			padding: 10px;
+			gap: 8px;
+		}
+
+		.chat-message .chat-message-body {
+			max-width: 90%;
+		}
 	}
 
 	.related-surfaces {

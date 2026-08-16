@@ -37,7 +37,7 @@ Every `blueprint/` subdirectory, one line each. Flat blueprint files (api.md, au
 | [data/](./blueprint/data/) | Drizzle schema workflow, Neon dev-branch refresh from prod |
 | [db/](./blueprint/db/) | Relational + graph database patterns, polyglot freshness |
 | [design/](./blueprint/design/) | Design tokens, tonal elevation, styling techniques, component layer system |
-| [desk/](./blueprint/desk/) | Desk workspace infrastructure, spreadsheet panel |
+| [desk/](./blueprint/desk/) | Dock workspace, focus architecture, mobile chrome, Explorer, spreadsheet panel |
 | [notifications/](./blueprint/notifications/) | External channel delivery — routing, Telegram/Discord/email, settings, schema |
 | [quick-search/](./blueprint/quick-search/) | Two-lane search, command palette, blog FTS |
 | [security/](./blueprint/security/) | Control topology, the two admin planes, threat model, static-scan gate tests |

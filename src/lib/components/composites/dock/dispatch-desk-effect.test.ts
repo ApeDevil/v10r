@@ -2,21 +2,19 @@ import { describe, expect, it, vi } from 'vitest';
 import type { DeskEffect } from '$lib/server/ai/tools/_types';
 import { makeMockActions } from './desk-context.fixtures';
 import { dispatchDeskEffect } from './dispatch-desk-effect';
-import type { LeafNode } from './dock.types';
-
-const root: LeafNode = { type: 'leaf', id: 'l1', tabs: ['p1'], activeTab: 'p1' };
 
 describe('dispatchDeskEffect', () => {
-	it('desk:open_panel adds panel when not found', () => {
-		const actions = makeMockActions(vi, null);
+	it('desk:open_panel adds panel when focusPanel reports it absent', () => {
+		const actions = makeMockActions(vi, false);
 		const effect: DeskEffect = {
 			type: 'desk:open_panel',
 			panelType: 'spreadsheet',
 			fileId: 'f1',
 			label: 'Budget',
 		};
-		dispatchDeskEffect(effect, actions, root);
+		expect(dispatchDeskEffect(effect, actions)).toBe(true);
 
+		expect(actions.focusPanel).toHaveBeenCalledWith('spreadsheet-f1');
 		expect(actions.addPanel).toHaveBeenCalledWith({
 			id: 'spreadsheet-f1',
 			type: 'spreadsheet',
@@ -24,33 +22,44 @@ describe('dispatchDeskEffect', () => {
 			closable: true,
 			meta: { fileId: 'f1' },
 		});
-		expect(actions.activateTab).not.toHaveBeenCalled();
 	});
 
-	it('desk:open_panel activates existing panel instead of adding', () => {
-		const actions = makeMockActions(vi, { id: 'l1', panelId: 'spreadsheet-f1' });
+	it('desk:open_panel focuses existing panel instead of adding', () => {
+		const actions = makeMockActions(vi, true);
 		const effect: DeskEffect = {
 			type: 'desk:open_panel',
 			panelType: 'spreadsheet',
 			fileId: 'f1',
 			label: 'Budget',
 		};
-		dispatchDeskEffect(effect, actions, root);
+		expect(dispatchDeskEffect(effect, actions)).toBe(true);
 
-		expect(actions.activateTab).toHaveBeenCalledWith('l1', 'spreadsheet-f1');
+		expect(actions.focusPanel).toHaveBeenCalledWith('spreadsheet-f1');
 		expect(actions.addPanel).not.toHaveBeenCalled();
+	});
+
+	it('desk:activate_panel reports false when the panel is absent', () => {
+		const actions = makeMockActions(vi, false);
+		expect(dispatchDeskEffect({ type: 'desk:activate_panel', panelId: 'editor-x' }, actions)).toBe(false);
+		expect(actions.focusPanel).toHaveBeenCalledWith('editor-x');
+	});
+
+	it('desk:focus_panel focuses an existing panel and reports true', () => {
+		const actions = makeMockActions(vi, true);
+		expect(dispatchDeskEffect({ type: 'desk:focus_panel', panelId: 'editor-x' }, actions)).toBe(true);
+		expect(actions.focusPanel).toHaveBeenCalledWith('editor-x');
 	});
 
 	it('desk:refresh_file publishes to bus', () => {
 		const actions = makeMockActions(vi);
-		dispatchDeskEffect({ type: 'desk:refresh_file', fileId: 'f1' }, actions, root);
+		dispatchDeskEffect({ type: 'desk:refresh_file', fileId: 'f1' }, actions);
 
 		expect(actions.publish).toHaveBeenCalledWith('ai:refresh_file', { fileId: 'f1' });
 	});
 
 	it('desk:refresh_explorer publishes to bus', () => {
 		const actions = makeMockActions(vi);
-		dispatchDeskEffect({ type: 'desk:refresh_explorer' }, actions, root);
+		dispatchDeskEffect({ type: 'desk:refresh_explorer' }, actions);
 
 		expect(actions.publish).toHaveBeenCalledWith('ai:refresh_explorer', expect.anything());
 	});
@@ -60,7 +69,6 @@ describe('dispatchDeskEffect', () => {
 		dispatchDeskEffect(
 			{ type: 'desk:tab_indicator', fileId: 'f1', panelType: 'spreadsheet', variant: 'modified' },
 			actions,
-			root,
 		);
 
 		expect(actions.updatePanel).toHaveBeenCalledWith('spreadsheet-f1', { indicator: 'ai-modified' });
@@ -68,35 +76,47 @@ describe('dispatchDeskEffect', () => {
 
 	it('desk:tab_indicator clears indicator for non-modified variant', () => {
 		const actions = makeMockActions(vi);
-		dispatchDeskEffect(
-			{ type: 'desk:tab_indicator', fileId: 'f1', panelType: 'editor', variant: 'created' },
-			actions,
-			root,
-		);
+		dispatchDeskEffect({ type: 'desk:tab_indicator', fileId: 'f1', panelType: 'editor', variant: 'created' }, actions);
 
 		expect(actions.updatePanel).toHaveBeenCalledWith('editor-f1', { indicator: undefined });
 	});
 
 	it('desk:notify publishes to bus with level', () => {
 		const actions = makeMockActions(vi);
-		dispatchDeskEffect({ type: 'desk:notify', message: 'Done!', level: 'success' }, actions, root);
+		dispatchDeskEffect({ type: 'desk:notify', message: 'Done!', level: 'success' }, actions);
 
 		expect(actions.publish).toHaveBeenCalledWith('ai:notify', { message: 'Done!', level: 'success' });
 	});
 
-	it('unknown effect type is silently ignored', () => {
+	it('desk:scroll_to focuses the target panel BEFORE publishing', () => {
+		const actions = makeMockActions(vi, true);
+		const order: string[] = [];
+		(actions.focusPanel as ReturnType<typeof vi.fn>).mockImplementation(() => {
+			order.push('focus');
+			return true;
+		});
+		(actions.publish as ReturnType<typeof vi.fn>).mockImplementation(() => {
+			order.push('publish');
+		});
+		dispatchDeskEffect({ type: 'desk:scroll_to', panelId: 'editor-f1', target: 'heading-2' }, actions);
+
+		expect(order).toEqual(['focus', 'publish']);
+		expect(actions.publish).toHaveBeenCalledWith('ai:scroll_to', { panelId: 'editor-f1', target: 'heading-2' });
+	});
+
+	it('unknown effect type reports not-applied', () => {
 		const actions = makeMockActions(vi);
 		const effect = { type: 'desk:unknown_future_effect' } as unknown as DeskEffect;
-		dispatchDeskEffect(effect, actions, root);
+		expect(dispatchDeskEffect(effect, actions)).toBe(false);
 
 		expect(actions.addPanel).not.toHaveBeenCalled();
 		expect(actions.publish).not.toHaveBeenCalled();
 		expect(actions.updatePanel).not.toHaveBeenCalled();
 	});
 
-	it('null/undefined effect does not throw', () => {
+	it('null/undefined effect does not throw and reports not-applied', () => {
 		const actions = makeMockActions(vi);
-		expect(() => dispatchDeskEffect(null as unknown as DeskEffect, actions, root)).not.toThrow();
-		expect(() => dispatchDeskEffect(undefined as unknown as DeskEffect, actions, root)).not.toThrow();
+		expect(dispatchDeskEffect(null as unknown as DeskEffect, actions)).toBe(false);
+		expect(dispatchDeskEffect(undefined as unknown as DeskEffect, actions)).toBe(false);
 	});
 });

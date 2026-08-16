@@ -27,7 +27,7 @@ Serves the pattern registry and a separate demo-state service over HTTP through 
 
 ## Proof
 
-- [`POST /api/mcp/public`](/api/mcp/public) (app route, no showcase)
+- [`/api/mcp/public`](/api/mcp/public) (app route, no showcase) — POST
 - [`/admin/mcp`](/admin/mcp) (app route, no showcase)
 
 ---

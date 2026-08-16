@@ -28,7 +28,7 @@ A universal search combining an instant client-side lane with a debounced server
 ## Proof
 
 - [`/search`](/search) (app route, no showcase)
-- [`GET /api/search`](/api/search) (app route, no showcase)
+- [`/api/search`](/api/search) (app route, no showcase) — GET
 
 ---
 

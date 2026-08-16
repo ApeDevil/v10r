@@ -1,5 +1,6 @@
 <script lang="ts">
-import { Button } from '$lib/components/primitives';
+import { MediaQuery } from 'svelte/reactivity';
+import { Button, Drawer } from '$lib/components/primitives';
 import type { AssetListItem } from './types';
 
 function formatBytes(bytes: number): string {
@@ -17,6 +18,10 @@ interface Props {
 }
 
 let { asset, onclose, oninsert }: Props = $props();
+
+// Inline side pane on desktop, bottom sheet on mobile — an inline pane below
+// a full-height tree is unreachable on a phone.
+const isMobile = new MediaQuery('(max-width: 767px)', false);
 
 let copied = $state(false);
 
@@ -41,7 +46,50 @@ function copyUrl() {
 }
 </script>
 
-{#if asset}
+{#snippet previewBody(a: AssetListItem)}
+	<div class="preview-image">
+		<img src={imageUrl(a)} alt={a.altText || a.fileName} />
+	</div>
+
+	<div class="preview-meta">
+		{#if a.width && a.height}
+			<span>{a.width} × {a.height}</span>
+			<span class="meta-sep">·</span>
+		{/if}
+		<span>{formatBytes(a.fileSize)}</span>
+		<span class="meta-sep">·</span>
+		<span>{a.mimeType}</span>
+	</div>
+
+	<div class="preview-actions">
+		<Button variant="outline" size="sm" onclick={copyMarkdown}>
+			{#if copied}
+				<span class="i-lucide-check h-3 w-3 mr-1"></span> Copied
+			{:else}
+				<span class="i-lucide-copy h-3 w-3 mr-1"></span> Copy Markdown
+			{/if}
+		</Button>
+		<Button variant="ghost" size="sm" onclick={copyUrl}>
+			<span class="i-lucide-link h-3 w-3 mr-1"></span> Copy URL
+		</Button>
+		<Button variant="ghost" size="sm" onclick={() => oninsert(a)}>
+			<span class="i-lucide-image-plus h-3 w-3 mr-1"></span> Insert
+		</Button>
+	</div>
+{/snippet}
+
+{#if isMobile.current}
+	<Drawer
+		side="bottom"
+		layerId="explorer-preview"
+		title={asset?.fileName ?? ''}
+		bind:open={() => asset !== null, (value) => { if (!value) onclose(); }}
+	>
+		{#if asset}
+			{@render previewBody(asset)}
+		{/if}
+	</Drawer>
+{:else if asset}
 	<div class="explorer-preview">
 		<div class="preview-header">
 			<span class="preview-filename" title={asset.fileName}>{asset.fileName}</span>
@@ -50,35 +98,7 @@ function copyUrl() {
 			</button>
 		</div>
 
-		<div class="preview-image">
-			<img src={imageUrl(asset)} alt={asset.altText || asset.fileName} />
-		</div>
-
-		<div class="preview-meta">
-			{#if asset.width && asset.height}
-				<span>{asset.width} × {asset.height}</span>
-				<span class="meta-sep">·</span>
-			{/if}
-			<span>{formatBytes(asset.fileSize)}</span>
-			<span class="meta-sep">·</span>
-			<span>{asset.mimeType}</span>
-		</div>
-
-		<div class="preview-actions">
-			<Button variant="outline" size="sm" onclick={copyMarkdown}>
-				{#if copied}
-					<span class="i-lucide-check h-3 w-3 mr-1"></span> Copied
-				{:else}
-					<span class="i-lucide-copy h-3 w-3 mr-1"></span> Copy Markdown
-				{/if}
-			</Button>
-			<Button variant="ghost" size="sm" onclick={copyUrl}>
-				<span class="i-lucide-link h-3 w-3 mr-1"></span> Copy URL
-			</Button>
-			<Button variant="ghost" size="sm" onclick={() => oninsert(asset)}>
-				<span class="i-lucide-image-plus h-3 w-3 mr-1"></span> Insert
-			</Button>
-		</div>
+		{@render previewBody(asset)}
 	</div>
 {/if}
 

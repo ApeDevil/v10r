@@ -71,6 +71,7 @@ function handleFormulaInput(event: Event) {
 
 	.sheet-formula-input {
 		flex: 1;
+		min-width: 0;
 		padding: 2px 8px;
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-sm);
@@ -82,5 +83,20 @@ function handleFormulaInput(event: Event) {
 
 	.sheet-formula-input:disabled {
 		opacity: 0.5;
+	}
+
+	/* Touch: 16px formula input (no iOS zoom) at a 44px target. */
+	@media (max-width: 767px) {
+		.sheet-formula-input {
+			font-size: 16px;
+			min-height: 44px;
+		}
+
+		.sheet-cell-ref {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			min-height: 32px;
+		}
 	}
 </style>

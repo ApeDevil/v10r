@@ -21,22 +21,52 @@ import type { ActivityBarPosition, DragState, DropTarget, LayoutNode, LeafNode, 
 const DOCK_CTX = Symbol('dock');
 const MAX_DEPTH = 4;
 
+export interface DockStateHooks {
+	/** Fires after a panel leaves the tree (any close path). Host wires undo UX. */
+	onPanelClosed?: (panel: PanelDefinition) => void;
+}
+
 export function createDockState(
 	initialRoot: LayoutNode,
 	initialPanels: Record<string, PanelDefinition>,
 	initialBarPosition: ActivityBarPosition = 'left',
+	initialFocusedLeafId: string | null = null,
+	hooks: DockStateHooks = {},
 ) {
 	let root = $state<LayoutNode>(initialRoot);
 	let panels = $state<Record<string, PanelDefinition>>({ ...initialPanels });
 	let dragState = $state<DragState | null>(null);
 	let activityBarPosition = $state<ActivityBarPosition>(initialBarPosition);
-	let focusedLeafId = $state<string | null>(null);
+	// Raw stored focus — may go stale (closed leaf, workspace switch). Consumers
+	// read the TOTAL derivation below, never this directly.
+	let focusedLeafId = $state<string | null>(initialFocusedLeafId);
+	// Monotonic focus-request counter. Bumped on every setFocusedLeaf CALL (even a
+	// repeat of the current leaf) so "surface this panel" is observable when the
+	// target is already focused — the mobile overlay auto-close depends on it.
+	let focusSeq = $state(0);
+
+	// Total while any panel is open: stored leaf if it still resolves, else the
+	// first non-empty leaf, else null. Keeps focus meaningful after closes and
+	// workspace switches without every consumer re-implementing the fallback.
+	// A plain function, not $derived: server-mode compilation (SSR, node tests)
+	// evaluates $derived once and freezes it; reading the $state sources inside
+	// the getters gives consumers the same fine-grained tracking in the browser.
+	function resolveFocusedLeaf(): LeafNode | null {
+		if (focusedLeafId) {
+			const node = findNode(root, focusedLeafId);
+			if (node && node.type === 'leaf' && node.tabs.length > 0) return node;
+		}
+		return collectLeaves(root).find((leaf) => leaf.tabs.length > 0) ?? null;
+	}
 
 	// --- Tab operations ---
 
 	function activateTab(leafId: string, panelId: string): void {
 		const leaf = findNode(root, leafId);
 		if (!leaf || leaf.type !== 'leaf' || !leaf.tabs.includes(panelId)) return;
+		// Idempotent: re-activating the active tab must not reassign root, or
+		// every $effect that both reads the tree and activates would loop.
+		if (leaf.activeTab === panelId) return;
 		const updated: LeafNode = { ...leaf, activeTab: panelId };
 		const newRoot = replaceNode(root, leafId, updated);
 		if (newRoot) root = newRoot;
@@ -57,6 +87,9 @@ export function createDockState(
 			root = { type: 'leaf', id: generateId('leaf'), tabs: [], activeTab: '' };
 		}
 		// Don't remove from panels registry — allows re-adding via activity bar
+		// (and makes onPanelClosed undo a plain addPanel of the same definition).
+		const closed = panels[panelId];
+		if (closed) hooks.onPanelClosed?.(closed);
 	}
 
 	// --- Move operations ---
@@ -118,21 +151,28 @@ export function createDockState(
 					const updated = addPanelToLeaf(targetLeaf, panel.id);
 					const newRoot = replaceNode(root, target.leafId, updated);
 					if (newRoot) root = newRoot;
+					setFocusedLeaf(target.leafId);
 				} else {
 					const split = splitLeaf(targetLeaf, panel.id, target.zone);
 					const newRoot = replaceNode(root, target.leafId, split);
 					if (newRoot) root = newRoot;
+					// The new panel lives in the split's freshly minted leaf.
+					const newLeaf = findLeafWithPanel(root, panel.id);
+					if (newLeaf) setFocusedLeaf(newLeaf.id);
 				}
 				return;
 			}
 		}
 
-		// Default: add to first leaf
+		// Default: add to first leaf. Focusing the insertion leaf is load-bearing:
+		// the mobile visible panel derives from focus, so an added panel surfaces
+		// on every surface without any auto-surface diffing machinery.
 		const leaves = collectLeaves(root);
 		if (leaves.length > 0) {
 			const updated = addPanelToLeaf(leaves[0], panel.id);
 			const newRoot = replaceNode(root, leaves[0].id, updated);
 			if (newRoot) root = newRoot;
+			setFocusedLeaf(leaves[0].id);
 		}
 	}
 
@@ -225,6 +265,7 @@ export function createDockState(
 	// --- Focus tracking ---
 
 	function setFocusedLeaf(leafId: string): void {
+		focusSeq++;
 		if (focusedLeafId === leafId) return;
 		focusedLeafId = leafId;
 	}
@@ -271,15 +312,17 @@ export function createDockState(
 		get activityBarPosition() {
 			return activityBarPosition;
 		},
+		/** Effective focused leaf id (total — falls back to the first non-empty leaf). */
 		get focusedLeafId() {
-			return focusedLeafId;
+			return resolveFocusedLeaf()?.id ?? null;
 		},
-		/** The panelId of the active tab in the focused leaf */
+		/** The panelId of the active tab in the focused leaf (total while panels exist). */
 		get focusedPanelId(): string | null {
-			if (!focusedLeafId) return null;
-			const leaf = findNode(root, focusedLeafId);
-			if (!leaf || leaf.type !== 'leaf') return null;
-			return leaf.activeTab || null;
+			return resolveFocusedLeaf()?.activeTab || null;
+		},
+		/** Focus-request counter — changes on every setFocusedLeaf call, repeats included. */
+		get focusSeq() {
+			return focusSeq;
 		},
 
 		activateTab,
@@ -320,8 +363,10 @@ export function setDockContext(
 	initialRoot: LayoutNode,
 	initialPanels: Record<string, PanelDefinition>,
 	initialBarPosition?: ActivityBarPosition,
+	initialFocusedLeafId?: string | null,
+	hooks?: DockStateHooks,
 ): DockState {
-	const state = createDockState(initialRoot, initialPanels, initialBarPosition);
+	const state = createDockState(initialRoot, initialPanels, initialBarPosition, initialFocusedLeafId ?? null, hooks);
 	setContext(DOCK_CTX, state);
 	return state;
 }

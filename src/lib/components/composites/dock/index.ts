@@ -33,6 +33,7 @@ export {
 	type ContextStatus,
 	dismissContext,
 	getContextChips,
+	getContextRegistryVersion,
 	getTokenEstimate,
 	markResponseReceived,
 	type PanelContext,
@@ -93,7 +94,19 @@ export type {
 } from './dock.types';
 export { appendIOLog, clearIOLog, getIOLogEntries, type IOLogEntry, type IOLogSource } from './io-log.svelte';
 export { default as PanelEmptyState } from './PanelEmptyState.svelte';
-export { getActiveMenus, type PanelMenus, registerPanelMenus, setFocusedPanel } from './panel-menus.svelte';
+export {
+	closeCurrent,
+	focusPanel,
+	openOrCycle,
+	splitFocused,
+	togglePanelType,
+} from './panel-actions';
+export {
+	getPanelMenus,
+	type PanelMenus,
+	type PanelMenusState,
+	setPanelMenusContext,
+} from './panel-menus.svelte';
 export {
 	fetchProviders,
 	getActiveProviderId,
@@ -101,6 +114,7 @@ export {
 	type ProviderInfo,
 	switchProvider,
 } from './provider-preference.svelte';
+export { buildViewMenu, type ViewMenuActions } from './view-menu';
 export { buildWorkspacesFromServer, loadWorkspaceStore, saveWorkspaceStore } from './workspace.persistence';
 export {
 	createWorkspaceState,

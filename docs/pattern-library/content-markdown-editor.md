@@ -1,7 +1,7 @@
 ---
 title: "Markdown editor (CodeMirror, slash commands)"
 description: "A CodeMirror-based source markdown editor with a slash-command palette that auto-inserts custom syntax."
-category: "Content, Blog & Desk"
+category: "Content & Blog"
 ---
 
 # Markdown editor (CodeMirror, slash commands)
@@ -10,7 +10,7 @@ category: "Content, Blog & Desk"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Content, Blog & Desk · **Tier:** light · **Risk:** low — frontend only
+**Category:** Content & Blog · **Tier:** light · **Risk:** low — frontend only
 
 A CodeMirror-based source markdown editor with a slash-command palette that auto-inserts custom syntax.
 

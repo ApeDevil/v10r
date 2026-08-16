@@ -63,7 +63,7 @@ const MENU_ITEM_CLASS =
 				class="bar-button"
 				class:active={item.panelType === activeType}
 				aria-pressed={item.panelType === activeType}
-				aria-label={item.label}
+				aria-label={count > 1 ? `${item.label} (${count} open)` : item.label}
 				title={item.label}
 				onclick={() => onSelect(item.panelType)}
 			>
@@ -128,7 +128,7 @@ const MENU_ITEM_CLASS =
 
 <style>
 	.dock-mobile-bar {
-		grid-area: bar;
+		flex-shrink: 0;
 		border-top: 1px solid var(--color-border);
 		background: var(--color-bg);
 		padding-bottom: var(--safe-bottom, 0px);

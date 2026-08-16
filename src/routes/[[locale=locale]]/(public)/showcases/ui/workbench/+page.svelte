@@ -117,6 +117,7 @@ const sections = $derived([
 					initialPanels={panels}
 					{activityBarItems}
 					persist={true}
+					mobileChrome="bar"
 					class="dock-demo"
 				>
 					{#snippet panelContent(panelId)}

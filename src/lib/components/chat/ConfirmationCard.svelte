@@ -90,4 +90,16 @@ let { description, onconfirm, onskip }: Props = $props();
 		color: var(--color-fg);
 		background: color-mix(in srgb, var(--color-muted) 10%, transparent);
 	}
+
+	/* Narrow widths: stacked full-width approval actions with 44px targets. */
+	@media (max-width: 420px) {
+		.confirm-actions {
+			flex-direction: column;
+		}
+
+		.confirm-btn {
+			width: 100%;
+			min-height: 44px;
+		}
+	}
 </style>

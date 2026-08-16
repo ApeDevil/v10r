@@ -104,6 +104,7 @@ export const DAG_SHORT_LABELS: Record<string, string> = {
 	'layered-rag': 'Layered RAG',
 	'retrieval-endpoints': 'Retrieval',
 	'agent-experience': 'Agent AX',
+	'desk-workspace': 'Desk',
 };
 
 /**

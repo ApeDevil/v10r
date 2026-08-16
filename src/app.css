@@ -66,6 +66,26 @@
 	   Requires viewport-fit=cover — already set in app.html. */
 	--safe-bottom: env(safe-area-inset-bottom, 0px);
 
+	/* Floating-control slots (bottom-right corner) — the ONE coordinate table
+	   for every occupant: SidebarFab (row 1, corner), VelyMinimizedBubble
+	   (row 2), desk mobile controls (row 1, left of the corner FAB).
+	   Occupants read slots; none hardcode offsets. Every occupant is
+	   position: fixed (same origin — the viewport) and --fab-size tall;
+	   the row math assumes both. */
+	--fab-size: 56px;
+	--fab-gap: 8px;
+	--fab-gutter: 1rem;
+	--fab-bottom-1: calc(var(--safe-bottom) + var(--fab-gutter));
+	--fab-bottom-2: calc(var(--fab-bottom-1) + var(--fab-size) + var(--fab-gap));
+	--fab-right-1: var(--fab-gutter);
+	--fab-right-2: calc(var(--fab-gutter) + var(--fab-size) + var(--fab-gap));
+	/* Content clearance above the control row (scroll padding / reserved insets). */
+	--fab-reserve-bottom: calc(var(--fab-bottom-1) + var(--fab-size) + var(--fab-gap));
+
+	/* Virtual-keyboard inset — written by state/visual-viewport.svelte.ts onto
+	   <html> (data-keyboard="open|closed" alongside). 0 while closed. */
+	--keyboard-inset: 0px;
+
 	/* Layout - Content */
 	--layout-max-width: 80rem;
 	--layout-content-width: 65ch;
@@ -1098,4 +1118,12 @@ select option:checked {
 .dark .shiki span {
 	color: var(--shiki-dark) !important;
 	background-color: var(--shiki-dark-bg) !important;
+}
+
+/* ── Virtual keyboard: floating corner controls get out of the way ──────────
+   state/visual-viewport.svelte.ts stamps data-keyboard on <html>. display:none
+   (not opacity) — the control must leave the a11y tree and tab order too, or
+   it stays focusable while covered (WCAG 2.4.11 focus-not-obscured). */
+:root[data-keyboard="open"] .fab-keyboard-hide {
+	display: none !important;
 }

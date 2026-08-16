@@ -29,10 +29,10 @@ export function serializeExplorerContext(state: ExplorerState): string {
  * Register the explorer panel with the dock's AI context system. Returns the
  * cleanup function from `registerPanelContext` — wire into `$effect` directly.
  */
-export function registerExplorerAiContext(state: ExplorerState): () => void {
+export function registerExplorerAiContext(state: ExplorerState, panelId: string): () => void {
 	const content = serializeExplorerContext(state);
 	return registerPanelContext({
-		panelId: 'explorer',
+		panelId,
 		panelType: 'explorer',
 		label: 'Explorer',
 		content,
@@ -43,9 +43,9 @@ export function registerExplorerAiContext(state: ExplorerState): () => void {
 }
 
 /** Push a fresh snapshot of the explorer tree into the dock's AI context. */
-export function updateExplorerAiContext(state: ExplorerState): void {
+export function updateExplorerAiContext(state: ExplorerState, panelId: string): void {
 	const content = serializeExplorerContext(state);
-	updatePanelContext('explorer', {
+	updatePanelContext(panelId, {
 		content,
 		tokenEstimate: Math.ceil(content.length / 4),
 	});

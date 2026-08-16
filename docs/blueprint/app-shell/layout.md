@@ -25,7 +25,7 @@ src/lib/components/
 │   ├── Sidebar.svelte        # Sidebar container
 │   ├── SidebarRail.svelte    # Desktop collapsed state
 │   ├── SidebarDrawer.svelte  # Mobile drawer
-│   ├── SidebarFab.svelte     # Mobile trigger button
+│   ├── SidebarFab.svelte     # Mobile nav trigger — slot-token positioned (--fab-*), open-only (scrim dismisses)
 │   ├── SidebarLogo.svelte    # Logo/branding (top)
 │   ├── SidebarNav.svelte     # Navigation container (middle)
 │   ├── NavItem.svelte        # Compound nav button
@@ -152,19 +152,20 @@ Tablets (768px - 1024px) require hybrid treatment: touchable like mobile, but wi
 <script lang="ts">
   import { MediaQuery } from 'svelte/reactivity';
 
-  const isTouch = new MediaQuery('(hover: none)');
-  const isTablet = new MediaQuery('(min-width: 768px) and (max-width: 1024px)');
+  // Second argument = SSR fallback; the reactive value is `.current` (not `.matches`)
+  const isTouch = new MediaQuery('(hover: none)', false);
+  const isTablet = new MediaQuery('(min-width: 768px) and (max-width: 1024px)', false);
 
   function handleMouseEnter() {
     // Only hover-expand on non-touch desktop devices
-    if (!isTouch.matches && !isTablet.matches) {
+    if (!isTouch.current && !isTablet.current) {
       sidebar.expand();
     }
   }
 
   function handleClick() {
     // Click-to-toggle on tablet and touch devices
-    if (isTouch.matches || isTablet.matches) {
+    if (isTouch.current || isTablet.current) {
       sidebar.expanded ? sidebar.collapse() : sidebar.expand();
     }
   }
@@ -230,12 +231,12 @@ What happens when viewport resizes across breakpoints:
 
   const sidebar = getSidebar();
 
-  const isMobile = new MediaQuery('(max-width: 767px)');
-  const isDesktop = new MediaQuery('(min-width: 1025px)');
+  const isMobile = new MediaQuery('(max-width: 767px)', false);
+  const isDesktop = new MediaQuery('(min-width: 1025px)', true);
 
   // Handle breakpoint transitions
   $effect(() => {
-    if (isMobile.matches) {
+    if (isMobile.current) {
       // Mobile: close drawer if was open, reset sidebar state
       sidebar.closeMobile();
       sidebar.collapse();
@@ -243,7 +244,7 @@ What happens when viewport resizes across breakpoints:
   });
 
   $effect(() => {
-    if (!isDesktop.matches && sidebar.pinned) {
+    if (!isDesktop.current && sidebar.pinned) {
       // Leaving desktop: unpin to prevent stuck expanded state
       sidebar.unpin();
       sidebar.collapse();

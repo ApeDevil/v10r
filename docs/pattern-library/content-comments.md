@@ -1,7 +1,7 @@
 ---
 title: "Comments (flat, per-locale, moderated)"
 description: "A flat, per-locale comment system with a short author edit window and admin moderation (hide/unhide/remove)."
-category: "Content, Blog & Desk"
+category: "Content & Blog"
 ---
 
 # Comments (flat, per-locale, moderated)
@@ -10,7 +10,7 @@ category: "Content, Blog & Desk"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Content, Blog & Desk · **Tier:** light · **Risk:** medium — persists user-generated content, moderation authority
+**Category:** Content & Blog · **Tier:** light · **Risk:** medium — persists user-generated content, moderation authority
 
 A flat, per-locale comment system with a short author edit window and admin moderation (hide/unhide/remove).
 

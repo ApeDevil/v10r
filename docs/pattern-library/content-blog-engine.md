@@ -1,7 +1,7 @@
 ---
 title: "Blog engine (posts, revisions, locale-aware publishing)"
 description: "A DB-backed blog system with posts, immutable revisions, and locale-aware publishing supporting multiple authors."
-category: "Content, Blog & Desk"
+category: "Content & Blog"
 ---
 
 # Blog engine (posts, revisions, locale-aware publishing)
@@ -10,7 +10,7 @@ category: "Content, Blog & Desk"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Content, Blog & Desk · **Tier:** light · **Risk:** medium — persists content revisions across locales, multi-author permissions
+**Category:** Content & Blog · **Tier:** light · **Risk:** medium — persists content revisions across locales, multi-author permissions
 
 A DB-backed blog system with posts, immutable revisions, and locale-aware publishing supporting multiple authors.
 

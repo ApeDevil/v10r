@@ -55,6 +55,17 @@ afterNavigate(() => {
 	if (sidebar.mobileOpen) sidebar.closeMobile();
 });
 
+// Yield to any layer that opens above us (desk drawers/sheets register on the
+// same layerStack) — one scrim at a time, with zero import edges between shell
+// and dock. No self-loop: closing pops our own id, top goes null, the guard
+// stops there.
+$effect(() => {
+	const top = layerStack.top;
+	if (sidebar.mobileOpen && top !== null && top !== 'sidebar-drawer') {
+		sidebar.closeMobile();
+	}
+});
+
 // Close on Escape key — only when no layer (menu, modal) was stacked above us when
 // the keypress began (wasTop, not isTop: a covering Bits menu closes itself
 // synchronously before this window handler runs).
@@ -84,14 +95,16 @@ function handleOverlayClick() {
 		role="presentation"
 	></div>
 
-	<!-- Drawer -->
+	<!-- Drawer — scrimmed + focus-trapped ⇒ APG modal dialog semantics; the
+		navigation landmark lives on the SidebarNav inside. -->
 	<aside
 		bind:this={drawerRef}
 		{...s.attrs}
 		class={cn('sidebar-drawer fixed top-0 right-0 border-l z-drawer flex flex-col motion-reduce:animate-none', className)}
 		style:width="var(--sidebar-mobile-width)"
 		style:height="100dvh"
-		role="navigation"
+		role="dialog"
+		aria-modal="true"
 		aria-label="Main navigation"
 	>
 		<div class="flex items-center justify-between gap-3 p-4 border-b border-border">

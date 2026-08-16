@@ -144,6 +144,16 @@ export function setContextFocus(panelId: string | null): void {
 	focusedPanelId = panelId;
 }
 
+/**
+ * Bare registry version for focus-follower retries. `setContextFocus` no-ops
+ * for a panel that has not registered context yet (a just-mounted panel), so
+ * the DockLayout follower effect reads this to re-assert focus once the
+ * panel's registerPanelContext effect has run.
+ */
+export function getContextRegistryVersion(): number {
+	return registryVersion;
+}
+
 /** Pin a panel's context for inclusion in AI prompts across focus switches */
 export function pinContext(panelId: string): void {
 	if (!registry.has(panelId)) return;

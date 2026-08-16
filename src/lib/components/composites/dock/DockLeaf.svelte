@@ -1,14 +1,16 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
+import { collectTypeInstances, composePanelMenus } from './compose-menus';
 import DockDropOverlay from './DockDropOverlay.svelte';
 import DockTabBar from './DockTabBar.svelte';
-import { setContextFocus } from './desk-context.svelte';
 import { getDeskSettings } from './desk-settings.svelte';
-import { collectLeaves, hasPanelType } from './dock.operations';
+import { collectPanelIds } from './dock.operations';
 import { getDockContext } from './dock.state.svelte';
 import type { LeafNode } from './dock.types';
-import { getActiveMenus, setFocusedPanel } from './panel-menus.svelte';
+import { closeCurrent, focusPanel, splitFocused, togglePanelType } from './panel-actions';
+import { getPanelMenus } from './panel-menus.svelte';
+import { buildViewMenu } from './view-menu';
 
 interface Props {
 	leaf: LeafNode;
@@ -19,78 +21,37 @@ let { leaf, panelContent }: Props = $props();
 
 const dock = getDockContext();
 const deskSettings = getDeskSettings();
+const panelMenus = getPanelMenus();
 
 const focusedPanelType = $derived(dock.panels[leaf.activeTab]?.type ?? null);
 
-// View menu — same items as the old DeskMenuBar
-function togglePanelType(panelType: string) {
-	if (hasPanelType(dock.root, panelType, dock.panels)) {
-		const leaves = collectLeaves(dock.root);
-		for (const l of leaves) {
-			for (const tabId of l.tabs) {
-				if (dock.panels[tabId]?.type === panelType) {
-					dock.closePanel(tabId);
-				}
-			}
-		}
-	} else {
-		dock.addPanel({
-			id: `${panelType}-${Date.now()}`,
-			type: panelType,
-			label: panelType.charAt(0).toUpperCase() + panelType.slice(1),
-			icon: panelType === 'explorer' ? 'i-lucide-folder-tree' : 'i-lucide-eye',
-			closable: true,
-		});
-	}
-}
-
-function splitFocused(zone: 'right' | 'bottom') {
-	const panelId = dock.focusedPanelId;
-	if (!panelId) return;
-	const panel = dock.panels[panelId];
-	if (!panel) return;
-	dock.addPanel(
-		{ id: `${panel.type}-${Date.now()}`, type: panel.type, label: panel.label, icon: panel.icon, closable: true },
-		{ leafId: dock.focusedLeafId ?? '', zone },
-	);
-}
-
-function closeFocusedPanel() {
-	const panelId = dock.focusedPanelId;
-	if (panelId) dock.closePanel(panelId);
-}
-
-const viewMenu = $derived<MenuBarMenu>({
-	label: 'View',
-	items: [
-		{
-			label: 'Toggle Explorer',
-			icon: 'i-lucide-folder-tree',
-			shortcut: 'Ctrl+Shift+E',
-			onSelect: () => togglePanelType('explorer'),
+const viewMenu = $derived<MenuBarMenu>(
+	buildViewMenu({
+		structural: true,
+		actions: {
+			togglePanelType: (panelType) => togglePanelType(dock, panelType),
+			splitFocused: (zone) => splitFocused(dock, zone),
+			closeFocusedPanel: () => closeCurrent(dock),
+			openPreferences: () => deskSettings.openDialog(),
 		},
-		{
-			label: 'Toggle Preview',
-			icon: 'i-lucide-eye',
-			shortcut: 'Ctrl+Shift+P',
-			onSelect: () => togglePanelType('preview'),
-		},
-		{ type: 'separator' },
-		{ label: 'Split Right', icon: 'i-lucide-columns-2', onSelect: () => splitFocused('right') },
-		{ label: 'Split Down', icon: 'i-lucide-rows-2', onSelect: () => splitFocused('bottom') },
-		{ type: 'separator' },
-		{ label: 'Close Active Panel', icon: 'i-lucide-x', shortcut: 'Ctrl+W', onSelect: closeFocusedPanel },
-		{ type: 'separator' },
-		{
-			label: 'Desk Preferences\u2026',
-			icon: 'i-lucide-settings',
-			shortcut: 'Ctrl+Shift+,',
-			onSelect: () => deskSettings.openDialog(),
-		},
-	],
-});
+	}),
+);
 
-const leafMenus = $derived<MenuBarMenu[]>([...getActiveMenus().menuBar, viewMenu]);
+// Composed for THIS leaf's active tab (instance-correct — a background leaf's
+// kebab must not show the focused panel's menus), same composition contract as
+// the mobile commands sheet.
+const leafMenus = $derived<MenuBarMenu[]>(
+	composePanelMenus({
+		registered: panelMenus.getMenus(leaf.activeTab).menuBar,
+		panel: dock.panels[leaf.activeTab] ?? null,
+		instances: collectTypeInstances(collectPanelIds(dock.root), dock.panels, focusedPanelType ?? undefined),
+		viewMenu,
+		actions: {
+			focusPanel: (panelId) => focusPanel(dock, panelId),
+			closePanel: (panelId) => dock.closePanel(panelId),
+		},
+	}),
+);
 
 // Per-panel-type color override (inline CSS vars on the leaf element)
 const leafStyle = $derived.by(() => {
@@ -102,7 +63,9 @@ const leafStyle = $derived.by(() => {
 });
 </script>
 
-<div class="dock-leaf" style={leafStyle} onfocusin={() => { dock.setFocusedLeaf(leaf.id); setFocusedPanel(leaf.activeTab); setContextFocus(leaf.activeTab); }} onpointerdown={() => { dock.setFocusedLeaf(leaf.id); setFocusedPanel(leaf.activeTab); setContextFocus(leaf.activeTab); }}>
+<!-- Focus is the dock's single truth: menus and AI context follow it via
+	DockLayout's focus-follower effect, so this handler only moves the leaf. -->
+<div class="dock-leaf" style={leafStyle} onfocusin={() => dock.setFocusedLeaf(leaf.id)} onpointerdown={() => dock.setFocusedLeaf(leaf.id)}>
 	{#if leaf.tabs.length > 0}
 		<DockTabBar {leaf} menus={leafMenus} panelType={focusedPanelType} />
 		<div class="dock-leaf-content">

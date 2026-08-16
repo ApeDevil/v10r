@@ -2,11 +2,19 @@
 import { onDestroy } from 'svelte';
 import { apiFetch } from '$lib/api';
 import Renderer from '$lib/components/blog/Renderer.svelte';
-import { getDeskBus, registerPanelMenus } from '$lib/components/composites/dock';
+import { getDeskBus, getPanelMenus } from '$lib/components/composites/dock';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import { Spinner } from '$lib/components/primitives';
 
+interface Props {
+	/** Panel instance id — menu registrations key on it. */
+	panelId: string;
+}
+
+let { panelId }: Props = $props();
+
 const bus = getDeskBus();
+const panelMenus = getPanelMenus();
 
 let html = $state('');
 let rendering = $state(false);
@@ -68,7 +76,7 @@ const unsubDocument = bus.subscribe('editor:document', (payload) => {
 const previewMenus: MenuBarMenu[] = [];
 
 $effect(() => {
-	return registerPanelMenus('preview', { menuBar: previewMenus });
+	return panelMenus.register(panelId, { menuBar: previewMenus });
 });
 
 onDestroy(() => {
@@ -169,5 +177,29 @@ onDestroy(() => {
 		flex: 1;
 		overflow-y: auto;
 		padding: 24px;
+	}
+
+	/* Mobile: tighter measure; wide rendered-HTML blocks scroll inside their
+	   own container instead of widening the panel */
+	@media (max-width: 767px) {
+		.preview-content {
+			padding: 16px;
+		}
+
+		.preview-content :global(img) {
+			max-width: 100%;
+			height: auto;
+		}
+
+		.preview-content :global(pre) {
+			max-width: 100%;
+			overflow-x: auto;
+		}
+
+		.preview-content :global(table) {
+			display: block;
+			max-width: 100%;
+			overflow-x: auto;
+		}
 	}
 </style>

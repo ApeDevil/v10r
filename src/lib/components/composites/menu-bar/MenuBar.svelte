@@ -64,7 +64,7 @@ const s = useSurface();
 						{:else}
 							<Menubar.Item
 								disabled={item.disabled}
-								class={menuBarItemVariants()}
+								class={cn(menuBarItemVariants(), item.destructive && 'text-error')}
 								onSelect={() => {
 									if (item.onSelect) {
 										item.onSelect();

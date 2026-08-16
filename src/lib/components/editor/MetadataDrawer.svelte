@@ -1,4 +1,5 @@
 <script lang="ts">
+import { MediaQuery } from 'svelte/reactivity';
 import { Stack } from '$lib/components/layout';
 import { Badge, Drawer, Input } from '$lib/components/primitives';
 
@@ -47,6 +48,9 @@ let {
 	ontagstoggle,
 }: Props = $props();
 
+// Bottom sheet on mobile, right drawer on desktop (same pattern as Chatbot's sources drawer)
+const isDesktop = new MediaQuery('(min-width: 768px)', true);
+
 let manualSlug = $state(false);
 
 function slugify(text: string): string {
@@ -87,7 +91,7 @@ function isTagSelected(tagId: string): boolean {
 }
 </script>
 
-<Drawer bind:open title="Post Metadata">
+<Drawer bind:open side={isDesktop.current ? 'right' : 'bottom'} title="Post Metadata">
 	<Stack gap="5">
 		<!-- Title -->
 		<div class="field">
@@ -268,5 +272,13 @@ function isTagSelected(tagId: string): boolean {
 		background: var(--color-primary);
 		color: var(--color-on-primary-container);
 		border-color: var(--color-primary);
+	}
+
+	/* Mobile: 16px floor on text inputs — below that iOS Safari auto-zooms on focus */
+	@media (max-width: 767px) {
+		.field :global(input),
+		.summary-textarea {
+			font-size: 16px;
+		}
 	}
 </style>

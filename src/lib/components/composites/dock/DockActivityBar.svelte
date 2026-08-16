@@ -5,9 +5,10 @@ import * as m from '$lib/paraglide/messages';
 import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 import { getDeskSettings } from './desk-settings.svelte';
-import { collectLeaves, hasPanelType } from './dock.operations';
+import { hasPanelType } from './dock.operations';
 import { getDockContext } from './dock.state.svelte';
-import type { ActivityBarItem, ActivityBarPosition, PanelDefinition } from './dock.types';
+import type { ActivityBarItem, ActivityBarPosition } from './dock.types';
+import { togglePanelType } from './panel-actions';
 import WorkspaceZone from './WorkspaceZone.svelte';
 
 interface Props {
@@ -37,27 +38,9 @@ function isTypeInLayout(panelType: string): boolean {
 	return hasPanelType(dock.root, panelType, dock.panels);
 }
 
+// Desktop toggle semantics (close-all-of-type / add) — shared via panel-actions.
 function handleClick(item: ActivityBarItem) {
-	if (isTypeInLayout(item.panelType)) {
-		const leaves = collectLeaves(dock.root);
-		for (const leaf of leaves) {
-			for (const tabId of leaf.tabs) {
-				const panel = dock.panels[tabId];
-				if (panel?.type === item.panelType) {
-					dock.closePanel(tabId);
-				}
-			}
-		}
-	} else {
-		const panel: PanelDefinition = {
-			id: `${item.panelType}-${Date.now()}`,
-			type: item.panelType,
-			label: item.label,
-			icon: item.icon,
-			closable: true,
-		};
-		dock.addPanel(panel);
-	}
+	togglePanelType(dock, item.panelType, item.label, item.icon);
 }
 </script>
 

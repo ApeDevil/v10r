@@ -121,11 +121,11 @@ export function getSidebar() {
   import { MediaQuery } from 'svelte/reactivity';
 
   const sidebar = getSidebar(); // Get from context (SSR-safe)
-  const isDesktop = new MediaQuery('(min-width: 1024px)');
+  const isDesktop = new MediaQuery('(min-width: 1024px)', true);
 
   // Auto-close mobile drawer on resize to desktop
   $effect(() => {
-    if (isDesktop.matches && sidebar.mobileOpen) {
+    if (isDesktop.current && sidebar.mobileOpen) {
       sidebar.closeMobile();
     }
   });

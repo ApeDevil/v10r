@@ -67,4 +67,12 @@ export interface DockLayoutState {
 	root: LayoutNode;
 	panels: Record<string, PanelDefinition>;
 	activityBarPosition?: ActivityBarPosition;
+	/**
+	 * Leaf holding focus at save time. Restores the focused panel on reload —
+	 * and on mobile, the visible panel. Every field added here MUST also be
+	 * added to DockLayoutStateSchema (src/lib/server/desk/schemas.ts) in the
+	 * same change: valibot strips unknown keys silently, so the DB workspace
+	 * lane would otherwise diverge from localStorage without any error.
+	 */
+	focusedLeafId?: string;
 }

@@ -251,4 +251,16 @@ const terminalStatus = $derived(proposal.status !== 'pending' ? proposal.status 
 		background-color: color-mix(in srgb, var(--color-muted) 10%, transparent);
 		color: var(--color-muted);
 	}
+
+	/* Narrow widths: full-width stacked actions, primary on top, 44px targets. */
+	@media (max-width: 420px) {
+		.plan-card-actions {
+			flex-direction: column-reverse;
+		}
+
+		.plan-card-btn {
+			width: 100%;
+			min-height: 44px;
+		}
+	}
 </style>

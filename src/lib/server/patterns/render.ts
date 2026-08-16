@@ -210,10 +210,10 @@ function pageRefLines(refs: RegRef[]): string {
 function pageProofLines(refs: RegRef[]): string {
 	return refs
 		.map((ref) => {
-			// Both showcase routes and app routes are live URLs — link them.
-			const label = ref.note ? `${ref.note} ${ref.path}` : ref.path;
+			// Both showcase routes and app routes are live URLs — link them; the note trails the link.
 			const suffix = ref.kind === 'approute' ? ' (app route, no showcase)' : '';
-			return `- [\`${label}\`](${ref.path})${suffix}`;
+			const note = ref.note ? ` — ${ref.note}` : '';
+			return `- [\`${ref.path}\`](${ref.path})${suffix}${note}`;
 		})
 		.join('\n');
 }

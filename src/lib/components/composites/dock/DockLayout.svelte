@@ -1,14 +1,21 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import { untrack } from 'svelte';
 import { MediaQuery } from 'svelte/reactivity';
 import { browser } from '$app/environment';
 import { apiFetch } from '$lib/api';
+import { ConfirmDialog } from '$lib/components/composites/confirm-dialog';
+import * as m from '$lib/paraglide/messages';
 import DeskPreferencesDialog from './DeskPreferencesDialog.svelte';
 import DeskShortcuts from './DeskShortcuts.svelte';
 import DockActivityBar from './DockActivityBar.svelte';
+import DockMobileCommandsSheet from './DockMobileCommandsSheet.svelte';
+import DockMobileControls from './DockMobileControls.svelte';
+import DockMobilePanelsDrawer from './DockMobilePanelsDrawer.svelte';
 import DockMobileView from './DockMobileView.svelte';
 import DockNode from './DockNode.svelte';
 import { setDeskBusContext } from './desk-bus.svelte';
+import { getContextRegistryVersion, setContextFocus } from './desk-context.svelte';
 import {
 	buildThemeFromServer,
 	clearDeskSettings,
@@ -18,10 +25,13 @@ import {
 } from './desk-settings.persistence';
 import { setDeskSettingsContext } from './desk-settings.svelte';
 import type { DeskTheme } from './desk-settings.types';
-import { collapseEmptyLeaves, collectLeaves, hasPanelType } from './dock.operations';
+import { collapseEmptyLeaves, collectPanelIds, findNode } from './dock.operations';
 import { loadDockState, saveDockState } from './dock.persistence';
 import { setDockContext } from './dock.state.svelte';
 import type { ActivityBarItem, LayoutNode, PanelDefinition } from './dock.types';
+import { setDockMobileContext } from './dock-mobile.state.svelte';
+import { focusPanel } from './panel-actions';
+import { setPanelMenusContext } from './panel-menus.svelte';
 import { buildWorkspacesFromServer, loadWorkspaceStore, saveWorkspaceStore } from './workspace.persistence';
 import { setWorkspaceContext } from './workspace.state.svelte';
 import type { Workspace } from './workspace.types';
@@ -31,7 +41,20 @@ interface Props {
 	initialPanels: Record<string, PanelDefinition>;
 	activityBarItems?: ActivityBarItem[];
 	persist?: boolean | string;
+	/** Ensure + focus a panel TYPE (e.g. from ?open=). */
 	openPanel?: string | null;
+	/** Focus an existing panel INSTANCE by id (e.g. from ?panel=). Silent no-op if unknown. */
+	focusPanelId?: string | null;
+	/**
+	 * How the compact (<768px) chrome is placed relative to the dock box.
+	 *  'floating' — open-panels tab strip on top + a floating controls pill
+	 *               (commands | panels) beside the shell FAB. Chrome overlays
+	 *               are position:absolute inside .dock-layout, never `fixed`.
+	 *  'bar'      — contained bottom switcher strip; content never occluded.
+	 *               Required for embedded consumers (a 500px demo card cannot
+	 *               host floating chrome — its overlay surfaces portal to body).
+	 */
+	mobileChrome?: 'floating' | 'bar';
 	/** Whether the user is authenticated (enables DB persistence). */
 	authenticated?: boolean;
 	/** Server-loaded desk theme (from DB). Null = no DB row yet. */
@@ -58,6 +81,10 @@ interface Props {
 	}>;
 	/** Server-loaded active workspace ID. */
 	serverActiveWorkspaceId?: string | null;
+	/** Fires after any panel close — the host wires undo UX (e.g. toast calling `restore`). */
+	onPanelClosed?: (panel: PanelDefinition, restore: () => void) => void;
+	/** Sink for AI `desk:notify` effects (ai:notify bus channel). Omit = dropped. */
+	onNotify?: (notification: { message: string; level: 'info' | 'success' | 'error' }) => void;
 	panelContent: Snippet<[string]>;
 	class?: string;
 }
@@ -68,11 +95,15 @@ let {
 	activityBarItems,
 	persist = false,
 	openPanel,
+	focusPanelId = null,
+	mobileChrome = 'floating',
 	authenticated = false,
 	serverTheme = null,
 	serverPresets = [],
 	serverWorkspaces = [],
 	serverActiveWorkspaceId = null,
+	onPanelClosed,
+	onNotify,
 	panelContent,
 	class: className,
 }: Props = $props();
@@ -113,11 +144,58 @@ function pruneAndCollapse(node: LayoutNode, panels: Record<string, PanelDefiniti
 
 // svelte-ignore state_referenced_locally
 const restoredRoot = saved?.root ? pruneAndCollapse(saved.root, mergedPanels) : initialRoot;
+// Restore focus only if the saved leaf survived pruning — the total getter
+// would fall back anyway, but a validated seed keeps the raw state honest.
 // svelte-ignore state_referenced_locally
-const dock = setDockContext(restoredRoot, mergedPanels, saved?.activityBarPosition ?? 'left');
+const restoredFocus =
+	saved?.focusedLeafId && findNode(restoredRoot, saved.focusedLeafId)?.type === 'leaf' ? saved.focusedLeafId : null;
+// svelte-ignore state_referenced_locally
+const dock = setDockContext(restoredRoot, mergedPanels, saved?.activityBarPosition ?? 'left', restoredFocus, {
+	// The closure runs post-init, so referencing `dock` here is safe. Restore is
+	// a plain re-add (closePanel keeps the definition in the registry).
+	onPanelClosed: (panel) => onPanelClosed?.(panel, () => dock.addPanel(panel)),
+});
+
+// Panel menu registry — context-scoped so two DockLayouts never share one.
+const panelMenus = setPanelMenusContext();
+
+// Mobile chrome state (surface discriminator + unsaved-close confirm) —
+// context-scoped for the same reason.
+const mobile = setDockMobileContext(dock);
+
+// Overlay auto-close: every focus REQUEST (tab tap, drawer row, ?open=, AI
+// effect — focusSeq counts repeats too) surfaces a panel, and closing whatever
+// covers it is part of that action, not the caller's job (effect contract).
+$effect(() => {
+	void dock.focusSeq;
+	mobile.close();
+});
+
+// Mobile projections (cheap; only rendered <768px).
+const mobileOpenIds = $derived(collectPanelIds(dock.root));
+const mobileVisibleId = $derived(dock.focusedPanelId);
+
+// THE focus follower: panel menus and the AI desk context track the dock's
+// focused panel from exactly one place. setContextFocus no-ops until the
+// panel registers context, so the effect also re-runs on the context
+// registry version to retry for just-mounted panels.
+$effect(() => {
+	const id = dock.focusedPanelId;
+	panelMenus.setFocused(id);
+	void getContextRegistryVersion();
+	setContextFocus(id);
+});
 
 // DeskBus: typed pub/sub available to all panels via context
-setDeskBusContext();
+const bus = setDeskBusContext();
+
+// Surface-independent sink for AI notifications — subscribing HERE (not in
+// ChatPanel) means they survive the chat panel being closed or behind an
+// overlay. Before this, ai:notify had no subscriber anywhere.
+$effect(() => {
+	if (!onNotify) return;
+	return bus.subscribe('ai:notify', (payload) => onNotify(payload));
+});
 
 // Desk settings: panel color customization via context
 // Priority: server data (DB) > localStorage cache > defaults
@@ -257,9 +335,10 @@ if (persist && browser) {
 		const root = $state.snapshot(dock.root) as LayoutNode;
 		const panels = $state.snapshot(dock.panels) as Record<string, PanelDefinition>;
 		const barPos = dock.activityBarPosition;
+		const focusedLeafId = dock.focusedLeafId ?? undefined;
 		clearTimeout(timer);
 		timer = setTimeout(() => {
-			saveDockState(root, panels, persistKey, barPos);
+			saveDockState(root, panels, persistKey, barPos, focusedLeafId);
 			// Bump workspace modification tracking
 			if (workspace.activeId) workspace.onDockChange();
 		}, 300);
@@ -368,29 +447,26 @@ if (browser) {
 	});
 }
 
-// Auto-focus the first leaf so the kebab menu is visible on load
-if (browser) {
-	$effect(() => {
-		if (dock.focusedLeafId) return;
-		const leaves = collectLeaves(dock.root);
-		if (leaves.length > 0) dock.setFocusedLeaf(leaves[0].id);
-	});
-}
-
-// Open a panel type via prop (e.g. from URL search param)
+// Open (ensure + FOCUS) a panel type via prop (e.g. from ?open=). ensurePanelType
+// focuses existing instances and addPanel focuses insertions, so the panel
+// surfaces on every surface — no auto-focus fallback effect needed (the dock's
+// focusedLeafId getter is total). The action is untracked: the effect must
+// depend on the PROP only, or closing the opened panel would resurrect it on
+// the next tree change.
 // svelte-ignore state_referenced_locally
 $effect(() => {
 	if (!openPanel) return;
-	if (hasPanelType(dock.root, openPanel, dock.panels)) return;
 	const def = Object.values(initialPanels).find((p) => p.type === openPanel);
 	if (!def) return;
-	dock.addPanel({
-		id: `${openPanel}-${Date.now()}`,
-		type: def.type,
-		label: def.label,
-		icon: def.icon,
-		closable: true,
-	});
+	untrack(() => dock.ensurePanelType(openPanel, def.label, def.icon));
+});
+
+// Focus a specific panel INSTANCE via prop (e.g. from ?panel=). Silent no-op
+// when the id is not in the tree — a bad deep link must never error a workspace.
+$effect(() => {
+	if (!focusPanelId) return;
+	const id = focusPanelId;
+	untrack(() => focusPanel(dock, id));
 });
 </script>
 
@@ -414,12 +490,41 @@ $effect(() => {
 			<DockNode node={dock.root} {panelContent} />
 		</div>
 	{:else}
-		<DockMobileView items={activityBarItems ?? []} {openPanel} {panelContent} />
+		<DockMobileView
+			items={activityBarItems ?? []}
+			chrome={mobileChrome}
+			openPanelIds={mobileOpenIds}
+			visibleId={mobileVisibleId}
+			{panelContent}
+		/>
+		{#if mobileChrome === 'floating'}
+			<DockMobileControls openCount={mobileOpenIds.length} />
+			<DockMobilePanelsDrawer
+				items={activityBarItems ?? []}
+				openPanelIds={mobileOpenIds}
+				visibleId={mobileVisibleId}
+			/>
+			<DockMobileCommandsSheet openPanelIds={mobileOpenIds} visibleId={mobileVisibleId} />
+			<ConfirmDialog
+				bind:open={() => mobile.pendingClose !== null, (value) => { if (!value) mobile.cancelPendingClose(); }}
+				title={m.composites_dock_mobile_unsaved_close_title()}
+				description={mobile.pendingClose
+					? m.composites_dock_mobile_unsaved_close_desc({ label: mobile.pendingClose.label })
+					: undefined}
+				destructive
+				confirmLabel={m.composites_dock_mobile_unsaved_close_confirm()}
+				onconfirm={() => mobile.confirmPendingClose()}
+				oncancel={() => mobile.cancelPendingClose()}
+			/>
+		{/if}
 	{/if}
 </div>
 
 <style>
 	.dock-layout {
+		/* relative: mobile floating chrome anchors to the DOCK BOX (never the
+		   viewport), so an embedded DockLayout stays contained in its card. */
+		position: relative;
 		display: grid;
 		height: 100%;
 		width: 100%;
@@ -452,11 +557,12 @@ $effect(() => {
 		grid-template-rows: 1fr auto;
 	}
 
-	/* Mobile mode: single panel above a bottom switcher bar */
+	/* Mobile mode: one content area — DockMobileView lays out its own rows
+	   (tabs / stack / optional bar); floating chrome overlays it. */
 	.dock-layout[data-bar-position='mobile'] {
-		grid-template-areas: 'content' 'bar';
+		grid-template-areas: 'content';
 		grid-template-columns: 1fr;
-		grid-template-rows: 1fr auto;
+		grid-template-rows: 1fr;
 	}
 
 	.dock-content {

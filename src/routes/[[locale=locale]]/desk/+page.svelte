@@ -1,5 +1,5 @@
 <script lang="ts">
-import { goto } from '$app/navigation';
+import { replaceState } from '$app/navigation';
 import { page } from '$app/state';
 import { ChatPanel } from '$lib/components/chat';
 import type { LayoutNode } from '$lib/components/composites/dock';
@@ -10,6 +10,9 @@ import IOLogPanel from '$lib/components/io-log/IOLogPanel.svelte';
 import { PreviewPanel } from '$lib/components/preview';
 import { SpreadsheetPanel } from '$lib/components/spreadsheet';
 import { DESK_ACTIVITY_BAR_ITEMS, DESK_PANEL_TYPES, DESK_PANELS } from '$lib/config/desk-panels';
+import { getToast } from '$lib/state/toast.svelte';
+
+const toast = getToast();
 
 // Server data from desk/+layout.server.ts
 const authenticated = $derived(!!page.data.session?.user?.id);
@@ -18,13 +21,19 @@ const serverPresets = $derived(page.data.deskPresets ?? []);
 const serverWorkspaces = $derived(page.data.deskWorkspaces ?? []);
 const serverActiveWorkspaceId = $derived(page.data.deskActiveWorkspaceId ?? null);
 
+// ?open=<type> ensures + focuses a panel type; ?panel=<id> deep-links to a
+// specific instance (silent no-op on unknown ids).
 let openPanel = $derived(page.url.searchParams.get('open'));
+let focusPanelId = $derived(page.url.searchParams.get('panel'));
 
-// Clean URL param after it's consumed
+// Clean URL params after they're consumed. `replaceState`, not `goto`: a
+// cosmetic URL edit must not re-run loads or fire after/beforeNavigate
+// (which would e.g. auto-close the sidebar drawer). Deferred a macrotask so
+// DockLayout's param effects observe the values before they vanish.
 $effect(() => {
-	if (openPanel && page.url.searchParams.has('open')) {
-		goto(page.url.pathname, { replaceState: true });
-	}
+	if (!page.url.searchParams.has('open') && !page.url.searchParams.has('panel')) return;
+	const timer = setTimeout(() => replaceState(page.url.pathname, page.state ?? {}), 0);
+	return () => clearTimeout(timer);
 });
 
 const initialRoot: LayoutNode = {
@@ -88,18 +97,27 @@ function getPanelType(panelId: string): string | undefined {
 		activityBarItems={DESK_ACTIVITY_BAR_ITEMS}
 		persist="desk-layout"
 		{openPanel}
+		{focusPanelId}
 		{authenticated}
 		{serverTheme}
 		{serverPresets}
 		{serverWorkspaces}
 		{serverActiveWorkspaceId}
+		onPanelClosed={(panel, restore) =>
+			toast?.show({
+				type: 'info',
+				message: `Closed ${panel.label}`,
+				duration: 6000,
+				action: { label: 'Undo', onclick: restore },
+			})}
+		onNotify={(n) => toast?.show({ type: n.level, message: n.message, duration: 6000 })}
 		class="desk-dock"
 	>
 		{#snippet panelContent(panelId)}
 			{@const type = getPanelType(panelId)}
 			<div class="desk-panel">
 				{#if type === 'explorer'}
-					<ExplorerPanel />
+					<ExplorerPanel {panelId} />
 				{:else if type === 'editor'}
 					<AuthorGate>
 						{#snippet children()}
@@ -107,7 +125,7 @@ function getPanelType(panelId: string): string | undefined {
 						{/snippet}
 					</AuthorGate>
 				{:else if type === 'preview'}
-					<PreviewPanel />
+					<PreviewPanel {panelId} />
 				{:else if type === 'bot'}
 					<ChatPanel {panelId} />
 				{:else if type === 'spreadsheet'}

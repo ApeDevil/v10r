@@ -121,7 +121,7 @@ src/lib/components/shell/
 ├── Sidebar.svelte            # Sidebar container
 ├── SidebarRail.svelte        # Desktop collapsed state
 ├── SidebarDrawer.svelte      # Mobile full drawer
-├── SidebarFab.svelte         # Mobile trigger button
+├── SidebarFab.svelte         # Mobile nav trigger — slot-token positioned (--fab-*), open-only (scrim dismisses)
 ├── SidebarLogo.svelte        # Logo in sidebar header
 ├── SidebarNav.svelte         # Navigation container
 ├── SidebarTriggers.svelte    # Quick Search + Vely trigger (state-aware: open-or-restore)

@@ -3,16 +3,22 @@
  *
  * Extracted from ChatPanel.svelte for testability. Each effect type
  * maps to a dock state mutation or bus publication.
+ *
+ * Contract: an effect that surfaces a panel must leave that panel the user's
+ * current panel on EVERY surface — `focusPanel` is the one verb for that
+ * (desktop activates + focuses the leaf; the mobile visible panel derives
+ * from the same focus). Overlay auto-close reacts to the focus change in the
+ * mobile view; the dispatcher stays surface-free.
  */
 
 import type { DeskEffect } from '$lib/server/ai/tools/_types';
 import type { DeskEvents } from './desk-bus.svelte';
-import type { LayoutNode, LeafNode, PanelDefinition } from './dock.types';
+import type { PanelDefinition } from './dock.types';
 
 /** Callback interface for effect dispatch — abstracts dock/bus calls. */
 export interface EffectActions {
-	findLeafWithPanel: (root: LayoutNode, panelId: string) => LeafNode | null;
-	activateTab: (leafId: string, panelId: string) => void;
+	/** Make panelId THE focused panel. Returns false when it is not in the tree. */
+	focusPanel: (panelId: string) => boolean;
 	addPanel: (panel: PanelDefinition) => void;
 	updatePanel: (panelId: string, partial: Partial<PanelDefinition>) => void;
 	publish: <K extends keyof DeskEvents>(channel: K, payload: DeskEvents[K]) => void;
@@ -20,18 +26,18 @@ export interface EffectActions {
 
 /**
  * Dispatch a single DeskEffect to the dock/bus layer.
- * Unknown effect types are silently ignored (defensive).
+ * Returns false for unknown or inapplicable effects (target panel absent) so
+ * the caller can log the failure — a desk effect that did nothing must never
+ * be indistinguishable from one that worked.
  */
-export function dispatchDeskEffect(effect: DeskEffect, actions: EffectActions, root: LayoutNode): void {
-	if (!effect?.type) return;
+export function dispatchDeskEffect(effect: DeskEffect, actions: EffectActions): boolean {
+	if (!effect?.type) return false;
 
 	switch (effect.type) {
 		case 'desk:open_panel': {
 			const panelId = `${effect.panelType}-${effect.fileId}`;
-			const existingLeaf = actions.findLeafWithPanel(root, panelId);
-			if (existingLeaf) {
-				actions.activateTab(existingLeaf.id, panelId);
-			} else {
+			if (!actions.focusPanel(panelId)) {
+				// addPanel focuses the insertion leaf, so the new panel surfaces too.
 				actions.addPanel({
 					id: panelId,
 					type: effect.panelType,
@@ -40,35 +46,32 @@ export function dispatchDeskEffect(effect: DeskEffect, actions: EffectActions, r
 					meta: { fileId: effect.fileId },
 				});
 			}
-			break;
+			return true;
 		}
 		case 'desk:refresh_file':
 			actions.publish('ai:refresh_file', { fileId: effect.fileId });
-			break;
+			return true;
 		case 'desk:refresh_explorer':
 			actions.publish('ai:refresh_explorer', {} as Record<string, never>);
-			break;
+			return true;
 		case 'desk:tab_indicator':
 			actions.updatePanel(`${effect.panelType}-${effect.fileId}`, {
 				indicator: effect.variant === 'modified' ? 'ai-modified' : undefined,
 			});
-			break;
+			return true;
 		case 'desk:notify':
 			actions.publish('ai:notify', { message: effect.message, level: effect.level });
-			break;
+			return true;
 		case 'desk:activate_panel':
-		case 'desk:focus_panel': {
-			const leaf = actions.findLeafWithPanel(root, effect.panelId);
-			if (leaf) {
-				actions.activateTab(leaf.id, effect.panelId);
-			}
-			break;
-		}
+		case 'desk:focus_panel':
+			return actions.focusPanel(effect.panelId);
 		case 'desk:scroll_to':
+			// Focus first — a scroll inside a background tab is invisible on every surface.
+			actions.focusPanel(effect.panelId);
 			actions.publish('ai:scroll_to', { panelId: effect.panelId, target: effect.target });
-			break;
+			return true;
 		default:
-			// Unknown effect — silently ignore (defensive)
-			break;
+			// Unknown effect — report as not applied so the caller can log it.
+			return false;
 	}
 }
