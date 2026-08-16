@@ -21,7 +21,7 @@ import { ConfirmDialog } from '$lib/components/composites';
 import { locales, localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 import { signOutAndFlush } from '$lib/pwa/sign-out';
-import { layerStack } from '$lib/state/layer-stack.svelte';
+import { getLayerScope, layerStack, setLayerScope } from '$lib/state/layer-stack.svelte';
 import { getTheme } from '$lib/state/theme.svelte';
 import { elevationAttr, getParentLevel } from '$lib/styles/elevation';
 import { floatingContentBase } from '$lib/styles/floating';
@@ -59,13 +59,21 @@ let signOutConfirmOpen = $state(false);
 let themeSubmenuOpen = $state(false);
 let languageSubmenuOpen = $state(false);
 
+/* Layer identity. `ownerScope` is whatever encloses this menu (the mobile drawer, or
+ * nothing on the rail) — carried on every push so an enclosing layer that yields to
+ * covering surfaces recognises these as its own and stays open. `menuScope` extends it
+ * for what the menu itself opens: the stacked panel here, the sign-out ConfirmDialog
+ * below through context. Both read at init — getContext cannot run inside $effect. */
+const menuLayerId = `user-menu-${variant}`;
+const ownerScope = getLayerScope();
+const menuScope = setLayerScope(menuLayerId);
+
 /* Register as a layer while open so hand-rolled Escape/overlay handlers underneath
  * (the mobile drawer) peel one layer per keypress instead of closing with us. */
 $effect(() => {
 	if (menuOpen) {
-		const id = `user-menu-${variant}`;
-		layerStack.push(id);
-		return () => layerStack.pop(id);
+		layerStack.push(menuLayerId, ownerScope);
+		return () => layerStack.pop(menuLayerId);
 	}
 });
 
@@ -73,7 +81,7 @@ $effect(() => {
  * Escape peels panel → menu → drawer, one keypress each. */
 $effect(() => {
 	if (variant === 'drawer' && (themeSubmenuOpen || languageSubmenuOpen)) {
-		layerStack.push('user-menu-panel');
+		layerStack.push('user-menu-panel', menuScope);
 		return () => layerStack.pop('user-menu-panel');
 	}
 });

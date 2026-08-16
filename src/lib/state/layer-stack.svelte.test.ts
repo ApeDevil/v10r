@@ -71,6 +71,44 @@ describe('layerStack', () => {
 		expect(layerStack.top).toBe('drawer');
 	});
 
+	// ownsTop is what lets a layer yield to competing surfaces without dismissing
+	// itself the moment its OWN menu opens — the mobile sidebar drawer regression:
+	// a blanket `top !== 'sidebar-drawer'` guard closed the drawer on the tap that
+	// opened its user menu, unmounting the menu before it could render.
+	it('ownsTop: a layer opened from within is not foreign', () => {
+		layerStack.push('sidebar-drawer');
+		layerStack.push('user-menu-drawer', ['sidebar-drawer']);
+		expect(layerStack.ownsTop('sidebar-drawer')).toBe(true);
+		expect(layerStack.isTop('sidebar-drawer')).toBe(false);
+	});
+
+	it('ownsTop: ownership reaches through nested scopes', () => {
+		layerStack.push('sidebar-drawer');
+		layerStack.push('user-menu-panel', ['sidebar-drawer', 'user-menu-drawer']);
+		expect(layerStack.ownsTop('sidebar-drawer')).toBe(true);
+		expect(layerStack.ownsTop('user-menu-drawer')).toBe(true);
+	});
+
+	// The chain is captured at push time precisely for this: the user menu closes as
+	// its sign-out confirm opens, so walking live stack entries would lose the trail.
+	it('ownsTop: survives an intermediate owner closing', () => {
+		layerStack.push('sidebar-drawer');
+		layerStack.push('user-menu-drawer', ['sidebar-drawer']);
+		layerStack.push('confirm-dialog', ['sidebar-drawer', 'user-menu-drawer']);
+		layerStack.pop('user-menu-drawer');
+		expect(layerStack.ownsTop('sidebar-drawer')).toBe(true);
+	});
+
+	it('ownsTop: a foreign layer still covers — the yield path must survive', () => {
+		layerStack.push('sidebar-drawer');
+		layerStack.push('desk-panels');
+		expect(layerStack.ownsTop('sidebar-drawer')).toBe(false);
+	});
+
+	it('ownsTop: empty stack is owned by everyone (mirrors isTop)', () => {
+		expect(layerStack.ownsTop('sidebar-drawer')).toBe(true);
+	});
+
 	// Without a browser (no window listeners → no interaction snapshot), wasTop must
 	// degrade to plain isTop rather than throw or return stale answers.
 	it('wasTop falls back to isTop when no interaction snapshot exists', () => {

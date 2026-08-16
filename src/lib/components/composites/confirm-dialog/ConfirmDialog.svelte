@@ -2,7 +2,7 @@
 import { Dialog } from 'bits-ui';
 import { Button } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
-import { layerStack } from '$lib/state/layer-stack.svelte';
+import { getLayerScope, layerStack } from '$lib/state/layer-stack.svelte';
 import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 
@@ -34,9 +34,14 @@ const s = useSurface();
 
 // Bits Dialog handles its own Escape/overlay dismissal; registration is for
 // hand-rolled layers underneath (the mobile drawer) to know they're not top.
+// The owner chain travels with it: a confirm opened from inside the mobile
+// drawer's user menu must not read as a competing surface (the menu that spawned
+// it has already closed by then, so only the chain captured here still says so).
+const ownerScope = getLayerScope();
+
 $effect(() => {
 	if (open) {
-		layerStack.push('confirm-dialog');
+		layerStack.push('confirm-dialog', ownerScope);
 		return () => layerStack.pop('confirm-dialog');
 	}
 });

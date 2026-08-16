@@ -2,7 +2,7 @@
 import { Dialog as DialogPrimitive } from 'bits-ui';
 import type { Snippet } from 'svelte';
 import * as m from '$lib/paraglide/messages';
-import { layerStack } from '$lib/state/layer-stack.svelte';
+import { getLayerScope, layerStack, setLayerScope } from '$lib/state/layer-stack.svelte';
 import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 
@@ -33,11 +33,16 @@ let {
 // carries the separation).
 const s = useSurface();
 
+// Owner chain in, owner scope out: this drawer is a layer inside whatever encloses
+// it, and the owner of every layer opened from within it (menus, confirms).
+const ownerScope = getLayerScope();
+if (layerId) setLayerScope(layerId);
+
 // Effect-scoped with cleanup: an unmount-while-open (breakpoint cross) must
 // pop the layer, or wasTop() goes false for everyone and Escape dies app-wide.
 $effect(() => {
 	if (open && layerId) {
-		layerStack.push(layerId);
+		layerStack.push(layerId, ownerScope);
 		return () => layerStack.pop(layerId);
 	}
 });

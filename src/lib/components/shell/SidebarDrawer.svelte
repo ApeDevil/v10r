@@ -1,7 +1,7 @@
 <script lang="ts">
 import { afterNavigate } from '$app/navigation';
 import { page } from '$app/state';
-import { layerStack } from '$lib/state/layer-stack.svelte';
+import { layerStack, setLayerScope } from '$lib/state/layer-stack.svelte';
 import { getSidebar } from '$lib/state/sidebar.svelte';
 import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
@@ -23,6 +23,10 @@ let { isAdmin = false, class: className }: Props = $props();
 // The mobile drawer is the sidebar plane on its own scrim (level 1, like the rail). Seeds the
 // elevation context so its UserMenu climbs relatively (menu E2 → panel E3).
 const s = useSurface();
+
+// Own everything opened from inside the drawer (its UserMenu, that menu's sign-out
+// confirm) so the yield effect below can tell those apart from a competing surface.
+setLayerScope('sidebar-drawer');
 
 const sidebar = getSidebar();
 // Identity from reactive page data, not the frozen session-state context — see
@@ -55,13 +59,14 @@ afterNavigate(() => {
 	if (sidebar.mobileOpen) sidebar.closeMobile();
 });
 
-// Yield to any layer that opens above us (desk drawers/sheets register on the
-// same layerStack) — one scrim at a time, with zero import edges between shell
-// and dock. No self-loop: closing pops our own id, top goes null, the guard
-// stops there.
+// Yield to a FOREIGN layer that opens above us (desk drawers/sheets, the command
+// palette, the Vely sheet — all register on the same layerStack) — one scrim at a
+// time, with zero import edges between shell and dock. `ownsTop`, not `top !==
+// 'sidebar-drawer'`: our own UserMenu is a layer too, and a blanket check closed
+// the drawer — unmounting the menu with it — the instant it was tapped. No
+// self-loop: closing pops our own id, the stack empties, ownsTop goes true.
 $effect(() => {
-	const top = layerStack.top;
-	if (sidebar.mobileOpen && top !== null && top !== 'sidebar-drawer') {
+	if (sidebar.mobileOpen && !layerStack.ownsTop('sidebar-drawer')) {
 		sidebar.closeMobile();
 	}
 });

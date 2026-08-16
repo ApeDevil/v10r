@@ -164,6 +164,19 @@ layer at a time — the panel stops Bits UI's escape-defer chain with
 `escapeKeydownBehavior="close"`. See the elevation ladder in
 [design/tokens.md](../design/tokens.md).
 
+The drawer also **yields** — it closes itself when a competing full-screen
+surface opens (a desk panel drawer or commands sheet, the command palette, the
+Vely sheet), keeping one scrim on screen at a time with no import edge between
+shell and dock. The guard is `layerStack.ownsTop('sidebar-drawer')`, never a
+bare `top !== 'sidebar-drawer'`: the drawer's own user menu is a layer too, and
+a blanket check closed the drawer — unmounting the menu with it — on the very
+tap that opened it. Ownership travels by Svelte context (`setLayerScope` /
+`getLayerScope`), so it survives the portal that moves menu DOM to `<body>`;
+each layer stores the owner chain it was pushed with, because an owner can close
+while its descendant stays open (the menu closes as its sign-out confirm opens).
+**Anything rendered inside the drawer that registers a layer must push it with
+`getLayerScope()`** or the drawer will treat it as a competing surface.
+
 **Sign out** does not act immediately — it opens a destructive `ConfirmDialog`
 (itself registered as a `confirm-dialog` layer, so on mobile Escape peels the
 dialog before the drawer).
