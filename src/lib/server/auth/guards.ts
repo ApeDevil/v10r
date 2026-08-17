@@ -24,21 +24,12 @@ export function requireAuth(locals: App.Locals, returnTo?: string) {
 }
 
 /**
- * NOTE ON THE MISSING `requireApi*` FAMILY
- *
- * There used to be `requireApiUser` / `requireApiBlogAuthor` /
- * `requirePostOwnership` / `requireAssetOwnership` here, which did
- * `throw apiError(...)`. That throws a bare `Response`, and SvelteKit only
- * special-cases `HttpError` / `Redirect` — anything else falls through to
- * `handle_fatal_error`, so all 59 endpoints using them answered **500** to
- * unauthenticated callers instead of 401/403. Fail-closed, but the wrong
- * contract, and invisible to `guards.test.ts` because a `Response` also has
- * a `.status`.
- *
- * `+server.ts` therefore uses the returning `guardApi*` family below, and
- * `guard-contract.gate.test.ts` forbids `throw apiError` in this file. Page loads keep
- * `requireAuth` / `requireAdmin`, which use Kit's own `redirect()` / `error()`
- * and are correct.
+ * `+server.ts` uses the RETURNING `guardApi*` family below. Throwing `apiError`
+ * here would throw a bare `Response`, which SvelteKit does not special-case the
+ * way it does `HttpError` / `Redirect` — it falls through to `handle_fatal_error`
+ * and answers 500 instead of 401/403, invisibly, because a `Response` also has a
+ * `.status`. `guard-contract.gate.test.ts` enforces this. Page loads keep
+ * `requireAuth` / `requireAdmin`, which use Kit's own `redirect()` / `error()`.
  */
 
 export function requireAdmin(locals: App.Locals, returnTo?: string) {
@@ -58,7 +49,6 @@ export function requireBlogAuthor(locals: App.Locals) {
 	return { user, session };
 }
 
-// ---------------------------------------------------------------------------
 // API guards — the ONLY family `+server.ts` may use.
 //
 // They return a Response rather than throwing one: SvelteKit does not unwrap a
@@ -66,7 +56,6 @@ export function requireBlogAuthor(locals: App.Locals) {
 // with `'error' in guard`, which is why the success branch always carries a
 // distinct required key (no `?: never` — optional-never keys make `in`-narrowing
 // unreliable).
-// ---------------------------------------------------------------------------
 
 type ApiGuardSuccess = { user: App.Locals['user'] & {}; session: App.Locals['session'] & {} };
 type ApiGuardResult = ApiGuardSuccess | { error: Response };
@@ -101,7 +90,6 @@ export function guardApiAdmin(locals: App.Locals): ApiGuardResult {
 	return { user: locals.user, session: locals.session };
 }
 
-// ---------------------------------------------------------------------------
 // Ownership guards.
 //
 // These replace assertion functions (`asserts post is ...`). The generic is
@@ -112,7 +100,6 @@ export function guardApiAdmin(locals: App.Locals): ApiGuardResult {
 //
 // "Not yours" and "doesn't exist" both answer 404 on purpose: a 403 would
 // confirm the row exists to someone who cannot see it.
-// ---------------------------------------------------------------------------
 
 /** Verify the authenticated user owns the post (or is admin). */
 export function guardPostOwnership<T extends { authorId: string }>(

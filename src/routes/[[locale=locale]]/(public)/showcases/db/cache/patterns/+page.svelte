@@ -33,27 +33,21 @@ const sections = $derived([
 	{ id: 'lists', label: m.showcase_db_cache_patterns_nav_lists() },
 ]);
 
-// ─── Inspect state ──────────────────────────────────
 let inspectLoading = $state(false);
 let inspectResult = $state<{ key: string; type: string; value: unknown } | null>(null);
 
-// ─── String state ───────────────────────────────────
 let newStringKey = $state('showcase:');
 let newStringValue = $state('');
 let newStringTtl = $state('');
 
-// ─── Hash state ─────────────────────────────────────
 let hashField = $state('');
 let hashValue = $state('');
 
-// ─── Sorted set state ───────────────────────────────
 let newMember = $state('');
 let newScore = $state('');
 
-// ─── List state ─────────────────────────────────────
 let listValue = $state('');
 
-// ─── Loading states ─────────────────────────────────
 let actionLoading = $state('');
 
 function handleResult(successMsg?: string) {
@@ -434,9 +428,7 @@ const typeBadgeVariant = (type: string) => {
 		</Stack>
 	{/if}
 
-
 <style>
-	/* ─── Stats ──────────────────────────────────────────── */
 
 	.stats-grid {
 		display: grid;
@@ -468,8 +460,6 @@ const typeBadgeVariant = (type: string) => {
 		text-transform: capitalize;
 	}
 
-	/* ─── Table ──────────────────────────────────────────── */
-
 	.table-wrap {
 		overflow-x: auto;
 	}
@@ -484,8 +474,6 @@ const typeBadgeVariant = (type: string) => {
 		font-family: ui-monospace, monospace;
 		font-size: var(--text-fluid-xs);
 	}
-
-	/* ─── Inspect ────────────────────────────────────────── */
 
 	.inspect-panel {
 		margin-top: var(--spacing-5);
@@ -516,8 +504,6 @@ const typeBadgeVariant = (type: string) => {
 		line-height: 1.6;
 	}
 
-	/* ─── Forms ──────────────────────────────────────────── */
-
 	.form-grid {
 		display: grid;
 		grid-template-columns: 1fr 1fr auto auto;
@@ -536,8 +522,6 @@ const typeBadgeVariant = (type: string) => {
 		flex-wrap: wrap;
 	}
 
-	/* ─── Hashes ─────────────────────────────────────────── */
-
 	.hash-section {
 		display: flex;
 		align-items: center;
@@ -555,8 +539,6 @@ const typeBadgeVariant = (type: string) => {
 		padding-top: var(--spacing-4);
 		border-top: 1px solid var(--color-border);
 	}
-
-	/* ─── Counters ───────────────────────────────────────── */
 
 	.counter-grid {
 		display: grid;
@@ -587,8 +569,6 @@ const typeBadgeVariant = (type: string) => {
 		gap: var(--spacing-2);
 	}
 
-	/* ─── Sorted Sets ────────────────────────────────────── */
-
 	.zset-header {
 		display: flex;
 		align-items: center;
@@ -606,8 +586,6 @@ const typeBadgeVariant = (type: string) => {
 		padding-top: var(--spacing-4);
 		border-top: 1px solid var(--color-border);
 	}
-
-	/* ─── Lists ──────────────────────────────────────────── */
 
 	.list-header {
 		display: flex;

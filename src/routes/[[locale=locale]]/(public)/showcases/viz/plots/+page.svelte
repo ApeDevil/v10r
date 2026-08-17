@@ -18,8 +18,6 @@ const sections = [
 // SSR-safe: resolve palette only in browser
 let palette: string[] = $state(browser ? getVizPalette() : []);
 
-// --- Scatter Plot data ---
-
 const scatterData = {
 	datasets: [
 		{
@@ -56,7 +54,7 @@ const scatterData = {
 	],
 };
 
-// --- Activity Heatmap (GitHub-style contribution graph) ---
+// Activity Heatmap (GitHub-style contribution graph)
 
 const activityData: HeatMapData = {
 	xLabels: ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12'],
@@ -72,8 +70,6 @@ const activityData: HeatMapData = {
 	],
 };
 
-// --- Correlation Matrix ---
-
 const corrLabels = ['Sales', 'Traffic', 'Ads', 'Social', 'Email', 'SEO'];
 const corrData: HeatMapData = {
 	xLabels: corrLabels,
@@ -88,7 +84,7 @@ const corrData: HeatMapData = {
 	],
 };
 
-// --- Server Load (2-hour blocks × days) ---
+// Server Load (2-hour blocks × days)
 
 const serverData: HeatMapData = {
 	xLabels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
@@ -335,7 +331,6 @@ const serverData: HeatMapData = {
 		padding: var(--spacing-7) var(--spacing-4);
 		box-sizing: border-box;
 	}
-
 
 	.section {
 		scroll-margin-top: 5rem;

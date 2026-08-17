@@ -1,3 +1,7 @@
+/**
+ * Not localized: every user-facing string below is a literal or a humanized
+ * enum key. The whole file still needs an i18n pass — no per-string markers.
+ */
 import { fail, redirect } from '@sveltejs/kit';
 import { localizeHref } from '$lib/i18n';
 import { getVisionProvider } from '$lib/server/ai';
@@ -11,7 +15,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	const provider = getVisionProvider(locals.user.id);
 	return {
-		// TODO(i18n)
 		title: 'Image Kit - Toolkits - Showcases',
 		aiAvailable: !!provider,
 	};
@@ -29,7 +32,6 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const file = formData.get('image');
 		if (!(file instanceof File) || file.size === 0) {
-			// TODO(i18n)
 			return fail(400, { uploadError: 'Choose an image to upload.' });
 		}
 

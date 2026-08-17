@@ -26,7 +26,6 @@ const {
 const usernameLength = $derived($form.username.length);
 const usernameMaxLength = 20;
 
-// Password strength
 const passwordStrength = $derived.by(() => {
 	const pw = $form.password;
 	if (!pw) return { score: 0, label: '', variant: 'default' as const };

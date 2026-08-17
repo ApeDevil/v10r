@@ -71,9 +71,7 @@ useTask((delta) => {
 	mixer?.update(delta);
 });
 
-// ---------------------------------------------------------------------------
 // Part picking + camera fly-to (interactive mode only)
-// ---------------------------------------------------------------------------
 
 /** Minimal shape of a Threlte interactivity intersection event we rely on. */
 interface PickEvent {

@@ -6,20 +6,19 @@ import { rowCountOf } from '$lib/server/db/rows';
  * Compute daily page stats from raw events for yesterday.
  * Idempotent via INSERT … ON CONFLICT, so it is safe to re-run.
  *
- * ## Both derived metrics were rewritten, because both were wrong
+ * ## How the two derived metrics are defined, and why not the obvious way
  *
- * **Duration** used to be `(session.ended_at - started_at) / page_count`:
- * wall-clock elapsed time divided by pages. That counts a tab left open over
- * lunch as deep engagement, which is exactly why raw time-on-page is treated as
- * a vanity metric. It now reads real engaged time — accumulated client-side from
- * `visibilitychange`, so a hidden tab contributes nothing — carried on
- * `engagement` action events.
+ * **Duration** is real engaged time — accumulated client-side from
+ * `visibilitychange` so a hidden tab contributes nothing — carried on
+ * `engagement` action events. NOT `(ended_at - started_at) / page_count`, which
+ * counts a tab left open over lunch as deep engagement; that is precisely why
+ * raw time-on-page is a vanity metric.
  *
- * **Bounce rate** used to be `page_count = 1`. That was doubly broken: the SPA
- * beacon never advanced `page_count`, so almost every visitor looked like a
- * single-page session; and a "bounce" that lasted four minutes of reading is not
- * a bounce in any useful sense. It is now a single-page session that ALSO failed
- * to clear an engagement threshold — someone who arrived, did not stay, and left.
+ * **Bounce rate** is a single-page session that ALSO failed to clear an
+ * engagement threshold — someone who arrived, did not stay, and left. NOT
+ * `page_count = 1`: the SPA beacon does not advance `page_count`, so that would
+ * make almost every visitor look single-page, and a "bounce" that lasted four
+ * minutes of reading is not a bounce in any useful sense.
  *
  * Sessions with no engagement event at all (client JS blocked, or consent below
  * the analytics tier) count as bounces only when they are also single-page. They

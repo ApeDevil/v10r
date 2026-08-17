@@ -5,8 +5,6 @@
 
 import { getContext, setContext } from 'svelte';
 
-// ── Event types ──────────────────────────────────────────────────────
-
 export interface DeskEvents {
 	'editor:content': { content: string; type: string; metadata: Record<string, unknown> };
 	'editor:document': { documentId: string; type: string } | null;
@@ -26,7 +24,7 @@ export interface DeskEvents {
 		_nonce: string;
 	};
 
-	// ── AI-originated desk actions ──────────────────────────────────
+	// AI-originated desk actions
 	'ai:open_panel': { panelType: string; fileId?: string; label?: string };
 	'ai:refresh_file': { fileId: string };
 	'ai:refresh_explorer': Record<string, never>;
@@ -39,8 +37,6 @@ export interface SubscribeOptions {
 	/** Replay the last published payload immediately on subscribe. */
 	replayLast?: boolean;
 }
-
-// ── Bus implementation ───────────────────────────────────────────────
 
 const DESK_BUS_CTX = Symbol('desk-bus');
 

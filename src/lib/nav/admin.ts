@@ -3,10 +3,9 @@ import type { LabelFn } from './types';
 
 /**
  * Admin navigation registry — the single source of truth for the admin
- * sidebar AND the AI section tabs. Both surfaces previously carried their own
- * inline arrays (hand-synced, in English only), which is how three real pages
- * (/admin/access/*, /admin/content/comments) ended up reachable by direct URL
- * only.
+ * sidebar AND the AI section tabs. Neither may carry its own inline array:
+ * hand-synced English-only copies are how /admin/access/* and
+ * /admin/content/comments ended up reachable by direct URL only.
  *
  * Rules:
  *   - Array order = display order

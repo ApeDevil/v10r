@@ -128,8 +128,6 @@ function handleKeydown(e: KeyboardEvent) {
 		transform: scale(1.05);
 	}
 
-	/* --- Lightbox ----------------------------------------------------------- */
-
 	:global(.lightbox) {
 		display: flex;
 		align-items: center;

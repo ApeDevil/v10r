@@ -6,19 +6,18 @@
  * create scopes are always-on: they're safe because delete is soft and
  * create's undo path is "delete the file you just created."
  *
- * Per-action gating lives in the PlanCard / ConfirmCard components, not
- * here. The old 12-second revert timer was removed because plan-before-
- * execute moves consent to *before* the action, not after — a countdown
- * to stop something that already happened is the wrong posture.
+ * Per-action gating is not here: destructive tools return a `requiresApproval`
+ * sentinel that becomes a pending `agent_proposal`, surfaced as a PlanCard and
+ * executed only via the approve endpoint. Consent therefore lands *before* the
+ * action, which is why there is no revert countdown — a timer to stop something
+ * that already happened is the wrong posture.
  *
- * Module-level $state is safe because the desk route sets `ssr = false`
- * in src/routes/desk/+layout.ts. This module only ever runs in the
- * browser, so state is per-tab and never shared across server requests.
+ * Module-level $state, safe for the reason desk-context.svelte.ts documents.
  */
 
 import type { DeskToolScope } from '$lib/server/ai/tools/_types';
 
-// ── Module-level state ───────────────────────────────────────────────
+// Module-level state
 
 /**
  * Scopes the user has explicitly opted into.
@@ -29,15 +28,11 @@ import type { DeskToolScope } from '$lib/server/ai/tools/_types';
  */
 let optInScopes = $state(new Set<Exclude<DeskToolScope, 'desk:read' | 'desk:create'>>());
 
-// ── Derived ──────────────────────────────────────────────────────────
-
 /**
  * The full scope set to send in requests — always includes read+create,
  * plus whichever mutating scopes the user opted into.
  */
 const effectiveScopes = $derived<DeskToolScope[]>(['desk:read', 'desk:create', ...[...optInScopes]]);
-
-// ── Public API ───────────────────────────────────────────────────────
 
 /** Get enabled scopes as an array for request serialization. */
 export function getEnabledScopes(): DeskToolScope[] {

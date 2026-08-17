@@ -25,7 +25,7 @@ let { model, open = $bindable(false), onclose, standalone = false, backHref = '/
 const config = $derived(resolveViewportConfig(model));
 const customizeHref = $derived(model.customization ? `/showcases/3d/customize/${model.id}` : undefined);
 
-// --- Part explorer (opt-in per model) -------------------------------------
+// Part explorer (opt-in per model)
 const parts = $derived(PART_EXPLORERS_BY_MODEL.get(model.id));
 let selectedPartId = $state<string | null>(null);
 const selectedPart = $derived(parts?.find((p) => p.id === selectedPartId) ?? null);

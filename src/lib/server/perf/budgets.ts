@@ -1,9 +1,9 @@
 /**
  * Performance budgets and how to score a number against them.
  *
- * `budgets.json` is the single source of truth and is read by two consumers that
- * historically drifted: this module (the observatory + the gate test) and the
- * shell probes in `scripts/perf/`, which used to hardcode their own thresholds.
+ * `budgets.json` is the single source of truth for two consumers that would
+ * otherwise drift: this module (the observatory + the gate test) and the shell
+ * probes in `scripts/perf/`. Neither may hardcode its own thresholds.
  *
  * Budgets carry a `kind` because the same metric name means different things in
  * the two measurement contexts, and conflating them produces false verdicts.

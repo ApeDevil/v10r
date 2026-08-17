@@ -8,12 +8,11 @@
  *   - Implicit: the focused panel's context is auto-included
  *   - Pinned: user explicitly pins other panels' context
  *
- * Follows the exact same pattern as panel-menus.svelte.ts:
- * module-level $state, Map registry, version counter, queueMicrotask.
- *
- * Module-level $state is safe here because the desk route sets `ssr = false`
- * in src/routes/desk/+layout.ts. This module only ever runs in the browser,
- * so state is per-tab and never shared across server requests.
+ * Module-level $state, Map registry, version counter, queueMicrotask. Unlike
+ * `panel-menus.svelte.ts`, which is context-scoped precisely so two DockLayouts
+ * on one page cannot share a registry, this one is a genuine singleton: the
+ * desk route sets `ssr = false` in `src/routes/[[locale=locale]]/desk/+layout.ts`,
+ * so the module only ever runs in the browser and state is per-tab.
  */
 
 import {
@@ -29,8 +28,6 @@ import {
 // Re-export pure types so existing consumers keep working
 export type { ContentLevel, PanelStatus, SerializedContext };
 export { CONTEXT_TOKEN_BUDGET };
-
-// ── Types ────────────────────────────────────────────────────────────
 
 /** What a panel publishes as its AI-visible state */
 export interface PanelContext {
@@ -49,7 +46,7 @@ export interface PanelContext {
 
 export type ContextStatus = 'implicit' | 'pinned' | 'available';
 
-/** What the ContextTray renders per entry */
+/** One context entry plus its inclusion status. */
 export interface ContextChip {
 	context: PanelContext;
 	status: ContextStatus;
@@ -57,7 +54,7 @@ export interface ContextChip {
 	stale: boolean;
 }
 
-// ── Module-level state ───────────────────────────────────────────────
+// Module-level state
 
 /** Reactive registry version — bumped on every register/unregister/update */
 let registryVersion = $state(0);
@@ -77,8 +74,6 @@ let focusedPanelId = $state<string | null>(null);
 /** Timestamp of the last AI response — drives staleness detection */
 let lastResponseAt = $state(0);
 
-// ── Microtask coalescing ─────────────────────────────────────────────
-
 /**
  * Coalesce multiple registry mutations within the same microtask into
  * a single registryVersion bump. Prevents N simultaneous panel
@@ -94,8 +89,6 @@ function scheduleVersionBump(): void {
 		registryVersion++;
 	});
 }
-
-// ── Public API ───────────────────────────────────────────────────────
 
 /**
  * Register context for a panel. Call inside a $effect so it re-runs
@@ -166,10 +159,8 @@ export function pinContext(panelId: string): void {
 	}
 }
 
-/** Unpin a panel's context */
 /** Dismiss a panel's context — removes it from active inclusion entirely */
 export function dismissContext(panelId: string): void {
-	// Remove from pinned
 	if (pinnedIds.has(panelId)) {
 		const nextPinned = new Set(pinnedIds);
 		nextPinned.delete(panelId);
@@ -191,8 +182,6 @@ export function restoreContext(panelId: string): void {
 export function markResponseReceived(): void {
 	lastResponseAt = Date.now();
 }
-
-// ── Reactive derived ─────────────────────────────────────────────────
 
 /**
  * All context entries with their status and staleness.
@@ -216,9 +205,9 @@ const activeContexts = $derived.by((): PanelContext[] => {
 /** Total estimated tokens across all active (implicit + pinned) entries */
 const tokenEstimate = $derived(activeContexts.reduce((sum, c) => sum + c.tokenEstimate, 0));
 
-// ── Public getters (must be called in reactive context) ──────────────
+// Public getters (must be called in reactive context)
 
-/** Get all context entries with status — for ContextTray rendering */
+/** All context entries with status. No UI consumes this yet. */
 export function getContextChips(): ContextChip[] {
 	return contextChips;
 }

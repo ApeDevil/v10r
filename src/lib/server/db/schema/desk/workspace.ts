@@ -14,11 +14,9 @@ import type { DockLayoutState } from '$lib/components/composites/dock/dock.types
 import { user } from '../auth/_better-auth';
 import { deskSchema } from './schema';
 
-// ── JSONB column type ───────────────────────────────────────────
-
 export type WorkspaceLayoutJson = DockLayoutState;
 
-// ── Workspace (1:N from user) ───────────────────────────────────
+// Workspace (1:N from user)
 
 export const deskWorkspace = deskSchema.table(
 	'workspace',
@@ -40,7 +38,7 @@ export const deskWorkspace = deskSchema.table(
 	],
 );
 
-// ── Active workspace pointer (1:1 with user) ────────────────────
+// Active workspace pointer (1:1 with user)
 
 export const deskWorkspaceActive = deskSchema.table('workspace_active', {
 	userId: text('user_id')

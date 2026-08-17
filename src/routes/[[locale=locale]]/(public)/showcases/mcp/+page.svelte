@@ -44,7 +44,7 @@ function dependedBy(id: string): string {
 	);
 }
 
-// --- Architecture: one tool call's journey (FlowDiagram) ---
+// Architecture: one tool call's journey (FlowDiagram)
 const archNodes: Node[] = [
 	{
 		id: 'client',
@@ -85,7 +85,7 @@ const archEdges: Edge[] = [
 	},
 ];
 
-// --- Handshake sequence, as exercised by mcp/smoke.ts (StateDiagram) ---
+// Handshake sequence, as exercised by mcp/smoke.ts (StateDiagram)
 const handshakeNodes: Node[] = [
 	{ id: 'start', type: 'start', position: { x: 0, y: 60 }, data: { variant: 'start' } },
 	{ id: 'initialize', type: 'state', position: { x: 100, y: 50 }, data: { label: 'initialize', variant: 'state' } },

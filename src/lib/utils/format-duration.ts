@@ -1,7 +1,6 @@
 /**
  * Duration formatting — the single implementation behind every "how long"
- * label. Previously copied verbatim in three places (two cache showcase pages
- * + a dead server export) and near-verbatim in two more (analytics pages).
+ * label. Call sites must import it rather than keep a local copy.
  *
  * Locale note: these are compact technical labels (`3m 12s`), not prose —
  * unit letters stay untranslated by design, like `ms` in devtools.

@@ -7,8 +7,6 @@
 import { sql } from 'drizzle-orm';
 import type { Database } from '$lib/server/db';
 
-// ── Seeded PRNG ──────────────────────────────────────────────────────────────
-
 /** mulberry32 — simple, fast, deterministic 32-bit PRNG */
 function mulberry32(seed: number) {
 	let s = seed | 0;
@@ -36,8 +34,6 @@ function alphanumeric(len: number): string {
 	for (let i = 0; i < len; i++) result += chars[Math.floor(rng() * chars.length)];
 	return result;
 }
-
-// ── Constants ────────────────────────────────────────────────────────────────
 
 const SESSION_COUNT = 500;
 const DAYS_BACK = 90;
@@ -126,8 +122,6 @@ const ACTION_EVENTS = [
 	{ type: 'share_click', path: '/blog/release-v2' as string | null, weight: 5 },
 ] as const;
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
 function weightedPick<T extends { weight: number }>(items: readonly T[]): T {
 	const total = items.reduce((sum, i) => sum + i.weight, 0);
 	let r = randInt(0, total - 1);
@@ -156,8 +150,6 @@ function hashVisitorId(seed: number): string {
 function formatTimestamp(d: Date): string {
 	return d.toISOString().replace('T', ' ').replace('Z', '+00');
 }
-
-// ── Seed Function ────────────────────────────────────────────────────────────
 
 export async function reseedAnalytics(database: Database) {
 	// Reset PRNG for deterministic output
@@ -320,9 +312,9 @@ export async function reseedAnalytics(database: Database) {
 		ORDER BY date, path
 	`);
 
-	// A small bot lane so the composition panel and the bots page have something
-	// to show after a reseed — previously they rendered zeros against a freshly
-	// seeded human lane, which read as "no crawlers exist".
+	// A small bot lane so the composition panel and the bots page have something to
+	// show after a reseed. Zeros against a freshly seeded human lane read as "no
+	// crawlers exist".
 	const botRows: string[] = [];
 	const BOT_SEED: Array<{
 		family: string;

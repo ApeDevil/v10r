@@ -112,8 +112,6 @@ export function sanitizeProperties(name: EventName, raw: unknown): Record<string
 	return out;
 }
 
-// ── Path templating ──────────────────────────────────────────────────────────
-
 /**
  * Reduce a SvelteKit route id to a stable, low-cardinality template.
  *

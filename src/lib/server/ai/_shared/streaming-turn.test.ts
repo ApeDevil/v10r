@@ -82,7 +82,7 @@ function makeHooks(extra: Partial<Parameters<typeof streamTextIntoOpenMessage>[3
 }
 
 describe('streamTextIntoOpenMessage', () => {
-	// ── success path (unchanged contract) ────────────────────────────────────
+	// success path (unchanged contract)
 
 	it('writes text parts → afterText metadata → exactly one finish, with NO metadata after finish', async () => {
 		const { rec, writer, writes } = makeWriter();
@@ -141,8 +141,6 @@ describe('streamTextIntoOpenMessage', () => {
 		expect(failures).toHaveLength(0);
 	});
 
-	// ── rotation ─────────────────────────────────────────────────────────────
-
 	it('rotates to the next provider when the primary fails with ZERO visible parts', async () => {
 		const { writer, writes } = makeWriter();
 		const primary = makeResult({ parts: [], rejectText: true });
@@ -193,7 +191,7 @@ describe('streamTextIntoOpenMessage', () => {
 		expect(failures[0].willRetry).toBe(true);
 	});
 
-	// ── no rotation once the client has seen frames ──────────────────────────
+	// no rotation once the client has seen frames
 
 	it('does NOT rotate after a visible part — rethrows and writes NO finish', async () => {
 		const { writer, writes } = makeWriter();
@@ -225,7 +223,7 @@ describe('streamTextIntoOpenMessage', () => {
 		expect(failures[0].willRetry).toBe(false);
 	});
 
-	// ── non-retryable kinds ──────────────────────────────────────────────────
+	// non-retryable kinds
 
 	it("rethrows immediately on kind 'unknown' even with attempts remaining", async () => {
 		const { writer, writes } = makeWriter();
@@ -251,7 +249,7 @@ describe('streamTextIntoOpenMessage', () => {
 		expect(failures[0].willRetry).toBe(false);
 	});
 
-	// ── skip (circuit breaker) ───────────────────────────────────────────────
+	// skip (circuit breaker)
 
 	it('never runs a skipped attempt', async () => {
 		const { writer, writes } = makeWriter();
@@ -318,7 +316,7 @@ describe('streamTextIntoOpenMessage', () => {
 		expect(failures).toHaveLength(0);
 	});
 
-	// ── afterText is best-effort, generation failure is not ──────────────────
+	// afterText is best-effort, generation failure is not
 
 	it('still closes with a single finish when afterText itself fails', async () => {
 		const { writer, writes } = makeWriter();

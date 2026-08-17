@@ -13,8 +13,8 @@ const sidebar = getSidebar();
 
 // Rendering is CSS-driven: BOTH the mobile (drawer + FAB) and desktop (rail) trees
 // are server-rendered and shown per viewport via `display: contents`/`none`. This
-// removes the old JS-only swap — previously SSR always emitted the rail and mobile
-// clients hydrated it, then tore it down and mounted the drawer/FAB after JS ran.
+// avoids a JS-only swap, where SSR emits the rail, mobile clients hydrate it, then
+// tear it down and mount the drawer/FAB once JS runs.
 // `display: contents` keeps the rail/drawer/FAB as the layout participants (the
 // wrappers add no box). The reactive query below only drives the close-on-widen
 // side-effect. Desktop-first SSR fallback so layout-shell math matches the rail.

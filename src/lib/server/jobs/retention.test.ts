@@ -58,7 +58,7 @@ beforeEach(async () => {
 	await db.insert(user).values({ id: USER_ID, name: 'Retention Tester', email: 'retention@example.com' });
 });
 
-// ── desk-retention: the destructive one ──────────────────────────────────────
+// desk-retention: the destructive one
 
 describe('deskRetention — never touches a live file', () => {
 	it('keeps a live file (deletedAt NULL) and a recently-trashed one; deletes only the expired soft-delete', async () => {
@@ -137,7 +137,7 @@ describe('deskRetention — never touches a live file', () => {
 	});
 });
 
-// ── ai-telemetry-retention: age-cap, parents untouched ────────────────────────
+// ai-telemetry-retention: age-cap, parents untouched
 
 describe('aiTelemetryRetention — age-caps conversation_step, leaves conversation/message', () => {
 	it('deletes steps past the window, keeps recent, and never touches the parent rows', async () => {
@@ -172,7 +172,7 @@ describe('aiTelemetryRetention — age-caps conversation_step, leaves conversati
 	});
 });
 
-// ── audit-log-retention: age-cap ──────────────────────────────────────────────
+// audit-log-retention: age-cap
 
 describe('auditLogRetention — age-caps admin.audit_log', () => {
 	it('deletes rows past the window and keeps recent ones', async () => {
@@ -199,7 +199,7 @@ describe('auditLogRetention — age-caps admin.audit_log', () => {
 	});
 });
 
-// ── mcp-telemetry-retention: two speeds, column before row ───────────────────
+// mcp-telemetry-retention: two speeds, column before row
 
 describe('mcpTelemetryRetention — minimises by column before minimising by row', () => {
 	/** A tool row that still carries both caller-supplied values. */

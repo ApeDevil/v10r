@@ -23,7 +23,6 @@ let {
 // Clamp value between 0 and max
 const clampedValue = $derived(value !== undefined ? Math.min(Math.max(value, 0), max) : undefined);
 
-// Calculate percentage
 const percentage = $derived(clampedValue !== undefined ? Math.round((clampedValue / max) * 100) : undefined);
 
 // Determine if indeterminate

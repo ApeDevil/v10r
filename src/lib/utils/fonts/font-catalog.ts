@@ -5,7 +5,7 @@ import type { FontCategory, FontFamily, FontPairing } from './types';
  * To add a font: add an entry here. No other files need to change.
  */
 export const fontCatalog: FontFamily[] = [
-	// === System (no loading needed) ===
+	// System (no loading needed)
 	{
 		family: 'System',
 		category: 'sans-serif',
@@ -15,7 +15,6 @@ export const fontCatalog: FontFamily[] = [
 		note: 'Default system font stack. No network request.',
 	},
 
-	// === Sans Serif ===
 	{
 		family: 'Inter',
 		category: 'sans-serif',
@@ -41,7 +40,6 @@ export const fontCatalog: FontFamily[] = [
 		note: 'Optimized for on-screen body text. Friendly personality.',
 	},
 
-	// === Serif ===
 	{
 		family: 'Playfair Display',
 		category: 'serif',
@@ -67,7 +65,6 @@ export const fontCatalog: FontFamily[] = [
 		note: 'Calligraphic serif. Well-suited for body text and headings.',
 	},
 
-	// === Monospace ===
 	{
 		family: 'JetBrains Mono',
 		category: 'monospace',
@@ -85,7 +82,6 @@ export const fontCatalog: FontFamily[] = [
 		note: 'Programming ligatures. Popular with developers.',
 	},
 
-	// === Display ===
 	{
 		family: 'Space Grotesk',
 		category: 'display',

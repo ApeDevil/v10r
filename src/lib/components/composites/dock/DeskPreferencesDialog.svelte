@@ -185,8 +185,6 @@ function typeColor(panelType: string): string {
 		margin-top: 0.5rem;
 	}
 
-	/* ── Panel type sections ───────────────────────────────────── */
-
 	.panel-type-section {
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);
@@ -254,8 +252,6 @@ function typeColor(panelType: string): string {
 		align-self: flex-start;
 		margin-top: 0.25rem;
 	}
-
-	/* ── Presets ────────────────────────────────────────────────── */
 
 	.preset-save-row {
 		display: flex;
@@ -328,7 +324,7 @@ function typeColor(panelType: string): string {
 		color: var(--color-error-fg) !important;
 	}
 
-	/* ── Reduce dialog backdrop opacity for live preview ────── */
+	/* Reduce dialog backdrop opacity for live preview */
 
 	:global([data-dialog-overlay]) {
 		background: rgba(0, 0, 0, 0.3) !important;

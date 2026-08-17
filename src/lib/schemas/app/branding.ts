@@ -1,7 +1,5 @@
 import * as v from 'valibot';
 
-// ── Custom Palettes ─────────────────────────────────────────────────
-
 /** OKLCH color string validator */
 const oklchColor = v.pipe(
 	v.string(),

@@ -1,88 +1,75 @@
 /**
- * MCP CALL LOG — Immutable, append-only record of every request reaching an `/api/mcp/*` route.
+ * MCP CALL LOG — append-only record of every request reaching an `/api/mcp/*` route.
  *
- * One POST produces exactly ONE row, written at a single terminating edge after the outcome is
- * decided. There is never a "begin" row plus an "end" UPDATE: the second write can be lost,
- * leaving permanently-pending rows that look like hangs when they were successes.
+ * One POST writes exactly ONE row, at a single terminating edge once the outcome is known. Never
+ * a "begin" row plus an "end" UPDATE: a lost second write leaves permanently-pending rows that
+ * read as hangs when they were successes.
  *
- * ## One table, not two
+ * Gate rejections (rate limit / auth) and envelope rejections (origin / protocol version / parse)
+ * live in this same table, because "what fraction of arrivals never reached a tool" is a funnel
+ * over one ordered stream; splitting it makes the denominator two-sourced and it composes wrongly
+ * with sampling. Column-set divergence is handled by the stage/outcome CHECK and partial indexes
+ * below. Rejected rows are not all-NULL: `Mcp-Method`/`Mcp-Name`, `traceparent` and `User-Agent`
+ * arrive in HEADERS, so a gate row can still name the tool the caller wanted.
  *
- * Requests that die at the gate (rate limit / auth) or at the envelope (origin / protocol version
- * / parse) share this table with requests that reached a tool. The highest-value question — "what
- * fraction of arrivals never reached a tool" — is a funnel over one ordered stream, and splitting
- * it makes the arrivals denominator a two-sourced number that composes wrongly with sampling.
- * Column-set divergence is handled by the stage/outcome CHECK below and by partial indexes.
+ * ## Identifiers
  *
- * Rejected rows are not all-NULL the way a naive split assumes: `Mcp-Method` / `Mcp-Name`,
- * `traceparent` and `User-Agent` all arrive in HEADERS, before any gate or parse, so a gate row
- * can still name the tool the caller was reaching for.
- *
- * ## No identifier beyond a keyed, day-scoped hash
- *
- * There is deliberately NO raw IP, no session id, and no FK to `user`. `clientKey` is
+ * NO raw IP, no session id, no FK to `user`. `clientKey` is
  * HMAC-SHA256(MCP_TELEMETRY_SALT, ip:ua:UTC-date) — keyed, because a bare SHA-256 over the IPv4
- * space plus a handful of real UA strings is ~2^35 hashes and inverts on a laptop; that is
- * obfuscation, not pseudonymisation. It is NULL on gate/envelope rows (a per-reason counter
- * answers everything a rejection needs, and rejections sit on the path an attacker controls the
- * volume of), and it is NULLABLE everywhere so a missing salt degrades the column rather than
- * failing the write.
+ * space plus a handful of real UA strings is ~2^35 hashes and inverts on a laptop: obfuscation,
+ * not pseudonymisation. NULL on gate/envelope rows (a per-reason counter answers everything a
+ * rejection needs, and rejections sit on the path an attacker controls the volume of), and
+ * NULLABLE everywhere so a missing salt degrades the column instead of failing the write.
  *
- * `clientKey` is forgeable UPWARD — a caller varying its User-Agent mints unlimited distinct keys.
- * Never label `count(DISTINCT client_key)` as "number of consumers", and never treat this table as
- * security telemetry.
+ * `clientKey` is forgeable UPWARD — varying the User-Agent mints unlimited distinct keys. Never
+ * label `count(DISTINCT client_key)` "number of consumers"; never treat this table as security
+ * telemetry.
  *
- * This table shares NO join key with either `analytics` lane or with `admin.audit_log`. That is
- * what keeps DPIA screening criterion 6 ("matching or combining datasets") answerable as "No" —
- * hence no FKs here, deliberately.
+ * Sharing NO join key with either `analytics` lane or `admin.audit_log` is what keeps DPIA
+ * screening criterion 6 ("matching or combining datasets") answerable as "No" — hence no FKs.
  *
- * ## OTel naming (names aligned where free; NO exporter is shipped)
+ * ## OTel naming (aligned where free; NO exporter is shipped)
  *
- *   mcp.method.name             → method
- *   gen_ai.tool.name            → toolName
- *   error.type                  → outcome (superset; maps on the failure values)
- *   mcp.protocol.version        → servedProtocolVersion
- *   user_agent.name/.version    → clientFamily / clientVersion
- *   gen_ai.tool.call.arguments  → queryText   (OTel classifies this Opt-In, its most restrictive
- *                                 level — independent corroboration of the narrow scope below)
- *   mcp.server.operation.duration → totalMs
- *      ⚠ OTel's metric is in SECONDS. These columns are integer MILLISECONDS. An exporter must
- *        divide by 1000 or it reports 300x too slow.
- *   client.address / mcp.session.id → DELIBERATELY ABSENT. OTel marks client.address
- *        *Recommended*, but semantic conventions are interoperability guidance with no legal
- *        weight. Do not "complete" the mapping by adding the IP back.
+ *   mcp.method.name → method · gen_ai.tool.name → toolName · mcp.protocol.version →
+ *   servedProtocolVersion · user_agent.name/.version → clientFamily/clientVersion ·
+ *   error.type → outcome (superset) · gen_ai.tool.call.arguments → queryText (OTel rates this
+ *   Opt-In, its most restrictive level) · mcp.server.operation.duration → totalMs
  *
- * ## Known blind spot — timeouts are structurally unrecordable
+ *   ⚠ OTel's duration metric is SECONDS; these columns are integer MILLISECONDS. An exporter
+ *     must divide by 1000 or it reports 300x too slow.
+ *   client.address / mcp.session.id are DELIBERATELY ABSENT. OTel marks client.address
+ *     *Recommended*, but semantic conventions carry no legal weight — do not "complete" the
+ *     mapping by adding the IP back.
  *
- * The row is written via `waitUntil`, and Vercel cancels those promises when the function times
- * out. Cancellation is therefore perfectly correlated with request timeout: the rows lost are
- * exactly the rows describing the requests that timed out. There is no `outcome='timeout'` and
- * there cannot be one from inside this design. Do NOT read a clean latency histogram here as
- * proof that no requests time out — that answer lives in the platform logs.
+ * ## Timeouts are structurally unrecordable
+ *
+ * The row is written via `waitUntil`, which Vercel cancels when the function times out. The rows
+ * lost are therefore exactly the rows describing requests that timed out. There is no
+ * `outcome='timeout'` and cannot be one from inside this design: do NOT read a clean latency
+ * histogram here as proof that nothing times out. That answer lives in the platform logs.
  *
  * ## Retention (jobs/mcp-telemetry-retention.ts, weekly)
  *
- *   1. 30d — UPDATE ... SET query_text = NULL, trace_id = NULL   (minimise by COLUMN)
- *            SKIPS surface='private' — see "The private lane" below.
- *   2. 90d — DELETE rows                                          (then by ROW; includes private)
+ *   1. 30d — UPDATE … SET query_text = NULL, trace_id = NULL  (minimise by COLUMN; SKIPS private)
+ *   2. 90d — DELETE rows                                      (then by ROW; includes private)
  *
- * Both are absolute-age predicates, so they are idempotent and self-healing: Vercel's +-59min
- * cron jitter is irrelevant and a missed week is fully repaired by the next run. Do NOT
- * "optimise" either into a since-last-run window — that destroys the property. On a weekly
- * cadence the EFFECTIVE windows are 30-37d and 90-97d; document the upper bound, not the nominal.
+ * Both predicates are absolute-age, so they are idempotent and self-healing: Vercel's ±59min cron
+ * jitter is irrelevant and a missed week is repaired by the next run. Do NOT "optimise" either
+ * into a since-last-run window — that destroys the property. On a weekly cadence the EFFECTIVE
+ * windows are 30-37d and 90-97d; document the upper bound, not the nominal.
  *
  * ## The private lane (surface='private')
  *
- * `/api/mcp/private` is bearer-gated to exactly ONE holder: the operator. Its rows may keep more
- * than the public surface's, and that widening is principled, not an oversight: the questions are
- * the operator's own prompts, and the answers (`response_text`) are v10r's OWN registry text
- * echoed back — no third-party data can enter either column. Hence: `query_text` on EVERY
- * outcome (not just 'empty'), a `response_text` column that exists nowhere else, a `workspace`
- * label, and the pass-1 retention exemption (minimised by ROW at 90d instead of by COLUMN at
- * 30d). Private rows are `traffic <> 'external'` by construction, so every external KPI excludes
- * them with the same one filter it already has.
+ * `/api/mcp/private` is bearer-gated to exactly one holder, the operator, so its rows keep more
+ * than the public surface's: the questions are the operator's own prompts and `response_text` is
+ * v10r's OWN registry text echoed back, so no third-party data can enter either column. Hence
+ * `query_text` on EVERY outcome (not just 'empty'), a `response_text` column that exists nowhere
+ * else, a `workspace` label, and exemption from pass 1 (minimised by ROW at 90d instead of by
+ * COLUMN at 30d). Private rows are `traffic <> 'external'` by construction, so every external KPI
+ * excludes them with the filter it already has.
  *
- * Every CHECK here lives in the drizzle definition on purpose: this is a `db:push`-only repo, so a
- * constraint added by hand to Neon is invisible to drizzle and gets dropped by the next push.
+ * Every CHECK lives in the drizzle definition: this is a `db:push`-only repo, so a constraint
+ * added by hand to Neon is invisible to drizzle and gets dropped by the next push.
  *
  * MUST be re-exported from `schema/mcp/index.ts` — `db:push` silently drops enums and tables it
  * cannot reach from the schema index.
@@ -92,7 +79,7 @@ import { sql } from 'drizzle-orm';
 import { boolean, check, index, integer, text, timestamp } from 'drizzle-orm/pg-core';
 import { mcpSchema } from './demo-state';
 
-// ── Enums (MUST be exported or db:push silently omits them) ─────────────────
+// Enums (MUST be exported or db:push silently omits them)
 
 /**
  * Which hosted endpoint served the request. The local stdio server runs `--network=none` on the
@@ -113,7 +100,10 @@ export const mcpSurfaceEnum = mcpSchema.enum('mcp_surface', ['public', 'admin', 
  * `preview` — VERCEL_ENV !== 'production'. Preview deployments share the production Neon database,
  *             so without this every preview call contaminates the KPI strip. This is a larger
  *             contamination source than curl and it is easy to forget.
- * `test`    — synthetic monitors and E2E runs against a deployed environment.
+ * `test`    — synthetic monitors, E2E runs, and registry probes: MCP registries actively probe
+ *             listed servers and some offer an in-browser inspector, so a listed server receives
+ *             real JSON-RPC from neither the operator nor an adopting consumer. Generic crawlers
+ *             fold in here too — a separate `bot` value would change no decision.
  *
  * Every KPI query filters `traffic = 'external'` — one filter, and it cannot forget to also
  * exclude admin (see the admin CHECK below). NOT NULL from the first row: retrofitting it would
@@ -195,8 +185,6 @@ export const mcpMethodEnum = mcpSchema.enum('mcp_method', [
 	'subscriptions/listen',
 	'other',
 ]);
-
-// ── Table ───────────────────────────────────────────────────────────────────
 
 export const mcpCallLog = mcpSchema.table(
 	'call_log',
@@ -296,7 +284,8 @@ export const mcpCallLog = mcpSchema.table(
 		rcHeaders: boolean('rc_headers').notNull().default(false),
 
 		/**
-		 * Bucketed from User-Agent on EVERY row (claude-code | claude-web | cursor | vscode |
+		 * Bucketed from User-Agent on EVERY row by `classifyClientFamily`, which owns the value
+		 * set (claude-code | claude-web | claude-desktop | cursor | windsurf | vscode |
 		 * inspector | sdk | curl | bot | other | none). Derived from ONE source so there is nothing
 		 * to drift. Self-asserted and trivially spoofable — never an auth or authz input.
 		 */
@@ -377,7 +366,6 @@ export const mcpCallLog = mcpSchema.table(
 		startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
 	},
 	(table) => [
-		// ── Indexes ────────────────────────────────────────────────────────────
 		// Every partial predicate is `IS NOT NULL` and none compares an enum: an enum-comparing
 		// index predicate normalises to `'x'::mcp.enum` and makes drizzle-kit push see a permanent
 		// diff on every run.
@@ -414,8 +402,6 @@ export const mcpCallLog = mcpSchema.table(
 
 		// NOT indexed: `traffic`. 'external' is >90% of rows, so a partial index on it would be
 		// nearly the whole table; it is a filter applied after the time range narrows the scan.
-
-		// ── Constraints ────────────────────────────────────────────────────────
 
 		// THE tagged union. Makes every impossible stage/outcome pair unrepresentable.
 		check(

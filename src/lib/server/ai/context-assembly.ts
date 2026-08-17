@@ -198,11 +198,11 @@ export async function assembleChatbotContext(
 			startOffsetMs: Math.round(searchStart - t0),
 		});
 
-		// Embed the user message at most ONCE per turn. Previously searchLlmwiki AND the
-		// system-docs retrieve each embedded it independently — two Gemini embed calls
+		// Embed the user message at most ONCE per turn. Letting searchLlmwiki and the
+		// system-docs retrieve each embed it independently costs two Gemini calls
 		// against the ~1000/day free-tier ceiling for one turn, the second often pure
-		// waste (llmwiki is empty in prod). We compute a single shared query vector and
-		// hand it to both. `shouldGroundFromSystemDocs` is a triviality gate, so on
+		// waste (llmwiki is empty in prod). One shared query vector is handed to both.
+		// `shouldGroundFromSystemDocs` is a triviality gate, so on
 		// greetings/acks (`groundDocs === false`) we skip the embed AND llmwiki search
 		// entirely → 0 embeds on chit-chat. A single promise is shared so the provider
 		// call fires once; if it rejects (quota/rate 429) BOTH consumers reject, which

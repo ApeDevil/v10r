@@ -1,7 +1,5 @@
 import * as v from 'valibot';
 
-// ── Vocabularies ────────────────────────────────────────────────────
-
 /** Semantic image categories the user (or AI) classifies an image into. */
 export const IMAGE_CATEGORIES = ['photo', 'illustration', 'screenshot', 'diagram', 'document', 'other'] as const;
 export const imageCategorySchema = v.picklist(IMAGE_CATEGORIES);
@@ -22,7 +20,7 @@ export const provenanceStateSchema = v.picklist(PROVENANCE_STATES);
 export type ProvenanceState = v.InferOutput<typeof provenanceStateSchema>;
 export type FieldProvenance = Record<MetadataFieldKey, ProvenanceState>;
 
-// ── 1) AI-propose contract ──────────────────────────────────────────
+// 1) AI-propose contract
 // Every content field is nullable: null = "the AI could not determine this".
 // This is the canonical VALIDATION schema. AI SDK v6 Output.object needs an SDK
 // jsonSchema() (not a Valibot schema directly), so extract.ts hand-writes a
@@ -51,7 +49,7 @@ export function analysisIsEmpty(a: ImageAnalysis): boolean {
 	return a.title === null && a.caption === null && a.altText === null && a.category === null && a.keywords.length === 0;
 }
 
-// ── 2) Strict save contract ─────────────────────────────────────────
+// 2) Strict save contract
 // The single gate for Superforms + persistence. The manual form is the always-usable
 // ground floor; the AI path only ever pre-fills values that still pass this schema.
 
@@ -95,7 +93,7 @@ export function emptyImageMetadata(imageId: string): ImageMetadataInput {
 	};
 }
 
-// ── 3) Cost + usage telemetry (showcase cost panel) ─────────────────
+// 3) Cost + usage telemetry (showcase cost panel)
 // Token counts come straight from the provider's reported usage. The dollar figures
 // are a REFERENCE estimate at standard pay-as-you-go pricing — our Gemini key runs on
 // the FREE tier, so the real charge is $0. These are pure DTO types (no runtime), shared

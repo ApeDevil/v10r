@@ -26,11 +26,10 @@ type RoutableSettings = Record<string, unknown> & {
  * already loaded the settings row does not pay for a second read.
  *
  * SECURITY ALERTS ALWAYS DELIVER. `type === 'security'` bypasses the per-type
- * email toggle, the global mute, and the digest suppression alike. Previously
- * `mutedUntil` was checked BEFORE the security force-send, so a global mute
- * silently suppressed security alerts while an explicit `emailSecurity: false`
- * did not — the two mutes disagreed about the one category that matters most.
- * Resolved here in favour of always-deliver.
+ * email toggle, the global mute, and the digest suppression alike. Checking
+ * `mutedUntil` BEFORE the security force-send would let a global mute silently
+ * suppress security alerts while an explicit `emailSecurity: false` did not —
+ * two mutes disagreeing about the one category that matters most.
  */
 export function channelsForSettings(settings: RoutableSettings, type: NotificationType): string[] {
 	const channels: string[] = [];

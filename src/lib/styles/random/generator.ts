@@ -37,7 +37,6 @@ export function generateRandomStyle(opts?: GenerateOptions): StyleConfig {
 		palettePool = PALETTE_IDS;
 	}
 
-	// Filter out excluded palettes
 	if (opts?.excludePaletteIds?.length) {
 		const filtered = palettePool.filter((id) => !opts.excludePaletteIds?.includes(id));
 		if (filtered.length > 0) palettePool = filtered;

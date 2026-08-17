@@ -218,7 +218,7 @@ export async function getUnsupportedVersionRequests(since: Date) {
 }
 
 /**
- * ── The private lane ─────────────────────────────────────────────────────────────────────────
+ * The private lane
  *
  * These queries filter on `surface`, NEVER on `traffic`. Private rows are non-external by
  * construction (`classifyTraffic` + `mcp_call_private_not_external`), so `externalOnly` would

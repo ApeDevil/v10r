@@ -33,27 +33,21 @@ const sections = $derived([
 	{ id: 'temporal', label: m.showcase_db_relational_mutability_nav_temporal() },
 ]);
 
-// ─── CRUD state ──────────────────────────────────────────
 let showCreateForm = $state(false);
 let editingSpecimen = $state<(typeof data.mutableRows)[0] | null>(null);
 let editDialogOpen = $state(false);
 
-// ─── Versioned state ─────────────────────────────────────
 let editingVersioned = $state<(typeof data.mutableRows)[0] | null>(null);
 let versionedDialogOpen = $state(false);
 
-// ─── Reset state ─────────────────────────────────────────
 let resetDialogOpen = $state(false);
 
-// ─── Temporal query state ────────────────────────────────
 let temporalQueryDate = $state('');
 let temporalResults = $state<typeof data.temporalRows>([]);
 let temporalQueryActive = $state(false);
 
-// ─── Action result handling ──────────────────────────────
 const actionResult = $derived(page.form);
 
-// ─── Shared ──────────────────────────────────────────────
 function formatTs(val: unknown): string {
 	if (!val) return '—';
 	const d = new Date(String(val));
@@ -128,7 +122,6 @@ let appendSeverity = $state('info');
 		{/if}
 
 		<Stack gap="7">
-			<!-- ═══ MUTABLE CRUD ═══ -->
 			<section id="mutable">
 				<Card>
 					{#snippet header()}
@@ -231,7 +224,6 @@ let appendSeverity = $state('info');
 				</Card>
 			</section>
 
-			<!-- ═══ VERSIONED RECORDS ═══ -->
 			<section id="versioned">
 				<Card>
 					{#snippet header()}
@@ -321,7 +313,6 @@ let appendSeverity = $state('info');
 				</Card>
 			</section>
 
-			<!-- ═══ SOFT DELETE ═══ -->
 			<section id="soft-delete">
 				<Card>
 					{#snippet header()}
@@ -395,7 +386,7 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 				</Card>
 			</section>
 
-			<!-- ═══ APPEND-ONLY ═══ -->
+			<!-- APPEND-ONLY -->
 			<section id="append-only">
 				<Card>
 					{#snippet header()}
@@ -473,7 +464,6 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 				</Card>
 			</section>
 
-			<!-- ═══ TEMPORAL ═══ -->
 			<section id="temporal">
 				<Card>
 					{#snippet header()}
@@ -622,8 +612,6 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 			</Button>
 		</Cluster>
 	{/if}
-
-<!-- ═══ DIALOGS ═══ -->
 
 <!-- Edit Specimen Dialog (CRUD) -->
 {#if editingSpecimen}
@@ -797,7 +785,6 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 		margin-top: 0;
 	}
 
-	/* ─── Create form ─── */
 	.create-form {
 		display: flex;
 		flex-wrap: wrap;
@@ -819,13 +806,11 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 		gap: var(--spacing-2);
 	}
 
-	/* ─── Row actions ─── */
 	.row-actions {
 		display: flex;
 		gap: var(--spacing-1);
 	}
 
-	/* ─── Pattern notes ─── */
 	.pattern-note {
 		margin-top: var(--spacing-5);
 		padding: var(--spacing-4);
@@ -851,7 +836,6 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 		white-space: pre;
 	}
 
-	/* ─── Soft delete ─── */
 	.soft-delete-groups {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
@@ -890,7 +874,7 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 		color: var(--color-muted);
 	}
 
-	/* ─── Append-only form ─── */
+	/* Append-only form */
 	.append-form-section {
 		margin-top: var(--spacing-5);
 		padding-top: var(--spacing-5);
@@ -916,7 +900,6 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 		font-style: italic;
 	}
 
-	/* ─── Temporal ─── */
 	.temporal-query {
 		margin-top: var(--spacing-5);
 		padding-top: var(--spacing-5);
@@ -951,7 +934,6 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 		gap: var(--spacing-3);
 	}
 
-	/* ─── Dialog form ─── */
 	.dialog-form {
 		display: flex;
 		flex-direction: column;
@@ -972,7 +954,6 @@ UPDATE SET deleted_at = NULL WHERE id = $1</code></pre>
 		border-top: 1px solid var(--color-border);
 	}
 
-	/* ─── Reset ─── */
 	.hidden {
 		display: none;
 	}

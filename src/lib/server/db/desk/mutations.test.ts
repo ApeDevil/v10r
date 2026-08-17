@@ -54,8 +54,6 @@ describe('desk mutations', () => {
 		await db.delete(folder);
 	});
 
-	// ── createSpreadsheetFile ────────────────────────────────────────
-
 	describe('createSpreadsheetFile', () => {
 		it('creates both a file and spreadsheet row in a transaction', async () => {
 			const result = await createSpreadsheetFile(USER_A.id, 'Budget');
@@ -94,8 +92,6 @@ describe('desk mutations', () => {
 		});
 	});
 
-	// ── renameFile ───────────────────────────────────────────────────
-
 	describe('renameFile', () => {
 		it('renames a file and returns the updated row', async () => {
 			const f = makeFile({ userId: USER_A.id, name: 'Old Name' });
@@ -120,8 +116,6 @@ describe('desk mutations', () => {
 			expect(result).toBeNull();
 		});
 	});
-
-	// ── deleteFile (soft-delete) ─────────────────────────────────────
 
 	describe('deleteFile (soft delete)', () => {
 		it('sets deleted_at on the file row and returns it', async () => {
@@ -176,8 +170,6 @@ describe('desk mutations', () => {
 		});
 	});
 
-	// ── moveFile ─────────────────────────────────────────────────────
-
 	describe('moveFile', () => {
 		it('moves a file into a folder', async () => {
 			const f = makeFile({ userId: USER_A.id });
@@ -211,8 +203,6 @@ describe('desk mutations', () => {
 		});
 	});
 
-	// ── toggleFileAiContext ──────────────────────────────────────────
-
 	describe('toggleFileAiContext', () => {
 		it('enables aiContext on a file', async () => {
 			const f = makeFile({ userId: USER_A.id, aiContext: false });
@@ -241,8 +231,6 @@ describe('desk mutations', () => {
 			expect(result).toBeNull();
 		});
 	});
-
-	// ── duplicateSpreadsheetFile ─────────────────────────────────────
 
 	describe('duplicateSpreadsheetFile', () => {
 		it('returns null when original file does not exist', async () => {
@@ -295,8 +283,6 @@ describe('desk mutations', () => {
 		});
 	});
 
-	// ── createFolder ─────────────────────────────────────────────────
-
 	describe('createFolder', () => {
 		it('creates a folder with default name', async () => {
 			const result = await createFolder(USER_A.id);
@@ -315,8 +301,6 @@ describe('desk mutations', () => {
 			expect(child.parentId).toBe(parent.id);
 		});
 	});
-
-	// ── renameFolder ─────────────────────────────────────────────────
 
 	describe('renameFolder', () => {
 		it('renames a folder and returns the updated row', async () => {
@@ -344,8 +328,6 @@ describe('desk mutations', () => {
 			await expect(renameFolder(other.id, USER_A.id, 'Existing')).rejects.toBeInstanceOf(FolderNameConflictError);
 		});
 	});
-
-	// ── moveFolder ───────────────────────────────────────────────────
 
 	describe('moveFolder', () => {
 		it('moves a folder to a new parent', async () => {
@@ -400,8 +382,6 @@ describe('desk mutations', () => {
 		});
 	});
 
-	// ── deleteFolder ─────────────────────────────────────────────────
-
 	describe('deleteFolder', () => {
 		it('deletes an empty folder and returns its id', async () => {
 			const fol = makeFolder({ userId: USER_A.id });
@@ -455,8 +435,6 @@ describe('desk mutations', () => {
 		});
 	});
 
-	// ── updateSpreadsheetByFileId ────────────────────────────────────
-
 	describe('updateSpreadsheetByFileId', () => {
 		it('updates cells and touches file updatedAt', async () => {
 			const { file: fileRow } = await createSpreadsheetFile(USER_A.id, 'Editable');
@@ -499,8 +477,6 @@ describe('desk mutations', () => {
 		});
 	});
 
-	// ── createMarkdownFile ───────────────────────────────────────────
-
 	describe('createMarkdownFile', () => {
 		it('creates both a file and markdown row in a transaction', async () => {
 			const result = await createMarkdownFile(USER_A.id, 'My Doc', '# Hello');
@@ -540,8 +516,6 @@ describe('desk mutations', () => {
 		});
 	});
 
-	// ── updateMarkdownByFileId ───────────────────────────────────────
-
 	describe('updateMarkdownByFileId', () => {
 		it('updates markdown content and touches file updatedAt', async () => {
 			const { file: fileRow } = await createMarkdownFile(USER_A.id, 'Doc', 'original');
@@ -571,7 +545,6 @@ describe('desk mutations', () => {
 			expect(result).toBeNull();
 		});
 	});
-	// ── Destination ownership ────────────────────────────────────────
 	//
 	// The existing per-function tests prove the SOURCE row is the caller's, but
 	// every one of them passes `null` as the destination — so a foreign

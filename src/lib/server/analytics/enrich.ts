@@ -1,9 +1,8 @@
 /**
  * SESSION ENRICHMENT — derives `country`, `device` and `browser` for a session.
  *
- * These three columns exist on `analytics.sessions` but were never populated by
- * the collector, so every dashboard split rendered `unknown` / `??` against real
- * traffic and only looked populated against seed data.
+ * The collector must populate all three, or every dashboard split renders
+ * `unknown` / `??` against real traffic while looking fine against seed data.
  *
  * ## Consent tiers differ per field, and the reason is legal, not stylistic
  *

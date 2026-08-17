@@ -16,7 +16,6 @@ export const user = authSchema.table('user', {
 	createdAt: timestamp('created_at').notNull().defaultNow(),
 	updatedAt: timestamp('updated_at').notNull().defaultNow(),
 
-	// ── Ban state ─────────────────────────────────────────────────────
 	// App-owned, written directly by the admin users page. There is NO `role`
 	// column: authorization is the ADMIN_USER_ID env list (auth/admin-ids.ts),
 	// and the whole point of that design is that database write access cannot
@@ -25,7 +24,6 @@ export const user = authSchema.table('user', {
 	bannedAt: timestamp('banned_at'),
 	banReason: text('ban_reason'),
 
-	// ── twoFactor plugin column ───────────────────────────────────────
 	twoFactorEnabled: boolean('two_factor_enabled').default(false),
 });
 

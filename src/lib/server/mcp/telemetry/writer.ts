@@ -40,9 +40,9 @@ export type McpCallLogRow = typeof mcpCallLog.$inferInsert;
  * scrubber's purpose is defeated at the same time as the diagnosis is lost.
  *
  * SQLSTATE plus the constraint name carry no row data and are sufficient on their own: a rejected
- * CHECK names itself. This is not hypothetical tidying — on 2026-07-28 every admin row was rejected
- * for an hour by `mcp_call_admin_not_external` and the log said only "Failed query: insert into
- * mcp.call_log ...", naming neither the constraint nor the reason.
+ * CHECK names itself. Without them a whole-surface rejection logs only "Failed query: insert into
+ * mcp.call_log ...", naming neither the constraint nor the reason — which is how a CHECK can drop
+ * every row on one surface unnoticed.
  *
  * `detail`, `where` and `internalQuery` are deliberately NOT read: those are the pg fields that
  * carry offending row values and SQL text.

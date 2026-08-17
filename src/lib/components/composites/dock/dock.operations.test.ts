@@ -12,8 +12,6 @@ import {
 } from './dock.operations';
 import type { LayoutNode, LeafNode, SplitNode } from './dock.types';
 
-// --- Helpers ---
-
 function leaf(id: string, tabs: string[], activeTab?: string): LeafNode {
 	return { type: 'leaf', id, tabs, activeTab: activeTab ?? tabs[0] };
 }
@@ -21,8 +19,6 @@ function leaf(id: string, tabs: string[], activeTab?: string): LeafNode {
 function split(id: string, direction: 'horizontal' | 'vertical', children: [LayoutNode, LayoutNode]): SplitNode {
 	return { type: 'split', id, direction, children, sizes: [50, 50] };
 }
-
-// --- Tests ---
 
 describe('findNode', () => {
 	it('finds root node', () => {

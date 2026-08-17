@@ -1,3 +1,7 @@
+/**
+ * Not localized: every user-facing string below is a literal or a humanized
+ * enum key. The whole file still needs an i18n pass — no per-string markers.
+ */
 import { redirect } from '@sveltejs/kit';
 import { fail, message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
@@ -49,7 +53,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const form = await superValidate(emptyImageMetadata(''), valibot(imageMetadataSaveSchema));
 
 	return {
-		// TODO(i18n)
 		title: 'Image Metadata Reader - AI - Showcases',
 		form,
 		aiAvailable: !!getVisionProvider(locals.user.id),
@@ -69,7 +72,6 @@ export const actions: Actions = {
 		const file = formData.get('image');
 
 		if (!(file instanceof File) || file.size === 0) {
-			// TODO(i18n)
 			return fail(400, { uploadError: 'Choose an image to upload.' });
 		}
 
@@ -114,7 +116,6 @@ export const actions: Actions = {
 
 		await saveImageMetadata(locals.user.id, form.data, provenance);
 
-		// TODO(i18n)
 		return message(form, 'Metadata saved.');
 	},
 };

@@ -1,14 +1,11 @@
-// ---------------------------------------------------------------------------
 // 3D Model Configuration
-// ---------------------------------------------------------------------------
 // Static registry of all 3D models available in the showcase.
-// Components (SceneCard, SceneViewport, ViewportToolbar) consume this config
-// to set up camera, lights, controls, and rendering behavior.
+// Viewer components (SceneCard, ViewerScene, ViewerOverlay, ViewerDialog)
+// consume this config to set up camera, lights, controls, and rendering.
 //
 // Scene content (the actual Threlte snippet) is NOT referenced here.
 // Pages import scenes by model ID via route-level mapping to avoid
 // circular dependencies and preserve code-splitting.
-// ---------------------------------------------------------------------------
 
 import type { CustomizationConfig } from './customization';
 import { FOX_CUSTOMIZATION, ROBOT_CUSTOMIZATION, SOFA_CUSTOMIZATION } from './customization';
@@ -19,9 +16,7 @@ export type RotationAxis = 'x' | 'y' | 'z';
 /** Threlte render mode */
 export type RenderMode = 'always' | 'on-demand' | 'manual';
 
-// ---------------------------------------------------------------------------
 // Camera
-// ---------------------------------------------------------------------------
 
 export interface CameraPreset {
 	/** Camera position [x, y, z] */
@@ -45,9 +40,7 @@ export interface CardCameraOverrides {
 	fov?: number;
 }
 
-// ---------------------------------------------------------------------------
 // Controls
-// ---------------------------------------------------------------------------
 
 export interface OrbitControlsConfig {
 	/** Enable orbit controls (default: true for viewport, false for card) */
@@ -64,9 +57,7 @@ export interface OrbitControlsConfig {
 	autoRotateSpeed?: number;
 }
 
-// ---------------------------------------------------------------------------
 // Auto-rotation (card view)
-// ---------------------------------------------------------------------------
 
 export interface AutoRotationConfig {
 	/** Enable auto-rotation (default: true for cards) */
@@ -79,9 +70,7 @@ export interface AutoRotationConfig {
 	pauseOnHover?: boolean;
 }
 
-// ---------------------------------------------------------------------------
 // Lighting
-// ---------------------------------------------------------------------------
 
 export interface LightConfig {
 	/** Directional light position [x, y, z] */
@@ -92,9 +81,7 @@ export interface LightConfig {
 	ambientIntensity?: number;
 }
 
-// ---------------------------------------------------------------------------
 // Animation
-// ---------------------------------------------------------------------------
 
 export interface AnimationConfig {
 	/** Available animation clip names (from GLTF) */
@@ -103,9 +90,7 @@ export interface AnimationConfig {
 	defaultClip: string;
 }
 
-// ---------------------------------------------------------------------------
 // Model3D — the main config type
-// ---------------------------------------------------------------------------
 
 export interface Model3D {
 	/** Unique identifier, used for route matching and scene lookup */
@@ -121,50 +106,34 @@ export interface Model3D {
 	/** Tags for filtering in the card grid */
 	tags: string[];
 
-	// -- Rendering ----------------------------------------------------------
-
 	/** Render mode for full-page viewport (default: inferred from animations) */
 	viewportRenderMode?: RenderMode;
 	/** Render mode for card thumbnail (default: 'on-demand') */
 	cardRenderMode?: RenderMode;
 
-	// -- Camera -------------------------------------------------------------
-
-	/** Base camera preset (used by SceneViewport) */
+	/** Base camera preset. */
 	camera: CameraPreset;
 	/** Overrides for card thumbnail camera. Merged over base camera. */
 	cardCamera?: CardCameraOverrides;
-
-	// -- Controls -----------------------------------------------------------
 
 	/** Orbit controls for full-page viewport */
 	controls?: Partial<OrbitControlsConfig>;
 	/** Auto-rotation config for card thumbnail view */
 	autoRotation?: Partial<AutoRotationConfig>;
 
-	// -- Lighting -----------------------------------------------------------
-
 	/** Lighting setup. Shared between card and viewport unless scene overrides. */
 	lighting: LightConfig;
 
-	// -- Animations ---------------------------------------------------------
-
 	/** Animation config. Undefined = static model. */
 	animations?: AnimationConfig;
-
-	// -- Visual helpers -----------------------------------------------------
 
 	/** Show grid helper in viewport (default: false) */
 	showGrid?: boolean;
 	/** Grid size and divisions [size, divisions] (default: [10, 10]) */
 	gridArgs?: [number, number];
 
-	// -- Customization ------------------------------------------------------
-
 	/** Runtime customization config (material variants, morph targets, etc.) */
 	customization?: CustomizationConfig;
-
-	// -- Metadata -----------------------------------------------------------
 
 	/** Icon class for LinkCard / badge (UnoCSS icon) */
 	icon: string;
@@ -176,9 +145,7 @@ export interface Model3D {
 	sourceUrl?: string;
 }
 
-// ---------------------------------------------------------------------------
 // Model registry
-// ---------------------------------------------------------------------------
 
 export const MODELS: Model3D[] = [
 	{
@@ -368,16 +335,12 @@ export const MODELS: Model3D[] = [
 	},
 ];
 
-// ---------------------------------------------------------------------------
 // Lookup helpers
-// ---------------------------------------------------------------------------
 
 /** Map of model ID to config for O(1) lookup */
 export const MODELS_BY_ID = new Map(MODELS.map((m) => [m.id, m]));
 
-// ---------------------------------------------------------------------------
-// Defaults — consumed by SceneCard and SceneViewport to fill gaps
-// ---------------------------------------------------------------------------
+// Defaults — consumed by the viewer components to fill gaps
 
 export const CARD_DEFAULTS = {
 	renderMode: 'on-demand' as RenderMode,
@@ -412,9 +375,7 @@ export const VIEWPORT_DEFAULTS = {
 	},
 } as const;
 
-// ---------------------------------------------------------------------------
 // Resolved config helpers — merge model config with defaults
-// ---------------------------------------------------------------------------
 
 export interface ResolvedCardConfig {
 	renderMode: RenderMode;
@@ -463,7 +424,7 @@ export function resolveCardConfig(model: Model3D): ResolvedCardConfig {
 	};
 }
 
-/** Merge model config with viewport defaults for SceneViewport consumption */
+/** Merge model config with viewport defaults for the viewer components. */
 export function resolveViewportConfig(model: Model3D): ResolvedViewportConfig {
 	const inferredRenderMode: RenderMode = model.animations ? 'always' : 'on-demand';
 

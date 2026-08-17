@@ -1,14 +1,13 @@
 /**
  * GDPR Art 17 erasure — one canonical definition of "delete everything".
  *
- * Deleting the auth.user row is the relational erasure: nearly every user-keyed
+ * Deleting the auth.user row IS the relational erasure: nearly every user-keyed
  * table references it with onDelete: 'cascade' (sessions, accounts, preferences,
- * conversations, desk, notification links, palettes, RAG documents+chunks), so the
- * cascade does the work. Idempotent — deleting an already-deleted user is a no-op.
+ * conversations, desk, notification links, palettes, RAG documents+chunks). Idempotent.
  *
  * FOUR tables do NOT cascade, and each is handled explicitly inside one transaction
- * before the user row goes (a bare DELETE raises 23503 → 500 for any user who ever
- * wrote a post, issued a grant, or commented):
+ * before the user row goes — a bare DELETE raises 23503 → 500 for any user who ever
+ * wrote a post, issued a grant, or commented:
  *
  * - `blog.post.author_id` (RESTRICT) → REASSIGNED to another configured admin.
  *   Published writing is not the erasing user's personal data alone; the article

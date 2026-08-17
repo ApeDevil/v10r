@@ -127,11 +127,10 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 		pending = { ip, ua, consentTier, referrer, country, device, browser, sessionId };
 	}
 
-	// ── The bot lane ─────────────────────────────────────────────────────────
 	//
 	// The complement of the human lane, and the reason it exists: everything
-	// `shouldTrack` refuses for being non-human used to be discarded, which meant
-	// the only traffic that reads /llms.txt and the .md docs layer produced no
+	// `shouldTrack` refuses for being non-human would otherwise be discarded,
+	// leaving the only traffic that reads /llms.txt and the .md docs layer with no
 	// evidence at all. Vercel Web Analytics cannot fill that gap — its beacon needs
 	// JavaScript and crawlers run none.
 	//

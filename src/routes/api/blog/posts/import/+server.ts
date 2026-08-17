@@ -35,7 +35,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const text = body.value;
 	if (!text.trim()) return apiError(400, 'empty_file', 'Empty file');
 
-	// Parse frontmatter
 	const fmMatch = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
 	if (!fmMatch)
 		return apiError(400, 'invalid_frontmatter', 'Invalid markdown file: missing YAML frontmatter (---...---)');

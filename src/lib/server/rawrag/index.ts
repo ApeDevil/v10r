@@ -90,7 +90,6 @@ export async function retrieve(
 	const emitOrigin = t0 ?? start;
 	const requestedTiers = new Set(opts.tiers);
 
-	// --- Embed ---
 	// Reuse a caller-supplied vector when present (lets a chatbot turn embed the user
 	// message ONCE and share it with both this retrieve and the llmwiki search). The
 	// 'done' event still fires — marked `reused` — so the pipeline trace stays intact.
@@ -114,7 +113,7 @@ export async function retrieve(
 		throw err;
 	}
 
-	// --- Skip events for unused tiers ---
+	// Skip events for unused tiers
 	if (onEvent) {
 		for (const t of [1, 2, 3] as const) {
 			if (!requestedTiers.has(t)) {
@@ -123,7 +122,7 @@ export async function retrieve(
 		}
 	}
 
-	// --- Run requested tiers in parallel ---
+	// Run requested tiers in parallel
 	const tierPromises = opts.tiers.map(async (tier) => {
 		const stepId = `tier-${tier}` as const;
 		const tierStart = performance.now();
@@ -169,7 +168,6 @@ export async function retrieve(
 
 	const tierResults = await Promise.all(tierPromises);
 
-	// --- Rank ---
 	const rankStart = performance.now();
 	onEvent && emit(onEvent, 'rank', 'active', { startOffsetMs: Math.round(rankStart - emitOrigin) });
 	const allChunks = tierResults.flat();
@@ -197,7 +195,6 @@ export async function retrieve(
 			},
 		});
 
-	// --- Context assembly ---
 	const ctxStart = performance.now();
 	onEvent && emit(onEvent, 'context', 'active', { startOffsetMs: Math.round(ctxStart - emitOrigin) });
 	const tokenEstimate = chunks.reduce((sum, c) => sum + Math.ceil(c.content.length / 4), 0);
@@ -211,7 +208,6 @@ export async function retrieve(
 			},
 		});
 
-	// --- Emit chunk details ---
 	if (onEvent) {
 		const survivedIds = new Set(chunks.map((c) => c.chunkId));
 		const rrfRankById = new Map<string, number>();

@@ -3,15 +3,12 @@ import { disableScope, enableScope, isScopeEnabled } from '$lib/components/compo
 import Switch from '$lib/components/primitives/switch/Switch.svelte';
 
 /**
- * Per the harness adoption plan, `desk:read` and `desk:create` are now
- * always-on — they're safe because delete is soft and create's undo path
- * is "delete the file you just created." Only the two genuinely-policy
- * toggles remain user-visible.
+ * `desk:read` and `desk:create` are always-on — safe because delete is soft and
+ * create's undo path is "delete the file you just created." Only the two
+ * genuinely-policy toggles are user-visible.
  *
- * The 12-second delete revert timer was removed along with the
- * "pending" confirmation flow: consent for destructive actions now
- * lives in the per-action `ConfirmCard` in the chat stream, not in a
- * standing configuration dialog.
+ * Consent for destructive actions lives in the per-action approval flow
+ * (proposal → PlanCard → approve endpoint), not in this standing dialog.
  */
 const SCOPE_INFO = [
 	{

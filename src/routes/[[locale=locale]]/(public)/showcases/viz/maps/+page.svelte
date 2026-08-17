@@ -14,7 +14,7 @@ const sections = [
 	{ id: 'choropleth', label: 'Choropleth' },
 ];
 
-// --- Section 2: Markers data ---
+// Section 2: Markers data
 const markers = [
 	{ city: 'San Francisco', lnglat: { lng: -122.42, lat: 37.78 }, description: 'Silicon Valley hub' },
 	{ city: 'London', lnglat: { lng: -0.12, lat: 51.51 }, description: 'European fintech center' },
@@ -24,7 +24,7 @@ const markers = [
 	{ city: 'Singapore', lnglat: { lng: 103.85, lat: 1.29 }, description: 'Asia-Pacific gateway' },
 ];
 
-// --- Section 3: Choropleth (dynamic imports) ---
+// Section 3: Choropleth (dynamic imports)
 const STATES_GEOJSON = 'https://maplibre.org/maplibre-gl-js/docs/assets/us_states.geojson';
 
 type AnyComponent = Component<Record<string, unknown>, Record<string, unknown>, string>;
@@ -315,7 +315,6 @@ ${"<"}/script>
 		padding: var(--spacing-7) var(--spacing-4);
 		box-sizing: border-box;
 	}
-
 
 	.section {
 		scroll-margin-top: 5rem;

@@ -75,9 +75,8 @@ export function windowMessages(messages: ChatMessage[], maxTurns = 5): ChatMessa
  * Stable short hash of a system prompt — used as a non-cryptographic identifier
  * in pipeline events when the full prompt isn't safe to expose (non-dev/admin).
  *
- * Single canonical implementation for both retrieval branches in the chat
- * orchestrator — previously they diverged (`length.toString(16)` vs djb2),
- * which made cross-branch event correlation impossible.
+ * ONE implementation for both retrieval branches in the chat orchestrator: two
+ * hashes would make cross-branch event correlation impossible.
  */
 export function hashSystemPrompt(s: string): string {
 	let h = 0;

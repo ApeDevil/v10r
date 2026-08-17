@@ -21,7 +21,6 @@ export const load: PageServerLoad = async ({ url, locals, cookies }) => {
 		error(400, 'Missing OAuth parameters');
 	}
 
-	// Validate CSRF state
 	const savedState = cookies.get('discord_oauth_state');
 	cookies.delete('discord_oauth_state', { path: '/' });
 
@@ -56,7 +55,6 @@ export const load: PageServerLoad = async ({ url, locals, cookies }) => {
 
 	const tokens = await tokenRes.json();
 
-	// Fetch Discord user info
 	const userRes = await fetch('https://discord.com/api/v10/users/@me', {
 		headers: { Authorization: `Bearer ${tokens.access_token}` },
 	});

@@ -16,8 +16,6 @@ const MIN_SIZE = 10;
 
 let dragging = $state(false);
 
-// --- Pointer resize ---
-
 function handlePointerDown(e: PointerEvent) {
 	if (e.button !== 0) return;
 	e.preventDefault();
@@ -49,8 +47,6 @@ function handlePointerUp(_e: PointerEvent) {
 	if (!dragging) return;
 	dragging = false;
 }
-
-// --- Keyboard resize ---
 
 function handleKeyDown(e: KeyboardEvent) {
 	const step = e.shiftKey ? 10 : 2;

@@ -30,10 +30,9 @@ const sections = $derived([
 	{ id: 'vs-sql', label: m.showcase_db_graph_traversal_nav_vs_sql() },
 ]);
 
-// ─── Node options for selects ────────────────────────
+// Node options for selects
 const nodeOptions = $derived(data.nodes.map((n) => ({ value: n.elementId, label: `${n.name} (${n.label})` })));
 
-// ─── Browse state ────────────────────────────────────
 let browseNodeId = $state('');
 let browseLoading = $state(false);
 let browseResult = $state<{
@@ -42,19 +41,16 @@ let browseResult = $state<{
 	connections: Array<{ direction: string; relType: string; neighborName: string; neighborLabel: string }>;
 } | null>(null);
 
-// ─── Path state ──────────────────────────────────────
 let pathFromId = $state('');
 let pathToId = $state('');
 let pathLoading = $state(false);
 let pathResult = $state<Array<{ label: string; name: string; relType?: string }> | null>(null);
 let pathMessage = $state('');
 
-// ─── Recommendation state ────────────────────────────
 let recNodeId = $state('');
 let recLoading = $state(false);
 let recommendations = $state<Array<{ label: string; name: string; score: number; via: string }>>([]);
 
-// ─── REPL state ──────────────────────────────────────
 let replQuery = $state('MATCH (t:Technology) RETURN t.name AS name, t.category AS category LIMIT 5');
 let replLoading = $state(false);
 let replResult = $state<{ columns: string[]; rows: Record<string, unknown>[] } | null>(null);
@@ -431,7 +427,6 @@ WHERE a.id &lt;&gt; b.id;</code></pre>
 		</Stack>
 	{/if}
 
-
 <style>
 	.action-row {
 		display: flex;
@@ -449,8 +444,6 @@ WHERE a.id &lt;&gt; b.id;</code></pre>
 		overflow-x: auto;
 		margin-top: var(--spacing-4);
 	}
-
-	/* ─── Browse ─────────────────────────────────────────── */
 
 	.browse-result {
 		margin-top: var(--spacing-5);
@@ -508,8 +501,6 @@ WHERE a.id &lt;&gt; b.id;</code></pre>
 		word-break: break-all;
 	}
 
-	/* ─── Shortest Path ──────────────────────────────────── */
-
 	.path-chain {
 		display: flex;
 		align-items: center;
@@ -541,8 +532,6 @@ WHERE a.id &lt;&gt; b.id;</code></pre>
 	.path-arrow {
 		color: var(--color-muted);
 	}
-
-	/* ─── Recommendations ────────────────────────────────── */
 
 	.rec-grid {
 		display: grid;
@@ -583,8 +572,6 @@ WHERE a.id &lt;&gt; b.id;</code></pre>
 		font-size: var(--text-fluid-xs);
 	}
 
-	/* ─── REPL ───────────────────────────────────────────── */
-
 	.repl-input {
 		display: flex;
 		flex-direction: column;
@@ -623,8 +610,6 @@ WHERE a.id &lt;&gt; b.id;</code></pre>
 		font-size: var(--text-fluid-xs);
 		text-align: right;
 	}
-
-	/* ─── VS SQL ─────────────────────────────────────────── */
 
 	.comparison-list {
 		display: flex;

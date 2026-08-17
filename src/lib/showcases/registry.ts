@@ -69,7 +69,6 @@ export interface ShowcaseCard {
 }
 
 export const showcases: ShowcaseCard[] = [
-	// ── frontend ──────────────────────────────────────────────────────────
 	{
 		href: '/showcases/shell',
 		icon: 'i-lucide-layout',
@@ -326,7 +325,6 @@ export const showcases: ShowcaseCard[] = [
 			{ href: '/docs/stack/pwa', label: 'PWA Capabilities' },
 		],
 	},
-	// ── backend ───────────────────────────────────────────────────────────
 	{
 		href: '/showcases/cycle',
 		icon: 'i-lucide-orbit',
@@ -397,7 +395,6 @@ export const showcases: ShowcaseCard[] = [
 			},
 		],
 	},
-	// ── data ──────────────────────────────────────────────────────────────
 	{
 		href: '/showcases/db',
 		icon: 'i-lucide-server',
@@ -501,7 +498,6 @@ export const showcases: ShowcaseCard[] = [
 			{ label: m.showcase_observability_tab_budgets, href: '/showcases/observability/budgets' },
 		],
 	},
-	// ── ai ────────────────────────────────────────────────────────────────
 	{
 		href: '/showcases/ai',
 		icon: 'i-lucide-bot',
@@ -565,7 +561,6 @@ export const showcases: ShowcaseCard[] = [
 		domain: 'ai',
 		docs: [{ href: '/docs/blueprint/architecture/agent-experience', label: 'Agent Experience' }],
 	},
-	// ── security ──────────────────────────────────────────────────────────
 	{
 		href: '/showcases/auth',
 		icon: 'i-lucide-lock',

@@ -63,8 +63,6 @@ function formatTime(ts: number): string {
 	return new Date(ts).toLocaleTimeString(undefined, { hour12: false });
 }
 
-// ── Panel menus ─────────────────────────────────────────────────
-
 const logMenus = $derived<MenuBarMenu[]>([
 	{
 		label: 'Log',

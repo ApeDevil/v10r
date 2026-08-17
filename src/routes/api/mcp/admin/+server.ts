@@ -50,10 +50,10 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
 	const gateStartedAt = performance.now();
 	const ip = getClientAddress();
 
-	// Rate-limit BEFORE auth so failed-credential attempts are throttled too.
-	// Bucketed by /64 so an IPv6 caller cannot rotate within its own allocation
-	// to widen the throttle in front of the bearer check. `ip` stays raw for
-	// telemetry and the registry actor below.
+	// Rate-limit BEFORE auth so failed-credential attempts are throttled too. Bucketed
+	// by /64 so an IPv6 caller cannot rotate within its own allocation to widen the
+	// throttle in front of the bearer check. `ip` stays raw for telemetry and the
+	// registry actor below.
 	const { success, reset } = await limiter.limit(`ip:${normalizeIpKey(ip) ?? ip}`);
 	// As on the public surface: a refused request writes nothing, so the limiter cannot be turned
 	// into a write amplifier.

@@ -66,7 +66,6 @@ type ToolState = 'idle' | 'running' | 'done' | 'error';
 
 let liveStatus = $state('');
 
-// ─── Markdown negotiation ────────────────────────────────────────────
 interface NegotiateResult {
 	redirected: boolean;
 	url: string;
@@ -131,7 +130,7 @@ async function runDirect() {
 	}
 }
 
-// ─── /llms.txt ───────────────────────────────────────────────────────
+// /llms.txt
 interface LlmsResult {
 	lines: number;
 	docUrls: number;
@@ -160,7 +159,7 @@ async function runLlms() {
 	}
 }
 
-// ─── Self-correcting errors ──────────────────────────────────────────
+// Self-correcting errors
 interface BadIdResult {
 	body: string;
 	actions: string[];
@@ -227,7 +226,6 @@ async function runProtocol() {
 	}
 }
 
-// ─── validate_snippet loop ───────────────────────────────────────────
 const languageOptions = [
 	{ value: 'svelte', label: 'Svelte' },
 	{ value: 'ts', label: 'TypeScript' },

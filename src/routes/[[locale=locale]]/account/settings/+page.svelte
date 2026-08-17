@@ -13,7 +13,7 @@ import { getSidebar } from '$lib/state/sidebar.svelte';
 
 let { data }: PageProps = $props();
 
-// ── Danger zone (delete account) ────────────────────────────────────────────
+// Danger zone (delete account)
 
 let deleting = $state(false);
 let confirmDelete = $state(false);

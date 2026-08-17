@@ -15,7 +15,6 @@ export async function reseedGraph(): Promise<void> {
 
 	// 3. Create all nodes and relationships in a single statement
 	await cypher(`
-		// ─── Layers ─────────────────────────────────────────────
 		CREATE (lRuntime:Layer {name: 'Runtime', description: 'JavaScript/TypeScript execution environment', order: 1})
 		CREATE (lFramework:Layer {name: 'Framework', description: 'Application framework and component model', order: 2})
 		CREATE (lDatabase:Layer {name: 'Database', description: 'Data persistence and querying', order: 3})
@@ -27,7 +26,6 @@ export async function reseedGraph(): Promise<void> {
 		CREATE (lI18n:Layer {name: 'i18n', description: 'Internationalization and localization', order: 9})
 		CREATE (l3d:Layer {name: '3D', description: 'Three-dimensional rendering and physics', order: 10})
 
-		// ─── Technologies ───────────────────────────────────────
 		CREATE (tBun:Technology {name: 'Bun', version: '1.x', description: 'All-in-one JavaScript runtime, bundler, and package manager', url: 'https://bun.sh', category: 'runtime'})
 		CREATE (tSvelteKit:Technology {name: 'SvelteKit', version: '2', description: 'Full-stack web framework with SSR, routing, and form actions', url: 'https://svelte.dev/docs/kit', category: 'framework'})
 		CREATE (tSvelte:Technology {name: 'Svelte', version: '5', description: 'Reactive UI compiler with runes-based state management', url: 'https://svelte.dev', category: 'framework'})
@@ -47,7 +45,6 @@ export async function reseedGraph(): Promise<void> {
 		CREATE (tPodman:Technology {name: 'Podman', description: 'Rootless container engine for dev environments', url: 'https://podman.io', category: 'containers'})
 		CREATE (tNeon:Technology {name: 'Neon', description: 'Serverless PostgreSQL with scale-to-zero', url: 'https://neon.tech', category: 'database'})
 
-		// ─── Concepts ───────────────────────────────────────────
 		CREATE (cSsr:Concept {name: 'SSR', description: 'Server-side rendering for initial page loads'})
 		CREATE (cReactivity:Concept {name: 'Reactivity', description: 'Automatic UI updates when state changes'})
 		CREATE (cTypeSafety:Concept {name: 'Type Safety', description: 'Compile-time type checking across the stack'})
@@ -57,12 +54,10 @@ export async function reseedGraph(): Promise<void> {
 		CREATE (cValidation:Concept {name: 'Validation', description: 'Input validation with schema definitions'})
 		CREATE (cContainerization:Concept {name: 'Containerization', description: 'Isolated reproducible development environments'})
 
-		// ─── Showcases ──────────────────────────────────────────
 		CREATE (sDb:Showcase {name: 'Database', path: '/showcases/db', description: 'PostgreSQL + Neo4j data storage demos'})
 		CREATE (sUi:Showcase {name: 'UI', path: '/showcases/ui', description: 'Component library and styling demos'})
 		CREATE (sForms:Showcase {name: 'Forms', path: '/showcases/forms', description: 'Validation and form handling demos'})
 
-		// ─── BELONGS_TO relationships ───────────────────────────
 		CREATE (tBun)-[:BELONGS_TO]->(lRuntime)
 		CREATE (tSvelteKit)-[:BELONGS_TO]->(lFramework)
 		CREATE (tSvelte)-[:BELONGS_TO]->(lFramework)
@@ -82,7 +77,6 @@ export async function reseedGraph(): Promise<void> {
 		CREATE (tValibot)-[:BELONGS_TO]->(lQuality)
 		CREATE (tSuperforms)-[:BELONGS_TO]->(lFramework)
 
-		// ─── DEPENDS_ON relationships ───────────────────────────
 		CREATE (tSvelteKit)-[:DEPENDS_ON {reason: 'SvelteKit compiles Svelte components'}]->(tSvelte)
 		CREATE (tSvelteKit)-[:DEPENDS_ON {reason: 'SvelteKit runs on Bun runtime'}]->(tBun)
 		CREATE (tDrizzle)-[:DEPENDS_ON {reason: 'Drizzle queries PostgreSQL'}]->(tPostgres)
@@ -96,7 +90,6 @@ export async function reseedGraph(): Promise<void> {
 		CREATE (tNeon)-[:DEPENDS_ON {reason: 'Neon hosts PostgreSQL databases'}]->(tPostgres)
 		CREATE (tUno)-[:DEPENDS_ON {reason: 'UnoCSS processes Svelte template classes'}]->(tSvelte)
 
-		// ─── IMPLEMENTS relationships ───────────────────────────
 		CREATE (tSvelteKit)-[:IMPLEMENTS]->(cSsr)
 		CREATE (tSvelte)-[:IMPLEMENTS]->(cReactivity)
 		CREATE (tDrizzle)-[:IMPLEMENTS]->(cTypeSafety)
@@ -108,7 +101,6 @@ export async function reseedGraph(): Promise<void> {
 		CREATE (tPodman)-[:IMPLEMENTS]->(cContainerization)
 		CREATE (tBun)-[:IMPLEMENTS]->(cTypeSafety)
 
-		// ─── INTEGRATES_WITH relationships ──────────────────────
 		CREATE (tDrizzle)-[:INTEGRATES_WITH {how: 'Schema-driven migrations and queries'}]->(tSvelteKit)
 		CREATE (tBetterAuth)-[:INTEGRATES_WITH {how: 'Auth hooks in hooks.server.ts'}]->(tSvelteKit)
 		CREATE (tUno)-[:INTEGRATES_WITH {how: 'Vite plugin for class extraction'}]->(tSvelteKit)
@@ -116,14 +108,12 @@ export async function reseedGraph(): Promise<void> {
 		CREATE (tParaglide)-[:INTEGRATES_WITH {how: 'Reroute hook for locale routing'}]->(tSvelteKit)
 		CREATE (tBits)-[:INTEGRATES_WITH {how: 'Styled with UnoCSS utilities'}]->(tUno)
 
-		// ─── DEMONSTRATES relationships ─────────────────────────
 		CREATE (sDb)-[:DEMONSTRATES]->(tPostgres)
 		CREATE (sDb)-[:DEMONSTRATES]->(tNeo4j)
 		CREATE (sDb)-[:DEMONSTRATES]->(tDrizzle)
 		CREATE (sUi)-[:DEMONSTRATES]->(tBits)
 		CREATE (sForms)-[:DEMONSTRATES]->(tSuperforms)
 
-		// ─── REQUIRES relationships ─────────────────────────────
 		CREATE (cSsr)-[:REQUIRES]->(cReactivity)
 		CREATE (cGraphTraversal)-[:REQUIRES]->(cTypeSafety)
 		CREATE (cSessionAuth)-[:REQUIRES]->(cValidation)

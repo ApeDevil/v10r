@@ -25,7 +25,6 @@ export const load: LayoutServerLoad = async ({ cookies, locals, depends, request
 	const raw = cookies.get('theme');
 	const themeMode: 'light' | 'dark' | 'system' = raw === 'light' || raw === 'dark' || raw === 'system' ? raw : 'system';
 
-	// Read sidebar width from cookie
 	const rawWidth = Number(cookies.get('sidebar-width'));
 	const sidebarWidth = rawWidth >= 160 && rawWidth <= 320 ? rawWidth : 240;
 

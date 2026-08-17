@@ -68,7 +68,6 @@ export function remarkDirectiveHandlers() {
 				if (v !== undefined) attrs[k] = v;
 			}
 
-			// Validate required attributes
 			const missing = def.requiredAttrs.filter((a) => !attrs[a]);
 			if (missing.length > 0) {
 				// Produce a warning placeholder

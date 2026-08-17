@@ -4,8 +4,6 @@ import { db } from '../index';
 import { conversation, conversationStep, message } from '../schema/ai/conversation';
 import { user } from '../schema/auth/_better-auth';
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
 export interface AIOverviewStats {
 	totalConversations: number;
 	totalMessages: number;
@@ -43,8 +41,6 @@ export interface MessageVolumeDay {
 	date: string;
 	count: number;
 }
-
-// ── Queries ──────────────────────────────────────────────────────────────────
 
 export async function getAIOverviewStats(): Promise<AIOverviewStats> {
 	const today = new Date();

@@ -40,7 +40,6 @@ const useNumbers = $derived(
 	mode === 'numbers' || (mode === 'auto' && workspace.workspaces.length <= VISIBLE_WORKSPACE_BUTTONS),
 );
 
-// Create workspace popover
 let createOpen = $state(false);
 let newName = $state('');
 

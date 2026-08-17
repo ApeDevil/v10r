@@ -22,7 +22,6 @@ export function initKeyboardHandler(): () => void {
 		// Ignore if focused on input/textarea/contenteditable
 		if (shouldIgnoreEvent(event)) return;
 
-		// Build key string from event
 		const keyString = buildKeyString(event);
 		if (!keyString) return;
 
@@ -117,10 +116,8 @@ function isSequenceStart(keyString: string): boolean {
  * Handle key sequences (e.g., 'g h').
  */
 function handleSequence(keyString: string, event: KeyboardEvent) {
-	// Add key to sequence
 	sequenceKeys.push(keyString);
 
-	// Clear existing timeout
 	if (sequenceTimeout) clearTimeout(sequenceTimeout);
 
 	// Try to match current sequence

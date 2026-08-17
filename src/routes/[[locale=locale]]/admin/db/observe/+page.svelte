@@ -22,8 +22,6 @@ let { data }: PageProps = $props();
 
 let refreshing = $state(false);
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 function formatBytes(bytes: number): string {
 	if (bytes === 0) return '0 B';
 	const k = 1024;
@@ -67,7 +65,7 @@ function timeAgo(iso: string): string {
 	return m.admin_db_time_hours_ago({ hours });
 }
 
-// ── Alert visibility: any resolved provider in warning/error state ─────────────
+// Alert visibility: any resolved provider in warning/error state
 
 const resolvedAlert = $derived.by(() => {
 	const providers = [data.upstash, data.r2];
@@ -113,7 +111,7 @@ const resolvedAlert = $derived.by(() => {
 
 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
 
-	<!-- ── PostgreSQL (Neon) ──────────────────────────────────────────────────── -->
+	<!-- PostgreSQL (Neon) -->
 	{#await data.neon}
 		<Card>
 			{#snippet header()}
@@ -270,7 +268,6 @@ const resolvedAlert = $derived.by(() => {
 		</Card>
 	{/await}
 
-	<!-- ── Neo4j ──────────────────────────────────────────────────────────────── -->
 	{#await data.neo4j}
 		<Card>
 			{#snippet header()}
@@ -421,7 +418,6 @@ const resolvedAlert = $derived.by(() => {
 		</Card>
 	{/await}
 
-	<!-- ── Upstash Redis ──────────────────────────────────────────────────────── -->
 	<Card>
 		{#snippet header()}
 			<div class="card-header-row">
@@ -503,7 +499,6 @@ const resolvedAlert = $derived.by(() => {
 		{/snippet}
 	</Card>
 
-	<!-- ── Cloudflare R2 ──────────────────────────────────────────────────────── -->
 	<Card>
 		{#snippet header()}
 			<div class="card-header-row">

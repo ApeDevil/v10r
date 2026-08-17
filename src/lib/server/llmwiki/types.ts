@@ -36,7 +36,6 @@ export interface LlmwikiPage extends LlmwikiHit {
 	compiledByModel: string;
 }
 
-/** Options for llmwiki search. */
 export interface LlmwikiSearchOptions {
 	userId: string;
 	collectionId?: string | null;

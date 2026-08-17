@@ -41,8 +41,6 @@ export const CreatePresetSchema = v.object({
 	typeStyles: v.optional(TypeStylesSchema, {}),
 });
 
-// ── Workspace schemas ───────────────────────────────────────────
-
 /**
  * DockLayoutState validation — structural only.
  * The recursive tree is validated at the top level; deep node validation

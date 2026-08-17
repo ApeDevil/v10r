@@ -94,7 +94,7 @@ export function getFallbackProviders(registry: ProviderEntry[], activeId: string
 	return registry.filter((p) => p.configured && p.id !== activeId);
 }
 
-// ── Circuit breaker — cooldown for rate-limited providers ──────────
+// Circuit breaker — cooldown for rate-limited providers
 //
 // Stored in Redis so the breaker is shared across serverless instances — an
 // in-process Map would let every cold lambda independently re-trip a provider

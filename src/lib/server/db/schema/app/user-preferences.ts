@@ -21,7 +21,6 @@ export const userPreferences = appSchema.table('user_preferences', {
 	displayDensity: displayDensityEnum('display_density').notNull().default('comfortable'),
 	sidebarWidth: smallint('sidebar_width').notNull().default(240),
 
-	// Locale
 	locale: text('locale').notNull().default('en'),
 	timezone: text('timezone').notNull().default('UTC'),
 	dateFormat: dateFormatEnum('date_format').notNull().default('relative'),

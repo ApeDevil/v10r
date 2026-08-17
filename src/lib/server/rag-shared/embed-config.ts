@@ -4,9 +4,9 @@
  * scripts (scripts/db/ingest-docs.ts, scripts/db/catalog-sync.ts).
  *
  * It MUST stay dependency-free — no `$lib`, no `$env`, no `import.meta` — because the
- * Bun scripts import it by relative path and cannot resolve Vite aliases. These
- * constants were previously copy-pasted into the scripts and drifted; this leaf ends
- * that. `src/lib/server/config.ts` re-exports them so app import sites are unchanged.
+ * Bun scripts import it by relative path and cannot resolve Vite aliases. The scripts
+ * must never re-declare these constants — copies drift. `src/lib/server/config.ts`
+ * re-exports them so app import sites are unchanged.
  */
 
 /** Embedding model identifier (provider model name). */

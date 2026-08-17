@@ -7,6 +7,9 @@
  *
  * Focus trap + Escape + scroll-lock come from bits-ui Dialog. Reduced motion is
  * honored by gating the enter/exit animation classes on the motion query.
+ *
+ * Not localized: every user-facing string below is a literal or a humanized
+ * enum key. The whole file still needs an i18n pass — no per-string markers.
  */
 import { Dialog } from 'bits-ui';
 import { Button } from '$lib/components/primitives';
@@ -33,7 +36,7 @@ let { open = $bindable(), rows, includeLocation, gps, onconfirm, oncancel }: Pro
 // Relative elevation — one rung above the plane that owns the trigger (page → E1; the scrim carries separation).
 const s = useSurface();
 
-// TODO(i18n) — placeholder for an empty cell.
+// placeholder for an empty cell.
 const EMPTY = '—';
 </script>
 
@@ -54,11 +57,9 @@ const EMPTY = '—';
 		>
 			<div class="flex flex-col gap-1">
 				<Dialog.Title class="text-fluid-lg font-semibold text-fg">
-					<!-- TODO(i18n) -->
 					Review metadata before saving
 				</Dialog.Title>
 				<Dialog.Description class="text-fluid-sm text-muted">
-					<!-- TODO(i18n) -->
 					Compare what the AI proposed against the values that will be saved. Saving applies all fields at once.
 				</Dialog.Description>
 			</div>
@@ -67,7 +68,6 @@ const EMPTY = '—';
 				<table class="diff-table">
 					<thead>
 						<tr>
-							<!-- TODO(i18n) -->
 							<th scope="col">Field</th>
 							<th scope="col">AI proposed</th>
 							<th scope="col">Saving</th>
@@ -90,12 +90,10 @@ const EMPTY = '—';
 					<div class="gps-consent-head">
 						<span class="i-lucide-map-pin text-icon-sm" aria-hidden="true"></span>
 						<span id="gps-consent-title" class="gps-consent-title">
-							<!-- TODO(i18n) -->
 							Location (sensitive)
 						</span>
 					</div>
 					<p class="gps-consent-body">
-						<!-- TODO(i18n) -->
 						These coordinates will be saved with the image:
 						<code>{gps.lat.toFixed(6)}, {gps.lng.toFixed(6)}</code>
 					</p>
@@ -104,11 +102,9 @@ const EMPTY = '—';
 
 			<div class="pt-2 flex justify-end gap-3">
 				<Button variant="outline" onclick={oncancel}>
-					<!-- TODO(i18n) -->
 					Cancel
 				</Button>
 				<Button variant="primary" onclick={onconfirm}>
-					<!-- TODO(i18n) -->
 					Save metadata
 				</Button>
 			</div>
@@ -118,7 +114,6 @@ const EMPTY = '—';
 				onclick={oncancel}
 			>
 				<span class="i-lucide-x text-icon-sm" aria-hidden="true"></span>
-				<!-- TODO(i18n) -->
 				<span class="sr-only">Close</span>
 			</Dialog.Close>
 		</Dialog.Content>

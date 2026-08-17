@@ -16,7 +16,7 @@ export const aiConfigured = registry.some((p) => p.configured);
 /** Full provider registry for status pages and API endpoints. */
 export const providerRegistry = registry;
 
-// ── Per-request resolution functions ────────────────────────────────
+// Per-request resolution functions
 
 /**
  * Get the active provider for a given user.

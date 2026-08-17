@@ -9,8 +9,6 @@ import type { DeskPreset, DeskTheme } from './desk-settings.types';
 const DEFAULT_KEY = 'desk-theme';
 const CURRENT_VERSION = 2;
 
-// ── Built-in presets ──────────────────────────────────────────────
-
 export const BUILT_IN_PRESETS: DeskPreset[] = [
 	{
 		id: 'preset-default',
@@ -28,8 +26,6 @@ export const DEFAULT_THEME: DeskTheme = {
 	presets: [...BUILT_IN_PRESETS],
 	activePresetId: null,
 };
-
-// ── Persistence ───────────────────────────────────────────────────
 
 export function saveDeskSettings(theme: DeskTheme, storageKey = DEFAULT_KEY): void {
 	if (!browser) return;

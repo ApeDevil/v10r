@@ -94,7 +94,7 @@ afterEach(() => {
 	vi.unstubAllEnvs();
 });
 
-// ── the ordinary case: an author with all three RESTRICT references ───────────
+// the ordinary case: an author with all three RESTRICT references
 
 describe('deleteUserData — reassigns what survives, deletes what does not', () => {
 	it('erases a user who authored a post, issued a grant, and commented', async () => {
@@ -138,7 +138,7 @@ describe('deleteUserData — reassigns what survives, deletes what does not', ()
 	});
 });
 
-// ── the refusal: nobody left to inherit ──────────────────────────────────────
+// the refusal: nobody left to inherit
 
 describe('deleteUserData — sole configured admin', () => {
 	it('refuses with SoleAdminBlockedError and rolls back, leaving the account intact', async () => {
@@ -162,7 +162,7 @@ describe('deleteUserData — sole configured admin', () => {
 	});
 });
 
-// ── the probe: RAG-active user, where the cascade trips its own junction ─────
+// the probe: RAG-active user, where the cascade trips its own junction
 
 describe('deleteUserData — RAG-active user (llmwiki_page_source RESTRICT)', () => {
 	it('erases a user with a compiled llmwiki page over their own chunks', async () => {

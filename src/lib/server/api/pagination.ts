@@ -12,9 +12,7 @@
 
 import { json } from '@sveltejs/kit';
 
-// ---------------------------------------------------------------------------
 // Offset-based pagination
-// ---------------------------------------------------------------------------
 
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 200;
@@ -47,9 +45,7 @@ export function apiPaginated<T>(items: T[], total: number, params: PaginationPar
 	});
 }
 
-// ---------------------------------------------------------------------------
 // Cursor-based pagination
-// ---------------------------------------------------------------------------
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;

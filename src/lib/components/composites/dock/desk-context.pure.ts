@@ -7,8 +7,6 @@
 
 import type { ContextChip, ContextStatus, PanelContext } from './desk-context.svelte';
 
-// ── Types ────────────────────────────────────────────────────────────
-
 /** How much content is included in the AI prompt for a panel. */
 export type ContentLevel = 'full' | 'summary' | 'title-only';
 
@@ -25,8 +23,6 @@ export interface SerializedContext {
 	tokenEstimate: number;
 }
 
-// ── Constants ────────────────────────────────────────────────────────
-
 /** Max tokens for all panel context combined in a single AI request. */
 export const CONTEXT_TOKEN_BUDGET = 8000;
 
@@ -36,8 +32,6 @@ const TITLE_ONLY_THRESHOLD = 0.9;
 
 /** Max chars for a summary-level truncation. */
 const SUMMARY_MAX_CHARS = 500;
-
-// ── Pure computations ────────────────────────────────────────────────
 
 /** Approximate token count from content length. */
 export function estimateTokens(content: string): number {

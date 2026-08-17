@@ -4,6 +4,9 @@
  * "Saved!" this shows exactly what a real app WOULD persist, and offers real,
  * client-side actions: download the crops, copy the metadata JSON. Closing it
  * discards the temporary upload. Focus trap + Escape come from bits-ui Dialog.
+ *
+ * Not localized: every user-facing string below is a literal or a humanized
+ * enum key. The whole file still needs an i18n pass — no per-string markers.
  */
 import { Dialog } from 'bits-ui';
 import { Alert } from '$lib/components/composites';
@@ -73,17 +76,14 @@ async function handleCopy() {
 		>
 			<div class="flex flex-col gap-1">
 				<Dialog.Title class="text-fluid-lg font-semibold text-fg">
-					<!-- TODO(i18n) -->
 					Review — nothing is saved
 				</Dialog.Title>
 				<Dialog.Description class="text-fluid-sm text-muted">
-					<!-- TODO(i18n) -->
 					This is a showcase. Below is exactly what a real app would persist; you can download the crops or copy the
 					metadata, but nothing is written anywhere.
 				</Dialog.Description>
 			</div>
 
-			<!-- TODO(i18n) -->
 			<Alert
 				variant="info"
 				description="Closing this discards the temporary uploaded image."
@@ -91,7 +91,6 @@ async function handleCopy() {
 
 			<div class="summary">
 				<h3 class="summary-h text-fluid-sm font-semibold">
-					<!-- TODO(i18n) -->
 					Metadata
 				</h3>
 				<table class="summary-table">
@@ -105,7 +104,6 @@ async function handleCopy() {
 				</table>
 
 				<h3 class="summary-h text-fluid-sm font-semibold">
-					<!-- TODO(i18n) -->
 					Crops <span class="text-muted font-normal">(size &amp; position, source px)</span>
 				</h3>
 				<table class="summary-table">
@@ -118,7 +116,6 @@ async function handleCopy() {
 									{#if r}
 										{r.width} × {r.height} px
 										<span class="crop-origin text-muted">
-											<!-- TODO(i18n) -->
 											· at ({r.left}, {r.top})
 										</span>
 									{:else}
@@ -131,7 +128,6 @@ async function handleCopy() {
 				</table>
 
 				<h3 class="summary-h text-fluid-sm font-semibold">
-					<!-- TODO(i18n) -->
 					Embedding
 				</h3>
 				<table class="summary-table">
@@ -150,23 +146,19 @@ async function handleCopy() {
 				<Button type="button" variant="outline" onclick={handleDownload} disabled={downloading}>
 					{#if downloading}<Spinner size="sm" class="mr-2" />{/if}
 					<span class="i-lucide-download text-icon-sm mr-1" aria-hidden="true"></span>
-					<!-- TODO(i18n) -->
 					Download crops
 				</Button>
 				<Button type="button" variant="outline" onclick={handleCopy}>
 					<span class={cn('text-icon-sm mr-1', copied ? 'i-lucide-check' : 'i-lucide-clipboard')} aria-hidden="true"></span>
-					<!-- TODO(i18n) -->
 					{copied ? 'Copied' : 'Copy metadata JSON'}
 				</Button>
 				<Button type="button" variant="primary" onclick={ondone}>
-					<!-- TODO(i18n) -->
 					Done
 				</Button>
 			</div>
 
 			<Dialog.Close class="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100" onclick={() => (open = false)}>
 				<span class="i-lucide-x text-icon-sm" aria-hidden="true"></span>
-				<!-- TODO(i18n) -->
 				<span class="sr-only">Close</span>
 			</Dialog.Close>
 		</Dialog.Content>

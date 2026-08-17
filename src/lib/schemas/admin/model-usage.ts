@@ -59,7 +59,7 @@ export interface ModelUsageSummary {
 	asOf: string | null;
 }
 
-// ── Image Metadata Reader feature health (image surface only) ────────
+// Image Metadata Reader feature health (image surface only)
 
 /**
  * Conversion of analyses into saved metadata. The only outcomes the code produces are

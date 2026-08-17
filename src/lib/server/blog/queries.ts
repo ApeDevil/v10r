@@ -37,7 +37,6 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 	if (status) conditions.push(eq(post.status, status));
 	if (authorId) conditions.push(eq(post.authorId, authorId));
 
-	// Filter by domain
 	if (domainSlug) {
 		const [domainRow] = await db.select({ id: domain.id }).from(domain).where(eq(domain.slug, domainSlug)).limit(1);
 		if (!domainRow) return { items: [], total: 0 };
@@ -61,7 +60,6 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 
 	const where = and(...conditions);
 
-	// Sort
 	const sortColumn = {
 		created: post.createdAt,
 		updated: post.updatedAt,
@@ -228,7 +226,6 @@ export async function getPublishedPostForSlug(slug: string, locale = 'en'): Prom
 
 	if (!row) return null;
 
-	// Fetch domain
 	let postDomain: { id: string; slug: string; name: string; icon: string | null; color: number | null } | null = null;
 	if (row.domainId) {
 		const [d] = await db
@@ -239,7 +236,6 @@ export async function getPublishedPostForSlug(slug: string, locale = 'en'): Prom
 		postDomain = d ?? null;
 	}
 
-	// Fetch tags
 	const tags = await db
 		.select({
 			id: tag.id,
@@ -512,8 +508,6 @@ export async function isSlugTaken(slug: string, excludePostId?: string): Promise
 	return !!row;
 }
 
-// ── Assets ───────────────────────────────────────────────────────────
-
 /** List all assets, optionally filtered by uploader. */
 export async function listAssets(
 	uploaderId?: string,
@@ -577,9 +571,8 @@ export async function listAllAssetStorageKeys(): Promise<string[]> {
 /**
  * Same reachability rule as `getPublicAssetById`, keyed on the R2 storage key.
  *
- * Backs the legacy media proxy, which previously presigned any `blog/`-prefixed
- * key with no database lookup whatsoever — it could not tell a real asset from
- * an arbitrary guessed key, published or not.
+ * Backs the legacy media proxy. Without this lookup the proxy would presign any
+ * `blog/`-prefixed key, unable to tell a real asset from a guessed one.
  */
 export async function getPublicAssetByStorageKey(storageKey: string): Promise<BlogAsset | null> {
 	const [row] = await db

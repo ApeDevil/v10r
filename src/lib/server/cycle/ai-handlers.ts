@@ -36,7 +36,7 @@ export async function executeAiCycle(input: AiCycleInput, userId: string): Promi
 	const { trace, traceStart } = createTrace('ai');
 	trace.inputPayload = { query };
 
-	// --- Server: auth + parse ---
+	// Server: auth + parse
 	const serverSpan = startSpan(trace, 'server', traceStart);
 	await delay(2);
 	endSpan(serverSpan, traceStart, { action: 'auth + parse', userId });
@@ -99,7 +99,7 @@ export async function executeAiCycle(input: AiCycleInput, userId: string): Promi
 		}
 	};
 
-	// --- Retrieval pipeline (embed + retrieve + rank + context) ---
+	// Retrieval pipeline (embed + retrieve + rank + context)
 	let retrievalOk = false;
 	let retrievalResult: Awaited<ReturnType<typeof retrieve>> | null = null;
 	if (input.simulateError === 'embed' || input.simulateError === 'retrieve') {
@@ -136,7 +136,7 @@ export async function executeAiCycle(input: AiCycleInput, userId: string): Promi
 		}
 	}
 
-	// --- Generate (LLM stream) ---
+	// Generate (LLM stream)
 	const genSpan = startSpan(trace, 'generate', traceStart);
 	if (input.simulateError === 'generate') {
 		await delay(120);
@@ -188,7 +188,6 @@ export async function executeAiCycle(input: AiCycleInput, userId: string): Promi
 
 	endSpan(genSpan, traceStart, generateDetail);
 
-	// --- Response ---
 	const respSpan = startSpan(trace, 'response', traceStart);
 	await delay(2);
 	const output = { answer, tokens: (generateDetail as { outputTokens?: number }).outputTokens ?? answer.length / 4 };

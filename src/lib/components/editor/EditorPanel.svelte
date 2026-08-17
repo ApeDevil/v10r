@@ -81,7 +81,6 @@ $effect(() => {
 // Content change debounce for DeskBus
 let contentTimer: ReturnType<typeof setTimeout>;
 
-// Load document when documentId changes
 $effect(() => {
 	if (documentId) loadDocument(documentId);
 });
@@ -260,7 +259,6 @@ function handleTagToggle(tagId: string) {
 		const tag = availableTags.find((t) => t.id === tagId);
 		if (tag) tags = [...tags, tag];
 	}
-	// Save tags via API
 	saveTagsDebounced();
 }
 
@@ -380,7 +378,6 @@ $effect(() => {
 	return panelMenus.register(panelId, { menuBar: editorMenus });
 });
 
-// ── AI Context registration ─────────────────────────────────────
 let contextTimer2: ReturnType<typeof setTimeout>;
 
 function serializeEditorContext(): string {

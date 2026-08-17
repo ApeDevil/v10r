@@ -15,10 +15,10 @@
  * This gate used to scan `src/routes/api` for `+server.ts` and nothing else. It
  * was therefore structurally blind to the exact class of surface an
  * unauthenticated arbitrary-object read shipped in: a public `+page.server.ts`
- * form action, which is neither under `/api` nor named `+server.ts`. Fifty-three
- * files exporting `actions`, plus eleven `+server.ts` outside `/api`, were
- * invisible — and one `+page.server.ts` sits INSIDE `src/routes/api`, so it was
- * in the scanned tree and still unseen.
+ * form action, which is neither under `/api` nor named `+server.ts`. Every file
+ * exporting `actions`, plus the `+server.ts` outside `/api`, were invisible —
+ * and one `+page.server.ts` sits INSIDE `src/routes/api`, so it was in the
+ * scanned tree and still unseen.
  *
  * The two scans keep separate allowlists because their keys are relative to
  * different roots. Merging them would silently invalidate all twelve existing

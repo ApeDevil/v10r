@@ -8,10 +8,9 @@ export const load: PageServerLoad = async () => {
 	const start = performance.now();
 
 	try {
-		// All four reads are Postgres now. This page used to stream a separate Neo4j
-		// round trip for the flow graph, but that graph was populated by a seed
-		// function with zero callers — so the Sankey rendered stale demo data
-		// indefinitely while claiming to show real journeys.
+		// All four reads are Postgres. Deliberately no Neo4j round trip for a flow
+		// graph: that graph had only a seed function to populate it, so a Sankey over
+		// it renders stale demo data while claiming to show real journeys.
 		const [sessions, transitions, entryPages, exitPages] = await Promise.all([
 			getSessionTimeline({ limit: 20 }),
 			getTopTransitions(RANGE_DAYS, 20),

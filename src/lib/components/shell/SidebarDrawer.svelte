@@ -53,8 +53,8 @@ $effect(() => {
 	}
 });
 
-// The drawer must not survive navigation (it used to stay open — and focus-trapped —
-// over the destination page).
+// Close on navigation: a surviving drawer keeps its focus trap over the
+// destination page.
 afterNavigate(() => {
 	if (sidebar.mobileOpen) sidebar.closeMobile();
 });

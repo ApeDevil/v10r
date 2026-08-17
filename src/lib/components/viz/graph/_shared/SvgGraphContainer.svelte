@@ -44,7 +44,6 @@ function cleanup() {
 	resizeObserver = undefined;
 	clearTimeout(zoomIndicatorTimeout);
 	zoomIndicatorTimeout = undefined;
-	// Remove d3-zoom listeners
 	if (d3Sel) {
 		d3Sel.on('.zoom', null);
 	}

@@ -173,7 +173,6 @@ const wildInstances: Instance[] = [
 </section>
 
 <style>
-	/* ─── TYPOGRAPHY ─── */
 	.instances-title,
 	.instance-name,
 	.stack-label,
@@ -184,7 +183,6 @@ const wildInstances: Instance[] = [
 		font-family: var(--font-mono, ui-monospace, monospace);
 	}
 
-	/* ─── SECTION ─── */
 	.instances {
 		padding: var(--spacing-5) var(--spacing-fluid-3) var(--spacing-8);
 		max-width: 80rem;
@@ -209,7 +207,6 @@ const wildInstances: Instance[] = [
 		margin: 0;
 	}
 
-	/* ─── DESCRIPTION ─── */
 	.instances-description {
 		max-width: 52ch;
 		margin: var(--spacing-7) auto 0;
@@ -219,7 +216,6 @@ const wildInstances: Instance[] = [
 		line-height: 1.6;
 	}
 
-	/* ─── CARD ROW ─── */
 	.instances-row {
 		display: flex;
 		flex-direction: column;
@@ -234,7 +230,6 @@ const wildInstances: Instance[] = [
 		}
 	}
 
-	/* ─── SPECTRUM BAR ─── */
 	.spectrum {
 		display: flex;
 		align-items: center;
@@ -286,7 +281,6 @@ const wildInstances: Instance[] = [
 		}
 	}
 
-	/* ─── PRACTICAL EXAMPLE ─── */
 	.wild-section {
 		margin-top: var(--spacing-7);
 		display: flex;
@@ -328,7 +322,6 @@ const wildInstances: Instance[] = [
 		flex-shrink: 0;
 	}
 
-	/* ─── INSTANCE CARD ─── */
 	.instance-card {
 		position: relative;
 		flex: 1;
@@ -344,7 +337,6 @@ const wildInstances: Instance[] = [
 		border-color: var(--color-primary);
 	}
 
-	/* ─── FUNCTION NAME ─── */
 	.instance-name {
 		font-size: var(--text-fluid-lg);
 		font-weight: 700;
@@ -366,7 +358,6 @@ const wildInstances: Instance[] = [
 		color: var(--color-primary);
 	}
 
-	/* ─── METER ─── */
 	.instance-meter {
 		height: 2px;
 		background: var(--color-border);
@@ -383,7 +374,6 @@ const wildInstances: Instance[] = [
 		box-shadow: 0 0 6px color-mix(in srgb, var(--color-primary) 50%, transparent);
 	}
 
-	/* ─── STACK ROW ─── */
 	.stack-row {
 		display: flex;
 		flex-wrap: wrap;

@@ -14,7 +14,6 @@ let { class: className }: Props = $props();
 
 const modals = getModals();
 
-// Get shortcuts grouped by category
 const shortcutsByCategory = $derived(getShortcutsByCategory());
 
 let modalRef: HTMLElement | undefined = $state();

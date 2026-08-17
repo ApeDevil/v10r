@@ -59,8 +59,6 @@ export function createDockState(
 		return collectLeaves(root).find((leaf) => leaf.tabs.length > 0) ?? null;
 	}
 
-	// --- Tab operations ---
-
 	function activateTab(leafId: string, panelId: string): void {
 		const leaf = findNode(root, leafId);
 		if (!leaf || leaf.type !== 'leaf' || !leaf.tabs.includes(panelId)) return;
@@ -71,8 +69,6 @@ export function createDockState(
 		const newRoot = replaceNode(root, leafId, updated);
 		if (newRoot) root = newRoot;
 	}
-
-	// --- Close operations ---
 
 	function closePanel(panelId: string): void {
 		const leaf = findLeafWithPanel(root, panelId);
@@ -91,8 +87,6 @@ export function createDockState(
 		const closed = panels[panelId];
 		if (closed) hooks.onPanelClosed?.(closed);
 	}
-
-	// --- Move operations ---
 
 	function movePanel(panelId: string, target: DropTarget): void {
 		const sourceLeaf = findLeafWithPanel(root, panelId);
@@ -182,8 +176,6 @@ export function createDockState(
 		panels = rest;
 	}
 
-	// --- Resize ---
-
 	function resizeSplit(splitId: string, sizes: [number, number]): void {
 		const node = findNode(root, splitId);
 		if (!node || node.type !== 'split') return;
@@ -191,8 +183,6 @@ export function createDockState(
 		node.sizes[0] = sizes[0];
 		node.sizes[1] = sizes[1];
 	}
-
-	// --- Drag coordination ---
 
 	function startDrag(panelId: string, sourceLeafId: string): void {
 		dragState = { panelId, sourceLeafId, target: null };
@@ -214,7 +204,7 @@ export function createDockState(
 		dragState = null;
 	}
 
-	// --- Tab reorder within leaf ---
+	// Tab reorder within leaf
 
 	function reorderTab(leafId: string, panelId: string, toIndex: number): void {
 		const leaf = findNode(root, leafId);
@@ -232,13 +222,9 @@ export function createDockState(
 		if (newRoot) root = newRoot;
 	}
 
-	// --- Panel type operations ---
-
 	/** Ensure a panel of the given type is open and focused. If absent, create one. */
 	function ensurePanelType(panelType: string, label?: string, icon?: string): void {
-		// Check if already in layout
 		if (hasPanelType(root, panelType, panels)) {
-			// Find and activate it
 			const leaves = collectLeaves(root);
 			for (const leaf of leaves) {
 				for (const tabId of leaf.tabs) {
@@ -262,15 +248,11 @@ export function createDockState(
 		addPanel(panel);
 	}
 
-	// --- Focus tracking ---
-
 	function setFocusedLeaf(leafId: string): void {
 		focusSeq++;
 		if (focusedLeafId === leafId) return;
 		focusedLeafId = leafId;
 	}
-
-	// --- Panel updates ---
 
 	function updatePanel(panelId: string, partial: Partial<PanelDefinition>): void {
 		const existing = panels[panelId];
@@ -280,8 +262,6 @@ export function createDockState(
 		if (!changed) return;
 		panels = { ...panels, [panelId]: { ...existing, ...partial } };
 	}
-
-	// --- Bulk close operations ---
 
 	function closeOtherPanels(leafId: string, keepPanelId: string): void {
 		const leaf = findNode(root, leafId);

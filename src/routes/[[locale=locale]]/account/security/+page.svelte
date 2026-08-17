@@ -13,8 +13,6 @@ let { data } = $props();
 
 const toast = getToast();
 
-// ── Passkeys ────────────────────────────────────────────────────────────────
-
 let addingPasskey = $state(false);
 let newPasskeyName = $state('');
 let renamingId = $state<string | null>(null);
@@ -97,8 +95,6 @@ async function deletePasskey() {
 	deleteTarget = null;
 }
 
-// ── TOTP ────────────────────────────────────────────────────────────────────
-
 type TotpFlow =
 	| { step: 'idle' }
 	| { step: 'starting' }
@@ -109,8 +105,6 @@ let stepUpOpen = $state(false);
 let stepUpAction = $state<'disable' | 'regenerate' | null>(null);
 let disabling = $state(false);
 let freshBackupCodes = $state<string[] | null>(null);
-
-// ── Active sessions ─────────────────────────────────────────────────────────
 
 let revoking = $state<string | null>(null);
 // Server actions 403 with stepUpRequired when TOTP is enrolled and the freshness

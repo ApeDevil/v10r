@@ -34,7 +34,7 @@ import {
 	STEPUP_VERIFY_RATE_LIMIT_MAX,
 	STEPUP_VERIFY_RATE_LIMIT_WINDOW,
 } from '$lib/server/config';
-// 2c in the chain — the agent-facing `.md` layer over /docs. Lives in its own
+// The agent-facing `.md` layer over /docs. Lives in its own
 // module so its tests never import this file's heavy graph (schedulers, auth).
 import { docsMarkdown } from '$lib/server/docs/markdown-hook';
 import { clearOwnerCookie, PAIRING_COOKIE, verifyOwnerCookie } from '$lib/server/pairing/cookie';
@@ -108,7 +108,7 @@ const TWO_FACTOR_VERIFY_PATHS = new Set([
 ]);
 
 /**
- * 1. Security headers + canonical client IP stamp
+ * Security headers + canonical client IP stamp
  *
  * Stamps event.locals.clientIp and x-client-ip ONCE here, before any other
  * handler. Downstream code MUST read event.locals.clientIp (or x-client-ip
@@ -195,7 +195,7 @@ const bodySizeFloor: Handle = async ({ event, resolve }) => {
 };
 
 /**
- * 2. loadStyle — reads/generates style from cookie, populates event.locals.style
+ * loadStyle — reads/generates style from cookie, populates event.locals.style
  */
 const loadStyle: Handle = async ({ event, resolve }) => {
 	// locals.style is consumed only by HTML rendering. Skip the cookie parse + custom
@@ -247,7 +247,6 @@ const loadStyle: Handle = async ({ event, resolve }) => {
 		resolved = fallback;
 	}
 
-	// Set cookie if changed
 	if (!config) throw new Error('Style config missing after resolution');
 	const serialized = serializeStyleCookie(config);
 	if (cookieValue !== serialized) {
@@ -259,7 +258,7 @@ const loadStyle: Handle = async ({ event, resolve }) => {
 };
 
 /**
- * 2b. Strip leading /en/ — base locale must not be URL-prefixed.
+ * Strip leading /en/ — base locale must not be URL-prefixed.
  *
  * Paraglide's URL pattern serves the base locale at unprefixed paths.
  * /en/foo has no canonical place to live; redirect to /foo (308 = permanent,
@@ -293,7 +292,7 @@ const stripBaseLocalePrefix: Handle = ({ event, resolve }) => {
 };
 
 /**
- * 3. i18n — Paraglide locale detection + HTML lang attribute + style attrs
+ * i18n — Paraglide locale detection + HTML lang attribute + style attrs
  *
  * Stamps event.locals.locale (canonical adapter handoff so domain code never
  * imports from $lib/paraglide). Persists URL-resolved locale to the
@@ -320,10 +319,10 @@ const i18n: Handle = ({ event, resolve }) =>
 		}
 		event.request = request;
 
-		// Hoist all per-response derivations OUT of the per-chunk callback. The
-		// callback used to recompute the custom-palette <style> block (including
-		// two culori-backed deriveAccentTokens calls) on every HTML chunk. Now it
-		// is computed once and only injected when the </head> marker passes.
+		// All per-response derivations stay OUT of the per-chunk callback: computing
+		// the custom-palette <style> block there (two culori-backed
+		// deriveAccentTokens calls) would rerun it on every HTML chunk. Computed
+		// once here, injected only when the </head> marker passes.
 		const style = event.locals.style;
 		const paletteId = style?.paletteId ?? '';
 		const typographyId = style?.typographyId ?? '';
@@ -368,7 +367,7 @@ const i18n: Handle = ({ event, resolve }) =>
 	});
 
 /**
- * 3b. Auth captcha gate — verify ALTCHA token before email-sending auth routes.
+ * Auth captcha gate — verify ALTCHA token before email-sending auth routes.
  *     Token is sent via x-altcha-token header by the client (Better Auth
  *     fetchOptions.headers). We MUST verify here, not in form actions, because
  *     the Better Auth client posts JSON directly to /api/auth/* and form-action
@@ -464,7 +463,7 @@ function authRateLimited(event: RequestEvent, reset: number, message: string): R
 }
 
 /**
- * 4. Auth API handler — intercepts /api/auth/* routes
+ * Auth API handler — intercepts /api/auth/* routes
  *    Includes Upstash rate limiting on all auth endpoints
  */
 const authHandler: Handle = async ({ event, resolve }) => {
@@ -509,7 +508,7 @@ const authHandler: Handle = async ({ event, resolve }) => {
 };
 
 /**
- * 5. Session populate — reads session from cookie/headers into event.locals
+ * Session populate — reads session from cookie/headers into event.locals
  *    CRITICAL: svelteKitHandler does NOT populate event.locals (Issue #2188)
  */
 const sessionPopulate: Handle = async ({ event, resolve }) => {
@@ -585,16 +584,17 @@ const sessionPopulate: Handle = async ({ event, resolve }) => {
 };
 
 /**
- * 6. CSRF protection — defense in depth on mutating API calls. Predicates
+ * CSRF protection — defense in depth on mutating API calls. Predicates
  *    (needsCsrf / isSameHost / exempt set) live in $lib/server/security/csrf
  *    where they are unit-tested; this handler just wires them.
+ *
+ *    Both rejections answer `{ error: { code, message } }` like every other
+ *    door, so a client parsing `body.error.code` works on the path most likely
+ *    to fire during integration.
  */
 const csrfProtection: Handle = async ({ event, resolve }) => {
 	if (needsCsrf(event.request.method, event.url.pathname)) {
 		if (!event.request.headers.get('x-requested-with')) {
-			// `{ error: { code, message } }` like every other door — this used to
-			// return a bare string, so a client parsing `body.error.code` crashed on
-			// the one path most likely to fire during integration.
 			return apiError(403, 'csrf_failed', 'Request rejected.');
 		}
 
@@ -606,9 +606,6 @@ const csrfProtection: Handle = async ({ event, resolve }) => {
 		// clients that omit Origin on same-origin POSTs. If both are missing, reject.
 		const ok = origin ? isSameHost(origin, expectedHost) : isSameHost(referer, expectedHost);
 		if (!ok) {
-			// `{ error: { code, message } }` like every other door — this used to
-			// return a bare string, so a client parsing `body.error.code` crashed on
-			// the one path most likely to fire during integration.
 			return apiError(403, 'csrf_failed', 'Request rejected.');
 		}
 	}
@@ -617,7 +614,7 @@ const csrfProtection: Handle = async ({ event, resolve }) => {
 };
 
 /**
- * 6b. Consent loader — populate event.locals.consentTier from cookie. Defaults to
+ * Consent loader — populate event.locals.consentTier from cookie. Defaults to
  *     'necessary'. Lives before routeGuard so admin pages also have a consistent value.
  */
 const consentLoader: Handle = async ({ event, resolve }) => {
@@ -626,7 +623,7 @@ const consentLoader: Handle = async ({ event, resolve }) => {
 };
 
 /**
- * 6c. Debug-owner loader — verifies the v10r_debug_owner HMAC cookie and stamps
+ * Debug-owner loader — verifies the v10r_debug_owner HMAC cookie and stamps
  *     locals.debugOwnerId so the analyticsCollector can attribute events to the
  *     paired admin. Independent of Better Auth — the phone is not logged in.
  */
@@ -652,7 +649,7 @@ const debugOwnerLoader: Handle = async ({ event, resolve }) => {
 };
 
 /**
- * 7. Dev route guard — hide (dev) routes outside dev.
+ * Dev route guard — hide (dev) routes outside dev.
  * Member and admin auth gates live in app/+layout.server.ts and admin/+layout.server.ts.
  */
 const devRouteGuard: Handle = async ({ event, resolve }) => {

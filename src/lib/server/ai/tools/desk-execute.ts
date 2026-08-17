@@ -4,9 +4,8 @@
  *
  * The in-loop path is gated differently: `createDeskTools` only assembles the
  * tools whose scope was granted, so an ungranted tool is never callable. This
- * module is the replay equivalent, and it must enforce the same thing itself —
- * it previously did not, which made approval the weaker of the two doors for
- * the identical mutation.
+ * module is the replay equivalent and must enforce the same thing itself, or
+ * approval becomes the weaker of the two doors for the identical mutation.
  *
  * A new mutating desk tool MUST get both a case in the switch and an entry in
  * `TOOL_SCOPE`, or the drift-guard test fails — so the replay path can never
@@ -72,11 +71,10 @@ export interface DeskExecContext {
 /**
  * Execute a single desk tool call against the desk domain. Never throws.
  *
- * Scope enforcement lives HERE, not at the callers. This function was previously
- * a dispatcher with no authority check, so the proposal-replay door executed
- * mutations without consulting scopes at all — strictly weaker than the in-loop
- * door for the identical operation. Putting the gate at the one shared door is
- * what makes the two paths agree by construction.
+ * Scope enforcement lives HERE, not at the callers. A bare dispatcher would let
+ * the proposal-replay door execute mutations without consulting scopes at all —
+ * strictly weaker than the in-loop door for the identical operation. The gate at
+ * this one shared door is what makes the two paths agree by construction.
  *
  * Note this is a consent/intent boundary, not a tenancy one: every underlying
  * mutation is already scoped by `userId`, so a scope failure cannot reach

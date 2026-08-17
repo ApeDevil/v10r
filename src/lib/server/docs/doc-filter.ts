@@ -5,9 +5,8 @@
  *   - scripts/db/ingest-docs.ts        (the chatbot RAG ingestion, under Bun)
  *
  * Kept Vite-free and dependency-light (only `yaml`) so the Bun script can import it
- * by relative path. These constants + helpers were previously copy-pasted in both
- * files and drifted (stale blocklist entries pointing at moved files) — hence this
- * shared module.
+ * by relative path. Neither consumer may keep its own copy of these constants:
+ * duplicates drift into stale blocklist entries pointing at moved files.
  */
 import { parse as parseYaml } from 'yaml';
 

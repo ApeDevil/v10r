@@ -9,7 +9,7 @@
 import type { UIMessage } from 'ai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// ── Mocks (hoisted before dynamic imports) ──────────────────────────────────
+// Mocks (hoisted before dynamic imports)
 
 vi.mock('$lib/server/db/ai/mutations', () => ({
 	createConversation: vi.fn(() => ({ id: 'conv-new' })),
@@ -128,7 +128,7 @@ vi.mock('ai', () => ({
 	stepCountIs: vi.fn(() => () => false),
 }));
 
-// ── Dynamic imports (resolved after vi.mock hoisting) ───────────────────────
+// Dynamic imports (resolved after vi.mock hoisting)
 
 const { createOnFinish, orchestrateChat } = await import('./chat-orchestrator');
 const { getMessageText, windowMessages, escapeXmlAttr, buildSystemPrompt } = await import('./context/system-prompt');
@@ -148,7 +148,7 @@ const checkConversationLimit = limits.checkConversationLimit as ReturnType<typeo
 const getActiveProvider = providers.getActiveProvider as ReturnType<typeof vi.fn>;
 const markCooldown = providerRegistry.markCooldown as ReturnType<typeof vi.fn>;
 
-// ── 1. getMessageText ───────────────────────────────────────────────────────
+// 1. getMessageText
 
 describe('getMessageText', () => {
 	it('returns content from legacy {role, content} format', () => {
@@ -202,7 +202,7 @@ describe('getMessageText', () => {
 	});
 });
 
-// ── 2. windowMessages ───────────────────────────────────────────────────────
+// 2. windowMessages
 
 describe('windowMessages', () => {
 	it('returns all messages when count is within maxTurns * 2', () => {
@@ -287,7 +287,7 @@ describe('windowMessages', () => {
 	});
 });
 
-// ── 3. escapeXmlAttr ────────────────────────────────────────────────────────
+// 3. escapeXmlAttr
 
 describe('escapeXmlAttr', () => {
 	it('replaces & with &amp;', () => expect(escapeXmlAttr('a&b')).toBe('a&amp;b'));
@@ -299,7 +299,7 @@ describe('escapeXmlAttr', () => {
 	it('passes through safe string unchanged', () => expect(escapeXmlAttr('hello world')).toBe('hello world'));
 });
 
-// ── 4. buildSystemPrompt ────────────────────────────────────────────────────
+// 4. buildSystemPrompt
 
 describe('buildSystemPrompt', () => {
 	it('returns SYSTEM_PROMPT exactly when called with no arguments', () => {
@@ -444,7 +444,7 @@ describe('buildSystemPrompt', () => {
 	});
 });
 
-// ── 5. createOnFinish ───────────────────────────────────────────────────────
+// 5. createOnFinish
 
 describe('createOnFinish', () => {
 	beforeEach(() => {
@@ -482,7 +482,7 @@ describe('createOnFinish', () => {
 	});
 });
 
-// ── 6. orchestrateChat (integration — error paths) ──────────────────────────
+// 6. orchestrateChat (integration — error paths)
 
 describe('orchestrateChat', () => {
 	const baseInput = {

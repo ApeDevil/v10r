@@ -27,8 +27,6 @@ export function createDeskSettings(initial: DeskTheme, options: DeskSettingsOpti
 	let dialogOpen = $state(false);
 	let dialogTab = $state<'workspace' | 'panels' | 'presets'>('workspace');
 
-	// ── Dialog lifecycle ──────────────────────────────────────────
-
 	function openDialog(tab?: 'workspace' | 'panels' | 'presets') {
 		draft = $state.snapshot(committed) as DeskTheme;
 		if (tab) dialogTab = tab;
@@ -48,8 +46,6 @@ export function createDeskSettings(initial: DeskTheme, options: DeskSettingsOpti
 		dialogOpen = false;
 	}
 
-	// ── Workspace colors ──────────────────────────────────────────
-
 	function setWorkspaceColor(key: keyof WorkspaceColors, value: string) {
 		if (!draft) return;
 		draft.workspace = { ...draft.workspace, [key]: value };
@@ -60,8 +56,6 @@ export function createDeskSettings(initial: DeskTheme, options: DeskSettingsOpti
 		const { [key]: _, ...rest } = draft.workspace;
 		draft.workspace = rest;
 	}
-
-	// ── Panel type styles ─────────────────────────────────────────
 
 	function setTypeStyle(panelType: string, key: keyof PanelColorOverride, value: string) {
 		if (!draft) return;
@@ -76,8 +70,6 @@ export function createDeskSettings(initial: DeskTheme, options: DeskSettingsOpti
 		const { [panelType]: _, ...rest } = draft.typeStyles;
 		draft.typeStyles = rest;
 	}
-
-	// ── Presets ────────────────────────────────────────────────────
 
 	function applyPreset(presetId: string) {
 		if (!draft) return;
@@ -120,7 +112,7 @@ export function createDeskSettings(initial: DeskTheme, options: DeskSettingsOpti
 
 	const activeDraft = $derived<DeskTheme>(draft ?? committed);
 
-	// ── Derived: CSS variable map ─────────────────────────────────
+	// Derived: CSS variable map
 
 	const cssVarsMap = $derived.by(() => {
 		const vars = new Map<string, string>();
@@ -132,7 +124,7 @@ export function createDeskSettings(initial: DeskTheme, options: DeskSettingsOpti
 		return vars;
 	});
 
-	// ── Resolution: merge type override for a given panel type ────
+	// Resolution: merge type override for a given panel type
 
 	function resolvePanel(panelType: string): PanelColorOverride {
 		const typeOverride = activeDraft.typeStyles[panelType];

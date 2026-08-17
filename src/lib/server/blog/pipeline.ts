@@ -33,7 +33,7 @@ export interface RenderResult {
 	frontmatter: Record<string, unknown>;
 }
 
-// ── Custom rehype plugin: TOC extraction ────────────────────────────
+// Custom rehype plugin: TOC extraction
 
 function rehypeToc() {
 	return (tree: HastRoot, file: { data: Record<string, unknown> }) => {
@@ -55,8 +55,6 @@ function rehypeToc() {
 		file.data.toc = toc;
 	};
 }
-
-// ── Lazy pipeline initialization ────────────────────────────────────
 
 // unified chain loses generic precision after many .use() calls
 type BlogProcessor = Processor<Node, Node, Node, Node, string>;
@@ -90,8 +88,6 @@ function getProcessor(): Promise<BlogProcessor> {
 	}
 	return processorPromise;
 }
-
-// ── Public API ──────────────────────────────────────────────────────
 
 export async function renderBlogPost(markdown: string, _permalinks?: string[]): Promise<RenderResult> {
 	try {

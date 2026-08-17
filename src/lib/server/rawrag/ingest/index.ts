@@ -171,7 +171,6 @@ export async function ingest(doc: IngestableDocument, onEvent?: IngestEmitFn): P
 			await db.insert(chunk).values(batch).onConflictDoNothing();
 		}
 
-		// Update document stats
 		const totalTokens = allChunks.reduce((sum, c) => sum + c.tokenCount, 0);
 		await db
 			.update(document)

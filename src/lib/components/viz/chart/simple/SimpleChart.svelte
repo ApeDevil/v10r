@@ -77,10 +77,8 @@ const padding = { top: 20, right: 20, bottom: 40, left: 50 };
 const chartWidth = $derived(width - padding.left - padding.right);
 const chartHeight = $derived(height - padding.top - padding.bottom);
 
-// Normalize data to ChartSeries[]
 const series = $derived.by(() => {
 	if (Array.isArray(data) && data.length > 0) {
-		// Check if it's ChartDataPoint[]
 		if ('label' in data[0] && 'value' in data[0]) {
 			return [
 				{
@@ -94,7 +92,6 @@ const series = $derived.by(() => {
 	return data as ChartSeries[];
 });
 
-// Extract all labels
 const allLabels = $derived.by(() => {
 	if (labels.length > 0) return labels;
 
@@ -113,7 +110,6 @@ const allLabels = $derived.by(() => {
 	return Array.from({ length: firstSeries.data.length }, (_, i) => String(i + 1));
 });
 
-// Get max value for scaling
 const maxValue = $derived.by(() => {
 	let max = 0;
 	for (const s of series) {
@@ -134,7 +130,6 @@ const scaleX = (index: number) => {
 	return (index / (allLabels.length - 1 || 1)) * chartWidth;
 };
 
-// Grid lines
 const gridLines = $derived.by(() => {
 	const lines = [];
 	const steps = 5;

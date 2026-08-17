@@ -14,8 +14,6 @@ import {
 	parseCellRef,
 } from '$lib/utils/spreadsheet';
 
-// ── Types ────────────────────────────────────────────────────────────
-
 export interface SpreadsheetCell {
 	/** What the user typed (may be a formula like "=SUM(A1:A3)") */
 	raw: string;
@@ -45,7 +43,7 @@ interface PersistedCell {
 	t?: string;
 }
 
-// ── Security: credential pattern scanner ─────────────────────────────
+// Security: credential pattern scanner
 
 const SENSITIVE_PATTERNS = [
 	/sk-[a-zA-Z0-9]{20,}/g,
@@ -66,8 +64,6 @@ function redactSensitive(value: string): string {
 	return result;
 }
 
-// ── Factory ──────────────────────────────────────────────────────────
-
 export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 	// Sparse storage: key = "col,row" (0-indexed)
 	let cells = $state(new Map<string, SpreadsheetCell>());
@@ -77,13 +73,9 @@ export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 	let editValue = $state('');
 	let dirty = $state(0);
 
-	// ── Cell key helpers ────────────────────────────────────────────
-
 	function key(col: number, row: number): string {
 		return `${col},${row}`;
 	}
-
-	// ── Cell access ─────────────────────────────────────────────────
 
 	function getCell(col: number, row: number): SpreadsheetCell | undefined {
 		return cells.get(key(col, row));
@@ -135,8 +127,6 @@ export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 			}
 		}
 	}
-
-	// ── Selection ───────────────────────────────────────────────────
 
 	function select(col: number, row: number, extend = false): void {
 		if (extend && activeCell) {
@@ -197,8 +187,6 @@ export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 		return activeCell?.col === col && activeCell?.row === row;
 	}
 
-	// ── Selection stats ─────────────────────────────────────────────
-
 	const selectionStats = $derived.by((): SelectionStats => {
 		const range = selectionRange;
 		const active = activeCell;
@@ -237,8 +225,6 @@ export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 		};
 	});
 
-	// ── Active cell label ───────────────────────────────────────────
-
 	const activeCellLabel = $derived(activeCell ? cellLabel(activeCell.col, activeCell.row) : '');
 
 	const activeCellRaw = $derived.by(() => {
@@ -246,8 +232,6 @@ export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 		const cell = cells.get(key(activeCell.col, activeCell.row));
 		return cell?.raw ?? '';
 	});
-
-	// ── Serialization ───────────────────────────────────────────────
 
 	/** Serialize to JSONB-compatible sparse map for persistence */
 	function toJSON(): Record<string, PersistedCell> {
@@ -286,8 +270,6 @@ export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 		recalculateAll();
 	}
 
-	// ── AI Context serialization ────────────────────────────────────
-
 	/**
 	 * Serialize the current state for AI context injection.
 	 * Includes selected cells with labeled headers for LLM spatial orientation.
@@ -322,7 +304,6 @@ export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 			? `${cellLabel(minCol, minRow)}:${cellLabel(maxCol, maxRow)}`
 			: cellLabel(active?.col ?? 0, active?.row ?? 0);
 
-		// Build markdown table
 		const lines: string[] = [];
 		lines.push(`## Spreadsheet: ${sheetName} [Selection: ${selLabel}]`);
 		lines.push('');

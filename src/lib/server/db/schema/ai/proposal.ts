@@ -19,8 +19,6 @@ import { index, jsonb, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
 import { user } from '../auth/_better-auth';
 import { aiSchema, conversation, message } from './conversation';
 
-// ── Enums ───────────────────────────────────────────────────────────
-
 export const proposalStatusEnum = aiSchema.enum('agent_proposal_status', [
 	'pending',
 	'approved',
@@ -32,8 +30,6 @@ export const proposalStatusEnum = aiSchema.enum('agent_proposal_status', [
 ]);
 
 export const proposalRiskTierEnum = aiSchema.enum('agent_proposal_risk_tier', ['low', 'medium', 'high']);
-
-// ── JSONB Types ─────────────────────────────────────────────────────
 
 /** A single proposed tool call inside a proposal's payload. */
 export type ProposedToolCall = {
@@ -49,8 +45,6 @@ export type ProposalExecutionResult = {
 	/** Per-step results, in the order they were executed. */
 	results: Array<{ toolName: string; ok: boolean; output: unknown; errorMessage?: string }>;
 };
-
-// ── Table ───────────────────────────────────────────────────────────
 
 export const agentProposal = aiSchema.table(
 	'agent_proposal',

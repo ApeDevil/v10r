@@ -71,8 +71,6 @@ export const load: PageServerLoad = async () => {
 };
 
 export const actions: Actions = {
-	// ─── Mutable CRUD ──────────────────────────────────────────
-
 	createSpecimen: async ({ request }) => {
 		const formData = await request.formData();
 		const label = formData.get('label');
@@ -142,8 +140,6 @@ export const actions: Actions = {
 		}
 	},
 
-	// ─── Versioned Records ─────────────────────────────────────
-
 	updateWithHistory: async ({ request }) => {
 		const formData = await request.formData();
 		const id = formData.get('id');
@@ -169,8 +165,6 @@ export const actions: Actions = {
 			});
 		}
 	},
-
-	// ─── Soft Delete ────────────────────────────────────────────
 
 	softDelete: async ({ request }) => {
 		const formData = await request.formData();
@@ -202,7 +196,7 @@ export const actions: Actions = {
 		}
 	},
 
-	// ─── Append-Only ────────────────────────────────────────────
+	// Append-Only
 
 	appendAuditEntry: async ({ request }) => {
 		const formData = await request.formData();
@@ -230,8 +224,6 @@ export const actions: Actions = {
 			});
 		}
 	},
-
-	// ─── Temporal ───────────────────────────────────────────────
 
 	addTemporalRecord: async ({ request }) => {
 		const formData = await request.formData();
@@ -275,8 +267,6 @@ export const actions: Actions = {
 			});
 		}
 	},
-
-	// ─── Reset ──────────────────────────────────────────────────
 
 	reseed: async () => {
 		try {

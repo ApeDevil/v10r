@@ -7,10 +7,10 @@
  *   2. `/api/analytics/journey`         — client-side navigations (SPA beacon)
  *   3. `$lib/analytics/vercel.ts`       — Vercel Web Analytics `beforeSend`
  *
- * (1) and (2) previously disagreed: the hook excluded `/admin` and `/account`,
- * the beacon endpoint filtered nothing, and the beacon is initialised in the
- * ROOT layout — so every client-side navigation into an authenticated surface
- * was written into the anonymous lane anyway.
+ * They disagree easily: the beacon is initialised in the ROOT layout, so if the
+ * hook excludes `/admin` and `/account` but the beacon endpoint filters nothing,
+ * every client-side navigation into an authenticated surface still lands in the
+ * anonymous lane.
  *
  * This module lives OUTSIDE `$lib/server` because collector (3) runs in the
  * browser and `$lib/server` is unimportable from client code. Everything here

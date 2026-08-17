@@ -76,7 +76,6 @@ export async function extractEntities(text: string, model?: LanguageModel | null
 					.slice(0, 200),
 			}))
 			.filter((e: ExtractedEntity) => {
-				// Validate entity type
 				if (!VALID_ENTITY_TYPES.has(e.type)) return false;
 				// Reject suspiciously short or empty names
 				if (e.name.length < 2) return false;

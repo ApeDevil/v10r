@@ -1,5 +1,3 @@
-// ── Types ────────────────────────────────────────────────────────────────────
-
 export type ThresholdLevel = 'ok' | 'warning' | 'error';
 
 export type ProviderStatus = 'ok' | 'unavailable' | 'error';
@@ -64,8 +62,6 @@ export interface R2Metrics {
 	objectCount: number;
 }
 
-// ── Constants ────────────────────────────────────────────────────────────────
-
 export const FREE_TIER_LIMITS = {
 	neon: { storageBytes: 512 * 1024 * 1024 },
 	neo4j: { nodes: 200_000, relationships: 400_000 },
@@ -74,8 +70,6 @@ export const FREE_TIER_LIMITS = {
 } as const;
 
 export const THRESHOLDS = { warning: 0.7, error: 0.9 } as const;
-
-// ── Utilities ────────────────────────────────────────────────────────────────
 
 export function computeThreshold(used: number, limit: number): ThresholdLevel {
 	const ratio = limit > 0 ? used / limit : 0;

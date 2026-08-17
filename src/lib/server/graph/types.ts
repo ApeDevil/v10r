@@ -1,6 +1,6 @@
 import type { KnowledgeData, KnowledgeEdge, KnowledgeNode } from '$lib/types/knowledge';
 
-// ─── Neo4j HTTP response shapes ─────────────────────────
+// Neo4j HTTP response shapes
 
 export interface Neo4jNodeRecord {
 	elementId: string;
@@ -15,8 +15,6 @@ export interface Neo4jRelRecord {
 	type: string;
 	properties: Record<string, unknown>;
 }
-
-// ─── KnowledgeData mapper ───────────────────────────────
 
 /**
  * Transform raw Neo4j node/relationship records into KnowledgeData

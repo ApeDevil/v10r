@@ -7,8 +7,6 @@ function requireRedis() {
 	return redis;
 }
 
-// ─── Strings ────────────────────────────────────────────
-
 export async function setString(key: string, value: string, ttl?: number): Promise<void> {
 	const r = requireRedis();
 	assertShowcaseKey(key);
@@ -18,8 +16,6 @@ export async function setString(key: string, value: string, ttl?: number): Promi
 		await r.set(key, value);
 	}
 }
-
-// ─── Counters ───────────────────────────────────────────
 
 export async function incrementCounter(key: string, amount = 1): Promise<number> {
 	const r = requireRedis();
@@ -33,8 +29,6 @@ export async function decrementCounter(key: string, amount = 1): Promise<number>
 	return r.decrby(key, amount);
 }
 
-// ─── Hashes ─────────────────────────────────────────────
-
 export async function setHashField(key: string, field: string, value: string): Promise<void> {
 	const r = requireRedis();
 	assertShowcaseKey(key);
@@ -47,8 +41,6 @@ export async function deleteHashField(key: string, field: string): Promise<void>
 	await r.hdel(key, field);
 }
 
-// ─── Sorted Sets ────────────────────────────────────────
-
 export async function addToSortedSet(key: string, member: string, score: number): Promise<void> {
 	const r = requireRedis();
 	assertShowcaseKey(key);
@@ -60,8 +52,6 @@ export async function removeFromSortedSet(key: string, member: string): Promise<
 	assertShowcaseKey(key);
 	await r.zrem(key, member);
 }
-
-// ─── Lists ──────────────────────────────────────────────
 
 export async function pushToList(key: string, value: string, side: 'left' | 'right' = 'right'): Promise<void> {
 	const r = requireRedis();
@@ -81,8 +71,6 @@ export async function popFromList(key: string, side: 'left' | 'right' = 'left'):
 	}
 	return r.rpop(key);
 }
-
-// ─── TTL management ─────────────────────────────────────
 
 /** Sliding TTL: refresh the TTL to a new value, returns the new TTL. */
 export async function slideTtl(key: string, seconds: number): Promise<number> {

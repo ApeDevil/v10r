@@ -248,7 +248,6 @@ function getToolInvocation(part: MessagePart) {
 		background-color: color-mix(in srgb, var(--color-muted) 12%, transparent);
 	}
 
-	/* === Chat prose styles === */
 	.chat-prose :global(h1),
 	.chat-prose :global(h2),
 	.chat-prose :global(h3),

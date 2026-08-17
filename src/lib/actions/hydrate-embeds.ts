@@ -47,10 +47,8 @@ export function hydrateEmbeds(node: HTMLElement, descriptors: EmbedDescriptor[] 
 	function setup() {
 		if (embeds.length === 0) return;
 
-		// Build descriptor lookup by id
 		const descriptorMap = new Map(embeds.map((d) => [d.id, d]));
 
-		// Find all placeholder elements
 		const placeholders = node.querySelectorAll<HTMLElement>('[data-embed-id]');
 		if (placeholders.length === 0) return;
 
@@ -79,7 +77,6 @@ export function hydrateEmbeds(node: HTMLElement, descriptors: EmbedDescriptor[] 
 
 		if (instances.size === 0) return;
 
-		// Create intersection observer
 		observer = new IntersectionObserver(handleIntersect, {
 			rootMargin: ROOT_MARGIN,
 			threshold: 0,
@@ -99,7 +96,6 @@ export function hydrateEmbeds(node: HTMLElement, descriptors: EmbedDescriptor[] 
 			if (!instance) continue;
 
 			if (entry.isIntersecting) {
-				// Clear any pending exit timer
 				if (instance.exitTimer) {
 					clearTimeout(instance.exitTimer);
 					instance.exitTimer = null;

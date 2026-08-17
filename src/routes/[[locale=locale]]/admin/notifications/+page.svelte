@@ -11,8 +11,6 @@ import { getToast } from '$lib/state/toast.svelte';
 let { data }: PageProps = $props();
 const toast = getToast();
 
-// ── State ────────────────────────────────────────────────────────────────────
-
 let submitting = $state(false);
 let expandedDelivery = $state<string | null>(null);
 let deactivatingId = $state<string | null>(null);
@@ -24,8 +22,6 @@ let composeBody = $state('');
 let composeSeverity = $state<'info' | 'warning' | 'critical'>('info');
 let composeStartsAt = $state('');
 let composeEndsAt = $state('');
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function relativeTime(d: Date | string | null): string {
 	if (!d) return m.admin_notifications_time_never();
@@ -85,7 +81,7 @@ function resetComposeForm() {
 </script>
 <Stack gap="6">
 
-	<!-- ═══ Section 1: Channel Health ═══════════════════════════════════════════ -->
+	<!-- Section 1: Channel Health -->
 	<Card>
 		{#snippet header()}
 			<Cluster justify="between" align="center">
@@ -173,7 +169,7 @@ function resetComposeForm() {
 		</div>
 	</Card>
 
-	<!-- ═══ Section 2: Delivery Log ════════════════════════════════════════════ -->
+	<!-- Section 2: Delivery Log -->
 
 	<!-- Needs Attention -->
 	{#if data.deadEntries.length > 0}
@@ -360,7 +356,7 @@ function resetComposeForm() {
 		{/await}
 	</Card>
 
-	<!-- ═══ Section 3: Broadcast Announcements ════════════════════════════════ -->
+	<!-- Section 3: Broadcast Announcements -->
 	<div class="section-divider"></div>
 
 	<h2 class="text-fluid-xl font-semibold">{m.admin_notifications_broadcast_heading()}</h2>

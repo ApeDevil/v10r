@@ -21,8 +21,8 @@
  * ## Provider rotation (why `attempts`, not one result)
  *
  * The three streaming branches return their `Response` synchronously, so the orchestrator's outer
- * `try/catch` (which holds `tryFallback`) is UNREACHABLE for stream-phase errors — a provider 429
- * on the first token used to end the turn with a bare error part and an empty persisted row. This
+ * `try/catch` (which holds `tryFallback`) is UNREACHABLE for stream-phase errors, so a provider 429
+ * on the first token would end the turn with a bare error part and an empty persisted row. This
  * helper therefore owns the rotation for the CURRENT turn: it takes a list of lazily-started
  * attempts (`[primary, ...fallbacks]`) and re-pumps the next provider into the SAME open message.
  *

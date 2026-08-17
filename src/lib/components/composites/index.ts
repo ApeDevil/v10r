@@ -1,10 +1,10 @@
 // Composite component exports.
 //
-// chatbot/ and info-dialog/ are intentionally excluded — they import the
-// markdown sanitiser, which historically pulled `jsdom` (via isomorphic-dompurify)
-// and broke Vercel/Node 22 with ERR_REQUIRE_ESM. Even after swapping to
-// sanitize-html, keeping these out of the default barrel prevents the chat/markdown
-// graph from being unconditionally pulled into every route's import graph.
+// chatbot/ and info-dialog/ are intentionally excluded — they import the markdown
+// sanitiser. Keeping them out of the default barrel stops the chat/markdown graph
+// being pulled into every route's import graph. (The same exclusion also kept
+// jsdom, via isomorphic-dompurify, from breaking Vercel/Node 22 with
+// ERR_REQUIRE_ESM before the swap to sanitize-html.)
 // Callers must import them directly: `$lib/components/composites/chatbot`,
 // `$lib/components/composites/info-dialog`.
 

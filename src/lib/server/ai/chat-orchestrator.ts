@@ -339,16 +339,6 @@ async function tryFallback(
 }
 
 /**
- * Orchestrate a chat request: resolve conversation, optionally retrieve context,
- * stream the response, and persist messages.
- *
- * Runs the entire request inside a compaction context (`runWithCompaction`) so
- * tool results above the budget are transparently replaced with refs the model
- * can pull back via `resolve_ref` — the AI SDK #9631 workaround.
- *
- * Returns a Response (either streaming or error JSON).
- */
-/**
  * Honest tool degrade — pick a tool-capable provider that can actually serve THIS turn.
  *
  * The previous check looked only at the resolved tool provider: one cooled provider silently
@@ -403,6 +393,14 @@ function buildTurnAttempts(
 	return attempts;
 }
 
+/**
+ * Resolve conversation, optionally retrieve context, stream the response, persist
+ * messages. Returns a streaming Response or error JSON.
+ *
+ * The whole request runs inside a compaction context so tool results above the
+ * budget are replaced with refs the model pulls back via `resolve_ref` — the
+ * AI SDK #9631 workaround.
+ */
 export async function orchestrateChat(input: ChatInput): Promise<Response> {
 	return runWithCompaction(DEFAULT_BUDGET, () => orchestrateChatInner(input));
 }
@@ -482,18 +480,10 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	// the provider that is actually running, not the one the turn started on.
 	let currentProviderId = hasTools ? (availableToolProvider?.provider.id ?? null) : (activeInfo?.id ?? null);
 	let currentModelId = hasTools ? (availableToolProvider?.provider.model ?? null) : (activeInfo?.model ?? null);
-	// --- Plan-before-execute gate (policy/governor.ts) ---
-	// Pre-turn estimate of whether this is a destructive, multi-capability, multi-target
-	// desk turn that must produce a plan first. Wiring this is what makes the `<planning>`
-	// block inject and `desk_propose_plan` reachable — the governor was dead code before
-	// (never called), so the model was never instructed to plan. Heuristic is deliberately
-	// conservative and tunable; it activates more as the deskbot grows structural tools.
-	// Chatbot turns have no mutating scopes, so requirePlan is always false for them.
 	const grantedScopes = toolScopes ?? [];
 	const lastRawMsg = windowedMessages[windowedMessages.length - 1];
 	const userMsgText = lastRawMsg?.role === 'user' ? getMessageText(lastRawMsg) : '';
 
-	// --- Explicit surface discriminant ---
 	// One named dispatch decision. The routes set `input.surface` explicitly; the chatbot
 	// (retrieval) branch additionally requires a fresh user turn — resume turns degrade to
 	// the plain deskbot streaming path. Computed BEFORE conversation resolution so it can
@@ -501,14 +491,13 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	const isFreshUserTurn = lastRawMsg?.role === 'user' && !!userMsgText && !resumeContext;
 	const surface: TurnSurface = isFreshUserTurn && input.surface === 'chatbot' ? 'chatbot' : 'deskbot';
 
-	// --- Plan-before-execute gate (policy/governor.ts) ---
+	// Plan-before-execute gate (policy/governor.ts)
 	// Pre-turn estimate of whether this is a destructive, multi-capability, multi-target
-	// desk turn that must produce a plan first. Wiring this is what makes the `<planning>`
-	// block inject and `desk_propose_plan` reachable — the governor was dead code before
-	// (never called). Heuristic is deliberately conservative and tunable; it activates more
-	// as the deskbot grows structural tools. Chatbot turns have no mutating scopes → false.
-	// "Structural" capabilities (create/delete files) are the destructive surface; in-place
-	// content writes (desk:write) are not counted as structurally destructive.
+	// desk turn that must produce a plan first. Wiring it is what makes the `<planning>`
+	// block inject and `desk_propose_plan` reachable. Deliberately conservative and
+	// tunable; it activates more as the deskbot grows structural tools. Chatbot turns have
+	// no mutating scopes → false. "Structural" (create/delete) is the destructive surface;
+	// in-place content writes (desk:write) are not.
 	const hasMutatingScopeGranted = grantedScopes.some(
 		(s) => s === 'desk:write' || s === 'desk:create' || s === 'desk:delete',
 	);
@@ -1043,11 +1032,10 @@ The user has just approved the plan above and the listed steps were executed. Ac
 					streamOpts.tools = deskTools;
 					streamOpts.toolChoice = 'auto';
 					streamOpts.stopWhen = stepCountIs(stepsForScopes(toolScopes ?? []));
-					// NOTE: per-step tool-result compaction used to live here via `prepareStep`,
-					// but AI SDK #9631 silently drops message mutations returned from `prepareStep`.
-					// Compaction is now applied at tool-execute time via `wrapToolsWithCompaction`
-					// inside `createDeskTools`, and the whole request runs inside a
-					// `runWithCompaction` context (see below) so refs resolve consistently.
+					// Compaction deliberately does NOT hook `prepareStep`: AI SDK #9631 silently
+					// drops message mutations returned from it. It runs at tool-execute time via
+					// `wrapToolsWithCompaction` inside `createDeskTools`, with the whole request
+					// inside a `runWithCompaction` context (below) so refs resolve consistently.
 				}
 				type ToolResultRecord = {
 					toolName: string;
@@ -1279,11 +1267,9 @@ The user has just approved the plan above and the listed steps were executed. Ac
 		// tool schema, serialization failure) that every provider fails identically.
 		if (['unavailable', 'timeout', 'rate_limit'].includes(aiErr.kind)) {
 			// Per-surface fallback. Only a genuine DESK turn (real desk scopes) may mount desk
-			// tools. A failed CHATBOT turn (no scopes) previously re-derived
-			// createDeskTools with undefined scopes — mounting an empty/wrong toolset and
-			// contaminating the surface. It now falls back tool-less on any provider (ungrounded
-			// but honest); the full grounded-fallback contract lands with the Phase-1 per-surface
-			// pipeline extraction, where each surface owns its own fallback closure.
+			// tools — calling createDeskTools with undefined scopes would mount an empty/wrong
+			// toolset and contaminate the surface. A chatbot turn falls back tool-less on any
+			// provider: ungrounded but honest.
 			const isDeskTurn = !!toolScopes?.length;
 			const fallbackTools = isDeskTurn
 				? (deskTools ?? createDeskTools(userId, effectiveToolScopes ?? toolScopes, deskLayout))

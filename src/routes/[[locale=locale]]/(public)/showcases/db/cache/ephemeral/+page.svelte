@@ -32,15 +32,12 @@ const sections = $derived([
 	{ id: 'cache-vs-db', label: m.showcase_db_cache_ephemeral_nav_vs() },
 ]);
 
-// ─── TTL state ──────────────────────────────────────
 let newTtlKey = $state('showcase:ttl:');
 let newTtlValue = $state('');
 let newTtlSeconds = $state('60');
 
-// ─── Sliding state ──────────────────────────────────
 let slideResult = $state<{ before: { remainingSeconds: number }; after: { remainingSeconds: number } } | null>(null);
 
-// ─── Rate limit state ───────────────────────────────
 let rateLimitResult = $state<{
 	allowed: boolean;
 	remaining: number;
@@ -50,7 +47,6 @@ let rateLimitResult = $state<{
 } | null>(null);
 let rateLoading = $state(false);
 
-// ─── Loading ────────────────────────────────────────
 let actionLoading = $state('');
 
 function handleResult(successMsg?: string) {
@@ -317,9 +313,7 @@ function handleResult(successMsg?: string) {
 		</Stack>
 	{/if}
 
-
 <style>
-	/* ─── TTL Countdown ──────────────────────────────────── */
 
 	.ttl-grid {
 		display: grid;
@@ -371,8 +365,6 @@ function handleResult(successMsg?: string) {
 	:global(.ttl-input) {
 		max-width: 100px;
 	}
-
-	/* ─── Sliding Expiry ─────────────────────────────────── */
 
 	.slide-demo {
 		display: flex;
@@ -427,8 +419,6 @@ function handleResult(successMsg?: string) {
 		font-size: var(--text-fluid-lg);
 	}
 
-	/* ─── Rate Limiting ──────────────────────────────────── */
-
 	.rate-demo {
 		display: flex;
 		flex-direction: column;
@@ -464,8 +454,6 @@ function handleResult(successMsg?: string) {
 		color: var(--color-muted);
 	}
 
-	/* ─── Cache vs DB ────────────────────────────────────── */
-
 	.table-wrap {
 		overflow-x: auto;
 	}
@@ -474,8 +462,6 @@ function handleResult(successMsg?: string) {
 		font-weight: 500;
 		color: var(--color-muted);
 	}
-
-	/* ─── Shared ─────────────────────────────────────────── */
 
 	.action-row {
 		display: flex;

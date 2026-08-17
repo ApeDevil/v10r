@@ -2,12 +2,12 @@
  * Plan-gating predicate for the desk agent loop.
  *
  * `shouldRequirePlan` decides whether a destructive multi-step turn must
- * produce a plan (via the `propose_plan` tool) before executing. Pure
+ * produce a plan (via the `desk_propose_plan` tool) before executing. Pure
  * function — no I/O.
  *
- * The `propose_plan` tool is registered in `tools/index.ts`; this predicate
- * is the intended trigger for forcing the `<planning>` block in the system
- * prompt (`context/system-prompt.ts` → `requirePlan`).
+ * The tool is built by `createProposePlanTool` and wired in `tools/index.ts`;
+ * this predicate is the trigger for forcing the `<planning>` block in the
+ * system prompt (`context/system-prompt.ts` → `requirePlan`).
  *
  * Scope enforcement itself lives in the tool factory: `createDeskTools(userId,
  * scopes)` omits tools for scopes the caller wasn't granted, so out-of-scope

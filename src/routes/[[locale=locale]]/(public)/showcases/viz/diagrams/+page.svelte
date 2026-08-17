@@ -12,7 +12,7 @@ const sections = [
 	{ id: 'cicd-pipeline', label: 'CI/CD' },
 ];
 
-// --- Section 1: Authentication Flow (FlowDiagram) ---
+// Section 1: Authentication Flow (FlowDiagram)
 const authNodes: Node[] = [
 	{ id: 'start', type: 'flow', position: { x: 250, y: 0 }, data: { label: 'Start', variant: 'terminal' } },
 	{ id: 'login', type: 'flow', position: { x: 250, y: 100 }, data: { label: 'Login Page' } },
@@ -31,7 +31,7 @@ const authEdges: Edge[] = [
 	{ id: 'e-retry-login', source: 'retry', target: 'login', type: 'smoothstep', animated: true },
 ];
 
-// --- Section 2: Order State Machine (StateDiagram) ---
+// Section 2: Order State Machine (StateDiagram)
 const orderNodes: Node[] = [
 	{ id: 'start', type: 'start', position: { x: 0, y: 150 }, data: { variant: 'start' } },
 	{ id: 'pending', type: 'state', position: { x: 100, y: 140 }, data: { label: 'Pending', variant: 'state' } },
@@ -52,7 +52,7 @@ const orderEdges: Edge[] = [
 	{ id: 'e-failed-pending', source: 'failed', target: 'pending', type: 'smoothstep', label: 'retry', animated: true },
 ];
 
-// --- Section 3: CI/CD Pipeline (FlowDiagram) ---
+// Section 3: CI/CD Pipeline (FlowDiagram)
 const cicdNodes: Node[] = [
 	{ id: 'build', type: 'flow', position: { x: 0, y: 150 }, data: { label: 'Build' } },
 	{ id: 'test-unit', type: 'flow', position: { x: 200, y: 80 }, data: { label: 'Unit Tests' } },
@@ -299,7 +299,6 @@ const cicdEdges: Edge[] = [
 		padding: var(--spacing-7) var(--spacing-4);
 		box-sizing: border-box;
 	}
-
 
 	.section {
 		scroll-margin-top: 5rem;

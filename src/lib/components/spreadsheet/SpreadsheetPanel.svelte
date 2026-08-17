@@ -26,8 +26,6 @@ const sheet = createSpreadsheetState();
 const dock = getDockContext();
 const panelMenus = getPanelMenus();
 
-// ── Persistence ─────────────────────────────────────────────────
-
 /** File-mode: panelId is "spreadsheet-fil_xxx" → extract fileId. */
 const fileId = $derived(panelId.startsWith('spreadsheet-fil_') ? panelId.replace('spreadsheet-', '') : null);
 
@@ -66,8 +64,6 @@ onMount(() => {
 	}
 });
 
-// ── AI refresh subscription ─────────────────────────────────────
-
 const bus = getDeskBus();
 
 $effect(() => {
@@ -98,7 +94,7 @@ $effect(() => {
 	});
 });
 
-// ── Auto-save (1.5s debounce after cell changes) ────────────────
+// Auto-save (1.5s debounce after cell changes)
 
 let saveTimer: ReturnType<typeof setTimeout>;
 
@@ -132,7 +128,7 @@ $effect(() => {
 	return () => clearTimeout(saveTimer);
 });
 
-// ── AI Context registration (800ms debounce) ────────────────────
+// AI Context registration (800ms debounce)
 
 let contextTimer: ReturnType<typeof setTimeout>;
 // Plain variable (not $state) — only used as a guard flag within this component
@@ -183,8 +179,6 @@ $effect(() => {
 
 	return () => clearTimeout(contextTimer);
 });
-
-// ── Panel menus ─────────────────────────────────────────────────
 
 const spreadsheetMenus = $derived<MenuBarMenu[]>([
 	{

@@ -31,18 +31,14 @@ export const keySymbols: Record<string, string> = {
 	alt: 'Alt',
 	option: 'Alt',
 	shift: '⇧',
-	// Enter
 	enter: '⏎',
 	return: '⏎',
 	// Backspace/Delete
 	backspace: '⌫',
 	delete: 'Del',
-	// Escape
 	escape: 'Esc',
 	esc: 'Esc',
-	// Tab
 	tab: '⇥',
-	// Space
 	space: 'Space',
 	// Arrows
 	up: '↑',

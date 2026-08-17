@@ -4,8 +4,6 @@ import { db } from '../index';
 import { user } from '../schema/auth/_better-auth';
 import { chunk, collection, document } from '../schema/rag';
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
 export interface RAGOverviewStats {
 	totalDocuments: number;
 	pendingCount: number;
@@ -39,8 +37,6 @@ export interface CollectionAdminView {
 	documentCount: number;
 	createdAt: Date;
 }
-
-// ── Queries ──────────────────────────────────────────────────────────────────
 
 export async function getRAGOverviewStats(): Promise<RAGOverviewStats> {
 	const [docStats, chunkStats, collCount] = await Promise.all([

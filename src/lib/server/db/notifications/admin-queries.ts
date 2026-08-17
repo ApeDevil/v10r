@@ -14,8 +14,6 @@ import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegr
 // Per-user error codes excluded from channel health calculation
 const PER_USER_ERROR_CODES = ['50007', '403'];
 
-// ── Channel Health Stats ─────────────────────────────────────────────────────
-
 export interface ChannelHealthStats {
 	channel: string;
 	sent: number;
@@ -58,8 +56,6 @@ export async function getChannelHealthStats(): Promise<ChannelHealthStats[]> {
 		lastSentAt: r.lastSentAt,
 	}));
 }
-
-// ── Delivery Log ─────────────────────────────────────────────────────────────
 
 export interface DeliveryLogFilters {
 	channel?: string;
@@ -152,7 +148,7 @@ export async function getDeliveryLog(filters: DeliveryLogFilters = {}) {
 	};
 }
 
-// ── Dead Deliveries (Needs Attention) ────────────────────────────────────────
+// Dead Deliveries (Needs Attention)
 
 export interface DeadDeliveryEntry {
 	id: string;
@@ -195,8 +191,6 @@ export async function getDeadDeliveries(): Promise<DeadDeliveryEntry[]> {
 		createdAt: r.createdAt,
 	}));
 }
-
-// ── Connected Accounts ───────────────────────────────────────────────────────
 
 export async function getConnectedAccountsCounts() {
 	const [discord, telegram] = await Promise.all([

@@ -25,8 +25,6 @@ import { UNKNOWN_CLIENT, UNKNOWN_COUNTRY } from '$lib/server/db/analytics/consta
 import { rowsOf } from '$lib/server/db/rows';
 import { dailyPageStats, events, sessions, userEvents } from '$lib/server/db/schema/analytics';
 
-// ── Date helpers ─────────────────────────────────────────────────────────────
-
 function daysAgo(n: number): string {
 	const d = new Date();
 	d.setDate(d.getDate() - n);
@@ -36,8 +34,6 @@ function daysAgo(n: number): string {
 function dateRange(days: number) {
 	return { from: daysAgo(days), to: daysAgo(0) };
 }
-
-// ── Overview metrics ─────────────────────────────────────────────────────────
 
 /**
  * Headline metrics for a date range — CONFIRMED sessions only, with the
@@ -115,20 +111,16 @@ export async function getRollupFreshness(): Promise<string | null> {
 	return rows[0]?.latest ?? null;
 }
 
-// ── Traffic trend ────────────────────────────────────────────────────────────
-
 /**
  * CONFIRMED pageviews and unique visitors per day.
  *
  * ## Why this does not read the rollup
  *
- * It used to be `sum(daily_page_stats.unique_visitors) GROUP BY date`, and that
- * is unsound for the same reason `getOverviewMetrics` documents: the rollup's
- * `unique_visitors` is distinct-per-(date, path), so summing it over a day
- * multiplies every person by the number of distinct pages they viewed. On
- * 2026-07-30 that turned 114 real visitors into a plotted 177 across 106 paths —
- * and because the headline metric was already counted correctly, the KPI and the
- * chart directly above it disagreed by 55%.
+ * `sum(daily_page_stats.unique_visitors) GROUP BY date` is unsound for the same
+ * reason `getOverviewMetrics` documents: the rollup's `unique_visitors` is
+ * distinct-per-(date, path), so summing it over a day multiplies every person by
+ * the number of distinct pages they viewed — and since the headline KPI counts
+ * correctly, the chart would disagree with the number directly above it.
  *
  * A per-day distinct count cannot be assembled from a per-path rollup at all; the
  * only correct source is the raw events. Reading them here also decouples the
@@ -164,8 +156,6 @@ export async function getTrafficTrend(days: number): Promise<TrafficTrendPoint[]
 		.orderBy(day);
 }
 
-// ── Top pages ────────────────────────────────────────────────────────────────
-
 /**
  * Confirmed pageviews per path (the rollup's headline columns are confirmed-
  * only). Deliberately NO unique-visitors column: summing the rollup's per-day
@@ -189,7 +179,7 @@ export async function getTopPages(days: number, limit = 10): Promise<TopPage[]> 
 		.limit(limit);
 }
 
-// ── Audience breakdown: who the visitors are ─────────────────────────────────
+// Audience breakdown: who the visitors are
 
 /**
  * Distinct visitors broken down by country, device class, and browser family.
@@ -276,8 +266,6 @@ export async function getAudienceBreakdown(days: number): Promise<AudienceBreakd
 	};
 }
 
-// ── Consent distribution ─────────────────────────────────────────────────────
-
 export async function getConsentSplit(days: number): Promise<ConsentSplit[]> {
 	const cutoff = new Date(Date.now() - days * 86400000);
 
@@ -297,7 +285,7 @@ export async function getConsentSplit(days: number): Promise<ConsentSplit[]> {
 	);
 }
 
-// ── Traffic composition: the three honestly-labelled buckets ─────────────────
+// Traffic composition: the three honestly-labelled buckets
 
 /**
  * Confirmed / unconfirmed / bots, for the composition panel.
@@ -377,8 +365,6 @@ export async function getTrafficComposition(days: number): Promise<TrafficCompos
 	};
 }
 
-// ── Funnel analysis ──────────────────────────────────────────────────────────
-
 export async function getFunnelSteps(days: number, steps: { label: string; path: string }[]): Promise<FunnelStep[]> {
 	const cutoff = new Date(Date.now() - days * 86400000);
 
@@ -423,16 +409,13 @@ export async function getFunnelSteps(days: number, steps: { label: string; path:
 	return results;
 }
 
-// ── Navigation paths ─────────────────────────────────────────────────────────
-
 /**
  * Top page-to-page transitions, computed in Postgres with a window function.
  *
- * Replaces the retired Neo4j `FOLLOWED_BY` graph. The Sankey it used to feed is
- * gone deliberately: aggregate path diagrams merge visitors with opposite
- * experiences into one indistinguishable ribbon, so they look explanatory
- * without being able to answer "who, and why". A ranked transition table says
- * the same thing without implying more than the data supports.
+ * A ranked table rather than a Sankey, deliberately: aggregate path diagrams
+ * merge visitors with opposite experiences into one indistinguishable ribbon, so
+ * they look explanatory without being able to answer "who, and why". The table
+ * says the same thing without implying more than the data supports.
  *
  * Self-transitions (a reload, or a beacon replay that slipped past the event-id
  * unique index) are excluded — they are not navigations.
@@ -496,8 +479,6 @@ export async function getExitPages(days: number, limit = 10): Promise<PageCount[
 		.limit(limit);
 }
 
-// ── Web Vitals ───────────────────────────────────────────────────────────────
-
 /**
  * Web Vitals at the 75th percentile, with the element most often blamed.
  *
@@ -549,8 +530,6 @@ export async function getWebVitals(days: number): Promise<VitalSummary[]> {
 	}));
 }
 
-// ── Friction signals ─────────────────────────────────────────────────────────
-
 /**
  * Rage and dead clicks, grouped by what was clicked and where.
  *
@@ -586,8 +565,6 @@ export async function getFrictionSignals(days: number, limit = 20): Promise<Fric
 	}));
 }
 
-// ── Authenticated lane ───────────────────────────────────────────────────────
-
 /**
  * Usage of the authenticated area. Reads `analytics.user_events` — the lane the
  * consent banner does not govern, because for a logged-in user the ePrivacy gate
@@ -621,7 +598,7 @@ export async function getUserLaneStats(days: number): Promise<UserLaneStats> {
 	};
 }
 
-// ── Data age stats (for privacy page) ────────────────────────────────────────
+// Data age stats (for privacy page)
 
 export async function getDataAgeStats() {
 	const result = await db

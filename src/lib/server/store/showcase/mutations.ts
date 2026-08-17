@@ -26,7 +26,6 @@ export async function generateUploadUrl(
 ): Promise<PresignedUrlResult & { key: string }> {
 	const client = requireS3();
 
-	// Validate MIME type
 	if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
 		throw new StoreError(
 			'forbidden',
@@ -34,12 +33,10 @@ export async function generateUploadUrl(
 		);
 	}
 
-	// Validate size
 	if (fileSize > MAX_UPLOAD_SIZE) {
 		throw new StoreError('limit', `File size ${(fileSize / 1024 / 1024).toFixed(1)} MB exceeds the 2 MB limit`);
 	}
 
-	// Check showcase object limit
 	const limitMsg = await checkObjectLimit();
 	if (limitMsg) {
 		throw new StoreError('limit', limitMsg);

@@ -64,7 +64,6 @@ const unsubContent = bus.subscribe(
 	{ replayLast: true },
 );
 
-// Clear when document changes
 const unsubDocument = bus.subscribe('editor:document', (payload) => {
 	if (!payload) {
 		hasDocument = false;

@@ -48,7 +48,6 @@ export const POST: RequestHandler = async ({ cookies, locals, getClientAddress }
 		return apiError(500, 'resolve_failed', 'Failed to resolve style.');
 	}
 
-	// Set cookie
 	cookies.set(STYLE_COOKIE_NAME, serializeStyleCookie(config), STYLE_COOKIE_OPTIONS);
 
 	// Fire-and-forget DB persistence for authenticated users

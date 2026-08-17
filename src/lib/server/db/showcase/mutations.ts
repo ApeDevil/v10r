@@ -8,8 +8,6 @@ import { and, desc, eq, gt, isNull, lte, max, or } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { auditLog, documentVault, temporalRecord, typeSpecimen, typeSpecimenHistory } from '$lib/server/db/schema';
 
-// ─── Mutable CRUD ──────────────────────────────────────────────
-
 export async function createSpecimen(data: {
 	label: string;
 	code: string;
@@ -70,8 +68,6 @@ export async function deleteSpecimen(id: number) {
 	return row;
 }
 
-// ─── Versioned Records ─────────────────────────────────────────
-
 export async function updateWithHistory(
 	id: number,
 	data: {
@@ -90,7 +86,6 @@ export async function updateWithHistory(
 
 		const nextVersion = (versionResult?.maxVersion ?? 0) + 1;
 
-		// Update the specimen
 		const [updated] = await tx
 			.update(typeSpecimen)
 			.set({ ...data, updatedAt: new Date() })
@@ -99,7 +94,6 @@ export async function updateWithHistory(
 
 		if (!updated) return null;
 
-		// Insert history snapshot
 		await tx.insert(typeSpecimenHistory).values({
 			specimenId: updated.id,
 			version: nextVersion,
@@ -116,8 +110,6 @@ export async function updateWithHistory(
 		return { specimen: updated, version: nextVersion };
 	});
 }
-
-// ─── Soft Delete ────────────────────────────────────────────────
 
 export async function softDeleteDocument(id: string) {
 	const [doc] = await db
@@ -137,7 +129,7 @@ export async function restoreDocument(id: string) {
 	return doc;
 }
 
-// ─── Append-Only ────────────────────────────────────────────────
+// Append-Only
 
 export async function appendAuditEntry(data: {
 	action: 'create' | 'update' | 'delete' | 'restore' | 'export' | 'import' | 'login' | 'logout';
@@ -155,8 +147,6 @@ export async function appendAuditEntry(data: {
 		.returning();
 	return entry;
 }
-
-// ─── Temporal ───────────────────────────────────────────────────
 
 export async function queryTemporalAt(date: string) {
 	const rows = await db

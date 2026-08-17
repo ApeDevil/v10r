@@ -13,7 +13,7 @@ import type { PageServerLoad } from './$types';
  * returns a drift status comparing the file's hash against the latest
  * published revision in the DB.
  *
- * Auth is inherited from `src/routes/admin/+layout.server.ts` (requireAdmin).
+ * Auth is inherited from `src/routes/[[locale=locale]]/admin/+layout.server.ts` (requireAdmin).
  */
 export const load: PageServerLoad = async ({ params }) => {
 	const { slug, locale } = params;

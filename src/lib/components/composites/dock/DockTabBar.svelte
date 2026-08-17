@@ -56,7 +56,6 @@ function handleClose(e: MouseEvent, panelId: string) {
 	dock.closePanel(panelId);
 }
 
-// --- Drag source ---
 let dragId = $state<string | null>(null);
 let ghostEl = $state<HTMLElement | null>(null);
 let startX = 0;

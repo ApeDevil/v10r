@@ -5,8 +5,6 @@ import { CacheError } from '../errors';
 import { redis } from '../index';
 import type { CacheEntry, CacheEntryDetail, RedisType } from '../types';
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
 export interface CacheOverview {
 	totalKeys: number;
 	keysByPrefix: Record<string, number>;
@@ -17,8 +15,6 @@ export interface CacheOverview {
 export interface InProcessCacheStatus {
 	announcementsCacheSize: number;
 }
-
-// ── Queries ──────────────────────────────────────────────────────────────────
 
 function requireRedis() {
 	if (!redis) throw new CacheError('credentials', 'Redis is not configured');

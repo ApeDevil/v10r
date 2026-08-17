@@ -137,8 +137,6 @@ export const actions: Actions = {
 		}
 	},
 
-	// ── Domain actions ─────────────────────────────────────────────
-
 	createDomain: async (event) => {
 		requireAdmin(event.locals);
 		const formData = await event.request.formData();

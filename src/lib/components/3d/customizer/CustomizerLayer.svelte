@@ -33,9 +33,7 @@ let { scene, parser, config, currentState }: Props = $props();
 
 const { invalidate } = useThrelte();
 
-// ---------------------------------------------------------------------------
 // Material cloning — prevent shared-reference mutation
-// ---------------------------------------------------------------------------
 
 function ensureMaterialsCloned(root: Object3D) {
 	root.traverse((child) => {
@@ -67,9 +65,7 @@ function captureOriginalColors(root: Object3D) {
 	});
 }
 
-// ---------------------------------------------------------------------------
 // KHR_materials_variants — uses parser.getDependency() (Three.js r170+)
-// ---------------------------------------------------------------------------
 
 // Store original material per mesh for variant reset
 const originalMaterials = new Map<Mesh, MeshStandardMaterial | MeshStandardMaterial[]>();
@@ -133,9 +129,7 @@ async function applyKHRVariant(root: Object3D, variantIndex: number) {
 	invalidate();
 }
 
-// ---------------------------------------------------------------------------
 // Color override
-// ---------------------------------------------------------------------------
 
 function applyColorOverride(root: Object3D, targetMaterials: string[], hex: string) {
 	const color = new Color(hex);
@@ -170,9 +164,7 @@ function resetColors(root: Object3D) {
 	invalidate();
 }
 
-// ---------------------------------------------------------------------------
 // Part visibility
-// ---------------------------------------------------------------------------
 
 function applyPartVisibility(root: Object3D, objectNames: string[], visible: boolean) {
 	for (const name of objectNames) {
@@ -182,9 +174,7 @@ function applyPartVisibility(root: Object3D, objectNames: string[], visible: boo
 	invalidate();
 }
 
-// ---------------------------------------------------------------------------
 // Morph targets
-// ---------------------------------------------------------------------------
 
 /**
  * Find all meshes matching a name. Handles multi-primitive GLTF meshes where
@@ -226,9 +216,7 @@ function applyMorphTarget(root: Object3D, meshName: string, targetName: string, 
 	}
 }
 
-// ---------------------------------------------------------------------------
 // Bone attachments
-// ---------------------------------------------------------------------------
 
 const GEOMETRY_FACTORIES = {
 	cone: (args: number[]) => new ConeGeometry(...(args as [number, number, number])),
@@ -240,10 +228,8 @@ const GEOMETRY_FACTORIES = {
 const attachedMeshes = new Map<string, { mesh: Mesh; bone: Bone }>();
 
 function attachAccessory(root: Object3D, boneName: string, accessory: Accessory) {
-	// Remove existing if present
 	detachAccessory(accessory.id);
 
-	// Find bone
 	let bone: Bone | undefined;
 	root.traverse((child) => {
 		if ('isBone' in child && child.isBone && child.name === boneName) {
@@ -294,9 +280,7 @@ function detachAccessory(id: string) {
 	invalidate();
 }
 
-// ---------------------------------------------------------------------------
 // Initialize on scene load
-// ---------------------------------------------------------------------------
 
 let initialized = $state(false);
 
@@ -320,9 +304,7 @@ $effect(() => {
 	initialized = true;
 });
 
-// ---------------------------------------------------------------------------
 // React to state changes
-// ---------------------------------------------------------------------------
 
 // Materials
 $effect(() => {
@@ -382,9 +364,7 @@ $effect(() => {
 	}
 });
 
-// ---------------------------------------------------------------------------
 // Cleanup
-// ---------------------------------------------------------------------------
 
 onDestroy(() => {
 	for (const [id] of attachedMeshes) {

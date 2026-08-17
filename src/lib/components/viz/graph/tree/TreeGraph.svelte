@@ -49,7 +49,6 @@ onMount(async () => {
 });
 
 function computeLayout(d3Hierarchy: typeof import('d3-hierarchy')) {
-	// Filter out collapsed children
 	function filterCollapsed(node: TreeData): TreeData {
 		if (collapsedIds.has(node.id) || !node.children) {
 			return { id: node.id, label: node.label };

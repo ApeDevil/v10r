@@ -23,7 +23,6 @@ export async function adminFlushByPrefix(prefix: string): Promise<number> {
 	return result;
 }
 
-/** Invalidate all in-process caches. */
 export function adminInvalidateInProcessCaches(): void {
 	invalidateAnnouncementCache();
 }

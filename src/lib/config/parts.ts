@@ -1,6 +1,4 @@
-// ---------------------------------------------------------------------------
 // 3D Part Explorer Configuration
-// ---------------------------------------------------------------------------
 // Logical-part registry for the interactive "part explorer" (click a part of a
 // model to surface info + highlight + camera framing). Keys are STABLE logical
 // part IDs; each maps to one or more GLTF mesh-name patterns. Never key logic on
@@ -9,7 +7,6 @@
 //
 // Pure module: no Three.js scene construction, no WebGL. `resolvePartId` is
 // unit-tested in parts.test.ts.
-// ---------------------------------------------------------------------------
 
 import type { Mesh, Object3D } from 'three';
 
@@ -39,9 +36,7 @@ export interface PartDef {
 	customizeHint?: boolean;
 }
 
-// ---------------------------------------------------------------------------
 // Model-specific registries
-// ---------------------------------------------------------------------------
 
 /**
  * Glam Velvet Sofa — the GLB exposes exactly three meshes:
@@ -134,9 +129,7 @@ export const SOFA_PARTS: PartDef[] = [
 /** Map of model id → its part registry. Absent = model is not a part explorer. */
 export const PART_EXPLORERS_BY_MODEL = new Map<string, PartDef[]>([['glam-velvet-sofa', SOFA_PARTS]]);
 
-// ---------------------------------------------------------------------------
 // Resolution helpers (prefix-match — robust to multi-primitive splits)
-// ---------------------------------------------------------------------------
 
 /** Exact match, or a multi-primitive split where Three.js appends "_0"/"_1". */
 function matchesPattern(name: string, pattern: string): boolean {

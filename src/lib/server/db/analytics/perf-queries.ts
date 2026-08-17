@@ -44,8 +44,6 @@ function cutoffFor(days: number): Date {
 	return new Date(Date.now() - days * 86400000);
 }
 
-// ── Field vitals ─────────────────────────────────────────────────────────────
-
 export interface VitalLaneSummary {
 	metric: string;
 	/** p75 over the PROD lane only. Null when the prod lane has no samples. */
@@ -166,7 +164,7 @@ export async function getVitalsTrend(days: number): Promise<VitalTrendPoint[]> {
 	}));
 }
 
-// ── Idle-gap profile ─────────────────────────────────────────────────────────
+// Idle-gap profile
 
 export const IDLE_GAP_BUCKETS = ['lt1m', '1to15m', '15to60m', 'gt60m'] as const;
 export type IdleGapBucket = (typeof IDLE_GAP_BUCKETS)[number];
@@ -265,8 +263,6 @@ export async function getIdleGapProfile(days: number): Promise<IdleGapRow[]> {
 	});
 }
 
-// ── Hot paths ────────────────────────────────────────────────────────────────
-
 export interface RouteHotPath {
 	route: string;
 	/** Server-rendered pageviews — requests that actually cost render time. */
@@ -320,8 +316,6 @@ export async function getRouteHotPaths(days: number, limit = 15): Promise<RouteH
 		botHits: Number(r.bot_hits),
 	}));
 }
-
-// ── Lane census ──────────────────────────────────────────────────────────────
 
 export interface LaneCensus {
 	lane: TelemetryLane;

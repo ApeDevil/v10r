@@ -41,7 +41,7 @@ podman exec v10r bun run knip             # unused exports / dead code
 ### Running a single test
 
 ```bash
-podman exec v10r bunx vitest run src/lib/server/mcp/server.test.ts   # one file
+podman exec v10r bunx vitest run src/lib/server/mcp/http.test.ts     # one file
 podman exec v10r bunx vitest run -t "rejects unauthenticated"        # by test name
 podman exec v10r bunx vitest run src/lib/server/rag                  # by path prefix
 ```
@@ -145,6 +145,15 @@ Global CSS (`uno.css`, `app.css`, fonts) is imported once in the **root** `src/r
 - Svelte 5 runes only — no Svelte 4 stores. Reactive state files **must** use the `.svelte.ts` extension: app-wide in `src/lib/state/[concern].svelte.ts`, component-local co-located as `[component].state.svelte.ts`.
 - Never name a prop `state` — it collides with the `$state` rune (`store_invalid_shape`).
 - `src/lib/paraglide/` is generated and gitignored — never edit. Translation source of truth is `messages/*.json` (en/de/ru). Adding a new i18n key requires a dev-server restart; the running Vite process 500s on the unknown key until then.
+
+### Comments
+
+Comment the WHY, never the WHAT. Delete a comment that restates its next line.
+
+- Present tense; one owner per fact, cross-referenced by path. No "previously…"/"used to…" outside a regression test, where the bug IS the reason.
+- No banners or structural `<!-- -->` / `/* */` labels — group with blank lines; keep a label's words, drop its frame. A `##` heading in a docblock means it outgrew a comment.
+- Keep: ordering constraints, upstream-bug workarounds, security invariants, "looks wrong, is deliberate", `svelte-ignore`/`biome-ignore` justifications, gate-test docstrings (invariant → motivating bug → `── Honest limits ──` → alternative to widening the allowlist).
+- Don't edit casually: `@ts-expect-error`, `@unocss-include`, `PATTERN-INDEX` anchors in `docs/pattern-library/README.md`, comments in raw-text-gate files — most gates don't strip comments, so edits flip them either way.
 
 ## Documentation
 

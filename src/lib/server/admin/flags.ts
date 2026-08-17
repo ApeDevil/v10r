@@ -11,13 +11,9 @@ import { systemConfig } from '$lib/server/db/schema/admin';
  */
 const flagValueSchema = v.boolean('Flag values must be booleans');
 
-// ── Read ──────────────────────────────────────────────────────────────────────
-
 export async function getAllFlags() {
 	return db.select().from(systemConfig).orderBy(systemConfig.key);
 }
-
-// ── Write ─────────────────────────────────────────────────────────────────────
 
 export async function setFlag(
 	key: string,

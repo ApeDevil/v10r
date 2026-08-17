@@ -70,8 +70,6 @@ export function evaluateFormula(expr: string, getCell: CellGetter, visiting: Set
 	}
 }
 
-// ── Internal parser ──────────────────────────────────────────────────
-
 function evalExpression(expr: string, getCell: CellGetter, visiting: Set<string>): CellValue {
 	const trimmed = expr.trim();
 	const upper = trimmed.toUpperCase();

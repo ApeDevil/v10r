@@ -170,7 +170,7 @@ function restoreAll() {
 	}
 }
 
-// --- Init: clone materials (prevent shared-ref mutation), capture originals ---
+// Init: clone materials (prevent shared-ref mutation), capture originals
 $effect(() => {
 	if (!scene || initialized) return;
 
@@ -204,7 +204,7 @@ $effect(() => {
 	initialized = true;
 });
 
-// --- Reactive highlight: selected wins over hover ---
+// Reactive highlight: selected wins over hover
 $effect(() => {
 	if (!initialized) return;
 	restoreAll();

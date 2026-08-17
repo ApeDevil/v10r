@@ -6,7 +6,7 @@
  * Bun dev container's neon-serverless driver with `poolQueryViaFetch = true`. Production
  * runs Node on Vercel where WebSocket transactions are known-good; this closes the ONE
  * environment (Bun + fetch-routed pool) that the pglite-based unit tests cannot exercise,
- * despite the codebase having 22 `db.transaction()` call sites.
+ * despite the codebase leaning on `db.transaction()` throughout.
  *
  * Safe: creates a throwaway scratch table, exercises rollback + commit, then drops it.
  * Touches no real data. Targets NEON_DATABASE_URL_PROD (the same var the app uses).

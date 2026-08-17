@@ -81,7 +81,7 @@ export async function botRangesRefresh(): Promise<number> {
 		});
 	}
 
-	// ── Datacenter / relay feeds (sessions.ip_class) ─────────────────────────
+	// Datacenter / relay feeds (sessions.ip_class)
 	//
 	// Same per-source swap semantics as the crawler feeds above, and for the
 	// same reason: a failed fetch keeps the previous rows, because an emptied

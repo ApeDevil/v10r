@@ -24,8 +24,6 @@ function clampPresignTtl(expiresIn: number): number {
 	return Math.min(Math.max(requested, MIN_PRESIGN_TTL), PRESIGNED_URL_EXPIRY);
 }
 
-// ─── Connection page ────────────────────────────────────
-
 export interface ConnectionResult {
 	reachable: boolean;
 	bucketName: string;
@@ -76,8 +74,6 @@ async function getBucketStats(): Promise<BucketStats> {
 
 	return { objectCount, totalSize };
 }
-
-// ─── Objects page ───────────────────────────────────────
 
 export async function listShowcaseObjects(): Promise<ObjectInfo[]> {
 	const client = requireS3();
@@ -142,8 +138,6 @@ export async function generateDownloadUrl(key: string, expiresIn: number): Promi
 		expiresAt: new Date(Date.now() + ttl * 1000).toISOString(),
 	};
 }
-
-// ─── Transfer page ──────────────────────────────────────
 
 /** Max bytes one range read may return — a hex-dump window, not a download. */
 const MAX_RANGE_BYTES = 1024;

@@ -77,8 +77,6 @@ beforeEach(async () => {
 	await db.delete(user); // cascades sessions/accounts/preferences
 });
 
-// ── maskIp ────────────────────────────────────────────────────────────────────
-
 describe('maskIp', () => {
 	it('keeps first two IPv4 octets only', () => {
 		expect(maskIp('198.51.100.7')).toBe('198.51.xxx.xxx');
@@ -89,7 +87,7 @@ describe('maskIp', () => {
 	});
 });
 
-// ── collectUserData — secret projection ──────────────────────────────────────
+// collectUserData — secret projection
 
 describe('collectUserData — no secrets cross out', () => {
 	it('report never contains token values or raw prior IPs anywhere', async () => {
@@ -127,7 +125,7 @@ describe('collectUserData — no secrets cross out', () => {
 	});
 });
 
-// ── collectUserData — shape + degrade ────────────────────────────────────────
+// collectUserData — shape + degrade
 
 describe('collectUserData — report shape', () => {
 	it('produces a full report with zero counts for a fresh user', async () => {
@@ -191,8 +189,6 @@ describe('collectUserData — report shape', () => {
 	});
 });
 
-// ── deleteUserData ────────────────────────────────────────────────────────────
-
 describe('deleteUserData', () => {
 	it('cascade-deletes sessions and accounts with the user row, idempotently', async () => {
 		await seedUser();
@@ -224,8 +220,6 @@ describe('deleteUserData', () => {
 		expect(await db.select().from(userEvents)).toHaveLength(0);
 	});
 });
-
-// ── consumeTransparencyMarker ────────────────────────────────────────────────
 
 describe('consumeTransparencyMarker — exactly once', () => {
 	it('returns true on first call, false on every subsequent call', async () => {

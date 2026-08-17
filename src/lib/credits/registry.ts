@@ -75,7 +75,6 @@ export interface CreditEntry {
 }
 
 export const credits: CreditEntry[] = [
-	// ── framework ─────────────────────────────────────────────────────────
 	{
 		id: 'sveltekit',
 		name: 'SvelteKit',
@@ -107,7 +106,6 @@ export const credits: CreditEntry[] = [
 		source: { kind: 'npm', pkg: 'vite' },
 	},
 
-	// ── data ──────────────────────────────────────────────────────────────
 	{
 		id: 'neon',
 		name: 'Neon (PostgreSQL)',
@@ -160,7 +158,6 @@ export const credits: CreditEntry[] = [
 		source: { kind: 'service' },
 	},
 
-	// ── auth ──────────────────────────────────────────────────────────────
 	{
 		id: 'better-auth',
 		name: 'Better Auth',
@@ -183,7 +180,6 @@ export const credits: CreditEntry[] = [
 		source: { kind: 'npm', pkg: 'altcha' },
 	},
 
-	// ── forms ─────────────────────────────────────────────────────────────
 	{
 		id: 'valibot',
 		name: 'Valibot',
@@ -207,7 +203,6 @@ export const credits: CreditEntry[] = [
 		source: { kind: 'npm', pkg: 'sveltekit-superforms' },
 	},
 
-	// ── i18n ──────────────────────────────────────────────────────────────
 	{
 		id: 'paraglide',
 		name: 'Paraglide JS',
@@ -220,7 +215,6 @@ export const credits: CreditEntry[] = [
 		source: { kind: 'npm', pkg: '@inlang/paraglide-js' },
 	},
 
-	// ── ui ────────────────────────────────────────────────────────────────
 	{
 		id: 'unocss',
 		name: 'UnoCSS',
@@ -263,7 +257,6 @@ export const credits: CreditEntry[] = [
 		source: { kind: 'npm', pkg: '@fontsource-variable/inter' },
 	},
 
-	// ── viz ───────────────────────────────────────────────────────────────
 	{
 		id: 'threejs',
 		name: 'Three.js',
@@ -330,7 +323,6 @@ export const credits: CreditEntry[] = [
 		source: { kind: 'npm', pkg: '@xyflow/svelte' },
 	},
 
-	// ── content ───────────────────────────────────────────────────────────
 	{
 		id: 'unified',
 		name: 'unified (remark · rehype)',
@@ -350,7 +342,6 @@ export const credits: CreditEntry[] = [
 		source: { kind: 'npm', pkg: 'shiki' },
 	},
 
-	// ── ai ────────────────────────────────────────────────────────────────
 	{
 		id: 'ai-sdk',
 		name: 'Vercel AI SDK',
@@ -381,7 +372,6 @@ export const credits: CreditEntry[] = [
 		source: { kind: 'service' },
 	},
 
-	// ── platform ──────────────────────────────────────────────────────────
 	{
 		id: 'vercel',
 		name: 'Vercel',

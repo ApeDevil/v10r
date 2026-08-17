@@ -37,7 +37,6 @@ export async function linkTelegramAccount(opts: {
 		return { status: 'expired' };
 	}
 
-	// Mark token as used
 	await db
 		.update(telegramVerificationTokens)
 		.set({ usedAt: new Date() })

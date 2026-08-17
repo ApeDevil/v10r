@@ -1,8 +1,7 @@
 /**
  * The canonical View menu — ONE factory for every surface that renders or
  * matches it (desktop kebab via DockLeaf, keyboard matching via DeskShortcuts,
- * the mobile commands sheet). Before this factory the menu existed as three
- * drifting copies.
+ * the mobile commands sheet). One factory, so the three surfaces cannot drift.
  *
  * `structural: false` strips the split commands — mobile performs only
  * non-structural dock operations, so the persisted desktop tree shape is

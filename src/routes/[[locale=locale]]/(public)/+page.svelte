@@ -270,7 +270,6 @@ v          10            r</pre>
 </section>
 
 <style>
-	/* ─── TYPOGRAPHY ─── */
 	.classification {
 		font-family: var(--font-heading, system-ui, sans-serif);
 	}
@@ -291,7 +290,7 @@ v          10            r</pre>
 		font-family: var(--font-body, system-ui, sans-serif);
 	}
 
-	/* ─── ACT I: HERO ─── */
+	/* ACT I: HERO */
 	.hero {
 		min-height: 100svh;
 		display: flex;
@@ -626,14 +625,13 @@ v          10            r</pre>
 		max-width: 280px;
 	}
 
-	/* ─── DIVIDERS ─── */
 	.divider-wrap {
 		padding: var(--spacing-8) var(--spacing-fluid-3);
 		display: flex;
 		justify-content: center;
 	}
 
-	/* ─── ACT II: TAXONOMY ─── */
+	/* ACT II: TAXONOMY */
 	.taxonomy {
 		padding: var(--spacing-5) var(--spacing-fluid-3) var(--spacing-8);
 		max-width: 80rem;
@@ -738,7 +736,7 @@ v          10            r</pre>
 		margin-left: var(--spacing-2);
 	}
 
-	/* ─── ACT IV: SHOWCASE ENTRY ─── */
+	/* ACT IV: SHOWCASE ENTRY */
 	.showcase-entry {
 		padding: var(--spacing-7) var(--spacing-fluid-3) var(--spacing-8);
 		display: flex;

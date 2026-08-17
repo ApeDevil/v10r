@@ -2,10 +2,9 @@
  * POST /api/ai/images/[id]/analyze — run vision extraction for an owned image and
  * record the proposal.
  *
- * Formerly a route-local showcase RPC (`showcases/ai/image-metadata/analyze`), which
- * let it bypass the shared AI guard: real vision budget was spent with no AI rate
- * limit and no daily-budget check. Promoted to the un-localized API tree behind
- * `guardAiRequest` and normalized to the repo-wide `{ data } / { error }` envelope.
+ * Lives in the un-localized API tree behind `guardAiRequest`, not as a route-local
+ * showcase RPC: this spends real vision budget, so it must pass the shared AI rate
+ * limit and daily-budget check. Uses the repo-wide `{ data } / { error }` envelope.
  * The image id is the path segment (subresource action) — the target resource is
  * also the idempotency key.
  */
@@ -42,7 +41,7 @@ export const config = { runtime: 'nodejs22.x', maxDuration: 60 };
 
 export const POST: RequestHandler = async ({ params, locals }) => {
 	// auth → aiConfigured → rate-limit → daily budget: the same four gates every
-	// AI-spending route passes. This endpoint used to skip all but auth.
+	// AI-spending route passes.
 	const guard = await guardAiRequest(locals);
 	if (guard.response) return guard.response;
 

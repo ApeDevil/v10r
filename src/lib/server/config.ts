@@ -1,5 +1,3 @@
-// ── Auth ───────────────────────────────────────────────────────────────────────
-
 /** Session lifetime in seconds (7 days) */
 export const SESSION_EXPIRES_IN = 60 * 60 * 24 * 7;
 
@@ -47,8 +45,6 @@ export const STEPUP_VERIFY_RATE_LIMIT_MAX = 5;
 /** Per-account 2FA verify rate limit: window duration */
 export const STEPUP_VERIFY_RATE_LIMIT_WINDOW = '300 s';
 
-// ── AI ─────────────────────────────────────────────────────────────────────────
-
 /** Chat endpoint rate limit: requests per window */
 export const AI_RATE_LIMIT_MAX = 20;
 
@@ -68,8 +64,6 @@ export const AI_MAX_TOKENS = 2048;
  */
 export const AI_DAILY_TOKEN_CAP = 100_000;
 
-// ── Retrieval ──────────────────────────────────────────────────────────────────
-
 /**
  * Embedding model identity + chunk sizing live in the Vite-free `rag-shared/embed-config`
  * leaf so the standalone Bun ingestion scripts can import the SAME constants by relative
@@ -85,7 +79,7 @@ export {
 	SECTION_CHUNK_TARGET,
 } from './rag-shared/embed-config';
 
-// ── Docs corpus (project documentation RAG) ──────────────────────────────────
+// Docs corpus (project documentation RAG)
 
 /**
  * Reserved system user that owns every ingested project-documentation row. Each
@@ -124,8 +118,6 @@ export const SEARCH_RATE_LIMIT_MAX = 30;
 /** Search endpoint rate limit: window duration */
 export const SEARCH_RATE_LIMIT_WINDOW = '1m';
 
-// ── Showcase ───────────────────────────────────────────────────────────────────
-
 /** Max rows per showcase table */
 export const MAX_SHOWCASE_ROWS = 50;
 
@@ -141,7 +133,6 @@ export const MAX_BLOG_UPLOAD_SIZE = 10 * 1024 * 1024;
 /** Max blog 3D model upload size (bytes, 50 MB) */
 export const MAX_BLOG_3D_UPLOAD_SIZE = 50 * 1024 * 1024;
 
-/** Max conversations per user */
 export const MAX_CONVERSATIONS_PER_USER = 200;
 
 /** Conversation CRUD rate limit: requests per window */
@@ -158,8 +149,6 @@ export const USERNAME_CHECK_RATE_LIMIT_MAX = 20;
 
 /** Username check endpoint rate limit: window duration */
 export const USERNAME_CHECK_RATE_LIMIT_WINDOW = '60 s' as const;
-
-// ── Jobs ───────────────────────────────────────────────────────────────────────
 
 /** Default scheduler interval (3 hours, ms). Override with JOB_INTERVAL_MS env var. */
 export const DEFAULT_JOB_INTERVAL_MS = 3 * 60 * 60 * 1000;
@@ -199,15 +188,11 @@ export const MCP_QUERY_TEXT_RETENTION_DAYS = 30;
  */
 export const MCP_TELEMETRY_RETENTION_DAYS = 90;
 
-// ── Storage ────────────────────────────────────────────────────────────────────
-
 /** Max file upload size (bytes, 2 MB) */
 export const MAX_UPLOAD_SIZE = 2 * 1024 * 1024;
 
 /** Presigned URL expiry (seconds) */
 export const PRESIGNED_URL_EXPIRY = 300;
-
-// ── Image Metadata Reader ───────────────────────────────────────────────────────
 
 /** Max original image upload size (bytes, 8 MB) — server-proxied; rejected before processing. */
 export const MAX_IMAGE_UPLOAD_SIZE = 8 * 1024 * 1024;
@@ -217,10 +202,6 @@ export const IMAGE_MAX_DIMENSION = 1024;
 
 /** Accepted image input types (sniffed by magic bytes, not just the declared MIME). */
 export const IMAGE_ALLOWED_MIME = ['image/png', 'image/jpeg', 'image/webp'] as const;
-
-// ── Database ───────────────────────────────────────────────────────────────────
-
-// ── Graph ──────────────────────────────────────────────────────────────────────
 
 /** Default Neo4j query timeout (ms) — for ingest/admin/background callers. */
 export const GRAPH_TIMEOUT_MS = 30_000;
@@ -233,14 +214,9 @@ export const GRAPH_TIMEOUT_MS = 30_000;
  */
 export const USER_GRAPH_TIMEOUT_MS = 3000;
 
-// ── Security ───────────────────────────────────────────────────────────────────
-
 /** HSTS max-age (seconds, 2 years) */
 export const HSTS_MAX_AGE = 63_072_000;
 
-// ── Notifications ─────────────────────────────────────────────────────────
-
-/** Notifications per page */
 export const NOTIFICATIONS_PAGE_SIZE = 20;
 
 /** Archive read notifications after N days */
@@ -261,9 +237,8 @@ export const DEFAULT_DELIVERY_INTERVAL_MS = 15_000;
 /**
  * Max delivery attempts before the row is dead-lettered.
  *
- * 5 rather than 3 because attempts are now spaced by exponential backoff: 3 would
- * cover only ~2.5 minutes of provider downtime, barely better than the ~30 seconds
- * the old immediate-requeue gave. 5 covers ~42 minutes.
+ * 5 rather than 3 because attempts are spaced by exponential backoff: 3 covers
+ * only ~2.5 minutes of provider downtime, 5 covers ~42 minutes.
  */
 export const DELIVERY_MAX_ATTEMPTS = 5;
 
@@ -296,8 +271,6 @@ export const DELIVERY_RETRY_JITTER = 0.15;
  * invariant is currently aspirational — see the follow-ups in the workers doc.
  */
 export const DELIVERY_CLAIM_LEASE_MS = 5 * 60_000;
-
-// ── API Rate Limits ─────────────────────────────────────────────────────────
 
 /** Notification mark-as-read rate limit: requests per window */
 export const NOTIFICATION_RATE_LIMIT_MAX = 60;
@@ -354,19 +327,15 @@ export const PALETTE_WRITE_RATE_LIMIT_MAX = 20;
 export const PALETTE_WRITE_RATE_LIMIT_WINDOW = '60 s' as const;
 
 /**
- * Per-user custom palette cap. Palette creation used to be admin-only and so had
- * no ceiling; now that any signed-in user can craft one, this bounds row growth.
+ * Per-user custom palette cap. Any signed-in user can craft a palette, so this
+ * bounds row growth.
  */
 export const MAX_CUSTOM_PALETTES_PER_USER = 20;
-
-// ── Feedback ──────────────────────────────────────────────────────────────────
 
 /** Public feedback submission rate limit (per IP) */
 export const FEEDBACK_RATE_LIMIT_PREFIX = 'rl:feedback:submit';
 export const FEEDBACK_RATE_LIMIT_MAX = 3;
 export const FEEDBACK_RATE_LIMIT_WINDOW = '1 h' as const;
-
-// ── Analytics ─────────────────────────────────────────────────────────────────
 
 /** Raw event retention period (days) */
 export const ANALYTICS_RETENTION_DAYS = 60;
@@ -425,8 +394,6 @@ export const ANALYTICS_CONSENT_MAX_AGE = 15_552_000;
  * replay window of a stateless token for no benefit.
  */
 export const ANALYTICS_CONFIRM_TOKEN_TTL_MS = 10 * 60 * 1000;
-
-// ── Admin ──────────────────────────────────────────────────────────────────────
 
 // ADMIN_USER_ID gates admin access — a comma-separated list of admin user ids
 // (one per admin; immutable, so admin can't be transferred by re-claiming an

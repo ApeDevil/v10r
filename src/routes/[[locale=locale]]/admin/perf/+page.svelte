@@ -389,8 +389,6 @@ function share(value: number, max: number) {
 		outline-offset: 2px;
 	}
 
-	/* ── Lane strip ─────────────────────────────────────────────────────── */
-
 	.lane-strip {
 		display: flex;
 		height: var(--spacing-2);
@@ -428,8 +426,6 @@ function share(value: number, max: number) {
 		gap: var(--spacing-2);
 		font-size: var(--text-fluid-xs);
 	}
-
-	/* ── Metric cards ───────────────────────────────────────────────────── */
 
 	.vitals-grid {
 		display: grid;
@@ -478,8 +474,6 @@ function share(value: number, max: number) {
 	.vital-meta code {
 		font-size: 0.9em;
 	}
-
-	/* ── Tables ─────────────────────────────────────────────────────────── */
 
 	.data-table {
 		width: 100%;

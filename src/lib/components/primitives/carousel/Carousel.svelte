@@ -146,7 +146,6 @@ function handleKeydown(e: KeyboardEvent) {
 	}
 }
 
-// Toggle autoplay
 function toggleAutoplay() {
 	isPlaying = !isPlaying;
 }

@@ -65,7 +65,6 @@ export const actions: Actions = {
 		try {
 			const result = await getObjectRange(key, start, end);
 
-			// Convert to hex dump
 			const lines: string[] = [];
 			for (let i = 0; i < result.data.length; i += 16) {
 				const addr = (start + i).toString(16).padStart(8, '0');

@@ -1,12 +1,9 @@
 import { and, count, desc, eq, sql } from 'drizzle-orm';
+import type { TranslationMap } from '$lib/i18n/translate';
 import { ADMIN_ANNOUNCEMENT_CACHE_TTL_MS } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { announcementDismissals, announcements } from '$lib/server/db/schema/admin';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
-
-// ── Types ────────────────────────────────────────────────────────────────────
-
-import type { TranslationMap } from '$lib/i18n/translate';
 
 export interface ActiveAnnouncement {
 	id: string;
@@ -59,7 +56,7 @@ export interface CreateAnnouncementInput {
 	createdBy: string;
 }
 
-// ── In-Process Cache ─────────────────────────────────────────────────────────
+// In-Process Cache
 
 const cache = new Map<string, { data: ActiveAnnouncement[]; cachedAt: number }>();
 
@@ -71,7 +68,7 @@ export function getAnnouncementCacheSize(): number {
 	return cache.size;
 }
 
-// ── Read (User-facing, cached) ───────────────────────────────────────────────
+// Read (User-facing, cached)
 
 export async function getActiveAnnouncements(userId: string): Promise<ActiveAnnouncement[]> {
 	const cached = cache.get(userId);
@@ -113,7 +110,7 @@ export async function getActiveAnnouncements(userId: string): Promise<ActiveAnno
 	return rows;
 }
 
-// ── Read (Admin-facing, uncached) ────────────────────────────────────────────
+// Read (Admin-facing, uncached)
 
 export async function getAllAnnouncementsAdmin(): Promise<AnnouncementAdminView[]> {
 	const totalUsersResult = await db.select({ total: count() }).from(user);
@@ -151,8 +148,6 @@ export async function getAllAnnouncementsAdmin(): Promise<AnnouncementAdminView[
 		totalUsers,
 	}));
 }
-
-// ── Write ────────────────────────────────────────────────────────────────────
 
 export async function createAnnouncement(input: CreateAnnouncementInput) {
 	const id = `ann_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;

@@ -42,8 +42,6 @@ const { enhance, delayed } = superForm(data.form, {
 	},
 });
 
-// ── helpers ───────────────────────────────────────────────────────────────────
-
 function formatBytes(bytes: number): string {
 	if (bytes === 0) return '0 B';
 	const k = 1024;
@@ -91,7 +89,7 @@ function statusLabel(s: RunStatus): string {
 	/>
 {:else}
 	<Stack gap="6">
-		<!-- ── Hero: refresh dev from prod ─────────────────────────────────────── -->
+		<!-- Hero: refresh dev from prod -->
 		<Card>
 			{#snippet header()}
 				<div class="flex items-center gap-2">
@@ -138,7 +136,6 @@ function statusLabel(s: RunStatus): string {
 			{/snippet}
 		</Card>
 
-		<!-- ── Branch status panel ─────────────────────────────────────────────── -->
 		{#if data.branchStatus}
 			{#await data.branchStatus}
 				<Card>

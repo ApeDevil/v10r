@@ -6,10 +6,9 @@
  *
  * Server call sites feed user-influenced strings into a `Location` header or a
  * `redirect()`: the `?returnTo=` param on the login and verify pages, and the
- * `/en/` prefix-stripping hook. Each previously carried its own copy of this
- * logic (login and verify were byte-identical duplicates; the hook had none,
- * which is how the open redirect got in; the feedback source field carried a
- * fourth, weaker copy that missed the backslash case).
+ * `/en/` prefix-stripping hook. None of them may carry its own copy: duplicated
+ * checks drift, and a call site with no check at all is how the open redirect got
+ * in.
  *
  * What has to be rejected, and why plain "starts with /" is not enough:
  *  - `//evil.com`   — protocol-relative; the browser reads it as a foreign origin.

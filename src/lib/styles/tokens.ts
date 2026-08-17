@@ -1,8 +1,6 @@
 // src/lib/styles/tokens.ts
 
-// ═══════════════════════════════════════════════════════════════
 // BREAKPOINTS
-// ═══════════════════════════════════════════════════════════════
 
 /** Media query breakpoints (min-width) */
 export const breakpoints = {
@@ -22,9 +20,7 @@ export const containers = {
 	xl: '576px',
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
 // FLUID TYPOGRAPHY
-// ═══════════════════════════════════════════════════════════════
 
 /**
  * Fluid font sizes using clamp().
@@ -43,9 +39,7 @@ export const fontSize = {
 	'fluid-5xl': 'clamp(3rem, 2rem + 4vw, 5rem)', // Display
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
 // ICON SIZES
-// ═══════════════════════════════════════════════════════════════
 
 /**
  * Standard icon sizes.
@@ -59,9 +53,7 @@ export const iconSize = {
 	'icon-xl': '2rem', // 32px - Section headers, decorative
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
 // FIXED & FLUID SPACING
-// ═══════════════════════════════════════════════════════════════
 
 /**
  * Fixed spacing scale (8px base).
@@ -103,9 +95,7 @@ export const spacing = {
 	...fluidSpacing,
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
 // FONT FAMILY
-// ═══════════════════════════════════════════════════════════════
 
 /** Font family tokens (CSS variable references, set by data-typography attribute) */
 export const fontFamily = {
@@ -114,9 +104,7 @@ export const fontFamily = {
 	mono: 'var(--font-mono, ui-monospace, monospace)',
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
 // COLORS
-// ═══════════════════════════════════════════════════════════════
 
 /**
  * Semantic color tokens (CSS variable references).
@@ -193,9 +181,7 @@ export const colors = {
 	},
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
 // BORDER RADIUS
-// ═══════════════════════════════════════════════════════════════
 
 /** Border radius tokens (CSS variable references, set by data-radius attribute) */
 export const borderRadius = {
@@ -206,9 +192,7 @@ export const borderRadius = {
 	full: 'var(--radius-full)',
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
 // BOX SHADOW
-// ═══════════════════════════════════════════════════════════════
 
 /** Shadow tokens (CSS variable references — values live in app.css, theme-aware in dark mode).
  * Partial map: UnoCSS deep-merges into the preset theme, so preset keys like `2xl`/`inner` survive. */
@@ -222,9 +206,7 @@ export const boxShadow = {
 	'glow-warning': 'var(--shadow-glow-warning)',
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
 // Z-INDEX
-// ═══════════════════════════════════════════════════════════════
 
 /** Z-index layers for stacking context.
  * References only — the numeric ladder lives in app.css (SSOT); calc() consumers
@@ -246,9 +228,7 @@ export const zIndex = {
 	progress: 'var(--z-progress)',
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
 // LAYOUT
-// ═══════════════════════════════════════════════════════════════
 
 /** Sidebar dimensions */
 export const sidebar = {
@@ -265,11 +245,8 @@ export const layout = {
 	narrowWidth: '50rem', // 800px - docs/showcase pages
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
 // ANIMATION
-// ═══════════════════════════════════════════════════════════════
 
-/** Duration values */
 export const duration = {
 	instant: '0ms', // Immediate, no animation
 	fast: '150ms', // Micro-interactions, hovers

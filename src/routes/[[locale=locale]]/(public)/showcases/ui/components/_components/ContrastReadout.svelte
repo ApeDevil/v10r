@@ -44,7 +44,7 @@ const announce = $derived(
 				`${cr.toFixed(2)} to 1, ${pass ? 'passes' : 'fails'} the 3 to 1 minimum.`,
 );
 
-// --- colour parsing → sRGB, robust to serialization format ------------------
+// colour parsing → sRGB, robust to serialization format
 let canvas: HTMLCanvasElement | null = null;
 let ctx: CanvasRenderingContext2D | null = null;
 
@@ -171,7 +171,7 @@ $effect(() => {
 		width: 100%;
 	}
 
-	/* --- rendered measurement swatches (2-rung mini stack) --- */
+	/* rendered measurement swatches (2-rung mini stack) */
 	.swatch {
 		border-width: 1px;
 		border-style: solid;
@@ -203,7 +203,6 @@ $effect(() => {
 		border-color: transparent;
 	}
 
-	/* --- numeric metric --- */
 	.metric {
 		display: flex;
 		flex-direction: column;

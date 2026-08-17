@@ -48,8 +48,6 @@ describe('desk queries', () => {
 		await db.delete(folder);
 	});
 
-	// ── getFile ──────────────────────────────────────────────────────
-
 	describe('getFile', () => {
 		it('returns a file when found with correct ownership', async () => {
 			const f = makeFile({ userId: USER_A.id });
@@ -75,8 +73,6 @@ describe('desk queries', () => {
 			expect(result).toBeNull();
 		});
 	});
-
-	// ── listFiles ────────────────────────────────────────────────────
 
 	describe('listFiles', () => {
 		it('returns empty list when user has no files', async () => {
@@ -139,8 +135,6 @@ describe('desk queries', () => {
 		});
 	});
 
-	// ── getFolder ────────────────────────────────────────────────────
-
 	describe('getFolder', () => {
 		it('returns a folder with correct ownership', async () => {
 			const fol = makeFolder({ userId: USER_A.id, name: 'My Folder' });
@@ -165,8 +159,6 @@ describe('desk queries', () => {
 		});
 	});
 
-	// ── listFolders ──────────────────────────────────────────────────
-
 	describe('listFolders', () => {
 		it('returns empty list when user has no folders', async () => {
 			const result = await listFolders(USER_A.id);
@@ -190,8 +182,6 @@ describe('desk queries', () => {
 			expect(result.items).toHaveLength(1);
 		});
 	});
-
-	// ── countFolderContents ──────────────────────────────────────────
 
 	describe('countFolderContents', () => {
 		it('returns 0 for an empty folder', async () => {
@@ -234,8 +224,6 @@ describe('desk queries', () => {
 		});
 	});
 
-	// ── getSpreadsheetByFileId ───────────────────────────────────────
-
 	describe('getSpreadsheetByFileId', () => {
 		it('returns joined file and spreadsheet data', async () => {
 			const f = makeFile({ userId: USER_A.id, name: 'Joined File' });
@@ -269,8 +257,6 @@ describe('desk queries', () => {
 		});
 	});
 
-	// ── getMarkdownByFileId ──────────────────────────────────────────
-
 	describe('getMarkdownByFileId', () => {
 		it('returns joined file and markdown data', async () => {
 			const f = makeFile({ userId: USER_A.id, type: 'markdown', name: 'My Doc' });
@@ -302,8 +288,6 @@ describe('desk queries', () => {
 			expect(result).toBeNull();
 		});
 	});
-
-	// ── getAiContextFiles ────────────────────────────────────────────
 
 	describe('getAiContextFiles', () => {
 		it('returns only files with aiContext=true', async () => {

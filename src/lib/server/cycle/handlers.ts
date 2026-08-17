@@ -30,7 +30,7 @@ export async function executeCycle(input: CycleInput, trigger: 'form' | 'api' | 
 	const { trace, traceStart } = createTrace(trigger);
 	trace.inputPayload = input as unknown as Record<string, unknown>;
 
-	// --- Stage: Server (validation, request parsing) ---
+	// Stage: Server (validation, request parsing)
 	const serverSpan = startSpan(trace, 'server', traceStart);
 	if (input.simulateError === 'validation') {
 		failSpan(serverSpan, traceStart, 'Validation failed: label must be non-empty');
@@ -39,7 +39,7 @@ export async function executeCycle(input: CycleInput, trigger: 'form' | 'api' | 
 	}
 	endSpan(serverSpan, traceStart, { action: 'validated', fields: ['label', 'description'] });
 
-	// --- Stage: Domain (business logic) ---
+	// Stage: Domain (business logic)
 	const domainSpan = startSpan(trace, 'domain', traceStart);
 	if (input.simulateError === 'domain') {
 		await delay(randomBetween(15, 40));
@@ -58,7 +58,7 @@ export async function executeCycle(input: CycleInput, trigger: 'form' | 'api' | 
 		outputKeys: Object.keys(processed),
 	});
 
-	// --- Stage: Database (Drizzle insert) ---
+	// Stage: Database (Drizzle insert)
 	const dbSpan = startSpan(trace, 'database', traceStart);
 	if (input.simulateError === 'db') {
 		await delay(randomBetween(20, 60));
@@ -73,7 +73,7 @@ export async function executeCycle(input: CycleInput, trigger: 'form' | 'api' | 
 		return finalize(trace, input, trigger, null, limitError, 'database');
 	}
 
-	// --- Stage: Response (serialization) ---
+	// Stage: Response (serialization)
 	const responseSpan = startSpan(trace, 'response', traceStart);
 	const result = { id: 0, label: processed.label, timestamp: processed.timestamp };
 	trace.outputPayload = result as unknown as Record<string, unknown>;

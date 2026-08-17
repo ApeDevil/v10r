@@ -36,7 +36,7 @@ export interface ActionContext {
 	announce: (msg: string) => void;
 }
 
-// ── Cross-root rules ──────────────────────────────────────────────
+// Cross-root rules
 
 /**
  * Which virtual root each node source belongs to. Null for the `virtual`
@@ -62,8 +62,6 @@ export function isSameVirtualTree(a: ExplorerNode, b: ExplorerNode): boolean {
 	const rootB = b.source === 'virtual' ? b.id : VIRTUAL_ROOT[b.source];
 	return rootA !== null && rootA === rootB;
 }
-
-// ── Move dispatch ─────────────────────────────────────────────────
 
 type MoveSpec = {
 	url: (id: string) => string;
@@ -171,8 +169,6 @@ export async function dispatchMove(
 	}
 }
 
-// ── Folder delete dispatch ────────────────────────────────────────
-
 const FOLDER_DELETE_URLS: Partial<Record<NodeSource, (id: string) => string>> = {
 	'desk-folder': (id) => `/api/desk/folders/${id}?recursive=true`,
 	'blog-folder': (id) => `/api/blog/post-folders/${id}?recursive=true`,
@@ -214,8 +210,6 @@ export async function dispatchDeleteFolder(state: ExplorerState, nodeId: string,
 		return false;
 	}
 }
-
-// ── Rename dispatch ───────────────────────────────────────────────
 
 type RenameSpec = {
 	url: (id: string) => string;
@@ -287,7 +281,7 @@ export async function dispatchRename(_state: ExplorerState, node: ExplorerNode, 
 	}
 }
 
-// ── Leaf delete dispatch (non-folder) ─────────────────────────────
+// Leaf delete dispatch (non-folder)
 
 type LeafDeleteSpec = {
 	url: (id: string) => string;
@@ -323,7 +317,7 @@ export async function dispatchDeleteLeaf(_state: ExplorerState, node: ExplorerNo
 	}
 }
 
-// ── Duplicate dispatch (desk-file only) ───────────────────────────
+// Duplicate dispatch (desk-file only)
 
 /**
  * Duplicate a desk file. Refreshes, then enters rename mode on the copy so the
@@ -344,7 +338,7 @@ export async function dispatchDuplicate(state: ExplorerState, node: ExplorerNode
 	}
 }
 
-// ── AI context toggle dispatch ────────────────────────────────────
+// AI context toggle dispatch
 
 /**
  * Toggle a node's AI context pin. Optimistic with rollback on failure. Desk
@@ -371,8 +365,6 @@ export async function dispatchToggleAiContext(
 		ctx.setError(e instanceof Error ? e.message : 'Failed to toggle AI context');
 	}
 }
-
-// ── New folder dispatch ───────────────────────────────────────────
 
 const FOLDER_ENDPOINTS: Record<string, string> = {
 	'virtual:data': '/api/desk/folders',
@@ -422,8 +414,6 @@ export async function dispatchNewFolder(state: ExplorerState, node: ExplorerNode
 		ctx.setError(e instanceof Error ? e.message : 'Failed to create folder');
 	}
 }
-
-// ── New spreadsheet dispatch ──────────────────────────────────────
 
 /**
  * Create a new spreadsheet under the given anchor (folder or virtual root).

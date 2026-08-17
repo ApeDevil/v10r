@@ -2,14 +2,11 @@ import { and, count, desc, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../index';
 import { file, folder, markdown, spreadsheet } from '../schema/desk';
 
-// ── Soft-delete note ───────────────────────────────────────────────
+// Soft-delete note
 // All queries below filter `file.deleted_at IS NULL` (and the same on
 // spreadsheet / markdown when joined). Soft-deleted rows are preserved
 // so the I/O Log can surface an "undo" chip; a retention job can sweep
 // them on a schedule (not shipped with the template).
-// ───────────────────────────────────────────────────────────────────
-
-// ── File registry queries ──────────────────────────────────────────
 
 /** List all files for a user, optionally filtered by type. Newest first. Excludes soft-deleted rows. */
 export async function listFiles(userId: string, type?: string, offset = 0, limit = 50) {
@@ -99,8 +96,6 @@ export async function getMarkdownByFileId(fileId: string, userId: string) {
 		.limit(1);
 	return row ?? null;
 }
-
-// ── Folder queries ────────────────────────────────────────────────
 
 /** Hard cap on folders returned by `listFolders`. Exceeding it indicates a pathological user state. */
 export const FOLDER_LIST_CAP = 500;

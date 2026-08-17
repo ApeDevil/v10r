@@ -46,7 +46,6 @@ export const notificationSettings = notificationsSchema.table('notification_sett
 	pushSystem: boolean('push_system').notNull().default(false),
 	pushSecurity: boolean('push_security').notNull().default(true),
 
-	// Digest
 	digestFrequency: digestFrequencyEnum('digest_frequency').notNull().default('instant'),
 	/**
 	 * When the last digest was sent. Doubles as the aggregation lower bound and

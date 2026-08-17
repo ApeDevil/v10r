@@ -7,7 +7,6 @@ import FontPicker from './_components/FontPicker.svelte';
 import FontPreview from './_components/FontPreview.svelte';
 import ProsePreview from './_components/ProsePreview.svelte';
 
-// --- Mode state ---
 // svelte-ignore state_referenced_locally
 const urlHeading = page.url.searchParams.get('heading');
 // svelte-ignore state_referenced_locally
@@ -20,12 +19,10 @@ let mode = $state<'single' | 'pairing'>(urlHeading && urlBody ? 'pairing' : 'sin
 // svelte-ignore state_referenced_locally
 let viewMode = $state<'scale' | 'prose'>(urlView === 'prose' ? 'prose' : 'scale');
 
-// --- Single mode ---
 // svelte-ignore state_referenced_locally
 let selectedFamily = $state(page.url.searchParams.get('font') ?? 'System');
 let loadState = $state<FontLoadState>('idle');
 
-// --- Pairing mode ---
 // svelte-ignore state_referenced_locally
 let headingFamily = $state(urlHeading ?? 'Playfair Display');
 // svelte-ignore state_referenced_locally
@@ -33,7 +30,6 @@ let bodyFamily = $state(urlBody ?? 'Inter');
 let headingLoadState = $state<FontLoadState>('idle');
 let bodyLoadState = $state<FontLoadState>('idle');
 
-// --- Derived font stacks ---
 function buildFontStack(family: string): string {
 	const meta = findFont(family);
 	if (!meta || meta.family === 'System') {
@@ -46,7 +42,6 @@ let fontStack = $derived(buildFontStack(selectedFamily));
 let headingFontStack = $derived(buildFontStack(headingFamily));
 let bodyFontStack = $derived(buildFontStack(bodyFamily));
 
-// --- URL sync ---
 function syncUrl() {
 	const url = new URL(page.url);
 
@@ -72,7 +67,6 @@ function syncUrl() {
 	goto(url.toString(), { replaceState: true, noScroll: true, keepFocus: true });
 }
 
-// --- Font loading helpers ---
 async function doLoadFont(family: string): Promise<void> {
 	if (family === 'System' || isFontLoaded(family)) return;
 	const meta = findFont(family);
@@ -80,7 +74,6 @@ async function doLoadFont(family: string): Promise<void> {
 	await loadFont(meta.family, meta.weights);
 }
 
-// --- Single mode selection ---
 async function selectFont(family: string) {
 	selectedFamily = family;
 	syncUrl();
@@ -98,7 +91,6 @@ async function selectFont(family: string) {
 	}
 }
 
-// --- Pairing mode selection ---
 async function selectHeadingFont(family: string) {
 	headingFamily = family;
 	syncUrl();
@@ -133,7 +125,6 @@ async function selectBodyFont(family: string) {
 	}
 }
 
-// --- Mode switch ---
 function handleModeChange(newMode: 'single' | 'pairing') {
 	mode = newMode;
 	if (newMode === 'pairing') {
@@ -149,7 +140,7 @@ function handleViewChange(newView: 'scale' | 'prose') {
 	syncUrl();
 }
 
-// --- Load initial fonts if arriving via URL params ---
+// Load initial fonts if arriving via URL params
 // svelte-ignore state_referenced_locally
 if (mode === 'pairing') {
 	selectHeadingFont(headingFamily);

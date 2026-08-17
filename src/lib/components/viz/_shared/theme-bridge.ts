@@ -3,7 +3,7 @@
  * Used by viz components to consume design tokens for chart theming.
  */
 
-// --- Singleton theme observer (pub/sub) ---
+// Singleton theme observer (pub/sub)
 
 type Listener = () => void;
 const listeners = new Set<Listener>();
@@ -31,8 +31,6 @@ export function onThemeChange(fn: Listener): () => void {
 		}
 	};
 }
-
-// --- CSS variable resolution ---
 
 /** Read a single CSS custom property value (e.g., getCSSVar('chart-1') reads --chart-1) */
 export function getCSSVar(token: string): string {

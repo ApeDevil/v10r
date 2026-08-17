@@ -19,8 +19,6 @@ import { localeRegconfig } from '$lib/server/search/regconfig';
 import { renderBlogPost } from './pipeline';
 import type { BlogAsset, BlogDomain, BlogPost, BlogRevision, BlogTag } from './types';
 
-// ── Posts ────────────────────────────────────────────────────────────
-
 /** Create a new blog post (draft). */
 export async function createPost(authorId: string, data: { slug: string }): Promise<BlogPost> {
 	const [row] = await db
@@ -64,7 +62,6 @@ export async function updatePostMetadata(
 	return row ?? null;
 }
 
-/** Soft-delete a post. */
 export async function softDeletePost(postId: string): Promise<boolean> {
 	const [row] = await db
 		.update(post)
@@ -73,8 +70,6 @@ export async function softDeletePost(postId: string): Promise<boolean> {
 		.returning({ id: post.id });
 	return !!row;
 }
-
-// ── Revisions ────────────────────────────────────────────────────────
 
 /** Create an immutable revision. Auto-renders markdown and computes content hash. */
 export async function createRevision(
@@ -144,13 +139,10 @@ export async function createRevision(
 			.returning();
 	});
 
-	// Update post's updatedAt
 	await db.update(post).set({ updatedAt: new Date() }).where(eq(post.id, postId));
 
 	return row;
 }
-
-// ── Publishing ───────────────────────────────────────────────────────
 
 /** Publish a specific revision for a locale. UPSERT on published_revision. */
 export async function publishRevision(postId: string, locale: string, revisionId: string): Promise<void> {
@@ -176,7 +168,6 @@ export async function publishRevision(postId: string, locale: string, revisionId
 				set: { revisionId },
 			});
 
-		// Update post status + published_at
 		await tx
 			.update(post)
 			.set({
@@ -197,9 +188,6 @@ export async function unpublishPost(postId: string): Promise<void> {
 	});
 }
 
-// ── Tags ─────────────────────────────────────────────────────────────
-
-/** Create a new tag. */
 export async function createTag(
 	name: string,
 	slug: string,
@@ -219,7 +207,6 @@ export async function createTag(
 	return row;
 }
 
-/** Update a tag. */
 export async function updateTag(
 	tagId: string,
 	data: {
@@ -251,9 +238,6 @@ export async function setPostTags(postId: string, tagIds: string[]): Promise<voi
 	});
 }
 
-// ── Domains ─────────────────────────────────────────────────────────
-
-/** Create a new domain. */
 export async function createDomain(
 	name: string,
 	slug: string,
@@ -273,7 +257,6 @@ export async function createDomain(
 	return row;
 }
 
-/** Update a domain. */
 export async function updateDomain(
 	domainId: string,
 	data: { name?: string; slug?: string; icon?: string | null; color?: number | null; description?: string | null },
@@ -295,8 +278,6 @@ export async function setPostDomain(postId: string, domainId: string | null): Pr
 		.set({ domainId, updatedAt: new Date() })
 		.where(and(eq(post.id, postId), isNull(post.deletedAt)));
 }
-
-// ── Assets ───────────────────────────────────────────────────────────
 
 /** Register a new asset (after upload to R2). */
 export async function createAsset(data: {

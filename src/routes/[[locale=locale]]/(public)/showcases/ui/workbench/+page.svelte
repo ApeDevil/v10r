@@ -4,7 +4,6 @@ import type { ActivityBarItem, LayoutNode, PanelDefinition } from '$lib/componen
 import { DockLayout } from '$lib/components/composites/dock';
 import * as m from '$lib/paraglide/messages';
 
-// --- Panel definitions ---
 const panels: Record<string, PanelDefinition> = {
 	explorer: {
 		id: 'explorer',
@@ -50,7 +49,6 @@ const panels: Record<string, PanelDefinition> = {
 	},
 };
 
-// --- Layout tree ---
 // Explorer (left) | Editor + Preview (right-top) | Terminal + Output (right-bottom)
 const initialRoot: LayoutNode = {
 	type: 'split',
@@ -87,7 +85,6 @@ const initialRoot: LayoutNode = {
 	],
 };
 
-// --- Activity bar items ---
 const activityBarItems: ActivityBarItem[] = [
 	{ panelType: 'explorer', icon: 'i-lucide-folder-tree', label: 'Explorer' },
 	{ panelType: 'search', icon: 'i-lucide-search', label: 'Search' },

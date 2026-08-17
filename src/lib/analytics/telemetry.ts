@@ -63,8 +63,6 @@ let hasConsent = false;
 /** Supplied by the app; lets the module read the current templated route. */
 let routeOf: () => string = () => '(unknown)';
 
-// ── Queue ────────────────────────────────────────────────────────────────────
-
 function push(kind: QueuedEvent['kind'], name: string, extra: Partial<QueuedEvent> = {}): void {
 	if (!hasConsent) return;
 	queue.push({
@@ -96,8 +94,6 @@ export function setTelemetryConsent(granted: boolean): void {
 	hasConsent = granted;
 }
 
-// ── Web Vitals ───────────────────────────────────────────────────────────────
-
 async function initVitals(): Promise<void> {
 	// Dynamically imported so the attribution build — which is the larger one —
 	// never lands on the critical path for the initial render.
@@ -117,8 +113,6 @@ async function initVitals(): Promise<void> {
 	onTTFB((m) => send(m.name, m.value));
 	onFCP((m) => send(m.name, m.value));
 }
-
-// ── Engagement ───────────────────────────────────────────────────────────────
 
 let engagedMs = 0;
 let lastResume = 0;
@@ -150,8 +144,6 @@ function reportEngagement(): void {
 	if (document.visibilityState === 'visible') resumeEngagement();
 }
 
-// ── Scroll depth ─────────────────────────────────────────────────────────────
-
 function onScroll(): void {
 	const doc = document.documentElement;
 	const scrollable = doc.scrollHeight - window.innerHeight;
@@ -168,7 +160,7 @@ function onScroll(): void {
 	}
 }
 
-// ── Rage + dead clicks ───────────────────────────────────────────────────────
+// Rage + dead clicks
 
 /**
  * A short, stable description of an element — tag, id, and up to two classes.
@@ -226,8 +218,6 @@ function onClick(evt: MouseEvent): void {
 	});
 }
 
-// ── Form abandonment ─────────────────────────────────────────────────────────
-
 let touchedForm: { form: string; lastField: string } | null = null;
 
 function onFocusIn(evt: FocusEvent): void {
@@ -251,8 +241,6 @@ function reportFormAbandon(): void {
 	touchedForm = null;
 }
 
-// ── Errors ───────────────────────────────────────────────────────────────────
-
 function onError(evt: ErrorEvent): void {
 	push('error', 'uncaught', { props: { message: evt.message } });
 }
@@ -262,8 +250,6 @@ function onRejection(evt: PromiseRejectionEvent): void {
 	const message = reason instanceof Error ? reason.message : String(reason);
 	push('error', 'unhandled_rejection', { props: { message } });
 }
-
-// ── Init ─────────────────────────────────────────────────────────────────────
 
 export function initTelemetry(getRoute: () => string): void {
 	// `dev` is a hard gate, not a preference. The dev server points at the ONE

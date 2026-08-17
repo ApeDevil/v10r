@@ -160,7 +160,7 @@ sw.addEventListener('message', (event) => {
 	}
 });
 
-/* ── Web push ──────────────────────────────────────────────────────────────
+/* Web push
  * The server sends ONE payload shape: declarative-web-push JSON. Safari/iOS
  * 18.4+ renders it natively (this handler never runs there); Chrome/Android
  * delivers it as a classic push event, so this deliberately dumb handler

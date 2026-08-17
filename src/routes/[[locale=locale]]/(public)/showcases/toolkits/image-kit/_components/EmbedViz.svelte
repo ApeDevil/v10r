@@ -5,6 +5,9 @@
  * for screen readers (WCAG 1.4.1 — the colour heatmap never carries meaning alone).
  * A Switch toggles between embedding the AI caption (text) and the actual image
  * (multimodal, preview model). Re-embedding is explicit (no spend on toggle).
+ *
+ * Not localized: every user-facing string below is a literal or a humanized
+ * enum key. The whole file still needs an i18n pass — no per-string markers.
  */
 import { browser } from '$app/environment';
 import { Alert } from '$lib/components/composites';
@@ -107,26 +110,22 @@ function barWidth(n: number): number {
 		<Button type="button" variant="outline" size="sm" onclick={onrun} disabled={loading}>
 			{#if loading}<Spinner size="sm" class="mr-2" />{/if}
 			<span class="i-lucide-refresh-cw text-icon-sm mr-1" aria-hidden="true"></span>
-			<!-- TODO(i18n) -->
 			Re-embed
 		</Button>
 	</div>
 
 	{#if !multimodalAvailable}
 		<p class="text-fluid-xs text-muted">
-			<!-- TODO(i18n) -->
 			Multimodal image embedding needs a preview model that isn't configured — showing the text-caption embedding.
 		</p>
 	{/if}
 
 	{#if error}
-		<!-- TODO(i18n) -->
 		<Alert variant="warning" title="Embedding unavailable" description={error} />
 	{:else if loading}
 		<div class="embed-loading">
 			<Spinner size="md" />
 			<span class="text-fluid-sm text-muted">
-				<!-- TODO(i18n) -->
 				Embedding…
 			</span>
 		</div>
@@ -138,14 +137,12 @@ function barWidth(n: number): number {
 			</Badge>
 			<span class="text-fluid-xs text-muted"><code>{embed.model}</code></span>
 			<span class="text-fluid-xs text-muted">
-				<!-- TODO(i18n) -->
 				‖v‖ = {embed.l2Norm.toFixed(3)}
 			</span>
 		</div>
 
 		{#if embed.sourceText}
 			<p class="embed-source text-fluid-xs text-muted">
-				<!-- TODO(i18n) -->
 				Embedded text: <span class="embed-source-text">“{embed.sourceText}”</span>
 			</p>
 		{/if}
@@ -153,7 +150,6 @@ function barWidth(n: number): number {
 		<!-- ── Cosine similarity to the fixed corpus ── -->
 		<section class="embed-block" aria-labelledby="embed-neighbors-h">
 			<h4 id="embed-neighbors-h" class="text-fluid-sm font-semibold">
-				<!-- TODO(i18n) -->
 				Closest concepts (cosine similarity)
 			</h4>
 			<ul class="neighbors">
@@ -163,7 +159,6 @@ function barWidth(n: number): number {
 							{n.label}
 							{#if i === 0}
 								<Badge variant="secondary">
-									<!-- TODO(i18n) -->
 									closest
 								</Badge>
 							{/if}
@@ -180,7 +175,6 @@ function barWidth(n: number): number {
 		<!-- ── Per-dimension heatmap (decorative; table below is the SR view) ── -->
 		<section class="embed-block" aria-labelledby="embed-heatmap-h">
 			<h4 id="embed-heatmap-h" class="text-fluid-sm font-semibold">
-				<!-- TODO(i18n) -->
 				The vector, dimension by dimension
 			</h4>
 			<canvas
@@ -191,13 +185,11 @@ function barWidth(n: number): number {
 			></canvas>
 			<details class="embed-table-toggle">
 				<summary class="text-fluid-sm">
-					<!-- TODO(i18n) -->
 					View strongest dimensions as a table
 				</summary>
 				<table class="dim-table">
 					<thead>
 						<tr>
-							<!-- TODO(i18n) -->
 							<th scope="col">Dimension</th>
 							<th scope="col" class="num">Value</th>
 						</tr>
@@ -213,7 +205,6 @@ function barWidth(n: number): number {
 				</table>
 			</details>
 			<p class="text-fluid-xs text-muted embed-caveat">
-				<!-- TODO(i18n) -->
 				Illustrative: a real {embed.dimensions}-dimension vector isn't human-readable. The bars above show where it
 				lands among a tiny fixed set of concepts.
 			</p>

@@ -68,7 +68,6 @@ export async function migrateDeskTheme(
 	},
 ) {
 	return db.transaction(async (tx) => {
-		// Check if row already exists
 		const [existing] = await tx
 			.select({ userId: deskTheme.userId })
 			.from(deskTheme)
@@ -77,7 +76,6 @@ export async function migrateDeskTheme(
 
 		if (existing) return false;
 
-		// Insert theme row
 		await tx.insert(deskTheme).values({
 			userId,
 			workspace: data.workspace,
@@ -85,7 +83,6 @@ export async function migrateDeskTheme(
 			activePresetId: data.activePresetId,
 		});
 
-		// Insert user presets
 		if (data.userPresets.length > 0) {
 			await tx.insert(deskThemePreset).values(
 				data.userPresets.map((p) => ({

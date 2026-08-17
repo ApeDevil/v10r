@@ -20,8 +20,6 @@ function requireRedis() {
 	return redis;
 }
 
-// ─── Connection page ────────────────────────────────────
-
 export async function verifyConnection(): Promise<CacheConnectionInfo> {
 	const r = requireRedis();
 	const start = performance.now();
@@ -37,8 +35,6 @@ export async function verifyConnection(): Promise<CacheConnectionInfo> {
 		measuredAt: new Date().toISOString(),
 	};
 }
-
-// ─── Patterns page ──────────────────────────────────────
 
 export async function listShowcaseEntries(): Promise<CacheEntry[]> {
 	const r = requireRedis();
@@ -106,8 +102,6 @@ export async function getShowcaseStats(): Promise<CacheShowcaseStats> {
 	return { keyCount: entries.length, keysByType };
 }
 
-// ─── Ephemeral page ─────────────────────────────────────
-
 export async function getTtlSnapshot(key: string): Promise<TtlSnapshot> {
 	const r = requireRedis();
 	const ttl = await r.ttl(key);
@@ -127,17 +121,15 @@ export const DEMO_RATE_WINDOW_SECONDS = 10;
 /**
  * The rate-limit demo, keyed by the caller's own IP.
  *
- * Previously this took the bucket key, the limit AND the window from the form
- * body of an anonymous public page. That is a rate limiter you can ask to let
- * you through: pick a fresh identifier and the bucket is empty, or pass
- * `limit=999999` and it never fills. It also wrote to Upstash under the SDK's
- * default keyspace, because no `prefix` was set, and an unbounded caller-chosen
- * identifier is unbounded key cardinality in a shared Redis.
+ * The bucket key, limit and window are all fixed here, never read from the form
+ * body of an anonymous public page: a limiter you can ask to let you through is
+ * not one. A caller-chosen identifier means a fresh empty bucket every time, a
+ * caller-chosen `limit=999999` never fills, and unbounded identifiers mean
+ * unbounded key cardinality in a shared Redis.
  *
- * The demo is just as legible with a fixed window and a real key — arguably
- * more so, since "your requests are counted against YOUR bucket" is the actual
- * lesson. `SHOWCASE_PREFIX` namespaces the keys so this can never collide with
- * a production limiter.
+ * The demo is just as legible this way — arguably more so, since "your requests
+ * are counted against YOUR bucket" is the actual lesson. `SHOWCASE_PREFIX`
+ * namespaces the keys so this can never collide with a production limiter.
  */
 export async function checkRateLimit(ipKey: string): Promise<RateLimitResult> {
 	const r = requireRedis();

@@ -9,8 +9,6 @@ import {
 	parseCellRef,
 } from './formula';
 
-// ── Helpers ──────────────────────────────────────────────────────────
-
 /** Build a CellGetter from a sparse map of "A1" → value */
 function makeGrid(data: Record<string, CellValue>): CellGetter {
 	return (col, row) => {
@@ -24,7 +22,7 @@ function makeGrid(data: Record<string, CellValue>): CellGetter {
 	};
 }
 
-// ── Unit: colLabel / cellLabel ───────────────────────────────────────
+// Unit: colLabel / cellLabel
 
 describe('colLabel', () => {
 	test('converts 0 to A', () => expect(colLabel(0)).toBe('A'));
@@ -37,7 +35,7 @@ describe('cellLabel', () => {
 	test('converts (25, 49) to Z50', () => expect(cellLabel(25, 49)).toBe('Z50'));
 });
 
-// ── Unit: parseCellRef ───────────────────────────────────────────────
+// Unit: parseCellRef
 
 describe('parseCellRef', () => {
 	test('parses B5', () => expect(parseCellRef('B5')).toEqual({ col: 1, row: 4 }));
@@ -49,7 +47,7 @@ describe('parseCellRef', () => {
 	test('returns null for row 0', () => expect(parseCellRef('A0')).toBeNull());
 });
 
-// ── Unit: expandRange ────────────────────────────────────────────────
+// Unit: expandRange
 
 describe('expandRange', () => {
 	test('single cell range A1:A1', () => {
@@ -85,7 +83,7 @@ describe('expandRange', () => {
 	});
 });
 
-// ── Unit: evaluateFormula ────────────────────────────────────────────
+// Unit: evaluateFormula
 
 describe('evaluateFormula', () => {
 	const grid = makeGrid({

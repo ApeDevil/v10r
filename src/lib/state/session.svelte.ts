@@ -46,9 +46,8 @@ export function createSessionState(initialSession: Session | null) {
 		// server-side setInterval has no unmount to clear it — every authenticated
 		// render leaked a 1s timer for the life of the process.
 		if (!browser) return;
-		// Idempotent: `refresh()` calls this again on every session update, which
-		// previously stacked a second interval on top of the live one (and a third,
-		// and so on) because the old handle was overwritten without being cleared.
+		// Idempotent: `refresh()` calls this again on every session update, so the
+		// live handle must be cleared or each call stacks another interval.
 		stopTimer();
 
 		intervalId = setInterval(() => {

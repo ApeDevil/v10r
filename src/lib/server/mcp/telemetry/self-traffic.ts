@@ -1,26 +1,14 @@
 /**
  * Classify a caller as real external traffic or as something that must not inflate the KPIs.
  *
- * Nobody in the MCP ecosystem has solved this — there is no spec field, no header convention, and
- * no vendor default. The closest thing to a standard is OpenTelemetry's `user_agent.synthetic.type`
- * (`bot` | `test`), which is derived SERVER-SIDE from the User-Agent and needs no client
- * cooperation. That is the shape adopted here, widened with the two sources that actually matter
- * for this deployment.
+ * MCP has no spec field, header convention or vendor default for this. The shape here follows
+ * OpenTelemetry's `user_agent.synthetic.type` (`bot` | `test`), which is derived SERVER-SIDE from
+ * the User-Agent and needs no client cooperation, widened with the two sources that matter for
+ * this deployment. What each lane means: `mcpTrafficEnum` in `schema/mcp/call-log.ts`.
  *
- * Classification happens at INGESTION and the result is stored NOT NULL. The tempting alternative —
- * filter at analysis time, the way some analytics products do — is an anti-pattern here: every
- * query that forgets the filter silently lies, and the whole point of this table is to stop the
- * dashboard lying about adoption.
- *
- * The four non-external sources, in rough order of how much traffic they would otherwise fake:
- *
- *  1. `preview`  — preview deployments share the PRODUCTION Neon database. This is the largest
- *                  contamination source and the easiest to forget, because it needs no client at all.
- *  2. `self`     — the operator's own curl/CI, proven by a secret header (see below).
- *  3. `test`     — automated runs and registry probes. MCP registries actively probe listed servers
- *                  and some offer an in-browser inspector, so a listed server receives real
- *                  JSON-RPC that is neither the operator nor an adopting consumer.
- *  4. `bot`      — generic crawlers, folded into `test` since the distinction changes no decision.
+ * Classification happens at INGESTION and is stored NOT NULL. Filtering at analysis time instead
+ * is an anti-pattern here: every query that forgets the filter silently lies, and the point of the
+ * table is to stop the dashboard lying about adoption.
  */
 import { createHash, timingSafeEqual } from 'node:crypto';
 
@@ -82,14 +70,12 @@ export function classifyTraffic({ headers, surface, vercelEnv, selfSecret }: Tra
 	if (vercelEnv !== undefined && vercelEnv !== 'production') return 'preview';
 	if (matchesSelfSecret(headers.get(SELF_TRAFFIC_HEADER), selfSecret)) return 'self';
 	if (SYNTHETIC_UA_RE.test(headers.get('user-agent') ?? '')) return 'test';
-	// Reaching the admin or private surface at all costs the respective bearer token, so the
-	// caller is the operator whether or not they bothered to send the self header. Labelling that
-	// `external` would both inflate the adoption KPI and violate the table's CHECKs — which is
-	// exactly what happened in production on 2026-07-28: every admin row was silently rejected
-	// because the operator's MCP client does not send X-V10r-Self, and the writer fails open by
-	// design. NOTE the precedence above still applies: an operator curl against either surface
-	// classifies `test`, and a preview deployment classifies `preview` — both legal, only
-	// `external` is forbidden, so lane queries filter on `surface`, never `traffic`.
+	// Reaching the admin or private surface at all costs the respective bearer token, so the caller
+	// is the operator whether or not they sent the self header — MCP clients do not. Labelling that
+	// `external` would inflate the adoption KPI AND violate the table's CHECKs, and since the writer
+	// fails open the rows would be dropped silently. The precedence above still applies: an operator
+	// curl against either surface classifies `test`, a preview deployment `preview` — both legal,
+	// only `external` is forbidden, so lane queries filter on `surface`, never `traffic`.
 	if (surface === 'admin' || surface === 'private') return 'self';
 	return 'external';
 }

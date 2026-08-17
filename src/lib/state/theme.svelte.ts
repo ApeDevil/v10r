@@ -29,7 +29,6 @@ export function createThemeState(initial: { mode: ThemeMode; accent: AccentColor
 		resolvedMode: 'light',
 	});
 
-	// Resolve system preference
 	$effect(() => {
 		if (!browser) return;
 
@@ -47,7 +46,6 @@ export function createThemeState(initial: { mode: ThemeMode; accent: AccentColor
 		}
 	});
 
-	// Apply to DOM
 	$effect(() => {
 		if (!browser) return;
 		document.documentElement.classList.toggle('dark', state.resolvedMode === 'dark');

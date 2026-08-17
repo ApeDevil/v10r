@@ -3,7 +3,7 @@ import type { GalleryCardItem } from '$lib/components';
 import { GalleryCard } from '$lib/components';
 import { DemoCard } from '../_components';
 
-// ── Offline SVG placeholder helpers ──────────────────────────────────────
+// Offline SVG placeholder helpers
 // bg values are pixel data inside generated SVG images — literal colors here
 // are unavoidable for image fixture data and are NOT component/section CSS.
 const slide = (label: string, bg: string): string =>
@@ -16,7 +16,7 @@ const animated: string = `data:image/svg+xml,${encodeURIComponent(
 	`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'><rect width='400' height='300' fill='#1e3a8a'/><circle cy='150' r='40' fill='#f59e0b'><animate attributeName='cx' values='60;340;60' dur='2s' repeatCount='indefinite'/></circle></svg>`,
 )}`;
 
-// ── Demo A: fixed copy, 4 items ──────────────────────────────────────────
+// Demo A: fixed copy, 4 items
 const itemsFixed: GalleryCardItem[] = [
 	{ src: slide('Alpine', '#2563eb'), alt: 'Alpine mountain landscape' },
 	{ src: slide('Forest', '#16a34a'), alt: 'Dense green forest' },
@@ -24,7 +24,7 @@ const itemsFixed: GalleryCardItem[] = [
 	{ src: slide('Ocean', '#0891b2'), alt: 'Deep blue ocean' },
 ];
 
-// ── Demo B: synced copy, 3 items ─────────────────────────────────────────
+// Demo B: synced copy, 3 items
 const itemsSynced: GalleryCardItem[] = [
 	{
 		src: slide('Model A', '#7c3aed'),
@@ -46,7 +46,7 @@ const itemsSynced: GalleryCardItem[] = [
 	},
 ];
 
-// ── Demo C: autoplay + animated, 3 items ─────────────────────────────────
+// Demo C: autoplay + animated, 3 items
 const itemsAutoplay: GalleryCardItem[] = [
 	{ src: animated, alt: 'Animated yellow circle bouncing across a dark-blue background' },
 	{ src: slide('Slide 2', '#9333ea'), alt: 'Purple slide' },

@@ -7,7 +7,6 @@
 import { contrastRatio } from './contrast';
 import { formatOklch, parseOklch } from './oklch';
 
-/** The 5 accent token keys */
 export const ACCENT_TOKEN_KEYS = [
 	'accent',
 	'accent-hover',

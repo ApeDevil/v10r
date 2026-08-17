@@ -4,7 +4,7 @@
  *
  * EN is the canonical source. For each non-EN locale, list keys present in
  * en.json but absent in <locale>.json (and vice versa, for orphaned keys).
- * Exits non-zero on any divergence so it's CI-safe.
+ * Exits non-zero on any divergence, so `bun run validate` fails on it.
  *
  * Run via: `bun run i18n:check-missing`
  *

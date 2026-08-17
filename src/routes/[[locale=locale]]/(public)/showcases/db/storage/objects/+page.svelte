@@ -29,7 +29,6 @@ const sections = $derived([
 	{ id: 'presigned', label: m.showcase_db_storage_objects_nav_presigned() },
 ]);
 
-// ─── Metadata inspection state ──────────────────────
 let selectedKey = $state('');
 let inspecting = $state(false);
 let inspectedDetail = $state<{
@@ -44,7 +43,6 @@ let inspectedDetail = $state<{
 	contentEncoding?: string;
 } | null>(null);
 
-// ─── Presigned URL state ────────────────────────────
 let presignKey = $state('');
 let presignExpiry = $state('300');
 let generating = $state(false);
@@ -100,7 +98,6 @@ $effect(() => {
 		<NavSection {sections} ariaLabel="Object operations" />
 
 		<Stack gap="7">
-			<!-- ═══ BROWSER ═══ -->
 			<section id="browser">
 				<Card>
 					{#snippet header()}
@@ -169,7 +166,6 @@ $effect(() => {
 				</Card>
 			</section>
 
-			<!-- ═══ METADATA ═══ -->
 			<section id="metadata">
 				<Card>
 					{#snippet header()}
@@ -243,7 +239,6 @@ $effect(() => {
 				</Card>
 			</section>
 
-			<!-- ═══ PRESIGNED URLs ═══ -->
 			<section id="presigned">
 				<Card>
 					{#snippet header()}
@@ -328,7 +323,6 @@ $effect(() => {
 		</Stack>
 	{/if}
 
-
 <style>
 	.section-desc {
 		margin: var(--spacing-1) 0 0;
@@ -353,7 +347,6 @@ $effect(() => {
 		color: var(--color-muted);
 	}
 
-	/* ─── Metadata ─── */
 	.diag-grid {
 		display: flex;
 		flex-direction: column;
@@ -400,7 +393,6 @@ $effect(() => {
 		border-top: 1px solid var(--color-border);
 	}
 
-	/* ─── Presigned URLs ─── */
 	.presign-form {
 		display: flex;
 		flex-direction: column;

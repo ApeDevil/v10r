@@ -186,8 +186,6 @@ $effect(() => {
 		}
 	}
 
-	/* ── Media column ──────────────────────────────────── */
-
 	.media-col {
 		display: flex;
 		flex-direction: column;
@@ -211,7 +209,7 @@ $effect(() => {
 		display: block;
 	}
 
-	/* ── Pause / Play overlay ──────────────────────────── */
+	/* Pause / Play overlay */
 
 	.play-pause-btn {
 		position: absolute;
@@ -238,8 +236,6 @@ $effect(() => {
 		outline: 2px solid var(--color-primary);
 		outline-offset: 2px;
 	}
-
-	/* ── Thumbnail strip ───────────────────────────────── */
 
 	.thumb-strip {
 		display: flex;
@@ -292,8 +288,6 @@ $effect(() => {
 		display: block;
 	}
 
-	/* ── Text column ───────────────────────────────────── */
-
 	.text-col {
 		display: flex;
 		flex-direction: column;
@@ -320,8 +314,6 @@ $effect(() => {
 	.cta-wrapper {
 		margin-top: var(--spacing-2);
 	}
-
-	/* ── Accessibility ─────────────────────────────────── */
 
 	.sr-only {
 		position: absolute;

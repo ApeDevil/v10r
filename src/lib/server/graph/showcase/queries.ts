@@ -3,7 +3,6 @@ import { cypher } from '../index';
 import type { Neo4jNodeRecord, Neo4jRelRecord } from '../types';
 import { toKnowledgeData } from '../types';
 
-// ─── Tenant isolation ──────────────────────────────────
 // This Neo4j instance is SHARED: alongside the public "Tech Stack" demo graph it
 // also holds per-user RAG `:Entity`/`:Chunk` nodes (owned via an `ownerId` property).
 // Aura free = one database, so the demo can't live on a separate instance. Every
@@ -13,8 +12,6 @@ import { toKnowledgeData } from '../types';
 // route. See docs/stack/data/neo4j.md.
 const DEMO_LABELS = ['Layer', 'Technology', 'Concept', 'Showcase'];
 
-// ─── Sanitization ──────────────────────────────────────
-
 /** Strip non-alphanumeric characters to prevent Cypher injection via label/type names.
  *  Current queries use db.labels()/db.relationshipTypes() within Cypher's own WITH
  *  binding (not string interpolation), but this guards against second-order injection
@@ -22,8 +19,6 @@ const DEMO_LABELS = ['Layer', 'Technology', 'Concept', 'Showcase'];
 function sanitizeIdentifier(name: string): string {
 	return name.replace(/[^a-zA-Z0-9_]/g, '');
 }
-
-// ─── Connection page ────────────────────────────────────
 
 interface ConnectionInfo {
 	connected: boolean;
@@ -74,8 +69,6 @@ export async function verifyConnection(): Promise<ConnectionInfo> {
 		relTypeCount: relTypes.length,
 	};
 }
-
-// ─── Model page ─────────────────────────────────────────
 
 interface LabelInfo {
 	label: string;
@@ -177,8 +170,6 @@ export async function getFullGraph(): Promise<KnowledgeData> {
 
 	return toKnowledgeData(nodes, relationships);
 }
-
-// ─── Traversal page ─────────────────────────────────────
 
 interface NodeSummary {
 	elementId: string;

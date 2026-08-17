@@ -1,4 +1,8 @@
 <script lang="ts">
+/**
+ * Not localized: every user-facing string below is a literal or a humanized
+ * enum key. The whole file still needs an i18n pass — no per-string markers.
+ */
 import { enhance } from '$app/forms';
 import { Alert, Card, FormField, NavSection, TagInput } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
@@ -40,7 +44,6 @@ interface EditFields {
 	category: string;
 }
 
-// ─── Upload state ────────────────────────────────────────────────────
 let imageId = $state('');
 let previewUrl = $state('');
 let imageDims = $state<{ width: number; height: number }>({ width: 0, height: 0 });
@@ -48,7 +51,6 @@ let estimate = $state<PreRunEstimate | null>(null);
 let uploading = $state(false);
 let uploadError = $state('');
 
-// ─── Run state ───────────────────────────────────────────────────────
 type ToolState = 'idle' | 'running' | 'done' | 'error';
 let visionState = $state<ToolState>('idle');
 let visionError = $state('');
@@ -56,7 +58,6 @@ let embedState = $state<ToolState>('idle');
 let embedError = $state('');
 let liveStatus = $state('');
 
-// ─── Results ─────────────────────────────────────────────────────────
 let fields = $state<EditFields>({ title: '', caption: '', altText: '', keywords: [], category: '' });
 let confidence = $state<Partial<Record<MetadataFieldKey, ConfidenceTier>>>({});
 let touched = $state<Record<MetadataFieldKey, boolean>>({
@@ -88,7 +89,6 @@ const sections = [
 
 const categoryOptions = IMAGE_CATEGORIES.map((c) => ({ value: c, label: c.charAt(0).toUpperCase() + c.slice(1) }));
 
-// ─── Formatting ──────────────────────────────────────────────────────
 const tokenFmt = new Intl.NumberFormat('en-US');
 function fmtPer1000(n: number): string {
 	return `≈ ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: n < 0.01 ? 4 : 2 }).format(n)}`;
@@ -122,7 +122,6 @@ function resetResults() {
 	cost = null;
 }
 
-// ─── Run pipeline ────────────────────────────────────────────────────
 async function runKit() {
 	if (!canRun) return;
 	await runVision();
@@ -134,7 +133,6 @@ async function runVision() {
 	visionError = '';
 	embed = null;
 	embedState = 'idle';
-	// TODO(i18n)
 	liveStatus = 'Analyzing image…';
 	try {
 		const res = await fetch(endpoint('vision'), {
@@ -158,17 +156,14 @@ async function runVision() {
 			usage = body.usage;
 			cost = body.cost;
 			visionState = 'done';
-			// TODO(i18n)
 			liveStatus = 'Analysis complete. Review the results below.';
 		} else {
 			visionState = 'error';
 			visionError = body.message;
-			// TODO(i18n)
 			liveStatus = 'Analysis failed.';
 		}
 	} catch {
 		visionState = 'error';
-		// TODO(i18n)
 		visionError = 'Could not reach the analysis service.';
 		liveStatus = visionError;
 	}
@@ -197,12 +192,10 @@ async function runEmbed() {
 		}
 	} catch {
 		embedState = 'error';
-		// TODO(i18n)
 		embedError = 'Could not reach the embedding service.';
 	}
 }
 
-// ─── Approve terminal actions ────────────────────────────────────────
 async function downloadCrops() {
 	for (const ratio of CROP_RATIOS) {
 		const rect = currentRects[ratio];
@@ -254,7 +247,6 @@ async function finishKit() {
 	imageDims = { width: 0, height: 0 };
 	estimate = null;
 	resetResults();
-	// TODO(i18n)
 	liveStatus = 'Session cleared. Upload another image to start again.';
 	try {
 		await fetch(endpoint('discard'), {
@@ -271,10 +263,9 @@ async function finishKit() {
 <Stack gap="6">
 	<div aria-live="polite" class="sr-only">{liveStatus}</div>
 
-	<!-- ═══ 1. UPLOAD ═══ -->
+	<!-- 1. UPLOAD -->
 	<Card>
 		{#snippet header()}
-			<!-- TODO(i18n) -->
 			<h2 class="text-fluid-lg font-semibold">1. Upload an image</h2>
 			<p class="text-fluid-sm text-muted">
 				Three tools in one pass — read metadata, suggest crops, and embed it for retrieval. PNG, JPEG, or WebP. The image
@@ -306,7 +297,6 @@ async function finishKit() {
 						estimate = u.estimate;
 						resetResults();
 					} else if (result.type === 'failure') {
-						// TODO(i18n)
 						uploadError = (result.data?.uploadError as string) ?? 'Upload failed.';
 					}
 				};
@@ -320,7 +310,6 @@ async function finishKit() {
 				<Cluster gap="3">
 					<Button type="submit" variant="primary" disabled={uploading}>
 						{#if uploading}<Spinner size="sm" class="mr-2" />{/if}
-						<!-- TODO(i18n) -->
 						Upload
 					</Button>
 				</Cluster>
@@ -338,10 +327,9 @@ async function finishKit() {
 		{/if}
 	</Card>
 
-	<!-- ═══ 2. RUN ═══ -->
+	<!-- 2. RUN -->
 	<Card>
 		{#snippet header()}
-			<!-- TODO(i18n) -->
 			<h2 class="text-fluid-lg font-semibold">2. Run the kit</h2>
 			<p class="text-fluid-sm text-muted">One click runs all three tools. You can re-run any of them afterwards.</p>
 		{/snippet}
@@ -351,19 +339,15 @@ async function finishKit() {
 				<Button type="button" variant="primary" onclick={runKit} disabled={!canRun}>
 					{#if visionState === 'running' || embedState === 'running'}<Spinner size="sm" class="mr-2" />{/if}
 					<span class="i-lucide-play text-icon-sm mr-1" aria-hidden="true"></span>
-					<!-- TODO(i18n) -->
 					Run
 				</Button>
 
 				{#if !data.aiAvailable}
-					<!-- TODO(i18n) -->
 					<span class="text-fluid-xs text-muted">No vision provider configured — analysis is unavailable.</span>
 				{:else if !hasImage}
-					<!-- TODO(i18n) -->
 					<span class="text-fluid-xs text-muted">Upload an image first.</span>
 				{:else if estimate && visionState === 'idle'}
 					<span class="text-fluid-xs text-muted">
-						<!-- TODO(i18n) -->
 						Est. ~{tokenFmt.format(estimate.estInputTokens)} input tokens{#if estimate.cost}
 							· {fmtPer1000(estimate.cost.per1000Usd)} per 1,000 runs (reference, free-tier $0){/if}
 					</span>
@@ -374,13 +358,11 @@ async function finishKit() {
 				<ul class="stages">
 					<li class="stage">
 						{@render stageIcon(visionState)}
-						<!-- TODO(i18n) -->
 						<span class="stage-label text-fluid-sm">Read metadata &amp; suggest crops</span>
 						{#if visionState === 'running'}<span class="stage-bar"><span class="stage-bar-fill"></span></span>{/if}
 					</li>
 					<li class="stage">
 						{@render stageIcon(embedState)}
-						<!-- TODO(i18n) -->
 						<span class="stage-label text-fluid-sm">Embed for retrieval</span>
 						{#if embedState === 'running'}<span class="stage-bar"><span class="stage-bar-fill"></span></span>{/if}
 					</li>
@@ -389,7 +371,6 @@ async function finishKit() {
 
 			{#if usage && cost}
 				<p class="text-fluid-xs text-muted">
-					<!-- TODO(i18n) -->
 					Analyzed with <code>{usage.modelId}</code> · {usage.totalTokens ?? '—'} tokens · {fmtPer1000(cost.per1000Usd)} per
 					1,000 (reference; you're on the free tier, so this run cost $0).
 				</p>
@@ -401,11 +382,10 @@ async function finishKit() {
 		<NavSection {sections} ariaLabel="Image Kit tools" />
 	{/if}
 
-	<!-- ═══ 3a. METADATA ═══ -->
+	<!-- 3a. METADATA -->
 	<section id="kit-metadata">
 		<Card>
 			{#snippet header()}
-				<!-- TODO(i18n) -->
 				<h2 class="text-fluid-lg font-semibold">Metadata</h2>
 				<p class="text-fluid-sm text-muted">AI-proposed values you can edit. Each field shows the AI's confidence.</p>
 			{/snippet}
@@ -417,7 +397,6 @@ async function finishKit() {
 					<Alert variant="warning" title="Analysis unavailable" description={visionError} />
 					<div>
 						<Button type="button" variant="outline" size="sm" onclick={runVision}>
-							<!-- TODO(i18n) -->
 							Retry
 						</Button>
 					</div>
@@ -471,18 +450,16 @@ async function finishKit() {
 				</Stack>
 			{:else}
 				<p class="text-fluid-sm text-muted">
-					<!-- TODO(i18n) -->
 					Run the kit to read this image's metadata.
 				</p>
 			{/if}
 		</Card>
 	</section>
 
-	<!-- ═══ 3b. CROP ═══ -->
+	<!-- 3b. CROP -->
 	<section id="kit-crop">
 		<Card>
 			{#snippet header()}
-				<!-- TODO(i18n) -->
 				<h2 class="text-fluid-lg font-semibold">Frame cropper</h2>
 				<p class="text-fluid-sm text-muted">
 					The AI places a frame on the subject for each ratio. Drag, resize, or nudge with the arrow keys to adjust.
@@ -495,18 +472,16 @@ async function finishKit() {
 				<div class="skeleton-box"></div>
 			{:else}
 				<p class="text-fluid-sm text-muted">
-					<!-- TODO(i18n) -->
 					Run the kit to get suggested crops.
 				</p>
 			{/if}
 		</Card>
 	</section>
 
-	<!-- ═══ 3c. EMBED ═══ -->
+	<!-- 3c. EMBED -->
 	<section id="kit-embed">
 		<Card>
 			{#snippet header()}
-				<!-- TODO(i18n) -->
 				<h2 class="text-fluid-lg font-semibold">Image embedder</h2>
 				<p class="text-fluid-sm text-muted">
 					How retrieval "sees" this image — by embedding its description into a vector. Toggle to embed the pixels
@@ -525,7 +500,6 @@ async function finishKit() {
 				/>
 			{:else}
 				<p class="text-fluid-sm text-muted">
-					<!-- TODO(i18n) -->
 					Run the kit to embed this image.
 				</p>
 			{/if}
@@ -536,7 +510,6 @@ async function finishKit() {
 		<Cluster gap="3">
 			<Button type="button" variant="primary" onclick={() => (showApprove = true)}>
 				<span class="i-lucide-check text-icon-sm mr-1" aria-hidden="true"></span>
-				<!-- TODO(i18n) -->
 				Approve &amp; review
 			</Button>
 		</Cluster>
@@ -553,18 +526,15 @@ async function finishKit() {
 	ondone={finishKit}
 />
 
-<!-- ─── Snippets ─── -->
 {#snippet fieldMeta(key: MetadataFieldKey)}
 	{#if touched[key]}
 		<span class="meta-chip">
 			<span class="i-lucide-user-pen text-icon-sm" aria-hidden="true"></span>
-			<!-- TODO(i18n) -->
 			<span class="text-fluid-xs font-medium">Edited by you</span>
 		</span>
 	{:else if confidence[key]}
 		<Badge variant={tierVariant(confidence[key]!)}>
 			<span class="i-lucide-sparkles text-icon-sm mr-1" aria-hidden="true"></span>
-			<!-- TODO(i18n) -->
 			AI · {confidence[key]} confidence
 		</Badge>
 	{/if}

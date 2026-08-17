@@ -3,8 +3,6 @@ import { ADMIN_AUDIT_PAGE_SIZE } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { adminAuditLog } from '$lib/server/db/schema/admin';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 export interface AuditEventInput {
 	actorId: string;
 	actorEmail: string;
@@ -25,8 +23,6 @@ export interface AuditLogFilters {
 	pageSize?: number;
 }
 
-// ── Write ─────────────────────────────────────────────────────────────────────
-
 export async function recordAuditEvent(input: AuditEventInput): Promise<void> {
 	await db.insert(adminAuditLog).values({
 		action: input.action,
@@ -38,8 +34,6 @@ export async function recordAuditEvent(input: AuditEventInput): Promise<void> {
 		ipAddress: input.ipAddress,
 	});
 }
-
-// ── Read ──────────────────────────────────────────────────────────────────────
 
 function buildWhereClause(filters: AuditLogFilters) {
 	const conditions = [];

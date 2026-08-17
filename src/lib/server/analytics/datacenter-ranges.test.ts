@@ -32,8 +32,6 @@ afterAll(async () => {
 	await testClient?.close();
 });
 
-// ── Parsers ──────────────────────────────────────────────────────────────────
-
 describe('feed parsers', () => {
 	it('AWS: ip_prefix + ipv6_prefix arrays', () => {
 		const doc = JSON.stringify({
@@ -79,7 +77,7 @@ describe('feed parsers', () => {
 	});
 });
 
-// ── Write-time containment (PGlite) ──────────────────────────────────────────
+// Write-time containment (PGlite)
 
 describe('upsertSession ip_class containment', () => {
 	beforeEach(async () => {

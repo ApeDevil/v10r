@@ -1,17 +1,12 @@
 /**
  * Provider preference state for the Desk workspace.
  *
- * Manages which AI provider the user has selected. Follows the same
- * module-level $state pattern as bot-config.svelte.ts.
+ * Manages which AI provider the user has selected.
  *
- * Module-level $state is safe here because the desk route sets `ssr = false`
- * in src/routes/desk/+layout.ts. This module only ever runs in the browser,
- * so state is per-tab and never shared across server requests.
+ * Module-level $state, safe for the reason desk-context.svelte.ts documents.
  */
 
 import { apiFetch } from '$lib/api';
-
-// ── Types ───────────────────────────────────────────────────────────
 
 export interface ProviderInfo {
 	id: string;
@@ -30,7 +25,7 @@ interface ProviderState {
 	error: string | null;
 }
 
-// ── Module-level state ──────────────────────────────────────────────
+// Module-level state
 
 const state = $state<ProviderState>({
 	providers: [],
@@ -39,8 +34,6 @@ const state = $state<ProviderState>({
 	loading: false,
 	error: null,
 });
-
-// ── Public API ──────────────────────────────────────────────────────
 
 /** Get the full reactive provider state. */
 export function getProviderState(): ProviderState {

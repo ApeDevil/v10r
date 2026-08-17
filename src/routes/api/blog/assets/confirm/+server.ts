@@ -31,11 +31,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	/**
 	 * Prove this key was issued to THIS caller before touching storage.
 	 *
-	 * Previously confirmation checked only the blog-author grant, so any author
-	 * could confirm any `blog/<uuid>.<ext>` key — including one another author
-	 * had uploaded but not yet confirmed. Because `storage_key` carries a global
-	 * unique index and first write wins, the theft was permanent and the rightful
-	 * uploader's own confirm came back as a 409.
+	 * The blog-author grant alone is not enough: it would let any author confirm
+	 * any `blog/<uuid>.<ext>` key, including one another author uploaded but has
+	 * not yet confirmed. `storage_key` carries a global unique index and first
+	 * write wins, so such a theft is permanent and the rightful uploader's own
+	 * confirm comes back 409.
 	 */
 	let claims: ReturnType<typeof verifyUploadTicket>;
 	try {
@@ -46,10 +46,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	try {
-		// The object itself is the authority on its own size and type. Both were
-		// previously taken from the request body, so a caller could declare a
-		// small PNG, upload something else entirely, and have the lie persisted —
-		// a presigned PUT signs Content-Type but never Content-Length.
+		// The object itself is the authority on its own size and type — never the
+		// request body. A presigned PUT signs Content-Type but never Content-Length,
+		// so a caller can declare a small PNG and upload something else entirely.
 		const head = await confirmBlogUpload(key);
 
 		// Which limit applied was decided at issuance (3D models get a far larger

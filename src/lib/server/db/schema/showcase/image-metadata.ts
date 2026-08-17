@@ -58,7 +58,7 @@ export const imageCategoryEnum = imageSchema.enum('image_category', [
 	'other',
 ]);
 
-// ── image.asset — the uploaded (stripped) image in R2 ───────────────
+// image.asset — the uploaded (stripped) image in R2
 
 export const imageAsset = imageSchema.table(
 	'asset',
@@ -127,7 +127,7 @@ export const imageMetadata = imageSchema.table(
 	],
 );
 
-// ── image.ai_proposal — append-only run snapshot + telemetry ────────
+// image.ai_proposal — append-only run snapshot + telemetry
 
 export const imageAiProposal = imageSchema.table(
 	'ai_proposal',
@@ -161,7 +161,7 @@ export const imageAiProposal = imageSchema.table(
 	],
 );
 
-// ── image.tag + image.metadata_tag — N:M keywords ───────────────────
+// image.tag + image.metadata_tag — N:M keywords
 
 export const imageTag = imageSchema.table(
 	'tag',

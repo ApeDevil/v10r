@@ -15,15 +15,11 @@ import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 
 const PANEL_MENUS_CTX = Symbol('panel-menus');
 
-// ── Types ────────────────────────────────────────────────────────────
-
 export interface PanelMenus {
 	menuBar: MenuBarMenu[];
 }
 
 const EMPTY: PanelMenus = { menuBar: [] };
-
-// ── Factory ──────────────────────────────────────────────────────────
 
 export function createPanelMenusState() {
 	/** Reactive registry version — bumped on every register/unregister */

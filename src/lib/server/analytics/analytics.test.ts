@@ -17,7 +17,7 @@ import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { consentEvents, events, sessions } from '$lib/server/db/schema/analytics';
 
-// ── DB setup (PGlite) ─────────────────────────────────────────────────────────
+// DB setup (PGlite)
 
 let testClient: PGlite;
 
@@ -72,7 +72,7 @@ afterAll(async () => {
 	await testClient?.close();
 });
 
-// ── 1. consent.ts — parseConsentTier contracts ───────────────────────────────
+// 1. consent.ts — parseConsentTier contracts
 
 describe('parseConsentTier', () => {
 	it('returns necessary when cookie is undefined — deny-by-default', () => {
@@ -104,7 +104,7 @@ describe('parseConsentTier', () => {
 	});
 });
 
-// ── 2. consent.ts — hasConsent contracts ─────────────────────────────────────
+// 2. consent.ts — hasConsent contracts
 
 describe('hasConsent', () => {
 	it('necessary tier does NOT satisfy analytics requirement — GDPR gate', () => {
@@ -124,7 +124,7 @@ describe('hasConsent', () => {
 	});
 });
 
-// ── 3. consent.ts — hashVisitorId: IP never in output ────────────────────────
+// 3. consent.ts — hashVisitorId: IP never in output
 
 describe('hashVisitorId', () => {
 	const SALT = 'test-analytics-visitor-salt';
@@ -214,7 +214,7 @@ describe('deriveVisitorId — the salt every lane actually uses', () => {
 	});
 });
 
-// ── 3b. consent.ts — deriveCookielessSessionId (no-consent fallback) ─────────
+// 3b. consent.ts — deriveCookielessSessionId (no-consent fallback)
 
 describe('deriveCookielessSessionId', () => {
 	it('returns a session id in the same s_ + 16 hex format as cookie ids', async () => {
@@ -249,7 +249,7 @@ describe('deriveCookielessSessionId', () => {
 	});
 });
 
-// ── 4. collect-policy.ts — the shared anonymous-lane admission rules ─────────
+// 4. collect-policy.ts — the shared anonymous-lane admission rules
 
 describe('isExcludedPath', () => {
 	it.each([
@@ -443,7 +443,7 @@ describe('analyticsCollector — cookie naming', () => {
 	});
 });
 
-// ── 4d. event-schema.ts — the cardinality budget ─────────────────────────────
+// 4d. event-schema.ts — the cardinality budget
 
 describe('templateRoute', () => {
 	it.each([
@@ -532,7 +532,7 @@ describe('isKnownEvent', () => {
 	});
 });
 
-// ── 4c. enrich.ts — session enrichment ───────────────────────────────────────
+// 4c. enrich.ts — session enrichment
 
 describe('geoFromHeaders', () => {
 	it('reads and upper-cases the Vercel edge country header', () => {
@@ -599,7 +599,7 @@ describe('classifyUserAgent', () => {
 	});
 });
 
-// ── 4b. hook.ts — _v10r_sid Set-Cookie is consent-gated (TDDDG §25) ──────────
+// 4b. hook.ts — _v10r_sid Set-Cookie is consent-gated (TDDDG §25)
 
 /**
  * The header shape a real browser sends on a top-level navigation.
@@ -671,7 +671,7 @@ describe('analyticsCollector — session cookie requires analytics consent', () 
 	});
 });
 
-// ── 4b. hook.ts — a miss must not buy a database write ───────────────────────
+// 4b. hook.ts — a miss must not buy a database write
 
 /**
  * `isExcludedPath` filters by prefix and by "contains a dot", so before this
@@ -733,7 +733,7 @@ describe('analyticsCollector — misses write nothing', () => {
 	});
 });
 
-// ── 4b. hook.ts + beacon endpoints — dev is muted without the override ────────
+// 4b. hook.ts + beacon endpoints — dev is muted without the override
 
 /**
  * There is exactly one database across environments (NEON_DATABASE_URL_PROD by
@@ -783,7 +783,7 @@ describe('dev gate — collectors refuse in dev without ANALYTICS_DEV_TRACKING',
 	});
 });
 
-// ── 4c. journey endpoint — 'enter' events are never pageview rows ────────────
+// 4c. journey endpoint — 'enter' events are never pageview rows
 
 /**
  * The server half of the double-count fix. The initial hydration firing is the
@@ -853,7 +853,7 @@ describe('journey endpoint — navigationType filter', () => {
 	});
 });
 
-// ── 4d. confirm endpoint — corroboration at every tier ───────────────────────
+// 4d. confirm endpoint — corroboration at every tier
 
 describe('confirm endpoint — sessions get human_confirmed_at at every tier', () => {
 	const UA = 'Mozilla/5.0 (Test) Gecko/20100101';
@@ -1022,7 +1022,7 @@ describe('confirm endpoint — sessions get human_confirmed_at at every tier', (
 	});
 });
 
-// ── 5. mutations.ts — recordEvent ────────────────────────────────────────────
+// 5. mutations.ts — recordEvent
 
 describe('recordEvent', () => {
 	beforeEach(async () => {
@@ -1158,7 +1158,7 @@ describe('recordEvent', () => {
 	});
 });
 
-// ── 6. mutations.ts — upsertSession ──────────────────────────────────────────
+// 6. mutations.ts — upsertSession
 
 describe('upsertSession', () => {
 	beforeEach(async () => {
@@ -1279,7 +1279,7 @@ describe('upsertSession', () => {
 	});
 });
 
-// ── 7. analytics-cleanup.ts — retention drift ────────────────────────────────
+// 7. analytics-cleanup.ts — retention drift
 
 describe('analyticsCleanup — retention constant', () => {
 	it('keeps raw events for 60 days — GDPR Art. 5(1)(e) storage limitation', () => {
@@ -1384,7 +1384,7 @@ describe('analyticsCleanup — functional behaviour', () => {
 	});
 });
 
-// ── 8. consent state — init-time leakage guard ───────────────────────────────
+// 8. consent state — init-time leakage guard
 
 describe('createConsentState — default is null, never auto-granted', () => {
 	it('tier is null on initialisation — not necessary, analytics, or full', () => {
@@ -1420,7 +1420,7 @@ describe('createConsentState — default is null, never auto-granted', () => {
 	});
 });
 
-// ── 9. silent swallow — DB error is observable, not rethrown ─────────────────
+// 9. silent swallow — DB error is observable, not rethrown
 
 describe('recordEvent — DB error swallowed silently by hook', () => {
 	it('promise rejects on invalid input; catch handler receives the error', async () => {
@@ -1458,7 +1458,7 @@ describe('recordEvent — DB error swallowed silently by hook', () => {
 	});
 });
 
-// ── 8. aggregations.ts — audience breakdown counts people, not sessions ──────
+// 8. aggregations.ts — audience breakdown counts people, not sessions
 
 describe('aggregations — debug-owned traffic is not audience', () => {
 	beforeEach(async () => {

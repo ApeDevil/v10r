@@ -16,7 +16,6 @@ const sections = $derived([
 	{ id: 'mime', label: m.showcase_db_storage_transfer_nav_mime() },
 ]);
 
-// ─── Upload state machine ───────────────────────────
 type UploadState = 'idle' | 'requesting' | 'uploading' | 'confirming' | 'done' | 'error';
 
 let uploadState = $state<UploadState>('idle');
@@ -135,7 +134,6 @@ async function startDirectUpload() {
 	}
 }
 
-// ─── Range request state ────────────────────────────
 let rangeStart = $state(0);
 let rangeEnd = $state(63);
 let fetchingRange = $state(false);
@@ -154,7 +152,6 @@ $effect(() => {
 <NavSection {sections} ariaLabel="Transfer operations" />
 
 	<Stack gap="7">
-		<!-- ═══ UPLOAD ═══ -->
 		<section id="upload">
 			<Card>
 				{#snippet header()}
@@ -294,7 +291,6 @@ $effect(() => {
 			<input type="hidden" name="key" value="" />
 		</form>
 
-		<!-- ═══ RANGE REQUESTS ═══ -->
 		<section id="range">
 			<Card>
 				{#snippet header()}
@@ -375,7 +371,6 @@ $effect(() => {
 			</Card>
 		</section>
 
-		<!-- ═══ MIME ENFORCEMENT ═══ -->
 		<section id="mime">
 			<Card>
 				{#snippet header()}
@@ -432,7 +427,6 @@ fetch(url, &#123;
 		</section>
 	</Stack>
 
-
 <style>
 	.section-desc {
 		margin: var(--spacing-1) 0 0;
@@ -445,7 +439,6 @@ fetch(url, &#123;
 		display: none;
 	}
 
-	/* ─── Upload ─── */
 	.drop-zone {
 		display: flex;
 		flex-direction: column;
@@ -537,7 +530,7 @@ fetch(url, &#123;
 		gap: var(--spacing-4);
 	}
 
-	/* ─── Diag grid (shared) ─── */
+	/* Diag grid (shared) */
 	.diag-grid {
 		display: flex;
 		flex-direction: column;
@@ -570,7 +563,6 @@ fetch(url, &#123;
 		text-align: right;
 	}
 
-	/* ─── Range requests ─── */
 	.range-form {
 		display: flex;
 		flex-direction: column;
@@ -643,7 +635,6 @@ fetch(url, &#123;
 		white-space: pre;
 	}
 
-	/* ─── MIME enforcement ─── */
 	.mime-content {
 		display: flex;
 		flex-direction: column;

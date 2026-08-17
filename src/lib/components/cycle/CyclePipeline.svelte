@@ -268,7 +268,6 @@ function stageDescription(id: string): string {
 </svg>
 
 <style>
-	/* --- Boundary band --- */
 	.boundary-client {
 		fill: color-mix(in srgb, var(--chart-6) 12%, transparent);
 	}
@@ -286,7 +285,6 @@ function stageDescription(id: string): string {
 		text-transform: uppercase;
 	}
 
-	/* --- Edges --- */
 	.edge {
 		stroke: var(--color-border);
 		stroke-width: 1.5;
@@ -309,7 +307,6 @@ function stageDescription(id: string): string {
 		opacity: 0.25;
 	}
 
-	/* --- Pills --- */
 	.pill {
 		cursor: default;
 		outline: none;
@@ -366,7 +363,6 @@ function stageDescription(id: string): string {
 		opacity: 0.45;
 	}
 
-	/* --- Icon --- */
 	.pill-icon {
 		color: var(--color-muted);
 	}
@@ -379,7 +375,6 @@ function stageDescription(id: string): string {
 		color: var(--color-error-fg);
 	}
 
-	/* --- Labels --- */
 	.pill-label {
 		font-size: 10px;
 		font-weight: 500;
@@ -406,7 +401,6 @@ function stageDescription(id: string): string {
 		letter-spacing: 0.02em;
 	}
 
-	/* --- Sonar pulse --- */
 	.sonar {
 		fill: none;
 		stroke: var(--stage-color);
@@ -426,7 +420,6 @@ function stageDescription(id: string): string {
 		}
 	}
 
-	/* --- Badges --- */
 	.badge-done {
 		fill: var(--color-primary);
 	}
@@ -450,12 +443,10 @@ function stageDescription(id: string): string {
 		stroke-linecap: round;
 	}
 
-	/* --- Traveling dot --- */
 	.traveling-dot {
 		fill: var(--color-primary);
 	}
 
-	/* --- Shake animation --- */
 	.pill-error-shake {
 		animation: shake 0.4s ease-in-out;
 	}
@@ -473,14 +464,12 @@ function stageDescription(id: string): string {
 		}
 	}
 
-	/* --- Dash flow --- */
 	@keyframes dash-flow {
 		to {
 			stroke-dashoffset: -8;
 		}
 	}
 
-	/* --- Reduced motion --- */
 	@media (prefers-reduced-motion: reduce) {
 		.sonar,
 		.pill-error-shake,

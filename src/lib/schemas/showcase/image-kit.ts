@@ -28,7 +28,6 @@ export {
 	IMAGE_CATEGORIES,
 };
 
-// ── Image handle validation ──────────────────────────────────────────
 // Auth-gated v1 needs no signed handle: the server derives the R2 key from the
 // session userId + this client-sent id. Validate it's a real UUID (the id the
 // upload generated) so a client can't smuggle a path segment into the key.
@@ -41,7 +40,6 @@ export function isCropRatio(value: unknown): value is CropRatio {
 	return typeof value === 'string' && (CROP_RATIOS as readonly string[]).includes(value);
 }
 
-// ── Crop aspect ratios ───────────────────────────────────────────────
 export const CROP_RATIOS = ['1:1', '16:9', '9:16'] as const;
 export type CropRatio = (typeof CROP_RATIOS)[number];
 
@@ -64,7 +62,7 @@ export function largestRatioRect(ratio: number, W: number, H: number): { width: 
 	return { width: W, height: Math.min(Math.round(W / ratio), H) };
 }
 
-// ── 1) Merged vision contract (metadata + crop hint) ─────────────────
+// 1) Merged vision contract (metadata + crop hint)
 // Mirrors the reader's imageAnalysisSchema and adds a `crop` branch. The model
 // returns only a salient HINT (Gemini-native conventions below); the server
 // re-derives exact pixel geometry deterministically (see snapToAspect), so range
@@ -102,7 +100,7 @@ export function visionIsEmpty(a: ImageKitVision): boolean {
 	return a.title === null && a.caption === null && a.altText === null && a.category === null && a.keywords.length === 0;
 }
 
-// ── 2) Wire DTOs — vision RPC ────────────────────────────────────────
+// 2) Wire DTOs — vision RPC
 // Route-local `{ ok }` envelope (same convention as the reader's analyze RPC).
 
 export const VISION_FAILURE_REASONS = ['no_provider', 'budget', 'model_refused', 'timeout', 'error'] as const;
@@ -144,7 +142,7 @@ export interface VisionErr {
 }
 export type VisionResponse = VisionOk | VisionErr;
 
-// ── 3) Wire DTOs — crop derivative RPC (sharp only, no AI) ────────────
+// 3) Wire DTOs — crop derivative RPC (sharp only, no AI)
 
 export interface CropDerivativeOk {
 	ok: true;
@@ -162,7 +160,7 @@ export interface CropDerivativeErr {
 }
 export type CropDerivativeResponse = CropDerivativeOk | CropDerivativeErr;
 
-// ── 4) Wire DTOs — embed RPC ─────────────────────────────────────────
+// 4) Wire DTOs — embed RPC
 
 export const EMBED_FAILURE_REASONS = ['no_provider', 'budget', 'empty_source', 'error'] as const;
 export type EmbedFailureReason = (typeof EMBED_FAILURE_REASONS)[number];
@@ -194,7 +192,7 @@ export interface EmbedErr {
 }
 export type EmbedResponse = EmbedOk | EmbedErr;
 
-// ── 5) Upload result (form action → client) ──────────────────────────
+// 5) Upload result (form action → client)
 
 /** Pre-run cost estimate shown next to the Run button before spending. */
 export interface PreRunEstimate {

@@ -12,8 +12,6 @@ import { user } from '../auth/_better-auth';
 
 export const aiSchema = pgSchema('ai');
 
-// ── Enums ───────────────────────────────────────────────────────────
-
 export const messageRoleEnum = aiSchema.enum('message_role', ['user', 'assistant', 'system', 'tool']);
 
 export const toolCallStatusEnum = aiSchema.enum('tool_call_status', ['pending', 'success', 'error']);
@@ -22,8 +20,6 @@ export const stepTypeEnum = aiSchema.enum('step_type', ['initial', 'tool-result'
 
 /** Which AI surface a conversation belongs to. See `docs/blueprint/ai/surfaces.md`. */
 export const aiSurfaceEnum = aiSchema.enum('ai_surface', ['chatbot', 'deskbot']);
-
-// ── JSONB Types ─────────────────────────────────────────────────────
 
 /** Structured context entry attached to a message. */
 export type MessageContext = {
@@ -40,8 +36,6 @@ export type RetrievalEvent = {
 	chunkCount: number;
 	durationMs: number;
 };
-
-// ── Conversation ────────────────────────────────────────────────────
 
 export const conversation = aiSchema.table(
 	'conversation',
@@ -66,8 +60,6 @@ export const conversation = aiSchema.table(
 	},
 	(table) => [index('conversation_user_updated_idx').on(table.userId, table.updatedAt)],
 );
-
-// ── Message ─────────────────────────────────────────────────────────
 
 export const message = aiSchema.table(
 	'message',
@@ -97,8 +89,6 @@ export const message = aiSchema.table(
 	},
 	(table) => [index('message_conv_created_idx').on(table.conversationId, table.createdAt)],
 );
-
-// ── Tool Call ────────────────────────────────────────────────────────
 
 export const toolCall = aiSchema.table(
 	'tool_call',
@@ -138,8 +128,6 @@ export const toolCall = aiSchema.table(
 		index('tool_call_proposal_idx').on(table.proposalId),
 	],
 );
-
-// ── Conversation Step ───────────────────────────────────────────────
 
 /**
  * One row per AI SDK step within a conversation turn.

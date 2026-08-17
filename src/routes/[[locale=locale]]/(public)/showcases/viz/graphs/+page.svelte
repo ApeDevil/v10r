@@ -16,7 +16,7 @@ const sections = [
 	{ id: 'layout-comparison', label: 'Comparison' },
 ];
 
-// --- Sample Data: Social Network (undirected) ---
+// Sample Data: Social Network (undirected)
 const socialNetwork: NetworkData = {
 	nodes: [
 		{ id: 'alice', label: 'Alice', group: 'engineering', size: 8 },
@@ -47,7 +47,7 @@ const socialNetwork: NetworkData = {
 	],
 };
 
-// --- Sample Data: Citation Network (directed) ---
+// Sample Data: Citation Network (directed)
 const citationNetwork: NetworkData = {
 	nodes: [
 		{ id: 'paper-a', label: 'Paper A', group: 'ml', size: 9 },
@@ -74,7 +74,7 @@ const citationNetwork: NetworkData = {
 	],
 };
 
-// --- Sample Data: Weighted Network ---
+// Sample Data: Weighted Network
 const weightedNetwork: NetworkData = {
 	nodes: [
 		{ id: 'server-1', label: 'Server 1', group: 'frontend', size: 8 },
@@ -100,7 +100,7 @@ const weightedNetwork: NetworkData = {
 	],
 };
 
-// --- Sample Data: Org Chart Tree ---
+// Sample Data: Org Chart Tree
 const orgChart: TreeData = {
 	id: 'ceo',
 	label: 'CEO',
@@ -161,7 +161,7 @@ const orgChart: TreeData = {
 	],
 };
 
-// --- Sample Data: File System Tree ---
+// Sample Data: File System Tree
 const fileSystem: TreeData = {
 	id: 'src',
 	label: 'src/',
@@ -211,7 +211,7 @@ const fileSystem: TreeData = {
 	],
 };
 
-// --- Sample Data: Package Dependencies DAG ---
+// Sample Data: Package Dependencies DAG
 const packageDeps: DagData = {
 	nodes: [
 		{ id: 'app', label: 'App' },
@@ -237,7 +237,7 @@ const packageDeps: DagData = {
 	],
 };
 
-// --- Sample Data: Task Pipeline DAG ---
+// Sample Data: Task Pipeline DAG
 const taskPipeline: DagData = {
 	nodes: [
 		{ id: 'fetch', label: 'Fetch', group: 'input' },
@@ -259,7 +259,7 @@ const taskPipeline: DagData = {
 	],
 };
 
-// --- Sample Data: Energy Flow Sankey ---
+// Sample Data: Energy Flow Sankey
 const energyFlow: SankeyData = {
 	nodes: [
 		{ id: 'solar', label: 'Solar', category: 'source' },
@@ -286,7 +286,7 @@ const energyFlow: SankeyData = {
 	],
 };
 
-// --- Sample Data: User Funnel Sankey ---
+// Sample Data: User Funnel Sankey
 const userFunnel: SankeyData = {
 	nodes: [
 		{ id: 'visit', label: 'Visit', category: 'top' },
@@ -306,7 +306,7 @@ const userFunnel: SankeyData = {
 	],
 };
 
-// --- Sample Data: Movie Knowledge Graph ---
+// Sample Data: Movie Knowledge Graph
 const movieKG: KnowledgeData = {
 	entityTypes: ['Person', 'Movie', 'Genre'],
 	relationshipTypes: ['ACTED_IN', 'DIRECTED', 'HAS_GENRE'],
@@ -347,7 +347,7 @@ const movieKG: KnowledgeData = {
 	],
 };
 
-// --- Layout Comparison: same data for network, tree, DAG ---
+// Layout Comparison: same data for network, tree, DAG
 const comparisonNetwork: NetworkData = {
 	nodes: [
 		{ id: 'a', label: 'A', group: 'root' },
@@ -404,7 +404,6 @@ const comparisonDag: DagData = {
 	],
 };
 
-// --- Helpers ---
 function flattenTree(
 	node: TreeData,
 	depth = 0,
@@ -925,7 +924,6 @@ function flattenTree(
 		padding: var(--spacing-7) var(--spacing-4);
 		box-sizing: border-box;
 	}
-
 
 	.section {
 		scroll-margin-top: 5rem;

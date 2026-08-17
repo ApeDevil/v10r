@@ -9,7 +9,6 @@ interface Props extends KbdVariants {
 
 let { keys, size = 'md', class: className }: Props = $props();
 
-// Convert keys to array format
 const keyArray = $derived(
 	Array.isArray(keys) ? keys : keys.includes('+') ? keys.split('+').map((k) => k.trim()) : [keys],
 );

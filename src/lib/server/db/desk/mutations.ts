@@ -18,8 +18,6 @@ import {
 	suggestNextName,
 } from '../shared/folder-tree';
 
-// ── File registry mutations ────────────────────────────────────────
-
 /**
  * Create a new spreadsheet file (file + spreadsheet in a transaction).
  *
@@ -148,7 +146,6 @@ export async function toggleFileAiContext(id: string, userId: string, aiContext:
 
 /** Duplicate a spreadsheet file. Generates "X copy", "X copy 2", etc. Skips soft-deleted source. */
 export async function duplicateSpreadsheetFile(id: string, userId: string) {
-	// Get original file + spreadsheet
 	const [original] = await db
 		.select()
 		.from(file)
@@ -162,7 +159,6 @@ export async function duplicateSpreadsheetFile(id: string, userId: string) {
 		.where(and(eq(spreadsheet.fileId, id), isNull(spreadsheet.deletedAt)))
 		.limit(1);
 
-	// Compute duplicate name
 	const baseName = original.name;
 	const copyPattern = `${baseName} copy%`;
 	const existing = await db
@@ -214,8 +210,6 @@ export async function duplicateSpreadsheetFile(id: string, userId: string) {
 	});
 }
 
-// ── Folder mutations ──────────────────────────────────────────────
-
 /**
  * Create a new folder.
  * @throws FolderNameConflictError when `(userId, parentId, name)` collides.
@@ -266,7 +260,6 @@ export async function renameFolder(id: string, userId: string, name: string) {
  * @throws FolderNameConflictError on sibling name collision at the new parent.
  */
 export async function moveFolder(id: string, userId: string, parentId: string | null) {
-	// Check ownership
 	const [target] = await db
 		.select()
 		.from(folder)
@@ -379,7 +372,6 @@ export async function updateSpreadsheetByFileId(
 			.limit(1);
 		if (!fileRow) return null;
 
-		// Update spreadsheet detail
 		const sheetUpdate: Record<string, unknown> = {};
 		if (data.cells !== undefined) sheetUpdate.cells = data.cells;
 		if (data.columnMeta !== undefined) sheetUpdate.columnMeta = data.columnMeta;

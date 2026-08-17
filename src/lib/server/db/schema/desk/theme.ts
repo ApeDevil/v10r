@@ -9,8 +9,6 @@ import { index, jsonb, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
 import { deskSchema } from './schema';
 
-// ── JSONB column types ───────────────────────────────────────────
-
 export type WorkspaceColorsJson = {
 	shellBg?: string;
 	panelBg?: string;
@@ -20,7 +18,7 @@ export type WorkspaceColorsJson = {
 
 export type TypeStylesJson = Record<string, { bg?: string }>;
 
-// ── Active theme (1:1 with user) ─────────────────────────────────
+// Active theme (1:1 with user)
 
 export const deskTheme = deskSchema.table('theme', {
 	userId: text('user_id')
@@ -32,7 +30,7 @@ export const deskTheme = deskSchema.table('theme', {
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
-// ── User-created presets (1:N from user) ─────────────────────────
+// User-created presets (1:N from user)
 
 export const deskThemePreset = deskSchema.table(
 	'theme_preset',

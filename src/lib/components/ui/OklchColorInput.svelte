@@ -12,7 +12,6 @@ interface Props {
 
 let { label, value = $bindable(), onchange }: Props = $props();
 
-// ── Internal slider state ──────────────────────────────────────
 let l = $state(0.5);
 let c = $state(0.1);
 let h = $state(0);
@@ -20,7 +19,6 @@ let expanded = $state(false);
 let hexInput = $state('');
 let lastSyncedValue = $state('');
 
-// Parse the incoming oklch() string
 function parseOklchString(v: string): { l: number; c: number; h: number } | null {
 	const match = v.match(/oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*\)/);
 	if (!match) return null;

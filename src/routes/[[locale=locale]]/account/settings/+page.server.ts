@@ -50,7 +50,6 @@ export const actions: Actions = {
 			await updateDisplayName(locals.user.id, displayName);
 		}
 
-		// Update preferences
 		await updatePreferences(locals.user.id, { theme, sidebarWidth, ...prefsData });
 
 		// Write theme cookie for SSR FOUC prevention (httpOnly:false — read client-side)

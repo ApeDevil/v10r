@@ -190,8 +190,8 @@ $effect(() => {
 const bus = setDeskBusContext();
 
 // Surface-independent sink for AI notifications — subscribing HERE (not in
-// ChatPanel) means they survive the chat panel being closed or behind an
-// overlay. Before this, ai:notify had no subscriber anywhere.
+// ChatPanel) is what makes them survive the chat panel being closed or behind
+// an overlay. Without it, ai:notify has no subscriber at all.
 $effect(() => {
 	if (!onNotify) return;
 	return bus.subscribe('ai:notify', (payload) => onNotify(payload));
@@ -260,7 +260,6 @@ const deskSettings = setDeskSettingsContext(initialTheme, {
 	},
 });
 
-// ── Workspace state ─────────────────────────────────────────────
 // Priority: server data (DB) > localStorage cache > empty
 // svelte-ignore state_referenced_locally
 const hasServerWorkspaces = authenticated && serverWorkspaces.length > 0;

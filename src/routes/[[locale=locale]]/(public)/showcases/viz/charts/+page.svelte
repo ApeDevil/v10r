@@ -36,13 +36,10 @@ const sections = [
 // SSR-safe: resolve palette only in browser
 let palette: string[] = $state(browser ? getVizPalette() : []);
 
-// --- DataControls state ---
 let dataset: string = $state('sales');
 let animated: boolean = $state(true);
 
 const animationOption = $derived(animated ? {} : false);
-
-// --- Sample datasets ---
 
 type DatasetMap = {
 	labels: string[];
@@ -127,11 +124,11 @@ const datasets: Record<string, DatasetMap> = {
 
 const d = $derived(datasets[dataset]);
 
-// --- SimpleChart data (static, not affected by dataset picker) ---
+// SimpleChart data (static, not affected by dataset picker)
 
 const simpleData = $derived(d.labels.map((label, i) => ({ label, value: d.values[i] })));
 
-// --- Chart.js data shapes ---
+// Chart.js data shapes
 
 const barData = $derived({
 	labels: d.labels,
@@ -271,8 +268,6 @@ const doughnutData = $derived({
 	],
 });
 
-// --- Radar chart data ---
-
 const radarData = $derived({
 	labels: d.radarLabels,
 	datasets: [
@@ -306,8 +301,6 @@ const radarCompareData = $derived({
 	],
 });
 
-// --- Bubble chart data ---
-
 const bubbleData = $derived({
 	datasets: [
 		{
@@ -320,15 +313,13 @@ const bubbleData = $derived({
 	],
 });
 
-// --- Sparkline table data ---
-
 const sparklineTable = $derived([
 	{ label: 'Revenue', values: d.sparklineValues, type: 'line' as const },
 	{ label: 'Orders', values: d.sparklineValues.map((v) => v * 0.8 + 10).map(Math.round), type: 'bar' as const },
 	{ label: 'Visitors', values: d.sparklineValues.map((v) => v * 1.2 - 5).map(Math.round), type: 'area' as const },
 ]);
 
-// --- Treemap data (static, not dataset-dependent) ---
+// Treemap data (static, not dataset-dependent)
 
 const treemapFlat: TreemapNode = {
 	id: 'root',
@@ -927,7 +918,6 @@ const treemapNested: TreemapNode = {
 		padding: var(--spacing-7) var(--spacing-4);
 		box-sizing: border-box;
 	}
-
 
 	.section {
 		scroll-margin-top: 5rem;

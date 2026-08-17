@@ -149,7 +149,7 @@ $effect(() => {
 	);
 });
 
-// ── AI desk effect dispatch ─────────────────────────────────────
+// AI desk effect dispatch
 
 /** Track which tool call IDs we've already dispatched effects for. */
 const processedToolCalls = new Set<string>();
@@ -225,8 +225,6 @@ function dispatchDeskEffect(effect: DeskEffect) {
 	}
 }
 
-// ── Scroll ──────────────────────────────────────────────────────
-
 let scrollContainer: HTMLDivElement | undefined = $state();
 
 $effect(() => {
@@ -239,8 +237,6 @@ $effect(() => {
 	}
 });
 
-// ── Actions ─────────────────────────────────────────────────────
-
 function startNewChat() {
 	conversationId = undefined;
 	chat.messages = [];
@@ -248,8 +244,6 @@ function startNewChat() {
 	proposalBusy = {};
 	chatStateCache.delete(panelId);
 }
-
-// ── Harness proposal state ──────────────────────────────────────
 
 /** Map of proposalId → in-flight flag, so the PlanCard disables buttons during approve/reject. */
 let proposalBusy = $state<Record<string, boolean>>({});
@@ -344,8 +338,6 @@ function submitMessage() {
 		},
 	);
 }
-
-// ── Panel menus ─────────────────────────────────────────────────
 
 const chatMenus = $derived<MenuBarMenu[]>([
 	{

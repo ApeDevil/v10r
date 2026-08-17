@@ -9,13 +9,13 @@
  *   { "creationTime": "...", "prefixes": [ { "ipv4Prefix": "1.2.3.0/24" },
  *                                          { "ipv6Prefix": "2001:db8::/32" } ] }
  *
- * All six URLs were verified live on 2026-08-03. They are stable, public, and
- * unauthenticated; if one starts 404ing the refresh job reports a failure for
- * that source and leaves the previous prefixes in place (see `refreshBotRanges`).
+ * The feed URLs are public and unauthenticated; if one starts 404ing the refresh
+ * job reports a failure for that source and leaves the previous prefixes in
+ * place (see `botRangesRefresh` in `jobs/bot-ranges-refresh.ts`).
  *
  * ## Why this is a job and not a request-path fetch
  *
- * Verification runs on every bot hit. Fetching six documents per request would be
+ * Verification runs on every bot hit. Fetching every feed per request would be
  * absurd, and caching them in module scope would still mean a cold start pays for
  * it — on Vercel, frequently. Instead the job writes prefixes to
  * `analytics.bot_ip_ranges` and the containment test runs in Postgres as part of

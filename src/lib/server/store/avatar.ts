@@ -36,9 +36,9 @@ export function assertAvatarKey(key: string): void {
 	if (!key.startsWith(AVATAR_PREFIX)) {
 		throw new StoreError('forbidden', `Key must start with "${AVATAR_PREFIX}": ${key}`);
 	}
-	// One flat segment under the prefix, ending in an extension we actually
-	// produce. The prefix check alone would accept `avatars/../blog/x`, and the
-	// extension used to come from the uploaded filename.
+	// One flat segment under the prefix, ending in an extension we actually produce.
+	// The prefix check alone would accept `avatars/../blog/x`, and the extension must
+	// come from here, never from the uploaded filename.
 	if (!/^avatars\/[^/]+\.(png|jpg|gif|webp)$/.test(key) || key.includes('..')) {
 		throw new StoreError('forbidden', `Malformed avatar key: ${key}`);
 	}

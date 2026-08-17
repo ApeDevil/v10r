@@ -18,8 +18,6 @@ import {
 // the provider for the running app and leak across test runs).
 vi.mock('$lib/server/cache', () => ({ redis: null }));
 
-// ── Mock registry ───────────────────────────────────────────────────
-
 function makeEntry(overrides: Partial<ProviderEntry> & { id: string }): ProviderEntry {
 	return {
 		name: overrides.id,
@@ -39,8 +37,6 @@ const google = makeEntry({ id: 'google' });
 const unconfigured = makeEntry({ id: 'unconfigured', configured: false });
 
 const registry = [groq, openai, google, unconfigured];
-
-// ── User preference ────────────────────────────────────────────────
 
 describe('user preferences', () => {
 	beforeEach(() => {
@@ -70,8 +66,6 @@ describe('user preferences', () => {
 		expect(getUserPreference('user-1')).toBeNull();
 	});
 });
-
-// ── resolveActiveProvider ──────────────────────────────────────────
 
 describe('resolveActiveProvider', () => {
 	it('returns first configured when no preference', () => {
@@ -106,8 +100,6 @@ describe('resolveActiveProvider', () => {
 	});
 });
 
-// ── resolveToolProvider ────────────────────────────────────────────
-
 describe('resolveToolProvider', () => {
 	it('returns a tool-capable provider', () => {
 		const result = resolveToolProvider(registry);
@@ -134,8 +126,6 @@ describe('resolveToolProvider', () => {
 		expect(result).toBeNull();
 	});
 });
-
-// ── resolveVisionProvider ──────────────────────────────────────────
 
 describe('resolveVisionProvider', () => {
 	const groqNoVision = makeEntry({ id: 'groq', supportsVision: false });
@@ -173,8 +163,6 @@ describe('resolveVisionProvider', () => {
 		expect(result).toBeNull();
 	});
 });
-
-// ── Cooldown visibility ────────────────────────────────────────────
 
 describe('getCooldownResumeAt', () => {
 	afterEach(() => resetCooldowns());

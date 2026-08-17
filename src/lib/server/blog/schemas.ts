@@ -4,8 +4,6 @@ import { LocaleParam, Markdown, SlugParam } from '$lib/server/schemas/shared';
 
 const MAX_MARKDOWN_SIZE = 500_000;
 
-// ── Posts ───────────────────────────────────────────────────────────
-
 export const CreatePostSchema = v.object({
 	slug: SlugParam,
 });
@@ -29,7 +27,7 @@ export const PublishSchema = v.object({
 	locale: LocaleParam,
 });
 
-// ── Assets ─────���────────────────────────────────────────────────────
+// Assets ─────���
 
 export const RequestUploadSchema = v.object({
 	fileName: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
@@ -42,10 +40,9 @@ export const RequestUploadSchema = v.object({
  *
  * `mimeType` and `fileSize` are deliberately absent: they describe the object
  * that landed in R2, and the server reads them back from `HeadObject` rather
- * than believing the uploader. `fileName` is likewise absent — it is the name
- * declared at issuance, and it now genuinely comes from the signed ticket
- * rather than being re-supplied here, which is what that claim used to assert
- * without enforcing. Dimensions and alt text stay caller-supplied: verifying
+ * than believing the uploader. `fileName` is likewise absent — it comes from the
+ * signed ticket, where it was declared at issuance, rather than being re-supplied
+ * here where it could differ. Dimensions and alt text stay caller-supplied: verifying
  * them would mean decoding the image, and a wrong value is a display bug rather
  * than an integrity one.
  */
@@ -71,8 +68,6 @@ export const PatchAssetSchema = v.object({
 	/** Null moves the asset to the assets root (virtual:assets on the client). */
 	folderId: v.optional(v.nullable(v.pipe(v.string(), v.startsWith('afd_')))),
 });
-
-// ── Preview ─────────────────────────────────────────────────────────
 
 export const PreviewSchema = v.object({
 	markdown: v.pipe(v.string(), v.minLength(1), v.maxLength(MAX_MARKDOWN_SIZE)),

@@ -10,8 +10,6 @@ import {
 	truncateToTokenBudget,
 } from './desk-context.pure';
 
-// ── estimateTokens ──────────────────────────────────────────────────
-
 describe('estimateTokens', () => {
 	it('returns content.length / 4 rounded up', () => {
 		expect(estimateTokens('abcd')).toBe(1);
@@ -19,8 +17,6 @@ describe('estimateTokens', () => {
 		expect(estimateTokens('')).toBe(0);
 	});
 });
-
-// ── computePanelStatus ──────────────────────────────────────────────
 
 describe('computePanelStatus', () => {
 	it('returns focused when panel is focused and not dismissed', () => {
@@ -43,8 +39,6 @@ describe('computePanelStatus', () => {
 		expect(computePanelStatus('p1', null, new Set(['p1']), new Set(['p1']))).toBe('background');
 	});
 });
-
-// ── computeContextChips ─────────────────────────────────────────────
 
 describe('computeContextChips', () => {
 	it('returns empty array for empty registry', () => {
@@ -105,8 +99,6 @@ describe('computeContextChips', () => {
 	});
 });
 
-// ── computeActiveContexts ───────────────────────────────────────────
-
 describe('computeActiveContexts', () => {
 	it('returns empty for empty registry', () => {
 		expect(computeActiveContexts(new Map(), null, new Set(), new Set())).toEqual([]);
@@ -144,8 +136,6 @@ describe('computeActiveContexts', () => {
 	});
 });
 
-// ── truncateToTokenBudget ───────────────────────────────────────────
-
 describe('truncateToTokenBudget', () => {
 	it('returns full when content fits', () => {
 		const result = truncateToTokenBudget('short', 'Test', 100);
@@ -168,8 +158,6 @@ describe('truncateToTokenBudget', () => {
 		expect(result.text).toBe('[My Panel]');
 	});
 });
-
-// ── budgetAwareSerialize ────────────────────────────────────────────
 
 describe('budgetAwareSerialize', () => {
 	it('returns empty array for empty input', () => {

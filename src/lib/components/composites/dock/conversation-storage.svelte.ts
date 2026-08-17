@@ -2,16 +2,12 @@
  * Conversation storage state for the Desk workspace.
  *
  * Manages the conversation list and stats for the Storage tab
- * in the Bot Manager dialog. Follows the same module-level $state
- * pattern as bot-config.svelte.ts and provider-preference.svelte.ts.
+ * in the Bot Manager dialog.
  *
- * Module-level $state is safe here because the desk route sets `ssr = false`
- * in src/routes/desk/+layout.ts.
+ * Module-level $state, safe for the reason desk-context.svelte.ts documents.
  */
 
 import { apiFetch } from '$lib/api';
-
-// ── Types ───────────────────────────────────────────────────────────
 
 export interface ConversationSummary {
 	id: string;
@@ -36,7 +32,7 @@ interface StorageState {
 	error: string | null;
 }
 
-// ── Module-level state ──────────────────────────────────────────────
+// Module-level state
 
 const state = $state<StorageState>({
 	conversations: [],
@@ -45,8 +41,6 @@ const state = $state<StorageState>({
 	deleting: new Set(),
 	error: null,
 });
-
-// ── Public API ──────────────────────────────────────────────────────
 
 /** Get the reactive storage state. */
 export function getStorageState(): StorageState {

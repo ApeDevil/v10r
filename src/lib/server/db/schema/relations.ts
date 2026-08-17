@@ -58,8 +58,6 @@ import {
 	userTelegramAccounts,
 } from './index';
 
-// ── Auth ─────────────────────────────────────────────────────────────
-
 export const sessionRelations = relations(session, ({ one }) => ({
 	user: one(user, { fields: [session.userId], references: [user.id] }),
 }));
@@ -67,8 +65,6 @@ export const sessionRelations = relations(session, ({ one }) => ({
 export const accountRelations = relations(account, ({ one }) => ({
 	user: one(user, { fields: [account.userId], references: [user.id] }),
 }));
-
-// ── AI ───────────────────────────────────────────────────────────────
 
 export const conversationRelations = relations(conversation, ({ one, many }) => ({
 	user: one(user, { fields: [conversation.userId], references: [user.id] }),
@@ -101,8 +97,6 @@ export const conversationStepRelations = relations(conversationStep, ({ one }) =
 		references: [message.id],
 	}),
 }));
-
-// ── RAG ──────────────────────────────────────────────────────────────
 
 export const embeddingModelRelations = relations(embeddingModel, ({ many }) => ({
 	chunks: many(chunk),
@@ -144,8 +138,6 @@ export const collectionDocumentRelations = relations(collectionDocument, ({ one 
 	}),
 }));
 
-// ── Notifications ────────────────────────────────────────────────────
-
 export const notificationsRelations = relations(notifications, ({ one, many }) => ({
 	user: one(user, {
 		fields: [notifications.userId],
@@ -186,8 +178,6 @@ export const userDiscordAccountsRelations = relations(userDiscordAccounts, ({ on
 	user: one(user, { fields: [userDiscordAccounts.userId], references: [user.id] }),
 }));
 
-// ── Showcase ─────────────────────────────────────────────────────────
-
 export const typeSpecimenRelations = relations(typeSpecimen, ({ many }) => ({
 	history: many(typeSpecimenHistory),
 	auditEntries: many(auditLog),
@@ -206,8 +196,6 @@ export const auditLogRelations = relations(auditLog, ({ one }) => ({
 		references: [typeSpecimen.id],
 	}),
 }));
-
-// ── Desk ────────────────────────────────────────────────────────────
 
 export const folderRelations = relations(folder, ({ one, many }) => ({
 	user: one(user, { fields: [folder.userId], references: [user.id] }),
@@ -250,8 +238,6 @@ export const deskWorkspaceActiveRelations = relations(deskWorkspaceActive, ({ on
 	workspace: one(deskWorkspace, { fields: [deskWorkspaceActive.workspaceId], references: [deskWorkspace.id] }),
 }));
 
-// ── App ─────────────────────────────────────────────────────────────
-
 export const userPreferencesRelations = relations(userPreferences, ({ one }) => ({
 	user: one(user, { fields: [userPreferences.userId], references: [user.id] }),
 }));
@@ -259,8 +245,6 @@ export const userPreferencesRelations = relations(userPreferences, ({ one }) => 
 export const customPalettesRelations = relations(customPalettes, ({ one }) => ({
 	creator: one(user, { fields: [customPalettes.createdBy], references: [user.id] }),
 }));
-
-// ── Blog ─────────────────────────────────────────────────────────────
 
 export const postRelations = relations(post, ({ one, many }) => ({
 	author: one(user, { fields: [post.authorId], references: [user.id] }),
@@ -326,7 +310,7 @@ export const grantRequestRelations = relations(grantRequest, ({ one }) => ({
 	}),
 }));
 
-// ── User hub (the big one) ──────────────────────────────────────────
+// User hub (the big one)
 
 export const userRelations = relations(user, ({ one, many }) => ({
 	// auth
@@ -337,7 +321,6 @@ export const userRelations = relations(user, ({ one, many }) => ({
 	// rag
 	documents: many(document),
 	collections: many(collection),
-	// notifications
 	notifications: many(notifications, { relationName: 'notification_recipient' }),
 	actedNotifications: many(notifications, { relationName: 'notification_actor' }),
 	notificationSettings: one(notificationSettings),
@@ -361,7 +344,6 @@ export const userRelations = relations(user, ({ one, many }) => ({
 	revisions: many(revision),
 	blogAssets: many(asset),
 	comments: many(comment),
-	// grants
 	grants: many(grant, { relationName: 'grant_user' }),
 	grantRequests: many(grantRequest, { relationName: 'grant_request_user' }),
 }));

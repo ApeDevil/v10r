@@ -20,7 +20,7 @@ import { Button, Cluster, Dialog, Select, Surface, Switch, ToggleGroup } from '$
 import { ContrastReadout, DemoCard, RungStack } from '../_components';
 import type { Rung } from '../_components/RungStack.svelte';
 
-// ── Didactic layer mapping: 5 named surfaces across E0–E4 ──────────────────────
+// Didactic layer mapping: 5 named surfaces across E0–E4
 const LADDER: Rung[] = [
 	{ e: 0, role: 'Background', token: 'surface-0' },
 	{ e: 1, role: 'Sidebar', token: 'surface-1' },
@@ -48,7 +48,6 @@ const GAUNTLET = [
 	{ p: 'P7', name: 'Midnight' },
 ];
 
-// ── Control options ────────────────────────────────────────────────────────────
 const PALETTES = [
 	{ value: 'auto', label: 'Auto (page palette)' },
 	{ value: 'P0', label: 'P0 · High Contrast' },
@@ -73,7 +72,7 @@ const RUNGS = [
 	{ value: '4', label: 'E4' },
 ];
 
-// ── Section-level control state (Svelte 5 runes) ────────────────────────────────
+// Section-level control state (Svelte 5 runes)
 let dark = $state(false);
 let paletteSel = $state('auto');
 let rungStr = $state('2'); // string for ToggleGroup's bindable contract

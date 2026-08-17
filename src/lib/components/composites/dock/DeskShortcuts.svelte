@@ -27,8 +27,6 @@ const viewMenu = $derived<MenuBarMenu>(
 );
 const menus = $derived<MenuBarMenu[]>([...panelMenus.active.menuBar, viewMenu]);
 
-// ── Keyboard shortcuts ───────────────────────────────────────────
-
 const INPUT_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT']);
 
 function isEditing(el: Element): boolean {

@@ -10,6 +10,9 @@
  *  - Reset restores the AI suggestion
  *  - "Compare" fetches the deterministic sharp `attention` crop side-by-side
  * The frame can never leave the image; geometry mirrors the server's snapToAspect.
+ *
+ * Not localized: every user-facing string below is a literal or a humanized
+ * enum key. The whole file still needs an i18n pass — no per-string markers.
  */
 import { Alert } from '$lib/components/composites';
 import { Badge, Button, Slider, Spinner, ToggleGroup } from '$lib/components/primitives';
@@ -104,7 +107,7 @@ $effect(() => {
 
 const ratioItems = CROP_RATIOS.map((r) => ({ value: r, label: r }));
 
-// ── Size slider ↔ active-ratio scale (loop-safe two-way sync) ─────────
+// Size slider ↔ active-ratio scale (loop-safe two-way sync)
 let sizeValue = $state<number[]>([100]);
 let suppressSizeWrite = false;
 
@@ -137,7 +140,7 @@ function resetActive() {
 	announce();
 }
 
-// ── Drag-to-move ─────────────────────────────────────────────────────
+// Drag-to-move
 let stageEl = $state<HTMLDivElement | null>(null);
 let dragging = false;
 let startX = 0;
@@ -172,7 +175,7 @@ function onPointerUp(e: PointerEvent) {
 	announce();
 }
 
-// ── Corner-handle resize (ratio-locked, opposite corner anchored) ─────
+// Corner-handle resize (ratio-locked, opposite corner anchored)
 type Corner = 'nw' | 'ne' | 'sw' | 'se';
 const CORNERS = ['nw', 'ne', 'sw', 'se'] as const;
 let resizing = false;
@@ -230,7 +233,6 @@ function onHandleUp(e: PointerEvent) {
 	announce();
 }
 
-// ── Keyboard nudge ───────────────────────────────────────────────────
 function onKeydown(e: KeyboardEvent) {
 	const base = Math.max(1, Math.round(W * 0.01));
 	const step = e.shiftKey ? base * 5 : base;
@@ -258,19 +260,17 @@ function onKeydown(e: KeyboardEvent) {
 	}
 }
 
-// ── Throttled SR announcement ────────────────────────────────────────
 let liveStatus = $state('');
 let announceTimer: ReturnType<typeof setTimeout> | null = null;
 function announce() {
 	if (announceTimer) clearTimeout(announceTimer);
 	announceTimer = setTimeout(() => {
 		const r = rectFor(activeRatio);
-		// TODO(i18n)
 		liveStatus = `Crop ${activeRatio}: ${r.width} by ${r.height} pixels at ${r.left}, ${r.top}.`;
 	}, 350);
 }
 
-// ── Deterministic comparison (sharp attention) ───────────────────────
+// Deterministic comparison (sharp attention)
 let comparing = $state(false);
 let compareError = $state('');
 let comparison = $state<Partial<Record<CropRatio, { aiCrop: string; attentionCrop: string }>>>({});
@@ -291,7 +291,6 @@ async function compare() {
 			compareError = body.message;
 		}
 	} catch {
-		// TODO(i18n)
 		compareError = 'Could not generate the comparison crops.';
 	} finally {
 		comparing = false;
@@ -307,13 +306,11 @@ const isFallback = $derived(view[activeRatio].fallback);
 		<ToggleGroup type="single" bind:value={activeRatioStr} items={ratioItems} size="sm" />
 		<Button type="button" variant="ghost" size="sm" onclick={resetActive}>
 			<span class="i-lucide-rotate-ccw text-icon-sm mr-1" aria-hidden="true"></span>
-			<!-- TODO(i18n) -->
 			Reset to suggestion
 		</Button>
 	</div>
 
 	{#if isFallback}
-		<!-- TODO(i18n) -->
 		<Alert
 			variant="warning"
 			title="Fallback frame"
@@ -322,7 +319,6 @@ const isFallback = $derived(view[activeRatio].fallback);
 	{:else if cropNote}
 		<p class="crop-note text-fluid-xs text-muted">
 			<span class="i-lucide-sparkles text-icon-sm" aria-hidden="true"></span>
-			<!-- TODO(i18n) -->
 			AI suggestion keeps <strong>{cropNote}</strong>
 		</p>
 	{/if}
@@ -356,7 +352,6 @@ const isFallback = $derived(view[activeRatio].fallback);
 
 	<div class="crop-size">
 		<span class="crop-size-label text-fluid-sm">
-			<!-- TODO(i18n) -->
 			Size <span class="text-muted">({sizeValue[0]}%)</span>
 		</span>
 		<Slider bind:value={sizeValue} min={30} max={100} step={1} />
@@ -366,7 +361,6 @@ const isFallback = $derived(view[activeRatio].fallback);
 		<Button type="button" variant="outline" size="sm" onclick={compare} disabled={comparing}>
 			{#if comparing}<Spinner size="sm" class="mr-2" />{/if}
 			<span class="i-lucide-columns-2 text-icon-sm mr-1" aria-hidden="true"></span>
-			<!-- TODO(i18n) -->
 			Compare with deterministic crop
 		</Button>
 
@@ -381,7 +375,6 @@ const isFallback = $derived(view[activeRatio].fallback);
 					<figcaption>
 						<Badge variant="secondary">
 							<span class="i-lucide-sparkles text-icon-sm mr-1" aria-hidden="true"></span>
-							<!-- TODO(i18n) -->
 							AI-guided
 						</Badge>
 					</figcaption>
@@ -391,7 +384,6 @@ const isFallback = $derived(view[activeRatio].fallback);
 					<figcaption>
 						<Badge variant="secondary">
 							<span class="i-lucide-cpu text-icon-sm mr-1" aria-hidden="true"></span>
-							<!-- TODO(i18n) -->
 							sharp attention
 						</Badge>
 					</figcaption>

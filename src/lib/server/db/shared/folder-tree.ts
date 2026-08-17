@@ -14,8 +14,6 @@ import { type SQL, sql } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
 import { rowsOf } from '$lib/server/db/rows';
 
-// ── Typed errors ──────────────────────────────────────────────────
-
 export class FolderNotFoundError extends Error {
 	readonly code = 'folder_not_found' as const;
 	constructor(public folderId: string) {
@@ -58,8 +56,6 @@ export class FolderNotEmptyError extends Error {
 	}
 }
 
-// ── Postgres error detection ──────────────────────────────────────
-
 /** Postgres unique-violation SQLSTATE. */
 export const PG_UNIQUE_VIOLATION = '23505';
 
@@ -82,8 +78,6 @@ export function isUniqueViolation(e: unknown): boolean {
 	return false;
 }
 
-// ── Name suggestion ───────────────────────────────────────────────
-
 /** "Foo" → "Foo (2)", "Foo (2)" → "Foo (3)". Used in name-conflict error payloads. */
 export function suggestNextName(name: string): string {
 	const m = name.match(/^(.*) \((\d+)\)$/);
@@ -91,7 +85,7 @@ export function suggestNextName(name: string): string {
 	return `${name} (2)`;
 }
 
-// ── Cycle-check CTE ───────────────────────────────────────────────
+// Cycle-check CTE
 
 /**
  * Run the ancestor-walk cycle check against an arbitrary folder table.

@@ -1,13 +1,8 @@
-// ---------------------------------------------------------------------------
 // 3D Model Customization Configuration
-// ---------------------------------------------------------------------------
 // Types and configs for runtime 3D model customization: material variants,
 // part visibility, morph targets, and bone-attached accessories.
-// ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
 // Material customization
-// ---------------------------------------------------------------------------
 
 /** How a material option is applied at runtime */
 export type MaterialMethod = 'khr-variant' | 'color-override' | 'map-swap';
@@ -31,9 +26,7 @@ export interface MaterialGroup {
 	defaultOptionId: string;
 }
 
-// ---------------------------------------------------------------------------
 // Part visibility
-// ---------------------------------------------------------------------------
 
 export interface ToggleablePart {
 	id: string;
@@ -43,9 +36,7 @@ export interface ToggleablePart {
 	defaultVisible: boolean;
 }
 
-// ---------------------------------------------------------------------------
 // Morph targets
-// ---------------------------------------------------------------------------
 
 export interface MorphTarget {
 	name: string;
@@ -63,9 +54,7 @@ export interface MorphTargetGroup {
 	targets: MorphTarget[];
 }
 
-// ---------------------------------------------------------------------------
 // Bone attachments
-// ---------------------------------------------------------------------------
 
 export interface Accessory {
 	id: string;
@@ -91,9 +80,7 @@ export interface AttachmentPoint {
 	accessories: Accessory[];
 }
 
-// ---------------------------------------------------------------------------
 // Presets + conflicts
-// ---------------------------------------------------------------------------
 
 export interface ConflictRule {
 	/** Two IDs that cannot be active simultaneously */
@@ -107,9 +94,7 @@ export interface CustomizationPreset {
 	state: Partial<CustomizationState>;
 }
 
-// ---------------------------------------------------------------------------
 // Top-level config (optional on Model3D)
-// ---------------------------------------------------------------------------
 
 export interface CustomizationConfig {
 	materialGroups?: MaterialGroup[];
@@ -120,9 +105,7 @@ export interface CustomizationConfig {
 	presets?: CustomizationPreset[];
 }
 
-// ---------------------------------------------------------------------------
 // Runtime state
-// ---------------------------------------------------------------------------
 
 export interface CustomizationState {
 	/** groupId → optionId */
@@ -135,9 +118,7 @@ export interface CustomizationState {
 	accessories: Record<string, boolean>;
 }
 
-// ---------------------------------------------------------------------------
 // Helpers
-// ---------------------------------------------------------------------------
 
 /** Build a default CustomizationState from config */
 export function getDefaultState(config: CustomizationConfig): CustomizationState {
@@ -191,9 +172,7 @@ export function checkConflicts(state: CustomizationState, config: CustomizationC
 	return disabled;
 }
 
-// ---------------------------------------------------------------------------
 // Model-specific configs
-// ---------------------------------------------------------------------------
 
 export const SOFA_CUSTOMIZATION: CustomizationConfig = {
 	materialGroups: [

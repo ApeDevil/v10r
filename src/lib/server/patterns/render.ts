@@ -98,7 +98,7 @@ export function frontmatterDescription(summary: string): string {
 	return `${(lastSpace > 100 ? slice.slice(0, lastSpace) : slice).replace(/[,;:—–-]\s*$/, '')}…`;
 }
 
-// --- README Pattern Index region ---------------------------------------------
+// README Pattern Index region
 
 function readmeDocsCell(refs: RegRef[]): string {
 	if (refs.length === 0) return '—';
@@ -166,7 +166,7 @@ export function renderReadmeIndex(registry: Registry): string {
 	return lines.join('\n');
 }
 
-// --- Per-pattern pages --------------------------------------------------------
+// Per-pattern pages
 
 const REPO_GITHUB = 'https://github.com/ApeDevil/v10r';
 const REPO_GITLAB = 'https://gitlab.com/ApeDevil/v10r';
@@ -279,8 +279,6 @@ export function renderPatternPage(pattern: PatternRecord, registry: Registry, op
 	sections.push('', '---', '', `_Machine-readable record: \`${pattern.id}\` in \`mcp/patterns.registry.json\`._`, '');
 	return sections.join('\n');
 }
-
-// --- Directory hub ------------------------------------------------------------
 
 /** The docs/pattern-library/README.md navigation hub (README convention; doc-filter keeps any README out of the in-app manifest, so this is a GitHub-only surface). */
 export function renderPatternsHub(registry: Registry): string {

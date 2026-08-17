@@ -65,8 +65,6 @@ async function handleMove(nodeId: string, newParentId: string | null) {
 	await dispatchMove(explorerState, nodeId, newParentId, actionContext);
 }
 
-// ── Action dispatchers ────────────────────────────────────────────
-
 function openNode(node: ExplorerNode) {
 	if (node.isFolder) {
 		explorerState.toggleExpanded(node.id);
@@ -206,7 +204,7 @@ const treeCallbacks: ContextMenuCallbacks = {
 	onDelete: handleDelete,
 };
 
-// ── Existing helpers (preserved) ──────────────────────────────────
+// Existing helpers (preserved)
 
 function openPost(p: PostListItem) {
 	const editorPanelId = `editor-${p.id}`;
@@ -381,13 +379,10 @@ $effect(() => {
 	return panelMenus.register(panelId, { menuBar: explorerMenus });
 });
 
-// ── AI Context registration ─────────────────────────────────────
-
 // Register unconditionally on mount (like SpreadsheetPanel)
 // svelte-ignore state_referenced_locally
 $effect(() => untrack(() => registerExplorerAiContext(explorerState, panelId)));
 
-// Update context when nodes change
 $effect(() => {
 	void explorerState.nodes;
 	if (!data.loading) updateExplorerAiContext(explorerState, panelId);

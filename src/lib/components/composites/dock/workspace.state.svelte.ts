@@ -39,12 +39,8 @@ export function createWorkspaceState(
 	let currentVersion = $state(0);
 	let savedVersion = $state(0);
 
-	// ── Derived ──────────────────────────────────────────────────
-
 	const active = $derived(workspaces.find((w) => w.id === activeId) ?? null);
 	const isModified = $derived(currentVersion !== savedVersion);
-
-	// ── Snapshot helpers ──────────────────────────────────────────
 
 	function captureLayout(): DockLayoutState {
 		return {
@@ -65,8 +61,6 @@ export function createWorkspaceState(
 			updatedAt: new Date().toISOString(),
 		};
 	}
-
-	// ── Switching ─────────────────────────────────────────────────
 
 	function switchTo(id: string): void {
 		if (id === activeId) return;
@@ -107,8 +101,6 @@ export function createWorkspaceState(
 		// 6. Fire-and-forget sync to API
 		options.onSync?.({ save: saveData, activate: id });
 	}
-
-	// ── CRUD ──────────────────────────────────────────────────────
 
 	async function createWorkspace(name: string): Promise<string | null> {
 		if (workspaces.length >= MAX_WORKSPACES) return null;
@@ -222,7 +214,7 @@ export function createWorkspaceState(
 		workspaces = reordered.map((w, i) => ({ ...w, sortOrder: i }));
 	}
 
-	// ── Called by persistence $effect to track modifications ──────
+	// Called by persistence $effect to track modifications
 
 	function onDockChange(): void {
 		currentVersion++;

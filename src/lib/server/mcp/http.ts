@@ -46,11 +46,10 @@ export function mcpMethodNotAllowed(): Response {
  *    `http://` Origin can never pass for an `https://` request URL (that is not same-origin), or
  *  - the Origin is explicitly listed in MCP_ALLOWED_ORIGINS, which is compared as a FULL origin.
  *
- * A bare-host entry (`app.example`) used to match any scheme, which meant one config line silently
- * admitted `http://app.example` as well. Bare hosts are now normalized to `https://` rather than
- * accepted loosely — the operator's intent is preserved, the downgrade is not. `http://localhost`
- * and `http://127.0.0.1` remain expressible by writing the scheme out, which is what a local MCP
- * client actually needs.
+ * Bare-host entries (`app.example`) are normalized to `https://`, never accepted loosely: matching
+ * any scheme would let one config line silently admit `http://app.example` too. The operator's
+ * intent is preserved, the downgrade is not. `http://localhost` and `http://127.0.0.1` stay
+ * expressible by writing the scheme out, which is what a local MCP client actually needs.
  */
 function allowedOrigins(): string[] {
 	return (env.MCP_ALLOWED_ORIGINS ?? '')

@@ -9,8 +9,6 @@
 import { listAssets, listPosts } from '$lib/server/blog/queries';
 import { listFiles, listFolders } from '$lib/server/db/desk/queries';
 
-// ── Types ───────────────────────────────────────────────────────────
-
 export interface FileTreeNode {
 	name: string;
 	kind: 'folder' | 'spreadsheet' | 'markdown' | 'post' | 'image';
@@ -18,8 +16,6 @@ export interface FileTreeNode {
 	children?: FileTreeNode[];
 	meta?: string;
 }
-
-// ── Main ────────────────────────────────────────────────────────────
 
 export async function getFileTree(userId: string): Promise<FileTreeNode[]> {
 	const [filesResult, foldersResult, postsResult, assetsResult] = await Promise.allSettled([
@@ -78,8 +74,6 @@ export async function getFileTree(userId: string): Promise<FileTreeNode[]> {
 	return roots;
 }
 
-// ── Data tree builder ───────────────────────────────────────────────
-
 function buildDataTree(
 	folders: { id: string; parentId: string | null; name: string }[],
 	files: { id: string; type: string; name: string; folderId: string | null }[],
@@ -131,8 +125,6 @@ function sortChildren(node: FileTreeNode): void {
 	for (const child of node.children) sortChildren(child);
 }
 
-// ── Text rendering ──────────────────────────────────────────────────
-
 export function renderFileTree(roots: FileTreeNode[]): string {
 	const lines: string[] = [];
 	for (const root of roots) {
@@ -173,8 +165,6 @@ function collectLeafIds(nodes: FileTreeNode[], out: string[]): void {
 		}
 	}
 }
-
-// ── Helpers ──────────────────────────────────────────────────────────
 
 function formatBytes(bytes: number): string {
 	if (bytes === 0) return '0 B';
