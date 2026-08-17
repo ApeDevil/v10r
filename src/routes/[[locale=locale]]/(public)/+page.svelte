@@ -148,6 +148,17 @@ v          10            r</pre>
 					<p class="etymology-descriptor">{m.home_hero_etymology_descriptor()}</p>
 				</div>
 			</div>
+
+			<a
+				class="license-card focus-ring"
+				href="https://gitlab.com/ApeDevil/v10r/-/blob/main/LICENSE"
+				target="_blank"
+				rel="noopener"
+				aria-label={m.home_hero_license_aria()}
+			>
+				<span class="license-label">{m.home_hero_license_label()}</span>
+				<p class="license-descriptor">{m.home_hero_license_descriptor()}</p>
+			</a>
 		</div>
 
 		<div class="hero-experience">
@@ -276,6 +287,7 @@ v          10            r</pre>
 
 	.etymology-label,
 	.etymology-diagram,
+	.license-label,
 	.taxonomy-title,
 	.zone-name,
 	.cta-link {
@@ -377,7 +389,8 @@ v          10            r</pre>
 	.hero .tagline,
 	.hero .hero-raptor,
 	.hero .roll-block,
-	.hero .etymology-card {
+	.hero .etymology-card,
+	.hero .license-card {
 		opacity: 0;
 	}
 
@@ -415,6 +428,9 @@ v          10            r</pre>
 	.hero-revealed .etymology-card {
 		animation: hero-enter-from-right 280ms cubic-bezier(0.16, 1, 0.3, 1) 280ms both;
 	}
+	.hero-revealed .license-card {
+		animation: hero-enter-from-right 280ms cubic-bezier(0.16, 1, 0.3, 1) 340ms both;
+	}
 
 	@media (max-width: 1023px) {
 		.hero-revealed .classification {
@@ -429,6 +445,9 @@ v          10            r</pre>
 		}
 		.hero-revealed .etymology-card {
 			animation: hero-enter-vertical 280ms cubic-bezier(0.16, 1, 0.3, 1) 440ms both;
+		}
+		.hero-revealed .license-card {
+			animation: hero-enter-vertical 280ms cubic-bezier(0.16, 1, 0.3, 1) 520ms both;
 		}
 	}
 
@@ -445,7 +464,8 @@ v          10            r</pre>
 		.hero .tagline,
 		.hero .hero-raptor,
 		.hero .roll-block,
-		.hero .etymology-card {
+		.hero .etymology-card,
+		.hero .license-card {
 			opacity: 1;
 			animation: none;
 		}
@@ -571,15 +591,17 @@ v          10            r</pre>
 		margin: 0;
 	}
 
-	/* Etymology card */
-	.etymology-card {
+	/* Etymology + license cards share the notched-fieldset frame */
+	.etymology-card,
+	.license-card {
 		position: relative;
 		border: 1px solid var(--color-fg);
 		padding: var(--spacing-6) var(--spacing-5);
 		max-width: 24rem;
 	}
 
-	.etymology-label {
+	.etymology-label,
+	.license-label {
 		position: absolute;
 		top: -0.6em;
 		left: var(--spacing-4);
@@ -611,12 +633,30 @@ v          10            r</pre>
 		overflow-x: auto;
 	}
 
-	.etymology-descriptor {
+	.etymology-descriptor,
+	.license-descriptor {
 		font-family: var(--font-body, system-ui, sans-serif);
 		font-size: var(--text-fluid-xs);
 		color: var(--color-muted);
 		margin: 0;
 		letter-spacing: 0.05em;
+	}
+
+	.license-card {
+		display: block;
+		margin-top: var(--spacing-6);
+		text-decoration: none;
+		color: inherit;
+	}
+
+	.license-label,
+	.license-descriptor {
+		transition: color 120ms ease;
+	}
+
+	.license-card:hover .license-label,
+	.license-card:hover .license-descriptor {
+		color: var(--color-fg);
 	}
 
 	/* Raptor */
