@@ -25,7 +25,7 @@ export function getHighlighter(): Promise<Highlighter> {
 	if (!highlighterPromise) {
 		highlighterPromise = createHighlighter({
 			themes: ['github-light', 'github-dark'],
-			langs: ['svelte', 'typescript', 'css', 'html', 'javascript', 'json', 'bash', 'sql'],
+			langs: ['svelte', 'typescript', 'css', 'html', 'javascript', 'json', 'bash', 'sql', 'rust'],
 		});
 	}
 	return highlighterPromise;

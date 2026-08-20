@@ -1,0 +1,16 @@
+{
+	"image": "docker.io/library/rust:1.97-slim@sha256:8e8cf8f7fd54a2d23d5a743b3a03f56e26b6c774276c33fa0595111704ebb15c",
+	"bindgenVersion": "0.2.127",
+	"inputs": {
+		"crates/kernel/Cargo.lock": "1b6c6e8e96a6afac80e57dbdda91a25e99178df45b47503bdfe149019498d5ec",
+		"crates/kernel/Cargo.toml": "925556b7a5b059eab3bd0346bc038b77dc8976c687de6f07a208c38bc9ca6b61",
+		"crates/kernel/rust-toolchain.toml": "4d0625c206a801cf15d833776bac50cc9e56df3a1b06b9b8284878c7bdf0148a",
+		"crates/kernel/src/lib.rs": "e7ec80f5d166c534428baa11d314ed2a59e90ff3a6d3e4d640365435026095be"
+	},
+	"outputs": {
+		"kernel.d.ts": "23b067ec19d685aff8230fb2a4e3e7bacbf4a9a99053d56e4d4134316c272fc9",
+		"kernel.js": "90b29e4c4e637a5c9af95799c30b0403f361148f4ab3b887599f28c8e2e6129f",
+		"kernel_bg.wasm": "8586c64c749419deb4d9029c4100d1a744ddb7da39d756eb215a8af8203fcfb0",
+		"kernel_bg.wasm.d.ts": "fd212c12d3bd6554f00462af20c9176f69df3ee8ea19ae9055877e88fd30e682"
+	}
+}

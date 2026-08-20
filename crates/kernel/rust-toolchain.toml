@@ -1,0 +1,7 @@
+# Reproducibility pin for scripts/wasm/build.sh — matches the rustc shipped in the
+# pinned builder image, so rustup reuses it instead of downloading a toolchain.
+# The listed target is auto-installed on first cargo invocation.
+[toolchain]
+channel = "1.97.1"
+targets = ["wasm32-unknown-unknown"]
+profile = "minimal"

@@ -272,6 +272,38 @@ export const showcaseSections: ShowcaseSection[] = [
 		keywords: ['job', 'trigger', 'queue', 'cron'],
 	},
 
+	// WebAssembly
+	{
+		pageHref: '/showcases/wasm',
+		anchorId: 'wasm-pattern',
+		title: 'Rust to Wasm Pattern',
+		keywords: ['rust', 'wasm-bindgen', 'vendored artifact', 'vite', 'loader'],
+	},
+	{
+		pageHref: '/showcases/wasm',
+		anchorId: 'wasm-lab',
+		title: 'Wasm vs JS Filter Lab',
+		keywords: ['benchmark', 'box blur', 'grayscale', 'checksum', 'speedup'],
+	},
+	{
+		pageHref: '/showcases/wasm',
+		anchorId: 'wasm-boundary',
+		title: 'Wasm Boundary Tax',
+		keywords: ['marshalling', 'copy', 'linear memory', 'typed array', 'resident'],
+	},
+	{
+		pageHref: '/showcases/wasm',
+		anchorId: 'wasm-honesty',
+		title: 'Honest Benchmark Protocol',
+		keywords: ['warmup', 'jit', 'median', 'interleave', 'first run'],
+	},
+	{
+		pageHref: '/showcases/wasm',
+		anchorId: 'wasm-when',
+		title: 'When Wasm Wins',
+		keywords: ['performance', 'simd', 'gc', 'strings', 'decision'],
+	},
+
 	// Notifications
 	{ pageHref: '/showcases/notifications/channels', anchorId: 'channels-providers', title: 'Channel Providers' },
 	{ pageHref: '/showcases/notifications/channels', anchorId: 'channels-user', title: 'User Channel Preferences' },

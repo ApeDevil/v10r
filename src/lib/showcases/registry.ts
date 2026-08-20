@@ -326,6 +326,14 @@ export const showcases: ShowcaseCard[] = [
 		],
 	},
 	{
+		href: '/showcases/wasm',
+		icon: 'i-lucide-binary',
+		title: m.showcase_wasm_title,
+		description: m.showcase_wasm_description,
+		domain: 'frontend',
+		docs: [{ href: '/docs/blueprint/architecture/wasm', label: 'WebAssembly' }],
+	},
+	{
 		href: '/showcases/cycle',
 		icon: 'i-lucide-orbit',
 		title: m.showcase_cycle_title,

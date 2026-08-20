@@ -1,0 +1,26 @@
+[package]
+name = "v10r-kernel"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Exact-pinned: scripts/wasm/build.sh installs wasm-bindgen-cli at this same
+# version, and the CLI hard-errors on any mismatch with the crate dependency.
+wasm-bindgen = "=0.2.127"
+
+[profile.release]
+# The conventional speed setting, not a measured one: IMC '21 (Yan et al.)
+# actually found -Oz FASTEST in aggregate (0.86x of -O2) on 2019-era engines, so
+# optimization-level folklore doesn't transfer — re-benchmark the levels on this
+# kernel before trusting any of them. Size is irrelevant (~20 KB either way).
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+# Already the wasm32-unknown-unknown default, pinned here so a future toolchain
+# can't silently switch to unwinding (exnref), which Safari &lt; 18.4 rejects.
+panic = "abort"

@@ -151,6 +151,10 @@
 		{
 			"folderPath": "velociraptor/.claude/agent-memory/",
 			"badge": "🤖🧠"
+		},
+		{
+			"folderPath": "velociraptor/crates/",
+			"badge": "🦀"
 		}
 	]
 }

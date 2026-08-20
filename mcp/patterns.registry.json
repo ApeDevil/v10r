@@ -543,6 +543,66 @@
 			"risk": "low — structural pattern, no external services"
 		},
 		{
+			"id": "architecture-wasm-kernel",
+			"tier": "light",
+			"title": "Rust→wasm compute kernel (vendored, plugin-free)",
+			"category": "architecture",
+			"summary": "Rust crate compiled to wasm in an ephemeral container, artifacts vendored into src/lib/wasm/kernel/, loaded via ?url + explicit init with zero Vite plugins, benchmarked honestly against a line-for-line JS twin with a vitest parity gate.",
+			"when_to_use": "Reach for it when a browser workload is compute-dense over typed data (convolution, physics, hashing) and the data can stay resident in wasm linear memory — and to see why string-heavy or per-call-copy workloads should stay in JS.",
+			"capabilities": ["wasm compute offload", "honest benchmarking"],
+			"keywords": ["webassembly", "rust", "wasm-bindgen", "vendored artifact", "boundary cost"],
+			"depends_on": [],
+			"docs": [
+				{
+					"path": "docs/blueprint/architecture/wasm.md"
+				}
+			],
+			"code": [
+				{
+					"path": "crates/kernel/src/lib.rs",
+					"note": "The Rust kernel — resident buffers, scalars-only boundary, deliberate marshalling counter-example."
+				},
+				{
+					"path": "src/lib/wasm/index.ts",
+					"note": "The loader: ?url + init({ module_or_path }), dynamic import, singleton — no Vite plugins."
+				},
+				{
+					"path": "src/lib/wasm/filters.ts",
+					"note": "Line-for-line JS twins of the kernel; integer math keeps both engines byte-identical."
+				},
+				{
+					"path": "src/lib/wasm/kernel-bench.worker.ts",
+					"note": "Worker shell — handler installed synchronously, counterbalanced warm-up/timed protocol."
+				},
+				{
+					"path": "scripts/wasm/build.sh",
+					"note": "Ephemeral rust: container build; digest-pinned image + rust-toolchain.toml + Cargo.lock + bindgen version; emits the freshness manifest."
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/wasm/kernel-parity.test.ts",
+					"note": "Parity gate: committed wasm artifact vs JS twins, byte-identical, loaded under plain Node."
+				},
+				{
+					"path": "src/lib/wasm/kernel-manifest.test.ts",
+					"note": "Freshness gate: recomputes build-manifest.json hashes so a Rust edit without a rebuild goes red — without Rust in the gate."
+				},
+				{
+					"path": "src/lib/wasm/filters.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/wasm",
+					"kind": "route"
+				}
+			],
+			"invariants": [],
+			"emulation_notes": [],
+			"risk": "low — browser-only compute, no external services; rebuilds need only podman"
+		},
+		{
 			"id": "app-shell-layout",
 			"tier": "light",
 			"title": "Shell layout (no global header, sidebar-first)",

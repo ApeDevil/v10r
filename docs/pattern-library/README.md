@@ -2,7 +2,7 @@
 
 > Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-One page per pattern record — 139 patterns (12 deep cards / 127 index rows) across 21 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
+One page per pattern record — 140 patterns (12 deep cards / 128 index rows) across 21 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
 
 This README is the GitHub navigation hub; in-app, this directory is the Pattern Library docs section — the catalog lives at `/docs/pattern-library` and every page below at `/docs/pattern-library/<id>`.
 
@@ -20,6 +20,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [Testing infrastructure (Vitest, PGlite isolation)](./architecture-testing-infra.md)
 - [Pattern MCP (agent-queryable pattern registry, local stdio)](./architecture-pattern-mcp.md)
 - [Hosted MCP (two trust surfaces: public read-only · bearer admin)](./architecture-hosted-mcp.md)
+- [Rust→wasm compute kernel (vendored, plugin-free)](./architecture-wasm-kernel.md)
 
 ### App Shell & Navigation
 

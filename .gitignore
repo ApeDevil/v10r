@@ -22,3 +22,6 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Rust (crates/kernel builds via scripts/wasm/build.sh in an ephemeral container)
+crates/kernel/target
